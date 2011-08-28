@@ -1,0 +1,14 @@
+
+# Build system
+/volt
+/volt.*
+.obj
+
+# Temporary files produced by the compiler
+*.ll
+*.bc
+a.out*
+a.exe*
+
+# Misc files
+b.bat
