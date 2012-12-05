@@ -59,14 +59,14 @@ interface Backend
 	TargetType[] supported();
 
 	/**
-	 * Set the target file and output type. Backends useally only
+	 * Set the target file and output type. Backends usually only
 	 * suppports one or two output types @see supported.
 	 */
 	void setTarget(string filename, TargetType type);
 
 	/**
-	 * Compile the given module. Need to have called setTarget before
-	 * calling this function, setTarget needs to be called for each
+	 * Compile the given module. You need to have called setTarget before
+	 * calling this function. setTarget needs to be called for each
 	 * invocation of this function.
 	 */
 	void compile(ir.Module m);
