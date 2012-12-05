@@ -1,0 +1,126 @@
+// Copyright © 2012, Bernard Helyer.  All rights reserved.
+// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+module volt.semantic.condremoval;
+
+import volt.exceptions;
+import volt.interfaces;
+import volt.ir.base;
+import volt.visitor.manip;
+import volt.visitor.visitor;
+
+/**
+ * A pass that removes version and debug blocks.
+ */
+class ConditionalRemoval : NullVisitor, Pass
+{
+public:
+	Settings settings;
+
+public:
+	this(Settings settings)
+	{
+		this.settings = settings;
+	}
+
+public:
+	bool evaluateCondition(ir.Condition c)
+	{
+		if (c.kind == ir.Condition.Kind.Version) {
+			return settings.isVersionSet(c.identifier);
+		} else if (c.kind == ir.Condition.Kind.Debug) {
+			return settings.isDebugSet(c.identifier);
+		} else {
+			/// Static if.
+			return false;
+		}
+	}
+
+	/// Replace conditionals with their children, or not, depending on their Condition.
+	bool removeConditionals(ir.Node node, out ir.Node[] ret)
+	{
+		if (auto cond = cast(ir.ConditionTopLevel) node) {
+			// Conditional Top Level.
+			if (evaluateCondition(cond.condition)) {
+				ret = cond.members;
+			} else {
+				ret = cond._else;
+			}
+			if (ret.length > 0) {
+				ret = manipNodes(ret, &removeConditionals);
+			}
+			return true;
+		} else if (auto condstatement = cast(ir.ConditionStatement) node) {
+			// Conditional Statement.
+			if (evaluateCondition(condstatement.condition)) {
+				ret = condstatement.block.statements;
+			} else {
+				ret = condstatement._else.statements;
+			}
+			if (ret.length > 0) {
+				ret = manipNodes(ret, &removeConditionals);
+			}
+			return true;
+		} else {
+			// Not a Condition at all.
+			return false;
+		}
+	}
+
+public:
+	override void transform(ir.Module m)
+	{
+		accept(m, this);
+	}
+
+	override void close() {}
+
+	override Status enter(ir.Module m)
+	{
+		m.children = manipNodes(m.children, &removeConditionals);
+		return Continue;
+	}
+
+	override Status enter(ir.BlockStatement bs)
+	{
+		bs.statements = manipNodes(bs.statements, &removeConditionals);
+		return Continue;
+	}
+
+	override Status enter(ir.Function fn)
+	{
+		fn.inContract = manipNodes(fn.inContract, &removeConditionals);
+		fn.outContract = manipNodes(fn.outContract, &removeConditionals);
+		fn._body = manipNodes(fn._body, &removeConditionals);
+		return Continue;
+	}
+
+	override Status enter(ir.Unittest u)
+	{
+		u._body = manipNodes(u._body, &removeConditionals);
+		return Continue;
+	}
+
+	override Status enter(ir.Struct s)
+	{
+		s.members = manipNodes(s.members, &removeConditionals);
+		return Continue;
+	}
+
+	override Status enter(ir.Class c)
+	{
+		c.members = manipNodes(c.members, &removeConditionals);
+		return Continue;
+	}
+
+	override Status enter(ir.Attribute a)
+	{
+		a.members = manipNodes(a.members, &removeConditionals);
+		return Continue;
+	}
+
+	override Status enter(ir._Interface i)
+	{
+		i.members = manipNodes(i.members, &removeConditionals);
+		return Continue;
+	}
+}

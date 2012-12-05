@@ -1,0 +1,3 @@
+Ugly things in the language, compiler, standard library, etc:
+
+EmptyStatements are needed for things like LabelStatement at the end of functions and things.

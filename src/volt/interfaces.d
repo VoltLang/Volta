@@ -1,0 +1,183 @@
+// Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
+// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+module volt.interfaces;
+
+import volt.token.location;
+import ir = volt.ir.ir;
+
+
+/**
+ * Start of the compile pipeline, it lexes source, parses tokens and do
+ * some very lightweight transformation of internal AST into Volt IR.
+ */
+interface Frontend
+{
+	ir.Module parseNewFile(string source, Location loc);
+
+	void close();
+}
+
+/**
+ * Interface implemented by transformation, debug and/or validation passes.
+ *
+ * Transformation passes often lowers high level Volt IR into something
+ * that is easier for backends to handle.
+ *
+ * Validation passes validates the Volt IR, and reports errors, often halting
+ * compilation by throwing CompilerError.
+ */
+interface Pass
+{
+	void transform(ir.Module m);
+
+	void close();
+}
+
+/**
+ * Used to determin the output of the backend.
+ */
+enum TargetType
+{
+	DebugPrinting,
+	LlvmBitcode,
+	ElfObject,
+	VoltCode,
+	CCode,
+}
+
+/**
+ * Interface implemented by backends. Often the last stage of the compile
+ * pipe that is implemented in this compiler, optimization and linking
+ * are often done outside of the compiler, either invoked directly by us
+ * or a build system.
+ */
+interface Backend
+{
+	/**
+	 * Return the supported target types.
+	 */
+	TargetType[] supported();
+
+	/**
+	 * Set the target file and output type. Backends useally only
+	 * suppports one or two output types @see supported.
+	 */
+	void setTarget(string filename, TargetType type);
+
+	/**
+	 * Compile the given module. Need to have called setTarget before
+	 * calling this function, setTarget needs to be called for each
+	 * invocation of this function.
+	 */
+	void compile(ir.Module m);
+
+	void close();
+}
+
+/**
+ * Holds a set of compiler settings.
+ *
+ * Things like version/debug identifiers, warning mode,
+ * debug/release, import paths, and so on.
+ */
+final class Settings
+{
+public:
+	bool warningsEnabled;
+	bool debugEnabled;
+	bool noBackend;
+	string outputFile;
+
+private:
+	/// If the ident exists and is true, it's set, if false it's reserved.
+	bool[string] mVersionIdentifiers;
+	/// If the ident exists, it's set.
+	bool[string] mDebugIdentifiers;
+
+public:
+	this()
+	{
+		setDefaultVersionIdentifiers();
+	}
+
+	/// Throws: Exception if ident is reserved.
+	final void setVersionIdentifier(string ident)
+	{
+		if (auto p = ident in mVersionIdentifiers) {
+			if (!(*p)) {
+				throw new Exception("cannot set reserved identifier.");
+			}
+		}
+		mVersionIdentifiers[ident] = true;
+	}
+
+	/// Doesn't throw, debug identifiers can't be reserved.
+	final void setDebugIdentifier(string ident)
+	{
+		mDebugIdentifiers[ident] = true;
+	}
+
+	/**
+	 * Check if a given version identifier is set.
+	 * Params:
+	 *   ident = the identifier to check.
+	 * Returns: true if set, false otherwise.
+	 */
+	final bool isVersionSet(string ident)
+	{
+		if (auto p = ident in mVersionIdentifiers) {
+			return *p;
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Check if a given debug identifier is set.
+	 * Params:
+	 *   ident = the identifier to check.
+	 * Returns: true if set, false otherwise.
+	 */
+	final bool isDebugSet(string ident)
+	{
+		return (ident in mDebugIdentifiers) !is null;
+	}
+
+	final ir.PrimitiveType getSizeT()
+	{
+		return new ir.PrimitiveType(ir.PrimitiveType.Kind.Uint);
+	}
+
+private:
+	final void setDefaultVersionIdentifiers()
+	{
+		setVersionIdentifier("Volt");
+		setVersionIdentifier("all");
+
+		reserveVersionIdentifier("none");
+	}
+
+	/// Marks an identifier as unable to be set. Doesn't set the identifier.
+	final void reserveVersionIdentifier(string ident)
+	{
+		mVersionIdentifiers[ident] = false;
+	}
+}
+
+unittest
+{
+	auto settings = new Settings();
+	assert(!settings.isVersionSet("none"));
+	assert(settings.isVersionSet("all"));
+	settings.setVersionIdentifier("foo");
+	assert(settings.isVersionSet("foo"));
+	assert(!settings.isDebugSet("foo"));
+	settings.setDebugIdentifier("foo");
+	assert(settings.isDebugSet("foo"));
+
+	try {
+		settings.setVersionIdentifier("none");
+		assert(false);
+	} catch (Exception e) {
+	}
+}
