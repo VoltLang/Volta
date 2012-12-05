@@ -2,6 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.exptyper;
 
+import std.conv : to;
 import std.string : format;
 
 import ir = volt.ir.ir;
@@ -61,6 +62,64 @@ bool isOkayForPointerArithmetic(ir.PrimitiveType.Kind kind)
 	case Uint:
 	case Long:
 	case Ulong:
+		return true;
+	default:
+		return false;
+	}
+}
+
+bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
+{
+	if (e.nodeType != ir.NodeType.Constant) {
+		return false;
+	}
+	auto asConstant = cast(ir.Constant) e;
+	assert(asConstant !is null);
+
+	long l;
+	try {
+		l = to!long(asConstant.value);
+	} catch (Throwable t) {
+		return false;
+	}
+
+	switch (t.type) with (ir.PrimitiveType.Kind) {
+	case Ubyte:
+		return l >= ubyte.min && l <= ubyte.max;
+	case Byte:
+		return l >= byte.min && l <= byte.max;
+	case Ushort:
+		return l >= ushort.min && l <= ushort.max;
+	case Short:
+		return l >= short.min && l <= short.max;
+	case Uint:
+		return l >= uint.min && l <= uint.max;
+	case Int:
+		return l >= int.min && l <= int.max;
+	case Long:
+		return true;
+	case Ulong:
+		try {
+			ulong ul = to!ulong(asConstant.value);
+		} catch (Throwable) {
+			return false;
+		}
+		return true;
+	case Float:
+		float f;
+		try {
+			f = to!float(asConstant.value);
+		} catch (Throwable) {
+			return false;
+		}
+		return true;
+	case Double:
+		double d;
+		try {
+			d = to!double(asConstant.value);
+		} catch (Throwable) {
+			return false;
+		}
 		return true;
 	default:
 		return false;
@@ -464,14 +523,15 @@ public:
 			throw new CompilerError(bin.location, "cannot implicitly reconcile binary expression types.");
 		}
 
+		auto leftsz = size(lp.type);
+		auto rightsz = size(rp.type);
+
 		bool leftUnsigned = isUnsigned(lp.type);
 		bool rightUnsigned = isUnsigned(rp.type);
 		if (leftUnsigned != rightUnsigned) {
 			throw new CompilerError(bin.location, "binary operation with both signed and unsigned operands.");
 		}
 
-		auto leftsz = size(lp.type);
-		auto rightsz = size(rp.type);
 		auto intsz = size(ir.PrimitiveType.Kind.Int);
 		int largestsz;
 		ir.Type largestType;
@@ -560,20 +620,21 @@ public:
 			throw new CompilerError(exp.location, "cannot implicitly reconcile binary expression types.");
 		}
 
-		bool leftUnsigned = isUnsigned(lp.type);
-		bool rightUnsigned = isUnsigned(rp.type);
-		if (leftUnsigned != rightUnsigned) {
-			throw new CompilerError(exp.location, "binary operation with both signed and unsigned operands.");
-		}
-
 		auto leftsz = size(lp.type);
 		auto rightsz = size(rp.type);
 
-		if (rightsz > leftsz) {
-			throw new CompilerError(exp.location, format("cannot implicitly cast '%s' to '%s'.", to!string(rp.type), to!string(lp.type)));
-		} else if (rightsz < leftsz) {
-			exp = new ir.Unary(lp, exp);
+		bool leftUnsigned = isUnsigned(lp.type);
+		bool rightUnsigned = isUnsigned(rp.type);
+		if (leftUnsigned != rightUnsigned && !fitsInPrimitive(lp, src) && rightsz >= leftsz) {
+			throw new CompilerError(exp.location, "binary operation with both signed and unsigned operands.");
 		}
+
+		if (rightsz > leftsz && !fitsInPrimitive(lp, src)) {
+			throw new CompilerError(exp.location, format("cannot implicitly cast '%s' to '%s'.", to!string(rp.type), to!string(lp.type)));
+		}
+		
+		
+		exp = new ir.Unary(lp, exp);
 
 		return lp;
 	}
