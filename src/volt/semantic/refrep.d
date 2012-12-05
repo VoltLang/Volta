@@ -11,7 +11,7 @@ import volt.exceptions;
 import volt.interfaces;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
-import volt.semantic.expreplace;
+import volt.visitor.expreplace;
 
 ir.Store lookup(ir.Scope _scope, string name)
 {

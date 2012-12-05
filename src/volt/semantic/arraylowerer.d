@@ -11,7 +11,7 @@ import ir = volt.ir.ir;
 import volt.interfaces;
 import volt.exceptions;
 import volt.visitor.visitor;
-import volt.semantic.expreplace;
+import volt.visitor.expreplace;
 import volt.semantic.mangle;
 
 /**
