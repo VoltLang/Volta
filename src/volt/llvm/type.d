@@ -133,6 +133,28 @@ public:
 				val = 1;
 		} else if (signed) {
 			val = to!long(cnst.value);
+		} else if (bits == 8) {
+			/// @todo this should not be done here.
+
+			auto v = cnst.value;
+			assert(v.length >= 3);
+			assert(v[0] == '\'');
+
+			val = v[1];
+			if (val == '\\') {
+				switch (v[2]) {
+				case 'n': val = '\n'; break;
+				case 'r': val = '\r'; break;
+				case 't': val = '\t'; break;
+				case '0': val = '\0'; break;
+				case 'f': val = '\f'; break;
+				case 'b': val = '\b'; break;
+				case 'a': val = '\a'; break;
+				case 'v': val = '\v'; break;
+				default:
+					throw new CompilerPanic(cnst.location, "unhandled escape");
+				}
+			}
 		} else {
 			val = cast(long)to!ulong(cnst.value);
 		}
