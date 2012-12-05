@@ -34,6 +34,11 @@ import volt.semantic.manglewriter;
 
 import volt.llvm.backend;
 
+version (Windows) {
+	enum DEFAULT_EXE = "a.exe";
+} else {
+	enum DEFAULT_EXE = "a.out";
+}
 
 int main(string[] args)
 {
@@ -94,7 +99,7 @@ int main(string[] args)
 		b.compile(m);
 		b.close();
 
-		string of = settings.outputFile is null ? "a.out" : settings.outputFile;
+		string of = settings.outputFile is null ? DEFAULT_EXE : settings.outputFile;
 		system(format("llvm-ld -native -o \"%s\" \"%s\"", of, o));
 	}
 
