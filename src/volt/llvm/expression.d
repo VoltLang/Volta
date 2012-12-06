@@ -11,16 +11,16 @@ static import volt.semantic.mangle;
 
 
 /**
- * Representing a single LLVMValueRef plus associated high-type.
+ * Represents a single LLVMValueRef plus the associated high level type.
  *
- * A value can be in reference form where it is actually a pointer
- * to the give value, since all variables are stored as alloced
- * memory in a function we will no instert loads untill needed.
+ * A Value can be in reference form where it is actually a pointer
+ * to the give value, since all variables are stored as alloca'd
+ * memory in a function we will not insert loads until needed.
  * This is needed for '&' to work and struct lookups.
  */
 class Value
 {
-	bool isPointer; ///< Is reference to the real value?
+	bool isPointer; ///< Is this a reference to the real value?
 	Type type;
 	LLVMValueRef value;
 }
@@ -419,7 +419,8 @@ void handleCastPrimitive(State state, ir.Unary cst, Value result,
 }
 
 /**
- * Handle pointer casts this is really easy.
+ * Handle pointer casts. 
+ * This is really easy.
  */
 void handleCastPointer(State state, ir.Unary cst, Value result,
                        PointerType newType, PointerType oldType)
