@@ -25,6 +25,7 @@ public:
 	LLVMModuleRef mod;
 
 	LLVMBasicBlockRef currentBlock;
+	LLVMBasicBlockRef currentBreakBlock; ///< Block to jump to on break.
 	LLVMBasicBlockRef currentContinueBlock; ///< Block to jump to on continue.
 
 	LLVMValueRef currentFunc;
@@ -93,6 +94,16 @@ public:
 	{
 		auto t = currentContinueBlock;
 		currentContinueBlock = b;
+		return t;
+	}
+
+	/**
+	 * Helper function to swap out the currentBreakBlock, returns the old one.
+	 */
+	LLVMBasicBlockRef replaceBreakBlock(LLVMBasicBlockRef b)
+	{
+		auto t = currentBreakBlock;
+		currentBreakBlock = b;
 		return t;
 	}
 

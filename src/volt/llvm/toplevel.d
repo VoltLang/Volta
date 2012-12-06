@@ -185,8 +185,9 @@ public:
 		whileOut = LLVMAppendBasicBlockInContext(
 			state.context, state.currentFunc, "whileOut");
 
-		// Make continue jump to the cond block.
-		auto save = state.replaceContinueBlock(whileCond);
+		// Make continue jump to the cond block, and break to out.
+		auto saveBre = state.replaceBreakBlock(whileOut);
+		auto saveCon = state.replaceContinueBlock(whileCond);
 
 		// Jump to the cond block.
 		LLVMBuildBr(state.builder, whileCond);
@@ -202,7 +203,8 @@ public:
 		// Switch out block
 		LLVMMoveBasicBlockAfter(whileOut, state.currentBlock);
 		state.startBlock(whileOut);
-		state.replaceContinueBlock(save);
+		state.replaceBreakBlock(saveBre);
+		state.replaceContinueBlock(saveCon);
 
 		return ContinueParent;
 	}
@@ -220,8 +222,9 @@ public:
 		doOut = LLVMAppendBasicBlockInContext(
 			state.context, state.currentFunc, "doOut");
 
-		// Make continue jump to the cond block.
-		auto save = state.replaceContinueBlock(doCond);
+		// Make continue jump to the cond block, and break to out.
+		auto saveBre = state.replaceBreakBlock(doOut);
+		auto saveCon = state.replaceContinueBlock(doCond);
 
 		// Jump to the body block
 		LLVMBuildBr(state.builder, doBody);
@@ -238,7 +241,8 @@ public:
 		// Switch out block
 		LLVMMoveBasicBlockAfter(doOut, state.currentBlock);
 		state.startBlock(doOut);
-		state.replaceContinueBlock(save);
+		state.replaceBreakBlock(saveBre);
+		state.replaceContinueBlock(saveCon);
 
 		return ContinueParent;
 	}
@@ -262,8 +266,9 @@ public:
 		foreach(exp; f.initExps)
 			state.getValue(exp);
 
-		// Make continue jump to the post block.
-		auto save = state.replaceContinueBlock(forPost);
+		// Make continue jump to the post block, and break to out.
+		auto saveBre = state.replaceBreakBlock(forOut);
+		auto saveCon = state.replaceContinueBlock(forPost);
 
 		// Jump to the cond block
 		LLVMBuildBr(state.builder, forCond);
@@ -295,7 +300,8 @@ public:
 		// For out block
 		LLVMMoveBasicBlockAfter(forOut, state.currentBlock);
 		state.startBlock(forOut);
-		state.replaceContinueBlock(save);
+		state.replaceBreakBlock(saveBre);
+		state.replaceContinueBlock(saveCon);
 
 		return ContinueParent;
 	}
@@ -310,7 +316,20 @@ public:
 		LLVMBuildBr(state.builder, state.currentContinueBlock);
 		state.currentFall = false;
 
-		return ContinueParent;
+		return Continue;
+	}
+
+	override Status visit(ir.BreakStatement bs)
+	{
+		assert(state.currentBreakBlock !is null);
+
+		if (bs.label !is null)
+			throw new CompilerPanic(bs.location, "labled break statements not supported");
+
+		LLVMBuildBr(state.builder, state.currentBreakBlock);
+		state.currentFall = false;
+
+		return Continue;
 	}
 
 	void doNewBlock(LLVMBasicBlockRef b, ir.BlockStatement bs,
