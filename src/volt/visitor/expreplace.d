@@ -1,6 +1,6 @@
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.semantic.expreplace;
+module volt.visitor.expreplace;
 
 import std.conv : to;
 import std.string : format;
