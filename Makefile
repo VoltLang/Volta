@@ -3,7 +3,7 @@
 RDMD=rdmd
 DMD=dmd
 EXE=volt.exe
-DFLAGS=--build-only --compiler=$(DMD) -of$(EXE) -gc -w -debug $(FLAGS)
+DFLAGS=--build-only --compiler=$(DMD) -of$(EXE) -gc -w -debug LLVM.lib $(FLAGS)
 
 # rules
 all:
