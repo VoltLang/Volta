@@ -181,10 +181,6 @@ public:
 	override Status leave(ir.SwitchStatement n) { leaveNode(n); return Continue; }
 	override Status enter(ref ir.SwitchStatement.Case n) { /*enterNode(n);*/ return Continue; }
 	override Status leave(ref ir.SwitchStatement.Case n) { /*leaveNode(n);*/ return Continue; }
-	override Status enter(ir.ContinueStatement n) { enterNode(n); return Continue; }
-	override Status leave(ir.ContinueStatement n) { leaveNode(n); return Continue; }
-	override Status enter(ir.BreakStatement n) { enterNode(n); return Continue; }
-	override Status leave(ir.BreakStatement n) { leaveNode(n); return Continue; }
 	override Status enter(ir.GotoStatement n) { enterNode(n); return Continue; }
 	override Status leave(ir.GotoStatement n) { leaveNode(n); return Continue; }
 	override Status enter(ir.WithStatement n) { enterNode(n); return Continue; }
@@ -202,7 +198,8 @@ public:
 	override Status enter(ir.ConditionStatement n) { enterNode(n); return Continue; }
 	override Status leave(ir.ConditionStatement n) { leaveNode(n); return Continue; }
 
-
+	override Status visit(ir.ContinueStatement n) { enterNode(n); return Continue; }
+	override Status visit(ir.BreakStatement n) { enterNode(n); return Continue; }
 	override Status visit(ir.EmptyStatement n) { visitNode(n); return Continue; }
 
 	/*

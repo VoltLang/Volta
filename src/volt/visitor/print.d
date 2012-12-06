@@ -776,7 +776,7 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ir.ContinueStatement cs)
+	override Status visit(ir.ContinueStatement cs)
 	{
 		twf("continue");
 		if (cs.label.length > 0) {
@@ -785,15 +785,10 @@ public:
 		}
 		wfln(";");
 
-		return ContinueParent;
+		return Continue;
 	}
 
-	override Status leave(ir.ContinueStatement cs)
-	{
-		assert(false);
-	}
-
-	override Status enter(ir.BreakStatement bs)
+	override Status visit(ir.BreakStatement bs)
 	{
 		twf("break");
 		if (bs.label.length > 0) {
@@ -802,12 +797,7 @@ public:
 		}
 		wfln(";");
 
-		return ContinueParent;
-	}
-
-	override Status leave(ir.BreakStatement bs)
-	{
-		assert(false);
+		return Continue;
 	}
 
 	override Status enter(ir.GotoStatement gs)

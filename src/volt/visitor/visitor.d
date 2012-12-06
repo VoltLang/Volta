@@ -80,10 +80,6 @@ public abstract:
 	Status leave(ir.SwitchStatement ss);
 	Status enter(ref ir.SwitchStatement.Case c);
 	Status leave(ref ir.SwitchStatement.Case c);
-	Status enter(ir.ContinueStatement cs);
-	Status leave(ir.ContinueStatement cs);
-	Status enter(ir.BreakStatement bs);
-	Status leave(ir.BreakStatement bs);
 	Status enter(ir.GotoStatement gs);
 	Status leave(ir.GotoStatement gs);
 	Status enter(ir.WithStatement ws);
@@ -101,7 +97,8 @@ public abstract:
 	Status enter(ir.ConditionStatement cs);
 	Status leave(ir.ConditionStatement cs);
 
-
+	Status visit(ir.BreakStatement bs);
+	Status visit(ir.ContinueStatement cs);
 	Status visit(ir.EmptyStatement es);
 
 	/*
@@ -223,10 +220,6 @@ override:
 	Status leave(ir.SwitchStatement ss){ return Continue; }
 	Status enter(ref ir.SwitchStatement.Case c){ return Continue; }
 	Status leave(ref ir.SwitchStatement.Case c){ return Continue; }
-	Status enter(ir.ContinueStatement cs){ return Continue; }
-	Status leave(ir.ContinueStatement cs){ return Continue; }
-	Status enter(ir.BreakStatement bs){ return Continue; }
-	Status leave(ir.BreakStatement bs){ return Continue; }
 	Status enter(ir.GotoStatement gs){ return Continue; }
 	Status leave(ir.GotoStatement gs){ return Continue; }
 	Status enter(ir.WithStatement ws){ return Continue; }
@@ -244,7 +237,8 @@ override:
 	Status enter(ir.ConditionStatement cs){ return Continue; }
 	Status leave(ir.ConditionStatement cs){ return Continue; }
 
-
+	Status visit(ir.ContinueStatement cs){ return Continue; }
+	Status visit(ir.BreakStatement bs){ return Continue; }
 	Status visit(ir.EmptyStatement es){ return Continue; }
 
 	/*
@@ -446,9 +440,13 @@ Visitor.Status accept(ir.Node n, Visitor av)
 	case ir.NodeType.SwitchStatement:
 		return acceptSwitchStatement(cast(ir.SwitchStatement) n, av);
 	case ir.NodeType.ContinueStatement:
-		return acceptContinueStatement(cast(ir.ContinueStatement) n, av);
+		auto asCont = cast(ir.ContinueStatement) n;
+		assert(asCont !is null);
+		return av.visit(asCont);
 	case ir.NodeType.BreakStatement:
-		return acceptBreakStatement(cast(ir.BreakStatement) n, av);
+		auto asBreak = cast(ir.BreakStatement) n;
+		assert(asBreak !is null);
+		return av.visit(asBreak);
 	case ir.NodeType.GotoStatement:
 		return acceptGotoStatement(cast(ir.GotoStatement) n, av);
 	case ir.NodeType.WithStatement:
@@ -1040,24 +1038,6 @@ Visitor.Status acceptSwitchStatement(ir.SwitchStatement ss, Visitor av)
 	}
 
 	return av.leave(ss);
-}
-
-Visitor.Status acceptContinueStatement(ir.ContinueStatement cs, Visitor av)
-{
-	auto status = av.enter(cs);
-	if (status != VisitorContinue)
-		return parentContinue(status);
-
-	return av.leave(cs);
-}
-
-Visitor.Status acceptBreakStatement(ir.BreakStatement bs, Visitor av)
-{
-	auto status = av.enter(bs);
-	if (status != VisitorContinue)
-		return parentContinue(status);
-
-	return av.leave(bs);
 }
 
 Visitor.Status acceptGotoStatement(ir.GotoStatement gs, Visitor av)

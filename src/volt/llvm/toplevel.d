@@ -300,7 +300,7 @@ public:
 		return ContinueParent;
 	}
 
-	override Status enter(ir.ContinueStatement cs)
+	override Status visit(ir.ContinueStatement cs)
 	{
 		assert(state.currentContinueBlock !is null);
 
