@@ -25,6 +25,8 @@ public:
 	LLVMModuleRef mod;
 
 	LLVMBasicBlockRef currentBlock;
+	LLVMBasicBlockRef currentContinueBlock; ///< Block to jump to on continue.
+
 	LLVMValueRef currentFunc;
 	bool currentFall; ///< Tracking for auto branch generation.
 
@@ -82,6 +84,16 @@ public:
 		currentFall = true;
 		currentBlock = b;
 		LLVMPositionBuilderAtEnd(builder, currentBlock);
+	}
+
+	/**
+	 * Helper function to swap out the currentContineBlock, returns the old one.
+	 */
+	LLVMBasicBlockRef replaceContinueBlock(LLVMBasicBlockRef b)
+	{
+		auto t = currentContinueBlock;
+		currentContinueBlock = b;
+		return t;
 	}
 
 	/**
