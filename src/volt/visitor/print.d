@@ -720,7 +720,7 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ref ir.SwitchStatement.Case sc)
+	override Status enter(ir.SwitchCase sc)
 	{
 		if (sc.isDefault) {
 			twfln("default:");
@@ -759,7 +759,7 @@ public:
 		return Continue;
 	}
 
-	override Status leave(ref ir.SwitchStatement.Case sc)
+	override Status leave(ir.SwitchCase sc)
 	{
 		return Continue;
 	}

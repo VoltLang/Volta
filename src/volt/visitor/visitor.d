@@ -78,8 +78,8 @@ public abstract:
 	Status leave(ir.LabelStatement ls);
 	Status enter(ir.SwitchStatement ss);
 	Status leave(ir.SwitchStatement ss);
-	Status enter(ref ir.SwitchStatement.Case c);
-	Status leave(ref ir.SwitchStatement.Case c);
+	Status enter(ir.SwitchCase c);
+	Status leave(ir.SwitchCase c);
 	Status enter(ir.GotoStatement gs);
 	Status leave(ir.GotoStatement gs);
 	Status enter(ir.WithStatement ws);
@@ -218,8 +218,8 @@ override:
 	Status leave(ir.LabelStatement ls){ return Continue; }
 	Status enter(ir.SwitchStatement ss){ return Continue; }
 	Status leave(ir.SwitchStatement ss){ return Continue; }
-	Status enter(ref ir.SwitchStatement.Case c){ return Continue; }
-	Status leave(ref ir.SwitchStatement.Case c){ return Continue; }
+	Status enter(ir.SwitchCase c){ return Continue; }
+	Status leave(ir.SwitchCase c){ return Continue; }
 	Status enter(ir.GotoStatement gs){ return Continue; }
 	Status leave(ir.GotoStatement gs){ return Continue; }
 	Status enter(ir.WithStatement ws){ return Continue; }

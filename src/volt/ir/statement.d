@@ -189,6 +189,34 @@ public:
 }
 
 /**
+ * Represents a case in a switch statement.
+ *
+ * If firstExp !is null and secondExp is null:
+ *     case firstExp:
+ * If firstExp !is null and secondExp !is null:
+ *     case firstExp: .. case secondExp:
+ * If exps.length > 0:
+ *     case exps[0], exps[1], ... exps[$-1]:
+ * If isDefault:
+ *     default:
+ *
+ * The above are all mutually exclusive.
+ */
+class SwitchCase : Node
+{
+public:
+	Exp firstExp;
+	Exp secondExp;
+	Exp[] exps;
+	bool isDefault;
+
+	Node[] statements;
+
+public:
+	this() { super(NodeType.SwitchCase); }
+}
+
+/**
  * A switch statement jumps to various case labels depending
  * on the value of its condition.
  * 
@@ -199,37 +227,9 @@ public:
 class SwitchStatement : Statement
 {
 public:
-	/**
-	 * Represents a case in a switch statement.
-	 *
-	 * If firstExp !is null and secondExp is null:
-	 *     case firstExp:
-	 * If firstExp !is null and secondExp !is null:
-	 *     case firstExp: .. case secondExp:
-	 * If exps.length > 0:
-	 *     case exps[0], exps[1], ... exps[$-1]:
-	 * If isDefault:
-	 *     default:
-	 *
-	 * The above are all mutually exclusive.
-	 *
-	 * @todo Make class and inherit from Node.
-	 */
-	struct Case
-	{
-		Location location;
-		Exp firstExp;
-		Exp secondExp;
-		Exp[] exps;
-		bool isDefault;
-
-		Node[] statements;
-	}
-
-public:
 	bool isFinal;
 	Exp condition;
-	Case[] cases;
+	SwitchCase[] cases;
 
 public:
 	this() { super(NodeType.SwitchStatement); }

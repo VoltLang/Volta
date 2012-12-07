@@ -77,6 +77,7 @@ enum NodeType
 	LabelStatement,
 	ExpStatement,
 	SwitchStatement,
+	SwitchCase,
 	ContinueStatement,
 	BreakStatement,
 	GotoStatement,
@@ -272,6 +273,7 @@ string nodeToString(NodeType nodeType)
 	case LabelStatement: return "LabelStatement";
 	case ExpStatement: return "ExpStatement";
 	case SwitchStatement: return "SwitchStatement";
+	case SwitchCase: return "SwitchCase";
 	case ContinueStatement: return "ContinueStatement";
 	case BreakStatement: return "BreakStatement";
 	case GotoStatement: return "GotoStatement";

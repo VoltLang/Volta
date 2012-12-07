@@ -321,7 +321,7 @@ ir.SwitchStatement parseSwitchStatement(TokenStream ts)
 
 	bool hadDefault;
 	while (ts.peek.type != TokenType.CloseBrace) {
-		ir.SwitchStatement.Case newCase;
+		auto newCase = new ir.SwitchCase();
 		newCase.location = ts.peek.location;
 		switch (ts.peek.type) {
 		case TokenType.Default:

@@ -268,10 +268,8 @@ public:
 }
 
 /**
-* enum { <Member = 0> }
-*
-* @todo Make into a class.
-*/
+ * enum { <Member = 0> }
+ */
 class EnumMember : Node
 {
 public:
@@ -294,8 +292,6 @@ public:
  */
 class Enum : Type
 {
-public:
-
 public:
 	Access access; ///< default public.
 	string name;  ///< Optional.

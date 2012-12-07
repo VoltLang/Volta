@@ -179,8 +179,8 @@ public:
 	override Status leave(ir.LabelStatement n) { leaveNode(n); return Continue; }
 	override Status enter(ir.SwitchStatement n) { enterNode(n); return Continue; }
 	override Status leave(ir.SwitchStatement n) { leaveNode(n); return Continue; }
-	override Status enter(ref ir.SwitchStatement.Case n) { /*enterNode(n);*/ return Continue; }
-	override Status leave(ref ir.SwitchStatement.Case n) { /*leaveNode(n);*/ return Continue; }
+	override Status enter(ir.SwitchCase n) { enterNode(n); return Continue; }
+	override Status leave(ir.SwitchCase n) { leaveNode(n); return Continue; }
 	override Status enter(ir.GotoStatement n) { enterNode(n); return Continue; }
 	override Status leave(ir.GotoStatement n) { leaveNode(n); return Continue; }
 	override Status enter(ir.WithStatement n) { enterNode(n); return Continue; }
