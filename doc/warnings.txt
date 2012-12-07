@@ -9,3 +9,4 @@ Passing a non ref foreach element to a ref parameter.
 Warning/error for modifing non ref foreach value http://d.puremagic.com/issues/show_bug.cgi?id=9087
 Warning for passing a preinitialised variable to an out parameter.
 Warning when pointer is right value in BinOp pointer math expresssion "3 + ptr".
+Define all conditions even false ones and warn when using undefined ones, fixes version(linux) vs version(Linux).
