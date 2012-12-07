@@ -368,6 +368,16 @@ public:
 	this() { super(NodeType.IsExp); }
 }
 
+class FunctionParameter : Node
+{
+public:
+	Type type;
+	string name;
+
+public:
+	this() { super(NodeType.FunctionParameter); }
+}
+
 /**
  * A function literal can define a normal function, or a delegate (a function with context).
  * There are multiple ways to define these but the long hand way is
@@ -381,16 +391,9 @@ public:
 class FunctionLiteral : Exp
 {
 public:
-	struct Parameter
-	{
-		Type type;
-		string name;  // Optional.
-	}
-
-public:
 	bool isDelegate;
 	Type returnType;  // Optional.
-	Parameter[] params;
+	FunctionParameter[] params;
 	Node[] block;
 
 	string singleLambdaParam;  // Optional. (<a> => a + 1)

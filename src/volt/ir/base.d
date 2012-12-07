@@ -65,6 +65,7 @@ enum NodeType
 	Variable,
 	Alias,
 	Function,
+	FunctionParameter,
 
 	/* statements.d */
 	ReturnStatement,
@@ -263,6 +264,7 @@ string nodeToString(NodeType nodeType)
 	case Variable: return "Variable";
 	case Alias: return "Alias";
 	case Function: return "Function";
+	case FunctionParameter: return "FunctionParameter";
 	case ReturnStatement: return "ReturnStatement";
 	case BlockStatement: return "BlockStatement";
 	case AsmStatement: return "AsmStatement";

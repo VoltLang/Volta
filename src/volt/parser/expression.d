@@ -444,7 +444,8 @@ ir.FunctionLiteral parseFunctionLiteral(TokenStream ts)
 
 	match(ts, TokenType.OpenParen);
 	while (ts.peek.type != TokenType.CloseParen) {
-		ir.FunctionLiteral.Parameter param;
+		auto param = new ir.FunctionParameter();
+		param.location = ts.peek.location;
 		param.type = parseType(ts);
 		if (ts.peek.type == TokenType.Identifier) {
 			auto nameTok = match(ts, TokenType.Identifier);
