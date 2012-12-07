@@ -43,6 +43,7 @@ enum NodeType
 	Interface,
 	Union,
 	Enum,
+	EnumMember,
 	Attribute,
 	StaticAssert,
 	EmptyTopLevel,
@@ -241,6 +242,7 @@ string nodeToString(NodeType nodeType)
 	case Interface: return "Interface";
 	case Union: return "Union";
 	case Enum: return "Enum";
+	case EnumMember: return "EnumMember";
 	case Attribute: return "Attribute";
 	case StaticAssert: return "StaticAssert";
 	case EmptyTopLevel: return "EmptyTopLevel";

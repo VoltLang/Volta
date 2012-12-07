@@ -268,6 +268,21 @@ public:
 }
 
 /**
+* enum { <Member = 0> }
+*
+* @todo Make into a class.
+*/
+class EnumMember : Node
+{
+public:
+	string name;  ///< Not optional.
+	Exp init;  ///< Optional.
+
+public:
+	this() { super(NodeType.EnumMember); }
+}
+
+/**
  * C style Enum.
  * Enums create symbols that are associated with compile
  * time constants. By default, they are enumerated with
@@ -280,24 +295,12 @@ public:
 class Enum : Type
 {
 public:
-	/**
-	 * enum { <Member = 0> }
-	 *
-	 * @todo Make into a class.
-	 */
-	struct Member
-	{
-		Location location; ///< Position.
-		string name;  ///< Not optional.
-		Exp init;  ///< Optional.
-	}
-
 
 public:
 	Access access; ///< default public.
 	string name;  ///< Optional.
 	Type base;	///< Optional.
-	Member[] members; ///< At least one.
+	EnumMember[] members; ///< At least one.
 
 
 public:

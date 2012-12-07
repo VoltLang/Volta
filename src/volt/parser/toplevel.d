@@ -316,7 +316,7 @@ private ir.Enum tryParseManifestConstant(TokenStream ts)
 {
 	auto e = new ir.Enum();
 	e.location = ts.peek.location;
-	auto member = ir.Enum.Member();
+	auto member = new ir.EnumMember();
 	member.location = ts.peek.location;
 
 	match(ts, TokenType.Enum);
@@ -355,7 +355,7 @@ ir.Enum parseEnum(TokenStream ts)
 
 	if (matchIf(ts, TokenType.Assign)) {
 		// enum a = 3;
-		auto member = ir.Enum.Member();
+		auto member = new ir.EnumMember();
 		member.location = ts.peek.location;
 		member.name = e.name;
 		e.name.length = 0;
@@ -380,9 +380,9 @@ ir.Enum parseEnum(TokenStream ts)
 	return e;
 }
 
-ir.Enum.Member parseEnumMember(TokenStream ts)
+ir.EnumMember parseEnumMember(TokenStream ts)
 {
-	auto member = ir.Enum.Member();
+	auto member = new ir.EnumMember();
 	member.location = ts.peek.location;
 
 	auto nameTok = match(ts, TokenType.Identifier);
