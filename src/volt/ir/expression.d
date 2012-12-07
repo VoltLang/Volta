@@ -228,6 +228,22 @@ public:
 	this() { super(NodeType.Array); }
 }
 
+class AAPair : Node
+{
+public:
+	Exp key;
+	Exp value;
+
+public:
+	this() { super(NodeType.AAPair); }
+	this(Exp key, Exp value)
+	{
+		this();
+		this.key = key;
+		this.value = value;
+	}
+}
+
 /**
  * Represents an associative array literal -- a list of
  * key/value pairs.
@@ -237,14 +253,7 @@ public:
 class AssocArray : Exp
 {
 public:
-	struct Pair
-	{
-		Exp key;
-		Exp value;
-	}
-
-public:
-	Pair[] pairs;
+	AAPair[] pairs;
 
 public:
 	this() { super(NodeType.AssocArray); }

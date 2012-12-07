@@ -296,7 +296,8 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 	case intir.PrimaryExp.Type.AssocArrayLiteral:
 		auto c = new ir.AssocArray();
 		for (size_t i = 0; i < primary.keys.length; ++i) {
-			c.pairs ~= ir.AssocArray.Pair(binexpToExp(primary.keys[i]), binexpToExp(primary.arguments[i]));
+			c.pairs ~= new ir.AAPair(binexpToExp(primary.keys[i]), binexpToExp(primary.arguments[i]));
+			c.pairs[$-1].location = primary.keys[i].location;
 		}
 		exp = c;
 		break;

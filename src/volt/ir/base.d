@@ -59,6 +59,7 @@ enum NodeType
 	ArrayType,
 	StaticArrayType,
 	AAType,
+	AAPair,
 	FunctionType,
 	DelegateType,
 	StorageType,
@@ -258,6 +259,7 @@ string nodeToString(NodeType nodeType)
 	case ArrayType: return "ArrayType";
 	case StaticArrayType: return "StaticArrayType";
 	case AAType: return "AAType";
+	case AAPair: return "AAPair";
 	case FunctionType: return "FunctionType";
 	case DelegateType: return "DelegateType";
 	case StorageType: return "StorageType";
