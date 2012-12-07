@@ -2,50 +2,19 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module main;
 
-import std.stdio : readln;
-import std.path : exists;
-import std.file : read;
-import std.random : uniform;
-import std.process : getenv, system;
+import std.stdio : writefln;
 
 import volt.license;
 import volt.interfaces;
 
-import volt.token.stream;
-import volt.token.source;
-import volt.token.lexer;
-import volt.token.location;
-
-import volt.parser.parser;
-
-import volt.visitor.print;
-import volt.visitor.debugprint;
-
-import volt.semantic.attribremoval;
-import volt.semantic.context;
-import volt.semantic.condremoval;
-import volt.semantic.declgatherer;
-import volt.semantic.userresolver;
-import volt.semantic.typeverifier;
-import volt.semantic.exptyper;
-import volt.semantic.refrep;
-import volt.semantic.arraylowerer;
-import volt.semantic.manglewriter;
-
-import volt.llvm.backend;
-
-version (Windows) {
-	enum DEFAULT_EXE = "a.exe";
-} else {
-	enum DEFAULT_EXE = "a.out";
-}
+import volt.semantic.languagepass;
 
 int main(string[] args)
 {
 	// Arguments setup.
-	auto settings = new Settings();
+	auto langpass = new LanguagePass();
 
-	if (!filterArgs(args, settings))
+	if (!filterArgs(args, langpass.settings))
 		return 0;
 
 	if (args.length <= 1) {
@@ -55,53 +24,12 @@ int main(string[] args)
 
 	if (args.length > 2) {
 		/// @todo fix this.
-		writefln("%s, to many input files", args[0]);
+		writefln("%s, too many input files", args[0]);
 		return 1;
 	}
 
-
-	// Setup the compiler.
-	Pass[] passes;
-	passes ~= new AttribRemoval();
-	passes ~= new ConditionalRemoval(settings);
-	passes ~= new ContextBuilder();
-	passes ~= new UserResolver();
-	passes ~= new DeclarationGatherer();
-	passes ~= new TypeDefinitionVerifier();
-	passes ~= new ExpTyper(settings);
-	passes ~= new ReferenceReplacer();
-	passes ~= new ArrayLowerer(settings);
-	passes ~= new MangleWriter();
-
-	if (!settings.noBackend && settings.outputFile is null) {
-		passes ~= new DebugPrintVisitor("Running DebugPrintVisitor:");
-		passes ~= new PrintVisitor("Running PrintVisitor:");
-	}
-
-	auto p = new Parser();
-	p.dumpLex = false;
-
-	// Compile all files.
-	foreach(arg; args[1 .. $]) {
-		Location loc;
-		loc.filename = arg;
-		auto src = cast(string)read(loc.filename);
-		auto m = p.parseNewFile(src, loc);
-
-		foreach(pass; passes)
-			pass.transform(m);
-
-		auto b = new LlvmBackend(settings.outputFile is null);
-
-		// this is just during bring up.
-		string o = settings.outputFile is null ? "output.bc" : temporaryFilename(".bc");
-		b.setTarget(o, TargetType.LlvmBitcode);
-		b.compile(m);
-		b.close();
-
-		string of = settings.outputFile is null ? DEFAULT_EXE : settings.outputFile;
-		system(format("llvm-ld -native -o \"%s\" \"%s\"", of, o));
-	}
+	langpass.addFiles(args[1 .. $]);
+	langpass.compile();
 
 	return 0;
 }
@@ -162,53 +90,3 @@ bool printLicense()
 	return false;
 }
 
-/**
- * Generate a filename in a temporary directory that doesn't exist.
- *
- * Params:
- *   extension = a string to be appended to the filename. Defaults to an empty string.
- *
- * Returns: an absolute path to a unique (as far as we can tell) filename. 
- */
-string temporaryFilename(string extension = "")
-{
-	version (Windows) {
-		string prefix = getenv("TEMP") ~ '/';
-	} else {
-		string prefix = "/tmp/";
-	}
-
-	string filename;
-	do {
-		filename = randomString(32);
-		filename = prefix ~ filename ~ extension;
-	} while (exists(filename));
-
-	return filename;
-}
-
-/**
- * Generate a random string `length` characters long.
- */
-string randomString(size_t length)
-{
-	auto str = new char[length];
-	foreach (i; 0 .. length) {
-		char c;
-		switch (uniform(0, 3)) {
-		case 0:
-			c = uniform!("[]", char, char)('0', '9');
-			break;
-		case 1:
-			c = uniform!("[]", char, char)('a', 'z');
-			break;
-		case 2:
-			c = uniform!("[]", char, char)('A', 'Z');
-			break;
-		default:
-			assert(false);
-		}
-		str[i] = c;
-	}
-	return str.idup;    
-}
