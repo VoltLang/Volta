@@ -190,6 +190,20 @@ public:
 	/// If true, this name starts with a dot.
 	bool leadingDot;
 
+public:
+	override string toString()
+	{
+		string str;
+		foreach (i, identifier; identifiers) {
+			str ~= identifier.value;
+			if (i < identifiers.length - 1) {
+				str ~= ".";
+			}
+		}
+		return str;
+	}
+
+public:
 	this() { super(NodeType.QualifiedName); }
 }
 

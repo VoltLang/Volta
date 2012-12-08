@@ -118,7 +118,7 @@ public:
 		foreach (name; i.names) {
 			auto mod = languagepass.getModule(name);
 			if (mod is null) {
-				throw new CompilerError(name.location, "cannot find module.");
+				throw new CompilerError(name.location, format("cannot find module '%s'.", name));
 			}
 		}
 		return Continue;
