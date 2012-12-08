@@ -42,7 +42,16 @@ public:
 	Backend backend;
 	string[] files;
 
+private:
+	ir.Module[ir.QualifiedName] mModules;
+
 public:
+	/// Retrieve a Module by its name. Returns null if none is found.
+	ir.Module getModule(ir.QualifiedName name)
+	{
+		return mModules.get(name, null);
+	}
+
 	void addFile(string file)
 	{
 		files ~= file;
@@ -58,19 +67,22 @@ public:
 		auto p = new Parser();
 		p.dumpLex = false;
 
-		foreach(arg; files) {
+		foreach (file; files) {
 			Location loc;
-			loc.filename = arg;
-			auto src = cast(string)read(loc.filename);
+			loc.filename = file;
+			auto src = cast(string) read(loc.filename);
 			auto m = p.parseNewFile(src, loc);
+			mModules[m.name] = m;
+		}
 
+		foreach (name, _module; mModules) {
 			foreach(pass; passes)
-				pass.transform(m);
+				pass.transform(_module);
 
 			// this is just during bring up.
 			string o = settings.outputFile is null ? "output.bc" : temporaryFilename(".bc");
 			backend.setTarget(o, TargetType.LlvmBitcode);
-			backend.compile(m);
+			backend.compile(_module);
 			backend.close();
 
 			/// @todo Whoaaah, this shouldn't be here.
@@ -87,7 +99,7 @@ public:
 
 		passes ~= new AttribRemoval();
 		passes ~= new ConditionalRemoval(settings);
-		passes ~= new ContextBuilder();
+		passes ~= new ContextBuilder(this);
 		passes ~= new UserResolver();
 		passes ~= new DeclarationGatherer();
 		passes ~= new TypeDefinitionVerifier();

@@ -22,7 +22,7 @@ int main(string[] args)
 		return 0;
 	}
 
-	if (args.length > 2) {
+	version (none) if (args.length > 2) {
 		/// @todo fix this.
 		writefln("%s, too many input files", args[0]);
 		return 1;

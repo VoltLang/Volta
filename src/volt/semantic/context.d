@@ -7,12 +7,14 @@ import ir = volt.ir.ir;
 import volt.exceptions;
 import volt.interfaces;
 import volt.visitor.visitor;
+import volt.semantic.languagepass;
 
 
 class ContextBuilder : NullVisitor, Pass
 {
 public:
 	ir.Scope current;
+	LanguagePass languagepass;
 
 
 public:
@@ -110,9 +112,26 @@ public:
 
 		return Continue;
 	}
+	
+	override Status enter(ir.Import i)
+	{
+		foreach (name; i.names) {
+			auto mod = languagepass.getModule(name);
+			if (mod is null) {
+				throw new CompilerError(name.location, "cannot find module.");
+			}
+		}
+		return Continue;
+	}
 
 	override Status leave(ir.Class c) { pop(); return Continue; }
 	override Status leave(ir._Interface i) { pop(); return Continue; }
 	override Status leave(ir.Struct s) { pop(); return Continue; }
 	override Status leave(ir.Function fn) { pop(); return Continue; }
+
+public:
+	this(LanguagePass languagepass)
+	{
+		this.languagepass = languagepass;
+	}
 }
