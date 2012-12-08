@@ -43,13 +43,17 @@ public:
 	string[] files;
 
 private:
-	ir.Module[ir.QualifiedName] mModules;
+	ir.Module[string] mModules;
 
 public:
 	/// Retrieve a Module by its name. Returns null if none is found.
 	ir.Module getModule(ir.QualifiedName name)
 	{
-		return mModules.get(name, null);
+		auto p = name.toString() in mModules;
+		if (p is null) {
+			return null;
+		}
+		return *p;
 	}
 
 	void addFile(string file)
@@ -72,7 +76,7 @@ public:
 			loc.filename = file;
 			auto src = cast(string) read(loc.filename);
 			auto m = p.parseNewFile(src, loc);
-			mModules[m.name] = m;
+			mModules[m.name.toString()] = m;
 		}
 
 		foreach (name, _module; mModules) {
