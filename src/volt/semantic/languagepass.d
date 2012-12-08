@@ -73,6 +73,7 @@ public:
 			backend.compile(m);
 			backend.close();
 
+			/// @todo Whoaaah, this shouldn't be here.
 			string of = settings.outputFile is null ? DEFAULT_EXE : settings.outputFile;
 			system(format("llvm-ld -native -o \"%s\" \"%s\"", of, o));
 		}
