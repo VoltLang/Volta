@@ -9,12 +9,12 @@ import volt.interfaces;
 
 import volt.semantic.languagepass;
 
+import volt.llvm.backend;
+
 int main(string[] args)
 {
-	// Arguments setup.
-	auto langpass = new LanguagePass();
-
-	if (!filterArgs(args, langpass.settings))
+	auto settings = new Settings();
+	if (!filterArgs(args, settings))
 		return 0;
 
 	if (args.length <= 1) {
@@ -28,6 +28,9 @@ int main(string[] args)
 		return 1;
 	}
 
+	auto backend = new LlvmBackend(settings.outputFile is null);
+
+	auto langpass = new LanguagePass(settings, backend);
 	langpass.addFiles(args[1 .. $]);
 	langpass.compile();
 

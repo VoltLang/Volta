@@ -39,6 +39,7 @@ class LanguagePass
 public:
 	Pass[] passes;
 	Settings settings;
+	Backend backend;
 	string[] files;
 
 public:
@@ -66,13 +67,11 @@ public:
 			foreach(pass; passes)
 				pass.transform(m);
 
-			auto b = new LlvmBackend(settings.outputFile is null);
-
 			// this is just during bring up.
 			string o = settings.outputFile is null ? "output.bc" : temporaryFilename(".bc");
-			b.setTarget(o, TargetType.LlvmBitcode);
-			b.compile(m);
-			b.close();
+			backend.setTarget(o, TargetType.LlvmBitcode);
+			backend.compile(m);
+			backend.close();
 
 			string of = settings.outputFile is null ? DEFAULT_EXE : settings.outputFile;
 			system(format("llvm-ld -native -o \"%s\" \"%s\"", of, o));
@@ -80,9 +79,10 @@ public:
 	}
 
 public:
-	this()
+	this(Settings settings, Backend backend)
 	{
-		settings = new Settings();
+		this.settings = settings;
+		this.backend = backend;
 
 		passes ~= new AttribRemoval();
 		passes ~= new ConditionalRemoval(settings);
