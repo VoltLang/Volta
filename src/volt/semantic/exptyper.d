@@ -615,6 +615,10 @@ public:
 			throw new CompilerError(exp.location, "cannot implicitly reconcile binary expression types.");
 		}
 
+		if (typesEqual(lp, rp)) {
+			return lp;
+		}
+
 		auto leftsz = size(lp.type);
 		auto rightsz = size(rp.type);
 
