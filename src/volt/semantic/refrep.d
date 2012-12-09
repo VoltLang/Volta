@@ -12,19 +12,7 @@ import volt.interfaces;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
 import volt.visitor.expreplace;
-
-ir.Store lookup(ir.Scope _scope, string name)
-{
-	auto current = _scope;
-	while (current !is null) {
-		auto store = current.getStore(name);
-		if (store !is null) {
-			return store;
-		}
-		current = current.parent;
-	}
-	return null;
-}
+import volt.semantic.lookup;
 
 /** 
  * Replace identifiers with references to what they point at.
