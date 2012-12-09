@@ -1,4 +1,4 @@
 module m2;
 
-const int exportedVar = 32;
-const int otherVar = 3232;
+global int exportedVar = 32;
+global int otherVar = 3232;
