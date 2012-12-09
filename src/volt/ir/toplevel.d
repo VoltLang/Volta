@@ -76,6 +76,11 @@ public:
 	 */
 	Scope internalScope;
 
+	/**
+	 * Scopes to implicitly look up symbols in.
+	 */
+	Scope[] importedScopes;
+
 
 public:
 	this() { super(NodeType.Module); }

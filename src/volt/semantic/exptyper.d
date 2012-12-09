@@ -13,6 +13,7 @@ import volt.token.location;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
 import volt.semantic.userresolver : scopeLookup;
+import volt.semantic.lookup;
 
 int size(ir.PrimitiveType.Kind kind)
 {
@@ -129,27 +130,21 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 /// Get the type from a Variable.
 ir.Node declTypeLookup(ir.Scope _scope, string name, Location location)
 {
-	auto current = _scope;
-	while (current !is null) {
-		auto store = current.getStore(name);
-		if (store is null) {
-			current = current.parent;
-			continue;
-		}
-
-		if (store.kind == ir.Store.Kind.Function) {
-			/// @todo Overloading.
-			assert(store.functions.length == 1);
-			return store.functions[0].type;
-		}
-		
-		auto d = cast(ir.Variable) store.node;
-		if (d is null) {
-			throw new CompilerError(location, format("%s used as value.", name));
-		}
-		return d.type;
+	auto store = _scope.lookup(name);
+	if (store is null) {
+		throw new CompilerError(location, format("undefined identifier '%s'.", name));
 	}
-	throw new CompilerError(location, format("undefined identifier '%s'.", name));
+	if (store.kind == ir.Store.Kind.Function) {
+		/// @todo Overloading.
+		assert(store.functions.length == 1);
+		return store.functions[0].type;
+	}
+
+	auto d = cast(ir.Variable) store.node;
+	if (d is null) {
+		throw new CompilerError(location, format("%s used as value.", name));
+	}
+	return d.type;
 }
 
 

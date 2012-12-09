@@ -15,6 +15,7 @@ class ContextBuilder : NullVisitor, Pass
 public:
 	ir.Scope current;
 	LanguagePass languagepass;
+	ir.Module thisModule;
 
 
 public:
@@ -24,6 +25,7 @@ public:
 
 	void transform(ir.Module m)
 	{
+		thisModule = m;
 		accept(m, this);
 	}
 
@@ -122,6 +124,7 @@ public:
 			throw new CompilerError(name.location, format("cannot find module '%s'.", name));
 		}
 		current.addScope(i, mod.myScope, name.toString());
+		thisModule.importedScopes ~= mod.myScope;
 		return Continue;
 	}
 
