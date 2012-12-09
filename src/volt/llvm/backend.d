@@ -53,10 +53,7 @@ public:
 	}
 
 	void setTarget(string filename, TargetType type)
-	in {
-		assert(mFilename is null);
-	}
-	body {
+	{
 		mFilename = filename;
 		mTargetType = type;
 	}
@@ -93,5 +90,6 @@ public:
 		LLVMWriteBitcodeToFile(mod, mFilename);
 
 		state.close();
+		mFilename = null;
 	}
 }
