@@ -93,10 +93,13 @@ public:
 			break;
 		case Local:
 		case Global:
+			LLVMValueRef init;
 			if (var.assign !is null) {
-				throw new CompilerPanic("Can't init global vars");
+				init = state.getConstantValue(var.assign);
+			} else {
+				init = LLVMConstNull(type.llvmType);
 			}
-			LLVMSetInitializer(v, LLVMConstNull(type.llvmType));
+			LLVMSetInitializer(v, init);
 			break;
 		}
 

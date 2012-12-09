@@ -38,6 +38,36 @@ LLVMValueRef getValue(State state, ir.Exp exp)
 }
 
 /**
+ * Returns the LLVMValueRef for the given constant expression,
+ * does not require that state.builder is set.
+ */
+LLVMValueRef getConstantValue(State state, ir.Exp exp)
+{
+	void error() {
+		throw new CompilerPanic(exp.location, "Could not get constant from expression");
+	}
+
+	if (exp.nodeType == ir.NodeType.Constant)
+		return getValue(state, exp);
+	if (exp.nodeType != ir.NodeType.Unary)
+		error();
+
+	auto asUnary = cast(ir.Unary)exp;
+	if (asUnary.op != ir.Unary.Op.Cast)
+		error();
+
+	auto c = cast(ir.Constant)asUnary.value;
+	if (c is null)
+		error();
+
+	auto t = state.fromIr(asUnary.type);
+
+	/// @todo actually handle the casts.
+	error();
+	assert(false);
+}
+
+/**
  * Returns the value, making sure that the value is not in
  * reference form, basically inserting load instructions where needed.
  */
