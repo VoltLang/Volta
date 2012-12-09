@@ -48,6 +48,7 @@ void main(string[] args)
 
 	if (true) {
 		listDir("simple", "*test_*.d", &addTest);
+		listDir("imports", "*test_*.d", &addTest);
 	}
 	sort(tests);
 
@@ -92,7 +93,7 @@ void main(string[] args)
  */
 void runTest(string filename, string compiler)
 {
-	string dependencies;
+	string[] dependencies;
 	bool hasPassed = true;
 	bool expectedToCompile = true;
 	int expectedRetval = 0;
@@ -150,9 +151,15 @@ void runTest(string filename, string compiler)
 
 
 	string justTest = stripExtension(filename);
+	string inDir = dirName(filename);
 	string outDir = ".obj" ~ dirSeparator ~ justTest;
 	string exeName = outDir ~ dirSeparator ~ "output.exe";
-	string command = compiler ~ " " ~ filename ~ " -o " ~ exeName;
+	string command = compiler ~ " -o " ~ exeName;
+
+	foreach (d; dependencies) {
+		command ~= " " ~ inDir ~ dirSeparator ~ d;
+	}
+	command ~= " " ~ filename;
 
 	mkdirP(outDir);
 
