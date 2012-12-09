@@ -85,12 +85,13 @@ public:
 				pass.transform(_module);
 
 			// this is just during bring up.
-			string o = settings.outputFile is null ? (name ~ "output.bc") : temporaryFilename(".bc");
+			string o = temporaryFilename(".bc");
 			backend.setTarget(o, TargetType.LlvmBitcode);
 			backend.compile(_module);
-			backend.close();
 			linkInputFiles ~= " \"" ~ o ~ "\" ";
 		}
+		// close only after all uses
+		backend.close();
 
 		/// @todo Whoaaah, this shouldn't be here.
 		string of = settings.outputFile is null ? DEFAULT_EXE : settings.outputFile;
