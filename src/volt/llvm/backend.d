@@ -25,6 +25,7 @@ import volt.llvm.expression;
 class LlvmBackend : Backend
 {
 protected:
+	LLVMContextRef mContext;
 	string mFilename;
 	TargetType mTargetType;
 	bool dump;
@@ -39,6 +40,8 @@ public:
 		LLVMInitializeCore(passRegistry);
 		LLVMInitializeAnalysis(passRegistry);
 		LLVMInitializeTarget(passRegistry);
+
+		mContext = LLVMGetGlobalContext();
 	}
 
 	void close()
@@ -66,7 +69,7 @@ public:
 		scope(exit)
 			mFilename = null;
 
-		auto state = new State(m);
+		auto state = new State(mContext, m);
 		auto visitor = new LlvmVisitor(state);
 		auto mod = state.mod;
 

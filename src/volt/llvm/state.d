@@ -51,7 +51,7 @@ public:
 	Type[string] typeStore;
 
 public:
-	this(ir.Module irMod)
+	this(LLVMContextRef context, ir.Module irMod)
 	{
 		assert(irMod.name.identifiers.length > 0);
 		string name = irMod.name.identifiers[0].value;
@@ -60,7 +60,7 @@ public:
 		}
 
 		this.irMod = irMod;
-		this.context = LLVMGetGlobalContext();
+		this.context = context;
 		this.mod = LLVMModuleCreateWithNameInContext(name, context);
 		this.builder = LLVMCreateBuilderInContext(context);
 	}
@@ -73,8 +73,8 @@ public:
 
 	void close()
 	{
-		LLVMDisposeModule(mod);
 		LLVMDisposeBuilder(builder);
+		LLVMDisposeModule(mod);
 
 		mod = null;
 		builder = null;
