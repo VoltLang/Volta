@@ -64,7 +64,7 @@ void main(string[] args)
 			passed++;
 			improvments += !ok.hasPassed;
 		} catch (TestException e) {
-			stderr.writeln(e.msg);
+			stdout.writeln(e.msg);
 			regressions += e.hasPassed;
 		}
 	}
