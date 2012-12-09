@@ -79,20 +79,22 @@ public:
 			mModules[m.name.toString()] = m;
 		}
 
+		string linkInputFiles;
 		foreach (name, _module; mModules) {
 			foreach(pass; passes)
 				pass.transform(_module);
 
 			// this is just during bring up.
-			string o = settings.outputFile is null ? "output.bc" : temporaryFilename(".bc");
+			string o = settings.outputFile is null ? (name ~ "output.bc") : temporaryFilename(".bc");
 			backend.setTarget(o, TargetType.LlvmBitcode);
 			backend.compile(_module);
 			backend.close();
-
-			/// @todo Whoaaah, this shouldn't be here.
-			string of = settings.outputFile is null ? DEFAULT_EXE : settings.outputFile;
-			system(format("llvm-ld -native -o \"%s\" \"%s\"", of, o));
+			linkInputFiles ~= " \"" ~ o ~ "\" ";
 		}
+
+		/// @todo Whoaaah, this shouldn't be here.
+		string of = settings.outputFile is null ? DEFAULT_EXE : settings.outputFile;
+		system(format("llvm-ld -native -o \"%s\" %s", of, linkInputFiles));
 	}
 
 public:
