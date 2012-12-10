@@ -7,6 +7,18 @@ import ir = volt.ir.ir;
 
 
 /**
+ * Home to logic for tying Frontend, Pass and Backend together and
+ * abstracts away several IO related functions. Such as looking up
+ * module files and printing error messages.
+ */
+interface Controller
+{
+	ir.Module getModule(ir.QualifiedName name);
+
+	void close();
+}
+
+/**
  * Start of the compile pipeline, it lexes source, parses tokens and do
  * some very lightweight transformation of internal AST into Volt IR.
  */

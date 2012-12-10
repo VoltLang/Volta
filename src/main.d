@@ -6,10 +6,8 @@ import std.stdio : writefln;
 
 import volt.license;
 import volt.interfaces;
+import volt.controller;
 
-import volt.semantic.languagepass;
-
-import volt.llvm.backend;
 
 int main(string[] args)
 {
@@ -28,11 +26,10 @@ int main(string[] args)
 		return 1;
 	}
 
-	auto backend = new LlvmBackend(settings.outputFile is null);
-
-	auto langpass = new LanguagePass(settings, backend);
-	langpass.addFiles(args[1 .. $]);
-	langpass.compile();
+	auto vc = new VoltController(settings);
+	vc.addFiles(args[1 .. $]);
+	vc.compile();
+	vc.close();
 
 	return 0;
 }
