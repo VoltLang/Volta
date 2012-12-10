@@ -6,7 +6,7 @@
 
 module test_017;
 
-import ctx = m1 : exportedVal1 = exportedVal;
+import ctx = m1 : exportedVal1 = exportedVar;
 
 
 int main()
