@@ -12,5 +12,5 @@ import m4;
 
 int main()
 {
-	return exportedVal;
+	return exportedVar;
 }

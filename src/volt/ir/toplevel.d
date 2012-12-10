@@ -80,6 +80,7 @@ public:
 	 * Modules to implicitly look up symbols in.
 	 */
 	Module[] importedModules;
+	Access[] importedAccess;
 
 
 public:

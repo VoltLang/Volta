@@ -127,6 +127,7 @@ public:
 			}
 			if (i.aliases.length == 0) {
 				thisModule.importedModules ~= mod;
+				thisModule.importedAccess ~= i.access;
 			} else {
 				foreach (_alias; i.aliases) {
 					string symbolFromImportName, symbolInModuleName;

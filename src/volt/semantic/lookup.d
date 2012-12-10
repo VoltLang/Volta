@@ -29,6 +29,19 @@ ir.Store lookup(ir.Scope _scope, string name)
 		if (store !is null) {
 			return store;
 		}
+
+
+		import std.stdio;
+
+		/// Check publically imported modules.
+		foreach (i, submod; mod.importedModules) {
+			if (mod.importedAccess[i] == ir.Access.Public) {
+				store = submod.myScope.getStore(name);
+				if (store !is null) {
+					return store;
+				}
+			}
+		}
 	}
 
 	/// @todo Error if we found multiple matches in importedScopes.
