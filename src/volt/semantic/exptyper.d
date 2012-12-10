@@ -140,6 +140,12 @@ ir.Node declTypeLookup(ir.Scope _scope, string name, Location location)
 		return store.functions[0].type;
 	}
 
+	if (store.kind == ir.Store.Kind.Scope) {
+		auto asMod = cast(ir.Module) store.s.node;
+		assert(asMod !is null);
+		return asMod;
+	}
+
 	auto d = cast(ir.Variable) store.node;
 	if (d is null) {
 		throw new CompilerError(location, format("%s used as value.", name));
@@ -232,13 +238,25 @@ public:
 			}
 		}
 
-		assert(t.nodeType == ir.NodeType.TypeReference);
-		auto asUser = cast(ir.TypeReference) t;
-		auto asStruct = cast(ir.Struct) asUser.type;
+		ir.Scope _scope;
+		string emsg;
+		if (t.nodeType == ir.NodeType.Module) {
+			auto asModule = cast(ir.Module) t;
+			assert(asModule !is null);
+			_scope = asModule.myScope;
+			emsg = format("Module '%s' has no member '%s'.", asModule.name, asPostfix.identifier.value);
+		} else if (t.nodeType == ir.NodeType.TypeReference) {
+			auto asUser = cast(ir.TypeReference) t;
+			auto asStruct = cast(ir.Struct) asUser.type;
+			_scope = asStruct.myScope;
+			emsg = format("Type '%s' has no member '%s'.", asUser.names[$-1], asPostfix.identifier.value);
+		} else {
+			assert(false);
+		}
 
-		auto store = asStruct.myScope.getStore(asPostfix.identifier.value);
+		auto store = _scope.getStore(asPostfix.identifier.value);
 		if (store is null) {
-			throw new CompilerError(asPostfix.identifier.location, format("Type '%s' has no member '%s'.", asUser.names[$-1], asPostfix.identifier.value));
+			throw new CompilerError(asPostfix.identifier.location, emsg);
 		}
 
 		if (store.kind == ir.Store.Kind.Value) {
