@@ -2,7 +2,9 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.controller;
 
+import core.exception;
 import std.process : system;
+import std.stdio : stderr;
 
 import volt.util.path;
 import volt.exceptions;
@@ -26,6 +28,7 @@ public:
 	Backend backend;
 
 protected:
+	string mCurrentFile;
 	string[] mFiles;
 	ir.Module[string] mModules;
 
@@ -76,9 +79,37 @@ public:
 		this.mFiles ~= files;
 	}
 
-	void compile()
+	int compile()
+	{
+		try {
+			intCompile();
+		} catch (CompilerPanic e) {
+			stderr.writefln(e.msg);
+			return 2;
+		} catch (CompilerError e) {
+			stderr.writefln(e.msg);
+			return 1;
+		} catch (Exception e) {
+			stderr.writefln("panic: %s", e.msg);
+			if (e.file !is null)
+				stderr.writefln("%s:%s", e.file, e.line);
+			return 2;
+		} catch (Error e) {
+			stderr.writefln("panic: %s", e.msg);
+			if (e.file !is null)
+				stderr.writefln("%s:%s", e.file, e.line);
+			return 2;
+		}
+
+		return 0;
+	}
+
+protected:
+	void intCompile()
 	{
 		foreach (file; mFiles) {
+			mCurrentFile = file;
+
 			Location loc;
 			loc.filename = file;
 			auto src = cast(string) read(loc.filename);
@@ -102,7 +133,6 @@ public:
 		system(format("llvm-ld -native -o \"%s\" %s", of, linkInputFiles));
 	}
 
-protected:
 	this(Settings s, Frontend f, Pass lp, Backend b)
 	{
 		this.settings = s;

@@ -28,10 +28,10 @@ int main(string[] args)
 
 	auto vc = new VoltController(settings);
 	vc.addFiles(args[1 .. $]);
-	vc.compile();
+	int ret = vc.compile();
 	vc.close();
 
-	return 0;
+	return ret;
 }
 
 bool filterArgs(ref string[] args, Settings settings)
