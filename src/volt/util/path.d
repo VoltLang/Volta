@@ -5,6 +5,7 @@ module volt.util.path;
 
 import std.file : read, exists;
 import std.random : uniform;
+import std.process : getenv;
 
 
 /**
