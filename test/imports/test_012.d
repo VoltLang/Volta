@@ -6,7 +6,7 @@
 
 module test_012;
 
-import m1 : exportedVal1 = exportedVal;
+import m1 : exportedVal1 = exportedVar;
 
 
 int main()
