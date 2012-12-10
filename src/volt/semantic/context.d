@@ -117,16 +117,16 @@ public:
 	
 	override Status enter(ir.Import i)
 	{
-		assert(i.names.length == 1);
-		auto name = i.names[0];
-		auto mod = languagepass.getModule(name);
-		if (mod is null) {
-			throw new CompilerError(name.location, format("cannot find module '%s'.", name));
+		foreach (name; i.names) {
+			auto mod = languagepass.getModule(name);
+			if (mod is null) {
+				throw new CompilerError(name.location, format("cannot find module '%s'.", name));
+			}
+			if (i.bind !is null) {
+				current.addScope(i, mod.myScope, i.bind.value);
+			}
+			thisModule.importedScopes ~= mod.myScope;
 		}
-		if (i.bind !is null) {
-			current.addScope(i, mod.myScope, i.bind.value);
-		}
-		thisModule.importedScopes ~= mod.myScope;
 		return Continue;
 	}
 
