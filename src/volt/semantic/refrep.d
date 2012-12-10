@@ -173,41 +173,15 @@ public:
 		}
 		ir.Scope _scope = current;
 		ir.ExpReference _ref;
-		if (idents.length > 1) for (int i = cast(int)idents.length - 1; i > 0; --i) {
-			string ident = idents[i];
-			if (i > 1) {
-				_scope = getChildScope(_scope, idents[i]);
-				if (_scope is null) {
-					return Continue;
-				}
-			} else {
-				_ref = new ir.ExpReference();
-				_ref.location = p.location;
-				_ref.idents = idents;
-
-				auto store = _scope.lookup(idents[i]);
-				if (store is null) {
-					return Continue;
-				}
-				if (store.kind == ir.Store.Kind.Value) {
-					auto var = cast(ir.Variable) store.node;
-					assert(var !is null);
-					_ref.decl = var;
-				} else if (store.kind == ir.Store.Kind.Function) {
-					assert(store.functions.length == 1);
-					auto fn = store.functions[0];
-					_ref.decl = fn;
-				}
-			}
-		} else if (idents.length == 1) {
+		/// Fillout _ref with data from ident.
+		void filloutReference(string ident)
+		{
 			_ref = new ir.ExpReference();
 			_ref.location = p.location;
 			_ref.idents = idents;
 
-			auto store = _scope.lookup(idents[0]);
-			if (store is null) {
-				return Continue;
-			}
+			auto store = _scope.lookup(ident);
+			assert(store !is null);
 			if (store.kind == ir.Store.Kind.Value) {
 				auto var = cast(ir.Variable) store.node;
 				assert(var !is null);
@@ -217,6 +191,19 @@ public:
 				auto fn = store.functions[0];
 				_ref.decl = fn;
 			}
+		}
+
+		if (idents.length > 1) for (int i = cast(int)idents.length - 1; i > 0; --i) {
+			if (i > 1) {
+				_scope = getChildScope(_scope, idents[i]);
+				if (_scope is null) {
+					return Continue;
+				}
+			} else {
+				filloutReference(idents[i]);
+			}
+		} else if (idents.length == 1) {
+			filloutReference(idents[0]);
 		}
 
 		p.child = _ref;
