@@ -77,9 +77,9 @@ public:
 	Scope internalScope;
 
 	/**
-	 * Scopes to implicitly look up symbols in.
+	 * Modules to implicitly look up symbols in.
 	 */
-	Scope[] importedScopes;
+	Module[] importedModules;
 
 
 public:

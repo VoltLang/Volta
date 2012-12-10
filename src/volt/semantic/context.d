@@ -126,7 +126,7 @@ public:
 				current.addScope(i, mod.myScope, i.bind.value);
 			}
 			if (i.aliases.length == 0) {
-				thisModule.importedScopes ~= mod.myScope;
+				thisModule.importedModules ~= mod;
 			} else {
 				foreach (_alias; i.aliases) {
 					string symbolFromImportName, symbolInModuleName;

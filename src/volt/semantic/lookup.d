@@ -24,8 +24,8 @@ ir.Store lookup(ir.Scope _scope, string name)
 	assert(asMod !is null);
 
 
-	foreach (importedScope; asMod.importedScopes) {
-		auto store = importedScope.getStore(name);
+	foreach (mod; asMod.importedModules) {
+		auto store = mod.myScope.getStore(name);
 		if (store !is null) {
 			return store;
 		}
