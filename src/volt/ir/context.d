@@ -237,6 +237,21 @@ public:
 	}
 
 	/**
+	 * Add a pre-existing store to the scope.
+	 *
+	 * Throws:
+	 *   CompilerPanic if another symbol of the same name is found.
+	 *
+	 * Side-effects:
+	 *   None.
+	 */
+	void addStore(Store s, string name)
+	{
+		errorOn(s.node, name);
+		symbols[name] = s;
+	}
+
+	/**
 	 * Doesn't look in parent scopes, just this Store.
 	 *
 	 * Returns: the Store found, or null on lookup failure.

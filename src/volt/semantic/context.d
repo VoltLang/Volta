@@ -125,7 +125,24 @@ public:
 			if (i.bind !is null) {
 				current.addScope(i, mod.myScope, i.bind.value);
 			}
-			thisModule.importedScopes ~= mod.myScope;
+			if (i.aliases.length == 0) {
+				thisModule.importedScopes ~= mod.myScope;
+			} else {
+				foreach (_alias; i.aliases) {
+					string symbolFromImportName, symbolInModuleName;
+					if (_alias[1] is null) {
+						symbolFromImportName = symbolInModuleName = _alias[0].value;
+					} else {
+						symbolFromImportName = _alias[1].value;
+						symbolInModuleName = _alias[0].value;
+					}
+					auto store = mod.myScope.getStore(symbolFromImportName);
+					if (store is null) {
+						throw new CompilerError(format("module '%s' has no symbol '%s'.", mod.name, symbolFromImportName));
+					}
+					thisModule.myScope.addStore(store, symbolInModuleName);
+				}
+			}
 		}
 		return Continue;
 	}
