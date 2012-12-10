@@ -123,7 +123,9 @@ public:
 		if (mod is null) {
 			throw new CompilerError(name.location, format("cannot find module '%s'.", name));
 		}
-		current.addScope(i, mod.myScope, name.toString());
+		if (i.bind !is null) {
+			current.addScope(i, mod.myScope, i.bind.value);
+		}
 		thisModule.importedScopes ~= mod.myScope;
 		return Continue;
 	}

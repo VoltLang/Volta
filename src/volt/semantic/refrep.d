@@ -24,6 +24,11 @@ public:
 	ir.Scope getChildScope(ir.Scope _scope, string s)
 	{
 		auto store = _scope.getStore(s);
+
+		if (store.kind == ir.Store.Kind.Scope) {
+			return store.s;
+		}
+
 		assert(store.node.nodeType == ir.NodeType.Variable);
 		auto asDecl = cast(ir.Variable) store.node;
 		assert(asDecl !is null);
@@ -200,7 +205,17 @@ public:
 					return Continue;
 				}
 			} else {
-				filloutReference(idents[i]);
+				auto store = _scope.lookup(idents[i]);
+				assert(store !is null);
+				if (store.kind == ir.Store.Kind.Scope) {
+					_scope = store.s;
+					assert(i == 1);
+					filloutReference(idents[0]);
+					e = _ref;
+					return ContinueParent;
+				} else {
+					filloutReference(idents[i]);
+				}
 			}
 		} else if (idents.length == 1) {
 			filloutReference(idents[0]);
