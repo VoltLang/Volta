@@ -23,6 +23,7 @@ public:
 
 	override Status enter(ir.Variable d)
 	{
+		assert(current !is null);
 		current.addValue(d, d.name);
 		return Continue;
 	}

@@ -21,6 +21,7 @@ import volt.semantic.exptyper;
 import volt.semantic.refrep;
 import volt.semantic.arraylowerer;
 import volt.semantic.manglewriter;
+import volt.semantic.importresolver;
 
 
 class LanguagePass : Pass
@@ -41,7 +42,8 @@ public:
 
 		passes ~= new AttribRemoval();
 		passes ~= new ConditionalRemoval(settings);
-		passes ~= new ContextBuilder(this);
+		passes ~= new ContextBuilder();
+		passes ~= new ImportResolver(this, cast(ContextBuilder) passes[$-1]);
 		passes ~= new UserResolver();
 		passes ~= new DeclarationGatherer();
 		passes ~= new TypeDefinitionVerifier();

@@ -14,9 +14,6 @@ class ContextBuilder : NullVisitor, Pass
 {
 public:
 	ir.Scope current;
-	LanguagePass languagepass;
-	ir.Module thisModule;
-
 
 public:
 	void close()
@@ -25,11 +22,10 @@ public:
 
 	void transform(ir.Module m)
 	{
-		if (m.myScope is null) {
+		if (m.myScope !is null) {
 			return;
 		}
 
-		thisModule = m;
 		accept(m, this);
 	}
 
@@ -118,62 +114,9 @@ public:
 
 		return Continue;
 	}
-	
-	override Status enter(ir.Import i)
-	{
-		foreach (name; i.names) {
-			auto mod = languagepass.getModule(name);
-			if (mod is null) {
-				throw new CompilerError(name.location, format("cannot find module '%s'.", name));
-			}
-			
-			if (i.bind !is null && i.aliases.length == 0) { // import a = b;
-				current.addScope(i, mod.myScope, i.bind.value);
-			} else if (i.aliases.length == 0 && i.bind is null) {
-				thisModule.importedModules ~= mod;
-				thisModule.importedAccess ~= i.access;
-			} else if (i.aliases.length > 0) {  // import a : b, c OR import a = b : c, d;
-				ir.Scope bindScope;
-				if (i.bind !is null) {
-					auto newMod = new ir.Module();
-					newMod.location = i.bind.location;
-					newMod.name = new ir.QualifiedName();
-					newMod.name.identifiers ~= i.bind;
-					bindScope = new ir.Scope(newMod, "");
-					newMod.myScope = bindScope;
-				}
-				foreach (ii, _alias; i.aliases) {
-					string symbolFromImportName, symbolInModuleName;
-					if (_alias[1] is null) {
-						symbolFromImportName = symbolInModuleName = _alias[0].value;
-					} else {
-						symbolFromImportName = _alias[1].value;
-						symbolInModuleName = _alias[0].value;
-					}
-					auto store = mod.myScope.getStore(symbolFromImportName);
-					if (store is null) {
-						throw new CompilerError(format("module '%s' has no symbol '%s'.", mod.name, symbolFromImportName));
-					}
-					if (i.bind !is null) {
-						bindScope.addStore(store, symbolInModuleName);
-					} else {
-						thisModule.myScope.addStore(store, symbolInModuleName);
-					}
-				}
-				if (i.bind !is null) current.addScope(i, bindScope, i.bind.value);
-			}
-		}
-		return Continue;
-	}
 
 	override Status leave(ir.Class c) { pop(); return Continue; }
 	override Status leave(ir._Interface i) { pop(); return Continue; }
 	override Status leave(ir.Struct s) { pop(); return Continue; }
 	override Status leave(ir.Function fn) { pop(); return Continue; }
-
-public:
-	this(LanguagePass languagepass)
-	{
-		this.languagepass = languagepass;
-	}
 }
