@@ -167,6 +167,11 @@ void runTest(string filename, string compiler)
 		remove(exeName);
 
 	auto retval = system(command);
+
+	// Catch segfaults and ICEs
+	if (retval != 0 && retval != 1)
+		throw new CompilationPanic(filename, hasPassed);
+
 	if (expectedToCompile && retval != 0)
 		throw new CompilationFailed(filename, hasPassed);
 
@@ -233,6 +238,11 @@ class MalformedTest : TestException
 class CompilationFailed : TestException
 {
 	this(string test, bool has) { super(test, has, "test expected to compile, did not"); }
+}
+
+class CompilationPanic : TestException
+{
+	this(string test, bool has) { super(test, has, "compile returned invalid retval"); }
 }
 
 class CompilationSucceeded : TestException
