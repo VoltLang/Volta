@@ -1,6 +1,5 @@
 //T compiles:no
 //T dependency:m1.d
-//T has-passed:no
 // Import contexts.
 module test_019;
 
