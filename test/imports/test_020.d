@@ -10,5 +10,5 @@ import m3;
 
 int main()
 {
-	return m1.exportedVal;
+	return m1.exportedVar;
 }

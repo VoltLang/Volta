@@ -7,10 +7,10 @@
 
 module test_009;
 
-import m4 : exportedVal;
+import m4 : exportedVar;
 
 
 int main()
 {
-	return exportedVal;
+	return exportedVar;
 }

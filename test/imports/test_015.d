@@ -11,5 +11,5 @@ import ctx = m1;
 
 int main()
 {
-	return ctx.exportedVal;
+	return ctx.exportedVar;
 }

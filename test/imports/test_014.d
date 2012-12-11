@@ -7,11 +7,11 @@
 
 module test_014;
 
-import m1 : exportedVal1 = exportedVar;
-import m2 : exportedVal2 = exportedVar;
+import m1 : exportedVar1 = exportedVar;
+import m2 : exportedVar2 = exportedVar;
 
 
 int main()
 {
-	return exportedVal1 + exportedVal2;
+	return exportedVar1 + exportedVar2;
 }

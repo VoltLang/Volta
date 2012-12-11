@@ -9,5 +9,5 @@ import m1 : exportedVar;
 
 int main()
 {
-	return otherVal;
+	return otherVar;
 }

@@ -5,10 +5,10 @@
 
 module test_010;
 
-import m4 : otherVal;
+import m4 : otherVar;
 
 
 int main()
 {
-	return exportedVal;
+	return exportedVar;
 }

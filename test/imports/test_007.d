@@ -5,10 +5,10 @@
 
 module test_007;
 
-import m3 : exportedVal;
+import m3 : exportedVar;
 
 
 int main()
 {
-	return exportedVal;
+	return exportedVar;
 }

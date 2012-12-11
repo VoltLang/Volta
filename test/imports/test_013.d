@@ -4,10 +4,10 @@
 
 module test_013;
 
-import m1 : exportedVal1 = exportedVal;
+import m1 : exportedVar1 = exportedVar;
 
 
 int main()
 {
-	return exportedVal;
+	return exportedVar;
 }

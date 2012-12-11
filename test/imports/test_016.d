@@ -9,5 +9,5 @@ import ctx = m1;
 
 int main()
 {
-	return exportedVal;
+	return exportedVar;
 }

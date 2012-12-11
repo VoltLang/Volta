@@ -3,10 +3,10 @@
 // Import contexts.
 module test_018;
 
-import ctx = m1 : exportedVal1 = exportedVal;
+import ctx = m1 : exportedVar1 = exportedVar;
 
 
 int main()
 {
-	return ctx.exportedVal;
+	return ctx.exportedVar;
 }
