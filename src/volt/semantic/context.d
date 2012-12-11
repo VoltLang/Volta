@@ -25,6 +25,10 @@ public:
 
 	void transform(ir.Module m)
 	{
+		if (m.myScope is null) {
+			return;
+		}
+
 		thisModule = m;
 		accept(m, this);
 	}
