@@ -186,7 +186,9 @@ public:
 			_ref.idents = idents;
 
 			auto store = _scope.lookup(ident);
-			assert(store !is null);
+			if (store is null) {
+				throw new CompilerError(p.location, format("unknown identifier '%s'.", ident));
+			}
 			if (store.kind == ir.Store.Kind.Value) {
 				auto var = cast(ir.Variable) store.node;
 				assert(var !is null);

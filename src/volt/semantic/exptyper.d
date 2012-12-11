@@ -244,12 +244,12 @@ public:
 			auto asModule = cast(ir.Module) t;
 			assert(asModule !is null);
 			_scope = asModule.myScope;
-			emsg = format("Module '%s' has no member '%s'.", asModule.name, asPostfix.identifier.value);
+			emsg = format("module '%s' has no member '%s'.", asModule.name, asPostfix.identifier.value);
 		} else if (t.nodeType == ir.NodeType.TypeReference) {
 			auto asUser = cast(ir.TypeReference) t;
 			auto asStruct = cast(ir.Struct) asUser.type;
 			_scope = asStruct.myScope;
-			emsg = format("Type '%s' has no member '%s'.", asUser.names[$-1], asPostfix.identifier.value);
+			emsg = format("type '%s' has no member '%s'.", asUser.names[$-1], asPostfix.identifier.value);
 		} else {
 			assert(false);
 		}

@@ -122,16 +122,23 @@ public:
 			if (mod is null) {
 				throw new CompilerError(name.location, format("cannot find module '%s'.", name));
 			}
-			ir.Scope bindScope;
-			if (i.bind !is null) {
-				bindScope = mod.myScope.dup;
-				current.addScope(i, bindScope, i.bind.value);
-			}
-			if (i.aliases.length == 0) {
+			
+			if (i.bind !is null && i.aliases.length == 0) { // import a = b;
+				current.addScope(i, mod.myScope, i.bind.value);
+			} else if (i.aliases.length == 0 && i.bind is null) {
 				thisModule.importedModules ~= mod;
 				thisModule.importedAccess ~= i.access;
-			} else {
-				foreach (_alias; i.aliases) {
+			} else if (i.aliases.length > 0) {  // import a : b, c OR import a = b : c, d;
+				ir.Scope bindScope;
+				if (i.bind !is null) {
+					auto newMod = new ir.Module();
+					newMod.location = i.bind.location;
+					newMod.name = new ir.QualifiedName();
+					newMod.name.identifiers ~= i.bind;
+					bindScope = new ir.Scope(newMod, "");
+					newMod.myScope = bindScope;
+				}
+				foreach (ii, _alias; i.aliases) {
 					string symbolFromImportName, symbolInModuleName;
 					if (_alias[1] is null) {
 						symbolFromImportName = symbolInModuleName = _alias[0].value;
@@ -143,12 +150,13 @@ public:
 					if (store is null) {
 						throw new CompilerError(format("module '%s' has no symbol '%s'.", mod.name, symbolFromImportName));
 					}
-					if (bindScope !is null) {
+					if (i.bind !is null) {
 						bindScope.addStore(store, symbolInModuleName);
 					} else {
 						thisModule.myScope.addStore(store, symbolInModuleName);
 					}
 				}
+				if (i.bind !is null) current.addScope(i, bindScope, i.bind.value);
 			}
 		}
 		return Continue;
