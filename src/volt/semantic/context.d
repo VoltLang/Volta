@@ -122,8 +122,10 @@ public:
 			if (mod is null) {
 				throw new CompilerError(name.location, format("cannot find module '%s'.", name));
 			}
+			ir.Scope bindScope;
 			if (i.bind !is null) {
-				current.addScope(i, mod.myScope, i.bind.value);
+				bindScope = mod.myScope.dup;
+				current.addScope(i, bindScope, i.bind.value);
 			}
 			if (i.aliases.length == 0) {
 				thisModule.importedModules ~= mod;
@@ -141,7 +143,11 @@ public:
 					if (store is null) {
 						throw new CompilerError(format("module '%s' has no symbol '%s'.", mod.name, symbolFromImportName));
 					}
-					thisModule.myScope.addStore(store, symbolInModuleName);
+					if (bindScope !is null) {
+						bindScope.addStore(store, symbolInModuleName);
+					} else {
+						thisModule.myScope.addStore(store, symbolInModuleName);
+					}
 				}
 			}
 		}

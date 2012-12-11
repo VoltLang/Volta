@@ -268,6 +268,23 @@ public:
 		return *ret;
 	}
 
+	/**
+	 * Return this scope with a copy of its symbol table.
+	 * 
+	 * That is to say, modifying the copy's symbol table
+	 * won't alter the original's.
+	 */
+	Scope dup()
+	{
+		auto copy = this;
+		auto oldSymbols = copy.symbols;
+		copy.symbols = null;
+		foreach (k, v; oldSymbols) {
+			copy.symbols[k] = v;
+		}
+		return copy;
+	}
+
 
 private:
 	void errorOn(Node n, string name)
