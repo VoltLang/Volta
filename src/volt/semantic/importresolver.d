@@ -13,6 +13,22 @@ import volt.visitor.visitor;
 import volt.visitor.scopemanager;
 import volt.semantic.context;
 import volt.semantic.languagepass;
+import volt.semantic.attribremoval;
+
+private class PublicImportGatherer : NullVisitor
+{
+public:
+	ir.Import[] imports;
+
+public:
+	override Status enter(ir.Import i)
+	{
+		if (i.access == ir.Access.Public) {
+			imports ~= i;
+		}
+		return Continue;
+	}
+}
 
 class ImportResolver : ScopeManager, Pass
 {
@@ -34,12 +50,17 @@ public:
 
 	override Status enter(ir.Import i)
 	{
+		auto attrrm = new AttribRemoval();
+		auto gatherer = new PublicImportGatherer();
 		foreach (name; i.names) {
 			auto mod = languagepass.getModule(name);
-			context.transform(mod);
 			if (mod is null) {
 				throw new CompilerError(name.location, format("cannot find module '%s'.", name));
 			}
+			attrrm.transform(mod);
+			context.transform(mod);
+
+			accept(mod, gatherer);
 
 			if (i.bind !is null && i.aliases.length == 0) { // import a = b;
 				current.addScope(i, mod.myScope, i.bind.value);
@@ -65,6 +86,15 @@ public:
 						symbolInModuleName = _alias[0].value;
 					}
 					auto store = mod.myScope.getStore(symbolFromImportName);
+					if (store is null) OUTER: foreach (pubImp; gatherer.imports) {
+						foreach (_name; pubImp.names) {
+							auto _mod = languagepass.getModule(_name);
+							store = _mod.myScope.getStore(symbolFromImportName);
+							if (store !is null) {
+								break OUTER;
+							}
+						}
+					}
 					if (store is null) {
 						throw new CompilerError(format("module '%s' has no symbol '%s'.", mod.name, symbolFromImportName));
 					}

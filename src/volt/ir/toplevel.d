@@ -115,7 +115,7 @@ class Import : Node
 {
 public:
 	/// public, private, package or protected.
-	Access access;
+	Access access = Access.Private;
 
 	/// import <a, b.c, d>
 	QualifiedName[] names;
