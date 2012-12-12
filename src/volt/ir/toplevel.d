@@ -117,13 +117,13 @@ public:
 	/// public, private, package or protected.
 	Access access = Access.Private;
 
-	/// import <a, b.c, d>
-	QualifiedName[] names;
+	/// import <a>
+	QualifiedName name;
 
-	/// Optional, import @<foo> = a, names.length == 1
+	/// Optional, import @<foo> = a
 	Identifier bind;
 
-	/// Optional, import a : <b = c, d>, names.length == 1
+	/// Optional, import a : <b = c, d>
 	Identifier[2][] aliases;
 
 

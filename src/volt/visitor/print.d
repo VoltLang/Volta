@@ -161,31 +161,21 @@ public:
 	override Status enter(ir.Import i)
 	{
 		twf("import ");
-		if (i.names.length > 1) {
-			foreach (idx, name; i.names) {
-				accept(name, this);
-				if (idx < i.names.length - 1) {
-					wf(", ");
+		if (i.bind !is null) {
+			accept(i.bind, this);
+			wf(" = ");
+		}
+		accept(i.name, this);
+		if (i.aliases.length > 0) {
+			wf(" : ");
+			foreach (idx, _alias; i.aliases) {
+				accept(_alias[0], this);
+				if (_alias[1] !is null) {
+					wf(" = ");
+					accept(_alias[1], this);
 				}
-			}
-		} else {
-			assert(i.names.length == 1);
-			if (i.bind !is null) {
-				accept(i.bind, this);
-				wf(" = ");
-			}
-			accept(i.names[0], this);
-			if (i.aliases.length > 0) {
-				wf(" : ");
-				foreach (idx, _alias; i.aliases) {
-					accept(_alias[0], this);
-					if (_alias[1] !is null) {
-						wf(" = ");
-						accept(_alias[1], this);
-					}
-					if (idx < i.aliases.length - 1) {
-						wf(", ");
-					}
+				if (idx < i.aliases.length - 1) {
+					wf(", ");
 				}
 			}
 		}

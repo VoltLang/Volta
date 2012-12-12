@@ -52,61 +52,59 @@ public:
 	{
 		auto attrrm = new AttribRemoval();
 		auto gatherer = new PublicImportGatherer();
-		foreach (name; i.names) {
-			auto mod = languagepass.getModule(name);
-			if (mod is null) {
-				throw new CompilerError(name.location, format("cannot find module '%s'.", name));
-			}
-			attrrm.transform(mod);
-			context.transform(mod);
 
-			accept(mod, gatherer);
-
-			if (i.bind !is null && i.aliases.length == 0) { // import a = b;
-				current.addScope(i, mod.myScope, i.bind.value);
-			} else if (i.aliases.length == 0 && i.bind is null) {
-				thisModule.importedModules ~= mod;
-				thisModule.importedAccess ~= i.access;
-			} else if (i.aliases.length > 0) {  // import a : b, c OR import a = b : c, d;
-				ir.Scope bindScope;
-				if (i.bind !is null) {
-					auto newMod = new ir.Module();
-					newMod.location = i.bind.location;
-					newMod.name = new ir.QualifiedName();
-					newMod.name.identifiers ~= i.bind;
-					bindScope = new ir.Scope(newMod, "");
-					newMod.myScope = bindScope;
-				}
-				foreach (ii, _alias; i.aliases) {
-					string symbolFromImportName, symbolInModuleName;
-					if (_alias[1] is null) {
-						symbolFromImportName = symbolInModuleName = _alias[0].value;
-					} else {
-						symbolFromImportName = _alias[1].value;
-						symbolInModuleName = _alias[0].value;
-					}
-					auto store = mod.myScope.getStore(symbolFromImportName);
-					if (store is null) OUTER: foreach (pubImp; gatherer.imports) {
-						foreach (_name; pubImp.names) {
-							auto _mod = languagepass.getModule(_name);
-							store = _mod.myScope.getStore(symbolFromImportName);
-							if (store !is null) {
-								break OUTER;
-							}
-						}
-					}
-					if (store is null) {
-						throw new CompilerError(format("module '%s' has no symbol '%s'.", mod.name, symbolFromImportName));
-					}
-					if (i.bind !is null) {
-						bindScope.addStore(store, symbolInModuleName);
-					} else {
-						thisModule.myScope.addStore(store, symbolInModuleName);
-					}
-				}
-				if (i.bind !is null) current.addScope(i, bindScope, i.bind.value);
-			}
+		auto mod = languagepass.getModule(i.name);
+		if (mod is null) {
+			throw new CompilerError(i.name.location, format("cannot find module '%s'.", i.name));
 		}
+		attrrm.transform(mod);
+		context.transform(mod);
+
+		accept(mod, gatherer);
+
+		if (i.bind !is null && i.aliases.length == 0) { // import a = b;
+			current.addScope(i, mod.myScope, i.bind.value);
+		} else if (i.aliases.length == 0 && i.bind is null) {
+			thisModule.importedModules ~= mod;
+			thisModule.importedAccess ~= i.access;
+		} else if (i.aliases.length > 0) {  // import a : b, c OR import a = b : c, d;
+			ir.Scope bindScope;
+			if (i.bind !is null) {
+				auto newMod = new ir.Module();
+				newMod.location = i.bind.location;
+				newMod.name = new ir.QualifiedName();
+				newMod.name.identifiers ~= i.bind;
+				bindScope = new ir.Scope(newMod, "");
+				newMod.myScope = bindScope;
+			}
+			foreach (ii, _alias; i.aliases) {
+				string symbolFromImportName, symbolInModuleName;
+				if (_alias[1] is null) {
+					symbolFromImportName = symbolInModuleName = _alias[0].value;
+				} else {
+					symbolFromImportName = _alias[1].value;
+					symbolInModuleName = _alias[0].value;
+				}
+				auto store = mod.myScope.getStore(symbolFromImportName);
+				if (store is null) OUTER: foreach (pubImp; gatherer.imports) {
+					auto _mod = languagepass.getModule(pubImp.name);
+					store = _mod.myScope.getStore(symbolFromImportName);
+					if (store !is null) {
+						break OUTER;
+					}
+				}
+				if (store is null) {
+					throw new CompilerError(format("module '%s' has no symbol '%s'.", mod.name, symbolFromImportName));
+				}
+				if (i.bind !is null) {
+					bindScope.addStore(store, symbolInModuleName);
+				} else {
+					thisModule.myScope.addStore(store, symbolInModuleName);
+				}
+			}
+			if (i.bind !is null) current.addScope(i, bindScope, i.bind.value);
+		}
+
 		return Continue;
 	}
 

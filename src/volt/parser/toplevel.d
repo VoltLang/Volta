@@ -120,22 +120,13 @@ ir.Node parseImport(TokenStream ts, bool inModule)
 		// import <a = b.c>
 		_import.bind = parseIdentifier(ts);
 		match(ts, TokenType.Assign);
-		_import.names ~= parseQualifiedName(ts);
+		_import.name = parseQualifiedName(ts);
 	} else {
 		// No import bind.
-		_import.names ~= parseQualifiedName(ts);
-		while (ts.peek.type == TokenType.Comma) {
-			match(ts, TokenType.Comma);
-			_import.names ~= parseQualifiedName(ts);
-		}
-		if (_import.names.length > 1) {
-			// import a, b.c, d;
-			goto _exit;
-		}
+		_import.name = parseQualifiedName(ts);
 	}
 
-	// Only one import, so we can check for aliases.
-	assert(_import.names.length == 1);
+	// Parse out any aliases.
 	if (matchIf(ts, TokenType.Colon)) {
 		// import a : <b, c = d>
 		bool first = true;
