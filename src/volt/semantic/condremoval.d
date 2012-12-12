@@ -88,15 +88,15 @@ public:
 
 	override Status enter(ir.Function fn)
 	{
-		fn.inContract = manipNodes(fn.inContract, &removeConditionals);
-		fn.outContract = manipNodes(fn.outContract, &removeConditionals);
-		fn._body = manipNodes(fn._body, &removeConditionals);
+		if (fn.inContract !is null) fn.inContract.statements = manipNodes(fn.inContract.statements, &removeConditionals);
+		if (fn.outContract !is null) fn.outContract.statements = manipNodes(fn.outContract.statements, &removeConditionals);
+		if (fn._body !is null) fn._body.statements = manipNodes(fn._body.statements, &removeConditionals);
 		return Continue;
 	}
 
 	override Status enter(ir.Unittest u)
 	{
-		u._body = manipNodes(u._body, &removeConditionals);
+		u._body.statements = manipNodes(u._body.statements, &removeConditionals);
 		return Continue;
 	}
 

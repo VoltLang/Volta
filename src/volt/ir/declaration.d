@@ -170,9 +170,9 @@ public:
 
 
 	/// @todo Make these @p BlockStatements?
-	Node[] inContract;  ///< Optional.
-	Node[] outContract;  ///< Optional.
-	Node[] _body;  ///< Optional.
+	BlockStatement inContract;  ///< Optional.
+	BlockStatement outContract;  ///< Optional.
+	BlockStatement _body;  ///< Optional.
 
 	/// The @p Scope for the body of the function. @todo What about the contracts?
 	Scope myScope;

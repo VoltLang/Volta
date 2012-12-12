@@ -403,7 +403,7 @@ public:
 	bool isDelegate;
 	Type returnType;  // Optional.
 	FunctionParameter[] params;
-	Node[] block;
+	BlockStatement block;
 
 	string singleLambdaParam;  // Optional. (<a> => a + 1)
 	Exp lambdaExp;  // Optional. (a => <a + 1>;)

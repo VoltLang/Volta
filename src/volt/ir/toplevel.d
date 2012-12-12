@@ -8,6 +8,7 @@ import volt.ir.type;
 import volt.ir.context;
 import volt.ir.expression;
 import volt.ir.declaration;
+import volt.ir.statement;
 
 /**
  * @defgroup irTopLevel IR TopLevel Nodes
@@ -335,7 +336,7 @@ public:
 class Unittest : Node
 {
 public:
-	Node[] _body; ///< Contains statements.
+	BlockStatement _body; ///< Contains statements.
 
 
 public:

@@ -1153,34 +1153,34 @@ public:
 			mIndent--;
 		}
 
-		if (fn.inContract.length > 0) {
+		if (fn.inContract !is null) {
 			ln();
 			twfln("in {");
-			printNodes(fn.inContract);
+			printNodes(fn.inContract.statements);
 			ln();
 			twfln("}");
 		}
 
-		if (fn.outContract.length > 0) {
+		if (fn.outContract !is null) {
 			if (fn.outParameter.length > 0) {
 				twfln("out (" ~ fn.outParameter ~ ") {");
 			} else {
 				twfln("out {");
 			}
-			printNodes(fn.outContract);
+			printNodes(fn.outContract.statements);
 			ln();
 			twfln("}");
 		}
 
-		if (fn._body.length > 0) {
-			if (fn.inContract.length > 0 || fn.outContract.length > 0) {
+		if (fn._body !is null) {
+			if (fn.inContract is null || fn.outContract is null) {
 				twfln("body {");
 			} else {
 				ln();
 				twfln("{");
 			}
 
-			printNodes(fn._body);
+			printNodes(fn._body.statements);
 
 			ln();
 			twfln("}");
@@ -1623,7 +1623,7 @@ public:
 		printParams();
 		wfln(") {");
 		mIndent++;
-		foreach (statement; functionLiteral.block) {
+		foreach (statement; functionLiteral.block.statements) {
 			accept(statement, this);
 		}
 		mIndent--;

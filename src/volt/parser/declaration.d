@@ -344,15 +344,16 @@ ir.Function parseFunction(TokenStream ts, ir.Type base)
 	return fn;
 }
 
-ir.Node[] parseBlock(TokenStream ts)
+ir.BlockStatement parseBlock(TokenStream ts)
 {
-	ir.Node[] statements;
+	auto bs = new ir.BlockStatement();
+	bs.location = ts.peek.location;
 
 	match(ts, TokenType.OpenBrace);
 	while (ts != TokenType.CloseBrace) {
-		statements ~= parseStatement(ts);
+		bs.statements ~= parseStatement(ts);
 	}
 	match(ts, TokenType.CloseBrace);
 
-	return statements;
+	return bs;
 }

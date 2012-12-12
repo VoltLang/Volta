@@ -46,7 +46,7 @@ public:
 		auto llvmFunc = state.getFunctionValue(fn, type);
 		auto llvmType = type.llvmType;
 
-		if (fn._body.length > 0) {
+		if (fn._body.statements.length > 0) {
 			state.currentFall = true;
 			state.currentFunc = llvmFunc;
 			state.currentBlock = LLVMAppendBasicBlock(llvmFunc, "entry");
@@ -62,7 +62,7 @@ public:
 				LLVMBuildStore(state.builder, v, a);
 			}
 
-			foreach(n; fn._body)
+			foreach(n; fn._body.statements)
 				accept(n, this);
 
 			// Assume language pass knows what it is doing.

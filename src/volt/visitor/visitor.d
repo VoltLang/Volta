@@ -572,7 +572,7 @@ Visitor.Status acceptUnittest(ir.Unittest u, Visitor av)
 		return parentContinue(status);
 	}
 
-	foreach (statement; u._body) {
+	foreach (statement; u._body.statements) {
 		accept(statement, av);
 	}
 
@@ -848,19 +848,19 @@ Visitor.Status acceptFunction(ir.Function fn, Visitor av)
 	if (status == VisitorStop)
 		return status;
 
-	foreach(n; fn.inContract) {
+	if (fn.inContract !is null) foreach(n; fn.inContract.statements) {
 		status = accept(n, av);
 		if (status == VisitorStop)
 			return status;
 	}
 
-	foreach(n; fn.outContract) {
+	if (fn.outContract !is null) foreach(n; fn.outContract.statements) {
 		status = accept(n, av);
 		if (status == VisitorStop)
 			return status;
 	}
 
-	foreach(n; fn._body) {
+	if (fn._body !is null) foreach(n; fn._body.statements) {
 		status = accept(n, av);
 		if (status == VisitorStop)
 			return status;
@@ -1372,7 +1372,7 @@ Visitor.Status acceptFunctionLiteral(ir.FunctionLiteral functionLiteral, Visitor
 		return parentContinue(status);
 	}
 
-	foreach (statement; functionLiteral.block) {
+	foreach (statement; functionLiteral.block.statements) {
 		status = accept(statement, av);
 		if (status == VisitorStop) {
 			return VisitorStop;
