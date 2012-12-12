@@ -23,11 +23,36 @@ import std.conv : to;
 
 void main(string[] args)
 {
-	if (args.length > 1) {
-	}
-
 	string compiler = ".." ~ dirSeparator ~ "volt";
 	bool waitOnExit;
+	bool printOk;
+	bool printImprovments = true;
+	bool printFailing;
+	bool printRegressions = true;
+
+	foreach(arg; args[1 .. $]) {
+		switch(arg) {
+		case "--print-all":
+			printOk = true;
+			printImprovments = true;
+			printFailing = true;
+			printRegressions = true;
+			break;
+		case "--print-ok":
+			printOk = true;
+			goto case;
+		case "--print-improvments":
+			printImprovments = true;
+			break;
+		case "--print-failing":
+			printFailing = true;
+			goto case;
+		case "--print-regressions":
+			printRegressions = true;
+			break;
+		default:
+		}
+	}
 
 	string[] tests;
 	int testNumber;
@@ -60,11 +85,13 @@ void main(string[] args)
 		try {
 			runTest(test, compiler);
 		} catch (TestOk ok) {
-			stdout.writeln(ok.msg);
 			passed++;
 			improvments += !ok.hasPassed;
+			if (printOk || !ok.hasPassed && printImprovments)
+				stdout.writeln(ok.msg);
 		} catch (TestException e) {
-			stdout.writefln("%s%s", e.msg, e.hasPassed ? " **REGRESSION**" : "");
+			if (printFailing || e.hasPassed && printRegressions)
+				stdout.writeln(e.msg);
 			regressions += e.hasPassed;
 		}
 	}
