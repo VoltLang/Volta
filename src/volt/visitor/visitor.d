@@ -30,6 +30,8 @@ public abstract:
 	 */
 	Status enter(ir.Module m);
 	Status leave(ir.Module m);
+	Status enter(ir.TopLevelBlock tlb);
+	Status leave(ir.TopLevelBlock tlb);
 	Status enter(ir.Import i);
 	Status leave(ir.Import i);
 	Status enter(ir.Unittest u);
@@ -171,6 +173,8 @@ public:
 override:
 	Status enter(ir.Module m){ return Continue; }
 	Status leave(ir.Module m){ return Continue; }
+	Status enter(ir.TopLevelBlock tlb) { return Continue; }
+	Status leave(ir.TopLevelBlock tlb) { return Continue; } 
 	Status enter(ir.Import i){ return Continue; }
 	Status leave(ir.Import i){ return Continue; }
 	Status enter(ir.Unittest u){ return Continue; }
@@ -327,6 +331,10 @@ Visitor.Status accept(ir.Node n, Visitor av)
 	 */
 	case ir.NodeType.Module:
 		return acceptModule(cast(ir.Module) n, av);
+	case ir.NodeType.TopLevelBlock:
+		auto asTlb = cast(ir.TopLevelBlock) n;
+		assert(asTlb !is null);
+		return acceptTopLevelBlock(asTlb, av);
 	case ir.NodeType.Import:
 		auto asImport = cast(ir.Import) n;
 		assert(asImport !is null);
@@ -531,6 +539,20 @@ Visitor.Status acceptModule(ir.Module m, Visitor av)
 	}
 
 	return av.leave(m);
+}
+
+Visitor.Status acceptTopLevelBlock(ir.TopLevelBlock tlb, Visitor av)
+{
+	auto status = av.enter(tlb);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	foreach (n; tlb.nodes) {
+		accept(n, av);
+	}
+
+	return av.leave(tlb);
 }
 
 Visitor.Status acceptImport(ir.Import i, Visitor av)

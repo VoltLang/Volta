@@ -158,6 +158,9 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.TopLevelBlock tlb) { return Continue; }
+	override Status leave(ir.TopLevelBlock tlb) { return Continue; }
+
 	override Status enter(ir.Import i)
 	{
 		twf("import ");

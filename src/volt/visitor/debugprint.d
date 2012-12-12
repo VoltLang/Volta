@@ -125,6 +125,8 @@ public:
 	 */
 	override Status enter(ir.Module n) { enterNode(n); return Continue; }
 	override Status leave(ir.Module n) { leaveNode(n); return Continue; }
+	override Status enter(ir.TopLevelBlock n) { enterNode(n); return Continue; }
+	override Status leave(ir.TopLevelBlock n) { leaveNode(n); return Continue; }
 	override Status enter(ir.Import n) { enterNode(n); return Continue; }
 	override Status leave(ir.Import n) { leaveNode(n); return Continue; }
 	override Status enter(ir.Unittest n) { enterNode(n); return Continue; }
