@@ -86,7 +86,7 @@ public:
 		}
 
 		bool defined = true;
-		foreach (member; s.members) {
+		foreach (member; s.members.nodes) {
 			defined = defined && verify(member, true);
 		}
 
@@ -104,7 +104,7 @@ public:
 		}
 
 		bool defined = true;
-		foreach (member; c.members) {
+		foreach (member; c.members.nodes) {
 			defined = defined && verify(member, true);
 		}
 
@@ -122,7 +122,7 @@ public:
 		}
 
 		bool defined = true;
-		foreach (member; i.members) {
+		foreach (member; i.members.nodes) {
 			defined = defined && verify(member, true);
 		}
 

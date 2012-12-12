@@ -43,7 +43,7 @@ public:
 		mCtx = [new Context(m)];
 
 		// Filter out any Attributes.
-		m.children = manipNodes(m.children, &nodeManipDg);
+		m.children.nodes = manipNodes(m.children.nodes, &nodeManipDg);
 
 		return ContinueParent;
 	}
@@ -411,14 +411,14 @@ protected:
 		attrPush(attr);
 
 		scope(exit) {
-			if (attr.members.length > 0)
+			if (attr.members.nodes.length > 0)
 		    	ctxPop(attr);
 			attrPop(attr);
 		}
 
-		if (attr.members.length > 0) {
+		if (attr.members.nodes.length > 0) {
 			ctxPush(attr, true);
-			return manipNodes(attr.members, &nodeManipDg);
+			return manipNodes(attr.members.nodes, &nodeManipDg);
 		} else {
 			return null;
 		}

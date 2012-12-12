@@ -36,6 +36,7 @@ enum NodeType
 
 	/* toplevel.d */
 	Module,
+	TopLevelBlock,
 	Import,
 	Unittest,
 	Struct,
@@ -252,6 +253,7 @@ string nodeToString(NodeType nodeType)
 	case QualifiedName: return "QualifiedName";
 	case Identifier: return "Identifier";
 	case Module: return "Module";
+	case TopLevelBlock: return "TopLevelBlock";
 	case Import: return "Import";
 	case Unittest: return "Unittest";
 	case Struct: return "Struct";

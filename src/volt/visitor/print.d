@@ -223,7 +223,7 @@ public:
 
 		twf("{\n");
 		mIndent++;
-		foreach (member; c.members) {
+		foreach (member; c.members.nodes) {
 			accept(member, this);
 		}
 		mIndent--;
@@ -254,7 +254,7 @@ public:
 
 		twf("{\n");
 		mIndent++;
-		foreach (member; i.members) {
+		foreach (member; i.members.nodes) {
 			accept(member, this);
 		}
 		mIndent--;
@@ -278,7 +278,7 @@ public:
 		ln();
 		mIndent++;
 
-		foreach (member; s.members) {
+		foreach (member; s.members.nodes) {
 			accept(member, this);
 		}
 
@@ -386,7 +386,7 @@ public:
 
 		wfln(" {");
 		mIndent++;
-		foreach (member; attr.members) {
+		foreach (member; attr.members.nodes) {
 			accept(member, this);
 		}
 		mIndent--;
@@ -456,7 +456,7 @@ public:
 		accept(ctl.condition, this);
 		wfln(" {");
 		mIndent++;
-		foreach (member; ctl.members) {
+		foreach (member; ctl.members.nodes) {
 			accept(member, this);
 		}
 		mIndent--;
@@ -464,7 +464,7 @@ public:
 		if (ctl.elsePresent) {
 			wfln(" else {");
 			mIndent++;
-			foreach (member; ctl._else) {
+			foreach (member; ctl._else.nodes) {
 				accept(member, this);
 			}
 			mIndent--;

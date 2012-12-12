@@ -41,9 +41,9 @@ public:
 		if (auto cond = cast(ir.ConditionTopLevel) node) {
 			// Conditional Top Level.
 			if (evaluateCondition(cond.condition)) {
-				ret = cond.members;
+				ret = cond.members.nodes;
 			} else {
-				ret = cond._else;
+				ret = cond._else.nodes;
 			}
 			if (ret.length > 0) {
 				ret = manipNodes(ret, &removeConditionals);
@@ -76,7 +76,7 @@ public:
 
 	override Status enter(ir.Module m)
 	{
-		m.children = manipNodes(m.children, &removeConditionals);
+		m.children.nodes = manipNodes(m.children.nodes, &removeConditionals);
 		return Continue;
 	}
 
@@ -102,25 +102,25 @@ public:
 
 	override Status enter(ir.Struct s)
 	{
-		s.members = manipNodes(s.members, &removeConditionals);
+		s.members.nodes = manipNodes(s.members.nodes, &removeConditionals);
 		return Continue;
 	}
 
 	override Status enter(ir.Class c)
 	{
-		c.members = manipNodes(c.members, &removeConditionals);
+		c.members.nodes = manipNodes(c.members.nodes, &removeConditionals);
 		return Continue;
 	}
 
 	override Status enter(ir.Attribute a)
 	{
-		a.members = manipNodes(a.members, &removeConditionals);
+		a.members.nodes = manipNodes(a.members.nodes, &removeConditionals);
 		return Continue;
 	}
 
 	override Status enter(ir._Interface i)
 	{
-		i.members = manipNodes(i.members, &removeConditionals);
+		i.members.nodes = manipNodes(i.members.nodes, &removeConditionals);
 		return Continue;
 	}
 }

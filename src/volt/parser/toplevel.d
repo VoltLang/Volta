@@ -23,86 +23,117 @@ ir.Module parseModule(TokenStream ts)
 	auto mod = new ir.Module();
 	mod.name = qn;
 
-	while(ts != TokenType.End) {
-		mod.children ~= parseTopLevelDecl(ts, true);
-	}
+	mod.children = parseTopLevelBlock(ts, TokenType.End, true);
 
 	return mod;
 }
 
-ir.Node[] parseTopLevelDecl(TokenStream ts, bool inModule = false)
+ir.TopLevelBlock parseOneTopLevelBlock(TokenStream ts, bool inModule = false)
 out(result)
 {
 	assert(result !is null);
 }
 body
 {
-	auto t = ts.peek;
-	auto type = t.type;
+	auto tlb = new ir.TopLevelBlock();
+	tlb.location = ts.peek.location;
 
 	switch (ts.peek.type) {
-	case TokenType.Import:
-		return [parseImport(ts, inModule)];
-	case TokenType.Unittest:
-		return [parseUnittest(ts)];
-	case TokenType.This:
-		return [parseConstructor(ts)];
-	case TokenType.Tilde:  // XXX: Is this unambiguous?
-		return [parseDestructor(ts)];
-	case TokenType.Struct:
-		return [parseStruct(ts)];
-	case TokenType.Class:
-		return [parseClass(ts)];
-	case TokenType.Interface:
-		return [parseInterface(ts)];
-	case TokenType.Enum:
-		return [parseEnum(ts)];
-	case TokenType.Extern:
-	case TokenType.Align:
-	case TokenType.At:
-	case TokenType.Deprecated:
-	case TokenType.Private:
-	case TokenType.Protected:
-	case TokenType.Package:
-	case TokenType.Public:
-	case TokenType.Export:
-	case TokenType.Final:
-	case TokenType.Synchronized:
-	case TokenType.Override:
-	case TokenType.Abstract:
-	case TokenType.Const:
-	case TokenType.Auto:
-	case TokenType.Scope:
-	case TokenType.Global:
-	case TokenType.Local:
-	case TokenType.Shared:
-	case TokenType.Immutable:
-	case TokenType.Inout:
-		return [parseAttribute(ts, inModule)];
-	case TokenType.Version:
-	case TokenType.Debug:
-		return [parseConditionTopLevel(ts, inModule)];
-	case TokenType.Static:
-		auto next = ts.lookahead(1).type;
-		if (next == TokenType.Tilde) {
-			goto case TokenType.Tilde;
-		} else if (next == TokenType.This) {
-			goto case TokenType.This;
-		} else if (next == TokenType.Assert) {
-			return [parseStaticAssert(ts)];
-		} else if (next == TokenType.If) {
-			goto case TokenType.Version;
-		} else {
-			return [parseAttribute(ts)];
-		}
-	case TokenType.Semicolon:
-		auto empty = new ir.EmptyTopLevel();
-		empty.location = ts.peek.location;
-		match(ts, TokenType.Semicolon);
-		return [empty];
-	default:
-		return parseVariable(ts);
+		case TokenType.Import:
+			tlb.nodes ~= [parseImport(ts, inModule)];
+			break;
+		case TokenType.Unittest:
+			tlb.nodes ~= [parseUnittest(ts)];
+			break;
+		case TokenType.This:
+			tlb.nodes ~= [parseConstructor(ts)];
+			break;
+		case TokenType.Tilde:  // XXX: Is this unambiguous?
+			tlb.nodes ~= [parseDestructor(ts)];
+			break;
+		case TokenType.Struct:
+			tlb.nodes ~= [parseStruct(ts)];
+			break;
+		case TokenType.Class:
+			tlb.nodes ~= [parseClass(ts)];
+			break;
+		case TokenType.Interface:
+			tlb.nodes ~= [parseInterface(ts)];
+			break;
+		case TokenType.Enum:
+			tlb.nodes ~= [parseEnum(ts)];
+			break;
+		case TokenType.Extern:
+		case TokenType.Align:
+		case TokenType.At:
+		case TokenType.Deprecated:
+		case TokenType.Private:
+		case TokenType.Protected:
+		case TokenType.Package:
+		case TokenType.Public:
+		case TokenType.Export:
+		case TokenType.Final:
+		case TokenType.Synchronized:
+		case TokenType.Override:
+		case TokenType.Abstract:
+		case TokenType.Const:
+		case TokenType.Auto:
+		case TokenType.Scope:
+		case TokenType.Global:
+		case TokenType.Local:
+		case TokenType.Shared:
+		case TokenType.Immutable:
+		case TokenType.Inout:
+			tlb.nodes ~= [parseAttribute(ts, inModule)];
+			break;
+		case TokenType.Version:
+		case TokenType.Debug:
+			tlb.nodes ~= [parseConditionTopLevel(ts, inModule)];
+			break;
+		case TokenType.Static:
+			auto next = ts.lookahead(1).type;
+			if (next == TokenType.Tilde) {
+				goto case TokenType.Tilde;
+			} else if (next == TokenType.This) {
+				goto case TokenType.This;
+			} else if (next == TokenType.Assert) {
+				tlb.nodes ~= [parseStaticAssert(ts)];
+			} else if (next == TokenType.If) {
+				goto case TokenType.Version;
+			} else {
+				tlb.nodes ~= [parseAttribute(ts)];
+			}
+			break;
+		case TokenType.Semicolon:
+			auto empty = new ir.EmptyTopLevel();
+			empty.location = ts.peek.location;
+			match(ts, TokenType.Semicolon);
+			tlb.nodes ~= [empty];
+			break;
+		default:
+			tlb.nodes ~= parseVariable(ts);
+			break;
 	}
+
+	return tlb;
+}
+
+ir.TopLevelBlock parseTopLevelBlock(TokenStream ts, TokenType end, bool inModule = false)
+out(result)
+{
+	assert(result !is null);
+}
+body
+{
+	auto tlb = new ir.TopLevelBlock();
+	tlb.location = ts.peek.location;
+
+	while (ts.peek.type != end && ts.peek.type != TokenType.End) {
+		auto tmp = parseOneTopLevelBlock(ts, inModule);
+		tlb.nodes ~= tmp.nodes;
+	}
+
+	return tlb;
 }
 
 ir.Node parseImport(TokenStream ts, bool inModule)
@@ -246,9 +277,7 @@ ir.Class parseClass(TokenStream ts)
 	}
 
 	match(ts, TokenType.OpenBrace);
-	while (ts.peek.type != TokenType.CloseBrace) {
-		c.members ~= parseTopLevelDecl(ts);
-	}
+	c.members = parseTopLevelBlock(ts, TokenType.CloseBrace);
 	match(ts, TokenType.CloseBrace);
 
 	return c;
@@ -272,9 +301,7 @@ ir._Interface parseInterface(TokenStream ts)
 	}
 
 	match(ts, TokenType.OpenBrace);
-	while (ts.peek.type != TokenType.CloseBrace) {
-		i.members ~= parseTopLevelDecl(ts);
-	}
+	i.members = parseTopLevelBlock(ts, TokenType.CloseBrace);
 	match(ts, TokenType.CloseBrace);
 
 	return i;
@@ -293,9 +320,7 @@ ir.Struct parseStruct(TokenStream ts)
 		match(ts, TokenType.Semicolon);
 	} else {
 		match(ts, TokenType.OpenBrace);
-		while (ts.peek.type != TokenType.CloseBrace) {
-			s.members ~= parseTopLevelDecl(ts);
-		}
+		s.members = parseTopLevelBlock(ts, TokenType.CloseBrace);
 		match(ts, TokenType.CloseBrace);
 	}
 
@@ -457,17 +482,13 @@ ir.Attribute parseAttribute(TokenStream ts, bool inModule = false)
 	}
 
 	if (matchIf(ts, TokenType.OpenBrace)) {
-		while (ts.peek.type != TokenType.CloseBrace) {
-			attr.members ~= parseTopLevelDecl(ts, inModule);
-		}
+		attr.members = parseTopLevelBlock(ts, TokenType.CloseBrace, inModule);
 		match(ts, TokenType.CloseBrace);
 	} else if (matchIf(ts, TokenType.Colon)) {
 		// Colons are implictly converted into braces; the IR knows nothing of colons.
-		while (ts.peek.type != TokenType.CloseBrace && ts.peek.type != TokenType.End) {
-			attr.members ~= parseTopLevelDecl(ts, inModule);
-		}
+		attr.members = parseTopLevelBlock(ts, TokenType.CloseBrace, inModule);
 	} else {
-		attr.members ~= parseTopLevelDecl(ts, inModule);
+		attr.members = parseOneTopLevelBlock(ts, inModule);
 	}
 
 	return attr;
@@ -542,33 +563,25 @@ ir.ConditionTopLevel parseConditionTopLevel(TokenStream ts, bool inModule = fals
 	ctl.condition = parseCondition(ts);
 	if (matchIf(ts, TokenType.Colon)) {
 		// Colons are implictly converted into braces; the IR knows nothing of colons.
-		while (ts.peek.type != TokenType.CloseBrace && ts.peek.type != TokenType.End) {
-			ctl.members ~= parseTopLevelDecl(ts, inModule);
-		}
+		ctl.members = parseTopLevelBlock(ts, TokenType.CloseBrace, inModule);
 		return ctl;  // Else blocks aren't tied to colon conditionals.
 	} else if (matchIf(ts, TokenType.OpenBrace)) {
-		while (ts.peek.type != TokenType.CloseBrace) {
-			ctl.members ~= parseTopLevelDecl(ts, inModule);
-		}
+		ctl.members = parseTopLevelBlock(ts, TokenType.CloseBrace, inModule);
 		match(ts, TokenType.CloseBrace);
 	} else {
-		ctl.members ~= parseTopLevelDecl(ts, inModule);
+		ctl.members = parseOneTopLevelBlock(ts, inModule);
 	}
 
 	if (matchIf(ts, TokenType.Else)) {
 		ctl.elsePresent = true;
 		if (matchIf(ts, TokenType.Colon)) {
 			// Colons are implictly converted into braces; the IR knows nothing of colons.
-			while (ts.peek.type != TokenType.CloseBrace && ts.peek.type != TokenType.End) {
-				ctl.members ~= parseTopLevelDecl(ts, inModule);
-			}
+			ctl.members = parseTopLevelBlock(ts, TokenType.CloseBrace, inModule);
 		} else if (matchIf(ts, TokenType.OpenBrace)) {
-			while (ts.peek.type != TokenType.CloseBrace) {
-				ctl._else ~= parseTopLevelDecl(ts);
-			}
+			ctl._else = parseTopLevelBlock(ts, TokenType.CloseBrace);
 			match(ts, TokenType.CloseBrace);
 		} else {
-			ctl._else ~= parseTopLevelDecl(ts);
+			ctl._else = parseOneTopLevelBlock(ts);
 		}
 	}
 

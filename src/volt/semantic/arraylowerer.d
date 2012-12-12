@@ -91,14 +91,14 @@ public:
 		lengthVar.location = s.location;
 		lengthVar.type = ltype;
 		lengthVar.name = "length";
-		s.members ~= lengthVar;
+		s.members.nodes ~= lengthVar;
 
 		s.myScope.addValue(ptype, "ptr");
 		auto ptrVar = new ir.Variable();
 		ptrVar.location = s.location;
 		ptrVar.type = ptype;
 		ptrVar.name = "ptr";
-		s.members ~= ptrVar;
+		s.members.nodes ~= ptrVar;
 
 		s.name = name;
 		s.mangledName = name;

@@ -226,7 +226,7 @@ class StructType : Type
 		uint index;
 		LLVMTypeRef[] mt;
 
-		foreach(m; irType.members) {
+		foreach(m; irType.members.nodes) {
 			auto var = cast(ir.Variable)m;
 			if (var is null)
 				continue;

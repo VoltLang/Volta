@@ -526,7 +526,7 @@ Visitor.Status acceptModule(ir.Module m, Visitor av)
 	if (status != VisitorContinue)
 		return parentContinue(status);
 
-	foreach(c; m.children) {
+	foreach(c; m.children.nodes) {
 		accept(c, av);
 	}
 
@@ -586,7 +586,7 @@ Visitor.Status acceptClass(ir.Class c, Visitor av)
 		return parentContinue(status);
 	}
 
-	foreach (member; c.members) {
+	foreach (member; c.members.nodes) {
 		accept(member, av);
 	}
 
@@ -600,7 +600,7 @@ Visitor.Status acceptInterface(ir._Interface i, Visitor av)
 		return parentContinue(status);
 	}
 
-	foreach (member; i.members) {
+	foreach (member; i.members.nodes) {
 		accept(member, av);
 	}
 
@@ -614,7 +614,7 @@ Visitor.Status acceptStruct(ir.Struct s, Visitor av)
 		return parentContinue(status);
 	}
 
-	foreach (member; s.members) {
+	foreach (member; s.members.nodes) {
 		accept(member, av);
 	}
 
@@ -675,12 +675,12 @@ Visitor.Status acceptConditionTopLevel(ir.ConditionTopLevel ctl, Visitor av)
 		return parentContinue(status);
 	}
 
-	foreach (member; ctl.members) {
+	foreach (member; ctl.members.nodes) {
 		accept(member, av);
 	}
 
 	if (ctl.elsePresent) {
-		foreach (member; ctl._else) {
+		foreach (member; ctl._else.nodes) {
 			status = accept(member, av);
 			if (status == VisitorStop) {
 				return VisitorStop;
@@ -702,7 +702,7 @@ Visitor.Status acceptAttribute(ir.Attribute attr, Visitor av)
 		return parentContinue(status);
 	}
 
-	foreach (toplevel; attr.members) {
+	foreach (toplevel; attr.members.nodes) {
 		status = accept(toplevel, av);
 		if (status != VisitorContinue) {
 			return parentContinue(status);

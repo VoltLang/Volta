@@ -61,7 +61,7 @@ class Module : Node
 {
 public:
 	QualifiedName name; ///< Name used for mangeling.
-	Node[] children; ///< Toplevel nodes.
+	TopLevelBlock children; ///< Toplevel nodes.
 
 	/**
 	 * Scope for this module.
@@ -86,6 +86,15 @@ public:
 
 public:
 	this() { super(NodeType.Module); }
+}
+
+class TopLevelBlock : Node
+{
+public:
+	Node[] nodes;
+
+public:
+	this() { super(NodeType.TopLevelBlock); }
 }
 
 /**
@@ -183,7 +192,7 @@ public:
 	/// What kind of attribute.
 	Kind kind;
 
-	Node[] members;
+	TopLevelBlock members;
 
 	/// Only if type == Align.
 	int alignAmount;
@@ -211,7 +220,7 @@ public:
 	string name;  //< Not optional.
 	QualifiedName parent;  //< Optional.
 	QualifiedName[] interfaces;  //< Optional.
-	Node[] members;  //< Optional.
+	TopLevelBlock members;  //< Optional.
 
 	bool defined;
 
@@ -237,7 +246,7 @@ public:
 
 	string name; ///< Unmangled name of the Interface.
 	QualifiedName[] interfaces; ///< Super interfaces to this.
-	Node[] members; ///< Toplevel nodes.
+	TopLevelBlock members; ///< Toplevel nodes.
 
 	bool defined;
 
@@ -264,7 +273,7 @@ public:
 	Scope myScope; ///< Context for this struct.
 
 	string name; ///< Unmangled name of the struct.
-	Node[] members; ///< Toplevel nodes.
+	TopLevelBlock members; ///< Toplevel nodes.
 	Node loweredNode;  ///< If not null, this struct was lowered from this.
 
 	bool defined;
@@ -398,9 +407,9 @@ public:
 	bool elsePresent;
 
 	/// version(foo) { @<members> }
-	Node[] members;
+	TopLevelBlock members;
 	/// version(foo) { @<members> } else { @<_else> }
-	Node[] _else;
+	TopLevelBlock _else;
 
 
 public:
