@@ -207,6 +207,7 @@ class Constant : Exp
 {
 public:
 	string value;
+	void[] arrayData;
 	Type type;
 
 public:
