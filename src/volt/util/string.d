@@ -35,6 +35,8 @@ void[] unescape(T)(Location location, const T[] s)
 			continue;
 		}
 
+		// @todo Named character entities. http://www.w3.org/TR/html5/named-character-references.html
+
 		if (c == '\\') {
 			escaping = true;
 			continue;
