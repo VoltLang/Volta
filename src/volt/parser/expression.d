@@ -10,6 +10,7 @@ import volt.exceptions;
 import volt.token.stream;
 import volt.parser.base;
 import volt.parser.declaration;
+import volt.util.string;
 
 
 ir.Exp parseExp(TokenStream ts)
@@ -260,6 +261,7 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		c.value = primary._string;
 		c.type = new ir.ArrayType(new ir.PrimitiveType(ir.PrimitiveType.Kind.Char));
 		c.type.location = primary.location;
+		c.arrayData = unescapeString(primary.location, c.value);
 		exp = c;
 		break;
 	case intir.PrimaryExp.Type.CharLiteral:
