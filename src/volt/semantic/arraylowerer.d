@@ -83,6 +83,8 @@ public:
 		auto s = new ir.Struct();
 		s.myScope = new ir.Scope(internalScope, s, null);
 		s.location = at.location;
+		s.members = new ir.TopLevelBlock();
+		s.members.location = at.location;
 		auto ptype = new ir.PointerType(t);
 		auto ltype = settings.getSizeT();
 

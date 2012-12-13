@@ -128,6 +128,14 @@ public:
 		return Continue;
 	}
 
+	override Status visit(ir.Constant c)
+	{
+		if (c.type !is null) {
+			c.type.mangledName = mangle(parentNames, c.type);
+		}
+		return Continue;
+	}
+
 	override Status debugVisitNode(ir.Node n)
 	{
 		auto t = cast(ir.Type) n;
