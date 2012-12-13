@@ -44,6 +44,7 @@ void[] unescape(T)(Location location, const T[] s)
 				hexing = false;
 				hexchars.length = 0;
 			}
+			continue;
 		}
 		if (escaping) {
 			switch (c) {
@@ -62,7 +63,7 @@ void[] unescape(T)(Location location, const T[] s)
 					escaping = false;
 					hexing = true;
 					hexchars.length = 0;
-					break;
+					continue;
 				default:
 					throw new CompilerError(location, "bad escape.");
 			}
