@@ -1,5 +1,6 @@
 module volt.util.string;
 
+import std.conv;
 import std.utf;
 
 import volt.exceptions;
@@ -9,12 +10,41 @@ alias unescape!char unescapeString;
 alias unescape!wchar unescapeWstring;
 alias unescape!dchar unescapeDstring;
 
+bool isHex(dchar d)
+{
+	switch (d) {
+	case 'a', 'b', 'c', 'd', 'e', 'f',
+		 'A', 'B', 'C', 'D', 'E', 'F',
+		 '0', '1', '2', '3', '4', '5',
+		 '6', '7', '8', '9':
+		return true;
+	default:
+		return false;
+	}
+}
+
 void[] unescape(T)(Location location, const T[] s)
 {
 	T[] output;
 
-	bool escaping;
+	bool escaping, hexing;
+	dchar[] hexchars;
 	foreach (c; s) {
+		if (hexing) {
+			if (!isHex(c)) {
+				throw new CompilerError(location, "bad hex digit.");
+			}
+			hexchars ~= c;
+			if (hexchars.length == 2) {
+				try {
+					encode(output, parse!ubyte(hexchars, 16));
+				} catch (ConvException) {
+					throw new CompilerError(location, "bad hex digit.");
+				}
+				hexing = false;
+				hexchars.length = 0;
+			}
+		}
 		if (escaping) {
 			switch (c) {
 				case '\'': encode(output, '\''); break;
@@ -28,6 +58,11 @@ void[] unescape(T)(Location location, const T[] s)
 				case 'r': encode(output, '\r'); break;
 				case 't': encode(output, '\t'); break;
 				case 'v': encode(output, '\v'); break;
+				case 'x':
+					escaping = false;
+					hexing = true;
+					hexchars.length = 0;
+					break;
 				default:
 					throw new CompilerError(location, "bad escape.");
 			}
