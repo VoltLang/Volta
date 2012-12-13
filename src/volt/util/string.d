@@ -37,7 +37,7 @@ void[] unescape(T)(Location location, const T[] s)
 			hexchars ~= c;
 			if (hexchars.length == 2) {
 				try {
-					encode(output, parse!ubyte(hexchars, 16));
+					output ~= parse!ubyte(hexchars, 16);
 				} catch (ConvException) {
 					throw new CompilerError(location, "bad hex digit.");
 				}
