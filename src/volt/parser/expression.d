@@ -269,6 +269,7 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		c.value = primary._string;
 		c.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Char);
 		c.type.location = primary.location;
+		c.arrayData = unescapeString(primary.location, c.value);
 		exp = c;
 		break;
 	case intir.PrimaryExp.Type.FloatLiteral:
