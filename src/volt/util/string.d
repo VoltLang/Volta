@@ -57,6 +57,17 @@ void[] unescape(T)(Location location, const T[] s)
 					throw new CompilerError(location, "bad unicode codepoint specification.");
 				}
 			}
+			if (hexchars.length == 8) {
+				uint i;
+				try {
+					i = parse!uint(hexchars, 16);
+				} catch (ConvException) {
+					throw new CompilerError(location, "bad unicode codepoint specification.");
+				}
+				encode(output, i);
+				unicoding = false;
+				continue;
+			}
 			hexchars ~= c;
 			continue;
 		}
