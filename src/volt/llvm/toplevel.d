@@ -46,7 +46,7 @@ public:
 		auto llvmFunc = state.getFunctionValue(fn, type);
 		auto llvmType = type.llvmType;
 
-		if (fn._body.statements.length > 0) {
+		if (fn._body !is null) {
 			state.currentFall = true;
 			state.currentFunc = llvmFunc;
 			state.currentBlock = LLVMAppendBasicBlock(llvmFunc, "entry");
