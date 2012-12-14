@@ -199,6 +199,10 @@ public:
 			return Continue;
 		}
 
+		if (p.op == ir.Postfix.Op.Identifier) {
+			return Continue;
+		}
+
 		auto np = new ir.Postfix();
 		np.op = ir.Postfix.Op.Identifier;
 		np.child = p.child;
