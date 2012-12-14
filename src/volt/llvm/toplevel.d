@@ -79,10 +79,16 @@ public:
 	override Status enter(ir.Variable var)
 	{
 		Type type;
-		auto v = state.getVariableValue(var, type);
 
 		final switch(var.storage) with (ir.Variable.Storage) {
 		case None:
+			// Variables declared in structs.
+			/// @todo mark members with a special storage type.
+			if (state.currentFunc is null)
+				break;
+
+			auto v = state.getVariableValue(var, type);
+
 			if (var.assign !is null) {
 				auto ret = state.getValue(var.assign);
 				LLVMBuildStore(state.builder, ret, v);
@@ -94,6 +100,8 @@ public:
 		case Local:
 		case Global:
 			LLVMValueRef init;
+			auto v = state.getVariableValue(var, type);
+
 			if (var.assign !is null) {
 				init = state.getConstantValue(var.assign);
 			} else {

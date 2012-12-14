@@ -151,7 +151,9 @@ public:
 
 		final switch(var.storage) with (ir.Variable.Storage) {
 		case None:
-			assert(currentFunc !is null);
+			if (currentFunc is null)
+				throw CompilerPanic(var.location,
+					"non-local/global variable in non-function scope");
 			v = LLVMBuildAlloca(builder, type.llvmType, var.name);
 			break;
 		case Local:
