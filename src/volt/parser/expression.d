@@ -261,7 +261,8 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		c.value = primary._string;
 		c.type = new ir.ArrayType(new ir.PrimitiveType(ir.PrimitiveType.Kind.Char));
 		c.type.location = primary.location;
-		c.arrayData = unescapeString(primary.location, c.value);
+		assert(c.value[$-1] == '"' && c.value.length >= 3);
+		c.arrayData = unescapeString(primary.location, c.value[1 .. $-1]);
 		exp = c;
 		break;
 	case intir.PrimaryExp.Type.CharLiteral:
@@ -269,7 +270,8 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		c.value = primary._string;
 		c.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Char);
 		c.type.location = primary.location;
-		c.arrayData = unescapeString(primary.location, c.value);
+		assert(c.value[$-1] == '\'' && c.value.length >= 3);
+		c.arrayData = unescapeString(primary.location, c.value[1 .. $-1]);
 		exp = c;
 		break;
 	case intir.PrimaryExp.Type.FloatLiteral:
