@@ -85,6 +85,8 @@ public:
 			intCompile();
 		} catch (CompilerPanic e) {
 			stderr.writefln(e.msg);
+			if (e.file !is null)
+				stderr.writefln("%s:%s", e.file, e.line);
 			return 2;
 		} catch (CompilerError e) {
 			stderr.writefln(e.msg);

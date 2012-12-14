@@ -264,7 +264,7 @@ bool lexIdentifier(TokenWriter tw)
 
 	identToken.value = tw.source.sliceFrom(m);
 	if (identToken.value.length == 0) {
-		throw new CompilerPanic(identToken.location, "empty identifier string.");
+		throw CompilerPanic(identToken.location, "empty identifier string.");
 	}
 	if (identToken.value[0] == '@') {
 		auto i = identifierType(identToken.value);

@@ -520,7 +520,7 @@ Visitor.Status accept(ir.Node n, Visitor av)
 	 * Failure fall through.
 	 */
 	default:
-		throw new CompilerPanic(n.location, format("unhandled accept node: %s.", to!string(n.nodeType)));
+		throw CompilerPanic(n.location, format("unhandled accept node: %s.", to!string(n.nodeType)));
 	}
 }
 

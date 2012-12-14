@@ -75,9 +75,32 @@ protected:
 	}
 }
 
+
+
 class CompilerPanic : CompilerError
 {
-public:
+	static CompilerPanic opCall(string message,
+	                            string file = __FILE__,
+	                            int line = __LINE__)
+	{
+		auto c = new CompilerPanic(message);
+		c.file = file;
+		c.line = line;
+		return c;
+	}
+
+	static CompilerPanic opCall(Location loc,
+	                            string message,
+	                            string file = __FILE__,
+	                            int line = __LINE__)
+	{	
+		auto c = new CompilerPanic(loc, message);
+		c.file = file;
+		c.line = line;
+		return c;
+	}
+
+protected:
 	this(string message)
 	{
 		super(message);
@@ -90,7 +113,7 @@ public:
 		neverIgnore = true;
 	}
 
-protected override:
+override:
 	string errorFormat()
 	{
 		return "panic: %s";

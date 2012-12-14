@@ -324,7 +324,7 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 	case intir.PrimaryExp.Type.FunctionLiteral:
 		return primary.functionLiteral;
 	default:
-		throw new CompilerPanic(primary.location, "unhandled primary expression.");
+		throw CompilerPanic(primary.location, "unhandled primary expression.");
 	}
 
 	exp.location = primary.location;

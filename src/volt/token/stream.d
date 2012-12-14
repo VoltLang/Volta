@@ -28,11 +28,11 @@ public:
 	this(Token[] tokens)
 	{
 		if (tokens.length < 3)
-			throw new CompilerPanic("Token stream too short");
+			throw CompilerPanic("Token stream too short");
 		if (tokens[0].type != TokenType.Begin)
-			throw new CompilerPanic("Token stream not started correctly");
+			throw CompilerPanic("Token stream not started correctly");
 		if (tokens[$-1].type != TokenType.End)
-			throw new CompilerPanic("Token stream not terminated correctly");
+			throw CompilerPanic("Token stream not terminated correctly");
 
 		this.mTokens = tokens;
 	}
@@ -151,7 +151,7 @@ public:
 	Token lookbehind(size_t n)
 	{
 		if (n > mIndex)
-			throw new CompilerPanic("Token array access out of bounds");
+			throw CompilerPanic("Token array access out of bounds");
 		return mTokens[mIndex - n];
 	}
 

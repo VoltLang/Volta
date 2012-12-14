@@ -44,7 +44,7 @@ LLVMValueRef getValue(State state, ir.Exp exp)
 LLVMValueRef getConstantValue(State state, ir.Exp exp)
 {
 	void error() {
-		throw new CompilerPanic(exp.location, "Could not get constant from expression");
+		throw CompilerPanic(exp.location, "Could not get constant from expression");
 	}
 
 	if (exp.nodeType == ir.NodeType.Constant)
@@ -90,7 +90,7 @@ void getValueRef(State state, ir.Exp exp, Value result)
 
 	if (result.isPointer)
 		return;
-	throw new CompilerPanic(exp.location, "Value is not a backend reference");
+	throw CompilerPanic(exp.location, "Value is not a backend reference");
 }
 
 /**
@@ -122,7 +122,7 @@ void getValueAnyForm(State state, ir.Exp exp, Value result)
 		break;
 	default:
 		auto str = format("can't getValue from %s", to!string(exp.nodeType));
-		throw new CompilerPanic(exp.location, str);
+		throw CompilerPanic(exp.location, str);
 	}
 }
 
@@ -186,7 +186,7 @@ void handleBoolCompare(State state, ir.BinOp bin, Value result)
 	//	result.value = LLVMBuildXor(state.builder, left.value, right.value, "XorXor");
 	//	break;
 	default:
-		throw new CompilerPanic(bin.location, "error");
+		throw CompilerPanic(bin.location, "error");
 	}
 }
 
@@ -200,7 +200,7 @@ void handleCompare(State state, ir.BinOp bin, Value result)
 
 	auto pt = cast(PrimitiveType)result.type;
 	if (pt is null)
-		throw new CompilerPanic(bin.location, "can only compare primitive types");
+		throw CompilerPanic(bin.location, "can only compare primitive types");
 
 	LLVMIntPredicate pr;
 	switch(bin.op) with (ir.BinOp.Type) {
@@ -235,7 +235,7 @@ void handleCompare(State state, ir.BinOp bin, Value result)
 			pr = LLVMIntPredicate.UGT;
 		break;
 	default:
-		throw new CompilerPanic(bin.location, "error");
+		throw CompilerPanic(bin.location, "error");
 	}
 
 	/// @todo Turn this into a singleton on the state.
@@ -252,9 +252,9 @@ void handleBinOpPointer(State state, ir.BinOp bin,
 	auto ptrType = cast(PointerType)ptr.type;
 	auto pt = cast(PrimitiveType)other.type;
 	if (pt is null)
-		throw new CompilerPanic("Can only do pointer math with non-pointer");
+		throw CompilerPanic("Can only do pointer math with non-pointer");
 	if (pt.floating)
-		throw new CompilerPanic("Can't do pointer math with floating value");
+		throw CompilerPanic("Can't do pointer math with floating value");
 
 	result.type = ptr.type;
 	result.value = LLVMBuildGEP(state.builder, ptr.value, [other.value], "gep");
@@ -280,7 +280,7 @@ void handleBinOpFallthrough(State state, ir.BinOp bin, Value result)
 
 	auto pt = cast(PrimitiveType)result.type;
 	if (pt is null)
-		throw new CompilerPanic(bin.location, "Can only binop on primitive types");
+		throw CompilerPanic(bin.location, "Can only binop on primitive types");
 
 	LLVMOpcode op;
 	switch(bin.op) with (ir.BinOp.Type) {
@@ -322,7 +322,7 @@ void handleBinOpFallthrough(State state, ir.BinOp bin, Value result)
 		op = LLVMOpcode.LShr;
 		break;
 	default:
-		throw new CompilerPanic(bin.location, "Unhandled BinOp type");
+		throw CompilerPanic(bin.location, "Unhandled BinOp type");
 	}
 
 	result.value = LLVMBuildBinOp(state.builder, op, left.value, right.value, "binOp");
@@ -342,7 +342,7 @@ void handleUnary(State state, ir.Unary unary, Value result)
 		break;
 	default:
 		auto str = format("unhandled Unary op %s", to!string(unary.op));
-		throw new CompilerPanic(unary.location, str);
+		throw CompilerPanic(unary.location, str);
 	}
 }
 
@@ -373,7 +373,7 @@ void handleCast(State state, ir.Unary cst, Value result)
 	    oldTypePtr !is null)
 		return handleCastPointer(state, cst, result, newTypePtr, oldTypePtr);
 
-	throw new CompilerPanic("Can not handled casts");
+	throw CompilerPanic("Can not handled casts");
 }
 
 /**
@@ -384,7 +384,7 @@ void handleCastPrimitive(State state, ir.Unary cst, Value result,
 {
 	void error() {
 		string str = "invalid cast";
-		throw new CompilerPanic(cst.location, str);
+		throw CompilerPanic(cst.location, str);
 	}
 
 	result.type = newType;
@@ -507,7 +507,7 @@ void handlePostfix(State state, ir.Postfix postfix, Value result)
 		break;
 	default:
 		auto str = format("unhandled postfix op %s", to!string(postfix.op));
-		throw new CompilerPanic(postfix.location, str);
+		throw CompilerPanic(postfix.location, str);
 	}
 }
 
@@ -523,10 +523,10 @@ void handlePostId(State state, ir.Postfix postfix, Value result)
 	if (st is null) {
 		auto pt = cast(PointerType)result.type;
 		if (pt is null)
-			throw new CompilerPanic(postfix.child.location, "is not pointer or struct");
+			throw CompilerPanic(postfix.child.location, "is not pointer or struct");
 		st = cast(StructType)pt.base;
 		if (st is null)
-			throw new CompilerPanic(postfix.child.location, "pointed to value is not a struct");
+			throw CompilerPanic(postfix.child.location, "pointed to value is not a struct");
 
 		// The pointer was a reference, deref it.
 		if (result.isPointer)
@@ -535,7 +535,7 @@ void handlePostId(State state, ir.Postfix postfix, Value result)
 			v = result.value;
 	} else {
 		if (!result.isPointer)
-			throw new CompilerPanic(postfix.location, "can only access structs on pointers");
+			throw CompilerPanic(postfix.location, "can only access structs on pointers");
 		v = result.value;
 	}
 
@@ -635,7 +635,7 @@ void handleExpReference(State state, ir.ExpReference expRef, Value result)
 		result.value = state.getVariableValue(var, result.type);
 		break;
 	default:
-		throw new CompilerPanic(expRef.location, "invalid decl type");
+		throw CompilerPanic(expRef.location, "invalid decl type");
 	}
 }
 

@@ -37,7 +37,7 @@ protected:
 public:
 	LLVMValueRef fromConstant(ir.Constant cnst)
 	{
-		throw new CompilerPanic(cnst.location, "Can't from constant");
+		throw CompilerPanic(cnst.location, "Can't from constant");
 	}
 }
 
@@ -114,9 +114,9 @@ public:
 			llvmType = LLVMDoubleType();
 			break;
 		case Real:
-			throw new CompilerPanic(pt.location, "PrmitiveType.Real not handled");
+			throw CompilerPanic(pt.location, "PrmitiveType.Real not handled");
 		case Void:
-			throw new CompilerPanic(pt.location, "PrmitiveType.Void not handled");
+			throw CompilerPanic(pt.location, "PrmitiveType.Void not handled");
 		}
 
 		super(pt, llvmType);
@@ -125,7 +125,7 @@ public:
 	override LLVMValueRef fromConstant(ir.Constant cnst)
 	{
 		if (floating)
-			throw new CompilerPanic(cnst.location, "Can not handle float literals");
+			throw CompilerPanic(cnst.location, "Can not handle float literals");
 
 		long val;
 		if (boolean) {
@@ -273,7 +273,7 @@ Type uncachedFromIr(State state, ir.Type irType)
 	case Struct:
 		return state.structTypeFromIr(cast(ir.Struct)irType);
 	default:
-		throw new CompilerPanic(irType.location, "Can't translate type");
+		throw CompilerPanic(irType.location, "Can't translate type");
 	}
 }
 

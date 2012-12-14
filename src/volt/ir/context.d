@@ -281,6 +281,6 @@ private:
 	void errorDefined(Node n, string name)
 	{
 		auto str = format("\"%s\" already defined", name);
-		throw new CompilerPanic(n.location, str);
+		throw CompilerPanic(n.location, str);
 	}
 }

@@ -72,7 +72,7 @@ Visitor.Status acceptExp(ref ir.Exp exp, ExpReplaceVisitor av)
 		auto asFunctionLiteral = cast(ir.FunctionLiteral)exp;
 		return acceptFunctionLiteral(exp, asFunctionLiteral, av);
 	default:
-		throw new CompilerPanic(exp.location, format("unhandled accept node: %s.", to!string(exp.nodeType)));
+		throw CompilerPanic(exp.location, format("unhandled accept node: %s.", to!string(exp.nodeType)));
 	}
 }
 

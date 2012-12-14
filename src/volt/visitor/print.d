@@ -736,7 +736,7 @@ public:
 				}
 				wfln(":");
 			} else {
-				throw new CompilerPanic(sc.location, "unknown case type passed to PrintVisitor.");
+				throw CompilerPanic(sc.location, "unknown case type passed to PrintVisitor.");
 			}
 		}
 		mIndent++;
@@ -807,7 +807,7 @@ public:
 				accept(gs.exp, this);
 			}
 		} else {
-			throw new CompilerPanic(gs.location, "malformed goto statement made it to PrintVisitor.");
+			throw CompilerPanic(gs.location, "malformed goto statement made it to PrintVisitor.");
 		}
 		wfln(";");
 
@@ -1503,7 +1503,7 @@ public:
 				accept(postfix.arguments[1], this);
 				break;
 			default:
-				throw new CompilerPanic(postfix.location, "bad slice.");
+				throw CompilerPanic(postfix.location, "bad slice.");
 			}
 			wf("]");
 			break;
@@ -1518,7 +1518,7 @@ public:
 			wf(")");
 			break;
 		default:
-			throw new CompilerPanic(postfix.location, "tried to print bad postfix expression.");
+			throw CompilerPanic(postfix.location, "tried to print bad postfix expression.");
 		}
 
 		return ContinueParent;

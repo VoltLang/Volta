@@ -314,7 +314,7 @@ public:
 		assert(state.currentContinueBlock !is null);
 
 		if (cs.label !is null)
-			throw new CompilerPanic(cs.location, "labled continue statements not supported");
+			throw CompilerPanic(cs.location, "labled continue statements not supported");
 
 		LLVMBuildBr(state.builder, state.currentContinueBlock);
 		state.currentFall = false;
@@ -327,7 +327,7 @@ public:
 		assert(state.currentBreakBlock !is null);
 
 		if (bs.label !is null)
-			throw new CompilerPanic(bs.location, "labled break statements not supported");
+			throw CompilerPanic(bs.location, "labled break statements not supported");
 
 		LLVMBuildBr(state.builder, state.currentBreakBlock);
 		state.currentFall = false;

@@ -106,7 +106,7 @@ public:
 		    source.length >= 2 && source[0 .. 2] == cast(string)[0xFF, 0xFE] ||
 		    source.length >= 4 && source[0 .. 4] == cast(string)[0x00, 0x00, 0xFE, 0xFF] ||
 		    source.length >= 4 && source[0 .. 4] == cast(string)[0xFF, 0xFE, 0x00, 0x00]) {
-			throw new CompilerPanic("only UTF-8 input is supported.");
+			throw CompilerPanic("only UTF-8 input is supported.");
 		}
 
 		if (source.length >= 3 && source[0 .. 3] == cast(string)[0xEF, 0xBB, 0xBF]) {
@@ -253,7 +253,7 @@ public:
 	void sync(Source src)
 	{
 		if (src.source !is this.source) {
-			throw new CompilerPanic(
+			throw CompilerPanic(
 				"attempted to sync different sources");
 		}
 		this.location = src.location;

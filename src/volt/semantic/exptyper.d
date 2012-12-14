@@ -269,7 +269,7 @@ public:
 		} else if (store.kind == ir.Store.Kind.Function) {
 			return subTypes[asPostfix] = store.functions[$-1].type;  // !!!
 		} else {
-			throw new CompilerPanic(asPostfix.location, "unhandled postfix type retrieval.");
+			throw CompilerPanic(asPostfix.location, "unhandled postfix type retrieval.");
 		}
 	}
 
@@ -317,7 +317,7 @@ public:
 			array = cast(ir.ArrayType) t;
 			assert(array !is null);
 		} else {
-			throw new CompilerPanic(asPostfix.location, "don't know how to index non pointers or non arrays.");
+			throw CompilerPanic(asPostfix.location, "don't know how to index non pointers or non arrays.");
 		}
 		assert((pointer !is null && array is null) || (array !is null && pointer is null));
 
@@ -582,7 +582,7 @@ public:
 		auto rp = cast(ir.ArrayType) evaluate(src);
 
 		if (lp is null || rp is null) {
-			throw new CompilerPanic(exp.location, "extypeArrayAssign called with non-array types.");
+			throw CompilerPanic(exp.location, "extypeArrayAssign called with non-array types.");
 		}
 
 		if (typesEqual(lp, rp)) {
@@ -607,7 +607,7 @@ public:
 		auto rp = cast(ir.PointerType) evaluate(src);
 
 		if (lp is null || rp is null) {
-			throw new CompilerPanic(exp.location, "extypePointerAssign called with non-pointer types.");
+			throw CompilerPanic(exp.location, "extypePointerAssign called with non-pointer types.");
 		}
 
 		if (typesEqual(lp, rp)) {

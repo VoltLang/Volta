@@ -87,7 +87,7 @@ public:
 		auto failed = LLVMVerifyModule(mod, result);
 		if (failed) {
 			writefln(result);
-			throw new CompilerPanic("Module verification failed.");
+			throw CompilerPanic("Module verification failed.");
 		}
 
 		LLVMWriteBitcodeToFile(mod, mFilename);
