@@ -37,6 +37,7 @@ public abstract:
 
 	Visitor.Status visit(ref ir.Exp, ir.Constant);
 	Visitor.Status visit(ref ir.Exp, ir.IdentifierExp);
+	Visitor.Status visit(ref ir.Exp, ir.ExpReference);
 }
 
 
@@ -71,9 +72,18 @@ Visitor.Status acceptExp(ref ir.Exp exp, ExpReplaceVisitor av)
 	case FunctionLiteral:
 		auto asFunctionLiteral = cast(ir.FunctionLiteral)exp;
 		return acceptFunctionLiteral(exp, asFunctionLiteral, av);
+	case ExpReference:
+		auto asExpRef = cast(ir.ExpReference) exp;
+		assert(asExpRef !is null);
+		return acceptExpReference(exp, asExpRef, av);
 	default:
 		throw CompilerPanic(exp.location, format("unhandled accept node: %s.", to!string(exp.nodeType)));
 	}
+}
+
+Visitor.Status acceptExpReference(ref ir.Exp exp, ir.ExpReference expref, ExpReplaceVisitor av)
+{
+	return av.visit(exp, expref);
 }
 
 Visitor.Status acceptPostfix(ref ir.Exp exp, ir.Postfix postfix, ExpReplaceVisitor av)

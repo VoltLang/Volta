@@ -248,6 +248,8 @@ public:
 		return Continue; 
 	}
 
+	override Status visit(ref ir.Exp e, ir.ExpReference expref) { return Continue; }
+
 	override Status leave(ref ir.Exp, ir.Postfix) { return Continue; }
 	override Status enter(ref ir.Exp, ir.Unary) { return Continue; }
 	override Status leave(ref ir.Exp, ir.Unary) { return Continue; }

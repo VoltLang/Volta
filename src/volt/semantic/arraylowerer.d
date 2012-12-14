@@ -257,4 +257,5 @@ public:
 	}
 
 	Status visit(ref ir.Exp, ir.IdentifierExp) { return Continue; }
+	Status visit(ref ir.Exp, ir.ExpReference) { return Continue; }
 }
