@@ -48,7 +48,7 @@ public:
 		this.more = more;
 		this.location = loc;
 		this.hasLocation = true;
-		super(format(errorFormat(), message));
+		super(format(locationFormat(), loc.toString(), message));
 	}
 
 protected:
