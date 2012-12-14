@@ -10,11 +10,9 @@ import volt.token.location;
 
 
 /**
- * Exception for compiler error messages arising from source code.
- *
- * Is subclassed by more specialized error messages.
+ * Base class for compiler exceptions.
  */
-class CompilerError : Exception
+abstract class CompilerException : Exception
 {
 public:
 	Location location;
@@ -38,29 +36,19 @@ public:
 	string fixHint; // Optional
 
 public:
-	this(string message)
+	this(string message, CompilerError more, bool neverIgnore)
 	{
+		this.more = more;
+		this.neverIgnore = neverIgnore;
 		super(format(errorFormat(), message));
 	}
 
-	this(string message, CompilerError more)
+	this(Location loc, string message, CompilerError more, bool neverIgnore)
 	{
 		this.more = more;
-		this(message);
-	}
-
-	this(Location loc, string message, bool neverIgnore = false)
-	{
-		super(format(locationFormat(), loc.toString(), message));
-		location = loc;
-		hasLocation = true;
-		this.neverIgnore = neverIgnore;
-	}
-
-	this(Location loc, string message, CompilerError more)
-	{
-		this.more = more;
-		this(loc, message);
+		this.location = loc;
+		this.hasLocation = true;
+		super(format(errorFormat(), message));
 	}
 
 protected:
@@ -75,53 +63,26 @@ protected:
 	}
 }
 
-
-
-class CompilerPanic : CompilerError
+/**
+ * Exception for compiler error messages arising from source code.
+ *
+ * Is subclassed by more specialized error messages.
+ */
+class CompilerError : CompilerException
 {
-	static CompilerPanic opCall(string message,
-	                            string file = __FILE__,
-	                            int line = __LINE__)
+	this(string message, CompilerError more = null)
 	{
-		auto c = new CompilerPanic(message);
-		c.file = file;
-		c.line = line;
-		return c;
+		super(message, more, false);
 	}
 
-	static CompilerPanic opCall(Location loc,
-	                            string message,
-	                            string file = __FILE__,
-	                            int line = __LINE__)
-	{	
-		auto c = new CompilerPanic(loc, message);
-		c.file = file;
-		c.line = line;
-		return c;
+	this(Location loc, string message, bool neverIgnore)
+	{
+		super(loc, message, null, neverIgnore);
 	}
 
-protected:
-	this(string message)
+	this(Location loc, string message, CompilerError more = null)
 	{
-		super(message);
-		neverIgnore = true;
-	}
-
-	this(Location loc, string message)
-	{
-		super(loc, message);
-		neverIgnore = true;
-	}
-
-override:
-	string errorFormat()
-	{
-		return "panic: %s";
-	}
-
-	string locationFormat()
-	{
-		return "%s: panic: %s";
+		super(loc, message, more, false);
 	}
 }
 
@@ -172,6 +133,55 @@ public:
 	{
 		this.argNumber = argNumber;
 		super(loc, message);
+	}
+}
+
+/**
+ * Aka Internal Compiler Error, aka ICE, aka CompilerPanic.
+ */
+class CompilerPanic : CompilerException
+{
+	static CompilerPanic opCall(string message,
+	                            string file = __FILE__,
+	                            int line = __LINE__)
+	{
+		auto c = new CompilerPanic(message);
+		c.file = file;
+		c.line = line;
+		return c;
+	}
+
+	static CompilerPanic opCall(Location loc,
+	                            string message,
+	                            string file = __FILE__,
+	                            int line = __LINE__)
+	{
+		auto c = new CompilerPanic(loc, message);
+		c.file = file;
+		c.line = line;
+		return c;
+	}
+
+protected:
+	this(string message)
+	{
+		super(message, null, true);
+	}
+
+	this(Location loc, string message)
+	{
+		super(loc, message, null, true);
+	}
+
+override:
+	string errorFormat()
+	{
+		return "panic: %s";
+	}
+
+	string locationFormat()
+	{
+		return "%s: panic: %s";
 	}
 }
 
