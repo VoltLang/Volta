@@ -74,6 +74,7 @@ void main(string[] args)
 	if (true) {
 		listDir("simple", "*test_*.d", &addTest);
 		listDir("imports", "*test_*.d", &addTest);
+		listDir("aggregate", "*test_*.d", &addTest);
 	}
 	sort(tests);
 
