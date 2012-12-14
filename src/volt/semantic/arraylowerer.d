@@ -137,6 +137,14 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.FunctionType t)
+	{
+		foreach (param; t.params) {
+			accept(param, this);
+		}
+		return Continue;
+	}
+
 	/** 
 	 * Replace when we leave, in case this is the first time
 	 * we've seen the ArrayType.
