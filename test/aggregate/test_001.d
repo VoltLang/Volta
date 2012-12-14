@@ -1,6 +1,5 @@
 //T compiles:yes
 //T retval:0
-//T has-passed:no
 // Basic struct read test.
 module test_001;
 
