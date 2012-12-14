@@ -183,8 +183,14 @@ bool typesEqual(ir.Type a, ir.Type b)
 		auto bp = cast(ir.ArrayType) b;
 		assert(ap !is null && bp !is null);
 		return typesEqual(ap.base, ap.base);
+	} else if (a.nodeType == ir.NodeType.TypeReference &&
+			   b.nodeType == ir.NodeType.TypeReference) {
+		auto ap = cast(ir.TypeReference) a;
+		auto bp = cast(ir.TypeReference) b;
+		assert(ap !is null && bp !is null);
+		return ap.names == bp.names;
 	} else {
-		return false;
+		return a is b;
 	}
 }
 
@@ -418,6 +424,8 @@ public:
 	ir.Node extype(ir.Type left, ref ir.Exp right)
 	{
 		ir.Node t = evaluate(right);
+		string emsg = format("cannot implicitly convert '%s' to '%s'.", to!string(left.nodeType), to!string(t.nodeType));
+
 		if (left.nodeType == ir.NodeType.PrimitiveType &&
 			t.nodeType == ir.NodeType.PrimitiveType) {
 
@@ -428,9 +436,18 @@ public:
 		} else if (left.nodeType == ir.NodeType.ArrayType &&
 				   t.nodeType == ir.NodeType.ArrayType) {
 			return extypeArrayAssign(right, left, right);
+		} else if (left.nodeType == ir.NodeType.TypeReference &&
+				   t.nodeType == ir.NodeType.TypeReference) {
+			auto asUser = cast(ir.TypeReference) t;
+			assert(asUser !is null);
+			if (!typesEqual(left, asUser)) {
+				import std.stdio;
+				writefln("%s %s", left.mangledName, asUser.mangledName);
+				throw new CompilerError(right.location, emsg);
+			}
+			return left;
 		} else {
-			throw new CompilerError(right.location, 
-									format("cannot implicitly convert '%s' to '%s'.", to!string(left.nodeType), to!string(t.nodeType)));
+			throw new CompilerError(right.location, emsg);
 		}
 	}
 
