@@ -609,7 +609,7 @@ void handleIncDec(State state, ir.Postfix postfix, Value result)
 		store = LLVMBuildGEP(state.builder, value, [c], "postfixGep");
 	} else if (primType) {
 		auto op = isInc ? LLVMOpcode.Add : LLVMOpcode.Sub;
-		auto c = primType.fromNumber(1);
+		auto c = primType.fromNumber(state, 1);
 		store = LLVMBuildBinOp(state.builder, op, value, c, "postfixBinOp");
 	} else {
 
@@ -648,5 +648,5 @@ void handleConstant(State state, ir.Constant cnst, Value result)
 	// is checked for in the called functions.
 
 	result.type = state.fromIr(cnst.type);
-	result.value = result.type.fromConstant(cnst);
+	result.value = result.type.fromConstant(state, cnst);
 }

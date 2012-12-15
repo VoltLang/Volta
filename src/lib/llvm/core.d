@@ -19,6 +19,9 @@ alias lib.llvm.c.Core.LLVMFunctionType LLVMFunctionType;
 alias lib.llvm.c.Core.LLVMStructCreateNamed LLVMStructCreateNamed;
 alias lib.llvm.c.Core.LLVMGetStructName LLVMGetStructNamez;
 alias lib.llvm.c.Core.LLVMStructSetBody LLVMStructSetBody;
+alias lib.llvm.c.Core.LLVMConstNamedStruct LLVMConstNamedStruct;
+alias lib.llvm.c.Core.LLVMConstStringInContext LLVMConstStringInContext;
+alias lib.llvm.c.Core.LLVMConstInBoundsGEP LLVMConstInBoundsGEP;
 alias lib.llvm.c.Core.LLVMAddFunction LLVMAddFunction;
 alias lib.llvm.c.Core.LLVMBuildCall LLVMBuildCall;
 alias lib.llvm.c.Core.LLVMBuildAlloca LLVMBuildAlloca;
@@ -46,6 +49,13 @@ LLVMTypeRef LLVMStructCreateNamed(LLVMContextRef c, string name)
 	return lib.llvm.c.Core.LLVMStructCreateNamed(c, ptr);
 }
 
+LLVMValueRef LLVMConstNamedStruct(LLVMTypeRef structType,
+                                  LLVMValueRef[] constantVals)
+{
+	return lib.llvm.c.Core.LLVMConstNamedStruct(
+		structType, constantVals.ptr, cast(uint)constantVals.length);
+}
+
 string LLVMGetStructName(LLVMTypeRef t)
 {
 	return to!string(lib.llvm.c.Core.LLVMGetStructName(t));
@@ -56,12 +66,25 @@ void LLVMStructSetBody(LLVMTypeRef t, LLVMTypeRef[] types, LLVMBool packed)
 	lib.llvm.c.Core.LLVMStructSetBody(t, types.ptr, cast(uint)types.length, packed);
 }
 
+LLVMValueRef LLVMConstStringInContext(LLVMContextRef c, const(char)[] str, bool nullTerminate)
+{
+	return lib.llvm.c.Core.LLVMConstStringInContext(
+		c, str.ptr, cast(uint)str.length, nullTerminate);
+}
+
+LLVMValueRef LLVMConstInBoundsGEP(LLVMValueRef val, LLVMValueRef[] indices)
+{
+	return lib.llvm.c.Core.LLVMConstInBoundsGEP(
+		val, indices.ptr, cast(uint)indices.length);
+}
+
 LLVMValueRef LLVMAddFunction(LLVMModuleRef mod, string name, LLVMTypeRef type)
 {
 	char[1024] stack;
 	auto ptr = nullTerminate(stack, name);
 	return lib.llvm.c.Core.LLVMAddFunction(mod, ptr, type);
 }
+
 
 LLVMValueRef LLVMBuildCall(LLVMBuilderRef b, LLVMValueRef func,
                            LLVMValueRef[] args)

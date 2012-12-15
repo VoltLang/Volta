@@ -35,7 +35,7 @@ protected:
 
 
 public:
-	LLVMValueRef fromConstant(ir.Constant cnst)
+	LLVMValueRef fromConstant(State state, ir.Constant cnst)
 	{
 		throw CompilerPanic(cnst.location, "Can't from constant");
 	}
@@ -122,7 +122,7 @@ public:
 		super(pt, llvmType);
 	}
 
-	override LLVMValueRef fromConstant(ir.Constant cnst)
+	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
 	{
 		if (floating)
 			throw CompilerPanic(cnst.location, "Can not handle float literals");
@@ -143,7 +143,7 @@ public:
 		return LLVMConstInt(llvmType, val, signed);
 	}
 
-	LLVMValueRef fromNumber(long val)
+	LLVMValueRef fromNumber(State state, long val)
 	{
 		return LLVMConstInt(llvmType, val, signed);
 	}
@@ -227,6 +227,36 @@ class StructType : Type
 		LLVMStructSetBody(llvmType, mt, false);
 
 		super(irType, llvmType);
+	}
+
+	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
+	{
+		auto ptrIndex = indecies["ptr"];
+		auto lengthIndex = indecies["length"];
+
+		if (ptrIndex > 1 || lengthIndex > 1 || indecies.length > 2)
+			throw CompilerPanic(cnst.location, "constant can't be turned into array struct");
+
+
+		auto ptrType = cast(PointerType)types[ptrIndex];
+		auto lengthType = cast(PrimitiveType)types[lengthIndex];
+
+		auto strConst = LLVMConstStringInContext(state.context, cast(char[])cnst.arrayData, true);
+		auto strGlobal = LLVMAddGlobal(state.mod, LLVMTypeOf(strConst), "__arrayLiteral");
+		LLVMSetGlobalConstant(strGlobal, true);
+		LLVMSetInitializer(strGlobal, strConst);
+
+		LLVMValueRef[2] ind;
+		ind[0] = LLVMConstNull(lengthType.llvmType);
+		ind[1] = LLVMConstNull(lengthType.llvmType);
+
+		auto strGep = LLVMConstInBoundsGEP(strGlobal, ind);
+
+		LLVMValueRef[2] vals;
+		vals[lengthIndex] = lengthType.fromNumber(state, cast(long)cnst.arrayData.length);
+		vals[ptrIndex] = strGep;
+
+		return LLVMConstNamedStruct(llvmType, vals);
 	}
 }
 
