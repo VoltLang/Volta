@@ -199,7 +199,7 @@ public:
  */
 class StructType : Type
 {
-	uint[string] indecies;
+	uint[string] indices;
 	Type[] types;
 
 	this(State state, ir.Struct irType)
@@ -216,7 +216,7 @@ class StructType : Type
 			/// @todo handle anon types.
 			assert(var.name !is null);
 
-			indecies[var.name] = index++;
+			indices[var.name] = index++;
 			auto t = state.fromIr(var.type);
 			mt ~= t.llvmType;
 			types ~= t;
@@ -231,10 +231,10 @@ class StructType : Type
 
 	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
 	{
-		auto ptrIndex = indecies["ptr"];
-		auto lengthIndex = indecies["length"];
+		auto ptrIndex = indices["ptr"];
+		auto lengthIndex = indices["length"];
 
-		if (ptrIndex > 1 || lengthIndex > 1 || indecies.length > 2)
+		if (ptrIndex > 1 || lengthIndex > 1 || indices.length > 2)
 			throw CompilerPanic(cnst.location, "constant can't be turned into array struct");
 
 

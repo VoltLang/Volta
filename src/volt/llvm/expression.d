@@ -539,7 +539,7 @@ void handlePostId(State state, ir.Postfix postfix, Value result)
 		v = result.value;
 	}
 
-	index = st.indecies[postfix.identifier.value];
+	index = st.indices[postfix.identifier.value];
 	v = LLVMBuildStructGEP(b, v, index, "structGep");
 
 	result.isPointer = true;
