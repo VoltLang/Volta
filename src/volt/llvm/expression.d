@@ -4,6 +4,7 @@ module volt.llvm.expression;
 
 import lib.llvm.core;
 
+import volt.token.location : Location;
 import volt.exceptions;
 import volt.llvm.state;
 import volt.llvm.type;
@@ -151,7 +152,7 @@ void handleBinOp(State state, ir.BinOp bin, Value result)
 		handleCompare(state, bin, result);
 		break;
 	default:
-		handleBinOpFallthrough(state, bin, result);
+		handleBinOpNonAssign(state, bin, result);
 	}
 }
 
@@ -249,47 +250,67 @@ void handleCompare(State state, ir.BinOp bin, Value result)
 	result.value = LLVMBuildICmp(state.builder, pr, left.value, right.value, "icmp");
 }
 
-void handleBinOpPointer(State state, ir.BinOp bin,
-                        Value ptr, Value other, Value result)
+void handleBinOpNonAssign(State state, ir.BinOp bin, Value result)
 {
-	auto ptrType = cast(PointerType)ptr.type;
-	auto pt = cast(PrimitiveType)other.type;
+	Value left = new Value();
+	Value right = result;
 
-	if (ptrType is null)
-		throw CompilerPanic("left value must be of pointer type");
-	if (pt is null)
-		throw CompilerPanic("Can only do pointer math with non-pointer");
-	if (pt.floating)
-		throw CompilerPanic("Can't do pointer math with floating value");
+	state.getValueAnyForm(bin.left, left);
+	state.getValueAnyForm(bin.right, right);
 
-	result.type = ptr.type;
-	result.value = LLVMBuildGEP(state.builder, ptr.value, [other.value], "gep");
+	handleBinOpNonAssign(state, bin.location, bin.op,
+	                       left, right, result);
 }
 
-void handleBinOpFallthrough(State state, ir.BinOp bin, Value result)
+void handleBinOpNonAssign(State state, Location loc, ir.BinOp.Type binOp,
+                          Value left, Value right, Value result)
 {
-	Value left = result;
-	Value right = new Value();
-
-	state.getValue(bin.left, left);
-	state.getValue(bin.right, right);
+	makeNonPointer(state, left);
+	makeNonPointer(state, right);
 
 	// Check for pointer math.
 	auto ptrType = cast(PointerType)left.type;
 	if (ptrType !is null)
-		return handleBinOpPointer(state, bin, left, right, result);
+		return handleBinOpPointer(state, loc, binOp, left, right, result);
 
 	// Note the flipping of args.
 	ptrType = cast(PointerType)right.type;
 	if (ptrType !is null)
-		return handleBinOpPointer(state, bin, right, left, result);
+		return handleBinOpPointer(state, loc, binOp, right, left, result);
 
-	auto pt = cast(PrimitiveType)result.type;
+	auto pt = cast(PrimitiveType)right.type;
 	if (pt is null)
-		throw CompilerPanic(bin.location, "Can only binop on primitive types");
+		throw CompilerPanic(loc, "can only binop on primitive types");
 
+	handleBinOpPrimitive(state, loc, binOp, pt, left, right, result);
+}
+
+void handleBinOpPointer(State state, Location loc, ir.BinOp.Type binOp,
+                        Value ptr, Value other, Value result)
+{
+	auto ptrType = cast(PointerType)ptr.type;
+	auto primType = cast(PrimitiveType)other.type;
+
+	if (ptrType is null)
+		throw CompilerPanic(loc, "left value must be of pointer type");
+	if (primType is null)
+		throw CompilerPanic(loc, "can only do pointer math with non-pointer");
+	if (primType.floating)
+		throw CompilerPanic(loc, "can't do pointer math with floating value");
+	if (binOp != ir.BinOp.Type.Add)
+		throw CompilerPanic(loc, "can only add to pointers");
+
+	// Either ptr or other could be result, keep that in mind.
+	result.type = ptr.type;
+	result.value = LLVMBuildGEP(state.builder, ptr.value, [other.value], "gep");
+}
+
+void handleBinOpPrimitive(State state, Location loc, ir.BinOp.Type binOp,
+                          PrimitiveType pt,
+	                      Value left, Value right, Value result)
+{
 	LLVMOpcode op;
-	switch(bin.op) with (ir.BinOp.Type) {
+	switch(binOp) with (ir.BinOp.Type) {
 	case Add:
 		op = pt.floating ? LLVMOpcode.FAdd : LLVMOpcode.Add;
 		break;
@@ -328,9 +349,11 @@ void handleBinOpFallthrough(State state, ir.BinOp bin, Value result)
 		op = LLVMOpcode.LShr;
 		break;
 	default:
-		throw CompilerPanic(bin.location, "Unhandled BinOp type");
+		throw CompilerPanic(loc, "unhandled BinOp type");
 	}
 
+	// Either right or left could be result, keep that in mind.
+	result.type = right.type;
 	result.value = LLVMBuildBinOp(state.builder, op, left.value, right.value, "binOp");
 }
 
