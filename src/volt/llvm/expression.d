@@ -74,10 +74,7 @@ LLVMValueRef getConstantValue(State state, ir.Exp exp)
 void getValue(State state, ir.Exp exp, Value result)
 {
 	state.getValueAnyForm(exp, result);
-
-	if (result.isPointer)
-		result.value = LLVMBuildLoad(state.builder, result.value, "load");
-	result.isPointer = false;
+	makeNonPointer(state, result);
 }
 
 /**
@@ -528,11 +525,9 @@ void handlePostId(State state, ir.Postfix postfix, Value result)
 		if (st is null)
 			throw CompilerPanic(postfix.child.location, "pointed to value is not a struct");
 
-		// The pointer was a reference, deref it.
-		if (result.isPointer)
-			v = LLVMBuildLoad(state.builder, v, "load");
-		else
-			v = result.value;
+		// We are looking at a pointer, make sure to load it.
+		makeNonPointer(state, result);
+		v = result.value;
 	} else {
 		if (!result.isPointer)
 			throw CompilerPanic(postfix.location, "can only access structs on pointers");
@@ -649,4 +644,16 @@ void handleConstant(State state, ir.Constant cnst, Value result)
 
 	result.type = state.fromIr(cnst.type);
 	result.value = result.type.fromConstant(state, cnst);
+}
+
+/**
+ * If the given value isPointer is set build a load function.
+ */
+void makeNonPointer(State state, Value result)
+{
+	if (!result.isPointer)
+		return;
+
+	result.value = LLVMBuildLoad(state.builder, result.value, "load");
+	result.isPointer = false;
 }
