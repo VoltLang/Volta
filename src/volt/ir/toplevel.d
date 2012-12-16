@@ -88,6 +88,13 @@ public:
 	this() { super(NodeType.Module); }
 }
 
+/**
+ * A TopLevelBlock contains a series of nodes, appropriate
+ * for things like modules, classes, structs, and so on.
+ *
+ * This allows visitors to handle such things uniformly when
+ * needed.
+ */
 class TopLevelBlock : Node
 {
 public:
