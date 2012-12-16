@@ -71,19 +71,19 @@ public:
 		auto ptype = new ir.PointerType(t);
 		auto ltype = settings.getSizeT();
 
-		s.myScope.addValue(ltype, "length");
 		auto lengthVar = new ir.Variable();
 		lengthVar.location = s.location;
 		lengthVar.type = ltype;
 		lengthVar.name = "length";
 		s.members.nodes ~= lengthVar;
+		s.myScope.addValue(lengthVar, "length");
 
-		s.myScope.addValue(ptype, "ptr");
 		auto ptrVar = new ir.Variable();
 		ptrVar.location = s.location;
 		ptrVar.type = ptype;
 		ptrVar.name = "ptr";
 		s.members.nodes ~= ptrVar;
+		s.myScope.addValue(ptrVar, "ptr");
 
 		s.name = name;
 		s.mangledName = name;
