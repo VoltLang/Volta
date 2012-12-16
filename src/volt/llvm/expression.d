@@ -123,8 +123,12 @@ void getValueAnyForm(State state, ir.Exp exp, Value result)
 	}
 }
 
-
 private:
+/*
+ *
+ * BinOp functions.
+ *
+ */
 
 
 void handleBinOp(State state, ir.BinOp bin, Value result)
@@ -172,6 +176,7 @@ void handleBoolCompare(State state, ir.BinOp bin, Value result)
 	state.getValue(bin.left, left);
 	state.getValue(bin.right, right);
 
+	// The frontend should have made sure that both are bools.
 	switch(bin.op) with (ir.BinOp.Type) {
 	case AndAnd:
 		result.value = LLVMBuildAnd(state.builder, left.value, right.value, "AndAnd");
@@ -239,6 +244,7 @@ void handleCompare(State state, ir.BinOp bin, Value result)
 	auto irPt = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
 	irPt.location = bin.location;
 	irPt.mangledName = volt.semantic.mangle.mangle(null, irPt);
+
 	result.type = state.fromIr(irPt);
 	result.value = LLVMBuildICmp(state.builder, pr, left.value, right.value, "icmp");
 }
@@ -248,6 +254,9 @@ void handleBinOpPointer(State state, ir.BinOp bin,
 {
 	auto ptrType = cast(PointerType)ptr.type;
 	auto pt = cast(PrimitiveType)other.type;
+
+	if (ptrType is null)
+		throw CompilerPanic("left value must be of pointer type");
 	if (pt is null)
 		throw CompilerPanic("Can only do pointer math with non-pointer");
 	if (pt.floating)
@@ -325,6 +334,14 @@ void handleBinOpFallthrough(State state, ir.BinOp bin, Value result)
 	result.value = LLVMBuildBinOp(state.builder, op, left.value, right.value, "binOp");
 }
 
+
+/*
+ *
+ * Unary functions.
+ *
+ */
+
+
 void handleUnary(State state, ir.Unary unary, Value result)
 {
 	switch(unary.op) with (ir.Unary.Op) {
@@ -379,6 +396,10 @@ void handleCast(State state, ir.Unary cst, Value result)
 void handleCastPrimitive(State state, ir.Unary cst, Value result,
                          PrimitiveType newType, PrimitiveType oldType)
 {
+	// No op it.
+	if (newType is oldType)
+		return;
+
 	void error() {
 		string str = "invalid cast";
 		throw CompilerPanic(cst.location, str);
@@ -408,9 +429,7 @@ void handleCastPrimitive(State state, ir.Unary cst, Value result,
 			} else if (newType.bits > oldType.bits) {
 				op = LLVMOpcode.FPExt;
 			} else {
-				/// @todo when types are cached make this an error path.
-				//error();
-				op = LLVMOpcode.BitCast;
+				error(); // Type are the same?
 			}
 		}
 	} else if (oldType.floating) {
@@ -434,11 +453,8 @@ void handleCastPrimitive(State state, ir.Unary cst, Value result,
 		} else if (newType.signed != oldType.signed) {
 			// Just bitcast this.
 			op = LLVMOpcode.BitCast;
-		} else if (newType.bits == oldType.bits) {
-			/// @todo when types are cached make this an error path.
-			op = LLVMOpcode.BitCast;
 		} else {
-			error();
+			error(); // Type are the same?
 		}
 	}
 
@@ -485,6 +501,14 @@ void handleAddrOf(State state, ir.Unary de, Value result)
 	result.type = state.fromIr(pt);
 	result.isPointer = false;
 }
+
+
+/*
+ *
+ * Postfix functions.
+ *
+ */
+
 
 void handlePostfix(State state, ir.Postfix postfix, Value result)
 {
@@ -602,12 +626,11 @@ void handleIncDec(State state, ir.Postfix postfix, Value result)
 		auto v = isInc ? 1 : -1;
 		auto c = LLVMConstInt(LLVMInt32TypeInContext(state.context), v, true);
 		store = LLVMBuildGEP(state.builder, value, [c], "postfixGep");
-	} else if (primType) {
+	} else if (primType !is null) {
 		auto op = isInc ? LLVMOpcode.Add : LLVMOpcode.Sub;
 		auto c = primType.fromNumber(state, 1);
 		store = LLVMBuildBinOp(state.builder, op, value, c, "postfixBinOp");
 	} else {
-
 		throw new CompilerError(postfix.location, "unexpected type of postfix child");
 	}
 
@@ -616,6 +639,14 @@ void handleIncDec(State state, ir.Postfix postfix, Value result)
 	result.isPointer = false;
 	result.value = value;
 }
+
+
+/*
+ *
+ * Misc functions.
+ *
+ */
+
 
 void handleExpReference(State state, ir.ExpReference expRef, Value result)
 {
