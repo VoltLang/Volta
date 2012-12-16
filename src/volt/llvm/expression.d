@@ -24,6 +24,17 @@ class Value
 	bool isPointer; ///< Is this a reference to the real value?
 	Type type;
 	LLVMValueRef value;
+
+	this()
+	{
+	}
+
+	this(Value val)
+	{
+		this.isPointer = val.isPointer;
+		this.type = val.type;
+		this.value = val.value;
+	}
 }
 
 /**
@@ -143,6 +154,16 @@ void handleBinOp(State state, ir.BinOp bin, Value result)
 	//case XorXor:
 		handleBoolCompare(state, bin, result);
 		break;
+	case AddAssign:
+	case SubAssign:
+	case MulAssign:
+	case DivAssign:
+	case ModAssign:
+	case AndAssign:
+	case OrAssign:
+	case XorAssign:
+		handleBinOpAssign(state, bin, result);
+		break;
 	case Equal:
 	case NotEqual:
 	case Less:
@@ -248,6 +269,45 @@ void handleCompare(State state, ir.BinOp bin, Value result)
 
 	result.type = state.fromIr(irPt);
 	result.value = LLVMBuildICmp(state.builder, pr, left.value, right.value, "icmp");
+}
+
+void handleBinOpAssign(State state, ir.BinOp bin, Value result)
+{
+	// We return the left value.
+	Value left = result;
+	Value right = new Value();
+	Value opResult = right;
+
+	state.getValueRef(bin.left, left);
+	state.getValueAnyForm(bin.right, right);
+
+	// Copy the left value since the handleBinOpNonAssign
+	// function will turn it into a value, and we return
+	// it as a lvalue/reference.
+	left = new Value(left);
+
+	ir.BinOp.Type op;
+	switch (bin.op) with (ir.BinOp.Type) {
+	case AddAssign: op = Add; break;
+	case SubAssign: op = Sub; break;
+	case MulAssign: op = Mul; break;
+	case DivAssign: op = Div; break;
+	case ModAssign: op = Mod; break;
+	case AndAssign: op = And; break;
+	case OrAssign: op = Or; break;
+	case XorAssign: op = Xor; break;
+	default:
+		throw CompilerPanic(bin.location, "unhandled assign BipOp type");
+	}
+
+	auto pt = cast(PrimitiveType)right.type;
+	if (pt is null)
+		throw CompilerPanic(bin.location, "right hand value must be of primitive type");
+
+	handleBinOpNonAssign(state, bin.location, op, left, right, right);
+
+	// Not returned.
+	LLVMBuildStore(state.builder, right.value, result.value);
 }
 
 void handleBinOpNonAssign(State state, ir.BinOp bin, Value result)
