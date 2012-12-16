@@ -40,23 +40,6 @@ public:
 		this.settings = settings;
 	}
 
-	/// Turn a type into a string. A protomangler, if you will.
-	string tempMangle(ir.Type t)
-	{
-		switch (t.nodeType) with (ir.NodeType) {
-		case PrimitiveType:
-			auto asPrimitive = cast(ir.PrimitiveType) t;
-			assert(asPrimitive !is null);
-			return format("PrimitiveType%s", to!string(asPrimitive.type));
-		case Struct:
-			auto asStruct = cast(ir.Struct) t;
-			assert(asStruct !is null);
-			return asStruct.name;
-		default:
-			return "";
-		}
-	}
-
 	string arrayStructName(ir.Type t)
 	{
 		return mangle(parentNames, t);
