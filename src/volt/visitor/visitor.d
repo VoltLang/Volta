@@ -534,8 +534,9 @@ Visitor.Status acceptModule(ir.Module m, Visitor av)
 	if (status != VisitorContinue)
 		return parentContinue(status);
 
-	foreach(c; m.children.nodes) {
-		accept(c, av);
+	status = accept(m.children, av);
+	if (status == VisitorStop) {
+		return VisitorStop;
 	}
 
 	return av.leave(m);
@@ -608,8 +609,9 @@ Visitor.Status acceptClass(ir.Class c, Visitor av)
 		return parentContinue(status);
 	}
 
-	foreach (member; c.members.nodes) {
-		accept(member, av);
+	status = accept(c.members, av);
+	if (status == VisitorStop) {
+		return VisitorStop;
 	}
 
 	return av.leave(c);
@@ -622,8 +624,9 @@ Visitor.Status acceptInterface(ir._Interface i, Visitor av)
 		return parentContinue(status);
 	}
 
-	foreach (member; i.members.nodes) {
-		accept(member, av);
+	status = accept(i.members, av);
+	if (status == VisitorStop) {
+		return VisitorStop;
 	}
 
 	return av.leave(i);
@@ -636,8 +639,9 @@ Visitor.Status acceptStruct(ir.Struct s, Visitor av)
 		return parentContinue(status);
 	}
 
-	foreach (member; s.members.nodes) {
-		accept(member, av);
+	status = accept(s.members, av);
+	if (status == VisitorStop) {
+		return VisitorStop;
 	}
 
 	return av.leave(s);
