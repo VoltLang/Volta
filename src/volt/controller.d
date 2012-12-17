@@ -125,12 +125,18 @@ protected:
 
 			languagePass.transform(_module);
 
+			if (settings.noBackend)
+				continue;
+
 			// this is just during bring up.
 			string o = temporaryFilename(".bc");
 			backend.setTarget(o, TargetType.LlvmBitcode);
 			backend.compile(_module);
 			linkInputFiles ~= " \"" ~ o ~ "\" ";
 		}
+
+		if (settings.noBackend)
+			return 0;
 
 		string of = settings.outputFile is null ? DEFAULT_EXE : settings.outputFile;
 		string cmd;
