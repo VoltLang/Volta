@@ -68,6 +68,9 @@ bool filterArgs(ref string[] args, Settings settings)
 		case "-d":
 			settings.debugEnabled = true;
 			continue;
+		case "-c":
+			settings.noLink = true;
+			continue;
 		case "--no-backend":
 		case "-S":
 			settings.noBackend = true;

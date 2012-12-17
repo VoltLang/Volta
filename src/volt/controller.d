@@ -81,8 +81,9 @@ public:
 
 	int compile()
 	{
+		int ret;
 		try {
-			intCompile();
+			ret = intCompile();
 		} catch (CompilerPanic e) {
 			stderr.writefln(e.msg);
 			if (e.file !is null)
@@ -103,11 +104,11 @@ public:
 			return 2;
 		}
 
-		return 0;
+		return ret;
 	}
 
 protected:
-	void intCompile()
+	int intCompile()
 	{
 		foreach (file; mFiles) {
 			mCurrentFile = file;
@@ -132,7 +133,34 @@ protected:
 		}
 
 		string of = settings.outputFile is null ? DEFAULT_EXE : settings.outputFile;
-		system(format("llvm-ld -native -o \"%s\" %s", of, linkInputFiles));
+		string cmd;
+		int ret;
+
+		if (settings.noLink) {
+			string link = temporaryFilename(".bc");
+			cmd = format("llvm-link -o \"%s\" %s", link, linkInputFiles);
+			ret = system(cmd);
+			if (ret)
+				return ret;
+
+			string as = temporaryFilename("*.as");
+			cmd = format("llc -o \"%s\" \"%s\"", as, link);
+			ret = system(cmd);
+			if (ret)
+				return ret;
+
+			cmd = format("llvm-mc -filetype=obj -o \"%s\" \"%s\"", of, as);
+			ret = system(cmd);
+			if (ret)
+				return ret;
+		} else {
+			cmd = format("llvm-ld -native -o \"%s\" %s", of, linkInputFiles);
+			ret = system(cmd);
+			if (ret)
+				return ret;
+		}
+
+		return 0;
 	}
 
 	this(Settings s, Frontend f, Pass lp, Backend b)

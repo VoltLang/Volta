@@ -98,6 +98,7 @@ public:
 	bool warningsEnabled;
 	bool debugEnabled;
 	bool noBackend;
+	bool noLink; ///< The -c argument
 	string outputFile;
 
 private:
