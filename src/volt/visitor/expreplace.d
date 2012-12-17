@@ -42,6 +42,149 @@ public abstract:
 	Visitor.Status visit(ref ir.Exp, ir.ExpReference);
 }
 
+/**
+ * A Visitor and an ExpReplaceVisitor that visits 
+ * Expressions in their various hidey holes suitable
+ * for replacing with the ExpReplaceVisitor methods.
+ */
+class NullExpReplaceVisitor : NullVisitor, ExpReplaceVisitor
+{
+public:
+	override Visitor.Status enter(ir.ExpStatement expStatement)
+	{
+		acceptExp(expStatement.exp, this);
+		return Continue;
+	}
+
+	override Visitor.Status enter(ir.Variable variable)
+	{
+		if (variable.assign !is null) {
+			acceptExp(variable.assign, this);
+		}
+		return Continue;
+	}
+
+	override Visitor.Status enter(ir.ReturnStatement returnStatement)
+	{
+		if (returnStatement.exp !is null) {
+			acceptExp(returnStatement.exp, this);
+		}
+		return Continue;
+	}
+
+	override Visitor.Status enter(ir.IfStatement ifStatement)
+	{
+		acceptExp(ifStatement.exp, this);
+		return Continue;
+	}
+
+	override Visitor.Status enter(ir.WhileStatement whileStatement)
+	{
+		acceptExp(whileStatement.condition, this);
+		return Continue;
+	}
+
+	override Visitor.Status enter(ir.DoStatement doStatement)
+	{
+		acceptExp(doStatement.condition, this);
+		return Continue;
+	}
+
+	override Visitor.Status enter(ir.ForStatement forStatement)
+	{
+		foreach (ref initExp; forStatement.initExps) {
+			acceptExp(initExp, this);
+		}
+
+		if (forStatement.test !is null) {
+			acceptExp(forStatement.test, this);
+		}
+
+		foreach (ref increment; forStatement.increments) {
+			acceptExp(increment, this);
+		}
+		return Continue;
+	}
+
+	override Visitor.Status enter(ir.SwitchStatement switchStatement)
+	{
+		acceptExp(switchStatement.condition, this);
+		foreach (switchCase; switchStatement.cases) {
+			if (switchCase.firstExp !is null) acceptExp(switchCase.firstExp, this);
+			if (switchCase.secondExp !is null) acceptExp(switchCase.secondExp, this);
+			foreach (ref exp; switchCase.exps) {
+				acceptExp(exp, this);
+			}
+		}
+		return Continue;
+	}
+
+	override Visitor.Status enter(ir.GotoStatement gotoStatement)
+	{
+		if (gotoStatement.exp !is null) {
+			acceptExp(gotoStatement.exp, this);
+		}
+		return Continue;
+	}
+
+	override Visitor.Status enter(ir.WithStatement withStatement)
+	{
+		acceptExp(withStatement.exp, this);
+		return Continue;
+	}
+
+	override Visitor.Status enter(ir.SynchronizedStatement syncStatement)
+	{
+		if (syncStatement.exp !is null) {
+			acceptExp(syncStatement.exp, this);
+		}
+		return Continue;
+	}
+
+	override Visitor.Status enter(ir.ThrowStatement throwStatement)
+	{
+		acceptExp(throwStatement.exp, this);
+		return Continue;
+	}
+
+	override Visitor.Status enter(ir.PragmaStatement pragmaStatement)
+	{
+		foreach (ref arg; pragmaStatement.arguments) {
+			acceptExp(arg, this);
+		}
+		return Continue;
+	}
+
+	override Visitor.Status enter(ref ir.Exp, ir.Postfix) { return Continue; }
+	override Visitor.Status leave(ref ir.Exp, ir.Postfix) { return Continue; }
+	override Visitor.Status enter(ref ir.Exp, ir.Unary) { return Continue; }
+	override Visitor.Status leave(ref ir.Exp, ir.Unary) { return Continue; }
+	override Visitor.Status enter(ref ir.Exp, ir.BinOp) { return Continue; }
+	override Visitor.Status leave(ref ir.Exp, ir.BinOp) { return Continue; }
+	override Visitor.Status enter(ref ir.Exp, ir.Ternary) { return Continue; }
+	override Visitor.Status leave(ref ir.Exp, ir.Ternary) { return Continue; }
+	override Visitor.Status enter(ref ir.Exp, ir.ArrayLiteral) { return Continue; }
+	override Visitor.Status leave(ref ir.Exp, ir.ArrayLiteral) { return Continue; }
+	override Visitor.Status enter(ref ir.Exp, ir.AssocArray) { return Continue; }
+	override Visitor.Status leave(ref ir.Exp, ir.AssocArray) { return Continue; }
+	override Visitor.Status enter(ref ir.Exp, ir.Assert) { return Continue; }
+	override Visitor.Status leave(ref ir.Exp, ir.Assert) { return Continue; }
+	override Visitor.Status enter(ref ir.Exp, ir.StringImport) { return Continue; }
+	override Visitor.Status leave(ref ir.Exp, ir.StringImport) { return Continue; }
+	override Visitor.Status enter(ref ir.Exp, ir.Typeid) { return Continue; }
+	override Visitor.Status leave(ref ir.Exp, ir.Typeid) { return Continue; }
+	override Visitor.Status enter(ref ir.Exp, ir.IsExp) { return Continue; }
+	override Visitor.Status leave(ref ir.Exp, ir.IsExp) { return Continue; }
+	override Visitor.Status enter(ref ir.Exp, ir.FunctionLiteral) { return Continue; }
+	override Visitor.Status leave(ref ir.Exp, ir.FunctionLiteral) { return Continue; }
+	override Visitor.Status enter(ref ir.Exp, ir.StructLiteral) { return Continue; }
+	override Visitor.Status leave(ref ir.Exp, ir.StructLiteral) { return Continue; }
+
+	override Visitor.Status visit(ref ir.Exp, ir.Constant) { return Continue; }
+	override Visitor.Status visit(ref ir.Exp, ir.IdentifierExp) { return Continue; }
+	override Visitor.Status visit(ref ir.Exp, ir.ExpReference) { return Continue; }
+}
+
 
 Visitor.Status acceptExp(ref ir.Exp exp, ExpReplaceVisitor av)
 {
@@ -130,9 +273,11 @@ Visitor.Status acceptUnary(ref ir.Exp exp, ir.Unary unary, ExpReplaceVisitor av)
 	}
 */
 
-	status = acceptExp(unary.value, av);
-	if (status == VisitorStop) {
-		return VisitorStop;
+	if (unary.value !is null) {
+		status = acceptExp(unary.value, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
 	}
 
 	return av.leave(exp, unary);
