@@ -225,6 +225,22 @@ public:
 }
 
 /**
+ * The common ancestor of DelegateTypes and FunctionTypes.
+ */
+class CallableType : Type
+{
+public:
+	Linkage linkage;
+
+	Type ret;
+	Variable[] params;
+
+
+public:
+	this(NodeType nt) { super(nt); }
+}
+
+/**
  * A FunctionType represents the form of a function, and defines
  * how it is called. It has a return type and a number of parameters.
  *
@@ -234,15 +250,8 @@ public:
  *
  * @ingroup irNode irType
  */
-class FunctionType : Type
+class FunctionType : CallableType
 {
-public:
-	Linkage linkage;
-
-	Type ret;
-	Variable[] params;
-
-
 public:
 	this() { super(NodeType.FunctionType); }
 }
@@ -255,15 +264,8 @@ public:
  *
  * @ingroup irNode irType
  */
-class DelegateType : Type
+class DelegateType : CallableType
 {
-public:
-	Linkage linkage;
-
-	Type ret;
-	Variable[] params;
-
-
 public:
 	this() { super(NodeType.DelegateType); }
 }

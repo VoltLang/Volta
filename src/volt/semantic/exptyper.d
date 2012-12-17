@@ -283,8 +283,13 @@ public:
 	ir.Node evaluatePostfixCall(ir.Postfix asPostfix)
 	{
 		auto t = evaluate(asPostfix.child);
-		assert(t.nodeType == ir.NodeType.FunctionType);
-		auto asFunctionType = cast(ir.FunctionType) t;
+		if (t.nodeType == ir.NodeType.TypeReference) {
+			auto asTR = cast(ir.TypeReference) t;
+			assert(asTR !is null);
+			t = asTR.type;
+		}
+
+		auto asFunctionType = cast(ir.CallableType) t;
 		assert(asFunctionType !is null);
 		if (asPostfix.arguments.length != asFunctionType.params.length) {
 			throw new CompilerError(asPostfix.location, "wrong number of arguments to function.");
@@ -536,7 +541,13 @@ public:
 			}
 			result = pointer;
 		} else {
-			throw new CompilerError(bin.location, "cannot implicitly reconcile binary expression types.");
+			auto lt = cast(ir.Type) left;
+			auto rt = cast(ir.Type) right;
+			if (lt !is null && rt !is null && typesEqual(lt, rt)) {
+				result = lt;
+			} else {
+				throw new CompilerError(bin.location, "cannot implicitly reconcile binary expression types.");
+			}
 		}
 
 		if (isComparison(bin.op)) {
