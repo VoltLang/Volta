@@ -101,6 +101,15 @@ public:
 		return Continue;
 	}
 
+	override Status visit(ir.Alias a)
+	{
+		if (a.type.mangledName != "") {
+			return Continue;
+		}
+		a.type.mangledName = mangle(parentNames, a.type);
+		return Continue;
+	}
+
 	override Status enter(ir.Variable v)
 	{
 		if (v.mangledName != "") {
