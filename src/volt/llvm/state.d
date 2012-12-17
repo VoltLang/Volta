@@ -140,7 +140,8 @@ public:
 
 		// The simple stuff, declare that mofo.
 		type = this.fromIr(fn.type);
-		auto llvmType = type.llvmType;
+		auto ft = cast(FunctionType)type;
+		auto llvmType = ft.llvmCallType;
 		auto v = LLVMAddFunction(mod, fn.mangledName, llvmType);
 
 		valueStore[k] = Store(v, type);

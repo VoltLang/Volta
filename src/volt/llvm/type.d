@@ -174,6 +174,7 @@ abstract class CallableType : Type
 {
 public:
 	Type ret;
+	LLVMTypeRef llvmCallType;
 
 public:
 	this(ir.CallableType ct, LLVMTypeRef llvmType)
@@ -184,8 +185,6 @@ public:
 
 /**
  * Function type.
- *
- * @todo Might want to wrap llvmType in a pointer.
  */
 class FunctionType : CallableType
 {
@@ -202,7 +201,8 @@ public:
 			args[i] = type.llvmType;
 		}
 
-		auto llvmType = LLVMFunctionType(ret.llvmType, args, false);
+		llvmCallType = LLVMFunctionType(ret.llvmType, args, false);
+		llvmType = LLVMPointerType(llvmCallType, 0);
 		super(ft, llvmType);
 	}
 }
@@ -213,7 +213,7 @@ public:
 class DelegateType : CallableType
 {
 public:
-	LLVMTypeRef llvmCallType;
+	LLVMTypeRef llvmCallPtrType;
 
 	immutable uint funcIndex = 0;
 	immutable uint voidPtrIndex = 1;
@@ -234,10 +234,10 @@ public:
 		}
 
 		llvmCallType = LLVMFunctionType(ret.llvmType, args, false);
-		llvmCallType = LLVMPointerType(llvmCallType, 0);
+		llvmCallPtrType = LLVMPointerType(llvmCallType, 0);
 
 		LLVMTypeRef[2] mt;
-		mt[funcIndex] = llvmCallType;
+		mt[funcIndex] = llvmCallPtrType;
 		mt[voidPtrIndex] = state.voidPtrType.llvmType;
 
 		llvmType = LLVMStructCreateNamed(state.context, dt.mangledName);
