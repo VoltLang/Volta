@@ -26,7 +26,7 @@ public:
 public:
 	string toString()
 	{
-		return format("%s(%s:%s)", filename, line, column);
+		return format("%s:%s:%s", filename, line, column);
 	}
 
 	/**
