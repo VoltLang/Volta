@@ -477,7 +477,7 @@ void handleCast(State state, ir.Unary cst, Value result)
 	    (oldTypePtr !is null || oldTypeFn !is null))
 		return handleCastPointer(state, cst, result, newType);
 
-	throw CompilerPanic("Can not handled casts");
+	throw CompilerPanic("Unhandlable cast.");
 }
 
 /**
