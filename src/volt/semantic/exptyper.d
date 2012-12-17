@@ -189,6 +189,21 @@ bool typesEqual(ir.Type a, ir.Type b)
 		auto bp = cast(ir.TypeReference) b;
 		assert(ap !is null && bp !is null);
 		return ap.names == bp.names;
+	} else if (a.nodeType == ir.NodeType.FunctionType &&
+			   b.nodeType == ir.NodeType.FunctionType) {
+		auto ap = cast(ir.FunctionType) a;
+		auto bp = cast(ir.FunctionType) b;
+		assert(ap !is null && bp !is null);
+
+		if (ap.params.length != bp.params.length)
+			return false;
+		auto ret = typesEqual(ap.ret, bp.ret);
+		if (!ret)
+			return false;
+		for (int i; i < ap.params.length; i++)
+			if (!typesEqual(ap.params[i].type, bp.params[i].type))
+				return false;
+		return true;
 	} else {
 		return a is b;
 	}
