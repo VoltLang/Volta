@@ -1237,14 +1237,9 @@ public:
 	{
 		ln();
 		twf("alias ");
+		wf(a.name);
+		wf(" = ");
 		accept(a.type, this);
-		wf(" ");
-		foreach (i, name; a.names) {
-			wf(name);
-			if (i < a.names.length - 1) {
-				wf(", ");
-			}
-		}
 		wfln(";");
 		return Continue;
 	}

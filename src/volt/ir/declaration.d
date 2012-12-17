@@ -111,7 +111,7 @@ public:
 	/// The @p Type names are associated with.
 	Type type;
 	/// The names to associate with the type. There is at least one.
-	string[] names;
+	string name;
 
 
 public:

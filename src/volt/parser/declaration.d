@@ -43,18 +43,12 @@ ir.Alias parseAlias(TokenStream ts)
 	a.location = ts.peek.location;
 
 	match(ts, TokenType.Alias);
+	auto nameTok = match(ts, TokenType.Identifier);
+	a.name = nameTok.value;
+	match(ts, TokenType.Assign);
 	a.type = parseType(ts);
-	while (true) {
-		auto nameTok = match(ts, TokenType.Identifier);
-		a.names ~= nameTok.value;
-		if (matchIf(ts, TokenType.Comma)) {
-			continue;
-		} else {
-			match(ts, TokenType.Semicolon);
-			break;
-		}
-	}
-
+	match(ts, TokenType.Semicolon);
+	
 	return a;
 }
 
