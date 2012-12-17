@@ -461,9 +461,11 @@ void handleCast(State state, ir.Unary cst, Value result)
 
 	auto newTypePtr = cast(PointerType)newType;
 	auto oldTypePtr = cast(PointerType)oldType;
-	if (newTypePtr !is null &&
-	    oldTypePtr !is null)
-		return handleCastPointer(state, cst, result, newTypePtr, oldTypePtr);
+	auto newTypeFn = cast(FunctionType)newType;
+	auto oldTypeFn = cast(FunctionType)oldType;
+	if ((newTypePtr !is null || newTypeFn !is null) &&
+	    (oldTypePtr !is null || oldTypeFn !is null))
+		return handleCastPointer(state, cst, result, newType);
 
 	throw CompilerPanic("Can not handled casts");
 }
@@ -542,9 +544,9 @@ void handleCastPrimitive(State state, ir.Unary cst, Value result,
 /**
  * Handle pointer casts. 
  * This is really easy.
+ * Also casts between function pointers and pointers.
  */
-void handleCastPointer(State state, ir.Unary cst, Value result,
-                       PointerType newType, PointerType oldType)
+void handleCastPointer(State state, ir.Unary cst, Value result, Type newType)
 {
 	result.type = newType;
 	result.value = LLVMBuildBitCast(state.builder, result.value, newType.llvmType, "ptrCast");
