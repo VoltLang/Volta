@@ -233,19 +233,38 @@ public:
 		if (store is null) {
 			throw new CompilerError(i.location, format("unidentified identifier '%s'.", i.value));
 		}
-		if (store.kind != ir.Store.Kind.Value) {
+
+		if (store.kind == ir.Store.Kind.Value) {
+
+			auto var = cast(ir.Variable) store.node;
+			assert(var !is null);
+
+			auto _ref = new ir.ExpReference();
+			_ref.idents ~= i.value;
+			_ref.location = i.location;
+			_ref.decl = var;
+			e = _ref;
+			return Continue;
+
+		} else if (store.kind == ir.Store.Kind.Function) {
+
+			if (store.functions.length != 1)
+				throw CompilerPanic(i.location, "can not take function pointers from overloaded functions");
+
+			/// @todo Figure out if this is a delegate or not.
+			auto fn = cast(ir.Function) store.functions[0];
+			assert(fn !is null);
+
+			auto _ref = new ir.ExpReference();
+			_ref.idents ~= i.value;
+			_ref.location = i.location;
+			_ref.decl = fn;
+			e = _ref;
+
 			return Continue;
 		}
-		auto var = cast(ir.Variable) store.node;
-		assert(var !is null);
 
-		auto _ref = new ir.ExpReference();
-		_ref.idents ~= i.value;
-		_ref.location = i.location;
-		_ref.decl = var;
-		e = _ref;
-
-		return Continue; 
+		throw CompilerPanic(i.location, format("unhandled identifier type '%s'.", i.value));
 	}
 
 	override Status visit(ref ir.Exp e, ir.ExpReference expref) { return Continue; }
