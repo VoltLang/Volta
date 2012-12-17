@@ -176,6 +176,7 @@ public:
 	Scope myScope;
 
 	bool defined;
+	int vtableIndex = -1;
 
 
 public:

@@ -232,6 +232,10 @@ public:
 	TopLevelBlock members;  //< Optional.
 
 	bool defined;
+	Function constructor;
+	Function[] userConstructors;
+	Struct vtableStruct;
+	Class parentClass;  ///< Filled in by declgatherer.
 
 
 public:
