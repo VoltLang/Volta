@@ -262,12 +262,7 @@ void handleCompare(State state, ir.BinOp bin, Value result)
 		throw CompilerPanic(bin.location, "error");
 	}
 
-	/// @todo Turn this into a singleton on the state.
-	auto irPt = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
-	irPt.location = bin.location;
-	irPt.mangledName = volt.semantic.mangle.mangle(null, irPt);
-
-	result.type = state.fromIr(irPt);
+	result.type = state.boolType;
 	result.value = LLVMBuildICmp(state.builder, pr, left.value, right.value, "icmp");
 }
 

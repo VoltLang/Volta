@@ -261,6 +261,47 @@ class StructType : Type
 }
 
 /**
+ * Populate the common types that hang off the state.
+ */
+void buildCommonTypes(State state)
+{
+	auto voidTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Void);
+	auto voidPtrTypeIr = new ir.PointerType(voidTypeIr);
+
+	auto boolTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
+	auto intTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
+	auto uintTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
+	auto ulongTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
+
+
+	addMangledName(voidTypeIr);
+	addMangledName(voidPtrTypeIr);
+
+	addMangledName(boolTypeIr);
+	addMangledName(intTypeIr);
+	addMangledName(uintTypeIr);
+	addMangledName(ulongTypeIr);
+
+
+	state.voidType = cast(VoidType)state.fromIr(voidTypeIr);
+	state.voidPtrType = cast(PointerType)state.fromIr(voidPtrTypeIr);
+
+	state.boolType = cast(PrimitiveType)state.fromIr(boolTypeIr);
+	state.intType = cast(PrimitiveType)state.fromIr(intTypeIr);
+	state.uintType = cast(PrimitiveType)state.fromIr(uintTypeIr);
+	state.ulongType = cast(PrimitiveType)state.fromIr(ulongTypeIr);
+
+
+	assert(state.voidType !is null);
+	assert(state.voidPtrType !is null);
+
+	assert(state.boolType !is null);
+	assert(state.intType !is null);
+	assert(state.uintType !is null);
+	assert(state.ulongType !is null);
+}
+
+/**
  * Looks up or creates the corresponding LLVMTypeRef
  * and Type for the given irType.
  */
@@ -272,10 +313,9 @@ Type fromIr(State state, ir.Type irType)
 	}
 
 	if (irType.mangledName is null) {
-		auto m = volt.semantic.mangle.mangle(null, irType);
+		auto m = addMangledName(irType);
 		auto str = format("mangledName not set (%s)", m);
 		warning(irType.location, str);
-		irType.mangledName = m;
 	}
 
 	auto tCheck = irType.mangledName in state.typeStore;
@@ -290,6 +330,13 @@ Type fromIr(State state, ir.Type irType)
 
 private:
 
+
+string addMangledName(ir.Type irType)
+{
+	string m = volt.semantic.mangle.mangle(null, irType);
+	irType.mangledName = m;
+	return m;
+}
 
 Type uncachedFromIr(State state, ir.Type irType)
 {

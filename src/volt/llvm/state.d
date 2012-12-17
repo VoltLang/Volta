@@ -38,6 +38,20 @@ public:
 	}
 
 	/**
+	 * Cached type for convenience.
+	 * @{
+	 */
+	VoidType voidType;
+	PointerType voidPtrType;
+	PrimitiveType boolType;
+	PrimitiveType intType;
+	PrimitiveType uintType;
+	PrimitiveType ulongType;
+	/**
+	 * @}
+	 */
+
+	/**
 	 * Store for all the defined llvm values, like functions,
 	 * that might be referenced by other code.
 	 *
@@ -63,6 +77,8 @@ public:
 		this.context = context;
 		this.mod = LLVMModuleCreateWithNameInContext(name, context);
 		this.builder = LLVMCreateBuilderInContext(context);
+
+		buildCommonTypes(this);
 	}
 
 	~this()
