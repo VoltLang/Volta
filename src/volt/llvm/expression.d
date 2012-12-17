@@ -680,12 +680,34 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 		llvmArgs[i] = v.value;
 	}
 
-	state.getValue(postfix.child, result);
+	state.getValueAnyForm(postfix.child, result);
 	auto ft = cast(FunctionType)result.type;
-	assert(ft !is null);
+	auto dt = cast(DelegateType)result.type;
+
+	Type ret;
+	if (ft !is null) {
+		ret = ft.ret;
+		makeNonPointer(state, result);
+	} else if (dt !is null) {
+		assert(dt !is null);
+		assert(result.isPointer);
+		ret = dt.ret;
+
+		auto func = LLVMBuildStructGEP(state.builder, result.value, dt.funcIndex, "dgFuncGep");
+		auto voidPtr = LLVMBuildStructGEP(state.builder, result.value, dt.voidPtrIndex, "dgVoidPtrGep");
+
+		func = LLVMBuildLoad(state.builder, func, "dgFuncGep");
+		voidPtr = LLVMBuildLoad(state.builder, voidPtr, "dgVoidGep");
+
+		llvmArgs = [voidPtr] ~ llvmArgs;
+		result.value = func;
+	} else {
+		throw CompilerPanic(postfix.location, "can not call this thing");
+	}
 
 	result.value = LLVMBuildCall(state.builder, result.value, llvmArgs);
-	result.type = ft.ret;
+	result.isPointer = false;
+	result.type = ret;
 }
 
 void handleIncDec(State state, ir.Postfix postfix, Value result)

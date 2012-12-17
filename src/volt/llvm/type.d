@@ -168,14 +168,27 @@ public:
 }
 
 /**
- *
+ * Base class for callable types FunctionType and DelegateType.
  */
-class FunctionType : Type
+abstract class CallableType : Type
 {
 public:
 	Type ret;
 
+public:
+	this(ir.CallableType ct, LLVMTypeRef llvmType)
+	{
+		super(ct, llvmType);
+	}
+}
 
+/**
+ * Function type.
+ *
+ * @todo Might want to wrap llvmType in a pointer.
+ */
+class FunctionType : CallableType
+{
 public:
 	this(State state, ir.FunctionType ft)
 	{
@@ -191,6 +204,46 @@ public:
 
 		auto llvmType = LLVMFunctionType(ret.llvmType, args, false);
 		super(ft, llvmType);
+	}
+}
+
+/**
+ * Delegates are lowered here into a struct with two members.
+ */
+class DelegateType : CallableType
+{
+public:
+	LLVMTypeRef llvmCallType;
+
+	immutable uint funcIndex = 0;
+	immutable uint voidPtrIndex = 1;
+
+public:
+	this(State state, ir.DelegateType dt)
+	{
+		ret = state.fromIr(dt.ret);
+
+		LLVMTypeRef[] args;
+		args.length = dt.params.length + 1;
+
+		args[0] = state.voidPtrType.llvmType;
+
+		foreach(int i, param; dt.params) {
+			auto type = state.fromIr(param.type);
+			args[i+1] = type.llvmType;
+		}
+
+		llvmCallType = LLVMFunctionType(ret.llvmType, args, false);
+		llvmCallType = LLVMPointerType(llvmCallType, 0);
+
+		LLVMTypeRef[2] mt;
+		mt[funcIndex] = llvmCallType;
+		mt[voidPtrIndex] = state.voidPtrType.llvmType;
+
+		llvmType = LLVMStructCreateNamed(state.context, dt.mangledName);
+		LLVMStructSetBody(llvmType, mt, false);
+
+		super(dt, llvmType);
 	}
 }
 
@@ -347,6 +400,8 @@ Type uncachedFromIr(State state, ir.Type irType)
 		return state.pointerTypeFromIr(cast(ir.PointerType)irType);
 	case FunctionType:
 		return state.functionTypeFromIr(cast(ir.FunctionType)irType);
+	case DelegateType:
+		return state.delegateTypeFromIr(cast(ir.DelegateType)irType);
 	case Struct:
 		return state.structTypeFromIr(cast(ir.Struct)irType);
 	default:
@@ -370,6 +425,11 @@ Type pointerTypeFromIr(State state, ir.PointerType pt)
 Type functionTypeFromIr(State state, ir.FunctionType ft)
 {
 	return new FunctionType(state, ft);
+}
+
+Type delegateTypeFromIr(State state, ir.DelegateType dt)
+{
+	return new DelegateType(state, dt);
 }
 
 Type structTypeFromIr(State state, ir.Struct strct)
