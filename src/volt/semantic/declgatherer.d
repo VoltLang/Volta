@@ -27,4 +27,11 @@ public:
 		current.addValue(d, d.name);
 		return Continue;
 	}
+
+	override Status visit(ir.Alias a)
+	{
+		assert(current !is null);
+		current.addType(a.type, a.name);
+		return Continue;
+	}
 }

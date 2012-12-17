@@ -44,8 +44,8 @@ public:
 		passes ~= new ConditionalRemoval(settings);
 		passes ~= new ContextBuilder();
 		passes ~= new ImportResolver(this, cast(ContextBuilder) passes[$-1]);
-		passes ~= new UserResolver();
 		passes ~= new DeclarationGatherer();
+		passes ~= new UserResolver();
 		passes ~= new TypeDefinitionVerifier();
 		passes ~= new ExpTyper(settings);
 		passes ~= new ReferenceReplacer();
