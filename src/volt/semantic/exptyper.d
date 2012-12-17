@@ -459,7 +459,12 @@ public:
 	ir.Node extype(ir.Type left, ref ir.Exp right)
 	{
 		ir.Node t = evaluate(right);
+		ir.Type type = cast(ir.Type)t;
 		string emsg = format("cannot implicitly convert '%s' to '%s'.", to!string(left.nodeType), to!string(t.nodeType));
+
+		if (type !is null && typesEqual(left, type)) {
+			return left;
+		}
 
 		if (left.nodeType == ir.NodeType.PrimitiveType &&
 			t.nodeType == ir.NodeType.PrimitiveType) {
