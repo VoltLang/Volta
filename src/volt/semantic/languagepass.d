@@ -24,6 +24,7 @@ import volt.semantic.manglewriter;
 import volt.semantic.importresolver;
 import volt.semantic.irverifier;
 import volt.semantic.thisinserter;
+import volt.semantic.classlowerer;
 
 /**
  * @defgroup passes Passes
@@ -97,8 +98,9 @@ public:
 		passes ~= new TypeDefinitionVerifier();
 		passes ~= new ExpTyper(settings);
 		passes ~= new ReferenceReplacer();
-		passes ~= new ThisInserter();
 		passes ~= new ArrayLowerer(settings);
+		passes ~= new ClassLowerer();
+		passes ~= new ThisInserter();	
 		passes ~= new MangleWriter();
 		passes ~= new IrVerifier();
 

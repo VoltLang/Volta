@@ -38,6 +38,20 @@ ir.Store lookup(ir.Scope _scope, string name)
 		current = current.parent;
 	}
 
+	if (_scope.parent !is null) {
+		auto asClass = cast(ir.Class) _scope.parent.node;
+		if (asClass !is null) {
+			auto currentClass = asClass.parentClass;
+			while (currentClass !is null) {
+				auto store = currentClass.myScope.getStore(name);
+				if (store !is null) {
+					return store;
+				}
+				currentClass = currentClass.parentClass;
+			}
+		}
+	}
+
 	auto asMod = cast(ir.Module) previous.node;
 	assert(asMod !is null);
 

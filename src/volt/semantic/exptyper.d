@@ -82,6 +82,7 @@ public:
 
 		ir.Scope _scope;
 		string emsg;
+		ir.Class _class;
 		void retrieveScope(ir.Node tt)
 		{
 			if (tt.nodeType == ir.NodeType.Module) {
@@ -91,9 +92,17 @@ public:
 				emsg = format("module '%s' has no member '%s'.", asModule.name, asPostfix.identifier.value);
 			} else if (tt.nodeType == ir.NodeType.TypeReference) {
 				auto asUser = cast(ir.TypeReference) tt;
-				auto asStruct = cast(ir.Struct) asUser.type;
-				_scope = asStruct.myScope;
-				emsg = format("type '%s' has no member '%s'.", asUser.names[$-1], asPostfix.identifier.value);
+				if (asUser.type.nodeType == ir.NodeType.Struct) {
+					auto asStruct = cast(ir.Struct) asUser.type;
+					_scope = asStruct.myScope;
+					emsg = format("type '%s' has no member '%s'.", asUser.names[$-1], asPostfix.identifier.value);
+				} else if (asUser.type.nodeType == ir.NodeType.Class) {
+					_class = cast(ir.Class) asUser.type;
+					_scope = _class.myScope;
+					emsg = format("type '%s' has no member '%s'.", asUser.names[$-1], asPostfix.identifier.value);
+				} else {
+					throw CompilerPanic("couldn't retrieve scope from type.");
+				}
 			} else if (tt.nodeType == ir.NodeType.PointerType) {
 				auto asPointer = cast(ir.PointerType) tt;
 				assert(asPointer !is null);
@@ -102,9 +111,16 @@ public:
 				assert(false);
 			}
 		}
-		retrieveScope(t); 
+		retrieveScope(t);
 
+		_lookup:
 		auto store = _scope.getStore(asPostfix.identifier.value);
+		if (store is null && _class !is null && _class.parentClass !is null) {
+			_class = _class.parentClass;
+			_scope = _class.myScope;
+			goto _lookup;
+		}
+		
 		if (store is null) {
 			throw new CompilerError(asPostfix.identifier.location, emsg);
 		}
@@ -131,7 +147,9 @@ public:
 		}
 
 		auto asFunctionType = cast(ir.CallableType) t;
-		assert(asFunctionType !is null);
+		if (asFunctionType is null) {
+			throw new CompilerError(asPostfix.location, format("tried to call uncallable type."));
+		}
 		if (asPostfix.arguments.length != (asFunctionType.params.length - (asFunctionType.hiddenParameter ? 1 : 0))) {
 			throw new CompilerError(asPostfix.location, "wrong number of arguments to function.");
 		}
@@ -326,7 +344,7 @@ public:
 		}
 
 		ir.Type type = cast(ir.Type)t;
-		string emsg = format("cannot implicitly convert '%s' to '%s'.", to!string(left.nodeType), to!string(t.nodeType));
+		string emsg = format("cannot implicitly convert '%s' to '%s'.", to!string(t.nodeType), to!string(left.nodeType));
 
 		if (type !is null && typesEqual(left, type)) {
 			return left;
@@ -344,11 +362,20 @@ public:
 			return extypeArrayAssign(right, left, right);
 		} else if (left.nodeType == ir.NodeType.TypeReference &&
 				   t.nodeType == ir.NodeType.TypeReference) {
-			auto asUser = cast(ir.TypeReference) t;
-			assert(asUser !is null);
-			if (!typesEqual(left, asUser)) {
-				import std.stdio;
-				writefln("%s %s", left.mangledName, asUser.mangledName);
+			auto leftTR = cast(ir.TypeReference) left;
+			assert(leftTR !is null);
+			auto rightTR = cast(ir.TypeReference) t;
+			assert(rightTR !is null);
+			auto leftClass = cast(ir.Class) leftTR.type, rightClass = cast(ir.Class) rightTR.type;
+			/// Check for converting child classes into parent classes.
+			if (leftClass !is null && rightClass !is null) {
+				if (inheritsFrom(rightClass, leftClass)) {
+					right = new ir.Unary(leftTR, right);
+					return left;
+				}
+			}
+
+			if (!typesEqual(left, rightTR)) {
 				throw new CompilerError(right.location, emsg);
 			}
 			return left;

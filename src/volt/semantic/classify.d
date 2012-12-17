@@ -3,6 +3,7 @@
 module volt.semantic.classify;
 
 import std.conv : to;
+import std.stdio : format;
 
 import ir = volt.ir.ir;
 
@@ -28,6 +29,51 @@ int size(ir.PrimitiveType.Kind kind)
 	case Double: return 8;
 	case Real: return 8;
 	}
+}
+
+/// Returns the size of a given Struct, in bytes.
+int size(Location location, ir.Struct s)
+{
+	int sizeAccumulator;
+	foreach (node; s.members.nodes) {
+		// If it's not a Variable, it shouldn't take up space.
+		if (node.nodeType != ir.NodeType.Variable) {
+			continue;
+		}
+
+		auto asVar = cast(ir.Variable) node;
+		assert(asVar !is null);
+
+		// PrimitiveTypes have known sizes.
+		if (asVar.type.nodeType == ir.NodeType.PrimitiveType) {
+			auto asPrim = cast(ir.PrimitiveType) asVar.type;
+			assert(asPrim !is null);
+			sizeAccumulator += size(asPrim.type);
+			continue;
+		}
+
+		if (asVar.type.nodeType == ir.NodeType.PointerType ||
+			asVar.type.nodeType == ir.NodeType.FunctionType) {
+			/// @todo get the correct size of a pointer from Settings.
+			sizeAccumulator += 4;
+			continue;
+		}
+
+		if (asVar.type.nodeType == ir.NodeType.TypeReference) {
+			auto asTR = cast(ir.TypeReference) asVar.type;
+			assert(asTR !is null);
+			if (asTR.type.nodeType == ir.NodeType.Struct) {
+				auto asStruct = cast(ir.Struct) asTR.type;
+				assert(asStruct !is null);
+				sizeAccumulator += size(location, asStruct);
+				continue; 
+			}
+		}
+
+		/// @todo Arrays, AAs, ...
+		throw new CompilerError(location, format("couldn't retrieve size of struct '%s'", s.name));
+	}
+	return sizeAccumulator;
 }
 
 bool isIntegral(ir.PrimitiveType.Kind kind)
@@ -259,4 +305,47 @@ ir.Scope scopeLookup(ir.Scope _scope, string name, Location location, string mem
 		}
 	}
 	throw new CompilerError(location, emsg);
+}
+
+ir.Function[] getStructFunctions(ir.Struct _struct)
+{
+	ir.Function[] functions;
+
+	if (_struct.members !is null) foreach (node; _struct.members.nodes) {
+		auto asFunction = cast(ir.Function) node;
+		if (asFunction is null) {
+			continue;
+		}
+		functions ~= asFunction;
+	}
+
+	return functions;
+}
+
+ir.Function[] getClassFunctions(ir.Class _class)
+{
+	ir.Function[] functions;
+
+	if (_class.members !is null) foreach (node; _class.members.nodes) {
+		auto asFunction = cast(ir.Function) node;
+		if (asFunction is null) {
+			continue;
+		}
+		functions ~= asFunction;
+	}
+
+	return functions;
+}
+
+/// Returns: true if child is a child of parent.
+bool inheritsFrom(ir.Class child, ir.Class parent)
+{
+	auto currentClass = child;
+	while (currentClass !is null) {
+		if (currentClass is parent) {
+			return true;
+		}
+		currentClass = currentClass.parentClass;
+	}
+	return false;
 }

@@ -25,6 +25,52 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.ReturnStatement rstat)
+	{
+		if (rstat.exp is null) {
+			return Continue;
+		}
+
+		acceptExp(rstat.exp, this);
+		return Continue;
+	}
+
+	override Status enter(ir.Variable var)
+	{
+		if (var.assign is null) {
+			return Continue;
+		}
+		acceptExp(var.assign, this);
+		return Continue;
+	}
+
+	override Status enter(ir.IfStatement _if)
+	{
+		acceptExp(_if.exp, this);
+		return Continue;
+	}
+
+	override Status enter(ir.ForStatement _for)
+	{
+		if (_for.test is null) {
+			return Continue;
+		}
+		acceptExp(_for.test, this);
+		return Continue;
+	}
+
+	override Status enter(ir.WhileStatement _while)
+	{
+		acceptExp(_while.condition, this);
+		return Continue;
+	}
+
+	override Status enter(ir.DoStatement _do)
+	{
+		acceptExp(_do.condition, this);
+		return Continue;
+	}
+	
 	Status visit(ref ir.Exp exp, ir.ExpReference reference)
 	{
 		auto varStore = current.getStore(reference.idents[$-1]);
