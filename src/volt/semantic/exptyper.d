@@ -204,6 +204,21 @@ bool typesEqual(ir.Type a, ir.Type b)
 			if (!typesEqual(ap.params[i].type, bp.params[i].type))
 				return false;
 		return true;
+	} else if (a.nodeType == ir.NodeType.DelegateType &&
+			   b.nodeType == ir.NodeType.DelegateType) {
+		auto ap = cast(ir.DelegateType) a;
+		auto bp = cast(ir.DelegateType) b;
+		assert(ap !is null && bp !is null);
+
+		if (ap.params.length != bp.params.length)
+			return false;
+		auto ret = typesEqual(ap.ret, bp.ret);
+		if (!ret)
+			return false;
+		for (int i; i < ap.params.length; i++)
+			if (!typesEqual(ap.params[i].type, bp.params[i].type))
+				return false;
+		return true;
 	} else {
 		return a is b;
 	}
