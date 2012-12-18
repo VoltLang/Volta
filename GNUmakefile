@@ -76,12 +76,15 @@ DOBJ = $(patsubst src/%.d, $(OBJ_DIR)/%.$(OBJ_TYPE), $(DSRC))
 OBJ := $(DOBJ) $(EXTRA_OBJ)
 
 
-all: $(TARGET)
+all: rt/rt.o
 
 $(OBJ_DIR)/%.$(OBJ_TYPE) : src/%.d Makefile
 	@echo "  DMD    src/$*.d"
 	@mkdir -p $(dir $@)
 	@$(DMD) $(DCOMP_FLAGS) src/$*.d
+
+rt/rt.o: $(TARGET) rt/src/object.d rt/src/vrt/vmain.d rt/src/vrt/gc.d
+	@./$(TARGET) -c -o rt/rt.o rt/src/object.d rt/src/vrt/vmain.d rt/src/vrt/gc.d
 
 $(TARGET): $(OBJ) Makefile
 	@echo "  LD     $@"
@@ -89,6 +92,7 @@ $(TARGET): $(OBJ) Makefile
 
 clean:
 	@rm -rf $(TARGET) .obj
+	@rm rt/rt.o
 
 run: $(TARGET)
 	@./$(TARGET) test/simple/test_001.d

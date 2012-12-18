@@ -80,9 +80,10 @@ public:
 	override Status enter(ir.Function fn)
 	{
 		/// @todo check other linkage as well.
-		if (fn.name == "main" ||
-		    fn.type.linkage == ir.Linkage.C) {
-			/// @todo Actual proper main rewriting. Requires a runtime.
+		if (fn.name == "main" &&
+		    fn.type.linkage != ir.Linkage.C) {
+			fn.mangledName = "vmain";
+		} else if (fn.type.linkage == ir.Linkage.C) {
 			fn.mangledName = fn.name;
 		} else {
 			fn.mangledName = mangle(parentNames, fn);

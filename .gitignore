@@ -7,6 +7,7 @@
 # Temporary files produced by the compiler
 *.ll
 *.bc
+*.o
 a.out*
 a.exe*
 

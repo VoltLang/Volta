@@ -3,6 +3,7 @@
 module volt.controller;
 
 import core.exception;
+import std.path : dirSeparator;
 import std.process : system;
 import std.stdio : stderr;
 
@@ -159,6 +160,8 @@ protected:
 				return ret;
 		} else {
 			// this is just during bring up.
+			linkInputFiles ~= " \"" ~ getExePath() ~ dirSeparator ~ "rt/rt.o\"";
+
 			cmd = format("llvm-ld -native -o \"%s\" %s", of, linkInputFiles);
 			ret = system(cmd);
 			if (ret)
