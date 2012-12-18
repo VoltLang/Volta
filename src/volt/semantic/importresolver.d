@@ -14,6 +14,7 @@ import volt.visitor.scopemanager;
 import volt.semantic.context;
 import volt.semantic.languagepass;
 import volt.semantic.attribremoval;
+import volt.semantic.declgatherer;
 
 private class PublicImportGatherer : NullVisitor
 {
@@ -51,6 +52,7 @@ public:
 	override Status enter(ir.Import i)
 	{
 		auto attrrm = new AttribRemoval();
+		auto declg = new DeclarationGatherer();
 		auto gatherer = new PublicImportGatherer();
 
 		auto mod = languagepass.getModule(i.name);
@@ -59,6 +61,7 @@ public:
 		}
 		attrrm.transform(mod);
 		context.transform(mod);
+		declg.transform(mod);
 
 		accept(mod, gatherer);
 

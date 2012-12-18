@@ -14,7 +14,11 @@ class DeclarationGatherer : ScopeManager, Pass
 public:
 	override void transform(ir.Module m)
 	{
+		if (m.gathered) {
+			return;
+		}
 		accept(m, this);
+		m.gathered = true;
 	}
 
 	override void close()

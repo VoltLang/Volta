@@ -83,6 +83,8 @@ public:
 	Module[] importedModules;
 	Access[] importedAccess;
 
+	bool gathered;
+
 
 public:
 	this() { super(NodeType.Module); }
