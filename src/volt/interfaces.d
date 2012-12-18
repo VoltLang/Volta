@@ -95,10 +95,11 @@ interface Backend
 final class Settings
 {
 public:
-	bool warningsEnabled;
-	bool debugEnabled;
-	bool noBackend;
+	bool warningsEnabled; ///< The -w argument.
+	bool debugEnabled; ///< The -d argument.
+	bool noBackend; ///< The -S argument.
 	bool noLink; ///< The -c argument
+	bool noCatch; ///< The --no-catch argument.
 	string outputFile;
 
 private:

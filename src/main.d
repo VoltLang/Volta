@@ -75,6 +75,9 @@ bool filterArgs(ref string[] args, Settings settings)
 		case "-S":
 			settings.noBackend = true;
 			continue;
+		case "--no-catch":
+			settings.noCatch = true;
+			continue;
 		default:
 		}
 

@@ -82,7 +82,9 @@ public:
 	int compile()
 	{
 		int ret;
-		try {
+		if (settings.noCatch) {
+			ret = intCompile();
+		} else try {
 			ret = intCompile();
 		} catch (CompilerPanic e) {
 			stderr.writefln(e.msg);
