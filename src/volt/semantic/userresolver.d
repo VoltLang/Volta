@@ -11,24 +11,20 @@ import volt.interfaces;
 import volt.token.location;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
+import volt.semantic.lookup;
 
 ir.Type typeLookup(ir.Scope _scope, string name, Location location)
 {
-	auto current = _scope;
-	while (current !is null) {
-		auto store = current.getStore(name);
-		if (store is null) {
-			current = current.parent;
-			continue;
-		}
-		if (store.kind != ir.Store.Kind.Type) {
-			throw new CompilerError(location, format("%s used as type.", name));
-		}
-		auto asType = cast(ir.Type) store.node;
-		assert(asType !is null);
-		return asType;
+	auto store = _scope.lookup(name);
+	if (store is null) {
+		throw new CompilerError(location, format("undefined identifier '%s'.", name));
 	}
-	throw new CompilerError(location, format("undefined identifier '%s'.", name));
+	if (store.kind != ir.Store.Kind.Type) {
+		throw new CompilerError(location, format("%s used as type.", name));
+	}
+	auto asType = cast(ir.Type) store.node;
+	assert(asType !is null);
+	return asType;
 }
 
 /**
