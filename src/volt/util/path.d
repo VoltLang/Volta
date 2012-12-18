@@ -4,7 +4,7 @@
 module volt.util.path;
 
 version (Windows) {
-	import core.sys.windows.windows : GetModuleFileName;
+	import core.sys.windows.windows : GetModuleFileNameA;
 } else version (Posix) {
 	import core.sys.posix.unistd : readlink;
 } else {
@@ -74,7 +74,7 @@ string getExePath()
 
 	version (Windows) {
 
-		auto ret = GetModuleFileName(null, stack.ptr, 512);
+		auto ret = GetModuleFileNameA(null, stack.ptr, 512);
 
 	} else version (linux) {
 
