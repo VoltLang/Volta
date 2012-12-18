@@ -78,6 +78,8 @@ bool filterArgs(ref string[] args, Settings settings)
 		case "--no-catch":
 			settings.noCatch = true;
 			continue;
+		case "--help", "-h":
+			return printUsage();
 		default:
 		}
 
@@ -87,6 +89,20 @@ bool filterArgs(ref string[] args, Settings settings)
 	ret.length = i;
 	args = ret;
 	return true;
+}
+
+bool printUsage()
+{
+	writefln("usage: volt [options] [source files]");
+	writefln("\t--license       Print license information and quit.");
+	writefln("\t-o outputname   Set output to outputname.");
+	writefln("\t-w              Enable warnings.");
+	writefln("\t-d              Compile in debug mode.");
+	writefln("\t-c              Compile only, do not link.");
+	writefln("\t-S,--no-backend Stop compilation before the backend.");
+	writefln("\t--no-catch      For compiler debugging purposes.");
+	writefln("\t-h,--help       Print this message and quit.");
+	return false;
 }
 
 bool printLicense()
