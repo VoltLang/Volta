@@ -122,23 +122,19 @@ protected:
 			mModules[m.name.toString()] = m;
 		}
 
-		string linkInputFiles;
-		foreach (name, _module; mModules) {
-
+		foreach (name, _module; mModules)
 			languagePass.transform(_module);
 
-			if (settings.noBackend)
-				continue;
+		if (settings.noBackend)
+			return 0;
 
-			// this is just during bring up.
+		string linkInputFiles;
+		foreach (name, _module; mModules) {
 			string o = temporaryFilename(".bc");
 			backend.setTarget(o, TargetType.LlvmBitcode);
 			backend.compile(_module);
 			linkInputFiles ~= " \"" ~ o ~ "\" ";
 		}
-
-		if (settings.noBackend)
-			return 0;
 
 		string of = settings.outputFile is null ? DEFAULT_EXE : settings.outputFile;
 		string cmd;
@@ -162,6 +158,7 @@ protected:
 			if (ret)
 				return ret;
 		} else {
+			// this is just during bring up.
 			cmd = format("llvm-ld -native -o \"%s\" %s", of, linkInputFiles);
 			ret = system(cmd);
 			if (ret)
