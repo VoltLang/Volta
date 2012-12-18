@@ -138,6 +138,9 @@ public:
 			return ret.value;
 		}
 
+		if (fn.type is null)
+			throw CompilerPanic(fn.location, "function without type");
+
 		// The simple stuff, declare that mofo.
 		type = this.fromIr(fn.type);
 		auto ft = cast(FunctionType)type;
@@ -162,6 +165,9 @@ public:
 			type = ret.type;
 			return ret.value;
 		}
+
+		if (var.type is null)
+			throw CompilerPanic(var.location, "variable without type");
 
 		type = this.fromIr(var.type);
 		LLVMValueRef v;

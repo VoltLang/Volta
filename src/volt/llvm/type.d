@@ -362,6 +362,11 @@ Type fromIr(State state, ir.Type irType)
 {
 	if (irType.nodeType == ir.NodeType.TypeReference) {
 		auto tr = cast(ir.TypeReference)irType;
+		assert(tr !is null);
+
+		if (tr.type is null)
+			throw CompilerPanic(irType.location, "TypeReference with null type");
+
 		return state.fromIr(tr.type);
 	}
 
