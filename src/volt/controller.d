@@ -149,7 +149,7 @@ protected:
 			if (ret)
 				return ret;
 
-			string as = temporaryFilename("*.as");
+			string as = temporaryFilename(".as");
 			cmd = format("llc -o \"%s\" \"%s\"", as, link);
 			ret = system(cmd);
 			if (ret)
