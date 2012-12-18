@@ -3,7 +3,16 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.util.path;
 
+version (Windows) {
+	import core.sys.windows.windows : GetModuleFileName;
+} else version (Posix) {
+	import core.sys.posix.unistd : readlink;
+} else {
+	static assert(false);
+}
+
 import std.file : read, exists;
+import std.path : dirName;
 import std.random : uniform;
 import std.process : getenv;
 
@@ -57,4 +66,26 @@ string randomString(size_t length)
 		str[i] = c;
 	}
 	return str.idup;    
+}
+
+string getExePath()
+{
+	char[512] stack;
+
+	version (Windows) {
+
+		auto ret = GetModuleFileName(null, stack.ptr, 512);
+
+	} else version (linux) {
+
+		auto ret = readlink("/proc/self/exe", stack.ptr, 512);
+
+	} else {
+		static assert(false);
+	}
+
+	if (ret < 1)
+		throw new Exception("could not get exe path");
+
+	return dirName(stack[0 .. cast(size_t)ret]).idup;
 }
