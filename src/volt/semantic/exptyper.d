@@ -166,48 +166,35 @@ ir.Node declTypeLookup(ir.Scope _scope, string name, Location location)
 bool typesEqual(ir.Type a, ir.Type b)
 {
 	if (a.nodeType == ir.NodeType.PrimitiveType &&
-		b.nodeType == ir.NodeType.PrimitiveType) {
+	    b.nodeType == ir.NodeType.PrimitiveType) {
 		auto ap = cast(ir.PrimitiveType) a;
 		auto bp = cast(ir.PrimitiveType) b;
 		assert(ap !is null && bp !is null);
 		return ap.type == bp.type;
 	} else if (a.nodeType == ir.NodeType.PointerType &&
-			   b.nodeType == ir.NodeType.PointerType) {
+	           b.nodeType == ir.NodeType.PointerType) {
 		auto ap = cast(ir.PointerType) a;
 		auto bp = cast(ir.PointerType) b;
 		assert(ap !is null && bp !is null);
 		return typesEqual(ap.base, bp.base);
 	} else if (a.nodeType == ir.NodeType.ArrayType &&
-			   b.nodeType == ir.NodeType.ArrayType) {
+	           b.nodeType == ir.NodeType.ArrayType) {
 		auto ap = cast(ir.ArrayType) a;
 		auto bp = cast(ir.ArrayType) b;
 		assert(ap !is null && bp !is null);
 		return typesEqual(ap.base, ap.base);
 	} else if (a.nodeType == ir.NodeType.TypeReference &&
-			   b.nodeType == ir.NodeType.TypeReference) {
+	           b.nodeType == ir.NodeType.TypeReference) {
 		auto ap = cast(ir.TypeReference) a;
 		auto bp = cast(ir.TypeReference) b;
 		assert(ap !is null && bp !is null);
 		return ap.names == bp.names;
-	} else if (a.nodeType == ir.NodeType.FunctionType &&
-			   b.nodeType == ir.NodeType.FunctionType) {
-		auto ap = cast(ir.FunctionType) a;
-		auto bp = cast(ir.FunctionType) b;
-		assert(ap !is null && bp !is null);
-
-		if (ap.params.length != bp.params.length)
-			return false;
-		auto ret = typesEqual(ap.ret, bp.ret);
-		if (!ret)
-			return false;
-		for (int i; i < ap.params.length; i++)
-			if (!typesEqual(ap.params[i].type, bp.params[i].type))
-				return false;
-		return true;
-	} else if (a.nodeType == ir.NodeType.DelegateType &&
-			   b.nodeType == ir.NodeType.DelegateType) {
-		auto ap = cast(ir.DelegateType) a;
-		auto bp = cast(ir.DelegateType) b;
+	} else if ((a.nodeType == ir.NodeType.FunctionType &&
+	            b.nodeType == ir.NodeType.FunctionType) ||
+		   (a.nodeType == ir.NodeType.DelegateType &&
+	            b.nodeType == ir.NodeType.DelegateType)) {
+		auto ap = cast(ir.CallableType) a;
+		auto bp = cast(ir.CallableType) b;
 		assert(ap !is null && bp !is null);
 
 		if (ap.params.length != bp.params.length)
