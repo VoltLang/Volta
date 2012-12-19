@@ -98,6 +98,13 @@ Visitor.Status acceptPostfix(ref ir.Exp exp, ir.Postfix postfix, ExpReplaceVisit
 		return VisitorStop;
 	}
 
+	foreach (ref arg; postfix.arguments) {
+		status = acceptExp(arg, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
 	return av.leave(exp, postfix);
 }
 
