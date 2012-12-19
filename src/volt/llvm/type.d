@@ -265,7 +265,9 @@ class StructType : Type
 			if (var is null)
 				continue;
 
-			/// @todo figure out if Variable is member or not.
+			if (var.storage != ir.Variable.Storage.None)
+				continue;
+
 			/// @todo handle anon types.
 			assert(var.name !is null);
 
