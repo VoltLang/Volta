@@ -158,24 +158,36 @@ public:
 
 	override Status enter(ref ir.Exp e, ir.Postfix p)
 	{
-		foreach (ref arg; p.arguments) {
-			acceptExp(arg, this);
-		}
+		if (p.op != ir.Postfix.Op.Identifier)
+			return Continue;
 
 		string[] idents;
 		ir.Postfix currentP = p;
 		while (true) {
-			if (currentP.identifier !is null) {
-				idents ~= currentP.identifier.value;
-			}
+			if (currentP.identifier is null)
+				throw CompilerPanic(currentP.location, "null identifier");
+
+			idents ~= currentP.identifier.value;
+
 			if (currentP.child.nodeType == ir.NodeType.Postfix) {
-				currentP = cast(ir.Postfix) currentP.child;
+				auto child = cast(ir.Postfix) currentP.child;
+
+				// for things like func().structVar;
+				if (child.op != ir.Postfix.Op.Identifier) {
+					return acceptExp(currentP.child, this);
+				}
+
+				currentP = child;
+
 			} else if (currentP.child.nodeType == ir.NodeType.IdentifierExp) {
 				auto identExp = cast(ir.IdentifierExp) currentP.child;
 				idents ~= identExp.value;
 				break;
+			} else {
+				throw CompilerPanic(currentP.location, "strange postfix child");
 			}
 		}
+
 		ir.Scope _scope = current;
 		ir.ExpReference _ref;
 		/// Fillout _ref with data from ident.
