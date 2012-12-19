@@ -21,10 +21,13 @@ static import volt.semantic.mangle;
  */
 class Value
 {
-	bool isPointer; ///< Is this a reference to the real value?
+public:
 	Type type;
 	LLVMValueRef value;
 
+	bool isPointer; ///< Is this a reference to the real value?
+
+public:
 	this()
 	{
 	}
@@ -656,8 +659,8 @@ void handleIndex(State state, ir.Postfix postfix, Value result)
 	state.getValue(postfix.arguments[0], right);
 
 	auto pt = cast(PointerType)left.type;
-	assert(pt !is null);
-
+	if (pt is null)
+		throw CompilerPanic(postfix.location, "can not index non-pointer type");
 
 	result.value = LLVMBuildGEP(state.builder, left.value, [right.value], "gep");
 	result.type = pt.base;
@@ -690,7 +693,6 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 		ret = ft.ret;
 		makeNonPointer(state, result);
 	} else if (dt !is null) {
-		assert(dt !is null);
 
 		makePointer(state, result);
 
