@@ -77,7 +77,10 @@ public:
 		applyAttributes(s, ctxTop.stack);
 		applyAttributes(s, mStack);
 
-		return Continue;
+		// Filter out any Attributes.
+		s.members.nodes = manipNodes(s.members.nodes, &nodeManipDg);
+
+		return ContinueParent;
 	}
 
 	override Status enter(ir.Class c)
@@ -85,7 +88,10 @@ public:
 		applyAttributes(c, ctxTop.stack);
 		applyAttributes(c, mStack);
 
-		return Continue;
+		// Filter out any Attributes.
+		c.members.nodes = manipNodes(c.members.nodes, &nodeManipDg);
+
+		return ContinueParent;
 	}
 
 	override Status enter(ir._Interface i)
@@ -93,7 +99,10 @@ public:
 		applyAttributes(i, ctxTop.stack);
 		applyAttributes(i, mStack);
 
-		return Continue;
+		// Filter out any Attributes.
+		i.members.nodes = manipNodes(i.members.nodes, &nodeManipDg);
+
+		return ContinueParent;
 	}
 
 	override Status enter(ir.Enum e)
