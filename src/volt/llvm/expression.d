@@ -633,8 +633,7 @@ void handlePostId(State state, ir.Postfix postfix, Value result)
 		makeNonPointer(state, result);
 		v = result.value;
 	} else {
-		if (!result.isPointer)
-			throw CompilerPanic(postfix.location, "can only access structs on pointers");
+		makePointer(state, result);
 		v = result.value;
 	}
 
@@ -692,7 +691,9 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 		makeNonPointer(state, result);
 	} else if (dt !is null) {
 		assert(dt !is null);
-		assert(result.isPointer);
+
+		makePointer(state, result);
+
 		ret = dt.ret;
 
 		auto func = LLVMBuildStructGEP(state.builder, result.value, dt.funcIndex, "dgFuncGep");
@@ -789,4 +790,19 @@ void makeNonPointer(State state, Value result)
 
 	result.value = LLVMBuildLoad(state.builder, result.value, "load");
 	result.isPointer = false;
+}
+
+/**
+ * Ensures that the given Value is a pointer by allocating temp storage for it.
+ */
+void makePointer(State state, Value result)
+{
+	if (result.isPointer)
+		return;
+
+	auto v = LLVMBuildAlloca(state.builder, result.type.llvmType, "tempStorage");
+	LLVMBuildStore(state.builder, result.value, v);
+
+	result.value = v;
+	result.isPointer = true;
 }
