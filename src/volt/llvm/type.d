@@ -326,17 +326,20 @@ class StructType : Type
 void buildCommonTypes(State state)
 {
 	auto voidTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Void);
-	auto ubyteTypeIR = new ir.PrimitiveType(ir.PrimitiveType.Kind.Ubyte);
-	auto voidPtrTypeIr = new ir.PointerType(ubyteTypeIR);  // http://lists.cs.uiuc.edu/pipermail/llvmdev/2012-May/050080.html
 
 	auto boolTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
+	auto byteTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Byte);
+	auto ubyteTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Ubyte);
 	auto intTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
 	auto uintTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
 	auto ulongTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
 
+	auto voidPtrTypeIr = new ir.PointerType(voidTypeIr);
+
 
 	addMangledName(voidTypeIr);
-	addMangledName(ubyteTypeIR);
+	addMangledName(byteTypeIr);
+	addMangledName(ubyteTypeIr);
 	addMangledName(voidPtrTypeIr);
 
 	addMangledName(boolTypeIr);
@@ -346,12 +349,15 @@ void buildCommonTypes(State state)
 
 
 	state.voidType = cast(VoidType)state.fromIr(voidTypeIr);
-	state.voidPtrType = cast(PointerType)state.fromIr(voidPtrTypeIr);
 
 	state.boolType = cast(PrimitiveType)state.fromIr(boolTypeIr);
+	state.byteType = cast(PrimitiveType)state.fromIr(byteTypeIr);
+	state.ubyteType = cast(PrimitiveType)state.fromIr(ubyteTypeIr);
 	state.intType = cast(PrimitiveType)state.fromIr(intTypeIr);
 	state.uintType = cast(PrimitiveType)state.fromIr(uintTypeIr);
 	state.ulongType = cast(PrimitiveType)state.fromIr(ulongTypeIr);
+
+	state.voidPtrType = cast(PointerType)state.fromIr(voidPtrTypeIr);
 
 
 	assert(state.voidType !is null);

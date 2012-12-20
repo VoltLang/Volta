@@ -42,11 +42,15 @@ public:
 	 * @{
 	 */
 	VoidType voidType;
-	PointerType voidPtrType;
+
 	PrimitiveType boolType;
+	PrimitiveType byteType;
+	PrimitiveType ubyteType;
 	PrimitiveType intType;
 	PrimitiveType uintType;
 	PrimitiveType ulongType;
+
+	PointerType voidPtrType;
 	/**
 	 * @}
 	 */
