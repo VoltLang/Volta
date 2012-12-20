@@ -207,16 +207,15 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		i.value = primary._string;
 		exp = i;
 		break;
-	// <horrific hack>
 	case intir.PrimaryExp.Type.This:
-		auto c = new ir.Constant();
-		c.value = "this";
-		exp = c;
+		auto i = new ir.IdentifierExp();
+		i.value = "this";
+		exp = i;
 		break;
 	case intir.PrimaryExp.Type.Super:
-		auto c = new ir.Constant();
-		c.value = "super";
-		exp = c;
+		auto i = new ir.IdentifierExp();
+		i.value = "super";
+		exp = i;
 		break;
 	case intir.PrimaryExp.Type.Null:
 		auto c = new ir.Constant();
@@ -246,7 +245,6 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		c.type.location = primary.location;
 		exp = c;
 		break;
-	// </hack>
 	case intir.PrimaryExp.Type.Typeid:
 		auto ti = new ir.Typeid();
 		if (primary.exp !is null) {

@@ -14,6 +14,7 @@ class ContextBuilder : NullVisitor, Pass
 {
 public:
 	ir.Scope current;
+	ir.Struct[] structStack;
 
 public:
 	void close()
@@ -101,6 +102,8 @@ public:
 		current.addType(s, s.name);
 		s.myScope = newContext(s);
 
+		structStack ~= s;		
+
 		return Continue;
 	}
 
@@ -112,11 +115,36 @@ public:
 			fn.myScope.addValue(var, var.name);
 		}
 
+		if (structStack.length == 0) {
+			return Continue;
+		}
+
+		auto tr = new ir.TypeReference();
+		tr.location = structStack[$-1].location;
+		tr.names ~= structStack[$-1].name;
+		tr.type = structStack[$-1];
+
+		auto thisVar = new ir.Variable();
+		thisVar.location = structStack[$-1].location;
+		thisVar.type = tr;
+		thisVar.name = "this";
+		thisVar.mangledName = "this";
+
+		fn.myScope.addValue(thisVar, thisVar.name); 
+
 		return Continue;
 	}
 
 	override Status leave(ir.Class c) { pop(); return Continue; }
 	override Status leave(ir._Interface i) { pop(); return Continue; }
-	override Status leave(ir.Struct s) { pop(); return Continue; }
+
+	override Status leave(ir.Struct s) 
+	{ 
+		pop();
+		assert(structStack.length > 0); 
+		structStack = structStack[0 .. $-1];
+		return Continue;
+	}
+
 	override Status leave(ir.Function fn) { pop(); return Continue; }
 }
