@@ -181,7 +181,12 @@ public:
 			break;
 		case Local:
 			v = LLVMAddGlobal(mod, type.llvmType, var.mangledName);
-			LLVMSetThreadLocal(v, true);
+			version (Windows) {
+				/* LLVM on Windows (as of 3.1) does not support TLS. 
+				 * So for now, make all Variables marked as local global,
+				 * else nothing will work at all.
+				 */
+			} else LLVMSetThreadLocal(v, true);
 			break;
 		case Global:
 			v = LLVMAddGlobal(mod, type.llvmType, var.mangledName);
