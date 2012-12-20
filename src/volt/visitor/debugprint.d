@@ -225,10 +225,11 @@ public:
 	override Status leave(ir.StorageType n) { leaveNode(n); return Continue; }
 	override Status enter(ir.Attribute n) { enterNode(n); return Continue; }
 	override Status leave(ir.Attribute n) { leaveNode(n); return Continue; }
+	override Status enter(ir.Alias n) { enterNode(n); return Continue; }
+	override Status leave(ir.Alias n) { leaveNode(n); return Continue; }
 
 	override Status visit(ir.PrimitiveType n) { visitNode(n); return Continue; }
 	override Status visit(ir.TypeReference n) { visitRef(n, n.type); return Continue; }
-	override Status visit(ir.Alias n) { visitNode(n); return Continue; }
 
 	/*
 	 * Expression Nodes.

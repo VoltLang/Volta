@@ -124,10 +124,12 @@ public abstract:
 	Status leave(ir.StorageType type);
 	Status enter(ir.Attribute attr);
 	Status leave(ir.Attribute attr);
+	Status enter(ir.Alias a);
+	Status leave(ir.Alias a);
 
 	Status visit(ir.PrimitiveType it);
 	Status visit(ir.TypeReference tr);
-	Status visit(ir.Alias a);
+
 
 	/*
 	 * Expression Nodes.
@@ -266,10 +268,11 @@ override:
 	Status leave(ir.StorageType type){ return Continue; }
 	Status enter(ir.Attribute attr){ return Continue; }
 	Status leave(ir.Attribute attr){ return Continue; }
+	Status enter(ir.Alias a){ return Continue; }
+	Status leave(ir.Alias a){ return Continue; }
 
 	Status visit(ir.PrimitiveType it){ return Continue; }
 	Status visit(ir.TypeReference tr){ return Continue; }
-	Status visit(ir.Alias a){ return Continue; }
 
 	/*
 	* Expression Nodes.
@@ -512,9 +515,7 @@ Visitor.Status accept(ir.Node n, Visitor av)
 	case ir.NodeType.StorageType:
 		return acceptStorageType(cast(ir.StorageType) n, av);
 	case ir.NodeType.Alias:
-		auto asAlias = cast(ir.Alias) n;
-		assert(asAlias !is null);
-		return av.visit(asAlias);
+		return acceptAlias(cast(ir.Alias) n, av);
 
 	/*
 	 * Failure fall through.
@@ -736,6 +737,21 @@ Visitor.Status acceptAttribute(ir.Attribute attr, Visitor av)
 	}
 
 	return av.leave(attr);
+}
+
+Visitor.Status acceptAlias(ir.Alias a, Visitor av)
+{
+	auto status = av.enter(a);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	status = accept(a.type, av);
+	if (status == VisitorStop) {
+		return status;
+	}
+
+	return av.leave(a);
 }
 
 Visitor.Status acceptStorageType(ir.StorageType type, Visitor av)

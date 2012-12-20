@@ -1233,7 +1233,7 @@ public:
 		assert(false);
 	}
 
-	override Status visit(ir.Alias a)
+	override Status enter(ir.Alias a)
 	{
 		ln();
 		twf("alias ");
@@ -1241,7 +1241,12 @@ public:
 		wf(" = ");
 		accept(a.type, this);
 		wfln(";");
-		return Continue;
+		return ContinueParent;
+	}
+
+	override Status leave(ir.Alias a)
+	{
+		assert(false);
 	}
 
 	/*

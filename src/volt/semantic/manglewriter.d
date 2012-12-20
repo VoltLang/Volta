@@ -102,7 +102,7 @@ public:
 		return Continue;
 	}
 
-	override Status visit(ir.Alias a)
+	override Status enter(ir.Alias a)
 	{
 		if (a.type.mangledName != "") {
 			return Continue;

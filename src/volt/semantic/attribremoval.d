@@ -113,7 +113,7 @@ public:
 		return Continue;
 	}
 
-	override Status visit(ir.Alias a)
+	override Status enter(ir.Alias a)
 	{
 		applyAttributes(a, ctxTop.stack);
 		applyAttributes(a, mStack);

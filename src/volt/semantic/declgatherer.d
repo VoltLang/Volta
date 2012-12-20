@@ -32,7 +32,7 @@ public:
 		return Continue;
 	}
 
-	override Status visit(ir.Alias a)
+	override Status enter(ir.Alias a)
 	{
 		assert(current !is null);
 		current.addType(a.type, a.name);
