@@ -980,9 +980,21 @@ Visitor.Status acceptIfStatement(ir.IfStatement i, Visitor av)
 		return parentContinue(status);
 	}
 
-	accept(i.thenState, av);
+	status = accept(i.exp, av);
+	if (status == VisitorStop) {
+		return VisitorStop;
+	}
+
+	status = accept(i.thenState, av);
+	if (status == VisitorStop) {
+		return VisitorStop;
+	}
+
 	if (i.elseState !is null) {
-		accept(i.elseState, av);
+		status = accept(i.elseState, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
 	}
 
 	return av.leave(i);
