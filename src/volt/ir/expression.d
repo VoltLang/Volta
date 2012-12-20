@@ -428,3 +428,12 @@ public:
 public:
 	this() { super(NodeType.ExpReference); }
 }
+
+class StructLiteral : Exp
+{
+public:
+	Exp[] exps;
+
+public:
+	this() { super(NodeType.StructLiteral); }
+}

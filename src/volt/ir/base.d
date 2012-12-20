@@ -109,6 +109,7 @@ enum NodeType
 	IsExp,
 	FunctionLiteral,
 	ExpReference,
+	StructLiteral,
 }
 
 /**
@@ -320,5 +321,6 @@ string nodeToString(NodeType nodeType)
 	case IsExp: return "IsExp";
 	case FunctionLiteral: return "FunctionLiteral";
 	case ExpReference: return "ExpReference";
+	case StructLiteral: return "StructLiteral";
 	}
 }
