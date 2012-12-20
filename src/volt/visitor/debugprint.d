@@ -256,6 +256,8 @@ public:
 	override Status leave(ir.IsExp n) { leaveNode(n); return Continue; }
 	override Status enter(ir.FunctionLiteral n) { enterNode(n); return Continue; }
 	override Status leave(ir.FunctionLiteral n) { leaveNode(n); return Continue; }
+	override Status enter(ir.StructLiteral n) { enterNode(n); return Continue; }
+	override Status leave(ir.StructLiteral n) { leaveNode(n); return Continue; }
 
 	override Status visit(ir.ExpReference n) { visitRef(n, n.decl); return Continue; }
 	override Status visit(ir.Constant n) { visitNode(n); return Continue; }

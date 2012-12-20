@@ -1640,6 +1640,25 @@ public:
 		assert(false);
 	}
 
+	override Status enter(ir.StructLiteral sliteral)
+	{
+		wf("{ ");
+		foreach (i, exp; sliteral.exps) {
+			accept(exp, this);
+			if (i < sliteral.exps.length - 1) {
+				wf(", ");
+			}
+		}
+		wf("}");
+
+		return ContinueParent;
+	}
+
+	override Status leave(ir.StructLiteral sliteral)
+	{
+		assert(false);
+	}
+
 	override Status visit(ir.ExpReference e)
 	{ 
 		if (e.idents.length > 1) for (int i = cast(int)e.idents.length - 1; i > 0; --i) {

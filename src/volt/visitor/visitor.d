@@ -156,6 +156,8 @@ public abstract:
 	Status leave(ir.IsExp);
 	Status enter(ir.FunctionLiteral);
 	Status leave(ir.FunctionLiteral);
+	Status enter(ir.StructLiteral);
+	Status leave(ir.StructLiteral);
 
 	Status visit(ir.ExpReference);
 	Status visit(ir.Constant);
@@ -202,8 +204,8 @@ override:
 	Status visit(ir.Identifier name){ return Continue; }
 
 	/*
-	* Statement Nodes.
-	*/
+	 * Statement Nodes.
+	 */
 	Status enter(ir.ExpStatement e){ return Continue; }
 	Status leave(ir.ExpStatement e){ return Continue; }
 	Status enter(ir.ReturnStatement ret){ return Continue; }
@@ -248,8 +250,8 @@ override:
 	Status visit(ir.EmptyStatement es){ return Continue; }
 
 	/*
-	* Declaration
-	*/
+	 * Declaration
+	 */
 	Status enter(ir.PointerType pointer){ return Continue; }
 	Status leave(ir.PointerType pointer){ return Continue; }
 	Status enter(ir.ArrayType array){ return Continue; }
@@ -275,8 +277,8 @@ override:
 	Status visit(ir.TypeReference tr){ return Continue; }
 
 	/*
-	* Expression Nodes.
-	*/
+	 * Expression Nodes.
+	 */
 	Status enter(ir.Postfix){ return Continue; }
 	Status leave(ir.Postfix){ return Continue; }
 	Status enter(ir.Unary){ return Continue; }
@@ -299,6 +301,8 @@ override:
 	Status leave(ir.IsExp){ return Continue; }
 	Status enter(ir.FunctionLiteral){ return Continue; }
 	Status leave(ir.FunctionLiteral){ return Continue; }
+	Status enter(ir.StructLiteral){ return Continue; }
+	Status leave(ir.StructLiteral){ return Continue; }
 
 	Status visit(ir.ExpReference){ return Continue; }
 	Status visit(ir.Constant){ return Continue; }
@@ -426,6 +430,10 @@ Visitor.Status accept(ir.Node n, Visitor av)
 		auto asExpReference = cast(ir.ExpReference) n;
 		assert(asExpReference !is null);
 		return av.visit(asExpReference);
+	case ir.NodeType.StructLiteral:
+		auto asStructLiteral = cast(ir.StructLiteral) n;
+		assert(asStructLiteral !is null);
+		return acceptStructLiteral(asStructLiteral, av);
 
 	/*
 	 * Statements.
@@ -1452,4 +1460,23 @@ Visitor.Status acceptConstant(ir.Constant constant, Visitor av)
 Visitor.Status acceptIdentifier(ir.IdentifierExp identifier, Visitor av)
 {
 	return av.visit(identifier);
+}
+
+Visitor.Status acceptStructLiteral(ir.StructLiteral sliteral, Visitor av)
+{
+	auto status = av.enter(sliteral);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	foreach (exp; sliteral.exps) {
+		status = accept(exp, av);
+		if (status == VisitorContinueParent) {
+			continue;
+		} else if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	return av.leave(sliteral);
 }
