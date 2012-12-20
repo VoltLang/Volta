@@ -162,7 +162,12 @@ public:
 	{
 		base = state.fromIr(pt.base);
 
-		llvmType = LLVMPointerType(base.llvmType, 0);
+		auto voidT = cast(VoidType) base;
+		if (voidT !is null) {
+			llvmType = LLVMPointerType(LLVMInt8Type(), 0);
+		} else {
+			llvmType = LLVMPointerType(base.llvmType, 0);
+		}
 		super(pt, llvmType);
 	}
 }
@@ -321,7 +326,7 @@ class StructType : Type
 void buildCommonTypes(State state)
 {
 	auto voidTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Void);
-	auto voidPtrTypeIr = new ir.PointerType(voidTypeIr);
+	auto voidPtrTypeIr = new ir.PointerType(new ir.PrimitiveType(ir.PrimitiveType.Kind.Ubyte));  // http://lists.cs.uiuc.edu/pipermail/llvmdev/2012-May/050080.html
 
 	auto boolTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
 	auto intTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
