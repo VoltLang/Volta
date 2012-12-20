@@ -321,6 +321,13 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		return primary.isExp;
 	case intir.PrimaryExp.Type.FunctionLiteral:
 		return primary.functionLiteral;
+	case intir.PrimaryExp.Type.StructLiteral:
+		auto lit = new ir.StructLiteral();
+		foreach (bexp; primary.arguments) {
+			lit.exps ~= binexpToExp(bexp);
+		}
+		exp = lit;
+		break;
 	default:
 		throw CompilerPanic(primary.location, "unhandled primary expression.");
 	}
@@ -880,6 +887,15 @@ intir.PrimaryExp parsePrimaryExp(TokenStream ts)
 		exp.tlargs ~= parseTernaryExp(ts);
 		match(ts, TokenType.CloseParen);
 		exp.op = intir.PrimaryExp.Type.ParenExp;
+		break;
+	case TokenType.OpenBrace:
+		ts.get();
+		exp.op = intir.PrimaryExp.Type.StructLiteral;
+		while (ts.peek.type != TokenType.CloseBrace) {
+			exp.arguments ~= parseBinExp(ts);
+			matchIf(ts, TokenType.Comma);
+		}
+		match(ts, TokenType.CloseBrace);
 		break;
 	case TokenType.Typeid:
 		ts.get();

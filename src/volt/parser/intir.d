@@ -121,6 +121,7 @@ public:
 		Is,
 		ParenExp,        // tlargs
 		Traits,
+		StructLiteral,
 	}
 
 public:
