@@ -119,6 +119,8 @@ public:
 			return Continue;
 		}
 
+		/// @todo not when the function is static
+
 		auto tr = new ir.TypeReference();
 		tr.location = structStack[$-1].location;
 		tr.names ~= structStack[$-1].name;
