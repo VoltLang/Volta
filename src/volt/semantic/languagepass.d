@@ -22,6 +22,7 @@ import volt.semantic.refrep;
 import volt.semantic.arraylowerer;
 import volt.semantic.manglewriter;
 import volt.semantic.importresolver;
+import volt.semantic.irverifier;
 
 
 class LanguagePass : Pass
@@ -51,6 +52,7 @@ public:
 		passes ~= new ReferenceReplacer();
 		passes ~= new ArrayLowerer(settings);
 		passes ~= new MangleWriter();
+		passes ~= new IrVerifier();
 
 		if (!settings.noBackend && settings.outputFile is null) {
 			passes ~= new DebugPrintVisitor("Running DebugPrintVisitor:");
