@@ -326,7 +326,8 @@ class StructType : Type
 void buildCommonTypes(State state)
 {
 	auto voidTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Void);
-	auto voidPtrTypeIr = new ir.PointerType(new ir.PrimitiveType(ir.PrimitiveType.Kind.Ubyte));  // http://lists.cs.uiuc.edu/pipermail/llvmdev/2012-May/050080.html
+	auto ubyteTypeIR = new ir.PrimitiveType(ir.PrimitiveType.Kind.Ubyte);
+	auto voidPtrTypeIr = new ir.PointerType(ubyteTypeIR);  // http://lists.cs.uiuc.edu/pipermail/llvmdev/2012-May/050080.html
 
 	auto boolTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
 	auto intTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
@@ -335,6 +336,7 @@ void buildCommonTypes(State state)
 
 
 	addMangledName(voidTypeIr);
+	addMangledName(ubyteTypeIR);
 	addMangledName(voidPtrTypeIr);
 
 	addMangledName(boolTypeIr);
