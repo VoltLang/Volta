@@ -78,19 +78,27 @@ public:
 
 		ir.Scope _scope;
 		string emsg;
-		if (t.nodeType == ir.NodeType.Module) {
-			auto asModule = cast(ir.Module) t;
-			assert(asModule !is null);
-			_scope = asModule.myScope;
-			emsg = format("module '%s' has no member '%s'.", asModule.name, asPostfix.identifier.value);
-		} else if (t.nodeType == ir.NodeType.TypeReference) {
-			auto asUser = cast(ir.TypeReference) t;
-			auto asStruct = cast(ir.Struct) asUser.type;
-			_scope = asStruct.myScope;
-			emsg = format("type '%s' has no member '%s'.", asUser.names[$-1], asPostfix.identifier.value);
-		} else {
-			assert(false);
+		void retrieveScope(ir.Node tt)
+		{
+			if (tt.nodeType == ir.NodeType.Module) {
+				auto asModule = cast(ir.Module) tt;
+				assert(asModule !is null);
+				_scope = asModule.myScope;
+				emsg = format("module '%s' has no member '%s'.", asModule.name, asPostfix.identifier.value);
+			} else if (tt.nodeType == ir.NodeType.TypeReference) {
+				auto asUser = cast(ir.TypeReference) tt;
+				auto asStruct = cast(ir.Struct) asUser.type;
+				_scope = asStruct.myScope;
+				emsg = format("type '%s' has no member '%s'.", asUser.names[$-1], asPostfix.identifier.value);
+			} else if (tt.nodeType == ir.NodeType.PointerType) {
+				auto asPointer = cast(ir.PointerType) tt;
+				assert(asPointer !is null);
+				retrieveScope(asPointer.base);
+			} else {
+				assert(false);
+			}
 		}
+		retrieveScope(t); 
 
 		auto store = _scope.getStore(asPostfix.identifier.value);
 		if (store is null) {

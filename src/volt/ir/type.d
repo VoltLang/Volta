@@ -154,6 +154,13 @@ class PointerType : Type
 {
 public:
 	Type base;
+	/**
+	 * If this is true, then this pointer represents a
+	 * reference -- that is to say, it is presented to
+	 * the user as the base type, but is handled as a
+	 * pointer internally to the compiler.
+	 */
+	bool isReference;
 
 
 public:
@@ -234,6 +241,8 @@ public:
 
 	Type ret;
 	Variable[] params;
+	/// @todo Get rid of this once we've moved Function.Kind here.
+	bool hiddenParameter;
 
 
 public:

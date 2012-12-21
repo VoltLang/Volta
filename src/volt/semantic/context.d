@@ -128,11 +128,13 @@ public:
 
 		auto thisVar = new ir.Variable();
 		thisVar.location = structStack[$-1].location;
-		thisVar.type = tr;
+		thisVar.type = new ir.PointerType(tr);
 		thisVar.name = "this";
 		thisVar.mangledName = "this";
 
-		fn.myScope.addValue(thisVar, thisVar.name); 
+		fn.myScope.addValue(thisVar, thisVar.name);
+		fn.type.params ~= thisVar;
+		fn.type.hiddenParameter = true;
 
 		return Continue;
 	}
