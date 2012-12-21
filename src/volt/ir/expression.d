@@ -226,6 +226,7 @@ class Array : Exp
 {
 public:
 	Exp[] values;
+	Type type;
 
 public:
 	this() { super(NodeType.Array); }

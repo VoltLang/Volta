@@ -259,6 +259,24 @@ public:
 				}
 			case StructLiteral:
 				return e;
+			case Array:
+				auto asArray = cast(ir.Array) e;
+				assert(asArray !is null);
+				if (asArray.type !is null) {
+					return asArray.type;
+				}
+				ir.Type base;
+				if (asArray.values.length > 0) {
+					/// @todo figure out common subtype stuff. For now, D1 stylin'.
+					base = cast(ir.Type) evaluate(asArray.values[0]);
+				} else {
+					base = new ir.PrimitiveType(ir.PrimitiveType.Kind.Void);
+				}
+				assert(base !is null);
+				base.location = asArray.location;
+				asArray.type = new ir.ArrayType(base);
+				asArray.type.location = asArray.location;
+				return asArray.type;
 			default:
 				return null;
 		}
