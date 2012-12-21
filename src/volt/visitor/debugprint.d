@@ -234,11 +234,11 @@ public:
 	/*
 	 * Expression Nodes.
 	 */
-	override Status enter(ir.Postfix n) { enterNode(n); return Continue; }
+	override Status enter(ir.Postfix n) { enterNode(n, to!string(n.op)); return Continue; }
 	override Status leave(ir.Postfix n) { leaveNode(n); return Continue; }
-	override Status enter(ir.Unary n) { enterNode(n); return Continue; }
+	override Status enter(ir.Unary n) { enterNode(n, to!string(n.op)); return Continue; }
 	override Status leave(ir.Unary n) { leaveNode(n); return Continue; }
-	override Status enter(ir.BinOp n) { enterNode(n); return Continue; }
+	override Status enter(ir.BinOp n) { enterNode(n, to!string(n.op)); return Continue; }
 	override Status leave(ir.BinOp n) { leaveNode(n); return Continue; }
 	override Status enter(ir.Ternary n) { enterNode(n); return Continue; }
 	override Status leave(ir.Ternary n) { leaveNode(n); return Continue; }
@@ -279,6 +279,14 @@ protected:
 		if (mIndent != 0)
 			ln();
 		twf(["(", ir.nodeToString(node), " 0x", to!string(*cast(size_t*)&node)]);
+		mLastIndent = mIndent++;
+	}
+
+	void enterNode(ir.Node node, string extra)
+	{
+		if (mIndent != 0)
+			ln();
+		twf(["(", ir.nodeToString(node), " ", extra, " 0x", to!string(*cast(size_t*)&node)]);
 		mLastIndent = mIndent++;
 	}
 
