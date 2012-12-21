@@ -14,7 +14,7 @@ extern(C) AllocDg vrt_gc_get_alloc_dg()
 	return *cast(AllocDg*)&structToDg;
 }
 
-void* mallocFunc(void *ptr, uint size)
+void* mallocFunc(uint size, void *ptr)
 {
 	return malloc(size);
 }
@@ -26,6 +26,6 @@ extern(C) void* malloc(uint size);
  */
 struct StructToDg
 {
-	void *func;
 	void *instance;
+	void *func;
 }
