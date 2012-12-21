@@ -765,6 +765,7 @@ void handleExpReference(State state, ir.ExpReference expRef, Value result)
 	switch(expRef.decl.declKind) with (ir.Declaration.Kind) {
 	case Function:
 		auto fn = cast(ir.Function)expRef.decl;
+		result.isPointer = false;
 		result.value = state.getFunctionValue(fn, result.type);
 		break;
 	case Variable:
