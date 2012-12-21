@@ -58,28 +58,31 @@ LLVMValueRef getValue(State state, ir.Exp exp)
  */
 LLVMValueRef getConstantValue(State state, ir.Exp exp)
 {
-	void error() {
-		throw CompilerPanic(exp.location, "Could not get constant from expression");
+	void error(string t) {
+		auto str = format("could not get constant from expression '%s'", t);
+		throw CompilerPanic(exp.location, str);
 	}
 
 	if (exp.nodeType == ir.NodeType.Constant)
 		return getValue(state, exp);
 	if (exp.nodeType != ir.NodeType.Unary)
-		error();
+		error("other exp then unary or constant");
 
 	auto asUnary = cast(ir.Unary)exp;
 	if (asUnary.op != ir.Unary.Op.Cast)
-		error();
+		error("other unary op then cast");
 
 	auto c = cast(ir.Constant)asUnary.value;
 	if (c is null)
-		error();
+		error("not cast from constant");
 
-	auto t = state.fromIr(asUnary.type);
+	auto to = cast(PrimitiveType)state.fromIr(asUnary.type);
+	auto from = cast(PrimitiveType)state.fromIr(c.type);
+	if (to is null || from is null)
+		error("not integer constants");
 
-	/// @todo actually handle the casts.
-	error();
-	assert(false);
+	auto v = from.fromConstant(state, c);
+	return LLVMConstIntCast(v, to.llvmType, from.signed);
 }
 
 /**
