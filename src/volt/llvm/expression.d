@@ -676,22 +676,31 @@ void handleIndex(State state, ir.Postfix postfix, Value result)
 
 void handleCall(State state, ir.Postfix postfix, Value result)
 {
-	auto numArgs = postfix.arguments.length; 
-
-	Value[] args;
 	LLVMValueRef[] llvmArgs;
 
-	args.length = numArgs;
-	llvmArgs.length = numArgs;
+	llvmArgs.length = postfix.arguments.length;
 
 	foreach(int i, arg; postfix.arguments) {
 		auto v = new Value();
 		state.getValue(arg, v);
-		args[i] = v;
 		llvmArgs[i] = v.value;
 	}
 
-	state.getValueAnyForm(postfix.child, result);
+	// Special case create delegate children to save
+	// a bunch of created delegates in the LLVM IR.
+	auto childAsPostfix = cast(ir.Postfix)postfix.child;
+	if (childAsPostfix !is null &&
+	    childAsPostfix.op == ir.Postfix.Op.CreateDelegate) {
+
+		state.getValueRef(childAsPostfix.child, result);
+		llvmArgs ~= result.value;
+
+		state.getValue(childAsPostfix.memberFunction, result);
+
+	} else {
+		state.getValueAnyForm(postfix.child, result);
+	}
+
 	auto ft = cast(FunctionType)result.type;
 	auto dt = cast(DelegateType)result.type;
 
