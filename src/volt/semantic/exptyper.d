@@ -249,6 +249,8 @@ public:
 				} else {
 					assert(false);
 				}
+			case StructLiteral:
+				return e;
 			default:
 				return null;
 		}
@@ -258,6 +260,31 @@ public:
 	ir.Node extype(ir.Type left, ref ir.Exp right)
 	{
 		ir.Node t = evaluate(right);
+		if (t is null) {
+			throw new CompilerError(right.location, "cannot retrieve type.");
+		}
+
+		if (t.nodeType == ir.NodeType.StructLiteral) {
+			auto asLit = cast(ir.StructLiteral) t;
+			assert(asLit !is null);
+			string emsg = "cannot implicitly cast struct literal to destination.";
+
+			auto tr = cast(ir.TypeReference) left;
+			if (tr is null) {
+				throw new CompilerError(right.location, emsg);
+			}
+			auto as = cast(ir.Struct) tr.type;
+			if (as is null) {
+				throw new CompilerError(right.location, emsg);
+			}
+
+			if (as.members.nodes.length < asLit.exps.length) {
+				throw new CompilerError(right.location, "cannot implicitly cast struct literal -- too many expressions for target.");
+			}
+
+			return right = new ir.Unary(left, right);
+		}
+
 		ir.Type type = cast(ir.Type)t;
 		string emsg = format("cannot implicitly convert '%s' to '%s'.", to!string(left.nodeType), to!string(t.nodeType));
 

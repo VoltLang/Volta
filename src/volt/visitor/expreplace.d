@@ -34,6 +34,8 @@ public abstract:
 	Visitor.Status leave(ref ir.Exp, ir.IsExp);
 	Visitor.Status enter(ref ir.Exp, ir.FunctionLiteral);
 	Visitor.Status leave(ref ir.Exp, ir.FunctionLiteral);
+	Visitor.Status enter(ref ir.Exp, ir.StructLiteral);
+	Visitor.Status leave(ref ir.Exp, ir.StructLiteral);
 
 	Visitor.Status visit(ref ir.Exp, ir.Constant);
 	Visitor.Status visit(ref ir.Exp, ir.IdentifierExp);
@@ -76,6 +78,10 @@ Visitor.Status acceptExp(ref ir.Exp exp, ExpReplaceVisitor av)
 		auto asExpRef = cast(ir.ExpReference) exp;
 		assert(asExpRef !is null);
 		return acceptExpReference(exp, asExpRef, av);
+	case StructLiteral:
+		auto asStructLiteral = cast(ir.StructLiteral) exp;
+		assert(asStructLiteral !is null);
+		return acceptStructLiteral(exp, asStructLiteral, av);
 	default:
 		throw CompilerPanic(exp.location, format("unhandled accept node: %s.", to!string(exp.nodeType)));
 	}
@@ -314,6 +320,25 @@ Visitor.Status acceptFunctionLiteral(ref ir.Exp exp, ir.FunctionLiteral function
 */
 
 	return av.leave(exp, functionLiteral);
+}
+
+Visitor.Status acceptStructLiteral(ref ir.Exp exp, ir.StructLiteral sliteral, ExpReplaceVisitor av)
+{
+	auto status = av.enter(exp, sliteral);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	foreach (ref sexp; sliteral.exps) {
+		status = acceptExp(sexp, av);
+		if (status == VisitorContinueParent) {
+			continue;
+		} else if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	return av.leave(exp, sliteral);
 }
 
 Visitor.Status acceptConstant(ref ir.Exp exp, ir.Constant constant, ExpReplaceVisitor av)

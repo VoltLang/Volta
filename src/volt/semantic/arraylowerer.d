@@ -223,6 +223,8 @@ public:
 	Status leave(ref ir.Exp, ir.IsExp) { return Continue; }
 	Status enter(ref ir.Exp, ir.FunctionLiteral) { return Continue; }
 	Status leave(ref ir.Exp, ir.FunctionLiteral) { return Continue; }
+	Status enter(ref ir.Exp, ir.StructLiteral) { return Continue; }
+	Status leave(ref ir.Exp, ir.StructLiteral) { return Continue; }
 
 	Status visit(ref ir.Exp e, ir.Constant c)
 	{

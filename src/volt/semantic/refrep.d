@@ -302,5 +302,7 @@ public:
 	override Status leave(ref ir.Exp, ir.IsExp) { return Continue; }
 	override Status enter(ref ir.Exp, ir.FunctionLiteral) { return Continue; }
 	override Status leave(ref ir.Exp, ir.FunctionLiteral) { return Continue; }
+	override Status enter(ref ir.Exp, ir.StructLiteral) { return Continue; }
+	override Status leave(ref ir.Exp, ir.StructLiteral) { return Continue; }
 	override Status visit(ref ir.Exp, ir.Constant) { return Continue; }
 }
