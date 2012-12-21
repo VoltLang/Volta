@@ -7,6 +7,7 @@ import ir = volt.ir.ir;
 import intir = volt.parser.intir;
 
 import volt.exceptions;
+import volt.token.location;
 import volt.token.stream;
 import volt.parser.base;
 import volt.parser.declaration;
@@ -142,7 +143,7 @@ ir.Exp binexpToExp(intir.BinExp bin)
 ir.Exp unaryToExp(intir.UnaryExp unary)
 {
 	if (unary.op == ir.Unary.Op.None) {
-		return postfixToExp(unary.postExp);
+		return postfixToExp(unary.location, unary.postExp);
 	} else if (unary.op == ir.Unary.Op.Cast) {
 		auto exp = new ir.Unary();
 		exp.location = unary.castExp.location;
@@ -174,7 +175,7 @@ ir.Exp unaryToExp(intir.UnaryExp unary)
 	assert(false);
 }
 
-ir.Exp postfixToExp(intir.PostfixExp postfix, ir.Exp seed = null)
+ir.Exp postfixToExp(Location location, intir.PostfixExp postfix, ir.Exp seed = null)
 {
 	if (seed is null) {
 		seed = primaryToExp(postfix.primary);
@@ -183,7 +184,7 @@ ir.Exp postfixToExp(intir.PostfixExp postfix, ir.Exp seed = null)
 		return seed;
 	} else {
 		auto exp = new ir.Postfix();
-		exp.location = postfix.location;
+		exp.location = location;
 		exp.op = postfix.op;
 		exp.child = seed;
 		if (exp.op == ir.Postfix.Op.Identifier) {
@@ -192,7 +193,7 @@ ir.Exp postfixToExp(intir.PostfixExp postfix, ir.Exp seed = null)
 		} else foreach (arg; postfix.arguments) {
 			exp.arguments ~= binexpToExp(arg);
 		}
-		return postfixToExp(postfix.postfix, exp);
+		return postfixToExp(location, postfix.postfix, exp);
 	}
 }
 
