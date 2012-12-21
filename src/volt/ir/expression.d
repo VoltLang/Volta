@@ -186,6 +186,7 @@ public:
 		Call,
 		Index,
 		Slice,
+		CreateDelegate,
 	}
 
 public:
@@ -193,6 +194,7 @@ public:
 	Exp child;  // What the op is operating on.
 	Exp[] arguments;
 	Identifier identifier;  // op == Identifier
+	ExpReference memberFunction;
 
 public:
 	this() { super(NodeType.Postfix); }
