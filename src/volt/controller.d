@@ -43,6 +43,10 @@ public:
 		auto b = new LlvmBackend(s.outputFile is null);
 
 		this(s, p, lp, b);
+
+		// Setup default include paths.
+		auto std = getExePath() ~ dirSeparator ~ "rt" ~ dirSeparator ~ "src";
+		settings.includePaths = std ~ settings.includePaths;
 	}
 
 	/**
