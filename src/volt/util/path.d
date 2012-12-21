@@ -12,10 +12,24 @@ version (Windows) {
 }
 
 import std.file : read, exists;
-import std.path : dirName;
+import std.path : dirName, dirSeparator;
 import std.random : uniform;
 import std.process : getenv;
 
+
+/**
+ * Used for turning module qualified names into file paths to open.
+ */
+string makeFilename(string dir, string[] names)
+{
+	auto ret = dir;
+
+	foreach(name; names)
+		ret ~= dirSeparator ~ name;
+	ret ~= ".d";
+
+	return ret;
+}
 
 /**
  * Generate a filename in a temporary directory that doesn't exist.

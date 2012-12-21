@@ -101,6 +101,7 @@ public:
 	bool noLink; ///< The -c argument
 	bool noCatch; ///< The --no-catch argument.
 	string outputFile;
+	string[] includePaths; ///< The -I arguments.
 
 private:
 	/// If the ident exists and is true, it's set, if false it's reserved.

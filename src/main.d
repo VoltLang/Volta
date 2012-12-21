@@ -46,6 +46,10 @@ bool filterArgs(ref string[] args, Settings settings)
 		settings.outputFile = file;
 	}
 
+	void includePath(string path) {
+		settings.includePaths ~= path;
+	}
+
 	// Skip the first argument.
 	ret[i++] = args[0];
 
@@ -61,6 +65,9 @@ bool filterArgs(ref string[] args, Settings settings)
 			return printLicense();
 		case "-o":
 			argHandler = &outputFile;
+			continue;
+		case "-I":
+			argHandler = &includePath;
 			continue;
 		case "-w":
 			settings.warningsEnabled = true;
@@ -96,6 +103,7 @@ bool printUsage()
 	writefln("usage: volt [options] [source files]");
 	writefln("\t--license       Print license information and quit.");
 	writefln("\t-o outputname   Set output to outputname.");
+	writefln("\t-I path         Add a include path.");
 	writefln("\t-w              Enable warnings.");
 	writefln("\t-d              Compile in debug mode.");
 	writefln("\t-c              Compile only, do not link.");

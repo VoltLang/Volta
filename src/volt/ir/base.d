@@ -205,6 +205,17 @@ public:
 		return str;
 	}
 
+	string[] strings()
+	{
+		string[] ret = new string[identifiers.length];
+
+		foreach (i, identifier; identifiers) {
+			ret[i] = identifier.value;
+		}
+
+		return ret;
+	}
+
 public:
 	this() { super(NodeType.QualifiedName); }
 }

@@ -3,7 +3,7 @@
 module volt.controller;
 
 import core.exception;
-import std.path : dirSeparator;
+import std.path : dirSeparator, exists;
 import std.process : system;
 import std.stdio : stderr;
 
@@ -29,7 +29,6 @@ public:
 	Backend backend;
 
 protected:
-	string mCurrentFile;
 	string[] mFiles;
 	ir.Module[string] mModules;
 
@@ -52,10 +51,24 @@ public:
 	ir.Module getModule(ir.QualifiedName name)
 	{
 		auto p = name.toString() in mModules;
-		if (p is null) {
-			return null;
+		if (p !is null)
+			return *p;
+
+		ir.Module m;
+
+		foreach (path; settings.includePaths) {
+			auto f = makeFilename(path, name.strings);
+
+			if (!exists(f))
+				continue;
+
+			m = loadAndParse(f);
+
+			if (m !is null)
+				break;
 		}
-		return *p;
+
+		return m;
 	}
 
 	void close()
@@ -111,29 +124,40 @@ public:
 	}
 
 protected:
+	/**
+	 * Loads a file and parses it, also adds it to the loaded modules.
+	 */
+	ir.Module loadAndParse(string file)
+	{
+		Location loc;
+		loc.filename = file;
+
+		auto src = cast(string) read(loc.filename);
+		auto m = frontend.parseNewFile(src, loc);
+		mModules[m.name.toString()] = m;
+
+		return m;
+	}
+
 	int intCompile()
 	{
-		foreach (file; mFiles) {
-			mCurrentFile = file;
+		ir.Module[] mods;
 
-			Location loc;
-			loc.filename = file;
-			auto src = cast(string) read(loc.filename);
-			auto m = frontend.parseNewFile(src, loc);
-			mModules[m.name.toString()] = m;
+		foreach (file; mFiles) {
+			mods ~= loadAndParse(file);
 		}
 
-		foreach (name, _module; mModules)
-			languagePass.transform(_module);
+		foreach (mod; mods)
+			languagePass.transform(mod);
 
 		if (settings.noBackend)
 			return 0;
 
 		string linkInputFiles;
-		foreach (name, _module; mModules) {
+		foreach (mod; mods) {
 			string o = temporaryFilename(".bc");
 			backend.setTarget(o, TargetType.LlvmBitcode);
-			backend.compile(_module);
+			backend.compile(mod);
 			linkInputFiles ~= " \"" ~ o ~ "\" ";
 		}
 
