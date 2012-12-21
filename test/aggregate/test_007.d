@@ -1,6 +1,5 @@
 //T compiles:yes
 //T retval:3
-//T has-passed:no
 // Struct literals.
 module test_007;
 
