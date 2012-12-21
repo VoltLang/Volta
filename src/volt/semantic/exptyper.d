@@ -273,13 +273,19 @@ public:
 			if (tr is null) {
 				throw new CompilerError(right.location, emsg);
 			}
-			auto as = cast(ir.Struct) tr.type;
-			if (as is null) {
+			auto asStruct = cast(ir.Struct) tr.type;
+			if (asStruct is null) {
 				throw new CompilerError(right.location, emsg);
 			}
 
-			if (as.members.nodes.length < asLit.exps.length) {
+			ir.Type[] types = getStructFieldTypes(asStruct);
+
+			if (types.length < asLit.exps.length) {
 				throw new CompilerError(right.location, "cannot implicitly cast struct literal -- too many expressions for target.");
+			}
+
+			foreach (i, ref sexp; asLit.exps) {
+				extype(types[i], sexp);
 			}
 
 			return right = new ir.Unary(left, right);

@@ -195,3 +195,20 @@ bool typesEqual(ir.Type a, ir.Type b)
 		return a is b;
 	}
 }
+
+/// Retrieves the types of Variables in _struct, in the order they appear.
+ir.Type[] getStructFieldTypes(ir.Struct _struct)
+{
+	ir.Type[] types;
+
+	if (_struct.members !is null) foreach (node; _struct.members.nodes) {
+		auto asVar = cast(ir.Variable) node;
+		if (asVar is null) {
+			continue;
+		}
+		types ~= asVar.type;
+		assert(types[$-1] !is null);
+	}
+
+	return types;
+}
