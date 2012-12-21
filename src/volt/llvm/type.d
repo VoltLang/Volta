@@ -9,6 +9,7 @@ import lib.llvm.core;
 import ir = volt.ir.ir;
 import volt.exceptions;
 import volt.llvm.state;
+import volt.llvm.expression;
 static import volt.semantic.mangle;
 
 
@@ -315,6 +316,21 @@ class StructType : Type
 		LLVMValueRef[2] vals;
 		vals[lengthIndex] = lengthType.fromNumber(state, cast(long)cnst.arrayData.length);
 		vals[ptrIndex] = strGep;
+
+		return LLVMConstNamedStruct(llvmType, vals);
+	}
+
+	LLVMValueRef fromStructLiteral(State state, ir.StructLiteral sl)
+	{
+		LLVMValueRef[] vals;
+		vals.length = indices.length;
+
+		if (vals.length != sl.exps.length)
+			throw CompilerPanic("struct literal has the wrong number of initializers");
+
+		foreach(uint i, ref val; vals) {
+			val = state.getConstantValue(sl.exps[i]);
+		}
 
 		return LLVMConstNamedStruct(llvmType, vals);
 	}

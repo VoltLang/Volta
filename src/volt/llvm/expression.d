@@ -131,6 +131,10 @@ void getValueAnyForm(State state, ir.Exp exp, Value result)
 		auto expRef = cast(ir.ExpReference)exp;
 		handleExpReference(state, expRef, result);
 		break;
+	case StructLiteral:
+		auto sl = cast(ir.StructLiteral)exp;
+		handleStructLiteral(state, sl, result);
+		break;
 	case Constant:
 		auto cnst = cast(ir.Constant)exp;
 		handleConstant(state, cnst, result);
@@ -771,6 +775,23 @@ void handleExpReference(State state, ir.ExpReference expRef, Value result)
 	default:
 		throw CompilerPanic(expRef.location, "invalid decl type");
 	}
+}
+
+void handleStructLiteral(State state, ir.StructLiteral sl, Value result)
+{
+	auto tr = cast(ir.TypeReference)sl.type;
+	if (tr is null)
+		throw CompilerPanic(sl.location, "struct literal type must be TypeReference");
+
+	auto st = cast(ir.Struct)tr.type;
+	if (st is null)
+		throw CompilerPanic(sl.location, "struct literal type must be TypeReference");
+
+	auto type = cast(StructType)state.fromIr(st);
+
+	result.isPointer = false;
+	result.type = type;
+	result.value = type.fromStructLiteral(state, sl);
 }
 
 void handleConstant(State state, ir.Constant cnst, Value result)
