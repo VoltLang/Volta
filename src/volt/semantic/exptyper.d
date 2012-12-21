@@ -128,7 +128,7 @@ public:
 
 		auto asFunctionType = cast(ir.CallableType) t;
 		assert(asFunctionType !is null);
-		if (asPostfix.arguments.length != asFunctionType.params.length) {
+		if (asPostfix.arguments.length != (asFunctionType.params.length - (asFunctionType.hiddenParameter ? 1 : 0))) {
 			throw new CompilerError(asPostfix.location, "wrong number of arguments to function.");
 		}
 		foreach (i; 0 .. asPostfix.arguments.length) {
