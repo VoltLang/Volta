@@ -1239,6 +1239,13 @@ Visitor.Status acceptPostfix(ir.Postfix postfix, Visitor av)
 		}
 	}
 
+	if (postfix.memberFunction !is null) {
+		status = accept(postfix.memberFunction, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
 	return av.leave(postfix);
 }
 

@@ -1517,6 +1517,10 @@ public:
 			}
 			wf(")");
 			break;
+		case ir.Postfix.Op.CreateDelegate:
+			wf(".");
+			wf(postfix.identifier.value);
+			break;
 		default:
 			throw CompilerPanic(postfix.location, "tried to print bad postfix expression.");
 		}

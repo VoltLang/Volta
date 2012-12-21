@@ -236,6 +236,42 @@ public:
 		}
 
 		p.child = _ref;
+
+		/* If we end up with a identifier postfix that points
+		 * at a struct, and retrieves a member function, then
+		 * transform the op from Identifier to CreatePostfix.
+		 */
+		if (p.op == ir.Postfix.Op.Identifier && _ref.decl.declKind == ir.Declaration.Kind.Variable) {
+			auto asVar = cast(ir.Variable) _ref.decl;
+			assert(asVar !is null);
+			if (asVar.type.nodeType != ir.NodeType.TypeReference) {
+				return ContinueParent;
+			}
+			auto asTR = cast(ir.TypeReference) asVar.type;
+			assert(asTR !is null);
+			if (asTR.type.nodeType != ir.NodeType.Struct) {
+				return ContinueParent;
+			}
+			auto asStruct = cast(ir.Struct) asTR.type;
+			assert(asStruct !is null);
+			ir.Store store = asStruct.myScope.getStore(p.identifier.value);
+			if (store is null) {
+				throw new CompilerError(_ref.location, format("aggregate has no member '%s'.", p.identifier.value));
+			}
+			if (store.functions.length == 0) {
+				return ContinueParent;
+			}
+			assert(store.functions.length == 1);
+
+			auto funcref = new ir.ExpReference();
+			funcref.location = p.identifier.location;
+			funcref.idents = _ref.idents;
+			funcref.idents ~= p.identifier.value;
+			funcref.decl = store.functions[0];
+			p.op = ir.Postfix.Op.CreateDelegate;
+			p.memberFunction = funcref;
+		}
+
 		return ContinueParent;
 	}
 
