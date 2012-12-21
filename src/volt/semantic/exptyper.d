@@ -288,7 +288,7 @@ public:
 				extype(types[i], sexp);
 			}
 
-			return right = new ir.Unary(left, right);
+			return asLit.type = tr;
 		}
 
 		ir.Type type = cast(ir.Type)t;

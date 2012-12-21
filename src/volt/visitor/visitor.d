@@ -1478,5 +1478,12 @@ Visitor.Status acceptStructLiteral(ir.StructLiteral sliteral, Visitor av)
 		}
 	}
 
+	if (sliteral.type !is null) {
+		status = accept(sliteral.type, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
 	return av.leave(sliteral);
 }

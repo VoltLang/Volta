@@ -429,10 +429,12 @@ public:
 	this() { super(NodeType.ExpReference); }
 }
 
+/// A StructLiteral is an expression form of a struct.
 class StructLiteral : Exp
 {
 public:
 	Exp[] exps;
+	Type type;  /// Filled in Later.
 
 public:
 	this() { super(NodeType.StructLiteral); }
