@@ -84,6 +84,7 @@ $(OBJ_DIR)/%.$(OBJ_TYPE) : src/%.d Makefile
 	@$(DMD) $(DCOMP_FLAGS) src/$*.d
 
 rt/rt.o: $(TARGET) rt/src/object.d rt/src/vrt/vmain.d rt/src/vrt/gc.d
+	@echo "  VOLT   rt/rt.o"
 	@./$(TARGET) -c -o rt/rt.o rt/src/object.d rt/src/vrt/vmain.d rt/src/vrt/gc.d
 
 $(TARGET): $(OBJ) Makefile
