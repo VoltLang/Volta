@@ -24,12 +24,18 @@ public:
 
 
 protected:
-	this(ir.Type irType, LLVMTypeRef llvmType)
-	out {
+	this(State state, ir.Type irType, LLVMTypeRef llvmType)
+	in {
+		assert(state !is null);
 		assert(irType !is null);
 		assert(llvmType !is null);
+
+		assert(irType.mangledName !is null);
+		assert((irType.mangledName in state.typeStore) is null);
 	}
 	body {
+		state.typeStore[irType.mangledName] = this;
+
 		this.irType = irType;
 		this.llvmType = llvmType;
 	}
@@ -50,7 +56,7 @@ class VoidType : Type
 public:
 	this(State state, ir.PrimitiveType pt)
 	{
-		super(pt, LLVMVoidType());
+		super(state, pt, LLVMVoidType());
 	}
 }
 
@@ -120,7 +126,7 @@ public:
 			throw CompilerPanic(pt.location, "PrmitiveType.Void not handled");
 		}
 
-		super(pt, llvmType);
+		super(state, pt, llvmType);
 	}
 
 	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
@@ -169,7 +175,7 @@ public:
 		} else {
 			llvmType = LLVMPointerType(base.llvmType, 0);
 		}
-		super(pt, llvmType);
+		super(state, pt, llvmType);
 	}
 }
 
@@ -183,9 +189,9 @@ public:
 	LLVMTypeRef llvmCallType;
 
 public:
-	this(ir.CallableType ct, LLVMTypeRef llvmType)
+	this(State state, ir.CallableType ct, LLVMTypeRef llvmType)
 	{
-		super(ct, llvmType);
+		super(state, ct, llvmType);
 	}
 }
 
@@ -209,7 +215,7 @@ public:
 
 		llvmCallType = LLVMFunctionType(ret.llvmType, args, false);
 		llvmType = LLVMPointerType(llvmCallType, 0);
-		super(ft, llvmType);
+		super(state, ft, llvmType);
 	}
 }
 
@@ -249,7 +255,7 @@ public:
 		llvmType = LLVMStructCreateNamed(state.context, dt.mangledName);
 		LLVMStructSetBody(llvmType, mt, false);
 
-		super(dt, llvmType);
+		super(state, dt, llvmType);
 	}
 }
 
@@ -265,6 +271,10 @@ class StructType : Type
 	{
 		uint index;
 		LLVMTypeRef[] mt;
+
+		/// @todo check packing.
+		llvmType = LLVMStructCreateNamed(state.context, irType.mangledName);
+		super(state, irType, llvmType);
 
 		foreach(m; irType.members.nodes) {
 			auto var = cast(ir.Variable)m;
@@ -283,11 +293,8 @@ class StructType : Type
 			types ~= t;
 		}
 
-		/// @todo check packing.
-		llvmType = LLVMStructCreateNamed(state.context, irType.mangledName);
-		LLVMStructSetBody(llvmType, mt, false);
 
-		super(irType, llvmType);
+		LLVMStructSetBody(llvmType, mt, false);
 	}
 
 	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
@@ -411,9 +418,7 @@ Type fromIr(State state, ir.Type irType)
 	if (tCheck !is null)
 		return *tCheck;
 
-	auto t = uncachedFromIr(state, irType);
-	state.typeStore[irType.mangledName] = t;
-	return t;
+	return uncachedFromIr(state, irType);
 }
 
 
