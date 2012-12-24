@@ -56,7 +56,7 @@ class VoidType : Type
 public:
 	this(State state, ir.PrimitiveType pt)
 	{
-		super(state, pt, LLVMVoidType());
+		super(state, pt, LLVMVoidTypeInContext(state.context));
 	}
 }
 
@@ -79,7 +79,7 @@ public:
 		case Bool:
 			bits = 1;
 			boolean = true;
-			llvmType = LLVMInt1Type();
+			llvmType = LLVMInt1TypeInContext(state.context);
 			break;
 		case Byte:
 			signed = true;
@@ -87,38 +87,38 @@ public:
 		case Char:
 		case Ubyte:
 			bits = 8;
-			llvmType = LLVMInt8Type();
+			llvmType = LLVMInt8TypeInContext(state.context);
 			break;
 		case Short:
 			signed = true;
 			goto case Ushort;
 		case Ushort:
 			bits = 16;
-			llvmType = LLVMInt16Type();
+			llvmType = LLVMInt16TypeInContext(state.context);
 			break;
 		case Int:
 			signed = true;
 			goto case Uint;
 		case Uint:
 			bits = 32;
-			llvmType = LLVMInt32Type();
+			llvmType = LLVMInt32TypeInContext(state.context);
 			break;
 		case Long:
 			signed = true;
 			goto case Ulong;
 		case Ulong:
 			bits = 64;
-			llvmType = LLVMInt64Type();
+			llvmType = LLVMInt64TypeInContext(state.context);
 			break;
 		case Float:
 			bits = 32;
 			floating = true;
-			llvmType = LLVMFloatType();
+			llvmType = LLVMFloatTypeInContext(state.context);
 			break;
 		case Double:
 			bits = 64;
 			floating = true;
-			llvmType = LLVMDoubleType();
+			llvmType = LLVMDoubleTypeInContext(state.context);
 			break;
 		case Real:
 			throw CompilerPanic(pt.location, "PrmitiveType.Real not handled");
