@@ -20,7 +20,8 @@ import volt.llvm.expression;
 
 
 /**
- *
+ * Main interface for the @link volt.interfaces.Controller
+ * Controller@endlink to the llvm backend.
  */
 class LlvmBackend : Backend
 {
@@ -28,13 +29,12 @@ protected:
 	LLVMContextRef mContext;
 	string mFilename;
 	TargetType mTargetType;
-	bool dump;
-
+	bool mDump;
 
 public:
 	this(bool dump)
 	{
-		this.dump = dump;
+		this.mDump = dump;
 		auto passRegistry = LLVMGetGlobalPassRegistry();
 
 		LLVMInitializeCore(passRegistry);
@@ -73,12 +73,12 @@ public:
 		auto visitor = new LlvmVisitor(state);
 		auto mod = state.mod;
 
-		if (dump)
+		if (mDump)
 			writefln("Compiling module");
 
 		visitor.compile(m);
 
-		if (dump) {
+		if (mDump) {
 			writefln("Dumping module");
 			LLVMDumpModule(mod);
 		}

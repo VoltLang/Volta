@@ -122,7 +122,6 @@ public:
 	ir.Type irType;
 	LLVMTypeRef llvmType;
 
-
 protected:
 	this(State state, ir.Type irType, LLVMTypeRef llvmType)
 	in {
@@ -139,7 +138,6 @@ protected:
 		this.irType = irType;
 		this.llvmType = llvmType;
 	}
-
 
 public:
 	LLVMValueRef fromConstant(State state, ir.Constant cnst)
@@ -170,7 +168,6 @@ public:
 	bool signed;
 	bool floating;
 	uint bits;
-
 
 public:
 	this(State state, ir.PrimitiveType pt)
@@ -364,9 +361,11 @@ public:
  */
 class StructType : Type
 {
+public:
 	uint[string] indices;
 	Type[] types;
 
+public:
 	this(State state, ir.Struct irType)
 	{
 		uint index;
