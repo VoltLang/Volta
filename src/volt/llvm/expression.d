@@ -612,6 +612,9 @@ void handlePostfix(State state, ir.Postfix postfix, Value result)
 	case Call:
 		handleCall(state, postfix, result);
 		break;
+	case CreateDelegate:
+		handleCreateDelegate(state, postfix, result);
+		break;
 	case Decrement:
 	case Increment:
 		handleIncDec(state, postfix, result);
@@ -672,6 +675,49 @@ void handleIndex(State state, ir.Postfix postfix, Value result)
 	result.value = LLVMBuildGEP(state.builder, left.value, [right.value], "gep");
 	result.type = pt.base;
 	result.isPointer = true;
+}
+
+void handleCreateDelegate(State state, ir.Postfix postfix, Value result)
+{
+	Value instance = result;
+	Value func = new Value();
+
+	state.getStructRef(postfix.child, instance);
+	state.getValue(postfix.memberFunction, func);
+
+	auto fn = cast(FunctionType)func.type;
+	if (fn is null)
+		throw CompilerPanic(postfix.location, "func isn't FunctionType");
+
+	auto irFn = cast(ir.FunctionType)fn.irType;
+	auto irDg = new ir.DelegateType();
+	irDg.ret = irFn.ret;
+	irDg.linkage = irFn.linkage;
+	irDg.params = irFn.params[0 .. $-1].dup;
+	irDg.mangledName = volt.semantic.mangle.mangle(null, irDg);
+
+	auto dg = cast(DelegateType)state.fromIr(irDg);
+	if (dg is null)
+		throw CompilerPanic("oh god");
+
+	instance.value = LLVMBuildBitCast(
+		state.builder, instance.value, state.voidPtrType.llvmType, "");
+	func.value = LLVMBuildBitCast(
+		state.builder, func.value, dg.llvmCallPtrType, "");
+
+	auto v = LLVMBuildAlloca(state.builder, dg.llvmType, "");
+
+	auto funcPtr = LLVMBuildStructGEP(
+		state.builder, v, dg.funcIndex, "dgFuncGep");
+	auto voidPtrPtr = LLVMBuildStructGEP(
+		state.builder, v, dg.voidPtrIndex, "dgVoidPtrGep");
+
+	LLVMBuildStore(state.builder, func.value, funcPtr);
+	LLVMBuildStore(state.builder, instance.value, voidPtrPtr);
+
+	result.type = dg;
+	result.isPointer = true;
+	result.value = v;
 }
 
 void handleCall(State state, ir.Postfix postfix, Value result)
@@ -814,6 +860,35 @@ void handleConstant(State state, ir.Constant cnst, Value result)
 
 	result.type = state.fromIr(cnst.type);
 	result.value = result.type.fromConstant(state, cnst);
+}
+
+/**
+ * Gets the value for the expressions and makes sure that
+ * it is a struct reference value. Will handle pointers to
+ * structs correctly, setting isPointer to true and
+ * dereferencing the type pointer to the actual StructType.
+ */
+void getStructRef(State state, ir.Exp exp, Value result)
+{
+	getValueAnyForm(state, exp, result);
+
+	auto strct = cast(StructType)result.type;
+	auto pt = cast(PointerType)result.type;
+
+	if (strct !is null) {
+		makePointer(state, result);
+	} else if (pt !is null) {
+		makeNonPointer(state, result);
+
+		strct = cast(StructType)pt.base;
+		if (strct is null)
+			throw CompilerPanic(exp.location, "not a pointer to a struct");
+
+		result.type = strct;
+		result.isPointer = true;
+	} else {
+		throw CompilerPanic(exp.location, "is not a struct");
+	}
 }
 
 /**
