@@ -12,7 +12,11 @@ import volt.interfaces;
 import volt.visitor.visitor;
 import volt.semantic.mangle;
 
-/// Apply mangle symbols to Types and Functions.
+/**
+ * Apply mangle symbols to Types and Functions.
+ *
+ * @ingroup passes passLang
+ */
 class MangleWriter : NullVisitor, Pass
 {
 public:

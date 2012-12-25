@@ -24,7 +24,27 @@ import volt.semantic.manglewriter;
 import volt.semantic.importresolver;
 import volt.semantic.irverifier;
 
+/**
+ * @defgroup passes Passes
+ * @brief Volt is a passes based compiler.
+ */
 
+/**
+ * @defgroup passLang Language Passes
+ * @ingroup passes
+ * @brief Language Passes verify and slightly transforms parsed modules.
+ */
+
+/**
+ * @defgroup passLower Lowering Passes
+ * @ingroup passes
+ * @brief Lowers ir before being passed of to backends.
+ */
+
+/**
+ * Center point for all language passes.
+ * @ingroup passes passLang
+ */
 class LanguagePass : Pass
 {
 public:

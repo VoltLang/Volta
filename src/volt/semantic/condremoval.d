@@ -10,6 +10,8 @@ import volt.visitor.visitor;
 
 /**
  * A pass that removes version and debug blocks.
+ *
+ * @ingroup passes passLang
  */
 class ConditionalRemoval : NullVisitor, Pass
 {

@@ -18,6 +18,8 @@ import volt.semantic.classify;
  *
  * Such as implicit casts or parser nodes that should have
  * been cleaned or uninitialized fields (such as magnedName).
+ *
+ * @ingroup passes passLang
  */
 class IrVerifier : ScopeManager, Pass
 {

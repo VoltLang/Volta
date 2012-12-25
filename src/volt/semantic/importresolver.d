@@ -16,6 +16,12 @@ import volt.semantic.languagepass;
 import volt.semantic.attribremoval;
 import volt.semantic.declgatherer;
 
+
+/**
+ * Searches a module for public imports.
+ *
+ * @ingroup passes passLang
+ */
 private class PublicImportGatherer : NullVisitor
 {
 public:
@@ -31,6 +37,11 @@ public:
 	}
 }
 
+/**
+ * Resolves imports on a single module.
+ *
+ * @ingroup passes passLang
+ */
 class ImportResolver : ScopeManager, Pass
 {
 public:

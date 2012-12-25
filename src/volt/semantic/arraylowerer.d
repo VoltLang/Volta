@@ -24,6 +24,8 @@ import volt.semantic.mangle;
  *     size_t length;
  * }
  * ---
+ *
+ * @ingroup passes passLower
  */
 class ArrayLowerer : NullVisitor, ExpReplaceVisitor, Pass
 {

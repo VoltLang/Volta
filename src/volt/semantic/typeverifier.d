@@ -14,6 +14,8 @@ import volt.visitor.visitor;
  * Firstly, it determines whether or not all user defined types
  * are 'well defined'. That is to say, that they can be instantiated
  * -- so no recursive types, or types using undefined objects.
+ *
+ * @ingroup passes passLang
  */
 class TypeDefinitionVerifier : NullVisitor, Pass
 {

@@ -14,6 +14,8 @@ import volt.visitor.manip;
 /**
  * A pass that turns Attributes nodes into fields on to
  * Functions, Classes and the like.
+ *
+ * @ingroup passes passLang
  */
 class AttribRemoval : NullVisitor, Pass
 {
@@ -21,6 +23,9 @@ protected:
 	ir.Attribute[] mStack;
 	Context[] mCtx;
 
+	/**
+	 * Helper class.
+	 */
 	static class Context
 	{
 		this(ir.Node node)

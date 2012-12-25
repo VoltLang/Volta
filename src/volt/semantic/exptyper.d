@@ -43,7 +43,11 @@ ir.Node declTypeLookup(ir.Scope _scope, string name, Location location)
 	return d.type;
 }
 
-/// Make implicit casts explicit.
+/**
+ * Make implicit casts explicit.
+ *
+ * @ingroup passes passLang
+ */
 class ExpTyper : ScopeManager, Pass
 {
 public:

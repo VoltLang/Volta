@@ -8,7 +8,11 @@ import volt.interfaces;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
 
-
+/**
+ * Poplate the scops with Variables, Alias and Functions.
+ *
+ * @ingroup passes passLang
+ */
 class DeclarationGatherer : ScopeManager, Pass
 {
 public:

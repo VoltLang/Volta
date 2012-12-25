@@ -9,7 +9,12 @@ import volt.interfaces;
 import volt.visitor.visitor;
 import volt.semantic.languagepass;
 
-
+/**
+ * Builds populates ir.volt.context.Scopes on
+ * Modules, Classes, Structs and the like.
+ *
+ * @ingroup passes passLang
+ */
 class ContextBuilder : NullVisitor, Pass
 {
 public:

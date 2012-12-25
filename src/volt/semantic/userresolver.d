@@ -72,6 +72,11 @@ ir.Scope scopeLookup(ir.Scope _scope, string name, Location location, string mem
 	throw new CompilerError(location, emsg);
 }
 
+/**
+ * Resolves all @link volt.ir.type.TypeReference TypeReferences@endlink.
+ *
+ * @ingroup passes passLang
+ */
 class UserResolver : ScopeManager, Pass
 {
 public:

@@ -16,6 +16,8 @@ import volt.semantic.lookup;
 
 /** 
  * Replace identifiers with references to what they point at.
+ *
+ * @ingroup passes passLang
  */
 class ReferenceReplacer : ScopeManager, ExpReplaceVisitor, Pass
 {
