@@ -720,7 +720,7 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 		func = LLVMBuildLoad(state.builder, func, "dgFuncGep");
 		voidPtr = LLVMBuildLoad(state.builder, voidPtr, "dgVoidGep");
 
-		llvmArgs = [voidPtr] ~ llvmArgs;
+		llvmArgs ~= voidPtr;
 		result.value = func;
 	} else {
 		throw CompilerPanic(postfix.location, "can not call this thing");

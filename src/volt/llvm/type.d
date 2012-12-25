@@ -324,8 +324,8 @@ class DelegateType : CallableType
 public:
 	LLVMTypeRef llvmCallPtrType;
 
-	immutable uint funcIndex = 0;
-	immutable uint voidPtrIndex = 1;
+	immutable uint voidPtrIndex = 0;
+	immutable uint funcIndex = 1;
 
 public:
 	this(State state, ir.DelegateType dt)
@@ -335,19 +335,18 @@ public:
 		LLVMTypeRef[] args;
 		args.length = dt.params.length + 1;
 
-		args[0] = state.voidPtrType.llvmType;
-
 		foreach(int i, param; dt.params) {
 			auto type = state.fromIr(param.type);
-			args[i+1] = type.llvmType;
+			args[i] = type.llvmType;
 		}
+		args[$-1] = state.voidPtrType.llvmType;
 
 		llvmCallType = LLVMFunctionType(ret.llvmType, args, false);
 		llvmCallPtrType = LLVMPointerType(llvmCallType, 0);
 
 		LLVMTypeRef[2] mt;
-		mt[funcIndex] = llvmCallPtrType;
 		mt[voidPtrIndex] = state.voidPtrType.llvmType;
+		mt[funcIndex] = llvmCallPtrType;
 
 		llvmType = LLVMStructCreateNamed(state.context, dt.mangledName);
 		LLVMStructSetBody(llvmType, mt, false);
