@@ -10,7 +10,7 @@ struct Test
 
 	void setVal(int inVal)
 	{
-		val = inVal;
+		this.val = inVal;
 		return; /// @todo remove
 	}
 
