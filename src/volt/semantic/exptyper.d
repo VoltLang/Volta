@@ -263,8 +263,8 @@ public:
 				}
 			case StructLiteral:
 				return e;
-			case Array:
-				auto asArray = cast(ir.Array) e;
+			case ArrayLiteral:
+				auto asArray = cast(ir.ArrayLiteral) e;
 				assert(asArray !is null);
 				if (asArray.type !is null) {
 					return asArray.type;

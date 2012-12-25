@@ -142,8 +142,8 @@ public abstract:
 	Status leave(ir.BinOp);
 	Status enter(ir.Ternary);
 	Status leave(ir.Ternary);
-	Status enter(ir.Array);
-	Status leave(ir.Array);
+	Status enter(ir.ArrayLiteral);
+	Status leave(ir.ArrayLiteral);
 	Status enter(ir.AssocArray);
 	Status leave(ir.AssocArray);
 	Status enter(ir.Assert);
@@ -287,8 +287,8 @@ override:
 	Status leave(ir.BinOp){ return Continue; }
 	Status enter(ir.Ternary){ return Continue; }
 	Status leave(ir.Ternary){ return Continue; }
-	Status enter(ir.Array){ return Continue; }
-	Status leave(ir.Array){ return Continue; }
+	Status enter(ir.ArrayLiteral){ return Continue; }
+	Status leave(ir.ArrayLiteral){ return Continue; }
 	Status enter(ir.AssocArray){ return Continue; }
 	Status leave(ir.AssocArray){ return Continue; }
 	Status enter(ir.Assert){ return Continue; }
@@ -408,8 +408,8 @@ Visitor.Status accept(ir.Node n, Visitor av)
 		return acceptBinOp(cast(ir.BinOp) n, av);
 	case ir.NodeType.Ternary:
 		return acceptTernary(cast(ir.Ternary) n, av);
-	case ir.NodeType.Array:
-		return acceptArray(cast(ir.Array) n, av);
+	case ir.NodeType.ArrayLiteral:
+		return acceptArrayLiteral(cast(ir.ArrayLiteral) n, av);
 	case ir.NodeType.AssocArray:
 		return acceptAssocArray(cast(ir.AssocArray) n, av);
 	case ir.NodeType.Assert:
@@ -1318,7 +1318,7 @@ Visitor.Status acceptTernary(ir.Ternary ternary, Visitor av)
 	return av.leave(ternary);
 }
 
-Visitor.Status acceptArray(ir.Array array, Visitor av)
+Visitor.Status acceptArrayLiteral(ir.ArrayLiteral array, Visitor av)
 {
 	auto status = av.enter(array);
 	if (status != VisitorContinue) {

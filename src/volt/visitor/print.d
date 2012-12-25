@@ -1271,7 +1271,7 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ir.Array array)
+	override Status enter(ir.ArrayLiteral array)
 	{
 		wf("[");
 		foreach (i, exp; array.values) {
@@ -1284,7 +1284,7 @@ public:
 		return ContinueParent;
 	}
 
-	override Status leave(ir.Array array)
+	override Status leave(ir.ArrayLiteral array)
 	{
 		return Continue;
 	}

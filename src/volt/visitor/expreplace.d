@@ -20,8 +20,8 @@ public abstract:
 	Visitor.Status leave(ref ir.Exp, ir.BinOp);
 	Visitor.Status enter(ref ir.Exp, ir.Ternary);
 	Visitor.Status leave(ref ir.Exp, ir.Ternary);
-	Visitor.Status enter(ref ir.Exp, ir.Array);
-	Visitor.Status leave(ref ir.Exp, ir.Array);
+	Visitor.Status enter(ref ir.Exp, ir.ArrayLiteral);
+	Visitor.Status leave(ref ir.Exp, ir.ArrayLiteral);
 	Visitor.Status enter(ref ir.Exp, ir.AssocArray);
 	Visitor.Status leave(ref ir.Exp, ir.AssocArray);
 	Visitor.Status enter(ref ir.Exp, ir.Assert);
@@ -58,8 +58,8 @@ Visitor.Status acceptExp(ref ir.Exp exp, ExpReplaceVisitor av)
 		return acceptBinOp(exp, cast(ir.BinOp)exp, av);
 	case Ternary:
 		return acceptTernary(exp, cast(ir.Ternary)exp, av);
-	case Array:
-		return acceptArray(exp, cast(ir.Array)exp, av);
+	case ArrayLiteral:
+		return acceptArrayLiteral(exp, cast(ir.ArrayLiteral)exp, av);
 	case AssocArray:
 		return acceptAssocArray(exp, cast(ir.AssocArray)exp, av);
 	case Assert:
@@ -183,7 +183,7 @@ Visitor.Status acceptTernary(ref ir.Exp exp, ir.Ternary ternary, ExpReplaceVisit
 	return av.leave(exp, ternary);
 }
 
-Visitor.Status acceptArray(ref ir.Exp exp, ir.Array array, ExpReplaceVisitor av)
+Visitor.Status acceptArrayLiteral(ref ir.Exp exp, ir.ArrayLiteral array, ExpReplaceVisitor av)
 {
 	auto status = av.enter(exp, array);
 	if (status != VisitorContinue) {

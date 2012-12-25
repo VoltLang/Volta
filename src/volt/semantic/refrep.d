@@ -326,8 +326,8 @@ public:
 	override Status leave(ref ir.Exp, ir.BinOp) { return Continue; }
 	override Status enter(ref ir.Exp, ir.Ternary) { return Continue; }
 	override Status leave(ref ir.Exp, ir.Ternary) { return Continue; }
-	override Status enter(ref ir.Exp, ir.Array) { return Continue; }
-	override Status leave(ref ir.Exp, ir.Array) { return Continue; }
+	override Status enter(ref ir.Exp, ir.ArrayLiteral) { return Continue; }
+	override Status leave(ref ir.Exp, ir.ArrayLiteral) { return Continue; }
 	override Status enter(ref ir.Exp, ir.AssocArray) { return Continue; }
 	override Status leave(ref ir.Exp, ir.AssocArray) { return Continue; }
 	override Status enter(ref ir.Exp, ir.Assert) { return Continue; }

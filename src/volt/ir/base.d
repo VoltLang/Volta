@@ -100,7 +100,7 @@ enum NodeType
 	Ternary,
 	Unary,
 	Postfix,
-	Array,
+	ArrayLiteral,
 	AssocArray,
 	IdentifierExp,
 	Assert,
@@ -323,7 +323,7 @@ string nodeToString(NodeType nodeType)
 	case Ternary: return "Ternary";
 	case Unary: return "Unary";
 	case Postfix: return "Postfix";
-	case Array: return "Array";
+	case ArrayLiteral: return "ArrayLiteral";
 	case AssocArray: return "AssocArray";
 	case IdentifierExp: return "IdentifierExp";
 	case Assert: return "Assert";

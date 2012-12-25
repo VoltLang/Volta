@@ -242,8 +242,8 @@ public:
 	override Status leave(ir.BinOp n) { leaveNode(n); return Continue; }
 	override Status enter(ir.Ternary n) { enterNode(n); return Continue; }
 	override Status leave(ir.Ternary n) { leaveNode(n); return Continue; }
-	override Status enter(ir.Array n) { enterNode(n); return Continue; }
-	override Status leave(ir.Array n) { leaveNode(n); return Continue; }
+	override Status enter(ir.ArrayLiteral n) { enterNode(n); return Continue; }
+	override Status leave(ir.ArrayLiteral n) { leaveNode(n); return Continue; }
 	override Status enter(ir.AssocArray n) { enterNode(n); return Continue; }
 	override Status leave(ir.AssocArray n) { leaveNode(n); return Continue; }
 	override Status enter(ir.Assert n) { enterNode(n); return Continue; }

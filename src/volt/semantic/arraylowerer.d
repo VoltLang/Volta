@@ -211,8 +211,8 @@ public:
 	Status leave(ref ir.Exp, ir.BinOp) { return Continue; }
 	Status enter(ref ir.Exp, ir.Ternary) { return Continue; }
 	Status leave(ref ir.Exp, ir.Ternary) { return Continue; }
-	Status enter(ref ir.Exp, ir.Array) { return Continue; }
-	Status leave(ref ir.Exp, ir.Array) { return Continue; }
+	Status enter(ref ir.Exp, ir.ArrayLiteral) { return Continue; }
+	Status leave(ref ir.Exp, ir.ArrayLiteral) { return Continue; }
 	Status enter(ref ir.Exp, ir.AssocArray) { return Continue; }
 	Status leave(ref ir.Exp, ir.AssocArray) { return Continue; }
 	Status enter(ref ir.Exp, ir.Assert) { return Continue; }

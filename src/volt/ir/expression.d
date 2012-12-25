@@ -222,14 +222,14 @@ public:
  *
  * @ingroup irNode irExp
  */
-class Array : Exp
+class ArrayLiteral : Exp
 {
 public:
 	Exp[] values;
 	Type type;
 
 public:
-	this() { super(NodeType.Array); }
+	this() { super(NodeType.ArrayLiteral); }
 }
 
 class AAPair : Node

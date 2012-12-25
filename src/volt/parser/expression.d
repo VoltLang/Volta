@@ -291,7 +291,7 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		assert(primary.tlargs.length == 1);
 		return ternaryToExp(primary.tlargs[0]);
 	case intir.PrimaryExp.Type.ArrayLiteral:
-		auto c = new ir.Array();
+		auto c = new ir.ArrayLiteral();
 		foreach (arg; primary.arguments) {
 			c.values ~= binexpToExp(arg);
 		}
