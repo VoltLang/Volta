@@ -85,8 +85,8 @@ public:
 		this.settings = settings;
 		this.controller = controller;
 
-		passes ~= new AttribRemoval();
 		passes ~= new ConditionalRemoval(settings);
+		passes ~= new AttribRemoval();
 		passes ~= new ContextBuilder();
 		passes ~= new ImportResolver(this, cast(ContextBuilder) passes[$-1]);
 		passes ~= new DeclarationGatherer();
