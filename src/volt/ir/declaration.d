@@ -134,8 +134,6 @@ public:
 	 *
 	 * Some types have hidden arguemnts, like the this arguement
 	 * for member functions, constructors and destructors.
-	 *
-	 * @todo move to FunctionType.
 	 */
 	enum Kind {
 		Function,  ///< foo()

@@ -42,4 +42,17 @@ public:
 		current.addType(a.type, a.name);
 		return Continue;
 	}
+
+	override Status enter(ir.Function fn)
+	{
+		import std.stdio, std.conv;
+		if (current.node !is null) {
+			if (current.node.nodeType == ir.NodeType.Struct || current.node.nodeType == ir.NodeType.Class) {
+				fn.kind = ir.Function.Kind.Member;
+			}
+		}
+		super.enter(fn);
+		
+		return Continue;
+	}
 }
