@@ -23,6 +23,7 @@ import volt.semantic.arraylowerer;
 import volt.semantic.manglewriter;
 import volt.semantic.importresolver;
 import volt.semantic.irverifier;
+import volt.semantic.thisinserter;
 
 /**
  * @defgroup passes Passes
@@ -85,15 +86,18 @@ public:
 		this.settings = settings;
 		this.controller = controller;
 
+		auto contextBuilder = new ContextBuilder();
+
 		passes ~= new ConditionalRemoval(settings);
 		passes ~= new AttribRemoval();
-		passes ~= new ContextBuilder();
-		passes ~= new ImportResolver(this, cast(ContextBuilder) passes[$-1]);
+		passes ~= contextBuilder;
+		passes ~= new ImportResolver(this, contextBuilder);
 		passes ~= new DeclarationGatherer();
 		passes ~= new UserResolver();
 		passes ~= new TypeDefinitionVerifier();
 		passes ~= new ExpTyper(settings);
 		passes ~= new ReferenceReplacer();
+		passes ~= new ThisInserter();
 		passes ~= new ArrayLowerer(settings);
 		passes ~= new MangleWriter();
 		passes ~= new IrVerifier();

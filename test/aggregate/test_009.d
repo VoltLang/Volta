@@ -1,6 +1,5 @@
 //T compiles:yes
 //T retval:42
-//T has-passed:no
 // Basic function call & this test.
 module test_009;
 
