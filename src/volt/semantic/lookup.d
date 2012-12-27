@@ -16,6 +16,24 @@ ir.Store lookup(ir.Scope _scope, string name)
 		if (store !is null) {
 			return store;
 		}
+
+		/// If this scope has a this variable, check it.
+		auto _this = current.getStore("this");
+		if (_this !is null) {
+			auto asVar = cast(ir.Variable) _this.node;
+			assert(asVar !is null);
+			auto asPointer = cast(ir.PointerType) asVar.type;
+			assert(asPointer !is null);
+			auto asTR = cast(ir.TypeReference) asPointer.base;
+			assert(asTR !is null);
+			auto asStruct = cast(ir.Struct) asTR.type;
+			assert(asStruct !is null);
+			store = asStruct.myScope.getStore(name);
+			if (store !is null) {
+				return store;
+			}
+		}
+
 		previous = current;
 		current = current.parent;
 	}
