@@ -67,8 +67,11 @@ public:
 				accept(n, this);
 
 			// Assume language pass knows what it is doing.
-			if (state.currentFall)
+			if (state.currentFall) {
+				LLVMBuildCall(state.builder, state.llvmTrap, null);
 				LLVMBuildUnreachable(state.builder);
+			}
+
 			state.currentFall = false;
 			state.currentFunc = null;
 			state.currentBlock = null;

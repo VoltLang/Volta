@@ -408,18 +408,21 @@ void buildCommonTypes(State state)
 	auto ulongTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
 
 	auto voidPtrTypeIr = new ir.PointerType(voidTypeIr);
+	auto voidFunctionTypeIr = new ir.FunctionType();
+	voidFunctionTypeIr.ret = voidTypeIr;
 
 
 	addMangledName(voidTypeIr);
-	addMangledName(byteTypeIr);
-	addMangledName(ubyteTypeIr);
-	addMangledName(voidPtrTypeIr);
 
 	addMangledName(boolTypeIr);
+	addMangledName(byteTypeIr);
+	addMangledName(ubyteTypeIr);
 	addMangledName(intTypeIr);
 	addMangledName(uintTypeIr);
 	addMangledName(ulongTypeIr);
 
+	addMangledName(voidPtrTypeIr);
+	addMangledName(voidFunctionTypeIr);
 
 	state.voidType = cast(VoidType)state.fromIr(voidTypeIr);
 
@@ -431,15 +434,20 @@ void buildCommonTypes(State state)
 	state.ulongType = cast(PrimitiveType)state.fromIr(ulongTypeIr);
 
 	state.voidPtrType = cast(PointerType)state.fromIr(voidPtrTypeIr);
+	state.voidFunctionType = cast(FunctionType)state.fromIr(voidFunctionTypeIr);
 
 
 	assert(state.voidType !is null);
-	assert(state.voidPtrType !is null);
 
 	assert(state.boolType !is null);
+	assert(state.byteType !is null);
+	assert(state.ubyteType !is null);
 	assert(state.intType !is null);
 	assert(state.uintType !is null);
 	assert(state.ulongType !is null);
+
+	assert(state.voidPtrType !is null);
+	assert(state.voidFunctionType !is null);
 }
 
 

@@ -51,6 +51,17 @@ public:
 	PrimitiveType ulongType;
 
 	PointerType voidPtrType;
+
+	FunctionType voidFunctionType;
+	/**
+	 * @}
+	 */
+
+	/**
+	 * LLVM intrinsic.
+	 * @{
+	 */
+	LLVMValueRef llvmTrap;
 	/**
 	 * @}
 	 */
@@ -83,6 +94,8 @@ public:
 		this.builder = LLVMCreateBuilderInContext(context);
 
 		buildCommonTypes(this);
+
+		this.llvmTrap = LLVMAddFunction(mod, "llvm.trap", voidFunctionType.llvmCallType);
 	}
 
 	~this()
