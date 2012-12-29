@@ -15,105 +15,6 @@ static import volt.semantic.mangle;
 
 
 /**
- * Looks up or creates the corresponding LLVMTypeRef
- * and Type for the given irType.
- */
-Type fromIr(State state, ir.Type irType)
-{
-	if (irType.nodeType == ir.NodeType.TypeReference) {
-		auto tr = cast(ir.TypeReference)irType;
-		assert(tr !is null);
-
-		if (tr.type is null)
-			throw CompilerPanic(irType.location, "TypeReference with null type");
-
-		return state.fromIr(tr.type);
-	}
-
-	if (irType.mangledName is null) {
-		auto m = addMangledName(irType);
-		auto str = format("mangledName not set (%s)", m);
-		warning(irType.location, str);
-	}
-
-	auto tCheck = irType.mangledName in state.typeStore;
-	if (tCheck !is null)
-		return *tCheck;
-
-	switch(irType.nodeType) with (ir.NodeType) {
-	case PrimitiveType:
-		auto pt = cast(ir.PrimitiveType)irType;
-		if (pt.type == ir.PrimitiveType.Kind.Void)
-			return new .VoidType(state, pt);
-		else
-			return new .PrimitiveType(state, pt);
-	case PointerType:
-		auto pt = cast(ir.PointerType)irType;
-		return new .PointerType(state, pt);
-	case FunctionType:
-		auto ft = cast(ir.FunctionType)irType;
-		return new .FunctionType(state, ft);
-	case DelegateType:
-		auto dt = cast(ir.DelegateType)irType;
-		return new .DelegateType(state, dt);
-	case Struct:
-		auto strct = cast(ir.Struct)irType;
-		return new .StructType(state, strct);
-	default:
-		throw CompilerPanic(irType.location, "Can't translate type");
-	}
-}
-
-/**
- * Populate the common types that hang off the state.
- */
-void buildCommonTypes(State state)
-{
-	auto voidTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Void);
-
-	auto boolTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
-	auto byteTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Byte);
-	auto ubyteTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Ubyte);
-	auto intTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
-	auto uintTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
-	auto ulongTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
-
-	auto voidPtrTypeIr = new ir.PointerType(voidTypeIr);
-
-
-	addMangledName(voidTypeIr);
-	addMangledName(byteTypeIr);
-	addMangledName(ubyteTypeIr);
-	addMangledName(voidPtrTypeIr);
-
-	addMangledName(boolTypeIr);
-	addMangledName(intTypeIr);
-	addMangledName(uintTypeIr);
-	addMangledName(ulongTypeIr);
-
-
-	state.voidType = cast(VoidType)state.fromIr(voidTypeIr);
-
-	state.boolType = cast(PrimitiveType)state.fromIr(boolTypeIr);
-	state.byteType = cast(PrimitiveType)state.fromIr(byteTypeIr);
-	state.ubyteType = cast(PrimitiveType)state.fromIr(ubyteTypeIr);
-	state.intType = cast(PrimitiveType)state.fromIr(intTypeIr);
-	state.uintType = cast(PrimitiveType)state.fromIr(uintTypeIr);
-	state.ulongType = cast(PrimitiveType)state.fromIr(ulongTypeIr);
-
-	state.voidPtrType = cast(PointerType)state.fromIr(voidPtrTypeIr);
-
-
-	assert(state.voidType !is null);
-	assert(state.voidPtrType !is null);
-
-	assert(state.boolType !is null);
-	assert(state.intType !is null);
-	assert(state.uintType !is null);
-	assert(state.ulongType !is null);
-}
-
-/**
  * Base class for a LLVM backend types.
  */
 class Type
@@ -439,6 +340,105 @@ public:
 
 		return LLVMConstNamedStruct(llvmType, vals);
 	}
+}
+
+/**
+ * Looks up or creates the corresponding LLVMTypeRef
+ * and Type for the given irType.
+ */
+Type fromIr(State state, ir.Type irType)
+{
+	if (irType.nodeType == ir.NodeType.TypeReference) {
+		auto tr = cast(ir.TypeReference)irType;
+		assert(tr !is null);
+
+		if (tr.type is null)
+			throw CompilerPanic(irType.location, "TypeReference with null type");
+
+		return state.fromIr(tr.type);
+	}
+
+	if (irType.mangledName is null) {
+		auto m = addMangledName(irType);
+		auto str = format("mangledName not set (%s)", m);
+		warning(irType.location, str);
+	}
+
+	auto tCheck = irType.mangledName in state.typeStore;
+	if (tCheck !is null)
+		return *tCheck;
+
+	switch(irType.nodeType) with (ir.NodeType) {
+	case PrimitiveType:
+		auto pt = cast(ir.PrimitiveType)irType;
+		if (pt.type == ir.PrimitiveType.Kind.Void)
+			return new .VoidType(state, pt);
+		else
+			return new .PrimitiveType(state, pt);
+	case PointerType:
+		auto pt = cast(ir.PointerType)irType;
+		return new .PointerType(state, pt);
+	case FunctionType:
+		auto ft = cast(ir.FunctionType)irType;
+		return new .FunctionType(state, ft);
+	case DelegateType:
+		auto dt = cast(ir.DelegateType)irType;
+		return new .DelegateType(state, dt);
+	case Struct:
+		auto strct = cast(ir.Struct)irType;
+		return new .StructType(state, strct);
+	default:
+		throw CompilerPanic(irType.location, "Can't translate type");
+	}
+}
+
+/**
+ * Populate the common types that hang off the state.
+ */
+void buildCommonTypes(State state)
+{
+	auto voidTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Void);
+
+	auto boolTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
+	auto byteTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Byte);
+	auto ubyteTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Ubyte);
+	auto intTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
+	auto uintTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
+	auto ulongTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
+
+	auto voidPtrTypeIr = new ir.PointerType(voidTypeIr);
+
+
+	addMangledName(voidTypeIr);
+	addMangledName(byteTypeIr);
+	addMangledName(ubyteTypeIr);
+	addMangledName(voidPtrTypeIr);
+
+	addMangledName(boolTypeIr);
+	addMangledName(intTypeIr);
+	addMangledName(uintTypeIr);
+	addMangledName(ulongTypeIr);
+
+
+	state.voidType = cast(VoidType)state.fromIr(voidTypeIr);
+
+	state.boolType = cast(PrimitiveType)state.fromIr(boolTypeIr);
+	state.byteType = cast(PrimitiveType)state.fromIr(byteTypeIr);
+	state.ubyteType = cast(PrimitiveType)state.fromIr(ubyteTypeIr);
+	state.intType = cast(PrimitiveType)state.fromIr(intTypeIr);
+	state.uintType = cast(PrimitiveType)state.fromIr(uintTypeIr);
+	state.ulongType = cast(PrimitiveType)state.fromIr(ulongTypeIr);
+
+	state.voidPtrType = cast(PointerType)state.fromIr(voidPtrTypeIr);
+
+
+	assert(state.voidType !is null);
+	assert(state.voidPtrType !is null);
+
+	assert(state.boolType !is null);
+	assert(state.intType !is null);
+	assert(state.uintType !is null);
+	assert(state.ulongType !is null);
 }
 
 
