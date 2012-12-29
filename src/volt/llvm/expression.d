@@ -442,6 +442,9 @@ void handleUnary(State state, ir.Unary unary, Value result)
 	case AddrOf:
 		handleAddrOf(state, unary, result);
 		break;
+	case Minus:
+		handleMinus(state, unary, result);
+		break;
 	default:
 		auto str = format("unhandled Unary op %s", to!string(unary.op));
 		throw CompilerPanic(unary.location, str);
@@ -590,6 +593,18 @@ void handleAddrOf(State state, ir.Unary de, Value result)
 
 	result.type = state.fromIr(pt);
 	result.isPointer = false;
+}
+
+void handleMinus(State state, ir.Unary cst, Value result)
+{
+	state.getValue(cst.value, result);
+
+	auto v = new Value(result);
+	v.value = LLVMConstNull(result.type.llvmType);
+
+	handleBinOpNonAssign(state, cst.location,
+	                     ir.BinOp.Type.Sub,
+	                     v, result, result);
 }
 
 
