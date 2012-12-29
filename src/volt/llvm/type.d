@@ -9,8 +9,9 @@ import lib.llvm.core;
 import ir = volt.ir.ir;
 
 import volt.exceptions;
+import volt.llvm.type;
 import volt.llvm.state;
-import volt.llvm.expression;
+import volt.llvm.constant;
 static import volt.semantic.mangle;
 
 

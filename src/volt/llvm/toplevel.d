@@ -8,6 +8,7 @@ import volt.exceptions;
 import volt.visitor.visitor;
 import volt.llvm.type;
 import volt.llvm.state;
+import volt.llvm.constant;
 import volt.llvm.expression;
 
 

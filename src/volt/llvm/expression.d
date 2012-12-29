@@ -6,39 +6,11 @@ import lib.llvm.core;
 
 import volt.token.location : Location;
 import volt.exceptions;
-import volt.llvm.state;
 import volt.llvm.type;
+import volt.llvm.value;
+import volt.llvm.state;
 static import volt.semantic.mangle;
 
-
-/**
- * Represents a single LLVMValueRef plus the associated high level type.
- *
- * A Value can be in reference form where it is actually a pointer
- * to the give value, since all variables are stored as alloca'd
- * memory in a function we will not insert loads until needed.
- * This is needed for '&' to work and struct lookups.
- */
-class Value
-{
-public:
-	Type type;
-	LLVMValueRef value;
-
-	bool isPointer; ///< Is this a reference to the real value?
-
-public:
-	this()
-	{
-	}
-
-	this(Value val)
-	{
-		this.isPointer = val.isPointer;
-		this.type = val.type;
-		this.value = val.value;
-	}
-}
 
 /**
  * Returns the LLVMValueRef for the given expression,
@@ -50,39 +22,6 @@ LLVMValueRef getValue(State state, ir.Exp exp)
 
 	state.getValue(exp, v);
 	return v.value;
-}
-
-/**
- * Returns the LLVMValueRef for the given constant expression,
- * does not require that state.builder is set.
- */
-LLVMValueRef getConstantValue(State state, ir.Exp exp)
-{
-	void error(string t) {
-		auto str = format("could not get constant from expression '%s'", t);
-		throw CompilerPanic(exp.location, str);
-	}
-
-	if (exp.nodeType == ir.NodeType.Constant)
-		return getValue(state, exp);
-	if (exp.nodeType != ir.NodeType.Unary)
-		error("other exp then unary or constant");
-
-	auto asUnary = cast(ir.Unary)exp;
-	if (asUnary.op != ir.Unary.Op.Cast)
-		error("other unary op then cast");
-
-	auto c = cast(ir.Constant)asUnary.value;
-	if (c is null)
-		error("not cast from constant");
-
-	auto to = cast(PrimitiveType)state.fromIr(asUnary.type);
-	auto from = cast(PrimitiveType)state.fromIr(c.type);
-	if (to is null || from is null)
-		error("not integer constants");
-
-	auto v = from.fromConstant(state, c);
-	return LLVMConstIntCast(v, to.llvmType, from.signed);
 }
 
 /**
