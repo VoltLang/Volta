@@ -258,6 +258,10 @@ public:
 					return subTypes[e] = new ir.PointerType(t);
 				} else if (asUnary.op == ir.Unary.Op.New) {
 					return evaluateNewExp(asUnary);
+				} else if (asUnary.op == ir.Unary.Op.Minus || asUnary.op == ir.Unary.Op.Plus) {
+					auto t = cast(ir.Type) evaluate(asUnary.value);
+					assert(t !is null);
+					return subTypes[e] = t;
 				} else {
 					assert(false);
 				}
