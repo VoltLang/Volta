@@ -43,6 +43,34 @@ void getConstantValue(State state, ir.Exp exp, Value result)
 
 void handleUnary(State state, ir.Unary asUnary, Value result)
 {
+	switch (asUnary.op) with (ir.Unary.Op) {
+	case Cast:
+		return handleCast(state, asUnary, result);
+	case Plus:
+	case Minus:
+		return handlePlusMinus(state, asUnary, result);
+	default:
+		auto str = format(
+			"could not handle unary operation '%s'",
+			to!string(asUnary.op));
+		throw CompilerPanic(asUnary.location, str);
+	}
+}
+
+void handlePlusMinus(State state, ir.Unary asUnary, Value result)
+{
+	state.getConstantValue(asUnary.value, result);
+
+	auto primType = cast(PrimitiveType)result.type;
+	if (primType is null)
+		throw CompilerPanic(asUnary.location, "must be primitive type");
+
+	if (asUnary.op == ir.Unary.Op.Minus)
+		result.value = LLVMConstNeg(result.value);
+}
+
+void handleCast(State state, ir.Unary asUnary, Value result)
+{
 	void error(string t) {
 		auto str = format("error unary constant expression '%s'", t);
 		throw CompilerPanic(asUnary.location, str);
