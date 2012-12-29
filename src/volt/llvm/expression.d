@@ -442,8 +442,9 @@ void handleUnary(State state, ir.Unary unary, Value result)
 	case AddrOf:
 		handleAddrOf(state, unary, result);
 		break;
+	case Plus:
 	case Minus:
-		handleMinus(state, unary, result);
+		handlePlusMinus(state, unary, result);
 		break;
 	default:
 		auto str = format("unhandled Unary op %s", to!string(unary.op));
@@ -595,16 +596,22 @@ void handleAddrOf(State state, ir.Unary de, Value result)
 	result.isPointer = false;
 }
 
-void handleMinus(State state, ir.Unary cst, Value result)
+void handlePlusMinus(State state, ir.Unary unary, Value result)
 {
-	state.getValue(cst.value, result);
+	state.getValue(unary.value, result);
 
-	auto v = new Value(result);
-	v.value = LLVMConstNull(result.type.llvmType);
+	auto primType = cast(PrimitiveType)result.type;
+	if (primType is null)
+		throw CompilerPanic(unary.location, "must be primitive type");
 
-	handleBinOpNonAssign(state, cst.location,
-	                     ir.BinOp.Type.Sub,
-	                     v, result, result);
+	// No-op plus
+	if (unary.op == ir.Unary.Op.Plus)
+		return;
+
+	if (primType.floating)
+		result.value = LLVMBuildFNeg(state.builder, result.value, "neg");
+	else
+		result.value = LLVMBuildNeg(state.builder, result.value, "fneg");
 }
 
 
