@@ -2,13 +2,14 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.llvm.constant;
 
+import std.conv : to;
+
 import lib.llvm.core;
 
 import volt.exceptions;
 import volt.llvm.type;
 import volt.llvm.value;
 import volt.llvm.state;
-import volt.llvm.expression;
 
 
 /**
@@ -17,29 +18,58 @@ import volt.llvm.expression;
  */
 LLVMValueRef getConstantValue(State state, ir.Exp exp)
 {
-	void error(string t) {
-		auto str = format("could not get constant from expression '%s'", t);
+
+	auto v = new Value();
+	getConstantValue(state, exp, v);
+	return v.value;
+}
+
+void getConstantValue(State state, ir.Exp exp, Value result)
+{
+	switch (exp.nodeType) with (ir.NodeType) {
+	case Constant:
+		auto cnst = cast(ir.Constant)exp;
+		return handleConstant(state, cnst, result);
+	case Unary:
+		auto asUnary = cast(ir.Unary)exp;
+		return handleUnary(state, asUnary, result);
+	default:
+		auto str = format(
+			"could not get constant from expression '%s'",
+			to!string(exp.nodeType));
 		throw CompilerPanic(exp.location, str);
 	}
+}
 
-	if (exp.nodeType == ir.NodeType.Constant)
-		return getValue(state, exp);
-	if (exp.nodeType != ir.NodeType.Unary)
-		error("other exp then unary or constant");
+void handleUnary(State state, ir.Unary asUnary, Value result)
+{
+	void error(string t) {
+		auto str = format("error unary constant expression '%s'", t);
+		throw CompilerPanic(asUnary.location, str);
+	}
 
-	auto asUnary = cast(ir.Unary)exp;
 	if (asUnary.op != ir.Unary.Op.Cast)
 		error("other unary op then cast");
 
-	auto c = cast(ir.Constant)asUnary.value;
-	if (c is null)
-		error("not cast from constant");
+	state.getConstantValue(asUnary.value, result);
 
 	auto to = cast(PrimitiveType)state.fromIr(asUnary.type);
-	auto from = cast(PrimitiveType)state.fromIr(c.type);
+	auto from = cast(PrimitiveType)result.type;
 	if (to is null || from is null)
 		error("not integer constants");
 
-	auto v = from.fromConstant(state, c);
-	return LLVMConstIntCast(v, to.llvmType, from.signed);
+	result.type = to;
+	result.value =  LLVMConstIntCast(result.value, to.llvmType, from.signed);
+}
+
+void handleConstant(State state, ir.Constant asConst, Value result)
+{
+	assert(asConst.type !is null);
+
+	// All of the error checking should have been
+	// done in other passes and unimplemented features
+	// is checked for in the called functions.
+
+	result.type = state.fromIr(asConst.type);
+	result.value = result.type.fromConstant(state, asConst);
 }
