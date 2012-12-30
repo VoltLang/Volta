@@ -1,4 +1,6 @@
 # Makefile for windows.
+# Intended for Digital Mars Make and GNU Make.
+# If using the latter, make sure to specify -fMakefile.
 
 RDMD=rdmd
 DMD=dmd

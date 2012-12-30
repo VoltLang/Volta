@@ -82,6 +82,7 @@ void mangleBase(ir.Type t, string[] names, ref string mangledString)
 	case TypeReference:
 		auto asTypeRef = cast(ir.TypeReference) t;
 		assert(asTypeRef !is null);
+		assert(asTypeRef.type !is null);
 		mangleBase(asTypeRef.type, names, mangledString);
 		break;
 	case DelegateType:
