@@ -8,6 +8,7 @@ import ir = volt.ir.ir;
 
 import volt.exceptions;
 import volt.token.stream;
+import volt.token.location;
 
 import volt.parser.base;
 import volt.parser.declaration;
@@ -25,7 +26,21 @@ ir.Module parseModule(TokenStream ts)
 
 	mod.children = parseTopLevelBlock(ts, TokenType.End, true);
 
+	mod.children.nodes = createImport(mod.children.nodes[0].location, "defaultsymbols") ~ mod.children.nodes;
+
 	return mod;
+}
+
+ir.Import createImport(Location location, string name)
+{
+	auto _import = new ir.Import();
+	_import.location = location;
+	_import.name = new ir.QualifiedName();
+	_import.name.location = location;
+	_import.name.identifiers ~= new ir.Identifier();
+	_import.name.identifiers[0].location = location;
+	_import.name.identifiers[0].value = name;
+	return _import;
 }
 
 ir.TopLevelBlock parseOneTopLevelBlock(TokenStream ts, bool inModule = false)
