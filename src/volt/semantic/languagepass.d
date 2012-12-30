@@ -26,46 +26,6 @@ import volt.semantic.irverifier;
 import volt.semantic.thisinserter;
 import volt.semantic.classlowerer;
 
-/**
- * @defgroup passes Passes
- * @brief Volt is a passes based compiler.
- */
-
-/**
- * @defgroup passLang Language Passes
- * @ingroup passes
- * @brief Language Passes verify and slightly transforms parsed modules.
- *
- * The language passes are devided into 3 main phases:
- * 1. PostParse
- * 2. Exp Type Verification
- * 3. Misc
- *
- * Phase 1, PostParse, works like this:
- * 1. All of the version statements are resolved for the entire module.
- * 2. Then for each Module, Class, Struct, Enum's TopLevelBlock.
- *   1. Apply all attributes in the current block or direct children.
- *   2. Add symbols to scope in the current block or direct children.
- *   3. Then do step a-c for for each child TopLevelBlock that
- *      brings in a new scope (Classes, Enums, Structs).
- * 3. Resolve the imports.
- * 4. Going from top to bottom resolving static if (applying step 2
- *    to the selected TopLevelBlock).
- *
- * Phase 2, ExpTyper, is just a single complex step that resolves and typechecks
- * any expressions, this pass is only run for modules that are called
- * directly by the LanguagePass.transform function, or functions that
- * are invoked by static ifs.
- *
- * Phase 3, Misc, are various lowering and transformation passes, some can
- * inoke Phase 1 and 2 on newly generated code.
- */
-
-/**
- * @defgroup passLower Lowering Passes
- * @ingroup passes
- * @brief Lowers ir before being passed of to backends.
- */
 
 /**
  * Default implementation of
