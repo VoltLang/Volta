@@ -89,16 +89,15 @@ public:
 				assert(asModule !is null);
 				_scope = asModule.myScope;
 				emsg = format("module '%s' has no member '%s'.", asModule.name, asPostfix.identifier.value);
-			} else if (tt.nodeType == ir.NodeType.TypeReference) {
-				auto asUser = cast(ir.TypeReference) tt;
-				if (asUser.type.nodeType == ir.NodeType.Struct) {
-					auto asStruct = cast(ir.Struct) asUser.type;
+			} else if (tt.nodeType == ir.NodeType.Class || tt.nodeType == ir.NodeType.Struct) {
+				if (tt.nodeType == ir.NodeType.Struct) {
+					auto asStruct = cast(ir.Struct) tt;
 					_scope = asStruct.myScope;
-					emsg = format("type '%s' has no member '%s'.", asUser.names[$-1], asPostfix.identifier.value);
-				} else if (asUser.type.nodeType == ir.NodeType.Class) {
-					_class = cast(ir.Class) asUser.type;
+					emsg = format("type '%s' has no member '%s'.", asStruct.name, asPostfix.identifier.value);
+				} else if (tt.nodeType == ir.NodeType.Class) {
+					_class = cast(ir.Class) tt;
 					_scope = _class.myScope;
-					emsg = format("type '%s' has no member '%s'.", asUser.names[$-1], asPostfix.identifier.value);
+					emsg = format("type '%s' has no member '%s'.", _class.name, asPostfix.identifier.value);
 				} else {
 					throw CompilerPanic("couldn't retrieve scope from type.");
 				}
@@ -106,8 +105,12 @@ public:
 				auto asPointer = cast(ir.PointerType) tt;
 				assert(asPointer !is null);
 				retrieveScope(asPointer.base);
+			} else if (tt.nodeType == ir.NodeType.TypeReference) {
+				auto asTR = cast(ir.TypeReference) tt;
+				assert(asTR !is null);
+				retrieveScope(asTR.type);
 			} else {
-				assert(false);
+				assert(false, to!string(tt.nodeType));
 			}
 		}
 		retrieveScope(t);
@@ -313,6 +316,11 @@ public:
 				return null;
 		}
 
+		auto asTR = cast(ir.TypeReference) result;
+		if (asTR !is null) {
+			result = asTR.type;
+		}
+
 		return result;
 	}	
 
@@ -323,16 +331,17 @@ public:
 			throw new CompilerError(right.location, "cannot retrieve type.");
 		}
 
+		auto asTR = cast(ir.TypeReference) left;
+		if (asTR !is null) {
+			left = asTR.type;
+		}
+
 		if (t.nodeType == ir.NodeType.StructLiteral) {
 			auto asLit = cast(ir.StructLiteral) t;
 			assert(asLit !is null);
 			string emsg = "cannot implicitly cast struct literal to destination.";
 
-			auto tr = cast(ir.TypeReference) left;
-			if (tr is null) {
-				throw new CompilerError(right.location, emsg);
-			}
-			auto asStruct = cast(ir.Struct) tr.type;
+			auto asStruct = cast(ir.Struct) left;
 			if (asStruct is null) {
 				throw new CompilerError(right.location, emsg);
 			}
@@ -347,7 +356,9 @@ public:
 				extype(types[i], sexp);
 			}
 
-			return asLit.type = tr;
+			asLit.type = new ir.TypeReference(left, asStruct.name);
+			asLit.type.location = right.location;
+			return asLit.type;
 		}
 
 		ir.Type type = cast(ir.Type)t;
@@ -367,22 +378,21 @@ public:
 		} else if (left.nodeType == ir.NodeType.ArrayType &&
 				   t.nodeType == ir.NodeType.ArrayType) {
 			return extypeArrayAssign(right, left, right);
-		} else if (left.nodeType == ir.NodeType.TypeReference &&
-				   t.nodeType == ir.NodeType.TypeReference) {
-			auto leftTR = cast(ir.TypeReference) left;
-			assert(leftTR !is null);
-			auto rightTR = cast(ir.TypeReference) t;
-			assert(rightTR !is null);
-			auto leftClass = cast(ir.Class) leftTR.type, rightClass = cast(ir.Class) rightTR.type;
+		} else if (left.nodeType == ir.NodeType.Class &&
+				   t.nodeType == ir.NodeType.Class) {
+			auto leftClass = cast(ir.Class) left;
+			assert(leftClass !is null);
+			auto rightClass = cast(ir.Class) t;
+			assert(rightClass !is null);
 			/// Check for converting child classes into parent classes.
 			if (leftClass !is null && rightClass !is null) {
 				if (inheritsFrom(rightClass, leftClass)) {
-					right = new ir.Unary(leftTR, right);
+					right = new ir.Unary(new ir.TypeReference(left, leftClass.name), right);
 					return left;
 				}
 			}
 
-			if (!typesEqual(left, rightTR)) {
+			if (leftClass !is rightClass) {
 				throw new CompilerError(right.location, emsg);
 			}
 			return left;
