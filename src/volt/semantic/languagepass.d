@@ -35,9 +35,26 @@ import volt.semantic.classlowerer;
 class VoltLanguagePass : LanguagePass
 {
 public:
-	Pass[] passes;
 	Settings settings;
 	Controller controller;
+
+	/**
+	 * Phase 1 fields.
+	 * @{
+	 */
+	Pass[] postParse;
+	/**
+	 * @}
+	 */
+
+	/**
+	 * Phase 2 fields.
+	 * @{
+	 */
+	Pass[] passes;
+	/**
+	 * @}
+	 */
 
 private:
 	ir.Module[string] mModules;
@@ -48,9 +65,10 @@ public:
 		this.settings = settings;
 		this.controller = controller;
 
+		postParse ~= new ConditionalRemoval(settings);
+
 		auto contextBuilder = new ContextBuilder();
 
-		passes ~= new ConditionalRemoval(settings);
 		passes ~= new AttribRemoval();
 		passes ~= contextBuilder;
 		passes ~= new ImportResolver(this, contextBuilder, settings);
@@ -78,7 +96,8 @@ public:
 
 	override void phase1(ir.Module m)
 	{
-
+		foreach(pass; postParse)
+			pass.transform(m);
 	}
 
 	override void phase2(ir.Module m)

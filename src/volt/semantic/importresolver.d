@@ -14,7 +14,6 @@ import volt.visitor.scopemanager;
 import volt.semantic.context;
 import volt.semantic.attribremoval;
 import volt.semantic.declgatherer;
-import volt.semantic.condremoval;
 
 
 /**
@@ -66,13 +65,11 @@ public:
 		auto attrrm = new AttribRemoval();
 		auto declg = new DeclarationGatherer();
 		auto gatherer = new PublicImportGatherer();
-		auto cond = new ConditionalRemoval(settings);
 
 		auto mod = languagepass.getModule(i.name);
 		if (mod is null) {
 			throw new CompilerError(i.name.location, format("cannot find module '%s'.", i.name));
 		}
-		cond.transform(mod);
 		attrrm.transform(mod);
 		context.transform(mod);
 		declg.transform(mod);
