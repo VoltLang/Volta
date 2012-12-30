@@ -53,7 +53,6 @@ class ExpTyper : ScopeManager, Pass
 public:
 	Settings settings;
 	ir.Module _module;
-	ir.Node[ir.Exp] subTypes;
 	ir.Type functionRet;
 
 public:
@@ -72,9 +71,9 @@ public:
 			assert(asArray !is null);
 			switch (asPostfix.identifier.value) {
 			case "length":
-				return subTypes[asPostfix] = settings.getSizeT();
+				return settings.getSizeT();
 			case "ptr":
-				return subTypes[asPostfix] = new ir.PointerType(asArray.base);
+				return new ir.PointerType(asArray.base);
 			default:
 				throw new CompilerError(asPostfix.location, "arrays have length and ptr members only.");
 			}
@@ -128,9 +127,9 @@ public:
 		if (store.kind == ir.Store.Kind.Value) {
 			auto asDecl = cast(ir.Variable) store.node;
 			assert(asDecl !is null);
-			return subTypes[asPostfix] = asDecl.type;
+			return asDecl.type;
 		} else if (store.kind == ir.Store.Kind.Function) {
-			return subTypes[asPostfix] = store.functions[$-1].type;  // !!!
+			return store.functions[$-1].type;  // !!!
 		} else {
 			throw CompilerPanic(asPostfix.location, "unhandled postfix type retrieval.");
 		}
@@ -198,9 +197,9 @@ public:
 	{
 		assert(u.op == ir.Unary.Op.New);
 		if (!u.isArray && !u.hasArgumentList) {
-			return subTypes[u] = new ir.PointerType(u.type);
+			return new ir.PointerType(u.type);
 		} else if (u.isArray) {
-			return subTypes[u] = new ir.ArrayType(u.type);
+			return new ir.ArrayType(u.type);
 		} else {
 			assert(u.hasArgumentList);
 			return u.type;
@@ -211,15 +210,14 @@ public:
 	/// Retrieve the type for e.
 	ir.Node evaluate(ir.Exp e)
 	{
-		if (auto p = e in subTypes) {
-			return *p;
-		}
+		ir.Node result;
 
 		switch (e.nodeType) with (ir.NodeType) {
 			case Constant:
 				auto asConstant = cast(ir.Constant) e;
 				assert(asConstant !is null);
-				return subTypes[e] = asConstant.type;
+				result = asConstant.type;
+				break;
 			case IdentifierExp:
 				auto asIdentifierExp = cast(ir.IdentifierExp) e;
 				assert(asIdentifierExp !is null);
@@ -227,41 +225,46 @@ public:
 					visit(asIdentifierExp);
 				}
 				assert(asIdentifierExp.type !is null);
-				return subTypes[e] = asIdentifierExp.type;
+				result = asIdentifierExp.type;
+				break;
 			case BinOp:
 				auto asBin = cast(ir.BinOp) e;
 				assert(asBin !is null);
-				return subTypes[e] = extype(asBin);
+				result = extype(asBin);
+				break;
 			case TypeReference:
 				auto asUser = cast(ir.TypeReference) e;
 				assert(asUser !is null);
-				return subTypes[e] = asUser.type;
+				result = asUser.type;
+				break;
 			case Variable:
 				auto asDecl = cast(ir.Variable) e;
 				assert(asDecl !is null);
-				return subTypes[e] = asDecl.type;
+				result = asDecl.type;
+				break;
 			case Postfix:
 				auto asPostfix = cast(ir.Postfix) e;
 				assert(asPostfix !is null);
 				if (asPostfix.op == ir.Postfix.Op.Identifier) {
-					return evaluatePostfixIdentifier(asPostfix);
+					result = evaluatePostfixIdentifier(asPostfix);
 				} else if (asPostfix.op == ir.Postfix.Op.Call) {
-					return evaluatePostfixCall(asPostfix);
+					result = evaluatePostfixCall(asPostfix);
 				} else if (asPostfix.op == ir.Postfix.Op.Index ||
 						   asPostfix.op == ir.Postfix.Op.Slice) {
-					return evaluatePostfixIndex(asPostfix);
+					result = evaluatePostfixIndex(asPostfix);
 				} else if (asPostfix.op == ir.Postfix.Op.Increment ||
 				           asPostfix.op == ir.Postfix.Op.Decrement) {
-					return evaluatePostfixIncDec(asPostfix);
+					result = evaluatePostfixIncDec(asPostfix);
 				} else  {
 					assert(false);
 				}
+				break;
 			case Unary:
 				auto asUnary = cast(ir.Unary) e;
 				if (asUnary.op == ir.Unary.Op.None) {
-					return subTypes[e] = evaluate(asUnary.value);
+					result = evaluate(asUnary.value);
 				} else if (asUnary.op == ir.Unary.Op.Cast) {
-					return subTypes[e] = asUnary.type;
+					result = asUnary.type;
 				} else if (asUnary.op == ir.Unary.Op.Dereference) {
 					auto t = evaluate(asUnary.value);
 					if (t.nodeType != ir.NodeType.PointerType) {
@@ -269,22 +272,24 @@ public:
 					}
 					auto asPointer = cast(ir.PointerType) t;
 					assert(asPointer !is null);
-					return subTypes[e] = asPointer.base;
+					result = asPointer.base;
 				} else if (asUnary.op == ir.Unary.Op.AddrOf) {
 					auto t = cast(ir.Type) evaluate(asUnary.value);
 					assert(t !is null);
-					return subTypes[e] = new ir.PointerType(t);
+					result = new ir.PointerType(t);
 				} else if (asUnary.op == ir.Unary.Op.New) {
-					return evaluateNewExp(asUnary);
+					result = evaluateNewExp(asUnary);
 				} else if (asUnary.op == ir.Unary.Op.Minus || asUnary.op == ir.Unary.Op.Plus) {
 					auto t = cast(ir.Type) evaluate(asUnary.value);
 					assert(t !is null);
-					return subTypes[e] = t;
+					result = t;
 				} else {
 					assert(false);
 				}
+				break;
 			case StructLiteral:
-				return e;
+				result = e;
+				break;
 			case ArrayLiteral:
 				auto asArray = cast(ir.ArrayLiteral) e;
 				assert(asArray !is null);
@@ -302,12 +307,14 @@ public:
 				base.location = asArray.location;
 				asArray.type = new ir.ArrayType(base);
 				asArray.type.location = asArray.location;
-				return asArray.type;
+				result = asArray.type;
+				break;
 			default:
 				return null;
 		}
-		assert(false);
-	}
+
+		return result;
+	}	
 
 	ir.Node extype(ir.Type left, ref ir.Exp right)
 	{
