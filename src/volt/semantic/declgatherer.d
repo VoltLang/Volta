@@ -59,26 +59,4 @@ public:
 		super.enter(fn);
 		return Continue;
 	}
-		
-	override Status enter(ir.Class _class)
-	{
-		super.enter(_class);
-		if (_class.parent is null) {
-			return Continue;
-		} else {
-			assert(_class.parent.identifiers.length == 1);
-			/// @todo Correct look up.
-			auto store = _class.myScope.lookup(_class.parent.identifiers[0].value);
-			if (store is null) {
-				throw new CompilerError(_class.parent.location, format("unidentified identifier '%s'.", _class.parent));
-			}
-			if (store.node is null || store.node.nodeType != ir.NodeType.Class) {
-				throw new CompilerError(_class.parent.location, format("'%s' is not a class.", _class.parent));
-			}
-			auto asClass = cast(ir.Class) store.node;
-			assert(asClass !is null);
-			_class.parentClass = asClass;
-		}
-		return Continue;
-	}
 }
