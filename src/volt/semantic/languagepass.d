@@ -92,7 +92,7 @@ public:
 		passes ~= new ConditionalRemoval(settings);
 		passes ~= new AttribRemoval();
 		passes ~= contextBuilder;
-		passes ~= new ImportResolver(this, contextBuilder);
+		passes ~= new ImportResolver(this, contextBuilder, settings);
 		passes ~= new DeclarationGatherer();
 		passes ~= new UserResolver();
 		passes ~= new TypeDefinitionVerifier();
