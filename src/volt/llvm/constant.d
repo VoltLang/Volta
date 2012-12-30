@@ -30,6 +30,14 @@ void getConstantValue(State state, ir.Exp exp, Value result)
 	case Constant:
 		auto cnst = cast(ir.Constant)exp;
 		return handleConstant(state, cnst, result);
+	case StructLiteral:
+		auto sl = cast(ir.StructLiteral)exp;
+		handleStructLiteral(state, sl, result);
+		break;
+	case ExpReference:
+		auto expRef = cast(ir.ExpReference)exp;
+		handleExpReference(state, expRef, result);
+		break;
 	case Unary:
 		auto asUnary = cast(ir.Unary)exp;
 		return handleUnary(state, asUnary, result);
@@ -46,6 +54,8 @@ void handleUnary(State state, ir.Unary asUnary, Value result)
 	switch (asUnary.op) with (ir.Unary.Op) {
 	case Cast:
 		return handleCast(state, asUnary, result);
+	case AddrOf:
+		return handleAddrOf(state, asUnary, result);
 	case Plus:
 	case Minus:
 		return handlePlusMinus(state, asUnary, result);
@@ -55,6 +65,30 @@ void handleUnary(State state, ir.Unary asUnary, Value result)
 			to!string(asUnary.op));
 		throw CompilerPanic(asUnary.location, str);
 	}
+}
+
+void handleAddrOf(State state, ir.Unary de, Value result)
+{
+	auto expRef = cast(ir.ExpReference)de.value;
+	if (expRef is null)
+		throw CompilerPanic(de.value.location, "not a ExpReference");
+
+	if (expRef.decl.declKind != ir.Declaration.Kind.Variable)
+		throw CompilerPanic(de.value.location, "must be a variable");
+
+	auto var = cast(ir.Variable)expRef.decl;
+	Type type;
+
+	auto v = state.getVariableValue(var, type);
+
+	auto pt = new ir.PointerType();
+	pt.base = type.irType;
+	assert(pt.base !is null);
+	pt.mangledName = volt.semantic.mangle.mangle(null, pt);
+
+	result.value = v;
+	result.type = state.fromIr(pt);
+	result.isPointer = false;
 }
 
 void handlePlusMinus(State state, ir.Unary asUnary, Value result)
@@ -76,28 +110,59 @@ void handleCast(State state, ir.Unary asUnary, Value result)
 		throw CompilerPanic(asUnary.location, str);
 	}
 
-	if (asUnary.op != ir.Unary.Op.Cast)
-		error("other unary op then cast");
-
 	state.getConstantValue(asUnary.value, result);
 
-	auto to = cast(PrimitiveType)state.fromIr(asUnary.type);
-	auto from = cast(PrimitiveType)result.type;
-	if (to is null || from is null)
-		error("not integer constants");
+	auto newType = state.fromIr(asUnary.type);
+	auto oldType = result.type;
 
-	result.type = to;
-	result.value =  LLVMConstIntCast(result.value, to.llvmType, from.signed);
+	{
+		auto newPrim = cast(PrimitiveType)newType;
+		auto oldPrim = cast(PrimitiveType)oldType;
+
+		if (newPrim !is null && oldPrim !is null) {
+			result.type = newType;
+			result.value = LLVMConstIntCast(result.value, newPrim.llvmType, oldPrim.signed);
+			return;
+		}
+	}
+
+	{
+		auto newTypePtr = cast(PointerType)newType;
+		auto oldTypePtr = cast(PointerType)oldType;
+		auto newTypeFn = cast(FunctionType)newType;
+		auto oldTypeFn = cast(FunctionType)oldType;
+
+		if ((newTypePtr !is null || newTypeFn !is null) &&
+		    (oldTypePtr !is null || oldTypeFn !is null)) {
+			result.type = newType;
+			result.value = LLVMConstBitCast(result.value, newType.llvmType);
+			return;
+		}
+	}
+
+	error("not a handle cast type");
 }
 
-void handleConstant(State state, ir.Constant asConst, Value result)
+
+/*
+ *
+ * Misc functions.
+ *
+ */
+
+
+
+void handleExpReference(State state, ir.ExpReference expRef, Value result)
 {
-	assert(asConst.type !is null);
-
-	// All of the error checking should have been
-	// done in other passes and unimplemented features
-	// is checked for in the called functions.
-
-	result.type = state.fromIr(asConst.type);
-	result.value = result.type.fromConstant(state, asConst);
+	switch(expRef.decl.declKind) with (ir.Declaration.Kind) {
+	case Function:
+		auto fn = cast(ir.Function)expRef.decl;
+		result.isPointer = false;
+		result.value = state.getFunctionValue(fn, result.type);
+		break;
+	case Variable:
+		throw CompilerPanic("variables needs '&' for constants");
+	default:
+		throw CompilerPanic(expRef.location, "invalid decl type");
+	}
 }

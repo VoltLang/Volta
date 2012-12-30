@@ -794,35 +794,6 @@ void handleExpReference(State state, ir.ExpReference expRef, Value result)
 	}
 }
 
-void handleStructLiteral(State state, ir.StructLiteral sl, Value result)
-{
-	auto tr = cast(ir.TypeReference)sl.type;
-	if (tr is null)
-		throw CompilerPanic(sl.location, "struct literal type must be TypeReference");
-
-	auto st = cast(ir.Struct)tr.type;
-	if (st is null)
-		throw CompilerPanic(sl.location, "struct literal type must be TypeReference");
-
-	auto type = cast(StructType)state.fromIr(st);
-
-	result.isPointer = false;
-	result.type = type;
-	result.value = type.fromStructLiteral(state, sl);
-}
-
-void handleConstant(State state, ir.Constant cnst, Value result)
-{
-	assert(cnst.type !is null);
-
-	// All of the error checking should have been
-	// done in other passes and unimplemented features
-	// is checked for in the called functions.
-
-	result.type = state.fromIr(cnst.type);
-	result.value = result.type.fromConstant(state, cnst);
-}
-
 /**
  * Gets the value for the expressions and makes sure that
  * it is a struct reference value. Will handle pointers to

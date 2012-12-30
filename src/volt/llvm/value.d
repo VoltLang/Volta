@@ -3,7 +3,10 @@
 module volt.llvm.value;
 
 import lib.llvm.core;
+
+import volt.exceptions;
 import volt.llvm.type;
+import volt.llvm.state;
 
 
 /**
@@ -33,4 +36,41 @@ public:
 		this.type = val.type;
 		this.value = val.value;
 	}
+}
+
+
+/*
+ *
+ * Common handle functions for both inline and constants.
+ *
+ */
+
+
+void handleStructLiteral(State state, ir.StructLiteral sl, Value result)
+{
+	auto tr = cast(ir.TypeReference)sl.type;
+	if (tr is null)
+		throw CompilerPanic(sl.location, "struct literal type must be TypeReference");
+
+	auto st = cast(ir.Struct)tr.type;
+	if (st is null)
+		throw CompilerPanic(sl.location, "struct literal type must be TypeReference");
+
+	auto type = cast(StructType)state.fromIr(st);
+
+	result.isPointer = false;
+	result.type = type;
+	result.value = type.fromStructLiteral(state, sl);
+}
+
+void handleConstant(State state, ir.Constant asConst, Value result)
+{
+	assert(asConst.type !is null);
+
+	// All of the error checking should have been
+	// done in other passes and unimplemented features
+	// is checked for in the called functions.
+
+	result.type = state.fromIr(asConst.type);
+	result.value = result.type.fromConstant(state, asConst);
 }
