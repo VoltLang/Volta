@@ -15,6 +15,7 @@ public:
 public:
 	override Status enter(ir.Module m)
 	{
+		assert(current is null);
 		current = m.myScope;
 		return Continue;
 	}
