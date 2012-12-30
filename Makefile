@@ -12,4 +12,11 @@ all:
 	$(RDMD) $(DFLAGS) src\main.d
 	./volt -c -o rt/rt.o rt/src/object.d rt/src/vrt/vmain.d rt/src/vrt/gc.d
 
-.PHONY: all
+# Only works with Digital Mar's make. Make it into
+# one line for GNU (join commands with &&).
+test:
+	cd test
+	$(DMD) runner
+	runner
+
+.PHONY: all test
