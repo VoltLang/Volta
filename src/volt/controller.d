@@ -25,7 +25,7 @@ class VoltController : Controller
 public:
 	Settings settings;
 	Frontend frontend;
-	Pass languagePass;
+	LanguagePass languagePass;
 	Backend backend;
 
 protected:
@@ -38,7 +38,7 @@ public:
 		auto p = new Parser();
 		p.dumpLex = false;
 
-		auto lp = new LanguagePass(s, this);
+		auto lp = new VoltLanguagePass(s, this);
 
 		auto b = new LlvmBackend(s.outputFile is null);
 
@@ -140,6 +140,10 @@ protected:
 		auto m = frontend.parseNewFile(src, loc);
 		mModules[m.name.toString()] = m;
 
+		// Need to make sure that this module can
+		// be used by other modules.
+		languagePass.phase1(m);
+
 		return m;
 	}
 
@@ -147,12 +151,15 @@ protected:
 	{
 		ir.Module[] mods;
 
+		// Load all modules to be compiled.
 		foreach (file; mFiles) {
 			mods ~= loadAndParse(file);
 		}
 
+		// All modules to be compiled needs
+		// to be run trough phase2.
 		foreach (mod; mods)
-			languagePass.transform(mod);
+			languagePass.phase2(mod);
 
 		if (settings.noBackend)
 			return 0;
@@ -199,7 +206,7 @@ protected:
 		return 0;
 	}
 
-	this(Settings s, Frontend f, Pass lp, Backend b)
+	this(Settings s, Frontend f, LanguagePass lp, Backend b)
 	{
 		this.settings = s;
 		this.frontend = f;

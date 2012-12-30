@@ -12,7 +12,6 @@ import volt.interfaces;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
 import volt.semantic.context;
-import volt.semantic.languagepass;
 import volt.semantic.attribremoval;
 import volt.semantic.declgatherer;
 import volt.semantic.condremoval;

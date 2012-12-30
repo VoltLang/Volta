@@ -68,10 +68,11 @@ import volt.semantic.classlowerer;
  */
 
 /**
- * Center point for all language passes.
- * @ingroup passes passLang
+ * Default implementation of
+ * @link volt.interfaces.LanguagePass LanguagePass@endlink, replace
+ * this if you wish to any of the semantics of the language.
  */
-class LanguagePass : Pass
+class VoltLanguagePass : LanguagePass
 {
 public:
 	Pass[] passes;
@@ -110,7 +111,17 @@ public:
 		}
 	}
 
-	override void transform(ir.Module m)
+	override ir.Module getModule(ir.QualifiedName name)
+	{
+		return controller.getModule(name);
+	}
+
+	override void phase1(ir.Module m)
+	{
+
+	}
+
+	override void phase2(ir.Module m)
 	{
 		foreach(pass; passes)
 			pass.transform(m);
@@ -120,13 +131,5 @@ public:
 	{
 		foreach(pass; passes)
 			pass.close();
-	}
-
-	/**
-	 * Helper function, just routed to the controller.
-	 */
-	ir.Module getModule(ir.QualifiedName name)
-	{
-		return controller.getModule(name);
 	}
 }

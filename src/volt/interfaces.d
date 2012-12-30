@@ -37,10 +37,30 @@ interface Frontend
  *
  * Validation passes validates the Volt IR, and reports errors, often halting
  * compilation by throwing CompilerError.
+ *
+ * @ingroup passes
  */
 interface Pass
 {
 	void transform(ir.Module m);
+
+	void close();
+}
+
+/**
+ * Center point for all language passes.
+ * @ingroup passes passLang
+ */
+interface LanguagePass
+{
+	/**
+	 * Helper function, often just routed to the Controller.
+	 */
+	ir.Module getModule(ir.QualifiedName name);
+
+	void phase1(ir.Module m);
+
+	void phase2(ir.Module m);
 
 	void close();
 }
