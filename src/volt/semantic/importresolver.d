@@ -11,9 +11,6 @@ import volt.exceptions;
 import volt.interfaces;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
-import volt.semantic.context;
-import volt.semantic.attribremoval;
-import volt.semantic.declgatherer;
 
 
 /**
@@ -44,7 +41,6 @@ public:
 class ImportResolver : ScopeManager, Pass
 {
 public:
-	ContextBuilder context;
 	LanguagePass languagepass;
 	ir.Module thisModule;
 	Settings settings;
@@ -62,18 +58,12 @@ public:
 
 	override Status enter(ir.Import i)
 	{
-		auto attrrm = new AttribRemoval();
-		auto declg = new DeclarationGatherer();
-		auto gatherer = new PublicImportGatherer();
-
 		auto mod = languagepass.getModule(i.name);
 		if (mod is null) {
 			throw new CompilerError(i.name.location, format("cannot find module '%s'.", i.name));
 		}
-		attrrm.transform(mod);
-		context.transform(mod);
-		declg.transform(mod);
 
+		auto gatherer = new PublicImportGatherer();
 		accept(mod, gatherer);
 
 		if (i.bind !is null && i.aliases.length == 0) { // import a = b;
@@ -123,11 +113,9 @@ public:
 	}
 
 public:
-	this(LanguagePass pass, ContextBuilder context, Settings settings)
+	this(LanguagePass pass, Settings settings)
 	{
-		assert(context !is null);
 		languagepass = pass;
-		this.context = context;
 		this.settings = settings;
 	}
 }

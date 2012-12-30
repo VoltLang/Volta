@@ -66,13 +66,10 @@ public:
 		this.controller = controller;
 
 		postParse ~= new ConditionalRemoval(settings);
+		postParse ~= new AttribRemoval();
+		postParse ~= new ContextBuilder();
+		postParse ~= new DeclarationGatherer();
 
-		auto contextBuilder = new ContextBuilder();
-
-		passes ~= new AttribRemoval();
-		passes ~= contextBuilder;
-		passes ~= new ImportResolver(this, contextBuilder, settings);
-		passes ~= new DeclarationGatherer();
 		passes ~= new UserResolver();
 		passes ~= new TypeDefinitionVerifier();
 		passes ~= new ExpTyper(settings);
@@ -98,6 +95,11 @@ public:
 	{
 		foreach(pass; postParse)
 			pass.transform(m);
+
+		// Need to create one for each import since,
+		// the import resolver will cause phase1 to be called.
+		auto impRes = new ImportResolver(this, settings);
+		impRes.transform(m);
 	}
 
 	override void phase2(ir.Module m)
