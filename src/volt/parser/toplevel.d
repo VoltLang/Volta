@@ -116,7 +116,7 @@ body
 			} else if (next == TokenType.If) {
 				goto case TokenType.Version;
 			} else {
-				tlb.nodes ~= [parseAttribute(ts)];
+				tlb.nodes ~= [parseAttribute(ts, inModule)];
 			}
 			break;
 		case TokenType.Semicolon:
