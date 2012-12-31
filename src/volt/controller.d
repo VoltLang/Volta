@@ -55,21 +55,27 @@ public:
 	ir.Module getModule(ir.QualifiedName name)
 	{
 		auto p = name.toString() in mModules;
-		if (p !is null)
-			return *p;
-
 		ir.Module m;
 
+		if (p !is null)
+			m = *p;
+
 		foreach (path; settings.includePaths) {
+			if (m !is null)
+				break;
+
 			auto f = makeFilename(path, name.strings);
 
 			if (!exists(f))
 				continue;
 
 			m = loadAndParse(f);
+		}
 
-			if (m !is null)
-				break;
+		// Need to make sure that this module can
+		// be used by other modules.
+		if (m !is null) {
+			languagePass.phase1(m);
 		}
 
 		return m;
@@ -140,10 +146,6 @@ protected:
 		auto m = frontend.parseNewFile(src, loc);
 		mModules[m.name.toString()] = m;
 
-		// Need to make sure that this module can
-		// be used by other modules.
-		languagePass.phase1(m);
-
 		return m;
 	}
 
@@ -152,9 +154,14 @@ protected:
 		ir.Module[] mods;
 
 		// Load all modules to be compiled.
+		// Don't run phase 1 on them yet.
 		foreach (file; mFiles) {
 			mods ~= loadAndParse(file);
 		}
+
+		// Force phase 1 to be executed on the modules.
+		foreach (mod; mods)
+			languagePass.phase1(mod);
 
 		// All modules to be compiled needs
 		// to be run trough phase2.
