@@ -136,6 +136,9 @@ public:
 	/// public, private, package or protected.
 	Access access = Access.Private;
 
+	/// Optional
+	bool isStatic;
+
 	/// import <a>
 	QualifiedName name;
 

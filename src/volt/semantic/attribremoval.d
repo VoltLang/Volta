@@ -162,6 +162,9 @@ protected:
 			case Protected:
 				i.access = ir.Access.Protected;
 				break;
+			case Static:
+				i.isStatic = true;
+				break;
 			default:
 				// Warn?
 			}
