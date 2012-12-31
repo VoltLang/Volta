@@ -69,8 +69,13 @@ public:
 		if (i.bind !is null && i.aliases.length == 0) { // import a = b;
 			current.addScope(i, mod.myScope, i.bind.value);
 		} else if (i.aliases.length == 0 && i.bind is null) {
-			thisModule.importedModules ~= mod;
-			thisModule.importedAccess ~= i.access;
+			if (i.isStatic) {
+				assert(i.name.identifiers.length == 1);
+				thisModule.myScope.addScope(i, mod.myScope, i.name.identifiers[0].value);
+			} else {
+				thisModule.importedModules ~= mod;
+				thisModule.importedAccess ~= i.access;
+			}
 		} else if (i.aliases.length > 0) {  // import a : b, c OR import a = b : c, d;
 			ir.Scope bindScope;
 			if (i.bind !is null) {
