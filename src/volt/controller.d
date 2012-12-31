@@ -170,9 +170,8 @@ protected:
 		// All modules need to be run trough phase2.
 		languagePass.phase2(dmdIsStupid);
 
-		// All modules to be compiled needs
-		// to be run trough phase3.
-		languagePass.phase3(mods);
+		// All modules need to be run trough phase3.
+		languagePass.phase3(dmdIsStupid);
 
 		if (settings.noBackend)
 			return 0;

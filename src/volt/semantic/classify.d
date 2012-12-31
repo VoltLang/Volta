@@ -32,8 +32,36 @@ int size(ir.PrimitiveType.Kind kind)
 	}
 }
 
+int size(Location location, ir.Node node)
+{
+	switch (node.nodeType) with (ir.NodeType) {
+	case PrimitiveType:
+		auto asPrim = cast(ir.PrimitiveType) node;
+		assert(asPrim !is null);
+		return size(asPrim.type);
+	case Struct:
+		auto asStruct = cast(ir.Struct) node;
+		assert(asStruct !is null);
+		return structSize(location, asStruct);
+	case Variable:
+		auto asVariable = cast(ir.Variable) node;
+		assert(asVariable !is null);
+		return size(location, asVariable.type);
+	case PointerType, FunctionType:
+		return 4;  /// @todo Aieeeeeeeeeeeeeeeeeeeeeeeeeeee!!!
+	case ArrayType:
+		return 8;  /// @todo See above.
+	case TypeReference:
+		auto asTR = cast(ir.TypeReference) node;
+		assert(asTR !is null);
+		return size(location, asTR.type);
+	default:
+		throw new CompilerError(location, format("couldn't retrieve size of element: %s", to!string(node.nodeType)));
+	}
+}
+
 /// Returns the size of a given Struct, in bytes.
-int size(Location location, ir.Struct s)
+int structSize(Location location, ir.Struct s)
 {
 	int sizeAccumulator;
 	foreach (node; s.members.nodes) {
@@ -42,37 +70,7 @@ int size(Location location, ir.Struct s)
 			continue;
 		}
 
-		auto asVar = cast(ir.Variable) node;
-		assert(asVar !is null);
-
-		// PrimitiveTypes have known sizes.
-		if (asVar.type.nodeType == ir.NodeType.PrimitiveType) {
-			auto asPrim = cast(ir.PrimitiveType) asVar.type;
-			assert(asPrim !is null);
-			sizeAccumulator += size(asPrim.type);
-			continue;
-		}
-
-		if (asVar.type.nodeType == ir.NodeType.PointerType ||
-			asVar.type.nodeType == ir.NodeType.FunctionType) {
-			/// @todo get the correct size of a pointer from Settings.
-			sizeAccumulator += 4;
-			continue;
-		}
-
-		if (asVar.type.nodeType == ir.NodeType.TypeReference) {
-			auto asTR = cast(ir.TypeReference) asVar.type;
-			assert(asTR !is null);
-			if (asTR.type.nodeType == ir.NodeType.Struct) {
-				auto asStruct = cast(ir.Struct) asTR.type;
-				assert(asStruct !is null);
-				sizeAccumulator += size(location, asStruct);
-				continue; 
-			}
-		}
-
-		/// @todo Arrays, AAs, ...
-		throw new CompilerError(location, format("couldn't retrieve size of struct '%s'", s.name));
+		sizeAccumulator += size(location, node);
 	}
 	return sizeAccumulator;
 }
@@ -283,6 +281,9 @@ ir.Scope scopeLookup(ir.Scope _scope, string name, Location location, string mem
 		if (store is null) {
 			current = current.parent;
 			continue;
+		}
+		if (store.s !is null) {
+			return store.s;
 		}
 		if (store.kind != ir.Store.Kind.Type) {
 			// !!! this will need to handle more cases some day.

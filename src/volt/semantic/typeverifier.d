@@ -23,6 +23,7 @@ class TypeDefinitionVerifier : NullVisitor, Pass
 {
 public:
 	int undefinedTypes;
+	ir.Node lastUndefined;
 
 public:
 	bool verify(ir.Node n, bool fromInternal)
@@ -75,6 +76,7 @@ public:
 		}
 
 		if (!defined) {
+			lastUndefined = fn;
 			undefinedTypes++;
 		}
 		return fn.defined = defined;
@@ -95,6 +97,7 @@ public:
 		}
 
 		if (!defined) {
+			lastUndefined = s;
 			undefinedTypes++;
 		}
 		return s.defined = defined;
@@ -113,6 +116,7 @@ public:
 		}
 
 		if (!defined) {
+			lastUndefined = c;
 			undefinedTypes++;
 		}
 		return c.defined = defined;
@@ -131,6 +135,7 @@ public:
 		}
 
 		if (!defined) {
+			lastUndefined = i;
 			undefinedTypes++;
 		}
 		return i.defined = defined;
@@ -144,9 +149,11 @@ public:
 			int oldUndefined = undefinedTypes;
 			undefinedTypes = 0;
 			accept(m, this);
-			if (undefinedTypes == oldUndefined) {
+			if (undefinedTypes > 0 && undefinedTypes == oldUndefined) {
 				// Temporary error message.
-				throw new CompilerError(m.location, "circular definition.");
+				/// @todo This doesn't work cross module!
+				//throw new CompilerError(lastUndefined.location, "circular definition.");
+				break;
 			}
 		}
 	}

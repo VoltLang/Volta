@@ -312,6 +312,9 @@ public:
 				asArray.type.location = asArray.location;
 				result = asArray.type;
 				break;
+			case Typeid:
+				result = retrieveTypeInfoClass(e.location, _module.myScope);
+				break;
 			default:
 				assert(false);
 		}
@@ -459,7 +462,7 @@ public:
 		} else if (left.nodeType == ir.NodeType.ArrayType ||
 				   right.nodeType == ir.NodeType.ArrayType) {
 			// ...
-			if (bin.op != ir.BinOp.Type.Cat) {
+			if (!(bin.op == ir.BinOp.Type.Cat || bin.op == ir.BinOp.Type.Assign)) {
 				throw new CompilerError(bin.location, "can only concatenate arrays.");
 			}
 			ir.ArrayType array;

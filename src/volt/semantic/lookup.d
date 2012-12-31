@@ -2,6 +2,9 @@ module volt.semantic.lookup;
 
 import ir = volt.ir.ir;
 
+import volt.exceptions;
+import volt.token.location;
+
 /**
  * Lookup an identifier in a scope and its parent scopes.
  * Returns the store or null if no match was found.
@@ -79,5 +82,39 @@ ir.Store lookup(ir.Scope _scope, string name)
 	/// @todo Error if we found multiple matches in importedScopes.
 
 	return null;
+}
+
+/**
+ * Look up object.TypeInfo.
+ * Throws: CompilerPanic on failure.
+ */
+ir.Struct retrieveTypeInfoStruct(Location location, ir.Scope _scope)
+{
+	auto objectStore = _scope.lookup("object");
+	if (objectStore is null || objectStore.s is null) {
+		throw CompilerPanic(location, "couldn't access object module.");
+	}
+	auto tinfoStore = objectStore.s.lookup("TypeInfo");
+	if (tinfoStore is null || tinfoStore.node is null || tinfoStore.node.nodeType != ir.NodeType.Struct) {
+		throw CompilerPanic(location, "couldn't locate object.TypeInfo lowered class.");
+	}
+	auto tinfo = cast(ir.Struct) tinfoStore.node;
+	assert(tinfo !is null);
+	return tinfo;
+}
+
+ir.Class retrieveTypeInfoClass(Location location, ir.Scope _scope)
+{
+	auto objectStore = _scope.lookup("object");
+	if (objectStore is null || objectStore.s is null) {
+		throw CompilerPanic(location, "couldn't access object module.");
+	}
+	auto tinfoStore = objectStore.s.lookup("TypeInfo");
+	if (tinfoStore is null || tinfoStore.node is null || tinfoStore.node.nodeType != ir.NodeType.Class) {
+		throw CompilerPanic(location, "couldn't locate object.TypeInfo class.");
+	}
+	auto tinfo = cast(ir.Class) tinfoStore.node;
+	assert(tinfo !is null);
+	return tinfo;
 }
 

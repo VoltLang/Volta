@@ -13,30 +13,8 @@ import volt.visitor.visitor;
 import volt.semantic.classify;
 import volt.semantic.mangle;
 import volt.semantic.lookup;
+import volt.semantic.newreplacer;
 import volt.token.location;
-
-ir.Postfix createFunctionCall(Location location, ir.Scope _scope, string name, ir.Exp[] arguments...)
-{
-	auto iexp = new ir.ExpReference();
-	iexp.location = location;
-	iexp.idents ~= name;
-
-	auto store = _scope.lookup(name);
-	if (store is null || store.functions.length == 0) {
-		throw CompilerPanic(location, format("couldn't find function of name of '%s'", name));
-	}
-	assert(store.functions.length == 1);
-
-	iexp.decl = store.functions[0];
-
-	auto pfix = new ir.Postfix();
-	pfix.location = location;
-	pfix.op = ir.Postfix.Op.Call;
-	pfix.child = iexp;
-	pfix.arguments = arguments.dup;
-
-	return pfix;
-}
 
 class ClassLowerer : NullExpReplaceVisitor, Pass
 {
@@ -46,8 +24,15 @@ public:
 	ir.Struct[ir.Class] synthesised;
 	string[] parentNames;
 	int passNumber;
+	Settings settings;
+	ir.Variable allocDgVar;
 
 public:
+	this(Settings settings)
+	{
+		this.settings = settings;
+	}
+
 	/**
 	 * The basic form of the constructor is as follows:
 	 * ---
@@ -110,9 +95,7 @@ public:
 		objSizeof.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Uint);  // @todo use Settings.
 
 		// cast(Object*) malloc(Object.sizeof);
-		ir.Postfix mallocCall = createFunctionCall(c.location, c.myScope, "malloc", objSizeof);
-		auto castExp = new ir.Unary(objVar.type, mallocCall);
-		castExp.location = c.location;
+		auto castExp = createAllocDgCall(allocDgVar, settings, c.location, new ir.TypeReference(c, c.name));
 
 		objVar.assign = castExp;
 		fn._body.statements ~= objVar;
@@ -131,10 +114,7 @@ public:
 		vtableSizeof.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Uint);  // aieee
 
 		// cast(Object.__Vtable*) malloc(Object.__Vtable.sizeof);
-		ir.Postfix vtableMallocCall = createFunctionCall(c.location, c.myScope, "malloc", vtableSizeof);
-
-		auto vtableMallocCast = new ir.Unary(new ir.PointerType(new ir.TypeReference(vtable, vtable.name)), vtableMallocCall);
-		vtableMallocCast.location = vtable.location;
+		auto vtableMallocCast = createAllocDgCall(allocDgVar, settings, c.location, new ir.TypeReference(vtable, vtable.name));
 
 		auto vtableAccess = new ir.Postfix();
 		vtableAccess.location = c.location;
@@ -157,8 +137,6 @@ public:
 
 		ir.Function[] functions = getStructFunctions(c);
 		foreach (i, methodfn; functions) {
-			methodfn.vtableIndex = cast(int)i;
-
 			auto vindex = new ir.Postfix();
 			vindex.location = c.location;
 			vindex.op = ir.Postfix.Op.Identifier;
@@ -331,6 +309,7 @@ public:
 
 				assert(asFunction !is null);
 				if (!asFunction.type.hiddenParameter) {
+					asFunction.vtableIndex = i;
 					asFunction.type.params ~= getThis();
 
 					auto argThis = new ir.ExpReference();
@@ -402,9 +381,9 @@ public:
 
 		// Create the empty struct for us to work with.
 		auto _struct = new ir.Struct();
-		_struct.name = name;
+		_struct.name = _class.name;
 		_struct.location = _class.location;
-		_struct.myScope = new ir.Scope(internalScope, _struct, null);
+		_struct.myScope = new ir.Scope(_class.myScope.parent, _struct, null);
 		_struct.members = new ir.TopLevelBlock();
 		_struct.members.location = _class.location;
 		_struct.mangledName = name;
@@ -449,6 +428,11 @@ public:
 			_struct.members.nodes ~= method;
 		}
 
+		if (_struct.name == "TypeInfo" && _struct.myScope.parent.name == "object" && _struct.myScope.parent.parent is null) {
+			// object.TypeInfo shouldn't have a constructor -- it is built with struct literals.
+			return _struct;
+		}
+
 		// And finally, create and add the constructor.
 		auto ctor = createConstructor(_struct, vtableStruct, constructors);
 		_struct.myScope.addFunction(ctor, ctor.name);
@@ -465,6 +449,7 @@ public:
 
 	override void transform(ir.Module m)
 	{
+		allocDgVar = retrieveAllocDg(m.location, m.myScope);
 		foreach (ident; m.name.identifiers) {
 			parentNames ~= ident.value;
 		}
@@ -495,7 +480,8 @@ public:
 				auto n = createClassStruct(asClass);
 				assert(n !is null);
 				tlb.nodes[i] = n;
-				internalScope.addType(n, n.name);
+				n.myScope.parent.remove(n.name);
+				n.myScope.parent.addType(n, n.name);
 				assert(tlb.nodes[i].nodeType == ir.NodeType.Struct);
 			}
 		}
@@ -518,9 +504,11 @@ public:
 			}
 			return;		
 		}
-		auto n = cast(ir.Type) createClassStruct(asClass);
-		assert(n !is null);
-		asTR.type = n;
+		auto n = createClassStruct(asClass);
+		n.myScope.parent.remove(n.name);
+		n.myScope.parent.addType(n, n.name);
+		asTR.type = cast(ir.Type) n;
+		assert(asTR.type !is null);
 		asTR.names[0] = asTR.type.mangledName;
 		type = new ir.PointerType(asTR);
 		type.location = asTR.location;
@@ -530,6 +518,15 @@ public:
 	{
 		replaceTypeIfNeeded(ftype.ret);
 		foreach (ref param; ftype.params) {
+			accept(param, this);
+		}
+		return Continue;
+	}
+
+	override Status enter(ir.DelegateType dtype)
+	{
+		replaceTypeIfNeeded(dtype.ret);
+		foreach (ref param; dtype.params) {
 			accept(param, this);
 		}
 		return Continue;

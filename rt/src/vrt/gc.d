@@ -14,9 +14,12 @@ extern(C) AllocDg vrt_gc_get_alloc_dg()
 	return *cast(AllocDg*)&structToDg;
 }
 
-void* mallocFunc(uint size, void *ptr)
+void* mallocFunc(TypeInfo typeinfo, uint count, void *ptr)
 {
-	return malloc(size);
+	if (count == cast(uint) 0) {
+		return malloc(typeinfo.tsize());
+	}
+	return malloc(count * typeinfo.tsize());
 }
 
 extern(C) void* malloc(uint size);

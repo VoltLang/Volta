@@ -37,13 +37,27 @@ module object;
  * Clazz[] arr; arr.length = 3;
  * Clazz[] arr; { arr.ptr = allocDg(typeid(Clazz), 3); arr.length = 3 }
  * // Alloc size == (void*).sizeof * 3
- *
- * alias AllocDg = void* delegate(TypeInfo typeinfo, uint count);
- * Temporary until we have typeinfos.
  */
-alias AllocDg = void* delegate(uint size);
+alias AllocDg = void* delegate(TypeInfo typeinfo, uint count);
 
 
 local AllocDg allocDg;
 
 extern(C) AllocDg vrt_gc_get_alloc_dg();
+
+struct ArrayStruct
+{
+	void* ptr;
+	uint length;
+}
+
+class TypeInfo
+{
+	uint mSize;
+	int mType;
+	char[] mMangledName;
+
+	uint tsize() { return mSize; }
+	int type() { return mType; }
+	char[] mangledName() { return mMangledName; }
+}

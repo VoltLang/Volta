@@ -24,6 +24,8 @@ import volt.semantic.importresolver;
 import volt.semantic.irverifier;
 import volt.semantic.thisinserter;
 import volt.semantic.classlowerer;
+import volt.semantic.typeidreplacer;
+import volt.semantic.newreplacer;
 
 
 /**
@@ -46,12 +48,11 @@ public:
 	 * @}
 	 */
 
-	Pass[] passes2a;
-
 	/**
 	 * Phase 2 fields.
 	 * @{
 	 */
+	Pass[] passes2a;
 	Pass[] passes2b;
 	/**
 	 * @}
@@ -61,7 +62,8 @@ public:
 	 * Phase 3 fields.
 	 * @{
 	 */
-	Pass[] lowerers;
+	Pass[] passes3a;
+	Pass[] passes3b;
 	/**
 	 * @}
 	 */
@@ -87,19 +89,22 @@ public:
 		passes2b ~= new ReferenceReplacer();
 		passes2b ~= new IrVerifier();
 
-		lowerers ~= new ClassLowerer();
-		lowerers ~= new ThisInserter();
-		lowerers ~= new MangleWriter();
-		lowerers ~= new IrVerifier();
+		passes3a ~= new ClassLowerer(settings);
+		passes3a ~= new ThisInserter();
+
+		passes3b ~= new NewReplacer(settings);
+		passes3b ~= new TypeidReplacer(settings);
+		passes3b ~= new MangleWriter();
+		passes3b ~= new IrVerifier();
 
 		if (settings.internalDebug) {
-			lowerers ~= new DebugPrintVisitor("Running DebugPrintVisitor:");
-			lowerers ~= new PrintVisitor("Running PrintVisitor:");
+			passes3b ~= new DebugPrintVisitor("Running DebugPrintVisitor:");
+			passes3b ~= new PrintVisitor("Running PrintVisitor:");
 		}
 	}
 
 	override ir.Module getModule(ir.QualifiedName name)
-	{
+	{ 
 		return controller.getModule(name);
 	}
 
@@ -136,7 +141,13 @@ public:
 	override void phase3(ir.Module[] mods)
 	{
 		foreach(m; mods) {
-			foreach(pass; lowerers) {
+			foreach(pass; passes3a) {
+				pass.transform(m);
+			}
+		}
+
+		foreach(m; mods) {
+			foreach(pass; passes3b) {
 				pass.transform(m);
 			}
 		}
