@@ -93,6 +93,10 @@ public:
 
 	override void phase1(ir.Module m)
 	{
+		if (m.hasPhase1)
+			return;
+		m.hasPhase1 = true;
+
 		foreach(pass; postParse)
 			pass.transform(m);
 

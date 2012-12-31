@@ -83,8 +83,12 @@ public:
 	Module[] importedModules;
 	Access[] importedAccess;
 
-	bool gathered;
+	/**
+	 * Has phase 1 be started on this module.
+	 */
+	bool hasPhase1;
 
+	bool gathered;
 
 public:
 	this() { super(NodeType.Module); }
