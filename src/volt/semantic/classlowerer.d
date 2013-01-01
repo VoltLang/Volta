@@ -610,6 +610,8 @@ public:
 		 */
 		if (asClass.userConstructors.length > 0 && asClass.userConstructors[0].type.params.length - 1 != unary.argumentList.length) {
 			throw new CompilerError(unary.location, "no match for constructor (bad number of arguments).");
+		} else if (asClass.userConstructors.length == 0 && unary.argumentList.length > 0) {
+			throw new CompilerError(unary.location, "no user constructor yet arguments supplied.");
 		}
 
 		exp = createConstructorFromNewExp(unary);
