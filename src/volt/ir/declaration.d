@@ -81,6 +81,8 @@ public:
 
 	Storage storage;
 
+	bool isWeakLink;   ///< Only for global variables.
+
 
 public:
 	this() { super(NodeType.Variable); }
