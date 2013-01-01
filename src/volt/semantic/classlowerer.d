@@ -43,7 +43,7 @@ class ClassLowerer : NullExpReplaceVisitor, Pass
 public:
 	ir.Scope internalScope;
 	ir.TopLevelBlock internalTLB;
-	ir.Struct[string] synthesised;
+	ir.Struct[ir.Class] synthesised;
 	string[] parentNames;
 	int passNumber;
 
@@ -396,7 +396,7 @@ public:
 		// If we have already created this class struct, return it.
 		string name = mangle(parentNames, _class);
 		assert(name != "");
-		if (auto oldStruct = name in synthesised) {
+		if (auto oldStruct = _class in synthesised) {
 			return *oldStruct;
 		}
 
@@ -409,7 +409,7 @@ public:
 		_struct.members.location = _class.location;
 		_struct.mangledName = name;
 		_struct.loweredNode = _class;
-		synthesised[name] = _struct;
+		synthesised[_class] = _struct;
 
 		// Retrieve the methods and fields for this class.
 		auto inheritanceChain = getInheritanceChain(_class);
