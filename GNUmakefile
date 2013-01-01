@@ -93,7 +93,7 @@ $(TARGET): $(OBJ) Makefile
 
 clean:
 	@rm -rf $(TARGET) .obj
-	@rm rt/rt.o
+	@rm -f rt/rt.o
 
 run: $(TARGET)
 	@./$(TARGET) test/simple/test_001.d
