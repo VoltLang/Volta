@@ -207,6 +207,8 @@ public:
 			break;
 		case Global:
 			v = LLVMAddGlobal(mod, type.llvmType, var.mangledName);
+			if (var.isWeakLink)
+				LLVMSetLinkage(v, LLVMLinkage.LinkOnceODR);
 			break;
 		}
 
