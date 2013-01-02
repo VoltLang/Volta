@@ -133,6 +133,9 @@ public:
 		// cast(Object.__Vtable*) malloc(Object.__Vtable.sizeof);
 		ir.Postfix vtableMallocCall = createFunctionCall(c.location, c.myScope, "malloc", vtableSizeof);
 
+		auto vtableMallocCast = new ir.Unary(new ir.PointerType(new ir.TypeReference(vtable, vtable.name)), vtableMallocCall);
+		vtableMallocCast.location = vtable.location;
+
 		auto vtableAccess = new ir.Postfix();
 		vtableAccess.location = c.location;
 		vtableAccess.op = ir.Postfix.Op.Identifier;
@@ -145,7 +148,7 @@ public:
 		vtableAssign.location = c.location;
 		vtableAssign.op = ir.BinOp.Type.Assign;
 		vtableAssign.left = vtableAccess;
-		vtableAssign.right = vtableMallocCall;
+		vtableAssign.right = vtableMallocCast;
 
 		auto expStatement = new ir.ExpStatement();
 		expStatement.location = c.location;
@@ -156,13 +159,10 @@ public:
 		foreach (i, methodfn; functions) {
 			methodfn.vtableIndex = cast(int)i;
 
-			auto vtableCast = new ir.Unary(new ir.PointerType(new ir.TypeReference(vtable, vtable.name)), vtableAccess);
-			vtableCast.location = c.location;
-
 			auto vindex = new ir.Postfix();
 			vindex.location = c.location;
 			vindex.op = ir.Postfix.Op.Identifier;
-			vindex.child = vtableCast;
+			vindex.child = vtableAccess;
 			vindex.identifier = new ir.Identifier();
 			vindex.identifier.location = c.location;
 			vindex.identifier.value = "_" ~ to!string(i);
@@ -433,7 +433,7 @@ public:
 		auto vtableVar = new ir.Variable();
 		vtableVar.location = _class.location;
 		vtableVar.name = "__vtable";
-		vtableVar.type = new ir.PointerType(new ir.PrimitiveType(ir.PrimitiveType.Kind.Void));
+		vtableVar.type = new ir.PointerType(new ir.TypeReference(vtableStruct, vtableStruct.name));
 		_struct.myScope.addValue(vtableVar, vtableVar.name);
 		_struct.members.nodes ~= vtableVar;
 
@@ -685,16 +685,13 @@ public:
 		vtable.identifier.value = "__vtable";
 		vtable.child = asRef;
 
-		auto vtableCast = new ir.Unary(new ir.PointerType(new ir.TypeReference(asClass.vtableStruct, asClass.vtableStruct.name)), vtable);
-		vtableCast.location = postfix.location;
-
 		auto methodLookup = new ir.Postfix();
 		methodLookup.location = postfix.location;
 		methodLookup.op = ir.Postfix.Op.Identifier;
 		methodLookup.identifier = new ir.Identifier();
 		methodLookup.identifier.location = postfix.location;
 		methodLookup.identifier.value = "_" ~ to!string(store.functions[0].vtableIndex);
-		methodLookup.child = vtableCast;
+		methodLookup.child = vtable;
 
 		auto _cast = new ir.Unary(new ir.PointerType(new ir.PrimitiveType(ir.PrimitiveType.Kind.Void)), asRef);
 		_cast.location = postfix.location;

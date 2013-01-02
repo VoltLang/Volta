@@ -1112,7 +1112,7 @@ public:
 		case Member:
 			accept(fn.type.ret, this);
 			wf(" ");
-			wf(fn.name);
+			wf(fn.mangledName);
 			wf("(");
 			break;
 		case Constructor:
