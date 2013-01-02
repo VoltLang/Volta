@@ -60,7 +60,7 @@ import volt.ir.statement;
 class Module : Node
 {
 public:
-	QualifiedName name; ///< Name used for mangeling.
+	QualifiedName name; ///< Name used for mangling.
 	TopLevelBlock children; ///< Toplevel nodes.
 
 	/**

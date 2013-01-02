@@ -35,24 +35,9 @@ public:
 		accept(m, this);
 	}
 
-
-	/**
-	 * The scopes for types, classes, strucs and functions don't have
-	 * a name, and for everyone except functions you need to get the scope
-	 * from the ir.Node itself.
-	 */
-	ir.Scope newContext(ir.Node n)
-	{
-		return current = new ir.Scope(current, n, null);
-	}
-
-	/**
-	 * Named scopes for imports and packages.
-	 */
 	ir.Scope newContext(ir.Node n, string name)
 	{
 		auto newCtx = new ir.Scope(current, n, name);
-		current.addScope(n, current, name);
 		return current = newCtx;
 	}
 
@@ -73,8 +58,9 @@ public:
 		assert(m.myScope is null);
 		assert(current is null);
 		// Name
-		m.myScope = current = new ir.Scope(m, "");
-		m.internalScope = new ir.Scope(m, "");
+		string name = m.name.identifiers[$-1].value;
+		m.myScope = current = new ir.Scope(m, name);
+		m.internalScope = new ir.Scope(m, "_" ~ name);
 
 		return Continue;
 	}
@@ -89,7 +75,7 @@ public:
 	override Status enter(ir.Class c)
 	{
 		current.addType(c, c.name);
-		c.myScope = newContext(c);
+		c.myScope = newContext(c, c.name);
 
 		return Continue;
 	}
@@ -97,7 +83,7 @@ public:
 	override Status enter(ir._Interface i)
 	{
 		current.addType(i, i.name);
-		i.myScope = newContext(i);
+		i.myScope = newContext(i, i.name);
 
 		return Continue;
 	}
@@ -105,7 +91,7 @@ public:
 	override Status enter(ir.Struct s)
 	{
 		current.addType(s, s.name);
-		s.myScope = newContext(s);
+		s.myScope = newContext(s, s.name);
 
 		structStack ~= s;		
 
@@ -115,7 +101,7 @@ public:
 	override Status enter(ir.Function fn)
 	{
 		current.addFunction(fn, fn.name);
-		fn.myScope = newContext(fn);
+		fn.myScope = newContext(fn, fn.name);
 		foreach (var; fn.type.params) {
 			fn.myScope.addValue(var, var.name);
 		}
