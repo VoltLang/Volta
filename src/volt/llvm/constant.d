@@ -30,6 +30,10 @@ void getConstantValue(State state, ir.Exp exp, Value result)
 	case Constant:
 		auto cnst = cast(ir.Constant)exp;
 		return handleConstant(state, cnst, result);
+	case ArrayLiteral:
+		auto al = cast(ir.ArrayLiteral)exp;
+		handleArrayLiteral(state, al, result);
+		break;
 	case StructLiteral:
 		auto sl = cast(ir.StructLiteral)exp;
 		handleStructLiteral(state, sl, result);

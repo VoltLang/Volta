@@ -70,13 +70,17 @@ void getValueAnyForm(State state, ir.Exp exp, Value result)
 		auto expRef = cast(ir.ExpReference)exp;
 		handleExpReference(state, expRef, result);
 		break;
+	case Constant:
+		auto cnst = cast(ir.Constant)exp;
+		handleConstant(state, cnst, result);
+		break;
 	case StructLiteral:
 		auto sl = cast(ir.StructLiteral)exp;
 		handleStructLiteral(state, sl, result);
 		break;
-	case Constant:
-		auto cnst = cast(ir.Constant)exp;
-		handleConstant(state, cnst, result);
+	case ArrayLiteral:
+		auto al = cast(ir.ArrayLiteral)exp;
+		handleArrayLiteral(state, al, result);
 		break;
 	default:
 		auto str = format("can't getValue from %s", to!string(exp.nodeType));

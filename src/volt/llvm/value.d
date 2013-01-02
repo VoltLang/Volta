@@ -46,6 +46,25 @@ public:
  */
 
 
+void handleArrayLiteral(State state, ir.ArrayLiteral al, Value result)
+{
+	auto at = cast(ir.ArrayType)al.type;
+	if (at is null) {
+		auto tr = cast(ir.TypeReference)al.type;
+		if (tr !is null)
+			at = cast(ir.ArrayType)tr.type;
+	}
+
+	if (at is null)
+		throw CompilerPanic(al.location, "array literal type must be ArrayType or TypeReference");
+
+	auto type = cast(ArrayType)state.fromIr(at);
+
+	result.isPointer = false;
+	result.type = type;
+	result.value = type.fromArrayLiteral(state, al);
+}
+
 void handleStructLiteral(State state, ir.StructLiteral sl, Value result)
 {
 	auto tr = cast(ir.TypeReference)sl.type;

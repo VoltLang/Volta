@@ -21,6 +21,7 @@ alias lib.llvm.c.Core.LLVMGetStructName LLVMGetStructNamez;
 alias lib.llvm.c.Core.LLVMStructSetBody LLVMStructSetBody;
 alias lib.llvm.c.Core.LLVMConstNamedStruct LLVMConstNamedStruct;
 alias lib.llvm.c.Core.LLVMConstStringInContext LLVMConstStringInContext;
+alias lib.llvm.c.Core.LLVMConstArray LLVMConstArray;
 alias lib.llvm.c.Core.LLVMConstInBoundsGEP LLVMConstInBoundsGEP;
 alias lib.llvm.c.Core.LLVMAddFunction LLVMAddFunction;
 alias lib.llvm.c.Core.LLVMBuildCall LLVMBuildCall;
@@ -70,6 +71,12 @@ LLVMValueRef LLVMConstStringInContext(LLVMContextRef c, const(char)[] str, bool 
 {
 	return lib.llvm.c.Core.LLVMConstStringInContext(
 		c, str.ptr, cast(uint)str.length, nullTerminate);
+}
+
+LLVMValueRef LLVMConstArray(LLVMTypeRef type, LLVMValueRef[] vals)
+{
+	return lib.llvm.c.Core.LLVMConstArray(
+		type, vals.ptr, cast(uint)vals.length);
 }
 
 LLVMValueRef LLVMConstInBoundsGEP(LLVMValueRef val, LLVMValueRef[] indices)

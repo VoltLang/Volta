@@ -235,6 +235,34 @@ public:
 
 		return LLVMConstNamedStruct(llvmType, vals);
 	}
+
+	LLVMValueRef fromArrayLiteral(State state, ir.ArrayLiteral al)
+	{
+		assert(state.fromIr(al.type) is this);
+
+		LLVMValueRef[] alVals;
+		alVals.length = al.values.length;
+		foreach(uint i, exp; al.values) {
+			alVals[i] = state.getConstantValue(exp);
+		}
+
+		auto litConst = LLVMConstArray(base.llvmType, alVals);
+		auto litGlobal = LLVMAddGlobal(state.mod, LLVMTypeOf(litConst), "__arrayLiteral");
+		LLVMSetGlobalConstant(litGlobal, true);
+		LLVMSetInitializer(litGlobal, litConst);
+
+		LLVMValueRef[2] ind;
+		ind[0] = LLVMConstNull(lengthType.llvmType);
+		ind[1] = LLVMConstNull(lengthType.llvmType);
+
+		auto strGep = LLVMConstInBoundsGEP(litGlobal, ind);
+
+		LLVMValueRef[2] vals;
+		vals[lengthIndex] = lengthType.fromNumber(state, cast(long)al.values.length);
+		vals[ptrIndex] = strGep;
+
+		return LLVMConstNamedStruct(llvmType, vals);
+	}
 }
 
 /**
