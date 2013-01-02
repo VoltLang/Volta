@@ -1,6 +1,5 @@
 //T compiles:yes
 //T retval:32
-//T has-passed:no
 // Try to use defaultsymbols even more.
 module test_022;
 
