@@ -210,6 +210,7 @@ public:
 		ptrType = cast(PointerType)state.fromIr(irPtr);
 		base = ptrType.base;
 
+		/// @todo get the correct size here (size_t).
 		lengthType = state.uintType;
 
 		types[ptrIndex] = ptrType;
