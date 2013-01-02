@@ -19,7 +19,6 @@ import volt.semantic.userresolver;
 import volt.semantic.typeverifier;
 import volt.semantic.exptyper;
 import volt.semantic.refrep;
-import volt.semantic.arraylowerer;
 import volt.semantic.manglewriter;
 import volt.semantic.importresolver;
 import volt.semantic.irverifier;
@@ -74,7 +73,6 @@ public:
 		passes ~= new TypeDefinitionVerifier();
 		passes ~= new ExpTyper(settings);
 		passes ~= new ReferenceReplacer();
-		passes ~= new ArrayLowerer(settings);
 		passes ~= new ClassLowerer();
 		passes ~= new ThisInserter();	
 		passes ~= new MangleWriter();
