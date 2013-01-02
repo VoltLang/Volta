@@ -101,7 +101,10 @@ run: $(TARGET)
 debug: $(TARGET)
 	@gdb --args ./$(TARGET) test/simple/test_001.d
 
+test: all
+	@make -C test run
+
 license: $(TARGET)
 	@./$(TARGET) --license
 
-.PHONY: all clean run debug license
+.PHONY: all test clean run debug license
