@@ -199,7 +199,13 @@ public:
 		llvmType = LLVMStructCreateNamed(state.context, at.mangledName);
 		super(state, at, llvmType);
 
-		auto irPtr = new ir.PointerType(at.base);
+		// Avoid creating void[] arrays turn them into ubyte[] instead.
+		base = state.fromIr(at.base);
+		if (base is state.voidType) {
+			base = state.ubyteType;
+		}
+
+		auto irPtr = new ir.PointerType(base.irType);
 		addMangledName(irPtr);
 		ptrType = cast(PointerType)state.fromIr(irPtr);
 		base = ptrType.base;
