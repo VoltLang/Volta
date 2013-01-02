@@ -396,9 +396,40 @@ public:
 				throw new CompilerError(right.location, emsg);
 			}
 			return left;
-		} else {
-			throw new CompilerError(right.location, emsg);
+		} else if ((left.nodeType == ir.NodeType.PointerType &&
+			 	   t.nodeType == ir.NodeType.Class) ||
+				   (left.nodeType == ir.NodeType.Class &&
+				   t.nodeType == ir.NodeType.PointerType)) {
+			/* This is the case when using a function that takes a
+			 * class instance in one module from another before the
+			 * latter module's class lowerer has turned it into the
+			 * struct pointer. We know it'll run eventually, so just
+			 * verify that the struct and class agree, and move on.
+			 */ 
+			auto asClass = cast(ir.Class) t;
+			if (asClass is null) {
+				asClass = cast(ir.Class) left;
+				assert(asClass !is null);
+			}
+			
+			auto asPointer = cast(ir.PointerType) left;
+			if (asPointer is null) {
+				asPointer = cast(ir.PointerType) t;
+				assert(asPointer !is null);
+			}
+			auto asTR2 = cast(ir.TypeReference) asPointer.base;
+			if (asTR2 is null) {
+				throw new CompilerError(right.location, emsg);
+			}
+			auto asStruct = cast(ir.Struct) asTR2.type;
+			if (asStruct is null || asStruct.loweredNode !is asClass) {
+				throw new CompilerError(right.location, emsg);
+			}
+
+			return asPointer;
 		}
+
+		throw new CompilerError(right.location, emsg);
 	}
 
 	/// Convert a BinOp to use explicit casts where needed.
