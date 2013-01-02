@@ -1,7 +1,8 @@
 //T compiles:yes
 //T retval:42
 // Test string literals.
-module test_004;
+
+module test_001;
 
 int sumArray(char[] str)
 {
