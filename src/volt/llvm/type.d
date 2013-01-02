@@ -179,6 +179,65 @@ public:
 }
 
 /**
+ * Array type.
+ */
+class ArrayType : Type
+{
+public:
+	Type base;
+	PointerType ptrType;
+	PrimitiveType lengthType;
+
+	Type types[2];
+
+	immutable size_t ptrIndex = 0;
+	immutable size_t lengthIndex = 1;
+
+public:
+	this(State state, ir.ArrayType at)
+	{
+		llvmType = LLVMStructCreateNamed(state.context, at.mangledName);
+		super(state, at, llvmType);
+
+		auto irPtr = new ir.PointerType(at.base);
+		addMangledName(irPtr);
+		ptrType = cast(PointerType)state.fromIr(irPtr);
+		base = ptrType.base;
+
+		lengthType = state.uintType;
+
+		types[ptrIndex] = ptrType;
+		types[lengthIndex] = lengthType;
+
+		LLVMTypeRef[2] mt;
+		mt[ptrIndex] = ptrType.llvmType;
+		mt[lengthIndex] = lengthType.llvmType;
+
+		LLVMStructSetBody(llvmType, mt, false);
+	}
+
+	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
+	{
+		auto strConst = LLVMConstStringInContext(state.context, cast(char[])cnst.arrayData, true);
+		auto strGlobal = LLVMAddGlobal(state.mod, LLVMTypeOf(strConst), "__arrayLiteral");
+		LLVMSetGlobalConstant(strGlobal, true);
+		LLVMSetInitializer(strGlobal, strConst);
+
+		LLVMValueRef[2] ind;
+		ind[0] = LLVMConstNull(lengthType.llvmType);
+		ind[1] = LLVMConstNull(lengthType.llvmType);
+
+		auto strGep = LLVMConstInBoundsGEP(strGlobal, ind);
+
+		LLVMValueRef[2] vals;
+		vals[lengthIndex] = lengthType.fromNumber(state, cast(long)cnst.arrayData.length);
+		vals[ptrIndex] = strGep;
+
+		return LLVMConstNamedStruct(llvmType, vals);
+	}
+}
+
+/**
  * Base class for callable types FunctionType and DelegateType.
  */
 abstract class CallableType : Type
@@ -297,36 +356,6 @@ public:
 		LLVMStructSetBody(llvmType, mt, false);
 	}
 
-	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
-	{
-		auto ptrIndex = indices["ptr"];
-		auto lengthIndex = indices["length"];
-
-		if (ptrIndex > 1 || lengthIndex > 1 || indices.length > 2)
-			throw CompilerPanic(cnst.location, "constant can't be turned into array struct");
-
-
-		auto ptrType = cast(PointerType)types[ptrIndex];
-		auto lengthType = cast(PrimitiveType)types[lengthIndex];
-
-		auto strConst = LLVMConstStringInContext(state.context, cast(char[])cnst.arrayData, true);
-		auto strGlobal = LLVMAddGlobal(state.mod, LLVMTypeOf(strConst), "__arrayLiteral");
-		LLVMSetGlobalConstant(strGlobal, true);
-		LLVMSetInitializer(strGlobal, strConst);
-
-		LLVMValueRef[2] ind;
-		ind[0] = LLVMConstNull(lengthType.llvmType);
-		ind[1] = LLVMConstNull(lengthType.llvmType);
-
-		auto strGep = LLVMConstInBoundsGEP(strGlobal, ind);
-
-		LLVMValueRef[2] vals;
-		vals[lengthIndex] = lengthType.fromNumber(state, cast(long)cnst.arrayData.length);
-		vals[ptrIndex] = strGep;
-
-		return LLVMConstNamedStruct(llvmType, vals);
-	}
-
 	LLVMValueRef fromStructLiteral(State state, ir.StructLiteral sl)
 	{
 		LLVMValueRef[] vals;
@@ -379,6 +408,9 @@ Type fromIr(State state, ir.Type irType)
 	case PointerType:
 		auto pt = cast(ir.PointerType)irType;
 		return new .PointerType(state, pt);
+	case ArrayType:
+		auto at = cast(ir.ArrayType)irType;
+		return new .ArrayType(state, at);
 	case FunctionType:
 		auto ft = cast(ir.FunctionType)irType;
 		return new .FunctionType(state, ft);

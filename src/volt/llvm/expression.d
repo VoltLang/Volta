@@ -595,28 +595,47 @@ void handlePostId(State state, ir.Postfix postfix, Value result)
 	state.getValueAnyForm(postfix.child, result);
 
 	auto st = cast(StructType)result.type;
-	if (st is null) {
-		auto pt = cast(PointerType)result.type;
-		if (pt is null)
-			throw CompilerPanic(postfix.child.location, "is not pointer or struct");
+	auto at = cast(ArrayType)result.type;
+	auto pt = cast(PointerType)result.type;
+
+	if (pt !is null) {
 		st = cast(StructType)pt.base;
-		if (st is null)
-			throw CompilerPanic(postfix.child.location, "pointed to value is not a struct");
+		at = cast(ArrayType)pt.base;
+		if (st is null && at is null)
+			throw CompilerPanic(postfix.child.location, "pointed to value is not a struct or array");
 
 		// We are looking at a pointer, make sure to load it.
 		makeNonPointer(state, result);
 		v = result.value;
-	} else {
+	} else if (st !is null || at !is null) {
 		makePointer(state, result);
 		v = result.value;
 	}
 
-	index = st.indices[postfix.identifier.value];
-	v = LLVMBuildStructGEP(b, v, index, "structGep");
+	if (st !is null) {
+		index = st.indices[postfix.identifier.value];
+		v = LLVMBuildStructGEP(b, v, index, "structGep");
 
-	result.isPointer = true;
-	result.type = st.types[index];
-	result.value = v;
+		result.isPointer = true;
+		result.type = st.types[index];
+		result.value = v;
+	} else if (at !is null) {
+		if (postfix.identifier.value == "ptr") {
+			index = ArrayType.ptrIndex;
+		} else {
+			index = ArrayType.lengthIndex;
+		}
+
+		v = LLVMBuildStructGEP(b, v, index, "arrayGep");
+
+		result.isPointer = true;
+		result.type = at.types[index];
+		result.value = v;
+
+		makeNonPointer(state, result);
+	} else {
+		throw CompilerPanic(postfix.child.location, "is not struct, array or pointer");
+	}
 }
 
 void handleIndex(State state, ir.Postfix postfix, Value result)
@@ -626,12 +645,25 @@ void handleIndex(State state, ir.Postfix postfix, Value result)
 
 	assert(postfix.arguments.length == 1);
 
-	state.getValue(postfix.child, left);
+	state.getValueAnyForm(postfix.child, left);
 	state.getValue(postfix.arguments[0], right);
+
+	// Turn arr[index] into arr.ptr[index]
+	auto at = cast(ArrayType)left.type;
+	if (at !is null) {
+		makePointer(state, left);
+
+		left.isPointer = true;
+		left.type = at.ptrType;
+		left.value = LLVMBuildStructGEP(
+			state.builder, left.value, ArrayType.ptrIndex, "arrayGep");
+	}
 
 	auto pt = cast(PointerType)left.type;
 	if (pt is null)
-		throw CompilerPanic(postfix.location, "can not index non-pointer type");
+		throw CompilerPanic(postfix.location, "can not index non-array or pointer type");
+
+	makeNonPointer(state, left);
 
 	result.value = LLVMBuildGEP(state.builder, left.value, [right.value], "gep");
 	result.type = pt.base;
