@@ -123,6 +123,9 @@ void mangleBase(ir.Type t, string[] names, ref string mangledString)
 void mangleFunctionType(ir.FunctionType fn, string[] names, ref string mangledString)
 {
 	mangleLinkage(fn.linkage, mangledString);
+	if (fn.hiddenParameter) {
+		mangledString ~= "M";
+	}
 	// !!! Attributes go here. !!!
 	foreach (i, param; fn.params) {
 		if (fn.hiddenParameter && i == fn.params.length - 1) {
