@@ -160,6 +160,11 @@ public:
 		this.parent = parent;
 	}
 
+	void remove(string name)
+	{
+		symbols.remove(name);
+	}
+
 	/**
 	 * Add a named scope, @n is the node which introduced
 	 * this scope, must not be null.
