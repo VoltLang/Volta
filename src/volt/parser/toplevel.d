@@ -26,12 +26,15 @@ ir.Module parseModule(TokenStream ts)
 
 	mod.children = parseTopLevelBlock(ts, TokenType.End, true);
 
-	mod.children.nodes = createImport(mod.children.nodes[0].location, "defaultsymbols") ~ mod.children.nodes;
+	mod.children.nodes = [
+			createImport(mod.children.nodes[0].location, "defaultsymbols", false),
+			createImport(mod.children.nodes[0].location, "object", true)
+		] ~ mod.children.nodes;
 
 	return mod;
 }
 
-ir.Import createImport(Location location, string name)
+ir.Node createImport(Location location, string name, bool _static)
 {
 	auto _import = new ir.Import();
 	_import.location = location;
@@ -40,6 +43,7 @@ ir.Import createImport(Location location, string name)
 	_import.name.identifiers ~= new ir.Identifier();
 	_import.name.identifiers[0].location = location;
 	_import.name.identifiers[0].value = name;
+	_import.isStatic = _static;
 	return _import;
 }
 
