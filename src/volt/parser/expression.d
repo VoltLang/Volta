@@ -904,14 +904,14 @@ intir.PrimaryExp parsePrimaryExp(TokenStream ts)
 		match(ts, TokenType.OpenParen);
 		auto mark = ts.save();
 		try {
-			auto e = parseExp(ts);
-			exp.exp = e;
+			auto e = parseType(ts);
+			exp.type = e;
 		} catch (CompilerError err) {
 			if (err.neverIgnore) {
 				throw err;
 			}
 			ts.restore(mark);
-			exp.type = parseType(ts);
+			exp.exp = parseExp(ts);
 		}
 		match(ts, TokenType.CloseParen);
 		break;
