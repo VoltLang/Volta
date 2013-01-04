@@ -97,6 +97,8 @@ interface LanguagePass
 
 	void phase2(ir.Module m);
 
+	void phase3(ir.Module m);
+
 	void close();
 }
 

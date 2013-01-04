@@ -168,6 +168,11 @@ protected:
 		foreach (mod; mods)
 			languagePass.phase2(mod);
 
+		// All modules to be compiled needs
+		// to be run trough phase3.
+		foreach (mod; mods)
+			languagePass.phase3(mod);
+
 		if (settings.noBackend)
 			return 0;
 

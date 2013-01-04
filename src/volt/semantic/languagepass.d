@@ -55,6 +55,15 @@ public:
 	 * @}
 	 */
 
+	/**
+	 * Phase 3 fields.
+	 * @{
+	 */
+	Pass[] lowerers;
+	/**
+	 * @}
+	 */
+
 private:
 	ir.Module[string] mModules;
 
@@ -73,10 +82,12 @@ public:
 		passes ~= new TypeDefinitionVerifier();
 		passes ~= new ExpTyper(settings);
 		passes ~= new ReferenceReplacer();
-		passes ~= new ClassLowerer();
-		passes ~= new ThisInserter();	
-		passes ~= new MangleWriter();
 		passes ~= new IrVerifier();
+
+		lowerers ~= new ClassLowerer();
+		lowerers ~= new ThisInserter();
+		lowerers ~= new MangleWriter();
+		lowerers ~= new IrVerifier();
 
 		if (!settings.noBackend && settings.outputFile is null) {
 			passes ~= new DebugPrintVisitor("Running DebugPrintVisitor:");
@@ -107,6 +118,12 @@ public:
 	override void phase2(ir.Module m)
 	{
 		foreach(pass; passes)
+			pass.transform(m);
+	}
+
+	override void phase3(ir.Module m)
+	{
+		foreach(pass; lowerers)
 			pass.transform(m);
 	}
 
