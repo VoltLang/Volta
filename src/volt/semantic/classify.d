@@ -2,6 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.classify;
 
+import std.range : array, retro;
 import std.conv : to;
 import std.stdio : format;
 
@@ -348,4 +349,15 @@ bool inheritsFrom(ir.Class child, ir.Class parent)
 		currentClass = currentClass.parentClass;
 	}
 	return false;
+}
+
+string[] getParentScopeNames(ir.Scope _scope)
+{
+	string[] backwardsNames;
+	ir.Scope currentScope = _scope;
+	while (currentScope !is null) {
+		backwardsNames ~= currentScope.name;
+		currentScope = currentScope.parent;
+	}
+	return array(retro(backwardsNames));
 }

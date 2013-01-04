@@ -10,6 +10,7 @@ import ir = volt.ir.ir;
 import volt.exceptions;
 import volt.interfaces;
 import volt.visitor.visitor;
+import volt.semantic.classify;
 import volt.semantic.mangle;
 
 /**
@@ -54,7 +55,7 @@ public:
 
 	override Status enter(ir.Struct s)
 	{
-		parentNames ~= s.name;
+		parentNames = getParentScopeNames(s.myScope);
 		aggregateDepth++;
 		return Continue;
 	}
@@ -69,7 +70,7 @@ public:
 
 	override Status enter(ir.Class c)
 	{
-		parentNames ~= c.name;
+		parentNames = getParentScopeNames(c.myScope);
 		aggregateDepth++;
 		return Continue;
 	}
@@ -83,6 +84,7 @@ public:
 
 	override Status enter(ir.Function fn)
 	{
+		parentNames = getParentScopeNames(fn.myScope);
 		/// @todo check other linkage as well.
 		if (fn.name == "main" &&
 		    fn.type.linkage != ir.Linkage.C) {
@@ -92,7 +94,6 @@ public:
 		} else {
 			fn.mangledName = mangle(parentNames, fn);
 		}
-		parentNames ~= fn.name;
 		functionDepth++;
 		aggregateDepth++;
 		return Continue;
