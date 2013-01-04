@@ -43,9 +43,7 @@ public:
 			}
 		}
 
-		foreach (ident; m.name.identifiers) {
-			parentNames ~= ident.value;
-		}
+		parentNames = getParentScopeNames(m.myScope);
 		accept(m, this);
 	}
 
@@ -62,7 +60,6 @@ public:
 
 	override Status leave(ir.Struct s)
 	{
-		parentNames = parentNames[0 .. $-1];
 		aggregateDepth--;
 		return Continue;
 	}
@@ -77,7 +74,6 @@ public:
 
 	override Status leave(ir.Class c)
 	{
-		parentNames = parentNames[0 .. $-1];
 		aggregateDepth--;
 		return Continue;
 	}
@@ -101,7 +97,6 @@ public:
 
 	override Status leave(ir.Function fn)
 	{
-		parentNames = parentNames[0 .. $-1];
 		functionDepth--;
 		aggregateDepth--;
 		return Continue;
