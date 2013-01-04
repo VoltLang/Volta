@@ -313,13 +313,14 @@ public:
 				result = asArray.type;
 				break;
 			default:
-				return null;
+				assert(false);
 		}
 
 		auto asTR = cast(ir.TypeReference) result;
 		if (asTR !is null) {
 			result = asTR.type;
 		}
+		assert(result !is null);
 
 		return result;
 	}	
@@ -327,9 +328,6 @@ public:
 	ir.Node extype(ir.Type left, ref ir.Exp right)
 	{
 		ir.Node t = evaluate(right);
-		if (t is null) {
-			throw new CompilerError(right.location, "cannot retrieve type.");
-		}
 
 		auto asTR = cast(ir.TypeReference) left;
 		if (asTR !is null) {
@@ -436,15 +434,8 @@ public:
 	ir.Node extype(ir.BinOp bin)
 	{
 		ir.Node left = evaluate(bin.left);
-		if (left is null) {
-			throw new CompilerError(bin.left.location, "could not determine type.");
-		}
-
-		ir.Node right = evaluate(bin.right); 
-		if (right is null) {
-			throw new CompilerError(bin.right.location, "could not determine type.");
-		}
-
+		ir.Node right = evaluate(bin.right);
+		
 		if (bin.op == ir.BinOp.Type.AndAnd || bin.op == ir.BinOp.Type.OrOr) {
 			auto boolType = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
 			bin.left = new ir.Unary(boolType, bin.left);

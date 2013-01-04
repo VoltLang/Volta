@@ -163,10 +163,12 @@ protected:
 		foreach (mod; mods)
 			languagePass.phase1(mod);
 
-		// All modules to be compiled needs
-		// to be run trough phase2.
-		foreach (mod; mods)
-			languagePass.phase2(mod);
+		foreach (mod; mModules)
+			languagePass.phase2a(mod);
+
+		// All modules need to be run trough phase2.
+		foreach (name, mod; mModules)
+ 			languagePass.phase2b(mod);
 
 		// All modules to be compiled needs
 		// to be run trough phase3.

@@ -46,11 +46,13 @@ public:
 	 * @}
 	 */
 
+	Pass[] passes2a;
+
 	/**
 	 * Phase 2 fields.
 	 * @{
 	 */
-	Pass[] passes;
+	Pass[] passes2b;
 	/**
 	 * @}
 	 */
@@ -78,11 +80,12 @@ public:
 		postParse ~= new ContextBuilder();
 		postParse ~= new DeclarationGatherer();
 
-		passes ~= new UserResolver();
-		passes ~= new TypeDefinitionVerifier();
-		passes ~= new ExpTyper(settings);
-		passes ~= new ReferenceReplacer();
-		passes ~= new IrVerifier();
+		passes2a ~= new UserResolver();
+
+		passes2b ~= new TypeDefinitionVerifier();
+		passes2b ~= new ExpTyper(settings);
+		passes2b ~= new ReferenceReplacer();
+		passes2b ~= new IrVerifier();
 
 		lowerers ~= new ClassLowerer();
 		lowerers ~= new ThisInserter();
@@ -90,8 +93,8 @@ public:
 		lowerers ~= new IrVerifier();
 
 		if (!settings.noBackend && settings.outputFile is null) {
-			passes ~= new DebugPrintVisitor("Running DebugPrintVisitor:");
-			passes ~= new PrintVisitor("Running PrintVisitor:");
+			passes2b ~= new DebugPrintVisitor("Running DebugPrintVisitor:");
+			passes2b ~= new PrintVisitor("Running PrintVisitor:");
 		}
 	}
 
@@ -115,9 +118,16 @@ public:
 		impRes.transform(m);
 	}
 
-	override void phase2(ir.Module m)
+	override void phase2a(ir.Module m)
 	{
-		foreach(pass; passes)
+		foreach(pass; passes2a) {
+			pass.transform(m);
+		}
+	}
+
+	override void phase2b(ir.Module m)
+	{
+		foreach(pass; passes2b)
 			pass.transform(m);
 	}
 
@@ -129,7 +139,7 @@ public:
 
 	override void close()
 	{
-		foreach(pass; passes)
+		foreach(pass; passes2b)
 			pass.close();
 	}
 }
