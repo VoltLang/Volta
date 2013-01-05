@@ -78,6 +78,7 @@ void main(string[] args)
 		listDir("imports", "*test_*.d", &addTest);
 		listDir("aggregate", "*test_*.d", &addTest);
 		listDir("exps", "*test_*.d", &addTest);
+		listDir("lower", "*test_*.d", &addTest);
 	}
 	sort(tests);
 
