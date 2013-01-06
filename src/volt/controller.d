@@ -40,7 +40,7 @@ public:
 
 		auto lp = new VoltLanguagePass(s, this);
 
-		auto b = new LlvmBackend(s.outputFile is null);
+		auto b = new LlvmBackend(s.internalDebug);
 
 		this(s, p, lp, b);
 

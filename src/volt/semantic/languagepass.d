@@ -92,9 +92,9 @@ public:
 		lowerers ~= new MangleWriter();
 		lowerers ~= new IrVerifier();
 
-		if (!settings.noBackend && settings.outputFile is null) {
-			passes2b ~= new DebugPrintVisitor("Running DebugPrintVisitor:");
-			passes2b ~= new PrintVisitor("Running PrintVisitor:");
+		if (settings.internalDebug) {
+			lowerers ~= new DebugPrintVisitor("Running DebugPrintVisitor:");
+			lowerers ~= new PrintVisitor("Running PrintVisitor:");
 		}
 	}
 

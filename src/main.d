@@ -85,6 +85,9 @@ bool filterArgs(ref string[] args, Settings settings)
 		case "--no-catch":
 			settings.noCatch = true;
 			continue;
+		case "--internal-dbg":
+			settings.internalDebug = true;
+			continue;
 		case "--help", "-h":
 			return printUsage();
 		default:
@@ -109,6 +112,7 @@ bool printUsage()
 	writefln("\t-c              Compile only, do not link.");
 	writefln("\t-S,--no-backend Stop compilation before the backend.");
 	writefln("\t--no-catch      For compiler debugging purposes.");
+	writefln("\t--internal-dbg  Enables internal debug printing.");
 	writefln("\t-h,--help       Print this message and quit.");
 	return false;
 }
