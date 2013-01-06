@@ -3,6 +3,8 @@
 module volt.parser.expression;
 // Most of these can pass through to a lower function, see the IR.
 
+import std.conv;
+
 import ir = volt.ir.ir;
 import intir = volt.parser.intir;
 
@@ -157,6 +159,13 @@ ir.Exp unaryToExp(intir.UnaryExp unary)
 		exp.op = unary.op;
 		exp.type = unary.newExp.type;
 		if (unary.newExp.isArray) {
+			auto asStaticArray = cast(ir.StaticArrayType) unary.newExp.type;
+			exp.type = asStaticArray.base;
+			auto constant = new ir.Constant();
+			constant.location = unary.newExp.location;
+			constant.value = to!string(asStaticArray.length);
+			constant.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Uint);
+			exp.index = constant;
 			exp.isArray = true;
 		} else if (unary.newExp.hasArgumentList) {
 			exp.hasArgumentList = true;
@@ -675,7 +684,7 @@ intir.NewExp parseNewExp(TokenStream ts)
 	auto newExp = new intir.NewExp();
 	newExp.type = parseType(ts);
 
-	if (newExp.type.nodeType == ir.NodeType.ArrayType) {
+	if (newExp.type.nodeType == ir.NodeType.StaticArrayType) {
 		newExp.isArray = true;
 	} else if (matchIf(ts, TokenType.OpenParen)) {
 		newExp.hasArgumentList = true;
