@@ -73,8 +73,8 @@ public:
 				assert(i.name.identifiers.length == 1);
 				thisModule.myScope.addScope(i, mod.myScope, i.name.identifiers[0].value);
 			} else {
-				thisModule.importedModules ~= mod;
-				thisModule.importedAccess ~= i.access;
+				thisModule.myScope.importedModules ~= mod;
+				thisModule.myScope.importedAccess ~= i.access;
 			}
 		} else if (i.aliases.length > 0) {  // import a : b, c OR import a = b : c, d;
 			ir.Scope bindScope;

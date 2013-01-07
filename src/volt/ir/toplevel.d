@@ -78,12 +78,6 @@ public:
 	Scope internalScope;
 
 	/**
-	 * Modules to implicitly look up symbols in.
-	 */
-	Module[] importedModules;
-	Access[] importedAccess;
-
-	/**
 	 * Has phase 1 be started on this module.
 	 */
 	bool hasPhase1;

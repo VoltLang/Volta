@@ -133,6 +133,13 @@ public:
 	/// Declared symbols in this scope.
 	Store[string] symbols;
 
+	/**
+	 * Modules to implicitly look up symbols in.
+	 *
+	 * Currently only populated on module scopes.
+	 */
+	Module[] importedModules;
+	Access[] importedAccess;
 
 public:
 	/**

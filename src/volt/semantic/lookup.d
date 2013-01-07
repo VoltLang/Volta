@@ -59,7 +59,7 @@ ir.Store lookup(ir.Scope _scope, string name)
 	assert(asMod !is null);
 
 
-	foreach (mod; asMod.importedModules) {
+	foreach (mod; asMod.myScope.importedModules) {
 		auto store = mod.myScope.getStore(name);
 		if (store !is null) {
 			return store;
@@ -69,8 +69,8 @@ ir.Store lookup(ir.Scope _scope, string name)
 		import std.stdio;
 
 		/// Check publically imported modules.
-		foreach (i, submod; mod.importedModules) {
-			if (mod.importedAccess[i] == ir.Access.Public) {
+		foreach (i, submod; mod.myScope.importedModules) {
+			if (mod.myScope.importedAccess[i] == ir.Access.Public) {
 				store = submod.myScope.getStore(name);
 				if (store !is null) {
 					return store;
