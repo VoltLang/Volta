@@ -163,17 +163,16 @@ protected:
 		foreach (mod; mods)
 			languagePass.phase1(mod);
 
+		ir.Module[] dmdIsStupid;
 		foreach (mod; mModules)
-			languagePass.phase2a(mod);
+			dmdIsStupid ~= mod;
 
 		// All modules need to be run trough phase2.
-		foreach (name, mod; mModules)
- 			languagePass.phase2b(mod);
+		languagePass.phase2(dmdIsStupid);
 
 		// All modules to be compiled needs
 		// to be run trough phase3.
-		foreach (mod; mods)
-			languagePass.phase3(mod);
+		languagePass.phase3(mods);
 
 		if (settings.noBackend)
 			return 0;

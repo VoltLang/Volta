@@ -118,23 +118,28 @@ public:
 		impRes.transform(m);
 	}
 
-	override void phase2a(ir.Module m)
+	override void phase2(ir.Module[] mods)
 	{
-		foreach(pass; passes2a) {
-			pass.transform(m);
+		foreach(m; mods) {
+			foreach(pass; passes2a) {
+				pass.transform(m);
+			}
+		}
+
+		foreach(m; mods) {
+			foreach(pass; passes2b) {
+				pass.transform(m);
+			}
 		}
 	}
 
-	override void phase2b(ir.Module m)
+	override void phase3(ir.Module[] mods)
 	{
-		foreach(pass; passes2b)
-			pass.transform(m);
-	}
-
-	override void phase3(ir.Module m)
-	{
-		foreach(pass; lowerers)
-			pass.transform(m);
+		foreach(m; mods) {
+			foreach(pass; lowerers) {
+				pass.transform(m);
+			}
+		}
 	}
 
 	override void close()

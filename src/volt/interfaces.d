@@ -95,11 +95,9 @@ interface LanguagePass
 
 	void phase1(ir.Module m);
 
-	void phase2a(ir.Module m);
+	void phase2(ir.Module[] m);
 
-	void phase2b(ir.Module m);
-
-	void phase3(ir.Module m);
+	void phase3(ir.Module[] m);
 
 	void close();
 }
