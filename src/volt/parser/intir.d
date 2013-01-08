@@ -49,6 +49,41 @@ bool isLeftAssociative(BinOp.Type operator)
 	return operator != BinOp.Type.Assign;
 }
 
+int getPrecedence(BinOp.Type operator)
+{
+	switch (operator) with (BinOp.Type) {
+	case Pow:
+		return 11;
+	case Mul, Div, Mod:
+		return 10;
+	case Add, Sub, Cat:
+		return 9;
+	case LS, SRS, RS:
+		return 8;
+	case Less, LessEqual, GreaterEqual, Greater, In, NotIn:
+		return 7;
+	case Equal, NotEqual, Is, NotIs:
+		return 6;
+	case And:
+		return 5;
+	case Xor:
+		return 4;
+	case Or:
+		return 3;
+	case AndAnd:
+		return 2;
+	case OrOr:
+		return 1;
+	case Assign, AddAssign, SubAssign, MulAssign,
+		 DivAssign, ModAssign, AndAssign, OrAssign,
+		 XorAssign, CatAssign, LSAssign, SRSAssign,
+		 RSAssign, PowAssign:
+		return 0;
+	default:
+		assert(false);
+	}
+}
+
 class UnaryExp : IntExp
 {
 public:

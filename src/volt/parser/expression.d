@@ -91,19 +91,22 @@ ExpOrOp[] expressionsAsPostfix(intir.BinExp bin)
 			continue;
 		}
 		while (operationStack.length > 0) {
-			auto op = new ExpOrOp(operationStack[0]);
-			operationStack = operationStack[1 .. $];
-			postfix ~= op;
-			if ((intir.isLeftAssociative(element.op) && element.op <= op.op) ||
-				element.op < op.op) {
+			auto op = operationStack[0];
+			if ((intir.isLeftAssociative(element.op) && intir.getPrecedence(element.op) <= intir.getPrecedence(operationStack[0])) ||
+				(!intir.isLeftAssociative(element.op) && intir.getPrecedence(element.op) < intir.getPrecedence(operationStack[0]))) {
+				postfix ~= new ExpOrOp(operationStack[0]);
+				operationStack = operationStack[1 .. $];
+			} else {
 				break;
 			}
 		}
+
 		operationStack = [element.op] ~ operationStack;
 	}
 
-	foreach (op; operationStack) {
-		postfix ~= new ExpOrOp(op);
+	while (operationStack.length > 0) {
+		postfix ~= new ExpOrOp(operationStack[0]);
+		operationStack = operationStack[1 .. $];
 	}
 
 	return postfix;
@@ -132,8 +135,13 @@ ir.Exp binexpToExp(intir.BinExp bin)
 			} else {
 				auto b = new ir.BinOp();
 				b.op = el.op;
-				b.left = unaryToExp(exps[0]);
-				b.right = binout;
+				if (intir.isLeftAssociative(b.op)) {
+					b.left =  binout;
+					b.right = unaryToExp(exps[0]);
+				} else {
+					b.left = unaryToExp(exps[0]);
+					b.right = binout;
+				}
 				binout = b;
 			}
 		}
