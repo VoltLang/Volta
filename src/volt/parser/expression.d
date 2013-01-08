@@ -91,11 +91,11 @@ ExpOrOp[] expressionsAsPostfix(intir.BinExp bin)
 			continue;
 		}
 		while (operationStack.length > 0) {
-			if ((intir.isLeftAssociative(element.op) && element.op <= operationStack[0]) ||
-				(!intir.isLeftAssociative(element.op) && element.op < operationStack[0])) {
-				postfix ~= new ExpOrOp(operationStack[0]);
-				operationStack = operationStack[1 .. $];
-			} else {
+			auto op = new ExpOrOp(operationStack[0]);
+			operationStack = operationStack[1 .. $];
+			postfix ~= op;
+			if ((intir.isLeftAssociative(element.op) && element.op <= op.op) ||
+				element.op < op.op) {
 				break;
 			}
 		}
