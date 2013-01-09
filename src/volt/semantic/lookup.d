@@ -5,9 +5,22 @@ import ir = volt.ir.ir;
 import volt.exceptions;
 import volt.token.location;
 
+
+/**
+ * Lookup an identifier in the scope and only in this scope
+ * not parents scops, not parent classes, and not in imported
+ * modules in this or any other scopes.
+ */
+ir.Store lookupOnlyThisScope(ir.Scope _scope, string name)
+{
+	return _scope.getStore(name);
+}
+
 /**
  * Lookup an identifier in a scope and its parent scopes.
  * Returns the store or null if no match was found.
+ *
+ * @param decend Should parents scopes be concidered.
  * 
  * @todo Take a location.
  */
@@ -21,6 +34,7 @@ ir.Store lookup(ir.Scope _scope, string name)
 		}
 
 		/// If this scope has a this variable, check it.
+		/// @todo this should not be here
 		auto _this = current.getStore("this");
 		if (_this !is null) {
 			auto asVar = cast(ir.Variable) _this.node;

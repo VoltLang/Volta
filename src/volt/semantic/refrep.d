@@ -23,9 +23,10 @@ class ReferenceReplacer : ScopeManager, ExpReplaceVisitor, Pass
 {
 public:
 	/// Get a scope from n, or null if it doesn't have one.
+	/// @todo refactor into lookup
 	ir.Scope getChildScope(ir.Scope _scope, string s)
 	{
-		auto store = _scope.getStore(s);
+		auto store = current.lookupOnlyThisScope(s);
 
 		if (store.kind == ir.Store.Kind.Scope) {
 			return store.s;
@@ -256,7 +257,7 @@ public:
 			}
 			auto asStruct = cast(ir.Struct) asTR.type;
 			assert(asStruct !is null);
-			ir.Store store = asStruct.myScope.getStore(p.identifier.value);
+			ir.Store store = asStruct.myScope.lookupOnlyThisScope(p.identifier.value);
 			if (store is null) {
 				throw new CompilerError(_ref.location, format("aggregate has no member '%s'.", p.identifier.value));
 			}

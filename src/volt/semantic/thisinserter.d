@@ -5,6 +5,7 @@ module volt.semantic.thisinserter;
 import ir = volt.ir.ir;
 
 import volt.interfaces;
+import volt.semantic.lookup;
 import volt.visitor.expreplace;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
@@ -73,12 +74,12 @@ public:
 	
 	Status visit(ref ir.Exp exp, ir.ExpReference reference)
 	{
-		auto varStore = current.getStore(reference.idents[$-1]);
+		auto varStore = current.lookupOnlyThisScope(reference.idents[$-1]);
 		if (varStore !is null) {
 			return Continue;
 		}
 
-		auto thisStore = current.getStore("this");
+		auto thisStore = current.lookupOnlyThisScope("this");
 		if (thisStore is null) {
 			return Continue;
 		}
@@ -92,7 +93,7 @@ public:
 		auto asStruct = cast(ir.Struct) asTR.type;
 		assert(asStruct !is null);
 
-		varStore = asStruct.myScope.getStore(reference.idents[0]);
+		varStore = asStruct.myScope.lookupOnlyThisScope(reference.idents[0]);
 		if (varStore is null) {
 			return Continue;
 		}

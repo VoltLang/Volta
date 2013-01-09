@@ -10,6 +10,7 @@ import ir = volt.ir.ir;
 
 import volt.exceptions;
 import volt.token.location;
+import volt.semantic.lookup;
 
 
 int size(ir.PrimitiveType.Kind kind)
@@ -270,6 +271,8 @@ ir.Type[] getStructFieldTypes(ir.Struct _struct)
  *   member   = what you want to look up in the returned scope, for error message purposes.
  * Returns: the Scope found in _scope.
  * Throws: CompilerError if a Scope bearing thing couldn't be found in _scope.
+ *
+ * @todo refactor to lookup
  */
 ir.Scope scopeLookup(ir.Scope _scope, string name, Location location, string member)
 {
@@ -277,7 +280,7 @@ ir.Scope scopeLookup(ir.Scope _scope, string name, Location location, string mem
 
 	auto current = _scope;
 	while (current !is null) {
-		auto store = current.getStore(name);
+		auto store = current.lookupOnlyThisScope(name);
 		if (store is null) {
 			current = current.parent;
 			continue;

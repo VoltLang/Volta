@@ -54,7 +54,7 @@ public:
 	{
 		ir.ExpReference getFunction(string name)
 		{
-			auto store = typeinfo.myScope.getStore(name);
+			auto store = typeinfo.myScope.lookupOnlyThisScope(name);
 			if (store is null || store.functions.length != 1) {
 				throw CompilerPanic(m.location, format("couldn't retrieve function '%s' from TypeInfo.", name));
 			}
@@ -68,7 +68,7 @@ public:
 		thisModule = m;
 		
 		typeinfo = retrieveTypeInfoStruct(m.location, m.myScope);
-		auto store = typeinfo.myScope.getStore("__Vtable");
+		auto store = typeinfo.myScope.lookupOnlyThisScope("__Vtable");
 		if (store is null || store.node is null || store.node.nodeType != ir.NodeType.Struct) {
 			throw CompilerPanic(m.location, "couldn't retrieve TypeInfo vtable struct.");
 		}

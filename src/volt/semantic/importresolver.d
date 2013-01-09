@@ -9,6 +9,7 @@ import ir = volt.ir.ir;
 
 import volt.exceptions;
 import volt.interfaces;
+import volt.semantic.lookup;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
 
@@ -94,10 +95,11 @@ public:
 					symbolFromImportName = _alias[1].value;
 					symbolInModuleName = _alias[0].value;
 				}
-				auto store = mod.myScope.getStore(symbolFromImportName);
+				/// @todo refactor into lookup
+				auto store = mod.myScope.lookupOnlyThisScope(symbolFromImportName);
 				if (store is null) OUTER: foreach (pubImp; gatherer.imports) {
 					auto _mod = languagepass.getModule(pubImp.name);
-					store = _mod.myScope.getStore(symbolFromImportName);
+					store = _mod.myScope.lookupOnlyThisScope(symbolFromImportName);
 					if (store !is null) {
 						break OUTER;
 					}

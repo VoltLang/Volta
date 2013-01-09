@@ -664,7 +664,7 @@ public:
 			return Continue;
 		}
 
-		auto store = asStruct.myScope.getStore(postfixChild.identifier.value);
+		auto store = asStruct.myScope.lookupOnlyThisScope(postfixChild.identifier.value);
 		if (store is null || store.functions.length == 0) {
 			return Continue;
 		}
