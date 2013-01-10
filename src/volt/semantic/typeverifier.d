@@ -173,7 +173,7 @@ public:
 		if (c.parent !is null) {
 			assert(c.parent.identifiers.length == 1);
 			/// @todo Correct look up.
-			auto store = c.myScope.lookup(c.parent.identifiers[0].value);
+			auto store = c.myScope.lookup(c.parent.identifiers[0].value, c.location);
 			if (store is null) {
 				throw new CompilerError(c.parent.location, format("unidentified identifier '%s'.", c.parent));
 			}

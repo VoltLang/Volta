@@ -9,6 +9,7 @@ import ir = volt.ir.ir;
 
 import volt.exceptions;
 import volt.interfaces;
+import volt.token.location;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
 import volt.visitor.expreplace;
@@ -24,9 +25,9 @@ class ReferenceReplacer : ScopeManager, ExpReplaceVisitor, Pass
 public:
 	/// Get a scope from n, or null if it doesn't have one.
 	/// @todo refactor into lookup
-	ir.Scope getChildScope(ir.Scope _scope, string s)
+	ir.Scope getChildScope(ir.Scope _scope, string s, Location location)
 	{
-		auto store = current.lookupOnlyThisScope(s);
+		auto store = current.lookupOnlyThisScope(s, location);
 
 		if (store.kind == ir.Store.Kind.Scope) {
 			return store.s;
@@ -200,7 +201,7 @@ public:
 			_ref.location = p.location;
 			_ref.idents = idents;
 
-			auto store = _scope.lookup(ident);
+			auto store = _scope.lookup(ident, p.location);
 			if (store is null) {
 				throw new CompilerError(p.location, format("unknown identifier '%s'.", ident));
 			}
@@ -217,12 +218,12 @@ public:
 
 		if (idents.length > 1) for (int i = cast(int)idents.length - 1; i > 0; --i) {
 			if (i > 1) {
-				_scope = getChildScope(_scope, idents[i]);
+				_scope = getChildScope(_scope, idents[i], p.location);
 				if (_scope is null) {
 					return Continue;
 				}
 			} else {
-				auto store = _scope.lookup(idents[i]);
+				auto store = _scope.lookup(idents[i], p.location);
 				assert(store !is null);
 				if (store.kind == ir.Store.Kind.Scope) {
 					_scope = store.s;
@@ -257,7 +258,7 @@ public:
 			}
 			auto asStruct = cast(ir.Struct) asTR.type;
 			assert(asStruct !is null);
-			ir.Store store = asStruct.myScope.lookupOnlyThisScope(p.identifier.value);
+			ir.Store store = asStruct.myScope.lookupOnlyThisScope(p.identifier.value, p.identifier.location);
 			if (store is null) {
 				throw new CompilerError(_ref.location, format("aggregate has no member '%s'.", p.identifier.value));
 			}
@@ -280,7 +281,7 @@ public:
 
 	override Status visit(ref ir.Exp e, ir.IdentifierExp i)
 	{
-		auto store = current.lookup(i.value);
+		auto store = current.lookup(i.value, i.location);
 		if (store is null) {
 			throw new CompilerError(i.location, format("unidentified identifier '%s'.", i.value));
 		}

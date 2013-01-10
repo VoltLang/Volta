@@ -14,9 +14,10 @@ import volt.visitor.scopemanager;
 import volt.semantic.lookup;
 import volt.semantic.classify;
 
+/// @todo refactor to lookup
 ir.Type typeLookup(ir.Scope _scope, string name, Location location)
 {
-	auto store = _scope.lookup(name);
+	auto store = _scope.lookup(name, location);
 	if (store is null) {
 		throw new CompilerError(location, format("undefined identifier '%s'.", name));
 	}

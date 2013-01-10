@@ -280,7 +280,7 @@ ir.Scope scopeLookup(ir.Scope _scope, string name, Location location, string mem
 
 	auto current = _scope;
 	while (current !is null) {
-		auto store = current.lookupOnlyThisScope(name);
+		auto store = current.lookupOnlyThisScope(name, location);
 		if (store is null) {
 			current = current.parent;
 			continue;

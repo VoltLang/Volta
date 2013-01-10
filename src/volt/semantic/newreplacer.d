@@ -13,11 +13,11 @@ import volt.semantic.mangle;
 
 ir.Variable retrieveAllocDg(Location location, ir.Scope _scope)
 {
-	auto objectStore = _scope.lookup("object");
+	auto objectStore = _scope.lookup("object", location);
 	if (objectStore is null || objectStore.s is null) {
 		throw CompilerPanic(location, "couldn't retrieve object module.");
 	}
-	auto allocDgStore = objectStore.s.lookup("allocDg");
+	auto allocDgStore = objectStore.s.lookup("allocDg", location);
 	if (allocDgStore is null || allocDgStore.node is null) {
 		throw CompilerPanic(location, "couldn't retrieve allocDg.");
 	}
@@ -30,11 +30,11 @@ ir.Variable retrieveAllocDg(Location location, ir.Scope _scope)
 
 ir.Struct retrieveArrayStruct(Location location, ir.Scope _scope)
 {
-	auto objectStore = _scope.lookup("object");
+	auto objectStore = _scope.lookup("object", location);
 	if (objectStore is null || objectStore.s is null) {
 		throw CompilerPanic(location, "couldn't retrieve object module.");
 	}
-	auto arrayStore = objectStore.s.lookup("ArrayStruct");
+	auto arrayStore = objectStore.s.lookup("ArrayStruct", location);
 	if (arrayStore is null || arrayStore.node is null) {
 		throw CompilerPanic(location, "couldn't retrieve object.ArrayStruct.");
 	}

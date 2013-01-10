@@ -16,7 +16,7 @@ import volt.semantic.lookup;
 /// Look up a Variable and return its type.
 ir.Type declTypeLookup(ir.Scope _scope, string name, Location location)
 {
-	auto store = _scope.lookup(name);
+	auto store = _scope.lookup(name, location);
 	if (store is null) {
 		throw new CompilerError(location, format("undefined identifier '%s'.", name));
 	}
@@ -246,7 +246,7 @@ ir.Type getPostfixType(ir.Postfix postfix, ir.Scope currentScope)
 
 ir.Type getSizeT(Location location, ir.Scope currentScope)
 {
-	auto store = currentScope.lookup("size_t");
+	auto store = currentScope.lookup("size_t", location);
 	if (store is null) {
 		throw CompilerPanic(location, "couldn't retrieve size_t.");
 	}
@@ -304,7 +304,7 @@ ir.Type getPostfixIdentifierType(ir.Postfix postfix, ir.Scope currentScope)
 	 */
 	auto asIdentifierExp = cast(ir.IdentifierExp) postfix.child;
 	if (asIdentifierExp !is null) {
-		auto store = currentScope.lookup(asIdentifierExp.value);
+		auto store = currentScope.lookup(asIdentifierExp.value, asIdentifierExp.location);
 		if (store !is null && store.s !is null) {
 			_scope = store.s;
 			emsg = format("module '%s' did not have member '%s'.", asIdentifierExp.value, postfix.identifier.value);

@@ -96,10 +96,10 @@ public:
 					symbolInModuleName = _alias[0].value;
 				}
 				/// @todo refactor into lookup
-				auto store = mod.myScope.lookupOnlyThisScope(symbolFromImportName);
+				auto store = mod.myScope.lookupOnlyThisScope(symbolFromImportName, i.location);
 				if (store is null) OUTER: foreach (pubImp; gatherer.imports) {
 					auto _mod = languagepass.getModule(pubImp.name);
-					store = _mod.myScope.lookupOnlyThisScope(symbolFromImportName);
+					store = _mod.myScope.lookupOnlyThisScope(symbolFromImportName, i.location);
 					if (store !is null) {
 						break OUTER;
 					}

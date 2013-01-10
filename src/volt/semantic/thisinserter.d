@@ -74,12 +74,12 @@ public:
 	
 	Status visit(ref ir.Exp exp, ir.ExpReference reference)
 	{
-		auto varStore = current.lookupOnlyThisScope(reference.idents[$-1]);
+		auto varStore = current.lookupOnlyThisScope(reference.idents[$-1], reference.location);
 		if (varStore !is null) {
 			return Continue;
 		}
 
-		auto thisStore = current.lookupOnlyThisScope("this");
+		auto thisStore = current.lookupOnlyThisScope("this", reference.location);
 		if (thisStore is null) {
 			return Continue;
 		}
@@ -93,7 +93,7 @@ public:
 		auto asStruct = cast(ir.Struct) asTR.type;
 		assert(asStruct !is null);
 
-		varStore = asStruct.myScope.lookupOnlyThisScope(reference.idents[0]);
+		varStore = asStruct.myScope.lookupOnlyThisScope(reference.idents[0], reference.location);
 		if (varStore is null) {
 			return Continue;
 		}

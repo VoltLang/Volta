@@ -11,7 +11,7 @@ import volt.token.location;
  * not parents scops, not parent classes, and not in imported
  * modules in this or any other scopes.
  */
-ir.Store lookupOnlyThisScope(ir.Scope _scope, string name)
+ir.Store lookupOnlyThisScope(ir.Scope _scope, string name, Location location)
 {
 	return _scope.getStore(name);
 }
@@ -24,7 +24,7 @@ ir.Store lookupOnlyThisScope(ir.Scope _scope, string name)
  * 
  * @todo Take a location.
  */
-ir.Store lookup(ir.Scope _scope, string name)
+ir.Store lookup(ir.Scope _scope, string name, Location location)
 {
 	ir.Scope current = _scope, previous = _scope;
 	while (current !is null) {
@@ -104,11 +104,11 @@ ir.Store lookup(ir.Scope _scope, string name)
  */
 ir.Struct retrieveTypeInfoStruct(Location location, ir.Scope _scope)
 {
-	auto objectStore = _scope.lookup("object");
+	auto objectStore = _scope.lookup("object", location);
 	if (objectStore is null || objectStore.s is null) {
 		throw CompilerPanic(location, "couldn't access object module.");
 	}
-	auto tinfoStore = objectStore.s.lookup("TypeInfo");
+	auto tinfoStore = objectStore.s.lookup("TypeInfo", location);
 	if (tinfoStore is null || tinfoStore.node is null || tinfoStore.node.nodeType != ir.NodeType.Struct) {
 		throw CompilerPanic(location, "couldn't locate object.TypeInfo lowered class.");
 	}
@@ -119,11 +119,11 @@ ir.Struct retrieveTypeInfoStruct(Location location, ir.Scope _scope)
 
 ir.Class retrieveTypeInfoClass(Location location, ir.Scope _scope)
 {
-	auto objectStore = _scope.lookup("object");
+	auto objectStore = _scope.lookup("object", location);
 	if (objectStore is null || objectStore.s is null) {
 		throw CompilerPanic(location, "couldn't access object module.");
 	}
-	auto tinfoStore = objectStore.s.lookup("TypeInfo");
+	auto tinfoStore = objectStore.s.lookup("TypeInfo", location);
 	if (tinfoStore is null || tinfoStore.node is null || tinfoStore.node.nodeType != ir.NodeType.Class) {
 		throw CompilerPanic(location, "couldn't locate object.TypeInfo class.");
 	}
