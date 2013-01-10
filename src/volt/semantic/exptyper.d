@@ -1,4 +1,4 @@
-// Copyright © 2012, Bernard Helyer.  All rights reserved.
+// Copyright © 2012-2013, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.exptyper;
 
@@ -15,33 +15,7 @@ import volt.visitor.scopemanager;
 import volt.semantic.classify;
 import volt.semantic.userresolver : scopeLookup;
 import volt.semantic.lookup;
-
-
-/// Get the type from a Variable.
-ir.Node declTypeLookup(ir.Scope _scope, string name, Location location)
-{
-	auto store = _scope.lookup(name);
-	if (store is null) {
-		throw new CompilerError(location, format("undefined identifier '%s'.", name));
-	}
-	if (store.kind == ir.Store.Kind.Function) {
-		/// @todo Overloading.
-		assert(store.functions.length == 1);
-		return store.functions[0].type;
-	}
-
-	if (store.kind == ir.Store.Kind.Scope) {
-		auto asMod = cast(ir.Module) store.s.node;
-		assert(asMod !is null);
-		return asMod;
-	}
-
-	auto d = cast(ir.Variable) store.node;
-	if (d is null) {
-		throw new CompilerError(location, format("%s used as value.", name));
-	}
-	return d.type;
-}
+import volt.semantic.typer;
 
 /**
  * Make implicit casts explicit.
@@ -61,290 +35,42 @@ public:
 		this.settings = settings;
 	}
 
-	/// Look up an identifier. Assumes struct parent. (!!!)
-	ir.Node evaluatePostfixIdentifier(ir.Postfix asPostfix)
-	{
-		auto t = evaluate(asPostfix.child);
-
-		if (t.nodeType == ir.NodeType.ArrayType) {
-			auto asArray = cast(ir.ArrayType) t;
-			assert(asArray !is null);
-			switch (asPostfix.identifier.value) {
-			case "length":
-				return settings.getSizeT();
-			case "ptr":
-				return new ir.PointerType(asArray.base);
-			default:
-				throw new CompilerError(asPostfix.location, "arrays have length and ptr members only.");
-			}
-		}
-
-		ir.Scope _scope;
-		string emsg;
-		ir.Class _class;
-		void retrieveScope(ir.Node tt)
-		{
-			if (tt.nodeType == ir.NodeType.Module) {
-				auto asModule = cast(ir.Module) tt;
-				assert(asModule !is null);
-				_scope = asModule.myScope;
-				emsg = format("module '%s' has no member '%s'.", asModule.name, asPostfix.identifier.value);
-			} else if (tt.nodeType == ir.NodeType.Class || tt.nodeType == ir.NodeType.Struct) {
-				if (tt.nodeType == ir.NodeType.Struct) {
-					auto asStruct = cast(ir.Struct) tt;
-					_scope = asStruct.myScope;
-					emsg = format("type '%s' has no member '%s'.", asStruct.name, asPostfix.identifier.value);
-				} else if (tt.nodeType == ir.NodeType.Class) {
-					_class = cast(ir.Class) tt;
-					_scope = _class.myScope;
-					emsg = format("type '%s' has no member '%s'.", _class.name, asPostfix.identifier.value);
-				} else {
-					throw CompilerPanic("couldn't retrieve scope from type.");
-				}
-			} else if (tt.nodeType == ir.NodeType.PointerType) {
-				auto asPointer = cast(ir.PointerType) tt;
-				assert(asPointer !is null);
-				retrieveScope(asPointer.base);
-			} else if (tt.nodeType == ir.NodeType.TypeReference) {
-				auto asTR = cast(ir.TypeReference) tt;
-				assert(asTR !is null);
-				retrieveScope(asTR.type);
-			} else {
-				assert(false, to!string(tt.nodeType));
-			}
-		}
-		retrieveScope(t);
-
-		_lookup:
-		auto store = _scope.getStore(asPostfix.identifier.value);
-		if (store is null && _class !is null && _class.parentClass !is null) {
-			_class = _class.parentClass;
-			_scope = _class.myScope;
-			goto _lookup;
-		}
-		
-		if (store is null) {
-			throw new CompilerError(asPostfix.identifier.location, emsg);
-		}
-
-		if (store.kind == ir.Store.Kind.Value) {
-			auto asDecl = cast(ir.Variable) store.node;
-			assert(asDecl !is null);
-			return asDecl.type;
-		} else if (store.kind == ir.Store.Kind.Function) {
-			return store.functions[$-1].type;  // !!!
-		} else {
-			throw CompilerPanic(asPostfix.location, "unhandled postfix type retrieval.");
-		}
-	}
-
 	/// Modify a function call to have explicit casts and return the return type.
-	ir.Node evaluatePostfixCall(ir.Postfix asPostfix)
+	void extypePostfix(ir.Postfix postfix)
 	{
-		auto t = evaluate(asPostfix.child);
-		if (t.nodeType == ir.NodeType.TypeReference) {
-			auto asTR = cast(ir.TypeReference) t;
-			assert(asTR !is null);
-			t = asTR.type;
+		if (postfix.op != ir.Postfix.Op.Call) {
+			return;
 		}
 
-		auto asFunctionType = cast(ir.CallableType) t;
+		auto type = getExpType(postfix.child, current);
+		auto asFunctionType = cast(ir.CallableType) type;
 		if (asFunctionType is null) {
-			throw new CompilerError(asPostfix.location, format("tried to call uncallable type."));
+			throw new CompilerError(postfix.location, format("tried to call uncallable type."));
 		}
-		if (asPostfix.arguments.length != (asFunctionType.params.length - (asFunctionType.hiddenParameter ? 1 : 0))) {
-			throw new CompilerError(asPostfix.location, "wrong number of arguments to function.");
+		if (postfix.arguments.length != (asFunctionType.params.length - (asFunctionType.hiddenParameter ? 1 : 0))) {
+			throw new CompilerError(postfix.location, "wrong number of arguments to function.");
 		}
-		foreach (i; 0 .. asPostfix.arguments.length) {
-			extype(asFunctionType.params[i].type, asPostfix.arguments[i]);
+		foreach (i; 0 .. postfix.arguments.length) {
+			extype(asFunctionType.params[i].type, postfix.arguments[i]);
 		}
-		return asFunctionType.ret;
 	}
-
-	ir.Node evaluatePostfixIncDec(ir.Postfix asPostfix)
-	{
-		auto t = evaluate(asPostfix.child);
-		/// @todo check if value is LValue.
-
-		if (t.nodeType == ir.NodeType.PointerType) {
-			return t;
-		} else if (t.nodeType == ir.NodeType.PrimitiveType &&
-		           isOkayForPointerArithmetic((cast(ir.PrimitiveType)t).type)) {
-			return t;
-		}
-
-		throw new CompilerError(asPostfix.location, "value not suited for increment/decrement");
-	}
-
-	ir.Node evaluatePostfixIndex(ir.Postfix asPostfix)
-	{
-		ir.ArrayType array;
-		ir.PointerType pointer;
-
-		auto t = evaluate(asPostfix.child);
-		if (t.nodeType == ir.NodeType.PointerType) {
-			pointer = cast(ir.PointerType) t;
-			assert(pointer !is null);
-		} else if (t.nodeType == ir.NodeType.ArrayType) {
-			array = cast(ir.ArrayType) t;
-			assert(array !is null);
-		} else {
-			throw CompilerPanic(asPostfix.location, "don't know how to index non pointers or non arrays.");
-		}
-		assert((pointer !is null && array is null) || (array !is null && pointer is null));
-
-		return pointer is null ? array.base : pointer.base;
-	}
-
-	ir.Node evaluateNewExp(ir.Unary u)
-	{
-		assert(u.op == ir.Unary.Op.New);
-		if (!u.isArray && !u.hasArgumentList) {
-			return new ir.PointerType(u.type);
-		} else if (u.isArray) {
-			return new ir.ArrayType(u.type);
-		} else {
-			assert(u.hasArgumentList);
-			return u.type;
-		}
-		assert(false);
-	}
-
-	/// Retrieve the type for e.
-	ir.Node evaluate(ir.Exp e)
-	{
-		ir.Node result;
-
-		switch (e.nodeType) with (ir.NodeType) {
-			case Constant:
-				auto asConstant = cast(ir.Constant) e;
-				assert(asConstant !is null);
-				result = asConstant.type;
-				break;
-			case IdentifierExp:
-				auto asIdentifierExp = cast(ir.IdentifierExp) e;
-				assert(asIdentifierExp !is null);
-				if (asIdentifierExp.type is null) {
-					visit(asIdentifierExp);
-				}
-				assert(asIdentifierExp.type !is null);
-				result = asIdentifierExp.type;
-				break;
-			case BinOp:
-				auto asBin = cast(ir.BinOp) e;
-				assert(asBin !is null);
-				result = extype(asBin);
-				break;
-			case TypeReference:
-				auto asUser = cast(ir.TypeReference) e;
-				assert(asUser !is null);
-				result = asUser.type;
-				break;
-			case Variable:
-				auto asDecl = cast(ir.Variable) e;
-				assert(asDecl !is null);
-				result = asDecl.type;
-				break;
-			case Postfix:
-				auto asPostfix = cast(ir.Postfix) e;
-				assert(asPostfix !is null);
-				if (asPostfix.op == ir.Postfix.Op.Identifier) {
-					result = evaluatePostfixIdentifier(asPostfix);
-				} else if (asPostfix.op == ir.Postfix.Op.Call) {
-					result = evaluatePostfixCall(asPostfix);
-				} else if (asPostfix.op == ir.Postfix.Op.Index ||
-						   asPostfix.op == ir.Postfix.Op.Slice) {
-					result = evaluatePostfixIndex(asPostfix);
-				} else if (asPostfix.op == ir.Postfix.Op.Increment ||
-				           asPostfix.op == ir.Postfix.Op.Decrement) {
-					result = evaluatePostfixIncDec(asPostfix);
-				} else  {
-					assert(false);
-				}
-				break;
-			case Unary:
-				auto asUnary = cast(ir.Unary) e;
-				if (asUnary.op == ir.Unary.Op.None) {
-					result = evaluate(asUnary.value);
-				} else if (asUnary.op == ir.Unary.Op.Cast) {
-					result = asUnary.type;
-				} else if (asUnary.op == ir.Unary.Op.Dereference) {
-					auto t = evaluate(asUnary.value);
-					if (t.nodeType != ir.NodeType.PointerType) {
-						throw new CompilerError(asUnary.location, "tried to dereference non-pointer type.");
-					}
-					auto asPointer = cast(ir.PointerType) t;
-					assert(asPointer !is null);
-					result = asPointer.base;
-				} else if (asUnary.op == ir.Unary.Op.AddrOf) {
-					auto t = cast(ir.Type) evaluate(asUnary.value);
-					assert(t !is null);
-					result = new ir.PointerType(t);
-				} else if (asUnary.op == ir.Unary.Op.New) {
-					result = evaluateNewExp(asUnary);
-				} else if (asUnary.op == ir.Unary.Op.Minus || asUnary.op == ir.Unary.Op.Plus) {
-					auto t = cast(ir.Type) evaluate(asUnary.value);
-					assert(t !is null);
-					result = t;
-				} else {
-					assert(false);
-				}
-				break;
-			case StructLiteral:
-				result = e;
-				break;
-			case ArrayLiteral:
-				auto asArray = cast(ir.ArrayLiteral) e;
-				assert(asArray !is null);
-				if (asArray.type !is null) {
-					return asArray.type;
-				}
-				ir.Type base;
-				if (asArray.values.length > 0) {
-					/// @todo figure out common subtype stuff. For now, D1 stylin'.
-					base = cast(ir.Type) evaluate(asArray.values[0]);
-				} else {
-					base = new ir.PrimitiveType(ir.PrimitiveType.Kind.Void);
-				}
-				assert(base !is null);
-				base.location = asArray.location;
-				asArray.type = new ir.ArrayType(base);
-				asArray.type.location = asArray.location;
-				result = asArray.type;
-				break;
-			case Typeid:
-				result = retrieveTypeInfoClass(e.location, _module.myScope);
-				break;
-			default:
-				assert(false);
-		}
-
-		auto asTR = cast(ir.TypeReference) result;
-		if (asTR !is null) {
-			result = asTR.type;
-		}
-		assert(result !is null);
-
-		return result;
-	}	
 
 	ir.Node extype(ir.Type left, ref ir.Exp right)
 	{
-		ir.Node t = evaluate(right);
-
-		auto asTR = cast(ir.TypeReference) left;
-		if (asTR !is null) {
-			left = asTR.type;
-		}
-
-		if (t.nodeType == ir.NodeType.StructLiteral) {
-			auto asLit = cast(ir.StructLiteral) t;
+		if (right.nodeType == ir.NodeType.StructLiteral) {
+			auto asLit = cast(ir.StructLiteral) right;
 			assert(asLit !is null);
 			string emsg = "cannot implicitly cast struct literal to destination.";
 
 			auto asStruct = cast(ir.Struct) left;
 			if (asStruct is null) {
-				throw new CompilerError(right.location, emsg);
+				auto asTR = cast(ir.TypeReference) left;
+				if (asTR !is null) {
+					asStruct = cast(ir.Struct) asTR.type;
+				}
+				if (asStruct is null) {
+					throw new CompilerError(right.location, emsg);
+				}
 			}
 
 			ir.Type[] types = getStructFieldTypes(asStruct);
@@ -357,9 +83,16 @@ public:
 				extype(types[i], sexp);
 			}
 
-			asLit.type = new ir.TypeReference(left, asStruct.name);
+			asLit.type = new ir.TypeReference(asStruct, asStruct.name);
 			asLit.type.location = right.location;
 			return asLit.type;
+		}
+
+		ir.Node t = getExpType(right, current);
+
+		auto asTR = cast(ir.TypeReference) left;
+		if (asTR !is null) {
+			left = asTR.type;
 		}
 
 		ir.Type type = cast(ir.Type)t;
@@ -436,8 +169,19 @@ public:
 	/// Convert a BinOp to use explicit casts where needed.
 	ir.Node extype(ir.BinOp bin)
 	{
-		ir.Node left = evaluate(bin.left);
-		ir.Node right = evaluate(bin.right);
+		if (bin.left.nodeType == ir.NodeType.Postfix) {
+			extypePostfix(cast(ir.Postfix)bin.left);
+		} else if (bin.left.nodeType == ir.NodeType.BinOp) {
+			extype(cast(ir.BinOp)bin.left);
+		}
+		if (bin.right.nodeType == ir.NodeType.Postfix) {
+			extypePostfix(cast(ir.Postfix)bin.right);
+		} else if (bin.right.nodeType == ir.NodeType.BinOp) {
+			extype(cast(ir.BinOp)bin.right);
+		}
+
+		ir.Node left = getExpType(bin.left, current);
+		ir.Node right = getExpType(bin.right, current);
 		
 		if (bin.op == ir.BinOp.Type.AndAnd || bin.op == ir.BinOp.Type.OrOr) {
 			auto boolType = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
@@ -577,7 +321,7 @@ public:
 	ir.Node extypeArrayAssign(ref ir.Exp exp, ir.Node dest, ir.Exp src)
 	{
 		auto lp = cast(ir.ArrayType) dest;
-		auto rp = cast(ir.ArrayType) evaluate(src);
+		auto rp = cast(ir.ArrayType) getExpType(src, current);
 
 		if (lp is null || rp is null) {
 			throw CompilerPanic(exp.location, "extypeArrayAssign called with non-array types.");
@@ -602,7 +346,7 @@ public:
 	ir.Node extypePointerAssign(ref ir.Exp exp, ir.Node dest, ir.Exp src)
 	{
 		auto lp = cast(ir.PointerType) dest;
-		auto rp = cast(ir.PointerType) evaluate(src);
+		auto rp = cast(ir.PointerType) getExpType(src, current);
 
 		if (lp is null || rp is null) {
 			throw CompilerPanic(exp.location, "extypePointerAssign called with non-pointer types.");
@@ -628,7 +372,7 @@ public:
 	ir.Node extypePrimitiveAssign(ref ir.Exp exp, ir.Node dest, ir.Exp src)
 	{
 		auto lp = cast(ir.PrimitiveType) dest;
-		auto rp = cast(ir.PrimitiveType) evaluate(src);
+		auto rp = cast(ir.PrimitiveType) getExpType(src, current);
 
 		if (lp is null || rp is null) {
 			throw new CompilerError(exp.location, "cannot implicitly reconcile binary expression types.");
@@ -691,7 +435,7 @@ public:
 
 	override Status enter(ir.Postfix p)
 	{
-		evaluate(p);
+		extypePostfix(p);
 		return ContinueParent;
 	}
 
@@ -707,7 +451,7 @@ public:
 
 	override Status enter(ir.IfStatement ifs)
 	{
-		ir.Node t = evaluate(ifs.exp);
+		ir.Node t = getExpType(ifs.exp, current);
 		if (t.nodeType == ir.NodeType.PrimitiveType) {
 			auto asPrimitive = cast(ir.PrimitiveType) t;
 			if (asPrimitive.type == ir.PrimitiveType.Kind.Bool) {
@@ -720,7 +464,7 @@ public:
 
 	override Status enter(ir.ForStatement fs)
 	{
-		ir.Node t = evaluate(fs.test);
+		ir.Node t = getExpType(fs.test, current);
 		if (t.nodeType == ir.NodeType.PrimitiveType) {
 			auto asPrimitive = cast(ir.PrimitiveType) t;
 			if (asPrimitive.type == ir.PrimitiveType.Kind.Bool) {
@@ -733,7 +477,7 @@ public:
 
 	override Status enter(ir.WhileStatement ws)
 	{
-		ir.Node t = evaluate(ws.condition);
+		ir.Node t = getExpType(ws.condition, current);
 		if (t.nodeType == ir.NodeType.PrimitiveType) {
 			auto asPrimitive = cast(ir.PrimitiveType) t;
 			if (asPrimitive.type == ir.PrimitiveType.Kind.Bool) {
@@ -746,7 +490,7 @@ public:
 
 	override Status enter(ir.DoStatement ds)
 	{
-		ir.Node t = evaluate(ds.condition);
+		ir.Node t = getExpType(ds.condition, current);
 		if (t.nodeType == ir.NodeType.PrimitiveType) {
 			auto asPrimitive = cast(ir.PrimitiveType) t;
 			if (asPrimitive.type == ir.PrimitiveType.Kind.Bool) {
