@@ -17,6 +17,28 @@ ir.Store lookupOnlyThisScope(ir.Scope _scope, string name, Location location)
 }
 
 /**
+ * Lookup and identifier in the scope and any parents scopes if
+ * if it is a class scope including imports in for those scope.
+ * Ment to implement the this.identifier constructs.
+ *
+ * Where the scope is can to used for this function is retrived
+ * via the getFirstThisable function.
+ *
+ * @todo actually lookup imports.
+ */
+ir.Store lookupAsThisScope(ir.Scope _scope, string name, Location location)
+{
+	ir.Class _class;
+	do {
+		auto ret = lookupOnlyThisScope(_scope, name, location);
+		if (ret !is null)
+			return ret;
+	} while (getClassParentsScope(_scope, _scope, _class));
+
+	return null;
+}
+
+/**
  * Lookup an identifier in a scope and its parent scopes.
  * Returns the store or null if no match was found.
  *
@@ -190,4 +212,38 @@ bool getFirstClass(ir.Scope _scope, out ir.Scope outScope, out ir.Class outClass
 		_scope = _scope.parent;
 	}
 	return false;
+}
+
+/**
+ * Get the parents scope of the given scope if its a class scope.
+ *
+ * Returns:
+ *   If the is a class and had a parents scope.
+ */
+bool getClassParentsScope(ir.Scope _scope, out ir.Scope outScope, out ir.Class outClass)
+{
+	auto node = _scope.node;
+	if (node is null)
+		throw CompilerPanic("scope without owning node");
+
+	switch (node.nodeType) with (ir.NodeType) {
+	case Module:
+	case Import:
+	case Struct:
+		return false;
+	case Class:
+		auto asClass = cast(ir.Class)node;
+		assert(asClass !is null);
+
+		if (asClass.parentClass is null) {
+			assert(asClass.parent is null);
+			return false;
+		}
+
+		outClass = asClass.parentClass;
+		outScope = asClass.parentClass.myScope;
+		return true;
+	default:
+		throw CompilerPanic(node.location, "unexpected nodetype");
+	}
 }
