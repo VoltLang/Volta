@@ -26,6 +26,7 @@ public:
 	int passNumber;
 	Settings settings;
 	ir.Variable allocDgVar;
+	ir.Scope currentFunctionScope;
 
 public:
 	this(Settings settings)
@@ -695,6 +696,45 @@ public:
 
 		postfix.child = methodLookup;
 		postfix.arguments ~= _cast;
+
+		return Continue;
+	}
+
+	override Status enter(ir.Function fn)
+	{
+		currentFunctionScope = fn.myScope;
+		return Continue;
+	}
+
+	override Status leave(ir.Function fn)
+	{
+		currentFunctionScope = null;
+		return Continue;
+	}
+
+	/**
+	 * The exptyper inserts empty thises in classes as the this variable
+	 * doesn't exist at that point. It should now, so just go and fill
+	 * those in.
+	 */
+	override Status visit(ir.ExpReference expref)
+	{
+		if (expref.idents[0] != "this" || expref.decl !is null || currentFunctionScope is null ||
+			passNumber == 0) {
+			return Continue;
+		}
+
+		auto thisStore = currentFunctionScope.lookupOnlyThisScope("this", expref.location);
+		if (thisStore is null) {
+			return Continue;
+		}
+
+		auto asVar = cast(ir.Variable) thisStore.node;
+		if (asVar is null) {
+			throw new CompilerError(expref.location, "non variable this.");
+		}
+
+		expref.decl = asVar;
 
 		return Continue;
 	}

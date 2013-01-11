@@ -74,6 +74,9 @@ ir.Store lookup(ir.Scope _scope, string name, Location location)
 
 	if (_scope.parent !is null) {
 		auto asClass = cast(ir.Class) _scope.parent.node;
+		if (asClass is null) {
+			asClass = cast(ir.Class) _scope.node;
+		}
 		if (asClass !is null) {
 			auto currentClass = asClass.parentClass;
 			while (currentClass !is null) {

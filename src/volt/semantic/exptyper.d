@@ -30,6 +30,7 @@ public:
 	Settings settings;
 	ir.Module _module;
 	ir.Type functionRet;
+	int pass;
 
 public:
 	this(Settings settings)
@@ -456,6 +457,9 @@ public:
 
 	override void transform(ir.Module m)
 	{
+		pass = 1;
+		accept(m, this);
+		pass = 2;
 		accept(m, this);
 	}
 
@@ -471,6 +475,10 @@ public:
 
 	override Status visit(ir.IdentifierExp e)
 	{
+		if (pass == 2) {
+			return Continue;
+		}
+
 		if (e.globalLookup) {
 			e.type = declTypeLookup(_module.myScope, e.value, e.location);
 		} else {
@@ -482,12 +490,18 @@ public:
 
 	override Status enter(ir.BinOp bin)
 	{
+		if (pass == 2) {
+			return Continue;
+		}
 		extype(bin);
 		return Continue;
 	}
 
 	override Status enter(ir.Postfix p)
 	{
+		if (pass == 2) {
+			return Continue;
+		}
 		extypePostfix(p);
 		return Continue;
 	}
@@ -498,6 +512,10 @@ public:
 			return Continue;
 		}
 		acceptExp(d.assign, this);
+
+		if (pass == 2) {
+			return Continue;
+		}
 
 		extype(d.type, d.assign);
 
@@ -513,6 +531,10 @@ public:
 	override Status enter(ir.IfStatement ifs)
 	{
 		acceptExp(ifs.exp, this);
+
+		if (pass == 2) {
+			return Continue;
+		}
 
 		ir.Node t = getExpType(ifs.exp, current);
 		if (t.nodeType == ir.NodeType.PrimitiveType) {
@@ -536,6 +558,10 @@ public:
 			acceptExp(increment, this);
 		}
 
+		if (pass == 2) {
+			return Continue;
+		}
+
 		ir.Node t = getExpType(fs.test, current);
 		if (t.nodeType == ir.NodeType.PrimitiveType) {
 			auto asPrimitive = cast(ir.PrimitiveType) t;
@@ -550,6 +576,10 @@ public:
 	override Status enter(ir.WhileStatement ws)
 	{
 		acceptExp(ws.condition, this);
+
+		if (pass == 2) {
+			return Continue;
+		}
 
 		ir.Node t = getExpType(ws.condition, current);
 		if (t.nodeType == ir.NodeType.PrimitiveType) {
@@ -566,6 +596,10 @@ public:
 	{
 		acceptExp(ds.condition, this);
 
+		if (pass == 2) {
+			return Continue;
+		}
+
 		ir.Node t = getExpType(ds.condition, current);
 		if (t.nodeType == ir.NodeType.PrimitiveType) {
 			auto asPrimitive = cast(ir.PrimitiveType) t;
@@ -580,6 +614,11 @@ public:
 	override Status enter(ir.SwitchStatement ss)
 	{
 		acceptExp(ss.condition, this);
+
+		if (pass == 2) {
+			return Continue;
+		}
+
 		foreach (ref c; ss.cases) {
 			if (c.firstExp !is null) acceptExp(c.firstExp, this);
 			if (c.secondExp !is null) acceptExp(c.secondExp, this);
@@ -644,8 +683,14 @@ public:
 	{
 		if (rs.exp !is null) {
 			acceptExp(rs.exp, this);
+			if (pass == 2) {
+				return Continue;
+			}
 			extype(functionRet, rs.exp);
 		} else {
+			if (pass == 2) {
+				return Continue;
+			}
 			auto v = new ir.PrimitiveType(ir.PrimitiveType.Kind.Void);
 			if (!typesEqual(functionRet, v))
 				throw new CompilerError(rs.location, "function return type is not void.");
@@ -655,6 +700,9 @@ public:
 
 	override Status enter(ref ir.Exp e, ir.Postfix p)
 	{
+		if (pass == 2) {
+			return Continue;
+		}
 		if (p.op != ir.Postfix.Op.Identifier)
 			return Continue;
 
@@ -718,7 +766,7 @@ public:
 			if (i > 1) {
 				_scope = getChildScope(p.location, _scope, idents[i]);
 				if (_scope is null) {
-					return Continue;
+					return ContinueParent;
 				}
 			} else {
 				auto store = _scope.lookup(idents[i], p.location);
@@ -742,7 +790,7 @@ public:
 		}
 
 		if (_ref.decl is null) {
-			return Continue;
+			return ContinueParent;
 			//throw CompilerPanic(_ref.location, "empty ExpReference declaration.");
 		}
 
@@ -790,6 +838,9 @@ public:
 
 	override Status visit(ref ir.Exp e, ir.IdentifierExp i)
 	{
+		if (pass == 2) {
+			return Continue;
+		}
 		auto store = current.lookup(i.value, e.location);
 		if (store is null) {
 			throw new CompilerError(i.location, format("unidentified identifier '%s'.", i.value));
@@ -827,7 +878,81 @@ public:
 		throw CompilerPanic(i.location, format("unhandled identifier type '%s'.", i.value));
 	}
 
-	override Status visit(ref ir.Exp e, ir.ExpReference expref) { return Continue; }
+	override Status visit(ref ir.Exp e, ir.ExpReference reference)
+	{
+		auto asClass = cast(ir.Class) current.parent.node;
+		if (asClass !is null) {
+			auto asFunction = cast(ir.Function) current.node;
+			if (asFunction is null) {
+				return Continue;
+			}
+
+			auto store = asClass.myScope.lookup(reference.idents[$-1], reference.location);
+			if (store is null) {
+				return Continue;
+			}
+
+			auto thisRef = new ir.ExpReference();
+			thisRef.location = reference.location;
+			thisRef.idents ~= "this";
+			thisRef.decl = null;  // Filled in in the class lowerer.
+
+			auto postfix = new ir.Postfix();
+			postfix.location = reference.location;
+			postfix.op = ir.Postfix.Op.Identifier;
+			postfix.identifier = new ir.Identifier();
+			postfix.identifier.location = reference.location;
+			postfix.identifier.value = reference.idents[0];
+			postfix.child = thisRef;
+
+			e = postfix;
+			return Continue;
+		}
+
+		if (pass == 1) {
+			return Continue;
+		}
+		auto varStore = current.lookupOnlyThisScope(reference.idents[$-1], reference.location);
+		if (varStore !is null) {
+			return Continue;
+		}
+
+		auto thisStore = current.lookupOnlyThisScope("this", reference.location);
+		if (thisStore is null) {
+			return Continue;
+		}
+
+		auto asVar = cast(ir.Variable) thisStore.node;
+		assert(asVar !is null);
+		auto asPointer = cast(ir.PointerType) asVar.type;
+		assert(asPointer !is null);
+		auto asTR = cast(ir.TypeReference) asPointer.base;
+		assert(asTR !is null);
+		auto asStruct = cast(ir.Struct) asTR.type;
+		assert(asStruct !is null);
+
+		varStore = asStruct.myScope.lookupOnlyThisScope(reference.idents[0], reference.location);
+		if (varStore is null) {
+			return Continue;
+		}
+
+		// Okay, it looks like reference isn't pointing at a local, and it exists in a this.
+		auto thisRef = new ir.ExpReference();
+		thisRef.location = reference.location;
+		thisRef.idents ~= "this";
+		thisRef.decl = asVar;
+
+		auto postfix = new ir.Postfix();
+		postfix.location = reference.location;
+		postfix.op = ir.Postfix.Op.Identifier;
+		postfix.identifier = new ir.Identifier();
+		postfix.identifier.location = reference.location;
+		postfix.identifier.value = reference.idents[0];
+		postfix.child = thisRef;
+
+		e = postfix;
+		return Continue;
+	}
 
 	override Status leave(ref ir.Exp, ir.Postfix) { return Continue; }
 	override Status enter(ref ir.Exp, ir.Unary) { return Continue; }
