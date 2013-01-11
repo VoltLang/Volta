@@ -2,7 +2,6 @@
 //T retval:74
 //T dependency:m1.d
 //T dependency:m2.d
-//T has-passed:yes
 // Multiple renames.
 
 module test_014;
