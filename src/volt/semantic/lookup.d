@@ -132,3 +132,62 @@ ir.Class retrieveTypeInfoClass(Location location, ir.Scope _scope)
 	return tinfo;
 }
 
+/**
+ * Return the first scope and type that is thisable going down the
+ * chain of containing scopes (_scope.parent field).
+ *
+ * Returns:
+ *   True if we found a thisable type and its scope and type.
+ */
+bool getFirstThisable(ir.Scope _scope, out ir.Scope outScope, out ir.Type outType)
+{
+	while (_scope !is null) {
+		auto node = _scope.node;
+		if (node is null)
+			throw CompilerPanic("scope without owning node");
+
+		auto asType = cast(ir.Type)node;
+		auto asClass = cast(ir.Class)node;
+		auto asStruct = cast(ir.Struct)node;
+
+		/// @todo Interface.
+		if (asClass !is null) {
+			outType = asType;
+			outScope = asClass.myScope;
+			return true;
+		} else if (asStruct !is null) {
+			outType = asType;
+			outScope = asStruct.myScope;
+			return true;
+		}
+
+		_scope = _scope.parent;
+	}
+	return false;
+}
+
+/**
+ * Return the first class scope and the class going down the chain
+ * of containing scopes (_scope.parent field).
+ *
+ * Returns:
+ *   True if we found a thisable type and its scope and type.
+ */
+bool getFirstClass(ir.Scope _scope, out ir.Scope outScope, out ir.Class outClass)
+{
+	while (_scope !is null) {
+		auto node = _scope.node;
+		if (node is null)
+			throw CompilerPanic("scope without owning node");
+
+		auto asClass = cast(ir.Class)node;
+		if (asClass !is null) {
+			outClass = asClass;
+			outScope = asClass.myScope;
+			return true;
+		}
+
+		_scope = _scope.parent;
+	}
+	return false;
+}
