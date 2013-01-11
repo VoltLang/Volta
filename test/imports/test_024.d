@@ -3,7 +3,6 @@
 //T dependency:m1.d
 //T dependency:m6.d
 //T dependency:m7.d
-//T has-passed:no
 // We must go deeper.
 
 module test_024;
