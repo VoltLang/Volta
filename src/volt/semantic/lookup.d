@@ -7,9 +7,9 @@ import volt.token.location;
 
 
 /**
- * Lookup an identifier in the scope and only in this scope
- * not parents scops, not parent classes, and not in imported
- * modules in this or any other scopes.
+ * Look up an identifier in this scope only. 
+ * Doesn't check parent scopes, parent classes, imports, or anywhere else but the
+ * given scope.
  */
 ir.Store lookupOnlyThisScope(ir.Scope _scope, string name, Location location)
 {
@@ -17,12 +17,11 @@ ir.Store lookupOnlyThisScope(ir.Scope _scope, string name, Location location)
 }
 
 /**
- * Lookup and identifier in the scope and any parents scopes if
- * if it is a class scope including imports in for those scope.
- * Ment to implement the this.identifier constructs.
+ * Look up an identifier in this scope, in parent scopes (in
+ * the case of classes), and in any imports for this scope.
  *
- * Where the scope is can to used for this function is retrived
- * via the getFirstThisable function.
+ * A usable scope for this function is retrieved from the
+ * getFirstThisable function.
  *
  * @todo actually lookup imports.
  */
@@ -39,12 +38,8 @@ ir.Store lookupAsThisScope(ir.Scope _scope, string name, Location location)
 }
 
 /**
- * Lookup an identifier in a scope and its parent scopes.
+ * Look up an identifier in a scope and its parent scopes.
  * Returns the store or null if no match was found.
- *
- * @param decend Should parents scopes be concidered.
- * 
- * @todo Take a location.
  */
 ir.Store lookup(ir.Scope _scope, string name, Location location)
 {
