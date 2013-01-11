@@ -880,14 +880,16 @@ public:
 
 	override Status visit(ref ir.Exp e, ir.ExpReference reference)
 	{
-		auto asClass = cast(ir.Class) current.parent.node;
-		if (asClass !is null) {
+		ir.Scope _; 
+		ir.Class _class;
+		bool foundClass = current.getFirstClass(_, _class);
+		if (foundClass) {
 			auto asFunction = cast(ir.Function) current.node;
 			if (asFunction is null) {
 				return Continue;
 			}
 
-			auto store = asClass.myScope.lookup(reference.idents[$-1], reference.location);
+			auto store = _class.myScope.lookup(reference.idents[$-1], reference.location);
 			if (store is null) {
 				return Continue;
 			}
