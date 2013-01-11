@@ -99,9 +99,32 @@ ir.Type getExpTypeImpl(ir.Exp exp, ir.Scope currentScope)
 		auto asBinOp = cast(ir.BinOp) exp;
 		assert(asBinOp !is null);
 		return getBinOpType(asBinOp, currentScope);
+	case ExpReference:
+		auto asExpRef = cast(ir.ExpReference) exp;
+		assert(asExpRef !is null);
+		return getExpReferenceType(asExpRef);
 	default:
 		throw CompilerPanic(format("unable to type expression '%s'.", to!string(exp.nodeType)));
 	}
+}
+
+ir.Type getExpReferenceType(ir.ExpReference expref)
+{
+	if (expref.decl is null) {
+		throw CompilerPanic(expref.location, "unable to type expression reference.");
+	}
+
+	auto var = cast(ir.Variable) expref.decl;
+	if (var !is null) {
+		return var.type;
+	}
+
+	auto fn = cast(ir.Function) expref.decl;
+	if (fn !is null) {
+		return fn.type;
+	}
+
+	throw CompilerPanic(expref.location, "unable to type expression reference.");
 }
 
 ir.Type getBinOpType(ir.BinOp bin, ir.Scope currentScope)
@@ -239,9 +262,41 @@ ir.Type getPostfixType(ir.Postfix postfix, ir.Scope currentScope)
 		return getPostfixIncDecType(postfix, currentScope);
 	case Identifier:
 		return getPostfixIdentifierType(postfix, currentScope);
+	case CreateDelegate:
+		return getPostfixCreateDelegateType(postfix, currentScope);
 	default:
-		assert(false);
+		auto emsg = format("unhandled postfix op type '%s'", to!string(postfix.op));
+		throw CompilerPanic(postfix.location, emsg);
 	}
+}
+
+ir.Type getPostfixCreateDelegateType(ir.Postfix postfix, ir.Scope currentScope)
+{
+	auto err = CompilerPanic(postfix.location, "couldn't retrieve type from CreateDelegate postfix.");
+
+	/*auto _void = new ir.PrimitiveType(ir.PrimitiveType.Kind.Void);
+	_void.location = postfix.child.location;
+	auto pointer = new ir.PointerType(_void);
+	pointer.location = _void.location;
+	auto thisVar = new ir.Variable();
+	thisVar.location = _void.location;
+	thisVar.type = pointer;
+	thisVar.name = "this";*/
+
+	auto eref = cast(ir.ExpReference) postfix.memberFunction;
+	if (eref is null) {
+		throw err;
+	}
+
+	auto fn = cast(ir.Function) eref.decl;
+	if (fn is null) {
+		throw err;
+	}
+
+	auto dg = new ir.DelegateType(fn.type);
+	//dg.params ~= thisVar;
+	//dg.hiddenParameter = true;
+	return dg;
 }
 
 ir.Type getSizeT(Location location, ir.Scope currentScope)
@@ -324,7 +379,7 @@ ir.Type getPostfixIdentifierType(ir.Postfix postfix, ir.Scope currentScope)
 	retrieveScope(type, postfix, _scope, _class, emsg);
 
 	_lookup:
-	auto store = _scope.getStore(postfix.identifier.value);
+	auto store = _scope.lookupOnlyThisScope(postfix.identifier.value, postfix.location);
 	// If this scope came from a class and it has a parent, check the parent as well.
 	if (store is null && _class !is null && _class.parentClass !is null) {
 		_class = _class.parentClass;

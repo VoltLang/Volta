@@ -88,6 +88,12 @@ public:
 		return ContinueParent;
 	}
 
+	override Status visit(ir.IdentifierExp ie)
+	{
+		auto emsg = format("IdentifierExp '%s' left in IR.", ie.value);
+		throw CompilerPanic(ie.location, emsg);
+	}
+
 	override Status leave(ir.TopLevelBlock tlb) { assert(false); }
 	override Status leave(ir.BlockStatement bs) { assert(false); }
 }

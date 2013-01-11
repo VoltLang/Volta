@@ -284,6 +284,15 @@ class DelegateType : CallableType
 {
 public:
 	this() { super(NodeType.DelegateType); }
+	this(FunctionType ftype)
+	{
+		this();
+		location = ftype.location;
+		linkage = ftype.linkage;
+		ret = ftype.ret;
+		params = ftype.params.dup;
+		hiddenParameter = ftype.hiddenParameter;
+	}
 }
 
 /**
