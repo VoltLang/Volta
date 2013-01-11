@@ -254,6 +254,15 @@ public:
 
 public:
 	this(NodeType nt) { super(nt); }
+	this(NodeType nt, CallableType ctype)
+	{
+		this(nt);
+		location = ctype.location;
+		linkage = ctype.linkage;
+		ret = ctype.ret;
+		params = ctype.params.dup;
+		hiddenParameter = ctype.hiddenParameter;
+	}
 }
 
 /**
@@ -270,6 +279,10 @@ class FunctionType : CallableType
 {
 public:
 	this() { super(NodeType.FunctionType); }
+	this(CallableType ctype)
+	{
+		super(NodeType.FunctionType, ctype);
+	}
 }
 
 /**
@@ -284,14 +297,9 @@ class DelegateType : CallableType
 {
 public:
 	this() { super(NodeType.DelegateType); }
-	this(FunctionType ftype)
+	this(CallableType ctype)
 	{
-		this();
-		location = ftype.location;
-		linkage = ftype.linkage;
-		ret = ftype.ret;
-		params = ftype.params.dup;
-		hiddenParameter = ftype.hiddenParameter;
+		super(NodeType.DelegateType, ctype);
 	}
 }
 
