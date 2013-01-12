@@ -286,9 +286,11 @@ ir.Function parseFunction(TokenStream ts, ir.Type base)
 	// int <add>(int a, int b) {}
 	auto nameTok = match(ts, TokenType.Identifier);
 	fn.name = nameTok.value;
+	fn.location = nameTok.location;
 
 	// int add<(int a, int b)> {}
 	fn.type.params = parseParameterList(ts);
+	fn.type.location = ts.previous.location - fn.type.ret.location;
 
 	bool inBlocks = ts.peek.type != TokenType.Semicolon;
 	while (inBlocks) {
