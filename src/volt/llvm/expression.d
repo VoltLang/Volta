@@ -617,7 +617,16 @@ void handlePostId(State state, ir.Postfix postfix, Value result)
 	}
 
 	if (st !is null) {
-		index = st.indices[postfix.identifier.value];
+		auto key = postfix.identifier.value;
+		auto ptr = key in st.indices;
+		if (ptr is null) {
+			auto str = format("0x%s no field name '%s' in struct '%s'",
+			                  to!string(*cast(size_t*)&postfix),
+			                  key, st.irType.mangledName);
+			throw CompilerPanic(postfix.location, str);
+		}
+
+		index = *ptr;
 		v = LLVMBuildStructGEP(b, v, index, "structGep");
 
 		result.isPointer = true;
