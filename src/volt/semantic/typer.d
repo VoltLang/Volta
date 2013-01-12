@@ -274,15 +274,6 @@ ir.Type getPostfixCreateDelegateType(ir.Postfix postfix, ir.Scope currentScope)
 {
 	auto err = CompilerPanic(postfix.location, "couldn't retrieve type from CreateDelegate postfix.");
 
-	/*auto _void = new ir.PrimitiveType(ir.PrimitiveType.Kind.Void);
-	_void.location = postfix.child.location;
-	auto pointer = new ir.PointerType(_void);
-	pointer.location = _void.location;
-	auto thisVar = new ir.Variable();
-	thisVar.location = _void.location;
-	thisVar.type = pointer;
-	thisVar.name = "this";*/
-
 	auto eref = cast(ir.ExpReference) postfix.memberFunction;
 	if (eref is null) {
 		throw err;
@@ -294,8 +285,7 @@ ir.Type getPostfixCreateDelegateType(ir.Postfix postfix, ir.Scope currentScope)
 	}
 
 	auto dg = new ir.DelegateType(fn.type);
-	//dg.params ~= thisVar;
-	//dg.hiddenParameter = true;
+	dg.location = postfix.location;
 	return dg;
 }
 
