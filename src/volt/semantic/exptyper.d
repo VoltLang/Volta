@@ -38,48 +38,6 @@ public:
 		this.settings = settings;
 	}
 
-	/// Get a scope from n, or null if it doesn't have one.
-	ir.Scope getChildScope(Location location, ir.Scope _scope, string s)
-	{
-		auto store = _scope.lookup(s, location);
-
-		if (store is null) {
-			auto emsg = format("'%s' has no member '%s'", _scope.name, s);
-			throw new CompilerError(location, emsg);
-		}
-
-		if (store.kind == ir.Store.Kind.Scope) {
-			return store.s;
-		}
-
-		assert(store.node.nodeType == ir.NodeType.Variable);
-		auto asDecl = cast(ir.Variable) store.node;
-		assert(asDecl !is null);
-
-		if (asDecl.type.nodeType == ir.NodeType.ArrayType) {
-			return null;
-		}
-
-		assert(asDecl.type.nodeType == ir.NodeType.TypeReference);
-		auto asUser = cast(ir.TypeReference) asDecl.type;
-		switch (asUser.type.nodeType) with (ir.NodeType) {
-		case Struct:
-			auto asStruct = cast(ir.Struct) asUser.type;
-			assert(asStruct !is null);
-			return asStruct.myScope;
-		case Class:
-			auto asClass = cast(ir.Class) asUser.type;
-			assert(asClass !is null);
-			return asClass.myScope;
-		case Interface:
-			auto asInterface = cast(ir._Interface) asUser.type;
-			assert(asInterface !is null);
-			return asInterface.myScope;
-		default:
-			throw new CompilerError(asUser.location, "can't retrieve members from type.");
-		}
-	}
-
 	/// Modify a function call to have explicit casts and return the return type.
 	void extypePostfix(ir.Postfix postfix)
 	{
