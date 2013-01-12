@@ -706,13 +706,15 @@ public:
 		if (p.op != ir.Postfix.Op.Identifier)
 			return Continue;
 
-		string[] idents;
+		ir.Postfix[] postfixIdents; // In reverse order.
+		ir.IdentifierExp identExp; // The top of the stack.
 		ir.Postfix currentP = p;
+
 		while (true) {
 			if (currentP.identifier is null)
 				throw CompilerPanic(currentP.location, "null identifier");
 
-			idents ~= currentP.identifier.value;
+			postfixIdents = [currentP] ~ postfixIdents;
 
 			if (currentP.child.nodeType == ir.NodeType.Postfix) {
 				auto child = cast(ir.Postfix) currentP.child;
@@ -725,27 +727,26 @@ public:
 				currentP = child;
 
 			} else if (currentP.child.nodeType == ir.NodeType.IdentifierExp) {
-				auto identExp = cast(ir.IdentifierExp) currentP.child;
-				idents ~= identExp.value;
+				identExp = cast(ir.IdentifierExp) currentP.child;
 				break;
 			} else {
 				throw CompilerPanic(currentP.location, "strange postfix child");
 			}
 		}
 
-		ir.Scope _scope = current;
 		ir.ExpReference _ref;
+		ir.Location loc;
+		string ident;
+		string[] idents;
+
 		/// Fillout _ref with data from ident.
-		void filloutReference(string ident)
+		void filloutReference(ir.Store store)
 		{
 			_ref = new ir.ExpReference();
-			_ref.location = p.location;
+			_ref.location = loc;
 			_ref.idents = idents;
 
-			auto store = _scope.lookup(ident, p.location);
-			if (store is null) {
-				throw new CompilerError(p.location, format("unknown identifier '%s'.", ident));
-			}
+			assert(store !is null);
 			if (store.kind == ir.Store.Kind.Value) {
 				auto var = cast(ir.Variable) store.node;
 				assert(var !is null);
@@ -754,49 +755,95 @@ public:
 				assert(store.functions.length == 1);
 				auto fn = store.functions[0];
 				_ref.decl = fn;
-			} else if (store.kind == ir.Store.Kind.Type) {
-				throw CompilerPanic(p.location, "ExpReferences can't hold types, related to aggregate test 5.");
 			} else {
 				auto emsg = format("unhandled Store kind: '%s'.", to!string(store.kind));
 				throw CompilerPanic(_ref.location, emsg);
 			}
-		}
 
-		if (idents.length > 1) for (int i = cast(int)idents.length - 1; i > 0; --i) {
-			if (i > 1) {
-				_scope = getChildScope(p.location, _scope, idents[i]);
-				if (_scope is null) {
-					return ContinueParent;
-				}
-			} else {
-				auto store = _scope.lookup(idents[i], p.location);
-				if (store is null) {
-					auto emsg = format("'%s' has no member '%s'.", _scope.name, idents[i]);
-					throw new CompilerError(p.location, emsg);
-				}
-				assert(store !is null);
-				if (store.kind == ir.Store.Kind.Scope) {
-					_scope = store.s;
-					assert(i == 1);
-					filloutReference(idents[0]);
-					e = _ref;
-					return ContinueParent;
-				} else {
-					filloutReference(idents[i]);
-				}
+			// Sanity check.
+			if (_ref.decl is null) {
+				throw CompilerPanic(_ref.location, "empty ExpReference declaration.");
 			}
-		} else if (idents.length == 1) {
-			filloutReference(idents[0]);
 		}
 
-		if (_ref.decl is null) {
+		/**
+		 * Our job here is to work trough the stack of postfixs and
+		 * the top identifier exp looking for the first variable or
+		 * function.
+		 *
+		 * pkg.mod.Class.Child.'staticVar'.field.anotherField;
+		 *
+		 * Would have 6 postfixs and IdentifierExp == "pkg".
+		 * We would skip 3 postfixes and the IdentifierExp.
+		 * Postfix "anotherField" ->
+		 *   Postfix "field" ->
+		 *     ExpReference "pkg.mod.Class.Child.staticVar".
+		 *
+		 *
+		 * pkg.mod.'staticVar'.field;
+		 *
+		 * Would have 2 Postfixs and the IdentifierExp.
+		 * We would should skip everything but one Postfix.
+		 * Postfix "field" ->
+		 *   ExpReference "pkg.mod.staticVar".
+		 */
+
+		ir.Scope _scope;
+		ir.Store store;
+
+		// First do the identExp lookup.
+		// p is in an unknown state at this point.
+		{
+			_scope = current;
+			loc = identExp.location;
+			ident = identExp.value;
+			idents = [ident];
+			store = _scope.lookup(ident, loc);
+		}
+
+		// Now do the looping.
+		do {
+			if (store is null) {
+				/// @todo keep track of what the context was that we looked into.
+				throw new CompilerError(loc, format("unknown identifier '%s'.", ident));
+			}
+
+			final switch(store.kind) with (ir.Store.Kind) {
+			case Scope:
+			case Type:
+				_scope = getScopeFromStore(store);
+				if (_scope is null)
+					throw CompilerPanic(loc, "missing scope");
+
+				if (postfixIdents.length == 0)
+					throw new CompilerError(loc, "expected value or function not type/scope");
+
+				p = postfixIdents[0];
+				postfixIdents = postfixIdents[1 .. $];
+				ident = p.identifier.value;
+				loc = p.identifier.location;
+
+				store = _scope.lookupOnlyThisScope(ident, loc);
+				idents = [ident] ~ idents;
+
+				break;
+			case Value:
+			case Function:
+				filloutReference(store);
+				break;
+			}
+
+		} while(_ref is null);
+
+		assert(_ref !is null);
+
+		if (postfixIdents.length == 0) {
+			e = _ref;
 			return ContinueParent;
-			//throw CompilerPanic(_ref.location, "empty ExpReference declaration.");
+		} else {
+			p = postfixIdents[0];
+			p.child = _ref;
 		}
-
-		p.child = _ref;
-
-
 
 		/* If we end up with a identifier postfix that points
 		 * at a struct, and retrieves a member function, then
@@ -815,7 +862,7 @@ public:
 			}
 			auto asStruct = cast(ir.Struct) asTR.type;
 			assert(asStruct !is null);
-			ir.Store store = asStruct.myScope.lookupOnlyThisScope(p.identifier.value, p.location);
+			store = asStruct.myScope.lookupOnlyThisScope(p.identifier.value, p.location);
 			if (store is null) {
 				throw new CompilerError(_ref.location, format("aggregate has no member '%s'.", p.identifier.value));
 			}

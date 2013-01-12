@@ -157,6 +157,40 @@ ir.Class retrieveTypeInfoClass(Location location, ir.Scope _scope)
 }
 
 /**
+ * For the give store get the scoep that it introduces.
+ *
+ * Returns null for Values and non-scope types.
+ */
+ir.Scope getScopeFromStore(ir.Store store)
+{
+	final switch(store.kind) with (ir.Store.Kind) {
+	case Scope:
+		return store.s;
+	case Type:
+		auto type = store.node;
+		switch (type.nodeType) with (ir.NodeType) {
+		case Struct:
+			auto asStruct = cast(ir.Struct) type;
+			assert(asStruct !is null);
+			return asStruct.myScope;
+		case Class:
+			auto asClass = cast(ir.Class) type;
+			assert(asClass !is null);
+			return asClass.myScope;
+		case Interface:
+			auto asInterface = cast(ir._Interface) type;
+			assert(asInterface !is null);
+			return asInterface.myScope;
+		default:
+			return null;
+		}
+	case Value:
+	case Function:
+		return null;
+	}
+}
+
+/**
  * Return the first scope and type that is thisable going down the
  * chain of containing scopes (_scope.parent field).
  *
