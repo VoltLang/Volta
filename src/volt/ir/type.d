@@ -296,10 +296,22 @@ public:
 class DelegateType : CallableType
 {
 public:
-	this() { super(NodeType.DelegateType); }
+	this()
+	out {
+		assert(this.hiddenParameter);
+	}
+	body {
+		super(NodeType.DelegateType);
+		this.hiddenParameter = true;
+	}
+
 	this(CallableType ctype)
-	{
+	out {
+		assert(this.hiddenParameter);
+	}
+	body {
 		super(NodeType.DelegateType, ctype);
+		this.hiddenParameter = true;
 	}
 }
 
