@@ -231,21 +231,10 @@ bool typesEqual(ir.Type a, ir.Type b)
 		auto bp = cast(ir.CallableType) b;
 		assert(ap !is null && bp !is null);
 
-		/* Don't bother comparing the hidden parameter if
-		 * they're in different states.
-		 */
 		size_t apLength = ap.params.length, bpLength = bp.params.length;
-		if ((ap.hiddenParameter && !bp.hiddenParameter) ||
-			(bp.hiddenParameter && !ap.hiddenParameter)) {
-			if (ap.hiddenParameter) {
-				apLength--;
-			}
-			if (bp.hiddenParameter) {
-				bpLength--;
-			}
-		}
-
 		if (apLength != bpLength)
+			return false;
+		if (ap.hiddenParameter != bp.hiddenParameter)
 			return false;
 		auto ret = typesEqual(ap.ret, bp.ret);
 		if (!ret)

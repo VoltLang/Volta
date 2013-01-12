@@ -19,7 +19,7 @@ class ContextBuilder : NullVisitor, Pass
 {
 public:
 	ir.Scope current;
-	ir.Struct[] structStack;
+	ir.Type[] thisStack;
 
 public:
 	void close()
@@ -77,6 +77,8 @@ public:
 		current.addType(c, c.name);
 		c.myScope = newContext(c, c.name);
 
+		thisStack ~= c;
+
 		return Continue;
 	}
 
@@ -93,7 +95,7 @@ public:
 		current.addType(s, s.name);
 		s.myScope = newContext(s, s.name);
 
-		structStack ~= s;		
+		thisStack ~= s;
 
 		return Continue;
 	}
@@ -106,40 +108,47 @@ public:
 			fn.myScope.addValue(var, var.name);
 		}
 
-		if (structStack.length == 0) {
+		if (thisStack.length == 0) {
 			return Continue;
 		}
 
 		/// @todo not when the function is static
 
 		auto tr = new ir.TypeReference();
-		tr.location = structStack[$-1].location;
-		tr.names ~= structStack[$-1].name;
-		tr.type = structStack[$-1];
+		tr.location = thisStack[$-1].location;
+		tr.names ~= "__this";
+		tr.type = thisStack[$-1];
 
 		auto thisVar = new ir.Variable();
-		thisVar.location = structStack[$-1].location;
-		thisVar.type = new ir.PointerType(tr);
+		thisVar.location = fn.location;
+		thisVar.type = tr;
 		thisVar.name = "this";
 		thisVar.mangledName = "this";
 
 		fn.myScope.addValue(thisVar, thisVar.name);
-		fn.type.params ~= thisVar;
+		fn.thisHiddenParameter = thisVar;
 		fn.type.hiddenParameter = true;
 
 		return Continue;
 	}
 
-	override Status leave(ir.Class c) { pop(); return Continue; }
-	override Status leave(ir._Interface i) { pop(); return Continue; }
+
+	override Status leave(ir.Class c)
+	{
+		pop();
+		assert(thisStack.length > 0);
+		thisStack = thisStack[0 .. $-1];
+		return Continue;
+	}
 
 	override Status leave(ir.Struct s) 
 	{ 
 		pop();
-		assert(structStack.length > 0); 
-		structStack = structStack[0 .. $-1];
+		assert(thisStack.length > 0);
+		thisStack = thisStack[0 .. $-1];
 		return Continue;
 	}
 
+	override Status leave(ir._Interface i) { pop(); return Continue; }
 	override Status leave(ir.Function fn) { pop(); return Continue; }
 }

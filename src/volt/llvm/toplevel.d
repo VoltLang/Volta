@@ -63,6 +63,12 @@ public:
 				LLVMBuildStore(state.builder, v, a);
 			}
 
+			ir.Variable thisVar = fn.thisHiddenParameter;
+			if (thisVar !is null) {
+				auto v = LLVMGetParam(llvmFunc, cast(uint)fn.type.params.length);
+				state.makeThisVariable(thisVar, v);
+			}
+
 			foreach(n; fn._body.statements)
 				accept(n, this);
 

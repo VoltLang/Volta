@@ -128,9 +128,6 @@ void mangleFunctionType(ir.FunctionType fn, string[] names, ref string mangledSt
 	}
 	// !!! Attributes go here. !!!
 	foreach (i, param; fn.params) {
-		if (fn.hiddenParameter && i == fn.params.length - 1) {
-			continue;
-		}
 		mangleBase(param.type, names, mangledString);
 	}
 	mangledString ~= "Z";  // This would be difference with variadics.

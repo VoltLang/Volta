@@ -299,11 +299,15 @@ public:
 		ret = state.fromIr(ft.ret);
 
 		LLVMTypeRef[] args;
-		args.length = ft.params.length;
+		args.length = ft.params.length + ft.hiddenParameter;
 
 		foreach(int i, param; ft.params) {
 			auto type = state.fromIr(param.type);
 			args[i] = type.llvmType;
+		}
+
+		if (ft.hiddenParameter) {
+			args[$-1] = state.voidPtrType.llvmType;
 		}
 
 		llvmCallType = LLVMFunctionType(ret.llvmType, args, false);
@@ -413,6 +417,9 @@ public:
  */
 Type fromIr(State state, ir.Type irType)
 {
+	import std.stdio;
+	if (irType.mangledName == "_VDQZv") writefln(irType.location.toString);
+
 	if (irType.nodeType == ir.NodeType.TypeReference) {
 		auto tr = cast(ir.TypeReference)irType;
 		assert(tr !is null);
@@ -456,7 +463,7 @@ Type fromIr(State state, ir.Type irType)
 		auto strct = cast(ir.Struct)irType;
 		return new .StructType(state, strct);
 	default:
-		throw CompilerPanic(irType.location, "Can't translate type");
+		throw CompilerPanic(irType.location, "Can't translate type %s");
 	}
 }
 

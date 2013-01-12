@@ -56,13 +56,17 @@ ir.Store lookup(ir.Scope _scope, string name, Location location)
 		if (_this !is null) {
 			auto asVar = cast(ir.Variable) _this.node;
 			assert(asVar !is null);
-			auto asPointer = cast(ir.PointerType) asVar.type;
-			assert(asPointer !is null);
-			auto asTR = cast(ir.TypeReference) asPointer.base;
+			auto asTR = cast(ir.TypeReference) asVar.type;
 			assert(asTR !is null);
 			auto asStruct = cast(ir.Struct) asTR.type;
-			assert(asStruct !is null);
-			store = asStruct.myScope.getStore(name);
+			auto asClass = cast(ir.Class) asTR.type;
+			assert(asStruct !is null || asClass !is null);
+
+			if (asClass !is null) {
+				store = asClass.myScope.getStore(name);
+			} else if (asStruct !is null) {
+				store = asStruct.myScope.getStore(name);
+			}
 			if (store !is null) {
 				return store;
 			}

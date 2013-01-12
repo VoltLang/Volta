@@ -48,7 +48,7 @@ public:
 	 * }
 	 * ---
 	 */
-	ir.Function createConstructor(ir.Struct c, ir.Struct vtable, ir.Function[] userConstructors)
+	ir.Function createConstructor(ir.Struct c, ir.Struct vtable, ir.Function[] userConstructors, ir.Function[] functions)
 	{
 		/* Okay, this might look kind of terrifying, but it's not too
 		 * bad once you realise it's just a lot of setting up the artificial
@@ -76,15 +76,13 @@ public:
 		if (userConstructors.length > 0) {
 			assert(userConstructors.length == 1);
 
-			foreach (param; userConstructors[0].type.params[0 .. $-1]) {
+			foreach (param; userConstructors[0].type.params) {
 				fn.type.params ~= new ir.Variable();
 				fn.type.params[$-1].location = c.location;
 				fn.type.params[$-1].name = param.name;
 				fn.type.params[$-1].type = param.type;
 			}
 		}
-
-		fn.type.hiddenParameter = true;
 
 		fn.myScope = new ir.Scope(c.myScope, c, null);
 
@@ -136,7 +134,6 @@ public:
 		expStatement.exp = vtableAssign;
 		fn._body.statements ~= expStatement;
 
-		ir.Function[] functions = getStructFunctions(c);
 		foreach (i, methodfn; functions) {
 			auto vindex = new ir.Postfix();
 			vindex.location = c.location;
@@ -209,13 +206,13 @@ public:
 	 * A vtable struct is a struct with function pointers
 	 * of the class methods on it.
 	 */
-	ir.Struct createVtableStruct(Location location, ir.Function[] functions)
+	ir.Struct createVtableStruct(Location location, ir.Struct parent, ir.Function[] functions)
 	{
 		import std.stdio;
 
 		auto _struct = new ir.Struct();
 		_struct.location = location;
-		_struct.myScope = new ir.Scope(internalScope, _struct, null);
+		_struct.myScope = new ir.Scope(parent.myScope, _struct, null);
 		_struct.name = "__Vtable";
 		_struct.defined = true;
 
@@ -281,25 +278,13 @@ public:
 	 * Retrieve all appropriate methods for a given inheritance chain,
 	 * taking into account function overriding.
 	 *
-	 * Side-effects: the hidden this parameter is added to functions
-	 *               that do not have it.
+	 * Side-effects: change the type of the hidden this to the struct.
 	 */
-	ir.Function[] getMethods(ir.Class[] inheritanceChain, ir.Struct _struct)
+	ir.Function[] getMethods(ir.Class[] inheritanceChain, ir.Struct _struct, out ir.Function[] myMethods)
 	{
-		import std.stdio;
-
-		// Each parameter needs a unique this or the LLVM IR generated is bad.
-		ir.Variable getThis()
-		{
-			auto thisVar = new ir.Variable();
-			thisVar.location = inheritanceChain[0].location;
-			thisVar.name = "argThis";
-			thisVar.type = new ir.PointerType(new ir.PrimitiveType(ir.PrimitiveType.Kind.Void));
-			return thisVar;
-		}
-
 		ir.Function[] methods;
 		int[string] definedMethods;
+
 		for (int i = cast(int)(inheritanceChain.length - 1); i >= 0; --i) {
 			auto _class = inheritanceChain[i];
 			foreach (node; _class.members.nodes) {
@@ -307,37 +292,32 @@ public:
 					continue;
 				}
 				auto asFunction = cast(ir.Function) node;
-
 				assert(asFunction !is null);
-				if (!asFunction.type.hiddenParameter) {
-					asFunction.vtableIndex = i;
-					asFunction.type.params ~= getThis();
 
-					auto argThis = new ir.ExpReference();
-					argThis.location = inheritanceChain[0].location;
-					argThis.idents ~= "argThis";
-					argThis.decl = asFunction.type.params[$-1];
-
-					auto _cast = new ir.Unary(new ir.PointerType(new ir.TypeReference(_struct, _struct.name)), argThis);
-					_cast.location = inheritanceChain[0].location;
-
-					auto thisVar = new ir.Variable();
-					thisVar.location = inheritanceChain[0].location;
-					thisVar.name = "this";
-					thisVar.type = new ir.PointerType(new ir.TypeReference(_struct, _struct.name));
-					thisVar.type.location = inheritanceChain[0].location;
-					thisVar.assign = _cast;
-					if (asFunction._body !is null) {
-						asFunction._body.statements = thisVar ~ asFunction._body.statements;
-					}
-					asFunction.myScope.addValue(thisVar, "this");
-
-					asFunction.type.hiddenParameter = true;
+				if (asFunction.thisHiddenParameter is null) {
+					continue;
 				}
+
+				auto asTypeRef = cast(ir.TypeReference) asFunction.thisHiddenParameter.type;
+				assert(asTypeRef !is null);
+
+				auto asClass = cast(ir.Class) asTypeRef.type;
+				if (asClass !is null) {
+					 asTypeRef.type = _struct;
+				}
+
 				// Don't add constructors to the method list.
 				if (asFunction.kind == ir.Function.Kind.Constructor) {
 					continue;
 				}
+
+				// And test again...
+				if (asClass !is null) {
+					asFunction.vtableIndex = i;
+					myMethods ~= asFunction;
+					assert(asFunction.type.hiddenParameter);
+				}
+
 				if (auto indexPointer = asFunction.name in definedMethods) {
 					methods[*indexPointer] = asFunction;
 				} else {
@@ -384,7 +364,7 @@ public:
 		auto _struct = new ir.Struct();
 		_struct.name = _class.name;
 		_struct.location = _class.location;
-		_struct.myScope = new ir.Scope(_class.myScope.parent, _struct, null);
+		_struct.myScope = new ir.Scope(_class.myScope.parent, _struct, _class.name);
 		_struct.members = new ir.TopLevelBlock();
 		_struct.members.location = _class.location;
 		_struct.mangledName = name;
@@ -392,8 +372,9 @@ public:
 		synthesised[_class] = _struct;
 
 		// Retrieve the methods and fields for this class.
+		ir.Function[] myMethods;
 		auto inheritanceChain = getInheritanceChain(_class);
-		auto methods = getMethods(inheritanceChain, _struct);
+		auto methods = getMethods(inheritanceChain, _struct, myMethods);
 		auto fields = getFields(inheritanceChain);
 		auto constructors = getConstructors(inheritanceChain);
 
@@ -404,7 +385,7 @@ public:
 		_class.userConstructors = constructors;
 
 		// Add the vtable type to the struct.
-		auto vtableStruct = createVtableStruct(_class.location, methods);
+		auto vtableStruct = createVtableStruct(_class.location, _struct, methods);
 		_struct.myScope.addType(vtableStruct, vtableStruct.name);
 		_struct.members.nodes ~= vtableStruct;
 		_class.vtableStruct = vtableStruct;
@@ -424,7 +405,7 @@ public:
 		}
 
 		// Add the methods.
-		foreach (method; methods) {
+		foreach (method; myMethods) {
 			_struct.myScope.addFunction(method, method.name);
 			_struct.members.nodes ~= method;
 		}
@@ -435,7 +416,7 @@ public:
 		}
 
 		// And finally, create and add the constructor.
-		auto ctor = createConstructor(_struct, vtableStruct, constructors);
+		auto ctor = createConstructor(_struct, vtableStruct, constructors, methods);
 		_struct.myScope.addFunction(ctor, ctor.name);
 		_struct.members.nodes ~= ctor;
 		_class.constructor = ctor;
@@ -602,11 +583,11 @@ public:
 			return Continue;
 		}
 
-		/* Check that the number of arguments passed to new is the same as the class's
-		 * constructor minus one. Minus one because the user constructor has a hidden
-		 * this parameter.
+		/*
+		 * Check that the number of arguments passed to
+		 * new is the same as the class's constructor.
 		 */
-		if (asClass.userConstructors.length > 0 && asClass.userConstructors[0].type.params.length - 1 != unary.argumentList.length) {
+		if (asClass.userConstructors.length > 0 && asClass.userConstructors[0].type.params.length != unary.argumentList.length) {
 			throw new CompilerError(unary.location, "no match for constructor (bad number of arguments).");
 		} else if (asClass.userConstructors.length == 0 && unary.argumentList.length > 0) {
 			throw new CompilerError(unary.location, "no user constructor yet arguments supplied.");

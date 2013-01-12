@@ -690,7 +690,8 @@ void handleCreateDelegate(State state, ir.Postfix postfix, Value result)
 	auto irDg = new ir.DelegateType();
 	irDg.ret = irFn.ret;
 	irDg.linkage = irFn.linkage;
-	irDg.params = irFn.params[0 .. $-1].dup;
+	irDg.location = postfix.location;
+	irDg.params = irFn.params.dup;
 	irDg.mangledName = volt.semantic.mangle.mangle(null, irDg);
 
 	auto dg = cast(DelegateType)state.fromIr(irDg);
@@ -736,7 +737,8 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 	    childAsPostfix.op == ir.Postfix.Op.CreateDelegate) {
 
 		state.getValueRef(childAsPostfix.child, result);
-		llvmArgs ~= result.value;
+
+		llvmArgs ~= LLVMBuildBitCast(state.builder, result.value, state.voidPtrType.llvmType, "thisArg");
 
 		state.getValue(childAsPostfix.memberFunction, result);
 

@@ -215,4 +215,16 @@ public:
 		valueStore[k] = Store(v, type);
 		return v;
 	}
+
+	void makeThisVariable(ir.Variable var, LLVMValueRef v)
+	{
+		auto k = *cast(size_t*)&var;
+		assert((k in valueStore) is null);
+
+		auto type = this.fromIr(var.type);
+		auto ptrType = LLVMPointerType(type.llvmType, 0);
+
+		v = LLVMBuildBitCast(builder, v, ptrType, "this");
+		valueStore[k] = Store(v, type);
+	}
 }

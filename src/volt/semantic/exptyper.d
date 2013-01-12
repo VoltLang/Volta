@@ -92,7 +92,7 @@ public:
 		if (asFunctionType is null) {
 			throw new CompilerError(postfix.location, format("tried to call uncallable type."));
 		}
-		if (postfix.arguments.length != (asFunctionType.params.length - (asFunctionType.hiddenParameter ? 1 : 0))) {
+		if (postfix.arguments.length != asFunctionType.params.length) {
 			throw new CompilerError(postfix.location, "wrong number of arguments to function.");
 		}
 		foreach (i; 0 .. postfix.arguments.length) {
@@ -926,9 +926,7 @@ public:
 
 		auto asVar = cast(ir.Variable) thisStore.node;
 		assert(asVar !is null);
-		auto asPointer = cast(ir.PointerType) asVar.type;
-		assert(asPointer !is null);
-		auto asTR = cast(ir.TypeReference) asPointer.base;
+		auto asTR = cast(ir.TypeReference) asVar.type;
 		assert(asTR !is null);
 		auto asStruct = cast(ir.Struct) asTR.type;
 		assert(asStruct !is null);
