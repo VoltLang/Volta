@@ -177,6 +177,9 @@ public:
 	/// The @p Scope for the body of the function. @todo What about the contracts?
 	Scope myScope;
 
+	/// Optional this argument for member functions.
+	Variable thisHiddenParameter;
+
 	bool defined;
 	int vtableIndex = -1;
 
