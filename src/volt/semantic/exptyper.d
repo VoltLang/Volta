@@ -91,7 +91,12 @@ public:
 			return asLit.type;
 		}
 
-		ir.Node t = getExpType(right, current);
+		ir.Type t = getExpType(right, current);
+
+		auto asStorageType = cast(ir.StorageType) left;
+		if (asStorageType !is null && asStorageType.base is null) {
+			return asStorageType.base = t;
+		}
 
 		auto asTR = cast(ir.TypeReference) left;
 		if (asTR !is null) {

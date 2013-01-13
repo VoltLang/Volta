@@ -58,6 +58,14 @@ ir.Type getExpType(ir.Exp exp, ir.Scope currentScope)
 		assert(asTR !is null);
 		result = asTR.type;
 	}
+	while (result.nodeType == ir.NodeType.StorageType) {
+		auto asStorageType = cast(ir.StorageType) result;
+		assert(asStorageType !is null);
+		if (asStorageType.base is null) {
+			break;
+		}
+		result = asStorageType.base;
+	}
 	return result;
 }
 
