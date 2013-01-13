@@ -756,6 +756,10 @@ public:
 			loc = identExp.location;
 			ident = identExp.value;
 			idents = [ident];
+
+			/// @todo handle leading dot.
+			assert(!identExp.globalLookup);
+
 			store = _scope.lookup(ident, loc);
 		}
 
