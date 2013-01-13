@@ -811,26 +811,37 @@ public:
 		 * at a struct, and retrieves a member function, then
 		 * transform the op from Identifier to CreatePostfix.
 		 */
-		if (p.op == ir.Postfix.Op.Identifier && _ref.decl.declKind == ir.Declaration.Kind.Variable) {
+		/// @todo this should be checked in another place,
+		///        probably at the same place we handle property
+		if (p.op == ir.Postfix.Op.Identifier &&
+		    _ref.decl.declKind == ir.Declaration.Kind.Variable) {
+
 			auto asVar = cast(ir.Variable) _ref.decl;
 			assert(asVar !is null);
 			if (asVar.type.nodeType != ir.NodeType.TypeReference) {
 				return ContinueParent;
 			}
+
 			auto asTR = cast(ir.TypeReference) asVar.type;
 			assert(asTR !is null);
 			if (asTR.type.nodeType != ir.NodeType.Struct) {
 				return ContinueParent;
 			}
+
 			auto asStruct = cast(ir.Struct) asTR.type;
 			assert(asStruct !is null);
+
+			/// @todo this is probably an error.
 			store = asStruct.myScope.lookupOnlyThisScope(p.identifier.value, p.location);
 			if (store is null) {
 				throw new CompilerError(_ref.location, format("aggregate has no member '%s'.", p.identifier.value));
 			}
-			if (store.functions.length == 0) {
+
+			if (store.kind != ir.Store.Kind.Function) {
 				return ContinueParent;
 			}
+
+			/// @todo handle function overloading.
 			assert(store.functions.length == 1);
 
 			auto funcref = new ir.ExpReference();
