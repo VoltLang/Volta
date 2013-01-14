@@ -1202,24 +1202,11 @@ public:
 	override Status enter(ir.StorageType type)
 	{
 		final switch (type.type) with (ir.StorageType.Kind) {
-		case Abstract: wf("abstract"); break;
 		case Auto: wf("auto"); break;
 		case Const: wf("const"); break;
-		case Deprecated: wf("deprecated"); break;
-		case Enum: wf("enum"); break;
-		case Extern: wf("extern"); break;
-		case Final: wf("final"); break;
 		case Immutable: wf("immutable"); break;
 		case Inout: wf("inout"); break;
-		case Shared: wf("shared"); break;
-		case Nothrow: wf("nothrow"); break;
-		case Override: wf("override"); break;
-		case Pure: wf("pure"); break;
-		case Global: wf("global"); break;
-		case Local: wf("local"); break;
 		case Scope: wf("scope"); break;
-		case Static: wf("static"); break;
-		case Synchronized: wf("synchronized"); break;
 		}
 		if (type.base !is null) {
 			wf(" ");

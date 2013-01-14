@@ -117,15 +117,8 @@ public:
 			return Continue;
 		}
 		if (functionDepth > 0) {
-			// If we're in a function, only mangle static variables.
-			if (v.type.nodeType != ir.NodeType.StorageType) {
-				return Continue;
-			}
-			auto asStorage = cast(ir.StorageType) v.type;
-			assert(asStorage !is null);
-			if (asStorage.type != ir.StorageType.Kind.Static) {
-				return Continue;
-			}
+			/// @todo mangle static variables, but we need static for that.
+			return Continue;
 		}
 		if (aggregateDepth == 0) {
 			// Module level -- ensure global or local is specified.

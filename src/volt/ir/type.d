@@ -316,10 +316,40 @@ public:
 }
 
 /**
- * A StorageType changes how a Type is stored and/or
- * operated on.
+ * A StorageType changes how a Type behaves.
  *
- * @todo This needs serious pruning.
+ * Nested storage types are culled like so:
+ *
+ * Remove duplicate storage types, keeping the first.
+ *     const(const(immutable(const(T)))) => const(immutable(T))
+ *   
+ * If there is more than one storage type, remove auto.
+ *     const(auto(T)) => const(T)
+ *     
+ * Only one of immutable, const, and inout can exist in a single chain,
+ * with the following priority: immutable, inout, const
+ *    const(immutable(inout(T))) => immutable(T)
+ *    const(inout(T)) => inout(T)
+ * That is, const can only remain if inout or immutable are not present.
+ * inout can only remain if immutable is not present.
+ * If immutable is present, it will always remain.
+ *    
+ * If after the above, there is one storage type with a base of a 
+ * non-storage type, the collapsing is done.
+ *  
+ * (If the result is auto(T), the type becomes T)
+ *    
+ * Otherwise, the following assertions hold:
+ *   There are no duplicate storage types.
+ *   auto is not in the list.
+ *   there may be immutable, const, inout, but only one.
+ *   
+ * Given that, sort the storage types in the given order:
+ *  
+ * scope
+ * const/immutable/inout
+ *  
+ * const(scope(T))) => scope(const(T)))
  *
  * @ingroup irNode irType
  */
@@ -327,24 +357,11 @@ class StorageType : Type
 {
 public:
 	enum Kind {
-		Abstract = TokenType.Abstract,
 		Auto = TokenType.Auto,
 		Const = TokenType.Const,
-		Deprecated = TokenType.Deprecated,
-		Enum = TokenType.Enum,
-		Extern = TokenType.Extern,
-		Final = TokenType.Final,
 		Immutable = TokenType.Immutable,
 		Inout = TokenType.Inout,
-		Shared = TokenType.Shared,
-		Nothrow = TokenType.Nothrow,
-		Override = TokenType.Override,
-		Pure = TokenType.Pure,
-		Global = TokenType.Global,
-		Local = TokenType.Local,
 		Scope = TokenType.Scope,
-		Static = TokenType.Static,
-		Synchronized = TokenType.Synchronized,
 	}
 
 
