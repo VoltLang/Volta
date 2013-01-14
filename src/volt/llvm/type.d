@@ -417,9 +417,6 @@ public:
  */
 Type fromIr(State state, ir.Type irType)
 {
-	import std.stdio;
-	if (irType.mangledName == "_VDQZv") writefln(irType.location.toString);
-
 	if (irType.nodeType == ir.NodeType.TypeReference) {
 		auto tr = cast(ir.TypeReference)irType;
 		assert(tr !is null);
