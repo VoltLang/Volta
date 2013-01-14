@@ -56,14 +56,13 @@ public:
 		ir.Type endOfChain;
 		do {
 			storageChain ~= current.type;
-			if (current.base.nodeType != ir.NodeType.StorageType) {
+			if (current.base is null || current.base.nodeType != ir.NodeType.StorageType) {
 				endOfChain = current.base;
 				break;
 			}
 			current = cast(ir.StorageType) current.base;
 			assert(current !is null);
 		} while (true);
-		assert(endOfChain !is null);
 
 		if (storageChain.length == 1) {
 			return Continue;
@@ -126,8 +125,8 @@ public:
 		current.base = endOfChain;
 
 		// Skip over all of those storage types.
-		accept(endOfChain, this);
-		return ContinueParent;
+		//if (endOfChain !is null) accept(endOfChain, this);
+		return Continue;
 	}
 
 	override Status visit(ir.TypeReference u)

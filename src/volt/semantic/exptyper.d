@@ -58,16 +58,18 @@ public:
 		}
 	}
 
-	ir.Node extype(ir.Type left, ref ir.Exp right)
+	ir.Node extype(ref ir.Type left, ref ir.Exp right)
 	{
+		ir.Type localLeft = left;
+
 		if (right.nodeType == ir.NodeType.StructLiteral) {
 			auto asLit = cast(ir.StructLiteral) right;
 			assert(asLit !is null);
 			string emsg = "cannot implicitly cast struct literal to destination.";
 
-			auto asStruct = cast(ir.Struct) left;
+			auto asStruct = cast(ir.Struct) localLeft;
 			if (asStruct is null) {
-				auto asTR = cast(ir.TypeReference) left;
+				auto asTR = cast(ir.TypeReference) localLeft;
 				if (asTR !is null) {
 					asStruct = cast(ir.Struct) asTR.type;
 				}
@@ -94,53 +96,58 @@ public:
 		ir.Type t = getExpType(right, current);
 
 		auto asStorageType = cast(ir.StorageType) left;
-		if (asStorageType !is null && asStorageType.base is null) {
-			return asStorageType.base = t;
+		if (asStorageType !is null) { 
+			if (asStorageType.base is null) {
+				asStorageType.base = t;
+			}
+			if (asStorageType.type == ir.StorageType.Kind.Auto) {
+				localLeft = left = asStorageType.base;
+			}
 		}
 
 		auto asTR = cast(ir.TypeReference) left;
 		if (asTR !is null) {
-			left = asTR.type;
+			localLeft = asTR.type;
 		}
 
 		ir.Type type = cast(ir.Type)t;
-		string emsg = format("cannot implicitly convert '%s' to '%s'.", to!string(t.nodeType), to!string(left.nodeType));
+		string emsg = format("cannot implicitly convert '%s' to '%s'.", to!string(t.nodeType), to!string(localLeft.nodeType));
 
-		if (type !is null && typesEqual(left, type)) {
-			return left;
+		if (type !is null && typesEqual(localLeft, type)) {
+			return localLeft;
 		}
 
-		if (left.nodeType == ir.NodeType.PrimitiveType &&
+		if (localLeft.nodeType == ir.NodeType.PrimitiveType &&
 			t.nodeType == ir.NodeType.PrimitiveType) {
 
-			return extypePrimitiveAssign(right, left, right);
-		} else if (left.nodeType == ir.NodeType.PointerType &&
+			return extypePrimitiveAssign(right, localLeft, right);
+		} else if (localLeft.nodeType == ir.NodeType.PointerType &&
 					t.nodeType == ir.NodeType.PointerType) {
-			return extypePointerAssign(right, left, right);
-		} else if (left.nodeType == ir.NodeType.ArrayType &&
+			return extypePointerAssign(right, localLeft, right);
+		} else if (localLeft.nodeType == ir.NodeType.ArrayType &&
 				   t.nodeType == ir.NodeType.ArrayType) {
-			return extypeArrayAssign(right, left, right);
-		} else if (left.nodeType == ir.NodeType.Class &&
+			return extypeArrayAssign(right, localLeft, right);
+		} else if (localLeft.nodeType == ir.NodeType.Class &&
 				   t.nodeType == ir.NodeType.Class) {
-			auto leftClass = cast(ir.Class) left;
+			auto leftClass = cast(ir.Class) localLeft;
 			assert(leftClass !is null);
 			auto rightClass = cast(ir.Class) t;
 			assert(rightClass !is null);
 			/// Check for converting child classes into parent classes.
 			if (leftClass !is null && rightClass !is null) {
 				if (inheritsFrom(rightClass, leftClass)) {
-					right = new ir.Unary(new ir.TypeReference(left, leftClass.name), right);
-					return left;
+					right = new ir.Unary(new ir.TypeReference(localLeft, leftClass.name), right);
+					return localLeft;
 				}
 			}
 
 			if (leftClass !is rightClass) {
 				throw new CompilerError(right.location, emsg);
 			}
-			return left;
-		} else if ((left.nodeType == ir.NodeType.PointerType &&
+			return localLeft;
+		} else if ((localLeft.nodeType == ir.NodeType.PointerType &&
 			 	   t.nodeType == ir.NodeType.Class) ||
-				   (left.nodeType == ir.NodeType.Class &&
+				   (localLeft.nodeType == ir.NodeType.Class &&
 				   t.nodeType == ir.NodeType.PointerType)) {
 			/* This is the case when using a function that takes a
 			 * class instance in one module from another before the
@@ -150,11 +157,11 @@ public:
 			 */ 
 			auto asClass = cast(ir.Class) t;
 			if (asClass is null) {
-				asClass = cast(ir.Class) left;
+				asClass = cast(ir.Class) localLeft;
 				assert(asClass !is null);
 			}
 			
-			auto asPointer = cast(ir.PointerType) left;
+			auto asPointer = cast(ir.PointerType) localLeft;
 			if (asPointer is null) {
 				asPointer = cast(ir.PointerType) t;
 				assert(asPointer !is null);
@@ -169,9 +176,9 @@ public:
 			}
 
 			return asPointer;
-		} else if (left.nodeType == ir.NodeType.DelegateType &&
+		} else if (localLeft.nodeType == ir.NodeType.DelegateType &&
 				   t.nodeType == ir.NodeType.DelegateType) {
-			auto ldg = cast(ir.DelegateType) left;
+			auto ldg = cast(ir.DelegateType) localLeft;
 			auto rdg = cast(ir.DelegateType) t;
 			assert(ldg !is null && rdg !is null);
 
