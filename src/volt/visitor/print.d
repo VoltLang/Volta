@@ -1202,16 +1202,16 @@ public:
 	override Status enter(ir.StorageType type)
 	{
 		final switch (type.type) with (ir.StorageType.Kind) {
-		case Auto: wf("auto"); break;
-		case Const: wf("const"); break;
-		case Immutable: wf("immutable"); break;
-		case Inout: wf("inout"); break;
-		case Scope: wf("scope"); break;
+		case Auto: wf("auto("); break;
+		case Const: wf("const("); break;
+		case Immutable: wf("immutable("); break;
+		case Inout: wf("inout("); break;
+		case Scope: wf("scope("); break;
 		}
 		if (type.base !is null) {
-			wf(" ");
 			accept(type.base, this);
 		}
+		wf(")");
 		return ContinueParent;
 	}
 
