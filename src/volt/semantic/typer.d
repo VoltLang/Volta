@@ -143,6 +143,10 @@ ir.Type getBinOpType(ir.BinOp bin, ir.Scope currentScope)
 		boolType.location = bin.location;
 		return boolType;
 	}
+
+	if (effectivelyConst(left) && bin.op == ir.BinOp.Type.Assign) {
+		throw new CompilerError(bin.location, "cannot assign to const type.");
+	}
 	
 	if (left.nodeType == ir.NodeType.PrimitiveType &&
 		right.nodeType == ir.NodeType.PrimitiveType) {

@@ -230,8 +230,12 @@ public:
 			extype(cast(ir.BinOp)bin.right);
 		}
 
-		ir.Node left = getExpType(bin.left, current);
-		ir.Node right = getExpType(bin.right, current);
+		ir.Type left = getExpType(bin.left, current);
+		ir.Type right = getExpType(bin.right, current);
+
+		if (effectivelyConst(left) && bin.op == ir.BinOp.Type.Assign) {
+			throw new CompilerError(bin.location, "cannot assign to const type.");
+		}
 		
 		if (bin.op == ir.BinOp.Type.AndAnd || bin.op == ir.BinOp.Type.OrOr) {
 			auto boolType = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
