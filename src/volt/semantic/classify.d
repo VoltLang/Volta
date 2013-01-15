@@ -78,21 +78,23 @@ bool mutableIndirection(ir.Type t)
 	switch (t.nodeType) with (ir.NodeType) {
 	case PrimitiveType:
 		return false;
+	case TypeReference:
+		auto asTR = cast(ir.TypeReference) t;
+		assert(asTR !is null);
+		return mutableIndirection(asTR.type);
 	case Struct:
 		auto asStruct = cast(ir.Struct) t;
 		assert(asStruct !is null);
-		int indirectionCount;
 		foreach (node; asStruct.members.nodes) {
 			auto asVar = cast(ir.Variable) node;
 			if (asVar is null) {
 				continue;
 			}
-			bool indirection = mutableIndirection(asVar.type);
-			if (indirection) {
-				indirectionCount++;
+			if (mutableIndirection(asVar.type)) {
+				return true;
 			}
 		}
-		return indirectionCount > 0;
+		return false;
 	default:
 		return true;
 	}
