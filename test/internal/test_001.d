@@ -5,7 +5,7 @@ module test_001;
 
 int a()
 {
-    object.TypeInfo tinfo = typeid(int);
+    auto tinfo = typeid(int);
     if (tinfo.mutableIndirection) {
         return 2;
     } else {
@@ -15,7 +15,7 @@ int a()
 
 int b()
 {
-    object.TypeInfo tinfo = typeid(int*);
+    auto tinfo = typeid(int*);
     if (tinfo.mutableIndirection) {
         return 6;
     } else {
@@ -37,7 +37,7 @@ struct StructB
 
 int c()
 {
-    object.TypeInfo tinfo = typeid(StructA);
+    auto tinfo = typeid(StructA);
     if (tinfo.mutableIndirection) {
         return 10;
     } else {
@@ -47,7 +47,7 @@ int c()
 
 int d()
 {
-    object.TypeInfo tinfo = typeid(StructB);
+    auto tinfo = typeid(StructB);
     if (tinfo.mutableIndirection) {
         return 14;
     } else {
