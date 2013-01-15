@@ -3,6 +3,7 @@
 module volt.controller;
 
 import core.exception;
+import std.algorithm : endsWith;
 import std.path : dirSeparator, exists;
 import std.process : system;
 import std.stdio : stderr;
@@ -29,7 +30,8 @@ public:
 	Backend backend;
 
 protected:
-	string[] mFiles;
+	string[] mSourceFiles;
+	string[] mBitCodeFiles;
 	ir.Module[string] mModules;
 
 public:
@@ -95,12 +97,20 @@ public:
 
 	void addFile(string file)
 	{
-		mFiles ~= file;
+		if (endsWith(file, ".d", ".v") > 0) {
+			mSourceFiles ~= file;
+		} else if (endsWith(file, ".bc")) {
+			mBitCodeFiles ~= file;
+		} else {
+			auto str = format("unknown file type %s", file);
+			throw new CompilerError(str);
+		}
 	}
 
-	void addFiles(string[] files...)
+	void addFiles(string[] files)
 	{
-		this.mFiles ~= files;
+		foreach(file; files)
+			addFile(file);
 	}
 
 	int compile()
@@ -155,7 +165,7 @@ protected:
 
 		// Load all modules to be compiled.
 		// Don't run phase 1 on them yet.
-		foreach (file; mFiles) {
+		foreach (file; mSourceFiles) {
 			mods ~= loadAndParse(file);
 		}
 
@@ -176,17 +186,25 @@ protected:
 		if (settings.noBackend)
 			return 0;
 
-		string linkInputFiles;
+		// We will be modifing this later on,
+		// but we don't want to change mBitCodeFiles.
+		string[] bitCodeFiles = mBitCodeFiles;
+
 		foreach (mod; mods) {
 			string o = temporaryFilename(".bc");
 			backend.setTarget(o, TargetType.LlvmBitcode);
 			backend.compile(mod);
-			linkInputFiles ~= " \"" ~ o ~ "\" ";
+			bitCodeFiles ~= o;
 		}
 
+		string linkInputFiles;
 		string of = settings.outputFile is null ? DEFAULT_EXE : settings.outputFile;
 		string cmd;
 		int ret;
+
+		foreach (file; bitCodeFiles) {
+			linkInputFiles ~= " \"" ~ file ~ "\" ";
+		}
 
 		if (settings.noLink) {
 			string link = temporaryFilename(".bc");
