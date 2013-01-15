@@ -119,6 +119,12 @@ ir.Function createArrayAllocFunction(Location location, Settings settings, ir.Sc
 	lengthAssign.left = lengthPfix;
 	lengthAssign.right = countRef;
 
+	expStatement = new ir.ExpStatement();
+	expStatement.location = location;
+	expStatement.exp = lengthAssign;
+
+	fn._body.statements ~= expStatement;
+
 	auto addrOf = new ir.Unary();
 	addrOf.location = location;
 	addrOf.op = ir.Unary.Op.AddrOf;
