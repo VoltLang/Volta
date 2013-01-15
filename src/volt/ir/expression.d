@@ -166,7 +166,7 @@ public:
 
 public:
 	this() { super(NodeType.Unary); }
-	this(Type n, Exp e) { super(NodeType.Unary); op = Op.Cast; value = e; type = n; }
+	this(Type n, Exp e) { super(NodeType.Unary); location = e.location; op = Op.Cast; value = e; type = n; }
 }
 
 /**
