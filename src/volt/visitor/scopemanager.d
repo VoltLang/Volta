@@ -22,6 +22,8 @@ public:
 
 	override Status leave(ir.Module m)
 	{
+		assert(current == m.myScope);
+
 		current = null;
 		return Continue;
 	}
@@ -34,6 +36,8 @@ public:
 
 	override Status leave(ir.Struct s)
 	{
+		assert(current == s.myScope);
+
 		current = current.parent;
 		return Continue;
 	}
@@ -46,6 +50,8 @@ public:
 
 	override Status leave(ir.Class c)
 	{
+		assert(current == c.myScope);
+
 		current = current.parent;
 		return Continue;
 	}
@@ -58,6 +64,8 @@ public:
 
 	override Status leave(ir._Interface i)
 	{
+		assert(current == i.myScope);
+
 		current = current.parent;
 		return Continue;
 	}
@@ -70,6 +78,8 @@ public:
 
 	override Status leave(ir.Function fn)
 	{
+		assert(current == fn.myScope);
+
 		current = current.parent;
 		return Continue;
 	}
