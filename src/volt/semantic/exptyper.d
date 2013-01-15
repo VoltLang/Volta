@@ -486,6 +486,8 @@ public:
 	override Status enter(ir.Postfix p)
 	{
 		if (pass == 2) {
+			// Ensure semantic correctness.
+			getExpType(p, current);
 			return Continue;
 		}
 		extypePostfix(p);

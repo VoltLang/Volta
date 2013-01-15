@@ -50,6 +50,12 @@ ir.Scope getTopScope(ir.Scope currentScope)
 	return current;
 }
 
+/**
+ * Get the type of a given expression.
+ *
+ * If the operation of the expression isn't semantically valid
+ * for the given type, a CompilerError is thrown.
+ */
 ir.Type getExpType(ir.Exp exp, ir.Scope currentScope)
 {
 	auto result = getExpTypeImpl(exp, currentScope);
@@ -417,6 +423,8 @@ ir.Type getPostfixIncDecType(ir.Postfix postfix, ir.Scope currentScope)
 	} else if (type.nodeType == ir.NodeType.PrimitiveType &&
 			   isOkayForPointerArithmetic((cast(ir.PrimitiveType)type).type)) {
 		return type;
+	} else if (effectivelyConst(type)) {
+		throw new CompilerError(postfix.location, "cannot modify const type.");
 	}
 
 	throw new CompilerError(postfix.location, "value not suited for increment/decrement");
