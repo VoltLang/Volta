@@ -61,6 +61,37 @@ int size(Location location, ir.Node node)
 	}
 }
 
+/**
+ * A type without mutable indirection is a pure value type --
+ * it cannot mutate any other memory than its own, or is composed
+ * of the above. This is useful for making const and friends more
+ * user friendly.
+ */
+bool mutableIndirection(ir.Type t)
+{
+	switch (t.nodeType) with (ir.NodeType) {
+	case PrimitiveType:
+		return false;
+	case Struct:
+		auto asStruct = cast(ir.Struct) t;
+		assert(asStruct !is null);
+		int indirectionCount;
+		foreach (node; asStruct.members.nodes) {
+			auto asVar = cast(ir.Variable) node;
+			if (asVar is null) {
+				continue;
+			}
+			bool indirection = mutableIndirection(asVar.type);
+			if (indirection) {
+				indirectionCount++;
+			}
+		}
+		return indirectionCount > 0;
+	default:
+		return true;
+	}
+}
+
 /// Returns the size of a given Struct, in bytes.
 int structSize(Location location, ir.Struct s)
 {
