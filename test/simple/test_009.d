@@ -5,6 +5,7 @@ module test_009;
 
 void foo(short i)
 {
+    return;
 }
 
 int main()
