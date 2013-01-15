@@ -115,6 +115,17 @@ int structSize(Location location, ir.Struct s)
 	return sizeAccumulator;
 }
 
+bool effectivelyConst(ir.Type type)
+{
+	auto asStorageType = cast(ir.StorageType) type;
+	if (asStorageType is null) {
+		return false;
+	}
+
+	auto t = asStorageType.type;
+	with (ir.StorageType.Kind) return t == Const || t == Immutable || t == Inout;
+}
+
 bool isIntegral(ir.PrimitiveType.Kind kind)
 {
 	switch (kind) with (ir.PrimitiveType.Kind) {
