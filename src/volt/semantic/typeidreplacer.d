@@ -39,9 +39,6 @@ public:
 	Settings settings;
 	ir.Struct typeinfo;
 	ir.Struct typeinfoVtable;
-	ir.ExpReference tsizeFunc;
-	ir.ExpReference typeFunc;
-	ir.ExpReference mangledNameFunc;
 	ir.Module thisModule;
 
 public:
@@ -52,19 +49,6 @@ public:
 
 	override void transform(ir.Module m)
 	{
-		ir.ExpReference getFunction(string name)
-		{
-			auto store = typeinfo.myScope.lookupOnlyThisScope(name, m.location);
-			if (store is null || store.functions.length != 1) {
-				throw CompilerPanic(m.location, format("couldn't retrieve function '%s' from TypeInfo.", name));
-			}
-			auto _ref = new ir.ExpReference();
-			_ref.location = m.location;
-			_ref.idents ~= name;
-			_ref.decl = store.functions[0];
-			return _ref;
-		}
-
 		thisModule = m;
 		
 		typeinfo = retrieveTypeInfoStruct(m.location, m.myScope);
@@ -74,16 +58,8 @@ public:
 		}
 		typeinfoVtable = cast(ir.Struct) store.node;
 
-		tsizeFunc = getFunction("tsize");
-		typeFunc = getFunction("type");
-		mangledNameFunc = getFunction("mangledName");
-
 		assert(typeinfo !is null);
 		assert(typeinfoVtable !is null);
-		assert(tsizeFunc !is null);
-		assert(typeFunc !is null);
-		assert(mangledNameFunc !is null);
-
 		accept(m, this);
 	}
 
@@ -119,12 +95,16 @@ public:
 		mangledNameConstant.arrayData = cast(void[]) mangledNameConstant.value;
 		mangledNameConstant.type = new ir.ArrayType(new ir.PrimitiveType(ir.PrimitiveType.Kind.Char));
 
+		bool mindirection = mutableIndirection(_typeid.type);
+		auto mindirectionConstant = new ir.Constant();
+		mindirectionConstant.location = _typeid.location;
+		mindirectionConstant.value = mindirection ? "true" : "false";
+		mindirectionConstant.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
+		mindirectionConstant.type.location = _typeid.location;
+
 		auto vtable = new ir.StructLiteral();
 		vtable.location = _typeid.location;
 		vtable.type = new ir.TypeReference(typeinfoVtable, typeinfoVtable.name);
-		vtable.exps ~= tsizeFunc;
-		vtable.exps ~= typeFunc;
-		vtable.exps ~= mangledNameFunc;
 
 		auto vtableVar = new ir.Variable();
 		vtableVar.location = thisModule.location;
@@ -152,6 +132,7 @@ public:
 		literal.exps ~= typeConstant;
 		literal.exps ~= typeTagConstant;
 		literal.exps ~= mangledNameConstant;
+		literal.exps ~= mindirectionConstant;
 
 		auto literalVar = new ir.Variable();
 		literalVar.location = vtableVar.location;

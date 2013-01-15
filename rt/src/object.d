@@ -53,11 +53,8 @@ struct ArrayStruct
 
 class TypeInfo
 {
-	uint mSize;
-	int mType;
-	char[] mMangledName;
-
-	uint tsize() { return mSize; }
-	int type() { return mType; }
-	char[] mangledName() { return mMangledName; }
+	uint size;
+	int type;
+	char[] mangledName;
+	bool mutableIndirection;
 }

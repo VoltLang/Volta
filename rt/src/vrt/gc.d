@@ -17,9 +17,9 @@ extern(C) AllocDg vrt_gc_get_alloc_dg()
 void* mallocFunc(TypeInfo typeinfo, uint count, void *ptr)
 {
 	if (count == cast(uint) 0) {
-		return malloc(typeinfo.tsize());
+		return malloc(typeinfo.size);
 	}
-	return malloc(count * typeinfo.tsize());
+	return malloc(count * typeinfo.size);
 }
 
 extern(C) void* malloc(uint size);

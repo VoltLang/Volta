@@ -6,5 +6,5 @@ module test_001;
 int main()
 {
 	object.TypeInfo tinfo = typeid(int);
-	return cast(int) tinfo.tsize();
+	return cast(int) tinfo.size;
 }
