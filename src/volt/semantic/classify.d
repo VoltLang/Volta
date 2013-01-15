@@ -243,6 +243,11 @@ bool typesEqual(ir.Type a, ir.Type b)
 			if (!typesEqual(ap.params[i].type, bp.params[i].type))
 				return false;
 		return true;
+	} else if (a.nodeType == ir.NodeType.StorageType &&
+			   b.nodeType == ir.NodeType.StorageType) {
+		auto ap = cast(ir.StorageType) a;
+		auto bp = cast(ir.StorageType) b;
+		return ap.type == bp.type && typesEqual(ap.base, bp.base);
 	} else {
 		return a is b;
 	}

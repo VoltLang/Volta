@@ -185,6 +185,10 @@ public:
 			if (typesEqual(ldg, rdg)) {
 				return ldg;
 			}
+		} else {
+			if (typesEqual(localLeft, t)) {
+				return localLeft;
+			}
 		}
 
 		throw new CompilerError(right.location, emsg);
