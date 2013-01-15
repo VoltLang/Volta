@@ -89,12 +89,8 @@ ir.Type parseType(TokenStream ts)
 		 TokenType.Real, TokenType.Bool:
 		base = parsePrimitiveType(ts);
 		break;
-	case TokenType.Abstract, TokenType.Auto, TokenType.Const,
-		 TokenType.Deprecated, TokenType.Enum, TokenType.Extern,
-		 TokenType.Final, TokenType.Immutable, TokenType.Inout,
-		 TokenType.Shared, TokenType.Nothrow, TokenType.Override,
-		 TokenType.Pure, TokenType.Global, TokenType.Local,
-		 TokenType.Scope, TokenType.Static, TokenType.Synchronized:
+	case TokenType.Auto, TokenType.Const, TokenType.Immutable,
+		 TokenType.Inout, TokenType.Scope:
 		base = parseStorageType(ts);
 		break;
 	case TokenType.Identifier:
@@ -156,6 +152,9 @@ ir.StorageType parseStorageType(TokenStream ts)
 	if (ts == [TokenType.Identifier, TokenType.Semicolon] ||
 		ts == [TokenType.Identifier, TokenType.Assign, TokenType.Void, TokenType.Semicolon]) {
 		throw new CompilerError(ts.peek.location, "not enough information to infer type.", true);
+	} else if (matchIf(ts, TokenType.OpenParen)) {
+		storageType.base = parseType(ts);
+		match(ts, TokenType.CloseParen);
 	} else if (!(ts == [TokenType.Identifier, TokenType.Assign])) {
 		storageType.base = parseType(ts);
 	}
