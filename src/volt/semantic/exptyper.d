@@ -96,9 +96,21 @@ public:
 		ir.Type t = getExpType(right, current);
 
 		auto asStorageType = cast(ir.StorageType) left;
-		if (asStorageType !is null) { 
+		if (asStorageType !is null) {
 			if (asStorageType.base is null) {
-				asStorageType.base = t;
+				auto asClass = cast(ir.Class) t;
+				if (asClass !is null) {
+					asStorageType.base = new ir.TypeReference(asClass, asClass.name);
+				}
+
+				auto asStruct = cast(ir.Struct) t;
+				if (asStorageType.base is null && asStruct !is null) {
+					asStorageType.base = new ir.TypeReference(asStruct, asStruct.name);
+				}
+
+				if (asStorageType.base is null) {
+					asStorageType.base = t;
+				}
 			}
 			if (asStorageType.type == ir.StorageType.Kind.Auto) {
 				localLeft = left = asStorageType.base;
