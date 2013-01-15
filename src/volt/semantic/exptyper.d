@@ -94,7 +94,6 @@ public:
 		}
 
 		ir.Type t = getExpType(right, current);
-_after_exp_eval:
 
 		auto asStorageType = cast(ir.StorageType) left;
 		if (asStorageType !is null) {
@@ -204,8 +203,8 @@ _after_exp_eval:
 			asStorageType = cast(ir.StorageType) t;
 			assert(asStorageType !is null);
 			if (!mutableIndirection(asStorageType.base)) {
-				t = asStorageType.base;
-				goto _after_exp_eval;
+				right = new ir.Unary(asStorageType.base, right);
+				return extype(left, right);
 			}
 			throw new CompilerError(right.location, "cannot implicitly convert const to non const.");
 		} else {
