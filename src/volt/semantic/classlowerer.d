@@ -84,7 +84,7 @@ public:
 			}
 		}
 
-		fn.myScope = new ir.Scope(c.myScope, c, null);
+		fn.myScope = new ir.Scope(c.myScope, c, fn.name);
 
 		// Object.sizeof
 		int sz = size(c.location, c);
@@ -212,8 +212,8 @@ public:
 
 		auto _struct = new ir.Struct();
 		_struct.location = location;
-		_struct.myScope = new ir.Scope(parent.myScope, _struct, null);
 		_struct.name = "__Vtable";
+		_struct.myScope = new ir.Scope(parent.myScope, _struct, _struct.name);
 		_struct.defined = true;
 
 		_struct.members = new ir.TopLevelBlock();
