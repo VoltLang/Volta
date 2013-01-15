@@ -94,6 +94,7 @@ public:
 		}
 
 		ir.Type t = getExpType(right, current);
+_after_exp_eval:
 
 		auto asStorageType = cast(ir.StorageType) left;
 		if (asStorageType !is null) {
@@ -197,6 +198,16 @@ public:
 			if (typesEqual(ldg, rdg)) {
 				return ldg;
 			}
+		} else if (localLeft.nodeType != ir.NodeType.StorageType &&
+				   t.nodeType == ir.NodeType.StorageType &&
+				   effectivelyConst(t)) {
+			asStorageType = cast(ir.StorageType) t;
+			assert(asStorageType !is null);
+			if (!mutableIndirection(asStorageType.base)) {
+				t = asStorageType.base;
+				goto _after_exp_eval;
+			}
+			throw new CompilerError(right.location, "cannot implicitly convert const to non const.");
 		} else {
 			if (typesEqual(localLeft, t)) {
 				return localLeft;
