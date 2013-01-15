@@ -27,8 +27,8 @@ ir.Module parseModule(TokenStream ts)
 	mod.children = parseTopLevelBlock(ts, TokenType.End, true);
 
 	mod.children.nodes = [
-			createImport(mod.children.nodes[0].location, "defaultsymbols", false),
-			createImport(mod.children.nodes[0].location, "object", true)
+			createImport(mod.location, "defaultsymbols", false),
+			createImport(mod.location, "object", true)
 		] ~ mod.children.nodes;
 
 	return mod;
