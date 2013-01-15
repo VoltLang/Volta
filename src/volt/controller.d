@@ -230,7 +230,7 @@ protected:
 				return ret;
 		} else {
 			// this is just during bring up.
-			linkInputFiles ~= " \"" ~ getExePath() ~ dirSeparator ~ "rt/rt.o\"";
+			linkInputFiles ~= " \"" ~ getExePath() ~ dirSeparator ~ "rt/rt.bc\"";
 
 			cmd = format("llvm-ld -native -o \"%s\" %s", of, linkInputFiles);
 			ret = system(cmd);

@@ -76,16 +76,16 @@ DOBJ = $(patsubst src/%.d, $(OBJ_DIR)/%.$(OBJ_TYPE), $(DSRC))
 OBJ := $(DOBJ) $(EXTRA_OBJ)
 
 
-all: rt/rt.o
+all: rt/rt.bc
 
 $(OBJ_DIR)/%.$(OBJ_TYPE) : src/%.d Makefile
 	@echo "  DMD    src/$*.d"
 	@mkdir -p $(dir $@)
 	@$(DMD) $(DCOMP_FLAGS) src/$*.d
 
-rt/rt.o: $(TARGET) rt/src/object.d rt/src/vrt/vmain.d rt/src/vrt/gc.d
-	@echo "  VOLT   rt/rt.o"
-	@./$(TARGET) -c -o rt/rt.o rt/src/object.d rt/src/vrt/vmain.d rt/src/vrt/gc.d
+rt/rt.bc: $(TARGET) rt/src/object.d rt/src/vrt/vmain.d rt/src/vrt/gc.d
+	@echo "  VOLT   rt/rt.bc"
+	@./$(TARGET) --emit-bitcode -o rt/rt.bc rt/src/object.d rt/src/vrt/vmain.d rt/src/vrt/gc.d
 
 $(TARGET): $(OBJ) Makefile
 	@echo "  LD     $@"
@@ -93,7 +93,7 @@ $(TARGET): $(OBJ) Makefile
 
 clean:
 	@rm -rf $(TARGET) .obj
-	@rm -f rt/rt.o
+	@rm -f rt/rt.bc
 
 run: $(TARGET)
 	@./$(TARGET) test/simple/test_001.d

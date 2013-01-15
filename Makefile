@@ -10,7 +10,7 @@ DFLAGS=--build-only --compiler=$(DMD) -of$(EXE) -gc -w -debug LLVM.lib $(FLAGS)
 # rules
 all:
 	$(RDMD) $(DFLAGS) src\main.d
-	./volt -c -o rt/rt.o rt/src/object.d rt/src/vrt/vmain.d rt/src/vrt/gc.d
+	./volt --emit-bitcode -o rt/rt.bc rt/src/object.d rt/src/vrt/vmain.d rt/src/vrt/gc.d
 
 # Only works with Digital Mar's make. Make it into
 # one line for GNU (join commands with &&).
