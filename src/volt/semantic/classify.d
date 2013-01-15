@@ -66,6 +66,12 @@ int size(Location location, ir.Node node)
  * it cannot mutate any other memory than its own, or is composed
  * of the above. This is useful for making const and friends more
  * user friendly.
+ *
+ * Given a Variable with a const type that does not have mutableIndirection
+ * it is safe to copy that value and pass it to a non-const function, like so:
+ *
+ * void bar(int f);
+ * void foo(const(int) i) { bar(i); }
  */
 bool mutableIndirection(ir.Type t)
 {
