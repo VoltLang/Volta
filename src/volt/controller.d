@@ -206,7 +206,12 @@ protected:
 			linkInputFiles ~= " \"" ~ file ~ "\" ";
 		}
 
-		if (settings.noLink) {
+		if (settings.emitBitCode) {
+			cmd = format("llvm-link -o \"%s\" %s", of, linkInputFiles);
+			ret = system(cmd);
+			if (ret)
+				return ret;
+		} else if (settings.noLink) {
 			string link = temporaryFilename(".bc");
 			cmd = format("llvm-link -o \"%s\" %s", link, linkInputFiles);
 			ret = system(cmd);

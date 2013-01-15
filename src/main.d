@@ -78,6 +78,9 @@ bool filterArgs(ref string[] args, Settings settings)
 		case "-c":
 			settings.noLink = true;
 			continue;
+		case "--emit-bitcode":
+			settings.emitBitCode = true;
+			continue;
 		case "--no-backend":
 		case "-S":
 			settings.noBackend = true;
@@ -110,6 +113,7 @@ bool printUsage()
 	writefln("\t-w              Enable warnings.");
 	writefln("\t-d              Compile in debug mode.");
 	writefln("\t-c              Compile only, do not link.");
+	writefln("\t--emit-bitcode  Emit LLVM bitcode (implies -c).");
 	writefln("\t-S,--no-backend Stop compilation before the backend.");
 	writefln("\t--no-catch      For compiler debugging purposes.");
 	writefln("\t--internal-dbg  Enables internal debug printing.");

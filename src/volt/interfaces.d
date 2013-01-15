@@ -162,6 +162,7 @@ public:
 	bool debugEnabled; ///< The -d argument.
 	bool noBackend; ///< The -S argument.
 	bool noLink; ///< The -c argument
+	bool emitBitCode; ///< The --emit-bitcode argument.
 	bool noCatch; ///< The --no-catch argument.
 	bool internalDebug; ///< The --internal-dbg argument.
 	string outputFile;
