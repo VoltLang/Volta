@@ -58,7 +58,7 @@ public:
 		}
 	}
 
-	ir.Node extype(ref ir.Type left, ref ir.Exp right)
+	ir.Node extype(ref ir.Type left, ref ir.Exp right, bool inVariable = false)
 	{
 		ir.Type localLeft = left;
 
@@ -117,17 +117,18 @@ public:
 			}
 		}
 
+		if (inVariable && effectivelyConst(left)) {
+			asStorageType = cast(ir.StorageType) left;
+			right = new ir.Unary(asStorageType, right);
+		}
+
 		auto asTR = cast(ir.TypeReference) left;
 		if (asTR !is null) {
 			localLeft = asTR.type;
 		}
 
-		ir.Type type = cast(ir.Type)t;
+		ir.Type type = t;
 		string emsg = format("cannot implicitly convert '%s' to '%s'.", to!string(t.nodeType), to!string(localLeft.nodeType));
-
-		if (type !is null && typesEqual(localLeft, type)) {
-			return localLeft;
-		}
 
 		if (localLeft.nodeType == ir.NodeType.PrimitiveType &&
 			t.nodeType == ir.NodeType.PrimitiveType) {
@@ -519,7 +520,7 @@ public:
 			return Continue;
 		}
 
-		extype(d.type, d.assign);
+		extype(d.type, d.assign, true);
 
 		return Continue;
 	}

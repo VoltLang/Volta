@@ -249,6 +249,10 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
  */
 bool typesEqual(ir.Type a, ir.Type b)
 {
+	if (a is b) {
+		return true;
+	}
+	
 	if (a.nodeType == ir.NodeType.PrimitiveType &&
 	    b.nodeType == ir.NodeType.PrimitiveType) {
 		auto ap = cast(ir.PrimitiveType) a;
@@ -298,9 +302,9 @@ bool typesEqual(ir.Type a, ir.Type b)
 		auto ap = cast(ir.StorageType) a;
 		auto bp = cast(ir.StorageType) b;
 		return ap.type == bp.type && typesEqual(ap.base, bp.base);
-	} else {
-		return a is b;
 	}
+
+	return false;
 }
 
 /// Retrieves the types of Variables in _struct, in the order they appear.
