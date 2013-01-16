@@ -119,7 +119,9 @@ public:
 
 		if (inVariable && effectivelyConst(left)) {
 			asStorageType = cast(ir.StorageType) left;
-			right = new ir.Unary(asStorageType, right);
+			if (!mutableIndirection(asStorageType.base)) {
+				right = new ir.Unary(asStorageType, right);
+			}
 		}
 
 		auto asTR = cast(ir.TypeReference) left;
