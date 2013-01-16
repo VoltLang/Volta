@@ -398,9 +398,16 @@ void handleUnary(State state, ir.Unary unary, Value result)
 void handleCast(State state, ir.Unary cst, Value result)
 {
 	// Start by getting the value.
-	state.getValue(cst.value, result);
+	state.getValueAnyForm(cst.value, result);
 
 	auto newType = state.fromIr(cst.type);
+	handleCast(state, cst.location, newType, result);
+}
+
+void handleCast(State state, Location loc, Type newType, Value result)
+{
+	makeNonPointer(state, result);
+
 	auto oldType = result.type;
 
 	assert(newType !is null);
@@ -414,7 +421,7 @@ void handleCast(State state, ir.Unary cst, Value result)
 	auto oldTypePrim = cast(PrimitiveType)oldType;
 	if (newTypePrim !is null &&
 	    oldTypePrim !is null)
-		return handleCastPrimitive(state, cst, result, newTypePrim, oldTypePrim);
+		return handleCastPrimitive(state, loc, newTypePrim, oldTypePrim, result);
 
 	auto newTypePtr = cast(PointerType)newType;
 	auto oldTypePtr = cast(PointerType)oldType;
@@ -422,7 +429,7 @@ void handleCast(State state, ir.Unary cst, Value result)
 	auto oldTypeFn = cast(FunctionType)oldType;
 	if ((newTypePtr !is null || newTypeFn !is null) &&
 	    (oldTypePtr !is null || oldTypeFn !is null))
-		return handleCastPointer(state, cst, result, newType);
+		return handleCastPointer(state, loc, newType, result);
 
 	throw CompilerPanic("Unhandlable cast.");
 }
@@ -430,16 +437,17 @@ void handleCast(State state, ir.Unary cst, Value result)
 /**
  * Handle primitive casts, the value to cast is stored in result already.
  */
-void handleCastPrimitive(State state, ir.Unary cst, Value result,
-                         PrimitiveType newType, PrimitiveType oldType)
+void handleCastPrimitive(State state, Location loc, PrimitiveType newType,
+                         PrimitiveType oldType, Value result)
 {
+	assert(!result.isPointer);
+
 	// No op it.
 	if (newType is oldType)
 		return;
 
 	void error() {
-		string str = "invalid cast";
-		throw CompilerPanic(cst.location, str);
+		throw CompilerPanic(loc, "invalid cast");
 	}
 
 	result.type = newType;
@@ -503,8 +511,10 @@ void handleCastPrimitive(State state, ir.Unary cst, Value result,
  * This is really easy.
  * Also casts between function pointers and pointers.
  */
-void handleCastPointer(State state, ir.Unary cst, Value result, Type newType)
+void handleCastPointer(State state, Location loc, Type newType, Value result)
 {
+	assert(!result.isPointer);
+
 	result.type = newType;
 	result.value = LLVMBuildBitCast(state.builder, result.value, newType.llvmType, "ptrCast");
 }
