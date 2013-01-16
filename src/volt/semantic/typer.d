@@ -264,8 +264,10 @@ ir.Type getArrayLiteralType(ir.ArrayLiteral arrayLiteral, ir.Scope currentScope)
 ir.Type getPostfixType(ir.Postfix postfix, ir.Scope currentScope)
 {
 	switch (postfix.op) with (ir.Postfix.Op) {
-	case Index, Slice:
+	case Index:
 		return getPostfixIndexType(postfix, currentScope);
+	case Slice:
+		return getPostfixSliceType(postfix, currentScope);
 	case Call:
 		return getPostfixCallType(postfix, currentScope);
 	case Increment, Decrement:
@@ -278,6 +280,31 @@ ir.Type getPostfixType(ir.Postfix postfix, ir.Scope currentScope)
 		auto emsg = format("unhandled postfix op type '%s'", to!string(postfix.op));
 		throw CompilerPanic(postfix.location, emsg);
 	}
+}
+
+ir.Type getPostfixSliceType(ir.Postfix postfix, ir.Scope currentScope)
+{
+	ir.ArrayType array;
+	ir.PointerType pointer;
+
+	auto type = getExpType(postfix.child, currentScope);
+	if (type.nodeType == ir.NodeType.PointerType) {
+		pointer = cast(ir.PointerType) type;
+		assert(pointer !is null);
+	} else if (type.nodeType == ir.NodeType.ArrayType) {
+		array = cast(ir.ArrayType) type;
+		assert(array !is null);
+	} else {
+		throw new CompilerError(postfix.location, "tried to index non array or pointer.");
+	}
+
+	if (array is null) {
+		assert(pointer !is null);
+		array = new ir.ArrayType(pointer.base);
+		array.location = postfix.location;
+	}
+
+	return array;
 }
 
 ir.Type getPostfixCreateDelegateType(ir.Postfix postfix, ir.Scope currentScope)
