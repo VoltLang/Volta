@@ -584,6 +584,9 @@ void handlePostfix(State state, ir.Postfix postfix, Value result)
 	case Index:
 		handleIndex(state, postfix, result);
 		break;
+	case Slice:
+		handleSlice(state, postfix, result);
+		break;
 	case Call:
 		handleCall(state, postfix, result);
 		break;
@@ -671,16 +674,11 @@ void handleIndex(State state, ir.Postfix postfix, Value result)
 	state.getValueAnyForm(postfix.child, left);
 	state.getValue(postfix.arguments[0], right);
 
+
 	// Turn arr[index] into arr.ptr[index]
 	auto at = cast(ArrayType)left.type;
-	if (at !is null) {
-		makePointer(state, left);
-
-		left.isPointer = true;
-		left.type = at.ptrType;
-		left.value = LLVMBuildStructGEP(
-			state.builder, left.value, ArrayType.ptrIndex, "arrayGep");
-	}
+	if (at !is null)
+		getPointerFromArray(state, postfix.location, left);
 
 	auto pt = cast(PointerType)left.type;
 	if (pt is null)
@@ -691,6 +689,73 @@ void handleIndex(State state, ir.Postfix postfix, Value result)
 	result.value = LLVMBuildGEP(state.builder, left.value, [right.value], "gep");
 	result.type = pt.base;
 	result.isPointer = true;
+}
+
+void handleSlice(State state, ir.Postfix postfix, Value result)
+{
+	Value left = new Value();
+	Value start = new Value();
+	Value end = new Value();
+
+	assert(postfix.arguments.length == 2);
+
+	// Make sure that this is in a known state.
+	result.value = null;
+	result.isPointer = false;
+	result.type = null;
+
+	state.getValueAnyForm(postfix.child, left);
+	auto pt = cast(PointerType)left.type;
+	auto at = cast(ArrayType)left.type;
+	if (pt !is null) {
+		makeNonPointer(state, left);
+		at = null;
+		/// @todo handle slices on pointers.
+		assert(false);
+
+	} else if (at !is null) {
+		// Use the temporary value directly.
+		if (!left.isPointer) {
+			makePointer(state, left);
+			result.value = left.value;
+			result.isPointer = true;
+			result.type = at;
+		}
+
+		getPointerFromArray(state, postfix.location, left);
+		makeNonPointer(state, left);
+	}
+
+	// Do we need temporary storage for the result?
+	if (result.value is null) {
+		result.value = LLVMBuildAlloca(state.builder, at.llvmType, "sliceTemp");
+		result.isPointer = true;
+		result.type = at;
+	}
+
+	state.getValueAnyForm(postfix.arguments[0], start);
+	state.getValueAnyForm(postfix.arguments[1], end);
+
+	/// @todo cast to size_t and not uint
+	handleCast(state, postfix.location, state.uintType, start);
+	handleCast(state, postfix.location, state.uintType, end);
+
+	LLVMValueRef srcPtr, srcLength;
+	LLVMValueRef dstPtr, dstLength;
+
+	srcPtr = LLVMBuildGEP(state.builder, left.value, [start.value], "sliceGep");
+
+	// Subtract start from end to get the length, which returned in end. 
+	handleBinOpNonAssign(state, postfix.location,
+	                     ir.BinOp.Type.Sub,
+	                     end, start, end);
+	srcLength = end.value;
+
+	dstPtr = LLVMBuildStructGEP(state.builder, result.value, ArrayType.ptrIndex, "sliceDstPtrGep");
+	LLVMBuildStore(state.builder, srcPtr, dstPtr);
+
+	dstLength = LLVMBuildStructGEP(state.builder, result.value, ArrayType.lengthIndex, "sliceDstLenGep");
+	LLVMBuildStore(state.builder, srcLength, dstLength);
 }
 
 void handleCreateDelegate(State state, ir.Postfix postfix, Value result)
@@ -849,6 +914,22 @@ void handleExpReference(State state, ir.ExpReference expRef, Value result)
 	default:
 		throw CompilerPanic(expRef.location, "invalid decl type");
 	}
+}
+
+/**
+ * Turns a ArrayType Value into a Pointer Value. Value must be
+ * of type ArrayType.
+ */
+void getPointerFromArray(State state, Location loc, Value result)
+{
+	auto at = cast(ArrayType)result.type;
+	assert(at !is null);
+
+	makePointer(state, result);
+
+	result.value = LLVMBuildStructGEP(state.builder, result.value, ArrayType.ptrIndex, "arrayGep");
+	result.isPointer = true;
+	result.type = at.ptrType;
 }
 
 /**
