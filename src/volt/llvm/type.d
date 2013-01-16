@@ -460,7 +460,8 @@ Type fromIr(State state, ir.Type irType)
 		auto strct = cast(ir.Struct)irType;
 		return new .StructType(state, strct);
 	default:
-		throw CompilerPanic(irType.location, "Can't translate type %s");
+		auto emsg = format("Can't translate type %s (%s)", irType.nodeType, irType.mangledName);
+		throw CompilerPanic(irType.location, emsg);
 	}
 }
 
