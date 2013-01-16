@@ -459,6 +459,9 @@ Type fromIr(State state, ir.Type irType)
 	case Struct:
 		auto strct = cast(ir.Struct)irType;
 		return new .StructType(state, strct);
+	case StorageType:
+		auto storage = cast(ir.StorageType) irType;
+		return fromIr(state, storage.base);
 	default:
 		auto emsg = format("Can't translate type %s (%s)", irType.nodeType, irType.mangledName);
 		throw CompilerPanic(irType.location, emsg);
