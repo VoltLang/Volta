@@ -479,8 +479,8 @@ void buildCommonTypes(State state)
 	auto byteTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Byte);
 	auto ubyteTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Ubyte);
 	auto intTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
-	auto uintTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
-	auto ulongTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
+	auto uintTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Uint);
+	auto ulongTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Ulong);
 
 	auto voidPtrTypeIr = new ir.PointerType(voidTypeIr);
 	auto voidFunctionTypeIr = new ir.FunctionType();
