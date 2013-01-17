@@ -8,9 +8,6 @@ import volt.interfaces;
 
 import volt.token.location;
 
-import volt.visitor.print;
-import volt.visitor.debugprint;
-
 import volt.semantic.attribremoval;
 import volt.semantic.context;
 import volt.semantic.condremoval;
@@ -92,11 +89,6 @@ public:
 		passes3b ~= new TypeidReplacer(settings);
 		passes3b ~= new MangleWriter();
 		passes3b ~= new IrVerifier();
-
-		if (settings.internalDebug) {
-			passes3b ~= new DebugPrintVisitor("Running DebugPrintVisitor:");
-			passes3b ~= new PrintVisitor("Running PrintVisitor:");
-		}
 	}
 
 	override ir.Module getModule(ir.QualifiedName name)

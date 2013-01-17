@@ -16,6 +16,9 @@ import volt.parser.parser;
 import volt.semantic.languagepass;
 import volt.llvm.backend;
 
+import volt.visitor.print;
+import volt.visitor.debugprint;
+
 
 /**
  * Default implementation of @link volt.interfaces.Controller Controller@endlink, replace
@@ -28,6 +31,8 @@ public:
 	Frontend frontend;
 	LanguagePass languagePass;
 	Backend backend;
+
+	Pass[] debugVisitors;
 
 protected:
 	string[] mSourceFiles;
@@ -49,6 +54,9 @@ public:
 		// Setup default include paths.
 		auto std = getExePath() ~ dirSeparator ~ "rt" ~ dirSeparator ~ "src";
 		settings.includePaths = std ~ settings.includePaths;
+
+		debugVisitors ~= new DebugPrintVisitor("Running DebugPrintVisitor:");
+		debugVisitors ~= new PrintVisitor("Running PrintVisitor:");
 	}
 
 	/**
@@ -182,6 +190,14 @@ protected:
 
 		// All modules need to be run trough phase3.
 		languagePass.phase3(dmdIsStupid);
+
+		if (settings.internalDebug) {
+			foreach(pass; debugVisitors) {
+				foreach(mod; mods) {
+					pass.transform(mod);
+				}
+			}
+		}
 
 		if (settings.noBackend)
 			return 0;
