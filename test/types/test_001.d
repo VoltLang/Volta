@@ -1,6 +1,6 @@
 //T compiles:no
 // Test transitive dereferencing.
-module test_011;
+module test_001;
 
 int main()
 {

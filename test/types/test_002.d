@@ -1,7 +1,7 @@
 //T compiles:yes
 //T retval:21
 // Test transitive dereferencing.
-module test_012;
+module test_002;
 
 int main()
 {

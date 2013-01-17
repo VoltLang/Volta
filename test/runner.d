@@ -80,6 +80,7 @@ void main(string[] args)
 		listDir("exps", "*test_*.d", &addTest);
 		listDir("lower", "*test_*.d", &addTest);
 		listDir("internal", "*test_*.d", &addTest);
+		listDir("types", "*test_*.d", &addTest);
 	}
 	sort(tests);
 
