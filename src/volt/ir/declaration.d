@@ -60,9 +60,9 @@ class Variable : Declaration
 public:
 	enum Storage
 	{
-		None,
-		Local,
-		Global,
+		None,  /// Not applicable (usually stack).
+		Local,  /// Stored in TLS.
+		Global,  /// Stored in the global data segment.
 	}
 
 public:
@@ -79,6 +79,7 @@ public:
 	/// An expression that is assigned to the instance if present.
 	Exp assign;  // Optional.
 
+	/// What storage this variable will be stored in. 
 	Storage storage;
 
 	bool isWeakLink;   ///< Only for global variables.
@@ -180,8 +181,10 @@ public:
 	/// Optional this argument for member functions.
 	Variable thisHiddenParameter;
 
-	bool defined;
-	int vtableIndex = -1;
+	bool defined;  /** The middle-end uses this tag to determine if all the types 
+					*  this function uses are well defined.
+					*/
+	int vtableIndex = -1;  // If this is a member function, where in the vtable does it live?
 
 
 public:
