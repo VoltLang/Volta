@@ -358,7 +358,7 @@ public:
 			largestType = rp;
 		}
 
-		if (intsz > largestsz) {
+		if (bin.op != ir.BinOp.Type.Assign && intsz > largestsz) {
 			largestsz = intsz;
 			largestType = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
 		}
