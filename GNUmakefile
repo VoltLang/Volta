@@ -96,7 +96,8 @@ clean:
 	@rm -f rt/rt.bc
 
 run: $(TARGET)
-	@./$(TARGET) test/simple/test_001.d
+	@./$(TARGET) --internal-dbg -o a.out.exe test/simple/test_001.d
+	@./a.out.exe
 
 debug: $(TARGET)
 	@gdb --args ./$(TARGET) test/simple/test_001.d
