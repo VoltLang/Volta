@@ -5,6 +5,8 @@ module volt.util.path;
 
 version (Windows) {
 	import core.sys.windows.windows : GetModuleFileNameA;
+} else version (darwin) {
+	extern(C) int _NSGetExecutablePath(char*, uint*);
 } else version (Posix) {
 	import core.sys.posix.unistd : readlink;
 } else {
@@ -94,8 +96,19 @@ string getExePath()
 
 		auto ret = readlink("/proc/self/exe", stack.ptr, 512);
 
+	} else version (darwin) {
+
+		uint size = cast(uint)stack.length;
+		auto ret = _NSGetExecutablePath(stack.ptr, &size);
+		if (ret != 0 || size == 0)
+			ret = -1;
+		else
+			ret = cast(int)size;
+
 	} else {
+
 		static assert(false);
+
 	}
 
 	if (ret < 1)
