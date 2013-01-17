@@ -185,6 +185,86 @@ public:
 	override Visitor.Status visit(ref ir.Exp, ir.ExpReference) { return Continue; }
 }
 
+/**
+ * The same as NullExpReplaceVisitor but also tracks scopes.
+ */
+class ScopeExpReplaceVisitor : NullExpReplaceVisitor
+{
+public:
+	ir.Scope current;
+
+public:
+	override Visitor.Status enter(ir.Module m)
+	{
+		assert(current is null);
+		current = m.myScope;
+		return Continue;
+	}
+
+	override Visitor.Status leave(ir.Module m)
+	{
+		assert(current == m.myScope);
+
+		current = null;
+		return Continue;
+	}
+
+	override Visitor.Status enter(ir.Struct s)
+	{
+		current = s.myScope;
+		return Continue;
+	}
+
+	override Visitor.Status leave(ir.Struct s)
+	{
+		assert(current == s.myScope);
+
+		current = current.parent;
+		return Continue;
+	}
+
+	override Visitor.Status enter(ir.Class c)
+	{
+		current = c.myScope;
+		return Continue;
+	}
+
+	override Visitor.Status leave(ir.Class c)
+	{
+		assert(current == c.myScope);
+
+		current = current.parent;
+		return Continue;
+	}
+
+	override Visitor.Status enter(ir._Interface i)
+	{
+		current = i.myScope;
+		return Continue;
+	}
+
+	override Visitor.Status leave(ir._Interface i)
+	{
+		assert(current == i.myScope);
+
+		current = current.parent;
+		return Continue;
+	}
+
+	override Visitor.Status enter(ir.Function fn)
+	{
+		current = fn.myScope;
+		return Continue;
+	}
+
+	override Visitor.Status leave(ir.Function fn)
+	{
+		assert(current == fn.myScope);
+
+		current = current.parent;
+		return Continue;
+	}
+}
 
 Visitor.Status acceptExp(ref ir.Exp exp, ExpReplaceVisitor av)
 {
