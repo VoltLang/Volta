@@ -67,6 +67,7 @@ ir.Function createArrayAllocFunction(Location location, Settings settings, ir.Sc
 	fn.location = location;
 	fn.type = ftype;
 	fn.name = "__arrayAlloc" ~ arrayMangledName;
+	fn.mangledName = fn.name;
 	fn.myScope = new ir.Scope(baseScope, fn, fn.name);
 	fn.myScope.addValue(countRef, "count");
 	fn._body = new ir.BlockStatement();
