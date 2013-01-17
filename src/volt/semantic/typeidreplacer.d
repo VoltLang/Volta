@@ -12,22 +12,6 @@ import volt.semantic.classify;
 import volt.semantic.lookup;
 import volt.semantic.mangle;
 
-ir.Scope getScope(ir.Type type)
-{
-	auto pointer = cast(ir.PointerType) type;
-	if (pointer !is null) return getScope(pointer.base);
-
-	auto tr = cast(ir.TypeReference) type;
-	if (tr !is null) return getScope(tr.type);
-
-	auto _struct = cast(ir.Struct) type;
-	if (_struct !is null) return _struct.myScope;
-
-	auto _class = cast(ir.Class) type;
-	if (_class !is null) return _class.myScope;
-
-	return null;
-}
 
 /**
  * Replaces typeid(...) expressions with a call
@@ -86,7 +70,7 @@ public:
 
 		auto mangledNameConstant = new ir.Constant();
 		mangledNameConstant.location = _typeid.location;
-		auto _scope = getScope(_typeid.type);
+		auto _scope = getScopeFromType(_typeid.type);
 		string[] parentNames;
 		if (_scope !is null) {
 			parentNames = getParentScopeNames(_scope);
