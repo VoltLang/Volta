@@ -236,6 +236,8 @@ protected:
 
 			string as = temporaryFilename(".as");
 			cmd = format("llc -o \"%s\" \"%s\"", as, link);
+			version (darwin)
+				cmd ~= " -disable-cfi";
 			ret = system(cmd);
 			if (ret)
 				return ret;
