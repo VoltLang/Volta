@@ -1,7 +1,7 @@
 //T compiles:yes
 //T retval:42
 // Test implicit conversion from const using mutable indirection doesn't prevent other conversions from occurring.
-module test_008;
+module test_005;
 
 void foo(long i)
 {

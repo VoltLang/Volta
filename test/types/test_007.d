@@ -1,7 +1,7 @@
 //T compiles:no
 //T retval:42
 // Ensure that const values can't be assigned to.
-module test_010;
+module test_007;
 
 int main()
 {
