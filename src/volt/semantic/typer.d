@@ -526,6 +526,39 @@ ir.Type getUnaryCastType(ir.Unary unary)
 ir.Type getUnaryDerefType(ir.Unary unary, ir.Scope currentScope)
 {
 	auto type = getExpType(unary.value, currentScope);
+	// If this is a storageType(T*) make the result storageType(T).
+	if (type.nodeType == ir.NodeType.StorageType) {
+		ir.Type base = type;
+		ir.StorageType.Kind[] kinds;
+		Location[] locations;
+		while (base.nodeType == ir.NodeType.StorageType) {
+			auto asStorage = cast(ir.StorageType) type;
+			kinds ~= asStorage.type;
+			locations ~= asStorage.location;
+			assert(asStorage !is null);
+			base = asStorage.base;
+		}
+		if (base.nodeType != ir.NodeType.PointerType) {
+			throw new CompilerError(unary.location, "can only dereference pointers.");
+		}
+		assert(kinds.length == locations.length);
+		ir.StorageType outStorage = new ir.StorageType();
+		for (int i = 0; i < kinds.length; ++i) {
+			auto kind = kinds[i];
+			auto location = locations[i];
+			outStorage.type = kind;
+			outStorage.location = location;
+			if (i < kinds.length - 1) {
+				outStorage.base = new ir.StorageType();
+				outStorage = cast(ir.StorageType) outStorage.base;
+			}
+		}
+		auto asPointer = cast(ir.PointerType) base;
+		assert(asPointer !is null);
+		outStorage.base = asPointer.base;
+		return outStorage;
+	}
+
 	if (type.nodeType != ir.NodeType.PointerType) {
 		throw new CompilerError(unary.location, "can only dereference pointers.");
 	}
