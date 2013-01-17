@@ -163,6 +163,8 @@ public:
 		auto ft = cast(FunctionType)type;
 		auto llvmType = ft.llvmCallType;
 		auto v = LLVMAddFunction(mod, fn.mangledName, llvmType);
+		if (fn.isWeakLink)
+			LLVMSetLinkage(v, LLVMLinkage.LinkOnceODR);
 
 		valueStore[k] = Store(v, type);
 		return v;
