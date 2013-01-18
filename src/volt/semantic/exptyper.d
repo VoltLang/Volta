@@ -200,15 +200,25 @@ public:
 				return ldg;
 			}
 		} else if (localLeft.nodeType != ir.NodeType.StorageType &&
-				   t.nodeType == ir.NodeType.StorageType &&
-				   effectivelyConst(t)) {
+				   t.nodeType == ir.NodeType.StorageType) {
 			asStorageType = cast(ir.StorageType) t;
 			assert(asStorageType !is null);
-			if (!mutableIndirection(asStorageType.base)) {
+			if (asStorageType.type == ir.StorageType.Kind.Scope) {
+				if (mutableIndirection(asStorageType.base)) {
+					throw new CompilerError(right.location, "cannot convert scope into mutably indirectable type.");
+				}
 				right = new ir.Unary(asStorageType.base, right);
 				return extype(left, right);
 			}
-			throw new CompilerError(right.location, "cannot implicitly convert const to non const.");
+
+			if (effectivelyConst(t)) {
+				if (!mutableIndirection(asStorageType.base)) {
+					right = new ir.Unary(asStorageType.base, right);
+					return extype(left, right);
+				} else {
+					throw new CompilerError(right.location, "cannot implicitly convert const to non const.");
+				}
+			}
 		} else if (localLeft.nodeType == ir.NodeType.StorageType &&
 				   t.nodeType != ir.NodeType.StorageType) {
 			asStorageType = cast(ir.StorageType) localLeft;
