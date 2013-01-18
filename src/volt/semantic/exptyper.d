@@ -209,6 +209,21 @@ public:
 				return extype(left, right);
 			}
 			throw new CompilerError(right.location, "cannot implicitly convert const to non const.");
+		} else if (localLeft.nodeType == ir.NodeType.StorageType &&
+				   t.nodeType != ir.NodeType.StorageType) {
+			asStorageType = cast(ir.StorageType) localLeft;
+			/* Scope is always the first StorageType, so we don't have to
+			 * worry about StorageType chains.
+			 */
+			if (asStorageType.type == ir.StorageType.Kind.Scope) {
+				if (mutableIndirection(t)) {
+					/// This is not the world's greatest error message. @todo
+					throw new CompilerError(right.location, "cannot convert mutably indirectable type to scope.");
+				} else {
+					right = new ir.Unary(asStorageType, right);
+					return asStorageType;
+				}
+			}
 		} else {
 			if (typesEqual(localLeft, t)) {
 				return localLeft;
