@@ -364,6 +364,10 @@ void retrieveScope(ir.Node tt, ir.Postfix postfix, ref ir.Scope _scope, ref ir.C
 		auto asTR = cast(ir.TypeReference) tt;
 		assert(asTR !is null);
 		retrieveScope(asTR.type, postfix, _scope, _class, emsg);
+	} else if (tt.nodeType == ir.NodeType.StorageType) {
+		auto asStorage = cast(ir.StorageType) tt;
+		assert(asStorage !is null);
+		retrieveScope(asStorage.base, postfix, _scope, _class, emsg);
 	} else {
 		assert(false, to!string(tt.nodeType));
 	}
