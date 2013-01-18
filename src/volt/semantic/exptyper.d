@@ -50,6 +50,18 @@ public:
 		if (asFunctionType is null) {
 			throw new CompilerError(postfix.location, format("tried to call uncallable type."));
 		}
+
+		if (asFunctionType.isScope && postfix.child.nodeType == ir.NodeType.Postfix) {
+			auto asPostfix = cast(ir.Postfix) postfix.child;
+			auto parentType = getExpType(asPostfix.child, current);
+			if (mutableIndirection(parentType)) {
+				auto asStorageType = cast(ir.StorageType) parentType;
+				if (asStorageType is null || asStorageType.type != ir.StorageType.Kind.Scope) {
+					throw new CompilerError(postfix.location, "cannot call scope function on non scope instance.");
+				}
+			}
+		}
+
 		if (postfix.arguments.length != asFunctionType.params.length) {
 			throw new CompilerError(postfix.location, "wrong number of arguments to function.");
 		}
