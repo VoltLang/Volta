@@ -49,7 +49,14 @@ ir.Statement[] parseStatement(TokenStream ts)
 	case TokenType.Throw:
 		return [parseThrowStatement(ts)];
 	case TokenType.Scope:
-		return [parseScopeStatement(ts)];
+		if (ts.lookahead(1).type == TokenType.OpenParen && ts.lookahead(2).type == TokenType.Identifier &&
+			ts.lookahead(3).type == TokenType.CloseParen) {
+			auto identTok = ts.lookahead(2);
+			if (identTok.value == "exit" || identTok.value == "failure" || identTok.value == "success") {
+				return [parseScopeStatement(ts)];
+			}
+		}
+		goto default;
 	case TokenType.Pragma:
 		return [parsePragmaStatement(ts)];
 	case TokenType.Identifier:
