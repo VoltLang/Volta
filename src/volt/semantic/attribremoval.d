@@ -208,6 +208,9 @@ protected:
 			case Protected:
 				fn.access = ir.Access.Protected;
 				break;
+			case Scope:
+				fn.type.isScope = true;
+				break;
 			default:
 				// Warn?
 			}
