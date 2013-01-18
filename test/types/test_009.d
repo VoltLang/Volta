@@ -7,5 +7,5 @@ int main()
 {
     int i = 17;
     scope(int) si = i;
-    return cast(int) si;
+    return si;
 }
