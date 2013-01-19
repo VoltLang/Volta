@@ -63,6 +63,7 @@ public:
 		if (mod is null) {
 			throw new CompilerError(i.name.location, format("cannot find module '%s'.", i.name));
 		}
+		i.targetModule = mod;
 
 		auto gatherer = new PublicImportGatherer();
 		accept(mod, gatherer);

@@ -24,6 +24,7 @@ public:
 	ir.Struct typeinfo;
 	ir.Struct typeinfoVtable;
 	ir.Module thisModule;
+	ir.Variable vtableVar;
 
 public:
 	this(Settings settings)
@@ -42,8 +43,44 @@ public:
 		}
 		typeinfoVtable = cast(ir.Struct) store.node;
 
+		auto objectStore = m.myScope.lookup("object", m.location);
+		if (objectStore is null) {
+			throw CompilerPanic(m.location, "couldn't locate object module scope.");
+		}
+
+		auto objectScope = objectStore.s;
+		if (objectScope is null) {
+			throw CompilerPanic(m.location, "Found symbol 'object', but it is not an imported module.");
+		}
+
+		auto objectImport = cast(ir.Import) objectStore.node;
+		assert(objectImport !is null);
+		auto objectModule = objectImport.targetModule;
+		assert(objectModule !is null);
+
+		auto vtableVarStore = objectScope.lookupOnlyThisScope("__TypeInfo_vtable", m.location);
+		if (vtableVarStore is null) {
+			auto vtable = new ir.StructLiteral();
+			vtable.location = objectStore.node.location;
+			vtable.type = new ir.TypeReference(typeinfoVtable, typeinfoVtable.name);
+
+			vtableVar = new ir.Variable();
+			vtableVar.location = objectScope.node.location;
+			vtableVar.assign = vtable;
+			vtableVar.mangledName = vtableVar.name = "__TypeInfo_vtable";
+			vtableVar.type = new ir.TypeReference(typeinfoVtable, typeinfoVtable.name);
+			//vtableVar.isWeakLink = true;
+			vtableVar.storage = ir.Variable.Storage.Global;
+
+			objectModule.children.nodes = vtableVar ~ objectModule.children.nodes;
+			objectScope.addValue(vtableVar, "__TypeInfo_vtable");
+		} else {
+			vtableVar = cast(ir.Variable) vtableVarStore.node;
+		}
+
 		assert(typeinfo !is null);
 		assert(typeinfoVtable !is null);
+		assert(vtableVar !is null);
 		accept(m, this);
 	}
 
@@ -85,19 +122,6 @@ public:
 		mindirectionConstant.value = mindirection ? "true" : "false";
 		mindirectionConstant.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
 		mindirectionConstant.type.location = _typeid.location;
-
-		auto vtable = new ir.StructLiteral();
-		vtable.location = _typeid.location;
-		vtable.type = new ir.TypeReference(typeinfoVtable, typeinfoVtable.name);
-
-		auto vtableVar = new ir.Variable();
-		vtableVar.location = thisModule.location;
-		vtableVar.assign = vtable;
-		vtableVar.mangledName = vtableVar.name = _typeid.type.mangledName ~ "__TypeInfo_vtable";
-		vtableVar.type = new ir.TypeReference(typeinfoVtable, typeinfoVtable.name);
-		vtableVar.isWeakLink = true;
-		vtableVar.storage = ir.Variable.Storage.Global;
-		thisModule.children.nodes = vtableVar ~ thisModule.children.nodes;
 
 		auto vtableRef = new ir.ExpReference();
 		vtableRef.location = vtableVar.location;

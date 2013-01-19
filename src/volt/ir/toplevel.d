@@ -146,6 +146,9 @@ public:
 	/// Optional, import a : <b = c, d>
 	Identifier[2][] aliases;
 
+	/// This points at the imported module -- filled in by ImportResolver.
+	Module targetModule;
+
 
 public:
 	this() { super(NodeType.Import); }
