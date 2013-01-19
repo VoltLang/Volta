@@ -92,6 +92,8 @@ public:
 	{
 		assert(_typeid.type !is null);
 
+		_typeid.type.mangledName = mangle(null, _typeid.type);
+
 		int typeSize = size(_typeid.location, _typeid.type);
 		auto typeConstant = new ir.Constant();
 		typeConstant.location = _typeid.location;
@@ -145,7 +147,7 @@ public:
 		auto literalVar = new ir.Variable();
 		literalVar.location = vtableVar.location;
 		literalVar.assign = literal;
-		literalVar.mangledName = literalVar.name = _typeid.type.mangledName ~ "__TypeInfo";
+		literalVar.mangledName = literalVar.name = "_V__TypeInfo_" ~ _typeid.type.mangledName;
 		literalVar.type = new ir.TypeReference(typeinfo, typeinfo.name);
 		literalVar.isWeakLink = true;
 		literalVar.storage = ir.Variable.Storage.Global;
