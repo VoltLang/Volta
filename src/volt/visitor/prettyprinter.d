@@ -31,13 +31,11 @@ protected:
 
 	int mIndent;
 	string mIndentText;
-	string mStartText;
 
 public:
-	this(string startText = null, string indentText = "\t")
+	this(string indentText = "\t")
 	{
 		mIndentText = indentText;
-		mStartText = startText;
 	}
 
 	void close()
@@ -65,8 +63,6 @@ public:
 		assert(mFilename is null);
 
 		mStream = dout;
-		if (mStartText != null)
-			mStream.writefln(mStartText);
 		accept(m, this);
 		mStream.writefln();
 		mStream = null;

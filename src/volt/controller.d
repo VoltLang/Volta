@@ -55,8 +55,10 @@ public:
 		auto std = getExePath() ~ dirSeparator ~ "rt" ~ dirSeparator ~ "src";
 		settings.includePaths = std ~ settings.includePaths;
 
-		debugVisitors ~= new DebugPrinter("Running DebugPrintVisitor:");
-		debugVisitors ~= new PrettyPrinter("Running PrintVisitor:");
+		debugVisitors ~= new DebugMarker("Running DebugPrinter:");
+		debugVisitors ~= new DebugPrinter();
+		debugVisitors ~= new DebugMarker("Running PrettyPrinter:");
+		debugVisitors ~= new PrettyPrinter();
 	}
 
 	/**

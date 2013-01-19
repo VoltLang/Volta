@@ -22,6 +22,27 @@ void debugPrinter(ir.Module m)
 	dp.close();
 }
 
+string getNodeAddressString(ir.Node node)
+{
+	return "0x" ~ to!string(*cast(size_t*)&node);
+}
+
+class DebugMarker : Pass
+{
+protected:
+	string mText;
+
+public:
+	this(string text) { mText = text; }
+
+	override void close() {}
+
+	override void transform(ir.Module m)
+	{
+		writefln("%s %s \"%s\"", mText, getNodeAddressString(m), m.name.toString);
+	}
+}
+
 class DebugPrinter : Visitor, Pass, Backend
 {
 protected:
@@ -31,13 +52,11 @@ protected:
 	int mIndent;
 	int mLastIndent;
 	string mIndentText;
-	string mStartText;
 
 public:
-	this(string startText = null, string indentText = "\t")
+	this(string indentText = "\t")
 	{
 		mIndentText = indentText;
-		mStartText = startText;
 	}
 
 	void close()
@@ -65,8 +84,6 @@ public:
 		assert(mFilename is null);
 
 		mStream = dout;
-		if (mStartText != null)
-			mStream.writefln(mStartText);
 		accept(m, this);
 		mStream.writefln();
 		mStream = null;
@@ -280,7 +297,7 @@ protected:
 	{
 		if (mIndent != 0)
 			ln();
-		twf(["(", ir.nodeToString(node), " 0x", to!string(*cast(size_t*)&node)]);
+		twf(["(", ir.nodeToString(node), " ", getNodeAddressString(node)]);
 		mLastIndent = mIndent++;
 	}
 
@@ -288,7 +305,7 @@ protected:
 	{
 		if (mIndent != 0)
 			ln();
-		twf(["(", ir.nodeToString(node), " ", extra, " 0x", to!string(*cast(size_t*)&node)]);
+		twf(["(", ir.nodeToString(node), " ", extra, " ", getNodeAddressString(node)]);
 		mLastIndent = mIndent++;
 	}
 
@@ -309,7 +326,7 @@ protected:
 
 		ln();
 		if (r !is null) {
-			twf(["-> ", ir.nodeToString(r), " 0x", to!string(*cast(size_t*)&r)]);
+		twf(["-> ", ir.nodeToString(r), " ", getNodeAddressString(r)]);
 		} else {
 			twf("-> null");
 		}
@@ -321,7 +338,7 @@ protected:
 	void visitNode(ir.Node node)
 	{
 		ln();
-		twf(["(", ir.nodeToString(node), " 0x", to!string(*cast(size_t*)&node), ")"]);
+		twf(["(", ir.nodeToString(node), " ", getNodeAddressString(node), ")"]);
 		mLastIndent = mIndent;
 	}
 
