@@ -36,6 +36,8 @@ public abstract:
 	Visitor.Status leave(ref ir.Exp, ir.FunctionLiteral);
 	Visitor.Status enter(ref ir.Exp, ir.StructLiteral);
 	Visitor.Status leave(ref ir.Exp, ir.StructLiteral);
+	Visitor.Status enter(ref ir.Exp, ir.ClassLiteral);
+	Visitor.Status leave(ref ir.Exp, ir.ClassLiteral);
 
 	Visitor.Status visit(ref ir.Exp, ir.Constant);
 	Visitor.Status visit(ref ir.Exp, ir.IdentifierExp);
@@ -179,6 +181,8 @@ public:
 	override Visitor.Status leave(ref ir.Exp, ir.FunctionLiteral) { return Continue; }
 	override Visitor.Status enter(ref ir.Exp, ir.StructLiteral) { return Continue; }
 	override Visitor.Status leave(ref ir.Exp, ir.StructLiteral) { return Continue; }
+	override Visitor.Status enter(ref ir.Exp, ir.ClassLiteral) { return Continue; }
+	override Visitor.Status leave(ref ir.Exp, ir.ClassLiteral) { return Continue; }
 
 	override Visitor.Status visit(ref ir.Exp, ir.Constant) { return Continue; }
 	override Visitor.Status visit(ref ir.Exp, ir.IdentifierExp) { return Continue; }
@@ -305,6 +309,10 @@ Visitor.Status acceptExp(ref ir.Exp exp, ExpReplaceVisitor av)
 		auto asStructLiteral = cast(ir.StructLiteral) exp;
 		assert(asStructLiteral !is null);
 		return acceptStructLiteral(exp, asStructLiteral, av);
+	case ClassLiteral:
+		auto asClassLiteral = cast(ir.ClassLiteral) exp;
+		assert(asClassLiteral !is null);
+		return acceptClassLiteral(exp, asClassLiteral, av);
 	default:
 		throw CompilerPanic(exp.location, format("unhandled accept node: %s.", to!string(exp.nodeType)));
 	}
@@ -564,6 +572,25 @@ Visitor.Status acceptStructLiteral(ref ir.Exp exp, ir.StructLiteral sliteral, Ex
 	}
 
 	return av.leave(exp, sliteral);
+}
+
+Visitor.Status acceptClassLiteral(ref ir.Exp exp, ir.ClassLiteral cliteral, ExpReplaceVisitor av)
+{
+	auto status = av.enter(exp, cliteral);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	foreach (ref sexp; cliteral.exps) {
+		status = acceptExp(sexp, av);
+		if (status == VisitorContinueParent) {
+			continue;
+		} else if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	return av.leave(exp, cliteral);
 }
 
 Visitor.Status acceptConstant(ref ir.Exp exp, ir.Constant constant, ExpReplaceVisitor av)

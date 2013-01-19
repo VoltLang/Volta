@@ -158,6 +158,8 @@ public abstract:
 	Status leave(ir.FunctionLiteral);
 	Status enter(ir.StructLiteral);
 	Status leave(ir.StructLiteral);
+	Status enter(ir.ClassLiteral);
+	Status leave(ir.ClassLiteral);
 
 	Status visit(ir.ExpReference);
 	Status visit(ir.Constant);
@@ -303,6 +305,8 @@ override:
 	Status leave(ir.FunctionLiteral){ return Continue; }
 	Status enter(ir.StructLiteral){ return Continue; }
 	Status leave(ir.StructLiteral){ return Continue; }
+	Status enter(ir.ClassLiteral){ return Continue; }
+	Status leave(ir.ClassLiteral){ return Continue; }
 
 	Status visit(ir.ExpReference){ return Continue; }
 	Status visit(ir.Constant){ return Continue; }
@@ -434,6 +438,10 @@ Visitor.Status accept(ir.Node n, Visitor av)
 		auto asStructLiteral = cast(ir.StructLiteral) n;
 		assert(asStructLiteral !is null);
 		return acceptStructLiteral(asStructLiteral, av);
+	case ir.NodeType.ClassLiteral:
+		auto asClassLiteral = cast(ir.ClassLiteral) n;
+		assert(asClassLiteral !is null);
+		return acceptClassLiteral(asClassLiteral, av);
 
 	/*
 	 * Statements.
@@ -1493,4 +1501,30 @@ Visitor.Status acceptStructLiteral(ir.StructLiteral sliteral, Visitor av)
 	}
 
 	return av.leave(sliteral);
+}
+
+Visitor.Status acceptClassLiteral(ir.ClassLiteral cliteral, Visitor av)
+{
+	auto status = av.enter(cliteral);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	foreach (exp; cliteral.exps) {
+		status = accept(exp, av);
+		if (status == VisitorContinueParent) {
+			continue;
+		} else if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	if (cliteral.type !is null) {
+		status = accept(cliteral.type, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	return av.leave(cliteral);
 }
