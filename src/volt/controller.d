@@ -16,8 +16,8 @@ import volt.parser.parser;
 import volt.semantic.languagepass;
 import volt.llvm.backend;
 
-import volt.visitor.print;
-import volt.visitor.debugprint;
+import volt.visitor.prettyprinter;
+import volt.visitor.debugprinter;
 
 
 /**
@@ -55,8 +55,8 @@ public:
 		auto std = getExePath() ~ dirSeparator ~ "rt" ~ dirSeparator ~ "src";
 		settings.includePaths = std ~ settings.includePaths;
 
-		debugVisitors ~= new DebugPrintVisitor("Running DebugPrintVisitor:");
-		debugVisitors ~= new PrintVisitor("Running PrintVisitor:");
+		debugVisitors ~= new DebugPrinter("Running DebugPrintVisitor:");
+		debugVisitors ~= new PrettyPrinter("Running PrintVisitor:");
 	}
 
 	/**

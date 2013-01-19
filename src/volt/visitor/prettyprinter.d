@@ -1,7 +1,7 @@
 // Copyright © 2012, Bernard Helyer.  All rights reserved.
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.visitor.print;
+module volt.visitor.prettyprinter;
 
 import std.stdio : writefln, writef;
 import std.stream : Stream, File, FileMode;
@@ -16,13 +16,14 @@ import ir = volt.ir.ir;
 import volt.visitor.visitor;
 
 
-void printVisitor(ir.Module m)
+void prettyPrinter(ir.Module m)
 {
-	auto pv = new PrintVisitor();
-	accept(m, pv);
+	auto pp = new PrettyPrinter();
+	accept(m, pp);
+	pp.close();
 }
 
-class PrintVisitor : Visitor, Pass, Backend
+class PrettyPrinter : Visitor, Pass, Backend
 {
 protected:
 	string mFilename;

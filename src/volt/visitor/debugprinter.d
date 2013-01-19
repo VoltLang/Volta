@@ -1,6 +1,6 @@
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.visitor.debugprint;
+module volt.visitor.debugprinter;
 
 import std.stdio : writefln, writef;
 import std.stream : Stream, File, FileMode;
@@ -15,14 +15,14 @@ import ir = volt.ir.ir;
 import volt.visitor.visitor;
 
 
-void debugPrintVisitor(ir.Module m)
+void debugPrinter(ir.Module m)
 {
-	auto dpv = new DebugPrintVisitor();
-	accept(m, dpv);
-	dpv.close();
+	auto dp = new DebugPrinter();
+	accept(m, dp);
+	dp.close();
 }
 
-class DebugPrintVisitor : Visitor, Pass, Backend
+class DebugPrinter : Visitor, Pass, Backend
 {
 protected:
 	string mFilename;
