@@ -86,7 +86,7 @@ public:
 		string result;
 		auto failed = LLVMVerifyModule(mod, result);
 		if (failed) {
-			writefln(result);
+			writefln("%s", result);
 			throw CompilerPanic("Module verification failed.");
 		}
 
