@@ -6,6 +6,7 @@ module volt.ir.expression;
 import volt.ir.base;
 import volt.ir.type;
 import volt.ir.declaration;
+import volt.ir.toplevel;
 import volt.ir.statement;
 
 
@@ -441,4 +442,15 @@ public:
 
 public:
 	this() { super(NodeType.StructLiteral); }
+}
+
+/// A ClassLiteral is a compiler internal expression form of a class.
+class ClassLiteral : Exp
+{
+public:
+	Exp[] exps;  ///< Values for the fields in the class.
+	Class type;  ///< The class this literal represents.
+
+public:
+	this() { super(NodeType.ClassLiteral); }
 }
