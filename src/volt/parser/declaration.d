@@ -183,7 +183,7 @@ ir.FunctionType parseFunctionType(TokenStream ts, ir.Type base)
 
 	fn.ret = base;
 	match(ts, TokenType.Function);
-	fn.params = parseParameterList(ts);
+	fn.params = parseParameterList(ts, fn);
 
 	return fn;
 }
@@ -195,17 +195,24 @@ ir.DelegateType parseDelegateType(TokenStream ts, ir.Type base)
 
 	fn.ret = base;
 	match(ts, TokenType.Delegate);
-	fn.params = parseParameterList(ts);
+	fn.params = parseParameterList(ts, fn);
 
 	return fn;
 }
 
-ir.Variable[] parseParameterList(TokenStream ts)
+ir.Variable[] parseParameterList(TokenStream ts, ir.CallableType parentCallable=null)
 {
 	ir.Variable[] plist;
 
 	match(ts, TokenType.OpenParen);
 	while (ts.peek.type != TokenType.CloseParen) {
+		if (matchIf(ts, TokenType.TripleDot)) {
+			if (parentCallable is null) {
+				throw new CompilerError(ts.peek.location, "only functions and delegates may have vararg parameters.");
+			}
+			parentCallable.hasVarArgs = true;
+			break;
+		}
 		plist ~= parseParameter(ts);
 		if (ts.peek.type == TokenType.Comma) {
 			ts.get();
@@ -302,7 +309,7 @@ ir.Function parseFunction(TokenStream ts, ir.Type base)
 	fn.location = nameTok.location;
 
 	// int add<(int a, int b)> {}
-	fn.type.params = parseParameterList(ts);
+	fn.type.params = parseParameterList(ts, fn.type);
 	fn.type.location = ts.previous.location - fn.type.ret.location;
 
 	bool inBlocks = ts.peek.type != TokenType.Semicolon;
