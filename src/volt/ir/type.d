@@ -267,6 +267,7 @@ public:
 	bool hiddenParameter;
 	bool isScope;
 	bool hasVarArgs;
+	bool varArgsProcessed;
 	// Hi there. Thinking of adding a new field? Add it to the copy constructor, below.
 
 
@@ -282,6 +283,7 @@ public:
 		hiddenParameter = ctype.hiddenParameter;
 		isScope = ctype.isScope;
 		hasVarArgs = ctype.hasVarArgs;
+		varArgsProcessed = ctype.varArgsProcessed;
 	}
 }
 

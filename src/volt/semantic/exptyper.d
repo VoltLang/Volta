@@ -63,6 +63,41 @@ public:
 			}
 		}
 
+		if (asFunctionType.hasVarArgs) {
+			auto asExp = cast(ir.ExpReference) postfix.child;
+			assert(asExp !is null);
+			auto asFunction = cast(ir.Function) asExp.decl;
+			assert(asFunction !is null);
+
+			replaceVarArgsIfNeeded(asFunction);
+
+			auto amountOfVarArgs = postfix.arguments.length - (asFunctionType.params.length + 1);
+			assert(amountOfVarArgs >= 0);
+
+			auto tinfoClass = retrieveTypeInfoClass(postfix.location, current);
+			auto tr = new ir.TypeReference(tinfoClass, tinfoClass.name);
+			tr.location = postfix.location;
+			auto array = new ir.ArrayType();
+			array.location = postfix.location;
+			array.base = tr;
+
+			auto typeidsLiteral = new ir.ArrayLiteral();
+			typeidsLiteral.location = postfix.location;
+			typeidsLiteral.type = array;
+
+			for (size_t i = asFunctionType.params.length - 1; i < postfix.arguments.length; ++i) {
+				auto typeId = new ir.Typeid();
+				typeId.location = postfix.location;
+				typeId.type = getExpType(postfix.arguments[i], current);
+				typeidsLiteral.values ~= typeId;
+			}
+
+			if (postfix.arguments.length != asFunctionType.params.length) {
+				postfix.arguments.length = asFunctionType.params.length;
+			}
+			postfix.arguments[$- 1] = typeidsLiteral;
+		}
+
 		if (postfix.arguments.length != asFunctionType.params.length) {
 			throw new CompilerError(postfix.location, "wrong number of arguments to function.");
 		}
@@ -695,8 +730,29 @@ public:
 		return Continue;
 	}
 
+	void replaceVarArgsIfNeeded(ir.Function fn)
+	{
+		if (fn.type.hasVarArgs && !fn.type.varArgsProcessed) {
+			auto tinfoClass = retrieveTypeInfoClass(fn.location, current);
+			assert(tinfoClass !is null);
+			auto tr = new ir.TypeReference(tinfoClass, tinfoClass.name);
+			tr.location = fn.location;
+			auto array = new ir.ArrayType();
+			array.location = tr.location;
+			array.base = tr;
+			auto var = new ir.Variable();
+			var.location = fn.location;
+			var.type = array;
+			var.name = "_typeids";
+			fn.type.params ~= var;
+			fn.myScope.addValue(var, "_typeids");
+			fn.type.varArgsProcessed = true;
+		}
+	}
+
 	override Status enter(ir.Function fn)
 	{
+		replaceVarArgsIfNeeded(fn);
 		super.enter(fn);
 		functionRet = fn.type.ret;
 		return Continue;
