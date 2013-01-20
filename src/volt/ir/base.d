@@ -68,6 +68,7 @@ enum NodeType
 	Alias,
 	Function,
 	FunctionParameter,
+	TypeOf,
 
 	/* statements.d */
 	ReturnStatement,
@@ -292,6 +293,7 @@ string nodeToString(NodeType nodeType)
 	case FunctionType: return "FunctionType";
 	case DelegateType: return "DelegateType";
 	case StorageType: return "StorageType";
+	case TypeOf: return "TypeOf";
 	case Variable: return "Variable";
 	case Alias: return "Alias";
 	case Function: return "Function";

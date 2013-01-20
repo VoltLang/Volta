@@ -126,6 +126,8 @@ public abstract:
 	Status leave(ir.Attribute attr);
 	Status enter(ir.Alias a);
 	Status leave(ir.Alias a);
+	Status enter(ir.TypeOf typeOf);
+	Status leave(ir.TypeOf typeOf);
 
 	Status visit(ir.PrimitiveType it);
 	Status visit(ir.TypeReference tr);
@@ -307,6 +309,8 @@ override:
 	Status leave(ir.StructLiteral){ return Continue; }
 	Status enter(ir.ClassLiteral){ return Continue; }
 	Status leave(ir.ClassLiteral){ return Continue; }
+	Status enter(ir.TypeOf typeOf) { return Continue; }
+	Status leave(ir.TypeOf typeOf) { return Continue; }
 
 	Status visit(ir.ExpReference){ return Continue; }
 	Status visit(ir.Constant){ return Continue; }
@@ -532,6 +536,10 @@ Visitor.Status accept(ir.Node n, Visitor av)
 		return acceptStorageType(cast(ir.StorageType) n, av);
 	case ir.NodeType.Alias:
 		return acceptAlias(cast(ir.Alias) n, av);
+	case ir.NodeType.TypeOf:
+		auto typeOf = cast(ir.TypeOf) n;
+		assert(typeOf !is null);
+		return acceptTypeOf(typeOf, av);
 
 	/*
 	 * Failure fall through.
@@ -768,6 +776,21 @@ Visitor.Status acceptAlias(ir.Alias a, Visitor av)
 	}
 
 	return av.leave(a);
+}
+
+Visitor.Status acceptTypeOf(ir.TypeOf typeOf, Visitor av)
+{
+	auto status = av.enter(typeOf);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	status = accept(typeOf.exp, av);
+	if (status == VisitorStop) {
+		return VisitorStop;
+	}
+
+	return av.leave(typeOf);
 }
 
 Visitor.Status acceptStorageType(ir.StorageType type, Visitor av)

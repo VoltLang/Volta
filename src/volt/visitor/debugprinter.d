@@ -244,6 +244,8 @@ public:
 	override Status leave(ir.Attribute n) { leaveNode(n); return Continue; }
 	override Status enter(ir.Alias n) { enterNode(n); return Continue; }
 	override Status leave(ir.Alias n) { leaveNode(n); return Continue; }
+	override Status enter(ir.TypeOf n) { enterNode(n); return Continue; }
+	override Status leave(ir.TypeOf n) { leaveNode(n); return Continue; }
 
 	override Status visit(ir.PrimitiveType n) { visitNode(n); return Continue; }
 	override Status visit(ir.TypeReference n) { visitRef(n, n.type); return Continue; }

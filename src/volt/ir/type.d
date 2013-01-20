@@ -5,6 +5,7 @@ module volt.ir.type;
 
 import volt.ir.base;
 import volt.ir.declaration;
+import volt.ir.expression;
 
 
 /**
@@ -141,6 +142,20 @@ public:
 		this.names = names.dup; 
 		type = t; 
 	}
+}
+
+/**
+ * TypeOf is generated for typeof(expression), anywhere a type could be
+ * used. This is then used as if the type of the expression had been
+ * written out by hand.
+ */
+class TypeOf : Type
+{
+public:
+	Exp exp;  ///< The expression to get the type of.
+
+public:
+	this() { super(NodeType.TypeOf); }
 }
 
 /**

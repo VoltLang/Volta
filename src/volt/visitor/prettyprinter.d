@@ -1233,6 +1233,19 @@ public:
 		assert(false);
 	}
 
+	override Status enter(ir.TypeOf typeOf)
+	{
+		wf("typeof(");
+		accept(typeOf.exp, this);
+		wf(")");
+		return ContinueParent;
+	}
+
+	override Status leave(ir.TypeOf typeOf)
+	{
+		assert(false);
+	}
+
 	/*
 	 *
 	 * Expression Nodes.
