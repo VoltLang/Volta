@@ -1356,6 +1356,13 @@ Visitor.Status acceptArrayLiteral(ir.ArrayLiteral array, Visitor av)
 		return parentContinue(status);
 	}
 
+	if (array.type !is null) {
+		status = accept(array.type, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
 	foreach (exp; array.values) {
 		status = accept(exp, av);
 		if (status == VisitorStop) {
