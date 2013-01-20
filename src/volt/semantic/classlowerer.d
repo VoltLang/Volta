@@ -484,7 +484,7 @@ public:
 				type = new ir.PointerType(asTR);
 				type.location = asTR.location;
 			}
-			return;		
+			return;
 		}
 		auto n = createClassStruct(asClass);
 		n.myScope.parent.remove(n.name);
@@ -494,6 +494,12 @@ public:
 		asTR.names[0] = asTR.type.mangledName;
 		type = new ir.PointerType(asTR);
 		type.location = asTR.location;
+	}
+
+	override Status enter(ir.ArrayType arrayType)
+	{
+		replaceTypeIfNeeded(arrayType.base);
+		return Continue;
 	}
 
 	override Status enter(ir.FunctionType ftype)
