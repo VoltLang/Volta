@@ -266,6 +266,7 @@ public:
 	/// @todo Get rid of this once we've moved Function.Kind here.
 	bool hiddenParameter;
 	bool isScope;
+	bool hasVarArgs;
 	// Hi there. Thinking of adding a new field? Add it to the copy constructor, below.
 
 
@@ -280,6 +281,7 @@ public:
 		params = ctype.params.dup;
 		hiddenParameter = ctype.hiddenParameter;
 		isScope = ctype.isScope;
+		hasVarArgs = ctype.hasVarArgs;
 	}
 }
 
