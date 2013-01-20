@@ -6,4 +6,4 @@ version (V_LP64) {
 	alias size_t = uint;
 }
 
-alias string = char[];
+alias string = immutable(char)[];
