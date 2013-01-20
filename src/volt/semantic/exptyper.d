@@ -6,6 +6,7 @@ import std.conv : to;
 import std.string : format;
 
 import ir = volt.ir.ir;
+import volt.ir.util;
 
 import volt.exceptions;
 import volt.interfaces;
@@ -110,19 +111,7 @@ public:
 		auto asStorageType = cast(ir.StorageType) left;
 		if (asStorageType !is null) {
 			if (asStorageType.base is null) {
-				auto asClass = cast(ir.Class) t;
-				if (asClass !is null) {
-					asStorageType.base = new ir.TypeReference(asClass, asClass.name);
-				}
-
-				auto asStruct = cast(ir.Struct) t;
-				if (asStorageType.base is null && asStruct !is null) {
-					asStorageType.base = new ir.TypeReference(asStruct, asStruct.name);
-				}
-
-				if (asStorageType.base is null) {
-					asStorageType.base = t;
-				}
+				asStorageType.base = copyTypeSmart(t, left.location);
 			}
 			if (asStorageType.type == ir.StorageType.Kind.Auto) {
 				localLeft = left = asStorageType.base;
@@ -131,7 +120,7 @@ public:
 
 		if (inVariable && effectivelyConst(left)) {
 			asStorageType = cast(ir.StorageType) left;
-			right = new ir.Unary(asStorageType, right);
+			right = buildCastSmart(asStorageType, right);
 			t = asStorageType;
 		}
 
@@ -162,7 +151,7 @@ public:
 			/// Check for converting child classes into parent classes.
 			if (leftClass !is null && rightClass !is null) {
 				if (inheritsFrom(rightClass, leftClass)) {
-					right = new ir.Unary(new ir.TypeReference(localLeft, leftClass.name), right);
+					right = buildCastSmart(new ir.TypeReference(localLeft, leftClass.name), right);
 					return localLeft;
 				}
 			}
@@ -219,13 +208,13 @@ public:
 				if (mutableIndirection(asStorageType.base)) {
 					throw new CompilerError(right.location, "cannot convert scope into mutably indirectable type.");
 				}
-				right = new ir.Unary(asStorageType.base, right);
+				right = buildCastSmart(asStorageType.base, right);
 				return extype(left, right);
 			}
 
 			if (effectivelyConst(t)) {
 				if (!mutableIndirection(asStorageType.base)) {
-					right = new ir.Unary(asStorageType.base, right);
+					right = buildCastSmart(asStorageType.base, right);
 					return extype(left, right);
 				} else {
 					throw new CompilerError(right.location, "cannot implicitly convert const to non const.");
@@ -242,7 +231,7 @@ public:
 					/// This is not the world's greatest error message. @todo
 					throw new CompilerError(right.location, "cannot convert mutably indirectable type to scope.");
 				} else {
-					right = new ir.Unary(asStorageType, right);
+					right = buildCastSmart(asStorageType, right);
 					return asStorageType;
 				}
 			}
@@ -278,8 +267,8 @@ public:
 		
 		if (bin.op == ir.BinOp.Type.AndAnd || bin.op == ir.BinOp.Type.OrOr) {
 			auto boolType = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
-			bin.left = new ir.Unary(boolType, bin.left);
-			bin.right = new ir.Unary(boolType, bin.right);
+			bin.left = buildCastSmart(boolType, bin.left);
+			bin.right = buildCastSmart(boolType, bin.right);
 			return left = right = boolType;
 		}
 		
@@ -401,11 +390,11 @@ public:
 		}
 
 		if (leftsz < largestsz) {
-			bin.left = new ir.Unary(largestType, bin.left);
+			bin.left = buildCastSmart(largestType, bin.left);
 		}
 
 		if (rightsz < largestsz) {
-			bin.right = new ir.Unary(largestType, bin.right);
+			bin.right = buildCastSmart(largestType, bin.right);
 		}
 
 		return largestType;
@@ -428,7 +417,7 @@ public:
 			auto asPrimitive = cast(ir.PrimitiveType) lp.base;
 			assert(asPrimitive !is null);
 			if (asPrimitive.type == ir.PrimitiveType.Kind.Void) {
-				exp = new ir.Unary(lp, exp);
+				exp = buildCastSmart(lp, exp);
 				return lp;
 			}
 		}
@@ -453,7 +442,7 @@ public:
 			auto asPrimitive = cast(ir.PrimitiveType) lp.base;
 			assert(asPrimitive !is null);
 			if (asPrimitive.type == ir.PrimitiveType.Kind.Void) {
-				exp = new ir.Unary(lp, exp);
+				exp = buildCastSmart(lp, exp);
 				return lp;
 			}
 		}
@@ -489,7 +478,7 @@ public:
 		}
 		
 		
-		exp = new ir.Unary(lp, exp);
+		exp = buildCastSmart(lp, exp);
 
 		return lp;
 	}
@@ -584,7 +573,7 @@ public:
 				return Continue;
 			}
 		}
-		ifs.exp = new ir.Unary(new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool), ifs.exp);
+		ifs.exp = buildCastSmart(new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool), ifs.exp);
 		ifs.exp.location = ifs.location;
 		return Continue;
 	}
@@ -610,7 +599,7 @@ public:
 				return Continue;
 			}
 		}
-		fs.test = new ir.Unary(new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool), fs.test);
+		fs.test = buildCastSmart(new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool), fs.test);
 		return Continue;
 	}
 
@@ -629,7 +618,7 @@ public:
 				return Continue;
 			}
 		}
-		ws.condition = new ir.Unary(new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool), ws.condition);
+		ws.condition = buildCastSmart(new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool), ws.condition);
 		return Continue;
 	}
 
@@ -648,7 +637,7 @@ public:
 				return Continue;
 			}
 		}
-		ds.condition = new ir.Unary(new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool), ds.condition);
+		ds.condition = buildCastSmart(new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool), ds.condition);
 		return Continue;
 	}
 

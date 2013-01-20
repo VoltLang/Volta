@@ -7,6 +7,7 @@ import std.algorithm : sort;
 import std.string : format;
 
 import ir = volt.ir.ir;
+import volt.ir.util;
 
 import volt.exceptions;
 import volt.interfaces;
@@ -16,6 +17,7 @@ import volt.visitor.scopemanager;
 import volt.semantic.lookup;
 import volt.semantic.classify;
 import volt.semantic.typer;
+
 
 /// @todo refactor to lookup
 ir.Type typeLookup(ir.Scope _scope, string name, Location location)
@@ -59,7 +61,7 @@ public:
 			return;
 		}
 
-		type = getExpType(asTypeOf.exp, current);
+		type = copyTypeSmart(getExpType(asTypeOf.exp, current), asTypeOf.location);
 	}
 
 	override Status enter(ir.Variable variable)

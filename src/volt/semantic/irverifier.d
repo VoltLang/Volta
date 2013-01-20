@@ -8,6 +8,7 @@ import volt.exceptions;
 import volt.interfaces;
 import volt.token.location;
 import volt.visitor.visitor;
+import volt.visitor.debugprinter;
 import volt.visitor.scopemanager;
 import volt.semantic.classify;
 
@@ -23,9 +24,15 @@ import volt.semantic.classify;
  */
 class IrVerifier : ScopeManager, Pass
 {
+private:
+	int[size_t] mNodes;
+	int mCount;
+
 public:
 	override void transform(ir.Module m)
 	{
+		mNodes = null;
+		mCount = 0;
 		accept(m, this);
 	}
 
@@ -35,6 +42,20 @@ public:
 
 
 public:
+	override Status debugVisitNode(ir.Node n)
+	{
+		auto t = *cast(size_t*)&n;
+		if (t in mNodes) {
+			auto str = format(
+				"%s \"%s\" node found more then once in IR",
+				getNodeAddressString(n), to!string(n.nodeType));
+			throw CompilerPanic(n.location, str);
+		}
+		mNodes[t] = mCount++;
+
+		return Status.Continue;
+	}
+
 	override Status enter(ir.TopLevelBlock tlb)
 	{
 		foreach (n; tlb.nodes) {

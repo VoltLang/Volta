@@ -5,6 +5,7 @@ import std.conv : to;
 import std.stdio;
 
 import ir = volt.ir.ir;
+import volt.ir.util;
 
 import volt.exceptions;
 import volt.interfaces;
@@ -15,6 +16,7 @@ import volt.semantic.mangle;
 import volt.semantic.lookup;
 import volt.semantic.newreplacer;
 import volt.token.location;
+
 
 class ClassLowerer : NullExpReplaceVisitor, Pass
 {
@@ -71,7 +73,7 @@ public:
 
 		fn.type = new ir.FunctionType();
 		fn.type.location = c.location;
-		fn.type.ret = objVar.type;
+		fn.type.ret = copyTypeSmart(objVar.type, c.location);
 
 		if (userConstructors.length > 0) {
 			assert(userConstructors.length == 1);
@@ -80,7 +82,7 @@ public:
 				fn.type.params ~= new ir.Variable();
 				fn.type.params[$-1].location = c.location;
 				fn.type.params[$-1].name = param.name;
-				fn.type.params[$-1].type = param.type;
+				fn.type.params[$-1].type = copyTypeSmart(param.type, c.location);
 			}
 		}
 
@@ -99,42 +101,57 @@ public:
 		objVar.assign = castExp;
 		fn._body.statements ~= objVar;
 
-		// obj expression
-		auto objRef = new ir.ExpReference();
-		objRef.location = c.location;
-		objRef.decl = objVar;
-		objRef.idents ~= "obj";
+		{
+			// obj expression
+			auto objRef = new ir.ExpReference();
+			objRef.location = c.location;
+			objRef.decl = objVar;
+			objRef.idents ~= "obj";
 
-		// Object.__Vtable.sizeof;
-		sz = size(vtable.location, vtable);
-		auto vtableSizeof = new ir.Constant();
-		vtableSizeof.location = vtable.location;
-		vtableSizeof.value = to!string(sz);
-		vtableSizeof.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Uint);  // aieee
+			// Object.__Vtable.sizeof;
+			sz = size(vtable.location, vtable);
+			auto vtableSizeof = new ir.Constant();
+			vtableSizeof.location = vtable.location;
+			vtableSizeof.value = to!string(sz);
+			vtableSizeof.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Uint);  // aieee
 
-		// cast(Object.__Vtable*) malloc(Object.__Vtable.sizeof);
-		auto vtableMallocCast = createAllocDgCall(allocDgVar, settings, c.location, new ir.TypeReference(vtable, vtable.name));
+			// cast(Object.__Vtable*) malloc(Object.__Vtable.sizeof);
+			auto vtableMallocCast = createAllocDgCall(allocDgVar, settings, c.location, new ir.TypeReference(vtable, vtable.name));
 
-		auto vtableAccess = new ir.Postfix();
-		vtableAccess.location = c.location;
-		vtableAccess.op = ir.Postfix.Op.Identifier;
-		vtableAccess.identifier = new ir.Identifier();
-		vtableAccess.identifier.location = c.location;
-		vtableAccess.identifier.value = "__vtable";
-		vtableAccess.child = objRef;
+			auto vtableAccess = new ir.Postfix();
+			vtableAccess.location = c.location;
+			vtableAccess.op = ir.Postfix.Op.Identifier;
+			vtableAccess.identifier = new ir.Identifier();
+			vtableAccess.identifier.location = c.location;
+			vtableAccess.identifier.value = "__vtable";
+			vtableAccess.child = objRef;
 
-		auto vtableAssign = new ir.BinOp();
-		vtableAssign.location = c.location;
-		vtableAssign.op = ir.BinOp.Type.Assign;
-		vtableAssign.left = vtableAccess;
-		vtableAssign.right = vtableMallocCast;
+			auto vtableAssign = new ir.BinOp();
+			vtableAssign.location = c.location;
+			vtableAssign.op = ir.BinOp.Type.Assign;
+			vtableAssign.left = vtableAccess;
+			vtableAssign.right = vtableMallocCast;
 
-		auto expStatement = new ir.ExpStatement();
-		expStatement.location = c.location;
-		expStatement.exp = vtableAssign;
-		fn._body.statements ~= expStatement;
+			auto expStatement = new ir.ExpStatement();
+			expStatement.location = c.location;
+			expStatement.exp = vtableAssign;
+			fn._body.statements ~= expStatement;
+		}
 
 		foreach (i, methodfn; functions) {
+			auto objRef = new ir.ExpReference();
+			objRef.location = c.location;
+			objRef.decl = objVar;
+			objRef.idents ~= "obj";
+
+			auto vtableAccess = new ir.Postfix();
+			vtableAccess.location = c.location;
+			vtableAccess.op = ir.Postfix.Op.Identifier;
+			vtableAccess.identifier = new ir.Identifier();
+			vtableAccess.identifier.location = c.location;
+			vtableAccess.identifier.value = "__vtable";
+			vtableAccess.child = objRef;
+
 			auto vindex = new ir.Postfix();
 			vindex.location = c.location;
 			vindex.op = ir.Postfix.Op.Identifier;
@@ -162,6 +179,11 @@ public:
 
 		// obj.__user_ctor(arg1, arg2, obj);
 		if (userConstructors.length > 0) {
+			auto objRef = new ir.ExpReference();
+			objRef.location = c.location;
+			objRef.decl = objVar;
+			objRef.idents ~= "obj";
+
 			auto uctor = new ir.ExpReference();
 			uctor.location = c.location;
 			uctor.idents ~= "__user_ctor";//userConstructors[0].name;
@@ -175,6 +197,7 @@ public:
 				exp.decl = param;
 				args ~= exp;
 			}
+
 			auto objCast = new ir.Unary(new ir.PointerType(new ir.PrimitiveType(ir.PrimitiveType.Kind.Void)), objRef);
 			args ~= objCast;
 
@@ -191,10 +214,17 @@ public:
 		}
 
 		// return obj;
-		auto retstatement = new ir.ReturnStatement();
-		retstatement.location = c.location;
-		retstatement.exp = objRef;
-		fn._body.statements ~= retstatement;
+		{
+			auto objRef = new ir.ExpReference();
+			objRef.location = c.location;
+			objRef.decl = objVar;
+			objRef.idents ~= "obj";
+
+			auto retstatement = new ir.ReturnStatement();
+			retstatement.location = c.location;
+			retstatement.exp = objRef;
+			fn._body.statements ~= retstatement;
+		}
 
 		return fn;
 	}
@@ -208,22 +238,14 @@ public:
 	 */
 	ir.Struct createVtableStruct(Location location, ir.Struct parent, ir.Function[] functions)
 	{
-		import std.stdio;
-
-		auto _struct = new ir.Struct();
-		_struct.location = location;
-		_struct.name = "__Vtable";
-		_struct.myScope = new ir.Scope(parent.myScope, _struct, _struct.name);
+		auto _struct = buildStruct(parent.members, parent.myScope, "__Vtable", location);
 		_struct.defined = true;
-
-		_struct.members = new ir.TopLevelBlock();
-		_struct.members.location = _struct.location;
 
 		foreach (i, _function; functions) {
 			auto var = new ir.Variable();
 			var.location = _struct.location;
 			var.name = format("_%s", i);
-			var.type = _function.type;
+			var.type = copyTypeSmart(_function.type, _struct.location);
 			_struct.members.nodes ~= var;
 		}
 
@@ -303,7 +325,8 @@ public:
 
 				auto asClass = cast(ir.Class) asTypeRef.type;
 				if (asClass !is null) {
-					 asTypeRef.type = _struct;
+					asTypeRef.type = _struct;
+					asFunction.myScope.parent = _struct.myScope;
 				}
 
 				// Don't add constructors to the method list.
@@ -386,8 +409,6 @@ public:
 
 		// Add the vtable type to the struct.
 		auto vtableStruct = createVtableStruct(_class.location, _struct, methods);
-		_struct.myScope.addType(vtableStruct, vtableStruct.name);
-		_struct.members.nodes ~= vtableStruct;
 		_class.vtableStruct = vtableStruct;
 
 		// Add the vtable instance to the struct.
@@ -678,7 +699,8 @@ public:
 		methodLookup.identifier.value = "_" ~ to!string(store.functions[0].vtableIndex);
 		methodLookup.child = vtable;
 
-		auto _cast = new ir.Unary(new ir.PointerType(new ir.PrimitiveType(ir.PrimitiveType.Kind.Void)), asRef);
+		auto newRef = buildExpReference(asVar, asRef.idents, asRef.location);
+		auto _cast = new ir.Unary(new ir.PointerType(new ir.PrimitiveType(ir.PrimitiveType.Kind.Void)), newRef);
 		_cast.location = postfix.location;
 
 		postfix.child = methodLookup;

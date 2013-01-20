@@ -1,6 +1,7 @@
 module volt.semantic.newreplacer;
 
 import ir = volt.ir.ir;
+import volt.ir.util;
 
 import volt.interfaces;
 import volt.exceptions;
@@ -10,6 +11,7 @@ import volt.visitor.expreplace;
 import volt.semantic.classify;
 import volt.semantic.lookup;
 import volt.semantic.mangle;
+
 
 ir.Variable retrieveAllocDg(Location location, ir.Scope _scope)
 {
@@ -53,14 +55,10 @@ ir.Function createArrayAllocFunction(Location location, Settings settings, ir.Sc
 	countVar.location = location;
 	countVar.type = settings.getSizeT();
 	countVar.name = "count";
-	auto countRef = new ir.ExpReference();
-	countRef.location = location;
-	countRef.idents ~= "count";
-	countRef.decl = countVar;
 
 	auto ftype = new ir.FunctionType();
 	ftype.location = location;
-	ftype.ret = atype;
+	ftype.ret = copyTypeSmart(atype, location);
 	ftype.params ~= countVar;
 
 	auto fn = new ir.Function();
@@ -70,7 +68,7 @@ ir.Function createArrayAllocFunction(Location location, Settings settings, ir.Sc
 	fn.mangledName = fn.name;
 	fn.isWeakLink = true;
 	fn.myScope = new ir.Scope(baseScope, fn, fn.name);
-	fn.myScope.addValue(countRef, "count");
+	fn.myScope.addValue(countVar, "count");
 	fn._body = new ir.BlockStatement();
 	fn._body.location = location;
 
@@ -82,15 +80,11 @@ ir.Function createArrayAllocFunction(Location location, Settings settings, ir.Sc
 	arrayStructVar.name = "from";
 	arrayStructVar.type = new ir.TypeReference(arrayStruct, arrayStruct.name);
 	fn._body.statements ~= arrayStructVar;
-	auto arrayStructRef = new ir.ExpReference();
-	arrayStructRef.location = location;
-	arrayStructRef.idents ~= "from";
-	arrayStructRef.decl = arrayStructVar;
 
 	auto ptrPfix = new ir.Postfix();
 	ptrPfix.location = location;
 	ptrPfix.op = ir.Postfix.Op.Identifier;
-	ptrPfix.child = arrayStructRef;
+	ptrPfix.child = buildExpReference(arrayStructVar, ["from"], location);
 	ptrPfix.identifier = new ir.Identifier();
 	ptrPfix.identifier.location = location;
 	ptrPfix.identifier.value = "ptr";
@@ -98,7 +92,7 @@ ir.Function createArrayAllocFunction(Location location, Settings settings, ir.Sc
 	auto lengthPfix = new ir.Postfix();
 	lengthPfix.location = location;
 	lengthPfix.op = ir.Postfix.Op.Identifier;
-	lengthPfix.child = arrayStructRef;
+	lengthPfix.child = buildExpReference(arrayStructVar, ["from"], location);
 	lengthPfix.identifier = new ir.Identifier();
 	lengthPfix.identifier.location = location;
 	lengthPfix.identifier.value = "length";
@@ -107,7 +101,7 @@ ir.Function createArrayAllocFunction(Location location, Settings settings, ir.Sc
 	ptrAssign.location = location;
 	ptrAssign.op = ir.BinOp.Type.Assign;
 	ptrAssign.left = ptrPfix;
-	ptrAssign.right = createAllocDgCall(allocDgVar, settings, location, atype.base, countRef, true);
+	ptrAssign.right = createAllocDgCall(allocDgVar, settings, location, atype.base, buildExpReference(countVar, ["count"], location), true);
 
 	auto expStatement = new ir.ExpStatement();
 	expStatement.location = location;
@@ -119,7 +113,7 @@ ir.Function createArrayAllocFunction(Location location, Settings settings, ir.Sc
 	lengthAssign.location = location;
 	lengthAssign.op = ir.BinOp.Type.Assign;
 	lengthAssign.left = lengthPfix;
-	lengthAssign.right = countRef;
+	lengthAssign.right = buildExpReference(countVar, ["count"], location);
 
 	expStatement = new ir.ExpStatement();
 	expStatement.location = location;
@@ -130,9 +124,9 @@ ir.Function createArrayAllocFunction(Location location, Settings settings, ir.Sc
 	auto addrOf = new ir.Unary();
 	addrOf.location = location;
 	addrOf.op = ir.Unary.Op.AddrOf;
-	addrOf.value = arrayStructRef;
+	addrOf.value = buildExpReference(arrayStructVar, ["from"], location);
 
-	auto arrayPointer = new ir.PointerType(atype);
+	auto arrayPointer = new ir.PointerType(copyTypeSmart(atype, location));
 	arrayPointer.location = location;
 
 	auto _cast = new ir.Unary(arrayPointer, addrOf);
@@ -162,7 +156,7 @@ ir.Exp createAllocDgCall(ir.Variable allocDgVar, Settings settings, Location loc
 
 	auto tidExp = new ir.Typeid();
 	tidExp.location = location;
-	tidExp.type = type;
+	tidExp.type = copyTypeSmart(type, location);
 
 	auto countConst = new ir.Constant();
 	countConst.location = location;
@@ -181,7 +175,7 @@ ir.Exp createAllocDgCall(ir.Variable allocDgVar, Settings settings, Location loc
 	}
 
 	if (!suppressCast) {
-		auto result = new ir.PointerType(type);
+		auto result = new ir.PointerType(copyTypeSmart(type, location));
 		result.location = location;
 		auto resultCast = new ir.Unary(result, pfixCall);
 		resultCast.location = location;
