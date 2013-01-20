@@ -199,6 +199,26 @@ ir.Unary buildCastToBool(ir.Exp exp)
 }
 
 /**
+ * Builds an AddrOf expression.
+ */
+ir.Unary buildAddrOf(ir.Exp exp, Location loc)
+{
+	auto addr = new ir.Unary();
+	addr.location = loc;
+	addr.op = ir.Unary.Op.AddrOf;
+	addr.value = exp;
+	return addr;
+}
+
+/**
+ * Builds a ExpReference and a AddrOf from a Variable.
+ */
+ir.Unary buildAddrOf(ir.Variable var, string[] name, Location loc)
+{
+	return buildAddrOf(buildExpReference(var, name, loc), loc);
+}
+
+/**
  * Builds a completely useable struct and insert it into the
  * various places it needs to be inserted.
  */
