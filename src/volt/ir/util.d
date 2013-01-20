@@ -148,3 +148,25 @@ ir.Type copyTypeSmart(ir.Type type, Location loc)
 		assert(false);
 	}
 }
+
+/**
+ * Build a cast but setting location to exps location and
+ * calling copyTypeSmart on the type, to avoid duplicate nodes.
+ */
+ir.Unary buildCastSmart(ir.Type type, ir.Exp exp)
+{
+	return buildCastSmart(type, exp, exp.location);
+}
+
+/**
+ * Build a cast but setting location and calling copyTypeSmart
+ * on the type, to avoid duplicate nodes.
+ */
+ir.Unary buildCastSmart(ir.Type type, ir.Exp exp, Location location)
+{
+	auto cst = new ir.Unary(type, exp);
+	cst.location = location;
+	cst.type = copyTypeSmart(type, location);
+
+	return cst;
+}
