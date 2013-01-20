@@ -393,8 +393,9 @@ public:
 
 		// Add the fields.
 		foreach (field; fields) {
-			_struct.myScope.addValue(field, field.name);
-			_struct.members.nodes ~= field;
+			auto var = copyVariableSmart(_struct.location, field);
+			_struct.myScope.addValue(var, var.name);
+			_struct.members.nodes ~= var;
 		}
 
 		// Add the methods.
