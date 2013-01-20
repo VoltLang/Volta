@@ -153,17 +153,33 @@ ir.Type copyTypeSmart(Location loc, ir.Type type)
 }
 
 /**
+ * Build a Variable, while being smart about its type.
+ */
+ir.Variable buildVariable(Location loc, ir.Type type, string name)
+{
+	auto var = new ir.Variable();
+	var.location = loc;
+	var.name = name;
+	var.type = type;
+
+	return var;
+}
+
+/**
  * Copy a Variable, while being smart about its type, does
  * not copy the the assign exp on the Variable.
  */
 ir.Variable copyVariableSmart(Location loc, ir.Variable right)
 {
-	auto var = new ir.Variable();
-	var.location = loc;
-	var.name = right.name;
-	var.type = copyTypeSmart(loc, right.type);
+	return buildVariable(loc, copyTypeSmart(loc, right.type), right.name);
+}
 
-	return var;
+/**
+ * Build a Variable, while being smart about its type.
+ */
+ir.Variable buildVariableSmart(Location loc, ir.Type type, string name)
+{
+	return buildVariable(loc, copyTypeSmart(loc, type), name);
 }
 
 /**
@@ -221,6 +237,88 @@ ir.Unary buildAddrOf(Location loc, ir.Exp exp)
 ir.Unary buildAddrOf(Location loc, ir.Variable var, string[] names...)
 {
 	return buildAddrOf(loc, buildExpReference(loc, var, names));
+}
+
+/**
+ * Builds a postfix call.
+ */
+ir.Postfix buildCall(Location loc, ir.Exp child, ir.Exp[] args)
+{
+	auto call = new ir.Postfix();
+	call.location = loc;
+	call.op = ir.Postfix.Op.Call;
+	call.child = child;
+	call.arguments = args;
+
+	return call;
+}
+
+/**
+ * Builds a postfix call.
+ */
+ir.Postfix buildCall(Location loc, ir.Declaration decl, ir.Exp[] args, string[] names...)
+{
+	return buildCall(loc, buildExpReference(loc, decl, names), args);
+}
+
+/**
+ * Adds a variable argument to a function, also adds it to the scope.
+ */
+ir.Variable addParam(Location loc, ir.Function fn, ir.Type type, string name)
+{
+	auto var = buildVariable(loc, type, name);
+	fn.type.params ~= var;
+	fn.myScope.addValue(var, name);
+	return var;
+}
+
+/**
+ * Adds a variable argument to a function, also adds it to the scope.
+ */
+ir.Variable addParamSmart(Location loc, ir.Function fn, ir.Type type, string name)
+{
+	return addParam(loc, fn, copyTypeSmart(loc, type), name);
+}
+
+/**
+ * Build a return statement.
+ */
+ir.ReturnStatement buildReturn(Location loc, ir.BlockStatement block, ir.Exp exp = null)
+{
+	auto ret = new ir.ReturnStatement();
+	ret.location = loc;
+	ret.exp = exp;
+
+	block.statements ~= ret;
+
+	return ret;
+}
+
+/**
+ * Builds a completely useable Function and insert it into the
+ * various places it needs to be inserted.
+ */
+ir.Function buildFunction(Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, string name, bool buildBody = true)
+{
+	auto fn = new ir.Function();
+	fn.name = name;
+	fn.myScope = new ir.Scope(_scope, fn, name);
+	fn.location = loc;
+
+	fn.type = new ir.FunctionType();
+	fn.type.location = loc;
+	fn.type.ret = new ir.PrimitiveType(ir.PrimitiveType.Kind.Void);
+	fn.type.ret.location = loc;
+
+	if (buildBody) {
+		fn._body = new ir.BlockStatement();
+		fn._body.location = loc;
+	}
+
+	// Insert the struct into all the places.
+	_scope.addFunction(fn, fn.name);
+	tlb.nodes ~= fn;
+	return fn;
 }
 
 /**
