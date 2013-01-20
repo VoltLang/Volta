@@ -153,6 +153,19 @@ ir.Type copyTypeSmart(ir.Type type, Location loc)
 }
 
 /**
+ * Builds a usable ExpReference.
+ */
+ir.ExpReference buildExpReference(ir.Variable var, string[] names, Location loc)
+{
+	auto varRef = new ir.ExpReference();
+	varRef.location = loc;
+	varRef.decl = var;
+	varRef.idents ~= names;
+
+	return varRef;
+}
+
+/**
  * Build a cast but setting location to exps location and
  * calling copyTypeSmart on the type, to avoid duplicate nodes.
  */
@@ -172,4 +185,24 @@ ir.Unary buildCastSmart(ir.Type type, ir.Exp exp, Location location)
 	cst.type = copyTypeSmart(type, location);
 
 	return cst;
+}
+
+/**
+ * Builds a completely useable struct and insert it into the
+ * various places it needs to be inserted.
+ */
+ir.Struct buildStruct(ir.TopLevelBlock tlb, ir.Scope _scope, string name, Location loc)
+{
+	auto s = new ir.Struct();
+	s.name = name;
+	s.myScope = new ir.Scope(_scope, s, name);
+	s.location = loc;
+
+	s.members = new ir.TopLevelBlock();
+	s.members.location = loc;
+
+	// Insert the struct into all the places.
+	_scope.addType(s, s.name);
+	tlb.nodes ~= s;
+	return s;
 }
