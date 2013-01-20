@@ -155,11 +155,11 @@ ir.Type copyTypeSmart(ir.Type type, Location loc)
 /**
  * Builds a usable ExpReference.
  */
-ir.ExpReference buildExpReference(ir.Variable var, string[] names, Location loc)
+ir.ExpReference buildExpReference(ir.Declaration decl, string[] names, Location loc)
 {
 	auto varRef = new ir.ExpReference();
 	varRef.location = loc;
-	varRef.decl = var;
+	varRef.decl = decl;
 	varRef.idents ~= names;
 
 	return varRef;
@@ -195,7 +195,6 @@ ir.Unary buildCastToBool(ir.Exp exp)
 
 	auto cst = new ir.Unary(pt, exp);
 	cst.location = exp.location;
-
 	return cst;
 }
 
