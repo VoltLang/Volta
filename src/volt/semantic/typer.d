@@ -7,6 +7,7 @@ import std.conv : to;
 import std.string : format;
 
 import ir = volt.ir.ir;
+import volt.ir.util;
 
 import volt.exceptions;
 import volt.token.location;
@@ -250,7 +251,9 @@ ir.Type getArrayLiteralType(ir.ArrayLiteral arrayLiteral, ir.Scope currentScope)
 	ir.Type base;
 	if (arrayLiteral.values.length > 0) {
 		/// @todo figure out common subtype stuff. For now, D1 stylin'.
-		base = getExpType(arrayLiteral.values[0], currentScope);
+		base = copyTypeSmart(
+			getExpType(arrayLiteral.values[0], currentScope),
+			arrayLiteral.location);
 	} else {
 		base = new ir.PrimitiveType(ir.PrimitiveType.Kind.Void);
 		base.location = arrayLiteral.location;
