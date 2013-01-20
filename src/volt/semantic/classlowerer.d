@@ -1,3 +1,6 @@
+// Copyright © 2012-2013, Bernard Helyer.  All rights reserved.
+// Copyright © 2013, Jakob Bornecrantz.  All rights reserved.
+// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.classlowerer;
 
 import std.array : insertInPlace;
