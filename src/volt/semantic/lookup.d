@@ -161,6 +161,21 @@ ir.Class retrieveTypeInfoClass(Location location, ir.Scope _scope)
 }
 
 /**
+ * Get the module in the bottom of the given _scope chain.
+ */
+ir.Module getModuleFromScope(ir.Scope _scope)
+{
+	while (_scope !is null) {
+		auto m = cast(ir.Module)_scope.node;
+		if (m !is null)
+			return m;
+
+		_scope = _scope.parent;
+	}
+	throw CompilerPanic("scope chain without module base");
+}
+
+/**
  * Return the first scope and type that is thisable going down the
  * chain of containing scopes (_scope.parent field).
  *
