@@ -697,8 +697,6 @@ void handleSlice(State state, ir.Postfix postfix, Value result)
 	Value start = new Value();
 	Value end = new Value();
 
-	assert(postfix.arguments.length == 2);
-
 	// Make sure that this is in a known state.
 	result.value = null;
 	result.isPointer = false;
@@ -708,12 +706,24 @@ void handleSlice(State state, ir.Postfix postfix, Value result)
 	auto pt = cast(PointerType)left.type;
 	auto at = cast(ArrayType)left.type;
 	if (pt !is null) {
+		assert(postfix.arguments.length == 2);
+
 		makeNonPointer(state, left);
 		at = null;
 		/// @todo handle slices on pointers.
 		assert(false);
 
 	} else if (at !is null) {
+		// Nothing todo.
+		if (postfix.arguments.length == 0) {
+			result.value = left.value;
+			result.isPointer = left.isPointer;
+			result.type = left.type;
+			return;
+		}
+
+		assert(postfix.arguments.length == 2);
+
 		// Use the temporary value directly.
 		if (!left.isPointer) {
 			makePointer(state, left);
