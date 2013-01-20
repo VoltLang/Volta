@@ -153,6 +153,20 @@ ir.Type copyTypeSmart(Location loc, ir.Type type)
 }
 
 /**
+ * Copy a Variable, while being smart about its type, does
+ * not copy the the assign exp on the Variable.
+ */
+ir.Variable copyVariableSmart(Location loc, ir.Variable right)
+{
+	auto var = new ir.Variable();
+	var.location = loc;
+	var.name = right.name;
+	var.type = copyTypeSmart(loc, right.type);
+
+	return var;
+}
+
+/**
  * Builds a usable ExpReference.
  */
 ir.ExpReference buildExpReference(Location loc, ir.Declaration decl, string[] names...)
