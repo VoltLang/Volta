@@ -96,6 +96,9 @@ ir.Type parseType(TokenStream ts)
 	case TokenType.Identifier:
 		base = parseTypeReference(ts);
 		break;
+	case TokenType.Typeof:
+		base = parseTypeOf(ts);
+		break;
 	default:
 		throw new CompilerError(ts.peek.location, "expected primitive type, not '" ~ ts.peek.value ~ "'.");
 	}
@@ -120,6 +123,17 @@ ir.Type parseType(TokenStream ts)
 	base.location = ts.peek.location - origin;
 
 	return base;
+}
+
+ir.TypeOf parseTypeOf(TokenStream ts)
+{
+	auto typeOf = new ir.TypeOf();
+	typeOf.location = ts.peek.location;
+	match(ts, TokenType.Typeof);
+	match(ts, TokenType.OpenParen);
+	typeOf.exp = parseExp(ts);
+	match(ts, TokenType.CloseParen);
+	return typeOf;
 }
 
 ir.TypeReference parseTypeReference(TokenStream ts)
