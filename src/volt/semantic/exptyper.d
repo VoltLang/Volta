@@ -1055,10 +1055,18 @@ public:
 				return Continue;
 			}
 
+			store = current.lookup("this", reference.location);
+			if (store is null || store.kind != ir.Store.Kind.Value) {
+				throw CompilerPanic("function doesn't have this");
+			}
+
+			auto asVar = cast(ir.Variable)store.node;
+			assert(asVar !is null);
+
 			auto thisRef = new ir.ExpReference();
 			thisRef.location = reference.location;
 			thisRef.idents ~= "this";
-			thisRef.decl = null;  // Filled in in the class lowerer.
+			thisRef.decl = asVar;
 
 			auto postfix = new ir.Postfix();
 			postfix.location = reference.location;
