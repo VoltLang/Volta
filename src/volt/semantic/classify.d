@@ -56,6 +56,10 @@ int size(Location location, ir.Node node)
 		auto asTR = cast(ir.TypeReference) node;
 		assert(asTR !is null);
 		return size(location, asTR.type);
+	case StorageType:
+		auto asST = cast(ir.StorageType) node;
+		assert(asST !is null);
+		return size(location, asST.base);
 	default:
 		throw new CompilerError(location, format("couldn't retrieve size of element: %s", to!string(node.nodeType)));
 	}
