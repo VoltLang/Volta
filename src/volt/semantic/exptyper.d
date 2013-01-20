@@ -444,6 +444,11 @@ public:
 			throw CompilerPanic(exp.location, "extypeArrayAssign called with non-array types.");
 		}
 
+		if (effectivelyConst(rp.base) && !effectivelyConst(lp.base)) {
+			// All arrays are mutable indirectable.
+			throw new CompilerError(exp.location, "cannot convert const array to mutable array.");
+		}
+
 		if (typesEqual(lp, rp)) {
 			return lp;
 		}
