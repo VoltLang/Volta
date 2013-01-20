@@ -133,6 +133,9 @@ ir.Type copyTypeSmart(ir.Type type, Location loc)
 		st.base = copyTypeSmart(asSt.base, loc);
 		st.type = asSt.type;
 		return st;
+	case TypeReference:
+		auto tr = cast(ir.TypeReference)type;
+		return copyTypeSmart(tr.type, loc);
 	case Interface:
 	case Struct:
 	case Class:
