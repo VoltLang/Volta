@@ -80,6 +80,12 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.Typeid _typeid)
+	{
+		replaceTypeOfIfNeeded(_typeid.type);
+		return Continue;
+	}
+
 	override Status enter(ir.StorageType storageType)
 	{
 		// Get a list of storage kinds for all consecutive storage types.
