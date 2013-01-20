@@ -70,7 +70,7 @@ ir.Scope getScopeFromStore(ir.Store store)
  * TypeReferences, but inserting one when it comes
  * across a named type.
  */
-ir.Type copyTypeSmart(ir.Type type, Location loc)
+ir.Type copyTypeSmart(Location loc, ir.Type type)
 {
 	switch (type.nodeType) with (ir.NodeType) {
 	case PrimitiveType:
@@ -81,34 +81,34 @@ ir.Type copyTypeSmart(ir.Type type, Location loc)
 	case PointerType:
 		auto pt = cast(ir.PointerType)type;
 		pt.location = loc;
-		pt = new ir.PointerType(copyTypeSmart(pt.base, loc));
+		pt = new ir.PointerType(copyTypeSmart(loc, pt.base));
 		return pt;
 	case ArrayType:
 		auto at = cast(ir.ArrayType)type;
 		at.location = loc;
-		at = new ir.ArrayType(copyTypeSmart(at.base, loc));
+		at = new ir.ArrayType(copyTypeSmart(loc, at.base));
 		return at;
 	case StaticArrayType:
 		auto asSat = cast(ir.StaticArrayType)type;
 		auto sat = new ir.StaticArrayType();
 		sat.location = loc;
-		sat.base = copyTypeSmart(asSat.base, loc);
+		sat.base = copyTypeSmart(loc, asSat.base);
 		sat.length = asSat.length;
 		return sat;
 	case AAType:
 		auto asAA = cast(ir.AAType)type;
 		auto aa = new ir.AAType();
 		aa.location = loc;
-		aa.value = copyTypeSmart(asAA.value, loc);
-		aa.key = copyTypeSmart(asAA.key, loc);
+		aa.value = copyTypeSmart(loc, asAA.value);
+		aa.key = copyTypeSmart(loc, asAA.key);
 		return aa;
 	case FunctionType:
 		auto asFt = cast(ir.FunctionType)type;
 		auto ft = new ir.FunctionType(asFt);
 		ft.location = loc;
-		ft.ret = copyTypeSmart(ft.ret, loc);
+		ft.ret = copyTypeSmart(loc, ft.ret);
 		foreach(ref var; ft.params) {
-			auto t = copyTypeSmart(var.type, loc);
+			auto t = copyTypeSmart(loc, var.type);
 			var = new ir.Variable();
 			var.location = loc;
 			var.type = t;
@@ -118,9 +118,9 @@ ir.Type copyTypeSmart(ir.Type type, Location loc)
 		auto asDg = cast(ir.DelegateType)type;
 		auto dg = new ir.DelegateType(asDg);
 		dg.location = loc;
-		dg.ret = copyTypeSmart(dg.ret, loc);
+		dg.ret = copyTypeSmart(loc, dg.ret);
 		foreach(ref var; dg.params) {
-			auto t = copyTypeSmart(var.type, loc);
+			auto t = copyTypeSmart(loc, var.type);
 			var = new ir.Variable();
 			var.location = loc;
 			var.type = t;
@@ -130,12 +130,12 @@ ir.Type copyTypeSmart(ir.Type type, Location loc)
 		auto asSt = cast(ir.StorageType)type;
 		auto st = new ir.StorageType();
 		st.location = loc;
-		st.base = copyTypeSmart(asSt.base, loc);
+		st.base = copyTypeSmart(loc, asSt.base);
 		st.type = asSt.type;
 		return st;
 	case TypeReference:
 		auto tr = cast(ir.TypeReference)type;
-		return copyTypeSmart(tr.type, loc);
+		return copyTypeSmart(loc, tr.type);
 	case Interface:
 	case Struct:
 	case Class:
@@ -155,7 +155,7 @@ ir.Type copyTypeSmart(ir.Type type, Location loc)
 /**
  * Builds a usable ExpReference.
  */
-ir.ExpReference buildExpReference(ir.Declaration decl, string[] names, Location loc)
+ir.ExpReference buildExpReference(Location loc, ir.Declaration decl, string[] names...)
 {
 	auto varRef = new ir.ExpReference();
 	varRef.location = loc;
@@ -166,42 +166,33 @@ ir.ExpReference buildExpReference(ir.Declaration decl, string[] names, Location 
 }
 
 /**
- * Build a cast but setting location to exps location and
- * calling copyTypeSmart on the type, to avoid duplicate nodes.
- */
-ir.Unary buildCastSmart(ir.Type type, ir.Exp exp)
-{
-	return buildCastSmart(type, exp, exp.location);
-}
-
-/**
  * Build a cast but setting location and calling copyTypeSmart
  * on the type, to avoid duplicate nodes.
  */
-ir.Unary buildCastSmart(ir.Type type, ir.Exp exp, Location location)
+ir.Unary buildCastSmart(Location loc, ir.Type type, ir.Exp exp)
 {
-	auto cst = new ir.Unary(copyTypeSmart(type, location), exp);
-	cst.location = location;
+	auto cst = new ir.Unary(copyTypeSmart(loc, type), exp);
+	cst.location = loc;
 	return cst;
 }
 
 /**
  * Build a cast to bool setting location to the exp location.
  */
-ir.Unary buildCastToBool(ir.Exp exp)
+ir.Unary buildCastToBool(Location loc, ir.Exp exp)
 {
 	auto pt = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
-	pt.location = exp.location;
+	pt.location = loc;
 
 	auto cst = new ir.Unary(pt, exp);
-	cst.location = exp.location;
+	cst.location = loc;
 	return cst;
 }
 
 /**
  * Builds an AddrOf expression.
  */
-ir.Unary buildAddrOf(ir.Exp exp, Location loc)
+ir.Unary buildAddrOf(Location loc, ir.Exp exp)
 {
 	auto addr = new ir.Unary();
 	addr.location = loc;
@@ -213,16 +204,16 @@ ir.Unary buildAddrOf(ir.Exp exp, Location loc)
 /**
  * Builds a ExpReference and a AddrOf from a Variable.
  */
-ir.Unary buildAddrOf(ir.Variable var, string[] name, Location loc)
+ir.Unary buildAddrOf(Location loc, ir.Variable var, string[] names...)
 {
-	return buildAddrOf(buildExpReference(var, name, loc), loc);
+	return buildAddrOf(loc, buildExpReference(loc, var, names));
 }
 
 /**
  * Builds a completely useable struct and insert it into the
  * various places it needs to be inserted.
  */
-ir.Struct buildStruct(ir.TopLevelBlock tlb, ir.Scope _scope, string name, Location loc)
+ir.Struct buildStruct(Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, string name)
 {
 	auto s = new ir.Struct();
 	s.name = name;
@@ -237,3 +228,10 @@ ir.Struct buildStruct(ir.TopLevelBlock tlb, ir.Scope _scope, string name, Locati
 	tlb.nodes ~= s;
 	return s;
 }
+
+/*
+ * Functions who takes the location from the given exp.
+ */
+ir.Unary buildCastSmart(ir.Type type, ir.Exp exp) { return buildCastSmart(exp.location, type, exp); }
+ir.Unary buildAddrOf(ir.Exp exp) { return buildAddrOf(exp.location, exp); }
+ir.Unary buildCastToBool(ir.Exp exp) { return buildCastToBool(exp.location, exp); }

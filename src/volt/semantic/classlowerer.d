@@ -73,7 +73,7 @@ public:
 
 		fn.type = new ir.FunctionType();
 		fn.type.location = c.location;
-		fn.type.ret = copyTypeSmart(objVar.type, c.location);
+		fn.type.ret = copyTypeSmart(c.location, objVar.type);
 
 		if (userConstructors.length > 0) {
 			assert(userConstructors.length == 1);
@@ -82,7 +82,7 @@ public:
 				fn.type.params ~= new ir.Variable();
 				fn.type.params[$-1].location = c.location;
 				fn.type.params[$-1].name = param.name;
-				fn.type.params[$-1].type = copyTypeSmart(param.type, c.location);
+				fn.type.params[$-1].type = copyTypeSmart(c.location, param.type);
 			}
 		}
 
@@ -102,8 +102,8 @@ public:
 		fn._body.statements ~= objVar;
 
 		{
-			auto objRef = buildExpReference(objVar, ["obj"], c.location);
-			auto vtableGet = buildAddrOf(vtableGlobal, [vtableGlobal.name], c.location);
+			auto objRef = buildExpReference(c.location, objVar, "obj");
+			auto vtableGet = buildAddrOf(c.location, vtableGlobal, vtableGlobal.name);
 
 			auto vtableAccess = new ir.Postfix();
 			vtableAccess.location = c.location;
@@ -186,14 +186,14 @@ public:
 	 */
 	ir.Struct createVtableStruct(Location location, ir.Struct parent, ir.Function[] functions)
 	{
-		auto _struct = buildStruct(parent.members, parent.myScope, "__Vtable", location);
+		auto _struct = buildStruct(location, parent.members, parent.myScope, "__Vtable");
 		_struct.defined = true;
 
 		foreach (i, _function; functions) {
 			auto var = new ir.Variable();
 			var.location = _struct.location;
 			var.name = format("_%s", i);
-			var.type = copyTypeSmart(_function.type, _struct.location);
+			var.type = copyTypeSmart(_struct.location, _function.type);
 			_struct.members.nodes ~= var;
 		}
 
@@ -372,17 +372,17 @@ public:
 		vtableGlobalVar.location = _class.location;
 		vtableGlobalVar.name = "__vtableGlobal";
 		vtableGlobalVar.storage = ir.Variable.Storage.Global;
-		vtableGlobalVar.type = copyTypeSmart(vtableStruct, _class.location);
+		vtableGlobalVar.type = copyTypeSmart(_class.location, vtableStruct);
 		_struct.myScope.addValue(vtableGlobalVar, vtableGlobalVar.name);
 		_struct.members.nodes ~= vtableGlobalVar;
 
 		if (methods.length > 0) {
 			auto vtableLiteral = new ir.StructLiteral();
 			vtableLiteral.location = _class.location;
-			vtableLiteral.type = copyTypeSmart(vtableStruct, _class.location);
+			vtableLiteral.type = copyTypeSmart(_class.location, vtableStruct);
 
 			foreach (f; methods) {
-				vtableLiteral.exps ~= buildExpReference(f, [f.name], _class.location);
+				vtableLiteral.exps ~= buildExpReference(_class.location, f, f.name);
 			}
 
 			vtableGlobalVar.assign = vtableLiteral;
@@ -668,7 +668,7 @@ public:
 		methodLookup.identifier.value = "_" ~ to!string(store.functions[0].vtableIndex);
 		methodLookup.child = vtable;
 
-		auto newRef = buildExpReference(asVar, asRef.idents, asRef.location);
+		auto newRef = buildExpReference(asRef.location, asVar, asRef.idents);
 		auto _cast = new ir.Unary(new ir.PointerType(new ir.PrimitiveType(ir.PrimitiveType.Kind.Void)), newRef);
 		_cast.location = postfix.location;
 

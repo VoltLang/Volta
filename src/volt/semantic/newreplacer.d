@@ -58,7 +58,7 @@ ir.Function createArrayAllocFunction(Location location, Settings settings, ir.Sc
 
 	auto ftype = new ir.FunctionType();
 	ftype.location = location;
-	ftype.ret = copyTypeSmart(atype, location);
+	ftype.ret = copyTypeSmart(location, atype);
 	ftype.params ~= countVar;
 
 	auto fn = new ir.Function();
@@ -84,7 +84,7 @@ ir.Function createArrayAllocFunction(Location location, Settings settings, ir.Sc
 	auto ptrPfix = new ir.Postfix();
 	ptrPfix.location = location;
 	ptrPfix.op = ir.Postfix.Op.Identifier;
-	ptrPfix.child = buildExpReference(arrayStructVar, ["from"], location);
+	ptrPfix.child = buildExpReference(location, arrayStructVar, "from");
 	ptrPfix.identifier = new ir.Identifier();
 	ptrPfix.identifier.location = location;
 	ptrPfix.identifier.value = "ptr";
@@ -92,7 +92,7 @@ ir.Function createArrayAllocFunction(Location location, Settings settings, ir.Sc
 	auto lengthPfix = new ir.Postfix();
 	lengthPfix.location = location;
 	lengthPfix.op = ir.Postfix.Op.Identifier;
-	lengthPfix.child = buildExpReference(arrayStructVar, ["from"], location);
+	lengthPfix.child = buildExpReference(location, arrayStructVar, "from");
 	lengthPfix.identifier = new ir.Identifier();
 	lengthPfix.identifier.location = location;
 	lengthPfix.identifier.value = "length";
@@ -101,7 +101,9 @@ ir.Function createArrayAllocFunction(Location location, Settings settings, ir.Sc
 	ptrAssign.location = location;
 	ptrAssign.op = ir.BinOp.Type.Assign;
 	ptrAssign.left = ptrPfix;
-	ptrAssign.right = createAllocDgCall(allocDgVar, settings, location, atype.base, buildExpReference(countVar, ["count"], location), true);
+	ptrAssign.right = createAllocDgCall(
+		allocDgVar, settings, location, atype.base,
+		buildExpReference(location, countVar, "count"), true);
 
 	auto expStatement = new ir.ExpStatement();
 	expStatement.location = location;
@@ -113,7 +115,7 @@ ir.Function createArrayAllocFunction(Location location, Settings settings, ir.Sc
 	lengthAssign.location = location;
 	lengthAssign.op = ir.BinOp.Type.Assign;
 	lengthAssign.left = lengthPfix;
-	lengthAssign.right = buildExpReference(countVar, ["count"], location);
+	lengthAssign.right = buildExpReference(location, countVar, "count");
 
 	expStatement = new ir.ExpStatement();
 	expStatement.location = location;
@@ -124,9 +126,9 @@ ir.Function createArrayAllocFunction(Location location, Settings settings, ir.Sc
 	auto addrOf = new ir.Unary();
 	addrOf.location = location;
 	addrOf.op = ir.Unary.Op.AddrOf;
-	addrOf.value = buildExpReference(arrayStructVar, ["from"], location);
+	addrOf.value = buildExpReference(location, arrayStructVar, "from");
 
-	auto arrayPointer = new ir.PointerType(copyTypeSmart(atype, location));
+	auto arrayPointer = new ir.PointerType(copyTypeSmart(location, atype));
 	arrayPointer.location = location;
 
 	auto _cast = new ir.Unary(arrayPointer, addrOf);
@@ -156,7 +158,7 @@ ir.Exp createAllocDgCall(ir.Variable allocDgVar, Settings settings, Location loc
 
 	auto tidExp = new ir.Typeid();
 	tidExp.location = location;
-	tidExp.type = copyTypeSmart(type, location);
+	tidExp.type = copyTypeSmart(location, type);
 
 	auto countConst = new ir.Constant();
 	countConst.location = location;
@@ -175,7 +177,7 @@ ir.Exp createAllocDgCall(ir.Variable allocDgVar, Settings settings, Location loc
 	}
 
 	if (!suppressCast) {
-		auto result = new ir.PointerType(copyTypeSmart(type, location));
+		auto result = new ir.PointerType(copyTypeSmart(location, type));
 		result.location = location;
 		auto resultCast = new ir.Unary(result, pfixCall);
 		resultCast.location = location;

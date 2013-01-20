@@ -88,7 +88,7 @@ public:
 			for (size_t i = asFunctionType.params.length - 1; i < postfix.arguments.length; ++i) {
 				auto typeId = new ir.Typeid();
 				typeId.location = postfix.location;
-				typeId.type = copyTypeSmart(getExpType(postfix.arguments[i], current), postfix.location);
+				typeId.type = copyTypeSmart(postfix.location, getExpType(postfix.arguments[i], current));
 				typeidsLiteral.values ~= typeId;
 			}
 
@@ -148,7 +148,7 @@ public:
 		auto asStorageType = cast(ir.StorageType) left;
 		if (asStorageType !is null) {
 			if (asStorageType.base is null) {
-				asStorageType.base = copyTypeSmart(t, left.location);
+				asStorageType.base = copyTypeSmart(left.location, t);
 			}
 			if (asStorageType.type == ir.StorageType.Kind.Auto) {
 				localLeft = left = asStorageType.base;

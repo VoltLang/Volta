@@ -61,7 +61,7 @@ public:
 			return;
 		}
 
-		type = copyTypeSmart(getExpType(asTypeOf.exp, current), asTypeOf.location);
+		type = copyTypeSmart(asTypeOf.location, getExpType(asTypeOf.exp, current));
 	}
 
 	override Status enter(ir.Variable variable)
