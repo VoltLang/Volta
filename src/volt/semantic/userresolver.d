@@ -15,6 +15,7 @@ import volt.visitor.visitor;
 import volt.visitor.scopemanager;
 import volt.semantic.lookup;
 import volt.semantic.classify;
+import volt.semantic.typer;
 
 /// @todo refactor to lookup
 ir.Type typeLookup(ir.Scope _scope, string name, Location location)
@@ -32,7 +33,8 @@ ir.Type typeLookup(ir.Scope _scope, string name, Location location)
 }
 
 /**
- * Resolves all @link volt.ir.type.TypeReference TypeReferences@endlink.
+ * Resolves all @link volt.ir.type.TypeReference TypeReferences@endlink and
+ * @link volt.ir.type.TypeOf TypeOfs@endlink.
  *
  * @ingroup passes passLang
  */
@@ -46,6 +48,36 @@ public:
 
 	override void close()
 	{
+	}
+
+	/// Replace TypeOf with its expression's type, if needed.
+	void replaceTypeOfIfNeeded(ref ir.Type type)
+	{
+		auto asTypeOf = cast(ir.TypeOf) type;
+		if (asTypeOf is null) {
+			assert(type.nodeType != ir.NodeType.TypeOf);
+			return;
+		}
+
+		type = getExpType(asTypeOf.exp, current);
+	}
+
+	override Status enter(ir.Variable variable)
+	{
+		replaceTypeOfIfNeeded(variable.type);
+		return Continue;
+	}
+
+	override Status enter(ir.FunctionType ftype)
+	{
+		replaceTypeOfIfNeeded(ftype.ret);
+		return Continue;
+	}
+
+	override Status enter(ir.DelegateType dtype)
+	{
+		replaceTypeOfIfNeeded(dtype.ret);
+		return Continue;
 	}
 
 	override Status enter(ir.StorageType storageType)
