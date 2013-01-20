@@ -143,6 +143,8 @@ public:
 
 		ir.Type t = getExpType(right, current);
 
+
+		// Fill in storage type if the base is null.
 		auto asStorageType = cast(ir.StorageType) left;
 		if (asStorageType !is null) {
 			if (asStorageType.base is null) {
@@ -151,6 +153,12 @@ public:
 			if (asStorageType.type == ir.StorageType.Kind.Auto) {
 				localLeft = left = asStorageType.base;
 			}
+		}
+
+		auto lstorage = cast(ir.StorageType) localLeft;
+		auto rstorage = cast(ir.StorageType) t;
+		if (isConst(lstorage) && isImmutable(rstorage) && mutableIndirection(rstorage.base)) {
+			throw new CompilerError(right.location, "cannot convert immutable type to const.");
 		}
 
 		if (inVariable && effectivelyConst(left)) {

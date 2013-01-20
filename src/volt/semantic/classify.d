@@ -104,6 +104,42 @@ bool mutableIndirection(ir.Type t)
 	}
 }
 
+bool isImmutable(ir.Type type)
+{
+	if (type is null) {
+		return false;
+	}
+	auto storage = cast(ir.StorageType) type;
+	if (storage is null) {
+		return false;
+	}
+	while (storage !is null) {
+		if (storage.type == ir.StorageType.Kind.Immutable) {
+			return true;
+		}
+		storage = cast(ir.StorageType) storage.base;
+	}
+	return false;
+}
+
+bool isConst(ir.Type type)
+{
+	if (type is null) {
+		return false;
+	}
+	auto storage = cast(ir.StorageType) type;
+	if (storage is null) {
+		return false;
+	}
+	while (storage !is null) {
+		if (storage.type == ir.StorageType.Kind.Const) {
+			return true;
+		}
+		storage = cast(ir.StorageType) storage.base;
+	}
+	return false;
+}
+
 /// Returns the size of a given Struct, in bytes.
 int structSize(Location location, ir.Struct s)
 {
