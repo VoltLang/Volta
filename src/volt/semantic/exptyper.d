@@ -88,7 +88,7 @@ public:
 			for (size_t i = asFunctionType.params.length - 1; i < postfix.arguments.length; ++i) {
 				auto typeId = new ir.Typeid();
 				typeId.location = postfix.location;
-				typeId.type = getExpType(postfix.arguments[i], current);
+				typeId.type = copyTypeSmart(getExpType(postfix.arguments[i], current), postfix.location);
 				typeidsLiteral.values ~= typeId;
 			}
 
