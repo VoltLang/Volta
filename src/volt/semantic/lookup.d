@@ -1,6 +1,7 @@
 module volt.semantic.lookup;
 
 import ir = volt.ir.ir;
+import volt.ir.util : getScopeFromStore, getScopeFromType;
 
 import volt.exceptions;
 import volt.token.location;
@@ -154,63 +155,6 @@ ir.Class retrieveTypeInfoClass(Location location, ir.Scope _scope)
 	auto tinfo = cast(ir.Class) tinfoStore.node;
 	assert(tinfo !is null);
 	return tinfo;
-}
-
-/**
- * Return the scope from the given type if it is,
- * a aggregate or a derivative from one.
- */
-ir.Scope getScopeFromType(ir.Type type)
-{
-	switch (type.nodeType) with (ir.NodeType) {
-	case TypeReference:
-		auto asTypeRef = cast(ir.TypeReference) type;
-		assert(asTypeRef !is null);
-		assert(asTypeRef.type !is null);
-		return getScopeFromType(asTypeRef.type);
-	case ArrayType:
-		auto asArray = cast(ir.ArrayType) type;
-		assert(asArray !is null);
-		return getScopeFromType(asArray.base);
-	case PointerType:
-		auto asPointer = cast(ir.PointerType) type;
-		assert(asPointer !is null);
-		return getScopeFromType(asPointer.base);
-	case Struct:
-		auto asStruct = cast(ir.Struct) type;
-		assert(asStruct !is null);
-		return asStruct.myScope;
-	case Class:
-		auto asClass = cast(ir.Class) type;
-		assert(asClass !is null);
-		return asClass.myScope;
-	case Interface:
-		auto asInterface = cast(ir._Interface) type;
-		assert(asInterface !is null);
-		return asInterface.myScope;
-	default:
-		return null;
-	}
-}
-
-/**
- * For the give store get the scoep that it introduces.
- *
- * Returns null for Values and non-scope types.
- */
-ir.Scope getScopeFromStore(ir.Store store)
-{
-	final switch(store.kind) with (ir.Store.Kind) {
-	case Scope:
-		return store.s;
-	case Type:
-		auto type = cast(ir.Type)store.node;
-		assert(type !is null);
-		return getScopeFromType(type);
-	case Value:
-	case Function:
-		return null;
-	}
 }
 
 /**
