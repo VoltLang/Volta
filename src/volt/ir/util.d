@@ -180,9 +180,21 @@ ir.Unary buildCastSmart(ir.Type type, ir.Exp exp)
  */
 ir.Unary buildCastSmart(ir.Type type, ir.Exp exp, Location location)
 {
-	auto cst = new ir.Unary(type, exp);
+	auto cst = new ir.Unary(copyTypeSmart(type, location), exp);
 	cst.location = location;
-	cst.type = copyTypeSmart(type, location);
+	return cst;
+}
+
+/**
+ * Build a cast to bool setting location to the exp location.
+ */
+ir.Unary buildCastToBool(ir.Exp exp)
+{
+	auto pt = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
+	pt.location = exp.location;
+
+	auto cst = new ir.Unary(pt, exp);
+	cst.location = exp.location;
 
 	return cst;
 }
