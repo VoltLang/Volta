@@ -613,7 +613,7 @@ public:
 				return Continue;
 			}
 		}
-		ifs.exp = buildCastSmart(new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool), ifs.exp);
+		ifs.exp = buildCastToBool(ifs.exp);
 		ifs.exp.location = ifs.location;
 		return Continue;
 	}
@@ -639,7 +639,7 @@ public:
 				return Continue;
 			}
 		}
-		fs.test = buildCastSmart(new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool), fs.test);
+		fs.test = buildCastToBool(fs.test);
 		return Continue;
 	}
 
@@ -658,7 +658,7 @@ public:
 				return Continue;
 			}
 		}
-		ws.condition = buildCastSmart(new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool), ws.condition);
+		ws.condition = buildCastToBool(ws.condition);
 		return Continue;
 	}
 
