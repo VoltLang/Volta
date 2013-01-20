@@ -8,6 +8,9 @@ import volt.interfaces;
 
 import volt.token.location;
 
+import volt.visitor.debugprinter;
+import volt.visitor.prettyprinter;
+
 import volt.semantic.attribremoval;
 import volt.semantic.context;
 import volt.semantic.condremoval;
