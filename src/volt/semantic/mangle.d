@@ -44,7 +44,6 @@ string mangle(string[] names, ir.Function fn)
 {
 	string s = "_V";
 	mangleScope(fn.myScope, s);
-	mangleString(fn.name, s);
 	mangleType(fn.type, s);
 	return s;
 }
