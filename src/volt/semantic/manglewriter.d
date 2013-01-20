@@ -84,8 +84,10 @@ public:
 	{
 		parentNames = getParentScopeNames(fn.myScope);
 		/// @todo check other linkage as well.
-		if (fn.name == "main" &&
-		    fn.type.linkage != ir.Linkage.C) {
+		if (fn.mangledName !is null) {
+			// Do nothing.
+		} else if (fn.name == "main" &&
+		           fn.type.linkage != ir.Linkage.C) {
 			fn.mangledName = "vmain";
 		} else if (fn.type.linkage == ir.Linkage.C) {
 			fn.mangledName = fn.name;
