@@ -140,9 +140,12 @@ ir.Type copyTypeSmart(ir.Type type, Location loc)
 	case Struct:
 	case Class:
 	case Enum:
-		/// @todo Get fully qualified name for type.
+		auto s = getScopeFromType(type);
 		auto tr = new ir.TypeReference(type, null);
 		tr.location = loc;
+		/// @todo Get fully qualified name for type.
+		if (s !is null)
+			tr.names = [s.name];
 		return tr;
 	default:
 		assert(false);
