@@ -4,7 +4,10 @@ module volt.visitor.scopemanager;
 
 import ir = volt.ir.ir;
 
+import volt.exceptions;
+
 import volt.visitor.visitor;
+import volt.visitor.debugprinter;
 
 
 class ScopeManager : NullVisitor
@@ -22,7 +25,12 @@ public:
 
 	override Status leave(ir.Module m)
 	{
-		assert(current == m.myScope);
+		if (current !is m.myScope) {
+			auto str = "invalid scope layout should be " ~
+			           getNodeAddressString(m) ~ " is " ~
+			           getNodeAddressString(current.node);
+			throw CompilerPanic(m.location, str);
+		}
 
 		current = null;
 		return Continue;
@@ -36,7 +44,12 @@ public:
 
 	override Status leave(ir.Struct s)
 	{
-		assert(current == s.myScope);
+		if (current !is s.myScope) {
+			auto str = "invalid scope layout should be " ~
+			           getNodeAddressString(s) ~ " is " ~
+			           getNodeAddressString(current.node);
+			throw CompilerPanic(s.location, str);
+		}
 
 		current = current.parent;
 		return Continue;
@@ -50,7 +63,12 @@ public:
 
 	override Status leave(ir.Class c)
 	{
-		assert(current == c.myScope);
+		if (current !is c.myScope) {
+			auto str = "invalid scope layout should be " ~
+			           getNodeAddressString(c) ~ " is " ~
+			           getNodeAddressString(current.node);
+			throw CompilerPanic(c.location, str);
+		}
 
 		current = current.parent;
 		return Continue;
@@ -64,7 +82,12 @@ public:
 
 	override Status leave(ir._Interface i)
 	{
-		assert(current == i.myScope);
+		if (current !is i.myScope) {
+			auto str = "invalid scope layout should be " ~
+			           getNodeAddressString(i) ~ " is " ~
+			           getNodeAddressString(current.node);
+			throw CompilerPanic(i.location, str);
+		}
 
 		current = current.parent;
 		return Continue;
@@ -78,7 +101,12 @@ public:
 
 	override Status leave(ir.Function fn)
 	{
-		assert(current == fn.myScope);
+		if (current !is fn.myScope) {
+			auto str = "invalid scope layout should be " ~
+			           getNodeAddressString(fn) ~ " is " ~
+			           getNodeAddressString(current.node);
+			throw CompilerPanic(fn.location, str);
+		}
 
 		current = current.parent;
 		return Continue;
