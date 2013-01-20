@@ -61,6 +61,7 @@ public:
 	override Status leave(ir.Struct s)
 	{
 		aggregateDepth--;
+		parentNames = parentNames[0 .. $-1];
 		return Continue;
 	}
 
@@ -75,6 +76,7 @@ public:
 	override Status leave(ir.Class c)
 	{
 		aggregateDepth--;
+		parentNames = parentNames[0 .. $-1];
 		return Continue;
 	}
 
@@ -99,6 +101,7 @@ public:
 	{
 		functionDepth--;
 		aggregateDepth--;
+		parentNames = parentNames[0 .. $-1];
 		return Continue;
 	}
 
