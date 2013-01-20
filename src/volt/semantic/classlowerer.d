@@ -50,7 +50,7 @@ public:
 	 * }
 	 * ---
 	 */
-	ir.Function createConstructor(ir.Struct c, ir.Struct vtable, ir.Function[] userConstructors, ir.Function[] functions)
+	ir.Function createConstructor(ir.Struct c, ir.Struct vtable, ir.Function[] userConstructors, ir.Variable vtableGlobal)
 	{
 		/* Okay, this might look kind of terrifying, but it's not too
 		 * bad once you realise it's just a lot of setting up the artificial
@@ -102,21 +102,8 @@ public:
 		fn._body.statements ~= objVar;
 
 		{
-			// obj expression
-			auto objRef = new ir.ExpReference();
-			objRef.location = c.location;
-			objRef.decl = objVar;
-			objRef.idents ~= "obj";
-
-			// Object.__Vtable.sizeof;
-			sz = size(vtable.location, vtable);
-			auto vtableSizeof = new ir.Constant();
-			vtableSizeof.location = vtable.location;
-			vtableSizeof.value = to!string(sz);
-			vtableSizeof.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Uint);  // aieee
-
-			// cast(Object.__Vtable*) malloc(Object.__Vtable.sizeof);
-			auto vtableMallocCast = createAllocDgCall(allocDgVar, settings, c.location, new ir.TypeReference(vtable, vtable.name));
+			auto objRef = buildExpReference(objVar, ["obj"], c.location);
+			auto vtableGet = buildAddrOf(vtableGlobal, [vtableGlobal.name], c.location);
 
 			auto vtableAccess = new ir.Postfix();
 			vtableAccess.location = c.location;
@@ -130,51 +117,12 @@ public:
 			vtableAssign.location = c.location;
 			vtableAssign.op = ir.BinOp.Type.Assign;
 			vtableAssign.left = vtableAccess;
-			vtableAssign.right = vtableMallocCast;
+			vtableAssign.right = vtableGet;
 
 			auto expStatement = new ir.ExpStatement();
 			expStatement.location = c.location;
 			expStatement.exp = vtableAssign;
 			fn._body.statements ~= expStatement;
-		}
-
-		foreach (i, methodfn; functions) {
-			auto objRef = new ir.ExpReference();
-			objRef.location = c.location;
-			objRef.decl = objVar;
-			objRef.idents ~= "obj";
-
-			auto vtableAccess = new ir.Postfix();
-			vtableAccess.location = c.location;
-			vtableAccess.op = ir.Postfix.Op.Identifier;
-			vtableAccess.identifier = new ir.Identifier();
-			vtableAccess.identifier.location = c.location;
-			vtableAccess.identifier.value = "__vtable";
-			vtableAccess.child = objRef;
-
-			auto vindex = new ir.Postfix();
-			vindex.location = c.location;
-			vindex.op = ir.Postfix.Op.Identifier;
-			vindex.child = vtableAccess;
-			vindex.identifier = new ir.Identifier();
-			vindex.identifier.location = c.location;
-			vindex.identifier.value = "_" ~ to!string(i);
-
-			auto methodfnexpref = new ir.ExpReference();
-			methodfnexpref.location = c.location;
-			methodfnexpref.idents ~= methodfn.name;
-			methodfnexpref.decl = methodfn;
-
-			auto methodAssign = new ir.BinOp();
-			methodAssign.location = c.location;
-			methodAssign.op = ir.BinOp.Type.Assign;
-			methodAssign.left = vindex;
-			methodAssign.right = methodfnexpref;
-
-			auto methodiexp = new ir.ExpStatement();
-			methodiexp.location = c.location;
-			methodiexp.exp = methodAssign;
-			fn._body.statements ~= methodiexp;
 		}
 
 		// obj.__user_ctor(arg1, arg2, obj);
@@ -419,6 +367,27 @@ public:
 		_struct.myScope.addValue(vtableVar, vtableVar.name);
 		_struct.members.nodes ~= vtableVar;
 
+		// Add the vtable global var to the struct.
+		auto vtableGlobalVar = new ir.Variable();
+		vtableGlobalVar.location = _class.location;
+		vtableGlobalVar.name = "__vtableGlobal";
+		vtableGlobalVar.storage = ir.Variable.Storage.Global;
+		vtableGlobalVar.type = copyTypeSmart(vtableStruct, _class.location);
+		_struct.myScope.addValue(vtableGlobalVar, vtableGlobalVar.name);
+		_struct.members.nodes ~= vtableGlobalVar;
+
+		if (methods.length > 0) {
+			auto vtableLiteral = new ir.StructLiteral();
+			vtableLiteral.location = _class.location;
+			vtableLiteral.type = copyTypeSmart(vtableStruct, _class.location);
+
+			foreach (f; methods) {
+				vtableLiteral.exps ~= buildExpReference(f, [f.name], _class.location);
+			}
+
+			vtableGlobalVar.assign = vtableLiteral;
+		}
+
 		// Add the fields.
 		foreach (field; fields) {
 			_struct.myScope.addValue(field, field.name);
@@ -437,7 +406,7 @@ public:
 		}
 
 		// And finally, create and add the constructor.
-		auto ctor = createConstructor(_struct, vtableStruct, constructors, methods);
+		auto ctor = createConstructor(_struct, vtableStruct, constructors, vtableGlobalVar);
 		_struct.myScope.addFunction(ctor, ctor.name);
 		_struct.members.nodes ~= ctor;
 		_class.constructor = ctor;
