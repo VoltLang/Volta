@@ -114,8 +114,9 @@ public:
 		ir.Type localLeft = left;
 
 		auto asExpRef = cast(ir.ExpReference) right;
+		ir.Variable asVar;
 		if (asExpRef !is null) {
-			auto asVar = cast(ir.Variable) asExpRef.decl;
+			asVar = cast(ir.Variable) asExpRef.decl;
 			if (asVar !is null && asVar.isRef) {
 				right = buildDeref(right.location, right);
 			}
@@ -281,7 +282,7 @@ public:
 			 * worry about StorageType chains.
 			 */
 			if (asStorageType.type == ir.StorageType.Kind.Scope) {
-				if (mutableIndirection(t)) {
+				if ((asVar !is null && !asVar.isRef) && mutableIndirection(t)) {
 					/// This is not the world's greatest error message. @todo
 					throw new CompilerError(right.location, "cannot convert mutably indirectable type to scope.");
 				} else {
@@ -398,6 +399,15 @@ public:
 				throw new CompilerError(bin.location, format("pointer arithmetic cannot be performed with '%s'.", to!string(prim.type)));
 			}
 			result = pointer;
+		} else if (left.nodeType == ir.NodeType.StorageType) {
+			auto asStorage = cast(ir.StorageType) left;
+			assert(asStorage !is null);
+			if (asStorage.type == ir.StorageType.Kind.Scope && !mutableIndirection(right)) {
+				bin.right = buildCastSmart(bin.right.location, asStorage, bin.right);
+				result = asStorage;
+			} else {
+				throw new CompilerError(bin.location, "cannot implicitly convert non storage type to storage type.");
+			}
 		} else {
 			auto lt = cast(ir.Type) left;
 			auto rt = cast(ir.Type) right;
