@@ -606,27 +606,26 @@ void handlePostfix(State state, ir.Postfix postfix, Value result)
 void handlePostId(State state, ir.Postfix postfix, Value result)
 {
 	auto b = state.builder;
-	LLVMValueRef v;
 	uint index;
 
 	state.getValueAnyForm(postfix.child, result);
 
 	auto st = cast(StructType)result.type;
 	auto at = cast(ArrayType)result.type;
+	auto sat = cast(StaticArrayType)result.type;
 	auto pt = cast(PointerType)result.type;
 
 	if (pt !is null) {
 		st = cast(StructType)pt.base;
 		at = cast(ArrayType)pt.base;
-		if (st is null && at is null)
-			throw CompilerPanic(postfix.child.location, "pointed to value is not a struct or array");
+		sat = cast(StaticArrayType)pt.base;
+		if (st is null && at is null && sat is null)
+			throw CompilerPanic(postfix.child.location, "pointed to value is not a struct or (static)array");
 
 		// We are looking at a pointer, make sure to load it.
 		makeNonPointer(state, result);
-		v = result.value;
-	} else if (st !is null || at !is null) {
-		makePointer(state, result);
-		v = result.value;
+		result.isPointer = true;
+		result.type = pt.base;
 	}
 
 	if (st !is null) {
@@ -637,14 +636,19 @@ void handlePostId(State state, ir.Postfix postfix, Value result)
 			                  to!string(*cast(size_t*)&postfix),
 			                  key, st.irType.mangledName);
 			throw CompilerPanic(postfix.location, str);
+		} else {
+			index = *ptr;
 		}
 
-		index = *ptr;
+		makePointer(state, result);
+		auto v = result.value;
+
 		v = LLVMBuildStructGEP(b, v, index, "structGep");
 
+		result.value = v;
 		result.isPointer = true;
 		result.type = st.types[index];
-		result.value = v;
+
 	} else if (at !is null) {
 		if (postfix.identifier.value == "ptr") {
 			index = ArrayType.ptrIndex;
@@ -652,13 +656,25 @@ void handlePostId(State state, ir.Postfix postfix, Value result)
 			index = ArrayType.lengthIndex;
 		}
 
+		makePointer(state, result);
+		auto v = result.value;
+
 		v = LLVMBuildStructGEP(b, v, index, "arrayGep");
 
+		result.value = v;
 		result.isPointer = true;
 		result.type = at.types[index];
-		result.value = v;
 
-		makeNonPointer(state, result);
+	} else if (sat !is null) {
+		if (postfix.identifier.value == "ptr") {
+			return getPointerFromStaticArray(state, postfix.location, result);
+		}
+
+		auto t = state.uintType;
+		result.value = LLVMConstInt(t.llvmType, sat.length, false);
+		result.isPointer = false;
+		result.type = t;
+
 	} else {
 		throw CompilerPanic(postfix.child.location, "is not struct, array or pointer");
 	}
