@@ -929,20 +929,20 @@ Visitor.Status acceptFunction(ir.Function fn, Visitor av)
 	if (status == VisitorStop)
 		return status;
 
-	if (fn.inContract !is null) foreach(n; fn.inContract.statements) {
-		status = accept(n, av);
+	if (fn.inContract !is null) {
+		status = accept(fn.inContract, av);
 		if (status == VisitorStop)
 			return status;
 	}
 
-	if (fn.outContract !is null) foreach(n; fn.outContract.statements) {
-		status = accept(n, av);
+	if (fn.outContract !is null) {
+		status = accept(fn.outContract, av);
 		if (status == VisitorStop)
 			return status;
 	}
 
-	if (fn._body !is null) foreach(n; fn._body.statements) {
-		status = accept(n, av);
+	if (fn._body !is null) {
+		status = accept(fn._body, av);
 		if (status == VisitorStop)
 			return status;
 	}
