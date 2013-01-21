@@ -95,6 +95,7 @@ public:
 			case DoStatement:
 			case ForStatement:
 			case ExpStatement:
+			case Variable:
 				auto s = accept(n, this);
 				if (s == Stop)
 					return Stop;
