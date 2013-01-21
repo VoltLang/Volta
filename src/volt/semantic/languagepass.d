@@ -24,6 +24,7 @@ import volt.semantic.irverifier;
 import volt.semantic.classlowerer;
 import volt.semantic.typeidreplacer;
 import volt.semantic.newreplacer;
+import volt.semantic.llvmlowerer;
 
 
 /**
@@ -90,6 +91,7 @@ public:
 
 		passes3b ~= new NewReplacer(settings);
 		passes3b ~= new TypeidReplacer(settings);
+		passes3b ~= new LlvmLowerer(settings);
 		passes3b ~= new MangleWriter();
 		passes3b ~= new IrVerifier();
 	}
