@@ -2,6 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.ir.util;
 
+import std.conv : to;
+
 import volt.token.location;
 import ir = volt.ir.ir;
 
@@ -153,6 +155,39 @@ ir.Type copyTypeSmart(Location loc, ir.Type type)
 }
 
 /**
+ * Build a PrimitiveType.
+ */
+ir.PrimitiveType buildPrimitiveType(Location loc, ir.PrimitiveType.Kind kind)
+{
+	auto pt = new ir.PrimitiveType(kind);
+	pt.location = loc;
+	return pt;
+}
+
+ir.PrimitiveType buildVoid(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Void); }
+ir.PrimitiveType buildBool(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Bool); }
+ir.PrimitiveType buildChar(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Char); }
+ir.PrimitiveType buildByte(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Byte); }
+ir.PrimitiveType buildUbyte(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Ubyte); }
+ir.PrimitiveType buildShort(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Short); }
+ir.PrimitiveType buildUshort(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Ushort); }
+ir.PrimitiveType buildInt(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Int); }
+ir.PrimitiveType buildUint(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Uint); }
+ir.PrimitiveType buildLong(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Long); }
+ir.PrimitiveType buildUlong(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Ulong); }
+
+/**
+ * Build a void* type.
+ */
+ir.PointerType buildVoidPtr(Location loc)
+{
+	auto pt = new ir.PointerType(buildVoid(loc));
+	pt.location = loc;
+
+	return pt;
+}
+
+/**
  * Build a Variable, while being smart about its type.
  */
 ir.Variable buildVariable(Location loc, ir.Type type, string name)
@@ -196,6 +231,35 @@ ir.ExpReference buildExpReference(Location loc, ir.Declaration decl, string[] na
 }
 
 /**
+ * Builds a constant int.
+ */
+ir.Constant buildConstantInt(Location loc, int value)
+{
+	auto c = new ir.Constant();
+	c.location = loc;
+	c.value = to!string(value);
+	c.type = buildInt(loc);
+
+	return c;
+}
+
+/**
+ * Builds a constant bool.
+ */
+ir.Constant buildConstantBool(Location loc, bool val)
+{
+	auto c = new ir.Constant();
+	c.location = loc;
+	c.value = val ? "true" : "false";
+	c.type = buildBool(loc);
+
+	return c;
+}
+
+ir.Constant buildTrue(Location loc) { return buildConstantBool(loc, true); }
+ir.Constant buildFalse(Location loc) { return buildConstantBool(loc, false); }
+
+/**
  * Build a cast but setting location and calling copyTypeSmart
  * on the type, to avoid duplicate nodes.
  */
@@ -207,14 +271,21 @@ ir.Unary buildCastSmart(Location loc, ir.Type type, ir.Exp exp)
 }
 
 /**
- * Build a cast to bool setting location to the exp location.
+ * Build a cast to bool.
  */
 ir.Unary buildCastToBool(Location loc, ir.Exp exp)
 {
-	auto pt = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
-	pt.location = loc;
+	auto cst = new ir.Unary(buildBool(loc), exp);
+	cst.location = loc;
+	return cst;
+}
 
-	auto cst = new ir.Unary(pt, exp);
+/**
+ * Build a cast to void*.
+ */
+ir.Unary buildCastToVoidPtr(Location loc, ir.Exp exp)
+{
+	auto cst = new ir.Unary(buildVoidPtr(loc), exp);
 	cst.location = loc;
 	return cst;
 }
@@ -232,6 +303,14 @@ ir.Unary buildAddrOf(Location loc, ir.Exp exp)
 }
 
 /**
+ * Builds a ExpReference and a AddrOf from a Variable.
+ */
+ir.Unary buildAddrOf(Location loc, ir.Variable var, string[] names...)
+{
+	return buildAddrOf(loc, buildExpReference(loc, var, names));
+}
+
+/**
  * Builds a Dereference expression.
  */
 ir.Unary buildDeref(Location loc, ir.Exp exp)
@@ -244,11 +323,19 @@ ir.Unary buildDeref(Location loc, ir.Exp exp)
 }
 
 /**
- * Builds a ExpReference and a AddrOf from a Variable.
+ * Build a postfix Identifier expression.
  */
-ir.Unary buildAddrOf(Location loc, ir.Variable var, string[] names...)
+ir.Postfix buildAccess(Location loc, ir.Exp exp, string name)
 {
-	return buildAddrOf(loc, buildExpReference(loc, var, names));
+	auto access = new ir.Postfix();
+	access.location = loc;
+	access.op = ir.Postfix.Op.Identifier;
+	access.child = exp;
+	access.identifier = new ir.Identifier();
+	access.identifier.location = loc;
+	access.identifier.value = name;
+
+	return access;
 }
 
 /**
@@ -292,6 +379,19 @@ ir.Variable addParamSmart(Location loc, ir.Function fn, ir.Type type, string nam
 	return addParam(loc, fn, copyTypeSmart(loc, type), name);
 }
 
+/**
+ * Build a exp statement.
+ */
+ir.ExpStatement buildExpStat(Location loc, ir.BlockStatement block, ir.Exp exp)
+{
+	auto ret = new ir.ExpStatement();
+	ret.location = loc;
+	ret.exp = exp;
+
+	block.statements ~= ret;
+
+	return ret;
+}
 /**
  * Build a return statement.
  */
