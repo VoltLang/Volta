@@ -155,6 +155,15 @@ public:
 
 		ir.Type t = getExpType(right, current);
 
+		// Turn no-arg @property functions into calls.
+		if (t.nodeType == ir.NodeType.FunctionType || t.nodeType == ir.NodeType.DelegateType) {
+			auto asCallable = cast(ir.CallableType) t;
+			if (asCallable.isProperty && asCallable.params.length == 0) {
+				right = buildCall(right.location, right, null);
+				t = asCallable.ret;
+			}
+		}
+
 
 		// Fill in storage type if the base is null.
 		auto asStorageType = cast(ir.StorageType) left;
