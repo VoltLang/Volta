@@ -268,6 +268,7 @@ public:
 	bool isScope;
 	bool hasVarArgs;
 	bool varArgsProcessed;
+	bool isProperty;
 	// Hi there. Thinking of adding a new field? Add it to the copy constructor, below.
 
 
@@ -284,6 +285,7 @@ public:
 		isScope = ctype.isScope;
 		hasVarArgs = ctype.hasVarArgs;
 		varArgsProcessed = ctype.varArgsProcessed;
+		isProperty = ctype.isProperty;
 	}
 }
 

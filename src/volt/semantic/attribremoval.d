@@ -9,6 +9,7 @@ import volt.exceptions;
 import volt.interfaces;
 import volt.visitor.visitor;
 import volt.visitor.manip;
+import volt.semantic.classify;
 
 
 /**
@@ -210,6 +211,18 @@ protected:
 				break;
 			case Scope:
 				fn.type.isScope = true;
+				break;
+			case Property:
+				if (fn.type.params.length == 0) {
+					if (isVoid(fn.type.ret)) {
+						throw new CompilerError(fn.location, "zero argument @property functions may not have void return types.");
+					}
+				} else {
+					if (fn.type.params.length != 1) {
+						throw new CompilerError(fn.location, "@property functions may only have one or zero parameters.");
+					}
+				}
+				fn.type.isProperty = true;
 				break;
 			default:
 				// Warn?

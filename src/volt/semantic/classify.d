@@ -217,6 +217,18 @@ bool isOkayForPointerArithmetic(ir.PrimitiveType.Kind kind)
 	}
 }
 
+bool isVoid(ir.Type type)
+{
+	if (type is null) {
+		return false;
+	}
+	auto primitive = cast(ir.PrimitiveType) type;
+	if (primitive is null) {
+		return false;
+	}
+	return primitive.type == ir.PrimitiveType.Kind.Void;
+}
+
 bool isComparison(ir.BinOp.Type t)
 {
 	switch (t) with (ir.BinOp.Type) {
