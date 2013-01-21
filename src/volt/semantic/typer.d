@@ -411,8 +411,11 @@ ir.Type getPostfixIdentifierType(ir.Postfix postfix, ir.Scope currentScope)
 		auto asArray = cast(ir.ArrayType) type;
 		assert(asArray !is null);
 		return getPostfixIdentifierArrayType(postfix, asArray, currentScope);
+	} else if (type.nodeType == ir.NodeType.StaticArrayType) {
+		auto asStaticArray = cast(ir.StaticArrayType) type;
+		assert(asStaticArray !is null);
+		return getPostfixIdentifierStaticArrayType(postfix, asStaticArray, currentScope);
 	}
-
 
 	retrieveScope(type, postfix, _scope, _class, emsg);
 
@@ -452,6 +455,20 @@ ir.Type getPostfixIdentifierArrayType(ir.Postfix postfix, ir.ArrayType arrayType
 		return pointer;
 	default:
 		throw new CompilerError(postfix.location, "arrays only have length and ptr members.");
+	}
+}
+
+ir.Type getPostfixIdentifierStaticArrayType(ir.Postfix postfix, ir.StaticArrayType arrayType, ir.Scope currentScope)
+{
+	switch (postfix.identifier.value) {
+	case "length":
+		return getSizeT(postfix.location, currentScope);
+	case "ptr":
+		auto pointer = new ir.PointerType(arrayType.base);
+		pointer.location = postfix.location;
+		return pointer;
+	default:
+		throw new CompilerError(postfix.location, "static arrays only have length and ptr members.");
 	}
 }
 
