@@ -339,8 +339,8 @@ public:
 		
 		if (bin.op == ir.BinOp.Type.AndAnd || bin.op == ir.BinOp.Type.OrOr) {
 			auto boolType = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
-			bin.left = buildCastSmart(boolType, bin.left);
-			bin.right = buildCastSmart(boolType, bin.right);
+			if (!typesEqual(left, boolType)) bin.left = buildCastSmart(boolType, bin.left);
+			if (!typesEqual(left, boolType)) bin.right = buildCastSmart(boolType, bin.right);
 			return left = right = boolType;
 		}
 		
