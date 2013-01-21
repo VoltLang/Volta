@@ -228,7 +228,14 @@ ir.Variable parseParameter(TokenStream ts)
 	ir.Variable p = new ir.Variable();
 	Location origin = ts.peek.location;
 
+	/// @todo intermixed ref
+	p.isRef = matchIf(ts, TokenType.Ref);
+
 	p.type = parseType(ts);
+	if (p.isRef) {
+		p.type = new ir.PointerType(p.type);
+		p.type.location = ts.peek.location;
+	}
 	if (ts.peek.type == TokenType.Identifier) {
 		Token name = match(ts, TokenType.Identifier);
 		p.name = name.value;

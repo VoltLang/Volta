@@ -102,6 +102,9 @@ public:
 			throw new CompilerError(postfix.location, "wrong number of arguments to function.");
 		}
 		foreach (i; 0 .. postfix.arguments.length) {
+			if (asFunctionType.params[i].isRef) {
+				postfix.arguments[i] = buildAddrOf(postfix.location, postfix.arguments[i]);
+			}
 			extype(asFunctionType.params[i].type, postfix.arguments[i]);
 		}
 	}
@@ -109,6 +112,14 @@ public:
 	ir.Node extype(ref ir.Type left, ref ir.Exp right, bool inVariable = false)
 	{
 		ir.Type localLeft = left;
+
+		auto asExpRef = cast(ir.ExpReference) right;
+		if (asExpRef !is null) {
+			auto asVar = cast(ir.Variable) asExpRef.decl;
+			if (asVar !is null && asVar.isRef) {
+				right = buildDeref(right.location, right);
+			}
+		}
 
 		if (right.nodeType == ir.NodeType.StructLiteral) {
 			auto asLit = cast(ir.StructLiteral) right;
@@ -299,6 +310,14 @@ public:
 			extypePostfix(cast(ir.Postfix)bin.right);
 		} else if (bin.right.nodeType == ir.NodeType.BinOp) {
 			extype(cast(ir.BinOp)bin.right);
+		}
+
+		auto asExpRef = cast(ir.ExpReference) bin.left;
+		if (asExpRef !is null) {
+			auto asVar = cast(ir.Variable) asExpRef.decl;
+			if (asVar !is null && asVar.isRef) {
+				bin.left = buildDeref(bin.left.location, bin.left);
+			}
 		}
 
 		ir.Type left = getExpType(bin.left, current);
