@@ -230,11 +230,22 @@ ir.Variable parseParameter(TokenStream ts)
 
 	/// @todo intermixed ref
 	p.isRef = matchIf(ts, TokenType.Ref);
+	bool isOut;
+	if (!p.isRef) {
+		isOut = p.isRef = matchIf(ts, TokenType.Out);
+	}
 
 	p.type = parseType(ts);
 	if (p.isRef) {
 		p.type = new ir.PointerType(p.type);
 		p.type.location = ts.peek.location;
+		if (isOut) {
+			auto scopeStorage = new ir.StorageType();
+			scopeStorage.location = ts.peek.location;
+			scopeStorage.type = ir.StorageType.Kind.Scope;
+			scopeStorage.base = p.type;
+			p.type = scopeStorage;
+		}
 	}
 	if (ts.peek.type == TokenType.Identifier) {
 		Token name = match(ts, TokenType.Identifier);
