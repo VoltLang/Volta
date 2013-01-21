@@ -897,7 +897,7 @@ public:
 		if (asFunction.type.params.length != 1) {
 			return Continue;
 		}
-		auto call = buildCall(bin.location, buildExpReference(bin.left.location, asFunction, asFunction.name), [bin.right]);
+		auto call = buildCall(bin.location, asFunction, [bin.right], asFunction.name);
 		assert(call.arguments.length == 1);
 		assert(call.arguments[0] !is null);
 		
