@@ -84,6 +84,8 @@ public:
 
 	bool isWeakLink;   ///< Only for global variables.
 
+	bool isRef;  ///< Will only true for some function parameters.
+
 
 public:
 	this() { super(NodeType.Variable); }
