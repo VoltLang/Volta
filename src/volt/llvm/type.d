@@ -226,7 +226,7 @@ public:
 	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
 	{
 		auto strConst = LLVMConstStringInContext(state.context, cast(char[])cnst.arrayData, true);
-		auto strGlobal = LLVMAddGlobal(state.mod, LLVMTypeOf(strConst), "__arrayLiteral");
+		auto strGlobal = LLVMAddGlobal(state.mod, LLVMTypeOf(strConst), "");
 		LLVMSetGlobalConstant(strGlobal, true);
 		LLVMSetInitializer(strGlobal, strConst);
 
@@ -254,7 +254,7 @@ public:
 		}
 
 		auto litConst = LLVMConstArray(base.llvmType, alVals);
-		auto litGlobal = LLVMAddGlobal(state.mod, LLVMTypeOf(litConst), "__arrayLiteral");
+		auto litGlobal = LLVMAddGlobal(state.mod, LLVMTypeOf(litConst), "");
 		LLVMSetGlobalConstant(litGlobal, true);
 		LLVMSetInitializer(litGlobal, litConst);
 
