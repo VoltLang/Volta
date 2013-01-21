@@ -232,6 +232,18 @@ ir.Unary buildAddrOf(Location loc, ir.Exp exp)
 }
 
 /**
+ * Builds a Dereference expression.
+ */
+ir.Unary buildDeref(Location loc, ir.Exp exp)
+{
+	auto deref = new ir.Unary();
+	deref.location = loc;
+	deref.op = ir.Unary.Op.Dereference;
+	deref.value = exp;
+	return deref;
+}
+
+/**
  * Builds a ExpReference and a AddrOf from a Variable.
  */
 ir.Unary buildAddrOf(Location loc, ir.Variable var, string[] names...)
