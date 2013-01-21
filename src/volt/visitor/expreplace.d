@@ -352,17 +352,22 @@ Visitor.Status acceptUnary(ref ir.Exp exp, ir.Unary unary, ExpReplaceVisitor av)
 		return parentContinue(status);
 	}
 
-/*
-	if (unary.type !is null) {
-		status = accept(unary.type, av);
+	if (unary.value !is null) {
+		status = acceptExp(unary.value, av);
 		if (status == VisitorStop) {
 			return VisitorStop;
 		}
 	}
-*/
 
-	if (unary.value !is null) {
-		status = acceptExp(unary.value, av);
+	if (unary.index !is null) {
+		status = acceptExp(unary.index, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	foreach (ref arg; unary.argumentList) {
+		status = acceptExp(arg, av);
 		if (status == VisitorStop) {
 			return VisitorStop;
 		}

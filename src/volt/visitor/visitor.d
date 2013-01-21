@@ -1301,6 +1301,20 @@ Visitor.Status acceptUnary(ir.Unary unary, Visitor av)
 		}
 	}
 
+	if (unary.index !is null) {
+		status = accept(unary.index, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	foreach (arg; unary.argumentList) {
+		status = accept(arg, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
 	return av.leave(unary);
 }
 
