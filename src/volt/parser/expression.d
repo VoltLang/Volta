@@ -300,7 +300,28 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 	case intir.PrimaryExp.Type.IntegerLiteral:
 		auto c = new ir.Constant();
 		c.value = primary._string;
-		c.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
+		auto base = ir.PrimitiveType.Kind.Int;
+
+		// If there are any suffixes, change the type to match.
+		while (c.value[$-1] == 'u' || c.value[$-1] == 'U' ||
+			   c.value[$-1] == 'L') {
+			if (c.value[$-1] == 'u' || c.value[$-1] == 'U') {
+				if (base == ir.PrimitiveType.Kind.Long) {
+					base = ir.PrimitiveType.Kind.Ulong;
+				} else {
+					base = ir.PrimitiveType.Kind.Uint;
+				}
+			} else if (c.value[$-1] == 'L') {
+				if (base == ir.PrimitiveType.Kind.Uint) {
+					base = ir.PrimitiveType.Kind.Ulong;
+				} else {
+					base = ir.PrimitiveType.Kind.Long;
+				}
+			}
+			c.value = c.value[0 .. $-1];
+		}
+
+		c.type = new ir.PrimitiveType(base);
 		c.type.location = primary.location;
 		exp = c;
 		break;
