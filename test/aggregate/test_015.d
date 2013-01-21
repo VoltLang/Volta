@@ -1,15 +1,16 @@
 //T compiles:yes
 //T retval:42
+// Properties and classes and also a bug with multiple methods that we used to have.
 module test_015;
 
 class S {
     int mX;
 
-    int y()
+    @property int y()
     {
         return mX;
     }
-    void x(int _x)
+    @property void x(int _x)
     {
         mX = _x;
         return;
@@ -19,6 +20,6 @@ class S {
 int main()
 {
     S s = new S();
-    s.x(42);
-    return s.y();
+    s.x = 42;
+    return s.y;
 }
