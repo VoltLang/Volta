@@ -78,76 +78,74 @@ ExpOrOp[] gatherExps(intir.BinExp bin)
 	return list;
 }
 
-ExpOrOp[] expressionsAsPostfix(intir.BinExp bin)
-{
-	// Ladies and gentlemen, Mr. Edsger Dijkstra's shunting-yard algorithm! (polite applause)
-	ExpOrOp[] infix = gatherExps(bin);
-	ExpOrOp[] postfix;
-	ir.BinOp.Type[] operationStack;
-
-	foreach (element; infix) {
-		if (element.isExp) {
-			postfix ~= element;
-			continue;
-		}
-		while (operationStack.length > 0) {
-			auto op = operationStack[0];
-			if ((intir.isLeftAssociative(element.op) && intir.getPrecedence(element.op) <= intir.getPrecedence(operationStack[0])) ||
-				(!intir.isLeftAssociative(element.op) && intir.getPrecedence(element.op) < intir.getPrecedence(operationStack[0]))) {
-				postfix ~= new ExpOrOp(operationStack[0]);
-				operationStack = operationStack[1 .. $];
-			} else {
-				break;
-			}
-		}
-
-		operationStack = [element.op] ~ operationStack;
-	}
-
-	while (operationStack.length > 0) {
-		postfix ~= new ExpOrOp(operationStack[0]);
-		operationStack = operationStack[1 .. $];
-	}
-
-	return postfix;
-}
-
 ir.Exp binexpToExp(intir.BinExp bin)
 {
-	if (bin.op == ir.BinOp.Type.None) {
-		return unaryToExp(bin.left);
-	}
+	// Ladies and gentlemen, Mr. Edsger Dijkstra's shunting-yard algorithm! (polite applause)
+	// Shouldn't be needed.
 
-	ExpOrOp[] postfix = expressionsAsPostfix(bin);
-	intir.UnaryExp[] exps;
-	ir.BinOp binout;
+	import std.stdio;
+	ExpOrOp[] tokens = gatherExps(bin);
+	ExpOrOp[] output;
+	ir.BinOp.Type[] stack;
 
-	foreach (el; postfix) {
-		if (el.isExp) {
-			exps = el.exp ~ exps;
+	// While there are tokens to be read.
+	while (tokens.length > 0) {
+		// Read a token.
+		auto token = tokens[0];
+		tokens = tokens[1 .. $];
+
+		if (token.isExp) {
+			// If the token is an expression, add it to the output queue.
+			output ~= new ExpOrOp(token.exp);
 		} else {
-			if (binout is null) {
-				binout = new ir.BinOp();
-				binout.op = el.op;
-				binout.left = unaryToExp(exps[1]);
-				binout.right = unaryToExp(exps[0]);
-				exps = exps[2..$];
-			} else {
-				auto b = new ir.BinOp();
-				b.op = el.op;
-				if (intir.isLeftAssociative(b.op)) {
-					b.left =  binout;
-					b.right = unaryToExp(exps[0]);
+			// If the token is an operator
+			auto op1 = token.op;
+			// While there is an operator token on the top of the stack
+			while (stack.length > 0) {
+				// and op1 is left associative and its precedence is <= op2.
+				if ((intir.isLeftAssociative(op1) && intir.getPrecedence(op1) <= intir.getPrecedence(stack[0])) || 
+					(intir.getPrecedence(op1) < intir.getPrecedence(stack[0]))) {
+				// or op1 has precedence < op2) {
+					// pop op2 off the stack
+					auto op2 = stack[0];
+					stack = stack[1 .. $];
+					// and onto the output queue.
+					output ~= new ExpOrOp(op2); 
 				} else {
-					b.left = unaryToExp(exps[0]);
-					b.right = binout;
+					break;
 				}
-				binout = b;
 			}
+			// Push op1 onto the stack.
+			stack = op1 ~ stack;
 		}
 	}
-	binout.location = bin.location;
-	return binout;
+
+	// When there are no more tokens to read:
+	// While there are still operator tokens on the stack.
+	while (stack.length > 0) {
+		// Pop the operator onto the output queue.
+		output ~= new ExpOrOp(stack[0]);
+		stack = stack[1 .. $];
+	}
+
+	ir.Exp[] expstack;
+	while (output.length > 0) {
+		if (output[0].isExp) {
+			expstack = unaryToExp(output[0].exp) ~ expstack;
+		} else {
+			assert(expstack.length >= 2);
+			auto binout = new ir.BinOp();
+			binout.location = expstack[0].location;
+			binout.left = expstack[1];
+			binout.right = expstack[0];
+			binout.op = output[0].op;
+			expstack = expstack[2 .. $];
+			expstack = binout ~ expstack;
+		}
+		output = output[1 .. $];
+	}
+	assert(expstack.length == 1);
+	return expstack[0];
 }
 
 ir.Exp unaryToExp(intir.UnaryExp unary)
