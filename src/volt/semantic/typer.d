@@ -286,13 +286,18 @@ ir.Type getPostfixType(ir.Postfix postfix, ir.Scope currentScope)
 
 ir.Type getPostfixSliceType(ir.Postfix postfix, ir.Scope currentScope)
 {
+	ir.Type base;
 	ir.ArrayType array;
-	ir.PointerType pointer;
 
 	auto type = getExpType(postfix.child, currentScope);
 	if (type.nodeType == ir.NodeType.PointerType) {
-		pointer = cast(ir.PointerType) type;
+		auto pointer = cast(ir.PointerType) type;
 		assert(pointer !is null);
+		base = pointer.base;
+	} else if (type.nodeType == ir.NodeType.StaticArrayType) {
+		auto staticArray = cast(ir.StaticArrayType) type;
+		assert(staticArray !is null);
+		base = staticArray.base;
 	} else if (type.nodeType == ir.NodeType.ArrayType) {
 		array = cast(ir.ArrayType) type;
 		assert(array !is null);
@@ -301,8 +306,8 @@ ir.Type getPostfixSliceType(ir.Postfix postfix, ir.Scope currentScope)
 	}
 
 	if (array is null) {
-		assert(pointer !is null);
-		array = new ir.ArrayType(pointer.base);
+		assert(base !is null);
+		array = new ir.ArrayType(base);
 		array.location = postfix.location;
 	}
 
@@ -469,22 +474,27 @@ ir.Type getPostfixIncDecType(ir.Postfix postfix, ir.Scope currentScope)
 
 ir.Type getPostfixIndexType(ir.Postfix postfix, ir.Scope currentScope)
 {
-	ir.ArrayType array;
-	ir.PointerType pointer;
+	ir.Type base;
 
 	auto type = getExpType(postfix.child, currentScope);
 	if (type.nodeType == ir.NodeType.PointerType) {
-		pointer = cast(ir.PointerType) type;
+		auto pointer = cast(ir.PointerType) type;
 		assert(pointer !is null);
+		base = pointer.base;
 	} else if (type.nodeType == ir.NodeType.ArrayType) {
-		array = cast(ir.ArrayType) type;
+		auto array = cast(ir.ArrayType) type;
 		assert(array !is null);
+		base = array.base;
+	} else if (type.nodeType == ir.NodeType.StaticArrayType) {
+		auto staticArray = cast(ir.StaticArrayType) type;
+		assert(staticArray !is null);
+		base = staticArray.base;
 	} else {
 		throw new CompilerError(postfix.location, "tried to index non array or pointer.");
 	}
-	assert((pointer !is null && array is null) || (array !is null && pointer is null));
 
-	return pointer is null ? array.base : pointer.base;
+	assert(base !is null);
+	return base;
 }
 
 ir.Type getPostfixCallType(ir.Postfix postfix, ir.Scope currentScope)
