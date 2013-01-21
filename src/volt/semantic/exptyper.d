@@ -843,6 +843,7 @@ public:
 		}
 		auto asExpRef = cast(ir.ExpReference) bin.left;
 		ir.Postfix asPostfix;
+		string functionName;
 
 		// Not a stand alone function, check if it's a member function.
 		if (asExpRef is null) {
@@ -850,16 +851,46 @@ public:
 			if (asPostfix is null) {
 				return Continue;
 			}
-			asExpRef = asPostfix.memberFunction;
+			if (asPostfix.op == ir.Postfix.Op.CreateDelegate) {
+				asExpRef = asPostfix.memberFunction;
+			} else if (asPostfix.op == ir.Postfix.Op.Identifier) {
+				asExpRef = cast(ir.ExpReference) asPostfix.child;
+				assert(asPostfix.identifier !is null);
+				functionName = asPostfix.identifier.value;
+			}
 			if (asExpRef is null) {
 				return Continue;
 			}
 		}
 
 		auto asFunction = cast(ir.Function) asExpRef.decl;
+		// Classes aren't filled in yet, so try to see if it's one of those.
 		if (asFunction is null) {
-			return Continue;
+			auto asVariable = cast(ir.Variable) asExpRef.decl;
+			if (asVariable is null) {
+				return Continue;
+			}
+			auto asTR = cast(ir.TypeReference) asVariable.type;
+			if (asTR is null) {
+				return Continue;
+			}
+			auto asClass = cast(ir.Class) asTR.type;
+			if (asClass is null) {
+				return Continue;
+			}
+			auto functionStore = asClass.myScope.lookupOnlyThisScope(functionName, bin.location);
+			if (functionStore is null) {
+				return Continue;
+			}
+			if (functionStore.functions.length != 1) {
+				assert(functionStore.functions.length == 0);
+				return Continue;
+			}
+			asFunction = functionStore.functions[0];
+			assert(asFunction !is null);
 		}
+
+
 		if (!asFunction.type.isProperty) {
 			return Continue;
 		}
