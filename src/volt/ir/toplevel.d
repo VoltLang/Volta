@@ -198,6 +198,7 @@ public:
 		Immutable,
 		Inout,
 		Disable,
+		Property,
 	}
 
 

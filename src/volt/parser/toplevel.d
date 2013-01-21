@@ -472,10 +472,16 @@ ir.Attribute parseAttribute(TokenStream ts, bool inModule = false)
 		break;
 	case TokenType.At:
 		auto nameTok = match(ts, TokenType.Identifier);
-		if (nameTok.value != "disable") {
-			throw new CompilerError(nameTok.location, "expected 'disable'.");
+		switch (nameTok.value) {
+		case "disable":
+			attr.kind = ir.Attribute.Kind.Disable;
+			break;
+		case "property":
+			attr.kind = ir.Attribute.Kind.Property;
+			break;
+		default:
+			throw new CompilerError(nameTok.location, "expected 'disable' or 'property'.");
 		}
-		attr.kind = ir.Attribute.Kind.Disable;
 		break;
 	case TokenType.Deprecated: attr.kind = ir.Attribute.Kind.Deprecated; break;
 	case TokenType.Private: attr.kind = ir.Attribute.Kind.Private; break;

@@ -356,6 +356,7 @@ public:
 		case Protected: twf("protected"); break;
 		case Shared: twf("shared"); break;
 		case Private: twf("private"); break;
+		case Property: twf("@property"); break;
 		case Package: twf("package"); break;
 		case Override: twf("override"); break;
 		case Local: twf("local"); break;
