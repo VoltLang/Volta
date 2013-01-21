@@ -697,6 +697,35 @@ void handleIndex(State state, ir.Postfix postfix, Value result)
 
 void handleSlice(State state, ir.Postfix postfix, Value result)
 {
+	if (postfix.arguments.length == 0)
+		handleSliceNone(state, postfix, result);
+	else if (postfix.arguments.length == 2)
+		handleSliceTwo(state, postfix, result);
+	else
+		throw CompilerPanic(postfix.location, "wrong number of arguments to slice");
+}
+
+void handleSliceNone(State state, ir.Postfix postfix, Value result)
+{
+	assert(postfix.arguments.length == 0);
+
+	state.getValueAnyForm(postfix.child, result);
+
+	auto at = cast(ArrayType)result.type;
+	auto sat = cast(StaticArrayType)result.type;
+	if (at !is null) {
+		// Nothing todo.
+	} else if (sat !is null) {
+		getArrayFromStaticArray(state, postfix.location, result);
+	} else {
+		throw CompilerPanic(postfix.location, "unhandled type in slice (none)");
+	}
+}
+
+void handleSliceTwo(State state, ir.Postfix postfix, Value result)
+{
+	assert(postfix.arguments.length == 2);
+
 	Value left = new Value();
 	Value start = new Value();
 	Value end = new Value();
@@ -707,11 +736,11 @@ void handleSlice(State state, ir.Postfix postfix, Value result)
 	result.type = null;
 
 	state.getValueAnyForm(postfix.child, left);
+
 	auto pt = cast(PointerType)left.type;
 	auto at = cast(ArrayType)left.type;
 	auto sat = cast(StaticArrayType)left.type;
 	if (pt !is null) {
-		assert(postfix.arguments.length == 2);
 
 		makeNonPointer(state, left);
 		auto irPt = cast(ir.PointerType)pt.irType;
@@ -724,16 +753,6 @@ void handleSlice(State state, ir.Postfix postfix, Value result)
 		makeNonPointer(state, left);
 
 	} else if (at !is null) {
-		// Nothing todo.
-		if (postfix.arguments.length == 0) {
-			result.value = left.value;
-			result.isPointer = left.isPointer;
-			result.type = left.type;
-			return;
-		}
-
-		assert(postfix.arguments.length == 2);
-
 		// Use the temporary value directly.
 		if (!left.isPointer) {
 			makePointer(state, left);
@@ -746,16 +765,7 @@ void handleSlice(State state, ir.Postfix postfix, Value result)
 		makeNonPointer(state, left);
 
 	} else if (sat !is null) {
-		if (postfix.arguments.length == 0) {
-			result.value = left.value;
-			result.isPointer = left.isPointer;
-			result.type = left.type;
-			return getArrayFromStaticArray(state, postfix.location, result);
-		}
 
-		assert(postfix.arguments.length == 2);
-
-		makePointer(state, left);
 		getPointerFromStaticArray(state, postfix.location, left);
 
 	} else {
