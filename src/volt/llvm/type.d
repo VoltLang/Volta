@@ -273,6 +273,33 @@ public:
 }
 
 /**
+ * Static array type.
+ */
+class StaticArrayType : Type
+{
+public:
+	Type base;
+	uint length;
+
+	ArrayType arrayType;
+	PointerType ptrType;
+
+public:
+	this(State state, ir.StaticArrayType sat)
+	{
+		auto irArray = new ir.ArrayType(sat.base);
+		addMangledName(irArray);
+		arrayType = cast(ArrayType)state.fromIr(irArray);
+		base = arrayType.base;
+		ptrType = arrayType.ptrType;
+
+		length = cast(uint)sat.length;
+		llvmType = LLVMArrayType(base.llvmType, length);
+		super(state, sat, llvmType);
+	}
+}
+
+/**
  * Base class for callable types FunctionType and DelegateType.
  */
 abstract class CallableType : Type
@@ -450,6 +477,9 @@ Type fromIr(State state, ir.Type irType)
 	case ArrayType:
 		auto at = cast(ir.ArrayType)irType;
 		return new .ArrayType(state, at);
+	case StaticArrayType:
+		auto sat = cast(ir.StaticArrayType)irType;
+		return new .StaticArrayType(state, sat);
 	case FunctionType:
 		auto ft = cast(ir.FunctionType)irType;
 		return new .FunctionType(state, ft);

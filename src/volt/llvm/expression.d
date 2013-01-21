@@ -680,6 +680,10 @@ void handleIndex(State state, ir.Postfix postfix, Value result)
 	if (at !is null)
 		getPointerFromArray(state, postfix.location, left);
 
+	auto sat = cast(StaticArrayType)left.type;
+	if (sat !is null)
+		getPointerFromStaticArray(state, postfix.location, left);
+
 	auto pt = cast(PointerType)left.type;
 	if (pt is null)
 		throw CompilerPanic(postfix.location, "can not index non-array or pointer type");
@@ -705,6 +709,7 @@ void handleSlice(State state, ir.Postfix postfix, Value result)
 	state.getValueAnyForm(postfix.child, left);
 	auto pt = cast(PointerType)left.type;
 	auto at = cast(ArrayType)left.type;
+	auto sat = cast(StaticArrayType)left.type;
 	if (pt !is null) {
 		assert(postfix.arguments.length == 2);
 
@@ -739,6 +744,22 @@ void handleSlice(State state, ir.Postfix postfix, Value result)
 
 		getPointerFromArray(state, postfix.location, left);
 		makeNonPointer(state, left);
+
+	} else if (sat !is null) {
+		if (postfix.arguments.length == 0) {
+			result.value = left.value;
+			result.isPointer = left.isPointer;
+			result.type = left.type;
+			return getArrayFromStaticArray(state, postfix.location, result);
+		}
+
+		assert(postfix.arguments.length == 2);
+
+		makePointer(state, left);
+		getPointerFromStaticArray(state, postfix.location, left);
+
+	} else {
+		throw CompilerPanic(postfix.location, "unhandled type in slice");
 	}
 
 	// Do we need temporary storage for the result?
@@ -945,6 +966,46 @@ void getPointerFromArray(State state, Location loc, Value result)
 	result.value = LLVMBuildStructGEP(state.builder, result.value, ArrayType.ptrIndex, "arrayGep");
 	result.isPointer = true;
 	result.type = at.ptrType;
+}
+
+/**
+ * Turns a StaticArrayType Value into a Pointer Value. Value must be
+ * of type StaticArrayType.
+ */
+void getPointerFromStaticArray(State state, Location loc, Value result)
+{
+	auto sat = cast(StaticArrayType)result.type;
+	assert(sat !is null);
+
+	makePointer(state, result);
+
+	result.value = LLVMBuildStructGEP(state.builder, result.value, 0, "staticArrayGep");
+	result.isPointer = false;
+	result.type = sat.ptrType;
+}
+
+/**
+ * Turns a StaticArrayType Value into a Array Value. Value must be
+ * of type StaticArrayType.
+ */
+void getArrayFromStaticArray(State state, Location loc, Value result)
+{
+	auto sat = cast(StaticArrayType)result.type;
+	assert(sat !is null);
+	auto at = sat.arrayType;
+
+	getPointerFromStaticArray(state, loc, result);
+	LLVMValueRef srcPtr = result.value;
+
+	result.value = LLVMBuildAlloca(state.builder, at.llvmType, "arrayTemp");
+	result.isPointer = true;
+	result.type = at;
+
+	auto dstPtr = LLVMBuildStructGEP(state.builder, result.value, ArrayType.ptrIndex, "arrayDstPtrGep");
+	LLVMBuildStore(state.builder, srcPtr, dstPtr);
+
+	auto dstLength = LLVMBuildStructGEP(state.builder, result.value, ArrayType.lengthIndex, "arrayDstLenGep");
+	LLVMBuildStore(state.builder, LLVMConstInt(state.intType.llvmType, sat.length, false), dstLength);
 }
 
 /**
