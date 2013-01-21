@@ -826,15 +826,27 @@ public:
 		return Continue;
 	}
 
+	/// If this is an assignment to a @property function, turn it into a function call.
 	override Status leave(ref ir.Exp e, ir.BinOp bin)
 	{
 		if (bin.op != ir.BinOp.Type.Assign) {
 			return Continue;
 		}
 		auto asExpRef = cast(ir.ExpReference) bin.left;
+		ir.Postfix asPostfix;
+
+		// Not a stand alone function, check if it's a member function.
 		if (asExpRef is null) {
-			return Continue;
+			asPostfix = cast(ir.Postfix) bin.left;
+			if (asPostfix is null) {
+				return Continue;
+			}
+			asExpRef = asPostfix.memberFunction;
+			if (asExpRef is null) {
+				return Continue;
+			}
 		}
+
 		auto asFunction = cast(ir.Function) asExpRef.decl;
 		if (asFunction is null) {
 			return Continue;
@@ -848,6 +860,10 @@ public:
 		auto call = buildCall(bin.location, buildExpReference(bin.left.location, asFunction, asFunction.name), [bin.right]);
 		assert(call.arguments.length == 1);
 		assert(call.arguments[0] !is null);
+		
+		if (asPostfix !is null) {
+			call.child = asPostfix;
+		}
 		e = call;
 		return Continue;
 	}
