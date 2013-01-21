@@ -826,6 +826,32 @@ public:
 		return Continue;
 	}
 
+	override Status leave(ref ir.Exp e, ir.BinOp bin)
+	{
+		if (bin.op != ir.BinOp.Type.Assign) {
+			return Continue;
+		}
+		auto asExpRef = cast(ir.ExpReference) bin.left;
+		if (asExpRef is null) {
+			return Continue;
+		}
+		auto asFunction = cast(ir.Function) asExpRef.decl;
+		if (asFunction is null) {
+			return Continue;
+		}
+		if (!asFunction.type.isProperty) {
+			return Continue;
+		}
+		if (asFunction.type.params.length != 1) {
+			return Continue;
+		}
+		auto call = buildCall(bin.location, buildExpReference(bin.left.location, asFunction, asFunction.name), [bin.right]);
+		assert(call.arguments.length == 1);
+		assert(call.arguments[0] !is null);
+		e = call;
+		return Continue;
+	}
+
 	override Status enter(ref ir.Exp e, ir.Postfix p)
 	{
 		if (pass == 2) {
@@ -1156,7 +1182,6 @@ public:
 	override Status enter(ref ir.Exp, ir.Unary) { return Continue; }
 	override Status leave(ref ir.Exp, ir.Unary) { return Continue; }
 	override Status enter(ref ir.Exp, ir.BinOp) { return Continue; }
-	override Status leave(ref ir.Exp, ir.BinOp) { return Continue; }
 	override Status enter(ref ir.Exp, ir.Ternary) { return Continue; }
 	override Status leave(ref ir.Exp, ir.Ternary) { return Continue; }
 	override Status enter(ref ir.Exp, ir.ArrayLiteral) { return Continue; }
