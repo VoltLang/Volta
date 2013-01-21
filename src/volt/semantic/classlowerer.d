@@ -260,6 +260,7 @@ public:
 
 		for (int i = cast(int)(inheritanceChain.length - 1); i >= 0; --i) {
 			auto _class = inheritanceChain[i];
+			int methodsAdded;
 			foreach (node; _class.members.nodes) {
 				if (node.nodeType != ir.NodeType.Function) {
 					continue;
@@ -287,7 +288,7 @@ public:
 
 				// And test again...
 				if (asClass !is null) {
-					asFunction.vtableIndex = i;
+					asFunction.vtableIndex = methodsAdded++;
 					myMethods ~= asFunction;
 					assert(asFunction.type.hiddenParameter);
 				}
