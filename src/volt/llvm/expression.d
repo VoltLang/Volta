@@ -709,9 +709,14 @@ void handleSlice(State state, ir.Postfix postfix, Value result)
 		assert(postfix.arguments.length == 2);
 
 		makeNonPointer(state, left);
-		at = null;
-		/// @todo handle slices on pointers.
-		assert(false);
+		auto irPt = cast(ir.PointerType)pt.irType;
+		assert(irPt !is null);
+		auto irAt = new ir.ArrayType(irPt.base);
+		irAt.location = postfix.location;
+		at = cast(ArrayType)state.fromIr(irAt);
+		assert(at !is null);
+
+		makeNonPointer(state, left);
 
 	} else if (at !is null) {
 		// Nothing todo.
