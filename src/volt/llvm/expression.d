@@ -783,6 +783,7 @@ void handleSliceTwo(State state, ir.Postfix postfix, Value result)
 	} else if (sat !is null) {
 
 		getPointerFromStaticArray(state, postfix.location, left);
+		at = sat.arrayType;
 
 	} else {
 		throw CompilerPanic(postfix.location, "unhandled type in slice");
