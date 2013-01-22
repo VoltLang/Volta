@@ -96,7 +96,7 @@ public:
 		auto objSizeof = new ir.Constant();
 		objSizeof.location = c.location;
 		objSizeof.value = to!string(sz);
-		objSizeof.type = settings.getSizeT();
+		objSizeof.type = settings.getSizeT(c.location);
 
 		// cast(Object*) malloc(Object.sizeof);
 		auto castExp = createAllocDgCall(allocDgVar, settings, c.location, new ir.TypeReference(c, c.name));

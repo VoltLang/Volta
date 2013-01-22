@@ -55,7 +55,7 @@ ir.Function createArrayAllocFunction(Location location, Settings settings, ir.Sc
 
 	auto countVar = new ir.Variable();
 	countVar.location = location;
-	countVar.type = settings.getSizeT();
+	countVar.type = settings.getSizeT(location);
 	countVar.name = "count";
 
 	auto ftype = new ir.FunctionType();
@@ -165,7 +165,7 @@ ir.Exp createAllocDgCall(ir.Variable allocDgVar, Settings settings, Location loc
 	auto countConst = new ir.Constant();
 	countConst.location = location;
 	countConst.value = "0";
-	countConst.type = settings.getSizeT();
+	countConst.type = settings.getSizeT(location);
 
 	auto pfixCall = new ir.Postfix();
 	pfixCall.location = location;
@@ -175,7 +175,7 @@ ir.Exp createAllocDgCall(ir.Variable allocDgVar, Settings settings, Location loc
 	if (countArg is null) {
 		pfixCall.arguments ~= countConst;
 	} else {
-		pfixCall.arguments ~= buildCast(location, settings.getSizeT(), countArg);
+		pfixCall.arguments ~= buildCast(location, settings.getSizeT(location), countArg);
 	}
 
 	if (!suppressCast) {
@@ -233,7 +233,7 @@ public:
 			auto call = new ir.Postfix();
 			call.location = unary.location;
 			call.op = ir.Postfix.Op.Call;
-			call.arguments ~= buildCast(unary.location, settings.getSizeT(), unary.index);
+			call.arguments ~= buildCast(unary.location, settings.getSizeT(unary.location), unary.index);
 			call.child = _ref;
 
 			exp = call;

@@ -285,13 +285,16 @@ public:
 		return (ident in mDebugIdentifiers) !is null;
 	}
 
-	final ir.PrimitiveType getSizeT()
+	final ir.PrimitiveType getSizeT(Location loc)
 	{
+		ir.PrimitiveType pt;
 		if (isVersionSet("V_P64")) {
-			return new ir.PrimitiveType(ir.PrimitiveType.Kind.Ulong);
+			pt = new ir.PrimitiveType(ir.PrimitiveType.Kind.Ulong);
 		} else {
-			return new ir.PrimitiveType(ir.PrimitiveType.Kind.Uint);
+			pt = new ir.PrimitiveType(ir.PrimitiveType.Kind.Uint);
 		}
+		pt.location = loc;
+		return pt;
 	}
 
 private:

@@ -100,7 +100,7 @@ public:
 		auto typeConstant = new ir.Constant();
 		typeConstant.location = _typeid.location;
 		typeConstant.value = to!string(typeSize);
-		typeConstant.type = settings.getSizeT();
+		typeConstant.type = settings.getSizeT(_typeid.location);
 
 		int typeTag = _typeid.type.nodeType;
 		auto typeTagConstant = new ir.Constant();
