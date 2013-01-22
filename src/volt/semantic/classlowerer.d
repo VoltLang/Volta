@@ -92,7 +92,7 @@ public:
 		fn.myScope = new ir.Scope(c.myScope, c, fn.name);
 
 		// Object.sizeof
-		int sz = size(c.location, c);
+		int sz = size(c.location, settings, c);
 		auto objSizeof = new ir.Constant();
 		objSizeof.location = c.location;
 		objSizeof.value = to!string(sz);

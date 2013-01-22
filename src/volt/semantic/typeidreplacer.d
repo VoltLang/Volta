@@ -96,7 +96,7 @@ public:
 
 		_typeid.type.mangledName = mangle(null, _typeid.type);
 
-		int typeSize = size(_typeid.location, _typeid.type);
+		int typeSize = size(_typeid.location, settings, _typeid.type);
 		auto typeConstant = new ir.Constant();
 		typeConstant.location = _typeid.location;
 		typeConstant.value = to!string(typeSize);

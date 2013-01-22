@@ -9,6 +9,7 @@ import std.stdio : format;
 import ir = volt.ir.ir;
 
 import volt.exceptions;
+import volt.interfaces;
 import volt.token.location;
 import volt.semantic.lookup;
 
@@ -33,7 +34,7 @@ int size(ir.PrimitiveType.Kind kind)
 	}
 }
 
-int size(Location location, ir.Node node)
+int size(Location location, Settings settings, ir.Node node)
 {
 	switch (node.nodeType) with (ir.NodeType) {
 	case PrimitiveType:
@@ -43,23 +44,23 @@ int size(Location location, ir.Node node)
 	case Struct:
 		auto asStruct = cast(ir.Struct) node;
 		assert(asStruct !is null);
-		return structSize(location, asStruct);
+		return structSize(location, settings, asStruct);
 	case Variable:
 		auto asVariable = cast(ir.Variable) node;
 		assert(asVariable !is null);
-		return size(location, asVariable.type);
+		return size(location, settings, asVariable.type);
 	case PointerType, FunctionType:
-		return 4;  /// @todo Aieeeeeeeeeeeeeeeeeeeeeeeeeeee!!!
+		return settings.isVersionSet("V_P64") ? 8 : 4;
 	case ArrayType:
-		return 8;  /// @todo See above.
+		return settings.isVersionSet("V_P64") ? 16 : 8;
 	case TypeReference:
 		auto asTR = cast(ir.TypeReference) node;
 		assert(asTR !is null);
-		return size(location, asTR.type);
+		return size(location, settings, asTR.type);
 	case StorageType:
 		auto asST = cast(ir.StorageType) node;
 		assert(asST !is null);
-		return size(location, asST.base);
+		return size(location, settings, asST.base);
 	default:
 		throw new CompilerError(location, format("couldn't retrieve size of element: %s", to!string(node.nodeType)));
 	}
@@ -154,7 +155,7 @@ bool isRefVar(ir.Exp exp)
 }
 
 /// Returns the size of a given Struct, in bytes.
-int structSize(Location location, ir.Struct s)
+int structSize(Location location, Settings settings, ir.Struct s)
 {
 	int sizeAccumulator;
 	foreach (node; s.members.nodes) {
@@ -163,7 +164,7 @@ int structSize(Location location, ir.Struct s)
 			continue;
 		}
 
-		sizeAccumulator += size(location, node);
+		sizeAccumulator += size(location, settings, node);
 	}
 	return sizeAccumulator;
 }
