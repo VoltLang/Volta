@@ -260,35 +260,26 @@ ir.Constant buildTrue(Location loc) { return buildConstantBool(loc, true); }
 ir.Constant buildFalse(Location loc) { return buildConstantBool(loc, false); }
 
 /**
- * Build a cast but setting location and calling copyTypeSmart
+ * Build a cast and sets the location, does not call copyTypeSmart.
+ */
+ir.Unary buildCast(Location loc, ir.Type type, ir.Exp exp)
+{
+	auto cst = new ir.Unary(type, exp);
+	cst.location = loc;
+	return cst;
+}
+
+/**
+ * Build a cast, sets the location and calling copyTypeSmart
  * on the type, to avoid duplicate nodes.
  */
 ir.Unary buildCastSmart(Location loc, ir.Type type, ir.Exp exp)
 {
-	auto cst = new ir.Unary(copyTypeSmart(loc, type), exp);
-	cst.location = loc;
-	return cst;
+	return buildCast(loc, copyTypeSmart(loc, type), exp);
 }
 
-/**
- * Build a cast to bool.
- */
-ir.Unary buildCastToBool(Location loc, ir.Exp exp)
-{
-	auto cst = new ir.Unary(buildBool(loc), exp);
-	cst.location = loc;
-	return cst;
-}
-
-/**
- * Build a cast to void*.
- */
-ir.Unary buildCastToVoidPtr(Location loc, ir.Exp exp)
-{
-	auto cst = new ir.Unary(buildVoidPtr(loc), exp);
-	cst.location = loc;
-	return cst;
-}
+ir.Unary buildCastToBool(Location loc, ir.Exp exp) { return buildCast(loc, buildBool(loc), exp); }
+ir.Unary buildCastToVoidPtr(Location loc, ir.Exp exp) { return buildCast(loc, buildVoidPtr(loc), exp); }
 
 /**
  * Builds an AddrOf expression.
