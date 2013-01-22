@@ -22,12 +22,6 @@ int main(string[] args)
 		return 0;
 	}
 
-	version (none) if (args.length > 2) {
-		/// @todo fix this.
-		writefln("%s, too many input files", args[0]);
-		return 1;
-	}
-
 	auto vc = new VoltController(settings);
 	vc.addFiles(args[1 .. $]);
 	int ret = vc.compile();
