@@ -150,6 +150,33 @@ interface Backend
 }
 
 /**
+ * Each of these listed platforms corresponds
+ * to a Version identifier.
+ *
+ * Posix and Windows are not listed here as they
+ * they are available on multiple platforms.
+ *
+ * Posix on Linux and OSX.
+ * Windows on MinGW.
+ */
+enum Platform
+{
+	MinGW,
+	Linux,
+	OSX,
+}
+
+/**
+ * Each of these listed architectures corresponds
+ * to a Version identifier.
+ */
+enum Arch
+{
+	X86,
+	X86_64,
+}
+
+/**
  * Holds a set of compiler settings.
  *
  * Things like version/debug identifiers, warning mode,
@@ -165,6 +192,10 @@ public:
 	bool emitBitCode; ///< The --emit-bitcode argument.
 	bool noCatch; ///< The --no-catch argument.
 	bool internalDebug; ///< The --internal-dbg argument.
+
+	Platform platform;
+	Arch arch;
+
 	string outputFile;
 	string[] includePaths; ///< The -I arguments.
 
@@ -178,6 +209,37 @@ public:
 	this()
 	{
 		setDefaultVersionIdentifiers();
+	}
+
+	void setVersionsFromOptions()
+	{
+		final switch (platform) with (Platform) {
+		case MinGW:
+			setVersionIdentifier("Windows");
+			setVersionIdentifier("MinGW");
+			break;
+		case Linux:
+			setVersionIdentifier("Linux");
+			setVersionIdentifier("Posix");
+			break;
+		case OSX:
+			setVersionIdentifier("OSX");
+			setVersionIdentifier("Posix");
+			break;
+		}
+
+		final switch (arch) with (Arch) {
+		case X86:
+			setVersionIdentifier("X86");
+			setVersionIdentifier("LittleEndian");
+			setVersionIdentifier("V_P32");
+			break;
+		case X86_64:
+			setVersionIdentifier("X86_64");
+			setVersionIdentifier("LittleEndian");
+			setVersionIdentifier("V_P64");
+			break;
+		}
 	}
 
 	/// Throws: Exception if ident is reserved.

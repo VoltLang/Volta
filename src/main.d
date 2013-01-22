@@ -12,6 +12,8 @@ import volt.controller;
 int main(string[] args)
 {
 	auto settings = new Settings();
+
+	setDefault(settings);
 	if (!filterArgs(args, settings))
 		return 0;
 
@@ -99,9 +101,33 @@ bool filterArgs(ref string[] args, Settings settings)
 		ret[i++] = arg;
 	}
 
+	settings.setVersionsFromOptions();
+
 	ret.length = i;
 	args = ret;
 	return true;
+}
+
+void setDefault(Settings settings)
+{
+	// Only MinGW is supported.
+	version (Windows) {
+		settings.platform = Platform.MinGW;
+	} else version (linux) {
+		settings.platform = Platform.Linux;
+	} else version (OSX) {
+		settings.platform = Platform.OSX;
+	} else {
+		static assert(false);
+	}
+
+	version (X86) {
+		settings.arch = Arch.X86;
+	} else version (X86_64) {
+		settings.arch = Arch.X86_64;
+	} else {
+		static assert(false);
+	}
 }
 
 bool printUsage()
