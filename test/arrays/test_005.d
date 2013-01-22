@@ -24,7 +24,7 @@ int main()
 	ptr[0 .. 1] = "TheVoltIsAwesome"[index .. index+1];
 
 	int val = sumArray(str);
-	if ((val == 421) && (*ptr == 'V'))
+	if (val == 421 && *ptr == 'V')
 		return 42;
 	else
 		return 0;
