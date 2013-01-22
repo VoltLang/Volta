@@ -102,6 +102,9 @@ public:
 			throw new CompilerError(postfix.location, "wrong number of arguments to function.");
 		}
 		foreach (i; 0 .. postfix.arguments.length) {
+			if (isRefVar(postfix.arguments[i])) {
+				postfix.arguments[i] = buildDeref(postfix.location, postfix.arguments[i]);
+			}
 			if (asFunctionType.params[i].isRef) {
 				postfix.arguments[i] = buildAddrOf(postfix.location, postfix.arguments[i]);
 			}

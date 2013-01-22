@@ -140,6 +140,19 @@ bool isConst(ir.Type type)
 	return false;
 }
 
+bool isRefVar(ir.Exp exp)
+{
+	auto asExpRef = cast(ir.ExpReference) exp;
+	if (asExpRef is null) {
+		return false;
+	}
+	auto asVar = cast(ir.Variable) asExpRef.decl;
+	if (asVar is null) {
+		return false;
+	}
+	return asVar.isRef;
+}
+
 /// Returns the size of a given Struct, in bytes.
 int structSize(Location location, ir.Struct s)
 {
