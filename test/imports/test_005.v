@@ -1,5 +1,5 @@
 //T compiles:no
-//T dependency:m1.d
+//T dependency:m1.v
 // Constrained imports.
 
 module test_005;

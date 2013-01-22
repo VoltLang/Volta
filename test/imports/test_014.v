@@ -1,7 +1,7 @@
 //T compiles:yes
 //T retval:74
-//T dependency:m1.d
-//T dependency:m2.d
+//T dependency:m1.v
+//T dependency:m2.v
 // Multiple renames.
 
 module test_014;

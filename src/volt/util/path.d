@@ -28,7 +28,7 @@ string makeFilename(string dir, string[] names)
 
 	foreach(name; names)
 		ret ~= dirSeparator ~ name;
-	ret ~= ".d";
+	ret ~= ".v";
 
 	return ret;
 }

@@ -72,15 +72,15 @@ void main(string[] args)
 	}
 
 	if (true) {
-		listDir("simple", "*test_*.d", &addTest);
-		listDir("arrays", "*test_*.d", &addTest);
-		listDir("cond", "*test_*.d", &addTest);
-		listDir("imports", "*test_*.d", &addTest);
-		listDir("aggregate", "*test_*.d", &addTest);
-		listDir("exps", "*test_*.d", &addTest);
-		listDir("lower", "*test_*.d", &addTest);
-		listDir("internal", "*test_*.d", &addTest);
-		listDir("types", "*test_*.d", &addTest);
+		listDir("simple", "*test_*.v", &addTest);
+		listDir("arrays", "*test_*.v", &addTest);
+		listDir("cond", "*test_*.v", &addTest);
+		listDir("imports", "*test_*.v", &addTest);
+		listDir("aggregate", "*test_*.v", &addTest);
+		listDir("exps", "*test_*.v", &addTest);
+		listDir("lower", "*test_*.v", &addTest);
+		listDir("internal", "*test_*.v", &addTest);
+		listDir("types", "*test_*.v", &addTest);
 	}
 	sort(tests);
 

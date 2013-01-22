@@ -1,6 +1,6 @@
 //T compiles:yes
 //T retval:42
-//T dependency:m1.d
+//T dependency:m1.v
 // Contained imports.
 
 module test_003;

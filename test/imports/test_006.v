@@ -1,6 +1,6 @@
 //T compiles:no
-//T dependency:m1.d
-//T dependency:m3.d
+//T dependency:m1.v
+//T dependency:m3.v
 // Import leaks.
 
 module test_006;

@@ -1,6 +1,6 @@
 //T compiles:no
-//T dependency:m1.d
-//T dependency:m2.d
+//T dependency:m1.v
+//T dependency:m2.v
 // Multiple imports per import deprecated.
 
 module test_011;

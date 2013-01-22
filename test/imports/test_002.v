@@ -1,6 +1,6 @@
 //T compiles:yes
 //T retval:32
-//T dependency:m2.d
+//T dependency:m2.v
 // Other import.
 
 module test_002;
