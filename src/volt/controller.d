@@ -42,12 +42,14 @@ protected:
 public:
 	this(Settings s)
 	{
+		this.settings = s;
+
 		auto p = new Parser();
 		p.dumpLex = false;
 
 		auto lp = new VoltLanguagePass(s, this);
 
-		auto b = new LlvmBackend(s.internalDebug);
+		auto b = new LlvmBackend(s);
 
 		this(s, p, lp, b);
 

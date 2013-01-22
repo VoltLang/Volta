@@ -287,7 +287,11 @@ public:
 
 	final ir.PrimitiveType getSizeT()
 	{
-		return new ir.PrimitiveType(ir.PrimitiveType.Kind.Uint);
+		if (isVersionSet("V_P64")) {
+			return new ir.PrimitiveType(ir.PrimitiveType.Kind.Ulong);
+		} else {
+			return new ir.PrimitiveType(ir.PrimitiveType.Kind.Uint);
+		}
 	}
 
 private:

@@ -25,6 +25,7 @@ import volt.semantic.classify;
 class LlvmLowerer : ScopeExpReplaceVisitor, Pass
 {
 public:
+	bool V_P64;
 	Settings settings;
 	ir.Module thisModule;
 
@@ -32,6 +33,7 @@ public:
 	this(Settings settings)
 	{
 		this.settings = settings;
+		this.V_P64 = settings.isVersionSet("V_P64");
 	}
 
 	override void transform(ir.Module m)
@@ -107,19 +109,33 @@ public:
 
 	ir.Function getLlvmMemMove(Location loc)
 	{
-		auto name = "llvm_memmove_p0i8_p0i8_i32";
+		auto name32 = "llvm_memmove_p0i8_p0i8_i32";
+		auto name64 = "llvm_memmove_p0i8_p0i8_i64";
+		auto name = V_P64 ? name64 : name32;
+
 		auto fn = lookupFunction(loc, name);
 		if (fn !is null)
 			return fn;
 
-		fn = buildFunction(loc, thisModule.children, thisModule.myScope, name, false);
-		fn.mangledName = "llvm.memmove.p0i8.p0i8.i32";
-		addParam(loc, fn, buildVoidPtr(loc), "dst");
-		addParam(loc, fn, buildVoidPtr(loc), "src");
-		addParam(loc, fn, buildUint(loc), "len");
-		addParam(loc, fn, buildInt(loc), "align");
-		addParam(loc, fn, buildBool(loc), "isvolatile");
+		if (V_P64) {
+			fn = buildFunction(loc, thisModule.children, thisModule.myScope, name64, false);
+			fn.mangledName = "llvm.memmove.p0i8.p0i8.i64";
+			addParam(loc, fn, buildVoidPtr(loc), "dst");
+			addParam(loc, fn, buildVoidPtr(loc), "src");
+			addParam(loc, fn, buildUlong(loc), "len");
+			addParam(loc, fn, buildInt(loc), "align");
+			addParam(loc, fn, buildBool(loc), "isvolatile");
+		} else {
+			fn = buildFunction(loc, thisModule.children, thisModule.myScope, name32, false);
+			fn.mangledName = "llvm.memmove.p0i8.p0i8.i32";
+			addParam(loc, fn, buildVoidPtr(loc), "dst");
+			addParam(loc, fn, buildVoidPtr(loc), "src");
+			addParam(loc, fn, buildUint(loc), "len");
+			addParam(loc, fn, buildInt(loc), "align");
+			addParam(loc, fn, buildBool(loc), "isvolatile");
+		}
 
+		assert(fn !is null);
 		return fn;
 	}
 

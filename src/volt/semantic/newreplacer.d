@@ -175,7 +175,7 @@ ir.Exp createAllocDgCall(ir.Variable allocDgVar, Settings settings, Location loc
 	if (countArg is null) {
 		pfixCall.arguments ~= countConst;
 	} else {
-		pfixCall.arguments ~= countArg;
+		pfixCall.arguments ~= buildCast(location, settings.getSizeT(), countArg);
 	}
 
 	if (!suppressCast) {
@@ -233,7 +233,7 @@ public:
 			auto call = new ir.Postfix();
 			call.location = unary.location;
 			call.op = ir.Postfix.Op.Call;
-			call.arguments ~= unary.index;
+			call.arguments ~= buildCast(unary.location, settings.getSizeT(), unary.index);
 			call.child = _ref;
 
 			exp = call;

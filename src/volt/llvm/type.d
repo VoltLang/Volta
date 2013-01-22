@@ -210,8 +210,7 @@ public:
 		ptrType = cast(PointerType)state.fromIr(irPtr);
 		base = ptrType.base;
 
-		/// @todo get the correct size here (size_t).
-		lengthType = state.uintType;
+		lengthType = state.sizeType;
 
 		types[ptrIndex] = ptrType;
 		types[lengthIndex] = lengthType;
@@ -501,7 +500,7 @@ Type fromIr(State state, ir.Type irType)
 /**
  * Populate the common types that hang off the state.
  */
-void buildCommonTypes(State state)
+void buildCommonTypes(State state, bool V_P64)
 {
 	auto voidTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Void);
 
@@ -541,6 +540,11 @@ void buildCommonTypes(State state)
 	state.voidPtrType = cast(PointerType)state.fromIr(voidPtrTypeIr);
 	state.voidFunctionType = cast(FunctionType)state.fromIr(voidFunctionTypeIr);
 
+	if (V_P64) {
+		state.sizeType = state.ulongType;
+	} else {
+		state.sizeType = state.uintType;
+	}
 
 	assert(state.voidType !is null);
 

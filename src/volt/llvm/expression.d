@@ -670,7 +670,7 @@ void handlePostId(State state, ir.Postfix postfix, Value result)
 			return getPointerFromStaticArray(state, postfix.location, result);
 		}
 
-		auto t = state.uintType;
+		auto t = state.sizeType;
 		result.value = LLVMConstInt(t.llvmType, sat.length, false);
 		result.isPointer = false;
 		result.type = t;
@@ -799,9 +799,8 @@ void handleSliceTwo(State state, ir.Postfix postfix, Value result)
 	state.getValueAnyForm(postfix.arguments[0], start);
 	state.getValueAnyForm(postfix.arguments[1], end);
 
-	/// @todo cast to size_t and not uint
-	handleCast(state, postfix.location, state.uintType, start);
-	handleCast(state, postfix.location, state.uintType, end);
+	handleCast(state, postfix.location, state.sizeType, start);
+	handleCast(state, postfix.location, state.sizeType, end);
 
 	LLVMValueRef srcPtr, srcLength;
 	LLVMValueRef dstPtr, dstLength;
@@ -1032,7 +1031,7 @@ void getArrayFromStaticArray(State state, Location loc, Value result)
 	LLVMBuildStore(state.builder, srcPtr, dstPtr);
 
 	auto dstLength = LLVMBuildStructGEP(state.builder, result.value, ArrayType.lengthIndex, "arrayDstLenGep");
-	LLVMBuildStore(state.builder, LLVMConstInt(state.intType.llvmType, sat.length, false), dstLength);
+	LLVMBuildStore(state.builder, LLVMConstInt(state.sizeType.llvmType, sat.length, false), dstLength);
 }
 
 /**

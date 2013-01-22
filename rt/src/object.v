@@ -38,7 +38,7 @@ module object;
  * Clazz[] arr; { arr.ptr = allocDg(typeid(Clazz), 3); arr.length = 3 }
  * // Alloc size == (void*).sizeof * 3
  */
-alias AllocDg = void* delegate(TypeInfo typeinfo, uint count);
+alias AllocDg = void* delegate(TypeInfo typeinfo, size_t count);
 
 
 local AllocDg allocDg;
@@ -48,12 +48,12 @@ extern(C) AllocDg vrt_gc_get_alloc_dg();
 struct ArrayStruct
 {
 	void* ptr;
-	uint length;
+	size_t length;
 }
 
 class TypeInfo
 {
-	uint size;
+	size_t size;
 	int type;
 	char[] mangledName;
 	bool mutableIndirection;

@@ -14,7 +14,7 @@ extern(C) AllocDg vrt_gc_get_alloc_dg()
 	return *cast(AllocDg*)&structToDg;
 }
 
-void* mallocFunc(TypeInfo typeinfo, uint count, void *ptr)
+void* mallocFunc(TypeInfo typeinfo, size_t count, void *ptr)
 {
 	if (count == cast(uint) 0) {
 		return malloc(typeinfo.size);
@@ -22,7 +22,7 @@ void* mallocFunc(TypeInfo typeinfo, uint count, void *ptr)
 	return malloc(count * typeinfo.size);
 }
 
-extern(C) void* malloc(uint size);
+extern(C) void* malloc(size_t size);
 
 /**
  * Struct used to go from function instance pair to a delegate.

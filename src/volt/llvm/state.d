@@ -52,6 +52,8 @@ public:
 
 	PointerType voidPtrType;
 
+	PrimitiveType sizeType;
+
 	FunctionType voidFunctionType;
 	/**
 	 * @}
@@ -80,7 +82,7 @@ public:
 	Type[string] typeStore;
 
 public:
-	this(LLVMContextRef context, ir.Module irMod)
+	this(LLVMContextRef context, ir.Module irMod, bool V_P64)
 	{
 		assert(irMod.name.identifiers.length > 0);
 		string name = irMod.name.identifiers[0].value;
@@ -93,7 +95,7 @@ public:
 		this.mod = LLVMModuleCreateWithNameInContext(name, context);
 		this.builder = LLVMCreateBuilderInContext(context);
 
-		buildCommonTypes(this);
+		buildCommonTypes(this, V_P64);
 
 		this.llvmTrap = LLVMAddFunction(mod, "llvm.trap", voidFunctionType.llvmCallType);
 	}
