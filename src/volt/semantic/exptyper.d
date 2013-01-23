@@ -158,6 +158,21 @@ public:
 
 		ir.Type t = getExpType(right, current);
 
+		// Handle null.
+		if (t.nodeType == ir.NodeType.NullType) {
+			auto constant = cast(ir.Constant) right;
+			if (constant is null) {
+				throw CompilerPanic(right.location, "non constant null");
+			}
+			if (localLeft.nodeType == ir.NodeType.PointerType) {
+				constant.type = buildVoidPtr(right.location);
+				right = buildCastSmart(right.location, localLeft, right);
+				return copyTypeSmart(right.location, localLeft);
+			} else {
+				throw new CompilerError(right.location, "can only convert null into pointers currently.");
+			}
+		}
+
 		// Turn no-arg @property functions into calls.
 		if (t.nodeType == ir.NodeType.FunctionType || t.nodeType == ir.NodeType.DelegateType) {
 			auto asCallable = cast(ir.CallableType) t;
