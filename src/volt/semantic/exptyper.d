@@ -123,6 +123,9 @@ public:
 				constant.type = buildVoidPtr(right.location);
 				right = buildCastSmart(right.location, left, right);
 				return copyTypeSmart(right.location, left);
+			} else if (left.nodeType == ir.NodeType.ArrayType) {
+				right = buildArrayLiteralSmart(right.location, left);
+				return copyTypeSmart(right.location, left);
 			} else {
 				throw new CompilerError(right.location, "can only convert null into pointers currently.");
 			}

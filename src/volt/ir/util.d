@@ -187,6 +187,15 @@ ir.PointerType buildVoidPtr(Location loc)
 	return pt;
 }
 
+ir.ArrayLiteral buildArrayLiteralSmart(Location loc, ir.Type type, ir.Exp[] exps...)
+{
+	auto literal = new ir.ArrayLiteral();
+	literal.location = loc;
+	literal.type = copyTypeSmart(loc, type);
+	literal.values = exps.dup;
+	return literal;
+}
+
 /**
  * Build a Variable, while being smart about its type.
  */
