@@ -217,57 +217,80 @@ protected:
 			bitCodeFiles ~= o;
 		}
 
-		string linkInputFiles;
-		string of = settings.outputFile is null ? DEFAULT_EXE : settings.outputFile;
+		string bcInputFiles;
+		string asInputFiles;
+		string objInputFiles;
+
+		string bc, as, obj, of;
+
+		string bcLinker = "llvm-link";
+		string compiler = "llc";
+		string assembler = "llvm-mc";
+		string linker = "gcc";
 		string cmd;
 		int ret;
 
+		// Should we add the standard library.
 		if (!settings.emitBitCode &&
 		    !settings.noLink &&
 		    !settings.noStdLib) {
-			linkInputFiles ~= " \"" ~ getExePath() ~ dirSeparator ~ "rt/rt.bc\"";
+			bcInputFiles ~= " \"" ~ getExePath() ~ dirSeparator ~ "rt/rt.bc\"";
 		}
 
+		// Gather all the bitcode files.
 		foreach (file; bitCodeFiles) {
-			linkInputFiles ~= " \"" ~ file ~ "\" ";
+			bcInputFiles ~= " \"" ~ file ~ "\" ";
 		}
 
 		if (settings.emitBitCode) {
-
-			cmd = format("llvm-link -o \"%s\" %s", of, linkInputFiles);
-			ret = system(cmd);
-			if (ret)
-				return ret;
-
-		} else if (settings.noLink) {
-
-			string link = temporaryFilename(".bc");
-			cmd = format("llvm-link -o \"%s\" %s", link, linkInputFiles);
-			ret = system(cmd);
-			if (ret)
-				return ret;
-
-			string as = temporaryFilename(".as");
-			cmd = format("llc -o \"%s\" \"%s\"", as, link);
-			version (darwin)
-				cmd ~= " -disable-cfi";
-			ret = system(cmd);
-			if (ret)
-				return ret;
-
-			cmd = format("llvm-mc -filetype=obj -o \"%s\" \"%s\"", of, as);
-			ret = system(cmd);
-			if (ret)
-				return ret;
-
+			bc = settings.getOutput(DEFAULT_BC);
 		} else {
-
-			cmd = format("llvm-ld -native -o \"%s\" %s", of, linkInputFiles);
-			ret = system(cmd);
-			if (ret)
-				return ret;
-
+			bc = temporaryFilename(".bc");
+			as = temporaryFilename(".as");
+			asInputFiles ~= " \"" ~ as ~ "\" ";
 		}
+
+		if (settings.noLink) {
+			obj = settings.getOutput(DEFAULT_OBJ);
+		} else {
+			of = settings.getOutput(DEFAULT_EXE);
+			obj = temporaryFilename(".o");
+			objInputFiles ~= " \"" ~ obj ~ "\" ";
+		}
+
+		cmd = format("%s -o \"%s\" %s", bcLinker, bc, bcInputFiles);
+		ret = system(cmd);
+		if (ret)
+			return ret;
+
+		// When outputting bitcode we are now done.
+		if (settings.emitBitCode) {
+			return 0;
+		}
+
+
+		cmd = format("%s -o \"%s\" \"%s\"", compiler, as, bc);
+		version (darwin)
+			cmd ~= " -disable-cfi";
+		ret = system(cmd);
+		if (ret)
+			return ret;
+
+		cmd = format("%s -filetype=obj -o \"%s\" ", assembler, obj, asInputFiles);
+		ret = system(cmd);
+		if (ret)
+			return ret;
+
+		// When not linking we are now done.
+		if (settings.noLink) {
+			return 0;
+		}
+
+
+		cmd = format("%s -o \"%s\" %s", linker, of, objInputFiles);
+		ret = system(cmd);
+		if (ret)
+			return ret;
 
 		return 0;
 	}
@@ -281,8 +304,17 @@ protected:
 	}
 }
 
+string getOutput(Settings settings, string def)
+{
+	return settings.outputFile is null ? def : settings.outputFile;
+}
+
 version (Windows) {
+	enum DEFAULT_BC = "a.bc";
+	enum DEFAULT_OBJ = "a.obj";
 	enum DEFAULT_EXE = "a.exe";
 } else {
+	enum DEFAULT_BC = "a.bc";
+	enum DEFAULT_OBJ = "a.obj";
 	enum DEFAULT_EXE = "a.out";
 }
