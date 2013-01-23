@@ -19,6 +19,9 @@ int main(string[] args)
 	auto settings = new Settings();
 	setDefault(settings);
 
+	if (!handleArgs(getConfigLines(), files, settings))
+		return 0;
+
 	if (!handleArgs(args, files, settings))
 		return 0;
 
@@ -129,6 +132,14 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 	}
 
 	return true;
+}
+
+string[] getConfigLines()
+{
+	string[] lines;
+	string file = getExecDir() ~ dirSeparator ~ "volt.conf";
+	getLinesFromFile(file, lines);
+	return lines;
 }
 
 bool getLinesFromFile(string file, ref string[] lines)
