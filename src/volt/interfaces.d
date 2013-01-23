@@ -200,6 +200,9 @@ public:
 	string outputFile;
 	string[] includePaths; ///< The -I arguments.
 
+	string[] stdFiles; ///< The --stdlib-file arguements.
+	string[] stdIncludePaths; ///< The --stdlib-I arguments.
+
 private:
 	/// If the ident exists and is true, it's set, if false it's reserved.
 	bool[string] mVersionIdentifiers;

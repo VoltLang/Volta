@@ -35,6 +35,7 @@ public:
 	Pass[] debugVisitors;
 
 protected:
+	string[] mIncludes;
 	string[] mSourceFiles;
 	string[] mBitCodeFiles;
 	ir.Module[string] mModules;
@@ -53,9 +54,23 @@ public:
 
 		this(s, p, lp, b);
 
-		// Setup default include paths.
-		auto std = getExecDir() ~ dirSeparator ~ "rt" ~ dirSeparator ~ "src";
-		settings.includePaths = std ~ settings.includePaths;
+		mIncludes = settings.includePaths;
+
+		// Add the stdlib includes and files.
+		if (!settings.noStdLib) {
+			mIncludes = settings.stdIncludePaths ~ mIncludes;
+
+
+		}
+
+		// Should we add the standard library.
+		if (!settings.emitBitCode &&
+		    !settings.noLink &&
+		    !settings.noStdLib) {
+			foreach (file; settings.stdFiles) {
+				addFile(file);
+			}
+		}
 
 		debugVisitors ~= new DebugMarker("Running DebugPrinter:");
 		debugVisitors ~= new DebugPrinter();
@@ -74,7 +89,7 @@ public:
 		if (p !is null)
 			m = *p;
 
-		foreach (path; settings.includePaths) {
+		foreach (path; mIncludes) {
 			if (m !is null)
 				break;
 
@@ -229,13 +244,6 @@ protected:
 		string linker = "gcc";
 		string cmd;
 		int ret;
-
-		// Should we add the standard library.
-		if (!settings.emitBitCode &&
-		    !settings.noLink &&
-		    !settings.noStdLib) {
-			bcInputFiles ~= " \"" ~ getExecDir() ~ dirSeparator ~ "rt/rt.bc\"";
-		}
 
 		// Gather all the bitcode files.
 		foreach (file; bitCodeFiles) {

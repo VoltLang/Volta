@@ -51,6 +51,14 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 		settings.includePaths ~= replaceEscapes(path);
 	}
 
+	void stdFile(string file) {
+		settings.stdFiles ~= replaceEscapes(file);
+	}
+
+	void stdIncludePath(string path) {
+		settings.stdIncludePaths ~= replaceEscapes(path);
+	}
+
 	foreach(arg; args)  {
 		if (argHandler !is null) {
 			argHandler(arg);
@@ -73,6 +81,8 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 		}
 
 		switch (arg) {
+		case "--help", "-h":
+			return printUsage();
 		case "-license", "--license":
 			return printLicense();
 		case "-o":
@@ -100,14 +110,18 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 		case "--no-catch":
 			settings.noCatch = true;
 			continue;
-		case "--no-stdlib":
-			settings.noStdLib = true;
-			continue;
 		case "--internal-dbg":
 			settings.internalDebug = true;
 			continue;
-		case "--help", "-h":
-			return printUsage();
+		case "--no-stdlib":
+			settings.noStdLib = true;
+			continue;
+		case "--stdlib-file":
+			argHandler = &stdFile;
+			continue;
+		case "--stdlib-I":
+			argHandler = &stdIncludePath;
+			continue;
 		default:
 		}
 
@@ -157,6 +171,7 @@ void setDefault(Settings settings)
 bool printUsage()
 {
 	writefln("usage: volt [options] [source files]");
+	writefln("\t-h,--help       Print this message and quit.");
 	writefln("\t--license       Print license information and quit.");
 	writefln("\t-o outputname   Set output to outputname.");
 	writefln("\t-I path         Add a include path.");
@@ -167,7 +182,11 @@ bool printUsage()
 	writefln("\t-S,--no-backend Stop compilation before the backend.");
 	writefln("\t--no-catch      For compiler debugging purposes.");
 	writefln("\t--internal-dbg  Enables internal debug printing.");
-	writefln("\t-h,--help       Print this message and quit.");
+	writefln("\t--no-stdlib     Don't include any stdlib (from config or arguments)");
+	writefln("\t--stdlib-I      Apply this include before any other -I");
+	writefln("\t                (ignored if --no-stdlib was given)");
+	writefln("\t--stdlib-file   Apply this file first but only when linking");
+	writefln("\t                (ignored if --no-stdlib was given)");
 	return false;
 }
 
