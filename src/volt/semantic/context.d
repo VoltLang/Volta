@@ -141,6 +141,8 @@ public:
 		thisVar.location = fn.location;
 		thisVar.type = tr;
 		thisVar.name = "this";
+		// For classes this needs to be set.
+		thisVar.useBaseStorage = cast(ir.Class)t !is null;
 
 		// Don't add it, it will get added by the variable code.
 		fn.thisHiddenParameter = thisVar;

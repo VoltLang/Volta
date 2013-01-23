@@ -29,22 +29,30 @@ extern(C) AllocDg vrt_gc_get_alloc_dg()
 
 void* gcMalloc(TypeInfo typeinfo, size_t count, void *ptr)
 {
+	void* memory;
 	size_t size;
 
 	if (count == cast(size_t) 0) {
 		size = typeinfo.size;
 	} else if (count == cast(size_t) -1) {
-		// 
 		// Hack for now.
 		size = typeinfo.size;
 	} else {
+		size = typeinfo.size;
 		size = count * typeinfo.size;
 	}
 
 	if(typeinfo.mutableIndirection) {
-		return GC_malloc_atomic(size);
+		memory = GC_malloc_atomic(size);
+	} else {
+		memory = GC_malloc(size);
 	}
-	return GC_malloc(size);
+
+	if (count == cast(size_t) -1) {
+		(cast(void**)memory)[0] = typeinfo.classVtable;
+	}
+
+	return memory;
 }
 
 /**

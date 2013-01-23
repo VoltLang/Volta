@@ -144,6 +144,9 @@ ir.Exp createAllocDgCall(ir.Variable allocDgVar, LanguagePass lp, Location locat
 		pfixCall.arguments ~= buildCast(location, lp.settings.getSizeT(location), countArg);
 	}
 
+	auto asTR = cast(ir.TypeReference) type;
+	if (asTR !is null) suppressCast = asTR.type.nodeType == ir.NodeType.Class;
+
 	if (!suppressCast) {
 		auto result = new ir.PointerType(copyTypeSmart(location, type));
 		result.location = location;
@@ -179,6 +182,36 @@ public:
 	{	
 	}
 
+	void createWrapperConstructorIfNeeded(Location location, ir.Class _class, ir.Unary unary)
+	{
+		if (_class.constructor !is null) {
+			return;
+		}
+		auto _module = getModuleFromScope(_class.myScope);
+
+		auto _function = buildFunction(location, _class.members, _class.myScope, "magicConstructor");
+		_function.type.ret = copyTypeSmart(location, _class);
+		_function.type.params = copyVariablesSmart(location, _class.userConstructors[0].type.params);
+
+		// auto thisVar = allocDg(Class, -1)
+		auto thisVar = buildVariable(location, copyTypeSmart(location, _class), "thisVar");
+		thisVar.assign = createAllocDgCall(allocDgVar, lp, unary.location, _class, buildConstantInt(unary.location, -1), true);
+		thisVar.assign = buildCastSmart(location, _class, thisVar.assign);
+		_function._body.statements ~= thisVar;
+
+		// thisVar.this(cast(void*) thisVar)
+		assert(_class.userConstructors.length == 1);
+		auto eref = buildExpReference(unary.location, _class.userConstructors[0], "this");
+		auto exp = buildCall(location, eref, null);
+		exp.arguments ~= getExpRefs(location, _function.type.params) ~ buildCast(location, buildVoidPtr(location), buildExpReference(location, thisVar, "thisVar"));
+		buildExpStat(location, _function._body, exp);
+
+		// return thisVar
+		buildReturn(location, _function._body, buildExpReference(location, thisVar, "thisVar"));
+
+		_class.constructor = _function;
+	}
+
 	override Status enter(ref ir.Exp exp, ir.Unary unary)
 	{
 		if (unary.op != ir.Unary.Op.New) {
@@ -203,6 +236,18 @@ public:
 			call.child = _ref;
 
 			exp = call;
+
+			return Continue;
+		}
+
+		if (unary.hasArgumentList) {
+			auto tr = cast(ir.TypeReference) unary.type;
+			assert(tr !is null);
+			auto _class = cast(ir.Class) tr.type;
+
+			createWrapperConstructorIfNeeded(unary.location, _class, unary);
+			auto eref = buildExpReference(unary.location, _class.constructor, "magicConstructor");
+			exp = buildCall(unary.location, eref, unary.argumentList);
 
 			return Continue;
 		}

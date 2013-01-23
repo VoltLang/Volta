@@ -463,7 +463,7 @@ class ClassLiteral : Exp
 {
 public:
 	Exp[] exps;  ///< Values for the fields in the class.
-	Class type;  ///< The class this literal represents.
+	Type type;  ///< The class this literal represents.
 
 public:
 	this() { super(NodeType.ClassLiteral); }

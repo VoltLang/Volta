@@ -21,7 +21,6 @@ import volt.semantic.exptyper;
 import volt.semantic.manglewriter;
 import volt.semantic.importresolver;
 import volt.semantic.irverifier;
-import volt.semantic.classlowerer;
 import volt.semantic.typeidreplacer;
 import volt.semantic.newreplacer;
 import volt.semantic.llvmlowerer;
@@ -82,8 +81,6 @@ public:
 		passes2b ~= new TypeDefinitionVerifier();
 		passes2b ~= new ExpTyper(this);
 		passes2b ~= new IrVerifier();
-
-		passes3a ~= new ClassLowerer(this);
 
 		passes3b ~= new NewReplacer(this);
 		passes3b ~= new TypeidReplacer(this);

@@ -5,6 +5,7 @@ module volt.llvm.value;
 import lib.llvm.core;
 
 import volt.exceptions;
+import volt.ir.util;
 import volt.llvm.type;
 import volt.llvm.state;
 
@@ -76,6 +77,30 @@ void handleStructLiteral(State state, ir.StructLiteral sl, Value result)
 		throw CompilerPanic(sl.location, "struct literal type must be TypeReference");
 
 	auto type = cast(StructType)state.fromIr(st);
+
+	result.isPointer = false;
+	result.type = type;
+	result.value = type.fromStructLiteral(state, sl);
+}
+
+void handleClassLiteral(State state, ir.ClassLiteral cl, Value result)
+{
+	auto tr = cast(ir.TypeReference)cl.type;
+	if (tr is null)
+		throw CompilerPanic(cl.location, "class literal type must be TypeReference");
+
+	auto _class = cast(ir.Class)tr.type;
+	if (_class is null)
+		throw CompilerPanic(cl.location, "class literal type must be TypeReference");
+
+	auto type = cast(StructType)state.fromIr(_class.layoutStruct);
+
+	auto sl = new ir.StructLiteral();
+	sl.location = cl.location;
+	sl.type = copyTypeSmart(_class.location, _class.layoutStruct);
+	auto eref = buildExpReference(cl.location, _class.vtableVariable, _class.vtableVariable.name);
+	sl.exps ~= buildAddrOf(cl.location, eref);
+	sl.exps ~= cl.exps;
 
 	result.isPointer = false;
 	result.type = type;

@@ -715,6 +715,13 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.Class _class)
+	{
+		super.enter(_class);
+		fillInClassLayoutIfNeeded(_class);
+		return Continue;
+	}
+
 	override Status enter(ir.FunctionType ftype)
 	{
 		replaceTypeOfIfNeeded(ftype.ret);
@@ -1175,15 +1182,25 @@ public:
 
 			auto asTR = cast(ir.TypeReference) asVar.type;
 			assert(asTR !is null);
-			if (asTR.type.nodeType != ir.NodeType.Struct) {
+
+			ir.Scope aggScope;
+
+			if (asTR.type.nodeType != ir.NodeType.Struct && asTR.type.nodeType != ir.NodeType.Class) {
 				return ContinueParent;
 			}
 
-			auto asStruct = cast(ir.Struct) asTR.type;
-			assert(asStruct !is null);
+			auto _struct = cast(ir.Struct) asTR.type;
+			auto _class = cast(ir.Class) asTR.type;
+			if (_struct !is null) {
+				aggScope = _struct.myScope;
+			} else if (_class !is null) {
+				aggScope = _class.myScope;
+			} else {
+				assert(false);
+			}
 
 			/// @todo this is probably an error.
-			store = asStruct.myScope.lookupOnlyThisScope(p.identifier.value, p.location);
+			store = aggScope.lookupAsThisScope(p.identifier.value, p.location);
 			if (store is null) {
 				throw new CompilerError(_ref.location, format("aggregate has no member '%s'.", p.identifier.value));
 			}
@@ -1317,10 +1334,19 @@ public:
 		assert(asVar !is null);
 		auto asTR = cast(ir.TypeReference) asVar.type;
 		assert(asTR !is null);
-		auto asStruct = cast(ir.Struct) asTR.type;
-		assert(asStruct !is null);
 
-		varStore = asStruct.myScope.lookupOnlyThisScope(reference.idents[0], reference.location);
+		ir.Scope aggScope;
+		if (asTR.type.nodeType == ir.NodeType.Struct) {
+			auto asStruct = cast(ir.Struct) asTR.type;
+			aggScope = asStruct.myScope;
+		} else if (asTR.type.nodeType == ir.NodeType.Class) {
+			auto asClass = cast(ir.Class) asTR.type;
+			aggScope = asClass.myScope;
+		} else {
+			assert(false);
+		}
+
+		varStore = aggScope.lookupOnlyThisScope(reference.idents[0], reference.location);
 		if (varStore is null) {
 			return Continue;
 		}

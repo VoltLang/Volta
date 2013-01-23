@@ -238,8 +238,11 @@ public:
 	Function constructor;
 	Function[] userConstructors;
 	Struct vtableStruct;
-	Class parentClass;  ///< Filled in by declgatherer.
+	Variable vtableVariable;
+	Class parentClass;  ///< Filled in by the typeverifier.
 
+	/// How a lowered class will look internally.
+	Struct layoutStruct;
 
 public:
 	this() { super(NodeType.Class); }

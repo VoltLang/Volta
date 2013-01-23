@@ -75,14 +75,8 @@ void mangleType(ir.Type t, ref string mangledString)
 	case Struct:
 		auto asStruct = cast(ir.Struct) t;
 		assert(asStruct !is null);
-		if (asStruct.loweredNode !is null) {
-			auto asType = cast(ir.Type) asStruct.loweredNode;
-			assert(asType !is null);
-			mangleType(asType, mangledString);
-		} else {
-			mangledString ~= "S";
-			mangleScope(asStruct.myScope, mangledString);
-		}
+		mangledString ~= "S";
+		mangleScope(asStruct.myScope, mangledString);
 		break;
 	case Class:
 		auto asClass = cast(ir.Class) t;

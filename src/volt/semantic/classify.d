@@ -48,6 +48,10 @@ int size(Location location, LanguagePass lp, ir.Node node)
 		auto asStruct = cast(ir.Struct) node;
 		assert(asStruct !is null);
 		return structSize(location, lp, asStruct);
+	case Class:
+		auto asClass = cast(ir.Class) node;
+		assert(asClass !is null);
+		return classSize(location, lp, asClass);
 	case Variable:
 		auto asVariable = cast(ir.Variable) node;
 		assert(asVariable !is null);
@@ -187,6 +191,26 @@ int structSize(Location location, LanguagePass lp, ir.Struct s)
 		sizeAccumulator += size(location, lp, node);
 	}
 	return sizeAccumulator;
+}
+
+/// Returns the size of a given Class (not the reference), in bytes.
+int classSize(Location location, LanguagePass lp, ir.Class c)
+{
+	int sizeAccumulator;
+	while (c !is null) {
+		foreach (node; c.members.nodes) {
+			// If it's not a Variable, it shouldn't take up space.
+			if (node.nodeType != ir.NodeType.Variable) {
+				continue;
+			}
+
+			sizeAccumulator += size(location, lp, node);
+		}
+		c = c.parentClass;
+	}
+
+	auto wordSize = size(lp.settings.getSizeT(location).type);
+	return sizeAccumulator + wordSize;
 }
 
 bool effectivelyConst(ir.Type type)

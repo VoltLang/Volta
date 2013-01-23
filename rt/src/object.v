@@ -55,8 +55,14 @@ struct ArrayStruct
 
 class TypeInfo
 {
+	this()
+	{
+		return;
+	}
+
 	size_t size;
 	int type;
 	char[] mangledName;
 	bool mutableIndirection;
+	void* classVtable;
 }

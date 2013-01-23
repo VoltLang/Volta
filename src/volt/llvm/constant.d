@@ -7,6 +7,7 @@ import std.conv : to;
 import lib.llvm.core;
 
 import volt.exceptions;
+import volt.ir.util;
 import volt.llvm.type;
 import volt.llvm.value;
 import volt.llvm.state;
@@ -45,6 +46,11 @@ void getConstantValue(State state, ir.Exp exp, Value result)
 	case Unary:
 		auto asUnary = cast(ir.Unary)exp;
 		return handleUnary(state, asUnary, result);
+	case ClassLiteral:
+		auto literal = cast(ir.ClassLiteral)exp;
+		assert(literal !is null);
+		handleClassLiteral(state, literal, result);
+		break;
 	default:
 		auto str = format(
 			"could not get constant from expression '%s'",

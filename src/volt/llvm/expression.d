@@ -878,7 +878,7 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 	if (childAsPostfix !is null &&
 	    childAsPostfix.op == ir.Postfix.Op.CreateDelegate) {
 
-		state.getValueRef(childAsPostfix.child, result);
+		state.getStructRef(childAsPostfix.child, result);
 
 		llvmArgs ~= LLVMBuildBitCast(state.builder, result.value, state.voidPtrType.llvmType, "thisArg");
 

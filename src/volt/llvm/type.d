@@ -7,6 +7,7 @@ import std.conv : to;
 import lib.llvm.core;
 
 import ir = volt.ir.ir;
+import volt.ir.util;
 
 import volt.exceptions;
 import volt.llvm.type;
@@ -540,6 +541,11 @@ Type fromIr(State state, ir.Type irType)
 	case StorageType:
 		auto storage = cast(ir.StorageType) irType;
 		return fromIr(state, storage.base);
+	case Class:
+		auto _class = cast(ir.Class)irType;
+		auto pointer = buildPtrSmart(_class.location, _class.layoutStruct);
+		addMangledName(pointer);
+		return fromIr(state, pointer);
 	default:
 		auto emsg = format("Can't translate type %s (%s)", irType.nodeType, irType.mangledName);
 		throw CompilerPanic(irType.location, emsg);
