@@ -276,7 +276,7 @@ protected:
 		if (ret)
 			return ret;
 
-		cmd = format("%s -filetype=obj -o \"%s\" ", assembler, obj, asInputFiles);
+		cmd = format("%s -filetype=obj -o \"%s\" %s", assembler, obj, asInputFiles);
 		ret = system(cmd);
 		if (ret)
 			return ret;
