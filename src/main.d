@@ -2,7 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module main;
 
-import std.stdio : writefln;
+import std.stdio : File, writefln;
 
 import volt.license;
 import volt.interfaces;
@@ -57,6 +57,20 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 			continue;
 		}
 
+		// Handle @file.txt arguments.
+		if (arg.length > 0 && arg[0] == '@') {
+			string[] lines;
+			if (!getLinesFromFile(arg[1 .. $], lines)) {
+				writefln("can not find file \"%s\"", arg[1 .. $]);
+				return false;
+			}
+
+			if (!handleArgs(lines, files, settings))
+				return false;
+
+			continue;
+		}
+
 		switch (arg) {
 		case "-license", "--license":
 			return printLicense();
@@ -99,6 +113,21 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 		files ~= arg;
 	}
 
+	return true;
+}
+
+bool getLinesFromFile(string file, ref string[] lines)
+{
+	try {
+		auto f = File(file);
+		foreach(line; f.byLine) {
+			if (line.length > 0 && line[0] != '#') {
+				lines ~= line.idup;
+			}
+		}
+	} catch {
+		return false;
+	}
 	return true;
 }
 
