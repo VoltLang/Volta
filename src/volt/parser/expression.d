@@ -236,7 +236,7 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 	case intir.PrimaryExp.Type.Null:
 		auto c = new ir.Constant();
 		c.value = "null";
-		c.type = new ir.PointerType(new ir.PrimitiveType(ir.PrimitiveType.Kind.Void));
+		c.type = new ir.NullType();
 		c.type.location = primary.location;
 		exp = c;
 		break;
