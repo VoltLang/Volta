@@ -11,31 +11,35 @@ import volt.controller;
 
 int main(string[] args)
 {
-	auto settings = new Settings();
+	string[] files;
+	auto cmd = args[0];
+	args = args[1 .. $];
 
+	auto settings = new Settings();
 	setDefault(settings);
-	if (!filterArgs(args, settings))
+
+	if (!handleArgs(args, files, settings))
 		return 0;
 
-	if (args.length <= 1) {
-		writefln("%s: no input files", args[0]);
+	settings.setVersionsFromOptions();
+
+	if (files.length == 0) {
+		writefln("%s: no input files", cmd);
 		return 0;
 	}
 
 	auto vc = new VoltController(settings);
-	vc.addFiles(args[1 .. $]);
+	vc.addFiles(files);
 	int ret = vc.compile();
 	vc.close();
 
 	return ret;
 }
 
-bool filterArgs(ref string[] args, Settings settings)
+bool handleArgs(string[] args, ref string[] files, Settings settings)
 {
 	void delegate(string) argHandler;
-	string[] ret;
 	int i;
-	ret.length = args.length;
 
 	// Handlers.
 	void outputFile(string file) {
@@ -46,10 +50,7 @@ bool filterArgs(ref string[] args, Settings settings)
 		settings.includePaths ~= path;
 	}
 
-	// Skip the first argument.
-	ret[i++] = args[0];
-
-	foreach(arg; args[1 .. $])  {
+	foreach(arg; args)  {
 		if (argHandler !is null) {
 			argHandler(arg);
 			argHandler = null;
@@ -95,13 +96,9 @@ bool filterArgs(ref string[] args, Settings settings)
 		default:
 		}
 
-		ret[i++] = arg;
+		files ~= arg;
 	}
 
-	settings.setVersionsFromOptions();
-
-	ret.length = i;
-	args = ret;
 	return true;
 }
 
