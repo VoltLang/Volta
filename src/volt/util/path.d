@@ -84,7 +84,10 @@ string randomString(size_t length)
 	return str.idup;    
 }
 
-string getExePath()
+/**
+ * Return the path to the dir that the executable is in.
+ */
+string getExecDir()
 {
 	char[512] stack;
 

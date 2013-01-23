@@ -54,7 +54,7 @@ public:
 		this(s, p, lp, b);
 
 		// Setup default include paths.
-		auto std = getExePath() ~ dirSeparator ~ "rt" ~ dirSeparator ~ "src";
+		auto std = getExecDir() ~ dirSeparator ~ "rt" ~ dirSeparator ~ "src";
 		settings.includePaths = std ~ settings.includePaths;
 
 		debugVisitors ~= new DebugMarker("Running DebugPrinter:");
@@ -234,7 +234,7 @@ protected:
 		if (!settings.emitBitCode &&
 		    !settings.noLink &&
 		    !settings.noStdLib) {
-			bcInputFiles ~= " \"" ~ getExePath() ~ dirSeparator ~ "rt/rt.bc\"";
+			bcInputFiles ~= " \"" ~ getExecDir() ~ dirSeparator ~ "rt/rt.bc\"";
 		}
 
 		// Gather all the bitcode files.
