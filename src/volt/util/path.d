@@ -14,6 +14,8 @@ version (Windows) {
 }
 
 import std.file : read, exists;
+import std.string : indexOf;
+import std.array : replace;
 import std.path : dirName, dirSeparator;
 import std.random : uniform;
 import std.process : getenv;
@@ -31,6 +33,22 @@ string makeFilename(string dir, string[] names)
 	ret ~= ".v";
 
 	return ret;
+}
+
+/**
+ * Replace volt compiler escape codes in the given filename
+ * with their associated values.
+ */
+string replaceEscapes(string file)
+{
+	size_t ret;
+	string execdir = "%@execdir%";
+
+	ret = indexOf(file, execdir);
+	if (ret != size_t.max)
+		file = replace(file, execdir, getExecDir());
+
+	return file;
 }
 
 /**
