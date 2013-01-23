@@ -7,6 +7,7 @@ import std.stdio : File, writefln;
 import volt.license;
 import volt.interfaces;
 import volt.controller;
+import volt.util.path;
 
 
 int main(string[] args)
@@ -47,7 +48,7 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 	}
 
 	void includePath(string path) {
-		settings.includePaths ~= path;
+		settings.includePaths ~= replaceEscapes(path);
 	}
 
 	foreach(arg; args)  {
@@ -110,7 +111,7 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 		default:
 		}
 
-		files ~= arg;
+		files ~= replaceEscapes(arg);
 	}
 
 	return true;
