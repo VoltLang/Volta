@@ -496,8 +496,10 @@ ir.Function buildFunction(Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, s
 /**
  * Builds a completely useable struct and insert it into the
  * various places it needs to be inserted.
+ *
+ * The members list is used directly in the new struct; be wary not to duplicate IR nodes.
  */
-ir.Struct buildStruct(Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, string name)
+ir.Struct buildStruct(Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, string name, ir.Variable[] members...)
 {
 	auto s = new ir.Struct();
 	s.name = name;
@@ -506,6 +508,11 @@ ir.Struct buildStruct(Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, strin
 
 	s.members = new ir.TopLevelBlock();
 	s.members.location = loc;
+
+	foreach (member; members) {
+		s.members.nodes ~= member;
+		s.myScope.addValue(member, member.name);
+	}
 
 	// Insert the struct into all the places.
 	_scope.addType(s, s.name);
