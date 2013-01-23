@@ -176,6 +176,14 @@ public:
 		}
 		super(state, pt, llvmType);
 	}
+
+	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
+	{
+		if (cnst.value != "null") {
+			throw CompilerPanic(cnst.location, "can only fromConstant null pointers.");
+		}
+		return LLVMConstPointerNull(llvmType);
+	}
 }
 
 /**
