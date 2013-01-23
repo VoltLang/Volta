@@ -112,6 +112,24 @@ public:
 		}
 	}
 
+	ir.Node handleNull(ref ir.Type left, ref ir.Exp right, ir.Type rightType)
+	{
+		if (rightType.nodeType == ir.NodeType.NullType) {
+			auto constant = cast(ir.Constant) right;
+			if (constant is null) {
+				throw CompilerPanic(right.location, "non constant null");
+			}
+			if (left.nodeType == ir.NodeType.PointerType) {
+				constant.type = buildVoidPtr(right.location);
+				right = buildCastSmart(right.location, left, right);
+				return copyTypeSmart(right.location, left);
+			} else {
+				throw new CompilerError(right.location, "can only convert null into pointers currently.");
+			}
+		}
+		return null;
+	}
+
 	ir.Node extype(ref ir.Type left, ref ir.Exp right, bool inVariable = false)
 	{
 		ir.Type localLeft = left;
@@ -159,18 +177,8 @@ public:
 		ir.Type t = getExpType(right, current);
 
 		// Handle null.
-		if (t.nodeType == ir.NodeType.NullType) {
-			auto constant = cast(ir.Constant) right;
-			if (constant is null) {
-				throw CompilerPanic(right.location, "non constant null");
-			}
-			if (localLeft.nodeType == ir.NodeType.PointerType) {
-				constant.type = buildVoidPtr(right.location);
-				right = buildCastSmart(right.location, localLeft, right);
-				return copyTypeSmart(right.location, localLeft);
-			} else {
-				throw new CompilerError(right.location, "can only convert null into pointers currently.");
-			}
+		if (auto p = handleNull(localLeft, right, t)) {
+			return p;
 		}
 
 		// Turn no-arg @property functions into calls.
