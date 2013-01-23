@@ -191,6 +191,20 @@ public:
 }
 
 /**
+ * The NullType represents the Type of a null.
+ *
+ * null's are like water, they fill the shape of their container,
+ * hence they need their own type.
+ *
+ * @ingroup irNode irType
+ */
+class NullType : Type
+{
+public:
+	this() { super(NodeType.NullType); }
+}
+
+/**
  * An ArrayType represents a slice of memory. It contains a pointer,
  * that contains elements of the base type, and a length, which says
  * how many elements this slice shows. This is lowered into a struct

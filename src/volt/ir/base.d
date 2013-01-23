@@ -69,6 +69,7 @@ enum NodeType
 	Function,
 	FunctionParameter,
 	TypeOf,
+	NullType,
 
 	/* statements.d */
 	ReturnStatement,
@@ -286,6 +287,7 @@ string nodeToString(NodeType nodeType)
 	case PrimitiveType: return "PrimitiveType";
 	case TypeReference: return "TypeReference";
 	case PointerType: return "PointerType";
+	case NullType: return "NullType";
 	case ArrayType: return "ArrayType";
 	case StaticArrayType: return "StaticArrayType";
 	case AAType: return "AAType";
