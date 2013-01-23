@@ -192,6 +192,7 @@ public:
 	bool emitBitCode; ///< The --emit-bitcode argument.
 	bool noCatch; ///< The --no-catch argument.
 	bool internalDebug; ///< The --internal-dbg argument.
+	bool noStdLib; ///< The --no-stdlib argument.
 
 	Platform platform;
 	Arch arch;

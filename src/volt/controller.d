@@ -222,16 +222,25 @@ protected:
 		string cmd;
 		int ret;
 
+		if (!settings.emitBitCode &&
+		    !settings.noLink &&
+		    !settings.noStdLib) {
+			linkInputFiles ~= " \"" ~ getExePath() ~ dirSeparator ~ "rt/rt.bc\"";
+		}
+
 		foreach (file; bitCodeFiles) {
 			linkInputFiles ~= " \"" ~ file ~ "\" ";
 		}
 
 		if (settings.emitBitCode) {
+
 			cmd = format("llvm-link -o \"%s\" %s", of, linkInputFiles);
 			ret = system(cmd);
 			if (ret)
 				return ret;
+
 		} else if (settings.noLink) {
+
 			string link = temporaryFilename(".bc");
 			cmd = format("llvm-link -o \"%s\" %s", link, linkInputFiles);
 			ret = system(cmd);
@@ -250,14 +259,14 @@ protected:
 			ret = system(cmd);
 			if (ret)
 				return ret;
+
 		} else {
-			// this is just during bring up.
-			linkInputFiles ~= " \"" ~ getExePath() ~ dirSeparator ~ "rt/rt.bc\"";
 
 			cmd = format("llvm-ld -native -o \"%s\" %s", of, linkInputFiles);
 			ret = system(cmd);
 			if (ret)
 				return ret;
+
 		}
 
 		return 0;

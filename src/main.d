@@ -84,6 +84,9 @@ bool filterArgs(ref string[] args, Settings settings)
 		case "--no-catch":
 			settings.noCatch = true;
 			continue;
+		case "--no-stdlib":
+			settings.noStdLib = true;
+			continue;
 		case "--internal-dbg":
 			settings.internalDebug = true;
 			continue;
