@@ -232,7 +232,7 @@ public:
 
 	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
 	{
-		auto strConst = LLVMConstStringInContext(state.context, cast(char[])cnst.arrayData, true);
+		auto strConst = LLVMConstStringInContext(state.context, cast(char[])cnst.arrayData, false);
 		auto strGlobal = LLVMAddGlobal(state.mod, LLVMTypeOf(strConst), "");
 		LLVMSetGlobalConstant(strGlobal, true);
 		LLVMSetInitializer(strGlobal, strConst);
