@@ -3,6 +3,7 @@
 module main;
 
 import std.stdio : File, writefln;
+import std.string : chomp;
 
 import volt.license;
 import volt.interfaces;
@@ -148,7 +149,7 @@ bool getLinesFromFile(string file, ref string[] lines)
 		auto f = File(file);
 		foreach(line; f.byLine) {
 			if (line.length > 0 && line[0] != '#') {
-				lines ~= line.idup;
+				lines ~= chomp(line).idup;
 			}
 		}
 	} catch {
