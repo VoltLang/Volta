@@ -112,7 +112,7 @@ public:
 		}
 	}
 
-	ir.Node handleNull(ref ir.Type left, ref ir.Exp right, ir.Type rightType)
+	ir.Node handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
 	{
 		if (rightType.nodeType == ir.NodeType.NullType) {
 			auto constant = cast(ir.Constant) right;
@@ -361,6 +361,12 @@ public:
 
 		if (effectivelyConst(left) && bin.op == ir.BinOp.Type.Assign) {
 			throw new CompilerError(bin.location, "cannot assign to const type.");
+		}
+
+		if (bin.op == ir.BinOp.Type.Assign) {
+			if (auto p = handleNull(left, bin.right, right)) {
+				return p;
+			}
 		}
 		
 		if (bin.op == ir.BinOp.Type.AndAnd || bin.op == ir.BinOp.Type.OrOr) {
