@@ -131,6 +131,7 @@ public abstract:
 
 	Status visit(ir.PrimitiveType it);
 	Status visit(ir.TypeReference tr);
+	Status visit(ir.NullType nt);
 
 
 	/*
@@ -279,6 +280,7 @@ override:
 
 	Status visit(ir.PrimitiveType it){ return Continue; }
 	Status visit(ir.TypeReference tr){ return Continue; }
+	Status visit(ir.NullType nt) { return Continue; }
 
 	/*
 	 * Expression Nodes.
@@ -540,6 +542,10 @@ Visitor.Status accept(ir.Node n, Visitor av)
 		auto typeOf = cast(ir.TypeOf) n;
 		assert(typeOf !is null);
 		return acceptTypeOf(typeOf, av);
+	case ir.NodeType.NullType:
+		auto nt = cast(ir.NullType) n;
+		assert(nt !is null);
+		return av.visit(nt);
 
 	/*
 	 * Failure fall through.

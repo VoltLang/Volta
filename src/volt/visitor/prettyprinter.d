@@ -1007,6 +1007,11 @@ public:
 		return Continue;
 	}
 
+	override Status visit(ir.NullType nullType)
+	{
+		return Continue;
+	}
+
 	override Status enter(ir.ArrayType array)
 	{
 		accept(array.base, this);
