@@ -1,5 +1,6 @@
 //T compiles:yes
 //T retval:42
+//T has-passed:no
 // Can't call functions from member functions.
 module test_005;
 

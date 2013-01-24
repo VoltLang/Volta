@@ -1,4 +1,5 @@
 //T compiles:no
+//T has-passed:no
 // LValue checking is broken.
 module test_003;
 
