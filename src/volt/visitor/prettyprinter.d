@@ -1061,6 +1061,9 @@ public:
 				wf(", ");
 			}
 		}
+		if (fn.hasVarArgs) {
+			wf(", ...");
+		}
 		wf(")");
 		return ContinueParent;
 	}
@@ -1083,6 +1086,9 @@ public:
 			if (i < fn.params.length - 1) {
 				wf(", ");
 			}
+		}
+		if (fn.hasVarArgs) {
+			wf(", ...");
 		}
 		wf(")");
 		return ContinueParent;
@@ -1146,6 +1152,9 @@ public:
 			if (i < fn.type.params.length - 1) {
 				wf(", ");
 			}
+		}
+		if (fn.type.hasVarArgs) {
+			wf(", ...");
 		}
 		wf(")");
 
