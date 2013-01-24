@@ -63,16 +63,24 @@ public:
 			}
 		}
 
-		if (asFunctionType.hasVarArgs) {
+		if (asFunctionType.hasVarArgs &&
+		    asFunctionType.linkage == ir.Linkage.Volt) {
 			auto asExp = cast(ir.ExpReference) postfix.child;
 			assert(asExp !is null);
 			auto asFunction = cast(ir.Function) asExp.decl;
 			assert(asFunction !is null);
 
+			// This must be done first.
 			replaceVarArgsIfNeeded(asFunction);
 
-			auto amountOfVarArgs = postfix.arguments.length - (asFunctionType.params.length + 1);
-			assert(amountOfVarArgs >= 0);
+			auto callNumArgs = postfix.arguments.length;
+			auto funcNumArgs = asFunctionType.params.length - 1;
+			if (callNumArgs < funcNumArgs) {
+				throw new CompilerError(postfix.location, "not enough arguments to vararg function");
+			}
+			auto amountOfVarArgs = callNumArgs - funcNumArgs;
+			auto argsSlice = postfix.arguments[0 .. funcNumArgs];
+			auto varArgsSlice = postfix.arguments[funcNumArgs .. $];
 
 			auto tinfoClass = retrieveTypeInfoClass(postfix.location, current);
 			auto tr = new ir.TypeReference(tinfoClass, tinfoClass.name);
@@ -85,23 +93,22 @@ public:
 			typeidsLiteral.location = postfix.location;
 			typeidsLiteral.type = array;
 
-			for (size_t i = asFunctionType.params.length - 1; i < postfix.arguments.length; ++i) {
+			foreach (exp; varArgsSlice) {
 				auto typeId = new ir.Typeid();
 				typeId.location = postfix.location;
-				typeId.type = copyTypeSmart(postfix.location, getExpType(postfix.arguments[i], current));
+				typeId.type = copyTypeSmart(postfix.location, getExpType(exp, current));
 				typeidsLiteral.values ~= typeId;
 			}
 
-			if (postfix.arguments.length != asFunctionType.params.length) {
-				postfix.arguments.length = asFunctionType.params.length;
-			}
-			postfix.arguments[$- 1] = typeidsLiteral;
+			postfix.arguments = argsSlice ~ typeidsLiteral ~ varArgsSlice;
 		}
 
-		if (postfix.arguments.length != asFunctionType.params.length) {
+		if (!asFunctionType.hasVarArgs &&
+		    postfix.arguments.length != asFunctionType.params.length) {
 			throw new CompilerError(postfix.location, "wrong number of arguments to function.");
 		}
-		foreach (i; 0 .. postfix.arguments.length) {
+		assert(asFunctionType.params.length <= postfix.arguments.length);
+		foreach (i; 0 .. asFunctionType.params.length) {
 			if (asFunctionType.params[i].isRef && !isRefVar(postfix.arguments[i])) {
 				postfix.arguments[i] = buildAddrOf(postfix.location, postfix.arguments[i]);
 			}
@@ -884,7 +891,9 @@ public:
 
 	void replaceVarArgsIfNeeded(ir.Function fn)
 	{
-		if (fn.type.hasVarArgs && !fn.type.varArgsProcessed) {
+		if (fn.type.hasVarArgs &&
+		    !fn.type.varArgsProcessed &&
+		    fn.type.linkage == ir.Linkage.Volt) {
 			auto tinfoClass = retrieveTypeInfoClass(fn.location, current);
 			assert(tinfoClass !is null);
 			auto tr = new ir.TypeReference(tinfoClass, tinfoClass.name);
