@@ -7,8 +7,8 @@ module test_007;
 int main()
 {
 	char[] arr = new char[1];
-	t[0] = '\n';
-	t[0] = '\0';
+	arr[0] = '\n';
+	arr[0] = '\0';
 
 	char c = '\0';
 
