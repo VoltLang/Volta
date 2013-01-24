@@ -626,6 +626,16 @@ public:
 			}
 		}
 
+		if (isConst(lp.base) && rp.base.nodeType != ir.NodeType.StorageType) {
+			exp = buildCastSmart(lp, exp);
+			return lp;
+		}
+
+		if (isImmutable(rp.base) && isConst(lp.base)) {
+			exp = buildCastSmart(lp, exp);
+			return lp;
+		}
+
 		throw new CompilerError(exp.location, "pointers may only be implicitly converted to void*.");
 	}
 
