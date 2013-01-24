@@ -356,6 +356,10 @@ public:
 		case Shared: twf("shared"); break;
 		case Private: twf("private"); break;
 		case Property: twf("@property"); break;
+		case Trusted: twf("@trusted"); break;
+		case System: twf("@system"); break;
+		case Safe: twf("@safe"); break;
+		case NoThrow: twf("nothrow"); break;
 		case Package: twf("package"); break;
 		case Override: twf("override"); break;
 		case Local: twf("local"); break;
@@ -377,6 +381,7 @@ public:
 		case Const: twf("const"); break;
 		case Auto: twf("auto"); break;
 		case Abstract: twf("abstract"); break;
+		case Pure: twf("pure"); break;
 		case Align:
 			twf("align(");
 			wf(attr.alignAmount);

@@ -199,6 +199,11 @@ public:
 		Inout,
 		Disable,
 		Property,
+		Trusted,
+		System,
+		Safe,
+		NoThrow,
+		Pure,
 	}
 
 
