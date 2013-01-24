@@ -102,13 +102,10 @@ public:
 			throw new CompilerError(postfix.location, "wrong number of arguments to function.");
 		}
 		foreach (i; 0 .. postfix.arguments.length) {
-			if (isRefVar(postfix.arguments[i])) {
-				postfix.arguments[i] = buildDeref(postfix.location, postfix.arguments[i]);
-			}
-			if (asFunctionType.params[i].isRef) {
+			if (asFunctionType.params[i].isRef && !isRefVar(postfix.arguments[i])) {
 				postfix.arguments[i] = buildAddrOf(postfix.location, postfix.arguments[i]);
 			}
-			extype(asFunctionType.params[i].type, postfix.arguments[i]);
+			extype(asFunctionType.params[i].type, postfix.arguments[i], false, asFunctionType.params[i].isRef);
 		}
 	}
 
@@ -133,7 +130,7 @@ public:
 		return null;
 	}
 
-	ir.Node extype(ref ir.Type left, ref ir.Exp right, bool inVariable = false)
+	ir.Node extype(ref ir.Type left, ref ir.Exp right, bool inVariable = false, bool inCallAndPassingToRef = false)
 	{
 		/* This is needed so we can refer to things like TypeReference's base
 		 * without updating the type in the IR.
@@ -144,7 +141,7 @@ public:
 		ir.Variable asVar;
 		if (asExpRef !is null) {
 			asVar = cast(ir.Variable) asExpRef.decl;
-			if (asVar !is null && asVar.isRef) {
+			if (asVar !is null && asVar.isRef && !inCallAndPassingToRef) {
 				right = buildDeref(right.location, right);
 			}
 		}
