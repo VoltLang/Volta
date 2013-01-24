@@ -177,6 +177,9 @@ public:
 			return asLit.type;
 		}
 
+		replaceTypeOfIfNeeded(left);
+		localLeft = left;
+
 		ir.Type t = getExpType(right, current);
 
 		// Handle null.
@@ -657,6 +660,18 @@ public:
 		return Continue;
 	}
 
+	/// Replace TypeOf with its expression's type, if needed.
+	void replaceTypeOfIfNeeded(ref ir.Type type)
+	{
+		auto asTypeOf = cast(ir.TypeOf) type;
+		if (asTypeOf is null) {
+			assert(type.nodeType != ir.NodeType.TypeOf);
+			return;
+		}
+
+		type = copyTypeSmart(asTypeOf.location, getExpType(asTypeOf.exp, current));
+	}
+
 	override Status enter(ir.Variable d)
 	{
 		if (d.assign is null) {
@@ -669,7 +684,26 @@ public:
 		}
 
 		extype(d.type, d.assign, true);
+		replaceTypeOfIfNeeded(d.type);
 
+		return Continue;
+	}
+
+	override Status enter(ir.FunctionType ftype)
+	{
+		replaceTypeOfIfNeeded(ftype.ret);
+		return Continue;
+	}
+
+	override Status enter(ir.DelegateType dtype)
+	{
+		replaceTypeOfIfNeeded(dtype.ret);
+		return Continue;
+	}
+
+	override Status enter(ir.Typeid _typeid)
+	{
+		replaceTypeOfIfNeeded(_typeid.type);
 		return Continue;
 	}
 
