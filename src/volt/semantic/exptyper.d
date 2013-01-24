@@ -510,7 +510,7 @@ public:
 	}
 
 	/// Given a binary operation between two primitive types, make the casts explicit.
-	ir.Node extypePrimitive(ir.BinOp bin, ir.Node left, ir.Node right)
+	ir.Node extypePrimitive(ir.BinOp bin, ir.Type left, ir.Type right)
 	{
 		if (bin.op == ir.BinOp.Type.Assign) {
 			return extypePrimitiveAssign(bin.right, left, bin.right);
@@ -528,7 +528,20 @@ public:
 		bool leftUnsigned = isUnsigned(lp.type);
 		bool rightUnsigned = isUnsigned(rp.type);
 		if (leftUnsigned != rightUnsigned) {
-			throw new CompilerError(bin.location, "binary operation with both signed and unsigned operands.");
+			if (leftUnsigned) {
+				if (fitsInPrimitive(lp, bin.right)) {
+					bin.right = buildCastSmart(left, bin.right);
+					rightUnsigned = true;
+				}
+			} else {
+				if (fitsInPrimitive(rp, bin.left)) {
+					bin.left = buildCastSmart(right, bin.left);
+					leftUnsigned = true;
+				}
+			}
+			if (leftUnsigned != rightUnsigned) {
+				throw new CompilerError(bin.location, "binary operation with both signed and unsigned operands.");
+			}
 		}
 
 		auto intsz = size(ir.PrimitiveType.Kind.Int);
