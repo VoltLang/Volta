@@ -476,7 +476,12 @@ public:
 		return result;
 	}
 
-	/// Modify exp to become a cast to dest from src, if required.
+	/** 
+	 * Modify exp to become a cast to dest from src, if required.
+	 * 
+	 * This is not all in one with the BinOp one because all other binops can
+	 * have both side of the expression casted -- not so with assign ops.
+	 */ 
 	ir.Node extypePrimitiveAssign(ref ir.Exp exp, ir.Node dest, ir.Exp src)
 	{
 		auto lp = cast(ir.PrimitiveType) dest;
