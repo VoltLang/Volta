@@ -602,6 +602,9 @@ ir.Type getUnaryDerefType(ir.Unary unary, ir.Scope currentScope)
 
 ir.Type getUnaryAddrOfType(ir.Unary unary, ir.Scope currentScope)
 {
+	if (!isLValue(unary.value)) {
+		throw new CompilerError(unary.location, "expression is not an lvalue.");
+	}
 	auto type = getExpType(unary.value, currentScope);
 	auto pointer = new ir.PointerType(type);
 	pointer.location = unary.location;
