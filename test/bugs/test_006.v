@@ -1,6 +1,5 @@
 //T compiles:yes
 //T retval:42
-//T has-passed:no
 // Implicit converions doesn't work for binops.
 module test_006;
 
