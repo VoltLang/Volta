@@ -474,8 +474,10 @@ ir.Type getPostfixIdentifierStaticArrayType(ir.Postfix postfix, ir.StaticArrayTy
 
 ir.Type getPostfixIncDecType(ir.Postfix postfix, ir.Scope currentScope)
 {
+	if (!isLValue(postfix.child)) {
+		throw new CompilerError(postfix.location, "expression is not an lvalue.");
+	}
 	auto type = getExpType(postfix.child, currentScope);
-	/// @todo check if value is LValue.
 
 	if (type.nodeType == ir.NodeType.PointerType) {
 		return type;
