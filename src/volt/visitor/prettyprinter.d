@@ -3,7 +3,6 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.visitor.prettyprinter;
 
-import std.stdio : writefln, writef;
 import std.stream : Stream, File, FileMode;
 import std.cstream : dout;
 
@@ -1760,9 +1759,9 @@ protected:
 	void twf(string[] strings...)
 	{
 		for(int i; i < mIndent; i++)
-			mStream.writef(mIndentText);
+			mStream.writef("%s", mIndentText);
 		foreach (s; strings) {
-			mStream.writef(s);
+			mStream.writef("%s", s);
 		}
 	}
 
@@ -1777,11 +1776,11 @@ protected:
 	void wf(string[] strings...)
 	{
 		foreach (s; strings) {
-			mStream.writef(s);
+			mStream.writef("%s", s);
 		}
 	}
 
 	void wf(size_t i) { mStream.writef("%s", i); }
-	void wfln(string str) { wf(str); mStream.writefln(); }
+	void wfln(string str) { wf(str); ln(); }
 	void ln() { mStream.writefln(); }
 }
