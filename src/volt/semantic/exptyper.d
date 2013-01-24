@@ -326,7 +326,7 @@ public:
 			 * worry about StorageType chains.
 			 */
 			if (asStorageType.type == ir.StorageType.Kind.Scope) {
-				if ((asVar !is null && !asVar.isRef) && mutableIndirection(t)) {
+				if (mutableIndirection(t)) {
 					/// This is not the world's greatest error message. @todo
 					throw new CompilerError(right.location, "cannot convert mutably indirectable type to scope.");
 				} else {
