@@ -344,7 +344,7 @@ public:
 			args[$-1] = state.voidPtrType.llvmType;
 		}
 
-		llvmCallType = LLVMFunctionType(ret.llvmType, args, false);
+		llvmCallType = LLVMFunctionType(ret.llvmType, args, ft.hasVarArgs);
 		llvmType = LLVMPointerType(llvmCallType, 0);
 		super(state, ft, llvmType);
 	}
@@ -375,7 +375,7 @@ public:
 		}
 		args[$-1] = state.voidPtrType.llvmType;
 
-		llvmCallType = LLVMFunctionType(ret.llvmType, args, false);
+		llvmCallType = LLVMFunctionType(ret.llvmType, args, dt.hasVarArgs);
 		llvmCallPtrType = LLVMPointerType(llvmCallType, 0);
 
 		LLVMTypeRef[2] mt;
