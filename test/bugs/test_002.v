@@ -4,7 +4,7 @@ module test_002;
 
 void func(scope char* t)
 {
-
+	return;
 }
 
 int main()
