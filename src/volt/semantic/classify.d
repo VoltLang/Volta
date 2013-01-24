@@ -191,6 +191,7 @@ bool isIntegral(ir.PrimitiveType.Kind kind)
 		case Uint:
 		case Long:
 		case Ulong:
+		case Char:
 			return true;
 		default:
 			return false;
@@ -279,7 +280,7 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 			return false;
 		}
 		switch (t.type) with (ir.PrimitiveType.Kind) {
-		case Ubyte:
+		case Ubyte, Char:
 			return l >= ubyte.min && l <= ubyte.max;
 		case Byte:
 			return l >= byte.min && l <= byte.max;

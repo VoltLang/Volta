@@ -7,7 +7,6 @@ module test_006;
 int main()
 {
 	size_t t = 1;
-
 	auto arr = new int[4];
 	arr[0 .. t + 1];
 

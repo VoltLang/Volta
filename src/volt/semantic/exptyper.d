@@ -476,9 +476,45 @@ public:
 		return result;
 	}
 
+	/// Modify exp to become a cast to dest from src, if required.
+	ir.Node extypePrimitiveAssign(ref ir.Exp exp, ir.Node dest, ir.Exp src)
+	{
+		auto lp = cast(ir.PrimitiveType) dest;
+		auto rp = cast(ir.PrimitiveType) getExpType(src, current);
+
+		if (lp is null || rp is null) {
+			throw new CompilerError(exp.location, "cannot implicitly reconcile binary expression types.");
+		}
+
+		if (typesEqual(lp, rp)) {
+			return lp;
+		}
+
+		auto leftsz = size(lp.type);
+		auto rightsz = size(rp.type);
+
+		bool leftUnsigned = isUnsigned(lp.type);
+		bool rightUnsigned = isUnsigned(rp.type);
+		if (leftUnsigned != rightUnsigned && !fitsInPrimitive(lp, src) && rightsz >= leftsz) {
+			throw new CompilerError(exp.location, "binary operation with both signed and unsigned operands.");
+		}
+
+		if (rightsz > leftsz && !fitsInPrimitive(lp, src)) {
+			throw new CompilerError(exp.location, format("cannot implicitly cast '%s' to '%s'.", to!string(rp.type), to!string(lp.type)));
+		}
+		
+		
+		exp = buildCastSmart(lp, exp);
+
+		return lp;
+	}
+
 	/// Given a binary operation between two primitive types, make the casts explicit.
 	ir.Node extypePrimitive(ir.BinOp bin, ir.Node left, ir.Node right)
 	{
+		if (bin.op == ir.BinOp.Type.Assign) {
+			return extypePrimitiveAssign(bin.right, left, bin.right);
+		}
 		auto lp = cast(ir.PrimitiveType) left;
 		auto rp = cast(ir.PrimitiveType) right;
 
@@ -576,39 +612,6 @@ public:
 		}
 
 		throw new CompilerError(exp.location, "pointers may only be implicitly converted to void*.");
-	}
-
-	/// Modify exp to become a cast to dest from src, if required.
-	ir.Node extypePrimitiveAssign(ref ir.Exp exp, ir.Node dest, ir.Exp src)
-	{
-		auto lp = cast(ir.PrimitiveType) dest;
-		auto rp = cast(ir.PrimitiveType) getExpType(src, current);
-
-		if (lp is null || rp is null) {
-			throw new CompilerError(exp.location, "cannot implicitly reconcile binary expression types.");
-		}
-
-		if (typesEqual(lp, rp)) {
-			return lp;
-		}
-
-		auto leftsz = size(lp.type);
-		auto rightsz = size(rp.type);
-
-		bool leftUnsigned = isUnsigned(lp.type);
-		bool rightUnsigned = isUnsigned(rp.type);
-		if (leftUnsigned != rightUnsigned && !fitsInPrimitive(lp, src) && rightsz >= leftsz) {
-			throw new CompilerError(exp.location, "binary operation with both signed and unsigned operands.");
-		}
-
-		if (rightsz > leftsz && !fitsInPrimitive(lp, src)) {
-			throw new CompilerError(exp.location, format("cannot implicitly cast '%s' to '%s'.", to!string(rp.type), to!string(lp.type)));
-		}
-		
-		
-		exp = buildCastSmart(lp, exp);
-
-		return lp;
 	}
 
 	override void transform(ir.Module m)
