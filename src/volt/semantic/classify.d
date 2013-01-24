@@ -105,6 +105,15 @@ bool mutableIndirection(ir.Type t)
 	}
 }
 
+bool isLValue(ir.Exp exp)
+{
+	switch (exp.nodeType) {
+	case ir.NodeType.ExpReference: return true;
+	default:
+		return false;
+	}
+}
+
 bool isImmutable(ir.Type type)
 {
 	if (type is null) {
