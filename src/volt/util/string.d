@@ -104,6 +104,7 @@ void[] unescape(T)(Location location, const T[] s)
 				case 'r': encode(output, '\r'); break;
 				case 't': encode(output, '\t'); break;
 				case 'v': encode(output, '\v'); break;
+				case '0': encode(output, 0); break;
 				case 'x':
 					escaping = false;
 					hexing = true;
