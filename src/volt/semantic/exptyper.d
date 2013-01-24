@@ -135,6 +135,9 @@ public:
 
 	ir.Node extype(ref ir.Type left, ref ir.Exp right, bool inVariable = false)
 	{
+		/* This is needed so we can refer to things like TypeReference's base
+		 * without updating the type in the IR.
+		 */
 		ir.Type localLeft = left;
 
 		auto asExpRef = cast(ir.ExpReference) right;
