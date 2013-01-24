@@ -166,17 +166,16 @@ public:
 	Type base;
 
 public:
-	this(State state, ir.PointerType pt)
+	static PointerType fromIr(State state, ir.PointerType pt)
 	{
-		base = state.fromIr(pt.base);
+		auto base = state.fromIr(pt.base);
 
-		auto voidT = cast(VoidType) base;
-		if (voidT !is null) {
-			llvmType = LLVMPointerType(LLVMInt8Type(), 0);
-		} else {
-			llvmType = LLVMPointerType(base.llvmType, 0);
+		// Pointers can via structs reference themself.
+		auto test = pt.mangledName in state.typeStore;
+		if (test !is null) {
+			return cast(PointerType)*test;
 		}
-		super(state, pt, false, llvmType);
+		return new PointerType(state, pt, base);
 	}
 
 	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
@@ -185,6 +184,20 @@ public:
 			throw CompilerPanic(cnst.location, "can only fromConstant null pointers.");
 		}
 		return LLVMConstPointerNull(llvmType);
+	}
+
+private:
+	this(State state, ir.PointerType pt, Type base)
+	{
+		this.base = base;
+
+		auto voidT = cast(VoidType) base;
+		if (voidT !is null) {
+			llvmType = LLVMPointerType(LLVMInt8Type(), 0);
+		} else {
+			llvmType = LLVMPointerType(base.llvmType, 0);
+		}
+		super(state, pt, false, llvmType);
 	}
 }
 
@@ -332,15 +345,32 @@ public:
 class FunctionType : CallableType
 {
 public:
-	this(State state, ir.FunctionType ft)
+	static FunctionType fromIr(State state, ir.FunctionType ft)
 	{
-		ret = state.fromIr(ft.ret);
+		Type ret;
+		Type[] params;
 
+		ret = state.fromIr(ft.ret);
+		foreach(int i, param; ft.params) {
+			params ~= state.fromIr(param.type);
+		}
+
+		// FunctionPointers can via structs reference themself.
+		auto test = ft.mangledName in state.typeStore;
+		if (test !is null) {
+			return cast(FunctionType)*test;
+		}
+		return new FunctionType(state, ft, ret, params);
+	}
+
+private:
+	this(State state, ir.FunctionType ft, Type ret, Type[] params)
+	{
 		LLVMTypeRef[] args;
 		args.length = ft.params.length + ft.hiddenParameter;
 
-		foreach(int i, param; ft.params) {
-			auto type = state.fromIr(param.type);
+		this.ret = ret;
+		foreach(int i, type; params) {
 			if (type.passByVal) {
 				args[i] = LLVMPointerType(type.llvmType, 0);
 			} else {
@@ -372,6 +402,9 @@ public:
 public:
 	this(State state, ir.DelegateType dt)
 	{
+		llvmType = LLVMStructCreateNamed(state.context, dt.mangledName);
+		super(state, dt, true, llvmType);
+
 		ret = state.fromIr(dt.ret);
 
 		LLVMTypeRef[] args;
@@ -390,10 +423,7 @@ public:
 		mt[voidPtrIndex] = state.voidPtrType.llvmType;
 		mt[funcIndex] = llvmCallPtrType;
 
-		llvmType = LLVMStructCreateNamed(state.context, dt.mangledName);
 		LLVMStructSetBody(llvmType, mt, false);
-
-		super(state, dt, true, llvmType);
 	}
 }
 
@@ -409,12 +439,12 @@ public:
 public:
 	this(State state, ir.Struct irType)
 	{
-		uint index;
-		LLVMTypeRef[] mt;
-
-		/// @todo check packing.
 		llvmType = LLVMStructCreateNamed(state.context, irType.mangledName);
 		super(state, irType, true, llvmType);
+
+		/// @todo check packing.
+		uint index;
+		LLVMTypeRef[] mt;
 
 		foreach(m; irType.members.nodes) {
 			auto var = cast(ir.Variable)m;
@@ -432,7 +462,6 @@ public:
 			mt ~= t.llvmType;
 			types ~= t;
 		}
-
 
 		LLVMStructSetBody(llvmType, mt, false);
 	}
@@ -488,7 +517,7 @@ Type fromIr(State state, ir.Type irType)
 			return new .PrimitiveType(state, pt);
 	case PointerType:
 		auto pt = cast(ir.PointerType)irType;
-		return new .PointerType(state, pt);
+		return .PointerType.fromIr(state, pt);
 	case ArrayType:
 		auto at = cast(ir.ArrayType)irType;
 		return new .ArrayType(state, at);
@@ -497,7 +526,7 @@ Type fromIr(State state, ir.Type irType)
 		return new .StaticArrayType(state, sat);
 	case FunctionType:
 		auto ft = cast(ir.FunctionType)irType;
-		return new .FunctionType(state, ft);
+		return .FunctionType.fromIr(state, ft);
 	case DelegateType:
 		auto dt = cast(ir.DelegateType)irType;
 		return new .DelegateType(state, dt);
