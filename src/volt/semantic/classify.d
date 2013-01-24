@@ -312,7 +312,7 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 		case Long:
 			return true;
 		case Ulong:
-			return false;
+			return l >= 0;
 		case Float:
 			return l >= float.min && l <= float.max;
 		case Double:
