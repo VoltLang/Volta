@@ -428,8 +428,17 @@ public:
 				extype(array.base, rightExp ? bin.right : bin.left);
 				result = array;
 			}
+		} else if (left.nodeType == ir.NodeType.StorageType) {
+			auto asStorage = cast(ir.StorageType) left;
+			assert(asStorage !is null);
+			if (asStorage.type == ir.StorageType.Kind.Scope && !mutableIndirection(right)) {
+				bin.right = buildCastSmart(bin.right.location, asStorage, bin.right);
+				result = asStorage;
+			} else {
+				throw new CompilerError(bin.location, "cannot implicitly convert non storage type to storage type.");
+			}
 		} else if ((left.nodeType == ir.NodeType.PointerType && right.nodeType != ir.NodeType.PointerType) ||
-                   (left.nodeType != ir.NodeType.PointerType && right.nodeType == ir.NodeType.PointerType)) {
+				   (left.nodeType != ir.NodeType.PointerType && right.nodeType == ir.NodeType.PointerType)) {
 			if (!isValidPointerArithmeticOperation(bin.op)) {
 				throw new CompilerError(bin.location, "invalid operation for pointer arithmetic.");
 			}
@@ -450,15 +459,6 @@ public:
 				throw new CompilerError(bin.location, format("pointer arithmetic cannot be performed with '%s'.", to!string(prim.type)));
 			}
 			result = pointer;
-		} else if (left.nodeType == ir.NodeType.StorageType) {
-			auto asStorage = cast(ir.StorageType) left;
-			assert(asStorage !is null);
-			if (asStorage.type == ir.StorageType.Kind.Scope && !mutableIndirection(right)) {
-				bin.right = buildCastSmart(bin.right.location, asStorage, bin.right);
-				result = asStorage;
-			} else {
-				throw new CompilerError(bin.location, "cannot implicitly convert non storage type to storage type.");
-			}
 		} else {
 			auto lt = cast(ir.Type) left;
 			auto rt = cast(ir.Type) right;
