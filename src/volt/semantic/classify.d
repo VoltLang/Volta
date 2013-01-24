@@ -108,7 +108,15 @@ bool mutableIndirection(ir.Type t)
 bool isLValue(ir.Exp exp)
 {
 	switch (exp.nodeType) {
+	case ir.NodeType.IdentifierExp:
 	case ir.NodeType.ExpReference: return true;
+	case ir.NodeType.Postfix:
+		auto asPostfix = cast(ir.Postfix) exp;
+		assert(asPostfix !is null);
+		if (asPostfix.op == ir.Postfix.Op.Index) {
+			return isLValue(asPostfix.child);
+		}
+		return asPostfix.op == ir.Postfix.Op.Identifier;
 	default:
 		return false;
 	}
