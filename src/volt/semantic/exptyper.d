@@ -330,6 +330,7 @@ public:
 					/// This is not the world's greatest error message. @todo
 					throw new CompilerError(right.location, "cannot convert mutably indirectable type to scope.");
 				} else {
+					extype(asStorageType.base, right, inVariable);
 					right = buildCastSmart(asStorageType, right);
 					return asStorageType;
 				}
