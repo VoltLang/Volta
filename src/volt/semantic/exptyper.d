@@ -1224,6 +1224,7 @@ public:
 		throw CompilerPanic(i.location, format("unhandled identifier type '%s'.", i.value));
 	}
 
+	/// This function tries to inserts this to lookups that are implicitly using a this var.
 	override Status visit(ref ir.Exp e, ir.ExpReference reference)
 	{
 		ir.Scope _; 
@@ -1235,7 +1236,7 @@ public:
 				return Continue;
 			}
 
-			auto store = _class.myScope.lookup(reference.idents[$-1], reference.location);
+			auto store = _class.myScope.lookupAsThisScope(reference.idents[$-1], reference.location);
 			if (store is null) {
 				return Continue;
 			}
