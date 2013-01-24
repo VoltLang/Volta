@@ -46,6 +46,8 @@ public:
 		Type type;
 		auto llvmFunc = state.getFunctionValue(fn, type);
 		auto llvmType = type.llvmType;
+		auto ct = cast(CallableType)type;
+		assert(ct !is null);
 
 		if (fn._body !is null) {
 			state.currentFall = true;
@@ -57,10 +59,16 @@ public:
 				if (p.name is null)
 					continue;
 
+				auto t = state.fromIr(fn.type.params[i].type);
 				auto v = LLVMGetParam(llvmFunc, i);
-				Type t;
-				auto a = state.getVariableValue(p, t);
-				LLVMBuildStore(state.builder, v, a);
+
+				if (t.passByVal) {
+					LLVMAddAttribute(v, LLVMAttribute.ByVal);
+					state.makeByValVariable(p, v);
+				} else {
+					auto a = state.getVariableValue(p, t);
+					LLVMBuildStore(state.builder, v, a);
+				}
 			}
 
 			ir.Variable thisVar = fn.thisHiddenParameter;

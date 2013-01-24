@@ -23,9 +23,10 @@ class Type
 public:
 	ir.Type irType;
 	LLVMTypeRef llvmType;
+	bool passByVal; // Pass by value to functions.
 
 protected:
-	this(State state, ir.Type irType, LLVMTypeRef llvmType)
+	this(State state, ir.Type irType, bool passByVal, LLVMTypeRef llvmType)
 	in {
 		assert(state !is null);
 		assert(irType !is null);
@@ -38,6 +39,7 @@ protected:
 		state.typeStore[irType.mangledName] = this;
 
 		this.irType = irType;
+		this.passByVal = passByVal;
 		this.llvmType = llvmType;
 	}
 
@@ -56,7 +58,7 @@ class VoidType : Type
 public:
 	this(State state, ir.PrimitiveType pt)
 	{
-		super(state, pt, LLVMVoidTypeInContext(state.context));
+		super(state, pt, false, LLVMVoidTypeInContext(state.context));
 	}
 }
 
@@ -125,7 +127,7 @@ public:
 			throw CompilerPanic(pt.location, "PrmitiveType.Void not handled");
 		}
 
-		super(state, pt, llvmType);
+		super(state, pt, false, llvmType);
 	}
 
 	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
@@ -174,7 +176,7 @@ public:
 		} else {
 			llvmType = LLVMPointerType(base.llvmType, 0);
 		}
-		super(state, pt, llvmType);
+		super(state, pt, false, llvmType);
 	}
 
 	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
@@ -205,7 +207,7 @@ public:
 	this(State state, ir.ArrayType at)
 	{
 		llvmType = LLVMStructCreateNamed(state.context, at.mangledName);
-		super(state, at, llvmType);
+		super(state, at, true, llvmType);
 
 		// Avoid creating void[] arrays turn them into ubyte[] instead.
 		base = state.fromIr(at.base);
@@ -302,7 +304,7 @@ public:
 
 		length = cast(uint)sat.length;
 		llvmType = LLVMArrayType(base.llvmType, length);
-		super(state, sat, llvmType);
+		super(state, sat, true, llvmType);
 	}
 }
 
@@ -314,11 +316,13 @@ abstract class CallableType : Type
 public:
 	Type ret;
 	LLVMTypeRef llvmCallType;
+	ir.CallableType ct;
 
 public:
-	this(State state, ir.CallableType ct, LLVMTypeRef llvmType)
+	this(State state, ir.CallableType ct, bool passByVal, LLVMTypeRef llvmType)
 	{
-		super(state, ct, llvmType);
+		this.ct = ct;
+		super(state, ct, passByVal, llvmType);
 	}
 }
 
@@ -337,7 +341,11 @@ public:
 
 		foreach(int i, param; ft.params) {
 			auto type = state.fromIr(param.type);
-			args[i] = type.llvmType;
+			if (type.passByVal) {
+				args[i] = LLVMPointerType(type.llvmType, 0);
+			} else {
+				args[i] = type.llvmType;
+			}
 		}
 
 		if (ft.hiddenParameter) {
@@ -346,7 +354,7 @@ public:
 
 		llvmCallType = LLVMFunctionType(ret.llvmType, args, ft.hasVarArgs);
 		llvmType = LLVMPointerType(llvmCallType, 0);
-		super(state, ft, llvmType);
+		super(state, ft, false, llvmType);
 	}
 }
 
@@ -385,7 +393,7 @@ public:
 		llvmType = LLVMStructCreateNamed(state.context, dt.mangledName);
 		LLVMStructSetBody(llvmType, mt, false);
 
-		super(state, dt, llvmType);
+		super(state, dt, true, llvmType);
 	}
 }
 
@@ -406,7 +414,7 @@ public:
 
 		/// @todo check packing.
 		llvmType = LLVMStructCreateNamed(state.context, irType.mangledName);
-		super(state, irType, llvmType);
+		super(state, irType, true, llvmType);
 
 		foreach(m; irType.members.nodes) {
 			auto var = cast(ir.Variable)m;

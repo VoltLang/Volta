@@ -866,15 +866,7 @@ void handleCreateDelegate(State state, ir.Postfix postfix, Value result)
 
 void handleCall(State state, ir.Postfix postfix, Value result)
 {
-	LLVMValueRef[] llvmArgs;
-
-	llvmArgs.length = postfix.arguments.length;
-
-	foreach(int i, arg; postfix.arguments) {
-		auto v = new Value();
-		state.getValue(arg, v);
-		llvmArgs[i] = v.value;
-	}
+	auto llvmArgs = new LLVMValueRef[postfix.arguments.length];
 
 	// Special case create delegate children to save
 	// a bunch of created delegates in the LLVM IR.
@@ -892,6 +884,7 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 		state.getValueAnyForm(postfix.child, result);
 	}
 
+	auto ct = cast(CallableType)result.type;
 	auto ft = cast(FunctionType)result.type;
 	auto dt = cast(DelegateType)result.type;
 
@@ -915,6 +908,19 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 		result.value = func;
 	} else {
 		throw CompilerPanic(postfix.location, "can not call this thing");
+	}
+	assert(ct !is null);
+
+	foreach(int i, arg; postfix.arguments) {
+		auto v = new Value();
+		state.getValueAnyForm(arg, v);
+		// Dealing with varargs and pass LLVMAttribute.ByVal.
+		if (ct.ct.params.length > i && v.type.passByVal) {
+			makePointer(state, v);
+		} else {
+			makeNonPointer(state, v);
+		}
+		llvmArgs[i] = v.value;
 	}
 
 	result.value = LLVMBuildCall(state.builder, result.value, llvmArgs);

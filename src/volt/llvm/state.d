@@ -220,6 +220,15 @@ public:
 		return v;
 	}
 
+	void makeByValVariable(ir.Variable var, LLVMValueRef v)
+	{
+		auto k = *cast(size_t*)&var;
+		assert((k in valueStore) is null);
+
+		auto type = this.fromIr(var.type);
+		valueStore[k] = Store(v, type);
+	}
+
 	void makeThisVariable(ir.Variable var, LLVMValueRef v)
 	{
 		auto k = *cast(size_t*)&var;
