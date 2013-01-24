@@ -103,6 +103,8 @@ body
 		case TokenType.Shared:
 		case TokenType.Immutable:
 		case TokenType.Inout:
+		case TokenType.Nothrow:
+		case TokenType.Pure:
 			tlb.nodes ~= [parseAttribute(ts, inModule)];
 			break;
 		case TokenType.Version:
@@ -479,6 +481,15 @@ ir.Attribute parseAttribute(TokenStream ts, bool inModule = false)
 		case "property":
 			attr.kind = ir.Attribute.Kind.Property;
 			break;
+		case "trusted":
+			attr.kind = ir.Attribute.Kind.Trusted;
+			break;
+		case "system":
+			attr.kind = ir.Attribute.Kind.System;
+			break;
+		case "safe":
+			attr.kind = ir.Attribute.Kind.Safe;
+			break;
 		default:
 			throw new CompilerError(nameTok.location, "expected 'disable' or 'property'.");
 		}
@@ -502,6 +513,8 @@ ir.Attribute parseAttribute(TokenStream ts, bool inModule = false)
 	case TokenType.Shared: attr.kind = ir.Attribute.Kind.Shared; break;
 	case TokenType.Immutable: attr.kind = ir.Attribute.Kind.Immutable; break;
 	case TokenType.Inout: attr.kind = ir.Attribute.Kind.Inout; break;
+	case TokenType.Nothrow: attr.kind = ir.Attribute.Kind.NoThrow; break;
+	case TokenType.Pure: attr.kind = ir.Attribute.Kind.Pure; break;
 	default:
 		assert(false);
 	}
