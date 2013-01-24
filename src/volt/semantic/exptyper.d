@@ -1013,7 +1013,8 @@ public:
 				identExp = cast(ir.IdentifierExp) currentP.child;
 				break;
 			} else {
-				throw CompilerPanic(currentP.location, "strange postfix child");
+				// For instance typeid(int).mangledName.
+				return Continue;
 			}
 		}
 
