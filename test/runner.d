@@ -79,7 +79,6 @@ void main(string[] args)
 		listDir("aggregate", "*test_*.v", &addTest);
 		listDir("exps", "*test_*.v", &addTest);
 		listDir("lower", "*test_*.v", &addTest);
-		listDir("internal", "*test_*.v", &addTest);
 		listDir("types", "*test_*.v", &addTest);
 		listDir("bugs", "*test_*.v", &addTest);
 	}

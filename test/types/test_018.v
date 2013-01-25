@@ -1,7 +1,7 @@
 //T compiles:yes
 //T retval:36
 // Tests mutable indirection detection.
-module test_001;
+module test_018;
 
 int a()
 {
