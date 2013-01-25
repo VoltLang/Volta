@@ -303,9 +303,9 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 			c._string = c._string[0 .. $-1];
 		}
 		if (base == ir.PrimitiveType.Kind.Float) {
-			c._float = to!float(primary._string);
+			c._float = to!float(c._string);
 		} else {
-			c._double = to!double(primary._string);
+			c._double = to!double(c._string);
 		}
 		c.type = new ir.PrimitiveType(base);
 		c.type.location = primary.location;
