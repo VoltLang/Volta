@@ -5,6 +5,7 @@ module volt.semantic.classify;
 import std.range : array, retro;
 import std.conv : to;
 import std.stdio : format;
+import std.math : isNaN;
 
 import ir = volt.ir.ir;
 
@@ -283,52 +284,91 @@ bool isValidPointerArithmeticOperation(ir.BinOp.Type t)
 
 bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 {
-	if (e.nodeType != ir.NodeType.Constant) {
+	auto constant = cast(ir.Constant) e;
+	if (constant is null) {
 		return false;
 	}
-	auto asConstant = cast(ir.Constant) e;
-	assert(asConstant !is null);
 
-	if (isIntegral(t.type)) {
-		auto constantPrim = cast(ir.PrimitiveType) asConstant.type;
-		if (constantPrim is null) {
-			return false;
+	auto primitive = cast(ir.PrimitiveType) constant.type;
+	if (primitive is null) {
+		return false;
+	}
+
+	with (ir.PrimitiveType.Kind) {
+		bool inUnsignedRange(ulong max)
+		{
+			if (primitive.type == Int) {
+				return constant._int > 0 && cast(ulong) constant._int <= max;
+			} else if (primitive.type == Uint) {
+				return constant._uint <= max;
+			} else if (primitive.type == Long) {
+				return constant._long > 0 && cast(ulong) constant._long <= max;
+			} else if (primitive.type == Ulong) {
+				return constant._ulong <= max;
+			} else if (primitive.type == Float || primitive.type == Double) {
+				return false;
+			} else {
+				assert(false);
+			}
 		}
-		long l;
-		switch (constantPrim.type) with (ir.PrimitiveType.Kind) {
-		case Int: l = asConstant._int; break;
-		case Uint: l = asConstant._int; break;
-		case Long: l = asConstant._int; break;
-		case Ulong: return t.type == Ulong;
-		default: return false;
+
+		bool inSignedRange(long min, long max)
+		{
+			if (primitive.type == Int) {
+				return constant._int > min && constant._int <= max;
+			} else if (primitive.type == Uint) {
+				return constant._uint <= cast(uint) max;
+			} else if (primitive.type == Long) {
+				return constant._long > min && constant._long <= max;
+			} else if (primitive.type == Ulong) {
+				return constant._ulong <= cast(ulong) max;
+			} else if (primitive.type == Float || primitive.type == Double) {
+				return false;
+			} else {
+				assert(false);
+			}
 		}
-		switch (t.type) with (ir.PrimitiveType.Kind) {
-		case Ubyte, Char:
-			return l >= ubyte.min && l <= ubyte.max;
-		case Byte:
-			return l >= byte.min && l <= byte.max;
-		case Ushort:
-			return l >= ushort.min && l <= ushort.max;
-		case Short:
-			return l >= short.min && l <= short.max;
-		case Uint:
-			return l >= uint.min && l <= uint.max;
-		case Int:
-			return l >= int.min && l <= int.max;
-		case Long:
-			return true;
-		case Ulong:
-			assert(false);
-		case Float:
-			return l >= float.min && l <= float.max;
-		case Double:
-			return l >= double.min && l <= double.max;
+
+		bool inFPRange(T)()
+		{
+			if (primitive.type == Int) {
+				return !isNaN(cast(T)constant._int);
+			} else if (primitive.type == Uint) {
+				return !isNaN(cast(T)constant._uint);
+			} else if (primitive.type == Long) {
+				return !isNaN(cast(T)constant._long);
+			} else if (primitive.type == Ulong) {
+				return !isNaN(cast(T)constant._ulong);
+			} else if (primitive.type == Float) {
+				return !isNaN(cast(T)constant._float);
+			} else if (primitive.type == Double) {
+				return !isNaN(cast(T)constant._double);
+			} else {
+				assert(false);
+			}
+		}
+
+		alias inFPRange!float inFloatRange;
+		alias inFPRange!double inDoubleRange;
+
+		switch (t.type) {
+		case Ubyte, Char: return inUnsignedRange(ubyte.max);
+		case Byte: return inSignedRange(byte.min, byte.max);
+		case Ushort: return inUnsignedRange(ushort.max);
+		case Short: return inSignedRange(ushort.min, ushort.max);
+		case Uint: return inUnsignedRange(uint.max);
+		case Int: return inSignedRange(int.min, int.max);
+		case Ulong: return inUnsignedRange(ulong.max);
+		case Long: return inSignedRange(ulong.min, ulong.max);
+		case Float: return inFloatRange();
+		case Double: return inDoubleRange();
+		case Void: return false;
 		default:
 			return false;
 		}
-	} else {
-		return false;
 	}
+
+	assert(false);
 }
 
 /**
