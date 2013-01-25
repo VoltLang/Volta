@@ -216,6 +216,7 @@ public:
 		long _long;
 		ulong _ulong;
 		float _float;
+		double _double;
 		bool _bool;
 		void* _pointer;
 	}
