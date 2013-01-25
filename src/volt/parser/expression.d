@@ -334,18 +334,24 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 			}
 			c._string = c._string[0 .. $-1];
 		}
+
+		int intBase = 10;
+		if (c._string.length > 2 && c._string[0 .. 2] == "0x") {
+			c._string = c._string[2 .. $];
+			intBase = 16;
+		}
 		switch (base) with (ir.PrimitiveType.Kind) {
 		case Int:
-			c._int = to!int(c._string);
+			c._int = to!int(c._string, intBase);
 			break;
 		case Uint:
-			c._uint = to!uint(c._string);
+			c._uint = to!uint(c._string, intBase);
 			break;
 		case Long:
-			c._long = to!long(c._string);
+			c._long = to!long(c._string, intBase);
 			break;
 		case Ulong:
-			c._ulong = to!ulong(c._string);
+			c._ulong = to!ulong(c._string, intBase);
 			break;
 		default:
 			assert(false);
