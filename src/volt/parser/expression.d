@@ -169,7 +169,7 @@ ir.Exp unaryToExp(intir.UnaryExp unary)
 			exp.type = asStaticArray.base;
 			auto constant = new ir.Constant();
 			constant.location = unary.newExp.location;
-			constant._uint = asStaticArray.length;
+			constant._uint = cast(uint) asStaticArray.length;
 			constant.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Uint);
 			exp.index = constant;
 			exp.isArray = true;
