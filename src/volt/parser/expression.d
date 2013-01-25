@@ -291,8 +291,23 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		break;
 	case intir.PrimaryExp.Type.FloatLiteral:
 		auto c = new ir.Constant();
-		c._float = to!float(primary._string);
-		c.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Float);
+		auto base = ir.PrimitiveType.Kind.Double;
+		c._string = primary._string;
+		while (c._string[$-1] == 'f' || c._string[$-1] == 'F' ||
+			   c._string[$-1] == 'L') {
+			if (c._string[$-1] == 'f' || c._string[$-1] == 'F') {
+				base = ir.PrimitiveType.Kind.Float;
+			} else if (c._string[$-1] == 'L') {
+				base = ir.PrimitiveType.Kind.Double;
+			}
+			c._string = c._string[0 .. $-1];
+		}
+		if (base == ir.PrimitiveType.Kind.Float) {
+			c._float = to!float(primary._string);
+		} else {
+			c._double = to!double(primary._string);
+		}
+		c.type = new ir.PrimitiveType(base);
 		c.type.location = primary.location;
 		exp = c;
 		break;
