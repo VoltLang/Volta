@@ -132,8 +132,14 @@ public:
 
 	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
 	{
-		if (floating)
-			throw CompilerPanic(cnst.location, "Can not handle float literals");
+		if (floating) {
+			if (bits == 32) {
+				return LLVMConstReal(llvmType, cnst._float);
+			} else {
+				assert(bits == 64);
+				return LLVMConstReal(llvmType, cnst._double);
+			}
+		}
 
 		long val;
 		if (boolean) {
