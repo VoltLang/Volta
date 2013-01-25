@@ -332,17 +332,17 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 		bool inFPRange(T)()
 		{
 			if (primitive.type == Int) {
-				return !isNaN(cast(T)constant._int);
+				return constant._int > T.min && constant._int <= T.max;
 			} else if (primitive.type == Uint) {
-				return !isNaN(cast(T)constant._uint);
+				return constant._uint > T.min && constant._uint <= T.max;
 			} else if (primitive.type == Long) {
-				return !isNaN(cast(T)constant._long);
+				return constant._long > T.min && constant._long <= T.max;
 			} else if (primitive.type == Ulong) {
-				return !isNaN(cast(T)constant._ulong);
+				return constant._ulong > T.min && constant._ulong <= T.max;
 			} else if (primitive.type == Float) {
-				return !isNaN(cast(T)constant._float);
+				return constant._float > T.min && constant._float <= T.max;
 			} else if (primitive.type == Double) {
-				return !isNaN(cast(T)constant._double);
+				return constant._double > T.min && constant._double <= T.max;
 			} else {
 				assert(false);
 			}
