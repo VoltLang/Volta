@@ -4,6 +4,7 @@ module volt.ir.util;
 
 import std.conv : to;
 
+import volt.interfaces;
 import volt.token.location;
 import ir = volt.ir.ir;
 
@@ -246,7 +247,7 @@ ir.Constant buildConstantInt(Location loc, int value)
 {
 	auto c = new ir.Constant();
 	c.location = loc;
-	c.value = to!string(value);
+	c._int = value;
 	c.type = buildInt(loc);
 
 	return c;
@@ -259,9 +260,27 @@ ir.Constant buildConstantBool(Location loc, bool val)
 {
 	auto c = new ir.Constant();
 	c.location = loc;
-	c.value = val ? "true" : "false";
+	c._bool = val;
 	c.type = buildBool(loc);
 
+	return c;
+}
+
+/**
+ * Gets a size_t Constant and fills it with a value.
+ */
+ir.Constant buildSizeTConstant(Location loc, Settings settings, int val)
+{
+	auto c = new ir.Constant();
+	c.location = loc;
+	auto prim = settings.getSizeT(loc);
+	// Uh, I assume just c._uint = val would work, but I can't test it here, so just be safe.
+	if (prim.type == ir.PrimitiveType.Kind.Ulong) {
+		c._ulong = val;
+	} else {
+		c._uint = val;
+	}
+	c.type = prim;
 	return c;
 }
 

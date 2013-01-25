@@ -290,11 +290,17 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 	assert(asConstant !is null);
 
 	if (isIntegral(t.type)) {
-		long l;
-		try {
-			l = to!long(asConstant.value);
-		} catch (Throwable t) {
+		auto constantPrim = cast(ir.PrimitiveType) asConstant.type;
+		if (constantPrim is null) {
 			return false;
+		}
+		long l;
+		switch (constantPrim.type) with (ir.PrimitiveType.Kind) {
+		case Int: l = asConstant._int; break;
+		case Uint: l = asConstant._int; break;
+		case Long: l = asConstant._int; break;
+		case Ulong: return t.type == Ulong;
+		default: return false;
 		}
 		switch (t.type) with (ir.PrimitiveType.Kind) {
 		case Ubyte, Char:
@@ -312,7 +318,7 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 		case Long:
 			return true;
 		case Ulong:
-			return l >= 0;
+			assert(false);
 		case Float:
 			return l >= float.min && l <= float.max;
 		case Double:

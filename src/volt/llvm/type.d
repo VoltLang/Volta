@@ -137,15 +137,15 @@ public:
 
 		long val;
 		if (boolean) {
-			if (cnst.value == "true")
+			if (cnst._bool)
 				val = 1;
 		} else if (signed) {
-			val = to!long(cnst.value);
+			val = cnst._long;
 		} else if (bits == 8) {
 			assert(cnst.arrayData.length == 1);
 			val = (cast(ubyte[])cnst.arrayData)[0];
 		} else {
-			val = cast(long)to!ulong(cnst.value);
+			val = cnst._ulong;
 		}
 
 		return LLVMConstInt(llvmType, val, signed);
@@ -180,7 +180,7 @@ public:
 
 	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
 	{
-		if (cnst.value != "null") {
+		if (!cnst.isNull) {
 			throw CompilerPanic(cnst.location, "can only fromConstant null pointers.");
 		}
 		return LLVMConstPointerNull(llvmType);

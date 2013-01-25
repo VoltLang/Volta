@@ -1274,7 +1274,18 @@ public:
 
 	override Status visit(ir.Constant constant)
 	{
-		wf(constant.value);
+		auto asPrim = cast(ir.PrimitiveType) constant.type;
+		if (asPrim !is null) {
+			switch (asPrim.type) with (ir.PrimitiveType.Kind) {
+			case Uint: wf(constant._uint); break;
+			case Int: wf(constant._int); break;
+			case Long: wf(constant._long); break;
+			case Ulong: wf(constant._ulong); break;
+			default: wf(constant._string); break;
+			}
+		} else {
+			wf(constant._string);
+		}
 		return ContinueParent;
 	}
 
@@ -1793,7 +1804,8 @@ protected:
 			mStream.writef("%s", s);
 		}
 	}
-
+	void wf(int i) { mStream.writef("%s", i); }
+	void wf(long l) { mStream.writef("%s", l); }
 	void wf(size_t i) { mStream.writef("%s", i); }
 	void wfln(string str) { wf(str); ln(); }
 	void ln() { mStream.writefln(); }

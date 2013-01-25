@@ -164,7 +164,7 @@ ir.Exp createAllocDgCall(ir.Variable allocDgVar, Settings settings, Location loc
 
 	auto countConst = new ir.Constant();
 	countConst.location = location;
-	countConst.value = "0";
+	countConst._ulong = 0;
 	countConst.type = settings.getSizeT(location);
 
 	auto pfixCall = new ir.Postfix();

@@ -5,6 +5,7 @@ module volt.semantic.typeidreplacer;
 import std.string : format;
 
 import ir = volt.ir.ir;
+import volt.ir.util;
 
 import volt.exceptions;
 import volt.interfaces;
@@ -97,15 +98,12 @@ public:
 		_typeid.type.mangledName = mangle(null, _typeid.type);
 
 		int typeSize = size(_typeid.location, settings, _typeid.type);
-		auto typeConstant = new ir.Constant();
-		typeConstant.location = _typeid.location;
-		typeConstant.value = to!string(typeSize);
-		typeConstant.type = settings.getSizeT(_typeid.location);
+		auto typeConstant = buildSizeTConstant(_typeid.location, settings, typeSize);
 
 		int typeTag = _typeid.type.nodeType;
 		auto typeTagConstant = new ir.Constant();
 		typeTagConstant.location = _typeid.location;
-		typeTagConstant.value = to!string(typeTag);
+		typeTagConstant._int = typeTag;
 		typeTagConstant.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
 		typeTagConstant.type.location = _typeid.location;
 
@@ -116,14 +114,14 @@ public:
 		if (_scope !is null) {
 			parentNames = getParentScopeNames(_scope);
 		}
-		mangledNameConstant.value = mangle(parentNames, _typeid.type);
-		mangledNameConstant.arrayData = cast(void[]) mangledNameConstant.value;
+		mangledNameConstant._string = mangle(parentNames, _typeid.type);
+		mangledNameConstant.arrayData = cast(void[]) mangledNameConstant._string;
 		mangledNameConstant.type = new ir.ArrayType(new ir.PrimitiveType(ir.PrimitiveType.Kind.Char));
 
 		bool mindirection = mutableIndirection(_typeid.type);
 		auto mindirectionConstant = new ir.Constant();
 		mindirectionConstant.location = _typeid.location;
-		mindirectionConstant.value = mindirection ? "true" : "false";
+		mindirectionConstant._bool = mindirection;
 		mindirectionConstant.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
 		mindirectionConstant.type.location = _typeid.location;
 

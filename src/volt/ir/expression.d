@@ -209,7 +209,18 @@ public:
 class Constant : Exp
 {
 public:
-	string value;
+	union
+	{
+		int _int;
+		uint _uint;
+		long _long;
+		ulong _ulong;
+		float _float;
+		bool _bool;
+		void* _pointer;
+	}
+	string _string;
+	bool isNull;  // Turns out checking for non-truth can be hard.
 	void[] arrayData;
 	Type type;
 

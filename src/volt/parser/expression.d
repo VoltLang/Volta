@@ -169,7 +169,7 @@ ir.Exp unaryToExp(intir.UnaryExp unary)
 			exp.type = asStaticArray.base;
 			auto constant = new ir.Constant();
 			constant.location = unary.newExp.location;
-			constant.value = to!string(asStaticArray.length);
+			constant._uint = asStaticArray.length;
 			constant.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Uint);
 			exp.index = constant;
 			exp.isArray = true;
@@ -235,28 +235,29 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		break;
 	case intir.PrimaryExp.Type.Null:
 		auto c = new ir.Constant();
-		c.value = "null";
+		c._pointer = null;
 		c.type = new ir.NullType();
+		c.isNull = true;
 		c.type.location = primary.location;
 		exp = c;
 		break;
 	case intir.PrimaryExp.Type.Dollar:
 		auto c = new ir.Constant();
-		c.value = "$";
+		c._string = "$";
 		c.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Uint);
 		c.type.location = primary.location;
 		exp = c;
 		break;
 	case intir.PrimaryExp.Type.True:
 		auto c = new ir.Constant();
-		c.value = "true";
+		c._bool = true;
 		c.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
 		c.type.location = primary.location;
 		exp = c;
 		break;
 	case intir.PrimaryExp.Type.False:
 		auto c = new ir.Constant();
-		c.value = "false";
+		c._bool = false;
 		c.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
 		c.type.location = primary.location;
 		exp = c;
@@ -272,53 +273,69 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		break;
 	case intir.PrimaryExp.Type.StringLiteral:
 		auto c = new ir.Constant();
-		c.value = primary._string;
+		c._string = primary._string;
 		c.type = new ir.ArrayType(new ir.PrimitiveType(ir.PrimitiveType.Kind.Char));
 		c.type.location = primary.location;
-		assert((c.value[$-1] == '"' || c.value[$-1] == '`') && c.value.length >= 3);
-		c.arrayData = unescapeString(primary.location, c.value[1 .. $-1]);
+		assert((c._string[$-1] == '"' || c._string[$-1] == '`') && c._string.length >= 3);
+		c.arrayData = unescapeString(primary.location, c._string[1 .. $-1]);
 		exp = c;
 		break;
 	case intir.PrimaryExp.Type.CharLiteral:
 		auto c = new ir.Constant();
-		c.value = primary._string;
+		c._string = primary._string;
 		c.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Char);
 		c.type.location = primary.location;
-		assert(c.value[$-1] == '\'' && c.value.length >= 3);
-		c.arrayData = unescapeString(primary.location, c.value[1 .. $-1]);
+		assert(c._string[$-1] == '\'' && c._string.length >= 3);
+		c.arrayData = unescapeString(primary.location, c._string[1 .. $-1]);
 		exp = c;
 		break;
 	case intir.PrimaryExp.Type.FloatLiteral:
 		auto c = new ir.Constant();
-		c.value = primary._string;
+		c._float = to!float(primary._string);
 		c.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Float);
 		c.type.location = primary.location;
 		exp = c;
 		break;
 	case intir.PrimaryExp.Type.IntegerLiteral:
 		auto c = new ir.Constant();
-		c.value = primary._string;
+		c._string = primary._string;
 		auto base = ir.PrimitiveType.Kind.Int;
 
 		// If there are any suffixes, change the type to match.
-		while (c.value[$-1] == 'u' || c.value[$-1] == 'U' ||
-			   c.value[$-1] == 'L') {
-			if (c.value[$-1] == 'u' || c.value[$-1] == 'U') {
+		while (c._string[$-1] == 'u' || c._string[$-1] == 'U' ||
+			   c._string[$-1] == 'L') {
+			if (c._string[$-1] == 'u' || c._string[$-1] == 'U') {
 				if (base == ir.PrimitiveType.Kind.Long) {
 					base = ir.PrimitiveType.Kind.Ulong;
 				} else {
 					base = ir.PrimitiveType.Kind.Uint;
 				}
-			} else if (c.value[$-1] == 'L') {
+			} else if (c._string[$-1] == 'L') {
 				if (base == ir.PrimitiveType.Kind.Uint) {
 					base = ir.PrimitiveType.Kind.Ulong;
 				} else {
 					base = ir.PrimitiveType.Kind.Long;
 				}
 			}
-			c.value = c.value[0 .. $-1];
+			c._string = c._string[0 .. $-1];
 		}
-
+		switch (base) with (ir.PrimitiveType.Kind) {
+		case Int:
+			c._int = to!int(c._string);
+			break;
+		case Uint:
+			c._uint = to!uint(c._string);
+			break;
+		case Long:
+			c._long = to!long(c._string);
+			break;
+		case Ulong:
+			c._ulong = to!ulong(c._string);
+			break;
+		default:
+			assert(false);
+		}
+		c._string = "";
 		c.type = new ir.PrimitiveType(base);
 		c.type.location = primary.location;
 		exp = c;
