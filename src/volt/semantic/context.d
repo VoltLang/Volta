@@ -74,6 +74,10 @@ public:
 
 	override Status enter(ir.Class c)
 	{
+		if (c.name is null) {
+			throw new CompilerError(c.location, "anonymous interfaces not supported");
+		}
+
 		current.addType(c, c.name);
 		c.myScope = newContext(c, c.name);
 
@@ -84,6 +88,10 @@ public:
 
 	override Status enter(ir._Interface i)
 	{
+		if (i.name is null) {
+			throw new CompilerError(i.location, "anonymous interfaces not supported");
+		}
+
 		current.addType(i, i.name);
 		i.myScope = newContext(i, i.name);
 
@@ -92,6 +100,10 @@ public:
 
 	override Status enter(ir.Struct s)
 	{
+		if (s.name is null) {
+			throw new CompilerError(s.location, "anonymous structs not supported (yet)");
+		}
+
 		current.addType(s, s.name);
 		s.myScope = newContext(s, s.name);
 
@@ -102,8 +114,12 @@ public:
 
 	override Status enter(ir.Function fn)
 	{
-		current.addFunction(fn, fn.name);
+		if (fn.name !is null) {
+			current.addFunction(fn, fn.name);
+		}
+
 		fn.myScope = newContext(fn, fn.name);
+
 		foreach (var; fn.type.params) {
 			if (var.name !is null) {
 				fn.myScope.addValue(var, var.name);
@@ -133,7 +149,6 @@ public:
 
 		return Continue;
 	}
-
 
 	override Status leave(ir.Class c)
 	{
