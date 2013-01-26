@@ -184,7 +184,9 @@ public:
 	 */
 	void addScope(Node n, Scope s, string name)
 	in {
+		if (name is null) asm { int 3; }
 		assert(n !is null);
+		assert(name !is null);
 	}
 	body {
 		errorOn(n, name);
@@ -204,7 +206,12 @@ public:
 	 *   None.
 	 */
 	void addType(Node n, string name)
-	{
+	in {
+		if (name is null) asm { int 3; }
+		assert(n !is null);
+		assert(name !is null);
+	}
+	body {
 		errorOn(n, name);
 		symbols[name] = new Store(this, n, name, Store.Kind.Type);
 	}
@@ -219,7 +226,12 @@ public:
 	 *   None.
 	 */
 	void addValue(Node n, string name)
-	{
+	in {
+		if (name is null) asm { int 3; }
+		assert(n !is null);
+		assert(name !is null);
+	}
+	body {
 		errorOn(n, name);
 		symbols[name] = new Store(this, n, name, Store.Kind.Value);
 	}
@@ -235,7 +247,12 @@ public:
 	 *   None.
 	 */
 	void addFunction(Function fn, string name)
-	{
+	in {
+		if (name is null) asm { int 3; }
+		assert(fn !is null);
+		assert(name !is null);
+	}
+	body {
 		auto ret = name in symbols;
 
 		if (ret is null) {
@@ -258,7 +275,13 @@ public:
 	 *   None.
 	 */
 	void addStore(Store s, string name)
-	{
+	in {
+		if (name is null) asm { int 3; }
+		assert(s !is null);
+		assert(s.node !is null);
+		assert(name !is null);
+	}
+	body {
 		errorOn(s.node, name);
 		symbols[name] = s;
 	}
@@ -282,7 +305,12 @@ public:
 
 private:
 	void errorOn(Node n, string name)
-	{
+	in {
+		if (name is null) asm { int 3; }
+		assert(n !is null);
+		assert(name !is null);
+	}
+	body {
 		auto ret = name in symbols;
 		if (ret is null)
 			return;
