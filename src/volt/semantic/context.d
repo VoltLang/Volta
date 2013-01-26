@@ -105,7 +105,9 @@ public:
 		current.addFunction(fn, fn.name);
 		fn.myScope = newContext(fn, fn.name);
 		foreach (var; fn.type.params) {
-			fn.myScope.addValue(var, var.name);
+			if (var.name !is null) {
+				fn.myScope.addValue(var, var.name);
+			}
 		}
 
 		if (thisStack.length == 0) {
