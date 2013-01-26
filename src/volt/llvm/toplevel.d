@@ -45,6 +45,9 @@ public:
 	{
 		Type type;
 		auto llvmFunc = state.getFunctionValue(fn, type);
+		if (fn.type.linkage == ir.Linkage.Windows) {
+			LLVMSetFunctionCallConv(llvmFunc, LLVMCallConv.X86Stdcall);
+		}
 		auto llvmType = type.llvmType;
 		auto ct = cast(CallableType)type;
 		assert(ct !is null);
