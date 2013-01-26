@@ -94,6 +94,7 @@ public:
 			signed = true;
 			goto case Ushort;
 		case Ushort:
+		case Wchar:
 			bits = 16;
 			llvmType = LLVMInt16TypeInContext(state.context);
 			break;
@@ -101,6 +102,7 @@ public:
 			signed = true;
 			goto case Uint;
 		case Uint:
+		case Dchar:
 			bits = 32;
 			llvmType = LLVMInt32TypeInContext(state.context);
 			break;

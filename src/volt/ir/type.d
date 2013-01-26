@@ -92,6 +92,8 @@ public:
 		Bool = TokenType.Bool,
 
 		Char = TokenType.Char,
+		Wchar = TokenType.Wchar,
+		Dchar = TokenType.Dchar,
 		Byte = TokenType.Byte,
 		Ubyte = TokenType.Ubyte,
 		Short = TokenType.Short,

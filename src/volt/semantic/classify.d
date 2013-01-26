@@ -25,8 +25,10 @@ int size(ir.PrimitiveType.Kind kind)
 	case Ubyte: return 1;
 	case Short: return 2;
 	case Ushort: return 2;
+	case Wchar: return 2;
 	case Int: return 4;
 	case Uint: return 4;
+	case Dchar: return 4;
 	case Long: return 8;
 	case Ulong: return 8;
 	case Float: return 4;
@@ -210,6 +212,8 @@ bool isIntegral(ir.PrimitiveType.Kind kind)
 		case Long:
 		case Ulong:
 		case Char:
+		case Wchar:
+		case Dchar:
 			return true;
 		default:
 			return false;
@@ -354,9 +358,9 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 		switch (t.type) {
 		case Ubyte, Char: return inUnsignedRange(ubyte.max);
 		case Byte: return inSignedRange(byte.min, byte.max);
-		case Ushort: return inUnsignedRange(ushort.max);
+		case Ushort, Wchar: return inUnsignedRange(ushort.max);
 		case Short: return inSignedRange(ushort.min, ushort.max);
-		case Uint: return inUnsignedRange(uint.max);
+		case Uint, Dchar: return inUnsignedRange(uint.max);
 		case Int: return inSignedRange(int.min, int.max);
 		case Ulong: return inUnsignedRange(ulong.max);
 		case Long: return inSignedRange(ulong.min, ulong.max);

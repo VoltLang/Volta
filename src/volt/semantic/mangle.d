@@ -177,6 +177,12 @@ void manglePrimitiveType(ir.PrimitiveType t, ref string mangledString)
 	case Char:
 		mangledString ~= "a";
 		break;
+	case Wchar:
+		mangledString ~= "u";
+		break;
+	case Dchar:
+		mangledString ~= "w";
+		break;
 	case Double:
 		mangledString ~= "d";
 		break;

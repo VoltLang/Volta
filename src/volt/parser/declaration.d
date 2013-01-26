@@ -86,7 +86,7 @@ ir.Type parseType(TokenStream ts)
 	case TokenType.Void, TokenType.Char, TokenType.Byte, TokenType.Ubyte,
 		 TokenType.Short, TokenType.Ushort, TokenType.Int, TokenType.Uint,
 		 TokenType.Long, TokenType.Ulong, TokenType.Float, TokenType.Double,
-		 TokenType.Real, TokenType.Bool:
+		 TokenType.Real, TokenType.Bool, TokenType.Wchar, TokenType.Dchar:
 		base = parsePrimitiveType(ts);
 		break;
 	case TokenType.Auto, TokenType.Const, TokenType.Immutable,
