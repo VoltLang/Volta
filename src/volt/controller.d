@@ -240,7 +240,6 @@ protected:
 
 		string bcLinker = "llvm-link";
 		string compiler = "llc";
-		string assembler = "llvm-mc";
 		string linker = "gcc";
 		string cmd;
 		int ret;
@@ -276,15 +275,9 @@ protected:
 			return 0;
 		}
 
-
-		cmd = format("%s -o \"%s\" \"%s\"", compiler, as, bc);
+		cmd = format("%s -filetype=obj -o \"%s\" \"%s\"", compiler, obj, bc);
 		version (darwin)
 			cmd ~= " -disable-cfi";
-		ret = system(cmd);
-		if (ret)
-			return ret;
-
-		cmd = format("%s -filetype=obj -o \"%s\" %s", assembler, obj, asInputFiles);
 		ret = system(cmd);
 		if (ret)
 			return ret;
@@ -293,7 +286,6 @@ protected:
 		if (settings.noLink) {
 			return 0;
 		}
-
 
 		cmd = format("%s -o \"%s\" %s", linker, of, objInputFiles);
 		ret = system(cmd);
