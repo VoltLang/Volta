@@ -89,7 +89,7 @@ public:
 		} else if (fn.name == "main" &&
 		           fn.type.linkage != ir.Linkage.C) {
 			fn.mangledName = "vmain";
-		} else if (fn.type.linkage == ir.Linkage.C) {
+		} else if (fn.type.linkage == ir.Linkage.C || fn.type.linkage == ir.Linkage.Windows) {
 			fn.mangledName = fn.name;
 		} else {
 			fn.mangledName = mangle(parentNames, fn);
