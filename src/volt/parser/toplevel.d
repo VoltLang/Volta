@@ -82,6 +82,12 @@ body
 		case TokenType.Enum:
 			tlb.nodes ~= [parseEnum(ts)];
 			break;
+		case TokenType.Const:
+			if (ts.lookahead(1).type == TokenType.OpenParen) {
+				goto default;
+			} else {
+				goto case;
+			}
 		case TokenType.Extern:
 		case TokenType.Align:
 		case TokenType.At:
@@ -95,7 +101,6 @@ body
 		case TokenType.Synchronized:
 		case TokenType.Override:
 		case TokenType.Abstract:
-		case TokenType.Const:
 		case TokenType.Auto:
 		case TokenType.Scope:
 		case TokenType.Global:
