@@ -431,7 +431,8 @@ void handleCast(State state, Location loc, Type newType, Value result)
 	    (oldTypePtr !is null || oldTypeFn !is null))
 		return handleCastPointer(state, loc, newType, result);
 
-	throw CompilerPanic("Unhandlable cast.");
+	string emsg = format("Unhandlable cast from %s to %s", oldType.irType.nodeType, newType.irType.nodeType);
+	throw CompilerPanic(loc, emsg );
 }
 
 /**
