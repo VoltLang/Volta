@@ -148,13 +148,13 @@ public:
 	override Status leave(ir.Import n) { leaveNode(n); return Continue; }
 	override Status enter(ir.Unittest n) { enterNode(n); return Continue; }
 	override Status leave(ir.Unittest n) { leaveNode(n); return Continue; }
-	override Status enter(ir.Class n) { enterNode(n); return Continue; }
+	override Status enter(ir.Class n) { enterNode(n); visitNamed(n); return Continue; }
 	override Status leave(ir.Class n) { leaveNode(n); return Continue; }
 	override Status enter(ir._Interface n) { enterNode(n); return Continue; }
 	override Status leave(ir._Interface n) { leaveNode(n); return Continue; }
-	override Status enter(ir.Struct n) { enterNode(n); return Continue; }
+	override Status enter(ir.Struct n) { enterNode(n); visitNamed(n); return Continue; }
 	override Status leave(ir.Struct n) { leaveNode(n); return Continue; }
-	override Status enter(ir.Variable n) { enterNode(n); return Continue; }
+	override Status enter(ir.Variable n) { enterNode(n); visitNamed(n); return Continue; }
 	override Status leave(ir.Variable n) { leaveNode(n); return Continue; }
 	override Status enter(ir.Enum n) { enterNode(n); return Continue; }
 	override Status leave(ir.Enum n) { leaveNode(n); return Continue; }
@@ -167,6 +167,8 @@ public:
 
 	override Status visit(ir.EmptyTopLevel n) { visitNode(n); return Continue; }
 	override Status visit(ir.QualifiedName n) { visitNode(n); return Continue; }
+
+
 	override Status visit(ir.Identifier n)
 	{
 		ln();
@@ -236,7 +238,7 @@ public:
 	override Status leave(ir.FunctionType n) { leaveNode(n); return Continue; }
 	override Status enter(ir.DelegateType n) { enterNode(n); return Continue; }
 	override Status leave(ir.DelegateType n) { leaveNode(n); return Continue; }
-	override Status enter(ir.Function n) { enterNode(n); return Continue; }
+	override Status enter(ir.Function n) { enterNode(n); visitNamed(n); return Continue; }
 	override Status leave(ir.Function n) { leaveNode(n); return Continue; }
 	override Status enter(ir.StorageType n) { enterNode(n); return Continue; }
 	override Status leave(ir.StorageType n) { leaveNode(n); return Continue; }
@@ -250,6 +252,7 @@ public:
 	override Status visit(ir.NullType n) { visitNode(n); return Continue; }
 	override Status visit(ir.PrimitiveType n) { visitNode(n); return Continue; }
 	override Status visit(ir.TypeReference n) { visitRef(n, n.type); return Continue; }
+
 
 	/*
 	 * Expression Nodes.
@@ -329,13 +332,46 @@ protected:
 
 		ln();
 		if (r !is null) {
-		twf(["-> ", ir.nodeToString(r), " ", getNodeAddressString(r)]);
+			twf(["-> ", ir.nodeToString(r), " ", getNodeAddressString(r)]);
+			visitNamed(r);
 		} else {
 			twf("-> null");
 		}
 		mLastIndent = mIndent;
 
 		leaveNode(node);
+	}
+
+	void visitNamed(ir.Node n)
+	{
+		switch (n.nodeType) with (ir.NodeType) {
+		case Function:
+			auto asFn = cast(ir.Function)n;
+			return visitNames(asFn.name, asFn.mangledName);
+		case Variable:
+			auto asVar = cast(ir.Variable)n;
+			return visitNames(asVar.name, asVar.mangledName);
+		case Class:
+			auto asClass = cast(ir.Class)n;
+			return visitName(asClass.name);
+		case Struct:
+			auto asStruct = cast(ir.Struct)n;
+			return visitName(asStruct.name);
+		default:
+		}
+	}
+
+	void visitNames(string name, string mangledName)
+	{
+		wf(" \"", name, "\"");
+		if (mangledName !is null) {
+			wf(" \"", mangledName, "\"");
+		}
+	}
+
+	void visitName(string name)
+	{
+		wf(" \"", name, "\"");
 	}
 
 	void visitNode(ir.Node node)
