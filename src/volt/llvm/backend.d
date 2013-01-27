@@ -81,7 +81,15 @@ public:
 		if (mDump)
 			writefln("Compiling module");
 
-		visitor.compile(m);
+		try {
+			visitor.compile(m);
+		} catch (Throwable t) {
+			if (mDump) {
+				writefln("Caught \"%s\" dumping module:", t.classinfo.name);
+				LLVMDumpModule(mod);
+			}
+			throw t;
+		}
 
 		if (mDump) {
 			writefln("Dumping module");
