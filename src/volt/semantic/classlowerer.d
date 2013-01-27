@@ -676,7 +676,10 @@ public:
 		methodLookup.identifier.value = "_" ~ to!string(store.functions[0].vtableIndex);
 		methodLookup.child = vtable;
 
-		auto newRef = buildExpReference(asRef.location, asVar, asRef.idents);
+		ir.Exp newRef = buildExpReference(asRef.location, asVar, asRef.idents);	
+		if (!fromPointer) {
+			newRef = buildAddrOf(asRef.location, newRef);
+		}
 		auto _cast = new ir.Unary(new ir.PointerType(new ir.PrimitiveType(ir.PrimitiveType.Kind.Void)), newRef);
 		_cast.location = postfix.location;
 
