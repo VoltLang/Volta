@@ -699,6 +699,9 @@ public:
 	 */
 	override Status visit(ir.ExpReference expref)
 	{
+		if (expref.decl !is null) {
+			accept(expref.decl, this);
+		}
 		if (expref.idents[0] != "this" || expref.decl !is null || currentFunctionScope is null ||
 			passNumber == 0) {
 			return Continue;
