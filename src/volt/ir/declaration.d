@@ -82,6 +82,9 @@ public:
 	/// What storage this variable will be stored in. 
 	Storage storage;
 
+	// For exported symbols.
+	Linkage linkage;
+
 	bool isWeakLink;   ///< Only for global variables.
 
 	bool isRef;  ///< Will only true for some function parameters.
