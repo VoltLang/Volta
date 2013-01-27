@@ -420,13 +420,7 @@ ir.Type getPostfixIdentifierType(ir.Postfix postfix, ir.Scope currentScope)
 	retrieveScope(type, postfix, _scope, _class, emsg);
 
 	_lookup:
-	auto store = _scope.lookupOnlyThisScope(postfix.identifier.value, postfix.location);
-	// If this scope came from a class and it has a parent, check the parent as well.
-	if (store is null && _class !is null && _class.parentClass !is null) {
-		_class = _class.parentClass;
-		_scope = _class.myScope;
-		goto _lookup;
-	}
+	auto store = _scope.lookupAsThisScope(postfix.identifier.value, postfix.location);
   
 	if (store is null) {
 		throw new CompilerError(postfix.identifier.location, emsg);
