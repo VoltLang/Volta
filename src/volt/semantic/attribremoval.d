@@ -255,6 +255,24 @@ protected:
 			case Local:
 				d.storage = ir.Variable.Storage.Local;
 				break;
+			case LinkageVolt:
+				d.linkage = ir.Linkage.Volt;
+				break;
+			case LinkageC:
+				d.linkage = ir.Linkage.C;
+				break;
+			case LinkageCPlusPlus:
+				d.linkage = ir.Linkage.CPlusPlus;
+				break;
+			case LinkageWindows:
+				d.linkage = ir.Linkage.Windows;
+				break;
+			case LinkagePascal:
+				d.linkage = ir.Linkage.Pascal;
+				break;
+			case LinkageSystem:
+				d.linkage = ir.Linkage.System;
+				break;
 			default:
 				// Warn?
 			}
