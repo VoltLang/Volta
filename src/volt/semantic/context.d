@@ -131,11 +131,12 @@ public:
 		}
 
 		/// @todo not when the function is static
+		auto t = thisStack[$-1];
 
 		auto tr = new ir.TypeReference();
-		tr.location = thisStack[$-1].location;
+		tr.location = t.location;
 		tr.names ~= "__this";
-		tr.type = thisStack[$-1];
+		tr.type = t;
 
 		auto thisVar = new ir.Variable();
 		thisVar.location = fn.location;
@@ -143,7 +144,7 @@ public:
 		thisVar.name = "this";
 		thisVar.mangledName = "this";
 
-		fn.myScope.addValue(thisVar, thisVar.name);
+		// Don't add it, it will get added by the variable code.
 		fn.thisHiddenParameter = thisVar;
 		fn.type.hiddenParameter = true;
 

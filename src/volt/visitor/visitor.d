@@ -931,9 +931,17 @@ Visitor.Status acceptFunction(ir.Function fn, Visitor av)
 		return parentContinue(status);
 	}
 
-	status = accept(fn.type, av);
-	if (status == VisitorStop)
-		return status;
+	if (fn.type !is null) {
+		status = accept(fn.type, av);
+		if (status == VisitorStop)
+			return status;
+	}
+
+	if (fn.thisHiddenParameter !is null) {
+		status = accept(fn.thisHiddenParameter, av);
+		if (status == VisitorStop)
+			return status;
+	}
 
 	if (fn.inContract !is null) {
 		status = accept(fn.inContract, av);
