@@ -135,8 +135,12 @@ public:
 
 	override Status visit(ir.TypeReference u)
 	{
+		if (u.type !is null)
+			return Continue;
+
 		ir.Scope lookupScope = current;
 		ir.Type theType;
+
 		foreach (i, name; u.names) {
 			if (i == u.names.length - 1) {
 				theType = typeLookup(lookupScope, name, u.location);
