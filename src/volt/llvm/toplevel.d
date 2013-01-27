@@ -114,6 +114,9 @@ public:
 			break;
 		case Local:
 		case Global:
+			if (var.isExtern)
+				break;
+
 			LLVMValueRef init;
 			auto v = state.getVariableValue(var, type);
 
