@@ -648,9 +648,9 @@ public:
 		if (store is null || store.functions.length == 0) {
 			return Continue;
 		}
-		assert(store.functions.length == 1);
+		assert(store.functions.length >= 1);
 		assert(asClass.vtableStruct !is null);
-		if (store.functions[0].vtableIndex == -1) {
+		if (store.functions[$-1].vtableIndex == -1) {
 			throw CompilerPanic(postfix.location, "bad vtable index on class method.");
 		}
 
