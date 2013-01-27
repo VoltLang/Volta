@@ -87,6 +87,8 @@ public:
 
 	bool isWeakLink;   ///< Only for global variables.
 
+	bool isExtern; ///< Only for global variables.
+
 	bool isRef;  ///< Will only true for some function parameters.
 
 
