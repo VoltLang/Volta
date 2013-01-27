@@ -23,10 +23,10 @@ class Type
 public:
 	ir.Type irType;
 	LLVMTypeRef llvmType;
-	bool passByVal; // Pass by value to functions.
+	bool structType; // Is the type a LLVM struct.
 
 protected:
-	this(State state, ir.Type irType, bool passByVal, LLVMTypeRef llvmType)
+	this(State state, ir.Type irType, bool structType, LLVMTypeRef llvmType)
 	in {
 		assert(state !is null);
 		assert(irType !is null);
@@ -39,7 +39,7 @@ protected:
 		state.typeStore[irType.mangledName] = this;
 
 		this.irType = irType;
-		this.passByVal = passByVal;
+		this.structType = structType;
 		this.llvmType = llvmType;
 	}
 
@@ -379,11 +379,7 @@ private:
 
 		this.ret = ret;
 		foreach(int i, type; params) {
-			if (type.passByVal) {
-				args[i] = LLVMPointerType(type.llvmType, 0);
-			} else {
-				args[i] = type.llvmType;
-			}
+			args[i] = type.llvmType;
 		}
 
 		if (ft.hiddenParameter) {

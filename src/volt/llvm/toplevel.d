@@ -64,14 +64,8 @@ public:
 
 				auto t = state.fromIr(fn.type.params[i].type);
 				auto v = LLVMGetParam(llvmFunc, i);
-
-				if (t.passByVal) {
-					LLVMAddAttribute(v, LLVMAttribute.ByVal);
-					state.makeByValVariable(p, v);
-				} else {
-					auto a = state.getVariableValue(p, t);
-					LLVMBuildStore(state.builder, v, a);
-				}
+				auto a = state.getVariableValue(p, t);
+				LLVMBuildStore(state.builder, v, a);
 			}
 
 			ir.Variable thisVar = fn.thisHiddenParameter;

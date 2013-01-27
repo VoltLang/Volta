@@ -918,12 +918,7 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 	foreach(int i, arg; postfix.arguments) {
 		auto v = new Value();
 		state.getValueAnyForm(arg, v);
-		// Dealing with varargs and pass LLVMAttribute.ByVal.
-		if (ct.ct.params.length > i && v.type.passByVal) {
-			makePointer(state, v);
-		} else {
-			makeNonPointer(state, v);
-		}
+		makeNonPointer(state, v);
 		llvmArgs[i] = v.value;
 	}
 
