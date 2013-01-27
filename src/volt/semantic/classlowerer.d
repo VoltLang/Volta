@@ -463,7 +463,7 @@ public:
 	}
 
 	/// Turn type into a pointer to a lowered class struct if it's currently a Class. 
-	void replaceTypeIfNeeded(ref ir.Type type)
+	void replaceTypeIfNeeded(ref ir.Type type, bool createPointer = true)
 	{
 		auto asTR = cast(ir.TypeReference) type;
 		if (asTR is null) {
@@ -473,7 +473,7 @@ public:
 		if (asClass is null) {
 			auto asStruct = cast(ir.Struct) asTR.type;
 			if (asStruct !is null && asStruct.loweredNode !is null && asStruct.loweredNode.nodeType == ir.NodeType.Class) {
-				type = new ir.PointerType(asTR);
+				type = createPointer ? new ir.PointerType(asTR) : asTR;
 				type.location = asTR.location;
 			}
 			return;
@@ -484,7 +484,7 @@ public:
 		asTR.type = cast(ir.Type) n;
 		assert(asTR.type !is null);
 		asTR.names[0] = asTR.type.mangledName;
-		type = new ir.PointerType(asTR);
+		type = createPointer ? new ir.PointerType(asTR) : asTR;
 		type.location = asTR.location;
 	}
 
@@ -528,7 +528,7 @@ public:
 	override Status enter(ir.Variable var)
 	{
 		super.enter(var);
-		replaceTypeIfNeeded(var.type);
+		replaceTypeIfNeeded(var.type, var.name != "this");
 		return Continue;
 	}
 
