@@ -132,7 +132,7 @@ public:
 			}
 		}
 
-		if (v.linkage != ir.Linkage.C || v.linkage != ir.Linkage.Windows) {
+		if (v.linkage != ir.Linkage.C && v.linkage != ir.Linkage.Windows) {
 			v.mangledName = mangle(parentNames, v);
 		} else {
 			v.mangledName = v.name;
