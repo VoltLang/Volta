@@ -273,6 +273,9 @@ protected:
 			case LinkageSystem:
 				d.linkage = ir.Linkage.System;
 				break;
+			case Extern:
+				d.isExtern = true;
+				break;
 			default:
 				// Warn?
 			}
