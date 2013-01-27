@@ -625,14 +625,20 @@ public:
 			return Continue;
 		}
 
-		auto asPointer = cast(ir.PointerType) asVar.type;
-		if (asPointer is null) {
-			return Continue;
-		}
-
-		auto asTR = cast(ir.TypeReference) asPointer.base;
+		ir.TypeReference asTR;
+		asTR = cast(ir.TypeReference) asVar.type;
+		bool fromPointer;
 		if (asTR is null) {
-			return Continue;
+			fromPointer = true;
+			auto asPointer = cast(ir.PointerType) asVar.type;
+			if (asPointer is null) {
+				return Continue;
+			}
+
+			asTR = cast(ir.TypeReference) asPointer.base;
+			if (asTR is null) {
+				return Continue;
+			}
 		}
 		
 		ir.Class asClass;
