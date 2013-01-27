@@ -38,6 +38,7 @@ protected:
 	string[] mIncludes;
 	string[] mSourceFiles;
 	string[] mBitCodeFiles;
+	string[] mObjectFiles;
 	ir.Module[string] mModules;
 
 public:
@@ -128,6 +129,8 @@ public:
 			mSourceFiles ~= file;
 		} else if (endsWith(file, ".bc")) {
 			mBitCodeFiles ~= file;
+		} else if (endsWith(file, ".o", ".obj")) {
+			mObjectFiles ~= file;
 		} else {
 			auto str = format("unknown file type %s", file);
 			throw new CompilerError(str);
@@ -235,6 +238,9 @@ protected:
 		string bcInputFiles;
 		string asInputFiles;
 		string objInputFiles;
+		foreach (objectFile; mObjectFiles) {
+			objInputFiles ~= objectFile ~ " ";
+		}
 
 		string bc, as, obj, of;
 
