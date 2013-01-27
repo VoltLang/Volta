@@ -142,7 +142,6 @@ public:
 		thisVar.location = fn.location;
 		thisVar.type = tr;
 		thisVar.name = "this";
-		thisVar.mangledName = "this";
 
 		// Don't add it, it will get added by the variable code.
 		fn.thisHiddenParameter = thisVar;
