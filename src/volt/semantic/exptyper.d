@@ -379,6 +379,9 @@ public:
 			if (auto p = handleNull(left, bin.right, right)) {
 				return p;
 			}
+			if (auto p = propertyToCallIfNeeded(bin.location, bin.right, current, postfixStack)) {
+				right = p.ret;
+			}
 		}
 		
 		if (bin.op == ir.BinOp.Type.AndAnd || bin.op == ir.BinOp.Type.OrOr) {
