@@ -8,6 +8,7 @@ import volt.exceptions;
 import volt.interfaces;
 import volt.visitor.visitor;
 import volt.semantic.lookup : lookup;
+import volt.semantic.util : fillInParentIfNeeded;
 
 
 /**
@@ -170,21 +171,7 @@ public:
 
 	override Status enter(ir.Class c)
 	{
-		if (c.parent !is null) {
-			assert(c.parent.identifiers.length == 1);
-			/// @todo Correct look up.
-			auto store = c.myScope.lookup(c.parent.identifiers[0].value, c.location);
-			if (store is null) {
-				throw new CompilerError(c.parent.location, format("unidentified identifier '%s'.", c.parent));
-			}
-			if (store.node is null || store.node.nodeType != ir.NodeType.Class) {
-				throw new CompilerError(c.parent.location, format("'%s' is not a class.", c.parent));
-			}
-			auto asClass = cast(ir.Class) store.node;
-			assert(asClass !is null);
-			c.parentClass = asClass;
-		}
-
+		fillInParentIfNeeded(c.location, c, c.myScope);
 		verify(c, false);
 		return Continue;
 	}

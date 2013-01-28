@@ -8,6 +8,7 @@ import volt.ir.util : getScopeFromStore, getScopeFromType;
 
 import volt.exceptions;
 import volt.token.location;
+import volt.semantic.util: fillInParentIfNeeded;
 
 
 /**
@@ -256,6 +257,7 @@ bool getClassParentsScope(ir.Scope _scope, out ir.Scope outScope, out ir.Class o
 		auto asClass = cast(ir.Class)node;
 		assert(asClass !is null);
 
+		fillInParentIfNeeded(node.location, asClass, _scope);
 		if (asClass.parentClass is null) {
 			assert(asClass.parent is null);
 			return false;
