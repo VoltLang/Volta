@@ -285,6 +285,7 @@ public:
 	bool hasVarArgs;
 	bool varArgsProcessed;
 	bool isProperty;
+	bool propertyTransformed;
 	// Hi there. Thinking of adding a new field? Add it to the copy constructor, below.
 
 
@@ -302,6 +303,7 @@ public:
 		hasVarArgs = ctype.hasVarArgs;
 		varArgsProcessed = ctype.varArgsProcessed;
 		isProperty = ctype.isProperty;
+		propertyTransformed = ctype.propertyTransformed;
 	}
 }
 

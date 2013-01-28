@@ -35,15 +35,19 @@ void fillInParentIfNeeded(Location loc, ir.Class c, ir.Scope _scope)
 ir.CallableType propertyToCallIfNeeded(Location loc, ref ir.Exp e, ir.Scope current)
 {
 	auto t = getExpType(e, current);
-	ir.CallableType asCallable;
 	if (t.nodeType == ir.NodeType.FunctionType || t.nodeType == ir.NodeType.DelegateType) {
-		asCallable = cast(ir.CallableType) t;
+		auto asCallable = cast(ir.CallableType) t;
+		if (asCallable is null) {
+			return null;
+		}
+		if (asCallable.propertyTransformed) {
+			return null;
+		}
 		if (asCallable.isProperty && asCallable.params.length == 0) {
 			e = buildCall(loc, e, null);
-			t = asCallable.ret;
-		} else {
-			asCallable = null;
+			asCallable.propertyTransformed = true;
+			return asCallable;
 		}
 	}
-	return asCallable;
+	return null;
 }
