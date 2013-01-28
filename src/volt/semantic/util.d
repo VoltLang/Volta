@@ -40,12 +40,9 @@ ir.CallableType propertyToCallIfNeeded(Location loc, ref ir.Exp e, ir.Scope curr
 		if (asCallable is null) {
 			return null;
 		}
-		if (asCallable.propertyTransformed) {
-			return null;
-		}
 		if (asCallable.isProperty && asCallable.params.length == 0) {
-			e = buildCall(loc, e, null);
-			asCallable.propertyTransformed = true;
+			auto postfix = buildCall(loc, e, null);
+			e = postfix;
 			return asCallable;
 		}
 	}

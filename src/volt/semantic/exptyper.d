@@ -53,9 +53,6 @@ public:
 			throw new CompilerError(postfix.location, format("tried to call uncallable type."));
 		}
 
-		// If we're _calling_ it, no need to rewrite it.
-		asFunctionType.propertyTransformed = true;
-
 		if (asFunctionType.isScope && postfix.child.nodeType == ir.NodeType.Postfix) {
 			auto asPostfix = cast(ir.Postfix) postfix.child;
 			auto parentType = getExpType(asPostfix.child, current);
