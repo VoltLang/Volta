@@ -118,27 +118,6 @@ public:
 		}
 	}
 
-	ir.Node handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
-	{
-		if (rightType.nodeType == ir.NodeType.NullType) {
-			auto constant = cast(ir.Constant) right;
-			if (constant is null) {
-				throw CompilerPanic(right.location, "non constant null");
-			}
-			if (left.nodeType == ir.NodeType.PointerType) {
-				constant.type = buildVoidPtr(right.location);
-				right = buildCastSmart(right.location, left, right);
-				return copyTypeSmart(right.location, left);
-			} else if (left.nodeType == ir.NodeType.ArrayType) {
-				right = buildArrayLiteralSmart(right.location, left);
-				return copyTypeSmart(right.location, left);
-			} else {
-				throw new CompilerError(right.location, "can only convert null into pointers currently.");
-			}
-		}
-		return null;
-	}
-
 	ir.Node extype(ref ir.Type left, ref ir.Exp right, bool inVariable = false, bool inCallAndPassingToRef = false)
 	{
 		/* This is needed so we can refer to things like TypeReference's base

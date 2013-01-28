@@ -18,6 +18,7 @@ import volt.semantic.classify;
 import volt.semantic.mangle;
 import volt.semantic.lookup;
 import volt.semantic.newreplacer;
+import volt.semantic.util;
 import volt.token.location;
 
 
@@ -591,6 +592,13 @@ public:
 			throw new CompilerError(unary.location, "no match for constructor (bad number of arguments).");
 		} else if (asClass.userConstructors.length == 0 && unary.argumentList.length > 0) {
 			throw new CompilerError(unary.location, "no user constructor yet arguments supplied.");
+		}
+
+		if (asClass.userConstructors.length > 0) foreach (i, param; asClass.userConstructors[0].type.params) {
+			if (unary.argumentList[i].nodeType == ir.NodeType.Constant) {
+				auto t = getExpType(unary.argumentList[i], asClass.myScope);
+				handleNull(param.type, unary.argumentList[i], t);
+			}
 		}
 
 		exp = createConstructorFromNewExp(unary);
