@@ -18,6 +18,7 @@ import volt.semantic.classify;
 import volt.semantic.userresolver : scopeLookup;
 import volt.semantic.lookup;
 import volt.semantic.typer;
+import volt.semantic.util;
 
 
 /**
@@ -195,14 +196,10 @@ public:
 		}
 
 		// Turn no-arg @property functions into calls.
-		if (t.nodeType == ir.NodeType.FunctionType || t.nodeType == ir.NodeType.DelegateType) {
-			auto asCallable = cast(ir.CallableType) t;
-			if (asCallable.isProperty && asCallable.params.length == 0) {
-				right = buildCall(right.location, right, null);
-				t = asCallable.ret;
-			}
+		auto callable = propertyToCallIfNeeded(right.location, right, current);
+		if (callable !is null) {
+			t = callable.ret;
 		}
-
 
 		// Fill in storage type if the base is null.
 		auto asStorageType = cast(ir.StorageType) left;
@@ -1264,6 +1261,9 @@ public:
 	/// This function tries to inserts this to lookups that are implicitly using a this var.
 	override Status visit(ref ir.Exp e, ir.ExpReference reference)
 	{
+		// Turn references to @property functions into calls.
+		propertyToCallIfNeeded(e.location, e, current);
+
 		ir.Scope _; 
 		ir.Class _class;
 		bool foundClass = current.getFirstClass(_, _class);
