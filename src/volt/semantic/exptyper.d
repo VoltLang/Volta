@@ -33,6 +33,7 @@ public:
 	ir.Module _module;
 	ir.Type functionRet;
 	int pass;
+	ir.Postfix[] postfixStack;
 
 public:
 	this(Settings settings)
@@ -196,7 +197,7 @@ public:
 		}
 
 		// Turn no-arg @property functions into calls.
-		auto callable = propertyToCallIfNeeded(right.location, right, current);
+		auto callable = propertyToCallIfNeeded(right.location, right, current, postfixStack);
 		if (callable !is null) {
 			t = callable.ret;
 		}
@@ -687,12 +688,19 @@ public:
 
 	override Status enter(ir.Postfix p)
 	{
+		postfixStack ~= p;
 		if (pass == 2) {
 			// Ensure semantic correctness.
 			getExpType(p, current);
 			return Continue;
 		}
 		extypePostfix(p);
+		return Continue;
+	}
+
+	override Status leave(ir.Postfix p)
+	{
+		postfixStack = postfixStack[0 .. $-1];
 		return Continue;
 	}
 
@@ -1017,6 +1025,7 @@ public:
 
 	override Status enter(ref ir.Exp e, ir.Postfix p)
 	{
+		postfixStack ~= p;
 		if (pass == 2) {
 			return Continue;
 		}
@@ -1216,6 +1225,12 @@ public:
 		return ContinueParent;
 	}
 
+	override Status leave(ref ir.Exp e, ir.Postfix p)
+	{
+		postfixStack = postfixStack[0 .. $-1];
+		return Continue;
+	}
+
 	override Status visit(ref ir.Exp e, ir.IdentifierExp i)
 	{
 		if (pass == 2) {
@@ -1262,7 +1277,7 @@ public:
 	override Status visit(ref ir.Exp e, ir.ExpReference reference)
 	{
 		// Turn references to @property functions into calls.
-		propertyToCallIfNeeded(e.location, e, current);
+		propertyToCallIfNeeded(e.location, e, current, postfixStack);
 
 		ir.Scope _; 
 		ir.Class _class;
@@ -1346,7 +1361,6 @@ public:
 		return Continue;
 	}
 
-	override Status leave(ref ir.Exp, ir.Postfix) { return Continue; }
 	override Status enter(ref ir.Exp, ir.Unary) { return Continue; }
 	override Status leave(ref ir.Exp, ir.Unary) { return Continue; }
 	override Status enter(ref ir.Exp, ir.BinOp) { return Continue; }

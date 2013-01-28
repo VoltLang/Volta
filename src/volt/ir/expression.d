@@ -196,6 +196,7 @@ public:
 	Exp[] arguments;
 	Identifier identifier;  // op == Identifier
 	ExpReference memberFunction;
+	bool isImplicitPropertyCall;
 
 public:
 	this() { super(NodeType.Postfix); }

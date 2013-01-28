@@ -32,8 +32,12 @@ void fillInParentIfNeeded(Location loc, ir.Class c, ir.Scope _scope)
 
 /// If e is a reference to a no-arg property function, turn it into a call.
 /// Returns: the CallableType called, if any, null otherwise.
-ir.CallableType propertyToCallIfNeeded(Location loc, ref ir.Exp e, ir.Scope current)
+ir.CallableType propertyToCallIfNeeded(Location loc, ref ir.Exp e, ir.Scope current, ir.Postfix[] postfixStack)
 {
+	if (postfixStack.length > 0 && postfixStack[$-1].isImplicitPropertyCall) {
+		return null;
+	}
+
 	auto t = getExpType(e, current);
 	if (t.nodeType == ir.NodeType.FunctionType || t.nodeType == ir.NodeType.DelegateType) {
 		auto asCallable = cast(ir.CallableType) t;
@@ -42,6 +46,7 @@ ir.CallableType propertyToCallIfNeeded(Location loc, ref ir.Exp e, ir.Scope curr
 		}
 		if (asCallable.isProperty && asCallable.params.length == 0) {
 			auto postfix = buildCall(loc, e, null);
+			postfix.isImplicitPropertyCall = true;
 			e = postfix;
 			return asCallable;
 		}
