@@ -285,7 +285,6 @@ public:
 
 				// And test again...
 				if (asClass !is null) {
-					asFunction.vtableIndex = methodsAdded++;
 					myMethods ~= asFunction;
 					assert(asFunction.type.hiddenParameter);
 				}
@@ -297,6 +296,9 @@ public:
 					definedMethods[asFunction.name] = cast(int)methods.length - 1;
 				}
 			}
+		}
+		foreach (i, method; methods) {
+			method.vtableIndex = i;
 		}
 		return methods;
 	}
