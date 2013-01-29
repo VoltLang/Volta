@@ -184,7 +184,6 @@ public:
 	 */
 	void addScope(Node n, Scope s, string name)
 	in {
-		if (name is null) asm { int 3; }
 		assert(n !is null);
 		assert(name !is null);
 	}
@@ -207,7 +206,6 @@ public:
 	 */
 	void addType(Node n, string name)
 	in {
-		if (name is null) asm { int 3; }
 		assert(n !is null);
 		assert(name !is null);
 	}
@@ -227,7 +225,6 @@ public:
 	 */
 	void addValue(Node n, string name)
 	in {
-		if (name is null) asm { int 3; }
 		assert(n !is null);
 		assert(name !is null);
 	}
@@ -248,7 +245,6 @@ public:
 	 */
 	void addFunction(Function fn, string name)
 	in {
-		if (name is null) asm { int 3; }
 		assert(fn !is null);
 		assert(name !is null);
 	}
@@ -276,7 +272,6 @@ public:
 	 */
 	void addStore(Store s, string name)
 	in {
-		if (name is null) asm { int 3; }
 		assert(s !is null);
 		assert(s.node !is null);
 		assert(name !is null);
