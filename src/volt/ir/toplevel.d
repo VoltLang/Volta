@@ -71,13 +71,6 @@ public:
 	Scope myScope;
 
 	/**
-	 * Scope that contains internal symbols.
-	 *
-	 * Runtime functions, lowered types, and so on.
-	 */
-	Scope internalScope;
-
-	/**
 	 * Has phase 1 be started on this module.
 	 */
 	bool hasPhase1;

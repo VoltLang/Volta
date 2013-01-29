@@ -60,7 +60,6 @@ public:
 		// Name
 		string name = m.name.identifiers[$-1].value;
 		m.myScope = current = new ir.Scope(m, name);
-		m.internalScope = new ir.Scope(m, "_" ~ name);
 
 		return Continue;
 	}

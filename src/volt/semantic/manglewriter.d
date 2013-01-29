@@ -28,21 +28,6 @@ public:
 public:
 	override void transform(ir.Module m)
 	{
-		// Mangle the internal symbols.
-		foreach (store; m.internalScope.symbols) {
-			final switch (store.kind) with (ir.Store.Kind) {
-			case Value, Type:
-				accept(store.node, this);
-				break;
-			case Function:
-				assert(store.functions.length == 1);
-				accept(store.functions[0], this);
-				break;
-			case Scope:
-				break;	
-			}
-		}
-
 		parentNames = getParentScopeNames(m.myScope);
 		accept(m, this);
 	}

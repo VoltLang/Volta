@@ -132,7 +132,6 @@ class TypeReference : Type
 public:
 	string[] names;  /// The name of the Type. Filled in the initial parsing.
 	Type type;  /// What Type this refers to. Filled in after parsing sometime.
-	bool isInternal;  /// This TypeReference refers to a type in Module.internalScope.
 
 
 public:

@@ -25,7 +25,6 @@ import volt.token.location;
 class ClassLowerer : NullExpReplaceVisitor, Pass
 {
 public:
-	ir.Scope internalScope;
 	ir.TopLevelBlock internalTLB;
 	ir.Struct[ir.Class] synthesised;
 	string[] parentNames;
@@ -430,7 +429,6 @@ public:
 		foreach (ident; m.name.identifiers) {
 			parentNames ~= ident.value;
 		}
-		internalScope = m.myScope;
 		internalTLB = m.children;
 		passNumber = 0;
 		accept(m, this);
