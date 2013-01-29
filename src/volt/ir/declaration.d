@@ -107,10 +107,6 @@ public:
  * An @p Alias associates names with a @p Type. Once declared, using that name is 
  * as using that @p Type directly.
  *
- * @todo This uses the old Declaration format of multiple names per Alias. 
- * It should probably be changed to be parsed into multiple Alias nodes.
- * Also, we need to support the new alias name = type syntax.
- *
  * @ingroup irNode irDecl
  */
 class Alias : Node
@@ -120,7 +116,7 @@ public:
 
 	/// The @p Type names are associated with.
 	Type type;
-	/// The names to associate with the type. There is at least one.
+	/// The names to associate with the type.
 	string name;
 
 
