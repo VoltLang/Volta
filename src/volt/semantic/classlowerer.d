@@ -299,7 +299,7 @@ public:
 			}
 		}
 		foreach (i, method; methods) {
-			method.vtableIndex = i;
+			method.vtableIndex = cast(int)i;
 		}
 		return methods;
 	}
