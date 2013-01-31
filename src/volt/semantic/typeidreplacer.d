@@ -98,8 +98,8 @@ public:
 
 		_typeid.type.mangledName = mangle(null, _typeid.type);
 
-		int typeSize = size(_typeid.location, lp.settings, _typeid.type);
-		auto typeConstant = buildSizeTConstant(_typeid.location, lp.settings, typeSize);
+		int typeSize = size(_typeid.location, lp, _typeid.type);
+		auto typeConstant = buildSizeTConstant(_typeid.location, lp, typeSize);
 
 		int typeTag = _typeid.type.nodeType;
 		auto typeTagConstant = new ir.Constant();

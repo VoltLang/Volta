@@ -37,7 +37,7 @@ int size(ir.PrimitiveType.Kind kind)
 	}
 }
 
-int size(Location location, Settings settings, ir.Node node)
+int size(Location location, LanguagePass lp, ir.Node node)
 {
 	switch (node.nodeType) with (ir.NodeType) {
 	case PrimitiveType:
@@ -47,23 +47,23 @@ int size(Location location, Settings settings, ir.Node node)
 	case Struct:
 		auto asStruct = cast(ir.Struct) node;
 		assert(asStruct !is null);
-		return structSize(location, settings, asStruct);
+		return structSize(location, lp, asStruct);
 	case Variable:
 		auto asVariable = cast(ir.Variable) node;
 		assert(asVariable !is null);
-		return size(location, settings, asVariable.type);
+		return size(location, lp, asVariable.type);
 	case PointerType, FunctionType:
-		return settings.isVersionSet("V_P64") ? 8 : 4;
+		return lp.settings.isVersionSet("V_P64") ? 8 : 4;
 	case ArrayType:
-		return settings.isVersionSet("V_P64") ? 16 : 8;
+		return lp.settings.isVersionSet("V_P64") ? 16 : 8;
 	case TypeReference:
 		auto asTR = cast(ir.TypeReference) node;
 		assert(asTR !is null);
-		return size(location, settings, asTR.type);
+		return size(location, lp, asTR.type);
 	case StorageType:
 		auto asST = cast(ir.StorageType) node;
 		assert(asST !is null);
-		return size(location, settings, asST.base);
+		return size(location, lp, asST.base);
 	default:
 		throw new CompilerError(location, format("couldn't retrieve size of element: %s", to!string(node.nodeType)));
 	}
@@ -175,7 +175,7 @@ bool isRefVar(ir.Exp exp)
 }
 
 /// Returns the size of a given Struct, in bytes.
-int structSize(Location location, Settings settings, ir.Struct s)
+int structSize(Location location, LanguagePass lp, ir.Struct s)
 {
 	int sizeAccumulator;
 	foreach (node; s.members.nodes) {
@@ -184,7 +184,7 @@ int structSize(Location location, Settings settings, ir.Struct s)
 			continue;
 		}
 
-		sizeAccumulator += size(location, settings, node);
+		sizeAccumulator += size(location, lp, node);
 	}
 	return sizeAccumulator;
 }

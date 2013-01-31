@@ -93,8 +93,8 @@ public:
 		fn.myScope = new ir.Scope(c.myScope, c, fn.name);
 
 		// Object.sizeof
-		int sz = size(c.location, lp.settings, c);
-		auto objSizeof = buildSizeTConstant(c.location, lp.settings, sz);
+		int sz = size(c.location, lp, c);
+		auto objSizeof = buildSizeTConstant(c.location, lp, sz);
 
 		// cast(Object*) malloc(Object.sizeof);
 		auto castExp = createAllocDgCall(allocDgVar, lp, c.location, new ir.TypeReference(c, c.name));

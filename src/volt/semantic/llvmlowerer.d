@@ -92,7 +92,7 @@ public:
 		auto expRef = buildExpReference(loc, fnMove, fnMove.name);
 
 		ir.Exp length;
-		auto typeSize = size(loc, lp.settings, type.base);
+		auto typeSize = size(loc, lp, type.base);
 
 		ir.Exp[] args = [
 			cast(ir.Exp)
