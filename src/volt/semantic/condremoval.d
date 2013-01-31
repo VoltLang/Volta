@@ -18,12 +18,12 @@ import volt.visitor.visitor;
 class ConditionalRemoval : NullVisitor, Pass
 {
 public:
-	Settings settings;
+	LanguagePass lp;
 
 public:
-	this(Settings settings)
+	this(LanguagePass lp)
 	{
-		this.settings = settings;
+		this.lp = lp;
 	}
 
 	override void transform(ir.Module m)
@@ -108,9 +108,9 @@ protected:
 	bool evaluateCondition(ir.Condition c)
 	{
 		if (c.kind == ir.Condition.Kind.Version) {
-			return settings.isVersionSet(c.identifier);
+			return lp.settings.isVersionSet(c.identifier);
 		} else if (c.kind == ir.Condition.Kind.Debug) {
-			return settings.isDebugSet(c.identifier);
+			return lp.settings.isDebugSet(c.identifier);
 		} else {
 			throw CompilerPanic(c.location, "should not enter this path");
 		}

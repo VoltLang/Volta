@@ -49,13 +49,13 @@ ir.Struct retrieveArrayStruct(Location location, ir.Scope _scope)
 	return asStruct;
 }
 
-ir.Function createArrayAllocFunction(Location location, Settings settings, ir.Scope baseScope, ir.ArrayType atype)
+ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scope baseScope, ir.ArrayType atype)
 {
 	auto arrayMangledName = mangle(null, atype);
 
 	auto countVar = new ir.Variable();
 	countVar.location = location;
-	countVar.type = settings.getSizeT(location);
+	countVar.type = lp.settings.getSizeT(location);
 	countVar.name = "count";
 
 	auto ftype = new ir.FunctionType();
@@ -104,7 +104,7 @@ ir.Function createArrayAllocFunction(Location location, Settings settings, ir.Sc
 	ptrAssign.op = ir.BinOp.Type.Assign;
 	ptrAssign.left = ptrPfix;
 	ptrAssign.right = createAllocDgCall(
-		allocDgVar, settings, location, atype.base,
+		allocDgVar, lp, location, atype.base,
 		buildExpReference(location, countVar, "count"), true);
 
 	auto expStatement = new ir.ExpStatement();
@@ -151,7 +151,7 @@ ir.Function createArrayAllocFunction(Location location, Settings settings, ir.Sc
 }
 
 
-ir.Exp createAllocDgCall(ir.Variable allocDgVar, Settings settings, Location location, ir.Type type, ir.Exp countArg = null, bool suppressCast = false)
+ir.Exp createAllocDgCall(ir.Variable allocDgVar, LanguagePass lp, Location location, ir.Type type, ir.Exp countArg = null, bool suppressCast = false)
 {
 	auto adRef = new ir.ExpReference();
 	adRef.location = location;
@@ -165,7 +165,7 @@ ir.Exp createAllocDgCall(ir.Variable allocDgVar, Settings settings, Location loc
 	auto countConst = new ir.Constant();
 	countConst.location = location;
 	countConst._ulong = 0;
-	countConst.type = settings.getSizeT(location);
+	countConst.type = lp.settings.getSizeT(location);
 
 	auto pfixCall = new ir.Postfix();
 	pfixCall.location = location;
@@ -175,7 +175,7 @@ ir.Exp createAllocDgCall(ir.Variable allocDgVar, Settings settings, Location loc
 	if (countArg is null) {
 		pfixCall.arguments ~= countConst;
 	} else {
-		pfixCall.arguments ~= buildCast(location, settings.getSizeT(location), countArg);
+		pfixCall.arguments ~= buildCast(location, lp.settings.getSizeT(location), countArg);
 	}
 
 	if (!suppressCast) {
@@ -193,13 +193,13 @@ class NewReplacer : NullExpReplaceVisitor, Pass
 {
 public:
 	ir.Variable allocDgVar;
-	Settings settings;
+	LanguagePass lp;
 	ir.Module thisModule;
 
 public:
-	this(Settings settings)
+	this(LanguagePass lp)
 	{
-		this.settings = settings;
+		this.lp = lp;
 	}
 	
 	override void transform(ir.Module m)
@@ -221,7 +221,7 @@ public:
 
 		if (unary.index !is null) {
 			// WIP, doesn't consider multiple outputs of the same function.
-			auto allocFn = createArrayAllocFunction(unary.location, settings, thisModule.myScope, new ir.ArrayType(unary.type));
+			auto allocFn = createArrayAllocFunction(unary.location, lp, thisModule.myScope, new ir.ArrayType(unary.type));
 			thisModule.children.nodes = allocFn ~ thisModule.children.nodes;
 			thisModule.myScope.addFunction(allocFn, allocFn.name);
 
@@ -233,7 +233,7 @@ public:
 			auto call = new ir.Postfix();
 			call.location = unary.location;
 			call.op = ir.Postfix.Op.Call;
-			call.arguments ~= buildCast(unary.location, settings.getSizeT(unary.location), unary.index);
+			call.arguments ~= buildCast(unary.location, lp.settings.getSizeT(unary.location), unary.index);
 			call.child = _ref;
 
 			exp = call;
@@ -241,7 +241,7 @@ public:
 			return Continue;
 		}
 
-		exp = createAllocDgCall(allocDgVar, settings, unary.location, unary.type);
+		exp = createAllocDgCall(allocDgVar, lp, unary.location, unary.type);
 
 		return Continue;
 	}

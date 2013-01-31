@@ -25,18 +25,19 @@ import volt.token.location;
 class ClassLowerer : NullExpReplaceVisitor, Pass
 {
 public:
+	LanguagePass lp;
+
 	ir.TopLevelBlock internalTLB;
 	ir.Struct[ir.Class] synthesised;
 	string[] parentNames;
 	int passNumber;
-	Settings settings;
 	ir.Variable allocDgVar;
 	ir.Scope currentFunctionScope;
 
 public:
-	this(Settings settings)
+	this(LanguagePass lp)
 	{
-		this.settings = settings;
+		this.lp = lp;
 	}
 
 	/**
@@ -92,11 +93,11 @@ public:
 		fn.myScope = new ir.Scope(c.myScope, c, fn.name);
 
 		// Object.sizeof
-		int sz = size(c.location, settings, c);
-		auto objSizeof = buildSizeTConstant(c.location, settings, sz);
+		int sz = size(c.location, lp.settings, c);
+		auto objSizeof = buildSizeTConstant(c.location, lp.settings, sz);
 
 		// cast(Object*) malloc(Object.sizeof);
-		auto castExp = createAllocDgCall(allocDgVar, settings, c.location, new ir.TypeReference(c, c.name));
+		auto castExp = createAllocDgCall(allocDgVar, lp, c.location, new ir.TypeReference(c, c.name));
 
 		objVar.assign = castExp;
 		fn._body.statements ~= objVar;

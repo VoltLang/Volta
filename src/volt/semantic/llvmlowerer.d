@@ -25,15 +25,17 @@ import volt.semantic.classify;
 class LlvmLowerer : ScopeExpReplaceVisitor, Pass
 {
 public:
-	bool V_P64;
-	Settings settings;
+	LanguagePass lp;
+
 	ir.Module thisModule;
 
+	bool V_P64;
+
 public:
-	this(Settings settings)
+	this(LanguagePass lp)
 	{
-		this.settings = settings;
-		this.V_P64 = settings.isVersionSet("V_P64");
+		this.lp = lp;
+		this.V_P64 = lp.settings.isVersionSet("V_P64");
 	}
 
 	override void transform(ir.Module m)
@@ -90,7 +92,7 @@ public:
 		auto expRef = buildExpReference(loc, fnMove, fnMove.name);
 
 		ir.Exp length;
-		auto typeSize = size(loc, settings, type.base);
+		auto typeSize = size(loc, lp.settings, type.base);
 
 		ir.Exp[] args = [
 			cast(ir.Exp)

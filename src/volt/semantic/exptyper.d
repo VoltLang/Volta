@@ -29,16 +29,17 @@ import volt.semantic.util;
 class ExpTyper : ScopeManager, ExpReplaceVisitor, Pass
 {
 public:
-	Settings settings;
+	LanguagePass lp;
+
 	ir.Module _module;
 	ir.Type functionRet;
 	int pass;
 	ir.Postfix[] postfixStack;
 
 public:
-	this(Settings settings)
+	this(LanguagePass lp)
 	{
-		this.settings = settings;
+		this.lp = lp;
 	}
 
 	/// Modify a function call to have explicit casts and return the return type.
@@ -468,34 +469,34 @@ public:
 	 */ 
 	ir.Node extypePrimitiveAssign(ref ir.Exp exp, ir.Node dest, ir.Exp src)
 	{
-		auto lp = cast(ir.PrimitiveType) dest;
-		auto rp = cast(ir.PrimitiveType) getExpType(src, current);
+		auto lprim = cast(ir.PrimitiveType) dest;
+		auto rprim = cast(ir.PrimitiveType) getExpType(src, current);
 
-		if (lp is null || rp is null) {
+		if (lprim is null || rprim is null) {
 			throw new CompilerError(exp.location, "cannot implicitly reconcile binary expression types.");
 		}
 
-		if (typesEqual(lp, rp)) {
-			return lp;
+		if (typesEqual(lprim, rprim)) {
+			return lprim;
 		}
 
-		auto leftsz = size(lp.type);
-		auto rightsz = size(rp.type);
+		auto leftsz = size(lprim.type);
+		auto rightsz = size(rprim.type);
 
-		bool leftUnsigned = isUnsigned(lp.type);
-		bool rightUnsigned = isUnsigned(rp.type);
-		if (leftUnsigned != rightUnsigned && !fitsInPrimitive(lp, src) && rightsz >= leftsz) {
+		bool leftUnsigned = isUnsigned(lprim.type);
+		bool rightUnsigned = isUnsigned(rprim.type);
+		if (leftUnsigned != rightUnsigned && !fitsInPrimitive(lprim, src) && rightsz >= leftsz) {
 			throw new CompilerError(exp.location, "binary operation with both signed and unsigned operands.");
 		}
 
-		if (rightsz > leftsz && !fitsInPrimitive(lp, src)) {
-			throw new CompilerError(exp.location, format("cannot implicitly cast '%s' to '%s'.", to!string(rp.type), to!string(lp.type)));
+		if (rightsz > leftsz && !fitsInPrimitive(lprim, src)) {
+			throw new CompilerError(exp.location, format("cannot implicitly cast '%s' to '%s'.", to!string(rprim.type), to!string(lprim.type)));
 		}
 		
 		
-		exp = buildCastSmart(lp, exp);
+		exp = buildCastSmart(lprim, exp);
 
-		return lp;
+		return lprim;
 	}
 
 	/// Given a binary operation between two primitive types, make the casts explicit.

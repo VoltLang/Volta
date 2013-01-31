@@ -23,16 +23,17 @@ import volt.semantic.mangle;
 class TypeidReplacer : NullExpReplaceVisitor, Pass
 {
 public:
-	Settings settings;
+	LanguagePass lp;
+
 	ir.Struct typeinfo;
 	ir.Struct typeinfoVtable;
 	ir.Module thisModule;
 	ir.Variable vtableVar;
 
 public:
-	this(Settings settings)
+	this(LanguagePass lp)
 	{
-		this.settings = settings;
+		this.lp = lp;
 	}
 
 	override void transform(ir.Module m)
@@ -97,8 +98,8 @@ public:
 
 		_typeid.type.mangledName = mangle(null, _typeid.type);
 
-		int typeSize = size(_typeid.location, settings, _typeid.type);
-		auto typeConstant = buildSizeTConstant(_typeid.location, settings, typeSize);
+		int typeSize = size(_typeid.location, lp.settings, _typeid.type);
+		auto typeConstant = buildSizeTConstant(_typeid.location, lp.settings, typeSize);
 
 		int typeTag = _typeid.type.nodeType;
 		auto typeTagConstant = new ir.Constant();

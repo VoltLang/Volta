@@ -42,9 +42,8 @@ public:
 class ImportResolver : ScopeManager, Pass
 {
 public:
-	LanguagePass languagepass;
+	LanguagePass lp;
 	ir.Module thisModule;
-	Settings settings;
 
 public:
 	override void transform(ir.Module m)
@@ -59,7 +58,7 @@ public:
 
 	override Status enter(ir.Import i)
 	{
-		auto mod = languagepass.getModule(i.name);
+		auto mod = lp.getModule(i.name);
 		if (mod is null) {
 			throw new CompilerError(i.name.location, format("cannot find module '%s'.", i.name));
 		}
@@ -99,7 +98,7 @@ public:
 				/// @todo refactor into lookup
 				auto store = mod.myScope.lookupOnlyThisScope(symbolFromImportName, i.location);
 				if (store is null) OUTER: foreach (pubImp; gatherer.imports) {
-					auto _mod = languagepass.getModule(pubImp.name);
+					auto _mod = lp.getModule(pubImp.name);
 					store = _mod.myScope.lookupOnlyThisScope(symbolFromImportName, i.location);
 					if (store !is null) {
 						break OUTER;
@@ -121,9 +120,8 @@ public:
 	}
 
 public:
-	this(LanguagePass pass, Settings settings)
+	this(LanguagePass lp)
 	{
-		languagepass = pass;
-		this.settings = settings;
+		this.lp = lp;
 	}
 }

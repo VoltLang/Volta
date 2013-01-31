@@ -72,7 +72,7 @@ public:
 	{
 		super(settings, controller);
 
-		postParse ~= new ConditionalRemoval(settings);
+		postParse ~= new ConditionalRemoval(this);
 		postParse ~= new AttribRemoval();
 		postParse ~= new ContextBuilder();
 		postParse ~= new DeclarationGatherer();
@@ -80,14 +80,14 @@ public:
 		passes2a ~= new UserResolver();
 
 		passes2b ~= new TypeDefinitionVerifier();
-		passes2b ~= new ExpTyper(settings);
+		passes2b ~= new ExpTyper(this);
 		passes2b ~= new IrVerifier();
 
-		passes3a ~= new ClassLowerer(settings);
+		passes3a ~= new ClassLowerer(this);
 
-		passes3b ~= new NewReplacer(settings);
-		passes3b ~= new TypeidReplacer(settings);
-		passes3b ~= new LlvmLowerer(settings);
+		passes3b ~= new NewReplacer(this);
+		passes3b ~= new TypeidReplacer(this);
+		passes3b ~= new LlvmLowerer(this);
 		passes3b ~= new MangleWriter();
 		passes3b ~= new IrVerifier();
 	}
@@ -108,7 +108,7 @@ public:
 
 		// Need to create one for each import since,
 		// the import resolver will cause phase1 to be called.
-		auto impRes = new ImportResolver(this, settings);
+		auto impRes = new ImportResolver(this);
 		impRes.transform(m);
 	}
 
