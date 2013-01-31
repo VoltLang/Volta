@@ -86,20 +86,35 @@ interface Pass
  * Center point for all language passes.
  * @ingroup passes passLang
  */
-interface LanguagePass
+class LanguagePass
 {
+public:
+	Settings settings;
+	Controller controller;
+
+public:
+	this(Settings settings, Controller controller)
+	out {
+		assert(this.settings !is null);
+		assert(this.controller !is null);
+	}
+	body {
+		this.settings = settings;
+		this.controller = controller;
+	}
+
+	abstract void close();
+
 	/**
 	 * Helper function, often just routed to the Controller.
 	 */
-	ir.Module getModule(ir.QualifiedName name);
+	abstract ir.Module getModule(ir.QualifiedName name);
 
-	void phase1(ir.Module m);
+	abstract void phase1(ir.Module m);
 
-	void phase2(ir.Module[] m);
+	abstract void phase2(ir.Module[] m);
 
-	void phase3(ir.Module[] m);
-
-	void close();
+	abstract void phase3(ir.Module[] m);
 }
 
 /**

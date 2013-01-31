@@ -35,9 +35,6 @@ import volt.semantic.llvmlowerer;
 class VoltLanguagePass : LanguagePass
 {
 public:
-	Settings settings;
-	Controller controller;
-
 	/**
 	 * Phase 1 fields.
 	 * @{
@@ -73,8 +70,7 @@ private:
 public:
 	this(Settings settings, Controller controller)
 	{
-		this.settings = settings;
-		this.controller = controller;
+		super(settings, controller);
 
 		postParse ~= new ConditionalRemoval(settings);
 		postParse ~= new AttribRemoval();
