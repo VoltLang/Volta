@@ -141,10 +141,27 @@ class Alias : Node
 public:
 	Access access;
 
-	/// The @p Type names are associated with.
-	Type type;
-	/// The names to associate with the type.
+	/**
+	 * The names to associate with the alias.
+	 *
+	 * alias >name< = ...;
+	 */
 	string name;
+
+	/**
+	 * The @p Type names are associated with.
+	 *
+	 * alias name = const(char)[];
+	 */
+	Type type;
+
+	/**
+	 * This alias is a pure rebind of a name,
+	 * for when the parser doesn't know what it is.
+	 *
+	 * alias name = >.qualified.name<;
+	 */
+	QualifiedName id;
 
 
 public:
