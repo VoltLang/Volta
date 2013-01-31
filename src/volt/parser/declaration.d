@@ -46,9 +46,23 @@ ir.Alias parseAlias(TokenStream ts)
 	auto nameTok = match(ts, TokenType.Identifier);
 	a.name = nameTok.value;
 	match(ts, TokenType.Assign);
-	a.type = parseType(ts);
-	match(ts, TokenType.Semicolon);
-	
+
+	size_t pos = ts.save();
+	try {
+		a.id = parseQualifiedName(ts);
+		match(ts, TokenType.Semicolon);
+
+	} catch (CompilerError e) {
+		if (e.neverIgnore) {
+			throw e;
+		}
+		ts.restore(pos);
+
+		a.id = null;
+		a.type = parseType(ts);
+		match(ts, TokenType.Semicolon);
+	}
+
 	return a;
 }
 
