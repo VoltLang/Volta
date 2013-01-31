@@ -98,8 +98,10 @@ public:
 	 * consumption but are instead called from the addFunction
 	 * member in Scope.
 	 */
-	this(Scope s, Function fn)
+	this(Scope s, Function fn, string name)
 	{
+		this.name = name;
+		this.node = fn;
 		this.parent = s;
 		this.functions = [fn];
 		this.kind = Kind.Function;
@@ -252,7 +254,7 @@ public:
 		auto ret = name in symbols;
 
 		if (ret is null) {
-			symbols[name] = new Store(this, fn);
+			symbols[name] = new Store(this, fn, name);
 			return;
 		} else if (ret.kind == Store.Kind.Function) {
 			ret.functions ~= fn;
