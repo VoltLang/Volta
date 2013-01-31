@@ -776,9 +776,18 @@ Visitor.Status acceptAlias(ir.Alias a, Visitor av)
 		return parentContinue(status);
 	}
 
-	status = accept(a.type, av);
-	if (status == VisitorStop) {
-		return status;
+	if (a.type !is null) {
+		status = accept(a.type, av);
+		if (status == VisitorStop) {
+			return status;
+		}
+	}
+
+	if (a.id !is null) {
+		status = accept(a.id, av);
+		if (status == VisitorStop) {
+			return status;
+		}
 	}
 
 	return av.leave(a);

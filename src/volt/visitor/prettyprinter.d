@@ -1242,7 +1242,12 @@ public:
 		twf("alias ");
 		wf(a.name);
 		wf(" = ");
-		accept(a.type, this);
+		if (a.type !is null)
+			accept(a.type, this);
+		else if (a.id !is null)
+			accept(a.id, this);
+		else
+			wf("null");
 		wfln(";");
 		return ContinueParent;
 	}
