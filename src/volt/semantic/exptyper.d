@@ -1151,6 +1151,8 @@ public:
 			case Function:
 				filloutReference(store);
 				break;
+			case Alias:
+				throw CompilerPanic(loc, "alias scope");
 			}
 
 		} while(_ref is null);

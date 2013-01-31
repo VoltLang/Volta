@@ -4,6 +4,7 @@ module volt.ir.util;
 
 import std.conv : to;
 
+import volt.exceptions;
 import volt.interfaces;
 import volt.token.location;
 import ir = volt.ir.ir;
@@ -63,6 +64,8 @@ ir.Scope getScopeFromStore(ir.Store store)
 	case Value:
 	case Function:
 		return null;
+	case Alias:
+		throw CompilerPanic(store.node.location, "unresolved alias");
 	}
 }
 

@@ -6,6 +6,7 @@ import std.string : format;
 
 import volt.exceptions;
 import volt.ir.base;
+import volt.ir.type;
 import volt.ir.toplevel;
 import volt.ir.declaration;
 
@@ -52,6 +53,7 @@ public:
 	 */
 	enum Kind
 	{
+		Alias,
 		Value,
 		Type,
 		Scope,
@@ -68,12 +70,29 @@ public:
 	/// Type contained within store.
 	Kind kind;
 
-	/// This context, node might point to owning node.
-	Scope s;
-	/// Owning node, for Value and Type .
+
+
+	/**
+	 * Owning node, for all types.
+	 * For function the first encountered one.
+	 */
 	Node node;
-	/// Overloaded functions.
+
+	/**
+	 * For Scope this context, node might point to owning node.
+	 * For Alias the scope into which the alias should be resolved from.
+	 */
+	Scope s;
+
+	/**
+	 * Overloaded functions.
+	 */
 	Function[] functions;
+
+	/**
+	 * Store pointed to by alias.
+	 */
+	Store myAlias;
 
 
 public:
@@ -94,6 +113,26 @@ public:
 	}
 
 	/**
+	 * Used for Aliases Not really intended for general consumption
+	 * but are instead called from the addAlias function on Scope.
+	 */
+	this(Scope parent, Node n, string name, Scope look, Kind kind)
+	in {
+		assert(kind == Kind.Alias);
+	}
+	body {
+		this.name = name;
+		this.node = n;
+		this.kind = kind;
+		this.parent = parent;
+		if (look is null) {
+			this.s = parent;
+		} else {
+			this.s = look;
+		}
+	}
+
+	/**
 	 * Used for functions. Not really intended for general
 	 * consumption but are instead called from the addFunction
 	 * member in Scope.
@@ -105,6 +144,21 @@ public:
 		this.parent = s;
 		this.functions = [fn];
 		this.kind = Kind.Function;
+	}
+
+	void markAliasResolved(Store s)
+	{
+		assert(kind == Kind.Alias);
+		assert(myAlias is null);
+		myAlias = s;
+	}
+
+	void markAliasResolved(Type t)
+	{
+		assert(kind == Kind.Alias);
+		assert(myAlias is null);
+		kind = Kind.Type;
+		node = t;
 	}
 }
 
@@ -172,6 +226,27 @@ public:
 	void remove(string name)
 	{
 		symbols.remove(name);
+	}
+
+	/**
+	 * Add a unresolved Alias to this scope. The scope in which the
+	 * alias is resolved to is default this scope, can be changed
+	 * with the look argument, used by import rebinds.
+	 *
+	 * Throws:
+	 *   CompilerPanic if another symbol of same name is found.
+	 *
+	 * Side-effects:
+	 *   None.
+	 */
+	void addAlias(Alias n, string name, Scope look = null)
+	in {
+		assert(n !is null);
+		assert(name !is null);
+	}
+	body {
+		errorOn(n, name);
+		symbols[name] = new Store(this, n, name, look, Store.Kind.Alias);
 	}
 
 	/**
@@ -286,7 +361,8 @@ public:
 	/**
 	 * Doesn't look in parent scopes, just this Store.
 	 *
-	 * Returns: the Store found, or null on lookup failure.
+	 * Returns: the Store found, store pointed to by alias,
+	 * or null on lookup failure.
 	 *
 	 * Side-effects:
 	 *   None.
@@ -296,8 +372,11 @@ public:
 		auto ret = name in symbols;
 		if (ret is null)
 			return null;
-
-		return *ret;
+		auto s = *ret;
+		while (s.myAlias !is null) {
+			s = s.myAlias;
+		}
+		return s;
 	}
 
 private:
