@@ -458,56 +458,6 @@ ir.Type[] getStructFieldTypes(ir.Struct _struct)
 	return types;
 }
 
-/**
- * Lookup something with a scope in another scope.
- * Params:
- *   _scope   = the scope to look in.
- *   name     = the name to look up in _scope.
- *   location = the location to point an error message at.
- *   member   = what you want to look up in the returned scope, for error message purposes.
- * Returns: the Scope found in _scope.
- * Throws: CompilerError if a Scope bearing thing couldn't be found in _scope.
- *
- * @todo refactor to lookup
- */
-ir.Scope scopeLookup(ir.Scope _scope, string name, Location location, string member)
-{
-	string emsg = format("expected aggregate with member '%s'.", member);
-
-	auto current = _scope;
-	while (current !is null) {
-		auto store = current.lookupOnlyThisScope(name, location);
-		if (store is null) {
-			current = current.parent;
-			continue;
-		}
-		if (store.s !is null) {
-			return store.s;
-		}
-		if (store.kind != ir.Store.Kind.Type) {
-			// !!! this will need to handle more cases some day.
-			throw new CompilerError(location, emsg);
-		}
-		switch (store.node.nodeType) with (ir.NodeType) {
-		case Struct:
-			auto asStruct = cast(ir.Struct) store.node;
-			assert(asStruct !is null);
-			return asStruct.myScope;
-		case Class:
-			auto asClass = cast(ir.Class) store.node;
-			assert(asClass !is null);
-			return asClass.myScope;
-		case Interface:
-			auto asInterface = cast(ir._Interface) store.node;
-			assert(asInterface !is null);
-			return asInterface.myScope;
-		default:
-			throw new CompilerError(location, emsg);
-		}
-	}
-	throw new CompilerError(location, emsg);
-}
-
 ir.Function[] getStructFunctions(ir.Struct _struct)
 {
 	ir.Function[] functions;

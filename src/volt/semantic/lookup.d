@@ -3,6 +3,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.lookup;
 
+import std.string : format;
+
 import ir = volt.ir.ir;
 import volt.ir.util : getScopeFromStore, getScopeFromType;
 
@@ -125,6 +127,86 @@ ir.Store lookup(ir.Scope _scope, string name, Location location)
 	/// @todo Error if we found multiple matches in importedScopes.
 
 	return null;
+}
+
+/**
+ * Helper functions that looksup a type and throws compiler errors
+ * if it is not found or the found identifier is not a type.
+ */
+ir.Type lookupType(Location loc, ir.Scope _scope, string name)
+{
+	auto store = _scope.lookup(name, loc);
+	if (store is null) {
+		throw new CompilerError(loc, format("undefined identifier '%s'.", name));
+	}
+	if (store.kind != ir.Store.Kind.Type) {
+		throw new CompilerError(loc, format("%s used as type.", name));
+	}
+	auto asType = cast(ir.Type) store.node;
+	assert(asType !is null);
+	return asType;
+}
+
+/**
+ * Helper functions that looksup a type and throws compiler errors
+ * if it is not found or the found identifier is not a type. Scope
+ * is treated as a thisable scope.
+ *
+ * @see lookupAsThisScope.
+ */
+ir.Type lookupTypeAsThisScope(Location loc, ir.Scope _scope, string name)
+{
+	auto store = _scope.lookupAsThisScope(name, loc);
+	if (store is null) {
+		throw new CompilerError(loc, format("undefined identifier '%s'.", name));
+	}
+	if (store.kind != ir.Store.Kind.Type) {
+		throw new CompilerError(loc, format("%s used as type.", name));
+	}
+	auto asType = cast(ir.Type) store.node;
+	assert(asType !is null);
+	return asType;
+}
+
+/**
+ * Lookup something with a scope in another scope.
+ *
+ * @throws CompilerError  If a Scope bearing thing couldn't be found in _scope.
+ * @return                The Scope found in _scope.
+ */
+ir.Scope lookupScope(Location loc, ir.Scope _scope, string name)
+{
+	auto store = lookup(_scope, name, loc);
+	if (store is null) {
+		throw new CompilerError(loc, format("undefined identifier '%s'.", name));
+	}
+
+	auto s = getScopeFromStore(store);
+	if (s is null) {
+		throw new CompilerError(loc, format("'%s' is not a aggregate or scope", name));
+	}
+	return s;
+}
+
+/**
+ * Lookup something with a scope in another thisable scope.
+ * @see lookupAsThisScope.
+ *
+ * @throws CompilerError  If a Scope bearing thing couldn't be found in _scope.
+ * @return                The Scope found in _scope.
+ */
+ir.Scope lookupScopeAsThisScope(Location loc, ir.Scope _scope, string name)
+{
+	auto store = lookupAsThisScope(_scope, name, loc);
+	if (store is null) {
+		throw new CompilerError(loc, format("'%s' has no member named '%s'.", _scope.name, name));
+	}
+
+	auto s = getScopeFromStore(store);
+	if (s is null) {
+		throw new CompilerError(loc, format("'%s' is not a aggregate or scope", name));
+	}
+	return s;
 }
 
 /**

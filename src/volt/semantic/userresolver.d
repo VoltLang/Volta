@@ -19,21 +19,6 @@ import volt.semantic.classify;
 import volt.semantic.typer;
 
 
-/// @todo refactor to lookup
-ir.Type typeLookup(ir.Scope _scope, string name, Location location)
-{
-	auto store = _scope.lookup(name, location);
-	if (store is null) {
-		throw new CompilerError(location, format("undefined identifier '%s'.", name));
-	}
-	if (store.kind != ir.Store.Kind.Type) {
-		throw new CompilerError(location, format("%s used as type.", name));
-	}
-	auto asType = cast(ir.Type) store.node;
-	assert(asType !is null);
-	return asType;
-}
-
 /**
  * Resolves all @link volt.ir.type.TypeReference TypeReferences@endlink and
  * @link volt.ir.type.TypeOf TypeOfs@endlink.
@@ -143,10 +128,17 @@ public:
 
 		foreach (i, name; u.names) {
 			if (i == u.names.length - 1) {
-				theType = typeLookup(lookupScope, name, u.location);
+				if (i == 0) {
+					theType = lookupType(u.location, lookupScope, name);
+				} else {
+					theType = lookupTypeAsThisScope(u.location, lookupScope, name);
+				}
 				break;
+			} else if (i == 0) {
+				lookupScope = .lookupScope(u.location, lookupScope, name);
+			} else {
+				lookupScope = .lookupScopeAsThisScope(u.location, lookupScope, name);
 			}
-			lookupScope = scopeLookup(lookupScope, name, u.location, u.names[i+1]);
 		}
 		assert(theType !is null);
 
