@@ -41,6 +41,9 @@ protected:
 	string[] mObjectFiles;
 	ir.Module[string] mModules;
 
+	string[] mLibraryFiles;
+	string[] mLibraryPaths;
+
 public:
 	this(Settings s)
 	{
@@ -57,11 +60,12 @@ public:
 
 		mIncludes = settings.includePaths;
 
+		mLibraryPaths = settings.libraryPaths;
+		mLibraryFiles = settings.libraryFiles;
+
 		// Add the stdlib includes and files.
 		if (!settings.noStdLib) {
 			mIncludes = settings.stdIncludePaths ~ mIncludes;
-
-
 		}
 
 		// Should we add the standard library.
@@ -141,6 +145,28 @@ public:
 	{
 		foreach(file; files)
 			addFile(file);
+	}
+
+	void addLibrary(string lib)
+	{
+		mLibraryFiles ~= lib;
+	}
+
+	void addLibraryPath(string path)
+	{
+		mLibraryPaths ~= path;
+	}
+
+	void addLibrarys(string[] libs)
+	{
+		foreach(lib; libs)
+			addLibrary(lib);
+	}
+
+	void addLibraryPaths(string[] paths)
+	{
+		foreach(path; paths)
+			addLibraryPath(path);
 	}
 
 	int compile()
@@ -241,6 +267,14 @@ protected:
 		foreach (objectFile; mObjectFiles) {
 			objInputFiles ~= objectFile ~ " ";
 		}
+		string objLibraryPaths;
+		foreach(libraryPath; mLibraryPaths) {
+			objLibraryPaths ~= " -L" ~ libraryPath;
+		}
+		string objLibraryFiles;
+		foreach(libraryFile; mLibraryFiles) {
+			objLibraryFiles ~= " -l" ~ libraryFile;
+		}
 
 		string bc, as, obj, of;
 
@@ -293,7 +327,9 @@ protected:
 			return 0;
 		}
 
-		cmd = format("%s -o \"%s\" %s", linker, of, objInputFiles);
+		cmd = format("%s -o \"%s\"%s%s %s", linker, of, objLibraryPaths,
+											objLibraryFiles, objInputFiles);
+        
 		ret = system(cmd);
 		if (ret)
 			return ret;

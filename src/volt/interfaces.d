@@ -215,6 +215,9 @@ public:
 	string outputFile;
 	string[] includePaths; ///< The -I arguments.
 
+	string[] libraryPaths; ///< The -L arguements.
+	string[] libraryFiles; ///< The -l arguments.
+
 	string[] stdFiles; ///< The --stdlib-file arguements.
 	string[] stdIncludePaths; ///< The --stdlib-I arguments.
 

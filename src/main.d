@@ -55,6 +55,14 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 		settings.includePaths ~= replaceEscapes(path);
 	}
 
+	void libraryFile(string file) {
+		settings.libraryFiles ~= replaceEscapes(file);
+	}
+
+	void libraryPath(string path) {
+		settings.libraryPaths ~= replaceEscapes(path);
+	}
+
 	void stdFile(string file) {
 		settings.stdFiles ~= replaceEscapes(file);
 	}
@@ -62,6 +70,7 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 	void stdIncludePath(string path) {
 		settings.stdIncludePaths ~= replaceEscapes(path);
 	}
+
 
 	foreach(arg; args)  {
 		if (argHandler !is null) {
@@ -94,6 +103,12 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 			continue;
 		case "-I":
 			argHandler = &includePath;
+			continue;
+		case "-L":
+			argHandler = &libraryPath;
+			continue;
+		case "-l":
+			argHandler = &libraryFile;
 			continue;
 		case "-w":
 			settings.warningsEnabled = true;
