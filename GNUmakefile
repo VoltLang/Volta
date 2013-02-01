@@ -96,11 +96,11 @@ clean:
 	@rm -f rt/rt.bc
 
 run: $(TARGET)
-	@./$(TARGET) --internal-dbg -o a.out.exe test/simple/test_001.d
+	@./$(TARGET) --internal-dbg -o a.out.exe test/simple/test_001.v
 	@./a.out.exe
 
 debug: $(TARGET)
-	@gdb --args ./$(TARGET) test/simple/test_001.d
+	@gdb --args ./$(TARGET) --internal-dbg -o a.out.exe test/simple/test_001.v
 
 test: all
 	@make -C test run
