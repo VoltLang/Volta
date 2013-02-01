@@ -4,7 +4,6 @@ module vrt.vmain;
 
 import object;
 
-
 /**
  * While we could name this main and have the mangler renamit to vmain,
  * it wont work since we don't support overloaded functions.
@@ -17,6 +16,7 @@ extern(C) int vmain();
 extern(C) int main(int c, char** argv)
 {
 	// Currently all the init that is needed for the GC.
+	vrt_gc_init();
 	allocDg = vrt_gc_get_alloc_dg();
 
 	return vmain();

@@ -45,6 +45,8 @@ local AllocDg allocDg;
 
 extern(C) AllocDg vrt_gc_get_alloc_dg();
 
+extern(C) void vrt_gc_init();
+
 struct ArrayStruct
 {
 	void* ptr;
