@@ -210,37 +210,78 @@ ir.Scope lookupScopeAsThisScope(Location loc, ir.Scope _scope, string name)
 }
 
 /**
+ * Retrive from the object module a store with the given name.
+ * Throws: CompilerPanic on failure.
+ * Returns: Always a valid value.
+ */
+ir.Store retrieveStoreFromObject(Location location, ir.Scope _scope, string name)
+{
+	auto objectStore = _scope.lookup("object", location);
+	if (objectStore is null || objectStore.s is null) {
+		throw CompilerPanic(location, "couldn't access object module.");
+	}
+	auto store = objectStore.s.lookup(name, location);
+	if (store is null || store.node is null) {
+		throw CompilerPanic(location, "couldn't locate object." ~ name);
+	}
+	return store;
+}
+
+/**
+ * Look up object.TypeInfo.
+ * Throws: CompilerPanic on failure.
+ */
+ir.Class retrieveTypeInfoClass(Location location, ir.Scope _scope)
+{
+	auto tinfoStore = retrieveStoreFromObject(location, _scope, "TypeInfo");
+	auto tinfo = cast(ir.Class) tinfoStore.node;
+	if (tinfo is null) {
+		throw CompilerPanic(location, "tinfo is wrong type.");
+	}
+	return tinfo;
+}
+
+/**
  * Look up object.TypeInfo.
  * Throws: CompilerPanic on failure.
  */
 ir.Struct retrieveTypeInfoStruct(Location location, ir.Scope _scope)
 {
-	auto objectStore = _scope.lookup("object", location);
-	if (objectStore is null || objectStore.s is null) {
-		throw CompilerPanic(location, "couldn't access object module.");
-	}
-	auto tinfoStore = objectStore.s.lookup("TypeInfo", location);
-	if (tinfoStore is null || tinfoStore.node is null || tinfoStore.node.nodeType != ir.NodeType.Struct) {
-		throw CompilerPanic(location, "couldn't locate object.TypeInfo lowered class.");
-	}
+	auto tinfoStore = retrieveStoreFromObject(location, _scope, "TypeInfo");
 	auto tinfo = cast(ir.Struct) tinfoStore.node;
-	assert(tinfo !is null);
+	if (tinfo is null) {
+		throw CompilerPanic(location, "tinfo is wrong type.");
+	}
 	return tinfo;
 }
 
-ir.Class retrieveTypeInfoClass(Location location, ir.Scope _scope)
+/**
+ * Look up object.AllocDg.
+ * Throws: CompilerPanic on failure.
+ */
+ir.Variable retrieveAllocDg(Location location, ir.Scope _scope)
 {
-	auto objectStore = _scope.lookup("object", location);
-	if (objectStore is null || objectStore.s is null) {
-		throw CompilerPanic(location, "couldn't access object module.");
+
+	auto allocDgStore = retrieveStoreFromObject(location, _scope, "allocDg");
+	auto asVar = cast(ir.Variable) allocDgStore.node;
+	if (asVar is null) {
+		throw CompilerPanic(location, "allocDg is wrong type.");
 	}
-	auto tinfoStore = objectStore.s.lookup("TypeInfo", location);
-	if (tinfoStore is null || tinfoStore.node is null || tinfoStore.node.nodeType != ir.NodeType.Class) {
-		throw CompilerPanic(location, "couldn't locate object.TypeInfo class.");
+	return asVar;
+}
+
+/**
+ * Look up object.ArrayStruct.
+ * Throws: CompilerPanic on failure.
+ */
+ir.Struct retrieveArrayStruct(Location location, ir.Scope _scope)
+{
+	auto arrayStore = retrieveStoreFromObject(location, _scope, "ArrayStruct");
+	auto asStruct = cast(ir.Struct) arrayStore.node;
+	if (asStruct is null) {
+		throw CompilerPanic(asStruct.location, "object.ArrayStruct is wrong type.");
 	}
-	auto tinfo = cast(ir.Class) tinfoStore.node;
-	assert(tinfo !is null);
-	return tinfo;
+	return asStruct;
 }
 
 /**

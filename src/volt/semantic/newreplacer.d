@@ -15,40 +15,6 @@ import volt.semantic.lookup;
 import volt.semantic.mangle;
 
 
-ir.Variable retrieveAllocDg(Location location, ir.Scope _scope)
-{
-	auto objectStore = _scope.lookup("object", location);
-	if (objectStore is null || objectStore.s is null) {
-		throw CompilerPanic(location, "couldn't retrieve object module.");
-	}
-	auto allocDgStore = objectStore.s.lookup("allocDg", location);
-	if (allocDgStore is null || allocDgStore.node is null) {
-		throw CompilerPanic(location, "couldn't retrieve allocDg.");
-	}
-	auto asVar = cast(ir.Variable) allocDgStore.node;
-	if (asVar is null) {
-		throw CompilerPanic(location, "allocDg is wrong type.");
-	}
-	return asVar;
-}
-
-ir.Struct retrieveArrayStruct(Location location, ir.Scope _scope)
-{
-	auto objectStore = _scope.lookup("object", location);
-	if (objectStore is null || objectStore.s is null) {
-		throw CompilerPanic(location, "couldn't retrieve object module.");
-	}
-	auto arrayStore = objectStore.s.lookup("ArrayStruct", location);
-	if (arrayStore is null || arrayStore.node is null) {
-		throw CompilerPanic(location, "couldn't retrieve object.ArrayStruct.");
-	}
-	auto asStruct = cast(ir.Struct) arrayStore.node;
-	if (asStruct is null) {
-		throw CompilerPanic(asStruct.location, "object.ArrayStruct is wrong type.");
-	}
-	return asStruct;
-}
-
 ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scope baseScope, ir.ArrayType atype)
 {
 	auto arrayMangledName = mangle(null, atype);
