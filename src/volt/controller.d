@@ -327,8 +327,8 @@ protected:
 			return 0;
 		}
 
-		cmd = format("%s -o \"%s\"%s%s %s", linker, of, objLibraryPaths,
-											objLibraryFiles, objInputFiles);
+		cmd = format("%s -o \"%s\" %s%s%s", linker, of,
+		             objInputFiles, objLibraryPaths, objLibraryFiles);
         
 		ret = system(cmd);
 		if (ret)
