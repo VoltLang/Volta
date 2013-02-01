@@ -95,12 +95,13 @@ clean:
 	@rm -rf $(TARGET) .obj
 	@rm -f rt/rt.bc
 
-run: $(TARGET)
-	@./$(TARGET) --internal-dbg -o a.out.exe test/simple/test_001.v
-	@./a.out.exe
+run: $(TARGET) rt/rt.bc
+	@./$(TARGET) -o a.out.exe test/simple/test_001.v
+	@echo "  RUN    a.out.exe"
+	@./a.out.exe; test $$? -eq 42
 
 debug: $(TARGET)
-	@gdb --args ./$(TARGET) --internal-dbg -o a.out.exe test/simple/test_001.v
+	@gdb --args ./$(TARGET) -o a.out.exe test/simple/test_001.v
 
 test: all
 	@make -C test run
