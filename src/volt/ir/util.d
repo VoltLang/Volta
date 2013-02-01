@@ -188,6 +188,14 @@ ir.PointerType buildVoidPtr(Location loc)
 	return pt;
 }
 
+ir.PointerType buildPtrSmart(Location loc, ir.Type base)
+{
+	auto pt = new ir.PointerType(copyTypeSmart(loc, base));
+	pt.location = loc;
+
+	return pt;
+}
+
 ir.ArrayLiteral buildArrayLiteralSmart(Location loc, ir.Type type, ir.Exp[] exps...)
 {
 	auto literal = new ir.ArrayLiteral();
