@@ -206,7 +206,7 @@ ir.ArrayLiteral buildArrayLiteralSmart(Location loc, ir.Type type, ir.Exp[] exps
 }
 
 /**
- * Build a Variable, while being smart about its type.
+ * Build a Variable, while not being smart about its type.
  */
 ir.Variable buildVariable(Location loc, ir.Type type, string name)
 {
