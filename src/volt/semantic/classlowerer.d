@@ -595,7 +595,7 @@ public:
 
 		if (asClass.userConstructors.length > 0) foreach (i, param; asClass.userConstructors[0].type.params) {
 			if (unary.argumentList[i].nodeType == ir.NodeType.Constant) {
-				auto t = getExpType(unary.argumentList[i], asClass.myScope);
+				auto t = getExpType(lp, unary.argumentList[i], asClass.myScope);
 				handleNull(param.type, unary.argumentList[i], t);
 			}
 		}

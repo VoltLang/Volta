@@ -8,6 +8,7 @@ import ir = volt.ir.ir;
 import volt.ir.util;
 
 import volt.exceptions;
+import volt.interfaces;
 import volt.token.location;
 import volt.semantic.lookup : lookup;
 import volt.semantic.typer : getExpType;
@@ -32,13 +33,13 @@ void fillInParentIfNeeded(Location loc, ir.Class c, ir.Scope _scope)
 
 /// If e is a reference to a no-arg property function, turn it into a call.
 /// Returns: the CallableType called, if any, null otherwise.
-ir.CallableType propertyToCallIfNeeded(Location loc, ref ir.Exp e, ir.Scope current, ir.Postfix[] postfixStack)
+ir.CallableType propertyToCallIfNeeded(Location loc, LanguagePass lp, ref ir.Exp e, ir.Scope current, ir.Postfix[] postfixStack)
 {
 	if (postfixStack.length > 0 && postfixStack[$-1].isImplicitPropertyCall) {
 		return null;
 	}
 
-	auto t = getExpType(e, current);
+	auto t = getExpType(lp, e, current);
 	if (t.nodeType == ir.NodeType.FunctionType || t.nodeType == ir.NodeType.DelegateType) {
 		auto asCallable = cast(ir.CallableType) t;
 		if (asCallable is null) {

@@ -10,6 +10,7 @@ import ir = volt.ir.ir;
 import volt.ir.util;
 
 import volt.exceptions;
+import volt.interfaces;
 import volt.token.location;
 import volt.semantic.classify;
 import volt.semantic.lookup;
@@ -47,9 +48,9 @@ ir.Type declTypeLookup(ir.Scope _scope, string name, Location location)
  * If the operation of the expression isn't semantically valid
  * for the given type, a CompilerError is thrown.
  */
-ir.Type getExpType(ir.Exp exp, ir.Scope currentScope)
+ir.Type getExpType(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 {
-	auto result = getExpTypeImpl(exp, currentScope);
+	auto result = getExpTypeImpl(lp, exp, currentScope);
 	while (result.nodeType == ir.NodeType.TypeReference) {
 		auto asTR = cast(ir.TypeReference) result;
 		assert(asTR !is null);
@@ -61,51 +62,51 @@ ir.Type getExpType(ir.Exp exp, ir.Scope currentScope)
 /**
  * Retrieve the type of the given expression.
  */
-ir.Type getExpTypeImpl(ir.Exp exp, ir.Scope currentScope)
+ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 {
 	switch (exp.nodeType) with (ir.NodeType) {
 	case Constant:
 		auto asConstant = cast(ir.Constant) exp;
 		assert(asConstant !is null);
-		return getConstantType(asConstant);
+		return getConstantType(lp, asConstant);
 	case IdentifierExp:
 		auto asIdentifierExp = cast(ir.IdentifierExp) exp;
 		assert(asIdentifierExp !is null);
-		return getIdentifierExpType(asIdentifierExp, currentScope);
+		return getIdentifierExpType(lp, asIdentifierExp, currentScope);
 	case TypeReference:
 		auto asTR = cast(ir.TypeReference) exp;
 		assert(asTR !is null);
-		return getTypeReferenceType(asTR);
+		return getTypeReferenceType(lp, asTR);
 	case ArrayLiteral:
 		auto asLiteral = cast(ir.ArrayLiteral) exp;
 		assert(asLiteral !is null);
-		return getArrayLiteralType(asLiteral, currentScope);
+		return getArrayLiteralType(lp, asLiteral, currentScope);
 	case Unary:
 		auto asUnary = cast(ir.Unary) exp;
 		assert(asUnary !is null);
-		return getUnaryType(asUnary, currentScope);
+		return getUnaryType(lp, asUnary, currentScope);
 	case Typeid:
 		auto asTypeid = cast(ir.Typeid) exp;
 		assert(asTypeid !is null);
-		return getTypeidType(asTypeid, currentScope);
+		return getTypeidType(lp, asTypeid, currentScope);
 	case Postfix:
 		auto asPostfix = cast(ir.Postfix) exp;
 		assert(asPostfix !is null);
-		return getPostfixType(asPostfix, currentScope);
+		return getPostfixType(lp, asPostfix, currentScope);
 	case BinOp:
 		auto asBinOp = cast(ir.BinOp) exp;
 		assert(asBinOp !is null);
-		return getBinOpType(asBinOp, currentScope);
+		return getBinOpType(lp, asBinOp, currentScope);
 	case ExpReference:
 		auto asExpRef = cast(ir.ExpReference) exp;
 		assert(asExpRef !is null);
-		return getExpReferenceType(asExpRef);
+		return getExpReferenceType(lp, asExpRef);
 	default:
 		throw CompilerPanic(format("unable to type expression '%s'.", to!string(exp.nodeType)));
 	}
 }
 
-ir.Type getExpReferenceType(ir.ExpReference expref)
+ir.Type getExpReferenceType(LanguagePass lp, ir.ExpReference expref)
 {
 	if (expref.decl is null) {
 		throw CompilerPanic(expref.location, "unable to type expression reference.");
@@ -124,10 +125,10 @@ ir.Type getExpReferenceType(ir.ExpReference expref)
 	throw CompilerPanic(expref.location, "unable to type expression reference.");
 }
 
-ir.Type getBinOpType(ir.BinOp bin, ir.Scope currentScope)
+ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 {
-	ir.Type left = getExpType(bin.left, currentScope);
-	ir.Type right = getExpType(bin.right, currentScope);
+	ir.Type left = getExpType(lp, bin.left, currentScope);
+	ir.Type right = getExpType(lp, bin.right, currentScope);
 	
 	if (isComparison(bin.op)) {
 		auto boolType = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
@@ -203,17 +204,17 @@ ir.Type getBinOpType(ir.BinOp bin, ir.Scope currentScope)
 	assert(false);
 }
 
-ir.Type getTypeidType(ir.Typeid _typeid, ir.Scope currentScope)
+ir.Type getTypeidType(LanguagePass lp, ir.Typeid _typeid, ir.Scope currentScope)
 {
 	return retrieveTypeInfoClass(_typeid.location, currentScope);
 }
 
-ir.Type getConstantType(ir.Constant constant)
+ir.Type getConstantType(LanguagePass lp, ir.Constant constant)
 {
 	return constant.type;
 }
 
-ir.Type getIdentifierExpType(ir.IdentifierExp identifierExp, ir.Scope currentScope)
+ir.Type getIdentifierExpType(LanguagePass lp, ir.IdentifierExp identifierExp, ir.Scope currentScope)
 {
 	if (identifierExp.type is null) {
 		if (identifierExp.globalLookup) {
@@ -228,12 +229,12 @@ ir.Type getIdentifierExpType(ir.IdentifierExp identifierExp, ir.Scope currentSco
 	return asType;
 }
 
-ir.Type getTypeReferenceType(ir.TypeReference typeReference)
+ir.Type getTypeReferenceType(LanguagePass lp, ir.TypeReference typeReference)
 {
 	return typeReference.type;
 }
 
-ir.Type getArrayLiteralType(ir.ArrayLiteral arrayLiteral, ir.Scope currentScope)
+ir.Type getArrayLiteralType(LanguagePass lp, ir.ArrayLiteral arrayLiteral, ir.Scope currentScope)
 {
 	if (arrayLiteral.type !is null) {
 		return arrayLiteral.type;
@@ -242,7 +243,7 @@ ir.Type getArrayLiteralType(ir.ArrayLiteral arrayLiteral, ir.Scope currentScope)
 	if (arrayLiteral.values.length > 0) {
 		/// @todo figure out common subtype stuff. For now, D1 stylin'.
 		base = copyTypeSmart(arrayLiteral.location,
-			getExpType(arrayLiteral.values[0], currentScope));
+			getExpType(lp, arrayLiteral.values[0], currentScope));
 	} else {
 		base = new ir.PrimitiveType(ir.PrimitiveType.Kind.Void);
 		base.location = arrayLiteral.location;
@@ -253,33 +254,33 @@ ir.Type getArrayLiteralType(ir.ArrayLiteral arrayLiteral, ir.Scope currentScope)
 	return arrayLiteral.type;
 }
 
-ir.Type getPostfixType(ir.Postfix postfix, ir.Scope currentScope)
+ir.Type getPostfixType(LanguagePass lp, ir.Postfix postfix, ir.Scope currentScope)
 {
 	switch (postfix.op) with (ir.Postfix.Op) {
 	case Index:
-		return getPostfixIndexType(postfix, currentScope);
+		return getPostfixIndexType(lp, postfix, currentScope);
 	case Slice:
-		return getPostfixSliceType(postfix, currentScope);
+		return getPostfixSliceType(lp, postfix, currentScope);
 	case Call:
-		return getPostfixCallType(postfix, currentScope);
+		return getPostfixCallType(lp, postfix, currentScope);
 	case Increment, Decrement:
-		return getPostfixIncDecType(postfix, currentScope);
+		return getPostfixIncDecType(lp, postfix, currentScope);
 	case Identifier:
-		return getPostfixIdentifierType(postfix, currentScope);
+		return getPostfixIdentifierType(lp, postfix, currentScope);
 	case CreateDelegate:
-		return getPostfixCreateDelegateType(postfix, currentScope);
+		return getPostfixCreateDelegateType(lp, postfix, currentScope);
 	default:
 		auto emsg = format("unhandled postfix op type '%s'", to!string(postfix.op));
 		throw CompilerPanic(postfix.location, emsg);
 	}
 }
 
-ir.Type getPostfixSliceType(ir.Postfix postfix, ir.Scope currentScope)
+ir.Type getPostfixSliceType(LanguagePass lp, ir.Postfix postfix, ir.Scope currentScope)
 {
 	ir.Type base;
 	ir.ArrayType array;
 
-	auto type = getExpType(postfix.child, currentScope);
+	auto type = getExpType(lp, postfix.child, currentScope);
 	if (type.nodeType == ir.NodeType.PointerType) {
 		auto pointer = cast(ir.PointerType) type;
 		assert(pointer !is null);
@@ -304,7 +305,7 @@ ir.Type getPostfixSliceType(ir.Postfix postfix, ir.Scope currentScope)
 	return array;
 }
 
-ir.Type getPostfixCreateDelegateType(ir.Postfix postfix, ir.Scope currentScope)
+ir.Type getPostfixCreateDelegateType(LanguagePass lp, ir.Postfix postfix, ir.Scope currentScope)
 {
 	auto err = CompilerPanic(postfix.location, "couldn't retrieve type from CreateDelegate postfix.");
 
@@ -323,7 +324,7 @@ ir.Type getPostfixCreateDelegateType(ir.Postfix postfix, ir.Scope currentScope)
 	return dg;
 }
 
-ir.Type getSizeT(Location location, ir.Scope currentScope)
+ir.Type getSizeT(LanguagePass lp, Location location, ir.Scope currentScope)
 {
 	auto store = currentScope.lookup("size_t", location);
 	if (store is null) {
@@ -334,7 +335,7 @@ ir.Type getSizeT(Location location, ir.Scope currentScope)
 	return type;
 }
 
-void retrieveScope(ir.Node tt, ir.Postfix postfix, ref ir.Scope _scope, ref ir.Class _class, ref string emsg)
+void retrieveScope(LanguagePass lp, ir.Node tt, ir.Postfix postfix, ref ir.Scope _scope, ref ir.Class _class, ref string emsg)
 {
 	if (tt.nodeType == ir.NodeType.Module) {
 		auto asModule = cast(ir.Module) tt;
@@ -356,21 +357,21 @@ void retrieveScope(ir.Node tt, ir.Postfix postfix, ref ir.Scope _scope, ref ir.C
 	} else if (tt.nodeType == ir.NodeType.PointerType) {
 		auto asPointer = cast(ir.PointerType) tt;
 		assert(asPointer !is null);
-		retrieveScope(asPointer.base, postfix, _scope, _class, emsg);
+		retrieveScope(lp, asPointer.base, postfix, _scope, _class, emsg);
 	} else if (tt.nodeType == ir.NodeType.TypeReference) {
 		auto asTR = cast(ir.TypeReference) tt;
 		assert(asTR !is null);
-		retrieveScope(asTR.type, postfix, _scope, _class, emsg);
+		retrieveScope(lp, asTR.type, postfix, _scope, _class, emsg);
 	} else if (tt.nodeType == ir.NodeType.StorageType) {
 		auto asStorage = cast(ir.StorageType) tt;
 		assert(asStorage !is null);
-		retrieveScope(asStorage.base, postfix, _scope, _class, emsg);
+		retrieveScope(lp, asStorage.base, postfix, _scope, _class, emsg);
 	} else {
 		assert(false, to!string(tt.nodeType));
 	}
 }
 
-ir.Type getPostfixIdentifierType(ir.Postfix postfix, ir.Scope currentScope)
+ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope currentScope)
 {
 	ir.Scope _scope;
 	ir.Class _class;
@@ -395,19 +396,19 @@ ir.Type getPostfixIdentifierType(ir.Postfix postfix, ir.Scope currentScope)
 		}
 	}
 
-	auto type = getExpType(postfix.child, currentScope);
+	auto type = getExpType(lp, postfix.child, currentScope);
 
 	if (type.nodeType == ir.NodeType.ArrayType) {
 		auto asArray = cast(ir.ArrayType) type;
 		assert(asArray !is null);
-		return getPostfixIdentifierArrayType(postfix, asArray, currentScope);
+		return getPostfixIdentifierArrayType(lp, postfix, asArray, currentScope);
 	} else if (type.nodeType == ir.NodeType.StaticArrayType) {
 		auto asStaticArray = cast(ir.StaticArrayType) type;
 		assert(asStaticArray !is null);
-		return getPostfixIdentifierStaticArrayType(postfix, asStaticArray, currentScope);
+		return getPostfixIdentifierStaticArrayType(lp, postfix, asStaticArray, currentScope);
 	}
 
-	retrieveScope(type, postfix, _scope, _class, emsg);
+	retrieveScope(lp, type, postfix, _scope, _class, emsg);
 
 	_lookup:
 	auto store = _scope.lookupAsThisScope(postfix.identifier.value, postfix.location);
@@ -428,11 +429,11 @@ ir.Type getPostfixIdentifierType(ir.Postfix postfix, ir.Scope currentScope)
 	}
 }
 
-ir.Type getPostfixIdentifierArrayType(ir.Postfix postfix, ir.ArrayType arrayType, ir.Scope currentScope)
+ir.Type getPostfixIdentifierArrayType(LanguagePass lp, ir.Postfix postfix, ir.ArrayType arrayType, ir.Scope currentScope)
 {
 	switch (postfix.identifier.value) {
 	case "length":
-		return getSizeT(postfix.location, currentScope);
+		return getSizeT(lp, postfix.location, currentScope);
 	case "ptr":
 		auto pointer = new ir.PointerType(arrayType.base);
 		pointer.location = postfix.location;
@@ -442,11 +443,11 @@ ir.Type getPostfixIdentifierArrayType(ir.Postfix postfix, ir.ArrayType arrayType
 	}
 }
 
-ir.Type getPostfixIdentifierStaticArrayType(ir.Postfix postfix, ir.StaticArrayType arrayType, ir.Scope currentScope)
+ir.Type getPostfixIdentifierStaticArrayType(LanguagePass lp, ir.Postfix postfix, ir.StaticArrayType arrayType, ir.Scope currentScope)
 {
 	switch (postfix.identifier.value) {
 	case "length":
-		return getSizeT(postfix.location, currentScope);
+		return getSizeT(lp, postfix.location, currentScope);
 	case "ptr":
 		auto pointer = new ir.PointerType(arrayType.base);
 		pointer.location = postfix.location;
@@ -456,12 +457,12 @@ ir.Type getPostfixIdentifierStaticArrayType(ir.Postfix postfix, ir.StaticArrayTy
 	}
 }
 
-ir.Type getPostfixIncDecType(ir.Postfix postfix, ir.Scope currentScope)
+ir.Type getPostfixIncDecType(LanguagePass lp, ir.Postfix postfix, ir.Scope currentScope)
 {
 	if (!isLValue(postfix.child)) {
 		throw new CompilerError(postfix.location, "expression is not an lvalue.");
 	}
-	auto type = getExpType(postfix.child, currentScope);
+	auto type = getExpType(lp, postfix.child, currentScope);
 
 	if (type.nodeType == ir.NodeType.PointerType) {
 		return type;
@@ -475,11 +476,11 @@ ir.Type getPostfixIncDecType(ir.Postfix postfix, ir.Scope currentScope)
 	throw new CompilerError(postfix.location, "value not suited for increment/decrement");
 }
 
-ir.Type getPostfixIndexType(ir.Postfix postfix, ir.Scope currentScope)
+ir.Type getPostfixIndexType(LanguagePass lp, ir.Postfix postfix, ir.Scope currentScope)
 {
 	ir.Type base;
 
-	auto type = getExpType(postfix.child, currentScope);
+	auto type = getExpType(lp, postfix.child, currentScope);
 	if (type.nodeType == ir.NodeType.PointerType) {
 		auto pointer = cast(ir.PointerType) type;
 		assert(pointer !is null);
@@ -500,9 +501,9 @@ ir.Type getPostfixIndexType(ir.Postfix postfix, ir.Scope currentScope)
 	return base;
 }
 
-ir.Type getPostfixCallType(ir.Postfix postfix, ir.Scope currentScope)
+ir.Type getPostfixCallType(LanguagePass lp, ir.Postfix postfix, ir.Scope currentScope)
 {
-	auto type = getExpType(postfix.child, currentScope);
+	auto type = getExpType(lp, postfix.child, currentScope);
 
 	auto callable = cast(ir.CallableType) type;
 	if (callable is null) {
@@ -512,39 +513,39 @@ ir.Type getPostfixCallType(ir.Postfix postfix, ir.Scope currentScope)
 	return callable.ret;
 }
 
-ir.Type getUnaryType(ir.Unary unary, ir.Scope currentScope)
+ir.Type getUnaryType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 {
 	switch (unary.op) with (ir.Unary.Op) {
 	case None:
-		return getUnaryNoneType(unary, currentScope);
+		return getUnaryNoneType(lp, unary, currentScope);
 	case Cast:
-		return getUnaryCastType(unary);
+		return getUnaryCastType(lp, unary);
 	case Dereference:
-		return getUnaryDerefType(unary, currentScope);
+		return getUnaryDerefType(lp, unary, currentScope);
 	case AddrOf:
-		return getUnaryAddrOfType(unary, currentScope);
+		return getUnaryAddrOfType(lp, unary, currentScope);
 	case New:
-		return getUnaryNewType(unary);
+		return getUnaryNewType(lp, unary);
 	case Minus, Plus:
-		return getUnarySubAddType(unary, currentScope);
+		return getUnarySubAddType(lp, unary, currentScope);
 	default:
 		assert(false);
 	}
 }
 
-ir.Type getUnaryNoneType(ir.Unary unary, ir.Scope currentScope)
+ir.Type getUnaryNoneType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 {
-	return getExpType(unary.value, currentScope);
+	return getExpType(lp, unary.value, currentScope);
 }
 
-ir.Type getUnaryCastType(ir.Unary unary)
+ir.Type getUnaryCastType(LanguagePass lp, ir.Unary unary)
 {
 	return unary.type;
 }
 
-ir.Type getUnaryDerefType(ir.Unary unary, ir.Scope currentScope)
+ir.Type getUnaryDerefType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 {
-	auto type = getExpType(unary.value, currentScope);
+	auto type = getExpType(lp, unary.value, currentScope);
 	// If this is a storageType(T*) make the result storageType(T).
 	if (type.nodeType == ir.NodeType.StorageType) {
 		ir.Type base = type;
@@ -586,18 +587,18 @@ ir.Type getUnaryDerefType(ir.Unary unary, ir.Scope currentScope)
 	return asPointer.base;
 }
 
-ir.Type getUnaryAddrOfType(ir.Unary unary, ir.Scope currentScope)
+ir.Type getUnaryAddrOfType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 {
 	if (!isLValue(unary.value)) {
 		throw new CompilerError(unary.location, "expression is not an lvalue.");
 	}
-	auto type = getExpType(unary.value, currentScope);
+	auto type = getExpType(lp, unary.value, currentScope);
 	auto pointer = new ir.PointerType(type);
 	pointer.location = unary.location;
 	return pointer;
 }
 
-ir.Type getUnaryNewType(ir.Unary unary)
+ir.Type getUnaryNewType(LanguagePass lp, ir.Unary unary)
 {
 	if (!unary.isArray && !unary.hasArgumentList) {
 		auto pointer = new ir.PointerType(unary.type);
@@ -613,8 +614,8 @@ ir.Type getUnaryNewType(ir.Unary unary)
 	}
 }
 
-ir.Type getUnarySubAddType(ir.Unary unary, ir.Scope currentScope)
+ir.Type getUnarySubAddType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 {
-	auto type = getExpType(unary.value, currentScope);
+	auto type = getExpType(lp, unary.value, currentScope);
 	return type;
 }

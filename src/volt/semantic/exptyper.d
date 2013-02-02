@@ -48,7 +48,7 @@ public:
 			return;
 		}
 
-		auto type = getExpType(postfix.child, current);
+		auto type = getExpType(lp, postfix.child, current);
 		auto asFunctionType = cast(ir.CallableType) type;
 		if (asFunctionType is null) {
 			throw new CompilerError(postfix.location, format("tried to call uncallable type."));
@@ -56,7 +56,7 @@ public:
 
 		if (asFunctionType.isScope && postfix.child.nodeType == ir.NodeType.Postfix) {
 			auto asPostfix = cast(ir.Postfix) postfix.child;
-			auto parentType = getExpType(asPostfix.child, current);
+			auto parentType = getExpType(lp, asPostfix.child, current);
 			if (mutableIndirection(parentType)) {
 				auto asStorageType = cast(ir.StorageType) parentType;
 				if (asStorageType is null || asStorageType.type != ir.StorageType.Kind.Scope) {
@@ -98,7 +98,7 @@ public:
 			foreach (exp; varArgsSlice) {
 				auto typeId = new ir.Typeid();
 				typeId.location = postfix.location;
-				typeId.type = copyTypeSmart(postfix.location, getExpType(exp, current));
+				typeId.type = copyTypeSmart(postfix.location, getExpType(lp, exp, current));
 				typeidsLiteral.values ~= typeId;
 			}
 
@@ -168,7 +168,7 @@ public:
 		replaceTypeOfIfNeeded(left);
 		localLeft = left;
 
-		ir.Type t = getExpType(right, current);
+		ir.Type t = getExpType(lp, right, current);
 
 		// Handle null.
 		if (auto p = handleNull(localLeft, right, t)) {
@@ -176,7 +176,7 @@ public:
 		}
 
 		// Turn no-arg @property functions into calls.
-		auto callable = propertyToCallIfNeeded(right.location, right, current, postfixStack);
+		auto callable = propertyToCallIfNeeded(right.location, lp, right, current, postfixStack);
 		if (callable !is null) {
 			t = callable.ret;
 		}
@@ -347,8 +347,8 @@ public:
 			}
 		}
 
-		ir.Type left = getExpType(bin.left, current);
-		ir.Type right = getExpType(bin.right, current);
+		ir.Type left = getExpType(lp, bin.left, current);
+		ir.Type right = getExpType(lp, bin.right, current);
 
 		if (effectivelyConst(left) && bin.op == ir.BinOp.Type.Assign) {
 			throw new CompilerError(bin.location, "cannot assign to const type.");
@@ -358,7 +358,7 @@ public:
 			if (auto p = handleNull(left, bin.right, right)) {
 				return p;
 			}
-			if (auto p = propertyToCallIfNeeded(bin.location, bin.right, current, postfixStack)) {
+			if (auto p = propertyToCallIfNeeded(bin.location, lp, bin.right, current, postfixStack)) {
 				right = p.ret;
 			}
 		}
@@ -469,7 +469,7 @@ public:
 	ir.Node extypePrimitiveAssign(ref ir.Exp exp, ir.Node dest, ir.Exp src)
 	{
 		auto lprim = cast(ir.PrimitiveType) dest;
-		auto rprim = cast(ir.PrimitiveType) getExpType(src, current);
+		auto rprim = cast(ir.PrimitiveType) getExpType(lp, src, current);
 
 		if (lprim is null || rprim is null) {
 			throw new CompilerError(exp.location, "cannot implicitly reconcile binary expression types.");
@@ -564,7 +564,7 @@ public:
 	ir.Node extypeArrayAssign(ref ir.Exp exp, ir.Node dest, ir.Exp src)
 	{
 		auto lp = cast(ir.ArrayType) dest;
-		auto rp = cast(ir.ArrayType) getExpType(src, current);
+		auto rp = cast(ir.ArrayType) getExpType(this.lp, src, current);
 
 		if (lp is null || rp is null) {
 			throw CompilerPanic(exp.location, "extypeArrayAssign called with non-array types.");
@@ -594,7 +594,7 @@ public:
 	ir.Node extypePointerAssign(ref ir.Exp exp, ir.Node dest, ir.Exp src)
 	{
 		auto lp = cast(ir.PointerType) dest;
-		auto rp = cast(ir.PointerType) getExpType(src, current);
+		auto rp = cast(ir.PointerType) getExpType(this.lp, src, current);
 
 		if (lp is null || rp is null) {
 			throw CompilerPanic(exp.location, "extypePointerAssign called with non-pointer types.");
@@ -673,7 +673,7 @@ public:
 		postfixStack ~= p;
 		if (pass == 2) {
 			// Ensure semantic correctness.
-			getExpType(p, current);
+			getExpType(lp, p, current);
 			return Continue;
 		}
 		extypePostfix(p);
@@ -695,7 +695,7 @@ public:
 			return;
 		}
 
-		type = copyTypeSmart(asTypeOf.location, getExpType(asTypeOf.exp, current));
+		type = copyTypeSmart(asTypeOf.location, getExpType(lp, asTypeOf.exp, current));
 	}
 
 	override Status enter(ir.Variable d)
@@ -747,7 +747,7 @@ public:
 			return Continue;
 		}
 
-		ir.Node t = getExpType(ifs.exp, current);
+		ir.Node t = getExpType(lp, ifs.exp, current);
 		if (t.nodeType == ir.NodeType.PrimitiveType) {
 			auto asPrimitive = cast(ir.PrimitiveType) t;
 			if (asPrimitive.type == ir.PrimitiveType.Kind.Bool) {
@@ -773,7 +773,7 @@ public:
 			return Continue;
 		}
 
-		ir.Node t = getExpType(fs.test, current);
+		ir.Node t = getExpType(lp, fs.test, current);
 		if (t.nodeType == ir.NodeType.PrimitiveType) {
 			auto asPrimitive = cast(ir.PrimitiveType) t;
 			if (asPrimitive.type == ir.PrimitiveType.Kind.Bool) {
@@ -792,7 +792,7 @@ public:
 			return Continue;
 		}
 
-		ir.Node t = getExpType(ws.condition, current);
+		ir.Node t = getExpType(lp, ws.condition, current);
 		if (t.nodeType == ir.NodeType.PrimitiveType) {
 			auto asPrimitive = cast(ir.PrimitiveType) t;
 			if (asPrimitive.type == ir.PrimitiveType.Kind.Bool) {
@@ -811,7 +811,7 @@ public:
 			return Continue;
 		}
 
-		ir.Node t = getExpType(ds.condition, current);
+		ir.Node t = getExpType(lp, ds.condition, current);
 		if (t.nodeType == ir.NodeType.PrimitiveType) {
 			auto asPrimitive = cast(ir.PrimitiveType) t;
 			if (asPrimitive.type == ir.PrimitiveType.Kind.Bool) {
@@ -1259,7 +1259,7 @@ public:
 	override Status visit(ref ir.Exp e, ir.ExpReference reference)
 	{
 		// Turn references to @property functions into calls.
-		propertyToCallIfNeeded(e.location, e, current, postfixStack);
+		propertyToCallIfNeeded(e.location, lp, e, current, postfixStack);
 
 		ir.Scope _; 
 		ir.Class _class;

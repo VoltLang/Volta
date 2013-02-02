@@ -59,7 +59,7 @@ public:
 		if (asPostfix is null || asPostfix.op != ir.Postfix.Op.Slice)
 			return Continue;
 
-		auto leftType = getExpType(asPostfix, current);
+		auto leftType = getExpType(lp, asPostfix, current);
 		auto leftArrayType = cast(ir.ArrayType)leftType;
 		if (leftArrayType is null)
 			throw CompilerPanic(loc, "OH GOD!");
