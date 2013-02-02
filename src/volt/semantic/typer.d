@@ -324,17 +324,6 @@ ir.Type getPostfixCreateDelegateType(LanguagePass lp, ir.Postfix postfix, ir.Sco
 	return dg;
 }
 
-ir.Type getSizeT(LanguagePass lp, Location location, ir.Scope currentScope)
-{
-	auto store = currentScope.lookup("size_t", location);
-	if (store is null) {
-		throw CompilerPanic(location, "couldn't retrieve size_t.");
-	}
-	auto type = cast(ir.PrimitiveType) store.node;
-	assert(type !is null);
-	return type;
-}
-
 void retrieveScope(LanguagePass lp, ir.Node tt, ir.Postfix postfix, ref ir.Scope _scope, ref ir.Class _class, ref string emsg)
 {
 	if (tt.nodeType == ir.NodeType.Module) {
@@ -433,7 +422,7 @@ ir.Type getPostfixIdentifierArrayType(LanguagePass lp, ir.Postfix postfix, ir.Ar
 {
 	switch (postfix.identifier.value) {
 	case "length":
-		return getSizeT(lp, postfix.location, currentScope);
+		return lp.settings.getSizeT(postfix.location);
 	case "ptr":
 		auto pointer = new ir.PointerType(arrayType.base);
 		pointer.location = postfix.location;
@@ -447,7 +436,7 @@ ir.Type getPostfixIdentifierStaticArrayType(LanguagePass lp, ir.Postfix postfix,
 {
 	switch (postfix.identifier.value) {
 	case "length":
-		return getSizeT(lp, postfix.location, currentScope);
+		return lp.settings.getSizeT(postfix.location);
 	case "ptr":
 		auto pointer = new ir.PointerType(arrayType.base);
 		pointer.location = postfix.location;
