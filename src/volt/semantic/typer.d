@@ -41,16 +41,6 @@ ir.Type declTypeLookup(ir.Scope _scope, string name, Location location)
 	return d.type;
 }
 
-/// Given a scope, get the oldest parent -- this should be the module of that scope.
-ir.Scope getTopScope(ir.Scope currentScope)
-{
-	ir.Scope current = currentScope;
-	while (current.parent !is null) {
-		current = current.parent;
-	}
-	return current;
-}
-
 /**
  * Get the type of a given expression.
  *

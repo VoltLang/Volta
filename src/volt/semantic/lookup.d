@@ -286,17 +286,33 @@ ir.Struct retrieveArrayStruct(Location location, ir.Scope _scope)
 
 /**
  * Get the module in the bottom of the given _scope chain.
+ * @throws CompilerPanic if no module at bottom of chain.
  */
 ir.Module getModuleFromScope(ir.Scope _scope)
 {
 	while (_scope !is null) {
 		auto m = cast(ir.Module)_scope.node;
-		if (m !is null)
-			return m;
-
 		_scope = _scope.parent;
+
+		if (m is null) {
+			continue;
+		}
+
+		if (_scope !is null)
+			throw CompilerPanic(m.location, "module scope has parent");
+		return m;
 	}
 	throw CompilerPanic("scope chain without module base");
+}
+
+/**
+ * Given a scope, get the oldest parent -- this is the module of that scope.
+ * @throws CompilerPanic if no module at bottom of chain.
+ */
+ir.Scope getTopScope(ir.Scope _scope)
+{
+	auto m = getModuleFromScope(_scope);
+	return m.myScope;
 }
 
 /**
