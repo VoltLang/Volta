@@ -379,6 +379,26 @@ ir.Postfix buildCall(Location loc, ir.Exp child, ir.Exp[] args)
 	return call;
 }
 
+ir.Postfix buildMemberCall(Location loc, ir.Exp child, ir.ExpReference fn, string name, ir.Exp[] args)
+{
+	auto lookup = new ir.Postfix();
+	lookup.location = loc;
+	lookup.op = ir.Postfix.Op.CreateDelegate;
+	lookup.child = child;
+	lookup.identifier = new ir.Identifier();
+	lookup.identifier.location = loc;
+	lookup.identifier.value = name;
+	lookup.memberFunction = fn;
+
+	auto call = new ir.Postfix();
+	call.location = loc;
+	call.op = ir.Postfix.Op.Call;
+	call.child = lookup;
+	call.arguments = args;
+
+	return call;
+}
+
 /**
  * Builds a postfix call.
  */
