@@ -91,6 +91,33 @@ public:
 
 	bool isRef;  ///< Will only true for some function parameters.
 
+	/**
+	 * Tells the backend to turn the storage Variable to the
+	 * base of the reference or pointer type.
+	 *
+	 * Normally Variables hold storage for the type directly,
+	 * so a int* holds a storage for a pointer. So the real
+	 * type of the Variable is int** when we reference it in
+	 * the backend. But it treats all references to that
+	 * Variable as the pointer itself. So when you type:
+	 *
+	 * int *ptr;
+	 * *ptr = 4;
+	 *
+	 * That is really:
+	 *
+	 * **ptr = 4;
+	 *
+	 * If this bool is set we the variable allocates the
+	 * storage to be for the base type itself but still
+	 * treats the pointer as a pointer type. You just can't
+	 * assign to it nor can you get address of the storage.
+	 *
+	 * Mostly used for Classes, on typeid literals and on
+	 * the this arguments to class functions.
+	 */
+	bool useBaseStorage;
+
 
 public:
 	this() { super(NodeType.Variable); }
