@@ -18,7 +18,7 @@ import volt.visitor.visitor;
 void debugPrinter(ir.Module m)
 {
 	auto dp = new DebugPrinter();
-	accept(m, dp);
+	dp.transform(m);
 	dp.close();
 }
 

@@ -18,7 +18,7 @@ import volt.visitor.visitor;
 void prettyPrinter(ir.Module m)
 {
 	auto pp = new PrettyPrinter();
-	accept(m, pp);
+	pp.transform(m);
 	pp.close();
 }
 
