@@ -380,6 +380,19 @@ ir.Postfix buildCall(Location loc, ir.Declaration decl, ir.Exp[] args, string[] 
 }
 
 /**
+ * Builds an assign BinOp.
+ */
+ir.BinOp buildAssign(Location loc, ir.Exp left, ir.Exp right)
+{
+	auto binop = new ir.BinOp();
+	binop.location = loc;
+	binop.op = ir.BinOp.Type.Assign;
+	binop.left = left;
+	binop.right = right;
+	return binop;
+}
+
+/**
  * Adds a variable argument to a function, also adds it to the scope.
  */
 ir.Variable addParam(Location loc, ir.Function fn, ir.Type type, string name)
