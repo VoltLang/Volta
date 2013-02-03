@@ -161,11 +161,35 @@ void handleExpReference(State state, ir.ExpReference expRef, Value result)
 	switch(expRef.decl.declKind) with (ir.Declaration.Kind) {
 	case Function:
 		auto fn = cast(ir.Function)expRef.decl;
+		assert(fn !is null);
 		result.isPointer = false;
 		result.value = state.getFunctionValue(fn, result.type);
 		break;
 	case Variable:
-		throw CompilerPanic("variables needs '&' for constants");
+		auto var = cast(ir.Variable)expRef.decl;
+		assert(var !is null);
+
+		/**
+		 * Whats going on here? Since constants ultimatly is handled
+		 * by the linker, by either being just binary data in some
+		 * segment or references to symbols, but not a copy of a
+		 * values somewhere (which can later be changed), we can
+		 * not statically load from a variable.
+		 *
+		 * But since useBaseStorage causes Variables to become a reference
+		 * implicitly we can allow them trough. We use this for typeid.
+		 * This might seem backwards but it works out.
+		 */
+		if (!var.useBaseStorage)
+			throw CompilerPanic("variables needs '&' for constants");
+
+		Type type;
+		auto v = state.getVariableValue(var, type);
+
+		result.value = v;
+		result.isPointer = false;
+		result.type = type;
+		break;
 	default:
 		throw CompilerPanic(expRef.location, "invalid decl type");
 	}

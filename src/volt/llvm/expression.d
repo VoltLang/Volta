@@ -975,7 +975,7 @@ void handleExpReference(State state, ir.ExpReference expRef, Value result)
 		break;
 	case Variable:
 		auto var = cast(ir.Variable)expRef.decl;
-		result.isPointer = true;
+		result.isPointer = !var.useBaseStorage;
 		result.value = state.getVariableValue(var, result.type);
 		break;
 	default:

@@ -192,16 +192,34 @@ public:
 
 		type = this.fromIr(var.type);
 		LLVMValueRef v;
+		LLVMTypeRef llvmType;
+
+		/**
+		 * Deal with which storage should be used.
+		 * Note that the LLVM function below automatically wrap
+		 * wrap the type with a pointer, because the value returns
+		 * a pointer to the storage.
+		 */
+		if (!var.useBaseStorage) {
+			llvmType = type.llvmType;
+		} else {
+			auto pt = cast(PointerType)type;
+			assert(pt !is null);
+			llvmType = pt.base.llvmType;
+		}
 
 		final switch(var.storage) with (ir.Variable.Storage) {
 		case None:
 			if (currentFunc is null)
 				throw CompilerPanic(var.location,
 					"non-local/global variable in non-function scope");
-			v = LLVMBuildAlloca(builder, type.llvmType, var.name);
+			if (var.useBaseStorage)
+				throw CompilerPanic(var.location,
+					"useBaseStorage can not be used on function variables");
+			v = LLVMBuildAlloca(builder, llvmType, var.name);
 			break;
 		case Local:
-			v = LLVMAddGlobal(mod, type.llvmType, var.mangledName);
+			v = LLVMAddGlobal(mod, llvmType, var.mangledName);
 			version (Windows) {
 				/* LLVM on Windows (as of 3.1) does not support TLS. 
 				 * So for now, make all Variables marked as local global,
@@ -210,7 +228,7 @@ public:
 			} else LLVMSetThreadLocal(v, true);
 			break;
 		case Global:
-			v = LLVMAddGlobal(mod, type.llvmType, var.mangledName);
+			v = LLVMAddGlobal(mod, llvmType, var.mangledName);
 			if (var.isWeakLink)
 				LLVMSetLinkage(v, LLVMLinkage.LinkOnceODR);
 			break;
@@ -235,9 +253,21 @@ public:
 		assert((k in valueStore) is null);
 
 		auto type = this.fromIr(var.type);
-		auto ptrType = LLVMPointerType(type.llvmType, 0);
+		LLVMTypeRef llvmType;
 
-		v = LLVMBuildBitCast(builder, v, ptrType, "this");
+		/**
+		 * Deal with which storage should be used.
+		 * Need to manually wrap the type in a pointer.
+		 */
+		if (!var.useBaseStorage) {
+			llvmType = LLVMPointerType(type.llvmType, 0);
+		} else {
+			auto pt = cast(PointerType)type;
+			assert(pt !is null); // Just error checking.
+			llvmType = type.llvmType;
+		}
+
+		v = LLVMBuildBitCast(builder, v, llvmType, "this");
 		valueStore[k] = Store(v, type);
 	}
 }
