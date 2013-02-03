@@ -12,38 +12,39 @@ private extern(C) {
 }
 
 
-extern(C) {
-	void vrt_gc_init()
-	{
-		GC_init();
-		return;
-	}
-
-	void* vrt_gc_malloc(TypeInfo typeinfo, size_t count, void *ptr) {
-		size_t size;
-		
-		if (count == cast(uint) 0) {
-			size = typeinfo.size;
-		} else {
-			size = count * typeinfo.size;
-		}
-
-		if(typeinfo.mutableIndirection) {
-			return GC_malloc_atomic(size);
-		}
-		return GC_malloc(size);
-	}
+extern(C) void vrt_gc_init()
+{
+	GC_init();
+	return;
 }
-
-
 
 extern(C) AllocDg vrt_gc_get_alloc_dg()
 {
 	StructToDg structToDg;
 
-	structToDg.func = cast(void*)vrt_gc_malloc;
+	structToDg.func = cast(void*)gcMalloc;
 
 	return *cast(AllocDg*)&structToDg;
+}
+
+void* gcMalloc(TypeInfo typeinfo, size_t count, void *ptr)
+{
+	size_t size;
+
+	if (count == cast(size_t) 0) {
+		size = typeinfo.size;
+	} else if (count == cast(size_t) -1) {
+		// 
+		// Hack for now.
+		size = typeinfo.size;
+	} else {
+		size = count * typeinfo.size;
+	}
+
+	if(typeinfo.mutableIndirection) {
+		return GC_malloc_atomic(size);
+	}
+	return GC_malloc(size);
 }
 
 /**
