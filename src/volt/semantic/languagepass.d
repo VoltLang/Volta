@@ -95,6 +95,11 @@ public:
 		return controller.getModule(name);
 	}
 
+	override void resolveAlias(ir.Store a)
+	{
+
+	}
+
 	override void resolveStruct(ir.Struct c)
 	{
 		// Nothing to do here.

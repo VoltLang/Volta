@@ -117,6 +117,15 @@ public:
 	 */
 
 	/**
+	 * Resolves a unresolved alias store, the store can
+	 * change type to Type, either the field myAlias or
+	 * type is set.
+	 *
+	 * @throws CompilerError on failure to resolve alias.
+	 */
+	abstract void resolveAlias(ir.Store s);
+
+	/**
 	 * Resovles a Struct, making sure all its fields and methods
 	 * are populated, and any embedded structs (not referenced
 	 * via pointers) are resolved as well.
