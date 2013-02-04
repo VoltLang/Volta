@@ -11,6 +11,7 @@ import volt.token.location;
 import volt.visitor.debugprinter;
 import volt.visitor.prettyprinter;
 
+import volt.semantic.util;
 import volt.semantic.attribremoval;
 import volt.semantic.context;
 import volt.semantic.condremoval;
@@ -92,6 +93,17 @@ public:
 	override ir.Module getModule(ir.QualifiedName name)
 	{ 
 		return controller.getModule(name);
+	}
+
+	override void resolveStruct(ir.Struct c)
+	{
+		// Nothing to do here.
+	}
+
+	override void resolveClass(ir.Class c)
+	{
+		fillInParentIfNeeded(c.location, this, c, c.myScope);
+		fillInClassLayoutIfNeeded(c);
 	}
 
 	override void phase1(ir.Module m)
