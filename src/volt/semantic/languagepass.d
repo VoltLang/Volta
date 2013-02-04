@@ -72,20 +72,20 @@ public:
 		super(settings, controller);
 
 		postParse ~= new ConditionalRemoval(this);
-		postParse ~= new AttribRemoval();
-		postParse ~= new ContextBuilder();
-		postParse ~= new DeclarationGatherer();
+		postParse ~= new AttribRemoval(this);
+		postParse ~= new ContextBuilder(this);
+		postParse ~= new DeclarationGatherer(this);
 
-		passes2a ~= new UserResolver();
+		passes2a ~= new UserResolver(this);
 
-		passes2b ~= new TypeDefinitionVerifier();
+		passes2b ~= new TypeDefinitionVerifier(this);
 		passes2b ~= new ExpTyper(this);
 		passes2b ~= new IrVerifier();
 
 		passes3b ~= new NewReplacer(this);
 		passes3b ~= new TypeidReplacer(this);
 		passes3b ~= new LlvmLowerer(this);
-		passes3b ~= new MangleWriter();
+		passes3b ~= new MangleWriter(this);
 		passes3b ~= new IrVerifier();
 	}
 

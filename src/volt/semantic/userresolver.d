@@ -28,6 +28,14 @@ import volt.semantic.typer;
 class UserResolver : ScopeManager, Pass
 {
 public:
+	LanguagePass lp;
+
+public:
+	this(LanguagePass lp)
+	{
+		this.lp = lp;
+	}
+
 	override void transform(ir.Module m)
 	{
 		accept(m, this);

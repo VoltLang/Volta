@@ -18,10 +18,16 @@ import volt.semantic.languagepass;
 class ContextBuilder : NullVisitor, Pass
 {
 public:
+	LanguagePass lp;
 	ir.Scope current;
 	ir.Type[] thisStack;
 
 public:
+	this(LanguagePass lp)
+	{
+		this.lp = lp;
+	}
+
 	void close()
 	{
 	}

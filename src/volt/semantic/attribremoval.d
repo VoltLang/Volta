@@ -20,6 +20,9 @@ import volt.semantic.classify;
  */
 class AttribRemoval : NullVisitor, Pass
 {
+public:
+	LanguagePass lp;
+
 protected:
 	ir.Attribute[] mStack;
 	Context[] mCtx;
@@ -39,8 +42,12 @@ protected:
 		ir.Attribute[] oldStack;
 	}
 
-
 public:
+	this(LanguagePass lp)
+	{
+		this.lp = lp;
+	}
+
 	/*
 	 * Things that do stuff.
 	 */

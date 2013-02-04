@@ -23,10 +23,16 @@ import volt.semantic.util : fillInParentIfNeeded;
 class TypeDefinitionVerifier : NullVisitor, Pass
 {
 public:
+	LanguagePass lp;
 	int undefinedTypes;
 	ir.Node lastUndefined;
 
 public:
+	this(LanguagePass lp)
+	{
+		this.lp = lp;
+	}
+
 	bool verify(ir.Node n, bool fromInternal)
 	{
 		switch (n.nodeType) with (ir.NodeType) {

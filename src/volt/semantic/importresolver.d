@@ -46,6 +46,11 @@ public:
 	ir.Module thisModule;
 
 public:
+	this(LanguagePass lp)
+	{
+		this.lp = lp;
+	}
+
 	override void transform(ir.Module m)
 	{
 		thisModule = m;
@@ -117,11 +122,5 @@ public:
 		}
 
 		return Continue;
-	}
-
-public:
-	this(LanguagePass lp)
-	{
-		this.lp = lp;
 	}
 }

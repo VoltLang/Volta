@@ -20,6 +20,14 @@ import volt.semantic.lookup;
 class DeclarationGatherer : ScopeManager, Pass
 {
 public:
+	LanguagePass lp;
+
+public:
+	this(LanguagePass lp)
+	{
+		this.lp = lp;
+	}
+
 	override void transform(ir.Module m)
 	{
 		if (m.gathered) {
