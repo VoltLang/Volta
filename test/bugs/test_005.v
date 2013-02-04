@@ -10,6 +10,11 @@ void func()
 
 class Test
 {
+	this()
+	{
+		return;
+	}
+
 	void myFunc()
 	{
 		// Thinks func is a member on Test.

@@ -6,6 +6,11 @@ module test_014;
 
 class AnotherParent
 {
+	this()
+	{
+		return;
+	}
+
 	int mField;
 
 	void addToField(int val)
@@ -17,6 +22,10 @@ class AnotherParent
 
 class Parent : AnotherParent
 {
+	this()
+	{
+		return;
+	}
 }
 
 class Child : Parent

@@ -5,6 +5,11 @@ module test_013;
 
 class Parent
 {
+	this()
+	{
+		return;
+	}
+
 	int mField;
 }
 

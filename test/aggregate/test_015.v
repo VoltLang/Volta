@@ -6,6 +6,11 @@ module test_015;
 class S {
     int mX;
 
+    this()
+    {
+        return;
+    }
+
     @property int y()
     {
         return mX;

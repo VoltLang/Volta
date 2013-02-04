@@ -16,6 +16,11 @@ struct Struct
 
 class Clazz
 {
+	this()
+	{
+		return;
+	}
+
 	int g;
 
 	int func()
