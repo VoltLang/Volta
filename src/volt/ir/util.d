@@ -11,6 +11,30 @@ import ir = volt.ir.ir;
 
 
 /**
+ * Builds a QualifiedName from a string.
+ */
+ir.QualifiedName buildQualifiedName(Location loc, string value)
+{
+	auto i = new ir.Identifier(value);
+	i.location = loc;
+	auto q = new ir.QualifiedName();
+	q.identifiers = [i];
+	q.location = loc;
+	return q;
+}
+
+/**
+ * Builds a QualifiedName from a Identifier.
+ */
+ir.QualifiedName buildQualifiedNameSmart(ir.Identifier i)
+{
+	auto q = new ir.QualifiedName();
+	q.identifiers = [new ir.Identifier(i)];
+	q.location = i.location;
+	return q;
+}
+
+/**
  * Return the scope from the given type if it is,
  * a aggregate or a derivative from one.
  */
@@ -526,6 +550,30 @@ ir.Function buildFunction(Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, s
 	_scope.addFunction(fn, fn.name);
 	tlb.nodes ~= fn;
 	return fn;
+}
+
+/**
+ * Builds a alias from a string and a Identifier.
+ */
+ir.Alias buildAliasSmart(Location loc, string name, ir.Identifier i)
+{
+	auto a = new ir.Alias();
+	a.name = name;
+	a.location = loc;
+	a.id = buildQualifiedNameSmart(i);
+	return a;
+}
+
+/**
+ * Builds a alias from two strings.
+ */
+ir.Alias buildAlias(Location loc, string name, string from)
+{
+	auto a = new ir.Alias();
+	a.name = name;
+	a.location = loc;
+	a.id = buildQualifiedName(loc, from);
+	return a;
 }
 
 /**

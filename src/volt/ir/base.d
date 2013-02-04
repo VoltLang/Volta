@@ -240,6 +240,13 @@ public:
 		this();
 		value = s;
 	}
+
+	this(Identifier i)
+	{
+		this();
+		value = i.value;
+		location = i.location;
+	}
 }
 
 /**
