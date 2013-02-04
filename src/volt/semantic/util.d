@@ -35,6 +35,13 @@ void fillInParentIfNeeded(Location loc, ir.Class c, ir.Scope _scope)
 /// Returns: the CallableType called, if any, null otherwise.
 ir.CallableType propertyToCallIfNeeded(Location loc, LanguagePass lp, ref ir.Exp e, ir.Scope current, ir.Postfix[] postfixStack)
 {
+	auto asRef = cast(ir.ExpReference) e;
+	if (asRef !is null) {
+		if (asRef.rawReference) {
+			return null;
+		}
+	}
+
 	if (postfixStack.length > 0 && postfixStack[$-1].isImplicitPropertyCall) {
 		return null;
 	}

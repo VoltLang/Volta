@@ -441,6 +441,7 @@ class ExpReference : Exp
 public:
 	string[] idents;
 	Declaration decl;
+	bool rawReference;  ///< A raw get to a function to bypass @property.
 
 public:
 	this() { super(NodeType.ExpReference); }
