@@ -274,6 +274,17 @@ ir.Constant buildConstantBool(Location loc, bool val)
 	return c;
 }
 
+ir.Constant buildConstantNull(Location loc, ir.Type base)
+{
+	auto c = new ir.Constant();
+	c.location = loc;
+	c._pointer = null;
+	c.type = copyTypeSmart(loc, base);
+	c.type.location = loc;
+	c.isNull = true;
+	return c;
+}
+
 /**
  * Gets a size_t Constant and fills it with a value.
  */
