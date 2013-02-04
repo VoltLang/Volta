@@ -9,6 +9,8 @@ import volt.exceptions;
 
 import volt.token.location;
 
+import volt.util.worktracker;
+
 import volt.visitor.debugprinter;
 import volt.visitor.prettyprinter;
 
@@ -66,12 +68,15 @@ public:
 	 */
 
 private:
+	WorkTracker mTracker;
 	ir.Module[string] mModules;
 
 public:
 	this(Settings settings, Controller controller)
 	{
 		super(settings, controller);
+
+		mTracker = new WorkTracker();
 
 		postParse ~= new ConditionalRemoval(this);
 		postParse ~= new AttribRemoval(this);
@@ -103,6 +108,10 @@ public:
 			// UserResolver will have resolved the TypeReference.
 			return s.markAliasResolved(a.type);
 		}
+
+		auto w = mTracker.add(s.node, "resolving alias");
+		scope (exit)
+			w.done();
 
 		assert(a.id.identifiers.length == 1);
 		auto ret = lookup(a.location, this, s.s, a.id.identifiers[0].value);
