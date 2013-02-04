@@ -227,6 +227,27 @@ ir.Variable copyVariableSmart(Location loc, ir.Variable right)
 	return buildVariable(loc, copyTypeSmart(loc, right.type), right.name);
 }
 
+ir.Variable[] copyVariablesSmart(Location loc, ir.Variable[] vars)
+{
+	auto outVars = new ir.Variable[vars.length];
+	foreach (i, var; vars) {
+		outVars[i] = copyVariableSmart(loc, var);
+	}
+	return outVars;
+}
+
+/**
+ * Get ExpReferences from a list of variables.
+ */
+ir.Exp[] getExpRefs(Location loc, ir.Variable[] vars)
+{
+	auto erefs = new ir.Exp[vars.length];
+	foreach (i, var; vars) {
+		erefs[i] = buildExpReference(loc, var, var.name);
+	}
+	return erefs;
+}
+
 /**
  * Build a Variable, while being smart about its type.
  */
