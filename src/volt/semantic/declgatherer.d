@@ -51,7 +51,9 @@ public:
 	override Status enter(ir.Alias a)
 	{
 		assert(current !is null);
-		current.addType(a.type, a.name);
+
+		current.addAlias(a, a.name, current);
+
 		return Continue;
 	}
 

@@ -5,6 +5,7 @@ module volt.semantic.languagepass;
 import ir = volt.ir.ir;
 
 import volt.interfaces;
+import volt.exceptions;
 
 import volt.token.location;
 
@@ -95,9 +96,20 @@ public:
 		return controller.getModule(name);
 	}
 
-	override void resolveAlias(ir.Store a)
+	override void resolveAlias(ir.Store s)
 	{
+		auto a = cast(ir.Alias)s.node;
+		if (a.type !is null) {
+			// UserResolver will have resolved the TypeReference.
+			return s.markAliasResolved(a.type);
+		}
 
+		assert(a.id.identifiers.length == 1);
+		auto ret = lookup(a.location, this, s.s, a.id.identifiers[0].value);
+		if (ret is null) {
+			throw new CompilerError(a.location, "'" ~ a.id.toString ~ "' not found");
+		}
+		s.markAliasResolved(ret);
 	}
 
 	override void resolveStruct(ir.Struct c)

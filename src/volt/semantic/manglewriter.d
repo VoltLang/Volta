@@ -102,7 +102,8 @@ public:
 
 	override Status enter(ir.Alias a)
 	{
-		if (a.type.mangledName != "") {
+		if (a.type is null ||
+		    a.type.mangledName != "") {
 			return Continue;
 		}
 		a.type.mangledName = mangle(parentNames, a.type);

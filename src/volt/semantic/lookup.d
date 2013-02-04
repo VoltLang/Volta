@@ -21,7 +21,11 @@ import volt.semantic.util: fillInParentIfNeeded;
  */
 ir.Store lookupOnlyThisScope(Location loc, LanguagePass lp, ir.Scope _scope, string name)
 {
-	return _scope.getStore(name);
+	auto store = _scope.getStore(name);
+	if (store !is null) {
+		return ensureResolved(lp, store);
+	}
+	return null;
 }
 
 /**
@@ -39,7 +43,7 @@ ir.Store lookupAsThisScope(Location loc, LanguagePass lp, ir.Scope _scope, strin
 	do {
 		auto ret = lookupOnlyThisScope(loc, lp, _scope, name);
 		if (ret !is null)
-			return ret;
+			return ensureResolved(lp, ret);
 	} while (getClassParentsScope(lp, _scope, _scope, _class));
 
 	return null;
@@ -55,7 +59,7 @@ ir.Store lookup(Location loc, LanguagePass lp, ir.Scope _scope, string name)
 	while (current !is null) {
 		auto store = current.getStore(name);
 		if (store !is null) {
-			return store;
+			return ensureResolved(lp, store);
 		}
 
 		/// If this scope has a this variable, check it.
@@ -76,7 +80,7 @@ ir.Store lookup(Location loc, LanguagePass lp, ir.Scope _scope, string name)
 				store = asStruct.myScope.getStore(name);
 			}
 			if (store !is null) {
-				return store;
+				return ensureResolved(lp, store);
 			}
 		}
 
@@ -94,7 +98,7 @@ ir.Store lookup(Location loc, LanguagePass lp, ir.Scope _scope, string name)
 			while (currentClass !is null) {
 				auto store = currentClass.myScope.getStore(name);
 				if (store !is null) {
-					return store;
+					return ensureResolved(lp, store);
 				}
 				currentClass = currentClass.parentClass;
 			}
@@ -108,7 +112,7 @@ ir.Store lookup(Location loc, LanguagePass lp, ir.Scope _scope, string name)
 	foreach (mod; asMod.myScope.importedModules) {
 		auto store = mod.myScope.getStore(name);
 		if (store !is null) {
-			return store;
+			return ensureResolved(lp, store);
 		}
 
 
@@ -119,7 +123,7 @@ ir.Store lookup(Location loc, LanguagePass lp, ir.Scope _scope, string name)
 			if (mod.myScope.importedAccess[i] == ir.Access.Public) {
 				store = submod.myScope.getStore(name);
 				if (store !is null) {
-					return store;
+					return ensureResolved(lp, store);
 				}
 			}
 		}
@@ -395,4 +399,19 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
 	default:
 		throw CompilerPanic(node.location, "unexpected nodetype");
 	}
+}
+
+/**
+ * Ensures that a Store is a resolved alias.
+ */
+private ir.Store ensureResolved(LanguagePass lp, ir.Store s)
+{
+	if (s.kind == ir.Store.Kind.Alias) {
+		lp.resolveAlias(s);
+		while (s.myAlias !is null) {
+			s = s.myAlias;
+		}
+		return s;
+	}
+	return s;
 }
