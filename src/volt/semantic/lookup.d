@@ -9,6 +9,7 @@ import ir = volt.ir.ir;
 import volt.ir.util : getScopeFromStore, getScopeFromType;
 
 import volt.exceptions;
+import volt.interfaces;
 import volt.token.location;
 import volt.semantic.util: fillInParentIfNeeded;
 
@@ -18,7 +19,7 @@ import volt.semantic.util: fillInParentIfNeeded;
  * Doesn't check parent scopes, parent classes, imports, or anywhere else but the
  * given scope.
  */
-ir.Store lookupOnlyThisScope(ir.Scope _scope, string name, Location location)
+ir.Store lookupOnlyThisScope(Location loc, LanguagePass lp, ir.Scope _scope, string name)
 {
 	return _scope.getStore(name);
 }
@@ -32,14 +33,14 @@ ir.Store lookupOnlyThisScope(ir.Scope _scope, string name, Location location)
  *
  * @todo actually lookup imports.
  */
-ir.Store lookupAsThisScope(ir.Scope _scope, string name, Location location)
+ir.Store lookupAsThisScope(Location loc, LanguagePass lp, ir.Scope _scope, string name)
 {
 	ir.Class _class;
 	do {
-		auto ret = lookupOnlyThisScope(_scope, name, location);
+		auto ret = lookupOnlyThisScope(loc, lp, _scope, name);
 		if (ret !is null)
 			return ret;
-	} while (getClassParentsScope(_scope, _scope, _class));
+	} while (getClassParentsScope(lp, _scope, _scope, _class));
 
 	return null;
 }
@@ -48,7 +49,7 @@ ir.Store lookupAsThisScope(ir.Scope _scope, string name, Location location)
  * Look up an identifier in a scope and its parent scopes.
  * Returns the store or null if no match was found.
  */
-ir.Store lookup(ir.Scope _scope, string name, Location location)
+ir.Store lookup(Location loc, LanguagePass lp, ir.Scope _scope, string name)
 {
 	ir.Scope current = _scope, previous = _scope;
 	while (current !is null) {
@@ -133,9 +134,9 @@ ir.Store lookup(ir.Scope _scope, string name, Location location)
  * Helper functions that looksup a type and throws compiler errors
  * if it is not found or the found identifier is not a type.
  */
-ir.Type lookupType(Location loc, ir.Scope _scope, string name)
+ir.Type lookupType(Location loc, LanguagePass lp, ir.Scope _scope, string name)
 {
-	auto store = _scope.lookup(name, loc);
+	auto store = lookup(loc, lp, _scope, name);
 	if (store is null) {
 		throw new CompilerError(loc, format("undefined identifier '%s'.", name));
 	}
@@ -154,9 +155,9 @@ ir.Type lookupType(Location loc, ir.Scope _scope, string name)
  *
  * @see lookupAsThisScope.
  */
-ir.Type lookupTypeAsThisScope(Location loc, ir.Scope _scope, string name)
+ir.Type lookupTypeAsThisScope(Location loc, LanguagePass lp, ir.Scope _scope, string name)
 {
-	auto store = _scope.lookupAsThisScope(name, loc);
+	auto store = lookupAsThisScope(loc, lp, _scope, name);
 	if (store is null) {
 		throw new CompilerError(loc, format("undefined identifier '%s'.", name));
 	}
@@ -174,9 +175,9 @@ ir.Type lookupTypeAsThisScope(Location loc, ir.Scope _scope, string name)
  * @throws CompilerError  If a Scope bearing thing couldn't be found in _scope.
  * @return                The Scope found in _scope.
  */
-ir.Scope lookupScope(Location loc, ir.Scope _scope, string name)
+ir.Scope lookupScope(Location loc, LanguagePass lp, ir.Scope _scope, string name)
 {
-	auto store = lookup(_scope, name, loc);
+	auto store = lookup(loc, lp, _scope, name);
 	if (store is null) {
 		throw new CompilerError(loc, format("undefined identifier '%s'.", name));
 	}
@@ -195,9 +196,9 @@ ir.Scope lookupScope(Location loc, ir.Scope _scope, string name)
  * @throws CompilerError  If a Scope bearing thing couldn't be found in _scope.
  * @return                The Scope found in _scope.
  */
-ir.Scope lookupScopeAsThisScope(Location loc, ir.Scope _scope, string name)
+ir.Scope lookupScopeAsThisScope(Location loc, LanguagePass lp, ir.Scope _scope, string name)
 {
-	auto store = lookupAsThisScope(_scope, name, loc);
+	auto store = lookupAsThisScope(loc, lp, _scope, name);
 	if (store is null) {
 		throw new CompilerError(loc, format("'%s' has no member named '%s'.", _scope.name, name));
 	}
@@ -214,15 +215,15 @@ ir.Scope lookupScopeAsThisScope(Location loc, ir.Scope _scope, string name)
  * Throws: CompilerPanic on failure.
  * Returns: Always a valid value.
  */
-ir.Store retrieveStoreFromObject(Location location, ir.Scope _scope, string name)
+ir.Store retrieveStoreFromObject(Location loc, LanguagePass lp, ir.Scope _scope, string name)
 {
-	auto objectStore = _scope.lookup("object", location);
+	auto objectStore = lookup(loc, lp, _scope, "object");
 	if (objectStore is null || objectStore.s is null) {
-		throw CompilerPanic(location, "couldn't access object module.");
+		throw CompilerPanic(loc, "couldn't access object module.");
 	}
-	auto store = objectStore.s.lookup(name, location);
+	auto store = lookup(loc, lp, objectStore.s, name);
 	if (store is null || store.node is null) {
-		throw CompilerPanic(location, "couldn't locate object." ~ name);
+		throw CompilerPanic(loc, "couldn't locate object." ~ name);
 	}
 	return store;
 }
@@ -231,26 +232,12 @@ ir.Store retrieveStoreFromObject(Location location, ir.Scope _scope, string name
  * Look up object.TypeInfo.
  * Throws: CompilerPanic on failure.
  */
-ir.Class retrieveTypeInfoClass(Location location, ir.Scope _scope)
+ir.Class retrieveTypeInfo(Location loc, LanguagePass lp, ir.Scope _scope)
 {
-	auto tinfoStore = retrieveStoreFromObject(location, _scope, "TypeInfo");
+	auto tinfoStore = retrieveStoreFromObject(loc, lp, _scope, "TypeInfo");
 	auto tinfo = cast(ir.Class) tinfoStore.node;
 	if (tinfo is null) {
-		throw CompilerPanic(location, "tinfo is wrong type.");
-	}
-	return tinfo;
-}
-
-/**
- * Look up object.TypeInfo.
- * Throws: CompilerPanic on failure.
- */
-ir.Struct retrieveTypeInfoStruct(Location location, ir.Scope _scope)
-{
-	auto tinfoStore = retrieveStoreFromObject(location, _scope, "TypeInfo");
-	auto tinfo = cast(ir.Struct) tinfoStore.node;
-	if (tinfo is null) {
-		throw CompilerPanic(location, "tinfo is wrong type.");
+		throw CompilerPanic(loc, "tinfo is wrong type.");
 	}
 	return tinfo;
 }
@@ -259,13 +246,13 @@ ir.Struct retrieveTypeInfoStruct(Location location, ir.Scope _scope)
  * Look up object.AllocDg.
  * Throws: CompilerPanic on failure.
  */
-ir.Variable retrieveAllocDg(Location location, ir.Scope _scope)
+ir.Variable retrieveAllocDg(Location loc, LanguagePass lp, ir.Scope _scope)
 {
 
-	auto allocDgStore = retrieveStoreFromObject(location, _scope, "allocDg");
+	auto allocDgStore = retrieveStoreFromObject(loc, lp, _scope, "allocDg");
 	auto asVar = cast(ir.Variable) allocDgStore.node;
 	if (asVar is null) {
-		throw CompilerPanic(location, "allocDg is wrong type.");
+		throw CompilerPanic(loc, "allocDg is wrong type.");
 	}
 	return asVar;
 }
@@ -274,9 +261,9 @@ ir.Variable retrieveAllocDg(Location location, ir.Scope _scope)
  * Look up object.ArrayStruct.
  * Throws: CompilerPanic on failure.
  */
-ir.Struct retrieveArrayStruct(Location location, ir.Scope _scope)
+ir.Struct retrieveArrayStruct(Location loc, LanguagePass lp, ir.Scope _scope)
 {
-	auto arrayStore = retrieveStoreFromObject(location, _scope, "ArrayStruct");
+	auto arrayStore = retrieveStoreFromObject(loc, lp, _scope, "ArrayStruct");
 	auto asStruct = cast(ir.Struct) arrayStore.node;
 	if (asStruct is null) {
 		throw CompilerPanic(asStruct.location, "object.ArrayStruct is wrong type.");
@@ -381,7 +368,7 @@ bool getFirstClass(ir.Scope _scope, out ir.Scope outScope, out ir.Class outClass
  * Returns:
  *   If the is a class and had a parents scope.
  */
-bool getClassParentsScope(ir.Scope _scope, out ir.Scope outScope, out ir.Class outClass)
+bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScope, out ir.Class outClass)
 {
 	auto node = _scope.node;
 	if (node is null)
@@ -396,7 +383,7 @@ bool getClassParentsScope(ir.Scope _scope, out ir.Scope outScope, out ir.Class o
 		auto asClass = cast(ir.Class)node;
 		assert(asClass !is null);
 
-		fillInParentIfNeeded(node.location, asClass, _scope);
+		fillInParentIfNeeded(node.location, lp, asClass, _scope);
 		if (asClass.parentClass is null) {
 			assert(asClass.parent is null);
 			return false;

@@ -177,7 +177,7 @@ public:
 
 	override Status enter(ir.Class c)
 	{
-		fillInParentIfNeeded(c.location, c, c.myScope);
+		fillInParentIfNeeded(c.location, lp, c, c.myScope);
 		verify(c, false);
 		return Continue;
 	}

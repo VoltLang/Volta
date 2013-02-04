@@ -16,11 +16,11 @@ import volt.semantic.classify;
 import volt.semantic.lookup;
 
 /// Look up a Variable and return its type.
-ir.Type declTypeLookup(ir.Scope _scope, string name, Location location)
+ir.Type declTypeLookup(Location loc, LanguagePass lp, ir.Scope _scope, string name)
 {
-	auto store = _scope.lookup(name, location);
+	auto store = lookup(loc, lp, _scope, name);
 	if (store is null) {
-		throw new CompilerError(location, format("undefined identifier '%s'.", name));
+		throw new CompilerError(loc, format("undefined identifier '%s'.", name));
 	}
 	if (store.kind == ir.Store.Kind.Function) {
 		/// @todo Overloading.
@@ -37,7 +37,7 @@ ir.Type declTypeLookup(ir.Scope _scope, string name, Location location)
 
 	auto d = cast(ir.Variable) store.node;
 	if (d is null) {
-		throw new CompilerError(location, format("%s used as value.", name));
+		throw new CompilerError(loc, format("%s used as value.", name));
 	}
 	return d.type;
 }
@@ -206,7 +206,7 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 
 ir.Type getTypeidType(LanguagePass lp, ir.Typeid _typeid, ir.Scope currentScope)
 {
-	return retrieveTypeInfoClass(_typeid.location, currentScope);
+	return retrieveTypeInfo(_typeid.location, lp, currentScope);
 }
 
 ir.Type getConstantType(LanguagePass lp, ir.Constant constant)
@@ -218,9 +218,9 @@ ir.Type getIdentifierExpType(LanguagePass lp, ir.IdentifierExp identifierExp, ir
 {
 	if (identifierExp.type is null) {
 		if (identifierExp.globalLookup) {
-			identifierExp.type = declTypeLookup(getTopScope(currentScope), identifierExp.value, identifierExp.location);
+			identifierExp.type = declTypeLookup(identifierExp.location, lp, getTopScope(currentScope), identifierExp.value);
 		} else {
-			identifierExp.type = declTypeLookup(currentScope, identifierExp.value, identifierExp.location);
+			identifierExp.type = declTypeLookup(identifierExp.location, lp, currentScope, identifierExp.value);
 		}
 	}
 	assert(identifierExp.type !is null);
@@ -377,7 +377,7 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 	 */
 	auto asIdentifierExp = cast(ir.IdentifierExp) postfix.child;
 	if (asIdentifierExp !is null) {
-		auto store = currentScope.lookup(asIdentifierExp.value, asIdentifierExp.location);
+		auto store = lookup(asIdentifierExp.location, lp, currentScope, asIdentifierExp.value);
 		if (store !is null && store.s !is null) {
 			_scope = store.s;
 			emsg = format("module '%s' did not have member '%s'.", asIdentifierExp.value, postfix.identifier.value);
@@ -400,7 +400,7 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 	retrieveScope(lp, type, postfix, _scope, _class, emsg);
 
 	_lookup:
-	auto store = _scope.lookupAsThisScope(postfix.identifier.value, postfix.location);
+	auto store = lookupAsThisScope(postfix.location, lp, _scope, postfix.identifier.value);
   
 	if (store is null) {
 		throw new CompilerError(postfix.identifier.location, emsg);

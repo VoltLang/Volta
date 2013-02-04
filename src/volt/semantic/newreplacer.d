@@ -40,8 +40,8 @@ ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scop
 	fn._body = new ir.BlockStatement();
 	fn._body.location = location;
 
-	auto arrayStruct = retrieveArrayStruct(location, baseScope);
-	auto allocDgVar = retrieveAllocDg(location, baseScope);
+	auto arrayStruct = retrieveArrayStruct(location, lp, baseScope);
+	auto allocDgVar = retrieveAllocDg(location, lp, baseScope);
 
 	auto arrayStructVar = new ir.Variable();
 	arrayStructVar.location = location;
@@ -174,7 +174,7 @@ public:
 	override void transform(ir.Module m)
 	{
 		thisModule = m;
-		allocDgVar = retrieveAllocDg(m.location, m.myScope);
+		allocDgVar = retrieveAllocDg(m.location, lp, m.myScope);
 		accept(m, this);
 	}
 

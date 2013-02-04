@@ -84,7 +84,7 @@ public:
 			auto argsSlice = postfix.arguments[0 .. funcNumArgs];
 			auto varArgsSlice = postfix.arguments[funcNumArgs .. $];
 
-			auto tinfoClass = retrieveTypeInfoClass(postfix.location, current);
+			auto tinfoClass = retrieveTypeInfo(postfix.location, lp, current);
 			auto tr = new ir.TypeReference(tinfoClass, tinfoClass.name);
 			tr.location = postfix.location;
 			auto array = new ir.ArrayType();
@@ -651,9 +651,9 @@ public:
 		}
 
 		if (e.globalLookup) {
-			e.type = declTypeLookup(_module.myScope, e.value, e.location);
+			e.type = declTypeLookup(e.location, lp, _module.myScope, e.value);
 		} else {
-			e.type = declTypeLookup(current, e.value, e.location);
+			e.type = declTypeLookup(e.location, lp, current, e.value);
 		}
 
 		return Continue;
@@ -888,7 +888,7 @@ public:
 		if (fn.type.hasVarArgs &&
 		    !fn.type.varArgsProcessed &&
 		    fn.type.linkage == ir.Linkage.Volt) {
-			auto tinfoClass = retrieveTypeInfoClass(fn.location, current);
+			auto tinfoClass = retrieveTypeInfo(fn.location, lp, current);
 			assert(tinfoClass !is null);
 			auto tr = new ir.TypeReference(tinfoClass, tinfoClass.name);
 			tr.location = fn.location;
@@ -982,7 +982,7 @@ public:
 			if (asClass is null) {
 				return Continue;
 			}
-			auto functionStore = asClass.myScope.lookupOnlyThisScope(functionName, bin.location);
+			auto functionStore = lookupOnlyThisScope(bin.location, lp, asClass.myScope, functionName);
 			if (functionStore is null) {
 				return Continue;
 			}
@@ -1118,7 +1118,7 @@ public:
 			/// @todo handle leading dot.
 			assert(!identExp.globalLookup);
 
-			store = _scope.lookup(ident, loc);
+			store = lookup(loc, lp, _scope, ident);
 		}
 
 		// Now do the looping.
@@ -1143,7 +1143,7 @@ public:
 				ident = p.identifier.value;
 				loc = p.identifier.location;
 
-				store = _scope.lookupOnlyThisScope(ident, loc);
+				store = lookupOnlyThisScope(loc, lp, _scope, ident);
 				idents = [ident] ~ idents;
 
 				break;
@@ -1200,7 +1200,7 @@ public:
 			}
 
 			/// @todo this is probably an error.
-			store = aggScope.lookupAsThisScope(p.identifier.value, p.location);
+			store = lookupAsThisScope(p.location, lp, aggScope, p.identifier.value);
 			if (store is null) {
 				throw new CompilerError(_ref.location, format("aggregate has no member '%s'.", p.identifier.value));
 			}
@@ -1235,7 +1235,7 @@ public:
 		if (pass == 2) {
 			return Continue;
 		}
-		auto store = current.lookup(i.value, e.location);
+		auto store = lookup(i.location, lp, current, i.value);
 		if (store is null) {
 			throw new CompilerError(i.location, format("unidentified identifier '%s'.", i.value));
 		}
@@ -1287,12 +1287,12 @@ public:
 				return Continue;
 			}
 
-			auto store = _class.myScope.lookupAsThisScope(reference.idents[$-1], reference.location);
+			auto store = lookupAsThisScope(reference.location, lp, _class.myScope, reference.idents[$-1]);
 			if (store is null) {
 				return Continue;
 			}
 
-			store = current.lookup("this", reference.location);
+			store = lookup(reference.location, lp, current, "this");
 			if (store is null || store.kind != ir.Store.Kind.Value) {
 				throw CompilerPanic("function doesn't have this");
 			}
@@ -1320,12 +1320,12 @@ public:
 		if (pass == 1) {
 			return Continue;
 		}
-		auto varStore = current.lookupOnlyThisScope(reference.idents[$-1], reference.location);
+		auto varStore = lookupOnlyThisScope(reference.location, lp, current, reference.idents[$-1]);
 		if (varStore !is null) {
 			return Continue;
 		}
 
-		auto thisStore = current.lookupOnlyThisScope("this", reference.location);
+		auto thisStore = lookupOnlyThisScope(reference.location, lp, current, "this");
 		if (thisStore is null) {
 			return Continue;
 		}
@@ -1346,7 +1346,7 @@ public:
 			assert(false);
 		}
 
-		varStore = aggScope.lookupOnlyThisScope(reference.idents[0], reference.location);
+		varStore = lookupOnlyThisScope(reference.location, lp, aggScope, reference.idents[0]);
 		if (varStore is null) {
 			return Continue;
 		}

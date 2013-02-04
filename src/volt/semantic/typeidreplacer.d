@@ -38,7 +38,7 @@ public:
 	override void transform(ir.Module m)
 	{
 		thisModule = m;
-		typeinfo = retrieveTypeInfoClass(m.location, m.myScope);
+		typeinfo = retrieveTypeInfo(m.location, lp, m.myScope);
 		assert(typeinfo !is null);
 		accept(m, this);
 	}

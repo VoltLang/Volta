@@ -84,7 +84,7 @@ public:
 		auto _class = cast(ir.Class) asTR.type;
 		assert(_class !is null);
 
-		auto vtableStore =  _class.layoutStruct.myScope.lookupOnlyThisScope("__vtable", postfix.location);
+		auto vtableStore =  lookupOnlyThisScope(postfix.location, lp, _class.layoutStruct.myScope, "__vtable");
 		assert(vtableStore !is null);
 
 		auto vtableVariable = cast(ir.Variable) vtableStore.node;
@@ -195,7 +195,7 @@ public:
 	ir.Function lookupFunction(Location loc, string name)
 	{
 		// Lookup the copy function for this type of array.
-		auto store = thisModule.myScope.lookupOnlyThisScope(name, loc);
+		auto store = lookupOnlyThisScope(loc, lp, thisModule.myScope, name);
 		if (store !is null && store.kind == ir.Store.Kind.Function) {
 			assert(store.functions.length == 1);
 			return store.functions[0];

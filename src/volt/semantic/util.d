@@ -13,12 +13,12 @@ import volt.token.location;
 import volt.semantic.lookup;
 import volt.semantic.typer : getExpType;
 
-void fillInParentIfNeeded(Location loc, ir.Class c, ir.Scope _scope)
+void fillInParentIfNeeded(Location loc, LanguagePass lp, ir.Class c, ir.Scope _scope)
 {
 	if (c.parent !is null) {
 		assert(c.parent.identifiers.length == 1);
 		/// @todo Correct look up.
-		auto store = _scope.lookup(c.parent.identifiers[0].value, loc);
+		auto store = lookup(loc, lp, _scope, c.parent.identifiers[0].value);
 		if (store is null) {
 			throw new CompilerError(loc, format("unidentified identifier '%s'.", c.parent));
 		}
