@@ -1,6 +1,5 @@
 //T compiles:yes
 //T retval:42
-//T has-passed:no
 // Generic function calling tests.
 module test_016;
 
