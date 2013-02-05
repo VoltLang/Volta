@@ -276,7 +276,7 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		c._string = primary._string;
 		c.type = new ir.ArrayType(new ir.PrimitiveType(ir.PrimitiveType.Kind.Char));
 		c.type.location = primary.location;
-		assert((c._string[$-1] == '"' || c._string[$-1] == '`') && c._string.length >= 3);
+		assert((c._string[$-1] == '"' || c._string[$-1] == '`') && c._string.length >= 2);
 		c.arrayData = unescapeString(primary.location, c._string[1 .. $-1]);
 		exp = c;
 		break;
