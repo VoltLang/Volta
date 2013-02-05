@@ -50,6 +50,30 @@ ir.Store lookupAsThisScope(Location loc, LanguagePass lp, ir.Scope _scope, strin
 }
 
 /**
+ * Lookup up as identifier in this scope, and any public imports.
+ * Used for rebinding imports.
+ * Returns the store or null if no match was found.
+ */
+ir.Store lookupAsImportScope(Location loc, LanguagePass lp, ir.Scope _scope, string name)
+{
+	auto store = lookupOnlyThisScope(loc, lp, _scope, name);
+	if (store !is null) {
+		return ensureResolved(lp, store);
+	}
+
+	foreach (i, submod; _scope.importedModules) {
+		if (_scope.importedAccess[i] == ir.Access.Public) {
+			store = submod.myScope.getStore(name);
+			if (store !is null) {
+				return ensureResolved(lp, store);
+			}
+		}
+	}
+
+	return null;
+}
+
+/**
  * Look up an identifier in a scope and its parent scopes.
  * Returns the store or null if no match was found.
  */

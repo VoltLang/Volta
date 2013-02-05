@@ -6,6 +6,7 @@ module volt.semantic.importresolver;
 import std.string : format;
 
 import ir = volt.ir.ir;
+import volt.ir.util;
 
 import volt.exceptions;
 import volt.interfaces;
@@ -74,7 +75,8 @@ public:
 
 		if (i.bind !is null && i.aliases.length == 0) { // import a = b;
 			current.addScope(i, mod.myScope, i.bind.value);
-		} else if (i.aliases.length == 0 && i.bind is null) {
+
+		} else if (i.aliases.length == 0 && i.bind is null) { // static import a; OR import a;
 			if (i.isStatic) {
 				assert(i.name.identifiers.length == 1);
 				thisModule.myScope.addScope(i, mod.myScope, i.name.identifiers[0].value);
@@ -82,43 +84,26 @@ public:
 				thisModule.myScope.importedModules ~= mod;
 				thisModule.myScope.importedAccess ~= i.access;
 			}
+
 		} else if (i.aliases.length > 0) {  // import a : b, c OR import a = b : c, d;
 			ir.Scope bindScope;
+
 			if (i.bind !is null) {
-				auto newMod = new ir.Module();
-				newMod.location = i.bind.location;
-				newMod.name = new ir.QualifiedName();
-				newMod.name.identifiers ~= i.bind;
-				bindScope = new ir.Scope(newMod, "");
-				newMod.myScope = bindScope;
+				bindScope = new ir.Scope(null, i, i.bind.value);
+				current.addScope(i, bindScope, i.bind.value);
+			} else {
+				bindScope = thisModule.myScope;
 			}
+
 			foreach (ii, _alias; i.aliases) {
-				string symbolFromImportName, symbolInModuleName;
+				ir.Alias a;
 				if (_alias[1] is null) {
-					symbolFromImportName = symbolInModuleName = _alias[0].value;
+					a = buildAlias(_alias[0].location, _alias[0].value, _alias[0].value);
 				} else {
-					symbolFromImportName = _alias[1].value;
-					symbolInModuleName = _alias[0].value;
+					a = buildAliasSmart(_alias[0].location, _alias[0].value, _alias[1]);
 				}
-				/// @todo refactor into lookup
-				auto store = lookupOnlyThisScope(i.location, lp, mod.myScope, symbolFromImportName);
-				if (store is null) OUTER: foreach (pubImp; gatherer.imports) {
-					auto _mod = lp.getModule(pubImp.name);
-					store = lookupOnlyThisScope(i.location, lp, _mod.myScope, symbolFromImportName);
-					if (store !is null) {
-						break OUTER;
-					}
-				}
-				if (store is null) {
-					throw new CompilerError(format("module '%s' has no symbol '%s'.", mod.name, symbolFromImportName));
-				}
-				if (i.bind !is null) {
-					bindScope.addStore(store, symbolInModuleName);
-				} else {
-					thisModule.myScope.addStore(store, symbolInModuleName);
-				}
+				bindScope.addAlias(a, a.name, mod.myScope);
 			}
-			if (i.bind !is null) current.addScope(i, bindScope, i.bind.value);
 		}
 
 		return Continue;

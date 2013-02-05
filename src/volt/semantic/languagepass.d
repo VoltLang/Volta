@@ -15,6 +15,7 @@ import volt.visitor.debugprinter;
 import volt.visitor.prettyprinter;
 
 import volt.semantic.util;
+import volt.semantic.lookup;
 import volt.semantic.attribremoval;
 import volt.semantic.context;
 import volt.semantic.condremoval;
@@ -113,11 +114,21 @@ public:
 		scope (exit)
 			w.done();
 
-		assert(a.id.identifiers.length == 1);
-		auto ret = lookup(a.location, this, s.s, a.id.identifiers[0].value);
+		ir.Store ret;
+		if (s.s is s.parent) {
+			// Normal alias.
+			assert(a.id.identifiers.length == 1);
+			ret = lookup(a.location, this, s.s, a.id.identifiers[0].value);
+		} else {
+			// Import alias.
+			assert(a.id.identifiers.length == 1);
+			ret = lookupAsImportScope(a.location, this, s.s, a.id.identifiers[0].value);
+		}
+
 		if (ret is null) {
 			throw new CompilerError(a.location, "'" ~ a.id.toString ~ "' not found");
 		}
+
 		s.markAliasResolved(ret);
 	}
 
