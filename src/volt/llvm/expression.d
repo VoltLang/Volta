@@ -825,6 +825,7 @@ void handleSliceTwo(State state, ir.Postfix postfix, Value result)
 		assert(irPt !is null);
 		auto irAt = new ir.ArrayType(irPt.base);
 		irAt.location = postfix.location;
+		addMangledName(irAt);
 		at = cast(ArrayType)state.fromIr(irAt);
 		assert(at !is null);
 

@@ -622,10 +622,6 @@ void buildCommonTypes(State state, bool V_P64)
 	assert(state.voidFunctionType !is null);
 }
 
-
-private:
-
-
 /**
  * Helper function for adding mangled name to ir types.
  */
