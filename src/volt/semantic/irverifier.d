@@ -94,6 +94,7 @@ public:
 			case WhileStatement:
 			case DoStatement:
 			case ForStatement:
+			case ContinueStatement:
 			case ExpStatement:
 			case Variable:
 				auto s = accept(n, this);
