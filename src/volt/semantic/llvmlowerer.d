@@ -149,7 +149,10 @@ public:
 			cast(ir.Exp)
 			buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, left, "left"), "ptr")),
 			buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, right, "right"), "ptr")),
-			buildAccess(loc, buildExpReference(loc, left, "left"), "length"),
+			buildBinOp(loc, ir.BinOp.Type.Mul,
+				buildAccess(loc, buildExpReference(loc, left, "left"), "length"),
+				buildSizeTConstant(loc, lp, size(loc, lp, type.base))
+				),
 			buildConstantInt(loc, 0),
 			buildFalse(loc)
 		];
