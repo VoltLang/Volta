@@ -22,6 +22,7 @@ int[] f3(int[]) { return null; }
 Struct[] f4(Struct[]) { return null; }
 Clazz[] f5(Clazz[]) { return null; }
 int*[] f6(int*[]) { return null; }
+string f7(string) { return null; }
 
 class Main
 {
@@ -31,16 +32,19 @@ public:
 	int[] p3;
 	Struct[] p4;
 	Clazz[] p5;
-	int*[] p6 = null;
+	int*[] p6;
+	string p7;
 
 public:
-	this(void[], char[], int[], Struct[], Clazz[], int*[])
+	this(void[], char[], int[], Struct[], Clazz[], int*[], string)
 	{
 		p1 = null;
 		p2 = null;
 		p3 = null;
 		p4 = null;
 		p5 = null;
+		p6 = null;
+		p7 = null;
 		return;
 	}
 
@@ -51,6 +55,8 @@ public:
 		p3 = null;
 		p4 = null;
 		p5 = null;
+		p6 = null;
+		p7 = null;
 		return;
 	}
 }
@@ -71,7 +77,7 @@ int main()
 	f5(null);
 	f6(null);
 
-	auto c = new Main(null, null, null, null, null);
+	auto c = new Main(null, null, null, null, null, null);
 	c.func();
 
 	return 0;

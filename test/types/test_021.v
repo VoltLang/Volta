@@ -4,6 +4,9 @@
 // null to pointer test.
 module test_021;
 
+
+alias voidPtr = void*;
+
 class Clazz
 {
 	this() { return; }
@@ -21,6 +24,7 @@ char* f2(char*) { return null; }
 int* f3(int*) { return null; }
 Struct* f4(Struct*) { return null; }
 Clazz f5(Clazz) { return null; }
+voidPtr f6(voidPtr) { return null; }
 
 class Main
 {
@@ -30,15 +34,17 @@ public:
 	int* p3;
 	Struct* p4;
 	Clazz p5;
+	voidPtr p6;
 
 public:
-	this(void*, char*, int*, Struct*, Clazz)
+	this(void*, char*, int*, Struct*, Clazz, voidPtr)
 	{
 		p1 = null;
 		p2 = null;
 		p3 = null;
 		p4 = null;
 		p5 = null;
+		p6 = null;
 		return;
 	}
 
@@ -49,6 +55,7 @@ public:
 		p3 = null;
 		p4 = null;
 		p5 = null;
+		p6 = null;
 		return;
 	}
 }
@@ -66,8 +73,9 @@ int main()
 	f3(null);
 	f4(null);
 	f5(null);
+	f6(null);
 
-	auto c = new Main(null, null, null, null, null);
+	auto c = new Main(null, null, null, null, null, null);
 	c.func();
 
 	return 0;
