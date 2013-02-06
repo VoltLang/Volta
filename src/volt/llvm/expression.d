@@ -389,6 +389,18 @@ void handleBinOpPrimitive(State state, Location loc, ir.BinOp.Type binOp,
 		assert(!pt.floating);
 		op = LLVMOpcode.LShr;
 		break;
+	case And:
+		assert(!pt.floating);
+		op = LLVMOpcode.And;
+		break;
+	case Or:
+		assert(!pt.floating);
+		op = LLVMOpcode.Or;
+		break;
+	case Xor:
+		assert(!pt.floating);
+		op = LLVMOpcode.Xor;
+		break;
 	default:
 		throw CompilerPanic(loc, "unhandled BinOp type");
 	}
