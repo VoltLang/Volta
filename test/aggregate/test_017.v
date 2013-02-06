@@ -1,6 +1,5 @@
 //T compiles:yes
 //T retval:42
-//T has-passed:no
 // More function calling tests.
 module test_017;
 
