@@ -70,27 +70,32 @@ ir.Type handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
 		if (constant is null) {
 			throw CompilerPanic(right.location, "non constant null");
 		}
-		if (left.nodeType == ir.NodeType.PointerType) {
+
+		while (true) switch (left.nodeType) with (ir.NodeType) {
+		case PointerType:
 			constant.type = buildVoidPtr(right.location);
 			right = buildCastSmart(right.location, left, right);
 			return copyTypeSmart(right.location, left);
-		} else if (left.nodeType == ir.NodeType.ArrayType) {
+		case ArrayType:
 			right = buildArrayLiteralSmart(right.location, left);
 			return copyTypeSmart(right.location, left);
-		} else if (left.nodeType == ir.NodeType.TypeReference) {
+		case TypeReference:
 			auto tr = cast(ir.TypeReference) left;
 			assert(tr !is null);
-			auto _class = cast(ir.Class) tr.type;
+			left = tr.type;
+			continue;
+		case Class:
+			auto _class = cast(ir.Class) left;
 			if (_class !is null) {
 				auto t = copyTypeSmart(right.location, _class);
 				constant.type = t;
 				return t;
 			}
-			// Fall-trough
+			goto default;
+		default:
+			string emsg = format("can't convert null into '%s'.", to!string(left.nodeType));
+			throw new CompilerError(right.location, emsg);
 		}
-
-		string emsg = format("can't convert null into '%s'.", to!string(left.nodeType));
-		throw new CompilerError(right.location, emsg);
 	}
 	return null;
 }
