@@ -101,9 +101,19 @@ public:
 
 	override Status enter(ref ir.Exp exp, ir.BinOp binOp)
 	{
-		if (binOp.op != ir.BinOp.Type.Assign)
-			return Continue;
+		switch(binOp.op) {
+			case ir.BinOp.Type.Assign: return handleAssign(exp, binOp);
 
+	//             case ir.BinOp.Type.CatAssign:
+			case ir.BinOp.Type.Cat: return handleCat(exp, binOp);
+
+			default: return Continue;
+		}
+
+		assert(false);
+	}
+
+	protected Status handleAssign(ref ir.Exp exp, ir.BinOp binOp) {
 		auto loc = binOp.location;
 		auto asPostfix = cast(ir.Postfix)binOp.left;
 
@@ -118,6 +128,21 @@ public:
 		auto fn = getCopyFunction(loc, leftArrayType);
 
 		exp = buildCall(loc, fn, [asPostfix, binOp.right], fn.name);
+
+		return Continue;
+	}
+
+	protected Status handleCat(ref ir.Exp exp, ir.BinOp binOp) {
+		auto loc = binOp.location;
+
+		auto leftType = getExpType(lp, binOp.left, current);
+		auto leftArrayType = cast(ir.ArrayType)leftType;
+		if (leftArrayType is null)
+			throw CompilerPanic(loc, "OH GOD!");
+
+		auto fn = getConcatFunction(loc, leftArrayType);
+
+		exp = buildCall(loc, fn, [binOp.left, binOp.right], fn.name);
 
 		return Continue;
 	}
@@ -159,6 +184,95 @@ public:
 		buildExpStat(loc, fn._body, buildCall(loc, expRef, args));
 
 		buildReturn(loc, fn._body, buildExpReference(loc, fn.type.params[0], "left"));
+
+		return fn;
+	}
+
+	ir.Function getConcatFunction(Location loc, ir.ArrayType type)
+	{
+		if(type.mangledName is null)
+			type.mangledName = mangle(null, type);
+
+		auto name = "__concatArray" ~ type.mangledName;
+		auto fn = lookupFunction(loc, name);
+		if(fn !is null)
+			return fn;
+
+		fn = buildFunction(loc, thisModule.children, thisModule.myScope, name);
+		fn.mangledName = fn.name;
+		fn.isWeakLink = true;
+		fn.type.ret = copyTypeSmart(loc, type);
+		auto left = addParamSmart(loc, fn, type, "left");
+		auto right = addParamSmart(loc, fn, type, "right");
+
+		auto fnAlloc = retrieveAllocDg(loc, lp, thisModule.myScope);
+		auto allocExpRef = buildExpReference(loc, fnAlloc, fnAlloc.name);
+
+		auto fnMove = getLlvmMemMove(loc);
+
+		ir.Exp[] args;
+
+		auto allocated = buildVarStatSmart(loc, fn._body, fn.myScope, buildVoidPtr(loc), "allocated");
+		auto count = buildVarStatSmart(loc, fn._body, fn.myScope, buildSizeT(loc, lp), "count");
+
+		buildExpStat(loc, fn._body,
+			buildAssign(loc,
+				buildExpReference(loc, count, count.name),
+				buildBinOp(loc, ir.BinOp.Type.Mul,
+					buildAdd(loc,
+						buildAccess(loc, buildExpReference(loc, left, "left"), "length"),
+						buildAccess(loc, buildExpReference(loc, left, "right"), "length")
+					),
+					buildSizeTConstant(loc, lp, size(loc, lp, type.base))
+				)
+			)
+		);
+
+		args = [
+			cast(ir.Exp)
+			buildTypeidSmart(loc, type.base),
+			buildExpReference(loc, count, count.name)
+		];
+
+		buildExpStat(loc, fn._body,
+			buildAssign(loc,
+				buildExpReference(loc, allocated, allocated.name),
+				buildCall(loc, allocExpRef, args)
+			)
+		);
+
+		args = [
+			cast(ir.Exp)
+			buildExpReference(loc, allocated, allocated.name),
+			buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, left, left.name), "ptr")),
+			buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
+			buildConstantInt(loc, 0),
+			buildFalse(loc)
+		];
+		buildExpStat(loc, fn._body, buildCall(loc, buildExpReference(loc, fnMove, fnMove.name), args));
+
+
+		args = [
+			cast(ir.Exp)
+			buildAdd(loc,
+				buildExpReference(loc, allocated, allocated.name),
+				buildAccess(loc, buildExpReference(loc, left, left.name), "length")
+			),
+			buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, right, right.name), "ptr")),
+			buildAccess(loc, buildExpReference(loc, right, right.name), "length"),
+			buildConstantInt(loc, 0),
+			buildFalse(loc)
+		];
+		buildExpStat(loc, fn._body, buildCall(loc, buildExpReference(loc, fnMove, fnMove.name), args));
+
+
+		buildReturn(loc, fn._body,
+			buildSlice(loc,
+				buildCastSmart(loc, buildPtrSmart(loc, type.base), buildExpReference(loc, allocated, allocated.name)),
+				[cast(ir.Exp)buildSizeTConstant(loc, lp, 0),
+					buildExpReference(loc, count, count.name)]
+			)
+		);
 
 		return fn;
 	}
