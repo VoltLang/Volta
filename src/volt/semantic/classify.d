@@ -112,6 +112,15 @@ bool mutableIndirection(ir.Type t)
 	}
 }
 
+bool isBool(ir.Type t)
+{
+	auto p = cast(ir.PrimitiveType) t;
+	if (p is null) {
+		return false;
+	}
+	return p.type == ir.PrimitiveType.Kind.Bool;
+}
+
 bool isLValue(ir.Exp exp)
 {
 	switch (exp.nodeType) {

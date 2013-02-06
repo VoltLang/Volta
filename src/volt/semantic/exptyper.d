@@ -710,6 +710,19 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.Ternary ternary)
+	{
+		auto baseType = getExpType(lp, ternary.ifTrue, current);
+		extype(baseType, ternary.ifFalse);
+
+		auto condType = getExpType(lp, ternary.condition, current);
+		if (!isBool(condType)) {
+			ternary.condition = buildCastToBool(ternary.condition.location, ternary.condition);
+		}
+
+		return Continue;
+	}
+
 	override Status leave(ir.Postfix p)
 	{
 		postfixStack = postfixStack[0 .. $-1];
