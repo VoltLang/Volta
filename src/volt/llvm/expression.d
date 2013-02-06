@@ -422,6 +422,9 @@ void handleUnary(State state, ir.Unary unary, Value result)
 	case Minus:
 		handlePlusMinus(state, unary, result);
 		break;
+	case Not:
+		handleNot(state, unary, result);
+		break;
 	default:
 		auto str = format("unhandled Unary op %s", to!string(unary.op));
 		throw CompilerPanic(unary.location, str);
@@ -604,6 +607,16 @@ void handlePlusMinus(State state, ir.Unary unary, Value result)
 		result.value = LLVMBuildNeg(state.builder, result.value, "fneg");
 }
 
+void handleNot(State state, ir.Unary unary, Value result)
+{
+	state.getValue(unary.value, result);
+
+	if (result.type !is state.boolType) {
+		handleCast(state, unary.location, state.boolType, result);
+	}
+
+	result.value = LLVMBuildNot(state.builder, result.value, "not");
+}
 
 /*
  *
