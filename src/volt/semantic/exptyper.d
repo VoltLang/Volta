@@ -354,20 +354,18 @@ public:
 
 		if (left.nodeType == ir.NodeType.NullType) {
 			left = handleNull(right, bin.left, left);
+			return left;
 		}
 		if (right.nodeType == ir.NodeType.NullType) {
 			right = handleNull(left, bin.right, right);
+			return right;
 		}
-		assert(left !is null && right !is null);
 
 		if (effectivelyConst(left) && bin.op == ir.BinOp.Type.Assign) {
 			throw new CompilerError(bin.location, "cannot assign to const type.");
 		}
 
 		if (bin.op == ir.BinOp.Type.Assign) {
-			if (auto p = handleNull(left, bin.right, right)) {
-				return p;
-			}
 			if (auto p = propertyToCallIfNeeded(bin.location, lp, bin.right, current, postfixStack)) {
 				right = p.ret;
 			}
