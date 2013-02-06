@@ -1,6 +1,5 @@
 //T compiles:yes
 //T retval:0
-//T has-passed:no
 // Segfault due to declaration order, and null.
 module test_014;
 
