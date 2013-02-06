@@ -651,6 +651,29 @@ public:
 		return super.enter(m);
 	}
 
+	override Status enter(ir.Unary _unary)
+	{
+		if (!_unary.hasArgumentList) {
+			return Continue;
+		}
+		auto tr = cast(ir.TypeReference) _unary.type;
+		if (tr is null) {
+			return Continue;
+		}
+		auto _class = cast(ir.Class) tr.type;
+		if (_class is null) {
+			return Continue;
+		}
+		assert(_class.userConstructors.length == 1);
+		if (_unary.argumentList.length != _class.userConstructors[0].type.params.length) {
+			throw new CompilerError(_unary.location, "mismatched argument count for constructor.");
+		}
+		for (size_t i = 0; i < _unary.argumentList.length; ++i) {
+			extype(_class.userConstructors[0].type.params[i].type, _unary.argumentList[i]);
+		}
+		return Continue;
+	}
+
 	override Status visit(ir.IdentifierExp e)
 	{
 		if (pass == 2) {
