@@ -1,5 +1,4 @@
 //T compiles:yes
-//T has-passed:no
 //T retval:0
 // null to array test.
 module test_022;
