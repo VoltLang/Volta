@@ -77,7 +77,17 @@ ir.Type handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
 		} else if (left.nodeType == ir.NodeType.ArrayType) {
 			right = buildArrayLiteralSmart(right.location, left);
 			return copyTypeSmart(right.location, left);
+		} else if (left.nodeType == ir.NodeType.TypeReference) {
+			auto tr = cast(ir.TypeReference) left;
+			assert(tr !is null);
+			auto _class = cast(ir.Class) tr.type;
+			if (_class is null) {
+				goto _error;
+			}
+			constant.type = buildPtrSmart(right.location, _class.layoutStruct);
+			return copyTypeSmart(right.location, _class);
 		} else {
+		_error:
 			string emsg = format("can't convert null into '%s'.", left.nodeType);
 			throw new CompilerError(right.location, emsg);
 		}
