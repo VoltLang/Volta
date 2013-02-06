@@ -409,6 +409,17 @@ ir.Unary buildDeref(Location loc, ir.Exp exp)
 }
 
 /**
+ * Builds a typeid with type smartly.
+ */
+ir.Typeid buildTypeidSmart(Location loc, ir.Type type)
+{
+	auto t = new ir.Typeid();
+	t.location = loc;
+	t.type = copyTypeSmart(loc, type);
+	return t;
+}
+
+/**
  * Build a postfix Identifier expression.
  */
 ir.Postfix buildAccess(Location loc, ir.Exp exp, string name)
