@@ -326,11 +326,11 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 		bool inUnsignedRange(ulong max)
 		{
 			if (primitive.type == Int) {
-				return constant._int > 0 && cast(ulong) constant._int <= max;
+				return constant._int >= 0 && cast(ulong) constant._int <= max;
 			} else if (primitive.type == Uint) {
 				return constant._uint <= max;
 			} else if (primitive.type == Long) {
-				return constant._long > 0 && cast(ulong) constant._long <= max;
+				return constant._long >= 0 && cast(ulong) constant._long <= max;
 			} else if (primitive.type == Ulong) {
 				return constant._ulong <= max;
 			} else if (primitive.type == Float || primitive.type == Double) {
@@ -343,11 +343,11 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 		bool inSignedRange(long min, long max)
 		{
 			if (primitive.type == Int) {
-				return constant._int > min && constant._int <= max;
+				return constant._int >= min && constant._int <= max;
 			} else if (primitive.type == Uint) {
 				return constant._uint <= cast(uint) max;
 			} else if (primitive.type == Long) {
-				return constant._long > min && constant._long <= max;
+				return constant._long >= min && constant._long <= max;
 			} else if (primitive.type == Ulong) {
 				return constant._ulong <= cast(ulong) max;
 			} else if (primitive.type == Float || primitive.type == Double) {
@@ -360,17 +360,17 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 		bool inFPRange(T)()
 		{
 			if (primitive.type == Int) {
-				return constant._int > T.min && constant._int <= T.max;
+				return constant._int >= T.min && constant._int <= T.max;
 			} else if (primitive.type == Uint) {
-				return constant._uint > T.min && constant._uint <= T.max;
+				return constant._uint >= T.min && constant._uint <= T.max;
 			} else if (primitive.type == Long) {
-				return constant._long > T.min && constant._long <= T.max;
+				return constant._long >= T.min && constant._long <= T.max;
 			} else if (primitive.type == Ulong) {
-				return constant._ulong > T.min && constant._ulong <= T.max;
+				return constant._ulong >= T.min && constant._ulong <= T.max;
 			} else if (primitive.type == Float) {
-				return constant._float > T.min && constant._float <= T.max;
+				return constant._float >= T.min && constant._float <= T.max;
 			} else if (primitive.type == Double) {
-				return constant._double > T.min && constant._double <= T.max;
+				return constant._double >= T.min && constant._double <= T.max;
 			} else {
 				assert(false);
 			}
