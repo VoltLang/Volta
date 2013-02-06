@@ -1,6 +1,5 @@
 //T compiles:yes
 //T retval:0
-//T has-passed:no 
 // null not handled to constructors.
 module test_001;
 
