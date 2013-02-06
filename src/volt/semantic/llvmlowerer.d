@@ -208,7 +208,7 @@ public:
 		auto fnAlloc = retrieveAllocDg(loc, lp, thisModule.myScope);
 		auto allocExpRef = buildExpReference(loc, fnAlloc, fnAlloc.name);
 
-		auto fnMove = getLlvmMemMove(loc);
+		auto fnCopy = getLlvmMemCopy(loc);
 
 		ir.Exp[] args;
 
@@ -249,7 +249,7 @@ public:
 			buildConstantInt(loc, 0),
 			buildFalse(loc)
 		];
-		buildExpStat(loc, fn._body, buildCall(loc, buildExpReference(loc, fnMove, fnMove.name), args));
+		buildExpStat(loc, fn._body, buildCall(loc, buildExpReference(loc, fnCopy, fnCopy.name), args));
 
 
 		args = [
@@ -263,7 +263,7 @@ public:
 			buildConstantInt(loc, 0),
 			buildFalse(loc)
 		];
-		buildExpStat(loc, fn._body, buildCall(loc, buildExpReference(loc, fnMove, fnMove.name), args));
+		buildExpStat(loc, fn._body, buildCall(loc, buildExpReference(loc, fnCopy, fnCopy.name), args));
 
 
 		buildReturn(loc, fn._body,
@@ -308,6 +308,39 @@ public:
 		assert(fn !is null);
 		return fn;
 	}
+
+	ir.Function getLlvmMemCopy(Location loc)
+	{
+		auto name32 = "llvm_memcpy_p0i8_p0i8_i32";
+		auto name64 = "llvm_memcpy_p0i8_p0i8_i64";
+		auto name = V_P64 ? name64 : name32;
+
+		auto fn = lookupFunction(loc, name);
+		if (fn !is null)
+			return fn;
+
+		if (V_P64) {
+			fn = buildFunction(loc, thisModule.children, thisModule.myScope, name64, false);
+			fn.mangledName = "llvm.memcpy.p0i8.p0i8.i64";
+			addParam(loc, fn, buildVoidPtr(loc), "dst");
+			addParam(loc, fn, buildVoidPtr(loc), "src");
+			addParam(loc, fn, buildUlong(loc), "len");
+			addParam(loc, fn, buildInt(loc), "align");
+			addParam(loc, fn, buildBool(loc), "isvolatile");
+		} else {
+			fn = buildFunction(loc, thisModule.children, thisModule.myScope, name32, false);
+			fn.mangledName = "llvm.memcpy.p0i8.p0i8.i32";
+			addParam(loc, fn, buildVoidPtr(loc), "dst");
+			addParam(loc, fn, buildVoidPtr(loc), "src");
+			addParam(loc, fn, buildUint(loc), "len");
+			addParam(loc, fn, buildInt(loc), "align");
+			addParam(loc, fn, buildBool(loc), "isvolatile");
+		}
+
+		assert(fn !is null);
+		return fn;
+	}
+
 
 	ir.Function lookupFunction(Location loc, string name)
 	{
