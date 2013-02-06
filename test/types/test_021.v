@@ -1,6 +1,5 @@
 //T compiles:yes
 //T retval:0
-//T has-passed:no
 // null to pointer test.
 module test_021;
 
