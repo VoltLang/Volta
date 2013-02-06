@@ -81,16 +81,16 @@ ir.Type handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
 			auto tr = cast(ir.TypeReference) left;
 			assert(tr !is null);
 			auto _class = cast(ir.Class) tr.type;
-			if (_class is null) {
-				goto _error;
+			if (_class !is null) {
+				auto t = copyTypeSmart(right.location, _class);
+				constant.type = t;
+				return t;
 			}
-			constant.type = buildPtrSmart(right.location, _class.layoutStruct);
-			return copyTypeSmart(right.location, _class);
-		} else {
-		_error:
-			string emsg = format("can't convert null into '%s'.", left.nodeType);
-			throw new CompilerError(right.location, emsg);
+			// Fall-trough
 		}
+
+		string emsg = format("can't convert null into '%s'.", to!string(left.nodeType));
+		throw new CompilerError(right.location, emsg);
 	}
 	return null;
 }
