@@ -99,18 +99,20 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ref ir.Exp exp, ir.BinOp binOp)
+	override Status leave(ref ir.Exp exp, ir.BinOp binOp)
 	{
+		/**
+		 * We do this on the leave function so we know that
+		 * any children has been lowered as well.
+		 */
 		switch(binOp.op) {
-			case ir.BinOp.Type.Assign: return handleAssign(exp, binOp);
-
-	//             case ir.BinOp.Type.CatAssign:
-			case ir.BinOp.Type.Cat: return handleCat(exp, binOp);
-
-			default: return Continue;
+		case ir.BinOp.Type.Assign:
+			return handleAssign(exp, binOp);
+		case ir.BinOp.Type.Cat:
+			return handleCat(exp, binOp);
+		default:
+			return Continue;
 		}
-
-		assert(false);
 	}
 
 	protected Status handleAssign(ref ir.Exp exp, ir.BinOp binOp) {
