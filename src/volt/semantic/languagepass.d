@@ -90,9 +90,9 @@ public:
 		passes2b ~= new ExpTyper(this);
 		passes2b ~= new IrVerifier();
 
+		passes3b ~= new LlvmLowerer(this);
 		passes3b ~= new NewReplacer(this);
 		passes3b ~= new TypeidReplacer(this);
-		passes3b ~= new LlvmLowerer(this);
 		passes3b ~= new MangleWriter(this);
 		passes3b ~= new IrVerifier();
 	}
