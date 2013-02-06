@@ -350,6 +350,14 @@ public:
 		ir.Type left = getExpType(lp, bin.left, current);
 		ir.Type right = getExpType(lp, bin.right, current);
 
+		if (left.nodeType == ir.NodeType.NullType) {
+			left = handleNull(right, bin.left, left);
+		}
+		if (right.nodeType == ir.NodeType.NullType) {
+			right = handleNull(left, bin.right, right);
+		}
+		assert(left !is null && right !is null);
+
 		if (effectivelyConst(left) && bin.op == ir.BinOp.Type.Assign) {
 			throw new CompilerError(bin.location, "cannot assign to const type.");
 		}
@@ -405,10 +413,8 @@ public:
 				}
 				result = left;
 			} else {
-				if (handleNull(array, bin.right, right) is null) {
-					// T[] ~ J
-					extype(array.base, rightExp ? bin.right : bin.left);
-				}
+				// T[] ~ J
+				extype(array.base, rightExp ? bin.right : bin.left);
 				result = array;
 			}
 		} else if (left.nodeType == ir.NodeType.StorageType) {
