@@ -1,6 +1,5 @@
 //T compiles:yes
 //T retval:0
-//T has-passed:no
 // Auto bug
 module test_001;
 
@@ -10,5 +9,5 @@ int main()
 {
 	auto ptr = funcReturnsPointer();
 
-	return 42;
+	return 0;
 }
