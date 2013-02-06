@@ -1,6 +1,5 @@
 //T compiles:yes
 //T retval:5
-//T has-passed:no
 module test_013;
 
 int main()
