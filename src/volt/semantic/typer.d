@@ -81,6 +81,10 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 		auto asLiteral = cast(ir.ArrayLiteral) exp;
 		assert(asLiteral !is null);
 		return getArrayLiteralType(lp, asLiteral, currentScope);
+	case Ternary:
+		auto asTernary = cast(ir.Ternary) exp;
+		assert(asTernary !is null);
+		return getTernaryType(lp, asTernary, currentScope);
 	case Unary:
 		auto asUnary = cast(ir.Unary) exp;
 		assert(asUnary !is null);
@@ -497,6 +501,11 @@ ir.Type getPostfixCallType(LanguagePass lp, ir.Postfix postfix, ir.Scope current
 	}
 
 	return callable.ret;
+}
+
+ir.Type getTernaryType(LanguagePass lp, ir.Ternary ternary, ir.Scope currentScope)
+{
+	return getExpType(lp, ternary.ifTrue, currentScope);
 }
 
 ir.Type getUnaryType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
