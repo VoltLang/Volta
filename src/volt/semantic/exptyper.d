@@ -1287,6 +1287,11 @@ public:
 			if (store is null) {
 				return Continue;
 			}
+			ir.Function memberFunction;
+			if (store.functions.length > 0) {
+				assert(store.functions.length == 1);
+				memberFunction = store.functions[0];
+			}
 
 			store = lookup(reference.location, lp, current, "this");
 			if (store is null || store.kind != ir.Store.Kind.Value) {
@@ -1308,6 +1313,10 @@ public:
 			postfix.identifier.location = reference.location;
 			postfix.identifier.value = reference.idents[0];
 			postfix.child = thisRef;
+			if (memberFunction !is null) {
+				postfix.op = ir.Postfix.Op.CreateDelegate;
+				postfix.memberFunction = buildExpReference(postfix.location, memberFunction);
+			}
 
 			e = postfix;
 			return Continue;
@@ -1336,6 +1345,11 @@ public:
 		if (varStore is null) {
 			return Continue;
 		}
+		ir.Function memberFunction;
+		if (varStore.functions.length > 0) {
+			assert(varStore.functions.length == 1);
+			memberFunction = varStore.functions[0];
+		}
 
 		// Okay, it looks like reference isn't pointing at a local, and it exists in a this.
 		auto thisRef = new ir.ExpReference();
@@ -1350,6 +1364,10 @@ public:
 		postfix.identifier.location = reference.location;
 		postfix.identifier.value = reference.idents[0];
 		postfix.child = thisRef;
+		if (memberFunction !is null) {
+			postfix.op = ir.Postfix.Op.CreateDelegate;
+			postfix.memberFunction = buildExpReference(postfix.location, memberFunction);
+		}
 
 		e = postfix;
 		return Continue;
