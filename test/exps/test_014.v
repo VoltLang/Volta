@@ -1,14 +1,14 @@
 //T compiles:yes
 //T retval:6
-//T has-passed:no
 // is test
 module test_014;
 
 int main()
 {
+	int ret;
+
 	// Emtpy list
 	string arr;
-	int ret;
 
 	if (arr is null)
 		ret += 1;
