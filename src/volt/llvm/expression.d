@@ -117,6 +117,10 @@ void handleBinOp(State state, ir.BinOp bin, Value result)
 	case XorAssign:
 		handleBinOpAssign(state, bin, result);
 		break;
+	case Is:
+	case NotIs:
+		handleIs(state, bin, result);
+		break;
 	case Equal:
 	case NotEqual:
 	case Less:
@@ -167,6 +171,34 @@ void handleBoolCompare(State state, ir.BinOp bin, Value result)
 	}
 }
 
+void handleIs(State state, ir.BinOp bin, Value result)
+{
+	Value left = result;
+	Value right = new Value();
+
+	state.getValueAnyForm(bin.left, left);
+	state.getValueAnyForm(bin.right, right);
+
+	auto at = cast(ArrayType)result.type;
+	if (at !is null) {
+		/// @todo Needs to compare length as well.
+		getPointerFromArray(state, bin.location, left);
+		getPointerFromArray(state, bin.location, right);
+	}
+
+	makeNonPointer(state, left);
+	makeNonPointer(state, right);
+
+	auto pr = bin.op == ir.BinOp.Type.Is ?
+		LLVMIntPredicate.EQ :
+		LLVMIntPredicate.NE;
+
+	result.type = state.boolType;
+	result.isPointer = false;
+	//result.value = state.boolType.fromNumber(state, 1);
+	result.value = LLVMBuildICmp(state.builder, pr, left.value, right.value, "icmp");
+}
+
 void handleCompare(State state, ir.BinOp bin, Value result)
 {
 	Value left = result;
@@ -176,8 +208,9 @@ void handleCompare(State state, ir.BinOp bin, Value result)
 	state.getValue(bin.right, right);
 
 	auto pt = cast(PrimitiveType)result.type;
-	if (pt is null)
+	if (pt is null) {
 		throw CompilerPanic(bin.location, "can only compare primitive types");
+	}
 
 	LLVMIntPredicate pr;
 	switch(bin.op) with (ir.BinOp.Type) {
