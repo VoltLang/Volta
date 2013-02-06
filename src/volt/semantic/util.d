@@ -78,7 +78,8 @@ ir.Node handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
 			right = buildArrayLiteralSmart(right.location, left);
 			return copyTypeSmart(right.location, left);
 		} else {
-			throw new CompilerError(right.location, "can only convert null into pointers currently.");
+			string emsg = format("can't convert null into '%s'.", left.nodeType);
+			throw new CompilerError(right.location, emsg);
 		}
 	}
 	return null;
