@@ -163,9 +163,6 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 		}
 	} else if (left.nodeType == ir.NodeType.ArrayType ||
 			   right.nodeType == ir.NodeType.ArrayType) {
-		if (!(bin.op == ir.BinOp.Type.Cat || bin.op == ir.BinOp.Type.Assign)) {
-			throw new CompilerError(bin.location, "can only concatenate arrays.");
-		}
 		if (left.nodeType == ir.NodeType.ArrayType) {
 			auto array = cast(ir.ArrayType) left;
 			assert(array !is null);

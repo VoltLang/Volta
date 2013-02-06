@@ -386,9 +386,6 @@ public:
 		} else if (left.nodeType == ir.NodeType.ArrayType ||
 				   right.nodeType == ir.NodeType.ArrayType) {
 			// ...
-			if (!(bin.op == ir.BinOp.Type.Cat || bin.op == ir.BinOp.Type.Assign)) {
-				throw new CompilerError(bin.location, "can only concatenate arrays.");
-			}
 			ir.ArrayType array;
 			ir.ArrayType array2;
 			bool rightExp;
