@@ -54,6 +54,10 @@ void getValueRef(State state, ir.Exp exp, Value result)
 void getValueAnyForm(State state, ir.Exp exp, Value result)
 {
 	switch(exp.nodeType) with (ir.NodeType) {
+	case Ternary:
+		auto ternary = cast(ir.Ternary)exp;
+		handleTernary(state, ternary, result);
+		break;
 	case BinOp:
 		auto bin = cast(ir.BinOp)exp;
 		handleBinOp(state, bin, result);
@@ -89,6 +93,27 @@ void getValueAnyForm(State state, ir.Exp exp, Value result)
 }
 
 private:
+/*
+ *
+ * Ternary function.
+ *
+ */
+
+
+void handleTernary(State state, ir.Ternary t, Value result)
+{
+	Value ifTrue = result;
+	Value ifFalse = new Value();
+	Value condition =  new Value();
+
+	getValue(state, t.ifTrue, ifTrue);
+	getValue(state, t.ifFalse, ifFalse);
+	getValue(state, t.condition, condition);
+
+	ifTrue.value = LLVMBuildSelect(state.builder, condition.value, ifTrue.value, ifFalse.value, "");
+}
+
+
 /*
  *
  * BinOp functions.
