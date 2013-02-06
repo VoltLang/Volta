@@ -63,7 +63,7 @@ ir.CallableType propertyToCallIfNeeded(Location loc, LanguagePass lp, ref ir.Exp
 }
 
 
-ir.Node handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
+ir.Type handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
 {
 	if (rightType.nodeType == ir.NodeType.NullType) {
 		auto constant = cast(ir.Constant) right;
