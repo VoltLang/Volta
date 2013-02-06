@@ -1,5 +1,6 @@
 //T compiles:yes
 //T retval:0
+//T has-passed:no
 // null to array test.
 module test_022;
 
@@ -22,6 +23,38 @@ Struct[] f4(Struct[]) { return null; }
 Clazz[] f5(Clazz[]) { return null; }
 int*[] f6(int*[]) { return null; }
 
+class Main
+{
+public:
+	void[] p1;
+	char[] p2;
+	int[] p3;
+	Struct[] p4;
+	Clazz[] p5;
+	int*[] p6 = null;
+
+public:
+	this(void[], char[], int[], Struct[], Clazz[], int*[])
+	{
+		p1 = null;
+		p2 = null;
+		p3 = null;
+		p4 = null;
+		p5 = null;
+		return;
+	}
+
+	void func()
+	{
+		p1 = null;
+		p2 = null;
+		p3 = null;
+		p4 = null;
+		p5 = null;
+		return;
+	}
+}
+
 int main()
 {
 	void[] p1 = null;
@@ -37,6 +70,9 @@ int main()
 	f4(null);
 	f5(null);
 	f6(null);
+
+	auto c = new Main(null, null, null, null, null);
+	c.func();
 
 	return 0;
 }
