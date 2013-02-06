@@ -218,12 +218,9 @@ public:
 		buildExpStat(loc, fn._body,
 			buildAssign(loc,
 				buildExpReference(loc, count, count.name),
-				buildBinOp(loc, ir.BinOp.Type.Mul,
-					buildAdd(loc,
-						buildAccess(loc, buildExpReference(loc, left, "left"), "length"),
-						buildAccess(loc, buildExpReference(loc, left, "right"), "length")
-					),
-					buildSizeTConstant(loc, lp, size(loc, lp, type.base))
+				buildAdd(loc,
+					buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
+					buildAccess(loc, buildExpReference(loc, right, right.name), "length")
 				)
 			)
 		);
@@ -245,7 +242,10 @@ public:
 			cast(ir.Exp)
 			buildExpReference(loc, allocated, allocated.name),
 			buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, left, left.name), "ptr")),
-			buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
+			buildBinOp(loc, ir.BinOp.Type.Mul,
+				buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
+				buildSizeTConstant(loc, lp, size(loc, lp, type.base))
+			),
 			buildConstantInt(loc, 0),
 			buildFalse(loc)
 		];
@@ -256,10 +256,16 @@ public:
 			cast(ir.Exp)
 			buildAdd(loc,
 				buildExpReference(loc, allocated, allocated.name),
-				buildAccess(loc, buildExpReference(loc, left, left.name), "length")
+				buildBinOp(loc, ir.BinOp.Type.Mul,
+					buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
+					buildSizeTConstant(loc, lp, size(loc, lp, type.base))
+				)
 			),
 			buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, right, right.name), "ptr")),
-			buildAccess(loc, buildExpReference(loc, right, right.name), "length"),
+			buildBinOp(loc, ir.BinOp.Type.Mul,
+				buildAccess(loc, buildExpReference(loc, right, right.name), "length"),
+				buildSizeTConstant(loc, lp, size(loc, lp, type.base))
+			),
 			buildConstantInt(loc, 0),
 			buildFalse(loc)
 		];
@@ -269,8 +275,7 @@ public:
 		buildReturn(loc, fn._body,
 			buildSlice(loc,
 				buildCastSmart(loc, buildPtrSmart(loc, type.base), buildExpReference(loc, allocated, allocated.name)),
-				[cast(ir.Exp)buildSizeTConstant(loc, lp, 0),
-					buildExpReference(loc, count, count.name)]
+				[cast(ir.Exp)buildSizeTConstant(loc, lp, 0), buildExpReference(loc, count, count.name)]
 			)
 		);
 
