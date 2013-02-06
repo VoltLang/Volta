@@ -8,6 +8,7 @@ int main()
 {
 	// Emtpy list
 	string arr;
+	int ret;
 
 	if (arr is null)
 		ret += 1;
