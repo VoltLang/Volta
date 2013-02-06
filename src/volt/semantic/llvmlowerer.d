@@ -281,29 +281,22 @@ public:
 	{
 		auto name32 = "llvm_memmove_p0i8_p0i8_i32";
 		auto name64 = "llvm_memmove_p0i8_p0i8_i64";
+		auto mangledName32 = "llvm.memmove.p0i8.p0i8.i32";
+		auto mangledName64 = "llvm.memmove.p0i8.p0i8.i64";
 		auto name = V_P64 ? name64 : name32;
+		auto mangledName = V_P64 ? mangledName64 : mangledName32;
 
 		auto fn = lookupFunction(loc, name);
 		if (fn !is null)
 			return fn;
 
-		if (V_P64) {
-			fn = buildFunction(loc, thisModule.children, thisModule.myScope, name64, false);
-			fn.mangledName = "llvm.memmove.p0i8.p0i8.i64";
-			addParam(loc, fn, buildVoidPtr(loc), "dst");
-			addParam(loc, fn, buildVoidPtr(loc), "src");
-			addParam(loc, fn, buildUlong(loc), "len");
-			addParam(loc, fn, buildInt(loc), "align");
-			addParam(loc, fn, buildBool(loc), "isvolatile");
-		} else {
-			fn = buildFunction(loc, thisModule.children, thisModule.myScope, name32, false);
-			fn.mangledName = "llvm.memmove.p0i8.p0i8.i32";
-			addParam(loc, fn, buildVoidPtr(loc), "dst");
-			addParam(loc, fn, buildVoidPtr(loc), "src");
-			addParam(loc, fn, buildUint(loc), "len");
-			addParam(loc, fn, buildInt(loc), "align");
-			addParam(loc, fn, buildBool(loc), "isvolatile");
-		}
+		fn = buildFunction(loc, thisModule.children, thisModule.myScope, name, false);
+		fn.mangledName = mangledName;
+		addParam(loc, fn, buildVoidPtr(loc), "dst");
+		addParam(loc, fn, buildVoidPtr(loc), "src");
+		addParam(loc, fn, buildSizeT(loc, lp), "len");
+		addParam(loc, fn, buildInt(loc), "align");
+		addParam(loc, fn, buildBool(loc), "isvolatile");
 
 		assert(fn !is null);
 		return fn;
@@ -313,29 +306,22 @@ public:
 	{
 		auto name32 = "llvm_memcpy_p0i8_p0i8_i32";
 		auto name64 = "llvm_memcpy_p0i8_p0i8_i64";
+		auto mangledName32 = "llvm.memcpy.p0i8.p0i8.i32";
+		auto mangledName64 = "llvm.memcpy.p0i8.p0i8.i64";
 		auto name = V_P64 ? name64 : name32;
+		auto mangledName = V_P64 ? mangledName64 : mangledName32;
 
 		auto fn = lookupFunction(loc, name);
 		if (fn !is null)
 			return fn;
 
-		if (V_P64) {
-			fn = buildFunction(loc, thisModule.children, thisModule.myScope, name64, false);
-			fn.mangledName = "llvm.memcpy.p0i8.p0i8.i64";
-			addParam(loc, fn, buildVoidPtr(loc), "dst");
-			addParam(loc, fn, buildVoidPtr(loc), "src");
-			addParam(loc, fn, buildUlong(loc), "len");
-			addParam(loc, fn, buildInt(loc), "align");
-			addParam(loc, fn, buildBool(loc), "isvolatile");
-		} else {
-			fn = buildFunction(loc, thisModule.children, thisModule.myScope, name32, false);
-			fn.mangledName = "llvm.memcpy.p0i8.p0i8.i32";
-			addParam(loc, fn, buildVoidPtr(loc), "dst");
-			addParam(loc, fn, buildVoidPtr(loc), "src");
-			addParam(loc, fn, buildUint(loc), "len");
-			addParam(loc, fn, buildInt(loc), "align");
-			addParam(loc, fn, buildBool(loc), "isvolatile");
-		}
+		fn = buildFunction(loc, thisModule.children, thisModule.myScope, name, false);
+		fn.mangledName = mangledName;
+		addParam(loc, fn, buildVoidPtr(loc), "dst");
+		addParam(loc, fn, buildVoidPtr(loc), "src");
+		addParam(loc, fn, buildSizeT(loc, lp), "len");
+		addParam(loc, fn, buildInt(loc), "align");
+		addParam(loc, fn, buildBool(loc), "isvolatile");
 
 		assert(fn !is null);
 		return fn;
