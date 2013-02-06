@@ -526,6 +526,18 @@ ir.Variable addParamSmart(Location loc, ir.Function fn, ir.Type type, string nam
 }
 
 /**
+ * Builds a variable statement smartly, inserting at the end of the
+ * block statements and inserting it in the scope.
+ */
+ir.Variable buildVarStatSmart(Location loc, ir.BlockStatement block, ir.Scope _scope, ir.Type type, string name)
+{
+	auto var = buildVariableSmart(loc, type, name);
+	block.statements ~= var;
+	_scope.addValue(var, name);
+	return var;
+}
+
+/**
  * Build a exp statement.
  */
 ir.ExpStatement buildExpStat(Location loc, ir.BlockStatement block, ir.Exp exp)
