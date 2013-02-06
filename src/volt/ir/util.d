@@ -203,6 +203,7 @@ ir.PrimitiveType buildInt(Location loc) { return buildPrimitiveType(loc, ir.Prim
 ir.PrimitiveType buildUint(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Uint); }
 ir.PrimitiveType buildLong(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Long); }
 ir.PrimitiveType buildUlong(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Ulong); }
+ir.PrimitiveType buildSizeT(Location loc, LanguagePass lp) { return lp.settings.getSizeT(loc); }
 
 /**
  * Build a void* type.
@@ -436,6 +437,20 @@ ir.Postfix buildAccess(Location loc, ir.Exp exp, string name)
 }
 
 /**
+ * Builds a postfix slice.
+ */
+ir.Postfix buildSlice(Location loc, ir.Exp child, ir.Exp[] args)
+{
+	auto slice = new ir.Postfix();
+	slice.location = loc;
+	slice.op = ir.Postfix.Op.Slice;
+	slice.child = child;
+	slice.arguments = args;
+
+	return slice;
+}
+
+/**
  * Builds a postfix call.
  */
 ir.Postfix buildCall(Location loc, ir.Exp child, ir.Exp[] args)
@@ -476,6 +491,7 @@ ir.Postfix buildCall(Location loc, ir.Declaration decl, ir.Exp[] args, string[] 
 {
 	return buildCall(loc, buildExpReference(loc, decl, names), args);
 }
+
 
 /**
  * Builds an add BinOp.
