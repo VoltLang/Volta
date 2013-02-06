@@ -7,11 +7,11 @@ module test_010;
 int main()
 {
     string s1 = "Volt";
-    string s2 = "Watt";
+    string s2 = " Watt";
 
     string result = s1 ~ s2;
 
-    if(result.length == 8)
+    if(result.length == 9)
         return 42;
     else
         return 0;
