@@ -77,7 +77,7 @@ int main()
 	f5(null);
 	f6(null);
 
-	auto c = new Main(null, null, null, null, null, null);
+	auto c = new Main(null, null, null, null, null, null, null);
 	c.func();
 
 	return 0;
