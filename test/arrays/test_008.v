@@ -9,6 +9,7 @@ int main()
 	// Yes this is a length zero array with a valid pointer.
 	// This is needed for C integration.
 	auto weird = "";
+	int ret;
 
 	if (weird !is null)
 		ret += 1;
