@@ -467,13 +467,29 @@ ir.Postfix buildCall(Location loc, ir.Declaration decl, ir.Exp[] args, string[] 
 }
 
 /**
+ * Builds an add BinOp.
+ */
+ir.BinOp buildAdd(Location loc, ir.Exp left, ir.Exp right)
+{
+	return buildBinOp(loc, ir.BinOp.Type.Add, left, right);
+}
+
+/**
  * Builds an assign BinOp.
  */
 ir.BinOp buildAssign(Location loc, ir.Exp left, ir.Exp right)
 {
+	return buildBinOp(loc, ir.BinOp.Type.Assign, left, right);
+}
+
+/**
+ * Builds an BinOp.
+ */
+ir.BinOp buildBinOp(Location loc, ir.BinOp.Type op, ir.Exp left, ir.Exp right)
+{
 	auto binop = new ir.BinOp();
 	binop.location = loc;
-	binop.op = ir.BinOp.Type.Assign;
+	binop.op = op;
 	binop.left = left;
 	binop.right = right;
 	return binop;
