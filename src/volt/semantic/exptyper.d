@@ -405,8 +405,10 @@ public:
 				}
 				result = left;
 			} else {
-				// T[] ~ J
-				extype(array.base, rightExp ? bin.right : bin.left);
+				if (handleNull(array, bin.right, right) is null) {
+					// T[] ~ J
+					extype(array.base, rightExp ? bin.right : bin.left);
+				}
 				result = array;
 			}
 		} else if (left.nodeType == ir.NodeType.StorageType) {
