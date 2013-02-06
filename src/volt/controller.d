@@ -5,6 +5,7 @@ module volt.controller;
 import core.exception;
 import std.algorithm : endsWith;
 import std.path : dirSeparator, exists;
+import std.file : remove;
 import std.process : system;
 import std.stdio : stderr;
 
@@ -253,12 +254,14 @@ protected:
 		// We will be modifing this later on,
 		// but we don't want to change mBitCodeFiles.
 		string[] bitCodeFiles = mBitCodeFiles;
+		string[] temporaryFiles;
 
 		foreach (mod; mods) {
 			string o = temporaryFilename(".bc");
 			backend.setTarget(o, TargetType.LlvmBitcode);
 			backend.compile(mod);
 			bitCodeFiles ~= o;
+			temporaryFiles ~= o;
 		}
 
 		string bcInputFiles;
@@ -277,6 +280,20 @@ protected:
 		}
 
 		string bc, as, obj, of;
+
+		scope(exit) {
+			foreach (f; temporaryFiles)
+				f.remove();
+			
+			if (bc.exists() && !settings.emitBitCode)
+				bc.remove();
+
+			if (as.exists())
+				as.remove();
+
+			if (obj.exists() && !settings.noLink)
+				obj.remove();
+		}
 
 		string bcLinker = "llvm-link";
 		string compiler = "llc";
