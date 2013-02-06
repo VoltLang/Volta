@@ -228,6 +228,8 @@ public:
 			assert(leftClass !is null);
 			auto rightClass = cast(ir.Class) t;
 			assert(rightClass !is null);
+			lp.resolveClass(leftClass);
+			lp.resolveClass(rightClass);
 			/// Check for converting child classes into parent classes.
 			if (leftClass !is null && rightClass !is null) {
 				if (inheritsFrom(rightClass, leftClass)) {
