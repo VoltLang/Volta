@@ -514,9 +514,16 @@ ir.Type getUnaryType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 		return getUnaryNewType(lp, unary);
 	case Minus, Plus:
 		return getUnarySubAddType(lp, unary, currentScope);
+	case Not:
+		return getUnaryNotType(lp, unary);
 	default:
 		assert(false);
 	}
+}
+
+ir.Type getUnaryNotType(LanguagePass lp, ir.Unary unary)
+{
+	return buildBool(unary.location);
 }
 
 ir.Type getUnaryNoneType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
