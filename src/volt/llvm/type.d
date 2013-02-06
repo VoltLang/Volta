@@ -278,6 +278,14 @@ public:
 	{
 		assert(state.fromIr(al.type) is this);
 
+		// Handle null.
+		if (al.values.length == 0) {
+			LLVMValueRef[2] vals;
+			vals[lengthIndex] = LLVMConstNull(lengthType.llvmType);
+			vals[ptrIndex] = LLVMConstNull(ptrType.llvmType);
+			return LLVMConstNamedStruct(llvmType, vals);
+		}
+
 		LLVMValueRef[] alVals;
 		alVals.length = al.values.length;
 		foreach(uint i, exp; al.values) {
