@@ -112,6 +112,7 @@ public:
 			return handleCat(exp, binOp);
 		case ir.BinOp.Type.CatAssign:
 			return handleCatAssign(exp, binOp);
+		case ir.BinOp.Type.NotEqual:
 		case ir.BinOp.Type.Equal:
 			return handleEqual(exp, binOp);
 		default:
@@ -179,7 +180,7 @@ public:
 		if (leftArrayType is null)
 			return Continue;
 
-		auto fn = getArrayCmpFunction(loc, leftArrayType);
+		auto fn = getArrayCmpFunction(loc, leftArrayType, binOp.op == ir.BinOp.Type.NotEqual);
 		exp = buildCall(loc, fn, [binOp.left, binOp.right], fn.name);
 
 		return Continue;
@@ -342,14 +343,18 @@ public:
 		return fn;
 	}
 
-	ir.Function getArrayCmpFunction(Location loc, ir.ArrayType type)
+	ir.Function getArrayCmpFunction(Location loc, ir.ArrayType type, bool notEqual)
 	{
 		if(type.mangledName is null)
 			type.mangledName = mangle(null, type);
 
-		auto name = "__cmpArray" ~ type.mangledName;
+		string name;
+		if (notEqual)
+			name = "__cmpNotArray" ~ type.mangledName;
+		else
+			name = "__cmpArray" ~ type.mangledName;
 		auto fn = lookupFunction(loc, name);
-		if(fn !is null)
+		if (fn !is null)
 			return fn;
 
 		fn = buildFunction(loc, thisModule.children, thisModule.myScope, name);
@@ -363,8 +368,9 @@ public:
 		auto memCmp = getCMemCmp(loc);
 		auto memCmpExpRef = buildExpReference(loc, memCmp, memCmp.name);
 
+
 		auto thenState = buildBlock(loc);
-		buildReturn(loc, thenState, buildConstantBool(loc, false));
+		buildReturn(loc, thenState, buildConstantBool(loc, !notEqual));
 		buildIf(loc, fn._body,
 			buildBinOp(loc, ir.BinOp.Type.NotEqual,
 				buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
@@ -374,7 +380,7 @@ public:
 		);
 
 		buildReturn(loc, fn._body,
-			buildBinOp(loc, ir.BinOp.Type.Equal,
+			buildBinOp(loc, notEqual ? ir.BinOp.Type.NotEqual : ir.BinOp.Type.Equal,
 				buildCall(loc, memCmpExpRef, [
 					buildAccess(loc, buildExpReference(loc, left, left.name), "ptr"),
 					buildAccess(loc, buildExpReference(loc, right, right.name), "ptr"),
