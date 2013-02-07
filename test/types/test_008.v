@@ -1,4 +1,4 @@
-//T compiles:no
+//T compiles:yes
 // MI to scope assignment.
 module test_008;
 
