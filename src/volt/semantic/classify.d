@@ -107,6 +107,10 @@ bool mutableIndirection(ir.Type t)
 			}
 		}
 		return false;
+	case StorageType:
+		auto asStorageType = cast(ir.StorageType) t;
+		assert(asStorageType !is null);
+		return mutableIndirection(asStorageType.base);
 	default:
 		return true;
 	}
