@@ -182,6 +182,15 @@ ir.Type copyTypeSmart(Location loc, ir.Type type)
 	}
 }
 
+ir.StorageType buildStorageType(Location loc, ir.StorageType.Kind kind, ir.Type base)
+{
+	auto storage = new ir.StorageType();
+	storage.location = loc;
+	storage.type = kind;
+	storage.base = base;
+	return storage;
+}
+
 /**
  * Build a PrimitiveType.
  */
