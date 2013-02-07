@@ -112,12 +112,15 @@ public:
 			return handleCat(exp, binOp);
 		case ir.BinOp.Type.CatAssign:
 			return handleCatAssign(exp, binOp);
+		case ir.BinOp.Type.Equal:
+			return handleEqual(exp, binOp);
 		default:
 			return Continue;
 		}
 	}
 
-	protected Status handleAssign(ref ir.Exp exp, ir.BinOp binOp) {
+	protected Status handleAssign(ref ir.Exp exp, ir.BinOp binOp)
+	{
 		auto loc = binOp.location;
 		auto asPostfix = cast(ir.Postfix)binOp.left;
 
@@ -136,7 +139,8 @@ public:
 		return Continue;
 	}
 
-	protected Status handleCat(ref ir.Exp exp, ir.BinOp binOp) {
+	protected Status handleCat(ref ir.Exp exp, ir.BinOp binOp)
+	{
 		auto loc = binOp.location;
 
 		auto leftType = getExpType(lp, binOp.left, current);
@@ -151,7 +155,8 @@ public:
 		return Continue;
 	}
 
-	protected Status handleCatAssign(ref ir.Exp exp, ir.BinOp binOp) {
+	protected Status handleCatAssign(ref ir.Exp exp, ir.BinOp binOp)
+	{
 		auto loc = binOp.location;
 
 		auto leftType = getExpType(lp, binOp.left, current);
@@ -161,6 +166,21 @@ public:
 
 		auto fn = getConcatFunction(loc, leftArrayType, true);
 		exp = buildCall(loc, fn, [buildAddrOf(binOp.left), binOp.right], fn.name);
+
+		return Continue;
+	}
+
+	protected Status handleEqual(ref ir.Exp exp, ir.BinOp binOp)
+	{
+		auto loc = binOp.location;
+
+		auto leftType = getExpType(lp, binOp.left, current);
+		auto leftArrayType = cast(ir.ArrayType)leftType;
+		if (leftArrayType is null)
+			return Continue;
+
+		auto fn = getArrayCmpFunction(loc, leftArrayType);
+		exp = buildCall(loc, fn, [binOp.left, binOp.right], fn.name);
 
 		return Continue;
 	}
@@ -322,6 +342,55 @@ public:
 		return fn;
 	}
 
+	ir.Function getArrayCmpFunction(Location loc, ir.ArrayType type)
+	{
+		if(type.mangledName is null)
+			type.mangledName = mangle(null, type);
+
+		auto name = "__cmpArray" ~ type.mangledName;
+		auto fn = lookupFunction(loc, name);
+		if(fn !is null)
+			return fn;
+
+		fn = buildFunction(loc, thisModule.children, thisModule.myScope, name);
+		fn.mangledName = fn.name;
+		fn.isWeakLink = true;
+		fn.type.ret = buildBool(loc);
+
+		auto left = addParamSmart(loc, fn, type, "left");
+		auto right = addParamSmart(loc, fn, type, "right");
+
+		auto memCmp = getCMemCmp(loc);
+		auto memCmpExpRef = buildExpReference(loc, memCmp, memCmp.name);
+
+		auto thenState = buildBlock(loc);
+		buildReturn(loc, thenState, buildConstantBool(loc, false));
+		buildIf(loc, fn._body,
+			buildBinOp(loc, ir.BinOp.Type.NotEqual,
+				buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
+				buildAccess(loc, buildExpReference(loc, right, right.name), "length")
+			),
+			thenState
+		);
+
+		buildReturn(loc, fn._body,
+			buildBinOp(loc, ir.BinOp.Type.Equal,
+				buildCall(loc, memCmpExpRef, [
+					buildAccess(loc, buildExpReference(loc, left, left.name), "ptr"),
+					buildAccess(loc, buildExpReference(loc, right, right.name), "ptr"),
+					cast(ir.Exp)buildBinOp(loc, ir.BinOp.Type.Mul,
+						buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
+						buildSizeTConstant(loc, lp, size(loc, lp, type.base))
+					)
+						
+				]),
+				buildConstantInt(loc, 0)
+			)
+		);
+
+		return fn;
+	}
+
 	ir.Function getLlvmMemMove(Location loc)
 	{
 		auto name32 = "llvm_memmove_p0i8_p0i8_i32";
@@ -367,6 +436,25 @@ public:
 		addParam(loc, fn, buildSizeT(loc, lp), "len");
 		addParam(loc, fn, buildInt(loc), "align");
 		addParam(loc, fn, buildBool(loc), "isvolatile");
+
+		assert(fn !is null);
+		return fn;
+	}
+
+	ir.Function getCMemCmp(Location loc)
+	{
+		auto name = "memcmp";
+
+		auto fn = lookupFunction(loc, name);
+		if (fn !is null)
+			return fn;
+
+		fn = buildFunction(loc, thisModule.children, thisModule.myScope, name, false);
+		fn.mangledName = name;
+		fn.type.ret = buildInt(loc);
+		addParam(loc, fn, buildPtrSmart(loc, buildStorageType(loc, ir.StorageType.Kind.Const, buildVoid(loc))), "ptr1");
+		addParam(loc, fn, buildPtrSmart(loc, buildStorageType(loc, ir.StorageType.Kind.Const, buildVoid(loc))), "ptr2");
+		addParam(loc, fn, buildSizeT(loc, lp), "num");
 
 		assert(fn !is null);
 		return fn;
