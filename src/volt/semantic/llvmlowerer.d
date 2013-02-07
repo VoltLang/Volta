@@ -110,6 +110,8 @@ public:
 			return handleAssign(exp, binOp);
 		case ir.BinOp.Type.Cat:
 			return handleCat(exp, binOp);
+		case ir.BinOp.Type.CatAssign:
+			return handleCatAssign(exp, binOp);
 		default:
 			return Continue;
 		}
@@ -142,9 +144,23 @@ public:
 		if (leftArrayType is null)
 			throw CompilerPanic(loc, "OH GOD!");
 
-		auto fn = getConcatFunction(loc, leftArrayType);
+		auto fn = getConcatFunction(loc, leftArrayType, false);
 
 		exp = buildCall(loc, fn, [binOp.left, binOp.right], fn.name);
+
+		return Continue;
+	}
+
+	protected Status handleCatAssign(ref ir.Exp exp, ir.BinOp binOp) {
+		auto loc = binOp.location;
+
+		auto leftType = getExpType(lp, binOp.left, current);
+		auto leftArrayType = cast(ir.ArrayType)leftType;
+		if (leftArrayType is null)
+			throw CompilerPanic(loc, "OH GOD!");
+
+		auto fn = getConcatFunction(loc, leftArrayType, true);
+		exp = buildCall(loc, fn, [buildAddrOf(binOp.left), binOp.right], fn.name);
 
 		return Continue;
 	}
@@ -190,12 +206,16 @@ public:
 		return fn;
 	}
 
-	ir.Function getConcatFunction(Location loc, ir.ArrayType type)
+	ir.Function getConcatFunction(Location loc, ir.ArrayType type, bool isAssignment)
 	{
 		if(type.mangledName is null)
 			type.mangledName = mangle(null, type);
 
-		auto name = "__concatArray" ~ type.mangledName;
+		string name;
+		if(isAssignment)
+			name = "__concatAssignArray" ~ type.mangledName;
+		else
+			name = "__concatArray" ~ type.mangledName;
 		auto fn = lookupFunction(loc, name);
 		if(fn !is null)
 			return fn;
@@ -204,7 +224,12 @@ public:
 		fn.mangledName = fn.name;
 		fn.isWeakLink = true;
 		fn.type.ret = copyTypeSmart(loc, type);
-		auto left = addParamSmart(loc, fn, type, "left");
+		
+		ir.Variable left;
+		if(isAssignment)
+			left = addParam(loc, fn, buildPtrSmart(loc, type), "left");
+		else
+			left = addParamSmart(loc, fn, type, "left");
 		auto right = addParamSmart(loc, fn, type, "right");
 
 		auto fnAlloc = retrieveAllocDg(loc, lp, thisModule.myScope);
@@ -274,12 +299,25 @@ public:
 		buildExpStat(loc, fn._body, buildCall(loc, buildExpReference(loc, fnCopy, fnCopy.name), args));
 
 
-		buildReturn(loc, fn._body,
-			buildSlice(loc,
-				buildCastSmart(loc, buildPtrSmart(loc, type.base), buildExpReference(loc, allocated, allocated.name)),
-				[cast(ir.Exp)buildSizeTConstant(loc, lp, 0), buildExpReference(loc, count, count.name)]
-			)
-		);
+		if (isAssignment) {
+			buildExpStat(loc, fn._body,
+				buildAssign(loc,
+					buildDeref(loc, buildExpReference(loc, left, left.name)),
+					buildSlice(loc,
+						buildCastSmart(loc, buildPtrSmart(loc, type.base), buildExpReference(loc, allocated, allocated.name)),
+						[cast(ir.Exp)buildSizeTConstant(loc, lp, 0), buildExpReference(loc, count, count.name)]
+					)
+				)
+			);
+			buildReturn(loc, fn._body, buildDeref(loc, buildExpReference(loc, left, left.name)));
+		} else {
+			buildReturn(loc, fn._body,
+				buildSlice(loc,
+					buildCastSmart(loc, buildPtrSmart(loc, type.base), buildExpReference(loc, allocated, allocated.name)),
+					[cast(ir.Exp)buildSizeTConstant(loc, lp, 0), buildExpReference(loc, count, count.name)]
+				)
+			);
+		}
 
 		return fn;
 	}
