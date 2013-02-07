@@ -1,5 +1,6 @@
 //T compiles:yes
 //T retval:42
+//T has-passed:no
 // Test string comparison.
 
 module test_012;

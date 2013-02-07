@@ -1,6 +1,5 @@
 //T compiles:yes
 //T retval:44
-//T has-passed:no
 // Local variable shadowing member variable.
 module test_012;
 
