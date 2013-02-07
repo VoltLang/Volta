@@ -8,7 +8,6 @@ import volt.exceptions;
 import volt.interfaces;
 import volt.visitor.visitor;
 import volt.semantic.lookup : lookup;
-import volt.semantic.util : fillInParentIfNeeded;
 
 
 /**
@@ -177,7 +176,7 @@ public:
 
 	override Status enter(ir.Class c)
 	{
-		fillInParentIfNeeded(c.location, lp, c, c.myScope);
+		lp.resolveClass(c);
 		verify(c, false);
 		return Continue;
 	}

@@ -756,13 +756,6 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ir.Class _class)
-	{
-		super.enter(_class);
-		fillInClassLayoutIfNeeded(_class);
-		return Continue;
-	}
-
 	override Status enter(ir.FunctionType ftype)
 	{
 		replaceTypeOfIfNeeded(ftype.ret);

@@ -31,6 +31,7 @@ import volt.semantic.typeidreplacer;
 import volt.semantic.newreplacer;
 import volt.semantic.llvmlowerer;
 
+import volt.semantic.classresolver;
 import volt.semantic.aliasresolver;
 
 
@@ -105,6 +106,14 @@ public:
 		return controller.getModule(name);
 	}
 
+
+	/*
+	 *
+	 * Resolver functions.
+	 *
+	 */
+
+
 	override void resolveAlias(ir.Store s)
 	{
 		auto w = mTracker.add(s.node, "resolving alias");
@@ -121,9 +130,23 @@ public:
 
 	override void resolveClass(ir.Class c)
 	{
-		fillInParentIfNeeded(c.location, this, c, c.myScope);
-		fillInClassLayoutIfNeeded(c);
+		if (!needsResolving(c))
+			return;
+
+		auto w = mTracker.add(c, "resolving class");
+		scope (exit)
+			w.done();
+
+		.resolveClass(this, c);
 	}
+
+
+	/*
+	 *
+	 * Phase functions.
+	 *
+	 */
+
 
 	override void phase1(ir.Module m)
 	{

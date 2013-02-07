@@ -11,7 +11,6 @@ import volt.ir.util : getScopeFromStore, getScopeFromType;
 import volt.exceptions;
 import volt.interfaces;
 import volt.token.location;
-import volt.semantic.util: fillInParentIfNeeded;
 
 
 /**
@@ -411,7 +410,7 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
 		auto asClass = cast(ir.Class)node;
 		assert(asClass !is null);
 
-		fillInParentIfNeeded(node.location, lp, asClass, _scope);
+		lp.resolveClass(asClass);
 		if (asClass.parentClass is null) {
 			assert(asClass.parent is null);
 			return false;
