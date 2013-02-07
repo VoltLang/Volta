@@ -198,7 +198,7 @@ public:
 			throw new CompilerError(right.location, "cannot convert immutable type to const.");
 		}
 
-		if (inVariable && effectivelyConst(left)) {
+		if (effectivelyConst(left)) {
 			asStorageType = cast(ir.StorageType) left;
 			right = buildCastSmart(asStorageType, right);
 			t = asStorageType;
