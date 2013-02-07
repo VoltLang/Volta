@@ -5,6 +5,7 @@ module volt.parser.declaration;
 import std.string : format;
 
 import ir = volt.ir.ir;
+import volt.ir.util;
 
 import volt.exceptions;
 import volt.token.stream;
@@ -244,9 +245,12 @@ ir.Variable parseParameter(TokenStream ts)
 
 	/// @todo intermixed ref
 	p.isRef = matchIf(ts, TokenType.Ref);
-	bool isOut;
+	bool isOut, isIn;
 	if (!p.isRef) {
 		isOut = p.isRef = matchIf(ts, TokenType.Out);
+	}
+	if (!isOut && !p.isRef) {
+		isIn = matchIf(ts, TokenType.In);
 	}
 
 	p.type = parseType(ts);
@@ -254,12 +258,13 @@ ir.Variable parseParameter(TokenStream ts)
 		p.type = new ir.PointerType(p.type);
 		p.type.location = ts.peek.location;
 		if (isOut) {
-			auto scopeStorage = new ir.StorageType();
-			scopeStorage.location = ts.peek.location;
-			scopeStorage.type = ir.StorageType.Kind.Scope;
-			scopeStorage.base = p.type;
+			auto scopeStorage = buildStorageType(ts.peek.location, ir.StorageType.Kind.Scope, p.type);
 			p.type = scopeStorage;
 		}
+	} else if (isIn) {
+		auto constStorage = buildStorageType(ts.peek.location, ir.StorageType.Kind.Const, p.type);
+		auto scopeStorage = buildStorageType(ts.peek.location, ir.StorageType.Kind.Scope, constStorage);
+		p.type = scopeStorage;
 	}
 	if (ts.peek.type == TokenType.Identifier) {
 		Token name = match(ts, TokenType.Identifier);
