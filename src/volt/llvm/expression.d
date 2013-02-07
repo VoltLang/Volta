@@ -9,6 +9,7 @@ import volt.exceptions;
 import volt.llvm.type;
 import volt.llvm.value;
 import volt.llvm.state;
+import volt.llvm.aggregate;
 static import volt.semantic.mangle;
 
 
@@ -727,14 +728,7 @@ void handlePostId(State state, ir.Postfix postfix, Value result)
 			index = *ptr;
 		}
 
-		makePointer(state, result);
-		auto v = result.value;
-
-		v = LLVMBuildStructGEP(b, v, index, "structGep");
-
-		result.value = v;
-		result.isPointer = true;
-		result.type = st.types[index];
+		getFieldFromAggregate(state, postfix.location, result, index, st.types[index], result);
 
 	} else if (at !is null) {
 		if (postfix.identifier.value == "ptr") {
@@ -743,14 +737,7 @@ void handlePostId(State state, ir.Postfix postfix, Value result)
 			index = ArrayType.lengthIndex;
 		}
 
-		makePointer(state, result);
-		auto v = result.value;
-
-		v = LLVMBuildStructGEP(b, v, index, "arrayGep");
-
-		result.value = v;
-		result.isPointer = true;
-		result.type = at.types[index];
+		getFieldFromAggregate(state, postfix.location, result, index, at.types[index], result);
 
 	} else if (sat !is null) {
 		if (postfix.identifier.value == "ptr") {
@@ -857,13 +844,6 @@ void handleSliceTwo(State state, ir.Postfix postfix, Value result)
 		makeNonPointer(state, left);
 
 	} else if (at !is null) {
-		// Use the temporary value directly.
-		if (!left.isPointer) {
-			makePointer(state, left);
-			result.value = left.value;
-			result.isPointer = true;
-			result.type = at;
-		}
 
 		getPointerFromArray(state, postfix.location, left);
 		makeNonPointer(state, left);
@@ -890,22 +870,17 @@ void handleSliceTwo(State state, ir.Postfix postfix, Value result)
 	handleCast(state, postfix.location, state.sizeType, start);
 	handleCast(state, postfix.location, state.sizeType, end);
 
-	LLVMValueRef srcPtr, srcLength;
-	LLVMValueRef dstPtr, dstLength;
+	LLVMValueRef ptr, len;
 
-	srcPtr = LLVMBuildGEP(state.builder, left.value, [start.value], "sliceGep");
+	ptr = LLVMBuildGEP(state.builder, left.value, [start.value], "sliceGep");
 
 	// Subtract start from end to get the length, which returned in end. 
 	handleBinOpNonAssign(state, postfix.location,
 	                     ir.BinOp.Type.Sub,
 	                     end, start, end);
-	srcLength = end.value;
+	len = end.value;
 
-	dstPtr = LLVMBuildStructGEP(state.builder, result.value, ArrayType.ptrIndex, "sliceDstPtrGep");
-	LLVMBuildStore(state.builder, srcPtr, dstPtr);
-
-	dstLength = LLVMBuildStructGEP(state.builder, result.value, ArrayType.lengthIndex, "sliceDstLenGep");
-	LLVMBuildStore(state.builder, srcLength, dstLength);
+	makeArrayTemp(state, postfix.location, at, ptr, len, result);
 }
 
 void handleCreateDelegate(State state, ir.Postfix postfix, Value result)
@@ -1065,62 +1040,6 @@ void handleExpReference(State state, ir.ExpReference expRef, Value result)
 	default:
 		throw CompilerPanic(expRef.location, "invalid decl type");
 	}
-}
-
-/**
- * Turns a ArrayType Value into a Pointer Value. Value must be
- * of type ArrayType.
- */
-void getPointerFromArray(State state, Location loc, Value result)
-{
-	auto at = cast(ArrayType)result.type;
-	assert(at !is null);
-
-	makePointer(state, result);
-
-	result.value = LLVMBuildStructGEP(state.builder, result.value, ArrayType.ptrIndex, "arrayGep");
-	result.isPointer = true;
-	result.type = at.ptrType;
-}
-
-/**
- * Turns a StaticArrayType Value into a Pointer Value. Value must be
- * of type StaticArrayType.
- */
-void getPointerFromStaticArray(State state, Location loc, Value result)
-{
-	auto sat = cast(StaticArrayType)result.type;
-	assert(sat !is null);
-
-	makePointer(state, result);
-
-	result.value = LLVMBuildStructGEP(state.builder, result.value, 0, "staticArrayGep");
-	result.isPointer = false;
-	result.type = sat.ptrType;
-}
-
-/**
- * Turns a StaticArrayType Value into a Array Value. Value must be
- * of type StaticArrayType.
- */
-void getArrayFromStaticArray(State state, Location loc, Value result)
-{
-	auto sat = cast(StaticArrayType)result.type;
-	assert(sat !is null);
-	auto at = sat.arrayType;
-
-	getPointerFromStaticArray(state, loc, result);
-	LLVMValueRef srcPtr = result.value;
-
-	result.value = LLVMBuildAlloca(state.builder, at.llvmType, "arrayTemp");
-	result.isPointer = true;
-	result.type = at;
-
-	auto dstPtr = LLVMBuildStructGEP(state.builder, result.value, ArrayType.ptrIndex, "arrayDstPtrGep");
-	LLVMBuildStore(state.builder, srcPtr, dstPtr);
-
-	auto dstLength = LLVMBuildStructGEP(state.builder, result.value, ArrayType.lengthIndex, "arrayDstLenGep");
-	LLVMBuildStore(state.builder, LLVMConstInt(state.sizeType.llvmType, sat.length, false), dstLength);
 }
 
 /**
