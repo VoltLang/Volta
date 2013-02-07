@@ -382,8 +382,8 @@ public:
 		buildReturnStat(loc, fn._body,
 			buildBinOp(loc, notEqual ? ir.BinOp.Type.NotEqual : ir.BinOp.Type.Equal,
 				buildCall(loc, memCmpExpRef, [
-					buildAccess(loc, buildExpReference(loc, left, left.name), "ptr"),
-					buildAccess(loc, buildExpReference(loc, right, right.name), "ptr"),
+					buildCastSmart(loc, buildVoidPtr(loc), buildAccess(loc, buildExpReference(loc, left, left.name), "ptr")),
+					buildCastSmart(loc, buildVoidPtr(loc), buildAccess(loc, buildExpReference(loc, right, right.name), "ptr")),
 					cast(ir.Exp)buildBinOp(loc, ir.BinOp.Type.Mul,
 						buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
 						buildSizeTConstant(loc, lp, size(loc, lp, type.base))
