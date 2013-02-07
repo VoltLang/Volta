@@ -1,15 +1,15 @@
 //T compiles:yes
 //T retval:42
-// Test string concatenation.
+// Test string assign-concatenation.
 
-module test_010;
+module test_011;
 
 int main()
 {
-	string s1 = "Volt";
+	string result = "Volt";
 	string s2 = " Watt";
 
-	string result = s1 ~ s2;
+	result ~= s2;
 
 	if(result.length == 9)
 		return 42;
