@@ -554,7 +554,7 @@ ir.Type getUnaryDerefType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope
 		ir.StorageType.Kind[] kinds;
 		Location[] locations;
 		while (base.nodeType == ir.NodeType.StorageType) {
-			auto asStorage = cast(ir.StorageType) type;
+			auto asStorage = cast(ir.StorageType) base;
 			kinds ~= asStorage.type;
 			locations ~= asStorage.location;
 			assert(asStorage !is null);
