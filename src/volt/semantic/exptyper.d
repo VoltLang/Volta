@@ -1298,6 +1298,12 @@ public:
 		// Turn references to @property functions into calls.
 		propertyToCallIfNeeded(e.location, lp, e, current, postfixStack);
 
+		/// If we can find it locally, don't insert a this, even if it's in a this. (i.e. shadowing).
+		auto sstore = lookupOnlyThisScope(e.location, lp, current, reference.idents[$-1]);
+		if (sstore !is null) {
+			return Continue;
+		}
+
 		ir.Scope _; 
 		ir.Class _class;
 		bool foundClass = current.getFirstClass(_, _class);
