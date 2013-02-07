@@ -309,14 +309,9 @@ public:
 			 * worry about StorageType chains.
 			 */
 			if (asStorageType.type == ir.StorageType.Kind.Scope) {
-				if (mutableIndirection(t)) {
-					/// This is not the world's greatest error message. @todo
-					throw new CompilerError(right.location, "cannot convert mutably indirectable type to scope.");
-				} else {
-					extype(asStorageType.base, right, inVariable);
-					right = buildCastSmart(asStorageType, right);
-					return asStorageType;
-				}
+				extype(asStorageType.base, right, inVariable);
+				right = buildCastSmart(asStorageType, right);
+				return asStorageType;
 			}
 		} else {
 			if (typesEqual(localLeft, t)) {
