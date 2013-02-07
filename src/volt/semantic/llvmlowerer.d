@@ -222,7 +222,7 @@ public:
 		];
 		buildExpStat(loc, fn._body, buildCall(loc, expRef, args));
 
-		buildReturn(loc, fn._body, buildExpReference(loc, fn.type.params[0], "left"));
+		buildReturnStat(loc, fn._body, buildExpReference(loc, fn.type.params[0], "left"));
 
 		return fn;
 	}
@@ -330,9 +330,9 @@ public:
 					)
 				)
 			);
-			buildReturn(loc, fn._body, buildDeref(loc, buildExpReference(loc, left, left.name)));
+			buildReturnStat(loc, fn._body, buildDeref(loc, buildExpReference(loc, left, left.name)));
 		} else {
-			buildReturn(loc, fn._body,
+			buildReturnStat(loc, fn._body,
 				buildSlice(loc,
 					buildCastSmart(loc, buildPtrSmart(loc, type.base), buildExpReference(loc, allocated, allocated.name)),
 					[cast(ir.Exp)buildSizeTConstant(loc, lp, 0), buildExpReference(loc, count, count.name)]
@@ -369,9 +369,9 @@ public:
 		auto memCmpExpRef = buildExpReference(loc, memCmp, memCmp.name);
 
 
-		auto thenState = buildBlock(loc);
-		buildReturn(loc, thenState, buildConstantBool(loc, !notEqual));
-		buildIf(loc, fn._body,
+		auto thenState = buildBlockStat(loc);
+		buildReturnStat(loc, thenState, buildConstantBool(loc, !notEqual));
+		buildIfStat(loc, fn._body,
 			buildBinOp(loc, ir.BinOp.Type.NotEqual,
 				buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
 				buildAccess(loc, buildExpReference(loc, right, right.name), "length")
@@ -379,7 +379,7 @@ public:
 			thenState
 		);
 
-		buildReturn(loc, fn._body,
+		buildReturnStat(loc, fn._body,
 			buildBinOp(loc, notEqual ? ir.BinOp.Type.NotEqual : ir.BinOp.Type.Equal,
 				buildCall(loc, memCmpExpRef, [
 					buildAccess(loc, buildExpReference(loc, left, left.name), "ptr"),

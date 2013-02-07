@@ -207,7 +207,7 @@ public:
 		buildExpStat(location, _function._body, exp);
 
 		// return thisVar
-		buildReturn(location, _function._body, buildExpReference(location, thisVar, "thisVar"));
+		buildReturnStat(location, _function._body, buildExpReference(location, thisVar, "thisVar"));
 
 		_class.constructor = _function;
 	}

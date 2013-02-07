@@ -579,8 +579,8 @@ ir.ExpStatement buildExpStat(Location loc, ir.BlockStatement block, ir.Exp exp)
 /**
  * Build an if statement.
  */
-ir.IfStatement buildIf(Location loc, ir.BlockStatement block, ir.Exp exp,
-                       ir.BlockStatement thenState, ir.BlockStatement elseState = null, string autoName = "")
+ir.IfStatement buildIfStat(Location loc, ir.BlockStatement block, ir.Exp exp,
+                           ir.BlockStatement thenState, ir.BlockStatement elseState = null, string autoName = "")
 {
 	auto ret = new ir.IfStatement();
 	ret.location = loc;
@@ -597,7 +597,7 @@ ir.IfStatement buildIf(Location loc, ir.BlockStatement block, ir.Exp exp,
 /**
  * Build a block statement.
  */
-ir.BlockStatement buildBlock(Location loc, ir.Node[] statements...)
+ir.BlockStatement buildBlockStat(Location loc, ir.Node[] statements...)
 {
 	auto ret = new ir.BlockStatement();
 	ret.location = loc;
@@ -610,7 +610,7 @@ ir.BlockStatement buildBlock(Location loc, ir.Node[] statements...)
 /**
  * Build a return statement.
  */
-ir.ReturnStatement buildReturn(Location loc, ir.BlockStatement block, ir.Exp exp = null)
+ir.ReturnStatement buildReturnStat(Location loc, ir.BlockStatement block, ir.Exp exp = null)
 {
 	auto ret = new ir.ReturnStatement();
 	ret.location = loc;
