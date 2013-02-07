@@ -1,17 +1,22 @@
 //T compiles:yes
 //T retval:42
-// Test string assign-concatenation.
+// Test array assign-concatenation.
 
 module test_011;
 
 int main()
 {
-	string result = "Volt";
+	string sresult = "Volt";
 	string s2 = " Watt";
 
-	result ~= s2;
+	sresult ~= s2;
 
-	if(result.length == 9)
+	int[] iresult = [1, 2];
+	int[] i2 = [3, 4, 5];
+
+	iresult ~= i2;
+
+	if(sresult.length == 9 && iresult.length == 5 && iresult[3] == 4)
 		return 42;
 	else
 		return 0;
