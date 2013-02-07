@@ -575,6 +575,38 @@ ir.ExpStatement buildExpStat(Location loc, ir.BlockStatement block, ir.Exp exp)
 
 	return ret;
 }
+
+/**
+ * Build an if statement.
+ */
+ir.IfStatement buildIf(Location loc, ir.BlockStatement block, ir.Exp exp,
+                       ir.BlockStatement thenState, ir.BlockStatement elseState = null, string autoName = "")
+{
+	auto ret = new ir.IfStatement();
+	ret.location = loc;
+	ret.exp = exp;
+	ret.thenState = thenState;
+	ret.elseState = elseState;
+	ret.autoName = autoName;
+
+	block.statements ~= ret;
+
+	return ret;
+}
+
+/**
+ * Build a block statement.
+ */
+ir.BlockStatement buildBlock(Location loc, ir.Node[] statements...)
+{
+	auto ret = new ir.BlockStatement();
+	ret.location = loc;
+	ret.statements = statements;
+	
+	return ret;
+}
+
+
 /**
  * Build a return statement.
  */
