@@ -24,6 +24,23 @@ ir.QualifiedName buildQualifiedName(Location loc, string value)
 }
 
 /**
+ * Builds a QualifiedName from an array.
+ */
+ir.QualifiedName buildQualifiedName(Location loc, string[] value)
+{
+	auto idents = new ir.Identifier[value.length];
+	foreach (i, val; value) {
+		idents[i] = new ir.Identifier(val);
+		idents[i].location = loc;
+	}
+
+	auto q = new ir.QualifiedName();
+	q.identifiers = idents;
+	q.location = loc;
+	return q;
+}
+
+/**
  * Builds a QualifiedName from a Identifier.
  */
 ir.QualifiedName buildQualifiedNameSmart(ir.Identifier i)
