@@ -62,9 +62,12 @@ void fillInParentIfNeeded(Location loc, LanguagePass lp, ir.Class c, ir.Scope _s
 		return;
 	}
 
-	assert(c.parent.identifiers.length == 1);
-	/// @todo Correct look up.
-	auto store = lookup(loc, lp, _scope, c.parent.identifiers[0].value);
+	foreach (ident; c.parent.identifiers[0 .. $-1]) {
+		_scope = lookupScope(loc, lp, _scope, ident.value);
+	}
+
+	assert(_scope !is null);
+	auto store = lookup(loc, lp, _scope, c.parent.identifiers[$-1].value);
 	if (store is null) {
 		throw new CompilerError(loc, format("unidentified identifier '%s'.", c.parent));
 	}
