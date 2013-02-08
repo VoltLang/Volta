@@ -19,15 +19,9 @@ ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scop
 {
 	auto arrayMangledName = mangle(null, atype);
 
-	auto countVar = new ir.Variable();
-	countVar.location = location;
-	countVar.type = lp.settings.getSizeT(location);
-	countVar.name = "count";
-
 	auto ftype = new ir.FunctionType();
 	ftype.location = location;
 	ftype.ret = copyTypeSmart(location, atype);
-	ftype.params ~= countVar;
 
 	auto fn = new ir.Function();
 	fn.location = location;
@@ -36,18 +30,15 @@ ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scop
 	fn.mangledName = fn.name;
 	fn.isWeakLink = true;
 	fn.myScope = new ir.Scope(baseScope, fn, fn.name);
-	fn.myScope.addValue(countVar, "count");
 	fn._body = new ir.BlockStatement();
 	fn._body.location = location;
+
+	auto countVar = addParam(location, fn, buildSizeT(location, lp), "count");
 
 	auto arrayStruct = retrieveArrayStruct(location, lp, baseScope);
 	auto allocDgVar = retrieveAllocDg(location, lp, baseScope);
 
-	auto arrayStructVar = new ir.Variable();
-	arrayStructVar.location = location;
-	arrayStructVar.name = "from";
-	arrayStructVar.type = new ir.TypeReference(arrayStruct, arrayStruct.name);
-	fn._body.statements ~= arrayStructVar;
+	auto arrayStructVar = buildVarStatSmart(location, fn._body, fn.myScope, arrayStruct, "from");
 
 	auto ptrPfix = new ir.Postfix();
 	ptrPfix.location = location;
@@ -194,10 +185,9 @@ public:
 		_function.type.params = copyVariablesSmart(location, _class.userConstructors[0].type.params);
 
 		// auto thisVar = allocDg(Class, -1)
-		auto thisVar = buildVariable(location, copyTypeSmart(location, _class), "thisVar");
+		auto thisVar = buildVarStatSmart(location, _function._body, _function.myScope, _class, "thisVar");
 		thisVar.assign = createAllocDgCall(allocDgVar, lp, unary.location, _class, buildConstantInt(unary.location, -1), true);
 		thisVar.assign = buildCastSmart(location, _class, thisVar.assign);
-		_function._body.statements ~= thisVar;
 
 		// thisVar.this(cast(void*) thisVar)
 		assert(_class.userConstructors.length == 1);

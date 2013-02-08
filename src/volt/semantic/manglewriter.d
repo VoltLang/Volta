@@ -121,7 +121,8 @@ public:
 		}
 		if (aggregateDepth == 0) {
 			// Module level -- ensure global or local is specified.
-			if (v.storage == ir.Variable.Storage.None) {
+			if (v.storage != ir.Variable.Storage.Local &&
+			    v.storage != ir.Variable.Storage.Global) {
 				throw new CompilerError(v.location, "module level variables must be explicitly global or local.");
 			}
 		}

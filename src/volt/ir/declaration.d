@@ -60,7 +60,9 @@ class Variable : Declaration
 public:
 	enum Storage
 	{
-		None,  /// Not applicable (usually stack).
+		Invalid,
+		Field, /// Member of a struct/class.
+		Function, /// Variable in a function.
 		Local,  /// Stored in TLS.
 		Global,  /// Stored in the global data segment.
 	}

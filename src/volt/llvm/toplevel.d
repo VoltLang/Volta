@@ -96,11 +96,12 @@ public:
 		Type type;
 
 		final switch(var.storage) with (ir.Variable.Storage) {
-		case None:
-			// Variables declared in structs.
-			/// @todo mark members with a special storage type.
-			if (state.currentFunc is null)
-				break;
+		case Invalid:
+			assert(false, "invalid variable");
+		case Field:
+			break;
+		case Function:
+			assert(state.currentFunc !is null);
 
 			auto v = state.getVariableValue(var, type);
 

@@ -56,6 +56,14 @@ public:
 		return Status.Continue;
 	}
 
+	override Status enter(ir.Variable v)
+	{
+		if (v.storage != ir.Variable.Storage.Invalid) {
+			return Continue;
+		}
+		throw CompilerPanic(v.location, "invalid variable found in IR");
+	}
+
 	override Status enter(ir.TopLevelBlock tlb)
 	{
 		foreach (n; tlb.nodes) {

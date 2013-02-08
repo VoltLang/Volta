@@ -924,12 +924,7 @@ public:
 			auto array = new ir.ArrayType();
 			array.location = tr.location;
 			array.base = tr;
-			auto var = new ir.Variable();
-			var.location = fn.location;
-			var.type = array;
-			var.name = "_typeids";
-			fn.type.params ~= var;
-			fn.myScope.addValue(var, "_typeids");
+			addParam(fn.location, fn, array, "_typeids");
 			fn.type.varArgsProcessed = true;
 		}
 	}

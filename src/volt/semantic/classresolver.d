@@ -97,7 +97,7 @@ ir.Variable[] getClassFields(ir.Class _class)
 		if (asVar is null) {
 			continue;
 		}
-		if (asVar.storage != ir.Variable.Storage.None) {
+		if (asVar.storage != ir.Variable.Storage.Field) {
 			continue;
 		}
 		fields ~= copyVariableSmart(asVar.location, asVar);
@@ -163,7 +163,7 @@ ir.Variable[] getClassMethodTypeVariables(ir.Class _class)
 
 	ir.Variable[] typeVars;
 	foreach (outIndex, method; methods) {
-		typeVars ~= buildVariableSmart(method.location, method.type, format("_%s", outIndex));
+		typeVars ~= buildVariableSmart(method.location, method.type, ir.Variable.Storage.Field, format("_%s", outIndex));
 	}
 	return typeVars;
 }
@@ -185,7 +185,7 @@ ir.Struct getClassLayoutStruct(ir.Class _class, ref ir.Struct vtableStruct)
 {
 	auto methodTypes = getClassMethodTypeVariables(_class);
 	vtableStruct = buildStruct(_class.location, _class.members, _class.myScope, "__Vtable", methodTypes);
-	auto vtableVar = buildVariableSmart(_class.location, buildPtrSmart(_class.location, vtableStruct), "__vtable");
+	auto vtableVar = buildVariableSmart(_class.location, buildPtrSmart(_class.location, vtableStruct), ir.Variable.Storage.Field, "__vtable");
 
 	auto fields = getClassFields(_class);
 	fields = vtableVar ~ fields;
@@ -201,8 +201,7 @@ void emitVtableVariable(ir.Class _class)
 	assign.exps = addrs;
 	assign.type = copyTypeSmart(_class.location, _class.vtableStruct);
 
-	_class.vtableVariable = buildVariableSmart(_class.location, _class.vtableStruct, "__vtable_instance");
-	_class.vtableVariable.storage = ir.Variable.Storage.Global;
+	_class.vtableVariable = buildVariableSmart(_class.location, _class.vtableStruct, ir.Variable.Storage.Global, "__vtable_instance");
 	_class.vtableVariable.assign = assign;
 	_class.members.nodes ~= _class.vtableVariable;
 	_class.myScope.addValue(_class.vtableVariable, _class.vtableVariable.name);

@@ -241,6 +241,7 @@ ir.Variable[] parseParameterList(TokenStream ts, ir.CallableType parentCallable=
 ir.Variable parseParameter(TokenStream ts)
 {
 	ir.Variable p = new ir.Variable();
+	p.storage = ir.Variable.Storage.Function;
 	Location origin = ts.peek.location;
 
 	/// @todo intermixed ref

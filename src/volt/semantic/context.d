@@ -21,6 +21,7 @@ public:
 	LanguagePass lp;
 	ir.Scope current;
 	ir.Type[] thisStack;
+	bool[] funStack;
 
 public:
 	this(LanguagePass lp)
@@ -77,6 +78,25 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.Variable v)
+	{
+		if (v.storage != ir.Variable.Storage.Invalid) {
+			return Continue;
+		}
+
+		if (funStack.length == 0) {
+			throw new CompilerError(v.location, "module level variables must be explicitly global or local.");
+		}
+
+		if (funStack[$-1]) {
+			v.storage = ir.Variable.Storage.Function;
+		} else {
+			v.storage = ir.Variable.Storage.Field;
+		}
+
+		return Continue;
+	}
+
 	override Status enter(ir.Class c)
 	{
 		if (c.name is null) {
@@ -87,6 +107,7 @@ public:
 		c.myScope = newContext(c, c.name);
 
 		thisStack ~= c;
+		funStack ~= false;
 
 		return Continue;
 	}
@@ -113,12 +134,16 @@ public:
 		s.myScope = newContext(s, s.name);
 
 		thisStack ~= s;
+		funStack ~= false;
 
 		return Continue;
 	}
 
 	override Status enter(ir.Function fn)
 	{
+		// We are in a function.
+		funStack ~= true;
+
 		if (fn.name !is null) {
 			current.addFunction(fn, fn.name);
 		}
@@ -147,6 +172,7 @@ public:
 		thisVar.location = fn.location;
 		thisVar.type = tr;
 		thisVar.name = "this";
+		thisVar.storage = ir.Variable.Storage.Function;
 		// For classes this needs to be set.
 		thisVar.useBaseStorage = cast(ir.Class)t !is null;
 
@@ -162,6 +188,8 @@ public:
 		pop();
 		assert(thisStack.length > 0);
 		thisStack = thisStack[0 .. $-1];
+		assert(funStack.length > 0);
+		funStack = funStack[0 .. $-1];
 		return Continue;
 	}
 
@@ -170,9 +198,18 @@ public:
 		pop();
 		assert(thisStack.length > 0);
 		thisStack = thisStack[0 .. $-1];
+		assert(funStack.length > 0);
+		funStack = funStack[0 .. $-1];
+		return Continue;
+	}
+
+	override Status leave(ir.Function fn)
+	{
+		pop();
+		assert(funStack.length > 0);
+		funStack = funStack[0 .. $-1];
 		return Continue;
 	}
 
 	override Status leave(ir._Interface i) { pop(); return Continue; }
-	override Status leave(ir.Function fn) { pop(); return Continue; }
 }

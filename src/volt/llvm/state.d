@@ -209,7 +209,11 @@ public:
 		}
 
 		final switch(var.storage) with (ir.Variable.Storage) {
-		case None:
+		case Invalid:
+			assert(false, "unclassified variable");
+		case Field:
+			assert(false, "field variable refered directly");
+		case Function:
 			if (currentFunc is null)
 				throw CompilerPanic(var.location,
 					"non-local/global variable in non-function scope");

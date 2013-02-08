@@ -262,12 +262,13 @@ ir.ArrayLiteral buildArrayLiteralSmart(Location loc, ir.Type type, ir.Exp[] exps
 /**
  * Build a Variable, while not being smart about its type.
  */
-ir.Variable buildVariable(Location loc, ir.Type type, string name)
+ir.Variable buildVariable(Location loc, ir.Type type, ir.Variable.Storage st, string name)
 {
 	auto var = new ir.Variable();
 	var.location = loc;
 	var.name = name;
 	var.type = type;
+	var.storage = st;
 
 	return var;
 }
@@ -278,7 +279,7 @@ ir.Variable buildVariable(Location loc, ir.Type type, string name)
  */
 ir.Variable copyVariableSmart(Location loc, ir.Variable right)
 {
-	return buildVariable(loc, copyTypeSmart(loc, right.type), right.name);
+	return buildVariable(loc, copyTypeSmart(loc, right.type), right.storage, right.name);
 }
 
 ir.Variable[] copyVariablesSmart(Location loc, ir.Variable[] vars)
@@ -305,9 +306,9 @@ ir.Exp[] getExpRefs(Location loc, ir.Variable[] vars)
 /**
  * Build a Variable, while being smart about its type.
  */
-ir.Variable buildVariableSmart(Location loc, ir.Type type, string name)
+ir.Variable buildVariableSmart(Location loc, ir.Type type, ir.Variable.Storage st, string name)
 {
-	return buildVariable(loc, copyTypeSmart(loc, type), name);
+	return buildVariable(loc, copyTypeSmart(loc, type), st, name);
 }
 
 /**
@@ -553,7 +554,7 @@ ir.BinOp buildBinOp(Location loc, ir.BinOp.Type op, ir.Exp left, ir.Exp right)
  */
 ir.Variable addParam(Location loc, ir.Function fn, ir.Type type, string name)
 {
-	auto var = buildVariable(loc, type, name);
+	auto var = buildVariable(loc, type, ir.Variable.Storage.Function, name);
 	fn.type.params ~= var;
 	fn.myScope.addValue(var, name);
 	return var;
@@ -573,7 +574,7 @@ ir.Variable addParamSmart(Location loc, ir.Function fn, ir.Type type, string nam
  */
 ir.Variable buildVarStatSmart(Location loc, ir.BlockStatement block, ir.Scope _scope, ir.Type type, string name)
 {
-	auto var = buildVariableSmart(loc, type, name);
+	auto var = buildVariableSmart(loc, type, ir.Variable.Storage.Function, name);
 	block.statements ~= var;
 	_scope.addValue(var, name);
 	return var;

@@ -464,7 +464,7 @@ public:
 			if (var is null)
 				continue;
 
-			if (var.storage != ir.Variable.Storage.None)
+			if (var.storage != ir.Variable.Storage.Field)
 				continue;
 
 			/// @todo handle anon types.
