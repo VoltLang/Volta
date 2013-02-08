@@ -66,3 +66,11 @@ class TypeInfo
 	bool mutableIndirection;
 	void* classVtable;
 }
+
+class Object
+{
+	this()
+	{
+		return;
+	}
+}
