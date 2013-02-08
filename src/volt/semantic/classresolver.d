@@ -59,6 +59,13 @@ void fillInClassLayoutIfNeeded(ir.Class c)
 void fillInParentIfNeeded(Location loc, LanguagePass lp, ir.Class c, ir.Scope _scope)
 {
 	if (c.parent is null) {
+		/// @todo one interface will be parsed into parent, remove it then do this.
+		auto mod = cast(ir.Module) c.myScope.parent.node;
+		bool inObject = mod !is null && mod.name.identifiers.length == 1 && mod.name.identifiers[0].value == "object";
+		if (c.name != "Object" || !inObject) {
+			c.parent = buildQualifiedName(loc, ["object", "Object"]);
+			c.parentClass = retrieveObject(loc, lp, _scope);
+		}
 		return;
 	}
 
