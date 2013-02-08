@@ -370,7 +370,7 @@ public:
 
 
 		auto thenState = buildBlockStat(loc);
-		buildReturnStat(loc, thenState, buildConstantBool(loc, !notEqual));
+		buildReturnStat(loc, thenState, buildConstantBool(loc, notEqual));
 		buildIfStat(loc, fn._body,
 			buildBinOp(loc, ir.BinOp.Type.NotEqual,
 				buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
