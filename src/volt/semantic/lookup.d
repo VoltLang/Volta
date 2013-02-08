@@ -270,6 +270,20 @@ ir.Class retrieveTypeInfo(Location loc, LanguagePass lp, ir.Scope _scope)
 }
 
 /**
+ * Look up object.Object.
+ * Throws: CompilerPanic on failure.
+ */
+ir.Class retrieveObject(Location loc, LanguagePass lp, ir.Scope _scope)
+{
+	auto objStore = retrieveStoreFromObject(loc, lp, _scope, "Object");
+	auto obj = cast(ir.Class) objStore.node;
+	if (obj is null) {
+		throw CompilerPanic(loc, "obj is wrong type.");
+	}
+	return obj;
+}
+
+/**
  * Look up object.AllocDg.
  * Throws: CompilerPanic on failure.
  */
