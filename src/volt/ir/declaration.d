@@ -244,6 +244,9 @@ public:
 
 	int vtableIndex = -1;  ///< If this is a member function, where in the vtable does it live?
 
+	/// True if this function has an explicit call to super in
+	bool explicitCallToSuper;
+
 public:
 	this() { super(NodeType.Function); }
 }

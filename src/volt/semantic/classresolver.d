@@ -48,6 +48,12 @@ bool rewriteSuperIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, LanguageP
 		return false;
 	}
 
+	auto asFunction = cast(ir.Function) _scope.node;
+	if (asFunction is null) {
+		throw new CompilerError(p.location, "super call outside of function.");
+	}
+	asFunction.explicitCallToSuper = true;
+
 	ir.Scope dummyScope;
 	ir.Class _class;
 	if (!getFirstClass(_scope, dummyScope, _class)) {
