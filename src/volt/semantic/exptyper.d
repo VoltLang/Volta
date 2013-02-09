@@ -107,7 +107,9 @@ public:
 
 		if (!asFunctionType.hasVarArgs &&
 		    postfix.arguments.length != asFunctionType.params.length) {
-			throw new CompilerError(postfix.location, "wrong number of arguments to function.");
+			string emsg = format("expected %s argument%s, got %s.", asFunctionType.params.length, 
+								 asFunctionType.params.length != 1 ? "s" : "", postfix.arguments.length);
+			throw new CompilerError(postfix.location, emsg);
 		}
 		assert(asFunctionType.params.length <= postfix.arguments.length);
 		foreach (i; 0 .. asFunctionType.params.length) {
