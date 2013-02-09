@@ -4,13 +4,10 @@ module volt.llvm.constant;
 
 import std.conv : to;
 
-import lib.llvm.core;
-
 import volt.exceptions;
 import volt.ir.util;
-import volt.llvm.type;
-import volt.llvm.value;
-import volt.llvm.state;
+
+import volt.llvm.interfaces;
 
 
 /**

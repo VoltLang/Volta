@@ -6,10 +6,9 @@ import lib.llvm.core;
 
 import volt.exceptions;
 import volt.visitor.visitor;
-import volt.llvm.type;
-import volt.llvm.state;
 import volt.llvm.constant;
 import volt.llvm.expression;
+import volt.llvm.interfaces;
 
 
 class LlvmVisitor : NullVisitor

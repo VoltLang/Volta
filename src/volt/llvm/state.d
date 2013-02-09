@@ -5,7 +5,7 @@ module volt.llvm.state;
 import lib.llvm.core;
 
 import volt.exceptions;
-import volt.llvm.type;
+import volt.llvm.interfaces;
 
 
 /**
@@ -15,58 +15,18 @@ import volt.llvm.type;
  *
  * One is created for each Volt module that is compiled.
  */
-class State
+class VoltState : State
 {
-public:
-	ir.Module irMod;
+protected:
 
-	LLVMContextRef context;
-	LLVMBuilderRef builder;
-	LLVMModuleRef mod;
-
-	LLVMBasicBlockRef currentBlock;
-	LLVMBasicBlockRef currentBreakBlock; ///< Block to jump to on break.
-	LLVMBasicBlockRef currentContinueBlock; ///< Block to jump to on continue.
-
-	LLVMValueRef currentFunc;
-	bool currentFall; ///< Tracking for auto branch generation.
-
+	/**
+	 * Used to store defined Variables.
+	 */
 	static struct Store
 	{
 		LLVMValueRef value;
 		Type type;
 	}
-
-	/**
-	 * Cached type for convenience.
-	 * @{
-	 */
-	VoidType voidType;
-
-	PrimitiveType boolType;
-	PrimitiveType byteType;
-	PrimitiveType ubyteType;
-	PrimitiveType intType;
-	PrimitiveType uintType;
-	PrimitiveType ulongType;
-
-	PointerType voidPtrType;
-
-	PrimitiveType sizeType;
-
-	FunctionType voidFunctionType;
-	/**
-	 * @}
-	 */
-
-	/**
-	 * LLVM intrinsic.
-	 * @{
-	 */
-	LLVMValueRef llvmTrap;
-	/**
-	 * @}
-	 */
 
 	/**
 	 * Store for all the defined llvm values, like functions,
@@ -85,10 +45,7 @@ public:
 	this(LLVMContextRef context, ir.Module irMod, bool V_P64)
 	{
 		assert(irMod.name.identifiers.length > 0);
-		string name = irMod.name.identifiers[0].value;
-		foreach (n; irMod.name.identifiers[1 .. $]) {
-			name ~= "." ~ n.value;
-		}
+		string name = irMod.name.toString();
 
 		this.irMod = irMod;
 		this.context = context;
@@ -106,7 +63,7 @@ public:
 		assert(builder is null);
 	}
 
-	void close()
+	override void close()
 	{
 		LLVMDisposeBuilder(builder);
 		LLVMDisposeModule(mod);
@@ -115,39 +72,12 @@ public:
 		builder = null;
 	}
 
-	void startBlock(LLVMBasicBlockRef b)
-	{
-		currentFall = true;
-		currentBlock = b;
-		LLVMPositionBuilderAtEnd(builder, currentBlock);
-	}
-
-	/**
-	 * Helper function to swap out the currentContineBlock, returns the old one.
-	 */
-	LLVMBasicBlockRef replaceContinueBlock(LLVMBasicBlockRef b)
-	{
-		auto t = currentContinueBlock;
-		currentContinueBlock = b;
-		return t;
-	}
-
-	/**
-	 * Helper function to swap out the currentBreakBlock, returns the old one.
-	 */
-	LLVMBasicBlockRef replaceBreakBlock(LLVMBasicBlockRef b)
-	{
-		auto t = currentBreakBlock;
-		currentBreakBlock = b;
-		return t;
-	}
-
 	/**
 	 * Return the LLVMValueRef for the given Function.
 	 *
 	 * If the value is not defined it will do so.
 	 */
-	LLVMValueRef getFunctionValue(ir.Function fn, out Type type)
+	override LLVMValueRef getFunctionValue(ir.Function fn, out Type type)
 	{
 		auto k = *cast(size_t*)&fn;
 		auto ret = k in valueStore;
@@ -177,7 +107,7 @@ public:
 	 *
 	 * If the value is not defined it will do so.
 	 */
-	LLVMValueRef getVariableValue(ir.Variable var, out Type type)
+	override LLVMValueRef getVariableValue(ir.Variable var, out Type type)
 	{
 		auto k = *cast(size_t*)&var;
 		auto ret = k in valueStore;
@@ -242,7 +172,7 @@ public:
 		return v;
 	}
 
-	void makeByValVariable(ir.Variable var, LLVMValueRef v)
+	override void makeByValVariable(ir.Variable var, LLVMValueRef v)
 	{
 		auto k = *cast(size_t*)&var;
 		assert((k in valueStore) is null);
@@ -251,7 +181,7 @@ public:
 		valueStore[k] = Store(v, type);
 	}
 
-	void makeThisVariable(ir.Variable var, LLVMValueRef v)
+	override void makeThisVariable(ir.Variable var, LLVMValueRef v)
 	{
 		auto k = *cast(size_t*)&var;
 		assert((k in valueStore) is null);
@@ -273,5 +203,26 @@ public:
 
 		v = LLVMBuildBitCast(builder, v, llvmType, "this");
 		valueStore[k] = Store(v, type);
+	}
+
+	override void addType(Type type, string mangledName)
+	in {
+		assert(type !is null);
+		assert(mangledName.length > 0);
+		assert((mangledName in typeStore) is null);
+	}
+	body {
+		typeStore[mangledName] = type;
+	}
+
+	override Type getTypeNoCreate(string mangledName)
+	in {
+		assert(mangledName.length > 0);
+	}
+	body {
+		auto ret = mangledName in typeStore;
+		if (ret !is null)
+			return *ret;
+		return null;
 	}
 }

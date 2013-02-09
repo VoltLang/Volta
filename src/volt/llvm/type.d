@@ -10,9 +10,8 @@ import ir = volt.ir.ir;
 import volt.ir.util;
 
 import volt.exceptions;
-import volt.llvm.type;
-import volt.llvm.state;
 import volt.llvm.constant;
+import volt.llvm.interfaces;
 static import volt.semantic.mangle;
 
 
@@ -34,10 +33,10 @@ protected:
 		assert(llvmType !is null);
 
 		assert(irType.mangledName !is null);
-		assert((irType.mangledName in state.typeStore) is null);
+		assert(state.getTypeNoCreate(irType.mangledName) is null);
 	}
 	body {
-		state.typeStore[irType.mangledName] = this;
+		state.addType(this, irType.mangledName);
 
 		this.irType = irType;
 		this.structType = structType;
@@ -180,9 +179,9 @@ public:
 		auto base = state.fromIr(pt.base);
 
 		// Pointers can via structs reference themself.
-		auto test = pt.mangledName in state.typeStore;
+		auto test = state.getTypeNoCreate(pt.mangledName);
 		if (test !is null) {
-			return cast(PointerType)*test;
+			return cast(PointerType)test;
 		}
 		return new PointerType(state, pt, base);
 	}
@@ -373,9 +372,9 @@ public:
 		}
 
 		// FunctionPointers can via structs reference themself.
-		auto test = ft.mangledName in state.typeStore;
+		auto test = state.getTypeNoCreate(ft.mangledName);
 		if (test !is null) {
-			return cast(FunctionType)*test;
+			return cast(FunctionType)test;
 		}
 		return new FunctionType(state, ft, ret, params);
 	}
@@ -517,9 +516,9 @@ Type fromIr(State state, ir.Type irType)
 		warning(irType.location, str);
 	}
 
-	auto tCheck = irType.mangledName in state.typeStore;
-	if (tCheck !is null)
-		return *tCheck;
+	auto test = state.getTypeNoCreate(irType.mangledName);
+	if (test !is null)
+		return test;
 
 	switch(irType.nodeType) with (ir.NodeType) {
 	case PrimitiveType:

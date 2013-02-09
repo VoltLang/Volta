@@ -2,13 +2,9 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.llvm.aggregate;
 
-import lib.llvm.core;
-
 import volt.token.location;
 
-import volt.llvm.type;
-import volt.llvm.state;
-import volt.llvm.value;
+import volt.llvm.interfaces;
 
 
 /**

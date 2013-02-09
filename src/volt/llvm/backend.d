@@ -74,7 +74,7 @@ public:
 		scope(exit)
 			mFilename = null;
 
-		auto state = new State(mContext, m, mSettings.isVersionSet("V_P64"));
+		auto state = new VoltState(mContext, m, mSettings.isVersionSet("V_P64"));
 		auto visitor = new LlvmVisitor(state);
 		auto mod = state.mod;
 
