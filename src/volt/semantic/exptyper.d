@@ -106,7 +106,7 @@ public:
 		}
 
 		if (!asFunctionType.hasVarArgs &&
-		    postfix.arguments.length != asFunctionType.params.length) {
+		    postfix.arguments.length != asFunctionType.params.length + postfix.flubLength) {
 			string emsg = format("expected %s argument%s, got %s.", asFunctionType.params.length, 
 								 asFunctionType.params.length != 1 ? "s" : "", postfix.arguments.length);
 			throw new CompilerError(postfix.location, emsg);

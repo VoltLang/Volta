@@ -197,6 +197,7 @@ public:
 	Identifier identifier;  // op == Identifier
 	ExpReference memberFunction;
 	bool isImplicitPropertyCall;
+	int flubLength;  ///< If we're calling through this postfix, pretend the type has this many extra parameters.
 
 public:
 	this() { super(NodeType.Postfix); }
