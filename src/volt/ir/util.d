@@ -511,6 +511,16 @@ ir.Postfix buildMemberCall(Location loc, ir.Exp child, ir.ExpReference fn, strin
 	return call;
 }
 
+ir.Postfix buildCreateDelegate(Location loc, ir.Exp child, ir.ExpReference fn)
+{
+	auto postfix = new ir.Postfix();
+	postfix.location = loc;
+	postfix.op = ir.Postfix.Op.CreateDelegate;
+	postfix.child = child;
+	postfix.memberFunction = fn;
+	return postfix;
+}
+
 /**
  * Builds a postfix call.
  */

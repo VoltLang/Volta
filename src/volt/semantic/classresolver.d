@@ -58,14 +58,10 @@ bool rewriteSuperIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, LanguageP
 
 	auto thisVar = getThisVar(p.location, lp, _scope);
 	auto thisRef = buildExpReference(thisVar.location, thisVar, "this");
-	auto thisCast = buildCastToVoidPtr(thisRef.location, thisRef);
 
 	assert(_class.userConstructors.length == 1);
-	auto eref = buildExpReference(ident.location, _class.userConstructors[0], _class.userConstructors[0].name);
-	p.child = eref;
-	p.arguments ~= thisCast;
-	p.flubLength = 1;
 
+	p.child = buildCreateDelegate(ident.location, thisRef, buildExpReference(ident.location, _class.userConstructors[0], _class.userConstructors[0].name));
 	return true;
 }
 

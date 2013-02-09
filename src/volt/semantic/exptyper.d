@@ -107,7 +107,7 @@ public:
 		}
 
 		if (!asFunctionType.hasVarArgs &&
-		    postfix.arguments.length != asFunctionType.params.length + postfix.flubLength) {
+		    postfix.arguments.length != asFunctionType.params.length) {
 			string emsg = format("expected %s argument%s, got %s.", asFunctionType.params.length, 
 								 asFunctionType.params.length != 1 ? "s" : "", postfix.arguments.length);
 			throw new CompilerError(postfix.location, emsg);
@@ -1046,7 +1046,6 @@ public:
 			return Continue;
 		}
 		rewriteSuperIfNeeded(e, p, current, lp);
-
 		if (p.op != ir.Postfix.Op.Identifier)
 			return Continue;
 
