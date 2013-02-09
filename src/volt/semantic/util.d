@@ -81,3 +81,16 @@ ir.Type handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
 	}
 	return null;
 }
+
+ir.Variable getThisVar(Location location, LanguagePass lp, ir.Scope _scope)
+{
+	auto thisStore = lookupOnlyThisScope(location, lp, _scope, "this");
+	if (thisStore is null) {
+		throw CompilerPanic(location, "need valid this for super.");
+	}
+	auto thisVar = cast(ir.Variable) thisStore.node;
+	if (thisVar is null) {
+		throw CompilerPanic(location, "this is not variable.");
+	}
+	return thisVar;
+}
