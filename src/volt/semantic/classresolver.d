@@ -206,3 +206,39 @@ void emitVtableVariable(ir.Class _class)
 	_class.members.nodes ~= _class.vtableVariable;
 	_class.myScope.addValue(_class.vtableVariable, _class.vtableVariable.name);
 }
+
+bool rewriteSuperIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, LanguagePass lp)
+{
+	if (p.op != ir.Postfix.Op.Call) {
+		return false;
+	}
+
+	auto ident = cast(ir.IdentifierExp) p.child;
+	if (ident is null) {
+		return false;
+	}
+
+	if (ident.value != "super") {
+		return false;
+	}
+
+	ir.Scope dummyScope;
+	ir.Class _class;
+	if (!getFirstClass(_scope, dummyScope, _class)) {
+		throw new CompilerError(ident.location, "super only valid inside classes.");
+	}
+	_class = _class.parentClass;
+	assert(_class !is null);
+
+	auto thisVar = getThisVar(p.location, lp, _scope);
+	auto thisRef = buildExpReference(thisVar.location, thisVar, "this");
+	auto thisCast = buildCastToVoidPtr(thisRef.location, thisRef);
+
+	assert(_class.userConstructors.length == 1);
+	auto eref = buildExpReference(ident.location, _class.userConstructors[0], _class.userConstructors[0].name);
+	p.child = eref;
+	p.arguments ~= thisCast;
+	p.flubLength = 1;
+
+	return true;
+}

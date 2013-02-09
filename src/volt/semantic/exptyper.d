@@ -15,6 +15,7 @@ import volt.visitor.visitor;
 import volt.visitor.scopemanager;
 import volt.visitor.expreplace;
 import volt.semantic.classify;
+import volt.semantic.classresolver;
 import volt.semantic.lookup;
 import volt.semantic.typer;
 import volt.semantic.util;
@@ -1044,6 +1045,8 @@ public:
 		if (pass == 2) {
 			return Continue;
 		}
+		rewriteSuperIfNeeded(e, p, current, lp);
+
 		if (p.op != ir.Postfix.Op.Identifier)
 			return Continue;
 
