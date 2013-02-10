@@ -430,3 +430,21 @@ public:
 public:
 	this() { super(NodeType.ConditionStatement); }
 }
+
+/**
+ * The mixin statement mixes in a mixin function, mixin template
+ * or a string.
+ *
+ * @ingroup irNode irStatement
+ */
+class MixinStatement : Statement
+{
+public:
+	Exp stringExp; ///< Not optional for mixin("string").
+	QualifiedName id; ///< Not optional for mixin .my.Ident!(...)
+
+	BlockStatement resolved;
+
+public:
+	this() { super(NodeType.MixinStatement); }
+}

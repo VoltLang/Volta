@@ -50,6 +50,8 @@ enum NodeType
 	EmptyTopLevel,
 	Condition,
 	ConditionTopLevel,
+	MixinFunction,
+	MixinTemplate,
 
 	/* declaration.d */
 	FunctionDecl,
@@ -94,6 +96,7 @@ enum NodeType
 	PragmaStatement,
 	EmptyStatement,
 	ConditionStatement,
+	MixinStatement,
 
 	/* expression.d */
 	Comma,
@@ -287,6 +290,8 @@ string nodeToString(NodeType nodeType)
 	case Attribute: return "Attribute";
 	case StaticAssert: return "StaticAssert";
 	case EmptyTopLevel: return "EmptyTopLevel";
+	case MixinFunction: return "MixinFunction";
+	case MixinTemplate: return "MixinTemplate";
 	case Condition: return "Condition";
 	case ConditionTopLevel: return "ConditionTopLevel";
 	case FunctionDecl: return "FunctionDecl";
@@ -329,6 +334,7 @@ string nodeToString(NodeType nodeType)
 	case PragmaStatement: return "PragmaStatement";
 	case EmptyStatement: return "EmptyStatement";
 	case ConditionStatement: return "ConditionStatement";
+	case MixinStatement: return "MixinStatement";
 	case Comma: return "Comma";
 	case Constant: return "Constant";
 	case BinOp: return "BinOp";

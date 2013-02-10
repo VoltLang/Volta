@@ -445,3 +445,45 @@ class EmptyTopLevel : Node
 public:
 	this() { super(NodeType.EmptyTopLevel); }
 }
+
+/**
+ * Node represention of a function mixin.
+ *
+ * @ingroup irNode irTopLevel
+ */
+class MixinFunction : Node
+{
+public:
+	string name; //< Not optional.
+
+	/**
+	 * Contains statements. These nodes are raw nodes and are
+	 * processed in any form and as such should not be visited.
+	 * They are copied and processed when the mixin is instanciated.
+	 */
+	BlockStatement raw;
+
+public:
+	this() { super(NodeType.MixinFunction); }
+}
+
+/**
+ * Node represention of a template mixin.
+ *
+ * @ingroup irNode irTopLevel
+ */
+class MixinTemplate : Node
+{
+public:
+	string name; //< Not optional.
+
+	/**
+	 * Toplevel nodes. These nodes are raw nodes and are not
+	 * processed in any form and as such should not be visited.
+	 * They are copied and processed when the mixin is instanciated.
+	 */
+	TopLevelBlock raw;
+
+public:
+	this() { super(NodeType.MixinTemplate); }
+}
