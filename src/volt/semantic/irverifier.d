@@ -78,6 +78,9 @@ public:
 			case Struct:
 			case Class:
 			case Interface:
+			case MixinFunction:
+			case MixinTemplate:
+			case MixinStatement:
 				auto s = accept(n, this);
 				if (s == Stop)
 					return Stop;
@@ -105,6 +108,7 @@ public:
 			case ContinueStatement:
 			case ExpStatement:
 			case Variable:
+			case MixinStatement:
 				auto s = accept(n, this);
 				if (s == Stop)
 					return Stop;
