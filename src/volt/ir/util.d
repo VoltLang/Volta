@@ -218,6 +218,14 @@ ir.PrimitiveType buildPrimitiveType(Location loc, ir.PrimitiveType.Kind kind)
 	return pt;
 }
 
+ir.ArrayType buildArrayTypeSmart(Location loc, ir.Type base)
+{
+	auto array = new ir.ArrayType();
+	array.location = loc;
+	array.base = copyTypeSmart(loc, base);
+	return array;
+}
+
 ir.PrimitiveType buildVoid(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Void); }
 ir.PrimitiveType buildBool(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Bool); }
 ir.PrimitiveType buildChar(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Char); }
