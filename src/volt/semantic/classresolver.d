@@ -30,7 +30,7 @@ bool needsResolving(ir.Class c)
 void resolveClass(LanguagePass lp, ir.Class c)
 {
 	fillInParentIfNeeded(c.location, lp, c, c.myScope);
-	fillInClassLayoutIfNeeded(c);
+	fillInClassLayoutIfNeeded(c, lp);
 }
 
 bool rewriteSuperIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, LanguagePass lp)
@@ -82,16 +82,16 @@ bool rewriteSuperIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, LanguageP
 /**
  * Fills in Class.layoutStruct and Class.vtableStruct.
  */
-void fillInClassLayoutIfNeeded(ir.Class c)
+void fillInClassLayoutIfNeeded(ir.Class c, LanguagePass lp)
 {
 	if (c.layoutStruct !is null) {
 		return;
 	}
 
 	ir.Struct vtableStruct;
-	c.layoutStruct = getClassLayoutStruct(c, vtableStruct);
+	c.layoutStruct = getClassLayoutStruct(c, lp, vtableStruct);
 	c.vtableStruct = vtableStruct;
-	emitVtableVariable(c);
+	emitVtableVariable(c, lp);
 }
 
 void fillInParentIfNeeded(Location loc, LanguagePass lp, ir.Class c, ir.Scope _scope)
@@ -220,10 +220,13 @@ ir.Exp[] getClassMethodAddrOfs(ir.Class _class)
 	return addrs;
 }
 
-ir.Struct getClassLayoutStruct(ir.Class _class, ref ir.Struct vtableStruct)
+ir.Struct getClassLayoutStruct(ir.Class _class, LanguagePass lp, ref ir.Struct vtableStruct)
 {
 	auto methodTypes = getClassMethodTypeVariables(_class);
-	vtableStruct = buildStruct(_class.location, _class.members, _class.myScope, "__Vtable", methodTypes);
+	auto tinfo = retrieveTypeInfo(_class.location, lp, _class.myScope);
+	auto tinfos = buildVariableSmart(_class.location, buildArrayTypeSmart(_class.location, tinfo), ir.Variable.Storage.Field, "tinfos");
+
+	vtableStruct = buildStruct(_class.location, _class.members, _class.myScope, "__Vtable", tinfos ~ methodTypes);
 	auto vtableVar = buildVariableSmart(_class.location, buildPtrSmart(_class.location, vtableStruct), ir.Variable.Storage.Field, "__vtable");
 
 	auto fields = getClassFields(_class);
@@ -232,12 +235,15 @@ ir.Struct getClassLayoutStruct(ir.Class _class, ref ir.Struct vtableStruct)
 	return buildStruct(_class.location, _class.members, _class.myScope, "__layoutStruct", fields);
 }
 
-void emitVtableVariable(ir.Class _class)
+void emitVtableVariable(ir.Class _class, LanguagePass lp)
 {
 	auto addrs = getClassMethodAddrOfs(_class);
+	auto tinfo = retrieveTypeInfo(_class.location, lp, _class.myScope);
+	auto tinfos = buildArrayLiteralSmart(_class.location, buildArrayTypeSmart(_class.location, tinfo));
+
 	auto assign = new ir.StructLiteral();
 	assign.location = _class.location;
-	assign.exps = addrs;
+	assign.exps = tinfos ~ addrs;
 	assign.type = copyTypeSmart(_class.location, _class.vtableStruct);
 
 	_class.vtableVariable = buildVariableSmart(_class.location, _class.vtableStruct, ir.Variable.Storage.Global, "__vtable_instance");
