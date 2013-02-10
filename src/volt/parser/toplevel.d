@@ -12,6 +12,7 @@ import volt.token.location;
 
 import volt.parser.base;
 import volt.parser.declaration;
+import volt.parser.statements : parseMixinStatement;
 import volt.parser.expression;
 
 
@@ -81,6 +82,18 @@ body
 			break;
 		case TokenType.Enum:
 			tlb.nodes ~= [parseEnum(ts)];
+			break;
+		case TokenType.Mixin:
+			auto next = ts.lookahead(1).type;
+			if (next == TokenType.Function) {
+				tlb.nodes ~= [parseMixinFunction(ts)];
+			} else if (next == TokenType.Template) {
+				tlb.nodes ~= [parseMixinTemplate(ts)];
+			} else {
+				auto err = ts.lookahead(1);
+				throw new CompilerError(err.location,
+					"expected 'function' or 'template' following 'mixin' not '" ~ err.value ~ "'.");
+			}
 			break;
 		case TokenType.Const:
 			if (ts.lookahead(1).type == TokenType.OpenParen) {
@@ -434,6 +447,48 @@ ir.EnumMember parseEnumMember(TokenStream ts)
 	}
 
 	return member;
+}
+
+ir.MixinFunction parseMixinFunction(TokenStream ts)
+{
+	auto m = new ir.MixinFunction();
+	m.location = ts.peek.location;
+
+	match(ts, TokenType.Mixin);
+	match(ts, TokenType.Function);
+	
+	auto nameTok = match(ts, TokenType.Identifier);
+	m.name = nameTok.value;
+	
+	// TODO allow arguments
+	match(ts, TokenType.OpenParen);
+	match(ts, TokenType.CloseParen);
+	
+	m.raw = parseBlock(ts);
+
+	return m;
+}
+
+ir.MixinTemplate parseMixinTemplate(TokenStream ts)
+{
+	auto m = new ir.MixinTemplate();
+	m.location = ts.peek.location;
+
+	match(ts, TokenType.Mixin);
+	match(ts, TokenType.Template);
+	
+	auto nameTok = match(ts, TokenType.Identifier);
+	m.name = nameTok.value;
+	
+	// TODO allow arguments
+	match(ts, TokenType.OpenParen);
+	match(ts, TokenType.CloseParen);
+
+	match(ts, TokenType.OpenBrace);
+	m.raw = parseTopLevelBlock(ts, TokenType.CloseBrace);
+	match(ts, TokenType.CloseBrace);
+
+	return m;
 }
 
 ir.Attribute parseAttribute(TokenStream ts, bool inModule = false)

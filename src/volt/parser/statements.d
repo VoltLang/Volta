@@ -81,6 +81,8 @@ ir.Statement[] parseStatement(TokenStream ts)
 	case TokenType.Debug:
 		ir.Statement[] condstate = [parseConditionStatement(ts)];
 		return condstate;
+	case TokenType.Mixin:
+		return [parseMixinStatement(ts)];
 	default:
 		ir.Node[] node = parseVariableOrExpression(ts);
 		if (node[0].nodeType != ir.NodeType.Variable) {
@@ -582,4 +584,31 @@ ir.ConditionStatement parseConditionStatement(TokenStream ts)
 	}
 
 	return cs;
+}
+
+ir.MixinStatement parseMixinStatement(TokenStream ts)
+{
+	auto ms = new ir.MixinStatement();
+	ms.location = ts.peek.location;
+	match(ts, TokenType.Mixin);
+	
+	if (matchIf(ts, TokenType.OpenParen)) {
+		ms.stringExp = parseExp(ts);
+		match(ts, TokenType.CloseParen);
+	} else {
+		auto ident = match(ts, TokenType.Identifier);
+
+		auto qualifiedName = new ir.QualifiedName();
+		qualifiedName.identifiers ~= new ir.Identifier(ident.value);
+
+		ms.id = qualifiedName;
+
+		match(ts, TokenType.Bang);
+		// TODO
+		match(ts, TokenType.OpenParen);
+		match(ts, TokenType.CloseParen);
+	}
+	match(ts, TokenType.Semicolon);
+	
+	return ms;
 }
