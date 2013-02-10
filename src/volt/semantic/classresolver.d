@@ -121,6 +121,7 @@ void fillInParentIfNeeded(Location loc, LanguagePass lp, ir.Class c, ir.Scope _s
 	}
 	auto asClass = cast(ir.Class) store.node;
 	assert(asClass !is null);
+	lp.resolveClass(asClass);
 	c.parentClass = asClass;
 }
 
