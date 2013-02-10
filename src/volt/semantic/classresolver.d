@@ -235,15 +235,44 @@ ir.Struct getClassLayoutStruct(ir.Class _class, LanguagePass lp, ref ir.Struct v
 	return buildStruct(_class.location, _class.members, _class.myScope, "__layoutStruct", fields);
 }
 
+ir.Class[] getInheritanceChain(ir.Class _class)
+{
+	ir.Class[] reverseClasses;
+
+	while (_class !is null) {
+		reverseClasses ~= _class;
+		_class = _class.parentClass;
+	}
+
+	auto outClasses = new ir.Class[reverseClasses.length];
+	for (size_t i = reverseClasses.length - 1, j = 0; i < reverseClasses.length; --i, ++j) {
+		auto rClass = reverseClasses[i];
+		outClasses[j] = rClass;
+	}
+
+	return outClasses;
+}
+
+ir.Exp[] getTypeInfos(ir.Class[] classes)
+{
+	auto tinfos = new ir.Exp[classes.length];
+	foreach (i, _class; classes) {
+		tinfos[i] = buildTypeidSmart(_class.location, _class);
+	}
+	return tinfos;
+}
+
 void emitVtableVariable(ir.Class _class, LanguagePass lp)
 {
 	auto addrs = getClassMethodAddrOfs(_class);
 	auto tinfo = retrieveTypeInfo(_class.location, lp, _class.myScope);
-	auto tinfos = buildArrayLiteralSmart(_class.location, buildArrayTypeSmart(_class.location, tinfo));
+	auto chain = getInheritanceChain(_class);
+	auto tinfos = getTypeInfos(chain);
+	auto tinfosArr = buildArrayLiteralSmart(_class.location, buildArrayTypeSmart(_class.location, tinfo), tinfos);
 
 	auto assign = new ir.StructLiteral();
 	assign.location = _class.location;
-	assign.exps = tinfos ~ addrs;
+	assign.exps = tinfosArr ~ addrs;
 	assign.type = copyTypeSmart(_class.location, _class.vtableStruct);
 
 	_class.vtableVariable = buildVariableSmart(_class.location, _class.vtableStruct, ir.Variable.Storage.Global, "__vtable_instance");
