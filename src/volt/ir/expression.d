@@ -240,7 +240,7 @@ class ArrayLiteral : Exp
 {
 public:
 	Exp[] values;
-	Type type;
+	Type type;  ///< The type of the array. e.g. [1, 2, 3], type would be int[], not int.
 
 public:
 	this() { super(NodeType.ArrayLiteral); }
