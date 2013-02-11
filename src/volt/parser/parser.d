@@ -14,6 +14,7 @@ import ir = volt.ir.ir;
 
 import volt.parser.base : match;
 import volt.parser.toplevel : parseModule;
+import volt.parser.statements : parseStatement;
 import volt.interfaces : Frontend;
 
 
@@ -23,7 +24,7 @@ public:
 	bool dumpLex;
 
 public:
-	ir.Module parseNewFile(string source, Location loc)
+	override ir.Module parseNewFile(string source, Location loc)
 	{
 		auto src = new Source(source, loc);
 		src.skipScriptLine();
@@ -35,6 +36,23 @@ public:
 		match(ts, TokenType.Begin);
 
 		return .parseModule(ts);
+	}
+
+	override ir.Node[] parseStatements(string source, Location loc)
+	{
+		auto src = new Source(source, loc);
+		auto ts = lex(src);
+		if (dumpLex)
+			doDumpLex(ts);
+
+		match(ts, TokenType.Begin);
+
+		ir.Node[] ret;
+		while (ts != TokenType.End) {
+			ret ~= parseStatement(ts);
+		}
+
+		return ret;
 	}
 
 	void close()

@@ -26,6 +26,14 @@ interface Frontend
 {
 	ir.Module parseNewFile(string source, Location loc);
 
+	/**
+	 * Parse a zero or more statements from a string, does not
+	 * need to start with '{' or end with a '}'.
+	 *
+	 * Used for string mixins in functions.
+	 */
+	ir.Node[] parseStatements(string source, Location loc);
+
 	void close();
 }
 
