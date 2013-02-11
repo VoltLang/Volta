@@ -1408,7 +1408,30 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ref ir.Exp, ir.Unary) { return Continue; }
+	/// Rewrite object casts into calls to __castTo.
+	override Status enter(ref ir.Exp exp, ir.Unary unary)
+	{
+		if (unary.type is null || unary.value is null) {
+			return Continue;
+		}
+
+		auto to = getClass(unary.type);
+		auto from = getClass(getExpType(lp, unary.value, current));
+
+		if (to is null || from is null || to is from) {
+			return Continue;
+		}
+
+		auto castToStore = lookupAsThisScope(unary.location, lp, from.myScope, "__castTo");
+		assert(castToStore.functions.length == 1);
+
+		auto fnref = buildExpReference(unary.location, castToStore.functions[0]);
+		auto tid = buildTypeidSmart(unary.location, to);
+		unary.value = buildMemberCall(unary.location, unary.value, fnref, "__castTo", [tid]);
+
+		return Continue;
+	}
+
 	override Status leave(ref ir.Exp, ir.Unary) { return Continue; }
 	override Status enter(ref ir.Exp, ir.BinOp) { return Continue; }
 	override Status enter(ref ir.Exp, ir.Ternary) { return Continue; }
