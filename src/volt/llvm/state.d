@@ -42,13 +42,13 @@ protected:
 	Type[string] typeStore;
 
 public:
-	this(LLVMContextRef context, ir.Module irMod, bool V_P64)
+	this(ir.Module irMod, bool V_P64)
 	{
 		assert(irMod.name.identifiers.length > 0);
 		string name = irMod.name.toString();
 
 		this.irMod = irMod;
-		this.context = context;
+		this.context = LLVMContextCreate();
 		this.mod = LLVMModuleCreateWithNameInContext(name, context);
 		this.builder = LLVMCreateBuilderInContext(context);
 
@@ -67,6 +67,7 @@ public:
 	{
 		LLVMDisposeBuilder(builder);
 		LLVMDisposeModule(mod);
+		LLVMContextDispose(context);
 
 		mod = null;
 		builder = null;

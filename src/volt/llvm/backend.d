@@ -28,8 +28,6 @@ class LlvmBackend : Backend
 protected:
 	Settings mSettings;
 
-	LLVMContextRef mContext;
-
 	TargetType mTargetType;
 	string mFilename;
 	bool mDump;
@@ -45,8 +43,6 @@ public:
 		LLVMInitializeCore(passRegistry);
 		LLVMInitializeAnalysis(passRegistry);
 		LLVMInitializeTarget(passRegistry);
-
-		mContext = LLVMGetGlobalContext();
 	}
 
 	void close()
@@ -74,7 +70,7 @@ public:
 		scope(exit)
 			mFilename = null;
 
-		auto state = new VoltState(mContext, m, mSettings.isVersionSet("V_P64"));
+		auto state = new VoltState(m, mSettings.isVersionSet("V_P64"));
 		auto visitor = new LlvmVisitor(state);
 		auto mod = state.mod;
 

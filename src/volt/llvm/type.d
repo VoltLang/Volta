@@ -201,7 +201,7 @@ private:
 
 		auto voidT = cast(VoidType) base;
 		if (voidT !is null) {
-			llvmType = LLVMPointerType(LLVMInt8Type(), 0);
+			llvmType = LLVMPointerType(LLVMInt8TypeInContext(state.context), 0);
 		} else {
 			llvmType = LLVMPointerType(base.llvmType, 0);
 		}
