@@ -7,6 +7,7 @@ import std.string : format;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
+import volt.ir.copy;
 
 import volt.exceptions;
 import volt.interfaces;
@@ -768,6 +769,50 @@ public:
 
 		extype(d.type, d.assign, true);
 		replaceTypeOfIfNeeded(d.type);
+
+		return Continue;
+	}
+
+	override Status enter(ir.MixinStatement ms)
+	{
+		if (pass == 2) {
+			return Continue;
+		}
+
+		if (ms.stringExp !is null) {
+			auto c = cast(ir.Constant)ms.stringExp;
+			auto l = ms.location.toString;
+			auto s = lp.frontend.parseStatements(c._string[1 .. $-1], Location(l ~ "!mixin", 0));
+
+			// Not needed anymore.
+			ms.stringExp = null;
+
+			ms.resolved = new ir.BlockStatement();
+			ms.resolved.location = ms.location;
+			ms.resolved.statements = s;
+
+		} else if (ms.id !is null) {
+
+			auto store = lookup(lp, current, ms.id);
+			if (store is null)
+				throw new CompilerError(ms.id.location, "could not find mixin '" ~ ms.id.toString ~ "'.");
+
+			auto mf = cast(ir.MixinFunction)store.node;
+			if (mf is null)
+				throw new CompilerError(ms.location, "'" ~ store.name ~ "' is not a mixin function.");
+
+			// Not needed anymore.
+			ms.id = null;
+
+			ms.resolved = copy(mf.raw);
+
+		} else {
+			assert(ms.resolved !is null);
+			return Continue;
+		}
+
+		// Make sure that all new scopes are created and filled out.
+		lp.gather(current, ms.resolved);
 
 		return Continue;
 	}
