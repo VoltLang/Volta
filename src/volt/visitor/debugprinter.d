@@ -24,7 +24,7 @@ void debugPrinter(ir.Module m)
 
 string getNodeAddressString(ir.Node node)
 {
-	return "0x" ~ to!string(*cast(size_t*)&node);
+	return "0x" ~ to!string(*cast(size_t*)&node, 16);
 }
 
 class DebugMarker : Pass
