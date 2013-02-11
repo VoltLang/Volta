@@ -735,6 +735,24 @@ ir.Struct buildStruct(Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, strin
 	return s;
 }
 
+/**
+ * If t is a class, or a typereference to a class, returns the
+ * class. Otherwise, returns null.
+ */
+ir.Class getClass(ir.Type t)
+{
+	auto asClass = cast(ir.Class) t;
+	if (asClass !is null) {
+		return asClass;
+	}
+	auto asTR = cast(ir.TypeReference) t;
+	if (asTR is null) {
+		return null;
+	}
+	asClass = cast(ir.Class) asTR.type;
+	return asClass;
+}
+
 /*
  * Functions who takes the location from the given exp.
  */
