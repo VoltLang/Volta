@@ -7,6 +7,7 @@ import std.string : format;
 
 import ir = volt.ir.ir;
 import volt.ir.util : getScopeFromStore, getScopeFromType;
+import volt.semantic.util : ensureResolved;
 
 import volt.exceptions;
 import volt.interfaces;
@@ -436,19 +437,4 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
 	default:
 		throw CompilerPanic(node.location, "unexpected nodetype");
 	}
-}
-
-/**
- * Ensures that a Store is a resolved alias.
- */
-private ir.Store ensureResolved(LanguagePass lp, ir.Store s)
-{
-	if (s.kind == ir.Store.Kind.Alias) {
-		lp.resolveAlias(s);
-		while (s.myAlias !is null) {
-			s = s.myAlias;
-		}
-		return s;
-	}
-	return s;
 }

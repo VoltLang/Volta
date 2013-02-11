@@ -94,3 +94,18 @@ ir.Variable getThisVar(Location location, LanguagePass lp, ir.Scope _scope)
 	}
 	return thisVar;
 }
+
+/**
+ * Ensures that a Store is a resolved alias.
+ */
+ir.Store ensureResolved(LanguagePass lp, ir.Store s)
+{
+	if (s.kind == ir.Store.Kind.Alias) {
+		lp.resolveAlias(s);
+		while (s.myAlias !is null) {
+			s = s.myAlias;
+		}
+		return s;
+	}
+	return s;
+}
