@@ -98,16 +98,19 @@ class LanguagePass
 {
 public:
 	Settings settings;
+	Frontend frontend;
 	Controller controller;
 
 public:
-	this(Settings settings, Controller controller)
+	this(Settings settings, Frontend frontend, Controller controller)
 	out {
 		assert(this.settings !is null);
+		assert(this.frontend !is null);
 		assert(this.controller !is null);
 	}
 	body {
 		this.settings = settings;
+		this.frontend = frontend;
 		this.controller = controller;
 	}
 

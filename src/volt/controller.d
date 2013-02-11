@@ -53,7 +53,7 @@ public:
 		auto p = new Parser();
 		p.dumpLex = false;
 
-		auto lp = new VoltLanguagePass(s, this);
+		auto lp = new VoltLanguagePass(s, p, this);
 
 		auto b = new LlvmBackend(s);
 

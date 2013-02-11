@@ -77,9 +77,9 @@ private:
 	ir.Module[string] mModules;
 
 public:
-	this(Settings settings, Controller controller)
+	this(Settings settings, Frontend frontend, Controller controller)
 	{
-		super(settings, controller);
+		super(settings, frontend, controller);
 
 		mTracker = new WorkTracker();
 
