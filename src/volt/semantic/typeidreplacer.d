@@ -52,6 +52,13 @@ public:
 		assert(_typeid.type !is null);
 
 		_typeid.type.mangledName = mangle(null, _typeid.type);
+		string name = "_V__TypeInfo_" ~ _typeid.type.mangledName;
+		auto typeidStore = lookupOnlyThisScope(exp.location, lp, thisModule.myScope, name);
+		if (typeidStore !is null) {
+			auto asVar = cast(ir.Variable) typeidStore.node;
+			exp = buildExpReference(exp.location, asVar, asVar.name);
+			return Continue;
+		}
 
 		int typeSize = size(_typeid.location, lp, _typeid.type);
 		auto typeConstant = buildSizeTConstant(_typeid.location, lp, typeSize);
@@ -105,12 +112,13 @@ public:
 		auto literalVar = new ir.Variable();
 		literalVar.location = _typeid.location;
 		literalVar.assign = literal;
-		literalVar.mangledName = literalVar.name = "_V__TypeInfo_" ~ _typeid.type.mangledName;
+		literalVar.mangledName = literalVar.name = name;
 		literalVar.type = new ir.TypeReference(typeinfo, typeinfo.name);
 		literalVar.isWeakLink = true;
 		literalVar.useBaseStorage = true;
 		literalVar.storage = ir.Variable.Storage.Global;
 		thisModule.children.nodes = literalVar ~ thisModule.children.nodes;
+		thisModule.myScope.addValue(literalVar, literalVar.name);
 
 		auto literalRef = new ir.ExpReference();
 		literalRef.location = literalVar.location;
