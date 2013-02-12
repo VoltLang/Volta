@@ -110,6 +110,18 @@ public:
 	 */
 
 
+	override void resolveTypeReference(ir.Scope current, ir.TypeReference tr)
+	{
+		if (tr.type !is null)
+			return;
+
+		auto w = mTracker.add(tr, "resolving type");
+		scope (exit)
+			w.done();
+
+		tr.type = lookupType(this, current, tr.id);
+	}
+
 	override void resolveAlias(ir.Store s)
 	{
 		auto w = mTracker.add(s.node, "resolving alias");

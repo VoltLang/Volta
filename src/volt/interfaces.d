@@ -128,6 +128,13 @@ public:
 	 */
 
 	/**
+	 * Resolves a unresolved TypeReference in the given scope.
+	 * The TypeReference's type is set to the looked up type,
+	 * should type be not null nothing is done.
+	 */
+	abstract void resolveTypeReference(ir.Scope s, ir.TypeReference tr);
+
+	/**
 	 * Resolves a unresolved alias store, the store can
 	 * change type to Type, either the field myAlias or
 	 * type is set.
