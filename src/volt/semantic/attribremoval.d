@@ -231,6 +231,9 @@ protected:
 				}
 				fn.type.isProperty = true;
 				break;
+			case UserAttribute:
+				fn.userAttrs ~= attr;
+				break;
 			default:
 				// Warn?
 			}
@@ -283,6 +286,9 @@ protected:
 			case Extern:
 				d.isExtern = true;
 				break;
+			case UserAttribute:
+				d.userAttrs ~= attr;
+				break;
 			default:
 				// Warn?
 			}
@@ -307,6 +313,9 @@ protected:
 				break;
 			case Protected:
 				s.access = ir.Access.Protected;
+				break;
+			case UserAttribute:
+				s.userAttrs ~= attr;
 				break;
 			default:
 				// Warn?
@@ -333,6 +342,9 @@ protected:
 			case Protected:
 				c.access = ir.Access.Protected;
 				break;
+			case UserAttribute:
+				c.userAttrs ~= attr;
+				break;
 			default:
 				// Warn?
 			}
@@ -357,6 +369,9 @@ protected:
 				break;
 			case Protected:
 				i.access = ir.Access.Protected;
+				break;
+			case UserAttribute:
+				i.userAttrs ~= attr;
 				break;
 			default:
 				// Warn?
