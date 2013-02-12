@@ -19,12 +19,12 @@ import volt.ir.statement;
  * the module system (structs, classes), or simply things that
  * can only live in top level contexts (e.g. unittest blocks).
  *
- * As you can see, it's a fairly nebulous group. There a things
+ * As you can see, it's a fairly nebulous group. There are things
  * here that could be arguably placed elsewhere (an Enum is a Type,
  * for instance). Or things that are elsewhere could arguably belong
  * here! (Functions, as an example). 
  *
- * The reason for this nebulous..ity is that Volt is a child of
+ * The reason for this nebulousity is that Volt is a child of
  * the curly brace languages -- particularly D, and through that
  * heritage, C++ and C. In C there was a very strict line about
  * what could be defined where, and resulting languages have stretched
