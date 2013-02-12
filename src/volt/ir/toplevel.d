@@ -234,7 +234,6 @@ public:
 	QualifiedName[] interfaces;  //< Optional.
 	TopLevelBlock members;  //< Optional.
 
-	bool defined;
 	Function constructor;
 	Function[] userConstructors;
 	Struct vtableStruct;
@@ -267,9 +266,6 @@ public:
 	QualifiedName[] interfaces; ///< Super interfaces to this.
 	TopLevelBlock members; ///< Toplevel nodes.
 
-	bool defined;
-
-
 public:
 	this() { super(NodeType.Interface); }
 }
@@ -294,9 +290,6 @@ public:
 	string name; ///< Unmangled name of the struct.
 	TopLevelBlock members; ///< Toplevel nodes.
 	Node loweredNode;  ///< If not null, this struct was lowered from this.
-
-	bool defined;
-
 
 public:
 	this() { super(NodeType.Struct); }

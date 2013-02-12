@@ -236,12 +236,6 @@ public:
 	 */
 	bool isWeakLink;
 
-	/**
-	 * The middle-end uses this tag to determine if all the types 
-	 * this function uses are well defined.
-	 */
-	bool defined;
-
 	int vtableIndex = -1;  ///< If this is a member function, where in the vtable does it live?
 
 	/// True if this function has an explicit call to super in
