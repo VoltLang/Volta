@@ -73,10 +73,6 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 		auto asIdentifierExp = cast(ir.IdentifierExp) exp;
 		assert(asIdentifierExp !is null);
 		return getIdentifierExpType(lp, asIdentifierExp, currentScope);
-	case TypeReference:
-		auto asTR = cast(ir.TypeReference) exp;
-		assert(asTR !is null);
-		return getTypeReferenceType(lp, asTR);
 	case ArrayLiteral:
 		auto asLiteral = cast(ir.ArrayLiteral) exp;
 		assert(asLiteral !is null);
@@ -228,11 +224,6 @@ ir.Type getIdentifierExpType(LanguagePass lp, ir.IdentifierExp identifierExp, ir
 	auto asType = cast(ir.Type) identifierExp.type;
 	assert(asType !is null);
 	return asType;
-}
-
-ir.Type getTypeReferenceType(LanguagePass lp, ir.TypeReference typeReference)
-{
-	return typeReference.type;
 }
 
 ir.Type getArrayLiteralType(LanguagePass lp, ir.ArrayLiteral arrayLiteral, ir.Scope currentScope)
