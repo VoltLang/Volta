@@ -647,6 +647,12 @@ public:
 		return super.enter(m);
 	}
 
+	override Status enter(ir.Class c)
+	{
+		lp.resolveClass(c);
+		return Continue;
+	}
+
 	override Status enter(ir.Unary _unary)
 	{
 		if (!_unary.hasArgumentList) {

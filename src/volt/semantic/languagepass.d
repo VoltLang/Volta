@@ -22,7 +22,6 @@ import volt.semantic.context;
 import volt.semantic.condremoval;
 import volt.semantic.declgatherer;
 import volt.semantic.userresolver;
-import volt.semantic.typeverifier;
 import volt.semantic.exptyper;
 import volt.semantic.manglewriter;
 import volt.semantic.importresolver;
@@ -90,7 +89,6 @@ public:
 
 		passes2a ~= new UserResolver(this);
 
-		passes2b ~= new TypeDefinitionVerifier(this);
 		passes2b ~= new ExpTyper(this);
 		passes2b ~= new IrVerifier();
 
