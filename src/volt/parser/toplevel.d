@@ -496,7 +496,16 @@ ir.Attribute parseAttribute(TokenStream ts, bool inModule = false)
 			attr.kind = ir.Attribute.Kind.Safe;
 			break;
 		default:
-			throw new CompilerError(nameTok.location, "expected 'disable' or 'property'.");
+			attr.kind = ir.Attribute.Kind.UserAttribute;
+			attr.userAttributeName = nameTok.value;
+			if (matchIf(ts, TokenType.OpenParen)) {
+				while (ts.peek.type != TokenType.CloseParen) {
+					attr.arguments ~= parseExp(ts);
+					matchIf(ts, TokenType.Comma);
+				}
+				match(ts, TokenType.CloseParen);
+			}
+			break;
 		}
 		break;
 	case TokenType.Deprecated: attr.kind = ir.Attribute.Kind.Deprecated; break;
