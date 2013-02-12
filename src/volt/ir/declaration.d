@@ -8,6 +8,7 @@ import volt.ir.type;
 import volt.ir.expression;
 import volt.ir.statement;
 import volt.ir.context;
+import volt.ir.toplevel;
 
 
 /**
@@ -39,6 +40,7 @@ abstract class Declaration : Node
 		Function = NodeType.Function,
 		Variable = NodeType.Variable
 	}
+	Attribute[] userAttrs;
 
 	@property Kind declKind() { return cast(Kind)nodeType; }
 	this(NodeType nt) { super(nt); }

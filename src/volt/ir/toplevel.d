@@ -197,6 +197,7 @@ public:
 		Safe,
 		NoThrow,
 		Pure,
+		UserAttribute,
 	}
 
 
@@ -205,6 +206,9 @@ public:
 	Kind kind;
 
 	TopLevelBlock members;
+
+	string userAttributeName;  ///< Optional.
+	Exp[] arguments;  ///< If kind == UserAttribute.
 
 	/// Only if type == Align.
 	int alignAmount;
@@ -239,6 +243,7 @@ public:
 	Struct vtableStruct;
 	Variable vtableVariable;
 	Class parentClass;  ///< Filled in by the typeverifier.
+	Attribute[] userAttrs;
 
 	/// How a lowered class will look internally.
 	Struct layoutStruct;
@@ -265,6 +270,7 @@ public:
 	string name; ///< Unmangled name of the Interface.
 	QualifiedName[] interfaces; ///< Super interfaces to this.
 	TopLevelBlock members; ///< Toplevel nodes.
+	Attribute[] userAttrs;
 
 public:
 	this() { super(NodeType.Interface); }
@@ -290,6 +296,7 @@ public:
 	string name; ///< Unmangled name of the struct.
 	TopLevelBlock members; ///< Toplevel nodes.
 	Node loweredNode;  ///< If not null, this struct was lowered from this.
+	Attribute[] userAttrs;
 
 public:
 	this() { super(NodeType.Struct); }

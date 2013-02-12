@@ -387,6 +387,18 @@ public:
 			wf(attr.alignAmount);
 			wf(")");
 			break;
+		case UserAttribute:
+			twf("@");
+			wf(attr.userAttributeName);
+			wf("(");
+			foreach (i, arg; attr.arguments) {
+				accept(arg, this);
+				if (i < attr.arguments.length - 1) {
+					wf(", ");
+				}
+			}
+			wf(")");
+			break;
 		}
 
 		wfln(" {");
