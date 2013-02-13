@@ -18,9 +18,8 @@ import volt.visitor.prettyprinter;
 import volt.semantic.util;
 import volt.semantic.lookup;
 import volt.semantic.attribremoval;
-import volt.semantic.context;
 import volt.semantic.condremoval;
-import volt.semantic.declgatherer;
+import volt.semantic.gatherer;
 import volt.semantic.userresolver;
 import volt.semantic.exptyper;
 import volt.semantic.manglewriter;
@@ -84,8 +83,7 @@ public:
 
 		postParse ~= new ConditionalRemoval(this);
 		postParse ~= new AttribRemoval(this);
-		postParse ~= new ContextBuilder(this);
-		postParse ~= new DeclarationGatherer(this);
+		postParse ~= new Gatherer(this);
 
 		passes2a ~= new UserResolver(this);
 
