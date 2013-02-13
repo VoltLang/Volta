@@ -136,6 +136,12 @@ public:
 		.resolveClass(this, c);
 	}
 
+	override void gather(ir.Scope current, ir.BlockStatement bs)
+	{
+		auto g = new Gatherer(this);
+		g.transform(current, bs);
+		g.close();
+	}
 
 	/*
 	 *

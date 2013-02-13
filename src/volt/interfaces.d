@@ -154,6 +154,16 @@ public:
 	 */
 	abstract void resolveClass(ir.Class c);
 
+	/**
+	 * Gathers all the symbols and adds scopes where needed from
+	 * the given block statement.
+	 *
+	 * This function is intended to be used for inserting new
+	 * block statements into already gathered functions, for
+	 * instance when processing mixin statemetns.
+	 */
+	abstract void gather(ir.Scope current, ir.BlockStatement bs);
+
 	/*
 	 *
 	 * General phases functions.

@@ -176,6 +176,10 @@ public:
 		this.lp = lp;
 	}
 
+	override void close()
+	{
+	}
+
 	override void transform(ir.Module m)
 	{
 		if (m.gathered) {
@@ -188,8 +192,13 @@ public:
 		assert(mWhere.length == 0);
 	}
 
-	override void close()
+	void transform(ir.Scope current, ir.BlockStatement bs)
 	{
+		assert(mWhere.length == 0);
+		push(current);
+		accept(bs, this);
+		pop();
+		assert(mWhere.length == 0);
 	}
 
 	/*
