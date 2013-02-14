@@ -447,7 +447,8 @@ bool typesEqual(ir.Type a, ir.Type b)
 		auto ap = cast(ir.TypeReference) a;
 		auto bp = cast(ir.TypeReference) b;
 		assert(ap !is null && bp !is null);
-		return ap.names == bp.names;
+		assert(ap.type !is null && bp.type !is null);
+		return typesEqual(ap.type, bp.type);
 	} else if ((a.nodeType == ir.NodeType.FunctionType &&
 	            b.nodeType == ir.NodeType.FunctionType) ||
 		   (a.nodeType == ir.NodeType.DelegateType &&

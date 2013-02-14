@@ -218,14 +218,18 @@ ir.Store lookup(Location loc, LanguagePass lp, ir.Scope _scope, string name)
  * Helper functions that looksup a type and throws compiler errors
  * if it is not found or the found identifier is not a type.
  */
-ir.Type lookupType(Location loc, LanguagePass lp, ir.Scope _scope, string[] names...)
+ir.Type lookupType(LanguagePass lp, ir.Scope _scope, ir.QualifiedName id)
 {
-	auto store = lookup(loc, lp, _scope, names);
+	auto store = lookup(lp, _scope, id);
 	if (store is null) {
-		throw new CompilerError(loc, format("undefined identifier '%s'.", names));
+		auto loc = id.identifiers[$-1].location;
+		auto name = id.identifiers[$-1].value;
+		throw new CompilerError(loc, format("undefined identifier '%s'.", name));
 	}
 	if (store.kind != ir.Store.Kind.Type) {
-		throw new CompilerError(loc, format("%s used as type.", names));
+		auto loc = id.identifiers[$-1].location;
+		auto name = id.identifiers[$-1].value;
+		throw new CompilerError(loc, format("%s used as type.", name));
 	}
 	auto asType = cast(ir.Type) store.node;
 	assert(asType !is null);

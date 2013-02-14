@@ -4,6 +4,7 @@
 module volt.semantic.gatherer;
 
 import ir = volt.ir.ir;
+import volt.ir.util;
 
 import volt.exceptions;
 import volt.interfaces;
@@ -115,10 +116,7 @@ void addScope(ir.Scope current, ir.Function fn, ir.Type thisType)
 		return;
 	}
 
-	auto tr = new ir.TypeReference();
-	tr.location = thisType.location;
-	tr.names ~= "__this";
-	tr.type = thisType;
+	auto tr = buildTypeReference(thisType.location, thisType,  "__this");
 
 	auto thisVar = new ir.Variable();
 	thisVar.location = fn.location;

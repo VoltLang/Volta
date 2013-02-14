@@ -156,17 +156,9 @@ ir.TypeReference parseTypeReference(TokenStream ts)
 	auto typeReference = new ir.TypeReference();
 	typeReference.location = ts.peek.location;
 
-	while (true) {
-		auto nameTok = match(ts, TokenType.Identifier);
-		typeReference.names ~= nameTok.value;
-		if (ts.peek.type == TokenType.Dot) {
-			match(ts, TokenType.Dot);
-		} else {
-			break;
-		}
-	}
+	typeReference.id = parseQualifiedName(ts);
 
-	assert(typeReference.names.length > 0);
+	assert(typeReference.id.identifiers.length > 0);
 	return typeReference;
 }
 

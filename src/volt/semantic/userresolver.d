@@ -131,7 +131,7 @@ public:
 		if (u.type !is null)
 			return Continue;
 
-		u.type = lookupType(u.location, lp, current, u.names);
+		u.type = lookupType(lp, current, u.id);
 
 		return Continue;
 	}

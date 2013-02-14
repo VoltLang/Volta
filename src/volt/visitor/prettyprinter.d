@@ -1838,12 +1838,7 @@ public:
 
 	override Status visit(ir.TypeReference tr)
 	{
-		foreach (i, name; tr.names) {
-			wf(name);
-			if (i < tr.names.length - 1) {
-				wf(".");
-			}
-		}
+		wf(tr.id);
 		return Continue;
 	}
 

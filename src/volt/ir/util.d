@@ -201,7 +201,7 @@ ir.TypeReference buildTypeReference(Location loc, ir.Type type, string[] names..
 	auto tr = new ir.TypeReference();
 	tr.location = loc;
 	tr.type = type;
-	tr.names = names;
+	tr.id = buildQualifiedName(loc, names);
 	return tr;
 }
 
