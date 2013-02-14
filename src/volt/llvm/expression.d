@@ -84,6 +84,10 @@ void getValueAnyForm(State state, ir.Exp exp, Value result)
 		auto al = cast(ir.ArrayLiteral)exp;
 		handleArrayLiteral(state, al, result);
 		break;
+	case ClassLiteral:
+		auto cl = cast(ir.ClassLiteral)exp;
+		handleClassLiteral(state, cl, result);
+		break;
 	default:
 		auto str = format("can't getValue from %s", to!string(exp.nodeType));
 		throw CompilerPanic(exp.location, str);
