@@ -92,7 +92,8 @@ void handleClassLiteral(State state, ir.ClassLiteral cl, Value result)
 	if (_class is null)
 		throw CompilerPanic(cl.location, "class literal type must be TypeReference");
 
-	auto type = cast(StructType)state.fromIr(_class.layoutStruct);
+	auto pt = cast(PointerType)state.fromIr(_class);
+	auto st = cast(StructType)pt.base;
 
 	auto sl = new ir.StructLiteral();
 	sl.location = cl.location;
@@ -101,9 +102,21 @@ void handleClassLiteral(State state, ir.ClassLiteral cl, Value result)
 	sl.exps ~= buildAddrOf(cl.location, eref);
 	sl.exps ~= cl.exps;
 
-	result.isPointer = false;
-	result.type = type;
-	result.value = type.fromStructLiteral(state, sl);
+	auto v = st.fromStructLiteral(state, sl);
+
+	if (cl.useBaseStorage) {
+		result.isPointer = false;
+		result.type = st;
+		result.value = v;
+	} else {
+		auto g = LLVMAddGlobal(state.mod, st.llvmType, "");
+		LLVMSetGlobalConstant(g, true);
+		LLVMSetInitializer(g, v);
+
+		result.isPointer = false;
+		result.type = pt;
+		result.value = g;
+	}
 }
 
 void handleConstant(State state, ir.Constant asConst, Value result)

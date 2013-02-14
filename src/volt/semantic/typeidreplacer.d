@@ -90,6 +90,7 @@ public:
 
 		auto literal = new ir.ClassLiteral();
 		literal.location = _typeid.location;
+		literal.useBaseStorage = true;
 		literal.type = copyTypeSmart(typeinfo.location, typeinfo);
 
 		literal.exps ~= typeConstant;

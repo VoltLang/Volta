@@ -465,6 +465,9 @@ public:
 	Exp[] exps;  ///< Values for the fields in the class.
 	Type type;  ///< The class this literal represents.
 
+	/// See Variable.useBaseStorage, should be set for literals.
+	bool useBaseStorage;
+
 public:
 	this() { super(NodeType.ClassLiteral); }
 }
