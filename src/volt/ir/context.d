@@ -58,6 +58,7 @@ public:
 		Type,
 		Scope,
 		Function,
+		Template,
 	}
 
 
@@ -336,6 +337,25 @@ public:
 			return;
 		}
 		errorDefined(fn, name);
+	}
+
+	/**
+	 * Add a user defined template.
+	 *
+	 * Throws:
+	 *   CompilerPanic if another symbol of same name is found.
+	 *
+	 * Side-effects:
+	 *   None.
+	 */
+	void addTemplate(Node n, string name)
+	in {
+		assert(n !is null);
+		assert(name !is null);
+	}
+	body {
+		errorOn(n, name);
+		symbols[name] = new Store(this, n, name, Store.Kind.Template);
 	}
 
 	/**

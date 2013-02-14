@@ -1181,6 +1181,8 @@ public:
 				idents = [ident] ~ idents;
 
 				break;
+			case Template:
+				throw new CompilerError(loc, "template used as a type or value");
 			case Value:
 			case Function:
 				filloutReference(store);
@@ -1290,6 +1292,8 @@ public:
 			e = _ref;
 
 			return Continue;
+		} else if (store.kind == ir.Store.Kind.Template) {
+			throw new CompilerError(i.location, "template used as a value");
 		} else if (store.kind == ir.Store.Kind.Type) {
 			return Continue;
 		}

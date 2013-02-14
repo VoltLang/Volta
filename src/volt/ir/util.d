@@ -104,6 +104,7 @@ ir.Scope getScopeFromStore(ir.Store store)
 		return getScopeFromType(type);
 	case Value:
 	case Function:
+	case Template:
 		return null;
 	case Alias:
 		throw CompilerPanic(store.node.location, "unresolved alias");
