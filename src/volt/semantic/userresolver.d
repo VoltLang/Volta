@@ -131,26 +131,7 @@ public:
 		if (u.type !is null)
 			return Continue;
 
-		ir.Scope lookupScope = current;
-		ir.Type theType;
-
-		foreach (i, name; u.names) {
-			if (i == u.names.length - 1) {
-				if (i == 0) {
-					theType = lookupType(u.location, lp, lookupScope, name);
-				} else {
-					theType = lookupTypeAsThisScope(u.location, lp, lookupScope, name);
-				}
-				break;
-			} else if (i == 0) {
-				lookupScope = .lookupScope(u.location, lp, lookupScope, name);
-			} else {
-				lookupScope = .lookupScopeAsThisScope(u.location, lp, lookupScope, name);
-			}
-		}
-		assert(theType !is null);
-
-		u.type = theType;
+		u.type = lookupType(u.location, lp, current, u.names);
 
 		return Continue;
 	}

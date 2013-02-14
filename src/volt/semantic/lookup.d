@@ -74,6 +74,62 @@ ir.Store lookupAsImportScope(Location loc, LanguagePass lp, ir.Scope _scope, str
 }
 
 /**
+ * Look up a QualifiedName chain, the first identifier is looked up globaly,
+ * and the result is treated as a scope to lookup the next one should there be
+ * more identifiers.
+ */
+ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
+{
+	auto current = _scope;
+	auto last = cast(int)qn.identifiers.length - 1;
+
+	foreach (i, id; qn.identifiers) {
+		if (i == last) {
+			if (i == 0) {
+				return lookup(id.location, lp, current, id.value);
+			} else {
+				return lookupAsThisScope(id.location, lp, current, id.value);
+			}
+		}
+
+		if (i == 0) {
+			current = lookupScope(id.location, lp, current, id.value);
+		} else {
+			current = lookupScopeAsThisScope(id.location, lp, current, id.value);
+		}
+	}
+	assert(false);
+}
+
+/**
+ * Look up a string chain, the first identifier is looked up globaly, and
+ * the result is treated as a scope to lookup the next one should there be
+ * more identifiers.
+ */
+ir.Store lookup(Location loc, LanguagePass lp, ir.Scope _scope, string[] names...)
+{
+	auto current = _scope;
+	auto last = cast(int)names.length - 1;
+
+	foreach (i, name; names) {
+		if (i == last) {
+			if (i == 0) {
+				return lookup(loc, lp, current, name);
+			} else {
+				return lookupAsThisScope(loc, lp, current, name);
+			}
+		}
+
+		if (i == 0) {
+			current = lookupScope(loc, lp, current, name);
+		} else {
+			current = lookupScopeAsThisScope(loc, lp, current, name);
+		}
+	}
+	assert(false);
+}
+
+/**
  * Look up an identifier in a scope and its parent scopes.
  * Returns the store or null if no match was found.
  */
@@ -162,35 +218,14 @@ ir.Store lookup(Location loc, LanguagePass lp, ir.Scope _scope, string name)
  * Helper functions that looksup a type and throws compiler errors
  * if it is not found or the found identifier is not a type.
  */
-ir.Type lookupType(Location loc, LanguagePass lp, ir.Scope _scope, string name)
+ir.Type lookupType(Location loc, LanguagePass lp, ir.Scope _scope, string[] names...)
 {
-	auto store = lookup(loc, lp, _scope, name);
+	auto store = lookup(loc, lp, _scope, names);
 	if (store is null) {
-		throw new CompilerError(loc, format("undefined identifier '%s'.", name));
+		throw new CompilerError(loc, format("undefined identifier '%s'.", names));
 	}
 	if (store.kind != ir.Store.Kind.Type) {
-		throw new CompilerError(loc, format("%s used as type.", name));
-	}
-	auto asType = cast(ir.Type) store.node;
-	assert(asType !is null);
-	return asType;
-}
-
-/**
- * Helper functions that looksup a type and throws compiler errors
- * if it is not found or the found identifier is not a type. Scope
- * is treated as a thisable scope.
- *
- * @see lookupAsThisScope.
- */
-ir.Type lookupTypeAsThisScope(Location loc, LanguagePass lp, ir.Scope _scope, string name)
-{
-	auto store = lookupAsThisScope(loc, lp, _scope, name);
-	if (store is null) {
-		throw new CompilerError(loc, format("undefined identifier '%s'.", name));
-	}
-	if (store.kind != ir.Store.Kind.Type) {
-		throw new CompilerError(loc, format("%s used as type.", name));
+		throw new CompilerError(loc, format("%s used as type.", names));
 	}
 	auto asType = cast(ir.Type) store.node;
 	assert(asType !is null);
