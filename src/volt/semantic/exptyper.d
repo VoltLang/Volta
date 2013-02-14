@@ -86,7 +86,7 @@ public:
 			auto varArgsSlice = postfix.arguments[funcNumArgs .. $];
 
 			auto tinfoClass = retrieveTypeInfo(postfix.location, lp, current);
-			auto tr = new ir.TypeReference(tinfoClass, tinfoClass.name);
+			auto tr = buildTypeReference(postfix.location, tinfoClass, tinfoClass.name);
 			tr.location = postfix.location;
 			auto array = new ir.ArrayType();
 			array.location = postfix.location;
@@ -163,8 +163,7 @@ public:
 				extype(types[i], sexp);
 			}
 
-			asLit.type = new ir.TypeReference(asStruct, asStruct.name);
-			asLit.type.location = right.location;
+			asLit.type = buildTypeReference(right.location, asStruct, asStruct.name);
 			return asLit.type;
 		}
 
@@ -236,7 +235,7 @@ public:
 			/// Check for converting child classes into parent classes.
 			if (leftClass !is null && rightClass !is null) {
 				if (inheritsFrom(rightClass, leftClass)) {
-					right = buildCastSmart(new ir.TypeReference(localLeft, leftClass.name), right);
+					right = buildCastSmart(localLeft, right);
 					return localLeft;
 				}
 			}
@@ -927,12 +926,8 @@ public:
 		    !fn.type.varArgsProcessed &&
 		    fn.type.linkage == ir.Linkage.Volt) {
 			auto tinfoClass = retrieveTypeInfo(fn.location, lp, current);
-			assert(tinfoClass !is null);
-			auto tr = new ir.TypeReference(tinfoClass, tinfoClass.name);
-			tr.location = fn.location;
-			auto array = new ir.ArrayType();
-			array.location = tr.location;
-			array.base = tr;
+			auto tr = buildTypeReference(fn.location, tinfoClass, tinfoClass.name);
+			auto array = buildArrayType(fn.location, tr);
 			addParam(fn.location, fn, array, "_typeids");
 			fn.type.varArgsProcessed = true;
 		}

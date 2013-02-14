@@ -114,7 +114,7 @@ public:
 		literalVar.location = _typeid.location;
 		literalVar.assign = literal;
 		literalVar.mangledName = literalVar.name = name;
-		literalVar.type = new ir.TypeReference(typeinfo, typeinfo.name);
+		literalVar.type = buildTypeReference(_typeid.location, typeinfo, typeinfo.name);
 		literalVar.isWeakLink = true;
 		literalVar.useBaseStorage = true;
 		literalVar.storage = ir.Variable.Storage.Global;

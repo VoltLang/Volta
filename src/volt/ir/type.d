@@ -136,13 +136,6 @@ public:
 
 public:
 	this() { super(NodeType.TypeReference); }
-
-	this(Type t, string[] names...) 
-	{ 
-		this(); 
-		this.names = names.dup; 
-		type = t; 
-	}
 }
 
 /**
