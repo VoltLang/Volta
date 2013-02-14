@@ -74,6 +74,16 @@ void gather(ir.Scope current, ir._Interface i, Where where)
 	current.addType(i, i.name);
 }
 
+void gather(ir.Scope current, ir.MixinFunction mf, Where where)
+{
+	current.addTemplate(mf, mf.name);
+}
+
+void gather(ir.Scope current, ir.MixinTemplate mt, Where where)
+{
+	current.addTemplate(mt, mt.name);
+}
+
 
 /*
  *
@@ -304,6 +314,18 @@ public:
 		gather(current, fn, where);
 		addScope(current, fn, where == Where.TopLevel ? thisType : null);
 		push(fn.myScope);
+		return Continue;
+	}
+
+	override Status enter(ir.MixinFunction mf)
+	{
+		gather(current, mf, where);
+		return Continue;
+	}
+
+	override Status enter(ir.MixinTemplate mt)
+	{
+		gather(current, mt, where);
 		return Continue;
 	}
 
