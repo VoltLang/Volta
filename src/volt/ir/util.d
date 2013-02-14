@@ -189,15 +189,20 @@ ir.Type copyTypeSmart(Location loc, ir.Type type)
 	case Class:
 	case Enum:
 		auto s = getScopeFromType(type);
-		auto tr = new ir.TypeReference(type, null);
-		tr.location = loc;
 		/// @todo Get fully qualified name for type.
-		if (s !is null)
-			tr.names = [s.name];
-		return tr;
+		return buildTypeReference(loc, type, s !is null ? s.name : null);
 	default:
 		assert(false);
 	}
+}
+
+ir.TypeReference buildTypeReference(Location loc, ir.Type type, string[] names...)
+{
+	auto tr = new ir.TypeReference();
+	tr.location = loc;
+	tr.type = type;
+	tr.names = names;
+	return tr;
 }
 
 ir.StorageType buildStorageType(Location loc, ir.StorageType.Kind kind, ir.Type base)
@@ -217,6 +222,14 @@ ir.PrimitiveType buildPrimitiveType(Location loc, ir.PrimitiveType.Kind kind)
 	auto pt = new ir.PrimitiveType(kind);
 	pt.location = loc;
 	return pt;
+}
+
+ir.ArrayType buildArrayType(Location loc, ir.Type base)
+{
+	auto array = new ir.ArrayType();
+	array.location = loc;
+	array.base = base;
+	return array;
 }
 
 ir.ArrayType buildArrayTypeSmart(Location loc, ir.Type base)
