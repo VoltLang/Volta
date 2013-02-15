@@ -84,18 +84,27 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
 	auto current = qn.leadingDot ? getTopScope(_scope) : _scope;
 
 	foreach (i, id; qn.identifiers) {
-		if (i == last) {
-			if (i == 0) {
-				return lookup(id.location, lp, current, id.value);
-			} else {
-				return lookupAsThisScope(id.location, lp, current, id.value);
-			}
+		ir.Store store;
+		Location loc = id.location;
+
+		/**
+		 * The first lookup should be done globally the following
+		 * in only that context. Leading dot taken care of above.
+		 */
+		if (i == 0) {
+			store = lookup(loc, lp, current, id.value);
+		} else {
+			store = lookupAsThisScope(loc, lp, current, id.value);
 		}
 
-		if (i == 0) {
-			current = lookupScope(id.location, lp, current, id.value);
+		// Need to resolve any aliases.
+		store = ensureResolved(lp, store);
+
+		if (i == last) {
+			return store;
 		} else {
-			current = lookupScopeAsThisScope(id.location, lp, current, id.value);
+			// Use improve error reporting by giving the scope.
+			current = ensureScope(loc, i == 0 ? null : current, id.value, store);
 		}
 	}
 	assert(false);
@@ -193,60 +202,10 @@ ir.Store lookup(Location loc, LanguagePass lp, ir.Scope _scope, string name)
 ir.Type lookupType(LanguagePass lp, ir.Scope _scope, ir.QualifiedName id)
 {
 	auto store = lookup(lp, _scope, id);
-	if (store is null) {
-		auto loc = id.identifiers[$-1].location;
-		auto name = id.identifiers[$-1].value;
-		throw new CompilerError(loc, format("undefined identifier '%s'.", name));
-	}
-	if (store.kind != ir.Store.Kind.Type) {
-		auto loc = id.identifiers[$-1].location;
-		auto name = id.identifiers[$-1].value;
-		throw new CompilerError(loc, format("%s used as type.", name));
-	}
-	auto asType = cast(ir.Type) store.node;
-	assert(asType !is null);
-	return asType;
-}
 
-/**
- * Lookup something with a scope in another scope.
- *
- * @throws CompilerError  If a Scope bearing thing couldn't be found in _scope.
- * @return                The Scope found in _scope.
- */
-ir.Scope lookupScope(Location loc, LanguagePass lp, ir.Scope _scope, string name)
-{
-	auto store = lookup(loc, lp, _scope, name);
-	if (store is null) {
-		throw new CompilerError(loc, format("undefined identifier '%s'.", name));
-	}
-
-	auto s = getScopeFromStore(store);
-	if (s is null) {
-		throw new CompilerError(loc, format("'%s' is not a aggregate or scope", name));
-	}
-	return s;
-}
-
-/**
- * Lookup something with a scope in another thisable scope.
- * @see lookupAsThisScope.
- *
- * @throws CompilerError  If a Scope bearing thing couldn't be found in _scope.
- * @return                The Scope found in _scope.
- */
-ir.Scope lookupScopeAsThisScope(Location loc, LanguagePass lp, ir.Scope _scope, string name)
-{
-	auto store = lookupAsThisScope(loc, lp, _scope, name);
-	if (store is null) {
-		throw new CompilerError(loc, format("'%s' has no member named '%s'.", _scope.name, name));
-	}
-
-	auto s = getScopeFromStore(store);
-	if (s is null) {
-		throw new CompilerError(loc, format("'%s' is not a aggregate or scope", name));
-	}
-	return s;
+	auto loc = id.identifiers[$-1].location;
+	auto name = id.identifiers[$-1].value;
+	return ensureType(loc, _scope, name, store);
 }
 
 /**
@@ -442,4 +401,53 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
 	default:
 		throw CompilerPanic(node.location, "unexpected nodetype");
 	}
+}
+
+/**
+ * Ensures that the given store is not null,
+ * and that the store node is a type.
+ *
+ * @return                The type pointed to by the store.
+ * @throws CompilerError  Raises error should this not be the case.
+ */
+ir.Type ensureType(Location loc, ir.Scope _scope, string name, ir.Store store)
+{
+	if (store is null) {
+		if (_scope is null) {
+			throw new CompilerError(loc, format("undefined identifier '%s'.", name));
+		} else {
+			throw new CompilerError(loc, format("'%s' has no member named '%s'.", _scope.name, name));
+		}
+	}
+
+	auto asType = cast(ir.Type) store.node;
+	if (asType is null) {
+		throw new CompilerError(loc, format("%s used as type.", name));
+	}
+
+	return asType;
+}
+
+/**
+ * Ensures that the given store is not null,
+ * and that the store node has or is a scope.
+ *
+ * @return                The scope of store type or the scope itself.
+ * @throws CompilerError  Raises error should this not be the case.
+ */
+ir.Scope ensureScope(Location loc, ir.Scope _scope, string name, ir.Store store)
+{
+	if (store is null) {
+		if (_scope is null) {
+			throw new CompilerError(loc, format("undefined identifier '%s'.", name));
+		} else {
+			throw new CompilerError(loc, format("'%s' has no member named '%s'.", _scope.name, name));
+		}
+	}
+
+	auto s = getScopeFromStore(store);
+	if (s is null) {
+		throw new CompilerError(loc, format("'%s' is not a aggregate or scope", name));
+	}
+	return s;
 }
