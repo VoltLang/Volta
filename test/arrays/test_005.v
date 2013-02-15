@@ -18,7 +18,7 @@ int main()
 {
 	int index = 3;
 	auto ptr = new char;
-	auto str = new char[4];
+	auto str = new char[](4);
 
 	str[] = "TheVoltIsAwesome"[index .. 7];
 	ptr[0 .. 1] = "TheVoltIsAwesome"[index .. index+1];

@@ -5,7 +5,7 @@ module test_007;
 
 int main()
 {
-	char[] arr = new char[1];
+	char[] arr = new char[](1);
 	arr[0] = '\n';
 	arr[0] = '\0';
 
