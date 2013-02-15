@@ -157,12 +157,9 @@ public:
 public:
 	Op op;
 	Exp value;
-	Type type;  // with Cast and New.
-
-	bool isArray;
-	Exp index;  // With new int[3];
 
 	bool hasArgumentList;
+	Type type;  // with Cast and New.
 	Exp[] argumentList;  // With new StringObject("foo", "bar");
 
 public:
