@@ -102,34 +102,6 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
 }
 
 /**
- * Look up a string chain, the first identifier is looked up globaly, and
- * the result is treated as a scope to lookup the next one should there be
- * more identifiers.
- */
-ir.Store lookup(Location loc, LanguagePass lp, ir.Scope _scope, string[] names...)
-{
-	auto current = _scope;
-	auto last = cast(int)names.length - 1;
-
-	foreach (i, name; names) {
-		if (i == last) {
-			if (i == 0) {
-				return lookup(loc, lp, current, name);
-			} else {
-				return lookupAsThisScope(loc, lp, current, name);
-			}
-		}
-
-		if (i == 0) {
-			current = lookupScope(loc, lp, current, name);
-		} else {
-			current = lookupScopeAsThisScope(loc, lp, current, name);
-		}
-	}
-	assert(false);
-}
-
-/**
  * Look up an identifier in a scope and its parent scopes.
  * Returns the store or null if no match was found.
  */
