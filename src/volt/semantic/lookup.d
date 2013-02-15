@@ -398,17 +398,11 @@ bool getFirstThisable(ir.Scope _scope, out ir.Scope outScope, out ir.Type outTyp
 			throw CompilerPanic("scope without owning node");
 
 		auto asType = cast(ir.Type)node;
-		auto asClass = cast(ir.Class)node;
-		auto asStruct = cast(ir.Struct)node;
+		auto asAggregate = cast(ir.Aggregate)node;
 
-		/// @todo Interface.
-		if (asClass !is null) {
+		if (asAggregate !is null) {
 			outType = asType;
-			outScope = asClass.myScope;
-			return true;
-		} else if (asStruct !is null) {
-			outType = asType;
-			outScope = asStruct.myScope;
+			outScope = asAggregate.myScope;
 			return true;
 		}
 
