@@ -164,20 +164,9 @@ ir.Exp unaryToExp(intir.UnaryExp unary)
 		exp.location = unary.newExp.location;
 		exp.op = unary.op;
 		exp.type = unary.newExp.type;
-		if (unary.newExp.isArray) {
-			auto asStaticArray = cast(ir.StaticArrayType) unary.newExp.type;
-			exp.type = asStaticArray.base;
-			auto constant = new ir.Constant();
-			constant.location = unary.newExp.location;
-			constant._uint = cast(uint) asStaticArray.length;
-			constant.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Uint);
-			exp.index = constant;
-			exp.isArray = true;
-		} else if (unary.newExp.hasArgumentList) {
-			exp.hasArgumentList = true;
-			foreach (arg; unary.newExp.argumentList) {
-				exp.argumentList ~= binexpToExp(arg);
-			}
+		exp.hasArgumentList = unary.newExp.hasArgumentList;
+		foreach (arg; unary.newExp.argumentList) {
+			exp.argumentList ~= binexpToExp(arg);
 		}
 		return exp;
 	} else {
@@ -749,9 +738,7 @@ intir.NewExp parseNewExp(TokenStream ts)
 	auto newExp = new intir.NewExp();
 	newExp.type = parseType(ts);
 
-	if (newExp.type.nodeType == ir.NodeType.StaticArrayType) {
-		newExp.isArray = true;
-	} else if (matchIf(ts, TokenType.OpenParen)) {
+	if (matchIf(ts, TokenType.OpenParen)) {
 		newExp.hasArgumentList = true;
 		newExp.argumentList = _parseArgumentList(ts);
 		match(ts, TokenType.CloseParen);

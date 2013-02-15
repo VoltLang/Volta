@@ -359,13 +359,6 @@ Visitor.Status acceptUnary(ref ir.Exp exp, ir.Unary unary, ExpReplaceVisitor av)
 		}
 	}
 
-	if (unary.index !is null) {
-		status = acceptExp(unary.index, av);
-		if (status == VisitorStop) {
-			return VisitorStop;
-		}
-	}
-
 	foreach (ref arg; unary.argumentList) {
 		status = acceptExp(arg, av);
 		if (status == VisitorStop) {
