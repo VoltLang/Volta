@@ -298,7 +298,7 @@ protected:
 	/**
 	 * Loops over all attributes and applies them.
 	 */
-	void applyAttributes(ir.Struct s, ir.Attribute[] attrs)
+	void applyAttributes(ir.Aggregate s, ir.Attribute[] attrs)
 	{
 		foreach(attr; attrs) {
 			switch(attr.kind) with (ir.Attribute.Kind) {
@@ -316,34 +316,6 @@ protected:
 				break;
 			case UserAttribute:
 				s.userAttrs ~= attr;
-				break;
-			default:
-				// Warn?
-			}
-		}
-	}
-
-	/**
-	 * Loops over all attributes and applies them.
-	 */
-	void applyAttributes(ir.Class c, ir.Attribute[] attrs)
-	{
-		foreach(attr; attrs) {
-			switch(attr.kind) with (ir.Attribute.Kind) {
-			case Public:
-				c.access = ir.Access.Public;
-				break;
-			case Private:
-				c.access = ir.Access.Private;
-				break;
-			case Package:
-				c.access = ir.Access.Package;
-				break;
-			case Protected:
-				c.access = ir.Access.Protected;
-				break;
-			case UserAttribute:
-				c.userAttrs ~= attr;
 				break;
 			default:
 				// Warn?
