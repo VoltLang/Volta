@@ -12,6 +12,7 @@ import volt.semantic.util : ensureResolved;
 import volt.exceptions;
 import volt.interfaces;
 import volt.token.location;
+import volt.semantic.classresolver : fillInParentIfNeeded;
 
 
 /**
@@ -118,66 +119,23 @@ ir.Store lookup(Location loc, LanguagePass lp, ir.Scope _scope, string name)
 {
 	ir.Scope current = _scope, previous = _scope;
 	while (current !is null) {
-		auto store = current.getStore(name);
+		auto store = lookupAsThisScope(loc, lp, current, name);
 		if (store !is null) {
-			return ensureResolved(lp, store);
-		}
-
-		/// If this scope has a this variable, check it.
-		/// @todo this should not be here
-		auto _this = current.getStore("this");
-		if (_this !is null) {
-			auto asVar = cast(ir.Variable) _this.node;
-			assert(asVar !is null);
-			auto asTR = cast(ir.TypeReference) asVar.type;
-			assert(asTR !is null);
-			auto asStruct = cast(ir.Struct) asTR.type;
-			auto asClass = cast(ir.Class) asTR.type;
-			assert(asStruct !is null || asClass !is null);
-
-			if (asClass !is null) {
-				store = asClass.myScope.getStore(name);
-			} else if (asStruct !is null) {
-				store = asStruct.myScope.getStore(name);
-			}
-			if (store !is null) {
-				return ensureResolved(lp, store);
-			}
+			return store;
 		}
 
 		previous = current;
 		current = current.parent;
 	}
 
-	if (_scope.parent !is null) {
-		auto asClass = cast(ir.Class) _scope.parent.node;
-		if (asClass is null) {
-			asClass = cast(ir.Class) _scope.node;
-		}
-		if (asClass !is null) {
-			auto currentClass = asClass.parentClass;
-			while (currentClass !is null) {
-				auto store = currentClass.myScope.getStore(name);
-				if (store !is null) {
-					return ensureResolved(lp, store);
-				}
-				currentClass = currentClass.parentClass;
-			}
-		}
-	}
-
 	auto asMod = cast(ir.Module) previous.node;
 	assert(asMod !is null);
-
 
 	foreach (mod; asMod.myScope.importedModules) {
 		auto store = mod.myScope.getStore(name);
 		if (store !is null) {
 			return ensureResolved(lp, store);
 		}
-
-
-		import std.stdio;
 
 		/// Check publically imported modules.
 		foreach (i, submod; mod.myScope.importedModules) {
@@ -381,6 +339,7 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
 		throw CompilerPanic("scope without owning node");
 
 	switch (node.nodeType) with (ir.NodeType) {
+	case Function:
 	case Module:
 	case Import:
 	case Struct:
@@ -389,7 +348,7 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
 		auto asClass = cast(ir.Class)node;
 		assert(asClass !is null);
 
-		lp.resolveClass(asClass);
+		fillInParentIfNeeded(lp, asClass);
 		if (asClass.parentClass is null) {
 			assert(asClass.parent is null);
 			return false;
