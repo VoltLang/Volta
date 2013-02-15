@@ -80,8 +80,8 @@ ir.Store lookupAsImportScope(Location loc, LanguagePass lp, ir.Scope _scope, str
  */
 ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
 {
-	auto current = _scope;
 	auto last = cast(int)qn.identifiers.length - 1;
+	auto current = qn.leadingDot ? getTopScope(_scope) : _scope;
 
 	foreach (i, id; qn.identifiers) {
 		if (i == last) {
