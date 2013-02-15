@@ -107,20 +107,11 @@ void fillInParentIfNeeded(Location loc, LanguagePass lp, ir.Class c, ir.Scope _s
 		return;
 	}
 
-	foreach (ident; c.parent.identifiers[0 .. $-1]) {
-		_scope = lookupScope(loc, lp, _scope, ident.value);
+	auto asClass = cast(ir.Class) lookupType(lp, _scope, c.parent);
+	if (asClass is null) {
+		throw new CompilerError(loc, format("'%s' is not a class.", c.parent.toString));
 	}
 
-	assert(_scope !is null);
-	auto store = lookup(loc, lp, _scope, c.parent.identifiers[$-1].value);
-	if (store is null) {
-		throw new CompilerError(loc, format("unidentified identifier '%s'.", c.parent));
-	}
-	if (store.node is null || store.node.nodeType != ir.NodeType.Class) {
-		throw new CompilerError(loc, format("'%s' is not a class.", c.parent));
-	}
-	auto asClass = cast(ir.Class) store.node;
-	assert(asClass !is null);
 	lp.resolveClass(asClass);
 	c.parentClass = asClass;
 }
