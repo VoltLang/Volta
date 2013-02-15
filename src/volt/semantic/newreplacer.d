@@ -208,9 +208,14 @@ public:
 			return Continue;
 		}
 
-		if (unary.index !is null) {
+		if (unary.type.nodeType == ir.NodeType.ArrayType && unary.argumentList.length > 0) {
+			if (unary.argumentList.length != 1) {
+				throw CompilerPanic(unary.location, "multidimensional arrays unsupported at the moment.");
+			}
 			// WIP, doesn't consider multiple outputs of the same function.
-			auto allocFn = createArrayAllocFunction(unary.location, lp, thisModule.myScope, new ir.ArrayType(unary.type));
+			auto asArray = cast(ir.ArrayType) unary.type;
+			assert(asArray !is null);
+			auto allocFn = createArrayAllocFunction(unary.location, lp, thisModule.myScope, asArray);
 			thisModule.children.nodes = allocFn ~ thisModule.children.nodes;
 			thisModule.myScope.addFunction(allocFn, allocFn.name);
 
@@ -222,15 +227,13 @@ public:
 			auto call = new ir.Postfix();
 			call.location = unary.location;
 			call.op = ir.Postfix.Op.Call;
-			call.arguments ~= buildCast(unary.location, lp.settings.getSizeT(unary.location), unary.index);
+			call.arguments ~= buildCast(unary.location, lp.settings.getSizeT(unary.location), unary.argumentList[0]);
 			call.child = _ref;
 
 			exp = call;
 
 			return Continue;
-		}
-
-		if (unary.hasArgumentList) {
+		} else if (unary.hasArgumentList) {
 			auto tr = cast(ir.TypeReference) unary.type;
 			assert(tr !is null);
 			auto _class = cast(ir.Class) tr.type;

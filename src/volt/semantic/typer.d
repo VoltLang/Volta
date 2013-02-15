@@ -593,14 +593,10 @@ ir.Type getUnaryAddrOfType(LanguagePass lp, ir.Unary unary, ir.Scope currentScop
 
 ir.Type getUnaryNewType(LanguagePass lp, ir.Unary unary)
 {
-	if (!unary.isArray && !unary.hasArgumentList) {
+	if (!unary.hasArgumentList) {
 		auto pointer = new ir.PointerType(unary.type);
 		pointer.location = unary.location;
 		return pointer;
-	} else if (unary.isArray) {
-		auto array = new ir.ArrayType(unary.type);
-		array.location = unary.location;
-		return array;
 	} else {
 		assert(unary.hasArgumentList);
 		return unary.type;
