@@ -71,7 +71,7 @@ ir.Node[] reallyParseVariable(TokenStream ts, ir.Type base)
 {
 	ir.Node[] decls;
 
-	while (ts.peek.type != TokenType.Semicolon) {
+	while (true) {
 		auto d = new ir.Variable();
 		d.location = ts.peek.location;
 		d.type = base;
@@ -85,6 +85,8 @@ ir.Node[] reallyParseVariable(TokenStream ts, ir.Type base)
 
 		if (ts.peek.type == TokenType.Comma) {
 			ts.get();
+		} else {
+			break;
 		}
 	}
 	match(ts, TokenType.Semicolon);
