@@ -147,6 +147,21 @@ public:
 	this() { super(NodeType.Import); }
 }
 
+abstract class Aggregate : Type
+{
+public:
+	Access access; ///< default public.
+
+	Scope myScope; ///< Context for this struct.
+
+	string name; ///< Unmangled name of the struct.
+	TopLevelBlock members; ///< Toplevel nodes.
+	Attribute[] userAttrs;
+
+public:
+	this(NodeType nt) { super(nt); }
+}
+
 /**
  * Attributes apply different behaviours and access levels
  * to one or more top level nodes. These are lowered onto the
@@ -226,24 +241,17 @@ public:
  *
  * @ingroup irNode irTopLevel irType irDecl
  */
-class Class : Type
+class Class : Aggregate
 {
 public:
-	Access access; ///< default public.
-
-	Scope myScope; ///< Context for this Class.
-
-	string name;  //< Not optional.
 	QualifiedName parent;  //< Optional.
 	QualifiedName[] interfaces;  //< Optional.
-	TopLevelBlock members;  //< Optional.
 
 	Function constructor;
 	Function[] userConstructors;
 	Struct vtableStruct;
 	Variable vtableVariable;
 	Class parentClass;  ///< Filled in by the typeverifier.
-	Attribute[] userAttrs;
 
 	/// How a lowered class will look internally.
 	Struct layoutStruct;
@@ -286,17 +294,10 @@ public:
  *
  * @ingroup irNode irTopLevel irType irDecl
  */
-class Struct : Type
+class Struct : Aggregate
 {
 public:
-	Access access; ///< default public.
-
-	Scope myScope; ///< Context for this struct.
-
-	string name; ///< Unmangled name of the struct.
-	TopLevelBlock members; ///< Toplevel nodes.
 	Node loweredNode;  ///< If not null, this struct was lowered from this.
-	Attribute[] userAttrs;
 
 public:
 	this() { super(NodeType.Struct); }
