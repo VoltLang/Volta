@@ -71,7 +71,7 @@ int size(Location location, LanguagePass lp, ir.Node node)
 	case StaticArrayType:
 		auto _static = cast(ir.StaticArrayType) node;
 		assert(_static !is null);
-		return size(location, lp, _static.base) * _static.length;
+		return size(location, lp, _static.base) * cast(int)_static.length;
 	default:
 		throw new CompilerError(location, format("couldn't retrieve size of element: %s", to!string(node.nodeType)));
 	}
