@@ -68,6 +68,10 @@ int size(Location location, LanguagePass lp, ir.Node node)
 		auto asST = cast(ir.StorageType) node;
 		assert(asST !is null);
 		return size(location, lp, asST.base);
+	case StaticArrayType:
+		auto _static = cast(ir.StaticArrayType) node;
+		assert(_static !is null);
+		return size(location, lp, _static.base) * _static.length;
 	default:
 		throw new CompilerError(location, format("couldn't retrieve size of element: %s", to!string(node.nodeType)));
 	}
@@ -430,6 +434,12 @@ bool typesEqual(ir.Type a, ir.Type b)
 		auto bp = cast(ir.PrimitiveType) b;
 		assert(ap !is null && bp !is null);
 		return ap.type == bp.type;
+	} else if (a.nodeType == ir.NodeType.StaticArrayType &&
+			   b.nodeType == ir.NodeType.StaticArrayType) {
+		auto ap = cast(ir.StaticArrayType) a;
+		auto bp = cast(ir.StaticArrayType) b;
+		assert(ap !is null && bp !is null);
+		return ap.length && bp.length && typesEqual(ap.base, bp.base);
 	} else if (a.nodeType == ir.NodeType.PointerType &&
 	           b.nodeType == ir.NodeType.PointerType) {
 		auto ap = cast(ir.PointerType) a;
