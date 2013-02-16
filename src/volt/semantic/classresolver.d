@@ -96,7 +96,7 @@ void fillInClassLayoutIfNeeded(ir.Class c, LanguagePass lp)
 	ir.Struct vtableStruct;
 	c.layoutStruct = getClassLayoutStruct(c, lp, vtableStruct);
 	c.vtableStruct = vtableStruct;
-	emitVtableVariable(c, lp);
+	emitVtableVariable(lp, c);
 }
 
 void fillInParentIfNeeded(LanguagePass lp, ir.Class c)
@@ -122,11 +122,11 @@ void fillInParentIfNeeded(LanguagePass lp, ir.Class c)
 	c.parentClass = parent;
 }
 
-ir.Variable[] getClassFields(ir.Class _class)
+ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class)
 {
 	ir.Variable[] fields;
 	if (_class.parentClass !is null) {
-		fields ~= getClassFields(_class.parentClass);
+		fields ~= getClassFields(lp, _class.parentClass);
 	}
 	foreach (node; _class.members.nodes) {
 		auto asVar = cast(ir.Variable) node;
@@ -136,18 +136,19 @@ ir.Variable[] getClassFields(ir.Class _class)
 		if (asVar.storage != ir.Variable.Storage.Field) {
 			continue;
 		}
+		ensureResolved(lp, _class.myScope, asVar.type);
 		fields ~= copyVariableSmart(asVar.location, asVar);
 	}
 	return fields;
 }
 
 /// Get all the functions in an inheritance chain -- ignore overloading.
-ir.Function[] getClassMethods(ir.Class _class)
+ir.Function[] getClassMethods(LanguagePass lp, ir.Class _class)
 {
 	bool gatherConstructors = _class.userConstructors.length == 0;
 	ir.Function[] methods;
 	if (_class.parentClass !is null) {
-		methods ~= getClassMethods(_class.parentClass);
+		methods ~= getClassMethods(lp, _class.parentClass);
 	}
 	foreach (node; _class.members.nodes) {
 		auto asFunction = cast(ir.Function) node;
@@ -162,6 +163,8 @@ ir.Function[] getClassMethods(ir.Class _class)
 			continue;
 		}
 
+		ensureResolved(lp, _class.myScope, asFunction.type);
+
 		methods ~= asFunction;
 	}
 
@@ -172,9 +175,9 @@ ir.Function[] getClassMethods(ir.Class _class)
 	return methods;
 }
 
-ir.Function[] getClassMethodFunctions(ir.Class _class)
+ir.Function[] getClassMethodFunctions(LanguagePass lp, ir.Class _class)
 {
-	ir.Function[] methods = getClassMethods(_class);
+	ir.Function[] methods = getClassMethods(lp, _class);
 
 	// Retrieve the types for these functions, taking into account overloading.
 	bool[string] definedFunctions;
@@ -193,9 +196,9 @@ ir.Function[] getClassMethodFunctions(ir.Class _class)
 	return outMethods;
 }
 
-ir.Variable[] getClassMethodTypeVariables(ir.Class _class)
+ir.Variable[] getClassMethodTypeVariables(LanguagePass lp, ir.Class _class)
 {
-	ir.Function[] methods = getClassMethodFunctions(_class);
+	ir.Function[] methods = getClassMethodFunctions(lp, _class);
 
 	ir.Variable[] typeVars;
 	foreach (outIndex, method; methods) {
@@ -204,9 +207,9 @@ ir.Variable[] getClassMethodTypeVariables(ir.Class _class)
 	return typeVars;
 }
 
-ir.Exp[] getClassMethodAddrOfs(ir.Class _class)
+ir.Exp[] getClassMethodAddrOfs(LanguagePass lp, ir.Class _class)
 {
-	ir.Function[] methods = getClassMethodFunctions(_class);
+	ir.Function[] methods = getClassMethodFunctions(lp, _class);
 
 	ir.Exp[] addrs;
 	foreach (method; methods) {
@@ -219,14 +222,14 @@ ir.Exp[] getClassMethodAddrOfs(ir.Class _class)
 
 ir.Struct getClassLayoutStruct(ir.Class _class, LanguagePass lp, ref ir.Struct vtableStruct)
 {
-	auto methodTypes = getClassMethodTypeVariables(_class);
+	auto methodTypes = getClassMethodTypeVariables(lp, _class);
 	auto tinfo = retrieveTypeInfo(_class.location, lp, _class.myScope);
 	auto tinfos = buildVariableSmart(_class.location, buildArrayTypeSmart(_class.location, tinfo), ir.Variable.Storage.Field, "tinfos");
 
 	vtableStruct = buildStruct(_class.location, _class.members, _class.myScope, "__Vtable", tinfos ~ methodTypes);
 	auto vtableVar = buildVariableSmart(_class.location, buildPtrSmart(_class.location, vtableStruct), ir.Variable.Storage.Field, "__vtable");
 
-	auto fields = getClassFields(_class);
+	auto fields = getClassFields(lp, _class);
 	fields = vtableVar ~ fields;
 
 	return buildStruct(_class.location, _class.members, _class.myScope, "__layoutStruct", fields);
@@ -259,9 +262,9 @@ ir.Exp[] getTypeInfos(ir.Class[] classes)
 	return tinfos;
 }
 
-void emitVtableVariable(ir.Class _class, LanguagePass lp)
+void emitVtableVariable(LanguagePass lp, ir.Class _class)
 {
-	auto addrs = getClassMethodAddrOfs(_class);
+	auto addrs = getClassMethodAddrOfs(lp, _class);
 	auto tinfo = retrieveTypeInfo(_class.location, lp, _class.myScope);
 	auto chain = getInheritanceChain(_class);
 	auto tinfos = getTypeInfos(chain);

@@ -8,6 +8,7 @@ import volt.interfaces;
 import volt.exceptions;
 
 import volt.semantic.lookup;
+import volt.semantic.util : ensureResolved;
 
 
 /**
@@ -18,7 +19,7 @@ void resolveAlias(LanguagePass lp, ir.Store s)
 {
 	auto a = cast(ir.Alias)s.node;
 	if (a.type !is null) {
-		// UserResolver will have resolved the TypeReference.
+		ensureResolved(lp, s.s, a.type);
 		return s.markAliasResolved(a.type);
 	}
 

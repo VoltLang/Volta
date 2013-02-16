@@ -654,6 +654,11 @@ public:
 
 	override Status enter(ir.Unary _unary)
 	{
+		// Needed because of "new Foo();" in ExpStatement.
+		if (_unary.type !is null) {
+			ensureResolved(lp, current, _unary.type);
+		}
+
 		if (!_unary.hasArgumentList) {
 			return Continue;
 		}
@@ -669,8 +674,13 @@ public:
 		if (_unary.argumentList.length != _class.userConstructors[0].type.params.length) {
 			throw new CompilerError(_unary.location, "mismatched argument count for constructor.");
 		}
+
+		auto fn = _class.userConstructors[0];
+
+		ensureResolved(lp, fn.myScope.parent, fn.type);
+
 		for (size_t i = 0; i < _unary.argumentList.length; ++i) {
-			extype(_class.userConstructors[0].type.params[i].type, _unary.argumentList[i]);
+			extype(fn.type.params[i].type, _unary.argumentList[i]);
 		}
 		return Continue;
 	}
@@ -744,9 +754,12 @@ public:
 
 	override Status enter(ir.Variable d)
 	{
+		ensureResolved(lp, current, d.type);
+
 		if (d.assign is null) {
 			return Continue;
 		}
+
 		acceptExp(d.assign, this);
 
 		if (pass == 2) {
@@ -773,6 +786,7 @@ public:
 
 	override Status enter(ir.Typeid _typeid)
 	{
+		ensureResolved(lp, current, _typeid.type);
 		replaceTypeOfIfNeeded(_typeid.type);
 		return Continue;
 	}
@@ -935,6 +949,9 @@ public:
 
 	override Status enter(ir.Function fn)
 	{
+		// Notice the scope in which we resolve the type.
+		ensureResolved(lp, fn.myScope.parent, fn.type);
+
 		replaceVarArgsIfNeeded(fn);
 		super.enter(fn);
 		functionRet = fn.type.ret;
@@ -1209,6 +1226,7 @@ public:
 
 			auto asVar = cast(ir.Variable) _ref.decl;
 			assert(asVar !is null);
+
 			if (asVar.type.nodeType != ir.NodeType.TypeReference) {
 				return ContinueParent;
 			}

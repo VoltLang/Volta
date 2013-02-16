@@ -106,6 +106,64 @@ ir.Store ensureResolved(LanguagePass lp, ir.Store s)
 			s = s.myAlias;
 		}
 		return s;
+	} else if (s.kind == ir.Store.Kind.Value) {
+		auto var = cast(ir.Variable)s.node;
+		ensureResolved(lp, s.parent, var.type);
+	} else if (s.kind == ir.Store.Kind.Function) {
+		assert(s.functions.length == 1);
+		auto fn = cast(ir.Function)s.functions[0];
+		ensureResolved(lp, s.parent, fn.type);
 	}
 	return s;
+}
+
+/**
+ * Ensure that there are no unresolved TypeRefences in the given
+ * type. Stops when encountering the first resolved TypeReference.
+ */
+void ensureResolved(LanguagePass lp, ir.Scope current, ir.Type type)
+{
+	switch (type.nodeType) with (ir.NodeType) {
+	case PrimitiveType:
+		return;
+	case PointerType:
+		auto pt = cast(ir.PointerType)type;
+		return ensureResolved(lp, current, pt.base);
+	case ArrayType:
+		auto at = cast(ir.ArrayType)type;
+		return ensureResolved(lp, current, at.base);
+	case StaticArrayType:
+		auto sat = cast(ir.StaticArrayType)type;
+		return ensureResolved(lp, current, sat.base);
+	case StorageType:
+		auto st = cast(ir.StorageType)type;
+		// For auto and friends.
+		if (st.base is null)
+			return;
+		return ensureResolved(lp, current, st.base);
+	case FunctionType:
+		auto ft = cast(ir.FunctionType)type;
+		ensureResolved(lp, current, ft.ret);
+		foreach (p; ft.params) {
+			ensureResolved(lp, current, p.type);
+		}
+		return;
+	case DelegateType:
+		auto dt = cast(ir.DelegateType)type;
+		ensureResolved(lp, current, dt.ret);
+		foreach (p; dt.params) {
+			ensureResolved(lp, current, p.type);
+		}
+		return;
+	case TypeReference:
+		auto tr = cast(ir.TypeReference)type;
+		return lp.resolveTypeReference(current, tr);
+	case Class:
+	case Struct:
+	case TypeOf:
+		return;
+	default:
+		string e = format("unhandled type: '%s'", to!string(type.nodeType));
+		throw new CompilerError(type.location, e);
+	}
 }

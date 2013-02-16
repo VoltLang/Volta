@@ -20,7 +20,6 @@ import volt.semantic.lookup;
 import volt.semantic.attribremoval;
 import volt.semantic.condremoval;
 import volt.semantic.gatherer;
-import volt.semantic.userresolver;
 import volt.semantic.exptyper;
 import volt.semantic.manglewriter;
 import volt.semantic.importresolver;
@@ -84,8 +83,6 @@ public:
 		postParse ~= new ConditionalRemoval(this);
 		postParse ~= new AttribRemoval(this);
 		postParse ~= new Gatherer(this);
-
-		passes2a ~= new UserResolver(this);
 
 		passes2b ~= new ExpTyper(this);
 		passes2b ~= new IrVerifier();

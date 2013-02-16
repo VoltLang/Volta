@@ -505,13 +505,13 @@ ir.Type getUnaryType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 	case None:
 		return getUnaryNoneType(lp, unary, currentScope);
 	case Cast:
-		return getUnaryCastType(lp, unary);
+		return getUnaryCastType(lp, unary, currentScope);
 	case Dereference:
 		return getUnaryDerefType(lp, unary, currentScope);
 	case AddrOf:
 		return getUnaryAddrOfType(lp, unary, currentScope);
 	case New:
-		return getUnaryNewType(lp, unary);
+		return getUnaryNewType(lp, unary, currentScope);
 	case Minus, Plus:
 		return getUnarySubAddType(lp, unary, currentScope);
 	case Not:
@@ -531,8 +531,9 @@ ir.Type getUnaryNoneType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 	return getExpType(lp, unary.value, currentScope);
 }
 
-ir.Type getUnaryCastType(LanguagePass lp, ir.Unary unary)
+ir.Type getUnaryCastType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 {
+	ensureResolved(lp, currentScope, unary.type);
 	return unary.type;
 }
 
@@ -591,8 +592,10 @@ ir.Type getUnaryAddrOfType(LanguagePass lp, ir.Unary unary, ir.Scope currentScop
 	return pointer;
 }
 
-ir.Type getUnaryNewType(LanguagePass lp, ir.Unary unary)
+ir.Type getUnaryNewType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 {
+	ensureResolved(lp, currentScope, unary.type);
+
 	if (!unary.hasArgumentList) {
 		auto pointer = new ir.PointerType(unary.type);
 		pointer.location = unary.location;
