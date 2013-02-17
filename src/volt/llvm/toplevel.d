@@ -42,11 +42,13 @@ public:
 
 	override Status enter(ir.Function fn)
 	{
+		// Don't export unused functions.
+		if (fn._body is null) {
+			return ContinueParent;
+		}
+
 		Type type;
 		auto llvmFunc = state.getFunctionValue(fn, type);
-		if (fn.type.linkage == ir.Linkage.Windows) {
-			LLVMSetFunctionCallConv(llvmFunc, LLVMCallConv.X86Stdcall);
-		}
 		auto llvmType = type.llvmType;
 		auto ct = cast(CallableType)type;
 		assert(ct !is null);

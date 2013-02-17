@@ -105,8 +105,14 @@ public:
 		auto ft = cast(FunctionType)type;
 		auto llvmType = ft.llvmCallType;
 		auto v = LLVMAddFunction(mod, fn.mangledName, llvmType);
-		if (fn.isWeakLink)
+		if (fn.isWeakLink) {
 			LLVMSetLinkage(v, LLVMLinkage.LinkOnceODR);
+		}
+
+		// Needs to be done here, because this can not be set on a type.
+		if (fn.type.linkage == ir.Linkage.Windows) {
+			LLVMSetFunctionCallConv(v, LLVMCallConv.X86Stdcall);
+		}
 
 		valueStore[k] = Store(v, type);
 		return v;
