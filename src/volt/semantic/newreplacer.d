@@ -135,8 +135,12 @@ ir.Exp createAllocDgCall(ir.Variable allocDgVar, LanguagePass lp, Location locat
 		pfixCall.arguments ~= buildCast(location, lp.settings.getSizeT(location), countArg);
 	}
 
-	auto asTR = cast(ir.TypeReference) type;
-	if (asTR !is null) suppressCast = asTR.type.nodeType == ir.NodeType.Class;
+	if (!suppressCast) {
+		auto asTR = cast(ir.TypeReference) type;
+		if (asTR !is null) {
+			suppressCast = asTR.type.nodeType == ir.NodeType.Class;
+		}
+	}
 
 	if (!suppressCast) {
 		auto result = new ir.PointerType(copyTypeSmart(location, type));
