@@ -279,6 +279,8 @@ public:
 	Platform platform;
 	Arch arch;
 
+	string linker; ///< The --linker argument
+
 	string outputFile;
 	string[] includePaths; ///< The -I arguments.
 

@@ -297,7 +297,7 @@ protected:
 
 		string bcLinker = "llvm-link";
 		string compiler = "llc";
-		string linker = "gcc";
+		string linker = settings.linker;
 		string cmd;
 		int ret;
 

@@ -92,6 +92,10 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 		}
 	}
 
+	void linker(string l) {
+		settings.linker = l;
+	}
+
 	void stdFile(string file) {
 		settings.stdFiles ~= replaceEscapes(file);
 	}
@@ -153,6 +157,9 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 			continue;
 		case "--platform":
 			argHandler = &platform;
+			continue;
+		case "--linker":
+			argHandler = &linker;
 			continue;
 		case "--emit-bitcode":
 			settings.emitBitCode = true;
@@ -228,6 +235,8 @@ void setDefault(Settings settings)
 	} else {
 		static assert(false);
 	}
+
+	settings.linker = "gcc";
 }
 
 bool printUsage()
