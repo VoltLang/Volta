@@ -41,30 +41,12 @@ class VoltLanguagePass : LanguagePass
 {
 public:
 	/**
-	 * Phase 1 fields.
+	 * Phases fields.
 	 * @{
 	 */
 	Pass[] postParse;
-	/**
-	 * @}
-	 */
-
-	/**
-	 * Phase 2 fields.
-	 * @{
-	 */
-	Pass[] passes2a;
-	Pass[] passes2b;
-	/**
-	 * @}
-	 */
-
-	/**
-	 * Phase 3 fields.
-	 * @{
-	 */
-	Pass[] passes3a;
-	Pass[] passes3b;
+	Pass[] passes2;
+	Pass[] passes3;
 	/**
 	 * @}
 	 */
@@ -84,14 +66,14 @@ public:
 		postParse ~= new AttribRemoval(this);
 		postParse ~= new Gatherer(this);
 
-		passes2b ~= new ExpTyper(this);
-		passes2b ~= new IrVerifier();
+		passes2 ~= new ExpTyper(this);
+		passes2 ~= new IrVerifier();
 
-		passes3b ~= new LlvmLowerer(this);
-		passes3b ~= new NewReplacer(this);
-		passes3b ~= new TypeidReplacer(this);
-		passes3b ~= new MangleWriter(this);
-		passes3b ~= new IrVerifier();
+		passes3 ~= new LlvmLowerer(this);
+		passes3 ~= new NewReplacer(this);
+		passes3 ~= new TypeidReplacer(this);
+		passes3 ~= new MangleWriter(this);
+		passes3 ~= new IrVerifier();
 	}
 
 	override ir.Module getModule(ir.QualifiedName name)
@@ -177,13 +159,7 @@ public:
 	override void phase2(ir.Module[] mods)
 	{
 		foreach(m; mods) {
-			foreach(pass; passes2a) {
-				pass.transform(m);
-			}
-		}
-
-		foreach(m; mods) {
-			foreach(pass; passes2b) {
+			foreach(pass; passes2) {
 				pass.transform(m);
 			}
 		}
@@ -192,13 +168,7 @@ public:
 	override void phase3(ir.Module[] mods)
 	{
 		foreach(m; mods) {
-			foreach(pass; passes3a) {
-				pass.transform(m);
-			}
-		}
-
-		foreach(m; mods) {
-			foreach(pass; passes3b) {
+			foreach(pass; passes3) {
 				pass.transform(m);
 			}
 		}
@@ -206,7 +176,11 @@ public:
 
 	override void close()
 	{
-		foreach(pass; passes2b)
+		foreach(pass; postParse)
+			pass.close();
+		foreach(pass; passes2)
+			pass.close();
+		foreach(pass; passes3)
 			pass.close();
 	}
 }
