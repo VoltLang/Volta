@@ -5,6 +5,7 @@ module volt.llvm.state;
 import lib.llvm.core;
 
 import volt.exceptions;
+import volt.interfaces;
 import volt.llvm.interfaces;
 
 
@@ -41,8 +42,14 @@ protected:
 	 */
 	Type[string] typeStore;
 
+	/**
+	 * The settings that the module was compiled with.
+	 * Needed for target/platform info and size_t.
+	 */
+	Settings mSettings;
+
 public:
-	this(ir.Module irMod, bool V_P64)
+	this(ir.Module irMod, Settings settings)
 	{
 		assert(irMod.name.identifiers.length > 0);
 		string name = irMod.name.toString();
@@ -51,8 +58,10 @@ public:
 		this.context = LLVMContextCreate();
 		this.mod = LLVMModuleCreateWithNameInContext(name, context);
 		this.builder = LLVMCreateBuilderInContext(context);
+		this.mSettings = settings;
 
-		buildCommonTypes(this, V_P64);
+		setTargetAndLayout();
+		buildCommonTypes(this, mSettings.isVersionSet("V_P64"));
 
 		this.llvmTrap = LLVMAddFunction(mod, "llvm.trap", voidFunctionType.llvmCallType);
 	}
@@ -226,4 +235,47 @@ public:
 			return *ret;
 		return null;
 	}
+
+protected:
+	void setTargetAndLayout()
+	{
+		final switch (mSettings.platform) with (Platform) {
+		case Linux:
+			LLVMSetTarget(mod, targetLinuxList[mSettings.arch]);
+			LLVMSetDataLayout(mod, layoutList[mSettings.arch]);
+			break;
+		case MinGW:
+			LLVMSetTarget(mod, targetMinGWList[mSettings.arch]);
+			LLVMSetDataLayout(mod, layoutList[mSettings.arch]);
+			break;
+		case OSX:
+			assert(false);
+		}
+	}
 }
+
+/**
+ * The subsystem will controll if llc emits coff or ELF object files.
+ *
+ * - i686-mingw32 emits ELF object files.
+ * - i686-pc-mingw32 emits COFF object files.
+ * - i686-w64-mingw32 emits COFF object files.
+ */
+string[] targetMinGWList = [
+	"i686-pc-mingw32",
+	"x86_64-w64-mingw32",
+];
+
+/**
+ * This is what clang uses for linux.
+ */
+string[] targetLinuxList = [
+	"i386-unknown-linux-gnu",
+	"x86_64-unknown-linux-gnu",
+];
+
+// Shared between platforms.
+string[] layoutList = [
+	"e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:32:32-n8:16:32-S128",
+	"e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128",
+];

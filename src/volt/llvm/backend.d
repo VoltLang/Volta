@@ -70,7 +70,7 @@ public:
 		scope(exit)
 			mFilename = null;
 
-		auto state = new VoltState(m, mSettings.isVersionSet("V_P64"));
+		auto state = new VoltState(m, mSettings);
 		auto visitor = new LlvmVisitor(state);
 		auto mod = state.mod;
 

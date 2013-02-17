@@ -14,6 +14,8 @@ public import lib.llvm.c.Core;
 
 
 // Need to do this for all overloaded functions.
+alias lib.llvm.c.Core.LLVMSetTarget LLVMSetTarget;
+alias lib.llvm.c.Core.LLVMSetDataLayout LLVMSetDataLayout;
 alias lib.llvm.c.Core.LLVMModuleCreateWithNameInContext LLVMModuleCreateWithNameInContext;
 alias lib.llvm.c.Core.LLVMFunctionType LLVMFunctionType;
 alias lib.llvm.c.Core.LLVMStructCreateNamed LLVMStructCreateNamed;
@@ -29,6 +31,20 @@ alias lib.llvm.c.Core.LLVMBuildAlloca LLVMBuildAlloca;
 alias lib.llvm.c.Core.LLVMAddGlobal LLVMAddGlobal;
 alias lib.llvm.c.Core.LLVMBuildGEP LLVMBuildGEP;
 alias lib.llvm.c.Core.LLVMBuildInBoundsGEP LLVMBuildInBoundsGEP;
+
+void LLVMSetTarget(LLVMModuleRef mod, string str)
+{
+	char[1024] stack;
+	auto ptr = nullTerminate(stack, str);
+	lib.llvm.c.Core.LLVMSetTarget(mod, ptr);
+}
+
+void LLVMSetDataLayout(LLVMModuleRef mod, string str)
+{
+	char[1024] stack;
+	auto ptr = nullTerminate(stack, str);
+	lib.llvm.c.Core.LLVMSetDataLayout(mod, ptr);
+}
 
 LLVMModuleRef LLVMModuleCreateWithNameInContext(string name, LLVMContextRef c)
 {
