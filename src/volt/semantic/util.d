@@ -84,7 +84,7 @@ ir.Type handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
 
 ir.Variable getThisVar(Location location, LanguagePass lp, ir.Scope _scope)
 {
-	auto thisStore = lookupOnlyThisScope(location, lp, _scope, "this");
+	auto thisStore = lookupOnlyThisScope(lp, _scope, location, "this");
 	if (thisStore is null) {
 		throw CompilerPanic(location, "need valid this for super.");
 	}

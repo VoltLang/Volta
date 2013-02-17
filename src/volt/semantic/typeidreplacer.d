@@ -38,7 +38,7 @@ public:
 	override void transform(ir.Module m)
 	{
 		thisModule = m;
-		typeinfo = retrieveTypeInfo(m.location, lp, m.myScope);
+		typeinfo = retrieveTypeInfo(lp, m.myScope, m.location);
 		assert(typeinfo !is null);
 		accept(m, this);
 	}
@@ -53,7 +53,7 @@ public:
 
 		_typeid.type.mangledName = mangle(null, _typeid.type);
 		string name = "_V__TypeInfo_" ~ _typeid.type.mangledName;
-		auto typeidStore = lookupOnlyThisScope(exp.location, lp, thisModule.myScope, name);
+		auto typeidStore = lookupOnlyThisScope(lp, thisModule.myScope, exp.location, name);
 		if (typeidStore !is null) {
 			auto asVar = cast(ir.Variable) typeidStore.node;
 			exp = buildExpReference(exp.location, asVar, asVar.name);

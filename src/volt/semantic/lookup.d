@@ -20,7 +20,7 @@ import volt.semantic.classresolver : fillInParentIfNeeded;
  * Doesn't check parent scopes, parent classes, imports, or anywhere else but the
  * given scope.
  */
-ir.Store lookupOnlyThisScope(Location loc, LanguagePass lp, ir.Scope _scope, string name)
+ir.Store lookupOnlyThisScope(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 {
 	auto store = _scope.getStore(name);
 	if (store !is null) {
@@ -38,11 +38,11 @@ ir.Store lookupOnlyThisScope(Location loc, LanguagePass lp, ir.Scope _scope, str
  *
  * @todo actually lookup imports.
  */
-ir.Store lookupAsThisScope(Location loc, LanguagePass lp, ir.Scope _scope, string name)
+ir.Store lookupAsThisScope(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 {
 	ir.Class _class;
 	do {
-		auto ret = lookupOnlyThisScope(loc, lp, _scope, name);
+		auto ret = lookupOnlyThisScope(lp, _scope, loc, name);
 		if (ret !is null)
 			return ensureResolved(lp, ret);
 	} while (getClassParentsScope(lp, _scope, _scope, _class));
@@ -55,9 +55,9 @@ ir.Store lookupAsThisScope(Location loc, LanguagePass lp, ir.Scope _scope, strin
  * Used for rebinding imports.
  * Returns the store or null if no match was found.
  */
-ir.Store lookupAsImportScope(Location loc, LanguagePass lp, ir.Scope _scope, string name)
+ir.Store lookupAsImportScope(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 {
-	auto store = lookupOnlyThisScope(loc, lp, _scope, name);
+	auto store = lookupOnlyThisScope(lp, _scope, loc, name);
 	if (store !is null) {
 		return ensureResolved(lp, store);
 	}
@@ -86,6 +86,7 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
 
 	foreach (i, id; qn.identifiers) {
 		ir.Store store;
+		string name = id.value;
 		Location loc = id.location;
 
 		/**
@@ -93,9 +94,9 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
 		 * in only that context. Leading dot taken care of above.
 		 */
 		if (i == 0) {
-			store = lookup(loc, lp, current, id.value);
+			store = lookup(lp, current, loc, name);
 		} else {
-			store = lookupAsThisScope(loc, lp, current, id.value);
+			store = lookupAsThisScope(lp, current, loc, name);
 		}
 
 		// Need to resolve any aliases.
@@ -105,7 +106,7 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
 			return store;
 		} else {
 			// Use improve error reporting by giving the scope.
-			current = ensureScope(loc, i == 0 ? null : current, id.value, store);
+			current = ensureScope(i == 0 ? null : current, loc, name, store);
 		}
 	}
 	assert(false);
@@ -115,11 +116,11 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
  * Look up an identifier in a scope and its parent scopes.
  * Returns the store or null if no match was found.
  */
-ir.Store lookup(Location loc, LanguagePass lp, ir.Scope _scope, string name)
+ir.Store lookup(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 {
 	ir.Scope current = _scope, previous = _scope;
 	while (current !is null) {
-		auto store = lookupAsThisScope(loc, lp, current, name);
+		auto store = lookupAsThisScope(lp, current, loc, name);
 		if (store !is null) {
 			return store;
 		}
@@ -163,7 +164,7 @@ ir.Type lookupType(LanguagePass lp, ir.Scope _scope, ir.QualifiedName id)
 
 	auto loc = id.identifiers[$-1].location;
 	auto name = id.identifiers[$-1].value;
-	return ensureType(loc, _scope, name, store);
+	return ensureType(_scope, loc, name, store);
 }
 
 /**
@@ -171,13 +172,13 @@ ir.Type lookupType(LanguagePass lp, ir.Scope _scope, ir.QualifiedName id)
  * Throws: CompilerPanic on failure.
  * Returns: Always a valid value.
  */
-ir.Store retrieveStoreFromObject(Location loc, LanguagePass lp, ir.Scope _scope, string name)
+ir.Store retrieveStoreFromObject(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 {
-	auto objectStore = lookup(loc, lp, _scope, "object");
+	auto objectStore = lookup(lp, _scope, loc, "object");
 	if (objectStore is null || objectStore.s is null) {
 		throw CompilerPanic(loc, "couldn't access object module.");
 	}
-	auto store = lookup(loc, lp, objectStore.s, name);
+	auto store = lookup(lp, objectStore.s, loc, name);
 	if (store is null || store.node is null) {
 		throw CompilerPanic(loc, "couldn't locate object." ~ name);
 	}
@@ -188,9 +189,9 @@ ir.Store retrieveStoreFromObject(Location loc, LanguagePass lp, ir.Scope _scope,
  * Look up object.TypeInfo.
  * Throws: CompilerPanic on failure.
  */
-ir.Class retrieveTypeInfo(Location loc, LanguagePass lp, ir.Scope _scope)
+ir.Class retrieveTypeInfo(LanguagePass lp, ir.Scope _scope, Location loc)
 {
-	auto tinfoStore = retrieveStoreFromObject(loc, lp, _scope, "TypeInfo");
+	auto tinfoStore = retrieveStoreFromObject(lp, _scope, loc, "TypeInfo");
 	auto tinfo = cast(ir.Class) tinfoStore.node;
 	if (tinfo is null) {
 		throw CompilerPanic(loc, "tinfo is wrong type.");
@@ -202,9 +203,9 @@ ir.Class retrieveTypeInfo(Location loc, LanguagePass lp, ir.Scope _scope)
  * Look up object.Object.
  * Throws: CompilerPanic on failure.
  */
-ir.Class retrieveObject(Location loc, LanguagePass lp, ir.Scope _scope)
+ir.Class retrieveObject(LanguagePass lp, ir.Scope _scope, Location loc)
 {
-	auto objStore = retrieveStoreFromObject(loc, lp, _scope, "Object");
+	auto objStore = retrieveStoreFromObject(lp, _scope, loc, "Object");
 	auto obj = cast(ir.Class) objStore.node;
 	if (obj is null) {
 		throw CompilerPanic(loc, "obj is wrong type.");
@@ -216,10 +217,10 @@ ir.Class retrieveObject(Location loc, LanguagePass lp, ir.Scope _scope)
  * Look up object.AllocDg.
  * Throws: CompilerPanic on failure.
  */
-ir.Variable retrieveAllocDg(Location loc, LanguagePass lp, ir.Scope _scope)
+ir.Variable retrieveAllocDg(LanguagePass lp, ir.Scope _scope, Location loc)
 {
 
-	auto allocDgStore = retrieveStoreFromObject(loc, lp, _scope, "allocDg");
+	auto allocDgStore = retrieveStoreFromObject(lp, _scope, loc, "allocDg");
 	auto asVar = cast(ir.Variable) allocDgStore.node;
 	if (asVar is null) {
 		throw CompilerPanic(loc, "allocDg is wrong type.");
@@ -231,9 +232,9 @@ ir.Variable retrieveAllocDg(Location loc, LanguagePass lp, ir.Scope _scope)
  * Look up object.ArrayStruct.
  * Throws: CompilerPanic on failure.
  */
-ir.Struct retrieveArrayStruct(Location loc, LanguagePass lp, ir.Scope _scope)
+ir.Struct retrieveArrayStruct(LanguagePass lp, ir.Scope _scope, Location loc)
 {
-	auto arrayStore = retrieveStoreFromObject(loc, lp, _scope, "ArrayStruct");
+	auto arrayStore = retrieveStoreFromObject(lp, _scope, loc, "ArrayStruct");
 	auto asStruct = cast(ir.Struct) arrayStore.node;
 	if (asStruct is null) {
 		throw CompilerPanic(asStruct.location, "object.ArrayStruct is wrong type.");
@@ -369,7 +370,7 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
  * @return                The type pointed to by the store.
  * @throws CompilerError  Raises error should this not be the case.
  */
-ir.Type ensureType(Location loc, ir.Scope _scope, string name, ir.Store store)
+ir.Type ensureType(ir.Scope _scope, Location loc, string name, ir.Store store)
 {
 	if (store is null) {
 		if (_scope is null) {
@@ -394,7 +395,7 @@ ir.Type ensureType(Location loc, ir.Scope _scope, string name, ir.Store store)
  * @return                The scope of store type or the scope itself.
  * @throws CompilerError  Raises error should this not be the case.
  */
-ir.Scope ensureScope(Location loc, ir.Scope _scope, string name, ir.Store store)
+ir.Scope ensureScope(ir.Scope _scope, Location loc, string name, ir.Store store)
 {
 	if (store is null) {
 		if (_scope is null) {

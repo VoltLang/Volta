@@ -18,7 +18,7 @@ import volt.semantic.lookup;
 /// Look up a Variable and return its type.
 ir.Type declTypeLookup(Location loc, LanguagePass lp, ir.Scope _scope, string name)
 {
-	auto store = lookup(loc, lp, _scope, name);
+	auto store = lookup(lp, _scope, loc, name);
 	if (store is null) {
 		throw new CompilerError(loc, format("undefined identifier '%s'.", name));
 	}
@@ -203,7 +203,7 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 
 ir.Type getTypeidType(LanguagePass lp, ir.Typeid _typeid, ir.Scope currentScope)
 {
-	return retrieveTypeInfo(_typeid.location, lp, currentScope);
+	return retrieveTypeInfo(lp, currentScope, _typeid.location);
 }
 
 ir.Type getConstantType(LanguagePass lp, ir.Constant constant)
@@ -369,7 +369,7 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 	 */
 	auto asIdentifierExp = cast(ir.IdentifierExp) postfix.child;
 	if (asIdentifierExp !is null) {
-		auto store = lookup(asIdentifierExp.location, lp, currentScope, asIdentifierExp.value);
+		auto store = lookup(lp, currentScope, asIdentifierExp.location, asIdentifierExp.value);
 		if (store !is null && store.s !is null) {
 			_scope = store.s;
 			emsg = format("module '%s' did not have member '%s'.", asIdentifierExp.value, postfix.identifier.value);
@@ -392,7 +392,7 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 	retrieveScope(lp, type, postfix, _scope, _class, emsg);
 
 	_lookup:
-	auto store = lookupAsThisScope(postfix.location, lp, _scope, postfix.identifier.value);
+	auto store = lookupAsThisScope(lp, _scope, postfix.location, postfix.identifier.value);
   
 	if (store is null) {
 		throw new CompilerError(postfix.identifier.location, emsg);

@@ -26,12 +26,11 @@ void resolveAlias(LanguagePass lp, ir.Store s)
 	ir.Store ret;
 	if (s.s is s.parent) {
 		// Normal alias.
-		assert(a.id.identifiers.length == 1);
-		ret = lookup(a.location, lp, s.s, a.id.identifiers[0].value);
+		ret = lookup(lp, s.s, a.id);
 	} else {
 		// Import alias.
 		assert(a.id.identifiers.length == 1);
-		ret = lookupAsImportScope(a.location, lp, s.s, a.id.identifiers[0].value);
+		ret = lookupAsImportScope(lp, s.s, a.location, a.id.identifiers[0].value);
 	}
 
 	if (ret is null) {

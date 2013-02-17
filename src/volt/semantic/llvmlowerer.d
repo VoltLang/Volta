@@ -84,7 +84,7 @@ public:
 		auto _class = cast(ir.Class) asTR.type;
 		assert(_class !is null);
 
-		auto vtableStore =  lookupOnlyThisScope(postfix.location, lp, _class.layoutStruct.myScope, "__vtable");
+		auto vtableStore =  lookupOnlyThisScope(lp, _class.layoutStruct.myScope, postfix.location, "__vtable");
 		assert(vtableStore !is null);
 
 		auto vtableVariable = cast(ir.Variable) vtableStore.node;
@@ -253,7 +253,7 @@ public:
 			left = addParamSmart(loc, fn, type, "left");
 		auto right = addParamSmart(loc, fn, type, "right");
 
-		auto fnAlloc = retrieveAllocDg(loc, lp, thisModule.myScope);
+		auto fnAlloc = retrieveAllocDg(lp, thisModule.myScope, loc);
 		auto allocExpRef = buildExpReference(loc, fnAlloc, fnAlloc.name);
 
 		auto fnCopy = getLlvmMemCopy(loc);
@@ -470,7 +470,7 @@ public:
 	ir.Function lookupFunction(Location loc, string name)
 	{
 		// Lookup the copy function for this type of array.
-		auto store = lookupOnlyThisScope(loc, lp, thisModule.myScope, name);
+		auto store = lookupOnlyThisScope(lp, thisModule.myScope, loc, name);
 		if (store !is null && store.kind == ir.Store.Kind.Function) {
 			assert(store.functions.length == 1);
 			return store.functions[0];

@@ -85,7 +85,7 @@ public:
 			auto argsSlice = postfix.arguments[0 .. funcNumArgs];
 			auto varArgsSlice = postfix.arguments[funcNumArgs .. $];
 
-			auto tinfoClass = retrieveTypeInfo(postfix.location, lp, current);
+			auto tinfoClass = retrieveTypeInfo(lp, current, postfix.location);
 			auto tr = buildTypeReference(postfix.location, tinfoClass, tinfoClass.name);
 			tr.location = postfix.location;
 			auto array = new ir.ArrayType();
@@ -939,7 +939,7 @@ public:
 		if (fn.type.hasVarArgs &&
 		    !fn.type.varArgsProcessed &&
 		    fn.type.linkage == ir.Linkage.Volt) {
-			auto tinfoClass = retrieveTypeInfo(fn.location, lp, current);
+			auto tinfoClass = retrieveTypeInfo(lp, current, fn.location);
 			auto tr = buildTypeReference(fn.location, tinfoClass, tinfoClass.name);
 			auto array = buildArrayType(fn.location, tr);
 			addParam(fn.location, fn, array, "_typeids");
@@ -1027,7 +1027,7 @@ public:
 			if (asClass is null) {
 				return Continue;
 			}
-			auto functionStore = lookupOnlyThisScope(bin.location, lp, asClass.myScope, functionName);
+			auto functionStore = lookupOnlyThisScope(lp, asClass.myScope, bin.location, functionName);
 			if (functionStore is null) {
 				return Continue;
 			}
@@ -1164,7 +1164,7 @@ public:
 			/// @todo handle leading dot.
 			assert(!identExp.globalLookup);
 
-			store = lookup(loc, lp, _scope, ident);
+			store = lookup(lp, _scope, loc, ident);
 		}
 
 		// Now do the looping.
@@ -1189,7 +1189,7 @@ public:
 				ident = p.identifier.value;
 				loc = p.identifier.location;
 
-				store = lookupOnlyThisScope(loc, lp, _scope, ident);
+				store = lookupOnlyThisScope(lp, _scope, loc, ident);
 				idents = [ident] ~ idents;
 
 				break;
@@ -1240,7 +1240,7 @@ public:
 
 			/// @todo this is probably an error.
 			auto aggScope = getScopeFromType(asTR.type);
-			store = lookupAsThisScope(p.location, lp, aggScope, p.identifier.value);
+			store = lookupAsThisScope(lp, aggScope, p.location, p.identifier.value);
 			if (store is null) {
 				throw new CompilerError(_ref.location, format("aggregate has no member '%s'.", p.identifier.value));
 			}
@@ -1275,7 +1275,7 @@ public:
 		if (pass == 2) {
 			return Continue;
 		}
-		auto store = lookup(i.location, lp, current, i.value);
+		auto store = lookup(lp, current, i.location, i.value);
 		if (store is null) {
 			throw new CompilerError(i.location, format("unidentified identifier '%s'.", i.value));
 		}
@@ -1321,7 +1321,7 @@ public:
 		propertyToCallIfNeeded(e.location, lp, e, current, postfixStack);
 
 		/// If we can find it locally, don't insert a this, even if it's in a this. (i.e. shadowing).
-		auto sstore = lookupOnlyThisScope(e.location, lp, current, reference.idents[$-1]);
+		auto sstore = lookupOnlyThisScope(lp, current, e.location, reference.idents[$-1]);
 		if (sstore !is null) {
 			return Continue;
 		}
@@ -1335,7 +1335,7 @@ public:
 				return Continue;
 			}
 
-			auto store = lookupAsThisScope(reference.location, lp, _class.myScope, reference.idents[$-1]);
+			auto store = lookupAsThisScope(lp, _class.myScope, reference.location, reference.idents[$-1]);
 			if (store is null) {
 				return Continue;
 			}
@@ -1345,7 +1345,7 @@ public:
 				memberFunction = store.functions[0];
 			}
 
-			store = lookup(reference.location, lp, current, "this");
+			store = lookup(lp, current, reference.location, "this");
 			if (store is null || store.kind != ir.Store.Kind.Value) {
 				throw CompilerPanic("function doesn't have this");
 			}
@@ -1377,12 +1377,12 @@ public:
 		if (pass == 1) {
 			return Continue;
 		}
-		auto varStore = lookupOnlyThisScope(reference.location, lp, current, reference.idents[$-1]);
+		auto varStore = lookupOnlyThisScope(lp, current, reference.location, reference.idents[$-1]);
 		if (varStore !is null) {
 			return Continue;
 		}
 
-		auto thisStore = lookupOnlyThisScope(reference.location, lp, current, "this");
+		auto thisStore = lookupOnlyThisScope(lp, current, reference.location, "this");
 		if (thisStore is null) {
 			return Continue;
 		}
@@ -1393,7 +1393,7 @@ public:
 		assert(asTR !is null);
 
 		auto aggScope = getScopeFromType(asTR.type);
-		varStore = lookupOnlyThisScope(reference.location, lp, aggScope, reference.idents[0]);
+		varStore = lookupOnlyThisScope(lp, aggScope, reference.location, reference.idents[0]);
 		if (varStore is null) {
 			return Continue;
 		}
@@ -1439,7 +1439,7 @@ public:
 			return Continue;
 		}
 
-		auto castToStore = lookupAsThisScope(unary.location, lp, from.myScope, "__castTo");
+		auto castToStore = lookupAsThisScope(lp, from.myScope, unary.location, "__castTo");
 		assert(castToStore.functions.length == 1);
 
 		auto fnref = buildExpReference(unary.location, castToStore.functions[0]);

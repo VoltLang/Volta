@@ -110,7 +110,7 @@ void fillInParentIfNeeded(LanguagePass lp, ir.Class c)
 	/// @todo one interface will be parsed into parent, remove it then do this.
 	if (c.parent is null) {
 		c.parent = buildQualifiedName(c.location, ["object", "Object"]);
-		parent = retrieveObject(c.location, lp, c.myScope.parent);
+		parent = retrieveObject(lp, c.myScope.parent, c.location);
 	} else {
 		// Use surrounding scope, and not this unresolved class.
 		parent = cast(ir.Class) lookupType(lp, c.myScope.parent, c.parent);
@@ -223,7 +223,7 @@ ir.Exp[] getClassMethodAddrOfs(LanguagePass lp, ir.Class _class)
 ir.Struct getClassLayoutStruct(ir.Class _class, LanguagePass lp, ref ir.Struct vtableStruct)
 {
 	auto methodTypes = getClassMethodTypeVariables(lp, _class);
-	auto tinfo = retrieveTypeInfo(_class.location, lp, _class.myScope);
+	auto tinfo = retrieveTypeInfo(lp, _class.myScope, _class.location);
 	auto tinfos = buildVariableSmart(_class.location, buildArrayTypeSmart(_class.location, tinfo), ir.Variable.Storage.Field, "tinfos");
 
 	vtableStruct = buildStruct(_class.location, _class.members, _class.myScope, "__Vtable", tinfos ~ methodTypes);
@@ -265,7 +265,7 @@ ir.Exp[] getTypeInfos(ir.Class[] classes)
 void emitVtableVariable(LanguagePass lp, ir.Class _class)
 {
 	auto addrs = getClassMethodAddrOfs(lp, _class);
-	auto tinfo = retrieveTypeInfo(_class.location, lp, _class.myScope);
+	auto tinfo = retrieveTypeInfo(lp, _class.myScope, _class.location);
 	auto chain = getInheritanceChain(_class);
 	auto tinfos = getTypeInfos(chain);
 	auto tinfosArr = buildArrayLiteralSmart(_class.location, buildArrayTypeSmart(_class.location, tinfo), tinfos);
