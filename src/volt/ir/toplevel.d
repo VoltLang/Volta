@@ -256,6 +256,9 @@ public:
 	/// How a lowered class will look internally.
 	Struct layoutStruct;
 
+	/// Is this the one true 'Object' to rule them all?
+	bool isObject;
+
 public:
 	this() { super(NodeType.Class); }
 }
