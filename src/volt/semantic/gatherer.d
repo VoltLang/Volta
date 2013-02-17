@@ -141,10 +141,21 @@ void addScope(ir.Scope current, ir.Struct s)
 	s.myScope = new ir.Scope(current, s, s.name);
 }
 
-void addScope(ir.Scope current, ir.Class c)
+void addScope(ir.Scope current, ir.Class c, Where where)
 {
 	if (c.name is null) {
 		throw new CompilerError(c.location, "anonymous classes not supported");
+	}
+
+	// Identify if this class is the one true Object.
+	if (where == Where.Module &&
+	    current.name == "object" &&
+	    c.name == "Object") {
+		auto mod = cast(ir.Module) current.node;
+		assert(mod !is null);
+		assert(mod.name.identifiers[$-1].value == "object");
+
+		c.isObject = mod.name.identifiers.length == 1;
 	}
 
 	assert(c.myScope is null);
@@ -286,7 +297,7 @@ public:
 	override Status enter(ir.Class c)
 	{
 		gather(current, c, where);
-		addScope(current, c);
+		addScope(current, c, where);
 		push(c.myScope, c);
 		return Continue;
 	}

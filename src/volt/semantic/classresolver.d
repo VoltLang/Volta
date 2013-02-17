@@ -20,7 +20,7 @@ bool needsResolving(ir.Class c)
 	if (c.layoutStruct is null) {
 		return true;
 	}
-	if (c.parentClass is null && c.parent !is null) {
+	if (!c.isObject && c.parentClass is null) {
 		return true;
 	}
 
@@ -29,7 +29,12 @@ bool needsResolving(ir.Class c)
 
 void resolveClass(LanguagePass lp, ir.Class c)
 {
-	fillInParentIfNeeded(c.location, lp, c, c.myScope);
+	fillInParentIfNeeded(lp, c);
+
+	if (!c.isObject) {
+		lp.resolveClass(c.parentClass);
+	}
+
 	fillInClassLayoutIfNeeded(c, lp);
 }
 
@@ -94,26 +99,27 @@ void fillInClassLayoutIfNeeded(ir.Class c, LanguagePass lp)
 	emitVtableVariable(c, lp);
 }
 
-void fillInParentIfNeeded(Location loc, LanguagePass lp, ir.Class c, ir.Scope _scope)
+void fillInParentIfNeeded(LanguagePass lp, ir.Class c)
 {
-	if (c.parent is null) {
-		/// @todo one interface will be parsed into parent, remove it then do this.
-		auto mod = cast(ir.Module) c.myScope.parent.node;
-		bool inObject = mod !is null && mod.name.identifiers.length == 1 && mod.name.identifiers[0].value == "object";
-		if (c.name != "Object" || !inObject) {
-			c.parent = buildQualifiedName(loc, ["object", "Object"]);
-			c.parentClass = retrieveObject(loc, lp, _scope);
-		}
+	if (c.isObject) {
 		return;
 	}
 
-	auto asClass = cast(ir.Class) lookupType(lp, _scope, c.parent);
-	if (asClass is null) {
-		throw new CompilerError(loc, format("'%s' is not a class.", c.parent.toString));
+	ir.Class parent;
+
+	/// @todo one interface will be parsed into parent, remove it then do this.
+	if (c.parent is null) {
+		c.parent = buildQualifiedName(c.location, ["object", "Object"]);
+		parent = retrieveObject(c.location, lp, c.myScope.parent);
+	} else {
+		// Use surrounding scope, and not this unresolved class.
+		parent = cast(ir.Class) lookupType(lp, c.myScope.parent, c.parent);
+		if (parent is null) {
+			throw new CompilerError(c.parent.location, format("'%s' is not a class.", c.parent.toString));
+		}
 	}
 
-	lp.resolveClass(asClass);
-	c.parentClass = asClass;
+	c.parentClass = parent;
 }
 
 ir.Variable[] getClassFields(ir.Class _class)
