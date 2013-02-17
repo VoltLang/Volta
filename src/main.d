@@ -2,8 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module main;
 
-import std.stdio : File, writefln;
-import std.string : chomp;
+import std.stdio : File, writeln, writefln;
+import std.string : chomp, toLower;
 
 import volt.license;
 import volt.interfaces;
@@ -63,6 +63,35 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 		settings.libraryPaths ~= replaceEscapes(path);
 	}
 
+	void arch(string a) {
+		switch (toLower(a)) {
+		case "x86":
+			settings.arch = Arch.X86;
+			break;
+		case "x86_64":
+			settings.arch = Arch.X86_64;
+			break;
+		default:
+			writefln("unknown arch \"%s\"", a);
+		}
+	}
+
+	void platform(string p) {
+		switch (toLower(p)) {
+		case "mingw":
+			settings.platform = Platform.MinGW;
+			break;
+		case "linux":
+			settings.platform = Platform.Linux;
+			break;
+		case "osx":
+			settings.platform = Platform.OSX;
+			break;
+		default:
+			writefln("unknown platform \"%s\"", p);
+		}
+	}
+
 	void stdFile(string file) {
 		settings.stdFiles ~= replaceEscapes(file);
 	}
@@ -118,6 +147,12 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 			continue;
 		case "-c":
 			settings.noLink = true;
+			continue;
+		case "--arch":
+			argHandler = &arch;
+			continue;
+		case "--platform":
+			argHandler = &platform;
 			continue;
 		case "--emit-bitcode":
 			settings.emitBitCode = true;
@@ -205,10 +240,15 @@ bool printUsage()
 	writefln("\t-w              Enable warnings.");
 	writefln("\t-d              Compile in debug mode.");
 	writefln("\t-c              Compile only, do not link.");
+	writeln();
+	writefln("\t--arch          Select processer architecture: 'x86', 'x86_64'");
+	writefln("\t--platform      Select platform: 'mingw', 'linux', 'osx'");
+	writeln();
 	writefln("\t--emit-bitcode  Emit LLVM bitcode (implies -c).");
 	writefln("\t-S,--no-backend Stop compilation before the backend.");
 	writefln("\t--no-catch      For compiler debugging purposes.");
 	writefln("\t--internal-dbg  Enables internal debug printing.");
+	writeln();
 	writefln("\t--no-stdlib     Don't include any stdlib (from config or arguments)");
 	writefln("\t--stdlib-I      Apply this include before any other -I");
 	writefln("\t                (ignored if --no-stdlib was given)");
