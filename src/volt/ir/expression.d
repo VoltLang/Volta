@@ -468,3 +468,21 @@ public:
 public:
 	this() { super(NodeType.ClassLiteral); }
 }
+
+class TraitsExp : Exp
+{
+public:
+	enum Type
+	{
+		GetAttribute,
+	}
+
+public:
+	Type type;
+
+	QualifiedName target;
+	QualifiedName qname;
+
+public:
+	this() { super(NodeType.TraitsExp); }
+}

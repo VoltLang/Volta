@@ -312,6 +312,7 @@ public:
 
 	override Status visit(ir.ExpReference n) { visitRef(n, n.decl); return Continue; }
 	override Status visit(ir.Constant n) { visitNode(n); return Continue; }
+	override Status visit(ir.TraitsExp n) { visitNode(n); return Continue; }
 
 	override Status debugVisitNode(ir.Node n) { return Continue; }
 

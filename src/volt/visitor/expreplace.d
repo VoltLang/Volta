@@ -42,6 +42,7 @@ public abstract:
 	Visitor.Status visit(ref ir.Exp, ir.Constant);
 	Visitor.Status visit(ref ir.Exp, ir.IdentifierExp);
 	Visitor.Status visit(ref ir.Exp, ir.ExpReference);
+	Visitor.Status visit(ref ir.Exp, ir.TraitsExp);
 }
 
 /**
@@ -187,6 +188,7 @@ public:
 	override Visitor.Status visit(ref ir.Exp, ir.Constant) { return Continue; }
 	override Visitor.Status visit(ref ir.Exp, ir.IdentifierExp) { return Continue; }
 	override Visitor.Status visit(ref ir.Exp, ir.ExpReference) { return Continue; }
+	override Visitor.Status visit(ref ir.Exp, ir.TraitsExp) { return Continue; }
 }
 
 /**
@@ -327,6 +329,10 @@ Visitor.Status acceptExp(ref ir.Exp exp, ExpReplaceVisitor av)
 		auto asClassLiteral = cast(ir.ClassLiteral) exp;
 		assert(asClassLiteral !is null);
 		return acceptClassLiteral(exp, asClassLiteral, av);
+	case TraitsExp:
+		auto asTraitsExp = cast(ir.TraitsExp) exp;
+		assert(asTraitsExp !is null);
+		return acceptTraitsExp(exp, asTraitsExp, av);
 	default:
 		throw CompilerPanic(exp.location, format("unhandled accept node: %s.", to!string(exp.nodeType)));
 	}
@@ -663,6 +669,11 @@ Visitor.Status acceptClassLiteral(ref ir.Exp exp, ir.ClassLiteral cliteral, ExpR
 	}
 
 	return av.leave(exp, cliteral);
+}
+
+Visitor.Status acceptTraitsExp(ref ir.Exp exp, ir.TraitsExp texp, ExpReplaceVisitor av)
+{
+	return av.visit(exp, texp);
 }
 
 Visitor.Status acceptExpReference(ref ir.Exp exp, ir.ExpReference expref, ExpReplaceVisitor av)

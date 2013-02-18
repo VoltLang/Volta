@@ -175,6 +175,7 @@ public abstract:
 	Status visit(ir.ExpReference);
 	Status visit(ir.Constant);
 	Status visit(ir.IdentifierExp);
+	Status visit(ir.TraitsExp);
 
 	Status debugVisitNode(ir.Node n);
 }
@@ -333,6 +334,7 @@ override:
 	Status visit(ir.ExpReference){ return Continue; }
 	Status visit(ir.Constant){ return Continue; }
 	Status visit(ir.IdentifierExp){ return Continue; }
+	Status visit(ir.TraitsExp){ return Continue; }
 
 	Status debugVisitNode(ir.Node) { return Continue; }
 }
@@ -476,6 +478,10 @@ Visitor.Status accept(ir.Node n, Visitor av)
 		auto asClassLiteral = cast(ir.ClassLiteral) n;
 		assert(asClassLiteral !is null);
 		return acceptClassLiteral(asClassLiteral, av);
+	case ir.NodeType.TraitsExp:
+		auto traits = cast(ir.TraitsExp) n;
+		assert(traits !is null);
+		return av.visit(traits);
 
 	/*
 	 * Statements.

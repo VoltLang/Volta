@@ -117,6 +117,7 @@ enum NodeType
 	ExpReference,
 	StructLiteral,
 	ClassLiteral,
+	TraitsExp,
 }
 
 /**
@@ -354,5 +355,6 @@ string nodeToString(NodeType nodeType)
 	case ExpReference: return "ExpReference";
 	case StructLiteral: return "StructLiteral";
 	case ClassLiteral: return "ClassLiteral";
+	case TraitsExp: return "TraitsExp";
 	}
 }

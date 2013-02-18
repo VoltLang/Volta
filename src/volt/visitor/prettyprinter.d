@@ -1836,6 +1836,17 @@ public:
 		return Continue; 
 	}
 
+	override Status visit(ir.TraitsExp texp)
+	{
+		assert(texp.type == ir.TraitsExp.Type.GetAttribute);
+		wf("__traits(getAttribute, ");
+		accept(texp.target, this);
+		wf(", ");
+		accept(texp.qname, this);
+		wf(")");
+		return Continue;
+	}
+
 	/*
 	 *
 	 * Base stuff.

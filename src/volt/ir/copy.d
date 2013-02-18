@@ -149,6 +149,7 @@ ir.Node copyNode(ir.Node n)
 	case StringImport:
 	case Typeid:
 	case IsExp:
+	case TraitsExp:
 	case FunctionLiteral:
 	case ExpReference:
 	case StructLiteral:
