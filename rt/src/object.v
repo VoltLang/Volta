@@ -62,6 +62,14 @@ class TypeInfo
 	void* classVtable;
 }
 
+class Attribute
+{
+	this()
+	{
+		return;
+	}
+}
+
 class Object
 {
 	this()
