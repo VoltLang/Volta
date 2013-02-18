@@ -562,6 +562,11 @@ Type fromIr(State state, ir.Type irType)
 		auto pointer = buildPtrSmart(_class.location, _class.layoutStruct);
 		addMangledName(pointer);
 		return fromIr(state, pointer);
+	case UserAttribute:
+		auto attr = cast(ir.UserAttribute)irType;
+		assert(attr !is null);
+		irType = attr.layoutClass;
+		goto case Class;
 	default:
 		auto emsg = format("Can't translate type %s (%s)", irType.nodeType, irType.mangledName);
 		throw CompilerPanic(irType.location, emsg);

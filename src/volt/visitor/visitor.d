@@ -56,6 +56,8 @@ public abstract:
 	Status leave(ir.MixinFunction mf);
 	Status enter(ir.MixinTemplate mt);
 	Status leave(ir.MixinTemplate mt);
+	Status enter(ir.UserAttribute ui);
+	Status leave(ir.UserAttribute ui);
 
 	Status visit(ir.EmptyTopLevel empty);
 	Status visit(ir.QualifiedName qname);
@@ -210,6 +212,8 @@ override:
 	Status leave(ir.Condition c){ return Continue; }
 	Status enter(ir.ConditionTopLevel ctl){ return Continue; }
 	Status leave(ir.ConditionTopLevel ctl){ return Continue; }
+	Status enter(ir.UserAttribute ui){ return Continue; }
+	Status leave(ir.UserAttribute ui){ return Continue; }
 	Status visit(ir.EmptyTopLevel empty){ return Continue; }
 	Status enter(ir.MixinFunction mf){ return Continue; }
 	Status leave(ir.MixinFunction mf){ return Continue; }
@@ -410,6 +414,10 @@ Visitor.Status accept(ir.Node n, Visitor av)
 		auto asCtl = cast(ir.ConditionTopLevel) n;
 		assert(asCtl !is null);
 		return acceptConditionTopLevel(asCtl, av);
+	case ir.NodeType.UserAttribute:
+		auto asUi = cast(ir.UserAttribute) n;
+		assert(asUi !is null);
+		return acceptUserAttribute(asUi, av);
 	case ir.NodeType.Condition:
 		auto asCondition = cast(ir.Condition) n;
 		assert(asCondition !is null);
@@ -794,6 +802,32 @@ Visitor.Status acceptMixinTemplate(ir.MixinTemplate mt, Visitor av)
 	// Raw members not visited.
 
 	return av.leave(mt);
+}
+
+Visitor.Status acceptUserAttribute(ir.UserAttribute ui, Visitor av)
+{
+	auto status = av.enter(ui);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	foreach (field; ui.fields) {
+		status = accept(field, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		} else if (status == VisitorContinue) {
+			continue;
+		}
+	}
+
+	if (ui.layoutClass !is null) {
+		status = accept(ui.layoutClass, av);
+		if (status != VisitorContinue) {
+			return parentContinue(status);
+		}
+	}
+
+	return av.leave(ui);
 }
 
 /*

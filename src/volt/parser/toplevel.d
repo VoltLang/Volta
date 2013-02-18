@@ -529,26 +529,33 @@ ir.Attribute parseAttribute(TokenStream ts, bool inModule = false)
 		match(ts, TokenType.CloseParen);
 		break;
 	case TokenType.At:
-		auto nameTok = match(ts, TokenType.Identifier);
-		switch (nameTok.value) {
+		if (ts.peek.type != TokenType.Identifier) {
+			throw new CompilerError(ts.peek.location, "expected identifier.");
+		}
+		switch (ts.peek.value) {
 		case "disable":
+			auto nameTok = match(ts, TokenType.Identifier);
 			attr.kind = ir.Attribute.Kind.Disable;
 			break;
 		case "property":
+			auto nameTok = match(ts, TokenType.Identifier);
 			attr.kind = ir.Attribute.Kind.Property;
 			break;
 		case "trusted":
+			auto nameTok = match(ts, TokenType.Identifier);
 			attr.kind = ir.Attribute.Kind.Trusted;
 			break;
 		case "system":
+			auto nameTok = match(ts, TokenType.Identifier);
 			attr.kind = ir.Attribute.Kind.System;
 			break;
 		case "safe":
+			auto nameTok = match(ts, TokenType.Identifier);
 			attr.kind = ir.Attribute.Kind.Safe;
 			break;
 		default:
 			attr.kind = ir.Attribute.Kind.UserAttribute;
-			attr.userAttributeName = nameTok.value;
+			attr.userAttributeName = parseQualifiedName(ts);
 			if (matchIf(ts, TokenType.OpenParen)) {
 				while (ts.peek.type != TokenType.CloseParen) {
 					attr.arguments ~= parseExp(ts);

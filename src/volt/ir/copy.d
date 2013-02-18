@@ -94,6 +94,7 @@ ir.Node copyNode(ir.Node n)
 	case StaticAssert:
 	case MixinTemplate:
 	case MixinFunction:
+	case UserAttribute:
 	case EmptyTopLevel:
 	case Condition:
 	case ConditionTopLevel:

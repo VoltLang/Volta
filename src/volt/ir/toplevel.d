@@ -222,8 +222,9 @@ public:
 
 	TopLevelBlock members;
 
-	string userAttributeName;  ///< Optional.
+	QualifiedName userAttributeName;  ///< Optional.
 	Exp[] arguments;  ///< If kind == UserAttribute.
+	UserAttribute userAttribute;  ///< Filled in by the exptyper.
 
 	/// Only if type == Align.
 	int alignAmount;
@@ -490,4 +491,35 @@ public:
 
 public:
 	this() { super(NodeType.MixinTemplate); }
+}
+
+/**
+ * The building block of user defined attributes.
+ *
+ * Defined fairly simply:
+ * ---
+ * @interface Name {
+ *     int someVar;
+ *     string someOtherVar;
+ *     bool somethingWithADefault = true;
+ * }
+ * ---
+ *
+ * Only variables can be present. Any assign (or when initializing them
+ * normally, in fact) must be known at compile time.
+ *
+ * @p UserAttributes are mangled as 'U' + name.
+ *
+ * @ingroup irNode irTopLevel
+ */
+class UserAttribute : Type
+{
+public:
+	string name;
+	Variable[] fields;
+	Scope myScope;
+	Class layoutClass;
+
+public:
+	this() { super(NodeType.UserAttribute); }
 }

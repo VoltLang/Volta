@@ -93,6 +93,24 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.UserAttribute ui)
+	{
+		current = ui.myScope;
+		return Continue;
+	}
+
+	override Status leave(ir.UserAttribute ui)
+	{
+		if (current !is ui.myScope) {
+			auto str = "invalid scope layout should be " ~
+			           getNodeAddressString(ui) ~ " is " ~
+			           getNodeAddressString(current.node);
+			throw CompilerPanic(ui.location, str);
+		}
+		current = current.parent;
+		return Continue;
+	}
+
 	override Status enter(ir.Function fn)
 	{
 		current = fn.myScope;

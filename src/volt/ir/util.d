@@ -83,6 +83,10 @@ ir.Scope getScopeFromType(ir.Type type)
 		auto asInterface = cast(ir._Interface) type;
 		assert(asInterface !is null);
 		return asInterface.myScope;
+	case UserAttribute:
+		auto asAttr = cast(ir.UserAttribute) type;
+		assert(asAttr !is null);
+		return asAttr.myScope;
 	default:
 		return null;
 	}
@@ -187,6 +191,7 @@ ir.Type copyTypeSmart(Location loc, ir.Type type)
 	case Interface:
 	case Struct:
 	case Class:
+	case UserAttribute:
 	case Enum:
 		auto s = getScopeFromType(type);
 		/// @todo Get fully qualified name for type.

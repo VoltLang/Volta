@@ -268,6 +268,20 @@ public:
 		current = current.parent;
 		return Continue;
 	}
+
+	override Visitor.Status enter(ir.UserAttribute ua)
+	{
+		current = ua.myScope;
+		return Continue;
+	}
+
+	override Visitor.Status leave(ir.UserAttribute ua)
+	{
+		assert(current == ua.myScope);
+
+		current = current.parent;
+		return Continue;
+	}
 }
 
 Visitor.Status acceptExp(ref ir.Exp exp, ExpReplaceVisitor av)

@@ -1084,6 +1084,22 @@ public:
 	
 	override Status leave(ir.MixinStatement ms) { return Continue; }
 	
+	override Status enter(ir.UserAttribute ui)
+	{
+		twf("@interface ");
+		wf(ui.name);
+		wfln(" {");
+		mIndent++;
+		return Continue;
+	}
+
+	override Status leave(ir.UserAttribute ui)
+	{
+		mIndent--;
+		twfln("}");
+		return Continue;
+	}
+
 	/*
 	 *
 	 * Declarations.
