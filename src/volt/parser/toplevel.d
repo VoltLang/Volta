@@ -101,9 +101,15 @@ body
 			} else {
 				goto case;
 			}
+		case TokenType.At:
+			if (ts.lookahead(1).type == TokenType.Interface) {
+				tlb.nodes ~= [parseUserAttribute(ts)];
+				break;
+			} else {
+				goto case;
+			}
 		case TokenType.Extern:
 		case TokenType.Align:
-		case TokenType.At:
 		case TokenType.Deprecated:
 		case TokenType.Private:
 		case TokenType.Protected:
@@ -696,4 +702,22 @@ ir.ConditionTopLevel parseConditionTopLevel(TokenStream ts, bool inModule = fals
 	}
 
 	return ctl;
+}
+
+ir.UserAttribute parseUserAttribute(TokenStream ts)
+{
+	auto ui = new ir.UserAttribute();
+	ui.location = ts.peek.location;
+
+	match(ts, TokenType.At);
+	match(ts, TokenType.Interface);
+	auto nameTok = match(ts, TokenType.Identifier);
+	ui.name = nameTok.value;
+	match(ts, TokenType.OpenBrace);
+	while (ts.peek.type != TokenType.CloseBrace) {
+		ui.fields ~= parseJustVariable(ts);
+	}
+	match(ts, TokenType.CloseBrace);
+
+	return ui;
 }

@@ -38,6 +38,18 @@ ir.Node[] parseVariable(TokenStream ts)
 	}
 }
 
+ir.Variable[] parseJustVariable(TokenStream ts)
+{
+	ir.Type base = parseType(ts);
+	ir.Node[] nodes = reallyParseVariable(ts, base);
+	auto vars = new ir.Variable[nodes.length];
+	foreach (i, node; nodes) {
+		vars[i] = cast(ir.Variable) node;
+		assert(vars[i] !is null, "reallyParseVariable parsed non variable");
+	}
+	return vars;
+}
+
 ir.Alias parseAlias(TokenStream ts)
 {
 	auto a = new ir.Alias();

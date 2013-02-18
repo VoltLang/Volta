@@ -392,6 +392,9 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		}
 		exp = lit;
 		break;
+	case intir.PrimaryExp.Type.Traits:
+		exp = primary.trait;
+		break;
 	default:
 		throw CompilerPanic(primary.location, "unhandled primary expression.");
 	}
@@ -543,6 +546,31 @@ ir.FunctionLiteral parseFunctionLiteral(TokenStream ts)
 		fn.block = parseBlock(ts);
 		return fn;
 	}
+}
+
+ir.TraitsExp parseTraitsExp(TokenStream ts)
+{
+	auto texp = new ir.TraitsExp();
+	texp.location = ts.peek.location;
+
+	match(ts, TokenType.__Traits);
+	match(ts, TokenType.OpenParen);
+
+	auto nameTok = match(ts, TokenType.Identifier);
+	switch (nameTok.value) {
+	case "getAttribute":
+		texp.type = ir.TraitsExp.Type.GetAttribute;
+		match(ts, TokenType.Comma);
+		texp.target = parseQualifiedName(ts);
+		match(ts, TokenType.Comma);
+		texp.qname = parseQualifiedName(ts);
+		break;
+	default:
+		throw new CompilerError(nameTok.location, "unknown __traits identifier.");
+	}
+
+	match(ts, TokenType.CloseParen);
+	return texp;
 }
 
 /*** ugly intir stuff ***/
@@ -983,6 +1011,10 @@ intir.PrimaryExp parsePrimaryExp(TokenStream ts)
 	case TokenType.Function, TokenType.Delegate:
 		exp.op = intir.PrimaryExp.Type.FunctionLiteral;
 		exp.functionLiteral = parseFunctionLiteral(ts);
+		break;
+	case TokenType.__Traits:
+		exp.op = intir.PrimaryExp.Type.Traits;
+		exp.trait = parseTraitsExp(ts);
 		break;
 	default:
 		auto mark = ts.save();

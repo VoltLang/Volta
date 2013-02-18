@@ -150,9 +150,9 @@ public:
 		FunctionLiteral,
 		Assert,          // arguments (length == 1 or 2)
 		Import,
-		TypeLookup,  // Type.Identifier
+		TypeLookup,      // Type.Identifier
 		Typeof,
-		Typeid,  // If exp !is null, exp. Otherwise type.
+		Typeid,          // If exp !is null, exp. Otherwise type.
 		Is,
 		ParenExp,        // tlargs
 		Traits,
@@ -169,4 +169,5 @@ public:
 	TernaryExp[] tlargs;   // Optional.
 	IsExp isExp;  // Optional.
 	FunctionLiteral functionLiteral;  // Optional.
+	TraitsExp trait;  // If op == Traits.
 }
