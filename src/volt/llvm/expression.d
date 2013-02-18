@@ -240,43 +240,71 @@ void handleCompare(State state, ir.BinOp bin, Value result)
 	}
 
 	LLVMIntPredicate pr;
+	LLVMRealPredicate fpr;
 	switch(bin.op) with (ir.BinOp.Type) {
 	case Equal:
-		pr = LLVMIntPredicate.EQ;
+		if (pt.floating) {
+			fpr = LLVMRealPredicate.OEQ;
+		} else {
+			pr = LLVMIntPredicate.EQ;
+		}
 		break;
 	case NotEqual:
-		pr = LLVMIntPredicate.NE;
+		if (pt.floating) {
+			fpr = LLVMRealPredicate.ONE;
+		} else {
+			pr = LLVMIntPredicate.NE;
+		}
 		break;
 	case Less:
-		if (pt.signed)
+		if (pt.floating) {
+			fpr = LLVMRealPredicate.OLT;
+		} else if (pt.signed) {
 			pr = LLVMIntPredicate.SLT;
-		else
+		} else {
 			pr = LLVMIntPredicate.ULT;
+		}
 		break;
 	case LessEqual:
-		if (pt.signed)
+		if (pt.floating) {
+			fpr = LLVMRealPredicate.OLE;
+		} else if (pt.signed) {
 			pr = LLVMIntPredicate.SLE;
-		else
+		} else {
 			pr = LLVMIntPredicate.ULE;
+		}
 		break;
 	case GreaterEqual:
-		if (pt.signed)
+		if (pt.floating) {
+			fpr = LLVMRealPredicate.OGE;
+		} else if (pt.signed) {
 			pr = LLVMIntPredicate.SGE;
-		else
+		} else {
 			pr = LLVMIntPredicate.UGE;
+		}
 		break;
 	case Greater:
-		if (pt.signed)
+		if (pt.floating) {
+			fpr = LLVMRealPredicate.OGT;
+		} else if (pt.signed) {
 			pr = LLVMIntPredicate.SGT;
-		else
+		} else {
 			pr = LLVMIntPredicate.UGT;
+		}
 		break;
 	default:
 		throw CompilerPanic(bin.location, "error");
 	}
 
+	LLVMValueRef v;
+	if (pt.floating) {
+		v = LLVMBuildFCmp(state.builder, fpr, left.value, right.value, "fcmp");
+	} else {
+		v = LLVMBuildICmp(state.builder, pr, left.value, right.value, "icmp");
+	}
+
 	result.type = state.boolType;
-	result.value = LLVMBuildICmp(state.builder, pr, left.value, right.value, "icmp");
+	result.value = v;
 }
 
 void handleBinOpAssign(State state, ir.BinOp bin, Value result)
