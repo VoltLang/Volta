@@ -30,6 +30,7 @@ import volt.semantic.llvmlowerer;
 
 import volt.semantic.classresolver;
 import volt.semantic.aliasresolver;
+import volt.semantic.userattrresolver;
 
 
 /**
@@ -117,6 +118,8 @@ public:
 		scope (exit)
 			w.done();
 
+		resolve(current, v.userAttrs);
+
 		auto e = new ExTyper(this);
 		e.transform(current, v);
 
@@ -125,8 +128,11 @@ public:
 
 	override void resolve(ir.Function fn)
 	{
-		ensureResolved(this, fn.myScope.parent, fn.type);
+		auto _scope = fn.myScope.parent;
+
+		ensureResolved(this, _scope, fn.type);
 		replaceVarArgsIfNeeded(this, fn);
+		resolve(_scope, fn.userAttrs);
 	}
 
 	override void resolve(ir.Store s)
@@ -138,14 +144,30 @@ public:
 		resolveAlias(this, s);
 	}
 
-	override void resolve(ir.Struct c)
+	override void resolve(ir.Struct s)
 	{
-		// Nothing to do here.
+		resolve(s.myScope.parent, s.userAttrs);
 	}
 
 	override void resolve(ir.Class c)
 	{
+		resolve(c.myScope.parent, c.userAttrs);
 		fillInParentIfNeeded(this, c);
+	}
+
+	override void resolve(ir.Scope current, ir.Attribute a)
+	{
+		if (!needsResolving(a)) {
+			return;
+		}
+
+		auto e = new ExTyper(this);
+		e.transform(current, a);
+	}
+
+	override void resolve(ir.UserAttribute ua)
+	{
+		// Nothing to do here.
 	}
 
 	override void actualize(ir.Struct c)
@@ -163,6 +185,18 @@ public:
 			w.done();
 
 		resolveClass(this, c);
+	}
+
+	override void actualize(ir.UserAttribute ua)
+	{
+		if (!needsActualizing(ua))
+			return;
+
+		auto w = mTracker.add(ua, "actualizing user attribute");
+		scope (exit)
+			w.done();
+
+		actualizeUserAttribute(this, ua);
 	}
 
 
@@ -214,5 +248,20 @@ public:
 			pass.close();
 		foreach(pass; passes3)
 			pass.close();
+	}
+
+
+	/*
+	 *
+	 * Random stuff.
+	 *
+	 */
+
+
+	private void resolve(ir.Scope current, ir.Attribute[] userAttrs)
+	{
+		foreach (a; userAttrs) {
+			resolve(current, a);
+		}
 	}
 }

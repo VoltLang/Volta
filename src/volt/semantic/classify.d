@@ -200,6 +200,33 @@ bool isRefVar(ir.Exp exp)
 	return asVar.isRef;
 }
 
+bool acceptableForUserAttribute(LanguagePass lp, ir.Scope current, ir.Type type)
+{
+	ensureResolved(lp, current, type);
+	auto asPrim = cast(ir.PrimitiveType) type;
+	if (asPrim !is null) {
+		return true;
+	}
+
+	auto asStorage = cast(ir.StorageType) type;
+	if (asStorage !is null) {
+		return acceptableForUserAttribute(lp, current, asStorage.base);
+	}
+
+	auto asArray = cast(ir.ArrayType) type;
+	if (asArray !is null) {
+		return acceptableForUserAttribute(lp, current, asArray.base);
+	}
+
+	auto asTR = cast(ir.TypeReference) type;
+	if (asTR !is null) {
+		assert(asTR.type !is null);
+		return acceptableForUserAttribute(lp, current, asTR.type);
+	}
+
+	return false;
+}
+
 /// Returns the size of a given Struct, in bytes.
 int structSize(Location location, LanguagePass lp, ir.Struct s)
 {

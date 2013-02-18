@@ -17,6 +17,7 @@ import volt.semantic.typer;
 import volt.semantic.mangle;
 import volt.semantic.lookup;
 import volt.semantic.classify;
+import volt.semantic.util;
 
 
 /**
@@ -131,6 +132,12 @@ public:
 		default:
 			return Continue;
 		}
+	}
+
+	override Status visit(ref ir.Exp exp, ir.TraitsExp traits)
+	{
+		replaceTraits(exp, traits, lp, thisModule, current);
+		return Continue;
 	}
 
 	protected Status handleAssign(ref ir.Exp exp, ir.BinOp binOp)

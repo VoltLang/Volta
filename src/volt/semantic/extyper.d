@@ -14,6 +14,7 @@ import volt.interfaces;
 import volt.visitor.visitor;
 import volt.visitor.expreplace;
 import volt.visitor.scopemanager;
+import volt.semantic.userattrresolver;
 import volt.semantic.classify;
 import volt.semantic.classresolver;
 import volt.semantic.lookup;
@@ -1113,9 +1114,34 @@ public:
 	{
 		assert(this.current is null);
 		this.current = current;
+		scope (exit) {
+			this.current = null;
+		}
+
 		this.enterFirstVariable = true;
 		accept(v, this);
-		this.current = null;
+	}
+
+	/**
+	 * For out of band checking of UserAttributes.
+	 */
+	void transform(ir.Scope current, ir.Attribute a)
+	{
+		assert(this.current is null);
+		this.current = current;
+		scope (exit) {
+			this.current = null;
+		}
+
+		basicValidateUserAttribute(lp, current, a);
+
+		auto ua = a.userAttribute;
+		assert(ua !is null);
+
+		foreach (i, ref arg; a.arguments) {
+			extypeAssign(lp, current, a.arguments[i], ua.fields[i].type);
+			acceptExp(a.arguments[i], this);
+		}
 	}
 
 	override void close()
@@ -1143,6 +1169,13 @@ public:
 		lp.actualize(c);
 		super.enter(c);
 		return Continue;
+	}
+
+	override Status enter(ir.UserAttribute ua)
+	{
+		lp.actualize(ua);
+		// Everything is done by actualize.
+		return ContinueParent;
 	}
 
 	override Status enter(ir.Variable v)

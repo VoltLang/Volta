@@ -84,6 +84,12 @@ void mangleType(ir.Type t, ref string mangledString)
 		mangledString ~= "C";
 		mangleScope(asClass.myScope, mangledString);
 		break;
+	case UserAttribute:
+		auto asAttr = cast(ir.UserAttribute) t;
+		assert(asAttr !is null);
+		mangledString ~= "U";
+		mangleScope(asAttr.myScope, mangledString);
+		break;
 	case Enum:
 		auto asEnum = cast(ir.Enum) t;
 		assert(asEnum !is null);

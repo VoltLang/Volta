@@ -88,6 +88,10 @@ void gather(ir.Scope current, ir.MixinTemplate mt, Where where)
 	current.addTemplate(mt, mt.name);
 }
 
+void gather(ir.Scope current, ir.UserAttribute ua, Where where)
+{
+	current.addType(ua, ua.name);
+}
 
 /*
  *
@@ -173,6 +177,12 @@ void addScope(ir.Scope current, ir._Interface i)
 
 	assert(i.myScope is null);
 	i.myScope = new ir.Scope(current, i, i.name);
+}
+
+void addScope(ir.Scope current, ir.UserAttribute ua)
+{
+	assert(ua.myScope is null);
+	ua.myScope = new ir.Scope(current, ua, ua.name);
 }
 
 
@@ -321,6 +331,14 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.UserAttribute ua)
+	{
+		gather(current, ua, where);
+		addScope(current, ua);
+		push(ua.myScope, ua);
+		return Continue;
+	}
+
 	override Status enter(ir.Function fn)
 	{
 		gather(current, fn, where);
@@ -346,4 +364,5 @@ public:
 	override Status leave(ir.Struct s) { pop(s); return Continue; }
 	override Status leave(ir.Function fn) { pop(); return Continue; }
 	override Status leave(ir._Interface i) { pop(i); return Continue; }
+	override Status leave(ir.UserAttribute ua) { pop(ua); return Continue; }
 }

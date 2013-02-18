@@ -56,6 +56,19 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.UserAttribute ui)
+	{
+		parentNames = getParentScopeNames(ui.myScope);
+		aggregateDepth++;
+		return Continue;
+	}
+
+	override Status leave(ir.UserAttribute ui)
+	{
+		aggregateDepth--;
+		parentNames = parentNames[0 .. $-1];
+		return Continue;
+	}
 
 	override Status enter(ir.Class c)
 	{

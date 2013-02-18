@@ -83,6 +83,7 @@ public:
 			case MixinFunction:
 			case MixinTemplate:
 			case MixinStatement:
+			case UserAttribute:
 				auto s = accept(n, this);
 				if (s == Stop)
 					return Stop;

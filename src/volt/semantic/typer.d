@@ -105,6 +105,10 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 		auto asExpRef = cast(ir.ExpReference) exp;
 		assert(asExpRef !is null);
 		return getExpReferenceType(lp, asExpRef);
+	case TraitsExp:
+		auto asTraits = cast(ir.TraitsExp) exp;
+		assert(asTraits !is null);
+		return getTraitsExpType(lp, asTraits, currentScope);
 	case StructLiteral:
 		auto asStructLiteral = cast(ir.StructLiteral) exp;
 		assert(asStructLiteral !is null);
@@ -126,6 +130,19 @@ ir.Type getStructLiteralType(LanguagePass lp, ir.StructLiteral slit)
 ir.Type getClassLiteralType(LanguagePass lp, ir.ClassLiteral clit)
 {
 	return clit.type;
+}
+
+ir.Type getTraitsExpType(LanguagePass lp, ir.TraitsExp traits, ir.Scope _scope)
+{
+	assert(traits.type == ir.TraitsExp.Type.GetAttribute);
+	auto store = lookup(lp, _scope, traits.qname);
+	auto attr = cast(ir.UserAttribute) store.node;
+	if (attr is null) {
+		string emsg = format("'%s' is not an @interface.", traits.qname);
+		throw new CompilerError(traits.location, emsg);
+	}
+	lp.actualize(attr);
+	return attr.layoutClass;
 }
 
 ir.Type getExpReferenceType(LanguagePass lp, ir.ExpReference expref)
@@ -345,7 +362,7 @@ void retrieveScope(LanguagePass lp, ir.Node tt, ir.Postfix postfix, ref ir.Scope
 		assert(asModule !is null);
 		_scope = asModule.myScope;
 		emsg = format("module '%s' has no member '%s'.", asModule.name, postfix.identifier.value);
-	} else if (tt.nodeType == ir.NodeType.Class || tt.nodeType == ir.NodeType.Struct) {
+	} else if (tt.nodeType == ir.NodeType.Class || tt.nodeType == ir.NodeType.Struct || tt.nodeType == ir.NodeType.UserAttribute) {
 		if (tt.nodeType == ir.NodeType.Struct) {
 			auto asStruct = cast(ir.Struct) tt;
 			_scope = asStruct.myScope;
@@ -354,6 +371,10 @@ void retrieveScope(LanguagePass lp, ir.Node tt, ir.Postfix postfix, ref ir.Scope
 			_class = cast(ir.Class) tt;
 			_scope = _class.myScope;
 			emsg = format("type '%s' has no member '%s'.", _class.name, postfix.identifier.value);
+		} else if (tt.nodeType == ir.NodeType.UserAttribute) {
+			auto asAttr = cast(ir.UserAttribute) tt;
+			_scope = asAttr.myScope;
+			emsg = format("type '%s' has no member '%s'.", asAttr.name, postfix.identifier.value);
 		} else {
 			throw CompilerPanic("couldn't retrieve scope from type.");
 		}

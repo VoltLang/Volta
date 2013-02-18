@@ -205,6 +205,20 @@ ir.Function retrieveFunctionFromObject(LanguagePass lp, ir.Scope _scope, Locatio
 }
 
 /**
+ * Look up object.Attribute.
+ * Throws: CompilerPanic on failure.
+ */
+ir.Class retrieveAttribute(LanguagePass lp, ir.Scope _scope, Location loc)
+{
+	auto attrStore = retrieveStoreFromObject(lp, _scope, loc, "Attribute");
+	auto attr = cast(ir.Class) attrStore.node;
+	if (attr is null) {
+		throw CompilerPanic(loc, "object.Attribute is not a class.");
+	}
+	return attr;
+}
+
+/**
  * Look up object.TypeInfo.
  * Throws: CompilerPanic on failure.
  */
@@ -363,6 +377,7 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
 	case Module:
 	case Import:
 	case Struct:
+	case UserAttribute:
 		return false;
 	case Class:
 		auto asClass = cast(ir.Class)node;

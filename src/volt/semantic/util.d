@@ -6,6 +6,7 @@ import std.string : format;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
+import volt.ir.copy;
 
 import volt.exceptions;
 import volt.interfaces;
@@ -189,4 +190,82 @@ void ensureResolved(LanguagePass lp, ir.Scope current, ir.Type type)
 		string e = format("unhandled type: '%s'", to!string(type.nodeType));
 		throw new CompilerError(type.location, e);
 	}
+}
+
+/// Get a UserAttribute struct literal from a user Attribute.
+ir.ClassLiteral getAttributeLiteral(ir.UserAttribute ua, ir.Attribute attr)
+{
+	auto cliteral = new ir.ClassLiteral();
+	cliteral.location = attr.location;
+	cliteral.type = copyTypeSmart(ua.layoutClass.location, ua.layoutClass);
+	cliteral.exps = attr.arguments.dup;
+
+	if (attr.arguments.length > ua.fields.length) {
+		throw new CompilerError(attr.location, "too many expressions for @interface.");
+	} else {
+		cliteral.exps = attr.arguments.dup;
+		foreach (field; ua.fields[attr.arguments.length .. $]) {
+			if (field.assign is null) {
+				throw new CompilerError(field.location, "expected field to have default initialiser.");
+			}
+			cliteral.exps ~= copyExp(field.assign);
+		}
+	}
+	if (cliteral.exps.length != ua.fields.length) {
+		throw new CompilerError(attr.location, "not every @interface field filled.");
+	}
+	return cliteral;
+}
+
+void replaceTraits(ref ir.Exp exp, ir.TraitsExp traits, LanguagePass lp, ir.Module thisModule, ir.Scope _scope)
+{
+	assert(traits.type == ir.TraitsExp.Type.GetAttribute);
+	auto store = lookup(lp, _scope, traits.qname);
+	auto uattr = cast(ir.UserAttribute) store.node;
+	if (uattr is null) {
+		throw new CompilerError(traits.qname.location, format("cannot find UserAttribute '%s'.", traits.qname));
+	}
+
+	ir.Attribute[] userAttrs;
+	string name;
+
+	store = lookup(lp, _scope, traits.target);
+
+	switch (store.node.nodeType) with (ir.NodeType) {
+	case Variable:
+		auto var = cast(ir.Variable) store.node;
+		userAttrs = var.userAttrs;
+		name = var.name;
+		break;
+	case Function:
+		auto fn = cast(ir.Function) store.node;
+		userAttrs = fn.userAttrs;
+		name = fn.name;
+		break;
+	case Class:
+		auto _class = cast(ir.Class) store.node;
+		userAttrs = _class.userAttrs;
+		name = _class.name;
+		break;
+	case Struct:
+		auto _struct = cast(ir.Struct) store.node;
+		userAttrs = _struct.userAttrs;
+		name = _struct.name;
+		break;
+	default:
+		assert(false, to!string(store.node.nodeType));
+	}
+
+	ir.Attribute userAttribute;
+	for (int i = cast(int)userAttrs.length - 1; i >= 0; i--) {
+		if (uattr is userAttrs[i].userAttribute) {
+			userAttribute = userAttrs[i];
+		}
+	}
+	if (userAttribute is null) {
+		auto str = format("'%s' has no '%s' user attribute.", traits.target, traits.qname);
+		throw new CompilerError(exp.location, str);
+	}
+
+	exp = getAttributeLiteral(userAttribute.userAttribute, userAttribute);
 }
