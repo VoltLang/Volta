@@ -101,7 +101,7 @@ ir.Variable getThisVar(Location location, LanguagePass lp, ir.Scope _scope)
 ir.Store ensureResolved(LanguagePass lp, ir.Store s)
 {
 	if (s.kind == ir.Store.Kind.Alias) {
-		lp.resolveAlias(s);
+		lp.resolve(s);
 		while (s.myAlias !is null) {
 			s = s.myAlias;
 		}
@@ -157,7 +157,7 @@ void ensureResolved(LanguagePass lp, ir.Scope current, ir.Type type)
 		return;
 	case TypeReference:
 		auto tr = cast(ir.TypeReference)type;
-		return lp.resolveTypeReference(current, tr);
+		return lp.resolve(current, tr);
 	case Class:
 	case Struct:
 	case TypeOf:

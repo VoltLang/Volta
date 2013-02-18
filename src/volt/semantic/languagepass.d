@@ -89,7 +89,7 @@ public:
 	 */
 
 
-	override void resolveTypeReference(ir.Scope current, ir.TypeReference tr)
+	override void resolve(ir.Scope current, ir.TypeReference tr)
 	{
 		if (tr.type !is null)
 			return;
@@ -101,21 +101,26 @@ public:
 		tr.type = lookupType(this, current, tr.id);
 	}
 
-	override void resolveAlias(ir.Store s)
+	override void resolve(ir.Scope current, ir.Variable v)
+	{
+		ensureResolved(this, current, v.type);
+	}
+
+	override void resolve(ir.Store s)
 	{
 		auto w = mTracker.add(s.node, "resolving alias");
 		scope (exit)
 			w.done();
 
-		.resolveAlias(this, s);
+		resolveAlias(this, s);
 	}
 
-	override void resolveStruct(ir.Struct c)
+	override void resolve(ir.Struct c)
 	{
 		// Nothing to do here.
 	}
 
-	override void resolveClass(ir.Class c)
+	override void resolve(ir.Class c)
 	{
 		if (!needsResolving(c))
 			return;
@@ -124,7 +129,7 @@ public:
 		scope (exit)
 			w.done();
 
-		.resolveClass(this, c);
+		resolveClass(this, c);
 	}
 
 	override void gather(ir.Scope current, ir.BlockStatement bs)
