@@ -77,6 +77,7 @@ void main(string[] args)
 		listDir("cond", "*test_*.v", &addTest);
 		listDir("imports", "*test_*.v", &addTest);
 		listDir("aggregate", "*test_*.v", &addTest);
+		listDir("annotations", "*test_*.v", &addTest);
 		listDir("exps", "*test_*.v", &addTest);
 		listDir("lower", "*test_*.v", &addTest);
 		listDir("types", "*test_*.v", &addTest);
