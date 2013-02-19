@@ -95,6 +95,20 @@ ir.Variable getThisVar(Location location, LanguagePass lp, ir.Scope _scope)
 	return thisVar;
 }
 
+void replaceVarArgsIfNeeded(LanguagePass lp, ir.Function fn)
+{
+	if (fn.type.hasVarArgs &&
+	    !fn.type.varArgsProcessed &&
+	    fn.type.linkage == ir.Linkage.Volt) {
+		auto current = fn.myScope.parent;
+		auto tinfoClass = retrieveTypeInfo(lp, current, fn.location);
+		auto tr = buildTypeReference(fn.location, tinfoClass, tinfoClass.name);
+		auto array = buildArrayType(fn.location, tr);
+		addParam(fn.location, fn, array, "_typeids");
+		fn.type.varArgsProcessed = true;
+	}
+}
+
 /**
  * Ensures that a Store is a resolved alias.
  */
@@ -108,11 +122,11 @@ ir.Store ensureResolved(LanguagePass lp, ir.Store s)
 		return s;
 	} else if (s.kind == ir.Store.Kind.Value) {
 		auto var = cast(ir.Variable)s.node;
-		ensureResolved(lp, s.parent, var.type);
+		lp.resolve(s.parent, var);
 	} else if (s.kind == ir.Store.Kind.Function) {
 		assert(s.functions.length == 1);
 		auto fn = cast(ir.Function)s.functions[0];
-		ensureResolved(lp, s.parent, fn.type);
+		lp.resolve(fn);
 	} else if (s.kind == ir.Store.Kind.Type) {
 		if (s.node.nodeType == ir.NodeType.Class) {
 			auto c = cast(ir.Class)s.node;

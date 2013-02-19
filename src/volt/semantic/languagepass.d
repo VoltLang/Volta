@@ -116,6 +116,7 @@ public:
 	override void resolve(ir.Function fn)
 	{
 		ensureResolved(this, fn.myScope.parent, fn.type);
+		replaceVarArgsIfNeeded(this, fn);
 	}
 
 	override void resolve(ir.Store s)

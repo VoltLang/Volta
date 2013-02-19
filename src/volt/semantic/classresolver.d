@@ -136,7 +136,7 @@ ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class)
 		if (asVar.storage != ir.Variable.Storage.Field) {
 			continue;
 		}
-		ensureResolved(lp, _class.myScope, asVar.type);
+		lp.resolve(_class.myScope, asVar);
 		fields ~= copyVariableSmart(asVar.location, asVar);
 	}
 	return fields;
@@ -163,7 +163,7 @@ ir.Function[] getClassMethods(LanguagePass lp, ir.Class _class)
 			continue;
 		}
 
-		ensureResolved(lp, _class.myScope, asFunction.type);
+		lp.resolve(asFunction);
 
 		methods ~= asFunction;
 	}

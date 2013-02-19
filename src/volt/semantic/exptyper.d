@@ -74,9 +74,6 @@ public:
 			auto asFunction = cast(ir.Function) asExp.decl;
 			assert(asFunction !is null);
 
-			// This must be done first.
-			replaceVarArgsIfNeeded(asFunction);
-
 			auto callNumArgs = postfix.arguments.length;
 			auto funcNumArgs = asFunctionType.params.length - 1;
 			if (callNumArgs < funcNumArgs) {
@@ -690,7 +687,7 @@ public:
 
 		auto fn = _class.userConstructors[0];
 
-		ensureResolved(lp, fn.myScope.parent, fn.type);
+		lp.resolve(fn);
 
 		for (size_t i = 0; i < _unary.argumentList.length; ++i) {
 			extype(fn.type.params[i].type, _unary.argumentList[i]);
@@ -767,7 +764,7 @@ public:
 
 	override Status enter(ir.Variable d)
 	{
-		ensureResolved(lp, current, d.type);
+		lp.resolve(current, d);
 
 		if (d.assign is null) {
 			return Continue;
@@ -991,25 +988,9 @@ public:
 		return Continue;
 	}
 
-	void replaceVarArgsIfNeeded(ir.Function fn)
-	{
-		if (fn.type.hasVarArgs &&
-		    !fn.type.varArgsProcessed &&
-		    fn.type.linkage == ir.Linkage.Volt) {
-			auto tinfoClass = retrieveTypeInfo(lp, current, fn.location);
-			auto tr = buildTypeReference(fn.location, tinfoClass, tinfoClass.name);
-			auto array = buildArrayType(fn.location, tr);
-			addParam(fn.location, fn, array, "_typeids");
-			fn.type.varArgsProcessed = true;
-		}
-	}
-
 	override Status enter(ir.Function fn)
 	{
-		// Notice the scope in which we resolve the type.
-		ensureResolved(lp, fn.myScope.parent, fn.type);
-
-		replaceVarArgsIfNeeded(fn);
+		lp.resolve(fn);
 		super.enter(fn);
 		functionRet = fn.type.ret;
 		return Continue;
