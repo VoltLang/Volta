@@ -145,6 +145,13 @@ public:
 	abstract void resolve(ir.Scope current, ir.Variable v);
 
 	/**
+	 * Resolves a Function making it usable externaly,
+	 *
+	 * @throws CompilerError on failure to resolve function.
+	 */
+	abstract void resolve(ir.Function fn);
+
+	/**
 	 * Resolves a unresolved TypeReference in the given scope.
 	 * The TypeReference's type is set to the looked up type,
 	 * should type be not null nothing is done.

@@ -113,6 +113,11 @@ public:
 		ensureResolved(this, current, v.type);
 	}
 
+	override void resolve(ir.Function fn)
+	{
+		ensureResolved(this, fn.myScope.parent, fn.type);
+	}
+
 	override void resolve(ir.Store s)
 	{
 		auto w = mTracker.add(s.node, "resolving alias");
