@@ -231,8 +231,8 @@ public:
 			assert(leftClass !is null);
 			auto rightClass = cast(ir.Class) t;
 			assert(rightClass !is null);
-			lp.resolveClass(leftClass);
-			lp.resolveClass(rightClass);
+			lp.resolve(leftClass);
+			lp.resolve(rightClass);
 			/// Check for converting child classes into parent classes.
 			if (leftClass !is null && rightClass !is null) {
 				if (inheritsFrom(rightClass, leftClass)) {
@@ -647,9 +647,17 @@ public:
 		return super.enter(m);
 	}
 
+	override Status enter(ir.Struct s)
+	{
+		lp.actualize(s);
+		super.enter(s);
+		return Continue;
+	}
+
 	override Status enter(ir.Class c)
 	{
-		lp.resolveClass(c);
+		lp.actualize(c);
+		super.enter(c);
 		return Continue;
 	}
 
@@ -671,6 +679,10 @@ public:
 		if (_class is null) {
 			return Continue;
 		}
+
+		// Needed because of userConstructors.
+		lp.actualize(_class);
+
 		assert(_class.userConstructors.length == 1);
 		if (_unary.argumentList.length != _class.userConstructors[0].type.params.length) {
 			throw new CompilerError(_unary.location, "mismatched argument count for constructor.");

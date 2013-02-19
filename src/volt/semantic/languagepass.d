@@ -89,6 +89,13 @@ public:
 	 */
 
 
+	override void gather(ir.Scope current, ir.BlockStatement bs)
+	{
+		auto g = new Gatherer(this);
+		g.transform(current, bs);
+		g.close();
+	}
+
 	override void resolve(ir.Scope current, ir.TypeReference tr)
 	{
 		if (tr.type !is null)
@@ -122,22 +129,26 @@ public:
 
 	override void resolve(ir.Class c)
 	{
+		fillInParentIfNeeded(this, c);
+	}
+
+	override void actualize(ir.Struct c)
+	{
+		// Nothing to do here.
+	}
+
+	override void actualize(ir.Class c)
+	{
 		if (!needsResolving(c))
 			return;
 
-		auto w = mTracker.add(c, "resolving class");
+		auto w = mTracker.add(c, "actualizing class");
 		scope (exit)
 			w.done();
 
 		resolveClass(this, c);
 	}
 
-	override void gather(ir.Scope current, ir.BlockStatement bs)
-	{
-		auto g = new Gatherer(this);
-		g.transform(current, bs);
-		g.close();
-	}
 
 	/*
 	 *

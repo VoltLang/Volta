@@ -32,7 +32,7 @@ void resolveClass(LanguagePass lp, ir.Class c)
 	fillInParentIfNeeded(lp, c);
 
 	if (!c.isObject) {
-		lp.resolveClass(c.parentClass);
+		lp.actualize(c.parentClass);
 	}
 
 	fillInClassLayoutIfNeeded(c, lp);

@@ -113,6 +113,14 @@ ir.Store ensureResolved(LanguagePass lp, ir.Store s)
 		assert(s.functions.length == 1);
 		auto fn = cast(ir.Function)s.functions[0];
 		ensureResolved(lp, s.parent, fn.type);
+	} else if (s.kind == ir.Store.Kind.Type) {
+		if (s.node.nodeType == ir.NodeType.Class) {
+			auto c = cast(ir.Class)s.node;
+			lp.resolve(c);
+		} else if (s.node.nodeType == ir.NodeType.Struct) {
+			auto st = cast(ir.Struct)s.node;
+			lp.resolve(st);
+		}
 	}
 	return s;
 }
