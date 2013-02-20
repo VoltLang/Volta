@@ -63,10 +63,15 @@ public:
 				if (p.name is null)
 					continue;
 
-				auto t = state.fromIr(fn.type.params[i].type);
 				auto v = LLVMGetParam(llvmFunc, i);
-				auto a = state.getVariableValue(p, t);
-				LLVMBuildStore(state.builder, v, a);
+
+				if (p.isRef) {
+					state.makeByValVariable(p, v);
+				} else {
+					auto t = state.fromIr(fn.type.params[i].type);
+					auto a = state.getVariableValue(p, t);
+					LLVMBuildStore(state.builder, v, a);
+				}
 			}
 
 			ir.Variable thisVar = fn.thisHiddenParameter;

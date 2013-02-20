@@ -94,6 +94,7 @@ public:
 	bool isExtern; ///< Only for global variables.
 
 	bool isRef;  ///< Will only true for some function parameters.
+	bool isOut;  ///< isRef will be set if this is set.
 
 	/**
 	 * Tells the backend to turn the storage Variable to the

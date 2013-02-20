@@ -1006,7 +1006,12 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 	foreach(int i, arg; postfix.arguments) {
 		auto v = new Value();
 		state.getValueAnyForm(arg, v);
-		makeNonPointer(state, v);
+
+		if (i < ct.ct.params.length && ct.ct.params[i].isRef) {
+			makePointer(state, v);
+		} else {
+			makeNonPointer(state, v);
+		}
 		llvmArgs[i] = v.value;
 	}
 

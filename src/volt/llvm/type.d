@@ -388,6 +388,9 @@ private:
 		this.ret = ret;
 		foreach(int i, type; params) {
 			args[i] = type.llvmType;
+			if (ft.params[i].isRef) {
+				args[i] = LLVMPointerType(args[i], 0);
+			}
 		}
 
 		if (ft.hiddenParameter) {
@@ -425,6 +428,9 @@ public:
 		foreach(int i, param; dt.params) {
 			auto type = state.fromIr(param.type);
 			args[i] = type.llvmType;
+			if (dt.params[i].isRef) {
+				args[i] = LLVMPointerType(args[i], 0);
+			}
 		}
 		args[$-1] = state.voidPtrType.llvmType;
 

@@ -112,28 +112,19 @@ public:
 		}
 		assert(asFunctionType.params.length <= postfix.arguments.length);
 		foreach (i; 0 .. asFunctionType.params.length) {
-			if (asFunctionType.params[i].isRef && !isRefVar(postfix.arguments[i])) {
-				postfix.arguments[i] = buildAddrOf(postfix.location, postfix.arguments[i]);
+			if (asFunctionType.params[i].isRef && !isLValue(postfix.arguments[i])) {
+				throw new CompilerError(postfix.arguments[i].location, "expression is not an lvalue");
 			}
-			extype(asFunctionType.params[i].type, postfix.arguments[i], false, asFunctionType.params[i].isRef);
+			extype(asFunctionType.params[i].type, postfix.arguments[i], false);
 		}
 	}
 
-	ir.Node extype(ref ir.Type left, ref ir.Exp right, bool inVariable = false, bool inCallAndPassingToRef = false)
+	ir.Node extype(ref ir.Type left, ref ir.Exp right, bool inVariable = false)
 	{
 		/* This is needed so we can refer to things like TypeReference's base
 		 * without updating the type in the IR.
 		 */
 		ir.Type localLeft = left;
-
-		auto asExpRef = cast(ir.ExpReference) right;
-		ir.Variable asVar;
-		if (asExpRef !is null) {
-			asVar = cast(ir.Variable) asExpRef.decl;
-			if (asVar !is null && asVar.isRef && !inCallAndPassingToRef) {
-				right = buildDeref(right.location, right);
-			}
-		}
 
 		if (right.nodeType == ir.NodeType.StructLiteral) {
 			auto asLit = cast(ir.StructLiteral) right;
@@ -334,14 +325,6 @@ public:
 			extypePostfix(cast(ir.Postfix)bin.right);
 		} else if (bin.right.nodeType == ir.NodeType.BinOp) {
 			extype(cast(ir.BinOp)bin.right);
-		}
-
-		auto asExpRef = cast(ir.ExpReference) bin.left;
-		if (asExpRef !is null) {
-			auto asVar = cast(ir.Variable) asExpRef.decl;
-			if (asVar !is null && asVar.isRef) {
-				bin.left = buildDeref(bin.left.location, bin.left);
-			}
 		}
 
 		ir.Type left = getExpType(lp, bin.left, current);

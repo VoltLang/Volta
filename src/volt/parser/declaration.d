@@ -249,14 +249,7 @@ ir.Variable parseParameter(TokenStream ts)
 	}
 
 	p.type = parseType(ts);
-	if (p.isRef) {
-		p.type = new ir.PointerType(p.type);
-		p.type.location = ts.peek.location;
-		if (isOut) {
-			auto scopeStorage = buildStorageType(ts.peek.location, ir.StorageType.Kind.Scope, p.type);
-			p.type = scopeStorage;
-		}
-	} else if (isIn) {
+	if (isIn) {
 		auto constStorage = buildStorageType(ts.peek.location, ir.StorageType.Kind.Const, p.type);
 		auto scopeStorage = buildStorageType(ts.peek.location, ir.StorageType.Kind.Scope, constStorage);
 		p.type = scopeStorage;

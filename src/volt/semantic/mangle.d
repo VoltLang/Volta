@@ -141,6 +141,11 @@ void mangleFunctionType(ir.FunctionType fn, ref string mangledString)
 	}
 	// !!! Attributes go here. !!!
 	foreach (i, param; fn.params) {
+		if (param.isOut) {
+			mangledString ~= 'K';
+		} else if (param.isRef) {
+			mangledString ~= 'J';
+		}
 		mangleType(param.type, mangledString);
 	}
 	mangledString ~= "Z";  // This would be difference with variadics.
