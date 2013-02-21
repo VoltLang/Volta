@@ -1,6 +1,5 @@
 //T compiles:yes
 //T retval:12
-//T has-passed:no
 // test various slices.
 module test_009;
 
