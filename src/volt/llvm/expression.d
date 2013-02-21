@@ -206,24 +206,38 @@ void handleIs(State state, ir.BinOp bin, Value result)
 	state.getValueAnyForm(bin.left, left);
 	state.getValueAnyForm(bin.right, right);
 
-	auto at = cast(ArrayType)result.type;
-	if (at !is null) {
-		/// @todo Needs to compare length as well.
-		getPointerFromArray(state, bin.location, left);
-		getPointerFromArray(state, bin.location, right);
-	}
-
-	makeNonPointer(state, left);
-	makeNonPointer(state, right);
-
 	auto pr = bin.op == ir.BinOp.Type.Is ?
 		LLVMIntPredicate.EQ :
 		LLVMIntPredicate.NE;
 
+	auto at = cast(ArrayType)result.type;
+	if (at is null) {
+		makeNonPointer(state, left);
+		makeNonPointer(state, right);
+
+		result.type = state.boolType;
+		result.isPointer = false;
+		result.value = LLVMBuildICmp(state.builder, pr, left.value, right.value, "icmp");
+		return;
+	}
+
+	// Deal with arrays.
+	auto loc = bin.location;
+	auto lPtr = getValueFromAggregate(state, loc, left, ArrayType.ptrIndex);
+	auto lLen = getValueFromAggregate(state, loc, left, ArrayType.lengthIndex);
+	auto rPtr = getValueFromAggregate(state, loc, right, ArrayType.ptrIndex);
+	auto rLen = getValueFromAggregate(state, loc, right, ArrayType.lengthIndex);
+
+	auto ptr = LLVMBuildICmp(state.builder, pr, lPtr, rPtr, "icmp");
+	auto len = LLVMBuildICmp(state.builder, pr, lLen, rLen, "icmp");
+
+	auto logic = bin.op == ir.BinOp.Type.Is ?
+		LLVMOpcode.And :
+		LLVMOpcode.Or;
+
 	result.type = state.boolType;
 	result.isPointer = false;
-	//result.value = state.boolType.fromNumber(state, 1);
-	result.value = LLVMBuildICmp(state.builder, pr, left.value, right.value, "icmp");
+	result.value = LLVMBuildBinOp(state.builder, logic, ptr, len, "test");
 }
 
 void handleCompare(State state, ir.BinOp bin, Value result)
