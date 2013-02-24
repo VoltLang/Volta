@@ -25,7 +25,7 @@ ir.CallableType propertyToCallIfNeeded(Location loc, LanguagePass lp, ref ir.Exp
 		}
 	}
 
-	if (postfixStack.length > 0 && postfixStack[$-1].isImplicitPropertyCall) {
+	if (postfixStack.length > 0 && postfixStack[0].isImplicitPropertyCall) {
 		return null;
 	}
 
@@ -147,6 +147,7 @@ void ensureResolved(LanguagePass lp, ir.Scope current, ir.Type type)
 {
 	switch (type.nodeType) with (ir.NodeType) {
 	case PrimitiveType:
+	case NullType:
 		return;
 	case PointerType:
 		auto pt = cast(ir.PointerType)type;

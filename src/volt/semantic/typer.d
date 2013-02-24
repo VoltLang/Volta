@@ -56,6 +56,10 @@ ir.Type getExpType(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 		assert(asTR !is null);
 		result = asTR.type;
 	}
+	auto storage = cast(ir.StorageType) result;
+	if (storage !is null && canTransparentlyReferToBase(storage)) {
+		result = storage.base;
+	}
 	return result;
 }
 
@@ -101,9 +105,18 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 		auto asExpRef = cast(ir.ExpReference) exp;
 		assert(asExpRef !is null);
 		return getExpReferenceType(lp, asExpRef);
+	case StructLiteral:
+		auto asStructLiteral = cast(ir.StructLiteral) exp;
+		assert(asStructLiteral !is null);
+		return getStructLiteralType(lp, asStructLiteral);
 	default:
 		throw CompilerPanic(format("unable to type expression '%s'.", to!string(exp.nodeType)));
 	}
+}
+
+ir.Type getStructLiteralType(LanguagePass lp, ir.StructLiteral slit)
+{
+	return slit.type;
 }
 
 ir.Type getExpReferenceType(LanguagePass lp, ir.ExpReference expref)

@@ -20,7 +20,7 @@ import volt.semantic.lookup;
 import volt.semantic.attribremoval;
 import volt.semantic.condremoval;
 import volt.semantic.gatherer;
-import volt.semantic.exptyper;
+import volt.semantic.extyper;
 import volt.semantic.manglewriter;
 import volt.semantic.importresolver;
 import volt.semantic.irverifier;
@@ -66,7 +66,7 @@ public:
 		postParse ~= new AttribRemoval(this);
 		postParse ~= new Gatherer(this);
 
-		passes2 ~= new ExpTyper(this);
+		passes2 ~= new ExTyper(this);
 		passes2 ~= new IrVerifier();
 
 		passes3 ~= new LlvmLowerer(this);

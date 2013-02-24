@@ -120,6 +120,11 @@ bool mutableIndirection(ir.Type t)
 	}
 }
 
+bool canTransparentlyReferToBase(ir.StorageType storage)
+{
+	return storage.type == ir.StorageType.Kind.Auto;
+}
+
 bool isBool(ir.Type t)
 {
 	auto p = cast(ir.PrimitiveType) t;
