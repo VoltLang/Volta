@@ -98,6 +98,16 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
 			store = lookupAsThisScope(lp, current, loc, name);
 		}
 
+		if (store is null) {
+			if (i == last) {
+				return null;
+			} else if (i == 0) {
+				throw new CompilerError(loc, format("undefined identifier '%s'.", name));
+			} else {
+				throw new CompilerError(loc, format("'%s' has no member named '%s'.", current.name, name));
+			}
+		}
+
 		// Need to resolve any aliases.
 		store = ensureResolved(lp, store);
 
