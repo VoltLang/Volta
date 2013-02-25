@@ -85,3 +85,12 @@ class Object
 		return null;
 	}
 }
+
+extern(C) {
+	/*@MangledName("memcmp")*/ int __llvm_memcmp(void*, void*, size_t);
+	/*@MangledName("llvm.trap")*/ void __llvm_trap();
+	/*@MangledName("llvm.memcpy.p0i8.p0i8.i32")*/ void __llvm_memcpy_p0i8_p0i8_i32(void*, void*, uint, int, bool);
+	/*@MangledName("llvm.memcpy.p0i8.p0i8.i64")*/ void __llvm_memcpy_p0i8_p0i8_i64(void*, void*, ulong, int, bool);
+	/*@MangledName("llvm.memmove.p0i8.p0i8.i32")*/ void __llvm_memmove_p0i8_p0i8_i32(void*, void*, uint, int, bool);
+	/*@MangledName("llvm.memmove.p0i8.p0i8.i64")*/ void __llvm_memmove_p0i8_p0i8_i64(void*, void*, ulong, int, bool);
+}
