@@ -40,6 +40,19 @@ public:
 
 	override void transform(ir.Module m)
 	{
+		/// @todo remove when MangledName attribute works.
+		void h(string name, string mangled) {
+			auto fn = retrieveFunctionFromObject(
+				lp, m.myScope, m.location, name);
+			fn.mangledName = mangled;
+		}
+
+		h("__llvm_memcmp", "memcmp");
+		h("__llvm_memcpy_p0i8_p0i8_i32", "llvm.memcpy.p0i8.p0i8.i32");
+		h("__llvm_memcpy_p0i8_p0i8_i64", "llvm.memcpy.p0i8.p0i8.i64");
+		h("__llvm_memmove_p0i8_p0i8_i32", "llvm.memmove.p0i8.p0i8.i32");
+		h("__llvm_memmove_p0i8_p0i8_i64", "llvm.memmove.p0i8.p0i8.i64");
+
 		thisModule = m;
 		accept(m, this);
 	}
@@ -399,74 +412,29 @@ public:
 
 	ir.Function getLlvmMemMove(Location loc)
 	{
-		auto name32 = "llvm_memmove_p0i8_p0i8_i32";
-		auto name64 = "llvm_memmove_p0i8_p0i8_i64";
-		auto mangledName32 = "llvm.memmove.p0i8.p0i8.i32";
-		auto mangledName64 = "llvm.memmove.p0i8.p0i8.i64";
+		auto name32 = "__llvm_memmove_p0i8_p0i8_i32";
+		auto name64 = "__llvm_memmove_p0i8_p0i8_i64";
 		auto name = V_P64 ? name64 : name32;
-		auto mangledName = V_P64 ? mangledName64 : mangledName32;
-
-		auto fn = lookupFunction(loc, name);
-		if (fn !is null)
-			return fn;
-
-		fn = buildFunction(loc, thisModule.children, thisModule.myScope, name, false);
-		fn.mangledName = mangledName;
-		addParam(loc, fn, buildVoidPtr(loc), "dst");
-		addParam(loc, fn, buildVoidPtr(loc), "src");
-		addParam(loc, fn, buildSizeT(loc, lp), "len");
-		addParam(loc, fn, buildInt(loc), "align");
-		addParam(loc, fn, buildBool(loc), "isvolatile");
-
-		assert(fn !is null);
-		return fn;
+		return retrieveFunctionFromObject(lp, thisModule.myScope, loc, name);
 	}
 
 	ir.Function getLlvmMemCopy(Location loc)
 	{
-		auto name32 = "llvm_memcpy_p0i8_p0i8_i32";
-		auto name64 = "llvm_memcpy_p0i8_p0i8_i64";
-		auto mangledName32 = "llvm.memcpy.p0i8.p0i8.i32";
-		auto mangledName64 = "llvm.memcpy.p0i8.p0i8.i64";
+		auto name32 = "__llvm_memcpy_p0i8_p0i8_i32";
+		auto name64 = "__llvm_memcpy_p0i8_p0i8_i64";
 		auto name = V_P64 ? name64 : name32;
-		auto mangledName = V_P64 ? mangledName64 : mangledName32;
-
-		auto fn = lookupFunction(loc, name);
-		if (fn !is null)
-			return fn;
-
-		fn = buildFunction(loc, thisModule.children, thisModule.myScope, name, false);
-		fn.mangledName = mangledName;
-		addParam(loc, fn, buildVoidPtr(loc), "dst");
-		addParam(loc, fn, buildVoidPtr(loc), "src");
-		addParam(loc, fn, buildSizeT(loc, lp), "len");
-		addParam(loc, fn, buildInt(loc), "align");
-		addParam(loc, fn, buildBool(loc), "isvolatile");
-
-		assert(fn !is null);
-		return fn;
+		return retrieveFunctionFromObject(lp, thisModule.myScope, loc, name);
 	}
 
 	ir.Function getCMemCmp(Location loc)
 	{
-		auto name = "memcmp";
-
-		auto fn = lookupFunction(loc, name);
-		if (fn !is null)
-			return fn;
-
-		fn = buildFunction(loc, thisModule.children, thisModule.myScope, name, false);
-		fn.mangledName = name;
-		fn.type.ret = buildInt(loc);
-		addParam(loc, fn, buildPtrSmart(loc, buildStorageType(loc, ir.StorageType.Kind.Const, buildVoid(loc))), "ptr1");
-		addParam(loc, fn, buildPtrSmart(loc, buildStorageType(loc, ir.StorageType.Kind.Const, buildVoid(loc))), "ptr2");
-		addParam(loc, fn, buildSizeT(loc, lp), "num");
-
-		assert(fn !is null);
-		return fn;
+		return retrieveFunctionFromObject(lp, thisModule.myScope, loc, "__llvm_memcmp");
 	}
 
-
+	/**
+	 * This function is used to retrive cached
+	 * versions of the helper functions.
+	 */
 	ir.Function lookupFunction(Location loc, string name)
 	{
 		// Lookup the copy function for this type of array.
