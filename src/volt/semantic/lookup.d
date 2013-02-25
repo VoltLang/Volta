@@ -194,6 +194,16 @@ ir.Store retrieveStoreFromObject(LanguagePass lp, ir.Scope _scope, Location loc,
 	return store;
 }
 
+ir.Function retrieveFunctionFromObject(LanguagePass lp, ir.Scope _scope, Location loc, string name)
+{
+	auto objectStore = lookup(lp, _scope, loc, "object");
+	if (objectStore is null || objectStore.s is null) {
+		throw CompilerPanic(loc, "couldn't access object module.");
+	}
+	auto store = lookup(lp, objectStore.s, loc, name);
+	return ensureFunction(objectStore.s, loc, name, store);
+}
+
 /**
  * Look up object.TypeInfo.
  * Throws: CompilerPanic on failure.
@@ -370,6 +380,30 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
 	default:
 		throw CompilerPanic(node.location, "unexpected nodetype");
 	}
+}
+
+/**
+ * Ensure that the given store is not null
+ * and that it is non-overloaded Function.
+ *
+ * @return                The function pointed to by the store.
+ * @throws CompilerError  Raises error should this not be the case.
+ */
+ir.Function ensureFunction(ir.Scope _scope, Location loc, string name, ir.Store store)
+{
+	if (store is null) {
+		if (_scope is null) {
+			throw new CompilerError(loc, format("undefined identifier '%s'.", name));
+		} else {
+			throw new CompilerError(loc, format("'%s' has no member named '%s'.", _scope.name, name));
+		}
+	}
+
+	if (store.kind != ir.Store.Kind.Function || store.functions.length != 1) {
+		throw new CompilerError(loc, format("%s used as function.", name));
+	}
+
+	return store.functions[0];
 }
 
 /**
