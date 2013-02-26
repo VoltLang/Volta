@@ -11,6 +11,7 @@ import volt.exceptions;
 
 import volt.token.location;
 
+import volt.semantic.mangle;
 import volt.semantic.lookup;
 import volt.semantic.util;
 
@@ -232,7 +233,9 @@ ir.Struct getClassLayoutStruct(ir.Class _class, LanguagePass lp, ref ir.Struct v
 	auto fields = getClassFields(lp, _class);
 	fields = vtableVar ~ fields;
 
-	return buildStruct(_class.location, _class.members, _class.myScope, "__layoutStruct", fields);
+	auto layoutStruct = buildStruct(_class.location, _class.members, _class.myScope, "__layoutStruct", fields);
+	layoutStruct.loweredNode = _class;
+	return layoutStruct;
 }
 
 ir.Class[] getInheritanceChain(ir.Class _class)
@@ -276,6 +279,7 @@ void emitVtableVariable(LanguagePass lp, ir.Class _class)
 	assign.type = copyTypeSmart(_class.location, _class.vtableStruct);
 
 	_class.vtableVariable = buildVariableSmart(_class.location, _class.vtableStruct, ir.Variable.Storage.Global, "__vtable_instance");
+	_class.vtableVariable.mangledName = "_V__Vtable_" ~ mangle(null, _class);
 	_class.vtableVariable.assign = assign;
 	_class.members.nodes ~= _class.vtableVariable;
 	_class.myScope.addValue(_class.vtableVariable, _class.vtableVariable.name);
