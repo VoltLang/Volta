@@ -60,8 +60,6 @@ public:
 	override Status enter(ir.Class c)
 	{
 		parentNames = getParentScopeNames(c.myScope);
-		accept(c.layoutStruct, this);
-		accept(c.vtableStruct, this);
 		aggregateDepth++;
 		return Continue;
 	}
