@@ -54,9 +54,12 @@ void gather(ir.Scope current, ir.Function fn, Where where)
 		current.addFunction(fn, fn.name);
 	}
 
-	/// @todo change this to check for invalid.
-	if (fn.kind == ir.Function.Kind.Function && where == Where.TopLevel) {
-		fn.kind = ir.Function.Kind.Member;
+	if (fn.kind == ir.Function.Kind.Invalid) {
+		if (where == Where.TopLevel) {
+			fn.kind = ir.Function.Kind.Member;
+		} else {
+			fn.kind = ir.Function.Kind.Function;
+		}
 	}
 }
 

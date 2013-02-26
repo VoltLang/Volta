@@ -191,6 +191,7 @@ public:
 	 * for member functions, constructors and destructors.
 	 */
 	enum Kind {
+		Invalid,
 		Function,  ///< foo()
 		Member,  ///< this.foo()
 		LocalMember,  ///< Clazz.foo()

@@ -679,8 +679,9 @@ ir.Function buildFunction(Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, s
 {
 	auto fn = new ir.Function();
 	fn.name = name;
-	fn.myScope = new ir.Scope(_scope, fn, name);
 	fn.location = loc;
+	fn.kind = ir.Function.Kind.Function;
+	fn.myScope = new ir.Scope(_scope, fn, name);
 
 	fn.type = new ir.FunctionType();
 	fn.type.location = loc;

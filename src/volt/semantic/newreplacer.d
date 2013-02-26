@@ -23,11 +23,13 @@ ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scop
 	ftype.location = location;
 	ftype.ret = copyTypeSmart(location, atype);
 
+	/// @todo Change this sucker to buildFunction
 	auto fn = new ir.Function();
 	fn.location = location;
 	fn.type = ftype;
 	fn.name = "__arrayAlloc" ~ arrayMangledName;
 	fn.mangledName = fn.name;
+	fn.kind = ir.Function.Kind.Function;
 	fn.isWeakLink = true;
 	fn.myScope = new ir.Scope(baseScope, fn, fn.name);
 	fn._body = new ir.BlockStatement();

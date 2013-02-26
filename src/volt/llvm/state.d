@@ -97,8 +97,12 @@ public:
 			return ret.value;
 		}
 
-		if (fn.type is null)
+		if (fn.type is null) {
 			throw CompilerPanic(fn.location, "function without type");
+		}
+		if (fn.kind == ir.Function.Kind.Invalid) {
+			throw CompilerPanic(fn.location, "invalid function kind");
+		}
 
 		// The simple stuff, declare that mofo.
 		type = this.fromIr(fn.type);

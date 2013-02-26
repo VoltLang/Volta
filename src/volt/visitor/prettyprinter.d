@@ -1212,6 +1212,7 @@ public:
 		case GlobalMember:
 			wf("local ");
 			goto case Member;
+		case Invalid:
 		case Function:
 		case Member:
 			accept(fn.type.ret, this);
