@@ -185,13 +185,13 @@ void handleBoolCompare(State state, ir.BinOp bin, Value result)
 	// The frontend should have made sure that both are bools.
 	switch(bin.op) with (ir.BinOp.Type) {
 	case AndAnd:
-		result.value = LLVMBuildAnd(state.builder, left.value, right.value, "AndAnd");
+		result.value = LLVMBuildAnd(state.builder, left.value, right.value, "");
 		break;
 	case OrOr:
-		result.value = LLVMBuildOr(state.builder, left.value, right.value, "OrOr");
+		result.value = LLVMBuildOr(state.builder, left.value, right.value, "");
 		break;
 	//case XorXor:
-	//	result.value = LLVMBuildXor(state.builder, left.value, right.value, "XorXor");
+	//	result.value = LLVMBuildXor(state.builder, left.value, right.value, "");
 	//	break;
 	default:
 		throw CompilerPanic(bin.location, "error");
@@ -217,7 +217,7 @@ void handleIs(State state, ir.BinOp bin, Value result)
 
 		result.type = state.boolType;
 		result.isPointer = false;
-		result.value = LLVMBuildICmp(state.builder, pr, left.value, right.value, "icmp");
+		result.value = LLVMBuildICmp(state.builder, pr, left.value, right.value, "");
 		return;
 	}
 
@@ -228,8 +228,8 @@ void handleIs(State state, ir.BinOp bin, Value result)
 	auto rPtr = getValueFromAggregate(state, loc, right, ArrayType.ptrIndex);
 	auto rLen = getValueFromAggregate(state, loc, right, ArrayType.lengthIndex);
 
-	auto ptr = LLVMBuildICmp(state.builder, pr, lPtr, rPtr, "icmp");
-	auto len = LLVMBuildICmp(state.builder, pr, lLen, rLen, "icmp");
+	auto ptr = LLVMBuildICmp(state.builder, pr, lPtr, rPtr, "");
+	auto len = LLVMBuildICmp(state.builder, pr, lLen, rLen, "");
 
 	auto logic = bin.op == ir.BinOp.Type.Is ?
 		LLVMOpcode.And :
@@ -237,7 +237,7 @@ void handleIs(State state, ir.BinOp bin, Value result)
 
 	result.type = state.boolType;
 	result.isPointer = false;
-	result.value = LLVMBuildBinOp(state.builder, logic, ptr, len, "test");
+	result.value = LLVMBuildBinOp(state.builder, logic, ptr, len, "");
 }
 
 void handleCompare(State state, ir.BinOp bin, Value result)
@@ -312,9 +312,9 @@ void handleCompare(State state, ir.BinOp bin, Value result)
 
 	LLVMValueRef v;
 	if (pt.floating) {
-		v = LLVMBuildFCmp(state.builder, fpr, left.value, right.value, "fcmp");
+		v = LLVMBuildFCmp(state.builder, fpr, left.value, right.value, "");
 	} else {
-		v = LLVMBuildICmp(state.builder, pr, left.value, right.value, "icmp");
+		v = LLVMBuildICmp(state.builder, pr, left.value, right.value, "");
 	}
 
 	result.type = state.boolType;
@@ -412,7 +412,7 @@ void handleBinOpPointer(State state, Location loc, ir.BinOp.Type binOp,
 
 	// Either ptr or other could be result, keep that in mind.
 	result.type = ptr.type;
-	result.value = LLVMBuildGEP(state.builder, ptr.value, [other.value], "gep");
+	result.value = LLVMBuildGEP(state.builder, ptr.value, [other.value], "");
 }
 
 void handleBinOpPrimitive(State state, Location loc, ir.BinOp.Type binOp,
@@ -476,7 +476,7 @@ void handleBinOpPrimitive(State state, Location loc, ir.BinOp.Type binOp,
 
 	// Either right or left could be result, keep that in mind.
 	result.type = right.type;
-	result.value = LLVMBuildBinOp(state.builder, op, left.value, right.value, "binOp");
+	result.value = LLVMBuildBinOp(state.builder, op, left.value, right.value, "");
 }
 
 
@@ -582,7 +582,7 @@ void handleCastPrimitive(State state, Location loc, PrimitiveType newType,
 		result.value = LLVMBuildICmp(state.builder,
 			LLVMIntPredicate.NE,
 			result.value,
-			LLVMConstNull(oldType.llvmType), "boolCast");
+			LLVMConstNull(oldType.llvmType), "");
 		return; // No fallthrough.
 	} else if (newType.floating) {
 		if (oldType.signed) {
@@ -624,7 +624,7 @@ void handleCastPrimitive(State state, Location loc, PrimitiveType newType,
 		}
 	}
 
-	result.value = LLVMBuildCast(state.builder, op, result.value, newType.llvmType, "cast");
+	result.value = LLVMBuildCast(state.builder, op, result.value, newType.llvmType, "");
 }
 
 /**
@@ -637,7 +637,7 @@ void handleCastPointer(State state, Location loc, Type newType, Value result)
 	assert(!result.isPointer);
 
 	result.type = newType;
-	result.value = LLVMBuildBitCast(state.builder, result.value, newType.llvmType, "ptrCast");
+	result.value = LLVMBuildBitCast(state.builder, result.value, newType.llvmType, "");
 }
 
 /**
@@ -683,9 +683,9 @@ void handlePlusMinus(State state, ir.Unary unary, Value result)
 		return;
 
 	if (primType.floating)
-		result.value = LLVMBuildFNeg(state.builder, result.value, "neg");
+		result.value = LLVMBuildFNeg(state.builder, result.value, "");
 	else
-		result.value = LLVMBuildNeg(state.builder, result.value, "fneg");
+		result.value = LLVMBuildNeg(state.builder, result.value, "");
 }
 
 void handleNot(State state, ir.Unary unary, Value result)
@@ -696,7 +696,7 @@ void handleNot(State state, ir.Unary unary, Value result)
 		handleCast(state, unary.location, state.boolType, result);
 	}
 
-	result.value = LLVMBuildNot(state.builder, result.value, "not");
+	result.value = LLVMBuildNot(state.builder, result.value, "");
 }
 
 /*
@@ -823,7 +823,7 @@ void handleIndex(State state, ir.Postfix postfix, Value result)
 
 	makeNonPointer(state, left);
 
-	result.value = LLVMBuildGEP(state.builder, left.value, [right.value], "gep");
+	result.value = LLVMBuildGEP(state.builder, left.value, [right.value], "");
 	result.type = pt.base;
 	result.isPointer = true;
 }
@@ -915,7 +915,7 @@ void handleSliceTwo(State state, ir.Postfix postfix, Value result)
 
 	LLVMValueRef ptr, len;
 
-	ptr = LLVMBuildGEP(state.builder, left.value, [start.value], "sliceGep");
+	ptr = LLVMBuildGEP(state.builder, left.value, [start.value], "");
 
 	// Subtract start from end to get the length, which returned in end. 
 	handleBinOpNonAssign(state, postfix.location,
@@ -958,9 +958,9 @@ void handleCreateDelegate(State state, ir.Postfix postfix, Value result)
 	auto v = LLVMBuildAlloca(state.builder, dg.llvmType, "");
 
 	auto funcPtr = LLVMBuildStructGEP(
-		state.builder, v, dg.funcIndex, "dgFuncGep");
+		state.builder, v, dg.funcIndex, "");
 	auto voidPtrPtr = LLVMBuildStructGEP(
-		state.builder, v, dg.voidPtrIndex, "dgVoidPtrGep");
+		state.builder, v, dg.voidPtrIndex, "");
 
 	LLVMBuildStore(state.builder, func.value, funcPtr);
 	LLVMBuildStore(state.builder, instance.value, voidPtrPtr);
@@ -982,7 +982,7 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 
 		state.getStructRef(childAsPostfix.child, result);
 
-		llvmArgs ~= LLVMBuildBitCast(state.builder, result.value, state.voidPtrType.llvmType, "thisArg");
+		llvmArgs ~= LLVMBuildBitCast(state.builder, result.value, state.voidPtrType.llvmType, "");
 
 		state.getValue(childAsPostfix.memberFunction, result);
 
@@ -1004,11 +1004,11 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 
 		ret = dt.ret;
 
-		auto func = LLVMBuildStructGEP(state.builder, result.value, dt.funcIndex, "dgFuncGep");
-		auto voidPtr = LLVMBuildStructGEP(state.builder, result.value, dt.voidPtrIndex, "dgVoidPtrGep");
+		auto func = LLVMBuildStructGEP(state.builder, result.value, dt.funcIndex, "");
+		auto voidPtr = LLVMBuildStructGEP(state.builder, result.value, dt.voidPtrIndex, "");
 
-		func = LLVMBuildLoad(state.builder, func, "dgFuncGep");
-		voidPtr = LLVMBuildLoad(state.builder, voidPtr, "dgVoidGep");
+		func = LLVMBuildLoad(state.builder, func, "");
+		voidPtr = LLVMBuildLoad(state.builder, voidPtr, "");
 
 		llvmArgs ~= voidPtr;
 		result.value = func;
@@ -1042,18 +1042,18 @@ void handleIncDec(State state, ir.Postfix postfix, Value result)
 	state.getValueRef(postfix.child, result);
 
 	ptr = result.value;
-	value = LLVMBuildLoad(state.builder, ptr, "postfixLoad");
+	value = LLVMBuildLoad(state.builder, ptr, "");
 
 	auto ptrType = cast(PointerType)result.type;
 	auto primType = cast(PrimitiveType)result.type;
 	if (ptrType !is null) {
 		auto v = isInc ? 1 : -1;
 		auto c = LLVMConstInt(LLVMInt32TypeInContext(state.context), v, true);
-		store = LLVMBuildGEP(state.builder, value, [c], "postfixGep");
+		store = LLVMBuildGEP(state.builder, value, [c], "");
 	} else if (primType !is null) {
 		auto op = isInc ? LLVMOpcode.Add : LLVMOpcode.Sub;
 		auto c = primType.fromNumber(state, 1);
-		store = LLVMBuildBinOp(state.builder, op, value, c, "postfixBinOp");
+		store = LLVMBuildBinOp(state.builder, op, value, c, "");
 	} else {
 		throw new CompilerError(postfix.location, "unexpected type of postfix child");
 	}
@@ -1127,7 +1127,7 @@ void makeNonPointer(State state, Value result)
 	if (!result.isPointer)
 		return;
 
-	result.value = LLVMBuildLoad(state.builder, result.value, "load");
+	result.value = LLVMBuildLoad(state.builder, result.value, "");
 	result.isPointer = false;
 }
 
