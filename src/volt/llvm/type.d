@@ -457,7 +457,10 @@ public:
 public:
 	this(State state, ir.Struct irType)
 	{
-		llvmType = LLVMStructCreateNamed(state.context, irType.mangledName);
+		auto c = cast(ir.Class)irType.loweredNode;
+		auto mangled = c !is null ? c.mangledName : irType.mangledName;
+
+		llvmType = LLVMStructCreateNamed(state.context, mangled);
 		super(state, irType, true, llvmType);
 
 		/// @todo check packing.
