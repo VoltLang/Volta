@@ -1,9 +1,15 @@
 //T compiles:no
-// Ensure that immutable can't become const.
+// Ensure that immutable can't become mutable through const.
 module test_013;
 
-void foo(const(char[]))
+void bar(char[])
 {
+    return;
+}
+
+void foo(const(char[]) a)
+{
+    bar(a);
     return;
 }
 
