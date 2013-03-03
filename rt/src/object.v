@@ -68,17 +68,6 @@ class Object
 	{
 		return;
 	}
-
-	void* __castTo(TypeInfo tinfo)
-	{
-		auto list = **cast(TypeInfo[]**)this;
-		for (size_t i = 0u; i < list.length; i = i + 1u) {
-			if (list[i] is tinfo) {
-				return cast(void*) this;
-			}
-		}
-		return null;
-	}
 }
 
 extern(C) void vrt_gc_init();

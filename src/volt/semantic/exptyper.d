@@ -1446,7 +1446,7 @@ public:
 		return Continue;
 	}
 
-	/// Rewrite object casts into calls to __castTo.
+	/// Rewrite object casts into calls to vrt_handle_cast.
 	override Status enter(ref ir.Exp exp, ir.Unary unary)
 	{
 		if (unary.type is null || unary.value is null) {
@@ -1460,12 +1460,13 @@ public:
 			return Continue;
 		}
 
-		auto castToStore = lookupAsThisScope(lp, from.myScope, unary.location, "__castTo");
-		assert(castToStore.functions.length == 1);
+		auto fn = retrieveFunctionFromObject(lp, from.myScope, unary.location, "vrt_handle_cast");
+		assert(fn !is null);
 
-		auto fnref = buildExpReference(unary.location, castToStore.functions[0]);
+		auto fnref = buildExpReference(unary.location, fn, "vrt_handle_cast");
 		auto tid = buildTypeidSmart(unary.location, to);
-		unary.value = buildMemberCall(unary.location, unary.value, fnref, "__castTo", [tid]);
+		auto val = buildCastToVoidPtr(unary.location, unary.value);
+		unary.value = buildCall(unary.location, fnref, [val, cast(ir.Exp)tid]);
 
 		return Continue;
 	}
