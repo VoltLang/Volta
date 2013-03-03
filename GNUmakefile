@@ -85,7 +85,9 @@ $(OBJ_DIR)/%.$(OBJ_TYPE) : src/%.d Makefile
 
 rt/rt.bc: $(TARGET) rt/src/object.v rt/src/vrt/vmain.v rt/src/vrt/gc.v
 	@echo "  VOLT   rt/rt.bc"
-	@./$(TARGET) --no-stdlib --emit-bitcode -I rt/src -o rt/rt.bc rt/src/object.v rt/src/vrt/vmain.v rt/src/vrt/gc.v
+	@./$(TARGET) --no-stdlib --emit-bitcode -I rt/src -o rt/rt.bc \
+	rt/src/object.v rt/src/vrt/vmain.v \
+	rt/src/vrt/gc.v rt/src/vrt/clazz.v
 
 $(TARGET): $(OBJ) Makefile
 	@echo "  LD     $@"

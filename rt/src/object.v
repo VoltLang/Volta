@@ -39,13 +39,8 @@ module object;
  * // Alloc size == (void*).sizeof * 3
  */
 alias AllocDg = void* delegate(TypeInfo typeinfo, size_t count);
-
-
 local AllocDg allocDg;
 
-extern(C) AllocDg vrt_gc_get_alloc_dg();
-
-extern(C) void vrt_gc_init();
 
 struct ArrayStruct
 {
@@ -85,6 +80,10 @@ class Object
 		return null;
 	}
 }
+
+extern(C) void vrt_gc_init();
+extern(C) AllocDg vrt_gc_get_alloc_dg();
+extern(C) void* vrt_handle_cast(void* obj, TypeInfo tinfo);
 
 extern(C) {
 	/*@MangledName("memcmp")*/ int __llvm_memcmp(void*, void*, size_t);
