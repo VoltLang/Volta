@@ -318,16 +318,16 @@ Visitor.Status acceptExp(ref ir.Exp exp, ExpReplaceVisitor av)
 	}
 }
 
-Visitor.Status acceptExpReference(ref ir.Exp exp, ir.ExpReference expref, ExpReplaceVisitor av)
-{
-	return av.visit(exp, expref);
-}
-
 Visitor.Status acceptPostfix(ref ir.Exp exp, ir.Postfix postfix, ExpReplaceVisitor av)
 {
 	auto status = av.enter(exp, postfix);
 	if (status != VisitorContinue) {
 		return parentContinue(status);
+	}
+
+	// If exp has been replaced
+	if (exp !is postfix) {
+		return acceptExp(exp, av);
 	}
 
 	status = acceptExp(postfix.child, av);
@@ -350,6 +350,11 @@ Visitor.Status acceptUnary(ref ir.Exp exp, ir.Unary unary, ExpReplaceVisitor av)
 	auto status = av.enter(exp, unary);
 	if (status != VisitorContinue) {
 		return parentContinue(status);
+	}
+
+	// If exp has been replaced
+	if (exp !is unary) {
+		return acceptExp(exp, av);
 	}
 
 	if (unary.value !is null) {
@@ -376,6 +381,11 @@ Visitor.Status acceptBinOp(ref ir.Exp exp, ir.BinOp binop, ExpReplaceVisitor av)
 		return parentContinue(status);
 	}
 
+	// If exp has been replaced
+	if (exp !is binop) {
+		return acceptExp(exp, av);
+	}
+
 	status = acceptExp(binop.left, av);
 	if (status == VisitorStop) {
 		return VisitorStop;
@@ -394,6 +404,11 @@ Visitor.Status acceptTernary(ref ir.Exp exp, ir.Ternary ternary, ExpReplaceVisit
 	auto status = av.enter(exp, ternary);
 	if (status != VisitorContinue) {
 		return parentContinue(status);
+	}
+
+	// If exp has been replaced
+	if (exp !is ternary) {
+		return acceptExp(exp, av);
 	}
 
 	status = acceptExp(ternary.condition, av);
@@ -421,6 +436,11 @@ Visitor.Status acceptArrayLiteral(ref ir.Exp exp, ir.ArrayLiteral array, ExpRepl
 		return parentContinue(status);
 	}
 
+	// If exp has been replaced
+	if (exp !is array) {
+		return acceptExp(exp, av);
+	}
+
 	foreach (ref childExp; array.values) {
 		status = acceptExp(childExp, av);
 		if (status == VisitorStop) {
@@ -436,6 +456,11 @@ Visitor.Status acceptAssocArray(ref ir.Exp exp, ir.AssocArray array, ExpReplaceV
 	auto status = av.enter(exp, array);
 	if (status != VisitorContinue) {
 		return parentContinue(status);
+	}
+
+	// If exp has been replaced
+	if (exp !is array) {
+		return acceptExp(exp, av);
 	}
 
 	foreach (ref pair; array.pairs) {
@@ -457,6 +482,11 @@ Visitor.Status acceptAssert(ref ir.Exp exp, ir.Assert _assert, ExpReplaceVisitor
 	auto status = av.enter(exp, _assert);
 	if (status != VisitorContinue) {
 		return parentContinue(status);
+	}
+
+	// If exp has been replaced
+	if (exp !is _assert) {
+		return acceptExp(exp, av);
 	}
 
 	status = acceptExp(_assert.condition, av);
@@ -481,6 +511,11 @@ Visitor.Status acceptStringImport(ref ir.Exp exp, ir.StringImport strimport, Exp
 		return parentContinue(status);
 	}
 
+	// If exp has been replaced
+	if (exp !is strimport) {
+		return acceptExp(exp, av);
+	}
+
 	status = acceptExp(strimport.filename, av);
 	if (status == VisitorStop) {
 		return VisitorStop;
@@ -494,6 +529,11 @@ Visitor.Status acceptTypeid(ref ir.Exp exp, ir.Typeid ti, ExpReplaceVisitor av)
 	auto status = av.enter(exp, ti);
 	if (status != VisitorContinue) {
 		return parentContinue(status);
+	}
+
+	// If exp has been replaced
+	if (exp !is ti) {
+		return acceptExp(exp, av);
 	}
 
 	if (ti.exp !is null) {
@@ -515,6 +555,11 @@ Visitor.Status acceptIsExp(ref ir.Exp exp, ir.IsExp isExp, ExpReplaceVisitor av)
 	auto status = av.enter(exp, isExp);
 	if (status != VisitorContinue) {
 		return parentContinue(status);
+	}
+
+	// If exp has been replaced
+	if (exp !is isExp) {
+		return acceptExp(exp, av);
 	}
 
 /*
@@ -541,6 +586,11 @@ Visitor.Status acceptFunctionLiteral(ref ir.Exp exp, ir.FunctionLiteral function
 		return parentContinue(status);
 	}
 
+	// If exp has been replaced
+	if (exp !is functionLiteral) {
+		return acceptExp(exp, av);
+	}
+
 /*
 	foreach (statement; functionLiteral.block) {
 		status = accept(statement, av);
@@ -558,6 +608,11 @@ Visitor.Status acceptStructLiteral(ref ir.Exp exp, ir.StructLiteral sliteral, Ex
 	auto status = av.enter(exp, sliteral);
 	if (status != VisitorContinue) {
 		return parentContinue(status);
+	}
+
+	// If exp has been replaced
+	if (exp !is sliteral) {
+		return acceptExp(exp, av);
 	}
 
 	foreach (ref sexp; sliteral.exps) {
@@ -579,6 +634,11 @@ Visitor.Status acceptClassLiteral(ref ir.Exp exp, ir.ClassLiteral cliteral, ExpR
 		return parentContinue(status);
 	}
 
+	// If exp has been replaced
+	if (exp !is cliteral) {
+		return acceptExp(exp, av);
+	}
+
 	foreach (ref sexp; cliteral.exps) {
 		status = acceptExp(sexp, av);
 		if (status == VisitorContinueParent) {
@@ -589,6 +649,11 @@ Visitor.Status acceptClassLiteral(ref ir.Exp exp, ir.ClassLiteral cliteral, ExpR
 	}
 
 	return av.leave(exp, cliteral);
+}
+
+Visitor.Status acceptExpReference(ref ir.Exp exp, ir.ExpReference expref, ExpReplaceVisitor av)
+{
+	return av.visit(exp, expref);
 }
 
 Visitor.Status acceptConstant(ref ir.Exp exp, ir.Constant constant, ExpReplaceVisitor av)
