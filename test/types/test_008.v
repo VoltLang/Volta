@@ -1,11 +1,12 @@
-//T compiles:yes
+//T compiles:no
 // MI to scope assignment.
 module test_008;
 
+
 int main()
 {
-    int i = 42;
-    int* ip = &i;
-    scope(int*) sip = ip;
-    return 0;
+	int i = 42;
+	int* ip = &i;
+	scope(int*) sip = ip;
+	return 0;
 }
