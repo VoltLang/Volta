@@ -61,7 +61,9 @@ public:
 		if (v.storage != ir.Variable.Storage.Invalid) {
 			return Continue;
 		}
-		throw CompilerPanic(v.location, "invalid variable found in IR");
+		auto str = format("%s invalid variable found in IR",
+		                  getNodeAddressString(v));
+		throw CompilerPanic(v.location, str);
 	}
 
 	override Status enter(ir.TopLevelBlock tlb)
@@ -86,7 +88,8 @@ public:
 					return Stop;
 				break;
 			default:
-				auto str = format("invalid node '%s' in toplevel block",
+				auto str = format("%s invalid node '%s' in toplevel block",
+				                  getNodeAddressString(n),
 				                  to!string(n.nodeType));
 				throw CompilerPanic(n.location, str);
 			}
@@ -114,7 +117,8 @@ public:
 					return Stop;
 				break;
 			default:
-				auto str = format("invalid node '%s' in block statement",
+				auto str = format("(%s) invalid node '%s' in block statement",
+				                  getNodeAddressString(n),
 				                  to!string(n.nodeType));
 				throw CompilerPanic(n.location, str);
 			}
@@ -125,8 +129,9 @@ public:
 
 	override Status visit(ir.IdentifierExp ie)
 	{
-		auto emsg = format("IdentifierExp '%s' left in IR.", ie.value);
-		throw CompilerPanic(ie.location, emsg);
+		auto str = format("%s IdentifierExp '%s' left in IR.",
+		                  getNodeAddressString(ie), ie.value);
+		throw CompilerPanic(ie.location, str);
 	}
 
 	override Status leave(ir.TopLevelBlock tlb) { assert(false); }
