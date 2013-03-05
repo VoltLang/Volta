@@ -1086,11 +1086,24 @@ class ExTyper : ScopeExpReplaceVisitor, Pass
 {
 public:
 	LanguagePass lp;
+	bool enterFirstVariable;
 
 public:
 	override void transform(ir.Module m)
 	{
 		accept(m, this);
+	}
+
+	/**
+	 * For out of band checking of Variables.
+	 */
+	void transform(ir.Scope current, ir.Variable v)
+	{
+		assert(this.current is null);
+		this.current = current;
+		this.enterFirstVariable = true;
+		accept(v, this);
+		this.current = null;
 	}
 
 	override void close()
@@ -1122,6 +1135,15 @@ public:
 
 	override Status enter(ir.Variable v)
 	{
+		// This has to be done this way, because the order in
+		// which the calls in this and the visiting functions
+		// are exectuted matters.
+		if (!enterFirstVariable) {
+			lp.resolve(current, v);
+			return ContinueParent;
+		}
+		enterFirstVariable = true;
+
 		ensureResolved(lp, current, v.type);
 
 		NullExpReplaceVisitor.enter(v);

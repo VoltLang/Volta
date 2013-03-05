@@ -110,7 +110,17 @@ public:
 
 	override void resolve(ir.Scope current, ir.Variable v)
 	{
-		ensureResolved(this, current, v.type);
+		if (v.isResolved)
+			return;
+
+		auto w = mTracker.add(v, "resolving variable");
+		scope (exit)
+			w.done();
+
+		auto e = new ExTyper(this);
+		e.transform(current, v);
+
+		v.isResolved = true;
 	}
 
 	override void resolve(ir.Function fn)

@@ -89,6 +89,8 @@ public:
 	// For exported symbols.
 	Linkage linkage;
 
+	bool isResolved;   ///< Has the extyper checked this variable.
+
 	bool isWeakLink;   ///< Only for global variables.
 
 	bool isExtern; ///< Only for global variables.
