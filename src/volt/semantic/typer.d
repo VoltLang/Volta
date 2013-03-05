@@ -109,6 +109,10 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 		auto asStructLiteral = cast(ir.StructLiteral) exp;
 		assert(asStructLiteral !is null);
 		return getStructLiteralType(lp, asStructLiteral);
+	case ClassLiteral:
+		auto asClassLiteral = cast(ir.ClassLiteral) exp;
+		assert(asClassLiteral !is null);
+		return getClassLiteralType(lp, asClassLiteral);
 	default:
 		throw CompilerPanic(format("unable to type expression '%s'.", to!string(exp.nodeType)));
 	}
@@ -117,6 +121,11 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 ir.Type getStructLiteralType(LanguagePass lp, ir.StructLiteral slit)
 {
 	return slit.type;
+}
+
+ir.Type getClassLiteralType(LanguagePass lp, ir.ClassLiteral clit)
+{
+	return clit.type;
 }
 
 ir.Type getExpReferenceType(LanguagePass lp, ir.ExpReference expref)
