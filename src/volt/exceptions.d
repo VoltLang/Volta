@@ -48,6 +48,7 @@ public:
 		this.more = more;
 		this.location = loc;
 		this.hasLocation = true;
+		this.neverIgnore = neverIgnore;
 		super(format(locationFormat(), loc.toString(), message));
 	}
 
