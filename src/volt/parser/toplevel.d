@@ -114,12 +114,8 @@ body
 		case TokenType.Synchronized:
 		case TokenType.Override:
 		case TokenType.Abstract:
-		case TokenType.Auto:
-		case TokenType.Scope:
 		case TokenType.Global:
 		case TokenType.Local:
-		case TokenType.Shared:
-		case TokenType.Immutable:
 		case TokenType.Inout:
 		case TokenType.Nothrow:
 		case TokenType.Pure:
