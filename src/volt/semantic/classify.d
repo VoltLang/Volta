@@ -544,6 +544,9 @@ ir.Function[] getClassFunctions(ir.Class _class)
 /// Returns: true if child is a child of parent.
 bool inheritsFrom(ir.Class child, ir.Class parent)
 {
+	if (child is parent)
+		return false;
+
 	auto currentClass = child;
 	while (currentClass !is null) {
 		if (currentClass is parent) {

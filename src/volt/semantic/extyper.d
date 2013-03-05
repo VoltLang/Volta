@@ -295,9 +295,14 @@ void extypeAssignPrimitiveType(LanguagePass lp, ir.Scope current, ref ir.Exp exp
 
 void extypeAssignClass(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Class _class)
 {
-	auto rightClass = cast(ir.Class) getExpType(lp, exp, current);
+	auto type = getExpType(lp, exp, current);
+	assert(type !is null);
+
+	auto rightClass = cast(ir.Class) type;
 	if (rightClass is null) {
-		return;
+		auto str = format("cannot assign non-class '%s' to class '%s'",
+		                  to!string(type.nodeType), _class.name);
+		throw new CompilerError(exp.location, str);
 	}
 	lp.resolve(rightClass);
 
