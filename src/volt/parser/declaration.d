@@ -82,8 +82,7 @@ ir.Node[] reallyParseVariable(TokenStream ts, ir.Type base)
 			try {
 				d.assign = parseAssignExp(ts);
 			} catch (CompilerError e) {
-				e.neverIgnore = true;
-				throw e;
+				throw new CompilerError(e.location, e.msg, e, true);
 			}
 		}
 		decls ~= d;

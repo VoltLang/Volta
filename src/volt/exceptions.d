@@ -85,6 +85,11 @@ class CompilerError : CompilerException
 	{
 		super(loc, message, more, false);
 	}
+
+	this(Location loc, string message, CompilerError more, bool neverIgnore)
+	{
+		super(loc, message, more, neverIgnore);
+	}
 }
 
 class MissingSemicolonError : CompilerError
