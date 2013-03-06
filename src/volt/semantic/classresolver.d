@@ -50,22 +50,31 @@ bool rewriteSuperIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, LanguageP
 		return false;
 	}
 
+	ir.Scope dummyScope;
+	ir.Class _class;
+	if (!getFirstClass(_scope, dummyScope, _class)) {
+		throw new CompilerError(ident.location, "super only valid inside classes.");
+	}
+	_class = _class.parentClass;
+	assert(_class !is null);
+
+
 	if (p.op == ir.Postfix.Op.Call) {
-		return rewriteSuperCallIfNeeded(e, p, _scope, lp, ident);
+		return rewriteSuperCallIfNeeded(e, p, _scope, lp, _class);
 	} else if (p.op == ir.Postfix.Op.Identifier) {
-		return rewriteSuperIdentifierIfNeeded(e, p, _scope, lp, ident);
+		return rewriteSuperIdentifierIfNeeded(e, p, _scope, lp, _class);
 	} else {
 		throw new CompilerError(e.location, "invalid use of super.");
 	}
 }
 
-bool rewriteSuperIdentifierIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, LanguagePass lp, ir.IdentifierExp ident)
+bool rewriteSuperIdentifierIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, LanguagePass lp, ir.Class _class)
 {
 	assert(p.op == ir.Postfix.Op.Identifier);
 	assert(false);
 }
 
-bool rewriteSuperCallIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, LanguagePass lp, ir.IdentifierExp ident)
+bool rewriteSuperCallIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, LanguagePass lp, ir.Class _class)
 {
 	assert(p.op == ir.Postfix.Op.Call);
 
@@ -75,20 +84,12 @@ bool rewriteSuperCallIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, Langu
 	}
 	asFunction.explicitCallToSuper = true;
 
-	ir.Scope dummyScope;
-	ir.Class _class;
-	if (!getFirstClass(_scope, dummyScope, _class)) {
-		throw new CompilerError(ident.location, "super only valid inside classes.");
-	}
-	_class = _class.parentClass;
-	assert(_class !is null);
-
 	auto thisVar = getThisVar(p.location, lp, _scope);
 	auto thisRef = buildExpReference(thisVar.location, thisVar, "this");
 
 	assert(_class.userConstructors.length == 1);
 
-	p.child = buildCreateDelegate(ident.location, thisRef, buildExpReference(ident.location, _class.userConstructors[0], _class.userConstructors[0].name));
+	p.child = buildCreateDelegate(p.location, thisRef, buildExpReference(p.location, _class.userConstructors[0], _class.userConstructors[0].name));
 	return true;
 }
 
