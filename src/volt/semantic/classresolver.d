@@ -41,10 +41,6 @@ void resolveClass(LanguagePass lp, ir.Class c)
 
 bool rewriteSuperIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, LanguagePass lp)
 {
-	if (p.op != ir.Postfix.Op.Call) {
-		return false;
-	}
-
 	auto ident = cast(ir.IdentifierExp) p.child;
 	if (ident is null) {
 		return false;
@@ -53,6 +49,25 @@ bool rewriteSuperIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, LanguageP
 	if (ident.value != "super") {
 		return false;
 	}
+
+	if (p.op == ir.Postfix.Op.Call) {
+		return rewriteSuperCallIfNeeded(e, p, _scope, lp, ident);
+	} else if (p.op == ir.Postfix.Op.Identifier) {
+		return rewriteSuperIdentifierIfNeeded(e, p, _scope, lp, ident);
+	} else {
+		throw new CompilerError(e.location, "invalid use of super.");
+	}
+}
+
+bool rewriteSuperIdentifierIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, LanguagePass lp, ir.IdentifierExp ident)
+{
+	assert(p.op == ir.Postfix.Op.Identifier);
+	assert(false);
+}
+
+bool rewriteSuperCallIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, LanguagePass lp, ir.IdentifierExp ident)
+{
+	assert(p.op == ir.Postfix.Op.Call);
 
 	auto asFunction = cast(ir.Function) _scope.node;
 	if (asFunction is null) {
