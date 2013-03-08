@@ -557,6 +557,15 @@ bool inheritsFrom(ir.Class child, ir.Class parent)
 	return false;
 }
 
+bool isOrInheritsFrom(ir.Class a, ir.Class b)
+{
+	if (a is b) {
+		return true;
+	} else {
+		return inheritsFrom(a, b);
+	}
+}
+
 string[] getParentScopeNames(ir.Scope _scope)
 {
 	string[] backwardsNames;
