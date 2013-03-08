@@ -72,7 +72,9 @@ bool rewriteSuperIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, LanguageP
 bool rewriteSuperIdentifierIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, LanguagePass lp, ir.Class _class)
 {
 	assert(p.op == ir.Postfix.Op.Identifier);
-	assert(false);
+	auto thisVar = getThisVar(p.location, lp, _scope);
+	p.child = buildCastSmart(p.location, _class, buildExpReference(p.location, thisVar, "this"));
+	return true;
 }
 
 bool rewriteSuperCallIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, LanguagePass lp, ir.Class _class)
