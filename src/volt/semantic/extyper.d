@@ -852,8 +852,13 @@ void extypePostfixIdentifier(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 		}
 
 		final switch(store.kind) with (ir.Store.Kind) {
-		case Scope:
 		case Type:
+			if (handleClassTypePostfixIfNeeded(lp, current, postfix, cast(ir.Type) store.node)) {
+				return;
+			} else {
+				goto case Scope;
+			}
+		case Scope:
 			_scope = getScopeFromStore(store);
 			if (_scope is null)
 				throw CompilerPanic(loc, "missing scope");

@@ -11,6 +11,7 @@ import volt.exceptions;
 
 import volt.token.location;
 
+import volt.semantic.classify;
 import volt.semantic.mangle;
 import volt.semantic.lookup;
 import volt.semantic.util;
@@ -299,4 +300,29 @@ void emitVtableVariable(LanguagePass lp, ir.Class _class)
 	_class.vtableVariable.assign = assign;
 	_class.members.nodes ~= _class.vtableVariable;
 	_class.myScope.addValue(_class.vtableVariable, _class.vtableVariable.name);
+}
+
+/**
+ * Handle things like 'Object.val = 3;'.
+ */
+bool handleClassTypePostfixIfNeeded(LanguagePass lp, ir.Scope current, ir.Postfix exp, ir.Type referredType)
+{
+	auto expressionClass = cast(ir.Class) referredType;
+	if (expressionClass is null) {
+		return false;
+	}
+
+	auto _this = getThisVar(exp.location, lp, current);
+	auto tr = cast(ir.TypeReference) _this.type;
+	if (tr is null) return false;
+	auto thisClass = cast(ir.Class) tr.type;
+	if (thisClass is null) return false;
+
+	if (!thisClass.isOrInheritsFrom(expressionClass)) {
+		throw new CompilerError(exp.location, format("this is not an instance of '%s'", expressionClass.name));
+	}
+
+	exp.child = buildCastSmart(exp.child.location, expressionClass, buildExpReference(_this.location, _this, "this"));
+
+	return true;
 }
