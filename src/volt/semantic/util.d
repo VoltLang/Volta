@@ -2,6 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.util;
 
+import std.algorithm : sort;
+import std.array : array;
 import std.string : format;
 
 import ir = volt.ir.ir;
@@ -12,6 +14,7 @@ import volt.ir.copy;
 import volt.exceptions;
 import volt.interfaces;
 import volt.token.location;
+import volt.semantic.classify;
 import volt.semantic.lookup;
 import volt.semantic.typer : getExpType;
 import volt.semantic.ctfe;
@@ -162,9 +165,9 @@ ir.Store ensureResolved(LanguagePass lp, ir.Store s)
 		lp.resolve(s.parent, var);
 		return s;
 	case Function:
-		assert(s.functions.length == 1);
-		auto fn = cast(ir.Function)s.functions[0];
-		lp.resolve(fn);
+		foreach (fn; s.functions) {
+			lp.resolve(fn);
+		}
 		return s;
 	case EnumDeclaration:
 		auto ed = cast(ir.EnumDeclaration)s.node;

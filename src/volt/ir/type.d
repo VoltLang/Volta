@@ -297,6 +297,30 @@ public:
 }
 
 /**
+ * Exists as a proxy for a FunctionSet.
+ *
+ * The reason this exists is for a couple of reasons.
+ * Firstly, and mainly, if we look up a name and get
+ * back a set of functions, the type look up has no
+ * way of selecting the function at that time (consider
+ * `int function(int, string) = foo;` where foo is an overloaded
+ * function).
+ *
+ * Secondly, when a single function is retrieved
+ * no function set or assorted types are returned,
+ * so the extyper can use the presence of a FunctionSetType
+ * as meaning "overloaded function" without issue.
+ */
+class FunctionSetType : Type
+{
+public:
+	FunctionSet set;
+
+public:
+	this() { super(NodeType.FunctionSetType); }
+}
+
+/**
  * A FunctionType represents the form of a function, and defines
  * how it is called. It has a return type and a number of parameters.
  *

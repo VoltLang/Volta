@@ -39,7 +39,8 @@ abstract class Declaration : Node
 	enum Kind {
 		Function = NodeType.Function,
 		Variable = NodeType.Variable,
-		EnumDeclaration = NodeType.EnumDeclaration
+		EnumDeclaration = NodeType.EnumDeclaration,
+		FunctionSet = NodeType.FunctionSet,
 	}
 	Attribute[] userAttrs;
 
@@ -262,4 +263,41 @@ class EnumDeclaration : Declaration
 
 public:
 	this() { super(NodeType.EnumDeclaration); }
+}
+
+/**
+ * Represents multiple functions associated with a single name.
+ *
+ * Contains the ExpReference that this set is associated with
+ * so that it can be transparently updated to point at the
+ * selected function.
+ */
+class FunctionSet : Declaration
+{
+public:
+	Function[] functions;
+	ExpReference reference;
+
+public:
+	this() { super(NodeType.FunctionSet); }
+
+	FunctionSetType type() @property
+	{
+		auto t = new FunctionSetType();
+		t.location = location;
+		t.set = this;
+		return t;
+	}
+
+	/**
+	 * Update reference to indicate function set has been resolved.
+	 * Returns the function passed to it.
+	 */
+	Function resolved(Function fn)
+	{
+		reference.decl = fn;
+		functions = null;
+		reference = null;
+		return fn;
+	}
 }

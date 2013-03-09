@@ -784,3 +784,30 @@ ir.Class getClass(ir.Type t)
 ir.Unary buildCastSmart(ir.Type type, ir.Exp exp) { return buildCastSmart(exp.location, type, exp); }
 ir.Unary buildAddrOf(ir.Exp exp) { return buildAddrOf(exp.location, exp); }
 ir.Unary buildCastToBool(ir.Exp exp) { return buildCastToBool(exp.location, exp); }
+
+ir.Type buildSetType(Location loc, ir.Function[] functions)
+{
+	if (functions.length == 1) {
+		return functions[0].type;
+	}
+
+	auto set = new ir.FunctionSetType();
+	set.location = loc;
+	set.set = cast(ir.FunctionSet) buildSet(loc, functions);
+	assert(set.set !is null);
+	return set;
+}
+
+ir.Declaration buildSet(Location loc, ir.Function[] functions)
+{
+	if (functions.length == 1) {
+		return functions[0];
+	}
+
+	auto set = new ir.FunctionSet();
+	set.location = loc;
+	foreach (fn; functions) {
+		set.functions ~= fn;
+	}
+	return set;
+}

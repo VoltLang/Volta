@@ -65,6 +65,8 @@ enum NodeType
 	AAPair,
 	FunctionType,
 	DelegateType,
+	FunctionSetType,
+	FunctionSet,
 	StorageType,
 	Variable,
 	Alias,
@@ -299,6 +301,8 @@ string nodeToString(NodeType nodeType)
 	case ConditionTopLevel: return "ConditionTopLevel";
 	case FunctionDecl: return "FunctionDecl";
 	case FunctionBody: return "FunctionBody";
+	case FunctionSetType: return "FunctionSetType";
+	case FunctionSet: return "FunctionSet";
 	case PrimitiveType: return "PrimitiveType";
 	case TypeReference: return "TypeReference";
 	case PointerType: return "PointerType";

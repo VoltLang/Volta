@@ -184,6 +184,8 @@ ir.Node copyNode(ir.Node n)
 	case StructLiteral:
 	case ClassLiteral:
 	case EnumDeclaration:
+	case FunctionSet:
+	case FunctionSetType:
 		goto case Invalid;
 	}
 }

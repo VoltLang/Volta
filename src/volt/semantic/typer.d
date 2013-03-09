@@ -14,6 +14,8 @@ import volt.interfaces;
 import volt.token.location;
 import volt.semantic.classify;
 import volt.semantic.lookup;
+import volt.semantic.util;
+import volt.semantic.overload;
 
 /// Look up a Variable and return its type.
 ir.Type declTypeLookup(Location loc, LanguagePass lp, ir.Scope _scope, string name)
@@ -23,9 +25,7 @@ ir.Type declTypeLookup(Location loc, LanguagePass lp, ir.Scope _scope, string na
 		throw new CompilerError(loc, format("undefined identifier '%s'.", name));
 	}
 	if (store.kind == ir.Store.Kind.Function) {
-		/// @todo Overloading.
-		assert(store.functions.length == 1);
-		return store.functions[0].type;
+		return buildSetType(loc, store.functions);
 	}
 
 	if (store.kind == ir.Store.Kind.Scope) {
@@ -173,6 +173,11 @@ ir.Type getExpReferenceType(LanguagePass lp, ir.ExpReference expref)
 	auto ed = cast(ir.EnumDeclaration) expref.decl;
 	if (ed !is null) {
 		return ed.type;
+	}
+
+	auto fnset = cast(ir.FunctionSet) expref.decl;
+	if (fnset !is null) {
+		return fnset.type;
 	}
 
 	throw CompilerPanic(expref.location, "unable to type expression reference.");
@@ -465,8 +470,7 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 		assert(asDecl !is null);
 		return asDecl.type;
 	} else if (store.kind == ir.Store.Kind.Function) {
-		assert(store.functions.length == 1);
-		return store.functions[$-1].type;
+		return buildSetType(postfix.location, store.functions);
 	} else if (store.kind == ir.Store.Kind.EnumDeclaration) {
 		auto asEnumDecl = cast(ir.EnumDeclaration) store.node;
 		return asEnumDecl.type;
@@ -551,12 +555,20 @@ ir.Type getPostfixCallType(LanguagePass lp, ir.Postfix postfix, ir.Scope current
 {
 	auto type = getExpType(lp, postfix.child, currentScope);
 
-	auto callable = cast(ir.CallableType) type;
-	if (callable is null) {
+	ir.CallableType ftype;
+	auto set = cast(ir.FunctionSetType) type;
+	if (set !is null) {
+		auto fn = selectFunction(lp, currentScope, set.set, postfix.arguments, postfix.location);
+		ftype = fn.type;
+	} else {
+		ftype = cast(ir.CallableType) type;
+	}
+
+	if (ftype is null) {
 		throw new CompilerError(postfix.location, "can only call functions and delegates.");
 	}
 
-	return callable.ret;
+	return ftype.ret;
 }
 
 ir.Type getTernaryType(LanguagePass lp, ir.Ternary ternary, ir.Scope currentScope)

@@ -22,6 +22,7 @@ import volt.semantic.lookup;
 import volt.semantic.typer;
 import volt.semantic.util;
 import volt.semantic.ctfe;
+import volt.semantic.overload;
 
 
 /**
@@ -193,6 +194,9 @@ void extypeAssignStorageType(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 {
 	auto type = getExpType(lp, exp, current);
 	if (storage.base is null) {
+		if (type.nodeType == ir.NodeType.FunctionSetType) {
+			throw new CompilerError(exp.location, "cannot infer type from overloaded function.");
+		}
 		storage.base = copyTypeSmart(exp.location, type);
 	}
 
@@ -328,6 +332,25 @@ void extypeAssignEnum(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Enum
 	extypeAssignDispatch(lp, current, exp, e.base);
 }
 
+void extypeAssignCallableType(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.CallableType ctype)
+{
+	auto rtype = getExpType(lp, exp, current);
+	if (typesEqual(ctype, rtype)) {
+		return;
+	}
+	if (rtype.nodeType == ir.NodeType.FunctionSetType) {
+		auto fset = cast(ir.FunctionSetType) rtype;
+		auto fn = selectFunction(lp, fset.set, ctype.params, exp.location);
+		exp = buildExpReference(exp.location, fn, fn.name);
+		extypeAssignCallableType(lp, current, exp, ctype);
+		return;
+	}
+	string emsg = format("can not assign '%s' to '%s'",
+		to!string(rtype.nodeType),
+		to!string(ctype.nodeType));
+	throw new CompilerError(exp.location, emsg);
+}
+
 void extypeAssignDispatch(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Type type)
 {
 	switch (type.nodeType) {
@@ -355,9 +378,12 @@ void extypeAssignDispatch(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.
 		auto e = cast(ir.Enum) type;
 		extypeAssignEnum(lp, current, exp, e);
 		break;
-	case ir.NodeType.ArrayType:
 	case ir.NodeType.FunctionType:
 	case ir.NodeType.DelegateType:
+		auto ctype = cast(ir.CallableType) type;
+		extypeAssignCallableType(lp, current, exp, ctype);
+		break;
+	case ir.NodeType.ArrayType:
 	case ir.NodeType.Struct:
 		auto rtype = getExpType(lp, exp, current);
 		if (typesEqual(type, rtype)) {
@@ -439,14 +465,10 @@ void extypeIdentifierExp(LanguagePass lp, ir.Scope current, ref ir.Exp e, ir.Ide
 		e = _ref;
 		return;
 	case Function:
-		if (store.functions.length != 1)
-			throw CompilerPanic(i.location, "can not take function pointers from overloaded functions");
-
-		/// @todo Figure out if this is a delegate or not.
-		auto fn = cast(ir.Function) store.functions[0];
-		assert(fn !is null);
-		_ref.decl = fn;
+		_ref.decl = buildSet(i.location, store.functions);
 		e = _ref;
+		auto fset = cast(ir.FunctionSet) _ref.decl;
+		if (fset !is null) fset.reference = _ref;
 		return;
 	case EnumDeclaration:
 		auto ed = cast(ir.EnumDeclaration) store.node;
@@ -518,9 +540,22 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 	}
 
 	auto type = getExpType(lp, postfix.child, current);
-	auto asFunctionType = cast(ir.CallableType) type;
-	if (asFunctionType is null) {
-		throw new CompilerError(postfix.location, format("tried to call uncallable type."));
+
+	ir.CallableType asFunctionType;
+	auto asFunctionSet = cast(ir.FunctionSetType) type;
+	if (asFunctionSet !is null) {
+		auto eref = cast(ir.ExpReference) postfix.child;
+		assert(eref !is null);
+		auto fn = selectFunction(lp, current, asFunctionSet.set, postfix.arguments, postfix.location);
+		eref.decl = fn;
+		auto fset = cast(ir.FunctionSet) fn;
+		if (fset !is null) fset.reference = eref;
+		asFunctionType = fn.type;
+	} else {
+		asFunctionType = cast(ir.CallableType) type;
+		if (asFunctionType is null) {
+			throw new CompilerError(postfix.location, "tried to call uncallable type.");
+		}
 	}
 
 	if (asFunctionType.isScope && postfix.child.nodeType == ir.NodeType.Postfix) {
@@ -947,8 +982,13 @@ void handleCastTo(LanguagePass lp, ir.Scope current, ir.Unary unary)
 		return;
 	}
 
+	auto type = getExpType(lp, unary.value, current);
+	if (type.nodeType == ir.NodeType.FunctionSetType) {
+		throw new CompilerError(unary.location, "cannot cast overloaded function.");
+	}
+
 	auto to = getClass(unary.type);
-	auto from = getClass(getExpType(lp, unary.value, current));
+	auto from = getClass(type);
 
 	if (to is null || from is null || to is from) {
 		return;
