@@ -346,7 +346,14 @@ void extypeAssignDispatch(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.
 	case ir.NodeType.FunctionType:
 	case ir.NodeType.DelegateType:
 	case ir.NodeType.Struct:
-		break;
+		auto rtype = getExpType(lp, exp, current);
+		if (typesEqual(type, rtype)) {
+			return;
+		}
+		string emsg = format("can not assign '%s' to '%s'",
+			to!string(rtype.nodeType),
+			to!string(type.nodeType));
+		throw new CompilerError(exp.location, emsg);
 	default:
 		string emsg = format("unhandled extypeAssign type '%s'", to!string(type.nodeType));
 		throw CompilerPanic(exp.location, emsg);
