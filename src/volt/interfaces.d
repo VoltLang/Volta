@@ -138,7 +138,7 @@ public:
 	abstract void gather(ir.Scope current, ir.BlockStatement bs);
 
 	/**
-	 * Resolves a Variable making it usable externaly,
+	 * Resolves a Variable making it usable externaly.
 	 *
 	 * @throws CompilerError on failure to resolve variable.
 	 */
@@ -186,6 +186,20 @@ public:
 	 * Resovles a UserAttribute, done on lookup of it.
 	 */
 	abstract void resolve(ir.UserAttribute au);
+
+	/**
+	 * Resolves a Enum making it usable externaly.
+	 *
+	 * @throws CompilerError on failure to resolve the enum.
+	 */
+	abstract void resolve(ir.Enum e);
+
+	/**
+	 * Resolves a EnumDeclaration setting its value.
+	 *
+	 * @throws CompilerError on failure to resolve the enum value.
+	 */
+	abstract void resolve(ir.Scope current, ir.EnumDeclaration ed);
 
 	/**
 	 * Actualize a Struct, making sure all its fields and methods

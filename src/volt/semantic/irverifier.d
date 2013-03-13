@@ -84,6 +84,7 @@ public:
 			case MixinTemplate:
 			case MixinStatement:
 			case UserAttribute:
+			case EnumDeclaration:
 				auto s = accept(n, this);
 				if (s == Stop)
 					return Stop;

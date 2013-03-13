@@ -170,6 +170,21 @@ public:
 		// Nothing to do here.
 	}
 
+	override void resolve(ir.Enum e)
+	{
+		if (e.resolved)
+			return;
+
+		ensureResolved(this, e.myScope.parent, e.base);
+		e.resolved = true;
+	}
+
+	override void resolve(ir.Scope current, ir.EnumDeclaration ed)
+	{
+		auto e = new ExTyper(this);
+		e.transform(current, ed);
+	}
+
 	override void actualize(ir.Struct c)
 	{
 		// Nothing to do here.

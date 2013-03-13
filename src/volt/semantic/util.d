@@ -5,6 +5,7 @@ module volt.semantic.util;
 import std.string : format;
 
 import ir = volt.ir.ir;
+import volt.ir.copy;
 import volt.ir.util;
 import volt.ir.copy;
 
@@ -13,6 +14,8 @@ import volt.interfaces;
 import volt.token.location;
 import volt.semantic.lookup;
 import volt.semantic.typer : getExpType;
+import volt.semantic.ctfe;
+import volt.semantic.classify;
 
 
 /// If e is a reference to a no-arg property function, turn it into a call.
@@ -110,34 +113,80 @@ void replaceVarArgsIfNeeded(LanguagePass lp, ir.Function fn)
 	}
 }
 
+void ensureResolved(LanguagePass lp, ir.Scope current, ir.EnumDeclaration ed)
+{
+	ir.EnumDeclaration[] edStack;
+	ir.Exp prevExp;
+
+	edStack ~= ed;
+	while (edStack[$-1].prevEnum !is null) {
+		edStack ~= edStack[$-1].prevEnum;
+	}
+
+	while (edStack.length > 0) {
+		edStack[$-1].type = copyTypeSmart(edStack[$-1].location, edStack[$-1].type);
+		if (edStack[$-1].assign is null && prevExp is null) {
+			edStack[$-1].assign = prevExp = buildConstantInt(edStack[$-1].location, 0);
+		}
+
+		if (edStack[$-1].assign !is null) {
+			edStack[$-1].assign = prevExp = evaluate(lp, current, edStack[$-1].assign);
+		} else {
+			auto loc = edStack[$-1].location;
+			auto prevType = getExpType(lp, prevExp, current);
+			if (!isIntegral(prevType)) {
+				throw new CompilerError(loc, "only integral types can be auto incremented.");
+			}
+
+			edStack[$-1].assign = prevExp = evaluate(lp, current, buildAdd(loc, copyExp(prevExp), buildConstantInt(loc, 1)));
+		}
+		assert(prevExp !is null);
+		edStack = edStack[0 .. $-1];
+	}
+}
+
 /**
  * Ensures that a Store is a resolved alias.
  */
 ir.Store ensureResolved(LanguagePass lp, ir.Store s)
 {
-	if (s.kind == ir.Store.Kind.Alias) {
+	final switch (s.kind) with (ir.Store.Kind) {
+	case Alias:
 		lp.resolve(s);
 		while (s.myAlias !is null) {
 			s = s.myAlias;
 		}
 		return s;
-	} else if (s.kind == ir.Store.Kind.Value) {
+	case Value:
 		auto var = cast(ir.Variable)s.node;
 		lp.resolve(s.parent, var);
-	} else if (s.kind == ir.Store.Kind.Function) {
+		return s;
+	case Function:
 		assert(s.functions.length == 1);
 		auto fn = cast(ir.Function)s.functions[0];
 		lp.resolve(fn);
-	} else if (s.kind == ir.Store.Kind.Type) {
+		return s;
+	case EnumDeclaration:
+		auto ed = cast(ir.EnumDeclaration)s.node;
+		assert(ed !is null);
+		lp.resolve(s.parent, ed);
+		return s;
+	case Type:
 		if (s.node.nodeType == ir.NodeType.Class) {
 			auto c = cast(ir.Class)s.node;
 			lp.resolve(c);
 		} else if (s.node.nodeType == ir.NodeType.Struct) {
 			auto st = cast(ir.Struct)s.node;
 			lp.resolve(st);
+		} else if (s.node.nodeType == ir.NodeType.Enum) {
+			auto st = cast(ir.Enum)s.node;
+			lp.resolve(st);
 		}
+		return s;
+	case Scope:
+	case Template:
+		return s;
 	}
-	return s;
 }
 
 /**
@@ -182,6 +231,15 @@ void ensureResolved(LanguagePass lp, ir.Scope current, ir.Type type)
 	case TypeReference:
 		auto tr = cast(ir.TypeReference)type;
 		return lp.resolve(current, tr);
+	case Enum:
+		auto e = cast(ir.Enum)type;
+		if (e.base !is null) {
+			ensureResolved(lp, current, e.base);
+		}
+		foreach (d; e.members) {
+			ensureResolved(lp, current, d);
+		}
+		return;
 	case Class:
 	case Struct:
 	case TypeOf:

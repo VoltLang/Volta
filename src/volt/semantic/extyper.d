@@ -8,6 +8,7 @@ import std.string : format;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
+import volt.ir.copy;
 
 import volt.exceptions;
 import volt.interfaces;
@@ -20,6 +21,7 @@ import volt.semantic.classresolver;
 import volt.semantic.lookup;
 import volt.semantic.typer;
 import volt.semantic.util;
+import volt.semantic.ctfe;
 
 
 /**
@@ -320,6 +322,12 @@ void extypeAssignClass(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Cla
 	}
 }
 
+void extypeAssignEnum(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Enum e)
+{
+	// TODO: this is wrong!
+	extypeAssignDispatch(lp, current, exp, e.base);
+}
+
 void extypeAssignDispatch(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Type type)
 {
 	switch (type.nodeType) {
@@ -342,6 +350,10 @@ void extypeAssignDispatch(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.
 	case ir.NodeType.Class:
 		auto _class = cast(ir.Class) type;
 		extypeAssignClass(lp, current, exp, _class);
+		break;
+	case ir.NodeType.Enum:
+		auto e = cast(ir.Enum) type;
+		extypeAssignEnum(lp, current, exp, e);
 		break;
 	case ir.NodeType.ArrayType:
 	case ir.NodeType.FunctionType:
@@ -419,13 +431,14 @@ void extypeIdentifierExp(LanguagePass lp, ir.Scope current, ref ir.Exp e, ir.Ide
 	_ref.idents ~= i.value;
 	_ref.location = i.location;
 
-	if (store.kind == ir.Store.Kind.Value) {
+	final switch (store.kind) with (ir.Store.Kind) {
+	case Value:
 		auto var = cast(ir.Variable) store.node;
 		assert(var !is null);
 		_ref.decl = var;
 		e = _ref;
 		return;
-	} else if (store.kind == ir.Store.Kind.Function) {
+	case Function:
 		if (store.functions.length != 1)
 			throw CompilerPanic(i.location, "can not take function pointers from overloaded functions");
 
@@ -435,13 +448,19 @@ void extypeIdentifierExp(LanguagePass lp, ir.Scope current, ref ir.Exp e, ir.Ide
 		_ref.decl = fn;
 		e = _ref;
 		return;
-	} else if (store.kind == ir.Store.Kind.Template) {
-		throw new CompilerError(i.location, "template used as a value");
-	} else if (store.kind == ir.Store.Kind.Type) {
+	case EnumDeclaration:
+		auto ed = cast(ir.EnumDeclaration) store.node;
+		assert(ed !is null);
+		assert(ed.assign !is null);
+		e = copyExp(ed.assign);
 		return;
+	case Template:
+		throw new CompilerError(i.location, "template used as a value");
+	case Type:
+	case Alias:
+	case Scope:
+		throw CompilerPanic(i.location, format("unhandled identifier type '%s'.", i.value));
 	}
-
-	throw CompilerPanic(i.location, format("unhandled identifier type '%s'.", i.value));
 }
 
 void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Postfix postfix)
@@ -883,12 +902,21 @@ void extypePostfixIdentifier(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 			idents = [ident] ~ idents;
 
 			break;
-		case Template:
-			throw new CompilerError(loc, "template used as a type or value");
+		case EnumDeclaration:
+			auto ed = cast(ir.EnumDeclaration)store.node;
+
+			// If we want aggregate enums this needs to be fixed.
+			assert(postfixIdents.length == 0);
+
+			exp = copyExp(ed.assign);
+			return;
+
 		case Value:
 		case Function:
 			filloutReference(store);
 			break;
+		case Template:
+			throw new CompilerError(loc, "template used as a type or value");
 		case Alias:
 			throw CompilerPanic(loc, "alias scope");
 		}
@@ -1144,6 +1172,69 @@ public:
 		}
 	}
 
+	void transform(ir.Scope current, ir.EnumDeclaration ed)
+	{
+		if (ed.resolved) {
+			return;
+		}
+
+		assert(this.current is null);
+		this.current = current;
+		scope (exit) {
+			this.current = null;
+		}
+
+		ir.EnumDeclaration[] edStack;
+		ir.Exp prevExp;
+
+		do {
+			edStack ~= ed;
+			ed = ed.prevEnum;
+			if (ed is null) {
+				break;
+			}
+
+			if (ed.resolved) {
+				prevExp = ed.assign;
+				break;
+			}
+		} while (true);
+
+		foreach_reverse (e; edStack) {
+			resolve(e, prevExp);
+			prevExp = e.assign;
+		}
+	}
+
+	void resolve(ir.EnumDeclaration ed, ir.Exp prevExp)
+	{
+		ensureResolved(lp, current, ed.type);
+
+		if (ed.assign is null) {
+			if (prevExp is null) {
+				ed.assign = buildConstantInt(ed.location, 0);
+			} else {
+				auto loc = ed.location;
+				auto prevType = getExpType(lp, prevExp, current);
+				if (!isIntegral(prevType)) {
+					throw new CompilerError(loc, "only integral types can be auto incremented.");
+				}
+
+				ed.assign = evaluate(lp, current, buildAdd(loc, copyExp(prevExp), buildConstantInt(loc, 1)));
+			}
+		} else {
+			acceptExp(ed.assign, this);
+			accept(ed.assign, this);
+			ed.assign = evaluate(lp, current, ed.assign);
+		}
+
+		extypeAssign(lp, current, ed.assign, ed.type);
+		replaceStorageIfNeeded(ed.type);
+		accept(ed.type, this);
+
+		ed.resolved = true;
+	}
+
 	override void close()
 	{
 	}
@@ -1152,8 +1243,11 @@ public:
 	{
 		extypeIdentifierExp(lp, current, exp, ie);
 		auto eref = cast(ir.ExpReference) exp;
-		assert(eref !is null);
-		extypeExpReference(lp, current, exp, eref);
+		if (eref !is null) {
+			extypeExpReference(lp, current, exp, eref);
+		} else {
+			assert(cast(ir.Constant)exp !is null);
+		}
 		return Continue;
 	}
 
@@ -1171,10 +1265,23 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.Enum e)
+	{
+		lp.resolve(e);
+		super.enter(e);
+		return Continue;
+	}
+
 	override Status enter(ir.UserAttribute ua)
 	{
 		lp.actualize(ua);
 		// Everything is done by actualize.
+		return ContinueParent;
+	}
+
+	override Status enter(ir.EnumDeclaration ed)
+	{
+		lp.resolve(current, ed);
 		return ContinueParent;
 	}
 

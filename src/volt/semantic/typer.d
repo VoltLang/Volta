@@ -36,10 +36,19 @@ ir.Type declTypeLookup(Location loc, LanguagePass lp, ir.Scope _scope, string na
 	}
 
 	auto d = cast(ir.Variable) store.node;
-	if (d is null) {
-		throw new CompilerError(loc, format("%s used as value.", name));
+	if (d !is null) {
+		return d.type;
 	}
-	return d.type;
+	auto ed = cast(ir.EnumDeclaration) store.node;
+	if (ed !is null) {
+		return ed.type;
+	}
+	auto e = cast(ir.Enum) store.node;
+	if (e !is null) {
+		return e;
+	}
+
+	throw new CompilerError(loc, format("%s used as value.", name));
 }
 
 /**
@@ -159,6 +168,11 @@ ir.Type getExpReferenceType(LanguagePass lp, ir.ExpReference expref)
 	auto fn = cast(ir.Function) expref.decl;
 	if (fn !is null) {
 		return fn.type;
+	}
+
+	auto ed = cast(ir.EnumDeclaration) expref.decl;
+	if (ed !is null) {
+		return ed.type;
 	}
 
 	throw CompilerPanic(expref.location, "unable to type expression reference.");
@@ -390,6 +404,11 @@ void retrieveScope(LanguagePass lp, ir.Node tt, ir.Postfix postfix, ref ir.Scope
 		auto asStorage = cast(ir.StorageType) tt;
 		assert(asStorage !is null);
 		retrieveScope(lp, asStorage.base, postfix, _scope, _class, emsg);
+	} else if (tt.nodeType == ir.NodeType.Enum) {
+		auto asEnum = cast(ir.Enum) tt;
+		assert(asEnum !is null);
+		_scope = asEnum.myScope;
+		emsg = format("enum '%s' has no member '%s'.", asEnum.name, postfix.identifier.value);
 	} else {
 		assert(false, to!string(tt.nodeType));
 	}
@@ -448,6 +467,9 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 	} else if (store.kind == ir.Store.Kind.Function) {
 		assert(store.functions.length == 1);
 		return store.functions[$-1].type;
+	} else if (store.kind == ir.Store.Kind.EnumDeclaration) {
+		auto asEnumDecl = cast(ir.EnumDeclaration) store.node;
+		return asEnumDecl.type;
 	} else {
 		throw CompilerPanic(postfix.location, "unhandled postfix type retrieval.");
 	}

@@ -273,6 +273,15 @@ bool effectivelyConst(ir.Type type)
 	with (ir.StorageType.Kind) return t == Const || t == Immutable || t == Inout;
 }
 
+bool isIntegral(ir.Type t)
+{
+	auto prim = cast(ir.PrimitiveType)t;
+	if (prim is null) {
+		return false;
+	}
+	return isIntegral(prim.type);
+}
+
 bool isIntegral(ir.PrimitiveType.Kind kind)
 {
 	switch (kind) with (ir.PrimitiveType.Kind) {

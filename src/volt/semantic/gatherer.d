@@ -25,6 +25,10 @@ enum Where
  *
  */
 
+void gather(ir.Scope current, ir.EnumDeclaration e, Where where)
+{
+	current.addEnumDeclaration(e);
+}
 
 void gather(ir.Scope current, ir.Alias a, Where where)
 {
@@ -71,6 +75,11 @@ void gather(ir.Scope current, ir.Struct s, Where where)
 void gather(ir.Scope current, ir.Class c, Where where)
 {
 	current.addType(c, c.name);
+}
+
+void gather(ir.Scope current, ir.Enum e, Where where)
+{
+	current.addType(e, e.name);
 }
 
 void gather(ir.Scope current, ir._Interface i, Where where)
@@ -146,6 +155,12 @@ void addScope(ir.Scope current, ir.Struct s)
 
 	assert(s.myScope is null);
 	s.myScope = new ir.Scope(current, s, s.name);
+}
+
+void addScope(ir.Scope current, ir.Enum e)
+{
+	assert(e.myScope is null);
+	e.myScope = new ir.Scope(current, e, e.name);
 }
 
 void addScope(ir.Scope current, ir.Class c, Where where)
@@ -339,6 +354,14 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.Enum e)
+	{
+		gather(current, e, where);
+		addScope(current, e);
+		push(e.myScope, e);
+		return Continue;
+	}
+
 	override Status enter(ir.Function fn)
 	{
 		gather(current, fn, where);
@@ -359,9 +382,16 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.EnumDeclaration e)
+	{
+		gather(current, e, where);
+		return Continue;
+	}
+
 	override Status leave(ir.Module m) { pop(); return Continue; }
 	override Status leave(ir.Class c) { pop(c); return Continue; }
 	override Status leave(ir.Struct s) { pop(s); return Continue; }
+	override Status leave(ir.Enum e) { pop(e); return Continue; }
 	override Status leave(ir.Function fn) { pop(); return Continue; }
 	override Status leave(ir._Interface i) { pop(i); return Continue; }
 	override Status leave(ir.UserAttribute ua) { pop(ua); return Continue; }
