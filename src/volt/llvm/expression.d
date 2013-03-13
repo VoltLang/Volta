@@ -6,6 +6,7 @@ import volt.token.location : Location;
 import volt.exceptions;
 
 import volt.llvm.aggregate;
+import volt.llvm.constant;
 import volt.llvm.interfaces;
 static import volt.semantic.mangle;
 
@@ -793,7 +794,7 @@ void handlePostId(State state, ir.Postfix postfix, Value result)
 		result.type = t;
 
 	} else {
-		throw CompilerPanic(postfix.child.location, "is not struct, array or pointer");
+		throw CompilerPanic(postfix.child.location, format("%s is not struct, array or pointer", to!string(cast(void*) result.type)));
 	}
 }
 
@@ -1084,6 +1085,11 @@ void handleExpReference(State state, ir.ExpReference expRef, Value result)
 		auto var = cast(ir.Variable)expRef.decl;
 		result.isPointer = !var.useBaseStorage;
 		result.value = state.getVariableValue(var, result.type);
+		break;
+	case EnumDeclaration:
+		auto ed = cast(ir.EnumDeclaration)expRef.decl;
+		result.isPointer = false;
+		getConstantValue(state, ed.assign, result);
 		break;
 	default:
 		throw CompilerPanic(expRef.location, "invalid decl type");

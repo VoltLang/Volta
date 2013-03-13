@@ -567,6 +567,9 @@ Type fromIr(State state, ir.Type irType)
 		assert(attr !is null);
 		irType = attr.layoutClass;
 		goto case Class;
+	case Enum:
+		auto _enum = cast(ir.Enum)irType;
+		return fromIr(state, _enum.base);
 	default:
 		auto emsg = format("Can't translate type %s (%s)", irType.nodeType, irType.mangledName);
 		throw CompilerPanic(irType.location, emsg);
