@@ -2,6 +2,9 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.ir.copy;
 
+import std.conv : to;
+import std.string : format;
+
 import ir = volt.ir.ir;
 import volt.ir.util;
 
@@ -37,6 +40,26 @@ ir.ReturnStatement copy(ir.ReturnStatement rs)
 	return r;
 }
 
+ir.BinOp copy(ir.BinOp bo)
+{
+	auto b = new ir.BinOp();
+	b.location = bo.location;
+	b.op = bo.op;
+	b.left = copyExp(bo.left);
+	b.right = copyExp(bo.right);
+	return b;
+}
+
+ir.IdentifierExp copy(ir.IdentifierExp ie)
+{
+	auto i = new ir.IdentifierExp();
+	i.location = ie.location;
+	i.globalLookup = ie.globalLookup;
+	i.value = ie.value;
+	i.type = copyNode(ie.type);
+	return i;
+}
+
 /**
  * Helper function that takes care of up
  * casting the return from copyDeep.
@@ -66,7 +89,8 @@ ir.Node copyNode(ir.Node n)
 {
 	final switch (n.nodeType) with (ir.NodeType) {
 	case Invalid:
-		assert(false, "invalid node");
+		auto msg = format("invalid node '%s'", to!string(n.nodeType));
+		assert(false, msg);
 	case NonVisiting:
 		assert(false, "non-visiting node");
 	case Constant:
@@ -78,28 +102,12 @@ ir.Node copyNode(ir.Node n)
 	case ReturnStatement:
 		auto rs = cast(ir.ReturnStatement)n;
 		return copy(rs);
-	case QualifiedName:
-	case Identifier:
-	case Module:
-	case TopLevelBlock:
-	case Import:
-	case Unittest:
-	case Struct:
-	case Class:
-	case Interface:
-	case Union:
-	case Enum:
-	case EnumMember:
-	case Attribute:
-	case StaticAssert:
-	case MixinTemplate:
-	case MixinFunction:
-	case UserAttribute:
-	case EmptyTopLevel:
-	case Condition:
-	case ConditionTopLevel:
-	case FunctionDecl:
-	case FunctionBody:
+	case BinOp:
+		auto bo = cast(ir.BinOp)n;
+		return copy(bo);
+	case IdentifierExp:
+		auto ie = cast(ir.IdentifierExp)n;
+		return copy(ie);
 	case PrimitiveType:
 	case TypeReference:
 	case PointerType:
@@ -112,6 +120,29 @@ ir.Node copyNode(ir.Node n)
 	case DelegateType:
 	case StorageType:
 	case TypeOf:
+	case Struct:
+	case Class:
+	case Interface:
+		auto t = cast(ir.Type)n;
+		return copyTypeSmart(t.location, t);  /// @todo do correctly.
+	case QualifiedName:
+	case Identifier:
+	case Module:
+	case TopLevelBlock:
+	case Import:
+	case Unittest:
+	case Union:
+	case Enum:
+	case Attribute:
+	case StaticAssert:
+	case MixinTemplate:
+	case MixinFunction:
+	case UserAttribute:
+	case EmptyTopLevel:
+	case Condition:
+	case ConditionTopLevel:
+	case FunctionDecl:
+	case FunctionBody:
 	case Variable:
 	case Alias:
 	case Function:
@@ -138,13 +169,11 @@ ir.Node copyNode(ir.Node n)
 	case ConditionStatement:
 	case MixinStatement:
 	case Comma:
-	case BinOp:
 	case Ternary:
 	case Unary:
 	case Postfix:
 	case ArrayLiteral:
 	case AssocArray:
-	case IdentifierExp:
 	case Assert:
 	case StringImport:
 	case Typeid:
@@ -154,6 +183,7 @@ ir.Node copyNode(ir.Node n)
 	case ExpReference:
 	case StructLiteral:
 	case ClassLiteral:
+	case EnumDeclaration:
 		goto case Invalid;
 	}
 }

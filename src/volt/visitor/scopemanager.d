@@ -129,4 +129,23 @@ public:
 		current = current.parent;
 		return Continue;
 	}
+
+	override Status enter(ir.Enum e)
+	{
+		current = e.myScope;
+		return Continue;
+	}
+
+	override Status leave(ir.Enum e)
+	{
+		if (current !is e.myScope) {
+			auto str = "invalid scope layout should be " ~
+			           getNodeAddressString(e) ~ " is " ~
+			           getNodeAddressString(current.node);
+			throw CompilerPanic(e.location, str);
+		}
+
+		current = current.parent;
+		return Continue;
+	}
 }

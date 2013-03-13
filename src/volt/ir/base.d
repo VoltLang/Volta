@@ -44,7 +44,6 @@ enum NodeType
 	Interface,
 	Union,
 	Enum,
-	EnumMember,
 	Attribute,
 	StaticAssert,
 	EmptyTopLevel,
@@ -73,6 +72,7 @@ enum NodeType
 	FunctionParameter,
 	TypeOf,
 	NullType,
+	EnumDeclaration,
 
 	/* statements.d */
 	ReturnStatement,
@@ -289,7 +289,7 @@ string nodeToString(NodeType nodeType)
 	case UserAttribute: return "UserAttribute";
 	case Union: return "Union";
 	case Enum: return "Enum";
-	case EnumMember: return "EnumMember";
+	case EnumDeclaration: return "EnumDeclaration";
 	case Attribute: return "Attribute";
 	case StaticAssert: return "StaticAssert";
 	case EmptyTopLevel: return "EmptyTopLevel";

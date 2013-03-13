@@ -136,6 +136,8 @@ public abstract:
 	Status leave(ir.Alias a);
 	Status enter(ir.TypeOf typeOf);
 	Status leave(ir.TypeOf typeOf);
+	Status enter(ir.EnumDeclaration);
+	Status leave(ir.EnumDeclaration);
 
 	Status visit(ir.PrimitiveType it);
 	Status visit(ir.TypeReference tr);
@@ -294,6 +296,8 @@ override:
 	Status leave(ir.Attribute attr){ return Continue; }
 	Status enter(ir.Alias a){ return Continue; }
 	Status leave(ir.Alias a){ return Continue; }
+	Status enter(ir.EnumDeclaration ed){ return Continue; }
+	Status leave(ir.EnumDeclaration ed){ return Continue; }
 
 	Status visit(ir.PrimitiveType it){ return Continue; }
 	Status visit(ir.TypeReference tr){ return Continue; }
@@ -584,6 +588,10 @@ Visitor.Status accept(ir.Node n, Visitor av)
 		auto nt = cast(ir.NullType) n;
 		assert(nt !is null);
 		return av.visit(nt);
+	case ir.NodeType.EnumDeclaration:
+		auto ed = cast(ir.EnumDeclaration) n;
+		assert(ed !is null);
+		return acceptEnumDeclaration(ed, av);
 
 	/*
 	 * Failure fall through.
@@ -721,6 +729,18 @@ Visitor.Status acceptEnum(ir.Enum e, Visitor av)
 	auto status = av.enter(e);
 	if (status != VisitorContinue) {
 		return parentContinue(status);
+	}
+
+	foreach (member; e.members) {
+		status = accept(member, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	status = accept(e.base, av);
+	if (status == VisitorStop) {
+		return VisitorStop;
 	}
 
 	return av.leave(e);
@@ -1059,6 +1079,30 @@ Visitor.Status acceptFunction(ir.Function fn, Visitor av)
 	}
 
 	return av.leave(fn);
+}
+
+Visitor.Status acceptEnumDeclaration(ir.EnumDeclaration ed, Visitor av)
+{
+	auto status = av.enter(ed);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	if (ed.type !is null && ed.type.nodeType != ir.NodeType.Enum) {
+		status = accept(ed.type, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	if (ed.assign !is null) {
+		status = accept(ed.assign, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	return av.leave(ed);
 }
 
 /*

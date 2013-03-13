@@ -5,6 +5,7 @@ module volt.parser.toplevel;
 import std.conv : to;
 
 import ir = volt.ir.ir;
+import volt.ir.util;
 
 import volt.exceptions;
 import volt.token.stream;
@@ -81,7 +82,7 @@ body
 			tlb.nodes ~= [parseInterface(ts)];
 			break;
 		case TokenType.Enum:
-			tlb.nodes ~= [parseEnum(ts)];
+			tlb.nodes ~= parseEnum(ts);
 			break;
 		case TokenType.Mixin:
 			auto next = ts.lookahead(1).type;
@@ -368,87 +369,89 @@ ir.Struct parseStruct(TokenStream ts)
 	return s;
 }
 
-// eg "enum int a = 3;"
-private ir.Enum tryParseManifestConstant(TokenStream ts)
+ir.Node[] parseEnum(TokenStream ts)
 {
-	auto e = new ir.Enum();
-	e.location = ts.peek.location;
-	auto member = new ir.EnumMember();
-	member.location = ts.peek.location;
+	ir.Node[] output;
+	auto origin = ts.peek.location;
 
 	match(ts, TokenType.Enum);
-	e.base = parseType(ts);
-	auto nameTok = match(ts, TokenType.Identifier);
-	member.name = nameTok.value;
-	match(ts, TokenType.Assign);
-	member.init = parseAssignExp(ts);
-	match(ts, TokenType.Semicolon);
 
-	e.members ~= member;
-	return e;
-}
+	ir.Enum namedEnum;
 
-ir.Enum parseEnum(TokenStream ts)
-{
-	auto e = new ir.Enum();
-	e.location = ts.peek.location;
-
-	auto mark = ts.save();
-	try {
-		// enum int a = 3;
-		return tryParseManifestConstant(ts);
-	} catch (CompilerError error) {
-		if (error.neverIgnore) {
-			throw error;
-		}
-		ts.restore(mark);
-	}
-
-	match(ts, TokenType.Enum);
-	if (ts.peek.type == TokenType.Identifier) {
-		auto nameTok = match(ts, TokenType.Identifier);
-		e.name = nameTok.value;
-	}
-
-	if (matchIf(ts, TokenType.Assign)) {
-		// enum a = 3;
-		auto member = new ir.EnumMember();
-		member.location = ts.peek.location;
-		member.name = e.name;
-		e.name.length = 0;
-		member.init = parseAssignExp(ts);
-		e.members ~= member;
-		match(ts, TokenType.Semicolon);
-	}
-
+	ir.Type base;
 	if (matchIf(ts, TokenType.Colon)) {
-		e.base = parseType(ts);
-	}
-	if (matchIf(ts, TokenType.OpenBrace)) {
-		while (ts.peek.type != TokenType.CloseBrace) {
-			e.members ~= parseEnumMember(ts);
-			if (ts.peek.type != TokenType.CloseBrace) {
-				match(ts, TokenType.Comma);
-			}
+		base = parseType(ts);
+	} else if (ts == [TokenType.Identifier, TokenType.Colon] || ts == [TokenType.Identifier, TokenType.OpenBrace]) {
+		// Named enum.
+		namedEnum = new ir.Enum();
+		namedEnum.location = origin;
+		auto nameTok = match(ts, TokenType.Identifier);
+		namedEnum.name = nameTok.value;
+		if (matchIf(ts, TokenType.Colon)) {
+			namedEnum.base = parseType(ts);
+		} else {
+			namedEnum.base = buildStorageType(ts.peek.location, ir.StorageType.Kind.Auto, null);
 		}
-		match(ts, TokenType.CloseBrace);
+		base = namedEnum;
+		output ~= namedEnum;
+	} else {
+		base = buildPrimitiveType(ts.peek.location, ir.PrimitiveType.Kind.Int);
+	}
+	assert(base !is null);
+
+	if (matchIf(ts, TokenType.OpenBrace)) {
+		ir.EnumDeclaration prevEnum;
+
+		// Better error printing.
+		if (ts.peek.type == TokenType.CloseBrace) {
+			throw new CompilerError(origin, "enum must have at least one member.");
+		}
+
+		while (true) {
+			auto ed = parseEnumDeclaration(ts);
+			if (ed.type is null) {
+				ed.type = copyTypeSmart(base.location, base);
+			}
+			ed.prevEnum = prevEnum;
+			prevEnum = ed;
+			if (namedEnum !is null) {
+				namedEnum.members ~= ed;
+			} else {
+				output ~= ed;
+			}
+
+			if (matchIf(ts, TokenType.CloseBrace)) {
+				break;
+			}
+			if (matchIf(ts, TokenType.Comma)) {
+				if (matchIf(ts, TokenType.CloseBrace)) {
+					break;
+				} else {
+					continue;
+				}
+			}
+
+			throw new CompilerError(ts.peek.location, "expected ',' or '}', got '" ~ tokenToString[ts.peek.type] ~ "'");
+		}
+
+	} else {
+		if (namedEnum !is null) {
+			throw new CompilerError(ts.peek.location, "expected open brace.");
+		}
+		if (ts != [TokenType.Identifier, TokenType.Assign]) {
+			base = parseType(ts);
+		} else {
+			base = buildStorageType(ts.peek.location, ir.StorageType.Kind.Auto, null);
+		}
+
+		auto ed = parseEnumDeclaration(ts);
+		match(ts, TokenType.Semicolon);
+
+		ed.type = base;
+		output ~= ed;
 	}
 
-	return e;
-}
-
-ir.EnumMember parseEnumMember(TokenStream ts)
-{
-	auto member = new ir.EnumMember();
-	member.location = ts.peek.location;
-
-	auto nameTok = match(ts, TokenType.Identifier);
-	member.name = nameTok.value;
-	if (matchIf(ts, TokenType.Assign)) {
-		member.init = parseAssignExp(ts);
-	}
-
-	return member;
+	return output;
 }
 
 ir.MixinFunction parseMixinFunction(TokenStream ts)

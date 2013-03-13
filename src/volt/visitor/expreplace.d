@@ -158,6 +158,14 @@ public:
 		return Continue;
 	}
 
+	override Visitor.Status enter(ir.EnumDeclaration ed)
+	{
+		if (ed.assign !is null) {
+			acceptExp(ed.assign, this);
+		}
+		return Continue;
+	}
+
 	override Visitor.Status enter(ref ir.Exp, ir.Postfix) { return Continue; }
 	override Visitor.Status leave(ref ir.Exp, ir.Postfix) { return Continue; }
 	override Visitor.Status enter(ref ir.Exp, ir.Unary) { return Continue; }
@@ -280,6 +288,20 @@ public:
 	override Visitor.Status leave(ir.UserAttribute ua)
 	{
 		assert(current == ua.myScope);
+
+		current = current.parent;
+		return Continue;
+	}
+
+	override Visitor.Status enter(ir.Enum e)
+	{
+		current = e.myScope;
+		return Continue;
+	}
+
+	override Visitor.Status leave(ir.Enum e)
+	{
+		assert(current == e.myScope);
 
 		current = current.parent;
 		return Continue;

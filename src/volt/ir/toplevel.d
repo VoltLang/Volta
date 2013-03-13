@@ -307,18 +307,6 @@ public:
 	this() { super(NodeType.Struct); }
 }
 
-/**
- * enum { <Member = 0> }
- */
-class EnumMember : Node
-{
-public:
-	string name;  ///< Not optional.
-	Exp init;  ///< Optional.
-
-public:
-	this() { super(NodeType.EnumMember); }
-}
 
 /**
  * C style Enum.
@@ -335,9 +323,17 @@ class Enum : Type
 public:
 	Access access; ///< default public.
 	string name;  ///< Optional.
-	Type base;	///< Optional.
-	EnumMember[] members; ///< At least one.
+	Scope myScope;
+	EnumDeclaration[] members; ///< At least one.
+	/**
+	 * With an anonymous enum, the base type (specified with a colon)
+	 * is the type of using that enum declaration. With a named enum the
+	 * type of the enum declaration is Enum, and the base type determines
+	 * what the declarations can be initialised with.
+	 */
+	Type base;
 
+	bool resolved;
 
 public:
 	this() { super(NodeType.Enum); }

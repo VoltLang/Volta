@@ -38,7 +38,8 @@ abstract class Declaration : Node
 {
 	enum Kind {
 		Function = NodeType.Function,
-		Variable = NodeType.Variable
+		Variable = NodeType.Variable,
+		EnumDeclaration = NodeType.EnumDeclaration
 	}
 	Attribute[] userAttrs;
 
@@ -249,4 +250,16 @@ public:
 
 public:
 	this() { super(NodeType.Function); }
+}
+
+class EnumDeclaration : Declaration
+{
+	Type type;
+	Exp assign;
+	string name;
+	EnumDeclaration prevEnum;
+	bool resolved;
+
+public:
+	this() { super(NodeType.EnumDeclaration); }
 }

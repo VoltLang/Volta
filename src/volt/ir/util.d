@@ -87,13 +87,17 @@ ir.Scope getScopeFromType(ir.Type type)
 		auto asAttr = cast(ir.UserAttribute) type;
 		assert(asAttr !is null);
 		return asAttr.myScope;
+	case Enum:
+		auto asEnum = cast(ir.Enum) type;
+		assert(asEnum !is null);
+		return asEnum.myScope;
 	default:
 		return null;
 	}
 }
 
 /**
- * For the give store get the scoep that it introduces.
+ * For the given store get the scope that it introduces.
  *
  * Returns null for Values and non-scope types.
  */
@@ -109,6 +113,7 @@ ir.Scope getScopeFromStore(ir.Store store)
 	case Value:
 	case Function:
 	case Template:
+	case EnumDeclaration:
 		return null;
 	case Alias:
 		throw CompilerPanic(store.node.location, "unresolved alias");
@@ -182,7 +187,7 @@ ir.Type copyTypeSmart(Location loc, ir.Type type)
 		auto asSt = cast(ir.StorageType)type;
 		auto st = new ir.StorageType();
 		st.location = loc;
-		st.base = copyTypeSmart(loc, asSt.base);
+		if (asSt.base !is null) st.base = copyTypeSmart(loc, asSt.base);
 		st.type = asSt.type;
 		return st;
 	case TypeReference:

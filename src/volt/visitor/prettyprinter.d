@@ -314,28 +314,24 @@ public:
 	override Status enter(ir.Enum e)
 	{
 		ln();
-		twf("enum");
+		twf("enum ");
 		if (e.name.length > 0) {
-			wf(" ", e.name);
+			wf(e.name, " ");
 		}
-		if (e.base !is null) {
-			wf(" : ");
-			accept(e.base, this);
-		}
-		ln();
-		twfln("{");
+		wf(" : ");
+		accept(e.base, this);
+		wfln(" {");
 		mIndent++;
 		foreach (member; e.members) {
 			twf(member.name);
-			if (member.init !is null) {
+			if (member.assign !is null) {
 				wf(" = ");
-				accept(member.init, this);
+				accept(member.assign, this);
 			}
-			wfln(",");
+			wfln(";");
 		}
 		mIndent--;
-		twfln("}");
-
+		twf("}");
 		return ContinueParent;
 	}
 
@@ -1105,6 +1101,27 @@ public:
 	 * Declarations.
 	 *
 	 */
+
+	override Status enter(ir.EnumDeclaration ed)
+	{
+		wf("enum");
+		if (ed.type !is null) {
+			wf(" ");
+			accept(ed.type, this);
+		}
+		wf(" ", ed.name);
+		if (ed.assign !is null) {
+			wf(" = ");
+			accept(ed.assign, this);
+		}
+		wfln(";");
+		return ContinueParent;
+	}
+
+	override Status leave(ir.EnumDeclaration ed)
+	{
+		assert(false);
+	}
 
 	override Status enter(ir.PointerType pointer)
 	{

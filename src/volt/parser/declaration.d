@@ -414,3 +414,18 @@ ir.BlockStatement parseBlock(TokenStream ts)
 
 	return bs;
 }
+
+ir.EnumDeclaration parseEnumDeclaration(TokenStream ts)
+{
+	auto edecl = new ir.EnumDeclaration();
+	edecl.location = ts.peek.location;
+
+	auto nameTok = match(ts, TokenType.Identifier);
+	edecl.name = nameTok.value;
+
+	if (matchIf(ts, TokenType.Assign)) {
+		edecl.assign = parseExp(ts);
+	}
+
+	return edecl;
+}

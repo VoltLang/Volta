@@ -9,6 +9,7 @@ import volt.ir.base;
 import volt.ir.type;
 import volt.ir.toplevel;
 import volt.ir.declaration;
+import volt.ir.expression;
 
 
 /**
@@ -59,6 +60,7 @@ public:
 		Scope,
 		Function,
 		Template,
+		EnumDeclaration,
 	}
 
 
@@ -145,6 +147,19 @@ public:
 		this.parent = s;
 		this.functions = [fn];
 		this.kind = Kind.Function;
+	}
+
+	/**
+	 * Used for enums.
+	 * The name will usually be the name of the enum declaration.
+	 * Not really intended for general consumption, but called from the
+	 * addEnumDeclaration member in Scope.
+	 */
+	this(Scope parent, EnumDeclaration ed, string name)
+	{
+		this.parent = parent;
+		this.node = ed;
+		this.kind = Kind.EnumDeclaration;
 	}
 
 	void markAliasResolved(Store s)
@@ -356,6 +371,25 @@ public:
 	body {
 		errorOn(n, name);
 		symbols[name] = new Store(this, n, name, Store.Kind.Template);
+	}
+
+	/**
+	 * Add a named expression to the scope.
+	 *
+	 * Throws:
+	 *   CompilerPanic if another symbol of the same name is found.
+	 *
+	 * Side-effects:
+	 *   None.
+	 */
+	void addEnumDeclaration(EnumDeclaration e)
+	in {
+		assert(e !is null);
+		assert(e.name.length > 0);
+	}
+	body {
+		errorOn(e, e.name);
+		symbols[e.name] = new Store(this, e, e.name);
 	}
 
 	/**
