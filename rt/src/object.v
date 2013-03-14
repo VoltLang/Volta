@@ -62,14 +62,6 @@ class TypeInfo
 	void* classVtable;
 }
 
-class Attribute
-{
-	this()
-	{
-		return;
-	}
-}
-
 class Object
 {
 	this()
@@ -78,15 +70,28 @@ class Object
 	}
 }
 
+class Attribute
+{
+	this()
+	{
+		return;
+	}
+}
+
+@interface MangledName
+{
+	string name;
+}
+
 extern(C) void vrt_gc_init();
 extern(C) AllocDg vrt_gc_get_alloc_dg();
 extern(C) void* vrt_handle_cast(void* obj, TypeInfo tinfo);
 
 extern(C) {
-	/*@MangledName("memcmp")*/ int __llvm_memcmp(void*, void*, size_t);
-	/*@MangledName("llvm.trap")*/ void __llvm_trap();
-	/*@MangledName("llvm.memcpy.p0i8.p0i8.i32")*/ void __llvm_memcpy_p0i8_p0i8_i32(void*, void*, uint, int, bool);
-	/*@MangledName("llvm.memcpy.p0i8.p0i8.i64")*/ void __llvm_memcpy_p0i8_p0i8_i64(void*, void*, ulong, int, bool);
-	/*@MangledName("llvm.memmove.p0i8.p0i8.i32")*/ void __llvm_memmove_p0i8_p0i8_i32(void*, void*, uint, int, bool);
-	/*@MangledName("llvm.memmove.p0i8.p0i8.i64")*/ void __llvm_memmove_p0i8_p0i8_i64(void*, void*, ulong, int, bool);
+	@MangledName("memcmp") int __llvm_memcmp(void*, void*, size_t);
+	@MangledName("llvm.trap") void __llvm_trap();
+	@MangledName("llvm.memcpy.p0i8.p0i8.i32") void __llvm_memcpy_p0i8_p0i8_i32(void*, void*, uint, int, bool);
+	@MangledName("llvm.memcpy.p0i8.p0i8.i64") void __llvm_memcpy_p0i8_p0i8_i64(void*, void*, ulong, int, bool);
+	@MangledName("llvm.memmove.p0i8.p0i8.i32") void __llvm_memmove_p0i8_p0i8_i32(void*, void*, uint, int, bool);
+	@MangledName("llvm.memmove.p0i8.p0i8.i64") void __llvm_memmove_p0i8_p0i8_i64(void*, void*, ulong, int, bool);
 }
