@@ -160,9 +160,9 @@ public:
 
 		final switch(var.storage) with (ir.Variable.Storage) {
 		case Invalid:
-			assert(false, "unclassified variable");
+			throw CompilerPanic(var.location, "unclassified variable");
 		case Field:
-			assert(false, "field variable refered directly");
+			throw CompilerPanic(var.location, "field variable refered directly");
 		case Function:
 			if (currentFunc is null)
 				throw CompilerPanic(var.location,
