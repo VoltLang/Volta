@@ -35,7 +35,6 @@ private:
 
 ir.Constant evaluateUnary(LanguagePass lp, ir.Scope current, ir.Unary unary)
 {
-	assert(unary.op == ir.Unary.Op.Minus);
 	auto constant = evaluate(lp, current, unary.value);
 	auto prim = cast(ir.PrimitiveType) constant.type;
 	assert(prim.type == ir.PrimitiveType.Kind.Int);
@@ -49,6 +48,8 @@ ir.Constant evaluateBinOp(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 	switch (binop.op) with (ir.BinOp.Type) {
 	case Add:
 		return evaluateBinOpAdd(lp, current, binop);
+	case Equal:
+		return evaluateBinOpEqual(lp, current, binop);
 	default:
 		string emsg = format("binary operation %s is currently unevaluatable at compile time.", binop.op);
 		throw new CompilerError(binop.location, emsg);
@@ -60,4 +61,11 @@ ir.Constant evaluateBinOpAdd(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 	auto left = evaluate(lp, current, binop.left);
 	auto right = evaluate(lp, current, binop.right);
 	return buildConstantInt(binop.location, left._int + right._int);
+}
+
+ir.Constant evaluateBinOpEqual(LanguagePass lp, ir.Scope current, ir.BinOp binop)
+{
+	auto left = evaluate(lp, current, binop.left);
+	auto right = evaluate(lp, current, binop.right);
+	return buildConstantBool(binop.location, left._int == right._int);
 }
