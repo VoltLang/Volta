@@ -71,6 +71,8 @@ ir.Constant evaluateBinOp(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 		return evaluateBinOpEqual(lp, current, binop);
 	case AndAnd:
 		return evaluateBinOpAndAnd(lp, current, binop);
+	case GreaterEqual:
+		return evaluateBinOpGreaterEqual(lp, current, binop);
 	default:
 		string emsg = format("binary operation %s is currently unevaluatable at compile time.", binop.op);
 		throw new CompilerError(binop.location, emsg);
@@ -89,6 +91,13 @@ ir.Constant evaluateBinOpEqual(LanguagePass lp, ir.Scope current, ir.BinOp binop
 	auto left = evaluate(lp, current, binop.left);
 	auto right = evaluate(lp, current, binop.right);
 	return buildConstantBool(binop.location, left._int == right._int);
+}
+
+ir.Constant evaluateBinOpGreaterEqual(LanguagePass lp, ir.Scope current, ir.BinOp binop)
+{
+	auto left = evaluate(lp, current, binop.left);
+	auto right = evaluate(lp, current, binop.right);
+	return buildConstantBool(binop.location, left._int >= right._int);
 }
 
 ir.Constant evaluateBinOpAndAnd(LanguagePass lp, ir.Scope current, ir.BinOp binop)
