@@ -38,10 +38,18 @@ ir.Constant evaluateUnary(LanguagePass lp, ir.Scope current, ir.Unary unary)
 	switch (unary.op) with (ir.Unary.Op) {
 	case Minus:
 		return evaluateUnaryMinus(lp, current, unary);
+	case Not:
+		return evaluateUnaryNot(lp, current, unary);
 	default:
 		string emsg = format("unary operation %s is currently unevaluatable at compile time.", unary.op);
 		throw new CompilerError(unary.location, emsg);
 	}
+}
+
+ir.Constant evaluateUnaryNot(LanguagePass lp, ir.Scope current, ir.Unary unary)
+{
+	auto constant = evaluate(lp, current, unary.value);
+	return buildConstantBool(unary.location, !constant._bool);
 }
 
 ir.Constant evaluateUnaryMinus(LanguagePass lp, ir.Scope current, ir.Unary unary)
