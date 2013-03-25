@@ -71,6 +71,8 @@ ir.Constant evaluateBinOp(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 		return evaluateBinOpEqual(lp, current, binop);
 	case AndAnd:
 		return evaluateBinOpAndAnd(lp, current, binop);
+	case OrOr:
+		return evaluateBinOpOrOr(lp, current, binop);
 	case GreaterEqual:
 		return evaluateBinOpGreaterEqual(lp, current, binop);
 	default:
@@ -105,4 +107,11 @@ ir.Constant evaluateBinOpAndAnd(LanguagePass lp, ir.Scope current, ir.BinOp bino
 	auto left = evaluate(lp, current, binop.left);
 	auto right = evaluate(lp, current, binop.right);
 	return buildConstantBool(binop.location, left._bool && right._bool);
+}
+
+ir.Constant evaluateBinOpOrOr(LanguagePass lp, ir.Scope current, ir.BinOp binop)
+{
+	auto left = evaluate(lp, current, binop.left);
+	auto right = evaluate(lp, current, binop.right);
+	return buildConstantBool(binop.location, left._bool || right._bool);
 }
