@@ -35,6 +35,17 @@ private:
 
 ir.Constant evaluateUnary(LanguagePass lp, ir.Scope current, ir.Unary unary)
 {
+	switch (unary.op) with (ir.Unary.Op) {
+	case Minus:
+		return evaluateUnaryMinus(lp, current, unary);
+	default:
+		string emsg = format("unary operation %s is currently unevaluatable at compile time.", unary.op);
+		throw new CompilerError(unary.location, emsg);
+	}
+}
+
+ir.Constant evaluateUnaryMinus(LanguagePass lp, ir.Scope current, ir.Unary unary)
+{
 	auto constant = evaluate(lp, current, unary.value);
 	auto prim = cast(ir.PrimitiveType) constant.type;
 	assert(prim.type == ir.PrimitiveType.Kind.Int);
@@ -50,6 +61,8 @@ ir.Constant evaluateBinOp(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 		return evaluateBinOpAdd(lp, current, binop);
 	case Equal:
 		return evaluateBinOpEqual(lp, current, binop);
+	case AndAnd:
+		return evaluateBinOpAndAnd(lp, current, binop);
 	default:
 		string emsg = format("binary operation %s is currently unevaluatable at compile time.", binop.op);
 		throw new CompilerError(binop.location, emsg);
@@ -68,4 +81,11 @@ ir.Constant evaluateBinOpEqual(LanguagePass lp, ir.Scope current, ir.BinOp binop
 	auto left = evaluate(lp, current, binop.left);
 	auto right = evaluate(lp, current, binop.right);
 	return buildConstantBool(binop.location, left._int == right._int);
+}
+
+ir.Constant evaluateBinOpAndAnd(LanguagePass lp, ir.Scope current, ir.BinOp binop)
+{
+	auto left = evaluate(lp, current, binop.left);
+	auto right = evaluate(lp, current, binop.right);
+	return buildConstantBool(binop.location, left._bool && right._bool);
 }
