@@ -21,6 +21,9 @@ ir.Constant evaluate(LanguagePass lp, ir.Scope current, ir.Exp exp)
 	case ir.NodeType.Constant:
 		auto constant = cast(ir.Constant) exp;
 		return copy(constant);
+	case ir.NodeType.Unary:
+		auto unary = cast(ir.Unary) exp;
+		return evaluateUnary(lp, current, unary);
 	default:
 		string emsg = format("%s is currently unevaluatable at compile time.", to!string(exp.nodeType));
 		throw new CompilerError(exp.location, emsg);
@@ -29,6 +32,17 @@ ir.Constant evaluate(LanguagePass lp, ir.Scope current, ir.Exp exp)
 }
 
 private:
+
+ir.Constant evaluateUnary(LanguagePass lp, ir.Scope current, ir.Unary unary)
+{
+	assert(unary.op == ir.Unary.Op.Minus);
+	auto constant = evaluate(lp, current, unary.value);
+	auto prim = cast(ir.PrimitiveType) constant.type;
+	assert(prim.type == ir.PrimitiveType.Kind.Int);
+	constant._int = constant._int * -1;
+	constant._string = "-" ~ constant._string;
+	return constant;
+}
 
 ir.Constant evaluateBinOp(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 {
