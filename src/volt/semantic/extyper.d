@@ -13,7 +13,6 @@ import volt.ir.copy;
 import volt.exceptions;
 import volt.interfaces;
 import volt.visitor.visitor;
-import volt.visitor.expreplace;
 import volt.visitor.scopemanager;
 import volt.semantic.userattrresolver;
 import volt.semantic.classify;
@@ -342,6 +341,7 @@ void extypeAssignCallableType(LanguagePass lp, ir.Scope current, ref ir.Exp exp,
 		auto fset = cast(ir.FunctionSetType) rtype;
 		auto fn = selectFunction(lp, fset.set, ctype.params, exp.location);
 		exp = buildExpReference(exp.location, fn, fn.name);
+		fset.set.reference = cast(ir.ExpReference) exp;
 		extypeAssignCallableType(lp, current, exp, ctype);
 		return;
 	}
@@ -546,10 +546,9 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 	if (asFunctionSet !is null) {
 		auto eref = cast(ir.ExpReference) postfix.child;
 		assert(eref !is null);
+		asFunctionSet.set.reference = eref;
 		auto fn = selectFunction(lp, current, asFunctionSet.set, postfix.arguments, postfix.location);
 		eref.decl = fn;
-		auto fset = cast(ir.FunctionSet) fn;
-		if (fset !is null) fset.reference = eref;
 		asFunctionType = fn.type;
 	} else {
 		asFunctionType = cast(ir.CallableType) type;
@@ -729,7 +728,8 @@ void extypeExpReference(LanguagePass lp, ir.Scope current, ref ir.Exp e, ir.ExpR
 	return;
 }
 
-void extypeLeaveBinOp(LanguagePass lp, ir.Scope current, ref ir.Exp e, ir.BinOp bin)
+/// Rewrite foo.prop = 3 into foo.prop(3).
+void rewritePropertyFunctionAssign(LanguagePass lp, ir.Scope current, ref ir.Exp e, ir.BinOp bin)
 {
 	if (bin.op != ir.BinOp.Type.Assign) {
 		return;
@@ -1163,7 +1163,7 @@ void replaceTypeOfIfNeeded(LanguagePass lp, ir.Scope current, ref ir.Type type)
  * inferred types or expressions concrete -- for example,
  * to make const i = 2 become const int = 2.
  */
-class ExTyper : ScopeExpReplaceVisitor, Pass
+class ExTyper : ScopeManager, Pass
 {
 public:
 	LanguagePass lp;
@@ -1264,7 +1264,6 @@ public:
 			}
 		} else {
 			acceptExp(ed.assign, this);
-			accept(ed.assign, this);
 			ed.assign = evaluate(lp, current, ed.assign);
 		}
 
@@ -1277,18 +1276,6 @@ public:
 
 	override void close()
 	{
-	}
-
-	override Status visit(ref ir.Exp exp, ir.IdentifierExp ie)
-	{
-		extypeIdentifierExp(lp, current, exp, ie);
-		auto eref = cast(ir.ExpReference) exp;
-		if (eref !is null) {
-			extypeExpReference(lp, current, exp, eref);
-		} else {
-			assert(cast(ir.Constant)exp !is null);
-		}
-		return Continue;
 	}
 
 	override Status enter(ir.Struct s)
@@ -1338,44 +1325,157 @@ public:
 
 		ensureResolved(lp, current, v.type);
 
-		NullExpReplaceVisitor.enter(v);
 		replaceTypeOfIfNeeded(lp, current, v.type);
 
 		if (v.assign !is null) {
+			acceptExp(v.assign, this);
 			extypeAssign(lp, current, v.assign, v.type);
 		}
 
 		replaceStorageIfNeeded(v.type);
+		accept(v.type, this);
 
-		return Continue;
-	}
-
-	override Status enter(ir.BinOp binop)
-	{
-		extypeBinOp(lp, current, binop);
-		return Continue;
-	}
-
-	override Status enter(ir.ReturnStatement ret)
-	{
-		NullExpReplaceVisitor.enter(ret);
-
-		auto fn = cast(ir.Function) current.node;
-		if (fn is null) {
-			throw CompilerPanic(ret.location, "return statement outside of function.");
-		}
-
-		if (ret.exp !is null) {
-			extypeAssign(lp, current, ret.exp, fn.type.ret);
-		}
-
-		return Continue;
+		return ContinueParent;
 	}
 
 	override Status enter(ir.Function fn)
 	{
 		lp.resolve(fn);
 		super.enter(fn);
+		return Continue;
+	}
+
+
+	/*
+	 *
+	 * Statements.
+	 *
+	 */
+
+
+	override Status enter(ir.ReturnStatement ret)
+	{
+		auto fn = cast(ir.Function) current.node;
+		if (fn is null) {
+			throw CompilerPanic(ret.location, "return statement outside of function.");
+		}
+
+		if (ret.exp !is null) {
+			acceptExp(ret.exp, this);
+			extypeAssign(lp, current, ret.exp, fn.type.ret);
+		}
+
+		return ContinueParent;
+	}
+
+	override Status enter(ir.IfStatement ifs)
+	{
+		if (ifs.exp !is null) {
+			acceptExp(ifs.exp, this);
+			extypeCastToBool(lp, current, ifs.exp);
+		}
+
+		if (ifs.thenState !is null) {
+			accept(ifs.thenState, this);
+		}
+
+		if (ifs.elseState !is null) {
+			accept(ifs.elseState, this);
+		}
+
+		return ContinueParent;
+	}
+
+	override Status enter(ir.ForStatement fs)
+	{
+		foreach (i; fs.initVars) {
+			accept(i, this);
+		}
+		foreach (ref i; fs.initExps) {
+			acceptExp(i, this);
+		}
+
+		if (fs.test !is null) {
+			acceptExp(fs.test, this);
+			extypeCastToBool(lp, current, fs.test);
+		}
+		foreach (ref increment; fs.increments) {
+			acceptExp(increment, this);
+		}
+		if (fs.block !is null) {
+			accept(fs.block, this);
+		}
+
+		return ContinueParent;
+	}
+
+	override Status enter(ir.WhileStatement ws)
+	{
+		if (ws.condition !is null) {
+			acceptExp(ws.condition, this);
+			extypeCastToBool(lp, current, ws.condition);
+		}
+
+		accept(ws.block, this);
+
+		return ContinueParent;
+	}
+
+	override Status enter(ir.DoStatement ds)
+	{
+		accept(ds.block, this);
+
+		if (ds.condition !is null) {
+			acceptExp(ds.condition, this);
+			extypeCastToBool(lp, current, ds.condition);
+		}
+
+		return ContinueParent;
+	}
+
+
+	/*
+	 *
+	 * Types.
+	 *
+	 */
+
+
+	override Status enter(ir.FunctionType ftype)
+	{
+		replaceTypeOfIfNeeded(lp, current, ftype.ret);
+		return Continue;
+	}
+
+	override Status enter(ir.DelegateType dtype)
+	{
+		replaceTypeOfIfNeeded(lp, current, dtype.ret);
+		return Continue;
+	}
+
+	override Status enter(ref ir.Exp exp, ir.Typeid _typeid)
+	{
+		ensureResolved(lp, current, _typeid.type);
+		replaceTypeOfIfNeeded(lp, current, _typeid.type);
+		return Continue;
+	}
+
+
+	/*
+	 *
+	 * Expressions.
+	 *
+	 */
+
+
+	/// If this is an assignment to a @property function, turn it into a function call.
+	override Status leave(ref ir.Exp e, ir.BinOp bin)
+	{
+		rewritePropertyFunctionAssign(lp, current, e, bin);
+		// If rewritten.
+		if (e is bin) {
+			extypeBinOp(lp, current, bin);
+		}
 		return Continue;
 	}
 
@@ -1391,60 +1491,14 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ir.IfStatement ifs)
-	{
-		NullExpReplaceVisitor.enter(ifs);
-		extypeCastToBool(lp, current, ifs.exp);
-		return Continue;
-	}
 
-	override Status enter(ir.ForStatement fs)
-	{
-		NullExpReplaceVisitor.enter(fs);
-		if (fs.test !is null) extypeCastToBool(lp, current, fs.test);
-		return Continue;
-	}
-
-	override Status enter(ir.WhileStatement ws)
-	{
-		NullExpReplaceVisitor.enter(ws);
-		extypeCastToBool(lp, current, ws.condition);
-		return Continue;
-	}
-
-	override Status enter(ir.DoStatement ds)
-	{
-		NullExpReplaceVisitor.enter(ds);
-		extypeCastToBool(lp, current, ds.condition);
-		return Continue;
-	}
-
-	override Status enter(ir.FunctionType ftype)
-	{
-		replaceTypeOfIfNeeded(lp, current, ftype.ret);
-		return Continue;
-	}
-
-	override Status enter(ir.DelegateType dtype)
-	{
-		replaceTypeOfIfNeeded(lp, current, dtype.ret);
-		return Continue;
-	}
-
-	override Status enter(ir.Typeid _typeid)
-	{
-		ensureResolved(lp, current, _typeid.type);
-		replaceTypeOfIfNeeded(lp, current, _typeid.type);
-		return Continue;
-	}
-
-	override Status enter(ir.Unary _unary)
+	override Status leave(ref ir.Exp exp, ir.Unary _unary)
 	{
 		extypeUnary(lp, current, _unary);
 		return Continue;
 	}
 
-	override Status enter(ir.Ternary ternary)
+	override Status leave(ref ir.Exp exp, ir.Ternary ternary)
 	{
 		extypeTernary(lp, current, ternary);
 		return Continue;
@@ -1456,10 +1510,15 @@ public:
 		return Continue;
 	}
 
-	/// If this is an assignment to a @property function, turn it into a function call.
-	override Status leave(ref ir.Exp e, ir.BinOp bin)
+	override Status visit(ref ir.Exp exp, ir.IdentifierExp ie)
 	{
-		extypeLeaveBinOp(lp, current, e, bin);
+		extypeIdentifierExp(lp, current, exp, ie);
+		auto eref = cast(ir.ExpReference) exp;
+		if (eref !is null) {
+			extypeExpReference(lp, current, exp, eref);
+		} else {
+			assert(cast(ir.Constant)exp !is null);
+		}
 		return Continue;
 	}
 

@@ -9,7 +9,6 @@ import volt.interfaces;
 import volt.exceptions;
 import volt.token.location;
 import volt.visitor.visitor;
-import volt.visitor.expreplace;
 import volt.semantic.classify;
 import volt.semantic.lookup;
 import volt.semantic.mangle;
@@ -155,7 +154,7 @@ ir.Exp createAllocDgCall(ir.Variable allocDgVar, LanguagePass lp, Location locat
 	}
 }
 	
-class NewReplacer : NullExpReplaceVisitor, Pass
+class NewReplacer : NullVisitor, Pass
 {
 public:
 	ir.Variable allocDgVar;

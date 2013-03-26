@@ -129,7 +129,7 @@ public:
 		return ContinueParent;
 	}
 
-	override Status visit(ir.IdentifierExp ie)
+	override Status visit(ref ir.Exp exp, ir.IdentifierExp ie)
 	{
 		auto str = format("%s IdentifierExp '%s' left in IR.",
 		                  getNodeAddressString(ie), ie.value);

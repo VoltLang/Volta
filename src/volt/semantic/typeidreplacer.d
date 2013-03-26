@@ -10,7 +10,6 @@ import volt.ir.util;
 import volt.exceptions;
 import volt.interfaces;
 import volt.visitor.visitor;
-import volt.visitor.expreplace;
 import volt.semantic.classify;
 import volt.semantic.lookup;
 import volt.semantic.mangle;
@@ -20,7 +19,7 @@ import volt.semantic.mangle;
  * Replaces typeid(...) expressions with a call
  * to the TypeInfo's constructor.
  */
-class TypeidReplacer : NullExpReplaceVisitor, Pass
+class TypeidReplacer : NullVisitor, Pass
 {
 public:
 	LanguagePass lp;

@@ -285,40 +285,41 @@ public:
 	/*
 	 * Expression Nodes.
 	 */
-	override Status enter(ir.Postfix n) { enterNode(n, to!string(n.op)); return Continue; }
-	override Status leave(ir.Postfix n) { leaveNode(n); return Continue; }
-	override Status enter(ir.Unary n) { enterNode(n, to!string(n.op)); return Continue; }
-	override Status leave(ir.Unary n) { leaveNode(n); return Continue; }
-	override Status enter(ir.BinOp n) { enterNode(n, to!string(n.op)); return Continue; }
-	override Status leave(ir.BinOp n) { leaveNode(n); return Continue; }
-	override Status enter(ir.Ternary n) { enterNode(n); return Continue; }
-	override Status leave(ir.Ternary n) { leaveNode(n); return Continue; }
-	override Status enter(ir.ArrayLiteral n) { enterNode(n); return Continue; }
-	override Status leave(ir.ArrayLiteral n) { leaveNode(n); return Continue; }
-	override Status enter(ir.AssocArray n) { enterNode(n); return Continue; }
-	override Status leave(ir.AssocArray n) { leaveNode(n); return Continue; }
-	override Status enter(ir.Assert n) { enterNode(n); return Continue; }
-	override Status leave(ir.Assert n) { leaveNode(n); return Continue; }
-	override Status enter(ir.StringImport n) { enterNode(n); return Continue; }
-	override Status leave(ir.StringImport n) { leaveNode(n); return Continue; }
-	override Status enter(ir.Typeid n) { enterNode(n); return Continue; }
-	override Status leave(ir.Typeid n) { leaveNode(n); return Continue; }
-	override Status enter(ir.IsExp n) { enterNode(n); return Continue; }
-	override Status leave(ir.IsExp n) { leaveNode(n); return Continue; }
-	override Status enter(ir.FunctionLiteral n) { enterNode(n); return Continue; }
-	override Status leave(ir.FunctionLiteral n) { leaveNode(n); return Continue; }
-	override Status enter(ir.StructLiteral n) { enterNode(n); return Continue; }
-	override Status leave(ir.StructLiteral n) { leaveNode(n); return Continue; }
-	override Status enter(ir.ClassLiteral n) { enterNode(n); return Continue; }
-	override Status leave(ir.ClassLiteral n) { leaveNode(n); return Continue; }
+	override Status enter(ref ir.Exp, ir.Postfix n) { enterNode(n, to!string(n.op)); return Continue; }
+	override Status leave(ref ir.Exp, ir.Postfix n) { leaveNode(n); return Continue; }
+	override Status enter(ref ir.Exp, ir.Unary n) { enterNode(n, to!string(n.op)); return Continue; }
+	override Status leave(ref ir.Exp, ir.Unary n) { leaveNode(n); return Continue; }
+	override Status enter(ref ir.Exp, ir.BinOp n) { enterNode(n, to!string(n.op)); return Continue; }
+	override Status leave(ref ir.Exp, ir.BinOp n) { leaveNode(n); return Continue; }
+	override Status enter(ref ir.Exp, ir.Ternary n) { enterNode(n); return Continue; }
+	override Status leave(ref ir.Exp, ir.Ternary n) { leaveNode(n); return Continue; }
+	override Status enter(ref ir.Exp, ir.ArrayLiteral n) { enterNode(n); return Continue; }
+	override Status leave(ref ir.Exp, ir.ArrayLiteral n) { leaveNode(n); return Continue; }
+	override Status enter(ref ir.Exp, ir.AssocArray n) { enterNode(n); return Continue; }
+	override Status leave(ref ir.Exp, ir.AssocArray n) { leaveNode(n); return Continue; }
+	override Status enter(ref ir.Exp, ir.Assert n) { enterNode(n); return Continue; }
+	override Status leave(ref ir.Exp, ir.Assert n) { leaveNode(n); return Continue; }
+	override Status enter(ref ir.Exp, ir.StringImport n) { enterNode(n); return Continue; }
+	override Status leave(ref ir.Exp, ir.StringImport n) { leaveNode(n); return Continue; }
+	override Status enter(ref ir.Exp, ir.Typeid n) { enterNode(n); return Continue; }
+	override Status leave(ref ir.Exp, ir.Typeid n) { leaveNode(n); return Continue; }
+	override Status enter(ref ir.Exp, ir.IsExp n) { enterNode(n); return Continue; }
+	override Status leave(ref ir.Exp, ir.IsExp n) { leaveNode(n); return Continue; }
+	override Status enter(ref ir.Exp, ir.FunctionLiteral n) { enterNode(n); return Continue; }
+	override Status leave(ref ir.Exp, ir.FunctionLiteral n) { leaveNode(n); return Continue; }
+	override Status enter(ref ir.Exp, ir.StructLiteral n) { enterNode(n); return Continue; }
+	override Status leave(ref ir.Exp, ir.StructLiteral n) { leaveNode(n); return Continue; }
+	override Status enter(ref ir.Exp, ir.ClassLiteral n) { enterNode(n); return Continue; }
+	override Status leave(ref ir.Exp, ir.ClassLiteral n) { leaveNode(n); return Continue; }
+	override Status enter(ref ir.Exp, ir.Constant n) { enterNode(n); return Continue; }
+	override Status leave(ref ir.Exp, ir.Constant n) { leaveNode(n); return Continue; }
 
-	override Status visit(ir.ExpReference n) { visitRef(n, n.decl); return Continue; }
-	override Status visit(ir.Constant n) { visitNode(n); return Continue; }
-	override Status visit(ir.TraitsExp n) { visitNode(n); return Continue; }
+	override Status visit(ref ir.Exp, ir.ExpReference n) { visitRef(n, n.decl); return Continue; }
+	override Status visit(ref ir.Exp, ir.TraitsExp n) { visitNode(n); return Continue; }
 
 	override Status debugVisitNode(ir.Node n) { return Continue; }
 
-	override Status visit(ir.IdentifierExp n)
+	override Status visit(ref ir.Exp, ir.IdentifierExp n)
 	{
 		ln();
 		twf(["(", ir.nodeToString(n), " \"", n.value, "\")"]);

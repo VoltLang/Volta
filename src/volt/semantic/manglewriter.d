@@ -147,7 +147,7 @@ public:
 		return Continue;
 	}
 
-	override Status visit(ir.Constant c)
+	override Status enter(ref ir.Exp exp, ir.Constant c)
 	{
 		if (c.type !is null) {
 			c.type.mangledName = mangle(parentNames, c.type);

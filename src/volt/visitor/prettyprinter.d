@@ -300,7 +300,7 @@ public:
 		wf(d.name);
 		if (d.assign !is null) {
 			wf(" = ");
-			accept(d.assign, this);
+			acceptExp(d.assign, this);
 		}
 		wfln(";");
 		return ContinueParent;
@@ -553,7 +553,7 @@ public:
 	override Status enter(ir.ExpStatement e)
 	{
 		twf("");
-		accept(e.exp, this);
+		acceptExp(e.exp, this);
 		wfln(";");
 		return ContinueParent;
 	}
@@ -781,16 +781,16 @@ public:
 		} else {
 			twf("case ");
 			if (sc.firstExp !is null && sc.secondExp is null) {
-				accept(sc.firstExp, this);
+				acceptExp(sc.firstExp, this);
 				wfln(":");
 			} else if (sc.firstExp !is null && sc.secondExp !is null) {
-				accept(sc.firstExp, this);
+				acceptExp(sc.firstExp, this);
 				wf(": .. case ");
-				accept(sc.secondExp, this);
+				acceptExp(sc.secondExp, this);
 				wfln(":");
 			} else if (sc.exps.length > 0) {
 				foreach (i, exp; sc.exps) {
-					accept(exp, this);
+					acceptExp(exp, this);
 					if (i < sc.exps.length - 1) {
 						wf(", ");
 					}
@@ -1402,7 +1402,7 @@ public:
 	 */
 
 
-	override Status visit(ir.Constant constant)
+	override Status enter(ref ir.Exp, ir.Constant constant)
 	{
 		auto asPrim = cast(ir.PrimitiveType) constant.type;
 		if (asPrim !is null) {
@@ -1420,7 +1420,12 @@ public:
 		return ContinueParent;
 	}
 
-	override Status visit(ir.IdentifierExp identifier)
+	override Status leave(ref ir.Exp, ir.Constant)
+	{
+		assert(false);
+	}
+
+	override Status visit(ref ir.Exp, ir.IdentifierExp identifier)
 	{
 		if (identifier.globalLookup) {
 			wf(".");
@@ -1429,11 +1434,11 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ir.ArrayLiteral array)
+	override Status enter(ref ir.Exp, ir.ArrayLiteral array)
 	{
 		wf("[");
 		foreach (i, exp; array.values) {
-			accept(exp, this);
+			acceptExp(exp, this);
 			if (i < array.values.length - 1) {
 				wf(", ");
 			}
@@ -1442,18 +1447,18 @@ public:
 		return ContinueParent;
 	}
 
-	override Status leave(ir.ArrayLiteral array)
+	override Status leave(ref ir.Exp, ir.ArrayLiteral array)
 	{
 		return Continue;
 	}
 
-	override Status enter(ir.AssocArray array)
+	override Status enter(ref ir.Exp, ir.AssocArray array)
 	{
 		wf("[");
 		foreach (i, ref pair; array.pairs) {
-			accept(pair.key, this);
+			acceptExp(pair.key, this);
 			wf(":");
-			accept(pair.value, this);
+			acceptExp(pair.value, this);
 			if (i < array.pairs.length - 1) {
 				wf(", ");
 			}
@@ -1462,12 +1467,12 @@ public:
 		return ContinueParent;
 	}
 
-	override Status leave(ir.AssocArray array)
+	override Status leave(ref ir.Exp, ir.AssocArray array)
 	{
 		return Continue;
 	}
 
-	override Status enter(ir.Assert _assert)
+	override Status enter(ref ir.Exp, ir.Assert _assert)
 	{
 		wf("assert(");
 		accept(_assert.condition, this);
@@ -1479,27 +1484,27 @@ public:
 		return ContinueParent;
 	}
 
-	override Status leave(ir.Assert _assert)
+	override Status leave(ref ir.Exp, ir.Assert _assert)
 	{
 		return Continue;
 	}
 
-	override Status enter(ir.StringImport strimport)
+	override Status enter(ref ir.Exp, ir.StringImport strimport)
 	{
 		wf("import(");
-		accept(strimport.filename, this);
+		acceptExp(strimport.filename, this);
 		wf(")");
 		return ContinueParent;
 	}
 
-	override Status leave(ir.StringImport strimport)
+	override Status leave(ref ir.Exp, ir.StringImport strimport)
 	{
 		return Continue;
 	}
 
-	override Status enter(ir.Ternary ternary)
+	override Status enter(ref ir.Exp, ir.Ternary ternary)
 	{
-		accept(ternary.condition, this);
+		acceptExp(ternary.condition, this);
 		wf(" ? ");
 		accept(ternary.ifTrue, this);
 		wf(" : ");
@@ -1507,16 +1512,16 @@ public:
 		return ContinueParent;
 	}
 
-	override Status leave(ir.Ternary ternary)
+	override Status leave(ref ir.Exp, ir.Ternary ternary)
 	{
 		return Continue;
 	}
 
-	override Status enter(ir.BinOp binop)
+	override Status enter(ref ir.Exp, ir.BinOp binop)
 	{
 		wf("(");
 
-		accept(binop.left, this);
+		acceptExp(binop.left, this);
 
 		switch (binop.op) {
 		case ir.BinOp.Type.Assign: wf(" = "); break;
@@ -1561,19 +1566,19 @@ public:
 		default: assert(false);
 		}
 
-		accept(binop.right, this);
+		acceptExp(binop.right, this);
 
 		wf(")");
 
 		return ContinueParent;
 	}
 
-	override Status leave(ir.BinOp binop)
+	override Status leave(ref ir.Exp, ir.BinOp binop)
 	{
 		return Continue;
 	}
 
-	override Status enter(ir.Unary unary)
+	override Status enter(ref ir.Exp, ir.Unary unary)
 	{
 		switch (unary.op) {
 		case ir.Unary.Op.AddrOf: wf("&"); break;
@@ -1594,8 +1599,8 @@ public:
 			accept(unary.type, this);
 			if (unary.hasArgumentList) {
 				wf("(");
-				foreach (i, arg; unary.argumentList) {
-					accept(arg, this);
+				foreach (i, ref arg; unary.argumentList) {
+					acceptExp(arg, this);
 					if (i < unary.argumentList.length - 1) {
 						wf(", ");
 					}
@@ -1607,25 +1612,25 @@ public:
 		}
 
 		if (unary.value !is null) {
-			accept(unary.value, this);
+			acceptExp(unary.value, this);
 		}
 
 		return ContinueParent;
 	}
 
-	override Status leave(ir.Unary unary)
+	override Status leave(ref ir.Exp, ir.Unary unary)
 	{
 		assert(false);
 	}
 
-	override Status leave(ir.Postfix postfix)
+	override Status leave(ref ir.Exp, ir.Postfix postfix)
 	{
 		assert(false);
 	}
 
-	override Status enter(ir.Postfix postfix)
+	override Status enter(ref ir.Exp, ir.Postfix postfix)
 	{
-		accept(postfix.child, this);
+		acceptExp(postfix.child, this);
 		switch (postfix.op) {
 		case ir.Postfix.Op.Identifier:
 			wf(".");
@@ -1639,8 +1644,8 @@ public:
 			break;
 		case ir.Postfix.Op.Index:
 			wf("[");
-			foreach (i, arg; postfix.arguments) {
-				accept(arg, this);
+			foreach (i, ref arg; postfix.arguments) {
+				acceptExp(arg, this);
 				if (i < postfix.arguments.length - 1) {
 					wf(", ");
 				}
@@ -1653,12 +1658,12 @@ public:
 			case 0:
 				break;
 			case 1:
-				accept(postfix.arguments[0], this);
+				acceptExp(postfix.arguments[0], this);
 				break;
 			case 2:
-				accept(postfix.arguments[0], this);
+				acceptExp(postfix.arguments[0], this);
 				wf("..");
-				accept(postfix.arguments[1], this);
+				acceptExp(postfix.arguments[1], this);
 				break;
 			default:
 				throw CompilerPanic(postfix.location, "bad slice.");
@@ -1668,7 +1673,7 @@ public:
 		case ir.Postfix.Op.Call:
 			wf("(");
 			foreach (i, arg; postfix.arguments) {
-				accept(arg, this);
+				acceptExp(arg, this);
 				if (i < postfix.arguments.length - 1) {
 					wf(", ");
 				}
@@ -1686,11 +1691,11 @@ public:
 		return ContinueParent;
 	}
 
-	override Status enter(ir.Typeid ti)
+	override Status enter(ref ir.Exp, ir.Typeid ti)
 	{
 		wf("typeid(");
 		if (ti.exp !is null) {
-			accept(ti.exp, this);
+			acceptExp(ti.exp, this);
 		} else {
 			accept(ti.type, this);
 		}
@@ -1698,12 +1703,12 @@ public:
 		return ContinueParent;
 	}
 
-	override Status leave(ir.Typeid ti)
+	override Status leave(ref ir.Exp, ir.Typeid ti)
 	{
 		assert(false);
 	}
 
-	override Status enter(ir.IsExp isExp)
+	override Status enter(ref ir.Exp, ir.IsExp isExp)
 	{
 		wf("is(");
 		accept(isExp.type, this);
@@ -1743,12 +1748,12 @@ public:
 		return ContinueParent;
 	}
 
-	override Status leave(ir.IsExp isExp)
+	override Status leave(ref ir.Exp, ir.IsExp isExp)
 	{
 		assert(false);
 	}
 
-	override Status enter(ir.FunctionLiteral functionLiteral)
+	override Status enter(ref ir.Exp, ir.FunctionLiteral functionLiteral)
 	{
 		void printParams() {
 			foreach (i, param; functionLiteral.params) {
@@ -1797,16 +1802,16 @@ public:
 		return ContinueParent;
 	}
 
-	override Status leave(ir.FunctionLiteral functionLiteral)
+	override Status leave(ref ir.Exp, ir.FunctionLiteral functionLiteral)
 	{
 		assert(false);
 	}
 
-	override Status enter(ir.StructLiteral sliteral)
+	override Status enter(ref ir.Exp, ir.StructLiteral sliteral)
 	{
 		wf("{ ");
 		foreach (i, exp; sliteral.exps) {
-			accept(exp, this);
+			acceptExp(exp, this);
 			if (i < sliteral.exps.length - 1) {
 				wf(", ");
 			}
@@ -1816,16 +1821,16 @@ public:
 		return ContinueParent;
 	}
 
-	override Status leave(ir.StructLiteral sliteral)
+	override Status leave(ref ir.Exp, ir.StructLiteral sliteral)
 	{
 		assert(false);
 	}
 
-	override Status enter(ir.ClassLiteral cliteral)
+	override Status enter(ref ir.Exp, ir.ClassLiteral cliteral)
 	{
 		wf("{ ");
-		foreach (i, exp; cliteral.exps) {
-			accept(exp, this);
+		foreach (i, ref exp; cliteral.exps) {
+			acceptExp(exp, this);
 			if (i < cliteral.exps.length - 1) {
 				wf(", ");
 			}
@@ -1835,12 +1840,12 @@ public:
 		return ContinueParent;
 	}
 
-	override Status leave(ir.ClassLiteral cliteral)
+	override Status leave(ref ir.Exp, ir.ClassLiteral cliteral)
 	{
 		assert(false);
 	}
 
-	override Status visit(ir.ExpReference e)
+	override Status visit(ref ir.Exp, ir.ExpReference e)
 	{ 
 		if (e.idents.length > 1) for (int i = cast(int)e.idents.length - 1; i > 0; --i) {
 			wf(e.idents[i]);
@@ -1853,7 +1858,7 @@ public:
 		return Continue; 
 	}
 
-	override Status visit(ir.TraitsExp texp)
+	override Status visit(ref ir.Exp, ir.TraitsExp texp)
 	{
 		assert(texp.type == ir.TraitsExp.Type.GetAttribute);
 		wf("__traits(getAttribute, ");

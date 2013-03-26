@@ -11,7 +11,7 @@ import volt.exceptions;
 import volt.interfaces;
 import volt.token.location;
 import volt.visitor.visitor;
-import volt.visitor.expreplace;
+import volt.visitor.scopemanager;
 
 import volt.semantic.typer;
 import volt.semantic.mangle;
@@ -23,7 +23,7 @@ import volt.semantic.util;
 /**
  * Lowerers misc things needed by the LLVM backend.
  */
-class LlvmLowerer : ScopeExpReplaceVisitor, Pass
+class LlvmLowerer : ScopeManager, Pass
 {
 public:
 	LanguagePass lp;
