@@ -322,11 +322,11 @@ public:
 		accept(e.base, this);
 		wfln(" {");
 		mIndent++;
-		foreach (member; e.members) {
+		foreach (ref member; e.members) {
 			twf(member.name);
 			if (member.assign !is null) {
 				wf(" = ");
-				accept(member.assign, this);
+				acceptExp(member.assign, this);
 			}
 			wfln(";");
 		}
@@ -700,7 +700,7 @@ public:
 		mIndent = 0;
 
 		if (f.initExps.length > 0) {
-			foreach (index, i; f.initExps) {
+			foreach (index, ref i; f.initExps) {
 				acceptExp(i, this);
 				if (index < f.initExps.length - 1) {
 					wf(", ");
@@ -725,12 +725,12 @@ public:
 		wf(";");
 		if (f.test !is null) {
 			wf(" ");
-			accept(f.test, this);
+			acceptExp(f.test, this);
 		}
 		wf(";");
 		if (f.increments.length > 0) {
 			wf(" ");
-			foreach (i, increment; f.increments) {
+			foreach (i, ref increment; f.increments) {
 				acceptExp(increment, this);
 				if (i < f.increments.length - 1) {
 					wf(", ");
@@ -761,7 +761,7 @@ public:
 		} else {
 			twf("switch (");
 		}
-		accept(ss.condition, this);
+		acceptExp(ss.condition, this);
 		wfln(") {");
 
 		return Continue;
@@ -865,7 +865,7 @@ public:
 			wf("case");
 			if (gs.exp !is null) {
 				wf(" ");
-				accept(gs.exp, this);
+				acceptExp(gs.exp, this);
 			}
 		} else {
 			throw CompilerPanic(gs.location, "malformed goto statement made it to PrintVisitor.");
@@ -883,7 +883,7 @@ public:
 	override Status enter(ir.WithStatement ws)
 	{
 		twf("with (");
-		accept(ws.exp, this);
+		acceptExp(ws.exp, this);
 		wfln(") {");
 		mIndent++;
 		internalPrintBlock(ws.block);
@@ -903,7 +903,7 @@ public:
 		twf("synchronized ");
 		if (ss.exp !is null) {
 			wf("(");
-			accept(ss.exp, this);
+			acceptExp(ss.exp, this);
 			wf(") ");
 		}
 		wfln("{");
@@ -963,7 +963,7 @@ public:
 	override Status enter(ir.ThrowStatement ts)
 	{
 		twf("throw ");
-		accept(ts.exp, this);
+		acceptExp(ts.exp, this);
 		wfln(";");
 		return ContinueParent;
 	}
@@ -998,11 +998,11 @@ public:
 		twf("pragma(");
 		wf(ps.type);
 		if (ps.arguments.length > 0) {
-			foreach (i, arg; ps.arguments) {
+			foreach (i, ref arg; ps.arguments) {
 				if (i < ps.arguments.length - 1) {
 					wf(", ");
 				}
-				accept(arg, this);
+				acceptExp(arg, this);
 			}
 		}
 		wfln(") {");
@@ -1063,7 +1063,7 @@ public:
 			auto oldIndentText = mIndentText;
 			mIndentText = "";
 			
-			accept(ms.stringExp, this);
+			acceptExp(ms.stringExp, this);
 			
 			mIndentText = oldIndentText;
 			
@@ -1475,10 +1475,10 @@ public:
 	override Status enter(ref ir.Exp, ir.Assert _assert)
 	{
 		wf("assert(");
-		accept(_assert.condition, this);
+		acceptExp(_assert.condition, this);
 		if (_assert.message !is null) {
 			wf(", ");
-			accept(_assert.message, this);
+			acceptExp(_assert.message, this);
 		}
 		wf(")");
 		return ContinueParent;
@@ -1506,9 +1506,9 @@ public:
 	{
 		acceptExp(ternary.condition, this);
 		wf(" ? ");
-		accept(ternary.ifTrue, this);
+		acceptExp(ternary.ifTrue, this);
 		wf(" : ");
-		accept(ternary.ifFalse, this);
+		acceptExp(ternary.ifFalse, this);
 		return ContinueParent;
 	}
 
@@ -1630,7 +1630,9 @@ public:
 
 	override Status enter(ref ir.Exp, ir.Postfix postfix)
 	{
-		acceptExp(postfix.child, this);
+		if (postfix.child !is null) {
+			acceptExp(postfix.child, this);
+		}
 		switch (postfix.op) {
 		case ir.Postfix.Op.Identifier:
 			wf(".");
@@ -1682,7 +1684,9 @@ public:
 			break;
 		case ir.Postfix.Op.CreateDelegate:
 			wf(".");
-			wf(postfix.identifier.value);
+			ir.ExpReference eref = cast(ir.ExpReference) postfix.memberFunction;
+			assert(eref !is null);
+			wf(eref.idents);
 			break;
 		default:
 			throw CompilerPanic(postfix.location, "tried to print bad postfix expression.");
@@ -1776,7 +1780,7 @@ public:
 				wf(")");
 			}
 			wf(" => ");
-			accept(functionLiteral.lambdaExp, this);
+			acceptExp(functionLiteral.lambdaExp, this);
 			return ContinueParent;
 		}
 
