@@ -417,7 +417,7 @@ public:
 	{
 		ln();
 		twf("static assert(");
-		accept(sa.exp, this);
+		acceptExp(sa.exp, this);
 		if (sa.message !is null) {
 			wf(", ");
 			accept(sa.message, this);
@@ -502,7 +502,7 @@ public:
 			break;
 		case StaticIf:
 			twf("static if(");
-			accept(c.exp, this);
+			acceptExp(c.exp, this);
 			wf(")");
 			break;
 		}
@@ -628,7 +628,7 @@ public:
 			wf(i.autoName);
 			wf(" = ");
 		}
-		accept(i.exp, this);
+		acceptExp(i.exp, this);
 		wf(") {");
 		mIndent++;
 		ln();
@@ -656,7 +656,7 @@ public:
 	{
 		twf("while ");
 		wf("(");
-		accept(w.condition, this);
+		acceptExp(w.condition, this);
 		wf(") {");
 		mIndent++;
 		ln();
@@ -680,7 +680,7 @@ public:
 		internalPrintBlock(d.block);
 		mIndent--;
 		twf("} while (");
-		accept(d.condition, this);
+		acceptExp(d.condition, this);
 		wf(");");
 		ln();
 
@@ -701,7 +701,7 @@ public:
 
 		if (f.initExps.length > 0) {
 			foreach (index, i; f.initExps) {
-				accept(i, this);
+				acceptExp(i, this);
 				if (index < f.initExps.length - 1) {
 					wf(", ");
 				}
@@ -715,7 +715,7 @@ public:
 				wf(d.name);
 				if (d.assign !is null) {
 					wf(" = ");
-					accept(d.assign, this);
+					acceptExp(d.assign, this);
 				}
 				if (i < f.initVars.length - 1) {
 					wf(", ");
@@ -731,7 +731,7 @@ public:
 		if (f.increments.length > 0) {
 			wf(" ");
 			foreach (i, increment; f.increments) {
-				accept(increment, this);
+				acceptExp(increment, this);
 				if (i < f.increments.length - 1) {
 					wf(", ");
 				}
@@ -1112,7 +1112,7 @@ public:
 		wf(" ", ed.name);
 		if (ed.assign !is null) {
 			wf(" = ");
-			accept(ed.assign, this);
+			acceptExp(ed.assign, this);
 		}
 		wfln(";");
 		return ContinueParent;
@@ -1385,7 +1385,7 @@ public:
 	override Status enter(ir.TypeOf typeOf)
 	{
 		wf("typeof(");
-		accept(typeOf.exp, this);
+		acceptExp(typeOf.exp, this);
 		wf(")");
 		return ContinueParent;
 	}
