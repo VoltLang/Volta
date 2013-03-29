@@ -409,14 +409,18 @@ ir.Node[] parseEnum(TokenStream ts)
 
 		while (true) {
 			auto ed = parseEnumDeclaration(ts);
-			if (ed.type is null) {
-				ed.type = copyTypeSmart(base.location, base);
-			}
 			ed.prevEnum = prevEnum;
 			prevEnum = ed;
 			if (namedEnum !is null) {
+				if (ed.type !is null) {
+					throw new CompilerError(ed.type.location, "named enums members can't be typed");
+				}
+				ed.type = copyTypeSmart(base.location, base);
 				namedEnum.members ~= ed;
 			} else {
+				if (ed.type is null) {
+					ed.sharedType = base;
+				}
 				output ~= ed;
 			}
 

@@ -256,6 +256,8 @@ public:
 class EnumDeclaration : Declaration
 {
 	Type type;
+	Type sharedType; // Points to a shared base type.
+
 	Exp assign;
 	string name;
 	EnumDeclaration prevEnum;
