@@ -1057,11 +1057,13 @@ void extypeBinOp(LanguagePass lp, ir.Scope current, ir.BinOp bin, ir.PrimitiveTy
 			if (fitsInPrimitive(lprim, bin.right)) {
 				bin.right = buildCastSmart(lprim, bin.right);
 				rightUnsigned = true;
+				rightsz = leftsz;
 			}
 		} else {
 			if (fitsInPrimitive(rprim, bin.left)) {
 				bin.left = buildCastSmart(rprim, bin.left);
 				leftUnsigned = true;
+				leftsz = rightsz;
 			}
 		}
 		if (leftUnsigned != rightUnsigned) {
