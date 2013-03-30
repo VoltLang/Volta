@@ -239,6 +239,7 @@ ir.Function parseConstructor(TokenStream ts)
 {
 	auto c = new ir.Function();
 	c.kind = ir.Function.Kind.Constructor;
+	c.name = "__ctor";
 
 	// XXX: Change to local/global.
 	if (matchIf(ts, TokenType.Static)) {
@@ -271,6 +272,7 @@ ir.Function parseDestructor(TokenStream ts)
 {
 	auto d = new ir.Function();
 	d.kind = ir.Function.Kind.Destructor;
+	d.name = "__dtor";
 
 	// XXX: Change to local/global or local/shared.
 	if (matchIf(ts, TokenType.Static)) {
