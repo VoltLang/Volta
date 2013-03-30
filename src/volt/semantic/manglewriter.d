@@ -66,8 +66,7 @@ public:
 
 	override Status enter(ir.Function fn)
 	{
-		if (fn.name is null)
-			writefln("null '%s'", fn.myScope.name);
+		assert(fn.name !is null);
 
 		/// @todo check other linkage as well.
 		if (fn.mangledName !is null) {
