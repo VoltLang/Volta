@@ -6,6 +6,7 @@ import std.conv : to;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
+import volt.ir.copy;
 
 import volt.exceptions;
 import volt.token.stream;
@@ -417,11 +418,11 @@ ir.Node[] parseEnum(TokenStream ts)
 				if (ed.type !is null) {
 					throw new CompilerError(ed.type.location, "named enums members can't be typed");
 				}
-				ed.type = copyTypeSmart(base.location, base);
+				ed.type = buildTypeReference(namedEnum.location, namedEnum);
 				namedEnum.members ~= ed;
 			} else {
 				if (ed.type is null) {
-					ed.sharedType = base;
+					ed.type = copyType(base);
 				}
 				output ~= ed;
 			}

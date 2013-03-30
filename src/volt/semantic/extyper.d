@@ -1224,10 +1224,7 @@ public:
 			this.current = null;
 		}
 
-		if (ed.type is null) {
-			ensureResolved(lp, current, ed.sharedType);
-			ed.type = copyType(ed.sharedType);
-		}
+		ensureResolved(lp, current, ed.type);
 
 		ir.EnumDeclaration[] edStack;
 		ir.Exp prevExp;
