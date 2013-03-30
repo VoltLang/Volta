@@ -32,7 +32,8 @@ void gather(ir.Scope current, ir.EnumDeclaration e, Where where)
 
 void gather(ir.Scope current, ir.Alias a, Where where)
 {
-	current.addAlias(a, a.name, current);
+	assert(a.store is null);
+	a.store = current.addAlias(a, a.name, current);
 }
 
 void gather(ir.Scope current, ir.Variable v, Where where)

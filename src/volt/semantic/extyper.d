@@ -1280,6 +1280,12 @@ public:
 	{
 	}
 
+	override Status enter(ir.Alias a)
+	{
+		lp.resolve(a);
+		return ContinueParent;
+	}
+
 	override Status enter(ir.Struct s)
 	{
 		lp.actualize(s);

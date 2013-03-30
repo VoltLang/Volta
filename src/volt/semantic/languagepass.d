@@ -135,6 +135,12 @@ public:
 		resolve(_scope, fn.userAttrs);
 	}
 
+	override void resolve(ir.Alias a)
+	{
+		if (!a.resolved)
+			resolve(a.store);
+	}
+
 	override void resolve(ir.Store s)
 	{
 		auto w = mTracker.add(s.node, "resolving alias");

@@ -164,8 +164,11 @@ public:
 	 * type is set.
 	 *
 	 * @throws CompilerError on failure to resolve alias.
+	 * @{
 	 */
 	abstract void resolve(ir.Store s);
+	abstract void resolve(ir.Alias a);
+	/* @} */
 
 	/**
 	 * Resovles a Struct, done on lookup of it.

@@ -18,6 +18,8 @@ import volt.semantic.util : ensureResolved;
 void resolveAlias(LanguagePass lp, ir.Store s)
 {
 	auto a = cast(ir.Alias)s.node;
+	scope(exit) a.resolved = true;
+
 	if (a.type !is null) {
 		ensureResolved(lp, s.s, a.type);
 		return s.markAliasResolved(a.type);

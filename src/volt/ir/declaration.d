@@ -149,6 +149,7 @@ class Alias : Node
 {
 public:
 	Access access;
+	bool resolved;
 
 	/**
 	 * The names to associate with the alias.
@@ -171,6 +172,11 @@ public:
 	 * alias name = >.qualified.name<;
 	 */
 	QualifiedName id;
+
+	/**
+	 * Needed for resolving.
+	 */
+	Store store;
 
 
 public:
