@@ -176,6 +176,11 @@ public:
 	abstract void resolve(ir.Struct c);
 
 	/**
+	 * Resovles a Union, done on lookup of it.
+	 */
+	abstract void resolve(ir.Union u);
+
+	/**
 	 * Resovles a Class, making sure the parent is populated.
 	 */
 	abstract void resolve(ir.Class c);
@@ -210,6 +215,13 @@ public:
 	 * via pointers) are resolved as well.
 	 */
 	abstract void actualize(ir.Struct c);
+
+	/**
+	 * Actualize a Union, making sure all its fields and methods
+	 * are populated, and any embedded structs (not referenced
+	 * via pointers) are resolved as well.
+	 */
+	abstract void actualize(ir.Union u);
 
 	/**
 	 * Actualize a Class, making sure all its fields and methods

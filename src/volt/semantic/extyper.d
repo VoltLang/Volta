@@ -385,6 +385,7 @@ void extypeAssignDispatch(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.
 		break;
 	case ir.NodeType.ArrayType:
 	case ir.NodeType.Struct:
+	case ir.NodeType.Union:
 		auto rtype = getExpType(lp, exp, current);
 		if (typesEqual(type, rtype)) {
 			return;
@@ -506,7 +507,9 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 				type = asStorage.base;
 			}
 
-			if (type.nodeType != ir.NodeType.Struct && type.nodeType != ir.NodeType.Class) {
+			if (type.nodeType != ir.NodeType.Struct &&
+			    type.nodeType != ir.NodeType.Union &&
+			    type.nodeType != ir.NodeType.Class) {
 				return;
 			}
 
@@ -1290,6 +1293,13 @@ public:
 	{
 		lp.actualize(s);
 		super.enter(s);
+		return Continue;
+	}
+
+	override Status enter(ir.Union u)
+	{
+		lp.actualize(u);
+		super.enter(u);
 		return Continue;
 	}
 

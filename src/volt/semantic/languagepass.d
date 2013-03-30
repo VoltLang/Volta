@@ -16,6 +16,7 @@ import volt.visitor.debugprinter;
 import volt.visitor.prettyprinter;
 
 import volt.semantic.util;
+import volt.semantic.classify;
 import volt.semantic.lookup;
 import volt.semantic.attribremoval;
 import volt.semantic.condremoval;
@@ -155,6 +156,11 @@ public:
 		resolve(s.myScope.parent, s.userAttrs);
 	}
 
+	override void resolve(ir.Union u)
+	{
+		resolve(u.myScope.parent, u.userAttrs);
+	}
+
 	override void resolve(ir.Class c)
 	{
 		resolve(c.myScope.parent, c.userAttrs);
@@ -194,6 +200,31 @@ public:
 	override void actualize(ir.Struct c)
 	{
 		// Nothing to do here.
+	}
+
+	override void actualize(ir.Union u)
+	{
+		if (u.actualized)
+			return;
+
+		auto w = mTracker.add(u, "actualizing union");
+		scope (exit)
+			w.done();
+
+		foreach (n; u.members.nodes) {
+			if (n.nodeType == ir.NodeType.Function) {
+				throw new CompilerError(n.location, "union can not have functions");
+			}
+			auto field = cast(ir.Variable)n;
+			if (field is null) {
+				continue;
+			}
+
+			resolve(u.myScope, field);
+		}
+
+		u.totalSize = size(u.location, this, u);
+		u.actualized = true;
 	}
 
 	override void actualize(ir.Class c)

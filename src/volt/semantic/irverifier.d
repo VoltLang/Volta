@@ -78,6 +78,7 @@ public:
 			case Alias:
 			case Enum:
 			case Struct:
+			case Union:
 			case Class:
 			case Interface:
 			case MixinFunction:

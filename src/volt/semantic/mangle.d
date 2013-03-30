@@ -77,6 +77,12 @@ void mangleType(ir.Type t, ref string mangledString)
 		mangledString ~= "S";
 		mangleScope(asStruct.myScope, mangledString);
 		break;
+	case Union:
+		auto asUnion = cast(ir.Union) t;
+		assert(asUnion !is null);
+		mangledString ~= "U";
+		mangleScope(asUnion.myScope, mangledString);
+		break;
 	case Class:
 		auto asClass = cast(ir.Class) t;
 		assert(asClass !is null);
@@ -93,8 +99,7 @@ void mangleType(ir.Type t, ref string mangledString)
 		auto asEnum = cast(ir.Enum) t;
 		assert(asEnum !is null);
 		mangledString ~= "E";
-		/// @todo Add myScope field to enum.
-		//mangleScope(asEnum.myScope, mangledString);
+		mangleScope(asEnum.myScope, mangledString);
 		mangleString(asEnum.name, mangledString);
 		break;
 	case TypeReference:

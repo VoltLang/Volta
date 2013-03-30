@@ -73,6 +73,11 @@ void gather(ir.Scope current, ir.Struct s, Where where)
 	current.addType(s, s.name);
 }
 
+void gather(ir.Scope current, ir.Union u, Where where)
+{
+	current.addType(u, u.name);
+}
+
 void gather(ir.Scope current, ir.Class c, Where where)
 {
 	current.addType(c, c.name);
@@ -156,6 +161,16 @@ void addScope(ir.Scope current, ir.Struct s)
 
 	assert(s.myScope is null);
 	s.myScope = new ir.Scope(current, s, s.name);
+}
+
+void addScope(ir.Scope current, ir.Union u)
+{
+	if (u.name is null) {
+		throw new CompilerError(u.location, "anonymous unions not supported (yet)");
+	}
+
+	assert(u.myScope is null);
+	u.myScope = new ir.Scope(current, u, u.name);
 }
 
 void addScope(ir.Scope current, ir.Enum e)
@@ -347,6 +362,14 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.Union u)
+	{
+		gather(current, u, where);
+		addScope(current, u);
+		push(u.myScope, u);
+		return Continue;
+	}
+
 	override Status enter(ir.UserAttribute ua)
 	{
 		gather(current, ua, where);
@@ -392,6 +415,7 @@ public:
 	override Status leave(ir.Module m) { pop(); return Continue; }
 	override Status leave(ir.Class c) { pop(c); return Continue; }
 	override Status leave(ir.Struct s) { pop(s); return Continue; }
+	override Status leave(ir.Union u) { pop(u); return Continue; }
 	override Status leave(ir.Enum e) { pop(e); return Continue; }
 	override Status leave(ir.Function fn) { pop(); return Continue; }
 	override Status leave(ir._Interface i) { pop(i); return Continue; }

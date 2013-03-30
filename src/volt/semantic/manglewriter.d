@@ -58,6 +58,9 @@ public:
 	override Status enter(ir.Struct s) { push(s.name); return Continue; }
 	override Status leave(ir.Struct s) { pop(s.name); return Continue; }
 
+	override Status enter(ir.Union u) { push(u.name); return Continue; }
+	override Status leave(ir.Union u) { pop(u.name); return Continue; }
+
 	override Status enter(ir.UserAttribute ui) { push(ui.name); return Continue; }
 	override Status leave(ir.UserAttribute ui) { pop(ui.name); return Continue; }
 

@@ -377,6 +377,7 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
 	case Module:
 	case Import:
 	case Struct:
+	case Union:
 	case UserAttribute:
 		return false;
 	case Class:

@@ -382,11 +382,16 @@ void retrieveScope(LanguagePass lp, ir.Node tt, ir.Postfix postfix, ref ir.Scope
 		assert(asModule !is null);
 		_scope = asModule.myScope;
 		emsg = format("module '%s' has no member '%s'.", asModule.name, postfix.identifier.value);
-	} else if (tt.nodeType == ir.NodeType.Class || tt.nodeType == ir.NodeType.Struct || tt.nodeType == ir.NodeType.UserAttribute) {
+	} else if (tt.nodeType == ir.NodeType.Struct || tt.nodeType == ir.NodeType.Union ||
+	           tt.nodeType == ir.NodeType.Class || tt.nodeType == ir.NodeType.UserAttribute) {
 		if (tt.nodeType == ir.NodeType.Struct) {
 			auto asStruct = cast(ir.Struct) tt;
 			_scope = asStruct.myScope;
 			emsg = format("type '%s' has no member '%s'.", asStruct.name, postfix.identifier.value);
+		} else if (tt.nodeType == ir.NodeType.Union) {
+			auto asUnion = cast(ir.Union) tt;
+			_scope = asUnion.myScope;
+			emsg = format("type '%s' has no member '%s'.", asUnion.name, postfix.identifier.value);
 		} else if (tt.nodeType == ir.NodeType.Class) {
 			_class = cast(ir.Class) tt;
 			_scope = _class.myScope;

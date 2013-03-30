@@ -48,10 +48,15 @@ int size(Location location, LanguagePass lp, ir.Node node)
 		auto asStruct = cast(ir.Struct) node;
 		assert(asStruct !is null);
 		return structSize(location, lp, asStruct);
+	case Union:
+		auto asUnion = cast(ir.Union) node;
+		assert(asUnion !is null);
+		return unionSize(location, lp, asUnion);
 	case Class:
 		auto asClass = cast(ir.Class) node;
 		assert(asClass !is null);
 		return classSize(location, lp, asClass);
+
 	case Variable:
 		auto asVariable = cast(ir.Variable) node;
 		assert(asVariable !is null);
@@ -102,6 +107,19 @@ bool mutableIndirection(ir.Type t)
 		auto asStruct = cast(ir.Struct) t;
 		assert(asStruct !is null);
 		foreach (node; asStruct.members.nodes) {
+			auto asVar = cast(ir.Variable) node;
+			if (asVar is null) {
+				continue;
+			}
+			if (mutableIndirection(asVar.type)) {
+				return true;
+			}
+		}
+		return false;
+	case Union:
+		auto asUnion = cast(ir.Union) t;
+		assert(asUnion !is null);
+		foreach (node; asUnion.members.nodes) {
 			auto asVar = cast(ir.Variable) node;
 			if (asVar is null) {
 				continue;
@@ -238,6 +256,23 @@ int structSize(Location location, LanguagePass lp, ir.Struct s)
 		}
 
 		sizeAccumulator += size(location, lp, node);
+	}
+	return sizeAccumulator;
+}
+
+/// Returns the size of a given Union, in bytes.
+int unionSize(Location location, LanguagePass lp, ir.Union u)
+{
+	int sizeAccumulator;
+	foreach (node; u.members.nodes) {
+		// If it's not a Variable, it shouldn't take up space.
+		if (node.nodeType != ir.NodeType.Variable) {
+			continue;
+		}
+
+		auto s = size(location, lp, node);
+		if (s > sizeAccumulator)
+			sizeAccumulator = s;
 	}
 	return sizeAccumulator;
 }
