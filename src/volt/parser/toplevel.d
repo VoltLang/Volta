@@ -746,6 +746,12 @@ ir.UserAttribute parseUserAttribute(TokenStream ts)
 	match(ts, TokenType.Interface);
 	auto nameTok = match(ts, TokenType.Identifier);
 	ui.name = nameTok.value;
+
+	if (ui.name[0] >= 'a' && ui.name[0] <= 'z') {
+		throw new CompilerError(nameTok.location,
+			"UserAttributes can not start with lowercase letter");
+	}
+
 	match(ts, TokenType.OpenBrace);
 	while (ts.peek.type != TokenType.CloseBrace) {
 		ui.fields ~= parseJustVariable(ts);
