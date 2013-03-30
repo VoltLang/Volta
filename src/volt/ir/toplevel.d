@@ -289,6 +289,26 @@ public:
 }
 
 /**
+ * C style union.
+ * Structs are a POD data type, and should be binary compatible
+ * with the same union as defined by your friendly neighbourhood
+ * C compiler.
+ *
+ * @p Union are mangled as "U" + @p name.
+ *
+ * @ingroup irNode irTopLevel irType irDecl
+ */
+class Union : Aggregate
+{
+public:
+	bool actualized;
+	int totalSize; // Total size in memory.
+
+public:
+	this() { super(NodeType.Union); }
+}
+
+/**
  * C style struct.
  * Structs are a POD data type, and should be binary compatible
  * with the same struct as defined by your friendly neighbourhood
@@ -504,7 +524,7 @@ public:
  * Only variables can be present. Any assign (or when initializing them
  * normally, in fact) must be known at compile time.
  *
- * @p UserAttributes are mangled as 'U' + name.
+ * @p UserAttributes are mangled as 'T' + name.
  *
  * @ingroup irNode irTopLevel
  */

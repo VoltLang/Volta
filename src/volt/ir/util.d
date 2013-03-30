@@ -75,6 +75,10 @@ ir.Scope getScopeFromType(ir.Type type)
 		auto asStruct = cast(ir.Struct) type;
 		assert(asStruct !is null);
 		return asStruct.myScope;
+	case Union:
+		auto asUnion = cast(ir.Union) type;
+		assert(asUnion !is null);
+		return asUnion.myScope;
 	case Class:
 		auto asClass = cast(ir.Class) type;
 		assert(asClass !is null);
