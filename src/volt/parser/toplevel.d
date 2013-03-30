@@ -73,6 +73,9 @@ body
 		case TokenType.Tilde:  // XXX: Is this unambiguous?
 			tlb.nodes ~= [parseDestructor(ts)];
 			break;
+		case TokenType.Union:
+			tlb.nodes ~= [parseUnion(ts)];
+			break;
 		case TokenType.Struct:
 			tlb.nodes ~= [parseStruct(ts)];
 			break;
@@ -350,6 +353,26 @@ ir._Interface parseInterface(TokenStream ts)
 	match(ts, TokenType.CloseBrace);
 
 	return i;
+}
+
+ir.Union parseUnion(TokenStream ts)
+{
+	auto u = new ir.Union();
+	u.location = ts.peek.location;
+
+	match(ts, TokenType.Union);
+	auto nameTok = match(ts, TokenType.Identifier);
+	u.name = nameTok.value;
+
+	if (ts.peek.type == TokenType.Semicolon) {
+		match(ts, TokenType.Semicolon);
+	} else {
+		match(ts, TokenType.OpenBrace);
+		u.members = parseTopLevelBlock(ts, TokenType.CloseBrace);
+		match(ts, TokenType.CloseBrace);
+	}
+
+	return u;
 }
 
 ir.Struct parseStruct(TokenStream ts)
