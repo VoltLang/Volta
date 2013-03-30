@@ -6,6 +6,7 @@ import std.string : format;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
+import volt.ir.copy;
 
 import volt.exceptions;
 import volt.token.stream;
@@ -100,6 +101,8 @@ ir.Node[] reallyParseVariable(TokenStream ts, ir.Type base)
 		decls ~= d;
 
 		if (ts.peek.type == TokenType.Comma) {
+			// Need to copy this on multiple.
+			base = copyType(base);
 			ts.get();
 		} else {
 			break;
