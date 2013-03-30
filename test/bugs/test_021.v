@@ -1,6 +1,5 @@
 //T compiles:yes
 //T retval:42
-//T has-passed:no
 // Implicit int conversion gone wrong.
 module test_021;
 
