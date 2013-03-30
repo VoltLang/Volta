@@ -55,6 +55,25 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.Union u)
+	{
+		current = u.myScope;
+		return Continue;
+	}
+
+	override Status leave(ir.Union u)
+	{
+		if (current !is u.myScope) {
+			auto str = "invalid scope layout should be " ~
+			           getNodeAddressString(u) ~ " is " ~
+			           getNodeAddressString(current.node);
+			throw CompilerPanic(u.location, str);
+		}
+
+		current = current.parent;
+		return Continue;
+	}
+
 	override Status enter(ir.Class c)
 	{
 		current = c.myScope;

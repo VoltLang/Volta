@@ -42,6 +42,8 @@ public abstract:
 	Status leave(ir._Interface i);
 	Status enter(ir.Struct s);
 	Status leave(ir.Struct s);
+	Status enter(ir.Union c);
+	Status leave(ir.Union c);
 	Status enter(ir.Variable d);
 	Status leave(ir.Variable d);
 	Status enter(ir.Enum e);
@@ -204,6 +206,8 @@ override:
 	Status leave(ir.Class c){ return Continue; }
 	Status enter(ir._Interface i){ return Continue; }
 	Status leave(ir._Interface i){ return Continue; }
+	Status enter(ir.Union u){ return Continue; }
+	Status leave(ir.Union u){ return Continue; }
 	Status enter(ir.Struct s){ return Continue; }
 	Status leave(ir.Struct s){ return Continue; }
 	Status enter(ir.Variable d){ return Continue; }
@@ -366,75 +370,77 @@ Visitor.Status accept(ir.Node n, Visitor av)
 		return parentContinue(status);
 	}
 
-	switch (n.nodeType) {
+	final switch (n.nodeType) with (ir.NodeType) {
 	/*
 	 * Top Levels.
 	 */
-	case ir.NodeType.Module:
+	case Module:
 		return acceptModule(cast(ir.Module) n, av);
-	case ir.NodeType.TopLevelBlock:
+	case TopLevelBlock:
 		auto asTlb = cast(ir.TopLevelBlock) n;
 		assert(asTlb !is null);
 		return acceptTopLevelBlock(asTlb, av);
-	case ir.NodeType.Import:
+	case Import:
 		auto asImport = cast(ir.Import) n;
 		assert(asImport !is null);
 		return acceptImport(asImport, av);
-	case ir.NodeType.Variable:
+	case Variable:
 		return acceptVariable(cast(ir.Variable) n, av);
-	case ir.NodeType.Unittest:
+	case Unittest:
 		return acceptUnittest(cast(ir.Unittest) n, av);
-	case ir.NodeType.Class:
+	case Class:
 		auto asClass = cast(ir.Class) n;
 		assert(asClass !is null);
 		return acceptClass(asClass, av);
-	case ir.NodeType.Interface:
+	case Interface:
 		auto asInterface = cast(ir._Interface) n;
 		assert(asInterface !is null);
 		return acceptInterface(asInterface, av);
-	case ir.NodeType.Struct:
+	case Struct:
 		return acceptStruct(cast(ir.Struct) n, av);
-	case ir.NodeType.Enum:
+	case Union:
+		return acceptUnion(cast(ir.Union) n, av);
+	case Enum:
 		auto asEnum = cast(ir.Enum) n;
 		assert(asEnum !is null);
 		return acceptEnum(asEnum, av);
-	case ir.NodeType.Attribute:
+	case Attribute:
 		auto asAttribute = cast(ir.Attribute) n;
 		assert(asAttribute !is null);
 		return acceptAttribute(asAttribute, av);
-	case ir.NodeType.StaticAssert:
+	case StaticAssert:
 		auto asStaticAssert = cast(ir.StaticAssert) n;
 		assert(asStaticAssert !is null);
 		return acceptStaticAssert(asStaticAssert, av);
-	case ir.NodeType.EmptyTopLevel:
+	case EmptyTopLevel:
 		auto asEmpty = cast(ir.EmptyTopLevel) n;
 		assert(asEmpty !is null);
 		return av.visit(asEmpty);
-	case ir.NodeType.MixinFunction:
+	case MixinFunction:
 		auto asMf = cast(ir.MixinFunction) n;
 		assert(asMf !is null);
 		return acceptMixinFunction(asMf, av);
-	case ir.NodeType.MixinTemplate:
+	case MixinTemplate:
 		auto asMt = cast(ir.MixinTemplate) n;
 		assert(asMt !is null);
 		return acceptMixinTemplate(asMt, av);
-	case ir.NodeType.ConditionTopLevel:
+	case ConditionTopLevel:
 		auto asCtl = cast(ir.ConditionTopLevel) n;
 		assert(asCtl !is null);
 		return acceptConditionTopLevel(asCtl, av);
-	case ir.NodeType.UserAttribute:
+	case UserAttribute:
 		auto asUi = cast(ir.UserAttribute) n;
 		assert(asUi !is null);
 		return acceptUserAttribute(asUi, av);
-	case ir.NodeType.Condition:
+	case Condition:
 		auto asCondition = cast(ir.Condition) n;
 		assert(asCondition !is null);
 		return acceptCondition(asCondition, av);
-	case ir.NodeType.QualifiedName:
+	case QualifiedName:
 		auto asQname = cast(ir.QualifiedName) n;
 		assert(asQname !is null);
 		return av.visit(asQname);
-	case ir.NodeType.Identifier:
+	case Identifier:
 		auto asName = cast(ir.Identifier) n;
 		assert(asName !is null);
 		return av.visit(asName);
@@ -442,87 +448,87 @@ Visitor.Status accept(ir.Node n, Visitor av)
 	/*
 	 * Expressions.
 	 */
-	case ir.NodeType.Constant:
-	case ir.NodeType.IdentifierExp:
-	case ir.NodeType.Postfix:
-	case ir.NodeType.Unary:
-	case ir.NodeType.BinOp:
-	case ir.NodeType.Ternary:
-	case ir.NodeType.ArrayLiteral:
-	case ir.NodeType.AssocArray:
-	case ir.NodeType.Assert:
-	case ir.NodeType.StringImport:
-	case ir.NodeType.Typeid:
-	case ir.NodeType.IsExp:
-	case ir.NodeType.FunctionLiteral:
-	case ir.NodeType.ExpReference:
-	case ir.NodeType.StructLiteral:
-	case ir.NodeType.ClassLiteral:
-	case ir.NodeType.TraitsExp:
+	case Constant:
+	case IdentifierExp:
+	case Postfix:
+	case Unary:
+	case BinOp:
+	case Ternary:
+	case ArrayLiteral:
+	case AssocArray:
+	case Assert:
+	case StringImport:
+	case Typeid:
+	case IsExp:
+	case FunctionLiteral:
+	case ExpReference:
+	case StructLiteral:
+	case ClassLiteral:
+	case TraitsExp:
 		throw CompilerPanic(n.location, "can not visit expressions");
 
 	/*
 	 * Statements.
 	 */
-	case ir.NodeType.ExpStatement:
+	case ExpStatement:
 		return acceptExpStatement(cast(ir.ExpStatement) n, av);
-	case ir.NodeType.ReturnStatement:
+	case ReturnStatement:
 		return acceptReturnStatement(cast(ir.ReturnStatement) n, av);
-	case ir.NodeType.BlockStatement:
+	case BlockStatement:
 		return acceptBlockStatement(cast(ir.BlockStatement) n, av);
-	case ir.NodeType.AsmStatement:
+	case AsmStatement:
 		return acceptAsmStatement(cast(ir.AsmStatement) n, av);
-	case ir.NodeType.IfStatement:
+	case IfStatement:
 		return acceptIfStatement(cast(ir.IfStatement) n, av);
-	case ir.NodeType.WhileStatement:
+	case WhileStatement:
 		return acceptWhileStatement(cast(ir.WhileStatement) n, av);
-	case ir.NodeType.DoStatement:
+	case DoStatement:
 		return acceptDoStatement(cast(ir.DoStatement) n, av);
-	case ir.NodeType.ForStatement:
+	case ForStatement:
 		return acceptForStatement(cast(ir.ForStatement) n, av);
-	case ir.NodeType.LabelStatement:
+	case LabelStatement:
 		return acceptLabelStatement(cast(ir.LabelStatement) n, av);
-	case ir.NodeType.SwitchStatement:
+	case SwitchStatement:
 		return acceptSwitchStatement(cast(ir.SwitchStatement) n, av);
-	case ir.NodeType.ContinueStatement:
+	case ContinueStatement:
 		auto asCont = cast(ir.ContinueStatement) n;
 		assert(asCont !is null);
 		return av.visit(asCont);
-	case ir.NodeType.BreakStatement:
+	case BreakStatement:
 		auto asBreak = cast(ir.BreakStatement) n;
 		assert(asBreak !is null);
 		return av.visit(asBreak);
-	case ir.NodeType.GotoStatement:
+	case GotoStatement:
 		return acceptGotoStatement(cast(ir.GotoStatement) n, av);
-	case ir.NodeType.WithStatement:
+	case WithStatement:
 		return acceptWithStatement(cast(ir.WithStatement) n, av);
-	case ir.NodeType.SynchronizedStatement:
+	case SynchronizedStatement:
 		return acceptSynchronizedStatement(cast(ir.SynchronizedStatement) n, av);
-	case ir.NodeType.TryStatement:
+	case TryStatement:
 		auto asTry = cast(ir.TryStatement) n;
 		assert(asTry !is null);
 		return acceptTryStatement(asTry, av);
-	case ir.NodeType.ThrowStatement:
+	case ThrowStatement:
 		auto asThrow = cast(ir.ThrowStatement) n;
 		assert(asThrow !is null);
 		return acceptThrowStatement(asThrow, av);
-	case ir.NodeType.ScopeStatement:
+	case ScopeStatement:
 		auto asScope = cast(ir.ScopeStatement) n;
 		assert(asScope !is null);
 		return acceptScopeStatement(asScope, av);
-	case ir.NodeType.PragmaStatement:
+	case PragmaStatement:
 		auto asPragma = cast(ir.PragmaStatement) n;
 		assert(asPragma !is null);
 		return acceptPragmaStatement(asPragma, av);
-	case ir.NodeType.EmptyStatement:
+	case EmptyStatement:
 		auto asEmpty = cast(ir.EmptyStatement) n;
 		assert(asEmpty !is null);
 		return av.visit(asEmpty);
-	case ir.NodeType.ConditionStatement:
+	case ConditionStatement:
 		auto asCs = cast(ir.ConditionStatement) n;
 		assert(asCs !is null);
 		return acceptConditionStatement(asCs, av);
-	case ir.NodeType.MixinStatement:
+	case MixinStatement:
 		auto asMs = cast(ir.MixinStatement) n;
 		assert(asMs !is null);
 		return acceptMixinStatement(asMs, av);
@@ -530,39 +536,39 @@ Visitor.Status accept(ir.Node n, Visitor av)
 	/*
 	 * Declarations.
 	 */
-	case ir.NodeType.Function:
+	case Function:
 		return acceptFunction(cast(ir.Function) n, av);
-	case ir.NodeType.PrimitiveType:
+	case PrimitiveType:
 		return av.visit(cast(ir.PrimitiveType) n);
-	case ir.NodeType.TypeReference:
+	case TypeReference:
 		auto asUser = cast(ir.TypeReference) n;
 		assert(asUser !is null);
 		return av.visit(asUser);
-	case ir.NodeType.PointerType:
+	case PointerType:
 		return acceptPointerType(cast(ir.PointerType) n, av);
-	case ir.NodeType.ArrayType:
+	case ArrayType:
 		return acceptArrayType(cast(ir.ArrayType) n, av);
-	case ir.NodeType.StaticArrayType:
+	case StaticArrayType:
 		return acceptStaticArrayType(cast(ir.StaticArrayType) n, av);
-	case ir.NodeType.AAType:
+	case AAType:
 		return acceptAAType(cast(ir.AAType) n, av);
-	case ir.NodeType.FunctionType:
+	case FunctionType:
 		return acceptFunctionType(cast(ir.FunctionType) n, av);
-	case ir.NodeType.DelegateType:
+	case DelegateType:
 		return acceptDelegateType(cast(ir.DelegateType) n, av);
-	case ir.NodeType.StorageType:
+	case StorageType:
 		return acceptStorageType(cast(ir.StorageType) n, av);
-	case ir.NodeType.Alias:
+	case Alias:
 		return acceptAlias(cast(ir.Alias) n, av);
-	case ir.NodeType.TypeOf:
+	case TypeOf:
 		auto typeOf = cast(ir.TypeOf) n;
 		assert(typeOf !is null);
 		return acceptTypeOf(typeOf, av);
-	case ir.NodeType.NullType:
+	case NullType:
 		auto nt = cast(ir.NullType) n;
 		assert(nt !is null);
 		return av.visit(nt);
-	case ir.NodeType.EnumDeclaration:
+	case EnumDeclaration:
 		auto ed = cast(ir.EnumDeclaration) n;
 		assert(ed !is null);
 		return acceptEnumDeclaration(ed, av);
@@ -570,7 +576,16 @@ Visitor.Status accept(ir.Node n, Visitor av)
 	/*
 	 * Failure fall through.
 	 */
-	default:
+	case Invalid:
+	case NonVisiting:
+	case FunctionDecl:
+	case FunctionBody:
+	case AAPair:
+	case FunctionSetType:
+	case FunctionSet:
+	case FunctionParameter:
+	case SwitchCase:
+	case Comma:
 		throw CompilerPanic(n.location, format("unhandled accept node: %s.", to!string(n.nodeType)));
 	}
 }
@@ -743,6 +758,21 @@ Visitor.Status acceptStruct(ir.Struct s, Visitor av)
 	}
 
 	return av.leave(s);
+}
+
+Visitor.Status acceptUnion(ir.Union u, Visitor av)
+{
+	auto status = av.enter(u);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	status = accept(u.members, av);
+	if (status == VisitorStop) {
+		return VisitorStop;
+	}
+
+	return av.leave(u);
 }
 
 Visitor.Status acceptEnum(ir.Enum e, Visitor av)

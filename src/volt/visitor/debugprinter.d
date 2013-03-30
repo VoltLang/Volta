@@ -154,6 +154,8 @@ public:
 	override Status leave(ir._Interface n) { leaveNode(n); return Continue; }
 	override Status enter(ir.Struct n) { enterNode(n); visitNamed(n); return Continue; }
 	override Status leave(ir.Struct n) { leaveNode(n); return Continue; }
+	override Status enter(ir.Union n) { enterNode(n); visitNamed(n); return Continue; }
+	override Status leave(ir.Union n) { leaveNode(n); return Continue; }
 	override Status enter(ir.Variable n) { enterNode(n); visitNamed(n); return Continue; }
 	override Status leave(ir.Variable n) { leaveNode(n); return Continue; }
 	override Status enter(ir.Enum n) { enterNode(n); return Continue; }

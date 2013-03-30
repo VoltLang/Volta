@@ -292,6 +292,31 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.Union u)
+	{
+		ln();
+		twf("union ");
+		wf(u.name);
+		ln();
+		twf("{");
+		ln();
+		mIndent++;
+
+		foreach (member; u.members.nodes) {
+			accept(member, this);
+		}
+
+		mIndent--;
+		twf("}\n");
+
+		return ContinueParent;
+	}
+
+	override Status leave(ir.Union u)
+	{
+		return Continue;
+	}
+
 	override Status enter(ir.Variable d)
 	{
 		twf("");
