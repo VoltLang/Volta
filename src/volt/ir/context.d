@@ -255,14 +255,16 @@ public:
 	 * Side-effects:
 	 *   None.
 	 */
-	void addAlias(Alias n, string name, Scope look = null)
+	Store addAlias(Alias n, string name, Scope look = null)
 	in {
 		assert(n !is null);
 		assert(name !is null);
 	}
 	body {
 		errorOn(n, name);
-		symbols[name] = new Store(this, n, name, look, Store.Kind.Alias);
+		auto store = new Store(this, n, name, look, Store.Kind.Alias);
+		symbols[name] = store;
+		return store;
 	}
 
 	/**
@@ -275,7 +277,7 @@ public:
 	 * Side-effects:
 	 *   None.
 	 */
-	void addScope(Node n, Scope s, string name)
+	Store addScope(Node n, Scope s, string name)
 	in {
 		assert(n !is null);
 		assert(name !is null);
@@ -286,6 +288,7 @@ public:
 		auto store = new Store(this, n, name, Store.Kind.Scope);
 		symbols[name] = store;
 		store.s = s;
+		return store;
 	}
 
 	/**
@@ -297,14 +300,16 @@ public:
 	 * Side-effects:
 	 *   None.
 	 */
-	void addType(Node n, string name)
+	Store addType(Node n, string name)
 	in {
 		assert(n !is null);
 		assert(name !is null);
 	}
 	body {
 		errorOn(n, name);
-		symbols[name] = new Store(this, n, name, Store.Kind.Type);
+		auto store = new Store(this, n, name, Store.Kind.Type);
+		symbols[name] = store;
+		return store;
 	}
 
 	/**
@@ -316,14 +321,16 @@ public:
 	 * Side-effects:
 	 *   None.
 	 */
-	void addValue(Node n, string name)
+	Store addValue(Node n, string name)
 	in {
 		assert(n !is null);
 		assert(name !is null);
 	}
 	body {
 		errorOn(n, name);
-		symbols[name] = new Store(this, n, name, Store.Kind.Value);
+		auto store = new Store(this, n, name, Store.Kind.Value);
+		symbols[name] = store;
+		return store;
 	}
 
 	/**
@@ -336,7 +343,7 @@ public:
 	 * Side-effects:
 	 *   None.
 	 */
-	void addFunction(Function fn, string name)
+	Store addFunction(Function fn, string name)
 	in {
 		assert(fn !is null);
 		assert(name !is null);
@@ -345,13 +352,15 @@ public:
 		auto ret = name in symbols;
 
 		if (ret is null) {
-			symbols[name] = new Store(this, fn, name);
-			return;
+			auto store = new Store(this, fn, name);
+			symbols[name] = store;
+			return store;
 		} else if (ret.kind == Store.Kind.Function) {
 			ret.functions ~= fn;
-			return;
+			return *ret;
 		}
 		errorDefined(fn, name);
+		assert(false);
 	}
 
 	/**
@@ -363,14 +372,16 @@ public:
 	 * Side-effects:
 	 *   None.
 	 */
-	void addTemplate(Node n, string name)
+	Store addTemplate(Node n, string name)
 	in {
 		assert(n !is null);
 		assert(name !is null);
 	}
 	body {
 		errorOn(n, name);
-		symbols[name] = new Store(this, n, name, Store.Kind.Template);
+		auto store = new Store(this, n, name, Store.Kind.Template);
+		symbols[name] = store;
+		return store;
 	}
 
 	/**
@@ -382,14 +393,16 @@ public:
 	 * Side-effects:
 	 *   None.
 	 */
-	void addEnumDeclaration(EnumDeclaration e)
+	Store addEnumDeclaration(EnumDeclaration e)
 	in {
 		assert(e !is null);
 		assert(e.name.length > 0);
 	}
 	body {
 		errorOn(e, e.name);
-		symbols[e.name] = new Store(this, e, e.name);
+		auto store = new Store(this, e, e.name);
+		symbols[e.name] = store;
+		return store;
 	}
 
 	/**
