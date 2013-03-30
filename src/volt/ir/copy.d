@@ -8,6 +8,8 @@ import std.string : format;
 import ir = volt.ir.ir;
 import volt.ir.util;
 
+import volt.exceptions;
+
 
 ir.Constant copy(ir.Constant cnst)
 {
@@ -60,14 +62,158 @@ ir.IdentifierExp copy(ir.IdentifierExp ie)
 	return i;
 }
 
+
+/*
+ *
+ * Type copy
+ *
+ */
+
+
+ir.PrimitiveType copy(ir.PrimitiveType old)
+{
+	auto pt = new ir.PrimitiveType(old.type);
+	pt.location = old.location;
+	return pt;
+}
+
+ir.PointerType copy(ir.PointerType old)
+{
+	auto pt = new ir.PointerType(copyType(old.base));
+	pt.location = old.location;
+	return pt;
+}
+
+ir.ArrayType copy(ir.ArrayType old)
+{
+	auto at = new ir.ArrayType(copyType(old.base));
+	at.location = old.location;
+	return at;
+}
+
+ir.StaticArrayType copy(ir.StaticArrayType old)
+{
+	auto sat = new ir.StaticArrayType();
+	sat.location = old.location;
+	sat.base = copyType(old.base);
+	sat.length = old.length;
+	return sat;
+}
+
+ir.AAType copy(ir.AAType old)
+{
+	auto aa = new ir.AAType();
+	aa.location = old.location;
+	aa.value = copyType(old.value);
+	aa.key = copyType(old.key);
+	return aa;
+}
+
+ir.FunctionType copy(ir.FunctionType old)
+{
+	auto ft = new ir.FunctionType(old);
+	ft.location = old.location;
+	ft.ret = copyType(old.ret);
+	foreach(ref oldVar; ft.params) {
+		auto var = new ir.Variable();
+		var.location = oldVar.location;
+		var.type = copyType(oldVar.type);
+		oldVar = var;
+	}
+	return ft;
+}
+
+ir.DelegateType copy(ir.DelegateType old)
+{
+	auto dg = new ir.DelegateType(old);
+	dg.location = old.location;
+	dg.ret = copyType(old.ret);
+	foreach(ref oldVar; dg.params) {
+		auto var = new ir.Variable();
+		var.location = oldVar.location;
+		var.type = copyType(oldVar.type);
+		oldVar = var;
+	}
+	return dg;
+}
+
+ir.StorageType copy(ir.StorageType old)
+{
+	auto st = new ir.StorageType();
+	st.location = old.location;
+	if (old.base !is null) {
+		st.base = copyType(old.base);
+	}
+	st.type = old.type;
+	return st;
+}
+
+ir.TypeReference copy(ir.TypeReference old)
+{
+	auto tr = new ir.TypeReference();
+	tr.location = old.location;
+	tr.id = copy(old.id);
+	if (old.type !is null) {
+		assert(false);
+	}
+	return tr;
+}
+
+
+/*
+ *
+ * Helpers.
+ *
+ */
+
+
+ir.QualifiedName copy(ir.QualifiedName old)
+{
+	auto q = new ir.QualifiedName();
+	q.location = old.location;
+	q.identifiers = old.identifiers;
+	foreach (ref oldId; q.identifiers) {
+		auto id = new ir.Identifier(oldId.value);
+		id.location = old.location;
+		oldId = id;
+	}
+	return q;
+}
+
 /**
  * Helper function that takes care of up
  * casting the return from copyDeep.
  */
 ir.Type copyType(ir.Type t)
 {
-	/// @todo use copyDeep.
-	return copyTypeSmart(t.location, t);
+	switch (t.nodeType) with (ir.NodeType) {
+	case PrimitiveType:
+		return copy(cast(ir.PrimitiveType)t);
+	case PointerType:
+		return copy(cast(ir.PointerType)t);
+	case ArrayType:
+		return copy(cast(ir.ArrayType)t);
+	case StaticArrayType:
+		return copy(cast(ir.StaticArrayType)t);
+	case AAType:
+		return copy(cast(ir.AAType)t);
+	case FunctionType:
+		return copy(cast(ir.FunctionType)t);
+	case DelegateType:
+		return copy(cast(ir.DelegateType)t);
+	case StorageType:
+		return copy(cast(ir.StorageType)t);
+	case TypeReference:
+		return copy(cast(ir.TypeReference)t);
+	case Interface:
+	case Struct:
+	case Class:
+	case UserAttribute:
+	case Enum:
+		throw CompilerPanic(t.location, "can't copy aggregate types");
+	default:
+		assert(false);
+	}
 }
 
 /**
