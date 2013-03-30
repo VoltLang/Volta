@@ -601,14 +601,3 @@ bool isOrInheritsFrom(ir.Class a, ir.Class b)
 		return inheritsFrom(a, b);
 	}
 }
-
-string[] getParentScopeNames(ir.Scope _scope)
-{
-	string[] backwardsNames;
-	ir.Scope currentScope = _scope;
-	while (currentScope !is null) {
-		backwardsNames ~= currentScope.name;
-		currentScope = currentScope.parent;
-	}
-	return array(retro(backwardsNames));
-}

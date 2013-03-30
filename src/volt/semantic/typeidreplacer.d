@@ -72,11 +72,7 @@ public:
 		auto mangledNameConstant = new ir.Constant();
 		mangledNameConstant.location = _typeid.location;
 		auto _scope = getScopeFromType(_typeid.type);
-		string[] parentNames;
-		if (_scope !is null) {
-			parentNames = getParentScopeNames(_scope);
-		}
-		mangledNameConstant._string = mangle(parentNames, _typeid.type);
+		mangledNameConstant._string = mangle(null, _typeid.type);
 		mangledNameConstant.arrayData = cast(void[]) mangledNameConstant._string;
 		mangledNameConstant.type = new ir.ArrayType(new ir.PrimitiveType(ir.PrimitiveType.Kind.Char));
 
