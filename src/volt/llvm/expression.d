@@ -665,7 +665,7 @@ void handleAddrOf(State state, ir.Unary de, Value result)
 	auto pt = new ir.PointerType();
 	pt.base = result.type.irType;
 	assert(pt.base !is null);
-	pt.mangledName = volt.semantic.mangle.mangle(null, pt);
+	pt.mangledName = volt.semantic.mangle.mangle(pt);
 
 	result.type = state.fromIr(pt);
 	result.isPointer = false;
@@ -945,7 +945,7 @@ void handleCreateDelegate(State state, ir.Postfix postfix, Value result)
 	irDg.linkage = irFn.linkage;
 	irDg.location = postfix.location;
 	irDg.params = irFn.params.dup;
-	irDg.mangledName = volt.semantic.mangle.mangle(null, irDg);
+	irDg.mangledName = volt.semantic.mangle.mangle(irDg);
 
 	auto dg = cast(DelegateType)state.fromIr(irDg);
 	if (dg is null)

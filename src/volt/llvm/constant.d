@@ -91,7 +91,7 @@ void handleAddrOf(State state, ir.Unary de, Value result)
 	auto pt = new ir.PointerType();
 	pt.base = type.irType;
 	assert(pt.base !is null);
-	pt.mangledName = volt.semantic.mangle.mangle(null, pt);
+	pt.mangledName = volt.semantic.mangle.mangle(pt);
 
 	result.value = v;
 	result.type = state.fromIr(pt);

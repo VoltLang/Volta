@@ -643,7 +643,7 @@ void buildCommonTypes(State state, bool V_P64)
  */
 string addMangledName(ir.Type irType)
 {
-	string m = volt.semantic.mangle.mangle(null, irType);
+	string m = volt.semantic.mangle.mangle(irType);
 	irType.mangledName = m;
 	return m;
 }

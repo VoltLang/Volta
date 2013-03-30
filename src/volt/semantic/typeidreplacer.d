@@ -50,7 +50,7 @@ public:
 	{
 		assert(_typeid.type !is null);
 
-		_typeid.type.mangledName = mangle(null, _typeid.type);
+		_typeid.type.mangledName = mangle(_typeid.type);
 		string name = "_V__TypeInfo_" ~ _typeid.type.mangledName;
 		auto typeidStore = lookupOnlyThisScope(lp, thisModule.myScope, exp.location, name);
 		if (typeidStore !is null) {
@@ -72,7 +72,7 @@ public:
 		auto mangledNameConstant = new ir.Constant();
 		mangledNameConstant.location = _typeid.location;
 		auto _scope = getScopeFromType(_typeid.type);
-		mangledNameConstant._string = mangle(null, _typeid.type);
+		mangledNameConstant._string = mangle(_typeid.type);
 		mangledNameConstant.arrayData = cast(void[]) mangledNameConstant._string;
 		mangledNameConstant.type = new ir.ArrayType(new ir.PrimitiveType(ir.PrimitiveType.Kind.Char));
 

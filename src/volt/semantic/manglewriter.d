@@ -100,7 +100,7 @@ public:
 		    a.type.mangledName != "") {
 			return Continue;
 		}
-		a.type.mangledName = mangle(parentNames, a.type);
+		a.type.mangledName = mangle(a.type);
 		return Continue;
 	}
 
@@ -141,7 +141,7 @@ public:
 			return Continue;
 		}
 
-		t.mangledName = mangle(parentNames, t);
+		t.mangledName = mangle(t);
 		return Continue;
 	}
 }

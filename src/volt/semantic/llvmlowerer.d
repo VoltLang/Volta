@@ -209,7 +209,7 @@ public:
 	ir.Function getCopyFunction(Location loc, ir.ArrayType type)
 	{
 		if (type.mangledName is null)
-			type.mangledName = mangle(null, type);
+			type.mangledName = mangle(type);
 
 		auto name = "__copyArray" ~ type.mangledName;
 		auto fn = lookupFunction(loc, name);
@@ -250,7 +250,7 @@ public:
 	ir.Function getConcatFunction(Location loc, ir.ArrayType type, bool isAssignment)
 	{
 		if(type.mangledName is null)
-			type.mangledName = mangle(null, type);
+			type.mangledName = mangle(type);
 
 		string name;
 		if(isAssignment)
@@ -366,7 +366,7 @@ public:
 	ir.Function getArrayCmpFunction(Location loc, ir.ArrayType type, bool notEqual)
 	{
 		if(type.mangledName is null)
-			type.mangledName = mangle(null, type);
+			type.mangledName = mangle(type);
 
 		string name;
 		if (notEqual)

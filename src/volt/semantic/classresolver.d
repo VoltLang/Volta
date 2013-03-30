@@ -298,7 +298,7 @@ void emitVtableVariable(LanguagePass lp, ir.Class _class)
 	assign.type = copyTypeSmart(_class.location, _class.vtableStruct);
 
 	_class.vtableVariable = buildVariableSmart(_class.location, _class.vtableStruct, ir.Variable.Storage.Global, "__vtable_instance");
-	_class.vtableVariable.mangledName = "_V__Vtable_" ~ mangle(null, _class);
+	_class.vtableVariable.mangledName = "_V__Vtable_" ~ mangle(_class);
 	_class.vtableVariable.assign = assign;
 	_class.members.nodes ~= _class.vtableVariable;
 	_class.myScope.addValue(_class.vtableVariable, _class.vtableVariable.name);

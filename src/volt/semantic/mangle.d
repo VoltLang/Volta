@@ -11,10 +11,8 @@ import ir = volt.ir.ir;
 
 /**
  * Mangle a type found in a given module.
- *
- * @todo remove names argument.
  */
-string mangle(string[] names, ir.Type t)
+string mangle(ir.Type t)
 {
 	string mangledStr;
 	mangleType(t, mangledStr);

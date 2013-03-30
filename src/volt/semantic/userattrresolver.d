@@ -62,7 +62,7 @@ void fillInUserAttributeLayoutClass(LanguagePass lp, ir.UserAttribute attr)
 	_class.myScope = new ir.Scope(attr.myScope, _class, _class.name);
 	_class.members = new ir.TopLevelBlock();
 	_class.members.location = attr.location;
-	attr.mangledName = mangle(null, attr);
+	attr.mangledName = mangle(attr);
 	_class.mangledName = attr.mangledName;
 	_class.parentClass = retrieveAttribute(lp, attr.myScope, attr.location);
 	_class.parent = buildQualifiedName(attr.location, ["object", "Attribute"]);

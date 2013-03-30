@@ -16,7 +16,7 @@ import volt.semantic.mangle;
 
 ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scope baseScope, ir.ArrayType atype)
 {
-	auto arrayMangledName = mangle(null, atype);
+	auto arrayMangledName = mangle(atype);
 
 	auto ftype = new ir.FunctionType();
 	ftype.location = location;
