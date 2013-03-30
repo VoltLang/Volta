@@ -69,6 +69,14 @@ ir.Constant evaluateBinOp(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 		return evaluateBinOpAdd(lp, current, binop);
 	case Equal:
 		return evaluateBinOpEqual(lp, current, binop);
+	case And:
+		return evaluateBinOpAnd(lp, current, binop);
+	case Or:
+		return evaluateBinOpOr(lp, current, binop);
+	case LS:
+		return evaluateBinOpLS(lp, current, binop);
+	case RS:
+		return evaluateBinOpRS(lp, current, binop);
 	case AndAnd:
 		return evaluateBinOpAndAnd(lp, current, binop);
 	case OrOr:
@@ -86,6 +94,34 @@ ir.Constant evaluateBinOpAdd(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 	auto left = evaluate(lp, current, binop.left);
 	auto right = evaluate(lp, current, binop.right);
 	return buildConstantInt(binop.location, left._int + right._int);
+}
+
+ir.Constant evaluateBinOpAnd(LanguagePass lp, ir.Scope current, ir.BinOp binop)
+{
+	auto left = evaluate(lp, current, binop.left);
+	auto right = evaluate(lp, current, binop.right);
+	return buildConstantInt(binop.location, left._int & right._int);
+}
+
+ir.Constant evaluateBinOpOr(LanguagePass lp, ir.Scope current, ir.BinOp binop)
+{
+	auto left = evaluate(lp, current, binop.left);
+	auto right = evaluate(lp, current, binop.right);
+	return buildConstantInt(binop.location, left._int | right._int);
+}
+
+ir.Constant evaluateBinOpLS(LanguagePass lp, ir.Scope current, ir.BinOp binop)
+{
+	auto left = evaluate(lp, current, binop.left);
+	auto right = evaluate(lp, current, binop.right);
+	return buildConstantInt(binop.location, left._int << right._int);
+}
+
+ir.Constant evaluateBinOpRS(LanguagePass lp, ir.Scope current, ir.BinOp binop)
+{
+	auto left = evaluate(lp, current, binop.left);
+	auto right = evaluate(lp, current, binop.right);
+	return buildConstantInt(binop.location, left._int >> right._int);
 }
 
 ir.Constant evaluateBinOpEqual(LanguagePass lp, ir.Scope current, ir.BinOp binop)
