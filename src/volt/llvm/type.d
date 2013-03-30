@@ -13,6 +13,7 @@ import volt.exceptions;
 import volt.llvm.constant;
 import volt.llvm.interfaces;
 static import volt.semantic.mangle;
+static import volt.semantic.classify;
 
 
 /**
@@ -504,6 +505,44 @@ public:
 }
 
 /**
+ * Backend instance of a @link volt.ir.toplevel.Union ir.Union@endlink.
+ */
+class UnionType : Type
+{
+public:
+	uint[string] indices;
+	Type[] types;
+
+public:
+	this(State state, ir.Union irType)
+	{
+		llvmType = LLVMStructCreateNamed(state.context, irType.mangledName);
+		super(state, irType, true, llvmType);
+
+		uint index;
+		foreach(m; irType.members.nodes) {
+			auto var = cast(ir.Variable)m;
+			if (var is null)
+				continue;
+
+			if (var.storage != ir.Variable.Storage.Field)
+				continue;
+
+			/// @todo handle anon members.
+			assert(var.name !is null);
+
+			indices[var.name] = index++;
+			types ~= state.fromIr(var.type);
+		}
+
+		/// @todo check packing.
+		LLVMTypeRef[1] mt;
+		mt[0] = LLVMArrayType(state.ubyteType.llvmType, irType.totalSize);
+		LLVMStructSetBody(llvmType, mt, false);
+	}
+}
+
+/**
  * Looks up or creates the corresponding LLVMTypeRef
  * and Type for the given irType.
  */
@@ -554,6 +593,9 @@ Type fromIr(State state, ir.Type irType)
 	case Struct:
 		auto strct = cast(ir.Struct)irType;
 		return new .StructType(state, strct);
+	case Union:
+		auto u = cast(ir.Union)irType;
+		return new .UnionType(state, u);
 	case StorageType:
 		auto storage = cast(ir.StorageType) irType;
 		return fromIr(state, storage.base);

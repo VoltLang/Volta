@@ -743,15 +743,17 @@ void handlePostId(State state, ir.Postfix postfix, Value result)
 	state.getValueAnyForm(postfix.child, result);
 
 	auto st = cast(StructType)result.type;
+	auto ut = cast(UnionType)result.type;
 	auto at = cast(ArrayType)result.type;
 	auto sat = cast(StaticArrayType)result.type;
 	auto pt = cast(PointerType)result.type;
 
 	if (pt !is null) {
 		st = cast(StructType)pt.base;
+		ut = cast(UnionType)pt.base;
 		at = cast(ArrayType)pt.base;
 		sat = cast(StaticArrayType)pt.base;
-		if (st is null && at is null && sat is null)
+		if (st is null && ut is null && at is null && sat is null)
 			throw CompilerPanic(postfix.child.location, "pointed to value is not a struct or (static)array");
 
 		// We are looking at a pointer, make sure to load it.
@@ -760,7 +762,25 @@ void handlePostId(State state, ir.Postfix postfix, Value result)
 		result.type = pt.base;
 	}
 
-	if (st !is null) {
+	if (ut !is null) {
+		auto key = postfix.identifier.value;
+		auto ptr = key in ut.indices;
+		if (ptr is null) {
+			auto str = format("0x%s no field name '%s' in struct '%s'",
+			                  to!string(*cast(size_t*)&postfix),
+			                  key, ut.irType.mangledName);
+			throw CompilerPanic(postfix.location, str);
+		} else {
+			index = *ptr;
+		}
+
+
+		makePointer(state, result);
+		result.type = ut.types[index];
+		auto t = LLVMPointerType(result.type.llvmType, 0);
+		result.value = LLVMBuildBitCast(state.builder, result.value, t, "");
+
+	} else if (st !is null) {
 		auto key = postfix.identifier.value;
 		auto ptr = key in st.indices;
 		if (ptr is null) {
