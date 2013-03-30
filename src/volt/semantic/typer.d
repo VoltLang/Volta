@@ -63,6 +63,7 @@ ir.Type getExpType(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 	while (result.nodeType == ir.NodeType.TypeReference) {
 		auto asTR = cast(ir.TypeReference) result;
 		assert(asTR !is null);
+		ensureResolved(lp, currentScope, asTR);
 		result = asTR.type;
 	}
 	auto storage = cast(ir.StorageType) result;
