@@ -34,7 +34,7 @@ public:
 
 	override void transform(ir.Module m)
 	{
-		parentNames = getParentScopeNames(m.myScope);
+		parentNames = m.name.strings();
 		accept(m, this);
 	}
 
@@ -42,51 +42,33 @@ public:
 	{
 	}
 
-	override Status enter(ir.Struct s)
+	final void push(string name)
 	{
-		parentNames = getParentScopeNames(s.myScope);
+		parentNames ~= [name];
 		aggregateDepth++;
-		return Continue;
 	}
 
-	override Status leave(ir.Struct s)
+	final void pop(string name)
 	{
-		aggregateDepth--;
+		assert(parentNames[$-1] == name);
 		parentNames = parentNames[0 .. $-1];
-		return Continue;
-	}
-
-	override Status enter(ir.UserAttribute ui)
-	{
-		parentNames = getParentScopeNames(ui.myScope);
-		aggregateDepth++;
-		return Continue;
-	}
-
-	override Status leave(ir.UserAttribute ui)
-	{
 		aggregateDepth--;
-		parentNames = parentNames[0 .. $-1];
-		return Continue;
 	}
 
-	override Status enter(ir.Class c)
-	{
-		parentNames = getParentScopeNames(c.myScope);
-		aggregateDepth++;
-		return Continue;
-	}
+	override Status enter(ir.Struct s) { push(s.name); return Continue; }
+	override Status leave(ir.Struct s) { pop(s.name); return Continue; }
 
-	override Status leave(ir.Class c)
-	{
-		aggregateDepth--;
-		parentNames = parentNames[0 .. $-1];
-		return Continue;
-	}
+	override Status enter(ir.UserAttribute ui) { push(ui.name); return Continue; }
+	override Status leave(ir.UserAttribute ui) { pop(ui.name); return Continue; }
+
+	override Status enter(ir.Class c) { push(c.name); return Continue; }
+	override Status leave(ir.Class c) { pop(c.name); return Continue; }
 
 	override Status enter(ir.Function fn)
 	{
-		parentNames = getParentScopeNames(fn.myScope);
+		if (fn.name is null)
+			writefln("null '%s'", fn.myScope.name);
+
 		/// @todo check other linkage as well.
 		if (fn.mangledName !is null) {
 			// Do nothing.
@@ -96,18 +78,19 @@ public:
 		} else if (fn.type.linkage == ir.Linkage.C || fn.type.linkage == ir.Linkage.Windows) {
 			fn.mangledName = fn.name;
 		} else {
+			assert(fn.name !is null);
 			fn.mangledName = mangle(parentNames, fn);
 		}
+
+		push(fn.name);
 		functionDepth++;
-		aggregateDepth++;
 		return Continue;
 	}
 
 	override Status leave(ir.Function fn)
 	{
+		pop(fn.name);
 		functionDepth--;
-		aggregateDepth--;
-		parentNames = parentNames[0 .. $-1];
 		return Continue;
 	}
 
@@ -123,7 +106,7 @@ public:
 
 	override Status enter(ir.Variable v)
 	{
-		if (v.mangledName != "") {
+		if (v.mangledName !is null) {
 			return Continue;
 		}
 		if (functionDepth > 0) {

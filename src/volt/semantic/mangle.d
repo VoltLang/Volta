@@ -38,12 +38,13 @@ string mangle(string[] names, ir.Variable v)
 /**
  * Mangle a function.
  *
- * @todo remove names argument.
+ * @todo figure out what to do about names argument.
  */
 string mangle(string[] names, ir.Function fn)
 {
 	string s = "_V";
-	mangleScope(fn.myScope, s);
+	mangleName(names, s);
+	mangleString(fn.name, s);
 	mangleType(fn.type, s);
 	return s;
 }
