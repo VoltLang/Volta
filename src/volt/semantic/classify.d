@@ -535,6 +535,18 @@ bool typesEqual(ir.Type a, ir.Type b)
 		assert(ap !is null && bp !is null);
 		assert(ap.type !is null && bp.type !is null);
 		return typesEqual(ap.type, bp.type);
+	} else if (a.nodeType == ir.NodeType.TypeReference) {
+		// Need to discard any TypeReference on either side.
+		auto ap = cast(ir.TypeReference) a;
+		assert(ap !is null);
+		assert(ap.type !is null);
+		return typesEqual(ap.type, b);
+	} else if (b.nodeType == ir.NodeType.TypeReference) {
+		// Need to discard any TypeReference on either side.
+		auto bp = cast(ir.TypeReference) b;
+		assert(bp !is null);
+		assert(bp.type !is null);
+		return typesEqual(a, bp.type);
 	} else if ((a.nodeType == ir.NodeType.FunctionType &&
 	            b.nodeType == ir.NodeType.FunctionType) ||
 		   (a.nodeType == ir.NodeType.DelegateType &&
