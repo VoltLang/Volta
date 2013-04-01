@@ -979,15 +979,20 @@ void extypePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Postfix
 	extypePostfixIdentifier(lp, current, exp, postfix);
 }
 
-void handleCastTo(LanguagePass lp, ir.Scope current, ir.Unary unary)
+void handleCastTo(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Unary unary)
 {
-	if (unary.type is null || unary.value is null) {
-		return;
-	}
+	assert(unary.type !is null);
+	assert(unary.value !is null);
 
 	auto type = getExpType(lp, unary.value, current);
 	if (type.nodeType == ir.NodeType.FunctionSetType) {
 		throw new CompilerError(unary.location, "cannot cast overloaded function.");
+	}
+
+	// Handling cast(Foo)null
+	if (volt.semantic.util.handleNull(unary.type, unary.value, type) !is null) {
+		exp = unary.value;
+		return;
 	}
 
 	auto to = getClass(unary.type);
@@ -1006,14 +1011,9 @@ void handleCastTo(LanguagePass lp, ir.Scope current, ir.Unary unary)
 	unary.value = buildCall(unary.location, fnref, [val, cast(ir.Exp)tid]);
 }
 
-void extypeUnary(LanguagePass lp, ir.Scope current, ir.Unary _unary)
+void handleNew(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Unary _unary)
 {
-	handleCastTo(lp, current, _unary);
-
-	// Needed because of "new Foo();" in ExpStatement.
-	if (_unary.type !is null) {
-		ensureResolved(lp, current, _unary.type);
-	}
+	assert(_unary.type !is null);
 
 	if (!_unary.hasArgumentList) {
 		return;
@@ -1042,7 +1042,17 @@ void extypeUnary(LanguagePass lp, ir.Scope current, ir.Unary _unary)
 	for (size_t i = 0; i < _unary.argumentList.length; ++i) {
 		extypeAssign(lp, current, _unary.argumentList[i], fn.type.params[i].type);
 	}
-	return;
+}
+
+void extypeUnary(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Unary _unary)
+{
+	switch (_unary.op) with (ir.Unary.Op) {
+	case Cast:
+		return handleCastTo(lp, current, exp, _unary);
+	case New:
+		return handleNew(lp, current, exp, _unary);
+	default:
+	}
 }
 
 void extypeBinOp(LanguagePass lp, ir.Scope current, ir.BinOp bin, ir.PrimitiveType lprim, ir.PrimitiveType rprim)
@@ -1514,7 +1524,11 @@ public:
 
 	override Status leave(ref ir.Exp exp, ir.Unary _unary)
 	{
-		extypeUnary(lp, current, _unary);
+		if (_unary.type !is null) {
+			ensureResolved(lp, current, _unary.type);
+			replaceTypeOfIfNeeded(lp, current, _unary.type);
+		}
+		extypeUnary(lp, current, exp, _unary);
 		return Continue;
 	}
 
