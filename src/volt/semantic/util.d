@@ -68,6 +68,10 @@ ir.Type handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
 		case ArrayType:
 			right = buildArrayLiteralSmart(right.location, left);
 			return copyTypeSmart(right.location, left);
+		case FunctionType:
+			auto t = copyTypeSmart(right.location, left);
+			constant.type = t;
+			return t;
 		case TypeReference:
 			auto tr = cast(ir.TypeReference) left;
 			assert(tr !is null);
