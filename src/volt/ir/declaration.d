@@ -255,6 +255,9 @@ public:
 	/// True if this function has an explicit call to super in
 	bool explicitCallToSuper;
 
+	/// Will be turned into a function pointer.
+	bool loadDynamic;
+
 public:
 	this() { super(NodeType.Function); }
 }

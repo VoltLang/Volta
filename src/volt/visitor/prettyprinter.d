@@ -391,6 +391,7 @@ public:
 		case LinkageWindows: twf("extern(Windows)"); break;
 		case LinkagePascal: twf("extern(Pascal)"); break;
 		case LinkageSystem: twf("extern(System)"); break;
+		case LoadDynamic: twf("@loadDynamic"); break;
 		case Inout: twf("inout"); break;
 		case Immutable: twf("immutable"); break;
 		case Global: twf("global"); break;

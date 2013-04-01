@@ -184,6 +184,7 @@ public:
 		LinkageWindows,
 		LinkagePascal,
 		LinkageSystem,
+		LoadDynamic,
 		Align,
 		Deprecated,
 		Private,

@@ -592,6 +592,10 @@ ir.Attribute parseAttribute(TokenStream ts, bool inModule = false)
 			auto nameTok = match(ts, TokenType.Identifier);
 			attr.kind = ir.Attribute.Kind.Safe;
 			break;
+		case "loadDynamic":
+			auto nameTok = match(ts, TokenType.Identifier);
+			attr.kind = ir.Attribute.Kind.LoadDynamic;
+			break;
 		default:
 			attr.kind = ir.Attribute.Kind.UserAttribute;
 			attr.userAttributeName = parseQualifiedName(ts);

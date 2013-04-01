@@ -188,6 +188,9 @@ protected:
 			case LinkageSystem:
 				fn.type.linkage = ir.Linkage.System;
 				break;
+			case LoadDynamic:
+				fn.loadDynamic = true;
+				break;
 			case Public:
 				fn.access = ir.Access.Public;
 				break;
@@ -385,12 +388,6 @@ protected:
 		}
 	}
 
-	ir.Node accept(ir.Node node)
-	{
-		.accept(node, this);
-		return node;
-	}
-
 	Context ctxTop()
 	{
 		return mCtx[$-1];
@@ -458,14 +455,32 @@ protected:
 
 	bool nodeManipDg(ir.Node node, out ir.Node[] ret)
 	{
-		auto attr = cast(ir.Attribute)node;
-		if (attr !is null) {
+		switch (node.nodeType) with (ir.NodeType) {
+		case Attribute:
+			auto attr = cast(ir.Attribute)node;
 			ret = attrManip(attr);
 			return true;
+		case Function:
+			auto fn = cast(ir.Function)node;
+			enter(fn);
+			if (!fn.loadDynamic) {
+				return false;
+			}
+			if (fn._body !is null) {
+				throw new CompilerError(fn.location, "can not @loadDynamic function with body");
+			}
+			auto var = new ir.Variable();
+			var.location = fn.location;
+			var.name = fn.name;
+			var.type = fn.type;
+			var.access = fn.access;
+			var.storage = ir.Variable.Storage.Global;
+			ret = [cast(ir.Node)var];
+			return true;
+		default:
+			accept(node, this);
+			return false;
 		}
-
-		.accept(node, this);
-		return false;
 	}
 
 
@@ -475,7 +490,7 @@ public:
 	 */
 	void transform(ir.Module m)
 	{
-		.accept(m, this);
+		accept(m, this);
 	}
 
 	void close()
