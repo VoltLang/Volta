@@ -39,46 +39,14 @@ void replaceStorageIfNeeded(ref ir.Type type)
  * This handles implicitly typing null.
  * Generic function used by assign and other functions.
  */
-bool handleNull(LanguagePass lp, ir.Scope current, ref ir.Exp right, ir.Type left)
+bool handleIfNull(LanguagePass lp, ir.Scope current, ir.Type left, ref ir.Exp right)
 {
 	auto rightType = getExpType(lp, right, current);
 	if (rightType.nodeType != ir.NodeType.NullType) {
 		return false;
 	}
 
-	auto constant = cast(ir.Constant) right;
-	if (constant is null) {
-		throw CompilerPanic(right.location, "non constant null");
-	}
-
-	while (true) {
-		switch (left.nodeType) with (ir.NodeType) {
-		case PointerType:
-			constant.type = buildVoidPtr(right.location);
-			right = buildCastSmart(right.location, left, right);
-			return true;
-		case ArrayType:
-			right = buildArrayLiteralSmart(right.location, left);
-			return true;
-		case TypeReference:
-			auto tr = cast(ir.TypeReference) left;
-			assert(tr !is null);
-			left = tr.type;
-			continue;
-		case Class:
-			auto _class = cast(ir.Class) left;
-			if (_class !is null) {
-				auto t = copyTypeSmart(right.location, _class);
-				constant.type = t;
-				return true;
-			}
-			goto default;
-		default:
-			string emsg = format("can't convert null into '%s'.", to!string(left.nodeType));
-			throw new CompilerError(right.location, emsg);
-		}
-	}
-	return true;
+	return handleNull(left, right, rightType) !is null;
 }
 
 /**
@@ -86,7 +54,7 @@ bool handleNull(LanguagePass lp, ir.Scope current, ref ir.Exp right, ir.Type lef
  *
  * While generic currently only used by extypeAssign.
  */
-bool handleStructLiteral(LanguagePass lp, ir.Scope current, ref ir.Exp right, ir.Type left)
+bool handleIfStructLiteral(LanguagePass lp, ir.Scope current, ir.Type left, ref ir.Exp right)
 {
 	auto asLit = cast(ir.StructLiteral) right;
 	if (asLit is null)
@@ -417,8 +385,8 @@ void extypePassDispatch(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Ty
 void extypePass(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Type type)
 {
 	ensureResolved(lp, current, type);
-	if (handleStructLiteral(lp, current, exp, type)) return;
-	if (handleNull(lp, current, exp, type)) return;
+	if (handleIfStructLiteral(lp, current, type, exp)) return;
+	if (handleIfNull(lp, current, type, exp)) return;
 
 	extypePassHandleStorage(lp, current, exp, type);
 
@@ -428,8 +396,8 @@ void extypePass(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Type type)
 void extypeAssign(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Type type)
 {
 	ensureResolved(lp, current, type);
-	if (handleStructLiteral(lp, current, exp, type)) return;
-	if (handleNull(lp, current, exp, type)) return;
+	if (handleIfStructLiteral(lp, current, type, exp)) return;
+	if (handleIfNull(lp, current, type, exp)) return;
 
 	extypeAssignHandleStorage(lp, current, exp, type);
 
@@ -990,7 +958,7 @@ void handleCastTo(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Unary un
 	}
 
 	// Handling cast(Foo)null
-	if (volt.semantic.util.handleNull(unary.type, unary.value, type) !is null) {
+	if (handleNull(unary.type, unary.value, type) !is null) {
 		exp = unary.value;
 		return;
 	}
@@ -1112,8 +1080,8 @@ void extypeBinOp(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 	auto ltype = getExpType(lp, binop.left, current);
 	auto rtype = getExpType(lp, binop.right, current);
 
-	if (handleNull(lp, current, binop.left, rtype)) return;
-	if (handleNull(lp, current, binop.right, ltype)) return;
+	if (handleIfNull(lp, current, rtype, binop.left)) return;
+	if (handleIfNull(lp, current, ltype, binop.right)) return;
 
 	if (binop.op == ir.BinOp.Type.Assign) {
 		if (effectivelyConst(ltype)) {
