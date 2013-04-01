@@ -380,6 +380,14 @@ public:
 		return new FunctionType(state, ft, ret, params);
 	}
 
+	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
+	{
+		if (!cnst.isNull) {
+			throw CompilerPanic(cnst.location, "can only fromConstant null pointers.");
+		}
+		return LLVMConstPointerNull(llvmType);
+	}
+
 private:
 	this(State state, ir.FunctionType ft, Type ret, Type[] params)
 	{
