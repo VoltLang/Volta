@@ -96,6 +96,17 @@ public:
 		return ContinueParent;
 	}
 
+	override Status enter(ir.Union u)
+	{
+		applyAttributes(u, ctxTop.stack);
+		applyAttributes(u, mStack);
+
+		// Filter out any Attributes.
+		u.members.nodes = manipNodes(u.members.nodes, &nodeManipDg);
+
+		return ContinueParent;
+	}
+
 	override Status enter(ir.Class c)
 	{
 		applyAttributes(c, ctxTop.stack);
@@ -141,6 +152,7 @@ public:
 	override Status leave(ir.Class c) { return Continue; }
 	override Status leave(ir._Interface i) { return Continue; }
 	override Status leave(ir.Struct s) { return Continue; }
+	override Status leave(ir.Union u) { return Continue; }
 	override Status leave(ir.Enum e) { return Continue; }
 
 	override Status enter(ir.Attribute attr) { assert(false); }
