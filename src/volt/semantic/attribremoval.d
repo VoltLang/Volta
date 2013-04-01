@@ -54,10 +54,13 @@ public:
 	override Status enter(ir.Module m)
 	{
 		mCtx = [new Context(m)];
+		return Continue;
+	}
 
+	override Status enter(ir.TopLevelBlock tlb)
+	{
 		// Filter out any Attributes.
-		m.children.nodes = manipNodes(m.children.nodes, &nodeManipDg);
-
+		tlb.nodes = manipNodes(tlb.nodes, &nodeManipDg);
 		return ContinueParent;
 	}
 
@@ -65,7 +68,6 @@ public:
 	{
 		applyAttributes(i, ctxTop.stack);
 		applyAttributes(i, mStack);
-
 		return Continue;
 	}
 
@@ -73,7 +75,6 @@ public:
 	{
 		applyAttributes(fn, ctxTop.stack);
 		applyAttributes(fn, mStack);
-
 		return Continue;
 	}
 
@@ -81,7 +82,6 @@ public:
 	{
 		applyAttributes(d, ctxTop.stack);
 		applyAttributes(d, mStack);
-
 		return Continue;
 	}
 
@@ -89,51 +89,34 @@ public:
 	{
 		applyAttributes(s, ctxTop.stack);
 		applyAttributes(s, mStack);
-
-		// Filter out any Attributes.
-		s.members.nodes = manipNodes(s.members.nodes, &nodeManipDg);
-
-		return ContinueParent;
+		return Continue;
 	}
 
 	override Status enter(ir.Union u)
 	{
 		applyAttributes(u, ctxTop.stack);
 		applyAttributes(u, mStack);
-
-		// Filter out any Attributes.
-		u.members.nodes = manipNodes(u.members.nodes, &nodeManipDg);
-
-		return ContinueParent;
+		return Continue;
 	}
 
 	override Status enter(ir.Class c)
 	{
 		applyAttributes(c, ctxTop.stack);
 		applyAttributes(c, mStack);
-
-		// Filter out any Attributes.
-		c.members.nodes = manipNodes(c.members.nodes, &nodeManipDg);
-
-		return ContinueParent;
+		return Continue;
 	}
 
 	override Status enter(ir._Interface i)
 	{
 		applyAttributes(i, ctxTop.stack);
 		applyAttributes(i, mStack);
-
-		// Filter out any Attributes.
-		i.members.nodes = manipNodes(i.members.nodes, &nodeManipDg);
-
-		return ContinueParent;
+		return Continue;
 	}
 
 	override Status enter(ir.Enum e)
 	{
 		applyAttributes(e, ctxTop.stack);
 		applyAttributes(e, mStack);
-
 		return Continue;
 	}
 
@@ -141,19 +124,8 @@ public:
 	{
 		applyAttributes(a, ctxTop.stack);
 		applyAttributes(a, mStack);
-
 		return Continue;
 	}
-
-	override Status leave(ir.Module m) { assert(false); }
-	override Status leave(ir.Import i) { return Continue; }
-	override Status leave(ir.Function fn) { return Continue; }
-	override Status leave(ir.Variable d) { return Continue; }
-	override Status leave(ir.Class c) { return Continue; }
-	override Status leave(ir._Interface i) { return Continue; }
-	override Status leave(ir.Struct s) { return Continue; }
-	override Status leave(ir.Union u) { return Continue; }
-	override Status leave(ir.Enum e) { return Continue; }
 
 	override Status enter(ir.Attribute attr) { assert(false); }
 	override Status leave(ir.Attribute attr) { assert(false); }
