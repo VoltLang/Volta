@@ -83,6 +83,7 @@ void main(string[] args)
 		listDir("types", "*test_*.v", &addTest);
 		listDir("bugs", "*test_*.v", &addTest);
 		listDir("overloading", "*test_*.v", &addTest);
+		listDir("lookup", "*test_*.v", &addTest);
 	}
 	sort(tests);
 
