@@ -77,7 +77,7 @@ class BinOp : Exp
 {
 public:
 	// Arranged in precedence order, lowest to highest.
-	enum Type
+	enum Op
 	{
 		None,
 		Assign,
@@ -122,7 +122,7 @@ public:
 	}
 
 public:
-	Type op;  ///< The operation to perform.
+	Op op;  ///< The operation to perform.
 	Exp left;  ///< The left hand side of the expression.
 	Exp right;  ///< The right hand side of the expression.
 
@@ -472,13 +472,13 @@ public:
 class TraitsExp : Exp
 {
 public:
-	enum Type
+	enum Op
 	{
 		GetAttribute,
 	}
 
 public:
-	Type type;
+	Op op;
 
 	QualifiedName target;
 	QualifiedName qname;

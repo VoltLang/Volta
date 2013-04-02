@@ -702,7 +702,7 @@ void extypeExpReference(LanguagePass lp, ir.Scope current, ref ir.Exp e, ir.ExpR
 /// Rewrite foo.prop = 3 into foo.prop(3).
 void rewritePropertyFunctionAssign(LanguagePass lp, ir.Scope current, ref ir.Exp e, ir.BinOp bin)
 {
-	if (bin.op != ir.BinOp.Type.Assign) {
+	if (bin.op != ir.BinOp.Op.Assign) {
 		return;
 	}
 	auto asExpRef = cast(ir.ExpReference) bin.left;
@@ -1061,7 +1061,7 @@ void extypeBinOp(LanguagePass lp, ir.Scope current, ir.BinOp bin, ir.PrimitiveTy
 		largestType = rprim;
 	}
 
-	if (bin.op != ir.BinOp.Type.Assign && intsz > largestsz) {
+	if (bin.op != ir.BinOp.Op.Assign && intsz > largestsz) {
 		largestsz = intsz;
 		largestType = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
 	}
@@ -1083,7 +1083,7 @@ void extypeBinOp(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 	if (handleIfNull(lp, current, rtype, binop.left)) return;
 	if (handleIfNull(lp, current, ltype, binop.right)) return;
 
-	if (binop.op == ir.BinOp.Type.Assign) {
+	if (binop.op == ir.BinOp.Op.Assign) {
 		if (effectivelyConst(ltype)) {
 			throw new CompilerError(binop.location, "cannot assign to const type.");
 		}
@@ -1091,7 +1091,7 @@ void extypeBinOp(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 		return;
 	}
 
-	if (binop.op == ir.BinOp.Type.AndAnd || binop.op == ir.BinOp.Type.OrOr) {
+	if (binop.op == ir.BinOp.Op.AndAnd || binop.op == ir.BinOp.Op.OrOr) {
 		auto boolType = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
 		if (!typesEqual(ltype, boolType)) {
 			binop.left = buildCastSmart(boolType, binop.left);

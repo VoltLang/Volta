@@ -1550,45 +1550,45 @@ public:
 		acceptExp(binop.left, this);
 
 		switch (binop.op) {
-		case ir.BinOp.Type.Assign: wf(" = "); break;
-		case ir.BinOp.Type.AddAssign: wf(" += "); break;
-		case ir.BinOp.Type.SubAssign: wf(" -= "); break;
-		case ir.BinOp.Type.MulAssign: wf(" *= "); break;
-		case ir.BinOp.Type.DivAssign: wf(" /= "); break;
-		case ir.BinOp.Type.ModAssign: wf(" %= "); break;
-		case ir.BinOp.Type.AndAssign: wf(" &= "); break;
-		case ir.BinOp.Type.OrAssign: wf(" |= "); break;
-		case ir.BinOp.Type.XorAssign: wf(" ^= "); break;
-		case ir.BinOp.Type.CatAssign: wf(" ~= "); break;
-		case ir.BinOp.Type.LSAssign: wf(" <<= "); break;
-		case ir.BinOp.Type.SRSAssign: wf(" >>= "); break;
-		case ir.BinOp.Type.RSAssign: wf(" >>>= "); break;
-		case ir.BinOp.Type.PowAssign: wf(" ^^= "); break;
-		case ir.BinOp.Type.OrOr: wf(" || "); break;
-		case ir.BinOp.Type.AndAnd: wf(" && "); break;
-		case ir.BinOp.Type.Or: wf(" | "); break;
-		case ir.BinOp.Type.Xor: wf(" ^ "); break;
-		case ir.BinOp.Type.And: wf(" & "); break;
-		case ir.BinOp.Type.Equal: wf(" == "); break;
-		case ir.BinOp.Type.NotEqual: wf(" != "); break;
-		case ir.BinOp.Type.Is: wf(" is "); break;
-		case ir.BinOp.Type.NotIs: wf(" !is "); break;
-		case ir.BinOp.Type.Less: wf(" < "); break;
-		case ir.BinOp.Type.LessEqual: wf(" <= "); break;
-		case ir.BinOp.Type.GreaterEqual: wf(" >= "); break;
-		case ir.BinOp.Type.Greater: wf(" > "); break;
-		case ir.BinOp.Type.In: wf(" in "); break;
-		case ir.BinOp.Type.NotIn: wf(" !in "); break;
-		case ir.BinOp.Type.LS: wf(" << "); break;
-		case ir.BinOp.Type.SRS: wf(" >> "); break;
-		case ir.BinOp.Type.RS: wf(" >>> "); break;
-		case ir.BinOp.Type.Add: wf(" + "); break;
-		case ir.BinOp.Type.Sub: wf(" - "); break;
-		case ir.BinOp.Type.Cat: wf(" ~ "); break;
-		case ir.BinOp.Type.Mul: wf(" * "); break;
-		case ir.BinOp.Type.Div: wf(" / "); break;
-		case ir.BinOp.Type.Mod: wf(" % "); break;
-		case ir.BinOp.Type.Pow: wf(" ^^ "); break;
+		case ir.BinOp.Op.Assign: wf(" = "); break;
+		case ir.BinOp.Op.AddAssign: wf(" += "); break;
+		case ir.BinOp.Op.SubAssign: wf(" -= "); break;
+		case ir.BinOp.Op.MulAssign: wf(" *= "); break;
+		case ir.BinOp.Op.DivAssign: wf(" /= "); break;
+		case ir.BinOp.Op.ModAssign: wf(" %= "); break;
+		case ir.BinOp.Op.AndAssign: wf(" &= "); break;
+		case ir.BinOp.Op.OrAssign: wf(" |= "); break;
+		case ir.BinOp.Op.XorAssign: wf(" ^= "); break;
+		case ir.BinOp.Op.CatAssign: wf(" ~= "); break;
+		case ir.BinOp.Op.LSAssign: wf(" <<= "); break;
+		case ir.BinOp.Op.SRSAssign: wf(" >>= "); break;
+		case ir.BinOp.Op.RSAssign: wf(" >>>= "); break;
+		case ir.BinOp.Op.PowAssign: wf(" ^^= "); break;
+		case ir.BinOp.Op.OrOr: wf(" || "); break;
+		case ir.BinOp.Op.AndAnd: wf(" && "); break;
+		case ir.BinOp.Op.Or: wf(" | "); break;
+		case ir.BinOp.Op.Xor: wf(" ^ "); break;
+		case ir.BinOp.Op.And: wf(" & "); break;
+		case ir.BinOp.Op.Equal: wf(" == "); break;
+		case ir.BinOp.Op.NotEqual: wf(" != "); break;
+		case ir.BinOp.Op.Is: wf(" is "); break;
+		case ir.BinOp.Op.NotIs: wf(" !is "); break;
+		case ir.BinOp.Op.Less: wf(" < "); break;
+		case ir.BinOp.Op.LessEqual: wf(" <= "); break;
+		case ir.BinOp.Op.GreaterEqual: wf(" >= "); break;
+		case ir.BinOp.Op.Greater: wf(" > "); break;
+		case ir.BinOp.Op.In: wf(" in "); break;
+		case ir.BinOp.Op.NotIn: wf(" !in "); break;
+		case ir.BinOp.Op.LS: wf(" << "); break;
+		case ir.BinOp.Op.SRS: wf(" >> "); break;
+		case ir.BinOp.Op.RS: wf(" >>> "); break;
+		case ir.BinOp.Op.Add: wf(" + "); break;
+		case ir.BinOp.Op.Sub: wf(" - "); break;
+		case ir.BinOp.Op.Cat: wf(" ~ "); break;
+		case ir.BinOp.Op.Mul: wf(" * "); break;
+		case ir.BinOp.Op.Div: wf(" / "); break;
+		case ir.BinOp.Op.Mod: wf(" % "); break;
+		case ir.BinOp.Op.Pow: wf(" ^^ "); break;
 		default: assert(false);
 		}
 
@@ -1890,7 +1890,7 @@ public:
 
 	override Status visit(ref ir.Exp, ir.TraitsExp texp)
 	{
-		assert(texp.type == ir.TraitsExp.Type.GetAttribute);
+		assert(texp.op == ir.TraitsExp.Op.GetAttribute);
 		wf("__traits(getAttribute, ");
 		accept(texp.target, this);
 		wf(", ");

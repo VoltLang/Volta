@@ -288,7 +288,7 @@ ir.ClassLiteral getAttributeLiteral(ir.UserAttribute ua, ir.Attribute attr)
 
 void replaceTraits(ref ir.Exp exp, ir.TraitsExp traits, LanguagePass lp, ir.Module thisModule, ir.Scope _scope)
 {
-	assert(traits.type == ir.TraitsExp.Type.GetAttribute);
+	assert(traits.op == ir.TraitsExp.Op.GetAttribute);
 	auto store = lookup(lp, _scope, traits.qname);
 	auto uattr = cast(ir.UserAttribute) store.node;
 	if (uattr is null) {

@@ -47,7 +47,7 @@ ir.Exp ternaryToExp(intir.TernaryExp tern)
 class ExpOrOp
 {
 	intir.UnaryExp exp;
-	ir.BinOp.Type op;
+	ir.BinOp.Op op;
 	ir.BinOp bin;
 
 	this(intir.UnaryExp exp)
@@ -55,7 +55,7 @@ class ExpOrOp
 		this.exp = exp;
 	}
 
-	this(ir.BinOp.Type op)
+	this(ir.BinOp.Op op)
 	{
 		this.op = op;
 	}
@@ -69,7 +69,7 @@ class ExpOrOp
 ExpOrOp[] gatherExps(intir.BinExp bin)
 {
 	ExpOrOp[] list;
-	while (bin.op != ir.BinOp.Type.None) {
+	while (bin.op != ir.BinOp.Op.None) {
 		list ~= new ExpOrOp(bin.left);
 		list ~= new ExpOrOp(bin.op);
 		bin = bin.right;
@@ -86,7 +86,7 @@ ir.Exp binexpToExp(intir.BinExp bin)
 	import std.stdio;
 	ExpOrOp[] tokens = gatherExps(bin);
 	ExpOrOp[] output;
-	ir.BinOp.Type[] stack;
+	ir.BinOp.Op[] stack;
 
 	// While there are tokens to be read.
 	while (tokens.length > 0) {
@@ -566,7 +566,7 @@ ir.TraitsExp parseTraitsExp(TokenStream ts)
 	auto nameTok = match(ts, TokenType.Identifier);
 	switch (nameTok.value) {
 	case "getAttribute":
-		texp.type = ir.TraitsExp.Type.GetAttribute;
+		texp.op = ir.TraitsExp.Op.GetAttribute;
 		match(ts, TokenType.Comma);
 		texp.target = parseQualifiedName(ts);
 		match(ts, TokenType.Comma);
@@ -610,92 +610,92 @@ intir.BinExp parseBinExp(TokenStream ts)
 	case TokenType.Bang:
 		if (ts.lookahead(1).type == TokenType.Is) {
 			ts.get();
-			exp.op = ir.BinOp.Type.NotIs;
+			exp.op = ir.BinOp.Op.NotIs;
 		} else if (ts.lookahead(1).type == TokenType.In) {
 			ts.get();
-			exp.op = ir.BinOp.Type.NotIn;
+			exp.op = ir.BinOp.Op.NotIn;
 		} else {
 			goto default;
 		}
 		break;
 	case TokenType.Assign:
-		exp.op = ir.BinOp.Type.Assign; break;
+		exp.op = ir.BinOp.Op.Assign; break;
 	case TokenType.PlusAssign:
-		exp.op = ir.BinOp.Type.AddAssign; break;
+		exp.op = ir.BinOp.Op.AddAssign; break;
 	case TokenType.DashAssign:
-		exp.op = ir.BinOp.Type.SubAssign; break;
+		exp.op = ir.BinOp.Op.SubAssign; break;
 	case TokenType.AsterixAssign:
-		exp.op = ir.BinOp.Type.MulAssign; break;
+		exp.op = ir.BinOp.Op.MulAssign; break;
 	case TokenType.SlashAssign:
-		exp.op = ir.BinOp.Type.DivAssign; break;
+		exp.op = ir.BinOp.Op.DivAssign; break;
 	case TokenType.PercentAssign:
-		exp.op = ir.BinOp.Type.ModAssign; break;
+		exp.op = ir.BinOp.Op.ModAssign; break;
 	case TokenType.AmpersandAssign:
-		exp.op = ir.BinOp.Type.AndAssign; break;
+		exp.op = ir.BinOp.Op.AndAssign; break;
 	case TokenType.PipeAssign:
-		exp.op = ir.BinOp.Type.OrAssign; break;
+		exp.op = ir.BinOp.Op.OrAssign; break;
 	case TokenType.CaretAssign:
-		exp.op = ir.BinOp.Type.XorAssign; break;
+		exp.op = ir.BinOp.Op.XorAssign; break;
 	case TokenType.TildeAssign:
-		exp.op = ir.BinOp.Type.CatAssign; break;
+		exp.op = ir.BinOp.Op.CatAssign; break;
 	case TokenType.DoubleLessAssign:
-		exp.op = ir.BinOp.Type.LSAssign; break;
+		exp.op = ir.BinOp.Op.LSAssign; break;
 	case TokenType.DoubleGreaterAssign:
-		exp.op = ir.BinOp.Type.SRSAssign; break;
+		exp.op = ir.BinOp.Op.SRSAssign; break;
 	case TokenType.TripleGreaterAssign:
-		exp.op = ir.BinOp.Type.RSAssign; break;
+		exp.op = ir.BinOp.Op.RSAssign; break;
 	case TokenType.DoubleCaretAssign:
-		exp.op = ir.BinOp.Type.PowAssign; break;
+		exp.op = ir.BinOp.Op.PowAssign; break;
 	case TokenType.DoublePipe:
-		exp.op = ir.BinOp.Type.OrOr; break;
+		exp.op = ir.BinOp.Op.OrOr; break;
 	case TokenType.DoubleAmpersand:
-		exp.op = ir.BinOp.Type.AndAnd; break;
+		exp.op = ir.BinOp.Op.AndAnd; break;
 	case TokenType.Pipe:
-		exp.op = ir.BinOp.Type.Or; break;
+		exp.op = ir.BinOp.Op.Or; break;
 	case TokenType.Caret:
-		exp.op = ir.BinOp.Type.Xor; break;
+		exp.op = ir.BinOp.Op.Xor; break;
 	case TokenType.Ampersand:
-		exp.op = ir.BinOp.Type.And; break;
+		exp.op = ir.BinOp.Op.And; break;
 	case TokenType.DoubleAssign:
-		exp.op = ir.BinOp.Type.Equal; break;
+		exp.op = ir.BinOp.Op.Equal; break;
 	case TokenType.BangAssign:
-		exp.op = ir.BinOp.Type.NotEqual; break;
+		exp.op = ir.BinOp.Op.NotEqual; break;
 	case TokenType.Is:
-		exp.op = ir.BinOp.Type.Is; break;
+		exp.op = ir.BinOp.Op.Is; break;
 	case TokenType.In:
-		exp.op = ir.BinOp.Type.In; break;
+		exp.op = ir.BinOp.Op.In; break;
 	case TokenType.Less:
-		exp.op = ir.BinOp.Type.Less; break;
+		exp.op = ir.BinOp.Op.Less; break;
 	case TokenType.LessAssign:
-		exp.op = ir.BinOp.Type.LessEqual; break;
+		exp.op = ir.BinOp.Op.LessEqual; break;
 	case TokenType.Greater:
-		exp.op = ir.BinOp.Type.Greater; break;
+		exp.op = ir.BinOp.Op.Greater; break;
 	case TokenType.GreaterAssign:
-		exp.op = ir.BinOp.Type.GreaterEqual; break;
+		exp.op = ir.BinOp.Op.GreaterEqual; break;
 	case TokenType.DoubleLess:
-		exp.op = ir.BinOp.Type.LS; break;
+		exp.op = ir.BinOp.Op.LS; break;
 	case TokenType.DoubleGreater:
-		exp.op = ir.BinOp.Type.SRS; break;
+		exp.op = ir.BinOp.Op.SRS; break;
 	case TokenType.TripleGreater:
-		exp.op = ir.BinOp.Type.RS; break;
+		exp.op = ir.BinOp.Op.RS; break;
 	case TokenType.Plus:
-		exp.op = ir.BinOp.Type.Add; break;
+		exp.op = ir.BinOp.Op.Add; break;
 	case TokenType.Dash:
-		exp.op = ir.BinOp.Type.Sub; break;
+		exp.op = ir.BinOp.Op.Sub; break;
 	case TokenType.Tilde:
-		exp.op = ir.BinOp.Type.Cat; break;
+		exp.op = ir.BinOp.Op.Cat; break;
 	case TokenType.Slash:
-		exp.op = ir.BinOp.Type.Div; break;
+		exp.op = ir.BinOp.Op.Div; break;
 	case TokenType.Asterix:
-		exp.op = ir.BinOp.Type.Mul; break;
+		exp.op = ir.BinOp.Op.Mul; break;
 	case TokenType.Percent:
-		exp.op = ir.BinOp.Type.Mod; break;
+		exp.op = ir.BinOp.Op.Mod; break;
 	case TokenType.DoubleCaret:
-		exp.op = ir.BinOp.Type.Pow; break;
+		exp.op = ir.BinOp.Op.Pow; break;
 	default:
-		exp.op = ir.BinOp.Type.None; break;
+		exp.op = ir.BinOp.Op.None; break;
 	}
-	if (exp.op != ir.BinOp.Type.None) {
+	if (exp.op != ir.BinOp.Op.None) {
 		ts.get();
 		exp.right = parseBinExp(ts);
 	}

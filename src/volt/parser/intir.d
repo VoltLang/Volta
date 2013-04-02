@@ -39,19 +39,19 @@ public:
 class BinExp : IntExp
 {
 public:
-	BinOp.Type op;
+	BinOp.Op op;
 	UnaryExp left;
 	BinExp right;  // Optional.
 }
 
-bool isLeftAssociative(BinOp.Type operator)
+bool isLeftAssociative(BinOp.Op operator)
 {
-	return operator != BinOp.Type.Assign;
+	return operator != BinOp.Op.Assign;
 }
 
-int getPrecedence(BinOp.Type operator)
+int getPrecedence(BinOp.Op operator)
 {
-	switch (operator) with (BinOp.Type) {
+	switch (operator) with (BinOp.Op) {
 	case Pow:
 		return 11;
 	case Mul, Div, Mod:

@@ -400,9 +400,9 @@ bool isVoid(ir.Type type)
 	return primitive.type == ir.PrimitiveType.Kind.Void;
 }
 
-bool isComparison(ir.BinOp.Type t)
+bool isComparison(ir.BinOp.Op t)
 {
-	switch (t) with (ir.BinOp.Type) {
+	switch (t) with (ir.BinOp.Op) {
 	case OrOr, AndAnd, Equal, NotEqual, Is, NotIs, Less, LessEqual, Greater, GreaterEqual:
 		return true;
 	default:
@@ -410,9 +410,9 @@ bool isComparison(ir.BinOp.Type t)
 	}
 }
 
-bool isValidPointerArithmeticOperation(ir.BinOp.Type t)
+bool isValidPointerArithmeticOperation(ir.BinOp.Op t)
 {
-	switch (t) with (ir.BinOp.Type) {
+	switch (t) with (ir.BinOp.Op) {
 	case Add, Sub:
 		return true;
 	default:

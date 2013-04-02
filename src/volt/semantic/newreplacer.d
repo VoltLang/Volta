@@ -59,7 +59,7 @@ ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scop
 
 	auto ptrAssign = new ir.BinOp();
 	ptrAssign.location = location;
-	ptrAssign.op = ir.BinOp.Type.Assign;
+	ptrAssign.op = ir.BinOp.Op.Assign;
 	ptrAssign.left = ptrPfix;
 	ptrAssign.right = createAllocDgCall(
 		allocDgVar, lp, location, atype.base,
@@ -73,7 +73,7 @@ ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scop
 
 	auto lengthAssign = new ir.BinOp();
 	lengthAssign.location = location;
-	lengthAssign.op = ir.BinOp.Type.Assign;
+	lengthAssign.op = ir.BinOp.Op.Assign;
 	lengthAssign.left = lengthPfix;
 	lengthAssign.right = buildExpReference(location, countVar, "count");
 

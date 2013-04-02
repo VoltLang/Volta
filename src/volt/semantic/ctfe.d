@@ -64,7 +64,7 @@ ir.Constant evaluateUnaryMinus(LanguagePass lp, ir.Scope current, ir.Unary unary
 
 ir.Constant evaluateBinOp(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 {
-	switch (binop.op) with (ir.BinOp.Type) {
+	switch (binop.op) with (ir.BinOp.Op) {
 	case Add:
 		return evaluateBinOpAdd(lp, current, binop);
 	case Equal:

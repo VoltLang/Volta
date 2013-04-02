@@ -144,7 +144,7 @@ ir.Type getClassLiteralType(LanguagePass lp, ir.ClassLiteral clit)
 
 ir.Type getTraitsExpType(LanguagePass lp, ir.TraitsExp traits, ir.Scope _scope)
 {
-	assert(traits.type == ir.TraitsExp.Type.GetAttribute);
+	assert(traits.op == ir.TraitsExp.Op.GetAttribute);
 	auto store = lookup(lp, _scope, traits.qname);
 	auto attr = cast(ir.UserAttribute) store.node;
 	if (attr is null) {
@@ -195,7 +195,7 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 		return boolType;
 	}
 
-	if (effectivelyConst(left) && bin.op == ir.BinOp.Type.Assign) {
+	if (effectivelyConst(left) && bin.op == ir.BinOp.Op.Assign) {
 		throw new CompilerError(bin.location, "cannot assign to const type.");
 	}
 	
@@ -211,9 +211,9 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 		}
 	} else if (left.nodeType == ir.NodeType.PointerType &&
 			   right.nodeType == ir.NodeType.PointerType) {
-		if (bin.op == ir.BinOp.Type.Assign) {
+		if (bin.op == ir.BinOp.Op.Assign) {
 			return left;
-		} else if (bin.op == ir.BinOp.Type.Is || bin.op == ir.BinOp.Type.NotIs) {
+		} else if (bin.op == ir.BinOp.Op.Is || bin.op == ir.BinOp.Op.NotIs) {
 			auto boolType = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
 			boolType.location = bin.location;
 			return boolType;

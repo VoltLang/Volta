@@ -126,7 +126,7 @@ void handleTernary(State state, ir.Ternary t, Value result)
 
 void handleBinOp(State state, ir.BinOp bin, Value result)
 {
-	switch(bin.op) with (ir.BinOp.Type) {
+	switch(bin.op) with (ir.BinOp.Op) {
 	case Assign:
 		handleAssign(state, bin, result);
 		break;
@@ -184,7 +184,7 @@ void handleBoolCompare(State state, ir.BinOp bin, Value result)
 	state.getValue(bin.right, right);
 
 	// The frontend should have made sure that both are bools.
-	switch(bin.op) with (ir.BinOp.Type) {
+	switch(bin.op) with (ir.BinOp.Op) {
 	case AndAnd:
 		result.value = LLVMBuildAnd(state.builder, left.value, right.value, "");
 		break;
@@ -207,7 +207,7 @@ void handleIs(State state, ir.BinOp bin, Value result)
 	state.getValueAnyForm(bin.left, left);
 	state.getValueAnyForm(bin.right, right);
 
-	auto pr = bin.op == ir.BinOp.Type.Is ?
+	auto pr = bin.op == ir.BinOp.Op.Is ?
 		LLVMIntPredicate.EQ :
 		LLVMIntPredicate.NE;
 
@@ -232,7 +232,7 @@ void handleIs(State state, ir.BinOp bin, Value result)
 	auto ptr = LLVMBuildICmp(state.builder, pr, lPtr, rPtr, "");
 	auto len = LLVMBuildICmp(state.builder, pr, lLen, rLen, "");
 
-	auto logic = bin.op == ir.BinOp.Type.Is ?
+	auto logic = bin.op == ir.BinOp.Op.Is ?
 		LLVMOpcode.And :
 		LLVMOpcode.Or;
 
@@ -256,7 +256,7 @@ void handleCompare(State state, ir.BinOp bin, Value result)
 
 	LLVMIntPredicate pr;
 	LLVMRealPredicate fpr;
-	switch(bin.op) with (ir.BinOp.Type) {
+	switch(bin.op) with (ir.BinOp.Op) {
 	case Equal:
 		if (pt.floating) {
 			fpr = LLVMRealPredicate.OEQ;
@@ -337,8 +337,8 @@ void handleBinOpAssign(State state, ir.BinOp bin, Value result)
 	// it as a lvalue/reference.
 	left = new Value(left);
 
-	ir.BinOp.Type op;
-	switch (bin.op) with (ir.BinOp.Type) {
+	ir.BinOp.Op op;
+	switch (bin.op) with (ir.BinOp.Op) {
 	case AddAssign: op = Add; break;
 	case SubAssign: op = Sub; break;
 	case MulAssign: op = Mul; break;
@@ -373,7 +373,7 @@ void handleBinOpNonAssign(State state, ir.BinOp bin, Value result)
 	                       left, right, result);
 }
 
-void handleBinOpNonAssign(State state, Location loc, ir.BinOp.Type binOp,
+void handleBinOpNonAssign(State state, Location loc, ir.BinOp.Op binOp,
                           Value left, Value right, Value result)
 {
 	makeNonPointer(state, left);
@@ -396,7 +396,7 @@ void handleBinOpNonAssign(State state, Location loc, ir.BinOp.Type binOp,
 	handleBinOpPrimitive(state, loc, binOp, pt, left, right, result);
 }
 
-void handleBinOpPointer(State state, Location loc, ir.BinOp.Type binOp,
+void handleBinOpPointer(State state, Location loc, ir.BinOp.Op binOp,
                         Value ptr, Value other, Value result)
 {
 	auto ptrType = cast(PointerType)ptr.type;
@@ -408,7 +408,7 @@ void handleBinOpPointer(State state, Location loc, ir.BinOp.Type binOp,
 		throw CompilerPanic(loc, "can only do pointer math with non-pointer");
 	if (primType.floating)
 		throw CompilerPanic(loc, "can't do pointer math with floating value");
-	if (binOp != ir.BinOp.Type.Add)
+	if (binOp != ir.BinOp.Op.Add)
 		throw CompilerPanic(loc, "can only add to pointers");
 
 	// Either ptr or other could be result, keep that in mind.
@@ -416,12 +416,12 @@ void handleBinOpPointer(State state, Location loc, ir.BinOp.Type binOp,
 	result.value = LLVMBuildGEP(state.builder, ptr.value, [other.value], "");
 }
 
-void handleBinOpPrimitive(State state, Location loc, ir.BinOp.Type binOp,
+void handleBinOpPrimitive(State state, Location loc, ir.BinOp.Op binOp,
                           PrimitiveType pt,
 	                      Value left, Value right, Value result)
 {
 	LLVMOpcode op;
-	switch(binOp) with (ir.BinOp.Type) {
+	switch(binOp) with (ir.BinOp.Op) {
 	case Add:
 		op = pt.floating ? LLVMOpcode.FAdd : LLVMOpcode.Add;
 		break;
@@ -940,7 +940,7 @@ void handleSliceTwo(State state, ir.Postfix postfix, Value result)
 
 	// Subtract start from end to get the length, which returned in end. 
 	handleBinOpNonAssign(state, postfix.location,
-	                     ir.BinOp.Type.Sub,
+	                     ir.BinOp.Op.Sub,
 	                     end, start, end);
 	len = end.value;
 

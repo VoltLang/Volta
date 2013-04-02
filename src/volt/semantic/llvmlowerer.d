@@ -120,14 +120,14 @@ public:
 		 * any children has been lowered as well.
 		 */
 		switch(binOp.op) {
-		case ir.BinOp.Type.Assign:
+		case ir.BinOp.Op.Assign:
 			return handleAssign(exp, binOp);
-		case ir.BinOp.Type.Cat:
+		case ir.BinOp.Op.Cat:
 			return handleCat(exp, binOp);
-		case ir.BinOp.Type.CatAssign:
+		case ir.BinOp.Op.CatAssign:
 			return handleCatAssign(exp, binOp);
-		case ir.BinOp.Type.NotEqual:
-		case ir.BinOp.Type.Equal:
+		case ir.BinOp.Op.NotEqual:
+		case ir.BinOp.Op.Equal:
 			return handleEqual(exp, binOp);
 		default:
 			return Continue;
@@ -200,7 +200,7 @@ public:
 		if (leftArrayType is null)
 			return Continue;
 
-		auto fn = getArrayCmpFunction(loc, leftArrayType, binOp.op == ir.BinOp.Type.NotEqual);
+		auto fn = getArrayCmpFunction(loc, leftArrayType, binOp.op == ir.BinOp.Op.NotEqual);
 		exp = buildCall(loc, fn, [binOp.left, binOp.right], fn.name);
 
 		return Continue;
@@ -233,7 +233,7 @@ public:
 			cast(ir.Exp)
 			buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, left, "left"), "ptr")),
 			buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, right, "right"), "ptr")),
-			buildBinOp(loc, ir.BinOp.Type.Mul,
+			buildBinOp(loc, ir.BinOp.Op.Mul,
 				buildAccess(loc, buildExpReference(loc, left, "left"), "length"),
 				buildSizeTConstant(loc, lp, size(loc, lp, type.base))
 				),
@@ -310,7 +310,7 @@ public:
 			cast(ir.Exp)
 			buildExpReference(loc, allocated, allocated.name),
 			buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, left, left.name), "ptr")),
-			buildBinOp(loc, ir.BinOp.Type.Mul,
+			buildBinOp(loc, ir.BinOp.Op.Mul,
 				buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
 				buildSizeTConstant(loc, lp, size(loc, lp, type.base))
 			),
@@ -324,13 +324,13 @@ public:
 			cast(ir.Exp)
 			buildAdd(loc,
 				buildExpReference(loc, allocated, allocated.name),
-				buildBinOp(loc, ir.BinOp.Type.Mul,
+				buildBinOp(loc, ir.BinOp.Op.Mul,
 					buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
 					buildSizeTConstant(loc, lp, size(loc, lp, type.base))
 				)
 			),
 			buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, right, right.name), "ptr")),
-			buildBinOp(loc, ir.BinOp.Type.Mul,
+			buildBinOp(loc, ir.BinOp.Op.Mul,
 				buildAccess(loc, buildExpReference(loc, right, right.name), "length"),
 				buildSizeTConstant(loc, lp, size(loc, lp, type.base))
 			),
@@ -392,7 +392,7 @@ public:
 		auto thenState = buildBlockStat(loc);
 		buildReturnStat(loc, thenState, buildConstantBool(loc, notEqual));
 		buildIfStat(loc, fn._body,
-			buildBinOp(loc, ir.BinOp.Type.NotEqual,
+			buildBinOp(loc, ir.BinOp.Op.NotEqual,
 				buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
 				buildAccess(loc, buildExpReference(loc, right, right.name), "length")
 			),
@@ -400,11 +400,11 @@ public:
 		);
 
 		buildReturnStat(loc, fn._body,
-			buildBinOp(loc, notEqual ? ir.BinOp.Type.NotEqual : ir.BinOp.Type.Equal,
+			buildBinOp(loc, notEqual ? ir.BinOp.Op.NotEqual : ir.BinOp.Op.Equal,
 				buildCall(loc, memCmpExpRef, [
 					buildCastSmart(loc, buildVoidPtr(loc), buildAccess(loc, buildExpReference(loc, left, left.name), "ptr")),
 					buildCastSmart(loc, buildVoidPtr(loc), buildAccess(loc, buildExpReference(loc, right, right.name), "ptr")),
-					cast(ir.Exp)buildBinOp(loc, ir.BinOp.Type.Mul,
+					cast(ir.Exp)buildBinOp(loc, ir.BinOp.Op.Mul,
 						buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
 						buildSizeTConstant(loc, lp, size(loc, lp, type.base))
 					)
