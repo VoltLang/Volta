@@ -7,7 +7,7 @@ import ir = volt.ir.ir;
 import volt.ir.copy;
 import volt.ir.util;
 
-import volt.exceptions;
+import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 import volt.semantic.lookup;
@@ -25,8 +25,7 @@ ir.Constant evaluate(LanguagePass lp, ir.Scope current, ir.Exp exp)
 		auto unary = cast(ir.Unary) exp;
 		return evaluateUnary(lp, current, unary);
 	default:
-		string emsg = format("%s is currently unevaluatable at compile time.", to!string(exp.nodeType));
-		throw new CompilerError(exp.location, emsg);
+		throw makeNotAvailableInCTFE(exp, exp);
 	}
 	assert(false);
 }
@@ -41,8 +40,7 @@ ir.Constant evaluateUnary(LanguagePass lp, ir.Scope current, ir.Unary unary)
 	case Not:
 		return evaluateUnaryNot(lp, current, unary);
 	default:
-		string emsg = format("unary operation %s is currently unevaluatable at compile time.", unary.op);
-		throw new CompilerError(unary.location, emsg);
+		throw makeNotAvailableInCTFE(unary, unary);
 	}
 }
 
@@ -84,8 +82,7 @@ ir.Constant evaluateBinOp(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 	case GreaterEqual:
 		return evaluateBinOpGreaterEqual(lp, current, binop);
 	default:
-		string emsg = format("binary operation %s is currently unevaluatable at compile time.", binop.op);
-		throw new CompilerError(binop.location, emsg);
+		throw makeNotAvailableInCTFE(binop, binop);
 	}
 }
 

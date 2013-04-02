@@ -4,6 +4,7 @@ module volt.parser.statements;
 
 import ir = volt.ir.ir;
 
+import volt.errors;
 import volt.exceptions;
 import volt.token.stream;
 
@@ -248,7 +249,7 @@ ir.ForStatement parseForStatement(TokenStream ts)
 		try {
 			first = parseVariableOrExpression(ts);
 		} catch (CompilerError e) {
-			throw new CompilerError(ts.peek.location, "expected declaration or expression.");
+			throw makeExpected(ts.peek.location, "declaration or expression");
 		}
 		if (first[0].nodeType != ir.NodeType.Variable) {
 			f.initExps ~= cast(ir.Exp) first[0];
@@ -335,10 +336,10 @@ ir.SwitchStatement parseSwitchStatement(TokenStream ts)
 		switch (ts.peek.type) {
 		case TokenType.Default:
 			if (hadDefault) {
-				throw new CompilerError(ts.peek.location, "multiple default cases defined.");
+				throw makeMultipleDefaults(ts.peek.location);
 			}
 			if (ss.isFinal) {
-				throw new CompilerError(ts.peek.location, "final switch with default case.");
+				throw makeFinalSwitchWithDefault(ts.peek.location);
 			}
 			match(ts, TokenType.Default);
 			match(ts, TokenType.Colon);
@@ -376,13 +377,13 @@ ir.SwitchStatement parseSwitchStatement(TokenStream ts)
 		case TokenType.CloseBrace:
 			break;
 		default:
-			throw new CompilerError(ts.peek.location, "expected 'case', 'default', or '}'.");
+			throw makeExpected(ts.peek.location, "'case', 'default', or '}'");
 		}
 	}
 	match(ts, TokenType.CloseBrace);
 
 	if (!ss.isFinal && !hadDefault) {
-		throw new CompilerError(ss.location, "no default case.");
+		throw makeNoDefaultCase(ss.location);
 	}
 
 	return ss;
@@ -441,7 +442,7 @@ ir.GotoStatement parseGotoStatement(TokenStream ts)
 		}
 		break;
 	default:
-		throw new CompilerError(ts.peek.location, "expected identifier, 'case', or 'default'.");
+		throw makeExpected(ts.peek.location, "identifier, 'case', or 'default'.");
 	}
 	match(ts, TokenType.Semicolon);
 
@@ -509,7 +510,7 @@ ir.TryStatement parseTryStatement(TokenStream ts)
 	}
 
 	if (t.catchBlocks.length == 0 && t.catchAll is null && t.finallyBlock is null) {
-		throw new CompilerError(t.location, "try statement must have a catch block and/or a finally block.");
+		throw makeTryWithoutCatch(t.location);
 	}
 
 	return t;
@@ -544,7 +545,7 @@ ir.ScopeStatement parseScopeStatement(TokenStream ts)
 		ss.kind = Failure;
 		break;
 	default:
-		throw new CompilerError(ts.peek.location, "expected 'exit', 'success', or 'failure'.");
+		throw makeExpected(ts.peek.location, "'exit', 'success', or 'failure'");
 	}
 	match(ts, TokenType.CloseParen);
 	ss.block = parseBlockStatement(ts);

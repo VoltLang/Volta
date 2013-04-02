@@ -9,6 +9,7 @@ import ir = volt.ir.ir;
 import intir = volt.parser.intir;
 
 import volt.exceptions;
+import volt.errors;
 import volt.token.location;
 import volt.token.stream;
 import volt.parser.base;
@@ -403,7 +404,7 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		exp = primary.trait;
 		break;
 	default:
-		throw CompilerPanic(primary.location, "unhandled primary expression.");
+		throw panic(primary.location, "unhandled primary expression.");
 	}
 
 	exp.location = primary.location;
@@ -415,7 +416,7 @@ private intir.BinExp[] _parseArgumentList(TokenStream ts, TokenType endChar = To
 	intir.BinExp[] pexps;
 	while (ts.peek.type != endChar) {
 		if (ts.peek.type == TokenType.End) {
-			throw new CompilerError(ts.peek.location, "unexpected EOF when parsing argument list.");
+			throw makeExpected(ts.peek.location, "end of argument list");
 		}
 		pexps ~= parseBinExp(ts);
 		if (ts.peek.type != endChar) {
@@ -454,28 +455,28 @@ ir.IsExp parseIsExp(TokenStream ts)
 			break;
 		case Identifier:
 			if (ie.identifier.length > 0) {
-				throw new CompilerError(ts.peek.location, "malformed is expression.");
+				throw makeExpected(ts.peek.location, "is expression");
 			}
 			auto nameTok = match(ts, Identifier);
 			ie.identifier = nameTok.value;
 			break;
 		case Colon:
 			if (ie.compType != ir.IsExp.Comparison.None) {
-				throw new CompilerError(ts.peek.location, "malformed is expression.");
+				throw makeExpected(ts.peek.location, "is expression");
 			}
 			ts.get();
 			ie.compType = ir.IsExp.Comparison.Implicit;
 			break;
 		case DoubleAssign:
 			if (ie.compType != ir.IsExp.Comparison.None) {
-				throw new CompilerError(ts.peek.location, "malformed is expression.");
+				throw makeExpected(ts.peek.location, "is expression");
 			}
 			ts.get();
 			ie.compType = ir.IsExp.Comparison.Exact;
 			break;
 		default:
 			if (ie.compType == ir.IsExp.Comparison.None) {
-				throw new CompilerError(ts.peek.location, "expected '==' or ':' before type specialisation.");
+				throw makeExpected(ts.peek.location, "'==' or ':'");
 			}
 			switch (ts.peek.type) {
 			case Struct, Union, Class, Enum, Interface, Function,
@@ -543,7 +544,7 @@ ir.FunctionLiteral parseFunctionLiteral(TokenStream ts)
 
 	if (ts.peek.type == TokenType.Assign) {
 		if (!fn.isDelegate || fn.returnType !is null) {
-			throw new CompilerError(ts.peek.location, "malformed lambda expression.", true);
+			throw makeExpected(ts.peek.location, "lambda expression.", true);
 		}
 		match(ts, TokenType.Assign);
 		match(ts, TokenType.Greater);
@@ -573,7 +574,7 @@ ir.TraitsExp parseTraitsExp(TokenStream ts)
 		texp.qname = parseQualifiedName(ts);
 		break;
 	default:
-		throw new CompilerError(nameTok.location, "unknown __traits identifier.");
+		throw makeExpected(nameTok.location, "__traits identifier");
 	}
 
 	match(ts, TokenType.CloseParen);
@@ -1030,7 +1031,7 @@ intir.PrimaryExp parsePrimaryExp(TokenStream ts)
 			exp.functionLiteral = parseFunctionLiteral(ts);
 		} catch (CompilerError e) {
 			ts.restore(mark);
-			throw new CompilerError(ts.peek.location, "Expected primary expression, not '" ~ ts.peek.value ~ "'.");
+			throw makeExpected(ts.peek.location, "primary expression");
 		}
 		break;
 	}

@@ -6,7 +6,7 @@ module volt.visitor.visitor;
 import std.conv : to;
 import std.string : format;
 
-import volt.exceptions;
+import volt.errors;
 import ir = volt.ir.ir;
 
 
@@ -465,7 +465,7 @@ Visitor.Status accept(ir.Node n, Visitor av)
 	case StructLiteral:
 	case ClassLiteral:
 	case TraitsExp:
-		throw CompilerPanic(n.location, "can not visit expressions");
+		throw panic(n.location, "can not visit expressions");
 
 	/*
 	 * Statements.
@@ -586,7 +586,7 @@ Visitor.Status accept(ir.Node n, Visitor av)
 	case FunctionParameter:
 	case SwitchCase:
 	case Comma:
-		throw CompilerPanic(n.location, format("unhandled accept node: %s.", to!string(n.nodeType)));
+		throw panicUnhandled(n, to!string(n.nodeType));
 	}
 }
 
@@ -633,7 +633,7 @@ Visitor.Status acceptExp(ref ir.Exp exp, Visitor av)
 	case TraitsExp:
 		return acceptTraitsExp(exp, cast(ir.TraitsExp)exp, av);
 	default:
-		throw CompilerPanic(exp.location, format("unhandled accept node: %s.", to!string(exp.nodeType)));
+		throw panicUnhandled(exp, to!string(exp.nodeType));
 	}
 }
 

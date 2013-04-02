@@ -9,7 +9,7 @@ import std.string : format;
 import ir = volt.ir.ir;
 import volt.ir.util;
 
-import volt.exceptions;
+import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 import volt.semantic.classify;
@@ -22,7 +22,7 @@ ir.Type declTypeLookup(Location loc, LanguagePass lp, ir.Scope _scope, string na
 {
 	auto store = lookup(lp, _scope, loc, name);
 	if (store is null) {
-		throw new CompilerError(loc, format("undefined identifier '%s'.", name));
+		throw makeFailedLookup(loc, name);
 	}
 	if (store.kind == ir.Store.Kind.Function) {
 		return buildSetType(loc, store.functions);
@@ -48,7 +48,7 @@ ir.Type declTypeLookup(Location loc, LanguagePass lp, ir.Scope _scope, string na
 		return e;
 	}
 
-	throw new CompilerError(loc, format("%s used as value.", name));
+	throw makeExpected(loc, "type");
 }
 
 /**
@@ -128,7 +128,7 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 		assert(asClassLiteral !is null);
 		return getClassLiteralType(lp, asClassLiteral);
 	default:
-		throw CompilerPanic(format("unable to type expression '%s'.", to!string(exp.nodeType)));
+		throw panicUnhandled(exp, to!string(exp.nodeType));
 	}
 }
 
@@ -148,8 +148,7 @@ ir.Type getTraitsExpType(LanguagePass lp, ir.TraitsExp traits, ir.Scope _scope)
 	auto store = lookup(lp, _scope, traits.qname);
 	auto attr = cast(ir.UserAttribute) store.node;
 	if (attr is null) {
-		string emsg = format("'%s' is not an @interface.", traits.qname);
-		throw new CompilerError(traits.location, emsg);
+		throw makeExpected(traits, "@inteface");
 	}
 	lp.actualize(attr);
 	return attr.layoutClass;
@@ -158,7 +157,7 @@ ir.Type getTraitsExpType(LanguagePass lp, ir.TraitsExp traits, ir.Scope _scope)
 ir.Type getExpReferenceType(LanguagePass lp, ir.ExpReference expref)
 {
 	if (expref.decl is null) {
-		throw CompilerPanic(expref.location, "unable to type expression reference.");
+		throw panic(expref.location, "unable to type expression reference.");
 	}
 
 	auto var = cast(ir.Variable) expref.decl;
@@ -181,7 +180,7 @@ ir.Type getExpReferenceType(LanguagePass lp, ir.ExpReference expref)
 		return fnset.type;
 	}
 
-	throw CompilerPanic(expref.location, "unable to type expression reference.");
+	throw panic(expref.location, "unable to type expression reference.");
 }
 
 ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
@@ -196,7 +195,7 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 	}
 
 	if (effectivelyConst(left) && bin.op == ir.BinOp.Op.Assign) {
-		throw new CompilerError(bin.location, "cannot assign to const type.");
+		throw makeCannotModify(bin, left);
 	}
 	
 	if (left.nodeType == ir.NodeType.PrimitiveType &&
@@ -218,7 +217,7 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 			boolType.location = bin.location;
 			return boolType;
 		} else {
-			throw new CompilerError(bin.location, "invalid binary operation for pointer types.");
+			throw makeBadImplicitCast(bin, right, left);
 		}
 	} else if (left.nodeType == ir.NodeType.ArrayType ||
 			   right.nodeType == ir.NodeType.ArrayType) {
@@ -234,7 +233,7 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 	} else if ((left.nodeType == ir.NodeType.PointerType && right.nodeType != ir.NodeType.PointerType) ||
                (left.nodeType != ir.NodeType.PointerType && right.nodeType == ir.NodeType.PointerType)) {
 		if (!isValidPointerArithmeticOperation(bin.op)) {
-			throw new CompilerError(bin.location, "invalid operation for pointer arithmetic.");
+			throw makeBadImplicitCast(bin, right, left);
 		}
 		ir.PrimitiveType prim;
 		ir.PointerType pointer;
@@ -253,7 +252,7 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 		if (lt !is null && rt !is null && typesEqual(lt, rt)) {
 			return lt;
 		} else {
-			throw new CompilerError(bin.location, "cannot implicitly reconcile binary expression types.");
+			throw makeBadImplicitCast(bin, right, left);
 		}
 	}
 
@@ -321,8 +320,7 @@ ir.Type getPostfixType(LanguagePass lp, ir.Postfix postfix, ir.Scope currentScop
 	case CreateDelegate:
 		return getPostfixCreateDelegateType(lp, postfix, currentScope);
 	default:
-		auto emsg = format("unhandled postfix op type '%s'", to!string(postfix.op));
-		throw CompilerPanic(postfix.location, emsg);
+		throw panicUnhandled(postfix, to!string(postfix.op));
 	}
 }
 
@@ -344,7 +342,7 @@ ir.Type getPostfixSliceType(LanguagePass lp, ir.Postfix postfix, ir.Scope curren
 		array = cast(ir.ArrayType) type;
 		assert(array !is null);
 	} else {
-		throw new CompilerError(postfix.location, "tried to index non array or pointer.");
+		throw makeBadOperation(postfix);
 	}
 
 	if (array is null) {
@@ -358,7 +356,7 @@ ir.Type getPostfixSliceType(LanguagePass lp, ir.Postfix postfix, ir.Scope curren
 
 ir.Type getPostfixCreateDelegateType(LanguagePass lp, ir.Postfix postfix, ir.Scope currentScope)
 {
-	auto err = CompilerPanic(postfix.location, "couldn't retrieve type from CreateDelegate postfix.");
+	auto err = panic(postfix.location, "couldn't retrieve type from CreateDelegate postfix.");
 
 	auto eref = cast(ir.ExpReference) postfix.memberFunction;
 	if (eref is null) {
@@ -401,7 +399,7 @@ void retrieveScope(LanguagePass lp, ir.Node tt, ir.Postfix postfix, ref ir.Scope
 			_scope = asAttr.myScope;
 			emsg = format("type '%s' has no member '%s'.", asAttr.name, postfix.identifier.value);
 		} else {
-			throw CompilerPanic("couldn't retrieve scope from type.");
+			throw panic("couldn't retrieve scope from type.");
 		}
 	} else if (tt.nodeType == ir.NodeType.PointerType) {
 		auto asPointer = cast(ir.PointerType) tt;
@@ -468,7 +466,7 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 	auto store = lookupAsThisScope(lp, _scope, postfix.location, postfix.identifier.value);
   
 	if (store is null) {
-		throw new CompilerError(postfix.identifier.location, emsg);
+		throw makeError(postfix.identifier.location, emsg);
 	}
 
 	if (store.kind == ir.Store.Kind.Value) {
@@ -481,7 +479,7 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 		auto asEnumDecl = cast(ir.EnumDeclaration) store.node;
 		return asEnumDecl.type;
 	} else {
-		throw CompilerPanic(postfix.location, "unhandled postfix type retrieval.");
+		throw panic(postfix.location, "unhandled postfix type retrieval.");
 	}
 }
 
@@ -495,7 +493,7 @@ ir.Type getPostfixIdentifierArrayType(LanguagePass lp, ir.Postfix postfix, ir.Ar
 		pointer.location = postfix.location;
 		return pointer;
 	default:
-		throw new CompilerError(postfix.location, "arrays only have length and ptr members.");
+		throw makeFailedLookup(postfix, postfix.identifier.value);
 	}
 }
 
@@ -509,14 +507,14 @@ ir.Type getPostfixIdentifierStaticArrayType(LanguagePass lp, ir.Postfix postfix,
 		pointer.location = postfix.location;
 		return pointer;
 	default:
-		throw new CompilerError(postfix.location, "static arrays only have length and ptr members.");
+		throw makeFailedLookup(postfix, postfix.identifier.value);
 	}
 }
 
 ir.Type getPostfixIncDecType(LanguagePass lp, ir.Postfix postfix, ir.Scope currentScope)
 {
 	if (!isLValue(postfix.child)) {
-		throw new CompilerError(postfix.location, "expression is not an lvalue.");
+		throw makeNotLValue(postfix);
 	}
 	auto type = getExpType(lp, postfix.child, currentScope);
 
@@ -526,10 +524,10 @@ ir.Type getPostfixIncDecType(LanguagePass lp, ir.Postfix postfix, ir.Scope curre
 			   isOkayForPointerArithmetic((cast(ir.PrimitiveType)type).type)) {
 		return type;
 	} else if (effectivelyConst(type)) {
-		throw new CompilerError(postfix.location, "cannot modify const type.");
+		throw makeCannotModify(postfix, type);
 	}
 
-	throw new CompilerError(postfix.location, "value not suited for increment/decrement");
+	throw makeBadOperation(postfix);
 }
 
 ir.Type getPostfixIndexType(LanguagePass lp, ir.Postfix postfix, ir.Scope currentScope)
@@ -550,7 +548,7 @@ ir.Type getPostfixIndexType(LanguagePass lp, ir.Postfix postfix, ir.Scope curren
 		assert(staticArray !is null);
 		base = staticArray.base;
 	} else {
-		throw new CompilerError(postfix.location, "tried to index non array or pointer.");
+		throw makeBadOperation(postfix);
 	}
 
 	assert(base !is null);
@@ -571,7 +569,7 @@ ir.Type getPostfixCallType(LanguagePass lp, ir.Postfix postfix, ir.Scope current
 	}
 
 	if (ftype is null) {
-		throw new CompilerError(postfix.location, "can only call functions and delegates.");
+		throw makeBadCall(postfix, ftype);
 	}
 
 	return ftype.ret;
@@ -636,7 +634,7 @@ ir.Type getUnaryDerefType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope
 			base = asStorage.base;
 		}
 		if (base.nodeType != ir.NodeType.PointerType) {
-			throw new CompilerError(unary.location, "can only dereference pointers.");
+			throw makeBadOperation(unary);
 		}
 		assert(kinds.length == locations.length);
 		ir.StorageType outStorage = new ir.StorageType();
@@ -657,7 +655,7 @@ ir.Type getUnaryDerefType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope
 	}
 
 	if (type.nodeType != ir.NodeType.PointerType) {
-		throw new CompilerError(unary.location, "can only dereference pointers.");
+		throw makeBadOperation(unary);
 	}
 	auto asPointer = cast(ir.PointerType) type;
 	assert(asPointer !is null);
@@ -667,7 +665,7 @@ ir.Type getUnaryDerefType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope
 ir.Type getUnaryAddrOfType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 {
 	if (!isLValue(unary.value)) {
-		throw new CompilerError(unary.location, "expression is not an lvalue.");
+		throw makeNotLValue(unary);
 	}
 	auto type = getExpType(lp, unary.value, currentScope);
 	auto pointer = new ir.PointerType(type);

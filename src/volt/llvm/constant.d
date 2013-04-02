@@ -4,7 +4,7 @@ module volt.llvm.constant;
 
 import std.conv : to;
 
-import volt.exceptions;
+import volt.errors;
 import volt.ir.util;
 
 import volt.llvm.interfaces;
@@ -52,7 +52,7 @@ void getConstantValue(State state, ir.Exp exp, Value result)
 		auto str = format(
 			"could not get constant from expression '%s'",
 			to!string(exp.nodeType));
-		throw CompilerPanic(exp.location, str);
+		throw panic(exp.location, str);
 	}
 }
 
@@ -67,10 +67,7 @@ void handleUnary(State state, ir.Unary asUnary, Value result)
 	case Minus:
 		return handlePlusMinus(state, asUnary, result);
 	default:
-		auto str = format(
-			"could not handle unary operation '%s'",
-			to!string(asUnary.op));
-		throw CompilerPanic(asUnary.location, str);
+		throw panicUnhandled(asUnary, to!string(asUnary.op));
 	}
 }
 
@@ -78,10 +75,10 @@ void handleAddrOf(State state, ir.Unary de, Value result)
 {
 	auto expRef = cast(ir.ExpReference)de.value;
 	if (expRef is null)
-		throw CompilerPanic(de.value.location, "not a ExpReference");
+		throw panic(de.value.location, "not a ExpReference");
 
 	if (expRef.decl.declKind != ir.Declaration.Kind.Variable)
-		throw CompilerPanic(de.value.location, "must be a variable");
+		throw panic(de.value.location, "must be a variable");
 
 	auto var = cast(ir.Variable)expRef.decl;
 	Type type;
@@ -104,7 +101,7 @@ void handlePlusMinus(State state, ir.Unary asUnary, Value result)
 
 	auto primType = cast(PrimitiveType)result.type;
 	if (primType is null)
-		throw CompilerPanic(asUnary.location, "must be primitive type");
+		throw panic(asUnary.location, "must be primitive type");
 
 	if (asUnary.op == ir.Unary.Op.Minus)
 		result.value = LLVMConstNeg(result.value);
@@ -114,7 +111,7 @@ void handleCast(State state, ir.Unary asUnary, Value result)
 {
 	void error(string t) {
 		auto str = format("error unary constant expression '%s'", t);
-		throw CompilerPanic(asUnary.location, str);
+		throw panic(asUnary.location, str);
 	}
 
 	state.getConstantValue(asUnary.value, result);
@@ -184,7 +181,7 @@ void handleExpReference(State state, ir.ExpReference expRef, Value result)
 		 * This might seem backwards but it works out.
 		 */
 		if (!var.useBaseStorage)
-			throw CompilerPanic("variables needs '&' for constants");
+			throw panic("variables needs '&' for constants");
 
 		Type type;
 		auto v = state.getVariableValue(var, type);
@@ -194,6 +191,6 @@ void handleExpReference(State state, ir.ExpReference expRef, Value result)
 		result.type = type;
 		break;
 	default:
-		throw CompilerPanic(expRef.location, "invalid decl type");
+		throw panic(expRef.location, "invalid decl type");
 	}
 }

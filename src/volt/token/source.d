@@ -7,7 +7,7 @@ import std.file : read;
 import std.utf : validate, decode;
 import std.string : format;
 
-import volt.exceptions : CompilerPanic;
+import volt.errors : panic;
 import volt.token.location : Location;
 
 alias size_t Mark;
@@ -106,7 +106,7 @@ public:
 		    source.length >= 2 && source[0 .. 2] == cast(string)[0xFF, 0xFE] ||
 		    source.length >= 4 && source[0 .. 4] == cast(string)[0x00, 0x00, 0xFE, 0xFF] ||
 		    source.length >= 4 && source[0 .. 4] == cast(string)[0xFF, 0xFE, 0x00, 0x00]) {
-			throw CompilerPanic("only UTF-8 input is supported.");
+			throw panic("only UTF-8 input is supported.");
 		}
 
 		if (source.length >= 3 && source[0 .. 3] == cast(string)[0xEF, 0xBB, 0xBF]) {
@@ -253,7 +253,7 @@ public:
 	void sync(Source src)
 	{
 		if (src.source !is this.source) {
-			throw CompilerPanic(
+			throw panic(
 				"attempted to sync different sources");
 		}
 		this.location = src.location;

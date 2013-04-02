@@ -4,7 +4,7 @@ module volt.visitor.scopemanager;
 
 import ir = volt.ir.ir;
 
-import volt.exceptions;
+import volt.errors;
 
 import volt.visitor.visitor;
 import volt.visitor.debugprinter;
@@ -29,7 +29,7 @@ public:
 			auto str = "invalid scope layout should be " ~
 			           getNodeAddressString(m) ~ " is " ~
 			           getNodeAddressString(current.node);
-			throw CompilerPanic(m.location, str);
+			throw panic(m.location, str);
 		}
 
 		current = null;
@@ -48,7 +48,7 @@ public:
 			auto str = "invalid scope layout should be " ~
 			           getNodeAddressString(s) ~ " is " ~
 			           getNodeAddressString(current.node);
-			throw CompilerPanic(s.location, str);
+			throw panic(s.location, str);
 		}
 
 		current = current.parent;
@@ -67,7 +67,7 @@ public:
 			auto str = "invalid scope layout should be " ~
 			           getNodeAddressString(u) ~ " is " ~
 			           getNodeAddressString(current.node);
-			throw CompilerPanic(u.location, str);
+			throw panic(u.location, str);
 		}
 
 		current = current.parent;
@@ -86,7 +86,7 @@ public:
 			auto str = "invalid scope layout should be " ~
 			           getNodeAddressString(c) ~ " is " ~
 			           getNodeAddressString(current.node);
-			throw CompilerPanic(c.location, str);
+			throw panic(c.location, str);
 		}
 
 		current = current.parent;
@@ -105,7 +105,7 @@ public:
 			auto str = "invalid scope layout should be " ~
 			           getNodeAddressString(i) ~ " is " ~
 			           getNodeAddressString(current.node);
-			throw CompilerPanic(i.location, str);
+			throw panic(i.location, str);
 		}
 
 		current = current.parent;
@@ -124,7 +124,7 @@ public:
 			auto str = "invalid scope layout should be " ~
 			           getNodeAddressString(ui) ~ " is " ~
 			           getNodeAddressString(current.node);
-			throw CompilerPanic(ui.location, str);
+			throw panic(ui.location, str);
 		}
 		current = current.parent;
 		return Continue;
@@ -142,7 +142,7 @@ public:
 			auto str = "invalid scope layout should be " ~
 			           getNodeAddressString(bs) ~ " is " ~
 			           getNodeAddressString(current.node);
-			throw CompilerPanic(bs.location, str);
+			throw panic(bs.location, str);
 		}
 
 		current = current.parent;
@@ -161,7 +161,7 @@ public:
 			auto str = "invalid scope layout should be " ~
 			           getNodeAddressString(e) ~ " is " ~
 			           getNodeAddressString(current.node);
-			throw CompilerPanic(e.location, str);
+			throw panic(e.location, str);
 		}
 
 		current = current.parent;

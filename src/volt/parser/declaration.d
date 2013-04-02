@@ -9,6 +9,7 @@ import volt.ir.util;
 import volt.ir.copy;
 
 import volt.exceptions;
+import volt.errors;
 import volt.token.stream;
 
 import volt.parser.base;
@@ -35,7 +36,7 @@ ir.Node[] parseVariable(TokenStream ts)
 		// Function!
 		return [parseFunction(ts, base)];
 	} else {
-		throw new CompilerError(ts.peek.location, "expected declaration.");
+		throw makeExpected(ts.peek.location, "declaration");
 	}
 }
 
@@ -136,7 +137,7 @@ ir.Type parseType(TokenStream ts)
 		base = parseTypeOf(ts);
 		break;
 	default:
-		throw new CompilerError(ts.peek.location, "expected primitive type, not '" ~ ts.peek.value ~ "'.");
+		throw makeExpected(ts.peek.location, "primitive type");
 	}
 
 	base = parseTypeSigils(ts, origin, base);
@@ -193,7 +194,7 @@ ir.StorageType parseStorageType(TokenStream ts)
 
 	if (ts == [TokenType.Identifier, TokenType.Semicolon] ||
 		ts == [TokenType.Identifier, TokenType.Assign, TokenType.Void, TokenType.Semicolon]) {
-		throw new CompilerError(ts.peek.location, "not enough information to infer type.", true);
+		throw makeCannotInfer(ts.peek.location);
 	} else if (matchIf(ts, TokenType.OpenParen)) {
 		storageType.base = parseType(ts);
 		match(ts, TokenType.CloseParen);
@@ -236,7 +237,7 @@ ir.Variable[] parseParameterList(TokenStream ts, ir.CallableType parentCallable=
 	while (ts.peek.type != TokenType.CloseParen) {
 		if (matchIf(ts, TokenType.TripleDot)) {
 			if (parentCallable is null) {
-				throw new CompilerError(ts.peek.location, "only functions and delegates may have vararg parameters.");
+				throw makeExpected(ts.peek.location, "function or delegate");
 			}
 			parentCallable.hasVarArgs = true;
 			break;
@@ -277,7 +278,7 @@ ir.Variable parseParameter(TokenStream ts)
 		Token name = match(ts, TokenType.Identifier);
 		p.name = name.value;
 	} else if (ts.peek.type != TokenType.Comma && ts.peek.type != TokenType.CloseParen) {
-		throw new CompilerError(ts.peek.location, format("expected ',', ')', or an identifier, not '%s'.", ts.peek.value));
+		throw makeExpected(ts.peek.location, "',', ')', or an identifier", ts.peek.value);
 	}
 	p.location = ts.peek.location - origin;
 
@@ -363,7 +364,7 @@ ir.Function parseFunction(TokenStream ts, ir.Type base)
 		case TokenType.In:
 			// <in> { }
 			if (_in) {
-				throw new CompilerError(ts.peek.location, "multiple in blocks specified for single function.");
+				throw makeMultipleOutBlocks(ts.peek.location);
 			}
 			_in = true;
 			match(ts, TokenType.In);
@@ -372,7 +373,7 @@ ir.Function parseFunction(TokenStream ts, ir.Type base)
 		case TokenType.Out:
 			// <out>
 			if (_out) {
-				throw new CompilerError(ts.peek.location, "multiple out blocks specified for single function.");
+				throw makeMultipleOutBlocks(ts.peek.location);
 			}
 			_out = true;
 			match(ts, TokenType.Out);
@@ -394,7 +395,7 @@ ir.Function parseFunction(TokenStream ts, ir.Type base)
 			fn._body = parseBlock(ts);
 			break;
 		default:
-			throw new CompilerError(ts.peek.location, "expected block declaration.");
+			throw makeExpected(ts.peek.location, "block declaration");
 		}
 	}
 	if (ts.peek.type == TokenType.Semicolon) {

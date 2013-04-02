@@ -4,7 +4,7 @@ module volt.llvm.state;
 
 import lib.llvm.core;
 
-import volt.exceptions;
+import volt.errors;
 import volt.interfaces;
 import volt.llvm.interfaces;
 
@@ -98,10 +98,10 @@ public:
 		}
 
 		if (fn.type is null) {
-			throw CompilerPanic(fn.location, "function without type");
+			throw panic(fn.location, "function without type");
 		}
 		if (fn.kind == ir.Function.Kind.Invalid) {
-			throw CompilerPanic(fn.location, "invalid function kind");
+			throw panic(fn.location, "invalid function kind");
 		}
 
 		// The simple stuff, declare that mofo.
@@ -138,7 +138,7 @@ public:
 		}
 
 		if (var.type is null)
-			throw CompilerPanic(var.location, "variable without type");
+			throw panic(var.location, "variable without type");
 
 		type = this.fromIr(var.type);
 		LLVMValueRef v;
@@ -160,15 +160,15 @@ public:
 
 		final switch(var.storage) with (ir.Variable.Storage) {
 		case Invalid:
-			throw CompilerPanic(var.location, "unclassified variable");
+			throw panic(var.location, "unclassified variable");
 		case Field:
-			throw CompilerPanic(var.location, "field variable refered directly");
+			throw panic(var.location, "field variable refered directly");
 		case Function:
 			if (currentFunc is null)
-				throw CompilerPanic(var.location,
+				throw panic(var.location,
 					"non-local/global variable in non-function scope");
 			if (var.useBaseStorage)
-				throw CompilerPanic(var.location,
+				throw panic(var.location,
 					"useBaseStorage can not be used on function variables");
 			v = LLVMBuildAlloca(builder, llvmType, var.name);
 			break;

@@ -7,7 +7,7 @@ import std.string : format;
 import ir = volt.ir.ir;
 import volt.ir.util;
 
-import volt.exceptions;
+import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 import volt.visitor.visitor;
@@ -151,7 +151,7 @@ public:
 		auto leftType = getExpType(lp, asPostfix, current);
 		auto leftArrayType = cast(ir.ArrayType)leftType;
 		if (leftArrayType is null)
-			throw CompilerPanic(loc, "OH GOD!");
+			throw panic(binOp, "OH GOD!");
 
 		auto fn = getCopyFunction(loc, leftArrayType);
 
@@ -167,7 +167,7 @@ public:
 		auto leftType = getExpType(lp, binOp.left, current);
 		auto leftArrayType = cast(ir.ArrayType)leftType;
 		if (leftArrayType is null)
-			throw CompilerPanic(loc, "OH GOD!");
+			throw panic(binOp, "OH GOD!");
 
 		auto fn = getConcatFunction(loc, leftArrayType, false);
 
@@ -183,7 +183,7 @@ public:
 		auto leftType = getExpType(lp, binOp.left, current);
 		auto leftArrayType = cast(ir.ArrayType)leftType;
 		if (leftArrayType is null)
-			throw CompilerPanic(loc, "OH GOD!");
+			throw panic(binOp, "OH GOD!");
 
 		auto fn = getConcatFunction(loc, leftArrayType, true);
 		exp = buildCall(loc, fn, [buildAddrOf(binOp.left), binOp.right], fn.name);

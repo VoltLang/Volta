@@ -11,7 +11,7 @@ import volt.ir.copy;
 import volt.ir.util;
 import volt.ir.copy;
 
-import volt.exceptions;
+import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 import volt.semantic.classify;
@@ -57,7 +57,7 @@ ir.Type handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
 	if (rightType.nodeType == ir.NodeType.NullType) {
 		auto constant = cast(ir.Constant) right;
 		if (constant is null) {
-			throw CompilerPanic(right.location, "non constant null");
+			throw panic(right.location, "non constant null");
 		}
 
 		while (true) switch (left.nodeType) with (ir.NodeType) {
@@ -86,8 +86,7 @@ ir.Type handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
 			}
 			goto default;
 		default:
-			string emsg = format("can't convert null into '%s'.", to!string(left.nodeType));
-			throw new CompilerError(right.location, emsg);
+			throw makeBadImplicitCast(right, rightType, left);
 		}
 	}
 	return null;
@@ -97,15 +96,15 @@ ir.Variable getThisVar(Location location, LanguagePass lp, ir.Scope _scope)
 {
 	auto fn = getParentFunction(_scope);
 	if (fn is null) {
-		throw CompilerPanic(location, "getThisVar called for scope outside of function.");
+		throw panic(location, "getThisVar called for scope outside of function.");
 	}
 	auto thisStore = lookupOnlyThisScope(lp, fn._body.myScope, location, "this");
 	if (thisStore is null) {
-		throw CompilerPanic(location, "need valid this for super.");
+		throw panic(location, "need valid this for super.");
 	}
 	auto thisVar = cast(ir.Variable) thisStore.node;
 	if (thisVar is null) {
-		throw CompilerPanic(location, "this is not variable.");
+		throw panic(location, "this is not variable.");
 	}
 	return thisVar;
 }
@@ -146,7 +145,7 @@ void ensureResolved(LanguagePass lp, ir.Scope current, ir.EnumDeclaration ed)
 			auto loc = edStack[$-1].location;
 			auto prevType = getExpType(lp, prevExp, current);
 			if (!isIntegral(prevType)) {
-				throw new CompilerError(loc, "only integral types can be auto incremented.");
+				throw makeExpected(loc, "integral type");
 			}
 
 			edStack[$-1].assign = prevExp = evaluate(lp, current, buildAdd(loc, copyExp(prevExp), buildConstantInt(loc, 1)));
@@ -256,8 +255,7 @@ void ensureResolved(LanguagePass lp, ir.Scope current, ir.Type type)
 	case TypeOf:
 		return;
 	default:
-		string e = format("unhandled type: '%s'", to!string(type.nodeType));
-		throw new CompilerError(type.location, e);
+		throw panicUnhandled(type, to!string(type.nodeType));
 	}
 }
 
@@ -270,18 +268,18 @@ ir.ClassLiteral getAttributeLiteral(ir.UserAttribute ua, ir.Attribute attr)
 	cliteral.exps = attr.arguments.dup;
 
 	if (attr.arguments.length > ua.fields.length) {
-		throw new CompilerError(attr.location, "too many expressions for @interface.");
+		throw makeWrongNumberOfArguments(attr, attr.arguments.length, ua.fields.length);
 	} else {
 		cliteral.exps = attr.arguments.dup;
 		foreach (field; ua.fields[attr.arguments.length .. $]) {
 			if (field.assign is null) {
-				throw new CompilerError(field.location, "expected field to have default initialiser.");
+				throw makeExpected(field, "initialiser");
 			}
 			cliteral.exps ~= copyExp(field.assign);
 		}
 	}
 	if (cliteral.exps.length != ua.fields.length) {
-		throw new CompilerError(attr.location, "not every @interface field filled.");
+		throw panic(attr.location, "not every @interface field filled.");
 	}
 	return cliteral;
 }
@@ -292,7 +290,7 @@ void replaceTraits(ref ir.Exp exp, ir.TraitsExp traits, LanguagePass lp, ir.Modu
 	auto store = lookup(lp, _scope, traits.qname);
 	auto uattr = cast(ir.UserAttribute) store.node;
 	if (uattr is null) {
-		throw new CompilerError(traits.qname.location, format("cannot find UserAttribute '%s'.", traits.qname));
+		throw makeFailedLookup(traits, traits.qname.toString());
 	}
 
 	ir.Attribute[] userAttrs;
@@ -332,8 +330,7 @@ void replaceTraits(ref ir.Exp exp, ir.TraitsExp traits, LanguagePass lp, ir.Modu
 		}
 	}
 	if (userAttribute is null) {
-		auto str = format("'%s' has no '%s' user attribute.", traits.target, traits.qname);
-		throw new CompilerError(exp.location, str);
+		throw makeNotMember(exp.location, traits.target.toString(), traits.qname.toString());
 	}
 
 	exp = getAttributeLiteral(userAttribute.userAttribute, userAttribute);

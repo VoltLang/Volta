@@ -6,7 +6,7 @@ import ir = volt.ir.ir;
 import volt.ir.util;
 
 import volt.interfaces;
-import volt.exceptions;
+import volt.errors;
 import volt.token.location;
 import volt.visitor.visitor;
 import volt.semantic.classify;
@@ -215,7 +215,7 @@ public:
 
 		if (unary.type.nodeType == ir.NodeType.ArrayType && unary.argumentList.length > 0) {
 			if (unary.argumentList.length != 1) {
-				throw CompilerPanic(unary.location, "multidimensional arrays unsupported at the moment.");
+				throw panic(unary.location, "multidimensional arrays unsupported at the moment.");
 			}
 			// WIP, doesn't consider multiple outputs of the same function.
 			auto asArray = cast(ir.ArrayType) unary.type;

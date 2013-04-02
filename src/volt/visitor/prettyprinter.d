@@ -8,7 +8,7 @@ import std.cstream : dout;
 
 import volt.token.token;
 
-import volt.exceptions;
+import volt.errors;
 import volt.interfaces;
 
 import ir = volt.ir.ir;
@@ -823,7 +823,7 @@ public:
 				}
 				wfln(":");
 			} else {
-				throw CompilerPanic(sc.location, "unknown case type passed to PrintVisitor.");
+				throw panic(sc.location, "unknown case type passed to PrintVisitor.");
 			}
 		}
 		mIndent++;
@@ -894,7 +894,7 @@ public:
 				acceptExp(gs.exp, this);
 			}
 		} else {
-			throw CompilerPanic(gs.location, "malformed goto statement made it to PrintVisitor.");
+			throw panic(gs.location, "malformed goto statement made it to PrintVisitor.");
 		}
 		wfln(";");
 
@@ -1702,7 +1702,7 @@ public:
 				acceptExp(postfix.arguments[1], this);
 				break;
 			default:
-				throw CompilerPanic(postfix.location, "bad slice.");
+				throw panic(postfix.location, "bad slice.");
 			}
 			wf("]");
 			break;
@@ -1723,7 +1723,7 @@ public:
 			wf(eref.idents);
 			break;
 		default:
-			throw CompilerPanic(postfix.location, "tried to print bad postfix expression.");
+			throw panic(postfix.location, "tried to print bad postfix expression.");
 		}
 
 		return ContinueParent;

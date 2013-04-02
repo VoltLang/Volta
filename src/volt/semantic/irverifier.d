@@ -4,7 +4,7 @@ module volt.semantic.irverifier;
 
 import ir = volt.ir.ir;
 
-import volt.exceptions;
+import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 import volt.visitor.visitor;
@@ -49,7 +49,7 @@ public:
 			auto str = format(
 				"%s \"%s\" node found more then once in IR",
 				getNodeAddressString(n), to!string(n.nodeType));
-			throw CompilerPanic(n.location, str);
+			throw panic(n, str);
 		}
 		mNodes[t] = mCount++;
 
@@ -63,7 +63,7 @@ public:
 		}
 		auto str = format("%s invalid variable found in IR",
 		                  getNodeAddressString(v));
-		throw CompilerPanic(v.location, str);
+		throw panic(v, str);
 	}
 
 	override Status enter(ir.TopLevelBlock tlb)
@@ -94,7 +94,7 @@ public:
 				auto str = format("%s invalid node '%s' in toplevel block",
 				                  getNodeAddressString(n),
 				                  to!string(n.nodeType));
-				throw CompilerPanic(n.location, str);
+				throw panic(n, str);
 			}
 		}
 
@@ -123,7 +123,7 @@ public:
 				auto str = format("(%s) invalid node '%s' in block statement",
 				                  getNodeAddressString(n),
 				                  to!string(n.nodeType));
-				throw CompilerPanic(n.location, str);
+				throw panic(n, str);
 			}
 		}
 
@@ -134,7 +134,7 @@ public:
 	{
 		auto str = format("%s IdentifierExp '%s' left in IR.",
 		                  getNodeAddressString(ie), ie.value);
-		throw CompilerPanic(ie.location, str);
+		throw panic(ie, str);
 	}
 
 	override Status leave(ir.TopLevelBlock tlb) { assert(false); }

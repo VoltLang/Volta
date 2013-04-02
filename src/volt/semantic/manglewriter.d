@@ -7,7 +7,7 @@ import std.stdio;
 
 import ir = volt.ir.ir;
 
-import volt.exceptions;
+import volt.errors;
 import volt.interfaces;
 import volt.visitor.visitor;
 import volt.semantic.classify;
@@ -119,7 +119,7 @@ public:
 			// Module level -- ensure global or local is specified.
 			if (v.storage != ir.Variable.Storage.Local &&
 			    v.storage != ir.Variable.Storage.Global) {
-				throw new CompilerError(v.location, "module level variables must be explicitly global or local.");
+				throw makeExpected(v, "global or local");
 			}
 		}
 

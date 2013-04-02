@@ -4,7 +4,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.token.stream;
 
-import volt.exceptions : CompilerPanic;
+import volt.errors : panic;
 public import volt.token.token;
 
 
@@ -28,11 +28,11 @@ public:
 	this(Token[] tokens)
 	{
 		if (tokens.length < 3)
-			throw CompilerPanic("Token stream too short");
+			throw panic("Token stream too short");
 		if (tokens[0].type != TokenType.Begin)
-			throw CompilerPanic("Token stream not started correctly");
+			throw panic("Token stream not started correctly");
 		if (tokens[$-1].type != TokenType.End)
-			throw CompilerPanic("Token stream not terminated correctly");
+			throw panic("Token stream not terminated correctly");
 
 		this.mTokens = tokens;
 	}
@@ -151,7 +151,7 @@ public:
 	Token lookbehind(size_t n)
 	{
 		if (n > mIndex)
-			throw CompilerPanic("Token array access out of bounds");
+			throw panic("Token array access out of bounds");
 		return mTokens[mIndex - n];
 	}
 

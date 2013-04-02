@@ -9,7 +9,7 @@ import std.math : isNaN;
 
 import ir = volt.ir.ir;
 
-import volt.exceptions;
+import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 import volt.semantic.lookup;
@@ -95,7 +95,7 @@ int size(Location location, LanguagePass lp, ir.Node node)
 		assert(_static !is null);
 		return size(location, lp, _static.base) * cast(int)_static.length;
 	default:
-		throw new CompilerError(location, format("couldn't retrieve size of element: %s", to!string(node.nodeType)));
+		throw panicUnhandled(node, to!string(node.nodeType));
 	}
 }
 

@@ -5,7 +5,7 @@ module volt.semantic.mangle;
 import std.conv;
 import std.string;
 
-import volt.exceptions;
+import volt.errors;
 import ir = volt.ir.ir;
 
 
@@ -240,7 +240,7 @@ void mangleScope(ir.Scope _scope, ref string mangledString)
 
 	auto asModule = cast(ir.Module)_scope.node;
 	if (asModule is null)
-		throw CompilerPanic(_scope.node.location, "top scope is not a module");
+		throw panic(_scope.node.location, "top scope is not a module");
 
 	foreach (id; asModule.name.identifiers) {
 		mangleString(id.value, mangledString);

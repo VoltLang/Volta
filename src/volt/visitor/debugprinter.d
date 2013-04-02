@@ -8,7 +8,6 @@ import std.cstream : dout;
 
 import volt.token.token;
 
-import volt.exceptions;
 import volt.interfaces;
 
 import ir = volt.ir.ir;

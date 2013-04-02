@@ -6,7 +6,7 @@ module volt.parser.base;
 
 import std.string : format;
 
-import volt.exceptions;
+import volt.errors;
 import volt.token.token;
 import volt.token.stream;
 
@@ -30,8 +30,7 @@ Token match(TokenStream ts, TokenType type)
 	if (t.type == type)
 		return ts.get();
 
-	auto str = format("expected '%s', got '%s'.", tokenToString[type], t.value);
-	throw new CompilerError(t.location, str);
+	throw makeExpected(t.location, tokenToString[type], t.value);
 }
 
 bool matchIf(TokenStream ts, TokenType type)

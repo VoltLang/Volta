@@ -6,7 +6,7 @@ import std.algorithm : sort;
 
 import ir = volt.ir.ir;
 
-import volt.exceptions;
+import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 import volt.semantic.classify;
@@ -220,5 +220,5 @@ ir.Function selectFunction(LanguagePass lp, ir.FunctionSet fset, ir.Type[] argum
 		return fset.resolved(matchedFunctions[0]);
 	}
 
-	throw new CompilerError(location, "couldn't disambiguate overloaded function set.");
+	throw makeCannotDisambiguate(fset, matchedFunctions);
 }

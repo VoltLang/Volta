@@ -8,7 +8,7 @@ import ir = volt.ir.ir;
 import volt.ir.util;
 import volt.ir.copy;
 
-import volt.exceptions;
+import volt.errors;
 import volt.token.stream;
 import volt.token.location;
 
@@ -96,8 +96,7 @@ body
 				tlb.nodes ~= [parseMixinTemplate(ts)];
 			} else {
 				auto err = ts.lookahead(1);
-				throw new CompilerError(err.location,
-					"expected 'function' or 'template' following 'mixin' not '" ~ err.value ~ "'.");
+				throw makeExpected(err.location, "'function' or 'template'");
 			}
 			break;
 		case TokenType.Const:
@@ -185,8 +184,7 @@ body
 ir.Node parseImport(TokenStream ts, bool inModule)
 {
 	if (!inModule) {
-		throw new CompilerError(ts.peek.location,
-		                        "Imports only allowed in top scope");
+		throw makeNonTopLevelImport(ts.peek.location);
 	}
 
 	auto _import = new ir.Import();
@@ -210,7 +208,7 @@ ir.Node parseImport(TokenStream ts, bool inModule)
 		do {
 			if (matchIf(ts, TokenType.Comma)) {
 				if (first) {
-					throw new CompilerError(ts.peek.location, "expected identifier, not ','.");
+					throw makeExpected(ts.peek.location, "identifier");
 				}
 			}
 			first = false;
@@ -430,7 +428,7 @@ ir.Node[] parseEnum(TokenStream ts)
 
 		// Better error printing.
 		if (ts.peek.type == TokenType.CloseBrace) {
-			throw new CompilerError(origin, "enum must have at least one member.");
+			throw makeExpected(origin, "member");
 		}
 
 		while (true) {
@@ -439,7 +437,7 @@ ir.Node[] parseEnum(TokenStream ts)
 			prevEnum = ed;
 			if (namedEnum !is null) {
 				if (ed.type !is null) {
-					throw new CompilerError(ed.type.location, "named enums members can't be typed");
+					throw makeExpected(ed.type.location, "non typed member");
 				}
 				ed.type = buildTypeReference(namedEnum.location, namedEnum);
 				namedEnum.members ~= ed;
@@ -461,12 +459,12 @@ ir.Node[] parseEnum(TokenStream ts)
 				}
 			}
 
-			throw new CompilerError(ts.peek.location, "expected ',' or '}', got '" ~ tokenToString[ts.peek.type] ~ "'");
+			throw makeExpected(ts.peek.location, "',' or '}'");
 		}
 
 	} else {
 		if (namedEnum !is null) {
-			throw new CompilerError(ts.peek.location, "expected open brace.");
+			throw makeExpected(ts.peek.location, "'{'");
 		}
 		if (ts != [TokenType.Identifier, TokenType.Assign]) {
 			base = parseType(ts);
@@ -553,8 +551,7 @@ ir.Attribute parseAttribute(TokenStream ts, bool inModule = false)
 			case "System": attr.kind = ir.Attribute.Kind.LinkageSystem; break;
 			case "Volt": attr.kind = ir.Attribute.Kind.LinkageVolt; break;
 			default:
-				throw new CompilerError(linkageTok.location, "expected 'C', 'C++', 'D', 'Windows', 'Pascal', 'System', or 'Volt', not '" ~
-										linkageTok.value ~ "'.");
+				throw makeExpected(linkageTok.location, "'C', 'C++', 'D', 'Windows', 'Pascal', 'System', or 'Volt'");
 			}
 			match(ts, TokenType.CloseParen);
 		} else {
@@ -569,7 +566,7 @@ ir.Attribute parseAttribute(TokenStream ts, bool inModule = false)
 		break;
 	case TokenType.At:
 		if (ts.peek.type != TokenType.Identifier) {
-			throw new CompilerError(ts.peek.location, "expected identifier.");
+			throw makeExpected(ts.peek.location, "identifier");
 		}
 		switch (ts.peek.value) {
 		case "disable":
@@ -702,7 +699,7 @@ package ir.Condition parseCondition(TokenStream ts)
 		match(ts, TokenType.CloseParen);
 		break;
 	default:
-		throw new CompilerError(ts.peek.location, "expected 'version', 'debug', or 'static', not '" ~ ts.peek.value ~ "'.");
+		throw makeExpected(ts.peek.location, "'version', 'debug', or 'static'");
 	}
 
 	return condition;
@@ -752,8 +749,7 @@ ir.UserAttribute parseUserAttribute(TokenStream ts)
 	ui.name = nameTok.value;
 
 	if (ui.name[0] >= 'a' && ui.name[0] <= 'z') {
-		throw new CompilerError(nameTok.location,
-			"UserAttributes can not start with lowercase letter");
+		throw makeExpected(ts.peek.location, "upper case letter or '_'");
 	}
 
 	match(ts, TokenType.OpenBrace);

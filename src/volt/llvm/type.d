@@ -9,7 +9,7 @@ import lib.llvm.core;
 import ir = volt.ir.ir;
 import volt.ir.util;
 
-import volt.exceptions;
+import volt.errors;
 import volt.llvm.constant;
 import volt.llvm.interfaces;
 static import volt.semantic.mangle;
@@ -47,7 +47,7 @@ protected:
 public:
 	LLVMValueRef fromConstant(State state, ir.Constant cnst)
 	{
-		throw CompilerPanic(cnst.location, "Can't from constant");
+		throw panic(cnst.location, "Can't from constant");
 	}
 }
 
@@ -125,9 +125,9 @@ public:
 			llvmType = LLVMDoubleTypeInContext(state.context);
 			break;
 		case Real:
-			throw CompilerPanic(pt.location, "PrmitiveType.Real not handled");
+			throw panic(pt.location, "PrmitiveType.Real not handled");
 		case Void:
-			throw CompilerPanic(pt.location, "PrmitiveType.Void not handled");
+			throw panic(pt.location, "PrmitiveType.Void not handled");
 		}
 
 		super(state, pt, false, llvmType);
@@ -190,7 +190,7 @@ public:
 	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
 	{
 		if (!cnst.isNull) {
-			throw CompilerPanic(cnst.location, "can only fromConstant null pointers.");
+			throw panic(cnst.location, "can only fromConstant null pointers.");
 		}
 		return LLVMConstPointerNull(llvmType);
 	}
@@ -383,7 +383,7 @@ public:
 	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
 	{
 		if (!cnst.isNull) {
-			throw CompilerPanic(cnst.location, "can only fromConstant null pointers.");
+			throw panic(cnst.location, "can only fromConstant null pointers.");
 		}
 		return LLVMConstPointerNull(llvmType);
 	}
@@ -502,7 +502,7 @@ public:
 		vals.length = indices.length;
 
 		if (vals.length != sl.exps.length)
-			throw CompilerPanic("struct literal has the wrong number of initializers");
+			throw panic("struct literal has the wrong number of initializers");
 
 		foreach(uint i, ref val; vals) {
 			val = state.getConstantValue(sl.exps[i]);
@@ -561,7 +561,7 @@ Type fromIr(State state, ir.Type irType)
 		assert(tr !is null);
 
 		if (tr.type is null)
-			throw CompilerPanic(irType.location, "TypeReference with null type");
+			throw panic(irType.location, "TypeReference with null type");
 
 		return state.fromIr(tr.type);
 	}
@@ -622,7 +622,7 @@ Type fromIr(State state, ir.Type irType)
 		return fromIr(state, _enum.base);
 	default:
 		auto emsg = format("Can't translate type %s (%s)", irType.nodeType, irType.mangledName);
-		throw CompilerPanic(irType.location, emsg);
+		throw panic(irType.location, emsg);
 	}
 }
 

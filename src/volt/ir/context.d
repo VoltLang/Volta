@@ -4,7 +4,7 @@ module volt.ir.context;
 
 import std.string : format;
 
-import volt.exceptions;
+import volt.errors;
 import volt.ir.base;
 import volt.ir.type;
 import volt.ir.toplevel;
@@ -464,6 +464,6 @@ private:
 	void errorDefined(Node n, string name)
 	{
 		auto str = format("\"%s\" already defined", name);
-		throw CompilerPanic(n.location, str);
+		throw panic(n.location, str);
 	}
 }

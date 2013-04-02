@@ -4,8 +4,10 @@ module volt.semantic.attribremoval;
 
 import std.stdio : writefln;
 
+import volt.ir.util;
+
 import ir = volt.ir.ir;
-import volt.exceptions;
+import volt.errors;
 import volt.interfaces;
 import volt.visitor.visitor;
 import volt.visitor.manip;
@@ -209,11 +211,11 @@ protected:
 			case Property:
 				if (fn.type.params.length == 0) {
 					if (isVoid(fn.type.ret)) {
-						throw new CompilerError(fn.location, "zero argument @property functions may not have void return types.");
+						throw makeInvalidType(fn, buildVoid(fn.location));
 					}
 				} else {
 					if (fn.type.params.length != 1) {
-						throw new CompilerError(fn.location, "@property functions may only have one or zero parameters.");
+						throw makeWrongNumberOfArguments(fn, fn.type.params.length, isVoid(fn.type.ret) ? 0 : 1);
 					}
 				}
 				fn.type.isProperty = true;
@@ -467,7 +469,7 @@ protected:
 				return false;
 			}
 			if (fn._body !is null) {
-				throw new CompilerError(fn.location, "can not @loadDynamic function with body");
+				throw makeCannotLoadDynamic(node, fn);
 			}
 			auto var = new ir.Variable();
 			var.location = fn.location;

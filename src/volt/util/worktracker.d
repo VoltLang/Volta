@@ -4,7 +4,7 @@ module volt.util.worktracker;
 
 import ir = volt.ir.ir;
 
-import volt.exceptions;
+import volt.errors;
 
 
 class Work
@@ -82,7 +82,7 @@ public:
 		foreach_reverse(s; mStack) {
 			str ~= "\n" ~ s.node.location.toString ~ "   " ~ w.action;
 		}
-		throw new CompilerError(w.node.location, str);
+		throw makeError(w.node.location, str);
 	}
 
 	void remove(Work w)

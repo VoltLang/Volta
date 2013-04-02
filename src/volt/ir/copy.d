@@ -8,7 +8,7 @@ import std.string : format;
 import ir = volt.ir.ir;
 import volt.ir.util;
 
-import volt.exceptions;
+import volt.errors;
 
 
 ir.Constant copy(ir.Constant cnst)
@@ -210,7 +210,7 @@ ir.Type copyType(ir.Type t)
 	case Class:
 	case UserAttribute:
 	case Enum:
-		throw CompilerPanic(t.location, "can't copy aggregate types");
+		throw panic(t.location, "can't copy aggregate types");
 	default:
 		assert(false);
 	}

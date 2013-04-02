@@ -9,7 +9,7 @@ import ir = volt.ir.ir;
 import volt.ir.util : getScopeFromStore, getScopeFromType;
 import volt.semantic.util : ensureResolved;
 
-import volt.exceptions;
+import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 
@@ -102,9 +102,9 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
 			if (i == last) {
 				return null;
 			} else if (i == 0) {
-				throw new CompilerError(loc, format("undefined identifier '%s'.", name));
+				throw makeFailedLookup(loc, name);
 			} else {
-				throw new CompilerError(loc, format("'%s' has no member named '%s'.", current.name, name));
+				throw makeNotMember(id, cast(ir.Type) current.node, name);
 			}
 		}
 
@@ -185,11 +185,11 @@ ir.Store retrieveStoreFromObject(LanguagePass lp, ir.Scope _scope, Location loc,
 {
 	auto objectStore = lookup(lp, _scope, loc, "object");
 	if (objectStore is null || objectStore.s is null) {
-		throw CompilerPanic(loc, "couldn't access object module.");
+		throw panic(loc, "couldn't access object module.");
 	}
 	auto store = lookup(lp, objectStore.s, loc, name);
 	if (store is null || store.node is null) {
-		throw CompilerPanic(loc, "couldn't locate object." ~ name);
+		throw panic(loc, "couldn't locate object." ~ name);
 	}
 	return store;
 }
@@ -198,7 +198,7 @@ ir.Function retrieveFunctionFromObject(LanguagePass lp, ir.Scope _scope, Locatio
 {
 	auto objectStore = lookup(lp, _scope, loc, "object");
 	if (objectStore is null || objectStore.s is null) {
-		throw CompilerPanic(loc, "couldn't access object module.");
+		throw panic(loc, "couldn't access object module.");
 	}
 	auto store = lookup(lp, objectStore.s, loc, name);
 	return ensureFunction(objectStore.s, loc, name, store);
@@ -213,7 +213,7 @@ ir.Class retrieveAttribute(LanguagePass lp, ir.Scope _scope, Location loc)
 	auto attrStore = retrieveStoreFromObject(lp, _scope, loc, "Attribute");
 	auto attr = cast(ir.Class) attrStore.node;
 	if (attr is null) {
-		throw CompilerPanic(loc, "object.Attribute is not a class.");
+		throw panic(loc, "object.Attribute is not a class.");
 	}
 	return attr;
 }
@@ -227,7 +227,7 @@ ir.Class retrieveTypeInfo(LanguagePass lp, ir.Scope _scope, Location loc)
 	auto tinfoStore = retrieveStoreFromObject(lp, _scope, loc, "TypeInfo");
 	auto tinfo = cast(ir.Class) tinfoStore.node;
 	if (tinfo is null) {
-		throw CompilerPanic(loc, "tinfo is wrong type.");
+		throw panic(loc, "tinfo is wrong type.");
 	}
 	return tinfo;
 }
@@ -241,7 +241,7 @@ ir.Class retrieveObject(LanguagePass lp, ir.Scope _scope, Location loc)
 	auto objStore = retrieveStoreFromObject(lp, _scope, loc, "Object");
 	auto obj = cast(ir.Class) objStore.node;
 	if (obj is null) {
-		throw CompilerPanic(loc, "obj is wrong type.");
+		throw panic(loc, "obj is wrong type.");
 	}
 	return obj;
 }
@@ -256,7 +256,7 @@ ir.Variable retrieveAllocDg(LanguagePass lp, ir.Scope _scope, Location loc)
 	auto allocDgStore = retrieveStoreFromObject(lp, _scope, loc, "allocDg");
 	auto asVar = cast(ir.Variable) allocDgStore.node;
 	if (asVar is null) {
-		throw CompilerPanic(loc, "allocDg is wrong type.");
+		throw panic(loc, "allocDg is wrong type.");
 	}
 	return asVar;
 }
@@ -270,7 +270,7 @@ ir.Struct retrieveArrayStruct(LanguagePass lp, ir.Scope _scope, Location loc)
 	auto arrayStore = retrieveStoreFromObject(lp, _scope, loc, "ArrayStruct");
 	auto asStruct = cast(ir.Struct) arrayStore.node;
 	if (asStruct is null) {
-		throw CompilerPanic(asStruct.location, "object.ArrayStruct is wrong type.");
+		throw panic(asStruct.location, "object.ArrayStruct is wrong type.");
 	}
 	return asStruct;
 }
@@ -290,10 +290,10 @@ ir.Module getModuleFromScope(ir.Scope _scope)
 		}
 
 		if (_scope !is null)
-			throw CompilerPanic(m.location, "module scope has parent");
+			throw panic(m.location, "module scope has parent");
 		return m;
 	}
-	throw CompilerPanic("scope chain without module base");
+	throw panic("scope chain without module base");
 }
 
 /**
@@ -318,7 +318,7 @@ bool getFirstThisable(ir.Scope _scope, out ir.Scope outScope, out ir.Type outTyp
 	while (_scope !is null) {
 		auto node = _scope.node;
 		if (node is null)
-			throw CompilerPanic("scope without owning node");
+			throw panic("scope without owning node");
 
 		auto asType = cast(ir.Type)node;
 		auto asAggregate = cast(ir.Aggregate)node;
@@ -346,7 +346,7 @@ bool getFirstClass(ir.Scope _scope, out ir.Scope outScope, out ir.Class outClass
 	while (_scope !is null) {
 		auto node = _scope.node;
 		if (node is null)
-			throw CompilerPanic("scope without owning node");
+			throw panic("scope without owning node");
 
 		auto asClass = cast(ir.Class)node;
 		if (asClass !is null) {
@@ -370,7 +370,7 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
 {
 	auto node = _scope.node;
 	if (node is null)
-		throw CompilerPanic("scope without owning node");
+		throw panic("scope without owning node");
 
 	switch (node.nodeType) with (ir.NodeType) {
 	case Function:
@@ -395,7 +395,7 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
 		outScope = asClass.parentClass.myScope;
 		return true;
 	default:
-		throw CompilerPanic(node.location, "unexpected nodetype");
+		throw panic(node.location, "unexpected nodetype");
 	}
 }
 
@@ -410,14 +410,14 @@ ir.Function ensureFunction(ir.Scope _scope, Location loc, string name, ir.Store 
 {
 	if (store is null) {
 		if (_scope is null) {
-			throw new CompilerError(loc, format("undefined identifier '%s'.", name));
+			throw makeFailedLookup(loc, name);
 		} else {
-			throw new CompilerError(loc, format("'%s' has no member named '%s'.", _scope.name, name));
+			throw makeNotMember(loc, _scope.name, name);
 		}
 	}
 
 	if (store.kind != ir.Store.Kind.Function || store.functions.length != 1) {
-		throw new CompilerError(loc, format("%s used as function.", name));
+		throw makeExpected(loc, "function");
 	}
 
 	return store.functions[0];
@@ -434,15 +434,15 @@ ir.Type ensureType(ir.Scope _scope, Location loc, string name, ir.Store store)
 {
 	if (store is null) {
 		if (_scope is null) {
-			throw new CompilerError(loc, format("undefined identifier '%s'.", name));
+			throw makeFailedLookup(loc, name);
 		} else {
-			throw new CompilerError(loc, format("'%s' has no member named '%s'.", _scope.name, name));
+			throw makeNotMember(loc, _scope.name, name);
 		}
 	}
 
 	auto asType = cast(ir.Type) store.node;
 	if (asType is null) {
-		throw new CompilerError(loc, format("%s used as type.", name));
+		throw makeExpected(loc, name);
 	}
 
 	return asType;
@@ -459,15 +459,15 @@ ir.Scope ensureScope(ir.Scope _scope, Location loc, string name, ir.Store store)
 {
 	if (store is null) {
 		if (_scope is null) {
-			throw new CompilerError(loc, format("undefined identifier '%s'.", name));
+			throw makeFailedLookup(loc, name);
 		} else {
-			throw new CompilerError(loc, format("'%s' has no member named '%s'.", _scope.name, name));
+			throw makeNotMember(loc, _scope.name, name);
 		}
 	}
 
 	auto s = getScopeFromStore(store);
 	if (s is null) {
-		throw new CompilerError(loc, format("'%s' is not a aggregate or scope", name));
+		throw makeExpected(loc, "aggregate or scope");
 	}
 	return s;
 }

@@ -4,7 +4,7 @@ module volt.llvm.value;
 
 import lib.llvm.core;
 
-import volt.exceptions;
+import volt.errors;
 import volt.ir.util;
 import volt.llvm.interfaces;
 
@@ -56,7 +56,7 @@ void handleArrayLiteral(State state, ir.ArrayLiteral al, Value result)
 	}
 
 	if (at is null)
-		throw CompilerPanic(al.location, "array literal type must be ArrayType or TypeReference");
+		throw panic(al.location, "array literal type must be ArrayType or TypeReference");
 
 	auto type = cast(ArrayType)state.fromIr(at);
 
@@ -69,11 +69,11 @@ void handleStructLiteral(State state, ir.StructLiteral sl, Value result)
 {
 	auto tr = cast(ir.TypeReference)sl.type;
 	if (tr is null)
-		throw CompilerPanic(sl.location, "struct literal type must be TypeReference");
+		throw panic(sl.location, "struct literal type must be TypeReference");
 
 	auto st = cast(ir.Struct)tr.type;
 	if (st is null)
-		throw CompilerPanic(sl.location, "struct literal type must be TypeReference");
+		throw panic(sl.location, "struct literal type must be TypeReference");
 
 	auto type = cast(StructType)state.fromIr(st);
 
@@ -86,11 +86,11 @@ void handleClassLiteral(State state, ir.ClassLiteral cl, Value result)
 {
 	auto tr = cast(ir.TypeReference)cl.type;
 	if (tr is null)
-		throw CompilerPanic(cl.location, "class literal type must be TypeReference");
+		throw panic(cl.location, "class literal type must be TypeReference");
 
 	auto _class = cast(ir.Class)tr.type;
 	if (_class is null)
-		throw CompilerPanic(cl.location, "class literal type must be TypeReference");
+		throw panic(cl.location, "class literal type must be TypeReference");
 
 	auto pt = cast(PointerType)state.fromIr(_class);
 	auto st = cast(StructType)pt.base;

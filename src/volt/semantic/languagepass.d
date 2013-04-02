@@ -6,7 +6,7 @@ module volt.semantic.languagepass;
 import ir = volt.ir.ir;
 
 import volt.interfaces;
-import volt.exceptions;
+import volt.errors;
 
 import volt.token.location;
 
@@ -211,7 +211,7 @@ public:
 
 		foreach (n; u.members.nodes) {
 			if (n.nodeType == ir.NodeType.Function) {
-				throw new CompilerError(n.location, "union can not have functions");
+				throw makeExpected(n, "field");
 			}
 			auto field = cast(ir.Variable)n;
 			if (field is null) {

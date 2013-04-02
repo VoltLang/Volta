@@ -7,7 +7,7 @@ import ir = volt.ir.ir;
 import volt.ir.util;
 
 import volt.interfaces;
-import volt.exceptions;
+import volt.errors;
 
 import volt.token.location;
 
@@ -45,7 +45,7 @@ void checkUserAttribute(LanguagePass lp, ir.UserAttribute attr)
 		lp.resolve(attr.myScope, field);
 
 		if (!acceptableForUserAttribute(lp, attr.myScope, field.type)) {
-			throw new CompilerError(field.location, "field type unacceptable for @interface.");
+			throw makeExpected(field, "@interface suitable type");
 		}
 	}
 }
@@ -95,19 +95,18 @@ void basicValidateUserAttribute(LanguagePass lp, ir.Scope current, ir.Attribute 
 
 	auto store = lookup(lp, current, a.userAttributeName);
 	if (store is null) {
-		throw new CompilerError(a.location, "unknown user attribute.");
+		throw makeFailedLookup(a, a.userAttributeName.toString());
 	}
 
 	auto ua = cast(ir.UserAttribute) store.node;
 	if (ua is null) {
-		auto emsg = format("'%s' is not a user attribute.", a.userAttributeName);
-		throw new CompilerError(a.location, emsg);
+		throw makeFailedLookup(a, a.userAttributeName.toString());
 	}
 
 	lp.actualize(ua);
 
 	if (a.arguments.length > ua.fields.length) {
-		throw new CompilerError(a.location, "too many fields for @interface " ~ ua.name);
+		throw makeWrongNumberOfArguments(a, a.arguments.length, ua.fields.length);
 	}
 
 	// Note this function does not check if the arguments are correct,

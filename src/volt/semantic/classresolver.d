@@ -7,7 +7,7 @@ import ir = volt.ir.ir;
 import volt.ir.util;
 
 import volt.interfaces;
-import volt.exceptions;
+import volt.errors;
 
 import volt.token.location;
 
@@ -54,7 +54,7 @@ bool rewriteSuperIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, LanguageP
 	ir.Scope dummyScope;
 	ir.Class _class;
 	if (!getFirstClass(_scope, dummyScope, _class)) {
-		throw new CompilerError(ident.location, "super only valid inside classes.");
+		throw makeExpectedContext(ident, null);
 	}
 	_class = _class.parentClass;
 	assert(_class !is null);
@@ -65,7 +65,7 @@ bool rewriteSuperIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, LanguageP
 	} else if (p.op == ir.Postfix.Op.Identifier) {
 		return rewriteSuperIdentifierIfNeeded(e, p, _scope, lp, _class);
 	} else {
-		throw new CompilerError(e.location, "invalid use of super.");
+		throw makeFailedLookup(p, "super");
 	}
 }
 
@@ -83,7 +83,7 @@ bool rewriteSuperCallIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, Langu
 
 	auto asFunction = getParentFunction(_scope);
 	if (asFunction is null) {
-		throw new CompilerError(p.location, "super call outside of function.");
+		throw makeExpectedContext(p, asFunction);
 	}
 	asFunction.explicitCallToSuper = true;
 
@@ -135,7 +135,7 @@ void fillInParentIfNeeded(LanguagePass lp, ir.Class c)
 		// Use surrounding scope, and not this unresolved class.
 		parent = cast(ir.Class) lookupType(lp, c.myScope.parent, c.parent);
 		if (parent is null) {
-			throw new CompilerError(c.parent.location, format("'%s' is not a class.", c.parent.toString));
+			throw makeExpected(c.parent, "class");
 		}
 	}
 
@@ -146,6 +146,7 @@ ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class)
 {
 	ir.Variable[] fields;
 	if (_class.parentClass !is null) {
+
 		fields ~= getClassFields(lp, _class.parentClass);
 	}
 	foreach (node; _class.members.nodes) {
@@ -189,7 +190,7 @@ ir.Function[] getClassMethods(LanguagePass lp, ir.Scope current, ir.Class _class
 	}
 
 	if (_class.userConstructors.length != 1) {
-		throw new CompilerError(_class.location, "at least one constructor is required.");
+		throw panic(_class, "at least one constructor is required.");
 	}
 
 	return methods;
@@ -321,7 +322,7 @@ bool handleClassTypePostfixIfNeeded(LanguagePass lp, ir.Scope current, ir.Postfi
 	if (thisClass is null) return false;
 
 	if (!thisClass.isOrInheritsFrom(expressionClass)) {
-		throw new CompilerError(exp.location, format("this is not an instance of '%s'", expressionClass.name));
+		throw makeInvalidType(exp, expressionClass);
 	}
 
 	exp.child = buildCastSmart(exp.child.location, expressionClass, buildExpReference(_this.location, _this, "this"));

@@ -3,7 +3,7 @@ module volt.util.string;
 import std.conv;
 import std.utf;
 
-import volt.exceptions;
+import volt.errors;
 import volt.token.location;
 
 alias unescape!char unescapeString;
@@ -38,7 +38,7 @@ void[] unescape(T)(Location location, const T[] s)
 					try {
 						i = parse!ushort(hexchars, 16);
 					} catch (ConvException) {
-						throw new CompilerError(location, "bad unicode codepoint specification.");
+						throw makeExpected(location, "unicode codepoint specification");
 					}
 					encode(output, i);
 					unicoding = false;
@@ -48,13 +48,13 @@ void[] unescape(T)(Location location, const T[] s)
 					try {
 						i = parse!uint(hexchars, 16);
 					} catch (ConvException) {
-						throw new CompilerError(location, "bad unicode codepoint specification.");
+						throw makeExpected(location, "unicode codepoint specification");
 					}
 					encode(output, i);
 					unicoding = false;
 					continue;
 				} else { 
-					throw new CompilerError(location, "bad unicode codepoint specification.");
+					throw makeExpected(location, "unicode codepoint specification");
 				}
 			}
 			if (hexchars.length == 8) {
@@ -62,7 +62,7 @@ void[] unescape(T)(Location location, const T[] s)
 				try {
 					i = parse!uint(hexchars, 16);
 				} catch (ConvException) {
-					throw new CompilerError(location, "bad unicode codepoint specification.");
+					throw makeExpected(location, "unicode codepoint specification");
 				}
 				encode(output, i);
 				unicoding = false;
@@ -75,14 +75,14 @@ void[] unescape(T)(Location location, const T[] s)
 		// \xXX
 		if (hexing) {
 			if (!isHex(c)) {
-				throw new CompilerError(location, "bad hex digit.");
+				throw makeExpected(location, "hex digit");
 			}
 			hexchars ~= c;
 			if (hexchars.length == 2) {
 				try {
 					output ~= parse!ubyte(hexchars, 16);
 				} catch (ConvException) {
-					throw new CompilerError(location, "bad hex digit.");
+					throw makeExpected(location, "hex digit");
 				}
 				hexing = false;
 				hexchars.length = 0;
@@ -116,7 +116,7 @@ void[] unescape(T)(Location location, const T[] s)
 					continue;
 				// @todo Named character entities. http://www.w3.org/TR/html5/named-character-references.html
 				default:
-					throw new CompilerError(location, "bad escape.");
+					throw makeExpected(location, "valid escape");
 			}
 			escaping = false;
 			continue;
@@ -131,7 +131,7 @@ void[] unescape(T)(Location location, const T[] s)
 	}
 
 	if (escaping) {
-		throw new CompilerError(location, "bad escape.");
+		throw makeExpected(location, "valid escape.");
 	}
 
 	return output;

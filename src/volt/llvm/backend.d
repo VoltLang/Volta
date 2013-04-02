@@ -5,7 +5,7 @@ module volt.llvm.backend;
 import std.string : toStringz;
 import std.stdio : writefln;
 
-import volt.exceptions;
+import volt.errors;
 import volt.interfaces;
 
 import lib.llvm.core;
@@ -96,7 +96,7 @@ public:
 		auto failed = LLVMVerifyModule(mod, result);
 		if (failed) {
 			writefln("%s", result);
-			throw CompilerPanic("Module verification failed.");
+			throw panic("Module verification failed.");
 		}
 
 		LLVMWriteBitcodeToFile(mod, mFilename);

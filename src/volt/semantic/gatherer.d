@@ -8,7 +8,7 @@ import std.string : format;
 import ir = volt.ir.ir;
 import volt.ir.util;
 
-import volt.exceptions;
+import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 import volt.visitor.visitor;
@@ -62,8 +62,7 @@ void gather(LanguagePass lp, ir.Scope current, ir.Variable v, Where where)
 {
 	auto shadowStore = findShadowed(lp, current, v.location, v.name);
 	if (shadowStore !is null) {
-		string emsg = format("shadows declaration at %s.", shadowStore.node.location);
-		throw new CompilerError(v.location, emsg);
+		throw makeShadowsDeclaration(v, shadowStore.node);
 	}
 
 	current.addValue(v, v.name);
@@ -73,7 +72,7 @@ void gather(LanguagePass lp, ir.Scope current, ir.Variable v, Where where)
 	}
 
 	if (where == Where.Module) {
-		throw new CompilerError(v.location, "module level variables must be explicitly global or local.");
+		throw makeExpected(v, "global or local");
 	}
 
 	v.storage = where == Where.Function ?
@@ -191,7 +190,7 @@ void addScope(ir.Scope current, ir.BlockStatement bs)
 void addScope(ir.Scope current, ir.Struct s)
 {
 	if (s.name is null) {
-		throw new CompilerError(s.location, "anonymous structs not supported (yet)");
+		throw panic(s, "anonymous structs not supported (yet)");
 	}
 
 	assert(s.myScope is null);
@@ -201,7 +200,7 @@ void addScope(ir.Scope current, ir.Struct s)
 void addScope(ir.Scope current, ir.Union u)
 {
 	if (u.name is null) {
-		throw new CompilerError(u.location, "anonymous unions not supported (yet)");
+		throw panic(u, "anonymous unions not supported (yet)");
 	}
 
 	assert(u.myScope is null);
@@ -217,7 +216,7 @@ void addScope(ir.Scope current, ir.Enum e)
 void addScope(ir.Scope current, ir.Class c, Where where)
 {
 	if (c.name is null) {
-		throw new CompilerError(c.location, "anonymous classes not supported");
+		throw panic(c, "anonymous classes not supported");
 	}
 
 	// Identify if this class is the one true Object.
@@ -238,7 +237,7 @@ void addScope(ir.Scope current, ir.Class c, Where where)
 void addScope(ir.Scope current, ir._Interface i)
 {
 	if (i.name is null) {
-		throw new CompilerError(i.location, "anonymous interfaces not supported");
+		throw panic(i, "anonymous interfaces not supported");
 	}
 
 	assert(i.myScope is null);

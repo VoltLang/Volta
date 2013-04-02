@@ -8,7 +8,7 @@ import std.string : format;
 import ir = volt.ir.ir;
 import volt.ir.util;
 
-import volt.exceptions;
+import volt.errors;
 import volt.interfaces;
 import volt.semantic.lookup;
 import volt.visitor.visitor;
@@ -66,7 +66,7 @@ public:
 	{
 		auto mod = lp.getModule(i.name);
 		if (mod is null) {
-			throw new CompilerError(i.name.location, format("cannot find module '%s'.", i.name));
+			throw makeCannotImport(i, i);
 		}
 		i.targetModule = mod;
 

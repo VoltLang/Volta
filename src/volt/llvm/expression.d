@@ -3,7 +3,7 @@
 module volt.llvm.expression;
 
 import volt.token.location : Location;
-import volt.exceptions;
+import volt.errors;
 
 import volt.llvm.aggregate;
 import volt.llvm.constant;
@@ -43,7 +43,7 @@ void getValueRef(State state, ir.Exp exp, Value result)
 
 	if (result.isPointer)
 		return;
-	throw CompilerPanic(exp.location, "Value is not a backend reference");
+	throw panic(exp.location, "Value is not a backend reference");
 }
 
 /**
@@ -90,8 +90,7 @@ void getValueAnyForm(State state, ir.Exp exp, Value result)
 		handleClassLiteral(state, cl, result);
 		break;
 	default:
-		auto str = format("can't getValue from %s", to!string(exp.nodeType));
-		throw CompilerPanic(exp.location, str);
+		throw panicUnhandled(exp, to!string(exp.nodeType));
 	}
 }
 
@@ -195,7 +194,7 @@ void handleBoolCompare(State state, ir.BinOp bin, Value result)
 	//	result.value = LLVMBuildXor(state.builder, left.value, right.value, "");
 	//	break;
 	default:
-		throw CompilerPanic(bin.location, "error");
+		throw panic(bin.location, "error");
 	}
 }
 
@@ -251,7 +250,7 @@ void handleCompare(State state, ir.BinOp bin, Value result)
 
 	auto pt = cast(PrimitiveType)result.type;
 	if (pt is null) {
-		throw CompilerPanic(bin.location, "can only compare primitive types");
+		throw panic(bin.location, "can only compare primitive types");
 	}
 
 	LLVMIntPredicate pr;
@@ -308,7 +307,7 @@ void handleCompare(State state, ir.BinOp bin, Value result)
 		}
 		break;
 	default:
-		throw CompilerPanic(bin.location, "error");
+		throw panic(bin.location, "error");
 	}
 
 	LLVMValueRef v;
@@ -348,12 +347,12 @@ void handleBinOpAssign(State state, ir.BinOp bin, Value result)
 	case OrAssign: op = Or; break;
 	case XorAssign: op = Xor; break;
 	default:
-		throw CompilerPanic(bin.location, "unhandled assign BipOp type");
+		throw panicUnhandled(bin, to!string(bin.op));
 	}
 
 	auto pt = cast(PrimitiveType)right.type;
 	if (pt is null)
-		throw CompilerPanic(bin.location, "right hand value must be of primitive type");
+		throw panic(bin, "right hand value must be of primitive type");
 
 	handleBinOpNonAssign(state, bin.location, op, left, right, right);
 
@@ -391,7 +390,7 @@ void handleBinOpNonAssign(State state, Location loc, ir.BinOp.Op binOp,
 
 	auto pt = cast(PrimitiveType)right.type;
 	if (pt is null)
-		throw CompilerPanic(loc, "can only binop on primitive types");
+		throw panic(loc, "can only binop on primitive types");
 
 	handleBinOpPrimitive(state, loc, binOp, pt, left, right, result);
 }
@@ -403,13 +402,13 @@ void handleBinOpPointer(State state, Location loc, ir.BinOp.Op binOp,
 	auto primType = cast(PrimitiveType)other.type;
 
 	if (ptrType is null)
-		throw CompilerPanic(loc, "left value must be of pointer type");
+		throw panic(loc, "left value must be of pointer type");
 	if (primType is null)
-		throw CompilerPanic(loc, "can only do pointer math with non-pointer");
+		throw panic(loc, "can only do pointer math with non-pointer");
 	if (primType.floating)
-		throw CompilerPanic(loc, "can't do pointer math with floating value");
+		throw panic(loc, "can't do pointer math with floating value");
 	if (binOp != ir.BinOp.Op.Add)
-		throw CompilerPanic(loc, "can only add to pointers");
+		throw panic(loc, "can only add to pointers");
 
 	// Either ptr or other could be result, keep that in mind.
 	result.type = ptr.type;
@@ -472,7 +471,7 @@ void handleBinOpPrimitive(State state, Location loc, ir.BinOp.Op binOp,
 		op = LLVMOpcode.Xor;
 		break;
 	default:
-		throw CompilerPanic(loc, "unhandled BinOp type");
+		throw panicUnhandled(loc, to!string(binOp));
 	}
 
 	// Either right or left could be result, keep that in mind.
@@ -508,8 +507,7 @@ void handleUnary(State state, ir.Unary unary, Value result)
 		handleNot(state, unary, result);
 		break;
 	default:
-		auto str = format("unhandled Unary op %s", to!string(unary.op));
-		throw CompilerPanic(unary.location, str);
+		throw panicUnhandled(unary.location, to!string(unary.op));
 	}
 }
 
@@ -549,11 +547,7 @@ void handleCast(State state, Location loc, Type newType, Value result)
 	    (oldTypePtr !is null || oldTypeFn !is null))
 		return handleCastPointer(state, loc, newType, result);
 
-	string emsg = format(
-		"Unhandlable cast from %s to %s",
-		to!string(oldType.irType.nodeType),
-		to!string(newType.irType.nodeType));
-	throw CompilerPanic(loc, emsg );
+	throw panicUnhandled(loc, to!string(oldType.irType.nodeType));
 }
 
 /**
@@ -569,7 +563,7 @@ void handleCastPrimitive(State state, Location loc, PrimitiveType newType,
 		return;
 
 	void error() {
-		throw CompilerPanic(loc, "invalid cast");
+		throw panic(loc, "invalid cast");
 	}
 
 	result.type = newType;
@@ -677,7 +671,7 @@ void handlePlusMinus(State state, ir.Unary unary, Value result)
 
 	auto primType = cast(PrimitiveType)result.type;
 	if (primType is null)
-		throw CompilerPanic(unary.location, "must be primitive type");
+		throw panic(unary.location, "must be primitive type");
 
 	// No-op plus
 	if (unary.op == ir.Unary.Op.Plus)
@@ -730,8 +724,7 @@ void handlePostfix(State state, ir.Postfix postfix, Value result)
 		handleIncDec(state, postfix, result);
 		break;
 	default:
-		auto str = format("unhandled postfix op %s", to!string(postfix.op));
-		throw CompilerPanic(postfix.location, str);
+		throw panicUnhandled(postfix.location, to!string(postfix.op));
 	}
 }
 
@@ -754,7 +747,7 @@ void handlePostId(State state, ir.Postfix postfix, Value result)
 		at = cast(ArrayType)pt.base;
 		sat = cast(StaticArrayType)pt.base;
 		if (st is null && ut is null && at is null && sat is null)
-			throw CompilerPanic(postfix.child.location, "pointed to value is not a struct or (static)array");
+			throw panic(postfix.child.location, "pointed to value is not a struct or (static)array");
 
 		// We are looking at a pointer, make sure to load it.
 		makeNonPointer(state, result);
@@ -766,10 +759,7 @@ void handlePostId(State state, ir.Postfix postfix, Value result)
 		auto key = postfix.identifier.value;
 		auto ptr = key in ut.indices;
 		if (ptr is null) {
-			auto str = format("0x%s no field name '%s' in struct '%s'",
-			                  to!string(*cast(size_t*)&postfix),
-			                  key, ut.irType.mangledName);
-			throw CompilerPanic(postfix.location, str);
+			throw panicNotMember(postfix, ut.irType.mangledName, key);
 		} else {
 			index = *ptr;
 		}
@@ -784,10 +774,7 @@ void handlePostId(State state, ir.Postfix postfix, Value result)
 		auto key = postfix.identifier.value;
 		auto ptr = key in st.indices;
 		if (ptr is null) {
-			auto str = format("0x%s no field name '%s' in struct '%s'",
-			                  to!string(*cast(size_t*)&postfix),
-			                  key, st.irType.mangledName);
-			throw CompilerPanic(postfix.location, str);
+			throw panicNotMember(postfix, st.irType.mangledName, key);
 		} else {
 			index = *ptr;
 		}
@@ -814,7 +801,7 @@ void handlePostId(State state, ir.Postfix postfix, Value result)
 		result.type = t;
 
 	} else {
-		throw CompilerPanic(postfix.child.location, format("%s is not struct, array or pointer", to!string(cast(void*) result.type)));
+		throw panic(postfix.child.location, format("%s is not struct, array or pointer", to!string(cast(void*) result.type)));
 	}
 }
 
@@ -840,7 +827,7 @@ void handleIndex(State state, ir.Postfix postfix, Value result)
 
 	auto pt = cast(PointerType)left.type;
 	if (pt is null)
-		throw CompilerPanic(postfix.location, "can not index non-array or pointer type");
+		throw panic(postfix.location, "can not index non-array or pointer type");
 
 	makeNonPointer(state, left);
 
@@ -856,7 +843,7 @@ void handleSlice(State state, ir.Postfix postfix, Value result)
 	else if (postfix.arguments.length == 2)
 		handleSliceTwo(state, postfix, result);
 	else
-		throw CompilerPanic(postfix.location, "wrong number of arguments to slice");
+		throw panic(postfix.location, "wrong number of arguments to slice");
 }
 
 void handleSliceNone(State state, ir.Postfix postfix, Value result)
@@ -872,7 +859,7 @@ void handleSliceNone(State state, ir.Postfix postfix, Value result)
 	} else if (sat !is null) {
 		getArrayFromStaticArray(state, postfix.location, result);
 	} else {
-		throw CompilerPanic(postfix.location, "unhandled type in slice (none)");
+		throw panic(postfix.location, "unhandled type in slice (none)");
 	}
 }
 
@@ -918,7 +905,7 @@ void handleSliceTwo(State state, ir.Postfix postfix, Value result)
 		at = sat.arrayType;
 
 	} else {
-		throw CompilerPanic(postfix.location, "unhandled type in slice");
+		throw panicUnhandled(postfix, to!string(left.type.irType.nodeType));
 	}
 
 	// Do we need temporary storage for the result?
@@ -957,7 +944,7 @@ void handleCreateDelegate(State state, ir.Postfix postfix, Value result)
 
 	auto fn = cast(FunctionType)func.type;
 	if (fn is null)
-		throw CompilerPanic(postfix.location, "func isn't FunctionType");
+		throw panic(postfix, "func isn't FunctionType");
 
 	auto irFn = cast(ir.FunctionType)fn.irType;
 	auto irDg = new ir.DelegateType();
@@ -969,7 +956,7 @@ void handleCreateDelegate(State state, ir.Postfix postfix, Value result)
 
 	auto dg = cast(DelegateType)state.fromIr(irDg);
 	if (dg is null)
-		throw CompilerPanic("oh god");
+		throw panicOhGod(postfix);
 
 	instance.value = LLVMBuildBitCast(
 		state.builder, instance.value, state.voidPtrType.llvmType, "");
@@ -1034,7 +1021,7 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 		llvmArgs ~= voidPtr;
 		result.value = func;
 	} else {
-		throw CompilerPanic(postfix.location, "can not call this thing");
+		throw panic(postfix.location, "can not call this thing");
 	}
 	assert(ct !is null);
 
@@ -1076,7 +1063,7 @@ void handleIncDec(State state, ir.Postfix postfix, Value result)
 		auto c = primType.fromNumber(state, 1);
 		store = LLVMBuildBinOp(state.builder, op, value, c, "");
 	} else {
-		throw new CompilerError(postfix.location, "unexpected type of postfix child");
+		throw makeExpected(postfix, "primitive or pointer");
 	}
 
 	LLVMBuildStore(state.builder, store, ptr);
@@ -1112,7 +1099,7 @@ void handleExpReference(State state, ir.ExpReference expRef, Value result)
 		getConstantValue(state, ed.assign, result);
 		break;
 	default:
-		throw CompilerPanic(expRef.location, "invalid decl type");
+		throw panicUnhandled(expRef.location, to!string(expRef.decl.declKind));
 	}
 }
 
@@ -1136,12 +1123,12 @@ void getStructRef(State state, ir.Exp exp, Value result)
 
 		strct = cast(StructType)pt.base;
 		if (strct is null)
-			throw CompilerPanic(exp.location, "not a pointer to a struct");
+			throw panic(exp, "not a pointer to a struct");
 
 		result.type = strct;
 		result.isPointer = true;
 	} else {
-		throw CompilerPanic(exp.location, "is not a struct");
+		throw panic(exp, "is not a struct");
 	}
 }
 

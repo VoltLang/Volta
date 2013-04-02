@@ -10,7 +10,7 @@ import ir = volt.ir.ir;
 import volt.ir.util;
 import volt.ir.copy;
 
-import volt.exceptions;
+import volt.errors;
 import volt.interfaces;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
@@ -61,7 +61,6 @@ bool handleIfStructLiteral(LanguagePass lp, ir.Scope current, ir.Type left, ref 
 		return false;
 
 	assert(asLit !is null);
-	string emsg = "cannot implicitly cast struct literal to destination.";
 
 	auto asStruct = cast(ir.Struct) left;
 	if (asStruct is null) {
@@ -70,14 +69,14 @@ bool handleIfStructLiteral(LanguagePass lp, ir.Scope current, ir.Type left, ref 
 			asStruct = cast(ir.Struct) asTR.type;
 		}
 		if (asStruct is null) {
-			throw new CompilerError(right.location, emsg);
+			throw makeBadImplicitCast(right, getExpType(lp, right, current), left);
 		}
 	}
 
 	ir.Type[] types = getStructFieldTypes(asStruct);
 
 	if (types.length < asLit.exps.length) {
-		throw new CompilerError(right.location, "cannot implicitly cast struct literal -- too many expressions for target.");
+		throw makeBadImplicitCast(right, getExpType(lp, right, current), left);
 	}
 
 	foreach (i, ref sexp; asLit.exps) {
@@ -115,7 +114,7 @@ void extypeAssignHandleStorage(LanguagePass lp, ir.Scope current, ref ir.Exp exp
 		assert(asStorageType !is null);
 		if (asStorageType.type == ir.StorageType.Kind.Scope) {
 			if (mutableIndirection(asStorageType.base)) {
-				throw new CompilerError(exp.location, "cannot assign to scoped variable.");
+				throw makeBadImplicitCast(exp, rtype, ltype);
 			}
 			exp = buildCastSmart(asStorageType.base, exp);
 		}
@@ -124,7 +123,7 @@ void extypeAssignHandleStorage(LanguagePass lp, ir.Scope current, ref ir.Exp exp
 			if (!mutableIndirection(asStorageType.base)) {
 				exp = buildCastSmart(asStorageType.base, exp);
 			} else {
-				throw new CompilerError(exp.location, "cannot implicitly convert const to non const.");
+				throw makeBadImplicitCast(exp, rtype, ltype);
 			}
 		}
 	} else if (ltype.nodeType == ir.NodeType.StorageType &&
@@ -151,7 +150,7 @@ void extypePassHandleStorage(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 			if (!mutableIndirection(asStorageType.base)) {
 				exp = buildCastSmart(asStorageType.base, exp);
 			} else {
-				throw new CompilerError(exp.location, "cannot implicitly convert const to non const.");
+				throw makeBadImplicitCast(exp, rtype, ltype);
 			}
 		}
 	}
@@ -162,14 +161,16 @@ void extypeAssignStorageType(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 	auto type = getExpType(lp, exp, current);
 	if (storage.base is null) {
 		if (type.nodeType == ir.NodeType.FunctionSetType) {
-			throw new CompilerError(exp.location, "cannot infer type from overloaded function.");
+			auto fset = cast(ir.FunctionSetType) type;
+			throw makeCannotDisambiguate(exp, fset.set.functions);
+
 		}
 		storage.base = copyTypeSmart(exp.location, type);
 	}
 
 	if (storage.type == ir.StorageType.Kind.Scope) {
 		if (mutableIndirection(storage.base)) {
-			throw new CompilerError(exp.location, "cannot convert scope into mutably indirectable type.");
+			throw makeBadImplicitCast(exp, type, storage);
 		}
 		exp = buildCastSmart(storage.base, exp);
 		extypeAssignDispatch(lp, current, exp, storage.base);
@@ -210,7 +211,7 @@ void extypeAssignPointerType(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 
 	auto rp = cast(ir.PointerType) type;
 	if (rp is null) {
-		throw new CompilerError(exp.location, "cannot implicitly convert expression into a pointer.");
+		throw makeBadImplicitCast(exp, type, ptr);
 	}
 
 	if (typesEqual(ptr, rp)) {
@@ -236,14 +237,15 @@ void extypeAssignPointerType(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 		return;
 	}
 
-	throw new CompilerError(exp.location, "pointers may only be implicitly converted to void*.");
+	throw makeBadImplicitCast(exp, type, ptr);
 }
 
 void extypeAssignPrimitiveType(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.PrimitiveType lprim)
 {
-	auto rprim = cast(ir.PrimitiveType) getExpType(lp, exp, current);
+	auto rtype = getExpType(lp, exp, current);
+	auto rprim = cast(ir.PrimitiveType) rtype;
 	if (rprim is null) {
-		throw new CompilerError(exp.location, "trying to convert non primitive type into primitive type.");
+		throw makeBadImplicitCast(exp, rtype, lprim);
 	}
 
 	if (typesEqual(lprim, rprim)) {
@@ -257,11 +259,11 @@ void extypeAssignPrimitiveType(LanguagePass lp, ir.Scope current, ref ir.Exp exp
 	auto runsigned = isUnsigned(rprim.type);
 
 	if (lunsigned != runsigned && !fitsInPrimitive(lprim, exp) && rsize >= lsize) {
-		throw new CompilerError(exp.location, "cannot implicitly convert expression to destination type.");
+		throw makeBadImplicitCast(exp, rprim, lprim);
 	}
 
 	if (rsize > lsize && !fitsInPrimitive(lprim, exp)) {
-		throw new CompilerError(exp.location, format("cannot implicitly cast '%s' to '%s'.", to!string(rprim.type), to!string(lprim.type)));
+		throw makeBadImplicitCast(exp, rprim, lprim);
 	}
 
 	exp = buildCastSmart(lprim, exp);
@@ -274,9 +276,7 @@ void extypeAssignClass(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Cla
 
 	auto rightClass = cast(ir.Class) type;
 	if (rightClass is null) {
-		auto str = format("cannot assign non-class '%s' to class '%s'",
-		                  to!string(type.nodeType), _class.name);
-		throw new CompilerError(exp.location, str);
+		throw makeBadImplicitCast(exp, type, _class);
 	}
 	lp.resolve(rightClass);
 
@@ -289,7 +289,7 @@ void extypeAssignClass(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Cla
 	}
 
 	if (_class !is rightClass) {
-		throw new CompilerError(exp.location, format("cannot convert class '%s' to class '%s'", rightClass.name, _class.name));
+		throw makeBadImplicitCast(exp, rightClass, _class);
 	}
 }
 
@@ -313,10 +313,7 @@ void extypeAssignCallableType(LanguagePass lp, ir.Scope current, ref ir.Exp exp,
 		extypeAssignCallableType(lp, current, exp, ctype);
 		return;
 	}
-	string emsg = format("can not assign '%s' to '%s'",
-		to!string(rtype.nodeType),
-		to!string(ctype.nodeType));
-	throw new CompilerError(exp.location, emsg);
+	throw makeBadImplicitCast(exp, rtype, ctype);
 }
 
 void extypeAssignDispatch(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Type type)
@@ -358,13 +355,9 @@ void extypeAssignDispatch(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.
 		if (typesEqual(type, rtype)) {
 			return;
 		}
-		string emsg = format("can not assign '%s' to '%s'",
-			to!string(rtype.nodeType),
-			to!string(type.nodeType));
-		throw new CompilerError(exp.location, emsg);
+		throw makeBadImplicitCast(exp, rtype, type);
 	default:
-		string emsg = format("unhandled extypeAssign type '%s'", to!string(type.nodeType));
-		throw CompilerPanic(exp.location, emsg);
+		throw panicUnhandled(exp, to!string(type.nodeType));
 	}
 }
 
@@ -419,7 +412,7 @@ void extypeIdentifierExp(LanguagePass lp, ir.Scope current, ref ir.Exp e, ir.Ide
 
 	auto store = lookup(lp, current, i.location, i.value);
 	if (store is null) {
-		throw new CompilerError(i.location, format("unidentified identifier '%s'.", i.value));
+		throw makeFailedLookup(i, i.value);
 	}
 
 	auto _ref = new ir.ExpReference();
@@ -446,11 +439,11 @@ void extypeIdentifierExp(LanguagePass lp, ir.Scope current, ref ir.Exp e, ir.Ide
 		e = copyExp(ed.assign);
 		return;
 	case Template:
-		throw new CompilerError(i.location, "template used as a value");
+		throw panic(i, "template used as a value.");
 	case Type:
 	case Alias:
 	case Scope:
-		throw CompilerPanic(i.location, format("unhandled identifier type '%s'.", i.value));
+		throw panicUnhandled(i, i.value);
 	}
 }
 
@@ -485,7 +478,7 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 			auto aggScope = getScopeFromType(type);
 			auto store = lookupAsThisScope(lp, aggScope, postfix.location, postfix.identifier.value);
 			if (store is null) {
-				throw new CompilerError(postfix.location, format("aggregate has no member '%s'.", postfix.identifier.value));
+				throw makeNotMember(postfix, type, postfix.identifier.value);
 			}
 
 			if (store.kind != ir.Store.Kind.Function) {
@@ -524,7 +517,7 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 	} else {
 		asFunctionType = cast(ir.CallableType) type;
 		if (asFunctionType is null) {
-			throw new CompilerError(postfix.location, "tried to call uncallable type.");
+			throw makeBadCall(postfix, type);
 		}
 	}
 
@@ -534,7 +527,7 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 		if (mutableIndirection(parentType)) {
 			auto asStorageType = cast(ir.StorageType) parentType;
 			if (asStorageType is null || asStorageType.type != ir.StorageType.Kind.Scope) {
-				throw new CompilerError(postfix.location, "cannot call scope function on non scope instance.");
+				throw makeBadCall(postfix, asFunctionType);
 			}
 		}
 	}
@@ -549,7 +542,7 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 		auto callNumArgs = postfix.arguments.length;
 		auto funcNumArgs = asFunctionType.params.length - 1;
 		if (callNumArgs < funcNumArgs) {
-			throw new CompilerError(postfix.location, "not enough arguments to vararg function");
+			throw makeWrongNumberOfArguments(postfix, callNumArgs, funcNumArgs);
 		}
 		auto amountOfVarArgs = callNumArgs - funcNumArgs;
 		auto argsSlice = postfix.arguments[0 .. funcNumArgs];
@@ -578,14 +571,12 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 
 	if (!asFunctionType.hasVarArgs &&
 	    postfix.arguments.length != asFunctionType.params.length) {
-		string emsg = format("expected %s argument%s, got %s.", asFunctionType.params.length, 
-							 asFunctionType.params.length != 1 ? "s" : "", postfix.arguments.length);
-		throw new CompilerError(postfix.location, emsg);
+		throw makeWrongNumberOfArguments(postfix, postfix.arguments.length, asFunctionType.params.length);
 	}
 	assert(asFunctionType.params.length <= postfix.arguments.length);
 	foreach (i; 0 .. asFunctionType.params.length) {
 		if (asFunctionType.params[i].isRef && !isLValue(postfix.arguments[i])) {
-			throw new CompilerError(postfix.arguments[i].location, "expression is not an lvalue");
+			throw makeNotLValue(postfix.arguments[i]);
 		}
 		extypePass(lp, current, postfix.arguments[i], asFunctionType.params[i].type);
 	}
@@ -623,7 +614,7 @@ void extypeExpReference(LanguagePass lp, ir.Scope current, ref ir.Exp e, ir.ExpR
 
 		store = lookup(lp, current, reference.location, "this");
 		if (store is null || store.kind != ir.Store.Kind.Value) {
-			throw CompilerPanic("function doesn't have this");
+			throw panic(e, "function doesn't have this.");
 		}
 
 		auto asVar = cast(ir.Variable)store.node;
@@ -783,7 +774,7 @@ void extypePostfixIdentifier(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 
 	while (true) {
 		if (currentP.identifier is null)
-			throw CompilerPanic(currentP.location, "null identifier");
+			throw panic(currentP, "null identifier.");
 
 		postfixIdents = [currentP] ~ postfixIdents;
 
@@ -828,13 +819,12 @@ void extypePostfixIdentifier(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 			auto fn = store.functions[0];
 			_ref.decl = fn;
 		} else {
-			auto emsg = format("unhandled Store kind: '%s'.", to!string(store.kind));
-			throw CompilerPanic(_ref.location, emsg);
+			throw panicUnhandled(_ref, to!string(store.kind));
 		}
 
 		// Sanity check.
 		if (_ref.decl is null) {
-			throw CompilerPanic(_ref.location, "empty ExpReference declaration.");
+			throw panic(_ref, "empty ExpReference declaration.");
 		}
 	}
 
@@ -881,7 +871,7 @@ void extypePostfixIdentifier(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 	do {
 		if (store is null) {
 			/// @todo keep track of what the context was that we looked into.
-			throw new CompilerError(loc, format("unknown identifier '%s'.", ident));
+			throw makeFailedLookup(loc, ident);
 		}
 
 		final switch(store.kind) with (ir.Store.Kind) {
@@ -894,10 +884,10 @@ void extypePostfixIdentifier(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 		case Scope:
 			_scope = getScopeFromStore(store);
 			if (_scope is null)
-				throw CompilerPanic(loc, "missing scope");
+				throw panic(postfix, "missing scope");
 
 			if (postfixIdents.length == 0)
-				throw new CompilerError(loc, "expected value or function not type/scope");
+				throw makeInvalidUseOfStore(postfix, store);
 
 			postfix = postfixIdents[0];
 			postfixIdents = postfixIdents[1 .. $];
@@ -922,9 +912,9 @@ void extypePostfixIdentifier(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 			filloutReference(store);
 			break;
 		case Template:
-			throw new CompilerError(loc, "template used as a type or value");
+			throw makeInvalidUseOfStore(postfix, store);
 		case Alias:
-			throw CompilerPanic(loc, "alias scope");
+			throw panic(postfix, "alias scope");
 		}
 
 	} while(_ref is null);
@@ -954,7 +944,8 @@ void handleCastTo(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Unary un
 
 	auto type = getExpType(lp, unary.value, current);
 	if (type.nodeType == ir.NodeType.FunctionSetType) {
-		throw new CompilerError(unary.location, "cannot cast overloaded function.");
+		auto fset = cast(ir.FunctionSetType) type;
+		throw makeCannotDisambiguate(unary, fset.set.functions);
 	}
 
 	// Handling cast(Foo)null
@@ -1000,7 +991,7 @@ void handleNew(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Unary _unar
 
 	assert(_class.userConstructors.length == 1);
 	if (_unary.argumentList.length != _class.userConstructors[0].type.params.length) {
-		throw new CompilerError(_unary.location, "mismatched argument count for constructor.");
+		throw makeWrongNumberOfArguments(_unary, _unary.argumentList.length, _class.userConstructors[0].type.params.length);
 	}
 
 	auto fn = _class.userConstructors[0];
@@ -1045,7 +1036,7 @@ void extypeBinOp(LanguagePass lp, ir.Scope current, ir.BinOp bin, ir.PrimitiveTy
 			}
 		}
 		if (leftUnsigned != rightUnsigned) {
-			throw new CompilerError(bin.location, "binary operation with both signed and unsigned operands.");
+			throw makeTypeIsNot(bin, rprim, lprim);
 		}
 	}
 
@@ -1085,7 +1076,7 @@ void extypeBinOp(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 
 	if (binop.op == ir.BinOp.Op.Assign) {
 		if (effectivelyConst(ltype)) {
-			throw new CompilerError(binop.location, "cannot assign to const type.");
+			throw makeCannotModify(binop, ltype);
 		}
 		extypeAssign(lp, current, binop.right, ltype);
 		return;
@@ -1242,7 +1233,7 @@ public:
 				auto loc = ed.location;
 				auto prevType = getExpType(lp, prevExp, current);
 				if (!isIntegral(prevType)) {
-					throw new CompilerError(loc, "only integral types can be auto incremented.");
+					throw makeTypeIsNot(ed, prevType, buildInt(ed.location));
 				}
 
 				ed.assign = evaluate(lp, current, buildAdd(loc, copyExp(prevExp), buildConstantInt(loc, 1)));
@@ -1354,7 +1345,7 @@ public:
 	{
 		auto fn = getParentFunction(current);
 		if (fn is null) {
-			throw CompilerPanic(ret.location, "return statement outside of function.");
+			throw panic(ret, "return statement outside of function.");
 		}
 
 		if (ret.exp !is null) {

@@ -4,7 +4,7 @@ module volt.llvm.toplevel;
 
 import lib.llvm.core;
 
-import volt.exceptions;
+import volt.errors;
 import volt.visitor.visitor;
 import volt.llvm.constant;
 import volt.llvm.expression;
@@ -347,7 +347,7 @@ public:
 		assert(state.currentContinueBlock !is null);
 
 		if (cs.label !is null)
-			throw CompilerPanic(cs.location, "labled continue statements not supported");
+			throw panic(cs.location, "labled continue statements not supported");
 
 		LLVMBuildBr(state.builder, state.currentContinueBlock);
 		state.currentFall = false;
@@ -360,7 +360,7 @@ public:
 		assert(state.currentBreakBlock !is null);
 
 		if (bs.label !is null)
-			throw CompilerPanic(bs.location, "labled break statements not supported");
+			throw panic(bs.location, "labled break statements not supported");
 
 		LLVMBuildBr(state.builder, state.currentBreakBlock);
 		state.currentFall = false;

@@ -147,28 +147,7 @@ public:
  */
 class CompilerPanic : CompilerException
 {
-	static CompilerPanic opCall(string message,
-	                            string file = __FILE__,
-	                            int line = __LINE__)
-	{
-		auto c = new CompilerPanic(message);
-		c.file = file;
-		c.line = line;
-		return c;
-	}
-
-	static CompilerPanic opCall(Location loc,
-	                            string message,
-	                            string file = __FILE__,
-	                            int line = __LINE__)
-	{
-		auto c = new CompilerPanic(loc, message);
-		c.file = file;
-		c.line = line;
-		return c;
-	}
-
-protected:
+public:
 	this(string message)
 	{
 		super(message, null, true);
@@ -194,9 +173,4 @@ override:
 void errorMessageOnly(Location loc, string message)
 {
 	writefln(format("%s: error: %s", loc.toString(), message));
-}
-
-void warning(Location loc, string message)
-{
-	writefln(format("%s: warning: %s", loc.toString(), message));
 }

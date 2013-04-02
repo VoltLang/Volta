@@ -5,7 +5,7 @@ module volt.semantic.aliasresolver;
 import ir = volt.ir.ir;
 
 import volt.interfaces;
-import volt.exceptions;
+import volt.errors;
 
 import volt.semantic.lookup;
 import volt.semantic.util : ensureResolved;
@@ -36,7 +36,7 @@ void resolveAlias(LanguagePass lp, ir.Store s)
 	}
 
 	if (ret is null) {
-		throw new CompilerError(a.location, "'" ~ a.id.toString ~ "' not found");
+		throw makeFailedLookup(a, a.id.toString);
 	}
 
 	s.markAliasResolved(ret);

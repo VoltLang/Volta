@@ -4,7 +4,7 @@ module volt.semantic.condremoval;
 
 import ir = volt.ir.ir;
 
-import volt.exceptions;
+import volt.errors;
 import volt.interfaces;
 import volt.visitor.manip;
 import volt.visitor.visitor;
@@ -101,7 +101,7 @@ public:
 	{
 		if (c.kind != ir.Condition.Kind.StaticIf)
 			return Continue;
-		throw CompilerPanic(c.location, "should not find condition here");
+		throw panic(c, "should not find condition here.");
 	}
 
 protected:
@@ -112,7 +112,7 @@ protected:
 		} else if (c.kind == ir.Condition.Kind.Debug) {
 			return lp.settings.isDebugSet(c.identifier);
 		} else {
-			throw CompilerPanic(c.location, "should not enter this path");
+			throw panic(c, "should not enter this path.");
 		}
 	}
 
