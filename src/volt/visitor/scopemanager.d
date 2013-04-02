@@ -130,19 +130,19 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ir.Function fn)
+	override Status enter(ir.BlockStatement bs)
 	{
-		current = fn.myScope;
+		current = bs.myScope;
 		return Continue;
 	}
 
-	override Status leave(ir.Function fn)
+	override Status leave(ir.BlockStatement bs)
 	{
-		if (current !is fn.myScope) {
+		if (current !is bs.myScope) {
 			auto str = "invalid scope layout should be " ~
-			           getNodeAddressString(fn) ~ " is " ~
+			           getNodeAddressString(bs) ~ " is " ~
 			           getNodeAddressString(current.node);
-			throw CompilerPanic(fn.location, str);
+			throw CompilerPanic(bs.location, str);
 		}
 
 		current = current.parent;

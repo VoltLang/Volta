@@ -7,6 +7,7 @@ import volt.ir.base;
 import volt.ir.declaration;
 import volt.ir.expression;
 import volt.ir.toplevel;
+import volt.ir.context;
 
 
 /**
@@ -43,6 +44,11 @@ class BlockStatement : Statement
 {
 public:
 	Node[] statements;
+	/** The scope directly attached to a function has its parent
+	 *  node set to that Function, otherwise it points to this
+	 *  BlockStatement.
+	 */
+	Scope myScope;
 
 public:
 	this() { super(NodeType.BlockStatement); }

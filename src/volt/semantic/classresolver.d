@@ -81,7 +81,7 @@ bool rewriteSuperCallIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, Langu
 {
 	assert(p.op == ir.Postfix.Op.Call);
 
-	auto asFunction = cast(ir.Function) _scope.node;
+	auto asFunction = getParentFunction(_scope);
 	if (asFunction is null) {
 		throw new CompilerError(p.location, "super call outside of function.");
 	}
@@ -163,12 +163,12 @@ ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class)
 }
 
 /// Get all the functions in an inheritance chain -- ignore overloading.
-ir.Function[] getClassMethods(LanguagePass lp, ir.Class _class)
+ir.Function[] getClassMethods(LanguagePass lp, ir.Scope current, ir.Class _class)
 {
 	bool gatherConstructors = _class.userConstructors.length == 0;
 	ir.Function[] methods;
 	if (_class.parentClass !is null) {
-		methods ~= getClassMethods(lp, _class.parentClass);
+		methods ~= getClassMethods(lp, _class.parentClass.myScope, _class.parentClass);
 	}
 	foreach (node; _class.members.nodes) {
 		auto asFunction = cast(ir.Function) node;
@@ -183,7 +183,7 @@ ir.Function[] getClassMethods(LanguagePass lp, ir.Class _class)
 			continue;
 		}
 
-		lp.resolve(asFunction);
+		lp.resolve(current, asFunction);
 
 		methods ~= asFunction;
 	}
@@ -197,7 +197,7 @@ ir.Function[] getClassMethods(LanguagePass lp, ir.Class _class)
 
 ir.Function[] getClassMethodFunctions(LanguagePass lp, ir.Class _class)
 {
-	ir.Function[] methods = getClassMethods(lp, _class);
+	ir.Function[] methods = getClassMethods(lp, _class.myScope, _class);
 
 	// Retrieve the types for these functions, taking into account overloading.
 	bool[string] definedFunctions;

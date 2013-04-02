@@ -602,7 +602,7 @@ ir.Variable addParam(Location loc, ir.Function fn, ir.Type type, string name)
 {
 	auto var = buildVariable(loc, type, ir.Variable.Storage.Function, name);
 	fn.type.params ~= var;
-	fn.myScope.addValue(var, name);
+	fn._body.myScope.addValue(var, name);
 	return var;
 }
 
@@ -695,7 +695,6 @@ ir.Function buildFunction(Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, s
 	fn.name = name;
 	fn.location = loc;
 	fn.kind = ir.Function.Kind.Function;
-	fn.myScope = new ir.Scope(_scope, fn, name);
 
 	fn.type = new ir.FunctionType();
 	fn.type.location = loc;
@@ -705,6 +704,7 @@ ir.Function buildFunction(Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, s
 	if (buildBody) {
 		fn._body = new ir.BlockStatement();
 		fn._body.location = loc;
+		fn._body.myScope = new ir.Scope(_scope, fn, name);
 	}
 
 	// Insert the struct into all the places.

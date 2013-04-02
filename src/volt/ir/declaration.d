@@ -238,9 +238,6 @@ public:
 	BlockStatement outContract;  ///< Optional.
 	BlockStatement _body;  ///< Optional.
 
-	/// The @p Scope for the body of the function. @todo What about the contracts?
-	Scope myScope;
-
 	/// Optional this argument for member functions.
 	Variable thisHiddenParameter;
 

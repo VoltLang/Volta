@@ -3,12 +3,16 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.gatherer;
 
+import std.string : format;
+
 import ir = volt.ir.ir;
 import volt.ir.util;
 
 import volt.exceptions;
 import volt.interfaces;
+import volt.token.location;
 import volt.visitor.visitor;
+import volt.semantic.lookup;
 
 
 enum Where
@@ -18,6 +22,24 @@ enum Where
 	Function,
 }
 
+ir.Store findShadowed(LanguagePass lp, ir.Scope _scope, Location loc, string name)
+{
+	// BlockStatements attached directly to a function have their .node set to that function.
+	if (_scope.node.nodeType != ir.NodeType.Function && _scope.node.nodeType != ir.NodeType.BlockStatement) {
+		return null;
+	}
+
+	auto store = lookupOnlyThisScope(lp, _scope, loc, name);
+	if (store !is null) {
+		return store;
+	}
+
+	if (_scope.parent !is null) {
+		return findShadowed(lp, _scope.parent, loc, name);
+	} else {
+		return null;
+	}
+}
 
 /*
  *
@@ -36,8 +58,14 @@ void gather(ir.Scope current, ir.Alias a, Where where)
 	a.store = current.addAlias(a, a.name, current);
 }
 
-void gather(ir.Scope current, ir.Variable v, Where where)
+void gather(LanguagePass lp, ir.Scope current, ir.Variable v, Where where)
 {
+	auto shadowStore = findShadowed(lp, current, v.location, v.name);
+	if (shadowStore !is null) {
+		string emsg = format("shadows declaration at %s.", shadowStore.node.location);
+		throw new CompilerError(v.location, emsg);
+	}
+
 	current.addValue(v, v.name);
 
 	if (v.storage != ir.Variable.Storage.Invalid) {
@@ -123,14 +151,13 @@ void addScope(ir.Module m)
 	m.myScope = new ir.Scope(m, name);
 }
 
-void addScope(ir.Scope current, ir.Function fn, ir.Type thisType)
+void addParameters(ir.Scope current, ir.Function fn, ir.Type thisType)
 {
-	assert(fn.myScope is null);
-	fn.myScope = new ir.Scope(current, fn, fn.name);
-
-	foreach (var; fn.type.params) {
-		if (var.name !is null) {
-			fn.myScope.addValue(var, var.name);
+	if (fn._body !is null) {
+		foreach (var; fn.type.params) {
+			if (var.name !is null) {
+				current.addValue(var, var.name);
+			}
 		}
 	}
 
@@ -151,6 +178,14 @@ void addScope(ir.Scope current, ir.Function fn, ir.Type thisType)
 	// Don't add it, it will get added by the variable code.
 	fn.thisHiddenParameter = thisVar;
 	fn.type.hiddenParameter = true;
+}
+
+void addScope(ir.Scope current, ir.BlockStatement bs)
+{
+	if (bs.myScope !is null) {
+		return;
+	}
+	bs.myScope = new ir.Scope(current, bs, "block");
 }
 
 void addScope(ir.Scope current, ir.Struct s)
@@ -232,6 +267,7 @@ protected:
 	Where[] mWhere;
 	ir.Scope[] mScope;
 	ir.Type[] mThis;
+	ir.Function mLastFunction;
 
 public:
 	this(LanguagePass lp)
@@ -334,7 +370,7 @@ public:
 
 	override Status enter(ir.Variable v)
 	{
-		gather(current, v, where);
+		gather(lp, current, v, where);
 		return Continue;
 	}
 
@@ -389,8 +425,38 @@ public:
 	override Status enter(ir.Function fn)
 	{
 		gather(current, fn, where);
-		addScope(current, fn, where == Where.TopLevel ? thisType : null);
-		push(fn.myScope);
+		mLastFunction = fn;
+		return Continue;
+	}
+
+	override Status enter(ir.ForStatement fs)
+	{
+		enter(fs.block);
+		foreach (var; fs.initVars) {
+			gather(lp, current, var, where);
+		}
+		foreach (node; fs.block.statements) {
+			accept(node, this);
+		}
+		leave(fs.block);
+		return ContinueParent;
+	}
+
+	override Status enter(ir.BlockStatement bs)
+	{
+		auto _thisType = where == Where.TopLevel ? thisType : null;
+
+		addScope(current, bs);
+		push(bs.myScope);
+		if (mLastFunction !is null) {
+			addParameters(current, mLastFunction, _thisType);
+			bs.myScope.node = mLastFunction;
+			bs.myScope.name = mLastFunction.name;
+			if (mLastFunction.type.hiddenParameter) {
+				accept(mLastFunction.thisHiddenParameter, this);
+			}
+			mLastFunction = null;
+		}
 		return Continue;
 	}
 
@@ -417,7 +483,8 @@ public:
 	override Status leave(ir.Struct s) { pop(s); return Continue; }
 	override Status leave(ir.Union u) { pop(u); return Continue; }
 	override Status leave(ir.Enum e) { pop(e); return Continue; }
-	override Status leave(ir.Function fn) { pop(); return Continue; }
+	override Status leave(ir.Function fn) { return Continue; }
+	override Status leave(ir.BlockStatement bs) { pop(); return Continue; }
 	override Status leave(ir._Interface i) { pop(i); return Continue; }
 	override Status leave(ir.UserAttribute ua) { pop(ua); return Continue; }
 }

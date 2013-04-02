@@ -30,8 +30,8 @@ ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scop
 	fn.mangledName = fn.name;
 	fn.kind = ir.Function.Kind.Function;
 	fn.isWeakLink = true;
-	fn.myScope = new ir.Scope(baseScope, fn, fn.name);
 	fn._body = new ir.BlockStatement();
+	fn._body.myScope = new ir.Scope(baseScope, fn._body, fn.name);
 	fn._body.location = location;
 
 	auto countVar = addParam(location, fn, buildSizeT(location, lp), "count");
@@ -39,7 +39,7 @@ ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scop
 	auto arrayStruct = retrieveArrayStruct(lp, baseScope, location);
 	auto allocDgVar = retrieveAllocDg(lp, baseScope, location);
 
-	auto arrayStructVar = buildVarStatSmart(location, fn._body, fn.myScope, arrayStruct, "from");
+	auto arrayStructVar = buildVarStatSmart(location, fn._body, fn._body.myScope, arrayStruct, "from");
 
 	auto ptrPfix = new ir.Postfix();
 	ptrPfix.location = location;
@@ -190,7 +190,7 @@ public:
 		_function.type.params = copyVariablesSmart(location, _class.userConstructors[0].type.params);
 
 		// auto thisVar = allocDg(Class, -1)
-		auto thisVar = buildVarStatSmart(location, _function._body, _function.myScope, _class, "thisVar");
+		auto thisVar = buildVarStatSmart(location, _function._body, _function._body.myScope, _class, "thisVar");
 		thisVar.assign = createAllocDgCall(allocDgVar, lp, unary.location, _class, buildConstantInt(unary.location, -1), true);
 		thisVar.assign = buildCastSmart(location, _class, thisVar.assign);
 

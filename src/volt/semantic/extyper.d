@@ -606,7 +606,7 @@ void extypeExpReference(LanguagePass lp, ir.Scope current, ref ir.Exp e, ir.ExpR
 	ir.Class _class;
 	bool foundClass = current.getFirstClass(_, _class);
 	if (foundClass) {
-		auto asFunction = cast(ir.Function) current.node;
+		auto asFunction = getParentFunction(current);
 		if (asFunction is null) {
 			return;
 		}
@@ -1005,7 +1005,7 @@ void handleNew(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Unary _unar
 
 	auto fn = _class.userConstructors[0];
 
-	lp.resolve(fn);
+	lp.resolve(current, fn);
 
 	for (size_t i = 0; i < _unary.argumentList.length; ++i) {
 		extypeAssign(lp, current, _unary.argumentList[i], fn.type.params[i].type);
@@ -1338,8 +1338,7 @@ public:
 
 	override Status enter(ir.Function fn)
 	{
-		lp.resolve(fn);
-		super.enter(fn);
+		lp.resolve(current, fn);
 		return Continue;
 	}
 
@@ -1353,7 +1352,7 @@ public:
 
 	override Status enter(ir.ReturnStatement ret)
 	{
-		auto fn = cast(ir.Function) current.node;
+		auto fn = getParentFunction(current);
 		if (fn is null) {
 			throw CompilerPanic(ret.location, "return statement outside of function.");
 		}
@@ -1386,6 +1385,7 @@ public:
 
 	override Status enter(ir.ForStatement fs)
 	{
+		super.enter(fs.block);
 		foreach (i; fs.initVars) {
 			accept(i, this);
 		}
@@ -1400,9 +1400,10 @@ public:
 		foreach (ref increment; fs.increments) {
 			acceptExp(increment, this);
 		}
-		if (fs.block !is null) {
-			accept(fs.block, this);
+		foreach (statement; fs.block.statements) {
+			accept(statement, this);
 		}
+		super.leave(fs.block);
 
 		return ContinueParent;
 	}

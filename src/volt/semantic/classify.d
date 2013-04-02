@@ -14,6 +14,23 @@ import volt.interfaces;
 import volt.token.location;
 import volt.semantic.lookup;
 
+/**
+ * If the given scope is in a function, return it. Otherwise, return null.
+ */
+ir.Function getParentFunction(ir.Scope current)
+{
+	auto fn = cast(ir.Function) current.node;
+	if (fn !is null) {
+		return fn;
+	}
+
+	auto bs = cast(ir.BlockStatement) current.node;
+	if (bs !is null) {
+		return getParentFunction(current.parent);
+	}
+
+	return null;
+}
 
 int size(ir.PrimitiveType.Kind kind)
 {

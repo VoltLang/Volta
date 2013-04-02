@@ -95,7 +95,11 @@ ir.Type handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
 
 ir.Variable getThisVar(Location location, LanguagePass lp, ir.Scope _scope)
 {
-	auto thisStore = lookupOnlyThisScope(lp, _scope, location, "this");
+	auto fn = getParentFunction(_scope);
+	if (fn is null) {
+		throw CompilerPanic(location, "getThisVar called for scope outside of function.");
+	}
+	auto thisStore = lookupOnlyThisScope(lp, fn._body.myScope, location, "this");
 	if (thisStore is null) {
 		throw CompilerPanic(location, "need valid this for super.");
 	}
@@ -111,7 +115,7 @@ void replaceVarArgsIfNeeded(LanguagePass lp, ir.Function fn)
 	if (fn.type.hasVarArgs &&
 	    !fn.type.varArgsProcessed &&
 	    fn.type.linkage == ir.Linkage.Volt) {
-		auto current = fn.myScope.parent;
+		auto current = fn._body.myScope.parent;
 		auto tinfoClass = retrieveTypeInfo(lp, current, fn.location);
 		auto tr = buildTypeReference(fn.location, tinfoClass, tinfoClass.name);
 		auto array = buildArrayType(fn.location, tr);
@@ -170,7 +174,7 @@ ir.Store ensureResolved(LanguagePass lp, ir.Store s)
 		return s;
 	case Function:
 		foreach (fn; s.functions) {
-			lp.resolve(fn);
+			lp.resolve(s.parent, fn);
 		}
 		return s;
 	case EnumDeclaration:

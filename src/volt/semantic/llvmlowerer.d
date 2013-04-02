@@ -280,8 +280,8 @@ public:
 
 		ir.Exp[] args;
 
-		auto allocated = buildVarStatSmart(loc, fn._body, fn.myScope, buildVoidPtr(loc), "allocated");
-		auto count = buildVarStatSmart(loc, fn._body, fn.myScope, buildSizeT(loc, lp), "count");
+		auto allocated = buildVarStatSmart(loc, fn._body, fn._body.myScope, buildVoidPtr(loc), "allocated");
+		auto count = buildVarStatSmart(loc, fn._body, fn._body.myScope, buildSizeT(loc, lp), "count");
 
 		buildExpStat(loc, fn._body,
 			buildAssign(loc,

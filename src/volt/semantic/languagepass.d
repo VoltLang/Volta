@@ -127,13 +127,11 @@ public:
 		v.isResolved = true;
 	}
 
-	override void resolve(ir.Function fn)
+	override void resolve(ir.Scope current, ir.Function fn)
 	{
-		auto _scope = fn.myScope.parent;
-
-		ensureResolved(this, _scope, fn.type);
+		ensureResolved(this, current, fn.type);
 		replaceVarArgsIfNeeded(this, fn);
-		resolve(_scope, fn.userAttrs);
+		resolve(current, fn.userAttrs);
 	}
 
 	override void resolve(ir.Alias a)

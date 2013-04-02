@@ -149,7 +149,7 @@ public:
 	 *
 	 * @throws CompilerError on failure to resolve function.
 	 */
-	abstract void resolve(ir.Function fn);
+	abstract void resolve(ir.Scope current, ir.Function fn);
 
 	/**
 	 * Resolves a unresolved TypeReference in the given scope.
