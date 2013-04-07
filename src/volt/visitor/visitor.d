@@ -1380,6 +1380,18 @@ Visitor.Status acceptTryStatement(ir.TryStatement ts, Visitor av)
 		return parentContinue(status);
 	}
 
+	status = accept(ts.tryBlock, av);
+	if (status == VisitorStop) {
+		return VisitorStop;
+	}
+
+	if (ts.finallyBlock !is null) {
+		status = accept(ts.finallyBlock, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
 	return av.leave(ts);
 }
 
@@ -1390,7 +1402,10 @@ Visitor.Status acceptThrowStatement(ir.ThrowStatement ts, Visitor av)
 		return parentContinue(status);
 	}
 
-	acceptExp(ts.exp, av);
+	status = acceptExp(ts.exp, av);
+	if (status == VisitorStop) {
+		return VisitorStop;
+	}
 
 	return av.leave(ts);
 }
@@ -1402,7 +1417,10 @@ Visitor.Status acceptScopeStatement(ir.ScopeStatement ss, Visitor av)
 		return parentContinue(status);
 	}
 
-	accept(ss.block, av);
+	status = accept(ss.block, av);
+	if (status == VisitorStop) {
+		return VisitorStop;
+	}
 
 	return av.leave(ss);
 }
@@ -1414,7 +1432,10 @@ Visitor.Status acceptPragmaStatement(ir.PragmaStatement ps, Visitor av)
 		return parentContinue(status);
 	}
 
-	accept(ps.block, av);
+	status = accept(ps.block, av);
+	if (status == VisitorStop) {
+		return VisitorStop;
+	}
 
 	return av.leave(ps);
 }
