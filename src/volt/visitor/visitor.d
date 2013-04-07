@@ -1385,6 +1385,25 @@ Visitor.Status acceptTryStatement(ir.TryStatement ts, Visitor av)
 		return VisitorStop;
 	}
 
+	foreach (i, v; ts.catchVars) {
+		status = accept(v, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+		status = accept(ts.catchBlocks[i], av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	if (ts.catchAll !is null) {
+		status = accept(ts.catchAll, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+
 	if (ts.finallyBlock !is null) {
 		status = accept(ts.finallyBlock, av);
 		if (status == VisitorStop) {
