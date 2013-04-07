@@ -953,16 +953,24 @@ public:
 		internalPrintBlock(ts.tryBlock);
 		mIndent--;
 		twf("} ");
-		if (ts.catchBlock !is null) {
+
+		foreach (i, cb; ts.catchBlocks) {
+			auto v = ts.catchVars[i];
 			wf("catch(");
-			if (ts.catchType !is null) {
-				accept(ts.catchType, this);
-				wf(" ");
-				wf(ts.catchName);
-			}
+			accept(v.type, this);
+			wf(" ");
+			wf(v.name);
 			wfln(") {");
 			mIndent++;
-			internalPrintBlock(ts.catchBlock);
+			internalPrintBlock(cb);
+			mIndent--;
+			twf("} ");
+		}
+
+		if (ts.catchAll !is null) {
+			wfln("catch {");
+			mIndent++;
+			internalPrintBlock(ts.catchAll);
 			mIndent--;
 			twf("} ");
 		}

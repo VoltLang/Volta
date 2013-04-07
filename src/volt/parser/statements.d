@@ -486,21 +486,29 @@ ir.TryStatement parseTryStatement(TokenStream ts)
 	match(ts, TokenType.Try);
 	t.tryBlock = parseBlockStatement(ts);
 
-	if (matchIf(ts, TokenType.Catch)) {
+	while (matchIf(ts, TokenType.Catch)) {
 		if (matchIf(ts, TokenType.OpenParen)) {
-			t.catchType = parseType(ts);
+			auto var = new ir.Variable();
+			var.location = ts.peek.location;
+			var.type = parseType(ts);
 			auto nameTok = match(ts, TokenType.Identifier);
-			t.catchName = nameTok.value;
+			var.name = nameTok.value;
 			match(ts, TokenType.CloseParen);
+			t.catchVars ~= var;
+			t.catchBlocks ~= parseBlockStatement(ts);
+		} else {
+			t.catchAll = parseBlockStatement(ts);
+			if (ts.peek.type == TokenType.Catch) {
+				throw new CompilerError(ts.peek.location, "catch all block must be last catch block in try statement.");
+			}
 		}
-		t.catchBlock = parseBlockStatement(ts);
 	}
 
 	if (matchIf(ts, TokenType.Finally)) {
 		t.finallyBlock = parseBlockStatement(ts);
 	}
 
-	if (t.catchBlock is null && t.finallyBlock is null) {
+	if (t.catchBlocks.length == 0 && t.catchAll is null && t.finallyBlock is null) {
 		throw new CompilerError(t.location, "try statement must have a catch block and/or a finally block.");
 	}
 

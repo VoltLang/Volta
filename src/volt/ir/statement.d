@@ -330,11 +330,10 @@ class TryStatement : Statement
 {
 public:
 	BlockStatement tryBlock;
-	BlockStatement catchBlock;  // Optional.
+	Variable[] catchVars;  // Optional.
+	BlockStatement[] catchBlocks;  // Optional.
+	BlockStatement catchAll;  // Optional.
 	BlockStatement finallyBlock;  // Optional.
-
-	Node catchType;  // Optional.
-	string catchName;  // Optional.
 
 public:
 	this() { super(NodeType.TryStatement); }
