@@ -194,7 +194,7 @@ CompilerException makeNonTopLevelImport(Location location)
  *
  */
 
-CompilerException makeWrongNumberOfArguments(ir.Node node, int got, int expected)
+CompilerException makeWrongNumberOfArguments(ir.Node node, size_t got, size_t expected)
 {
 	return new CompilerError(node.location, format("wrong number of arguments; got %s, expected %s.", got, expected));
 }
