@@ -206,7 +206,12 @@ CompilerException makeBadCall(ir.Node node, ir.Type type)
 
 CompilerException makeCannotDisambiguate(ir.Node node, ir.Function[] functions)
 {
-	return new CompilerError(node.location, format("cannot disambiguate between %s functions.", functions.length));
+	return makeCannotDisambiguate(node.location, functions);
+}
+
+CompilerException makeCannotDisambiguate(Location location, ir.Function[] functions)
+{
+	return new CompilerError(location, format("cannot disambiguate between %s functions.", functions.length));
 }
 
 CompilerException makeCannotInfer(ir.Location location)

@@ -989,12 +989,7 @@ void handleNew(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Unary _unar
 	// Needed because of userConstructors.
 	lp.actualize(_class);
 
-	assert(_class.userConstructors.length == 1);
-	if (_unary.argumentList.length != _class.userConstructors[0].type.params.length) {
-		throw makeWrongNumberOfArguments(_unary, _unary.argumentList.length, _class.userConstructors[0].type.params.length);
-	}
-
-	auto fn = _class.userConstructors[0];
+	auto fn = selectFunction(lp, current, _class.userConstructors, _unary.argumentList, _unary.location);
 
 	lp.resolve(current, fn);
 

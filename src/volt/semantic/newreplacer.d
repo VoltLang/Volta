@@ -4,6 +4,7 @@ module volt.semantic.newreplacer;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
+import volt.ir.copy;
 
 import volt.interfaces;
 import volt.errors;
@@ -12,6 +13,7 @@ import volt.visitor.visitor;
 import volt.semantic.classify;
 import volt.semantic.lookup;
 import volt.semantic.mangle;
+import volt.semantic.overload;
 
 
 ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scope baseScope, ir.ArrayType atype)
@@ -178,33 +180,49 @@ public:
 	{	
 	}
 
-	void createWrapperConstructorIfNeeded(Location location, ir.Class _class, ir.Unary unary)
+	void createWrapperConstructorsIfNeeded(Location location, ir.Class _class, ir.Unary unary)
 	{
-		if (_class.constructor !is null) {
+		if (_class.wrapperConstructors.length > 0) {
 			return;
 		}
+		_class.wrapperConstructors = new ir.Function[_class.userConstructors.length];
 		auto _module = getModuleFromScope(_class.myScope);
 
-		auto _function = buildFunction(location, _class.members, _class.myScope, "magicConstructor");
-		_function.type.ret = copyTypeSmart(location, _class);
-		_function.type.params = copyVariablesSmart(location, _class.userConstructors[0].type.params);
+		foreach (i, ref constructor; _class.wrapperConstructors) {
+			auto fn = _class.userConstructors[i];
+			constructor = buildFunction(location, _class.members, _class.myScope, "magicConstructor");
+			constructor.type.ret = copyTypeSmart(location, _class);
+			constructor.type.params = copyVariablesSmart(location, fn.type.params);
 
-		// auto thisVar = allocDg(Class, -1)
-		auto thisVar = buildVarStatSmart(location, _function._body, _function._body.myScope, _class, "thisVar");
-		thisVar.assign = createAllocDgCall(allocDgVar, lp, unary.location, _class, buildConstantInt(unary.location, -1), true);
-		thisVar.assign = buildCastSmart(location, _class, thisVar.assign);
+			// auto thisVar = allocDg(Class, -1)
+			auto thisVar = buildVarStatSmart(location, constructor._body, constructor._body.myScope, _class, "thisVar");
+			thisVar.assign = createAllocDgCall(allocDgVar, lp, unary.location, _class, buildConstantInt(unary.location, -1), true);
+			thisVar.assign = buildCastSmart(location, _class, thisVar.assign);
 
-		// thisVar.this(cast(void*) thisVar)
-		assert(_class.userConstructors.length == 1);
-		auto eref = buildExpReference(unary.location, _class.userConstructors[0], "this");
-		auto exp = buildCall(location, eref, null);
-		exp.arguments ~= getExpRefs(location, _function.type.params) ~ buildCast(location, buildVoidPtr(location), buildExpReference(location, thisVar, "thisVar"));
-		buildExpStat(location, _function._body, exp);
+			// thisVar.this(cast(void*) thisVar)
+			//assert(_class.userConstructors.length == 1);
+			auto eref = buildExpReference(unary.location, fn, "this");
+			auto exp = buildCall(location, eref, null);
+			exp.arguments ~= getExpRefs(location, constructor.type.params);
+			exp.arguments ~= buildCast(location, buildVoidPtr(location), buildExpReference(location, thisVar, "thisVar"));
+			buildExpStat(location, constructor._body, exp);
 
-		// return thisVar
-		buildReturnStat(location, _function._body, buildExpReference(location, thisVar, "thisVar"));
+			// return thisVar
+			buildReturnStat(location, constructor._body, buildExpReference(location, thisVar, "thisVar"));
+		}
+	}
 
-		_class.constructor = _function;
+	ir.Function getWrapperConstructor(Location location, ir.Class _class, ir.Unary unary)
+	{
+		createWrapperConstructorsIfNeeded(location, _class, unary);
+		auto fn = selectFunction(lp, _class.myScope, _class.userConstructors, unary.argumentList, location);
+		size_t index;
+		for (index = 0; index < _class.userConstructors.length; ++index) {
+			if (fn is _class.userConstructors[index]) {
+				break;
+			}
+		}
+		return _class.wrapperConstructors[index];
 	}
 
 	override Status enter(ref ir.Exp exp, ir.Unary unary)
@@ -243,8 +261,8 @@ public:
 			assert(tr !is null);
 			auto _class = cast(ir.Class) tr.type;
 
-			createWrapperConstructorIfNeeded(unary.location, _class, unary);
-			auto eref = buildExpReference(unary.location, _class.constructor, "magicConstructor");
+			auto wrapperCtor = getWrapperConstructor(unary.location, _class, unary);
+			auto eref = buildExpReference(unary.location, wrapperCtor, "magicConstructor");
 			exp = buildCall(unary.location, eref, unary.argumentList);
 
 			return Continue;

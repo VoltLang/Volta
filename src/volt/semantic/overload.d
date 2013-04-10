@@ -43,6 +43,15 @@ import volt.semantic.typer;
  * list, it is chosen, otherwise an error is generated.
  */
 
+ir.Function selectFunction(LanguagePass lp, ir.Scope current, ir.Function[] functions, ir.Exp[] arguments, Location location)
+{
+	ir.Type[] types;
+	foreach (arg; arguments) {
+		types ~= getExpType(lp, arg, current);
+	}
+	return selectFunction(lp, functions, types, location);
+}
+
 ir.Function selectFunction(LanguagePass lp, ir.Scope current, ir.FunctionSet fset, ir.Exp[] arguments, Location location)
 {
 	ir.Type[] types;
@@ -158,8 +167,14 @@ bool specialisationComparison(ir.Function a, ir.Function b)
 
 ir.Function selectFunction(LanguagePass lp, ir.FunctionSet fset, ir.Type[] arguments, Location location)
 {
-	if (fset.functions.length == 1) {
-		return fset.resolved(fset.functions[0]);
+	auto fn = selectFunction(lp, fset.functions, arguments, location);
+	return fset.resolved(fn);
+}
+
+ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] arguments, Location location)
+{
+	if (functions.length == 1) {
+		return functions[0];
 	}
 
 	bool correctNumberOfArguments(ir.Function fn)
@@ -188,7 +203,7 @@ ir.Function selectFunction(LanguagePass lp, ir.FunctionSet fset, ir.Type[] argum
 	}
 
 	ir.Function[] outFunctions;
-	foreach (fn; fset.functions) {
+	foreach (fn; functions) {
 		if (correctNumberOfArguments(fn)) {
 			outFunctions ~= fn;
 		}
@@ -217,8 +232,8 @@ ir.Function selectFunction(LanguagePass lp, ir.FunctionSet fset, ir.Type[] argum
 	sort!specialisationComparison(matchedFunctions);
 
 	if (matchedFunctions.length == 1 || specialisationComparison(matchedFunctions[0], matchedFunctions[1]) > 0) {
-		return fset.resolved(matchedFunctions[0]);
+		return matchedFunctions[0];
 	}
 
-	throw makeCannotDisambiguate(fset, matchedFunctions);
+	throw makeCannotDisambiguate(location, matchedFunctions);
 }

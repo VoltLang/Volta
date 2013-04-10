@@ -163,6 +163,25 @@ ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class)
 	return fields;
 }
 
+ir.Function generateDefaultConstructor(LanguagePass lp, ir.Scope current, ir.Class _class)
+{
+	auto fn = buildFunction(_class.location, _class.members, current, "this");
+	fn.kind = ir.Function.Kind.Constructor;
+	buildReturnStat(fn.location, fn._body);
+
+	auto tr = buildTypeReference(_class.location, _class,  "__this");
+	auto thisVar = new ir.Variable();
+	thisVar.location = fn.location;
+	thisVar.type = tr;
+	thisVar.name = "this";
+	thisVar.storage = ir.Variable.Storage.Function;
+	thisVar.useBaseStorage = true;
+	fn.thisHiddenParameter = thisVar;
+	fn.type.hiddenParameter = true;
+
+	return fn;
+}
+
 /// Get all the functions in an inheritance chain -- ignore overloading.
 ir.Function[] getClassMethods(LanguagePass lp, ir.Scope current, ir.Class _class)
 {
@@ -189,8 +208,8 @@ ir.Function[] getClassMethods(LanguagePass lp, ir.Scope current, ir.Class _class
 		methods ~= asFunction;
 	}
 
-	if (_class.userConstructors.length != 1) {
-		throw panic(_class, "at least one constructor is required.");
+	if (_class.userConstructors.length == 0) {
+		_class.userConstructors ~= generateDefaultConstructor(lp, current, _class);
 	}
 
 	return methods;

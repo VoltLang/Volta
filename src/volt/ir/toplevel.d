@@ -249,7 +249,7 @@ public:
 	QualifiedName parent;  //< Optional.
 	QualifiedName[] interfaces;  //< Optional.
 
-	Function constructor;
+	Function[] wrapperConstructors;
 	Function[] userConstructors;
 	Struct vtableStruct;
 	Variable vtableVariable;
