@@ -191,7 +191,7 @@ void runTest(string filename, string compiler)
 	string inDir = dirName(filename);
 	string outDir = ".obj" ~ dirSeparator ~ justTest;
 	string exeName = outDir ~ dirSeparator ~ "output.exe";
-	string command = compiler ~ " --no-stdlib ../rt/rt.bc -I ../rt/src -o " ~ exeName;
+	string command = compiler ~ " --no-stdlib ../rt/rt.bc -l gc -I ../rt/src -o " ~ exeName;
 
 	foreach (d; dependencies) {
 		command ~= " " ~ inDir ~ dirSeparator ~ d;
