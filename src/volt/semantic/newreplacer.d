@@ -10,6 +10,7 @@ import volt.interfaces;
 import volt.errors;
 import volt.token.location;
 import volt.visitor.visitor;
+import volt.visitor.scopemanager;
 import volt.semantic.classify;
 import volt.semantic.lookup;
 import volt.semantic.mangle;
@@ -156,7 +157,7 @@ ir.Exp createAllocDgCall(ir.Variable allocDgVar, LanguagePass lp, Location locat
 	}
 }
 	
-class NewReplacer : NullVisitor, Pass
+class NewReplacer : ScopeManager, Pass
 {
 public:
 	ir.Variable allocDgVar;
@@ -215,7 +216,7 @@ public:
 	ir.Function getWrapperConstructor(Location location, ir.Class _class, ir.Unary unary)
 	{
 		createWrapperConstructorsIfNeeded(location, _class, unary);
-		auto fn = selectFunction(lp, _class.myScope, _class.userConstructors, unary.argumentList, location);
+		auto fn = selectFunction(lp, current, _class.userConstructors, unary.argumentList, location);
 		size_t index;
 		for (index = 0; index < _class.userConstructors.length; ++index) {
 			if (fn is _class.userConstructors[index]) {
