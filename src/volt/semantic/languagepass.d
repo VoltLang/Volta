@@ -71,8 +71,8 @@ public:
 		passes2 ~= new ExTyper(this);
 		passes2 ~= new IrVerifier();
 
-		passes3 ~= new NewReplacer(this);
 		passes3 ~= new LlvmLowerer(this);
+		passes3 ~= new NewReplacer(this);
 		passes3 ~= new TypeidReplacer(this);
 		passes3 ~= new MangleWriter(this);
 		passes3 ~= new IrVerifier();
