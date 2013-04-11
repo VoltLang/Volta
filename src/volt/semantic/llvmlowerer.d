@@ -389,7 +389,7 @@ public:
 		auto memCmpExpRef = buildExpReference(loc, memCmp, memCmp.name);
 
 
-		auto thenState = buildBlockStat(loc);
+		auto thenState = buildBlockStat(loc, fn, fn._body.myScope);
 		buildReturnStat(loc, thenState, buildConstantBool(loc, notEqual));
 		buildIfStat(loc, fn._body,
 			buildBinOp(loc, ir.BinOp.Op.NotEqual,

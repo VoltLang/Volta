@@ -661,12 +661,13 @@ ir.IfStatement buildIfStat(Location loc, ir.BlockStatement block, ir.Exp exp,
 /**
  * Build a block statement.
  */
-ir.BlockStatement buildBlockStat(Location loc, ir.Node[] statements...)
+ir.BlockStatement buildBlockStat(Location loc, ir.Node introducingNode, ir.Scope _scope, ir.Node[] statements...)
 {
 	auto ret = new ir.BlockStatement();
 	ret.location = loc;
 	ret.statements = statements;
-	
+	ret.myScope = new ir.Scope(_scope, introducingNode, "block");
+
 	return ret;
 }
 
