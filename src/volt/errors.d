@@ -90,7 +90,7 @@ CompilerException makeExpected(ir.Node node, string s)
 
 CompilerException makeExpected(Location location, string s, bool b = false)
 {
-	return new CompilerError(location, "expected %s.", b);
+	return new CompilerError(location, format("expected %s.", s), b);
 }
 
 CompilerException makeExpected(Location location, string expected, string got)
