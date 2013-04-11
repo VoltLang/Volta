@@ -3,6 +3,8 @@
 /volt
 /volt.*
 .obj
+.pkg
+*.tar.gz
 
 # Temporary files produced by the compiler
 *.ll
