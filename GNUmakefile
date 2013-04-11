@@ -96,6 +96,8 @@ $(TARGET): $(OBJ) Makefile
 clean:
 	@rm -rf $(TARGET) .obj
 	@rm -f rt/rt.bc
+	@rm -rf .pkg
+	@rm -rf volt.tar.gz
 
 run: $(TARGET) rt/rt.bc
 	@./$(TARGET) -o a.out.exe test/simple/test_001.v
@@ -110,5 +112,12 @@ test: all
 
 license: $(TARGET)
 	@./$(TARGET) --license
+
+package: all
+	@mkdir -p .pkg/rt
+	@cp volt .pkg/
+	@cp ./rt/rt.bc .pkg/
+	@cp -r ./rt/src/* .pkg/rt/
+	@tar -czf volt.tar.gz .pkg/*
 
 .PHONY: all test clean run debug license
