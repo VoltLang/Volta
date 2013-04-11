@@ -504,6 +504,7 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 	}
 
 	auto type = getExpType(lp, postfix.child, current);
+	bool thisCall;
 
 	ir.CallableType asFunctionType;
 	auto asFunctionSet = cast(ir.FunctionSetType) type;
@@ -517,7 +518,18 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 	} else {
 		asFunctionType = cast(ir.CallableType) type;
 		if (asFunctionType is null) {
-			throw makeBadCall(postfix, type);
+			auto _class = cast(ir.Class) type;
+			if (_class !is null) {
+				// this(blah);
+				auto eref = cast(ir.ExpReference) postfix.child;
+				assert(eref !is null);
+				auto fn = selectFunction(lp, current, _class.userConstructors, postfix.arguments, postfix.location);
+				asFunctionType = fn.type;
+				eref.decl = fn;
+				thisCall = true;
+			} else {
+				throw makeBadCall(postfix, type);
+			}
 		}
 	}
 
@@ -579,6 +591,12 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 			throw makeNotLValue(postfix.arguments[i]);
 		}
 		extypePass(lp, current, postfix.arguments[i], asFunctionType.params[i].type);
+	}
+
+	if (thisCall) {
+		auto tvar = getThisVar(postfix.location, lp, current);
+		auto tref = buildExpReference(postfix.location, tvar, "this");
+		postfix.arguments ~= buildCastToVoidPtr(postfix.location, tref);
 	}
 }
 
