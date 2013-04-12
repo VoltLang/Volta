@@ -220,16 +220,18 @@ ir.Function[] getClassMethodFunctions(LanguagePass lp, ir.Class _class)
 	ir.Function[] methods = getClassMethods(lp, _class.myScope, _class);
 
 	// Retrieve the types for these functions, taking into account overloading.
-	bool[string] definedFunctions;
+	size_t[string] definedFunctions;
 	size_t outIndex;
 	auto outMethods = new ir.Function[methods.length];
 	foreach (method; methods) {
 		if (auto p = method.name in definedFunctions) {
+			outMethods[*p] = method;
 			continue;
 		}
 		outMethods[outIndex] = method;
+		definedFunctions[method.name] = outIndex;
 		outIndex++;
-		definedFunctions[method.name] = true;
+
 		method.vtableIndex = cast(int)outIndex - 1;
 	}
 	outMethods.length = outIndex;
