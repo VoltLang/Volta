@@ -1032,50 +1032,63 @@ void extypeBinOp(LanguagePass lp, ir.Scope current, ir.BinOp bin, ir.PrimitiveTy
 	auto leftsz = size(lprim.type);
 	auto rightsz = size(rprim.type);
 
-	bool leftUnsigned = isUnsigned(lprim.type);
-	bool rightUnsigned = isUnsigned(rprim.type);
-	if (leftUnsigned != rightUnsigned) {
-		if (leftUnsigned) {
-			if (fitsInPrimitive(lprim, bin.right)) {
-				bin.right = buildCastSmart(lprim, bin.right);
-				rightUnsigned = true;
-				rightsz = leftsz;
-			}
-		} else {
-			if (fitsInPrimitive(rprim, bin.left)) {
-				bin.left = buildCastSmart(rprim, bin.left);
-				leftUnsigned = true;
-				leftsz = rightsz;
-			}
-		}
+	if (isIntegral(lprim) && isIntegral(rprim)) {
+		bool leftUnsigned = isUnsigned(lprim.type);
+		bool rightUnsigned = isUnsigned(rprim.type);
 		if (leftUnsigned != rightUnsigned) {
-			throw makeTypeIsNot(bin, rprim, lprim);
+			if (leftUnsigned) {
+				if (fitsInPrimitive(lprim, bin.right)) {
+					bin.right = buildCastSmart(lprim, bin.right);
+					rightUnsigned = true;
+					rightsz = leftsz;
+				}
+			} else {
+				if (fitsInPrimitive(rprim, bin.left)) {
+					bin.left = buildCastSmart(rprim, bin.left);
+					leftUnsigned = true;
+					leftsz = rightsz;
+				}
+			}
+			if (leftUnsigned != rightUnsigned) {
+				throw makeTypeIsNot(bin, rprim, lprim);
+			}
 		}
 	}
+
 
 	auto intsz = size(ir.PrimitiveType.Kind.Int);
 	int largestsz;
 	ir.Type largestType;
 
-	if (leftsz > rightsz) {
-		largestsz = leftsz;
-		largestType = lprim;
+	if ((isFloatingPoint(lprim) && isFloatingPoint(rprim)) || (isIntegral(lprim) && isIntegral(rprim))) {
+		if (leftsz > rightsz) {
+			largestsz = leftsz;
+			largestType = lprim;
+		} else {
+			largestsz = rightsz;
+			largestType = rprim;
+		}
+
+		if (bin.op != ir.BinOp.Op.Assign && intsz > largestsz && isIntegral(lprim)) {
+			largestsz = intsz;
+			largestType = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
+		}
+
+		if (leftsz < largestsz) {
+			bin.left = buildCastSmart(largestType, bin.left);
+		}
+
+		if (rightsz < largestsz) {
+			bin.right = buildCastSmart(largestType, bin.right);
+		}
+
+		return;
+	}
+
+	if (isFloatingPoint(lprim) && isIntegral(rprim)) {
+		bin.right = buildCastSmart(lprim, bin.right);
 	} else {
-		largestsz = rightsz;
-		largestType = rprim;
-	}
-
-	if (bin.op != ir.BinOp.Op.Assign && intsz > largestsz) {
-		largestsz = intsz;
-		largestType = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
-	}
-
-	if (leftsz < largestsz) {
-		bin.left = buildCastSmart(largestType, bin.left);
-	}
-
-	if (rightsz < largestsz) {
-		bin.right = buildCastSmart(largestType, bin.right);
+		bin.left = buildCastSmart(rprim, bin.left);
 	}
 }
 
