@@ -333,8 +333,13 @@ protected:
 		}
 
 		cmd = format("%s -filetype=obj -o \"%s\" \"%s\"", compiler, obj, bc);
-		version (darwin)
+		version (darwin) {
 			cmd ~= " -disable-cfi";
+		}
+		if (settings.arch == Arch.X86) {
+			cmd ~= " -mcpu=i686";
+		}
+
 		ret = system(cmd);
 		if (ret)
 			return ret;
