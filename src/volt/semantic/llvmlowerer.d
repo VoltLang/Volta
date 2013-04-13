@@ -172,7 +172,7 @@ public:
 		auto rightType = getExpType(lp, binOp.right, current);
 		if (typesEqual(rightType, leftArrayType.base)) {
 			// T[] ~ T
-			auto fn = getArrayAppendFunction(loc, leftArrayType, rightType);
+			auto fn = getArrayAppendFunction(loc, leftArrayType, rightType, false);
 			exp = buildCall(loc, fn, [binOp.left, binOp.right], fn.name);
 		} else {
 			// T[] ~ T[]
@@ -192,8 +192,15 @@ public:
 		if (leftArrayType is null)
 			throw panic(binOp, "OH GOD!");
 
-		auto fn = getArrayConcatFunction(loc, leftArrayType, true);
-		exp = buildCall(loc, fn, [buildAddrOf(binOp.left), binOp.right], fn.name);
+		auto rightType = getExpType(lp, binOp.right, current);
+		if (typesEqual(rightType, leftArrayType.base)) {
+			// T[] ~ T
+			auto fn = getArrayAppendFunction(loc, leftArrayType, rightType, true);
+			exp = buildCall(loc, fn, [buildAddrOf(binOp.left), binOp.right], fn.name);
+		} else {
+			auto fn = getArrayConcatFunction(loc, leftArrayType, true);
+			exp = buildCall(loc, fn, [buildAddrOf(binOp.left), binOp.right], fn.name);
+		}
 
 		return Continue;
 	}
@@ -213,14 +220,19 @@ public:
 		return Continue;
 	}
 
-	ir.Function getArrayAppendFunction(Location loc, ir.ArrayType ltype, ir.Type rtype)
+	ir.Function getArrayAppendFunction(Location loc, ir.ArrayType ltype, ir.Type rtype, bool isAssignment)
 	{
 		if (ltype.mangledName is null)
 			ltype.mangledName = mangle(ltype);
 		if(rtype.mangledName is null)
 			rtype.mangledName = mangle(rtype);
 
-		auto name = "__appendArray" ~ ltype.mangledName ~ rtype.mangledName;
+		string name;
+		if (isAssignment)
+			name = "__appendArrayAssign" ~ ltype.mangledName ~ rtype.mangledName;
+		else
+			name = "__appendArray" ~ ltype.mangledName ~ rtype.mangledName;
+
 		auto fn = lookupFunction(loc, name);
 		if (fn !is null)
 			return fn;
@@ -229,7 +241,12 @@ public:
 		fn.mangledName = fn.name;
 		fn.isWeakLink = true;
 		fn.type.ret = copyTypeSmart(loc, ltype);
-		auto left = addParamSmart(loc, fn, ltype, "left");
+
+		ir.Variable left;
+		if(isAssignment)
+			left = addParam(loc, fn, buildPtrSmart(loc, ltype), "left");
+		else
+			left = addParamSmart(loc, fn, ltype, "left");
 		auto right = addParamSmart(loc, fn, rtype, "right");
 
 		auto fnAlloc = retrieveAllocDg(lp, thisModule.myScope, loc);
@@ -290,12 +307,25 @@ public:
 			)
 		);
 
-		buildReturnStat(loc, fn._body,
-			buildSlice(loc,
-				buildCastSmart(loc, buildPtrSmart(loc, ltype.base), buildExpReference(loc, allocated, allocated.name)),
-				[cast(ir.Exp)buildSizeTConstant(loc, lp, 0), buildExpReference(loc, count, count.name)]
-			)
-		);
+		if (isAssignment) {
+			buildExpStat(loc, fn._body,
+				buildAssign(loc,
+					buildDeref(loc, buildExpReference(loc, left, left.name)),
+					buildSlice(loc,
+						buildCastSmart(loc, buildPtrSmart(loc, ltype.base), buildExpReference(loc, allocated, allocated.name)),
+						[cast(ir.Exp)buildSizeTConstant(loc, lp, 0), buildExpReference(loc, count, count.name)]
+					)
+				)
+			);
+			buildReturnStat(loc, fn._body, buildDeref(loc, buildExpReference(loc, left, left.name)));
+		} else {
+			buildReturnStat(loc, fn._body,
+				buildSlice(loc,
+					buildCastSmart(loc, buildPtrSmart(loc, ltype.base), buildExpReference(loc, allocated, allocated.name)),
+					[cast(ir.Exp)buildSizeTConstant(loc, lp, 0), buildExpReference(loc, count, count.name)]
+				)
+			);
+		}
 
 		return fn;
 	}
