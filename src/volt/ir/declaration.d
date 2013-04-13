@@ -302,6 +302,7 @@ public:
 	 */
 	Function resolved(Function fn)
 	{
+		assert(reference !is null);
 		reference.decl = fn;
 		functions = null;
 		reference = null;

@@ -173,6 +173,7 @@ ir.Function selectFunction(LanguagePass lp, ir.FunctionSet fset, ir.Type[] argum
 
 ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] arguments, Location location)
 {
+	assert(functions.length > 0);
 	if (functions.length == 1) {
 		return functions[0];
 	}

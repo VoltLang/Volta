@@ -792,6 +792,7 @@ ir.Unary buildCastToBool(ir.Exp exp) { return buildCastToBool(exp.location, exp)
 
 ir.Type buildSetType(Location loc, ir.Function[] functions)
 {
+	assert(functions.length > 0);
 	if (functions.length == 1) {
 		return functions[0].type;
 	}
@@ -800,19 +801,21 @@ ir.Type buildSetType(Location loc, ir.Function[] functions)
 	set.location = loc;
 	set.set = cast(ir.FunctionSet) buildSet(loc, functions);
 	assert(set.set !is null);
+	assert(set.set.functions.length > 0);
 	return set;
 }
 
-ir.Declaration buildSet(Location loc, ir.Function[] functions)
+ir.Declaration buildSet(Location loc, ir.Function[] functions, ir.ExpReference eref = null)
 {
+	assert(functions.length > 0);
 	if (functions.length == 1) {
 		return functions[0];
 	}
 
 	auto set = new ir.FunctionSet();
+	set.functions = functions;
 	set.location = loc;
-	foreach (fn; functions) {
-		set.functions ~= fn;
-	}
+	set.reference = eref;
+	assert(set.functions.length > 0);
 	return set;
 }

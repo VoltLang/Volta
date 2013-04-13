@@ -176,8 +176,11 @@ ir.Type getExpReferenceType(LanguagePass lp, ir.ExpReference expref)
 	}
 
 	auto fnset = cast(ir.FunctionSet) expref.decl;
+	assert(fnset.functions.length > 0);
 	if (fnset !is null) {
-		return fnset.type;
+		auto ftype = fnset.type;
+		assert(ftype.set.functions.length > 0);
+		return ftype;
 	}
 
 	throw panic(expref.location, "unable to type expression reference.");
@@ -361,6 +364,14 @@ ir.Type getPostfixCreateDelegateType(LanguagePass lp, ir.Postfix postfix, ir.Sco
 	auto eref = cast(ir.ExpReference) postfix.memberFunction;
 	if (eref is null) {
 		throw err;
+	}
+
+	auto fset = cast(ir.FunctionSet) eref.decl;
+	if (fset !is null) {
+		auto ftype = fset.type;
+		assert(ftype.set.functions.length > 0);
+		ftype.isFromCreateDelegate = true;
+		return ftype;
 	}
 
 	auto fn = cast(ir.Function) eref.decl;
@@ -562,8 +573,13 @@ ir.Type getPostfixCallType(LanguagePass lp, ir.Postfix postfix, ir.Scope current
 	ir.CallableType ftype;
 	auto set = cast(ir.FunctionSetType) type;
 	if (set !is null) {
+		assert(set.set.functions.length > 0);
 		auto fn = selectFunction(lp, currentScope, set.set, postfix.arguments, postfix.location);
-		ftype = fn.type;
+		if (set.isFromCreateDelegate) {
+			ftype = new ir.DelegateType(fn.type);
+		} else {
+			ftype = fn.type;
+		}
 	} else {
 		ftype = cast(ir.CallableType) type;
 	}

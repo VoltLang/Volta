@@ -485,15 +485,16 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 				return;
 			}
 
-			/// @todo handle function overloading.
-			assert(store.functions.length == 1);
+			assert(store.functions.length > 0);
 
 			auto funcref = new ir.ExpReference();
 			funcref.location = postfix.identifier.location;
 			auto _ref = cast(ir.ExpReference) postfix.child;
 			if (_ref !is null) funcref.idents = _ref.idents;
 			funcref.idents ~= postfix.identifier.value;
-			funcref.decl = store.functions[0];
+			funcref.decl = buildSet(postfix.identifier.location, store.functions, funcref);
+			ir.FunctionSet set = cast(ir.FunctionSet) funcref.decl;
+			if (set !is null) assert(set.functions.length > 0);
 			postfix.op = ir.Postfix.Op.CreateDelegate;
 			postfix.memberFunction = funcref;
 		}
@@ -510,7 +511,15 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 	auto asFunctionSet = cast(ir.FunctionSetType) type;
 	if (asFunctionSet !is null) {
 		auto eref = cast(ir.ExpReference) postfix.child;
+
+		if (eref is null) {
+			auto pchild = cast(ir.Postfix) postfix.child;
+			assert(pchild !is null);
+			assert(pchild.op == ir.Postfix.Op.CreateDelegate);
+			eref = cast(ir.ExpReference) pchild.memberFunction;
+		}
 		assert(eref !is null);
+
 		asFunctionSet.set.reference = eref;
 		auto fn = selectFunction(lp, current, asFunctionSet.set, postfix.arguments, postfix.location);
 		eref.decl = fn;
@@ -594,6 +603,7 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 	}
 
 	if (thisCall) {
+		// Explicit constructor call.
 		auto tvar = getThisVar(postfix.location, lp, current);
 		auto tref = buildExpReference(postfix.location, tvar, "this");
 		postfix.arguments ~= buildCastToVoidPtr(postfix.location, tref);

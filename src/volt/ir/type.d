@@ -315,9 +315,16 @@ class FunctionSetType : Type
 {
 public:
 	FunctionSet set;
+	bool isFromCreateDelegate;  ///< For use in typer.
 
 public:
 	this() { super(NodeType.FunctionSetType); }
+	this(FunctionSet set)
+	{
+		this();
+		location = set.location;
+		this.set = set;
+	}
 }
 
 /**
