@@ -1138,8 +1138,10 @@ void extypeBinOp(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 
 void extypeCat(ir.BinOp bin, ir.ArrayType left, ir.Type right)
 {
-	if (typesEqual(left, right))
+	if (typesEqual(left, right) ||
+	    typesEqual(right, left.base)) {
 		return;
+	}
 
 	if (!isImplicitlyConvertable(right, left.base)) {
 		throw makeBadImplicitCast(bin, right, left.base);
