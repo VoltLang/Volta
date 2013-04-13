@@ -50,6 +50,7 @@ CCOMP_FLAGS = $(CARCH) -c -o $@ $(CFLAGS)
 MCOMP_FLAGS = $(CARCH) -c -o $@ $(CFLAGS)
 DCOMP_FLAGS = -c -w -Isrc $(DDEFINES_) -of$@ $(DFLAGS)
 LINK_FLAGS = -quiet -of$(TARGET) $(OBJ) $(LDFLAGS_) $(patsubst -%, -L-%, $(LLVM_LDFLAGS)) -L-ldl -L-lstdc++
+RUN_FLAGS = --internal-dbg --no-stdlib -I rt/src rt/rt.bc -l gc
 
 
 ifeq ($(UNAME),Linux)
@@ -100,12 +101,13 @@ clean:
 	@rm -rf volt.tar.gz
 
 run: $(TARGET) rt/rt.bc
-	@./$(TARGET) -o a.out.exe test/simple/test_001.v
+	@echo "  VOLT   a.out.exe"
+	@./$(TARGET) $(RUN_FLAGS) -o a.out.exe test/simple/test_001.v
 	@echo "  RUN    a.out.exe"
-	@./a.out.exe; test $$? -eq 42
+	@-./a.out.exe
 
 debug: $(TARGET)
-	@gdb --args ./$(TARGET) -o a.out.exe test/simple/test_001.v
+	@gdb --args ./$(TARGET) $(RUN_FLAGS) -o a.out.exe test/simple/test_001.v
 
 test: all
 	@make -C test run
