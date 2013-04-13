@@ -1119,12 +1119,33 @@ void extypeBinOp(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 		return;
 	}
 
+	if ((binop.op == ir.BinOp.Op.Cat || binop.op == ir.BinOp.Op.CatAssign) &&
+	    ltype.nodeType == ir.NodeType.ArrayType) {
+		if (binop.op == ir.BinOp.Op.CatAssign && effectivelyConst(ltype)) {
+			throw makeCannotModify(binop, ltype);
+		}
+		extypeCat(binop, cast(ir.ArrayType)ltype, rtype);
+		return;
+	}
+
 	if (ltype.nodeType == ir.NodeType.PrimitiveType && rtype.nodeType == ir.NodeType.PrimitiveType) {
 		auto lprim = cast(ir.PrimitiveType) ltype;
 		auto rprim = cast(ir.PrimitiveType) rtype;
 		assert(lprim !is null && rprim !is null);
 		extypeBinOp(lp, current, binop, lprim, rprim);
 	}
+}
+
+void extypeCat(ir.BinOp bin, ir.ArrayType left, ir.Type right)
+{
+	if (typesEqual(left, right))
+		return;
+
+	if (!isImplicitlyConvertable(right, left.base)) {
+		throw makeBadImplicitCast(bin, right, left.base);
+	}
+
+	bin.right = buildCastSmart(left.base, bin.right);
 }
 
 void extypeTernary(LanguagePass lp, ir.Scope current, ir.Ternary ternary)

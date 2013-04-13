@@ -169,9 +169,16 @@ public:
 		if (leftArrayType is null)
 			throw panic(binOp, "OH GOD!");
 
-		auto fn = getConcatFunction(loc, leftArrayType, false);
-
-		exp = buildCall(loc, fn, [binOp.left, binOp.right], fn.name);
+		auto rightType = getExpType(lp, binOp.right, current);
+		if (typesEqual(rightType, leftArrayType.base)) {
+			// T[] ~ T
+			auto fn = getArrayAppendFunction(loc, leftArrayType, rightType);
+			exp = buildCall(loc, fn, [binOp.left, binOp.right], fn.name);
+		} else {
+			// T[] ~ T[]
+			auto fn = getArrayConcatFunction(loc, leftArrayType, false);
+			exp = buildCall(loc, fn, [binOp.left, binOp.right], fn.name);
+		}
 
 		return Continue;
 	}
@@ -185,7 +192,7 @@ public:
 		if (leftArrayType is null)
 			throw panic(binOp, "OH GOD!");
 
-		auto fn = getConcatFunction(loc, leftArrayType, true);
+		auto fn = getArrayConcatFunction(loc, leftArrayType, true);
 		exp = buildCall(loc, fn, [buildAddrOf(binOp.left), binOp.right], fn.name);
 
 		return Continue;
@@ -204,6 +211,93 @@ public:
 		exp = buildCall(loc, fn, [binOp.left, binOp.right], fn.name);
 
 		return Continue;
+	}
+
+	ir.Function getArrayAppendFunction(Location loc, ir.ArrayType ltype, ir.Type rtype)
+	{
+		if (ltype.mangledName is null)
+			ltype.mangledName = mangle(ltype);
+		if(rtype.mangledName is null)
+			rtype.mangledName = mangle(rtype);
+
+		auto name = "__appendArray" ~ ltype.mangledName ~ rtype.mangledName;
+		auto fn = lookupFunction(loc, name);
+		if (fn !is null)
+			return fn;
+
+		fn = buildFunction(loc, thisModule.children, thisModule.myScope, name);
+		fn.mangledName = fn.name;
+		fn.isWeakLink = true;
+		fn.type.ret = copyTypeSmart(loc, ltype);
+		auto left = addParamSmart(loc, fn, ltype, "left");
+		auto right = addParamSmart(loc, fn, rtype, "right");
+
+		auto fnAlloc = retrieveAllocDg(lp, thisModule.myScope, loc);
+		auto allocExpRef = buildExpReference(loc, fnAlloc, fnAlloc.name);
+
+		auto fnCopy = getLlvmMemCopy(loc);
+
+		ir.Exp[] args;
+
+		auto allocated = buildVarStatSmart(loc, fn._body, fn._body.myScope, buildVoidPtr(loc), "allocated");
+		auto count = buildVarStatSmart(loc, fn._body, fn._body.myScope, buildSizeT(loc, lp), "count");
+
+		buildExpStat(loc, fn._body,
+			buildAssign(loc,
+				buildExpReference(loc, count, count.name),
+				buildAdd(loc,
+					buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
+					buildSizeTConstant(loc, lp, 1)
+				)
+			)
+		);
+
+		args = [
+			cast(ir.Exp)
+			buildTypeidSmart(loc, ltype.base),
+			buildExpReference(loc, count, count.name)
+		];
+
+		buildExpStat(loc, fn._body,
+			buildAssign(loc,
+				buildExpReference(loc, allocated, allocated.name),
+				buildCall(loc, allocExpRef, args)
+			)
+		);
+
+		args = [
+			cast(ir.Exp)
+			buildExpReference(loc, allocated, allocated.name),
+			buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, left, left.name), "ptr")),
+			buildBinOp(loc, ir.BinOp.Op.Mul,
+				buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
+				buildSizeTConstant(loc, lp, size(loc, lp, ltype.base))
+			),
+			buildConstantInt(loc, 0),
+			buildFalse(loc)
+		];
+		buildExpStat(loc, fn._body, buildCall(loc, buildExpReference(loc, fnCopy, fnCopy.name), args));
+
+		buildExpStat(loc, fn._body,
+			buildAssign(loc,
+				buildDeref(loc,
+					buildAdd(loc,
+						buildCastSmart(loc, buildPtrSmart(loc, ltype.base), buildExpReference(loc, allocated, allocated.name)),
+						buildAccess(loc, buildExpReference(loc, left, left.name), "length")
+					)
+				),
+				buildExpReference(loc, right, right.name)
+			)
+		);
+
+		buildReturnStat(loc, fn._body,
+			buildSlice(loc,
+				buildCastSmart(loc, buildPtrSmart(loc, ltype.base), buildExpReference(loc, allocated, allocated.name)),
+				[cast(ir.Exp)buildSizeTConstant(loc, lp, 0), buildExpReference(loc, count, count.name)]
+			)
+		);
+
+		return fn;
 	}
 
 	ir.Function getCopyFunction(Location loc, ir.ArrayType type)
@@ -226,7 +320,6 @@ public:
 		auto fnMove = getLlvmMemMove(loc);
 		auto expRef = buildExpReference(loc, fnMove, fnMove.name);
 
-		ir.Exp length;
 		auto typeSize = size(loc, lp, type.base);
 
 		ir.Exp[] args = [
@@ -247,7 +340,7 @@ public:
 		return fn;
 	}
 
-	ir.Function getConcatFunction(Location loc, ir.ArrayType type, bool isAssignment)
+	ir.Function getArrayConcatFunction(Location loc, ir.ArrayType type, bool isAssignment)
 	{
 		if(type.mangledName is null)
 			type.mangledName = mangle(type);
