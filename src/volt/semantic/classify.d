@@ -354,6 +354,27 @@ bool isIntegral(ir.PrimitiveType.Kind kind)
 	}
 }
 
+bool isFloatingPoint(ir.Type t)
+{
+	auto prim = cast(ir.PrimitiveType)t;
+	if (prim is null) {
+		return false;
+	}
+	return isFloatingPoint(prim.type);
+}
+
+bool isFloatingPoint(ir.PrimitiveType.Kind kind)
+{
+	switch (kind) with (ir.PrimitiveType.Kind) {
+		case Float:
+		case Double:
+		case Real:
+			return true;
+		default:
+			return false;
+	}
+}
+
 bool isUnsigned(ir.PrimitiveType.Kind kind)
 {
 	switch (kind) with (ir.PrimitiveType.Kind) {
@@ -418,6 +439,37 @@ bool isValidPointerArithmeticOperation(ir.BinOp.Op t)
 	default:
 		return false;
 	}
+}
+
+bool isImplicitlyConvertable(ir.Type from, ir.Type to)
+{
+	auto fprim = cast(ir.PrimitiveType)from;
+	auto tprim = cast(ir.PrimitiveType)to;
+
+	if (fprim is null || tprim is null)
+		return false;
+
+	auto fromsz = size(fprim.type);
+	auto tosz = size(tprim.type);
+	
+	if (isIntegral(from) && isIntegral(to)) {
+		if (isUnsigned(fprim.type) != isUnsigned(tprim.type))
+			return false;
+
+		return fromsz <= tosz; // int is implicitly convertable to int
+	}
+	
+	if (isFloatingPoint(from) && isFloatingPoint(to))
+		return fromsz <= tosz;
+
+	if (isFloatingPoint(from) && isIntegral(to))
+		return false;
+
+	if (isIntegral(from) && isFloatingPoint(to))
+		return true;
+
+	// also arrays go here
+	return false;
 }
 
 bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
