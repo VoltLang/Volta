@@ -15,6 +15,7 @@ import volt.semantic.classify;
 import volt.semantic.mangle;
 import volt.semantic.lookup;
 import volt.semantic.util;
+import volt.semantic.overload;
 
 
 bool needsResolving(ir.Class c)
@@ -183,13 +184,14 @@ ir.Function generateDefaultConstructor(LanguagePass lp, ir.Scope current, ir.Cla
 }
 
 /// Get all the functions in an inheritance chain -- ignore overloading.
-ir.Function[] getClassMethods(LanguagePass lp, ir.Scope current, ir.Class _class)
+ir.Function[][] getClassMethods(LanguagePass lp, ir.Scope current, ir.Class _class)
 {
 	bool gatherConstructors = _class.userConstructors.length == 0;
-	ir.Function[] methods;
+	ir.Function[][] methods;
 	if (_class.parentClass !is null) {
 		methods ~= getClassMethods(lp, _class.parentClass.myScope, _class.parentClass);
 	}
+	methods.length++;
 	foreach (node; _class.members.nodes) {
 		auto asFunction = cast(ir.Function) node;
 		if (asFunction is null) {
@@ -205,7 +207,7 @@ ir.Function[] getClassMethods(LanguagePass lp, ir.Scope current, ir.Class _class
 
 		lp.resolve(current, asFunction);
 
-		methods ~= asFunction;
+		methods[$-1] ~= asFunction;
 	}
 
 	if (_class.userConstructors.length == 0) {
@@ -217,25 +219,67 @@ ir.Function[] getClassMethods(LanguagePass lp, ir.Scope current, ir.Class _class
 
 ir.Function[] getClassMethodFunctions(LanguagePass lp, ir.Class _class)
 {
-	ir.Function[] methods = getClassMethods(lp, _class.myScope, _class);
+	ir.Function[][] methodss = getClassMethods(lp, _class.myScope, _class);
 
-	// Retrieve the types for these functions, taking into account overloading.
-	size_t[string] definedFunctions;
 	size_t outIndex;
-	auto outMethods = new ir.Function[methods.length];
-	foreach (method; methods) {
-		if (auto p = method.name in definedFunctions) {
-			outMethods[*p] = method;
+	ir.Function[] outMethods;
+	foreach (ref methods; methodss) {
+		bool noPriorMethods = false;
+		if (outMethods.length > 0) {
+			foreach (method; methods) {
+				overrideFunctionsIfNeeded(lp, method, outMethods);
+			}
+		} else {
+			noPriorMethods = true;
+		}
+		foreach (method; methods) {
+			if (noPriorMethods && method.isMarkedOverride) {
+				throw makeMarkedOverrideDoesNotOverride(method, method);
+			}
+			outMethods ~= method;
+			method.vtableIndex = cast(int)outIndex++;
+		}
+	}
+	return outMethods;
+}
+
+/**
+ * Replace an overriden function in parentSet with childFunction if appropriate.
+ * Returns true if a function is replaced, false otherwise.
+ */
+bool overrideFunctionsIfNeeded(LanguagePass lp, ir.Function childFunction, ref ir.Function[] parentSet)
+{
+	ir.Function[] toConsider;
+	foreach (parentFunction; parentSet) {
+		if (parentFunction is childFunction) {
 			continue;
 		}
-		outMethods[outIndex] = method;
-		definedFunctions[method.name] = outIndex;
-		outIndex++;
-
-		method.vtableIndex = cast(int)outIndex - 1;
+		if (parentFunction.name == childFunction.name) {
+			toConsider ~= parentFunction;
+		}
 	}
-	outMethods.length = outIndex;
-	return outMethods;
+
+	if (toConsider.length == 0) {
+		if (childFunction.isMarkedOverride) {
+			throw makeMarkedOverrideDoesNotOverride(childFunction, childFunction);
+		}
+		return false;
+	}
+
+	ir.Function selectedFunction = selectFunction(lp, toConsider, childFunction.type.params, childFunction.location);
+
+	foreach (ref parentFunction; parentSet) {
+		if (parentFunction is selectedFunction) {
+			if (!childFunction.isMarkedOverride) {
+				assert(childFunction !is parentFunction);
+				throw makeNeedOverride(childFunction, parentFunction);
+			}
+			parentFunction = childFunction;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 ir.Variable[] getClassMethodTypeVariables(LanguagePass lp, ir.Class _class)

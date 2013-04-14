@@ -24,6 +24,31 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeMarkedOverrideDoesNotOverride(ir.Node node, ir.Function fn)
+{
+	return new CompilerError(node.location, format("function '%s' is marked as override but does not override any functions.", fn.name));
+}
+
+CompilerException makeAbstractHasToBeMember(ir.Node node, ir.Function fn)
+{
+	return new CompilerError(node.location, format("function '%s' is marked as abstract but is not a member of an abstract class.", fn.name));
+}
+
+CompilerException makeAbstractBodyNotEmpty(ir.Node node, ir.Function fn)
+{
+	return new CompilerError(node.location, format("function '%s' is marked as abstract but it has an implementation.", fn.name));
+}
+
+CompilerException makeNewAbstract(ir.Node node, ir.Class _class)
+{
+	return new CompilerError(node.location, format("cannot create instance of abstract class '%s'.", _class.name));
+}
+
+CompilerException makeBadAbstract(ir.Node node, ir.Attribute attr)
+{
+	return new CompilerError(node.location, "only classes and functions may be marked as abstract.");
+}
+
 CompilerException makeCannotImport(ir.Node node, ir.Import _import)
 {
 	return new CompilerError(node.location, format("can't find module '%s'.", _import.name));
@@ -62,6 +87,12 @@ CompilerException makeTryWithoutCatch(Location location)
 CompilerException makeMultipleOutBlocks(Location location)
 {
 	return new CompilerError(location, "multiple in blocks specified for single function.");
+}
+
+CompilerException makeNeedOverride(ir.Function overrider, ir.Function overridee)
+{
+	string emsg = format("function '%s' overrides function at %s but is not marked with 'override'.", overrider.name, overridee.location);
+	return new CompilerError(overrider.location, emsg);
 }
 
 /*

@@ -129,6 +129,9 @@ public:
 
 	override void resolve(ir.Scope current, ir.Function fn)
 	{
+		if ((fn.kind == ir.Function.Kind.Function || (cast(ir.Class) current.node) is null) && fn.isMarkedOverride) {
+			throw makeMarkedOverrideDoesNotOverride(fn, fn);
+		}
 		ensureResolved(this, current, fn.type);
 		replaceVarArgsIfNeeded(this, fn);
 		resolve(current, fn.userAttrs);

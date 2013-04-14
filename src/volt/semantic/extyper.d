@@ -485,7 +485,7 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 				return;
 			}
 
-			assert(store.functions.length > 0);
+			assert(store.functions.length > 0, store.name);
 
 			auto funcref = new ir.ExpReference();
 			funcref.location = postfix.identifier.location;
