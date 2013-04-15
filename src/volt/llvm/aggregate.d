@@ -75,7 +75,7 @@ void getFieldFromAggregate(State state, Location loc, Value left,
 
 	result.value = v;
 	result.type = resultType;
-	//result.isPointer; Pointer stays the same.
+	result.isPointer = left.isPointer;
 }
 
 /**

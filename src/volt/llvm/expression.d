@@ -939,8 +939,7 @@ void handleCreateDelegate(State state, ir.Postfix postfix, Value result)
 	Value instance = result;
 	Value func = new Value();
 
-	state.getStructRef(postfix.child, instance);
-	state.getValue(postfix.memberFunction, func);
+	getCreateDelegateValues(state, postfix, instance, func);
 
 	auto fn = cast(FunctionType)func.type;
 	if (fn is null)
@@ -988,11 +987,10 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 	if (childAsPostfix !is null &&
 	    childAsPostfix.op == ir.Postfix.Op.CreateDelegate) {
 
-		state.getStructRef(childAsPostfix.child, result);
+		auto instance = new Value();
+		getCreateDelegateValues(state, childAsPostfix, instance, result);
 
-		llvmArgs ~= LLVMBuildBitCast(state.builder, result.value, state.voidPtrType.llvmType, "");
-
-		state.getValue(childAsPostfix.memberFunction, result);
+		llvmArgs ~= LLVMBuildBitCast(state.builder, instance.value, state.voidPtrType.llvmType, "");
 
 	} else {
 		state.getValueAnyForm(postfix.child, result);
@@ -1129,6 +1127,44 @@ void getStructRef(State state, ir.Exp exp, Value result)
 		result.isPointer = true;
 	} else {
 		throw panic(exp, "is not a struct");
+	}
+}
+
+/**
+ * Get the value pair needed to call or create a delegate.
+ */
+void getCreateDelegateValues(State state, ir.Postfix postfix, Value instance, Value func)
+{
+	state.getStructRef(postfix.child, instance);
+
+	// See if the function should be gotton from the vtable.
+	int index = -1;
+	if (postfix.memberFunction !is null) {
+		auto asFunction = cast(ir.Function) postfix.memberFunction.decl;
+		assert(asFunction !is null);
+		index = asFunction.vtableIndex;
+	}
+
+	if (index >= 0) {
+		auto st = cast(StructType)instance.type;
+		assert(st !is null);
+
+		getFieldFromAggregate(state, postfix.location, instance, 0, st.types[0], func);
+
+		makeNonPointer(state, func);
+
+		auto pt = cast(PointerType)func.type;
+		assert(pt !is null);
+		st = cast(StructType)pt.base;
+		assert(st !is null);
+
+		func.type = st;
+		func.isPointer = true;
+		auto i = index + 1; // Offseted by one.
+		getFieldFromAggregate(state, postfix.location, func, i, st.types[i], func);
+		makeNonPointer(state, func);
+	} else {
+		state.getValue(postfix.memberFunction, func);
 	}
 }
 

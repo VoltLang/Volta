@@ -62,57 +62,6 @@ public:
 	{
 	}
 
-	override Status enter(ref ir.Exp exp, ir.Postfix postfix)
-	{
-		if (postfix.op != ir.Postfix.Op.Call) {
-			return Continue;
-		}
-		auto asPostfix = cast(ir.Postfix) postfix.child;
-		if (asPostfix is null) {
-			return Continue;
-		}
-		if (asPostfix.op != ir.Postfix.Op.CreateDelegate) {
-			return Continue;
-		}
-
-		auto expRef = cast(ir.ExpReference) asPostfix.child;
-		if (expRef is null) {
-			return Continue;
-		}
-
-		auto asFunction = cast(ir.Function) asPostfix.memberFunction.decl;
-		assert(asFunction !is null);
-
-		if (asFunction.vtableIndex == -1) {
-			return Continue;
-		}
-
-		string fieldName = format("_%s", asFunction.vtableIndex);
-
-		auto asVar = cast(ir.Variable) expRef.decl;
-		assert(asVar !is null);
-
-		auto asTR = cast(ir.TypeReference) asVar.type;
-		assert(asTR !is null);
-
-		auto _class = cast(ir.Class) asTR.type;
-		assert(_class !is null);
-
-		auto vtableStore =  lookupOnlyThisScope(lp, _class.layoutStruct.myScope, postfix.location, "__vtable");
-		assert(vtableStore !is null);
-
-		auto vtableVariable = cast(ir.Variable) vtableStore.node;
-		assert(vtableVariable !is null);
-
-		auto preacc = buildAccess(postfix.location, expRef, "__vtable");
-
-		auto access = buildAccess(postfix.location, preacc, fieldName);
-		postfix.child = access;
-		postfix.arguments ~= buildCast(postfix.location, buildVoidPtr(postfix.location), buildExpReference(postfix.location, asVar, asVar.name));
-
-		return Continue;
-	}
-
 	override Status leave(ref ir.Exp exp, ir.BinOp binOp)
 	{
 		/**
