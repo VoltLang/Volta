@@ -261,6 +261,8 @@ public:
 	/// Is this the one true 'Object' to rule them all?
 	bool isObject;
 
+	bool isAbstract;
+
 public:
 	this() { super(NodeType.Class); }
 }

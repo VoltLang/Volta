@@ -1014,6 +1014,10 @@ void handleNew(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Unary _unar
 		return;
 	}
 
+	if (_class.isAbstract) {
+		throw makeNewAbstract(_unary, _class);
+	}
+
 	// Needed because of userConstructors.
 	lp.actualize(_class);
 

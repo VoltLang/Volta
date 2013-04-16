@@ -299,6 +299,13 @@ ir.Exp[] getClassMethodAddrOfs(LanguagePass lp, ir.Class _class)
 
 	ir.Exp[] addrs;
 	foreach (method; methods) {
+		if (method.isAbstract) {
+			if (!_class.isAbstract) {
+				throw makeAbstractHasToBeMember(_class, method);
+			}
+			addrs ~= buildConstantNull(_class.location, method.type);
+			continue;
+		}
 		auto eref = buildExpReference(_class.location, method, method.name);
 		eref.rawReference = true;
 		addrs ~= eref;

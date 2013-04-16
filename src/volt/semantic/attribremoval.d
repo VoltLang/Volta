@@ -226,6 +226,9 @@ protected:
 			case Override:
 				fn.isMarkedOverride = true;
 				break;
+			case Abstract:
+				fn.isAbstract = true;
+				break;
 			default:
 				// Warn?
 			}
@@ -308,6 +311,13 @@ protected:
 				break;
 			case UserAttribute:
 				s.userAttrs ~= attr;
+				break;
+			case Abstract:
+				auto c = cast(ir.Class) s;
+				if (c is null) {
+					throw makeBadAbstract(s, attr);
+				}
+				c.isAbstract = true;
 				break;
 			default:
 				// Warn?

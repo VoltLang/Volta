@@ -90,6 +90,9 @@ void gather(ir.Scope current, ir.Function fn, Where where)
 		if (where == Where.TopLevel) {
 			fn.kind = ir.Function.Kind.Member;
 		} else {
+			if (fn.isAbstract) {
+				throw makeAbstractHasToBeMember(fn, fn);
+			}
 			fn.kind = ir.Function.Kind.Function;
 		}
 	}
@@ -448,6 +451,9 @@ public:
 		addScope(current, bs);
 		push(bs.myScope);
 		if (mLastFunction !is null) {
+			if (mLastFunction.isAbstract) {
+				throw makeAbstractBodyNotEmpty(mLastFunction, mLastFunction);
+			}
 			addParameters(current, mLastFunction, _thisType);
 			bs.myScope.node = mLastFunction;
 			bs.myScope.name = mLastFunction.name;

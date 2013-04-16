@@ -257,6 +257,8 @@ public:
 
 	bool isMarkedOverride;
 
+	bool isAbstract;
+
 public:
 	this() { super(NodeType.Function); }
 }
