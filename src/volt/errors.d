@@ -64,6 +64,12 @@ CompilerException makeMultipleOutBlocks(Location location)
 	return new CompilerError(location, "multiple in blocks specified for single function.");
 }
 
+CompilerException makeNeedOverride(ir.Function overrider, ir.Function overridee)
+{
+	string emsg = format("function '%s' overrides function at %s but is not marked with 'override'.", overrider.name, overridee.location);
+	return new CompilerError(overrider.location, emsg);
+}
+
 /*
  *
  *

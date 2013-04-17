@@ -70,6 +70,15 @@ ir.Function selectFunction(LanguagePass lp, ir.FunctionSet fset, ir.Variable[] a
 	return selectFunction(lp, fset, types, location);
 }
 
+ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Variable[] arguments, Location location)
+{
+	ir.Type[] types;
+	foreach (arg; arguments) {
+		types ~= arg.type;
+	}
+	return selectFunction(lp, functions, types, location);
+}
+
 ir.Type ifTypeRefDeRef(ir.Type t)
 {
 	auto tref = cast(ir.TypeReference) t;

@@ -255,6 +255,8 @@ public:
 	/// Will be turned into a function pointer.
 	bool loadDynamic;
 
+	bool isMarkedOverride;
+
 public:
 	this() { super(NodeType.Function); }
 }

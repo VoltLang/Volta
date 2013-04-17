@@ -223,6 +223,9 @@ protected:
 			case UserAttribute:
 				fn.userAttrs ~= attr;
 				break;
+			case Override:
+				fn.isMarkedOverride = true;
+				break;
 			default:
 				// Warn?
 			}
