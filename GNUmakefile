@@ -51,6 +51,7 @@ MCOMP_FLAGS = $(CARCH) -c -o $@ $(CFLAGS)
 DCOMP_FLAGS = -c -w -Isrc $(DDEFINES_) -of$@ $(DFLAGS)
 LINK_FLAGS = -quiet -of$(TARGET) $(OBJ) $(LDFLAGS_) $(patsubst -%, -L-%, $(LLVM_LDFLAGS)) -L-ldl -L-lstdc++
 RUN_FLAGS = --internal-dbg --no-stdlib -I rt/src rt/rt.bc -l gc
+RUN_TARGET = a.out.exe
 
 
 ifeq ($(UNAME),Linux)
@@ -100,14 +101,20 @@ clean:
 	@rm -rf .pkg
 	@rm -rf volt.tar.gz
 
-run: $(TARGET) rt/rt.bc
-	@echo "  VOLT   a.out.exe"
-	@./$(TARGET) $(RUN_FLAGS) -o a.out.exe test/simple/test_001.v
-	@echo "  RUN    a.out.exe"
+$(RUN_TARGET): $(TARGET) rt/rt.bc
+	@echo "  VOLT   $(RUN_TARGET)"
+	@./$(TARGET) $(RUN_FLAGS) -o a.out.exe test/simple.v
+
+sanity: $(RUN_TARGET)
+	@echo "  SANITY a.out.exe"
+	@./a.out.exe; test $$? -eq 42
+
+run: $(RUN_TARGET)
+	@echo "  SANITY a.out.exe"
 	@-./a.out.exe
 
-debug: $(TARGET)
-	@gdb --args ./$(TARGET) $(RUN_FLAGS) -o a.out.exe test/simple/test_001.v
+debug: $(TARGET) rt/rt.bc
+	@gdb --args ./$(TARGET) $(RUN_FLAGS) -o a.out.exe test/simple.v
 
 license: $(TARGET)
 	@./$(TARGET) --license
