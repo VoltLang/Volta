@@ -53,9 +53,17 @@ protected:
 	string mIndentText;
 
 public:
-	this(string indentText = "\t")
+	this(string indentText = null)
 	{
-		mIndentText = indentText;
+		if (indentText is null) {
+			version (Windows) {
+				mIndentText = "  ";
+			} else {
+				mIndentText = "\t";
+			}
+		} else {
+			mIndentText = indentText;
+		}
 	}
 
 	void close()
