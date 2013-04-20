@@ -12,11 +12,4 @@ all:
 	$(RDMD) $(DFLAGS) src\main.d
 	./volt --no-stdlib --emit-bitcode -I rt/src -o rt/rt.bc rt/src/object.v rt/src/vrt/vmain.v rt/src/vrt/gc.v rt/src/vrt/clazz.v
 
-# Only works with Digital Mar's make. Make it into
-# one line for GNU (join commands with &&).
-test:
-	cd test
-	$(DMD) runner
-	runner
-
-.PHONY: all test
+.PHONY: all

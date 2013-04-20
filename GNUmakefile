@@ -109,9 +109,6 @@ run: $(TARGET) rt/rt.bc
 debug: $(TARGET)
 	@gdb --args ./$(TARGET) $(RUN_FLAGS) -o a.out.exe test/simple/test_001.v
 
-test: all
-	@make -C test run
-
 license: $(TARGET)
 	@./$(TARGET) --license
 
@@ -122,4 +119,4 @@ package: all
 	@cp -r ./rt/src/* .pkg/rt/
 	@tar -czf volt.tar.gz .pkg/*
 
-.PHONY: all test clean run debug license
+.PHONY: all clean run debug license
