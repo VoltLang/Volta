@@ -257,6 +257,8 @@ ir.ArrayType buildArrayTypeSmart(Location loc, ir.Type base)
 ir.PrimitiveType buildVoid(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Void); }
 ir.PrimitiveType buildBool(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Bool); }
 ir.PrimitiveType buildChar(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Char); }
+ir.PrimitiveType buildDchar(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Dchar); }
+ir.PrimitiveType buildWchar(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Wchar); }
 ir.PrimitiveType buildByte(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Byte); }
 ir.PrimitiveType buildUbyte(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Ubyte); }
 ir.PrimitiveType buildShort(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Short); }
@@ -266,6 +268,9 @@ ir.PrimitiveType buildUint(Location loc) { return buildPrimitiveType(loc, ir.Pri
 ir.PrimitiveType buildLong(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Long); }
 ir.PrimitiveType buildUlong(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Ulong); }
 ir.PrimitiveType buildSizeT(Location loc, LanguagePass lp) { return lp.settings.getSizeT(loc); }
+ir.PrimitiveType buildFloat(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Float); }
+ir.PrimitiveType buildDouble(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Double); }
+ir.PrimitiveType buildReal(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Real); }
 
 /**
  * Build a void* type.
@@ -797,6 +802,24 @@ ir.Class getClass(ir.Type t)
 	}
 	asClass = cast(ir.Class) asTR.type;
 	return asClass;
+}
+
+ir.Type buildStaticArrayTypeSmart(Location loc, size_t length, ir.Type base)
+{
+	auto sa = new ir.StaticArrayType();
+	sa.location = loc;
+	sa.length = length;
+	sa.base = copyTypeSmart(loc, base);
+	return sa;
+}
+
+ir.Type buildAATypeSmart(Location loc, ir.Type key, ir.Type value)
+{
+	auto aa = new ir.AAType();
+	aa.location = loc;
+	aa.key = copyTypeSmart(loc, key);
+	aa.value = copyTypeSmart(loc, value);
+	return aa;
 }
 
 /*

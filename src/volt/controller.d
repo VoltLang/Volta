@@ -16,6 +16,7 @@ import volt.interfaces;
 import volt.parser.parser;
 import volt.semantic.languagepass;
 import volt.llvm.backend;
+import volt.util.mangledecoder;
 
 import volt.visitor.prettyprinter;
 import volt.visitor.debugprinter;
