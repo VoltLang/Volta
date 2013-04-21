@@ -73,6 +73,10 @@ int size(Location location, LanguagePass lp, ir.Node node)
 		auto asClass = cast(ir.Class) node;
 		assert(asClass !is null);
 		return classSize(location, lp, asClass);
+	case Enum:
+		auto asEnum = cast(ir.Enum) node;
+		assert(asEnum !is null);
+		return size(location, lp, asEnum.base);
 
 	case Variable:
 		auto asVariable = cast(ir.Variable) node;
