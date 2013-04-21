@@ -382,8 +382,16 @@ void emitVtableVariable(LanguagePass lp, ir.Class _class)
  */
 bool handleClassTypePostfixIfNeeded(LanguagePass lp, ir.Scope current, ir.Postfix exp, ir.Type referredType)
 {
+	if (exp.identifier is null) {
+		return false;
+	}
+
 	auto expressionClass = cast(ir.Class) referredType;
 	if (expressionClass is null) {
+		return false;
+	}
+
+	if (lookupOnlyThisScope(lp, current, exp.location, "this") is null) {
 		return false;
 	}
 
@@ -392,6 +400,11 @@ bool handleClassTypePostfixIfNeeded(LanguagePass lp, ir.Scope current, ir.Postfi
 	if (tr is null) return false;
 	auto thisClass = cast(ir.Class) tr.type;
 	if (thisClass is null) return false;
+
+	auto store = lookupOnlyThisScope(lp, thisClass.myScope, exp.location, exp.identifier.value);
+	if (store !is null && (store.kind == ir.Store.Kind.Type || store.kind == ir.Store.Kind.EnumDeclaration)) {
+		return false;
+	}
 
 	if (!thisClass.isOrInheritsFrom(expressionClass)) {
 		throw makeInvalidType(exp, expressionClass);
