@@ -85,11 +85,12 @@ $(OBJ_DIR)/%.$(OBJ_TYPE) : src/%.d Makefile
 	@mkdir -p $(dir $@)
 	@$(DMD) $(DCOMP_FLAGS) src/$*.d
 
-rt/rt.bc: $(TARGET) rt/src/object.v rt/src/vrt/vmain.v rt/src/vrt/gc.v
+rt/rt.bc: $(TARGET) rt/src/object.v rt/src/vrt/vmain.v rt/src/vrt/gc.v rt/src/vrt/clazz.v rt/src/vrt/eh.v
 	@echo "  VOLT   rt/rt.bc"
 	@./$(TARGET) --no-stdlib --emit-bitcode -I rt/src -o rt/rt.bc \
 	rt/src/object.v rt/src/vrt/vmain.v \
-	rt/src/vrt/gc.v rt/src/vrt/clazz.v
+	rt/src/vrt/gc.v rt/src/vrt/clazz.v \
+	rt/src/vrt/eh.v
 
 $(TARGET): $(OBJ) Makefile
 	@echo "  LD     $@"

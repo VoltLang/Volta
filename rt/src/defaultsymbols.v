@@ -9,3 +9,4 @@ version (V_P64) {
 }
 
 alias string = immutable(char)[];
+alias Exception = object.Exception;

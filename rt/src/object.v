@@ -79,6 +79,51 @@ class Attribute
 	}
 }
 
+
+/*
+ *
+ * Exceptions
+ *
+ */
+
+
+class Throwable
+{
+	string msg;
+
+	this(string msg)
+	{
+		this.msg = msg;
+		return;
+	}
+}
+
+class Exception : Throwable
+{
+	this(string msg)
+	{
+		super(msg);
+		return;
+	}
+}
+
+class Error : Throwable
+{
+	this(string msg)
+	{
+		super(msg);
+		return;
+	}
+}
+
+
+/*
+ *
+ * Runtime and internal helpers.
+ *
+ */
+
+
 @interface MangledName
 {
 	string name;
@@ -87,6 +132,7 @@ class Attribute
 extern(C) void vrt_gc_init();
 extern(C) AllocDg vrt_gc_get_alloc_dg();
 extern(C) void* vrt_handle_cast(void* obj, TypeInfo tinfo);
+extern(C) void vrt_eh_throw(Throwable);
 
 extern(C) {
 	@MangledName("memcmp") int __llvm_memcmp(void*, void*, size_t);
