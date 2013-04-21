@@ -415,6 +415,22 @@ ir.Constant buildSizeTConstant(Location loc, LanguagePass lp, int val)
 	return c;
 }
 
+/**
+ * Build a constant to insert to the IR from a resolved EnumDeclaration.
+ */
+ir.Constant buildConstant(Location loc, ir.EnumDeclaration ed)
+{
+	auto cnst = cast(ir.Constant) ed.assign;
+	auto c = new ir.Constant();
+	c.location = loc;
+	c._ulong = cnst._ulong;
+	c._string = cnst._string;
+	c.arrayData = cnst.arrayData;
+	c.type = copyTypeSmart(loc, ed.type);
+
+	return c;
+}
+
 ir.Constant buildTrue(Location loc) { return buildConstantBool(loc, true); }
 ir.Constant buildFalse(Location loc) { return buildConstantBool(loc, false); }
 
