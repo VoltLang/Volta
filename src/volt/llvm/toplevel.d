@@ -368,6 +368,19 @@ public:
 		return Continue;
 	}
 
+	override Status leave(ir.ThrowStatement t)
+	{
+		if (t.exp is null) {
+			throw panic(t.location, "empty throw statement");
+		}
+	
+		state.getValue(t.exp);
+		LLVMBuildUnreachable(state.builder);
+		state.currentFall = false;
+
+		return Continue;
+	}
+
 	void doNewBlock(LLVMBasicBlockRef b, ir.BlockStatement bs,
 	                LLVMBasicBlockRef fall)
 	{

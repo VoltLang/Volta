@@ -62,6 +62,14 @@ public:
 	{
 	}
 
+	override Status leave(ir.ThrowStatement t)
+	{
+		auto fn = retrieveFunctionFromObject(lp, thisModule.myScope, t.location, "vrt_eh_throw");
+		auto eRef = buildExpReference(t.location, fn, "vrt_eh_throw");
+		t.exp = buildCall(t.location, eRef, [t.exp]);
+		return Continue;
+	}
+
 	override Status leave(ref ir.Exp exp, ir.BinOp binOp)
 	{
 		/**
