@@ -181,7 +181,12 @@ public:
 	{	
 	}
 
-	void createWrapperConstructorsIfNeeded(Location location, ir.Class _class, ir.Unary unary)
+	/**
+	 * This is currently broken as it should emit the magicConstructor
+	 * in the module that is calling new.
+	 * emit one for each new (cached in the current module) not in the class.
+	 */
+	void createWrapperConstructorsIfNeeded(ir.Class _class)
 	{
 		if (_class.wrapperConstructors.length > 0) {
 			return;
@@ -191,31 +196,45 @@ public:
 
 		foreach (i, ref constructor; _class.wrapperConstructors) {
 			auto fn = _class.userConstructors[i];
-			constructor = buildFunction(location, _class.members, _class.myScope, "magicConstructor");
-			constructor.type.ret = copyTypeSmart(location, _class);
-			constructor.type.params = copyVariablesSmart(location, fn.type.params);
+			constructor = buildFunction(fn.location, _class.members, _class.myScope, "magicConstructor");
+			constructor.type.ret = copyTypeSmart(fn.location, _class);
+			constructor.type.params = copyVariablesSmart(fn.location, fn.type.params);
 
 			// auto thisVar = allocDg(Class, -1)
-			auto thisVar = buildVarStatSmart(location, constructor._body, constructor._body.myScope, _class, "thisVar");
-			thisVar.assign = createAllocDgCall(allocDgVar, lp, unary.location, _class, buildConstantInt(unary.location, -1), true);
-			thisVar.assign = buildCastSmart(location, _class, thisVar.assign);
+			auto thisVar = buildVarStatSmart(fn.location, constructor._body, constructor._body.myScope, _class, "thisVar");
+			thisVar.assign = createAllocDgCall(allocDgVar, lp, fn.location, _class, buildConstantInt(fn.location, -1), true);
+			thisVar.assign = buildCastSmart(fn.location, _class, thisVar.assign);
 
 			// thisVar.this(cast(void*) thisVar)
 			//assert(_class.userConstructors.length == 1);
-			auto eref = buildExpReference(unary.location, fn, "this");
-			auto exp = buildCall(location, eref, null);
-			exp.arguments ~= getExpRefs(location, constructor.type.params);
-			exp.arguments ~= buildCast(location, buildVoidPtr(location), buildExpReference(location, thisVar, "thisVar"));
-			buildExpStat(location, constructor._body, exp);
+			auto eref = buildExpReference(fn.location, fn, "this");
+			auto exp = buildCall(fn.location, eref, null);
+			exp.arguments ~= getExpRefs(fn.location, constructor.type.params);
+			exp.arguments ~= buildCast(fn.location, buildVoidPtr(fn.location), buildExpReference(fn.location, thisVar, "thisVar"));
+			buildExpStat(fn.location, constructor._body, exp);
 
 			// return thisVar
-			buildReturnStat(location, constructor._body, buildExpReference(location, thisVar, "thisVar"));
+			buildReturnStat(fn.location, constructor._body, buildExpReference(fn.location, thisVar, "thisVar"));
 		}
+	}
+
+	override Status enter(ir.UserAttribute ab)
+	{
+		/// @TODO remove after the above has been fixed.
+		return ContinueParent;
+	}
+
+	override Status enter(ir.Class c)
+	{
+		/// @TODO remove after the above has been fixed.
+		createWrapperConstructorsIfNeeded(c);
+		return Continue;
 	}
 
 	ir.Function getWrapperConstructor(Location location, ir.Class _class, ir.Unary unary)
 	{
-		createWrapperConstructorsIfNeeded(location, _class, unary);
+		/// @TODO fetch or generate after the above has been fixed.
+		createWrapperConstructorsIfNeeded(_class);
 		auto fn = selectFunction(lp, current, _class.userConstructors, unary.argumentList, location);
 		size_t index;
 		for (index = 0; index < _class.userConstructors.length; ++index) {
