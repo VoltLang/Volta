@@ -401,7 +401,7 @@ bool handleClassTypePostfixIfNeeded(LanguagePass lp, ir.Scope current, ir.Postfi
 	auto thisClass = cast(ir.Class) tr.type;
 	if (thisClass is null) return false;
 
-	auto store = lookupOnlyThisScope(lp, thisClass.myScope, exp.location, exp.identifier.value);
+	auto store = lookupOnlyThisScope(lp, expressionClass.myScope, exp.location, exp.identifier.value);
 	if (store !is null && (store.kind == ir.Store.Kind.Type || store.kind == ir.Store.Kind.EnumDeclaration)) {
 		return false;
 	}
