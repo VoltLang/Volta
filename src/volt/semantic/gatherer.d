@@ -163,7 +163,7 @@ void addParameters(ir.Scope current, ir.Function fn, ir.Type thisType)
 		}
 	}
 
-	if (thisType is null) {
+	if (thisType is null || fn.kind == ir.Function.Kind.Function) {
 		return;
 	}
 
