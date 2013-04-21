@@ -115,6 +115,7 @@ public:
 			case ExpStatement:
 			case Variable:
 			case MixinStatement:
+			case ThrowStatement:
 				auto s = accept(n, this);
 				if (s == Stop)
 					return Stop;

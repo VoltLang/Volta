@@ -204,6 +204,16 @@ ir.Function retrieveFunctionFromObject(LanguagePass lp, ir.Scope _scope, Locatio
 	return ensureFunction(objectStore.s, loc, name, store);
 }
 
+ir.Type retrieveTypeFromObject(LanguagePass lp, ir.Scope _scope, Location loc, string name)
+{
+	auto objectStore = lookup(lp, _scope, loc, "object");
+	if (objectStore is null || objectStore.s is null) {
+		throw panic(loc, "couldn't access object module.");
+	}
+	auto store = lookup(lp, objectStore.s, loc, name);
+	return ensureType(objectStore.s, loc, name, store);
+}
+
 /**
  * Look up object.Attribute.
  * Throws: CompilerPanic on failure.

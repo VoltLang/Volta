@@ -1194,6 +1194,26 @@ void replaceTypeOfIfNeeded(LanguagePass lp, ir.Scope current, ref ir.Type type)
 	type = copyTypeSmart(asTypeOf.location, getExpType(lp, asTypeOf.exp, current));
 }
 
+void extypeThrow(LanguagePass lp, ir.Scope current, ir.ThrowStatement t)
+{
+	auto throwable = cast(ir.Class) retrieveTypeFromObject(lp, current, t.location, "Throwable");
+	assert(throwable !is null);
+
+	auto type = getExpType(lp, t.exp, current);
+	auto asClass = cast(ir.Class) type;
+	if (asClass is null) {
+		throw makeThrowOnlyThrowable(t.exp, type);
+	}
+
+	if (!asClass.isOrInheritsFrom(throwable)) {
+		throw makeThrowNoInherits(t.exp, asClass);
+	}
+
+	if (asClass !is throwable) {
+		t.exp = buildCastSmart(t.exp.location, throwable, t.exp);
+	}
+}
+
 
 /**
  * If type casting were to be strict, type T could only
@@ -1492,6 +1512,12 @@ public:
 		}
 
 		return ContinueParent;
+	}
+
+	override Status leave(ir.ThrowStatement t)
+	{
+		extypeThrow(lp, current, t);
+		return Continue;
 	}
 
 

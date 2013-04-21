@@ -100,6 +100,18 @@ CompilerException makeNeedOverride(ir.Function overrider, ir.Function overridee)
 	return new CompilerError(overrider.location, emsg);
 }
 
+CompilerException makeThrowOnlyThrowable(ir.Exp exp, ir.Type type)
+{
+	string emsg = format("can not throw expression of type %s", type.errorString);
+	return new CompilerError(exp.location, emsg);
+}
+
+CompilerException makeThrowNoInherits(ir.Exp exp, ir.Class clazz)
+{
+	string emsg = format("can not throw class of type %s as it does not inherit from object.Throwable", clazz.errorString);
+	return new CompilerError(exp.location, emsg);
+}
+
 /*
  *
  *
