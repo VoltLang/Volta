@@ -240,7 +240,7 @@ protected:
 			case Abstract:
 				fn.isAbstract = true;
 				break;
-			case Static:
+			case Local, Global:
 				fn.kind = ir.Function.Kind.Function;
 				break;
 			default:
