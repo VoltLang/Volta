@@ -237,6 +237,26 @@ bool isRefVar(ir.Exp exp)
 	return asVar.isRef;
 }
 
+bool isFunctionMemberOrConstructor(ir.Function fn)
+{
+	final switch (fn.kind) with (ir.Function.Kind) {
+	case Invalid:
+		assert(false);
+	case Member:
+	case Constructor:
+	case Destructor:
+	case LocalConstructor:
+	case LocalDestructor:
+	case GlobalConstructor:
+	case GlobalDestructor:
+		return true;
+	case Function:
+	case LocalMember:
+	case GlobalMember:
+		return false;
+	}
+}
+
 bool isFunctionStatic(ir.Function fn)
 {
 	final switch (fn.kind) with (ir.Function.Kind) {

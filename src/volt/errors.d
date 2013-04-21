@@ -24,6 +24,11 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeCallingStaticThroughInstance(ir.Node node, ir.Function fn)
+{
+	return new CompilerError(node.location, format("calling local or global function '%s' through instance variable.", fn.name));
+}
+
 CompilerException makeMarkedOverrideDoesNotOverride(ir.Node node, ir.Function fn)
 {
 	return new CompilerError(node.location, format("function '%s' is marked as override but does not override any functions.", fn.name));

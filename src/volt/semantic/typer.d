@@ -378,6 +378,9 @@ ir.Type getPostfixCreateDelegateType(LanguagePass lp, ir.Postfix postfix, ir.Sco
 	if (fn is null) {
 		throw err;
 	}
+	if (!isFunctionMemberOrConstructor(fn)) {
+		throw makeCallingStaticThroughInstance(postfix, fn);
+	}
 
 	auto dg = new ir.DelegateType(fn.type);
 	dg.location = postfix.location;
@@ -576,6 +579,9 @@ ir.Type getPostfixCallType(LanguagePass lp, ir.Postfix postfix, ir.Scope current
 		assert(set.set.functions.length > 0);
 		auto fn = selectFunction(lp, currentScope, set.set, postfix.arguments, postfix.location);
 		if (set.isFromCreateDelegate) {
+			if (!isFunctionMemberOrConstructor(fn)) {
+				throw makeCallingStaticThroughInstance(postfix, fn);
+			}
 			ftype = new ir.DelegateType(fn.type);
 		} else {
 			ftype = fn.type;
