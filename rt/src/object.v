@@ -60,6 +60,7 @@ class TypeInfo
 	char[] mangledName;
 	bool mutableIndirection;
 	void* classVtable;
+	size_t classSize;
 }
 
 class Object

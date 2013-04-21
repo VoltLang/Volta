@@ -70,9 +70,7 @@ int size(Location location, LanguagePass lp, ir.Node node)
 		assert(asUnion !is null);
 		return unionSize(location, lp, asUnion);
 	case Class:
-		auto asClass = cast(ir.Class) node;
-		assert(asClass !is null);
-		return classSize(location, lp, asClass);
+		return lp.settings.isVersionSet("V_P64") ? 8 : 4;
 	case Enum:
 		auto asEnum = cast(ir.Enum) node;
 		assert(asEnum !is null);

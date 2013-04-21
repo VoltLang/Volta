@@ -101,8 +101,10 @@ public:
 		if (asClass !is null) {
 			literal.exps ~= buildCast(_typeid.location, buildVoidPtr(_typeid.location),
 				buildAddrOf(_typeid.location, buildExpReference(_typeid.location, asClass.vtableVariable, "__vtable_instance")));
+			literal.exps ~= buildSizeTConstant(_typeid.location, lp, classSize(_typeid.location, lp, asClass));
 		} else {
 			literal.exps ~= buildConstantNull(_typeid.location, buildVoidPtr(_typeid.location));
+			literal.exps ~= buildSizeTConstant(_typeid.location, lp, 0);
 		}
 
 		auto literalVar = new ir.Variable();

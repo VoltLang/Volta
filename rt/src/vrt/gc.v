@@ -36,7 +36,7 @@ void* gcMalloc(TypeInfo typeinfo, size_t count, void *ptr)
 		size = typeinfo.size;
 	} else if (count == cast(size_t) -1) {
 		// Hack for now.
-		size = typeinfo.size;
+		size = typeinfo.classSize;
 	} else {
 		size = typeinfo.size;
 		size = count * typeinfo.size;
