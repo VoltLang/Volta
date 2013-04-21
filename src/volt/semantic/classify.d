@@ -235,6 +235,40 @@ bool isRefVar(ir.Exp exp)
 	return asVar.isRef;
 }
 
+bool isFunctionStatic(ir.Function fn)
+{
+	final switch (fn.kind) with (ir.Function.Kind) {
+	case Invalid:
+	case Constructor:
+	case Destructor:
+	case LocalConstructor:
+	case LocalDestructor:
+	case GlobalConstructor:
+	case GlobalDestructor:
+		assert(false);
+	case Member:
+		return false;
+	case Function:
+	case LocalMember:
+	case GlobalMember:
+		return true;
+	}
+}
+
+bool isVariableStatic(ir.Variable var)
+{
+	final switch (var.storage) with (ir.Variable.Storage) {
+	case Invalid:
+		assert(false);
+	case Field:
+		return false;
+	case Function:
+	case Local:
+	case Global:
+		return true;
+	}
+}
+
 bool acceptableForUserAttribute(LanguagePass lp, ir.Scope current, ir.Type type)
 {
 	ensureResolved(lp, current, type);

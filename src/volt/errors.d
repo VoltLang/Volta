@@ -192,6 +192,11 @@ CompilerException makeInvalidUseOfStore(ir.Node node, ir.Store store)
  *
  */
 
+CompilerException makeInvalidThis(ir.Node node, ir.Type was, ir.Type expected, string member)
+{
+	return new CompilerError(node.location, format("'this' is of type '%s' expected '%s' to access member '%s'", was.errorString, expected.errorString, member));
+}
+
 CompilerException makeNotMember(ir.Node node, ir.Type aggregate, string member)
 {
 	return new CompilerError(node.location, format("%s has no member '%s'", aggregate.errorString, member));

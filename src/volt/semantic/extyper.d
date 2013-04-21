@@ -308,8 +308,10 @@ void extypeAssignCallableType(LanguagePass lp, ir.Scope current, ref ir.Exp exp,
 	if (rtype.nodeType == ir.NodeType.FunctionSetType) {
 		auto fset = cast(ir.FunctionSetType) rtype;
 		auto fn = selectFunction(lp, fset.set, ctype.params, exp.location);
-		exp = buildExpReference(exp.location, fn, fn.name);
-		fset.set.reference = cast(ir.ExpReference) exp;
+		auto eRef = buildExpReference(exp.location, fn, fn.name);
+		fset.set.reference = eRef;
+		exp = eRef;
+		replaceExpReferenceIfNeeded(lp, current, null, exp, eRef);
 		extypeAssignCallableType(lp, current, exp, ctype);
 		return;
 	}
@@ -511,8 +513,10 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 	auto asFunctionSet = cast(ir.FunctionSetType) type;
 	if (asFunctionSet !is null) {
 		auto eref = cast(ir.ExpReference) postfix.child;
+		bool reeval = true;
 
 		if (eref is null) {
+			reeval = false;
 			auto pchild = cast(ir.Postfix) postfix.child;
 			assert(pchild !is null);
 			assert(pchild.op == ir.Postfix.Op.CreateDelegate);
@@ -524,6 +528,10 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 		auto fn = selectFunction(lp, current, asFunctionSet.set, postfix.arguments, postfix.location);
 		eref.decl = fn;
 		asFunctionType = fn.type;
+
+		if (reeval) {
+			replaceExpReferenceIfNeeded(lp, current, null, postfix.child, eref);
+		}
 	} else {
 		asFunctionType = cast(ir.CallableType) type;
 		if (asFunctionType is null) {
@@ -610,112 +618,104 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 	}
 }
 
-void extypeExpReference(LanguagePass lp, ir.Scope current, ref ir.Exp e, ir.ExpReference reference)
+/**
+ * This function acts as a extyperExpReference function would do,
+ * but it also takes a extra type context which is used for the
+ * cases when looking up Member variables via Types.
+ *
+ * pkg.mod.Class.member = 4;
+ *
+ * Even tho FunctionSets might need rewriting they are not rewritten
+ * directly but instead this function is called after they have been
+ * rewritten and the ExpReference has been resolved to a single Function.
+ */
+bool replaceExpReferenceIfNeeded(LanguagePass lp, ir.Scope current,
+                                 ir.Type referredType, ref ir.Exp exp, ir.ExpReference eRef)
 {
-	// Turn references to @property functions into calls.
-	propertyToCallIfNeeded(e.location, lp, e, current, null);
-
-	/// If we can find it locally, don't insert a this, even if it's in a this. (i.e. shadowing).
-	auto sstore = lookupOnlyThisScope(lp, current, e.location, reference.idents[$-1]);
-	if (sstore !is null) {
-		return;
+	// Hold onto your hats because this is ugly!
+	// But this needs to be run after this function has early out
+	// or rewritten the lookup.
+	scope (success) {
+		propertyToCallIfNeeded(exp.location, lp, exp, current, null);
 	}
 
-	ir.Scope _;
-	ir.Class _class;
-	bool foundClass = current.getFirstClass(_, _class);
-	if (foundClass) {
-		auto asFunction = getParentFunction(current);
-		if (asFunction is null) {
-			return;
+	// Early out on static vars.
+	// Or function sets.
+	auto decl = eRef.decl;
+	final switch (decl.declKind) with (ir.Declaration.Kind) {
+	case Function:
+		auto asFn = cast(ir.Function)decl;
+		if (isFunctionStatic(asFn)) {
+			return false;
 		}
-
-		auto store = lookupAsThisScope(lp, _class.myScope, reference.location, reference.idents[$-1]);
-		if (store is null) {
-			return;
+		break;
+	case Variable:
+		auto asVar = cast(ir.Variable)decl;
+		if (isVariableStatic(asVar)) {
+			return false;
 		}
-		ir.Function memberFunction;
-		if (store.functions.length > 0) {
-			assert(store.functions.length == 1);
-			memberFunction = store.functions[0];
+		break;
+	case EnumDeclaration:
+	case FunctionSet:
+		return false;
+	}
+
+	// For vtable and property.
+	if (eRef.rawReference) {
+		return false;
+	}
+
+	auto thisVar = getThisVar(eRef.location, lp, current);
+	assert(thisVar !is null);
+
+	auto tr = cast(ir.TypeReference) thisVar.type;
+	if (tr is null) {
+		throw panic(eRef, "not TypeReference thisVar");
+	}
+
+	auto thisAgg = cast(ir.Aggregate) tr.type;
+	if (thisAgg is null) {
+		throw panic(eRef, "thisVar not aggregate");
+	}
+
+	/// Use this for if type not provided.
+	if (referredType is null) {
+		referredType = thisAgg;
+	}
+
+	auto expressionAgg = cast(ir.Aggregate) referredType;
+	if (expressionAgg is null) {
+		throw panic(eRef, "referredType not Aggregate");
+	}
+
+	string ident = eRef.idents[$-1];
+	auto store = lookupOnlyThisScope(lp, expressionAgg.myScope, exp.location, ident);
+	if (store !is null && store.node !is eRef.decl) {
+		throw makeNotMember(eRef, expressionAgg, ident);
+	}
+
+	auto thisClass = cast(ir.Class) thisAgg;
+	auto expressionClass = cast(ir.Class) expressionAgg;
+	if (thisClass !is null && expressionClass !is null) {
+		if (!thisClass.isOrInheritsFrom(expressionClass)) {
+			throw makeInvalidType(exp, expressionClass);
 		}
-
-		store = lookup(lp, current, reference.location, "this");
-		if (store is null || store.kind != ir.Store.Kind.Value) {
-			throw panic(e, "function doesn't have this.");
-		}
-
-		auto asVar = cast(ir.Variable)store.node;
-		assert(asVar !is null);
-
-		auto thisRef = new ir.ExpReference();
-		thisRef.location = reference.location;
-		thisRef.idents ~= "this";
-		thisRef.decl = asVar;
-
-		auto postfix = new ir.Postfix();
-		postfix.location = reference.location;
-		postfix.op = ir.Postfix.Op.Identifier;
-		postfix.identifier = new ir.Identifier();
-		postfix.identifier.location = reference.location;
-		postfix.identifier.value = reference.idents[0];
-		postfix.child = thisRef;
-		if (memberFunction !is null) {
-			postfix.op = ir.Postfix.Op.CreateDelegate;
-			postfix.memberFunction = buildExpReference(postfix.location, memberFunction);
-		}
-
-		e = postfix;
-		lp.actualize(_class);
-		return;
+	} else if (thisAgg !is expressionAgg) {
+		throw makeInvalidThis(eRef, thisAgg, expressionAgg, ident);
 	}
 
-	auto varStore = lookupOnlyThisScope(lp, current, reference.location, reference.idents[$-1]);
-	if (varStore !is null) {
-		return;
+	ir.Exp thisRef = buildExpReference(eRef.location, thisVar, "this");
+	if (thisClass !is expressionClass) {
+		thisRef = buildCastSmart(eRef.location, expressionClass, thisRef);
 	}
 
-	auto thisStore = lookupOnlyThisScope(lp, current, reference.location, "this");
-	if (thisStore is null) {
-		return;
+	if (eRef.decl.declKind == ir.Declaration.Kind.Function) {
+		exp = buildCreateDelegate(eRef.location, thisRef, eRef);
+	} else {
+		exp = buildAccess(eRef.location, thisRef, ident);
 	}
 
-	auto asVar = cast(ir.Variable) thisStore.node;
-	assert(asVar !is null);
-	auto asTR = cast(ir.TypeReference) asVar.type;
-	assert(asTR !is null);
-
-	auto aggScope = getScopeFromType(asTR.type);
-	varStore = lookupOnlyThisScope(lp, aggScope, reference.location, reference.idents[0]);
-	if (varStore is null) {
-		return;
-	}
-	ir.Function memberFunction;
-	if (varStore.functions.length > 0) {
-		assert(varStore.functions.length == 1);
-		memberFunction = varStore.functions[0];
-	}
-
-	// Okay, it looks like reference isn't pointing at a local, and it exists in a this.
-	auto thisRef = new ir.ExpReference();
-	thisRef.location = reference.location;
-	thisRef.idents ~= "this";
-	thisRef.decl = asVar;
-
-	auto postfix = new ir.Postfix();
-	postfix.location = reference.location;
-	postfix.op = ir.Postfix.Op.Identifier;
-	postfix.identifier = new ir.Identifier();
-	postfix.identifier.location = reference.location;
-	postfix.identifier.value = reference.idents[0];
-	postfix.child = thisRef;
-	if (memberFunction !is null) {
-		postfix.op = ir.Postfix.Op.CreateDelegate;
-		postfix.memberFunction = buildExpReference(postfix.location, memberFunction);
-	}
-
-	e = postfix;
-	return;
+	return true;
 }
 
 /// Rewrite foo.prop = 3 into foo.prop(3).
@@ -880,6 +880,7 @@ void extypePostfixIdentifier(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 
 	ir.Scope _scope;
 	ir.Store store;
+	ir.Type lastType;
 
 	// First do the identExp lookup.
 	// postfix is in an unknown state at this point.
@@ -902,13 +903,12 @@ void extypePostfixIdentifier(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 			throw makeFailedLookup(loc, ident);
 		}
 
+		lastType = null;
 		final switch(store.kind) with (ir.Store.Kind) {
 		case Type:
-			if (handleClassTypePostfixIfNeeded(lp, current, postfix, cast(ir.Type) store.node)) {
-				return;
-			} else {
-				goto case Scope;
-			}
+			lastType = cast(ir.Type) store.node;
+			assert(lastType !is null);
+			goto case Scope;
 		case Scope:
 			_scope = getScopeFromStore(store);
 			if (_scope is null)
@@ -949,13 +949,15 @@ void extypePostfixIdentifier(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 
 	assert(_ref !is null);
 
+
 	// We are retriving a Variable or Function directly.
 	if (postfixIdents.length == 0) {
 		exp = _ref;
-		return;
+		replaceExpReferenceIfNeeded(lp, current, lastType, exp, _ref);
 	} else {
 		postfix = postfixIdents[0];
 		postfix.child = _ref;
+		replaceExpReferenceIfNeeded(lp, current, lastType, postfix.child, _ref);
 	}
 }
 
@@ -1186,6 +1188,7 @@ void replaceTypeOfIfNeeded(LanguagePass lp, ir.Scope current, ref ir.Type type)
 
 	type = copyTypeSmart(asTypeOf.location, getExpType(lp, asTypeOf.exp, current));
 }
+
 
 /**
  * If type casting were to be strict, type T could only
@@ -1561,9 +1564,9 @@ public:
 		return Continue;
 	}
 
-	override Status visit(ref ir.Exp exp, ir.ExpReference reference)
+	override Status visit(ref ir.Exp exp, ir.ExpReference eref)
 	{
-		extypeExpReference(lp, current, exp, reference);
+		replaceExpReferenceIfNeeded(lp, current, null, exp, eref);
 		return Continue;
 	}
 
@@ -1572,7 +1575,7 @@ public:
 		extypeIdentifierExp(lp, current, exp, ie);
 		auto eref = cast(ir.ExpReference) exp;
 		if (eref !is null) {
-			extypeExpReference(lp, current, exp, eref);
+			replaceExpReferenceIfNeeded(lp, current, null, exp, eref);
 		} else {
 			assert(cast(ir.Constant)exp !is null);
 		}
