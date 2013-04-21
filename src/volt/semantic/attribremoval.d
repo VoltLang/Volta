@@ -77,6 +77,7 @@ public:
 	{
 		applyAttributes(fn, ctxTop.stack);
 		applyAttributes(fn, mStack);
+		ctxPush(fn);
 		return Continue;
 	}
 
@@ -91,6 +92,7 @@ public:
 	{
 		applyAttributes(s, ctxTop.stack);
 		applyAttributes(s, mStack);
+		ctxPush(s);
 		return Continue;
 	}
 
@@ -98,6 +100,7 @@ public:
 	{
 		applyAttributes(u, ctxTop.stack);
 		applyAttributes(u, mStack);
+		ctxPush(u);
 		return Continue;
 	}
 
@@ -105,6 +108,7 @@ public:
 	{
 		applyAttributes(c, ctxTop.stack);
 		applyAttributes(c, mStack);
+		ctxPush(c);
 		return Continue;
 	}
 
@@ -112,6 +116,7 @@ public:
 	{
 		applyAttributes(i, ctxTop.stack);
 		applyAttributes(i, mStack);
+		ctxPush(i);
 		return Continue;
 	}
 
@@ -128,6 +133,12 @@ public:
 		applyAttributes(a, mStack);
 		return Continue;
 	}
+
+	override Status leave(ir.Function fn) { ctxPop(fn); return Continue; }
+	override Status leave(ir.Struct s) { ctxPop(s); return Continue; }
+	override Status leave(ir.Union u) { ctxPop(u); return Continue; }
+	override Status leave(ir.Class c) { ctxPop(c); return Continue; }
+	override Status leave(ir._Interface i) { ctxPop(i); return Continue; }
 
 	override Status enter(ir.Attribute attr) { assert(false); }
 	override Status leave(ir.Attribute attr) { assert(false); }
@@ -412,6 +423,7 @@ protected:
 	{
 		auto mCtx = new Context(node);
 
+		mCtx.node = node;
 		mCtx.oldStack = this.mStack;
 		if (inherit)
 			mCtx.stack = this.mStack ~ ctxTop.stack;
@@ -424,7 +436,9 @@ protected:
 
 	void ctxPop(ir.Node node)
 	{
-		assert(node is ctxTop.node);
+		if (node !is ctxTop.node) {
+			throw panic(node, "invalid attribute stack layout");
+		}
 		this.mStack = ctxTop.oldStack;
 		this.mCtx = mCtx[0 .. $-1];
 	}
@@ -477,7 +491,7 @@ protected:
 			return true;
 		case Function:
 			auto fn = cast(ir.Function)node;
-			enter(fn);
+			accept(fn, this);
 			if (!fn.loadDynamic) {
 				return false;
 			}
