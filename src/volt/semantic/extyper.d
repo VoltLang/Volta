@@ -295,7 +295,12 @@ void extypeAssignClass(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Cla
 
 void extypeAssignEnum(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Enum e)
 {
-	// TODO: this is wrong!
+	auto rtype = getExpType(lp, exp, current);
+	if (typesEqual(e, rtype)) {
+		return;
+	}
+
+	// TODO: This might need to be smarter.
 	extypeAssignDispatch(lp, current, exp, e.base);
 }
 
