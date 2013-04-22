@@ -506,6 +506,9 @@ void handleUnary(State state, ir.Unary unary, Value result)
 	case Not:
 		handleNot(state, unary, result);
 		break;
+	case Complement:
+		handleComplement(state, unary, result);
+		break;
 	default:
 		throw panicUnhandled(unary.location, to!string(unary.op));
 	}
@@ -633,6 +636,17 @@ void handleCastPointer(State state, Location loc, Type newType, Value result)
 
 	result.type = newType;
 	result.value = LLVMBuildBitCast(state.builder, result.value, newType.llvmType, "");
+}
+
+/**
+ * Handles bitwise not, the ~ operator.
+ */
+void handleComplement(State state, ir.Unary comp, Value result)
+{
+	state.getValue(comp.value, result);
+	auto neg = LLVMBuildNeg(state.builder, result.value, "");
+	auto one = LLVMConstInt(result.type.llvmType, 1, true);
+	result.value = LLVMBuildSub(state.builder, neg, one, "");
 }
 
 /**
