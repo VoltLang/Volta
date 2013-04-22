@@ -604,7 +604,7 @@ ir.Type getTernaryType(LanguagePass lp, ir.Ternary ternary, ir.Scope currentScop
 
 ir.Type getUnaryType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 {
-	switch (unary.op) with (ir.Unary.Op) {
+	final switch (unary.op) with (ir.Unary.Op) {
 	case None:
 		return getUnaryNoneType(lp, unary, currentScope);
 	case Cast:
@@ -619,9 +619,37 @@ ir.Type getUnaryType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 		return getUnarySubAddType(lp, unary, currentScope);
 	case Not:
 		return getUnaryNotType(lp, unary);
-	default:
-		assert(false);
+	case Complement:
+		return getUnaryComplementType(lp, unary, currentScope);
+	case Increment, Decrement:
+		return getUnaryIncDecType(lp, unary, currentScope);
+	case TypeIdent:
+		throw panicUnhandled(unary, "unary TypeIdent");
 	}
+}
+
+ir.Type getUnaryIncDecType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
+{
+	if (!isLValue(unary.value)) {
+		throw makeNotLValue(unary);
+	}
+	auto type = getExpType(lp, unary.value, currentScope);
+
+	if (type.nodeType == ir.NodeType.PointerType) {
+		return type;
+	} else if (type.nodeType == ir.NodeType.PrimitiveType &&
+			   isOkayForPointerArithmetic((cast(ir.PrimitiveType)type).type)) {
+		return type;
+	} else if (effectivelyConst(type)) {
+		throw makeCannotModify(unary, type);
+	}
+
+	throw makeBadOperation(unary);
+}
+
+ir.Type getUnaryComplementType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
+{
+	return getExpType(lp, unary.value, currentScope);
 }
 
 ir.Type getUnaryNotType(LanguagePass lp, ir.Unary unary)
