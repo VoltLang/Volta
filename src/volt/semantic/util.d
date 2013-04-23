@@ -246,8 +246,19 @@ void ensureResolved(LanguagePass lp, ir.Scope current, ir.Type type)
 		if (e.base !is null) {
 			ensureResolved(lp, current, e.base);
 		}
+		ir.EnumDeclaration first;
 		foreach (d; e.members) {
+			if (first is null) {
+				first = d;
+			}
 			ensureResolved(lp, current, d);
+		}
+		assert(first !is null && first.assign !is null);
+		if (isAuto(e.base)) {
+			e.base = getExpType(lp, first.assign, current);
+		}
+		if (!isIntegral(e.base)) {
+			throw panic(e, "only integral enums are supported.");
 		}
 		return;
 	case Class:

@@ -70,6 +70,10 @@ ir.Type getExpType(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 	if (storage !is null && canTransparentlyReferToBase(storage)) {
 		result = storage.base;
 	}
+	auto _enum = cast(ir.Enum) result;
+	if (_enum !is null) {
+		result = _enum.base;
+	}
 	return result;
 }
 

@@ -162,6 +162,15 @@ bool canTransparentlyReferToBase(ir.StorageType storage)
 	return storage.type == ir.StorageType.Kind.Auto;
 }
 
+bool isAuto(ir.Type t)
+{
+	auto s = cast(ir.StorageType) t;
+	if (s is null) {
+		return false;
+	}
+	return s.type == ir.StorageType.Kind.Auto;
+}
+
 bool isBool(ir.Type t)
 {
 	auto p = cast(ir.PrimitiveType) t;
