@@ -26,7 +26,7 @@ string mangle(ir.Type t)
  */
 string mangle(string[] names, ir.Variable v)
 {
-	string s = "_V";
+	string s = "Vv";
 	mangleName(names, s);
 	mangleString(v.name, s);
 	mangleType(v.type, s);
@@ -40,7 +40,7 @@ string mangle(string[] names, ir.Variable v)
  */
 string mangle(string[] names, ir.Function fn)
 {
-	string s = "_V";
+	string s = "Vf";
 	mangleName(names, s);
 	mangleString(fn.name, s);
 	mangleType(fn.type, s);
@@ -62,13 +62,13 @@ void mangleType(ir.Type t, ref string mangledString)
 	case ArrayType:
 		auto asArray = cast(ir.ArrayType) t;
 		assert(asArray !is null);
-		mangledString ~= "A";
+		mangledString ~= "a";
 		mangleType(asArray.base, mangledString);
 		break;
 	case PointerType:
 		auto asPointer = cast(ir.PointerType) t;
 		assert(asPointer !is null);
-		mangledString ~= "P";
+		mangledString ~= "p";
 		mangleType(asPointer.base, mangledString);
 		break;
 	case Struct:
@@ -92,7 +92,7 @@ void mangleType(ir.Type t, ref string mangledString)
 	case UserAttribute:
 		auto asAttr = cast(ir.UserAttribute) t;
 		assert(asAttr !is null);
-		mangledString ~= "T";
+		mangledString ~= "A";
 		mangleScope(asAttr.myScope, mangledString);
 		break;
 	case Enum:
@@ -101,6 +101,13 @@ void mangleType(ir.Type t, ref string mangledString)
 		mangledString ~= "E";
 		mangleScope(asEnum.myScope, mangledString);
 		mangleString(asEnum.name, mangledString);
+		break;
+	case Interface:
+		auto asInterface = cast(ir._Interface) t;
+		assert(asInterface !is null);
+		mangledString ~= "I";
+		mangleScope(asInterface.myScope, mangledString);
+		mangleString(asInterface.name, mangledString);
 		break;
 	case TypeReference:
 		auto asTypeRef = cast(ir.TypeReference) t;
@@ -121,82 +128,84 @@ void mangleType(ir.Type t, ref string mangledString)
 	case AAType:
 		auto asAA = cast(ir.AAType) t;
 		assert(asAA !is null);
-		mangledString ~= "H";
+		mangledString ~= "Aa";
 		mangleType(asAA.key, mangledString);
 		mangleType(asAA.value, mangledString);
 		break;
 	case StaticArrayType:
 		auto asSA = cast(ir.StaticArrayType) t;
 		assert(asSA !is null);
-		mangledString ~= "G";
+		mangledString ~= "at";
 		mangledString ~= to!string(asSA.length);
 		mangleType(asSA.base, mangledString);
 		break;
 	case StorageType:
 		auto asST = cast(ir.StorageType) t;
 		assert(asST !is null);
+		final switch (asST.type) with (ir.StorageType.Kind) {
+		case Auto: assert(false);
+		case Scope: mangledString ~= "e"; break;
+		case Const: mangledString ~= "o"; break;
+		case Immutable: mangledString ~= "m"; break;
+		case Inout: mangledString ~= "n"; break;
+		}
 		mangleType(asST.base, mangledString);
 		break;
 	default:
-		mangledString = "unknown" ~ to!string(t.nodeType);
-		break;
+		throw panicUnhandled(t, "type in mangler");
 	}
 }
 
 void mangleFunctionType(ir.FunctionType fn, ref string mangledString)
 {
-	mangleLinkage(fn.linkage, mangledString);
 	if (fn.hiddenParameter) {
 		mangledString ~= "M";
 	}
-	// !!! Attributes go here. !!!
-	foreach (i, param; fn.params) {
-		if (param.isOut) {
-			mangledString ~= 'K';
-		} else if (param.isRef) {
-			mangledString ~= 'J';
-		}
-		mangleType(param.type, mangledString);
-	}
-	mangledString ~= "Z";  // This would be difference with variadics.
-	mangleType(fn.ret, mangledString);
+	mangledString ~= "F";
+	mangleCallableType(fn, mangledString);
 }
 
 void mangleDelegateType(ir.DelegateType fn, ref string mangledString)
 {
 	mangledString ~= "D";
-	mangleLinkage(fn.linkage, mangledString);
-	// !!! Attributes go here. !!!
-	foreach (param; fn.params) {
+	mangleCallableType(fn, mangledString);
+}
+
+void mangleCallableType(ir.CallableType ct, ref string mangledString)
+{
+	mangleLinkage(ct.linkage, mangledString);
+	foreach (i, param; ct.params) {
+		if (param.isRef) {
+			mangledString ~= 'r';
+		}
 		mangleType(param.type, mangledString);
 	}
 	mangledString ~= "Z";  // This would be difference with variadics.
-	mangleType(fn.ret, mangledString);
+	mangleType(ct.ret, mangledString);
 }
-
 void manglePrimitiveType(ir.PrimitiveType t, ref string mangledString)
 {
 	final switch (t.type) with (ir.PrimitiveType.Kind) {
 	case Bool:
-		mangledString ~= "b";
+		mangledString ~= "t";
 		break;
 	case Byte:
-		mangledString ~= "g";
+		mangledString ~= "b";
 		break;
 	case Char:
-		mangledString ~= "a";
+		mangledString ~= "c";
 		break;
 	case Wchar:
-		mangledString ~= "u";
-		break;
-	case Dchar:
 		mangledString ~= "w";
 		break;
-	case Double:
+	case Dchar:
 		mangledString ~= "d";
 		break;
+	case Double:
+		mangledString ~= "fd";
+		break;
 	case Float:
-		mangledString ~= "f";
+		mangledString ~= "ff";
 		break;
 	case Int:
 		mangledString ~= "i";
@@ -205,22 +214,22 @@ void manglePrimitiveType(ir.PrimitiveType t, ref string mangledString)
 		mangledString ~= "l";
 		break;
 	case Real:
-		mangledString ~= "e";
+		mangledString ~= "fr";
 		break;
 	case Short:
 		mangledString ~= "s";
 		break;
 	case Ubyte:
-		mangledString ~= "h";
+		mangledString ~= "ub";
 		break;
 	case Uint:
-		mangledString ~= "k";
+		mangledString ~= "ui";
 		break;
 	case Ulong:
-		mangledString ~= "m";
+		mangledString ~= "ul";
 		break;
 	case Ushort:
-		mangledString ~= "t";
+		mangledString ~= "us";
 		break;
 	case Void:
 		mangledString ~= "v";
@@ -250,12 +259,12 @@ void mangleScope(ir.Scope _scope, ref string mangledString)
 void mangleLinkage(ir.Linkage l, ref string mangledString)
 {
 	final switch (l) with (ir.Linkage) {
-	case Volt: mangledString ~= "Q"; break;
-	case C: mangledString ~= "U"; break;
-	case CPlusPlus: mangledString ~= "R"; break;
-	case D: mangledString ~= "F"; break;
+	case Volt: mangledString ~= "v"; break;
+	case C: mangledString ~= "c"; break;
+	case CPlusPlus: mangledString ~= "C"; break;
+	case D: mangledString ~= "d"; break;
 	case Windows: mangledString ~= "W"; break;
-	case Pascal: mangledString ~= "V"; break;
+	case Pascal: mangledString ~= "P"; break;
 	case System:
 		assert(false);  // I assume we'll have had a pass removing System by now.
 	}
