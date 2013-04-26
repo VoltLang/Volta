@@ -7,6 +7,7 @@ import std.conv : to;
 import lib.llvm.core;
 
 import ir = volt.ir.ir;
+import volt.ir.copy;
 import volt.ir.util;
 
 import volt.errors;
@@ -556,6 +557,13 @@ public:
  */
 Type fromIr(State state, ir.Type irType)
 {
+	irType = scrubStorage(irType);
+	addMangledName(irType);
+	return fromIrImpl(state, irType);
+}
+
+Type fromIrImpl(State state, ir.Type irType)
+{
 	if (irType.nodeType == ir.NodeType.TypeReference) {
 		auto tr = cast(ir.TypeReference)irType;
 		assert(tr !is null);
@@ -605,8 +613,7 @@ Type fromIr(State state, ir.Type irType)
 		auto u = cast(ir.Union)irType;
 		return new .UnionType(state, u);
 	case StorageType:
-		auto storage = cast(ir.StorageType) irType;
-		return fromIr(state, storage.base);
+		assert(false);
 	case Class:
 		auto _class = cast(ir.Class)irType;
 		auto pointer = buildPtrSmart(_class.location, _class.layoutStruct);
