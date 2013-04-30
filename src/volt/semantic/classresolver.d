@@ -205,6 +205,8 @@ ir.Function[][] getClassMethods(LanguagePass lp, ir.Scope current, ir.Class _cla
 				_class.userConstructors ~= asFunction;
 			}
 			continue;
+		} else if (asFunction.kind == ir.Function.Kind.Destructor) {
+			asFunction.isMarkedOverride = !_class.isObject;
 		}
 
 		methods[$-1] ~= asFunction;

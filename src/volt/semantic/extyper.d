@@ -650,6 +650,11 @@ bool replaceExpReferenceIfNeeded(LanguagePass lp, ir.Scope current,
 		propertyToCallIfNeeded(exp.location, lp, exp, current, null);
 	}
 
+	// For vtable and property.
+	if (eRef.rawReference) {
+		return false;
+	}
+	
 	// Early out on static vars.
 	// Or function sets.
 	auto decl = eRef.decl;
@@ -670,11 +675,6 @@ bool replaceExpReferenceIfNeeded(LanguagePass lp, ir.Scope current,
 		return false;
 	case EnumDeclaration:
 	case FunctionSet:
-		return false;
-	}
-
-	// For vtable and property.
-	if (eRef.rawReference) {
 		return false;
 	}
 
