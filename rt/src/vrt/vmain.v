@@ -19,5 +19,9 @@ extern(C) int main(int c, char** argv)
 	vrt_gc_init();
 	allocDg = vrt_gc_get_alloc_dg();
 
-	return vmain();
+	int ret = vmain();
+
+	vrt_gc_shutdown();
+
+	return ret;
 }

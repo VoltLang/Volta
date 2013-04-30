@@ -69,6 +69,11 @@ class Object
 	{
 		return;
 	}
+
+	~this()
+	{
+		return;
+	}
 }
 
 class Attribute
@@ -131,6 +136,7 @@ class Error : Throwable
 
 extern(C) void vrt_gc_init();
 extern(C) AllocDg vrt_gc_get_alloc_dg();
+extern(C) void vrt_gc_shutdown();
 extern(C) void* vrt_handle_cast(void* obj, TypeInfo tinfo);
 extern(C) void vrt_eh_throw(Throwable);
 
