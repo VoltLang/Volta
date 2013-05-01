@@ -156,7 +156,7 @@ void addScope(ir.Module m)
 void addParameters(ir.Scope current, ir.Function fn, ir.Type thisType)
 {
 	if (fn._body !is null) {
-		foreach (var; fn.type.params) {
+		foreach (var; fn.params) {
 			if (var.name !is null) {
 				current.addValue(var, var.name);
 			}

@@ -336,6 +336,16 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.FunctionParam fp)
+	{
+		return ContinueParent;
+	}
+
+	override Status leave(ir.FunctionParam fp)
+	{
+		assert(false);
+	}
+
 	override Status enter(ir.Enum e)
 	{
 		ln();
@@ -1214,12 +1224,7 @@ public:
 		accept(fn.ret, this);
 		wf(" function(");
 		foreach (i, param; fn.params) {
-			accept(param.type, this);
-			wf(" ");
-			wf(param.name);
-			//if (param.name.length > 0) {
-
-			//}
+			accept(param, this);
 			if (i < fn.params.length - 1) {
 				wf(", ");
 			}
@@ -1241,11 +1246,7 @@ public:
 		accept(fn.ret, this);
 		wf(" delegate(");
 		foreach (i, param; fn.params) {
-			accept(param.type, this);
-			if (param.name.length > 0) {
-				wf(" ");
-				wf(param.name);
-			}
+			accept(param, this);
 			if (i < fn.params.length - 1) {
 				wf(", ");
 			}
@@ -1307,7 +1308,7 @@ public:
 			break;
 		}
 
-		foreach (i, param; fn.type.params) {
+		foreach (i, param; fn.params) {
 			accept(param.type, this);
 			if (param.name.length > 0) {
 				wf(" ");
@@ -1382,6 +1383,7 @@ public:
 		case Immutable: wf("immutable("); break;
 		case Inout: wf("inout("); break;
 		case Scope: wf("scope("); break;
+		case Ref: wf("ref("); break;
 		}
 		if (type.base !is null) {
 			accept(type.base, this);

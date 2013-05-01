@@ -161,8 +161,8 @@ bool specialisationComparison(ir.Function a, ir.Function b)
 	assert(a.type.params.length == b.type.params.length);
 	bool atob = true, btoa = true;
 	for (size_t i = 0; i < a.type.params.length; ++i) {
-		auto at = a.type.params[i].type;
-		auto bt = b.type.params[i].type;
+		auto at = a.params[i].type;
+		auto bt = b.params[i].type;
 		if (!willConvert(at, bt)) {
 			atob = false;
 		}
@@ -200,7 +200,7 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 		}
 		int[] matchLevels;
 		foreach (i, param; fn.type.params) {
-			matchLevels ~= .matchLevel(param.type, arguments[i]);
+			matchLevels ~= .matchLevel(param, arguments[i]);
 		}
 		int matchLevel = int.max;
 		foreach (l; matchLevels) {

@@ -148,6 +148,7 @@ void mangleType(ir.Type t, ref string mangledString)
 		case Const: mangledString ~= "o"; break;
 		case Immutable: mangledString ~= "m"; break;
 		case Inout: mangledString ~= "n"; break;
+		case Ref: mangledString ~= "r"; break;
 		}
 		mangleType(asST.base, mangledString);
 		break;
@@ -175,10 +176,7 @@ void mangleCallableType(ir.CallableType ct, ref string mangledString)
 {
 	mangleLinkage(ct.linkage, mangledString);
 	foreach (i, param; ct.params) {
-		if (param.isRef) {
-			mangledString ~= 'r';
-		}
-		mangleType(param.type, mangledString);
+		mangleType(param, mangledString);
 	}
 	mangledString ~= "Z";  // This would be difference with variadics.
 	mangleType(ct.ret, mangledString);

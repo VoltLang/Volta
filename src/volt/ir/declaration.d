@@ -41,6 +41,7 @@ abstract class Declaration : Node
 		Variable = NodeType.Variable,
 		EnumDeclaration = NodeType.EnumDeclaration,
 		FunctionSet = NodeType.FunctionSet,
+		FunctionParam = NodeType.FunctionParam,
 	}
 	Attribute[] userAttrs;
 
@@ -97,8 +98,7 @@ public:
 
 	bool isExtern; ///< Only for global variables.
 
-	bool isRef;  ///< Will only true for some function parameters.
-	bool isOut;  ///< isRef will be set if this is set.
+	bool isOut;  ///< The type will be a ref storage type if this is set.
 
 	/**
 	 * Tells the backend to turn the storage Variable to the
@@ -220,6 +220,7 @@ public:
 
 	Kind kind;  ///< What kind of function.
 	FunctionType type;  ///< Prototype.
+	FunctionParam[] params;
 
 	string name;  ///< Pre mangling.
 	string mangledName;
@@ -282,6 +283,8 @@ public:
  * Contains the ExpReference that this set is associated with
  * so that it can be transparently updated to point at the
  * selected function.
+ *
+ * @ingroup irNode irDecl
  */
 class FunctionSet : Declaration
 {
@@ -311,5 +314,34 @@ public:
 		functions = null;
 		reference = null;
 		return fn;
+	}
+}
+
+/**
+ * Represents a parameter to a function.
+ *
+ * Indirectly references the type which is on the Callable,
+ * and just contains the metadata parameters have (name, assign. etc).
+ *
+ * @ingroup irNode irDecl
+ */
+class FunctionParam : Declaration
+{
+public:
+	Function fn;
+	size_t index;
+	Exp assign;
+	string name;  // Optional.
+
+public:
+	this()
+	{
+		super(NodeType.FunctionParam);
+	}
+
+	@property Type type()
+	{
+		assert(fn !is null);
+		return fn.type.params[index];
 	}
 }

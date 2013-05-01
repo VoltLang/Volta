@@ -9,6 +9,7 @@ import volt.visitor.visitor;
 import volt.llvm.constant;
 import volt.llvm.expression;
 import volt.llvm.interfaces;
+static import volt.semantic.classify;
 
 
 class LlvmVisitor : NullVisitor
@@ -59,16 +60,16 @@ public:
 			state.currentBlock = LLVMAppendBasicBlock(llvmFunc, "entry");
 			LLVMPositionBuilderAtEnd(b, state.currentBlock);
 
-			foreach(uint i, p; fn.type.params) {
+			foreach(uint i, p; fn.params) {
 				if (p.name is null)
 					continue;
 
 				auto v = LLVMGetParam(llvmFunc, i);
 
-				if (p.isRef) {
+				if (volt.semantic.classify.isRef(p.type)) {
 					state.makeByValVariable(p, v);
 				} else {
-					auto t = state.fromIr(fn.type.params[i].type);
+					auto t = state.fromIr(p.type);
 					auto a = state.getVariableValue(p, t);
 					LLVMBuildStore(state.builder, v, a);
 				}

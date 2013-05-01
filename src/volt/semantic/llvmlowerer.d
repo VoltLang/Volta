@@ -199,7 +199,7 @@ public:
 		fn.isWeakLink = true;
 		fn.type.ret = copyTypeSmart(loc, ltype);
 
-		ir.Variable left;
+		ir.FunctionParam left;
 		if(isAssignment)
 			left = addParam(loc, fn, buildPtrSmart(loc, ltype), "left");
 		else
@@ -322,7 +322,7 @@ public:
 		];
 		buildExpStat(loc, fn._body, buildCall(loc, expRef, args));
 
-		buildReturnStat(loc, fn._body, buildExpReference(loc, fn.type.params[0], "left"));
+		buildReturnStat(loc, fn._body, buildExpReference(loc, fn.params[0], "left"));
 
 		return fn;
 	}
@@ -346,7 +346,7 @@ public:
 		fn.isWeakLink = true;
 		fn.type.ret = copyTypeSmart(loc, type);
 		
-		ir.Variable left;
+		ir.FunctionParam left;
 		if(isAssignment)
 			left = addParam(loc, fn, buildPtrSmart(loc, type), "left");
 		else

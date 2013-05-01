@@ -67,11 +67,19 @@ ir.Declaration mangledToDeclaration(string mangledString)
 ir.Variable mangledToVariable(string mangledString)
 {
 	auto var = new ir.Variable();
+	bool isRef;
 	if (mangledString[0] == 'r') {
 		mangledString.take(1);
-		var.isRef = true;
+		isRef = true;
 	}
 	var.type = mangledString.mangledToType();
+	if (isRef) {
+		auto storage = new ir.StorageType();
+		storage.location = var.type.location;
+		storage.type = ir.StorageType.Kind.Ref;
+		storage.base = var.type;
+		var.type = storage;
+	}
 	return var;
 }
 
@@ -221,7 +229,7 @@ ir.CallableType mangleToCallable(ref string mangledString)
 	}
 
 	while (mangledString[0] != 'X' && mangledString[0] != 'Y' && mangledString[0] != 'Z') {
-		ctype.params ~= mangledString.mangledToVariable();
+		ctype.params ~= mangledString.mangledToType();
 	}
 
 	auto argsclose = mangledString.take(1);

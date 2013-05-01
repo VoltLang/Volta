@@ -264,7 +264,17 @@ ir.Function parseConstructor(TokenStream ts)
 
 	c.type = new ir.FunctionType();
 	c.type.ret = pt;
-	c.type.params = parseParameterList(ts);
+	auto params = parseParameterList(ts, c.type);
+	foreach (i, param; params) {
+		c.type.params ~= param.type;
+		auto p = new ir.FunctionParam();
+		p.location = param.location;
+		p.name = param.name;
+		p.index = i;
+		p.assign = param.assign;
+		p.fn = c;
+		c.params ~= p;
+	}
 	c._body = parseBlock(ts);
 
 	return c;

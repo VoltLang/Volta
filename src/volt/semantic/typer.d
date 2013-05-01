@@ -43,6 +43,10 @@ ir.Type declTypeLookup(Location loc, LanguagePass lp, ir.Scope _scope, string na
 	if (ed !is null) {
 		return ed.type;
 	}
+	auto fp = cast(ir.FunctionParam) store.node;
+	if (fp !is null) {
+		return fp.type;
+	}
 	auto e = cast(ir.Enum) store.node;
 	if (e !is null) {
 		return e;
@@ -177,6 +181,11 @@ ir.Type getExpReferenceType(LanguagePass lp, ir.ExpReference expref)
 	auto ed = cast(ir.EnumDeclaration) expref.decl;
 	if (ed !is null) {
 		return ed.type;
+	}
+
+	auto fp = cast(ir.FunctionParam) expref.decl;
+	if (fp !is null) {
+		return fp.type;
 	}
 
 	auto fnset = cast(ir.FunctionSet) expref.decl;
@@ -482,7 +491,7 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 
 	_lookup:
 	auto store = lookupAsThisScope(lp, _scope, postfix.location, postfix.identifier.value);
-  
+
 	if (store is null) {
 		throw makeError(postfix.identifier.location, emsg);
 	}

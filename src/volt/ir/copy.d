@@ -114,11 +114,8 @@ ir.FunctionType copy(ir.FunctionType old)
 	auto ft = new ir.FunctionType(old);
 	ft.location = old.location;
 	ft.ret = copyType(old.ret);
-	foreach(ref oldVar; ft.params) {
-		auto var = new ir.Variable();
-		var.location = oldVar.location;
-		var.type = copyType(oldVar.type);
-		oldVar = var;
+	foreach(ref ptype; ft.params) {
+		ptype = copyType(ptype);
 	}
 	return ft;
 }
@@ -128,11 +125,8 @@ ir.DelegateType copy(ir.DelegateType old)
 	auto dg = new ir.DelegateType(old);
 	dg.location = old.location;
 	dg.ret = copyType(old.ret);
-	foreach(ref oldVar; dg.params) {
-		auto var = new ir.Variable();
-		var.location = oldVar.location;
-		var.type = copyType(oldVar.type);
-		oldVar = var;
+	foreach(ref ptype; dg.params) {
+		ptype = copyType(ptype);
 	}
 	return dg;
 }
@@ -292,7 +286,7 @@ ir.Node copyNode(ir.Node n)
 	case Variable:
 	case Alias:
 	case Function:
-	case FunctionParameter:
+	case FunctionParam:
 	case AsmStatement:
 	case IfStatement:
 	case WhileStatement:

@@ -61,6 +61,7 @@ public:
 		Function,
 		Template,
 		EnumDeclaration,
+		FunctionParam,
 	}
 
 
@@ -328,7 +329,12 @@ public:
 	}
 	body {
 		errorOn(n, name);
-		auto store = new Store(this, n, name, Store.Kind.Value);
+		ir.Store store;
+		if (n.nodeType == ir.NodeType.FunctionParam) {
+			store = new Store(this, n, name, Store.Kind.FunctionParam);
+		} else {
+			store = new Store(this, n, name, Store.Kind.Value);
+		}
 		symbols[name] = store;
 		return store;
 	}

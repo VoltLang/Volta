@@ -8,6 +8,7 @@ import volt.errors;
 import volt.llvm.aggregate;
 import volt.llvm.constant;
 import volt.llvm.interfaces;
+static import volt.semantic.classify;
 static import volt.semantic.mangle;
 
 
@@ -1041,7 +1042,7 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 		auto v = new Value();
 		state.getValueAnyForm(arg, v);
 
-		if (i < ct.ct.params.length && ct.ct.params[i].isRef) {
+		if (i < ct.ct.params.length && volt.semantic.classify.isRef(ct.ct.params[i])) {
 			makePointer(state, v);
 		} else {
 			makeNonPointer(state, v);
@@ -1104,6 +1105,11 @@ void handleExpReference(State state, ir.ExpReference expRef, Value result)
 		auto var = cast(ir.Variable)expRef.decl;
 		result.isPointer = !var.useBaseStorage;
 		result.value = state.getVariableValue(var, result.type);
+		break;
+	case FunctionParam:
+		auto fp = cast(ir.FunctionParam)expRef.decl;
+		result.isPointer = true;
+		result.value = state.getVariableValue(fp, result.type);
 		break;
 	case EnumDeclaration:
 		auto ed = cast(ir.EnumDeclaration)expRef.decl;

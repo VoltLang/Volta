@@ -370,7 +370,7 @@ public:
 
 		ret = state.fromIr(ft.ret);
 		foreach(int i, param; ft.params) {
-			params ~= state.fromIr(param.type);
+			params ~= state.fromIr(param);
 		}
 
 		// FunctionPointers can via structs reference themself.
@@ -398,7 +398,7 @@ private:
 		this.ret = ret;
 		foreach(int i, type; params) {
 			args[i] = type.llvmType;
-			if (ft.params[i].isRef) {
+			if (volt.semantic.classify.isRef(ft.params[i])) {
 				args[i] = LLVMPointerType(args[i], 0);
 			}
 		}
@@ -436,9 +436,9 @@ public:
 		args.length = dt.params.length + 1;
 
 		foreach(int i, param; dt.params) {
-			auto type = state.fromIr(param.type);
+			auto type = state.fromIr(param);
 			args[i] = type.llvmType;
-			if (dt.params[i].isRef) {
+			if (volt.semantic.classify.isRef(param)) {
 				args[i] = LLVMPointerType(args[i], 0);
 			}
 		}

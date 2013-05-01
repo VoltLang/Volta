@@ -159,7 +159,7 @@ bool mutableIndirection(ir.Type t)
 
 bool canTransparentlyReferToBase(ir.StorageType storage)
 {
-	return storage.type == ir.StorageType.Kind.Auto;
+	return storage.type == ir.StorageType.Kind.Auto || storage.type == ir.StorageType.Kind.Ref;
 }
 
 bool isAuto(ir.Type t)
@@ -215,6 +215,24 @@ bool isImmutable(ir.Type type)
 	return false;
 }
 
+bool isRef(ir.Type type)
+{
+	if (type is null) {
+		return false;
+	}
+	auto storage = cast(ir.StorageType) type;
+	if (storage is null) {
+		return false;
+	}
+	while (storage !is null) {
+		if (storage.type == ir.StorageType.Kind.Ref) {
+			return true;
+		}
+		storage = cast(ir.StorageType) storage.base;
+	}
+	return false;
+}
+
 bool isConst(ir.Type type)
 {
 	if (type is null) {
@@ -239,11 +257,11 @@ bool isRefVar(ir.Exp exp)
 	if (asExpRef is null) {
 		return false;
 	}
-	auto asVar = cast(ir.Variable) asExpRef.decl;
+	auto asVar = cast(ir.FunctionParam) asExpRef.decl;
 	if (asVar is null) {
 		return false;
 	}
-	return asVar.isRef;
+	return isRef(asVar.type);
 }
 
 bool isFunctionMemberOrConstructor(ir.Function fn)
@@ -698,7 +716,7 @@ bool typesEqual(ir.Type a, ir.Type b)
 		if (!ret)
 			return false;
 		for (int i; i < apLength; i++)
-			if (!typesEqual(ap.params[i].type, bp.params[i].type))
+			if (!typesEqual(ap.params[i], bp.params[i]))
 				return false;
 		return true;
 	} else if (a.nodeType == ir.NodeType.StorageType &&

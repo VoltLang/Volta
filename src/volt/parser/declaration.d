@@ -212,7 +212,7 @@ ir.FunctionType parseFunctionType(TokenStream ts, ir.Type base)
 
 	fn.ret = base;
 	match(ts, TokenType.Function);
-	fn.params = parseParameterList(ts, fn);
+	fn.params = parseParameterListFPtr(ts, fn);
 
 	return fn;
 }
@@ -224,14 +224,35 @@ ir.DelegateType parseDelegateType(TokenStream ts, ir.Type base)
 
 	fn.ret = base;
 	match(ts, TokenType.Delegate);
-	fn.params = parseParameterList(ts, fn);
+	fn.params = parseParameterListFPtr(ts, fn);
 
 	return fn;
 }
 
-ir.Variable[] parseParameterList(TokenStream ts, ir.CallableType parentCallable=null)
+ir.Type[] parseParameterListFPtr(TokenStream ts, ir.CallableType parentCallable)
 {
-	ir.Variable[] plist;
+	ir.Type[] types;
+
+	match(ts, TokenType.OpenParen);
+	while (ts.peek.type != TokenType.CloseParen) {
+		if (matchIf(ts, TokenType.TripleDot)) {
+			parentCallable.hasVarArgs = true;
+			break;
+		}
+		auto var = parseParameter(ts);
+		types ~= var.type;
+		if (ts.peek.type == TokenType.Comma) {
+			ts.get();
+		}
+	}
+	match(ts, TokenType.CloseParen);
+
+	return types;
+}
+
+ir.Variable[] parseParameterList(TokenStream ts, ir.CallableType parentCallable)
+{
+	ir.Variable[] vars;
 
 	match(ts, TokenType.OpenParen);
 	while (ts.peek.type != TokenType.CloseParen) {
@@ -242,6 +263,23 @@ ir.Variable[] parseParameterList(TokenStream ts, ir.CallableType parentCallable=
 			parentCallable.hasVarArgs = true;
 			break;
 		}
+		auto var = parseParameter(ts);
+		vars ~= var;
+		if (ts.peek.type == TokenType.Comma) {
+			ts.get();
+		}
+	}
+	match(ts, TokenType.CloseParen);
+
+	return vars;
+}
+
+ir.Variable[] parseParameterList(TokenStream ts)
+{
+	ir.Variable[] plist;
+
+	match(ts, TokenType.OpenParen);
+	while (ts.peek.type != TokenType.CloseParen) {
 		plist ~= parseParameter(ts);
 		if (ts.peek.type == TokenType.Comma) {
 			ts.get();
@@ -259,16 +297,23 @@ ir.Variable parseParameter(TokenStream ts)
 	Location origin = ts.peek.location;
 
 	/// @todo intermixed ref
-	p.isRef = matchIf(ts, TokenType.Ref);
-	bool isOut, isIn;
-	if (!p.isRef) {
-		isOut = p.isRef = matchIf(ts, TokenType.Out);
+	bool isOut, isIn, isRef;
+	isRef = matchIf(ts, TokenType.Ref);
+	if (!isRef) {
+		isOut = isRef = matchIf(ts, TokenType.Out);
 	}
-	if (!isOut && !p.isRef) {
+	if (!isOut && !isRef) {
 		isIn = matchIf(ts, TokenType.In);
 	}
 
 	p.type = parseType(ts);
+	if (isRef) {
+		auto s = new ir.StorageType();
+		s.location = p.type.location;
+		s.type = ir.StorageType.Kind.Ref;
+		s.base = p.type;
+		p.type = s;
+	}
 	if (isIn) {
 		auto constStorage = buildStorageType(ts.peek.location, ir.StorageType.Kind.Const, p.type);
 		auto scopeStorage = buildStorageType(ts.peek.location, ir.StorageType.Kind.Scope, constStorage);
@@ -354,7 +399,18 @@ ir.Function parseFunction(TokenStream ts, ir.Type base)
 	fn.location = nameTok.location;
 
 	// int add<(int a, int b)> {}
-	fn.type.params = parseParameterList(ts, fn.type);
+	auto params = parseParameterList(ts, fn.type);
+	foreach (i, param; params) {
+		fn.type.params ~= param.type;
+		auto p = new ir.FunctionParam();
+		p.location = param.location;
+		p.name = param.name;
+		p.index = i;
+		p.assign = param.assign;
+		p.fn = fn;
+		fn.params ~= p;
+	}
+	//fn.type.params = parseParameterList(ts, fn.type);
 	fn.type.location = ts.previous.location - fn.type.ret.location;
 
 	bool inBlocks = ts.peek.type != TokenType.Semicolon;

@@ -165,6 +165,17 @@ void handleExpReference(State state, ir.ExpReference expRef, Value result)
 		result.isPointer = false;
 		result.value = state.getFunctionValue(fn, result.type);
 		break;
+	case FunctionParam:
+		auto fp = cast(ir.FunctionParam)expRef.decl;
+		assert(fp !is null);
+
+		Type type;
+		auto v = state.getVariableValue(fp, type);
+
+		result.value = v;
+		result.isPointer = false;
+		result.type = type;
+		break;
 	case Variable:
 		auto var = cast(ir.Variable)expRef.decl;
 		assert(var !is null);

@@ -198,14 +198,14 @@ ir.Function[][] getClassMethods(LanguagePass lp, ir.Scope current, ir.Class _cla
 			continue;
 		}
 
+		lp.resolve(current, asFunction);
+
 		if (asFunction.kind == ir.Function.Kind.Constructor) {
 			if (gatherConstructors) {
 				_class.userConstructors ~= asFunction;
 			}
 			continue;
 		}
-
-		lp.resolve(current, asFunction);
 
 		methods[$-1] ~= asFunction;
 	}

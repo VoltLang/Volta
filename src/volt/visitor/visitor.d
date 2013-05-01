@@ -46,6 +46,8 @@ public abstract:
 	Status leave(ir.Union c);
 	Status enter(ir.Variable d);
 	Status leave(ir.Variable d);
+	Status enter(ir.FunctionParam fp);
+	Status leave(ir.FunctionParam fp);
 	Status enter(ir.Enum e);
 	Status leave(ir.Enum e);
 	Status enter(ir.StaticAssert sa);
@@ -212,6 +214,8 @@ override:
 	Status leave(ir.Struct s){ return Continue; }
 	Status enter(ir.Variable d){ return Continue; }
 	Status leave(ir.Variable d){ return Continue; }
+	Status enter(ir.FunctionParam fp){ return Continue; }
+	Status leave(ir.FunctionParam fp){ return Continue; }
 	Status enter(ir.Enum e){ return Continue; }
 	Status leave(ir.Enum e){ return Continue; }
 	Status enter(ir.StaticAssert sa){ return Continue; }
@@ -386,6 +390,10 @@ Visitor.Status accept(ir.Node n, Visitor av)
 		return acceptImport(asImport, av);
 	case Variable:
 		return acceptVariable(cast(ir.Variable) n, av);
+	case FunctionParam:
+		auto fp = cast(ir.FunctionParam) n;
+		assert(fp !is null);
+		return acceptFunctionParam(fp, av);
 	case Unittest:
 		return acceptUnittest(cast(ir.Unittest) n, av);
 	case Class:
@@ -583,7 +591,6 @@ Visitor.Status accept(ir.Node n, Visitor av)
 	case AAPair:
 	case FunctionSetType:
 	case FunctionSet:
-	case FunctionParameter:
 	case SwitchCase:
 	case Comma:
 		throw panicUnhandled(n, to!string(n.nodeType));
@@ -699,6 +706,23 @@ Visitor.Status acceptVariable(ir.Variable d, Visitor av)
 	}
 
 	return av.leave(d);
+}
+
+Visitor.Status acceptFunctionParam(ir.FunctionParam fp, Visitor av)
+{
+	auto status = av.enter(fp);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	if (fp.assign !is null) {
+		status = accept(fp.assign, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	return av.leave(fp);
 }
 
 Visitor.Status acceptUnittest(ir.Unittest u, Visitor av)
@@ -1061,8 +1085,8 @@ Visitor.Status acceptFunctionType(ir.FunctionType fn, Visitor av)
 		return VisitorStop;
 	}
 
-	foreach (param; fn.params) {
-		status = accept(param.type, av);
+	foreach (type; fn.params) {
+		status = accept(type, av);
 		if (status == VisitorStop) {
 			return VisitorStop;
 		}
@@ -1082,8 +1106,8 @@ Visitor.Status acceptDelegateType(ir.DelegateType fn, Visitor av)
 	if (status == VisitorStop) {
 		return VisitorStop;
 	}
-	foreach (param; fn.params) {
-		status = accept(param.type, av);
+	foreach (type; fn.params) {
+		status = accept(type, av);
 		if (status == VisitorStop) {
 			return VisitorStop;
 		}

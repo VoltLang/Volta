@@ -269,7 +269,7 @@ public:
 	Linkage linkage;
 
 	Type ret;
-	Variable[] params;
+	Type[] params;
 	/// @todo Get rid of this once we've moved Function.Kind here.
 	bool hiddenParameter;
 	bool isScope;
@@ -424,6 +424,7 @@ public:
 		Immutable = TokenType.Immutable,
 		Inout = TokenType.Inout,
 		Scope = TokenType.Scope,
+		Ref = TokenType.Ref,
 	}
 
 

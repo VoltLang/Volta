@@ -194,7 +194,34 @@ public:
 		return v;
 	}
 
-	override void makeByValVariable(ir.Variable var, LLVMValueRef v)
+	override LLVMValueRef getVariableValue(ir.FunctionParam var, out Type type)
+	{
+		auto k = *cast(size_t*)&var;
+		auto ret = k in valueStore;
+
+		if (ret !is null) {
+			type = ret.type;
+			return ret.value;
+		}
+
+		if (var.type is null)
+			throw panic(var.location, "variable without type");
+
+		type = this.fromIr(var.type);
+		LLVMValueRef v;
+		LLVMTypeRef llvmType;
+
+		llvmType = type.llvmType;
+
+		if (currentFunc is null)
+			throw panic(var.location, "non-local/global variable in non-function scope");
+		v = LLVMBuildAlloca(builder, llvmType, var.name);
+
+		valueStore[k] = Store(v, type);
+		return v;
+	}
+
+	override void makeByValVariable(ir.FunctionParam var, LLVMValueRef v)
 	{
 		auto k = *cast(size_t*)&var;
 		assert((k in valueStore) is null);

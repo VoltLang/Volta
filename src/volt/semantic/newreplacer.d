@@ -198,7 +198,10 @@ public:
 			auto fn = _class.userConstructors[i];
 			constructor = buildFunction(fn.location, _class.members, _class.myScope, "magicConstructor");
 			constructor.type.ret = copyTypeSmart(fn.location, _class);
-			constructor.type.params = copyVariablesSmart(fn.location, fn.type.params);
+			foreach (ii, ftype; fn.type.params) {
+				constructor.type.params ~= copyTypeSmart(ftype.location, ftype);
+				constructor.params ~= buildFunctionParam(fn.location, ii, "", constructor);
+			}
 
 			// auto thisVar = allocDg(Class, -1)
 			auto thisVar = buildVarStatSmart(fn.location, constructor._body, constructor._body.myScope, _class, "thisVar");
@@ -209,7 +212,7 @@ public:
 			//assert(_class.userConstructors.length == 1);
 			auto eref = buildExpReference(fn.location, fn, "this");
 			auto exp = buildCall(fn.location, eref, null);
-			exp.arguments ~= getExpRefs(fn.location, constructor.type.params);
+			exp.arguments ~= getExpRefs(fn.location, constructor.params);
 			exp.arguments ~= buildCast(fn.location, buildVoidPtr(fn.location), buildExpReference(fn.location, thisVar, "thisVar"));
 			buildExpStat(fn.location, constructor._body, exp);
 

@@ -71,7 +71,7 @@ enum NodeType
 	Variable,
 	Alias,
 	Function,
-	FunctionParameter,
+	FunctionParam,
 	TypeOf,
 	NullType,
 	EnumDeclaration,
@@ -318,7 +318,7 @@ string nodeToString(NodeType nodeType)
 	case Variable: return "Variable";
 	case Alias: return "Alias";
 	case Function: return "Function";
-	case FunctionParameter: return "FunctionParameter";
+	case FunctionParam: return "FunctionParam";
 	case ReturnStatement: return "ReturnStatement";
 	case BlockStatement: return "BlockStatement";
 	case AsmStatement: return "AsmStatement";

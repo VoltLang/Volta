@@ -433,6 +433,12 @@ void extypeIdentifierExp(LanguagePass lp, ir.Scope current, ref ir.Exp e, ir.Ide
 		_ref.decl = var;
 		e = _ref;
 		return;
+	case FunctionParam:
+		auto fp = cast(ir.FunctionParam) store.node;
+		assert(fp !is null);
+		_ref.decl = fp;
+		e = _ref;
+		return;
 	case Function:
 		_ref.decl = buildSet(i.location, store.functions);
 		e = _ref;
@@ -609,10 +615,10 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 	}
 	assert(asFunctionType.params.length <= postfix.arguments.length);
 	foreach (i; 0 .. asFunctionType.params.length) {
-		if (asFunctionType.params[i].isRef && !isLValue(postfix.arguments[i])) {
+		if (isRef(asFunctionType.params[i]) && !isLValue(postfix.arguments[i])) {
 			throw makeNotLValue(postfix.arguments[i]);
 		}
-		extypePass(lp, current, postfix.arguments[i], asFunctionType.params[i].type);
+		extypePass(lp, current, postfix.arguments[i], asFunctionType.params[i]);
 	}
 
 	if (thisCall) {
@@ -660,6 +666,8 @@ bool replaceExpReferenceIfNeeded(LanguagePass lp, ir.Scope current,
 			return false;
 		}
 		break;
+	case FunctionParam:
+		return false;
 	case EnumDeclaration:
 	case FunctionSet:
 		return false;
@@ -696,7 +704,9 @@ bool replaceExpReferenceIfNeeded(LanguagePass lp, ir.Scope current,
 	string ident = eRef.idents[$-1];
 	auto store = lookupOnlyThisScope(lp, expressionAgg.myScope, exp.location, ident);
 	if (store !is null && store.node !is eRef.decl) {
-		throw makeNotMember(eRef, expressionAgg, ident);
+		if (eRef.decl.nodeType !is ir.NodeType.FunctionParam) {
+			throw makeNotMember(eRef, expressionAgg, ident);
+		}
 	}
 
 	auto thisClass = cast(ir.Class) thisAgg;
@@ -851,6 +861,10 @@ void extypePostfixIdentifier(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 			assert(store.functions.length == 1);
 			auto fn = store.functions[0];
 			_ref.decl = fn;
+		} else if (store.kind == ir.Store.Kind.FunctionParam) {
+			auto fp = cast(ir.FunctionParam) store.node;
+			assert(fp !is null);
+			_ref.decl = fp;
 		} else {
 			throw panicUnhandled(_ref, to!string(store.kind));
 		}
@@ -942,6 +956,7 @@ void extypePostfixIdentifier(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 
 		case Value:
 		case Function:
+		case FunctionParam:
 			filloutReference(store);
 			break;
 		case Template:
@@ -1033,7 +1048,7 @@ void handleNew(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Unary _unar
 	lp.resolve(current, fn);
 
 	for (size_t i = 0; i < _unary.argumentList.length; ++i) {
-		extypeAssign(lp, current, _unary.argumentList[i], fn.type.params[i].type);
+		extypeAssign(lp, current, _unary.argumentList[i], fn.type.params[i]);
 	}
 }
 
@@ -1390,6 +1405,12 @@ public:
 	{
 		lp.resolve(current, ed);
 		return ContinueParent;
+	}
+
+	override Status enter(ir.FunctionParam p)
+	{
+		ensureResolved(lp, current, p.type);
+		return Continue;
 	}
 
 	override Status enter(ir.Variable v)

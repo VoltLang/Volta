@@ -171,6 +171,10 @@ ir.Store ensureResolved(LanguagePass lp, ir.Store s)
 		auto var = cast(ir.Variable)s.node;
 		lp.resolve(s.parent, var);
 		return s;
+	case FunctionParam:
+		auto fp = cast(ir.FunctionParam)s.node;
+		ensureResolved(lp, s.parent, fp.type);
+		return s;
 	case Function:
 		foreach (fn; s.functions) {
 			lp.resolve(s.parent, fn);
@@ -228,14 +232,14 @@ void ensureResolved(LanguagePass lp, ir.Scope current, ir.Type type)
 		auto ft = cast(ir.FunctionType)type;
 		ensureResolved(lp, current, ft.ret);
 		foreach (p; ft.params) {
-			ensureResolved(lp, current, p.type);
+			ensureResolved(lp, current, p);
 		}
 		return;
 	case DelegateType:
 		auto dt = cast(ir.DelegateType)type;
 		ensureResolved(lp, current, dt.ret);
 		foreach (p; dt.params) {
-			ensureResolved(lp, current, p.type);
+			ensureResolved(lp, current, p);
 		}
 		return;
 	case TypeReference:

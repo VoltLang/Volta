@@ -165,6 +165,8 @@ public:
 	override Status leave(ir.Union n) { leaveNode(n); return Continue; }
 	override Status enter(ir.Variable n) { enterNode(n); visitNamed(n); return Continue; }
 	override Status leave(ir.Variable n) { leaveNode(n); return Continue; }
+	override Status enter(ir.FunctionParam n) { enterNode(n); visitNamed(n); return Continue; }
+	override Status leave(ir.FunctionParam n) { leaveNode(n); return Continue; }
 	override Status enter(ir.Enum n) { enterNode(n); return Continue; }
 	override Status leave(ir.Enum n) { leaveNode(n); return Continue; }
 	override Status enter(ir.StaticAssert n) { enterNode(n); return Continue; }
@@ -390,6 +392,9 @@ protected:
 		case Variable:
 			auto asVar = cast(ir.Variable)n;
 			return visitNames(asVar.name, asVar.mangledName);
+		case FunctionParam:
+			auto asFP = cast(ir.FunctionParam)n;
+			return visitName(asFP.name);
 		case Class:
 			auto asClass = cast(ir.Class)n;
 			return visitName(asClass.name);

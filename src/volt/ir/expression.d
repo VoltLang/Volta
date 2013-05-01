@@ -399,7 +399,7 @@ public:
 	string name;
 
 public:
-	this() { super(NodeType.FunctionParameter); }
+	this() { super(NodeType.FunctionParam); }
 }
 
 /**

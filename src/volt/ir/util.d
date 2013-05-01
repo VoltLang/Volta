@@ -116,6 +116,7 @@ ir.Scope getScopeFromStore(ir.Store store)
 		return getScopeFromType(type);
 	case Value:
 	case Function:
+	case FunctionParam:
 	case Template:
 	case EnumDeclaration:
 		return null;
@@ -168,11 +169,8 @@ ir.Type copyTypeSmart(Location loc, ir.Type type)
 		auto ft = new ir.FunctionType(asFt);
 		ft.location = loc;
 		ft.ret = copyTypeSmart(loc, ft.ret);
-		foreach(ref var; ft.params) {
-			auto t = copyTypeSmart(loc, var.type);
-			var = new ir.Variable();
-			var.location = loc;
-			var.type = t;
+		foreach(i, ref t; ft.params) {
+			t = copyTypeSmart(loc, t);
 		}
 		return ft;
 	case DelegateType:
@@ -180,11 +178,8 @@ ir.Type copyTypeSmart(Location loc, ir.Type type)
 		auto dg = new ir.DelegateType(asDg);
 		dg.location = loc;
 		dg.ret = copyTypeSmart(loc, dg.ret);
-		foreach(ref var; dg.params) {
-			auto t = copyTypeSmart(loc, var.type);
-			var = new ir.Variable();
-			var.location = loc;
-			var.type = t;
+		foreach(i, ref t; dg.params) {
+			t = copyTypeSmart(loc, t);
 		}
 		return dg;
 	case StorageType:
@@ -335,7 +330,7 @@ ir.Variable[] copyVariablesSmart(Location loc, ir.Variable[] vars)
 /**
  * Get ExpReferences from a list of variables.
  */
-ir.Exp[] getExpRefs(Location loc, ir.Variable[] vars)
+ir.Exp[] getExpRefs(Location loc, ir.FunctionParam[] vars)
 {
 	auto erefs = new ir.Exp[vars.length];
 	foreach (i, var; vars) {
@@ -616,21 +611,35 @@ ir.BinOp buildBinOp(Location loc, ir.BinOp.Op op, ir.Exp left, ir.Exp right)
 	return binop;
 }
 
+ir.FunctionParam buildFunctionParam(Location loc, size_t index, string name, ir.Function fn)
+{
+	auto fparam = new ir.FunctionParam();
+	fparam.location = loc;
+	fparam.index = index;
+	fparam.name = name;
+	fparam.fn = fn;
+	return fparam;
+}
+
 /**
  * Adds a variable argument to a function, also adds it to the scope.
  */
-ir.Variable addParam(Location loc, ir.Function fn, ir.Type type, string name)
+ir.FunctionParam addParam(Location loc, ir.Function fn, ir.Type type, string name)
 {
-	auto var = buildVariable(loc, type, ir.Variable.Storage.Function, name);
-	fn.type.params ~= var;
+	auto var = buildFunctionParam(loc, fn.type.params.length, name, fn);
+
+	fn.type.params ~= type;
+
+	fn.params ~= var;
 	fn._body.myScope.addValue(var, name);
+
 	return var;
 }
 
 /**
  * Adds a variable argument to a function, also adds it to the scope.
  */
-ir.Variable addParamSmart(Location loc, ir.Function fn, ir.Type type, string name)
+ir.FunctionParam addParamSmart(Location loc, ir.Function fn, ir.Type type, string name)
 {
 	return addParam(loc, fn, copyTypeSmart(loc, type), name);
 }
