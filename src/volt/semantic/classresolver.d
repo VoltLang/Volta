@@ -243,6 +243,9 @@ ir.Function[] getClassMethodFunctions(LanguagePass lp, ir.Class _class)
 			if (noPriorMethods && method.isMarkedOverride) {
 				throw makeMarkedOverrideDoesNotOverride(method, method);
 			}
+			if (method.isMarkedOverride) {
+				continue;
+			}
 			outMethods ~= method;
 			method.vtableIndex = cast(int)outIndex++;
 		}
