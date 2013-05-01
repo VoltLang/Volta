@@ -233,6 +233,13 @@ ir.Function[] getClassMethodFunctions(LanguagePass lp, ir.Class _class)
 			noPriorMethods = true;
 		}
 		foreach (method; methods) {
+			auto fns = getPotentialOverrideFunctions(methods, method);
+			fns ~= method;
+			if (fns.length > 0) {
+				// Ensure that this function is the only overload possibility for itself in its own class.
+				auto tmp = selectFunction(lp, fns, method.type.params, method.location);
+			}
+
 			if (noPriorMethods && method.isMarkedOverride) {
 				throw makeMarkedOverrideDoesNotOverride(method, method);
 			}
@@ -244,20 +251,29 @@ ir.Function[] getClassMethodFunctions(LanguagePass lp, ir.Class _class)
 }
 
 /**
+ * Returns all functions in functions that have the same name as considerFunction.
+ */
+ir.Function[] getPotentialOverrideFunctions(ir.Function[] functions, ir.Function considerFunction)
+{
+	ir.Function[] _out;
+	foreach (fn; functions) {
+		if (fn is considerFunction) {
+			continue;
+		}
+		if (fn.name == considerFunction.name) {
+			_out ~= fn;
+		}
+	}
+	return _out;
+}
+
+/**
  * Replace an overriden function in parentSet with childFunction if appropriate.
  * Returns true if a function is replaced, false otherwise.
  */
 bool overrideFunctionsIfNeeded(LanguagePass lp, ir.Function childFunction, ref ir.Function[] parentSet)
 {
-	ir.Function[] toConsider;
-	foreach (parentFunction; parentSet) {
-		if (parentFunction is childFunction) {
-			continue;
-		}
-		if (parentFunction.name == childFunction.name) {
-			toConsider ~= parentFunction;
-		}
-	}
+	auto toConsider = getPotentialOverrideFunctions(parentSet, childFunction);
 
 	if (toConsider.length == 0) {
 		if (childFunction.isMarkedOverride) {
