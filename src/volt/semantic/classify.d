@@ -405,7 +405,7 @@ bool effectivelyConst(ir.Type type)
 	}
 
 	auto t = asStorageType.type;
-	with (ir.StorageType.Kind) return t == Const || t == Immutable || t == Inout;
+	with (ir.StorageType.Kind) return t == Const || t == Immutable;
 }
 
 bool isIntegral(ir.Type t)

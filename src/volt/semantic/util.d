@@ -374,7 +374,6 @@ void canonicaliseStorageType(ir.StorageType outStorage)
 			case Ref: return 4;
 			case Immutable: return 3;
 			case Const: return 2;
-			case Inout: return 1;
 			case Auto: return 0;
 			}
 		}

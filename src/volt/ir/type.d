@@ -422,7 +422,6 @@ public:
 		Auto = TokenType.Auto,
 		Const = TokenType.Const,
 		Immutable = TokenType.Immutable,
-		Inout = TokenType.Inout,
 		Scope = TokenType.Scope,
 		Ref = TokenType.Ref,
 	}

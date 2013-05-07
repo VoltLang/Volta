@@ -1427,7 +1427,6 @@ public:
 		case Auto: wf("auto("); break;
 		case Const: wf("const("); break;
 		case Immutable: wf("immutable("); break;
-		case Inout: wf("inout("); break;
 		case Scope: wf("scope("); break;
 		case Ref: wf("ref("); break;
 		}

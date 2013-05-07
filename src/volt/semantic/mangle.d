@@ -147,7 +147,6 @@ void mangleType(ir.Type t, ref string mangledString)
 		case Scope: mangledString ~= "e"; break;
 		case Const: mangledString ~= "o"; break;
 		case Immutable: mangledString ~= "m"; break;
-		case Inout: mangledString ~= "n"; break;
 		case Ref: mangledString ~= "r"; break;
 		}
 		if (asST.base is null) {

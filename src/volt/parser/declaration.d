@@ -127,7 +127,7 @@ ir.Type parseType(TokenStream ts)
 		base = parsePrimitiveType(ts);
 		break;
 	case TokenType.Auto, TokenType.Const, TokenType.Immutable,
-		 TokenType.Inout, TokenType.Scope:
+		 TokenType.Scope:
 		base = parseStorageType(ts);
 		break;
 	case TokenType.Identifier, TokenType.Dot:
