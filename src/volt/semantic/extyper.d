@@ -1407,6 +1407,13 @@ public:
 		return ContinueParent;
 	}
 
+	override Status enter(ir.StorageType st)
+	{
+		ensureResolved(lp, current, st);
+		assert(st.isCanonical);
+		return Continue;
+	}
+
 	override Status enter(ir.FunctionParam p)
 	{
 		ensureResolved(lp, current, p.type);

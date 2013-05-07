@@ -139,6 +139,7 @@ ir.StorageType copy(ir.StorageType old)
 		st.base = copyType(old.base);
 	}
 	st.type = old.type;
+	st.isCanonical = old.isCanonical;
 	return st;
 }
 

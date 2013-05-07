@@ -188,6 +188,7 @@ ir.Type copyTypeSmart(Location loc, ir.Type type)
 		st.location = loc;
 		if (asSt.base !is null) st.base = copyTypeSmart(loc, asSt.base);
 		st.type = asSt.type;
+		st.isCanonical = asSt.isCanonical;
 		return st;
 	case TypeReference:
 		auto tr = cast(ir.TypeReference)type;

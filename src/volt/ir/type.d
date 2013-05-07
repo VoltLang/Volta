@@ -431,6 +431,8 @@ public:
 public:
 	Kind type;
 	Type base;  // Optional.
+	///< True if this storage chain has been processed into a canonical format.
+	bool isCanonical;
 
 
 public:

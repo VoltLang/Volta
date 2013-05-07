@@ -66,6 +66,14 @@ public:
 		throw panic(v, str);
 	}
 
+	override Status enter(ir.StorageType st)
+	{
+		if (!st.isCanonical) {
+			throw panic(st, "uncanonicalised storage type found in IR.");
+		}
+		return Continue;
+	}
+
 	override Status enter(ir.TopLevelBlock tlb)
 	{
 		foreach (n; tlb.nodes) {
