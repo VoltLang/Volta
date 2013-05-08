@@ -204,11 +204,12 @@ public:
 	override void actualize(ir.Struct c)
 	{
 		// Nothing to do here.
+		c.isActualized = true;
 	}
 
 	override void actualize(ir.Union u)
 	{
-		if (u.actualized)
+		if (u.isActualized)
 			return;
 
 		auto w = mTracker.add(u, "actualizing union");
@@ -228,11 +229,14 @@ public:
 		}
 
 		u.totalSize = size(u.location, this, u);
-		u.actualized = true;
+		u.isActualized = true;
 	}
 
 	override void actualize(ir.Class c)
 	{
+		if (c.isActualized)
+			return;
+
 		if (!needsResolving(c))
 			return;
 
@@ -241,10 +245,14 @@ public:
 			w.done();
 
 		resolveClass(this, c);
+		c.isActualized = true;
 	}
 
 	override void actualize(ir.UserAttribute ua)
 	{
+		if (ua.isActualized)
+			return;
+
 		if (!needsActualizing(ua))
 			return;
 
@@ -253,6 +261,8 @@ public:
 			w.done();
 
 		actualizeUserAttribute(this, ua);
+		resolve(ua);
+		ua.isActualized = true;
 	}
 
 

@@ -158,6 +158,8 @@ public:
 	TopLevelBlock members; ///< Toplevel nodes.
 	Attribute[] userAttrs;
 
+	bool isActualized;
+
 public:
 	this(NodeType nt) { super(nt); }
 }
@@ -304,7 +306,6 @@ public:
 class Union : Aggregate
 {
 public:
-	bool actualized;
 	int totalSize; // Total size in memory.
 
 public:
@@ -538,6 +539,7 @@ public:
 	Variable[] fields;
 	Scope myScope;
 	Class layoutClass;
+	bool isActualized;
 
 public:
 	this() { super(NodeType.UserAttribute); }
