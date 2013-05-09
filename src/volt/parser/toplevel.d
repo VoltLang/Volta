@@ -645,8 +645,9 @@ ir.Attribute parseAttribute(TokenStream ts, bool inModule = false)
 		attr.members = parseTopLevelBlock(ts, TokenType.CloseBrace, inModule);
 		match(ts, TokenType.CloseBrace);
 	} else if (matchIf(ts, TokenType.Colon)) {
-		// Colons are implictly converted into braces; the IR knows nothing of colons.
-		attr.members = parseTopLevelBlock(ts, TokenType.CloseBrace, inModule);
+		/* Have the semantic passes apply this attribute as
+		 * doing it in the parser would require context.
+		 */
 	} else {
 		attr.members = parseOneTopLevelBlock(ts, inModule);
 	}

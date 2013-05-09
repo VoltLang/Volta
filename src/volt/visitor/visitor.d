@@ -942,7 +942,7 @@ Visitor.Status acceptAttribute(ir.Attribute attr, Visitor av)
 		return parentContinue(status);
 	}
 
-	foreach (toplevel; attr.members.nodes) {
+	if (attr.members !is null) foreach (toplevel; attr.members.nodes) {
 		status = accept(toplevel, av);
 		if (status != VisitorContinue) {
 			return parentContinue(status);

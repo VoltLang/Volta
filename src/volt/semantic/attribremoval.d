@@ -439,6 +439,10 @@ protected:
 
 	void ctxPop(ir.Node node)
 	{
+		while (mStack.length > 0 && attrTop().members is null) {
+			attrPop(attrTop());
+		}
+
 		if (node !is ctxTop.node) {
 			throw panic(node, "invalid attribute stack layout");
 		}
@@ -470,6 +474,10 @@ protected:
 	ir.Node[] attrManip(ir.Attribute attr)
 	{
 		attrPush(attr);
+
+		if (attr.members is null) {
+			return null;
+		}
 
 		scope(exit) {
 			if (attr.members.nodes.length > 0)
@@ -522,7 +530,11 @@ public:
 	 */
 	void transform(ir.Module m)
 	{
+		assert(mStack.length == 0);
+		assert(mCtx.length == 0);
 		accept(m, this);
+		mStack = [];
+		mCtx = [];
 	}
 
 	void close()

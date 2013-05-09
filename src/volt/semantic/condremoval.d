@@ -87,7 +87,8 @@ public:
 
 	override Status enter(ir.Attribute a)
 	{
-		a.members.nodes = manipNodes(a.members.nodes, &removeConditionals);
+		if (a.members !is null)
+			a.members.nodes = manipNodes(a.members.nodes, &removeConditionals);
 		return Continue;
 	}
 
