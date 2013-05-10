@@ -369,10 +369,15 @@ ir.Union parseUnion(TokenStream ts)
 	u.location = ts.peek.location;
 
 	match(ts, TokenType.Union);
-	auto nameTok = match(ts, TokenType.Identifier);
-	u.name = nameTok.value;
+	if (ts.peek.type == TokenType.Identifier) {
+		auto nameTok = match(ts, TokenType.Identifier);
+		u.name = nameTok.value;
+	}
 
 	if (ts.peek.type == TokenType.Semicolon) {
+		if (u.name.length == 0) {
+			match(ts, TokenType.OpenBrace);
+		}
 		match(ts, TokenType.Semicolon);
 	} else {
 		match(ts, TokenType.OpenBrace);
