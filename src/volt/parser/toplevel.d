@@ -275,7 +275,47 @@ ir.Function parseConstructor(TokenStream ts)
 		p.fn = c;
 		c.params ~= p;
 	}
-	c._body = parseBlock(ts);
+	bool inBlocks = true;
+	while (inBlocks) {
+		bool _in, _out;
+		switch (ts.peek.type) {
+		case TokenType.In:
+			// <in> { }
+			if (_in) {
+				throw makeMultipleOutBlocks(ts.peek.location);
+			}
+			_in = true;
+			match(ts, TokenType.In);
+			c.inContract = parseBlock(ts);
+			break;
+		case TokenType.Out:
+			// <out>
+			if (_out) {
+				throw makeMultipleOutBlocks(ts.peek.location);
+			}
+			_out = true;
+			match(ts, TokenType.Out);
+			if (ts.peek.type == TokenType.OpenParen) {
+				// out <(result)>
+				match(ts, TokenType.OpenParen);
+				auto identTok = match(ts, TokenType.Identifier);
+				c.outParameter = identTok.value;
+				match(ts, TokenType.CloseParen);
+			}
+			c.outContract = parseBlock(ts);
+			break;
+		case TokenType.OpenBrace:
+		case TokenType.Body:
+			if (ts.peek.type == TokenType.Body) {
+				ts.get();
+			}
+			inBlocks = false;
+			c._body = parseBlock(ts);
+			break;
+		default:
+			throw makeExpected(ts.peek.location, "block declaration");
+		}
+	}
 
 	return c;
 }
