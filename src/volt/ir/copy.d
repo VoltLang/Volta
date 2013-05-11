@@ -292,6 +292,7 @@ ir.Node copyNode(ir.Node n)
 	case WhileStatement:
 	case DoStatement:
 	case ForStatement:
+	case ForeachStatement:
 	case LabelStatement:
 	case ExpStatement:
 	case SwitchStatement:

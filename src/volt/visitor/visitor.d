@@ -593,6 +593,7 @@ Visitor.Status accept(ir.Node n, Visitor av)
 	case FunctionSet:
 	case SwitchCase:
 	case Comma:
+	case ForeachStatement:
 		throw panicUnhandled(n, to!string(n.nodeType));
 	}
 }

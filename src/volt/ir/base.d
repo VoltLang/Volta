@@ -84,6 +84,7 @@ enum NodeType
 	WhileStatement,
 	DoStatement,
 	ForStatement,
+	ForeachStatement,
 	LabelStatement,
 	ExpStatement,
 	SwitchStatement,
@@ -326,6 +327,7 @@ string nodeToString(NodeType nodeType)
 	case WhileStatement: return "WhileStatement";
 	case DoStatement: return "DoStatement";
 	case ForStatement: return "ForStatement";
+	case ForeachStatement: return "ForeachStatement";
 	case LabelStatement: return "LabelStatement";
 	case ExpStatement: return "ExpStatement";
 	case SwitchStatement: return "SwitchStatement";

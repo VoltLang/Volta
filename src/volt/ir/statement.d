@@ -164,6 +164,25 @@ public:
 }
 
 /**
+ * The foreach statement loops over elements in an aggregate.
+ * Arrays and AAs have builtin support, but users can define
+ * iteration solutions for their own types too.
+ *
+ * @ingroup irNode irStatement
+ */
+class ForeachStatement : Statement
+{
+public:
+	bool reverse;
+	Variable[] itervars;
+	Exp aggregate;
+	BlockStatement block;
+
+public:
+	this() { super(NodeType.ForeachStatement); }
+}
+
+/**
  * A label statement associates a string with a position
  * in the statement stream. Goto can then be used to jump
  * to that position and anger Dijkstra. 
