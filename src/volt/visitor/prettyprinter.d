@@ -728,6 +728,32 @@ public:
 		assert(false);
 	}
 
+	override Status enter(ir.ForeachStatement fes)
+	{
+		fes.reverse ? twf("foreach_reverse (") : twf("foreach (");
+		foreach (i, v; fes.itervars) {
+			accept(v.type, this);
+			wf(" ");
+			wf(v.name);
+			if (i < fes.itervars.length - 1) {
+				wf(", ");
+			}
+		}
+		wf("; ");
+		acceptExp(fes.aggregate, this);
+		wfln(") {");
+		mIndent++;
+		internalPrintBlock(fes.block);
+		mIndent--;
+		twfln("}");
+		return ContinueParent;
+	}
+
+	override Status leave(ir.ForeachStatement fes)
+	{
+		assert(false);
+	}
+
 	override Status enter(ir.ForStatement f)
 	{
 		twf("for (");

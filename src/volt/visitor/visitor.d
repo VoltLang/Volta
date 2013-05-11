@@ -86,6 +86,8 @@ public abstract:
 	Status leave(ir.DoStatement d);
 	Status enter(ir.ForStatement f);
 	Status leave(ir.ForStatement f);
+	Status enter(ir.ForeachStatement fes);
+	Status leave(ir.ForeachStatement fes);
 	Status enter(ir.LabelStatement ls);
 	Status leave(ir.LabelStatement ls);
 	Status enter(ir.SwitchStatement ss);
@@ -253,6 +255,8 @@ override:
 	Status leave(ir.DoStatement d){ return Continue; }
 	Status enter(ir.ForStatement f){ return Continue; }
 	Status leave(ir.ForStatement f){ return Continue; }
+	Status enter(ir.ForeachStatement fes){ return Continue; }
+	Status leave(ir.ForeachStatement fes){ return Continue; }
 	Status enter(ir.LabelStatement ls){ return Continue; }
 	Status leave(ir.LabelStatement ls){ return Continue; }
 	Status enter(ir.SwitchStatement ss){ return Continue; }
@@ -494,6 +498,8 @@ Visitor.Status accept(ir.Node n, Visitor av)
 		return acceptDoStatement(cast(ir.DoStatement) n, av);
 	case ForStatement:
 		return acceptForStatement(cast(ir.ForStatement) n, av);
+	case ForeachStatement:
+		return acceptForeachStatement(cast(ir.ForeachStatement) n, av);
 	case LabelStatement:
 		return acceptLabelStatement(cast(ir.LabelStatement) n, av);
 	case SwitchStatement:
@@ -593,7 +599,6 @@ Visitor.Status accept(ir.Node n, Visitor av)
 	case FunctionSet:
 	case SwitchCase:
 	case Comma:
-	case ForeachStatement:
 		throw panicUnhandled(n, to!string(n.nodeType));
 	}
 }
@@ -1331,6 +1336,35 @@ Visitor.Status acceptForStatement(ir.ForStatement f, Visitor av)
 	}
 
 	return av.leave(f);
+}
+
+Visitor.Status acceptForeachStatement(ir.ForeachStatement fes, Visitor av)
+{
+	auto status = av.enter(fes);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	foreach (v; fes.itervars) {
+		status = accept(v, av);
+		if (status == VisitorContinueParent) {
+			continue;
+		} else if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	status = acceptExp(fes.aggregate, av);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	status = accept(fes.block, av);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	return av.leave(fes);
 }
 
 Visitor.Status acceptLabelStatement(ir.LabelStatement ls, Visitor av)

@@ -231,6 +231,8 @@ public:
 	override Status leave(ir.DoStatement n) { leaveNode(n); return Continue; }
 	override Status enter(ir.ForStatement n) { enterNode(n); return Continue; }
 	override Status leave(ir.ForStatement n) { leaveNode(n); return Continue; }
+	override Status enter(ir.ForeachStatement n) { enterNode(n); return Continue; }
+	override Status leave(ir.ForeachStatement n) { leaveNode(n); return Continue; }
 	override Status enter(ir.LabelStatement n) { enterNode(n); return Continue; }
 	override Status leave(ir.LabelStatement n) { leaveNode(n); return Continue; }
 	override Status enter(ir.SwitchStatement n) { enterNode(n); return Continue; }
