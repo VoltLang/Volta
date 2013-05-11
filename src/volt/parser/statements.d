@@ -33,6 +33,8 @@ ir.Statement[] parseStatement(TokenStream ts)
 		return [parseDoStatement(ts)];
 	case TokenType.For:
 		return [parseForStatement(ts)];
+	case TokenType.Foreach, TokenType.ForeachReverse:
+		return [parseForeachStatement(ts)];
 	case TokenType.Switch:
 		return [parseSwitchStatement(ts)];
 	case TokenType.Break:
@@ -234,6 +236,53 @@ ir.DoStatement parseDoStatement(TokenStream ts)
 	match(ts, TokenType.Semicolon);
 
 	return d;
+}
+
+ir.ForeachStatement parseForeachStatement(TokenStream ts)
+{
+	auto f = new ir.ForeachStatement();
+	f.location = ts.peek.location;
+
+	f.reverse = matchIf(ts, TokenType.ForeachReverse);
+	if (!f.reverse) {
+		match(ts, TokenType.Foreach);
+	}
+	match(ts, TokenType.OpenParen);
+
+	while (ts.peek.type != TokenType.Semicolon) {
+		bool isRef = matchIf(ts, TokenType.Ref);
+		ir.Type type;
+		ir.Token name;
+		if (ts == [TokenType.Identifier, TokenType.Comma] || ts == [TokenType.Identifier, TokenType.Semicolon]) {
+			name = match(ts, TokenType.Identifier);
+			auto st = new ir.StorageType();
+			st.location = name.location;
+			st.type = ir.StorageType.Kind.Auto;
+			type = st;
+		} else {
+			type = parseType(ts);
+			name = match(ts, TokenType.Identifier);
+		}
+		if (isRef) {
+			auto st = new ir.StorageType();
+			st.location = type.location;
+			st.type = ir.StorageType.Kind.Ref;
+			st.base = type;
+			type = st;
+		}
+		f.itervars ~= new ir.Variable();
+		f.itervars[$-1].location = type.location;
+		f.itervars[$-1].type = type;
+		f.itervars[$-1].name = name.value;
+		matchIf(ts, TokenType.Comma);
+	}
+	match(ts, TokenType.Semicolon);
+
+	f.aggregate = parseExp(ts);
+
+	match(ts, TokenType.CloseParen);
+	f.block = parseBlockStatement(ts);
+	return f;
 }
 
 ir.ForStatement parseForStatement(TokenStream ts)
