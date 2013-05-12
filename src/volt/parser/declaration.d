@@ -322,6 +322,9 @@ ir.Variable parseParameter(TokenStream ts)
 	if (ts.peek.type == TokenType.Identifier) {
 		Token name = match(ts, TokenType.Identifier);
 		p.name = name.value;
+		if (matchIf(ts, TokenType.Assign)) {
+			p.assign = parseExp(ts);
+		}
 	} else if (ts.peek.type != TokenType.Comma && ts.peek.type != TokenType.CloseParen) {
 		throw makeExpected(ts.peek.location, "',', ')', or an identifier", ts.peek.value);
 	}
