@@ -88,7 +88,7 @@ ir.Statement[] parseStatement(TokenStream ts)
 		return [parseMixinStatement(ts)];
 	default:
 		ir.Node[] node = parseVariableOrExpression(ts);
-		if (node[0].nodeType != ir.NodeType.Variable) {
+		if (node[0].nodeType != ir.NodeType.Variable && node[0].nodeType != ir.NodeType.Function) {
 			// create an ExpStatement out of an Expression
 			match(ts, TokenType.Semicolon);
 			auto es = new ir.ExpStatement();
@@ -118,11 +118,19 @@ ir.Node[] parseVariableOrExpression(TokenStream ts)
 	try {
 		return parseVariable(ts);
 	} catch (CompilerError e) {
-		if (e.neverIgnore) {
-			throw e;
+		try {
+			if (e.neverIgnore) {
+				throw e;
+			}
+			ts.restore(pos);
+			return [parseFunction(ts, parseType(ts))];
+		} catch (CompilerError ee) {
+			if (ee.neverIgnore) {
+				throw ee;
+			}
+			ts.restore(pos);
+			return [parseAssignExp(ts)];
 		}
-		ts.restore(pos);
-		return [parseAssignExp(ts)];
 	}
 }
 
