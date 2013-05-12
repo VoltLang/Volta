@@ -130,7 +130,7 @@ ir.Type parseType(TokenStream ts)
 		 TokenType.Inout, TokenType.Scope:
 		base = parseStorageType(ts);
 		break;
-	case TokenType.Identifier:
+	case TokenType.Identifier, TokenType.Dot:
 		base = parseTypeReference(ts);
 		break;
 	case TokenType.Typeof:
@@ -178,7 +178,7 @@ ir.TypeReference parseTypeReference(TokenStream ts)
 	auto typeReference = new ir.TypeReference();
 	typeReference.location = ts.peek.location;
 
-	typeReference.id = parseQualifiedName(ts);
+	typeReference.id = parseQualifiedName(ts, true);
 
 	assert(typeReference.id.identifiers.length > 0);
 	return typeReference;
