@@ -77,9 +77,13 @@ ir.Statement[] parseStatement(TokenStream ts)
 	case TokenType.Static:
 		if (ts.lookahead(1).type == TokenType.If) {
 			goto case TokenType.Version;
+		} else if (ts.lookahead(1).type == TokenType.Assert) {
+			goto case TokenType.Assert;
 		} else {
 			goto default;
 		}
+	case TokenType.Assert:
+		return [parseAssertStatement(ts)];
 	case TokenType.Version:
 	case TokenType.Debug:
 		ir.Statement[] condstate = [parseConditionStatement(ts)];
@@ -132,6 +136,22 @@ ir.Node[] parseVariableOrExpression(TokenStream ts)
 			return [parseAssignExp(ts)];
 		}
 	}
+}
+
+ir.AssertStatement parseAssertStatement(TokenStream ts)
+{
+	auto as = new ir.AssertStatement();
+	as.location = ts.peek.location;
+	as.isStatic = matchIf(ts, TokenType.Static);
+	match(ts, TokenType.Assert);
+	match(ts, TokenType.OpenParen);
+	as.condition = parseExp(ts);
+	if (matchIf(ts, TokenType.Comma)) {
+		as.message = parseExp(ts);
+	}
+	match(ts, TokenType.CloseParen);
+	match(ts, TokenType.Semicolon);
+	return as;
 }
 
 ir.ExpStatement parseExpStatement(TokenStream ts)
