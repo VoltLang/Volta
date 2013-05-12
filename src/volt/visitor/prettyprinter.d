@@ -1121,6 +1121,26 @@ public:
 	{
 		assert(false);
 	}
+
+	override Status enter(ir.AssertStatement as)
+	{
+		if (as.isStatic) {
+			wf("static ");
+		}
+		wf("assert(");
+		acceptExp(as.condition, this);
+		if (as.message !is null) {
+			wf(", ");
+			acceptExp(as.message, this);
+		}
+		wfln(");");
+		return ContinueParent;
+	}
+
+	override Status leave(ir.AssertStatement as)
+	{
+		assert(false);
+	}
 	
 	override Status enter(ir.MixinStatement ms)
 	{

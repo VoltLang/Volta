@@ -112,6 +112,8 @@ public abstract:
 	Status leave(ir.ConditionStatement cs);
 	Status enter(ir.MixinStatement ms);
 	Status leave(ir.MixinStatement ms);
+	Status enter(ir.AssertStatement as);
+	Status leave(ir.AssertStatement as);
 	
 	Status visit(ir.BreakStatement bs);
 	Status visit(ir.ContinueStatement cs);
@@ -281,6 +283,8 @@ override:
 	Status leave(ir.ConditionStatement cs){ return Continue; }
 	Status enter(ir.MixinStatement ms){ return Continue; }
 	Status leave(ir.MixinStatement ms){ return Continue; }
+	Status enter(ir.AssertStatement as){ return Continue; }
+	Status leave(ir.AssertStatement as){ return Continue; }
 	
 	Status visit(ir.ContinueStatement cs){ return Continue; }
 	Status visit(ir.BreakStatement bs){ return Continue; }
@@ -546,6 +550,10 @@ Visitor.Status accept(ir.Node n, Visitor av)
 		auto asMs = cast(ir.MixinStatement) n;
 		assert(asMs !is null);
 		return acceptMixinStatement(asMs, av);
+	case AssertStatement:
+		auto as = cast(ir.AssertStatement) n;
+		assert(as !is null);
+		return acceptAssertStatement(as, av);
 
 	/*
 	 * Declarations.
@@ -599,7 +607,6 @@ Visitor.Status accept(ir.Node n, Visitor av)
 	case FunctionSet:
 	case SwitchCase:
 	case Comma:
-	case AssertStatement:
 		throw panicUnhandled(n, to!string(n.nodeType));
 	}
 }
@@ -1544,6 +1551,28 @@ Visitor.Status acceptConditionStatement(ir.ConditionStatement cs, Visitor av)
 	}
 
 	return av.leave(cs);
+}
+
+Visitor.Status acceptAssertStatement(ir.AssertStatement as, Visitor av)
+{
+	auto status = av.enter(as);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	status = acceptExp(as.condition, av);
+	if (status != VisitorContinue) {
+		return status;
+	}
+
+	if (as.message !is null) {
+		status = acceptExp(as.message, av);
+		if (status != VisitorContinue) {
+			return status;
+		}
+	}
+
+	return av.leave(as);
 }
 
 Visitor.Status acceptMixinStatement(ir.MixinStatement ms, Visitor av)

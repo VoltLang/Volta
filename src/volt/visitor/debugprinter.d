@@ -257,6 +257,8 @@ public:
 	override Status leave(ir.ConditionStatement n) { leaveNode(n); return Continue; }
 	override Status enter(ir.MixinStatement n) { enterNode(n); return Continue; }
 	override Status leave(ir.MixinStatement n) { leaveNode(n); return Continue; }
+	override Status enter(ir.AssertStatement n) { enterNode(n); return Continue; }
+	override Status leave(ir.AssertStatement n) { leaveNode(n); return Continue; }
 	
 	override Status visit(ir.ContinueStatement n) { enterNode(n); return Continue; }
 	override Status visit(ir.BreakStatement n) { enterNode(n); return Continue; }
