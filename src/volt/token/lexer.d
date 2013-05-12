@@ -326,6 +326,18 @@ bool lexSpecialToken(TokenWriter tw, Token token)
 		tw.addToken(token);
 		return true;
 
+	case "__FILE__":
+		token.type = TokenType.StringLiteral;
+		token.value = `"` ~ tw.source.location.filename ~ `"`;
+		tw.addToken(token);
+		return true;
+
+	case "__LINE__":
+		token.type = TokenType.IntegerLiteral;
+		token.value = to!string(tw.source.location.line);
+		tw.addToken(token);
+		return true;
+
 	case "__VERSION__":
 		token.type = TokenType.IntegerLiteral;
 		token.value = "N/A";
