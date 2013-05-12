@@ -309,6 +309,7 @@ ir.Node copyNode(ir.Node n)
 	case EmptyStatement:
 	case ConditionStatement:
 	case MixinStatement:
+	case AssertStatement:
 	case Comma:
 	case Ternary:
 	case Unary:

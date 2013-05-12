@@ -101,6 +101,7 @@ enum NodeType
 	EmptyStatement,
 	ConditionStatement,
 	MixinStatement,
+	AssertStatement,
 
 	/* expression.d */
 	Comma,
@@ -344,6 +345,7 @@ string nodeToString(NodeType nodeType)
 	case EmptyStatement: return "EmptyStatement";
 	case ConditionStatement: return "ConditionStatement";
 	case MixinStatement: return "MixinStatement";
+	case AssertStatement: return "AssertStatement";
 	case Comma: return "Comma";
 	case Constant: return "Constant";
 	case BinOp: return "BinOp";

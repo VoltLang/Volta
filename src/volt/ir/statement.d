@@ -87,6 +87,24 @@ public:
 }
 
 /**
+ * The assert statement aborts if condition is flase, optionally
+ * displaying message. isStatic determines whether condition is
+ * checked at compile time or not.
+ *
+ * @ingroup irNode irStatement
+ */
+class AssertStatement : Statement
+{
+public:
+	Exp condition;
+	Exp message;
+	bool isStatic;
+
+public:
+	this() { super(NodeType.AssertStatement); }
+}
+
+/**
  * If exp is true, execution flows to thenState.
  * If exp is false, execution flows to elseState,
  * if it exists, otherwise it skips to the end of
