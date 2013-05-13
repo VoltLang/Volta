@@ -133,7 +133,7 @@ ir.Node[] parseVariableOrExpression(TokenStream ts)
 				throw ee;
 			}
 			ts.restore(pos);
-			return [parseAssignExp(ts)];
+			return [parseExp(ts)];
 		}
 	}
 }
@@ -333,7 +333,7 @@ ir.ForStatement parseForStatement(TokenStream ts)
 			assert(f.initExps[0] !is null);
 			while (ts.peek.type != TokenType.Semicolon) {
 				match(ts, TokenType.Comma);
-				f.initExps ~= parseAssignExp(ts);
+				f.initExps ~= parseExp(ts);
 			}
 			match(ts, TokenType.Semicolon);
 		} else {
@@ -428,10 +428,10 @@ ir.SwitchStatement parseSwitchStatement(TokenStream ts)
 		case TokenType.Case:
 			match(ts, TokenType.Case);
 			ir.Exp[] exps;
-			exps ~= parseAssignExp(ts);
+			exps ~= parseExp(ts);
 			if (matchIf(ts, TokenType.Comma)) {
 				while (ts.peek.type != TokenType.Colon) {
-					exps ~= parseAssignExp(ts);
+					exps ~= parseExp(ts);
 					if (ts.peek.type != TokenType.Colon) {
 						match(ts, TokenType.Comma);
 					}
@@ -444,7 +444,7 @@ ir.SwitchStatement parseSwitchStatement(TokenStream ts)
 				if (ts.peek.type == TokenType.DoubleDot) {
 					match(ts, TokenType.DoubleDot);
 					match(ts, TokenType.Case);
-					newCase.secondExp = parseAssignExp(ts);
+					newCase.secondExp = parseExp(ts);
 					match(ts, TokenType.Colon);
 				}
 			}

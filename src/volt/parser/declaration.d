@@ -94,7 +94,7 @@ ir.Node[] reallyParseVariable(TokenStream ts, ir.Type base)
 		if (ts.peek.type == TokenType.Assign) {
 			match(ts, TokenType.Assign);
 			try {
-				d.assign = parseAssignExp(ts);
+				d.assign = parseExp(ts);
 			} catch (CompilerError e) {
 				throw new CompilerError(e.location, e.msg, e, true);
 			}

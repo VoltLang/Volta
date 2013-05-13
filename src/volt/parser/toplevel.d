@@ -708,9 +708,9 @@ ir.StaticAssert parseStaticAssert(TokenStream ts)
 	match(ts, TokenType.Static);
 	match(ts, TokenType.Assert);
 	match(ts, TokenType.OpenParen);
-	sa.exp = parseAssignExp(ts);
+	sa.exp = parseExp(ts);
 	if (matchIf(ts, TokenType.Comma)) {
-		sa.message = parseAssignExp(ts);
+		sa.message = parseExp(ts);
 	}
 	match(ts, TokenType.CloseParen);
 	match(ts, TokenType.Semicolon);

@@ -23,13 +23,6 @@ ir.Exp parseExp(TokenStream ts)
 	return ternaryToExp(ternaryExp);
 }
 
-/// Starts parsing at BinExp. Certain constructs need this.
-ir.Exp parseAssignExp(TokenStream ts)
-{
-	auto binexp = parseBinExp(ts);
-	return binexpToExp(binexp);
-}
-
 ir.Exp ternaryToExp(intir.TernaryExp tern)
 {
 	if (tern.ifTrue !is null) {
