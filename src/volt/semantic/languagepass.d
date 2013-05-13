@@ -65,6 +65,9 @@ public:
 		mTracker = new WorkTracker();
 
 		postParse ~= new ConditionalRemoval(this);
+		if (settings.removeConditionalsOnly) {
+			return;
+		}
 		postParse ~= new AttribRemoval(this);
 		postParse ~= new Gatherer(this);
 
@@ -268,6 +271,10 @@ public:
 
 		foreach(pass; postParse)
 			pass.transform(m);
+
+		if (settings.removeConditionalsOnly) {
+			return;
+		}
 
 		// Need to create one for each import since,
 		// the import resolver will cause phase1 to be called.

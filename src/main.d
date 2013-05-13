@@ -152,6 +152,10 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 		case "-c":
 			settings.noLink = true;
 			continue;
+		case "-E":
+			settings.removeConditionalsOnly = true;
+			settings.noBackend = true;
+			continue;
 		case "--arch":
 			argHandler = &arch;
 			continue;
@@ -249,6 +253,7 @@ bool printUsage()
 	writefln("\t-w              Enable warnings.");
 	writefln("\t-d              Compile in debug mode.");
 	writefln("\t-c              Compile only, do not link.");
+	writefln("\t-E              Only perform conditional removal (implies -S).");
 	writeln();
 	writefln("\t--arch          Select processer architecture: 'x86', 'x86_64'");
 	writefln("\t--platform      Select platform: 'mingw', 'linux', 'osx'");

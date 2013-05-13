@@ -349,6 +349,7 @@ public:
 	bool noCatch; ///< The --no-catch argument.
 	bool internalDebug; ///< The --internal-dbg argument.
 	bool noStdLib; ///< The --no-stdlib argument.
+	bool removeConditionalsOnly; ///< The -E argument.
 
 	Platform platform;
 	Arch arch;
