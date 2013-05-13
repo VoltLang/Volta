@@ -273,6 +273,8 @@ public:
 	bool isFinal;
 	Exp condition;
 	SwitchCase[] cases;
+	Exp[] withs;
+
 
 public:
 	this() { super(NodeType.SwitchStatement); }

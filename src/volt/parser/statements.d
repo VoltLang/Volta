@@ -389,7 +389,24 @@ ir.SwitchStatement parseSwitchStatement(TokenStream ts)
 	match(ts, TokenType.OpenParen);
 	ss.condition = parseExp(ts);
 	match(ts, TokenType.CloseParen);
+
+	while (matchIf(ts, TokenType.With)) {
+		match(ts, TokenType.OpenParen);
+		ss.withs ~= parseExp(ts);
+		match(ts, TokenType.CloseParen);
+	}
+
 	match(ts, TokenType.OpenBrace);
+
+	int braces = 1;  // Everybody gets one.
+	while (matchIf(ts, TokenType.With)) {
+		match(ts, TokenType.OpenParen);
+		ss.withs ~= parseExp(ts);
+		match(ts, TokenType.CloseParen);
+		if (matchIf(ts, TokenType.OpenBrace)) {
+			braces++;
+		}
+	}
 
 	static ir.Node[] parseCaseStatements(TokenStream ts)
 	{
@@ -457,7 +474,9 @@ ir.SwitchStatement parseSwitchStatement(TokenStream ts)
 			throw makeExpected(ts.peek.location, "'case', 'default', or '}'");
 		}
 	}
-	match(ts, TokenType.CloseBrace);
+	while (braces--) {
+		match(ts, TokenType.CloseBrace);
+	}
 
 	if (!ss.isFinal && !hadDefault) {
 		throw makeNoDefaultCase(ss.location);
