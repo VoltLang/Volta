@@ -338,7 +338,7 @@ CompilerException panicNotMember(ir.Node node, string aggregate, string field, s
 
 private:
 
-string errorString(ir.Type type) @property
+@property string errorString(ir.Type type)
 {
 	return format("'%s'", type);
 }

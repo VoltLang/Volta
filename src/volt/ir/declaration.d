@@ -295,7 +295,7 @@ public:
 public:
 	this() { super(NodeType.FunctionSet); }
 
-	FunctionSetType type() @property
+	@property FunctionSetType type()
 	{
 		auto t = new FunctionSetType();
 		t.location = location;

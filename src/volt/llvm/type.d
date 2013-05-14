@@ -221,7 +221,7 @@ public:
 	PointerType ptrType;
 	PrimitiveType lengthType;
 
-	Type types[2];
+	Type[2] types;
 
 	immutable size_t ptrIndex = 0;
 	immutable size_t lengthIndex = 1;
