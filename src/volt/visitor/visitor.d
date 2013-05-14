@@ -848,7 +848,7 @@ Visitor.Status acceptStaticAssert(ir.StaticAssert sa, Visitor av)
 	}
 
 	if (sa.message !is null) {
-		status = accept(sa.message, av);
+		status = acceptExp(sa.message, av);
 		if (status != VisitorContinue) {
 			return parentContinue(status);
 		}
