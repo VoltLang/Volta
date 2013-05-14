@@ -106,9 +106,9 @@ class NewExp : IntExp
 public:
 	Type type;
 	bool isArray;
-	BinExp binExp;  // new int[binExp]
+	TernaryExp exp;  // new int[binExp]
 	bool hasArgumentList;
-	BinExp[] argumentList;  // new int(argumentList)
+	TernaryExp[] argumentList;  // new int(argumentList)
 }
 
 class CastExp : IntExp
@@ -124,7 +124,7 @@ public:
 	Postfix.Op op;
 	PrimaryExp primary;  // Only in parent postfixes.
 	PostfixExp postfix;  // Optional.
-	BinExp[] arguments;  // Optional.
+	TernaryExp[] arguments;  // Optional.
 	Identifier identifier;  // Optional.
 }
 
@@ -164,8 +164,8 @@ public:
 	volt.ir.declaration.Type type;
 	Exp exp;
 	string _string;      // Optional.
-	BinExp[] keys;
-	BinExp[] arguments;  // Optional.
+	TernaryExp[] keys;
+	TernaryExp[] arguments;  // Optional.
 	TernaryExp[] tlargs;   // Optional.
 	IsExp isExp;  // Optional.
 	FunctionLiteral functionLiteral;  // Optional.

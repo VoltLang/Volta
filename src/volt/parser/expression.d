@@ -160,7 +160,7 @@ ir.Exp unaryToExp(intir.UnaryExp unary)
 		exp.type = unary.newExp.type;
 		exp.hasArgumentList = unary.newExp.hasArgumentList;
 		foreach (arg; unary.newExp.argumentList) {
-			exp.argumentList ~= binexpToExp(arg);
+			exp.argumentList ~= ternaryToExp(arg);
 		}
 		return exp;
 	} else {
@@ -189,7 +189,7 @@ ir.Exp postfixToExp(Location location, intir.PostfixExp postfix, ir.Exp seed = n
 			assert(postfix.identifier !is null);
 			exp.identifier = postfix.identifier;
 		} else foreach (arg; postfix.arguments) {
-			exp.arguments ~= binexpToExp(arg);
+			exp.arguments ~= ternaryToExp(arg);
 		}
 		return postfixToExp(location, postfix.postfix, exp);
 	}
@@ -357,29 +357,29 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 	case intir.PrimaryExp.Type.ArrayLiteral:
 		auto c = new ir.ArrayLiteral();
 		foreach (arg; primary.arguments) {
-			c.values ~= binexpToExp(arg);
+			c.values ~= ternaryToExp(arg);
 		}
 		exp = c;
 		break;
 	case intir.PrimaryExp.Type.AssocArrayLiteral:
 		auto c = new ir.AssocArray();
 		for (size_t i = 0; i < primary.keys.length; ++i) {
-			c.pairs ~= new ir.AAPair(binexpToExp(primary.keys[i]), binexpToExp(primary.arguments[i]));
+			c.pairs ~= new ir.AAPair(ternaryToExp(primary.keys[i]), ternaryToExp(primary.arguments[i]));
 			c.pairs[$-1].location = primary.keys[i].location;
 		}
 		exp = c;
 		break;
 	case intir.PrimaryExp.Type.Assert:
 		auto c = new ir.Assert();
-		c.condition = binexpToExp(primary.arguments[0]);
+		c.condition = ternaryToExp(primary.arguments[0]);
 		if (primary.arguments.length >= 2) {
-			c.message = binexpToExp(primary.arguments[1]);
+			c.message = ternaryToExp(primary.arguments[1]);
 		}
 		exp = c;
 		break;
 	case intir.PrimaryExp.Type.Import:
 		auto c = new ir.StringImport();
-		c.filename = binexpToExp(primary.arguments[0]);
+		c.filename = ternaryToExp(primary.arguments[0]);
 		exp = c;
 		break;
 	case intir.PrimaryExp.Type.Is:
@@ -389,7 +389,7 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 	case intir.PrimaryExp.Type.StructLiteral:
 		auto lit = new ir.StructLiteral();
 		foreach (bexp; primary.arguments) {
-			lit.exps ~= binexpToExp(bexp);
+			lit.exps ~= ternaryToExp(bexp);
 		}
 		exp = lit;
 		break;
@@ -404,14 +404,14 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 	return exp;
 }
 
-private intir.BinExp[] _parseArgumentList(TokenStream ts, TokenType endChar = TokenType.CloseParen)
+private intir.TernaryExp[] _parseArgumentList(TokenStream ts, TokenType endChar = TokenType.CloseParen)
 {
-	intir.BinExp[] pexps;
+	intir.TernaryExp[] pexps;
 	while (ts.peek.type != endChar) {
 		if (ts.peek.type == TokenType.End) {
 			throw makeExpected(ts.peek.location, "end of argument list");
 		}
-		pexps ~= parseBinExp(ts);
+		pexps ~= parseTernaryExp(ts);
 		if (ts.peek.type != endChar) {
 			match(ts, TokenType.Comma);
 		}
@@ -423,11 +423,11 @@ private intir.BinExp[] _parseArgumentList(TokenStream ts, TokenType endChar = To
 // Parse an argument list from ts. Will end with ts.peek == endChar.
 ir.Exp[] parseArgumentList(TokenStream ts, TokenType endChar = TokenType.CloseParen)
 {
-	intir.BinExp[] pexps = _parseArgumentList(ts, endChar);
+	intir.TernaryExp[] pexps = _parseArgumentList(ts, endChar);
 
 	ir.Exp[] outexps;
 	foreach (exp; pexps) {
-		outexps ~= binexpToExp(exp);
+		outexps ~= ternaryToExp(exp);
 	}
 	assert(pexps.length == outexps.length);
 
@@ -833,11 +833,11 @@ intir.PostfixExp parsePostfixExp(TokenStream ts, int depth=0)
 		if (ts.peek.type == TokenType.CloseBracket) {
 			exp.op = ir.Postfix.Op.Slice;
 		} else {
-			exp.arguments ~= parseBinExp(ts);
+			exp.arguments ~= parseTernaryExp(ts);
 			if (ts.peek.type == TokenType.DoubleDot) {
 				exp.op = ir.Postfix.Op.Slice;
 				ts.get();
-				exp.arguments ~= parseBinExp(ts);
+				exp.arguments ~= parseTernaryExp(ts);
 			} else {
 				exp.op = ir.Postfix.Op.Index;
 				if (ts.peek.type == TokenType.Comma) {
@@ -922,10 +922,10 @@ intir.PrimaryExp parsePrimaryExp(TokenStream ts)
 	case TokenType.Assert:
 		ts.get();
 		match(ts, TokenType.OpenParen);
-		exp.arguments ~= parseBinExp(ts);
+		exp.arguments ~= parseTernaryExp(ts);
 		if (ts.peek.type == TokenType.Comma) {
 			ts.get();
-			exp.arguments ~= parseBinExp(ts);
+			exp.arguments ~= parseTernaryExp(ts);
 		}
 		match(ts, TokenType.CloseParen);
 		exp.op = intir.PrimaryExp.Type.Assert;
@@ -933,7 +933,7 @@ intir.PrimaryExp parsePrimaryExp(TokenStream ts)
 	case TokenType.Import:
 		ts.get();
 		match(ts, TokenType.OpenParen);
-		exp.arguments ~= parseBinExp(ts);
+		exp.arguments ~= parseTernaryExp(ts);
 		match(ts, TokenType.CloseParen);
 		exp.op = intir.PrimaryExp.Type.Import;
 		break;
@@ -958,9 +958,9 @@ intir.PrimaryExp parsePrimaryExp(TokenStream ts)
 		} else {
 			ts.get();
 			while (ts.peek.type != TokenType.CloseBracket) {
-				exp.keys ~= parseBinExp(ts);
+				exp.keys ~= parseTernaryExp(ts);
 				match(ts, TokenType.Colon);
-				exp.arguments ~= parseBinExp(ts);
+				exp.arguments ~= parseTernaryExp(ts);
 				if (ts.peek.type == TokenType.Comma) {
 					ts.get();
 				}
@@ -983,7 +983,7 @@ intir.PrimaryExp parsePrimaryExp(TokenStream ts)
 		ts.get();
 		exp.op = intir.PrimaryExp.Type.StructLiteral;
 		while (ts.peek.type != TokenType.CloseBrace) {
-			exp.arguments ~= parseBinExp(ts);
+			exp.arguments ~= parseTernaryExp(ts);
 			matchIf(ts, TokenType.Comma);
 		}
 		match(ts, TokenType.CloseBrace);
