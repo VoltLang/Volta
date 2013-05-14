@@ -1309,7 +1309,7 @@ Visitor.Status acceptDoStatement(ir.DoStatement d, Visitor av)
 
 	accept(d.block, av);
 
-	status = accept(d.condition, av);
+	status = acceptExp(d.condition, av);
 	if (status != VisitorContinue) {
 		return parentContinue(status);
 	}
