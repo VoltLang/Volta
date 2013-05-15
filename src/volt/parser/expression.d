@@ -396,6 +396,11 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 	case intir.PrimaryExp.Type.Traits:
 		exp = primary.trait;
 		break;
+	case intir.PrimaryExp.Type.Type:
+		auto te = new ir.TypeExp();
+		te.type = primary.type;
+		exp = te;
+		break;
 	default:
 		throw panic(primary.location, "unhandled primary expression.");
 	}
