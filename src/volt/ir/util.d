@@ -374,6 +374,36 @@ ir.Constant buildConstantInt(Location loc, int value)
 	return c;
 }
 
+ir.Constant buildConstantUint(Location loc, uint value)
+{
+	auto c = new ir.Constant();
+	c.location = loc;
+	c._uint = value;
+	c.type = buildUint(loc);
+
+	return c;
+}
+
+ir.Constant buildConstantLong(Location loc, long value)
+{
+	auto c = new ir.Constant();
+	c.location = loc;
+	c._long = value;
+	c.type = buildLong(loc);
+
+	return c;
+}
+
+ir.Constant buildConstantUlong(Location loc, ulong value)
+{
+	auto c = new ir.Constant();
+	c.location = loc;
+	c._ulong = value;
+	c.type = buildUlong(loc);
+
+	return c;
+}
+
 /**
  * Builds a constant bool.
  */
