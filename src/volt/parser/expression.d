@@ -974,10 +974,25 @@ intir.PrimaryExp parsePrimaryExp(TokenStream ts)
 		if (isFunctionLiteral(ts)) {
 			goto case TokenType.Delegate;
 		}
+		if (ts == [TokenType.OpenParen, TokenType.Void, TokenType.Asterix, TokenType.CloseParen]) {
+			exp.op = intir.PrimaryExp.Type.Type;
+			match(ts, TokenType.OpenParen);
+			exp.type = parseType(ts);
+			match(ts, TokenType.CloseParen);
+			break;
+		}
 		ts.get();
 		exp.tlargs ~= parseTernaryExp(ts);
 		match(ts, TokenType.CloseParen);
 		exp.op = intir.PrimaryExp.Type.ParenExp;
+		break;
+	case TokenType.Bool, TokenType.Ubyte, TokenType.Byte,
+		 TokenType.Short, TokenType.Ushort,
+		 TokenType.Int, TokenType.Uint, TokenType.Long,
+		 TokenType.Ulong, TokenType.Void, TokenType.Float,
+		 TokenType.Double, TokenType.Real:
+		exp.op = intir.PrimaryExp.Type.Type;
+		exp.type = parseType(ts);
 		break;
 	case TokenType.OpenBrace:
 		ts.get();

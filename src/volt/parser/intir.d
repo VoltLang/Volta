@@ -150,7 +150,7 @@ public:
 		FunctionLiteral,
 		Assert,          // arguments (length == 1 or 2)
 		Import,
-		TypeLookup,      // Type.Identifier
+		Type,
 		Typeof,
 		Typeid,          // If exp !is null, exp. Otherwise type.
 		Is,
