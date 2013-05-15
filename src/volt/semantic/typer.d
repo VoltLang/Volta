@@ -446,7 +446,9 @@ void retrieveScope(LanguagePass lp, ir.Node tt, ir.Postfix postfix, ref ir.Scope
 		_scope = asEnum.myScope;
 		emsg = format("enum '%s' has no member '%s'.", asEnum.name, postfix.identifier.value);
 	} else {
-		assert(false, to!string(tt.nodeType));
+		auto type = cast(ir.Type) tt;
+		assert(type !is null);
+		throw makeNotMember(postfix, type, postfix.identifier.value);
 	}
 }
 
