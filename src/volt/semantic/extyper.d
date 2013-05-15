@@ -806,6 +806,53 @@ void rewritePropertyFunctionAssign(LanguagePass lp, ir.Scope current, ref ir.Exp
 	return;
 }
 
+void extypePrimitiveTypeLookup(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Postfix[] postfixIdents, ir.PrimitiveType prim)
+{
+	if (postfixIdents.length != 1) {
+		throw makeExpected(prim, "max or min");
+	}
+	if (postfixIdents[0].identifier.value != "max" && postfixIdents[0].identifier.value != "min") {
+		throw makeExpected(prim, "max or min");
+	}
+	bool max = postfixIdents[0].identifier.value == "max";
+	final switch (prim.type) with (ir.PrimitiveType.Kind) {
+	case Bool:
+		exp = buildConstantInt(prim.location, max ? 1 : 0);
+		break;
+	case Ubyte, Char:
+		exp = buildConstantInt(prim.location, max ? 255 : 0);
+		break;
+	case Byte:
+		exp = buildConstantInt(prim.location, max ? 127 : -128);
+		break;
+	case Ushort, Wchar:
+		exp = buildConstantInt(prim.location, max ? 65535 : 0);
+		break;
+	case Short:
+		exp = buildConstantInt(prim.location, max? 32767 : -32768);
+		break;
+	case Uint, Dchar:
+		exp = buildConstantUint(prim.location, max ? 4294967295U : 0);
+		break;
+	case Int:
+		exp = buildConstantInt(prim.location, max ? 2147483647 : -2147483648);
+		break;
+	case Ulong:
+		exp = buildConstantUlong(prim.location, max ? 18446744073709551615UL : 0);
+		break;
+	case Long:
+		/* We use a ulong here because -9223372036854775808 is not converted as a string
+		 * with a - on the front, but just the number 9223372036854775808 that is in a
+		 * Unary minus expression. And because it's one more than will fit in a long, we
+		 * have to use the next size up.
+		 */
+		exp = buildConstantUlong(prim.location, max ? 9223372036854775807UL : -9223372036854775808UL);
+		break;
+	case Float, Double, Real, Void:
+		throw makeExpected(prim, "integral type");
+	}
+}
+
 void extypePostfixIdentifier(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Postfix postfix)
 {
 	if (postfix.op != ir.Postfix.Op.Identifier)
@@ -927,6 +974,11 @@ void extypePostfixIdentifier(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 		case Type:
 			lastType = cast(ir.Type) store.node;
 			assert(lastType !is null);
+			auto prim = cast(ir.PrimitiveType) lastType;
+			if (prim !is null) {
+				extypePrimitiveTypeLookup(lp, current, exp, postfixIdents, prim);
+				return;
+			}
 			goto case Scope;
 		case Scope:
 			_scope = getScopeFromStore(store);
