@@ -62,6 +62,14 @@ ir.IdentifierExp copy(ir.IdentifierExp ie)
 	return i;
 }
 
+ir.TypeExp copy(ir.TypeExp te)
+{
+	auto newte = new ir.TypeExp();
+	newte.location = te.location;
+	newte.type = copyType(te.type);
+	return newte;
+}
+
 
 /*
  *
@@ -249,6 +257,9 @@ ir.Node copyNode(ir.Node n)
 	case IdentifierExp:
 		auto ie = cast(ir.IdentifierExp)n;
 		return copy(ie);
+	case TypeExp:
+		auto te = cast(ir.TypeExp)n;
+		return copy(te);
 	case PrimitiveType:
 	case TypeReference:
 	case PointerType:

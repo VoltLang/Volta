@@ -486,3 +486,18 @@ public:
 public:
 	this() { super(NodeType.TraitsExp); }
 }
+
+/**
+ * A TypeExp is used when a primitive type is used in an expression.
+ * This is currently limited to <primitive>.max/min and (void*).max/min.
+ *
+ * @ingroup irNode irExp
+ */
+class TypeExp : Exp
+{
+public:
+	Type type;
+
+public:
+	this() { super(NodeType.TypeExp); }
+}
