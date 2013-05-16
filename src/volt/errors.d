@@ -24,6 +24,11 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeStructConstructorsUnsupported(ir.Node node)
+{
+	return new CompilerError(node.location, "struct constructors are currently unsupported.");
+}
+
 CompilerException makeCallingStaticThroughInstance(ir.Node node, ir.Function fn)
 {
 	return new CompilerError(node.location, format("calling local or global function '%s' through instance variable.", fn.name));

@@ -1031,6 +1031,11 @@ void handleNew(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Unary _unar
 	if (tr is null) {
 		return;
 	}
+	auto _struct = cast(ir.Struct) tr.type;
+	if (_struct !is null) {
+		assert(_unary.hasArgumentList);
+		throw makeStructConstructorsUnsupported(_unary);
+	}
 	auto _class = cast(ir.Class) tr.type;
 	if (_class is null) {
 		return;
