@@ -135,9 +135,18 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 		auto asClassLiteral = cast(ir.ClassLiteral) exp;
 		assert(asClassLiteral !is null);
 		return getClassLiteralType(lp, asClassLiteral);
+	case TypeExp:
+		auto asTypeExp = cast(ir.TypeExp) exp;
+		assert(asTypeExp !is null);
+		return getTypeExpType(lp, asTypeExp);
 	default:
 		throw panicUnhandled(exp, to!string(exp.nodeType));
 	}
+}
+
+ir.Type getTypeExpType(LanguagePass lp, ir.TypeExp te)
+{
+	return te.type;
 }
 
 ir.Type getStructLiteralType(LanguagePass lp, ir.StructLiteral slit)
