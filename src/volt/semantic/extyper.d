@@ -806,15 +806,31 @@ void rewritePropertyFunctionAssign(LanguagePass lp, ir.Scope current, ref ir.Exp
 	return;
 }
 
-void extypePrimitiveTypeLookup(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Postfix[] postfixIdents, ir.PrimitiveType prim)
+void extypeTypeLookup(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Postfix[] postfixIdents, ir.Type type)
 {
 	if (postfixIdents.length != 1) {
-		throw makeExpected(prim, "max or min");
+		throw makeExpected(type, "max or min");
 	}
 	if (postfixIdents[0].identifier.value != "max" && postfixIdents[0].identifier.value != "min") {
-		throw makeExpected(prim, "max or min");
+		throw makeExpected(type, "max or min");
 	}
 	bool max = postfixIdents[0].identifier.value == "max";
+
+	auto pointer = cast(ir.PointerType) type;
+	if (pointer !is null) {
+		if (lp.settings.isVersionSet("V_LP64")) {
+			exp = buildConstantInt(type.location, max ? 8 : 0);
+		} else {
+			exp = buildConstantInt(type.location, max ? 4 : 0);
+		}
+		return;
+	}
+
+	auto prim = cast(ir.PrimitiveType) type;
+	if (prim is null) {
+		throw makeExpected(type, "primitive type");
+	}
+
 	final switch (prim.type) with (ir.PrimitiveType.Kind) {
 	case Bool:
 		exp = buildConstantInt(prim.location, max ? 1 : 0);
@@ -881,6 +897,10 @@ void extypePostfixIdentifier(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 		} else if (currentP.child.nodeType == ir.NodeType.IdentifierExp) {
 			identExp = cast(ir.IdentifierExp) currentP.child;
 			break;
+		} else if (currentP.child.nodeType == ir.NodeType.TypeExp) {
+			auto typeExp = cast(ir.TypeExp) currentP.child;
+			extypeTypeLookup(lp, current, exp, postfixIdents, typeExp.type);
+			return;
 		} else {
 			// For instance typeid(int).mangledName.
 			return;
@@ -976,7 +996,7 @@ void extypePostfixIdentifier(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 			assert(lastType !is null);
 			auto prim = cast(ir.PrimitiveType) lastType;
 			if (prim !is null) {
-				extypePrimitiveTypeLookup(lp, current, exp, postfixIdents, prim);
+				extypeTypeLookup(lp, current, exp, postfixIdents, prim);
 				return;
 			}
 			goto case Scope;
