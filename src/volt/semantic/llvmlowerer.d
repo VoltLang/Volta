@@ -71,6 +71,57 @@ public:
 		return Continue;
 	}
 
+	override Status leave(ref ir.Exp exp, ir.Postfix postfix)
+	{
+		switch(postfix.op) {
+		case ir.Postfix.Op.Index:
+			return handleIndex(exp, postfix);
+		default:
+			return Continue;
+		}
+	}
+
+	override Status enter(ref ir.Exp exp, ir.BinOp binOp)
+	{
+		switch(binOp.op) with(ir.BinOp.Op) {
+		case AddAssign:
+		case SubAssign:
+		case MulAssign:
+		case DivAssign:
+		case ModAssign:
+		case AndAssign:
+		case OrAssign:
+		case XorAssign:
+		case CatAssign:
+		case LSAssign:  // <<=
+		case SRSAssign:  // >>=
+		case RSAssign: // >>>=
+		case PowAssign:
+		case Assign:
+			auto asPostfix = cast(ir.Postfix)binOp.left;
+			if (asPostfix is null)
+				return Continue;
+
+			auto leftType = getExpType(lp, asPostfix.child, current);
+			if (leftType !is null &&
+			    leftType.nodeType == ir.NodeType.AAType &&
+			    asPostfix.op == ir.Postfix.Op.Index) {
+				acceptExp(asPostfix.child, this);
+				acceptExp(asPostfix.arguments[0], this);
+				acceptExp(binOp.right, this);
+
+				if (binOp.op == ir.BinOp.Op.Assign) {
+					return handleAssignAA(exp, binOp, asPostfix, cast(ir.AAType)leftType);
+				} else {
+					return handleOpAssignAA(exp, binOp, asPostfix, cast(ir.AAType)leftType);
+				}
+			}
+			return Continue;
+		default:
+			return Continue;
+		}
+	}
+
 	override Status leave(ref ir.Exp exp, ir.BinOp binOp)
 	{
 		/**
@@ -95,6 +146,37 @@ public:
 	override Status visit(ref ir.Exp exp, ir.TraitsExp traits)
 	{
 		replaceTraits(exp, traits, lp, thisModule, current);
+		return Continue;
+	}
+
+	override Status leave(ref ir.Exp exp, ir.AssocArray assocArray)
+	{
+		auto loc = exp.location;
+		auto aa = cast(ir.AAType)getExpType(lp, exp, current);
+		assert(aa !is null);
+
+		auto statExp = buildStatementExp(loc);
+
+		auto aaNewFn = retrieveFunctionFromObject(lp, thisModule.myScope, loc, "vrt_aa_new");
+		auto var = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp,
+			copyTypeSmart(loc, aa), buildCall(loc, aaNewFn, [
+				buildTypeidSmart(loc, aa.value)
+			], aaNewFn.name)
+		);
+
+		foreach (pair; assocArray.pairs) {
+			auto store = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp,
+				copyTypeSmart(loc, aa.value), pair.value
+			);
+
+			buildAAInsert(loc, lp, thisModule, current, statExp,
+				 aa, var, pair.key, buildExpReference(loc, store), false, false
+			);
+		}
+
+		statExp.exp = buildExpReference(loc, var);
+		exp = statExp;
+
 		return Continue;
 	}
 
@@ -137,24 +219,150 @@ public:
 		return Continue;
 	}
 
+	protected Status handleIndex(ref ir.Exp exp, ir.Postfix postfix)
+	{
+		auto type = getExpType(lp, postfix.child, current);
+		switch (type.nodeType) with(ir.NodeType) {
+			case AAType:
+				return handleIndexAA(exp, postfix, cast(ir.AAType)type);
+			default:
+				return Continue;
+		}
+	}
+
+	protected Status handleIndexAA(ref ir.Exp exp, ir.Postfix postfix, ir.AAType aa)
+	{
+		auto loc = postfix.location;
+		auto statExp = buildStatementExp(loc);
+
+		auto var = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp,
+			buildPtrSmart(loc, aa), buildAddrOf(loc, postfix.child)
+		);
+
+		auto key = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp,
+			copyTypeSmart(loc, aa.key), postfix.arguments[0]
+		);
+		auto store = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp,
+			copyTypeSmart(loc, aa.value), null
+		);
+
+		buildAALookup(loc, lp, thisModule, current, statExp, aa, var,
+			buildExpReference(loc, key, key.name),
+			buildExpReference(loc, store, store.name)
+		);
+
+		statExp.exp = buildExpReference(loc, store);
+
+		exp = statExp;
+
+		return Continue;
+	}
+
 	protected Status handleAssign(ref ir.Exp exp, ir.BinOp binOp)
 	{
-		auto loc = binOp.location;
 		auto asPostfix = cast(ir.Postfix)binOp.left;
-
-		if (asPostfix is null || asPostfix.op != ir.Postfix.Op.Slice)
+		if (asPostfix is null)
 			return Continue;
 
 		auto leftType = getExpType(lp, asPostfix, current);
-		auto leftArrayType = cast(ir.ArrayType)leftType;
-		if (leftArrayType is null)
-			throw panic(binOp, "OH GOD!");
+		if (leftType is null)
+			return Continue;
 
-		auto fn = getCopyFunction(loc, leftArrayType);
+		switch (leftType.nodeType) with(ir.NodeType) {
+			case ArrayType:
+				return handleAssignArray(exp, binOp, asPostfix, cast(ir.ArrayType)leftType);
+			default:
+				return Continue;
+		}
 
+	}
+
+	protected Status handleAssignArray(ref ir.Exp exp, ir.BinOp binOp, ir.Postfix asPostfix, ir.ArrayType leftType)
+	{
+		auto loc = binOp.location;
+
+		if (asPostfix.op != ir.Postfix.Op.Slice)
+			return Continue;
+
+		auto fn = getCopyFunction(loc, leftType);
 		exp = buildCall(loc, fn, [asPostfix, binOp.right], fn.name);
 
 		return Continue;
+	}
+
+	protected Status handleAssignAA(ref ir.Exp exp, ir.BinOp binOp, ir.Postfix asPostfix, ir.AAType aa)
+	{
+		auto loc = binOp.location;
+		assert(asPostfix.op == ir.Postfix.Op.Index);
+		auto statExp = buildStatementExp(loc);
+
+		auto var = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp,
+			buildPtrSmart(loc, aa), buildAddrOf(loc, asPostfix.child)
+		);
+
+		auto key = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp,
+			copyTypeSmart(loc, aa.key), asPostfix.arguments[0]
+		);
+		auto value = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp,
+			copyTypeSmart(loc, aa.value), binOp.right
+		);
+
+		buildAAInsert(loc, lp, thisModule, current, statExp, aa, var,
+				buildExpReference(loc, key, key.name),
+				buildExpReference(loc, value, value.name)
+		);
+
+		statExp.exp = buildExpReference(loc, key, key.name);
+		exp = statExp;
+
+		return ContinueParent;
+	}
+
+	protected Status handleOpAssignAA(ref ir.Exp exp, ir.BinOp binOp, ir.Postfix asPostfix, ir.AAType aa)
+	{
+		auto loc = binOp.location;
+		assert(asPostfix.op == ir.Postfix.Op.Index);
+		auto statExp = buildStatementExp(loc);
+
+		auto var = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp,
+			buildPtrSmart(loc, aa), null
+		);
+		buildExpStat(loc, statExp,
+			buildAssign(loc, buildExpReference(loc, var, var.name), buildAddrOf(loc, asPostfix.child))
+		);
+
+		auto key = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp,
+			copyTypeSmart(loc, aa.key), null
+		);
+		buildExpStat(loc, statExp,
+			buildAssign(loc, buildExpReference(loc, key, key.name), asPostfix.arguments[0])
+		);
+		auto store = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp,
+			copyTypeSmart(loc, aa.value), null
+		);
+
+		buildAALookup(loc, lp, thisModule, current, statExp, aa, var,
+			buildExpReference(loc, key, key.name),
+			buildExpReference(loc, store, store.name)
+		);
+
+		buildExpStat(loc, statExp,
+			buildBinOp(loc, binOp.op,
+				buildExpReference(loc, store, store.name),
+			 	binOp.right
+			)
+		);
+
+		buildAAInsert(loc, lp, thisModule, current, statExp, aa, var,
+			buildExpReference(loc, key, key.name),
+			buildExpReference(loc, store, store.name),
+			false
+		);
+
+		statExp.exp = buildExpReference(loc, store, store.name);
+		exp = statExp;
+
+		return ContinueParent;
 	}
 
 	protected Status handleCat(ref ir.Exp exp, ir.BinOp binOp)
@@ -572,4 +780,119 @@ public:
 		}
 		return null;
 	}
+}
+
+
+void buildAAInsert(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope current,
+		ir.StatementExp statExp, ir.AAType aa, ir.Variable var, ir.Exp key, ir.Exp value,
+		bool buildif=true, bool aaIsPointer=true) {
+	auto aaNewFn = retrieveFunctionFromObject(lp, thisModule.myScope, loc, "vrt_aa_new");
+
+	string name;
+	if (aa.key.nodeType == ir.NodeType.PrimitiveType)
+		name = "vrt_aa_insert_primitive";
+	else
+		name = "vrt_aa_insert_array";
+
+	auto aaInsertFn = retrieveFunctionFromObject(lp, thisModule.myScope, loc, name);
+
+	ir.Exp varExp;
+	if (buildif) {
+		auto thenState = buildBlockStat(loc, statExp, current);
+		varExp = buildExpReference(loc, var, var.name);
+		buildExpStat(loc, thenState,
+			buildAssign(loc,
+				aaIsPointer ? buildDeref(loc, varExp) : varExp,
+				buildCall(loc, aaNewFn, [
+						buildTypeidSmart(loc, aa.value)
+					], aaNewFn.name
+				)
+			)
+		);
+
+		varExp = buildExpReference(loc, var, var.name);
+		buildIfStat(loc, statExp,
+			buildBinOp(loc, ir.BinOp.Op.Is,
+				aaIsPointer ? buildDeref(loc, varExp) : varExp,
+				buildConstantNull(loc, buildVoidPtr(loc))
+			),
+			thenState
+		);
+	}
+
+	varExp = buildExpReference(loc, var, var.name);
+	auto call = buildExpStat(loc, statExp,
+		buildCall(loc, aaInsertFn, [
+			aaIsPointer ? buildDeref(loc, varExp) : varExp,
+			buildAAKeyCast(loc, key, aa),
+			buildCastToVoidPtr(loc, buildAddrOf(value))
+		], aaInsertFn.name)
+	);
+}
+
+void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope current,
+		ir.StatementExp statExp, ir.AAType aa, ir.Variable var, ir.Exp key, ir.Exp store) {
+	string name;
+	if (aa.key.nodeType == ir.NodeType.PrimitiveType)
+		name = "vrt_aa_in_primitive";
+	else
+		name = "vrt_aa_in_array";
+	auto inAAFn = retrieveFunctionFromObject(lp, thisModule.myScope, loc, name);
+	auto throwFn = retrieveFunctionFromObject(lp, thisModule.myScope, loc, "vrt_eh_throw");
+
+	auto thenState = buildBlockStat(loc, statExp, current);
+	auto s = buildStorageType(loc, ir.StorageType.Kind.Immutable, buildChar(loc));
+	canonicaliseStorageType(s);
+
+	auto knfClass = retrieveClassFromObject(lp, thisModule.myScope, loc, "KeyNotFoundException");
+	auto throwableClass = retrieveClassFromObject(lp, thisModule.myScope, loc, "Throwable");
+
+	buildExpStat(loc, thenState,
+		buildCall(loc, throwFn, [
+			buildCastSmart(throwableClass,
+				buildNew(loc, knfClass, "KeyNotFoundException", [
+					buildStringConstant(loc, `"Key does not exist"`)
+				]),
+			)
+		], throwFn.name));
+
+	buildIfStat(loc, statExp,
+		buildBinOp(loc, ir.BinOp.Op.Equal,
+			buildCall(loc, inAAFn, [
+				buildDeref(loc, buildExpReference(loc, var, var.name)),
+				buildAAKeyCast(loc, key, aa),
+				buildCastToVoidPtr(loc,
+					buildAddrOf(loc, store)
+				)
+			], inAAFn.name),
+			buildConstantBool(loc, false)
+		),
+		thenState
+	);
+}
+
+
+ir.Exp buildAAKeyCast(Location loc, ir.Exp key, ir.AAType aa)
+{
+	if (aa.key.nodeType == ir.NodeType.PrimitiveType) {
+		auto prim = cast(ir.PrimitiveType)aa.key;
+
+		assert(prim.type != ir.PrimitiveType.Kind.Real);
+
+		if (prim.type == ir.PrimitiveType.Kind.Float ||
+			prim.type == ir.PrimitiveType.Kind.Double) {
+			auto type = prim.type == ir.PrimitiveType.Kind.Double ?
+				buildUlong(loc) : buildInt(loc);
+
+			key = buildDeref(loc,
+					buildCastSmart(loc, buildPtrSmart(loc, type), buildAddrOf(key))
+			);
+		}
+
+		key = buildCastSmart(loc, buildUlong(loc), key);
+	} else {
+		key = buildCastSmart(loc, buildArrayTypeSmart(loc, buildVoid(loc)), key);
+	}
+
+	return key;
 }

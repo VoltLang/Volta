@@ -654,6 +654,9 @@ Type fromIrImpl(State state, ir.Type irType)
 	case Enum:
 		auto _enum = cast(ir.Enum)irType;
 		return fromIr(state, _enum.base);
+	case AAType:
+		auto aa = cast(ir.AAType)irType;
+		return state.voidPtrType;
 	default:
 		auto emsg = format("Can't translate type %s (%s)", irType.nodeType, irType.mangledName);
 		throw panic(irType.location, emsg);

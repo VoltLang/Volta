@@ -99,6 +99,10 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 		auto asLiteral = cast(ir.ArrayLiteral) exp;
 		assert(asLiteral !is null);
 		return getArrayLiteralType(lp, asLiteral, currentScope);
+	case AssocArray:
+		auto asAssoc = cast(ir.AssocArray) exp;
+		assert(asAssoc !is null);
+		return getAssocArrayType(lp, asAssoc, currentScope);
 	case Ternary:
 		auto asTernary = cast(ir.Ternary) exp;
 		assert(asTernary !is null);
@@ -225,7 +229,7 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 {
 	ir.Type left = getExpType(lp, bin.left, currentScope);
 	ir.Type right = getExpType(lp, bin.right, currentScope);
-	
+
 	if (isComparison(bin.op)) {
 		auto boolType = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
 		boolType.location = bin.location;
@@ -357,6 +361,28 @@ ir.Type getArrayLiteralType(LanguagePass lp, ir.ArrayLiteral arrayLiteral, ir.Sc
 	arrayLiteral.type = new ir.ArrayType(base);
 	arrayLiteral.type.location = arrayLiteral.location;
 	return arrayLiteral.type;
+}
+
+ir.Type getAssocArrayType(LanguagePass lp, ir.AssocArray assocArray, ir.Scope currentScope)
+{
+	ir.Type base;
+	if (assocArray.pairs.length > 0) {
+		auto pair = assocArray.pairs[0];
+		base = buildAATypeSmart(assocArray.location,
+			getExpType(lp, pair.key, currentScope),
+			getExpType(lp, pair.value, currentScope)
+		);
+	} else {
+		base = assocArray.type;
+	}
+
+	assert(base !is null);
+	auto aaType = new ir.AAType();
+	aaType.key = (cast(ir.AAType)base).key;
+	aaType.value = (cast(ir.AAType)base).value;
+	assocArray.type = aaType;
+	assocArray.type.location = assocArray.location;
+	return base;
 }
 
 ir.Type getPostfixType(LanguagePass lp, ir.Postfix postfix, ir.Scope currentScope)
@@ -603,6 +629,7 @@ ir.Type getPostfixIndexType(LanguagePass lp, ir.Postfix postfix, ir.Scope curren
 	ir.Type base;
 
 	auto type = getExpType(lp, postfix.child, currentScope);
+
 	if (type.nodeType == ir.NodeType.PointerType) {
 		auto pointer = cast(ir.PointerType) type;
 		assert(pointer !is null);
@@ -615,6 +642,10 @@ ir.Type getPostfixIndexType(LanguagePass lp, ir.Postfix postfix, ir.Scope curren
 		auto staticArray = cast(ir.StaticArrayType) type;
 		assert(staticArray !is null);
 		base = staticArray.base;
+	} else if (type.nodeType == ir.NodeType.AAType) {
+		auto aa = cast(ir.AAType)type;
+		assert(aa !is null);
+		base = aa.value;
 	} else {
 		throw makeBadOperation(postfix);
 	}

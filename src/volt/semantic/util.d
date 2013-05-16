@@ -269,6 +269,10 @@ void ensureResolved(LanguagePass lp, ir.Scope current, ir.Type type)
 			throw panic(e, "only integral enums are supported.");
 		}
 		return;
+	case AAType:
+		auto at = cast(ir.AAType)type;
+		lp.resolve(current, at);
+		return;
 	case Class:
 	case Struct:
 	case Union:

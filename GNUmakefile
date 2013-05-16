@@ -90,7 +90,7 @@ rt/rt.bc: $(TARGET) rt/src/object.volt rt/src/vrt/vmain.volt rt/src/vrt/gc.volt 
 	@./$(TARGET) --no-stdlib --emit-bitcode -I rt/src -o rt/rt.bc \
 	rt/src/object.volt rt/src/vrt/vmain.volt \
 	rt/src/vrt/gc.volt rt/src/vrt/clazz.volt \
-	rt/src/vrt/eh.volt
+	rt/src/vrt/eh.volt rt/src/vrt/aa.volt
 
 $(TARGET): $(OBJ) Makefile
 	@echo "  LD     $@"

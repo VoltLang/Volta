@@ -201,6 +201,39 @@ public:
 		e.transform(current, ed);
 	}
 
+	override void resolve(ir.Scope current, ir.AAType at)
+	{
+		ensureResolved(this, current, at.value);
+		ensureResolved(this, current, at.key);
+
+		auto base = at.key;
+
+		auto tr = cast(ir.TypeReference)base;
+		if (tr !is null) {
+			base = tr.type;
+		}
+
+		if (base.nodeType() == ir.NodeType.ArrayType) {
+			base = (cast(ir.ArrayType)base).base;
+		} else if (base.nodeType() == ir.NodeType.StaticArrayType) {
+			base = (cast(ir.StaticArrayType)base).base;
+		}
+
+		auto st = cast(ir.StorageType)base;
+		if (st !is null &&
+	  	    (st.type == ir.StorageType.Kind.Immutable ||
+		     st.type == ir.StorageType.Kind.Const)) {
+			base = st.base;
+		}
+
+		auto prim = cast(ir.PrimitiveType)base;
+		if (prim !is null) {
+			return;
+		}
+
+		throw makeInvalidAAKey(at);
+	}
+
 	override void actualize(ir.Struct c)
 	{
 		// Nothing to do here.

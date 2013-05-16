@@ -121,6 +121,17 @@ class Error : Throwable
 	}
 }
 
+// Thrown if Key does not exist in AA
+// TODO: move to core.exception (llvmlowerer!)
+class KeyNotFoundException : Exception
+{
+	this(string message)
+	{
+		super(message);
+		return;
+	}
+}
+
 
 /*
  *
@@ -139,6 +150,14 @@ extern(C) AllocDg vrt_gc_get_alloc_dg();
 extern(C) void vrt_gc_shutdown();
 extern(C) void* vrt_handle_cast(void* obj, TypeInfo tinfo);
 extern(C) void vrt_eh_throw(Throwable);
+
+extern(C) void* vrt_aa_new(TypeInfo value);
+extern(C) bool vrt_aa_in_primitive(void* rbtv, ulong key, void* ret);
+extern(C) bool vrt_aa_in_array(void* rbtv, void[] key, void* ret);
+extern(C) void vrt_aa_insert_primitive(void* rbtv, ulong key, void* value);
+extern(C) void vrt_aa_insert_array(void* rbtv, void[] key, void* value);
+extern(C) bool vrt_aa_delete_primitive(void* rbtv, ulong key);
+extern(C) bool vrt_aa_delete_array(void* rbtv, void[] key);
 
 extern(C) {
 	@MangledName("memcmp") int __llvm_memcmp(void*, void*, size_t);

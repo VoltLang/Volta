@@ -210,6 +210,13 @@ public:
 	abstract void resolve(ir.Scope current, ir.EnumDeclaration ed);
 
 	/**
+	 * Resoltes a AAType and checks if the Key-Type is compatible
+	 *
+	 * @throws CompilerError on invalid Key-Type
+	*/
+	abstract void resolve(ir.Scope current, ir.AAType at);
+
+	/**
 	 * Actualize a Struct, making sure all its fields and methods
 	 * are populated, and any embedded structs (not referenced
 	 * via pointers) are resolved as well.

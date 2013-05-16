@@ -691,6 +691,12 @@ bool typesEqual(ir.Type a, ir.Type b)
 		auto bp = cast(ir.ArrayType) b;
 		assert(ap !is null && bp !is null);
 		return typesEqual(ap.base, bp.base);
+	} else if (a.nodeType == ir.NodeType.AAType &&
+	           b.nodeType == ir.NodeType.AAType) {
+		auto ap = cast(ir.AAType) a;
+		auto bp = cast(ir.AAType) b;
+		assert(ap !is null && bp !is null);
+		return typesEqual(ap.key, bp.key) && typesEqual(ap.value, bp.value);
 	} else if (a.nodeType == ir.NodeType.TypeReference &&
 	           b.nodeType == ir.NodeType.TypeReference) {
 		auto ap = cast(ir.TypeReference) a;

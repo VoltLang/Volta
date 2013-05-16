@@ -407,6 +407,29 @@ void extypeAssignArrayType(ref AssignmentState state, ref ir.Exp exp, ir.ArrayTy
 	throw makeBadImplicitCast(exp, rtype, atype);
 }
 
+void extypeAssignAAType(ref AssignmentState state, ref ir.Exp exp, ir.AAType aatype)
+{
+	auto rtype = getExpType(state.lp, exp, state.current);
+	if (exp.nodeType == ir.NodeType.AssocArray && typesEqual(aatype, rtype)) {
+		return;
+	}
+
+	if (exp.nodeType == ir.NodeType.ArrayLiteral &&
+	    (cast(ir.ArrayLiteral)exp).values.length == 0) {
+		auto aa = new ir.AssocArray();
+		aa.location = exp.location;
+		aa.type = copyTypeSmart(exp.location, aatype);
+		exp = aa;
+		return;
+	}
+
+	if (rtype.nodeType == ir.NodeType.AAType) {
+	    throw makeBadAAAssign(exp.location);
+	}
+
+	throw makeBadImplicitCast(exp, rtype, aatype);
+}
+
 void extypeAssignDispatch(ref AssignmentState state, ref ir.Exp exp, ir.Type type)
 {
 	switch (type.nodeType) {
@@ -442,6 +465,10 @@ void extypeAssignDispatch(ref AssignmentState state, ref ir.Exp exp, ir.Type typ
 	case ir.NodeType.ArrayType:
 		auto atype = cast(ir.ArrayType) type;
 		extypeAssignArrayType(state, exp, atype);
+		break;
+	case ir.NodeType.AAType:
+		auto aatype = cast(ir.AAType) type;
+		extypeAssignAAType(state, exp, aatype);
 		break;
 	case ir.NodeType.Struct:
 	case ir.NodeType.Union:
@@ -1176,10 +1203,26 @@ void extypePostfixIdentifier(LanguagePass lp, ir.Function[] functionStack, ir.Sc
 	}
 }
 
+void extypePostfixIndex(LanguagePass lp, ir.Function[] functionStack, ir.Scope current, ref ir.Exp exp, ir.Postfix postfix)
+{
+	if (postfix.op != ir.Postfix.Op.Index)
+		return;
+
+	auto type = getExpType(lp, postfix.child, current);
+	if (type.nodeType == ir.NodeType.AAType) {
+		auto aa = cast(ir.AAType)type;
+		auto keyType = getExpType(lp, postfix.arguments[0], current);
+		if(!isImplicitlyConvertable(keyType, aa.key) && !typesEqual(keyType, aa.key)) {
+			throw makeBadImplicitCast(exp, keyType, aa.key);
+		}
+	}
+}
+
 void extypePostfix(LanguagePass lp, ir.Function[] functionStack, ir.Scope current, ref ir.Exp exp, ir.Postfix postfix)
 {
 	rewriteSuperIfNeeded(exp, postfix, current, lp);
 	extypePostfixIdentifier(lp, functionStack, current, exp, postfix);
+	extypePostfixIndex(lp, functionStack, current, exp, postfix);
 }
 
 /**
@@ -1353,12 +1396,38 @@ void extypeBinOp(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 	if (handleIfNull(lp, current, rtype, binop.left)) return;
 	if (handleIfNull(lp, current, ltype, binop.right)) return;
 
+	switch(binop.op) with(ir.BinOp.Op) {
+	case AddAssign, SubAssign, MulAssign, DivAssign, ModAssign, AndAssign,
+	     OrAssign, XorAssign, CatAssign, LSAssign, SRSAssign, RSAssign, PowAssign:
+	case Assign:
+		// TODO this needs to be changed if there is operator overloading
+		auto asPostfix = cast(ir.Postfix)binop.left;
+		if (asPostfix !is null) {
+			auto postfixLeft = getExpType(lp, asPostfix.child, current);
+			if (postfixLeft !is null &&
+			    postfixLeft.nodeType == ir.NodeType.AAType &&
+			    asPostfix.op == ir.Postfix.Op.Index) {
+				auto aa = cast(ir.AAType)postfixLeft;
+
+				auto valueType = getExpType(lp, binop.right, current);
+				if(!isImplicitlyConvertable(valueType, aa.value) && !typesEqual(valueType, aa.value)) {
+					throw makeBadImplicitCast(binop, valueType, aa.value);
+				}
+			}
+		}
+		break;
+	default: break;
+	}
+
+
 	if (binop.op == ir.BinOp.Op.Assign) {
 		if (effectivelyConst(ltype)) {
 			throw makeCannotModify(binop, ltype);
 		}
+
 		auto state = AssignmentState(lp, current, false);
 		extypeAssign(state, binop.right, ltype);
+
 		return;
 	}
 

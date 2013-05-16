@@ -197,6 +197,31 @@ CompilerException makeThrowNoInherits(ir.Exp exp, ir.Class clazz, string file = 
 	return e;
 }
 
+CompilerException makeInvalidAAKey(ir.AAType aa, string file = __FILE__, const int line = __LINE__)
+{
+	auto e = new CompilerError(aa.location, format("'%s' is an invalid AA key", aa.key.errorString));
+	e.file = file;
+	e.line = line;
+	return e;
+}
+
+CompilerException makeBadAAAssign(Location location, string file = __FILE__, const int line = __LINE__)
+{
+    auto e = new CompilerError(location, "assigning AA's to each other is not allowed due to semantic inconsistencies.");
+    e.file = file;
+    e.line = line;
+    return e;
+}
+
+CompilerException makeBadAANullAssign(Location location, string file = __FILE__, const int line = __LINE__)
+{
+    auto e = new CompilerError(location, "cannot set AA to null, use [] instead.");
+    e.file = file;
+    e.line = line;
+    return e;
+}
+
+
 /*
  *
  *

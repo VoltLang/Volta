@@ -269,6 +269,7 @@ class AssocArray : Exp
 {
 public:
 	AAPair[] pairs;
+	Type type;  ///< The type of the associative array.
 
 public:
 	this() { super(NodeType.AssocArray); }
