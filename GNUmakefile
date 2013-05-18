@@ -111,7 +111,7 @@ sanity: $(RUN_TARGET)
 	@./a.out.exe; test $$? -eq 42
 
 run: $(RUN_TARGET)
-	@echo "  SANITY a.out.exe"
+	@echo "  RUN    a.out.exe"
 	@-./a.out.exe
 
 debug: $(TARGET) rt/rt.bc
