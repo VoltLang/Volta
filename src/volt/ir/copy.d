@@ -343,35 +343,3 @@ ir.Node copyNode(ir.Node n)
 		goto case Invalid;
 	}
 }
-
-ir.Type scrubStorage(ir.Type type)
-{
-	switch (type.nodeType) with (ir.NodeType) {
-	case ArrayType:
-		auto ar = cast(ir.ArrayType) type;
-		ar.base = scrubStorage(ar.base);
-		return ar;
-	case StaticArrayType:
-		auto sat = cast(ir.StaticArrayType) type;
-		sat.base = scrubStorage(sat.base);
-		return sat;
-	case StorageType:
-		auto st = cast(ir.StorageType) type;
-		return copyType(scrubStorage(st.base));
-	case PointerType:
-		auto ptr = cast(ir.PointerType) type;
-		ptr.base = scrubStorage(ptr.base);
-		return ptr;
-	case TypeReference:
-		auto tr = cast(ir.TypeReference) type;
-		tr.type = scrubStorage(tr.type);
-		return tr;
-	case AAType:
-		auto aa = cast(ir.AAType) type;
-		aa.key = scrubStorage(aa.key);
-		aa.value = scrubStorage(aa.value);
-		return aa;
-	default:
-		return type;
-	}
-}
