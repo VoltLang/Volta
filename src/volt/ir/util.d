@@ -194,16 +194,17 @@ ir.Type copyTypeSmart(Location loc, ir.Type type)
 		auto tr = cast(ir.TypeReference)type;
 		assert(tr.type !is null);
 		return copyTypeSmart(loc, tr.type);
+	case UserAttribute:
 	case Interface:
 	case Struct:
 	case Class:
-	case UserAttribute:
+	case Union:
 	case Enum:
 		auto s = getScopeFromType(type);
 		/// @todo Get fully qualified name for type.
 		return buildTypeReference(loc, type, s !is null ? s.name : null);
 	default:
-		assert(false);
+		throw panicUnhandled(type, to!string(type.nodeType));
 	}
 }
 
