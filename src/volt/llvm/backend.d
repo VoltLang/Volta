@@ -73,6 +73,10 @@ public:
 		auto state = new VoltState(m, mSettings);
 		auto visitor = new LlvmVisitor(state);
 		auto mod = state.mod;
+		scope(exit) {
+			state.close();
+			mFilename = null;
+		}
 
 		if (mDump)
 			writefln("Compiling module");
@@ -100,8 +104,5 @@ public:
 		}
 
 		LLVMWriteBitcodeToFile(mod, mFilename);
-
-		state.close();
-		mFilename = null;
 	}
 }
