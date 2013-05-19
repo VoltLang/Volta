@@ -192,6 +192,7 @@ ir.Type copyTypeSmart(Location loc, ir.Type type)
 		return st;
 	case TypeReference:
 		auto tr = cast(ir.TypeReference)type;
+		assert(tr.type !is null);
 		return copyTypeSmart(loc, tr.type);
 	case Interface:
 	case Struct:
