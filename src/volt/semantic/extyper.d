@@ -1700,6 +1700,12 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ref ir.Exp exp, ir.TypeExp te)
+	{
+		ensureResolved(lp, current, te.type);
+		return Continue;
+	}
+
 	override Status visit(ref ir.Exp exp, ir.ExpReference eref)
 	{
 		replaceExpReferenceIfNeeded(lp, current, null, exp, eref);
