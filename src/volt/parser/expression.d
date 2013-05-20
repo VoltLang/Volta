@@ -400,7 +400,14 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 	case intir.PrimaryExp.Type.Type:
 		auto te = new ir.TypeExp();
 		te.type = primary.type;
-		exp = te;
+		te.location = primary.location;
+		auto pfix = new ir.Postfix();
+		pfix.op = ir.Postfix.Op.Identifier;
+		pfix.child = te;
+		pfix.identifier = new ir.Identifier();
+		pfix.identifier.location = primary.location;
+		pfix.identifier.value = primary._string;
+		exp = pfix;
 		break;
 	default:
 		throw panic(primary.location, "unhandled primary expression.");
@@ -985,6 +992,9 @@ intir.PrimaryExp parsePrimaryExp(TokenStream ts)
 			match(ts, TokenType.OpenParen);
 			exp.type = parseType(ts);
 			match(ts, TokenType.CloseParen);
+			match(ts, TokenType.Dot);
+			auto nameTok = match(ts, TokenType.Identifier);
+			exp._string = nameTok.value;
 			break;
 		}
 		ts.get();
@@ -998,7 +1008,10 @@ intir.PrimaryExp parsePrimaryExp(TokenStream ts)
 		 TokenType.Ulong, TokenType.Void, TokenType.Float,
 		 TokenType.Double, TokenType.Real:
 		exp.op = intir.PrimaryExp.Type.Type;
-		exp.type = parseType(ts);
+		exp.type = parsePrimitiveType(ts);
+		match(ts, TokenType.Dot);
+		auto nameTok = match(ts, TokenType.Identifier);
+		exp._string = nameTok.value;
 		break;
 	case TokenType.OpenBrace:
 		ts.get();

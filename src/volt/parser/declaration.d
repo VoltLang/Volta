@@ -378,7 +378,7 @@ ir.Type parseTypeSigils(TokenStream ts, Location origin, ir.Type base)
 	return base;
 }
 
-private ir.Type parsePrimitiveType(TokenStream ts)
+package ir.Type parsePrimitiveType(TokenStream ts)
 {
 	auto ptype = new ir.PrimitiveType();
 	ptype.location = ts.peek.location;
