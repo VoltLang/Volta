@@ -323,6 +323,30 @@ void extypeAssignCallableType(LanguagePass lp, ir.Scope current, ref ir.Exp exp,
 	throw makeBadImplicitCast(exp, rtype, ctype);
 }
 
+void extypeAssignArrayType(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.ArrayType atype)
+{
+	auto rtype = getExpType(lp, exp, current);
+	if (typesEqual(atype, rtype)) {
+		return;
+	}
+
+	auto rarr = cast(ir.ArrayType) rtype;
+	if (atype !is null && rarr !is null) { 
+		auto lstor = cast(ir.StorageType) atype.base;
+		auto rstor = cast(ir.StorageType) rarr.base;
+		if (lstor !is null && rstor is null) {
+			if (typesEqual(lstor.base, rarr.base) && !mutableIndirection(lstor.base)) {
+				return;
+			}
+		}
+		if (lstor !is null && rstor !is null && typesEqual(lstor.base, rstor.base) && !mutableIndirection(lstor.base)) {
+			return;
+		}
+	}
+
+	throw makeBadImplicitCast(exp, rtype, atype);
+}
+
 void extypeAssignDispatch(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Type type)
 {
 	switch (type.nodeType) {
@@ -356,6 +380,9 @@ void extypeAssignDispatch(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.
 		extypeAssignCallableType(lp, current, exp, ctype);
 		break;
 	case ir.NodeType.ArrayType:
+		auto atype = cast(ir.ArrayType) type;
+		extypeAssignArrayType(lp, current, exp, atype);
+		break;
 	case ir.NodeType.Struct:
 	case ir.NodeType.Union:
 		auto rtype = getExpType(lp, exp, current);
