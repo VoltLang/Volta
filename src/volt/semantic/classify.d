@@ -529,6 +529,16 @@ bool isImplicitlyConvertable(ir.Type from, ir.Type to)
 	auto fprim = cast(ir.PrimitiveType)from;
 	auto tprim = cast(ir.PrimitiveType)to;
 
+	auto tstorage = cast(ir.StorageType) to;
+	if (tstorage !is null) {
+		return typesEqual(from, tstorage.base) || isImplicitlyConvertable(from, tstorage.base);
+	}
+
+	auto fstorage = cast(ir.StorageType) from;
+	if (fstorage !is null) {
+		return typesEqual(to, fstorage.base) || isImplicitlyConvertable(fstorage.base, to);
+	}
+
 	if (fprim is null || tprim is null)
 		return false;
 

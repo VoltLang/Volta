@@ -1296,6 +1296,11 @@ void extypeCat(ir.BinOp bin, ir.ArrayType left, ir.Type right)
 		return;
 	}
 
+	auto rarray = cast(ir.ArrayType) right;
+	if (rarray !is null && isImplicitlyConvertable(rarray.base, left.base) && (isConst(left.base) || isImmutable(left.base))) {
+		return;
+	}
+
 	if (!isImplicitlyConvertable(right, left.base)) {
 		throw makeBadImplicitCast(bin, right, left.base);
 	}
