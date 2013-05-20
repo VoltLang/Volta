@@ -271,6 +271,23 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 		}
 		assert(pointer !is null);
 		return pointer;
+	} else if ((left.nodeType == ir.NodeType.StorageType && right.nodeType != ir.NodeType.StorageType) ||
+			   (left.nodeType != ir.NodeType.StorageType && right.nodeType == ir.NodeType.StorageType)) {
+		ir.StorageType storage = cast(ir.StorageType) left;
+		ir.Type other = right;
+		if (storage is null) {
+			storage = cast(ir.StorageType) right;
+			other = left;
+		}
+		assert(storage !is null);
+		while (storage.base.nodeType == ir.NodeType.StorageType) {
+			storage = cast(ir.StorageType) storage.base;
+		}
+		assert(storage !is null);
+		if (!mutableIndirection(storage.base) && isImplicitlyConvertable(storage.base, other)) {
+			return other;
+		}
+		throw makeBadImplicitCast(bin, right, left);
 	} else {
 		auto lt = cast(ir.Type) left;
 		auto rt = cast(ir.Type) right;

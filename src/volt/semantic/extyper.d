@@ -1279,6 +1279,14 @@ void extypeBinOp(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 		assert(lprim !is null && rprim !is null);
 		extypeBinOp(lp, current, binop, lprim, rprim);
 	}
+
+	if (ltype.nodeType == ir.NodeType.StorageType || rtype.nodeType == ir.NodeType.StorageType) {
+		if (ltype.nodeType == ir.NodeType.StorageType) {
+			binop.left = buildCastSmart(rtype, binop.left);
+		} else {
+			binop.right = buildCastSmart(ltype, binop.right);
+		}
+	}
 }
 
 void extypeCat(ir.BinOp bin, ir.ArrayType left, ir.Type right)
