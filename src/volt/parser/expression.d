@@ -7,6 +7,7 @@ import std.conv;
 
 import ir = volt.ir.ir;
 import intir = volt.parser.intir;
+import volt.ir.util;
 
 import volt.exceptions;
 import volt.errors;
@@ -257,8 +258,8 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 	case intir.PrimaryExp.Type.StringLiteral:
 		auto c = new ir.Constant();
 		c._string = primary._string;
-		c.type = new ir.ArrayType(new ir.PrimitiveType(ir.PrimitiveType.Kind.Char));
-		c.type.location = primary.location;
+		// c.type = immutable(char)[]
+		c.type = buildArrayType(primary.location, buildStorageType(primary.location, ir.StorageType.Kind.Immutable, buildPrimitiveType(primary.location, ir.PrimitiveType.Kind.Char)));
 		assert((c._string[$-1] == '"' || c._string[$-1] == '`') && c._string.length >= 2);
 		c.arrayData = unescapeString(primary.location, c._string[1 .. $-1]);
 		exp = c;
