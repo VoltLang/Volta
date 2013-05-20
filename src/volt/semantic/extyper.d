@@ -339,6 +339,11 @@ void extypeAssignArrayType(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir
 				return;
 			}
 		}
+		if (rstor !is null && lstor is null) {
+			if (typesEqual(rstor.base, atype.base) && !mutableIndirection(rstor.base)) {
+				return;
+			}
+		}
 		if (lstor !is null && rstor !is null && typesEqual(lstor.base, rstor.base) && !mutableIndirection(lstor.base)) {
 			return;
 		}
