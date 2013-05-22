@@ -486,6 +486,7 @@ Visitor.Status accept(ir.Node n, Visitor av)
 	case ClassLiteral:
 	case TraitsExp:
 	case TypeExp:
+	case TemplateInstanceExp:
 		throw panic(n.location, "can not visit expressions");
 
 	/*

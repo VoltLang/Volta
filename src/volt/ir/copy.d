@@ -333,6 +333,7 @@ ir.Node copyNode(ir.Node n)
 	case Typeid:
 	case IsExp:
 	case TraitsExp:
+	case TemplateInstanceExp:
 	case FunctionLiteral:
 	case ExpReference:
 	case StructLiteral:

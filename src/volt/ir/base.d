@@ -123,6 +123,7 @@ enum NodeType
 	ClassLiteral,
 	TraitsExp,
 	TypeExp,
+	TemplateInstanceExp,
 }
 
 /**
@@ -366,5 +367,6 @@ string nodeToString(NodeType nodeType)
 	case ClassLiteral: return "ClassLiteral";
 	case TraitsExp: return "TraitsExp";
 	case TypeExp: return "TypeExp";
+	case TemplateInstanceExp: return "TemplateInstanceExp";
 	}
 }

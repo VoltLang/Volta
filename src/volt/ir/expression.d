@@ -501,3 +501,19 @@ public:
 public:
 	this() { super(NodeType.TypeExp); }
 }
+
+/**
+ * A TemplateInstanceExp represents an instantiation of a template
+ * with explicit type parameters.
+ *
+ * @ingroup irNode irExp 
+ */
+class TemplateInstanceExp : Exp
+{
+public:
+	string name;
+	Type[] types;
+
+public:
+	this() { super(NodeType.TemplateInstanceExp); }
+}
