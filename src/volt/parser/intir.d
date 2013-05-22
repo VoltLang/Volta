@@ -157,6 +157,7 @@ public:
 		ParenExp,        // tlargs
 		Traits,
 		StructLiteral,
+		TemplateInstance,
 	}
 
 public:
@@ -170,4 +171,5 @@ public:
 	IsExp isExp;  // Optional.
 	FunctionLiteral functionLiteral;  // Optional.
 	TraitsExp trait;  // If op == Traits.
+	TemplateInstanceExp _template;  // If op == TemplateInstance.
 }

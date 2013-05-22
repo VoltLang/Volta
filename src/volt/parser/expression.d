@@ -409,6 +409,9 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		pfix.identifier.value = primary._string;
 		exp = pfix;
 		break;
+	case intir.PrimaryExp.Type.TemplateInstance:
+		exp = primary._template;
+		break;
 	default:
 		throw panic(primary.location, "unhandled primary expression.");
 	}
@@ -879,6 +882,23 @@ intir.PrimaryExp parsePrimaryExp(TokenStream ts)
 			goto case TokenType.Delegate;
 		}
 		auto token = ts.get();
+		if (ts.peek.type == TokenType.Bang && ts.lookahead(1).type != TokenType.Is) {
+			ts.get();
+			exp.op = intir.PrimaryExp.Type.TemplateInstance;
+			exp._template = new ir.TemplateInstanceExp();
+			exp._template.location = origin;
+			exp._template.name = token.value;
+			if (matchIf(ts, TokenType.OpenParen)) {
+				while (ts.peek.type != ir.TokenType.CloseParen) {
+					exp._template.types ~= parseType(ts);
+					matchIf(ts, TokenType.Comma);
+				}
+				match(ts, TokenType.CloseParen);
+			} else {
+				exp._template.types ~= parseType(ts);
+			}
+			break;
+		}
 		exp._string = token.value;
 		exp.op = intir.PrimaryExp.Type.Identifier;
 		break;
