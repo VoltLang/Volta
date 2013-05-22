@@ -330,6 +330,9 @@ public:
 	override Status leave(ref ir.Exp, ir.Constant n) { leaveNode(n); return Continue; }
 	override Status enter(ref ir.Exp, ir.TypeExp n) { enterNode(n); return Continue; }
 	override Status leave(ref ir.Exp, ir.TypeExp n) { leaveNode(n); return Continue; }
+	override Status enter(ref ir.Exp, ir.TemplateInstanceExp n) { enterNode(n); return Continue; }
+	override Status leave(ref ir.Exp, ir.TemplateInstanceExp n) { leaveNode(n); return Continue; }
+
 
 	override Status visit(ref ir.Exp, ir.ExpReference n) { visitRef(n, n.decl); return Continue; }
 	override Status visit(ref ir.Exp, ir.TraitsExp n) { visitNode(n); return Continue; }

@@ -1947,6 +1947,25 @@ public:
 		assert(false);
 	}
 
+	override Status enter(ref ir.Exp, ir.TemplateInstanceExp texp)
+	{
+		wf(texp.name, "!(");
+		foreach (i, type; texp.types) {
+			accept(type, this);
+			if (i < texp.types.length - 1) {
+				wf(", ");
+			} else {
+				wf(")");
+			}
+		}
+		return ContinueParent;
+	}
+
+	override Status leave(ref ir.Exp, ir.TemplateInstanceExp texp)
+	{
+		assert(false);
+	}
+
 	override Status visit(ref ir.Exp, ir.ExpReference e)
 	{ 
 		if (e.idents.length > 1) for (int i = cast(int)e.idents.length - 1; i > 0; --i) {
