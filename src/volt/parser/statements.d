@@ -306,7 +306,13 @@ ir.ForeachStatement parseForeachStatement(TokenStream ts)
 	}
 	match(ts, TokenType.Semicolon);
 
-	f.aggregate = parseExp(ts);
+	auto firstExp = parseExp(ts);
+	if (matchIf(ts, ir.TokenType.DoubleDot)) {
+		f.beginIntegerRange = firstExp;
+		f.endIntegerRange = parseExp(ts);
+	} else {
+		f.aggregate = firstExp;
+	}
 
 	match(ts, TokenType.CloseParen);
 	f.block = parseBlockStatement(ts);
