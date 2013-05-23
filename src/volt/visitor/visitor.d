@@ -1369,9 +1369,20 @@ Visitor.Status acceptForeachStatement(ir.ForeachStatement fes, Visitor av)
 		}
 	}
 
-	status = acceptExp(fes.aggregate, av);
-	if (status != VisitorContinue) {
-		return parentContinue(status);
+	if (fes.beginIntegerRange !is null) {
+		status = acceptExp(fes.beginIntegerRange, av);
+		if (status != VisitorContinue) {
+			return parentContinue(status);
+		}
+		status = acceptExp(fes.endIntegerRange, av);
+		if (status != VisitorContinue) {
+			return parentContinue(status);
+		}
+	} else {
+		status = acceptExp(fes.aggregate, av);
+		if (status != VisitorContinue) {
+			return parentContinue(status);
+		}
 	}
 
 	status = accept(fes.block, av);

@@ -740,7 +740,13 @@ public:
 			}
 		}
 		wf("; ");
-		acceptExp(fes.aggregate, this);
+		if (fes.beginIntegerRange !is null) {
+			acceptExp(fes.beginIntegerRange, this);
+			wf(" .. ");
+			acceptExp(fes.endIntegerRange, this);
+		} else {
+			acceptExp(fes.aggregate, this);
+		}
 		wfln(") {");
 		mIndent++;
 		internalPrintBlock(fes.block);
