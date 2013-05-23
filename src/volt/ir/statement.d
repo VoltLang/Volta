@@ -194,6 +194,7 @@ public:
 	bool reverse;
 	Variable[] itervars;
 	Exp aggregate;
+	Exp beginIntegerRange, endIntegerRange;  // aggregate will be null.
 	BlockStatement block;
 
 public:
