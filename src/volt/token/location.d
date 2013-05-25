@@ -16,7 +16,7 @@ struct Location
 {
 public:
 	/// When the column is 0, the whole line is assumed to be the location
-	const size_t wholeLine = 0;
+	enum size_t wholeLine = 0;
 
 	string filename;
 	size_t line = 1;
