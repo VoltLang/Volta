@@ -222,8 +222,8 @@ public:
 
 	Type[2] types;
 
-	immutable size_t ptrIndex = 0;
-	immutable size_t lengthIndex = 1;
+	enum size_t ptrIndex = 0;
+	enum size_t lengthIndex = 1;
 
 public:
 	this(State state, ir.ArrayType at)
@@ -420,8 +420,8 @@ class DelegateType : CallableType
 public:
 	LLVMTypeRef llvmCallPtrType;
 
-	immutable uint voidPtrIndex = 0;
-	immutable uint funcIndex = 1;
+	enum size_t voidPtrIndex = 0;
+	enum size_t funcIndex = 1;
 
 public:
 	this(State state, ir.DelegateType dt)
