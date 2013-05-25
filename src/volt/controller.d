@@ -4,8 +4,8 @@ module volt.controller;
 
 import core.exception;
 import std.algorithm : endsWith;
-import std.path : dirSeparator, exists;
-import std.file : remove;
+import std.path : dirSeparator;
+import std.file : remove, exists;
 import std.process : system;
 import std.stdio : stderr;
 
