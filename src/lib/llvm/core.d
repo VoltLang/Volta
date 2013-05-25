@@ -161,7 +161,7 @@ const(char)* nullTerminate(char[] stack, string str)
 {
 	if (str.length + 1 > stack.length)
 		return toStringz(str);
-	stack[0 .. str.length] = str;
+	stack[0 .. str.length] = str[];
 	stack[str.length] = 0;
 	return stack.ptr;
 }
