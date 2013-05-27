@@ -1007,17 +1007,20 @@ intir.PrimaryExp parsePrimaryExp(TokenStream ts)
 		if (isFunctionLiteral(ts)) {
 			goto case TokenType.Delegate;
 		}
-		if (ts == [TokenType.OpenParen, TokenType.Void, TokenType.Asterix, TokenType.CloseParen]) {
+		match(ts, TokenType.OpenParen);
+		if (isUnambiguouslyParenType(ts)) {
 			exp.op = intir.PrimaryExp.Type.Type;
-			match(ts, TokenType.OpenParen);
 			exp.type = parseType(ts);
 			match(ts, TokenType.CloseParen);
 			match(ts, TokenType.Dot);
-			auto nameTok = match(ts, TokenType.Identifier);
-			exp._string = nameTok.value;
+			if (matchIf(ts, TokenType.Typeid)) {
+				exp.op = intir.PrimaryExp.Type.Typeid;
+			} else {
+				auto nameTok = match(ts, TokenType.Identifier);
+				exp._string = nameTok.value;
+			}
 			break;
 		}
-		ts.get();
 		exp.tlargs ~= parseTernaryExp(ts);
 		match(ts, TokenType.CloseParen);
 		exp.op = intir.PrimaryExp.Type.ParenExp;
@@ -1030,8 +1033,12 @@ intir.PrimaryExp parsePrimaryExp(TokenStream ts)
 		exp.op = intir.PrimaryExp.Type.Type;
 		exp.type = parsePrimitiveType(ts);
 		match(ts, TokenType.Dot);
-		auto nameTok = match(ts, TokenType.Identifier);
-		exp._string = nameTok.value;
+		if (matchIf(ts, TokenType.Typeid)) {
+			exp.op = intir.PrimaryExp.Type.Typeid;
+		} else {
+			auto nameTok = match(ts, TokenType.Identifier);
+			exp._string = nameTok.value;
+		}
 		break;
 	case TokenType.OpenBrace:
 		ts.get();
@@ -1084,7 +1091,31 @@ intir.PrimaryExp parsePrimaryExp(TokenStream ts)
 	}
 
 	exp.location = ts.peek.location - origin;
+
+	if (ts == [TokenType.Dot, TokenType.Typeid] && exp.op != intir.PrimaryExp.Type.Typeid) {
+		ts.get();
+		ts.get();
+		exp.exp = primaryToExp(exp);
+		exp.op = intir.PrimaryExp.Type.Typeid;
+		assert(exp.type is null);
+	}
+	
 	return exp;
+}
+
+bool isUnambiguouslyParenType(TokenStream ts)
+{
+	switch (ts.peek.type) with (TokenType) {
+	case Bool, Byte, Short, Int, Long,
+		 Char, Ubyte, Ushort, Uint, Ulong,
+		 Dchar, Wchar, Void:
+		return true;
+	case Identifier:
+		return ts.lookahead(1).type == Asterix || ts == [Identifier, OpenBracket, CloseBracket] ||
+			   ts == [Identifier, OpenBracket, IntegerLiteral, CloseBracket];
+	default:
+		return false;
+	}
 }
 
 // Returns: true if the TokenStream is at a function literal.
