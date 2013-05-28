@@ -248,7 +248,9 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		break;
 	case intir.PrimaryExp.Type.Typeid:
 		auto ti = new ir.Typeid();
-		if (primary.exp !is null) {
+		if (primary._string !is null) {
+			ti.ident = primary._string;
+		} else if (primary.exp !is null) {
 			ti.exp = primary.exp;
 		} else {
 			ti.type = primary.type;
@@ -1053,16 +1055,20 @@ intir.PrimaryExp parsePrimaryExp(TokenStream ts)
 		ts.get();
 		exp.op = intir.PrimaryExp.Type.Typeid;
 		match(ts, TokenType.OpenParen);
-		auto mark = ts.save();
-		try {
-			auto e = parseType(ts);
-			exp.type = e;
-		} catch (CompilerError err) {
-			if (err.neverIgnore) {
-				throw err;
+		if (ts.peek.type == TokenType.Identifier) {
+			auto nameTok = ts.get();
+			exp._string = nameTok.value;
+		}  else {
+			auto mark = ts.save();
+			try {
+				exp.type = parseType(ts);
+			} catch (CompilerError err) {
+				if (err.neverIgnore) {
+					throw err;
+				}
+				ts.restore(mark);
+				exp.exp = parseExp(ts);
 			}
-			ts.restore(mark);
-			exp.exp = parseExp(ts);
 		}
 		match(ts, TokenType.CloseParen);
 		break;

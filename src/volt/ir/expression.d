@@ -333,9 +333,10 @@ public:
 class Typeid : Exp
 {
 public:
-	// One of these will be null.
+	// One of these will be non empty.
 	Exp exp;  // Optional.
 	Type type;  // Optional.
+	string ident;  // Optional.
 
 public:
 	this() { super(NodeType.Typeid); }

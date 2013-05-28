@@ -1689,9 +1689,42 @@ public:
 		replaceTypeOfIfNeeded(lp, current, dtype.ret);
 		return Continue;
 	}
-
+	enum Kind
+	{
+		Alias,
+		Value,
+		Type,
+		Scope,
+		Function,
+		Template,
+		EnumDeclaration,
+		FunctionParam,
+	}
 	override Status enter(ref ir.Exp exp, ir.Typeid _typeid)
 	{
+		if (_typeid.ident.length > 0) {
+			auto store = lookup(lp, current, _typeid.location, _typeid.ident);
+			if (store is null) {
+				throw makeFailedLookup(_typeid, _typeid.ident);
+			}
+			switch (store.kind) with (ir.Store.Kind) {
+			case Type:
+				_typeid.type = buildTypeReference(_typeid.location, cast(ir.Type) store.node, _typeid.ident);
+				assert(_typeid.type !is null);
+				break;
+			case Value, EnumDeclaration, FunctionParam:
+				auto decl = cast(ir.Declaration) store.node;
+				_typeid.exp = buildExpReference(_typeid.location, decl, _typeid.ident);
+				break;
+			default:
+				throw panicUnhandled(_typeid, "store kind");
+			}
+			_typeid.ident.length = 0;
+		}
+		if (_typeid.exp !is null) {
+			_typeid.type = copyType(getExpType(lp, _typeid.exp, current));
+			_typeid.exp = null;
+		}
 		ensureResolved(lp, current, _typeid.type);
 		replaceTypeOfIfNeeded(lp, current, _typeid.type);
 		return Continue;
