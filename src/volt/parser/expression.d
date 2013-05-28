@@ -1116,9 +1116,6 @@ bool isUnambiguouslyParenType(TokenStream ts)
 		 Char, Ubyte, Ushort, Uint, Ulong,
 		 Dchar, Wchar, Void:
 		return true;
-	case Identifier:
-		return ts.lookahead(1).type == Asterix || ts == [Identifier, OpenBracket, CloseBracket] ||
-			   ts == [Identifier, OpenBracket, IntegerLiteral, CloseBracket];
 	default:
 		return false;
 	}
