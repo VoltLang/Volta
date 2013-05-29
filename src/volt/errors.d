@@ -3,7 +3,8 @@
 module volt.errors;
 
 import std.conv : to;
-import std.string : format;
+import std.array : join;
+import std.string : format, toLower;
 
 import ir = volt.ir.ir;
 
@@ -107,13 +108,13 @@ CompilerException makeNeedOverride(ir.Function overrider, ir.Function overridee)
 
 CompilerException makeThrowOnlyThrowable(ir.Exp exp, ir.Type type)
 {
-	string emsg = format("can not throw expression of type %s", type.errorString);
+	string emsg = format("can not throw expression of type '%s'", type.errorString);
 	return new CompilerError(exp.location, emsg);
 }
 
 CompilerException makeThrowNoInherits(ir.Exp exp, ir.Class clazz)
 {
-	string emsg = format("can not throw class of type %s as it does not inherit from object.Throwable", clazz.errorString);
+	string emsg = format("can not throw class of type '%s' as it does not inherit from object.Throwable", clazz.errorString);
 	return new CompilerError(exp.location, emsg);
 }
 
@@ -177,7 +178,7 @@ CompilerException makeExpectedContext(ir.Node node, ir.Node node2)
 
 CompilerException makeBadImplicitCast(ir.Node node, ir.Type from, ir.Type to)
 {
-	string emsg = format("cannot implicitly convert %s to %s.", from.errorString, to.errorString);
+	string emsg = format("cannot implicitly convert '%s' to '%s'.", from.errorString, to.errorString);
 	return new CompilerError(node.location, emsg);
 }
 
@@ -193,12 +194,12 @@ CompilerException makeNotLValue(ir.Node node)
 
 CompilerException makeTypeIsNot(ir.Node node, ir.Type from, ir.Type to)
 {
-	return new CompilerError(node.location, format("type %s is not %s as expected.", from.errorString, to.errorString));
+	return new CompilerError(node.location, format("type '%s' is not '%s' as expected.", from.errorString, to.errorString));
 }
 
 CompilerException makeInvalidType(ir.Node node, ir.Type type)
 {
-	return new CompilerError(node.location, format("bad type %s", type.errorString));
+	return new CompilerError(node.location, format("bad type '%s'", type.errorString));
 }
 
 CompilerException makeInvalidUseOfStore(ir.Node node, ir.Store store)
@@ -221,7 +222,7 @@ CompilerException makeInvalidThis(ir.Node node, ir.Type was, ir.Type expected, s
 
 CompilerException makeNotMember(ir.Node node, ir.Type aggregate, string member)
 {
-	return new CompilerError(node.location, format("%s has no member '%s'", aggregate.errorString, member));
+	return new CompilerError(node.location, format("'%s' has no member '%s'", aggregate.errorString, member));
 }
 
 CompilerException makeNotMember(Location location, string aggregate, string member)
@@ -259,7 +260,7 @@ CompilerException makeWrongNumberOfArguments(ir.Node node, size_t got, size_t ex
 
 CompilerException makeBadCall(ir.Node node, ir.Type type)
 {
-	return new CompilerError(node.location, format("cannot call %s.", type.errorString));
+	return new CompilerError(node.location, format("cannot call '%s'.", type.errorString));
 }
 
 CompilerException makeCannotDisambiguate(ir.Node node, ir.Function[] functions)
@@ -345,5 +346,48 @@ private:
 
 @property string errorString(ir.Type type)
 {
-	return format("'%s'", type);
+
+	switch(type.nodeType()) with(ir.NodeType) {
+		case PrimitiveType:
+			ir.PrimitiveType prim = cast(ir.PrimitiveType)type;
+			return toLower(format("%s", prim.type));
+		case TypeReference:
+			ir.TypeReference tr = cast(ir.TypeReference)type;
+			return tr.type.errorString();
+		case PointerType:
+			ir.PointerType pt = cast(ir.PointerType)type;
+			return format("%s*", pt.base.errorString());
+		case NullType:
+			return "null";
+		case ArrayType:
+			ir.ArrayType at = cast(ir.ArrayType)type;
+			return format("%s[]", at.base.errorString());
+		case StaticArrayType:
+			ir.StaticArrayType sat = cast(ir.StaticArrayType)type;
+			return format("%s[%d]", sat.base.errorString(), sat.length);
+		case AAType:
+			ir.AAType aat = cast(ir.AAType)type;
+			return format("%s[%s]", aat.value.errorString(), aat.key.errorString());
+		case FunctionType:
+		case DelegateType:
+			ir.CallableType c = cast(ir.CallableType)type;
+
+			string ctype = type.nodeType() == FunctionType ? "function" : "delegate";
+
+			string[] params;
+			foreach (param; c.params) {
+				params ~= param.errorString();
+			}
+
+			return format("%s delegate(%s)", c.ret.errorString(), ctype, join(params, ", "));
+		case StorageType:
+			ir.StorageType st = cast(ir.StorageType)type;
+			return format("%s(%s)", toLower(format("%s", st.type)), st.base.errorString());
+		case TypeOf:
+		case FunctionSetType:
+		default:
+			return type.toString();
+	}
+
+	assert(0);
 }
