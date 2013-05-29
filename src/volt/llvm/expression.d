@@ -551,7 +551,7 @@ void handleCast(State state, Location loc, Type newType, Value result)
 	    (oldTypePtr !is null || oldTypeFn !is null))
 		return handleCastPointer(state, loc, newType, result);
 
-	throw panicUnhandled(loc, to!string(oldType.irType.nodeType));
+	throw panicUnhandled(loc, to!string(newType.irType.nodeType));
 }
 
 /**

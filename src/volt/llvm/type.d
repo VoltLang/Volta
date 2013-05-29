@@ -452,6 +452,14 @@ public:
 
 		LLVMStructSetBody(llvmType, mt, false);
 	}
+
+	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
+	{
+		if (!cnst.isNull) {
+			throw panic(cnst.location, "can only fromConstant null pointers.");
+		}
+		return LLVMConstPointerNull(llvmType);
+	}
 }
 
 /**
