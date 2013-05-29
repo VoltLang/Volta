@@ -268,6 +268,7 @@ void ensureResolved(LanguagePass lp, ir.Scope current, ir.Type type)
 		return;
 	case Class:
 	case Struct:
+	case Union:
 	case TypeOf:
 		return;
 	default:
