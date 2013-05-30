@@ -379,7 +379,7 @@ private:
 				params ~= param.errorString();
 			}
 
-			return format("%s delegate(%s)", c.ret.errorString(), ctype, join(params, ", "));
+			return format("%s %s(%s)", c.ret.errorString(), ctype, join(params, ", "));
 		case StorageType:
 			ir.StorageType st = cast(ir.StorageType)type;
 			return format("%s(%s)", toLower(format("%s", st.type)), st.base.errorString());
