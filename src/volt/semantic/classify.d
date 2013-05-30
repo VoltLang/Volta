@@ -80,7 +80,7 @@ int size(Location location, LanguagePass lp, ir.Node node)
 		auto asVariable = cast(ir.Variable) node;
 		assert(asVariable !is null);
 		return size(location, lp, asVariable.type);
-	case PointerType, FunctionType:
+	case PointerType, FunctionType, DelegateType:
 		return lp.settings.isVersionSet("V_P64") ? 8 : 4;
 	case ArrayType:
 		return lp.settings.isVersionSet("V_P64") ? 16 : 8;
