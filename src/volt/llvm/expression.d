@@ -496,9 +496,15 @@ void handleCast(State state, ir.Unary cst, Value result)
 
 void handleCast(State state, Location loc, Type newType, Value result)
 {
-	makeNonPointer(state, result);
-
 	auto oldType = result.type;
+
+	auto newTypeArray = cast(ArrayType)newType;
+	auto oldTypeArray = cast(ArrayType)oldType;
+	if (result.isPointer && (newTypeArray !is null && oldTypeArray !is null)) {
+		return handleCastArray(state, loc, newType, result);
+	}
+
+	makeNonPointer(state, result);
 
 	assert(newType !is null);
 	assert(oldType !is null);
@@ -610,6 +616,18 @@ void handleCastPointer(State state, Location loc, Type newType, Value result)
 }
 
 /**
+ * Handle all Array casts as bit casts
+ */
+void handleCastArray(State state, Location loc, Type newType, Value result)
+{
+	assert(result.isPointer);
+
+	result.type = newType;
+	result.value = LLVMBuildBitCast(state.builder, result.value, LLVMPointerType(newType.llvmType, 0), "");
+}
+
+
+/**
  * Handles bitwise not, the ~ operator.
  */
 void handleComplement(State state, ir.Unary comp, Value result)
@@ -619,6 +637,7 @@ void handleComplement(State state, ir.Unary comp, Value result)
 	auto one = LLVMConstInt(result.type.llvmType, 1, true);
 	result.value = LLVMBuildSub(state.builder, neg, one, "");
 }
+
 
 /**
  * Handles '*' dereferences.
