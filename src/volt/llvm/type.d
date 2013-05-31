@@ -458,7 +458,11 @@ public:
 		if (!cnst.isNull) {
 			throw panic(cnst.location, "can only fromConstant null pointers.");
 		}
-		return LLVMConstPointerNull(llvmType);
+		LLVMValueRef[2] vals;
+		auto vptr = LLVMPointerType(LLVMInt8TypeInContext(state.context), 0);
+		vals[0] = LLVMConstNull(vptr);
+		vals[1] = LLVMConstNull(vptr);
+		return LLVMConstNamedStruct(llvmType, vals.ptr, 2);
 	}
 }
 
