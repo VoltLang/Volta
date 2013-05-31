@@ -23,6 +23,12 @@ import volt.semantic.util;
 import volt.semantic.ctfe;
 import volt.semantic.overload;
 
+struct AssignmentState
+{
+	LanguagePass lp;
+	ir.Scope current;
+	bool isVarAssign;
+}
 
 /**
  * This handles the auto that has been filled in, removing the auto storage.
@@ -54,7 +60,7 @@ bool handleIfNull(LanguagePass lp, ir.Scope current, ir.Type left, ref ir.Exp ri
  *
  * While generic currently only used by extypeAssign.
  */
-bool handleIfStructLiteral(LanguagePass lp, ir.Scope current, ir.Type left, ref ir.Exp right)
+bool handleIfStructLiteral(ref AssignmentState state, ir.Type left, ref ir.Exp right)
 {
 	auto asLit = cast(ir.StructLiteral) right;
 	if (asLit is null)
@@ -69,18 +75,18 @@ bool handleIfStructLiteral(LanguagePass lp, ir.Scope current, ir.Type left, ref 
 			asStruct = cast(ir.Struct) asTR.type;
 		}
 		if (asStruct is null) {
-			throw makeBadImplicitCast(right, getExpType(lp, right, current), left);
+			throw makeBadImplicitCast(right, getExpType(state.lp, right, state.current), left);
 		}
 	}
 
 	ir.Type[] types = getStructFieldTypes(asStruct);
 
 	if (types.length < asLit.exps.length) {
-		throw makeBadImplicitCast(right, getExpType(lp, right, current), left);
+		throw makeBadImplicitCast(right, getExpType(state.lp, right, state.current), left);
 	}
 
 	foreach (i, ref sexp; asLit.exps) {
-		extypeAssign(lp, current, sexp, types[i]);
+		extypeAssign(state, sexp, types[i]);
 	}
 
 	asLit.type = buildTypeReference(right.location, asStruct, asStruct.name);
@@ -105,9 +111,9 @@ void extypeCastToBool(LanguagePass lp, ir.Scope current, ref ir.Exp exp)
 /**
  * This handles the exp being storage.
  */
-void extypeAssignHandleStorage(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Type ltype)
+void extypeAssignHandleStorage(ref AssignmentState state, ref ir.Exp exp, ir.Type ltype)
 {
-	auto rtype = getExpType(lp, exp, current);
+	auto rtype = getExpType(state.lp, exp, state.current);
 	if (ltype.nodeType != ir.NodeType.StorageType &&
 	    rtype.nodeType == ir.NodeType.StorageType) {
 		auto asStorageType = cast(ir.StorageType) rtype;
@@ -138,9 +144,9 @@ void extypeAssignHandleStorage(LanguagePass lp, ir.Scope current, ref ir.Exp exp
 	}
 }
 
-void extypePassHandleStorage(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Type ltype)
+void extypePassHandleStorage(ref AssignmentState state, ref ir.Exp exp, ir.Type ltype)
 {
-	auto rtype = getExpType(lp, exp, current);
+	auto rtype = getExpType(state.lp, exp, state.current);
 	if (ltype.nodeType != ir.NodeType.StorageType &&
 	    rtype.nodeType == ir.NodeType.StorageType) {
 		auto asStorageType = cast(ir.StorageType) rtype;
@@ -156,9 +162,9 @@ void extypePassHandleStorage(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 	}
 }
 
-void extypeAssignStorageType(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.StorageType storage)
+void extypeAssignStorageType(ref AssignmentState state, ref ir.Exp exp, ir.StorageType storage)
 {
-	auto type = getExpType(lp, exp, current);
+	auto type = getExpType(state.lp, exp, state.current);
 	if (storage.base is null) {
 		if (type.nodeType == ir.NodeType.FunctionSetType) {
 			auto fset = cast(ir.FunctionSetType) type;
@@ -169,40 +175,41 @@ void extypeAssignStorageType(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 	}
 
 	if (storage.type == ir.StorageType.Kind.Scope) {
-		if (mutableIndirection(storage.base)) {
+		if (mutableIndirection(storage.base) && (!state.isVarAssign ||
+		    (state.current.node.nodeType != ir.NodeType.Function || state.current.node.nodeType != ir.NodeType.BlockStatement))) {
 			throw makeBadImplicitCast(exp, type, storage);
 		}
 		exp = buildCastSmart(storage.base, exp);
-		extypeAssignDispatch(lp, current, exp, storage.base);
+		extypeAssignDispatch(state, exp, storage.base);
 	}
 
 	if (canTransparentlyReferToBase(storage)) {
-		extypeAssignDispatch(lp, current, exp, storage.base);
+		extypeAssignDispatch(state, exp, storage.base);
 	}
 }
 
-void extypePassStorageType(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.StorageType storage)
+void extypePassStorageType(ref AssignmentState state, ref ir.Exp exp, ir.StorageType storage)
 {
-	auto type = getExpType(lp, exp, current);
+	auto type = getExpType(state.lp, exp, state.current);
 	if (storage.base is null) {
 		storage.base = copyTypeSmart(exp.location, type);
 	}
 
 	if (storage.type == ir.StorageType.Kind.Scope) {
-		extypePassDispatch(lp, current, exp, storage.base);
+		extypePassDispatch(state, exp, storage.base);
 	} else if (canTransparentlyReferToBase(storage)) {
-		extypePassDispatch(lp, current, exp, storage.base);
+		extypePassDispatch(state, exp, storage.base);
 	}
 }
 
-void extypeAssignTypeReference(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.TypeReference tr)
+void extypeAssignTypeReference(ref AssignmentState state, ref ir.Exp exp, ir.TypeReference tr)
 {
-	extypeAssign(lp, current, exp, tr.type);
+	extypeAssign(state, exp, tr.type);
 }
 
-void extypeAssignPointerType(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.PointerType ptr)
+void extypeAssignPointerType(ref AssignmentState state, ref ir.Exp exp, ir.PointerType ptr)
 {
-	auto type = getExpType(lp, exp, current);
+	auto type = getExpType(state.lp, exp, state.current);
 
 	auto storage = cast(ir.StorageType) type;
 	if (storage !is null) {
@@ -240,9 +247,9 @@ void extypeAssignPointerType(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 	throw makeBadImplicitCast(exp, type, ptr);
 }
 
-void extypeAssignPrimitiveType(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.PrimitiveType lprim)
+void extypeAssignPrimitiveType(ref AssignmentState state, ref ir.Exp exp, ir.PrimitiveType lprim)
 {
-	auto rtype = getExpType(lp, exp, current);
+	auto rtype = getExpType(state.lp, exp, state.current);
 	auto rprim = cast(ir.PrimitiveType) rtype;
 	if (rprim is null) {
 		throw makeBadImplicitCast(exp, rtype, lprim);
@@ -269,16 +276,16 @@ void extypeAssignPrimitiveType(LanguagePass lp, ir.Scope current, ref ir.Exp exp
 	exp = buildCastSmart(lprim, exp);
 }
 
-void extypeAssignClass(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Class _class)
+void extypeAssignClass(ref AssignmentState state, ref ir.Exp exp, ir.Class _class)
 {
-	auto type = getExpType(lp, exp, current);
+	auto type = getExpType(state.lp, exp, state.current);
 	assert(type !is null);
 
 	auto rightClass = cast(ir.Class) type;
 	if (rightClass is null) {
 		throw makeBadImplicitCast(exp, type, _class);
 	}
-	lp.resolve(rightClass);
+	state.lp.resolve(rightClass);
 
 	/// Check for converting child classes into parent classes.
 	if (_class !is null && rightClass !is null) {
@@ -293,39 +300,39 @@ void extypeAssignClass(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Cla
 	}
 }
 
-void extypeAssignEnum(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Enum e)
+void extypeAssignEnum(ref AssignmentState state, ref ir.Exp exp, ir.Enum e)
 {
-	auto rtype = getExpType(lp, exp, current);
+	auto rtype = getExpType(state.lp, exp, state.current);
 	if (typesEqual(e, rtype)) {
 		return;
 	}
 
 	// TODO: This might need to be smarter.
-	extypeAssignDispatch(lp, current, exp, e.base);
+	extypeAssignDispatch(state, exp, e.base);
 }
 
-void extypeAssignCallableType(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.CallableType ctype)
+void extypeAssignCallableType(ref AssignmentState state, ref ir.Exp exp, ir.CallableType ctype)
 {
-	auto rtype = getExpType(lp, exp, current);
+	auto rtype = getExpType(state.lp, exp, state.current);
 	if (typesEqual(ctype, rtype)) {
 		return;
 	}
 	if (rtype.nodeType == ir.NodeType.FunctionSetType) {
 		auto fset = cast(ir.FunctionSetType) rtype;
-		auto fn = selectFunction(lp, fset.set, ctype.params, exp.location);
+		auto fn = selectFunction(state.lp, fset.set, ctype.params, exp.location);
 		auto eRef = buildExpReference(exp.location, fn, fn.name);
 		fset.set.reference = eRef;
 		exp = eRef;
-		replaceExpReferenceIfNeeded(lp, current, null, exp, eRef);
-		extypeAssignCallableType(lp, current, exp, ctype);
+		replaceExpReferenceIfNeeded(state.lp, state.current, null, exp, eRef);
+		extypeAssignCallableType(state, exp, ctype);
 		return;
 	}
 	throw makeBadImplicitCast(exp, rtype, ctype);
 }
 
-void extypeAssignArrayType(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.ArrayType atype)
+void extypeAssignArrayType(ref AssignmentState state, ref ir.Exp exp, ir.ArrayType atype)
 {
-	auto rtype = getExpType(lp, exp, current);
+	auto rtype = getExpType(state.lp, exp, state.current);
 	if (typesEqual(atype, rtype)) {
 		return;
 	}
@@ -352,45 +359,45 @@ void extypeAssignArrayType(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir
 	throw makeBadImplicitCast(exp, rtype, atype);
 }
 
-void extypeAssignDispatch(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Type type)
+void extypeAssignDispatch(ref AssignmentState state, ref ir.Exp exp, ir.Type type)
 {
 	switch (type.nodeType) {
 	case ir.NodeType.StorageType:
 		auto storage = cast(ir.StorageType) type;
-		extypeAssignStorageType(lp, current, exp, storage);
+		extypeAssignStorageType(state, exp, storage);
 		break;
 	case ir.NodeType.TypeReference:
 		auto tr = cast(ir.TypeReference) type;
-		extypeAssignTypeReference(lp, current, exp, tr);
+		extypeAssignTypeReference(state, exp, tr);
 		break;
 	case ir.NodeType.PointerType:
 		auto ptr = cast(ir.PointerType) type;
-		extypeAssignPointerType(lp, current, exp, ptr);
+		extypeAssignPointerType(state, exp, ptr);
 		break;
 	case ir.NodeType.PrimitiveType:
 		auto prim = cast(ir.PrimitiveType) type;
-		extypeAssignPrimitiveType(lp, current, exp, prim);
+		extypeAssignPrimitiveType(state, exp, prim);
 		break;
 	case ir.NodeType.Class:
 		auto _class = cast(ir.Class) type;
-		extypeAssignClass(lp, current, exp, _class);
+		extypeAssignClass(state, exp, _class);
 		break;
 	case ir.NodeType.Enum:
 		auto e = cast(ir.Enum) type;
-		extypeAssignEnum(lp, current, exp, e);
+		extypeAssignEnum(state, exp, e);
 		break;
 	case ir.NodeType.FunctionType:
 	case ir.NodeType.DelegateType:
 		auto ctype = cast(ir.CallableType) type;
-		extypeAssignCallableType(lp, current, exp, ctype);
+		extypeAssignCallableType(state, exp, ctype);
 		break;
 	case ir.NodeType.ArrayType:
 		auto atype = cast(ir.ArrayType) type;
-		extypeAssignArrayType(lp, current, exp, atype);
+		extypeAssignArrayType(state, exp, atype);
 		break;
 	case ir.NodeType.Struct:
 	case ir.NodeType.Union:
-		auto rtype = getExpType(lp, exp, current);
+		auto rtype = getExpType(state.lp, exp, state.current);
 		if (typesEqual(type, rtype)) {
 			return;
 		}
@@ -401,39 +408,39 @@ void extypeAssignDispatch(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.
 }
 
 
-void extypePassDispatch(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Type type)
+void extypePassDispatch(ref AssignmentState state, ref ir.Exp exp, ir.Type type)
 {
 	switch (type.nodeType) {
 	case ir.NodeType.StorageType:
 		auto storage = cast(ir.StorageType) type;
-		extypePassStorageType(lp, current, exp, storage);
+		extypePassStorageType(state, exp, storage);
 		break;
 	default:
-		extypeAssignDispatch(lp, current, exp, type);
+		extypeAssignDispatch(state, exp, type);
 		break;
 	}
 }
 
-void extypePass(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Type type)
+void extypePass(ref AssignmentState state, ref ir.Exp exp, ir.Type type)
 {
-	ensureResolved(lp, current, type);
-	if (handleIfStructLiteral(lp, current, type, exp)) return;
-	if (handleIfNull(lp, current, type, exp)) return;
+	ensureResolved(state.lp, state.current, type);
+	if (handleIfStructLiteral(state, type, exp)) return;
+	if (handleIfNull(state.lp, state.current, type, exp)) return;
 
-	extypePassHandleStorage(lp, current, exp, type);
+	extypePassHandleStorage(state, exp, type);
 
-	extypePassDispatch(lp, current, exp, type);
+	extypePassDispatch(state, exp, type);
 }
 
-void extypeAssign(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Type type)
+void extypeAssign(ref AssignmentState state, ref ir.Exp exp, ir.Type type)
 {
-	ensureResolved(lp, current, type);
-	if (handleIfStructLiteral(lp, current, type, exp)) return;
-	if (handleIfNull(lp, current, type, exp)) return;
+	ensureResolved(state.lp, state.current, type);
+	if (handleIfStructLiteral(state, type, exp)) return;
+	if (handleIfNull(state.lp, state.current, type, exp)) return;
 
-	extypeAssignHandleStorage(lp, current, exp, type);
+	extypeAssignHandleStorage(state, exp, type);
 
-	extypeAssignDispatch(lp, current, exp, type);
+	extypeAssignDispatch(state, exp, type);
 }
 
 /**
@@ -650,7 +657,8 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 		if (isRef(asFunctionType.params[i]) && !isLValue(postfix.arguments[i])) {
 			throw makeNotLValue(postfix.arguments[i]);
 		}
-		extypePass(lp, current, postfix.arguments[i], asFunctionType.params[i]);
+		auto state = AssignmentState(lp, current, false);
+		extypePass(state, postfix.arguments[i], asFunctionType.params[i]);
 	}
 
 	if (thisCall) {
@@ -1157,7 +1165,8 @@ void handleNew(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Unary _unar
 	lp.resolve(current, fn);
 
 	for (size_t i = 0; i < _unary.argumentList.length; ++i) {
-		extypeAssign(lp, current, _unary.argumentList[i], fn.type.params[i]);
+		auto state = AssignmentState(lp, current, false);
+		extypeAssign(state, _unary.argumentList[i], fn.type.params[i]);
 	}
 }
 
@@ -1249,7 +1258,8 @@ void extypeBinOp(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 		if (effectivelyConst(ltype)) {
 			throw makeCannotModify(binop, ltype);
 		}
-		extypeAssign(lp, current, binop.right, ltype);
+		auto state = AssignmentState(lp, current, false);
+		extypeAssign(state, binop.right, ltype);
 		return;
 	}
 
@@ -1308,12 +1318,12 @@ void extypeCat(ir.BinOp bin, ir.ArrayType left, ir.Type right)
 	bin.right = buildCastSmart(left.base, bin.right);
 }
 
-void extypeTernary(LanguagePass lp, ir.Scope current, ir.Ternary ternary)
+void extypeTernary(ref AssignmentState state, ir.Ternary ternary)
 {
-	auto baseType = getExpType(lp, ternary.ifTrue, current);
-	extypeAssign(lp, current, ternary.ifFalse, baseType);
+	auto baseType = getExpType(state.lp, ternary.ifTrue, state.current);
+	extypeAssign(state, ternary.ifFalse, baseType);
 
-	auto condType = getExpType(lp, ternary.condition, current);
+	auto condType = getExpType(state.lp, ternary.condition, state.current);
 	if (!isBool(condType)) {
 		ternary.condition = buildCastToBool(ternary.condition.location, ternary.condition);
 	}
@@ -1409,7 +1419,8 @@ public:
 		assert(ua !is null);
 
 		foreach (i, ref arg; a.arguments) {
-			extypeAssign(lp, current, a.arguments[i], ua.fields[i].type);
+			auto state = AssignmentState(lp, current, false);
+			extypeAssign(state, a.arguments[i], ua.fields[i].type);
 			acceptExp(a.arguments[i], this);
 		}
 	}
@@ -1471,7 +1482,8 @@ public:
 			ed.assign = evaluate(lp, current, ed.assign);
 		}
 
-		extypeAssign(lp, current, ed.assign, ed.type);
+		auto state = AssignmentState(lp, current, false);
+		extypeAssign(state, ed.assign, ed.type);
 		replaceStorageIfNeeded(ed.type);
 		accept(ed.type, this);
 
@@ -1559,7 +1571,8 @@ public:
 
 		if (v.assign !is null) {
 			acceptExp(v.assign, this);
-			extypeAssign(lp, current, v.assign, v.type);
+			auto state = AssignmentState(lp, current, true);
+			extypeAssign(state, v.assign, v.type);
 		}
 
 		replaceStorageIfNeeded(v.type);
@@ -1591,7 +1604,8 @@ public:
 
 		if (ret.exp !is null) {
 			acceptExp(ret.exp, this);
-			extypeAssign(lp, current, ret.exp, fn.type.ret);
+			auto state = AssignmentState(lp, current, false);
+			extypeAssign(state, ret.exp, fn.type.ret);
 		}
 
 		return ContinueParent;
@@ -1774,7 +1788,8 @@ public:
 
 	override Status leave(ref ir.Exp exp, ir.Ternary ternary)
 	{
-		extypeTernary(lp, current, ternary);
+		auto state = AssignmentState(lp, current, false);
+		extypeTernary(state, ternary);
 		return Continue;
 	}
 

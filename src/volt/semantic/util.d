@@ -85,6 +85,9 @@ ir.Type handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
 				return t;
 			}
 			goto default;
+		case StorageType:
+			auto storage = cast(ir.StorageType) left;
+			return handleNull(storage.base, right, rightType);
 		default:
 			throw makeBadImplicitCast(right, rightType, left);
 		}

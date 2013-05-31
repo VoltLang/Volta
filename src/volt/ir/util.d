@@ -194,6 +194,10 @@ ir.Type copyTypeSmart(Location loc, ir.Type type)
 		auto tr = cast(ir.TypeReference)type;
 		assert(tr.type !is null);
 		return copyTypeSmart(loc, tr.type);
+	case NullType:
+		auto nt = new ir.NullType();
+		nt.location = type.location;
+		return nt;
 	case UserAttribute:
 	case Interface:
 	case Struct:
