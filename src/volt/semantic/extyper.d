@@ -162,6 +162,19 @@ void extypePassHandleStorage(ref AssignmentState state, ref ir.Exp exp, ir.Type 
 	}
 }
 
+void rejectBadScopeAssign(ref AssignmentState state, ref ir.Exp exp, ir.Type type)
+{
+	auto storage = cast(ir.StorageType) type;
+	if (storage is null) {
+		return;
+	}
+	if (mutableIndirection(storage.base)) {
+		if (!state.isVarAssign || (state.current.node.nodeType != ir.NodeType.Function && state.current.node.nodeType != ir.NodeType.BlockStatement)) {
+			throw makeBadImplicitCast(exp, type, storage);
+		}
+	}
+}
+
 void extypeAssignStorageType(ref AssignmentState state, ref ir.Exp exp, ir.StorageType storage)
 {
 	auto type = getExpType(state.lp, exp, state.current);
@@ -175,10 +188,7 @@ void extypeAssignStorageType(ref AssignmentState state, ref ir.Exp exp, ir.Stora
 	}
 
 	if (storage.type == ir.StorageType.Kind.Scope) {
-		if (mutableIndirection(storage.base) && (!state.isVarAssign ||
-		    (state.current.node.nodeType != ir.NodeType.Function || state.current.node.nodeType != ir.NodeType.BlockStatement))) {
-			throw makeBadImplicitCast(exp, type, storage);
-		}
+		rejectBadScopeAssign(state, exp, storage);
 		exp = buildCastSmart(storage.base, exp);
 		extypeAssignDispatch(state, exp, storage.base);
 	}
@@ -1561,6 +1571,10 @@ public:
 		// are exectuted matters.
 		if (!enterFirstVariable) {
 			lp.resolve(current, v);
+			if (v.assign !is null) {
+				auto state = AssignmentState(lp, current, true);
+				rejectBadScopeAssign(state, v.assign, v.type);
+			}
 			return ContinueParent;
 		}
 		enterFirstVariable = true;
