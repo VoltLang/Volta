@@ -5,47 +5,13 @@ module volt.llvm.expression;
 import volt.token.location : Location;
 import volt.errors;
 
-import volt.llvm.aggregate;
+import volt.llvm.common;
 import volt.llvm.constant;
+import volt.llvm.aggregate;
 import volt.llvm.interfaces;
-static import volt.semantic.classify;
 static import volt.semantic.mangle;
+static import volt.semantic.classify;
 
-
-/**
- * Returns the LLVMValueRef for the given expression,
- * evaluated at the current state.builder location.
- */
-LLVMValueRef getValue(State state, ir.Exp exp)
-{
-	auto v = new Value();
-
-	state.getValue(exp, v);
-	return v.value;
-}
-
-/**
- * Returns the value, making sure that the value is not in
- * reference form, basically inserting load instructions where needed.
- */
-void getValue(State state, ir.Exp exp, Value result)
-{
-	state.getValueAnyForm(exp, result);
-	makeNonPointer(state, result);
-}
-
-/**
- * Returns the value in reference form, basically meaning that
- * the return value is a pointer to where it is held in memory.
- */
-void getValueRef(State state, ir.Exp exp, Value result)
-{
-	state.getValueAnyForm(exp, result);
-
-	if (result.isPointer)
-		return;
-	throw panic(exp.location, "Value is not a backend reference");
-}
 
 /**
  * Returns the value, without doing any checking if it is
@@ -109,9 +75,9 @@ void handleTernary(State state, ir.Ternary t, Value result)
 	Value ifFalse = new Value();
 	Value condition =  new Value();
 
-	getValue(state, t.ifTrue, ifTrue);
-	getValue(state, t.ifFalse, ifFalse);
-	getValue(state, t.condition, condition);
+	state.getValue(t.ifTrue, ifTrue);
+	state.getValue(t.ifFalse, ifFalse);
+	state.getValue(t.condition, condition);
 
 	ifTrue.value = LLVMBuildSelect(state.builder, condition.value, ifTrue.value, ifFalse.value, "");
 }
@@ -168,8 +134,8 @@ void handleAssign(State state, ir.BinOp bin, Value result)
 	Value left = new Value();
 	Value right = result;
 
-	state.getValueRef(bin.left, left);
 	state.getValue(bin.right, right);
+	state.getValueRef(bin.left, left);
 
 	// Not returned.
 	LLVMBuildStore(state.builder, right.value, left.value);

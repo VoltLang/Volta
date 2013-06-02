@@ -289,7 +289,7 @@ public:
 		LLVMValueRef[] alVals;
 		alVals.length = al.values.length;
 		foreach(uint i, exp; al.values) {
-			alVals[i] = state.getConstantValue(exp);
+			alVals[i] = state.getConstant(exp);
 		}
 
 		auto litConst = LLVMConstArray(base.llvmType, alVals);
@@ -517,7 +517,7 @@ public:
 			throw panic("struct literal has the wrong number of initializers");
 
 		foreach(uint i, ref val; vals) {
-			val = state.getConstantValue(sl.exps[i]);
+			val = state.getConstant(sl.exps[i]);
 		}
 
 		return LLVMConstNamedStruct(llvmType, vals);

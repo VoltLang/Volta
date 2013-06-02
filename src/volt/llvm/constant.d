@@ -7,20 +7,9 @@ import std.conv : to;
 import volt.errors;
 import volt.ir.util;
 
+import volt.llvm.common;
 import volt.llvm.interfaces;
 
-
-/**
- * Returns the LLVMValueRef for the given constant expression,
- * does not require that state.builder is set.
- */
-LLVMValueRef getConstantValue(State state, ir.Exp exp)
-{
-
-	auto v = new Value();
-	getConstantValue(state, exp, v);
-	return v.value;
-}
 
 void getConstantValue(State state, ir.Exp exp, Value result)
 {

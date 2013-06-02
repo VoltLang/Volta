@@ -6,10 +6,7 @@ import lib.llvm.core;
 
 import volt.errors;
 import volt.visitor.visitor;
-import volt.llvm.constant;
-import volt.llvm.expression;
 import volt.llvm.interfaces;
-static import volt.semantic.classify;
 
 
 class LlvmVisitor : NullVisitor
@@ -129,7 +126,7 @@ public:
 			auto v = state.getVariableValue(var, type);
 
 			if (var.assign !is null) {
-				init = state.getConstantValue(var.assign);
+				init = state.getConstant(var.assign);
 			} else {
 				init = LLVMConstNull(type.llvmType);
 			}

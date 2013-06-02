@@ -2,13 +2,43 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.llvm.interfaces;
 
+import volt.errors;
+
 public import lib.llvm.core;
 
 public import ir = volt.ir.ir;
 
-public import volt.llvm.value;
 public import volt.llvm.type;
 
+
+/**
+ * Represents a single LLVMValueRef plus the associated high level type.
+ *
+ * A Value can be in reference form where it is actually a pointer
+ * to the give value, since all variables are stored as alloca'd
+ * memory in a function we will not insert loads until needed.
+ * This is needed for '&' to work and struct lookups.
+ */
+class Value
+{
+public:
+	Type type;
+	LLVMValueRef value;
+
+	bool isPointer; ///< Is this a reference to the real value?
+
+public:
+	this()
+	{
+	}
+
+	this(Value val)
+	{
+		this.isPointer = val.isPointer;
+		this.type = val.type;
+		this.value = val.value;
+	}
+}
 
 /**
  * Collection of objects used by pretty much all of the translation
@@ -66,6 +96,60 @@ public:
 
 public:
 	abstract void close();
+
+	/*
+	 *
+	 * Expression value functions.
+	 *
+	 */
+
+	/**
+	 * Returns the LLVMValueRef for the given expression,
+	 * evaluated at the current state.builder location.
+	 */
+	final LLVMValueRef getValue(ir.Exp exp)
+	{
+		auto v = new Value();
+		getValue(exp, v);
+		return v.value;
+	}
+
+	/**
+	 * Returns the value, making sure that the value is not in
+	 * reference form, basically inserting load instructions where needed.
+	 */
+	final void getValue(ir.Exp exp, Value result)
+	{
+		getValueAnyForm(exp, result);
+		if (!result.isPointer)
+			return;
+		result.value = LLVMBuildLoad(builder, result.value, "");
+		result.isPointer = false;
+	}
+
+	/**
+	 * Returns the value in reference form, basically meaning that
+	 * the return value is a pointer to where it is held in memory.
+	 */
+	final void getValueRef(ir.Exp exp, Value result)
+	{
+		getValueAnyForm(exp, result);
+		if (result.isPointer)
+			return;
+		throw panic(exp.location, "Value is not a backend reference");
+	}
+
+	/**
+	 * Returns the value, without doing any checking if it is
+	 * in reference form or not.
+	 */
+	abstract void getValueAnyForm(ir.Exp exp, Value result);
+
+	/**
+	 * Returns the LLVMValueRef for the given constant expression,
+	 * does not require that state.builder is set.
+	 */
+	abstract LLVMValueRef getConstant(ir.Exp exp);
 
 	/*
 	 *

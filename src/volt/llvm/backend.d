@@ -13,10 +13,8 @@ import lib.llvm.analysis;
 import lib.llvm.bitwriter;
 import lib.llvm.c.Initialization;
 
-import volt.llvm.type;
 import volt.llvm.state;
 import volt.llvm.toplevel;
-import volt.llvm.expression;
 
 
 /**

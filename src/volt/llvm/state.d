@@ -6,6 +6,8 @@ import lib.llvm.core;
 
 import volt.errors;
 import volt.interfaces;
+import volt.llvm.constant;
+import volt.llvm.expression;
 import volt.llvm.interfaces;
 
 
@@ -80,6 +82,18 @@ public:
 
 		mod = null;
 		builder = null;
+	}
+
+	override void getValueAnyForm(ir.Exp exp, Value result)
+	{
+		.getValueAnyForm(this, exp, result);
+	}
+
+	override LLVMValueRef getConstant(ir.Exp exp)
+	{
+		auto v = new Value();
+		.getConstantValue(this, exp, v);
+		return v.value;
 	}
 
 	/**
