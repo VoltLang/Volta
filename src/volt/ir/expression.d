@@ -440,6 +440,14 @@ public:
 	string[] idents;
 	Declaration decl;
 	bool rawReference;  ///< A raw get to a function to bypass @property.
+	/**
+	 * When dealing with references to parameters in a nested function,
+	 * they need to be rewritten to lookup through a nested context,
+	 * except when assigning their value to the context struct. This flag
+	 * tells the semantic phase to leave this particular reference alone
+	 * for that purpose.
+	 */
+	bool doNotRewriteAsNestedLookup;
 
 public:
 	this() { super(NodeType.ExpReference); }

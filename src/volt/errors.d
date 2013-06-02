@@ -25,6 +25,11 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeCannotOverloadNested(ir.Node node, ir.Function fn)
+{
+	return new CompilerError(node.location, format("cannot overload nested function '%s'.", fn.name));
+}
+
 CompilerException makeUsedBeforeDeclared(ir.Node node, ir.Variable var)
 {
 	return new CompilerError(node.location, format("variable '%s' used before declaration.", var.name));

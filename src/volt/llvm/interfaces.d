@@ -61,6 +61,7 @@ public:
 	LLVMBasicBlockRef currentContinueBlock; ///< Block to jump to on continue.
 
 	LLVMValueRef currentFunc;
+	ir.Function currentIrFunc;
 	bool currentFall; ///< Tracking for auto branch generation.
 
 	/**
@@ -192,6 +193,7 @@ public:
 	abstract void makeByValVariable(ir.FunctionParam var, LLVMValueRef v);
 
 	abstract void makeThisVariable(ir.Variable var, LLVMValueRef v);
+	abstract void makeNestVariable(ir.Variable var, LLVMValueRef v);
 
 	/*
 	 *

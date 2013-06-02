@@ -128,6 +128,9 @@ public:
 				if (s == Stop)
 					return Stop;
 				break;
+			case Function:
+			case Struct:
+				break;
 			default:
 				auto str = format("(%s) invalid node '%s' in block statement",
 				                  getNodeAddressString(n),

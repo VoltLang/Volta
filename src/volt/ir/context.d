@@ -217,6 +217,8 @@ public:
 	Module[] importedModules;
 	Access[] importedAccess;
 
+	int nestedDepth;
+
 public:
 	/**
 	 * For toplevel modules.
@@ -458,6 +460,22 @@ public:
 			s = s.myAlias;
 		}
 		return s;
+	}
+
+	/**
+	 * Get all Variables in the Scope the have Nested storage.
+	 */
+	Declaration[] getNestedDeclarations()
+	{
+		Declaration[] variables;
+		foreach (store; symbols.values) {
+			auto variable = cast(ir.Variable) store.node;
+			if (variable is null || variable.storage != Variable.Storage.Nested) {
+				continue;
+			}
+			variables ~= variable;
+		}
+		return variables;
 	}
 
 private:

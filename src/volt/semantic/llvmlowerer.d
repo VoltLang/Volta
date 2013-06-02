@@ -18,6 +18,7 @@ import volt.semantic.mangle;
 import volt.semantic.lookup;
 import volt.semantic.classify;
 import volt.semantic.util;
+import volt.semantic.nested;
 
 
 /**
@@ -94,6 +95,33 @@ public:
 	override Status visit(ref ir.Exp exp, ir.TraitsExp traits)
 	{
 		replaceTraits(exp, traits, lp, thisModule, current);
+		return Continue;
+	}
+
+	override Status visit(ref ir.Exp exp, ir.ExpReference eref)
+	{
+		bool replaced = replaceNested(exp, eref, functionStack.length == 0 ? null : functionStack[$-1].nestedVariable);
+		if (replaced) {
+			return Continue;
+		}
+
+		auto fn = cast(ir.Function) eref.decl;
+		if (fn is null) {
+			return Continue;
+		}
+		if (functionStack.length == 0 || functionStack[$-1].nestedVariable is null) {
+			return Continue;
+		}
+		auto np = functionStack[$-1].nestedVariable;
+		exp = buildCreateDelegate(exp.location, buildExpReference(np.location, np, np.name), eref);
+
+		return Continue;
+	}
+
+	override Status enter(ir.BlockStatement bs)
+	{
+		insertBinOpAssignsForNestedVariableAssigns(bs);
+		super.enter(bs);
 		return Continue;
 	}
 

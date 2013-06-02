@@ -122,7 +122,7 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 	case ExpReference:
 		auto asExpRef = cast(ir.ExpReference) exp;
 		assert(asExpRef !is null);
-		return getExpReferenceType(lp, asExpRef);
+		return getExpReferenceType(lp, asExpRef, currentScope);
 	case TraitsExp:
 		auto asTraits = cast(ir.TraitsExp) exp;
 		assert(asTraits !is null);
@@ -181,7 +181,7 @@ ir.Type getTraitsExpType(LanguagePass lp, ir.TraitsExp traits, ir.Scope _scope)
 	return attr.layoutClass;
 }
 
-ir.Type getExpReferenceType(LanguagePass lp, ir.ExpReference expref)
+ir.Type getExpReferenceType(LanguagePass lp, ir.ExpReference expref, ir.Scope currentScope)
 {
 	if (expref.decl is null) {
 		throw panic(expref.location, "unable to type expression reference.");
@@ -194,6 +194,9 @@ ir.Type getExpReferenceType(LanguagePass lp, ir.ExpReference expref)
 
 	auto fn = cast(ir.Function) expref.decl;
 	if (fn !is null) {
+		if (fn.nestedHiddenParameter !is null) {
+			return buildStorageType(fn.location, ir.StorageType.Kind.Scope, new ir.DelegateType(fn.type));
+		}
 		return fn.type;
 	}
 
@@ -639,6 +642,12 @@ ir.Type getPostfixCallType(LanguagePass lp, ir.Postfix postfix, ir.Scope current
 		}
 	} else {
 		ftype = cast(ir.CallableType) type;
+		if (ftype is null) {
+			auto _storage = cast(ir.StorageType) type;
+			if (_storage !is null) {
+				ftype = cast(ir.CallableType) _storage.base;
+			}
+		}
 	}
 
 	if (ftype is null) {

@@ -57,6 +57,7 @@ public:
 
 		state.currentFall = true;
 		state.currentFunc = llvmFunc;
+		state.currentIrFunc = fn;
 		state.currentBlock = LLVMAppendBasicBlock(llvmFunc, "entry");
 		LLVMPositionBuilderAtEnd(b, state.currentBlock);
 
@@ -79,6 +80,12 @@ public:
 		if (thisVar !is null) {
 			auto v = LLVMGetParam(llvmFunc, cast(uint)fn.type.params.length);
 			state.makeThisVariable(thisVar, v);
+		}
+
+		ir.Variable nestVar = fn.nestedHiddenParameter;
+		if (nestVar !is null) {
+			auto v = LLVMGetParam(llvmFunc, cast(uint)fn.type.params.length);
+			state.makeNestVariable(nestVar, v);
 		}
 
 		foreach(n; fn._body.statements)
@@ -111,7 +118,7 @@ public:
 			assert(false, "invalid variable");
 		case Field:
 			break;
-		case Function:
+		case Function, Nested:
 			assert(state.currentFunc !is null);
 
 			auto v = state.getVariableValue(var, type);

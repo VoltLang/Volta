@@ -197,7 +197,7 @@ public:
 			throw panic(var.location, "unclassified variable");
 		case Field:
 			throw panic(var.location, "field variable refered directly");
-		case Function:
+		case Function, Nested:
 			if (currentFunc is null)
 				throw panic(var.location,
 					"non-local/global variable in non-function scope");
@@ -285,6 +285,19 @@ public:
 		}
 
 		v = LLVMBuildBitCast(builder, v, llvmType, "this");
+		valueStore[k] = Store(v, type);
+	}
+
+	override void makeNestVariable(ir.Variable var, LLVMValueRef v)
+	{
+		auto k = *cast(size_t*)&var;
+		assert((k in valueStore) is null);
+
+		auto type = this.fromIr(var.type);
+		LLVMTypeRef llvmType;
+		llvmType = LLVMPointerType(type.llvmType, 0);
+
+		v = LLVMBuildBitCast(builder, v, llvmType, "__nested");
 		valueStore[k] = Store(v, type);
 	}
 

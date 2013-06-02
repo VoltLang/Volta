@@ -704,7 +704,9 @@ Visitor.Status acceptTopLevelBlock(ir.TopLevelBlock tlb, Visitor av)
 		return parentContinue(status);
 	}
 
-	foreach (n; tlb.nodes) {
+	// Use a for in lieu of a foreach so that all nodes will be visited if a Visitor modifies it.
+	for (size_t i = 0; i < tlb.nodes.length; ++i) {
+		auto n = tlb.nodes[i];
 		accept(n, av);
 	}
 
@@ -1256,9 +1258,10 @@ Visitor.Status acceptBlockStatement(ir.BlockStatement b, Visitor av)
 		return parentContinue(status);
 	}
 
+	// Use a for in lieu of a foreach so that all nodes will be visited if a Visitor modifies it.
 	auto statements = b.statements;
-	foreach (statement; statements) {
-		status = accept(statement, av);
+	for (int i = 0; i < statements.length; ++i) {
+		status = accept(statements[i], av);
 		if (status != VisitorContinue) {
 			return parentContinue(status);
 		}

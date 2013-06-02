@@ -13,6 +13,7 @@ import volt.interfaces;
 import volt.token.location;
 import volt.visitor.visitor;
 import volt.semantic.lookup;
+import volt.semantic.nested;
 
 
 enum Where
@@ -35,6 +36,9 @@ ir.Store findShadowed(LanguagePass lp, ir.Scope _scope, Location loc, string nam
 	}
 
 	if (_scope.parent !is null) {
+		if (_scope.node.nodeType == ir.NodeType.Function && _scope.parent.node.nodeType == ir.NodeType.Function) {
+			return null;
+		}
 		return findShadowed(lp, _scope.parent, loc, name);
 	} else {
 		return null;
@@ -58,8 +62,14 @@ void gather(ir.Scope current, ir.Alias a, Where where)
 	a.store = current.addAlias(a, a.name, current);
 }
 
-void gather(LanguagePass lp, ir.Scope current, ir.Variable v, Where where)
+void gather(LanguagePass lp, ir.Scope current, ir.Variable v, Where where, ir.Function[] functionStack)
 {
+	if (functionStack.length > 1) {
+		v.oldname = v.name;
+		v.name = functionStack[$-1].name ~ v.name;
+		functionStack[$-1].renamedVariables ~= v;
+	}
+
 	auto shadowStore = findShadowed(lp, current, v.location, v.name);
 	if (shadowStore !is null) {
 		throw makeShadowsDeclaration(v, shadowStore.node);
@@ -153,15 +163,34 @@ void addScope(ir.Module m)
 	m.myScope = new ir.Scope(m, name);
 }
 
-void addScope(ir.Scope current, ir.Function fn, ir.Type thisType)
+void addScope(ir.Scope current, ir.Function fn, ir.Type thisType, ir.Function[] functionStack)
 {
 	fn.myScope = new ir.Scope(current, fn, fn.name);
 
 	if (fn._body !is null) {
 		foreach (var; fn.params) {
+			if (current.node.nodeType == ir.NodeType.BlockStatement) {
+				var.oldname = var.name;
+				var.name = fn.name ~ var.name;
+			}
 			if (var.name !is null) {
 				fn.myScope.addValue(var, var.name);
 			}
+		}
+	}
+
+	if (current.node.nodeType == ir.NodeType.BlockStatement) {
+		auto ns = functionStack[0].nestStruct;
+		assert(ns !is null);
+		auto tr = buildTypeReference(ns.location, ns, "__Nested");
+		auto decl = buildVariable(fn.location, tr, ir.Variable.Storage.Function, "__nested");
+		if (fn.nestedHiddenParameter is null) {
+			// XXX: Note __nested is not added to any scope.
+			// XXX: Instead make sure that nestedHiddenParameter is visited (and as such visited)
+			fn.nestedHiddenParameter = decl;
+			fn.nestedVariable = decl;
+			fn.nestStruct = ns;
+			fn.type.hiddenParameter = true;
 		}
 	}
 
@@ -271,6 +300,8 @@ protected:
 	Where[] mWhere;
 	ir.Scope[] mScope;
 	ir.Type[] mThis;
+	ir.Function[] mFunctionStack;
+	ir.Module mModule;
 
 public:
 	this(LanguagePass lp)
@@ -288,6 +319,7 @@ public:
 			return;
 		}
 
+		mModule = m;
 		accept(m, this);
 		m.gathered = true;
 
@@ -332,6 +364,19 @@ public:
 		}
 	}
 
+	void push(ir.Function fn)
+	{
+		push(fn.myScope);
+		mFunctionStack ~= fn;
+	}
+
+	void pop(ir.Function fn)
+	{
+		pop();
+		assert(fn is mFunctionStack[$-1]);
+		mFunctionStack = mFunctionStack[0 .. $-1];
+	}
+
 	@property Where where()
 	{
 		return mWhere[$-1];
@@ -374,7 +419,7 @@ public:
 
 	override Status enter(ir.Variable v)
 	{
-		gather(lp, current, v, where);
+		gather(lp, current, v, where, mFunctionStack);
 		return Continue;
 	}
 
@@ -431,8 +476,8 @@ public:
 		auto thisType = where == Where.TopLevel ? this.thisType : null;
 
 		gather(current, fn, where);
-		addScope(current, fn, thisType);
-		push(fn.myScope);
+		addScope(current, fn, thisType, mFunctionStack);
+		push(fn);
 
 		// I don't think this is the right place for this.
 		if (fn.isAbstract && fn._body !is null) {
@@ -445,7 +490,7 @@ public:
 	{
 		enter(fs.block);
 		foreach (var; fs.initVars) {
-			gather(lp, current, var, where);
+			gather(lp, current, var, where, mFunctionStack);
 		}
 		foreach (node; fs.block.statements) {
 			accept(node, this);
@@ -458,6 +503,7 @@ public:
 	{
 		addScope(current, bs);
 		push(bs.myScope);
+		emitNestedStructs(mFunctionStack[$-1], bs);
 		return Continue;
 	}
 
@@ -479,12 +525,56 @@ public:
 		return Continue;
 	}
 
+	void replaceNestedNames(ref string s)
+	{
+		if (mFunctionStack.length == 0) {
+			return;
+		}
+		/* Names in nested functions are modified to allow for shadowing,
+		 * correct strings that point to these renamed declarations
+		 * here.
+		 */
+		foreach (fn; mFunctionStack[0].nestedFunctions) {
+			if (s == fn.oldname) {
+				s = fn.name;
+				return;
+			}
+		}
+		for (int i = mFunctionStack.length - 1; i >= 0; --i) {
+			foreach (var; mFunctionStack[i].params) {
+				if (s == var.oldname) {
+					s = var.name;
+					return;
+				}
+			}
+			foreach (var; mFunctionStack[i].renamedVariables) {
+				if (s == var.oldname) {
+					s = var.name;
+				}
+			}
+		}
+	}
+
+	override Status enter(ref ir.Exp exp, ir.Typeid tid)
+	{
+		if (tid.ident.length > 0) {
+			replaceNestedNames(tid.ident);
+		}
+		return Continue;
+	}
+
+	override Status visit(ref ir.Exp exp, ir.IdentifierExp iexp)
+	{
+		replaceNestedNames(iexp.value);
+		return Continue;
+	}
+
 	override Status leave(ir.Module m) { pop(); return Continue; }
 	override Status leave(ir.Class c) { pop(c); return Continue; }
 	override Status leave(ir.Struct s) { pop(s); return Continue; }
 	override Status leave(ir.Union u) { pop(u); return Continue; }
 	override Status leave(ir.Enum e) { pop(e); return Continue; }
-	override Status leave(ir.Function fn) { pop(); return Continue; }
+	override Status leave(ir.Function fn) { pop(fn); return Continue; }
 	override Status leave(ir.BlockStatement bs) { pop(); return Continue; }
 	override Status leave(ir._Interface i) { pop(i); return Continue; }
 	override Status leave(ir.UserAttribute ua) { pop(ua); return Continue; }

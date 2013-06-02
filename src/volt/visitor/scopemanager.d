@@ -14,12 +14,15 @@ class ScopeManager : NullVisitor
 {
 public:
 	ir.Scope current;
+	int nestedDepth;
+	ir.Function[] functionStack;
 
 public:
 	override Status enter(ir.Module m)
 	{
 		assert(current is null);
 		current = m.myScope;
+		current.nestedDepth = nestedDepth;
 		return Continue;
 	}
 
@@ -39,6 +42,7 @@ public:
 	override Status enter(ir.Struct s)
 	{
 		current = s.myScope;
+		current.nestedDepth = nestedDepth;
 		return Continue;
 	}
 
@@ -58,6 +62,7 @@ public:
 	override Status enter(ir.Union u)
 	{
 		current = u.myScope;
+		current.nestedDepth = nestedDepth;
 		return Continue;
 	}
 
@@ -77,6 +82,7 @@ public:
 	override Status enter(ir.Class c)
 	{
 		current = c.myScope;
+		current.nestedDepth = nestedDepth;
 		return Continue;
 	}
 
@@ -96,6 +102,7 @@ public:
 	override Status enter(ir._Interface i)
 	{
 		current = i.myScope;
+		current.nestedDepth = nestedDepth;
 		return Continue;
 	}
 
@@ -115,6 +122,7 @@ public:
 	override Status enter(ir.UserAttribute ui)
 	{
 		current = ui.myScope;
+		current.nestedDepth = nestedDepth;
 		return Continue;
 	}
 
@@ -132,12 +140,25 @@ public:
 
 	override Status enter(ir.Function fn)
 	{
+		functionStack ~= fn;
+		if (current.node.nodeType == ir.NodeType.BlockStatement) {
+			// Nested function.
+			nestedDepth++;
+		}
 		current = fn.myScope;
 		return Continue;
 	}
 
 	override Status leave(ir.Function fn)
 	{
+		assert(functionStack.length > 0 && functionStack[$-1] is fn);
+		functionStack = functionStack[0 .. $-1];
+		if (current.node.nodeType == ir.NodeType.BlockStatement) {
+			// Nested function.
+			nestedDepth--;
+			assert(nestedDepth >= 0);
+		}
+
 		if (current !is fn.myScope) {
 			auto str = "invalid scope layout should be " ~
 			           getNodeAddressString(fn) ~ " is " ~
@@ -146,12 +167,14 @@ public:
 		}
 
 		current = current.parent;
+
 		return Continue;
 	}
 
 	override Status enter(ir.BlockStatement bs)
 	{
 		current = bs.myScope;
+		current.nestedDepth = nestedDepth;
 		return Continue;
 	}
 
@@ -171,6 +194,7 @@ public:
 	override Status enter(ir.Enum e)
 	{
 		current = e.myScope;
+		current.nestedDepth = nestedDepth;
 		return Continue;
 	}
 

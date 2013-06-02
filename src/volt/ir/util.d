@@ -935,6 +935,36 @@ ir.Struct buildStruct(Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, strin
 }
 
 /**
+ * Builds an IR complete, but semantically unfinished struct. i.e. it has no scope and isn't inserted anywhere.
+ * The members list is used directly in the new struct; be wary not to duplicate IR nodes.
+ */
+ir.Struct buildStruct(Location loc, string name, ir.Variable[] members...)
+{
+	auto s = new ir.Struct();
+	s.name = name;
+	s.location = loc;
+
+	s.members = new ir.TopLevelBlock();
+	s.members.location = loc;
+
+	foreach (member; members) {
+		s.members.nodes ~= member;
+	}
+
+	return s;
+}
+
+/**
+ * Add a variable to a pre-built struct.
+ */
+void addVarToStructSmart(ir.Struct _struct, ir.Variable var)
+{
+	auto cvar = buildVariableSmart(var.location, var.type, ir.Variable.Storage.Field, var.name);
+	_struct.members.nodes ~= cvar;
+	_struct.myScope.addValue(cvar, cvar.name);
+}
+
+/**
  * If t is a class, or a typereference to a class, returns the
  * class. Otherwise, returns null.
  */

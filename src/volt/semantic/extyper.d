@@ -3,6 +3,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.extyper;
 
+import std.array : insertInPlace;
 import std.conv : to;
 import std.string : format;
 
@@ -456,7 +457,7 @@ void extypeAssign(ref AssignmentState state, ref ir.Exp exp, ir.Type type)
 /**
  * Replace IdentifierExps with ExpReferences.
  */
-void extypeIdentifierExp(LanguagePass lp, ir.Scope current, ref ir.Exp e, ir.IdentifierExp i)
+void extypeIdentifierExp(ir.Function[] functionStack, LanguagePass lp, ir.Scope current, ref ir.Exp e, ir.IdentifierExp i)
 {
 	if (i.type is null) {
 		if (i.globalLookup) {
@@ -484,6 +485,21 @@ void extypeIdentifierExp(LanguagePass lp, ir.Scope current, ref ir.Exp e, ir.Ide
 		}
 		_ref.decl = var;
 		e = _ref;
+		if (current.nestedDepth > store.parent.nestedDepth) {
+			assert(functionStack[$-1].nestStruct !is null);
+			if (var.storage != ir.Variable.Storage.Field && var.storage != ir.Variable.Storage.Nested) {
+				addVarToStructSmart(functionStack[$-1].nestStruct, var);
+				var.storage = ir.Variable.Storage.Nested;
+			} else if (var.storage == ir.Variable.Storage.Field) {
+				assert(functionStack[$-1].nestedHiddenParameter !is null);
+				auto nref = buildExpReference(i.location, functionStack[$-1].nestedHiddenParameter, functionStack[$-1].nestedHiddenParameter.name);
+				auto a = buildAccess(i.location, nref, "this");
+				e = buildAccess(a.location, a, i.value);
+			}
+			if (var.storage != ir.Variable.Storage.Field) {
+				var.storage = ir.Variable.Storage.Nested;
+			}
+		}
 		return;
 	case FunctionParam:
 		auto fp = cast(ir.FunctionParam) store.node;
@@ -492,6 +508,15 @@ void extypeIdentifierExp(LanguagePass lp, ir.Scope current, ref ir.Exp e, ir.Ide
 		e = _ref;
 		return;
 	case Function:
+		foreach (fn; store.functions) {
+			if (fn.nestedHiddenParameter !is null && store.functions.length > 1) {
+				throw makeCannotOverloadNested(fn, fn);
+			} else if (fn.nestedHiddenParameter !is null) {
+				_ref.decl = store.functions[0];
+				e = _ref;
+				return;
+			}
+		}
 		_ref.decl = buildSet(i.location, store.functions);
 		e = _ref;
 		auto fset = cast(ir.FunctionSet) _ref.decl;
@@ -598,17 +623,23 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 	} else {
 		asFunctionType = cast(ir.CallableType) type;
 		if (asFunctionType is null) {
-			auto _class = cast(ir.Class) type;
-			if (_class !is null) {
-				// this(blah);
-				auto eref = cast(ir.ExpReference) postfix.child;
-				assert(eref !is null);
-				auto fn = selectFunction(lp, current, _class.userConstructors, postfix.arguments, postfix.location);
-				asFunctionType = fn.type;
-				eref.decl = fn;
-				thisCall = true;
-			} else {
-				throw makeBadCall(postfix, type);
+			auto _storage = cast(ir.StorageType) type;
+			if (_storage !is null) {
+				asFunctionType = cast(ir.CallableType) _storage.base;
+			}
+			if (asFunctionType is null) {
+				auto _class = cast(ir.Class) type;
+				if (_class !is null) {
+					// this(blah);
+					auto eref = cast(ir.ExpReference) postfix.child;
+					assert(eref !is null);
+					auto fn = selectFunction(lp, current, _class.userConstructors, postfix.arguments, postfix.location);
+					asFunctionType = fn.type;
+					eref.decl = fn;
+					thisCall = true;
+				} else {
+					throw makeBadCall(postfix, type);
+				}
 			}
 		}
 	}
@@ -1374,6 +1405,62 @@ void extypeThrow(LanguagePass lp, ir.Scope current, ir.ThrowStatement t)
 	}
 }
 
+void handleNestedThis(ir.Function fn)
+{
+	auto np = fn.nestedVariable;
+	auto ns = fn.nestStruct;
+	if (np is null || ns is null) {
+		return;
+	}
+	size_t index;
+	for (index = 0; index < fn._body.statements.length; ++index) {
+		if (fn._body.statements[index] is np) {
+			break;
+		}
+	}
+	if (++index >= fn._body.statements.length) {
+		return;
+	}
+	if (fn.thisHiddenParameter !is null) {
+		auto l = buildAccess(fn.location, buildExpReference(np.location, np, np.name), "this");
+		auto tv = fn.thisHiddenParameter;
+		auto r = buildExpReference(fn.location, tv, tv.name);
+		r.doNotRewriteAsNestedLookup = true;
+		ir.Node n = buildExpStat(l.location, buildAssign(l.location, l, r));
+		fn._body.statements.insertInPlace(index++, n);
+	}
+}
+
+/**
+ * Given a nested function fn, add its parameters to the nested
+ * struct and insert statements after the nested declaration.
+ */
+void handleNestedParams(ir.Function[] functionStack, ir.Function fn)
+{
+	if (functionStack.length == 0) {
+		return;
+	}
+	auto np = fn.nestedVariable;
+	auto ns = functionStack[$-1].nestStruct;
+	if (np is null || ns is null) {
+		return;
+	}
+	foreach (param; fn.params) {
+		if (!param.hasBeenNested) {
+			param.hasBeenNested = true;
+			auto var = buildVariableSmart(param.location, param.type, ir.Variable.Storage.Field, param.name);
+			addVarToStructSmart(ns, var);
+
+			// Insert an assignment of the param to the nest struct.
+			auto l = buildAccess(param.location, buildExpReference(np.location, np, np.name), param.name);
+			auto r = buildExpReference(param.location, param, param.name);
+			r.doNotRewriteAsNestedLookup = true;
+			ir.Node n = buildExpStat(l.location, buildAssign(l.location, l, r));
+			fn._body.statements = n ~ fn._body.statements;
+		}
+	}
+}
+
 
 /**
  * If type casting were to be strict, type T could only
@@ -1393,6 +1480,7 @@ class ExTyper : ScopeManager, Pass
 public:
 	LanguagePass lp;
 	bool enterFirstVariable;
+	int nestedDepth;
 
 public:
 	override void transform(ir.Module m)
@@ -1601,11 +1689,16 @@ public:
 
 	override Status enter(ir.Function fn)
 	{
+		if (fn.nestStruct !is null && fn.thisHiddenParameter !is null && functionStack.length == 0) {
+			auto cvar = copyVariableSmart(fn.thisHiddenParameter.location, fn.thisHiddenParameter);
+			addVarToStructSmart(fn.nestStruct, cvar);
+		}
+		handleNestedThis(fn);
+		handleNestedParams(functionStack, fn);
 		lp.resolve(current, fn);
 		super.enter(fn);
 		return Continue;
 	}
-
 
 	/*
 	 *
@@ -1826,12 +1919,10 @@ public:
 
 	override Status visit(ref ir.Exp exp, ir.IdentifierExp ie)
 	{
-		extypeIdentifierExp(lp, current, exp, ie);
+		extypeIdentifierExp(functionStack, lp, current, exp, ie);
 		auto eref = cast(ir.ExpReference) exp;
 		if (eref !is null) {
 			replaceExpReferenceIfNeeded(lp, current, null, exp, eref);
-		} else {
-			assert(cast(ir.Constant)exp !is null);
 		}
 		return Continue;
 	}

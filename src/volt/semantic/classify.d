@@ -312,6 +312,7 @@ bool isVariableStatic(ir.Variable var)
 	case Field:
 		return false;
 	case Function:
+	case Nested:
 	case Local:
 	case Global:
 		return true;
