@@ -153,12 +153,14 @@ void addScope(ir.Module m)
 	m.myScope = new ir.Scope(m, name);
 }
 
-void addParameters(ir.Scope current, ir.Function fn, ir.Type thisType)
+void addScope(ir.Scope current, ir.Function fn, ir.Type thisType)
 {
+	fn.myScope = new ir.Scope(current, fn, fn.name);
+
 	if (fn._body !is null) {
 		foreach (var; fn.params) {
 			if (var.name !is null) {
-				current.addValue(var, var.name);
+				fn.myScope.addValue(var, var.name);
 			}
 		}
 	}
@@ -269,7 +271,6 @@ protected:
 	Where[] mWhere;
 	ir.Scope[] mScope;
 	ir.Type[] mThis;
-	ir.Function mLastFunction;
 
 public:
 	this(LanguagePass lp)
@@ -326,6 +327,7 @@ public:
 		mWhere = mWhere[0 .. $-1];
 
 		if (thisType !is null) {
+			assert(thisType is mThis[$-1]);
 			mThis = mThis[0 .. $-1];
 		}
 	}
@@ -426,8 +428,16 @@ public:
 
 	override Status enter(ir.Function fn)
 	{
+		auto thisType = where == Where.TopLevel ? this.thisType : null;
+
 		gather(current, fn, where);
-		mLastFunction = fn;
+		addScope(current, fn, thisType);
+		push(fn.myScope);
+
+		// I don't think this is the right place for this.
+		if (fn.isAbstract && fn._body !is null) {
+			throw makeAbstractBodyNotEmpty(fn, fn);
+		}
 		return Continue;
 	}
 
@@ -446,22 +456,8 @@ public:
 
 	override Status enter(ir.BlockStatement bs)
 	{
-		auto _thisType = where == Where.TopLevel ? thisType : null;
-
 		addScope(current, bs);
 		push(bs.myScope);
-		if (mLastFunction !is null) {
-			if (mLastFunction.isAbstract) {
-				throw makeAbstractBodyNotEmpty(mLastFunction, mLastFunction);
-			}
-			addParameters(current, mLastFunction, _thisType);
-			bs.myScope.node = mLastFunction;
-			bs.myScope.name = mLastFunction.name;
-			if (mLastFunction.type.hiddenParameter) {
-				accept(mLastFunction.thisHiddenParameter, this);
-			}
-			mLastFunction = null;
-		}
 		return Continue;
 	}
 
@@ -488,7 +484,7 @@ public:
 	override Status leave(ir.Struct s) { pop(s); return Continue; }
 	override Status leave(ir.Union u) { pop(u); return Continue; }
 	override Status leave(ir.Enum e) { pop(e); return Continue; }
-	override Status leave(ir.Function fn) { return Continue; }
+	override Status leave(ir.Function fn) { pop(); return Continue; }
 	override Status leave(ir.BlockStatement bs) { pop(); return Continue; }
 	override Status leave(ir._Interface i) { pop(i); return Continue; }
 	override Status leave(ir.UserAttribute ua) { pop(ua); return Continue; }

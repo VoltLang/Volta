@@ -101,7 +101,7 @@ ir.Variable getThisVar(Location location, LanguagePass lp, ir.Scope _scope)
 	if (fn is null) {
 		throw panic(location, "getThisVar called for scope outside of function.");
 	}
-	auto thisStore = lookupOnlyThisScope(lp, fn._body.myScope, location, "this");
+	auto thisStore = lookupOnlyThisScope(lp, fn.myScope, location, "this");
 	if (thisStore is null) {
 		throw panic(location, "need valid this for super.");
 	}
@@ -117,7 +117,7 @@ void replaceVarArgsIfNeeded(LanguagePass lp, ir.Function fn)
 	if (fn.type.hasVarArgs &&
 	    !fn.type.varArgsProcessed &&
 	    fn.type.linkage == ir.Linkage.Volt) {
-		auto current = fn._body.myScope.parent;
+		auto current = fn.myScope.parent;
 		auto tinfoClass = retrieveTypeInfo(lp, current, fn.location);
 		auto tr = buildTypeReference(fn.location, tinfoClass, tinfoClass.name);
 		auto array = buildArrayType(fn.location, tr);

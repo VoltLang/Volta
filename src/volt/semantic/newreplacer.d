@@ -33,8 +33,9 @@ ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scop
 	fn.mangledName = fn.name;
 	fn.kind = ir.Function.Kind.Function;
 	fn.isWeakLink = true;
+	fn.myScope = new ir.Scope(baseScope, fn, fn.name);
 	fn._body = new ir.BlockStatement();
-	fn._body.myScope = new ir.Scope(baseScope, fn._body, fn.name);
+	fn._body.myScope = new ir.Scope(fn.myScope, fn._body, null);
 	fn._body.location = location;
 
 	auto countVar = addParam(location, fn, buildSizeT(location, lp), "count");

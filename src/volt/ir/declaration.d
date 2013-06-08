@@ -218,6 +218,8 @@ public:
 public:
 	Access access;  ///< defalt public.
 
+	Scope myScope; ///< Needed for params
+
 	Kind kind;  ///< What kind of function.
 	FunctionType type;  ///< Prototype.
 	FunctionParam[] params;
