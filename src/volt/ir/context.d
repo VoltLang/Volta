@@ -455,7 +455,6 @@ public:
 private:
 	void errorOn(Node n, string name)
 	in {
-		if (name is null) asm { int 3; }
 		assert(n !is null);
 		assert(name !is null);
 	}
