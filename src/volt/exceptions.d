@@ -126,7 +126,7 @@ public:
 class ArgumentMismatchError : CompilerError
 {
 public:
-	const ptrdiff_t unspecified = -1;
+	enum ptrdiff_t unspecified = -1;
 	ptrdiff_t argNumber = unspecified;
 
 public:
