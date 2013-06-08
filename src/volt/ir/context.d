@@ -196,6 +196,9 @@ public:
 final class Scope
 {
 public:
+	/// "Anonymous" identifier uniquifier value.
+	uint anon;
+
 	/// Name of this scope, needed for toplevel modules.
 	string name;
 
@@ -243,6 +246,11 @@ public:
 	void remove(string name)
 	{
 		symbols.remove(name);
+	}
+
+	string genAnonIdent()
+	{
+		return "__anon" ~ to!string(anon++);
 	}
 
 	/**
