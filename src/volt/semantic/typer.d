@@ -139,9 +139,19 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 		auto asTypeExp = cast(ir.TypeExp) exp;
 		assert(asTypeExp !is null);
 		return getTypeExpType(lp, asTypeExp);
+	case StatementExp:
+		auto asStatementExp = cast(ir.StatementExp) exp;
+		assert(asStatementExp !is null);
+		return getStatementExpType(lp, asStatementExp, currentScope);
 	default:
 		throw panicUnhandled(exp, to!string(exp.nodeType));
 	}
+}
+
+ir.Type getStatementExpType(LanguagePass lp, ir.StatementExp se, ir.Scope currentScope)
+{
+	assert(se.exp !is null);
+	return getExpType(lp, se.exp, currentScope);
 }
 
 ir.Type getTypeExpType(LanguagePass lp, ir.TypeExp te)
