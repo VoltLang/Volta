@@ -6,7 +6,11 @@ import lib.llvm.core;
 
 import volt.errors;
 import volt.interfaces;
+
+import volt.visitor.visitor;
+
 import volt.llvm.constant;
+import volt.llvm.toplevel;
 import volt.llvm.expression;
 import volt.llvm.interfaces;
 
@@ -50,6 +54,11 @@ protected:
 	 */
 	Settings mSettings;
 
+	/**
+	 * Visitor to build statements.
+	 */
+	LlvmVisitor visitor;
+
 public:
 	this(ir.Module irMod, Settings settings)
 	{
@@ -66,6 +75,7 @@ public:
 		buildCommonTypes(this, mSettings.isVersionSet("V_P64"));
 
 		this.llvmTrap = LLVMAddFunction(mod, "llvm.trap", voidFunctionType.llvmCallType);
+		visitor = new LlvmVisitor(this);
 	}
 
 	~this()
@@ -82,6 +92,16 @@ public:
 
 		mod = null;
 		builder = null;
+	}
+
+	override void compile(ir.Module m)
+	{
+		return visitor.compile(m);
+	}
+
+	override void evaluateStatement(ir.Node node)
+	{
+		accept(node, visitor);
 	}
 
 	override void getValueAnyForm(ir.Exp exp, Value result)

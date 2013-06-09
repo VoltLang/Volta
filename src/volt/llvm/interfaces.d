@@ -99,6 +99,23 @@ public:
 
 	/*
 	 *
+	 * High level building blocks.
+	 *
+	 */
+
+	/**
+	 * Build a complete module with this state.
+	 */
+	abstract void compile(ir.Module m);
+
+	/**
+	 * Builds the given statement class at the current place,
+	 * and any sub-expressions & -statements.
+	 */
+	abstract void evaluateStatement(ir.Node node);
+
+	/*
+	 *
 	 * Expression value functions.
 	 *
 	 */

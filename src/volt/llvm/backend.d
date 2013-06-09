@@ -69,7 +69,6 @@ public:
 			mFilename = null;
 
 		auto state = new VoltState(m, mSettings);
-		auto visitor = new LlvmVisitor(state);
 		auto mod = state.mod;
 		scope(exit) {
 			state.close();
@@ -80,7 +79,7 @@ public:
 			writefln("Compiling module");
 
 		try {
-			visitor.compile(m);
+			state.compile(m);
 		} catch (Throwable t) {
 			if (mDump) {
 				writefln("Caught \"%s\" dumping module:", t.classinfo.name);

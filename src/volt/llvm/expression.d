@@ -56,6 +56,10 @@ void getValueAnyForm(State state, ir.Exp exp, Value result)
 		auto cl = cast(ir.ClassLiteral)exp;
 		handleClassLiteral(state, cl, result);
 		break;
+	case StatementExp:
+		auto cl = cast(ir.StatementExp)exp;
+		handleStatementExp(state, cl, result);
+		break;
 	default:
 		throw panicUnhandled(exp, to!string(exp.nodeType));
 	}
@@ -1058,6 +1062,14 @@ void handleIncDec(State state, ir.Postfix postfix, Value result)
  *
  */
 
+
+void handleStatementExp(State state, ir.StatementExp statExp, Value result)
+{
+	foreach (stat; statExp.statements) {
+		state.evaluateStatement(stat);
+	}
+	state.getValueAnyForm(statExp.exp, result);
+}
 
 void handleExpReference(State state, ir.ExpReference expRef, Value result)
 {
