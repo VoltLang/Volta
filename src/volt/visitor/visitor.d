@@ -187,6 +187,8 @@ public abstract:
 	Visitor.Status leave(ref ir.Exp, ir.TypeExp);
 	Visitor.Status enter(ref ir.Exp, ir.TemplateInstanceExp);
 	Visitor.Status leave(ref ir.Exp, ir.TemplateInstanceExp);
+	Visitor.Status enter(ref ir.Exp, ir.StatementExp);
+	Visitor.Status leave(ref ir.Exp, ir.StatementExp);
 
 	Visitor.Status visit(ref ir.Exp, ir.IdentifierExp);
 	Visitor.Status visit(ref ir.Exp, ir.ExpReference);
@@ -361,6 +363,8 @@ override:
 	Status leave(ref ir.Exp, ir.TypeExp){ return Continue; }
 	Status enter(ref ir.Exp, ir.TemplateInstanceExp){ return Continue; }
 	Status leave(ref ir.Exp, ir.TemplateInstanceExp){ return Continue; }
+	Status enter(ref ir.Exp, ir.StatementExp){ return Continue; }
+	Status leave(ref ir.Exp, ir.StatementExp){ return Continue; }
 
 	Status visit(ref ir.Exp, ir.ExpReference){ return Continue; }
 	Status visit(ref ir.Exp, ir.IdentifierExp){ return Continue; }
@@ -668,6 +672,8 @@ Visitor.Status acceptExp(ref ir.Exp exp, Visitor av)
 		return acceptTypeExp(exp, cast(ir.TypeExp)exp, av);
 	case TemplateInstanceExp:
 		return acceptTemplateInstanceExp(exp, cast(ir.TemplateInstanceExp)exp, av);
+	case StatementExp:
+		return acceptStatementExp(exp, cast(ir.StatementExp)exp, av);
 	default:
 		throw panicUnhandled(exp, to!string(exp.nodeType));
 	}
@@ -2030,6 +2036,30 @@ Visitor.Status acceptTemplateInstanceExp(ref ir.Exp exp, ir.TemplateInstanceExp 
 	}
 
 	return av.leave(exp, texp);
+}
+
+Visitor.Status acceptStatementExp(ref ir.Exp exp, ir.StatementExp state, Visitor av)
+{
+	auto status = av.enter(exp, state);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	foreach (stat; state.statements) {
+		status = accept(stat, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	if (state.exp !is null) {
+		status = acceptExp(state.exp, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	return av.leave(exp, state);
 }
 
 Visitor.Status acceptTraitsExp(ref ir.Exp exp, ir.TraitsExp texp, Visitor av)

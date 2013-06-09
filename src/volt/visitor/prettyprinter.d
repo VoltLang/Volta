@@ -1966,6 +1966,27 @@ public:
 		assert(false);
 	}
 
+	override Status enter(ref ir.Exp, ir.StatementExp statExp)
+	{
+		wfln("({");
+		mIndent++;
+		foreach (stat; statExp.statements) {
+			accept(stat, this);
+		}
+		if (statExp.exp !is null) {
+			twf("");
+			acceptExp(statExp.exp, this);
+			wf(" })");
+		}
+		mIndent--;
+		return ContinueParent;
+	}
+
+	override Status leave(ref ir.Exp, ir.StatementExp state)
+	{
+		assert(false);
+	}
+
 	override Status visit(ref ir.Exp, ir.ExpReference e)
 	{ 
 		if (e.idents.length > 1) for (int i = cast(int)e.idents.length - 1; i > 0; --i) {
