@@ -303,16 +303,48 @@ ir.ArrayLiteral buildArrayLiteralSmart(Location loc, ir.Type type, ir.Exp[] exps
 }
 
 /**
+ * Add a Variable to the BlockStatement scope and either to
+ * its statement or if StatementExp given to it instead.
+ */
+void addVariable(ir.BlockStatement b, ir.StatementExp statExp, ir.Variable var)
+{
+	b.myScope.addValue(var, var.name);
+	if (statExp !is null) {
+		statExp.statements ~= var;
+	} else {
+		b.statements ~= var;
+	}
+}
+
+/**
  * Build a Variable, while not being smart about its type.
  */
-ir.Variable buildVariable(Location loc, ir.Type type, ir.Variable.Storage st, string name)
+ir.Variable buildVariable(Location loc, ir.Type type, ir.Variable.Storage st, string name, ir.Exp assign = null)
 {
 	auto var = new ir.Variable();
 	var.location = loc;
 	var.name = name;
 	var.type = type;
 	var.storage = st;
+	var.assign = assign;
 
+	return var;
+}
+
+/**
+ * Build a Variable with an anon. name and insert it into the BlockStatement
+ * or StatementExp if given. Note even if you want the Variable to end up in
+ * the StatementExp you must give it the BlockStatement that the StatementExp
+ * lives in as the variable will be added to its scope and generated a uniqe
+ * name from its context.
+ */
+ir.Variable buildVariableAnonSmart(Location loc, ir.BlockStatement b,
+                                   ir.StatementExp statExp,
+                                   ir.Type type, ir.Exp assign)
+{
+	auto name = b.myScope.genAnonIdent();
+	auto var = buildVariable(loc, type, ir.Variable.Storage.Function, name, assign);
+	addVariable(b, statExp, var);
 	return var;
 }
 
@@ -648,6 +680,15 @@ ir.BinOp buildBinOp(Location loc, ir.BinOp.Op op, ir.Exp left, ir.Exp right)
 	return binop;
 }
 
+ir.StatementExp buildStatementExp(Location loc, ir.Node[] stats, ir.Exp exp)
+{
+	auto stateExp = new ir.StatementExp;
+	stateExp.location = loc;
+	stateExp.statements = stats;
+	stateExp.exp = exp;
+	return stateExp;
+}
+
 ir.FunctionParam buildFunctionParam(Location loc, size_t index, string name, ir.Function fn)
 {
 	auto fparam = new ir.FunctionParam();
@@ -721,6 +762,24 @@ ir.IfStatement buildIfStat(Location loc, ir.BlockStatement block, ir.Exp exp,
 	ret.autoName = autoName;
 
 	block.statements ~= ret;
+
+	return ret;
+}
+
+/**
+ * Build an if statement.
+ */
+ir.IfStatement buildIfStat(Location loc, ir.StatementExp statExp, ir.Exp exp,
+                           ir.BlockStatement thenState, ir.BlockStatement elseState = null, string autoName = "")
+{
+	auto ret = new ir.IfStatement();
+	ret.location = loc;
+	ret.exp = exp;
+	ret.thenState = thenState;
+	ret.elseState = elseState;
+	ret.autoName = autoName;
+
+	statExp.statements ~= ret;
 
 	return ret;
 }
