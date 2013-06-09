@@ -8,6 +8,6 @@ extern(C) void printf(const char*, ...);
 
 extern(C) void vrt_eh_throw(object.Throwable t)
 {
-	printf("EXCEPTION: %.*s\n".ptr, t.msg.length, t.msg.ptr);
+	printf("EXCEPTION: %.*s\n".ptr, t.message.length, t.message.ptr);
 	exit(-1);
 }

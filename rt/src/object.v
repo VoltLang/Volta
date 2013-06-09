@@ -94,29 +94,29 @@ class Attribute
 
 class Throwable
 {
-	string msg;
+	string message;
 
-	this(string msg)
+	this(string message)
 	{
-		this.msg = msg;
+		this.message = message;
 		return;
 	}
 }
 
 class Exception : Throwable
 {
-	this(string msg)
+	this(string message)
 	{
-		super(msg);
+		super(message);
 		return;
 	}
 }
 
 class Error : Throwable
 {
-	this(string msg)
+	this(string message)
 	{
-		super(msg);
+		super(message);
 		return;
 	}
 }
