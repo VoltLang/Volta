@@ -680,10 +680,16 @@ ir.BinOp buildBinOp(Location loc, ir.BinOp.Op op, ir.Exp left, ir.Exp right)
 	return binop;
 }
 
+ir.StatementExp buildStatementExp(Location loc)
+{
+	auto stateExp = new ir.StatementExp();
+	stateExp.location = loc;
+	return stateExp;
+}
+
 ir.StatementExp buildStatementExp(Location loc, ir.Node[] stats, ir.Exp exp)
 {
-	auto stateExp = new ir.StatementExp;
-	stateExp.location = loc;
+	auto stateExp = buildStatementExp(loc);
 	stateExp.statements = stats;
 	stateExp.exp = exp;
 	return stateExp;
@@ -735,7 +741,21 @@ ir.Variable buildVarStatSmart(Location loc, ir.BlockStatement block, ir.Scope _s
 }
 
 /**
- * Build a exp statement.
+ * Build a exp statement and add it to a StatementExp.
+ */
+ir.ExpStatement buildExpStat(Location loc, ir.StatementExp stat, ir.Exp exp)
+{
+	auto ret = new ir.ExpStatement();
+	ret.location = loc;
+	ret.exp = exp;
+
+	stat.statements ~= ret;
+
+	return ret;
+}
+
+/**
+ * Build a exp statement and add it to the block.
  */
 ir.ExpStatement buildExpStat(Location loc, ir.BlockStatement block, ir.Exp exp)
 {
