@@ -302,6 +302,15 @@ ir.ArrayLiteral buildArrayLiteralSmart(Location loc, ir.Type type, ir.Exp[] exps
 	return literal;
 }
 
+ir.StructLiteral buildStructLiteralSmart(Location loc, ir.Type type, ir.Exp[] exps)
+{
+	auto literal = new ir.StructLiteral();
+	literal.location = loc;
+	literal.type = copyTypeSmart(loc, type);
+	literal.exps = exps.dup;
+	return literal;
+}
+
 /**
  * Add a Variable to the BlockStatement scope and either to
  * its statement or if StatementExp given to it instead.
@@ -741,7 +750,7 @@ ir.Variable buildVarStatSmart(Location loc, ir.BlockStatement block, ir.Scope _s
 }
 
 /**
- * Build a exp statement and add it to a StatementExp.
+ * Build an exp statement and add it to a StatementExp.
  */
 ir.ExpStatement buildExpStat(Location loc, ir.StatementExp stat, ir.Exp exp)
 {
@@ -755,7 +764,7 @@ ir.ExpStatement buildExpStat(Location loc, ir.StatementExp stat, ir.Exp exp)
 }
 
 /**
- * Build a exp statement and add it to the block.
+ * Build an exp statement and add it to a block.
  */
 ir.ExpStatement buildExpStat(Location loc, ir.BlockStatement block, ir.Exp exp)
 {
@@ -767,6 +776,19 @@ ir.ExpStatement buildExpStat(Location loc, ir.BlockStatement block, ir.Exp exp)
 
 	return ret;
 }
+
+
+/**
+ * Build an exp statement without inserting it anywhere.
+ */
+ir.ExpStatement buildExpStat(Location loc, ir.Exp exp)
+{
+	auto ret = new ir.ExpStatement();
+	ret.location = loc;
+	ret.exp = exp;
+	return ret;
+}
+
 
 /**
  * Build an if statement.
