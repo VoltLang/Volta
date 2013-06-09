@@ -124,6 +124,7 @@ enum NodeType
 	TraitsExp,
 	TypeExp,
 	TemplateInstanceExp,
+	StatementExp,
 }
 
 /**
@@ -368,5 +369,6 @@ string nodeToString(NodeType nodeType)
 	case TraitsExp: return "TraitsExp";
 	case TypeExp: return "TypeExp";
 	case TemplateInstanceExp: return "TemplateInstanceExp";
+	case StatementExp: return "StatementExp";
 	}
 }

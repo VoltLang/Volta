@@ -260,6 +260,7 @@ ir.Node copyNode(ir.Node n)
 	case TypeExp:
 		auto te = cast(ir.TypeExp)n;
 		return copy(te);
+	case StatementExp:
 	case PrimitiveType:
 	case TypeReference:
 	case PointerType:

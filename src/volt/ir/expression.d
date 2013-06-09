@@ -507,7 +507,7 @@ public:
  * A TemplateInstanceExp represents an instantiation of a template
  * with explicit type parameters.
  *
- * @ingroup irNode irExp 
+ * @ingroup irNode irExp
  */
 class TemplateInstanceExp : Exp
 {
@@ -517,4 +517,23 @@ public:
 
 public:
 	this() { super(NodeType.TemplateInstanceExp); }
+}
+
+/**
+ * A StatementExp is a internal expression for inserting statements
+ * into a expression. Note that this is not a function and executes
+ * the statements just as if they where inserted in the BlockStatement
+ * that the StatementExp is in. Meaning any ReturnStatement will
+ * return the current function not this StatementExp.
+ *
+ * @ingroup irNode irExp
+ */
+class StatementExp : Exp
+{
+public:
+	Node[] statements; ///< A list of statements to be executed.
+	Exp exp; ///< The value of the StatementExp
+
+public:
+	this() { super(NodeType.StatementExp); }
 }
