@@ -215,17 +215,26 @@ ir.Type retrieveTypeFromObject(LanguagePass lp, ir.Scope _scope, Location loc, s
 }
 
 /**
+ * Looks up a class in object.
+ * Throws: CompilerPanic on failure
+ */
+ir.Class retrieveClassFromObject(LanguagePass lp, ir.Scope _scope, Location loc, string name)
+{
+	auto clazzStore = retrieveStoreFromObject(lp, _scope, loc, name);
+	auto clazz = cast(ir.Class) clazzStore.node;
+	if (clazz is null) {
+		throw panic(loc, format("object.%s is not a class.", name));
+	}
+	return clazz;
+}
+
+/**
  * Look up object.Attribute.
  * Throws: CompilerPanic on failure.
  */
 ir.Class retrieveAttribute(LanguagePass lp, ir.Scope _scope, Location loc)
 {
-	auto attrStore = retrieveStoreFromObject(lp, _scope, loc, "Attribute");
-	auto attr = cast(ir.Class) attrStore.node;
-	if (attr is null) {
-		throw panic(loc, "object.Attribute is not a class.");
-	}
-	return attr;
+	return retrieveClassFromObject(lp, _scope, loc, "Attribute");
 }
 
 /**
@@ -234,12 +243,7 @@ ir.Class retrieveAttribute(LanguagePass lp, ir.Scope _scope, Location loc)
  */
 ir.Class retrieveTypeInfo(LanguagePass lp, ir.Scope _scope, Location loc)
 {
-	auto tinfoStore = retrieveStoreFromObject(lp, _scope, loc, "TypeInfo");
-	auto tinfo = cast(ir.Class) tinfoStore.node;
-	if (tinfo is null) {
-		throw panic(loc, "tinfo is wrong type.");
-	}
-	return tinfo;
+	return retrieveClassFromObject(lp, _scope, loc, "TypeInfo");
 }
 
 /**
@@ -248,12 +252,7 @@ ir.Class retrieveTypeInfo(LanguagePass lp, ir.Scope _scope, Location loc)
  */
 ir.Class retrieveObject(LanguagePass lp, ir.Scope _scope, Location loc)
 {
-	auto objStore = retrieveStoreFromObject(lp, _scope, loc, "Object");
-	auto obj = cast(ir.Class) objStore.node;
-	if (obj is null) {
-		throw panic(loc, "obj is wrong type.");
-	}
-	return obj;
+	return retrieveClassFromObject(lp, _scope, loc, "Object");
 }
 
 /**
