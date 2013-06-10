@@ -7,6 +7,8 @@ import std.conv : to;
 import volt.errors;
 import volt.interfaces;
 import volt.token.location;
+import volt.semantic.util : canonicaliseStorageType;
+import volt.util.string : unescapeString;
 import ir = volt.ir.ir;
 
 
@@ -494,6 +496,22 @@ ir.Constant buildSizeTConstant(Location loc, LanguagePass lp, int val)
 }
 
 /**
+ * Builds a constant string.
+ */
+ir.Constant buildStringConstant(Location loc, string val)
+{
+	auto c = new ir.Constant();
+	c.location = loc;
+	c._string = val;
+	auto stor = buildStorageType(loc, ir.StorageType.Kind.Immutable, buildChar(loc));
+	canonicaliseStorageType(stor);
+	c.type = buildArrayType(loc, stor);
+	assert((c._string[$-1] == '"' || c._string[$-1] == '`') && c._string.length >= 2);
+	c.arrayData = unescapeString(loc, c._string[1 .. $-1]);
+	return c;
+}
+
+/**
  * Build a constant to insert to the IR from a resolved EnumDeclaration.
  */
 ir.Constant buildConstant(Location loc, ir.EnumDeclaration ed)
@@ -564,6 +582,21 @@ ir.Unary buildDeref(Location loc, ir.Exp exp)
 	deref.op = ir.Unary.Op.Dereference;
 	deref.value = exp;
 	return deref;
+}
+
+/**
+ * Builds a New expression.
+ */
+ir.Unary buildNew(Location loc, ir.Type type, string name, ir.Exp[] arguments...)
+{
+	auto new_ = new ir.Unary();
+	new_.location = loc;
+	new_.op = ir.Unary.Op.New;
+	new_.type = buildTypeReference(loc, type, name);
+// 	new_.type = type;
+	new_.hasArgumentList = arguments.length > 0;
+	new_.argumentList = arguments;
+	return new_;
 }
 
 /**
