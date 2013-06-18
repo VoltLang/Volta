@@ -25,6 +25,12 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeUsedBeforeDeclared(ir.Node node, ir.Variable var)
+{
+	return new CompilerError(node.location, format("variable '%s' used before declaration.", var.name));
+}
+
+
 CompilerException makeStructConstructorsUnsupported(ir.Node node)
 {
 	return new CompilerError(node.location, "struct constructors are currently unsupported.");

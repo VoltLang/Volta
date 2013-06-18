@@ -100,6 +100,8 @@ public:
 
 	bool isOut;  ///< The type will be a ref storage type if this is set.
 
+	bool hasBeenDeclared;  ///< Has this variable been declared yet? (only useful in extyper)
+
 	/**
 	 * Tells the backend to turn the storage Variable to the
 	 * base of the reference or pointer type.

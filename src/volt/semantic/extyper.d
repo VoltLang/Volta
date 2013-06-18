@@ -479,6 +479,9 @@ void extypeIdentifierExp(LanguagePass lp, ir.Scope current, ref ir.Exp e, ir.Ide
 	case Value:
 		auto var = cast(ir.Variable) store.node;
 		assert(var !is null);
+		if (!var.hasBeenDeclared && var.storage == ir.Variable.Storage.Function) {
+			throw makeUsedBeforeDeclared(e, var);
+		}
 		_ref.decl = var;
 		e = _ref;
 		return;
@@ -1570,6 +1573,7 @@ public:
 		// which the calls in this and the visiting functions
 		// are exectuted matters.
 		if (!enterFirstVariable) {
+			v.hasBeenDeclared = true;
 			lp.resolve(current, v);
 			if (v.assign !is null) {
 				auto state = AssignmentState(lp, current, true);
