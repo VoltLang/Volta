@@ -51,46 +51,48 @@ public:
 		auto ct = cast(CallableType)type;
 		assert(ct !is null);
 
-		if (fn._body !is null) {
-			state.currentFall = true;
-			state.currentFunc = llvmFunc;
-			state.currentBlock = LLVMAppendBasicBlock(llvmFunc, "entry");
-			LLVMPositionBuilderAtEnd(b, state.currentBlock);
+		auto oldFall = state.currentFall;
+		auto oldFunc = state.currentFunc;
+		auto oldBlock = state.currentBlock;
 
-			foreach(uint i, p; fn.params) {
-				if (p.name is null)
-					continue;
+		state.currentFall = true;
+		state.currentFunc = llvmFunc;
+		state.currentBlock = LLVMAppendBasicBlock(llvmFunc, "entry");
+		LLVMPositionBuilderAtEnd(b, state.currentBlock);
 
-				auto v = LLVMGetParam(llvmFunc, i);
+		foreach(uint i, p; fn.params) {
+			if (p.name is null)
+				continue;
 
-				if (volt.semantic.classify.isRef(p.type)) {
-					state.makeByValVariable(p, v);
-				} else {
-					auto t = state.fromIr(p.type);
-					auto a = state.getVariableValue(p, t);
-					LLVMBuildStore(state.builder, v, a);
-				}
+			auto v = LLVMGetParam(llvmFunc, i);
+
+			if (volt.semantic.classify.isRef(p.type)) {
+				state.makeByValVariable(p, v);
+			} else {
+				auto t = state.fromIr(p.type);
+				auto a = state.getVariableValue(p, t);
+				LLVMBuildStore(state.builder, v, a);
 			}
-
-			ir.Variable thisVar = fn.thisHiddenParameter;
-			if (thisVar !is null) {
-				auto v = LLVMGetParam(llvmFunc, cast(uint)fn.type.params.length);
-				state.makeThisVariable(thisVar, v);
-			}
-
-			foreach(n; fn._body.statements)
-				accept(n, this);
-
-			// Assume language pass knows what it is doing.
-			if (state.currentFall) {
-				LLVMBuildCall(state.builder, state.llvmTrap, null);
-				LLVMBuildUnreachable(state.builder);
-			}
-
-			state.currentFall = false;
-			state.currentFunc = null;
-			state.currentBlock = null;
 		}
+
+		ir.Variable thisVar = fn.thisHiddenParameter;
+		if (thisVar !is null) {
+			auto v = LLVMGetParam(llvmFunc, cast(uint)fn.type.params.length);
+			state.makeThisVariable(thisVar, v);
+		}
+
+		foreach(n; fn._body.statements)
+			accept(n, this);
+
+		// Assume language pass knows what it is doing.
+		if (state.currentFall) {
+			LLVMBuildCall(state.builder, state.llvmTrap, null);
+			LLVMBuildUnreachable(state.builder);
+		}
+
+		state.currentFall = oldFall;
+		state.currentFunc = oldFunc;
+		state.currentBlock = oldBlock;
 
 		return ContinueParent;
 	}
