@@ -94,6 +94,11 @@ public:
 		state.currentFunc = oldFunc;
 		state.currentBlock = oldBlock;
 
+		// Reset builder for nested functions.
+		if (state.currentBlock !is null) {
+			LLVMPositionBuilderAtEnd(b, state.currentBlock);
+		}
+
 		return ContinueParent;
 	}
 
