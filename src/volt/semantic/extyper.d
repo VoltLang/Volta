@@ -1745,7 +1745,7 @@ public:
 				_typeid.type = buildTypeReference(_typeid.location, cast(ir.Type) store.node, _typeid.ident);
 				assert(_typeid.type !is null);
 				break;
-			case Value, EnumDeclaration, FunctionParam:
+			case Value, EnumDeclaration, FunctionParam, Function:
 				auto decl = cast(ir.Declaration) store.node;
 				_typeid.exp = buildExpReference(_typeid.location, decl, _typeid.ident);
 				break;
