@@ -540,14 +540,14 @@ public:
 				return;
 			}
 		}
-		for (int i = mFunctionStack.length - 1; i >= 0; --i) {
-			foreach (var; mFunctionStack[i].params) {
+		foreach_reverse(fn; mFunctionStack) {
+			foreach (var; fn.params) {
 				if (s == var.oldname) {
 					s = var.name;
 					return;
 				}
 			}
-			foreach (var; mFunctionStack[i].renamedVariables) {
+			foreach (var; fn.renamedVariables) {
 				if (s == var.oldname) {
 					s = var.name;
 				}
