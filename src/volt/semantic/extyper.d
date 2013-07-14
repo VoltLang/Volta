@@ -1848,7 +1848,12 @@ public:
 			_typeid.ident.length = 0;
 		}
 		if (_typeid.exp !is null) {
-			_typeid.type = copyType(getExpType(lp, _typeid.exp, current));
+			_typeid.type = getExpType(lp, _typeid.exp, current);
+			if ((cast(ir.Aggregate) _typeid.type) !is null) {
+				_typeid.type = buildTypeReference(_typeid.type.location, _typeid.type);
+			} else {
+				_typeid.type = copyType(_typeid.type);
+			}
 			_typeid.exp = null;
 		}
 		ensureResolved(lp, current, _typeid.type);
