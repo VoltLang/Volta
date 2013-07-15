@@ -784,10 +784,10 @@ ir.ConditionTopLevel parseConditionTopLevel(TokenStream ts, bool inModule = fals
 			// Colons are implictly converted into braces; the IR knows nothing of colons.
 			ctl.members = parseTopLevelBlock(ts, TokenType.CloseBrace, inModule);
 		} else if (matchIf(ts, TokenType.OpenBrace)) {
-			ctl._else = parseTopLevelBlock(ts, TokenType.CloseBrace);
+			ctl._else = parseTopLevelBlock(ts, TokenType.CloseBrace, inModule);
 			match(ts, TokenType.CloseBrace);
 		} else {
-			ctl._else = parseOneTopLevelBlock(ts);
+			ctl._else = parseOneTopLevelBlock(ts, inModule);
 		}
 	}
 
