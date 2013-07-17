@@ -1428,7 +1428,7 @@ void handleNestedThis(ir.Function fn)
  * Given a nested function fn, add its parameters to the nested
  * struct and insert statements after the nested declaration.
  */
-void handleNestedParams(ir.Function fn)
+void handleNestedParams(LanguagePass lp, ir.Scope current, ir.Function fn)
 {
 	auto np = fn.nestedVariable;
 	auto ns = fn.nestStruct;
@@ -1448,6 +1448,7 @@ void handleNestedParams(ir.Function fn)
 	foreach (param; fn.params) {
 		if (!param.hasBeenNested) {
 			param.hasBeenNested = true;
+			ensureResolved(lp, current, param.type);
 			auto var = buildVariableSmart(param.location, param.type, ir.Variable.Storage.Field, param.name);
 			addVarToStructSmart(ns, var);
 
@@ -1699,7 +1700,7 @@ public:
 			addVarToStructSmart(fn.nestStruct, cvar);
 		}
 		handleNestedThis(fn);
-		handleNestedParams(fn);
+		handleNestedParams(lp, current, fn);
 		lp.resolve(current, fn);
 		super.enter(fn);
 		return Continue;
