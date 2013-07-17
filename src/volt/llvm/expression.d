@@ -181,6 +181,28 @@ void handleIs(State state, ir.BinOp bin, Value result)
 		LLVMIntPredicate.EQ :
 		LLVMIntPredicate.NE;
 
+	auto logic = bin.op == ir.BinOp.Op.Is ?
+		LLVMOpcode.And :
+		LLVMOpcode.Or;
+
+	auto loc = bin.location;
+
+	auto dg = cast(DelegateType)result.type;
+	if (dg !is null) {
+		auto lInstance = getValueFromAggregate(state, loc, left, DelegateType.voidPtrIndex);
+		auto lFunc = getValueFromAggregate(state, loc, left, DelegateType.funcIndex);
+		auto rInstance = getValueFromAggregate(state, loc, right, DelegateType.voidPtrIndex);
+		auto rFunc = getValueFromAggregate(state, loc, right, DelegateType.funcIndex);
+
+		auto instance = LLVMBuildICmp(state.builder, pr, lInstance, rInstance, "");
+		auto func     = LLVMBuildICmp(state.builder, pr, lFunc, rFunc, "");
+
+		result.type = state.boolType;
+		result.isPointer = false;
+		result.value = LLVMBuildBinOp(state.builder, logic, instance, func, "");
+		return;
+	}
+
 	auto at = cast(ArrayType)result.type;
 	if (at is null) {
 		makeNonPointer(state, left);
@@ -193,7 +215,6 @@ void handleIs(State state, ir.BinOp bin, Value result)
 	}
 
 	// Deal with arrays.
-	auto loc = bin.location;
 	auto lPtr = getValueFromAggregate(state, loc, left, ArrayType.ptrIndex);
 	auto lLen = getValueFromAggregate(state, loc, left, ArrayType.lengthIndex);
 	auto rPtr = getValueFromAggregate(state, loc, right, ArrayType.ptrIndex);
@@ -201,10 +222,6 @@ void handleIs(State state, ir.BinOp bin, Value result)
 
 	auto ptr = LLVMBuildICmp(state.builder, pr, lPtr, rPtr, "");
 	auto len = LLVMBuildICmp(state.builder, pr, lLen, rLen, "");
-
-	auto logic = bin.op == ir.BinOp.Op.Is ?
-		LLVMOpcode.And :
-		LLVMOpcode.Or;
 
 	result.type = state.boolType;
 	result.isPointer = false;
