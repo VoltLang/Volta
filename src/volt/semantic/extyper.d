@@ -1428,16 +1428,23 @@ void handleNestedThis(ir.Function fn)
  * Given a nested function fn, add its parameters to the nested
  * struct and insert statements after the nested declaration.
  */
-void handleNestedParams(ir.Function[] functionStack, ir.Function fn)
+void handleNestedParams(ir.Function fn)
 {
-	if (functionStack.length == 0) {
-		return;
-	}
 	auto np = fn.nestedVariable;
-	auto ns = functionStack[$-1].nestStruct;
+	auto ns = fn.nestStruct;
 	if (np is null || ns is null) {
 		return;
 	}
+
+	// This is needed for the parent function.
+	size_t index;
+	for (index = 0; index < fn._body.statements.length; ++index) {
+		if (fn._body.statements[index] is np) {
+			break;
+		}
+	}
+	++index;
+
 	foreach (param; fn.params) {
 		if (!param.hasBeenNested) {
 			param.hasBeenNested = true;
@@ -1449,11 +1456,16 @@ void handleNestedParams(ir.Function[] functionStack, ir.Function fn)
 			auto r = buildExpReference(param.location, param, param.name);
 			r.doNotRewriteAsNestedLookup = true;
 			ir.Node n = buildExpStat(l.location, buildAssign(l.location, l, r));
-			fn._body.statements = n ~ fn._body.statements;
+			if (fn.nestedHiddenParameter !is null) {
+				// Nested function.
+				fn._body.statements = n ~ fn._body.statements;
+			} else {
+				// Parent function with nested children.
+				fn._body.statements.insertInPlace(index++, n);
+			}
 		}
 	}
 }
-
 
 /**
  * If type casting were to be strict, type T could only
@@ -1687,7 +1699,7 @@ public:
 			addVarToStructSmart(fn.nestStruct, cvar);
 		}
 		handleNestedThis(fn);
-		handleNestedParams(functionStack, fn);
+		handleNestedParams(fn);
 		lp.resolve(current, fn);
 		super.enter(fn);
 		return Continue;
