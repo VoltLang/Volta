@@ -23,6 +23,7 @@ import volt.semantic.typer;
 import volt.semantic.util;
 import volt.semantic.ctfe;
 import volt.semantic.overload;
+import volt.semantic.nested;
 
 struct AssignmentState
 {
@@ -485,21 +486,7 @@ void extypeIdentifierExp(ir.Function[] functionStack, LanguagePass lp, ir.Scope 
 		}
 		_ref.decl = var;
 		e = _ref;
-		if (current.nestedDepth > store.parent.nestedDepth) {
-			assert(functionStack[$-1].nestStruct !is null);
-			if (var.storage != ir.Variable.Storage.Field && var.storage != ir.Variable.Storage.Nested) {
-				addVarToStructSmart(functionStack[$-1].nestStruct, var);
-				var.storage = ir.Variable.Storage.Nested;
-			} else if (var.storage == ir.Variable.Storage.Field) {
-				assert(functionStack[$-1].nestedHiddenParameter !is null);
-				auto nref = buildExpReference(i.location, functionStack[$-1].nestedHiddenParameter, functionStack[$-1].nestedHiddenParameter.name);
-				auto a = buildAccess(i.location, nref, "this");
-				e = buildAccess(a.location, a, i.value);
-			}
-			if (var.storage != ir.Variable.Storage.Field) {
-				var.storage = ir.Variable.Storage.Nested;
-			}
-		}
+		tagNestedVariables(current, functionStack, var, i, store, e);
 		return;
 	case FunctionParam:
 		auto fp = cast(ir.FunctionParam) store.node;
@@ -953,13 +940,14 @@ void extypeTypeLookup(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Post
 	}
 }
 
-void extypePostfixIdentifier(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Postfix postfix)
+void extypePostfixIdentifier(LanguagePass lp, ir.Function[] functionStack, ir.Scope current, ref ir.Exp exp, ir.Postfix postfix)
 {
 	if (postfix.op != ir.Postfix.Op.Identifier)
 		return;
 
 	ir.Postfix[] postfixIdents; // In reverse order.
 	ir.IdentifierExp identExp; // The top of the stack.
+	ir.IdentifierExp firstExp;
 	ir.Postfix currentP = postfix;
 
 	while (true) {
@@ -980,6 +968,10 @@ void extypePostfixIdentifier(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 
 		} else if (currentP.child.nodeType == ir.NodeType.IdentifierExp) {
 			identExp = cast(ir.IdentifierExp) currentP.child;
+			if (firstExp is null) {
+				firstExp = identExp;
+				assert(firstExp !is null);
+			}
 			break;
 		} else if (currentP.child.nodeType == ir.NodeType.TypeExp) {
 			auto typeExp = cast(ir.TypeExp) currentP.child;
@@ -1006,6 +998,7 @@ void extypePostfixIdentifier(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 		assert(store !is null);
 		if (store.kind == ir.Store.Kind.Value) {
 			auto var = cast(ir.Variable) store.node;
+			tagNestedVariables(current, functionStack, var, firstExp, store, exp);
 			assert(var !is null);
 			_ref.decl = var;
 		} else if (store.kind == ir.Store.Kind.Function) {
@@ -1137,10 +1130,10 @@ void extypePostfixIdentifier(LanguagePass lp, ir.Scope current, ref ir.Exp exp, 
 	}
 }
 
-void extypePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Postfix postfix)
+void extypePostfix(LanguagePass lp, ir.Function[] functionStack, ir.Scope current, ref ir.Exp exp, ir.Postfix postfix)
 {
 	rewriteSuperIfNeeded(exp, postfix, current, lp);
-	extypePostfixIdentifier(lp, current, exp, postfix);
+	extypePostfixIdentifier(lp, functionStack, current, exp, postfix);
 }
 
 void handleCastTo(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Unary unary)
@@ -1882,7 +1875,7 @@ public:
 
 	override Status enter(ref ir.Exp exp, ir.Postfix postfix)
 	{
-		extypePostfix(lp, current, exp, postfix);
+		extypePostfix(lp, functionStack, current, exp, postfix);
 		return Continue;
 	}
 

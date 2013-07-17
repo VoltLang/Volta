@@ -90,3 +90,25 @@ void insertBinOpAssignsForNestedVariableAssigns(ir.BlockStatement bs)
 		}
 	}
 }
+
+void tagNestedVariables(ir.Scope current, ir.Function[] functionStack, ir.Variable var, ir.IdentifierExp i, ir.Store store, ref ir.Exp e)
+{
+	if (functionStack.length == 0 || functionStack[$-1].nestStruct is null) {
+		return;
+	}
+	if (current.nestedDepth > store.parent.nestedDepth) {
+		assert(functionStack[$-1].nestStruct !is null);
+		if (var.storage != ir.Variable.Storage.Field && var.storage != ir.Variable.Storage.Nested) {
+			addVarToStructSmart(functionStack[$-1].nestStruct, var);
+			var.storage = ir.Variable.Storage.Nested;
+		} else if (var.storage == ir.Variable.Storage.Field) {
+			assert(functionStack[$-1].nestedHiddenParameter !is null);
+			auto nref = buildExpReference(i.location, functionStack[$-1].nestedHiddenParameter, functionStack[$-1].nestedHiddenParameter.name);
+			auto a = buildAccess(i.location, nref, "this");
+			e = buildAccess(a.location, a, i.value);
+		}
+		if (var.storage != ir.Variable.Storage.Field) {
+			var.storage = ir.Variable.Storage.Nested;
+		}
+	}
+}
