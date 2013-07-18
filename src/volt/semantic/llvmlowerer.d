@@ -112,6 +112,18 @@ public:
 		if (functionStack.length == 0 || functionStack[$-1].nestedVariable is null) {
 			return Continue;
 		}
+		bool isNested;
+		PARENT: foreach (pf; functionStack) {
+			foreach (nf; pf.nestedFunctions) {
+				if (fn is nf) {
+					isNested = true;
+					break PARENT;
+				}
+			}
+		}
+		if (!isNested) {
+			return Continue;
+		}
 		auto np = functionStack[$-1].nestedVariable;
 		exp = buildCreateDelegate(exp.location, buildExpReference(np.location, np, np.name), eref);
 
