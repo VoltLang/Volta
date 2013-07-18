@@ -492,6 +492,10 @@ public:
 		foreach (var; fs.initVars) {
 			gather(lp, current, var, where, mFunctionStack);
 		}
+		acceptExp(fs.test, this);
+		foreach (ref inc; fs.increments) {
+			acceptExp(inc, this);
+		}
 		foreach (node; fs.block.statements) {
 			accept(node, this);
 		}
