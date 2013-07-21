@@ -85,10 +85,10 @@ void* gcMalloc(TypeInfo typeinfo, size_t count, void *ptr)
 		size = count * typeinfo.size;
 	}
 
-	if(typeinfo.mutableIndirection) {
-		memory = GC_malloc_atomic(size);
-	} else {
+	if (typeinfo.mutableIndirection) {
 		memory = GC_malloc(size);
+	} else {
+		memory = GC_malloc_atomic(size);
 	}
 
 	if (count == cast(size_t) -1) {
