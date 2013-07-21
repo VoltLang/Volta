@@ -119,6 +119,7 @@ public:
 			case WhileStatement:
 			case DoStatement:
 			case ForStatement:
+			case BreakStatement:
 			case ContinueStatement:
 			case ExpStatement:
 			case Variable:
