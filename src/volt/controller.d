@@ -12,6 +12,7 @@ import std.stdio : stderr;
 import volt.util.path;
 import volt.exceptions;
 import volt.interfaces;
+import volt.errors;
 
 import volt.parser.parser;
 import volt.semantic.languagepass;
@@ -96,16 +97,28 @@ public:
 		if (p !is null)
 			m = *p;
 
+		string[] validPaths;
 		foreach (path; mIncludes) {
 			if (m !is null)
 				break;
 
-			auto f = makeFilename(path, name.strings);
+			auto paths = genPossibleFilenames(path, name.strings);
 
-			if (!exists(f))
-				continue;
+			foreach (possiblePath; paths) {
+				if (exists(possiblePath)) {
+					validPaths ~= possiblePath;
+				}
+			}
+		}
 
-			m = loadAndParse(f);
+		if (m is null) {
+			if (validPaths.length == 0) {
+				return null;
+			}
+			if (validPaths.length > 1) {
+				throw makeMultipleValidModules(name, validPaths);
+			}
+			m = loadAndParse(validPaths[0]);
 		}
 
 		// Need to make sure that this module can

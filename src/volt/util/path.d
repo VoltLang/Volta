@@ -22,17 +22,21 @@ import std.process : getenv;
 
 
 /**
- * Used for turning module qualified names into file paths to open.
+ * Turns a qualified module name into a list of possible file paths.
  */
-string makeFilename(string dir, string[] names)
+string[] genPossibleFilenames(string dir, string[] names)
 {
+	string[] paths;
 	auto ret = dir;
 
 	foreach(name; names)
 		ret ~= dirSeparator ~ name;
-	ret ~= ".v";
+	paths ~= ret ~ ".volt";
+	paths ~= ret ~ ".v";
+	paths ~= ret ~ dirSeparator ~ "package.volt";
+	paths ~= ret ~ dirSeparator ~ "package.v";
 
-	return ret;
+	return paths;
 }
 
 /**

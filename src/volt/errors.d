@@ -25,6 +25,11 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeMultipleValidModules(ir.Node node, string[] paths)
+{
+	return new CompilerError(node.location, format("multiple modules are valid %s.", paths));
+}
+
 CompilerException makeCannotOverloadNested(ir.Node node, ir.Function fn)
 {
 	return new CompilerError(node.location, format("cannot overload nested function '%s'.", fn.name));
