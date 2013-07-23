@@ -32,9 +32,7 @@ string[] genPossibleFilenames(string dir, string[] names)
 	foreach(name; names)
 		ret ~= dirSeparator ~ name;
 	paths ~= ret ~ ".volt";
-	paths ~= ret ~ ".v";
 	paths ~= ret ~ dirSeparator ~ "package.volt";
-	paths ~= ret ~ dirSeparator ~ "package.v";
 
 	return paths;
 }

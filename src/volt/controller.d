@@ -144,7 +144,7 @@ public:
 
 	void addFile(string file)
 	{
-		if (endsWith(file, ".d", ".v", ".volt") > 0) {
+		if (endsWith(file, ".d", ".volt") > 0) {
 			mSourceFiles ~= file;
 		} else if (endsWith(file, ".bc")) {
 			mBitCodeFiles ~= file;
