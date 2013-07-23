@@ -85,12 +85,12 @@ $(OBJ_DIR)/%.$(OBJ_TYPE) : src/%.d Makefile
 	@mkdir -p $(dir $@)
 	@$(DMD) $(DCOMP_FLAGS) src/$*.d
 
-rt/rt.bc: $(TARGET) rt/src/object.v rt/src/vrt/vmain.v rt/src/vrt/gc.v rt/src/vrt/clazz.v rt/src/vrt/eh.v
+rt/rt.bc: $(TARGET) rt/src/object.volt rt/src/vrt/vmain.volt rt/src/vrt/gc.volt rt/src/vrt/clazz.volt rt/src/vrt/eh.volt
 	@echo "  VOLT   rt/rt.bc"
 	@./$(TARGET) --no-stdlib --emit-bitcode -I rt/src -o rt/rt.bc \
-	rt/src/object.v rt/src/vrt/vmain.v \
-	rt/src/vrt/gc.v rt/src/vrt/clazz.v \
-	rt/src/vrt/eh.v
+	rt/src/object.volt rt/src/vrt/vmain.volt \
+	rt/src/vrt/gc.volt rt/src/vrt/clazz.volt \
+	rt/src/vrt/eh.volt
 
 $(TARGET): $(OBJ) Makefile
 	@echo "  LD     $@"
@@ -104,7 +104,7 @@ clean:
 
 $(RUN_TARGET): $(TARGET) rt/rt.bc
 	@echo "  VOLT   $(RUN_TARGET)"
-	@./$(TARGET) $(RUN_FLAGS) -o a.out.exe test/simple.v
+	@./$(TARGET) $(RUN_FLAGS) -o a.out.exe test/simple.volt
 
 sanity: $(RUN_TARGET)
 	@echo "  SANITY a.out.exe"
@@ -115,7 +115,7 @@ run: $(RUN_TARGET)
 	@-./a.out.exe
 
 debug: $(TARGET) rt/rt.bc
-	@gdb --args ./$(TARGET) $(RUN_FLAGS) -o a.out.exe test/simple.v
+	@gdb --args ./$(TARGET) $(RUN_FLAGS) -o a.out.exe test/simple.volt
 
 license: $(TARGET)
 	@./$(TARGET) --license
