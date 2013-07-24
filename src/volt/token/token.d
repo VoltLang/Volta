@@ -16,7 +16,7 @@ import volt.token.location;
  * another are implicitly concatenated. I warn you of this out of experience.
  */
 
-string[179] tokenToString = [
+string[181] tokenToString = [
 "none", "identifier", "string literal", "character literal",
 "integer literal", "float literal", "abstract", "alias", "align",
 "asm", "assert", "auto", "body", "bool", "break", "byte", "case",
@@ -33,7 +33,7 @@ string[179] tokenToString = [
 "switch", "synchronized", "template", "this", "throw", "true",
 "try", "typedef", "typeid", "typeof", "ubyte", "ucent", "uint",
 "ulong", "union", "unittest", "ushort", "version", "void", "volatile",
-"wchar", "while", "with", "__FILE__", "__LINE__",
+"wchar", "while", "with", "__FILE__", "__FUNCTION__", "__LINE__", "__PRETTY_FUNCTION__",
 "__thread", "__traits",
 "/", "/=", ".", "..", "...", "&", "&=", "&&", "|", "|=", "||",
 "-", "-=", "--", "+", "+=", "++", "<", "<=", "<<", "<<=", "<>", "<>=",
@@ -90,7 +90,7 @@ enum TokenType
 	Ubyte, Ucent, Uint, Ulong, Union, Unittest, Ushort,
 	Version, Void, Volatile,
 	Wchar, While, With,
-	__File__, __Line__, __Thread, __Traits,
+	__File__, __Function__, __Line__, __Pretty_Function__, __Thread, __Traits,
 
 	/// Symbols.
 	Slash,                  // /
@@ -289,7 +289,9 @@ TokenType identifierType(string ident)
 	case "while":           return While;
 	case "with":            return With;
 	case "__FILE__":        return __File__;
+	case "__FUNCTION__":    return __Function__;
 	case "__LINE__":        return __Line__;
+	case "__PRETTY_FUNCTION__": return __Pretty_Function__;
 	case "__thread":        return __Thread;
 	case "__traits":        return __Traits;
 	default:                return Identifier;

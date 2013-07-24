@@ -546,3 +546,31 @@ public:
 public:
 	this() { super(NodeType.StatementExp); }
 }
+
+/**
+ * Expression that corresponds to what was once special tokens.
+ * __FUNCTION__, __PRETTY_FUNCTION__, __FILE__, and __LINE.
+ *
+ * @ingroup irNode irExp
+ */
+class TokenExp : Exp
+{
+public:
+	enum Type
+	{
+		Function, ///< Just the function name. (e.g. math.add)
+		PrettyFunction,  ///< Full signature. (e.g. int math.add(int a, int b))
+		File,  ///< Current file. (e.g. foo.volt)
+		Line,  ///< Current line number. (e.g. 32)
+	}
+
+	Type type;
+
+public:
+	this(TokenExp.Type type)
+	{
+		super(NodeType.TokenExp);
+		this.type = type;
+	}
+}
+

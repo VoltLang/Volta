@@ -25,6 +25,11 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeFunctionNameOutsideOfFunction(ir.TokenExp fexp)
+{
+	return new CompilerError(fexp.location, format("%s occuring outside of function.", fexp.type == ir.TokenExp.Type.PrettyFunction ? "__PRETTY_FUNCTION__" : "__FUNCTION__"));
+}
+
 CompilerException makeMultipleValidModules(ir.Node node, string[] paths, string file = __FILE__, const int line = __LINE__)
 {
 	auto e = new CompilerError(node.location, format("multiple modules are valid %s.", paths));

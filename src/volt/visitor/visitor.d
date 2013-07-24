@@ -193,6 +193,7 @@ public abstract:
 	Visitor.Status visit(ref ir.Exp, ir.IdentifierExp);
 	Visitor.Status visit(ref ir.Exp, ir.ExpReference);
 	Visitor.Status visit(ref ir.Exp, ir.TraitsExp);
+	Visitor.Status visit(ref ir.Exp, ir.TokenExp);
 
 	Status debugVisitNode(ir.Node n);
 }
@@ -369,6 +370,7 @@ override:
 	Status visit(ref ir.Exp, ir.ExpReference){ return Continue; }
 	Status visit(ref ir.Exp, ir.IdentifierExp){ return Continue; }
 	Status visit(ref ir.Exp, ir.TraitsExp){ return Continue; }
+	Status visit(ref ir.Exp, ir.TokenExp){ return Continue; }
 
 	Status debugVisitNode(ir.Node) { return Continue; }
 }
@@ -496,6 +498,7 @@ Visitor.Status accept(ir.Node n, Visitor av)
 	case TypeExp:
 	case TemplateInstanceExp:
 	case StatementExp:
+	case TokenExp:
 		throw panic(n.location, "can not visit expressions");
 
 	/*
@@ -671,6 +674,8 @@ Visitor.Status acceptExp(ref ir.Exp exp, Visitor av)
 		return acceptClassLiteral(exp, cast(ir.ClassLiteral)exp, av);
 	case TraitsExp:
 		return acceptTraitsExp(exp, cast(ir.TraitsExp)exp, av);
+	case TokenExp:
+		return acceptTokenExp(exp, cast(ir.TokenExp)exp, av);
 	case TypeExp:
 		return acceptTypeExp(exp, cast(ir.TypeExp)exp, av);
 	case TemplateInstanceExp:
@@ -2126,6 +2131,11 @@ Visitor.Status acceptStatementExp(ref ir.Exp exp, ir.StatementExp state, Visitor
 Visitor.Status acceptTraitsExp(ref ir.Exp exp, ir.TraitsExp texp, Visitor av)
 {
 	return av.visit(exp, texp);
+}
+
+Visitor.Status acceptTokenExp(ref ir.Exp exp, ir.TokenExp fexp, Visitor av)
+{
+	return av.visit(exp, fexp);
 }
 
 Visitor.Status acceptExpReference(ref ir.Exp exp, ir.ExpReference expref, Visitor av)

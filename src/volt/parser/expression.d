@@ -420,6 +420,18 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 	case intir.PrimaryExp.Type.TemplateInstance:
 		exp = primary._template;
 		break;
+	case intir.PrimaryExp.Type.FunctionName:
+		exp = new ir.TokenExp(ir.TokenExp.Type.Function);
+		break;
+	case intir.PrimaryExp.Type.PrettyFunctionName:
+		exp = new ir.TokenExp(ir.TokenExp.Type.PrettyFunction);
+		break;
+	case intir.PrimaryExp.Type.File:
+		exp = new ir.TokenExp(ir.TokenExp.Type.File);
+		break;
+	case intir.PrimaryExp.Type.Line:
+		exp = new ir.TokenExp(ir.TokenExp.Type.Line);
+		break;
 	default:
 		throw panic(primary.location, "unhandled primary expression.");
 	}
@@ -954,6 +966,22 @@ intir.PrimaryExp parsePrimaryExp(TokenStream ts)
 		auto token = ts.get();
 		exp._string = token.value;
 		exp.op = intir.PrimaryExp.Type.StringLiteral;
+		break;
+	case TokenType.__File__:
+		auto token = ts.get();
+		exp.op = intir.PrimaryExp.Type.File;
+		break;
+	case TokenType.__Line__:
+		auto token = ts.get();
+		exp.op = intir.PrimaryExp.Type.Line;
+		break;
+	case TokenType.__Function__:
+		auto token = ts.get();
+		exp.op = intir.PrimaryExp.Type.FunctionName;
+		break;
+	case TokenType.__Pretty_Function__:
+		auto token = ts.get();
+		exp.op = intir.PrimaryExp.Type.PrettyFunctionName;
 		break;
 	case TokenType.CharacterLiteral:
 		auto token = ts.get();

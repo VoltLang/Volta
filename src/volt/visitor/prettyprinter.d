@@ -2033,6 +2033,25 @@ public:
 		return Continue;
 	}
 
+	override Status visit(ref ir.Exp, ir.TokenExp fexp)
+	{
+		final switch (fexp.type) with (ir.TokenExp.Type) {
+		case File:
+			wf("__FILE__");
+			break;
+		case Line:
+			wf("__LINE__");
+			break;
+		case PrettyFunction:
+			wf("__PRETTY_FUNCTION__");
+			break;
+		case Function:
+			wf("__FUNCTION__");
+			break;
+		}
+		return Continue;
+	}
+
 	/*
 	 *
 	 * Base stuff.

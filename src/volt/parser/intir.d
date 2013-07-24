@@ -158,6 +158,10 @@ public:
 		Traits,
 		StructLiteral,
 		TemplateInstance,
+		FunctionName,
+		PrettyFunctionName,
+		File,
+		Line,
 	}
 
 public:

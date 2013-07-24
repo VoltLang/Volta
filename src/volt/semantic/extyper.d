@@ -15,6 +15,7 @@ import volt.errors;
 import volt.interfaces;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
+import volt.visitor.prettyprinter;
 import volt.semantic.userattrresolver;
 import volt.semantic.classify;
 import volt.semantic.classresolver;
@@ -2071,6 +2072,65 @@ public:
 		if (eref !is null) {
 			replaceExpReferenceIfNeeded(lp, current, null, exp, eref);
 		}
+		return Continue;
+	}
+
+	override Status visit(ref ir.Exp exp, ir.TokenExp fexp)
+	{
+		if (fexp.type == ir.TokenExp.Type.File) {
+			exp = buildStringConstant(fexp.location, `"` ~ fexp.location.filename ~ `"`); 
+			return Continue;
+		} else if (fexp.type == ir.TokenExp.Type.Line) {
+			exp = buildConstantInt(fexp.location, cast(int) fexp.location.line);
+			return Continue;
+		}
+
+		char[] buf = `"`.dup;
+		void sink(string s)
+		{
+			buf ~= s;
+		}
+		auto pp = new PrettyPrinter("\t", &sink);
+
+		string[] names;
+		ir.Scope scop = current;
+		ir.Function foundFunction;
+		while (scop !is null) {
+			if (scop.node.nodeType != ir.NodeType.BlockStatement) {
+				names ~= scop.name;
+			}
+			if (scop.node.nodeType == ir.NodeType.Function) {
+				foundFunction = cast(ir.Function) scop.node;
+			}
+			scop = scop.parent;
+		}
+		if (foundFunction is null) {
+			throw makeFunctionNameOutsideOfFunction(fexp);
+		}
+
+		if (fexp.type == ir.TokenExp.Type.PrettyFunction) {
+			pp.transform(foundFunction.type.ret);
+			buf ~= " ";
+		}
+
+		foreach_reverse (i, name; names) {
+			buf ~= name ~ (i > 0 ? "." : "");
+		}
+
+		if (fexp.type == ir.TokenExp.Type.PrettyFunction) {
+			buf ~= "(";
+			foreach (i, ptype; functionStack[$-1].type.params) {
+				pp.transform(ptype);
+				if (i < functionStack[$-1].type.params.length - 1) {
+					buf ~= ", ";
+				}
+			}
+			buf ~= ")";
+		}
+
+		buf ~= "\"";
+
+		exp = buildStringConstant(fexp.location, buf.idup);
 		return Continue;
 	}
 

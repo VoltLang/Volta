@@ -307,7 +307,7 @@ bool lexSpecialToken(TokenWriter tw, Token token)
 		token.value = format(`"%02s:%02s:%02s"`, tm.tm_hour, tm.tm_min,
 		                     tm.tm_sec);
 		tw.addToken(token);
-	return true;
+		return true;
 
 	case "__TIMESTAMP__":
 		auto thetime = time(null);
@@ -325,25 +325,11 @@ bool lexSpecialToken(TokenWriter tw, Token token)
 		token.value = "N/A";
 		tw.addToken(token);
 		return true;
-
-	case "__FILE__":
-		token.type = TokenType.StringLiteral;
-		token.value = `"` ~ tw.source.location.filename ~ `"`;
-		tw.addToken(token);
-		return true;
-
-	case "__LINE__":
-		token.type = TokenType.IntegerLiteral;
-		token.value = to!string(tw.source.location.line);
-		tw.addToken(token);
-		return true;
-
 	case "__VERSION__":
 		token.type = TokenType.IntegerLiteral;
 		token.value = "N/A";
 		tw.addToken(token);
 		return true;
-
 	default:
 		return false;
 	}

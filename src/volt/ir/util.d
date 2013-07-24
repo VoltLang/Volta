@@ -277,6 +277,16 @@ ir.PrimitiveType buildDouble(Location loc) { return buildPrimitiveType(loc, ir.P
 ir.PrimitiveType buildReal(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Real); }
 
 /**
+ * Build a string (immutable(char)[]) type.
+ */
+ir.ArrayType buildString(Location loc)
+{
+	auto stor = buildStorageType(loc, ir.StorageType.Kind.Immutable, buildChar(loc));
+	return buildArrayType(loc, stor);
+}
+
+
+/**
  * Build a void* type.
  */
 ir.PointerType buildVoidPtr(Location loc)
