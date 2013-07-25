@@ -5,6 +5,7 @@ module volt.visitor.prettyprinter;
 
 import std.stream : Stream, File, FileMode;
 import std.cstream : dout;
+import std.string : format;
 
 import volt.token.token;
 
@@ -27,14 +28,16 @@ class PrettyPrinter : Visitor, Pass, Backend
 protected:
 	string mFilename;
 	Stream mStream;
+	void delegate(string) mSink;
 
 	int mIndent;
 	string mIndentText;
 
 public:
-	this(string indentText = "\t")
+	this(string indentText = "\t", void delegate(string) sink = null)
 	{
 		mIndentText = indentText;
+		mSink = sink;
 	}
 
 	void close()
@@ -62,9 +65,27 @@ public:
 		assert(mFilename is null);
 
 		mStream = dout;
+		void sink(string s)
+		{
+			mStream.writef("%s", s);
+		}
+		bool sinkWasNull;
+		if (mSink is null) {
+			mSink = &sink;
+			sinkWasNull = true;
+		}
+
 		accept(m, this);
-		mStream.writefln();
+		mSink("\n");
 		mStream = null;
+		if (sinkWasNull) {
+			mSink = null;
+		}
+	}
+
+	void transform(ir.Type t)
+	{
+		accept(t, this);
 	}
 
 
@@ -2068,10 +2089,11 @@ protected:
 
 	void twf(string[] strings...)
 	{
-		for(int i; i < mIndent; i++)
-			mStream.writef("%s", mIndentText);
+		for (int i; i < mIndent; i++) {
+			mSink(mIndentText);
+		}
 		foreach (s; strings) {
-			mStream.writef("%s", s);
+			mSink(s);
 		}
 	}
 
@@ -2079,19 +2101,39 @@ protected:
 	{
 		foreach (s; strings) {
 			twf(s);
-			mStream.writefln();
+			ln();
 		}
 	}
 
 	void wf(string[] strings...)
 	{
 		foreach (s; strings) {
-			mStream.writef("%s", s);
+			mSink(s);
 		}
 	}
-	void wf(int i) { mStream.writef("%s", i); }
-	void wf(long l) { mStream.writef("%s", l); }
-	void wf(size_t i) { mStream.writef("%s", i); }
-	void wfln(string str) { wf(str); ln(); }
-	void ln() { mStream.writefln(); }
+
+	void wf(int i)
+	{
+		string s = format("%s", i);
+		mSink(s);
+	}
+
+	void wf(long l)
+	{
+		string s = format("%s", l);
+		mSink(s);
+	}
+
+	void wf(size_t i)
+	{
+		string s = format("%s", i);
+		mSink(s);
+	}
+
+	void wfln(string str){ wf(str); ln(); }
+
+	void ln()
+	{
+		mSink("\n");
+	}
 }
