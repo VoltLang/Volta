@@ -198,6 +198,8 @@ public:
 			return 2;
 		} catch (CompilerError e) {
 			stderr.writefln(e.msg);
+			debug if (e.file !is null)
+				stderr.writefln("%s:%s", e.file, e.line);
 			return 1;
 		} catch (Exception e) {
 			stderr.writefln("panic: %s", e.msg);
