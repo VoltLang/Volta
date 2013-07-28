@@ -417,8 +417,11 @@ ir.Union parseUnion(TokenStream ts)
 	if (ts.peek.type == TokenType.Semicolon) {
 		if (u.name.length == 0) {
 			match(ts, TokenType.OpenBrace);
+			match(ts, TokenType.Semicolon);
+		} else {
+			throw makeUnsupported(u.location, "opaque union declarations");
 		}
-		match(ts, TokenType.Semicolon);
+// 		match(ts, TokenType.Semicolon);
 	} else {
 		match(ts, TokenType.OpenBrace);
 		u.members = parseTopLevelBlock(ts, TokenType.CloseBrace);
@@ -438,7 +441,8 @@ ir.Struct parseStruct(TokenStream ts)
 	s.name = nameTok.value;
 
 	if (ts.peek.type == TokenType.Semicolon) {
-		match(ts, TokenType.Semicolon);
+		throw makeUnsupported(s.location, "opaque struct declarations");
+// 		match(ts, TokenType.Semicolon);
 	} else {
 		match(ts, TokenType.OpenBrace);
 		s.members = parseTopLevelBlock(ts, TokenType.CloseBrace);
