@@ -111,7 +111,11 @@ void extypeCastToBool(LanguagePass lp, ir.Scope current, ref ir.Exp exp)
 }
 
 /**
- * This handles the exp being storage.
+ * This deals with one side of an assign statement being 
+ * a storage type and the other not.
+ * It allows scope and const to decay if the left hand side
+ * isn't mutably indirect. It also allows types to be converted
+ * into scoped ones.
  */
 void extypeAssignHandleStorage(ref AssignmentState state, ref ir.Exp exp, ir.Type ltype)
 {
@@ -146,6 +150,10 @@ void extypeAssignHandleStorage(ref AssignmentState state, ref ir.Exp exp, ir.Typ
 	}
 }
 
+/**
+ * This handles implicitly casting a const type to a mutable type,
+ * if the underlying type has no mutable indirection.
+ */
 void extypePassHandleStorage(ref AssignmentState state, ref ir.Exp exp, ir.Type ltype)
 {
 	auto rtype = getExpType(state.lp, exp, state.current);
@@ -164,6 +172,10 @@ void extypePassHandleStorage(ref AssignmentState state, ref ir.Exp exp, ir.Type 
 	}
 }
 
+
+/**
+ * Forbids mutably indirect types being implicitly casted to scope.
+ */
 void rejectBadScopeAssign(ref AssignmentState state, ref ir.Exp exp, ir.Type type)
 {
 	auto storage = cast(ir.StorageType) type;
@@ -177,6 +189,9 @@ void rejectBadScopeAssign(ref AssignmentState state, ref ir.Exp exp, ir.Type typ
 	}
 }
 
+/**
+ * Implicitly convert to scope if possible.
+ */
 void extypeAssignStorageType(ref AssignmentState state, ref ir.Exp exp, ir.StorageType storage)
 {
 	auto type = getExpType(state.lp, exp, state.current);
@@ -200,6 +215,9 @@ void extypeAssignStorageType(ref AssignmentState state, ref ir.Exp exp, ir.Stora
 	}
 }
 
+/**
+ * Infer base types on storage types (eg 'auto a = 3').
+ */
 void extypePassStorageType(ref AssignmentState state, ref ir.Exp exp, ir.StorageType storage)
 {
 	auto type = getExpType(state.lp, exp, state.current);
@@ -219,6 +237,10 @@ void extypeAssignTypeReference(ref AssignmentState state, ref ir.Exp exp, ir.Typ
 	extypeAssign(state, exp, tr.type);
 }
 
+/**
+ * Handles implicit pointer casts. To void*, immutable(T)* to const(T)*
+ * T* to const(T)* and the like.
+ */
 void extypeAssignPointerType(ref AssignmentState state, ref ir.Exp exp, ir.PointerType ptr)
 {
 	auto type = getExpType(state.lp, exp, state.current);
@@ -259,6 +281,9 @@ void extypeAssignPointerType(ref AssignmentState state, ref ir.Exp exp, ir.Point
 	throw makeBadImplicitCast(exp, type, ptr);
 }
 
+/**
+ * Implicit primitive casts (smaller to larger).
+ */
 void extypeAssignPrimitiveType(ref AssignmentState state, ref ir.Exp exp, ir.PrimitiveType lprim)
 {
 	auto rtype = getExpType(state.lp, exp, state.current);
@@ -288,6 +313,9 @@ void extypeAssignPrimitiveType(ref AssignmentState state, ref ir.Exp exp, ir.Pri
 	exp = buildCastSmart(lprim, exp);
 }
 
+/**
+ * Handles converting child classes to parent classes.
+ */
 void extypeAssignClass(ref AssignmentState state, ref ir.Exp exp, ir.Class _class)
 {
 	auto type = getExpType(state.lp, exp, state.current);
@@ -323,6 +351,10 @@ void extypeAssignEnum(ref AssignmentState state, ref ir.Exp exp, ir.Enum e)
 	extypeAssignDispatch(state, exp, e.base);
 }
 
+
+/**
+ * Handles assigning an overloaded function to a delegate.
+ */
 void extypeAssignCallableType(ref AssignmentState state, ref ir.Exp exp, ir.CallableType ctype)
 {
 	auto rtype = getExpType(state.lp, exp, state.current);
@@ -342,6 +374,10 @@ void extypeAssignCallableType(ref AssignmentState state, ref ir.Exp exp, ir.Call
 	throw makeBadImplicitCast(exp, rtype, ctype);
 }
 
+/**
+ * Handles casting arrays of non mutably indirect types with
+ * differing storage types.
+ */
 void extypeAssignArrayType(ref AssignmentState state, ref ir.Exp exp, ir.ArrayType atype)
 {
 	auto rtype = getExpType(state.lp, exp, state.current);
@@ -524,6 +560,10 @@ void extypeIdentifierExp(ir.Function[] functionStack, LanguagePass lp, ir.Scope 
 	}
 }
 
+/**
+ * Turns identifier postfixes into CreateDelegates, and resolves property function
+ * calls in postfixes, type safe varargs, and explicit constructor calls.
+ */
 void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Postfix postfix)
 {
 	ir.Postfix[] postfixes;
@@ -877,6 +917,9 @@ void rewritePropertyFunctionAssign(LanguagePass lp, ir.Scope current, ref ir.Exp
 	return;
 }
 
+/**
+ * Handles <type>.<identifier>, like 'int.min' and the like.
+ */
 void extypeTypeLookup(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Postfix[] postfixIdents, ir.Type type)
 {
 	if (postfixIdents.length != 1) {
@@ -940,6 +983,9 @@ void extypeTypeLookup(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Post
 	}
 }
 
+/**
+ * Turn identifier postfixes into <ExpReference>.ident.
+ */
 void extypePostfixIdentifier(LanguagePass lp, ir.Function[] functionStack, ir.Scope current, ref ir.Exp exp, ir.Postfix postfix)
 {
 	if (postfix.op != ir.Postfix.Op.Identifier)
@@ -1136,6 +1182,10 @@ void extypePostfix(LanguagePass lp, ir.Function[] functionStack, ir.Scope curren
 	extypePostfixIdentifier(lp, functionStack, current, exp, postfix);
 }
 
+/**
+ * Stops casting to an overloaded function name, casting from null, and wires
+ * up some runtime magic needed for classes.
+ */
 void handleCastTo(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Unary unary)
 {
 	assert(unary.type !is null);
@@ -1169,6 +1219,9 @@ void handleCastTo(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Unary un
 	unary.value = buildCall(unary.location, fnref, [val, cast(ir.Exp)tid]);
 }
 
+/**
+ * Type new expressions.
+ */
 void handleNew(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Unary _unary)
 {
 	assert(_unary.type !is null);
@@ -1218,6 +1271,10 @@ void extypeUnary(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Unary _un
 	}
 }
 
+/**
+ * Everyone's favourite: integer promotion! :D!
+ * In general, converts to the largest type needed in a binary expression.
+ */
 void extypeBinOp(LanguagePass lp, ir.Scope current, ir.BinOp bin, ir.PrimitiveType lprim, ir.PrimitiveType rprim)
 {
 	auto leftsz = size(lprim.type);
@@ -1283,6 +1340,11 @@ void extypeBinOp(LanguagePass lp, ir.Scope current, ir.BinOp bin, ir.PrimitiveTy
 	}
 }
 
+/**
+ * Handles logical operators (making a && b result in a bool),
+ * binary of storage types, otherwise forwards to assign or primitive
+ * specific functions.
+ */
 void extypeBinOp(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 {
 	auto ltype = getExpType(lp, binop.left, current);
@@ -1336,6 +1398,9 @@ void extypeBinOp(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 	}
 }
 
+/**
+ * Ensure concatentation is sound.
+ */
 void extypeCat(ir.BinOp bin, ir.ArrayType left, ir.Type right)
 {
 	if (typesEqual(left, right) ||
@@ -1378,6 +1443,9 @@ void replaceTypeOfIfNeeded(LanguagePass lp, ir.Scope current, ref ir.Type type)
 	type = copyTypeSmart(asTypeOf.location, getExpType(lp, asTypeOf.exp, current));
 }
 
+/**
+ * Ensure that a thrown type inherits from Throwable.
+ */
 void extypeThrow(LanguagePass lp, ir.Scope current, ir.ThrowStatement t)
 {
 	auto throwable = cast(ir.Class) retrieveTypeFromObject(lp, current, t.location, "Throwable");
@@ -1398,6 +1466,9 @@ void extypeThrow(LanguagePass lp, ir.Scope current, ir.ThrowStatement t)
 	}
 }
 
+/**
+ * Correct this references in nested functions.
+ */
 void handleNestedThis(ir.Function fn)
 {
 	auto np = fn.nestedVariable;
