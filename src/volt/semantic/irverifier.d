@@ -125,6 +125,8 @@ public:
 			case Variable:
 			case MixinStatement:
 			case ThrowStatement:
+			case SwitchStatement:
+			case GotoStatement:
 				auto s = accept(n, this);
 				if (s == Stop)
 					return Stop;

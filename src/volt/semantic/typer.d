@@ -58,15 +58,23 @@ ir.Type declTypeLookup(Location loc, LanguagePass lp, ir.Scope _scope, string na
 /**
  * Remove types masking a type (e.g. enum).
  */
-ir.Type realType(ir.Type t)
+ir.Type realType(ir.Type t, bool stripEnum = true, bool stripStorage = false)
 {
-	auto e = cast(ir.Enum) t;
-	if (e !is null) {
-		return realType(e.base);
+	if (stripEnum) {
+		auto e = cast(ir.Enum) t;
+		if (e !is null) {
+			return realType(e.base, stripStorage);
+		}
 	}
 	auto tr = cast(ir.TypeReference) t;
 	if (tr !is null) {
-		return realType(tr.type);
+		return realType(tr.type, stripStorage);
+	}
+	if (stripStorage) {
+		auto st = cast(ir.StorageType) t;
+		if (st !is null) {
+			return realType(st.base, stripStorage);
+		}
 	}
 	return t;
 }

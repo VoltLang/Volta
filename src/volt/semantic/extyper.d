@@ -3,6 +3,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.extyper;
 
+import std.algorithm : remove;
 import std.array : insertInPlace;
 import std.conv : to;
 import std.string : format;
@@ -13,6 +14,7 @@ import volt.ir.copy;
 
 import volt.errors;
 import volt.interfaces;
+import volt.util.string;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
 import volt.visitor.prettyprinter;
@@ -1612,6 +1614,150 @@ void handleNestedParams(LanguagePass lp, ir.Scope current, ir.Function fn)
 }
 
 /**
+ * Ensure that a given switch statement is semantically sound.
+ * Errors on bad final switches (doesn't cover all enum members, not on an enum at all),
+ * and checks for doubled up cases.
+ */
+void verifySwitchStatement(LanguagePass lp, ir.Scope current, ir.SwitchStatement ss)
+{
+	auto hashFunction = retrieveFunctionFromObject(lp, current, ss.location, "vrt_hash");
+
+	auto conditionType = realType(getExpType(lp, ss.condition, current), false, true);
+	auto originalCondition = ss.condition;
+	if (isArray(conditionType)) {
+		auto l = ss.location;
+		auto asArray = cast(ir.ArrayType) conditionType;
+		assert(asArray !is null);
+		ir.Exp ptr = buildCastSmart(buildVoidPtr(l), buildAccess(l, copyExp(ss.condition), "ptr"));
+		ir.Exp length = buildBinOp(l, ir.BinOp.Op.Mul, buildAccess(l, copyExp(ss.condition), "length"),
+				buildAccess(l, buildTypeidSmart(l, asArray.base), "size"));
+		ss.condition = buildCall(ss.condition.location, hashFunction, [ptr, length]);
+		conditionType = buildUint(ss.condition.location);
+	}
+	auto astate = AssignmentState(lp, current, false);
+
+	struct ArrayCase
+	{
+		ir.Exp originalExp;
+		ir.SwitchCase _case;
+		ir.IfStatement lastIf;
+	}
+	ArrayCase[uint] arrayCases;
+	size_t[] toRemove;  // Indices of cases that have been folded into a collision case.
+
+	foreach (i, _case; ss.cases) {
+		void replaceWithHashIfNeeded(ref ir.Exp exp) 
+		{
+			if (exp !is null) {
+				auto etype = getExpType(lp, exp, current);
+				if (isArray(etype)) {
+					uint h;
+					auto constant = cast(ir.Constant) exp;
+					if (constant !is null) {
+						assert(isString(etype));
+						assert(constant._string[0] == '\"');
+						assert(constant._string[$-1] == '\"');
+						auto str = constant._string[1..$-1];
+						h = hash(cast(void*) str.ptr, str.length * str[0].sizeof);
+					} else {
+						auto alit = cast(ir.ArrayLiteral) exp;
+						assert(alit !is null);
+						auto atype = cast(ir.ArrayType) etype;
+						assert(atype !is null);
+						uint[] intArrayData;
+						ulong[] longArrayData;
+						size_t sz;
+						void addExp(ir.Exp e)
+						{
+							auto constant = cast(ir.Constant) e;
+							if (constant !is null) {
+								if (sz == 0) {
+									sz = size(ss.location, lp, constant.type);
+									assert(sz > 0);
+								}
+								switch (sz) {
+								case 8:
+									longArrayData ~= constant._ulong;
+									break;
+								default:
+									intArrayData ~= constant._uint;
+									break;
+								}
+								return;
+							}
+							auto cexp = cast(ir.Unary) e;
+							if (cexp !is null) {
+								assert(cexp.op == ir.Unary.Op.Cast);
+								assert(sz == 0);
+								sz = size(ss.location, lp, cexp.type);
+								assert(sz == 8);
+								addExp(cexp.value);
+								return;
+							}
+
+							auto type = getExpType(lp, exp, current);
+							throw makeSwitchBadType(ss, type);
+						}
+						foreach (e; alit.values) {
+							addExp(e);
+						}
+						if (sz == 8) {
+							h = hash(longArrayData.ptr, longArrayData.length * ulong.sizeof);
+						} else {
+							h = hash(intArrayData.ptr, intArrayData.length * uint.sizeof);
+						}
+					}
+					if (auto p = h in arrayCases) {
+						auto aStatements = _case.statements.statements;
+						auto bStatements = p._case.statements.statements;
+						auto c = p._case.statements.myScope;
+						auto aBlock = buildBlockStat(exp.location, p._case.statements, c, aStatements);
+						auto bBlock = buildBlockStat(exp.location, p._case.statements, c, bStatements);
+						p._case.statements.statements.length = 0;
+
+						auto cmp = buildBinOp(exp.location, ir.BinOp.Op.Equal, copyExp(exp), copyExp(originalCondition));
+						auto ifs = buildIfStat(exp.location, p._case.statements, cmp, aBlock, bBlock);
+						p._case.statements.statements[0] = ifs;
+						if (p.lastIf !is null) {
+							p.lastIf.thenState.myScope.parent = ifs.elseState.myScope;
+							p.lastIf.elseState.myScope.parent = ifs.elseState.myScope;
+						}
+						p.lastIf = ifs;
+						toRemove ~= i;
+					} else {
+						arrayCases[h] = ArrayCase(exp, _case, null);
+					}
+					exp = buildConstantUint(exp.location, h);
+				}
+			}
+		}
+		if (_case.firstExp !is null) {
+			replaceWithHashIfNeeded(_case.firstExp);
+			extypeAssign(astate, _case.firstExp, conditionType);
+		}
+		if (_case.secondExp !is null) {
+			replaceWithHashIfNeeded(_case.secondExp);
+			extypeAssign(astate, _case.secondExp, conditionType);
+		}
+		foreach (ref exp; _case.exps) {
+			extypeAssign(astate, exp, conditionType);
+		}
+	}
+
+	for (int i = cast(int) toRemove.length - 1; i >= 0; i--) {
+		ss.cases = remove(ss.cases, toRemove[i]);
+	}
+
+	auto asEnum = cast(ir.Enum) conditionType;
+	if (asEnum is null && ss.isFinal) {
+		throw makeExpected(ss, "enum type for final switch");
+	}
+	if (ss.isFinal && ss.cases.length != asEnum.members.length) {
+		throw makeFinalSwitchBadCoverage(ss);
+	}
+}
+
+/**
  * If type casting were to be strict, type T could only
  * go to type T without an explicit cast. Implicit casts
  * are places where the language deems automatic conversion
@@ -1937,6 +2083,12 @@ public:
 		}
 
 		return ContinueParent;
+	}
+
+	override Status enter(ir.SwitchStatement ss)
+	{
+		verifySwitchStatement(lp, current, ss);
+		return Continue;
 	}
 
 	override Status leave(ir.ThrowStatement t)

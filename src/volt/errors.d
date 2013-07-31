@@ -25,6 +25,31 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeSwitchBadType(ir.Node node, ir.Type type, string file = __FILE__, const int line = __LINE__)
+{
+	string emsg = format("bad switch type '%s'.", errorString(type));
+	auto e = new CompilerError(node.location, emsg);
+	e.file = file;
+	e.line = line;
+	return e;
+}
+
+CompilerException makeSwitchDuplicateCase(ir.Node node, string file = __FILE__, const int line = __LINE__)
+{
+	auto e = new CompilerError(node.location, "duplicate case in switch statement.");
+	e.file = file;
+	e.line = line;
+	return e;
+}
+
+CompilerException makeFinalSwitchBadCoverage(ir.Node node, string file = __FILE__, const int line = __LINE__)
+{
+	auto e = new CompilerError(node.location, "final switch statement doesn't cover all enum members.");
+	e.file = file;
+	e.line = line;
+	return e;
+}
+
 CompilerException makeArchNotSupported(string file = __FILE__, size_t line = __LINE__)
 {
 	return new CompilerError("arch not supported with current platform", file, line);

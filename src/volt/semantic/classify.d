@@ -180,6 +180,39 @@ bool isBool(ir.Type t)
 	return p.type == ir.PrimitiveType.Kind.Bool;
 }
 
+/// TODO: non char strings, non immutable strings.
+bool isString(ir.Type t)
+{
+	auto stor = cast(ir.StorageType) t;
+	if (stor !is null) {
+		return isString(stor.base);
+	}
+	auto arr = cast(ir.ArrayType) t;
+	if (arr is null) {
+		return false;
+	}
+	auto old = arr.base;
+	do {
+		stor = cast(ir.StorageType) old;
+		if (stor !is null) {
+			old = stor.base;
+		}
+	} while (stor !is null);
+	auto prim = cast(ir.PrimitiveType) old;
+	if (prim is null) {
+		return false;
+	}
+	if (prim.type == ir.PrimitiveType.Kind.Char) {
+		return true;
+	}
+	return false;
+}
+
+bool isArray(ir.Type t)
+{
+	return (cast(ir.ArrayType) t) !is null;
+}
+
 bool isLValue(ir.Exp exp)
 {
 	switch (exp.nodeType) {

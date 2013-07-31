@@ -138,18 +138,20 @@ void[] unescape(T)(Location location, const T[] s)
 }
 
 /**
- * Generate a hash for a string.
+ * Generate a hash.
  * djb2 algorithm stolen from http://www.cse.yorku.ca/~oz/hash.html
  *
  * This needs to correspond with the implementation
  * in vrt.string in the runtime. 
  */
-uint hash(string s)
+uint hash(void* ptr, size_t length)
 {
 	uint h = 5381;
 
-	for (size_t i = 0; i < s.length; i++) {
-		h = ((h << 5) + h) + s[i];
+	ubyte* uptr = cast(ubyte*) ptr;
+
+	for (size_t i = 0; i < length; i++) {
+		h = ((h << 5) + h) + uptr[i];
 	}
 
 	return h;
