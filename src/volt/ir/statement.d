@@ -254,7 +254,7 @@ public:
 	Exp[] exps;
 	bool isDefault;
 
-	Node[] statements;
+	BlockStatement statements;
 
 public:
 	this() { super(NodeType.SwitchCase); }

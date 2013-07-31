@@ -414,9 +414,10 @@ ir.SwitchStatement parseSwitchStatement(TokenStream ts)
 		}
 	}
 
-	static ir.Node[] parseCaseStatements(TokenStream ts)
+	static ir.BlockStatement parseCaseStatements(TokenStream ts)
 	{
-		ir.Node[] ret;
+		auto bs = new ir.BlockStatement();
+		bs.location = ts.peek.location;
 		while (true) {
 			auto type = ts.peek.type;
 			if (type == TokenType.Case ||
@@ -424,9 +425,9 @@ ir.SwitchStatement parseSwitchStatement(TokenStream ts)
 				type == TokenType.CloseBrace) {
 				break;
 			}
-			ret ~= parseStatement(ts);
+			bs.statements ~= parseStatement(ts);
 		}
-		return ret;
+		return bs;
 	}
 
 	bool hadDefault;

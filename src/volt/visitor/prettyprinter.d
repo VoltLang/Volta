@@ -869,7 +869,7 @@ public:
 			}
 		}
 		mIndent++;
-		foreach (statement; sc.statements) {
+		foreach (statement; sc.statements.statements) {
 			accept(statement, this);
 			if (statement.nodeType == ir.NodeType.Variable) {
 				// Ew.
