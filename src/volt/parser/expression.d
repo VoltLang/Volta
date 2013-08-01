@@ -301,17 +301,20 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		auto c = new ir.Constant();
 		c._string = primary._string;
 		auto base = ir.PrimitiveType.Kind.Int;
+		bool explicitBase;
 
 		// If there are any suffixes, change the type to match.
 		while (c._string[$-1] == 'u' || c._string[$-1] == 'U' ||
 			   c._string[$-1] == 'L') {
 			if (c._string[$-1] == 'u' || c._string[$-1] == 'U') {
+				explicitBase = true;
 				if (base == ir.PrimitiveType.Kind.Long) {
 					base = ir.PrimitiveType.Kind.Ulong;
 				} else {
 					base = ir.PrimitiveType.Kind.Uint;
 				}
 			} else if (c._string[$-1] == 'L') {
+				explicitBase = true;
 				if (base == ir.PrimitiveType.Kind.Uint) {
 					base = ir.PrimitiveType.Kind.Ulong;
 				} else {
@@ -324,11 +327,14 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		if (c._string.length > 2 && c._string[0 .. 2] == "0x") {
 			c._string = c._string[2 .. $];
 			auto v = to!ulong(c._string, 16);
+			import std.stdio;
 			if (v > uint.max) {
-				base = ir.PrimitiveType.Kind.Long;
+				if (!explicitBase)
+					base = ir.PrimitiveType.Kind.Long;
 				c._long = cast(long)v;
 			} else {
-				base = ir.PrimitiveType.Kind.Int;
+				if (!explicitBase)
+					base = ir.PrimitiveType.Kind.Int;
 				c._int = cast(int)v;
 			}
 		} else {
