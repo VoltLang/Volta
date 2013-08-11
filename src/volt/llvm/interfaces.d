@@ -59,6 +59,8 @@ public:
 	LLVMBasicBlockRef currentBlock;
 	LLVMBasicBlockRef currentBreakBlock; ///< Block to jump to on break.
 	LLVMBasicBlockRef currentContinueBlock; ///< Block to jump to on continue.
+	LLVMBasicBlockRef currentSwitchDefault;
+	LLVMBasicBlockRef[long] currentSwitchCases;
 
 	LLVMValueRef currentFunc;
 	ir.Function currentIrFunc;

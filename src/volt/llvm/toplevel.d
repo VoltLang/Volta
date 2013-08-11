@@ -184,6 +184,102 @@ public:
 		return ContinueParent;
 	}
 
+	override Status enter(ir.SwitchStatement ss)
+	{
+		assert(state.currentFall);
+
+		auto cond = state.getValue(ss.condition);
+
+		struct Block
+		{
+			ir.SwitchCase _case;
+			LLVMBasicBlockRef block;
+		}
+		Block[] blocks;
+
+		auto oldCases = state.currentSwitchCases; 
+		auto oldDefault = state.currentSwitchDefault;
+		state.currentSwitchCases = null;
+		// Even final switches have an (invalid) default case.
+		state.currentSwitchDefault = LLVMAppendBasicBlockInContext(state.context, state.currentFunc, "defaultCase");
+		ir.BlockStatement defaultStatements;
+		auto _switch = LLVMBuildSwitch(state.builder, cond, state.currentSwitchDefault, cast(uint)(ss.cases.length));
+
+		foreach (_case; ss.cases) {
+			if (_case.firstExp !is null) acceptExp(_case.firstExp, this);
+			void addVal(LLVMValueRef val, LLVMBasicBlockRef block)
+			{
+				auto i = LLVMConstIntGetSExtValue(val);
+				if ((i in state.currentSwitchCases) !is null) {
+					throw makeSwitchDuplicateCase(_case);
+				} else {
+					state.currentSwitchCases[i] = block;
+				}
+				LLVMAddCase(_switch, val, block);
+			}
+
+			void addExp(ir.Exp exp, LLVMBasicBlockRef block)
+			{
+				if (exp is null) {
+					return;
+				}
+				auto val = state.getValue(exp);
+				addVal(val, block);
+			}
+
+			if (_case.isDefault) {
+				defaultStatements = _case.statements;
+			} else {
+				auto block = LLVMAppendBasicBlockInContext(state.context, state.currentFunc, "switchCase");
+				if (_case.firstExp !is null && _case.secondExp !is null) {
+					// case A: .. case B:
+					auto aval = state.getValue(_case.firstExp);
+					auto bval = state.getValue(_case.secondExp);
+					auto typ = LLVMTypeOf(aval);
+					auto ai = LLVMConstIntGetSExtValue(aval);
+					auto bi = LLVMConstIntGetSExtValue(bval);
+					if (ai >= bi) {
+						throw panic(ss.location, "invalid case range");
+					}
+					while (ai <= bi) {
+						auto val = LLVMConstInt(typ, ai++, false); 
+						addVal(val, block);
+					}
+				} else {
+					addExp(_case.firstExp, block);
+					foreach (exp; _case.exps) addExp(exp, block);
+				}
+				blocks ~= Block(_case, block);
+			}
+		}
+		auto outBlock = LLVMAppendBasicBlockInContext(state.context, state.currentFunc, "endSwitch");
+
+		// Generate code for each case.
+		auto breakBlock = state.replaceBreakBlock(outBlock);
+		foreach (i, block; blocks) {
+			state.startBlock(block.block);
+			doNewBlock(block.block, block._case.statements, i == blocks.length - 1 ? outBlock : blocks[i+1].block);
+		}
+		state.startBlock(state.currentSwitchDefault);
+		if (defaultStatements !is null) {
+			doNewBlock(state.currentSwitchDefault, defaultStatements, outBlock);
+		} else {
+			// No default block (e.g. final switches)
+			LLVMBuildCall(state.builder, state.llvmTrap, null);
+			LLVMBuildUnreachable(state.builder);
+		}
+		state.replaceBreakBlock(breakBlock);
+
+		// Continue generating code after the switch.
+		LLVMMoveBasicBlockAfter(outBlock, state.currentBlock);
+		state.startBlock(outBlock);
+
+		state.currentSwitchDefault = oldDefault;
+		state.currentSwitchCases = oldCases;
+
+		return ContinueParent;
+	}
+
 	override Status enter(ir.IfStatement ifs)
 	{
 		assert(state.currentFall);
@@ -378,6 +474,14 @@ public:
 		state.currentFall = false;
 
 		return Continue;
+	}
+
+	override Status leave(ir.GotoStatement gs)
+	{
+		if (!gs.isDefault && !gs.isCase) {
+			throw panic(gs.location, "non switch goto");
+		}
+		throw makeExpected(gs.location, "break or return ending case.");
 	}
 
 	override Status leave(ir.ThrowStatement t)
