@@ -150,6 +150,7 @@ extern(C) AllocDg vrt_gc_get_alloc_dg();
 extern(C) void vrt_gc_shutdown();
 extern(C) void* vrt_handle_cast(void* obj, TypeInfo tinfo);
 extern(C) void vrt_eh_throw(Throwable);
+extern(C) uint vrt_hash(string);
 
 extern(C) void* vrt_aa_new(TypeInfo value);
 extern(C) bool vrt_aa_in_primitive(void* rbtv, ulong key, void* ret);
