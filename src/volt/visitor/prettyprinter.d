@@ -831,15 +831,16 @@ public:
 		}
 		acceptExp(ss.condition, this);
 		wfln(") {");
-
-		return Continue;
+		foreach (_case; ss.cases) {
+			accept(_case, this);
+		}
+		twfln("}");
+		return ContinueParent;
 	}
 
 	override Status leave(ir.SwitchStatement ss)
 	{
-		twf("}");
-
-		return Continue;
+		assert(false);
 	}
 
 	override Status enter(ir.SwitchCase sc)
@@ -878,12 +879,12 @@ public:
 		}
 		mIndent--;
 
-		return Continue;
+		return ContinueParent;
 	}
 
 	override Status leave(ir.SwitchCase sc)
 	{
-		return Continue;
+		assert(false);
 	}
 
 	override Status enter(ir.LabelStatement ls)

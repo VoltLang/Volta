@@ -523,6 +523,10 @@ Visitor.Status accept(ir.Node n, Visitor av)
 		return acceptLabelStatement(cast(ir.LabelStatement) n, av);
 	case SwitchStatement:
 		return acceptSwitchStatement(cast(ir.SwitchStatement) n, av);
+	case SwitchCase:
+		auto sc = cast(ir.SwitchCase) n;
+		assert(sc !is null);
+		return acceptSwitchCase(sc, av);
 	case ContinueStatement:
 		auto asCont = cast(ir.ContinueStatement) n;
 		assert(asCont !is null);
@@ -620,7 +624,6 @@ Visitor.Status accept(ir.Node n, Visitor av)
 	case AAPair:
 	case FunctionSetType:
 	case FunctionSet:
-	case SwitchCase:
 	case Comma:
 		throw panicUnhandled(n, to!string(n.nodeType));
 	}
@@ -1431,8 +1434,20 @@ Visitor.Status acceptSwitchStatement(ir.SwitchStatement ss, Visitor av)
 		return parentContinue(status);
 	}
 
-	foreach (_case; ss.cases) {
-		status = av.enter(_case);
+	status = acceptExp(ss.condition, av);
+	if (status == VisitorStop) {
+		return VisitorStop;
+	}
+
+	foreach (i, _case; ss.cases) {
+		status = accept(_case, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	foreach (ref _with; ss.withs) {
+		status = acceptExp(_with, av);
 		if (status == VisitorStop) {
 			return VisitorStop;
 		}
@@ -1441,11 +1456,54 @@ Visitor.Status acceptSwitchStatement(ir.SwitchStatement ss, Visitor av)
 	return av.leave(ss);
 }
 
+Visitor.Status acceptSwitchCase(ir.SwitchCase sc, Visitor av)
+{
+	auto status = av.enter(sc);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	if (sc.firstExp !is null) {
+		status = acceptExp(sc.firstExp, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+	if (sc.secondExp !is null) {
+		status = acceptExp(sc.secondExp, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+	foreach (ref exp; sc.exps) {
+		status = acceptExp(exp, av);
+		if (status == VisitorContinueParent) {
+			continue;
+		} else if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	status = accept(sc.statements, av);
+	if (status == VisitorStop) {
+		return VisitorStop;
+	}
+
+	return av.leave(sc);
+}
+
 Visitor.Status acceptGotoStatement(ir.GotoStatement gs, Visitor av)
 {
 	auto status = av.enter(gs);
 	if (status != VisitorContinue) {
 		return parentContinue(status);
+	}
+
+	if (gs.exp !is null) {
+		status = acceptExp(gs.exp, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
 	}
 
 	return av.leave(gs);
