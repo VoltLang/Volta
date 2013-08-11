@@ -18,6 +18,8 @@ ir.Constant copy(ir.Constant cnst)
 	c.type = copyType(cnst.type);
 	c._ulong = cnst._ulong;
 	c._string = cnst._string;
+	c.isNull = cnst.isNull;
+	c.arrayData = cnst.arrayData.dup;
 	return c;
 }
 
