@@ -263,7 +263,7 @@ void ensureResolved(LanguagePass lp, ir.Scope current, ir.Type type)
 		}
 		assert(first !is null && first.assign !is null);
 		if (isAuto(e.base)) {
-			e.base = getExpType(lp, first.assign, current);
+			e.base = copyType(getExpType(lp, first.assign, current));
 		}
 		if (!isIntegral(e.base)) {
 			throw panic(e, "only integral enums are supported.");
