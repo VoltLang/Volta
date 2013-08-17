@@ -17,7 +17,7 @@ int main(string[] args)
 	auto cmd = args[0];
 	args = args[1 .. $];
 
-	auto settings = new Settings();
+	auto settings = new Settings(getExecDir());
 	setDefault(settings);
 
 	if (!handleArgs(getConfigLines(), files, settings))
@@ -26,7 +26,7 @@ int main(string[] args)
 	if (!handleArgs(args, files, settings))
 		return 0;
 
-	settings.setVersionsFromOptions();
+	settings.processConfigs();
 
 	if (files.length == 0) {
 		writefln("%s: no input files", cmd);
@@ -52,15 +52,15 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 	}
 
 	void includePath(string path) {
-		settings.includePaths ~= replaceEscapes(path);
+		settings.includePaths ~= path;
 	}
 
 	void libraryFile(string file) {
-		settings.libraryFiles ~= replaceEscapes(file);
+		settings.libraryFiles ~= file;
 	}
 
 	void libraryPath(string path) {
-		settings.libraryPaths ~= replaceEscapes(path);
+		settings.libraryPaths ~= path;
 	}
 
 	void arch(string a) {
@@ -97,11 +97,11 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 	}
 
 	void stdFile(string file) {
-		settings.stdFiles ~= replaceEscapes(file);
+		settings.stdFiles ~= file;
 	}
 
 	void stdIncludePath(string path) {
-		settings.stdIncludePaths ~= replaceEscapes(path);
+		settings.stdIncludePaths ~= path;
 	}
 
 
@@ -190,7 +190,7 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 		default:
 		}
 
-		files ~= replaceEscapes(arg);
+		files ~= arg;
 	}
 
 	return true;

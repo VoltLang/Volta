@@ -2,6 +2,9 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.interfaces;
 
+import std.string : indexOf;
+import std.array : replace;
+
 import volt.token.location;
 import ir = volt.ir.ir;
 
@@ -361,6 +364,10 @@ public:
 	Platform platform;
 	Arch arch;
 
+	string execDir; ///< Set on create.
+	string platformStr; ///< Derived from platform.
+	string archStr; ///< Derived from arch.
+
 	string linker; ///< The --linker argument
 
 	string outputFile;
@@ -379,23 +386,47 @@ private:
 	bool[string] mDebugIdentifiers;
 
 public:
-	this()
+	this(string execDir)
 	{
 		setDefaultVersionIdentifiers();
+		this.execDir = execDir;
 	}
 
-	void setVersionsFromOptions()
+	final void processConfigs()
+	{
+		setVersionsFromOptions();
+		replaceMacros();
+	}
+
+	final void replaceMacros()
+	{
+		foreach (ref f; includePaths)
+			f = replaceEscapes(f);
+		foreach (ref f; libraryPaths)
+			f = replaceEscapes(f);
+		foreach (ref f; libraryFiles)
+			f = replaceEscapes(f);
+		foreach (ref f; stdFiles)
+			f = replaceEscapes(f);
+		foreach (ref f; stdIncludePaths)
+			f = replaceEscapes(f);
+	}
+
+	final void setVersionsFromOptions()
 	{
 		final switch (platform) with (Platform) {
 		case MinGW:
+			platformStr = "mingw";
 			setVersionIdentifier("Windows");
 			setVersionIdentifier("MinGW");
 			break;
 		case Linux:
+			platformStr = "linux";
 			setVersionIdentifier("Linux");
 			setVersionIdentifier("Posix");
 			break;
 		case OSX:
+			platformStr = "osx";
 			setVersionIdentifier("OSX");
 			setVersionIdentifier("Posix");
 			break;
@@ -403,16 +434,38 @@ public:
 
 		final switch (arch) with (Arch) {
 		case X86:
+			archStr = "x86";
 			setVersionIdentifier("X86");
 			setVersionIdentifier("LittleEndian");
 			setVersionIdentifier("V_P32");
 			break;
 		case X86_64:
+			archStr = "x86_64";
 			setVersionIdentifier("X86_64");
 			setVersionIdentifier("LittleEndian");
 			setVersionIdentifier("V_P64");
 			break;
 		}
+	}
+
+	final string replaceEscapes(string file)
+	{
+		enum e = "%@execdir%";
+		enum a = "%@arch%";
+		enum p = "%@platform%";
+		size_t ret;
+
+		ret = indexOf(file, e);
+		if (ret != size_t.max)
+			file = replace(file, e, execDir);
+		ret = indexOf(file, a);
+		if (ret != size_t.max)
+			file = replace(file, a, archStr);
+		ret = indexOf(file, p);
+		if (ret != size_t.max)
+			file = replace(file, p, platformStr);
+
+		return file;
 	}
 
 	/// Throws: Exception if ident is reserved.

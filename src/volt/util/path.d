@@ -38,22 +38,6 @@ string[] genPossibleFilenames(string dir, string[] names)
 }
 
 /**
- * Replace volt compiler escape codes in the given filename
- * with their associated values.
- */
-string replaceEscapes(string file)
-{
-	size_t ret;
-	string execdir = "%@execdir%";
-
-	ret = indexOf(file, execdir);
-	if (ret != size_t.max)
-		file = replace(file, execdir, getExecDir());
-
-	return file;
-}
-
-/**
  * Generate a filename in a temporary directory that doesn't exist.
  *
  * Params:

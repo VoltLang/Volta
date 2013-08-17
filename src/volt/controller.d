@@ -144,6 +144,8 @@ public:
 
 	void addFile(string file)
 	{
+		file = settings.replaceEscapes(file);
+
 		if (endsWith(file, ".d", ".volt") > 0) {
 			mSourceFiles ~= file;
 		} else if (endsWith(file, ".bc")) {
