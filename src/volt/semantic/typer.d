@@ -56,6 +56,22 @@ ir.Type declTypeLookup(Location loc, LanguagePass lp, ir.Scope _scope, string na
 }
 
 /**
+ * Remove types masking a type (e.g. enum).
+ */
+ir.Type realType(ir.Type t)
+{
+	auto e = cast(ir.Enum) t;
+	if (e !is null) {
+		return realType(e.base);
+	}
+	auto tr = cast(ir.TypeReference) t;
+	if (tr !is null) {
+		return realType(tr.type);
+	}
+	return t;
+}
+
+/**
  * Get the type of a given expression.
  *
  * If the operation of the expression isn't semantically valid
@@ -302,8 +318,8 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 		}
 		throw makeBadImplicitCast(bin, right, left);
 	} else {
-		auto lt = cast(ir.Type) left;
-		auto rt = cast(ir.Type) right;
+		auto lt = cast(ir.Type) realType(left);
+		auto rt = cast(ir.Type) realType(right);
 		if (lt !is null && rt !is null && typesEqual(lt, rt)) {
 			return lt;
 		} else {

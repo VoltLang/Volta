@@ -70,15 +70,9 @@ bool handleIfStructLiteral(ref AssignmentState state, ir.Type left, ref ir.Exp r
 
 	assert(asLit !is null);
 
-	auto asStruct = cast(ir.Struct) left;
+	auto asStruct = cast(ir.Struct) realType(left);
 	if (asStruct is null) {
-		auto asTR = cast(ir.TypeReference) left;
-		if (asTR !is null) {
-			asStruct = cast(ir.Struct) asTR.type;
-		}
-		if (asStruct is null) {
-			throw makeBadImplicitCast(right, getExpType(state.lp, right, state.current), left);
-		}
+		throw makeBadImplicitCast(right, getExpType(state.lp, right, state.current), left);
 	}
 
 	ir.Type[] types = getStructFieldTypes(asStruct);
@@ -102,7 +96,7 @@ void extypeCastToBool(LanguagePass lp, ir.Scope current, ref ir.Exp exp)
 {
 	auto t = getExpType(lp, exp, current);
 	if (t.nodeType == ir.NodeType.PrimitiveType) {
-		auto asPrimitive = cast(ir.PrimitiveType) t;
+		auto asPrimitive = cast(ir.PrimitiveType) realType(t);
 		if (asPrimitive.type == ir.PrimitiveType.Kind.Bool) {
 			return;
 		}
@@ -119,7 +113,8 @@ void extypeCastToBool(LanguagePass lp, ir.Scope current, ref ir.Exp exp)
  */
 void extypeAssignHandleStorage(ref AssignmentState state, ref ir.Exp exp, ir.Type ltype)
 {
-	auto rtype = getExpType(state.lp, exp, state.current);
+	auto rtype = realType(getExpType(state.lp, exp, state.current));
+	ltype = realType(ltype);
 	if (ltype.nodeType != ir.NodeType.StorageType &&
 	    rtype.nodeType == ir.NodeType.StorageType) {
 		auto asStorageType = cast(ir.StorageType) rtype;
@@ -156,7 +151,8 @@ void extypeAssignHandleStorage(ref AssignmentState state, ref ir.Exp exp, ir.Typ
  */
 void extypePassHandleStorage(ref AssignmentState state, ref ir.Exp exp, ir.Type ltype)
 {
-	auto rtype = getExpType(state.lp, exp, state.current);
+	auto rtype = realType(getExpType(state.lp, exp, state.current));
+	ltype = realType(ltype);
 	if (ltype.nodeType != ir.NodeType.StorageType &&
 	    rtype.nodeType == ir.NodeType.StorageType) {
 		auto asStorageType = cast(ir.StorageType) rtype;
@@ -178,7 +174,7 @@ void extypePassHandleStorage(ref AssignmentState state, ref ir.Exp exp, ir.Type 
  */
 void rejectBadScopeAssign(ref AssignmentState state, ref ir.Exp exp, ir.Type type)
 {
-	auto storage = cast(ir.StorageType) type;
+	auto storage = cast(ir.StorageType) realType(type);
 	if (storage is null) {
 		return;
 	}
@@ -194,7 +190,7 @@ void rejectBadScopeAssign(ref AssignmentState state, ref ir.Exp exp, ir.Type typ
  */
 void extypeAssignStorageType(ref AssignmentState state, ref ir.Exp exp, ir.StorageType storage)
 {
-	auto type = getExpType(state.lp, exp, state.current);
+	auto type = realType(getExpType(state.lp, exp, state.current));
 	if (storage.base is null) {
 		if (type.nodeType == ir.NodeType.FunctionSetType) {
 			auto fset = cast(ir.FunctionSetType) type;
@@ -243,7 +239,7 @@ void extypeAssignTypeReference(ref AssignmentState state, ref ir.Exp exp, ir.Typ
  */
 void extypeAssignPointerType(ref AssignmentState state, ref ir.Exp exp, ir.PointerType ptr)
 {
-	auto type = getExpType(state.lp, exp, state.current);
+	auto type = realType(getExpType(state.lp, exp, state.current));
 
 	auto storage = cast(ir.StorageType) type;
 	if (storage !is null) {
@@ -287,7 +283,7 @@ void extypeAssignPointerType(ref AssignmentState state, ref ir.Exp exp, ir.Point
 void extypeAssignPrimitiveType(ref AssignmentState state, ref ir.Exp exp, ir.PrimitiveType lprim)
 {
 	auto rtype = getExpType(state.lp, exp, state.current);
-	auto rprim = cast(ir.PrimitiveType) rtype;
+	auto rprim = cast(ir.PrimitiveType) realType(rtype);
 	if (rprim is null) {
 		throw makeBadImplicitCast(exp, rtype, lprim);
 	}
@@ -318,7 +314,7 @@ void extypeAssignPrimitiveType(ref AssignmentState state, ref ir.Exp exp, ir.Pri
  */
 void extypeAssignClass(ref AssignmentState state, ref ir.Exp exp, ir.Class _class)
 {
-	auto type = getExpType(state.lp, exp, state.current);
+	auto type = realType(getExpType(state.lp, exp, state.current));
 	assert(type !is null);
 
 	auto rightClass = cast(ir.Class) type;
@@ -357,7 +353,7 @@ void extypeAssignEnum(ref AssignmentState state, ref ir.Exp exp, ir.Enum e)
  */
 void extypeAssignCallableType(ref AssignmentState state, ref ir.Exp exp, ir.CallableType ctype)
 {
-	auto rtype = getExpType(state.lp, exp, state.current);
+	auto rtype = realType(getExpType(state.lp, exp, state.current));
 	if (typesEqual(ctype, rtype)) {
 		return;
 	}
@@ -380,7 +376,7 @@ void extypeAssignCallableType(ref AssignmentState state, ref ir.Exp exp, ir.Call
  */
 void extypeAssignArrayType(ref AssignmentState state, ref ir.Exp exp, ir.ArrayType atype)
 {
-	auto rtype = getExpType(state.lp, exp, state.current);
+	auto rtype = realType(getExpType(state.lp, exp, state.current));
 	if (typesEqual(atype, rtype)) {
 		return;
 	}
@@ -607,7 +603,7 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 		 * transform the op from Identifier to CreatePostfix.
 		 */
 		if (postfix.identifier !is null) {
-			auto asStorage = cast(ir.StorageType) type;
+			auto asStorage = cast(ir.StorageType) realType(type);
 			if (asStorage !is null && canTransparentlyReferToBase(asStorage)) {
 				type = asStorage.base;
 			}
@@ -652,7 +648,7 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 	bool thisCall;
 
 	ir.CallableType asFunctionType;
-	auto asFunctionSet = cast(ir.FunctionSetType) type;
+	auto asFunctionSet = cast(ir.FunctionSetType) realType(type);
 	if (asFunctionSet !is null) {
 		auto eref = cast(ir.ExpReference) postfix.child;
 		bool reeval = true;
@@ -675,7 +671,7 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 			replaceExpReferenceIfNeeded(lp, current, null, postfix.child, eref);
 		}
 	} else {
-		asFunctionType = cast(ir.CallableType) type;
+		asFunctionType = cast(ir.CallableType) realType(type);
 		if (asFunctionType is null) {
 			auto _storage = cast(ir.StorageType) type;
 			if (_storage !is null) {
@@ -702,7 +698,7 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 		auto asPostfix = cast(ir.Postfix) postfix.child;
 		auto parentType = getExpType(lp, asPostfix.child, current);
 		if (mutableIndirection(parentType)) {
-			auto asStorageType = cast(ir.StorageType) parentType;
+			auto asStorageType = cast(ir.StorageType) realType(parentType);
 			if (asStorageType is null || asStorageType.type != ir.StorageType.Kind.Scope) {
 				throw makeBadCall(postfix, asFunctionType);
 			}
@@ -957,7 +953,7 @@ void extypeTypeLookup(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Post
 	}
 	bool max = postfixIdents[0].identifier.value == "max";
 
-	auto pointer = cast(ir.PointerType) type;
+	auto pointer = cast(ir.PointerType) realType(type);
 	if (pointer !is null) {
 		if (lp.settings.isVersionSet("V_LP64")) {
 			exp = buildConstantInt(type.location, max ? 8 : 0);
@@ -967,7 +963,7 @@ void extypeTypeLookup(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Post
 		return;
 	}
 
-	auto prim = cast(ir.PrimitiveType) type;
+	auto prim = cast(ir.PrimitiveType) realType(type);
 	if (prim is null) {
 		throw makeExpected(type, "primitive type");
 	}
@@ -1234,7 +1230,7 @@ void handleCastTo(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Unary un
 	assert(unary.type !is null);
 	assert(unary.value !is null);
 
-	auto type = getExpType(lp, unary.value, current);
+	auto type = realType(getExpType(lp, unary.value, current));
 	if (type.nodeType == ir.NodeType.FunctionSetType) {
 		auto fset = cast(ir.FunctionSetType) type;
 		throw makeCannotDisambiguate(unary, fset.set.functions);
@@ -1390,8 +1386,8 @@ void extypeBinOp(LanguagePass lp, ir.Scope current, ir.BinOp bin, ir.PrimitiveTy
  */
 void extypeBinOp(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 {
-	auto ltype = getExpType(lp, binop.left, current);
-	auto rtype = getExpType(lp, binop.right, current);
+	auto ltype = realType(getExpType(lp, binop.left, current));
+	auto rtype = realType(getExpType(lp, binop.right, current));
 
 	if (handleIfNull(lp, current, rtype, binop.left)) return;
 	if (handleIfNull(lp, current, ltype, binop.right)) return;
@@ -1477,7 +1473,7 @@ void extypeCat(ir.BinOp bin, ir.ArrayType left, ir.Type right)
 		return;
 	}
 
-	auto rarray = cast(ir.ArrayType) right;
+	auto rarray = cast(ir.ArrayType) realType(right);
 	if (rarray !is null && isImplicitlyConvertable(rarray.base, left.base) && (isConst(left.base) || isImmutable(left.base))) {
 		return;
 	}
@@ -1503,7 +1499,7 @@ void extypeTernary(ref AssignmentState state, ir.Ternary ternary)
 /// Replace TypeOf with its expression's type, if needed.
 void replaceTypeOfIfNeeded(LanguagePass lp, ir.Scope current, ref ir.Type type)
 {
-	auto asTypeOf = cast(ir.TypeOf) type;
+	auto asTypeOf = cast(ir.TypeOf) realType(type);
 	if (asTypeOf is null) {
 		assert(type.nodeType != ir.NodeType.TypeOf);
 		return;
