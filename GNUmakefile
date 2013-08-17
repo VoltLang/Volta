@@ -50,7 +50,7 @@ CCOMP_FLAGS = $(CARCH) -c -o $@ $(CFLAGS)
 MCOMP_FLAGS = $(CARCH) -c -o $@ $(CFLAGS)
 DCOMP_FLAGS = -c -w -Isrc $(DDEFINES_) -of$@ $(DFLAGS)
 LINK_FLAGS = -quiet -of$(TARGET) $(OBJ) $(LDFLAGS_) $(patsubst -%, -L-%, $(LLVM_LDFLAGS)) -L-ldl -L-lstdc++
-RUN_FLAGS = --internal-dbg --no-stdlib -I rt/src rt/rt.bc -l gc
+RUN_FLAGS = --internal-dbg --no-stdlib -I rt/src $(RT_HOST) -l gc
 RUN_TARGET = a.out.exe
 
 
@@ -77,20 +77,32 @@ DSRC = $(shell find src -name "*.d")
 DOBJ = $(patsubst src/%.d, $(OBJ_DIR)/%.$(OBJ_TYPE), $(DSRC))
 OBJ := $(DOBJ) $(EXTRA_OBJ)
 
+RT_HOST = rt/libvrt-host.bc
+RT_SRC = $(shell find rt/src -name "*.volt")
+RT_TARGETS = \
+	rt/libvrt-x86-mingw.bc \
+	rt/libvrt-x86-linux.bc \
+	rt/libvrt-x86_64-linux.bc \
+	rt/libvrt-x86-osx.bc \
+	rt/libvrt-x86_64-osx.bc
 
-all: rt/rt.bc
+
+all: $(RT_TARGETS) $(RT_HOST)
 
 $(OBJ_DIR)/%.$(OBJ_TYPE) : src/%.d Makefile
 	@echo "  DMD    src/$*.d"
 	@mkdir -p $(dir $@)
 	@$(DMD) $(DCOMP_FLAGS) src/$*.d
 
-rt/rt.bc: $(TARGET) rt/src/object.volt rt/src/vrt/vmain.volt rt/src/vrt/gc.volt rt/src/vrt/clazz.volt rt/src/vrt/eh.volt
-	@echo "  VOLT   rt/rt.bc"
-	@./$(TARGET) --no-stdlib --emit-bitcode -I rt/src -o rt/rt.bc \
-	rt/src/object.volt rt/src/vrt/vmain.volt \
-	rt/src/vrt/gc.volt rt/src/vrt/clazz.volt \
-	rt/src/vrt/eh.volt rt/src/vrt/aa.volt rt/src/vrt/string.volt
+$(RT_HOST): $(TARGET) $(RT_SRC)
+	@echo "  VOLT   $@"
+	@./$(TARGET) --no-stdlib --emit-bitcode -I rt/src -o $@ $(RT_SRC)
+
+$(RT_TARGETS): $(TARGET) $(RT_SRC)
+	@echo "  VOLT   $@"
+	@./$(TARGET) --no-stdlib --emit-bitcode -I rt/src -o $@ $(RT_SRC) \
+		--arch $(shell echo $@ | sed "s,rt/libvrt-\([^-]*\)-[^.]*.bc,\1,") \
+		--platform $(shell echo $@ | sed "s,rt/libvrt-[^-]*-\([^.]*\).bc,\1,")
 
 $(TARGET): $(OBJ) Makefile
 	@echo "  LD     $@"
@@ -98,11 +110,12 @@ $(TARGET): $(OBJ) Makefile
 
 clean:
 	@rm -rf $(TARGET) .obj
-	@rm -f rt/rt.bc
+	@rm -f rt/libvrt-host.bc
+	@rm -f $(RT_TARGETS) $(RT_HOST)
 	@rm -rf .pkg
 	@rm -rf volt.tar.gz
 
-$(RUN_TARGET): $(TARGET) rt/rt.bc
+$(RUN_TARGET): $(TARGET) $(RT_HOST)
 	@echo "  VOLT   $(RUN_TARGET)"
 	@./$(TARGET) $(RUN_FLAGS) -o a.out.exe test/simple.volt
 
@@ -114,7 +127,7 @@ run: $(RUN_TARGET)
 	@echo "  RUN    a.out.exe"
 	@-./a.out.exe
 
-debug: $(TARGET) rt/rt.bc
+debug: $(TARGET) $(RT_HOST)
 	@gdb --args ./$(TARGET) $(RUN_FLAGS) -o a.out.exe test/simple.volt
 
 license: $(TARGET)
@@ -123,7 +136,7 @@ license: $(TARGET)
 package: all
 	@mkdir -p .pkg/rt
 	@cp volt .pkg/
-	@cp ./rt/rt.bc .pkg/
+	@cp $(RT_TARGETS) .pkg/
 	@cp -r ./rt/src/* .pkg/rt/
 	@tar -czf volt.tar.gz .pkg/*
 
