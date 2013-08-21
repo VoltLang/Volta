@@ -16,3 +16,6 @@ a.exe*
 
 # Misc files
 b.bat
+
+# IDE files
+*.kdev*
