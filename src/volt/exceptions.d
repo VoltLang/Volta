@@ -36,20 +36,20 @@ public:
 	string fixHint; // Optional
 
 public:
-	this(string message, CompilerError more, bool neverIgnore)
+	this(string message, CompilerError more, bool neverIgnore, string file = __FILE__, size_t line = __LINE__)
 	{
 		this.more = more;
 		this.neverIgnore = neverIgnore;
-		super(format(errorFormat(), message));
+		super(format(errorFormat(), message), file, line);
 	}
 
-	this(Location loc, string message, CompilerError more, bool neverIgnore)
+	this(Location loc, string message, CompilerError more, bool neverIgnore, string file = __FILE__, size_t line = __LINE__)
 	{
 		this.more = more;
 		this.location = loc;
 		this.hasLocation = true;
 		this.neverIgnore = neverIgnore;
-		super(format(locationFormat(), loc.toString(), message));
+		super(format(locationFormat(), loc.toString(), message), file, line);
 	}
 
 protected:
@@ -71,36 +71,46 @@ protected:
  */
 class CompilerError : CompilerException
 {
-	this(string message, CompilerError more = null)
+	this(string message, string file = __FILE__, size_t line = __LINE__)
 	{
-		super(message, more, false);
+		super(message, null, false, file, line);
 	}
 
-	this(Location loc, string message, bool neverIgnore)
+	this(string message, CompilerError more, string file = __FILE__, size_t line = __LINE__)
 	{
-		super(loc, message, null, neverIgnore);
+		super(message, more, false, file, line);
 	}
 
-	this(Location loc, string message, CompilerError more = null)
+	this(Location loc, string message, bool neverIgnore, string file = __FILE__, size_t line = __LINE__)
 	{
-		super(loc, message, more, false);
+		super(loc, message, null, neverIgnore, file, line);
 	}
 
-	this(Location loc, string message, CompilerError more, bool neverIgnore)
+	this(Location loc, string message, string file = __FILE__, size_t line = __LINE__)
 	{
-		super(loc, message, more, neverIgnore);
+		super(loc, message, null, false, file, line);
+	}
+
+	this(Location loc, string message, CompilerError more, string file = __FILE__, size_t line = __LINE__)
+	{
+		super(loc, message, more, false, file, line);
+	}
+
+	this(Location loc, string message, CompilerError more, bool neverIgnore, string file = __FILE__, size_t line = __LINE__)
+	{
+		super(loc, message, more, neverIgnore, file, line);
 	}
 }
 
 class MissingSemicolonError : CompilerError
 {
 public:
-	this(Location loc, string type)
+	this(Location loc, string type, string file = __FILE__, size_t line = __LINE__)
 	{
 		loc.column += loc.length;
 		loc.length = 1;
 
-		super(loc, format("missing ';' after %s.", type));
+		super(loc, format("missing ';' after %s.", type), file, line);
 
 		fixHint = ";";
 	}
@@ -109,12 +119,12 @@ public:
 class PairMismatchError : CompilerError
 {
 public:
-	this(Location pairStart, Location loc, string type, string token)
+	this(Location pairStart, Location loc, string type, string token, string file = __FILE__, size_t line = __LINE__)
 	{
 		loc.column += loc.length;
 		loc.length = token.length;
 
-		super(loc, format("expected '%s' to close %s.", token, type));
+		super(loc, format("expected '%s' to close %s.", token, type), file, line);
 
 		fixHint = token;
 
@@ -130,15 +140,15 @@ public:
 	ptrdiff_t argNumber = unspecified;
 
 public:
-	this(Location loc, string message)
+	this(Location loc, string message, string file = __FILE__, size_t line = __LINE__)
 	{
-		super(loc, message);
+		super(loc, message, file, line);
 	}
 
-	this(Location loc, string message, ptrdiff_t argNumber)
+	this(Location loc, string message, ptrdiff_t argNumber, string file = __FILE__, size_t line = __LINE__)
 	{
 		this.argNumber = argNumber;
-		super(loc, message);
+		super(loc, message, file, line);
 	}
 }
 
@@ -148,14 +158,14 @@ public:
 class CompilerPanic : CompilerException
 {
 public:
-	this(string message)
+	this(string message, string file = __FILE__, size_t line = __LINE__)
 	{
-		super(message, null, true);
+		super(message, null, true, file, line);
 	}
 
-	this(Location loc, string message)
+	this(Location loc, string message, string file = __FILE__, size_t line = __LINE__)
 	{
-		super(loc, message, null, true);
+		super(loc, message, null, true, file, line);
 	}
 
 override:
@@ -170,7 +180,7 @@ override:
 	}
 }
 
-void errorMessageOnly(Location loc, string message)
+void errorMessageOnly(Location loc, string message, string file = __FILE__, size_t line = __LINE__)
 {
 	writefln(format("%s: error: %s", loc.toString(), message));
 }
