@@ -240,6 +240,12 @@ void extypeAssignTypeReference(ref AssignmentState state, ref ir.Exp exp, ir.Typ
  */
 void extypeAssignPointerType(ref AssignmentState state, ref ir.Exp exp, ir.PointerType ptr)
 {
+	// string literals implicitly convert to typeof(string.ptr)
+	auto constant = cast(ir.Constant) exp;
+	if (constant !is null && constant._string.length != 0) {
+		exp = buildAccess(exp.location, exp, "ptr");
+	}
+
 	auto type = realType(getExpType(state.lp, exp, state.current));
 
 	auto storage = cast(ir.StorageType) type;
