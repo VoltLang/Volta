@@ -26,17 +26,18 @@ ir.Exp parseExp(TokenStream ts)
 
 ir.Exp ternaryToExp(intir.TernaryExp tern)
 {
+	ir.Exp exp;
 	if (tern.ifTrue !is null) {
-		auto exp = new ir.Ternary();
-		exp.location = tern.location;
-		exp.condition = binexpToExp(tern.condition);
-		exp.ifTrue = ternaryToExp(tern.ifTrue);
-		exp.ifFalse = ternaryToExp(tern.ifFalse);
-		return exp;
+		auto newTern = new ir.Ternary();
+		newTern.location = tern.location;
+		newTern.condition = binexpToExp(tern.condition);
+		newTern.ifTrue = ternaryToExp(tern.ifTrue);
+		newTern.ifFalse = ternaryToExp(tern.ifFalse);
+		exp = newTern;
 	} else {
-		return binexpToExp(tern.condition);
+		exp = binexpToExp(tern.condition);
 	}
-	assert(false);
+	return exp;
 }
 
 class ExpOrOp
@@ -189,8 +190,9 @@ ir.Exp postfixToExp(Location location, intir.PostfixExp postfix, ir.Exp seed = n
 		if (exp.op == ir.Postfix.Op.Identifier) {
 			assert(postfix.identifier !is null);
 			exp.identifier = postfix.identifier;
-		} else foreach (arg; postfix.arguments) {
+		} else foreach (arg; postfix.arguments) with (ir.Postfix.TagKind) {
 			exp.arguments ~= ternaryToExp(arg);
+			exp.argumentTags ~= arg.taggedRef ? Ref : (arg.taggedOut ? Out : None);
 		}
 		return postfixToExp(location, postfix.postfix, exp);
 	}
@@ -615,6 +617,10 @@ ir.TraitsExp parseTraitsExp(TokenStream ts)
 intir.TernaryExp parseTernaryExp(TokenStream ts)
 {
 	auto exp = new intir.TernaryExp();
+	exp.taggedRef = matchIf(ts, TokenType.Ref);
+	if (!exp.taggedRef) {
+		exp.taggedOut = matchIf(ts, TokenType.Out);
+	}
 
 	auto origin = ts.peek.location;
 	exp.condition = parseBinExp(ts);

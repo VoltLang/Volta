@@ -757,8 +757,17 @@ void extypeLeavePostfix(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Po
 	}
 	assert(asFunctionType.params.length <= postfix.arguments.length);
 	foreach (i; 0 .. asFunctionType.params.length) {
-		if (isRef(asFunctionType.params[i]) && !isLValue(postfix.arguments[i])) {
-			throw makeNotLValue(postfix.arguments[i]);
+		ir.StorageType.Kind stype;
+		if (isRef(asFunctionType.params[i], stype)) { 
+			if (!isLValue(postfix.arguments[i])) {
+				throw makeNotLValue(postfix.arguments[i]);
+			}
+			if (stype == ir.StorageType.Kind.Ref && postfix.argumentTags[i] != ir.Postfix.TagKind.Ref) {
+				throw makeNotTaggedRef(postfix.arguments[i]);
+			}
+			if (stype == ir.StorageType.Kind.Out && postfix.argumentTags[i] != ir.Postfix.TagKind.Out) {
+				throw makeNotTaggedOut(postfix.arguments[i]);
+			}
 		}
 		auto state = AssignmentState(lp, current, false);
 		extypePass(state, postfix.arguments[i], asFunctionType.params[i]);

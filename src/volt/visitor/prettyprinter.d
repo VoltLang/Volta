@@ -1457,6 +1457,7 @@ public:
 		case Immutable: wf("immutable("); break;
 		case Scope: wf("scope("); break;
 		case Ref: wf("ref("); break;
+		case Out: wf("out("); break;
 		}
 		if (type.base !is null) {
 			accept(type.base, this);

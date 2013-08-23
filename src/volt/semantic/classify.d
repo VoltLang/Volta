@@ -248,7 +248,7 @@ bool isImmutable(ir.Type type)
 	return false;
 }
 
-bool isRef(ir.Type type)
+bool isRef(ir.Type type, out ir.StorageType.Kind kind)
 {
 	if (type is null) {
 		return false;
@@ -258,7 +258,8 @@ bool isRef(ir.Type type)
 		return false;
 	}
 	while (storage !is null) {
-		if (storage.type == ir.StorageType.Kind.Ref) {
+		if (storage.type == ir.StorageType.Kind.Ref || storage.type == ir.StorageType.Kind.Out) {
+			kind = storage.type;
 			return true;
 		}
 		storage = cast(ir.StorageType) storage.base;
@@ -294,7 +295,8 @@ bool isRefVar(ir.Exp exp)
 	if (asVar is null) {
 		return false;
 	}
-	return isRef(asVar.type);
+	ir.StorageType.Kind dummy;
+	return isRef(asVar.type, dummy);
 }
 
 bool isFunctionMemberOrConstructor(ir.Function fn)

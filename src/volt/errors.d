@@ -55,6 +55,16 @@ CompilerException makeArchNotSupported(string file = __FILE__, size_t line = __L
 	return new CompilerError("arch not supported with current platform", file, line);
 }
 
+CompilerException makeNotTaggedOut(ir.Exp exp, string file = __FILE__, size_t line = __LINE__)
+{
+	return new CompilerError(exp.location, "out parameter not tagged as out.", file, line);
+}
+
+CompilerException makeNotTaggedRef(ir.Exp exp, string file = __FILE__, size_t line = __LINE__)
+{
+	return new CompilerError(exp.location, "ref parameter not tagged as ref.", file, line);
+}
+
 CompilerException makeFunctionNameOutsideOfFunction(ir.TokenExp fexp, string file = __FILE__, size_t line = __LINE__)
 {
 	return new CompilerError(fexp.location, format("%s occuring outside of function.", fexp.type == ir.TokenExp.Type.PrettyFunction ? "__PRETTY_FUNCTION__" : "__FUNCTION__"), file, line);

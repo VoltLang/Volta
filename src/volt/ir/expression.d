@@ -187,10 +187,18 @@ public:
 		CreateDelegate,
 	}
 
+	enum TagKind
+	{
+		None,
+		Ref,
+		Out,
+	}
+
 public:
 	Op op;
 	Exp child;  // What the op is operating on.
 	Exp[] arguments;
+	TagKind[] argumentTags;
 	Identifier identifier;  // op == Identifier
 	ExpReference memberFunction;
 	bool isImplicitPropertyCall;

@@ -67,7 +67,8 @@ public:
 
 			auto v = LLVMGetParam(llvmFunc, i);
 
-			if (volt.semantic.classify.isRef(p.type)) {
+			ir.StorageType.Kind dummy;
+			if (volt.semantic.classify.isRef(p.type, dummy)) {
 				state.makeByValVariable(p, v);
 			} else {
 				auto t = state.fromIr(p.type);

@@ -397,7 +397,8 @@ private:
 		this.ret = ret;
 		foreach(int i, type; params) {
 			args[i] = type.llvmType;
-			if (volt.semantic.classify.isRef(ft.params[i])) {
+			ir.StorageType.Kind dummy;
+			if (volt.semantic.classify.isRef(ft.params[i], dummy)) {
 				args[i] = LLVMPointerType(args[i], 0);
 			}
 		}
@@ -437,7 +438,8 @@ public:
 		foreach(int i, param; dt.params) {
 			auto type = state.fromIr(param);
 			args[i] = type.llvmType;
-			if (volt.semantic.classify.isRef(param)) {
+			ir.StorageType.Kind dummy;
+			if (volt.semantic.classify.isRef(param, dummy)) {
 				args[i] = LLVMPointerType(args[i], 0);
 			}
 		}
@@ -791,7 +793,7 @@ ir.Type scrubStorage(ir.Type type)
 		return dg;
 	case StorageType:
 		auto asSt = cast(ir.StorageType)type;
-		if (asSt.type != ir.StorageType.Kind.Ref) {
+		if (asSt.type != ir.StorageType.Kind.Ref && asSt.type != ir.StorageType.Kind.Out) {
 			return scrubStorage(asSt.base);
 		}
 		auto at = new ir.StorageType();

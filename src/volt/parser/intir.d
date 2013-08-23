@@ -34,6 +34,8 @@ public:
 	BinExp condition;
 	TernaryExp ifTrue;  // Optional.
 	TernaryExp ifFalse;  // Optional.
+	bool taggedRef;
+	bool taggedOut;
 }
 
 class BinExp : IntExp

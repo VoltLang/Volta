@@ -1048,7 +1048,8 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 		auto v = new Value();
 		state.getValueAnyForm(arg, v);
 
-		if (i < ct.ct.params.length && volt.semantic.classify.isRef(ct.ct.params[i])) {
+		ir.StorageType.Kind dummy;
+		if (i < ct.ct.params.length && volt.semantic.classify.isRef(ct.ct.params[i], dummy)) {
 			makePointer(state, v);
 		} else {
 			makeNonPointer(state, v);

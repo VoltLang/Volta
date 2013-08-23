@@ -300,17 +300,17 @@ ir.Variable parseParameter(TokenStream ts)
 	bool isOut, isIn, isRef;
 	isRef = matchIf(ts, TokenType.Ref);
 	if (!isRef) {
-		isOut = isRef = matchIf(ts, TokenType.Out);
+		isOut = matchIf(ts, TokenType.Out);
 	}
 	if (!isOut && !isRef) {
 		isIn = matchIf(ts, TokenType.In);
 	}
 
 	p.type = parseType(ts);
-	if (isRef) {
+	if (isRef || isOut) {
 		auto s = new ir.StorageType();
 		s.location = p.type.location;
-		s.type = ir.StorageType.Kind.Ref;
+		s.type = isRef ? ir.StorageType.Kind.Ref : ir.StorageType.Kind.Out;
 		s.base = p.type;
 		p.type = s;
 	}

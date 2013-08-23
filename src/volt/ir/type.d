@@ -407,11 +407,14 @@ public:
  *   there may be immutable, const, inout, but only one.
  *   
  * Given that, sort the storage types in the given order:
- *  
+ *
  * scope
  * const/immutable/inout
  *  
  * const(scope(T))) => scope(const(T)))
+ *
+ * The Kinds Scope, Const, Immutable, Ref, and Out are
+ * mangled as 'e', 'o', 'm', 'r', and 'O' respectively.
  *
  * @ingroup irNode irType
  */
@@ -424,6 +427,7 @@ public:
 		Immutable = TokenType.Immutable,
 		Scope = TokenType.Scope,
 		Ref = TokenType.Ref,
+		Out = TokenType.Out,
 	}
 
 

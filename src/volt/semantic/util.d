@@ -379,7 +379,7 @@ void canonicaliseStorageType(ir.StorageType outStorage)
 		{
 			final switch (kind) with (ir.StorageType.Kind) {
 			case Scope: return 5;
-			case Ref: return 4;
+			case Ref, Out: return 4;  // It cannot be both.
 			case Immutable: return 3;
 			case Const: return 2;
 			case Auto: return 0;
