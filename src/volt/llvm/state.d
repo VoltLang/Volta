@@ -325,63 +325,95 @@ public:
 protected:
 	void setTargetAndLayout()
 	{
-		final switch (mSettings.platform) with (Platform) {
-		case Linux:
-			LLVMSetTarget(mod, targetLinuxList[mSettings.arch]);
-			LLVMSetDataLayout(mod, layoutList[mSettings.arch]);
-			break;
-		case MinGW:
-			LLVMSetTarget(mod, targetMinGWList[mSettings.arch]);
-			LLVMSetDataLayout(mod, layoutList[mSettings.arch]);
-			break;
-		case OSX:
-			LLVMSetTarget(mod, targetOSXList[mSettings.arch]);
-			LLVMSetDataLayout(mod, layoutOSXList[mSettings.arch]);
-			break;
-		}
+		auto target = targetList[mSettings.platform][mSettings.arch];
+		auto layout = layoutList[mSettings.platform][mSettings.arch];
+		if (target is null || layout is null)
+			throw makeArchNotSupported();
+
+		LLVMSetTarget(mod, target);
+		LLVMSetDataLayout(mod, layout);
 	}
 }
 
-/**
- * The subsystem will controll if llc emits coff or ELF object files.
- *
- * - i686-mingw32 emits ELF object files.
- * - i686-pc-mingw32 emits COFF object files.
- * - i686-w64-mingw32 emits COFF object files.
- */
-string[] targetMinGWList = [
-	"i686-pc-mingw32",
-	"x86_64-w64-mingw32",
+
+string[][] targetList = [
+	/**
+	 * The subsystem will controll if llc emits coff or ELF object files.
+	 *
+	 * - i686-mingw32 emits ELF object files.
+	 * - i686-pc-mingw32 emits COFF object files.
+	 * - i686-w64-mingw32 emits COFF object files.
+	 */
+	[
+		"i686-pc-mingw32",
+		"x86_64-w64-mingw32",
+		null,
+	],
+
+	/**
+	 * This is what clang uses for Linux.
+	 */
+	[
+		"i386-unknown-linux-gnu",
+		"x86_64-unknown-linux-gnu",
+		null,
+	],
+
+	/**
+	 * This is what clang uses for OSX.
+	 */
+	[
+		"i386-apple-macosx10.7.0",
+		"x86_64-apple-macosx10.7.0",
+		null,
+	],
+
+	/**
+	 * This is what emscripten uses.
+	 */
+	[
+		null,
+		null,
+		"le32-unknown-nacl",
+	],
 ];
 
-/**
- * This is what clang uses for Linux.
- */
-string[] targetLinuxList = [
-	"i386-unknown-linux-gnu",
-	"x86_64-unknown-linux-gnu",
-];
-
-/**
- * This is what clang uses for OSX.
- */
-string[] targetOSXList = [
-	"i386-apple-macosx10.7.0",
-	"x86_64-apple-macosx10.7.0",
+string[][] layoutList = [
+	[ // MinGW
+		layoutWinLinux32,
+		layoutWinLinux64,
+		null,
+	],
+	[ // Linux
+		layoutWinLinux32,
+		layoutWinLinux64,
+		null,
+	],
+	[ // Windows
+		layoutOSX32,
+		layoutOSX64,
+		null,
+	],
+	[ // Emscripten
+		null,
+		null,
+		layoutEmscripten,
+	],
 ];
 
 /**
  * Shared between windows and linux platforms.
  */
-string[] layoutList = [
-	"e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:32:32-n8:16:32-S128",
-	"e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128",
-];
+enum string layoutWinLinux32 = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:32:32-n8:16:32-S128";
+enum string layoutWinLinux64 = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128";
 
 /**
  * OSX layouts grabbed from clang.
  */
-string[] layoutOSXList = [
-	"e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128-n8:16:32-S128",
-	"e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128",
-];
+enum string layoutOSX32 = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128-n8:16:32-S128";
+enum string layoutOSX64 = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128";
+
+/**
+ * The layout that emscripten uses.
+ */
+enum string layoutEmscripten = "e-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-p:32:32:32-v128:32:32";

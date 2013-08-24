@@ -25,6 +25,11 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeArchNotSupported(string file = __FILE__, size_t line = __LINE__)
+{
+	return new CompilerError("arch not supported with current platform", file, line);
+}
+
 CompilerException makeFunctionNameOutsideOfFunction(ir.TokenExp fexp, string file = __FILE__, size_t line = __LINE__)
 {
 	return new CompilerError(fexp.location, format("%s occuring outside of function.", fexp.type == ir.TokenExp.Type.PrettyFunction ? "__PRETTY_FUNCTION__" : "__FUNCTION__"), file, line);

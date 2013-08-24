@@ -71,6 +71,9 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 		case "x86_64":
 			settings.arch = Arch.X86_64;
 			break;
+		case "le32":
+			settings.arch = Arch.LE32;
+			break;
 		default:
 			writefln("unknown arch \"%s\"", a);
 		}
@@ -86,6 +89,10 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 			break;
 		case "osx":
 			settings.platform = Platform.OSX;
+			break;
+		case "emscripten":
+			settings.platform = Platform.EMSCRIPTEN;
+			settings.arch = Arch.LE32;
 			break;
 		default:
 			writefln("unknown platform \"%s\"", p);
@@ -255,8 +262,8 @@ bool printUsage()
 	writefln("\t-c              Compile only, do not link.");
 	writefln("\t-E              Only perform conditional removal (implies -S).");
 	writeln();
-	writefln("\t--arch          Select processer architecture: 'x86', 'x86_64'");
-	writefln("\t--platform      Select platform: 'mingw', 'linux', 'osx'");
+	writefln("\t--arch          Select processer architecture: 'x86', 'x86_64', 'le32'");
+	writefln("\t--platform      Select platform: 'mingw', 'linux', 'osx', 'emscripten'");
 	writeln();
 	writefln("\t--emit-bitcode  Emit LLVM bitcode (implies -c).");
 	writefln("\t-S,--no-backend Stop compilation before the backend.");

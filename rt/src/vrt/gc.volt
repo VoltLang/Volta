@@ -5,28 +5,58 @@ module vrt.gc;
 
 import object;
 
-private extern(C) {
-	void GC_init();
-	void* GC_malloc(size_t size_in_bytes);
-	void* GC_malloc_atomic(size_t size_in_bytes);
 
-	// Debian stable (sqeezy and wheezy libgc versions don't export that function)
-	//void GC_set_java_finalization(int on_off);
-	extern global int GC_java_finalization;
-	alias GC_finalization_proc = void function(void* obj, void* client_data);
-	void GC_register_finalizer_no_order(void* obj,
-	                                    GC_finalization_proc fn,
-	                                    void* cd,
-	                                    GC_finalization_proc* ofn,
-	                                    void** ocd);
 
-	// Also not available in older libgc versions
-	//void GC_gcollect_and_unmap();
-	void GC_gcollect();
+version (Emscripten) {
 
-	version(Windows) {
-		extern(C) void GC_win32_free_heap();
+	private extern(C) {
+		void GC_INIT();
+		void* GC_MALLOC(size_t);
+		void* GC_MALLOC_ATOMIC(size_t);
+		void GC_REGISTER_FINALIZER_NO_ORDER(void* obj,
+		                                    GC_finalization_proc fn,
+		                                    void* cd,
+		                                    GC_finalization_proc* ofn,
+		                                    void** ocd);
+		void GC_FORCE_COLLECT();
+
+		extern global int GC_java_finalization;
+		alias GC_finalization_proc = void function(void* obj, void* client_data);
 	}
+
+	alias GC_init = GC_INIT;
+	alias GC_malloc = GC_MALLOC;
+	alias GC_malloc_atomic = GC_MALLOC_ATOMIC;
+	alias GC_register_finalizer_no_order = GC_REGISTER_FINALIZER_NO_ORDER;
+	alias GC_gcollect = GC_FORCE_COLLECT;
+
+} else {
+
+	private extern(C) {
+		void GC_init();
+		void* GC_malloc(size_t size_in_bytes);
+		void* GC_malloc_atomic(size_t size_in_bytes);
+
+		// Debian stable (sqeezy and wheezy libgc versions don't export that function)
+		//void GC_set_java_finalization(int on_off);
+		void GC_register_finalizer_no_order(void* obj,
+		                                    GC_finalization_proc fn,
+		                                    void* cd,
+		                                    GC_finalization_proc* ofn,
+		                                    void** ocd);
+
+		// Also not available in older libgc versions
+		//void GC_gcollect_and_unmap();
+		void GC_gcollect();
+
+		version(Windows) {
+			extern(C) void GC_win32_free_heap();
+		}
+
+		extern global int GC_java_finalization;
+		alias GC_finalization_proc = void function(void* obj, void* client_data);
+	}
+
 }
 
 extern(C) void vrt_gc_init()

@@ -330,6 +330,7 @@ enum Platform
 	MinGW,
 	Linux,
 	OSX,
+	EMSCRIPTEN,
 }
 
 /**
@@ -340,6 +341,7 @@ enum Arch
 {
 	X86,
 	X86_64,
+	LE32, // Generic little endian
 }
 
 /**
@@ -430,6 +432,10 @@ public:
 			setVersionIdentifier("OSX");
 			setVersionIdentifier("Posix");
 			break;
+		case EMSCRIPTEN:
+			platformStr = "emscripten";
+			setVersionIdentifier("Emscripten");
+			break;
 		}
 
 		final switch (arch) with (Arch) {
@@ -445,6 +451,11 @@ public:
 			setVersionIdentifier("LittleEndian");
 			setVersionIdentifier("V_P64");
 			break;
+		case LE32:
+			archStr = "le32";
+			setVersionIdentifier("LE32");
+			setVersionIdentifier("LittleEndian");
+			setVersionIdentifier("V_P32");
 		}
 	}
 
