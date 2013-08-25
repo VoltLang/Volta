@@ -199,7 +199,11 @@ protected:
 				fn.type.linkage = ir.Linkage.Pascal;
 				break;
 			case LinkageSystem:
-				fn.type.linkage = ir.Linkage.System;
+				if (lp.settings.platform == Platform.MinGW) {
+					fn.type.linkage = ir.Linkage.Windows;
+				} else {
+					fn.type.linkage = ir.Linkage.C;
+				}
 				break;
 			case LoadDynamic:
 				fn.loadDynamic = true;
@@ -290,7 +294,11 @@ protected:
 				d.linkage = ir.Linkage.Pascal;
 				break;
 			case LinkageSystem:
-				d.linkage = ir.Linkage.System;
+				if (lp.settings.platform == Platform.MinGW) {
+					d.linkage = ir.Linkage.Windows;
+				} else {
+					d.linkage = ir.Linkage.C;
+				}
 				break;
 			case Extern:
 				d.isExtern = true;
