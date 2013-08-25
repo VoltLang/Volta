@@ -116,7 +116,7 @@ clean:
 	@rm -rf .pkg
 	@rm -rf volt.tar.gz
 
-$(RUN_TARGET): $(TARGET) $(RT_HOST)
+$(RUN_TARGET): $(TARGET) $(RT_HOST) test/simple.volt
 	@echo "  VOLT   $(RUN_TARGET)"
 	@./$(TARGET) $(RUN_FLAGS) -o a.out.exe test/simple.volt
 
