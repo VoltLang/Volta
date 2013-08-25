@@ -732,35 +732,23 @@ package ir.Condition parseCondition(TokenStream ts)
 		condition.kind = ir.Condition.Kind.Version;
 		ts.get();
 		match(ts, TokenType.OpenParen);
-		if (ts.peek.type == TokenType.Unittest) {
-			ts.get();
-			condition.identifier = "unittest";
-		} else {
-			auto identTok = match(ts, TokenType.Identifier);
-			condition.identifier = identTok.value;
-		}
-		match(ts, TokenType.CloseParen);
 		break;
 	case TokenType.Debug:
 		condition.kind = ir.Condition.Kind.Debug;
 		ts.get();
-		if (matchIf(ts, TokenType.OpenParen)) {
-			auto identTok = match(ts, TokenType.Identifier);
-			condition.identifier = identTok.value;
-			match(ts, TokenType.CloseParen);
-		}
 		break;
 	case TokenType.Static:
 		condition.kind = ir.Condition.Kind.StaticIf;
 		ts.get();
 		match(ts, TokenType.If);
 		match(ts, TokenType.OpenParen);
-		condition.exp = parseExp(ts);
-		match(ts, TokenType.CloseParen);
 		break;
 	default:
 		throw makeExpected(ts.peek.location, "'version', 'debug', or 'static'");
 	}
+
+	condition.exp = parseExp(ts);
+	match(ts, TokenType.CloseParen);
 
 	return condition;
 }

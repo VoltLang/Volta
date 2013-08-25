@@ -425,9 +425,6 @@ public:
 public:
 	/// What kind of Condition is this?
 	Kind kind;
-	/// If kind is Version or Debug.
-	string identifier;
-	/// If kind is StaticIf.
 	Exp exp;
 
 

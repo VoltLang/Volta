@@ -108,12 +108,59 @@ public:
 protected:
 	bool evaluateCondition(ir.Condition c)
 	{
-		if (c.kind == ir.Condition.Kind.Version) {
-			return lp.settings.isVersionSet(c.identifier);
-		} else if (c.kind == ir.Condition.Kind.Debug) {
-			return lp.settings.isDebugSet(c.identifier);
-		} else {
-			throw panic(c, "should not enter this path.");
+		bool[] stack;
+		evaluate(c, c.exp, stack);
+		assert(stack.length == 1);
+		return stack[0];
+	}
+
+	void evaluate(ir.Condition c, ir.Exp e, ref bool[] stack)
+	{
+		switch (e.nodeType) with (ir.NodeType) {
+		case IdentifierExp:
+			auto i = cast(ir.IdentifierExp) e;
+			assert(i !is null);
+			if (c.kind == ir.Condition.Kind.Version) {
+				stack ~= lp.settings.isVersionSet(i.value);
+			} else if (c.kind == ir.Condition.Kind.Debug) {
+				stack ~= lp.settings.isDebugSet(i.value);
+			} else {
+				throw panic(c, "should not enter this path.");
+			}		
+			return;
+		case Unary:
+			auto u = cast(ir.Unary) e;
+			assert(u !is null);
+			if (u.op != ir.Unary.Op.Not) {
+				goto default;
+			}
+			evaluate(c, u.value, stack);
+			if (stack.length == 0) {
+				goto default;
+			}
+			stack[$-1] = !stack[$-1];
+			return;
+		case BinOp:
+			auto b = cast(ir.BinOp) e;
+			assert(b !is null);
+			evaluate(c, b.right, stack);
+			evaluate(c, b.left, stack);
+			if (stack.length < 2) {
+				goto default;
+			}
+			auto l = stack[$-1];
+			auto r = stack[$-2];
+			stack = stack[0 .. $-2];
+			if (b.op == ir.BinOp.Op.AndAnd) {
+				stack ~= l && r;
+			} else if (b.op == ir.BinOp.Op.OrOr) {
+				stack ~= l || r;
+			} else {
+				goto default;
+			}
+			return;
+		default:
+			throw makeExpected(e, "identifier, &&, ||, (), or !");
 		}
 	}
 

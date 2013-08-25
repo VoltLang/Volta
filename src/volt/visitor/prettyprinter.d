@@ -549,20 +549,17 @@ public:
 	{
 		final switch (c.kind) with (ir.Condition.Kind) {
 		case Version:
-			twf("version (", c.identifier, ")");
+			twf("version (");
 			break;
 		case Debug:
-			twf("debug");
-			if (c.identifier.length > 0) {
-				wf(" (", c.identifier, ")");
-			}
+			twf("debug (");
 			break;
 		case StaticIf:
-			twf("static if(");
-			acceptExp(c.exp, this);
-			wf(")");
+			twf("static if (");
 			break;
 		}
+		acceptExp(c.exp, this);
+		wf(")");
 		return ContinueParent;
 	}
 
