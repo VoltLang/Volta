@@ -395,8 +395,8 @@ void handleBinOpPointer(State state, Location loc, ir.BinOp.Op binOp,
 		throw panic(loc, "can only do pointer math with non-pointer");
 	if (primType.floating)
 		throw panic(loc, "can't do pointer math with floating value");
-	if (binOp != ir.BinOp.Op.Add)
-		throw panic(loc, "can only add to pointers");
+	if (binOp != ir.BinOp.Op.Add && binOp != ir.BinOp.Op.Sub)
+		throw panic(loc, "can only add or subtract to pointers");
 
 	// Either ptr or other could be result, keep that in mind.
 	result.type = ptr.type;
