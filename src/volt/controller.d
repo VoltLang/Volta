@@ -38,6 +38,8 @@ public:
 	Pass[] debugVisitors;
 
 protected:
+	string mLinker;
+
 	string[] mIncludes;
 	string[] mSourceFiles;
 	string[] mBitCodeFiles;
@@ -78,6 +80,16 @@ public:
 			foreach (file; settings.stdFiles) {
 				addFile(file);
 			}
+		}
+
+		if (settings.linker is null) {
+			if (settings.platform == Platform.EMSCRIPTEN) {
+				mLinker = "emcc";
+			} else {
+				mLinker = "gcc";
+			}
+		} else {
+			mLinker = settings.linker;
 		}
 
 		debugVisitors ~= new DebugMarker("Running DebugPrinter:");
@@ -284,18 +296,7 @@ protected:
 
 		string bcInputFiles;
 		string asInputFiles;
-		string objInputFiles;
-		foreach (objectFile; mObjectFiles) {
-			objInputFiles ~= objectFile ~ " ";
-		}
-		string objLibraryPaths;
-		foreach(libraryPath; mLibraryPaths) {
-			objLibraryPaths ~= " -L" ~ libraryPath;
-		}
-		string objLibraryFiles;
-		foreach(libraryFile; mLibraryFiles) {
-			objLibraryFiles ~= " -l" ~ libraryFile;
-		}
+
 
 		string bc, as, obj, of;
 
@@ -315,7 +316,6 @@ protected:
 
 		string bcLinker = "llvm-link";
 		string compiler = "llc";
-		string linker = settings.linker;
 		string cmd;
 		int ret;
 
@@ -337,7 +337,6 @@ protected:
 		} else {
 			of = settings.getOutput(DEFAULT_EXE);
 			obj = temporaryFilename(".o");
-			objInputFiles ~= " \"" ~ obj ~ "\" ";
 		}
 
 		cmd = format("%s -o \"%s\" %s", bcLinker, bc, bcInputFiles);
@@ -350,7 +349,32 @@ protected:
 			return 0;
 		}
 
-		cmd = format("%s -filetype=obj -o \"%s\" \"%s\"", compiler, obj, bc);
+		// If we are compiling on the emscripten platform ignore .o files.
+		if (settings.platform == Platform.EMSCRIPTEN) {
+			return emscriptenLink(mLinker, bc, of);
+		}
+
+		// Native compilation, turn the bitcode into native code.
+		ret = assembleObjFile(compiler, obj, bc);
+		if (ret)
+			return 0;
+
+		// When not linking we are now done.
+		if (settings.noLink) {
+			return 0;
+		}
+
+		// And finally call the linker.
+		ret = nativeLink(mLinker, obj, of);
+		if (ret)
+			return 0;
+
+		return 0;
+	}
+
+	int assembleObjFile(string compiler, string obj, string bc)
+	{
+		string cmd = format("%s -filetype=obj -o \"%s\" \"%s\"", compiler, obj, bc);
 		version (darwin) {
 			cmd ~= " -disable-cfi";
 		}
@@ -358,23 +382,36 @@ protected:
 			cmd ~= " -mcpu=i686";
 		}
 
-		ret = system(cmd);
-		if (ret)
-			return ret;
+		return system(cmd);
+	}
 
-		// When not linking we are now done.
-		if (settings.noLink) {
-			return 0;
+	int nativeLink(string linker, string obj, string of)
+	{
+		string objInputFiles;
+		foreach (objectFile; mObjectFiles) {
+			objInputFiles ~= objectFile ~ " ";
+		}
+		string objLibraryPaths;
+		foreach(libraryPath; mLibraryPaths) {
+			objLibraryPaths ~= " -L" ~ libraryPath;
+		}
+		string objLibraryFiles;
+		foreach(libraryFile; mLibraryFiles) {
+			objLibraryFiles ~= " -l" ~ libraryFile;
 		}
 
-		cmd = format("%s -o \"%s\" %s%s%s", linker, of,
-		             objInputFiles, objLibraryPaths, objLibraryFiles);
-        
-		ret = system(cmd);
-		if (ret)
-			return ret;
+		objInputFiles ~= " " ~ obj;
 
-		return 0;
+		string cmd = format("%s -o \"%s\" %s%s%s", linker, of,
+		                    objInputFiles, objLibraryPaths, objLibraryFiles);
+
+		return system(cmd);
+	}
+
+	int emscriptenLink(string linker, string bc, string of)
+	{
+		string cmd = format("%s -o \"%s\" %s", linker, of, bc);
+		return system(cmd);
 	}
 
 	this(Settings s, Frontend f, LanguagePass lp, Backend b)

@@ -246,8 +246,6 @@ void setDefault(Settings settings)
 	} else {
 		static assert(false);
 	}
-
-	settings.linker = "gcc";
 }
 
 bool printUsage()
