@@ -30,6 +30,23 @@ ir.Constant evaluate(LanguagePass lp, ir.Scope current, ir.Exp exp)
 	assert(false);
 }
 
+bool needsEvaluation(ir.Exp exp)
+{
+	switch (exp.nodeType) with (ir.NodeType) {
+	case Constant:
+		return false;
+	case ArrayLiteral:
+		auto ar = cast(ir.ArrayLiteral) exp;
+		foreach (value; ar.values) {
+			if (needsEvaluation(value))
+				return true;
+		}
+		return false;
+	default:
+		return true;
+	}
+}
+
 private:
 
 ir.Constant evaluateUnary(LanguagePass lp, ir.Scope current, ir.Unary unary)

@@ -1875,7 +1875,9 @@ public:
 			}
 		} else {
 			acceptExp(ed.assign, this);
-			ed.assign = evaluate(lp, current, ed.assign);
+			if (needsEvaluation(ed.assign)) {
+				ed.assign = evaluate(lp, current, ed.assign);
+			}
 		}
 
 		auto state = AssignmentState(lp, current, false);
