@@ -72,6 +72,19 @@ ir.TypeExp copy(ir.TypeExp te)
 	return newte;
 }
 
+ir.ArrayLiteral copy(ir.ArrayLiteral ar)
+{
+	auto newar = new ir.ArrayLiteral();
+	newar.location = ar.location;
+	if (ar.type !is null)
+		newar.type = copyType(ar.type);
+	newar.values = ar.values.dup;
+	foreach (ref value; ar.values) {
+		value = copyExp(value);
+	}
+	return newar;
+}
+
 
 /*
  *
@@ -262,6 +275,9 @@ ir.Node copyNode(ir.Node n)
 	case TypeExp:
 		auto te = cast(ir.TypeExp)n;
 		return copy(te);
+	case ArrayLiteral:
+		auto ar = cast(ir.ArrayLiteral)n;
+		return copy(ar);
 	case StatementExp:
 	case PrimitiveType:
 	case TypeReference:
@@ -329,7 +345,6 @@ ir.Node copyNode(ir.Node n)
 	case Ternary:
 	case Unary:
 	case Postfix:
-	case ArrayLiteral:
 	case AssocArray:
 	case Assert:
 	case StringImport:
