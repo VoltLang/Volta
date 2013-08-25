@@ -55,6 +55,10 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 		settings.includePaths ~= path;
 	}
 
+	void versionIdentifier(string ident) {
+		settings.setVersionIdentifier(ident);
+	}
+
 	void libraryFile(string file) {
 		settings.libraryFiles ~= file;
 	}
@@ -111,7 +115,6 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 		settings.stdIncludePaths ~= path;
 	}
 
-
 	foreach(arg; args)  {
 		if (argHandler !is null) {
 			argHandler(arg);
@@ -138,6 +141,9 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 			return printUsage();
 		case "-license", "--license":
 			return printLicense();
+		case "-D":
+			argHandler = &versionIdentifier;
+			continue;
 		case "-o":
 			argHandler = &outputFile;
 			continue;
@@ -255,6 +261,7 @@ bool printUsage()
 	writefln("\t--license       Print license information and quit.");
 	writefln("\t-o outputname   Set output to outputname.");
 	writefln("\t-I path         Add a include path.");
+	writefln("\t-D ident        Define a new version flag");
 	writefln("\t-w              Enable warnings.");
 	writefln("\t-d              Compile in debug mode.");
 	writefln("\t-c              Compile only, do not link.");
