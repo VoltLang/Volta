@@ -265,6 +265,7 @@ bool printUsage()
 	writefln("\t--arch          Select processer architecture: 'x86', 'x86_64', 'le32'");
 	writefln("\t--platform      Select platform: 'mingw', 'linux', 'osx', 'emscripten'");
 	writeln();
+	writefln("\t--linker linker Linking program to use for linking.");
 	writefln("\t--emit-bitcode  Emit LLVM bitcode (implies -c).");
 	writefln("\t-S,--no-backend Stop compilation before the backend.");
 	writefln("\t--no-catch      For compiler debugging purposes.");
