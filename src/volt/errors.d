@@ -25,6 +25,24 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeConstField(ir.Variable v, string file = __FILE__, const int line = __LINE__)
+{
+	string emsg = format("const or immutable non local/global field '%s' is forbidden.", v.name);
+	auto e = new CompilerError(v.location, emsg);
+	e.file = file;
+	e.line = line;
+	return e;
+}
+
+CompilerException makeAssignToNonStaticField(ir.Variable v, string file = __FILE__, const int line = __LINE__)
+{
+	string emsg = format("Attempted to assign to non local/global field %s.", v.name);
+	auto e = new CompilerError(v.location, emsg);
+	e.file = file;
+	e.line = line;
+	return e;
+}
+
 CompilerException makeSwitchBadType(ir.Node node, ir.Type type, string file = __FILE__, const int line = __LINE__)
 {
 	string emsg = format("bad switch type '%s'.", errorString(type));

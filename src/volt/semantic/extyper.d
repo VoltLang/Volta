@@ -1979,6 +1979,16 @@ public:
 
 		ensureResolved(lp, current, v.type);
 
+		bool inAggregate = (cast(ir.Aggregate) current.node) !is null;
+		if (inAggregate && v.storage != ir.Variable.Storage.Local && v.storage != ir.Variable.Storage.Global) {
+			if (v.assign !is null) {
+				throw makeAssignToNonStaticField(v);
+			}
+			if (isConst(v.type) || isImmutable(v.type)) {
+				throw makeConstField(v);
+			}
+		}
+
 		replaceTypeOfIfNeeded(lp, current, v.type);
 
 		if (v.assign !is null) {
