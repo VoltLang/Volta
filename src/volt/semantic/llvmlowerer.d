@@ -42,19 +42,6 @@ public:
 
 	override void transform(ir.Module m)
 	{
-		/// @todo remove when MangledName attribute works.
-		void h(string name, string mangled) {
-			auto fn = retrieveFunctionFromObject(
-				lp, m.myScope, m.location, name);
-			fn.mangledName = mangled;
-		}
-
-		h("__llvm_memcmp", "memcmp");
-		h("__llvm_memcpy_p0i8_p0i8_i32", "llvm.memcpy.p0i8.p0i8.i32");
-		h("__llvm_memcpy_p0i8_p0i8_i64", "llvm.memcpy.p0i8.p0i8.i64");
-		h("__llvm_memmove_p0i8_p0i8_i32", "llvm.memmove.p0i8.p0i8.i32");
-		h("__llvm_memmove_p0i8_p0i8_i64", "llvm.memmove.p0i8.p0i8.i64");
-
 		thisModule = m;
 		accept(m, this);
 	}

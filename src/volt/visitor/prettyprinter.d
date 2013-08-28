@@ -440,6 +440,12 @@ public:
 			wf(attr.alignAmount);
 			wf(")");
 			break;
+		case MangledName:
+			twf("@MangledName(");
+			assert(attr.arguments.length == 1);
+			accept(attr.arguments[0], this);
+			wf(")");
+			break;
 		case UserAttribute:
 			twf("@");
 			wf(attr.userAttributeName);

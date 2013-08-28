@@ -216,6 +216,7 @@ public:
 		NoThrow,
 		Pure,
 		UserAttribute,
+		MangledName,
 	}
 
 
@@ -226,7 +227,7 @@ public:
 	TopLevelBlock members;
 
 	QualifiedName userAttributeName;  ///< Optional.
-	Exp[] arguments;  ///< If kind == UserAttribute.
+	Exp[] arguments;  ///< If kind == UserAttribute or MangledName.
 	UserAttribute userAttribute;  ///< Filled in by the exptyper.
 
 	/// Only if type == Align.

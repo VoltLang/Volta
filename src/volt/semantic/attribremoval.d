@@ -247,6 +247,16 @@ protected:
 			case Local, Global:
 				fn.kind = ir.Function.Kind.Function;
 				break;
+			case MangledName:
+				assert(attr.arguments.length == 1);
+				auto constant = cast(ir.Constant) attr.arguments[0];
+				if (constant is null || !isString(constant.type) || constant._string.length <= 2) {
+					throw makeExpected(attr, "non empty string literal argument to MangledName.");
+				}
+				assert(constant._string[0] == '\"');
+				assert(constant._string[$-1] == '\"');
+				fn.mangledName = constant._string[1..$-1];
+				break;
 			default:
 				// Warn?
 			}

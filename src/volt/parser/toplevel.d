@@ -652,6 +652,13 @@ ir.Attribute parseAttribute(TokenStream ts, bool inModule = false)
 			auto nameTok = match(ts, TokenType.Identifier);
 			attr.kind = ir.Attribute.Kind.LoadDynamic;
 			break;
+		case "mangledName":
+			auto nameTok = match(ts, TokenType.Identifier);
+			attr.kind = ir.Attribute.Kind.MangledName;
+			match(ts, TokenType.OpenParen);
+			attr.arguments ~= parseExp(ts);
+			match(ts, TokenType.CloseParen);
+			break;
 		default:
 			attr.kind = ir.Attribute.Kind.UserAttribute;
 			attr.userAttributeName = parseQualifiedName(ts);
