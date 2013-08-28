@@ -2118,6 +2118,22 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.AssertStatement as)
+	{
+		if (!as.isStatic) {
+			throw panicUnhandled(as, "non static asserts");
+		}
+		auto cond = cast(ir.Constant) as.condition;
+		auto msg = cast(ir.Constant) as.message;
+		if ((cond is null || msg is null) || (!isBool(cond.type) || !isString(msg.type))) {
+			throw panicUnhandled(as, "non simple static asserts (bool and string literal only).");
+		}
+		if (!cond._bool) {
+			throw makeStaticAssert(as, msg._string);
+		}
+		return Continue;
+	}
+
 
 	/*
 	 *

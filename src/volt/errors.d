@@ -25,6 +25,15 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeStaticAssert(ir.AssertStatement as, string msg, string file = __FILE__, const int line = __LINE__)
+{
+	string emsg = format("static assert: %s", msg);
+	auto e = new CompilerError(as.location, emsg);
+	e.file = file;
+	e.line = line;
+	return e;
+}
+
 CompilerException makeConstField(ir.Variable v, string file = __FILE__, const int line = __LINE__)
 {
 	string emsg = format("const or immutable non local/global field '%s' is forbidden.", v.name);
