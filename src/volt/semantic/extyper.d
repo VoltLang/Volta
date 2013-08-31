@@ -1412,8 +1412,7 @@ void extypeBinOp(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 
 	switch(binop.op) with(ir.BinOp.Op) {
 	case AddAssign, SubAssign, MulAssign, DivAssign, ModAssign, AndAssign,
-	     OrAssign, XorAssign, CatAssign, LSAssign, SRSAssign, RSAssign, PowAssign:
-	case Assign:
+	     OrAssign, XorAssign, CatAssign, LSAssign, SRSAssign, RSAssign, PowAssign, Assign:
 		// TODO this needs to be changed if there is operator overloading
 		auto asPostfix = cast(ir.Postfix)binop.left;
 		if (asPostfix !is null) {
