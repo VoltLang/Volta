@@ -19,7 +19,7 @@ alias size_t Mark;
  * Upon loading or getting source the ctor will validate the source
  * code to make sure that it is Utf-8 and the BOM is valid.
  */
-class Source
+final class Source
 {
 public:
 	/// Source code, validated utf8 by constructors.

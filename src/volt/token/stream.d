@@ -11,7 +11,7 @@ public import volt.token.token;
 /**
  * Class used by the parser to read lexed tokens.
  */
-class TokenStream
+final class TokenStream
 {
 private:
 	Token[] mTokens;

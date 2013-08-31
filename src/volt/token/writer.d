@@ -11,7 +11,7 @@ import volt.token.stream;
 /**
  * Small container class for tokens, used by the lexer to write tokens to.
  */
-class TokenWriter
+final class TokenWriter
 {
 private:
 	Source mSource;

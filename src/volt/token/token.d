@@ -165,7 +165,7 @@ enum TokenType
 /**
  * Holds the type, the actual string and location within the source file.
  */
-class Token
+final class Token
 {
 	TokenType type;
 	string value;
