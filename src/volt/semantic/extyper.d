@@ -214,23 +214,6 @@ void extypeAssignStorageType(ref AssignmentState state, ref ir.Exp exp, ir.Stora
 	}
 }
 
-/**
- * Infer base types on storage types (eg 'auto a = 3').
- */
-void extypePassStorageType(ref AssignmentState state, ref ir.Exp exp, ir.StorageType storage)
-{
-	auto type = getExpType(state.lp, exp, state.current);
-	if (storage.base is null) {
-		storage.base = copyTypeSmart(exp.location, type);
-	}
-
-	if (storage.type == ir.StorageType.Kind.Scope) {
-		extypePassDispatch(state, exp, storage.base);
-	} else if (canTransparentlyReferToBase(storage)) {
-		extypePassDispatch(state, exp, storage.base);
-	}
-}
-
 void extypeAssignTypeReference(ref AssignmentState state, ref ir.Exp exp, ir.TypeReference tr)
 {
 	extypeAssign(state, exp, tr.type);
@@ -487,29 +470,14 @@ void extypeAssignDispatch(ref AssignmentState state, ref ir.Exp exp, ir.Type typ
 	}
 }
 
-
-void extypePassDispatch(ref AssignmentState state, ref ir.Exp exp, ir.Type type)
-{
-	switch (type.nodeType) {
-	case ir.NodeType.StorageType:
-		auto storage = cast(ir.StorageType) type;
-		extypePassStorageType(state, exp, storage);
-		break;
-	default:
-		extypeAssignDispatch(state, exp, type);
-		break;
-	}
-}
-
 void extypePass(ref AssignmentState state, ref ir.Exp exp, ir.Type type)
 {
 	ensureResolved(state.lp, state.current, type);
-	if (handleIfStructLiteral(state, type, exp)) return;
-	if (handleIfNull(state.lp, state.current, type, exp)) return;
-
-	extypePassHandleStorage(state, exp, type);
-
-	extypePassDispatch(state, exp, type);
+	auto storage = cast(ir.StorageType) type;
+	if (storage !is null && storage.type == ir.StorageType.Kind.Scope) {
+		type = storage.base;
+	}
+	extypeAssign(state, exp, type);
 }
 
 void extypeAssign(ref AssignmentState state, ref ir.Exp exp, ir.Type type)
