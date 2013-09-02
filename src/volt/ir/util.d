@@ -1079,3 +1079,13 @@ ir.Declaration buildSet(Location loc, ir.Function[] functions, ir.ExpReference e
 	assert(set.functions.length > 0);
 	return set;
 }
+
+ir.Type stripStorage(ir.Type type)
+{
+	auto storage = cast(ir.StorageType) type;
+	while (storage !is null) {
+		type = storage.base;
+		storage = cast(ir.StorageType) type;
+	}
+	return type;
+}

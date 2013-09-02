@@ -209,6 +209,15 @@ void extypeAssignStorageType(ref AssignmentState state, ref ir.Exp exp, ir.Stora
 		extypeAssignDispatch(state, exp, storage.base);
 	}
 
+	auto ptr = cast(ir.PointerType) type;
+	ir.Type overrideType;
+	if (ptr !is null) {
+		ptr.base = stripStorage(ptr.base);
+		overrideType = ptr;
+	}
+	ir.Exp dummy = exp;
+	extypeAssignDispatch(state, dummy, storage.base, overrideType);
+	
 	if (canTransparentlyReferToBase(storage)) {
 		extypeAssignDispatch(state, exp, storage.base);
 	}
@@ -223,7 +232,7 @@ void extypeAssignTypeReference(ref AssignmentState state, ref ir.Exp exp, ir.Typ
  * Handles implicit pointer casts. To void*, immutable(T)* to const(T)*
  * T* to const(T)* and the like.
  */
-void extypeAssignPointerType(ref AssignmentState state, ref ir.Exp exp, ir.PointerType ptr)
+void extypeAssignPointerType(ref AssignmentState state, ref ir.Exp exp, ir.PointerType ptr, ir.Type expOverride = null)
 {
 	// string literals implicitly convert to typeof(string.ptr)
 	auto constant = cast(ir.Constant) exp;
@@ -231,7 +240,7 @@ void extypeAssignPointerType(ref AssignmentState state, ref ir.Exp exp, ir.Point
 		exp = buildAccess(exp.location, exp, "ptr");
 	}
 
-	auto type = realType(getExpType(state.lp, exp, state.current));
+	auto type = expOverride !is null ? expOverride : realType(getExpType(state.lp, exp, state.current));
 
 	auto storage = cast(ir.StorageType) type;
 	if (storage !is null) {
@@ -418,7 +427,7 @@ void extypeAssignAAType(ref AssignmentState state, ref ir.Exp exp, ir.AAType aat
 	throw makeBadImplicitCast(exp, rtype, aatype);
 }
 
-void extypeAssignDispatch(ref AssignmentState state, ref ir.Exp exp, ir.Type type)
+void extypeAssignDispatch(ref AssignmentState state, ref ir.Exp exp, ir.Type type, ir.Type expOverride = null)
 {
 	switch (type.nodeType) {
 	case ir.NodeType.StorageType:
@@ -431,7 +440,7 @@ void extypeAssignDispatch(ref AssignmentState state, ref ir.Exp exp, ir.Type typ
 		break;
 	case ir.NodeType.PointerType:
 		auto ptr = cast(ir.PointerType) type;
-		extypeAssignPointerType(state, exp, ptr);
+		extypeAssignPointerType(state, exp, ptr, expOverride);
 		break;
 	case ir.NodeType.PrimitiveType:
 		auto prim = cast(ir.PrimitiveType) type;
