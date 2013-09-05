@@ -8,9 +8,9 @@ Getting started
 Dependencies
 ------------
 
-As Volt is written in D a compiler for D is needed, GDC, LDC and DMD should
-be able to compile Votl. Once Volt is capable enough the compiler will be
-ported to Volt and achive self-hosting that way.
+As Volt is written in D, a compiler for D is needed. GDC, LDC and DMD should
+be able to compile Volt. Once Volt is capable enough the compiler will be
+ported to Volt and achieve self-hosting that way.
 
 Volt uses LLVM as backend to generate binary code. Currently version 3.1 is
 used, version 3.0 might work, 2.9 will not as it is missing some interfaces.
@@ -35,7 +35,7 @@ Mac
 
 There are no packages of GDC for Mac so DMD should be used. To install it
 just excract the contents of dmd.2.<version>.zip <somewhere> and set the
-DMD enviromental variable to be "<somewhere>/osx/bin/dmd" or put the folder
+DMD environmental variable to be "<somewhere>/osx/bin/dmd" or put the folder
 "<somewhere>/osx/bin" on the path.
 
 Download llvm from the llvm homepage, and put the bin folder inside the
@@ -73,8 +73,7 @@ Contributing
 ============
 
 Please feel free to contribute. Contributing is easy! Just send us your code.
-Diffs are appreciated, in git format; Github pull requests are excellent. The
-worst thing that can happen is that we will ignore you.
+Diffs are appreciated, in git format; Github pull requests are excellent.
 
 Things to consider:
 
@@ -82,5 +81,5 @@ Things to consider:
    contributions to any of these parts will be under that same license. If this
    isn't acceptable, then your code cannot be merged. This is really the only
    hard condition.
- * That was short wasn't it? Just remmeber don't be a dick, have fun and there
+ * That was short wasn't it? Just remember don't be a dick, have fun and there
    will be cake! That is all!
