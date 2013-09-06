@@ -209,6 +209,11 @@ void extypeAssignStorageType(ref AssignmentState state, ref ir.Exp exp, ir.Stora
 		extypeAssignDispatch(state, exp, storage.base);
 	}
 
+	if (canTransparentlyReferToBase(storage)) {
+		extypeAssignDispatch(state, exp, storage.base);
+		return;
+	}
+
 	auto ptr = cast(ir.PointerType) type;
 	ir.Type overrideType;
 	if (ptr !is null) {
@@ -217,10 +222,6 @@ void extypeAssignStorageType(ref AssignmentState state, ref ir.Exp exp, ir.Stora
 	}
 	ir.Exp dummy = exp;
 	extypeAssignDispatch(state, dummy, storage.base, overrideType);
-	
-	if (canTransparentlyReferToBase(storage)) {
-		extypeAssignDispatch(state, exp, storage.base);
-	}
 }
 
 void extypeAssignTypeReference(ref AssignmentState state, ref ir.Exp exp, ir.TypeReference tr)
