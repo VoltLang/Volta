@@ -57,7 +57,6 @@ public:
 
 		state.currentFall = true;
 		state.currentFunc = llvmFunc;
-		state.currentIrFunc = fn;
 		state.currentBlock = LLVMAppendBasicBlock(llvmFunc, "entry");
 		LLVMPositionBuilderAtEnd(b, state.currentBlock);
 

@@ -63,7 +63,6 @@ public:
 	LLVMBasicBlockRef[long] currentSwitchCases;
 
 	LLVMValueRef currentFunc;
-	ir.Function currentIrFunc;
 	bool currentFall; ///< Tracking for auto branch generation.
 
 	/**
