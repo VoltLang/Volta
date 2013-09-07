@@ -257,8 +257,11 @@ void extypeAssignPointerType(ref AssignmentState state, ref ir.Exp exp, ir.Point
 		return;
 	}
 
-	if (ptr.base.nodeType == ir.NodeType.PrimitiveType) {
-		auto asPrimitive = cast(ir.PrimitiveType) ptr.base;
+	auto pbase = realBase(ptr);
+	auto rbase = realBase(rp);
+
+	if (pbase.nodeType == ir.NodeType.PrimitiveType) {
+		auto asPrimitive = cast(ir.PrimitiveType) pbase;
 		assert(asPrimitive !is null);
 		if (asPrimitive.type == ir.PrimitiveType.Kind.Void) {
 			exp = buildCastSmart(ptr, exp);
@@ -266,12 +269,12 @@ void extypeAssignPointerType(ref AssignmentState state, ref ir.Exp exp, ir.Point
 		}
 	}
 
-	if (isConst(ptr.base) && rp.base.nodeType != ir.NodeType.StorageType) {
+	if (isConst(pbase) && rbase.nodeType != ir.NodeType.StorageType) {
 		exp = buildCastSmart(ptr, exp);
 		return;
 	}
 
-	if (isImmutable(rp.base) && isConst(ptr.base)) {
+	if (isImmutable(rbase) && isConst(pbase)) {
 		exp = buildCastSmart(ptr, exp);
 		return;
 	}

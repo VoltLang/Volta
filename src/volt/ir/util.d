@@ -1089,3 +1089,15 @@ ir.Type stripStorage(ir.Type type)
 	}
 	return type;
 }
+
+/// Returns the base of consecutive pointers. e.g. 'int***' returns 'int'.
+ir.Type realBase(ir.PointerType ptr)
+{
+	ir.Type base;
+	do {
+		base = ptr.base;
+		ptr = cast(ir.PointerType) base;
+	} while (ptr !is null);
+	return base;
+}
+
