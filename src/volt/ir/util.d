@@ -1090,6 +1090,29 @@ ir.Type stripStorage(ir.Type type)
 	return type;
 }
 
+ir.Type deepStripStorage(ir.Type type)
+{
+	auto ptr = cast(ir.PointerType) type;
+	if (ptr !is null) {
+		ptr.base = deepStripStorage(ptr.base);
+		return ptr;
+	}
+
+	auto arr = cast(ir.ArrayType) type;
+	if (arr !is null) {
+		arr.base = deepStripStorage(arr.base);
+		return arr;
+	}
+
+	auto storage = cast(ir.StorageType) type;
+	if (storage !is null) {
+		storage.base = stripStorage(storage.base);
+		return storage.base;
+	}
+
+	return type;
+}
+
 /// Returns the base of consecutive pointers. e.g. 'int***' returns 'int'.
 ir.Type realBase(ir.PointerType ptr)
 {

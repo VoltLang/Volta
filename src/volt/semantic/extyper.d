@@ -214,14 +214,9 @@ void extypeAssignStorageType(ref AssignmentState state, ref ir.Exp exp, ir.Stora
 		return;
 	}
 
-	auto ptr = cast(ir.PointerType) type;
-	ir.Type overrideType;
-	if (ptr !is null) {
-		ptr.base = stripStorage(ptr.base);
-		overrideType = ptr;
-	}
+	auto stripped = deepStripStorage(type);
 	ir.Exp dummy = exp;
-	extypeAssignDispatch(state, dummy, storage.base, overrideType);
+	extypeAssignDispatch(state, dummy, storage.base, stripped);
 }
 
 void extypeAssignTypeReference(ref AssignmentState state, ref ir.Exp exp, ir.TypeReference tr)
@@ -379,9 +374,9 @@ void extypeAssignCallableType(ref AssignmentState state, ref ir.Exp exp, ir.Call
  * Handles casting arrays of non mutably indirect types with
  * differing storage types.
  */
-void extypeAssignArrayType(ref AssignmentState state, ref ir.Exp exp, ir.ArrayType atype)
+void extypeAssignArrayType(ref AssignmentState state, ref ir.Exp exp, ir.ArrayType atype, ir.Type expOverride)
 {
-	auto rtype = realType(getExpType(state.lp, exp, state.current));
+	auto rtype = expOverride !is null ? expOverride : realType(getExpType(state.lp, exp, state.current));
 	if (typesEqual(atype, rtype)) {
 		return;
 	}
@@ -465,7 +460,7 @@ void extypeAssignDispatch(ref AssignmentState state, ref ir.Exp exp, ir.Type typ
 		break;
 	case ir.NodeType.ArrayType:
 		auto atype = cast(ir.ArrayType) type;
-		extypeAssignArrayType(state, exp, atype);
+		extypeAssignArrayType(state, exp, atype, expOverride);
 		break;
 	case ir.NodeType.AAType:
 		auto aatype = cast(ir.AAType) type;
