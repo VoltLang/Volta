@@ -288,7 +288,7 @@ void extypeAssignPointerType(ref AssignmentState state, ref ir.Exp exp, ir.Point
 void extypeAssignPrimitiveType(ref AssignmentState state, ref ir.Exp exp, ir.PrimitiveType lprim)
 {
 	auto rtype = getExpType(state.lp, exp, state.current);
-	auto rprim = cast(ir.PrimitiveType) realType(rtype);
+	auto rprim = cast(ir.PrimitiveType) realType(rtype, true, true);
 	if (rprim is null) {
 		throw makeBadImplicitCast(exp, rtype, lprim);
 	}
