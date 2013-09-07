@@ -27,10 +27,12 @@ alias lib.llvm.c.Core.LLVMConstArray LLVMConstArray;
 alias lib.llvm.c.Core.LLVMConstInBoundsGEP LLVMConstInBoundsGEP;
 alias lib.llvm.c.Core.LLVMAddFunction LLVMAddFunction;
 alias lib.llvm.c.Core.LLVMBuildCall LLVMBuildCall;
+alias lib.llvm.c.Core.LLVMBuildInvoke LLVMBuildInvoke;
 alias lib.llvm.c.Core.LLVMBuildAlloca LLVMBuildAlloca;
 alias lib.llvm.c.Core.LLVMAddGlobal LLVMAddGlobal;
 alias lib.llvm.c.Core.LLVMBuildGEP LLVMBuildGEP;
 alias lib.llvm.c.Core.LLVMBuildInBoundsGEP LLVMBuildInBoundsGEP;
+alias lib.llvm.c.Core.LLVMStructTypeInContext LLVMStructTypeInContext;
 
 void LLVMSetTarget(LLVMModuleRef mod, string str)
 {
@@ -57,6 +59,14 @@ LLVMTypeRef LLVMFunctionType(LLVMTypeRef ret, LLVMTypeRef[] args, bool vararg)
 {
 	return lib.llvm.c.Core.LLVMFunctionType(
 		ret, args.ptr, cast(uint)args.length, vararg);
+}
+
+LLVMTypeRef LLVMStructTypeInContext(LLVMContextRef c,
+	                                LLVMTypeRef[] types,
+	                                LLVMBool packed)
+{
+	return lib.llvm.c.Core.LLVMStructTypeInContext(
+		c, types.ptr, cast(int)types.length, packed);
 }
 
 LLVMTypeRef LLVMStructCreateNamed(LLVMContextRef c, string name)
@@ -114,6 +124,14 @@ LLVMValueRef LLVMBuildCall(LLVMBuilderRef b, LLVMValueRef func,
 {
 	return lib.llvm.c.Core.LLVMBuildCall(
 		b, func, args.ptr, cast(uint)args.length, "");
+}
+
+LLVMValueRef LLVMBuildInvoke(LLVMBuilderRef b, LLVMValueRef func,
+                             LLVMValueRef[] args,
+                             LLVMBasicBlockRef then, LLVMBasicBlockRef pad)
+{
+	return lib.llvm.c.Core.LLVMBuildInvoke(
+		b, func, args.ptr, cast(uint)args.length, then, pad, "");
 }
 
 LLVMValueRef LLVMBuildAlloca(LLVMBuilderRef b, LLVMTypeRef type,
