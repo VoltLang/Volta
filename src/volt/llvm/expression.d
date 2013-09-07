@@ -544,6 +544,10 @@ void handleCast(State state, Location loc, Type newType, Value result)
 	    (oldTypePtr !is null || oldTypeFn !is null))
 		return handleCastPointer(state, loc, newType, result);
 
+	if ((newTypePtr !is null || newTypePrim !is null) &&
+	    (oldTypePtr !is null || oldTypePrim !is null))
+		return handleCastPointerPrim(state, loc, newTypePtr, newTypePrim, result);
+
 	throw panicUnhandled(loc, to!string(newType.irType.nodeType));
 }
 
@@ -630,6 +634,23 @@ void handleCastPointer(State state, Location loc, Type newType, Value result)
 
 	result.type = newType;
 	result.value = LLVMBuildBitCast(state.builder, result.value, newType.llvmType, "");
+}
+
+/**
+ * Handle pointer <-> integer casts.
+ */
+void handleCastPointerPrim(State state, Location loc, Type newTypePtr, Type newTypePrim, Value result)
+{
+	assert(!result.isPointer);
+
+	if (newTypePtr !is null) {
+		result.type = newTypePtr;
+		result.value = LLVMBuildIntToPtr(state.builder, result.value, newTypePtr.llvmType, "");
+	} else {
+		assert(newTypePrim !is null);
+		result.type = newTypePrim;
+		result.value = LLVMBuildPtrToInt(state.builder, result.value, newTypePrim.llvmType, "");
+	}
 }
 
 /**
