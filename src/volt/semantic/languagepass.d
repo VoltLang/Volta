@@ -188,8 +188,9 @@ public:
 
 	override void resolve(ir.Enum e)
 	{
-		if (e.resolved)
+		if (e.resolved) {
 			return;
+		}
 
 		ensureResolved(this, e.myScope.parent, e.base);
 		e.resolved = true;
@@ -197,6 +198,10 @@ public:
 
 	override void resolve(ir.Scope current, ir.EnumDeclaration ed)
 	{
+		if (ed.resolved) {
+			return;
+		}
+
 		auto e = new ExTyper(this);
 		e.transform(current, ed);
 	}
