@@ -497,6 +497,10 @@ void handleUnary(State state, ir.Unary unary, Value result)
 	case Complement:
 		handleComplement(state, unary, result);
 		break;
+	case Increment:
+	case Decrement:
+		handleIncDec(state, unary, result);
+		break;
 	default:
 		throw panicUnhandled(unary.location, to!string(unary.op));
 	}
@@ -735,6 +739,37 @@ void handleNot(State state, ir.Unary unary, Value result)
 
 	result.value = LLVMBuildNot(state.builder, result.value, "");
 }
+
+void handleIncDec(State state, ir.Unary unary, Value result)
+{
+	LLVMValueRef ptr, read, value;
+	bool isInc = unary.op == ir.Unary.Op.Increment;
+
+	state.getValueRef(unary.value, result);
+
+	ptr = result.value;
+	read = LLVMBuildLoad(state.builder, ptr, "");
+
+	auto ptrType = cast(PointerType)result.type;
+	auto primType = cast(PrimitiveType)result.type;
+	if (ptrType !is null) {
+		auto v = isInc ? 1 : -1;
+		auto c = LLVMConstInt(LLVMInt32TypeInContext(state.context), v, true);
+		value = LLVMBuildGEP(state.builder, read, [c], "");
+	} else if (primType !is null) {
+		auto op = isInc ? LLVMOpcode.Add : LLVMOpcode.Sub;
+		auto c = primType.fromNumber(state, 1);
+		value = LLVMBuildBinOp(state.builder, op, read, c, "");
+	} else {
+		throw makeExpected(unary, "primitive or pointer");
+	}
+
+	LLVMBuildStore(state.builder, value, ptr);
+
+	result.isPointer = false;
+	result.value = value;
+}
+
 
 /*
  *
