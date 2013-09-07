@@ -14,6 +14,7 @@ final class Context
 public:
 	LanguagePass lp;
 	bool isVarAssign;
+	ir.Type overrideType;
 
 private:
 	ir.Scope mCurrent;

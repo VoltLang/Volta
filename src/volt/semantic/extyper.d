@@ -208,9 +208,10 @@ void extypeAssignStorageType(Context ctx, ref ir.Exp exp, ir.StorageType storage
 		return;
 	}
 
-	auto stripped = deepStripStorage(type);
 	ir.Exp dummy = exp;
-	extypeAssignDispatch(ctx, dummy, storage.base, stripped);
+	ctx.overrideType = deepStripStorage(type);
+	extypeAssignDispatch(ctx, dummy, storage.base);
+	ctx.overrideType = null;
 }
 
 void extypeAssignTypeReference(Context ctx, ref ir.Exp exp, ir.TypeReference tr)
@@ -222,7 +223,7 @@ void extypeAssignTypeReference(Context ctx, ref ir.Exp exp, ir.TypeReference tr)
  * Handles implicit pointer casts. To void*, immutable(T)* to const(T)*
  * T* to const(T)* and the like.
  */
-void extypeAssignPointerType(Context ctx, ref ir.Exp exp, ir.PointerType ptr, ir.Type expOverride = null)
+void extypeAssignPointerType(Context ctx, ref ir.Exp exp, ir.PointerType ptr)
 {
 	// string literals implicitly convert to typeof(string.ptr)
 	auto constant = cast(ir.Constant) exp;
@@ -230,7 +231,7 @@ void extypeAssignPointerType(Context ctx, ref ir.Exp exp, ir.PointerType ptr, ir
 		exp = buildAccess(exp.location, exp, "ptr");
 	}
 
-	auto type = expOverride !is null ? expOverride : realType(getExpType(ctx.lp, exp, ctx.current));
+	auto type = ctx.overrideType !is null ? ctx.overrideType : realType(getExpType(ctx.lp, exp, ctx.current));
 
 	auto storage = cast(ir.StorageType) type;
 	if (storage !is null) {
@@ -347,7 +348,7 @@ void extypeAssignEnum(Context ctx, ref ir.Exp exp, ir.Enum e)
  */
 void extypeAssignCallableType(Context ctx, ref ir.Exp exp, ir.CallableType ctype)
 {
-	auto rtype = realType(getExpType(ctx.lp, exp, ctx.current));
+	auto rtype = ctx.overrideType !is null ? ctx.overrideType : realType(getExpType(ctx.lp, exp, ctx.current));
 	if (typesEqual(ctype, rtype)) {
 		return;
 	}
@@ -368,9 +369,9 @@ void extypeAssignCallableType(Context ctx, ref ir.Exp exp, ir.CallableType ctype
  * Handles casting arrays of non mutably indirect types with
  * differing storage types.
  */
-void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ir.Type expOverride)
+void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype)
 {
-	auto rtype = expOverride !is null ? expOverride : realType(getExpType(ctx.lp, exp, ctx.current));
+	auto rtype = ctx.overrideType !is null ? ctx.overrideType : realType(getExpType(ctx.lp, exp, ctx.current));
 	if (typesEqual(atype, rtype)) {
 		return;
 	}
@@ -399,7 +400,7 @@ void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ir.T
 
 void extypeAssignAAType(Context ctx, ref ir.Exp exp, ir.AAType aatype)
 {
-	auto rtype = getExpType(ctx.lp, exp, ctx.current);
+	auto rtype = ctx.overrideType !is null ? ctx.overrideType : getExpType(ctx.lp, exp, ctx.current);
 	if (exp.nodeType == ir.NodeType.AssocArray && typesEqual(aatype, rtype)) {
 		return;
 	}
@@ -420,7 +421,7 @@ void extypeAssignAAType(Context ctx, ref ir.Exp exp, ir.AAType aatype)
 	throw makeBadImplicitCast(exp, rtype, aatype);
 }
 
-void extypeAssignDispatch(Context ctx, ref ir.Exp exp, ir.Type type, ir.Type expOverride = null)
+void extypeAssignDispatch(Context ctx, ref ir.Exp exp, ir.Type type)
 {
 	switch (type.nodeType) {
 	case ir.NodeType.StorageType:
@@ -433,7 +434,7 @@ void extypeAssignDispatch(Context ctx, ref ir.Exp exp, ir.Type type, ir.Type exp
 		break;
 	case ir.NodeType.PointerType:
 		auto ptr = cast(ir.PointerType) type;
-		extypeAssignPointerType(ctx, exp, ptr, expOverride);
+		extypeAssignPointerType(ctx, exp, ptr);
 		break;
 	case ir.NodeType.PrimitiveType:
 		auto prim = cast(ir.PrimitiveType) type;
@@ -454,7 +455,7 @@ void extypeAssignDispatch(Context ctx, ref ir.Exp exp, ir.Type type, ir.Type exp
 		break;
 	case ir.NodeType.ArrayType:
 		auto atype = cast(ir.ArrayType) type;
-		extypeAssignArrayType(ctx, exp, atype, expOverride);
+		extypeAssignArrayType(ctx, exp, atype);
 		break;
 	case ir.NodeType.AAType:
 		auto aatype = cast(ir.AAType) type;

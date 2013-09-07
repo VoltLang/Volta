@@ -1104,6 +1104,22 @@ ir.Type deepStripStorage(ir.Type type)
 		return arr;
 	}
 
+	auto aa = cast(ir.AAType) type;
+	if (aa !is null) {
+		aa.value = deepStripStorage(aa.value);
+		aa.key = deepStripStorage(aa.key);
+		return aa;
+	}
+
+	auto ct = cast(ir.CallableType) type;
+	if (ct !is null) {
+		ct.ret = deepStripStorage(ct.ret);
+		foreach (ref param; ct.params) {
+			param = deepStripStorage(param);
+		}
+		return ct;
+	}
+
 	auto storage = cast(ir.StorageType) type;
 	if (storage !is null) {
 		storage.base = stripStorage(storage.base);
