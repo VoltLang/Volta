@@ -430,6 +430,14 @@ public:
 		Out = TokenType.Out,
 	}
 
+	/// For bitfields.
+	enum STORAGE_AUTO      = 0x00000001;
+	enum STORAGE_CONST     = 0x00000002;
+	enum STORAGE_IMMUTABLE = 0x00000004;
+	enum STORAGE_SCOPE     = 0x00000008;
+	enum STORAGE_REF       = 0x00000010;
+	enum STORAGE_OUT       = 0x00000020;
+
 
 public:
 	Kind type;

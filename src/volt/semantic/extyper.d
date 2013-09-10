@@ -182,49 +182,33 @@ void rejectBadScopeAssign(Context ctx, ref ir.Exp exp, ir.Type type)
 	}
 }
 
-/**
- * Implicitly convert to scope if possible.
- */
-void extypeAssignStorageType(Context ctx, ref ir.Exp exp, ir.StorageType storage)
-{
-	auto type = realType(getExpType(ctx.lp, exp, ctx.current));
-	if (storage.base is null) {
-		if (type.nodeType == ir.NodeType.FunctionSetType) {
-			auto fset = cast(ir.FunctionSetType) type;
-			throw makeCannotDisambiguate(exp, fset.set.functions);
-
-		}
-		storage.base = copyTypeSmart(exp.location, type);
-	}
-
-	if (storage.type == ir.StorageType.Kind.Scope) {
-		rejectBadScopeAssign(ctx, exp, storage);
-		exp = buildCastSmart(storage.base, exp);
-		extypeAssignDispatch(ctx, exp, storage.base);
-	}
-
-	if (canTransparentlyReferToBase(storage)) {
-		extypeAssignDispatch(ctx, exp, storage.base);
-		return;
-	}
-
-	ir.Exp dummy = exp;
-	ctx.overrideType = deepStripStorage(type);
-	extypeAssignDispatch(ctx, dummy, storage.base);
-	ctx.overrideType = null;
-}
-
 void extypeAssignTypeReference(Context ctx, ref ir.Exp exp, ir.TypeReference tr)
 {
 	extypeAssign(ctx, exp, tr.type);
+}
+
+void stripPointerBases(ir.Type toType, ref uint flag)
+{
+	switch (toType.nodeType) {
+	case ir.NodeType.PointerType:
+		auto ptr = cast(ir.PointerType) toType;
+		assert(ptr !is null);
+		ptr.base = flagitiseStorage(ptr.base, flag);
+		stripPointerBases(ptr.base, flag);
+		break;
+	default:
+		break;
+	}
 }
 
 /**
  * Handles implicit pointer casts. To void*, immutable(T)* to const(T)*
  * T* to const(T)* and the like.
  */
-void extypeAssignPointerType(Context ctx, ref ir.Exp exp, ir.PointerType ptr)
+void extypeAssignPointerType(Context ctx, ref ir.Exp exp, ir.PointerType ptr, uint flag)
 {
+	stripPointerBases(ptr, flag);
+
 	// string literals implicitly convert to typeof(string.ptr)
 	auto constant = cast(ir.Constant) exp;
 	if (constant !is null && constant._string.length != 0) {
@@ -243,12 +227,20 @@ void extypeAssignPointerType(Context ctx, ref ir.Exp exp, ir.PointerType ptr)
 		throw makeBadImplicitCast(exp, type, ptr);
 	}
 
-	if (typesEqual(ptr, rp)) {
-		return;
-	}
 
 	auto pbase = realBase(ptr);
 	auto rbase = realBase(rp);
+	uint rflag, raflag;
+	flagitiseStorage(rp, rflag);
+	rp.base = flagitiseStorage(rp.base, raflag);
+	rflag |= raflag;
+	uint aflag;
+	ptr.base = flagitiseStorage(ptr.base, aflag);
+	flag |= aflag;
+
+	if (typesEqual(ptr, rp)) {
+		return;
+	}
 
 	if (pbase.nodeType == ir.NodeType.PrimitiveType) {
 		auto asPrimitive = cast(ir.PrimitiveType) pbase;
@@ -259,12 +251,12 @@ void extypeAssignPointerType(Context ctx, ref ir.Exp exp, ir.PointerType ptr)
 		}
 	}
 
-	if (isConst(pbase) && rbase.nodeType != ir.NodeType.StorageType) {
+	if (flag & ir.StorageType.STORAGE_CONST && !(rflag & ir.StorageType.STORAGE_SCOPE)) {
 		exp = buildCastSmart(ptr, exp);
 		return;
 	}
 
-	if (isImmutable(rbase) && isConst(pbase)) {
+	if (rflag & ir.StorageType.STORAGE_IMMUTABLE && rflag & ir.StorageType.STORAGE_CONST) {
 		exp = buildCastSmart(ptr, exp);
 		return;
 	}
@@ -421,12 +413,72 @@ void extypeAssignAAType(Context ctx, ref ir.Exp exp, ir.AAType aatype)
 	throw makeBadImplicitCast(exp, rtype, aatype);
 }
 
+ir.Type flagitiseStorage(ir.Type type, ref uint flag)
+{
+	auto storage = cast(ir.StorageType) type;
+	while (storage !is null) {
+		final switch (storage.type) with (ir.StorageType) {
+		case Kind.Auto:
+			flag |= STORAGE_AUTO;
+			break;
+		case Kind.Const:
+			flag |= STORAGE_CONST;
+			break;
+		case Kind.Immutable:
+			flag |= STORAGE_IMMUTABLE;
+			break;
+		case Kind.Scope:
+			flag |= STORAGE_SCOPE;
+			break;
+		case Kind.Ref:
+			flag |= STORAGE_REF;
+			break;
+		case Kind.Out:
+			flag |= STORAGE_OUT;
+			break;
+		}
+		type = storage.base;
+		storage = cast(ir.StorageType) storage.base;
+	}
+	return type;
+}
+
+
+
+void handleAssign(Context ctx, ref ir.Type toType, ref ir.Exp exp, ref uint toFlag)
+{
+	auto rtype = getExpType(ctx.lp, exp, ctx.current);
+	auto storage = cast(ir.StorageType) toType;
+	if (storage !is null && storage.base is null) {
+		if (rtype.nodeType == ir.NodeType.FunctionSetType) {
+			throw makeCannotInfer(exp.location);
+		}
+		storage.base = copyTypeSmart(exp.location, rtype);
+	}
+	auto originalRtype = rtype;
+	auto originalTo = toType;
+	toType = flagitiseStorage(toType, toFlag);
+	uint rflag;
+	rtype = flagitiseStorage(rtype, rflag);
+	if ((toFlag & ir.StorageType.STORAGE_SCOPE) != 0 && ctx.isVarAssign) {
+		exp = buildCastSmart(exp.location, toType, exp);
+	} else if ((toFlag & ir.StorageType.STORAGE_SCOPE) != 0 && (rflag & ir.StorageType.STORAGE_SCOPE) == 0 && mutableIndirection(toType)) {
+		throw makeBadImplicitCast(exp, originalRtype, originalTo);
+	} else if ((rflag & ir.StorageType.STORAGE_CONST) != 0 && mutableIndirection(toType)) {
+		throw makeBadImplicitCast(exp, originalRtype, originalTo);
+	} else if (mutableIndirection(toType) && (rflag & ir.StorageType.STORAGE_SCOPE) != 0) {
+		throw makeBadImplicitCast(exp, originalRtype, originalTo);
+	}
+}
+
 void extypeAssignDispatch(Context ctx, ref ir.Exp exp, ir.Type type)
 {
+	uint flag;
+	handleAssign(ctx, type, exp, flag);
 	switch (type.nodeType) {
 	case ir.NodeType.StorageType:
 		auto storage = cast(ir.StorageType) type;
-		extypeAssignStorageType(ctx, exp, storage);
+		extypeAssignDispatch(ctx, exp, storage.base);
 		break;
 	case ir.NodeType.TypeReference:
 		auto tr = cast(ir.TypeReference) type;
@@ -434,7 +486,7 @@ void extypeAssignDispatch(Context ctx, ref ir.Exp exp, ir.Type type)
 		break;
 	case ir.NodeType.PointerType:
 		auto ptr = cast(ir.PointerType) type;
-		extypeAssignPointerType(ctx, exp, ptr);
+		extypeAssignPointerType(ctx, exp, ptr, flag);
 		break;
 	case ir.NodeType.PrimitiveType:
 		auto prim = cast(ir.PrimitiveType) type;
@@ -488,8 +540,6 @@ void extypeAssign(Context ctx, ref ir.Exp exp, ir.Type type)
 	ensureResolved(ctx.lp, ctx.current, type);
 	if (handleIfStructLiteral(ctx, type, exp)) return;
 	if (handleIfNull(ctx, type, exp)) return;
-
-	extypeAssignHandleStorage(ctx, exp, type);
 
 	extypeAssignDispatch(ctx, exp, type);
 }
@@ -2030,7 +2080,6 @@ public:
 
 	override Status enter(ir.ReturnStatement ret)
 	{
-		//auto fn = ctx.parentFunction;
 		auto fn = getParentFunction(ctx.current);
 		if (fn is null) {
 			throw panic(ret, "return statement outside of function.");
