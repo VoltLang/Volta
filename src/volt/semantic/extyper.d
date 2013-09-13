@@ -201,6 +201,20 @@ void stripPointerBases(ir.Type toType, ref uint flag)
 	}
 }
 
+void stripArrayBases(ir.Type toType, ref uint flag)
+{
+	switch (toType.nodeType) {
+	case ir.NodeType.ArrayType:
+		auto arr = cast(ir.ArrayType) toType;
+		assert(arr !is null);
+		arr.base = flagitiseStorage(arr.base, flag);
+		stripArrayBases(arr.base, flag);
+		break;
+	default:
+		break;
+	}
+}
+
 /**
  * Handles implicit pointer casts. To void*, immutable(T)* to const(T)*
  * T* to const(T)* and the like.
@@ -361,30 +375,20 @@ void extypeAssignCallableType(Context ctx, ref ir.Exp exp, ir.CallableType ctype
  * Handles casting arrays of non mutably indirect types with
  * differing storage types.
  */
-void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype)
+void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ref uint flag)
 {
+	auto acopy = copyTypeSmart(exp.location, atype);
+	stripArrayBases(acopy, flag);
 	auto rtype = ctx.overrideType !is null ? ctx.overrideType : realType(getExpType(ctx.lp, exp, ctx.current));
-	if (typesEqual(atype, rtype)) {
-		return;
+	auto rarr = cast(ir.ArrayType) copyTypeSmart(exp.location, rtype);
+	uint rflag;
+	if (rarr !is null) {
+		stripArrayBases(rarr, rflag);
 	}
-
-	auto rarr = cast(ir.ArrayType) rtype;
-	if (atype !is null && rarr !is null) { 
-		auto lstor = cast(ir.StorageType) atype.base;
-		auto rstor = cast(ir.StorageType) rarr.base;
-		if (lstor !is null && rstor is null) {
-			if (typesEqual(lstor.base, rarr.base) && !mutableIndirection(lstor.base)) {
-				return;
-			}
-		}
-		if (rstor !is null && lstor is null) {
-			if (typesEqual(rstor.base, atype.base) && !mutableIndirection(rstor.base)) {
-				return;
-			}
-		}
-		if (lstor !is null && rstor !is null && typesEqual(lstor.base, rstor.base) && !mutableIndirection(lstor.base)) {
-			return;
-		}
+	bool badImmutable = (flag & ir.StorageType.STORAGE_IMMUTABLE) != 0 && (rflag & ir.StorageType.STORAGE_IMMUTABLE) == 0;
+	if (typesEqual(acopy, rarr !is null ? rarr : rtype) && 
+		!badImmutable && (flag & ir.StorageType.STORAGE_SCOPE) == 0) {
+		return;
 	}
 
 	throw makeBadImplicitCast(exp, rtype, atype);
@@ -507,7 +511,7 @@ void extypeAssignDispatch(Context ctx, ref ir.Exp exp, ir.Type type)
 		break;
 	case ir.NodeType.ArrayType:
 		auto atype = cast(ir.ArrayType) type;
-		extypeAssignArrayType(ctx, exp, atype);
+		extypeAssignArrayType(ctx, exp, atype, flag);
 		break;
 	case ir.NodeType.AAType:
 		auto aatype = cast(ir.AAType) type;
