@@ -221,7 +221,9 @@ void stripArrayBases(ir.Type toType, ref uint flag)
  */
 void extypeAssignPointerType(Context ctx, ref ir.Exp exp, ir.PointerType ptr, uint flag)
 {
-	stripPointerBases(ptr, flag);
+	ir.PointerType pcopy = cast(ir.PointerType) copyTypeSmart(exp.location, ptr);
+	assert(pcopy !is null);
+	stripPointerBases(pcopy, flag);
 
 	// string literals implicitly convert to typeof(string.ptr)
 	auto constant = cast(ir.Constant) exp;
@@ -238,21 +240,23 @@ void extypeAssignPointerType(Context ctx, ref ir.Exp exp, ir.PointerType ptr, ui
 
 	auto rp = cast(ir.PointerType) type;
 	if (rp is null) {
-		throw makeBadImplicitCast(exp, type, ptr);
+		throw makeBadImplicitCast(exp, type, pcopy);
 	}
+	ir.PointerType rcopy = cast(ir.PointerType) copyTypeSmart(exp.location, rp);
+	assert(rcopy !is null);
 
 
-	auto pbase = realBase(ptr);
-	auto rbase = realBase(rp);
+	auto pbase = realBase(pcopy);
+	auto rbase = realBase(rcopy);
 	uint rflag, raflag;
-	flagitiseStorage(rp, rflag);
-	rp.base = flagitiseStorage(rp.base, raflag);
+	flagitiseStorage(rcopy, rflag);
+	rcopy.base = flagitiseStorage(rp.base, raflag);
 	rflag |= raflag;
 	uint aflag;
-	ptr.base = flagitiseStorage(ptr.base, aflag);
+	pcopy.base = flagitiseStorage(ptr.base, aflag);
 	flag |= aflag;
 
-	if (typesEqual(ptr, rp)) {
+	if (typesEqual(pcopy, rcopy)) {
 		return;
 	}
 
@@ -260,22 +264,22 @@ void extypeAssignPointerType(Context ctx, ref ir.Exp exp, ir.PointerType ptr, ui
 		auto asPrimitive = cast(ir.PrimitiveType) pbase;
 		assert(asPrimitive !is null);
 		if (asPrimitive.type == ir.PrimitiveType.Kind.Void) {
-			exp = buildCastSmart(ptr, exp);
+			exp = buildCastSmart(pcopy, exp);
 			return;
 		}
 	}
 
 	if (flag & ir.StorageType.STORAGE_CONST && !(rflag & ir.StorageType.STORAGE_SCOPE)) {
-		exp = buildCastSmart(ptr, exp);
+		exp = buildCastSmart(pcopy, exp);
 		return;
 	}
 
 	if (rflag & ir.StorageType.STORAGE_IMMUTABLE && rflag & ir.StorageType.STORAGE_CONST) {
-		exp = buildCastSmart(ptr, exp);
+		exp = buildCastSmart(pcopy, exp);
 		return;
 	}
 
-	throw makeBadImplicitCast(exp, type, ptr);
+	throw makeBadImplicitCast(exp, type, pcopy);
 }
 
 /**
