@@ -96,6 +96,21 @@ public:
 		mStream = null;
 	}
 
+	void transform(ref ir.Exp exp)
+	in {
+		assert(mStream is null);
+		assert(mFilename is null);
+	}
+	body {
+		assert(mStream is null);
+		assert(mFilename is null);
+
+		mStream = dout;
+		acceptExp(exp, this);
+		mStream.writefln();
+		mStream = null;
+	}
+
 
 	/*
 	 *
