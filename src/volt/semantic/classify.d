@@ -131,7 +131,7 @@ bool mutableIndirection(ir.Type t)
 		assert(asStruct !is null);
 		foreach (node; asStruct.members.nodes) {
 			auto asVar = cast(ir.Variable) node;
-			if (asVar is null) {
+			if (asVar is null || asVar.storage != ir.Variable.Storage.Field) {
 				continue;
 			}
 			if (mutableIndirection(asVar.type)) {
@@ -144,7 +144,7 @@ bool mutableIndirection(ir.Type t)
 		assert(asUnion !is null);
 		foreach (node; asUnion.members.nodes) {
 			auto asVar = cast(ir.Variable) node;
-			if (asVar is null) {
+			if (asVar is null || asVar.storage != ir.Variable.Storage.Field) {
 				continue;
 			}
 			if (mutableIndirection(asVar.type)) {
