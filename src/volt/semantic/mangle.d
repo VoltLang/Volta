@@ -10,6 +10,16 @@ import ir = volt.ir.ir;
 
 
 /**
+ * Mangle the name of type if not set mangled.
+ */
+void ensureMangled(ir.Type t)
+{
+	if (t.mangledName is null) {
+		t.mangledName = mangle(t);
+	}
+}
+
+/**
  * Mangle a type found in a given module.
  */
 string mangle(ir.Type t)

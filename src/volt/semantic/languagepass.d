@@ -18,6 +18,7 @@ import volt.visitor.prettyprinter;
 import volt.semantic.util;
 import volt.semantic.classify;
 import volt.semantic.lookup;
+import volt.semantic.typeinfo;
 import volt.semantic.attribremoval;
 import volt.semantic.condremoval;
 import volt.semantic.gatherer;
@@ -239,10 +240,28 @@ public:
 		throw makeInvalidAAKey(at);
 	}
 
-	override void actualize(ir.Struct c)
+	override void actualize(ir.Struct s)
 	{
-		// Nothing to do here.
-		c.isActualized = true;
+		if (s.isActualized)
+			return;
+
+		resolve(s);
+
+		createAggregateVar(this, s.myScope, s);
+
+		foreach (n; s.members.nodes) {
+			auto field = cast(ir.Variable)n;
+			if (field is null ||
+			    field.storage != ir.Variable.Storage.Field) {
+				continue;
+			}
+
+			resolve(s.myScope, field);
+		}
+
+		s.isActualized = true;
+
+		fileInAggregateVar(this, s.myScope, s);
 	}
 
 	override void actualize(ir.Union u)
@@ -254,20 +273,32 @@ public:
 		scope (exit)
 			w.done();
 
+		resolve(u);
+
+		createAggregateVar(this, u.myScope, u);
+
+		uint accum;
 		foreach (n; u.members.nodes) {
 			if (n.nodeType == ir.NodeType.Function) {
 				throw makeExpected(n, "field");
 			}
 			auto field = cast(ir.Variable)n;
-			if (field is null) {
+			if (field is null ||
+			    field.storage != ir.Variable.Storage.Field) {
 				continue;
 			}
 
 			resolve(u.myScope, field);
+			auto s = size(u.location, this, field.type);
+			if (s > accum) {
+				accum = s;
+			}
 		}
 
-		u.totalSize = size(u.location, this, u);
+		u.totalSize = accum;
 		u.isActualized = true;
+
+		fileInAggregateVar(this, u.myScope, u);
 	}
 
 	override void actualize(ir.Class c)
@@ -278,12 +309,29 @@ public:
 		if (!needsResolving(c))
 			return;
 
+		resolve(c);
+
 		auto w = mTracker.add(c, "actualizing class");
 		scope (exit)
 			w.done();
 
+		createAggregateVar(this, c.myScope, c);
+
 		resolveClass(this, c);
+
 		c.isActualized = true;
+
+		foreach (n; c.members.nodes) {
+			auto field = cast(ir.Variable)n;
+			if (field is null ||
+			    field.storage != ir.Variable.Storage.Field) {
+				continue;
+			}
+
+			resolve(c.myScope, field);
+		}
+
+		fileInAggregateVar(this, c.myScope, c);
 	}
 
 	override void actualize(ir.UserAttribute ua)

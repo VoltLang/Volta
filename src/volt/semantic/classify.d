@@ -64,10 +64,12 @@ int size(Location location, LanguagePass lp, ir.Node node)
 	case Struct:
 		auto asStruct = cast(ir.Struct) node;
 		assert(asStruct !is null);
+		lp.actualize(asStruct);
 		return structSize(location, lp, asStruct);
 	case Union:
 		auto asUnion = cast(ir.Union) node;
 		assert(asUnion !is null);
+		lp.actualize(asUnion);
 		return unionSize(location, lp, asUnion);
 	case Class:
 		return lp.settings.isVersionSet("V_P64") ? 8 : 4;
@@ -388,8 +390,9 @@ int structSize(Location location, LanguagePass lp, ir.Struct s)
 {
 	int sizeAccumulator;
 	foreach (node; s.members.nodes) {
-		// If it's not a Variable, it shouldn't take up space.
-		if (node.nodeType != ir.NodeType.Variable) {
+		// If it's not a Variable, or not a field, it shouldn't take up space.
+		auto asVar = cast(ir.Variable)node;
+		if (asVar is null || asVar.storage != ir.Variable.Storage.Field) {
 			continue;
 		}
 
@@ -413,26 +416,6 @@ int unionSize(Location location, LanguagePass lp, ir.Union u)
 			sizeAccumulator = s;
 	}
 	return sizeAccumulator;
-}
-
-/// Returns the size of a given Class (not the reference), in bytes.
-int classSize(Location location, LanguagePass lp, ir.Class c)
-{
-	int sizeAccumulator;
-	while (c !is null) {
-		foreach (node; c.members.nodes) {
-			// If it's not a Variable, it shouldn't take up space.
-			if (node.nodeType != ir.NodeType.Variable) {
-				continue;
-			}
-
-			sizeAccumulator += size(location, lp, node);
-		}
-		c = c.parentClass;
-	}
-
-	auto wordSize = size(lp.settings.getSizeT(location).type);
-	return sizeAccumulator + wordSize;
 }
 
 bool effectivelyConst(ir.Type type)

@@ -147,23 +147,6 @@ public:
 	this() { super(NodeType.Import); }
 }
 
-abstract class Aggregate : Type
-{
-public:
-	Access access; ///< default public.
-
-	Scope myScope; ///< Context for this struct.
-
-	string name; ///< Unmangled name of the struct.
-	TopLevelBlock members; ///< Toplevel nodes.
-	Attribute[] userAttrs;
-
-	bool isActualized;
-
-public:
-	this(NodeType nt) { super(nt); }
-}
-
 /**
  * Attributes apply different behaviours and access levels
  * to one or more top level nodes. These are lowered onto the
@@ -235,6 +218,28 @@ public:
 
 public:
 	this() { super(NodeType.Attribute); }
+}
+
+/**
+ * Aggregate is a base class for Struct, Union & Class.
+ */
+abstract class Aggregate : Type
+{
+public:
+	string name; ///< Unmangled name of the NamedType.
+	Access access; ///< default public.
+
+	Scope myScope; ///< Context for this NamedType.
+
+	Variable typeInfo;  ///< Filled in by the semantic pass.
+
+	Attribute[] userAttrs;
+	bool isActualized;
+
+	TopLevelBlock members; ///< Toplevel nodes.
+
+public:
+	this(NodeType nt) { super(nt); }
 }
 
 /**
