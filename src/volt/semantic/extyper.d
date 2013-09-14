@@ -1851,6 +1851,10 @@ public:
 
 		do {
 			edStack ~= ed;
+			if (ed.assign !is null) {
+				break;
+			}
+
 			ed = ed.prevEnum;
 			if (ed is null) {
 				break;

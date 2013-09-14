@@ -132,8 +132,9 @@ void ensureResolved(LanguagePass lp, ir.Scope current, ir.EnumDeclaration ed)
 	ir.Exp prevExp;
 
 	edStack ~= ed;
-	while (edStack[$-1].prevEnum !is null) {
-		edStack ~= edStack[$-1].prevEnum;
+	auto last = ed;
+	while (last.prevEnum !is null && last.assign is null) {
+		edStack ~= last = edStack[$-1].prevEnum;
 	}
 
 	while (edStack.length > 0) {

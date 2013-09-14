@@ -76,6 +76,7 @@ int size(Location location, LanguagePass lp, ir.Node node)
 	case Enum:
 		auto asEnum = cast(ir.Enum) node;
 		assert(asEnum !is null);
+		lp.resolve(asEnum);
 		return size(location, lp, asEnum.base);
 
 	case Variable:

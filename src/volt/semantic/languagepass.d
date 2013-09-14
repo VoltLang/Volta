@@ -195,6 +195,9 @@ public:
 
 		ensureResolved(this, e.myScope.parent, e.base);
 		e.resolved = true;
+
+		// Need to resolve the first member to set the type of the Enum.
+		resolve(e.myScope, e.members[0]);
 	}
 
 	override void resolve(ir.Scope current, ir.EnumDeclaration ed)
