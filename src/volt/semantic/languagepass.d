@@ -383,6 +383,10 @@ public:
 	override void phase2(ir.Module[] mods)
 	{
 		foreach(m; mods) {
+			if (m.hasPhase2)
+				continue;
+			m.hasPhase2 = true;
+
 			foreach(pass; passes2) {
 				pass.transform(m);
 			}

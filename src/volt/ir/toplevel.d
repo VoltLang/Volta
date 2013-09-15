@@ -74,6 +74,10 @@ public:
 	 * Has phase 1 be started on this module.
 	 */
 	bool hasPhase1;
+	/**
+	 * Has phase 2 be started on this module.
+	 */
+	bool hasPhase2;
 
 	bool gathered;
 
