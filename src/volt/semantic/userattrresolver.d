@@ -59,7 +59,7 @@ void fillInUserAttributeLayoutClass(LanguagePass lp, ir.UserAttribute attr)
 	_class.members.location = attr.location;
 	attr.mangledName = mangle(attr);
 	_class.mangledName = attr.mangledName;
-	_class.parentClass = retrieveAttribute(lp, attr.myScope, attr.location);
+	_class.parentClass = lp.attributeClass;
 	_class.parent = buildQualifiedName(attr.location, ["object", "Attribute"]);
 
 	auto fn = buildFunction(attr.location, _class.members, _class.myScope, "__ctor", true);

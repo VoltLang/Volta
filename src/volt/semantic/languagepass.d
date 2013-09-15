@@ -290,7 +290,7 @@ public:
 		scope (exit)
 			w.done();
 
-		createAggregateVar(this, s.myScope, s);
+		createAggregateVar(this, s);
 
 		foreach (n; s.members.nodes) {
 			auto field = cast(ir.Variable)n;
@@ -304,7 +304,7 @@ public:
 
 		s.isActualized = true;
 
-		fileInAggregateVar(this, s.myScope, s);
+		fileInAggregateVar(this, s);
 	}
 
 	override void doActualize(ir.Union u)
@@ -315,7 +315,7 @@ public:
 		scope (exit)
 			w.done();
 
-		createAggregateVar(this, u.myScope, u);
+		createAggregateVar(this, u);
 
 		uint accum;
 		foreach (n; u.members.nodes) {
@@ -338,7 +338,7 @@ public:
 		u.totalSize = accum;
 		u.isActualized = true;
 
-		fileInAggregateVar(this, u.myScope, u);
+		fileInAggregateVar(this, u);
 	}
 
 	override void doActualize(ir.Class c)
@@ -349,7 +349,7 @@ public:
 		scope (exit)
 			w.done();
 
-		createAggregateVar(this, c.myScope, c);
+		createAggregateVar(this, c);
 
 		resolveClass(this, c);
 
@@ -365,7 +365,7 @@ public:
 
 		c.isActualized = true;
 
-		fileInAggregateVar(this, c.myScope, c);
+		fileInAggregateVar(this, c);
 	}
 
 	override void doActualize(ir.UserAttribute ua)

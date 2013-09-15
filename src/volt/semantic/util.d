@@ -118,7 +118,7 @@ void replaceVarArgsIfNeeded(LanguagePass lp, ir.Function fn)
 	    !fn.type.varArgsProcessed &&
 	    fn.type.linkage == ir.Linkage.Volt) {
 		auto current = fn.myScope.parent;
-		auto tinfoClass = retrieveTypeInfo(lp, current, fn.location);
+		auto tinfoClass = lp.typeInfoClass;
 		auto tr = buildTypeReference(fn.location, tinfoClass, tinfoClass.name);
 		auto array = buildArrayType(fn.location, tr);
 		addParam(fn.location, fn, array, "_typeids");

@@ -353,7 +353,7 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 
 ir.Type getTypeidType(LanguagePass lp, ir.Typeid _typeid, ir.Scope currentScope)
 {
-	return retrieveTypeInfo(lp, currentScope, _typeid.location);
+	return lp.typeInfoClass;
 }
 
 ir.Type getConstantType(LanguagePass lp, ir.Constant constant)

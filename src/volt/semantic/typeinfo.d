@@ -27,59 +27,54 @@ string getTypeInfoVarName(ir.Type type)
 /**
  * Builds a complete TypeInfo, for use on none aggregate Types.
  */
-ir.Variable buildTypeInfo(LanguagePass lp, ir.Scope current, ir.Type type)
+ir.Variable buildTypeInfo(LanguagePass lp, ir.Type type)
 {
 	if (type.mangledName is null) {
 		type.mangledName = mangle(type);
 	}
 
-	auto typeinfo = retrieveTypeInfo(lp, current, type.location);
-	auto assign = buildTypeInfoLiteral(lp, typeinfo, type);
-
-	return buildTypeInfoVariable(typeinfo, type, assign, false);
+	auto assign = buildTypeInfoLiteral(lp, type);
+	return buildTypeInfoVariable(lp, type, assign, false);
 }
 
 /**
  * Fills in the TypeInfo Variable on a Aggregate.
  */
-void createAggregateVar(LanguagePass lp, ir.Scope current, ir.Aggregate aggr)
+void createAggregateVar(LanguagePass lp, ir.Aggregate aggr)
 {
 	if (aggr.typeInfo !is null) {
 		return;
 	}
 
-	auto typeinfo = retrieveTypeInfo(lp, current, aggr.location);
-
-	aggr.typeInfo = buildTypeInfoVariable(typeinfo, aggr, null, true);
+	aggr.typeInfo = buildTypeInfoVariable(lp, aggr, null, true);
 	aggr.members.nodes ~= aggr.typeInfo;
 }
 
 /**
  * Fills in the TypeInfo Variable assign, completing it.
  */
-void fileInAggregateVar(LanguagePass lp, ir.Scope current, ir.Aggregate aggr)
+void fileInAggregateVar(LanguagePass lp, ir.Aggregate aggr)
 {
 	assert(aggr.typeInfo !is null);
 	if (aggr.typeInfo.assign !is null) {
 		return;
 	}
 
-	auto typeinfo = retrieveTypeInfo(lp, current, aggr.location);
-	aggr.typeInfo.assign = buildTypeInfoLiteral(lp, typeinfo, aggr);
+	aggr.typeInfo.assign = buildTypeInfoLiteral(lp, aggr);
 }
 
 
 private:
 
 
-ir.Variable buildTypeInfoVariable(ir.Class typeinfo, ir.Type type, ir.Exp assign, bool aggr)
+ir.Variable buildTypeInfoVariable(LanguagePass lp, ir.Type type, ir.Exp assign, bool aggr)
 {
 	string varName = getTypeInfoVarName(type);
 
 	auto literalVar = new ir.Variable();
 	literalVar.location = type.location;
 	literalVar.assign = assign;
-	literalVar.type = buildTypeReference(type.location, typeinfo, typeinfo.name);
+	literalVar.type = buildTypeReference(type.location, lp.typeInfoClass, lp.typeInfoClass.name);
 	literalVar.mangledName = varName;
 	literalVar.name = varName;
 	literalVar.isWeakLink = !aggr;
@@ -89,7 +84,7 @@ ir.Variable buildTypeInfoVariable(ir.Class typeinfo, ir.Type type, ir.Exp assign
 	return literalVar;
 }
 
-ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Class typeinfo, ir.Type type)
+ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Type type)
 {
 	assert(type.mangledName !is null);
 
@@ -119,7 +114,7 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Class typeinfo, ir.Type
 	auto literal = new ir.ClassLiteral();
 	literal.location = type.location;
 	literal.useBaseStorage = true;
-	literal.type = buildTypeReference(type.location, typeinfo, typeinfo.name);
+	literal.type = buildTypeReference(type.location, lp.typeInfoClass, lp.typeInfoClass.name);
 
 	literal.exps ~= typeConstant;
 	literal.exps ~= typeTagConstant;

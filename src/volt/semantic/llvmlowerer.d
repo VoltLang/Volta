@@ -52,7 +52,7 @@ public:
 
 	override Status leave(ir.ThrowStatement t)
 	{
-		auto fn = retrieveFunctionFromObject(lp, thisModule.myScope, t.location, "vrt_eh_throw");
+		auto fn = retrieveFunctionFromObject(lp, t.location, "vrt_eh_throw");
 		auto eRef = buildExpReference(t.location, fn, "vrt_eh_throw");
 		t.exp = buildCall(t.location, eRef, [t.exp]);
 		return Continue;
@@ -144,7 +144,7 @@ public:
 
 		auto statExp = buildStatementExp(loc);
 
-		auto aaNewFn = retrieveFunctionFromObject(lp, thisModule.myScope, loc, "vrt_aa_new");
+		auto aaNewFn = retrieveFunctionFromObject(lp, loc, "vrt_aa_new");
 		auto var = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp,
 			copyTypeSmart(loc, aa), buildCall(loc, aaNewFn, [
 				buildTypeidSmart(loc, aa.value)
@@ -441,7 +441,7 @@ public:
 			left = addParamSmart(loc, fn, ltype, "left");
 		auto right = addParamSmart(loc, fn, rtype, "right");
 
-		auto fnAlloc = retrieveAllocDg(lp, thisModule.myScope, loc);
+		auto fnAlloc = lp.allocDgVariable;
 		auto allocExpRef = buildExpReference(loc, fnAlloc, fnAlloc.name);
 
 		auto fnCopy = getLlvmMemCopy(loc);
@@ -588,7 +588,7 @@ public:
 			left = addParamSmart(loc, fn, type, "left");
 		auto right = addParamSmart(loc, fn, type, "right");
 
-		auto fnAlloc = retrieveAllocDg(lp, thisModule.myScope, loc);
+		auto fnAlloc = lp.allocDgVariable;
 		auto allocExpRef = buildExpReference(loc, fnAlloc, fnAlloc.name);
 
 		auto fnCopy = getLlvmMemCopy(loc);
@@ -737,7 +737,7 @@ public:
 		auto name32 = "__llvm_memmove_p0i8_p0i8_i32";
 		auto name64 = "__llvm_memmove_p0i8_p0i8_i64";
 		auto name = V_P64 ? name64 : name32;
-		return retrieveFunctionFromObject(lp, thisModule.myScope, loc, name);
+		return retrieveFunctionFromObject(lp, loc, name);
 	}
 
 	ir.Function getLlvmMemCopy(Location loc)
@@ -745,12 +745,12 @@ public:
 		auto name32 = "__llvm_memcpy_p0i8_p0i8_i32";
 		auto name64 = "__llvm_memcpy_p0i8_p0i8_i64";
 		auto name = V_P64 ? name64 : name32;
-		return retrieveFunctionFromObject(lp, thisModule.myScope, loc, name);
+		return retrieveFunctionFromObject(lp, loc, name);
 	}
 
 	ir.Function getCMemCmp(Location loc)
 	{
-		return retrieveFunctionFromObject(lp, thisModule.myScope, loc, "__llvm_memcmp");
+		return retrieveFunctionFromObject(lp, loc, "__llvm_memcmp");
 	}
 
 	/**
@@ -773,7 +773,7 @@ public:
 void buildAAInsert(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope current,
 		ir.StatementExp statExp, ir.AAType aa, ir.Variable var, ir.Exp key, ir.Exp value,
 		bool buildif=true, bool aaIsPointer=true) {
-	auto aaNewFn = retrieveFunctionFromObject(lp, thisModule.myScope, loc, "vrt_aa_new");
+	auto aaNewFn = retrieveFunctionFromObject(lp, loc, "vrt_aa_new");
 
 	string name;
 	if (aa.key.nodeType == ir.NodeType.PrimitiveType)
@@ -781,7 +781,7 @@ void buildAAInsert(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 	else
 		name = "vrt_aa_insert_array";
 
-	auto aaInsertFn = retrieveFunctionFromObject(lp, thisModule.myScope, loc, name);
+	auto aaInsertFn = retrieveFunctionFromObject(lp, loc, name);
 
 	ir.Exp varExp;
 	if (buildif) {
@@ -824,15 +824,15 @@ void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 		name = "vrt_aa_in_primitive";
 	else
 		name = "vrt_aa_in_array";
-	auto inAAFn = retrieveFunctionFromObject(lp, thisModule.myScope, loc, name);
-	auto throwFn = retrieveFunctionFromObject(lp, thisModule.myScope, loc, "vrt_eh_throw");
+	auto inAAFn = retrieveFunctionFromObject(lp, loc, name);
+	auto throwFn = retrieveFunctionFromObject(lp, loc, "vrt_eh_throw");
 
 	auto thenState = buildBlockStat(loc, statExp, current);
 	auto s = buildStorageType(loc, ir.StorageType.Kind.Immutable, buildChar(loc));
 	canonicaliseStorageType(s);
 
-	auto knfClass = retrieveClassFromObject(lp, thisModule.myScope, loc, "KeyNotFoundException");
-	auto throwableClass = retrieveClassFromObject(lp, thisModule.myScope, loc, "Throwable");
+	auto knfClass = retrieveClassFromObject(lp, loc, "KeyNotFoundException");
+	auto throwableClass = retrieveClassFromObject(lp, loc, "Throwable");
 
 	buildExpStat(loc, thenState,
 		buildCall(loc, throwFn, [

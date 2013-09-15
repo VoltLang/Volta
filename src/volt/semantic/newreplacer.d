@@ -40,8 +40,8 @@ ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scop
 
 	auto countVar = addParam(location, fn, buildSizeT(location, lp), "count");
 
-	auto arrayStruct = retrieveArrayStruct(lp, baseScope, location);
-	auto allocDgVar = retrieveAllocDg(lp, baseScope, location);
+	auto arrayStruct = lp.arrayStruct;
+	auto allocDgVar = lp.allocDgVariable;
 
 	auto arrayStructVar = buildVarStatSmart(location, fn._body, fn._body.myScope, arrayStruct, "from");
 
@@ -174,7 +174,7 @@ public:
 	override void transform(ir.Module m)
 	{
 		thisModule = m;
-		allocDgVar = retrieveAllocDg(lp, m.myScope, m.location);
+		allocDgVar = lp.allocDgVariable;
 		accept(m, this);
 	}
 

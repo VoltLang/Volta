@@ -759,7 +759,7 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		auto argsSlice = postfix.arguments[0 .. funcNumArgs];
 		auto varArgsSlice = postfix.arguments[funcNumArgs .. $];
 
-		auto tinfoClass = retrieveTypeInfo(ctx.lp, ctx.current, postfix.location);
+		auto tinfoClass = ctx.lp.typeInfoClass;
 		auto tr = buildTypeReference(postfix.location, tinfoClass, tinfoClass.name);
 		tr.location = postfix.location;
 		auto array = new ir.ArrayType();
@@ -1295,7 +1295,7 @@ void handleCastTo(Context ctx, ref ir.Exp exp, ir.Unary unary)
 		return;
 	}
 
-	auto fn = retrieveFunctionFromObject(ctx.lp, from.myScope, unary.location, "vrt_handle_cast");
+	auto fn = retrieveFunctionFromObject(ctx.lp, unary.location, "vrt_handle_cast");
 	assert(fn !is null);
 
 	auto fnref = buildExpReference(unary.location, fn, "vrt_handle_cast");
@@ -1556,7 +1556,7 @@ void replaceTypeOfIfNeeded(Context ctx, ref ir.Type type)
  */
 void extypeThrow(Context ctx, ir.ThrowStatement t)
 {
-	auto throwable = cast(ir.Class) retrieveTypeFromObject(ctx.lp, ctx.current, t.location, "Throwable");
+	auto throwable = cast(ir.Class) retrieveTypeFromObject(ctx.lp, t.location, "Throwable");
 	assert(throwable !is null);
 
 	auto type = getExpType(ctx.lp, t.exp, ctx.current);
@@ -1654,7 +1654,7 @@ void handleNestedParams(Context ctx, ir.Function fn)
  */
 void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 {
-	auto hashFunction = retrieveFunctionFromObject(ctx.lp, ctx.current, ss.location, "vrt_hash");
+	auto hashFunction = retrieveFunctionFromObject(ctx.lp, ss.location, "vrt_hash");
 
 	auto conditionType = realType(getExpType(ctx.lp, ss.condition, ctx.current), false, true);
 	auto originalCondition = ss.condition;

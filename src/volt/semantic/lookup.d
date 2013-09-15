@@ -181,107 +181,42 @@ ir.Type lookupType(LanguagePass lp, ir.Scope _scope, ir.QualifiedName id)
  * Throws: CompilerPanic on failure.
  * Returns: Always a valid value.
  */
-ir.Store retrieveStoreFromObject(LanguagePass lp, ir.Scope _scope, Location loc, string name)
+ir.Store retrieveStoreFromObject(LanguagePass lp, Location loc, string name)
 {
-	auto objectStore = lookup(lp, _scope, loc, "object");
-	if (objectStore is null || objectStore.s is null) {
-		throw panic(loc, "couldn't access object module.");
-	}
-	auto store = lookup(lp, objectStore.s, loc, name);
+	auto s = lp.objectModule.myScope;
+	auto store = lookup(lp, s, loc, name);
 	if (store is null || store.node is null) {
 		throw panic(loc, "couldn't locate object." ~ name);
 	}
 	return store;
 }
 
-ir.Function retrieveFunctionFromObject(LanguagePass lp, ir.Scope _scope, Location loc, string name)
+ir.Function retrieveFunctionFromObject(LanguagePass lp, Location loc, string name)
 {
-	auto objectStore = lookup(lp, _scope, loc, "object");
-	if (objectStore is null || objectStore.s is null) {
-		throw panic(loc, "couldn't access object module.");
-	}
-	auto store = lookup(lp, objectStore.s, loc, name);
-	return ensureFunction(objectStore.s, loc, name, store);
+	auto s = lp.objectModule.myScope;
+	auto store = lookup(lp, s, loc, name);
+	return ensureFunction(s, loc, name, store);
 }
 
-ir.Type retrieveTypeFromObject(LanguagePass lp, ir.Scope _scope, Location loc, string name)
+ir.Type retrieveTypeFromObject(LanguagePass lp, Location loc, string name)
 {
-	auto objectStore = lookup(lp, _scope, loc, "object");
-	if (objectStore is null || objectStore.s is null) {
-		throw panic(loc, "couldn't access object module.");
-	}
-	auto store = lookup(lp, objectStore.s, loc, name);
-	return ensureType(objectStore.s, loc, name, store);
+	auto s = lp.objectModule.myScope;
+	auto store = lookup(lp, s, loc, name);
+	return ensureType(s, loc, name, store);
 }
 
 /**
  * Looks up a class in object.
  * Throws: CompilerPanic on failure
  */
-ir.Class retrieveClassFromObject(LanguagePass lp, ir.Scope _scope, Location loc, string name)
+ir.Class retrieveClassFromObject(LanguagePass lp, Location loc, string name)
 {
-	auto clazzStore = retrieveStoreFromObject(lp, _scope, loc, name);
+	auto clazzStore = retrieveStoreFromObject(lp, loc, name);
 	auto clazz = cast(ir.Class) clazzStore.node;
 	if (clazz is null) {
 		throw panic(loc, format("object.%s is not a class.", name));
 	}
 	return clazz;
-}
-
-/**
- * Look up object.Attribute.
- * Throws: CompilerPanic on failure.
- */
-ir.Class retrieveAttribute(LanguagePass lp, ir.Scope _scope, Location loc)
-{
-	return retrieveClassFromObject(lp, _scope, loc, "Attribute");
-}
-
-/**
- * Look up object.TypeInfo.
- * Throws: CompilerPanic on failure.
- */
-ir.Class retrieveTypeInfo(LanguagePass lp, ir.Scope _scope, Location loc)
-{
-	return retrieveClassFromObject(lp, _scope, loc, "TypeInfo");
-}
-
-/**
- * Look up object.Object.
- * Throws: CompilerPanic on failure.
- */
-ir.Class retrieveObject(LanguagePass lp, ir.Scope _scope, Location loc)
-{
-	return retrieveClassFromObject(lp, _scope, loc, "Object");
-}
-
-/**
- * Look up object.AllocDg.
- * Throws: CompilerPanic on failure.
- */
-ir.Variable retrieveAllocDg(LanguagePass lp, ir.Scope _scope, Location loc)
-{
-
-	auto allocDgStore = retrieveStoreFromObject(lp, _scope, loc, "allocDg");
-	auto asVar = cast(ir.Variable) allocDgStore.node;
-	if (asVar is null) {
-		throw panic(loc, "allocDg is wrong type.");
-	}
-	return asVar;
-}
-
-/**
- * Look up object.ArrayStruct.
- * Throws: CompilerPanic on failure.
- */
-ir.Struct retrieveArrayStruct(LanguagePass lp, ir.Scope _scope, Location loc)
-{
-	auto arrayStore = retrieveStoreFromObject(lp, _scope, loc, "ArrayStruct");
-	auto asStruct = cast(ir.Struct) arrayStore.node;
-	if (asStruct is null) {
-		throw panic(asStruct.location, "object.ArrayStruct is wrong type.");
-	}
-	return asStruct;
 }
 
 /**
