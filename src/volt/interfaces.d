@@ -174,29 +174,9 @@ public:
 	/* @} */
 
 	/**
-	 * Resovles a Struct, done on lookup of it.
-	 */
-	abstract void resolve(ir.Struct c);
-
-	/**
-	 * Resovles a Union, done on lookup of it.
-	 */
-	abstract void resolve(ir.Union u);
-
-	/**
-	 * Resovles a Class, making sure the parent is populated.
-	 */
-	abstract void resolve(ir.Class c);
-
-	/**
 	 * Resovles a Attribute, for UserAttribute usages.
 	 */
 	abstract void resolve(ir.Scope current, ir.Attribute a);
-
-	/**
-	 * Resovles a UserAttribute, done on lookup of it.
-	 */
-	abstract void resolve(ir.UserAttribute au);
 
 	/**
 	 * Resolves a Enum making it usable externaly.
@@ -216,8 +196,32 @@ public:
 	 * Resoltes a AAType and checks if the Key-Type is compatible
 	 *
 	 * @throws CompilerError on invalid Key-Type
-	*/
+	 */
 	abstract void resolve(ir.Scope current, ir.AAType at);
+
+	/**
+	 * Resovles a Struct, done on lookup of it.
+	 */
+	final void resolve(ir.Struct s)
+	{ if (!s.isResolved) doResolve(s); }
+
+	/**
+	 * Resovles a Union, done on lookup of it.
+	 */
+	final void resolve(ir.Union u)
+	{ if (!u.isResolved) doResolve(u); }
+
+	/**
+	 * Resovles a Class, making sure the parent is populated.
+	 */
+	final void resolve(ir.Class c)
+	{ if (!c.isResolved) doResolve(c); }
+
+	/**
+	 * Resovles a UserAttribute, done on lookup of it.
+	 */
+	final void resolve(ir.UserAttribute au)
+	{ if (!au.isResolved) doResolve(au); }
 
 	/**
 	 * Actualize a Struct, making sure all its fields and methods
@@ -279,6 +283,11 @@ public:
 	 */
 
 protected:
+	abstract void doResolve(ir.Class c);
+	abstract void doResolve(ir.Union u);
+	abstract void doResolve(ir.Struct c);
+	abstract void doResolve(ir.UserAttribute ua);
+
 	abstract void doActualize(ir.Struct s);
 	abstract void doActualize(ir.Union u);
 	abstract void doActualize(ir.Class c);

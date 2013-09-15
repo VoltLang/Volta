@@ -156,22 +156,6 @@ public:
 		resolveAlias(this, s);
 	}
 
-	override void resolve(ir.Struct s)
-	{
-		resolve(s.myScope.parent, s.userAttrs);
-	}
-
-	override void resolve(ir.Union u)
-	{
-		resolve(u.myScope.parent, u.userAttrs);
-	}
-
-	override void resolve(ir.Class c)
-	{
-		resolve(c.myScope.parent, c.userAttrs);
-		fillInParentIfNeeded(this, c);
-	}
-
 	override void resolve(ir.Scope current, ir.Attribute a)
 	{
 		if (!needsResolving(a)) {
@@ -180,11 +164,6 @@ public:
 
 		auto e = new ExTyper(this);
 		e.transform(current, a);
-	}
-
-	override void resolve(ir.UserAttribute ua)
-	{
-		// Nothing to do here.
 	}
 
 	override void resolve(ir.Enum e)
@@ -243,6 +222,31 @@ public:
 		throw makeInvalidAAKey(at);
 	}
 
+	override void doResolve(ir.Struct s)
+	{
+		resolve(s.myScope.parent, s.userAttrs);
+		s.isResolved = true;
+	}
+
+	override void doResolve(ir.Union u)
+	{
+		resolve(u.myScope.parent, u.userAttrs);
+		u.isResolved = true;
+	}
+
+	override void doResolve(ir.Class c)
+	{
+		resolve(c.myScope.parent, c.userAttrs);
+		fillInParentIfNeeded(this, c);
+		c.isResolved = true;
+	}
+
+	override void doResolve(ir.UserAttribute ua)
+	{
+		// Nothing to do here.
+		ua.isResolved = true;
+	}
+
 
 	/*
 	 *
@@ -253,7 +257,7 @@ public:
 
 	override void doActualize(ir.Struct s)
 	{
-		resolve(s);
+		super.resolve(s);
 
 		auto w = mTracker.add(s, "actualizing struct");
 		scope (exit)
@@ -278,7 +282,7 @@ public:
 
 	override void doActualize(ir.Union u)
 	{
-		resolve(u);
+		super.resolve(u);
 
 		auto w = mTracker.add(u, "actualizing union");
 		scope (exit)
@@ -312,7 +316,7 @@ public:
 
 	override void doActualize(ir.Class c)
 	{
-		resolve(c);
+		super.resolve(c);
 
 		auto w = mTracker.add(c, "actualizing class");
 		scope (exit)
@@ -339,14 +343,13 @@ public:
 
 	override void doActualize(ir.UserAttribute ua)
 	{
-		resolve(ua);
+		super.resolve(ua);
 
 		auto w = mTracker.add(ua, "actualizing user attribute");
 		scope (exit)
 			w.done();
 
 		actualizeUserAttribute(this, ua);
-		resolve(ua);
 		ua.isActualized = true;
 	}
 

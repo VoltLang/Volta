@@ -234,9 +234,11 @@ public:
 	Variable typeInfo;  ///< Filled in by the semantic pass.
 
 	Attribute[] userAttrs;
-	bool isActualized;
 
 	TopLevelBlock members; ///< Toplevel nodes.
+
+	bool isResolved;
+	bool isActualized;
 
 public:
 	this(NodeType nt) { super(nt); }
@@ -542,6 +544,8 @@ public:
 	Variable[] fields;
 	Scope myScope;
 	Class layoutClass;
+
+	bool isResolved;
 	bool isActualized;
 
 public:
