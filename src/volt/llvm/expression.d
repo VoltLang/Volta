@@ -616,10 +616,10 @@ void handleCastPrimitive(State state, Location loc, PrimitiveType newType,
 		} else if (newType.bits > oldType.bits) {
 			// Extend care about signedness of the target type.
 			// But only if both are signed, since "cast(int)cast(ubyte)0xff" should yeild 255 not -1.
-			if (newType.signed && oldType.signed) {
-				op = LLVMOpcode.SExt;
-			} else {
+			if (!oldType.signed) {
 				op = LLVMOpcode.ZExt;
+			} else {
+				op = LLVMOpcode.SExt;
 			}
 		} else if (newType.signed != oldType.signed) {
 			// Just bitcast this.
