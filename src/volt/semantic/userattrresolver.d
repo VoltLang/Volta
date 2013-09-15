@@ -28,11 +28,6 @@ bool needsResolving(ir.Attribute a)
 	return true;
 }
 
-bool needsActualizing(ir.UserAttribute attr)
-{
-	return attr.layoutClass is null;
-}
-
 void actualizeUserAttribute(LanguagePass lp, ir.UserAttribute attr)
 {
 	checkUserAttribute(lp, attr);

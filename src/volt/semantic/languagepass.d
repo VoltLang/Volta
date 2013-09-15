@@ -243,12 +243,21 @@ public:
 		throw makeInvalidAAKey(at);
 	}
 
-	override void actualize(ir.Struct s)
-	{
-		if (s.isActualized)
-			return;
 
+	/*
+	 *
+	 * Actualize functons.
+	 *
+	 */
+
+
+	override void doActualize(ir.Struct s)
+	{
 		resolve(s);
+
+		auto w = mTracker.add(s, "actualizing struct");
+		scope (exit)
+			w.done();
 
 		createAggregateVar(this, s.myScope, s);
 
@@ -267,16 +276,13 @@ public:
 		fileInAggregateVar(this, s.myScope, s);
 	}
 
-	override void actualize(ir.Union u)
+	override void doActualize(ir.Union u)
 	{
-		if (u.isActualized)
-			return;
+		resolve(u);
 
 		auto w = mTracker.add(u, "actualizing union");
 		scope (exit)
 			w.done();
-
-		resolve(u);
 
 		createAggregateVar(this, u.myScope, u);
 
@@ -304,14 +310,8 @@ public:
 		fileInAggregateVar(this, u.myScope, u);
 	}
 
-	override void actualize(ir.Class c)
+	override void doActualize(ir.Class c)
 	{
-		if (c.isActualized)
-			return;
-
-		if (!needsResolving(c))
-			return;
-
 		resolve(c);
 
 		auto w = mTracker.add(c, "actualizing class");
@@ -321,8 +321,6 @@ public:
 		createAggregateVar(this, c.myScope, c);
 
 		resolveClass(this, c);
-
-		c.isActualized = true;
 
 		foreach (n; c.members.nodes) {
 			auto field = cast(ir.Variable)n;
@@ -334,16 +332,14 @@ public:
 			resolve(c.myScope, field);
 		}
 
+		c.isActualized = true;
+
 		fileInAggregateVar(this, c.myScope, c);
 	}
 
-	override void actualize(ir.UserAttribute ua)
+	override void doActualize(ir.UserAttribute ua)
 	{
-		if (ua.isActualized)
-			return;
-
-		if (!needsActualizing(ua))
-			return;
+		resolve(ua);
 
 		auto w = mTracker.add(ua, "actualizing user attribute");
 		scope (exit)

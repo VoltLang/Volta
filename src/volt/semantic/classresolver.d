@@ -18,18 +18,6 @@ import volt.semantic.util;
 import volt.semantic.overload;
 
 
-bool needsResolving(ir.Class c)
-{
-	if (c.layoutStruct is null) {
-		return true;
-	}
-	if (!c.isObject && c.parentClass is null) {
-		return true;
-	}
-
-	return false;
-}
-
 void resolveClass(LanguagePass lp, ir.Class c)
 {
 	fillInParentIfNeeded(lp, c);
