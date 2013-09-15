@@ -17,20 +17,22 @@ import volt.visitor.debugprinter;
 import volt.visitor.prettyprinter;
 
 import volt.semantic.util;
-import volt.semantic.classify;
 import volt.semantic.lookup;
+import volt.semantic.classify;
 import volt.semantic.typeinfo;
-import volt.semantic.attribremoval;
-import volt.semantic.condremoval;
-import volt.semantic.gatherer;
+
 import volt.semantic.extyper;
-import volt.semantic.manglewriter;
-import volt.semantic.importresolver;
+import volt.semantic.gatherer;
 import volt.semantic.irverifier;
-import volt.semantic.typeidreplacer;
+import volt.semantic.condremoval;
 import volt.semantic.newreplacer;
 import volt.semantic.llvmlowerer;
+import volt.semantic.manglewriter;
+import volt.semantic.attribremoval;
+import volt.semantic.typeidreplacer;
+import volt.semantic.importresolver;
 
+import volt.semantic.resolver;
 import volt.semantic.classresolver;
 import volt.semantic.aliasresolver;
 import volt.semantic.userattrresolver;
@@ -199,11 +201,7 @@ public:
 			return;
 		}
 
-		ensureResolved(this, e.myScope.parent, e.base);
-		e.resolved = true;
-
-		// Need to resolve the first member to set the type of the Enum.
-		resolve(e.myScope, e.members[0]);
+		resolveEnum(this, e);
 	}
 
 	override void resolve(ir.Scope current, ir.EnumDeclaration ed)

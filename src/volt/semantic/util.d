@@ -126,39 +126,6 @@ void replaceVarArgsIfNeeded(LanguagePass lp, ir.Function fn)
 	}
 }
 
-void ensureResolved(LanguagePass lp, ir.Scope current, ir.EnumDeclaration ed)
-{
-	ir.EnumDeclaration[] edStack;
-	ir.Exp prevExp;
-
-	edStack ~= ed;
-	auto last = ed;
-	while (last.prevEnum !is null && last.assign is null) {
-		edStack ~= last = edStack[$-1].prevEnum;
-	}
-
-	while (edStack.length > 0) {
-		edStack[$-1].type = copyTypeSmart(edStack[$-1].location, edStack[$-1].type);
-		if (edStack[$-1].assign is null && prevExp is null) {
-			edStack[$-1].assign = prevExp = buildConstantInt(edStack[$-1].location, 0);
-		}
-
-		if (edStack[$-1].assign !is null) {
-			edStack[$-1].assign = prevExp = evaluate(lp, current, edStack[$-1].assign);
-		} else {
-			auto loc = edStack[$-1].location;
-			auto prevType = getExpType(lp, prevExp, current);
-			if (!isIntegral(prevType)) {
-				throw makeExpected(loc, "integral type");
-			}
-
-			edStack[$-1].assign = prevExp = evaluate(lp, current, buildAdd(loc, copyExp(prevExp), buildConstantInt(loc, 1)));
-		}
-		assert(prevExp !is null);
-		edStack = edStack[0 .. $-1];
-	}
-}
-
 /**
  * Ensures that a Store is a resolved alias.
  */
@@ -252,24 +219,7 @@ void ensureResolved(LanguagePass lp, ir.Scope current, ir.Type type)
 		return lp.resolve(current, tr);
 	case Enum:
 		auto e = cast(ir.Enum)type;
-		if (e.base !is null) {
-			ensureResolved(lp, current, e.base);
-		}
-		ir.EnumDeclaration first;
-		foreach (d; e.members) {
-			if (first is null) {
-				first = d;
-			}
-			ensureResolved(lp, current, d);
-		}
-		assert(first !is null && first.assign !is null);
-		if (isAuto(e.base)) {
-			e.base = copyType(getExpType(lp, first.assign, current));
-		}
-		if (!isIntegral(e.base)) {
-			throw panic(e, "only integral enums are supported.");
-		}
-		return;
+		return lp.resolve(e);
 	case AAType:
 		auto at = cast(ir.AAType)type;
 		lp.resolve(current, at);
