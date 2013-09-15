@@ -16,10 +16,13 @@ import volt.semantic.mangle;
 import volt.semantic.lookup;
 import volt.semantic.util;
 import volt.semantic.overload;
+import volt.semantic.typeinfo;
 
 
-void resolveClass(LanguagePass lp, ir.Class c)
+void actualizeClass(LanguagePass lp, ir.Class c)
 {
+	createAggregateVar(lp, c);
+
 	fillInParentIfNeeded(lp, c);
 
 	if (!c.isObject) {
@@ -27,6 +30,10 @@ void resolveClass(LanguagePass lp, ir.Class c)
 	}
 
 	fillInClassLayoutIfNeeded(c, lp);
+
+	c.isActualized = true;
+
+	fileInAggregateVar(lp, c);
 }
 
 bool rewriteSuperIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, LanguagePass lp)

@@ -288,21 +288,7 @@ public:
 		scope (exit)
 			w.done();
 
-		createAggregateVar(this, s);
-
-		foreach (n; s.members.nodes) {
-			auto field = cast(ir.Variable)n;
-			if (field is null ||
-			    field.storage != ir.Variable.Storage.Field) {
-				continue;
-			}
-
-			resolve(s.myScope, field);
-		}
-
-		s.isActualized = true;
-
-		fileInAggregateVar(this, s);
+		actualizeStruct(this, s);
 	}
 
 	override void doActualize(ir.Union u)
@@ -313,30 +299,7 @@ public:
 		scope (exit)
 			w.done();
 
-		createAggregateVar(this, u);
-
-		uint accum;
-		foreach (n; u.members.nodes) {
-			if (n.nodeType == ir.NodeType.Function) {
-				throw makeExpected(n, "field");
-			}
-			auto field = cast(ir.Variable)n;
-			if (field is null ||
-			    field.storage != ir.Variable.Storage.Field) {
-				continue;
-			}
-
-			resolve(u.myScope, field);
-			auto s = size(u.location, this, field.type);
-			if (s > accum) {
-				accum = s;
-			}
-		}
-
-		u.totalSize = accum;
-		u.isActualized = true;
-
-		fileInAggregateVar(this, u);
+		actualizeUnion(this, u);
 	}
 
 	override void doActualize(ir.Class c)
@@ -347,23 +310,7 @@ public:
 		scope (exit)
 			w.done();
 
-		createAggregateVar(this, c);
-
-		resolveClass(this, c);
-
-		foreach (n; c.members.nodes) {
-			auto field = cast(ir.Variable)n;
-			if (field is null ||
-			    field.storage != ir.Variable.Storage.Field) {
-				continue;
-			}
-
-			resolve(c.myScope, field);
-		}
-
-		c.isActualized = true;
-
-		fileInAggregateVar(this, c);
+		actualizeClass(this, c);
 	}
 
 	override void doActualize(ir.UserAttribute ua)
@@ -375,7 +322,6 @@ public:
 			w.done();
 
 		actualizeUserAttribute(this, ua);
-		ua.isActualized = true;
 	}
 
 

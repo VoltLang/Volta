@@ -28,18 +28,19 @@ bool needsResolving(ir.Attribute a)
 	return true;
 }
 
-void actualizeUserAttribute(LanguagePass lp, ir.UserAttribute attr)
+void actualizeUserAttribute(LanguagePass lp, ir.UserAttribute ua)
 {
-	checkUserAttribute(lp, attr);
-	fillInUserAttributeLayoutClass(lp, attr);
+	checkUserAttribute(lp, ua);
+	fillInUserAttributeLayoutClass(lp, ua);
+	ua.isActualized = true;
 }
 
-void checkUserAttribute(LanguagePass lp, ir.UserAttribute attr)
+void checkUserAttribute(LanguagePass lp, ir.UserAttribute ua)
 {
-	foreach (field; attr.fields) {
-		lp.resolve(attr.myScope, field);
+	foreach (field; ua.fields) {
+		lp.resolve(ua.myScope, field);
 
-		if (!acceptableForUserAttribute(lp, attr.myScope, field.type)) {
+		if (!acceptableForUserAttribute(lp, ua.myScope, field.type)) {
 			throw makeExpected(field, "@interface suitable type");
 		}
 	}
@@ -49,32 +50,32 @@ void checkUserAttribute(LanguagePass lp, ir.UserAttribute attr)
  * Generate the layout class for a given UserAttribute,
  * if one has not been previously generated.
  */
-void fillInUserAttributeLayoutClass(LanguagePass lp, ir.UserAttribute attr)
+void fillInUserAttributeLayoutClass(LanguagePass lp, ir.UserAttribute ua)
 {
 	auto _class = new ir.Class();
-	_class.location = attr.location;
-	_class.name = attr.name;
-	_class.myScope = new ir.Scope(attr.myScope, _class, _class.name);
+	_class.location = ua.location;
+	_class.name = ua.name;
+	_class.myScope = new ir.Scope(ua.myScope, _class, _class.name);
 	_class.members = new ir.TopLevelBlock();
-	_class.members.location = attr.location;
-	attr.mangledName = mangle(attr);
-	_class.mangledName = attr.mangledName;
+	_class.members.location = ua.location;
+	ua.mangledName = mangle(ua);
+	_class.mangledName = ua.mangledName;
 	_class.parentClass = lp.attributeClass;
-	_class.parent = buildQualifiedName(attr.location, ["object", "Attribute"]);
+	_class.parent = buildQualifiedName(ua.location, ["object", "Attribute"]);
 
-	auto fn = buildFunction(attr.location, _class.members, _class.myScope, "__ctor", true);
+	auto fn = buildFunction(ua.location, _class.members, _class.myScope, "__ctor", true);
 	fn.kind = ir.Function.Kind.Constructor;
-	buildReturnStat(attr.location, fn._body);
+	buildReturnStat(ua.location, fn._body);
 	_class.userConstructors ~= fn;
 
-	foreach (field; attr.fields) {
-		auto v = copyVariableSmart(attr.location, field);
+	foreach (field; ua.fields) {
+		auto v = copyVariableSmart(ua.location, field);
 		v.storage = ir.Variable.Storage.Field;
 
 		_class.members.nodes ~= v;
 		_class.myScope.addValue(v, v.name);
 	}
-	attr.layoutClass = _class;
+	ua.layoutClass = _class;
 
 	lp.actualize(_class);
 }
