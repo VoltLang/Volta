@@ -44,7 +44,8 @@ protected:
 	string[] mSourceFiles;
 	string[] mBitCodeFiles;
 	string[] mObjectFiles;
-	ir.Module[string] mModules;
+	ir.Module[string] mModulesByName;
+	ir.Module[string] mModulesByFile;
 
 	string[] mLibraryFiles;
 	string[] mLibraryPaths;
@@ -103,7 +104,7 @@ public:
 	 */
 	ir.Module getModule(ir.QualifiedName name)
 	{
-		auto p = name.toString() in mModules;
+		auto p = name.toString() in mModulesByName;
 		ir.Module m;
 
 		if (p !is null)
@@ -239,9 +240,18 @@ protected:
 		Location loc;
 		loc.filename = file;
 
+		if (file in mModulesByFile) {
+			return mModulesByFile[file];
+		}
+
 		auto src = cast(string) read(loc.filename);
 		auto m = frontend.parseNewFile(src, loc);
-		mModules[m.name.toString()] = m;
+		if (m.name.toString() in mModulesByName) {
+			throw makeAlreadyLoaded(m, file);
+		}
+
+		mModulesByFile[file] = m;
+		mModulesByName[m.name.toString()] = m;
 
 		return m;
 	}
@@ -261,7 +271,7 @@ protected:
 			languagePass.phase1(mod);
 
 		ir.Module[] dmdIsStupid;
-		foreach (mod; mModules)
+		foreach (mod; mModulesByName)
 			dmdIsStupid ~= mod;
 
 		// All modules need to be run trough phase2.

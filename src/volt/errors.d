@@ -102,6 +102,11 @@ CompilerException makeMultipleValidModules(ir.Node node, string[] paths, string 
 	return new CompilerError(node.location, format("multiple modules are valid %s.", paths), file, line);
 }
 
+CompilerException makeAlreadyLoaded(ir.Module m, string filename, string file = __FILE__, size_t line = __LINE__)
+{
+	return new CompilerError(m.location, format("module %s already loaded '%s'", m.name.toString(), filename), file, line);
+}
+
 CompilerException makeCannotOverloadNested(ir.Node node, ir.Function fn, string file = __FILE__, size_t line = __LINE__)
 {
 	return new CompilerError(node.location, format("cannot overload nested function '%s'.", fn.name), file, line);
