@@ -104,6 +104,18 @@ public:
 	Frontend frontend;
 	Controller controller;
 
+	/**
+	 * Cached lookup items.
+	 * @{
+	 */
+	ir.Module objectModule;
+	ir.Class objectClass;
+	ir.Class typeInfoClass;
+	ir.Class attributeClass;
+	ir.Struct arrayStruct;
+	ir.Variable allocDgVariable;
+	/* @} */
+
 public:
 	this(Settings settings, Frontend frontend, Controller controller)
 	out {

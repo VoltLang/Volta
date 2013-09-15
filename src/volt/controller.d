@@ -266,6 +266,12 @@ protected:
 			mods ~= loadAndParse(file);
 		}
 
+		// After we have loaded all of the modules
+		// setup the pointers, this allows for suppling
+		// a user defined object module.
+		auto lp = cast(VoltLanguagePass)languagePass;
+		lp.setupOneTruePointers();
+
 		// Force phase 1 to be executed on the modules.
 		foreach (mod; mods)
 			languagePass.phase1(mod);

@@ -4,6 +4,7 @@
 module volt.semantic.languagepass;
 
 import ir = volt.ir.ir;
+import volt.ir.util;
 
 import volt.interfaces;
 import volt.errors;
@@ -80,6 +81,32 @@ public:
 		passes3 ~= new TypeidReplacer(this);
 		passes3 ~= new MangleWriter(this);
 		passes3 ~= new IrVerifier();
+	}
+
+	/**
+	 * This functions sets up the pointers to the often used
+	 * inbuilt classes, such as object.Object and object.TypeInfo.
+	 * This needs to be called after the Controller is fully setup.
+	 */
+	void setupOneTruePointers()
+	{
+		objectModule = getModule(buildQualifiedName(Location(), "object"));
+		if (objectModule is null) {
+			throw panic("could not find object module");
+		}
+
+		// Run postParse passes so we can lookup things.
+		phase1(objectModule);
+
+		// Get the classes.
+		auto s = objectModule.myScope;
+		objectClass = cast(ir.Class)s.getStore("Object").node;
+		typeInfoClass = cast(ir.Class)s.getStore("TypeInfo").node;
+		attributeClass = cast(ir.Class)s.getStore("Attribute").node;
+		arrayStruct = cast(ir.Struct)s.getStore("ArrayStruct").node;
+		allocDgVariable = cast(ir.Variable)s.getStore("allocDg").node;
+
+		phase2([objectModule]);
 	}
 
 	override ir.Module getModule(ir.QualifiedName name)
