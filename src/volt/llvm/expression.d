@@ -398,9 +398,14 @@ void handleBinOpPointer(State state, Location loc, ir.BinOp.Op binOp,
 	if (binOp != ir.BinOp.Op.Add && binOp != ir.BinOp.Op.Sub)
 		throw panic(loc, "can only add or subtract to pointers");
 
+	LLVMValueRef val = other.value;
+	if (binOp == ir.BinOp.Op.Sub) {
+		val = LLVMBuildNeg(state.builder, val, "");
+	}
+
 	// Either ptr or other could be result, keep that in mind.
 	result.type = ptr.type;
-	result.value = LLVMBuildGEP(state.builder, ptr.value, [other.value], "");
+	result.value = LLVMBuildGEP(state.builder, ptr.value, [val], "");
 }
 
 void handleBinOpPrimitive(State state, Location loc, ir.BinOp.Op binOp,
