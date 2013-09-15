@@ -1364,6 +1364,23 @@ void extypeBinOp(Context ctx, ir.BinOp bin, ir.PrimitiveType lprim, ir.Primitive
 	auto leftsz = size(lprim.type);
 	auto rightsz = size(rprim.type);
 
+	if (bin.op != ir.BinOp.Op.Assign &&
+	    bin.op != ir.BinOp.Op.Is &&
+	    bin.op != ir.BinOp.Op.NotIs &&
+	    bin.op != ir.BinOp.Op.Equal &&
+	    bin.op != ir.BinOp.Op.NotEqual) {
+		if (isBool(lprim)) {
+			auto i = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
+			lprim = i;
+			bin.left = buildCastSmart(i, bin.left);
+		}
+		if (isBool(rprim)) {
+			auto i = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
+			rprim = i;
+			bin.right = buildCastSmart(i, bin.right);
+		}
+	}
+
 	if (isIntegral(lprim) && isIntegral(rprim)) {
 		bool leftUnsigned = isUnsigned(lprim.type);
 		bool rightUnsigned = isUnsigned(rprim.type);
