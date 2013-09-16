@@ -687,21 +687,23 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 
 	ir.CallableType asFunctionType;
 	auto asFunctionSet = cast(ir.FunctionSetType) realType(type);
+	ir.Function fn;
+
+	auto eref = cast(ir.ExpReference) postfix.child;
+	bool reeval = true;
+
+	if (eref is null) {
+		reeval = false;
+		auto pchild = cast(ir.Postfix) postfix.child;
+		assert(pchild !is null);
+		assert(pchild.op == ir.Postfix.Op.CreateDelegate);
+		eref = cast(ir.ExpReference) pchild.memberFunction;
+	}
+	assert(eref !is null);
+
 	if (asFunctionSet !is null) {
-		auto eref = cast(ir.ExpReference) postfix.child;
-		bool reeval = true;
-
-		if (eref is null) {
-			reeval = false;
-			auto pchild = cast(ir.Postfix) postfix.child;
-			assert(pchild !is null);
-			assert(pchild.op == ir.Postfix.Op.CreateDelegate);
-			eref = cast(ir.ExpReference) pchild.memberFunction;
-		}
-		assert(eref !is null);
-
 		asFunctionSet.set.reference = eref;
-		auto fn = selectFunction(ctx.lp, ctx.current, asFunctionSet.set, postfix.arguments, postfix.location);
+		fn = selectFunction(ctx.lp, ctx.current, asFunctionSet.set, postfix.arguments, postfix.location);
 		eref.decl = fn;
 		asFunctionType = fn.type;
 
@@ -709,6 +711,7 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			replaceExpReferenceIfNeeded(ctx, null, postfix.child, eref);
 		}
 	} else {
+		fn = cast(ir.Function) eref.decl;
 		asFunctionType = cast(ir.CallableType) realType(type);
 		if (asFunctionType is null) {
 			auto _storage = cast(ir.StorageType) type;
@@ -719,9 +722,7 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 				auto _class = cast(ir.Class) type;
 				if (_class !is null) {
 					// this(blah);
-					auto eref = cast(ir.ExpReference) postfix.child;
-					assert(eref !is null);
-					auto fn = selectFunction(ctx.lp, ctx.current, _class.userConstructors, postfix.arguments, postfix.location);
+					fn = selectFunction(ctx.lp, ctx.current, _class.userConstructors, postfix.arguments, postfix.location);
 					asFunctionType = fn.type;
 					eref.decl = fn;
 					thisCall = true;
@@ -780,6 +781,28 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		postfix.arguments = argsSlice ~ typeidsLiteral ~ varArgsSlice;
 	}
 
+	if (postfix.arguments.length < asFunctionType.params.length && fn !is null) {
+		ir.Exp[] overflow;
+		foreach (p; fn.params[postfix.arguments.length .. $]) {
+			if (p.assign is null) {
+				throw makeExpected(postfix.location, "default argument");
+			}
+			overflow ~= p.assign;
+		}
+		auto oldLength = postfix.arguments.length;
+		foreach (i, ee; overflow) {
+			auto constant = cast(ir.Constant) ee;
+			if (constant is null) {
+				auto texp = cast(ir.TokenExp) ee;
+				assert(texp !is null);
+				texp.location = postfix.location;
+				postfix.arguments ~= texp;
+			} else {
+				postfix.arguments ~= copyExp(postfix.location, ee);
+			}
+			acceptExp(postfix.arguments[$-1], ctx.etyper);
+		}
+	}
 	if (!asFunctionType.hasVarArgs &&
 	    postfix.arguments.length != asFunctionType.params.length) {
 		throw makeWrongNumberOfArguments(postfix, postfix.arguments.length, asFunctionType.params.length);
@@ -2427,5 +2450,6 @@ public:
 	this(LanguagePass lp)
 	{
 		ctx = new Context(lp);
+		ctx.etyper = this;
 	}
 }

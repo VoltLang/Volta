@@ -165,3 +165,4 @@ ir.Constant evaluateBinOpOrOr(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 	auto right = evaluate(lp, current, binop.right);
 	return buildConstantBool(binop.location, left._bool || right._bool);
 }
+

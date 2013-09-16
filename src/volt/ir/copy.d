@@ -7,6 +7,7 @@ import std.string : format;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
+import volt.token.location;
 
 import volt.errors;
 
@@ -15,7 +16,7 @@ ir.Constant copy(ir.Constant cnst)
 {
 	auto c = new ir.Constant();
 	c.location = cnst.location;
-	c.type = copyType(cnst.type);
+	c.type = cnst.type !is null ? copyType(cnst.type) : null;
 	c._ulong = cnst._ulong;
 	c._string = cnst._string;
 	c.isNull = cnst.isNull;
@@ -63,6 +64,14 @@ ir.IdentifierExp copy(ir.IdentifierExp ie)
 	i.type = copyNode(ie.type);
 	return i;
 }
+
+ir.TokenExp copy(ir.TokenExp te)
+{
+	auto newte = new ir.TokenExp(te.type);
+	newte.location = te.location;
+	return newte;
+}
+
 
 ir.TypeExp copy(ir.TypeExp te)
 {
@@ -246,6 +255,13 @@ ir.Exp copyExp(ir.Exp exp)
 	return exp;
 }
 
+ir.Exp copyExp(Location location, ir.Exp exp)
+{
+	auto e = copyExp(exp);
+	e.location = location;
+	return e;
+}
+
 /**
  * Copies a node and all its children nodes.
  */
@@ -278,6 +294,9 @@ ir.Node copyNode(ir.Node n)
 	case ArrayLiteral:
 		auto ar = cast(ir.ArrayLiteral)n;
 		return copy(ar);
+	case TokenExp:
+		auto te = cast(ir.TokenExp)n;
+		return copy(te);
 	case StatementExp:
 	case PrimitiveType:
 	case TypeReference:
@@ -351,7 +370,6 @@ ir.Node copyNode(ir.Node n)
 	case Typeid:
 	case IsExp:
 	case TraitsExp:
-	case TokenExp:
 	case TemplateInstanceExp:
 	case FunctionLiteral:
 	case ExpReference:

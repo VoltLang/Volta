@@ -7,6 +7,7 @@ import ir = volt.ir.ir;
 import volt.errors;
 import volt.interfaces;
 import volt.visitor.debugprinter : getNodeAddressString;
+import volt.semantic.extyper;
 
 
 final class Context
@@ -15,6 +16,7 @@ public:
 	LanguagePass lp;
 	bool isVarAssign;
 	ir.Type overrideType;
+	ExTyper etyper;
 
 private:
 	ir.Scope mCurrent;

@@ -31,6 +31,7 @@ import volt.semantic.manglewriter;
 import volt.semantic.attribremoval;
 import volt.semantic.typeidreplacer;
 import volt.semantic.importresolver;
+import volt.semantic.ctfe;
 
 import volt.semantic.resolver;
 import volt.semantic.classresolver;
@@ -167,6 +168,14 @@ public:
 		}
 		ensureResolved(this, current, fn.type);
 		replaceVarArgsIfNeeded(this, fn);
+		foreach (ref param; fn.params) {
+			if (param.assign !is null) {
+				auto texp = cast(ir.TokenExp) param.assign;
+				if (texp is null) {
+					param.assign = evaluate(this, current, param.assign);
+				}
+			}
+		}
 		resolve(current, fn.userAttrs);
 	}
 
