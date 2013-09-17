@@ -963,6 +963,16 @@ bool lexReal(TokenWriter tw)
 {
 	auto token = currentLocationToken(tw);
 	auto mark = tw.source.save();
+	bool skipRealPrologue;
+
+	bool stop()
+	{
+		token.type = TokenType.FloatLiteral;
+		token.value = tw.source.sliceFrom(mark);
+		token.value = toUTF8(array(filter!"a != '_'"(token.value)));
+		tw.addToken(token);
+		return true;
+	}
 
 	if (tw.source.current == '.') {
 		// .n
@@ -974,7 +984,7 @@ bool lexReal(TokenWriter tw)
 		consume(tw.source, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '_');
 		if (tw.source.current == 'L' || tw.source.current == 'f' || tw.source.current == 'F') {
 			tw.source.next();
-			goto _lex_real_out;
+			return stop();
 		}
 	} else if (tw.source.current == '0') {
 		tw.source.next();
@@ -992,22 +1002,24 @@ bool lexReal(TokenWriter tw)
 				if (tw.source.current == '+' || tw.source.current == '-') {
 					tw.source.next();
 				}
-				goto _lex_real_after_exp;
+				skipRealPrologue = true;
 			} else {
 				throw makeExpected(tw.source.location, "exponent");
 			}
 		} else {
 			// 0.n
-			if (tw.source.current == '.') goto _lex_real_decimal;
-			if (tw.source.current != '0' && (isDigit(tw.source.current) || tw.source.current == '_')) {
-				tw.source.next();
-				consume(tw.source, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '_');
-			_lex_real_decimal:
+			bool skipDecimalPrologue = false;
+			if (tw.source.current == '.') skipDecimalPrologue = true; 
+			if (skipDecimalPrologue || (tw.source.current != '0' && (isDigit(tw.source.current) || tw.source.current == '_'))) {
+				if (!skipDecimalPrologue) {
+					tw.source.next();
+					consume(tw.source, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '_');
+				}
 				match(tw.source, '.');
 				consume(tw.source, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '_');
 				if (tw.source.current == 'L' || tw.source.current == 'f' || tw.source.current == 'F') {
 					tw.source.next();
-					goto _lex_real_out;
+					return stop();
 				}
 			} else {
 				throw makeExpected(tw.source.location, "non-zero digit, '_', or decimal point");
@@ -1020,18 +1032,19 @@ bool lexReal(TokenWriter tw)
 		consume(tw.source, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '_');
 		if (tw.source.current == 'L' || tw.source.current == 'f' || tw.source.current == 'F') {
 			tw.source.next();
-			goto _lex_real_out;
+			return stop();
 		}
 	} else {
 		throw makeExpected(tw.source.location, "floating point literal");
 	}
 
-	if (tw.source.current == 'e' || tw.source.current == 'E') {
-		tw.source.next();
-		if (tw.source.current == '+' || tw.source.current == '-') {
+	if (tw.source.current == 'e' || tw.source.current == 'E' || skipRealPrologue) {
+		if (!skipRealPrologue) {
 			tw.source.next();
+			if (tw.source.current == '+' || tw.source.current == '-') {
+				tw.source.next();
+			}
 		}
-	_lex_real_after_exp:
 		if (!isDigit(tw.source.current)) {
 			throw makeExpected(tw.source.location, "digit");
 		}
@@ -1041,12 +1054,7 @@ bool lexReal(TokenWriter tw)
 		}
 	}
 
-_lex_real_out:
-	token.type = TokenType.FloatLiteral;
-	token.value = tw.source.sliceFrom(mark);
-	token.value = toUTF8(array(filter!"a != '_'"(token.value)));
-	tw.addToken(token);
-	return true;
+	return stop();
 }
 
 bool lexPragma(TokenWriter tw)
