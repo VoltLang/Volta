@@ -18,6 +18,7 @@ import volt.parser.toplevel;
 import volt.parser.declaration;
 import volt.parser.statements;
 import volt.token.location;
+import volt.semantic.classify;
 
 
 ir.Node[] parseVariable(TokenStream ts)
@@ -270,24 +271,12 @@ ir.Variable[] parseParameterList(TokenStream ts, ir.CallableType parentCallable)
 		}
 	}
 	match(ts, TokenType.CloseParen);
+	if (parentCallable.hasVarArgs && isArray(vars[$-1].type)) {
+		parentCallable.homogenousVariadic = true;
+		parentCallable.hasVarArgs = false;
+	}
 
 	return vars;
-}
-
-ir.Variable[] parseParameterList(TokenStream ts)
-{
-	ir.Variable[] plist;
-
-	match(ts, TokenType.OpenParen);
-	while (ts.peek.type != TokenType.CloseParen) {
-		plist ~= parseParameter(ts);
-		if (ts.peek.type == TokenType.Comma) {
-			ts.get();
-		}
-	}
-	match(ts, TokenType.CloseParen);
-
-	return plist;
 }
 
 ir.Variable parseParameter(TokenStream ts)

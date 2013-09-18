@@ -25,6 +25,14 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeNonLastVariadic(ir.Variable var, string file = __FILE__, const int line = __LINE__)
+{
+	auto e = new CompilerError(var.location, "variadic parameter must be last.");
+	e.file = file;
+	e.line = line;
+	return e;
+}
+
 CompilerException makeStaticAssert(ir.AssertStatement as, string msg, string file = __FILE__, const int line = __LINE__)
 {
 	string emsg = format("static assert: %s", msg);

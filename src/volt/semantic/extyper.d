@@ -395,6 +395,11 @@ void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ref 
 		return;
 	}
 
+	auto ctype = cast(ir.CallableType) atype;
+	if (ctype !is null && ctype.homogenousVariadic && rarr is null) {
+		return;
+	}
+
 	throw makeBadImplicitCast(exp, rtype, atype);
 }
 
@@ -808,7 +813,7 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			acceptExp(postfix.arguments[$-1], ctx.etyper);
 		}
 	}
-	if (!asFunctionType.hasVarArgs &&
+	if (!(asFunctionType.hasVarArgs || asFunctionType.params.length > 0 && asFunctionType.homogenousVariadic) &&
 	    postfix.arguments.length != asFunctionType.params.length) {
 		throw makeWrongNumberOfArguments(postfix, postfix.arguments.length, asFunctionType.params.length);
 	}
@@ -824,6 +829,15 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			}
 			if (stype == ir.StorageType.Kind.Out && postfix.argumentTags[i] != ir.Postfix.TagKind.Out) {
 				throw makeNotTaggedOut(postfix.arguments[i]);
+			}
+		}
+		if (asFunctionType.homogenousVariadic && i == asFunctionType.params.length - 1) {
+			auto etype = getExpType(ctx.lp, postfix.arguments[i], ctx.current);
+			if (!isArray(etype)) {
+				auto exps = postfix.arguments[i .. $];
+				postfix.arguments[i] = buildInternalArrayLiteralSmart(exps[0].location, asFunctionType.params[i], exps);
+				postfix.arguments.length = i + 1;
+				break;
 			}
 		}
 		extypePass(ctx, postfix.arguments[i], asFunctionType.params[i]);

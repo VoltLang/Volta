@@ -609,6 +609,17 @@ ir.Unary buildNew(Location loc, ir.Type type, string name, ir.Exp[] arguments...
 	return new_;
 }
 
+ir.Unary buildNewSmart(Location loc, ir.Type type, ir.Exp[] arguments...)
+{
+	auto new_ = new ir.Unary();
+	new_.location = loc;
+	new_.op = ir.Unary.Op.New;
+ 	new_.type = copyTypeSmart(loc, type);
+	new_.hasArgumentList = arguments.length > 0;
+	new_.argumentList = arguments.dup;
+	return new_;
+}
+
 /**
  * Builds a typeid with type smartly.
  */
@@ -646,6 +657,20 @@ ir.Postfix buildSlice(Location loc, ir.Exp child, ir.Exp[] args)
 	slice.op = ir.Postfix.Op.Slice;
 	slice.child = child;
 	slice.arguments = args;
+
+	return slice;
+}
+
+/**
+ * Builds a postfix index.
+ */
+ir.Postfix buildIndex(Location loc, ir.Exp child, ir.Exp arg)
+{
+	auto slice = new ir.Postfix();
+	slice.location = loc;
+	slice.op = ir.Postfix.Op.Index;
+	slice.child = child;
+	slice.arguments ~= arg;
 
 	return slice;
 }
@@ -804,6 +829,25 @@ ir.ExpStatement buildExpStat(Location loc, ir.StatementExp stat, ir.Exp exp)
 	stat.statements ~= ret;
 
 	return ret;
+}
+
+ir.StatementExp buildInternalArrayLiteralSmart(Location loc, ir.Type atype, ir.Exp[] exps)
+{
+	assert(atype.nodeType == ir.NodeType.ArrayType);
+	auto sexp = new ir.StatementExp();
+	sexp.location = loc;
+	auto var = buildVariableSmart(loc, copyTypeSmart(loc, atype), ir.Variable.Storage.Function, "array");
+	sexp.statements ~= var;
+	auto _new = buildNewSmart(loc, atype, buildConstantUint(loc, cast(uint) exps.length));
+	auto vassign = buildAssign(loc, buildExpReference(loc, var), _new);
+	buildExpStat(loc, sexp, vassign);
+	foreach (i, exp; exps) {
+		auto slice = buildIndex(loc, buildExpReference(loc, var), buildConstantUint(loc, cast(uint) i));
+		auto assign = buildAssign(loc, slice, exp);
+		buildExpStat(loc, sexp, assign);
+	}
+	sexp.exp = buildExpReference(loc, var, var.name);
+	return sexp;
 }
 
 /**
