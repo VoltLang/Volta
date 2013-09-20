@@ -126,7 +126,7 @@ void[] unescape(T)(Location location, const T[] s)
 			escaping = true;
 			continue;
 		} else {
-			encode(output, c);
+			output ~= c;
 		}
 	}
 
