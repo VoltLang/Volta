@@ -625,7 +625,8 @@ void handleCastPrimitive(State state, Location loc, PrimitiveType newType,
 			// Just bitcast this.
 			op = LLVMOpcode.BitCast;
 		} else {
-			error(); // Type are the same?
+			// The types have the same size, but may be semantically distinct (char => ubyte, for example).
+			return;
 		}
 	}
 
