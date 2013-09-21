@@ -136,6 +136,8 @@ public:
 		check(memcpyFunc, "__llvm_memcpy_p0i8_p0i8_i32");
 		printFunc = cast(ir.Function)s.getStore("vrt_print").node;
 		check(printFunc, "vrt_print");
+		throwFunc = cast(ir.Function)s.getStore("vrt_eh_throw").node;
+		check(throwFunc, "vrt_eh_throw");
 		throwSliceErrorFunction = cast(ir.Function)s.getStore("vrt_throw_slice_error").node;
 		aaGetKeys = cast(ir.Function)s.getStore("vrt_aa_get_keys").node;
 		check(aaGetKeys, "vrt_aa_get_keys");

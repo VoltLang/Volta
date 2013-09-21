@@ -595,6 +595,7 @@ ir.TryStatement parseTryStatement(TokenStream ts)
 			auto var = new ir.Variable();
 			var.location = ts.peek.location;
 			var.type = parseType(ts);
+			var.specialInitValue = true;
 			if (ts.peek.type != TokenType.CloseParen) {
 				auto nameTok = match(ts, TokenType.Identifier);
 				var.name = nameTok.value;
@@ -602,8 +603,10 @@ ir.TryStatement parseTryStatement(TokenStream ts)
 				var.name = "1__dummy";
 			}
 			match(ts, TokenType.CloseParen);
+			auto bs = parseBlockStatement(ts);
+			bs.statements = var ~ bs.statements;
 			t.catchVars ~= var;
-			t.catchBlocks ~= parseBlockStatement(ts);
+			t.catchBlocks ~= bs;
 		} else {
 			t.catchAll = parseBlockStatement(ts);
 			if (ts.peek.type == TokenType.Catch) {

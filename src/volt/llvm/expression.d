@@ -1123,7 +1123,7 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 		llvmArgs[i] = v.value;
 	}
 
-	result.value = LLVMBuildCall(state.builder, result.value, llvmArgs);
+	result.value = state.buildCallOrInvoke(result.value, llvmArgs);
 	auto irc = cast(ir.CallableType) result.type.irType;
 	if (irc !is null) switch (irc.linkage) {
 	case ir.Linkage.Windows:
@@ -1134,6 +1134,7 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 	default:
 		throw panicUnhandled(postfix.location, "call site linkage");
 	}
+
 	result.isPointer = false;
 	result.type = ret;
 }

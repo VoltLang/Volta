@@ -51,10 +51,14 @@ public:
 		auto ct = cast(CallableType)type;
 		assert(ct !is null);
 
+		LLVMAddFunctionAttr(llvmFunc, LLVMAttribute.UWTable);
+
+		auto oldPath = state.path;
 		auto oldFall = state.currentFall;
 		auto oldFunc = state.currentFunc;
 		auto oldBlock = state.currentBlock;
 
+		state.path = new BlockPath();
 		state.currentFall = true;
 		state.currentFunc = llvmFunc;
 		state.currentBlock = LLVMAppendBasicBlock(llvmFunc, "entry");
@@ -107,6 +111,10 @@ public:
 			LLVMBuildUnreachable(state.builder);
 		}
 
+		// Clean up
+		state.onFunctionClose();
+
+		state.path = oldPath;
 		state.currentFall = oldFall;
 		state.currentFunc = oldFunc;
 		state.currentBlock = oldBlock;
@@ -133,7 +141,9 @@ public:
 
 			auto v = state.getVariableValue(var, type);
 
-			if (var.assign !is null) {
+			if (var.specialInitValue) {
+				assert(var.assign is null);
+			} else if (var.assign !is null) {
 				auto ret = state.getValue(var.assign);
 				LLVMBuildStore(state.builder, ret, v);
 			} else {
@@ -286,6 +296,103 @@ public:
 
 		state.currentSwitchDefault = oldDefault;
 		state.currentSwitchCases = oldCases;
+
+		return ContinueParent;
+	}
+
+	override Status enter(ir.TryStatement t)
+	{
+		LLVMBasicBlockRef landingPad, tryDone;
+
+		landingPad = LLVMAppendBasicBlockInContext(
+			state.context, state.currentFunc, "landingPad");
+		tryDone = LLVMAppendBasicBlockInContext(
+			state.context, state.currentFunc, "tryDone");
+
+		auto iVar = state.ehIndexVar;
+		auto eVar = state.ehExceptionVar;
+
+		/*
+		 * The try body.
+		 */
+		auto old = state.path;
+		state.path = new BlockPath();
+		state.path.landingBlock = landingPad;
+		accept(t.tryBlock, this);
+		state.path = old;
+		if (state.currentFall) {
+			LLVMBuildBr(state.builder, tryDone);
+		}
+
+		/*
+		 * Landing pad.
+		 */
+		LLVMMoveBasicBlockAfter(landingPad, state.currentBlock);
+		state.startBlock(landingPad);
+		auto pf = LLVMBuildBitCast(state.builder, state.ehPersonalityFunc, state.voidPtrType.llvmType, "");
+		auto lp = LLVMBuildLandingPad(
+			state.builder, state.ehLandingType, pf, cast(int)t.catchVars.length, "");
+		auto e = LLVMBuildExtractValue(state.builder, lp, 0, "");
+		LLVMBuildStore(state.builder, e, eVar);
+		auto i = LLVMBuildExtractValue(state.builder, lp, 1, "");
+		LLVMBuildStore(state.builder, i, iVar);
+
+		foreach (size_t index, v; t.catchVars) {
+			Type type;
+			auto asTR = cast(ir.TypeReference)v.type;
+			ir.Class c = cast(ir.Class)asTR.type;
+			auto value = state.getVariableValue(c.typeInfo, type);
+			value = LLVMBuildBitCast(state.builder, value, state.voidPtrType.llvmType, "");
+			LLVMAddClause(lp, value);
+
+			auto fn = state.ehTypeIdFunc;
+			auto test = LLVMBuildCall(state.builder, fn, [value]);
+			test = LLVMBuildICmp(state.builder, LLVMIntPredicate.EQ, test, i, "");
+
+
+			LLVMBasicBlockRef thenBlock, elseBlock;
+			thenBlock = LLVMAppendBasicBlockInContext(
+					state.context, state.currentFunc, "ifTrue");
+
+			elseBlock = LLVMAppendBasicBlockInContext(
+					state.context, state.currentFunc, "ifFalse");
+
+
+			LLVMBuildCondBr(state.builder, test, thenBlock, elseBlock);
+			LLVMMoveBasicBlockAfter(thenBlock, state.currentBlock);
+			state.startBlock(thenBlock);
+
+			auto ptr = state.getVariableValue(v, type);
+			value = LLVMBuildBitCast(state.builder, e, type.llvmType, "");
+			LLVMBuildStore(state.builder, value, ptr);
+
+			accept(t.catchBlocks[index], this);
+
+			if (state.currentFall) {
+				LLVMBuildBr(state.builder, tryDone);
+			}
+
+			LLVMMoveBasicBlockAfter(elseBlock, state.currentBlock);
+			state.startBlock(elseBlock);
+		}
+
+		/*
+		 * Finally block.
+		 */
+		if (t.finallyBlock !is null) {
+			LLVMSetCleanup(lp, true);
+			accept(t.finallyBlock, this);
+			LLVMBuildBr(state.builder, state.ehResumeBlock);
+			throw panic(t.finallyBlock, "does not support finally statements");
+		} else {
+			LLVMBuildBr(state.builder, state.ehResumeBlock);
+		}
+
+		/*
+		 * Everything after the try statement.
+		 */
+		LLVMMoveBasicBlockAfter(tryDone, state.currentBlock);
+		state.startBlock(tryDone);
 
 		return ContinueParent;
 	}

@@ -54,9 +54,11 @@ public:
 
 	override Status leave(ir.ThrowStatement t)
 	{
-		auto fn = retrieveFunctionFromObject(lp, t.location, "vrt_eh_throw");
+		auto fn = lp.throwFunc;
 		auto eRef = buildExpReference(t.location, fn, "vrt_eh_throw");
-		t.exp = buildCall(t.location, eRef, [t.exp]);
+		t.exp = buildCall(t.location, eRef, [t.exp,
+			buildAccess(t.location, buildConstantString(t.location, t.location.filename), "ptr"),
+			buildConstantSizeT(t.location, lp, cast(int)t.location.line)]);
 		return Continue;
 	}
 
@@ -934,7 +936,7 @@ void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 	else
 		name = "vrt_aa_in_array";
 	auto inAAFn = retrieveFunctionFromObject(lp, loc, name);
-	auto throwFn = retrieveFunctionFromObject(lp, loc, "vrt_eh_throw");
+	auto throwFn = lp.throwFunc;
 
 	auto thenState = buildBlockStat(loc, statExp, current);
 	auto s = buildStorageType(loc, ir.StorageType.Kind.Immutable, buildChar(loc));
@@ -948,9 +950,11 @@ void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 			buildCastSmart(throwableClass,
 				buildNew(loc, knfClass, "KeyNotFoundException", [
 					buildConstantString(loc, `Key does not exist`)
-				]),
-			)
-		], throwFn.name));
+					]),
+				),
+			buildAccess(loc, buildConstantString(loc, '\"' ~ loc.filename ~ '\"'), "ptr"),
+			cast(ir.Exp)buildConstantSizeT(loc, lp, cast(int)loc.line)],
+		throwFn.name));
 
 	buildIfStat(loc, statExp,
 		buildBinOp(loc, ir.BinOp.Op.Equal,

@@ -24,17 +24,17 @@ import volt.llvm.toplevel;
 class LlvmBackend : Backend
 {
 protected:
-	Settings mSettings;
+	LanguagePass lp;
 
 	TargetType mTargetType;
 	string mFilename;
 	bool mDump;
 
 public:
-	this(Settings settings)
+	this(LanguagePass lp)
 	{
-		this.mSettings = settings;
-		this.mDump = mSettings.internalDebug;
+		this.lp = lp;
+		this.mDump = lp.settings.internalDebug;
 
 		auto passRegistry = LLVMGetGlobalPassRegistry();
 
@@ -68,7 +68,7 @@ public:
 		scope(exit)
 			mFilename = null;
 
-		auto state = new VoltState(m, mSettings);
+		auto state = new VoltState(lp, m);
 		auto mod = state.mod;
 		scope(exit) {
 			state.close();

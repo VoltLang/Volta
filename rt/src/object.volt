@@ -141,6 +141,11 @@ class Throwable
 {
 	string message;
 
+	// These two are updated each time the exception is thrown.
+	const(char)* throwFile;
+	size_t throwLine;
+
+
 	this(string message)
 	{
 		this.message = message;
@@ -204,7 +209,7 @@ extern(C) void vrt_gc_init();
 extern(C) AllocDg vrt_gc_get_alloc_dg();
 extern(C) void vrt_gc_shutdown();
 extern(C) void* vrt_handle_cast(void* obj, TypeInfo tinfo);
-extern(C) void vrt_eh_throw(Throwable);
+extern(C) void vrt_eh_throw(Throwable, const(char)* file, size_t line);
 extern(C) uint vrt_hash(void*, size_t);
 extern(C) void vrt_throw_slice_error(size_t length, size_t targetSize, string file, size_t line)
 {
@@ -245,5 +250,7 @@ extern(C) {
 	@mangledName("llvm.memmove.p0i8.p0i8.i64") void __llvm_memmove_p0i8_p0i8_i64(void*, void*, ulong, int, bool);
 	@mangledName("llvm.va_start") void __llvm_volt_va_start(void*);
 	@mangledName("llvm.va_end") void __llvm_volt_va_end(void*);
+	@mangledName("llvm.eh.typeid.for") int __llvm_typeid_for(void*);
+	@mangledName("vrt_eh_personality_v0") void __llvm_personality();
 }
 

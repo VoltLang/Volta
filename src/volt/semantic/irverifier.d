@@ -129,6 +129,8 @@ public:
 			case GotoStatement:
 			case AssertStatement:
 			case WithStatement:
+			case ScopeStatement:
+			case TryStatement:
 				auto s = accept(n, this);
 				if (s == Stop)
 					return Stop;

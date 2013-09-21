@@ -132,6 +132,12 @@ public:
 	 */
 	bool useBaseStorage;
 
+	/**
+	 * This variable is initialized not by the assign but
+	 * by the backend. Mostly used for catch statements.
+	 */
+	bool specialInitValue;
+
 
 public:
 	this() { super(NodeType.Variable); }

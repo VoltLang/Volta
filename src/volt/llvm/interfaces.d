@@ -6,10 +6,22 @@ import volt.errors;
 
 public import lib.llvm.core;
 
+public import volt.interfaces;
 public import ir = volt.ir.ir;
 
 public import volt.llvm.type;
 
+
+final class BlockPath
+{
+public:
+	ir.Node node;
+	BlockPath prev;
+
+	LLVMBasicBlockRef landingBlock;
+	LLVMBasicBlockRef continueBlock;
+	LLVMBasicBlockRef breakBlock;
+}
 
 /**
  * Represents a single LLVMValueRef plus the associated high level type.
@@ -50,15 +62,19 @@ public:
 abstract class State
 {
 public:
+	LanguagePass lp;
 	ir.Module irMod;
 
 	LLVMContextRef context;
 	LLVMBuilderRef builder;
 	LLVMModuleRef mod;
 
+	BlockPath path;
+
 	LLVMBasicBlockRef currentBlock;
-	LLVMBasicBlockRef currentBreakBlock; ///< Block to jump to on break.
-	LLVMBasicBlockRef currentContinueBlock; ///< Block to jump to on continue.
+	final @property LLVMBasicBlockRef currentBreakBlock() { return path.breakBlock; }
+	final @property LLVMBasicBlockRef currentContinueBlock() { return path.continueBlock; }
+	final @property LLVMBasicBlockRef currentLandingBlock() { return path.landingBlock; }
 	LLVMBasicBlockRef currentSwitchDefault;
 	LLVMBasicBlockRef[long] currentSwitchCases;
 
@@ -109,8 +125,26 @@ public:
 	 * @}
 	 */
 
+	/**
+	 * Exception handling.
+	 * @{
+	 */
+	@property abstract LLVMValueRef ehPersonalityFunc();
+	@property abstract LLVMValueRef ehTypeIdFunc();
+	@property abstract LLVMTypeRef ehLandingType();
+	@property abstract LLVMBasicBlockRef ehResumeBlock();
+	@property abstract LLVMBasicBlockRef ehExitBlock();
+	@property abstract LLVMValueRef ehIndexVar();
+	@property abstract LLVMValueRef ehExceptionVar();
+	/**
+	 * @}
+	 */
+
+
 public:
 	abstract void close();
+
+	abstract void onFunctionClose();
 
 	/*
 	 *
@@ -226,6 +260,12 @@ public:
 	 */
 
 	/**
+	 * Builds either a call or a invoke. If invoke automatically
+	 * sets up a catch basic block and sets the currentBlock to it.
+	 */
+	abstract LLVMValueRef buildCallOrInvoke(LLVMValueRef fn, LLVMValueRef[] args);
+
+	/**
 	 * Start using a new basic block, setting currentBlock.
 	 *
 	 * Side-Effects:
@@ -240,12 +280,22 @@ public:
 	}
 
 	/**
+	 * Replaces the current blockpath.
+	 */
+	BlockPath replacePath(BlockPath p)
+	{
+		auto t = path;
+		path = p;
+		return t;
+	}
+
+	/**
 	 * Helper function to swap out the currentContineBlock, returns the old one.
 	 */
 	LLVMBasicBlockRef replaceContinueBlock(LLVMBasicBlockRef b)
 	{
-		auto t = currentContinueBlock;
-		currentContinueBlock = b;
+		auto t = path.continueBlock;
+		path.continueBlock = b;
 		return t;
 	}
 
@@ -254,8 +304,8 @@ public:
 	 */
 	LLVMBasicBlockRef replaceBreakBlock(LLVMBasicBlockRef b)
 	{
-		auto t = currentBreakBlock;
-		currentBreakBlock = b;
+		auto t = path.breakBlock;
+		path.breakBlock = b;
 		return t;
 	}
 }

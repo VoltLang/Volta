@@ -121,6 +121,7 @@ public:
 	ir.Function vaCEndFunc;
 	ir.Function memcpyFunc;
 	ir.Function printFunc;
+	ir.Function throwFunc;
 	ir.Function throwSliceErrorFunction;
 	ir.Function aaGetKeys;
 	ir.Function aaGetValues;

@@ -9,6 +9,9 @@ import volt.interfaces;
 
 import volt.visitor.visitor;
 
+import volt.token.location;
+import volt.semantic.lookup;
+
 import volt.llvm.constant;
 import volt.llvm.toplevel;
 import volt.llvm.expression;
@@ -49,18 +52,23 @@ protected:
 	Type[string] typeStore;
 
 	/**
-	 * The settings that the module was compiled with.
-	 * Needed for target/platform info and size_t.
-	 */
-	Settings mSettings;
-
-	/**
 	 * Visitor to build statements.
 	 */
 	LlvmVisitor visitor;
 
+	/*
+	 * Lazily created & cached.
+	 */
+	LLVMValueRef mPersonalityFunc;
+	LLVMValueRef mTypeIdFunc;
+	LLVMTypeRef mLandingType;
+	LLVMValueRef mIndexVar;
+	LLVMValueRef mExceptionVar;
+	LLVMBasicBlockRef mResumeBlock;
+	LLVMBasicBlockRef mExitBlock;
+
 public:
-	this(ir.Module irMod, Settings settings)
+	this(LanguagePass lp, ir.Module irMod)
 	{
 		assert(irMod.name.identifiers.length > 0);
 		string name = irMod.name.toString();
@@ -69,10 +77,10 @@ public:
 		this.context = LLVMContextCreate();
 		this.mod = LLVMModuleCreateWithNameInContext(name, context);
 		this.builder = LLVMCreateBuilderInContext(context);
-		this.mSettings = settings;
+		this.lp = lp;
 
 		setTargetAndLayout();
-		buildCommonTypes(this, mSettings.isVersionSet("V_P64"));
+		buildCommonTypes(this, lp.settings.isVersionSet("V_P64"));
 
 		this.llvmTrap = LLVMAddFunction(mod, "llvm.trap", voidFunctionType.llvmCallType);
 		visitor = new LlvmVisitor(this);
@@ -116,6 +124,128 @@ public:
 		return v.value;
 	}
 
+
+	/*
+	 *
+	 * Exception handling.
+	 *
+	 */
+
+
+	override LLVMValueRef ehPersonalityFunc()
+	{
+		if (mPersonalityFunc !is null) {
+			return mPersonalityFunc;
+		}
+		Type type;
+		auto fn = retrieveFunctionFromObject(lp, Location(), "__llvm_personality");
+		return mPersonalityFunc = getFunctionValue(fn, type);
+	}
+
+	override LLVMValueRef ehTypeIdFunc()
+	{
+		if (mTypeIdFunc !is null) {
+			return mTypeIdFunc;
+		}
+
+		Type type;
+		auto fn = retrieveFunctionFromObject(lp, Location(), "__llvm_typeid_for");
+		return mTypeIdFunc = getFunctionValue(fn, type);
+	}
+
+	override LLVMTypeRef ehLandingType()
+	{
+		if (mLandingType !is null) {
+			return mLandingType;
+		}
+
+		return mLandingType = LLVMStructTypeInContext(context,
+			[voidPtrType.llvmType, intType.llvmType], false);
+	}
+
+	override LLVMValueRef ehIndexVar()
+	{
+		if (mIndexVar !is null)
+			return mIndexVar;
+		return mIndexVar = LLVMBuildAlloca(
+			builder, intType.llvmType, "__index");
+	}
+
+	override LLVMValueRef ehExceptionVar()
+	{
+		if (mExceptionVar !is null)
+			return mExceptionVar;
+		return mExceptionVar = LLVMBuildAlloca(
+			builder, voidPtrType.llvmType, "__exception");
+	}
+
+	override LLVMBasicBlockRef ehResumeBlock()
+	{
+		if (mResumeBlock !is null)
+			return mResumeBlock;
+
+		auto b = LLVMAppendBasicBlockInContext(
+			context, currentFunc, "resume");
+		LLVMPositionBuilderAtEnd(builder, b);
+
+		auto v = LLVMGetUndef(ehLandingType);
+		v = LLVMBuildInsertValue(builder, v, LLVMBuildLoad(builder, ehExceptionVar, ""), 0, "");
+		v = LLVMBuildInsertValue(builder, v, LLVMBuildLoad(builder, ehIndexVar, ""), 1, "");
+		LLVMBuildResume(builder, v);
+		LLVMPositionBuilderAtEnd(builder, currentBlock);
+
+		return mResumeBlock = b;
+	}
+
+	override LLVMBasicBlockRef ehExitBlock()
+	{
+		if (mExitBlock !is null) {
+			return mExitBlock;
+		}
+		auto b = LLVMAppendBasicBlockInContext(
+			context, currentFunc, "exit");
+		LLVMPositionBuilderAtEnd(builder, b);
+
+		return mExitBlock = b;
+	}
+
+	override LLVMValueRef buildCallOrInvoke(LLVMValueRef fn, LLVMValueRef[] args)
+	{
+		if (path.landingBlock is null) {
+			return LLVMBuildCall(builder, fn, args);
+		} else {
+			auto b = LLVMAppendBasicBlockInContext(
+				context, currentFunc, "");
+			auto ret = LLVMBuildInvoke(builder, fn, args, b, path.landingBlock);
+			LLVMMoveBasicBlockAfter(b, currentBlock);
+			LLVMPositionBuilderAtEnd(builder, b);
+			currentBlock = b;
+			return ret;
+		}
+	}
+
+	override void onFunctionClose()
+	{
+		if (mResumeBlock !is null) {
+			LLVMMoveBasicBlockAfter(mResumeBlock, currentBlock);
+		}
+
+		mResumeBlock = null;
+		mIndexVar = null;
+		mExceptionVar = null;
+
+		currentFall = false;
+		currentFunc = null;
+		currentBlock = null;
+	}
+
+
+	/*
+	 *
+	 * Value functions.
+	 *
+	 */
+
 	/**
 	 * Return the LLVMValueRef for the given Function.
 	 *
@@ -149,7 +279,7 @@ public:
 
 		// Needs to be done here, because this can not be set on a type.
 		if (fn.type.linkage == ir.Linkage.Windows) {
-			if (mSettings.arch == Arch.X86_64) {
+			if (lp.settings.arch == Arch.X86_64) {
 				LLVMSetFunctionCallConv(v, LLVMCallConv.X86_64_Win64);
 			} else {
 				LLVMSetFunctionCallConv(v, LLVMCallConv.X86Stdcall);
@@ -217,7 +347,7 @@ public:
 			 * So for now, make all Variables marked as local global,
 			 * else nothing will work at all.
 			 */
-			if (mSettings.platform != Platform.MinGW) {
+			if (lp.settings.platform != Platform.MinGW) {
 				LLVMSetThreadLocal(v, true);
 			}
 			break;
@@ -329,8 +459,9 @@ public:
 protected:
 	void setTargetAndLayout()
 	{
-		auto target = targetList[mSettings.platform][mSettings.arch];
-		auto layout = layoutList[mSettings.platform][mSettings.arch];
+		auto settings = lp.settings;
+		auto target = targetList[settings.platform][settings.arch];
+		auto layout = layoutList[settings.platform][settings.arch];
 		if (target is null || layout is null)
 			throw makeArchNotSupported();
 

@@ -60,7 +60,7 @@ public:
 
 		auto lp = new VoltLanguagePass(s, p, this);
 
-		auto b = new LlvmBackend(s);
+		auto b = new LlvmBackend(lp);
 
 		this(s, p, lp, b);
 
