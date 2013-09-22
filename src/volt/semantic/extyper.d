@@ -646,6 +646,11 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 				type = asStorage.base;
 			}
 
+			auto tr = cast(ir.TypeReference) type;
+			if (tr !is null) {
+				type = tr.type;
+			}
+
 			if (type.nodeType != ir.NodeType.Struct &&
 			    type.nodeType != ir.NodeType.Union &&
 			    type.nodeType != ir.NodeType.Class) {
