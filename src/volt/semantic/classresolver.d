@@ -86,9 +86,9 @@ bool rewriteSuperCallIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, Langu
 	auto thisVar = getThisVar(p.location, lp, _scope);
 	auto thisRef = buildExpReference(thisVar.location, thisVar, "this");
 
-	assert(_class.userConstructors.length == 1);
+	auto fn = selectFunction(lp, _scope, _class.userConstructors, p.arguments, e.location);
 
-	p.child = buildCreateDelegate(p.location, thisRef, buildExpReference(p.location, _class.userConstructors[0], _class.userConstructors[0].name));
+	p.child = buildCreateDelegate(p.location, thisRef, buildExpReference(p.location, fn, fn.name));
 	return true;
 }
 
