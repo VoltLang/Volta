@@ -2013,6 +2013,21 @@ public:
 		assert(false);
 	}
 
+	override Status enter(ref ir.Exp, ir.VaArgExp vaexp)
+	{
+		wf("va_arg!(");
+		accept(vaexp.type, this);
+		wf(")(");
+		acceptExp(vaexp.arg, this);
+		wf(")");
+		return ContinueParent;
+	}
+
+	override Status leave(ref ir.Exp, ir.VaArgExp vaexp)
+	{
+		assert(false);
+	}
+
 	override Status visit(ref ir.Exp, ir.ExpReference e)
 	{ 
 		if (e.idents.length > 1) for (int i = cast(int)e.idents.length - 1; i > 0; --i) {

@@ -114,6 +114,11 @@ public:
 	ir.Class attributeClass;
 	ir.Struct arrayStruct;
 	ir.Variable allocDgVariable;
+	ir.Function vaStartFunc;
+	ir.Function vaEndFunc;
+	ir.Function vaCStartFunc;
+	ir.Function vaCEndFunc;
+	ir.Function memcpyFunc;
 	/* @} */
 
 	/**

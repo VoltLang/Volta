@@ -34,6 +34,22 @@ CompilerException makeNoValidFunction(Location loc, string fname, ir.Type[] args
 	return e;
 }
 
+CompilerException makeCVaArgsOnlyOperateOnSimpleTypes(Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	auto e = new CompilerError(loc, "C varargs only supports retrieving simple types, due to an LLVM limitation.");
+	e.file = file;
+	e.line = line;
+	return e;
+}
+
+CompilerException makeVaFooMustBeLValue(Location loc, string foo, string file = __FILE__, const int line = __LINE__)
+{
+	auto e = new CompilerError(loc, format("argument to %s is not an lvalue.", foo));
+	e.file = file;
+	e.line = line;
+	return e;
+}
+
 CompilerException makeNonLastVariadic(ir.Variable var, string file = __FILE__, const int line = __LINE__)
 {
 	auto e = new CompilerError(var.location, "variadic parameter must be last.");

@@ -171,9 +171,18 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 		auto asTokenExp = cast(ir.TokenExp) exp;
 		assert(asTokenExp !is null);
 		return getTokenExpType(lp, asTokenExp, currentScope);
+	case VaArgExp:
+		auto asVaArgExp = cast(ir.VaArgExp) exp;
+		assert(asVaArgExp !is null);
+		return getVaArgType(lp, asVaArgExp, currentScope);
 	default:
 		throw panicUnhandled(exp, to!string(exp.nodeType));
 	}
+}
+
+ir.Type getVaArgType(LanguagePass lp, ir.VaArgExp vaexp, ir.Scope currentScope)
+{
+	return vaexp.type;
 }
 
 ir.Type getTokenExpType(LanguagePass lp, ir.TokenExp texp, ir.Scope currentScope)

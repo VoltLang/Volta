@@ -94,6 +94,16 @@ ir.ArrayLiteral copy(ir.ArrayLiteral ar)
 	return newar;
 }
 
+ir.ExpReference copy(ir.ExpReference er)
+{
+	auto newer = new ir.ExpReference();
+	newer.location = er.location;
+	newer.idents = er.idents.dup;
+	newer.decl = er.decl;
+	newer.rawReference = er.rawReference;
+	newer.doNotRewriteAsNestedLookup = er.doNotRewriteAsNestedLookup;
+	return newer;
+}
 
 /*
  *
@@ -297,6 +307,9 @@ ir.Node copyNode(ir.Node n)
 	case TokenExp:
 		auto te = cast(ir.TokenExp)n;
 		return copy(te);
+	case ExpReference:
+		auto er = cast(ir.ExpReference)n;
+		return copy(er);
 	case StatementExp:
 	case PrimitiveType:
 	case TypeReference:
@@ -372,12 +385,12 @@ ir.Node copyNode(ir.Node n)
 	case TraitsExp:
 	case TemplateInstanceExp:
 	case FunctionLiteral:
-	case ExpReference:
 	case StructLiteral:
 	case ClassLiteral:
 	case EnumDeclaration:
 	case FunctionSet:
 	case FunctionSetType:
+	case VaArgExp:
 		goto case Invalid;
 	}
 }

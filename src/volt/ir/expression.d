@@ -582,3 +582,18 @@ public:
 	}
 }
 
+/**
+ * Expression that assists in working with varargs.
+ *
+ * @ingroup irNode irExp
+ */
+class VaArgExp : Exp
+{
+public:
+	Exp arg;
+	Type type;
+
+public:
+	this() { super(NodeType.VaArgExp); }
+}
+

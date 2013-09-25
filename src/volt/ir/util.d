@@ -10,6 +10,7 @@ import volt.token.location;
 import volt.semantic.util : canonicaliseStorageType;
 import volt.util.string : unescapeString;
 import ir = volt.ir.ir;
+import volt.ir.copy;
 
 
 /**
@@ -650,13 +651,13 @@ ir.Postfix buildAccess(Location loc, ir.Exp exp, string name)
 /**
  * Builds a postfix slice.
  */
-ir.Postfix buildSlice(Location loc, ir.Exp child, ir.Exp[] args)
+ir.Postfix buildSlice(Location loc, ir.Exp child, ir.Exp[] args...)
 {
 	auto slice = new ir.Postfix();
 	slice.location = loc;
 	slice.op = ir.Postfix.Op.Slice;
 	slice.child = child;
-	slice.arguments = args;
+	slice.arguments = args.dup;
 
 	return slice;
 }
@@ -684,7 +685,7 @@ ir.Postfix buildCall(Location loc, ir.Exp child, ir.Exp[] args)
 	call.location = loc;
 	call.op = ir.Postfix.Op.Call;
 	call.child = child;
-	call.arguments = args;
+	call.arguments = args.dup;
 
 	return call;
 }
@@ -742,6 +743,14 @@ ir.BinOp buildAdd(Location loc, ir.Exp left, ir.Exp right)
 ir.BinOp buildAssign(Location loc, ir.Exp left, ir.Exp right)
 {
 	return buildBinOp(loc, ir.BinOp.Op.Assign, left, right);
+}
+
+/**
+ * Builds an add-assign BinOp.
+ */
+ir.BinOp buildAddAssign(Location loc, ir.Exp left, ir.Exp right)
+{
+	return buildBinOp(loc, ir.BinOp.Op.AddAssign, left, right);
 }
 
 /**
@@ -831,6 +840,43 @@ ir.ExpStatement buildExpStat(Location loc, ir.StatementExp stat, ir.Exp exp)
 	return ret;
 }
 
+ir.StatementExp buildVaArgCast(Location loc, ir.VaArgExp vaexp)
+{
+	auto sexp = new ir.StatementExp();
+	sexp.location = loc;
+
+	auto ptrToPtr = buildVariableSmart(loc, buildPtrSmart(loc, buildVoidPtr(loc)), ir.Variable.Storage.Function, "ptrToPtr");
+	ptrToPtr.assign = buildAddrOf(loc, vaexp.arg);
+	sexp.statements ~= ptrToPtr;
+
+	auto cpy = buildVariableSmart(loc, buildVoidPtr(loc), ir.Variable.Storage.Function, "cpy");
+	cpy.assign = buildDeref(loc, buildExpReference(loc, ptrToPtr));
+	sexp.statements ~= cpy;
+
+	auto vlderef = buildDeref(loc, buildExpReference(loc, ptrToPtr));
+	auto tid = buildTypeidSmart(loc, vaexp.type);
+	auto sz = buildAccess(loc, tid, "size");
+	auto assign = buildAddAssign(loc, vlderef, sz);
+	buildExpStat(loc, sexp, assign);
+
+	auto ptr = buildPtrSmart(loc, vaexp.type);
+	auto _cast = buildCastSmart(loc, ptr, buildExpReference(loc, cpy));
+	auto deref = buildDeref(loc, _cast);
+	sexp.exp = deref;
+
+	return sexp;
+}
+
+ir.Exp buildVaArgStart(Location loc, ir.Exp vlexp, ir.Exp argexp)
+{
+	return buildAssign(loc, buildDeref(loc, vlexp), argexp);
+}
+
+ir.Exp buildVaArgEnd(Location loc, ir.Exp vlexp)
+{
+	return buildAssign(loc, buildDeref(loc, vlexp), buildConstantNull(loc, buildVoidPtr(loc)));
+}
+
 ir.StatementExp buildInternalArrayLiteralSmart(Location loc, ir.Type atype, ir.Exp[] exps)
 {
 	assert(atype.nodeType == ir.NodeType.ArrayType);
@@ -850,6 +896,37 @@ ir.StatementExp buildInternalArrayLiteralSmart(Location loc, ir.Type atype, ir.E
 	return sexp;
 }
 
+ir.StatementExp buildInternalArrayLiteralSliceSmart(Location loc, ir.Type atype, ir.Type[] types, int[] sizes, int totalSize, ir.Function memcpyFn, ir.Exp[] exps)
+{
+	assert(atype.nodeType == ir.NodeType.ArrayType);
+	auto sexp = new ir.StatementExp();
+	sexp.location = loc;
+	auto var = buildVariableSmart(loc, copyTypeSmart(loc, atype), ir.Variable.Storage.Function, "array");
+
+	sexp.statements ~= var;
+	auto _new = buildNewSmart(loc, atype, buildConstantUint(loc, cast(uint) totalSize));
+	auto vassign = buildAssign(loc, buildExpReference(loc, var), _new);
+	buildExpStat(loc, sexp, vassign);
+
+	int offset;
+	foreach (i, exp; exps) {
+		auto evar = buildVariableSmart(loc, types[i], ir.Variable.Storage.Function, "exp"); 
+		sexp.statements ~= evar;
+		auto evassign = buildAssign(loc, buildExpReference(loc, evar), exp);
+		buildExpStat(loc, sexp, evassign);
+
+		ir.Exp dst = buildAdd(loc, buildAccess(loc, buildExpReference(loc, var), "ptr"), buildConstantUint(loc, offset));
+		ir.Exp src = buildCastToVoidPtr(loc, buildAddrOf(loc, buildExpReference(loc, evar)));
+		ir.Exp len = buildConstantUint(loc, cast(uint) sizes[i]);
+		ir.Exp aln = buildConstantInt(loc, 0);
+		ir.Exp vol = buildConstantBool(loc, false);
+		auto call = buildCall(loc, buildExpReference(loc, memcpyFn), [dst, src, len, aln, vol]);
+		buildExpStat(loc, sexp, call);
+		offset += sizes[i];
+	}
+	sexp.exp = buildExpReference(loc, var, var.name);
+	return sexp;
+}
 /**
  * Build an exp statement and add it to a block.
  */

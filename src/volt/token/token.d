@@ -16,7 +16,7 @@ import volt.token.location;
  * another are implicitly concatenated. I warn you of this out of experience.
  */
 
-string[181] tokenToString = [
+string[182] tokenToString = [
 "none", "identifier", "string literal", "character literal",
 "integer literal", "float literal", "abstract", "alias", "align",
 "asm", "assert", "auto", "body", "bool", "break", "byte", "case",
@@ -32,7 +32,7 @@ string[181] tokenToString = [
 "scope", "shared", "short", "static", "struct", "super",
 "switch", "synchronized", "template", "this", "throw", "true",
 "try", "typedef", "typeid", "typeof", "ubyte", "ucent", "uint",
-"ulong", "union", "unittest", "ushort", "version", "void", "volatile",
+"ulong", "union", "unittest", "ushort", "va_arg", "version", "void", "volatile",
 "wchar", "while", "with", "__FILE__", "__FUNCTION__", "__LINE__", "__PRETTY_FUNCTION__",
 "__thread", "__traits",
 "/", "/=", ".", "..", "...", "&", "&=", "&&", "|", "|=", "||",
@@ -88,7 +88,7 @@ enum TokenType
 	Template, This, Throw, True, Try, Typedef,
 	Typeid, Typeof,
 	Ubyte, Ucent, Uint, Ulong, Union, Unittest, Ushort,
-	Version, Void, Volatile,
+	VaArg, Version, Void, Volatile,
 	Wchar, While, With,
 	__File__, __Function__, __Line__, __Pretty_Function__, __Thread, __Traits,
 
@@ -282,6 +282,7 @@ TokenType identifierType(string ident)
 	case "union":           return Union;
 	case "unittest":        return Unittest;
 	case "ushort":          return Ushort;
+	case "va_arg":          return VaArg;
 	case "version":         return Version;
 	case "void":            return Void;
 	case "volatile":        return Volatile;

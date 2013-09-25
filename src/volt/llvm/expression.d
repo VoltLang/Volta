@@ -60,6 +60,10 @@ void getValueAnyForm(State state, ir.Exp exp, Value result)
 		auto cl = cast(ir.StatementExp)exp;
 		handleStatementExp(state, cl, result);
 		break;
+	case VaArgExp:
+		auto ve = cast(ir.VaArgExp)exp;
+		handleVaArgExp(state, ve, result);
+		break;
 	default:
 		throw panicUnhandled(exp, to!string(exp.nodeType));
 	}
@@ -1171,6 +1175,12 @@ void handleIncDec(State state, ir.Postfix postfix, Value result)
  *
  */
 
+void handleVaArgExp(State state, ir.VaArgExp vaexp, Value result)
+{
+	state.getValueAnyForm(vaexp.arg, result);
+	auto ty = fromIr(state, vaexp.type);
+	result.value = LLVMBuildVAArg(state.builder, result.value, ty.llvmType, "");
+}
 
 void handleStatementExp(State state, ir.StatementExp statExp, Value result)
 {

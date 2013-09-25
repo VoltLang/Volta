@@ -189,6 +189,8 @@ public abstract:
 	Visitor.Status leave(ref ir.Exp, ir.TemplateInstanceExp);
 	Visitor.Status enter(ref ir.Exp, ir.StatementExp);
 	Visitor.Status leave(ref ir.Exp, ir.StatementExp);
+	Visitor.Status enter(ref ir.Exp, ir.VaArgExp);
+	Visitor.Status leave(ref ir.Exp, ir.VaArgExp);
 
 	Visitor.Status visit(ref ir.Exp, ir.IdentifierExp);
 	Visitor.Status visit(ref ir.Exp, ir.ExpReference);
@@ -366,6 +368,8 @@ override:
 	Status leave(ref ir.Exp, ir.TemplateInstanceExp){ return Continue; }
 	Status enter(ref ir.Exp, ir.StatementExp){ return Continue; }
 	Status leave(ref ir.Exp, ir.StatementExp){ return Continue; }
+	Status enter(ref ir.Exp, ir.VaArgExp){ return Continue; }
+	Status leave(ref ir.Exp, ir.VaArgExp){ return Continue; }
 
 	Status visit(ref ir.Exp, ir.ExpReference){ return Continue; }
 	Status visit(ref ir.Exp, ir.IdentifierExp){ return Continue; }
@@ -499,6 +503,7 @@ Visitor.Status accept(ir.Node n, Visitor av)
 	case TemplateInstanceExp:
 	case StatementExp:
 	case TokenExp:
+	case VaArgExp:
 		throw panic(n.location, "can not visit expressions");
 
 	/*
@@ -682,6 +687,8 @@ Visitor.Status acceptExp(ref ir.Exp exp, Visitor av)
 		return acceptTemplateInstanceExp(exp, cast(ir.TemplateInstanceExp)exp, av);
 	case StatementExp:
 		return acceptStatementExp(exp, cast(ir.StatementExp)exp, av);
+	case VaArgExp:
+		return acceptVaArgExp(exp, cast(ir.VaArgExp)exp, av);
 	default:
 		throw panicUnhandled(exp, to!string(exp.nodeType));
 	}
@@ -2136,6 +2143,26 @@ Visitor.Status acceptTraitsExp(ref ir.Exp exp, ir.TraitsExp texp, Visitor av)
 Visitor.Status acceptTokenExp(ref ir.Exp exp, ir.TokenExp fexp, Visitor av)
 {
 	return av.visit(exp, fexp);
+}
+
+Visitor.Status acceptVaArgExp(ref ir.Exp exp, ir.VaArgExp vaexp, Visitor av)
+{
+	auto status = av.enter(exp, vaexp);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	status = accept(vaexp.type, av);
+	if (status == VisitorStop) {
+		return VisitorStop;
+	}
+
+	status = acceptExp(vaexp.arg, av);
+	if (status == VisitorStop) {
+		return VisitorStop;
+	}
+
+	return av.leave(exp, vaexp);
 }
 
 Visitor.Status acceptExpReference(ref ir.Exp exp, ir.ExpReference expref, Visitor av)

@@ -121,7 +121,9 @@ void replaceVarArgsIfNeeded(LanguagePass lp, ir.Function fn)
 		auto tinfoClass = lp.typeInfoClass;
 		auto tr = buildTypeReference(fn.location, tinfoClass, tinfoClass.name);
 		auto array = buildArrayType(fn.location, tr);
+		auto argArray = buildArrayType(fn.location, buildVoid(fn.location));
 		addParam(fn.location, fn, array, "_typeids");
+		addParam(fn.location, fn, argArray, "_args");
 		fn.type.varArgsProcessed = true;
 	}
 }

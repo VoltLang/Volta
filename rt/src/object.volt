@@ -199,6 +199,10 @@ extern(C) void vrt_aa_insert_array(void* rbtv, void[] key, void* value);
 extern(C) bool vrt_aa_delete_primitive(void* rbtv, ulong key);
 extern(C) bool vrt_aa_delete_array(void* rbtv, void[] key);
 
+// Calls to these are replaced by the compiler.
+extern(C) void __volt_va_start(void** vl, void* _args);
+extern(C) void __volt_va_end(void** vl);
+
 extern(C) {
 	@mangledName("memcmp") int __llvm_memcmp(void*, void*, size_t);
 	@mangledName("llvm.trap") void __llvm_trap();
@@ -206,4 +210,7 @@ extern(C) {
 	@mangledName("llvm.memcpy.p0i8.p0i8.i64") void __llvm_memcpy_p0i8_p0i8_i64(void*, void*, ulong, int, bool);
 	@mangledName("llvm.memmove.p0i8.p0i8.i32") void __llvm_memmove_p0i8_p0i8_i32(void*, void*, uint, int, bool);
 	@mangledName("llvm.memmove.p0i8.p0i8.i64") void __llvm_memmove_p0i8_p0i8_i64(void*, void*, ulong, int, bool);
+	@mangledName("llvm.va_start") void __llvm_volt_va_start(void*);
+	@mangledName("llvm.va_end") void __llvm_volt_va_end(void*);
 }
+

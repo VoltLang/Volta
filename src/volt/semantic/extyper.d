@@ -740,6 +740,37 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		}
 	}
 
+	// Hand check va_start(vl) and va_end(vl), then modify their calls.
+	if (fn is ctx.lp.vaStartFunc || fn is ctx.lp.vaEndFunc || fn is ctx.lp.vaCStartFunc || fn is ctx.lp.vaCEndFunc) {
+		if (postfix.arguments.length != 1) {
+			throw makeWrongNumberOfArguments(postfix, postfix.arguments.length, 1);
+		}
+		auto etype = getExpType(ctx.lp, postfix.arguments[0], ctx.current);
+		auto ptr = cast(ir.PointerType) etype;
+		if (ptr is null || !isVoid(ptr.base)) {
+			throw makeExpected(postfix, "va_list argument");
+		}
+		if (!isLValue(postfix.arguments[0])) {
+			throw makeVaFooMustBeLValue(postfix.arguments[0].location, (fn is ctx.lp.vaStartFunc || fn is ctx.lp.vaCStartFunc) ? "va_start" : "va_end");
+		}
+		postfix.arguments[0] = buildAddrOf(postfix.arguments[0]);
+		if (fn is ctx.lp.vaStartFunc) {
+			assert(ctx.currentFunction.params[$-1].name == "_args");
+			postfix.arguments ~= buildAccess(postfix.location, buildExpReference(postfix.location, ctx.currentFunction.params[$-1], "_args"), "ptr");
+		}
+		if (ctx.currentFunction.type.linkage == ir.Linkage.Volt) {
+			if (fn is ctx.lp.vaStartFunc) {
+				exp = buildVaArgStart(postfix.location, postfix.arguments[0], postfix.arguments[1]);
+				return;
+			} else if (fn is ctx.lp.vaEndFunc) {
+				exp = buildVaArgEnd(postfix.location, postfix.arguments[0]);
+				return;
+			} else {
+				throw makeExpected(postfix.location, "volt va_args function.");
+			}
+		}
+	}
+
 	if (asFunctionType.isScope && postfix.child.nodeType == ir.NodeType.Postfix) {
 		auto asPostfix = cast(ir.Postfix) postfix.child;
 		auto parentType = getExpType(ctx.lp, asPostfix.child, ctx.current);
@@ -759,7 +790,7 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		assert(asFunction !is null);
 
 		auto callNumArgs = postfix.arguments.length;
-		auto funcNumArgs = asFunctionType.params.length - 1;
+		auto funcNumArgs = asFunctionType.params.length - 2; // 2 == the two hidden arguments
 		if (callNumArgs < funcNumArgs) {
 			throw makeWrongNumberOfArguments(postfix, callNumArgs, funcNumArgs);
 		}
@@ -778,14 +809,21 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		typeidsLiteral.location = postfix.location;
 		typeidsLiteral.type = array;
 
-		foreach (_exp; varArgsSlice) {
+		int[] sizes;
+		int totalSize;
+		ir.Type[] types;
+		foreach (i, _exp; varArgsSlice) {
+			auto etype = getExpType(ctx.lp, _exp, ctx.current);
 			auto typeId = new ir.Typeid();
 			typeId.location = postfix.location;
-			typeId.type = copyTypeSmart(postfix.location, getExpType(ctx.lp, _exp, ctx.current));
+			typeId.type = copyTypeSmart(postfix.location, etype);
 			typeidsLiteral.values ~= typeId;
+			types ~= etype;
+			sizes ~= size(postfix.location, ctx.lp, etype);
+			totalSize += sizes[$-1];
 		}
 
-		postfix.arguments = argsSlice ~ typeidsLiteral ~ varArgsSlice;
+		postfix.arguments = argsSlice ~ typeidsLiteral ~ buildInternalArrayLiteralSliceSmart(postfix.location, buildArrayType(postfix.location, buildVoid(postfix.location)), types, sizes, totalSize, ctx.lp.memcpyFunc, varArgsSlice);
 	}
 
 	if (postfix.arguments.length < asFunctionType.params.length && fn !is null) {
@@ -2392,6 +2430,28 @@ public:
 	override Status enter(ref ir.Exp exp, ir.TypeExp te)
 	{
 		ensureResolved(ctx.lp, ctx.current, te.type);
+		return Continue;
+	}
+
+	override Status enter(ref ir.Exp exp, ir.VaArgExp vaexp)
+	{
+		ensureResolved(ctx.lp, ctx.current, vaexp.type);
+		return Continue;
+	}
+
+	override Status leave(ref ir.Exp exp, ir.VaArgExp vaexp)
+	{
+		if (!isLValue(vaexp.arg)) {
+			throw makeVaFooMustBeLValue(vaexp.arg.location, "va_exp");
+		}
+		if (ctx.currentFunction.type.linkage == ir.Linkage.C) {
+			if (vaexp.type.nodeType != ir.NodeType.PrimitiveType && vaexp.type.nodeType != ir.NodeType.PointerType) {
+				throw makeCVaArgsOnlyOperateOnSimpleTypes(vaexp.location);
+			}
+			vaexp.arg = buildAddrOf(vaexp.location, copyExp(vaexp.arg));
+		} else {
+			exp = buildVaArgCast(vaexp.location, vaexp);
+		}
 		return Continue;
 	}
 

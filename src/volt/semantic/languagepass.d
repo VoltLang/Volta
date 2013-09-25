@@ -108,6 +108,11 @@ public:
 		attributeClass = cast(ir.Class)s.getStore("Attribute").node;
 		arrayStruct = cast(ir.Struct)s.getStore("ArrayStruct").node;
 		allocDgVariable = cast(ir.Variable)s.getStore("allocDg").node;
+		vaStartFunc = cast(ir.Function)s.getStore("__volt_va_start").node;
+		vaEndFunc = cast(ir.Function)s.getStore("__volt_va_end").node;
+		vaCStartFunc = cast(ir.Function)s.getStore("__llvm_volt_va_start").node;
+		vaCEndFunc = cast(ir.Function)s.getStore("__llvm_volt_va_end").node;
+		memcpyFunc = cast(ir.Function)s.getStore("__llvm_memcpy_p0i8_p0i8_i32").node;
 
 		ir.EnumDeclaration getEnum(string name)
 		{

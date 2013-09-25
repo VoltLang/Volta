@@ -164,6 +164,7 @@ public:
 		PrettyFunctionName,
 		File,
 		Line,
+		VaArg,
 	}
 
 public:
@@ -178,4 +179,5 @@ public:
 	FunctionLiteral functionLiteral;  // Optional.
 	TraitsExp trait;  // If op == Traits.
 	TemplateInstanceExp _template;  // If op == TemplateInstance.
+	VaArgExp vaexp;  // If op == VaArg.
 }

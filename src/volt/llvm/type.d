@@ -407,7 +407,7 @@ private:
 			args[$-1] = state.voidPtrType.llvmType;
 		}
 
-		llvmCallType = LLVMFunctionType(ret.llvmType, args, ft.hasVarArgs);
+		llvmCallType = LLVMFunctionType(ret.llvmType, args, ft.hasVarArgs && ft.linkage == ir.Linkage.C);
 		llvmType = LLVMPointerType(llvmCallType, 0);
 		super(state, ft, false, llvmType);
 	}

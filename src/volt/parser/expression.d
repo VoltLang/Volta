@@ -434,6 +434,9 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 	case intir.PrimaryExp.Type.Line:
 		exp = new ir.TokenExp(ir.TokenExp.Type.Line);
 		break;
+	case intir.PrimaryExp.Type.VaArg:
+		exp = primary.vaexp;
+		break;
 	default:
 		throw panic(primary.location, "unhandled primary expression.");
 	}
@@ -1124,6 +1127,10 @@ intir.PrimaryExp parsePrimaryExp(TokenStream ts)
 		exp.op = intir.PrimaryExp.Type.Traits;
 		exp.trait = parseTraitsExp(ts);
 		break;
+	case TokenType.VaArg:
+		exp.op = intir.PrimaryExp.Type.VaArg;
+		exp.vaexp = parseVaArgExp(ts);
+		break;
 	default:
 		auto mark = ts.save();
 		try {
@@ -1147,6 +1154,23 @@ intir.PrimaryExp parsePrimaryExp(TokenStream ts)
 	}
 	
 	return exp;
+}
+
+ir.VaArgExp parseVaArgExp(TokenStream ts)
+{
+	auto vaexp = new ir.VaArgExp();
+	vaexp.location = ts.peek.location;
+	match(ts, TokenType.VaArg);
+	match(ts, TokenType.Bang);
+	bool paren = matchIf(ts, TokenType.OpenParen);
+	vaexp.type = parseType(ts);
+	if (paren) {
+		match(ts, TokenType.CloseParen);
+	}
+	match(ts, TokenType.OpenParen);
+	vaexp.arg = parseExp(ts);
+	match(ts, TokenType.CloseParen);
+	return vaexp;
 }
 
 bool isUnambiguouslyParenType(TokenStream ts)
