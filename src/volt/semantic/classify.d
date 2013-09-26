@@ -838,3 +838,84 @@ bool isOrInheritsFrom(ir.Class a, ir.Class b)
 		return inheritsFrom(a, b);
 	}
 }
+
+// KEEP IN SYNC WITH OBJECT.VOLT!
+enum
+{
+	TYPE_STRUCT,
+	TYPE_CLASS,
+	TYPE_INTERFACE,
+	TYPE_UNION,
+	TYPE_ENUM,
+	TYPE_ATTRIBUTE,
+	TYPE_USER_ATTRIBUTE,
+
+	TYPE_VOID,
+	TYPE_UBYTE,
+	TYPE_BYTE,
+	TYPE_CHAR,
+	TYPE_BOOL,
+	TYPE_USHORT,
+	TYPE_SHORT,
+	TYPE_WCHAR,
+	TYPE_UINT,
+	TYPE_INT,
+	TYPE_DCHAR,
+	TYPE_FLOAT,
+	TYPE_ULONG,
+	TYPE_LONG,
+	TYPE_DOUBLE,
+	TYPE_REAL,
+
+	TYPE_POINTER,
+	TYPE_ARRAY,
+	TYPE_STATIC_ARRAY,
+	TYPE_AA,
+	TYPE_FUNCTION,
+	TYPE_DELEGATE,
+}
+
+int typeToRuntimeConstant(ir.Type type)
+{
+	switch (type.nodeType) with (ir.NodeType) {
+	case Struct: return TYPE_STRUCT;
+	case Class: return TYPE_CLASS;
+	case Interface: return TYPE_INTERFACE;
+	case Union: return TYPE_UNION;
+	case Enum: return TYPE_ENUM;
+	case Attribute: return TYPE_ATTRIBUTE;
+	case UserAttribute: return TYPE_USER_ATTRIBUTE;
+	case PrimitiveType:
+		auto prim = cast(ir.PrimitiveType) type;
+		final switch (prim.type) with (ir.PrimitiveType.Kind) {
+		case Void: return TYPE_VOID;
+		case Ubyte: return TYPE_UBYTE;
+		case Byte: return TYPE_BYTE;
+		case Char: return TYPE_CHAR;
+		case Bool: return TYPE_BOOL;
+		case Ushort: return TYPE_USHORT;
+		case Short: return TYPE_SHORT;
+		case Wchar: return TYPE_WCHAR;
+		case Uint: return TYPE_UINT;
+		case Int: return TYPE_INT;
+		case Dchar: return TYPE_DCHAR;
+		case Float: return TYPE_FLOAT;
+		case Ulong: return TYPE_ULONG;
+		case Long: return TYPE_LONG;
+		case Double: return TYPE_DOUBLE;
+		case Real: return TYPE_REAL;
+		}
+	case PointerType: return TYPE_POINTER;
+	case ArrayType: return TYPE_ARRAY;
+	case StaticArrayType: return TYPE_STATIC_ARRAY;
+	case AAType: return TYPE_AA;
+	case FunctionType: return TYPE_FUNCTION;
+	case DelegateType: return TYPE_DELEGATE;
+	case StorageType:
+		auto storage = cast(ir.StorageType) type;
+		return typeToRuntimeConstant(storage.base);
+	default:
+		throw panicUnhandled(type, "typeToRuntimeConstant");
+	}
+}
+

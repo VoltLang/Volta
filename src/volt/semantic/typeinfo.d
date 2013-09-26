@@ -91,7 +91,7 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Type type)
 	int typeSize = size(type.location, lp, type);
 	auto typeConstant = buildSizeTConstant(type.location, lp, typeSize);
 
-	int typeTag = type.nodeType;
+	int typeTag = typeToRuntimeConstant(type);
 	auto typeTagConstant = new ir.Constant();
 	typeTagConstant.location = type.location;
 	typeTagConstant._int = typeTag;
