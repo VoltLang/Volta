@@ -27,13 +27,13 @@ string getTypeInfoVarName(ir.Type type)
 /**
  * Builds a complete TypeInfo, for use on none aggregate Types.
  */
-ir.Variable buildTypeInfo(LanguagePass lp, ir.Type type)
+ir.Variable buildTypeInfo(LanguagePass lp, ir.Scope current, ir.Type type)
 {
 	if (type.mangledName is null) {
 		type.mangledName = mangle(type);
 	}
 
-	auto assign = buildTypeInfoLiteral(lp, type);
+	auto assign = buildTypeInfoLiteral(lp, current, type);
 	return buildTypeInfoVariable(lp, type, assign, false);
 }
 
@@ -60,7 +60,7 @@ void fileInAggregateVar(LanguagePass lp, ir.Aggregate aggr)
 		return;
 	}
 
-	aggr.typeInfo.assign = buildTypeInfoLiteral(lp, aggr);
+	aggr.typeInfo.assign = buildTypeInfoLiteral(lp, aggr.myScope, aggr);
 }
 
 
@@ -84,14 +84,14 @@ ir.Variable buildTypeInfoVariable(LanguagePass lp, ir.Type type, ir.Exp assign, 
 	return literalVar;
 }
 
-ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Type type)
+ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Scope current, ir.Type type)
 {
 	assert(type.mangledName !is null);
 
 	int typeSize = size(type.location, lp, type);
 	auto typeConstant = buildSizeTConstant(type.location, lp, typeSize);
 
-	int typeTag = typeToRuntimeConstant(type);
+	int typeTag = typeToRuntimeConstant(lp, current, type);
 	auto typeTagConstant = new ir.Constant();
 	typeTagConstant.location = type.location;
 	typeTagConstant._int = typeTag;

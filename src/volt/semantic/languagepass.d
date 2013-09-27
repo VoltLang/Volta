@@ -109,6 +109,43 @@ public:
 		arrayStruct = cast(ir.Struct)s.getStore("ArrayStruct").node;
 		allocDgVariable = cast(ir.Variable)s.getStore("allocDg").node;
 
+		ir.EnumDeclaration getEnum(string name)
+		{
+			auto ed = cast(ir.EnumDeclaration)s.getStore(name).node;
+			assert(ed !is null);
+			return ed;
+		}
+
+		TYPE_STRUCT = getEnum("TYPE_STRUCT");
+		TYPE_CLASS = getEnum("TYPE_CLASS");
+		TYPE_INTERFACE = getEnum("TYPE_INTERFACE");
+		TYPE_UNION = getEnum("TYPE_UNION");
+		TYPE_ENUM = getEnum("TYPE_ENUM");
+		TYPE_ATTRIBUTE = getEnum("TYPE_ATTRIBUTE");
+		TYPE_USER_ATTRIBUTE = getEnum("TYPE_USER_ATTRIBUTE");
+		TYPE_VOID = getEnum("TYPE_VOID");
+		TYPE_UBYTE = getEnum("TYPE_UBYTE");
+		TYPE_BYTE = getEnum("TYPE_BYTE");
+		TYPE_CHAR = getEnum("TYPE_CHAR");
+		TYPE_BOOL = getEnum("TYPE_BOOL");
+		TYPE_USHORT = getEnum("TYPE_USHORT");
+		TYPE_SHORT = getEnum("TYPE_SHORT");
+		TYPE_WCHAR = getEnum("TYPE_WCHAR");
+		TYPE_UINT = getEnum("TYPE_UINT");
+		TYPE_INT = getEnum("TYPE_INT");
+		TYPE_DCHAR = getEnum("TYPE_DCHAR");
+		TYPE_FLOAT = getEnum("TYPE_FLOAT");
+		TYPE_ULONG = getEnum("TYPE_ULONG");
+		TYPE_LONG = getEnum("TYPE_LONG");
+		TYPE_DOUBLE = getEnum("TYPE_DOUBLE");
+		TYPE_REAL = getEnum("TYPE_REAL");
+		TYPE_POINTER = getEnum("TYPE_POINTER");
+		TYPE_ARRAY = getEnum("TYPE_ARRAY");
+		TYPE_STATIC_ARRAY = getEnum("TYPE_STATIC_ARRAY");
+		TYPE_AA = getEnum("TYPE_AA");
+		TYPE_FUNCTION = getEnum("TYPE_FUNCTION");
+		TYPE_DELEGATE = getEnum("TYPE_DELEGATE");
+
 		phase2([objectModule]);
 	}
 

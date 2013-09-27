@@ -116,6 +116,43 @@ public:
 	ir.Variable allocDgVariable;
 	/* @} */
 
+	/**
+	 * Type id constants for TypeInfo.
+	 * @{
+	 */
+	ir.EnumDeclaration TYPE_STRUCT;
+	ir.EnumDeclaration TYPE_CLASS;
+	ir.EnumDeclaration TYPE_INTERFACE;
+	ir.EnumDeclaration TYPE_UNION;
+	ir.EnumDeclaration TYPE_ENUM;
+	ir.EnumDeclaration TYPE_ATTRIBUTE;
+	ir.EnumDeclaration TYPE_USER_ATTRIBUTE;
+
+	ir.EnumDeclaration TYPE_VOID;
+	ir.EnumDeclaration TYPE_UBYTE;
+	ir.EnumDeclaration TYPE_BYTE;
+	ir.EnumDeclaration TYPE_CHAR;
+	ir.EnumDeclaration TYPE_BOOL;
+	ir.EnumDeclaration TYPE_USHORT;
+	ir.EnumDeclaration TYPE_SHORT;
+	ir.EnumDeclaration TYPE_WCHAR;
+	ir.EnumDeclaration TYPE_UINT;
+	ir.EnumDeclaration TYPE_INT;
+	ir.EnumDeclaration TYPE_DCHAR;
+	ir.EnumDeclaration TYPE_FLOAT;
+	ir.EnumDeclaration TYPE_ULONG;
+	ir.EnumDeclaration TYPE_LONG;
+	ir.EnumDeclaration TYPE_DOUBLE;
+	ir.EnumDeclaration TYPE_REAL;
+
+	ir.EnumDeclaration TYPE_POINTER;
+	ir.EnumDeclaration TYPE_ARRAY;
+	ir.EnumDeclaration TYPE_STATIC_ARRAY;
+	ir.EnumDeclaration TYPE_AA;
+	ir.EnumDeclaration TYPE_FUNCTION;
+	ir.EnumDeclaration TYPE_DELEGATE;
+	/* @} */
+
 public:
 	this(Settings settings, Frontend frontend, Controller controller)
 	out {

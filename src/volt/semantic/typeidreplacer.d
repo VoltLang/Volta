@@ -68,7 +68,7 @@ public:
 		}
 
 
-		ir.Variable literalVar = buildTypeInfo(lp, _typeid.type);
+		ir.Variable literalVar = buildTypeInfo(lp, thisModule.myScope, _typeid.type);
 
 		thisModule.children.nodes = literalVar ~ thisModule.children.nodes;
 		thisModule.myScope.addValue(literalVar, literalVar.name);
