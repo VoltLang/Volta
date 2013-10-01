@@ -562,15 +562,12 @@ void extypeAssign(Context ctx, ref ir.Exp exp, ir.Type type)
  */
 void extypeIdentifierExp(Context ctx, ref ir.Exp e, ir.IdentifierExp i)
 {
+	auto current = i.globalLookup ? getModuleFromScope(ctx.current).myScope : ctx.current;
 	if (i.type is null) {
-		if (i.globalLookup) {
-			i.type = declTypeLookup(i.location, ctx.lp, getModuleFromScope(ctx.current).myScope, i.value);
-		} else {
-			i.type = declTypeLookup(i.location, ctx.lp, ctx.current, i.value);
-		}
+		i.type = declTypeLookup(i.location, ctx.lp, current, i.value);
 	}
 
-	auto store = lookup(ctx.lp, ctx.current, i.location, i.value);
+	auto store = lookup(ctx.lp, current, i.location, i.value);
 	if (store is null) {
 		throw makeFailedLookup(i, i.value);
 	}
