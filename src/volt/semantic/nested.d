@@ -92,7 +92,7 @@ void insertBinOpAssignsForNestedVariableAssigns(ir.BlockStatement bs)
 	}
 }
 
-void tagNestedVariables(Context ctx, ir.Variable var, ir.IdentifierExp i, ir.Store store, ref ir.Exp e)
+void tagNestedVariables(Context ctx, ir.Variable var, ir.Store store, ref ir.Exp e)
 {
 	if (!ctx.isFunction || ctx.currentFunction.nestStruct is null) {
 		return;
@@ -104,9 +104,9 @@ void tagNestedVariables(Context ctx, ir.Variable var, ir.IdentifierExp i, ir.Sto
 			var.storage = ir.Variable.Storage.Nested;
 		} else if (var.storage == ir.Variable.Storage.Field) {
 			assert(ctx.currentFunction.nestedHiddenParameter !is null);
-			auto nref = buildExpReference(i.location, ctx.currentFunction.nestedHiddenParameter, ctx.currentFunction.nestedHiddenParameter.name);
-			auto a = buildAccess(i.location, nref, "this");
-			e = buildAccess(a.location, a, i.value);
+			auto nref = buildExpReference(var.location, ctx.currentFunction.nestedHiddenParameter, ctx.currentFunction.nestedHiddenParameter.name);
+			auto a = buildAccess(var.location, nref, "this");
+			e = buildAccess(a.location, a, var.name);
 		}
 		if (var.storage != ir.Variable.Storage.Field) {
 			var.storage = ir.Variable.Storage.Nested;

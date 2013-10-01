@@ -36,8 +36,14 @@ public:
 	 */
 	void setupFromScope(ir.Scope _scope)
 	{
-		// XXX Build minimal needed mFunctionStack.
-		assert(mCurrent is null);
+		auto current = _scope;
+		while  (current !is null) {
+			auto fn = cast(ir.Function) current.node;
+			if (fn !is null) {
+				push(fn, current, fn);
+			}
+			current = current.parent;
+		}
 		mCurrent = _scope;
 	}
 

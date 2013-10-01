@@ -588,7 +588,7 @@ void extypeIdentifierExp(Context ctx, ref ir.Exp e, ir.IdentifierExp i)
 		}
 		_ref.decl = var;
 		e = _ref;
-		tagNestedVariables(ctx, var, i, store, e);
+		tagNestedVariables(ctx, var, store, e);
 		return;
 	case FunctionParam:
 		auto fp = cast(ir.FunctionParam) store.node;
@@ -1155,7 +1155,7 @@ void extypePostfixIdentifier(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		assert(store !is null);
 		if (store.kind == ir.Store.Kind.Value) {
 			auto var = cast(ir.Variable) store.node;
-			tagNestedVariables(ctx, var, firstExp, store, exp);
+			tagNestedVariables(ctx, var, store, exp);
 			assert(var !is null);
 			_ref.decl = var;
 		} else if (store.kind == ir.Store.Kind.Function) {
