@@ -109,6 +109,11 @@ class Object
 	{
 		return;
 	}
+
+	string toString()
+	{
+		return "object.Object";
+	}
 }
 
 class Attribute
