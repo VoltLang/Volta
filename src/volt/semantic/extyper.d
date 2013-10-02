@@ -855,7 +855,7 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
  *
  * pkg.mod.Class.member = 4;
  *
- * Even tho FunctionSets might need rewriting they are not rewritten
+ * Even though FunctionSets might need rewriting they are not rewritten
  * directly but instead this function is called after they have been
  * rewritten and the ExpReference has been resolved to a single Function.
  */
@@ -924,7 +924,15 @@ bool replaceExpReferenceIfNeeded(Context ctx,
 	auto store = lookupOnlyThisScope(ctx.lp, expressionAgg.myScope, exp.location, ident);
 	if (store !is null && store.node !is eRef.decl) {
 		if (eRef.decl.nodeType !is ir.NodeType.FunctionParam) {
-			throw makeNotMember(eRef, expressionAgg, ident);
+			bool found = false;
+			foreach (fn; store.functions) {
+				if (fn is eRef.decl) {
+					found = true;
+				}
+			}
+			if (!found) {
+				throw makeNotMember(eRef, expressionAgg, ident);
+			}
 		}
 	}
 
