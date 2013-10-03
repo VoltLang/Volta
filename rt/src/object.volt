@@ -96,6 +96,11 @@ class TypeInfo
 	bool mutableIndirection;
 	void* classVtable;
 	size_t classSize;
+	TypeInfo base;  // For arrays (dynamic and static), and pointers.
+	size_t staticArrayLength;
+	TypeInfo key, value;  // For AAs.
+	TypeInfo ret;  // For functions and delegates.
+	TypeInfo[] args;  // For functions and delegates.
 }
 
 class Object

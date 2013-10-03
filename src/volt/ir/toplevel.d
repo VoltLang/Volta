@@ -32,7 +32,7 @@ import volt.ir.statement;
  * for example, a place where traditionally only statements reside.
  *
  * So perhaps not the most elegant system, but usability trumps
- * elegance, much to the chagrin of architect astronaughts everywhere.
+ * elegance, much to the chagrin of architect astronauts everywhere.
  *
  * @ingroup irNode
  */

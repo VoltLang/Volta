@@ -116,11 +116,13 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Scope current, ir.Type 
 	literal.useBaseStorage = true;
 	literal.type = buildTypeReference(type.location, lp.typeInfoClass, lp.typeInfoClass.name);
 
+	// TypeInfo.size, TypeInfo.type, TypeInfo.mangledName, and TypeInfo.mutableIndirection. 
 	literal.exps ~= typeConstant;
 	literal.exps ~= typeTagConstant;
 	literal.exps ~= mangledNameConstant;
 	literal.exps ~= mindirectionConstant;
 
+	// TypeInfo.classVtable and TypeInfo.classSize.
 	auto asClass = cast(ir.Class)type;
 	if (asClass !is null) {
 		literal.exps ~= buildCast(type.location, buildVoidPtr(type.location),
@@ -130,6 +132,71 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Scope current, ir.Type 
 	} else {
 		literal.exps ~= buildConstantNull(type.location, buildVoidPtr(type.location));
 		literal.exps ~= buildSizeTConstant(type.location, lp, 0);
+	}
+
+	// TypeInfo.base.
+	auto asArray = cast(ir.ArrayType)type;
+	auto asPointer = cast(ir.PointerType)type;
+	auto asStaticArray = cast(ir.StaticArrayType)type;
+	if (asArray !is null || asPointer !is null || asStaticArray !is null) {
+		ir.Type base;
+		if (asArray !is null) {
+			base = asArray.base;
+		} else if (asPointer !is null) {
+			assert(asArray is null);
+			base = asPointer.base;
+		} else {
+			assert(asArray is null && asPointer is null && asStaticArray !is null);
+			base = asStaticArray.base;
+		}
+		assert(base !is null);
+
+		auto baseVar = buildTypeInfo(lp, current, base);
+		getModuleFromScope(current).children.nodes ~= baseVar;
+		literal.exps ~= buildExpReference(type.location, baseVar);
+	} else {
+		literal.exps ~= buildConstantNull(type.location, lp.typeInfoClass);
+	}
+
+	// TypeInfo.staticArrayLength.
+	if (asStaticArray !is null) {
+		literal.exps ~= buildSizeTConstant(type.location, lp, cast(int) asStaticArray.length);
+	} else {
+		literal.exps ~= buildSizeTConstant(type.location, lp, 0);
+	}
+
+	// TypeInfo.key and TypeInfo.value.
+	auto asAA = cast(ir.AAType)type;
+	if (asAA !is null) {
+		auto keyVar = buildTypeInfo(lp, current, asAA.key);
+		auto valVar = buildTypeInfo(lp, current, asAA.value);
+		getModuleFromScope(current).children.nodes ~= keyVar;
+		getModuleFromScope(current).children.nodes ~= valVar;
+		literal.exps ~= buildExpReference(type.location, keyVar);
+		literal.exps ~= buildExpReference(type.location, valVar);
+	} else {
+		literal.exps ~= buildConstantNull(type.location, lp.typeInfoClass);
+		literal.exps ~= buildConstantNull(type.location, lp.typeInfoClass);
+	}
+
+	// TypeInfo.ret and args.
+	auto asCallable = cast(ir.CallableType)type;
+	if (asCallable !is null) {
+		auto retVar = buildTypeInfo(lp, current, asCallable.ret);
+		getModuleFromScope(current).children.nodes ~= retVar;
+		literal.exps ~= buildExpReference(type.location, retVar);
+
+		ir.Exp[] exps;
+		foreach (param; asCallable.params) {
+			auto var = buildTypeInfo(lp, current, param);
+			getModuleFromScope(current).children.nodes ~= var;
+			exps ~= buildExpReference(type.location, var);
+		}
+
+		literal.exps ~= buildArrayLiteralSmart(type.location, buildArrayType(type.location, lp.typeInfoClass), exps);
+	} else {
+		literal.exps ~= buildConstantNull(type.location, lp.typeInfoClass);
+		literal.exps ~= buildArrayLiteralSmart(type.location, buildArrayType(type.location, lp.typeInfoClass));
 	}
 
 	return literal;
