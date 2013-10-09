@@ -119,6 +119,7 @@ public:
 	ir.Function vaCStartFunc;
 	ir.Function vaCEndFunc;
 	ir.Function memcpyFunc;
+	ir.Function throwSliceErrorFunction;
 	/* @} */
 
 	/**

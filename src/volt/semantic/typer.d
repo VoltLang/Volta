@@ -585,6 +585,11 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 	}
 
 	auto type = getExpType(lp, postfix.child, currentScope);
+	auto asPointer = cast(ir.PointerType) type;
+	if (asPointer !is null && (asPointer.base.nodeType == ir.NodeType.ArrayType 
+		|| asPointer.base.nodeType == ir.NodeType.StaticArrayType)) {
+		type = asPointer.base;
+	}
 
 	if (type.nodeType == ir.NodeType.ArrayType) {
 		auto asArray = cast(ir.ArrayType) type;

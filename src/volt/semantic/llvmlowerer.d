@@ -3,8 +3,10 @@
 module volt.semantic.llvmlowerer;
 
 import std.string : format;
+import std.file : baseName;
 
 import ir = volt.ir.ir;
+import volt.ir.copy;
 import volt.ir.util;
 
 import volt.errors;
@@ -164,6 +166,12 @@ public:
 		statExp.exp = buildExpReference(loc, var);
 		exp = statExp;
 
+		return Continue;
+	}
+
+	override Status leave(ref ir.Exp exp, ir.Unary uexp)
+	{
+		replaceArrayCastIfNeeded(exp.location, lp, current, uexp, exp);
 		return Continue;
 	}
 
@@ -883,3 +891,65 @@ ir.Exp buildAAKeyCast(Location loc, ir.Exp key, ir.AAType aa)
 
 	return key;
 }
+
+void replaceArrayCastIfNeeded(Location loc, LanguagePass lp, ir.Scope current, ir.Unary uexp, ref ir.Exp exp)
+{
+	if (uexp.op != ir.Unary.Op.Cast) {
+		return;
+	}
+
+	auto toArray = cast(ir.ArrayType) realType(uexp.type);
+	if (toArray is null) {
+		return;
+	}
+	auto fromArray = cast(ir.ArrayType) getExpType(lp, uexp.value, current);
+	if (fromArray is null) {
+		return;
+	}
+	if (typesEqual(toArray, fromArray)) {
+		return;
+	}
+
+	int fromSz = size(loc, lp, fromArray.base);
+	int toSz = size(loc, lp, toArray.base);
+	int biggestSz = fromSz > toSz ? fromSz : toSz;
+	bool decreasing = fromSz > toSz;
+
+	// ({
+	auto sexp = new ir.StatementExp();
+	sexp.location = loc;
+
+	// auto arr = <exp>
+	auto var = buildVariableSmart(loc, copyTypeSmart(loc, fromArray), ir.Variable.Storage.Function, "arr");
+	var.assign = uexp.value;
+	sexp.statements ~= var;
+
+	//     vrt_throw_slice_error(arr.length, typeid(T).size);
+	auto ln = buildAccess(loc, buildExpReference(loc, var), "length");
+	auto sz = buildAccess(loc, buildTypeidSmart(loc, toArray.base), "size");
+	ir.Exp fname = buildStringConstant(loc, format(`"%s"`, baseName(exp.location.filename)));
+	ir.Exp lineNum = buildSizeTConstant(loc, lp, cast(int) exp.location.line);
+	auto rtCall = buildCall(loc, buildExpReference(loc, lp.throwSliceErrorFunction), [ln, sz, fname, lineNum]);
+	buildExpStat(loc, sexp, rtCall);
+
+	// auto _out = <castexp>
+	auto _out = buildVariableSmart(loc, copyTypeSmart(loc, toArray), ir.Variable.Storage.Function, "_out");
+	uexp.value = buildExpReference(loc, var);
+	_out.assign = uexp;
+	sexp.statements ~= _out;
+
+	auto inLength = buildAccess(loc, buildExpReference(loc, var), "length");
+	auto outLength = buildAccess(loc, buildExpReference(loc, _out), "length");
+	ir.Exp lengthTweak;
+	if (!decreasing) {
+		lengthTweak = buildBinOp(loc, ir.BinOp.Op.Div, inLength, buildSizeTConstant(loc, lp, biggestSz));
+	} else {
+		lengthTweak = buildBinOp(loc, ir.BinOp.Op.Mul, inLength, buildSizeTConstant(loc, lp, biggestSz));
+	}
+	auto assign = buildAssign(loc, outLength, lengthTweak);
+	buildExpStat(loc, sexp, assign);
+
+	sexp.exp = buildExpReference(loc, _out);
+	exp = sexp;
+}
+

@@ -190,6 +190,13 @@ extern(C) void vrt_gc_shutdown();
 extern(C) void* vrt_handle_cast(void* obj, TypeInfo tinfo);
 extern(C) void vrt_eh_throw(Throwable);
 extern(C) uint vrt_hash(void*, size_t);
+extern(C) void vrt_throw_slice_error(size_t length, size_t targetSize, string file, size_t line)
+{
+	if ((length % targetSize) != 0) {
+		throw new Error("invalid array cast");
+	}
+	return;
+}
 
 extern(C) void* vrt_aa_new(TypeInfo value);
 extern(C) bool vrt_aa_in_primitive(void* rbtv, ulong key, void* ret);
