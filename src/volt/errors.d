@@ -25,6 +25,15 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeNoValidFunction(Location loc, string fname, ir.Type[] args, string file = __FILE__, const int line = __LINE__)
+{
+	auto msg = format("no function named '%s' matches arguments %s.", fname, typesString(args));
+	auto e = new CompilerError(loc, msg);
+	e.file = file;
+	e.line = line;
+	return e;
+}
+
 CompilerException makeNonLastVariadic(ir.Variable var, string file = __FILE__, const int line = __LINE__)
 {
 	auto e = new CompilerError(var.location, "variadic parameter must be last.");
@@ -449,6 +458,19 @@ CompilerException panicNotMember(ir.Node node, string aggregate, string field, s
 }
 
 private:
+
+string typesString(ir.Type[] types)
+{
+	char[] buf = "(".dup;
+	foreach (i, type; types) {
+		buf ~= type.errorString;
+		if (i < types.length - 1) {
+			buf ~= ", ".dup;
+		}
+	}
+	buf ~= ")".dup;
+	return buf.idup;
+}
 
 @property string errorString(ir.Type type)
 {

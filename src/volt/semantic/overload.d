@@ -218,6 +218,9 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 			outFunctions ~= fn;
 		}
 	}
+	if (outFunctions.length == 0) {
+		throw makeNoValidFunction(location, functions[0].name, arguments);
+	}
 
 	int[] matchLevels;
 	foreach (fn; outFunctions) {
