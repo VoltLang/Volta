@@ -158,7 +158,11 @@ int matchLevel(ir.Type argument, ir.Type parameter)
 
 bool specialisationComparison(ir.Function a, ir.Function b)
 {
-	assert(a.type.params.length == b.type.params.length);
+	if (a.type.params.length != b.type.params.length) {
+		auto longer = a.params.length > b.params.length ? a : b;
+		assert(longer.params[$-1].assign !is null);
+		return a.params.length < b.params.length;
+	}
 	bool atob = true, btoa = true;
 	for (size_t i = 0; i < a.type.params.length; ++i) {
 		auto at = a.params[i].type;
@@ -187,20 +191,30 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 		return functions[0];
 	}
 
-	bool correctNumberOfArguments(ir.Function fn)
+	bool correctNumberOfArguments(ir.Function fn, out int defaultArguments)
 	{
+		foreach (param; fn.params) {
+			if (param.assign !is null) {
+				defaultArguments++;
+			}
+		}
 		return fn.type.params.length == arguments.length;
 	}
 
 	int matchLevel(ir.Function fn)
 	{
-		assert(fn.type.params.length == arguments.length);
+		assert(fn.type.params.length >= arguments.length);
 		if (fn.type.params.length == 0) {
 			return 4;
 		}
 		int[] matchLevels;
 		foreach (i, param; fn.type.params) {
-			matchLevels ~= .matchLevel(param, arguments[i]);
+			if (i >= arguments.length) {
+				assert(fn.params[i].assign !is null);
+				matchLevels ~= 4;
+			} else {
+				matchLevels ~= .matchLevel(param, arguments[i]);
+			}
 		}
 		int matchLevel = int.max;
 		foreach (l; matchLevels) {
@@ -214,7 +228,10 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 
 	ir.Function[] outFunctions;
 	foreach (fn; functions) {
-		if (correctNumberOfArguments(fn)) {
+		int defaultArguments;
+		if (correctNumberOfArguments(fn, defaultArguments)) {
+			outFunctions ~= fn;
+		} else if (fn.params.length == arguments.length + defaultArguments) {
 			outFunctions ~= fn;
 		}
 	}
