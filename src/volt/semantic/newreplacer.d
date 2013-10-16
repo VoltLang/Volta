@@ -112,6 +112,28 @@ ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scop
 	return fn;
 }
 
+ir.StatementExp buildClassConstructionWrapper(Location loc, LanguagePass lp, ir.Scope current, ir.Class _class, ir.Function constructor, ir.Variable allocDgVar, ir.Exp[] exps)
+{
+	auto sexp = new ir.StatementExp();
+	sexp.location = loc;
+
+	// auto thisVar = allocDg(_class, -1);
+	auto thisVar = buildVariableSmart(loc, _class, ir.Variable.Storage.Function, "thisVar");
+	thisVar.assign = createAllocDgCall(allocDgVar, lp, loc, _class, buildConstantInt(loc, -1));
+	thisVar.assign = buildCastSmart(loc, _class, thisVar.assign);
+	sexp.statements ~= thisVar;
+	sexp.exp = buildExpReference(loc, thisVar, "thisVar");
+
+	// thisVar.this(cast(void*) thisVar)
+	auto eref = buildExpReference(loc, constructor, "this");
+	auto exp = buildCall(loc, eref, null);
+	exp.arguments ~= exps;
+	exp.arguments ~= buildCast(loc, buildVoidPtr(loc), buildExpReference(loc, thisVar, "thisVar"));
+	buildExpStat(loc, sexp, exp);
+
+	return sexp;
+}
+
 
 ir.Exp createAllocDgCall(ir.Variable allocDgVar, LanguagePass lp, Location location, ir.Type type, ir.Exp countArg = null, bool suppressCast = false)
 {
@@ -182,73 +204,6 @@ public:
 	{	
 	}
 
-	/**
-	 * This is currently broken as it should emit the magicConstructor
-	 * in the module that is calling new.
-	 * emit one for each new (cached in the current module) not in the class.
-	 */
-	void createWrapperConstructorsIfNeeded(ir.Class _class)
-	{
-		if (_class.wrapperConstructors.length > 0) {
-			return;
-		}
-		_class.wrapperConstructors = new ir.Function[_class.userConstructors.length];
-		auto _module = getModuleFromScope(_class.myScope);
-
-		foreach (i, ref constructor; _class.wrapperConstructors) {
-			auto fn = _class.userConstructors[i];
-			constructor = buildFunction(fn.location, _class.members, _class.myScope, "magicConstructor");
-			constructor.type.ret = copyTypeSmart(fn.location, _class);
-			foreach (ii, ftype; fn.type.params) {
-				constructor.type.params ~= copyTypeSmart(ftype.location, ftype);
-				constructor.params ~= buildFunctionParam(fn.location, ii, "", constructor);
-			}
-
-			// auto thisVar = allocDg(Class, -1)
-			auto thisVar = buildVarStatSmart(fn.location, constructor._body, constructor._body.myScope, _class, "thisVar");
-			thisVar.assign = createAllocDgCall(allocDgVar, lp, fn.location, _class, buildConstantInt(fn.location, -1), true);
-			thisVar.assign = buildCastSmart(fn.location, _class, thisVar.assign);
-
-			// thisVar.this(cast(void*) thisVar)
-			//assert(_class.userConstructors.length == 1);
-			auto eref = buildExpReference(fn.location, fn, "this");
-			auto exp = buildCall(fn.location, eref, null);
-			exp.arguments ~= getExpRefs(fn.location, constructor.params);
-			exp.arguments ~= buildCast(fn.location, buildVoidPtr(fn.location), buildExpReference(fn.location, thisVar, "thisVar"));
-			buildExpStat(fn.location, constructor._body, exp);
-
-			// return thisVar
-			buildReturnStat(fn.location, constructor._body, buildExpReference(fn.location, thisVar, "thisVar"));
-		}
-	}
-
-	override Status enter(ir.UserAttribute ab)
-	{
-		/// @TODO remove after the above has been fixed.
-		return ContinueParent;
-	}
-
-	override Status enter(ir.Class c)
-	{
-		/// @TODO remove after the above has been fixed.
-		createWrapperConstructorsIfNeeded(c);
-		return Continue;
-	}
-
-	ir.Function getWrapperConstructor(Location location, ir.Class _class, ir.Unary unary)
-	{
-		/// @TODO fetch or generate after the above has been fixed.
-		createWrapperConstructorsIfNeeded(_class);
-		auto fn = selectFunction(lp, current, _class.userConstructors, unary.argumentList, location);
-		size_t index;
-		for (index = 0; index < _class.userConstructors.length; ++index) {
-			if (fn is _class.userConstructors[index]) {
-				break;
-			}
-		}
-		return _class.wrapperConstructors[index];
-	}
-
 	override Status enter(ref ir.Exp exp, ir.Unary unary)
 	{
 		if (unary.op != ir.Unary.Op.New) {
@@ -285,9 +240,8 @@ public:
 			assert(tr !is null);
 			auto _class = cast(ir.Class) tr.type;
 
-			auto wrapperCtor = getWrapperConstructor(unary.location, _class, unary);
-			auto eref = buildExpReference(unary.location, wrapperCtor, "magicConstructor");
-			exp = buildCall(unary.location, eref, unary.argumentList);
+			auto ctor = selectFunction(lp, current, _class.userConstructors, unary.argumentList, unary.location);
+			exp = buildClassConstructionWrapper(unary.location, lp, current, _class, ctor, allocDgVar, unary.argumentList);
 
 			return Continue;
 		}
