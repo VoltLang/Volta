@@ -4,6 +4,10 @@ module main;
 
 import std.stdio : File, writeln, writefln;
 import std.string : chomp, toLower;
+version (Windows) {
+	import std.file : SpanMode, dirEntries;
+	import std.path : baseName, dirName;
+}
 
 import volt.license;
 import volt.interfaces;
@@ -201,6 +205,16 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 			argHandler = &stdIncludePath;
 			continue;
 		default:
+		}
+
+		version (Windows) {
+			auto barg = baseName(arg);
+			if (barg.length > 2 && barg[0 .. 2] == "*.") {
+				foreach (file; dirEntries(dirName(arg), barg, SpanMode.shallow)) {
+					files ~= file;
+				}
+				continue;
+			}
 		}
 
 		files ~= arg;
