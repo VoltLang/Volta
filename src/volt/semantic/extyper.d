@@ -477,7 +477,7 @@ void handleAssign(Context ctx, ref ir.Type toType, ref ir.Exp exp, ref uint toFl
 		exp = buildCastSmart(exp.location, toType, exp);
 	} else if ((toFlag & ir.StorageType.STORAGE_SCOPE) != 0 && (rflag & ir.StorageType.STORAGE_SCOPE) == 0 && mutableIndirection(toType)) {
 		throw makeBadImplicitCast(exp, originalRtype, originalTo);
-	} else if ((rflag & ir.StorageType.STORAGE_CONST) != 0 && mutableIndirection(toType)) {
+	} else if ((rflag & ir.StorageType.STORAGE_CONST) != 0 && !(toFlag & ir.StorageType.STORAGE_CONST) && mutableIndirection(toType)) {
 		throw makeBadImplicitCast(exp, originalRtype, originalTo);
 	} else if (mutableIndirection(toType) && (rflag & ir.StorageType.STORAGE_SCOPE) != 0) {
 		throw makeBadImplicitCast(exp, originalRtype, originalTo);
