@@ -630,6 +630,8 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 				return constant._ulong <= cast(ulong) max;
 			} else if (primitive.type == Float || primitive.type == Double) {
 				return false;
+			} else if (primitive.type == Char) {
+				return true;
 			} else {
 				assert(false);
 			}
