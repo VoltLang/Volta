@@ -6,7 +6,7 @@ module volt.semantic.extyper;
 import std.algorithm : remove;
 import std.array : insertInPlace;
 import std.conv : to;
-import std.string : format;
+import std.string : format, translate;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
@@ -2474,7 +2474,12 @@ public:
 	override Status visit(ref ir.Exp exp, ir.TokenExp fexp)
 	{
 		if (fexp.type == ir.TokenExp.Type.File) {
-			exp = buildStringConstant(fexp.location, `"` ~ fexp.location.filename ~ `"`); 
+			string fname = fexp.location.filename;
+			version (Windows) {
+				string[dchar] transTable = ['\\': "/"];
+				fname = translate(fname, transTable);
+			}
+			exp = buildStringConstant(fexp.location, `"` ~ fname ~ `"`); 
 			return Continue;
 		} else if (fexp.type == ir.TokenExp.Type.Line) {
 			exp = buildConstantInt(fexp.location, cast(int) fexp.location.line);
