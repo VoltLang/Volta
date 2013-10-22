@@ -275,6 +275,8 @@ bool printUsage()
 	writefln("\t--license       Print license information and quit.");
 	writefln("\t-o outputname   Set output to outputname.");
 	writefln("\t-I path         Add a include path.");
+	writefln("\t-L path         Add a library path.");
+	writefln("\t-l path         Add a library.");
 	writefln("\t-D ident        Define a new version flag");
 	writefln("\t-w              Enable warnings.");
 	writefln("\t-d              Compile in debug mode.");
