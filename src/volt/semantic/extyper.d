@@ -215,6 +215,32 @@ void stripArrayBases(ir.Type toType, ref uint flag)
 	}
 }
 
+void appendDefaultArguments(Context ctx, ir.Location loc, ref ir.Exp[] arguments, ir.Function fn)
+{
+	if (fn !is null && arguments.length < fn.params.length) {
+		ir.Exp[] overflow;
+		foreach (p; fn.params[arguments.length .. $]) {
+			if (p.assign is null) {
+				throw makeExpected(loc, "default argument");
+			}
+			overflow ~= p.assign;
+		}
+		auto oldLength = arguments.length;
+		foreach (i, ee; overflow) {
+			auto constant = cast(ir.Constant) ee;
+			if (constant is null) {
+				auto texp = cast(ir.TokenExp) ee;
+				assert(texp !is null);
+				texp.location = loc;
+				arguments ~= texp;
+			} else {
+				arguments ~= copyExp(loc, ee);
+			}
+			acceptExp(arguments[$-1], ctx.etyper);
+		}
+	}
+}
+
 /**
  * Handles implicit pointer casts. To void*, immutable(T)* to const(T)*
  * T* to const(T)* and the like.
@@ -826,28 +852,7 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		postfix.arguments = argsSlice ~ typeidsLiteral ~ buildInternalArrayLiteralSliceSmart(postfix.location, buildArrayType(postfix.location, buildVoid(postfix.location)), types, sizes, totalSize, ctx.lp.memcpyFunc, varArgsSlice);
 	}
 
-	if (postfix.arguments.length < asFunctionType.params.length && fn !is null) {
-		ir.Exp[] overflow;
-		foreach (p; fn.params[postfix.arguments.length .. $]) {
-			if (p.assign is null) {
-				throw makeExpected(postfix.location, "default argument");
-			}
-			overflow ~= p.assign;
-		}
-		auto oldLength = postfix.arguments.length;
-		foreach (i, ee; overflow) {
-			auto constant = cast(ir.Constant) ee;
-			if (constant is null) {
-				auto texp = cast(ir.TokenExp) ee;
-				assert(texp !is null);
-				texp.location = postfix.location;
-				postfix.arguments ~= texp;
-			} else {
-				postfix.arguments ~= copyExp(postfix.location, ee);
-			}
-			acceptExp(postfix.arguments[$-1], ctx.etyper);
-		}
-	}
+	appendDefaultArguments(ctx, postfix.location, postfix.arguments, fn);
 	if (!(asFunctionType.hasVarArgs || asFunctionType.params.length > 0 && asFunctionType.homogenousVariadic) &&
 	    postfix.arguments.length != asFunctionType.params.length) {
 		throw makeWrongNumberOfArguments(postfix, postfix.arguments.length, asFunctionType.params.length);
@@ -1421,6 +1426,7 @@ void handleNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 	ctx.lp.actualize(_class);
 
 	auto fn = selectFunction(ctx.lp, ctx.current, _class.userConstructors, _unary.argumentList, _unary.location);
+	appendDefaultArguments(ctx, _unary.location, _unary.argumentList, fn);
 
 	ctx.lp.resolve(ctx.current, fn);
 
