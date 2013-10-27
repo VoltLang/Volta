@@ -105,6 +105,26 @@ ir.ExpReference copy(ir.ExpReference er)
 	return newer;
 }
 
+ir.Postfix copy(ir.Postfix pfix)
+{
+	auto newpfix = new ir.Postfix();
+	newpfix.location = pfix.location;
+	newpfix.op = pfix.op;
+	newpfix.child = copyExp(pfix);
+	foreach (arg; pfix.arguments) {
+		newpfix.arguments ~= copyExp(arg);
+	}
+	foreach (argTag; pfix.argumentTags) {
+		newpfix.argumentTags ~= argTag;
+	}
+	newpfix.identifier = pfix.identifier;
+	if (newpfix.memberFunction !is null) {
+		newpfix.memberFunction = copy(pfix.memberFunction);
+	}
+	newpfix.isImplicitPropertyCall = pfix.isImplicitPropertyCall;
+	return newpfix;
+}
+
 /*
  *
  * Type copy
@@ -310,6 +330,9 @@ ir.Node copyNode(ir.Node n)
 	case ExpReference:
 		auto er = cast(ir.ExpReference)n;
 		return copy(er);
+	case Postfix:
+		auto pfix = cast(ir.Postfix)n;
+		return copy(pfix);
 	case StatementExp:
 	case PrimitiveType:
 	case TypeReference:
@@ -376,7 +399,6 @@ ir.Node copyNode(ir.Node n)
 	case Comma:
 	case Ternary:
 	case Unary:
-	case Postfix:
 	case AssocArray:
 	case Assert:
 	case StringImport:
