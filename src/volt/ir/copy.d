@@ -110,7 +110,7 @@ ir.Postfix copy(ir.Postfix pfix)
 	auto newpfix = new ir.Postfix();
 	newpfix.location = pfix.location;
 	newpfix.op = pfix.op;
-	newpfix.child = copyExp(pfix);
+	newpfix.child = copyExp(pfix.child);
 	foreach (arg; pfix.arguments) {
 		newpfix.arguments ~= copyExp(arg);
 	}
