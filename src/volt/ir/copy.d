@@ -105,6 +105,14 @@ ir.ExpReference copy(ir.ExpReference er)
 	return newer;
 }
 
+ir.Identifier copy(ir.Identifier ident)
+{
+	auto n = new ir.Identifier();
+	n.location = ident.location;
+	n.value = ident.value;
+	return n;
+}
+
 ir.Postfix copy(ir.Postfix pfix)
 {
 	auto newpfix = new ir.Postfix();
@@ -117,7 +125,9 @@ ir.Postfix copy(ir.Postfix pfix)
 	foreach (argTag; pfix.argumentTags) {
 		newpfix.argumentTags ~= argTag;
 	}
-	newpfix.identifier = pfix.identifier;
+	if (pfix.identifier !is null) {
+		newpfix.identifier = copy(pfix.identifier);
+	}
 	if (newpfix.memberFunction !is null) {
 		newpfix.memberFunction = copy(pfix.memberFunction);
 	}
