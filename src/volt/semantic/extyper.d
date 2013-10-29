@@ -729,7 +729,9 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		reeval = false;
 		auto pchild = cast(ir.Postfix) postfix.child;
 		assert(pchild !is null);
-		assert(pchild.op == ir.Postfix.Op.CreateDelegate);
+		if (pchild.op != ir.Postfix.Op.CreateDelegate) {
+			throw panic(pchild.location, "expected CreateDelegate");
+		}
 		eref = cast(ir.ExpReference) pchild.memberFunction;
 	}
 	assert(eref !is null);
