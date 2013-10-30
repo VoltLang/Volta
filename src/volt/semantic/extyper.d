@@ -877,6 +877,13 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			auto etype = getExpType(ctx.lp, postfix.arguments[i], ctx.current);
 			if (!isArray(etype)) {
 				auto exps = postfix.arguments[i .. $];
+				auto arr = cast(ir.ArrayType) asFunctionType.params[i];
+				if (arr is null) {
+					throw panic(postfix.location, "homogenous variadic not array type");
+				}
+				foreach (ref aexp; exps) {
+					extypePass(ctx, aexp, arr.base);
+				}
 				postfix.arguments[i] = buildInternalArrayLiteralSmart(exps[0].location, asFunctionType.params[i], exps);
 				postfix.arguments.length = i + 1;
 				break;
