@@ -8,7 +8,9 @@ import object;
  * While we could name this main and have the mangler renamit to vmain,
  * it wont work since we don't support overloaded functions.
  */
-extern(C) int vmain();
+extern(C) int vmain(string[] args);
+
+private extern (C) size_t strlen(const(char)*);
 
 /**
  * Main entry point, calls vmain.
@@ -19,7 +21,12 @@ extern(C) int main(int c, char** argv)
 	vrt_gc_init();
 	allocDg = vrt_gc_get_alloc_dg();
 
-	int ret = vmain();
+	auto args = new string[](c);
+	for (size_t i = 0; i < args.length; i++) {
+		args[i] = cast(immutable(char)[]) argv[i][0 .. strlen(argv[i])];
+	}
+
+	int ret = vmain(args);
 
 	vrt_gc_shutdown();
 

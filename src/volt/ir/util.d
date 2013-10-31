@@ -286,6 +286,11 @@ ir.ArrayType buildString(Location loc)
 	return buildArrayType(loc, stor);
 }
 
+ir.ArrayType buildStringArray(Location loc)
+{
+	return buildArrayType(loc, buildString(loc));
+}
+
 
 /**
  * Build a void* type.

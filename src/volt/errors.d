@@ -25,6 +25,14 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeInvalidMainSignature(ir.Function fn, string file = __FILE__, const int line = __LINE__)
+{
+	auto e = new CompilerError(fn.location, "invalid main signature.");
+	e.file = file;
+	e.line = line;
+	return e;
+}
+
 CompilerException makeNoValidFunction(Location loc, string fname, ir.Type[] args, string file = __FILE__, const int line = __LINE__)
 {
 	auto msg = format("no function named '%s' matches arguments %s.", fname, typesString(args));

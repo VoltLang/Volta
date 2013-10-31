@@ -2193,6 +2193,16 @@ public:
 
 	override Status enter(ir.Function fn)
 	{
+		if (fn.name == "main" && fn.type.linkage == ir.Linkage.Volt) {
+			if (fn.params.length == 0) {
+				addParam(fn.location, fn, buildStringArray(fn.location), "");
+			} else if (fn.params.length > 1) {
+				throw makeInvalidMainSignature(fn);
+			}
+			if (!isVoid(fn.type.ret) && !isInt(fn.type.ret)) {
+				throw makeInvalidMainSignature(fn);
+			}
+		}
 		if (fn.nestStruct !is null && fn.thisHiddenParameter !is null && !ctx.isFunction) {
 			auto cvar = copyVariableSmart(fn.thisHiddenParameter.location, fn.thisHiddenParameter);
 			addVarToStructSmart(fn.nestStruct, cvar);
@@ -2206,6 +2216,15 @@ public:
 
 	override Status leave(ir.Function fn)
 	{
+		if (fn.name == "main" && fn.type.linkage == ir.Linkage.Volt) {
+			if (fn.params.length != 1) {
+				throw panic(fn.location, "unnormalised main");
+			}
+			auto arr = cast(ir.ArrayType) fn.type.params[0];
+			if (arr is null || !isString(realType(arr.base))) {
+				throw makeInvalidMainSignature(fn);
+			}
+		}
 		ctx.leave(fn);
 		return Continue;
 	}

@@ -515,11 +515,17 @@ bool isOkayForPointerArithmetic(ir.PrimitiveType.Kind kind)
 	}
 }
 
-bool isVoid(ir.Type type)
+bool isInt(ir.Type type)
 {
-	if (type is null) {
+	auto primitive = cast(ir.PrimitiveType) type;
+	if (primitive is null) {
 		return false;
 	}
+	return primitive.type == ir.PrimitiveType.Kind.Int;
+}
+
+bool isVoid(ir.Type type)
+{
 	auto primitive = cast(ir.PrimitiveType) type;
 	if (primitive is null) {
 		return false;
