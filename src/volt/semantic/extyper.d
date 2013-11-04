@@ -812,8 +812,18 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 
 	if (asFunctionType.hasVarArgs &&
 	    asFunctionType.linkage == ir.Linkage.Volt) {
-		auto asExp = cast(ir.ExpReference) postfix.child;
-		assert(asExp !is null);
+		ir.ExpReference asExp;
+		if (postfix.child.nodeType == ir.NodeType.Postfix) {
+			assert(postfix.op == ir.Postfix.Op.Call);
+			auto pfix = cast(ir.Postfix) postfix.child;
+			assert(pfix !is null);
+			assert(pfix.op == ir.Postfix.Op.CreateDelegate);
+			assert(pfix.memberFunction !is null);
+			asExp = pfix.memberFunction;
+		}
+		if (asExp is null) {
+			asExp = cast(ir.ExpReference) postfix.child;
+		}
 		auto asFunction = cast(ir.Function) asExp.decl;
 		assert(asFunction !is null);
 
