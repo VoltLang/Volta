@@ -265,16 +265,30 @@ ir.Variable[] parseParameterList(TokenStream ts, ir.CallableType parentCallable)
 			break;
 		}
 		auto var = parseParameter(ts);
+		// foo(int a, int[] b...)
+		if (matchIf(ts, TokenType.TripleDot)) {
+			if (!isArray(var.type)) {
+				throw makeExpected(ts.peek.location, "array argument for homogenous variadic");
+			}
+			if (ts.peek.type != TokenType.CloseParen) {
+				throw makeExpected(ts.peek.location, "homogenous variadic argument to be final argument");
+			}
+			parentCallable.hasVarArgs = false;
+			parentCallable.homogenousVariadic = true;
+		}
 		vars ~= var;
+		// foo(int a, int b, ...)
 		if (ts.peek.type == TokenType.Comma) {
 			ts.get();
+			if (matchIf(ts, TokenType.TripleDot)) {
+				if (ts.peek.type != TokenType.CloseParen) {
+					throw makeExpected(ts.peek.location, "var args to be last argument");
+				}
+				parentCallable.hasVarArgs = true;
+			}
 		}
 	}
 	match(ts, TokenType.CloseParen);
-	if (parentCallable.hasVarArgs && isArray(vars[$-1].type)) {
-		parentCallable.homogenousVariadic = true;
-		parentCallable.hasVarArgs = false;
-	}
 
 	return vars;
 }
