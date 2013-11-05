@@ -279,6 +279,7 @@ enum LLVMLinkage {
   AvailableExternally,
   LinkOnceAny, /**< Keep one copy of function when linking (inline)*/
   LinkOnceODR, /**< Same, but only replaced by something equivalent. */
+  LinkOnceODRAutoHide,
   WeakAny,     /**< Keep one copy of function when linking (weak) */
   WeakODR,     /**< Same, but only replaced by something equivalent. */
   Appending,   /**< Special purpose, only applies to global arrays */

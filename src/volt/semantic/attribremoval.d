@@ -245,7 +245,21 @@ protected:
 				fn.isAbstract = true;
 				break;
 			case Local, Global:
-				fn.kind = ir.Function.Kind.Function;
+				with (ir.Function.Kind) {
+				if (fn.kind == Constructor) {
+					if (attr.kind == ir.Attribute.Kind.Local) {
+						throw panic(attr.location, "local constructors are unimplemented.");
+					}
+					fn.kind = attr.kind == ir.Attribute.Kind.Local ? LocalConstructor : GlobalConstructor;
+				} else if (fn.kind == Destructor) {
+					if (attr.kind == ir.Attribute.Kind.Local) {
+						throw panic(attr.location, "local destructors are unimplemented.");
+					}
+					fn.kind = attr.kind == ir.Attribute.Kind.Local ? LocalDestructor : GlobalDestructor;
+				} else {
+					fn.kind = ir.Function.Kind.Function;
+				}
+				} // with
 				break;
 			case MangledName:
 				assert(attr.arguments.length == 1);

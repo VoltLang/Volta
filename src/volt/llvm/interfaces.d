@@ -62,6 +62,19 @@ public:
 	LLVMBasicBlockRef currentSwitchDefault;
 	LLVMBasicBlockRef[long] currentSwitchCases;
 
+	/**
+	 * Global and local constructors and destructors.
+	 * @{
+	 */
+	LLVMValueRef[] globalConstructors;
+	LLVMValueRef[] globalDestructors;
+	LLVMValueRef[] localConstructors;
+	LLVMValueRef[] localDestructors;
+	/**
+	 * @}
+	 */
+
+
 	LLVMValueRef currentFunc;
 	bool currentFall; ///< Tracking for auto branch generation.
 

@@ -60,6 +60,16 @@ public:
 		state.currentBlock = LLVMAppendBasicBlock(llvmFunc, "entry");
 		LLVMPositionBuilderAtEnd(b, state.currentBlock);
 
+		if (fn.kind == ir.Function.Kind.GlobalConstructor) {
+			state.globalConstructors ~= llvmFunc;
+		} else if (fn.kind == ir.Function.Kind.GlobalDestructor) {
+			state.globalDestructors ~= llvmFunc;
+		} else if (fn.kind == ir.Function.Kind.LocalConstructor) {
+			state.localConstructors ~= llvmFunc;
+		} else if (fn.kind == ir.Function.Kind.LocalDestructor) {
+			state.localDestructors ~= llvmFunc;
+		}
+
 		foreach(uint i, p; fn.params) {
 			if (p.name is null)
 				continue;
@@ -497,6 +507,42 @@ public:
 		return Continue;
 	}
 
+	override Status leave(ir.Module m)
+	{
+		void globalAppendArray(LLVMValueRef[] arr, const(char)* name)
+		{
+			if (arr.length == 0) {
+				return;
+			}
+			auto fnty = LLVMTypeOf(arr[0]);
+			auto stypes = [LLVMInt32TypeInContext(state.context), fnty];
+			auto _struct = LLVMStructTypeInContext(state.context, stypes.ptr, 2, false);
+			auto array = LLVMArrayType(_struct, cast(uint) arr.length);
+			auto gval = LLVMAddGlobal(state.mod, array, name);
+			LLVMSetLinkage(gval, LLVMLinkage.Appending);
+
+			LLVMValueRef[] structs;
+			foreach (fn; arr) {
+				int priority = 2;
+				if (m.name.strings == ["vrt", "vmain"]) {
+					priority = 1;
+				}
+				auto vals = [LLVMConstInt(LLVMInt32TypeInContext(state.context), priority, false), fn];
+				structs ~= LLVMConstStructInContext(state.context, vals.ptr, 2, false);
+			}
+			auto lit = LLVMConstArray(_struct, structs.ptr, cast(uint) arr.length);
+			LLVMSetInitializer(gval, lit);
+		}
+
+		globalAppendArray(state.globalConstructors, "llvm.global_ctors");
+		globalAppendArray(state.globalDestructors, "llvm.global_dtors");
+
+		if (state.localConstructors.length > 0 || state.localDestructors.length > 0) {
+			throw panic(m.location, "local constructor or destructor made it into llvm backend.");
+		}
+		return Continue; 
+	}
+
 	void doNewBlock(LLVMBasicBlockRef b, ir.BlockStatement bs,
 	                LLVMBasicBlockRef fall)
 	{
@@ -512,7 +558,6 @@ public:
 	 * Ignore but pass.
 	 */
 	override Status enter(ir.Module m) { return Continue; }
-	override Status leave(ir.Module m) { return Continue; }
 
 	/*
 	 * Should not enter.
