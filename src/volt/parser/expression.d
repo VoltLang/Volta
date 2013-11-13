@@ -326,9 +326,10 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 			c._string = c._string[0 .. $-1];
 		}
 
-		if (c._string.length > 2 && c._string[0 .. 2] == "0x") {
+		if (c._string.length > 2 && (c._string[0 .. 2] == "0x" || c._string[0 .. 2] == "0b")) {
+			auto prefix = c._string[0 .. 2];
 			c._string = c._string[2 .. $];
-			auto v = to!ulong(c._string, 16);
+			auto v = to!ulong(c._string, prefix == "0x" ? 16 : 2);
 			import std.stdio;
 			if (v > uint.max) {
 				if (!explicitBase)
