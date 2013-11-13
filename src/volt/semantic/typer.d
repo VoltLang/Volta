@@ -60,20 +60,20 @@ ir.Type declTypeLookup(Location loc, LanguagePass lp, ir.Scope _scope, string na
  */
 ir.Type realType(ir.Type t, bool stripEnum = true, bool stripStorage = false)
 {
+	auto tr = cast(ir.TypeReference) t;
+	if (tr !is null) {
+		return realType(tr.type, stripEnum, stripStorage);
+	}
 	if (stripEnum) {
 		auto e = cast(ir.Enum) t;
 		if (e !is null) {
-			return realType(e.base, stripStorage);
+			return realType(e.base, stripEnum, stripStorage);
 		}
-	}
-	auto tr = cast(ir.TypeReference) t;
-	if (tr !is null) {
-		return realType(tr.type, stripStorage);
 	}
 	if (stripStorage) {
 		auto st = cast(ir.StorageType) t;
 		if (st !is null) {
-			return realType(st.base, stripStorage);
+			return realType(st.base, stripEnum, stripStorage);
 		}
 	}
 	return t;

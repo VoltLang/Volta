@@ -98,6 +98,9 @@ bool willConvert(ir.Type argument, ir.Type parameter)
 		return true;
 	}
 
+	argument = realType(argument);
+	parameter = realType(parameter);
+
 	switch (argument.nodeType) with (ir.NodeType) {
 	case PrimitiveType:
 		auto rprim = cast(ir.PrimitiveType) argument;
@@ -109,7 +112,9 @@ bool willConvert(ir.Type argument, ir.Type parameter)
 			return false;
 		}
 		return size(rprim.type) <= size(lprim.type);
+	case Enum:
 	case TypeReference:
+		assert(false);
 	case Class:
 		auto lclass = cast(ir.Class) ifTypeRefDeRef(parameter);
 		auto rclass = cast(ir.Class) ifTypeRefDeRef(argument);
@@ -264,6 +269,7 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 	if (matchedFunctions.length == 1 || specialisationComparison(matchedFunctions[0], matchedFunctions[1]) > 0) {
 		return matchedFunctions[0];
 	}
+
 
 	throw makeCannotDisambiguate(location, matchedFunctions);
 }
