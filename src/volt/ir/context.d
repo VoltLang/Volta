@@ -313,8 +313,12 @@ public:
 	 */
 	Store addType(Node n, string name)
 	in {
-		assert(n !is null);
-		assert(name !is null);
+		if (n is null) {
+			throw panic("null Node provided to addType");
+		}
+		if (name is null) {
+			throw panic(n.location, "null name provided to addType");
+		}
 	}
 	body {
 		errorOn(n, name);
