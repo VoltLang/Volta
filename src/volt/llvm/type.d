@@ -490,13 +490,14 @@ public:
 		uint index;
 		LLVMTypeRef[] mt;
 
-		foreach(m; irType.members.nodes) {
+		void handle(ir.Node m)
+		{
 			auto var = cast(ir.Variable)m;
 			if (var is null)
-				continue;
+				return;
 
 			if (var.storage != ir.Variable.Storage.Field)
-				continue;
+				return;
 
 			/// @todo handle anon types.
 			assert(var.name !is null);
@@ -505,6 +506,10 @@ public:
 			auto t = state.fromIr(var.type);
 			mt ~= t.llvmType;
 			types ~= t;
+		}
+		
+		foreach(m; irType.members.nodes) {
+			handle(m);
 		}
 
 		LLVMStructSetBody(llvmType, mt, false);
@@ -542,19 +547,23 @@ public:
 		super(state, irType, true, llvmType);
 
 		uint index;
-		foreach(m; irType.members.nodes) {
+		void handle(ir.Node m) {
 			auto var = cast(ir.Variable)m;
 			if (var is null)
-				continue;
+				return;
 
 			if (var.storage != ir.Variable.Storage.Field)
-				continue;
+				return;
 
 			/// @todo handle anon members.
 			assert(var.name !is null);
 
 			indices[var.name] = index++;
 			types ~= state.fromIr(var.type);
+		}
+
+		foreach(m; irType.members.nodes) {
+			handle(m);
 		}
 
 		/// @todo check packing.

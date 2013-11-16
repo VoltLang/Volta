@@ -238,6 +238,10 @@ public:
 	Variable typeInfo;  ///< Filled in by the semantic pass.
 
 	Attribute[] userAttrs;
+	Aggregate[] anonymousAggregates;
+	Variable[] anonymousVars;
+
+
 
 	TopLevelBlock members; ///< Toplevel nodes.
 

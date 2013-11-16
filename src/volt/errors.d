@@ -25,6 +25,23 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeAnonymousAggregateRedefines(ir.Aggregate agg, string name, string file = __FILE__, const int line = __LINE__)
+{
+	auto msg = format("anonymous aggregate redefines '%s'.", name);
+	auto e = new CompilerError(agg.location, msg);
+	e.file = file;
+	e.line = line;
+	return e;
+}
+
+CompilerException makeAnonymousAggregateAtTopLevel(ir.Aggregate agg, string file = __FILE__, const int line = __LINE__)
+{
+	auto e = new CompilerError(agg.location, "anonymous struct or union not inside aggregate.");
+	e.file = file;
+	e.line = line;
+	return e;
+}
+
 CompilerException makeInvalidMainSignature(ir.Function fn, string file = __FILE__, const int line = __LINE__)
 {
 	auto e = new CompilerError(fn.location, "invalid main signature.");

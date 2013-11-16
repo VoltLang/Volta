@@ -605,12 +605,25 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 	}
 
 	retrieveScope(lp, type, postfix, _scope, _class, emsg);
+	auto agg = cast(ir.Aggregate) realType(type);
 
 	_lookup:
 	auto store = lookupAsThisScope(lp, _scope, postfix.location, postfix.identifier.value);
 
 	if (store is null) {
-		throw makeError(postfix.identifier.location, emsg);
+		if (agg !is null) foreach (aa; agg.anonymousAggregates) {
+			auto tmpStore = lookupAsThisScope(lp, aa.myScope, postfix.location, postfix.identifier.value);
+			if (tmpStore is null) {
+				continue;
+			}
+			if (store !is null) {
+				throw makeAnonymousAggregateRedefines(aa, postfix.identifier.value);
+			}
+			store = tmpStore;
+		}
+		if (store is null) {
+			throw makeError(postfix.identifier.location, emsg);
+		}
 	}
 
 	if (store.kind == ir.Store.Kind.Value) {

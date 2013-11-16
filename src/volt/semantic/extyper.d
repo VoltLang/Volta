@@ -686,8 +686,33 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			}
 
 			/// @todo this is probably an error.
+			auto agg = cast(ir.Aggregate) type;
+			ir.Scope[] scopes;
 			auto aggScope = getScopeFromType(type);
+			if (agg !is null ) foreach (aa; agg.anonymousAggregates) {
+				scopes ~= aa.myScope;
+			}
+			ir.Variable aggVar;
 			auto store = lookupAsThisScope(ctx.lp, aggScope, postfix.location, postfix.identifier.value);
+			foreach (i, _scope; scopes) {
+				auto tmpStore = lookupAsThisScope(ctx.lp, _scope, postfix.location, postfix.identifier.value);
+				if (tmpStore is null) {
+					continue;
+				}
+				if (store !is null) {
+					throw makeAnonymousAggregateRedefines(agg.anonymousAggregates[i], postfix.identifier.value);
+				}
+				store = tmpStore;
+				aggVar = agg.anonymousVars[i];
+				// Keep checking to ensure anon aggs don't mask one another.
+			}
+			if (aggVar !is null) {
+				assert(postfix.identifier !is null);
+				auto origLookup = postfix.identifier.value;
+				postfix.identifier.value = aggVar.name;
+				exp = buildAccess(postfix.location, postfix, origLookup);
+				return;
+			}
 			if (store is null) {
 				throw makeNotMember(postfix, type, postfix.identifier.value);
 			}
@@ -1918,6 +1943,37 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 }
 
 /**
+ * Check a given Aggregate's anonymous structs/unions
+ * (if any) for name collisions.
+ */
+void checkAnonymousVariables(Context ctx, ir.Aggregate agg)
+{
+	if (agg.anonymousAggregates.length == 0) {
+		return;
+	}
+	bool[string] names;
+	foreach (anonAgg; agg.anonymousAggregates) foreach (n; anonAgg.members.nodes) {
+		auto var = cast(ir.Variable) n;
+		auto fn = cast(ir.Function) n;
+		string name;
+		if (var !is null) {
+			name = var.name;
+		} else if (fn !is null) {
+			name = fn.name;
+		} else {
+			continue;
+		}
+		if ((name in names) !is null) {
+			throw makeAnonymousAggregateRedefines(anonAgg, name);
+		}
+		auto store = lookupAsThisScope(ctx.lp, agg.myScope, agg.location, name);
+		if (store !is null) {
+			throw makeAnonymousAggregateRedefines(anonAgg, name);
+		}
+	}
+}
+
+/**
  * If type casting were to be strict, type T could only
  * go to type T without an explicit cast. Implicit casts
  * are places where the language deems automatic conversion
@@ -2068,6 +2124,7 @@ public:
 
 	override Status leave(ir.Struct s)
 	{
+		checkAnonymousVariables(ctx, s);
 		ctx.leave(s);
 		return Continue;
 	}
@@ -2093,6 +2150,7 @@ public:
 
 	override Status leave(ir.Union u)
 	{
+		checkAnonymousVariables(ctx, u);
 		ctx.leave(u);
 		return Continue;
 	}
@@ -2106,6 +2164,7 @@ public:
 
 	override Status leave(ir.Class c)
 	{
+		checkAnonymousVariables(ctx, c);
 		ctx.leave(c);
 		return Continue;
 	}

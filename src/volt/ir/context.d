@@ -312,15 +312,13 @@ public:
 	 *   None.
 	 */
 	Store addType(Node n, string name)
-	in {
+	{
 		if (n is null) {
 			throw panic("null Node provided to addType");
 		}
 		if (name is null) {
 			throw panic(n.location, "null name provided to addType");
 		}
-	}
-	body {
 		errorOn(n, name);
 		auto store = new Store(this, n, name, Store.Kind.Type);
 		symbols[name] = store;

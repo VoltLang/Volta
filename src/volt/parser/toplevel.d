@@ -437,8 +437,10 @@ ir.Struct parseStruct(TokenStream ts)
 	s.location = ts.peek.location;
 
 	match(ts, TokenType.Struct);
-	auto nameTok = match(ts, TokenType.Identifier);
-	s.name = nameTok.value;
+	if (ts.peek.type == TokenType.Identifier) {
+		auto nameTok = match(ts, TokenType.Identifier);
+		s.name = nameTok.value;
+	}
 
 	if (ts.peek.type == TokenType.Semicolon) {
 		throw makeUnsupported(s.location, "opaque struct declarations");

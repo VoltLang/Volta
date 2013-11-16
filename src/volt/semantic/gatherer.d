@@ -223,20 +223,34 @@ void addScope(ir.Scope current, ir.BlockStatement bs)
 
 void addScope(ir.Scope current, ir.Struct s)
 {
-	if (s.name is null) {
-		throw panic(s, "anonymous structs not supported (yet)");
+	auto agg = cast(ir.Aggregate) current.node;
+	if (s.name is null && agg is null) {
+		throw makeAnonymousAggregateAtTopLevel(s);
 	}
-
+	if (s.name is null) {
+		agg.anonymousAggregates ~= s;
+		auto name = format("%s_anonymous", agg.anonymousAggregates.length);
+		s.name = format("%s_anonymous_t", agg.anonymousAggregates.length);
+		agg.anonymousVars ~= buildVariableSmart(s.location, s, ir.Variable.Storage.Field, name);
+		agg.members.nodes ~= agg.anonymousVars[$-1];
+	}
 	assert(s.myScope is null);
 	s.myScope = new ir.Scope(current, s, s.name);
 }
 
 void addScope(ir.Scope current, ir.Union u)
 {
-	if (u.name is null) {
-		throw panic(u, "anonymous unions not supported (yet)");
+	auto agg = cast(ir.Aggregate) current.node;
+	if (u.name is null && agg is null) {
+		throw makeAnonymousAggregateAtTopLevel(u);
 	}
-
+	if (u.name is null) {
+		agg.anonymousAggregates ~= u;
+		auto name = format("%s_anonymous", agg.anonymousAggregates.length);
+		u.name = format("%s_anonymous_t", agg.anonymousAggregates.length);
+		agg.anonymousVars ~= buildVariableSmart(u.location, u, ir.Variable.Storage.Field, name);
+		agg.members.nodes ~= agg.anonymousVars[$-1];
+	}	
 	assert(u.myScope is null);
 	u.myScope = new ir.Scope(current, u, u.name);
 }
@@ -441,16 +455,16 @@ public:
 
 	override Status enter(ir.Struct s)
 	{
-		gather(current, s, where);
 		addScope(current, s);
+		gather(current, s, where);
 		push(s.myScope, s);
 		return Continue;
 	}
 
 	override Status enter(ir.Union u)
 	{
-		gather(current, u, where);
 		addScope(current, u);
+		gather(current, u, where);
 		push(u.myScope, u);
 		return Continue;
 	}
