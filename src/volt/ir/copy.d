@@ -226,6 +226,12 @@ ir.TypeReference copy(ir.TypeReference old)
 	return tr;
 }
 
+ir.NullType copy(ir.NullType old)
+{
+	auto nt = new ir.NullType();
+	nt.location = old.location;
+	return nt;
+}
 
 /*
  *
@@ -272,6 +278,8 @@ ir.Type copyType(ir.Type t)
 		return copy(cast(ir.StorageType)t);
 	case TypeReference:
 		return copy(cast(ir.TypeReference)t);
+	case NullType:
+		return copy(cast(ir.NullType)t);
 	case Interface:
 	case Struct:
 	case Class:
