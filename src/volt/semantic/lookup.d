@@ -324,6 +324,7 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
 	case Union:
 	case UserAttribute:
 	case BlockStatement:
+	case Enum:
 		return false;
 	case Class:
 		auto asClass = cast(ir.Class)node;
