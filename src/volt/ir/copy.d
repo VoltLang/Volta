@@ -279,7 +279,7 @@ ir.Type copyType(ir.Type t)
 	case Enum:
 		throw panic(t.location, "can't copy aggregate types");
 	default:
-		assert(false);
+		throw panicUnhandled(t, to!string(t.nodeType));
 	}
 }
 
