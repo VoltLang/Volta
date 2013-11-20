@@ -984,6 +984,12 @@ bool replaceExpReferenceIfNeeded(Context ctx,
 		return false;
 	}
 
+	ir.Exp nestedLookup;
+	auto ffn = getParentFunction(ctx.current);
+	if (ffn.nestStruct !is null) {
+		auto access = buildAccess(eRef.location, buildExpReference(eRef.location, ffn.nestedVariable), "this");
+		nestedLookup = buildAccess(eRef.location, access, eRef.idents[$-1]);
+	}
 	auto thisVar = getThisVar(eRef.location, ctx.lp, ctx.current);
 	assert(thisVar !is null);
 
@@ -1041,7 +1047,11 @@ bool replaceExpReferenceIfNeeded(Context ctx,
 	if (eRef.decl.declKind == ir.Declaration.Kind.Function) {
 		exp = buildCreateDelegate(eRef.location, thisRef, eRef);
 	} else {
-		exp = buildAccess(eRef.location, thisRef, ident);
+		if (nestedLookup !is null) {
+			exp = nestedLookup; 
+		} else {
+			exp = buildAccess(eRef.location, thisRef, ident);
+		}
 	}
 
 	return true;
@@ -1247,7 +1257,7 @@ void extypePostfixIdentifier(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		assert(store !is null);
 		if (store.kind == ir.Store.Kind.Value) {
 			auto var = cast(ir.Variable) store.node;
-			tagNestedVariables(ctx, var, store, exp);
+			tagNestedVariables(ctx, var, store, postfix.child);
 			assert(var !is null);
 			_ref.decl = var;
 		} else if (store.kind == ir.Store.Kind.Function) {

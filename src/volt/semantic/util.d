@@ -103,7 +103,12 @@ ir.Variable getThisVar(Location location, LanguagePass lp, ir.Scope _scope)
 	}
 	auto thisStore = lookupOnlyThisScope(lp, fn.myScope, location, "this");
 	if (thisStore is null) {
-		throw panic(location, "need valid this for super.");
+		if (fn.nestStruct !is null) {
+			thisStore = lookupOnlyThisScope(lp, fn.nestStruct.myScope, location, "this");
+		}
+		if (thisStore is null) {
+			throw panic(location, "need valid this for super.");
+		}
 	}
 	auto thisVar = cast(ir.Variable) thisStore.node;
 	if (thisVar is null) {
