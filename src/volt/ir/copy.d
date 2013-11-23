@@ -135,6 +135,20 @@ ir.Postfix copy(ir.Postfix pfix)
 	return newpfix;
 }
 
+ir.Unary copy(ir.Unary unary)
+{
+	auto newunary = new ir.Unary();
+	newunary.location = unary.location;
+	newunary.op = unary.op;
+	newunary.value = copyExp(unary.value);
+	newunary.hasArgumentList = unary.hasArgumentList;
+	newunary.type = copyTypeSmart(unary.type.location, unary.type);
+	foreach (arg; unary.argumentList) {
+		newunary.argumentList ~= copyExp(arg);
+	}
+	return newunary;
+}
+
 /*
  *
  * Type copy
@@ -351,6 +365,9 @@ ir.Node copyNode(ir.Node n)
 	case Postfix:
 		auto pfix = cast(ir.Postfix)n;
 		return copy(pfix);
+	case Unary:
+		auto unary = cast(ir.Unary)n;
+		return copy(unary);
 	case StatementExp:
 	case PrimitiveType:
 	case TypeReference:
@@ -416,7 +433,6 @@ ir.Node copyNode(ir.Node n)
 	case AssertStatement:
 	case Comma:
 	case Ternary:
-	case Unary:
 	case AssocArray:
 	case Assert:
 	case StringImport:
