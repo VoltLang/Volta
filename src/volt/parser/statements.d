@@ -595,8 +595,10 @@ ir.TryStatement parseTryStatement(TokenStream ts)
 			auto var = new ir.Variable();
 			var.location = ts.peek.location;
 			var.type = parseType(ts);
-			auto nameTok = match(ts, TokenType.Identifier);
-			var.name = nameTok.value;
+			if (ts.peek.type != TokenType.CloseParen) {
+				auto nameTok = match(ts, TokenType.Identifier);
+				var.name = nameTok.value;
+			}
 			match(ts, TokenType.CloseParen);
 			t.catchVars ~= var;
 			t.catchBlocks ~= parseBlockStatement(ts);
