@@ -521,6 +521,10 @@ public:
 	{
 		addScope(current, bs);
 		push(bs.myScope);
+		// TODO: unittest stuff triggers this
+		if (mFunctionStack.length == 0) {
+			throw panic(bs.location, "block statement outside of function");
+		}
 		emitNestedStructs(mFunctionStack[$-1], bs);
 		return Continue;
 	}
