@@ -598,6 +598,8 @@ ir.TryStatement parseTryStatement(TokenStream ts)
 			if (ts.peek.type != TokenType.CloseParen) {
 				auto nameTok = match(ts, TokenType.Identifier);
 				var.name = nameTok.value;
+			} else {
+				var.name = "1__dummy";
 			}
 			match(ts, TokenType.CloseParen);
 			t.catchVars ~= var;
