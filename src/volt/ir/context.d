@@ -335,11 +335,13 @@ public:
 	 *   None.
 	 */
 	Store addValue(Node n, string name)
-	in {
-		assert(n !is null);
-		assert(name !is null);
-	}
-	body {
+	{
+		if (n is null) {
+			throw panic("null node passed to addValue");
+		}
+		if (name is null) {
+			throw panic(n.location, "null name passed to addValue");
+		}
 		errorOn(n, name);
 		ir.Store store;
 		if (n.nodeType == ir.NodeType.FunctionParam) {
