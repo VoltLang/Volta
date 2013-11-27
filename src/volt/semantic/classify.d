@@ -14,6 +14,7 @@ import volt.interfaces;
 import volt.token.location;
 import volt.semantic.lookup;
 import volt.semantic.ctfe;
+import volt.semantic.typer;
 
 /**
  * If the given scope is in a function, return it. Otherwise, return null.
@@ -857,6 +858,7 @@ int typeToRuntimeConstant(LanguagePass lp, ir.Scope current, ir.Type type)
 		return constant._int;
 	}
 
+	type = realType(type);
 	switch (type.nodeType) with (ir.NodeType) {
 	case Struct: return evaluate(lp.TYPE_STRUCT);
 	case Class: return evaluate(lp.TYPE_CLASS);
