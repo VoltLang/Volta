@@ -753,15 +753,16 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	if (eref is null) {
 		reeval = false;
 		auto pchild = cast(ir.Postfix) postfix.child;
-		assert(pchild !is null);
-		if (pchild.op != ir.Postfix.Op.CreateDelegate) {
-			throw panic(pchild.location, "expected CreateDelegate");
+		if (pchild !is null) {
+			eref = cast(ir.ExpReference) pchild.memberFunction;
 		}
-		eref = cast(ir.ExpReference) pchild.memberFunction;
 	}
-	assert(eref !is null);
+	asFunctionType = cast(ir.CallableType) type;
 
 	if (asFunctionSet !is null) {
+		if (eref is null) {
+			throw panic(postfix.location, "expected expref");
+		}
 		asFunctionSet.set.reference = eref;
 		fn = selectFunction(ctx.lp, ctx.current, asFunctionSet.set, postfix.arguments, postfix.location);
 		eref.decl = fn;
@@ -770,7 +771,7 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		if (reeval) {
 			replaceExpReferenceIfNeeded(ctx, null, postfix.child, eref);
 		}
-	} else {
+	} else if (eref !is null) {
 		fn = cast(ir.Function) eref.decl;
 		asFunctionType = cast(ir.CallableType) realType(type);
 		if (asFunctionType is null) {
