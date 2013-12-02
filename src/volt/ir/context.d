@@ -10,6 +10,7 @@ import volt.ir.type;
 import volt.ir.toplevel;
 import volt.ir.declaration;
 import volt.ir.expression;
+import volt.token.location;
 
 
 /**
@@ -41,6 +42,8 @@ import volt.ir.expression;
  * node is a Type. Scope means s is a named scope, and node
  * contains the node that introduced the scope. Functions
  * means that functions contain an overload set of a function.
+ * An Expression Store contains a delegate that generates a new
+ * expression in place of the lookup.
  *
  * Note: not a node.
  *
@@ -62,6 +65,7 @@ public:
 		Template,
 		EnumDeclaration,
 		FunctionParam,
+		Expression,
 	}
 
 
@@ -97,6 +101,13 @@ public:
 	 * Store pointed to by alias.
 	 */
 	Store myAlias;
+
+	/**
+	 * If Kind is Expression, this delegate is used to replace
+	 * the IdentifierExp with another expression. It's null
+	 * otherwise.
+	 */
+	Exp delegate(Location) expressionDelegate;
 
 
 public:
@@ -161,6 +172,18 @@ public:
 		this.parent = parent;
 		this.node = ed;
 		this.kind = Kind.EnumDeclaration;
+	}
+
+	/**
+	 * Used in foreach statements to transparently replace
+	 * element variable lookups with index operations into
+	 * the foreach's array.
+	 */
+	this(Scope parent, Exp delegate(Location) dg, string name)
+	{
+		this.parent = parent;
+		this.expressionDelegate = dg;
+		this.kind = Kind.Expression;
 	}
 
 	void markAliasResolved(Store s)
@@ -428,6 +451,27 @@ public:
 	}
 
 	/**
+	 * Add an expression delegate store to the scope.
+	 *
+	 * Throws:
+	 *   CompilerPanic if anoter symbol of the same name is found.
+	 *
+	 * Side-effects:
+	 *   None.
+	 */
+	Store addExpressionDelegate(Node loc, Exp delegate(Location) dg, string name)
+	in {
+		assert(dg !is null);
+		assert(name.length > 0);
+	}
+	body {
+		errorOn(loc, name);
+		auto store = new Store(this, dg, name);
+		symbols[name] = store;
+		return store;
+	}
+
+	/**
 	 * Add a pre-existing store to the scope.
 	 *
 	 * Throws:
@@ -487,7 +531,6 @@ public:
 private:
 	void errorOn(Node n, string name)
 	in {
-		assert(n !is null);
 		assert(name !is null);
 	}
 	body {

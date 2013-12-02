@@ -249,6 +249,9 @@ ir.Type getExpReferenceType(LanguagePass lp, ir.ExpReference expref, ir.Scope cu
 
 	auto var = cast(ir.Variable) expref.decl;
 	if (var !is null) {
+		if (var.type is null) {
+			throw panic(var.location, format("variable '%s' has null type", var.name));
+		}
 		return var.type;
 	}
 
@@ -257,16 +260,25 @@ ir.Type getExpReferenceType(LanguagePass lp, ir.ExpReference expref, ir.Scope cu
 		if (fn.nestedHiddenParameter !is null) {
 			return buildStorageType(fn.location, ir.StorageType.Kind.Scope, new ir.DelegateType(fn.type));
 		}
+		if (fn.type is null) {
+			throw panic(fn.location, format("function '%s' has null type", fn.name));
+		}
 		return fn.type;
 	}
 
 	auto ed = cast(ir.EnumDeclaration) expref.decl;
 	if (ed !is null) {
+		if (ed.type is null) {
+			throw panic(ed.location, "enum declaration has null type");
+		}
 		return ed.type;
 	}
 
 	auto fp = cast(ir.FunctionParam) expref.decl;
 	if (fp !is null) {
+		if (fp.type is null) {
+			throw panic(fp.location, format("function parameter '%s' has null type", fp.name));
+		}
 		return fp.type;
 	}
 
@@ -275,6 +287,7 @@ ir.Type getExpReferenceType(LanguagePass lp, ir.ExpReference expref, ir.Scope cu
 	if (fnset !is null) {
 		auto ftype = fnset.type;
 		assert(ftype.set.functions.length > 0);
+		panicAssert(fnset, ftype !is null);
 		return ftype;
 	}
 
@@ -598,7 +611,7 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 		}
 	}
 
-	auto type = getExpType(lp, postfix.child, currentScope);
+	auto type = realType(getExpType(lp, postfix.child, currentScope), false, true);
 	auto asPointer = cast(ir.PointerType) type;
 	if (asPointer !is null && (asPointer.base.nodeType == ir.NodeType.ArrayType 
 		|| asPointer.base.nodeType == ir.NodeType.StaticArrayType)) {
@@ -731,7 +744,7 @@ ir.Type getPostfixIndexType(LanguagePass lp, ir.Postfix postfix, ir.Scope curren
 {
 	ir.Type base;
 
-	auto type = getExpType(lp, postfix.child, currentScope);
+	auto type = realType(getExpType(lp, postfix.child, currentScope), true, true);
 
 	if (type.nodeType == ir.NodeType.PointerType) {
 		auto pointer = cast(ir.PointerType) type;

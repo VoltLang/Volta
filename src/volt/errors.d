@@ -33,6 +33,14 @@ CompilerException makeBadWithType(Location loc, string file = __FILE__, const in
 	return e;
 }
 
+CompilerException makeForeachReverseOverAA(ir.ForeachStatement fes, string file = __FILE__, const int line = __LINE__)
+{
+	auto e = new CompilerError(fes.location, "foreach_reverse over associative array.");
+	e.file = file;
+	e.line = line;
+	return e;
+}
+
 CompilerException makeAnonymousAggregateRedefines(ir.Aggregate agg, string name, string file = __FILE__, const int line = __LINE__)
 {
 	auto msg = format("anonymous aggregate redefines '%s'.", name);
@@ -512,6 +520,18 @@ CompilerException panicNotMember(ir.Node node, string aggregate, string field, s
 	                  to!string(*cast(size_t*)&node),
 	                  field, aggregate);
 	return new CompilerPanic(node.location, str, file, line);
+}
+
+CompilerException panicExpected(ir.Location location, string msg, string file = __FILE__, size_t line = __LINE__)
+{
+	return new CompilerPanic(location, format("expected %s", msg), file, line);
+}
+
+void panicAssert(ir.Node node, bool condition, string file = __FILE__, size_t line = __LINE__)
+{
+	if (!condition) {
+		throw panic(node.location, "assertion failure", file, line);
+	}
 }
 
 private:

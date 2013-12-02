@@ -15,9 +15,11 @@ import volt.ir.copy;
 import volt.errors;
 import volt.interfaces;
 import volt.util.string;
+import volt.token.location;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
 import volt.visitor.prettyprinter;
+import volt.visitor.iexpreplace;
 import volt.semantic.userattrresolver;
 import volt.semantic.classify;
 import volt.semantic.classresolver;
@@ -691,6 +693,10 @@ void extypeIdentifierExp(Context ctx, ref ir.Exp e, ir.IdentifierExp i)
 		assert(ed !is null);
 		assert(ed.assign !is null);
 		e = copyExp(ed.assign);
+		return;
+	case Expression:
+		assert(store.expressionDelegate !is null);
+		e = store.expressionDelegate(e.location);
 		return;
 	case Template:
 		throw panic(i, "template used as a value.");
@@ -1521,13 +1527,13 @@ void extypePostfixIdentifier(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 
 			exp = copyExp(ed.assign);
 			return;
-
 		case Value:
 		case Function:
 		case FunctionParam:
 			filloutReference(store);
 			break;
 		case Template:
+		case Expression:
 			throw makeInvalidUseOfStore(postfix, store);
 		case Alias:
 			throw panic(postfix, "alias scope");
@@ -2214,6 +2220,219 @@ ir.Node transformRuntimeAssert(Context ctx, ir.AssertStatement as)
 }
 
 /**
+ * Rewrites a given foreach statement (fes) into a for statement.
+ * The ForStatement create takes several nodes directly; that is
+ * to say, the original foreach and the new for cannot coexist.
+ */
+ir.ForStatement foreachToFor(ir.ForeachStatement fes, Context ctx, ir.Scope nestedScope, ref int aggregateForeaches, out string[] replacers, out ir.Function nestedFunction)
+{
+	auto l = fes.location;
+	auto fs = new ir.ForStatement();
+	fs.location = l;
+	panicAssert(fes, fes.itervars.length == 1 || fes.itervars.length == 2);
+	fs.initVars = fes.itervars;
+	fs.block = fes.block;
+
+	// foreach (i; 5 .. 7) => for (int i = 5; i < 7; i++)
+	// foreach_reverse (i; 5 .. 7) => for (int i = 7 - 1; i >= 5; i--)
+	if (fes.beginIntegerRange !is null) {
+		panicAssert(fes, fes.endIntegerRange !is null);
+		panicAssert(fes, fes.itervars.length == 1);
+		auto v = fs.initVars[0];
+		if (v.type is null) {
+			v.type = buildInt(v.location);
+		}
+		v.assign = fes.reverse ?
+			buildSub(l, fes.endIntegerRange, buildConstantInt(l, 1)) :
+			fes.beginIntegerRange;
+
+		auto cmpRef = buildExpReference(v.location, v, v.name);
+		auto incRef = buildExpReference(v.location, v, v.name);
+		fs.test = buildBinOp(l,
+							 fes.reverse ? ir.BinOp.Op.GreaterEqual : ir.BinOp.Op.Less,
+							 cmpRef, fes.reverse ? fes.beginIntegerRange : fes.endIntegerRange);
+		fs.increments ~= fes.reverse ? buildDecrement(v.location, incRef) :
+						 buildIncrement(v.location, incRef);
+		return fs;
+	}
+
+	auto aggType = realType(getExpType(ctx.lp, fes.aggregate, ctx.current), true, true);
+
+	ensureResolved(ctx.lp, ctx.current, aggType);
+
+	// foreach (i, e; array) => for (size_t i = 0; i < array.length; i++) auto e = array[i]; ...
+	// foreach_reverse (i, e; array) => for (size_t i = array.length - 1; i+1 >= 0; i--) auto e = array[i]; ..
+	if (aggType.nodeType == ir.NodeType.ArrayType) {
+		// i = 0 / i = array.length
+		ir.Variable indexVar, elementVar;
+		ir.Exp indexAssign;
+		if (!fes.reverse) {
+			indexAssign = buildSizeTConstant(l, ctx.lp, 0);
+		} else {
+			indexAssign = buildSub(l, buildAccess(l, fes.aggregate, "length"), buildConstantInt(l, 1));
+		}
+		if (fs.initVars.length == 2) {
+			indexVar = fs.initVars[0];
+			if (indexVar.type is null) {
+				indexVar.type = ctx.lp.settings.getSizeT(l);
+			}
+			indexVar.assign = copyExp(indexAssign);
+			elementVar = fs.initVars[1];
+		} else {
+			panicAssert(fes, fs.initVars.length == 1);
+			indexVar = buildVariable(l, ctx.lp.settings.getSizeT(l),
+									 ir.Variable.Storage.Function, "i", indexAssign);
+			elementVar = fs.initVars[0];
+			fs.initVars ~= indexVar;
+		}
+
+		auto st = cast(ir.StorageType) elementVar.type;
+		if (st !is null && st.type == ir.StorageType.Kind.Ref) {
+			ir.Exp dg(Location l)
+			{
+				return buildIndex(l, fes.aggregate, buildExpReference(l, indexVar, indexVar.name));
+			}
+			ctx.current.addExpressionDelegate(elementVar, &dg, elementVar.name);
+			st = cast(ir.StorageType) st.base;
+		}
+		if (st !is null && st.type == ir.StorageType.Kind.Auto) {
+			auto asArray = cast(ir.ArrayType) aggType;
+			panicAssert(fes, asArray !is null);
+			ensureResolved(ctx.lp, ctx.current, elementVar.type);
+			elementVar.type = copyTypeSmart(asArray.base.location, asArray.base);
+			assert(elementVar.type !is null);
+		}
+
+		// i < array.length / i + 1 >= 0
+		auto tref = buildExpReference(indexVar.location, indexVar, indexVar.name);
+		auto rtref = buildAdd(l, tref, buildConstantInt(l, 1));
+		auto length = buildAccess(l, copyExp(fes.aggregate), "length");
+		auto zero = buildSizeTConstant(l, ctx.lp, 0);
+		fs.test = buildBinOp(l, fes.reverse ? ir.BinOp.Op.NotEqual : ir.BinOp.Op.Less,
+							 fes.reverse ? rtref : tref,
+							 fes.reverse ? zero : length);
+
+		// auto e = array[i]; i++/i--
+		auto incRef = buildExpReference(indexVar.location, indexVar, indexVar.name);
+		auto accessRef = buildExpReference(indexVar.location, indexVar, indexVar.name);
+		auto eRef = buildExpReference(elementVar.location, elementVar, elementVar.name);
+		auto assign = buildAssign(incRef.location, eRef,
+								  buildIndex(incRef.location, fes.aggregate, accessRef));
+		fs.block.statements = buildExpStat(assign.location, assign) ~ fs.block.statements;
+		fs.increments ~= fes.reverse ? buildDecrement(incRef.location, incRef) :
+									   buildIncrement(incRef.location, incRef);
+		return fs;
+	}
+
+	// foreach (i; aStructOrClass) { ... } => int dg(ref int i) { ... } for (;aStructOrClass.opApply(dg);) {}
+	// foreach_reverse (i; aStructOrClass) { ... } => int dg(ref int i) { ... } for (;aStructOrClass.opApplyReverse(dg);) {}
+	auto agg = cast(ir.Aggregate) aggType;
+	if (agg !is null) {
+		auto fn = buildFunction(l, nestedScope, "fndg", true);
+		fn._body.myScope.nestedDepth = nestedScope.nestedDepth + 1;
+		fn.kind = ir.Function.Kind.Member;
+		fn.type.ret = buildInt(l);
+		auto st = buildStorageType(l, ir.StorageType.Kind.Ref, buildInt(l));
+		assert(fn.params.length == 0);
+
+		// Adjacent foreaches end up in the same nested struct, so these vars need unique names.
+		auto newName = format("%s%s", aggregateForeaches++, fs.initVars[0].name);
+		addParam(l, fn, st, newName);
+		auto replacer = new IdentifierExpReplacer(fs.initVars[0].name, newName);
+		accept(fes, replacer);
+
+		foreach (node; fes.block.statements) {
+			auto bstat = cast(ir.BreakStatement) node;
+			if (bstat !is null) {
+				buildReturnStat(l, fn._body, buildConstantInt(l, 1));
+				continue;
+			}
+			auto cstat = cast(ir.ContinueStatement) node;
+			if (cstat !is null) {
+				buildReturnStat(l, fn._body, buildConstantInt(l, 0));
+				continue;
+			}
+			fn._body.statements ~= node;
+		}
+		buildReturnStat(l, fn._body, buildConstantInt(l, 0));
+		nestedFunction = fn;
+		auto simplefs = new ir.ForStatement();
+		simplefs.location = l;
+		ir.Exp[] args = [buildExpReference(l, fn, fn.name)];
+		simplefs.test = buildCall(l, buildAccess(l, fes.aggregate, fes.reverse ? "opApplyReverse" : "opApply"), args);
+		simplefs.block = fes.block;
+		simplefs.block.statements.length = 0;
+		return simplefs;
+	}
+
+	// foreach (k, v; aa) => for (size_t i; i < aa.keys.length; i++) k = aa.keys[i]; v = aa[k];
+	// foreach_reverse => error, as order is undefined.
+	auto aa = cast(ir.AAType) aggType;
+	if (aa !is null) {
+		if (fes.reverse) {
+			throw makeForeachReverseOverAA(fes);
+		}
+		if (fs.initVars.length != 1 && fs.initVars.length != 2) {
+			throw makeExpected(fes.location, "1 or 2 iteration variables");
+		}
+
+		auto valVar = fs.initVars[0];
+		ir.Variable keyVar;
+		if (fs.initVars.length == 2) {
+			keyVar = valVar;
+			valVar = fs.initVars[1];
+		} else {
+			keyVar = buildVariable(l, null, ir.Variable.Storage.Function, format("%sk", fs.block.myScope.nestedDepth));
+			fs.initVars ~= keyVar;
+		}
+
+		auto vstor = cast(ir.StorageType) valVar.type;
+		if (vstor !is null && vstor.type == ir.StorageType.Kind.Auto) {
+			valVar.type = null;
+		}
+
+		auto kstor = cast(ir.StorageType) keyVar.type;
+		if (kstor !is null && kstor.type == ir.StorageType.Kind.Auto) {
+			keyVar.type = null;
+		}
+
+		if (valVar.type is null) {
+			valVar.type = copyTypeSmart(l, aa.value);
+		}
+		if (keyVar.type is null) {
+			keyVar.type = copyTypeSmart(l, aa.key);
+		}
+		auto indexVar = buildVariable(l, ctx.lp.settings.getSizeT(l), ir.Variable.Storage.Function, format("%si", fs.block.myScope.nestedDepth), buildSizeTConstant(l, ctx.lp, 0));
+		assert(keyVar.type !is null);
+		assert(valVar.type !is null);
+		assert(indexVar.type !is null);
+		fs.initVars ~= indexVar;
+
+		// i < aa.keys.length
+		auto index = buildExpReference(l, indexVar, indexVar.name);
+		auto len = buildAccess(l, buildAccess(l, copyExp(fes.aggregate), "keys"), "length");
+		fs.test = buildBinOp(l, ir.BinOp.Op.Less, index, len);
+
+		// k = aa.keys[i]
+		auto kref = buildExpReference(l, keyVar, keyVar.name);
+		auto keys = buildAccess(l, copyExp(fes.aggregate), "keys");
+		auto rh   = buildIndex(l, keys, buildExpReference(l, indexVar, indexVar.name));
+		fs.increments ~= buildAssign(l, kref, rh);
+
+		// v = aa[aa.keys[i]]
+		fs.increments ~= buildAssign(l, buildExpReference(l, valVar, valVar.name), buildIndex(l, copyExp(fes.aggregate), buildIndex(l, buildAccess(l, copyExp(fes.aggregate), "keys"), buildExpReference(l, indexVar, indexVar.name))));
+
+		// i++
+		fs.increments ~= buildIncrement(l, buildExpReference(l, indexVar, indexVar.name));
+
+		return fs;
+	}
+
+
+	throw makeExpected(l, "foreach aggregate type");
+}
+
+/**
  * If type casting were to be strict, type T could only
  * go to type T without an explicit cast. Implicit casts
  * are places where the language deems automatic conversion
@@ -2595,6 +2814,11 @@ public:
 		return ContinueParent;
 	}
 
+	override Status enter(ir.ForeachStatement fes)
+	{
+		return ContinueParent;
+	}
+
 	override Status enter(ir.ForStatement fs)
 	{
 		ctx.enter(fs.block);
@@ -2689,6 +2913,49 @@ public:
 
 	override Status leave(ir.BlockStatement bs)
 	{
+		ir.Function nestedFunction;
+		ir.ForeachStatement lastFes;
+		int aggregateForeaches;
+		for (size_t i = 0; i < bs.statements.length; i++) {
+			auto fes = cast(ir.ForeachStatement) bs.statements[i];
+			if (fes is null) {
+				continue;
+			}
+			assert(fes !is lastFes);
+			lastFes = fes;
+			string[] replacers;
+			auto forStatement = foreachToFor(fes, ctx, ctx.current, aggregateForeaches, replacers, nestedFunction);
+			int toAdd = 1;
+
+			if (nestedFunction !is null) {
+				if (ctx.currentFunction.nestStruct is null) {
+					toAdd += 2;
+					ctx.currentFunction.nestStruct = createAndAddNestedStruct(ctx.currentFunction, bs);
+					ctx.currentFunction.nestStruct.myScope = new ir.Scope(ctx.currentFunction.myScope, ctx.currentFunction.nestStruct, "__Nested");
+				}
+				auto ns = ctx.currentFunction.nestStruct;
+				assert(ns !is null);
+				assert(ns.myScope !is null);
+				auto tr = buildTypeReference(ns.location, ns, "__Nested");
+				auto decl = buildVariable(nestedFunction.location, tr, ir.Variable.Storage.Function, "__nested");
+				if (nestedFunction.nestedHiddenParameter is null) {
+					nestedFunction.nestedHiddenParameter = decl;
+					nestedFunction.nestedVariable = decl;
+					nestedFunction.nestStruct = ns;
+					nestedFunction.type.hiddenParameter = true;
+				}
+				bs.statements.insertInPlace(i, nestedFunction);
+				accept(bs.statements[i], this);
+				auto l = forStatement.location;
+				auto _call = cast(ir.Postfix) forStatement.test;
+				assert(_call !is null);
+				assert(_call.arguments.length == 1);
+				_call.arguments[0] = buildCreateDelegate(l, buildExpReference(l, ctx.currentFunction.nestedVariable), buildExpReference(l, nestedFunction));
+				i += toAdd;  // nested struct + nested struct variable + nested function = 3
+			}
+			bs.statements[i] = forStatement;
+			accept(bs.statements[i], this);
+		}
 		ctx.leave(bs);
 		return Continue;
 	}
@@ -2842,6 +3109,14 @@ public:
 	override Status visit(ref ir.Exp exp, ir.IdentifierExp ie)
 	{
 		auto oldexp = exp;
+		if (!ie.globalLookup) {
+			auto oldExp = exp;
+			if (exp !is oldExp) {
+				acceptExp(exp, this);
+				return ContinueParent;
+			}
+		}
+
 		extypeIdentifierExp(ctx, exp, ie);
 		if (oldexp !is exp) {
 			return acceptExp(exp, this);

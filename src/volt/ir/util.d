@@ -132,6 +132,7 @@ ir.Scope getScopeFromStore(ir.Store store)
 	case FunctionParam:
 	case Template:
 	case EnumDeclaration:
+	case Expression:
 		return null;
 	case Alias:
 		throw panic(store.node.location, "unresolved alias");
@@ -689,6 +690,32 @@ ir.Postfix buildSlice(Location loc, ir.Exp child, ir.Exp[] args...)
 }
 
 /**
+ * Builds a postfix increment.
+ */
+ir.Postfix buildIncrement(Location loc, ir.Exp child)
+{
+	auto inc = new ir.Postfix();
+	inc.location = loc;
+	inc.op = ir.Postfix.Op.Increment;
+	inc.child = child;
+
+	return inc;
+}
+
+/**
+ * Builds a postfix decrement.
+ */
+ir.Postfix buildDecrement(Location loc, ir.Exp child)
+{
+	auto inc = new ir.Postfix();
+	inc.location = loc;
+	inc.op = ir.Postfix.Op.Decrement;
+	inc.child = child;
+
+	return inc;
+}
+
+/**
  * Builds a postfix index.
  */
 ir.Postfix buildIndex(Location loc, ir.Exp child, ir.Exp arg)
@@ -754,13 +781,20 @@ ir.Postfix buildCall(Location loc, ir.Declaration decl, ir.Exp[] args, string[] 
 	return buildCall(loc, buildExpReference(loc, decl, names), args);
 }
 
-
 /**
  * Builds an add BinOp.
  */
 ir.BinOp buildAdd(Location loc, ir.Exp left, ir.Exp right)
 {
 	return buildBinOp(loc, ir.BinOp.Op.Add, left, right);
+}
+
+/**
+ * Builds a subtraction BinOp.
+ */
+ir.BinOp buildSub(Location loc, ir.Exp left, ir.Exp right)
+{
+	return buildBinOp(loc, ir.BinOp.Op.Sub, left, right);
 }
 
 /**
@@ -1079,11 +1113,8 @@ ir.FunctionType buildFunctionTypeSmart(Location loc, ir.Type ret, ir.Type[] args
 	return type;
 }
 
-/**
- * Builds a completely useable Function and insert it into the
- * various places it needs to be inserted.
- */
-ir.Function buildFunction(Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, string name, bool buildBody = true)
+/// Builds a function without inserting it anywhere.
+ir.Function buildFunction(Location loc, ir.Scope _scope, string name, bool buildBody = true)
 {
 	auto fn = new ir.Function();
 	fn.name = name;
@@ -1101,6 +1132,17 @@ ir.Function buildFunction(Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, s
 		fn._body.location = loc;
 		fn._body.myScope = new ir.Scope(fn.myScope, fn._body, name);
 	}
+
+	return fn;
+}
+
+/**
+ * Builds a completely useable Function and insert it into the
+ * various places it needs to be inserted.
+ */
+ir.Function buildFunction(Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, string name, bool buildBody = true)
+{
+	auto fn = buildFunction(loc, _scope, name, buildBody);
 
 	// Insert the struct into all the places.
 	_scope.addFunction(fn, fn.name);

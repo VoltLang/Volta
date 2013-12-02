@@ -6,6 +6,7 @@ module volt.semantic.context;
 import ir = volt.ir.ir;
 import volt.errors;
 import volt.interfaces;
+import volt.token.location;
 import volt.visitor.debugprinter : getNodeAddressString;
 import volt.semantic.extyper;
 
@@ -20,6 +21,7 @@ public:
 
 private:
 	ir.Scope mCurrent;
+	ir.Module mThisModule;
 
 	uint mLength;
 	uint mParentIndex;
@@ -93,7 +95,7 @@ public:
 	 * Traversal functions.
 	 */
 
-	void enter(ir.Module m) { assert(mCurrent is null); push(m, m.myScope, null); }
+	void enter(ir.Module m) { assert(mCurrent is null); mThisModule = m; push(m, m.myScope, null); }
 	void enter(ir.Struct s) { push(s, s.myScope, null); }
 	void enter(ir.Union u) { push(u, u.myScope, null); }
 	void enter(ir.Class c) { push(c, c.myScope, null); }

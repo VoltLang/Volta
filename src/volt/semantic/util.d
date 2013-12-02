@@ -177,6 +177,7 @@ ir.Store ensureResolved(LanguagePass lp, ir.Store s)
 		return s;
 	case Scope:
 	case Template:
+	case Expression:
 		return s;
 	}
 }

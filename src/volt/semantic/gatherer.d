@@ -502,6 +502,25 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.ForeachStatement fes)
+	{
+		enter(fes.block);
+		foreach (var; fes.itervars) {
+			gather(lp, current, var, where, mFunctionStack);
+		}
+		if (fes.aggregate !is null) acceptExp(fes.aggregate, this);
+		if (fes.beginIntegerRange !is null) {
+			panicAssert(fes, fes.endIntegerRange !is null);
+			acceptExp(fes.beginIntegerRange, this);
+			acceptExp(fes.endIntegerRange, this);
+		}
+		foreach (node; fes.block.statements) {
+			accept(node, this);
+		}
+		leave(fes.block);
+		return ContinueParent;
+	}
+
 	override Status enter(ir.ForStatement fs)
 	{
 		enter(fs.block);

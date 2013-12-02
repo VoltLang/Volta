@@ -17,10 +17,14 @@ public:
 	int nestedDepth;
 	ir.Function[] functionStack;
 
+private:
+	ir.Module mThisModule;
+
 public:
 	override Status enter(ir.Module m)
 	{
 		assert(current is null);
+		mThisModule = m;
 		current = m.myScope;
 		current.nestedDepth = nestedDepth;
 		return Continue;
