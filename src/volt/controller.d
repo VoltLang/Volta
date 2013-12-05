@@ -158,6 +158,9 @@ public:
 	void addFile(string file)
 	{
 		file = settings.replaceEscapes(file);
+		version (Windows) {
+			file = toLower(file);  // VOLT TEST.VOLT  REM Reppin' MS-DOS
+		}
 
 		if (endsWith(file, ".d", ".volt") > 0) {
 			mSourceFiles ~= file;
