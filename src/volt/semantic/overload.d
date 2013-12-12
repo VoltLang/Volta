@@ -145,7 +145,6 @@ int matchLevel(ir.Type argument, ir.Type parameter)
 	if (typesEqual(argument, parameter)) {
 		return 4;
 	}
-
 	auto asConst = new ir.StorageType();
 	asConst.location = argument.location;
 	asConst.type = ir.StorageType.Kind.Const;
@@ -218,7 +217,7 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 				assert(fn.params[i].assign !is null);
 				matchLevels ~= 4;
 			} else {
-				matchLevels ~= .matchLevel(param, arguments[i]);
+				matchLevels ~= .matchLevel(arguments[i], param);
 			}
 		}
 		int matchLevel = int.max;
