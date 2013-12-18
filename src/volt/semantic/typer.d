@@ -602,6 +602,10 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 		auto asStaticArray = cast(ir.StaticArrayType) type;
 		assert(asStaticArray !is null);
 		return getPostfixIdentifierStaticArrayType(lp, postfix, asStaticArray, currentScope);
+	} else if (type.nodeType == ir.NodeType.AAType) {
+		auto asAssocArray = cast(ir.AAType) type;
+		assert(asAssocArray !is null);
+		return getPostfixIdentifierAssocArrayType(lp, postfix, asAssocArray, currentScope);
 	}
 
 	retrieveScope(lp, type, postfix, _scope, _class, emsg);
@@ -669,6 +673,18 @@ ir.Type getPostfixIdentifierStaticArrayType(LanguagePass lp, ir.Postfix postfix,
 		auto pointer = new ir.PointerType(arrayType.base);
 		pointer.location = postfix.location;
 		return pointer;
+	default:
+		throw makeFailedLookup(postfix, postfix.identifier.value);
+	}
+}
+
+ir.Type getPostfixIdentifierAssocArrayType(LanguagePass lp, ir.Postfix postfix, ir.AAType arrayType, ir.Scope currentScope)
+{
+	switch (postfix.identifier.value) {
+	case "keys":
+		return buildArrayTypeSmart(postfix.location, arrayType.key);
+	case "values":
+		return buildArrayTypeSmart(postfix.location, arrayType.value);
 	default:
 		throw makeFailedLookup(postfix, postfix.identifier.value);
 	}
