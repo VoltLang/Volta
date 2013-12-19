@@ -120,6 +120,8 @@ public:
 	ir.Function vaCEndFunc;
 	ir.Function memcpyFunc;
 	ir.Function throwSliceErrorFunction;
+	ir.Function aaGetKeys;
+	ir.Function aaGetValues;
 	/* @} */
 
 	/**

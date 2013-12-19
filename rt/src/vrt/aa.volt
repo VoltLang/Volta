@@ -693,3 +693,32 @@ private bool vrt_aa_validate_rule5_impl(TreeNode* node, int previouse_black_node
 	return vrt_aa_validate_rule5_impl(node.left, previouse_black_nodes, black_nodes) &&
 		   vrt_aa_validate_rule5_impl(node.right, previouse_black_nodes, black_nodes);
 }
+
+extern (C) size_t printf(const(char)* s, ...);
+
+extern (C) void* vrt_aa_get_keys(void* rbtv)
+{
+	auto rbt = cast(RedBlackTree*) rbtv;
+	void*[] arr;
+	vrt_aa_walk(rbt.root, true, ref arr);
+	return cast(void*) &arr;
+}
+
+extern (C) void* vrt_aa_get_values(void* rbtv)
+{
+	auto rbt = cast(RedBlackTree*) rbtv;
+	void*[] arr;
+	vrt_aa_walk(rbt.root, false, ref arr);
+	return cast(void*) &arr;
+}
+
+private void vrt_aa_walk(TreeNode* node, bool getKey, ref void*[] arr)
+{
+	if (node !is null) {
+		vrt_aa_walk(node.left, getKey, ref arr);
+		arr ~= (getKey ? node.key.ptr : node.value.ptr);
+		vrt_aa_walk(node.right, getKey, ref arr);
+	}
+	return;
+}
+

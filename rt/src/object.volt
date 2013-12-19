@@ -205,6 +205,8 @@ extern(C) void vrt_aa_insert_primitive(void* rbtv, ulong key, void* value);
 extern(C) void vrt_aa_insert_array(void* rbtv, void[] key, void* value);
 extern(C) bool vrt_aa_delete_primitive(void* rbtv, ulong key);
 extern(C) bool vrt_aa_delete_array(void* rbtv, void[] key);
+extern(C) void* vrt_aa_get_keys(void* rbtv);
+extern(C) void* vrt_aa_get_values(void* rbtv);
 
 // Calls to these are replaced by the compiler.
 extern(C) void __volt_va_start(void** vl, void* _args);

@@ -649,12 +649,45 @@ void extypeIdentifierExp(Context ctx, ref ir.Exp e, ir.IdentifierExp i)
 	}
 }
 
+bool replaceAAPostfixesIfNeeded(Context ctx, ir.Postfix postfix, ref ir.Exp exp)
+{
+	if (postfix.identifier is null) {
+		return false;
+	}
+	auto aa = cast(ir.AAType) realType(getExpType(ctx.lp, postfix.child, ctx.current));
+	if (aa is null) {
+		return false;
+	}
+	auto l = postfix.location;
+	ir.ExpReference rtFn;
+	ir.Type type;
+	switch (postfix.identifier.value) {
+	case "keys":
+		rtFn = buildExpReference(l, ctx.lp.aaGetKeys, ctx.lp.aaGetKeys.name);
+		type = aa.key;
+		break;
+	case "values":
+		rtFn = buildExpReference(l, ctx.lp.aaGetValues, ctx.lp.aaGetKeys.name);
+		type = aa.value;
+		break;
+	default:
+		return false;
+	}
+	assert(rtFn !is null);
+	ir.Exp[] arg = [copyExp(postfix.child)];
+	exp = buildDeref(l, buildCastSmart(l, buildPtrSmart(l, buildArrayType(l, type)), buildCall(l, rtFn, arg)));
+	return true;
+}
+
 /**
  * Turns identifier postfixes into CreateDelegates, and resolves property function
  * calls in postfixes, type safe varargs, and explicit constructor calls.
  */
 void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 {
+	if (replaceAAPostfixesIfNeeded(ctx, postfix, exp)) {
+		return;
+	}
 	ir.Postfix[] postfixes;
 	ir.Postfix currentPostfix = postfix;
 	do {

@@ -114,6 +114,10 @@ public:
 		vaCEndFunc = cast(ir.Function)s.getStore("__llvm_volt_va_end").node;
 		memcpyFunc = cast(ir.Function)s.getStore("__llvm_memcpy_p0i8_p0i8_i32").node;
 		throwSliceErrorFunction = cast(ir.Function)s.getStore("vrt_throw_slice_error").node;
+		aaGetKeys = cast(ir.Function)s.getStore("vrt_aa_get_keys").node;
+		assert(aaGetKeys !is null);
+		aaGetValues = cast(ir.Function)s.getStore("vrt_aa_get_values").node;
+		assert(aaGetValues !is null);
 
 		ir.EnumDeclaration getEnum(string name)
 		{
