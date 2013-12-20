@@ -33,6 +33,7 @@ private struct TreeNode
 private struct RedBlackTree
 {
 	TreeNode* root;
+	size_t length;
 
 	TypeInfo value;
 }
@@ -43,6 +44,7 @@ extern(C) void* vrt_aa_new(TypeInfo value)
 	RedBlackTree* rbt = new RedBlackTree;
 	rbt.root = null;
 	rbt.value = value;
+	rbt.length = 0;
 
 	return rbt;
 }
@@ -234,6 +236,7 @@ extern(C) void vrt_aa_insert_primitive(void* rbtv, ulong key, void* value)
 		inserted_node.parent = node;
 	}
 
+	rbt.length++;
 	vrt_aa_insert_case1(rbt, inserted_node);
 	//assert(vrt_aa_validate(rbt));
 	return;
@@ -295,6 +298,7 @@ extern(C) void vrt_aa_insert_array(void* rbtv, void[] key, void* value)
 		inserted_node.parent = node;
 	}
 
+	rbt.length++;
 	vrt_aa_insert_case1(rbt, inserted_node);
 	//assert(vrt_aa_validate(rbt));
 	return;
@@ -411,6 +415,11 @@ extern(C) bool vrt_aa_delete_primitive(void* rbtv, ulong key)
 		// Key did not exist
 		return false;
 	}
+
+	if (rbt.length == 0) {
+		throw new Exception("AA size tracking failure");
+	}
+	rbt.length--;
     
 	// deleting the node is basically the same as you would delete 
 	// a node from a binary search tree
@@ -475,6 +484,37 @@ extern(C) bool vrt_aa_delete_array(void* rbtv, void[] key)
 		child.red = false;
 	}
 	return true;
+}
+
+// aa.keys
+extern (C) void* vrt_aa_get_keys(void* rbtv)
+{
+	auto rbt = cast(RedBlackTree*) rbtv;
+	auto arr = new void*[](rbt.length);
+	size_t currentIndex;
+	vrt_aa_walk(rbt.root, true, ref arr, ref currentIndex);
+	return cast(void*) &arr;
+}
+
+// aa.values
+extern (C) void* vrt_aa_get_values(void* rbtv)
+{
+	auto rbt = cast(RedBlackTree*) rbtv;
+	auto arr = new void*[](rbt.length);
+	size_t currentIndex;
+	vrt_aa_walk(rbt.root, false, ref arr, ref currentIndex);
+	return cast(void*) &arr;
+}
+
+private void vrt_aa_walk(TreeNode* node, bool getKey, ref void*[] arr, ref size_t currentIndex)
+{
+	if (node !is null) {
+		vrt_aa_walk(node.left, getKey, ref arr, ref currentIndex);
+		arr[currentIndex] = (getKey ? node.key.ptr : node.value.ptr);
+		currentIndex += 1;
+		vrt_aa_walk(node.right, getKey, ref arr, ref currentIndex);
+	}
+	return;
 }
 
 private void vrt_aa_delete_case1(RedBlackTree* rbt, TreeNode* node)
@@ -694,31 +734,4 @@ private bool vrt_aa_validate_rule5_impl(TreeNode* node, int previouse_black_node
 		   vrt_aa_validate_rule5_impl(node.right, previouse_black_nodes, black_nodes);
 }
 
-extern (C) size_t printf(const(char)* s, ...);
-
-extern (C) void* vrt_aa_get_keys(void* rbtv)
-{
-	auto rbt = cast(RedBlackTree*) rbtv;
-	void*[] arr;
-	vrt_aa_walk(rbt.root, true, ref arr);
-	return cast(void*) &arr;
-}
-
-extern (C) void* vrt_aa_get_values(void* rbtv)
-{
-	auto rbt = cast(RedBlackTree*) rbtv;
-	void*[] arr;
-	vrt_aa_walk(rbt.root, false, ref arr);
-	return cast(void*) &arr;
-}
-
-private void vrt_aa_walk(TreeNode* node, bool getKey, ref void*[] arr)
-{
-	if (node !is null) {
-		vrt_aa_walk(node.left, getKey, ref arr);
-		arr ~= (getKey ? node.key.ptr : node.value.ptr);
-		vrt_aa_walk(node.right, getKey, ref arr);
-	}
-	return;
-}
 
