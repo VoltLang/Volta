@@ -122,6 +122,7 @@ public:
 	ir.Function throwSliceErrorFunction;
 	ir.Function aaGetKeys;
 	ir.Function aaGetValues;
+	ir.Function aaGetLength;
 	/* @} */
 
 	/**

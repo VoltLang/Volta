@@ -118,6 +118,8 @@ public:
 		assert(aaGetKeys !is null);
 		aaGetValues = cast(ir.Function)s.getStore("vrt_aa_get_values").node;
 		assert(aaGetValues !is null);
+		aaGetLength = cast(ir.Function)s.getStore("vrt_aa_get_length").node;
+		assert(aaGetLength !is null);
 
 		ir.EnumDeclaration getEnum(string name)
 		{

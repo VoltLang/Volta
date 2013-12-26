@@ -49,6 +49,12 @@ extern(C) void* vrt_aa_new(TypeInfo value)
 	return rbt;
 }
 
+extern(C) size_t vrt_aa_get_length(void* rbtv)
+{
+	RedBlackTree* rbt = cast(RedBlackTree*)rbtv;
+	return rbt.length;
+}
+
 private TreeNode* vrt_aa_lookup_node_primitive(void* rbtv, ulong key)
 {
 	RedBlackTree* rbt = cast(RedBlackTree*)rbtv;
