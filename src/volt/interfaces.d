@@ -123,6 +123,8 @@ public:
 	ir.Function aaGetKeys;
 	ir.Function aaGetValues;
 	ir.Function aaGetLength;
+	ir.Function aaInArray;
+	ir.Function aaInPrimitive;
 	/* @} */
 
 	/**

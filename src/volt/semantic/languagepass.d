@@ -120,6 +120,10 @@ public:
 		assert(aaGetValues !is null);
 		aaGetLength = cast(ir.Function)s.getStore("vrt_aa_get_length").node;
 		assert(aaGetLength !is null);
+		aaInArray = cast(ir.Function)s.getStore("vrt_aa_in_binop_array").node;
+		assert(aaInArray !is null);
+		aaInPrimitive = cast(ir.Function)s.getStore("vrt_aa_in_binop_primitive").node;
+		assert(aaInPrimitive !is null);
 
 		ir.EnumDeclaration getEnum(string name)
 		{
