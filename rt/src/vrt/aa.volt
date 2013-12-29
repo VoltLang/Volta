@@ -151,7 +151,7 @@ extern(C) void* vrt_aa_in_binop_array(void* rbtv, void[] key)
 	if (tn is null) {
 		return null;
 	}
-	return tn.value.ptr;
+	return &tn.value.ptr;
 }
 
 extern(C) void* vrt_aa_in_binop_primitive(void* rbtv, ulong key)
@@ -165,7 +165,7 @@ extern(C) void* vrt_aa_in_binop_primitive(void* rbtv, ulong key)
 	if (tn is null) {
 		return null;
 	}
-	return tn.value.ptr;
+	return &tn.value.ptr;
 }
 
 private void vrt_aa_rotate_left(RedBlackTree* rbt, TreeNode* node)

@@ -1629,13 +1629,42 @@ void extypeBinOp(Context ctx, ir.BinOp bin, ir.PrimitiveType lprim, ir.Primitive
  * binary of storage types, otherwise forwards to assign or primitive
  * specific functions.
  */
-void extypeBinOp(Context ctx, ir.BinOp binop)
+void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 {
 	auto ltype = realType(getExpType(ctx.lp, binop.left, ctx.current));
 	auto rtype = realType(getExpType(ctx.lp, binop.right, ctx.current));
 
 	if (handleIfNull(ctx, rtype, binop.left)) return;
 	if (handleIfNull(ctx, ltype, binop.right)) return;
+
+	// key in aa => some_vrt_call(aa, key)
+	if (binop.op == ir.BinOp.Op.In) {
+		auto asAA = cast(ir.AAType) rtype;
+		if (asAA is null) {
+			throw makeExpected(binop.right.location, "associative array");
+		}
+		extypeAssign(ctx, binop.left, asAA.key);
+		ir.Exp rtFn, key;
+		auto l = binop.location;
+		if (isArray(ltype)) {
+			rtFn = buildExpReference(l, ctx.lp.aaInArray, ctx.lp.aaInArray.name);
+			key = buildCast(l, buildArrayType(l, buildVoid(l)), copyExp(binop.left));
+		} else {
+			rtFn = buildExpReference(l, ctx.lp.aaInPrimitive, ctx.lp.aaInPrimitive.name);
+			key = buildCast(l, buildUlong(l), copyExp(binop.left));
+		}
+		assert(rtFn !is null);
+		assert(key !is null);
+
+		auto args = new ir.Exp[](2);
+		args[0] = copyExp(binop.right);
+		args[1] = key;
+
+		auto retptr = buildPtrSmart(l, asAA.value);
+		auto call = buildCall(l, rtFn, args);
+		exp = buildCast(l, retptr, call);
+		return;
+	}
 
 	switch(binop.op) with(ir.BinOp.Op) {
 	case AddAssign, SubAssign, MulAssign, DivAssign, ModAssign, AndAssign,
@@ -2544,7 +2573,7 @@ public:
 		rewritePropertyFunctionAssign(ctx, e, bin);
 		// If rewritten.
 		if (e is bin) {
-			extypeBinOp(ctx, bin);
+			extypeBinOp(ctx, bin, e);
 		}
 		return Continue;
 	}
