@@ -540,10 +540,10 @@ extern (C) void* vrt_aa_get_values(void* rbtv)
 }
 
 // aa.rehash
-extern (C) void* vrt_aa_rehash(void* rbtv)
+extern (C) void vrt_aa_rehash(void* rbtv)
 {
 	// Dummy implementation.
-	return rbtv;
+	return;
 }
 
 private void vrt_aa_walk(TreeNode* node, bool getKey, ref void*[] arr, ref size_t currentIndex)

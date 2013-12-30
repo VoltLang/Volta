@@ -661,6 +661,7 @@ bool replaceAAPostfixesIfNeeded(Context ctx, ir.Postfix postfix, ref ir.Exp exp)
 	auto l = postfix.location;
 	ir.ExpReference rtFn;
 	ir.Type type;
+	ir.Exp[] arg = [copyExp(postfix.child)];
 	switch (postfix.identifier.value) {
 	case "keys":
 		rtFn = buildExpReference(l, ctx.lp.aaGetKeys, ctx.lp.aaGetKeys.name);
@@ -674,11 +675,14 @@ bool replaceAAPostfixesIfNeeded(Context ctx, ir.Postfix postfix, ref ir.Exp exp)
 		rtFn = buildExpReference(l, ctx.lp.aaGetLength, ctx.lp.aaGetLength.name);
 		type = ctx.lp.settings.getSizeT(l);
 		break;
+	case "rehash":
+		rtFn = buildExpReference(l, ctx.lp.aaRehash, ctx.lp.aaRehash.name);
+		exp = buildCall(l, rtFn, arg);
+		return true;
 	default:
 		return false;
 	}
 	assert(rtFn !is null);
-	ir.Exp[] arg = [copyExp(postfix.child)];
 	exp = buildDeref(l, buildCastSmart(l, buildPtrSmart(l, type), buildCall(l, rtFn, arg)));
 	return true;
 }
