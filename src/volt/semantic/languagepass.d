@@ -124,6 +124,8 @@ public:
 		assert(aaInArray !is null);
 		aaInPrimitive = cast(ir.Function)s.getStore("vrt_aa_in_binop_primitive").node;
 		assert(aaInPrimitive !is null);
+		aaRehash = cast(ir.Function)s.getStore("vrt_aa_rehash").node;
+		assert(aaRehash !is null);
 
 		ir.EnumDeclaration getEnum(string name)
 		{

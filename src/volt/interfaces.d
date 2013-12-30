@@ -125,6 +125,7 @@ public:
 	ir.Function aaGetLength;
 	ir.Function aaInArray;
 	ir.Function aaInPrimitive;
+	ir.Function aaRehash;
 	/* @} */
 
 	/**
