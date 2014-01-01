@@ -211,6 +211,10 @@ extern(C) size_t vrt_aa_get_length(void* rbtv);
 extern(C) void* vrt_aa_in_binop_array(void* rbtv, void[] key);
 extern(C) void* vrt_aa_in_binop_primitive(void* rbtv, ulong key);
 extern(C) void vrt_aa_rehash(void* rbtv);
+extern(C) ulong vrt_aa_get_pp(void* rbtv, ulong key, ulong _default);
+extern(C) void[] vrt_aa_get_aa(void* rbtv, void[] key, void[] _default);
+extern(C) ulong vrt_aa_get_ap(void* rbtv, void[] key, ulong _default);
+extern(C) void[] vrt_aa_get_pa(void* rbtv, ulong key, void[] _default);
 
 // Calls to these are replaced by the compiler.
 extern(C) void __volt_va_start(void** vl, void* _args);

@@ -126,6 +126,14 @@ public:
 		assert(aaInPrimitive !is null);
 		aaRehash = cast(ir.Function)s.getStore("vrt_aa_rehash").node;
 		assert(aaRehash !is null);
+		aaGetPP = cast(ir.Function)s.getStore("vrt_aa_get_pp").node;
+		assert(aaGetPP !is null);
+		aaGetAA = cast(ir.Function)s.getStore("vrt_aa_get_aa").node;
+		assert(aaGetAA !is null);
+		aaGetAP = cast(ir.Function)s.getStore("vrt_aa_get_ap").node;
+		assert(aaGetAP !is null);
+		aaGetPA = cast(ir.Function)s.getStore("vrt_aa_get_pa").node;
+		assert(aaGetPA !is null);
 
 		ir.EnumDeclaration getEnum(string name)
 		{

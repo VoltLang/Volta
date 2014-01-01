@@ -55,6 +55,50 @@ extern(C) size_t vrt_aa_get_length(void* rbtv)
 	return rbt.length;
 }
 
+// vrt_aa_get_keyvalue (e.g. vrt_aa_get_pa key == primitive, value == array)
+// aa.get("key", null) => vrt_aa_get_primitive(aa, "key", null)
+
+extern(C) ulong vrt_aa_get_pp(void* rbtv, ulong key, ulong _default)
+{
+	TreeNode* tn = vrt_aa_lookup_node_primitive(rbtv, key);
+	if (tn is null) {
+		return _default;
+	} else {
+		return tn.value.unsigned;
+	}
+}
+
+extern(C) void[] vrt_aa_get_aa(void* rbtv, void[] key, void[] _default)
+{
+	TreeNode* tn = vrt_aa_lookup_node_array(rbtv, key);
+	if (tn is null) {
+		return _default;
+	} else {
+		return tn.value.array;
+	}
+}
+
+extern(C) ulong vrt_aa_get_ap(void* rbtv, void[] key, ulong _default)
+{
+	TreeNode* tn = vrt_aa_lookup_node_array(rbtv, key);
+	if (tn is null) {
+		return _default;
+	} else {
+		return tn.value.unsigned;
+	}
+}
+
+extern(C) void[] vrt_aa_get_pa(void* rbtv, ulong key, void[] _default)
+{
+	TreeNode* tn = vrt_aa_lookup_node_primitive(rbtv, key);
+	if (tn is null) {
+		return _default;
+	} else {
+		return tn.value.array;
+	}
+}
+
+
 private TreeNode* vrt_aa_lookup_node_primitive(void* rbtv, ulong key)
 {
 	RedBlackTree* rbt = cast(RedBlackTree*)rbtv;

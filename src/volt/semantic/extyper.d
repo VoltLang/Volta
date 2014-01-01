@@ -651,6 +651,51 @@ void extypeIdentifierExp(Context ctx, ref ir.Exp e, ir.IdentifierExp i)
 
 bool replaceAAPostfixesIfNeeded(Context ctx, ir.Postfix postfix, ref ir.Exp exp)
 {
+	auto l = postfix.location;
+	if (postfix.op == ir.Postfix.Op.Call) {
+		assert(postfix.identifier is null);
+		auto child = cast(ir.Postfix) postfix.child;
+		if (child is null || child.identifier is null) {
+			return false;
+		}
+		if (child.identifier.value != "get") {
+			return false;
+		}
+		if (postfix.arguments.length != 2) {
+			return false;
+		}
+		auto aa = cast(ir.AAType) realType(getExpType(ctx.lp, child.child, ctx.current));
+		if (aa is null) {
+			return false;
+		}
+		ir.ExpReference rtFn;
+		auto args = new ir.Exp[](3);
+		args[0] = copyExp(child.child);
+		bool keyIsArray = isArray(realType(aa.key));
+		bool valIsArray = isArray(realType(aa.value));
+		if (keyIsArray && valIsArray) {
+			rtFn = buildExpReference(l, ctx.lp.aaGetAA, ctx.lp.aaGetAA.name);
+		} else if (!keyIsArray && valIsArray) {
+			rtFn = buildExpReference(l, ctx.lp.aaGetPA, ctx.lp.aaGetPA.name);
+		} else if (keyIsArray && !valIsArray) {
+			rtFn = buildExpReference(l, ctx.lp.aaGetAP, ctx.lp.aaGetAP.name);
+		} else {
+			rtFn = buildExpReference(l, ctx.lp.aaGetPP, ctx.lp.aaGetPP.name);
+		}
+		if (keyIsArray) {
+			args[1] = buildCastSmart(l, buildArrayType(l, buildVoid(l)), postfix.arguments[0]);
+		} else {
+			args[1] = buildCastSmart(l, buildUlong(l), postfix.arguments[0]);
+		}
+		if (valIsArray) {
+			args[2] = buildCastSmart(l, buildArrayType(l, buildVoid(l)), postfix.arguments[1]);
+		} else {
+			args[2] = buildCastSmart(l, buildUlong(l), postfix.arguments[1]);
+		}
+		exp = buildCastSmart(l, aa.value, buildCall(l, rtFn, args));
+		return true;
+	}
+
 	if (postfix.identifier is null) {
 		return false;
 	}
@@ -658,7 +703,6 @@ bool replaceAAPostfixesIfNeeded(Context ctx, ir.Postfix postfix, ref ir.Exp exp)
 	if (aa is null) {
 		return false;
 	}
-	auto l = postfix.location;
 	ir.ExpReference rtFn;
 	ir.Type type;
 	ir.Exp[] arg = [copyExp(postfix.child)];
@@ -668,7 +712,7 @@ bool replaceAAPostfixesIfNeeded(Context ctx, ir.Postfix postfix, ref ir.Exp exp)
 		type = buildArrayType(l, aa.key);
 		break;
 	case "values":
-		rtFn = buildExpReference(l, ctx.lp.aaGetValues, ctx.lp.aaGetKeys.name);
+		rtFn = buildExpReference(l, ctx.lp.aaGetValues, ctx.lp.aaGetValues.name);
 		type = buildArrayType(l, aa.value);
 		break;
 	case "length":
@@ -798,7 +842,6 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			eref = cast(ir.ExpReference) pchild.memberFunction;
 		}
 	}
-	asFunctionType = cast(ir.CallableType) type;
 
 	if (asFunctionSet !is null) {
 		if (eref is null) {
@@ -834,6 +877,7 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			}
 		}
 	}
+	assert(asFunctionType !is null);
 
 	// Hand check va_start(vl) and va_end(vl), then modify their calls.
 	if (fn is ctx.lp.vaStartFunc || fn is ctx.lp.vaEndFunc || fn is ctx.lp.vaCStartFunc || fn is ctx.lp.vaCEndFunc) {

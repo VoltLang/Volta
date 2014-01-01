@@ -1023,6 +1023,17 @@ ir.ReturnStatement buildReturnStat(Location loc, ir.BlockStatement block, ir.Exp
 	return ret;
 }
 
+ir.FunctionType buildFunctionTypeSmart(Location loc, ir.Type ret, ir.Type[] args...)
+{
+	auto type = new ir.FunctionType();
+	type.location = loc;
+	type.ret = copyType(ret);
+	foreach (arg; args) {
+		type.params ~= copyType(arg);
+	}
+	return type;
+}
+
 /**
  * Builds a completely useable Function and insert it into the
  * various places it needs to be inserted.

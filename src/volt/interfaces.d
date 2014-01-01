@@ -126,6 +126,10 @@ public:
 	ir.Function aaInArray;
 	ir.Function aaInPrimitive;
 	ir.Function aaRehash;
+	ir.Function aaGetPP;
+	ir.Function aaGetAA;
+	ir.Function aaGetPA;
+	ir.Function aaGetAP;
 	/* @} */
 
 	/**

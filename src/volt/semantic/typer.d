@@ -7,6 +7,7 @@ import std.conv : to;
 import std.string : format;
 
 import ir = volt.ir.ir;
+import volt.ir.copy;
 import volt.ir.util;
 
 import volt.errors;
@@ -685,6 +686,8 @@ ir.Type getPostfixIdentifierAssocArrayType(LanguagePass lp, ir.Postfix postfix, 
 		return buildArrayTypeSmart(postfix.location, arrayType.key);
 	case "values":
 		return buildArrayTypeSmart(postfix.location, arrayType.value);
+	case "get":
+		return buildFunctionTypeSmart(postfix.location, arrayType.key, arrayType.value);
 	default:
 		throw makeFailedLookup(postfix, postfix.identifier.value);
 	}
