@@ -1528,7 +1528,8 @@ Visitor.Status acceptWithStatement(ir.WithStatement ws, Visitor av)
 		return parentContinue(status);
 	}
 
-	av.enter(ws.block);
+	acceptExp(ws.exp, av);
+	accept(ws.block, av);
 
 	return av.leave(ws);
 }
@@ -1540,7 +1541,7 @@ Visitor.Status acceptSynchronizedStatement(ir.SynchronizedStatement ss, Visitor 
 		return parentContinue(status);
 	}
 
-	av.enter(ss.block);
+	accept(ss.block, av);
 
 	return av.leave(ss);
 }
