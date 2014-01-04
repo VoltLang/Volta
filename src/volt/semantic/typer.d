@@ -21,6 +21,13 @@ import volt.semantic.overload;
 /// Look up a Variable and return its type.
 ir.Type declTypeLookup(Location loc, LanguagePass lp, ir.Scope _scope, string name)
 {
+	foreach (ws; _scope.withStatements) {
+		auto baseType = getExpType(lp, ws.exp, _scope);
+		auto access = buildAccess(loc, ws.exp, name);
+		ir.Class _class;
+		string dummy;
+		retrieveScope(lp, baseType, access, _scope, _class, dummy);
+	}
 	auto store = lookup(lp, _scope, loc, name);
 	if (store is null) {
 		throw makeFailedLookup(loc, name);

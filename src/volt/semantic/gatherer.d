@@ -316,6 +316,7 @@ protected:
 	ir.Type[] mThis;
 	ir.Function[] mFunctionStack;
 	ir.Module mModule;
+	ir.WithStatement[] mWithStatements;
 
 public:
 	this(LanguagePass lp)
@@ -357,6 +358,7 @@ public:
 
 	void push(ir.Scope s, ir.Type thisType = null)
 	{
+		s.withStatements = mWithStatements;
 		mWhere ~= thisType is null ?
 			Where.Function :
 			Where.TopLevel;
@@ -544,6 +546,21 @@ public:
 	override Status enter(ir.EnumDeclaration e)
 	{
 		gather(current, e, where);
+		return Continue;
+	}
+
+	override Status enter(ir.WithStatement ws)
+	{
+		mWithStatements ~= ws;
+		return Continue;
+	}
+
+	override Status leave(ir.WithStatement ws)
+	{
+		if (mWithStatements[$-1] !is ws) {
+			throw panic(ws.location, "invalid layout");
+		}
+		mWithStatements = mWithStatements[0 .. $-1];
 		return Continue;
 	}
 

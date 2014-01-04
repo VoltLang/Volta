@@ -584,11 +584,65 @@ void extypeAssign(Context ctx, ref ir.Exp exp, ir.Type type)
 }
 
 /**
+ * If qname has a child of name leaf, returns an expression looking it up.
+ * Otherwise, null is returned.
+ */
+ir.Exp withLookup(Context ctx, ref ir.Exp exp, ir.Scope current, string leaf, ir.Postfix pleaf = null)
+{
+	ir.Exp access = buildAccess(exp.location, copyExp(exp), leaf);
+	ir.Class _class;
+	string emsg;
+	ir.Scope eScope;
+	auto type = realType(getExpType(ctx.lp, exp, current));
+	if (exp.nodeType == ir.NodeType.Postfix) {
+		retrieveScope(ctx.lp, type, cast(ir.Postfix)exp, eScope, _class, emsg);
+	} else {
+		retrieveScope(ctx.lp, type, cast(ir.Postfix)access, eScope, _class, emsg);
+	}
+	if (eScope is null) {
+		throw makeBadWithType(exp.location);
+	}
+	auto store = lookup(ctx.lp, eScope, exp.location, leaf);
+	if (store is null) {
+		return null;
+	}
+	if (exp.nodeType == ir.NodeType.IdentifierExp) {
+		extypeLeavePostfix(ctx, access, cast(ir.Postfix) access);
+	}
+	return access;
+}
+
+/**
  * Replace IdentifierExps with ExpReferences.
  */
 void extypeIdentifierExp(Context ctx, ref ir.Exp e, ir.IdentifierExp i)
 {
 	auto current = i.globalLookup ? getModuleFromScope(ctx.current).myScope : ctx.current;
+
+	// Rewrite expressions that rely on a with block lookup.
+	ir.Exp rewriteExp;
+	foreach (withStatement; current.withStatements) {
+		auto withExp = withStatement.exp;
+		auto _rewriteExp = withLookup(ctx, withExp, current, i.value);
+		if (_rewriteExp is null) {
+			continue;
+		}
+		if (rewriteExp !is null) {
+			throw makeWithCreatesAmbiguity(withExp.location);
+		}
+		rewriteExp = _rewriteExp;
+		// Continue to ensure no ambiguity.
+	}
+	if (rewriteExp !is null) {
+		auto store = lookup(ctx.lp, current, i.location, i.value);
+		if (store !is null) {
+			throw makeWithCreatesAmbiguity(i.location);
+		}
+		e = rewriteExp;
+		return;
+	}
+	// With rewriting is completed after this point, and regular lookup logic resumes.
+
 	if (i.type is null) {
 		i.type = declTypeLookup(i.location, ctx.lp, current, i.value);
 	}
@@ -1412,6 +1466,15 @@ void extypePostfixIdentifier(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		/// @todo handle leading dot.
 		assert(!identExp.globalLookup);
 
+		ir.Exp withResult;
+		foreach (withStatement; _scope.withStatements) {
+			auto withExp = withStatement.exp;
+			withResult = withLookup(ctx, withExp, ctx.current, ident);
+			if (withResult !is null) {
+				postfixIdents[0].child = withResult;
+				return extypePostfixIdentifier(ctx, exp, postfix);
+			}
+		}
 		store = lookup(ctx.lp, _scope, loc, ident);
 	}
 
@@ -1961,6 +2024,37 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 		void replaceWithHashIfNeeded(ref ir.Exp exp) 
 		{
 			if (exp !is null) {
+				// If the case needs to be rewritten via the switch's with(s), it's done here.
+				int replaced;
+				foreach (wexp; ss.withs) {
+					auto etype = getExpType(ctx.lp, wexp, ctx.current);
+					auto iexp = cast(ir.IdentifierExp) exp;
+					if (iexp is null) {
+						continue;
+					}
+					auto access = buildAccess(_case.location, wexp, iexp.value);
+					ir.Class dummyClass;
+					string dummyString;
+					ir.Scope tmpScope;
+					retrieveScope(ctx.lp, etype, access, tmpScope, dummyClass, dummyString);
+					if (tmpScope is null) {
+						continue;
+					}
+					auto store = lookupOnlyThisScope(ctx.lp, tmpScope, _case.location, iexp.value);
+					if (store is null) {
+						continue;
+					}
+					auto decl = cast(ir.Declaration) store.node;
+					if (decl is null) {
+						continue;
+					}
+					exp = buildExpReference(_case.location, decl, iexp.value);
+					replaced++;
+				}
+				if (replaced >= 2) {
+					throw makeWithCreatesAmbiguity(_case.location);
+				}
+				// Back to replacing cases with hashes if needed.
 				auto etype = getExpType(ctx.lp, exp, ctx.current);
 				if (isArray(etype)) {
 					uint h;
@@ -2455,6 +2549,19 @@ public:
 	 */
 
 
+	override Status enter(ir.WithStatement ws)
+	{
+		auto e = cast(ir.Unary) ws.exp;
+		auto type = getExpType(ctx.lp, ws.exp, ctx.current);
+		if (e !is null && realType(type).nodeType == ir.NodeType.Class) {
+			auto var = buildVariableSmart(ws.block.location, type, ir.Variable.Storage.Function, ws.block.myScope.genAnonIdent());
+			var.assign = e;
+			ws.block.statements = var ~ ws.block.statements;
+			ws.exp = buildExpReference(var.location, var, var.name);
+		}
+		return Continue;
+	}
+
 	override Status enter(ir.ReturnStatement ret)
 	{
 		auto fn = getParentFunction(ctx.current);
@@ -2651,7 +2758,6 @@ public:
 		return Continue;
 	}
 
-
 	/*
 	 *
 	 * Expressions.
@@ -2735,10 +2841,10 @@ public:
 
 	override Status visit(ref ir.Exp exp, ir.IdentifierExp ie)
 	{
+		auto oldexp = exp;
 		extypeIdentifierExp(ctx, exp, ie);
-		auto eref = cast(ir.ExpReference) exp;
-		if (eref !is null) {
-			replaceExpReferenceIfNeeded(ctx, null, exp, eref);
+		if (oldexp !is exp) {
+			return acceptExp(exp, this);
 		}
 		return Continue;
 	}

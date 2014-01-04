@@ -61,7 +61,7 @@ ir.IdentifierExp copy(ir.IdentifierExp ie)
 	i.location = ie.location;
 	i.globalLookup = ie.globalLookup;
 	i.value = ie.value;
-	i.type = copyNode(ie.type);
+	i.type = ie.type is null ? null : copyNode(ie.type);
 	return i;
 }
 
@@ -140,7 +140,7 @@ ir.Unary copy(ir.Unary unary)
 	auto newunary = new ir.Unary();
 	newunary.location = unary.location;
 	newunary.op = unary.op;
-	newunary.value = copyExp(unary.value);
+	newunary.value = unary.value is null ? null : copyExp(unary.value);
 	newunary.hasArgumentList = unary.hasArgumentList;
 	newunary.type = copyTypeSmart(unary.type.location, unary.type);
 	foreach (arg; unary.argumentList) {

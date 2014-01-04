@@ -208,6 +208,8 @@ public:
 	Scope parent;
 	/// Declared symbols in this scope.
 	Store[string] symbols;
+	/// All with statements that apply to this scope.
+	ir.WithStatement[] withStatements;
 
 	/**
 	 * Modules to implicitly look up symbols in.

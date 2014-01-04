@@ -12,6 +12,16 @@ import volt.util.string : unescapeString;
 import ir = volt.ir.ir;
 import volt.ir.copy;
 
+/**
+ * Builds an identifier exp from a string.
+ */
+ir.IdentifierExp buildIdentifierExp(Location loc, string value, bool isGlobal = false)
+{
+	auto iexp = new ir.IdentifierExp(value);
+	iexp.location = loc;
+	iexp.globalLookup = isGlobal;
+	return iexp;
+}
 
 /**
  * Builds a QualifiedName from a string.
@@ -29,7 +39,7 @@ ir.QualifiedName buildQualifiedName(Location loc, string value)
 /**
  * Builds a QualifiedName from an array.
  */
-ir.QualifiedName buildQualifiedName(Location loc, string[] value)
+ir.QualifiedName buildQualifiedName(Location loc, string[] value...)
 {
 	auto idents = new ir.Identifier[value.length];
 	foreach (i, val; value) {

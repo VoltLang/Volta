@@ -1458,13 +1458,6 @@ Visitor.Status acceptSwitchStatement(ir.SwitchStatement ss, Visitor av)
 		}
 	}
 
-	foreach (ref _with; ss.withs) {
-		status = acceptExp(_with, av);
-		if (status == VisitorStop) {
-			return VisitorStop;
-		}
-	}
-
 	return av.leave(ss);
 }
 

@@ -128,6 +128,7 @@ public:
 			case SwitchStatement:
 			case GotoStatement:
 			case AssertStatement:
+			case WithStatement:
 				auto s = accept(n, this);
 				if (s == Stop)
 					return Stop;

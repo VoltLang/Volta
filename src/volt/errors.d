@@ -25,6 +25,14 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeBadWithType(Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	auto e = new CompilerError("bad expression type for with statement.");
+	e.file = file;
+	e.line = line;
+	return e;
+}
+
 CompilerException makeAnonymousAggregateRedefines(ir.Aggregate agg, string name, string file = __FILE__, const int line = __LINE__)
 {
 	auto msg = format("anonymous aggregate redefines '%s'.", name);
@@ -381,6 +389,14 @@ CompilerException makeInvalidUseOfStore(ir.Node node, ir.Store store, string fil
  *
  *
  */
+
+CompilerException makeWithCreatesAmbiguity(Location loc, string file = __FILE__, size_t line = __LINE__)
+{
+	auto e = new CompilerError(loc, "ambiguous lookup due to with block(s).");
+	e.file = file;
+	e.line = line;
+	return e;
+}
 
 CompilerException makeInvalidThis(ir.Node node, ir.Type was, ir.Type expected, string member, string file = __FILE__, size_t line = __LINE__)
 {
