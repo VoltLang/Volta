@@ -2355,7 +2355,21 @@ public:
 		bool inAggregate = (cast(ir.Aggregate) ctx.current.node) !is null;
 		if (inAggregate && v.storage != ir.Variable.Storage.Local && v.storage != ir.Variable.Storage.Global) {
 			if (v.assign !is null) {
-				throw makeAssignToNonStaticField(v);
+				auto _class = cast(ir.Class) ctx.current.node;
+				if (_class !is null) {
+					foreach (ctor; _class.userConstructors) {
+						assert(ctor.thisHiddenParameter !is null);
+						auto eref = buildExpReference(ctor.thisHiddenParameter.location, ctor.thisHiddenParameter, ctor.thisHiddenParameter.name);
+						auto assign = buildAssign(ctor.location, buildAccess(ctor.location, eref, v.name), v.assign);
+						auto stat = new ir.ExpStatement();
+						stat.location = ctor.location;
+						stat.exp = assign;
+						ctor._body.statements = stat ~ ctor._body.statements;
+						v.assign = null;
+					}
+				} else {
+					throw makeAssignToNonStaticField(v);
+				}
 			}
 			if (isConst(v.type) || isImmutable(v.type)) {
 				throw makeConstField(v);

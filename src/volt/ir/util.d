@@ -1277,3 +1277,11 @@ ir.Type realBase(ir.PointerType ptr)
 	return base;
 }
 
+ir.IdentifierExp buildIdentifierExp(Location loc, string name)
+{
+	auto iexp = new ir.IdentifierExp();
+	iexp.location = loc;
+	iexp.value = name;
+	return iexp;
+}
+
