@@ -523,9 +523,9 @@ public:
 
 			LLVMValueRef[] structs;
 			foreach (fn; arr) {
-				int priority = 2;
+				int priority = 1;
 				if (m.name.strings == ["vrt", "vmain"]) {
-					priority = 1;
+					priority = 2;
 				}
 				auto vals = [LLVMConstInt(LLVMInt32TypeInContext(state.context), priority, false), fn];
 				structs ~= LLVMConstStructInContext(state.context, vals.ptr, 2, false);
