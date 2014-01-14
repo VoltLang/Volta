@@ -3,6 +3,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.ir.declaration;
 
+import volt.errors;
 import volt.ir.base;
 import volt.ir.type;
 import volt.ir.expression;
@@ -324,7 +325,9 @@ public:
 	 */
 	Function resolved(Function fn)
 	{
-		assert(reference !is null);
+		if (reference is null) {
+			throw panic(fn.location, "resolving: null reference");
+		}
 		reference.decl = fn;
 		functions = null;
 		reference = null;
