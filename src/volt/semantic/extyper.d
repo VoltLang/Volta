@@ -631,8 +631,6 @@ void extypeIdentifierExp(Context ctx, ref ir.Exp e, ir.IdentifierExp i)
 		}
 		_ref.decl = buildSet(i.location, store.functions);
 		e = _ref;
-		auto fset = cast(ir.FunctionSet) _ref.decl;
-		if (fset !is null) fset.reference = _ref;
 		return;
 	case EnumDeclaration:
 		auto ed = cast(ir.EnumDeclaration) store.node;

@@ -306,7 +306,7 @@ class FunctionSet : Declaration
 {
 public:
 	Function[] functions;
-	ExpReference reference;
+	ExpReference reference;  ///< For assigning an overloaded function to a delegate.
 
 public:
 	this() { super(NodeType.FunctionSet); }
@@ -325,10 +325,9 @@ public:
 	 */
 	Function resolved(Function fn)
 	{
-		if (reference is null) {
-			throw panic(fn.location, "resolving: null reference");
+		if (reference !is null) {
+			reference.decl = fn;
 		}
-		reference.decl = fn;
 		functions = null;
 		reference = null;
 		return fn;
