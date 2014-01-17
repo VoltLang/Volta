@@ -875,7 +875,9 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			}
 		}
 	}
-	assert(asFunctionType !is null);
+	if (asFunctionType is null) {
+		return;
+	}
 
 	// Hand check va_start(vl) and va_end(vl), then modify their calls.
 	if (fn is ctx.lp.vaStartFunc || fn is ctx.lp.vaEndFunc || fn is ctx.lp.vaCStartFunc || fn is ctx.lp.vaCEndFunc) {
