@@ -15,6 +15,7 @@ import volt.semantic.classify;
 import volt.semantic.lookup;
 import volt.semantic.mangle;
 import volt.semantic.overload;
+import volt.semantic.typer;
 
 
 ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scope baseScope, ir.ArrayType atype)
@@ -236,10 +237,8 @@ public:
 
 			return Continue;
 		} else if (unary.hasArgumentList) {
-			auto tr = cast(ir.TypeReference) unary.type;
-			assert(tr !is null);
-			auto _class = cast(ir.Class) tr.type;
-
+			auto _class = cast(ir.Class) realType(unary.type);
+			assert(_class !is null);
 			auto ctor = selectFunction(lp, current, _class.userConstructors, unary.argumentList, unary.location);
 			exp = buildClassConstructionWrapper(unary.location, lp, current, _class, ctor, allocDgVar, unary.argumentList);
 

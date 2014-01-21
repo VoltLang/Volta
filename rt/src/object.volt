@@ -166,6 +166,15 @@ class Error : Throwable
 	}
 }
 
+class AssertError : Error
+{
+	this(string message)
+	{
+		super(message);
+		return;
+	}
+}
+
 // Thrown if Key does not exist in AA
 // TODO: move to core.exception (llvmlowerer!)
 class KeyNotFoundException : Exception

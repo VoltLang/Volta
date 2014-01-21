@@ -106,6 +106,8 @@ public:
 		objectClass = cast(ir.Class)s.getStore("Object").node;
 		typeInfoClass = cast(ir.Class)s.getStore("TypeInfo").node;
 		attributeClass = cast(ir.Class)s.getStore("Attribute").node;
+		assertErrorClass = cast(ir.Class)s.getStore("AssertError").node;
+		assert(assertErrorClass !is null);
 		arrayStruct = cast(ir.Struct)s.getStore("ArrayStruct").node;
 		allocDgVariable = cast(ir.Variable)s.getStore("allocDg").node;
 		vaStartFunc = cast(ir.Function)s.getStore("__volt_va_start").node;

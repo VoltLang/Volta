@@ -2100,6 +2100,25 @@ void checkAnonymousVariables(Context ctx, ir.Aggregate agg)
 	}
 }
 
+/// Turn a runtime assert into an if and a throw.
+ir.Node transformRuntimeAssert(Context ctx, ir.AssertStatement as)
+{
+	if (as.isStatic) {
+		throw panic(as.location, "expected runtime assert");
+	}
+	auto l = as.location;
+	ir.Exp message = as.message;
+	if (message is null) {
+		message = buildStringConstant(l, "\"assertion failure\"");
+	}
+	assert(message !is null);
+	auto exception = buildNew(l, ctx.lp.assertErrorClass, "AssertError", message);
+	auto theThrow  = buildThrowStatement(l, exception);
+	auto thenBlock = buildBlockStat(l, null, ctx.current, theThrow);
+	auto ifS = buildIfStat(l, buildNot(l, as.condition), thenBlock);
+	return ifS;
+}
+
 /**
  * If type casting were to be strict, type T could only
  * go to type T without an explicit cast. Implicit casts
@@ -2533,7 +2552,7 @@ public:
 	override Status enter(ir.AssertStatement as)
 	{
 		if (!as.isStatic) {
-			throw panicUnhandled(as, "non static asserts");
+			return Continue;
 		}
 		auto cond = cast(ir.Constant) as.condition;
 		auto msg = cast(ir.Constant) as.message;
@@ -2549,6 +2568,15 @@ public:
 	override Status enter(ir.BlockStatement bs)
 	{
 		ctx.enter(bs);
+		// Translate runtime asserts before processing the block.
+		for (size_t i = 0; i < bs.statements.length; i++) {
+			auto as = cast(ir.AssertStatement) bs.statements[i];
+			if (as is null || as.isStatic) {
+				continue;
+			}
+			import std.stdio;
+			bs.statements[i] = transformRuntimeAssert(ctx, as);
+		}
 		return Continue;
 	}
 

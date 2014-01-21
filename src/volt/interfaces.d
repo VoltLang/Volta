@@ -112,6 +112,7 @@ public:
 	ir.Class objectClass;
 	ir.Class typeInfoClass;
 	ir.Class attributeClass;
+	ir.Class assertErrorClass;
 	ir.Struct arrayStruct;
 	ir.Variable allocDgVariable;
 	ir.Function vaStartFunc;

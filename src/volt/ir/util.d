@@ -569,6 +569,18 @@ ir.Unary buildCastToBool(Location loc, ir.Exp exp) { return buildCast(loc, build
 ir.Unary buildCastToVoidPtr(Location loc, ir.Exp exp) { return buildCast(loc, buildVoidPtr(loc), exp); }
 
 /**
+ * Builds a not expression.
+ */
+ir.Unary buildNot(Location loc, ir.Exp exp)
+{
+	auto unot = new ir.Unary();
+	unot.location = loc;
+	unot.op = ir.Unary.Op.Not;
+	unot.value = exp;
+	return unot;
+}
+
+/**
  * Builds an AddrOf expression.
  */
 ir.Unary buildAddrOf(Location loc, ir.Exp exp)
@@ -609,9 +621,8 @@ ir.Unary buildNew(Location loc, ir.Type type, string name, ir.Exp[] arguments...
 	new_.location = loc;
 	new_.op = ir.Unary.Op.New;
 	new_.type = buildTypeReference(loc, type, name);
-// 	new_.type = type;
 	new_.hasArgumentList = arguments.length > 0;
-	new_.argumentList = arguments;
+	new_.argumentList = arguments.dup;
 	return new_;
 }
 
@@ -872,6 +883,14 @@ ir.StatementExp buildVaArgCast(Location loc, ir.VaArgExp vaexp)
 	return sexp;
 }
 
+ir.ThrowStatement buildThrowStatement(Location loc, ir.Exp exp)
+{
+	auto ts = new ir.ThrowStatement();
+	ts.location = loc;
+	ts.exp = exp;
+	return ts;
+}
+
 ir.Exp buildVaArgStart(Location loc, ir.Exp vlexp, ir.Exp argexp)
 {
 	return buildAssign(loc, buildDeref(loc, vlexp), argexp);
@@ -962,6 +981,22 @@ ir.ExpStatement buildExpStat(Location loc, ir.Exp exp)
 /**
  * Build an if statement.
  */
+ir.IfStatement buildIfStat(Location loc, ir.Exp exp,
+                           ir.BlockStatement thenState, ir.BlockStatement elseState = null, string autoName = "")
+{
+	auto ret = new ir.IfStatement();
+	ret.location = loc;
+	ret.exp = exp;
+	ret.thenState = thenState;
+	ret.elseState = elseState;
+	ret.autoName = autoName;
+
+	return ret;
+}
+
+/**
+ * Build an if statement.
+ */
 ir.IfStatement buildIfStat(Location loc, ir.BlockStatement block, ir.Exp exp,
                            ir.BlockStatement thenState, ir.BlockStatement elseState = null, string autoName = "")
 {
@@ -1002,7 +1037,7 @@ ir.BlockStatement buildBlockStat(Location loc, ir.Node introducingNode, ir.Scope
 {
 	auto ret = new ir.BlockStatement();
 	ret.location = loc;
-	ret.statements = statements;
+	ret.statements = statements.dup;
 	ret.myScope = new ir.Scope(_scope, introducingNode, "block");
 
 	return ret;
