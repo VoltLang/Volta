@@ -745,6 +745,12 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		currentPostfix = cast(ir.Postfix) currentPostfix.child;
 	} while (currentPostfix !is null);
 
+	// Given a.foo, if a is a pointer to a class, turn it into (*a).foo.
+	auto lastType = getExpType(ctx.lp, postfixes[$-1].child, ctx.current);
+	if (isPointerToClass(lastType)) {
+		postfixes[$-1].child = buildDeref(postfixes[$-1].child.location, postfixes[$-1].child);
+	}
+
 	if (postfix.op != ir.Postfix.Op.Call) {
 		auto type = getExpType(ctx.lp, postfix.child, ctx.current);
 		/* If we end up with a identifier postfix that points

@@ -901,3 +901,13 @@ int typeToRuntimeConstant(LanguagePass lp, ir.Scope current, ir.Type type)
 	}
 }
 
+bool isPointerToClass(ir.Type t)
+{
+	auto ptr = cast(ir.PointerType) realType(t);
+	if (ptr is null) {
+		return false;
+	}
+	auto _class = cast(ir.Class) realType(ptr.base);
+	return _class !is null;
+}
+
