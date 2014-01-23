@@ -1002,12 +1002,12 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		}
 		if (asFunctionType.homogenousVariadic && i == asFunctionType.params.length - 1) {
 			auto etype = getExpType(ctx.lp, postfix.arguments[i], ctx.current);
-			if (!isArray(etype)) {
+			auto arr = cast(ir.ArrayType) asFunctionType.params[i];
+			if (arr is null) {
+				throw panic(postfix.location, "homogenous variadic not array type");
+			}
+			if (!typesEqual(etype, arr)) {
 				auto exps = postfix.arguments[i .. $];
-				auto arr = cast(ir.ArrayType) asFunctionType.params[i];
-				if (arr is null) {
-					throw panic(postfix.location, "homogenous variadic not array type");
-				}
 				foreach (ref aexp; exps) {
 					extypePass(ctx, aexp, arr.base);
 				}
