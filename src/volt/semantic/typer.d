@@ -52,7 +52,10 @@ ir.Type declTypeLookup(Location loc, LanguagePass lp, ir.Scope _scope, string na
 	if (e !is null) {
 		return e;
 	}
-
+	auto t = cast(ir.Type) store.node;
+	if (t !is null) {
+		return t;
+	}
 	throw makeExpected(loc, "type");
 }
 
@@ -617,6 +620,7 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 
 	if (store is null) {
 		if (agg !is null) foreach (aa; agg.anonymousAggregates) {
+			assert(postfix.identifier !is null);
 			auto tmpStore = lookupAsThisScope(lp, aa.myScope, postfix.location, postfix.identifier.value);
 			if (tmpStore is null) {
 				continue;
@@ -647,7 +651,11 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 		auto asEnumDecl = cast(ir.EnumDeclaration) store.node;
 		return asEnumDecl.type;
 	} else {
-		throw panic(postfix.location, "unhandled postfix type retrieval.");
+		auto t = cast(ir.Type) store.node;
+		if (t is null) {
+			throw panic(postfix.location, "unhandled postfix type retrieval.");
+		}
+		return t;
 	}
 }
 
