@@ -1489,10 +1489,7 @@ void extypePostfixIndex(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	auto type = getExpType(ctx.lp, postfix.child, ctx.current);
 	if (type.nodeType == ir.NodeType.AAType) {
 		auto aa = cast(ir.AAType)type;
-		auto keyType = getExpType(ctx.lp, postfix.arguments[0], ctx.current);
-		if(!isImplicitlyConvertable(keyType, aa.key) && !typesEqual(keyType, aa.key)) {
-			throw makeBadImplicitCast(exp, keyType, aa.key);
-		}
+		extypeAssign(ctx, postfix.arguments[0], aa.key);
 	}
 }
 
@@ -1732,10 +1729,7 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 			    asPostfix.op == ir.Postfix.Op.Index) {
 				auto aa = cast(ir.AAType)postfixLeft;
 
-				auto valueType = getExpType(ctx.lp, binop.right, ctx.current);
-				if(!isImplicitlyConvertable(valueType, aa.value) && !typesEqual(valueType, aa.value)) {
-					throw makeBadImplicitCast(binop, valueType, aa.value);
-				}
+				extypeAssign(ctx, binop.right, aa.value);
 			}
 		}
 		break;
@@ -1769,7 +1763,7 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 		if (binop.op == ir.BinOp.Op.CatAssign && effectivelyConst(ltype)) {
 			throw makeCannotModify(binop, ltype);
 		}
-		extypeCat(binop, cast(ir.ArrayType)ltype, rtype);
+		extypeCat(ctx, binop, cast(ir.ArrayType)ltype, rtype);
 		return;
 	}
 
@@ -1792,7 +1786,7 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 /**
  * Ensure concatentation is sound.
  */
-void extypeCat(ir.BinOp bin, ir.ArrayType left, ir.Type right)
+void extypeCat(Context ctx, ir.BinOp bin, ir.ArrayType left, ir.Type right)
 {
 	if (typesEqual(left, right) ||
 	    typesEqual(right, left.base)) {
@@ -1804,10 +1798,7 @@ void extypeCat(ir.BinOp bin, ir.ArrayType left, ir.Type right)
 		return;
 	}
 
-	if (!isImplicitlyConvertable(right, left.base)) {
-		throw makeBadImplicitCast(bin, right, left.base);
-	}
-
+	extypeAssign(ctx, bin.right, left.base);
 	bin.right = buildCastSmart(left.base, bin.right);
 }
 
