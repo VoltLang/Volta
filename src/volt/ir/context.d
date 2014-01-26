@@ -119,6 +119,7 @@ public:
 	this(Scope s, Node n, string name, Kind kind)
 	in {
 		assert(kind != Kind.Function);
+		assert(n !is null);
 	}
 	body {
 		this.name = name;
@@ -134,6 +135,7 @@ public:
 	this(Scope parent, Node n, string name, Scope look, Kind kind)
 	in {
 		assert(kind == Kind.Alias);
+		assert(n !is null);
 	}
 	body {
 		this.name = name;
@@ -153,7 +155,10 @@ public:
 	 * member in Scope.
 	 */
 	this(Scope s, Function fn, string name)
-	{
+	in {
+		assert(fn !is null);
+	}
+	body {
 		this.name = name;
 		this.node = fn;
 		this.parent = s;
@@ -168,7 +173,10 @@ public:
 	 * addEnumDeclaration member in Scope.
 	 */
 	this(Scope parent, EnumDeclaration ed, string name)
-	{
+	in {
+		assert(ed !is null);
+	}
+	body {
 		this.parent = parent;
 		this.node = ed;
 		this.kind = Kind.EnumDeclaration;
@@ -179,11 +187,15 @@ public:
 	 * element variable lookups with index operations into
 	 * the foreach's array.
 	 */
-	this(Scope parent, Exp delegate(Location) dg, string name)
-	{
+	this(Scope parent, Node n, Exp delegate(Location) dg, string name)
+	in {
+		assert(n !is null);
+	}
+	body {
 		this.parent = parent;
 		this.expressionDelegate = dg;
 		this.kind = Kind.Expression;
+		this.node = n;
 	}
 
 	void markAliasResolved(Store s)
@@ -466,7 +478,7 @@ public:
 	}
 	body {
 		errorOn(loc, name);
-		auto store = new Store(this, dg, name);
+		auto store = new Store(this, loc, dg, name);
 		symbols[name] = store;
 		return store;
 	}
