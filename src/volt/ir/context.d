@@ -267,6 +267,7 @@ public:
 	{
 		this.name = name;
 		this.node = m;
+		assert(this.node !is null);
 	}
 
 	/**
@@ -280,6 +281,7 @@ public:
 		this.name = name;
 		this.node = node;
 		this.parent = parent;
+		assert(this.node !is null);
 	}
 
 	void remove(string name)

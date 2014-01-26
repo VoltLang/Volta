@@ -1082,7 +1082,7 @@ ir.BlockStatement buildBlockStat(Location loc, ir.Node introducingNode, ir.Scope
 	auto ret = new ir.BlockStatement();
 	ret.location = loc;
 	ret.statements = statements.dup;
-	ret.myScope = new ir.Scope(_scope, introducingNode, "block");
+	ret.myScope = new ir.Scope(_scope, introducingNode is null ? ret : introducingNode, "block");
 
 	return ret;
 }
