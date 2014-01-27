@@ -181,7 +181,7 @@ void handleExpReference(State state, ir.ExpReference expRef, Value result)
 		 * This might seem backwards but it works out.
 		 */
 		if (!var.useBaseStorage)
-			throw panic("variables needs '&' for constants");
+			throw panic(expRef.location, "variables needs '&' for constants");
 
 		Type type;
 		auto v = state.getVariableValue(var, type);
