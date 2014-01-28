@@ -16,26 +16,6 @@ import volt.visitor.scopemanager;
 
 
 /**
- * Searches a module for public imports.
- *
- * @ingroup passes passLang
- */
-private class PublicImportGatherer : NullVisitor
-{
-public:
-	ir.Import[] imports;
-
-public:
-	override Status enter(ir.Import i)
-	{
-		if (i.access == ir.Access.Public) {
-			imports ~= i;
-		}
-		return Continue;
-	}
-}
-
-/**
  * Resolves imports on a single module.
  *
  * @ingroup passes passLang
@@ -69,9 +49,6 @@ public:
 			throw makeCannotImport(i, i);
 		}
 		i.targetModule = mod;
-
-		auto gatherer = new PublicImportGatherer();
-		accept(mod, gatherer);
 
 		if (i.bind !is null && i.aliases.length == 0) { // import a = b;
 			current.addScope(i, mod.myScope, i.bind.value);

@@ -1515,7 +1515,7 @@ void extypePostfixIdentifier(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			ident = postfix.identifier.value;
 			loc = postfix.identifier.location;
 
-			store = lookupOnlyThisScope(ctx.lp, _scope, loc, ident);
+			store = lookupAsImportScope(ctx.lp, _scope, loc, ident);
 			idents = [ident] ~ idents;
 
 			break;
