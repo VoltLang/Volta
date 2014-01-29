@@ -12,6 +12,7 @@ import ir = volt.ir.ir;
 import volt.errors;
 import volt.interfaces;
 import volt.token.location;
+import volt.semantic.context;
 import volt.semantic.lookup;
 import volt.semantic.ctfe;
 import volt.semantic.typer;
@@ -542,6 +543,23 @@ bool isComparison(ir.BinOp.Op t)
 	default:
 		return false;
 	}
+}
+
+bool isConstant(ir.Exp e)
+{
+	auto eref = cast(ir.ExpReference) e;
+	if (eref !is null) {
+		auto var = cast(ir.Variable) eref.decl;
+		if (var !is null && var.assign !is null) {
+			return isConstant(var.assign);
+		}
+	}
+	return e.nodeType == ir.NodeType.Constant || e.nodeType == ir.NodeType.Typeid || e.nodeType == ir.NodeType.ClassLiteral;
+}
+
+bool isInFunction(Context ctx)
+{
+	return ctx.current.node.nodeType == ir.NodeType.Function || ctx.current.node.nodeType == ir.NodeType.BlockStatement;
 }
 
 bool isValidPointerArithmeticOperation(ir.BinOp.Op t)

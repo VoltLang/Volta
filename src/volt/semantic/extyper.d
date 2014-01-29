@@ -2230,6 +2230,27 @@ ir.Node transformRuntimeAssert(Context ctx, ir.AssertStatement as)
 	return ifS;
 }
 
+void transformArrayLiteralIfNeeded(Context ctx, ref ir.Exp exp, ir.ArrayLiteral al)
+{
+	size_t constants;
+	foreach (e; al.values) {
+		if (e.isConstant) {
+			constants++;
+		}
+	}
+	if (!ctx.isInFunction) {
+		if (constants != al.values.length) {
+			throw makeExpected(al.location, "constant array");
+		}
+		return;
+	}
+	if (constants == al.values.length) {
+		return;
+	}
+	auto at = getExpType(ctx.lp, al, ctx.current);
+	exp = buildInternalArrayLiteralSmart(al.location, at, al.values);
+}
+
 /**
  * Rewrites a given foreach statement (fes) into a for statement.
  * The ForStatement create takes several nodes directly; that is
@@ -3108,6 +3129,12 @@ public:
 		} else {
 			exp = buildVaArgCast(vaexp.location, vaexp);
 		}
+		return Continue;
+	}
+
+	override Status enter(ref ir.Exp exp, ir.ArrayLiteral al)
+	{
+		transformArrayLiteralIfNeeded(ctx, exp, al);
 		return Continue;
 	}
 
