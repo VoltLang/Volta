@@ -10,7 +10,7 @@ Dependencies
 
 As Volt is written in D, a compiler for D is needed. GDC, LDC and DMD should
 be able to compile Volt. Once Volt is capable enough the compiler will be
-ported to Volt and achieve self-hosting that way.
+ported to Volt and become self-hosting.
 
 Volt uses LLVM as backend to generate binary code. Currently version 3.1 is
 used, version 3.0 might work, 2.9 will not as it is missing some interfaces.
@@ -34,7 +34,7 @@ Mac
 ***
 
 There are no packages of GDC for Mac so DMD should be used. To install it
-just excract the contents of dmd.2.<version>.zip <somewhere> and set the
+just extract the contents of dmd.2.<version>.zip <somewhere> and set the
 DMD environmental variable to be "<somewhere>/osx/bin/dmd" or put the folder
 "<somewhere>/osx/bin" on the path.
 
@@ -42,6 +42,18 @@ Download llvm from the llvm homepage, and put the bin folder inside the
 unpacked tarball on the PATH, the builds system needs llvm-config and the
 compiler requires some helpers from there to link.
 
+
+Windows
+*******
+
+The only compiler that has been used to compile Volta on Windows is DMD.
+Install DMD and MinGW. Using MinGW's bash prompt, compile LLVM -- be sure
+to use --enable-shared and build a DLL.
+
+Once compiled, put the LLVM tools and DLL in your PATH, in with the D tools
+is probably the simplest place. Run `implib /p:64 LLVM.lib <thellvmdll>` and
+place that in the Volta directory. Run make (the digital mars one, not MinGW)
+and with a bit of luck, you should have a working volt.exe. 
 
 Other
 *****
