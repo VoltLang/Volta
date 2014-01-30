@@ -412,6 +412,53 @@ ir.Type getIdentifierExpType(LanguagePass lp, ir.IdentifierExp identifierExp, ir
 	return asType;
 }
 
+ir.Type getCommonSubtype(Location l, ir.Type[] types)
+{
+	bool arrayElementSubtype(ir.Type element, ir.Type proposed)
+	{
+		if (typesEqual(element, proposed)) {
+			return true;
+		}
+		auto aclass = cast(ir.Class) element;
+		auto bclass = cast(ir.Class) proposed;
+		if (aclass is null || bclass is null) {
+			return false;
+		}
+		if (inheritsFrom(aclass, bclass)) {
+			return true;
+		}
+		return false;
+	}
+
+	size_t countMatch(ir.Type t)
+	{
+		size_t count = 0;
+		foreach (type; types) {
+			if (arrayElementSubtype(type, t)) {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	ir.Type candidate = types[0];
+	size_t count = countMatch(candidate);
+	while (count < types.length) {
+		auto _class = cast(ir.Class) realType(candidate);
+		if (_class is null) {
+			return candidate;  // @todo non class common subtyping.
+		}
+		if (_class.parentClass is null) {
+			// No common parent; volt is SI, this shouldn't happen.
+			throw panic(l, "no common subtype");
+		}
+		candidate = _class.parentClass;
+		count = countMatch(candidate);
+	}
+
+	return candidate;
+}
+
 ir.Type getArrayLiteralType(LanguagePass lp, ir.ArrayLiteral arrayLiteral, ir.Scope currentScope)
 {
 	if (arrayLiteral.type !is null) {
@@ -420,8 +467,8 @@ ir.Type getArrayLiteralType(LanguagePass lp, ir.ArrayLiteral arrayLiteral, ir.Sc
 	ir.Type base;
 	if (arrayLiteral.values.length > 0) {
 		/// @todo figure out common subtype stuff. For now, D1 stylin'.
-		base = copyTypeSmart(arrayLiteral.location,
-			getExpType(lp, arrayLiteral.values[0], currentScope));
+		base = getCommonSubtype(arrayLiteral.location, expsToTypes(lp, arrayLiteral.values, currentScope));
+		base = copyTypeSmart(arrayLiteral.location, base);
 	} else {
 		base = new ir.PrimitiveType(ir.PrimitiveType.Kind.Void);
 		base.location = arrayLiteral.location;

@@ -391,3 +391,12 @@ void canonicaliseStorageType(ir.StorageType outStorage)
 	}
 	outStorage.base = current.base;
 }
+
+ir.Type[] expsToTypes(LanguagePass lp, ir.Exp[] exps, ir.Scope currentScope)
+{
+	auto types = new ir.Type[](exps.length);
+	for (size_t i = 0; i < exps.length; i++) {
+		types[i] = getExpType(lp, exps[i], currentScope);
+	}
+	return types;
+}
