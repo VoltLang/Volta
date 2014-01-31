@@ -553,45 +553,48 @@ string typesString(ir.Type[] types)
 {
 
 	switch(type.nodeType()) with(ir.NodeType) {
-		case PrimitiveType:
-			ir.PrimitiveType prim = cast(ir.PrimitiveType)type;
-			return toLower(format("%s", prim.type));
-		case TypeReference:
-			ir.TypeReference tr = cast(ir.TypeReference)type;
-			return tr.type.errorString();
-		case PointerType:
-			ir.PointerType pt = cast(ir.PointerType)type;
-			return format("%s*", pt.base.errorString());
-		case NullType:
-			return "null";
-		case ArrayType:
-			ir.ArrayType at = cast(ir.ArrayType)type;
-			return format("%s[]", at.base.errorString());
-		case StaticArrayType:
-			ir.StaticArrayType sat = cast(ir.StaticArrayType)type;
-			return format("%s[%d]", sat.base.errorString(), sat.length);
-		case AAType:
-			ir.AAType aat = cast(ir.AAType)type;
-			return format("%s[%s]", aat.value.errorString(), aat.key.errorString());
-		case FunctionType:
-		case DelegateType:
-			ir.CallableType c = cast(ir.CallableType)type;
+	case PrimitiveType:
+		ir.PrimitiveType prim = cast(ir.PrimitiveType)type;
+		return toLower(format("%s", prim.type));
+	case TypeReference:
+		ir.TypeReference tr = cast(ir.TypeReference)type;
+		return tr.type.errorString();
+	case PointerType:
+		ir.PointerType pt = cast(ir.PointerType)type;
+		return format("%s*", pt.base.errorString());
+	case NullType:
+		return "null";
+	case ArrayType:
+		ir.ArrayType at = cast(ir.ArrayType)type;
+		return format("%s[]", at.base.errorString());
+	case StaticArrayType:
+		ir.StaticArrayType sat = cast(ir.StaticArrayType)type;
+		return format("%s[%d]", sat.base.errorString(), sat.length);
+	case AAType:
+		ir.AAType aat = cast(ir.AAType)type;
+		return format("%s[%s]", aat.value.errorString(), aat.key.errorString());
+	case FunctionType:
+	case DelegateType:
+		ir.CallableType c = cast(ir.CallableType)type;
 
-			string ctype = type.nodeType() == FunctionType ? "function" : "delegate";
+		string ctype = type.nodeType() == FunctionType ? "function" : "delegate";
 
-			string[] params;
-			foreach (param; c.params) {
-				params ~= param.errorString();
-			}
+		string[] params;
+		foreach (param; c.params) {
+			params ~= param.errorString();
+		}
 
-			return format("%s %s(%s)", c.ret.errorString(), ctype, join(params, ", "));
-		case StorageType:
-			ir.StorageType st = cast(ir.StorageType)type;
-			return format("%s(%s)", toLower(format("%s", st.type)), st.base.errorString());
-		case TypeOf:
-		case FunctionSetType:
-		default:
-			return type.toString();
+		return format("%s %s(%s)", c.ret.errorString(), ctype, join(params, ", "));
+	case StorageType:
+		ir.StorageType st = cast(ir.StorageType)type;
+		return format("%s(%s)", toLower(format("%s", st.type)), st.base.errorString());
+	case Class:
+	case Struct:
+		auto agg = cast(ir.Aggregate)type;
+		assert(agg !is null);
+		return agg.name;
+	default:
+		return type.toString();
 	}
 
 	assert(0);
