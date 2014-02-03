@@ -1883,7 +1883,7 @@ void extypeCat(Context ctx, ir.BinOp bin, ir.ArrayType left, ir.Type right)
 		return;
 	}
 
-	extypeAssign(ctx, bin.right, left.base);
+	extypeAssign(ctx, bin.right, rarray is null ? left.base : left);
 	bin.right = buildCastSmart(left.base, bin.right);
 }
 
