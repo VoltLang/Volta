@@ -429,7 +429,10 @@ void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ref 
 	}
 
 	auto aclass = cast(ir.Class) realType(atype.base);
-	auto rclass = cast(ir.Class) realType(rarr.base);
+	ir.Class rclass;
+	if (rarr !is null) {
+		rclass = cast(ir.Class) realType(rarr.base);
+	}
 	if (rclass !is null) {
 		if (inheritsFrom(rclass, aclass)) {
 			return;
