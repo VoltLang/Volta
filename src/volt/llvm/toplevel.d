@@ -523,9 +523,12 @@ public:
 
 			LLVMValueRef[] structs;
 			foreach (fn; arr) {
-				int priority = 1;
+				// These version blocks brought to you by LLVM being terrible.
+				int priority = 2;
+				version (Windows) priority = 1;
 				if (m.name.strings == ["vrt", "vmain"]) {
-					priority = 2;
+					priority = 1;
+					version (Windows) priority = 2;
 				}
 				auto vals = [LLVMConstInt(LLVMInt32TypeInContext(state.context), priority, false), fn];
 				structs ~= LLVMConstStructInContext(state.context, vals.ptr, 2, false);
