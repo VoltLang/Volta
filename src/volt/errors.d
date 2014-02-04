@@ -551,7 +551,7 @@ string typesString(ir.Type[] types)
 
 @property string errorString(ir.Type type)
 {
-
+	assert(type !is null);
 	switch(type.nodeType()) with(ir.NodeType) {
 	case PrimitiveType:
 		ir.PrimitiveType prim = cast(ir.PrimitiveType)type;

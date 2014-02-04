@@ -845,7 +845,7 @@ ir.Type getPostfixCallType(LanguagePass lp, ir.Postfix postfix, ir.Scope current
 	}
 
 	if (ftype is null) {
-		throw makeBadCall(postfix, ftype);
+		throw makeBadCall(postfix, type);
 	}
 
 	return ftype.ret;
