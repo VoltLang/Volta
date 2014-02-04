@@ -41,7 +41,7 @@ ir.Store lookupAsThisScope(LanguagePass lp, ir.Scope _scope, Location loc, strin
 {
 	ir.Class _class;
 	do {
-		auto ret = lookupOnlyThisScope(lp, _scope, loc, name);
+		auto ret = lookupAsImportScope(lp, _scope, loc, name);
 		if (ret !is null)
 			return ensureResolved(lp, ret);
 	} while (getClassParentsScope(lp, _scope, _scope, _class));
