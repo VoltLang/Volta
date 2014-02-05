@@ -1372,3 +1372,11 @@ ir.IdentifierExp buildIdentifierExp(Location loc, string name)
 	return iexp;
 }
 
+/// Build a with statement that has no block.
+ir.WithStatement buildWithStatement(Location loc, ir.Exp exp)
+{
+	auto ws = new ir.WithStatement();
+	ws.location = loc;
+	ws.exp = exp;
+	return ws;
+}

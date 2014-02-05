@@ -7,6 +7,7 @@ import std.string : format;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
+import volt.ir.copy;
 
 import volt.errors;
 import volt.interfaces;
@@ -580,6 +581,23 @@ public:
 			throw panic(ws.location, "invalid layout");
 		}
 		mWithStatements = mWithStatements[0 .. $-1];
+		return Continue;
+	}
+
+	override Status enter(ir.SwitchStatement ss)
+	{
+		foreach (withExp; ss.withs) {
+			mWithStatements ~= buildWithStatement(withExp.location, copyExp(withExp));
+		}
+		return Continue;
+	}
+
+	override Status leave(ir.SwitchStatement ss)
+	{
+		if (mWithStatements.length < ss.withs.length) {
+			throw panic(ss.location, "invalid layout");
+		}
+		mWithStatements = mWithStatements[0 .. $-ss.withs.length];
 		return Continue;
 	}
 
