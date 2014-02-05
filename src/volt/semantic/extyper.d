@@ -606,7 +606,7 @@ ir.Exp withLookup(Context ctx, ref ir.Exp exp, ir.Scope current, string leaf, ir
 	ir.Class _class;
 	string emsg;
 	ir.Scope eScope;
-	auto type = realType(getExpType(ctx.lp, exp, current));
+	auto type = realType(getExpType(ctx.lp, exp, current), false, true);
 	if (exp.nodeType == ir.NodeType.Postfix) {
 		retrieveScope(ctx.lp, type, cast(ir.Postfix)exp, eScope, _class, emsg);
 	} else {
