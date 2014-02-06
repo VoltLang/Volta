@@ -24,6 +24,9 @@ ir.Constant evaluate(LanguagePass lp, ir.Scope current, ir.Exp exp)
 	case ir.NodeType.Unary:
 		auto unary = cast(ir.Unary) exp;
 		return evaluateUnary(lp, current, unary);
+	case ir.NodeType.Postfix:
+		auto pfix = cast(ir.Postfix) exp;
+		return evaluatePostfix(lp, current, pfix);
 	default:
 		throw makeNotAvailableInCTFE(exp, exp);
 	}
@@ -48,6 +51,38 @@ bool needsEvaluation(ir.Exp exp)
 }
 
 private:
+
+ir.Constant evaluatePostfix(LanguagePass lp, ir.Scope current, ir.Postfix pfix)
+{
+	auto iexp = cast(ir.IdentifierExp) pfix.child;
+	if (iexp is null) {
+		throw makeNotAvailableInCTFE(pfix, pfix);
+	}
+	if (pfix.identifier is null) {
+		throw makeNotAvailableInCTFE(pfix, pfix);
+	}
+	auto store = lookup(lp, current, pfix.location, iexp.value);
+	if (store is null) {
+		throw makeNotAvailableInCTFE(pfix, pfix);
+	}
+	auto _enum = cast(ir.Enum) store.node;
+	if (_enum is null) {
+		throw makeNotAvailableInCTFE(pfix, pfix);
+	}
+	auto finalStore = lookup(lp, _enum.myScope, pfix.location, pfix.identifier.value); 
+	if (finalStore is null) {
+		throw makeNotAvailableInCTFE(pfix, pfix);
+	}
+	auto edecl = cast(ir.EnumDeclaration) finalStore.node;
+	if (edecl is null) {
+		throw makeNotAvailableInCTFE(pfix, pfix);
+	}
+	auto constant = cast(ir.Constant) edecl.assign;
+	if (constant is null) {
+		throw makeNotAvailableInCTFE(pfix, pfix);
+	}
+	return constant;
+}
 
 ir.Constant evaluateUnary(LanguagePass lp, ir.Scope current, ir.Unary unary)
 {
