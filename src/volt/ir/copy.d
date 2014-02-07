@@ -368,6 +368,7 @@ ir.Node copyNode(ir.Node n)
 	case Unary:
 		auto unary = cast(ir.Unary)n;
 		return copy(unary);
+	case Enum:
 	case StatementExp:
 	case PrimitiveType:
 	case TypeReference:
@@ -393,7 +394,6 @@ ir.Node copyNode(ir.Node n)
 	case Import:
 	case Unittest:
 	case Union:
-	case Enum:
 	case Attribute:
 	case StaticAssert:
 	case MixinTemplate:
