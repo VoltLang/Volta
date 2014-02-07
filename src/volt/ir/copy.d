@@ -332,7 +332,7 @@ ir.Node copyNode(ir.Node n)
 	final switch (n.nodeType) with (ir.NodeType) {
 	case Invalid:
 		auto msg = format("invalid node '%s'", to!string(n.nodeType));
-		assert(false, msg);
+		throw panic(n.location, msg);
 	case NonVisiting:
 		assert(false, "non-visiting node");
 	case Constant:
