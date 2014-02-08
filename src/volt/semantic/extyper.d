@@ -615,7 +615,7 @@ ir.Exp withLookup(Context ctx, ref ir.Exp exp, ir.Scope current, string leaf, ir
 	if (eScope is null) {
 		throw makeBadWithType(exp.location);
 	}
-	auto store = lookup(ctx.lp, eScope, exp.location, leaf);
+	auto store = lookupOnlyThisScope(ctx.lp, eScope, exp.location, leaf);
 	if (store is null) {
 		return null;
 	}
