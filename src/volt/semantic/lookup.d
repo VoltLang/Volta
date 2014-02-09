@@ -94,6 +94,9 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
 		 */
 		if (i == 0) {
 			store = lookup(lp, current, loc, name);
+			if (store is null) {
+				return null;
+			}
 			auto asImport = cast(ir.Import) store.node;
 			if (asImport !is null) {
 				assert(asImport.targetModule !is null);
