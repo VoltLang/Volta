@@ -2163,6 +2163,7 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 			extypeAssign(ctx, _case.secondExp, conditionType);
 		}
 		foreach (ref exp; _case.exps) {
+			replaceWithHashIfNeeded(exp);
 			extypeAssign(ctx, exp, conditionType);
 		}
 	}
