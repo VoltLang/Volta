@@ -435,6 +435,7 @@ void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ref 
 	}
 	if (rclass !is null) {
 		if (inheritsFrom(rclass, aclass)) {
+			exp = buildCastSmart(exp.location, buildArrayType(exp.location, aclass), exp);
 			return;
 		}
 	}
