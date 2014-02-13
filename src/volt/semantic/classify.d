@@ -950,3 +950,30 @@ bool isPointerToClass(ir.Type t)
 	return _class !is null;
 }
 
+ir.Aggregate opOverloadableOrNull(ir.Type t)
+{
+	auto _agg = cast(ir.Aggregate) realType(t);
+	if (_agg is null || _agg.nodeType == ir.NodeType.UserAttribute) {
+		return null;
+	}
+	return _agg;
+}
+
+string overloadName(ir.BinOp.Op op)
+{
+	switch (op) with (ir.BinOp.Op) {
+	case NotEqual: return "opNotEqual";
+	case Equal:    return "opEqual";
+	case Sub:      return "opSub";
+	case Add:      return "opAdd";
+	case Mul:      return "opMul";
+	case Div:      return "opDiv";
+	default:       return "";
+	}
+}
+
+string overloadIndexName()
+{
+	return "opIndex";
+}
+

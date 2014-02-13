@@ -109,6 +109,14 @@ CompilerException makeBreakOutOfLoop(Location loc, string file = __FILE__, const
 	return e;
 }
 
+CompilerException makeAggregateDoesNotDefineOverload(Location loc, ir.Aggregate agg, string fn, string file = __FILE__, const int line = __LINE__)
+{
+	auto e = new CompilerError(loc, format("type '%s' does not define operator function '%s'.", agg.name, fn));
+	e.file = file;
+	e.line = line;
+	return e;
+}
+
 CompilerException makeBadWithType(Location loc, string file = __FILE__, const int line = __LINE__)
 {
 	auto e = new CompilerError(loc, "bad expression type for with statement.");
@@ -546,7 +554,7 @@ CompilerException makeCannotDisambiguate(ir.Node node, ir.Function[] functions, 
 
 CompilerException makeCannotDisambiguate(Location location, ir.Function[] functions, string file = __FILE__, size_t line = __LINE__)
 {
-	return new CompilerError(location, format("cannot disambiguate between %s functions.", functions.length), file, line);
+	return new CompilerError(location, format("no %s function (of %s possible) matches arguments.", functions[0].name, functions.length), file, line);
 }
 
 CompilerException makeCannotInfer(ir.Location location, string file = __FILE__, size_t line = __LINE__)

@@ -142,6 +142,11 @@ bool willConvert(ir.Type argument, ir.Type parameter)
 		} else {
 			return true;
 		}
+	case NullType:
+		auto nt = realType(parameter).nodeType;
+		with (ir.NodeType) {
+			return nt == PointerType || nt == Class || nt == ArrayType || nt == AAType || nt == DelegateType;
+		}
 	default: return false;
 	}
 }
@@ -197,9 +202,6 @@ ir.Function selectFunction(LanguagePass lp, ir.FunctionSet fset, ir.Type[] argum
 ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] arguments, Location location)
 {
 	assert(functions.length > 0);
-	if (functions.length == 1) {
-		return functions[0];
-	}
 
 	bool correctNumberOfArguments(ir.Function fn, out int defaultArguments)
 	{
@@ -272,7 +274,9 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 	sort!specialisationComparison(matchedFunctions);
 
 	if (matchedFunctions.length == 1 || specialisationComparison(matchedFunctions[0], matchedFunctions[1]) > 0) {
-		return matchedFunctions[0];
+		if (highestMatchLevel > 1) {
+			return matchedFunctions[0];
+		}
 	}
 
 

@@ -1521,6 +1521,9 @@ void extypePostfixIndex(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 
 void extypePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 {
+	if (opOverloadRewriteIndex(ctx, postfix, exp)) {
+		return;
+	}
 	rewriteSuperIfNeeded(exp, postfix, ctx.current, ctx.lp);
 	extypePostfixIdentifier(ctx, exp, postfix);
 	extypePostfixIndex(ctx, exp, postfix);
@@ -1699,6 +1702,57 @@ void extypeBinOp(Context ctx, ir.BinOp bin, ir.PrimitiveType lprim, ir.Primitive
 }
 
 /**
+ * If the given binop is working on an aggregate
+ * that overloads that operator, rewrite a call to that overload.
+ */
+bool opOverloadRewrite(Context ctx, ir.BinOp binop, ref ir.Exp exp)
+{
+	auto l = exp.location;
+	auto _agg = opOverloadableOrNull(getExpType(ctx.lp, binop.left, ctx.current));
+	if (_agg is null) {
+		return false;
+	}
+	string overfn = overloadName(binop.op);
+	if (overfn.length == 0) {
+		return false;
+	}
+	auto store = lookupOnlyThisScope(ctx.lp, _agg.myScope, l, overfn);
+	if (store is null || store.functions.length == 0) {
+		throw makeAggregateDoesNotDefineOverload(exp.location, _agg, overfn);
+	}
+	auto fn = selectFunction(ctx.lp, ctx.current, store.functions, [binop.right], l);
+	assert(fn !is null);
+	exp = buildCall(l, buildCreateDelegate(l, binop.left, buildExpReference(l, fn, overfn)), [binop.right]);
+	return true;
+}
+
+/**
+ * If this postfix operates on an aggregate with an index
+ * operator overload, rewrite it.
+ */
+bool opOverloadRewriteIndex(Context ctx, ir.Postfix pfix, ref ir.Exp exp)
+{
+	if (pfix.op != ir.Postfix.Op.Index) {
+		return false;
+	}
+	auto type = getExpType(ctx.lp, pfix.child, ctx.current);
+	auto _agg = opOverloadableOrNull(type);
+	if (_agg is null) {
+		return false;
+	}
+	auto name = overloadIndexName();
+	auto store = lookupOnlyThisScope(ctx.lp, _agg.myScope, exp.location, name);
+	if (store is null || store.functions.length == 0) {
+		throw makeAggregateDoesNotDefineOverload(exp.location, _agg, name);
+	}
+	assert(pfix.arguments.length > 0 && pfix.arguments[0] !is null);
+	auto fn = selectFunction(ctx.lp, ctx.current, store.functions, [pfix.arguments[0]], exp.location);
+	assert(fn !is null);
+	exp = buildCall(exp.location, buildCreateDelegate(exp.location, pfix.child, buildExpReference(exp.location, fn, name)), [pfix.arguments[0]]);
+	return true;
+}
+
+/**
  * Handles logical operators (making a && b result in a bool),
  * binary of storage types, otherwise forwards to assign or primitive
  * specific functions.
@@ -1710,6 +1764,10 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 
 	if (handleIfNull(ctx, rtype, binop.left)) return;
 	if (handleIfNull(ctx, ltype, binop.right)) return;
+
+	if (opOverloadRewrite(ctx, binop, exp)) {
+		return;
+	}
 
 	// key in aa => some_vrt_call(aa, key)
 	if (binop.op == ir.BinOp.Op.In) {
