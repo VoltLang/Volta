@@ -32,6 +32,7 @@ import volt.semantic.attribremoval;
 import volt.semantic.typeidreplacer;
 import volt.semantic.importresolver;
 import volt.semantic.ctfe;
+import volt.semantic.cfg;
 
 import volt.semantic.resolver;
 import volt.semantic.classresolver;
@@ -79,6 +80,7 @@ public:
 
 		passes2 ~= new SimpleTrace(this);
 		passes2 ~= new ExTyper(this);
+		passes2 ~= new CFGBuilder(this);
 		passes2 ~= new IrVerifier();
 
 		passes3 ~= new LlvmLowerer(this);

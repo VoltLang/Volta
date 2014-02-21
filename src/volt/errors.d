@@ -101,6 +101,14 @@ CompilerException makeDollarOutsideOfIndex(ir.Constant constant, string file = _
 	return doi;
 }
 
+CompilerException makeBreakOutOfLoop(Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	auto e = new CompilerError(loc, "break outside of loop or switch.");
+	e.file = file;
+	e.line = line;
+	return e;
+}
+
 CompilerException makeBadWithType(Location loc, string file = __FILE__, const int line = __LINE__)
 {
 	auto e = new CompilerError(loc, "bad expression type for with statement.");

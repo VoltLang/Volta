@@ -7,10 +7,20 @@ import ir = volt.ir.ir;
 import volt.ir.copy;
 import volt.ir.util;
 
+import volt.exceptions;
 import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 import volt.semantic.lookup;
+
+ir.Constant evaluateOrNull(LanguagePass lp, ir.Scope current, ir.Exp exp)
+{
+	try {
+		return evaluate(lp, current, exp);
+	} catch (CompilerError e) {
+		return null;
+	}
+}
 
 ir.Constant evaluate(LanguagePass lp, ir.Scope current, ir.Exp exp)
 {
