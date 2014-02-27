@@ -639,6 +639,9 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 	 * scopes.
 	 */
 	auto asIdentifierExp = cast(ir.IdentifierExp) postfix.child;
+	ir.Type type;
+	ir.Aggregate agg;
+	ir.PointerType asPointer;
 	if (asIdentifierExp !is null) {
 		auto store = lookup(lp, currentScope, asIdentifierExp.location, asIdentifierExp.value);
 		if (store !is null && store.s !is null) {
@@ -648,8 +651,8 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 		}
 	}
 
-	auto type = realType(getExpType(lp, postfix.child, currentScope), false, true);
-	auto asPointer = cast(ir.PointerType) type;
+	type = realType(getExpType(lp, postfix.child, currentScope), false, true);
+	asPointer = cast(ir.PointerType) type;
 	if (asPointer !is null && (asPointer.base.nodeType == ir.NodeType.ArrayType 
 		|| asPointer.base.nodeType == ir.NodeType.StaticArrayType)) {
 		type = asPointer.base;
@@ -670,7 +673,7 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 	}
 
 	retrieveScope(lp, type, postfix, _scope, _class, emsg);
-	auto agg = cast(ir.Aggregate) realType(type);
+	agg = cast(ir.Aggregate) realType(type);
 
 	_lookup:
 	auto store = lookupAsThisScope(lp, _scope, postfix.location, postfix.identifier.value);

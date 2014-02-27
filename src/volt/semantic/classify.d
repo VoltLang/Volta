@@ -4,7 +4,7 @@ module volt.semantic.classify;
 
 import std.range : array, retro;
 import std.conv : to;
-import std.stdio : format;
+import std.string : format;
 import std.math : isNaN;
 
 import ir = volt.ir.ir;
