@@ -94,6 +94,12 @@ ir.Type ifTypeRefDeRef(ir.Type t)
  */
 bool willConvert(ir.Type argument, ir.Type parameter)
 {
+	if (parameter.nodeType == ir.NodeType.StorageType && argument.nodeType == ir.NodeType.ArrayType) {
+		auto _storage = cast(ir.StorageType) parameter;
+		if (_storage.type == ir.StorageType.Kind.Ref) {
+			return willConvert(argument, _storage.base);
+		}
+	}
 	if (typesEqual(argument, parameter)) {
 		return true;
 	}
