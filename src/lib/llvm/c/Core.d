@@ -306,7 +306,8 @@ enum LLVMCallConv {
   Fast        = 8,
   Cold        = 9,
   X86Stdcall  = 64,
-  X86Fastcall = 65
+  X86Fastcall = 65,
+  X86_64_Win64 = 79,
 }
 
 enum LLVMIntPredicate {

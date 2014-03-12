@@ -149,7 +149,11 @@ public:
 
 		// Needs to be done here, because this can not be set on a type.
 		if (fn.type.linkage == ir.Linkage.Windows) {
-			LLVMSetFunctionCallConv(v, LLVMCallConv.X86Stdcall);
+			if (mSettings.arch == Arch.X86_64) {
+				LLVMSetFunctionCallConv(v, LLVMCallConv.X86_64_Win64);
+			} else {
+				LLVMSetFunctionCallConv(v, LLVMCallConv.X86Stdcall);
+			}
 		}
 
 		valueStore[k] = Store(v, type);
