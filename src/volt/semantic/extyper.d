@@ -2731,10 +2731,10 @@ public:
 						auto assign = buildAssign(ctor.location, buildAccess(ctor.location, eref, v.name), v.assign);
 						auto stat = new ir.ExpStatement();
 						stat.location = ctor.location;
-						stat.exp = assign;
+						stat.exp = copyExp(assign);
 						ctor._body.statements = stat ~ ctor._body.statements;
-						v.assign = null;
 					}
+					v.assign = null;
 				} else {
 					throw makeAssignToNonStaticField(v);
 				}
