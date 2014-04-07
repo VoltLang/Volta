@@ -120,6 +120,7 @@ public:
 	ir.Function vaCStartFunc;
 	ir.Function vaCEndFunc;
 	ir.Function memcpyFunc;
+	ir.Function printFunc;
 	ir.Function throwSliceErrorFunction;
 	ir.Function aaGetKeys;
 	ir.Function aaGetValues;
@@ -454,6 +455,7 @@ public:
 	bool internalDebug; ///< The --internal-dbg argument.
 	bool noStdLib; ///< The --no-stdlib argument.
 	bool removeConditionalsOnly; ///< The -E argument.
+	bool simpleTrace; ///< The --simple-trace argument.
 
 	Platform platform;
 	Arch arch;

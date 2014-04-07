@@ -204,6 +204,9 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 		case "--stdlib-I":
 			argHandler = &stdIncludePath;
 			continue;
+		case "--simple-trace":
+			settings.simpleTrace = true;
+			continue;
 		default:
 		}
 
@@ -282,6 +285,7 @@ bool printUsage()
 	writefln("\t-d              Compile in debug mode.");
 	writefln("\t-c              Compile only, do not link.");
 	writefln("\t-E              Only perform conditional removal (implies -S).");
+	writefln("\t--simple-trace  Print the name of functions to stdout as they're run.");
 	writeln();
 	writefln("\t--arch          Select processer architecture: 'x86', 'x86_64', 'le32'");
 	writefln("\t--platform      Select platform: 'mingw', 'linux', 'osx', 'emscripten'");

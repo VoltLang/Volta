@@ -193,6 +193,13 @@ class KeyNotFoundException : Exception
  *
  */
 
+private extern(C) size_t printf(const(char)* msg, ...);
+extern(C) void vrt_print(string s)
+{
+	printf("%*s\n", cast(int) s.length, s.ptr);
+	return;
+}
+
 extern(C) void vrt_gc_init();
 extern(C) AllocDg vrt_gc_get_alloc_dg();
 extern(C) void vrt_gc_shutdown();

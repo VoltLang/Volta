@@ -1380,3 +1380,10 @@ ir.WithStatement buildWithStatement(Location loc, ir.Exp exp)
 	ws.exp = exp;
 	return ws;
 }
+
+ir.TokenExp buildTokenExp(Location loc, ir.TokenExp.Type type)
+{
+	auto texp = new ir.TokenExp(type);
+	texp.location = loc;
+	return texp;
+}

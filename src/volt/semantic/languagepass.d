@@ -37,6 +37,7 @@ import volt.semantic.resolver;
 import volt.semantic.classresolver;
 import volt.semantic.aliasresolver;
 import volt.semantic.userattrresolver;
+import volt.semantic.strace;
 
 
 /**
@@ -76,6 +77,7 @@ public:
 		postParse ~= new AttribRemoval(this);
 		postParse ~= new Gatherer(this);
 
+		passes2 ~= new SimpleTrace(this);
 		passes2 ~= new ExTyper(this);
 		passes2 ~= new IrVerifier();
 
@@ -115,6 +117,8 @@ public:
 		vaCStartFunc = cast(ir.Function)s.getStore("__llvm_volt_va_start").node;
 		vaCEndFunc = cast(ir.Function)s.getStore("__llvm_volt_va_end").node;
 		memcpyFunc = cast(ir.Function)s.getStore("__llvm_memcpy_p0i8_p0i8_i32").node;
+		printFunc = cast(ir.Function)s.getStore("vrt_print").node;
+		assert(printFunc !is null);
 		throwSliceErrorFunction = cast(ir.Function)s.getStore("vrt_throw_slice_error").node;
 		aaGetKeys = cast(ir.Function)s.getStore("vrt_aa_get_keys").node;
 		assert(aaGetKeys !is null);
