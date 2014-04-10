@@ -3079,12 +3079,14 @@ public:
 
 	override Status enter(ref ir.Exp exp, ir.Postfix postfix)
 	{
+		ctx.enter(postfix);
 		extypePostfix(ctx, exp, postfix);
 		return Continue;
 	}
 
 	override Status leave(ref ir.Exp exp, ir.Postfix postfix)
 	{
+		ctx.leave(postfix);
 		extypeLeavePostfix(ctx, exp, postfix);
 		return Continue;
 	}
@@ -3160,6 +3162,19 @@ public:
 		extypeIdentifierExp(ctx, exp, ie);
 		if (oldexp !is exp) {
 			return acceptExp(exp, this);
+		}
+		return Continue;
+	}
+
+	override Status enter(ref ir.Exp exp, ir.Constant constant)
+	{
+		if (constant._string == "$" && isIntegral(constant.type)) {
+			if (ctx.lastIndexChild is null) {
+				throw makeDollarOutsideOfIndex(constant);
+			}
+			auto l = constant.location;
+			// Rewrite $ to (arrayName.length).
+			exp = buildAccess(l, copyExp(ctx.lastIndexChild), "length");
 		}
 		return Continue;
 	}

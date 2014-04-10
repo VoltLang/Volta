@@ -25,9 +25,17 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeDollarOutsideOfIndex(ir.Constant constant, string file = __FILE__, const int line = __LINE__)
+{
+	auto doi = new CompilerError(constant.location, "'$' outside of index expression.");
+	doi.file = file;
+	doi.line = line;
+	return doi;
+}
+
 CompilerException makeBadWithType(Location loc, string file = __FILE__, const int line = __LINE__)
 {
-	auto e = new CompilerError("bad expression type for with statement.");
+	auto e = new CompilerError(loc, "bad expression type for with statement.");
 	e.file = file;
 	e.line = line;
 	return e;

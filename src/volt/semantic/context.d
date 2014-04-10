@@ -26,6 +26,7 @@ private:
 	uint mLength;
 	uint mParentIndex;
 	ir.Function[] mFunctionStack;
+	ir.Exp[] mIndexChildren;
 
 public:
 	this(LanguagePass lp)
@@ -91,6 +92,11 @@ public:
 		return currentFunction !is null;
 	}
 
+	@property ir.Exp lastIndexChild()
+	{
+		return mIndexChildren.length > 0 ? mIndexChildren[$-1] : null;
+	}
+
 	/*
 	 * Traversal functions.
 	 */
@@ -114,6 +120,23 @@ public:
 	void leave(ir.Enum e) { pop(e, e.myScope, null); }
 	void leave(ir.Function fn) { pop(fn, fn.myScope, fn); }
 	void leave(ir.BlockStatement bs) { mCurrent = mCurrent.parent; }
+
+	/*
+	 * Keep track of index expressions for $ -> array.length replacement.
+	 */
+	void enter(ir.Postfix postfix)
+	{
+		if (postfix.op == ir.Postfix.Op.Index) {
+			mIndexChildren ~= postfix.child;
+		}
+	}
+
+	void leave(ir.Postfix postfix)
+	{
+		if (postfix.op == ir.Postfix.Op.Index) {
+			mIndexChildren = mIndexChildren[0 .. $-1];
+		}
+	}
 
 private:
 	void push(ir.Node n, ir.Scope ctx, ir.Function fn)
