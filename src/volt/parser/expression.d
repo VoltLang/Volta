@@ -275,6 +275,10 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		c.type.location = primary.location;
 		assert(c._string[$-1] == '\'' && c._string.length >= 3);
 		c.arrayData = unescapeString(primary.location, c._string[1 .. $-1]);
+		if (c.arrayData.length > 1) {
+			c.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Dchar);
+			c.type.location = primary.location;
+		}
 		exp = c;
 		break;
 	case intir.PrimaryExp.Type.FloatLiteral:

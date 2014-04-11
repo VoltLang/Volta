@@ -3,6 +3,7 @@
 module volt.llvm.type;
 
 import std.conv : to;
+import std.utf : decodeFront;
 
 import lib.llvm.core;
 
@@ -154,7 +155,12 @@ public:
 			assert(cnst.arrayData.length == 1);
 			val = (cast(ubyte[])cnst.arrayData)[0];
 		} else {
-			val = cnst._ulong;
+			if (cnst.arrayData.length > 0) {
+				auto str = cast(string) cnst.arrayData;
+				val = decodeFront(str);
+			} else {
+				val = cnst._ulong;
+			}
 		}
 
 		return LLVMConstInt(llvmType, val, signed);

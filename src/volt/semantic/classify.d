@@ -657,6 +657,8 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 				return false;
 			} else if (primitive.type == Char) {
 				return true;
+			} else if (primitive.type == Dchar) {
+				return constant._uint < cast(uint) max;
 			} else {
 				assert(false);
 			}
