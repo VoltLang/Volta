@@ -365,18 +365,32 @@ public:
 		auto loc = binOp.location;
 
 		auto leftType = getExpType(lp, binOp.left, current);
-		auto leftArrayType = cast(ir.ArrayType)leftType;
-		if (leftArrayType is null)
-			throw panic(binOp, "OH GOD!");
-
 		auto rightType = getExpType(lp, binOp.right, current);
-		if (typesEqual(rightType, leftArrayType.base)) {
+
+		auto arrayType = cast(ir.ArrayType)leftType;
+		auto elementType = rightType;
+		bool reversed = false;
+		if (arrayType is null) {
+			reversed = true;
+			arrayType = cast(ir.ArrayType) rightType;
+			elementType = leftType;
+			if (arrayType is null) {
+				throw panic(exp.location, "array concat failure");
+			}
+		}
+
+		if (typesEqual(elementType, arrayType.base)) {
 			// T[] ~ T
-			auto fn = getArrayAppendFunction(loc, leftArrayType, rightType, false);
+			ir.Function fn;
+			if (reversed) {
+				fn = getArrayPrependFunction(loc, arrayType, elementType);
+			} else {
+				fn = getArrayAppendFunction(loc, arrayType, elementType, false);
+			}
 			exp = buildCall(loc, fn, [binOp.left, binOp.right], fn.name);
 		} else {
 			// T[] ~ T[]
-			auto fn = getArrayConcatFunction(loc, leftArrayType, false);
+			auto fn = getArrayConcatFunction(loc, arrayType, false);
 			exp = buildCall(loc, fn, [binOp.left, binOp.right], fn.name);
 		}
 
@@ -442,12 +456,12 @@ public:
 		fn.isWeakLink = true;
 		fn.type.ret = copyTypeSmart(loc, ltype);
 
-		ir.FunctionParam left;
+		ir.FunctionParam left, right;
 		if(isAssignment)
 			left = addParam(loc, fn, buildPtrSmart(loc, ltype), "left");
 		else
 			left = addParamSmart(loc, fn, ltype, "left");
-		auto right = addParamSmart(loc, fn, rtype, "right");
+		right = addParamSmart(loc, fn, rtype, "right");
 
 		auto fnAlloc = lp.allocDgVariable;
 		auto allocExpRef = buildExpReference(loc, fnAlloc, fnAlloc.name);
@@ -526,6 +540,93 @@ public:
 				)
 			);
 		}
+
+		return fn;
+	}
+
+	ir.Function getArrayPrependFunction(Location loc, ir.ArrayType ltype, ir.Type rtype)
+	{
+		if (ltype.mangledName is null)
+			ltype.mangledName = mangle(ltype);
+		if(rtype.mangledName is null)
+			rtype.mangledName = mangle(rtype);
+
+		string name = "__prependArray" ~ ltype.mangledName ~ rtype.mangledName;
+
+		auto fn = lookupFunction(loc, name);
+		if (fn !is null)
+			return fn;
+
+		fn = buildFunction(loc, thisModule.children, thisModule.myScope, name);
+		fn.mangledName = fn.name;
+		fn.isWeakLink = true;
+		fn.type.ret = copyTypeSmart(loc, ltype);
+
+		ir.FunctionParam left, right;
+		right = addParamSmart(loc, fn, rtype, "left");
+		left = addParamSmart(loc, fn, ltype, "right");
+
+		auto fnAlloc = lp.allocDgVariable;
+		auto allocExpRef = buildExpReference(loc, fnAlloc, fnAlloc.name);
+
+		auto fnCopy = getLlvmMemCopy(loc);
+
+		ir.Exp[] args;
+
+		auto allocated = buildVarStatSmart(loc, fn._body, fn._body.myScope, buildVoidPtr(loc), "allocated");
+		auto count = buildVarStatSmart(loc, fn._body, fn._body.myScope, buildSizeT(loc, lp), "count");
+
+		buildExpStat(loc, fn._body,
+			buildAssign(loc,
+				buildExpReference(loc, count, count.name),
+				buildAdd(loc,
+					buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
+					buildConstantSizeT(loc, lp, 1)
+				)
+			)
+		);
+
+		args = [
+			cast(ir.Exp)
+			buildTypeidSmart(loc, ltype.base),
+			buildExpReference(loc, count, count.name)
+		];
+
+		buildExpStat(loc, fn._body,
+			buildAssign(loc,
+				buildExpReference(loc, allocated, allocated.name),
+				buildCall(loc, allocExpRef, args)
+			)
+		);
+
+		args = [
+			cast(ir.Exp)
+			buildAdd(loc, buildExpReference(loc, allocated, allocated.name), buildConstantSizeT(loc, lp, size(loc, lp, ltype.base))),
+			buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, left, left.name), "ptr")),
+			buildBinOp(loc, ir.BinOp.Op.Mul,
+				buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
+				buildConstantSizeT(loc, lp, size(loc, lp, ltype.base))
+			),
+			buildConstantInt(loc, 0),
+			buildConstantFalse(loc)
+		];
+		buildExpStat(loc, fn._body, buildCall(loc, buildExpReference(loc, fnCopy, fnCopy.name), args));
+
+		buildExpStat(loc, fn._body,
+			buildAssign(loc,
+				buildDeref(loc,
+						buildCastSmart(loc, buildPtrSmart(loc, ltype.base), buildExpReference(loc, allocated, allocated.name)),
+				),
+				buildExpReference(loc, right, right.name)
+			)
+		);
+
+		buildReturnStat(loc, fn._body,
+			buildSlice(loc,
+				buildCastSmart(loc, buildPtrSmart(loc, ltype.base), buildExpReference(loc, allocated, allocated.name)),
+				[cast(ir.Exp)buildConstantSizeT(loc, lp, 0), buildExpReference(loc, count, count.name)]
+			)
+		);
 
 		return fn;
 	}
