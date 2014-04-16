@@ -271,6 +271,9 @@ protected:
 				assert(constant._string[$-1] == '\"');
 				fn.mangledName = constant._string[1..$-1];
 				break;
+			case Static:
+				fn.kind = ir.Function.Kind.Function;
+				break;
 			default:
 				// Warn?
 			}
