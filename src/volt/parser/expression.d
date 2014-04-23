@@ -347,10 +347,34 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		} else {
 			switch (base) with (ir.PrimitiveType.Kind) {
 			case Int:
-				c._int = to!int(c._string);
+				try {
+					c._int = to!int(c._string);
+				} catch (ConvOverflowException) {
+					if (explicitBase) {
+						throw makeInvalidIntegerLiteral(c.location);
+					}
+					base = Long;
+					try {
+						c._long = to!long(c._string);
+					} catch (ConvOverflowException) {
+						throw makeInvalidIntegerLiteral(c.location);
+					}
+				}
 				break;
 			case Uint:
-				c._uint = to!uint(c._string);
+				try {
+					c._uint = to!uint(c._string);
+				} catch (ConvOverflowException) {
+					if (explicitBase) {
+						throw makeInvalidIntegerLiteral(c.location);
+					}
+					base = Ulong;
+					try {
+						c._ulong = to!ulong(c._string);
+					} catch (ConvOverflowException) {
+						throw makeInvalidIntegerLiteral(c.location);
+					}
+				}
 				break;
 			case Long:
 				c._long = to!long(c._string);

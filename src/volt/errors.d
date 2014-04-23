@@ -25,6 +25,14 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeInvalidIntegerLiteral(Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	auto inve = new CompilerError(loc, "integer literal too large.");
+	inve.file = file;
+	inve.line = line;
+	return inve;
+}
+
 CompilerException makeDollarOutsideOfIndex(ir.Constant constant, string file = __FILE__, const int line = __LINE__)
 {
 	auto doi = new CompilerError(constant.location, "'$' outside of index expression.");
