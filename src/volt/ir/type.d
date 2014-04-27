@@ -277,6 +277,7 @@ public:
 	bool varArgsProcessed;
 	bool isProperty;
 	bool homogenousVariadic;
+	bool forceLabel;
 	// Hi there. Thinking of adding a new field? Add it to the copy constructor, below.
 
 
@@ -295,6 +296,7 @@ public:
 		varArgsProcessed = ctype.varArgsProcessed;
 		isProperty = ctype.isProperty;
 		homogenousVariadic = ctype.homogenousVariadic;
+		forceLabel = ctype.forceLabel;
 	}
 }
 

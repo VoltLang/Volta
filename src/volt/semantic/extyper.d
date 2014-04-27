@@ -1,5 +1,5 @@
-// Copyright © 2012-2013, Bernard Helyer.  All rights reserved.
-// Copyright © 2012-2013, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2012-2014, Bernard Helyer.  All rights reserved.
+// Copyright © 2012-2014, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.extyper;
 
@@ -741,6 +741,81 @@ bool replaceAAPostfixesIfNeeded(Context ctx, ir.Postfix postfix, ref ir.Exp exp)
 	assert(false);
 }
 
+void handleArgumentLabelsIfNeeded(Context ctx, ir.Postfix postfix, ir.Function fn, ref ir.Exp exp)
+{
+	if (fn is null) {
+		return;
+	}
+	size_t[string] positions;
+	ir.Exp[string] defaults;
+	size_t defaultArgCount;
+	foreach (i, param; fn.params) {
+		defaults[param.name] = param.assign;
+		positions[param.name] = i;
+		if (param.assign !is null) {
+			defaultArgCount++;
+		}
+	}
+
+	if (postfix.argumentLabels.length == 0) {
+		if (fn.type.forceLabel && fn.type.params.length > defaultArgCount) {
+			throw makeForceLabel(exp.location, fn);
+		}
+		return;
+	}
+
+	if (postfix.argumentLabels.length != postfix.arguments.length) {
+		throw panic(exp.location, "argument count and label count unmatched");
+	}
+
+	// If they didn't provide all the arguments, try filling in any default arguments.
+	if (postfix.arguments.length < fn.params.length) {
+		bool[string] labels;
+		foreach (label; postfix.argumentLabels) {
+			labels[label] = true;
+		}
+		foreach (arg, exp; defaults) {
+			if (exp is null) {
+				continue;
+			}
+			if (auto p = arg in labels) {
+				continue;
+			}
+			postfix.arguments ~= exp;
+			postfix.argumentLabels ~= arg;
+			postfix.argumentTags ~= ir.Postfix.TagKind.None;
+		}
+	}
+
+	if (postfix.arguments.length != fn.params.length) {
+		throw makeWrongNumberOfArguments(postfix, postfix.arguments.length, fn.params.length);
+	}
+
+	// Reorder arguments to match parameter order.
+	for (size_t i = 0; i < postfix.argumentLabels.length; i++) {
+		auto argumentLabel = postfix.argumentLabels[i];
+		auto p = argumentLabel in positions;
+		if (p is null) {
+			throw makeUnmatchedLabel(postfix.location, argumentLabel);
+		}
+		auto labelIndex = *p;
+		if (labelIndex == i) {
+			continue;
+		}
+		auto tmp = postfix.arguments[i];
+		auto tmp2 = postfix.argumentLabels[i];
+		auto tmp3 = postfix.argumentTags[i];
+		postfix.arguments[i] = postfix.arguments[labelIndex];
+		postfix.argumentLabels[i] = postfix.argumentLabels[labelIndex];
+		postfix.argumentTags[i] = postfix.argumentTags[labelIndex];
+		postfix.arguments[labelIndex] = tmp;
+		postfix.argumentLabels[labelIndex] = tmp2;
+		postfix.argumentTags[labelIndex] = tmp3;
+		i = 0;
+	}
+	exp = postfix;
+}
+
 /**
  * Turns identifier postfixes into CreateDelegates, and resolves property function
  * calls in postfixes, type safe varargs, and explicit constructor calls.
@@ -896,6 +971,8 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	if (asFunctionType is null) {
 		return;
 	}
+
+	handleArgumentLabelsIfNeeded(ctx, postfix, fn, exp);
 
 	// Not providing an argument to a homogenous variadic function.
 	if (asFunctionType.homogenousVariadic && postfix.arguments.length + 1 == asFunctionType.params.length) {

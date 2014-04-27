@@ -127,6 +127,7 @@ public:
 	PrimaryExp primary;  // Only in parent postfixes.
 	PostfixExp postfix;  // Optional.
 	TernaryExp[] arguments;  // Optional.
+	string[] labels;     // Optional, only in calls (func(a:1, b:3)).
 	Identifier identifier;  // Optional.
 }
 

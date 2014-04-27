@@ -665,6 +665,10 @@ ir.Attribute parseAttribute(TokenStream ts, bool inModule = false)
 			attr.arguments ~= parseExp(ts);
 			match(ts, TokenType.CloseParen);
 			break;
+		case "label":
+			auto nameTok = match(ts, TokenType.Identifier);
+			attr.kind = ir.Attribute.Kind.Label;
+			break;
 		default:
 			attr.kind = ir.Attribute.Kind.UserAttribute;
 			attr.userAttributeName = parseQualifiedName(ts);

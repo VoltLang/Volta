@@ -33,6 +33,14 @@ CompilerException makeCallingWithoutInstance(Location loc, string file = __FILE_
 	return wi;
 }
 
+CompilerException makeForceLabel(Location loc, ir.Function fun, string file = __FILE__, const int line = __LINE__)
+{
+	auto fl = new CompilerError(loc, format("call to @label function '%s' doesn't label arguments.", fun.name));
+	fl.file = file;
+	fl.line = line;
+	return fl;
+}
+
 CompilerException makeNoEscapeScope(Location loc, string file = __FILE__, const int line = __LINE__)
 {
 	auto es = new CompilerError(loc, "assignment escapes scope type.");
@@ -91,6 +99,23 @@ CompilerException makeNoLinkModule(string filename, string msg, string file = __
 		err = format("failed to link in module '%s'", filename);
 	}
 	return new CompilerError(err, file, line);
+}
+
+CompilerException makeUnmatchedLabel(Location loc, string label, string file = __FILE__, const int line = __LINE__)
+{
+	auto emsg = format("no parameter matches argument label '%s'.", label);
+	auto unl = new CompilerError(loc, emsg);
+	unl.file = file;
+	unl.line = line;
+	return unl;
+}
+
+CompilerException makeAllArgumentsMustBeLabelled(Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	auto allarg = new CompilerError(loc, "number of labels in call doesn't match number of arguments.");
+	allarg.file = file;
+	allarg.line = line;
+	return allarg;
 }
 
 CompilerException makeInvalidIntegerLiteral(Location loc, string file = __FILE__, const int line = __LINE__)

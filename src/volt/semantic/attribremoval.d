@@ -274,6 +274,9 @@ protected:
 			case Static:
 				fn.kind = ir.Function.Kind.Function;
 				break;
+			case Label:
+				fn.type.forceLabel = true;
+				break;
 			default:
 				// Warn?
 			}

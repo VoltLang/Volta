@@ -188,6 +188,7 @@ ir.Exp postfixToExp(Location location, intir.PostfixExp postfix, ir.Exp seed = n
 		exp.location = location;
 		exp.op = postfix.op;
 		exp.child = seed;
+		exp.argumentLabels = postfix.labels;
 		if (exp.op == ir.Postfix.Op.Identifier) {
 			assert(postfix.identifier !is null);
 			exp.identifier = postfix.identifier;
@@ -489,6 +490,31 @@ private intir.TernaryExp[] _parseArgumentList(TokenStream ts, TokenType endChar 
 		if (ts.peek.type != endChar) {
 			match(ts, TokenType.Comma);
 		}
+	}
+
+	return pexps;
+}
+
+private intir.TernaryExp[] _parseArgumentList(TokenStream ts, ref string[] labels, TokenType endChar = TokenType.CloseParen)
+{
+	intir.TernaryExp[] pexps;
+	while (ts.peek.type != endChar) {
+		if (ts.peek.type == TokenType.End) {
+			throw makeExpected(ts.peek.location, "end of argument list");
+		}
+		if (ts.peek.type == TokenType.Identifier && ts.lookahead(1).type == TokenType.Colon) {
+			auto ident = match(ts, TokenType.Identifier);
+			labels ~= ident.value;
+			match(ts, TokenType.Colon);
+		}
+		pexps ~= parseTernaryExp(ts);
+		if (ts.peek.type != endChar) {
+			match(ts, TokenType.Comma);
+		}
+	}
+
+	if (labels.length != 0 && labels.length != pexps.length) {
+		throw makeAllArgumentsMustBeLabelled(ts.peek.location);
 	}
 
 	return pexps;
@@ -901,7 +927,7 @@ intir.PostfixExp parsePostfixExp(TokenStream ts, int depth=0)
 		break;
 	case TokenType.OpenParen:
 		ts.get();
-		exp.arguments = _parseArgumentList(ts);
+		exp.arguments = _parseArgumentList(ts, exp.labels);
 		match(ts, TokenType.CloseParen);
 		exp.op = ir.Postfix.Op.Call;
 		exp.postfix = parsePostfixExp(ts, depth);

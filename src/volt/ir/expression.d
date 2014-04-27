@@ -198,7 +198,8 @@ public:
 	Op op;
 	Exp child;  // What the op is operating on.
 	Exp[] arguments;
-	TagKind[] argumentTags;
+	TagKind[] argumentTags;   // foo(ref a);
+	string[] argumentLabels;  // foo(age:7);
 	Identifier identifier;  // op == Identifier
 	ExpReference memberFunction;
 	bool isImplicitPropertyCall;

@@ -204,6 +204,7 @@ public:
 		Pure,
 		UserAttribute,
 		MangledName,
+		Label,
 	}
 
 

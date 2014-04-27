@@ -414,6 +414,7 @@ public:
 		case NoThrow: twf("nothrow"); break;
 		case Package: twf("package"); break;
 		case Override: twf("override"); break;
+		case Label: twf("@label"); break;
 		case Local: twf("local"); break;
 		case LinkageC: twf("extern(C)"); break;
 		case LinkageCPlusPlus: twf("extern(C++)"); break;
