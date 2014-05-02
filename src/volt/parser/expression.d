@@ -4,6 +4,7 @@ module volt.parser.expression;
 // Most of these can pass through to a lower function, see the IR.
 
 import std.conv;
+import std.utf;
 
 import ir = volt.ir.ir;
 import intir = volt.parser.intir;
@@ -278,6 +279,9 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		if (c.arrayData.length > 1) {
 			c.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Dchar);
 			c.type.location = primary.location;
+			auto str = cast(string) c.arrayData;
+			size_t index;
+			c._ulong = decodeFront(str, index);
 		}
 		exp = c;
 		break;
