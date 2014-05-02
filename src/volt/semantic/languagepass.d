@@ -100,46 +100,63 @@ public:
 			throw panic("could not find object module");
 		}
 
+		void check(ir.Node n, string name)
+		{
+			if (n is null) {
+				throw panic(format("can't find runtime object '%s'.", name));
+			}
+		}
+
 		// Run postParse passes so we can lookup things.
 		phase1(objectModule);
 
 		// Get the classes.
 		auto s = objectModule.myScope;
 		objectClass = cast(ir.Class)s.getStore("Object").node;
+		check(objectClass, "Object");
 		typeInfoClass = cast(ir.Class)s.getStore("TypeInfo").node;
+		check(typeInfoClass, "TypeInfo");
 		attributeClass = cast(ir.Class)s.getStore("Attribute").node;
+		check(attributeClass, "Attribute");
 		assertErrorClass = cast(ir.Class)s.getStore("AssertError").node;
-		assert(assertErrorClass !is null);
+		check(assertErrorClass, "AssertError");
 		arrayStruct = cast(ir.Struct)s.getStore("ArrayStruct").node;
+		check(arrayStruct, "ArrayStruct");
 		allocDgVariable = cast(ir.Variable)s.getStore("allocDg").node;
+		check(allocDgVariable, "allocDg");
 		vaStartFunc = cast(ir.Function)s.getStore("__volt_va_start").node;
+		check(vaStartFunc, "__volt_va_start");
 		vaEndFunc = cast(ir.Function)s.getStore("__volt_va_end").node;
+		check(vaEndFunc, "__volt_va_end");
 		vaCStartFunc = cast(ir.Function)s.getStore("__llvm_volt_va_start").node;
+		check(vaCStartFunc, "__llvm_volt_va_start");
 		vaCEndFunc = cast(ir.Function)s.getStore("__llvm_volt_va_end").node;
+		check(vaCEndFunc, "__llvm_volt_va_end");
 		memcpyFunc = cast(ir.Function)s.getStore("__llvm_memcpy_p0i8_p0i8_i32").node;
+		check(memcpyFunc, "__llvm_memcpy_p0i8_p0i8_i32");
 		printFunc = cast(ir.Function)s.getStore("vrt_print").node;
-		assert(printFunc !is null);
+		check(printFunc, "vrt_print");
 		throwSliceErrorFunction = cast(ir.Function)s.getStore("vrt_throw_slice_error").node;
 		aaGetKeys = cast(ir.Function)s.getStore("vrt_aa_get_keys").node;
-		assert(aaGetKeys !is null);
+		check(aaGetKeys, "vrt_aa_get_keys");
 		aaGetValues = cast(ir.Function)s.getStore("vrt_aa_get_values").node;
-		assert(aaGetValues !is null);
+		check(aaGetValues, "vrt_aa_get_values");
 		aaGetLength = cast(ir.Function)s.getStore("vrt_aa_get_length").node;
-		assert(aaGetLength !is null);
+		check(aaGetLength, "vrt_aa_get_length");
 		aaInArray = cast(ir.Function)s.getStore("vrt_aa_in_binop_array").node;
-		assert(aaInArray !is null);
+		check(aaInArray, "vrt_aa_in_binop_array");
 		aaInPrimitive = cast(ir.Function)s.getStore("vrt_aa_in_binop_primitive").node;
-		assert(aaInPrimitive !is null);
+		check(aaInPrimitive, "vrt_aa_in_binop_primitive");
 		aaRehash = cast(ir.Function)s.getStore("vrt_aa_rehash").node;
-		assert(aaRehash !is null);
+		check(aaRehash, "vrt_aa_rehash");
 		aaGetPP = cast(ir.Function)s.getStore("vrt_aa_get_pp").node;
-		assert(aaGetPP !is null);
+		check(aaGetPP, "vrt_aa_get_pp");
 		aaGetAA = cast(ir.Function)s.getStore("vrt_aa_get_aa").node;
-		assert(aaGetAA !is null);
+		check(aaGetAA, "vrt_aa_get_aa");
 		aaGetAP = cast(ir.Function)s.getStore("vrt_aa_get_ap").node;
-		assert(aaGetAP !is null);
+		check(aaGetAP, "vrt_aa_get_ap");
 		aaGetPA = cast(ir.Function)s.getStore("vrt_aa_get_pa").node;
-		assert(aaGetPA !is null);
+		check(aaGetPA, "vrt_aa_get_pa");
 
 		ir.EnumDeclaration getEnum(string name)
 		{
