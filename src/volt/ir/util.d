@@ -507,7 +507,7 @@ ir.Constant buildConstantNull(Location loc, ir.Type base)
 /**
  * Gets a size_t Constant and fills it with a value.
  */
-ir.Constant buildSizeTConstant(Location loc, LanguagePass lp, int val)
+ir.Constant buildConstantSizeT(Location loc, LanguagePass lp, int val)
 {
 	auto c = new ir.Constant();
 	c.location = loc;
@@ -525,7 +525,7 @@ ir.Constant buildSizeTConstant(Location loc, LanguagePass lp, int val)
 /**
  * Builds a constant string.
  */
-ir.Constant buildStringConstant(Location loc, string val)
+ir.Constant buildConstantString(Location loc, string val)
 {
 	auto c = new ir.Constant();
 	c.location = loc;
@@ -541,7 +541,7 @@ ir.Constant buildStringConstant(Location loc, string val)
 /**
  * Build a constant to insert to the IR from a resolved EnumDeclaration.
  */
-ir.Constant buildConstant(Location loc, ir.EnumDeclaration ed)
+ir.Constant buildConstantEnum(Location loc, ir.EnumDeclaration ed)
 {
 	auto cnst = cast(ir.Constant) ed.assign;
 	auto c = new ir.Constant();
@@ -554,8 +554,8 @@ ir.Constant buildConstant(Location loc, ir.EnumDeclaration ed)
 	return c;
 }
 
-ir.Constant buildTrue(Location loc) { return buildConstantBool(loc, true); }
-ir.Constant buildFalse(Location loc) { return buildConstantBool(loc, false); }
+ir.Constant buildConstantTrue(Location loc) { return buildConstantBool(loc, true); }
+ir.Constant buildConstantFalse(Location loc) { return buildConstantBool(loc, false); }
 
 /**
  * Build a cast and sets the location, does not call copyTypeSmart.

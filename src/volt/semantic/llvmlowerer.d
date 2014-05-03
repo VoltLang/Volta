@@ -464,7 +464,7 @@ public:
 				buildExpReference(loc, count, count.name),
 				buildAdd(loc,
 					buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
-					buildSizeTConstant(loc, lp, 1)
+					buildConstantSizeT(loc, lp, 1)
 				)
 			)
 		);
@@ -488,10 +488,10 @@ public:
 			buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, left, left.name), "ptr")),
 			buildBinOp(loc, ir.BinOp.Op.Mul,
 				buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
-				buildSizeTConstant(loc, lp, size(loc, lp, ltype.base))
+				buildConstantSizeT(loc, lp, size(loc, lp, ltype.base))
 			),
 			buildConstantInt(loc, 0),
-			buildFalse(loc)
+			buildConstantFalse(loc)
 		];
 		buildExpStat(loc, fn._body, buildCall(loc, buildExpReference(loc, fnCopy, fnCopy.name), args));
 
@@ -513,7 +513,7 @@ public:
 					buildDeref(loc, buildExpReference(loc, left, left.name)),
 					buildSlice(loc,
 						buildCastSmart(loc, buildPtrSmart(loc, ltype.base), buildExpReference(loc, allocated, allocated.name)),
-						[cast(ir.Exp)buildSizeTConstant(loc, lp, 0), buildExpReference(loc, count, count.name)]
+						[cast(ir.Exp)buildConstantSizeT(loc, lp, 0), buildExpReference(loc, count, count.name)]
 					)
 				)
 			);
@@ -522,7 +522,7 @@ public:
 			buildReturnStat(loc, fn._body,
 				buildSlice(loc,
 					buildCastSmart(loc, buildPtrSmart(loc, ltype.base), buildExpReference(loc, allocated, allocated.name)),
-					[cast(ir.Exp)buildSizeTConstant(loc, lp, 0), buildExpReference(loc, count, count.name)]
+					[cast(ir.Exp)buildConstantSizeT(loc, lp, 0), buildExpReference(loc, count, count.name)]
 				)
 			);
 		}
@@ -558,10 +558,10 @@ public:
 			buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, right, "right"), "ptr")),
 			buildBinOp(loc, ir.BinOp.Op.Mul,
 				buildAccess(loc, buildExpReference(loc, left, "left"), "length"),
-				buildSizeTConstant(loc, lp, size(loc, lp, type.base))
+				buildConstantSizeT(loc, lp, size(loc, lp, type.base))
 				),
 			buildConstantInt(loc, 0),
-			buildFalse(loc)
+			buildConstantFalse(loc)
 		];
 		buildExpStat(loc, fn._body, buildCall(loc, expRef, args));
 
@@ -635,10 +635,10 @@ public:
 			buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, left, left.name), "ptr")),
 			buildBinOp(loc, ir.BinOp.Op.Mul,
 				buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
-				buildSizeTConstant(loc, lp, size(loc, lp, type.base))
+				buildConstantSizeT(loc, lp, size(loc, lp, type.base))
 			),
 			buildConstantInt(loc, 0),
-			buildFalse(loc)
+			buildConstantFalse(loc)
 		];
 		buildExpStat(loc, fn._body, buildCall(loc, buildExpReference(loc, fnCopy, fnCopy.name), args));
 
@@ -649,16 +649,16 @@ public:
 				buildExpReference(loc, allocated, allocated.name),
 				buildBinOp(loc, ir.BinOp.Op.Mul,
 					buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
-					buildSizeTConstant(loc, lp, size(loc, lp, type.base))
+					buildConstantSizeT(loc, lp, size(loc, lp, type.base))
 				)
 			),
 			buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, right, right.name), "ptr")),
 			buildBinOp(loc, ir.BinOp.Op.Mul,
 				buildAccess(loc, buildExpReference(loc, right, right.name), "length"),
-				buildSizeTConstant(loc, lp, size(loc, lp, type.base))
+				buildConstantSizeT(loc, lp, size(loc, lp, type.base))
 			),
 			buildConstantInt(loc, 0),
-			buildFalse(loc)
+			buildConstantFalse(loc)
 		];
 		buildExpStat(loc, fn._body, buildCall(loc, buildExpReference(loc, fnCopy, fnCopy.name), args));
 
@@ -669,7 +669,7 @@ public:
 					buildDeref(loc, buildExpReference(loc, left, left.name)),
 					buildSlice(loc,
 						buildCastSmart(loc, buildPtrSmart(loc, type.base), buildExpReference(loc, allocated, allocated.name)),
-						[cast(ir.Exp)buildSizeTConstant(loc, lp, 0), buildExpReference(loc, count, count.name)]
+						[cast(ir.Exp)buildConstantSizeT(loc, lp, 0), buildExpReference(loc, count, count.name)]
 					)
 				)
 			);
@@ -678,7 +678,7 @@ public:
 			buildReturnStat(loc, fn._body,
 				buildSlice(loc,
 					buildCastSmart(loc, buildPtrSmart(loc, type.base), buildExpReference(loc, allocated, allocated.name)),
-					[cast(ir.Exp)buildSizeTConstant(loc, lp, 0), buildExpReference(loc, count, count.name)]
+					[cast(ir.Exp)buildConstantSizeT(loc, lp, 0), buildExpReference(loc, count, count.name)]
 				)
 			);
 		}
@@ -729,7 +729,7 @@ public:
 					buildCastSmart(loc, buildVoidPtr(loc), buildAccess(loc, buildExpReference(loc, right, right.name), "ptr")),
 					cast(ir.Exp)buildBinOp(loc, ir.BinOp.Op.Mul,
 						buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
-						buildSizeTConstant(loc, lp, size(loc, lp, type.base))
+						buildConstantSizeT(loc, lp, size(loc, lp, type.base))
 					)
 						
 				]),
@@ -846,7 +846,7 @@ void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 		buildCall(loc, throwFn, [
 			buildCastSmart(throwableClass,
 				buildNew(loc, knfClass, "KeyNotFoundException", [
-					buildStringConstant(loc, `"Key does not exist"`)
+					buildConstantString(loc, `"Key does not exist"`)
 				]),
 			)
 		], throwFn.name));
@@ -927,8 +927,8 @@ void replaceArrayCastIfNeeded(Location loc, LanguagePass lp, ir.Scope current, i
 	//     vrt_throw_slice_error(arr.length, typeid(T).size);
 	auto ln = buildAccess(loc, buildExpReference(loc, var), "length");
 	auto sz = buildAccess(loc, buildTypeidSmart(loc, toArray.base), "size");
-	ir.Exp fname = buildStringConstant(loc, format(`"%s"`, baseName(exp.location.filename)));
-	ir.Exp lineNum = buildSizeTConstant(loc, lp, cast(int) exp.location.line);
+	ir.Exp fname = buildConstantString(loc, format(`"%s"`, baseName(exp.location.filename)));
+	ir.Exp lineNum = buildConstantSizeT(loc, lp, cast(int) exp.location.line);
 	auto rtCall = buildCall(loc, buildExpReference(loc, lp.throwSliceErrorFunction), [ln, sz, fname, lineNum]);
 	buildExpStat(loc, sexp, rtCall);
 
@@ -942,9 +942,9 @@ void replaceArrayCastIfNeeded(Location loc, LanguagePass lp, ir.Scope current, i
 	auto outLength = buildAccess(loc, buildExpReference(loc, _out), "length");
 	ir.Exp lengthTweak;
 	if (!decreasing) {
-		lengthTweak = buildBinOp(loc, ir.BinOp.Op.Div, inLength, buildSizeTConstant(loc, lp, biggestSz));
+		lengthTweak = buildBinOp(loc, ir.BinOp.Op.Div, inLength, buildConstantSizeT(loc, lp, biggestSz));
 	} else {
-		lengthTweak = buildBinOp(loc, ir.BinOp.Op.Mul, inLength, buildSizeTConstant(loc, lp, biggestSz));
+		lengthTweak = buildBinOp(loc, ir.BinOp.Op.Mul, inLength, buildConstantSizeT(loc, lp, biggestSz));
 	}
 	auto assign = buildAssign(loc, outLength, lengthTweak);
 	buildExpStat(loc, sexp, assign);

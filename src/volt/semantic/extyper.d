@@ -2222,7 +2222,7 @@ ir.Node transformRuntimeAssert(Context ctx, ir.AssertStatement as)
 	auto l = as.location;
 	ir.Exp message = as.message;
 	if (message is null) {
-		message = buildStringConstant(l, "\"assertion failure\"");
+		message = buildConstantString(l, "\"assertion failure\"");
 	}
 	assert(message !is null);
 	auto exception = buildNew(l, ctx.lp.assertErrorClass, "AssertError", message);
@@ -2301,7 +2301,7 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, Context ctx, ir.Scope nest
 		ir.Variable indexVar, elementVar;
 		ir.Exp indexAssign;
 		if (!fes.reverse) {
-			indexAssign = buildSizeTConstant(l, ctx.lp, 0);
+			indexAssign = buildConstantSizeT(l, ctx.lp, 0);
 		} else {
 			indexAssign = buildSub(l, buildAccess(l, fes.aggregate, "length"), buildConstantInt(l, 1));
 		}
@@ -2341,7 +2341,7 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, Context ctx, ir.Scope nest
 		auto tref = buildExpReference(indexVar.location, indexVar, indexVar.name);
 		auto rtref = buildAdd(l, tref, buildConstantInt(l, 1));
 		auto length = buildAccess(l, copyExp(fes.aggregate), "length");
-		auto zero = buildSizeTConstant(l, ctx.lp, 0);
+		auto zero = buildConstantSizeT(l, ctx.lp, 0);
 		fs.test = buildBinOp(l, fes.reverse ? ir.BinOp.Op.NotEqual : ir.BinOp.Op.Less,
 							 fes.reverse ? rtref : tref,
 							 fes.reverse ? zero : length);
@@ -2436,7 +2436,13 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, Context ctx, ir.Scope nest
 		if (keyVar.type is null) {
 			keyVar.type = copyTypeSmart(l, aa.key);
 		}
-		auto indexVar = buildVariable(l, ctx.lp.settings.getSizeT(l), ir.Variable.Storage.Function, format("%si", fs.block.myScope.nestedDepth), buildSizeTConstant(l, ctx.lp, 0));
+		auto indexVar = buildVariable(
+			l,
+			ctx.lp.settings.getSizeT(l),
+			ir.Variable.Storage.Function,
+			format("%si", fs.block.myScope.nestedDepth),
+			buildConstantSizeT(l, ctx.lp, 0)
+		);
 		assert(keyVar.type !is null);
 		assert(valVar.type !is null);
 		assert(indexVar.type !is null);
@@ -2454,7 +2460,15 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, Context ctx, ir.Scope nest
 		fs.increments ~= buildAssign(l, kref, rh);
 
 		// v = aa[aa.keys[i]]
-		fs.increments ~= buildAssign(l, buildExpReference(l, valVar, valVar.name), buildIndex(l, copyExp(fes.aggregate), buildIndex(l, buildAccess(l, copyExp(fes.aggregate), "keys"), buildExpReference(l, indexVar, indexVar.name))));
+		fs.increments ~= buildAssign(
+			l,
+			buildExpReference(l, valVar, valVar.name),
+			buildIndex(l, copyExp(fes.aggregate),
+				buildIndex(l, buildAccess(l, copyExp(fes.aggregate), "keys"),
+					buildExpReference(l, indexVar, indexVar.name)
+				)
+			)
+		);
 
 		// i++
 		fs.increments ~= buildIncrement(l, buildExpReference(l, indexVar, indexVar.name));
@@ -3187,7 +3201,7 @@ public:
 				string[dchar] transTable = ['\\': "/"];
 				fname = translate(fname, transTable);
 			}
-			exp = buildStringConstant(fexp.location, `"` ~ fname ~ `"`); 
+			exp = buildConstantString(fexp.location, `"` ~ fname ~ `"`); 
 			return Continue;
 		} else if (fexp.type == ir.TokenExp.Type.Line) {
 			exp = buildConstantInt(fexp.location, cast(int) fexp.location.line);
@@ -3239,7 +3253,7 @@ public:
 
 		buf ~= "\"";
 
-		exp = buildStringConstant(fexp.location, buf.idup);
+		exp = buildConstantString(fexp.location, buf.idup);
 		return Continue;
 	}
 

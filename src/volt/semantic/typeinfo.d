@@ -89,7 +89,7 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Scope current, ir.Type 
 	assert(type.mangledName !is null);
 
 	int typeSize = size(type.location, lp, type);
-	auto typeConstant = buildSizeTConstant(type.location, lp, typeSize);
+	auto typeConstant = buildConstantSizeT(type.location, lp, typeSize);
 
 	int typeTag = typeToRuntimeConstant(lp, current, type);
 	auto typeTagConstant = new ir.Constant();
@@ -128,10 +128,10 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Scope current, ir.Type 
 		literal.exps ~= buildCast(type.location, buildVoidPtr(type.location),
 				buildAddrOf(type.location, buildExpReference(type.location, asClass.vtableVariable, "__vtable_instance")));
 		auto s = size(type.location, lp, asClass.layoutStruct);
-		literal.exps ~= buildSizeTConstant(type.location, lp, size(type.location, lp, asClass.layoutStruct));
+		literal.exps ~= buildConstantSizeT(type.location, lp, size(type.location, lp, asClass.layoutStruct));
 	} else {
 		literal.exps ~= buildConstantNull(type.location, buildVoidPtr(type.location));
-		literal.exps ~= buildSizeTConstant(type.location, lp, 0);
+		literal.exps ~= buildConstantSizeT(type.location, lp, 0);
 	}
 
 	// TypeInfo.base.
@@ -160,9 +160,9 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Scope current, ir.Type 
 
 	// TypeInfo.staticArrayLength.
 	if (asStaticArray !is null) {
-		literal.exps ~= buildSizeTConstant(type.location, lp, cast(int) asStaticArray.length);
+		literal.exps ~= buildConstantSizeT(type.location, lp, cast(int) asStaticArray.length);
 	} else {
-		literal.exps ~= buildSizeTConstant(type.location, lp, 0);
+		literal.exps ~= buildConstantSizeT(type.location, lp, 0);
 	}
 
 	// TypeInfo.key and TypeInfo.value.
