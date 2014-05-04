@@ -2222,7 +2222,7 @@ ir.Node transformRuntimeAssert(Context ctx, ir.AssertStatement as)
 	auto l = as.location;
 	ir.Exp message = as.message;
 	if (message is null) {
-		message = buildConstantString(l, "\"assertion failure\"");
+		message = buildConstantString(l, "assertion failure");
 	}
 	assert(message !is null);
 	auto exception = buildNew(l, ctx.lp.assertErrorClass, "AssertError", message);
@@ -3201,14 +3201,14 @@ public:
 				string[dchar] transTable = ['\\': "/"];
 				fname = translate(fname, transTable);
 			}
-			exp = buildConstantString(fexp.location, `"` ~ fname ~ `"`); 
+			exp = buildConstantString(fexp.location, fname);
 			return Continue;
 		} else if (fexp.type == ir.TokenExp.Type.Line) {
 			exp = buildConstantInt(fexp.location, cast(int) fexp.location.line);
 			return Continue;
 		}
 
-		char[] buf = `"`.dup;
+		char[] buf;
 		void sink(string s)
 		{
 			buf ~= s;
@@ -3250,8 +3250,6 @@ public:
 			}
 			buf ~= ")";
 		}
-
-		buf ~= "\"";
 
 		exp = buildConstantString(fexp.location, buf.idup);
 		return Continue;

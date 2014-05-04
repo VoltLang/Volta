@@ -529,7 +529,7 @@ ir.Constant buildConstantString(Location loc, string val)
 {
 	auto c = new ir.Constant();
 	c.location = loc;
-	c._string = val;
+	c._string = '"' ~ val ~ '"';
 	auto stor = buildStorageType(loc, ir.StorageType.Kind.Immutable, buildChar(loc));
 	canonicaliseStorageType(stor);
 	c.type = buildArrayType(loc, stor);

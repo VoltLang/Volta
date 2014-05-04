@@ -947,7 +947,7 @@ void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 		buildCall(loc, throwFn, [
 			buildCastSmart(throwableClass,
 				buildNew(loc, knfClass, "KeyNotFoundException", [
-					buildConstantString(loc, `"Key does not exist"`)
+					buildConstantString(loc, `Key does not exist`)
 				]),
 			)
 		], throwFn.name));
@@ -1028,7 +1028,7 @@ void replaceArrayCastIfNeeded(Location loc, LanguagePass lp, ir.Scope current, i
 	//     vrt_throw_slice_error(arr.length, typeid(T).size);
 	auto ln = buildAccess(loc, buildExpReference(loc, var), "length");
 	auto sz = buildAccess(loc, buildTypeidSmart(loc, toArray.base), "size");
-	ir.Exp fname = buildConstantString(loc, format(`"%s"`, baseName(exp.location.filename)));
+	ir.Exp fname = buildConstantString(loc, format(`%s`, baseName(exp.location.filename)));
 	ir.Exp lineNum = buildConstantSizeT(loc, lp, cast(int) exp.location.line);
 	auto rtCall = buildCall(loc, buildExpReference(loc, lp.throwSliceErrorFunction), [ln, sz, fname, lineNum]);
 	buildExpStat(loc, sexp, rtCall);
