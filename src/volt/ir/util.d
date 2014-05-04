@@ -525,16 +525,20 @@ ir.Constant buildConstantSizeT(Location loc, LanguagePass lp, int val)
 /**
  * Builds a constant string.
  */
-ir.Constant buildConstantString(Location loc, string val)
+ir.Constant buildConstantString(Location loc, string val, char terminal = '"')
 {
 	auto c = new ir.Constant();
 	c.location = loc;
-	c._string = '"' ~ val ~ '"';
+	c._string = terminal ~ val ~ terminal;
 	auto stor = buildStorageType(loc, ir.StorageType.Kind.Immutable, buildChar(loc));
 	canonicaliseStorageType(stor);
 	c.type = buildArrayType(loc, stor);
 	assert((c._string[$-1] == '"' || c._string[$-1] == '`') && c._string.length >= 2);
-	c.arrayData = unescapeString(loc, c._string[1 .. $-1]);
+	if (c._string[0] != '`') {
+		c.arrayData = unescapeString(loc, c._string[1 .. $-1]);
+	} else {
+		c.arrayData = cast(void[]) c._string[1 .. $-1];
+	}
 	return c;
 }
 

@@ -57,7 +57,7 @@ public:
 		auto fn = lp.throwFunc;
 		auto eRef = buildExpReference(t.location, fn, "vrt_eh_throw");
 		t.exp = buildCall(t.location, eRef, [t.exp,
-			buildAccess(t.location, buildConstantString(t.location, t.location.filename), "ptr"),
+			buildAccess(t.location, buildConstantString(t.location, t.location.filename, '`'), "ptr"),
 			buildConstantSizeT(t.location, lp, cast(int)t.location.line)]);
 		return Continue;
 	}
@@ -952,7 +952,7 @@ void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 					buildConstantString(loc, `Key does not exist`)
 					]),
 				),
-			buildAccess(loc, buildConstantString(loc, '\"' ~ loc.filename ~ '\"'), "ptr"),
+			buildAccess(loc, buildConstantString(loc, loc.filename), "ptr"),
 			cast(ir.Exp)buildConstantSizeT(loc, lp, cast(int)loc.line)],
 		throwFn.name));
 
