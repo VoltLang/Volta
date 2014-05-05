@@ -228,7 +228,7 @@ public:
 	}
 	string _string;
 	bool isNull;  // Turns out checking for non-truth can be hard.
-	void[] arrayData;
+	immutable(void)[] arrayData;
 	Type type;
 
 public:

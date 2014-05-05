@@ -57,7 +57,7 @@ public:
 		auto fn = lp.throwFunc;
 		auto eRef = buildExpReference(t.location, fn, "vrt_eh_throw");
 		t.exp = buildCall(t.location, eRef, [t.exp,
-			buildAccess(t.location, buildConstantString(t.location, t.location.filename, '`'), "ptr"),
+			buildAccess(t.location, buildConstantString(t.location, t.location.filename, false), "ptr"),
 			buildConstantSizeT(t.location, lp, cast(int)t.location.line)]);
 		return Continue;
 	}

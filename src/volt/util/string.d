@@ -23,7 +23,7 @@ bool isHex(dchar d)
 	}
 }
 
-void[] unescape(T)(Location location, const T[] s)
+immutable(void)[] unescape(T)(Location location, const T[] s)
 {
 	T[] output;
 
@@ -134,7 +134,7 @@ void[] unescape(T)(Location location, const T[] s)
 		throw makeExpected(location, "valid escape.");
 	}
 
-	return output;
+	return cast(immutable(void)[]) output;
 }
 
 /**
