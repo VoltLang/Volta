@@ -138,7 +138,8 @@ public:
 		check(printFunc, "vrt_print");
 		throwFunc = cast(ir.Function)s.getStore("vrt_eh_throw").node;
 		check(throwFunc, "vrt_eh_throw");
-		throwSliceErrorFunction = cast(ir.Function)s.getStore("vrt_throw_slice_error").node;
+		throwEhSliceErrorFunction = cast(ir.Function)s.getStore("vrt_eh_throw_slice_error").node;
+		check(throwEhSliceErrorFunction, "vrt_eh_throw_slice_error");
 		aaGetKeys = cast(ir.Function)s.getStore("vrt_aa_get_keys").node;
 		check(aaGetKeys, "vrt_aa_get_keys");
 		aaGetValues = cast(ir.Function)s.getStore("vrt_aa_get_values").node;
