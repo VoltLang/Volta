@@ -7,7 +7,7 @@ HOST_MACHINE := $(strip $(shell uname -m))
 UNAME ?= $(HOST_UNAME)
 MACHINE ?= $(strip $(shell uname -m))
 LLVM_CONFIG ?= llvm-config
-LLVM_LDFLAGS = $(shell $(LLVM_CONFIG) --ldflags --libs core analysis scalaropts bitwriter ipo)
+LLVM_LDFLAGS = $(shell $(LLVM_CONFIG) --libs core analysis scalaropts bitwriter ipo) $(shell $(LLVM_CONFIG) --ldflags)
 
 ifeq ($(strip $(DMD)),)
   DMD := $(shell which gdmd)
