@@ -6,9 +6,9 @@ import lib.llvm.core;
 public import lib.llvm.c.BitWriter;
 
 
-void LLVMWriteBitcodeToFile(LLVMModuleRef mod, string filename)
+bool LLVMWriteBitcodeToFile(LLVMModuleRef mod, string filename)
 {
 	char[1024] stack;
 	auto ptr = nullTerminate(stack, filename);
-	lib.llvm.c.BitWriter.LLVMWriteBitcodeToFile(mod, ptr);
+	return lib.llvm.c.BitWriter.LLVMWriteBitcodeToFile(mod, ptr) != 0;
 }

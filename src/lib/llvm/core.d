@@ -184,6 +184,18 @@ const(char)* nullTerminate(char[] stack, string str)
 	return stack.ptr;
 }
 
+/**
+ * Small helper function that takes care of output messages.
+ */
+string handleAndDisposeMessage(const(char)** msg)
+{
+	if (msg is null || *msg is null)
+		return null;
+	auto ret = to!string(*msg);
+	LLVMDisposeMessage(*msg);
+	*msg = null;
+	return ret;
+}
 
 /*
  * License.

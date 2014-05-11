@@ -356,7 +356,7 @@ void LLVMInitializeCore(LLVMPassRegistryRef R);
 
 /*===-- Error handling ----------------------------------------------------===*/
 
-void LLVMDisposeMessage(char *Message);
+void LLVMDisposeMessage(const(char)* Message);
 
 
 /**
@@ -2512,9 +2512,9 @@ void LLVMDisposeModuleProvider(LLVMModuleProviderRef M);
 
 LLVMBool LLVMCreateMemoryBufferWithContentsOfFile(const(char)* Path,
                                                   LLVMMemoryBufferRef *OutMemBuf,
-                                                  char** OutMessage);
+                                                  const(char)** OutMessage);
 LLVMBool LLVMCreateMemoryBufferWithSTDIN(LLVMMemoryBufferRef *OutMemBuf,
-                                         char** OutMessage);
+                                         const(char)** OutMessage);
 void LLVMDisposeMemoryBuffer(LLVMMemoryBufferRef MemBuf);
 
 /**
