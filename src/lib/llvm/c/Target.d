@@ -14,6 +14,10 @@
 |* with C++ due to name mangling. So in addition to C, this interface enables *|
 |* tools written in such languages.                                           *|
 |*                                                                            *|
+|*===----------------------------------------------------------------------===*|
+|*                                                                            *|
+|* Up-to-date as of LLVM 3.4                                                  *|
+|*                                                                            *|
 \*===----------------------------------------------------------------------===*/
 module lib.llvm.c.Target;
 
@@ -22,140 +26,132 @@ import lib.llvm.c.Core;
 
 extern(C):
 
-enum LLVMByteOrdering { BigEndian, LittleEndian };
+
+/**
+ * @defgroup LLVMCTarget Target information
+ * @ingroup LLVMC
+ *
+ * @{
+ */
+
+enum LLVMByteOrdering
+{
+	BigEndian,
+	LittleEndian
+}
 
 struct LLVMTargetData {}
 alias  LLVMTargetData* LLVMTargetDataRef;
-struct LLVMStructLayout {}
-alias LLVMStructLayout* LLVMStructLayoutRef;
+struct LLVMTargetLibraryInfo {}
+alias  LLVMTargetLibraryInfo* LLVMTargetLibraryInfoRef;
 
-/* Declare all of the target-initialization functions that are available. */
-/*
-#define LLVM_TARGET(TargetName) void LLVMInitialize##TargetName##TargetInfo();
-#include "llvm/Config/Targets.def"
-#undef LLVM_TARGET  // Explicit undef to make SWIG happier
+/* A lot of targets are missing here but X86 is assumed safe */
+void LLVMInitializeX86TargetInfo();
+void LLVMInitializeX86Target();
+void LLVMInitializeX86TargetMC();
+void LLVMInitializeX86AsmPrinter();
+void LLVMInitializeX86AsmParser();
+void LLVMInitializeX86Disassembler();
 
-#define LLVM_TARGET(TargetName) void LLVMInitialize##TargetName##Target();
-#include "llvm/Config/Targets.def"
-#undef LLVM_TARGET  // Explicit undef to make SWIG happier
-*/
-
-/** LLVMInitializeAllTargetInfos - The main program should call this function if
-    it wants access to all available targets that LLVM is configured to
-    support. */
-/*
-static inline void LLVMInitializeAllTargetInfos() {
-#define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##TargetInfo();
-#include "llvm/Config/Targets.def"
-#undef LLVM_TARGET  // Explicit undef to make SWIG happier
-}
-*/
-
-/** LLVMInitializeAllTargets - The main program should call this function if it
-    wants to link in all available targets that LLVM is configured to
-    support. */
-/*
-static inline void LLVMInitializeAllTargets() {
-#define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##Target();
-#include "llvm/Config/Targets.def"
-#undef LLVM_TARGET  // Explicit undef to make SWIG happier
-}*/
-
-/** LLVMInitializeNativeTarget - The main program should call this function to
-    initialize the native target corresponding to the host.  This is useful
-    for JIT applications to ensure that the target gets linked in correctly. */
-/*
-static inline LLVMBool LLVMInitializeNativeTarget() {
-  // If we have a native target, initialize it to ensure it is linked in.
-#ifdef LLVM_NATIVE_ARCH
-#define DoInit2(TARG) \
-  LLVMInitialize ## TARG ## Info ();          \
-  LLVMInitialize ## TARG ()
-#define DoInit(T) DoInit2(T)
-  DoInit(LLVM_NATIVE_ARCH);
-  return 0;
-#undef DoInit
-#undef DoInit2
-#else
-  return 1;
-#endif
-}
-*/
 
 /*===-- Target Data -------------------------------------------------------===*/
 
 /** Creates target data from a target layout string.
-    See the constructor llvm::TargetData::TargetData. */
+    See the constructor llvm::DataLayout::DataLayout. */
 LLVMTargetDataRef LLVMCreateTargetData(const(char)* StringRep);
 
 /** Adds target data information to a pass manager. This does not take ownership
     of the target data.
     See the method llvm::PassManagerBase::add. */
-void LLVMAddTargetData(LLVMTargetDataRef, LLVMPassManagerRef);
+void LLVMAddTargetData(LLVMTargetDataRef TD, LLVMPassManagerRef PM);
+
+/** Adds target library information to a pass manager. This does not take
+    ownership of the target library info.
+    See the method llvm::PassManagerBase::add. */
+void LLVMAddTargetLibraryInfo(LLVMTargetLibraryInfoRef TLI,
+                              LLVMPassManagerRef PM);
 
 /** Converts target data to a target layout string. The string must be disposed
     with LLVMDisposeMessage.
-    See the constructor llvm::TargetData::TargetData. */
-char *LLVMCopyStringRepOfTargetData(LLVMTargetDataRef);
+    See the constructor llvm::DataLayout::DataLayout. */
+const(char)* LLVMCopyStringRepOfTargetData(LLVMTargetDataRef TD);
 
 /** Returns the byte order of a target, either LLVMBigEndian or
     LLVMLittleEndian.
-    See the method llvm::TargetData::isLittleEndian. */
-LLVMByteOrdering LLVMByteOrder(LLVMTargetDataRef);
+    See the method llvm::DataLayout::isLittleEndian. */
+LLVMByteOrdering LLVMByteOrder(LLVMTargetDataRef TD);
 
 /** Returns the pointer size in bytes for a target.
-    See the method llvm::TargetData::getPointerSize. */
-uint LLVMPointerSize(LLVMTargetDataRef);
+    See the method llvm::DataLayout::getPointerSize. */
+uint LLVMPointerSize(LLVMTargetDataRef TD);
+
+/** Returns the pointer size in bytes for a target for a specified
+    address space.
+    See the method llvm::DataLayout::getPointerSize. */
+uint LLVMPointerSizeForAS(LLVMTargetDataRef TD, uint AS);
 
 /** Returns the integer type that is the same size as a pointer on a target.
-    See the method llvm::TargetData::getIntPtrType. */
-LLVMTypeRef LLVMIntPtrType(LLVMTargetDataRef);
+    See the method llvm::DataLayout::getIntPtrType. */
+LLVMTypeRef LLVMIntPtrType(LLVMTargetDataRef TD);
+
+/** Returns the integer type that is the same size as a pointer on a target.
+    This version allows the address space to be specified.
+    See the method llvm::DataLayout::getIntPtrType. */
+LLVMTypeRef LLVMIntPtrTypeForAS(LLVMTargetDataRef TD, uint AS);
+
+/** Returns the integer type that is the same size as a pointer on a target.
+    See the method llvm::DataLayout::getIntPtrType. */
+LLVMTypeRef LLVMIntPtrTypeInContext(LLVMContextRef C, LLVMTargetDataRef TD);
+
+/** Returns the integer type that is the same size as a pointer on a target.
+    This version allows the address space to be specified.
+    See the method llvm::DataLayout::getIntPtrType. */
+LLVMTypeRef LLVMIntPtrTypeForASInContext(LLVMContextRef C, LLVMTargetDataRef TD,
+                                         uint AS);
 
 /** Computes the size of a type in bytes for a target.
-    See the method llvm::TargetData::getTypeSizeInBits. */
-ulong LLVMSizeOfTypeInBits(LLVMTargetDataRef, LLVMTypeRef);
+    See the method llvm::DataLayout::getTypeSizeInBits. */
+ulong LLVMSizeOfTypeInBits(LLVMTargetDataRef TD, LLVMTypeRef Ty);
 
 /** Computes the storage size of a type in bytes for a target.
-    See the method llvm::TargetData::getTypeStoreSize. */
-ulong LLVMStoreSizeOfType(LLVMTargetDataRef, LLVMTypeRef);
+    See the method llvm::DataLayout::getTypeStoreSize. */
+ulong LLVMStoreSizeOfType(LLVMTargetDataRef TD, LLVMTypeRef Ty);
 
 /** Computes the ABI size of a type in bytes for a target.
-    See the method llvm::TargetData::getTypeAllocSize. */
-ulong LLVMABISizeOfType(LLVMTargetDataRef, LLVMTypeRef);
+    See the method llvm::DataLayout::getTypeAllocSize. */
+ulong LLVMABISizeOfType(LLVMTargetDataRef TD, LLVMTypeRef Ty);
 
 /** Computes the ABI alignment of a type in bytes for a target.
-    See the method llvm::TargetData::getTypeABISize. */
-uint LLVMABIAlignmentOfType(LLVMTargetDataRef, LLVMTypeRef);
+    See the method llvm::DataLayout::getTypeABISize. */
+uint LLVMABIAlignmentOfType(LLVMTargetDataRef TD, LLVMTypeRef Ty);
 
 /** Computes the call frame alignment of a type in bytes for a target.
-    See the method llvm::TargetData::getTypeABISize. */
-uint LLVMCallFrameAlignmentOfType(LLVMTargetDataRef, LLVMTypeRef);
+    See the method llvm::DataLayout::getTypeABISize. */
+uint LLVMCallFrameAlignmentOfType(LLVMTargetDataRef TD, LLVMTypeRef Ty);
 
 /** Computes the preferred alignment of a type in bytes for a target.
-    See the method llvm::TargetData::getTypeABISize. */
-uint LLVMPreferredAlignmentOfType(LLVMTargetDataRef, LLVMTypeRef);
+    See the method llvm::DataLayout::getTypeABISize. */
+uint LLVMPreferredAlignmentOfType(LLVMTargetDataRef TD, LLVMTypeRef Ty);
 
 /** Computes the preferred alignment of a global variable in bytes for a target.
-    See the method llvm::TargetData::getPreferredAlignment. */
-uint LLVMPreferredAlignmentOfGlobal(LLVMTargetDataRef,
+    See the method llvm::DataLayout::getPreferredAlignment. */
+uint LLVMPreferredAlignmentOfGlobal(LLVMTargetDataRef TD,
                                     LLVMValueRef GlobalVar);
 
 /** Computes the structure element that contains the byte offset for a target.
     See the method llvm::StructLayout::getElementContainingOffset. */
-uint LLVMElementAtOffset(LLVMTargetDataRef, LLVMTypeRef StructTy,
+uint LLVMElementAtOffset(LLVMTargetDataRef TD, LLVMTypeRef StructTy,
                          ulong Offset);
 
 /** Computes the byte offset of the indexed struct element for a target.
     See the method llvm::StructLayout::getElementContainingOffset. */
-ulong LLVMOffsetOfElement(LLVMTargetDataRef, LLVMTypeRef StructTy,
-                          uint Element);
-
-/** Struct layouts are speculatively cached. If a TargetDataRef is alive when
-    types are being refined and removed, this method must be called whenever a
-    struct type is removed to avoid a dangling pointer in this cache.
-    See the method llvm::TargetData::InvalidateStructLayoutInfo. */
-void LLVMInvalidateStructLayout(LLVMTargetDataRef, LLVMTypeRef StructTy);
+ulong LLVMOffsetOfElement(LLVMTargetDataRef TD,
+                          LLVMTypeRef StructTy, uint Element);
 
 /** Deallocates a TargetData.
-    See the destructor llvm::TargetData::~TargetData. */
-void LLVMDisposeTargetData(LLVMTargetDataRef);
+    See the destructor llvm::DataLayout::~DataLayout. */
+void LLVMDisposeTargetData(LLVMTargetDataRef TD);
+
+/**
+ * @}
+ */
