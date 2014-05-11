@@ -32,7 +32,7 @@ enum LLVMVerifierFailureAction {
    Optionally returns a human-readable description of any invalid constructs.
    OutMessage must be disposed with LLVMDisposeMessage. */
 LLVMBool LLVMVerifyModule(LLVMModuleRef M, LLVMVerifierFailureAction Action,
-                          char **OutMessage);
+                          const(char)** OutMessage);
 
 /* Verifies that a single function is valid, taking the specified action. Useful
    for debugging. */

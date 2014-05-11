@@ -18,13 +18,10 @@ bool LLVMVerifyModule(LLVMModuleRef mod)
 
 bool LLVMVerifyModule(LLVMModuleRef mod, out string ret)
 {
-	char *str;
+	const(char)* str;
 	auto b =  cast(bool)LLVMVerifyModule(
 		mod, LLVMVerifierFailureAction.ReturnStatus, &str);
 
-	ret = to!string(str);
-	LLVMDisposeMessage(str);
-	str = null;
-
+	ret = handleAndDisposeMessage(&str);
 	return b;
 }
