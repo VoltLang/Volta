@@ -124,6 +124,8 @@ public:
 		check(arrayStruct, "ArrayStruct");
 		allocDgVariable = cast(ir.Variable)s.getStore("allocDg").node;
 		check(allocDgVariable, "allocDg");
+
+		// VA
 		vaStartFunc = cast(ir.Function)s.getStore("__volt_va_start").node;
 		check(vaStartFunc, "__volt_va_start");
 		vaEndFunc = cast(ir.Function)s.getStore("__volt_va_end").node;
@@ -132,14 +134,24 @@ public:
 		check(vaCStartFunc, "__llvm_volt_va_start");
 		vaCEndFunc = cast(ir.Function)s.getStore("__llvm_volt_va_end").node;
 		check(vaCEndFunc, "__llvm_volt_va_end");
-		memcpyFunc = cast(ir.Function)s.getStore("__llvm_memcpy_p0i8_p0i8_i32").node;
-		check(memcpyFunc, "__llvm_memcpy_p0i8_p0i8_i32");
+
+		// Util
 		printFunc = cast(ir.Function)s.getStore("vrt_print").node;
 		check(printFunc, "vrt_print");
-		throwFunc = cast(ir.Function)s.getStore("vrt_eh_throw").node;
-		check(throwFunc, "vrt_eh_throw");
-		throwEhSliceErrorFunction = cast(ir.Function)s.getStore("vrt_eh_throw_slice_error").node;
-		check(throwEhSliceErrorFunction, "vrt_eh_throw_slice_error");
+		memcpyFunc = cast(ir.Function)s.getStore("__llvm_memcpy_p0i8_p0i8_i32").node;
+		check(memcpyFunc, "__llvm_memcpy_p0i8_p0i8_i32");
+		memcmpFunc = cast(ir.Function)s.getStore("vrt_memcmp").node;
+		check(memcmpFunc, "vrt_memcmp");
+
+		// EH
+		ehThrowFunc = cast(ir.Function)s.getStore("vrt_eh_throw").node;
+		check(ehThrowFunc, "vrt_eh_throw");
+		ehThrowSliceErrorFunc = cast(ir.Function)s.getStore("vrt_eh_throw_slice_error").node;
+		check(ehThrowSliceErrorFunc, "vrt_eh_throw_slice_error");
+		ehPersonalityFunc = cast(ir.Function)s.getStore("vrt_eh_personality_v0").node;
+		check(ehPersonalityFunc, "vrt_eh_personality_v0");
+
+		// AA
 		aaGetKeys = cast(ir.Function)s.getStore("vrt_aa_get_keys").node;
 		check(aaGetKeys, "vrt_aa_get_keys");
 		aaGetValues = cast(ir.Function)s.getStore("vrt_aa_get_values").node;

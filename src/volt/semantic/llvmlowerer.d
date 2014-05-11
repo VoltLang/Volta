@@ -54,7 +54,7 @@ public:
 
 	override Status leave(ir.ThrowStatement t)
 	{
-		auto fn = lp.throwFunc;
+		auto fn = lp.ehThrowFunc;
 		auto eRef = buildExpReference(t.location, fn, "vrt_eh_throw");
 		t.exp = buildCall(t.location, eRef, [t.exp,
 			buildAccess(t.location, buildConstantString(t.location, t.location.filename, false), "ptr"),
@@ -811,7 +811,7 @@ public:
 		auto left = addParamSmart(loc, fn, type, "left");
 		auto right = addParamSmart(loc, fn, type, "right");
 
-		auto memCmp = getCMemCmp(loc);
+		auto memCmp = lp.memcmpFunc;
 		auto memCmpExpRef = buildExpReference(loc, memCmp, memCmp.name);
 
 
@@ -857,11 +857,6 @@ public:
 		auto name64 = "__llvm_memcpy_p0i8_p0i8_i64";
 		auto name = V_P64 ? name64 : name32;
 		return retrieveFunctionFromObject(lp, loc, name);
-	}
-
-	ir.Function getCMemCmp(Location loc)
-	{
-		return retrieveFunctionFromObject(lp, loc, "__llvm_memcmp");
 	}
 
 	/**
@@ -936,7 +931,7 @@ void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 	else
 		name = "vrt_aa_in_array";
 	auto inAAFn = retrieveFunctionFromObject(lp, loc, name);
-	auto throwFn = lp.throwFunc;
+	auto throwFn = lp.ehThrowFunc;
 
 	auto thenState = buildBlockStat(loc, statExp, current);
 	auto s = buildStorageType(loc, ir.StorageType.Kind.Immutable, buildChar(loc));
@@ -1034,7 +1029,7 @@ void replaceArrayCastIfNeeded(Location loc, LanguagePass lp, ir.Scope current, i
 	auto sz = buildAccess(loc, buildTypeidSmart(loc, toArray.base), "size");
 	ir.Exp fname = buildConstantString(loc, format(`%s`, baseName(exp.location.filename)));
 	ir.Exp lineNum = buildConstantSizeT(loc, lp, cast(int) exp.location.line);
-	auto rtCall = buildCall(loc, buildExpReference(loc, lp.throwEhSliceErrorFunction), [ln, sz, buildAccess(loc, fname, "ptr"), lineNum]);
+	auto rtCall = buildCall(loc, buildExpReference(loc, lp.ehThrowSliceErrorFunc), [ln, sz, buildAccess(loc, fname, "ptr"), lineNum]);
 	buildExpStat(loc, sexp, rtCall);
 
 	// auto _out = <castexp>

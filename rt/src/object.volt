@@ -198,45 +198,76 @@ class KeyNotFoundException : Exception
  *
  */
 
-private extern(C) size_t printf(const(char)* msg, ...);
-extern(C) void vrt_print(string s)
-{
-	printf("%*s\n", cast(int) s.length, s.ptr);
-	return;
+/*
+ * Language util functions
+ */
+extern(C) {
+	void* vrt_handle_cast(void* obj, TypeInfo tinfo);
+	uint vrt_hash(void*, size_t);
+	@mangledName("memcmp") int vrt_memcmp(void*, void*, size_t);
+	void vrt_print(string s)
+	{
+		printf("%*s\n", cast(int) s.length, s.ptr);
+		return;
+	}
 }
 
-extern(C) void vrt_gc_init();
-extern(C) AllocDg vrt_gc_get_alloc_dg();
-extern(C) void vrt_gc_shutdown();
-extern(C) void* vrt_handle_cast(void* obj, TypeInfo tinfo);
-extern(C) void vrt_eh_throw(Throwable, const(char)* file, size_t line);
-extern(C) void vrt_eh_throw_slice_error(size_t, size_t, const(char)*, size_t);
-extern(C) uint vrt_hash(void*, size_t);
+private extern(C) size_t printf(const(char)* msg, ...);
 
-extern(C) void* vrt_aa_new(TypeInfo value);
-extern(C) bool vrt_aa_in_primitive(void* rbtv, ulong key, void* ret);
-extern(C) bool vrt_aa_in_array(void* rbtv, void[] key, void* ret);
-extern(C) void vrt_aa_insert_primitive(void* rbtv, ulong key, void* value);
-extern(C) void vrt_aa_insert_array(void* rbtv, void[] key, void* value);
-extern(C) bool vrt_aa_delete_primitive(void* rbtv, ulong key);
-extern(C) bool vrt_aa_delete_array(void* rbtv, void[] key);
-extern(C) void* vrt_aa_get_keys(void* rbtv);
-extern(C) void* vrt_aa_get_values(void* rbtv);
-extern(C) size_t vrt_aa_get_length(void* rbtv);
-extern(C) void* vrt_aa_in_binop_array(void* rbtv, void[] key);
-extern(C) void* vrt_aa_in_binop_primitive(void* rbtv, ulong key);
-extern(C) void vrt_aa_rehash(void* rbtv);
-extern(C) ulong vrt_aa_get_pp(void* rbtv, ulong key, ulong _default);
-extern(C) void[] vrt_aa_get_aa(void* rbtv, void[] key, void[] _default);
-extern(C) ulong vrt_aa_get_ap(void* rbtv, void[] key, ulong _default);
-extern(C) void[] vrt_aa_get_pa(void* rbtv, ulong key, void[] _default);
-
-// Calls to these are replaced by the compiler.
-extern(C) void __volt_va_start(void** vl, void* _args);
-extern(C) void __volt_va_end(void** vl);
-
+/*
+ * GC functions
+ */
 extern(C) {
-	@mangledName("memcmp") int __llvm_memcmp(void*, void*, size_t);
+	void vrt_gc_init();
+	AllocDg vrt_gc_get_alloc_dg();
+	void vrt_gc_shutdown();
+}
+
+/*
+ * Exception handling functions
+ */
+extern(C) {
+	void vrt_eh_throw(Throwable, const(char)* file, size_t line);
+	void vrt_eh_throw_slice_error(size_t, size_t, const(char)*, size_t);
+	void vrt_eh_personality_v0();
+}
+
+/*
+ * AA functions
+ */
+extern(C) {
+	void* vrt_aa_new(TypeInfo value);
+	bool vrt_aa_in_primitive(void* rbtv, ulong key, void* ret);
+	bool vrt_aa_in_array(void* rbtv, void[] key, void* ret);
+	void vrt_aa_insert_primitive(void* rbtv, ulong key, void* value);
+	void vrt_aa_insert_array(void* rbtv, void[] key, void* value);
+	bool vrt_aa_delete_primitive(void* rbtv, ulong key);
+	bool vrt_aa_delete_array(void* rbtv, void[] key);
+	void* vrt_aa_get_keys(void* rbtv);
+	void* vrt_aa_get_values(void* rbtv);
+	size_t vrt_aa_get_length(void* rbtv);
+	void* vrt_aa_in_binop_array(void* rbtv, void[] key);
+	void* vrt_aa_in_binop_primitive(void* rbtv, ulong key);
+	void vrt_aa_rehash(void* rbtv);
+	ulong vrt_aa_get_pp(void* rbtv, ulong key, ulong _default);
+	void[] vrt_aa_get_aa(void* rbtv, void[] key, void[] _default);
+	ulong vrt_aa_get_ap(void* rbtv, void[] key, ulong _default);
+	void[] vrt_aa_get_pa(void* rbtv, ulong key, void[] _default);
+}
+
+/*
+ * Variadic arguments functions.
+ * Calls to these are replaced by the compiler.
+ */
+extern(C) {
+	void __volt_va_start(void** vl, void* _args);
+	void __volt_va_end(void** vl);
+}
+
+/*
+ * LLVM backend functions.
+ */
+extern(C) {
 	@mangledName("llvm.trap") void __llvm_trap();
 	@mangledName("llvm.memcpy.p0i8.p0i8.i32") void __llvm_memcpy_p0i8_p0i8_i32(void*, void*, uint, int, bool);
 	@mangledName("llvm.memcpy.p0i8.p0i8.i64") void __llvm_memcpy_p0i8_p0i8_i64(void*, void*, ulong, int, bool);
@@ -245,6 +276,5 @@ extern(C) {
 	@mangledName("llvm.va_start") void __llvm_volt_va_start(void*);
 	@mangledName("llvm.va_end") void __llvm_volt_va_end(void*);
 	@mangledName("llvm.eh.typeid.for") int __llvm_typeid_for(void*);
-	@mangledName("vrt_eh_personality_v0") void __llvm_personality();
 }
 

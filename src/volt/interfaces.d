@@ -115,14 +115,21 @@ public:
 	ir.Class assertErrorClass;
 	ir.Struct arrayStruct;
 	ir.Variable allocDgVariable;
+
+	ir.Function printFunc;
+
 	ir.Function vaStartFunc;
 	ir.Function vaEndFunc;
 	ir.Function vaCStartFunc;
 	ir.Function vaCEndFunc;
+
 	ir.Function memcpyFunc;
-	ir.Function printFunc;
-	ir.Function throwFunc;
-	ir.Function throwEhSliceErrorFunction;
+	ir.Function memcmpFunc;
+
+	ir.Function ehThrowFunc;
+	ir.Function ehThrowSliceErrorFunc;
+	ir.Function ehPersonalityFunc;
+
 	ir.Function aaGetKeys;
 	ir.Function aaGetValues;
 	ir.Function aaGetLength;

@@ -138,8 +138,7 @@ public:
 			return mPersonalityFunc;
 		}
 		Type type;
-		auto fn = retrieveFunctionFromObject(lp, Location(), "__llvm_personality");
-		return mPersonalityFunc = getFunctionValue(fn, type);
+		return mPersonalityFunc = getFunctionValue(lp.ehPersonalityFunc, type);
 	}
 
 	override LLVMValueRef ehTypeIdFunc()
