@@ -1,6 +1,6 @@
 // Copyright © 2014, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice and license in src/lib/llvm/core.d.
-module lib.llvm.Linker;
+module lib.llvm.linker;
 
 import lib.llvm.core;
 public import lib.llvm.c.Linker;
