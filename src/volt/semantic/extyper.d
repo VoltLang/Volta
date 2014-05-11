@@ -1614,10 +1614,7 @@ void handleCastTo(Context ctx, ref ir.Exp exp, ir.Unary unary)
 		return;
 	}
 
-	auto fn = retrieveFunctionFromObject(ctx.lp, unary.location, "vrt_handle_cast");
-	assert(fn !is null);
-
-	auto fnref = buildExpReference(unary.location, fn, "vrt_handle_cast");
+	auto fnref = buildExpReference(unary.location, ctx.lp.castFunc, "vrt_handle_cast");
 	auto tid = buildTypeidSmart(unary.location, to);
 	auto val = buildCastToVoidPtr(unary.location, unary.value);
 	unary.value = buildCall(unary.location, fnref, [val, cast(ir.Exp)tid]);
@@ -2014,8 +2011,6 @@ void handleNestedParams(Context ctx, ir.Function fn)
  */
 void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 {
-	auto hashFunction = retrieveFunctionFromObject(ctx.lp, ss.location, "vrt_hash");
-
 	auto conditionType = realType(getExpType(ctx.lp, ss.condition, ctx.current), false, true);
 	auto originalCondition = ss.condition;
 	if (isArray(conditionType)) {
@@ -2025,7 +2020,7 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 		ir.Exp ptr = buildCastSmart(buildVoidPtr(l), buildAccess(l, copyExp(ss.condition), "ptr"));
 		ir.Exp length = buildBinOp(l, ir.BinOp.Op.Mul, buildAccess(l, copyExp(ss.condition), "length"),
 				buildAccess(l, buildTypeidSmart(l, asArray.base), "size"));
-		ss.condition = buildCall(ss.condition.location, hashFunction, [ptr, length]);
+		ss.condition = buildCall(ss.condition.location, ctx.lp.hashFunc, [ptr, length]);
 		conditionType = buildUint(ss.condition.location);
 	}
 
