@@ -326,15 +326,17 @@ protected:
 				obj.remove();
 		}
 
-		string bcLinker = "llvm-link";
-		string compiler = "llc";
-		string cmd;
 		int ret;
 
 		if (settings.emitBitcode) {
 			bc = settings.getOutput(DEFAULT_BC);
 		} else {
-			bc = temporaryFilename(".bc");
+			if (bitcodeFiles.length == 1) {
+				bc = bitcodeFiles[0];
+				bitcodeFiles = null;
+			} else {
+				bc = temporaryFilename(".bc");
+			}
 		}
 
 		if (settings.noLink) {
@@ -344,9 +346,10 @@ protected:
 			obj = temporaryFilename(".o");
 		}
 
-		ret = bitcodeLink(bcLinker, bc, bitcodeFiles);
-		if (ret)
-			return ret;
+		// Link bitcode files
+		if (bitcodeFiles.length > 0) {
+			linkModules(bc, bitcodeFiles);
+		}
 
 		// When outputting bitcode we are now done.
 		if (settings.emitBitcode) {
@@ -359,9 +362,7 @@ protected:
 		}
 
 		// Native compilation, turn the bitcode into native code.
-		ret = assembleObjFile(compiler, obj, bc);
-		if (ret)
-			return 0;
+		writeObjectFile(settings, obj, bc);
 
 		// When not linking we are now done.
 		if (settings.noLink) {
@@ -374,32 +375,6 @@ protected:
 			return 0;
 
 		return 0;
-	}
-
-	int bitcodeLink(string bcLinker, string bc, string[] inputs)
-	{
-		string bcInputFiles;
-
-		// Gather all the bitcode files.
-		foreach (file; inputs) {
-			bcInputFiles ~= " \"" ~ file ~ "\" ";
-		}
-
-		string cmd = format("%s -o \"%s\" %s", bcLinker, bc, bcInputFiles);
-		return system(cmd);
-	}
-
-	int assembleObjFile(string compiler, string obj, string bc)
-	{
-		string cmd = format("%s -filetype=obj -o \"%s\" \"%s\"", compiler, obj, bc);
-		version (darwin) {
-			cmd ~= " -disable-cfi";
-		}
-		if (settings.arch == Arch.X86) {
-			cmd ~= " -mcpu=i686";
-		}
-
-		return system(cmd);
 	}
 
 	int nativeLink(string linker, string obj, string of)
