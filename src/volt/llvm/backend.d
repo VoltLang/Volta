@@ -3,7 +3,7 @@
 module volt.llvm.backend;
 
 import std.string : toStringz;
-import std.stdio : writefln;
+import std.stdio : stderr, stdout;
 
 import volt.errors;
 import volt.interfaces;
@@ -76,27 +76,27 @@ public:
 		}
 
 		if (mDump)
-			writefln("Compiling module");
+			stdout.writefln("Compiling module");
 
 		try {
 			state.compile(m);
 		} catch (Throwable t) {
 			if (mDump) {
-				writefln("Caught \"%s\" dumping module:", t.classinfo.name);
+				stdout.writefln("Caught \"%s\" dumping module:", t.classinfo.name);
 				LLVMDumpModule(mod);
 			}
 			throw t;
 		}
 
 		if (mDump) {
-			writefln("Dumping module");
+			stdout.writefln("Dumping module");
 			LLVMDumpModule(mod);
 		}
 
 		string result;
 		auto failed = LLVMVerifyModule(mod, result);
 		if (failed) {
-			writefln("%s", result);
+			stderr.writefln("%s", result);
 			throw panic("Module verification failed.");
 		}
 
