@@ -183,7 +183,7 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 			argHandler = &linker;
 			continue;
 		case "--emit-bitcode":
-			settings.emitBitCode = true;
+			settings.emitBitcode = true;
 			continue;
 		case "--no-backend":
 		case "-S":

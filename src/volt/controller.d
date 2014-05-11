@@ -42,7 +42,7 @@ protected:
 
 	string[] mIncludes;
 	string[] mSourceFiles;
-	string[] mBitCodeFiles;
+	string[] mBitcodeFiles;
 	string[] mObjectFiles;
 	ir.Module[string] mModulesByName;
 	ir.Module[string] mModulesByFile;
@@ -75,7 +75,7 @@ public:
 		}
 
 		// Should we add the standard library.
-		if (!settings.emitBitCode &&
+		if (!settings.emitBitcode &&
 		    !settings.noLink &&
 		    !settings.noStdLib) {
 			foreach (file; settings.stdFiles) {
@@ -165,7 +165,7 @@ public:
 		if (endsWith(file, ".d", ".volt") > 0) {
 			mSourceFiles ~= file;
 		} else if (endsWith(file, ".bc")) {
-			mBitCodeFiles ~= file;
+			mBitcodeFiles ~= file;
 		} else if (endsWith(file, ".o", ".obj")) {
 			mObjectFiles ~= file;
 		} else {
@@ -301,33 +301,26 @@ protected:
 			return 0;
 
 		// We will be modifing this later on,
-		// but we don't want to change mBitCodeFiles.
-		string[] bitCodeFiles = mBitCodeFiles;
+		// but we don't want to change mBitcodeFiles.
+		string[] bitcodeFiles = mBitcodeFiles;
 		string[] temporaryFiles;
 
 		foreach (mod; mods) {
 			string o = temporaryFilename(".bc");
 			backend.setTarget(o, TargetType.LlvmBitcode);
 			backend.compile(mod);
-			bitCodeFiles ~= o;
+			bitcodeFiles ~= o;
 			temporaryFiles ~= o;
 		}
 
-		string bcInputFiles;
-		string asInputFiles;
-
-
-		string bc, as, obj, of;
+		string bc, obj, of;
 
 		scope(exit) {
 			foreach (f; temporaryFiles)
 				f.remove();
 			
-			if (bc.exists() && !settings.emitBitCode)
+			if (bc.exists() && !settings.emitBitcode)
 				bc.remove();
-
-			if (as.exists())
-				as.remove();
 
 			if (obj.exists() && !settings.noLink)
 				obj.remove();
@@ -338,17 +331,10 @@ protected:
 		string cmd;
 		int ret;
 
-		// Gather all the bitcode files.
-		foreach (file; bitCodeFiles) {
-			bcInputFiles ~= " \"" ~ file ~ "\" ";
-		}
-
-		if (settings.emitBitCode) {
+		if (settings.emitBitcode) {
 			bc = settings.getOutput(DEFAULT_BC);
 		} else {
 			bc = temporaryFilename(".bc");
-			as = temporaryFilename(".as");
-			asInputFiles ~= " \"" ~ as ~ "\" ";
 		}
 
 		if (settings.noLink) {
@@ -358,13 +344,12 @@ protected:
 			obj = temporaryFilename(".o");
 		}
 
-		cmd = format("%s -o \"%s\" %s", bcLinker, bc, bcInputFiles);
-		ret = system(cmd);
+		ret = bitcodeLink(bcLinker, bc, bitcodeFiles);
 		if (ret)
 			return ret;
 
 		// When outputting bitcode we are now done.
-		if (settings.emitBitCode) {
+		if (settings.emitBitcode) {
 			return 0;
 		}
 
@@ -389,6 +374,19 @@ protected:
 			return 0;
 
 		return 0;
+	}
+
+	int bitcodeLink(string bcLinker, string bc, string[] inputs)
+	{
+		string bcInputFiles;
+
+		// Gather all the bitcode files.
+		foreach (file; inputs) {
+			bcInputFiles ~= " \"" ~ file ~ "\" ";
+		}
+
+		string cmd = format("%s -o \"%s\" %s", bcLinker, bc, bcInputFiles);
+		return system(cmd);
 	}
 
 	int assembleObjFile(string compiler, string obj, string bc)
