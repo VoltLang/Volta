@@ -460,18 +460,26 @@ protected:
 	void setTargetAndLayout()
 	{
 		auto settings = lp.settings;
-		auto target = targetList[settings.platform][settings.arch];
+		auto triple = tripleList[settings.platform][settings.arch];
 		auto layout = layoutList[settings.platform][settings.arch];
-		if (target is null || layout is null)
+		if (triple is null || layout is null)
 			throw makeArchNotSupported();
 
-		LLVMSetTarget(mod, target);
+		LLVMSetTarget(mod, triple);
 		LLVMSetDataLayout(mod, layout);
 	}
 }
 
+/**
+ * Used to select LLVMTarget.
+ */
+string[] archList = [
+	"x86",
+	"x86-64",
+	null
+];
 
-string[][] targetList = [
+string[][] tripleList = [
 	/**
 	 * The subsystem will controll if llc emits coff or ELF object files.
 	 *

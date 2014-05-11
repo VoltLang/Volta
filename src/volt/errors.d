@@ -25,6 +25,50 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeNoLoadBitcodeFile(string filename, string msg, string file = __FILE__, const int line = __LINE__)
+{
+	string err;
+	if (msg !is null) {
+		err = format("failed to read bitcode file '%s'\n%s", filename, msg);
+	} else {
+		err = format("failed to read bitcode file '%s'", filename);
+	}
+	return new CompilerError(err, file, line);
+}
+
+CompilerException makeNoWriteBitcodeFile(string filename, string msg, string file = __FILE__, const int line = __LINE__)
+{
+	string err;
+	if (msg !is null) {
+		err = format("failed to write object bitcode '%s'\n%s", filename, msg);
+	} else {
+		err = format("failed to write object bitcode '%s'", filename);
+	}
+	return new CompilerError(err, file, line);
+}
+
+CompilerException makeNoWriteObjectFile(string filename, string msg, string file = __FILE__, const int line = __LINE__)
+{
+	string err;
+	if (msg !is null) {
+		err = format("failed to write object file '%s'\n%s", filename, msg);
+	} else {
+		err = format("failed to write object file '%s'", filename);
+	}
+	return new CompilerError(err, file, line);
+}
+
+CompilerException makeNoLinkModule(string filename, string msg, string file = __FILE__, const int line = __LINE__)
+{
+	string err;
+	if (msg !is null) {
+		err = format("failed to link in module '%s'\n%s", filename, msg);
+	} else {
+		err = format("failed to link in module '%s'", filename);
+	}
+	return new CompilerError(err, file, line);
+}
+
 CompilerException makeInvalidIntegerLiteral(Location loc, string file = __FILE__, const int line = __LINE__)
 {
 	auto inve = new CompilerError(loc, "integer literal too large.");
