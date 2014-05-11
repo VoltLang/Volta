@@ -116,13 +116,12 @@ public:
 	ir.Struct arrayStruct;
 	ir.Variable allocDgVariable;
 
-	ir.Function printFunc;
-
 	ir.Function vaStartFunc;
 	ir.Function vaEndFunc;
 	ir.Function vaCStartFunc;
 	ir.Function vaCEndFunc;
 
+	ir.Function printfFunc;
 	ir.Function memcpyFunc;
 	ir.Function memcmpFunc;
 

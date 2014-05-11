@@ -136,8 +136,8 @@ public:
 		check(vaCEndFunc, "__llvm_volt_va_end");
 
 		// Util
-		printFunc = cast(ir.Function)s.getStore("vrt_print").node;
-		check(printFunc, "vrt_print");
+		printfFunc = cast(ir.Function)s.getStore("vrt_printf").node;
+		check(printfFunc, "vrt_printf");
 		memcpyFunc = cast(ir.Function)s.getStore("__llvm_memcpy_p0i8_p0i8_i32").node;
 		check(memcpyFunc, "__llvm_memcpy_p0i8_p0i8_i32");
 		memcmpFunc = cast(ir.Function)s.getStore("vrt_memcmp").node;

@@ -205,14 +205,8 @@ extern(C) {
 	void* vrt_handle_cast(void* obj, TypeInfo tinfo);
 	uint vrt_hash(void*, size_t);
 	@mangledName("memcmp") int vrt_memcmp(void*, void*, size_t);
-	void vrt_print(string s)
-	{
-		printf("%*s\n", cast(int) s.length, s.ptr);
-		return;
-	}
+	@mangledName("printf") void vrt_printf(const(char)*, ...);
 }
-
-private extern(C) size_t printf(const(char)* msg, ...);
 
 /*
  * GC functions

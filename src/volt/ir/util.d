@@ -542,6 +542,14 @@ ir.Constant buildConstantString(Location loc, string val, bool escape = true)
 }
 
 /**
+ * Builds a constant 'c' string.
+ */
+ir.Exp buildConstantCString(Location loc, string val, bool escape = true)
+{
+	return buildAccess(loc, buildConstantString(loc, val, escape), "ptr");
+}
+
+/**
  * Build a constant to insert to the IR from a resolved EnumDeclaration.
  */
 ir.Constant buildConstantEnum(Location loc, ir.EnumDeclaration ed)

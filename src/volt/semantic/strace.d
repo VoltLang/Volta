@@ -48,8 +48,9 @@ public:
 		}
 		// Build vrt_print(__FUNCTION__).
 		auto l = fn.location;
-		auto eref = buildExpReference(l, lp.printFunc, "vrt_print");
-		auto call = buildCall(l, eref, [cast(ir.Exp) buildTokenExp(l, ir.TokenExp.Type.Function)]);
+		auto eref = buildExpReference(l, lp.printfFunc, "vrt_printf");
+		auto call = buildCall(l, eref, [buildConstantCString(l, "%s\n", false),
+			cast(ir.Exp) buildAccess(l, buildTokenExp(l, ir.TokenExp.Type.Function), "ptr")]);
 		auto estat = buildExpStat(l, call);
 		// Add the print to the top of the function.
 		fn._body.statements = estat ~ fn._body.statements;

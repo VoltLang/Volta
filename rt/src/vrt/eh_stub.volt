@@ -6,11 +6,10 @@ module vrt.eh_stub;
 version (Emscripten):
 
 extern(C) void exit(int);
-extern(C) void printf(const(char)*, ...);
 
 extern(C) void vrt_eh_throw(object.Throwable t)
 {
-	printf("EXCEPTION: %.*s\n".ptr, t.message.length, t.message.ptr);
+	object.vrt_printf("EXCEPTION: %.*s\n".ptr, t.message.length, t.message.ptr);
 	exit(-1);
 }
 

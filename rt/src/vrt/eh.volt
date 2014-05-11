@@ -62,7 +62,7 @@ extern(C) void vrt_eh_throw(object.Throwable t, const(char)* file, size_t line)
 	e.t = t;
 
 	auto f = _Unwind_RaiseException(&e.e);
-	printf("FAILED TO RAISE EXCEPTION %i\n", f);
+	object.vrt_printf("FAILED TO RAISE EXCEPTION %i\n", f);
 	exit(-1);
 }
 
@@ -90,7 +90,7 @@ extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
 
 	ubyte* data = _Unwind_GetLanguageSpecificData(ctx);
 	if (data is null) {
-		printf("%s:%u non region data\n", __FUNCTION__.ptr, __LINE__);
+		object.vrt_printf("%s:%u non region data\n", __FUNCTION__.ptr, __LINE__);
 		return _Unwind_Reason_Code.FATAL_PHASE1_ERROR;
 	}
 
@@ -115,7 +115,7 @@ extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
 	if (lpStartEncoding == DW_EH_PE_omit) {
 		lpStartBase = funcStart;
 	} else {
-		printf("%s:%u unhandled lpStartEncoding\n", __FUNCTION__.ptr, __LINE__);
+		object.vrt_printf("%s:%u unhandled lpStartEncoding\n", __FUNCTION__.ptr, __LINE__);
 		return _Unwind_Reason_Code.FATAL_PHASE1_ERROR;
 	}
 
@@ -151,7 +151,7 @@ extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
 	if (callSiteEncoding != DW_EH_PE_omit) {
 		callSiteTableLength = dw_read_uleb128(&data);
 	} else {
-		printf("%s:%u unhandled callingSiteEncoding\n", __FUNCTION__.ptr, __LINE__);
+		object.vrt_printf("%s:%u unhandled callingSiteEncoding\n", __FUNCTION__.ptr, __LINE__);
 		return _Unwind_Reason_Code.FATAL_PHASE1_ERROR;
 	}
 
@@ -217,7 +217,7 @@ extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
 					actionPointer += cast(size_t)actionOffset;
 				}
 
-				printf("%s:%u unhandled case\n", __FUNCTION__.ptr, __LINE__);
+				object.vrt_printf("%s:%u unhandled case\n", __FUNCTION__.ptr, __LINE__);
 				return _Unwind_Reason_Code.FATAL_PHASE1_ERROR;
 			}
 		}
