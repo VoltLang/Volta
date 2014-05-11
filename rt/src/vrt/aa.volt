@@ -570,7 +570,10 @@ extern (C) void* vrt_aa_get_keys(void* rbtv)
 	auto arr = new void*[](rbt.length);
 	size_t currentIndex;
 	vrt_aa_walk(rbt.root, true, ref arr, ref currentIndex);
-	return cast(void*) &arr;
+
+	auto arrptr = new void*[];
+	*arrptr = arr;
+	return cast(void*) arrptr;
 }
 
 // aa.values
@@ -580,7 +583,10 @@ extern (C) void* vrt_aa_get_values(void* rbtv)
 	auto arr = new void*[](rbt.length);
 	size_t currentIndex;
 	vrt_aa_walk(rbt.root, false, ref arr, ref currentIndex);
-	return cast(void*) &arr;
+
+	auto arrptr = new void*[];
+	*arrptr = arr;
+	return cast(void*) arrptr;
 }
 
 // aa.rehash
