@@ -412,6 +412,8 @@ ir.Union parseUnion(TokenStream ts)
 	if (ts.peek.type == TokenType.Identifier) {
 		auto nameTok = match(ts, TokenType.Identifier);
 		u.name = nameTok.value;
+	} else {
+		throw makeUnsupported(u.location, "anonymous union declarations");
 	}
 
 	if (ts.peek.type == TokenType.Semicolon) {
@@ -440,6 +442,8 @@ ir.Struct parseStruct(TokenStream ts)
 	if (ts.peek.type == TokenType.Identifier) {
 		auto nameTok = match(ts, TokenType.Identifier);
 		s.name = nameTok.value;
+	} else {
+		throw makeUnsupported(s.location, "anonymous struct declarations");
 	}
 
 	if (ts.peek.type == TokenType.Semicolon) {
