@@ -230,15 +230,15 @@ extern(C) {
  * AA functions
  */
 extern(C) {
-	void* vrt_aa_new(TypeInfo value);
+	void* vrt_aa_new(TypeInfo value, TypeInfo key);
 	bool vrt_aa_in_primitive(void* rbtv, ulong key, void* ret);
 	bool vrt_aa_in_array(void* rbtv, void[] key, void* ret);
 	void vrt_aa_insert_primitive(void* rbtv, ulong key, void* value);
 	void vrt_aa_insert_array(void* rbtv, void[] key, void* value);
 	bool vrt_aa_delete_primitive(void* rbtv, ulong key);
 	bool vrt_aa_delete_array(void* rbtv, void[] key);
-	void* vrt_aa_get_keys(void* rbtv);
-	void* vrt_aa_get_values(void* rbtv);
+	void[] vrt_aa_get_keys(void* rbtv);
+	void[] vrt_aa_get_values(void* rbtv);
 	size_t vrt_aa_get_length(void* rbtv);
 	void* vrt_aa_in_binop_array(void* rbtv, void[] key);
 	void* vrt_aa_in_binop_primitive(void* rbtv, ulong key);

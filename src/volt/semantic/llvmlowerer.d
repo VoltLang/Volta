@@ -151,7 +151,8 @@ public:
 		auto aaNewFn = retrieveFunctionFromObject(lp, loc, "vrt_aa_new");
 		auto var = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp,
 			copyTypeSmart(loc, aa), buildCall(loc, aaNewFn, [
-				buildTypeidSmart(loc, aa.value)
+				buildTypeidSmart(loc, aa.value),
+				buildTypeidSmart(loc, aa.key)
 			], aaNewFn.name)
 		);
 
@@ -897,7 +898,8 @@ void buildAAInsert(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 			buildAssign(loc,
 				aaIsPointer ? buildDeref(loc, varExp) : varExp,
 				buildCall(loc, aaNewFn, [
-						buildTypeidSmart(loc, aa.value)
+						buildTypeidSmart(loc, aa.value),
+						buildTypeidSmart(loc, aa.key)
 					], aaNewFn.name
 				)
 			)

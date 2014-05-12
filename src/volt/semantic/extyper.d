@@ -773,32 +773,31 @@ bool replaceAAPostfixesIfNeeded(Context ctx, ir.Postfix postfix, ref ir.Exp exp)
 	if (aa is null) {
 		return false;
 	}
-	ir.ExpReference rtFn;
-	ir.Type type;
 	ir.Exp[] arg = [copyExp(postfix.child)];
 	switch (postfix.identifier.value) {
 	case "keys":
-		rtFn = buildExpReference(l, ctx.lp.aaGetKeys, ctx.lp.aaGetKeys.name);
-		type = buildArrayType(l, aa.key);
-		break;
+		auto rtFn = buildExpReference(l, ctx.lp.aaGetKeys, ctx.lp.aaGetKeys.name);
+		auto type = buildArrayType(l, aa.key);
+		exp = buildCastSmart(l, type, buildCall(l, rtFn, arg));
+		return true;
 	case "values":
-		rtFn = buildExpReference(l, ctx.lp.aaGetValues, ctx.lp.aaGetValues.name);
-		type = buildArrayType(l, aa.value);
-		break;
+		auto rtFn = buildExpReference(l, ctx.lp.aaGetValues, ctx.lp.aaGetValues.name);
+		auto type = buildArrayType(l, aa.value);
+		exp = buildCastSmart(l, type, buildCall(l, rtFn, arg));
+		return true;
 	case "length":
-		rtFn = buildExpReference(l, ctx.lp.aaGetLength, ctx.lp.aaGetLength.name);
-		type = ctx.lp.settings.getSizeT(l);
-		break;
+		auto rtFn = buildExpReference(l, ctx.lp.aaGetLength, ctx.lp.aaGetLength.name);
+		auto type = ctx.lp.settings.getSizeT(l);
+		exp = buildDeref(l, buildCastSmart(l, buildPtrSmart(l, type), buildCall(l, rtFn, arg)));
+		return true;
 	case "rehash":
-		rtFn = buildExpReference(l, ctx.lp.aaRehash, ctx.lp.aaRehash.name);
+		auto rtFn = buildExpReference(l, ctx.lp.aaRehash, ctx.lp.aaRehash.name);
 		exp = buildCall(l, rtFn, arg);
 		return true;
 	default:
 		return false;
 	}
-	assert(rtFn !is null);
-	exp = buildDeref(l, buildCastSmart(l, buildPtrSmart(l, type), buildCall(l, rtFn, arg)));
-	return true;
+	assert(false);
 }
 
 /**
