@@ -515,11 +515,9 @@ void handleAssign(Context ctx, ref ir.Type toType, ref ir.Exp exp, ref uint toFl
 	rtype = flagitiseStorage(rtype, rflag);
 	if ((toFlag & ir.StorageType.STORAGE_SCOPE) != 0 && ctx.isVarAssign) {
 		exp = buildCastSmart(exp.location, toType, exp);
-	} else if ((toFlag & ir.StorageType.STORAGE_SCOPE) != 0 && (rflag & ir.StorageType.STORAGE_SCOPE) == 0 && mutableIndirection(toType)) {
+	} else if ((rflag & ir.StorageType.STORAGE_CONST) != 0 && !(toFlag & ir.StorageType.STORAGE_CONST) && mutableIndirection(originalTo)) {
 		throw makeBadImplicitCast(exp, originalRtype, originalTo);
-	} else if ((rflag & ir.StorageType.STORAGE_CONST) != 0 && !(toFlag & ir.StorageType.STORAGE_CONST) && mutableIndirection(toType)) {
-		throw makeBadImplicitCast(exp, originalRtype, originalTo);
-	} else if (mutableIndirection(toType) && (rflag & ir.StorageType.STORAGE_SCOPE) != 0) {
+	} else if (mutableIndirection(originalTo) && (rflag & ir.StorageType.STORAGE_SCOPE) != 0) {
 		throw makeBadImplicitCast(exp, originalRtype, originalTo);
 	}
 }
@@ -581,10 +579,6 @@ void extypeAssignDispatch(Context ctx, ref ir.Exp exp, ir.Type type)
 void extypePass(Context ctx, ref ir.Exp exp, ir.Type type)
 {
 	ensureResolved(ctx.lp, ctx.current, type);
-	auto storage = cast(ir.StorageType) type;
-	if (storage !is null && storage.type == ir.StorageType.Kind.Scope) {
-		type = storage.base;
-	}
 	extypeAssign(ctx, exp, type);
 }
 

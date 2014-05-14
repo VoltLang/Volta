@@ -159,6 +159,9 @@ bool mutableIndirection(ir.Type t)
 	case StorageType:
 		auto asStorageType = cast(ir.StorageType) t;
 		assert(asStorageType !is null);
+		if (asStorageType.type == ir.StorageType.Kind.Immutable || asStorageType.type == ir.StorageType.Kind.Const) {
+			return false;
+		}
 		return mutableIndirection(asStorageType.base);
 	default:
 		return true;
