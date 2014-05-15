@@ -253,11 +253,7 @@ void extypeAssignPointerType(Context ctx, ref ir.Exp exp, ir.PointerType ptr, ui
 	assert(pcopy !is null);
 	stripPointerBases(pcopy, flag);
 
-	// string literals implicitly convert to typeof(string.ptr)
-	auto constant = cast(ir.Constant) exp;
-	if (constant !is null && constant._string.length != 0) {
-		exp = buildAccess(exp.location, exp, "ptr");
-	}
+
 
 	auto type = ctx.overrideType !is null ? ctx.overrideType : realType(getExpType(ctx.lp, exp, ctx.current));
 
@@ -579,6 +575,12 @@ void extypeAssignDispatch(Context ctx, ref ir.Exp exp, ir.Type type)
 void extypePass(Context ctx, ref ir.Exp exp, ir.Type type)
 {
 	ensureResolved(ctx.lp, ctx.current, type);
+	auto ptr = cast(ir.PointerType) realType(type, true, true);
+	// string literals implicitly convert to typeof(string.ptr)
+	auto constant = cast(ir.Constant) exp;
+	if (ptr !is null && constant !is null && constant._string.length != 0) {
+		exp = buildAccess(exp.location, exp, "ptr");
+	}
 	extypeAssign(ctx, exp, type);
 }
 
