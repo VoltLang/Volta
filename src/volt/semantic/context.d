@@ -126,14 +126,14 @@ public:
 	 */
 	void enter(ir.Postfix postfix)
 	{
-		if (postfix.op == ir.Postfix.Op.Index) {
+		if (postfix.op == ir.Postfix.Op.Index || postfix.op == ir.Postfix.Op.Slice) {
 			mIndexChildren ~= postfix.child;
 		}
 	}
 
 	void leave(ir.Postfix postfix)
 	{
-		if (postfix.op == ir.Postfix.Op.Index) {
+		if (postfix.op == ir.Postfix.Op.Index || postfix.op == ir.Postfix.Op.Slice) {
 			mIndexChildren = mIndexChildren[0 .. $-1];
 		}
 	}
