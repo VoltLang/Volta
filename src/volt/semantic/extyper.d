@@ -382,7 +382,7 @@ void extypeAssignEnum(Context ctx, ref ir.Exp exp, ir.Enum e)
  */
 void extypeAssignCallableType(Context ctx, ref ir.Exp exp, ir.CallableType ctype)
 {
-	auto rtype = ctx.overrideType !is null ? ctx.overrideType : realType(getExpType(ctx.lp, exp, ctx.current));
+	auto rtype = ctx.overrideType !is null ? ctx.overrideType : realType(getExpType(ctx.lp, exp, ctx.current), true, true);
 	if (typesEqual(ctype, rtype)) {
 		return;
 	}
@@ -513,7 +513,7 @@ void handleAssign(Context ctx, ref ir.Type toType, ref ir.Exp exp, ref uint toFl
 		exp = buildCastSmart(exp.location, toType, exp);
 	} else if ((rflag & ir.StorageType.STORAGE_CONST) != 0 && !(toFlag & ir.StorageType.STORAGE_CONST) && mutableIndirection(originalTo)) {
 		throw makeBadImplicitCast(exp, originalRtype, originalTo);
-	} else if (mutableIndirection(originalTo) && (rflag & ir.StorageType.STORAGE_SCOPE) != 0) {
+	} else if (mutableIndirection(originalTo) && (rflag & ir.StorageType.STORAGE_SCOPE) != 0 && (toFlag & ir.StorageType.STORAGE_SCOPE) == 0) {
 		throw makeBadImplicitCast(exp, originalRtype, originalTo);
 	}
 }
@@ -2828,6 +2828,10 @@ public:
 
 		if (ret.exp !is null) {
 			acceptExp(ret.exp, this);
+			auto st = cast(ir.StorageType) getExpType(ctx.lp, ret.exp, ctx.current);
+			if (st !is null && st.type == ir.StorageType.Kind.Scope && mutableIndirection(st)) {
+				throw makeNoReturnScope(ret.location);
+			}
 			extypeAssign(ctx, ret.exp, fn.type.ret);
 		}
 

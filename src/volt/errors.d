@@ -25,6 +25,14 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeNoReturnScope(Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	auto nrs = new CompilerError(loc, "returning scope type.");
+	nrs.file = file;
+	nrs.line = line;
+	return nrs;
+}
+
 CompilerException makeNoLoadBitcodeFile(string filename, string msg, string file = __FILE__, const int line = __LINE__)
 {
 	string err;
