@@ -211,6 +211,9 @@ ir.Type getTypeExpType(LanguagePass lp, ir.TypeExp te)
 
 ir.Type getStructLiteralType(LanguagePass lp, ir.StructLiteral slit)
 {
+	if (slit.type is null) {
+		throw panic(slit.location, "null struct literal");
+	}
 	return slit.type;
 }
 

@@ -58,14 +58,25 @@ bool handleIfNull(Context ctx, ir.Type left, ref ir.Exp right)
 
 /**
  * This handles implicitly typing a struct literal.
- *
- * While generic currently only used by extypeAssign.
  */
-bool handleIfStructLiteral(Context ctx, ir.Type left, ref ir.Exp right)
+void handleIfStructLiteral(Context ctx, ir.Type left, ref ir.Exp right)
 {
-	auto asLit = cast(ir.StructLiteral) right;
-	if (asLit is null)
-		return false;
+	ir.StructLiteral asLit;
+	auto arrayLit = cast(ir.ArrayLiteral) right;
+	if (arrayLit !is null) {
+		auto array = cast(ir.ArrayType) realType(left);
+		if (array is null) {
+			return;
+		}
+		foreach (ref value; arrayLit.values) {
+			handleIfStructLiteral(ctx, realType(array.base), value);
+		}
+		return;
+	} else {
+		asLit = cast(ir.StructLiteral) right;
+	}
+	if (asLit is null || asLit.type !is null)
+		return;
 
 	assert(asLit !is null);
 
@@ -85,7 +96,6 @@ bool handleIfStructLiteral(Context ctx, ir.Type left, ref ir.Exp right)
 	}
 
 	asLit.type = buildTypeReference(right.location, asStruct, asStruct.name);
-	return true;
 }
 
 /**
@@ -587,7 +597,7 @@ void extypePass(Context ctx, ref ir.Exp exp, ir.Type type)
 void extypeAssign(Context ctx, ref ir.Exp exp, ir.Type type)
 {
 	ensureResolved(ctx.lp, ctx.current, type);
-	if (handleIfStructLiteral(ctx, type, exp)) return;
+	handleIfStructLiteral(ctx, type, exp);
 	if (handleIfNull(ctx, type, exp)) return;
 
 	extypeAssignDispatch(ctx, exp, type);
@@ -2751,6 +2761,7 @@ public:
 		replaceTypeOfIfNeeded(ctx, v.type);
 
 		if (v.assign !is null) {
+			handleIfStructLiteral(ctx, v.type, v.assign);
 			acceptExp(v.assign, this);
 			extypeAssign(ctx, v.assign, v.type);
 		}
