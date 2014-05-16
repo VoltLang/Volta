@@ -1986,6 +1986,10 @@ void handleNestedParams(Context ctx, ir.Function fn)
 	}
 	++index;
 
+	if (index > fn._body.statements.length) {
+		index = 0;  // We didn't find a usage, so put it at the start.
+	}
+
 	foreach (param; fn.params) {
 		if (!param.hasBeenNested) {
 			param.hasBeenNested = true;
