@@ -224,6 +224,22 @@ bool isArray(ir.Type t)
 	return (cast(ir.ArrayType) t) !is null;
 }
 
+bool isAssign(ir.Exp exp)
+{
+	auto bop = cast(ir.BinOp) exp;
+	if (bop is null) {
+		return false;
+	}
+	switch (bop.op) with (ir.BinOp.Op) {
+	case Assign, AddAssign, SubAssign, MulAssign, DivAssign, ModAssign,
+		AndAssign, OrAssign, XorAssign, CatAssign, LSAssign, SRSAssign,
+		RSAssign, PowAssign:
+		return true;
+	default:
+		return false;
+	}
+}
+
 bool isLValue(ir.Exp exp)
 {
 	switch (exp.nodeType) {

@@ -533,10 +533,6 @@ void extypeAssign(Context ctx, ref ir.Exp exp, ir.Type type)
 {
 	ensureResolved(ctx.lp, ctx.current, type);
 	handleIfStructLiteral(ctx, type, exp);
-	auto st = cast(ir.StorageType) getExpType(ctx.lp, exp, ctx.current);
-	if (st !is null && st.type == ir.StorageType.Kind.Scope && !ctx.isVarAssign && mutableIndirection(type)) {
-		throw makeNoEscapeScope(exp.location);
-	}
 	if (handleIfNull(ctx, type, exp)) return;
 
 	extypeAssignDispatch(ctx, exp, type);
@@ -1761,6 +1757,11 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 		}
 		break;
 	default: break;
+	}
+
+	auto st = cast(ir.StorageType) ltype;
+	if (st !is null && st.type == ir.StorageType.Kind.Scope && mutableIndirection(ltype) && isAssign(exp)) {
+		throw makeNoEscapeScope(exp.location);
 	}
 
 
