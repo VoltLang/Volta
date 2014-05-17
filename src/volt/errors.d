@@ -25,6 +25,14 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeNoEscapeScope(Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	auto es = new CompilerError(loc, "assignment escapes scope type.");
+	es.file = file;
+	es.line = line;
+	return es;
+}
+
 CompilerException makeNoReturnScope(Location loc, string file = __FILE__, const int line = __LINE__)
 {
 	auto nrs = new CompilerError(loc, "returning scope type.");
