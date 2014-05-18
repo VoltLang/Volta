@@ -248,10 +248,11 @@ public:
 			if (_case.statements.statements.length == 0) {
 				continue;
 			}
-			caseBlocks[i] = block = new Block(currentBlock);
+			block = new Block(currentBlock);
 			breakBlocks ~= block;
 			accept(_case.statements, this);
 			breakBlocks = breakBlocks[0 .. $-1];
+			caseBlocks[i] = block;
 		}
 		block = new Block(caseBlocks);
 		return ContinueParent;
