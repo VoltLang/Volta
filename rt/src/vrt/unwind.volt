@@ -36,13 +36,27 @@ alias _Unwind_Exception_Cleanup_Fn = void function(_Unwind_Reason_Code, _Unwind_
 
 // XXX The IA-64 ABI says that this structure must be double-word aligned.
 // We probably don't follow that.
-struct _Unwind_Exception
-{
-	ulong exception_class;
-	_Unwind_Exception_Cleanup_Fn exception_cleanup;
+version (Windows) {
+	struct _Unwind_Exception
+	{
+		ulong exception_class;
+		_Unwind_Exception_Cleanup_Fn exception_cleanup;
+		void* pad1;
 
-	uintptr_t private_1;
-	uintptr_t private_2;
+		uintptr_t private_1;
+		void* pad2;
+		uintptr_t private_2;
+		void* pad3;
+	}
+} else {
+	struct _Unwind_Exception
+	{
+		ulong exception_class;
+		_Unwind_Exception_Cleanup_Fn exception_cleanup;
+
+		uintptr_t private_1;
+		uintptr_t private_2;
+	}
 }
 
 struct _Unwind_Context {}
