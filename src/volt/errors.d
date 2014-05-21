@@ -25,6 +25,14 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeCallingWithoutInstance(Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	auto wi = new CompilerError(loc, "calling instanced function without valid instance.");
+	wi.file = file;
+	wi.line = line;
+	return wi;
+}
+
 CompilerException makeNoEscapeScope(Location loc, string file = __FILE__, const int line = __LINE__)
 {
 	auto es = new CompilerError(loc, "assignment escapes scope type.");
