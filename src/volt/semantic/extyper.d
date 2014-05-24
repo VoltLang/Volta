@@ -1058,14 +1058,11 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 bool replaceExpReferenceIfNeeded(Context ctx,
                                  ir.Type referredType, ref ir.Exp exp, ir.ExpReference eRef)
 {
-	bool doNotPropertyRewrite = false;
 	// Hold onto your hats because this is ugly!
 	// But this needs to be run after this function has early out
 	// or rewritten the lookup.
 	scope (success) {
-		if (!doNotPropertyRewrite) {
-			propertyToCallIfNeeded(exp.location, ctx.lp, exp, ctx.current, null);
-		}
+		propertyToCallIfNeeded(exp.location, ctx.lp, exp, ctx.current, null);
 	}
 
 	// For vtable and property.
@@ -1158,7 +1155,6 @@ bool replaceExpReferenceIfNeeded(Context ctx,
 
 	if (eRef.decl.declKind == ir.Declaration.Kind.Function) {
 		exp = buildCreateDelegate(eRef.location, thisRef, eRef);
-		doNotPropertyRewrite = true;
 	} else {
 		if (nestedLookup !is null) {
 			exp = nestedLookup; 

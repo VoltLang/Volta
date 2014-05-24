@@ -43,9 +43,13 @@ ir.CallableType propertyToCallIfNeeded(Location loc, LanguagePass lp, ref ir.Exp
 			return null;
 		}
 		if (asCallable.isProperty && asCallable.params.length == 0) {
+			auto oldPostfix = cast(ir.Postfix) e;
 			auto postfix = buildCall(loc, e, null);
 			postfix.isImplicitPropertyCall = true;
 			e = postfix;
+			if (oldPostfix !is null) {
+				oldPostfix.isImplicitPropertyCall = true;
+			}
 			return asCallable;
 		}
 	}
