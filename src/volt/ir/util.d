@@ -444,7 +444,7 @@ ir.Constant buildConstantInt(Location loc, int value)
 {
 	auto c = new ir.Constant();
 	c.location = loc;
-	c._int = value;
+	c.u._int = value;
 	c.type = buildInt(loc);
 
 	return c;
@@ -454,7 +454,7 @@ ir.Constant buildConstantUint(Location loc, uint value)
 {
 	auto c = new ir.Constant();
 	c.location = loc;
-	c._uint = value;
+	c.u._uint = value;
 	c.type = buildUint(loc);
 
 	return c;
@@ -464,7 +464,7 @@ ir.Constant buildConstantLong(Location loc, long value)
 {
 	auto c = new ir.Constant();
 	c.location = loc;
-	c._long = value;
+	c.u._long = value;
 	c.type = buildLong(loc);
 
 	return c;
@@ -474,7 +474,7 @@ ir.Constant buildConstantUlong(Location loc, ulong value)
 {
 	auto c = new ir.Constant();
 	c.location = loc;
-	c._ulong = value;
+	c.u._ulong = value;
 	c.type = buildUlong(loc);
 
 	return c;
@@ -487,7 +487,7 @@ ir.Constant buildConstantBool(Location loc, bool val)
 {
 	auto c = new ir.Constant();
 	c.location = loc;
-	c._bool = val;
+	c.u._bool = val;
 	c.type = buildBool(loc);
 
 	return c;
@@ -497,7 +497,7 @@ ir.Constant buildConstantNull(Location loc, ir.Type base)
 {
 	auto c = new ir.Constant();
 	c.location = loc;
-	c._pointer = null;
+	c.u._pointer = null;
 	c.type = copyTypeSmart(loc, base);
 	c.type.location = loc;
 	c.isNull = true;
@@ -514,9 +514,9 @@ ir.Constant buildConstantSizeT(Location loc, LanguagePass lp, int val)
 	auto prim = lp.settings.getSizeT(loc);
 	// Uh, I assume just c._uint = val would work, but I can't test it here, so just be safe.
 	if (prim.type == ir.PrimitiveType.Kind.Ulong) {
-		c._ulong = val;
+		c.u._ulong = val;
 	} else {
-		c._uint = val;
+		c.u._uint = val;
 	}
 	c.type = prim;
 	return c;
@@ -557,7 +557,7 @@ ir.Constant buildConstantEnum(Location loc, ir.EnumDeclaration ed)
 	auto cnst = cast(ir.Constant) ed.assign;
 	auto c = new ir.Constant();
 	c.location = loc;
-	c._ulong = cnst._ulong;
+	c.u._ulong = cnst.u._ulong;
 	c._string = cnst._string;
 	c.arrayData = cnst.arrayData;
 	c.type = copyTypeSmart(loc, ed.type);

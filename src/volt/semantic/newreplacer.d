@@ -149,7 +149,7 @@ ir.Exp createAllocDgCall(ir.Variable allocDgVar, LanguagePass lp, Location locat
 
 	auto countConst = new ir.Constant();
 	countConst.location = location;
-	countConst._ulong = 0;
+	countConst.u._ulong = 0;
 	countConst.type = lp.settings.getSizeT(location);
 
 	auto pfixCall = new ir.Postfix();

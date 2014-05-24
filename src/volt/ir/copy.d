@@ -17,7 +17,7 @@ ir.Constant copy(ir.Constant cnst)
 	auto c = new ir.Constant();
 	c.location = cnst.location;
 	c.type = cnst.type !is null ? copyType(cnst.type) : null;
-	c._ulong = cnst._ulong;
+	c.u._ulong = cnst.u._ulong;
 	c._string = cnst._string;
 	c.isNull = cnst.isNull;
 	c.arrayData = cnst.arrayData.idup;

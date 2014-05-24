@@ -1520,11 +1520,11 @@ public:
 		auto asPrim = cast(ir.PrimitiveType) constant.type;
 		if (asPrim !is null) {
 			switch (asPrim.type) with (ir.PrimitiveType.Kind) {
-			case Bool: wf(to!string(constant._bool)); break;
-			case Uint: wf(constant._uint); break;
-			case Int: wf(constant._int); break;
-			case Long: wf(constant._long); break;
-			case Ulong: wf(constant._ulong); break;
+			case Bool: wf(to!string(constant.u._bool)); break;
+			case Uint: wf(constant.u._uint); break;
+			case Int: wf(constant.u._int); break;
+			case Long: wf(constant.u._long); break;
+			case Ulong: wf(constant.u._ulong); break;
 			default: wf(constant._string); break;
 			}
 		} else {

@@ -215,7 +215,7 @@ public:
 class Constant : Exp
 {
 public:
-	union
+	union U
 	{
 		int _int;
 		uint _uint;
@@ -226,6 +226,7 @@ public:
 		bool _bool;
 		void* _pointer;
 	}
+	U u;
 	string _string;
 	bool isNull;  // Turns out checking for non-truth can be hard.
 	immutable(void)[] arrayData;

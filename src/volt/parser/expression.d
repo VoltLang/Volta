@@ -222,7 +222,7 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		break;
 	case intir.PrimaryExp.Type.Null:
 		auto c = new ir.Constant();
-		c._pointer = null;
+		c.u._pointer = null;
 		c.type = new ir.NullType();
 		c.isNull = true;
 		c.type.location = primary.location;
@@ -237,14 +237,14 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		break;
 	case intir.PrimaryExp.Type.True:
 		auto c = new ir.Constant();
-		c._bool = true;
+		c.u._bool = true;
 		c.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
 		c.type.location = primary.location;
 		exp = c;
 		break;
 	case intir.PrimaryExp.Type.False:
 		auto c = new ir.Constant();
-		c._bool = false;
+		c.u._bool = false;
 		c.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
 		c.type.location = primary.location;
 		exp = c;
@@ -281,7 +281,7 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 			c.type.location = primary.location;
 			auto str = cast(string) c.arrayData;
 			size_t index;
-			c._ulong = decodeFront(str, index);
+			c.u._ulong = decodeFront(str, index);
 		}
 		exp = c;
 		break;
@@ -299,9 +299,9 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 			c._string = c._string[0 .. $-1];
 		}
 		if (base == ir.PrimitiveType.Kind.Float) {
-			c._float = to!float(c._string);
+			c.u._float = to!float(c._string);
 		} else {
-			c._double = to!double(c._string);
+			c.u._double = to!double(c._string);
 		}
 		c.type = new ir.PrimitiveType(base);
 		c.type.location = primary.location;
@@ -342,24 +342,24 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 			if (v > uint.max) {
 				if (!explicitBase)
 					base = ir.PrimitiveType.Kind.Long;
-				c._long = cast(long)v;
+				c.u._long = cast(long)v;
 			} else {
 				if (!explicitBase)
 					base = ir.PrimitiveType.Kind.Int;
-				c._int = cast(int)v;
+				c.u._int = cast(int)v;
 			}
 		} else {
 			switch (base) with (ir.PrimitiveType.Kind) {
 			case Int:
 				try {
-					c._int = to!int(c._string);
+					c.u._int = to!int(c._string);
 				} catch (ConvOverflowException) {
 					if (explicitBase) {
 						throw makeInvalidIntegerLiteral(c.location);
 					}
 					base = Long;
 					try {
-						c._long = to!long(c._string);
+						c.u._long = to!long(c._string);
 					} catch (ConvOverflowException) {
 						throw makeInvalidIntegerLiteral(c.location);
 					}
@@ -367,24 +367,24 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 				break;
 			case Uint:
 				try {
-					c._uint = to!uint(c._string);
+					c.u._uint = to!uint(c._string);
 				} catch (ConvOverflowException) {
 					if (explicitBase) {
 						throw makeInvalidIntegerLiteral(c.location);
 					}
 					base = Ulong;
 					try {
-						c._ulong = to!ulong(c._string);
+						c.u._ulong = to!ulong(c._string);
 					} catch (ConvOverflowException) {
 						throw makeInvalidIntegerLiteral(c.location);
 					}
 				}
 				break;
 			case Long:
-				c._long = to!long(c._string);
+				c.u._long = to!long(c._string);
 				break;
 			case Ulong:
-				c._ulong = to!ulong(c._string);
+				c.u._ulong = to!ulong(c._string);
 				break;
 			default:
 				assert(false);

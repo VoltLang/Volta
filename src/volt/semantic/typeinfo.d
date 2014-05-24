@@ -94,7 +94,7 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Scope current, ir.Type 
 	int typeTag = typeToRuntimeConstant(lp, current, type);
 	auto typeTagConstant = new ir.Constant();
 	typeTagConstant.location = type.location;
-	typeTagConstant._int = typeTag;
+	typeTagConstant.u._int = typeTag;
 	typeTagConstant.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
 	typeTagConstant.type.location = type.location;
 
@@ -107,7 +107,7 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Scope current, ir.Type 
 	bool mindirection = mutableIndirection(type);
 	auto mindirectionConstant = new ir.Constant();
 	mindirectionConstant.location = type.location;
-	mindirectionConstant._bool = mindirection;
+	mindirectionConstant.u._bool = mindirection;
 	mindirectionConstant.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
 	mindirectionConstant.type.location = type.location;
 

@@ -109,7 +109,7 @@ ir.Constant evaluateUnary(LanguagePass lp, ir.Scope current, ir.Unary unary)
 ir.Constant evaluateUnaryNot(LanguagePass lp, ir.Scope current, ir.Unary unary)
 {
 	auto constant = evaluate(lp, current, unary.value);
-	return buildConstantBool(unary.location, !constant._bool);
+	return buildConstantBool(unary.location, !constant.u._bool);
 }
 
 ir.Constant evaluateUnaryMinus(LanguagePass lp, ir.Scope current, ir.Unary unary)
@@ -117,7 +117,7 @@ ir.Constant evaluateUnaryMinus(LanguagePass lp, ir.Scope current, ir.Unary unary
 	auto constant = evaluate(lp, current, unary.value);
 	auto prim = cast(ir.PrimitiveType) constant.type;
 	assert(prim.type == ir.PrimitiveType.Kind.Int);
-	constant._int = constant._int * -1;
+	constant.u._int = constant.u._int * -1;
 	constant._string = "-" ~ constant._string;
 	return constant;
 }
@@ -152,62 +152,62 @@ ir.Constant evaluateBinOpAdd(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 {
 	auto left = evaluate(lp, current, binop.left);
 	auto right = evaluate(lp, current, binop.right);
-	return buildConstantInt(binop.location, left._int + right._int);
+	return buildConstantInt(binop.location, left.u._int + right.u._int);
 }
 
 ir.Constant evaluateBinOpAnd(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 {
 	auto left = evaluate(lp, current, binop.left);
 	auto right = evaluate(lp, current, binop.right);
-	return buildConstantInt(binop.location, left._int & right._int);
+	return buildConstantInt(binop.location, left.u._int & right.u._int);
 }
 
 ir.Constant evaluateBinOpOr(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 {
 	auto left = evaluate(lp, current, binop.left);
 	auto right = evaluate(lp, current, binop.right);
-	return buildConstantInt(binop.location, left._int | right._int);
+	return buildConstantInt(binop.location, left.u._int | right.u._int);
 }
 
 ir.Constant evaluateBinOpLS(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 {
 	auto left = evaluate(lp, current, binop.left);
 	auto right = evaluate(lp, current, binop.right);
-	return buildConstantInt(binop.location, left._int << right._int);
+	return buildConstantInt(binop.location, left.u._int << right.u._int);
 }
 
 ir.Constant evaluateBinOpRS(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 {
 	auto left = evaluate(lp, current, binop.left);
 	auto right = evaluate(lp, current, binop.right);
-	return buildConstantInt(binop.location, left._int >> right._int);
+	return buildConstantInt(binop.location, left.u._int >> right.u._int);
 }
 
 ir.Constant evaluateBinOpEqual(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 {
 	auto left = evaluate(lp, current, binop.left);
 	auto right = evaluate(lp, current, binop.right);
-	return buildConstantBool(binop.location, left._int == right._int);
+	return buildConstantBool(binop.location, left.u._int == right.u._int);
 }
 
 ir.Constant evaluateBinOpGreaterEqual(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 {
 	auto left = evaluate(lp, current, binop.left);
 	auto right = evaluate(lp, current, binop.right);
-	return buildConstantBool(binop.location, left._int >= right._int);
+	return buildConstantBool(binop.location, left.u._int >= right.u._int);
 }
 
 ir.Constant evaluateBinOpAndAnd(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 {
 	auto left = evaluate(lp, current, binop.left);
 	auto right = evaluate(lp, current, binop.right);
-	return buildConstantBool(binop.location, left._bool && right._bool);
+	return buildConstantBool(binop.location, left.u._bool && right.u._bool);
 }
 
 ir.Constant evaluateBinOpOrOr(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 {
 	auto left = evaluate(lp, current, binop.left);
 	auto right = evaluate(lp, current, binop.right);
-	return buildConstantBool(binop.location, left._bool || right._bool);
+	return buildConstantBool(binop.location, left.u._bool || right.u._bool);
 }
 

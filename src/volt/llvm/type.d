@@ -137,24 +137,24 @@ public:
 	{
 		if (floating) {
 			if (bits == 32) {
-				return LLVMConstReal(llvmType, cnst._float);
+				return LLVMConstReal(llvmType, cnst.u._float);
 			} else {
 				assert(bits == 64);
-				return LLVMConstReal(llvmType, cnst._double);
+				return LLVMConstReal(llvmType, cnst.u._double);
 			}
 		}
 
 		long val;
 		if (boolean) {
-			if (cnst._bool)
+			if (cnst.u._bool)
 				val = 1;
 		} else if (signed) {
-			val = cnst._long;
+			val = cnst.u._long;
 		} else if (bits == 8) {
 			assert(cnst.arrayData.length == 1);
 			val = (cast(ubyte[])cnst.arrayData)[0];
 		} else {
-			val = cnst._ulong;
+			val = cnst.u._ulong;
 		}
 
 		return LLVMConstInt(llvmType, val, signed);

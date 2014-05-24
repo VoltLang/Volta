@@ -648,13 +648,13 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 		bool inUnsignedRange(ulong max)
 		{
 			if (primitive.type == Int) {
-				return constant._int >= 0 && cast(ulong) constant._int <= max;
+				return constant.u._int >= 0 && cast(ulong) constant.u._int <= max;
 			} else if (primitive.type == Uint) {
-				return constant._uint <= max;
+				return constant.u._uint <= max;
 			} else if (primitive.type == Long) {
-				return constant._long >= 0 && cast(ulong) constant._long <= max;
+				return constant.u._long >= 0 && cast(ulong) constant.u._long <= max;
 			} else if (primitive.type == Ulong) {
-				return constant._ulong <= max;
+				return constant.u._ulong <= max;
 			} else if (primitive.type == Float || primitive.type == Double) {
 				return false;
 			} else {
@@ -665,19 +665,19 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 		bool inSignedRange(long min, long max)
 		{
 			if (primitive.type == Int) {
-				return constant._int >= min && constant._int <= max;
+				return constant.u._int >= min && constant.u._int <= max;
 			} else if (primitive.type == Uint) {
-				return constant._uint <= cast(uint) max;
+				return constant.u._uint <= cast(uint) max;
 			} else if (primitive.type == Long) {
-				return constant._long >= min && constant._long <= max;
+				return constant.u._long >= min && constant.u._long <= max;
 			} else if (primitive.type == Ulong) {
-				return constant._ulong <= cast(ulong) max;
+				return constant.u._ulong <= cast(ulong) max;
 			} else if (primitive.type == Float || primitive.type == Double) {
 				return false;
 			} else if (primitive.type == Char) {
 				return true;
 			} else if (primitive.type == Dchar) {
-				return constant._uint < cast(uint) max;
+				return constant.u._uint < cast(uint) max;
 			} else {
 				assert(false);
 			}
@@ -686,17 +686,17 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 		bool inFPRange(T)()
 		{
 			if (primitive.type == Int) {
-				return constant._int >= T.min_normal && constant._int <= T.max;
+				return constant.u._int >= T.min_normal && constant.u._int <= T.max;
 			} else if (primitive.type == Uint) {
-				return constant._uint >= T.min_normal && constant._uint <= T.max;
+				return constant.u._uint >= T.min_normal && constant.u._uint <= T.max;
 			} else if (primitive.type == Long) {
-				return constant._long >= T.min_normal && constant._long <= T.max;
+				return constant.u._long >= T.min_normal && constant.u._long <= T.max;
 			} else if (primitive.type == Ulong) {
-				return constant._ulong >= T.min_normal && constant._ulong <= T.max;
+				return constant.u._ulong >= T.min_normal && constant.u._ulong <= T.max;
 			} else if (primitive.type == Float) {
-				return constant._float >= T.min_normal && constant._float <= T.max;
+				return constant.u._float >= T.min_normal && constant.u._float <= T.max;
 			} else if (primitive.type == Double) {
-				return constant._double >= T.min_normal && constant._double <= T.max;
+				return constant.u._double >= T.min_normal && constant.u._double <= T.max;
 			} else {
 				assert(false);
 			}
@@ -894,7 +894,7 @@ int typeToRuntimeConstant(LanguagePass lp, ir.Scope current, ir.Type type)
 	{
 		assert(ed.assign !is null);
 		auto constant = .evaluate(lp, current, ed.assign);
-		return constant._int;
+		return constant.u._int;
 	}
 
 	type = realType(type);

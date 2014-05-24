@@ -341,7 +341,7 @@ private:
 		if (constant is null) {
 			return false;
 		}
-		return constant._pointer !is null;
+		return constant.u._pointer !is null;
 	}
 
 	/// Returns true if the given expression evaluates as a constant false.
@@ -351,7 +351,7 @@ private:
 		if (constant is null) {
 			return false;
 		}
-		return constant._pointer is null;
+		return constant.u._pointer is null;
 	}
 
 	/// Convenience function for building blocks for loops.

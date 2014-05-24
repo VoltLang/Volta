@@ -2103,10 +2103,10 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 								}
 								switch (sz) {
 								case 8:
-									longArrayData ~= constant._ulong;
+									longArrayData ~= constant.u._ulong;
 									break;
 								default:
-									intArrayData ~= constant._uint;
+									intArrayData ~= constant.u._uint;
 									break;
 								}
 								return;
@@ -2945,7 +2945,7 @@ public:
 		if ((cond is null || msg is null) || (!isBool(cond.type) || !isString(msg.type))) {
 			throw panicUnhandled(as, "non simple static asserts (bool and string literal only).");
 		}
-		if (!cond._bool) {
+		if (!cond.u._bool) {
 			throw makeStaticAssert(as, msg._string);
 		}
 		return Continue;
