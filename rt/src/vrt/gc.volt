@@ -59,6 +59,8 @@ version (Emscripten) {
 
 }
 
+extern(C) void memset(void*, int, size_t);
+
 extern(C) void vrt_gc_init()
 {
 	GC_init();
@@ -77,9 +79,10 @@ extern(C) AllocDg vrt_gc_get_alloc_dg()
 	return *cast(AllocDg*)&structToDg;
 }
 
-extern(C) void vrt_gc_finalize_class(void* obj, void* client_data)
+extern(C) void vrt_gc_finalize_class(void* objPtr, void* client_data)
 {
-	(cast(Object)obj).__dtor();
+	auto obj = cast(Object)objPtr;
+	obj.__dtor();
 	return;
 }
 
@@ -119,6 +122,7 @@ void* gcMalloc(TypeInfo typeinfo, size_t count, void *ptr)
 		memory = GC_malloc(size);
 	} else {
 		memory = GC_malloc_atomic(size);
+		memset(memory, 0, size);
 	}
 
 	if (count == cast(size_t) -1) {
