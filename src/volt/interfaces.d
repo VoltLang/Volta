@@ -484,6 +484,22 @@ public:
 	string[] stdFiles; ///< The --stdlib-file arguements.
 	string[] stdIncludePaths; ///< The --stdlib-I arguments.
 
+	struct Alignments
+	{
+		size_t int1;      // bool
+		size_t int8;      // byte, ubyte, char
+		size_t int16;     // short, ushort, wchar
+		size_t int32;     // int, uint, dchar
+		size_t int64;     // long, ulong
+		size_t float32;   // float
+		size_t float64;   // double
+		size_t ptr;       // pointer, class ref
+		size_t aggregate; // struct, class, delegate
+	}
+
+	Alignments alignment;
+
+
 private:
 	/// If the ident exists and is true, it's set, if false it's reserved.
 	bool[string] mVersionIdentifiers;
@@ -500,6 +516,7 @@ public:
 	final void processConfigs()
 	{
 		setVersionsFromOptions();
+		setAligmentsFromOptions();
 		replaceMacros();
 	}
 
@@ -515,6 +532,45 @@ public:
 			f = replaceEscapes(f);
 		foreach (ref f; stdIncludePaths)
 			f = replaceEscapes(f);
+	}
+
+	final void setAligmentsFromOptions()
+	{
+		final switch (arch) with (Arch) {
+		case X86:
+			alignment.int1 = 1;
+			alignment.int8 = 1;
+			alignment.int16 = 2;
+			alignment.int32 = 4;
+			alignment.int64 = 4; // abi 4, prefered 8
+			alignment.float32 = 4;
+			alignment.float64 = 4; // abi 4, prefered 8
+			alignment.ptr = 4;
+			alignment.aggregate = 8;
+			break;
+		case X86_64:
+			alignment.int1 = 1;
+			alignment.int8 = 1;
+			alignment.int16 = 2;
+			alignment.int32 = 4;
+			alignment.int64 = 8;
+			alignment.float32 = 4;
+			alignment.float64 = 8;
+			alignment.ptr = 8;
+			alignment.aggregate = 8;
+			break;
+		case LE32:
+			alignment.int1 = 1;
+			alignment.int8 = 1;
+			alignment.int16 = 2;
+			alignment.int32 = 4;
+			alignment.int64 = 8;
+			alignment.float32 = 4;
+			alignment.float64 = 8;
+			alignment.ptr = 4;
+			alignment.aggregate = 8;
+			break;
+		}
 	}
 
 	final void setVersionsFromOptions()

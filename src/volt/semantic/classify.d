@@ -109,6 +109,72 @@ int size(Location location, LanguagePass lp, ir.Node node)
 	}
 }
 
+size_t alignment(LanguagePass lp, ir.PrimitiveType.Kind kind)
+{
+	final switch (kind) with (ir.PrimitiveType.Kind) {
+	case Void: return lp.settings.alignment.int8;
+	case Bool: return lp.settings.alignment.int1;
+	case Char: return lp.settings.alignment.int8;
+	case Byte: return lp.settings.alignment.int8;
+	case Ubyte: return lp.settings.alignment.int8;
+	case Short: return lp.settings.alignment.int16;
+	case Ushort: return lp.settings.alignment.int16;
+	case Wchar: return lp.settings.alignment.int16;
+	case Int: return lp.settings.alignment.int32;
+	case Uint: return lp.settings.alignment.int32;
+	case Dchar: return lp.settings.alignment.int32;
+	case Long: return lp.settings.alignment.int64;
+	case Ulong: return lp.settings.alignment.int64;
+	case Float: return lp.settings.alignment.float32;
+	case Double: return lp.settings.alignment.float64;
+	case Real: return lp.settings.alignment.float64;
+	}
+}
+
+size_t alignment(Location location, LanguagePass lp, ir.Type node)
+{
+	switch (node.nodeType) with (ir.NodeType) {
+	case ArrayType:
+	case DelegateType:
+	case Struct:
+		return lp.settings.alignment.aggregate;
+	case AAType:
+	case PointerType:
+	case FunctionType:
+	case Class:
+		return lp.settings.alignment.ptr;
+	case Union:
+		return lp.settings.alignment.int8; // Matches implementation
+	case PrimitiveType:
+		auto asPrim = cast(ir.PrimitiveType) node;
+		assert(asPrim !is null);
+		return alignment(lp, asPrim.type);
+	case Enum:
+		auto asEnum = cast(ir.Enum) node;
+		assert(asEnum !is null);
+		lp.resolve(asEnum);
+		return alignment(location, lp, asEnum.base);
+	case Variable:
+		auto asVariable = cast(ir.Variable) node;
+		assert(asVariable !is null);
+		return alignment(location, lp, asVariable.type);
+	case TypeReference:
+		auto asTR = cast(ir.TypeReference) node;
+		assert(asTR !is null);
+		return alignment(location, lp, asTR.type);
+	case StorageType:
+		auto asST = cast(ir.StorageType) node;
+		assert(asST !is null);
+		return alignment(location, lp, asST.base);
+	case StaticArrayType:
+		auto _static = cast(ir.StaticArrayType) node;
+		assert(_static !is null);
+		return alignment(location, lp, _static.base) * cast(int)_static.length;
+	default:
+		throw panicUnhandled(node, to!string(node.nodeType));
+	}
+}
+
 /**
  * A type without mutable indirection is a pure value type --
  * it cannot mutate any other memory than its own, or is composed
@@ -419,7 +485,13 @@ int structSize(Location location, LanguagePass lp, ir.Struct s)
 			continue;
 		}
 
-		sizeAccumulator += size(location, lp, node);
+		int a = cast(int)alignment(location, lp, asVar.type);
+		int size = .size(location, lp, asVar.type);
+		if (sizeAccumulator % a) {
+			sizeAccumulator += (a - (sizeAccumulator % a)) + size;
+		} else {
+			sizeAccumulator += size;
+		}
 	}
 	return sizeAccumulator;
 }
