@@ -91,7 +91,7 @@ int size(Location location, LanguagePass lp, ir.Node node)
 	case ArrayType:
 		return lp.settings.isVersionSet("V_P64") ? 16 : 8;
 	case AAType:
-		return lp.settings.isVersionSet("V_P64") ? 16 : 8;
+		return lp.settings.isVersionSet("V_P64") ? 8 : 4;
 	case TypeReference:
 		auto asTR = cast(ir.TypeReference) node;
 		assert(asTR !is null);
