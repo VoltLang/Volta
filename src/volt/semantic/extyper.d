@@ -1895,7 +1895,7 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 	}
 
 	auto st = cast(ir.StorageType) ltype;
-	if (st !is null && st.type == ir.StorageType.Kind.Scope && mutableIndirection(ltype) && isAssign(exp)) {
+	if (st !is null && st.type == ir.StorageType.Kind.Scope && mutableIndirection(ltype) && isAssign(exp) && !binop.isInternalNestedAssign) {
 		throw makeNoEscapeScope(exp.location);
 	}
 
@@ -2076,7 +2076,9 @@ void handleNestedParams(Context ctx, ir.Function fn)
 			auto l = buildAccess(param.location, buildExpReference(np.location, np, np.name), param.name);
 			auto r = buildExpReference(param.location, param, param.name);
 			r.doNotRewriteAsNestedLookup = true;
-			ir.Node n = buildExpStat(l.location, buildAssign(l.location, l, r));
+			auto bop = buildAssign(l.location, l, r);
+			bop.isInternalNestedAssign = true;
+			ir.Node n = buildExpStat(l.location, bop);
 			if (fn.nestedHiddenParameter !is null) {
 				// Nested function.
 				fn._body.statements = n ~ fn._body.statements;
@@ -3168,7 +3170,7 @@ public:
 	override Status leave(ref ir.Exp e, ir.BinOp bin)
 	{
 		rewritePropertyFunctionAssign(ctx, e, bin);
-		// If rewritten.
+		// If not rewritten.
 		if (e is bin) {
 			extypeBinOp(ctx, bin, e);
 		}

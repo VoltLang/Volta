@@ -126,6 +126,8 @@ public:
 	Exp left;  ///< The left hand side of the expression.
 	Exp right;  ///< The right hand side of the expression.
 
+	bool isInternalNestedAssign;  ///< Is an assignment generated for passing context to a closure.
+
 public:
 	this() { super(NodeType.BinOp); }
 }
