@@ -519,7 +519,7 @@ ir.Type getPostfixSliceType(LanguagePass lp, ir.Postfix postfix, ir.Scope curren
 	ir.Type base;
 	ir.ArrayType array;
 
-	auto type = getExpType(lp, postfix.child, currentScope);
+	auto type = realType(getExpType(lp, postfix.child, currentScope), true, true);
 	if (type.nodeType == ir.NodeType.PointerType) {
 		auto pointer = cast(ir.PointerType) type;
 		assert(pointer !is null);
