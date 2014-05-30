@@ -2925,6 +2925,9 @@ public:
 				throw makeNoReturnScope(ret.location);
 			}
 			extypeAssign(ctx, ret.exp, fn.type.ret);
+		} else if (!isVoid(realType(fn.type.ret))) {
+			// No return expression on function returning a value.
+			throw makeReturnValueExpected(ret.location, fn.type.ret);
 		}
 
 		return ContinueParent;

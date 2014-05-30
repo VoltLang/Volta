@@ -57,6 +57,12 @@ CompilerException makeNoReturnScope(Location loc, string file = __FILE__, const 
 	return nrs;
 }
 
+CompilerException makeReturnValueExpected(Location loc, ir.Type type, string file = __FILE__, const int line = __LINE__)
+{
+	string emsg = format("return value of type '%s' expected", type.errorString);
+	return new CompilerError(loc, emsg, file, line);
+}
+
 CompilerException makeNoLoadBitcodeFile(string filename, string msg, string file = __FILE__, const int line = __LINE__)
 {
 	string err;
