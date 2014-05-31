@@ -329,9 +329,10 @@ public:
 		 */
 		LLVMMoveBasicBlockAfter(landingPad, state.currentBlock);
 		state.startBlock(landingPad);
-		auto pf = LLVMBuildBitCast(state.builder, state.ehPersonalityFunc, state.voidPtrType.llvmType, "");
 		auto lp = LLVMBuildLandingPad(
-			state.builder, state.ehLandingType, pf, cast(int)t.catchVars.length, "");
+			state.builder, state.ehLandingType,
+			state.ehPersonalityFunc,
+			cast(int)t.catchVars.length, "");
 		auto e = LLVMBuildExtractValue(state.builder, lp, 0, "");
 		LLVMBuildStore(state.builder, e, eVar);
 		auto i = LLVMBuildExtractValue(state.builder, lp, 1, "");
