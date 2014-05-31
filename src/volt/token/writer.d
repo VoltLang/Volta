@@ -15,6 +15,7 @@ final class TokenWriter
 {
 private:
 	Source mSource;
+	size_t mLength;
 	Token[] mTokens;
 
 public:
@@ -47,8 +48,17 @@ public:
 	 *   None.
 	 */
 	void addToken(Token token)
-	{
-		mTokens ~= token;
+	in {
+		assert(token !is null);
+	}
+	body {
+		if (mTokens.length <= mLength) {
+			auto tokens = new Token[](mLength * 2 + 3);
+			tokens[0 .. mLength] = mTokens[];
+			mTokens = tokens;
+		}
+
+		mTokens[mLength++] = token;
 		token.location.length = token.value.length;
 	}
 
@@ -60,8 +70,11 @@ public:
 	 *   mTokens is shortened by one.
 	 */
 	void pop()
-	{
-		mTokens = mTokens[0 .. $-1];
+	in {
+		assert(mLength > 0);
+	}
+	body {
+		mTokens[--mLength] = null;
 	}
 
 	/**
@@ -71,8 +84,11 @@ public:
 	 *   None.
 	 */
 	Token lastAdded()
-	{
-		return mTokens[$ - 1];
+	in {
+		assert(mLength > 0);
+	}
+	body {
+		return mTokens[mLength - 1];
 	}
 
 	/**
@@ -86,8 +102,11 @@ public:
 	 */
 	TokenStream getStream()
 	{
-		auto tstream = new TokenStream(mTokens);
+		auto ret = new Token[](mLength);
+		ret[] = mTokens[0 .. mLength];
 		initTokenArray();
+
+		auto tstream = new TokenStream(ret);
 		return tstream;
 	}
 
@@ -118,6 +137,9 @@ private:
 		start.value = "START";
 
 		// Reset the token array
-		mTokens = [start];
+		mTokens = new Token[](1);
+		mTokens[0] = start;
+		mLength = 1;
+		return;
 	}
 }
