@@ -44,7 +44,6 @@ extern(C) void vrt_eh_delete(
 	_Unwind_Reason_Code reason,
 	_Unwind_Exception* exceptionObject)
 {
-	return;
 }
 
 /**
@@ -71,7 +70,6 @@ extern(C) void vrt_eh_throw_slice_error(size_t length, size_t targetSize, const(
 	if ((length % targetSize) != 0) {
 		vrt_eh_throw(new object.Error("invalid array cast"), file, line);
 	}
-	return;
 }
 
 /**

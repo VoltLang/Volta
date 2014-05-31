@@ -224,8 +224,6 @@ private void vrt_aa_rotate_left(RedBlackTree* rbt, TreeNode* node)
 	}
 	right.left = node;
 	node.parent = right;
-
-	return;
 }
 
 private void vrt_aa_rotate_right(RedBlackTree* rbt, TreeNode* node)
@@ -238,8 +236,6 @@ private void vrt_aa_rotate_right(RedBlackTree* rbt, TreeNode* node)
 	}
 	left.right = node;
 	node.parent = left;
-
-	return;
 }
 
 private void vrt_aa_replace_node(RedBlackTree* rbt, TreeNode* old, TreeNode* new_)
@@ -257,8 +253,6 @@ private void vrt_aa_replace_node(RedBlackTree* rbt, TreeNode* old, TreeNode* new
 	if (new_ !is null) {
 		new_.parent = old.parent;
 	}
-
-	return;
 }
 
 extern(C) void vrt_aa_insert_primitive(void* rbtv, ulong key, void* value)
@@ -318,7 +312,6 @@ extern(C) void vrt_aa_insert_primitive(void* rbtv, ulong key, void* value)
 	rbt.length++;
 	vrt_aa_insert_case1(rbt, inserted_node);
 	//assert(vrt_aa_validate(rbt));
-	return;
 }
 
 
@@ -380,7 +373,6 @@ extern(C) void vrt_aa_insert_array(void* rbtv, void[] key, void* value)
 	rbt.length++;
 	vrt_aa_insert_case1(rbt, inserted_node);
 	//assert(vrt_aa_validate(rbt));
-	return;
 }
 
 
@@ -397,8 +389,6 @@ private void vrt_aa_insert_case1(RedBlackTree* rbt, TreeNode* node)
 		// ok, it is not the root node, check case 2
 		vrt_aa_insert_case2(rbt, node);
 	}
-
-	return;
 }
 
 private void vrt_aa_insert_case2(RedBlackTree* rbt, TreeNode* node)
@@ -408,8 +398,6 @@ private void vrt_aa_insert_case2(RedBlackTree* rbt, TreeNode* node)
 		// it is red!
 		vrt_aa_insert_case3(rbt, node);
 	}
-
-	return;
 }
 
 private void vrt_aa_insert_case3(RedBlackTree* rbt, TreeNode* node)
@@ -432,8 +420,6 @@ private void vrt_aa_insert_case3(RedBlackTree* rbt, TreeNode* node)
 		// continue with case 4
 		vrt_aa_insert_case4(rbt, node);
 	}
-
-	return;
 }
 
 private void vrt_aa_insert_case4(RedBlackTree* rbt, TreeNode* node)
@@ -455,7 +441,6 @@ private void vrt_aa_insert_case4(RedBlackTree* rbt, TreeNode* node)
 	}
 
 	vrt_aa_insert_case5(rbt, node);
-	return;
 }
 
 private void vrt_aa_insert_case5(RedBlackTree* rbt, TreeNode* node)
@@ -480,8 +465,6 @@ private void vrt_aa_insert_case5(RedBlackTree* rbt, TreeNode* node)
 		// error!
 		// assert(false);
 	}
-
-	return;
 }
 
 extern(C) bool vrt_aa_delete_primitive(void* rbtv, ulong key)
@@ -588,8 +571,6 @@ extern (C) void[] vrt_aa_get_values(void* rbtv)
 // aa.rehash
 extern (C) void vrt_aa_rehash(void* rbtv)
 {
-	// Dummy implementation.
-	return;
 }
 
 private void vrt_aa_walk(TreeNode* node, bool getKey, size_t argSize, ref void[] arr, ref size_t currentIndex)
@@ -605,7 +586,6 @@ private void vrt_aa_walk(TreeNode* node, bool getKey, size_t argSize, ref void[]
 		currentIndex += argSize;
 		vrt_aa_walk(node.right, getKey, argSize, ref arr, ref currentIndex);
 	}
-	return;
 }
 
 private void vrt_aa_delete_case1(RedBlackTree* rbt, TreeNode* node)
@@ -615,8 +595,6 @@ private void vrt_aa_delete_case1(RedBlackTree* rbt, TreeNode* node)
 	if (node.parent !is null) {
 		vrt_aa_delete_case2(rbt, node);
 	}
-    
-	return;
 }
 
 private void vrt_aa_delete_case2(RedBlackTree* rbt, TreeNode* node)
@@ -638,7 +616,6 @@ private void vrt_aa_delete_case2(RedBlackTree* rbt, TreeNode* node)
 	}
     
 	vrt_aa_delete_case3(rbt, node);
-	return;
 }
 
 private void vrt_aa_delete_case3(RedBlackTree* rbt, TreeNode* node)
@@ -656,8 +633,6 @@ private void vrt_aa_delete_case3(RedBlackTree* rbt, TreeNode* node)
 	} else {
 		vrt_aa_delete_case4(rbt, node);
 	}
-    
-	return;
 }
 
 private void vrt_aa_delete_case4(RedBlackTree* rbt, TreeNode* node)
@@ -674,8 +649,6 @@ private void vrt_aa_delete_case4(RedBlackTree* rbt, TreeNode* node)
 	} else {
 		vrt_aa_delete_case5(rbt, node);
 	}
-	
-	return;
 }
 
 private void vrt_aa_delete_case5(RedBlackTree* rbt, TreeNode* node)
@@ -698,7 +671,6 @@ private void vrt_aa_delete_case5(RedBlackTree* rbt, TreeNode* node)
 	}
 	
 	vrt_aa_delete_case6(rbt, node);
-	return;
 }
 
 private void vrt_aa_delete_case6(RedBlackTree* rbt, TreeNode* node)
@@ -713,8 +685,6 @@ private void vrt_aa_delete_case6(RedBlackTree* rbt, TreeNode* node)
 		sibling.left.red = false;
 		vrt_aa_rotate_right(rbt, node.parent);
 	}
-	
-	return;
 }
 
 private bool vrt_aa_node_is_red(TreeNode* node)
@@ -824,5 +794,3 @@ private bool vrt_aa_validate_rule5_impl(TreeNode* node, int previouse_black_node
 	return vrt_aa_validate_rule5_impl(node.left, previouse_black_nodes, black_nodes) &&
 		   vrt_aa_validate_rule5_impl(node.right, previouse_black_nodes, black_nodes);
 }
-
-

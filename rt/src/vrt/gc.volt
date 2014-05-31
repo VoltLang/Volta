@@ -6,7 +6,6 @@ module vrt.gc;
 import object;
 
 
-
 version (Emscripten) {
 
 	private extern(C) {
@@ -83,7 +82,6 @@ extern(C) void vrt_gc_finalize_class(void* objPtr, void* client_data)
 {
 	auto obj = cast(Object)objPtr;
 	obj.__dtor();
-	return;
 }
 
 extern(C) void vrt_gc_shutdown()
@@ -96,8 +94,6 @@ extern(C) void vrt_gc_shutdown()
 	version(Windows) {
 		GC_win32_free_heap();
 	}
-
-	return;
 }
 
 void* gcMalloc(TypeInfo typeinfo, size_t count, void *ptr)

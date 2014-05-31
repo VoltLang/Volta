@@ -17,7 +17,6 @@ global this()
 	// Currently all the init that is needed for the GC.
 	vrt_gc_init();
 	allocDg = vrt_gc_get_alloc_dg();
-	return;
 }
 
 /**

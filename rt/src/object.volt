@@ -271,4 +271,3 @@ extern(C) {
 	@mangledName("llvm.va_end") void __llvm_volt_va_end(void*);
 	@mangledName("llvm.eh.typeid.for") int __llvm_typeid_for(void*);
 }
-

@@ -21,4 +21,3 @@ extern(C) uint vrt_hash(void* ptr, size_t length)
 
 	return h;
 }
-
