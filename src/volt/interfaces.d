@@ -288,7 +288,7 @@ public:
 	{ if (!u.isResolved) doResolve(u); }
 
 	/**
-	 * Resovles a Class, making sure the parent is populated.
+	 * Resovles a Class, making sure the parent class is populated.
 	 */
 	final void resolve(ir.Class c)
 	{ if (!c.isResolved) doResolve(c); }
@@ -302,7 +302,8 @@ public:
 	/**
 	 * Actualize a Struct, making sure all its fields and methods
 	 * are populated, and any embedded structs (not referenced
-	 * via pointers) are resolved as well.
+	 * via pointers) are actualized as well. In short makes sure
+	 * that the struct size is fully known.
 	 */
 	final void actualize(ir.Struct s)
 	{ if (!s.isActualized) doActualize(s); }
