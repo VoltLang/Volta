@@ -222,7 +222,7 @@ extern(C) {
  */
 extern(C) {
 	void vrt_eh_throw(Throwable, const(char)* file, size_t line);
-	void vrt_eh_throw_slice_error(size_t, size_t, const(char)*, size_t);
+	void vrt_eh_throw_slice_error(const(char)*, size_t);
 	void vrt_eh_personality_v0();
 }
 

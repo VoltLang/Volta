@@ -1031,8 +1031,11 @@ void replaceArrayCastIfNeeded(Location loc, LanguagePass lp, ir.Scope current, i
 	auto sz = buildAccess(loc, buildTypeidSmart(loc, toArray.base), "size");
 	ir.Exp fname = buildConstantString(loc, format(`%s`, baseName(exp.location.filename)));
 	ir.Exp lineNum = buildConstantSizeT(loc, lp, cast(int) exp.location.line);
-	auto rtCall = buildCall(loc, buildExpReference(loc, lp.ehThrowSliceErrorFunc), [ln, sz, buildAccess(loc, fname, "ptr"), lineNum]);
-	buildExpStat(loc, sexp, rtCall);
+	auto rtCall = buildCall(loc, buildExpReference(loc, lp.ehThrowSliceErrorFunc), [buildAccess(loc, fname, "ptr"), lineNum]);
+	auto bs = buildBlockStat(loc, rtCall, current, buildExpStat(loc, rtCall));
+	auto check = buildBinOp(loc, ir.BinOp.Op.NotEqual, buildBinOp(loc, ir.BinOp.Op.Mod, ln, sz), buildConstantSizeT(loc, lp, 0));
+	auto _if = buildIfStat(loc, check, bs);
+	sexp.statements ~= _if;
 
 	// auto _out = <castexp>
 	auto _out = buildVariableSmart(loc, copyTypeSmart(loc, toArray), ir.Variable.Storage.Function, "_out");
