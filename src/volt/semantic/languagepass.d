@@ -112,6 +112,10 @@ public:
 		// Run postParse passes so we can lookup things.
 		phase1(objectModule);
 
+		if (settings.removeConditionalsOnly) {
+			return;
+		}
+
 		// Get the classes.
 		auto s = objectModule.myScope;
 		objectClass = cast(ir.Class)s.getStore("Object").node;
