@@ -524,35 +524,35 @@ ir.BreakStatement parseBreakStatement(TokenStream ts)
 
 ir.GotoStatement parseGotoStatement(TokenStream ts)
 {
-	throw makeUnsupported(ts.peek.location, "goto statement");
-	version (none) {
-		auto gs = new ir.GotoStatement();
-		gs.location = ts.peek.location;
+	auto gs = new ir.GotoStatement();
+	gs.location = ts.peek.location;
 
-		match(ts, TokenType.Goto);
-		switch (ts.peek.type) {
-		case TokenType.Identifier:
+	match(ts, TokenType.Goto);
+	switch (ts.peek.type) {
+	case TokenType.Identifier:
+		throw makeUnsupported(ts.peek.location, "goto statement");
+		version (none) {
 			auto nameTok = match(ts, TokenType.Identifier);
 			gs.label = nameTok.value;
 			break;
-		case TokenType.Default:
-			match(ts, TokenType.Default);
-			gs.isDefault = true;
-			break;
-		case TokenType.Case:
-			match(ts, TokenType.Case);
-			gs.isCase = true;
-			if (ts.peek.type != TokenType.Semicolon) {
-				gs.exp = parseExp(ts);
-			}
-			break;
-		default:
-			throw makeExpected(ts.peek.location, "identifier, 'case', or 'default'.");
 		}
-		match(ts, TokenType.Semicolon);
-
-		return gs;
+	case TokenType.Default:
+		match(ts, TokenType.Default);
+		gs.isDefault = true;
+		break;
+	case TokenType.Case:
+		match(ts, TokenType.Case);
+		gs.isCase = true;
+		if (ts.peek.type != TokenType.Semicolon) {
+			gs.exp = parseExp(ts);
+		}
+		break;
+	default:
+		throw makeExpected(ts.peek.location, "identifier, 'case', or 'default'.");
 	}
+	match(ts, TokenType.Semicolon);
+
+	return gs;
 }
 
 ir.WithStatement parseWithStatement(TokenStream ts)

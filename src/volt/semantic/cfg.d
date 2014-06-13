@@ -20,6 +20,7 @@ public:
 
 private:
 	bool mTerminates;  ///< Running this block ends execution of its function (e.g. return).
+	bool mGoto, mBreak; ///< For handling switches, did this case have a goto or break?
 
 public:
 	this()
@@ -85,6 +86,22 @@ bool canReachEntry(Block block)
 	return false;
 }
 
+bool canReachEntryWithoutBreakOrGoto(Block block)
+{
+	if (block.mBreak || block.mGoto) {
+		return false;
+	}
+	if (block.parents.length == 0) {
+		return true;
+	}
+	foreach (parent; block.parents) {
+		if (canReachEntryWithoutBreakOrGoto(parent)) {
+			return true;
+		}
+	}
+	return false;
+}
+
 /// Builds and checks CFGs on Functions.
 class CFGBuilder : ScopeManager, Pass
 {
@@ -92,6 +109,9 @@ public:
 	LanguagePass lp;
 	Block[] blocks;
 	Block[] breakBlocks;
+	ir.SwitchStatement currentSwitchStatement;
+	Block[] currentSwitchBlocks;
+	int currentCaseIndex = -1;
 
 public:
 	this(LanguagePass lp)
@@ -242,19 +262,39 @@ public:
 	override Status enter(ir.SwitchStatement ss)
 	{
 		ensureNonNullBlock(ss.location);
+		auto oldSwitchBlocks = currentSwitchBlocks;
+		auto oldSwitchStatement = currentSwitchStatement;
+		auto oldCaseIndex = currentCaseIndex;
+		currentSwitchBlocks = new Block[](ss.cases.length);
+		currentSwitchStatement = ss;
+
 		auto currentBlock = block;
-		auto caseBlocks = new Block[](ss.cases.length);
 		foreach (i, _case; ss.cases) {
-			if (_case.statements.statements.length == 0) {
-				continue;
-			}
-			block = new Block(currentBlock);
-			breakBlocks ~= block;
-			accept(_case.statements, this);
-			breakBlocks = breakBlocks[0 .. $-1];
-			caseBlocks[i] = block;
+			currentSwitchBlocks[i] = new Block(currentBlock);
 		}
-		block = new Block(caseBlocks);
+
+		foreach (i, _case; ss.cases) {
+			currentCaseIndex = cast(int) i;
+			breakBlocks ~= currentSwitchBlocks[i];
+			block = currentSwitchBlocks[i];
+			accept(_case.statements, this);
+			currentSwitchBlocks[i] = block;
+			if (canReachEntryWithoutBreakOrGoto(block) && _case.statements.statements.length > 0 && canReachEntry(block) && i < ss.cases.length - 1) {
+				throw makeCaseFallsThrough(_case.location);
+			}
+			breakBlocks = breakBlocks[0 .. $-1];
+		}
+
+		block = new Block();
+		foreach (_block; currentSwitchBlocks) {
+			if (!_block.mGoto) {
+				block.addParent(_block);
+			}
+		}
+
+		currentSwitchBlocks = oldSwitchBlocks;
+		currentSwitchStatement = oldSwitchStatement;
+		currentCaseIndex = oldCaseIndex;
 		return ContinueParent;
 	}
 
@@ -265,12 +305,74 @@ public:
 			throw panic(cs.location, "labelled continue unimplemented");
 		}
 		block.parents ~= block;
+		block.mBreak = true;
 		return Continue;
 	}
 
 	override Status enter(ir.GotoStatement gs)
 	{
-		throw panic(gs.location, "goto statement unimplemented");
+		Status addTarget(size_t i)
+		{
+			block.addChild(currentSwitchBlocks[i]);
+			currentSwitchBlocks[i].addParent(block);
+			return Continue;
+		}
+
+		if (currentSwitchStatement is null || currentCaseIndex < 0) {
+			throw makeGotoOutsideOfSwitch(gs.location);
+		}
+		block.mGoto = true;
+		if (gs.isDefault) {
+			// goto default;
+			foreach (i, _case; currentSwitchStatement.cases) {
+				if (_case.isDefault) {
+					return addTarget(i);
+				}
+			}
+			throw makeNoDefaultCase(gs.location);
+		} else if (gs.isCase && gs.exp !is null) {
+			// goto case foo;
+
+			// Do we know the result now?
+			auto _constant = evaluateOrNull(lp, current, gs.exp);
+			auto currentIndex = cast(size_t) currentCaseIndex;
+			if (_constant !is null) foreach (i, _case; currentSwitchStatement.cases) {
+				auto firstConstant = evaluateOrNull(lp, current, _case.firstExp);
+				if (firstConstant !is null && _constant.u._ulong == firstConstant.u._ulong) {
+					return addTarget(i);
+				}
+				auto secondConstant = evaluateOrNull(lp, current, _case.secondExp);
+				if (secondConstant !is null && _constant.u._ulong >= firstConstant.u._ulong && _constant.u._ulong < secondConstant.u._ulong) {
+					return addTarget(i);
+				}
+				foreach (exp; _case.exps) {
+					auto caseConst = evaluateOrNull(lp, current, _case.firstExp);
+					if (caseConst !is null && _constant.u._ulong == caseConst.u._ulong) {
+						return addTarget(i);
+					}
+				}
+			}
+
+			// If not, mark all possible targets.
+			foreach (i, _case; currentSwitchStatement.cases) {
+				if (_case.isDefault || i == currentIndex) {
+					continue;
+				}
+				block.addChild(currentSwitchBlocks[i]);
+				currentSwitchBlocks[i].addParent(block);
+			}
+		} else if (gs.isCase && gs.exp is null) {
+			// goto case;
+			auto i = cast(size_t) currentCaseIndex;
+			if (i >= currentSwitchBlocks.length - 1) {
+				throw makeNoNextCase(gs.location);
+			}
+			block.addChild(currentSwitchBlocks[i + 1]);
+			currentSwitchBlocks[i + 1].addParent(block);
+		} else {
+			throw panic(gs.location, "invalid goto statement.");
+		}
+		return Continue;
 	}
 
 	/// Generate blocks from a try statement.
@@ -328,6 +430,7 @@ public:
 		if (breakBlocks.length == 0) {
 			throw makeBreakOutOfLoop(bs.location);
 		}
+		block.mBreak = true;
 		return Continue;
 	}
 

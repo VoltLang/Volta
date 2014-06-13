@@ -109,6 +109,7 @@ size_t dw_encoded_size(ubyte encoding)
 	default:
 		object.vrt_printf("%s: unhandled case\n", __FUNCTION__);
 		exit(-1);
+		break;
 	}
 	assert(false); // To please cfg detection
 }
@@ -157,6 +158,7 @@ uintptr_t dw_read_encoded(const(ubyte)** data, ubyte encoding)
 	default:
 		object.vrt_printf("%s: unhandled case type: %x\n", __FUNCTION__.ptr, encoding);
 		exit(-1);
+		break;
 	}
 
 	if (result) {
@@ -169,6 +171,7 @@ uintptr_t dw_read_encoded(const(ubyte)** data, ubyte encoding)
 		default:
 			object.vrt_printf("%s: unhandled case encoding: %x\n", __FUNCTION__.ptr, encoding);
 			exit(-1);
+			break;
 		}
 
 		if (encoding & DW_EH_PE_indirect)

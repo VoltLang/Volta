@@ -25,6 +25,21 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeCaseFallsThrough(Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, "Non empty switch case falls through.", file, line);
+}
+
+CompilerException makeNoNextCase(Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, "No case to fall through to.", file, line);
+}
+
+CompilerException makeGotoOutsideOfSwitch(Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, "goto outside of switch statement.", file, line);
+}
+
 CompilerException makeCallingWithoutInstance(Location loc, string file = __FILE__, const int line = __LINE__)
 {
 	auto wi = new CompilerError(loc, "calling instanced function without valid instance.");

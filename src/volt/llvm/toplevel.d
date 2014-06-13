@@ -596,10 +596,26 @@ public:
 
 	override Status leave(ir.GotoStatement gs)
 	{
-		if (!gs.isDefault && !gs.isCase) {
+		if (gs.isDefault) {
+			LLVMBuildBr(state.builder, state.currentSwitchDefault);
+			state.currentFall = false;
+		} else if (gs.isCase) {
+			if (gs.exp is null) {
+				state.currentFall = true;
+			} else {
+				auto v = state.getValue(gs.exp);
+				auto i = LLVMConstIntGetSExtValue(v);
+				if (auto p = i in state.currentSwitchCases) {
+					LLVMBuildBr(state.builder, *p);
+					state.currentFall = false;
+				} else {
+					throw makeExpected(gs.location, "valid case");
+				}
+			}
+		} else {
 			throw panic(gs.location, "non switch goto");
 		}
-		throw makeExpected(gs.location, "break or return ending case.");
+		return Continue;
 	}
 
 	override Status leave(ir.ThrowStatement t)

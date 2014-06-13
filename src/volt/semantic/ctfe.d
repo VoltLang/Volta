@@ -15,6 +15,9 @@ import volt.semantic.lookup;
 
 ir.Constant evaluateOrNull(LanguagePass lp, ir.Scope current, ir.Exp exp)
 {
+	if (exp is null) {
+		return null;
+	}
 	try {
 		return evaluate(lp, current, exp);
 	} catch (CompilerError e) {
