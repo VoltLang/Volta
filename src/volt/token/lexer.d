@@ -15,6 +15,7 @@ import volt.token.location : Location;
 import volt.token.source : Source, Mark;
 import volt.token.stream : Token, TokenType, TokenStream, identifierType;
 import volt.token.writer : TokenWriter;
+import volt.util.string : cleanComment;
 import volt.errors;
 
 /**
@@ -177,15 +178,28 @@ void skipWhitespace(TokenWriter tw)
 
 void skipLineComment(TokenWriter tw)
 {
+	auto commentToken = currentLocationToken(tw);
+	auto mark = tw.source.save();
+
 	match(tw.source, '/');
 	while (tw.source.current != '\n') {
 		tw.source.next();
 		if (tw.source.eof) return;
 	}
+
+	auto commentString = tw.source.sliceFrom(mark);
+	if (commentString.length > 2 && commentString[0..2] == "//") {
+		commentToken.type = TokenType.DocComment;
+		commentToken.value = cleanComment(commentString, commentToken.isBackwardsComment);
+		tw.addToken(commentToken);
+	}
 }
 
 void skipBlockComment(TokenWriter tw)
 {
+	auto commentToken = currentLocationToken(tw);
+	auto mark = tw.source.save();
+
 	bool looping = true;
 	while (looping) {
 		if (tw.source.eof) {
@@ -206,10 +220,20 @@ void skipBlockComment(TokenWriter tw)
 			tw.source.next();
 		}
 	}
+
+	auto commentString = tw.source.sliceFrom(mark);
+	if (commentString.length > 2 && commentString[0..2] == "**") {
+		commentToken.type = TokenType.DocComment;
+		commentToken.value = cleanComment(commentString, commentToken.isBackwardsComment);
+		tw.addToken(commentToken);
+	}
 }
 
 void skipNestingComment(TokenWriter tw)
 {
+	auto commentToken = currentLocationToken(tw);
+	auto mark = tw.source.save();
+
 	int depth = 1;
 	while (depth > 0) {
 		if (tw.source.eof) {
@@ -229,6 +253,13 @@ void skipNestingComment(TokenWriter tw)
 		} else {
 			tw.source.next();
 		}
+	}
+
+	auto commentString = tw.source.sliceFrom(mark);
+	if (commentString.length > 2 && commentString[0..2] == "++") {
+		commentToken.type = TokenType.DocComment;
+		commentToken.value = cleanComment(commentString, commentToken.isBackwardsComment);
+		tw.addToken(commentToken);
 	}
 }
 

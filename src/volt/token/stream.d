@@ -4,7 +4,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.token.stream;
 
-import volt.errors : panic;
+import volt.errors : panic, makeStrayDocComment;
 public import volt.token.token;
 
 
@@ -13,9 +13,14 @@ public import volt.token.token;
  */
 final class TokenStream
 {
+public:
+	Token lastDocComment;
+	string* retroComment;  ///< For backwards doc comments (like this one).
+
 private:
 	Token[] mTokens;
 	size_t mIndex;
+	string[] mComment;
 
 public:
 	/**
@@ -176,5 +181,37 @@ public:
 	{
 		assert(index < mTokens.length);
 		mIndex = index;
+	}
+
+	void pushCommentLevel()
+	{
+		mComment ~= [""];
+	}
+
+	void popCommentLevel()
+	{
+		assert(mComment.length > 0);
+		if (mComment[$-1].length) {
+			assert(lastDocComment !is null);
+			throw makeStrayDocComment(lastDocComment.location);
+		}
+		mComment = mComment[0 .. $-1];
+	}
+
+	/// Add a comment to the current comment level.
+	void addComment(Token comment)
+	{
+		assert(comment.type == TokenType.DocComment);
+		mComment[$-1] ~= comment.value;
+		lastDocComment = comment;
+	}
+
+	/// Retrieve and clear the current comment.
+	string comment()
+	{
+		assert(mComment.length >= 1);
+		auto str = mComment[$-1];
+		mComment[$-1] = "";
+		return str;
 	}
 }
