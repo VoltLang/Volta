@@ -185,6 +185,9 @@ public:
 	/// Retrieve the NodeType for this Node.
 	NodeType nodeType() { return mNodeType; }
 
+	/// Documentation comment attached to this node, if any.
+	string docComment;
+
 protected:
 	this(NodeType nt)
 	{
@@ -193,7 +196,6 @@ protected:
 
 private:
 	NodeType mNodeType;
-
 }
 
 /**

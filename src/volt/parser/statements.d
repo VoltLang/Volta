@@ -16,6 +16,8 @@ import volt.parser.toplevel;
 
 ir.Statement[] parseStatement(TokenStream ts)
 {
+	eatComments(ts);
+	scope (exit) eatComments(ts);
 	switch (ts.peek.type) {
 	case TokenType.Semicolon:
 		return [parseEmptyStatement(ts)];
@@ -160,6 +162,7 @@ ir.ExpStatement parseExpStatement(TokenStream ts)
 	e.location = ts.peek.location;
 
 	e.exp = parseExp(ts);
+	eatComments(ts);
 	match(ts, TokenType.Semicolon);
 
 	return e;
@@ -187,6 +190,8 @@ ir.BlockStatement parseBlockStatement(TokenStream ts)
 	auto bs = new ir.BlockStatement();
 	bs.location = ts.peek.location;
 
+	ts.pushCommentLevel();
+
 	if (matchIf(ts, TokenType.OpenBrace)) {
 		while (ts.peek.type != TokenType.CloseBrace) {
 			bs.statements ~= parseStatement(ts);
@@ -195,6 +200,8 @@ ir.BlockStatement parseBlockStatement(TokenStream ts)
 	} else {
 		bs.statements ~= parseStatement(ts);
 	}
+
+	ts.popCommentLevel();
 
 	return bs;
 }

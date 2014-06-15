@@ -79,6 +79,8 @@ ir.Alias parseAlias(TokenStream ts)
 		match(ts, TokenType.Semicolon);
 	}
 
+	a.docComment = ts.comment();
+	ts.retroComment = &a.docComment;
 	return a;
 }
 
@@ -89,6 +91,7 @@ ir.Node[] reallyParseVariable(TokenStream ts, ir.Type base)
 	while (true) {
 		auto d = new ir.Variable();
 		d.location = ts.peek.location;
+		d.docComment = ts.comment();
 		d.type = base;
 		auto nameTok = match(ts, TokenType.Identifier);
 		d.name = nameTok.value;
@@ -111,6 +114,8 @@ ir.Node[] reallyParseVariable(TokenStream ts, ir.Type base)
 		}
 	}
 	match(ts, TokenType.Semicolon);
+
+	ts.retroComment = &decls[0].docComment;
 
 	return decls;
 }
@@ -159,7 +164,7 @@ ir.Type parseType(TokenStream ts)
 	}
 
 	base.location = ts.peek.location - origin;
-
+	base.docComment = ts.comment();
 	return base;
 }
 
@@ -182,6 +187,7 @@ ir.TypeReference parseTypeReference(TokenStream ts)
 	typeReference.id = parseQualifiedName(ts, true);
 
 	assert(typeReference.id.identifiers.length > 0);
+	typeReference.docComment = ts.comment();
 	return typeReference;
 }
 
@@ -203,6 +209,7 @@ ir.StorageType parseStorageType(TokenStream ts)
 		storageType.base = parseType(ts);
 	}
 
+	storageType.docComment = ts.comment();
 	return storageType;
 }
 
@@ -210,6 +217,7 @@ ir.FunctionType parseFunctionType(TokenStream ts, ir.Type base)
 {
 	auto fn = new ir.FunctionType();
 	fn.location = ts.peek.location;
+	fn.docComment = ts.comment();
 
 	fn.ret = base;
 	match(ts, TokenType.Function);
@@ -227,6 +235,7 @@ ir.DelegateType parseDelegateType(TokenStream ts, ir.Type base)
 	match(ts, TokenType.Delegate);
 	fn.params = parseParameterListFPtr(ts, fn);
 
+	fn.docComment = ts.comment();
 	return fn;
 }
 
@@ -395,6 +404,9 @@ ir.Function parseFunction(TokenStream ts, ir.Type base)
 {
 	auto fn = new ir.Function();
 	fn.type = new ir.FunctionType();
+	fn.docComment = base.docComment;
+	ts.pushCommentLevel();
+	scope (exit) ts.popCommentLevel();
 
 	// <int> add(int a, int b) { }
 	fn.type.ret = base;
@@ -473,7 +485,9 @@ ir.BlockStatement parseBlock(TokenStream ts)
 	bs.location = ts.peek.location;
 
 	match(ts, TokenType.OpenBrace);
+	eatComments(ts);
 	while (ts != TokenType.CloseBrace) {
+		eatComments(ts);
 		bs.statements ~= parseStatement(ts);
 	}
 	match(ts, TokenType.CloseBrace);
@@ -493,5 +507,10 @@ ir.EnumDeclaration parseEnumDeclaration(TokenStream ts)
 		edecl.assign = parseExp(ts);
 	}
 
+	edecl.docComment = ts.comment();
+	if (edecl.docComment.length == 0) {
+		ts.retroComment = &edecl.docComment;
+	}
+	eatComments(ts);
 	return edecl;
 }

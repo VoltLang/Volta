@@ -45,6 +45,16 @@ CompilerException makeGotoOutsideOfSwitch(Location loc, string file = __FILE__, 
 	return new CompilerError(loc, "goto outside of switch statement.", file, line);
 }
 
+CompilerException makeDocCommentAppliesToMultiple(Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, "doc comment would apply to multiple declarations.", file, line);
+}
+
+CompilerException makeStrayDocComment(Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, "stray documentation comment.", file, line);
+}
+
 CompilerException makeCallingWithoutInstance(Location loc, string file = __FILE__, const int line = __LINE__)
 {
 	auto wi = new CompilerError(loc, "calling instanced function without valid instance.");

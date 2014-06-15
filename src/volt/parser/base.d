@@ -44,6 +44,25 @@ bool matchIf(TokenStream ts, TokenType type)
 }
 
 /**
+ * Add all doccomment tokens to the current comment level.
+ */
+void eatComments(TokenStream ts)
+{
+	while (ts.peek.type == TokenType.DocComment) {
+		auto commentTok = match(ts, TokenType.DocComment);
+		if (commentTok.isBackwardsComment) {
+			if (ts.retroComment is null) {
+				throw makeStrayDocComment(commentTok.location);
+			} else {
+				*ts.retroComment = commentTok.value;
+			}
+		} else {
+			ts.addComment(commentTok);
+		}
+	}
+}
+
+/**
  *
  */
 ir.QualifiedName parseQualifiedName(TokenStream ts, bool allowLeadingDot = false)
