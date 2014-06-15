@@ -17,6 +17,7 @@ import volt.util.worktracker;
 
 import volt.visitor.debugprinter;
 import volt.visitor.prettyprinter;
+import volt.visitor.docprinter;
 
 import volt.semantic.util;
 import volt.semantic.lookup;

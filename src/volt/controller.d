@@ -21,6 +21,8 @@ import volt.util.mangledecoder;
 
 import volt.visitor.prettyprinter;
 import volt.visitor.debugprinter;
+import volt.visitor.docprinter;
+import volt.visitor.jsonprinter;
 
 
 /**
@@ -292,9 +294,17 @@ protected:
 
 		// Load all modules to be compiled.
 		// Don't run phase 1 on them yet.
+		auto dp = new DocPrinter(languagePass);
+		auto jp = new JsonPrinter(languagePass);
 		foreach (file; mSourceFiles) {
 			debugPrint("Parsing %s.", file);
 			mods ~= loadAndParse(file);
+			if (settings.writeDocs) {
+				dp.transform(mods[$-1]);
+			}
+		}
+		if (settings.writeJson) {
+			jp.transform(mods);
 		}
 
 		// After we have loaded all of the modules

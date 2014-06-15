@@ -127,6 +127,18 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 		settings.stdIncludePaths ~= path;
 	}
 
+	void docDir(string path) {
+		settings.docDir = path;
+	}
+
+	void docOutput(string path) {
+		settings.docOutput = path;
+	}
+
+	void jsonOutput(string path) {
+		settings.jsonOutput = path;
+	}
+
 	foreach(arg; args)  {
 		if (argHandler !is null) {
 			argHandler(arg);
@@ -221,6 +233,24 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 		case "--simple-trace":
 			settings.simpleTrace = true;
 			continue;
+		case "--doc":
+			settings.writeDocs = true;
+			continue;
+		case "--doc-dir":
+			settings.writeDocs = true;
+			argHandler = &docDir;
+			continue;
+		case "-do":
+			settings.writeDocs = true;
+			argHandler = &docOutput;
+			continue;
+		case "-jo":
+			settings.writeJson = true;
+			argHandler = &jsonOutput;
+			continue;
+		case "--json":
+			settings.writeJson = true;
+			continue;
 		default:
 		}
 
@@ -235,6 +265,11 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 		}
 
 		files ~= arg;
+	}
+
+	if (files.length > 1 && settings.docOutput.length > 0) {
+		writefln("-do flag incompatible with multiple modules");
+		return false;
 	}
 
 	return true;
@@ -304,6 +339,11 @@ bool printUsage()
 	writefln("\t-c               Compile only, do not link.");
 	writefln("\t-E               Only perform conditional removal (implies -S).");
 	writefln("\t--simple-trace   Print the name of functions to stdout as they're run.");
+	writefln("\t--doc           Write out documentation in HTML format.");
+	writefln("\t--json          Write documentation in JSON format.");
+	writefln("\t--doc-dir       Specify a base directory for documentation (implies --doc).");
+	writefln("\t-do             Specify documentation output name (implies --doc).");
+	writefln("\t-jo             Specify json output name (implies --json).");
 	writeln();
 	writefln("\t--arch           Select processer architecture: 'x86', 'x86_64', 'le32'");
 	writefln("\t--platform       Select platform: 'mingw', 'linux', 'osx', 'emscripten'");

@@ -469,6 +469,8 @@ public:
 	bool noStdLib; ///< The --no-stdlib argument.
 	bool removeConditionalsOnly; ///< The -E argument.
 	bool simpleTrace; ///< The --simple-trace argument.
+	bool writeDocs; ///< The --doc argument.
+	bool writeJson; ///< The --json argument.
 
 	Platform platform;
 	Arch arch;
@@ -490,6 +492,10 @@ public:
 
 	string[] stdFiles; ///< The --stdlib-file arguements.
 	string[] stdIncludePaths; ///< The --stdlib-I arguments.
+
+	string docDir; ///< The --doc-dir argument.
+	string docOutput; ///< The -do argument.
+	string jsonOutput = "voltoutput.json"; ///< The -jo argument.
 
 	struct Alignments
 	{
