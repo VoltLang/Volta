@@ -240,6 +240,7 @@ void ensureResolved(LanguagePass lp, ir.Scope current, ir.Type type)
 	case Struct:
 	case Union:
 	case TypeOf:
+	case Interface:
 		return;
 	default:
 		throw panicUnhandled(type, to!string(type.nodeType));

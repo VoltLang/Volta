@@ -645,40 +645,42 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 	ir.Type type;
 	ir.Aggregate agg;
 	ir.PointerType asPointer;
+	bool skipScopeRetrieval ;
 	if (asIdentifierExp !is null) {
 		auto store = lookup(lp, currentScope, asIdentifierExp.location, asIdentifierExp.value);
 		if (store !is null && store.s !is null) {
 			_scope = store.s;
 			emsg = format("module '%s' did not have member '%s'.", asIdentifierExp.value, postfix.identifier.value);
-			goto _lookup;
+			skipScopeRetrieval = true;
 		}
 	}
 
-	type = realType(getExpType(lp, postfix.child, currentScope), false, true);
-	asPointer = cast(ir.PointerType) type;
-	if (asPointer !is null && (asPointer.base.nodeType == ir.NodeType.ArrayType 
-		|| asPointer.base.nodeType == ir.NodeType.StaticArrayType)) {
-		type = asPointer.base;
+	if (!skipScopeRetrieval) {
+		type = realType(getExpType(lp, postfix.child, currentScope), false, true);
+		asPointer = cast(ir.PointerType) type;
+		if (asPointer !is null && (asPointer.base.nodeType == ir.NodeType.ArrayType 
+			|| asPointer.base.nodeType == ir.NodeType.StaticArrayType)) {
+			type = asPointer.base;
+		}
+
+		if (type.nodeType == ir.NodeType.ArrayType) {
+			auto asArray = cast(ir.ArrayType) type;
+			assert(asArray !is null);
+			return getPostfixIdentifierArrayType(lp, postfix, asArray, currentScope);
+		} else if (type.nodeType == ir.NodeType.StaticArrayType) {
+			auto asStaticArray = cast(ir.StaticArrayType) type;
+			assert(asStaticArray !is null);
+			return getPostfixIdentifierStaticArrayType(lp, postfix, asStaticArray, currentScope);
+		} else if (type.nodeType == ir.NodeType.AAType) {
+			auto asAssocArray = cast(ir.AAType) type;
+			assert(asAssocArray !is null);
+			return getPostfixIdentifierAssocArrayType(lp, postfix, asAssocArray, currentScope);
+		}
+
+		retrieveScope(lp, type, postfix, _scope, _class, emsg);
+		agg = cast(ir.Aggregate) realType(type);
 	}
 
-	if (type.nodeType == ir.NodeType.ArrayType) {
-		auto asArray = cast(ir.ArrayType) type;
-		assert(asArray !is null);
-		return getPostfixIdentifierArrayType(lp, postfix, asArray, currentScope);
-	} else if (type.nodeType == ir.NodeType.StaticArrayType) {
-		auto asStaticArray = cast(ir.StaticArrayType) type;
-		assert(asStaticArray !is null);
-		return getPostfixIdentifierStaticArrayType(lp, postfix, asStaticArray, currentScope);
-	} else if (type.nodeType == ir.NodeType.AAType) {
-		auto asAssocArray = cast(ir.AAType) type;
-		assert(asAssocArray !is null);
-		return getPostfixIdentifierAssocArrayType(lp, postfix, asAssocArray, currentScope);
-	}
-
-	retrieveScope(lp, type, postfix, _scope, _class, emsg);
-	agg = cast(ir.Aggregate) realType(type);
-
-	_lookup:
 	auto store = lookupAsThisScope(lp, _scope, postfix.location, postfix.identifier.value);
 
 	if (store is null) {
