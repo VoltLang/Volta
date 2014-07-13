@@ -358,7 +358,7 @@ void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ref 
 	if (rarr !is null) {
 		stripArrayBases(rarr, rflag);
 	}
-	bool badImmutable = (flag & ir.StorageType.STORAGE_IMMUTABLE) != 0 && (rflag & ir.StorageType.STORAGE_IMMUTABLE) == 0;
+	bool badImmutable = (flag & ir.StorageType.STORAGE_IMMUTABLE) != 0 && ((rflag & ir.StorageType.STORAGE_IMMUTABLE) == 0 && (rflag & ir.StorageType.STORAGE_CONST) == 0);
 	if (typesEqual(acopy, rarr !is null ? rarr : rtype) && 
 		!badImmutable && (flag & ir.StorageType.STORAGE_SCOPE) == 0) {
 		return;
