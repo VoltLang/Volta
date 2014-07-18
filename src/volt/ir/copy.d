@@ -142,7 +142,9 @@ ir.Unary copy(ir.Unary unary)
 	newunary.op = unary.op;
 	newunary.value = unary.value is null ? null : copyExp(unary.value);
 	newunary.hasArgumentList = unary.hasArgumentList;
-	newunary.type = copyTypeSmart(unary.type.location, unary.type);
+	if (unary.type !is null) {
+		newunary.type = copyTypeSmart(unary.type.location, unary.type);
+	}
 	foreach (arg; unary.argumentList) {
 		newunary.argumentList ~= copyExp(arg);
 	}
