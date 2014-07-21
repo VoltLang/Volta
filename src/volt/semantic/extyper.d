@@ -429,7 +429,7 @@ bool willConvertArray(ir.Type l, ir.Type r, ref uint flag, ir.Exp* exp = null)
 	}
 
 	bool badImmutable = (flag & ir.StorageType.STORAGE_IMMUTABLE) != 0 && ((rflag & ir.StorageType.STORAGE_IMMUTABLE) == 0 && (rflag & ir.StorageType.STORAGE_CONST) == 0);
-	if (typesEqual(acopy, rcopy) && !badImmutable && (flag & ir.StorageType.STORAGE_SCOPE) == 0) {
+	if (acopy !is null && rcopy !is null && typesEqual(acopy, rcopy) && !badImmutable && (flag & ir.StorageType.STORAGE_SCOPE) == 0) {
 		return true;
 	}
 
