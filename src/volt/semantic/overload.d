@@ -11,6 +11,7 @@ import volt.interfaces;
 import volt.token.location;
 import volt.semantic.classify;
 import volt.semantic.typer;
+import volt.semantic.extyper;
 
 
 /**
@@ -86,71 +87,6 @@ ir.Type ifTypeRefDeRef(ir.Type t)
 		return t;
 	} else {
 		return tref.type;
-	}
-}
-
-/**
- * Returns true if argument converts into parameter.
- */
-bool willConvert(ir.Type argument, ir.Type parameter)
-{
-	auto _storage = cast(ir.StorageType) parameter;
-	if (_storage !is null && _storage.type == ir.StorageType.Kind.Scope) {
-		return willConvert(argument, _storage.base);
-	}
-	if (_storage !is null && argument.nodeType == ir.NodeType.ArrayType) {
-		if (_storage.type == ir.StorageType.Kind.Ref) {
-			return willConvert(argument, _storage.base);
-		}
-	}
-	if (typesEqual(argument, parameter)) {
-		return true;
-	}
-
-	argument = realType(argument);
-	parameter = realType(parameter);
-
-	switch (argument.nodeType) with (ir.NodeType) {
-	case PrimitiveType:
-		auto rprim = cast(ir.PrimitiveType) argument;
-		auto lprim = cast(ir.PrimitiveType) parameter;
-		if (rprim is null || lprim is null) {
-			return false;
-		}
-		if (isUnsigned(rprim.type) != isUnsigned(lprim.type)) {
-			return false;
-		}
-		return size(rprim.type) <= size(lprim.type);
-	case Enum:
-	case TypeReference:
-		assert(false);
-	case Class:
-		auto lclass = cast(ir.Class) ifTypeRefDeRef(parameter);
-		auto rclass = cast(ir.Class) ifTypeRefDeRef(argument);
-		if (lclass is null || rclass is null) {
-			return false;
-		}
-		return isOrInheritsFrom(rclass, lclass);
-	case ArrayType:
-		auto arr = cast(ir.ArrayType) parameter;
-		if (arr is null || !isVoid(arr.base)) {
-			return false;
-		} else {
-			return true;
-		}
-	case PointerType:
-		auto ptr = cast(ir.PointerType) parameter;
-		if (ptr is null || !isVoid(ptr.base)) {
-			return false;
-		} else {
-			return true;
-		}
-	case NullType:
-		auto nt = realType(parameter).nodeType;
-		with (ir.NodeType) {
-			return nt == PointerType || nt == Class || nt == ArrayType || nt == AAType || nt == DelegateType;
-		}
-	default: return false;
 	}
 }
 
@@ -275,7 +211,6 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 	}
 
 	sort!specialisationComparison(matchedFunctions);
-
 	if (matchedFunctions.length == 1 || specialisationComparison(matchedFunctions[0], matchedFunctions[1]) > 0) {
 		if (highestMatchLevel > 1) {
 			return matchedFunctions[0];

@@ -32,6 +32,73 @@ import volt.semantic.nested;
 import volt.semantic.context;
 
 /**
+ * Returns true if argument converts into parameter.
+ */
+bool willConvert(ir.Type argument, ir.Type parameter)
+{
+	auto _storage = cast(ir.StorageType) parameter;
+	if (_storage !is null && _storage.type == ir.StorageType.Kind.Scope) {
+		return willConvert(argument, _storage.base);
+	}
+	if (_storage !is null && argument.nodeType == ir.NodeType.ArrayType) {
+		if (_storage.type == ir.StorageType.Kind.Ref) {
+			return willConvert(argument, _storage.base);
+		}
+	}
+	if (typesEqual(argument, parameter)) {
+		return true;
+	}
+
+	argument = realType(argument);
+	parameter = realType(parameter);
+
+	switch (argument.nodeType) with (ir.NodeType) {
+	case PrimitiveType:
+		auto rprim = cast(ir.PrimitiveType) argument;
+		auto lprim = cast(ir.PrimitiveType) parameter;
+		if (rprim is null || lprim is null) {
+			return false;
+		}
+		if (isUnsigned(rprim.type) != isUnsigned(lprim.type)) {
+			return false;
+		}
+		return size(rprim.type) <= size(lprim.type);
+	case Enum:
+	case TypeReference:
+		assert(false);
+	case Class:
+		auto lclass = cast(ir.Class) ifTypeRefDeRef(parameter);
+		auto rclass = cast(ir.Class) ifTypeRefDeRef(argument);
+		if (lclass is null || rclass is null) {
+			return false;
+		}
+		return isOrInheritsFrom(rclass, lclass);
+	case ArrayType:
+		uint dummy;
+		return willConvertArray(parameter, argument, dummy);
+	case PointerType:
+		auto ptr = cast(ir.PointerType) parameter;
+		if (ptr is null || !isVoid(ptr.base)) {
+			return false;
+		} else {
+			return true;
+		}
+	case NullType:
+		auto nt = realType(parameter).nodeType;
+		with (ir.NodeType) {
+			return nt == PointerType || nt == Class || nt == ArrayType || nt == AAType || nt == DelegateType;
+		}
+	default: return false;
+	}
+}
+
+bool willConvert(Context ctx, ir.Type type, ir.Exp exp)
+{
+	auto rtype = getExpType(ctx.lp, exp, ctx.current);
+	return willConvert(type, rtype);
+}
+
+/**
  * This handles the auto that has been filled in, removing the auto storage.
  */
 void replaceStorageIfNeeded(ref ir.Type type)
@@ -344,11 +411,70 @@ void extypeAssignCallableType(Context ctx, ref ir.Exp exp, ir.CallableType ctype
 	throw makeBadImplicitCast(exp, rtype, ctype);
 }
 
+bool willConvertArray(ir.Type l, ir.Type r, ref uint flag, ir.Exp* exp = null)
+{
+	auto atype = cast(ir.ArrayType) realType(l);
+	if (atype is null) {
+		return false;
+	}
+	auto acopy = copyTypeSmart(l.location, atype);
+	stripArrayBases(acopy, flag);
+	auto rarr = cast(ir.ArrayType) r;
+	uint rflag;
+	ir.ArrayType rcopy;
+	if (rarr !is null) {
+		rcopy = cast(ir.ArrayType) copyTypeSmart(r.location, rarr);
+		assert(rcopy !is null);
+		stripArrayBases(rcopy, rflag);
+	}
+
+	bool badImmutable = (flag & ir.StorageType.STORAGE_IMMUTABLE) != 0 && ((rflag & ir.StorageType.STORAGE_IMMUTABLE) == 0 && (rflag & ir.StorageType.STORAGE_CONST) == 0);
+	if (typesEqual(acopy, rcopy) && !badImmutable && (flag & ir.StorageType.STORAGE_SCOPE) == 0) {
+		return true;
+	}
+
+	auto ctype = cast(ir.CallableType) atype;
+	if (ctype !is null && ctype.homogenousVariadic && rarr is null) {
+		return true;
+	}
+
+	auto aclass = cast(ir.Class) realType(atype.base);
+	ir.Class rclass;
+	if (rarr !is null) {
+		rclass = cast(ir.Class) realType(rarr.base);
+	}
+	if (rclass !is null) {
+		if (inheritsFrom(rclass, aclass)) {
+			if (exp !is null)
+				*exp = buildCastSmart(exp.location, buildArrayType(exp.location, aclass), *exp);
+			return true;
+		}
+	}
+
+	return false;
+}
+
 /**
  * Handles casting arrays of non mutably indirect types with
  * differing storage types.
  */
 void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ref uint flag)
+{
+	auto acopy = copyTypeSmart(exp.location, atype);
+	stripArrayBases(acopy, flag);
+	auto rtype = ctx.overrideType !is null ? ctx.overrideType : realType(getExpType(ctx.lp, exp, ctx.current));
+	if (willConvertArray(atype, rtype, flag, &exp)) {
+		return;
+	}
+
+	throw makeBadImplicitCast(exp, rtype, atype);
+}
+
+/**
+ * Handles casting arrays of non mutably indirect types with
+ * differing storage types.
+ */
+version (none) void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ref uint flag)
 {
 	auto acopy = copyTypeSmart(exp.location, atype);
 	stripArrayBases(acopy, flag);
