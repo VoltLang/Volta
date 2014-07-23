@@ -24,7 +24,7 @@ import volt.semantic.nested;
 
 
 /**
- * Lowerers misc things needed by the LLVM backend.
+ * Lowers misc things needed by the LLVM backend.
  */
 class LlvmLowerer : ScopeManager, Pass
 {
@@ -50,6 +50,36 @@ public:
 
 	override void close()
 	{
+	}
+
+	override Status enter(ir.BlockStatement bs)
+	{
+		super.enter(bs);
+		insertBinOpAssignsForNestedVariableAssigns(bs);
+		/* Hoist declarations out of blocks and place them at the top of the function, to avoid
+		 * alloc()ing in a loop. Name collisions aren't an issue, as the generated assign statements
+		 * are already tied to the correct variable.
+		 */
+		if (functionStack.length == 0) {
+			return Continue;
+		}
+		ir.Node[] newTopVars;
+		for (size_t i = 0; i < bs.statements.length; ++i) {
+			auto var = cast(ir.Variable) bs.statements[i];
+			if (var is null) {
+				continue;
+			}
+			auto l = bs.statements[i].location;
+			if (var.assign !is null) {
+				bs.statements[i] = buildExpStat(l, buildAssign(l, buildExpReference(l, var, var.name), var.assign));
+				var.assign = null;
+			} else {
+				bs.statements[i] = buildEmptyStatement(l);
+			}
+			newTopVars ~= var;
+		}
+		functionStack[$-1]._body.statements = newTopVars ~ functionStack[$-1]._body.statements;
+		return Continue;
 	}
 
 	override Status leave(ir.ThrowStatement t)
@@ -207,13 +237,6 @@ public:
 		auto np = functionStack[$-1].nestedVariable;
 		exp = buildCreateDelegate(exp.location, buildExpReference(np.location, np, np.name), eref);
 
-		return Continue;
-	}
-
-	override Status enter(ir.BlockStatement bs)
-	{
-		insertBinOpAssignsForNestedVariableAssigns(bs);
-		super.enter(bs);
 		return Continue;
 	}
 

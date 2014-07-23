@@ -94,6 +94,7 @@ public:
 			case MixinStatement:
 			case UserAttribute:
 			case EnumDeclaration:
+			case EmptyStatement:
 				auto s = accept(n, this);
 				if (s == Stop)
 					return Stop;
@@ -131,6 +132,7 @@ public:
 			case WithStatement:
 			case ScopeStatement:
 			case TryStatement:
+			case EmptyStatement:
 				auto s = accept(n, this);
 				if (s == Stop)
 					return Stop;
