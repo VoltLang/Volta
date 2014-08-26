@@ -159,6 +159,17 @@ ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class)
 	return fields;
 }
 
+void addPreludeToConstructor(LanguagePass lp, ir.Function fn, ir.Class _class)
+{
+	assert(fn !is null);
+	assert(fn._body !is null);
+	assert(fn.thisHiddenParameter !is null);
+	assert(_class.vtableVariable !is null);
+	auto l = fn.location;
+	auto tv = fn.thisHiddenParameter;
+	fn._body.statements = buildExpStat(l, buildAssign(l, buildAccess(l, buildCastSmart(l, buildPtrSmart(l, _class.layoutStruct), buildExpReference(l, tv, tv.name)), "__vtable"), buildAddrOf(l, buildExpReference(l, _class.vtableVariable, _class.vtableVariable.name)))) ~ fn._body.statements;
+}
+
 ir.Function generateDefaultConstructor(LanguagePass lp, ir.Scope current, ir.Class _class)
 {
 	auto fn = buildFunction(_class.location, _class.members, current, "this");
@@ -391,4 +402,9 @@ void emitVtableVariable(LanguagePass lp, ir.Class _class)
 	_class.vtableVariable.assign = assign;
 	_class.members.nodes ~= _class.vtableVariable;
 	_class.myScope.addValue(_class.vtableVariable, _class.vtableVariable.name);
+
+	assert(_class.userConstructors.length >= 1);
+	foreach (fn; _class.userConstructors) {
+		addPreludeToConstructor(lp, fn, _class);
+	}
 }

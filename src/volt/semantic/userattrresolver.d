@@ -63,11 +63,6 @@ void fillInUserAttributeLayoutClass(LanguagePass lp, ir.UserAttribute ua)
 	_class.parentClass = lp.attributeClass;
 	_class.parent = buildQualifiedName(ua.location, ["object", "Attribute"]);
 
-	auto fn = buildFunction(ua.location, _class.members, _class.myScope, "__ctor", true);
-	fn.kind = ir.Function.Kind.Constructor;
-	buildReturnStat(ua.location, fn._body);
-	_class.userConstructors ~= fn;
-
 	foreach (field; ua.fields) {
 		auto v = copyVariableSmart(ua.location, field);
 		v.storage = ir.Variable.Storage.Field;
