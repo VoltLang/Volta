@@ -1255,7 +1255,7 @@ void getCreateDelegateValues(State state, ir.Postfix postfix, Value instance, Va
 {
 	state.getStructRef(postfix.child, instance);
 
-	// See if the function should be gotton from the vtable.
+	// See if the function should be gotten from the vtable.
 	int index = -1;
 	if (postfix.memberFunction !is null) {
 		auto asFunction = cast(ir.Function) postfix.memberFunction.decl;
@@ -1278,7 +1278,7 @@ void getCreateDelegateValues(State state, ir.Postfix postfix, Value instance, Va
 
 		func.type = st;
 		func.isPointer = true;
-		auto i = index + 1; // Offseted by one.
+		auto i = index + 1; // Offset by one.
 		getFieldFromAggregate(state, postfix.location, func, i, st.types[i], func);
 		makeNonPointer(state, func);
 	} else {

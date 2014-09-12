@@ -250,45 +250,45 @@ public:
 	/* @} */
 
 	/**
-	 * Resovles a Attribute, for UserAttribute usages.
+	 * Resolves an Attribute, for UserAttribute usages.
 	 */
 	abstract void resolve(ir.Scope current, ir.Attribute a);
 
 	/**
-	 * Resolves a Enum making it usable externaly.
+	 * Resolves an Enum making it usable externaly.
 	 *
 	 * @throws CompilerError on failure to resolve the enum.
 	 */
 	abstract void resolve(ir.Enum e);
 
 	/**
-	 * Resolves a EnumDeclaration setting its value.
+	 * Resolves an EnumDeclaration setting its value.
 	 *
 	 * @throws CompilerError on failure to resolve the enum value.
 	 */
 	abstract void resolve(ir.Scope current, ir.EnumDeclaration ed);
 
 	/**
-	 * Resoltes a AAType and checks if the Key-Type is compatible
+	 * Resolves an AAType and checks if the Key-Type is compatible
 	 *
 	 * @throws CompilerError on invalid Key-Type
 	 */
 	abstract void resolve(ir.Scope current, ir.AAType at);
 
 	/**
-	 * Resovles a Struct, done on lookup of it.
+	 * Resolves a Struct, done on lookup of it.
 	 */
 	final void resolve(ir.Struct s)
 	{ if (!s.isResolved) doResolve(s); }
 
 	/**
-	 * Resovles a Union, done on lookup of it.
+	 * Resolves a Union, done on lookup of it.
 	 */
 	final void resolve(ir.Union u)
 	{ if (!u.isResolved) doResolve(u); }
 
 	/**
-	 * Resovles a Class, making sure the parent class is populated.
+	 * Resolves a Class, making sure the parent class is populated.
 	 */
 	final void resolve(ir.Class c)
 	{ if (!c.isResolved) doResolve(c); }

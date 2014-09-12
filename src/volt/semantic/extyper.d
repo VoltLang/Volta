@@ -2928,7 +2928,7 @@ public:
 		scope (exit) ctx.isVarAssign = false;
 		// This has to be done this way, because the order in
 		// which the calls in this and the visiting functions
-		// are exectuted matters.
+		// are executed matters.
 		if (!enterFirstVariable) {
 			v.hasBeenDeclared = true;
 			ctx.lp.resolve(ctx.current, v);
