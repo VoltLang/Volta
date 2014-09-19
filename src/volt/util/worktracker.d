@@ -52,6 +52,15 @@ protected:
 			return 1;
 		return 0;
 	}
+
+	override bool opEquals(Object rhs)
+	{
+		auto rh = cast(Work) rhs;
+		if (rh is null) {
+			return false;
+		}
+		return rh.node is this.node && rh.action == this.action;
+	}
 }
 
 class WorkTracker
