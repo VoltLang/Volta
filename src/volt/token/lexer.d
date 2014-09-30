@@ -8,7 +8,6 @@ import std.conv : to;
 import std.string : format;
 import std.ascii : isDigit;
 import std.array : count, array;
-import std.algorithm : filter;
 import std.c.time : time, localtime;
 
 import volt.token.location : Location;
@@ -886,6 +885,24 @@ size_t consume(Source src, dchar[] characters...)
 }
 
 /**
+ * Returns a string that is s, with all '_' removed.
+ *    "134_hello" => "134hello"
+ *    "_" => ""
+ */
+string removeUnderscores(string s)
+{
+	auto output = new char[](s.length);
+	size_t i;
+	foreach (c; s) {
+		if (c == '_') {
+			continue;
+		}
+		output[i++] = c;
+	}
+	return i == s.length ? s : output[0 .. i].idup;
+}
+
+/**
  * Lex an integer literal and add the resulting token to tw.
  * If it detects the number is floating point, it will call lexReal directly.
  */
@@ -952,7 +969,7 @@ bool lexNumber(TokenWriter tw)
 
 	token.type = TokenType.IntegerLiteral;
 	token.value = tw.source.sliceFrom(mark);
-	token.value = toUTF8(array(filter!"a != '_'"(token.value)));
+	token.value = toUTF8(array(removeUnderscores(token.value)));
 	tw.addToken(token);
 
 	return true;
@@ -969,7 +986,7 @@ bool lexReal(TokenWriter tw)
 	{
 		token.type = TokenType.FloatLiteral;
 		token.value = tw.source.sliceFrom(mark);
-		token.value = toUTF8(array(filter!"a != '_'"(token.value)));
+		token.value = toUTF8(array(removeUnderscores(token.value)));
 		tw.addToken(token);
 		return true;
 	}
