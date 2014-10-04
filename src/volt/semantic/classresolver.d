@@ -159,6 +159,10 @@ ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class)
 	return fields;
 }
 
+/**
+ * Add a prelude that populates the vtable to the given constructor
+ * function.
+ */
 void addPreludeToConstructor(LanguagePass lp, ir.Function fn, ir.Class _class)
 {
 	assert(fn !is null);
@@ -167,7 +171,33 @@ void addPreludeToConstructor(LanguagePass lp, ir.Function fn, ir.Class _class)
 	assert(_class.vtableVariable !is null);
 	auto l = fn.location;
 	auto tv = fn.thisHiddenParameter;
-	fn._body.statements = buildExpStat(l, buildAssign(l, buildAccess(l, buildCastSmart(l, buildPtrSmart(l, _class.layoutStruct), buildExpReference(l, tv, tv.name)), "__vtable"), buildAddrOf(l, buildExpReference(l, _class.vtableVariable, _class.vtableVariable.name)))) ~ fn._body.statements;
+
+	/* Find the index of the super call, if one exists.
+	 * This is so we place the vtable assignment *after* that,
+	 * preventing the parent from overwriting it.
+	 * TODO: What about super calls in statements? Is that even permitted?
+	 */
+	size_t i;
+	foreach (statement; fn._body.statements) {
+		i++;
+		auto es = cast(ir.ExpStatement) statement;
+		if (es is null) {
+			continue;
+		}
+		auto pfix = cast(ir.Postfix) es.exp;
+		if (pfix is null) {
+			continue;
+		}
+		auto iexp = cast(ir.IdentifierExp) pfix.child;
+		if (iexp !is null && iexp.value == "super") {
+			break;
+		}
+	}
+	if (i >= fn._body.statements.length) {
+		i = 0;
+	}
+	auto exp = buildExpStat(l, buildAssign(l, buildAccess(l, buildCastSmart(l, buildPtrSmart(l, _class.layoutStruct), buildExpReference(l, tv, tv.name)), "__vtable"), buildAddrOf(l, buildExpReference(l, _class.vtableVariable, _class.vtableVariable.name))));
+	fn._body.statements = fn._body.statements[0 .. i] ~ exp ~ fn._body.statements[i .. $];
 }
 
 ir.Function generateDefaultConstructor(LanguagePass lp, ir.Scope current, ir.Class _class)
