@@ -186,7 +186,7 @@ void addPreludeToConstructor(LanguagePass lp, ir.Function fn, ir.Class _class)
 	}
 
 
-	if (fn._body.statements.length == 0 || fn._body.statements.length == 1) {
+	if (fn._body.statements.length == 0) {
 		fn._body.statements = exp() ~ fn._body.statements;
 		return;
 	}
@@ -196,9 +196,14 @@ void addPreludeToConstructor(LanguagePass lp, ir.Function fn, ir.Class _class)
 	 * preventing the parent from overwriting it.
 	 * TODO: What about super calls in statements? Is that even permitted?
 	 */
-	size_t i;
+	size_t superI, returnI, i;
 	foreach (statement; fn._body.statements) {
 		i++;
+		auto rs = cast(ir.ReturnStatement) statement;
+		if (rs !is null) {
+			returnI = i;
+			continue;
+		}
 		auto es = cast(ir.ExpStatement) statement;
 		if (es is null) {
 			continue;
@@ -209,14 +214,14 @@ void addPreludeToConstructor(LanguagePass lp, ir.Function fn, ir.Class _class)
 		}
 		auto iexp = cast(ir.IdentifierExp) pfix.child;
 		if (iexp !is null && iexp.value == "super") {
-			break;
+			superI = i;
 		}
 	}
-	if (i >= fn._body.statements.length) {
-		i = 0;
-	}
 
-	fn._body.statements = exp() ~ fn._body.statements[0 .. i] ~ exp() ~ fn._body.statements[i .. $];
+	fn._body.statements = exp() ~ fn._body.statements[0 .. superI] ~ exp() ~ fn._body.statements[superI .. $];
+	if (returnI > 0) {
+		fn._body.statements = fn._body.statements[0 .. returnI] ~ exp() ~ fn._body.statements[returnI .. $];
+	}
 }
 
 ir.Function generateDefaultConstructor(LanguagePass lp, ir.Scope current, ir.Class _class)
