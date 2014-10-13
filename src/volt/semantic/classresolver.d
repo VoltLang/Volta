@@ -159,71 +159,6 @@ ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class)
 	return fields;
 }
 
-/**
- * Add a prelude that populates the vtable to the given constructor
- * function.
- */
-void addPreludeToConstructor(LanguagePass lp, ir.Function fn, ir.Class _class)
-{
-	assert(fn !is null);
-	assert(fn._body !is null);
-	assert(fn.thisHiddenParameter !is null);
-	assert(_class.vtableVariable !is null);
-	auto l = fn.location;
-	auto tv = fn.thisHiddenParameter;
-
-	ir.ExpStatement exp()
-	{
-		return buildExpStat(l,
-			buildAssign(l,
-			buildAccess(l,
-			buildCastSmart(l,
-			buildPtrSmart(l, _class.layoutStruct),
-			buildExpReference(l, tv, tv.name)), "__vtable"),
-
-			buildAddrOf(l,
-			buildExpReference(l, _class.vtableVariable, _class.vtableVariable.name))));
-	}
-
-
-	if (fn._body.statements.length == 0) {
-		fn._body.statements = exp() ~ fn._body.statements;
-		return;
-	}
-
-	/* Find the index of the super call, if one exists.
-	 * This is so we place the vtable assignment *after* that,
-	 * preventing the parent from overwriting it.
-	 * TODO: What about super calls in statements? Is that even permitted?
-	 */
-	size_t superI, returnI, i;
-	foreach (statement; fn._body.statements) {
-		i++;
-		auto rs = cast(ir.ReturnStatement) statement;
-		if (rs !is null) {
-			returnI = i;
-			continue;
-		}
-		auto es = cast(ir.ExpStatement) statement;
-		if (es is null) {
-			continue;
-		}
-		auto pfix = cast(ir.Postfix) es.exp;
-		if (pfix is null) {
-			continue;
-		}
-		auto iexp = cast(ir.IdentifierExp) pfix.child;
-		if (iexp !is null && iexp.value == "super") {
-			superI = i;
-		}
-	}
-
-	fn._body.statements = exp() ~ fn._body.statements[0 .. superI] ~ exp() ~ fn._body.statements[superI .. $];
-	if (returnI > 0) {
-		fn._body.statements = fn._body.statements[0 .. returnI] ~ exp() ~ fn._body.statements[returnI .. $];
-	}
-}
-
 ir.Function generateDefaultConstructor(LanguagePass lp, ir.Scope current, ir.Class _class)
 {
 	auto fn = buildFunction(_class.location, _class.members, current, "this");
@@ -456,9 +391,4 @@ void emitVtableVariable(LanguagePass lp, ir.Class _class)
 	_class.vtableVariable.assign = assign;
 	_class.members.nodes ~= _class.vtableVariable;
 	_class.myScope.addValue(_class.vtableVariable, _class.vtableVariable.name);
-
-	assert(_class.userConstructors.length >= 1);
-	foreach (fn; _class.userConstructors) {
-		addPreludeToConstructor(lp, fn, _class);
-	}
 }

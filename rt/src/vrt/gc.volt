@@ -121,6 +121,10 @@ void* gcMalloc(TypeInfo typeinfo, size_t count, void *ptr)
 		memset(memory, 0, size);
 	}
 
+	if (count == cast(size_t) -1) {
+		*(cast(void**)memory) = typeinfo.classVtable;
+	}
+
 	if (registerFinalizer) {
 		GC_register_finalizer_no_order(memory, vrt_gc_finalize_class, null, null, null);
 	}
