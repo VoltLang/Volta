@@ -1102,7 +1102,7 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 
 	// Not providing an argument to a homogenous variadic function.
 	if (asFunctionType.homogenousVariadic && postfix.arguments.length + 1 == asFunctionType.params.length) {
-		postfix.arguments ~= buildConstantNull(postfix.location, asFunctionType.params[$-1]);
+		postfix.arguments ~= buildArrayLiteralSmart(postfix.location, asFunctionType.params[$-1], []);
 	}
 
 	// Hand check va_start(vl) and va_end(vl), then modify their calls.
