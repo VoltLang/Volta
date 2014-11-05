@@ -15,18 +15,15 @@ import std.string : format;
 struct Location
 {
 public:
-	/// When the column is 0, the whole line is assumed to be the location
-	enum size_t wholeLine = 0;
-
 	string filename;
-	size_t line = 1;
-	size_t column = 1;
-	size_t length = 0;
+	size_t line;
+	size_t column;
+	size_t length;
 
 public:
 	string toString()
 	{
-		return format("%s:%s:%s", filename, line, column);
+		return format("%s:%s:%s", filename, line + 1, column);
 	}
 
 	/**

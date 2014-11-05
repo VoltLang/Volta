@@ -50,8 +50,6 @@ public:
 	{
 		source = cast(string)read(filename);
 		location.filename = filename;
-		location.line = 1;
-		location.column = 1;
 
 		this(source, location);
 
