@@ -12,7 +12,7 @@ As Volt is written in D, a compiler for D is needed. GDC, LDC and DMD should
 be able to compile Volt. Once Volt is capable enough the compiler will be
 ported to Volt and become self-hosting.
 
-Volt uses LLVM as backend to generate binary code. Currently version 3.4 is
+Volt uses LLVM as a backend to generate binary code. Currently version 3.4 is
 used and required.
 
 
@@ -29,6 +29,7 @@ To get GDC and LLVM on Ubuntu do this:
 For DMD known working are DMD 2.060 and above. To setup DMD just follow the
 Mac instructions.
 
+Some versions of LLVM on Linux depend on being linked with tinfo, but don't tell llvm-config that. If you see a link failure involving del_setterm or similar, add -ltinfo to the LLVM_LDFLAGS variable in the GNUMakefile.
 
 Mac
 ***
