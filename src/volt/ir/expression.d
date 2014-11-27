@@ -484,6 +484,17 @@ public:
 	this() { super(NodeType.StructLiteral); }
 }
 
+/// A UnionLiteral is a compiler internal expression form of a struct
+class UnionLiteral : Exp
+{
+public:
+	Exp[] exps;
+	Type type;
+
+public:
+	this() { super(NodeType.UnionLiteral); }
+}
+
 /// A ClassLiteral is a compiler internal expression form of a class.
 class ClassLiteral : Exp
 {

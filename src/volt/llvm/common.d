@@ -76,6 +76,28 @@ void handleStructLiteral(State state, ir.StructLiteral sl, Value result)
 	result.value = type.fromStructLiteral(state, sl);
 }
 
+void handleUnionLiteral(State state, ir.UnionLiteral ul, Value result)
+{
+	auto tr = cast(ir.TypeReference)ul.type;
+	if (tr is null) {
+		throw panic(ul.location, "union literal type must be a TypeReference");
+	}
+
+	auto ut = cast(ir.Union)tr.type;
+	if (ut is null) {
+		throw panic(ul.location, "union literal type must resolve to Union");
+	}
+
+	auto type = cast(UnionType)state.fromIr(ut);
+	if (type is null) {
+		throw panic(ul.location, "couldn't retrieve UnionType");
+	}
+
+	result.isPointer = false;
+	result.type = type;
+	result.value = type.fromUnionLiteral(state, ul);
+}
+
 void handleClassLiteral(State state, ir.ClassLiteral cl, Value result)
 {
 	auto tr = cast(ir.TypeReference)cl.type;

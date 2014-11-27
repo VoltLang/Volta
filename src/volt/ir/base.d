@@ -120,6 +120,7 @@ enum NodeType
 	FunctionLiteral,
 	ExpReference,
 	StructLiteral,
+	UnionLiteral,
 	ClassLiteral,
 	TraitsExp,
 	TypeExp,
@@ -369,6 +370,7 @@ string nodeToString(NodeType nodeType)
 	case FunctionLiteral: return "FunctionLiteral";
 	case ExpReference: return "ExpReference";
 	case StructLiteral: return "StructLiteral";
+	case UnionLiteral: return "UnionLiteral";
 	case ClassLiteral: return "ClassLiteral";
 	case TraitsExp: return "TraitsExp";
 	case TypeExp: return "TypeExp";

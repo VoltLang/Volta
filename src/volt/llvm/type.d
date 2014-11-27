@@ -596,6 +596,53 @@ public:
 		mt[0] = LLVMArrayType(state.ubyteType.llvmType, irType.totalSize);
 		LLVMStructSetBody(llvmType, mt, false);
 	}
+
+	LLVMValueRef fromStructLiteral(State state, ir.StructLiteral sl)
+	{
+		LLVMValueRef[] vals;
+		vals.length = indices.length;
+
+		if (vals.length != sl.exps.length) {
+			throw panic("struct literal has the wrong number of initializers");
+		}
+
+		foreach(uint i, ref val; vals) {
+			val = state.getConstant(sl.exps[i]);
+		}
+
+		return LLVMConstNamedStruct(llvmType, vals);
+	}
+
+	LLVMValueRef fromUnionLiteral(State state, ir.UnionLiteral ul)
+	{
+		if (indices.length != ul.exps.length) {
+			throw panic("union literal has the wrong number of initializers");
+		}
+
+		auto utype = cast(ir.Union) irType;
+		if (utype is null) {
+			throw panic("couldn't retrieve ir union from union");
+		}
+
+		uint count = LLVMCountStructElementTypes(llvmType);
+		if (count != 1) {
+			throw panic("union with more than one member");
+		}
+		auto vals = new LLVMValueRef[](1);
+
+		int lastSize = 0;
+
+		foreach (size_t i; 0 .. indices.length) {
+			auto t = volt.semantic.typer.getExpType(state.lp, ul.exps[i], utype.myScope);
+			auto sz = volt.semantic.classify.size(t.location, state.lp, t);
+			if (sz > lastSize) {
+				vals[0] = state.getConstant(ul.exps[i]);
+				lastSize = sz;
+			}
+		}
+
+		return LLVMConstNamedStruct(llvmType, vals);
+	}
 }
 
 /**

@@ -179,6 +179,8 @@ public abstract:
 	Visitor.Status leave(ref ir.Exp, ir.FunctionLiteral);
 	Visitor.Status enter(ref ir.Exp, ir.StructLiteral);
 	Visitor.Status leave(ref ir.Exp, ir.StructLiteral);
+	Visitor.Status enter(ref ir.Exp, ir.UnionLiteral);
+	Visitor.Status leave(ref ir.Exp, ir.UnionLiteral);
 	Visitor.Status enter(ref ir.Exp, ir.ClassLiteral);
 	Visitor.Status leave(ref ir.Exp, ir.ClassLiteral);
 	Visitor.Status enter(ref ir.Exp, ir.Constant);
@@ -358,6 +360,8 @@ override:
 	Status leave(ref ir.Exp, ir.FunctionLiteral){ return Continue; }
 	Status enter(ref ir.Exp, ir.StructLiteral){ return Continue; }
 	Status leave(ref ir.Exp, ir.StructLiteral){ return Continue; }
+	Status enter(ref ir.Exp, ir.UnionLiteral){ return Continue; }
+	Status leave(ref ir.Exp, ir.UnionLiteral){ return Continue; }
 	Status enter(ref ir.Exp, ir.ClassLiteral){ return Continue; }
 	Status leave(ref ir.Exp, ir.ClassLiteral){ return Continue; }
 	Status enter(ref ir.Exp, ir.Constant){ return Continue; }
@@ -497,6 +501,7 @@ Visitor.Status accept(ir.Node n, Visitor av)
 	case FunctionLiteral:
 	case ExpReference:
 	case StructLiteral:
+	case UnionLiteral:
 	case ClassLiteral:
 	case TraitsExp:
 	case TypeExp:
@@ -675,6 +680,8 @@ Visitor.Status acceptExp(ref ir.Exp exp, Visitor av)
 		return acceptExpReference(exp, cast(ir.ExpReference)exp, av);
 	case StructLiteral:
 		return acceptStructLiteral(exp, cast(ir.StructLiteral)exp, av);
+	case UnionLiteral:
+		return acceptUnionLiteral(exp, cast(ir.UnionLiteral)exp, av);
 	case ClassLiteral:
 		return acceptClassLiteral(exp, cast(ir.ClassLiteral)exp, av);
 	case TraitsExp:
@@ -2051,6 +2058,37 @@ Visitor.Status acceptStructLiteral(ref ir.Exp exp, ir.StructLiteral sliteral, Vi
 	}
 
 	return av.leave(exp, sliteral);
+}
+
+Visitor.Status acceptUnionLiteral(ref ir.Exp exp, ir.UnionLiteral uliteral, Visitor av)
+{
+	auto status = av.enter(exp, uliteral);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	// If exp has been replaced
+	if (exp !is uliteral) {
+		return acceptExp(exp, av);
+	}
+
+	foreach (ref sexp; uliteral.exps) {
+		status = acceptExp(sexp, av);
+		if (status == VisitorContinueParent) {
+			continue;
+		} else if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	if (uliteral.type !is null) {
+		status = accept(uliteral.type, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	return av.leave(exp, uliteral);
 }
 
 Visitor.Status acceptClassLiteral(ref ir.Exp exp, ir.ClassLiteral cliteral, Visitor av)

@@ -339,6 +339,8 @@ public:
 	override Status leave(ref ir.Exp, ir.FunctionLiteral n) { leaveNode(n); return Continue; }
 	override Status enter(ref ir.Exp, ir.StructLiteral n) { enterNode(n); return Continue; }
 	override Status leave(ref ir.Exp, ir.StructLiteral n) { leaveNode(n); return Continue; }
+	override Status enter(ref ir.Exp, ir.UnionLiteral n) { enterNode(n); return Continue; }
+	override Status leave(ref ir.Exp, ir.UnionLiteral n) { leaveNode(n); return Continue; }
 	override Status enter(ref ir.Exp, ir.ClassLiteral n) { enterNode(n); return Continue; }
 	override Status leave(ref ir.Exp, ir.ClassLiteral n) { leaveNode(n); return Continue; }
 	override Status enter(ref ir.Exp, ir.Constant n) { enterNode(n); return Continue; }

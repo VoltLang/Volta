@@ -1944,6 +1944,25 @@ public:
 		assert(false);
 	}
 
+	override Status enter(ref ir.Exp, ir.UnionLiteral sliteral)
+	{
+		wf("{ ");
+		foreach (i, exp; sliteral.exps) {
+			acceptExp(exp, this);
+			if (i < sliteral.exps.length - 1) {
+				wf(", ");
+			}
+		}
+		wf("}");
+
+		return ContinueParent;
+	}
+
+	override Status leave(ref ir.Exp, ir.UnionLiteral sliteral)
+	{
+		assert(false);
+	}
+
 	override Status enter(ref ir.Exp, ir.ClassLiteral cliteral)
 	{
 		wf("{ ");

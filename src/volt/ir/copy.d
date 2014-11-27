@@ -474,6 +474,7 @@ ir.Node copyNode(ir.Node n)
 	case TemplateInstanceExp:
 	case FunctionLiteral:
 	case StructLiteral:
+	case UnionLiteral:
 	case ClassLiteral:
 	case EnumDeclaration:
 	case FunctionSet:

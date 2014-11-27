@@ -48,6 +48,10 @@ void getValueAnyForm(State state, ir.Exp exp, Value result)
 		auto sl = cast(ir.StructLiteral)exp;
 		handleStructLiteral(state, sl, result);
 		break;
+	case UnionLiteral:
+		auto ul = cast(ir.UnionLiteral)exp;
+		handleUnionLiteral(state, ul, result);
+		break;
 	case ArrayLiteral:
 		auto al = cast(ir.ArrayLiteral)exp;
 		handleArrayLiteral(state, al, result);
