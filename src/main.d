@@ -71,6 +71,14 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 		settings.libraryPaths ~= path;
 	}
 
+	void frameworkPath(string path) {
+		settings.frameworkPaths ~= path;
+	}
+
+	void frameworkName(string name) {
+		settings.frameworkNames ~= name;
+	}
+
 	void arch(string a) {
 		switch (toLower(a)) {
 		case "x86":
@@ -159,6 +167,12 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 			continue;
 		case "-l":
 			argHandler = &libraryFile;
+			continue;
+		case "-F":
+			argHandler = &frameworkPath;
+			continue;
+		case "-framework", "--framework":
+			argHandler = &frameworkName;
 			continue;
 		case "-w":
 			settings.warningsEnabled = true;
@@ -274,33 +288,37 @@ void setDefault(Settings settings)
 bool printUsage()
 {
 	writefln("usage: volt [options] [source files]");
-	writefln("\t-h,--help       Print this message and quit.");
-	writefln("\t--license       Print license information and quit.");
-	writefln("\t-o outputname   Set output to outputname.");
-	writefln("\t-I path         Add a include path.");
-	writefln("\t-L path         Add a library path.");
-	writefln("\t-l path         Add a library.");
-	writefln("\t-D ident        Define a new version flag");
-	writefln("\t-w              Enable warnings.");
-	writefln("\t-d              Compile in debug mode.");
-	writefln("\t-c              Compile only, do not link.");
-	writefln("\t-E              Only perform conditional removal (implies -S).");
-	writefln("\t--simple-trace  Print the name of functions to stdout as they're run.");
+	writefln("\t-h,--help        Print this message and quit.");
+	writefln("\t--license        Print license information and quit.");
+	writefln("\t-o outputname    Set output to outputname.");
+	writefln("\t-I path          Add a include path.");
+	writefln("\t-L path          Add a library path.");
+	writefln("\t-l path          Add a library.");
+	version (OSX) {
+	writefln("\t-F path          Add a framework path.");
+	writefln("\t--framework name Add a framework.");
+	}
+	writefln("\t-D ident         Define a new version flag");
+	writefln("\t-w               Enable warnings.");
+	writefln("\t-d               Compile in debug mode.");
+	writefln("\t-c               Compile only, do not link.");
+	writefln("\t-E               Only perform conditional removal (implies -S).");
+	writefln("\t--simple-trace   Print the name of functions to stdout as they're run.");
 	writeln();
-	writefln("\t--arch          Select processer architecture: 'x86', 'x86_64', 'le32'");
-	writefln("\t--platform      Select platform: 'mingw', 'linux', 'osx', 'emscripten'");
+	writefln("\t--arch           Select processer architecture: 'x86', 'x86_64', 'le32'");
+	writefln("\t--platform       Select platform: 'mingw', 'linux', 'osx', 'emscripten'");
 	writeln();
-	writefln("\t--linker linker Linking program to use for linking.");
-	writefln("\t--emit-bitcode  Emit LLVM bitcode (implies -c).");
-	writefln("\t-S,--no-backend Stop compilation before the backend.");
-	writefln("\t--no-catch      For compiler debugging purposes.");
-	writefln("\t--internal-dbg  Enables internal debug printing.");
+	writefln("\t--linker linker  Linking program to use for linking.");
+	writefln("\t--emit-bitcode   Emit LLVM bitcode (implies -c).");
+	writefln("\t-S,--no-backend  Stop compilation before the backend.");
+	writefln("\t--no-catch       For compiler debugging purposes.");
+	writefln("\t--internal-dbg   Enables internal debug printing.");
 	writeln();
-	writefln("\t--no-stdlib     Don't include any stdlib (from config or arguments)");
-	writefln("\t--stdlib-I      Apply this include before any other -I");
-	writefln("\t                (ignored if --no-stdlib was given)");
-	writefln("\t--stdlib-file   Apply this file first but only when linking");
-	writefln("\t                (ignored if --no-stdlib was given)");
+	writefln("\t--no-stdlib      Don't include any stdlib (from config or arguments)");
+	writefln("\t--stdlib-I       Apply this include before any other -I");
+	writefln("\t                 (ignored if --no-stdlib was given)");
+	writefln("\t--stdlib-file    Apply this file first but only when linking");
+	writefln("\t                 (ignored if --no-stdlib was given)");
 	return false;
 }
 

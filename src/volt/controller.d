@@ -50,6 +50,9 @@ protected:
 	string[] mLibraryFiles;
 	string[] mLibraryPaths;
 
+	string[] mFrameworkNames;
+	string[] mFrameworkPaths;
+
 public:
 	this(Settings s)
 	{
@@ -68,6 +71,9 @@ public:
 
 		mLibraryPaths = settings.libraryPaths;
 		mLibraryFiles = settings.libraryFiles;
+
+		mFrameworkNames = settings.frameworkNames;
+		mFrameworkPaths = settings.frameworkPaths;
 
 		// Add the stdlib includes and files.
 		if (!settings.noStdLib) {
@@ -384,18 +390,27 @@ protected:
 			objInputFiles ~= objectFile ~ " ";
 		}
 		string objLibraryPaths;
-		foreach(libraryPath; mLibraryPaths) {
+		foreach (libraryPath; mLibraryPaths) {
 			objLibraryPaths ~= " -L" ~ libraryPath;
 		}
 		string objLibraryFiles;
-		foreach(libraryFile; mLibraryFiles) {
+		foreach (libraryFile; mLibraryFiles) {
 			objLibraryFiles ~= " -l" ~ libraryFile;
+		}
+		string objFrameworkPaths;
+		foreach (frameworkPath; mFrameworkPaths) {
+			objLibraryPaths ~= " -F " ~ frameworkPath;
+		}
+		string objFrameworkNames;
+		foreach (frameworkName; mFrameworkNames) {
+			objFrameworkNames ~= " -framework " ~ frameworkName;
 		}
 
 		objInputFiles ~= " " ~ obj;
 
-		string cmd = format("%s -o \"%s\" %s%s%s", linker, of,
-		                    objInputFiles, objLibraryPaths, objLibraryFiles);
+		string cmd = format("%s -o \"%s\" %s%s%s%s%s", linker, of,
+		                    objInputFiles, objLibraryPaths, objLibraryFiles,
+		                    objFrameworkPaths, objFrameworkNames);
 
 		return system(cmd);
 	}
