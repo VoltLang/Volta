@@ -1624,17 +1624,18 @@ void extypePostfixIdentifier(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		ident = identExp.value;
 		idents = [ident];
 
-		/// @todo handle leading dot.
-		assert(!identExp.globalLookup);
-
-		ir.Exp withResult;
-		foreach (withStatement; _scope.withStatements) {
-			auto withExp = withStatement.exp;
-			withResult = withLookup(ctx, withExp, ctx.current, ident);
-			if (withResult !is null) {
-				postfixIdents[0].child = withResult;
-				return extypePostfixIdentifier(ctx, exp, postfix);
+		if (!identExp.globalLookup) {
+			ir.Exp withResult;
+			foreach (withStatement; _scope.withStatements) {
+				auto withExp = withStatement.exp;
+				withResult = withLookup(ctx, withExp, ctx.current, ident);
+				if (withResult !is null) {
+					postfixIdents[0].child = withResult;
+					return extypePostfixIdentifier(ctx, exp, postfix);
+				}
 			}
+		} else {
+			_scope = getModuleFromScope(_scope).myScope;
 		}
 		store = lookup(ctx.lp, _scope, loc, ident);
 	}
