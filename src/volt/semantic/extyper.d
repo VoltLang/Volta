@@ -2021,8 +2021,14 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 	default: break;
 	}
 
-	auto st = cast(ir.StorageType) ltype;
-	if (st !is null && st.type == ir.StorageType.Kind.Scope && mutableIndirection(ltype) && isAssign(exp) && !binop.isInternalNestedAssign) {
+	bool assigningOutsideFunction;
+	if (auto eref = cast(ir.ExpReference)binop.left) {
+		auto var = cast(ir.Variable) eref.decl;
+		assigningOutsideFunction = var !is null && var.storage != ir.Variable.Storage.Function;
+	}
+	auto st = cast(ir.StorageType) rtype;
+	auto lst = cast(ir.StorageType) ltype;
+	if (st !is null && (lst is null || assigningOutsideFunction) && st.type == ir.StorageType.Kind.Scope && mutableIndirection(ltype) && isAssign(exp) && !binop.isInternalNestedAssign) {
 		throw makeNoEscapeScope(exp.location);
 	}
 
