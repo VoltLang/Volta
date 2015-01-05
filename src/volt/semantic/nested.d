@@ -101,7 +101,13 @@ void tagNestedVariables(Context ctx, ir.Variable var, ir.Store store, ref ir.Exp
 		assert(ctx.currentFunction.nestStruct !is null);
 		if (var.storage != ir.Variable.Storage.Field && var.storage != ir.Variable.Storage.Nested) {
 			addVarToStructSmart(ctx.currentFunction.nestStruct, var);
-			var.storage = ir.Variable.Storage.Nested;
+			if (var.storage == ir.Variable.Storage.Local) {
+				var.storage = ir.Variable.Storage.NestedLocal;
+			} else if (var.storage == ir.Variable.Storage.Global) {
+				var.storage = ir.Variable.Storage.NestedGlobal;
+			} else {
+				var.storage = ir.Variable.Storage.Nested;
+			}
 		} else if (var.storage == ir.Variable.Storage.Field) {
 			if (ctx.currentFunction.nestedHiddenParameter is null) {
 				return;
@@ -109,9 +115,6 @@ void tagNestedVariables(Context ctx, ir.Variable var, ir.Store store, ref ir.Exp
 			auto nref = buildExpReference(var.location, ctx.currentFunction.nestedHiddenParameter, ctx.currentFunction.nestedHiddenParameter.name);
 			auto a = buildAccess(var.location, nref, "this");
 			e = buildAccess(a.location, a, var.name);
-		}
-		if (var.storage != ir.Variable.Storage.Field) {
-			var.storage = ir.Variable.Storage.Nested;
 		}
 	}
 }

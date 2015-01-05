@@ -118,7 +118,9 @@ public:
 		if (aggregateDepth == 0) {
 			// Module level -- ensure global or local is specified.
 			if (v.storage != ir.Variable.Storage.Local &&
-			    v.storage != ir.Variable.Storage.Global) {
+			    v.storage != ir.Variable.Storage.Global &&
+			    v.storage != ir.Variable.Storage.NestedLocal &&
+			    v.storage != ir.Variable.Storage.NestedGlobal) {
 				throw makeExpected(v, "global or local");
 			}
 		}

@@ -443,6 +443,8 @@ bool isVariableStatic(ir.Variable var)
 	case Nested:
 	case Local:
 	case Global:
+	case NestedLocal:
+	case NestedGlobal:
 		return true;
 	}
 }

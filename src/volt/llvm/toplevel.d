@@ -134,7 +134,7 @@ public:
 		final switch(var.storage) with (ir.Variable.Storage) {
 		case Invalid:
 			assert(false, "invalid variable");
-		case Field:
+		case Field, NestedLocal, NestedGlobal:
 			break;
 		case Function, Nested:
 			assert(state.currentFunc !is null);
