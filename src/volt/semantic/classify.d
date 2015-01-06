@@ -1051,3 +1051,10 @@ string overloadIndexName()
 	return "opIndex";
 }
 
+bool isNested(ir.Variable.Storage s)
+{
+	with (ir.Variable.Storage) {
+		return s == Nested || s == NestedLocal || s == NestedGlobal;
+	}
+}
+

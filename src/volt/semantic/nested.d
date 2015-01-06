@@ -15,6 +15,7 @@ import volt.visitor.visitor;
 import volt.semantic.lookup;
 import volt.semantic.gatherer;
 import volt.semantic.context;
+import volt.semantic.classify : isNested;
 
 void emitNestedStructs(ir.Function parentFunction, ir.BlockStatement bs)
 {
@@ -59,7 +60,7 @@ bool replaceNested(ref ir.Exp exp, ir.ExpReference eref, ir.Variable nestParam)
 	auto fp = cast(ir.FunctionParam) eref.decl;
 	if (fp is null || !fp.hasBeenNested) {
 		auto var = cast(ir.Variable) eref.decl;
-		if (var is null || var.storage != ir.Variable.Storage.Nested) { 
+		if (var is null || !isNested(var.storage)) {
 			return false;
 		} else {
 			name = var.name;
@@ -80,7 +81,7 @@ void insertBinOpAssignsForNestedVariableAssigns(ir.BlockStatement bs)
 {
 	for (size_t i = 0; i < bs.statements.length; ++i) {
 		auto var = cast(ir.Variable) bs.statements[i];
-		if (var is null || var.storage != ir.Variable.Storage.Nested) {
+		if (var is null || !isNested(var.storage)) {
 			continue;
 		}
 		if (var.assign is null) {
@@ -99,7 +100,7 @@ void tagNestedVariables(Context ctx, ir.Variable var, ir.Store store, ref ir.Exp
 	}
 	if (ctx.current.nestedDepth > store.parent.nestedDepth) {
 		assert(ctx.currentFunction.nestStruct !is null);
-		if (var.storage != ir.Variable.Storage.Field && var.storage != ir.Variable.Storage.Nested) {
+		if (var.storage != ir.Variable.Storage.Field && !isNested(var.storage)) {
 			addVarToStructSmart(ctx.currentFunction.nestStruct, var);
 			if (var.storage == ir.Variable.Storage.Local) {
 				var.storage = ir.Variable.Storage.NestedLocal;
