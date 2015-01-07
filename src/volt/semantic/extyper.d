@@ -1276,6 +1276,7 @@ bool replaceExpReferenceIfNeeded(Context ctx,
 	// Early out on static vars.
 	// Or function sets.
 	auto decl = eRef.decl;
+	ir.Exp nestedLookup;
 	final switch (decl.declKind) with (ir.Declaration.Kind) {
 	case Function:
 		auto asFn = cast(ir.Function)decl;
@@ -1285,6 +1286,11 @@ bool replaceExpReferenceIfNeeded(Context ctx,
 		break;
 	case Variable:
 		auto asVar = cast(ir.Variable)decl;
+		auto ffn = getParentFunction(ctx.current);
+		if (ffn !is null && ffn.nestStruct !is null && eRef.idents.length > 0) {
+			auto access = buildAccess(eRef.location, buildExpReference(eRef.location, ffn.nestedVariable), "this");
+			nestedLookup = buildAccess(eRef.location, access, eRef.idents[$-1]);
+		}
 		if (isVariableStatic(asVar)) {
 			return false;
 		}
@@ -1296,12 +1302,6 @@ bool replaceExpReferenceIfNeeded(Context ctx,
 		return false;
 	}
 
-	ir.Exp nestedLookup;
-	auto ffn = getParentFunction(ctx.current);
-	if (ffn.nestStruct !is null) {
-		auto access = buildAccess(eRef.location, buildExpReference(eRef.location, ffn.nestedVariable), "this");
-		nestedLookup = buildAccess(eRef.location, access, eRef.idents[$-1]);
-	}
 	auto thisVar = getThisVar(eRef.location, ctx.lp, ctx.current);
 	assert(thisVar !is null);
 
