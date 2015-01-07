@@ -443,8 +443,6 @@ bool isVariableStatic(ir.Variable var)
 	case Nested:
 	case Local:
 	case Global:
-	case NestedLocal:
-	case NestedGlobal:
 		return true;
 	}
 }
@@ -1054,7 +1052,7 @@ string overloadIndexName()
 bool isNested(ir.Variable.Storage s)
 {
 	with (ir.Variable.Storage) {
-		return s == Nested || s == NestedLocal || s == NestedGlobal;
+		return s == Nested;
 	}
 }
 

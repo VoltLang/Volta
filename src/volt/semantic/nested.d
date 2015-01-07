@@ -1,4 +1,4 @@
- // Copyright © 2013, Bernard Helyer.  All rights reserved.
+// Copyright © 2013-2015, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.nested;
 
@@ -101,14 +101,12 @@ void tagNestedVariables(Context ctx, ir.Variable var, ir.Store store, ref ir.Exp
 	if (ctx.current.nestedDepth > store.parent.nestedDepth) {
 		assert(ctx.currentFunction.nestStruct !is null);
 		if (var.storage != ir.Variable.Storage.Field && !isNested(var.storage)) {
-			addVarToStructSmart(ctx.currentFunction.nestStruct, var);
-			if (var.storage == ir.Variable.Storage.Local) {
-				var.storage = ir.Variable.Storage.NestedLocal;
-			} else if (var.storage == ir.Variable.Storage.Global) {
-				var.storage = ir.Variable.Storage.NestedGlobal;
-			} else {
-				var.storage = ir.Variable.Storage.Nested;
+			// If we're tagging a global variable, just ignore it.
+			if (var.storage == ir.Variable.Storage.Local || var.storage == ir.Variable.Storage.Global) {
+				return;
 			}
+			addVarToStructSmart(ctx.currentFunction.nestStruct, var);
+			var.storage = ir.Variable.Storage.Nested;
 		} else if (var.storage == ir.Variable.Storage.Field) {
 			if (ctx.currentFunction.nestedHiddenParameter is null) {
 				return;

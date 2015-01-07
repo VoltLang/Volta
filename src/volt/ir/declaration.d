@@ -73,8 +73,6 @@ public:
 		Nested,  /// Accessed in a nested function.
 		Local,  /// Stored in TLS.
 		Global,  /// Stored in the global data segment.
-		NestedLocal,  /// Nested from a TLS variable.
-		NestedGlobal,  /// Nested from a GDS variable.
 	}
 
 public:
