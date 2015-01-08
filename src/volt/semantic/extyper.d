@@ -1190,9 +1190,7 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		foreach (i, _exp; varArgsSlice) {
 			auto etype = getExpType(ctx.lp, _exp, ctx.current);
 			ensureResolved(ctx.lp, ctx.current, etype);
-			auto typeId = new ir.Typeid();
-			typeId.location = postfix.location;
-			typeId.type = copyTypeSmart(postfix.location, etype);
+			auto typeId = buildTypeidSmart(postfix.location, etype);
 			typeidsLiteral.values ~= typeId;
 			types ~= etype;
 			sizes ~= size(postfix.location, ctx.lp, etype);

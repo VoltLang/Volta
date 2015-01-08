@@ -13,6 +13,7 @@ import volt.interfaces;
 import volt.semantic.classify;
 import volt.semantic.lookup;
 import volt.semantic.mangle;
+import volt.semantic.typer;
 
 
 /**
@@ -87,6 +88,8 @@ ir.Variable buildTypeInfoVariable(LanguagePass lp, ir.Type type, ir.Exp assign, 
 ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Scope current, ir.Type type)
 {
 	assert(type.mangledName !is null);
+
+	type = realType(type, false, true);  // Strip storage type.
 
 	int typeSize = size(type.location, lp, type);
 	auto typeConstant = buildConstantSizeT(type.location, lp, typeSize);
