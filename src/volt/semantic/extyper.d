@@ -2693,6 +2693,53 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, Context ctx, ir.Scope nest
 	throw makeExpected(l, "foreach aggregate type");
 }
 
+void transformForeaches(Context ctx, ir.BlockStatement bs)
+{
+	ir.Function nestedFunction;
+	ir.ForeachStatement lastFes;
+	int aggregateForeaches;
+	for (size_t i = 0; i < bs.statements.length; i++) {
+		auto fes = cast(ir.ForeachStatement) bs.statements[i];
+		if (fes is null) {
+			continue;
+		}
+		assert(fes !is lastFes);
+		lastFes = fes;
+		string[] replacers;
+		auto forStatement = foreachToFor(fes, ctx, ctx.current, aggregateForeaches, replacers, nestedFunction);
+		int toAdd = 1;
+
+		if (nestedFunction !is null) {
+			if (ctx.currentFunction.nestStruct is null) {
+				toAdd += 2;
+				ctx.currentFunction.nestStruct = createAndAddNestedStruct(ctx.currentFunction, bs);
+				ctx.currentFunction.nestStruct.myScope = new ir.Scope(ctx.currentFunction.myScope, ctx.currentFunction.nestStruct, "__Nested");
+			}
+			auto ns = ctx.currentFunction.nestStruct;
+			assert(ns !is null);
+			assert(ns.myScope !is null);
+			auto tr = buildTypeReference(ns.location, ns, "__Nested");
+			auto decl = buildVariable(nestedFunction.location, tr, ir.Variable.Storage.Function, "__nested");
+			if (nestedFunction.nestedHiddenParameter is null) {
+				nestedFunction.nestedHiddenParameter = decl;
+				nestedFunction.nestedVariable = decl;
+				nestedFunction.nestStruct = ns;
+				nestedFunction.type.hiddenParameter = true;
+			}
+			bs.statements.insertInPlace(i, nestedFunction);
+			accept(bs.statements[i], ctx.etyper);
+			auto l = forStatement.location;
+			auto _call = cast(ir.Postfix) forStatement.test;
+			assert(_call !is null);
+			assert(_call.arguments.length == 1);
+			_call.arguments[0] = buildCreateDelegate(l, buildExpReference(l, ctx.currentFunction.nestedVariable), buildExpReference(l, nestedFunction));
+			i += toAdd;  // nested struct + nested struct variable + nested function = 3
+		}
+		bs.statements[i] = forStatement;
+		accept(bs.statements[i], ctx.etyper);
+	}
+}
+
 /**
  * If type casting were to be strict, type T could only
  * go to type T without an explicit cast. Implicit casts
@@ -3108,6 +3155,7 @@ public:
 		foreach (ctxment; fs.block.statements) {
 			accept(ctxment, this);
 		}
+		transformForeaches(ctx, fs.block);
 		ctx.leave(fs.block);
 
 		return ContinueParent;
@@ -3182,49 +3230,7 @@ public:
 
 	override Status leave(ir.BlockStatement bs)
 	{
-		ir.Function nestedFunction;
-		ir.ForeachStatement lastFes;
-		int aggregateForeaches;
-		for (size_t i = 0; i < bs.statements.length; i++) {
-			auto fes = cast(ir.ForeachStatement) bs.statements[i];
-			if (fes is null) {
-				continue;
-			}
-			assert(fes !is lastFes);
-			lastFes = fes;
-			string[] replacers;
-			auto forStatement = foreachToFor(fes, ctx, ctx.current, aggregateForeaches, replacers, nestedFunction);
-			int toAdd = 1;
-
-			if (nestedFunction !is null) {
-				if (ctx.currentFunction.nestStruct is null) {
-					toAdd += 2;
-					ctx.currentFunction.nestStruct = createAndAddNestedStruct(ctx.currentFunction, bs);
-					ctx.currentFunction.nestStruct.myScope = new ir.Scope(ctx.currentFunction.myScope, ctx.currentFunction.nestStruct, "__Nested");
-				}
-				auto ns = ctx.currentFunction.nestStruct;
-				assert(ns !is null);
-				assert(ns.myScope !is null);
-				auto tr = buildTypeReference(ns.location, ns, "__Nested");
-				auto decl = buildVariable(nestedFunction.location, tr, ir.Variable.Storage.Function, "__nested");
-				if (nestedFunction.nestedHiddenParameter is null) {
-					nestedFunction.nestedHiddenParameter = decl;
-					nestedFunction.nestedVariable = decl;
-					nestedFunction.nestStruct = ns;
-					nestedFunction.type.hiddenParameter = true;
-				}
-				bs.statements.insertInPlace(i, nestedFunction);
-				accept(bs.statements[i], this);
-				auto l = forStatement.location;
-				auto _call = cast(ir.Postfix) forStatement.test;
-				assert(_call !is null);
-				assert(_call.arguments.length == 1);
-				_call.arguments[0] = buildCreateDelegate(l, buildExpReference(l, ctx.currentFunction.nestedVariable), buildExpReference(l, nestedFunction));
-				i += toAdd;  // nested struct + nested struct variable + nested function = 3
-			}
-			bs.statements[i] = forStatement;
-			accept(bs.statements[i], this);
-		}
+		transformForeaches(ctx, bs);
 		ctx.leave(bs);
 		return Continue;
 	}
