@@ -2670,10 +2670,10 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, Context ctx, ir.Scope nest
 		auto kref = buildExpReference(l, keyVar, keyVar.name);
 		auto keys = buildAccess(l, copyExp(fes.aggregate), "keys");
 		auto rh   = buildIndex(l, keys, buildExpReference(l, indexVar, indexVar.name));
-		fs.increments ~= buildAssign(l, kref, rh);
+		fs.block.statements = buildExpStat(l, buildAssign(l, kref, rh)) ~ fs.block.statements;
 
 		// v = aa[aa.keys[i]]
-		fs.increments ~= buildAssign(
+		fs.block.statements = buildExpStat(l, buildAssign(
 			l,
 			buildExpReference(l, valVar, valVar.name),
 			buildIndex(l, copyExp(fes.aggregate),
@@ -2681,7 +2681,7 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, Context ctx, ir.Scope nest
 					buildExpReference(l, indexVar, indexVar.name)
 				)
 			)
-		);
+		)) ~ fs.block.statements;
 
 		// i++
 		fs.increments ~= buildIncrement(l, buildExpReference(l, indexVar, indexVar.name));
