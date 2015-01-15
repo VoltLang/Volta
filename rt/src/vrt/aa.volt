@@ -72,11 +72,11 @@ extern(C) ulong vrt_aa_get_pp(void* rbtv, ulong key, ulong _default)
 
 extern(C) void[] vrt_aa_get_aa(void* rbtv, void[] key, void[] _default)
 {
-	TreeNode* tn = vrt_aa_lookup_node_array(rbtv, key);
-	if (tn is null) {
-		return _default;
+	void[] ret;
+	if (vrt_aa_in_array(rbtv, key, cast(void*)&ret)) {
+		return ret;
 	} else {
-		return tn.value.array;
+		return _default;
 	}
 }
 
@@ -92,11 +92,11 @@ extern(C) ulong vrt_aa_get_ap(void* rbtv, void[] key, ulong _default)
 
 extern(C) void[] vrt_aa_get_pa(void* rbtv, ulong key, void[] _default)
 {
-	TreeNode* tn = vrt_aa_lookup_node_primitive(rbtv, key);
-	if (tn is null) {
-		return _default;
+	void[] ret;
+	if (vrt_aa_in_primitive(rbtv, key, cast(void*) &ret)) {
+		return ret;
 	} else {
-		return tn.value.array;
+		return _default;
 	}
 }
 
