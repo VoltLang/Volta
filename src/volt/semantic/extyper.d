@@ -37,13 +37,8 @@ import volt.semantic.context;
 bool willConvert(ir.Type argument, ir.Type parameter)
 {
 	auto _storage = cast(ir.StorageType) parameter;
-	if (_storage !is null && _storage.type == ir.StorageType.Kind.Scope) {
+	if (_storage !is null && (_storage.type == ir.StorageType.Kind.Scope || _storage.type == ir.StorageType.Kind.Ref)) {
 		return willConvert(argument, _storage.base);
-	}
-	if (_storage !is null && argument.nodeType == ir.NodeType.ArrayType) {
-		if (_storage.type == ir.StorageType.Kind.Ref) {
-			return willConvert(argument, _storage.base);
-		}
 	}
 	if (typesEqual(argument, parameter)) {
 		return true;
