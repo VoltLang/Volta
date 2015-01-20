@@ -2196,14 +2196,25 @@ void handleNestedParams(Context ctx, ir.Function fn)
 		if (!param.hasBeenNested) {
 			param.hasBeenNested = true;
 			ensureResolved(ctx.lp, ctx.current, param.type);
-			auto var = buildVariableSmart(param.location, param.type, ir.Variable.Storage.Field, param.name);
+			auto type = param.type;
+			ir.StorageType.Kind dummy;
+			bool refParam = isRef(param.type, dummy);
+			if (refParam) {
+				type = buildPtrSmart(param.location, param.type);
+			}
+			auto var = buildVariableSmart(param.location, type, ir.Variable.Storage.Field, param.name);
 			addVarToStructSmart(ns, var);
 
 			// Insert an assignment of the param to the nest struct.
 			auto l = buildAccess(param.location, buildExpReference(np.location, np, np.name), param.name);
 			auto r = buildExpReference(param.location, param, param.name);
 			r.doNotRewriteAsNestedLookup = true;
-			auto bop = buildAssign(l.location, l, r);
+			ir.BinOp bop;
+			if (!refParam) {
+				bop = buildAssign(l.location, l, r);
+			} else {
+				bop = buildAssign(l.location, l, buildAddrOf(r.location, r));
+			}
 			bop.isInternalNestedAssign = true;
 			ir.Node n = buildExpStat(l.location, bop);
 			if (fn.nestedHiddenParameter !is null) {

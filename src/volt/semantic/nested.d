@@ -15,7 +15,7 @@ import volt.visitor.visitor;
 import volt.semantic.lookup;
 import volt.semantic.gatherer;
 import volt.semantic.context;
-import volt.semantic.classify : isNested;
+import volt.semantic.classify : isNested, isRef;
 
 void emitNestedStructs(ir.Function parentFunction, ir.BlockStatement bs)
 {
@@ -56,6 +56,7 @@ bool replaceNested(ref ir.Exp exp, ir.ExpReference eref, ir.Variable nestParam)
 		return false;
 	}
 	string name;
+	ir.Type type;
 
 	auto fp = cast(ir.FunctionParam) eref.decl;
 	if (fp is null || !fp.hasBeenNested) {
@@ -64,9 +65,11 @@ bool replaceNested(ref ir.Exp exp, ir.ExpReference eref, ir.Variable nestParam)
 			return false;
 		} else {
 			name = var.name;
+			type = var.type;
 		}
 	} else {
 		name = fp.name;
+		type = fp.type;
 	}
 	assert(name.length > 0);
 
@@ -74,6 +77,10 @@ bool replaceNested(ref ir.Exp exp, ir.ExpReference eref, ir.Variable nestParam)
 		return false;
 	}
 	exp = buildAccess(exp.location, buildExpReference(nestParam.location, nestParam, nestParam.name), name);
+	ir.StorageType.Kind dummy;
+	if (isRef(type, dummy)) {
+		exp = buildDeref(exp.location, exp);
+	}
 	return true;
 }
 
