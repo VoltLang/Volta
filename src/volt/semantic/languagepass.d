@@ -371,12 +371,15 @@ public:
 	{
 		resolve(s.myScope.parent, s.userAttrs);
 		s.isResolved = true;
+		resolve(s.myScope, s.members);
+
 	}
 
 	override void doResolve(ir.Union u)
 	{
 		resolve(u.myScope.parent, u.userAttrs);
 		u.isResolved = true;
+		resolve(u.myScope, u.members);
 	}
 
 	override void doResolve(ir.Class c)
@@ -384,6 +387,7 @@ public:
 		resolve(c.myScope.parent, c.userAttrs);
 		fillInParentIfNeeded(this, c);
 		c.isResolved = true;
+		resolve(c.myScope, c.members);
 	}
 
 	override void doResolve(ir.UserAttribute ua)
@@ -515,6 +519,17 @@ public:
 	{
 		foreach (a; userAttrs) {
 			resolve(current, a);
+		}
+	}
+
+	private void resolve(ir.Scope current, ir.TopLevelBlock members)
+	{
+		foreach (node; members.nodes) {
+			auto var = cast(ir.Variable) node;
+			if (var is null) {
+				continue;
+			}
+			resolve(current, var);
 		}
 	}
 }
