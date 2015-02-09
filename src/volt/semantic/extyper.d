@@ -2545,7 +2545,7 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, Context ctx, ir.Scope nest
 			{
 				return buildIndex(l, fes.aggregate, buildExpReference(l, indexVar, indexVar.name));
 			}
-			ctx.current.addExpressionDelegate(elementVar, &dg, elementVar.name);
+			ctx.current.addExpressionDelegate(elementVar, &dg, elementVar.name ~ to!string(cast(size_t) cast(void*) fs));
 			st = cast(ir.StorageType) st.base;
 		}
 		if (st !is null && st.type == ir.StorageType.Kind.Auto) {
