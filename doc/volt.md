@@ -1,0 +1,209 @@
+## The Volt Programming Language ##
+
+Volt is a systems programming language that aims to be expressive but not at the expense of clarity and control.
+
+## Lexical ##
+
+Volt source files have the extension `.volt`, and are processed as UTF-8.
+
+*Comments* are ignored by the compiler, and come in three varieties.
+
+    // This is a single line comment, terminate by a newline.
+    /* This is a c-style block comment, cannot nest. */
+    /+ /+ These block comments can nest. +/ This is still a comment. +/
+
+*Keywords* are reserved, and cannot be used as identifiers.
+
+    abstract alias align asm assert auto
+    body bool break byte
+    case cast catch
+    cdouble cent cfloat char class const continue creal
+    dchar debug default delegate delete deprecated do double
+    else enum export extern
+    false final finally float for foreach foreach_reverse function
+    global goto
+    idouble if ifloat immutable import in inout int interface
+    invariant ireal is
+    lazy local long
+    macro mixin module
+    new nothrow null
+    out override
+    package pragma private protected public
+    real ref return
+    scope shared short static struct super switch synchronized
+    template this throw true try typedef typeid typeof
+    ubyte ucent uint ulong union unittest ushort
+    va_arg version void volatile wchar while with
+    __thread __traits __FILE__ __FUNCTION__ __LINE__ __PRETTY_FUNCTION__
+
+Furthermore, the following are handled specially by the lexer.
+
+    __DATE__     // Replaced with the date at compilation.
+    __EOF__      // Treated as the EOF by the lexer.
+    __TIME__     // Replaced with the time at compilation.
+    __VENDOR__   // Replaced with a compiler specific string.
+    __VERSION__  // Replaced with an integer representing the compiler version.
+
+*Identifiers* start with a letter or underscore, and contain letters, underscores, or numbers.
+
+    foo, _id, a_name32
+
+*Integer Literals* start with a number from `1` to `9`, `0x`, or `0b` and can contain _, and can end with U, L, or UL.
+
+    100    // int, 100
+    10_0   // int, 100
+    32U    // uint, 32
+    64L    // long, 64
+    128UL  // ulong, 128
+    0b0010 // int, 2
+    0xFF   // int, 255
+    0123   // Error, as some languages would treat this as an octal. 
+
+*Floating Point Literals* start with a digit, contain a `.` and can end in `f`.
+
+    1.23   // double, 1.23
+    1.23f  // float, 1.23
+
+There are a few *String Literals*.
+
+    "Hello, world."    // A UTF-8 string.
+    "Hello"c           // Another UTF-8 string.
+    "Hello"w           // UTF-16.
+    "Hello"d           // UTF-32.
+    "Hello,\nworld."   // Contains a newline character.
+    r"Hello,\nworld."  // Contains 'Hello,\nworld.' literally.
+    `Hello,\nworld.`   // As above, but can also use '"' character in the string.
+
+## Modules ##
+
+Modules correspond directly with source files, and start with a module declaration, giving their name.
+
+    module a_module_name;
+
+    struct MyStruct;
+
+The declarations in the above module can then be accessed from another module with an *import statement*.
+
+    import a_module_name;  // Symbols directly accessible.
+
+    global MyStruct myStruct;
+
+Imports can be marked as `static` which requires the module name to be prefixed to lookups.
+
+    static import a_module_name;
+
+    global a_module_name.MyStruct myStruct;
+
+Module names can be given `package` names by separating the names with `.`.
+
+    module foo.bar.baz;
+
+The above would usually correspond with a file in a path like `foo/bar/baz.volt`, but this is merely convention.
+
+Multiple imports can be given in one statement.
+
+    import a, b, c;
+
+And specific symbols can be imported from modules (without importing the rest of the symbols.
+
+    import math : cos, sin, tan;
+
+`public` imports will have the effect of `import`ing modules into any module that imports the module with the public imports.
+
+    module a;
+
+    global int integer;
+
+<!-- -->
+
+    module b;
+
+    public import a;
+
+<!-- -->
+
+    module c;
+
+    import a;
+
+    // Can access 'integer'.
+
+Finally, if a directory contains a file named `package.volt`, an `import` of that directory will be rewritten to `directoryname.package`. You can use this along with `public` imports to implement a package in multiple source files, but accessible with just one `import`.
+
+## Simple Types ##
+
+*Primitive Types* are the simplest form of abstraction available.
+
+    bool     // Is either 'true' or 'false'.
+    byte     // Signed 8 bit value.
+    ubyte    // Unsigned 8 bit value.
+    short    // Signed 16 bit value.
+    ushort   // Unsigned 16 bit value.
+    int      // Signed 32 bit value.
+    uint     // Unsigned 32 bit value.
+    long     // Signed 64 bit value.
+    ulong    // Unsigned 64 bit value.
+
+Various suffixes can be attached to these types to make new types.
+
+    int[]    // A dynamic (resizable at run-time) array of ints.
+    int[32]  // A static (size fixed at compile-time) array of 32 ints.
+    int*     // A pointer to an int. Can be 'null'.
+    int[int] // An associative array of ints, indexed by an int key.
+
+And various prefixes change how the types behave.
+
+    const(int)   // An integer that cannot be modified.
+    const(int)[] // An array of integers that cannot be modified, but the array itself can.
+    const(int[]) // An array of integers that cannot be modified, and neither can the array itself.
+
+Note that there is no way to write `int const([])`. That is to say, an array that cannot be modified with contents that can be modified. `const` (and other qualifiers) are *transitive*; they apply to themselves and their children.
+
+`immutable` is similar to `const`, except `immutable` values guarantee (save the programmer deliberately going around the type system with `cast`) that there are no mutable references to the data at all.
+
+To put it another way, mutable and `immutable` values can become `const`, but only `immutable` values (this includes types that cannot be modified by another reference, like plain integers for example) can become `immutable`.
+
+## Functions ##
+
+If you're familiar with other C like languages, functions shouldn't appear too foreign.
+
+    bool areEqual(int a, int b) {
+        return a + b;
+    }
+
+The above declares a function `areEqual`, that takes two `int`s and returns a `bool`. `void` can be used to mark that a function returns no value. Unlike C, `()` means that a function takes no arguments.
+
+     void doNothing() {
+         return;
+     }
+
+Calling them works as you'd expect.
+
+    areEqual(1, 2);
+    doNothing();
+
+
+Usually, parameters are pass-by-value.
+
+    void makeThree(int var) {
+         var = 3;
+    }
+
+    ...
+        int x = 2;
+        makeThree(x);
+        // x remains 2.
+
+However, if you mark a parameter as `ref`, the value will be updated.
+
+    void makeThree(ref int var) {
+         var = 3;
+    }
+
+    ...
+        int x = 2;
+        makeThree(ref x);  // The 'ref' here is required, too.
+        // x is 3.
+
+`out` works in a similar fashion except variables passed to the function are default initialised, even if nothing is written to them.
+
