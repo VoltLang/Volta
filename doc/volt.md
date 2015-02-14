@@ -168,7 +168,7 @@ To put it another way, mutable and `immutable` values can become `const`, but on
 If you're familiar with other C like languages, functions shouldn't appear too foreign.
 
     bool areEqual(int a, int b) {
-        return a + b;
+        return a == b;
     }
 
 The above declares a function `areEqual`, that takes two `int`s and returns a `bool`. `void` can be used to mark that a function returns no value. Unlike C, `()` means that a function takes no arguments.
@@ -206,4 +206,76 @@ However, if you mark a parameter as `ref`, the value will be updated.
         // x is 3.
 
 `out` works in a similar fashion except variables passed to the function are default initialised, even if nothing is written to them.
+
+The simplest form of variadics (functions that can take multiple arguments) are *homogeneous variadics*. These are simply functions that have a parameter that can be several (or none) of the same type.
+
+    int sum(int[] numbers...) {
+        int result;
+        foreach (number; numbers) {
+            result += number;
+        }
+        return result;
+    }
+
+The variadic parameter (marked with `...`) must be the final parameter, and must be an array type.
+
+The above function can be called in several ways.
+
+    sum(1, 2, 3)    // returns 6
+    sum([1, 2, 3])  // returns 6
+    sum()           // returns 0
+
+The first two calls are equivalent. As you can see, the function always handles an array, no matter how it's called.
+
+If you need more power, Volt also has true runtime *variadic function*s. The syntax is similar, except the `...` gets its own parameter.
+
+    import watt.varargs;
+
+    int sum(...) {
+        va_list vl;
+
+        va_start(vl);
+        int result;
+        foreach (tid; _typeids) {
+            if (tid.type != object.TYPE_INT) {
+                throw new Exception("sum: expected int");
+            }
+            result += va_arg!int(vl);
+        }
+        va_end(vl);
+        return result;
+    }
+
+## Structs ##
+
+*Structs* are the simplest aggregate type. In their simplest form, they bundle several declarations together.
+
+    struct S {
+        int x;
+        string s;
+    }
+
+    ...
+        S s;
+        s.x = 42;
+        s.s = "hello"
+
+The above struct is allocated on the stack, but we can ask the GC to allocate a struct too.
+
+    S* sp = new S;
+    sp.x = 32;  // No special access syntax required.
+
+Structs can contain functions. A reference to the struct is implicit in each function, and accessible implicitly or through the `this` keyword.
+
+    struct S {
+        int x;
+        int xSquaredTimesN(int n) {
+            return (x * this.x) * n;
+        }
+    }
+
+    ...
+        S s;
+        s.x = 2;
+        s.xSquaredTimesN(3);  // 12.
 
