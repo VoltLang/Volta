@@ -279,3 +279,153 @@ Structs can contain functions. A reference to the struct is implicit in each fun
         s.x = 2;
         s.xSquaredTimesN(3);  // 12.
 
+## Unions ##
+
+Unions are like structs, except all the variables occupy the same piece of memory.
+
+    union U {
+        int x;  // Setting x...
+        int y;  // ...will set y, too.
+    }
+
+
+## Classes ##
+
+*Classes* are superficially similar to structs at first glance, but are quite different. The core concept to keep in mind is structs represent **data** and are fairly low level (what a C++ programmer might call POD -- *P*lain *O*ld *D*ata) and classes represent high level concepts.
+
+Classes in volt are single inheritance and always reference types, so if you've used Java or C# you won't be too confused.
+
+As mentioned, at first glance they look like structs.
+
+    class C {
+        int x;
+    }
+
+But there are several differences already. Firstly when using them.
+
+    C c;       // Default initialised to null.
+    // c.x     // Crashes!
+    c = new C;
+    c.x = 2;
+
+Furthermore, classes can have constructors.
+
+    class C {
+        int x;
+        this() {
+            x = 3;
+        }
+        this(int x) {
+            this.x = x;
+        }
+        this(int x, int y) {
+            this.x = x * y;
+        }
+    }
+
+    ...
+        auto a = new C();       // x == 3
+        auto b = new C(4);    // x == 4
+        auto c = new C(2, 3); // x == 6
+
+ Classes can also have functions, which we call *methods*.
+
+    class C {
+        int getInt() {
+            return 42;
+        }
+    }
+
+They've a different name because of *inheritance* they behave differently. A class can be a child of a class (but only one!) like so.
+
+    class D : C {
+         int getAnotherInt() {
+             return 24;
+         }
+    }
+
+And D acts like you'd expect.
+
+    auto d = new D();
+    d.getInt();        // 42
+    d.getAnotherInt(); // 24
+
+But you can also use a D as a C.
+
+    C c = d;
+    c.getInt();         // 42
+    //c.getAnotherInt();  // Error!
+    auto asD = cast(D) c;
+    asD.getAnotherInt();  // 24
+
+In addition to this, methods can be overridden, changing their behaviour.
+
+    class D {
+        override int getInt() {
+            return 7;
+        }
+    }
+
+    ...
+        auto d = new D();
+        C c = d;
+        c.getInt();  // 7, not 42.
+
+If a function is related to a class or struct as a type, but not a particular instance, you can create a *static function*, that needs to be called through the *type*, not the *instance*.
+
+    class Fruit {
+        static bool isDelicious() {
+            return true;
+        }
+    }
+
+    ...
+        auto fruit = new Fruit();
+        // fruit.isDelicious();  // Error!
+        Fruit.isDelicious();     // true
+
+Finally, you can mark a function with `@property` if it takes one argument, or no arguments with a non-`void` return value.
+
+    class Person {
+        string _name;
+        @property string name() {
+            return _name;
+        }
+        @property void name(string n) {
+            _name = n;
+        }
+    }
+
+    ...
+        auto p = new Person();
+        p.name = "Selma";  // Calls second function as name("Selma").
+        string s = p.name; // Calls first function as name();
+
+
+## Interfaces ##
+
+Class can implement multiple *interface*s, which are a set of methods with no implementation.
+
+    interface IPerson {
+        int age();
+        string name();
+    }
+
+Then a class can give the list of interfaces it implements after its parent class (if one is specified).
+
+    class C : object.Object, IPerson {
+        int age() { return 11; }
+        string name() { return "Billy"; }
+    }
+
+If one of the specified methods is not implement, an error is generated. As for *why* one would want to do this, variables with a type of interface can be declared, and implementing classes can be treated as an instance of that interface.
+
+    int ageTimesTwo(IPerson person) {
+        return person.age() * 2;
+    }
+
+    ...
+        auto c = new C();
+        ageTimesTwo(c);  // Note: no cast needed.
+
+This allows classes of entirely different family trees to be adapted to work with the same interface.
