@@ -90,7 +90,7 @@ ir.Type ifTypeRefDeRef(ir.Type t)
 	}
 }
 
-int matchLevel(ir.Type argument, ir.Type parameter)
+int matchLevel(bool homogenous, ir.Type argument, ir.Type parameter)
 {
 	if (typesEqual(argument, parameter)) {
 		return 4;
@@ -106,6 +106,12 @@ int matchLevel(ir.Type argument, ir.Type parameter)
 	if (willConvert(argument, parameter)) {
 		return 2;
 	} else {
+		if (homogenous) {
+			auto pArray = cast(ir.ArrayType) parameter;
+			if (pArray !is null && willConvert(argument, pArray.base)) {
+				return 2;
+			}
+		}
 		return 1;
 	}
 }
@@ -164,7 +170,8 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 				assert(fn.params[i].assign !is null);
 				matchLevels ~= 4;
 			} else {
-				matchLevels ~= .matchLevel(arguments[i], param);
+				auto homogenous = fn.type.homogenousVariadic && i == fn.type.params.length - 1;
+				matchLevels ~= .matchLevel(homogenous, arguments[i], param);
 			}
 		}
 		int matchLevel = int.max;
