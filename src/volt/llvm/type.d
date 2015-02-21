@@ -336,6 +336,31 @@ public:
 		llvmType = LLVMArrayType(base.llvmType, length);
 		super(state, sat, true, llvmType);
 	}
+
+	LLVMValueRef fromArrayLiteral(State state, ir.ArrayLiteral al)
+	{
+		assert(state.fromIr(al.type) is this);
+
+		// Handle null.
+		version (none) if (al.values.length == 0) {
+			LLVMValueRef[2] vals;
+			vals[lengthIndex] = LLVMConstNull(lengthType.llvmType);
+			vals[ptrIndex] = LLVMConstNull(ptrType.llvmType);
+			return LLVMConstNamedStruct(llvmType, vals);
+		}
+
+		LLVMValueRef[] alVals;
+		alVals.length = al.values.length;
+		foreach(uint i, exp; al.values) {
+			alVals[i] = state.getConstant(exp);
+		}
+
+		auto litConst = LLVMConstArray(base.llvmType, alVals);
+		auto litGlobal = LLVMAddGlobal(state.mod, LLVMTypeOf(litConst), "");
+		LLVMSetGlobalConstant(litGlobal, true);
+		LLVMSetInitializer(litGlobal, litConst);
+		return litGlobal;
+	}
 }
 
 /**

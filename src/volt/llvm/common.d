@@ -21,16 +21,40 @@ void handleArrayLiteral(State state, ir.ArrayLiteral al, Value result)
 	auto at = cast(ir.ArrayType)al.type;
 	if (at is null) {
 		auto tr = cast(ir.TypeReference)al.type;
-		if (tr !is null)
+		if (tr !is null) {
 			at = cast(ir.ArrayType)tr.type;
+		}
 	}
 
-	if (at is null)
-		throw panic(al.location, "array literal type must be ArrayType or TypeReference");
+	if (at is null) {
+		handleStaticArrayLiteral(state, al, result);
+		return;
+	}
 
 	auto type = cast(ArrayType)state.fromIr(at);
 
 	result.isPointer = false;
+	result.type = type;
+	result.value = type.fromArrayLiteral(state, al);
+}
+
+void handleStaticArrayLiteral(State state, ir.ArrayLiteral al, Value result)
+{
+	auto at = cast(ir.StaticArrayType)al.type;
+	if (at is null) {
+		auto tr = cast(ir.TypeReference)al.type;
+		if (tr !is null) {
+			at = cast(ir.StaticArrayType)tr.type;
+		}
+	}
+
+	if (at is null) {
+		throw panic(al.location, "array literal type must be ArrayType or TypeReference");
+	}
+
+	auto type = cast(StaticArrayType)state.fromIr(at);
+
+	result.isPointer = true;
 	result.type = type;
 	result.value = type.fromArrayLiteral(state, al);
 }

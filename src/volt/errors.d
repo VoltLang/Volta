@@ -25,6 +25,11 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeStaticArrayLengthMismatch(Location loc, size_t expectedLength, size_t gotLength, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, format("Expected literal of length %s, got %s.", expectedLength, gotLength));
+}
+
 CompilerException makeCaseFallsThrough(Location loc, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(loc, "Non empty switch case falls through.", file, line);

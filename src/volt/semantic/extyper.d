@@ -465,6 +465,23 @@ void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ref 
 	throw makeBadImplicitCast(exp, rtype, atype);
 }
 
+void extypeAssignStaticArrayType(Context ctx, ref ir.Exp exp, ir.StaticArrayType atype, ref uint flag)
+{
+	auto alit = cast(ir.ArrayLiteral) exp;
+	if (alit is null) {
+		throw makeExpected(exp.location, "array literal");
+	}
+	if (alit.values.length != atype.length) {
+		throw makeStaticArrayLengthMismatch(exp.location, atype.length, alit.values.length);
+	}
+	assert(alit.values.length == atype.length);
+	auto ltype = realType(atype.base);
+	foreach (e; alit.values) {
+		extypeAssign(ctx, e, ltype);
+	}
+	exp = buildArrayLiteralSmart(exp.location, atype, alit.values);
+}
+
 /**
  * Handles casting arrays of non mutably indirect types with
  * differing storage types.
@@ -621,6 +638,10 @@ void extypeAssignDispatch(Context ctx, ref ir.Exp exp, ir.Type type)
 	case ir.NodeType.ArrayType:
 		auto atype = cast(ir.ArrayType) type;
 		extypeAssignArrayType(ctx, exp, atype, flag);
+		break;
+	case ir.NodeType.StaticArrayType:
+		auto atype = cast(ir.StaticArrayType) type;
+		extypeAssignStaticArrayType(ctx, exp, atype, flag);
 		break;
 	case ir.NodeType.AAType:
 		auto aatype = cast(ir.AAType) type;
