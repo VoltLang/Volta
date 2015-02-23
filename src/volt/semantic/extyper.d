@@ -467,18 +467,30 @@ void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ref 
 
 void extypeAssignStaticArrayType(Context ctx, ref ir.Exp exp, ir.StaticArrayType atype, ref uint flag)
 {
-	auto alit = cast(ir.ArrayLiteral) exp;
-	if (alit is null) {
-		throw makeExpected(exp.location, "array literal");
+	ir.ArrayLiteral alit;
+	void checkAlit()
+	{
+		if (alit is null) {
+			throw makeExpected(exp.location, "array literal");
+		}
+		if (alit.values.length != atype.length) {
+			throw makeStaticArrayLengthMismatch(exp.location, atype.length, alit.values.length);
+		}
+		auto ltype = realType(atype.base);
+		foreach (ref e; alit.values) {
+			acceptExp(e, ctx.etyper);
+			extypeAssign(ctx, e, ltype);
+		}
 	}
-	if (alit.values.length != atype.length) {
-		throw makeStaticArrayLengthMismatch(exp.location, atype.length, alit.values.length);
+	auto se = cast(ir.StatementExp) exp;
+	if (se !is null) {
+		alit = cast(ir.ArrayLiteral) se.originalExp;
+		checkAlit();
+		exp = buildInternalStaticArrayLiteralSmart(exp.location, atype, alit.values);
+		return;
 	}
-	assert(alit.values.length == atype.length);
-	auto ltype = realType(atype.base);
-	foreach (e; alit.values) {
-		extypeAssign(ctx, e, ltype);
-	}
+	alit = cast(ir.ArrayLiteral) exp;
+	checkAlit();
 	exp = buildArrayLiteralSmart(exp.location, atype, alit.values);
 }
 
@@ -2490,7 +2502,9 @@ void transformArrayLiteralIfNeeded(Context ctx, ref ir.Exp exp, ir.ArrayLiteral 
 		return;
 	}
 	auto at = getExpType(ctx.lp, al, ctx.current);
-	exp = buildInternalArrayLiteralSmart(al.location, at, al.values);
+	auto sexp = buildInternalArrayLiteralSmart(al.location, at, al.values);
+	sexp.originalExp = al;
+	exp = sexp;
 }
 
 /**

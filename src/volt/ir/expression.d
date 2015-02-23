@@ -554,6 +554,7 @@ class StatementExp : Exp
 public:
 	Node[] statements; ///< A list of statements to be executed.
 	Exp exp; ///< The value of the StatementExp
+	Exp originalExp; ///< If this was lowered from something, the original will go here.
 
 public:
 	this() { super(NodeType.StatementExp); }

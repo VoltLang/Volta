@@ -975,6 +975,22 @@ ir.StatementExp buildInternalArrayLiteralSmart(Location loc, ir.Type atype, ir.E
 	return sexp;
 }
 
+ir.StatementExp buildInternalStaticArrayLiteralSmart(Location loc, ir.Type atype, ir.Exp[] exps)
+{
+	assert(atype.nodeType == ir.NodeType.StaticArrayType);
+	auto sexp = new ir.StatementExp();
+	sexp.location = loc;
+	auto var = buildVariableSmart(loc, copyTypeSmart(loc, atype), ir.Variable.Storage.Function, "sarray");
+	sexp.statements ~= var;
+	foreach (i, exp; exps) {
+		auto l = buildIndex(loc, buildExpReference(loc, var), buildConstantUint(loc, cast(uint) i));
+		auto assign = buildAssign(loc, l, exp);
+		buildExpStat(loc, sexp, assign);
+	}
+	sexp.exp = buildExpReference(loc, var, var.name);
+	return sexp;
+}
+
 ir.StatementExp buildInternalArrayLiteralSliceSmart(Location loc, ir.Type atype, ir.Type[] types, int[] sizes, int totalSize, ir.Function memcpyFn, ir.Exp[] exps)
 {
 	assert(atype.nodeType == ir.NodeType.ArrayType);
