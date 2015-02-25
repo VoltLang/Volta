@@ -97,7 +97,7 @@ interface Pass
  * Center point for all language passes.
  * @ingroup passes passLang
  */
-class LanguagePass
+abstract class LanguagePass
 {
 public:
 	Settings settings;
