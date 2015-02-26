@@ -524,6 +524,12 @@ bool effectivelyConst(ir.Type type)
 	with (ir.StorageType.Kind) return t == Const || t == Immutable;
 }
 
+bool isPointer(ir.Type t)
+{
+	auto ptr = cast(ir.PointerType) t;
+	return ptr !is null;
+}
+
 bool isIntegral(ir.Type t)
 {
 	auto prim = cast(ir.PrimitiveType)t;

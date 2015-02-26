@@ -3155,9 +3155,24 @@ public:
 
 	override Status enter(ir.IfStatement ifs)
 	{
+		auto l = ifs.location;
+		ir.Exp exp;
+		ir.Type t;
 		if (ifs.exp !is null) {
 			acceptExp(ifs.exp, this);
-			extypeCastToBool(ctx, ifs.exp);
+			exp = ifs.exp;
+			t = getExpType(ctx.lp, ifs.exp, ctx.current);
+			if (isPointer(t)) {
+				ifs.exp = buildBinOp(l, ir.BinOp.Op.NotIs, ifs.exp, buildConstantNull(l, t));
+			} else {
+				extypeCastToBool(ctx, ifs.exp);
+			}
+		}
+		if (ifs.autoName.length > 0) {
+			assert(exp !is null);
+			auto var = buildVariable(l, copyTypeSmart(l, t), ir.Variable.Storage.Function, ifs.autoName, copyExp(exp));
+			ifs.thenState.myScope.addValue(var, var.name);
+			ifs.thenState.statements = var ~ ifs.thenState.statements;
 		}
 
 		if (ifs.thenState !is null) {
