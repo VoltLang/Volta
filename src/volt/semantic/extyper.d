@@ -3092,6 +3092,13 @@ public:
 		handleNestedThis(fn);
 		handleNestedParams(ctx, fn);
 		ctx.lp.resolve(ctx.current, fn);
+		if (fn.outParameter.length > 0) {
+			assert(fn.outContract !is null);
+			auto l = fn.outContract.location;
+			auto var = buildVariableSmart(l, copyTypeSmart(l, fn.type.ret), ir.Variable.Storage.Function, fn.outParameter);
+			fn.outContract.statements = var ~ fn.outContract.statements;
+			fn.outContract.myScope.addValue(var, var.name);
+		}
 		ctx.enter(fn);
 		return Continue;
 	}
