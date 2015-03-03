@@ -3159,8 +3159,8 @@ public:
 		ir.Exp exp;
 		ir.Type t;
 		if (ifs.exp !is null) {
-			acceptExp(ifs.exp, this);
 			exp = ifs.exp;
+			acceptExp(ifs.exp, this);
 			t = getExpType(ctx.lp, ifs.exp, ctx.current);
 			if (isPointer(t)) {
 				ifs.exp = buildBinOp(l, ir.BinOp.Op.NotIs, ifs.exp, buildConstantNull(l, t));
