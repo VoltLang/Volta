@@ -221,7 +221,6 @@ ir.Node parseImport(TokenStream ts, bool inModule)
 		} while (ts.peek.type == TokenType.Comma);
 	}
 
-_exit:
 	match(ts, TokenType.Semicolon);
 	return _import;
 }
