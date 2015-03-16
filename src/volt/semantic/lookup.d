@@ -179,6 +179,20 @@ ir.Type lookupType(LanguagePass lp, ir.Scope _scope, ir.QualifiedName id)
 {
 	auto store = lookup(lp, _scope, id);
 
+	// If we can't find it, try and generate a sensible error.
+	if (store is null) {
+		string lastName;
+		foreach (ident; id.identifiers) {
+			store = lookup(lp, _scope, ident.location, ident.value);
+			if (store is null && lastName == "") {
+				throw makeFailedLookup(ident, ident.value);
+			} else if (store is null) {
+				throw makeNotMember(ident.location, lastName, ident.value);
+			}
+			lastName = ident.value;
+		}
+	}
+
 	auto loc = id.identifiers[$-1].location;
 	auto name = id.identifiers[$-1].value;
 	return ensureType(_scope, loc, name, store);
