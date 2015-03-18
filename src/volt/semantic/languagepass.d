@@ -3,6 +3,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.languagepass;
 
+import std.stdio : stdout;
+
 import ir = volt.ir.ir;
 import volt.ir.util;
 
@@ -462,8 +464,10 @@ public:
 			return;
 		m.hasPhase1 = true;
 
-		foreach(pass; postParse)
+		foreach(pass; postParse) {
+			debugPrint("Phase 1 %s.", m.name);
 			pass.transform(m);
+		}
 
 		if (settings.removeConditionalsOnly) {
 			return;
@@ -483,6 +487,7 @@ public:
 			m.hasPhase2 = true;
 
 			foreach(pass; passes2) {
+				debugPrint("Phase 2 %s.", m.name);
 				pass.transform(m);
 			}
 		}
@@ -492,6 +497,7 @@ public:
 	{
 		foreach(m; mods) {
 			foreach(pass; passes3) {
+				debugPrint("Phase 3 %s.", m.name);
 				pass.transform(m);
 			}
 		}
@@ -530,6 +536,13 @@ public:
 				continue;
 			}
 			resolve(current, var);
+		}
+	}
+
+	private void debugPrint(string msg, ir.QualifiedName name)
+	{
+		if (settings.internalDebug) {
+			stdout.writefln(msg, name);
 		}
 	}
 }

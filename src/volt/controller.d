@@ -7,7 +7,7 @@ import std.algorithm : endsWith;
 import std.path : dirSeparator;
 import std.file : remove, exists;
 import std.process : system;
-import std.stdio : stderr;
+import std.stdio : stderr, stdout;
 
 import volt.util.path;
 import volt.exceptions;
@@ -268,10 +268,17 @@ protected:
 	int intCompile()
 	{
 		ir.Module[] mods;
+		void debugPrint(string msg, string s)
+		{
+			if (settings.internalDebug) {
+				stdout.writefln(msg, s);
+			}
+		}
 
 		// Load all modules to be compiled.
 		// Don't run phase 1 on them yet.
 		foreach (file; mSourceFiles) {
+			debugPrint("Parsing %s.", file);
 			mods ~= loadAndParse(file);
 		}
 
@@ -314,6 +321,7 @@ protected:
 		foreach (mod; mods) {
 			string o = temporaryFilename(".bc");
 			backend.setTarget(o, TargetType.LlvmBitcode);
+			debugPrint("Backend %s.", mod.name.toString());
 			backend.compile(mod);
 			bitcodeFiles ~= o;
 			temporaryFiles ~= o;
