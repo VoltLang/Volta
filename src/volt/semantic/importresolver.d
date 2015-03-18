@@ -55,8 +55,14 @@ public:
 
 		} else if (i.aliases.length == 0 && i.bind is null) { // static import a; OR import a;
 			if (i.isStatic) {
-				assert(i.name.identifiers.length == 1);
-				thisModule.myScope.addScope(i, mod.myScope, i.name.identifiers[0].value);
+				ir.Scope parent = thisModule.myScope;
+				foreach (ident; i.name.identifiers[0 .. $-1]) {
+					auto name = ident.value;
+					auto s = new ir.Scope(parent, ident, name);
+					parent.addScope(ident, s, name);
+					parent = s;
+				}
+				parent.addScope(i, mod.myScope, i.name.identifiers[$-1].value);
 			} else {
 				thisModule.myScope.importedModules ~= mod;
 				thisModule.myScope.importedAccess ~= i.access;
