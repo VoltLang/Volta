@@ -58,9 +58,17 @@ public:
 				ir.Scope parent = thisModule.myScope;
 				foreach (ident; i.name.identifiers[0 .. $-1]) {
 					auto name = ident.value;
-					auto s = new ir.Scope(parent, ident, name);
-					parent.addScope(ident, s, name);
-					parent = s;
+					auto store = lookup(lp, parent, ident.location, name);
+					if (store !is null) {
+						if (store.s is null) {
+							throw makeExpected(store.node.location, "scope");
+						}
+						parent = store.s;
+					} else {
+						auto s = new ir.Scope(parent, ident, name);
+						parent.addScope(ident, s, name);
+						parent = s;
+					}
 				}
 				parent.addScope(i, mod.myScope, i.name.identifiers[$-1].value);
 			} else {

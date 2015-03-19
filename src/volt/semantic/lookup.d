@@ -347,6 +347,7 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
 	case UserAttribute:
 	case BlockStatement:
 	case Enum:
+	case Identifier:
 		return false;
 	case Class:
 		auto asClass = cast(ir.Class)node;
@@ -362,7 +363,7 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
 		outScope = asClass.parentClass.myScope;
 		return true;
 	default:
-		throw panic(node.location, "unexpected nodetype");
+		throw panic(node.location, format("unexpected nodetype %s", node.nodeType));
 	}
 }
 
