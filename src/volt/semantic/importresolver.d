@@ -70,7 +70,14 @@ public:
 						parent = s;
 					}
 				}
-				parent.addScope(i, mod.myScope, i.name.identifiers[$-1].value);
+				auto store = lookup(lp, parent, i.location, i.name.identifiers[$-1].value);
+				if (store !is null) {
+					if (store.s !is mod.myScope) {
+						throw makeExpected(i.location, "unique module");
+					}
+				} else {
+					parent.addScope(i, mod.myScope, i.name.identifiers[$-1].value);
+				}
 			} else {
 				thisModule.myScope.importedModules ~= mod;
 				thisModule.myScope.importedAccess ~= i.access;
