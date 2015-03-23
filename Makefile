@@ -21,6 +21,6 @@ RT_SRC = \
 # rules
 all:
 	$(RDMD) $(DFLAGS) src\main.d
-	./volt --no-stdlib --emit-bitcode -I rt/src -o rt/rt.bc $(RT_SRC)
+	./volt --no-stdlib --emit-bitcode -I rt/src -o rt/rt.bc $(RT_SRC) $(VFLAGS)
 
 .PHONY: all
