@@ -429,3 +429,37 @@ If one of the specified methods is not implement, an error is generated. As for 
         ageTimesTwo(c);  // Note: no cast needed.
 
 This allows classes of entirely different family trees to be adapted to work with the same interface.
+
+## Unified Function Call Syntax
+
+Unified Function Call Syntax, UFCS for short, is a way of extending types without modifying the type itself.
+Without it, if we have a class or struct that lacks a method, we would have to settle for regular function call syntax.
+
+    class Book {
+        string title;
+        int price;
+    }
+
+    void reducePrice(Book book, int amount) {
+        book.price -= amount;
+    }
+
+    ...
+        reducePrice(book, 4);
+
+But with UFCS, we can call the function as if it were a method.
+
+    ...
+        book.reducePrice(4);  // Same as above.
+
+If the struct or class had already defined `reducePrice`, the real method would take precedence over any free functions.
+
+It's not limited to structs and classes either. If a method style lookup would fail on any type (primitive types like int, etc), then Volt will look for a function that takes the type as the first parameter, then the rest of the arguments.
+
+    int add(int i, int a, int b) {
+        return i + a + b;
+    }
+
+    ...
+        int i = 2;
+        i.add(3, 5);  // == 10
