@@ -10,6 +10,7 @@ import ir = volt.ir.ir;
 import volt.ir.copy;
 import volt.ir.util;
 
+import volt.exceptions;
 import volt.errors;
 import volt.interfaces;
 import volt.token.location;
@@ -30,7 +31,7 @@ ir.Type declTypeLookup(Location loc, LanguagePass lp, ir.Scope _scope, string na
 	}
 
 	if (store.kind == ir.Store.Kind.Scope) {
-		assert(false);
+		throw panic(loc, "got scope");
 	}
 
 	auto d = cast(ir.Variable) store.node;
@@ -103,6 +104,22 @@ ir.Type getExpType(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 		throw panic(exp.location, "null getExpType result.");
 	}
 	return result;
+}
+
+/**
+ * Same as getExpType, but will return null if no type can be retrieved.
+ *
+ * This is mainly useful if you're doing something like getting types from
+ * component parts of postfix expressions and the like, as a partial expression
+ * may not comprise a valid type.
+ */
+ir.Type tryToGetExpType(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
+{
+	try {
+		return getExpType(lp, exp, currentScope);
+	} catch (CompilerException) {
+		return null;
+	}
 }
 
 /**

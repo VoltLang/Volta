@@ -1750,6 +1750,47 @@ void extypePostfixIndex(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	}
 }
 
+// object.foo(1) into foo(object, 1);
+void extypePostfixUFCS(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
+{
+	if (postfix.op != ir.Postfix.Op.Call) {
+		return;
+	}
+	auto l = postfix.location;
+	auto child = cast(ir.Postfix) postfix.child;
+	if (child is null || child.child is null || child.identifier is null) {
+		return;
+	}
+
+	auto type = realType(tryToGetExpType(ctx.lp, child.child, ctx.current));
+	if (type is null) {
+		return;
+	}
+
+	auto agg = cast(ir.Aggregate) type;
+	if (agg !is null) {
+		auto store = lookupAsThisScope(ctx.lp, agg.myScope, l, child.identifier.value);
+		if (store !is null) {
+			return;
+		}
+	}
+
+	auto store = lookup(ctx.lp, ctx.current, l, child.identifier.value);
+	if (store is null || store.functions.length == 0) {
+		return;
+	}
+
+	auto arguments = new ir.Exp[](postfix.arguments.length + 1);
+	arguments[0] = child.child;
+	arguments[1 .. $] = postfix.arguments[];
+	panicAssert(postfix, arguments.length >= 1);
+
+	auto fn = selectFunction(ctx.lp, ctx.current, store.functions, arguments, l);
+	panicAssert(postfix, fn !is null);
+	postfix.child = buildExpReference(l, fn, fn.name);
+	postfix.arguments = arguments;
+}
+
 void extypePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 {
 	if (opOverloadRewriteIndex(ctx, postfix, exp)) {
@@ -1758,6 +1799,7 @@ void extypePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	rewriteSuperIfNeeded(exp, postfix, ctx.current, ctx.lp);
 	extypePostfixIdentifier(ctx, exp, postfix);
 	extypePostfixIndex(ctx, exp, postfix);
+	extypePostfixUFCS(ctx, exp, postfix);
 }
 
 /**
