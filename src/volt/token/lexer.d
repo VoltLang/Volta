@@ -7,7 +7,8 @@ import std.utf : toUTF8;
 import std.conv : to;
 import std.string : format;
 import std.ascii : isDigit;
-import std.array : count, array;
+import std.array : array;
+import std.algorithm : count;
 import std.c.time : time, localtime;
 
 import volt.token.location : Location;

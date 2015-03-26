@@ -1307,7 +1307,7 @@ LLVMValueRef LLVMConstInt(LLVMTypeRef IntTy, ulong N,
  */
 LLVMValueRef LLVMConstIntOfArbitraryPrecision(LLVMTypeRef IntTy,
                                               uint NumWords,
-                                              const ulong Words[]);
+                                              const ulong[] Words);
 
 /**
  * Obtain a constant value for an integer parsed from a string.
