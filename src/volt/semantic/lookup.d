@@ -61,15 +61,33 @@ ir.Store lookupAsImportScope(LanguagePass lp, ir.Scope _scope, Location loc, str
 		return ensureResolved(lp, store);
 	}
 
+	bool[ir.Scope] checked;
+	store = lookupPublicImportScope(lp, _scope, loc, name, checked);
+	if (store !is null) {
+		return ensureResolved(lp, store);
+	}
+
+	return null;
+}
+
+private ir.Store lookupPublicImportScope(LanguagePass lp, ir.Scope _scope, Location loc, string name, bool[ir.Scope] checked)
+{
 	foreach (i, submod; _scope.importedModules) {
 		if (_scope.importedAccess[i] == ir.Access.Public) {
-			store = submod.myScope.getStore(name);
+			auto store = submod.myScope.getStore(name);
+			if (store !is null) {
+				return ensureResolved(lp, store);
+			}
+			if (submod.myScope in checked) {
+				continue;
+			}
+			checked[submod.myScope] = true;
+			store = lookupPublicImportScope(lp, submod.myScope, loc, name, checked);
 			if (store !is null) {
 				return ensureResolved(lp, store);
 			}
 		}
 	}
-
 	return null;
 }
 
@@ -156,13 +174,10 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 		}
 
 		/// Check publically imported modules.
-		foreach (i, submod; mod.myScope.importedModules) {
-			if (mod.myScope.importedAccess[i] == ir.Access.Public) {
-				store = submod.myScope.getStore(name);
-				if (store !is null) {
-					return ensureResolved(lp, store);
-				}
-			}
+		bool[ir.Scope] checked;
+		store = lookupPublicImportScope(lp, mod.myScope, loc, name, checked);
+		if (store !is null) {
+			return ensureResolved(lp, store);
 		}
 	}
 
