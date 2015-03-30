@@ -712,7 +712,20 @@ bool isImplicitlyConvertable(ir.Type from, ir.Type to)
 
 bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 {
-	auto constant = cast(ir.Constant) e;
+	ir.Constant removeCast(ir.Exp exp)
+	{
+		auto constant = cast(ir.Constant) exp;
+		if (constant !is null) {
+			return constant;
+		}
+		auto unary = cast(ir.Unary) exp;
+		while (unary !is null && unary.op == ir.Unary.Op.Cast) {
+			return removeCast(unary.value);
+		}
+		return null;
+	}
+
+	auto constant = removeCast(e);
 	if (constant is null) {
 		return false;
 	}
