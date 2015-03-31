@@ -866,7 +866,7 @@ void handlePostId(State state, ir.Postfix postfix, Value result)
 			index = *ptr;
 		}
 
-		getFieldFromAggregate(state, postfix.location, result, index, st.types[index], result);
+		getFieldFromAggregate(state, postfix.location, result, cast(int) index, st.types[index], result);
 
 	} else if (at !is null) {
 		if (postfix.identifier.value == "ptr") {
@@ -875,7 +875,7 @@ void handlePostId(State state, ir.Postfix postfix, Value result)
 			index = ArrayType.lengthIndex;
 		}
 
-		getFieldFromAggregate(state, postfix.location, result, index, at.types[index], result);
+		getFieldFromAggregate(state, postfix.location, result, cast(int) index, at.types[index], result);
 
 	} else if (sat !is null) {
 		if (postfix.identifier.value == "ptr") {
