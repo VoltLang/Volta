@@ -1600,9 +1600,12 @@ void extypePostfixIdentifier(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			assert(var !is null);
 			_ref.decl = var;
 		} else if (store.kind == ir.Store.Kind.Function) {
-			assert(store.functions.length == 1);
-			auto fn = store.functions[0];
-			_ref.decl = fn;
+			panicAssert(postfix, store.functions.length > 0);
+			if (store.functions.length == 1) {
+				_ref.decl = store.functions[0];
+			} else {
+				_ref.decl = buildSet(postfix.location, store.functions, _ref);
+			}
 		} else if (store.kind == ir.Store.Kind.FunctionParam) {
 			auto fp = cast(ir.FunctionParam) store.node;
 			assert(fp !is null);
