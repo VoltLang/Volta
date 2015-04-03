@@ -2531,6 +2531,9 @@ ir.Node transformRuntimeAssert(Context ctx, ir.AssertStatement as)
 
 void transformArrayLiteralIfNeeded(Context ctx, ref ir.Exp exp, ir.ArrayLiteral al)
 {
+	if (al.values.length == 0) {
+		return;
+	}
 	size_t constants;
 	foreach (e; al.values) {
 		if (e.isConstant) {
@@ -2541,9 +2544,6 @@ void transformArrayLiteralIfNeeded(Context ctx, ref ir.Exp exp, ir.ArrayLiteral 
 		if (constants != al.values.length) {
 			throw makeExpected(al.location, "constant array");
 		}
-		return;
-	}
-	if (constants == al.values.length) {
 		return;
 	}
 	auto at = getExpType(ctx.lp, al, ctx.current);
