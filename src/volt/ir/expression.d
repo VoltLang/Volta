@@ -154,6 +154,7 @@ public:
 		New,
 		TypeIdent,  // (Type).Identifier
 		Cast,
+		Dup,
 	}
 
 public:
@@ -163,6 +164,10 @@ public:
 	bool hasArgumentList;
 	Type type;  // with Cast and New.
 	Exp[] argumentList;  // With new StringObject("foo", "bar");
+
+	// These are only for Dup.
+	Exp dupBeginning;
+	Exp dupEnd;
 
 public:
 	this() { super(NodeType.Unary); }

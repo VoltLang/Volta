@@ -138,6 +138,20 @@ public:
 		}
 	}
 
+	void enter(ir.Unary unary)
+	{
+		if (unary.op == ir.Unary.Op.Dup) {
+			mIndexChildren ~= unary.value;
+		}
+	}
+
+	void leave(ir.Unary unary)
+	{
+		if (unary.op == ir.Unary.Op.Dup) {
+			mIndexChildren = mIndexChildren[0 .. $-1];
+		}
+	}
+
 private:
 	void push(ir.Node n, ir.Scope ctx, ir.Function fn)
 	{

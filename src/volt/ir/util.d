@@ -381,8 +381,22 @@ ir.Variable buildVariableAnonSmart(Location loc, ir.BlockStatement b,
                                    ir.Type type, ir.Exp assign)
 {
 	auto name = b.myScope.genAnonIdent();
-	auto var = buildVariable(loc, type, ir.Variable.Storage.Function, name, assign);
+	auto var = buildVariable(loc, copyTypeSmart(loc, type), ir.Variable.Storage.Function, name, assign);
 	addVariable(b, statExp, var);
+	return var;
+}
+
+/**
+ * Create an anonymous variable for a statementexp without a block statement.
+ */
+ir.Variable buildVariableAnonSmart(Location loc, ir.Scope current,
+                                   ir.StatementExp statExp,
+                                   ir.Type type, ir.Exp assign)
+{
+	auto name = current.genAnonIdent();
+	auto var = buildVariable(loc, copyTypeSmart(loc, type), ir.Variable.Storage.Function, name, assign);
+	current.addValue(var, var.name);
+	statExp.statements ~= var;
 	return var;
 }
 

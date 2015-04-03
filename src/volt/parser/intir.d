@@ -101,6 +101,7 @@ public:
 	PostfixExp postExp;  // Optional.
 	NewExp newExp;       // Optional.
 	CastExp castExp;     // Optional.
+	DupExp dupExp;       // Optional.
 }
 
 class NewExp : IntExp
@@ -111,6 +112,15 @@ public:
 	TernaryExp exp;  // new int[binExp]
 	bool hasArgumentList;
 	TernaryExp[] argumentList;  // new int(argumentList)
+}
+
+// new foo[3 .. 6];  // duplicate array foo.
+class DupExp : IntExp
+{
+public:
+	PrimaryExp name;    // new FOO[beginning .. end]
+	TernaryExp beginning;  // new foo[BEGINNING .. end]
+	TernaryExp end;        // new foo[beginning .. END]
 }
 
 class CastExp : IntExp

@@ -1775,6 +1775,20 @@ Visitor.Status acceptUnary(ref ir.Exp exp, ir.Unary unary, Visitor av)
 		}
 	}
 
+	if (unary.dupBeginning !is null) {
+		status = acceptExp(unary.dupBeginning, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	if (unary.dupEnd !is null) {
+		status = acceptExp(unary.dupEnd, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
 	return av.leave(exp, unary);
 }
 

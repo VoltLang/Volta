@@ -1880,6 +1880,34 @@ void handleNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 	}
 }
 
+/**
+ * Lower. 'new foo[0 .. $]' expressions.
+ */
+void handleDup(Context ctx, ref ir.Exp exp, ir.Unary _unary)
+{
+	panicAssert(_unary, _unary.value !is null);
+	panicAssert(_unary, _unary.dupBeginning !is null);
+	panicAssert(_unary, _unary.dupEnd !is null);
+
+	auto l = exp.location;
+	if (!ctx.isFunction) {
+		throw makeExpected(l, "function context");
+	}
+
+	auto sexp = buildStatementExp(l);
+	auto type = getExpType(ctx.lp, exp, ctx.current);
+
+	auto length = buildSub(l, _unary.dupEnd, _unary.dupBeginning);
+	auto newExp = buildNewSmart(l, type, length);
+	auto var = buildVariableAnonSmart(l, ctx.current, sexp, type, newExp);
+	auto evar = buildExpReference(l, var, var.name);
+	auto sliceL = buildSlice(l, evar, copyExp(_unary.dupBeginning), copyExp(_unary.dupEnd));
+	auto sliceR = buildSlice(l, copyExp(_unary.value), copyExp(_unary.dupBeginning), copyExp(_unary.dupEnd));
+
+	sexp.exp = buildAssign(l, sliceL, sliceR);
+	exp = sexp;
+}
+
 void extypeUnary(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 {
 	switch (_unary.op) with (ir.Unary.Op) {
@@ -1887,6 +1915,8 @@ void extypeUnary(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 		return handleCastTo(ctx, exp, _unary);
 	case New:
 		return handleNew(ctx, exp, _unary);
+	case Dup:
+		return handleDup(ctx, exp, _unary);
 	default:
 	}
 }

@@ -8,6 +8,7 @@ import std.utf;
 
 import ir = volt.ir.ir;
 import intir = volt.parser.intir;
+import volt.ir.copy;
 import volt.ir.util;
 
 import volt.exceptions;
@@ -165,6 +166,24 @@ ir.Exp unaryToExp(intir.UnaryExp unary)
 		foreach (arg; unary.newExp.argumentList) {
 			exp.argumentList ~= ternaryToExp(arg);
 		}
+		return exp;
+	} else if (unary.op == ir.Unary.Op.Dup) {
+		auto exp = new ir.Unary();
+		void transformDollar(ref ir.Exp rexp)
+		{
+			auto constant = cast(ir.Constant) rexp;
+			if (constant is null || constant._string != "$") {
+				return;
+			}
+			rexp = buildAccess(rexp.location, copyExp(exp.value), "length");
+		}
+		exp.location = unary.dupExp.location;
+		exp.op = unary.op;
+		exp.value = primaryToExp(unary.dupExp.name);
+		exp.dupBeginning = ternaryToExp(unary.dupExp.beginning);
+		exp.dupEnd = ternaryToExp(unary.dupExp.end);
+		transformDollar(exp.dupBeginning);
+		transformDollar(exp.dupEnd);
 		return exp;
 	} else {
 		auto exp = new ir.Unary();
@@ -852,8 +871,7 @@ intir.UnaryExp parseUnaryExp(TokenStream ts)
 		exp.castExp = parseCastExp(ts);
 		break;
 	case TokenType.New:
-		exp.op = ir.Unary.Op.New;
-		exp.newExp = parseNewExp(ts);
+		parseNewOrDup(ts, exp);
 		break;
 	default:
 		exp.postExp = parsePostfixExp(ts);
@@ -862,6 +880,60 @@ intir.UnaryExp parseUnaryExp(TokenStream ts)
 	exp.location = ts.peek.location - origin;
 
 	return exp;
+}
+
+void parseNewOrDup(TokenStream ts, ref intir.UnaryExp exp)
+{
+	auto mark = ts.save();
+
+	bool parseNew = true;
+	match(ts, TokenType.New);
+	int bracketDepth;
+	while (ts.peek.type != TokenType.Semicolon && ts.peek.type != TokenType.End) {
+		auto t = ts.get();
+		if (t.type == TokenType.OpenBracket) {
+			bracketDepth++;
+			continue;
+		} else if (t.type == TokenType.CloseBracket) {
+			bracketDepth--;
+			continue;
+		}
+		if (bracketDepth == 0) {
+			if (t.type != TokenType.Dot && t.type != TokenType.Identifier) {
+				parseNew = true;
+				break;
+			}
+		} else if (bracketDepth == 1) {
+			if (t.type == TokenType.DoubleDot) {
+				parseNew = false;
+				break;
+			}
+		}
+	}
+	ts.restore(mark);
+
+	if (parseNew) {
+		exp.op = ir.Unary.Op.New;
+		exp.newExp = parseNewExp(ts);
+	} else {
+		exp.op = ir.Unary.Op.Dup;
+		exp.dupExp = parseDupExp(ts);
+	}
+}
+
+intir.DupExp parseDupExp(TokenStream ts)
+{
+	auto start = match(ts, TokenType.New);
+
+	auto dupExp = new intir.DupExp();
+	dupExp.name = parsePrimaryExp(ts);
+	match(ts, TokenType.OpenBracket);
+	dupExp.beginning = parseTernaryExp(ts);
+	match(ts, TokenType.DoubleDot);
+	dupExp.end = parseTernaryExp(ts);
+	match(ts, TokenType.CloseBracket);
+
+	return dupExp;
 }
 
 intir.NewExp parseNewExp(TokenStream ts)
