@@ -463,3 +463,59 @@ It's not limited to structs and classes either. If a method style lookup would f
     ...
         int i = 2;
         i.add(3, 5);  // == 10
+
+## Expressions
+
+###New Expression
+
+Volt is a 'garbage collected' language, which means that the programmer doesn't have to concern themselves with deallocating memory (unless they choose to!).
+
+To request memory from the garbage collector (GC), use the `new` expression. In its simplest form, `new` simply takes a type. In this case, the returned value is a pointer to that type.
+
+    ...
+        auto ip = new int;  // ip has the type `int*`.
+
+You can use this with your own `alias`es and `struct`s, but `class`es are a different story. As discussed earlier, classes are reference types, so `new Object()` doesn't give you a pointer to `Object`, but just a plain `Object`. The parens (`()`) are required, and arguments to constructors can be passed.
+
+    class Pair {
+        int a, b;
+        this(int a) {
+            this.a = a;
+        }
+        this(int a, int b) {
+            this.a = a;
+            this.b = b;
+        }
+    }
+
+    ...
+        // auto a = new Pair()    // Error! No matching constructor.
+        auto b = new Pair(32);    // Calls the first constructor.
+        auto c = new Pair(10, 5); // Calls the second constructor.
+
+That's not the only place arguments are passed to `new`. Consider `new int[]`. What's the type that this results in? If you guessed `int[]*`, you'd be right. If we want to allocate an array with `new`, give it the array type, but append parens with the requested length after it.
+
+    auto a = new int[](0);     // An empty array of ints.
+    auto b = new string[](3);  // An array of three strings.
+
+Speaking of arrays, sometimes you want to make a copy of one. You might think that
+
+    auto newArray = oldArray;
+
+would suffice, but consider that arrays are defined as structs, internally:
+
+	// Actual code from the runtime.
+    struct ArrayStruct {
+        void* ptr;
+        size_t length;
+    }
+
+With this in mind, it's easy to see why a simple assignment doesn't create a copy -- the pointer is the same! Well, `new` can help here, too:
+
+    auto newArray = new oldArray[0 .. $];
+
+If that dollar confuses you, it's simply a shorthand for `oldArray.length`. The number before the `..` is the index of `oldArray` to start copying, and the number after is the index to stop (non inclusive). It's easy to see how you could copy a portion of an array, if you don't want the whole thing:
+
+	auto oldArray = [1, 2, 3, 4, 5, 6];
+    auto newArray = new oldArray[3 .. 5];
+    // newArray == [4, 5]
