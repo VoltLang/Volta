@@ -1885,7 +1885,7 @@ void handleNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
  */
 void handleDup(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 {
-	panicAssert(_unary, _unary.value !is null);
+	panicAssert(_unary, _unary.dupName !is null);
 	panicAssert(_unary, _unary.dupBeginning !is null);
 	panicAssert(_unary, _unary.dupEnd !is null);
 
@@ -1895,7 +1895,7 @@ void handleDup(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 	}
 
 	auto sexp = buildStatementExp(l);
-	auto type = getExpType(ctx.lp, exp, ctx.current);
+	auto type = getExpType(ctx.lp, _unary.value, ctx.current);
 
 	auto length = buildSub(l, _unary.dupEnd, _unary.dupBeginning);
 	auto newExp = buildNewSmart(l, type, length);

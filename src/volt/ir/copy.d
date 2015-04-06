@@ -148,6 +148,11 @@ ir.Unary copy(ir.Unary unary)
 	foreach (arg; unary.argumentList) {
 		newunary.argumentList ~= copyExp(arg);
 	}
+	if (unary.dupName !is null) {
+		newunary.dupName = copy(unary.dupName);
+		newunary.dupBeginning = copyExp(unary.dupBeginning);
+		newunary.dupEnd = copyExp(unary.dupEnd);
+	}
 	return newunary;
 }
 

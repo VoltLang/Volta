@@ -448,6 +448,14 @@ ir.Scope ensureScope(ir.Scope _scope, Location loc, string name, ir.Store store)
 		}
 	}
 
+	auto var = cast(ir.Variable) store.node;
+	if (var !is null) {
+		auto s = getScopeFromType(var.type);
+		if (s !is null) {
+			return s;
+		}
+	}
+
 	auto s = getScopeFromStore(store);
 	if (s is null) {
 		throw makeExpected(loc, "aggregate or scope");

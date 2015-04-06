@@ -175,11 +175,18 @@ ir.Exp unaryToExp(intir.UnaryExp unary)
 			if (constant is null || constant._string != "$") {
 				return;
 			}
-			rexp = buildAccess(rexp.location, copyExp(exp.value), "length");
+			rexp = buildAccess(rexp.location, exp.dupName, "length");
 		}
 		exp.location = unary.dupExp.location;
 		exp.op = unary.op;
-		exp.value = primaryToExp(unary.dupExp.name);
+		exp.dupName = unary.dupExp.name;
+		if (exp.dupName.identifiers.length == 1) {
+			exp.value = buildIdentifierExp(exp.location, exp.dupName.identifiers[0].value);
+		} else {
+			auto qname = copy(exp.dupName);
+			qname.identifiers = qname.identifiers[0 .. $-1];
+			exp.value = buildAccess(exp.location, qname, exp.dupName.identifiers[$-1].value);
+		}
 		exp.dupBeginning = ternaryToExp(unary.dupExp.beginning);
 		exp.dupEnd = ternaryToExp(unary.dupExp.end);
 		transformDollar(exp.dupBeginning);
@@ -926,7 +933,7 @@ intir.DupExp parseDupExp(TokenStream ts)
 	auto start = match(ts, TokenType.New);
 
 	auto dupExp = new intir.DupExp();
-	dupExp.name = parsePrimaryExp(ts);
+	dupExp.name = parseQualifiedName(ts);
 	match(ts, TokenType.OpenBracket);
 	dupExp.beginning = parseTernaryExp(ts);
 	match(ts, TokenType.DoubleDot);

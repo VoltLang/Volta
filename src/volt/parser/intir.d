@@ -118,7 +118,7 @@ public:
 class DupExp : IntExp
 {
 public:
-	PrimaryExp name;    // new FOO[beginning .. end]
+	QualifiedName name;    // new FOO[beginning .. end]
 	TernaryExp beginning;  // new foo[BEGINNING .. end]
 	TernaryExp end;        // new foo[beginning .. END]
 }

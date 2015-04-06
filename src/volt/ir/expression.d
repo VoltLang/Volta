@@ -166,6 +166,7 @@ public:
 	Exp[] argumentList;  // With new StringObject("foo", "bar");
 
 	// These are only for Dup.
+	QualifiedName dupName;
 	Exp dupBeginning;
 	Exp dupEnd;
 

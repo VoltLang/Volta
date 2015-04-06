@@ -701,6 +701,26 @@ ir.Postfix buildAccess(Location loc, ir.Exp exp, string name)
 }
 
 /**
+ * Builds a chain of postfix lookups from a QualifiedName.
+ * These are only useful before the extyper runs.
+ */
+ir.Postfix buildAccess(Location loc, ir.QualifiedName qname, string name)
+{
+	ir.Exp current = buildIdentifierExp(loc, qname.identifiers[0].value);
+	foreach (ident; qname.identifiers[1 .. $]) {
+		auto pfix = new ir.Postfix();
+		pfix.location = loc;
+		pfix.child = current;
+		pfix.op = ir.Postfix.Op.Identifier;
+		pfix.identifier = new ir.Identifier();
+		pfix.identifier.location = loc;
+		pfix.identifier.value = ident.value;
+		current = pfix;
+	}
+	return buildAccess(loc, current, name);
+}
+
+/**
  * Builds a postfix slice.
  */
 ir.Postfix buildSlice(Location loc, ir.Exp child, ir.Exp[] args...)

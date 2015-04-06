@@ -885,7 +885,7 @@ ir.Type getUnaryType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 	case New:
 		return getUnaryNewType(lp, unary, currentScope);
 	case Dup:
-		return getExpType(lp, unary.value, currentScope);
+		throw panic(unary.location, "tried to type dup exp.");
 	case Minus, Plus:
 		return getUnarySubAddType(lp, unary, currentScope);
 	case Not:
