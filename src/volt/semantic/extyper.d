@@ -1897,7 +1897,8 @@ void handleDup(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 	auto sexp = buildStatementExp(l);
 	auto type = getExpType(ctx.lp, _unary.value, ctx.current);
 
-	auto length = buildSub(l, _unary.dupEnd, _unary.dupBeginning);
+	auto length = buildSub(l, buildCastSmart(l, ctx.lp.settings.getSizeT(l), _unary.dupEnd), 
+		buildCastSmart(l, ctx.lp.settings.getSizeT(l), _unary.dupBeginning));
 	auto newExp = buildNewSmart(l, type, length);
 	auto var = buildVariableAnonSmart(l, ctx.current, sexp, type, newExp);
 	auto evar = buildExpReference(l, var, var.name);
