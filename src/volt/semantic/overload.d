@@ -92,7 +92,7 @@ ir.Type ifTypeRefDeRef(ir.Type t)
 
 int matchLevel(bool homogenous, ir.Type argument, ir.Type parameter)
 {
-	if (typesEqual(argument, parameter)) {
+	if (typesEqual(removeRefAndOut(argument), removeRefAndOut(parameter))) {
 		return 4;
 	}
 	auto asConst = new ir.StorageType();
@@ -223,7 +223,6 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 			return matchedFunctions[0];
 		}
 	}
-
 
 	throw makeCannotDisambiguate(location, matchedFunctions);
 }

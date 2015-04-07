@@ -821,6 +821,27 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 }
 
 /**
+ * Return a view of the given type without ref or out.
+ * Doesn't copy internally, so don't place the result into the IR.
+ */
+ir.Type removeRefAndOut(ir.Type type)
+{
+	auto stype = cast(ir.StorageType)type;
+	if (stype is null) {
+		return type;
+	}
+	if (stype.type == ir.StorageType.Kind.Ref || stype.type == ir.StorageType.Kind.Out) {
+		return removeRefAndOut(stype.base);
+	}
+	auto outType = new ir.StorageType();
+	outType.type = stype.type;
+	outType.location = type.location;
+	outType.isCanonical = stype.isCanonical;
+	outType.base = removeRefAndOut(outType.base);
+	return outType;
+}
+
+/**
  * Determines whether the two given types are the same.
  *
  * Not similar. Not implicitly convertable. The _same_ type.
@@ -831,7 +852,7 @@ bool typesEqual(ir.Type a, ir.Type b)
 	if (a is b) {
 		return true;
 	}
-	
+
 	if (a.nodeType == ir.NodeType.PrimitiveType &&
 	    b.nodeType == ir.NodeType.PrimitiveType) {
 		auto ap = cast(ir.PrimitiveType) a;
