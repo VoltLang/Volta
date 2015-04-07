@@ -460,6 +460,97 @@ public:
 		return Continue;
 	}
 
+	protected void replaceStaticArrayToArray(Location loc, LanguagePass lp, ir.Scope current, ir.ArrayType atype, ir.StaticArrayType stype, ir.Unary uexp, ref ir.Exp exp)
+	{
+		ir.Exp getLength() { return buildAccess(loc, copyExp(uexp.value), "length"); }
+
+		// ({
+		auto sexp = new ir.StatementExp();
+		sexp.location = loc;
+
+		// auto arr = new T[](sarr.length);
+		auto var = buildVariableSmart(loc, copyTypeSmart(loc, atype), ir.Variable.Storage.Function, "arr");
+		var.assign = buildNewSmart(loc, atype, getLength());
+		sexp.statements ~= var;
+
+		// arr[0 .. sarr.length] = sarr[0 .. sarr.length];
+		auto left = buildSlice(loc, buildExpReference(loc, var, var.name), buildConstantSizeT(loc, lp, 0), getLength());
+		auto right = buildSlice(loc, copyExp(uexp.value), buildConstantSizeT(loc, lp, 0), getLength());
+		auto fn = getCopyFunction(loc, atype);
+		buildExpStat(loc, sexp, buildCall(loc, fn, [left, right], fn.name));
+
+		sexp.exp = buildExpReference(loc, var, var.name);
+		exp = sexp;
+	}
+
+	protected void replaceArrayCastIfNeeded(Location loc, LanguagePass lp, ir.Scope current, ir.Unary uexp, ref ir.Exp exp)
+	{
+		if (uexp.op != ir.Unary.Op.Cast) {
+			return;
+		}
+
+		auto toArray = cast(ir.ArrayType) realType(uexp.type);
+		if (toArray is null) {
+			return;
+		}
+		auto fromArray = cast(ir.ArrayType) getExpType(lp, uexp.value, current);
+		if (fromArray is null) {
+			auto stype = cast(ir.StaticArrayType) getExpType(lp, uexp.value, current);
+			if (stype !is null) {
+				replaceStaticArrayToArray(loc, lp, current, toArray, stype, uexp, exp);
+			}
+			return;
+		}
+		if (typesEqual(toArray, fromArray)) {
+			return;
+		}
+
+		int fromSz = size(loc, lp, fromArray.base);
+		int toSz = size(loc, lp, toArray.base);
+		int biggestSz = fromSz > toSz ? fromSz : toSz;
+		bool decreasing = fromSz > toSz;
+
+		// ({
+		auto sexp = new ir.StatementExp();
+		sexp.location = loc;
+
+		// auto arr = <exp>
+		auto var = buildVariableSmart(loc, copyTypeSmart(loc, fromArray), ir.Variable.Storage.Function, "arr");
+		var.assign = uexp.value;
+		sexp.statements ~= var;
+
+		//     vrt_throw_slice_error(arr.length, typeid(T).size);
+		auto ln = buildAccess(loc, buildExpReference(loc, var), "length");
+		auto sz = buildAccess(loc, buildTypeidSmart(loc, toArray.base), "size");
+		ir.Exp fname = buildConstantString(loc, format(`%s`, baseName(exp.location.filename)));
+		ir.Exp lineNum = buildConstantSizeT(loc, lp, cast(int) exp.location.line);
+		auto rtCall = buildCall(loc, buildExpReference(loc, lp.ehThrowSliceErrorFunc), [buildAccess(loc, fname, "ptr"), lineNum]);
+		auto bs = buildBlockStat(loc, rtCall, current, buildExpStat(loc, rtCall));
+		auto check = buildBinOp(loc, ir.BinOp.Op.NotEqual, buildBinOp(loc, ir.BinOp.Op.Mod, ln, sz), buildConstantSizeT(loc, lp, 0));
+		auto _if = buildIfStat(loc, check, bs);
+		sexp.statements ~= _if;
+
+		// auto _out = <castexp>
+		auto _out = buildVariableSmart(loc, copyTypeSmart(loc, toArray), ir.Variable.Storage.Function, "_out");
+		uexp.value = buildExpReference(loc, var);
+		_out.assign = uexp;
+		sexp.statements ~= _out;
+
+		auto inLength = buildAccess(loc, buildExpReference(loc, var), "length");
+		auto outLength = buildAccess(loc, buildExpReference(loc, _out), "length");
+		ir.Exp lengthTweak;
+		if (!decreasing) {
+			lengthTweak = buildBinOp(loc, ir.BinOp.Op.Div, inLength, buildConstantSizeT(loc, lp, biggestSz));
+		} else {
+			lengthTweak = buildBinOp(loc, ir.BinOp.Op.Mul, inLength, buildConstantSizeT(loc, lp, biggestSz));
+		}
+		auto assign = buildAssign(loc, outLength, lengthTweak);
+		buildExpStat(loc, sexp, assign);
+
+		sexp.exp = buildExpReference(loc, _out);
+		exp = sexp;
+	}
+
 	ir.Function getArrayAppendFunction(Location loc, ir.ArrayType ltype, ir.Type rtype, bool isAssignment)
 	{
 		if (ltype.mangledName is null)
@@ -1015,69 +1106,5 @@ ir.Exp buildAAKeyCast(Location loc, ir.Exp key, ir.AAType aa)
 	}
 
 	return key;
-}
-
-void replaceArrayCastIfNeeded(Location loc, LanguagePass lp, ir.Scope current, ir.Unary uexp, ref ir.Exp exp)
-{
-	if (uexp.op != ir.Unary.Op.Cast) {
-		return;
-	}
-
-	auto toArray = cast(ir.ArrayType) realType(uexp.type);
-	if (toArray is null) {
-		return;
-	}
-	auto fromArray = cast(ir.ArrayType) getExpType(lp, uexp.value, current);
-	if (fromArray is null) {
-		return;
-	}
-	if (typesEqual(toArray, fromArray)) {
-		return;
-	}
-
-	int fromSz = size(loc, lp, fromArray.base);
-	int toSz = size(loc, lp, toArray.base);
-	int biggestSz = fromSz > toSz ? fromSz : toSz;
-	bool decreasing = fromSz > toSz;
-
-	// ({
-	auto sexp = new ir.StatementExp();
-	sexp.location = loc;
-
-	// auto arr = <exp>
-	auto var = buildVariableSmart(loc, copyTypeSmart(loc, fromArray), ir.Variable.Storage.Function, "arr");
-	var.assign = uexp.value;
-	sexp.statements ~= var;
-
-	//     vrt_throw_slice_error(arr.length, typeid(T).size);
-	auto ln = buildAccess(loc, buildExpReference(loc, var), "length");
-	auto sz = buildAccess(loc, buildTypeidSmart(loc, toArray.base), "size");
-	ir.Exp fname = buildConstantString(loc, format(`%s`, baseName(exp.location.filename)));
-	ir.Exp lineNum = buildConstantSizeT(loc, lp, cast(int) exp.location.line);
-	auto rtCall = buildCall(loc, buildExpReference(loc, lp.ehThrowSliceErrorFunc), [buildAccess(loc, fname, "ptr"), lineNum]);
-	auto bs = buildBlockStat(loc, rtCall, current, buildExpStat(loc, rtCall));
-	auto check = buildBinOp(loc, ir.BinOp.Op.NotEqual, buildBinOp(loc, ir.BinOp.Op.Mod, ln, sz), buildConstantSizeT(loc, lp, 0));
-	auto _if = buildIfStat(loc, check, bs);
-	sexp.statements ~= _if;
-
-	// auto _out = <castexp>
-	auto _out = buildVariableSmart(loc, copyTypeSmart(loc, toArray), ir.Variable.Storage.Function, "_out");
-	uexp.value = buildExpReference(loc, var);
-	_out.assign = uexp;
-	sexp.statements ~= _out;
-
-	auto inLength = buildAccess(loc, buildExpReference(loc, var), "length");
-	auto outLength = buildAccess(loc, buildExpReference(loc, _out), "length");
-	ir.Exp lengthTweak;
-	if (!decreasing) {
-		lengthTweak = buildBinOp(loc, ir.BinOp.Op.Div, inLength, buildConstantSizeT(loc, lp, biggestSz));
-	} else {
-		lengthTweak = buildBinOp(loc, ir.BinOp.Op.Mul, inLength, buildConstantSizeT(loc, lp, biggestSz));
-	}
-	auto assign = buildAssign(loc, outLength, lengthTweak);
-	buildExpStat(loc, sexp, assign);
-
-	sexp.exp = buildExpReference(loc, _out);
-	exp = sexp;
 }
 

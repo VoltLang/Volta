@@ -458,6 +458,13 @@ void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ref 
 	auto acopy = copyTypeSmart(exp.location, atype);
 	stripArrayBases(acopy, flag);
 	auto rtype = ctx.overrideType !is null ? ctx.overrideType : realType(getExpType(ctx.lp, exp, ctx.current));
+
+	auto stype = cast(ir.StaticArrayType) rtype;
+	if (stype !is null && willConvertArray(atype, buildArrayType(exp.location, stype.base), flag, &exp)) {
+		exp = buildCastSmart(exp.location, atype, exp);
+		return;
+	}
+
 	if (willConvertArray(atype, rtype, flag, &exp)) {
 		return;
 	}
