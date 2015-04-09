@@ -52,33 +52,31 @@ public:
 
 		if (i.bind !is null && i.aliases.length == 0) { // import a = b;
 			current.addScope(i, mod.myScope, i.bind.value);
-
 		} else if (i.aliases.length == 0 && i.bind is null) { // static import a; OR import a;
-			if (i.isStatic) {
-				ir.Scope parent = thisModule.myScope;
-				foreach (ident; i.name.identifiers[0 .. $-1]) {
-					auto name = ident.value;
-					auto store = lookup(lp, parent, ident.location, name);
-					if (store !is null) {
-						if (store.s is null) {
-							throw makeExpected(store.node.location, "scope");
-						}
-						parent = store.s;
-					} else {
-						auto s = new ir.Scope(parent, ident, name);
-						parent.addScope(ident, s, name);
-						parent = s;
-					}
-				}
-				auto store = lookup(lp, parent, i.location, i.name.identifiers[$-1].value);
+			ir.Scope parent = thisModule.myScope;
+			foreach (ident; i.name.identifiers[0 .. $-1]) {
+				auto name = ident.value;
+				auto store = lookup(lp, parent, ident.location, name);
 				if (store !is null) {
-					if (store.s !is mod.myScope) {
-						throw makeExpected(i.location, "unique module");
+					if (store.s is null) {
+						throw makeExpected(store.node.location, "scope");
 					}
+					parent = store.s;
 				} else {
-					parent.addScope(i, mod.myScope, i.name.identifiers[$-1].value);
+					auto s = new ir.Scope(parent, ident, name);
+					parent.addScope(ident, s, name);
+					parent = s;
+				}
+			}
+			auto store = lookup(lp, parent, i.location, i.name.identifiers[$-1].value);
+			if (store !is null) {
+				if (i.isStatic && store.s !is mod.myScope) {
+					throw makeExpected(i.location, "unique module");
 				}
 			} else {
+				parent.addScope(i, mod.myScope, i.name.identifiers[$-1].value);
+			}
+			if (!i.isStatic) {
 				thisModule.myScope.importedModules ~= mod;
 				thisModule.myScope.importedAccess ~= i.access;
 			}
