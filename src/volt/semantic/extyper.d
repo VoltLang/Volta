@@ -455,6 +455,12 @@ bool willConvertArray(ir.Type l, ir.Type r, ref uint flag, ir.Exp* exp = null)
  */
 void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ref uint flag)
 {
+	auto alit = cast(ir.ArrayLiteral) exp;
+	if (alit !is null && alit.values.length == 0) {
+		exp = buildArrayLiteralSmart(exp.location, atype, []);
+		return;
+	}
+
 	auto acopy = copyTypeSmart(exp.location, atype);
 	stripArrayBases(acopy, flag);
 	auto rtype = ctx.overrideType !is null ? ctx.overrideType : realType(getExpType(ctx.lp, exp, ctx.current));
@@ -1262,10 +1268,16 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			}
 			if (!typesEqual(etype, arr)) {
 				auto exps = postfix.arguments[i .. $];
+				if (exps.length == 1) {
+					auto alit = cast(ir.ArrayLiteral) exps[0];
+					if (alit !is null && alit.values.length == 0) {
+						exps = [];
+					}
+				}
 				foreach (ref aexp; exps) {
 					extypePass(ctx, aexp, arr.base);
 				}
-				postfix.arguments[i] = buildInternalArrayLiteralSmart(exps[0].location, asFunctionType.params[i], exps);
+				postfix.arguments[i] = buildInternalArrayLiteralSmart(postfix.location, asFunctionType.params[i], exps);
 				postfix.arguments.length = i + 1;
 				break;
 			}

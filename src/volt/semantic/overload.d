@@ -106,8 +106,12 @@ int matchLevel(bool homogenous, ir.Type argument, ir.Type parameter)
 	if (willConvert(argument, parameter)) {
 		return 2;
 	} else {
+		auto pArray = cast(ir.ArrayType) parameter;
+		auto aArray = cast(ir.ArrayType) argument;
+		if (pArray !is null && aArray !is null && isVoid(aArray.base)) {
+			return 2;
+		}
 		if (homogenous) {
-			auto pArray = cast(ir.ArrayType) parameter;
 			if (pArray !is null && willConvert(argument, pArray.base)) {
 				return 2;
 			}
