@@ -2,7 +2,6 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.nested;
 
-import std.algorithm : remove;
 import std.conv : to;
 
 import volt.errors;
@@ -92,7 +91,8 @@ void insertBinOpAssignsForNestedVariableAssigns(ir.BlockStatement bs)
 			continue;
 		}
 		if (var.assign is null) {
-			bs.statements = remove(bs.statements, i--);
+			bs.statements = bs.statements[0 .. i] ~ bs.statements[i + 1 .. $];
+			i--;
 		} else {
 			auto assign = buildAssign(var.location, buildExpReference(var.location, var, var.name), var.assign);
 			bs.statements[i] = buildExpStat(assign.location, assign);
