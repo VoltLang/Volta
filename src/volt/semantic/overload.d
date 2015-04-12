@@ -188,7 +188,7 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 			assert(arr !is null);
 			foreach (arg; toCheck) {
 				auto atype = cast(ir.ArrayType) arg;
-				if (isVoid(atype.base)) {
+				if (atype !is null && isVoid(atype.base)) {
 					matchLevels ~= 2;
 				} else {
 					matchLevels ~= .matchLevel(true, arg, arr.base);
