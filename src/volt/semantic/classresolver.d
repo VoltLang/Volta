@@ -234,7 +234,13 @@ ir.Function[] getClassMethodFunctions(LanguagePass lp, ir.Class _class)
 			fns ~= method;
 			if (fns.length > 0) {
 				// Ensure that this function is the only overload possibility for itself in its own class.
-				auto tmp = selectFunction(lp, fns, method.type.params, method.location);
+				ir.Type[] params = method.type.params.dup;
+				if (method.type.homogenousVariadic) {
+					auto atype = cast(ir.ArrayType) params[$ - 1];
+					panicAssert(method, atype !is null);
+					params[$ - 1] = atype.base;
+				}
+				auto tmp = selectFunction(lp, fns, params, method.location);
 			}
 
 			if (noPriorMethods && method.isMarkedOverride) {
