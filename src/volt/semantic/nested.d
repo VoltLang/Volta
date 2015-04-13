@@ -112,6 +112,10 @@ void tagNestedVariables(Context ctx, ir.Variable var, ir.Store store, ref ir.Exp
 			if (var.storage == ir.Variable.Storage.Local || var.storage == ir.Variable.Storage.Global) {
 				return;
 			}
+			if (var.name == "this") {
+				var.storage = ir.Variable.Storage.Nested;
+				return;
+			}
 			addVarToStructSmart(ctx.currentFunction.nestStruct, var);
 			var.storage = ir.Variable.Storage.Nested;
 		} else if (var.storage == ir.Variable.Storage.Field) {
