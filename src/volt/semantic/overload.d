@@ -2,7 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.overload;
 
-import std.algorithm : sort;
+import std.algorithm : sort, max;
 
 import ir = volt.ir.ir;
 
@@ -106,14 +106,14 @@ int matchLevel(bool homogenous, ir.Type argument, ir.Type parameter)
 	if (willConvert(argument, parameter)) {
 		return 2;
 	} else {
-		auto pArray = cast(ir.ArrayType) parameter;
-		auto aArray = cast(ir.ArrayType) argument;
+		auto pArray = cast(ir.ArrayType) realType(parameter);
+		auto aArray = cast(ir.ArrayType) realType(argument);
 		if (pArray !is null && aArray !is null && isVoid(aArray.base)) {
 			return 2;
 		}
 		if (homogenous) {
 			if (pArray !is null && willConvert(argument, pArray.base)) {
-				return 2;
+				return matchLevel(homogenous, argument, pArray.base);
 			}
 		}
 		return 1;
@@ -183,6 +183,7 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 			}
 		}
 		if (fn.type.homogenousVariadic) {
+			matchLevels = matchLevels[0 .. $ - 1];
 			auto toCheck = arguments[fn.type.params.length - 1 .. $];
 			auto arr = cast(ir.ArrayType) realType(fn.type.params[$-1]);
 			assert(arr !is null);
@@ -191,7 +192,7 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 				if (atype !is null && isVoid(atype.base)) {
 					matchLevels ~= 2;
 				} else {
-					matchLevels ~= .matchLevel(true, arg, arr.base);
+					matchLevels ~= max(.matchLevel(true, arg, arr.base), .matchLevel(true, arg, arr));
 				}
 			}
 		}
