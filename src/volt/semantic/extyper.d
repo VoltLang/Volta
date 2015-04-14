@@ -2330,12 +2330,13 @@ void handleNestedParams(Context ctx, ir.Function fn)
 			if (refParam) {
 				type = buildPtrSmart(param.location, param.type);
 			}
-			auto var = buildVariableSmart(param.location, type, ir.Variable.Storage.Field, param.name);
+			auto name = param.name != "" ? param.name : "__anonparam_" ~ to!string(index);
+			auto var = buildVariableSmart(param.location, type, ir.Variable.Storage.Field, name);
 			addVarToStructSmart(ns, var);
-
 			// Insert an assignment of the param to the nest struct.
-			auto l = buildAccess(param.location, buildExpReference(np.location, np, np.name), param.name);
-			auto r = buildExpReference(param.location, param, param.name);
+
+			auto l = buildAccess(param.location, buildExpReference(np.location, np, np.name), name);
+			auto r = buildExpReference(param.location, param, name);
 			r.doNotRewriteAsNestedLookup = true;
 			ir.BinOp bop;
 			if (!refParam) {

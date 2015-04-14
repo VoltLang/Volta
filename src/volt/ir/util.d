@@ -1293,6 +1293,7 @@ ir.Struct buildStruct(Location loc, string name, ir.Variable[] members...)
  */
 void addVarToStructSmart(ir.Struct _struct, ir.Variable var)
 {
+	assert(var.name != "");
 	auto cvar = buildVariableSmart(var.location, var.type, ir.Variable.Storage.Field, var.name);
 	_struct.members.nodes ~= cvar;
 	_struct.myScope.addValue(cvar, cvar.name);
