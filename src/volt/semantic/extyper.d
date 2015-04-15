@@ -2580,21 +2580,51 @@ ir.Node transformRuntimeAssert(Context ctx, ir.AssertStatement as)
 	return ifS;
 }
 
-void transformArrayLiteralIfNeeded(Context ctx, ref ir.Exp exp, ir.ArrayLiteral al)
+void replaceGlobalArrayLiteralIfNeeded(Context ctx, ir.Variable var)
 {
-	if (al.values.length == 0) {
+	auto mod = getModuleFromScope(ctx.current);
+
+	auto al = cast(ir.ArrayLiteral) var.assign;
+	if (al is null) {
 		return;
 	}
-	size_t constants;
-	foreach (e; al.values) {
-		if (e.isConstant) {
-			constants++;
+
+	// Retrieve a named function from the current module, asserting that it is of type kind.
+	// Returns the first matching function, or null otherwise.
+	ir.Function getNamedTopLevelFunction(string name, ir.Function.Kind kind)
+	{
+		foreach (node; mod.children.nodes) {
+			auto fn = cast(ir.Function) node;
+			if (fn is null || fn.name != name) {
+				continue;
+			}
+			if (fn.kind != kind) {
+				throw panic(al.location, format("expected function kind '%s'", fn.kind));
+			}
+			return fn;
 		}
+		return null;
 	}
-	if (!ctx.isInFunction) {
-		if (constants != al.values.length) {
-			throw makeExpected(al.location, "constant array");
-		}
+
+	auto name = "__globalInitialiser_" ~ mod.name.toString();
+	auto fn = getNamedTopLevelFunction(name, ir.Function.Kind.GlobalConstructor);
+	if (fn is null) {
+		fn = buildGlobalConstructor(al.location, mod.children, mod.myScope, name);
+	}
+
+	auto at = getExpType(ctx.lp, al, ctx.current);
+	auto sexp = buildInternalArrayLiteralSmart(al.location, at, al.values);
+	sexp.originalExp = al;
+	auto assign = buildExpStat(al.location, buildAssign(al.location, buildExpReference(al.location, var, var.name), sexp));
+	fn._body.statements ~= assign;
+	var.assign = null;
+
+	return;
+}
+
+void transformArrayLiteralIfNeeded(Context ctx, ref ir.Exp exp, ir.ArrayLiteral al)
+{
+	if (al.values.length == 0 || !ctx.isInFunction) {
 		return;
 	}
 	auto at = getExpType(ctx.lp, al, ctx.current);
@@ -3165,6 +3195,10 @@ public:
 
 		replaceStorageIfNeeded(v.type);
 		accept(v.type, this);
+
+		if (!ctx.isInFunction) {
+			replaceGlobalArrayLiteralIfNeeded(ctx, v);
+		}
 
 		return ContinueParent;
 	}

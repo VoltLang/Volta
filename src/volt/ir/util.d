@@ -1217,6 +1217,13 @@ ir.Function buildFunction(Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, s
 	return fn;
 }
 
+ir.Function buildGlobalConstructor(Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, string name, bool buildBody = true)
+{
+	auto fn = buildFunction(loc, tlb, _scope, name, buildBody);
+	fn.kind = ir.Function.Kind.GlobalConstructor;
+	return fn;
+}
+
 /**
  * Builds a alias from a string and a Identifier.
  */
