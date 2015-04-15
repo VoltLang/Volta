@@ -154,8 +154,8 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 
 	bool correctNumberOfArguments(ir.Function fn, out int defaultArguments)
 	{
-		foreach (param; fn.params) {
-			if (param.assign !is null) {
+		foreach (i, param; fn.params) {
+			if (param.assign !is null && i >= arguments.length) {
 				defaultArguments++;
 			}
 		}
