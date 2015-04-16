@@ -408,13 +408,13 @@ void extypeAssignCallableType(Context ctx, ref ir.Exp exp, ir.CallableType ctype
 
 bool willConvertArray(ir.Type l, ir.Type r, ref uint flag, ir.Exp* exp = null)
 {
-	auto atype = cast(ir.ArrayType) realType(l);
+	auto atype = cast(ir.ArrayType) realType(removeRefAndOut(l));
 	if (atype is null) {
 		return false;
 	}
 	auto acopy = copyTypeSmart(l.location, atype);
 	stripArrayBases(acopy, flag);
-	auto rarr = cast(ir.ArrayType) r;
+	auto rarr = cast(ir.ArrayType) removeRefAndOut(r);
 	uint rflag;
 	ir.ArrayType rcopy;
 	if (rarr !is null) {
