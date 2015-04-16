@@ -242,7 +242,7 @@ ir.TypeReference copy(ir.TypeReference old)
 	tr.location = old.location;
 	tr.id = copy(old.id);
 	if (old.type !is null) {
-		assert(false);
+		tr.type = old.type;  // This is okay, as TR are meant to wrap the same type instance.
 	}
 	return tr;
 }
@@ -252,6 +252,22 @@ ir.NullType copy(ir.NullType old)
 	auto nt = new ir.NullType();
 	nt.location = old.location;
 	return nt;
+}
+
+ir.Typeid copy(ir.Typeid old)
+{
+	auto tid = new ir.Typeid();
+	tid.location = old.location;
+	if (old.exp !is null) {
+		tid.exp = copyExp(old.exp);
+	}
+	if (old.type !is null) {
+		tid.type = copyType(old.type);
+	}
+	if (old.ident !is null) {
+		tid.ident = old.ident.dup;
+	}
+	return tid;
 }
 
 /*
@@ -338,7 +354,7 @@ ir.Node copyNode(ir.Node n)
 {
 	final switch (n.nodeType) with (ir.NodeType) {
 	case Invalid:
-		auto msg = format("invalid node '%s'", to!string(n.nodeType));
+		auto msg = format("cannot copy '%s'", to!string(n.nodeType));
 		throw panic(n.location, msg);
 	case NonVisiting:
 		assert(false, "non-visiting node");
@@ -375,6 +391,9 @@ ir.Node copyNode(ir.Node n)
 	case Unary:
 		auto unary = cast(ir.Unary)n;
 		return copy(unary);
+	case Typeid:
+		auto tid = cast(ir.Typeid)n;
+		return copy(tid);
 	case Enum:
 	case StatementExp:
 	case PrimitiveType:
@@ -443,7 +462,6 @@ ir.Node copyNode(ir.Node n)
 	case AssocArray:
 	case Assert:
 	case StringImport:
-	case Typeid:
 	case IsExp:
 	case TraitsExp:
 	case TemplateInstanceExp:
