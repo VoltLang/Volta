@@ -988,123 +988,223 @@ public:
 		}
 		return null;
 	}
-}
 
+	void buildAAInsert(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope current,
+			ir.StatementExp statExp, ir.AAType aa, ir.Variable var, ir.Exp key, ir.Exp value,
+			bool buildif=true, bool aaIsPointer=true) {
+		auto aaNewFn = retrieveFunctionFromObject(lp, loc, "vrt_aa_new");
 
-void buildAAInsert(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope current,
-		ir.StatementExp statExp, ir.AAType aa, ir.Variable var, ir.Exp key, ir.Exp value,
-		bool buildif=true, bool aaIsPointer=true) {
-	auto aaNewFn = retrieveFunctionFromObject(lp, loc, "vrt_aa_new");
+		string name;
+		if (aa.key.nodeType == ir.NodeType.PrimitiveType)
+			name = "vrt_aa_insert_primitive";
+		else
+			name = "vrt_aa_insert_array";
 
-	string name;
-	if (aa.key.nodeType == ir.NodeType.PrimitiveType)
-		name = "vrt_aa_insert_primitive";
-	else
-		name = "vrt_aa_insert_array";
+		auto aaInsertFn = retrieveFunctionFromObject(lp, loc, name);
 
-	auto aaInsertFn = retrieveFunctionFromObject(lp, loc, name);
-
-	ir.Exp varExp;
-	if (buildif) {
-		auto thenState = buildBlockStat(loc, statExp, current);
-		varExp = buildExpReference(loc, var, var.name);
-		buildExpStat(loc, thenState,
-			buildAssign(loc,
-				aaIsPointer ? buildDeref(loc, varExp) : varExp,
-				buildCall(loc, aaNewFn, [
-						buildTypeidSmart(loc, aa.value),
-						buildTypeidSmart(loc, aa.key)
-					], aaNewFn.name
+		ir.Exp varExp;
+		if (buildif) {
+			auto thenState = buildBlockStat(loc, statExp, current);
+			varExp = buildExpReference(loc, var, var.name);
+			buildExpStat(loc, thenState,
+				buildAssign(loc,
+					aaIsPointer ? buildDeref(loc, varExp) : varExp,
+					buildCall(loc, aaNewFn, [
+							buildTypeidSmart(loc, aa.value),
+							buildTypeidSmart(loc, aa.key)
+						], aaNewFn.name
+					)
 				)
-			)
-		);
+			);
+
+			varExp = buildExpReference(loc, var, var.name);
+			buildIfStat(loc, statExp,
+				buildBinOp(loc, ir.BinOp.Op.Is,
+					aaIsPointer ? buildDeref(loc, varExp) : varExp,
+					buildConstantNull(loc, buildVoidPtr(loc))
+				),
+				thenState
+			);
+		}
 
 		varExp = buildExpReference(loc, var, var.name);
-		buildIfStat(loc, statExp,
-			buildBinOp(loc, ir.BinOp.Op.Is,
+		auto call = buildExpStat(loc, statExp,
+			buildCall(loc, aaInsertFn, [
 				aaIsPointer ? buildDeref(loc, varExp) : varExp,
-				buildConstantNull(loc, buildVoidPtr(loc))
+				buildAAKeyCast(loc, lp, current, key, aa),
+				buildCastToVoidPtr(loc, buildAddrOf(value))
+			], aaInsertFn.name)
+		);
+	}
+
+	void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope current,
+			ir.StatementExp statExp, ir.AAType aa, ir.Variable var, ir.Exp key, ir.Exp store) {
+		string name;
+		if (aa.key.nodeType == ir.NodeType.PrimitiveType)
+			name = "vrt_aa_in_primitive";
+		else
+			name = "vrt_aa_in_array";
+		auto inAAFn = retrieveFunctionFromObject(lp, loc, name);
+		auto throwFn = lp.ehThrowFunc;
+
+		auto thenState = buildBlockStat(loc, statExp, current);
+		auto s = buildStorageType(loc, ir.StorageType.Kind.Immutable, buildChar(loc));
+		canonicaliseStorageType(s);
+
+		auto knfClass = retrieveClassFromObject(lp, loc, "KeyNotFoundException");
+		auto throwableClass = retrieveClassFromObject(lp, loc, "Throwable");
+
+		buildExpStat(loc, thenState,
+			buildCall(loc, throwFn, [
+				buildCastSmart(throwableClass,
+					buildNew(loc, knfClass, "KeyNotFoundException", [
+						buildConstantString(loc, `Key does not exist`)
+						]),
+					),
+				buildAccess(loc, buildConstantString(loc, loc.filename), "ptr"),
+				cast(ir.Exp)buildConstantSizeT(loc, lp, cast(int)loc.line)],
+			throwFn.name));
+
+		buildIfStat(loc, statExp,
+			buildBinOp(loc, ir.BinOp.Op.Equal,
+				buildCall(loc, inAAFn, [
+					buildDeref(loc, buildExpReference(loc, var, var.name)),
+					buildAAKeyCast(loc, lp, current, key, aa),
+					buildCastToVoidPtr(loc,
+						buildAddrOf(loc, store)
+					)
+				], inAAFn.name),
+				buildConstantBool(loc, false)
 			),
 			thenState
 		);
 	}
 
-	varExp = buildExpReference(loc, var, var.name);
-	auto call = buildExpStat(loc, statExp,
-		buildCall(loc, aaInsertFn, [
-			aaIsPointer ? buildDeref(loc, varExp) : varExp,
-			buildAAKeyCast(loc, key, aa),
-			buildCastToVoidPtr(loc, buildAddrOf(value))
-		], aaInsertFn.name)
-	);
-}
+	ir.Exp buildAAKeyCast(Location loc, LanguagePass lp, ir.Scope current, ir.Exp key, ir.AAType aa)
+	{
+		if (aa.key.nodeType == ir.NodeType.PrimitiveType) {
+			auto prim = cast(ir.PrimitiveType)aa.key;
 
-void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope current,
-		ir.StatementExp statExp, ir.AAType aa, ir.Variable var, ir.Exp key, ir.Exp store) {
-	string name;
-	if (aa.key.nodeType == ir.NodeType.PrimitiveType)
-		name = "vrt_aa_in_primitive";
-	else
-		name = "vrt_aa_in_array";
-	auto inAAFn = retrieveFunctionFromObject(lp, loc, name);
-	auto throwFn = lp.ehThrowFunc;
+			assert(prim.type != ir.PrimitiveType.Kind.Real);
 
-	auto thenState = buildBlockStat(loc, statExp, current);
-	auto s = buildStorageType(loc, ir.StorageType.Kind.Immutable, buildChar(loc));
-	canonicaliseStorageType(s);
+			if (prim.type == ir.PrimitiveType.Kind.Float ||
+				prim.type == ir.PrimitiveType.Kind.Double) {
+				auto type = prim.type == ir.PrimitiveType.Kind.Double ?
+					buildUlong(loc) : buildInt(loc);
 
-	auto knfClass = retrieveClassFromObject(lp, loc, "KeyNotFoundException");
-	auto throwableClass = retrieveClassFromObject(lp, loc, "Throwable");
+				key = buildDeref(loc,
+						buildCastSmart(loc, buildPtrSmart(loc, type), buildAddrOf(key))
+				);
+			}
 
-	buildExpStat(loc, thenState,
-		buildCall(loc, throwFn, [
-			buildCastSmart(throwableClass,
-				buildNew(loc, knfClass, "KeyNotFoundException", [
-					buildConstantString(loc, `Key does not exist`)
-					]),
-				),
-			buildAccess(loc, buildConstantString(loc, loc.filename), "ptr"),
-			cast(ir.Exp)buildConstantSizeT(loc, lp, cast(int)loc.line)],
-		throwFn.name));
-
-	buildIfStat(loc, statExp,
-		buildBinOp(loc, ir.BinOp.Op.Equal,
-			buildCall(loc, inAAFn, [
-				buildDeref(loc, buildExpReference(loc, var, var.name)),
-				buildAAKeyCast(loc, key, aa),
-				buildCastToVoidPtr(loc,
-					buildAddrOf(loc, store)
-				)
-			], inAAFn.name),
-			buildConstantBool(loc, false)
-		),
-		thenState
-	);
-}
-
-
-ir.Exp buildAAKeyCast(Location loc, ir.Exp key, ir.AAType aa)
-{
-	if (aa.key.nodeType == ir.NodeType.PrimitiveType) {
-		auto prim = cast(ir.PrimitiveType)aa.key;
-
-		assert(prim.type != ir.PrimitiveType.Kind.Real);
-
-		if (prim.type == ir.PrimitiveType.Kind.Float ||
-			prim.type == ir.PrimitiveType.Kind.Double) {
-			auto type = prim.type == ir.PrimitiveType.Kind.Double ?
-				buildUlong(loc) : buildInt(loc);
-
-			key = buildDeref(loc,
-					buildCastSmart(loc, buildPtrSmart(loc, type), buildAddrOf(key))
-			);
+			key = buildCastSmart(loc, buildUlong(loc), key);
+		} else if (realType(aa.key).nodeType == ir.NodeType.Struct) {
+			key = buildStructAAKeyCast(loc, lp, current, key, aa);
+		} else {
+			key = buildCastSmart(loc, buildArrayTypeSmart(loc, buildVoid(loc)), key);
 		}
 
-		key = buildCastSmart(loc, buildUlong(loc), key);
-	} else {
-		key = buildCastSmart(loc, buildArrayTypeSmart(loc, buildVoid(loc)), key);
+		return key;
 	}
 
-	return key;
-}
+	ir.Exp buildStructAAKeyCast(Location l, LanguagePass lp, ir.Scope current, ir.Exp key, ir.AAType aa)
+	{
+		auto concatfn = getArrayAppendFunction(l, buildArrayType(l, buildUlong(l)), buildUlong(l), false);
+		auto keysfn = retrieveFunctionFromObject(lp, l, "vrt_aa_get_keys");
+		auto valuesfn = retrieveFunctionFromObject(lp, l, "vrt_aa_get_values");
 
+		// ulong[] array;
+		auto atype = buildArrayType(l, buildUlong(l));
+		auto sexp = buildStatementExp(l);
+		auto var = buildVariableSmart(l, copyTypeSmart(l, atype), ir.Variable.Storage.Function, "array");
+		sexp.statements ~= var;
+
+		ir.ExpReference eref(ir.Variable v)
+		{
+			return buildExpReference(v.location, v, v.name);
+		}
+
+		void addElement(ir.Exp e, ref ir.Node[] statements)
+		{
+			auto call = buildCall(l, concatfn, [eref(var), e], concatfn.name);
+			statements ~= buildExpStat(l, buildAssign(l, eref(var), call));
+		}
+
+		void delegate(ir.Aggregate) aggdg;  // Filled in with gatherAggregate, as DMD won't look forward for inline functions.
+
+		void gatherType(ir.Type t, ir.Exp e, ref ir.Node[] statements)
+		{
+			switch (t.nodeType) {
+			case ir.NodeType.ArrayType:
+				auto atype = cast(ir.ArrayType)t;
+				ir.ForStatement forStatement;
+				ir.Variable index;
+				buildForStatement(l, lp, current, buildAccess(l, e, "length"), forStatement, index);
+				gatherType(realType(atype.base), buildIndex(l, e, eref(index)), forStatement.block.statements);
+				sexp.statements ~= forStatement;
+				break;
+			case ir.NodeType.Struct:
+			case ir.NodeType.Union:
+				auto agg = cast(ir.Aggregate)t;
+				aggdg(agg);
+				break;
+			case ir.NodeType.StorageType:
+				auto stype = cast(ir.StorageType)t;
+				gatherType(stype.base, e, statements);
+				break;
+			case ir.NodeType.PointerType:
+			case ir.NodeType.PrimitiveType:
+			case ir.NodeType.Class:
+			case ir.NodeType.AAType:
+				addElement(buildCastSmart(l, buildUlong(l), e), statements);
+				break;
+			default:
+				throw panicUnhandled(t, "aa aggregate key type");
+			}
+		}
+
+		void gatherAggregate(ir.Aggregate agg)
+		{
+			foreach (node; agg.members.nodes) {
+				auto var = cast(ir.Variable) node;
+				if (var is null) {
+					continue;
+				}
+				if (var.name == "") {
+					continue;
+				}
+				auto store = lookupOnlyThisScope(lp, agg.myScope, l, var.name);
+				if (store is null) {
+					continue;
+				}
+				auto rtype = realType(var.type);
+				gatherType(rtype, buildAccess(l, copyExp(key), var.name), sexp.statements);
+			}
+		}
+
+		aggdg = &gatherAggregate;
+
+		auto agg = cast(ir.Aggregate) realType(aa.key);
+		panicAssert(key, agg !is null);
+		gatherAggregate(agg);
+
+		// ubyte[] barray;
+		auto oarray = buildArrayType(l, buildUbyte(l));
+		auto outvar = buildVariableSmart(l, oarray, ir.Variable.Storage.Function, "barray");
+		sexp.statements ~= outvar;
+
+		// barray.ptr = cast(ubyte*) array.ptr;
+		auto ptrcast = buildCastSmart(l, buildPtrSmart(l, buildUbyte(l)), buildAccess(l, eref(var), "ptr"));
+		auto ptrass = buildAssign(l, buildAccess(l, eref(outvar), "ptr"), ptrcast);
+		buildExpStat(l, sexp, ptrass);
+
+		// barray.length = exps.length * typeid(ulong).size;
+		auto lenaccess = buildAccess(l, eref(outvar), "length");
+		auto mul = buildBinOp(l, ir.BinOp.Op.Mul, buildAccess(l, eref(var), "length"), buildConstantSizeT(l, lp, 8));
+		auto lenass = buildAssign(l, lenaccess, mul);
+		buildExpStat(l, sexp, lenass);
+
+		sexp.exp = eref(outvar);
+		return buildCastSmart(l, buildArrayType(l, buildVoid(l)), sexp);
+	}
+}

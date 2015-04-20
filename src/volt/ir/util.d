@@ -859,6 +859,14 @@ ir.BinOp buildAddAssign(Location loc, ir.Exp left, ir.Exp right)
 }
 
 /**
+ * Builds a cat-assign BinOp.
+ */
+ir.BinOp buildCatAssign(Location loc, ir.Exp left, ir.Exp right)
+{
+	return buildBinOp(loc, ir.BinOp.Op.CatAssign, left, right);
+}
+
+/**
  * Builds an BinOp.
  */
 ir.BinOp buildBinOp(Location loc, ir.BinOp.Op op, ir.Exp left, ir.Exp right)
@@ -1461,4 +1469,17 @@ ir.TokenExp buildTokenExp(Location loc, ir.TokenExp.Type type)
 	auto texp = new ir.TokenExp(type);
 	texp.location = loc;
 	return texp;
+}
+
+/// Build a simple index for loop. for (i = 0; i < length; ++i)
+void buildForStatement(Location loc, LanguagePass lp, ir.Scope parent, ir.Exp length, out ir.ForStatement forStatement, out ir.Variable ivar)
+{
+	forStatement = new ir.ForStatement();
+	forStatement.location = loc;
+
+	ivar = buildVariable(loc, buildSizeT(loc, lp), ir.Variable.Storage.Function, "i", buildConstantSizeT(loc, lp, 0));
+	forStatement.initVars ~= ivar;
+	forStatement.test = buildBinOp(loc, ir.BinOp.Op.Less, buildExpReference(loc, ivar, ivar.name), copyExp(length));
+	forStatement.increments ~= buildIncrement(loc, buildExpReference(loc, ivar, ivar.name));
+	forStatement.block = buildBlockStat(loc, forStatement, parent);
 }

@@ -348,6 +348,10 @@ public:
 			base = tr.type;
 		}
 
+		if (base.nodeType() == ir.NodeType.Struct) {
+			return;
+		}
+
 		if (base.nodeType() == ir.NodeType.ArrayType) {
 			base = (cast(ir.ArrayType)base).base;
 		} else if (base.nodeType() == ir.NodeType.StaticArrayType) {
