@@ -1159,7 +1159,7 @@ public:
 				addElement(buildCastSmart(l, buildUlong(l), e), statements);
 				break;
 			default:
-				throw panicUnhandled(t, "aa aggregate key type");
+				throw panicUnhandled(t, format("aa aggregate key type '%s'", t.nodeType));
 			}
 		}
 
@@ -1184,9 +1184,7 @@ public:
 
 		aggdg = &gatherAggregate;
 
-		auto agg = cast(ir.Aggregate) realType(aa.key);
-		panicAssert(key, agg !is null);
-		gatherAggregate(agg);
+		gatherType(realType(aa.key), key, sexp.statements);
 
 		// ubyte[] barray;
 		auto oarray = buildArrayType(l, buildUbyte(l));

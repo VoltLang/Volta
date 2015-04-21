@@ -348,7 +348,7 @@ public:
 			base = tr.type;
 		}
 
-		if (base.nodeType() == ir.NodeType.Struct) {
+		if (base.nodeType() == ir.NodeType.Struct || base.nodeType() == ir.NodeType.Class) {
 			return;
 		}
 
