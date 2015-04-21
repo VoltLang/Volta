@@ -1098,7 +1098,7 @@ public:
 			}
 
 			key = buildCastSmart(loc, buildUlong(loc), key);
-		} else if (realType(aa.key).nodeType == ir.NodeType.Struct) {
+		} else if (realType(aa.key).nodeType == ir.NodeType.Struct || realType(aa.key).nodeType == ir.NodeType.Class) {
 			key = buildStructAAKeyCast(loc, lp, current, key, aa);
 		} else {
 			key = buildCastSmart(loc, buildArrayTypeSmart(loc, buildVoid(loc)), key);
