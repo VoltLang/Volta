@@ -184,6 +184,10 @@ public:
 		check(aaGetAP, "vrt_aa_get_ap");
 		aaGetPA = cast(ir.Function)s.getStore("vrt_aa_get_pa").node;
 		check(aaGetPA, "vrt_aa_get_pa");
+		aaDeletePrimitive = cast(ir.Function)s.getStore("vrt_aa_delete_primitive").node;
+		check(aaDeletePrimitive, "vrt_aa_delete_primitive");
+		aaDeleteArray = cast(ir.Function)s.getStore("vrt_aa_delete_array").node;
+		check(aaDeleteArray, "vrt_aa_delete_array");
 
 		ir.EnumDeclaration getEnum(string name)
 		{

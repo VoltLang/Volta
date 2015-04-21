@@ -141,6 +141,8 @@ public:
 	ir.Function aaGetAA;
 	ir.Function aaGetPA;
 	ir.Function aaGetAP;
+	ir.Function aaDeletePrimitive;
+	ir.Function aaDeleteArray;
 	/* @} */
 
 	/**

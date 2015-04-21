@@ -836,41 +836,60 @@ bool replaceAAPostfixesIfNeeded(Context ctx, ir.Postfix postfix, ref ir.Exp exp)
 		if (child is null || child.identifier is null) {
 			return false;
 		}
-		if (child.identifier.value != "get") {
-			return false;
-		}
-		if (postfix.arguments.length != 2) {
-			return false;
-		}
 		auto aa = cast(ir.AAType) realType(getExpType(ctx.lp, child.child, ctx.current));
 		if (aa is null) {
 			return false;
 		}
-		ir.ExpReference rtFn;
-		auto args = new ir.Exp[](3);
-		args[0] = copyExp(child.child);
+		if (child.identifier.value != "get" && child.identifier.value != "remove") {
+			return false;
+		}
 		bool keyIsArray = isArray(realType(aa.key));
 		bool valIsArray = isArray(realType(aa.value));
-		if (keyIsArray && valIsArray) {
-			rtFn = buildExpReference(l, ctx.lp.aaGetAA, ctx.lp.aaGetAA.name);
-		} else if (!keyIsArray && valIsArray) {
-			rtFn = buildExpReference(l, ctx.lp.aaGetPA, ctx.lp.aaGetPA.name);
-		} else if (keyIsArray && !valIsArray) {
-			rtFn = buildExpReference(l, ctx.lp.aaGetAP, ctx.lp.aaGetAP.name);
+		ir.ExpReference rtFn;
+		ir.Exp[] args;
+		if (child.identifier.value == "get") {
+			if (postfix.arguments.length != 2) {
+				return false;
+			}
+			args = new ir.Exp[](3);
+			args[0] = copyExp(child.child);
+			if (keyIsArray && valIsArray) {
+				rtFn = buildExpReference(l, ctx.lp.aaGetAA, ctx.lp.aaGetAA.name);
+			} else if (!keyIsArray && valIsArray) {
+				rtFn = buildExpReference(l, ctx.lp.aaGetPA, ctx.lp.aaGetPA.name);
+			} else if (keyIsArray && !valIsArray) {
+				rtFn = buildExpReference(l, ctx.lp.aaGetAP, ctx.lp.aaGetAP.name);
+			} else {
+				rtFn = buildExpReference(l, ctx.lp.aaGetPP, ctx.lp.aaGetPP.name);
+			}
+			if (keyIsArray) {
+				args[1] = buildCastSmart(l, buildArrayType(l, buildVoid(l)), postfix.arguments[0]);
+			} else {
+				args[1] = buildCastSmart(l, buildUlong(l), postfix.arguments[0]);
+			}
+			if (valIsArray) {
+				args[2] = buildCastSmart(l, buildArrayType(l, buildVoid(l)), postfix.arguments[1]);
+			} else {
+				args[2] = buildCastSmart(l, buildUlong(l), postfix.arguments[1]);
+			}
+			exp = buildCastSmart(l, aa.value, buildCall(l, rtFn, args));
+		} else if (child.identifier.value == "remove") {
+			if (postfix.arguments.length != 1) {
+				return false;
+			}
+			args = new ir.Exp[](2);
+			args[0] = copyExp(child.child);
+			if (keyIsArray) {
+				rtFn = buildExpReference(l, ctx.lp.aaDeleteArray, ctx.lp.aaDeleteArray.name);
+				args[1] = buildCastSmart(l, buildArrayType(l, buildVoid(l)), postfix.arguments[0]);
+			} else {
+				rtFn = buildExpReference(l, ctx.lp.aaDeletePrimitive, ctx.lp.aaDeletePrimitive.name);
+				args[1] = buildCastSmart(l, buildUlong(l), postfix.arguments[0]);
+			}
+			exp = buildCall(l, rtFn, args);
 		} else {
-			rtFn = buildExpReference(l, ctx.lp.aaGetPP, ctx.lp.aaGetPP.name);
+			panicAssert(child, false);
 		}
-		if (keyIsArray) {
-			args[1] = buildCastSmart(l, buildArrayType(l, buildVoid(l)), postfix.arguments[0]);
-		} else {
-			args[1] = buildCastSmart(l, buildUlong(l), postfix.arguments[0]);
-		}
-		if (valIsArray) {
-			args[2] = buildCastSmart(l, buildArrayType(l, buildVoid(l)), postfix.arguments[1]);
-		} else {
-			args[2] = buildCastSmart(l, buildUlong(l), postfix.arguments[1]);
-		}
-		exp = buildCastSmart(l, aa.value, buildCall(l, rtFn, args));
 		return true;
 	}
 
