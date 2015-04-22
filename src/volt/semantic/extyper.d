@@ -1804,7 +1804,8 @@ void extypePostfixUFCS(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	}
 
 	auto type = realType(tryToGetExpType(ctx.lp, child.child, ctx.current));
-	if (type is null) {
+	auto fnn = child.identifier.value;
+	if (type is null || (type.nodeType == ir.NodeType.AAType && (fnn == "remove" || fnn == "get"))) {
 		return;
 	}
 
