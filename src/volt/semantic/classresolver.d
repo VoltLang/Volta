@@ -288,7 +288,10 @@ bool overrideFunctionsIfNeeded(LanguagePass lp, ir.Function childFunction, ref i
 		return false;
 	}
 
-	ir.Function selectedFunction = selectFunction(lp, toConsider, childFunction.type.params, childFunction.location);
+	ir.Function selectedFunction = selectFunction(lp, toConsider, childFunction.type.params, childFunction.location, DoNotThrow);
+	if (selectedFunction is null) {
+		return false;
+	}
 
 	foreach (ref parentFunction; parentSet) {
 		if (parentFunction is selectedFunction) {

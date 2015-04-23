@@ -148,7 +148,10 @@ ir.Function selectFunction(LanguagePass lp, ir.FunctionSet fset, ir.Type[] argum
 	return fset.resolved(fn);
 }
 
-ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] arguments, Location location)
+enum ThrowOnError = true;
+enum DoNotThrow = false;
+
+ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] arguments, Location location, bool throwOnError = ThrowOnError)
 {
 	assert(functions.length > 0);
 
@@ -218,7 +221,11 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 		}
 	}
 	if (outFunctions.length == 0) {
-		throw makeNoValidFunction(location, functions[0].name, arguments);
+		if (throwOnError) {
+			throw makeNoValidFunction(location, functions[0].name, arguments);
+		} else {
+			return null;
+		}
 	}
 
 	int[] matchLevels;
@@ -248,5 +255,9 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 		}
 	}
 
-	throw makeCannotDisambiguate(location, matchedFunctions);
+	if (throwOnError) {
+		throw makeCannotDisambiguate(location, matchedFunctions);
+	} else {
+		return null;
+	}
 }
