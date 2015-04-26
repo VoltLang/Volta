@@ -44,40 +44,43 @@ import volt.semantic.extyper;
  * list, it is chosen, otherwise an error is generated.
  */
 
-ir.Function selectFunction(LanguagePass lp, ir.Scope current, ir.Function[] functions, ir.Exp[] arguments, Location location)
+enum ThrowOnError = true;
+enum DoNotThrow = false;
+
+ir.Function selectFunction(LanguagePass lp, ir.Scope current, ir.Function[] functions, ir.Exp[] arguments, Location location, bool throwOnError = ThrowOnError)
 {
 	ir.Type[] types;
 	foreach (arg; arguments) {
 		types ~= getExpType(lp, arg, current);
 	}
-	return selectFunction(lp, functions, types, location);
+	return selectFunction(lp, functions, types, location, throwOnError);
 }
 
-ir.Function selectFunction(LanguagePass lp, ir.Scope current, ir.FunctionSet fset, ir.Exp[] arguments, Location location)
+ir.Function selectFunction(LanguagePass lp, ir.Scope current, ir.FunctionSet fset, ir.Exp[] arguments, Location location, bool throwOnError = ThrowOnError)
 {
 	ir.Type[] types;
 	foreach (arg; arguments) {
 		types ~= getExpType(lp, arg, current);
 	}
-	return selectFunction(lp, fset, types, location);
+	return selectFunction(lp, fset, types, location, throwOnError);
 }
 
-ir.Function selectFunction(LanguagePass lp, ir.FunctionSet fset, ir.Variable[] arguments, Location location)
+ir.Function selectFunction(LanguagePass lp, ir.FunctionSet fset, ir.Variable[] arguments, Location location, bool throwOnError = ThrowOnError)
 {
 	ir.Type[] types;
 	foreach (arg; arguments) {
 		types ~= arg.type;
 	}
-	return selectFunction(lp, fset, types, location);
+	return selectFunction(lp, fset, types, location, throwOnError);
 }
 
-ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Variable[] arguments, Location location)
+ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Variable[] arguments, Location location, bool throwOnError)
 {
 	ir.Type[] types;
 	foreach (arg; arguments) {
 		types ~= arg.type;
 	}
-	return selectFunction(lp, functions, types, location);
+	return selectFunction(lp, functions, types, location, throwOnError);
 }
 
 ir.Type ifTypeRefDeRef(ir.Type t)
@@ -142,14 +145,14 @@ bool specialisationComparison(ir.Function a, ir.Function b)
 	return atob && !btoa;
 }
 
-ir.Function selectFunction(LanguagePass lp, ir.FunctionSet fset, ir.Type[] arguments, Location location)
+ir.Function selectFunction(LanguagePass lp, ir.FunctionSet fset, ir.Type[] arguments, Location location, bool throwOnError = ThrowOnError)
 {
-	auto fn = selectFunction(lp, fset.functions, arguments, location);
+	auto fn = selectFunction(lp, fset.functions, arguments, location, throwOnError);
+	if (fn is null) {
+		return null;
+	}
 	return fset.resolved(fn);
 }
-
-enum ThrowOnError = true;
-enum DoNotThrow = false;
 
 ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] arguments, Location location, bool throwOnError = ThrowOnError)
 {

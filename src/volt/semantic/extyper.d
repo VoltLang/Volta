@@ -1827,7 +1827,10 @@ void extypePostfixUFCS(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	arguments[1 .. $] = postfix.arguments[];
 	panicAssert(postfix, arguments.length >= 1);
 
-	auto fn = selectFunction(ctx.lp, ctx.current, store.functions, arguments, l);
+	auto fn = selectFunction(ctx.lp, ctx.current, store.functions, arguments, l, DoNotThrow);
+	if (fn is null) {
+		return;
+	}
 	panicAssert(postfix, fn !is null);
 	postfix.child = buildExpReference(l, fn, fn.name);
 	postfix.arguments = arguments;
