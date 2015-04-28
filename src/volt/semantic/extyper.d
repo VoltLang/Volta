@@ -2548,7 +2548,17 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 	if (asEnum is null && ss.isFinal) {
 		throw makeExpected(ss, "enum type for final switch");
 	}
-	if (ss.isFinal && ss.cases.length != asEnum.members.length) {
+	size_t caseCount;
+	foreach (_case; ss.cases) {
+		if (_case.firstExp !is null) {
+			caseCount++;
+		}
+		if (_case.secondExp !is null) {
+			caseCount++;
+		}
+		caseCount += _case.exps.length;
+	}
+	if (ss.isFinal && caseCount != asEnum.members.length) {
 		throw makeFinalSwitchBadCoverage(ss);
 	}
 }
