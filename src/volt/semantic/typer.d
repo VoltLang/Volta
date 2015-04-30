@@ -788,15 +788,16 @@ ir.Type getPostfixIncDecType(LanguagePass lp, ir.Postfix postfix, ir.Scope curre
 	if (!isLValue(postfix.child)) {
 		throw makeNotLValue(postfix);
 	}
-	auto type = getExpType(lp, postfix.child, currentScope);
+	auto otype = getExpType(lp, postfix.child, currentScope);
+	auto type = realType(otype, true, true);
 
 	if (type.nodeType == ir.NodeType.PointerType) {
 		return type;
 	} else if (type.nodeType == ir.NodeType.PrimitiveType &&
 			   isOkayForPointerArithmetic((cast(ir.PrimitiveType)type).type)) {
 		return type;
-	} else if (effectivelyConst(type)) {
-		throw makeCannotModify(postfix, type);
+	} else if (effectivelyConst(otype)) {
+		throw makeCannotModify(postfix, otype);
 	}
 
 	throw makeBadOperation(postfix);
