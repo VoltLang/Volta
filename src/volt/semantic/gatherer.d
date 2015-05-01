@@ -641,7 +641,9 @@ public:
 
 	override Status visit(ref ir.Exp exp, ir.IdentifierExp iexp)
 	{
-		replaceNestedNames(iexp.value);
+		if (!iexp.globalLookup) {
+			replaceNestedNames(iexp.value);
+		}
 		return Continue;
 	}
 
