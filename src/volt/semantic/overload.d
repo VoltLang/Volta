@@ -199,6 +199,10 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 					matchLevels ~= 2;
 				} else {
 					matchLevels ~= max(.matchLevel(true, arg, arr.base), .matchLevel(true, arg, arr));
+					// Given foo(T[]...) and foo(T) passing a T, the latter should be preferred.
+					if (matchLevels[$-1] == 4) {
+						matchLevels[$-1] = 3;
+					}
 				}
 			}
 		}
