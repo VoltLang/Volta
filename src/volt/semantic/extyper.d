@@ -350,7 +350,7 @@ void extypeAssignPrimitiveType(Context ctx, ref ir.Exp exp, ir.PrimitiveType lpr
  */
 void extypeAssignClass(Context ctx, ref ir.Exp exp, ir.Class _class)
 {
-	auto type = realType(getExpType(ctx.lp, exp, ctx.current));
+	auto type = realType(getExpType(ctx.lp, exp, ctx.current), true, true);
 	assert(type !is null);
 
 	auto rightClass = cast(ir.Class) type;
