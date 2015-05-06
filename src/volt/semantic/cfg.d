@@ -286,11 +286,14 @@ public:
 		}
 
 		block = new Block();
+		size_t parents;
 		foreach (_block; currentSwitchBlocks) {
-			if (!_block.mGoto) {
+			if (!_block.mGoto && !_block.terminates()) {
 				block.addParent(_block);
+				parents++;
 			}
 		}
+		block.terminates = parents == 0;
 
 		currentSwitchBlocks = oldSwitchBlocks;
 		currentSwitchStatement = oldSwitchStatement;
