@@ -928,6 +928,21 @@ void parseNewOrDup(TokenStream ts, ref intir.UnaryExp exp)
 	}
 }
 
+// Wrap a PrimaryExp in a TernaryExp.
+private intir.TernaryExp toTernary(intir.PrimaryExp exp)
+{
+	auto t = new intir.TernaryExp();
+	t.location = exp.location;
+	t.condition = new intir.BinExp();
+	t.condition.location = exp.location;
+	t.condition.left = new intir.UnaryExp();
+	t.condition.left.location = exp.location;
+	t.condition.left.postExp = new intir.PostfixExp();
+	t.condition.left.postExp.location = exp.location;
+	t.condition.left.postExp.primary = exp;
+	return t;
+}
+
 intir.DupExp parseDupExp(TokenStream ts)
 {
 	auto start = match(ts, TokenType.New);
@@ -935,9 +950,24 @@ intir.DupExp parseDupExp(TokenStream ts)
 	auto dupExp = new intir.DupExp();
 	dupExp.name = parseQualifiedName(ts);
 	match(ts, TokenType.OpenBracket);
-	dupExp.beginning = parseTernaryExp(ts);
-	match(ts, TokenType.DoubleDot);
-	dupExp.end = parseTernaryExp(ts);
+	if (ts.peek.type == TokenType.DoubleDot) {
+		// new foo[..];
+		match(ts, TokenType.DoubleDot);
+		auto beginning = new intir.PrimaryExp();
+		beginning.location = ts.peek.location;
+		beginning._string = "0";
+		beginning.op = intir.PrimaryExp.Type.IntegerLiteral;
+		auto end = new intir.PrimaryExp();
+		end.location = ts.peek.location;
+		end.op = intir.PrimaryExp.Type.Dollar;
+		dupExp.beginning = toTernary(beginning);
+		dupExp.end = toTernary(end);
+	} else {
+		// new foo[a..b];
+		dupExp.beginning = parseTernaryExp(ts);
+		match(ts, TokenType.DoubleDot);
+		dupExp.end = parseTernaryExp(ts);
+	}
 	match(ts, TokenType.CloseBracket);
 
 	return dupExp;

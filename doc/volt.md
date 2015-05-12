@@ -504,7 +504,7 @@ Speaking of arrays, sometimes you want to make a copy of one. You might think th
 
 would suffice, but consider that arrays are defined as structs, internally:
 
-	// Actual code from the runtime.
+    // Actual code from the runtime.
     struct ArrayStruct {
         void* ptr;
         size_t length;
@@ -516,6 +516,11 @@ With this in mind, it's easy to see why a simple assignment doesn't create a cop
 
 If that dollar confuses you, it's simply a shorthand for `oldArray.length`. The number before the `..` is the index of `oldArray` to start copying, and the number after is the index to stop (non inclusive). It's easy to see how you could copy a portion of an array, if you don't want the whole thing:
 
-	auto oldArray = [1, 2, 3, 4, 5, 6];
+    auto oldArray = [1, 2, 3, 4, 5, 6];
     auto newArray = new oldArray[3 .. 5];
     // newArray == [4, 5]
+
+And as copying the entire array is a common operation, there's a shorthand for the `0 .. $` syntax too:
+
+    auto newArray = new oldArray[..];
+
