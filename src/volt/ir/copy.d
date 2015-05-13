@@ -142,6 +142,7 @@ ir.Unary copy(ir.Unary unary)
 	newunary.op = unary.op;
 	newunary.value = unary.value is null ? null : copyExp(unary.value);
 	newunary.hasArgumentList = unary.hasArgumentList;
+	newunary.fullShorthand = unary.fullShorthand;
 	if (unary.type !is null) {
 		newunary.type = copyTypeSmart(unary.type.location, unary.type);
 	}

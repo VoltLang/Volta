@@ -231,6 +231,7 @@ extern(C) {
  */
 extern(C) {
 	void* vrt_aa_new(TypeInfo value, TypeInfo key);
+	void* vrt_aa_dup(void* rbtv);
 	bool vrt_aa_in_primitive(void* rbtv, ulong key, void* ret);
 	bool vrt_aa_in_array(void* rbtv, void[] key, void* ret);
 	void vrt_aa_insert_primitive(void* rbtv, ulong key, void* value);

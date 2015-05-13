@@ -188,6 +188,8 @@ public:
 		check(aaDeletePrimitive, "vrt_aa_delete_primitive");
 		aaDeleteArray = cast(ir.Function)s.getStore("vrt_aa_delete_array").node;
 		check(aaDeleteArray, "vrt_aa_delete_array");
+		aaDup = cast(ir.Function)s.getStore("vrt_aa_dup").node;
+		check(aaDup, "vrt_aa_dup");
 
 		ir.EnumDeclaration getEnum(string name)
 		{

@@ -57,6 +57,38 @@ extern(C) size_t vrt_aa_get_length(void* rbtv)
 	return rbt.length;
 }
 
+private TreeNode* vrt_aa_dup_treenode(TreeNode* tn, TreeNode* parent=null)
+{
+	if (tn is null) {
+		return null;
+	}
+	auto dup = new TreeNode;
+	if (tn.key.array.length > 0) {
+		dup.key.array = new tn.key.array[..];
+	} else {
+		dup.key.ptr = tn.key.ptr;
+	}
+	if (tn.value.array.length > 0) {
+		dup.value.array = new tn.value.array[..];
+	} else {
+		dup.value.ptr = tn.value.ptr;
+	}
+	dup.red = tn.red;
+	dup.parent = parent;
+	dup.left = vrt_aa_dup_treenode(tn.left, dup);
+	dup.right = vrt_aa_dup_treenode(tn.right);
+	return dup;
+}
+
+extern(C) void* vrt_aa_dup(void* rbtv)
+{
+	auto rbt = cast(RedBlackTree*)rbtv;
+	auto newRbt = cast(RedBlackTree*)vrt_aa_new(rbt.value, rbt.key);
+	newRbt.root = vrt_aa_dup_treenode(rbt.root);
+	newRbt.length = rbt.length;
+	return newRbt;
+}
+
 // vrt_aa_get_keyvalue (e.g. vrt_aa_get_pa key == primitive, value == array)
 // aa.get("key", null) => vrt_aa_get_primitive(aa, "key", null)
 

@@ -564,7 +564,19 @@ void extypeAssignAAType(Context ctx, ref ir.Exp exp, ir.AAType aatype)
 	}
 
 	if (rtype.nodeType == ir.NodeType.AAType) {
-	    throw makeBadAAAssign(exp.location);
+		// Allow assignment from vrt_aa_dup.
+		auto unary = cast(ir.Unary) exp;
+		if (unary !is null) {
+			auto pfix = cast(ir.Postfix) unary.value;
+			if (pfix !is null) {
+				auto fn = cast(ir.FunctionType) realType(getExpType(ctx.lp, pfix.child, ctx.current));
+				if (fn is ctx.lp.aaDup.type) {
+					return;
+				}
+			}
+		}
+		// Otherwise, verboten.
+		throw makeBadAAAssign(exp.location);
 	}
 
 	throw makeBadImplicitCast(exp, rtype, aatype);
@@ -1938,6 +1950,16 @@ void handleDup(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 
 	auto sexp = buildStatementExp(l);
 	auto type = getExpType(ctx.lp, _unary.value, ctx.current);
+
+	if (realType(type).nodeType == ir.NodeType.AAType) {
+		if (!_unary.fullShorthand) {
+			// Actual indices were used, which makes no sense for AAs.
+			throw makeExpected(l, format("new %s[..]", _unary.dupName));
+		}
+		exp = buildCall(l, buildExpReference(l, ctx.lp.aaDup, ctx.lp.aaDup.name), [_unary.value]);
+		exp = buildCastSmart(l, type, exp);
+		return;
+	}
 
 	auto length = buildSub(l, buildCastSmart(l, ctx.lp.settings.getSizeT(l), _unary.dupEnd), 
 		buildCastSmart(l, ctx.lp.settings.getSizeT(l), _unary.dupBeginning));

@@ -180,6 +180,7 @@ ir.Exp unaryToExp(intir.UnaryExp unary)
 		exp.location = unary.dupExp.location;
 		exp.op = unary.op;
 		exp.dupName = unary.dupExp.name;
+		exp.fullShorthand = unary.dupExp.shorthand;
 		if (exp.dupName.identifiers.length == 1) {
 			exp.value = buildIdentifierExp(exp.location, exp.dupName.identifiers[0].value);
 		} else {
@@ -962,6 +963,7 @@ intir.DupExp parseDupExp(TokenStream ts)
 		end.op = intir.PrimaryExp.Type.Dollar;
 		dupExp.beginning = toTernary(beginning);
 		dupExp.end = toTernary(end);
+		dupExp.shorthand = true;
 	} else {
 		// new foo[a..b];
 		dupExp.beginning = parseTernaryExp(ts);

@@ -169,6 +169,7 @@ public:
 	QualifiedName dupName;
 	Exp dupBeginning;
 	Exp dupEnd;
+	bool fullShorthand;  // This came from new foo[..], not [0 .. $].
 
 public:
 	this() { super(NodeType.Unary); }

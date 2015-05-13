@@ -121,6 +121,7 @@ public:
 	QualifiedName name;    // new FOO[beginning .. end]
 	TernaryExp beginning;  // new foo[BEGINNING .. end]
 	TernaryExp end;        // new foo[beginning .. END]
+	bool shorthand;
 }
 
 class CastExp : IntExp
