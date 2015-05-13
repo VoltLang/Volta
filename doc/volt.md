@@ -524,3 +524,4 @@ And as copying the entire array is a common operation, there's a shorthand for t
 
     auto newArray = new oldArray[..];
 
+The above syntax can be used to copy associate arrays, too.
