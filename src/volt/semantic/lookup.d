@@ -164,7 +164,7 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 		current = current.parent;
 	}
 
-	auto asMod = cast(ir.Module) previous.node;
+	auto asMod = getModuleFromScope(_scope);
 	assert(asMod !is null);
 
 	foreach (i, mod; asMod.myScope.importedModules) {
