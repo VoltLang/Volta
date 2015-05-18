@@ -31,7 +31,8 @@ ir.Store findShadowed(LanguagePass lp, ir.Scope _scope, Location loc, string nam
 		return null;
 	}
 
-	auto store = lookupOnlyThisScope(lp, _scope, loc, name);
+	// We don't use lookupOnlyThisScope because it will try and resolve it prematurely.
+	auto store = _scope.getStore(name);
 	if (store !is null) {
 		return store;
 	}
