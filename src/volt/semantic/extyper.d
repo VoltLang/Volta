@@ -618,10 +618,24 @@ void handleAssign(Context ctx, ref ir.Type toType, ref ir.Exp exp, ref uint toFl
 {
 	auto rtype = getExpType(ctx.lp, exp, ctx.current);
 	auto storage = cast(ir.StorageType) toType;
-	if (storage !is null && storage.base is null) {
-		if (rtype.nodeType == ir.NodeType.FunctionSetType) {
-			throw makeCannotInfer(exp.location);
+	if (rtype.nodeType == ir.NodeType.FunctionSetType) {
+		auto err = makeCannotInfer(exp.location);
+		auto eref = cast(ir.ExpReference) exp;
+		if (eref is null) {
+			throw err;
 		}
+		auto set = cast(ir.FunctionSet) eref.decl;
+		if (set is null) {
+			throw err;
+		}
+		auto fn = selectFunction(ctx.lp, ctx.current, set, [], exp.location, DoNotThrow);
+		if ((fn is null || !fn.type.isProperty) && storage !is null && storage.base is null) {
+			throw err;
+		}
+		exp = buildExpReference(exp.location, fn, fn.name);
+		rtype = fn.type;
+	}
+	if (storage !is null && storage.base is null) {
 		storage.base = copyTypeSmart(exp.location, rtype);
 	}
 	auto originalRtype = rtype;
