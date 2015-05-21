@@ -187,6 +187,13 @@ ir.Type copyTypeSmart(Location loc, ir.Type type)
 			t = copyTypeSmart(loc, t);
 		}
 		return ft;
+	case FunctionSetType:
+		auto asFset = cast(ir.FunctionSetType)type;
+		auto fset = new ir.FunctionSetType();
+		fset.location = loc;
+		fset.set = asFset.set;
+		fset.isFromCreateDelegate = asFset.isFromCreateDelegate;
+		return fset;
 	case DelegateType:
 		auto asDg = cast(ir.DelegateType)type;
 		auto dg = new ir.DelegateType(asDg);

@@ -619,21 +619,9 @@ void handleAssign(Context ctx, ref ir.Type toType, ref ir.Exp exp, ref uint toFl
 	auto rtype = getExpType(ctx.lp, exp, ctx.current);
 	auto storage = cast(ir.StorageType) toType;
 	if (rtype.nodeType == ir.NodeType.FunctionSetType) {
-		auto err = makeCannotInfer(exp.location);
-		auto eref = cast(ir.ExpReference) exp;
-		if (eref is null) {
-			throw err;
+		if (storage !is null && storage.base is null) {
+			throw makeCannotInfer(exp.location);
 		}
-		auto set = cast(ir.FunctionSet) eref.decl;
-		if (set is null) {
-			throw err;
-		}
-		auto fn = selectFunction(ctx.lp, ctx.current, set, [], exp.location, DoNotThrow);
-		if ((fn is null || !fn.type.isProperty) && storage !is null && storage.base is null) {
-			throw err;
-		}
-		exp = buildExpReference(exp.location, fn, fn.name);
-		rtype = fn.type;
 	}
 	if (storage !is null && storage.base is null) {
 		storage.base = copyTypeSmart(exp.location, rtype);
@@ -652,8 +640,43 @@ void handleAssign(Context ctx, ref ir.Type toType, ref ir.Exp exp, ref uint toFl
 	}
 }
 
+void rewriteOverloadedProperty(Context ctx, ref ir.Exp exp, ir.Type type)
+{
+	auto rtype = getExpType(ctx.lp, exp, ctx.current);
+	if (rtype.nodeType == ir.NodeType.FunctionSetType) {
+		auto err = makeCannotInfer(exp.location);
+		auto fsett = cast(ir.FunctionSetType)rtype;
+		auto set = fsett.set;
+		if (set is null) {
+			throw err;
+		}
+		auto fn = selectFunction(ctx.lp, ctx.current, set.functions, [], exp.location);
+		if (fn.type.isProperty) {
+			set.resolved(fn);
+			auto l = exp.location;
+			ir.Postfix call;
+			if (fn.thisHiddenParameter !is null && typesEqual(fn.thisHiddenParameter.type, ctx.currentFunction.thisHiddenParameter.type)) {
+				exp = buildExpReference(l, ctx.currentFunction.thisHiddenParameter, "this");
+				call = buildMemberCall(l, exp, buildExpReference(l, fn, fn.name), fn.name, []);
+				call.isImplicitPropertyCall = true;
+			} else if (fn.thisHiddenParameter !is null) {
+				auto pfix = cast(ir.Postfix)exp;
+				if (pfix is null) {
+					throw makeExpected(l, "postfix");
+				}
+				call = buildMemberCall(l, pfix.child, buildExpReference(l, fn, fn.name), fn.name, []);
+				call.isImplicitPropertyCall = true;
+			} else {
+				call = buildCall(l, buildExpReference(l, fn, fn.name), []);
+			}
+			exp = call;
+		}
+	}
+}
+
 void extypeAssignDispatch(Context ctx, ref ir.Exp exp, ir.Type type)
 {
+	rewriteOverloadedProperty(ctx, exp, type);
 	uint flag;
 	handleAssign(ctx, type, exp, flag);
 	switch (type.nodeType) {
@@ -1468,6 +1491,7 @@ void rewritePropertyFunctionAssign(Context ctx, ref ir.Exp e, ir.BinOp bin)
 	}
 	auto asExpRef = cast(ir.ExpReference) bin.left;
 	ir.Postfix asPostfix;
+	ir.Exp forceChild;
 	string functionName;
 
 	// Not a stand alone function, check if it's a member function.
@@ -1486,9 +1510,23 @@ void rewritePropertyFunctionAssign(Context ctx, ref ir.Exp e, ir.BinOp bin)
 		if (asExpRef is null) {
 			return;
 		}
+		forceChild = asPostfix;
 	}
 
-	auto asFunction = cast(ir.Function) asExpRef.decl;
+	ir.Function asFunction;
+	auto asFunctionSet = cast(ir.FunctionSet) asExpRef.decl;
+	if (asFunctionSet !is null) {
+		asFunction = selectFunction(ctx.lp, ctx.current, asFunctionSet, [bin.right], bin.location, DoNotThrow);
+		if (forceChild is null && asFunction.type.isProperty) {
+			forceChild = buildExpReference(bin.location, ctx.currentFunction.thisHiddenParameter, "this");
+			forceChild = buildCreateDelegate(bin.location, forceChild, buildExpReference(bin.location, asFunction, asFunction.name));
+		}
+	}
+
+	if (asFunction is null) {
+		asFunction = cast(ir.Function) asExpRef.decl;
+	}
+
 	// Classes aren't filled in yet, so try to see if it's one of those.
 	if (asFunction is null) {
 		auto asVariable = cast(ir.Variable) asExpRef.decl;
@@ -1526,8 +1564,8 @@ void rewritePropertyFunctionAssign(Context ctx, ref ir.Exp e, ir.BinOp bin)
 	assert(call.arguments.length == 1);
 	assert(call.arguments[0] !is null);
 	
-	if (asPostfix !is null) {
-		call.child = asPostfix;
+	if (forceChild !is null) {
+		call.child = forceChild;
 	}
 	e = call;
 	return;
