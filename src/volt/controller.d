@@ -268,12 +268,27 @@ protected:
 	int intCompile()
 	{
 		ir.Module[] mods;
+
 		void debugPrint(string msg, string s)
 		{
 			if (settings.internalDebug) {
 				stdout.writefln(msg, s);
 			}
 		}
+
+		bool debugPassesRun = false;
+		void debugPasses()
+		{
+			if (settings.internalDebug && !debugPassesRun) {
+				debugPassesRun = true;
+				foreach(pass; debugVisitors) {
+					foreach(mod; mods) {
+						pass.transform(mod);
+					}
+				}
+			}
+		}
+		scope(failure) debugPasses();
 
 		// Load all modules to be compiled.
 		// Don't run phase 1 on them yet.
@@ -302,13 +317,7 @@ protected:
 		// All modules need to be run trough phase3.
 		languagePass.phase3(dmdIsStupid);
 
-		if (settings.internalDebug) {
-			foreach(pass; debugVisitors) {
-				foreach(mod; mods) {
-					pass.transform(mod);
-				}
-			}
-		}
+		debugPasses();
 
 		if (settings.noBackend)
 			return 0;
