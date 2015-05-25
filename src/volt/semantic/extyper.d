@@ -1051,6 +1051,255 @@ void handleArgumentLabelsIfNeeded(Context ctx, ir.Postfix postfix, ir.Function f
 	exp = postfix;
 }
 
+// Given a postfix, return an array of postfixes of every postfix child. The initial postfix is the first element.
+private ir.Postfix[] getPostfixChain(ir.Postfix postfix)
+{
+	ir.Postfix[] postfixes;
+	do {
+		postfixes ~= postfix;
+		postfix = cast(ir.Postfix) postfix.child;
+	} while (postfix !is null);
+	return postfixes;
+}
+
+// Given a.foo, if a is a pointer to a class, turn it into (*a).foo.
+private void dereferenceInitialClass(Context ctx, ref ir.Postfix[] postfixes)
+{
+	auto lastType = getExpType(ctx.lp, postfixes[$-1].child, ctx.current);
+	if (isPointerToClass(lastType)) {
+		postfixes[$-1].child = buildDeref(postfixes[$-1].child.location, postfixes[$-1].child);
+	}
+}
+
+private bool transformToCreateDelegate(Context ctx, ref ir.Exp exp, ir.Postfix[] postfixes)
+{
+	if (postfixes[0].op == ir.Postfix.Op.Call) {
+		return false;
+	}
+
+	auto type = getExpType(ctx.lp, postfixes[0].child, ctx.current);
+	/* If we end up with a identifier postfix that points
+	 * at a struct, and retrieves a member function, then
+	 * transform the op from Identifier to CreatePostfix.
+	 */
+	if (postfixes[0].identifier !is null) {
+		auto asStorage = cast(ir.StorageType) realType(type);
+		if (asStorage !is null && canTransparentlyReferToBase(asStorage)) {
+			type = asStorage.base;
+		}
+
+		auto tr = cast(ir.TypeReference) type;
+		if (tr !is null) {
+			type = tr.type;
+		}
+
+		if (type.nodeType != ir.NodeType.Struct &&
+		    type.nodeType != ir.NodeType.Union &&
+		    type.nodeType != ir.NodeType.Class) {
+			return true;
+		}
+
+		/// @todo this is probably an error.
+		auto agg = cast(ir.Aggregate) type;
+		ir.Scope[] scopes;
+		auto aggScope = getScopeFromType(type);
+		if (agg !is null ) foreach (aa; agg.anonymousAggregates) {
+			scopes ~= aa.myScope;
+		}
+		ir.Variable aggVar;
+		auto store = lookupAsThisScope(ctx.lp, aggScope, postfixes[0].location, postfixes[0].identifier.value);
+		foreach (i, _scope; scopes) {
+			auto tmpStore = lookupAsThisScope(ctx.lp, _scope, postfixes[0].location, postfixes[0].identifier.value);
+			if (tmpStore is null) {
+				continue;
+			}
+			if (store !is null) {
+				throw makeAnonymousAggregateRedefines(agg.anonymousAggregates[i], postfixes[0].identifier.value);
+			}
+			store = tmpStore;
+			aggVar = agg.anonymousVars[i];
+			// Keep checking to ensure anon aggs don't mask one another.
+		}
+		if (aggVar !is null) {
+			assert(postfixes[0].identifier !is null);
+			auto origLookup = postfixes[0].identifier.value;
+			postfixes[0].identifier.value = aggVar.name;
+			exp = buildAccess(postfixes[0].location, postfixes[0], origLookup);
+			return true;
+		}
+		if (store is null) {
+			throw makeNotMember(postfixes[0], type, postfixes[0].identifier.value);
+		}
+
+		if (store.kind != ir.Store.Kind.Function) {
+			return true;
+		}
+
+		assert(store.functions.length > 0, store.name);
+
+		auto funcref = new ir.ExpReference();
+		funcref.location = postfixes[0].identifier.location;
+		auto _ref = cast(ir.ExpReference) postfixes[0].child;
+		if (_ref !is null) funcref.idents = _ref.idents;
+		funcref.idents ~= postfixes[0].identifier.value;
+		funcref.decl = buildSet(postfixes[0].identifier.location, store.functions, funcref);
+		ir.FunctionSet set = cast(ir.FunctionSet) funcref.decl;
+		if (set !is null) assert(set.functions.length > 0);
+		postfixes[0].op = ir.Postfix.Op.CreateDelegate;
+		postfixes[0].memberFunction = funcref;
+	}
+
+	propertyToCallIfNeeded(postfixes[0].location, ctx.lp, exp, ctx.current, postfixes);
+
+	return true;
+}
+
+private void errorIfScopeParent(Context ctx, ir.CallableType asFunctionType, ir.Postfix postfix)
+{
+	if (asFunctionType.isScope && postfix.child.nodeType == ir.NodeType.Postfix) {
+		auto asPostfix = cast(ir.Postfix) postfix.child;
+		auto parentType = getExpType(ctx.lp, asPostfix.child, ctx.current);
+		if (mutableIndirection(parentType)) {
+			auto asStorageType = cast(ir.StorageType) realType(parentType);
+			if (asStorageType is null || asStorageType.type != ir.StorageType.Kind.Scope) {
+				throw makeBadCall(postfix, asFunctionType);
+			}
+		}
+	}
+}
+
+// Hand check va_start(vl) and va_end(vl), then modify their calls.
+private void rewriteVaStartAndEnd(Context ctx, ir.Function fn, ir.Postfix postfix, ref ir.Exp exp)
+{
+	if (fn is ctx.lp.vaStartFunc || fn is ctx.lp.vaEndFunc || fn is ctx.lp.vaCStartFunc || fn is ctx.lp.vaCEndFunc) {
+		if (postfix.arguments.length != 1) {
+			throw makeWrongNumberOfArguments(postfix, postfix.arguments.length, 1);
+		}
+		auto etype = getExpType(ctx.lp, postfix.arguments[0], ctx.current);
+		auto ptr = cast(ir.PointerType) etype;
+		if (ptr is null || !isVoid(ptr.base)) {
+			throw makeExpected(postfix, "va_list argument");
+		}
+		if (!isLValue(postfix.arguments[0])) {
+			throw makeVaFooMustBeLValue(postfix.arguments[0].location, (fn is ctx.lp.vaStartFunc || fn is ctx.lp.vaCStartFunc) ? "va_start" : "va_end");
+		}
+		postfix.arguments[0] = buildAddrOf(postfix.arguments[0]);
+		if (fn is ctx.lp.vaStartFunc) {
+			assert(ctx.currentFunction.params[$-1].name == "_args");
+			postfix.arguments ~= buildAccess(postfix.location, buildExpReference(postfix.location, ctx.currentFunction.params[$-1], "_args"), "ptr");
+		}
+		if (ctx.currentFunction.type.linkage == ir.Linkage.Volt) {
+			if (fn is ctx.lp.vaStartFunc) {
+				exp = buildVaArgStart(postfix.location, postfix.arguments[0], postfix.arguments[1]);
+				return;
+			} else if (fn is ctx.lp.vaEndFunc) {
+				exp = buildVaArgEnd(postfix.location, postfix.arguments[0]);
+				return;
+			} else {
+				throw makeExpected(postfix.location, "volt va_args function.");
+			}
+		}
+	}
+}
+
+private void rewriteVarargs(Context ctx, ir.CallableType asFunctionType, ir.Postfix postfix)
+{
+	if (!asFunctionType.hasVarArgs ||
+		asFunctionType.linkage != ir.Linkage.Volt) {
+		return;
+	}
+	ir.ExpReference asExp;
+	if (postfix.child.nodeType == ir.NodeType.Postfix) {
+		assert(postfix.op == ir.Postfix.Op.Call);
+		auto pfix = cast(ir.Postfix) postfix.child;
+		assert(pfix !is null);
+		assert(pfix.op == ir.Postfix.Op.CreateDelegate);
+		assert(pfix.memberFunction !is null);
+		asExp = pfix.memberFunction;
+	}
+	if (asExp is null) {
+		asExp = cast(ir.ExpReference) postfix.child;
+	}
+	auto asFunction = cast(ir.Function) asExp.decl;
+	assert(asFunction !is null);
+
+	auto callNumArgs = postfix.arguments.length;
+	auto funcNumArgs = asFunctionType.params.length - 2; // 2 == the two hidden arguments
+	if (callNumArgs < funcNumArgs) {
+		throw makeWrongNumberOfArguments(postfix, callNumArgs, funcNumArgs);
+	}
+	auto amountOfVarArgs = callNumArgs - funcNumArgs;
+	auto argsSlice = postfix.arguments[0 .. funcNumArgs];
+	auto varArgsSlice = postfix.arguments[funcNumArgs .. $];
+
+	auto tinfoClass = ctx.lp.typeInfoClass;
+	auto tr = buildTypeReference(postfix.location, tinfoClass, tinfoClass.name);
+	tr.location = postfix.location;
+	auto array = new ir.ArrayType();
+	array.location = postfix.location;
+	array.base = tr;
+
+	auto typeidsLiteral = new ir.ArrayLiteral();
+	typeidsLiteral.location = postfix.location;
+	typeidsLiteral.type = array;
+
+	int[] sizes;
+	int totalSize;
+	ir.Type[] types;
+	foreach (i, _exp; varArgsSlice) {
+		auto etype = getExpType(ctx.lp, _exp, ctx.current);
+		ensureResolved(ctx.lp, ctx.current, etype);
+		auto typeId = buildTypeidSmart(postfix.location, etype);
+		typeidsLiteral.values ~= typeId;
+		types ~= etype;
+		sizes ~= size(postfix.location, ctx.lp, etype);
+		totalSize += sizes[$-1];
+	}
+
+	postfix.arguments = argsSlice ~ typeidsLiteral ~ buildInternalArrayLiteralSliceSmart(postfix.location, buildArrayType(postfix.location, buildVoid(postfix.location)), types, sizes, totalSize, ctx.lp.memcpyFunc, varArgsSlice);
+}
+
+private void resolvePostfixOverload(Context ctx, ir.Postfix postfix, ir.ExpReference eref, ref ir.Function fn, ref ir.CallableType asFunctionType, ref ir.FunctionSetType asFunctionSet, bool reeval)
+{
+	if (eref is null) {
+		throw panic(postfix.location, "expected expref");
+	}
+	asFunctionSet.set.reference = eref;
+	fn = selectFunction(ctx.lp, ctx.current, asFunctionSet.set, postfix.arguments, postfix.location);
+	eref.decl = fn;
+	asFunctionType = fn.type;
+
+	if (reeval) {
+		replaceExpReferenceIfNeeded(ctx, null, postfix.child, eref);
+	}
+}
+
+private void rewriteHomogenousVariadic(Context ctx, ir.CallableType asFunctionType, ir.Postfix postfix, size_t i)
+{
+	if (asFunctionType.homogenousVariadic && i == asFunctionType.params.length - 1) {
+		auto etype = getExpType(ctx.lp, postfix.arguments[i], ctx.current);
+		auto arr = cast(ir.ArrayType) asFunctionType.params[i];
+		if (arr is null) {
+			throw panic(postfix.location, "homogenous variadic not array type");
+		}
+		if (!typesEqual(etype, arr)) {
+			auto exps = postfix.arguments[i .. $];
+			if (exps.length == 1) {
+				auto alit = cast(ir.ArrayLiteral) exps[0];
+				if (alit !is null && alit.values.length == 0) {
+					exps = [];
+				}
+			}
+			foreach (ref aexp; exps) {
+				extypePass(ctx, aexp, arr.base);
+			}
+			postfix.arguments[i] = buildInternalArrayLiteralSmart(postfix.location, asFunctionType.params[i], exps);
+			postfix.arguments.length = i + 1;
+			return;
+		}
+	}
+}
+
 /**
  * Turns identifier postfixes into CreateDelegates, and resolves property function
  * calls in postfixes, type safe varargs, and explicit constructor calls.
@@ -1060,94 +1309,10 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	if (replaceAAPostfixesIfNeeded(ctx, postfix, exp)) {
 		return;
 	}
-	ir.Postfix[] postfixes;
-	ir.Postfix currentPostfix = postfix;
-	do {
-		postfixes ~= currentPostfix;
-		currentPostfix = cast(ir.Postfix) currentPostfix.child;
-	} while (currentPostfix !is null);
+	ir.Postfix[] postfixes = getPostfixChain(postfix);
 
-	// Given a.foo, if a is a pointer to a class, turn it into (*a).foo.
-	auto lastType = getExpType(ctx.lp, postfixes[$-1].child, ctx.current);
-	if (isPointerToClass(lastType)) {
-		postfixes[$-1].child = buildDeref(postfixes[$-1].child.location, postfixes[$-1].child);
-	}
-
-	if (postfix.op != ir.Postfix.Op.Call) {
-		auto type = getExpType(ctx.lp, postfix.child, ctx.current);
-		/* If we end up with a identifier postfix that points
-		 * at a struct, and retrieves a member function, then
-		 * transform the op from Identifier to CreatePostfix.
-		 */
-		if (postfix.identifier !is null) {
-			auto asStorage = cast(ir.StorageType) realType(type);
-			if (asStorage !is null && canTransparentlyReferToBase(asStorage)) {
-				type = asStorage.base;
-			}
-
-			auto tr = cast(ir.TypeReference) type;
-			if (tr !is null) {
-				type = tr.type;
-			}
-
-			if (type.nodeType != ir.NodeType.Struct &&
-			    type.nodeType != ir.NodeType.Union &&
-			    type.nodeType != ir.NodeType.Class) {
-				return;
-			}
-
-			/// @todo this is probably an error.
-			auto agg = cast(ir.Aggregate) type;
-			ir.Scope[] scopes;
-			auto aggScope = getScopeFromType(type);
-			if (agg !is null ) foreach (aa; agg.anonymousAggregates) {
-				scopes ~= aa.myScope;
-			}
-			ir.Variable aggVar;
-			auto store = lookupAsThisScope(ctx.lp, aggScope, postfix.location, postfix.identifier.value);
-			foreach (i, _scope; scopes) {
-				auto tmpStore = lookupAsThisScope(ctx.lp, _scope, postfix.location, postfix.identifier.value);
-				if (tmpStore is null) {
-					continue;
-				}
-				if (store !is null) {
-					throw makeAnonymousAggregateRedefines(agg.anonymousAggregates[i], postfix.identifier.value);
-				}
-				store = tmpStore;
-				aggVar = agg.anonymousVars[i];
-				// Keep checking to ensure anon aggs don't mask one another.
-			}
-			if (aggVar !is null) {
-				assert(postfix.identifier !is null);
-				auto origLookup = postfix.identifier.value;
-				postfix.identifier.value = aggVar.name;
-				exp = buildAccess(postfix.location, postfix, origLookup);
-				return;
-			}
-			if (store is null) {
-				throw makeNotMember(postfix, type, postfix.identifier.value);
-			}
-
-			if (store.kind != ir.Store.Kind.Function) {
-				return;
-			}
-
-			assert(store.functions.length > 0, store.name);
-
-			auto funcref = new ir.ExpReference();
-			funcref.location = postfix.identifier.location;
-			auto _ref = cast(ir.ExpReference) postfix.child;
-			if (_ref !is null) funcref.idents = _ref.idents;
-			funcref.idents ~= postfix.identifier.value;
-			funcref.decl = buildSet(postfix.identifier.location, store.functions, funcref);
-			ir.FunctionSet set = cast(ir.FunctionSet) funcref.decl;
-			if (set !is null) assert(set.functions.length > 0);
-			postfix.op = ir.Postfix.Op.CreateDelegate;
-			postfix.memberFunction = funcref;
-		}
-
-		propertyToCallIfNeeded(postfix.location, ctx.lp, exp, ctx.current, postfixes);
-
+	dereferenceInitialClass(ctx, postfixes);
+	if (transformToCreateDelegate(ctx, exp, postfixes)) {
 		return;
 	}
 
@@ -1170,17 +1335,7 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	}
 
 	if (asFunctionSet !is null) {
-		if (eref is null) {
-			throw panic(postfix.location, "expected expref");
-		}
-		asFunctionSet.set.reference = eref;
-		fn = selectFunction(ctx.lp, ctx.current, asFunctionSet.set, postfix.arguments, postfix.location);
-		eref.decl = fn;
-		asFunctionType = fn.type;
-
-		if (reeval) {
-			replaceExpReferenceIfNeeded(ctx, null, postfix.child, eref);
-		}
+		resolvePostfixOverload(ctx, postfix, eref, fn, asFunctionType, asFunctionSet, reeval);
 	} else if (eref !is null) {
 		fn = cast(ir.Function) eref.decl;
 		asFunctionType = cast(ir.CallableType) realType(type);
@@ -1214,100 +1369,9 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		postfix.arguments ~= buildArrayLiteralSmart(postfix.location, asFunctionType.params[$-1], []);
 	}
 
-	// Hand check va_start(vl) and va_end(vl), then modify their calls.
-	if (fn is ctx.lp.vaStartFunc || fn is ctx.lp.vaEndFunc || fn is ctx.lp.vaCStartFunc || fn is ctx.lp.vaCEndFunc) {
-		if (postfix.arguments.length != 1) {
-			throw makeWrongNumberOfArguments(postfix, postfix.arguments.length, 1);
-		}
-		auto etype = getExpType(ctx.lp, postfix.arguments[0], ctx.current);
-		auto ptr = cast(ir.PointerType) etype;
-		if (ptr is null || !isVoid(ptr.base)) {
-			throw makeExpected(postfix, "va_list argument");
-		}
-		if (!isLValue(postfix.arguments[0])) {
-			throw makeVaFooMustBeLValue(postfix.arguments[0].location, (fn is ctx.lp.vaStartFunc || fn is ctx.lp.vaCStartFunc) ? "va_start" : "va_end");
-		}
-		postfix.arguments[0] = buildAddrOf(postfix.arguments[0]);
-		if (fn is ctx.lp.vaStartFunc) {
-			assert(ctx.currentFunction.params[$-1].name == "_args");
-			postfix.arguments ~= buildAccess(postfix.location, buildExpReference(postfix.location, ctx.currentFunction.params[$-1], "_args"), "ptr");
-		}
-		if (ctx.currentFunction.type.linkage == ir.Linkage.Volt) {
-			if (fn is ctx.lp.vaStartFunc) {
-				exp = buildVaArgStart(postfix.location, postfix.arguments[0], postfix.arguments[1]);
-				return;
-			} else if (fn is ctx.lp.vaEndFunc) {
-				exp = buildVaArgEnd(postfix.location, postfix.arguments[0]);
-				return;
-			} else {
-				throw makeExpected(postfix.location, "volt va_args function.");
-			}
-		}
-	}
-
-	if (asFunctionType.isScope && postfix.child.nodeType == ir.NodeType.Postfix) {
-		auto asPostfix = cast(ir.Postfix) postfix.child;
-		auto parentType = getExpType(ctx.lp, asPostfix.child, ctx.current);
-		if (mutableIndirection(parentType)) {
-			auto asStorageType = cast(ir.StorageType) realType(parentType);
-			if (asStorageType is null || asStorageType.type != ir.StorageType.Kind.Scope) {
-				throw makeBadCall(postfix, asFunctionType);
-			}
-		}
-	}
-
-	if (asFunctionType.hasVarArgs &&
-	    asFunctionType.linkage == ir.Linkage.Volt) {
-		ir.ExpReference asExp;
-		if (postfix.child.nodeType == ir.NodeType.Postfix) {
-			assert(postfix.op == ir.Postfix.Op.Call);
-			auto pfix = cast(ir.Postfix) postfix.child;
-			assert(pfix !is null);
-			assert(pfix.op == ir.Postfix.Op.CreateDelegate);
-			assert(pfix.memberFunction !is null);
-			asExp = pfix.memberFunction;
-		}
-		if (asExp is null) {
-			asExp = cast(ir.ExpReference) postfix.child;
-		}
-		auto asFunction = cast(ir.Function) asExp.decl;
-		assert(asFunction !is null);
-
-		auto callNumArgs = postfix.arguments.length;
-		auto funcNumArgs = asFunctionType.params.length - 2; // 2 == the two hidden arguments
-		if (callNumArgs < funcNumArgs) {
-			throw makeWrongNumberOfArguments(postfix, callNumArgs, funcNumArgs);
-		}
-		auto amountOfVarArgs = callNumArgs - funcNumArgs;
-		auto argsSlice = postfix.arguments[0 .. funcNumArgs];
-		auto varArgsSlice = postfix.arguments[funcNumArgs .. $];
-
-		auto tinfoClass = ctx.lp.typeInfoClass;
-		auto tr = buildTypeReference(postfix.location, tinfoClass, tinfoClass.name);
-		tr.location = postfix.location;
-		auto array = new ir.ArrayType();
-		array.location = postfix.location;
-		array.base = tr;
-
-		auto typeidsLiteral = new ir.ArrayLiteral();
-		typeidsLiteral.location = postfix.location;
-		typeidsLiteral.type = array;
-
-		int[] sizes;
-		int totalSize;
-		ir.Type[] types;
-		foreach (i, _exp; varArgsSlice) {
-			auto etype = getExpType(ctx.lp, _exp, ctx.current);
-			ensureResolved(ctx.lp, ctx.current, etype);
-			auto typeId = buildTypeidSmart(postfix.location, etype);
-			typeidsLiteral.values ~= typeId;
-			types ~= etype;
-			sizes ~= size(postfix.location, ctx.lp, etype);
-			totalSize += sizes[$-1];
-		}
-
-		postfix.arguments = argsSlice ~ typeidsLiteral ~ buildInternalArrayLiteralSliceSmart(postfix.location, buildArrayType(postfix.location, buildVoid(postfix.location)), types, sizes, totalSize, ctx.lp.memcpyFunc, varArgsSlice);
-	}
+	rewriteVaStartAndEnd(ctx, fn, postfix, exp);
+	errorIfScopeParent(ctx, asFunctionType, postfix);
+	rewriteVarargs(ctx, asFunctionType, postfix);
 
 	appendDefaultArguments(ctx, postfix.location, postfix.arguments, fn);
 	if (!(asFunctionType.hasVarArgs || asFunctionType.params.length > 0 && asFunctionType.homogenousVariadic) &&
@@ -1328,28 +1392,7 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 				throw makeNotTaggedOut(postfix.arguments[i]);
 			}
 		}
-		if (asFunctionType.homogenousVariadic && i == asFunctionType.params.length - 1) {
-			auto etype = getExpType(ctx.lp, postfix.arguments[i], ctx.current);
-			auto arr = cast(ir.ArrayType) asFunctionType.params[i];
-			if (arr is null) {
-				throw panic(postfix.location, "homogenous variadic not array type");
-			}
-			if (!typesEqual(etype, arr)) {
-				auto exps = postfix.arguments[i .. $];
-				if (exps.length == 1) {
-					auto alit = cast(ir.ArrayLiteral) exps[0];
-					if (alit !is null && alit.values.length == 0) {
-						exps = [];
-					}
-				}
-				foreach (ref aexp; exps) {
-					extypePass(ctx, aexp, arr.base);
-				}
-				postfix.arguments[i] = buildInternalArrayLiteralSmart(postfix.location, asFunctionType.params[i], exps);
-				postfix.arguments.length = i + 1;
-				break;
-			}
-		}
+		rewriteHomogenousVariadic(ctx, asFunctionType, postfix, i);
 		extypePass(ctx, postfix.arguments[i], asFunctionType.params[i]);
 	}
 
