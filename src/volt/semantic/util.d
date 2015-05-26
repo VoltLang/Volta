@@ -50,6 +50,9 @@ ir.CallableType propertyToCallIfNeeded(Location loc, LanguagePass lp, ref ir.Exp
 			if (oldPostfix !is null) {
 				oldPostfix.isImplicitPropertyCall = true;
 			}
+			if (asRef !is null) {
+				asRef.rawReference = true;
+			}
 			return asCallable;
 		}
 	}

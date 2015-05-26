@@ -3565,7 +3565,6 @@ public:
 			if (as is null || as.isStatic) {
 				continue;
 			}
-			import std.stdio;
 			bs.statements[i] = transformRuntimeAssert(ctx, as);
 		}
 		return Continue;
