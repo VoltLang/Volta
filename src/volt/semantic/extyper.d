@@ -1300,6 +1300,52 @@ private void rewriteHomogenousVariadic(Context ctx, ir.CallableType asFunctionTy
 	}
 }
 
+// If a postfix operates directly on a struct via a function call, put it in a variable first.
+bool handleStructLookupViaFunctionCall(Context ctx, ref ir.Exp exp, ir.Postfix[] postfixes)
+{
+	// Verify that this expression takes the form Function().something, where Function() returns a struct or union.
+	ir.Type t;
+	size_t i;
+	// We don't care how many postfixes are attached to the call, so find the first one.
+	for (i = 1; i < postfixes.length; ++i) {
+		t = realType(getExpType(ctx.lp, postfixes[i], ctx.current));
+		auto s = cast(ir.Struct) t;
+		auto u = cast(ir.Union) t;
+
+		// A @property lookup. The call isn't there yet, but we want the whole postfix, so rewrite it now.
+		auto ct = cast(ir.CallableType) t;
+		if (s is null && u is null && ct !is null && ct.isProperty) {
+			s = cast(ir.Struct) realType(ct.ret);
+			u = cast(ir.Union) realType(ct.ret);
+			if (s !is null || u !is null) {
+				break;
+			}
+		}
+
+		if ((s is null && u is null) || postfixes[i].op != ir.Postfix.Op.Call) {
+			continue;
+		} else {
+			break;
+		}
+	}
+	if (i >= postfixes.length) {
+		return false;
+	}
+	assert(t !is null);
+
+	// StructType anonVar = Function();
+	auto l = postfixes[0].location;
+	auto sexp = buildStatementExp(l);
+	auto var = buildVariableAnonSmart(l, ctx.currentFunction._body, sexp, t, postfixes[i]);
+	// anonVar.something
+	postfixes[i-1].child = buildExpReference(l, var, var.name);
+	auto estat = buildExpStat(l, sexp, postfixes[0]);
+	sexp.originalExp = exp;
+	sexp.exp = copyExp(estat.exp);
+	exp = sexp;
+	return true;
+}
+
 /**
  * Turns identifier postfixes into CreateDelegates, and resolves property function
  * calls in postfixes, type safe varargs, and explicit constructor calls.
@@ -1312,6 +1358,9 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	ir.Postfix[] postfixes = getPostfixChain(postfix);
 
 	dereferenceInitialClass(ctx, postfixes);
+	if (handleStructLookupViaFunctionCall(ctx, exp, postfixes)) {
+		return;
+	}
 	if (transformToCreateDelegate(ctx, exp, postfixes)) {
 		return;
 	}
@@ -1361,6 +1410,7 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	if (asFunctionType is null) {
 		return;
 	}
+
 
 	handleArgumentLabelsIfNeeded(ctx, postfix, fn, exp);
 
