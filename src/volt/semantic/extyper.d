@@ -640,7 +640,7 @@ void handleAssign(Context ctx, ref ir.Type toType, ref ir.Exp exp, ref uint toFl
 	}
 }
 
-void rewriteOverloadedProperty(Context ctx, ref ir.Exp exp, ir.Type type)
+void rewriteOverloadedProperty(Context ctx, ref ir.Exp exp)
 {
 	auto rtype = getExpType(ctx.lp, exp, ctx.current);
 	if (rtype.nodeType == ir.NodeType.FunctionSetType) {
@@ -676,7 +676,7 @@ void rewriteOverloadedProperty(Context ctx, ref ir.Exp exp, ir.Type type)
 
 void extypeAssignDispatch(Context ctx, ref ir.Exp exp, ir.Type type)
 {
-	rewriteOverloadedProperty(ctx, exp, type);
+	rewriteOverloadedProperty(ctx, exp);
 	uint flag;
 	handleAssign(ctx, type, exp, flag);
 	switch (type.nodeType) {
