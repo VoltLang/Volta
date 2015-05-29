@@ -293,7 +293,7 @@ ir.Type getExpReferenceType(LanguagePass lp, ir.ExpReference expref, ir.Scope cu
 	}
 
 	auto fnset = cast(ir.FunctionSet) expref.decl;
-	assert(fnset.functions.length > 0);
+	panicAssert(fnset, fnset.functions.length > 0);
 	if (fnset !is null) {
 		auto ftype = fnset.type;
 		assert(ftype.set.functions.length > 0);

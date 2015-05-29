@@ -640,9 +640,19 @@ void handleAssign(Context ctx, ref ir.Type toType, ref ir.Exp exp, ref uint toFl
 	}
 }
 
-void rewriteOverloadedProperty(Context ctx, ref ir.Exp exp)
+void rewriteOverloadedProperty(Context ctx, ref ir.Exp exp, bool nested = false)
 {
-	auto rtype = getExpType(ctx.lp, exp, ctx.current);
+	auto pfix = cast(ir.Postfix) exp;
+	if (pfix !is null && !nested) {
+		auto postfixes = getPostfixChain(pfix);
+		foreach_reverse (ref postfix; postfixes) {
+			rewriteOverloadedProperty(ctx, postfix.child, true);
+		}
+	}
+	auto rtype = tryToGetExpType(ctx.lp, exp, ctx.current);
+	if (rtype is null) {
+		return;
+	}
 	if (rtype.nodeType == ir.NodeType.FunctionSetType) {
 		auto err = makeCannotInfer(exp.location);
 		auto fsett = cast(ir.FunctionSetType)rtype;
@@ -655,16 +665,16 @@ void rewriteOverloadedProperty(Context ctx, ref ir.Exp exp)
 			set.resolved(fn);
 			auto l = exp.location;
 			ir.Postfix call;
-			if (fn.thisHiddenParameter !is null && typesEqual(fn.thisHiddenParameter.type, ctx.currentFunction.thisHiddenParameter.type)) {
+			if (fn.thisHiddenParameter !is null && ctx.currentFunction.thisHiddenParameter !is null && typesEqual(fn.thisHiddenParameter.type, ctx.currentFunction.thisHiddenParameter.type)) {
 				exp = buildExpReference(l, ctx.currentFunction.thisHiddenParameter, "this");
 				call = buildMemberCall(l, exp, buildExpReference(l, fn, fn.name), fn.name, []);
 				call.isImplicitPropertyCall = true;
 			} else if (fn.thisHiddenParameter !is null) {
-				auto pfix = cast(ir.Postfix)exp;
-				if (pfix is null) {
+				auto pofix = cast(ir.Postfix)exp;
+				if (pofix is null) {
 					throw makeExpected(l, "postfix");
 				}
-				call = buildMemberCall(l, pfix.child, buildExpReference(l, fn, fn.name), fn.name, []);
+				call = buildMemberCall(l, pofix.child, buildExpReference(l, fn, fn.name), fn.name, []);
 				call.isImplicitPropertyCall = true;
 			} else {
 				call = buildCall(l, buildExpReference(l, fn, fn.name), []);
@@ -3703,6 +3713,7 @@ public:
 	override Status leave(ref ir.Exp e, ir.BinOp bin)
 	{
 		rewritePropertyFunctionAssign(ctx, e, bin);
+		rewriteOverloadedProperty(ctx, bin.left);
 		// If not rewritten.
 		if (e is bin) {
 			extypeBinOp(ctx, bin, e);
