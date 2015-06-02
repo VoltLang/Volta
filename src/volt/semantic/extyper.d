@@ -2001,6 +2001,13 @@ void extypePostfixUFCS(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	panicAssert(postfix, fn !is null);
 	postfix.child = buildExpReference(l, fn, fn.name);
 	postfix.arguments = arguments;
+
+	ir.StorageType.Kind kind;
+	if (isRef(fn.type.params[0], kind)) {
+		postfix.argumentTags = (kind == ir.StorageType.Kind.Ref ? ir.Postfix.TagKind.Ref : ir.Postfix.TagKind.Out) ~ postfix.argumentTags;
+	} else {
+		postfix.argumentTags = ir.Postfix.TagKind.None ~ postfix.argumentTags;
+	}
 }
 
 void extypePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
