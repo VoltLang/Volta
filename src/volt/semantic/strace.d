@@ -26,7 +26,7 @@ public:
 		this.lp = lp;
 	}
 
-	override void transform(ir.Module m)
+	void transform(ir.Module m)
 	{
 		if (!lp.settings.simpleTrace) {
 			return;
@@ -34,7 +34,7 @@ public:
 		accept(m, this);
 	}
 
-	override void close()
+	void close()
 	{
 	}
 

@@ -29,14 +29,14 @@ private:
 	int mCount;
 
 public:
-	override void transform(ir.Module m)
+	void transform(ir.Module m)
 	{
 		mNodes = null;
 		mCount = 0;
 		accept(m, this);
 	}
 
-	override void close()
+	void close()
 	{
 	}
 
