@@ -40,6 +40,12 @@ bool willConvert(ir.Type argument, ir.Type parameter)
 	if (_storage !is null && (_storage.type == ir.StorageType.Kind.Scope || _storage.type == ir.StorageType.Kind.Ref)) {
 		return willConvert(argument, _storage.base);
 	}
+	if (!mutableIndirection(argument)) {
+		argument = removeConstAndImmutable(argument);
+	}
+	if (!mutableIndirection(parameter)) {
+		parameter = removeConstAndImmutable(parameter);
+	}
 	if (typesEqual(argument, parameter)) {
 		return true;
 	}
