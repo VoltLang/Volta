@@ -73,7 +73,6 @@ ir.Type handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
 			right = buildCastSmart(right.location, left, right);
 			return copyTypeSmart(right.location, left);
 		case ArrayType:
-		case AAType:
 			right = buildArrayLiteralSmart(right.location, left);
 			return copyTypeSmart(right.location, left);
 		case FunctionType, DelegateType:
