@@ -6,7 +6,7 @@ import core.exception;
 import std.algorithm : endsWith;
 import std.path : dirSeparator;
 import std.file : remove, exists;
-import std.process : system;
+import std.process : wait, spawnShell;
 import std.stdio : stderr, stdout;
 
 import volt.util.path;
@@ -439,13 +439,13 @@ protected:
 		                    objInputFiles, objLibraryPaths, objLibraryFiles,
 		                    objFrameworkPaths, objFrameworkNames);
 
-		return system(cmd);
+		return wait(spawnShell(cmd));
 	}
 
 	int emscriptenLink(string linker, string bc, string of)
 	{
 		string cmd = format("%s -o \"%s\" %s", linker, of, bc);
-		return system(cmd);
+		return wait(spawnShell(cmd));
 	}
 
 	this(Settings s, Frontend f, LanguagePass lp, Backend b)

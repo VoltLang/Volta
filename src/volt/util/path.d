@@ -18,7 +18,7 @@ import std.string : indexOf;
 import std.array : replace;
 import std.path : dirName, dirSeparator;
 import std.random : uniform;
-import std.process : getenv;
+import std.process : environment;
 
 
 /**
@@ -48,7 +48,7 @@ string[] genPossibleFilenames(string dir, string[] names)
 string temporaryFilename(string extension = "")
 {
 	version (Windows) {
-		string prefix = getenv("TEMP") ~ '/';
+		string prefix = environment.get("TEMP") ~ '/';
 	} else {
 		string prefix = "/tmp/";
 	}
