@@ -3,6 +3,7 @@
 module volt.parser.toplevel;
 
 import std.conv : to;
+import std.string : strip;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
@@ -741,7 +742,8 @@ ir.Attribute parseAttribute(TokenStream ts, bool inModule = false)
 		/* Have the semantic passes apply this attribute as
 		 * doing it in the parser would require context.
 		 */
-		if (ts.comment().length > 0) {
+		auto comment = ts.comment();
+		if (comment.length > 0 && strip(comment) != "@}") {
 			throw makeDocCommentAppliesToMultiple(ts.lastDocComment.location);
 		}
 	} else {
