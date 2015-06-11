@@ -22,7 +22,7 @@ import ir = volt.ir.ir;
  * Side-effects:
  *     Advances the tokenstream if current token is of @type.
  */
-Token match(TokenStream ts, TokenType type)
+Token match(TokenStream ts, TokenType type, string file = __FILE__, size_t line = __LINE__)
 {
 	auto t = ts.peek;
 
@@ -30,7 +30,7 @@ Token match(TokenStream ts, TokenType type)
 	if (t.type == type)
 		return ts.get();
 
-	throw makeExpected(t.location, tokenToString[type], t.value);
+	throw makeExpected(t.location, tokenToString[type], t.value, file, line);
 }
 
 bool matchIf(TokenStream ts, TokenType type)
