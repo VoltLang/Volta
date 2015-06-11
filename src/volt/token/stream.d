@@ -193,7 +193,9 @@ public:
 		assert(mComment.length > 0);
 		if (mComment[$-1].length) {
 			assert(lastDocComment !is null);
-			throw makeStrayDocComment(lastDocComment.location);
+			auto e = makeStrayDocComment(lastDocComment.location);
+			e.neverIgnore = true;
+			throw e;
 		}
 		mComment = mComment[0 .. $-1];
 	}
