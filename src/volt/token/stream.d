@@ -4,6 +4,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.token.stream;
 
+import std.string : strip;
+
 import volt.errors : panic, makeStrayDocComment;
 public import volt.token.token;
 
@@ -191,7 +193,7 @@ public:
 	void popCommentLevel()
 	{
 		assert(mComment.length > 0);
-		if (mComment[$-1].length) {
+		if (mComment[$-1].length && strip(mComment[$-1]) != "@}") {
 			assert(lastDocComment !is null);
 			auto e = makeStrayDocComment(lastDocComment.location);
 			e.neverIgnore = true;

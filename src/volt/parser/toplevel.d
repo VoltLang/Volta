@@ -188,6 +188,9 @@ body
 			ts.pushCommentLevel();
 		}
 		tlb.nodes ~= tmp.nodes;
+		if (ts.peek.type == TokenType.DocComment && ts.lookahead(1).type == TokenType.End) {
+			ts.eatComments();
+		}
 	}
 
 	ts.popCommentLevel();
