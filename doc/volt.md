@@ -12,6 +12,33 @@ Volt source files have the extension `.volt`, and are processed as UTF-8.
     /* This is a c-style block comment, cannot nest. */
     /+ /+ These block comments can nest. +/ This is still a comment. +/
 
+*Doc Comments* can attach documentation to declarations to be output to HTML or JSON via the --doc or --json commands.
+
+    /** A doccomment */
+    /// And another.
+
+By default, doccomments will attach to the next single declaration.
+
+    /// ichi is marked with this comment.
+    void ichi();
+    // but ni receives no comment.
+    void ni();
+	/// This is an error, as there is no declaration to attach to.
+
+Line doccomments can be made to the previous declaration.
+
+    void san();  ///< This attaches to san.
+
+Usually, one doccomment goes to one declaration. However, you can apply doccomments to multiple declarations.
+
+    /// This comment attaches to alpha and beta.
+	/// @{
+	void alpha();
+	struct beta {}
+	/// @}
+
+Omitting the closing comment brace is an error, as is opening a new block in an existing one.  
+
 *Keywords* are reserved, and cannot be used as identifiers.
 
     abstract alias align asm assert auto
