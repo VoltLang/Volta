@@ -6,7 +6,7 @@ module volt.token.stream;
 
 import std.string : strip;
 
-import volt.errors : panic, makeStrayDocComment;
+import volt.errors : panic, makeStrayDocComment, makeExpected;
 public import volt.token.token;
 
 
@@ -18,6 +18,12 @@ final class TokenStream
 public:
 	Token lastDocComment;
 	string* retroComment;  ///< For backwards doc comments (like this one).
+	/**
+	 * True if we found @{ on its own, so apply the last doccomment
+	 * multiple times, until we see a @}. If we see @{ while
+	 * this is true, throw an error.
+	 */
+	bool inMultiCommentBlock;
 
 private:
 	Token[] mTokens;
@@ -187,13 +193,21 @@ public:
 
 	void pushCommentLevel()
 	{
-		mComment ~= [""];
+		if (inMultiCommentBlock && mComment.length > 0) {
+			auto oldComment = mComment[$-1];
+			mComment ~= oldComment;
+		} else {
+			mComment ~= [""];
+		}
 	}
 
 	void popCommentLevel()
 	{
 		assert(mComment.length > 0);
-		if (mComment[$-1].length && strip(mComment[$-1]) != "@}") {
+		if (inMultiCommentBlock) {
+			return;
+		}
+		if (mComment[$-1].length) {
 			assert(lastDocComment !is null);
 			auto e = makeStrayDocComment(lastDocComment.location);
 			e.neverIgnore = true;
@@ -206,6 +220,25 @@ public:
 	void addComment(Token comment)
 	{
 		assert(comment.type == TokenType.DocComment);
+		if (strip(comment.value) == "@{") {
+			if (inMultiCommentBlock) {
+				auto e = makeExpected(comment.location, "@}");
+				e.neverIgnore = true;
+				throw e;
+			}
+			inMultiCommentBlock = true;
+			return;
+		}
+		if (strip(comment.value) == "@}") {
+			if (!inMultiCommentBlock) {
+				auto e = makeExpected(comment.location, "@{");
+				e.neverIgnore = true;
+				throw e;
+			}
+			inMultiCommentBlock = false;
+			mComment[$-1] = "";
+			return;
+		}
 		mComment[$-1] ~= comment.value;
 		lastDocComment = comment;
 	}
@@ -215,7 +248,9 @@ public:
 	{
 		assert(mComment.length >= 1);
 		auto str = mComment[$-1];
-		mComment[$-1] = "";
+		if (!inMultiCommentBlock) {
+			mComment[$-1] = "";
+		}
 		return str;
 	}
 }

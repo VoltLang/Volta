@@ -3,7 +3,6 @@
 module volt.parser.toplevel;
 
 import std.conv : to;
-import std.string : strip;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
@@ -188,9 +187,6 @@ body
 			ts.pushCommentLevel();
 		}
 		tlb.nodes ~= tmp.nodes;
-		if (ts.peek.type == TokenType.DocComment && ts.lookahead(1).type == TokenType.End) {
-			ts.eatComments();
-		}
 	}
 
 	ts.popCommentLevel();
@@ -745,8 +741,7 @@ ir.Attribute parseAttribute(TokenStream ts, bool inModule = false)
 		/* Have the semantic passes apply this attribute as
 		 * doing it in the parser would require context.
 		 */
-		auto comment = ts.comment();
-		if (comment.length > 0 && strip(comment) != "@}") {
+		if (ts.comment().length > 0) {
 			throw makeDocCommentAppliesToMultiple(ts.lastDocComment.location);
 		}
 	} else {
