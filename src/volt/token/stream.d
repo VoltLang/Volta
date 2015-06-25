@@ -204,16 +204,19 @@ public:
 	void popCommentLevel()
 	{
 		assert(mComment.length > 0);
+		string oldComment;
 		if (inMultiCommentBlock) {
-			return;
+			oldComment = mComment[$-1];
 		}
-		if (mComment[$-1].length) {
+		if (mComment[$-1].length && !inMultiCommentBlock) {
 			assert(lastDocComment !is null);
 			auto e = makeStrayDocComment(lastDocComment.location);
 			e.neverIgnore = true;
 			throw e;
 		}
-		mComment = mComment[0 .. $-1];
+		if (mComment.length >= 0) {
+			mComment[$-1] = oldComment;
+		}
 	}
 
 	/// Add a comment to the current comment level.
