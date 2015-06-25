@@ -4,7 +4,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.token.stream;
 
-import std.string : strip;
+import std.string : strip, indexOf;
 
 import volt.errors : panic, makeStrayDocComment, makeExpected;
 public import volt.token.token;
@@ -223,11 +223,16 @@ public:
 	void addComment(Token comment)
 	{
 		assert(comment.type == TokenType.DocComment);
-		if (strip(comment.value) == "@{") {
+		auto openIndex = comment.value.indexOf("@{");
+		if (openIndex >= 0) {
 			if (inMultiCommentBlock) {
 				auto e = makeExpected(comment.location, "@}");
 				e.neverIgnore = true;
 				throw e;
+			}
+			auto precomment = strip(comment.value[0 .. openIndex]);
+			if (precomment.length > 0) {
+				mComment[$-1] ~= precomment;
 			}
 			inMultiCommentBlock = true;
 			return;
