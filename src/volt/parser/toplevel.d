@@ -181,6 +181,11 @@ body
 	ts.pushCommentLevel();
 
 	while (ts.peek.type != end && ts.peek.type != TokenType.End) {
+		if (ts.peek.type == TokenType.DocComment && ts.lookahead(1).type == TokenType.End) {
+			ts.get();
+			continue;
+		}
+
 		auto tmp = parseOneTopLevelBlock(ts, inModule);
 		if (tmp.nodeType != ir.NodeType.Attribute) {
 			ts.popCommentLevel();
