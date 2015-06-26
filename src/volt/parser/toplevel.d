@@ -746,7 +746,7 @@ ir.Attribute parseAttribute(TokenStream ts, bool inModule = false)
 		/* Have the semantic passes apply this attribute as
 		 * doing it in the parser would require context.
 		 */
-		if (ts.comment().length > 0) {
+		if (ts.comment().length > 0 && !ts.inMultiCommentBlock) {
 			throw makeDocCommentAppliesToMultiple(ts.lastDocComment.location);
 		}
 	} else {

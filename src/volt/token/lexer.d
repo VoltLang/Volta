@@ -5,7 +5,7 @@ module volt.token.lexer;
 import std.uni : isWhite, isAlpha;
 import std.utf : toUTF8;
 import std.conv : to;
-import std.string : format;
+import std.string : format, indexOf;
 import std.ascii : isDigit;
 import std.array : array;
 import std.algorithm : count;
@@ -176,6 +176,17 @@ void skipWhitespace(TokenWriter tw)
 	}
 }
 
+void addIfDocComment(TokenWriter tw, Token commentToken, string s, string docsignifier)
+{
+	auto closeIndex = s.indexOf("@}");
+	if ((s.length <= 2 || s[0 .. 2] != docsignifier) && closeIndex < 0) {
+		return;
+	}
+	commentToken.type = TokenType.DocComment;
+	commentToken.value = closeIndex < 0 ? cleanComment(s, commentToken.isBackwardsComment) : "@}";
+	tw.addToken(commentToken);
+}
+
 void skipLineComment(TokenWriter tw)
 {
 	auto commentToken = currentLocationToken(tw);
@@ -187,12 +198,7 @@ void skipLineComment(TokenWriter tw)
 		if (tw.source.eof) return;
 	}
 
-	auto commentString = tw.source.sliceFrom(mark);
-	if (commentString.length > 2 && commentString[0..2] == "//") {
-		commentToken.type = TokenType.DocComment;
-		commentToken.value = cleanComment(commentString, commentToken.isBackwardsComment);
-		tw.addToken(commentToken);
-	}
+	addIfDocComment(tw, commentToken, tw.source.sliceFrom(mark), "//");
 }
 
 void skipBlockComment(TokenWriter tw)
@@ -221,12 +227,7 @@ void skipBlockComment(TokenWriter tw)
 		}
 	}
 
-	auto commentString = tw.source.sliceFrom(mark);
-	if (commentString.length > 2 && commentString[0..2] == "**") {
-		commentToken.type = TokenType.DocComment;
-		commentToken.value = cleanComment(commentString, commentToken.isBackwardsComment);
-		tw.addToken(commentToken);
-	}
+	addIfDocComment(tw, commentToken, tw.source.sliceFrom(mark), "**");
 }
 
 void skipNestingComment(TokenWriter tw)
@@ -255,12 +256,7 @@ void skipNestingComment(TokenWriter tw)
 		}
 	}
 
-	auto commentString = tw.source.sliceFrom(mark);
-	if (commentString.length > 2 && commentString[0..2] == "++") {
-		commentToken.type = TokenType.DocComment;
-		commentToken.value = cleanComment(commentString, commentToken.isBackwardsComment);
-		tw.addToken(commentToken);
-	}
+	addIfDocComment(tw, commentToken, tw.source.sliceFrom(mark), "++");
 }
 
 bool lexEOF(TokenWriter tw)
