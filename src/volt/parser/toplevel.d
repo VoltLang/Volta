@@ -20,6 +20,7 @@ import volt.parser.expression;
 
 ir.Module parseModule(TokenStream ts)
 {
+	auto initLocation = ts.peek.location;
 	ts.pushCommentLevel();
 	eatComments(ts);
 	auto t = match(ts, TokenType.Module);
@@ -27,6 +28,7 @@ ir.Module parseModule(TokenStream ts)
 	match(ts, TokenType.Semicolon);
 
 	auto mod = new ir.Module();
+	mod.location = initLocation;
 	mod.name = qn;
 	mod.docComment = ts.comment();
 	ts.popCommentLevel();
