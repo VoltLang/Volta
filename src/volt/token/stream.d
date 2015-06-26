@@ -18,12 +18,7 @@ final class TokenStream
 public:
 	Token lastDocComment;
 	string* retroComment;  ///< For backwards doc comments (like this one).
-	/**
-	 * True if we found @{ on its own, so apply the last doccomment
-	 * multiple times, until we see a @}. If we see @{ while
-	 * this is true, throw an error.
-	 */
-	bool inMultiCommentBlock;
+	int multiDepth;
 
 private:
 	Token[] mTokens;
@@ -69,6 +64,11 @@ public:
 	 */
 	Token get()
 	{
+		if (mTokens[mIndex].type == TokenType.DocComment &&
+			mTokens[mIndex].value.indexOf("@}") >= 0 &&
+			mTokens[mIndex + 1].type == TokenType.End) {
+			multiDepth--;
+		}
 		auto retval = mTokens[mIndex];
 		if (mIndex < mTokens.length - 1) {
 			mIndex++;
@@ -225,16 +225,11 @@ public:
 		assert(comment.type == TokenType.DocComment);
 		auto openIndex = comment.value.indexOf("@{");
 		if (openIndex >= 0) {
-			if (inMultiCommentBlock) {
-				auto e = makeExpected(comment.location, "@}");
-				e.neverIgnore = true;
-				throw e;
-			}
 			auto precomment = strip(comment.value[0 .. openIndex]);
 			if (precomment.length > 0) {
 				mComment[$-1] ~= precomment;
 			}
-			inMultiCommentBlock = true;
+			multiDepth++;
 			return;
 		}
 		if (strip(comment.value) == "@}") {
@@ -243,7 +238,7 @@ public:
 				e.neverIgnore = true;
 				throw e;
 			}
-			inMultiCommentBlock = false;
+			multiDepth--;
 			mComment[$-1] = "";
 			return;
 		}
@@ -260,5 +255,14 @@ public:
 			mComment[$-1] = "";
 		}
 		return str;
+	}
+
+	/**
+	 * True if we found @{ on its own, so apply the last doccomment
+	 * multiple times, until we see a matching number of @}s.
+	 */
+	@property bool inMultiCommentBlock()
+	{
+		return multiDepth > 0;
 	}
 }

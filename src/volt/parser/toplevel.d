@@ -38,6 +38,9 @@ ir.Module parseModule(TokenStream ts)
 			createImport(mod.location, "object", true)
 		] ~ mod.children.nodes;
 
+	if (ts.multiDepth > 0) {
+		throw makeExpected(mod.location, "@}");
+	}
 	return mod;
 }
 

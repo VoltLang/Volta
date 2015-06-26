@@ -37,7 +37,7 @@ Usually, one doccomment goes to one declaration. However, you can apply doccomme
 	struct beta {}
 	/// @}
 
-Omitting the closing comment brace is an error, as is opening a new block in an existing one.  
+Omitting the closing comment brace is an error.
 
 *Keywords* are reserved, and cannot be used as identifiers.
 
