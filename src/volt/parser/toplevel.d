@@ -41,7 +41,7 @@ ir.Module parseModule(TokenStream ts)
 		] ~ mod.children.nodes;
 
 	if (ts.multiDepth > 0) {
-		throw makeExpected(mod.location, "@}");
+		throw makeExpected(ts.peek.location, "@}");
 	}
 	return mod;
 }
@@ -173,6 +173,22 @@ body
 	return tlb;
 }
 
+private bool ifDocCommentsUntilEndThenSkip(TokenStream ts)
+{
+	size_t n = 0;
+	TokenType tt;
+	do {
+		tt = ts.lookahead(n++).type;
+	} while (tt == TokenType.DocComment);
+	if (tt == TokenType.End) {
+		foreach (i; 0 .. n) {
+			ts.get();
+		}
+		return true;
+	}
+	return false;
+}
+
 ir.TopLevelBlock parseTopLevelBlock(TokenStream ts, TokenType end, bool inModule = false)
 out(result)
 {
@@ -186,8 +202,7 @@ body
 	ts.pushCommentLevel();
 
 	while (ts.peek.type != end && ts.peek.type != TokenType.End) {
-		if (ts.peek.type == TokenType.DocComment && ts.lookahead(1).type == TokenType.End) {
-			ts.get();
+		if (ifDocCommentsUntilEndThenSkip(ts)) {
 			continue;
 		}
 

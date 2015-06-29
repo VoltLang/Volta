@@ -64,11 +64,7 @@ public:
 	 */
 	Token get()
 	{
-		if (mTokens[mIndex].type == TokenType.DocComment &&
-			mTokens[mIndex].value.indexOf("@}") >= 0 &&
-			mTokens[mIndex + 1].type == TokenType.End) {
-			multiDepth--;
-		}
+		doDocCommentBlocks();
 		auto retval = mTokens[mIndex];
 		if (mIndex < mTokens.length - 1) {
 			mIndex++;
@@ -155,7 +151,7 @@ public:
 	 * Returns the token @n step behind the current token. Will cause
 	 * a compiler panic if looking to far back.
 	 *
-	 * Thorws:
+	 * Throws:
 	 *   CompilerPanic on @n being larger then mIndex.
 	 *
 	 * Side-effects:
@@ -223,23 +219,8 @@ public:
 	void addComment(Token comment)
 	{
 		assert(comment.type == TokenType.DocComment);
-		auto openIndex = comment.value.indexOf("@{");
-		if (openIndex >= 0) {
-			auto precomment = strip(comment.value[0 .. openIndex]);
-			if (precomment.length > 0) {
-				mComment[$-1] ~= precomment;
-			}
-			multiDepth++;
-			return;
-		}
-		if (strip(comment.value) == "@}") {
-			if (!inMultiCommentBlock) {
-				auto e = makeExpected(comment.location, "@{");
-				e.neverIgnore = true;
-				throw e;
-			}
-			multiDepth--;
-			mComment[$-1] = "";
+		auto raw = strip(comment.value);
+		if (raw == "@{" || raw == "@}") {
 			return;
 		}
 		mComment[$-1] ~= comment.value;
@@ -264,5 +245,34 @@ public:
 	@property bool inMultiCommentBlock()
 	{
 		return multiDepth > 0;
+	}
+
+private:
+
+	void doDocCommentBlocks()
+	{
+		if (mTokens[mIndex].type != TokenType.DocComment) {
+			return;
+		}
+		auto openIndex = mTokens[mIndex].value.indexOf("@{");
+		if (openIndex >= 0) {
+			auto precomment = strip(mTokens[mIndex].value[0 .. openIndex]);
+			if (precomment.length > 0) {
+				mComment[$-1] ~= precomment;
+			}
+			multiDepth++;
+			return;
+		}
+		if (mTokens[mIndex].value.indexOf("@}") >= 0) {
+			if (!inMultiCommentBlock) {
+				auto e = makeExpected(mTokens[mIndex].location, "@{");
+				e.neverIgnore = true;
+				throw e;
+			}
+			multiDepth--;
+			if (multiDepth == 0 && mComment.length > 0) {
+				mComment[$-1] = "";
+			}
+		}
 	}
 }
