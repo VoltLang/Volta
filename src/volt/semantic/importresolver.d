@@ -32,13 +32,13 @@ public:
 		this.lp = lp;
 	}
 
-	override void transform(ir.Module m)
+	void transform(ir.Module m)
 	{
 		thisModule = m;
 		accept(m, this);
 	}
 
-	override void close()
+	void close()
 	{
 	}
 
