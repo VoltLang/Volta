@@ -142,7 +142,6 @@ public:
 		if (t.mangledName != "") {
 			return Continue;
 		}
-
 		t.mangledName = mangle(t);
 		return Continue;
 	}

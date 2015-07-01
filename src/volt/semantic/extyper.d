@@ -2435,8 +2435,19 @@ void extypeCat(Context ctx, ir.BinOp bin, ir.ArrayType left, ir.Type right)
 
 void extypeTernary(Context ctx, ir.Ternary ternary)
 {
-	auto baseType = getExpType(ctx.lp, ternary.ifTrue, ctx.current);
-	extypeAssign(ctx, ternary.ifFalse, baseType);
+	auto trueType = realType(getExpType(ctx.lp, ternary.ifTrue, ctx.current));
+	auto falseType = realType(getExpType(ctx.lp, ternary.ifFalse, ctx.current));
+	// matchLevel lives in volt.semantic.overload.
+	int trueMatchLevel = trueType.nodeType == ir.NodeType.NullType ? 0 : matchLevel(false, trueType, falseType);
+	int falseMatchLevel = falseType.nodeType == ir.NodeType.NullType ? 0 : matchLevel(false, falseType, trueType);
+	ir.Exp baseExp = trueMatchLevel > falseMatchLevel ? ternary.ifTrue : ternary.ifFalse;
+	auto baseType = getExpType(ctx.lp, baseExp, ctx.current);
+	assert(baseType.nodeType != ir.NodeType.NullType);
+	if (trueMatchLevel > falseMatchLevel) {
+		extypeAssign(ctx, ternary.ifFalse, baseType);
+	} else {
+		extypeAssign(ctx, ternary.ifTrue, baseType);
+	}
 
 	auto condType = getExpType(ctx.lp, ternary.condition, ctx.current);
 	if (!isBool(condType)) {
