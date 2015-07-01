@@ -42,6 +42,8 @@ public:
 		if (tokens[$-1].type != TokenType.End)
 			throw panic("Token stream not terminated correctly");
 
+		pushCommentLevel();
+
 		this.mTokens = tokens;
 	}
 
