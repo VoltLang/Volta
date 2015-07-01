@@ -724,7 +724,7 @@ private:
 
 unittest
 {
-	auto settings = new Settings();
+	auto settings = new Settings(".");
 	assert(!settings.isVersionSet("none"));
 	assert(settings.isVersionSet("all"));
 	settings.setVersionIdentifier("foo");
