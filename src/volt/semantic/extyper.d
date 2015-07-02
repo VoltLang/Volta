@@ -2437,16 +2437,25 @@ void extypeTernary(Context ctx, ir.Ternary ternary)
 {
 	auto trueType = realType(getExpType(ctx.lp, ternary.ifTrue, ctx.current));
 	auto falseType = realType(getExpType(ctx.lp, ternary.ifFalse, ctx.current));
-	// matchLevel lives in volt.semantic.overload.
-	int trueMatchLevel = trueType.nodeType == ir.NodeType.NullType ? 0 : matchLevel(false, trueType, falseType);
-	int falseMatchLevel = falseType.nodeType == ir.NodeType.NullType ? 0 : matchLevel(false, falseType, trueType);
-	ir.Exp baseExp = trueMatchLevel > falseMatchLevel ? ternary.ifTrue : ternary.ifFalse;
-	auto baseType = getExpType(ctx.lp, baseExp, ctx.current);
-	assert(baseType.nodeType != ir.NodeType.NullType);
-	if (trueMatchLevel > falseMatchLevel) {
-		extypeAssign(ctx, ternary.ifFalse, baseType);
+
+	auto aClass = cast(ir.Class) trueType;
+	auto bClass = cast(ir.Class) falseType;
+	if (aClass !is null && bClass !is null) {
+		auto common = commonParent(aClass, bClass);
+		extypeAssign(ctx, ternary.ifTrue, common);
+		extypeAssign(ctx, ternary.ifFalse, common);
 	} else {
-		extypeAssign(ctx, ternary.ifTrue, baseType);
+		// matchLevel lives in volt.semantic.overload.
+		int trueMatchLevel = trueType.nodeType == ir.NodeType.NullType ? 0 : matchLevel(false, trueType, falseType);
+		int falseMatchLevel = falseType.nodeType == ir.NodeType.NullType ? 0 : matchLevel(false, falseType, trueType);
+		ir.Exp baseExp = trueMatchLevel > falseMatchLevel ? ternary.ifTrue : ternary.ifFalse;
+		auto baseType = getExpType(ctx.lp, baseExp, ctx.current);
+		assert(baseType.nodeType != ir.NodeType.NullType);
+		if (trueMatchLevel > falseMatchLevel) {
+			extypeAssign(ctx, ternary.ifFalse, baseType);
+		} else {
+			extypeAssign(ctx, ternary.ifTrue, baseType);
+		}
 	}
 
 	auto condType = getExpType(ctx.lp, ternary.condition, ctx.current);

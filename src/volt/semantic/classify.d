@@ -1121,3 +1121,30 @@ bool isNested(ir.Variable.Storage s)
 	}
 }
 
+/**
+ * How far removed from Object is this class?
+ */
+size_t distanceFromObject(ir.Class _class)
+{
+	size_t distance;
+	while (_class.parent !is null) {
+		distance++;
+		_class = _class.parentClass;
+	}
+	return distance;
+}
+
+/**
+ * Given two classes, return their closest relative.
+ */
+ir.Class commonParent(ir.Class a, ir.Class b)
+{
+	while (!typesEqual(a, b)) {
+		if (distanceFromObject(a) > distanceFromObject(b)) {
+			a = a.parentClass;
+		} else {
+			b = b.parentClass;
+		}
+	}
+	return a;
+}
