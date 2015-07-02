@@ -28,10 +28,8 @@ ir.BlockStatement copy(ir.BlockStatement bs)
 {
 	auto b = new ir.BlockStatement();
 	b.location = bs.location;
-	b.statements = bs.statements;
-
-	foreach (ref stat; b.statements) {
-		stat = copyNode(stat);
+	foreach (stmt; bs.statements) {
+		b.statements ~= copyNode(stmt);
 	}
 
 	return b;
@@ -41,7 +39,9 @@ ir.ReturnStatement copy(ir.ReturnStatement rs)
 {
 	auto r = new ir.ReturnStatement();
 	r.location = rs.location;
-	r.exp = copyExp(rs.exp);
+	if (rs.exp !is null) {
+		r.exp = copyExp(rs.exp);
+	}
 	return r;
 }
 
