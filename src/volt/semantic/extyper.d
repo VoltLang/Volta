@@ -1290,29 +1290,38 @@ private void resolvePostfixOverload(Context ctx, ir.Postfix postfix, ir.ExpRefer
 	}
 }
 
-private void rewriteHomogenousVariadic(Context ctx, ir.CallableType asFunctionType, ir.Postfix postfix, size_t i)
+/**
+ * Rewrite a call to a homogenous variadic if needed.
+ * Makes individual parameters at the end into an array.
+ */
+private void rewriteHomogenousVariadic(Context ctx, ir.CallableType asFunctionType, ir.Postfix postfix)
 {
-	if (asFunctionType.homogenousVariadic && i == asFunctionType.params.length - 1) {
-		auto etype = getExpType(ctx.lp, postfix.arguments[i], ctx.current);
-		auto arr = cast(ir.ArrayType) asFunctionType.params[i];
-		if (arr is null) {
-			throw panic(postfix.location, "homogenous variadic not array type");
-		}
-		if (!typesEqual(etype, arr)) {
-			auto exps = postfix.arguments[i .. $];
-			if (exps.length == 1) {
-				auto alit = cast(ir.ArrayLiteral) exps[0];
-				if (alit !is null && alit.values.length == 0) {
-					exps = [];
-				}
+	if (!asFunctionType.homogenousVariadic) {
+		return;
+	}
+	auto i = asFunctionType.params.length - 1;
+	auto etype = getExpType(ctx.lp, postfix.arguments[i], ctx.current);
+	auto arr = cast(ir.ArrayType) asFunctionType.params[i];
+	if (arr is null) {
+		throw panic(postfix.location, "homogenous variadic not array type");
+	}
+	if (willConvert(etype, arr)) {
+		return;
+	}
+	if (!typesEqual(etype, arr)) {
+		auto exps = postfix.arguments[i .. $];
+		if (exps.length == 1) {
+			auto alit = cast(ir.ArrayLiteral) exps[0];
+			if (alit !is null && alit.values.length == 0) {
+				exps = [];
 			}
-			foreach (ref aexp; exps) {
-				extypePass(ctx, aexp, arr.base);
-			}
-			postfix.arguments[i] = buildInternalArrayLiteralSmart(postfix.location, asFunctionType.params[i], exps);
-			postfix.arguments.length = i + 1;
-			return;
 		}
+		foreach (ref aexp; exps) {
+			extypePass(ctx, aexp, arr.base);
+		}
+		postfix.arguments[i] = buildInternalArrayLiteralSmart(postfix.location, asFunctionType.params[i], exps);
+		postfix.arguments.length = i + 1;
+		return;
 	}
 }
 
@@ -1445,6 +1454,7 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		throw makeWrongNumberOfArguments(postfix, postfix.arguments.length, asFunctionType.params.length);
 	}
 	assert(asFunctionType.params.length <= postfix.arguments.length);
+	rewriteHomogenousVariadic(ctx, asFunctionType, postfix);
 	foreach (i; 0 .. asFunctionType.params.length) {
 		ir.StorageType.Kind stype;
 		if (isRef(asFunctionType.params[i], stype)) { 
@@ -1458,7 +1468,6 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 				throw makeNotTaggedOut(postfix.arguments[i]);
 			}
 		}
-		rewriteHomogenousVariadic(ctx, asFunctionType, postfix, i);
 		extypePass(ctx, postfix.arguments[i], asFunctionType.params[i]);
 	}
 
