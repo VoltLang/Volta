@@ -505,6 +505,12 @@ public:
 			return;
 		}
 
+		auto toClass = cast(ir.Class) realType(toArray.base);
+		auto fromClass = cast(ir.Class) realType(fromArray.base);
+		if (toClass !is null && fromClass !is null && isOrInheritsFrom(fromClass, toClass)) {
+			return;
+		}
+
 		int fromSz = size(loc, lp, fromArray.base);
 		int toSz = size(loc, lp, toArray.base);
 		int biggestSz = fromSz > toSz ? fromSz : toSz;
