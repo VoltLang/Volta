@@ -550,7 +550,7 @@ enum Arch
  * Things like version/debug identifiers, warning mode,
  * debug/release, import paths, and so on.
  */
-final class Settings
+class Settings
 {
 public:
 	bool warningsEnabled; ///< The -w argument.
