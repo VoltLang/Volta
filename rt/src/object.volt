@@ -61,7 +61,7 @@ version (V_P64) {
  * // Alloc size == (void*).sizeof * 3
  */
 alias AllocDg = void* delegate(TypeInfo typeinfo, size_t count);
-local AllocDg allocDg;
+global AllocDg allocDg;
 
 
 struct ArrayStruct
