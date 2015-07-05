@@ -215,6 +215,8 @@ public:
 		this.frontend = frontend;
 	}
 
+	abstract void reset();
+
 	abstract void close();
 
 	/**

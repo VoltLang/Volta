@@ -72,8 +72,13 @@ public:
 	{
 		super(driver, ver, settings, frontend);
 
+		reset();
+	}
+
+	override void reset() {
 		mTracker = new WorkTracker();
 
+		postParse = [];
 		postParse ~= new ConditionalRemoval(ver);
 		if (settings.removeConditionalsOnly) {
 			return;
@@ -82,11 +87,13 @@ public:
 		postParse ~= new AttribRemoval(settings);
 		postParse ~= new Gatherer();
 
+		passes2 = [];
 		passes2 ~= new SimpleTrace(this);
 		passes2 ~= new ExTyper(this);
 		passes2 ~= new CFGBuilder(this);
 		passes2 ~= new IrVerifier();
 
+		passes3 = [];
 		passes3 ~= new LlvmLowerer(this);
 		passes3 ~= new NewReplacer(this);
 		passes3 ~= new TypeidReplacer(this);
