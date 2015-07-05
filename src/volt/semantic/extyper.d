@@ -3457,6 +3457,9 @@ public:
 
 	override Status enter(ir.Function fn)
 	{
+		if (fn.isAutoReturn) {
+			fn.type.ret = buildVoid(fn.type.ret.location);
+		}
 		if (fn.name == "main" && fn.type.linkage == ir.Linkage.Volt) {
 			if (fn.params.length == 0) {
 				addParam(fn.location, fn, buildStringArray(fn.location), "");
@@ -3529,7 +3532,11 @@ public:
 
 		if (ret.exp !is null) {
 			acceptExp(ret.exp, this);
-			auto st = cast(ir.StorageType) getExpType(ctx.lp, ret.exp, ctx.current);
+			auto retType = getExpType(ctx.lp, ret.exp, ctx.current);
+			if (fn.isAutoReturn) {
+				fn.type.ret = copyTypeSmart(retType.location, getExpType(ctx.lp, ret.exp, ctx.current));
+			}
+			auto st = cast(ir.StorageType)retType;
 			if (st !is null && st.type == ir.StorageType.Kind.Scope && mutableIndirection(st)) {
 				throw makeNoReturnScope(ret.location);
 			}

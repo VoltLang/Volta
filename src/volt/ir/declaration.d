@@ -282,6 +282,12 @@ public:
 
 	bool isAbstract;
 
+	/**
+	 * Makes the ExTyper automatically set the correct return type
+	 * based on the returned expression.
+	 */
+	bool isAutoReturn;
+
 public:
 	this() { super(NodeType.Function); }
 }
