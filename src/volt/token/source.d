@@ -164,6 +164,7 @@ public:
 		mChar = decodeChar(mIndex);
 		if (mChar == dchar.init) {
 			eof = true;
+			mIndex = source.length + 1;
 			return mChar;
 		}
 
