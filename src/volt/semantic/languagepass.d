@@ -285,7 +285,9 @@ public:
 
 	override void resolve(ir.Scope current, ir.Function fn)
 	{
-		if ((fn.kind == ir.Function.Kind.Function || (cast(ir.Class) current.node) is null) && fn.isMarkedOverride) {
+		if ((fn.kind == ir.Function.Kind.Function ||
+		    (cast(ir.Class) current.node) is null) &&
+		    fn.isMarkedOverride) {
 			throw makeMarkedOverrideDoesNotOverride(fn, fn);
 		}
 		ensureResolved(this, current, fn.type);
@@ -294,7 +296,8 @@ public:
 			if (param.assign !is null) {
 				auto texp = cast(ir.TokenExp) param.assign;
 				if (texp is null) {
-					param.assign = evaluate(this, current, param.assign);
+					param.assign = evaluate(
+						this, current, param.assign);
 				}
 			}
 		}
@@ -357,7 +360,8 @@ public:
 			base = tr.type;
 		}
 
-		if (base.nodeType() == ir.NodeType.Struct || base.nodeType() == ir.NodeType.Class) {
+		if (base.nodeType() == ir.NodeType.Struct ||
+		    base.nodeType() == ir.NodeType.Class) {
 			return;
 		}
 
