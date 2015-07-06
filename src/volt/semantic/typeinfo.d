@@ -129,7 +129,7 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Scope current, ir.Type 
 	auto asClass = cast(ir.Class)type;
 	if (asClass !is null) {
 		literal.exps ~= buildCast(type.location, buildVoidPtr(type.location),
-				buildAddrOf(type.location, buildExpReference(type.location, asClass.vtableVariable, "__vtable_instance")));
+				buildAddrOf(type.location, buildExpReference(type.location, asClass.initVariable, "__cinit")));
 		auto s = size(type.location, lp, asClass.layoutStruct);
 		literal.exps ~= buildConstantSizeT(type.location, lp, size(type.location, lp, asClass.layoutStruct));
 	} else {

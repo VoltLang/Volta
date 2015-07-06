@@ -94,7 +94,7 @@ class TypeInfo
 	int type;
 	char[] mangledName;
 	bool mutableIndirection;
-	void* classVtable;
+	void* classInit;
 	size_t classSize;
 	TypeInfo base;  // For arrays (dynamic and static), and pointers.
 	size_t staticArrayLength;

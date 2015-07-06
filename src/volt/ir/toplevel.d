@@ -271,7 +271,11 @@ public:
 	Function[] userConstructors;
 	Struct vtableStruct;
 	Variable vtableVariable;
+	Variable[] ifaceVariables;
+	Variable initVariable;
 	Class parentClass;  ///< Filled in by the typeverifier.
+	_Interface[] parentInterfaces;  ///< Filled in by the typeverifier.
+	size_t[] interfaceOffsets;  ///< Filled in by the typeverifier.
 
 	/// How a lowered class will look internally.
 	Struct layoutStruct;
@@ -293,17 +297,14 @@ public:
  *
  * @ingroup irNode irTopLevel irType irDecl
  */
-class _Interface : Type
+class _Interface : Aggregate
 {
 public:
-	Access access; ///< default public.
-
-	Scope myScope; ///< Context for this Interface.
-
-	string name; ///< Unmangled name of the Interface.
 	QualifiedName[] interfaces; ///< Super interfaces to this.
-	TopLevelBlock members; ///< Toplevel nodes.
-	Attribute[] userAttrs;
+	_Interface[] parentInterfaces;  ///< Filled in by the typeverifier.
+
+	/// How a lowered interface will look internally.
+	Struct layoutStruct;
 
 public:
 	this() { super(NodeType.Interface); }

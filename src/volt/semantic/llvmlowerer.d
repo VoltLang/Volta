@@ -21,6 +21,7 @@ import volt.semantic.lookup;
 import volt.semantic.classify;
 import volt.semantic.util;
 import volt.semantic.nested;
+import volt.semantic.classresolver;
 
 
 /**
@@ -82,6 +83,37 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.Variable v)
+	{
+		// Convert Interface variables to their internal struct.
+		auto iface = cast(ir._Interface) realType(v.type);
+		if (iface !is null) {
+			lp.actualize(iface);
+			assert(iface.layoutStruct !is null);
+			v.type = buildPtrSmart(v.location, buildPtrSmart(v.location, iface.layoutStruct));
+		}
+		return Continue;
+	}
+
+	override Status enter(ir.Function fn)
+	{
+		super.enter(fn);
+		// Convert Interfaces in parameters and return types to their internal struct.
+		foreach (ref p; fn.type.params) {
+			auto iface = cast(ir._Interface) realType(p);
+			if (iface !is null) {
+				assert(iface.layoutStruct !is null);
+				p = buildPtrSmart(p.location, buildPtrSmart(p.location, iface.layoutStruct));
+			}
+		}
+		auto retIface = cast(ir._Interface) realType(fn.type.ret);
+		if (retIface !is null) {
+			assert(retIface.layoutStruct !is null);
+			fn.type.ret = buildPtrSmart(fn.location, buildPtrSmart(fn.location, retIface.layoutStruct));
+		}
+		return Continue;
+	}
+
 	override Status leave(ir.ThrowStatement t)
 	{
 		auto fn = lp.ehThrowFunc;
@@ -90,16 +122,6 @@ public:
 			buildAccess(t.location, buildConstantString(t.location, t.location.filename, false), "ptr"),
 			buildConstantSizeT(t.location, lp, cast(int)t.location.line)]);
 		return Continue;
-	}
-
-	override Status leave(ref ir.Exp exp, ir.Postfix postfix)
-	{
-		switch(postfix.op) {
-		case ir.Postfix.Op.Index:
-			return handleIndex(exp, postfix);
-		default:
-			return Continue;
-		}
 	}
 
 	override Status enter(ref ir.Exp exp, ir.BinOp binOp)
@@ -204,7 +226,41 @@ public:
 
 	override Status leave(ref ir.Exp exp, ir.Unary uexp)
 	{
+		replaceInterfaceCastIfNeeded(exp.location, lp, current, uexp, exp);
 		replaceArrayCastIfNeeded(exp.location, lp, current, uexp, exp);
+		return Continue;
+	}
+
+	override Status leave(ref ir.Exp exp, ir.Postfix postfix)
+	{
+		switch(postfix.op) {
+		case ir.Postfix.Op.Index:
+			return handleIndex(exp, postfix);
+		default:
+			break;
+		}
+		ir._Interface iface;
+		if (isInterfacePointer(lp, postfix, current, iface)) {
+			assert(iface !is null);
+			auto cpostfix = cast(ir.Postfix) postfix.child;  // TODO: Calling returned interfaces directly.
+			if (cpostfix is null || cpostfix.identifier is null) {
+				throw makeExpected(exp.location, "interface");
+			}
+			auto store = lookupAsThisScope(lp, iface.myScope, postfix.location, cpostfix.identifier.value);
+			if (store is null) {
+				throw makeExpected(postfix.location, "method");
+			}
+			if (store.functions.length == 0) {
+				throw makeExpected(postfix.location, "method");
+			}
+			if (store.functions.length > 1) {
+				assert(false, "todo: generate default args and cross-ref");
+			}
+			//
+			auto l = exp.location;
+			auto handle = buildCastToVoidPtr(l, buildSub(l, buildCastSmart(l, buildPtrSmart(l, buildUbyte(l)), copyExp(cpostfix.child)), buildAccess(l, buildDeref(l, copyExp(cpostfix.child)), "__offset")));
+			exp = buildCall(l, buildAccess(l, buildDeref(l, copyExp(cpostfix.child)), mangle(null, store.functions[0])), postfix.arguments ~ handle);
+		}
 		return Continue;
 	}
 
@@ -481,6 +537,18 @@ public:
 
 		sexp.exp = buildExpReference(loc, var, var.name);
 		exp = sexp;
+	}
+
+	protected void replaceInterfaceCastIfNeeded(Location loc, LanguagePass lp, ir.Scope current, ir.Unary uexp, ref ir.Exp exp)
+	{
+		if (uexp.op != ir.Unary.Op.Cast) {
+			return;
+		}
+		auto iface = cast(ir._Interface) realType(uexp.type);
+		if (iface is null) {
+			return;
+		}
+		exp = buildAddrOf(loc, buildAccess(loc, uexp.value, mangle(iface)));
 	}
 
 	protected void replaceArrayCastIfNeeded(Location loc, LanguagePass lp, ir.Scope current, ir.Unary uexp, ref ir.Exp exp)
@@ -1211,4 +1279,27 @@ public:
 		sexp.exp = eref(outvar);
 		return buildCastSmart(l, buildArrayType(l, buildVoid(l)), sexp);
 	}
+}
+
+bool isInterfacePointer(LanguagePass lp, ir.Postfix pfix, ir.Scope current, out ir._Interface iface)
+{
+	pfix = cast(ir.Postfix) pfix.child;
+	if (pfix is null) {
+		return false;
+	}
+	auto t = getExpType(lp, pfix.child, current);
+	auto ptr = cast(ir.PointerType) realType(t);
+	if (ptr is null) {
+		return false;
+	}
+	ptr = cast(ir.PointerType) realType(ptr.base);
+	if (ptr is null) {
+		return false;
+	}
+	auto _struct = cast(ir.Struct) realType(ptr.base);
+	if (_struct is null) {
+		return false;
+	}
+	iface = cast(ir._Interface) _struct.loweredNode;
+	return iface !is null;
 }

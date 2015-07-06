@@ -347,6 +347,15 @@ ir.StructLiteral buildStructLiteralSmart(Location loc, ir.Type type, ir.Exp[] ex
 	return literal;
 }
 
+ir.UnionLiteral buildUnionLiteralSmart(Location loc, ir.Type type, ir.Exp[] exps)
+{
+	auto literal = new ir.UnionLiteral();
+	literal.location = loc;
+	literal.type = copyTypeSmart(loc, type);
+	literal.exps = exps.dup;
+	return literal;
+}
+
 /**
  * Add a Variable to the BlockStatement scope and either to
  * its statement or if StatementExp given to it instead.
@@ -456,6 +465,32 @@ ir.ExpReference buildExpReference(Location loc, ir.Declaration decl, string[] na
 	varRef.idents ~= names;
 
 	return varRef;
+}
+
+/**
+ * Builds a constant double.
+ */
+ir.Constant buildConstantDouble(Location loc, double value)
+{
+	auto c = new ir.Constant();
+	c.location = loc;
+	c.u._double = value;
+	c.type = buildDouble(loc);
+
+	return c;
+}
+
+/**
+ * Builds a constant float.
+ */
+ir.Constant buildConstantFloat(Location loc, float value)
+{
+	auto c = new ir.Constant();
+	c.location = loc;
+	c.u._double = value;
+	c.type = buildFloat(loc);
+
+	return c;
 }
 
 /**

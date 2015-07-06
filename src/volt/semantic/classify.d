@@ -75,6 +75,7 @@ int size(Location location, LanguagePass lp, ir.Node node)
 		lp.actualize(asUnion);
 		return unionSize(location, lp, asUnion);
 	case Class:
+	case Interface:
 		return lp.settings.isVersionSet("V_P64") ? 8 : 4;
 	case Enum:
 		auto asEnum = cast(ir.Enum) node;
@@ -142,6 +143,7 @@ size_t alignment(Location location, LanguagePass lp, ir.Type node)
 	case PointerType:
 	case FunctionType:
 	case Class:
+	case Interface:
 		return lp.settings.alignment.ptr;
 	case Union:
 		return lp.settings.alignment.int8; // Matches implementation
@@ -1147,4 +1149,16 @@ ir.Class commonParent(ir.Class a, ir.Class b)
 		}
 	}
 	return a;
+}
+
+/// Returns true if one of fns's types match fnToMatch. False otherwise.
+/// (If fns is empty, this function returns false).
+bool containsMatchingFunction(ir.Function[] fns, ir.Function fnToMatch)
+{
+	foreach (fn; fns) {
+		if (typesEqual(fn.type, fnToMatch.type)) {
+			return true;
+		}
+	}
+	return false;
 }

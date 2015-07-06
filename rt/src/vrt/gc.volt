@@ -59,6 +59,7 @@ version (Emscripten) {
 }
 
 extern(C) void memset(void*, int, size_t);
+extern(C) void* memcpy(void*, void*, size_t);
 
 extern(C) void vrt_gc_init()
 {
@@ -122,7 +123,7 @@ void* gcMalloc(TypeInfo typeinfo, size_t count, void *ptr)
 	}
 
 	if (count == cast(size_t) -1) {
-		*(cast(void**)memory) = typeinfo.classVtable;
+		memcpy(memory, typeinfo.classInit, typeinfo.classSize);
 	}
 
 	if (registerFinalizer) {

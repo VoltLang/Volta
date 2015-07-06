@@ -30,6 +30,11 @@ CompilerException makeStaticArrayLengthMismatch(Location loc, size_t expectedLen
 	return new CompilerError(loc, format("Expected literal of length %s, got %s.", expectedLength, gotLength));
 }
 
+CompilerException makeDoesNotImplement(Location loc, ir.Class _class, ir._Interface iface, ir.Function fn, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, format("%s does not implement the %s method of interface %s.", _class.name, fn.name, iface.name), file, line);
+}
+
 CompilerException makeCaseFallsThrough(Location loc, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(loc, "Non empty switch case falls through.", file, line);

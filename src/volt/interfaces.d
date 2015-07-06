@@ -297,7 +297,13 @@ public:
 	{ if (!c.isResolved) doResolve(c); }
 
 	/**
-	 * Resovles a UserAttribute, done on lookup of it.
+	 * Resolves an Interface.
+	 */
+	final void resolve(ir._Interface i)
+	{ if (!i.isResolved) doResolve(i); }
+
+	/**
+	 * Resolves a UserAttribute, done on lookup of it.
 	 */
 	final void resolve(ir.UserAttribute au)
 	{ if (!au.isResolved) doResolve(au); }
@@ -318,6 +324,12 @@ public:
 	 */
 	final void actualize(ir.Union u)
 	{ if (!u.isActualized) doActualize(u); }
+
+	/**
+	 * Actualize an Interface.
+	 */
+	final void actualize(ir._Interface i)
+	{ if (!i.isActualized) doActualize(i); }
 
 	/**
 	 * Actualize a Class, making sure all its fields and methods
@@ -363,11 +375,13 @@ public:
 	 */
 
 protected:
+	abstract void doResolve(ir._Interface i);
 	abstract void doResolve(ir.Class c);
 	abstract void doResolve(ir.Union u);
 	abstract void doResolve(ir.Struct c);
 	abstract void doResolve(ir.UserAttribute ua);
 
+	abstract void doActualize(ir._Interface i);
 	abstract void doActualize(ir.Struct s);
 	abstract void doActualize(ir.Union u);
 	abstract void doActualize(ir.Class c);

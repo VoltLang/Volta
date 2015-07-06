@@ -25,6 +25,10 @@ void getConstantValue(State state, ir.Exp exp, Value result)
 		auto sl = cast(ir.StructLiteral)exp;
 		handleStructLiteral(state, sl, result);
 		break;
+	case UnionLiteral:
+		auto ul = cast(ir.UnionLiteral)exp;
+		handleUnionLiteral(state, ul, result);
+		break;
 	case ExpReference:
 		auto expRef = cast(ir.ExpReference)exp;
 		handleExpReference(state, expRef, result);

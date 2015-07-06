@@ -409,6 +409,11 @@ public:
 		resolve(c.myScope, c.members);
 	}
 
+	override void doResolve(ir._Interface i)
+	{
+		i.isResolved = true;
+	}
+
 	override void doResolve(ir.UserAttribute ua)
 	{
 		// Nothing to do here.
@@ -418,10 +423,20 @@ public:
 
 	/*
 	 *
-	 * Actualize functons.
+	 * Actualize functions.
 	 *
 	 */
 
+	override void doActualize(ir._Interface i)
+	{
+		super.resolve(i);
+
+		auto w = mTracker.add(i, "actualizing interface");
+		scope (exit)
+			w.done();
+
+		actualizeInterface(this, i);
+	}
 
 	override void doActualize(ir.Struct s)
 	{

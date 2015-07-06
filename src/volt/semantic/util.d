@@ -92,6 +92,14 @@ ir.Type handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
 				return t;
 			}
 			goto default;
+		case Interface:
+			auto _interface = cast(ir._Interface) left;
+			if (_interface !is null) {
+				auto t = copyTypeSmart(right.location, _interface);
+				constant.type = t;
+				return t;
+			}
+			goto default;
 		case StorageType:
 			auto storage = cast(ir.StorageType) left;
 			return handleNull(storage.base, right, rightType);
@@ -180,6 +188,9 @@ ir.Store ensureResolved(LanguagePass lp, ir.Store s)
 		} else if (s.node.nodeType == ir.NodeType.Enum) {
 			auto st = cast(ir.Enum)s.node;
 			lp.resolve(st);
+		} else if (s.node.nodeType == ir.NodeType.Interface) {
+			auto i = cast(ir._Interface)s.node;
+			lp.resolve(i);
 		}
 		return s;
 	case Scope:
@@ -407,4 +418,58 @@ ir.Type[] expsToTypes(LanguagePass lp, ir.Exp[] exps, ir.Scope currentScope)
 		types[i] = getExpType(lp, exps[i], currentScope);
 	}
 	return types;
+}
+
+/**
+ * Gets a default value (The .init -- 0, or null, usually) for a given type.
+ */
+ir.Exp getDefaultInit(Location l, LanguagePass lp, ir.Scope current, ir.Type t)
+{
+	if (t is null) {
+		throw panic(l, "null type");
+	}
+	switch (t.nodeType) {
+	case ir.NodeType.TypeReference:
+		auto tr = cast(ir.TypeReference) t;
+		return getDefaultInit(l, lp, current, tr.type);
+	case ir.NodeType.Enum:
+		auto e = cast(ir.Enum) t;
+		return getDefaultInit(l, lp, current, e.base);
+	case ir.NodeType.PrimitiveType:
+		auto pt = cast(ir.PrimitiveType) t;
+		if (pt.type == ir.PrimitiveType.Kind.Float) {
+			return buildConstantFloat(l, 0.0f);
+		} else if (pt.type == ir.PrimitiveType.Kind.Double || pt.type == ir.PrimitiveType.Kind.Real) {
+			return buildConstantDouble(l, 0.0);
+		} else {
+			return buildCastSmart(l, t, buildConstantInt(l, 0));
+		}
+	case ir.NodeType.ArrayType:
+	case ir.NodeType.StaticArrayType:
+		return buildArrayLiteralSmart(l, t, []);
+	case ir.NodeType.PointerType:
+	case ir.NodeType.Class:
+	case ir.NodeType.DelegateType:
+	case ir.NodeType.AAType:
+	case ir.NodeType.Interface:
+		return buildConstantNull(l, t);
+	case ir.NodeType.Struct:
+	case ir.NodeType.Union:
+		auto _struct = cast(ir.Aggregate) t;
+		ir.Exp[] exps;
+		foreach (n; _struct.members.nodes) {
+			auto var = cast(ir.Variable) n;
+			if (var is null || var is _struct.typeInfo) {
+				continue;
+			}
+			exps ~= getDefaultInit(l, lp, current, var.type);
+		}
+		if (t.nodeType == ir.NodeType.Union) {
+			return buildUnionLiteralSmart(l, _struct, exps);
+		} else {
+			return buildStructLiteralSmart(l, _struct, exps);
+		}
+	default:
+		throw panicUnhandled(l, format("%s", t.nodeType));
+	}
 }

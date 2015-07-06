@@ -18,6 +18,19 @@ import volt.semantic.util;
 import volt.semantic.overload;
 import volt.semantic.typeinfo;
 
+void actualizeInterface(LanguagePass lp, ir._Interface i)
+{
+	foreach (childI; i.interfaces) {
+		auto iface = cast(ir._Interface) lookupType(lp, i.myScope.parent, childI);
+		if (iface is null) {
+			throw makeExpected(childI, "interface");
+		}
+		lp.actualize(iface);
+		i.parentInterfaces ~= iface;
+	}
+	fillInInterfaceLayoutIfNeeded(lp, i);
+	i.isActualized = true;
+}
 
 void actualizeClass(LanguagePass lp, ir.Class c)
 {
@@ -29,7 +42,8 @@ void actualizeClass(LanguagePass lp, ir.Class c)
 		lp.actualize(c.parentClass);
 	}
 
-	fillInClassLayoutIfNeeded(c, lp);
+	fillInInterfacesIfNeeded(lp, c);
+	fillInClassLayoutIfNeeded(lp, c);
 
 	c.isActualized = true;
 
@@ -99,11 +113,22 @@ bool rewriteSuperCallIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, Langu
  *
  */
 
+/**
+ * Fills in _Interface.layoutStruct.
+ */
+void fillInInterfaceLayoutIfNeeded(LanguagePass lp, ir._Interface i)
+{
+	if (i.layoutStruct !is null) {
+		return;
+	}
+
+	i.layoutStruct = getInterfaceLayoutStruct(i, lp);
+}
 
 /**
  * Fills in Class.layoutStruct and Class.vtableStruct.
  */
-void fillInClassLayoutIfNeeded(ir.Class c, LanguagePass lp)
+void fillInClassLayoutIfNeeded(LanguagePass lp, ir.Class c)
 {
 	if (c.layoutStruct !is null) {
 		return;
@@ -123,27 +148,49 @@ void fillInParentIfNeeded(LanguagePass lp, ir.Class c)
 
 	ir.Class parent;
 
-	/// @todo one interface will be parsed into parent, remove it then do this.
-	if (c.parent is null) {
+	void fillNullParent() {
 		c.parent = buildQualifiedName(c.location, ["object", "Object"]);
 		parent = lp.objectClass;
+	}
+
+	if (c.parent is null) {
+		fillNullParent();
 	} else {
 		// Use surrounding scope, and not this unresolved class.
-		parent = cast(ir.Class) lookupType(lp, c.myScope.parent, c.parent);
-		if (parent is null) {
-			throw makeExpected(c.parent, "class");
+		auto ptype = lookupType(lp, c.myScope.parent, c.parent);
+		auto iface = cast(ir._Interface) ptype;
+		if (iface !is null) {
+			// If there's only one parent listed, the parser puts the interface in the parent slot.
+			c.interfaces ~= c.parent;
+			fillNullParent();
+		} else {
+			parent = cast(ir.Class) ptype;
+			if (parent is null) {
+				throw makeExpected(c.parent, "class");
+			}
 		}
 	}
 
 	c.parentClass = parent;
 }
 
-ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class)
+void fillInInterfacesIfNeeded(LanguagePass lp, ir.Class c)
+{
+	foreach (ifaceName; c.interfaces) {
+		auto iface = cast(ir._Interface) lookupType(lp, c.myScope.parent, ifaceName);
+		if (iface is null) {
+			throw makeExpected(ifaceName, "interface");
+		}
+		lp.actualize(iface);
+		c.parentInterfaces ~= iface;
+	}
+}
+
+ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class, size_t offset)
 {
 	ir.Variable[] fields;
 	if (_class.parentClass !is null) {
-
-		fields ~= getClassFields(lp, _class.parentClass);
+		fields ~= getClassFields(lp, _class.parentClass, offset);
 	}
 	foreach (node; _class.members.nodes) {
 		auto asVar = cast(ir.Variable) node;
@@ -154,7 +201,24 @@ ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class)
 			continue;
 		}
 		lp.resolve(_class.myScope, asVar);
+		offset += size(_class.location, lp, asVar);
 		fields ~= copyVariableSmart(asVar.location, asVar);
+	}
+	assert(_class.interfaces.length == _class.parentInterfaces.length);
+	void addOffset(ir._Interface iface)
+	{
+		_class.interfaceOffsets ~= offset;
+		offset += size(_class.location, lp, buildSizeT(_class.location, lp));
+		auto var = buildVariableSmart(_class.location, buildPtrSmart(_class.location, iface.layoutStruct), ir.Variable.Storage.Field, mangle(iface));
+		fields ~= var;
+		assert(iface.interfaces.length == iface.parentInterfaces.length);
+		foreach (piface; iface.parentInterfaces) {
+			addOffset(piface);
+		}
+	}
+
+	foreach (iface; _class.parentInterfaces) {
+		addOffset(iface);
 	}
 	return fields;
 }
@@ -212,6 +276,24 @@ ir.Function[][] getClassMethods(LanguagePass lp, ir.Scope current, ir.Class _cla
 	}
 
 	return methods;
+}
+
+ir.Function[] getInterfaceMethods(LanguagePass lp, ir._Interface iface)
+{
+	ir.Function[] functions;
+	foreach (node; iface.members.nodes) {
+		auto asFunction =  cast(ir.Function) node;
+		if (asFunction is null) {
+			continue;
+		}
+		lp.resolve(iface.myScope, asFunction);
+		functions ~= asFunction;
+	}
+	assert(iface.interfaces.length == iface.parentInterfaces.length);
+	foreach (piface; iface.parentInterfaces) {
+		functions ~= getInterfaceMethods(lp, piface);
+	}
+	return functions;
 }
 
 ir.Function[] getClassMethodFunctions(LanguagePass lp, ir.Class _class)
@@ -338,6 +420,20 @@ ir.Exp[] getClassMethodAddrOfs(LanguagePass lp, ir.Class _class)
 	return addrs;
 }
 
+ir.Struct getInterfaceLayoutStruct(ir._Interface iface, LanguagePass lp)
+{
+	auto l = iface.location;
+	ir.Variable[] fields;
+	fields ~= buildVariableSmart(l, buildSizeT(l, lp), ir.Variable.Storage.Field, "__offset");
+	auto methods = getInterfaceMethods(lp, iface);
+	foreach (method; methods) {
+		fields ~= buildVariableSmart(l, copyTypeSmart(l, method.type), ir.Variable.Storage.Field, mangle(null, method));
+	}
+	auto layoutStruct = buildStruct(l, iface.members, iface.myScope, "__ifaceVtable", fields);
+	layoutStruct.loweredNode = iface;
+	return layoutStruct;
+}
+
 ir.Struct getClassLayoutStruct(ir.Class _class, LanguagePass lp, ref ir.Struct vtableStruct)
 {
 	auto methodTypes = getClassMethodTypeVariables(lp, _class);
@@ -347,7 +443,7 @@ ir.Struct getClassLayoutStruct(ir.Class _class, LanguagePass lp, ref ir.Struct v
 	vtableStruct = buildStruct(_class.location, _class.members, _class.myScope, "__Vtable", tinfos ~ methodTypes);
 	auto vtableVar = buildVariableSmart(_class.location, buildPtrSmart(_class.location, vtableStruct), ir.Variable.Storage.Field, "__vtable");
 
-	auto fields = getClassFields(lp, _class);
+	auto fields = getClassFields(lp, _class, /* Account for the vtable: */ size(_class.location, lp, buildSizeT(_class.location, lp)));
 	fields = vtableVar ~ fields;
 
 	auto layoutStruct = buildStruct(_class.location, _class.members, _class.myScope, "__layoutStruct", fields);
@@ -382,22 +478,138 @@ ir.Exp[] getTypeInfos(ir.Class[] classes)
 	return tinfos;
 }
 
+/// For a given interface, return every function that needs to be implemented by an implementor.
+ir.Function[] getInterfaceFunctions(LanguagePass lp, ir._Interface iface)
+{
+	assert(iface.parentInterfaces.length == iface.interfaces.length);
+	ir.Function[] fns;
+	foreach (node; iface.members.nodes) {
+		auto fn = cast(ir.Function) node;
+		if (fn is null) {
+			continue;
+		}
+		fns ~= fn;
+	}
+	foreach (piface; iface.parentInterfaces) {
+		fns ~= getInterfaceFunctions(lp, piface);
+	}
+	return fns;
+}
+
+/// Get a struct literal with an implementation of an interface from a given class.
+ir.Exp getInterfaceStructAssign(LanguagePass lp, ir.Class _class, ir.Scope _scope, ir._Interface iface, size_t ifaceIndex)
+{
+	assert(iface.layoutStruct !is null);
+	auto l = _class.location;
+	ir.Exp[] exps;
+	exps ~= buildConstantSizeT(l, lp, cast(int) _class.interfaceOffsets[ifaceIndex]);
+	auto fns = getInterfaceFunctions(lp, iface);
+
+	foreach (fn; fns) {
+		auto store = lookupAsThisScope(lp, _scope, l, fn.name);
+		if (store is null || !containsMatchingFunction(store.functions, fn)) {
+			throw makeDoesNotImplement(l, _class, iface, fn);
+		}
+		foreach (sfn; store.functions) {
+			lp.resolve(_scope, sfn);
+			if (mangle(null, sfn) != mangle(null, fn)) {
+				continue;
+			}
+			auto eref = buildExpReference(l, sfn, mangle(null, sfn));
+			eref.rawReference = true;
+			exps ~= eref;
+		}
+	}
+	return buildStructLiteralSmart(l, iface.layoutStruct, exps);
+}
+
+void buildInstanceVariable(LanguagePass lp, ir.Class _class)
+{
+	bool fromInterface(ir.Type t) {
+		auto ptr = cast(ir.PointerType) t;
+		if (ptr !is null) {
+			auto tr = cast(ir.TypeReference) ptr.base;
+			if (tr !is null) {
+				auto str = cast(ir.Struct) tr.type;
+				if (str !is null && str.loweredNode !is null) {
+					return (cast(ir._Interface) str.loweredNode) !is null;
+				}
+			}
+		}
+		return false;
+	}
+
+	auto l = _class.location;
+	_class.initVariable = buildVariableSmart(l, _class.layoutStruct, ir.Variable.Storage.Global, "__cinit");
+
+	ir.Exp[] exps;
+	exps ~= buildAddrOf(l, _class.vtableVariable, _class.vtableVariable.name);
+
+	ir.Variable[] ifaceVars;
+	auto classes = getInheritanceChain(_class);
+	foreach (c; classes) {
+		ifaceVars ~= c.ifaceVariables;
+	}
+	size_t ifaceIndex;
+
+	foreach (i, node; _class.layoutStruct.members.nodes[1 .. $]) {
+		auto var = cast(ir.Variable) node;
+		if (var is null) {
+			throw panic(l, "expected variable in layout struct");
+		}
+		if (fromInterface(var.type)) {
+			auto iv = _class.ifaceVariables[ifaceIndex++];
+			exps ~= buildAddrOf(l, iv, iv.name);
+			continue;
+		}
+		exps ~= getDefaultInit(l, lp, _class.myScope, var.type);
+	}
+
+	_class.initVariable.assign = buildStructLiteralSmart(l, _class.layoutStruct, exps);
+	_class.members.nodes ~= _class.initVariable;
+	_class.myScope.addValue(_class.initVariable, _class.initVariable.name);
+}
+
 void emitVtableVariable(LanguagePass lp, ir.Class _class)
 {
+	auto l = _class.location;
 	auto addrs = getClassMethodAddrOfs(lp, _class);
 	auto tinfo = lp.typeInfoClass;
-	auto chain = getInheritanceChain(_class);
-	auto tinfos = getTypeInfos(chain);
-	auto tinfosArr = buildArrayLiteralSmart(_class.location, buildArrayTypeSmart(_class.location, tinfo), tinfos);
+	auto classes = getInheritanceChain(_class);
+	auto tinfos = getTypeInfos(classes);
+	auto tinfosArr = buildArrayLiteralSmart(l, buildArrayTypeSmart(l, tinfo), tinfos);
+
+	assert(_class.interfaces.length == _class.parentInterfaces.length);
+	void addInterfaceInstance(ir._Interface iface, ir.Class fromParent, size_t i)
+	{
+		auto var = buildVariableSmart(l, iface.layoutStruct, ir.Variable.Storage.Global, format("__iface%s_instance", mangle(iface)));
+		var.mangledName = "_V__Interface_" ~ mangle(iface);
+		var.assign = getInterfaceStructAssign(lp, fromParent, _class.myScope, iface, i);
+		_class.members.nodes ~= var;
+		_class.myScope.addValue(var, var.name);
+		_class.ifaceVariables ~= var;
+		assert(iface.interfaces.length == iface.parentInterfaces.length);
+		foreach (j, piface; iface.parentInterfaces) {
+			addInterfaceInstance(piface, fromParent, i + (j + 1));
+		}
+	}
+
+	foreach (c; classes) {
+		foreach (i, iface; c.parentInterfaces) {
+			addInterfaceInstance(iface, c, i);
+		}
+	}
 
 	auto assign = new ir.StructLiteral();
-	assign.location = _class.location;
+	assign.location = l;
 	assign.exps = tinfosArr ~ addrs;
-	assign.type = copyTypeSmart(_class.location, _class.vtableStruct);
+	assign.type = copyTypeSmart(l, _class.vtableStruct);
 
-	_class.vtableVariable = buildVariableSmart(_class.location, _class.vtableStruct, ir.Variable.Storage.Global, "__vtable_instance");
+	_class.vtableVariable = buildVariableSmart(l, _class.vtableStruct, ir.Variable.Storage.Global, "__vtable_instance");
 	_class.vtableVariable.mangledName = "_V__Vtable_" ~ mangle(_class);
 	_class.vtableVariable.assign = assign;
 	_class.members.nodes ~= _class.vtableVariable;
 	_class.myScope.addValue(_class.vtableVariable, _class.vtableVariable.name);
+
+	buildInstanceVariable(lp, _class);
 }

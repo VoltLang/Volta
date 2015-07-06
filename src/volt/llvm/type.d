@@ -14,6 +14,7 @@ import volt.llvm.constant;
 import volt.llvm.interfaces;
 static import volt.semantic.mangle;
 static import volt.semantic.classify;
+static import volt.semantic.typer;
 
 
 /**
@@ -545,8 +546,9 @@ public:
 		LLVMValueRef[] vals;
 		vals.length = indices.length;
 
-		if (vals.length != sl.exps.length)
+		if (vals.length != sl.exps.length) {
 			throw panic("struct literal has the wrong number of initializers");
+		}
 
 		foreach(uint i, ref val; vals) {
 			val = state.getConstant(sl.exps[i]);

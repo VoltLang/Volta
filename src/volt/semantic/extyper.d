@@ -30,6 +30,7 @@ import volt.semantic.ctfe;
 import volt.semantic.overload;
 import volt.semantic.nested;
 import volt.semantic.context;
+import volt.semantic.mangle;
 
 /**
  * Returns true if argument converts into parameter.
@@ -68,8 +69,22 @@ bool willConvert(ir.Type argument, ir.Type parameter)
 	case TypeReference:
 		assert(false);
 	case Class:
+		bool implements(ir._Interface _iface, ir.Class _class)
+		{
+			foreach (i; _class.parentInterfaces) {
+				if (i is _iface) {
+					return true;
+				}
+			}
+			return false;
+		}
 		auto lclass = cast(ir.Class) ifTypeRefDeRef(parameter);
+		auto liface = cast(ir._Interface) ifTypeRefDeRef(parameter);
 		auto rclass = cast(ir.Class) ifTypeRefDeRef(argument);
+		auto riface = cast(ir._Interface) ifTypeRefDeRef(argument);
+		if ((liface !is null && rclass !is null) || (lclass !is null && riface !is null)) {
+			return implements(liface is null ? riface : liface, lclass is null ? rclass : lclass);
+		}
 		if (lclass is null || rclass is null) {
 			return false;
 		}
@@ -266,8 +281,6 @@ void extypeAssignPointerType(Context ctx, ref ir.Exp exp, ir.PointerType ptr, ui
 	assert(pcopy !is null);
 	stripPointerBases(pcopy, flag);
 
-
-
 	auto type = ctx.overrideType !is null ? ctx.overrideType : realType(getExpType(ctx.lp, exp, ctx.current));
 
 	auto storage = cast(ir.StorageType) type;
@@ -281,7 +294,6 @@ void extypeAssignPointerType(Context ctx, ref ir.Exp exp, ir.PointerType ptr, ui
 	}
 	ir.PointerType rcopy = cast(ir.PointerType) copyTypeSmart(exp.location, rp);
 	assert(rcopy !is null);
-
 
 	auto pbase = realBase(pcopy);
 	auto rbase = realBase(rcopy);
@@ -737,6 +749,10 @@ void extypeAssignDispatch(Context ctx, ref ir.Exp exp, ir.Type type)
 		auto aatype = cast(ir.AAType) type;
 		extypeAssignAAType(ctx, exp, aatype);
 		break;
+	case ir.NodeType.Interface:
+		auto iface = cast(ir._Interface) type;
+		extypeAssignInterface(ctx, exp, iface);
+		break;
 	case ir.NodeType.Struct:
 	case ir.NodeType.Union:
 		auto rtype = getExpType(ctx.lp, exp, ctx.current);
@@ -747,6 +763,57 @@ void extypeAssignDispatch(Context ctx, ref ir.Exp exp, ir.Type type)
 	default:
 		throw panicUnhandled(exp, to!string(type.nodeType));
 	}
+}
+
+void extypeAssignInterface(Context ctx, ref ir.Exp exp, ir._Interface iface)
+{
+	auto type = realType(getExpType(ctx.lp, exp, ctx.current));
+
+	auto eiface = cast(ir._Interface)type;
+	if (eiface !is null) {
+		if (typesEqual(iface, eiface)) {
+			return;
+		} else {
+			throw panic(exp.location, "todo interface to different interface.");
+		}
+	}
+
+	auto ctype = cast(ir.Class) type;
+	if (ctype is null) {
+		throw makeExpected(exp.location, "class");
+	}
+	bool checkInterface(ir._Interface i)
+	{
+		if (i is iface) {
+			exp = buildCastSmart(exp.location, i, exp);
+			return true;
+		}
+		foreach (piface; i.parentInterfaces) {
+			if (checkInterface(piface)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	bool checkClass(ir.Class _class)
+	{
+		if (_class is null) {
+			return false;
+		}
+		foreach (i, classIface; _class.parentInterfaces) {
+			if (checkInterface(classIface)) {
+				return true;
+			}
+		}
+		if (checkClass(_class.parentClass)) {
+			return true;
+		}
+		return false;
+	}
+	if (checkClass(ctype)) {
+		return;
+	}
+	throw makeBadImplicitCast(exp, type, iface);
 }
 
 void extypePass(Context ctx, ref ir.Exp exp, ir.Type type)
@@ -3317,6 +3384,7 @@ public:
 
 	override Status enter(ir._Interface i)
 	{
+		ctx.lp.actualize(i);
 		ctx.enter(i);
 		return Continue;
 	}
