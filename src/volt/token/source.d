@@ -129,6 +129,21 @@ public:
 		while (next() != '\n' && !eof) {}
 	}
 
+	dchar decodeChar()
+	{
+		size_t tmpIndex = mIndex;
+		return decodeChar(tmpIndex);
+	}
+
+	dchar decodeChar(ref size_t index)
+	{
+		if (mIndex >= source.length) {
+			return dchar.init;
+		}
+
+		return decode(source, index);
+	}
+
 	/**
 	 * Get the next unicode character.
 	 *
@@ -146,9 +161,9 @@ public:
 	 */
 	dchar next()
 	{
-		if (mIndex >= source.length) {
+		mChar = decodeChar(mIndex);
+		if (mChar == dchar.init) {
 			eof = true;
-			mChar = dchar.init;
 			return mChar;
 		}
 
@@ -157,7 +172,6 @@ public:
 			location.column = 0;
 		}
 
-		mChar = decode(source, mIndex);
 		location.column++;
 
 		return mChar;
@@ -191,10 +205,9 @@ public:
 	{
 		if (n == 0) return mChar;
 
-		size_t tmpIndex = mIndex;
-		for(int i; i < n; i++) {
-			dchar c = decode(source, tmpIndex);
-			if (tmpIndex >= source.length) {
+		for (int i; i < n; i++) {
+			dchar c = decodeChar();
+			if (c == dchar.init) {
 				lookaheadEOF = true;
 				return dchar.init;
 			}
