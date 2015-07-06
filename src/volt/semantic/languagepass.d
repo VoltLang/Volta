@@ -100,17 +100,12 @@ public:
 	 */
 	void setupOneTruePointers()
 	{
-		objectModule = getModule(buildQualifiedName(Location(), "object"));
+		objectModule =
+			getModule(buildQualifiedName(Location(), "object"));
 		if (objectModule is null) {
 			throw panic("could not find object module");
 		}
 
-		void check(ir.Node n, string name)
-		{
-			if (n is null) {
-				throw panic(format("can't find runtime object '%s'.", name));
-			}
-		}
 
 		// Run postParse passes so we can lookup things.
 		phase1(objectModule);
@@ -119,85 +114,92 @@ public:
 			return;
 		}
 
-		// Get the classes.
+		// The object module scope from which we should get everthing
+		// from, setup this here for convinience.
 		auto s = objectModule.myScope;
-		objectClass = cast(ir.Class)s.getStore("Object").node;
-		check(objectClass, "Object");
-		typeInfoClass = cast(ir.Class)s.getStore("TypeInfo").node;
-		check(typeInfoClass, "TypeInfo");
-		attributeClass = cast(ir.Class)s.getStore("Attribute").node;
-		check(attributeClass, "Attribute");
-		assertErrorClass = cast(ir.Class)s.getStore("AssertError").node;
-		check(assertErrorClass, "AssertError");
-		arrayStruct = cast(ir.Struct)s.getStore("ArrayStruct").node;
-		check(arrayStruct, "ArrayStruct");
-		allocDgVariable = cast(ir.Variable)s.getStore("allocDg").node;
-		check(allocDgVariable, "allocDg");
 
-		// VA
-		vaStartFunc = cast(ir.Function)s.getStore("__volt_va_start").node;
-		check(vaStartFunc, "__volt_va_start");
-		vaEndFunc = cast(ir.Function)s.getStore("__volt_va_end").node;
-		check(vaEndFunc, "__volt_va_end");
-		vaCStartFunc = cast(ir.Function)s.getStore("__llvm_volt_va_start").node;
-		check(vaCStartFunc, "__llvm_volt_va_start");
-		vaCEndFunc = cast(ir.Function)s.getStore("__llvm_volt_va_end").node;
-		check(vaCEndFunc, "__llvm_volt_va_end");
-
-		// Util
-		hashFunc = cast(ir.Function)s.getStore("vrt_hash").node;
-		check(hashFunc, "vrt_hash");
-		castFunc = cast(ir.Function)s.getStore("vrt_handle_cast").node;
-		check(castFunc, "vrt_handle_cast");
-		printfFunc = cast(ir.Function)s.getStore("vrt_printf").node;
-		check(printfFunc, "vrt_printf");
-		memcpyFunc = cast(ir.Function)s.getStore("__llvm_memcpy_p0i8_p0i8_i32").node;
-		check(memcpyFunc, "__llvm_memcpy_p0i8_p0i8_i32");
-		memcmpFunc = cast(ir.Function)s.getStore("vrt_memcmp").node;
-		check(memcmpFunc, "vrt_memcmp");
-
-		// EH
-		ehThrowFunc = cast(ir.Function)s.getStore("vrt_eh_throw").node;
-		check(ehThrowFunc, "vrt_eh_throw");
-		ehThrowSliceErrorFunc = cast(ir.Function)s.getStore("vrt_eh_throw_slice_error").node;
-		check(ehThrowSliceErrorFunc, "vrt_eh_throw_slice_error");
-		ehPersonalityFunc = cast(ir.Function)s.getStore("vrt_eh_personality_v0").node;
-		check(ehPersonalityFunc, "vrt_eh_personality_v0");
-
-		// AA
-		aaGetKeys = cast(ir.Function)s.getStore("vrt_aa_get_keys").node;
-		check(aaGetKeys, "vrt_aa_get_keys");
-		aaGetValues = cast(ir.Function)s.getStore("vrt_aa_get_values").node;
-		check(aaGetValues, "vrt_aa_get_values");
-		aaGetLength = cast(ir.Function)s.getStore("vrt_aa_get_length").node;
-		check(aaGetLength, "vrt_aa_get_length");
-		aaInArray = cast(ir.Function)s.getStore("vrt_aa_in_binop_array").node;
-		check(aaInArray, "vrt_aa_in_binop_array");
-		aaInPrimitive = cast(ir.Function)s.getStore("vrt_aa_in_binop_primitive").node;
-		check(aaInPrimitive, "vrt_aa_in_binop_primitive");
-		aaRehash = cast(ir.Function)s.getStore("vrt_aa_rehash").node;
-		check(aaRehash, "vrt_aa_rehash");
-		aaGetPP = cast(ir.Function)s.getStore("vrt_aa_get_pp").node;
-		check(aaGetPP, "vrt_aa_get_pp");
-		aaGetAA = cast(ir.Function)s.getStore("vrt_aa_get_aa").node;
-		check(aaGetAA, "vrt_aa_get_aa");
-		aaGetAP = cast(ir.Function)s.getStore("vrt_aa_get_ap").node;
-		check(aaGetAP, "vrt_aa_get_ap");
-		aaGetPA = cast(ir.Function)s.getStore("vrt_aa_get_pa").node;
-		check(aaGetPA, "vrt_aa_get_pa");
-		aaDeletePrimitive = cast(ir.Function)s.getStore("vrt_aa_delete_primitive").node;
-		check(aaDeletePrimitive, "vrt_aa_delete_primitive");
-		aaDeleteArray = cast(ir.Function)s.getStore("vrt_aa_delete_array").node;
-		check(aaDeleteArray, "vrt_aa_delete_array");
-		aaDup = cast(ir.Function)s.getStore("vrt_aa_dup").node;
-		check(aaDup, "vrt_aa_dup");
+		void check(ir.Node n, string name)
+		{
+			if (n is null) {
+				throw panicRuntimeObjectNotFound(name);
+			}
+		}
 
 		ir.EnumDeclaration getEnum(string name)
 		{
 			auto ed = cast(ir.EnumDeclaration)s.getStore(name).node;
-			assert(ed !is null);
+			check(ed, name);
 			return ed;
 		}
+
+		ir.Class getClass(string name)
+		{
+			auto clazz = cast(ir.Class)s.getStore(name).node;
+			check(clazz, name);
+			return clazz;
+		}
+
+		ir.Function getFunction(string name)
+		{
+			auto fn = cast(ir.Function)s.getStore(name).node;
+			check(fn, name);
+			return fn;
+		}
+
+		ir.Variable getVar(string name)
+		{
+			auto var = cast(ir.Variable)s.getStore(name).node;
+			check(var, name);
+			return var;
+		}
+
+		ir.Struct getStruct(string name)
+		{
+			auto _struct = cast(ir.Struct)s.getStore(name).node;
+			check(_struct, name);
+			return _struct;
+		}
+
+		// Get the classes.
+		objectClass = getClass("Object");
+		typeInfoClass = getClass("TypeInfo");
+		attributeClass = getClass("Attribute");
+		assertErrorClass = getClass("AssertError");
+		arrayStruct = getStruct("ArrayStruct");
+		allocDgVariable = getVar("allocDg");
+
+		// VA
+		vaStartFunc = getFunction("__volt_va_start");
+		vaEndFunc = getFunction("__volt_va_end");
+		vaCStartFunc = getFunction("__llvm_volt_va_start");
+		vaCEndFunc = getFunction("__llvm_volt_va_end");
+
+		// Util
+		hashFunc = getFunction("vrt_hash");
+		castFunc = getFunction("vrt_handle_cast");
+		printfFunc = getFunction("vrt_printf");
+		memcpyFunc = getFunction("__llvm_memcpy_p0i8_p0i8_i32");
+		memcmpFunc = getFunction("vrt_memcmp");
+
+		// EH
+		ehThrowFunc = getFunction("vrt_eh_throw");
+		ehThrowSliceErrorFunc = getFunction("vrt_eh_throw_slice_error");
+		ehPersonalityFunc = getFunction("vrt_eh_personality_v0");
+
+		// AA
+		aaGetKeys = getFunction("vrt_aa_get_keys");
+		aaGetValues = getFunction("vrt_aa_get_values");
+		aaGetLength = getFunction("vrt_aa_get_length");
+		aaInArray = getFunction("vrt_aa_in_binop_array");
+		aaInPrimitive = getFunction("vrt_aa_in_binop_primitive");
+		aaRehash = getFunction("vrt_aa_rehash");
+		aaGetPP = getFunction("vrt_aa_get_pp");
+		aaGetAA = getFunction("vrt_aa_get_aa");
+		aaGetAP = getFunction("vrt_aa_get_ap");
+		aaGetPA = getFunction("vrt_aa_get_pa");
+		aaDeletePrimitive = getFunction("vrt_aa_delete_primitive");
+		aaDeleteArray = getFunction("vrt_aa_delete_array");
+		aaDup = getFunction("vrt_aa_dup");
 
 		TYPE_STRUCT = getEnum("TYPE_STRUCT");
 		TYPE_CLASS = getEnum("TYPE_CLASS");

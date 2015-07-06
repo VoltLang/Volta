@@ -665,6 +665,11 @@ CompilerException panic(string msg, string file = __FILE__, size_t line = __LINE
 	return new CompilerPanic(msg, file, line);
 }
 
+CompilerException panicRuntimeObjectNotFound(string name, string file = __FILE__, size_t line = __LINE__)
+{
+	return panic(format("can't find runtime object '%s'.", name), file, line);
+}
+
 CompilerException panicUnhandled(ir.Node node, string unhandled, string file = __FILE__, size_t line = __LINE__)
 {
 	return panicUnhandled(node.location, unhandled, file, line);
