@@ -94,6 +94,7 @@ public:
 			case MixinStatement:
 			case UserAttribute:
 			case EnumDeclaration:
+			case EmptyTopLevel:
 			case EmptyStatement:
 				auto s = accept(n, this);
 				if (s == Stop)
