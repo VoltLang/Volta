@@ -828,6 +828,7 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
  */
 ir.Type removeRefAndOut(ir.Type type)
 {
+	assert(type !is null);
 	auto stype = cast(ir.StorageType)type;
 	if (stype is null) {
 		return type;
@@ -839,7 +840,7 @@ ir.Type removeRefAndOut(ir.Type type)
 	outType.type = stype.type;
 	outType.location = type.location;
 	outType.isCanonical = stype.isCanonical;
-	outType.base = removeRefAndOut(outType.base);
+	outType.base = removeRefAndOut(stype.base);
 	return outType;
 }
 
