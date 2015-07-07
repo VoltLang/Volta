@@ -266,7 +266,7 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 	}
 
 	if (throwOnError) {
-		if (matchedFunctions.length > 1) {
+		if (matchedFunctions.length > 1 && highestMatchLevel > 1) {
 			throw makeMultipleFunctionsMatch(location, matchedFunctions);
 		} else {
 			throw makeCannotDisambiguate(location, matchedFunctions);
