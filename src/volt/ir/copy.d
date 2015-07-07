@@ -147,7 +147,7 @@ ir.Unary copy(ir.Unary unary)
 	newunary.hasArgumentList = unary.hasArgumentList;
 	newunary.fullShorthand = unary.fullShorthand;
 	if (unary.type !is null) {
-		newunary.type = copyTypeSmart(unary.type.location, unary.type);
+		newunary.type = copyType(unary.type);
 	}
 	newunary.argumentList.length = unary.argumentList.length;
 	foreach (size_t i, arg; unary.argumentList) {
