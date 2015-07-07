@@ -151,18 +151,18 @@ ir.Type copyTypeSmart(Location loc, ir.Type type)
 	switch (type.nodeType) with (ir.NodeType) {
 	case PrimitiveType:
 		auto pt = cast(ir.PrimitiveType)type;
-		pt.location = loc;
 		pt = new ir.PrimitiveType(pt.type);
+		pt.location = loc;
 		return pt;
 	case PointerType:
 		auto pt = cast(ir.PointerType)type;
-		pt.location = loc;
 		pt = new ir.PointerType(copyTypeSmart(loc, pt.base));
+		pt.location = loc;
 		return pt;
 	case ArrayType:
 		auto at = cast(ir.ArrayType)type;
-		at.location = loc;
 		at = new ir.ArrayType(copyTypeSmart(loc, at.base));
+		at.location = loc;
 		return at;
 	case StaticArrayType:
 		auto asSat = cast(ir.StaticArrayType)type;
