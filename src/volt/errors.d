@@ -641,6 +641,10 @@ CompilerException makeCannotLoadDynamic(ir.Node node, ir.Function fn, string fil
 	return new CompilerError(node.location, "can not @loadDynamic function with body", file, line);
 }
 
+CompilerException makeMultipleFunctionsMatch(ir.Location location, ir.Function[] functions, string file = __FILE__, size_t line = __LINE__)
+{
+	return new CompilerError(location, format("%s overloaded functions match call.", functions.length), file, line);
+}
 
 /*
  *

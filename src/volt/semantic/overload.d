@@ -263,7 +263,11 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 	}
 
 	if (throwOnError) {
-		throw makeCannotDisambiguate(location, matchedFunctions);
+		if (matchedFunctions.length > 1) {
+			throw makeMultipleFunctionsMatch(location, matchedFunctions);
+		} else {
+			throw makeCannotDisambiguate(location, matchedFunctions);
+		}
 	} else {
 		return null;
 	}
