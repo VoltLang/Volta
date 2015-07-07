@@ -46,7 +46,6 @@ enum NodeType
 	Enum,
 	Attribute,
 	StaticAssert,
-	EmptyTopLevel,
 	Condition,
 	ConditionTopLevel,
 	MixinFunction,
@@ -98,7 +97,6 @@ enum NodeType
 	ThrowStatement,
 	ScopeStatement,
 	PragmaStatement,
-	EmptyStatement,
 	ConditionStatement,
 	MixinStatement,
 	AssertStatement,
@@ -304,7 +302,6 @@ string nodeToString(NodeType nodeType)
 	case EnumDeclaration: return "EnumDeclaration";
 	case Attribute: return "Attribute";
 	case StaticAssert: return "StaticAssert";
-	case EmptyTopLevel: return "EmptyTopLevel";
 	case MixinFunction: return "MixinFunction";
 	case MixinTemplate: return "MixinTemplate";
 	case Condition: return "Condition";
@@ -350,7 +347,6 @@ string nodeToString(NodeType nodeType)
 	case ThrowStatement: return "ThrowStatement";
 	case ScopeStatement: return "ScopeStatement";
 	case PragmaStatement: return "PragmaStatement";
-	case EmptyStatement: return "EmptyStatement";
 	case ConditionStatement: return "ConditionStatement";
 	case MixinStatement: return "MixinStatement";
 	case AssertStatement: return "AssertStatement";

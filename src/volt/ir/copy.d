@@ -432,7 +432,6 @@ ir.Node copyNode(ir.Node n)
 	case MixinTemplate:
 	case MixinFunction:
 	case UserAttribute:
-	case EmptyTopLevel:
 	case Condition:
 	case ConditionTopLevel:
 	case FunctionDecl:
@@ -460,7 +459,6 @@ ir.Node copyNode(ir.Node n)
 	case ThrowStatement:
 	case ScopeStatement:
 	case PragmaStatement:
-	case EmptyStatement:
 	case ConditionStatement:
 	case MixinStatement:
 	case AssertStatement:

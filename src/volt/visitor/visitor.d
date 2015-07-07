@@ -63,7 +63,6 @@ public abstract:
 	Status enter(ir.UserAttribute ui);
 	Status leave(ir.UserAttribute ui);
 
-	Status visit(ir.EmptyTopLevel empty);
 	Status visit(ir.QualifiedName qname);
 	Status visit(ir.Identifier name);
 
@@ -117,7 +116,6 @@ public abstract:
 	
 	Status visit(ir.BreakStatement bs);
 	Status visit(ir.ContinueStatement cs);
-	Status visit(ir.EmptyStatement es);
 
 	/*
 	 * Declaration
@@ -241,7 +239,6 @@ override:
 	Status leave(ir.ConditionTopLevel ctl){ return Continue; }
 	Status enter(ir.UserAttribute ui){ return Continue; }
 	Status leave(ir.UserAttribute ui){ return Continue; }
-	Status visit(ir.EmptyTopLevel empty){ return Continue; }
 	Status enter(ir.MixinFunction mf){ return Continue; }
 	Status leave(ir.MixinFunction mf){ return Continue; }
 	Status enter(ir.MixinTemplate mt){ return Continue; }
@@ -299,7 +296,6 @@ override:
 	
 	Status visit(ir.ContinueStatement cs){ return Continue; }
 	Status visit(ir.BreakStatement bs){ return Continue; }
-	Status visit(ir.EmptyStatement es){ return Continue; }
 
 	/*
 	 * Declaration
@@ -450,10 +446,6 @@ Visitor.Status accept(ir.Node n, Visitor av)
 		auto asStaticAssert = cast(ir.StaticAssert) n;
 		assert(asStaticAssert !is null);
 		return acceptStaticAssert(asStaticAssert, av);
-	case EmptyTopLevel:
-		auto asEmpty = cast(ir.EmptyTopLevel) n;
-		assert(asEmpty !is null);
-		return av.visit(asEmpty);
 	case MixinFunction:
 		auto asMf = cast(ir.MixinFunction) n;
 		assert(asMf !is null);
@@ -570,10 +562,6 @@ Visitor.Status accept(ir.Node n, Visitor av)
 		auto asPragma = cast(ir.PragmaStatement) n;
 		assert(asPragma !is null);
 		return acceptPragmaStatement(asPragma, av);
-	case EmptyStatement:
-		auto asEmpty = cast(ir.EmptyStatement) n;
-		assert(asEmpty !is null);
-		return av.visit(asEmpty);
 	case ConditionStatement:
 		auto asCs = cast(ir.ConditionStatement) n;
 		assert(asCs !is null);

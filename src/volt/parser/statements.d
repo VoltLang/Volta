@@ -20,7 +20,9 @@ ir.Statement[] parseStatement(TokenStream ts)
 	scope (exit) eatComments(ts);
 	switch (ts.peek.type) {
 	case TokenType.Semicolon:
-		return [parseEmptyStatement(ts)];
+		match(ts, TokenType.Semicolon);
+		// Just ignore EmptyStatements
+		return [];
 	case TokenType.Return:
 		return [parseReturnStatement(ts)];
 	case TokenType.OpenBrace:
@@ -689,16 +691,6 @@ ir.PragmaStatement parsePragmaStatement(TokenStream ts)
 	ps.block = parseBlockStatement(ts);
 
 	return ps;
-}
-
-ir.EmptyStatement parseEmptyStatement(TokenStream ts)
-{
-	auto es = new ir.EmptyStatement();
-	es.location = ts.peek.location;
-
-	match(ts, TokenType.Semicolon);
-
-	return es;
 }
 
 ir.ConditionStatement parseConditionStatement(TokenStream ts)

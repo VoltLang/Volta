@@ -160,10 +160,8 @@ body
 			}
 			break;
 		case TokenType.Semicolon:
-			auto empty = new ir.EmptyTopLevel();
-			empty.location = ts.peek.location;
+			// Just ignore EmptyTopLevel
 			match(ts, TokenType.Semicolon);
-			tlb.nodes ~= [empty];
 			break;
 		default:
 			tlb.nodes ~= parseVariable(ts);

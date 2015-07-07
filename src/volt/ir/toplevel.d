@@ -475,17 +475,6 @@ public:
 }
 
 /**
- * Is a ";". short and simple.
- *
- * @ingroup irNode irTopLevel
- */
-class EmptyTopLevel : Node
-{
-public:
-	this() { super(NodeType.EmptyTopLevel); }
-}
-
-/**
  * Node represention of a function mixin.
  *
  * @ingroup irNode irTopLevel

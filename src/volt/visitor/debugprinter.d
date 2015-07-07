@@ -195,7 +195,6 @@ public:
 	override Status enter(ir.UserAttribute n) { enterNode(n); return Continue; }
 	override Status leave(ir.UserAttribute n) { leaveNode(n); return Continue; }
 
-	override Status visit(ir.EmptyTopLevel n) { visitNode(n); return Continue; }
 	override Status visit(ir.QualifiedName n) { visitNode(n); return Continue; }
 
 
@@ -277,7 +276,6 @@ public:
 	
 	override Status visit(ir.ContinueStatement n) { enterNode(n); return Continue; }
 	override Status visit(ir.BreakStatement n) { enterNode(n); return Continue; }
-	override Status visit(ir.EmptyStatement n) { visitNode(n); return Continue; }
 
 	/*
 	 * Declaration

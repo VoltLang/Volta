@@ -495,12 +495,6 @@ public:
 		assert(false);
 	}
 
-	override Status visit(ir.EmptyTopLevel empty)
-	{
-		twfln("\n;");
-		return Continue;
-	}
-
 	override Status enter(ir.MixinFunction mf)
 	{
 		ln();
@@ -1118,12 +1112,6 @@ public:
 	override Status leave(ir.PragmaStatement ps)
 	{
 		assert(false);
-	}
-
-	override Status visit(ir.EmptyStatement es)
-	{
-		twfln(";");
-		return Continue;
 	}
 
 	override Status enter(ir.ConditionStatement cs)

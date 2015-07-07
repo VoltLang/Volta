@@ -1,3 +1,5 @@
 Ugly things in the language, compiler, standard library, etc:
 
 EmptyStatements are needed for things like LabelStatement at the end of functions and things.
+Well technically it needs a ";" for it to parse properly, but given that LabelStatements are
+right now not supported at all this shouldn't be a problem.

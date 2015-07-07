@@ -1120,13 +1120,6 @@ ir.ExpStatement buildExpStat(Location loc, ir.BlockStatement block, ir.Exp exp)
 	return ret;
 }
 
-ir.EmptyStatement buildEmptyStatement(Location loc)
-{
-	auto es = new ir.EmptyStatement();
-	es.location = loc;
-	return es;
-}
-
 /**
  * Build an exp statement without inserting it anywhere.
  */

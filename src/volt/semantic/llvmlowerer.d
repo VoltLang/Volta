@@ -75,7 +75,7 @@ public:
 				bs.statements[i] = buildExpStat(l, buildAssign(l, buildExpReference(l, var, var.name), var.assign));
 				var.assign = null;
 			} else {
-				bs.statements[i] = buildEmptyStatement(l);
+				bs.statements = bs.statements[0 .. i] ~ bs.statements[i + 1 .. $];
 			}
 			newTopVars ~= var;
 		}

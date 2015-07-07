@@ -445,19 +445,6 @@ public:
 }
 
 /**
- * An EmptyStatement does nothing, successfully.
- *
- * @ingroup irNode irStatement
- */
-class EmptyStatement : Statement
-{
-public:
-
-public:
-	this() { super(NodeType.EmptyStatement); }
-}
-
-/**
  * A ConditionStatement provides for conditional compilation
  * of statements. If condition is true, then it is as if block
  * was where the ConditionStatement was. Otherwise, the _else
