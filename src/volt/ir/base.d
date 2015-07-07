@@ -53,8 +53,6 @@ enum NodeType
 	UserAttribute,
 
 	/* declaration.d */
-	FunctionDecl,
-	FunctionBody,
 	PrimitiveType,
 	TypeReference,
 	PointerType,
@@ -306,8 +304,6 @@ string nodeToString(NodeType nodeType)
 	case MixinTemplate: return "MixinTemplate";
 	case Condition: return "Condition";
 	case ConditionTopLevel: return "ConditionTopLevel";
-	case FunctionDecl: return "FunctionDecl";
-	case FunctionBody: return "FunctionBody";
 	case FunctionSetType: return "FunctionSetType";
 	case FunctionSet: return "FunctionSet";
 	case PrimitiveType: return "PrimitiveType";

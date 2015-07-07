@@ -620,8 +620,6 @@ Visitor.Status accept(ir.Node n, Visitor av)
 	 */
 	case Invalid:
 	case NonVisiting:
-	case FunctionDecl:
-	case FunctionBody:
 	case AAPair:
 	case FunctionSetType:
 	case FunctionSet:

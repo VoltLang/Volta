@@ -434,8 +434,6 @@ ir.Node copyNode(ir.Node n)
 	case UserAttribute:
 	case Condition:
 	case ConditionTopLevel:
-	case FunctionDecl:
-	case FunctionBody:
 	case Variable:
 	case Alias:
 	case Function:
