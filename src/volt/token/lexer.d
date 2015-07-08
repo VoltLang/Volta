@@ -2,14 +2,22 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.token.lexer;
 
-import std.uni : isWhite, isAlpha;
-import std.utf : toUTF8;
-import std.conv : to;
-import std.string : format, indexOf;
-import std.ascii : isDigit;
-import std.array : array;
-import std.algorithm : count;
-import std.c.time : time, localtime;
+version(Volt) {
+	import core.stdc.time;
+	import watt.conv;
+	import watt.text.ascii;
+	import watt.text.format;
+	import watt.text.utf;
+} else {
+	import std.uni : isWhite, isAlpha;
+	import std.utf : toUTF8;
+	import std.conv : to;
+	import std.string : format, indexOf;
+	import std.ascii : isDigit;
+	import std.array : array;
+	import std.algorithm : count;
+	import std.c.time : time, localtime;
+}
 
 import volt.token.location : Location;
 import volt.token.source : Source, Mark;

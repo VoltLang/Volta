@@ -4,7 +4,11 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.token.stream;
 
-import std.string : strip, indexOf;
+version(Volt) {
+
+} else {
+	import std.string : strip, indexOf;
+}
 
 import volt.errors : panic, makeStrayDocComment, makeExpected;
 public import volt.token.token;
