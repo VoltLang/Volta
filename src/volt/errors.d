@@ -25,6 +25,11 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeCallClass(Location loc, ir.Class _class, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, format("Attempted to call class '%s'. Did you forget a new?", _class.name));
+}
+
 CompilerException makeMixedSignedness(Location loc, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(loc, format("Expression mixes unsigned and signed values."));

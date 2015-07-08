@@ -1980,8 +1980,14 @@ void extypePostfixIdentifier(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			if (_scope is null)
 				throw panic(postfix, "missing scope");
 
-			if (postfixIdents.length == 0)
+			if (postfixIdents.length == 0) {
+				auto _class = cast(ir.Class) store.node;
+				if (_class !is null) {
+					throw makeCallClass(postfix.location, _class);
+				}
+
 				throw makeInvalidUseOfStore(postfix, store);
+			}
 
 			postfix = postfixIdents[0];
 			postfixIdents = postfixIdents[1 .. $];
