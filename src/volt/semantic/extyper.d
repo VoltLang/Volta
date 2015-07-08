@@ -2274,7 +2274,7 @@ void extypeBinOp(Context ctx, ir.BinOp bin, ir.PrimitiveType lprim, ir.Primitive
 				}
 			}
 			if (leftUnsigned != rightUnsigned) {
-				throw makeTypeIsNot(bin, rprim, lprim);
+				throw makeMixedSignedness(bin.location);
 			}
 		}
 	}
