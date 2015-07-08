@@ -2507,7 +2507,7 @@ void extypeCat(Context ctx, ir.BinOp bin, ir.ArrayType left, ir.Type right)
 	}
 
 	auto rarray = cast(ir.ArrayType) realType(right);
-	if (rarray !is null && isImplicitlyConvertable(rarray.base, left.base) && (isConst(left.base) || isImmutable(left.base))) {
+	if (rarray !is null && isImplicitlyConvertable(rarray.base, left.base)) {
 		return;
 	}
 
