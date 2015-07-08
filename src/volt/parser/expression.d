@@ -3,8 +3,12 @@
 module volt.parser.expression;
 // Most of these can pass through to a lower function, see the IR.
 
-import std.conv;
-import std.utf;
+version(Volt) {
+	import watt.conv;
+} else {
+	import std.conv;
+	import std.utf;
+}
 
 import ir = volt.ir.ir;
 import intir = volt.parser.intir;

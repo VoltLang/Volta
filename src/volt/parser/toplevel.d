@@ -2,7 +2,11 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.parser.toplevel;
 
-import std.conv : to;
+version(Volt) {
+	import watt.conv;
+} else {
+	import std.conv : to;
+}
 
 import ir = volt.ir.ir;
 import volt.ir.util;

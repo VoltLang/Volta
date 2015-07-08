@@ -2,7 +2,12 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.parser.declaration;
 
-import std.string : format;
+version(Volt) {
+	import watt.conv;
+	import watt.text.format;
+} else {
+	import std.string : format;
+}
 
 import ir = volt.ir.ir;
 import volt.ir.util;
