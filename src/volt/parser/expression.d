@@ -1246,7 +1246,8 @@ intir.PrimaryExp parsePrimaryExp(TokenStream ts)
 		 TokenType.Short, TokenType.Ushort,
 		 TokenType.Int, TokenType.Uint, TokenType.Long,
 		 TokenType.Ulong, TokenType.Void, TokenType.Float,
-		 TokenType.Double, TokenType.Real:
+		 TokenType.Double, TokenType.Real, TokenType.Char,
+		 TokenType.Wchar, TokenType.Dchar:
 		exp.op = intir.PrimaryExp.Type.Type;
 		exp.type = parsePrimitiveType(ts);
 		match(ts, TokenType.Dot);
