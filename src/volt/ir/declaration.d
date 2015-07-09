@@ -68,11 +68,11 @@ public:
 	enum Storage
 	{
 		Invalid,
-		Field, /// Member of a struct/class.
-		Function, /// Variable in a function.
-		Nested,  /// Accessed in a nested function.
-		Local,  /// Stored in TLS.
-		Global,  /// Stored in the global data segment.
+		Field, ///< Member of a struct/class.
+		Function, ///< Variable in a function.
+		Nested,  ///< Accessed in a nested function.
+		Local,  ///< Stored in TLS.
+		Global,  ///< Stored in the global data segment.
 	}
 
 public:

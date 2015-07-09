@@ -130,8 +130,8 @@ public:
 class TypeReference : Type
 {
 public:
-	Type type;  /// What Type this refers to. Filled in after parsing sometime.
-	QualifiedName id; /// The name of the Type. Filled in the initial parsing.
+	Type type;  ///< What Type this refers to. Filled in after parsing sometime.
+	QualifiedName id; ///< The name of the Type. Filled in the initial parsing.
 
 public:
 	this() { super(NodeType.TypeReference); }
@@ -289,7 +289,11 @@ public:
 		location = ctype.location;
 		linkage = ctype.linkage;
 		ret = ctype.ret;
-		params = ctype.params.dup;
+		version(Volt) {
+			params = new ctype.params[0 .. $];
+		} else {
+			params = ctype.params.dup;
+		}
 		hiddenParameter = ctype.hiddenParameter;
 		isScope = ctype.isScope;
 		hasVarArgs = ctype.hasVarArgs;

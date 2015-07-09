@@ -2,9 +2,14 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.errors;
 
-import std.conv : to;
-import std.array : join;
-import std.string : format, toLower;
+version(Volt) {
+	import watt.conv;
+	import watt.text.format;
+} else {
+	import std.conv : to;
+	import std.array : join;
+	import std.string : format, toLower;
+}
 
 import ir = volt.ir.ir;
 

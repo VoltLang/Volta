@@ -2,14 +2,19 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.ir.copy;
 
-import std.conv : to;
-import std.string : format;
+version(Volt) {
+	import watt.text.format : format;
+	import watt.conv : toString;
+} else {
+	import std.conv : to;
+	import std.string : format;
+}
 
 import ir = volt.ir.ir;
+import volt.errors;
 import volt.ir.util;
 import volt.token.location;
 
-import volt.errors;
 
 
 ir.Constant copy(ir.Constant cnst)
@@ -20,7 +25,11 @@ ir.Constant copy(ir.Constant cnst)
 	c.u._ulong = cnst.u._ulong;
 	c._string = cnst._string;
 	c.isNull = cnst.isNull;
-	c.arrayData = cnst.arrayData.idup;
+	version(Volt) {
+		c.arrayData = new cnst.arrayData[0 .. $];
+	} else {
+		c.arrayData = cnst.arrayData.idup;
+	}
 	return c;
 }
 
@@ -99,7 +108,11 @@ ir.ExpReference copy(ir.ExpReference er)
 {
 	auto newer = new ir.ExpReference();
 	newer.location = er.location;
-	newer.idents = er.idents.dup;
+	version(Volt) {
+		newer.idents = new er.idents[0 .. $];
+	} else {
+		newer.idents = er.idents.dup;
+	}
 	newer.decl = er.decl;
 	newer.rawReference = er.rawReference;
 	newer.doNotRewriteAsNestedLookup = er.doNotRewriteAsNestedLookup;
@@ -272,7 +285,11 @@ ir.Typeid copy(ir.Typeid old)
 		tid.type = copyType(old.type);
 	}
 	if (old.ident !is null) {
-		tid.ident = old.ident.dup;
+		version(Volt) {
+			tid.ident = new old.ident[0 .. $];
+		} else {
+			tid.ident = tid.ident.dup;
+		}
 	}
 	return tid;
 }
@@ -303,7 +320,7 @@ ir.QualifiedName copy(ir.QualifiedName old)
  */
 ir.Type copyType(ir.Type t)
 {
-	switch (t.nodeType) with (ir.NodeType) {
+	switch (t.nodeType()) with (ir.NodeType) {
 	case PrimitiveType:
 		return copy(cast(ir.PrimitiveType)t);
 	case PointerType:
@@ -331,8 +348,9 @@ ir.Type copyType(ir.Type t)
 	case Enum:
 		throw panic(t.location, "can't copy aggregate types");
 	default:
-		throw panicUnhandled(t, to!string(t.nodeType));
+		throw panicUnhandled(t, ir.nodeToString(t));
 	}
+	version(Volt) assert(false);
 }
 
 /**
@@ -359,9 +377,9 @@ ir.Exp copyExp(Location location, ir.Exp exp)
  */
 ir.Node copyNode(ir.Node n)
 {
-	final switch (n.nodeType) with (ir.NodeType) {
+	final switch (n.nodeType()) with (ir.NodeType) {
 	case Invalid:
-		auto msg = format("cannot copy '%s'", to!string(n.nodeType));
+		auto msg = format("cannot copy '%s'", ir.nodeToString(n));
 		throw panic(n.location, msg);
 	case NonVisiting:
 		assert(false, "non-visiting node");
@@ -419,7 +437,7 @@ ir.Node copyNode(ir.Node n)
 	case Class:
 	case Interface:
 		auto t = cast(ir.Type)n;
-		return copyTypeSmart(t.location, t);  /// @todo do correctly.
+		return copyTypeSmart(t.location, t);  // / @todo do correctly.
 	case QualifiedName:
 	case Identifier:
 	case Module:
@@ -478,4 +496,5 @@ ir.Node copyNode(ir.Node n)
 	case VaArgExp:
 		goto case Invalid;
 	}
+	version(Volt) assert(false);
 }

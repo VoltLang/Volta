@@ -2,8 +2,13 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.ir.util;
 
-import std.algorithm : sort;
-import std.conv : to;
+version(Volt) {
+	import watt.algorithm;
+	import watt.conv;
+} else {
+	import std.algorithm : sort;
+	import std.conv : to;
+}
 
 import volt.errors;
 import volt.interfaces;
@@ -1532,9 +1537,9 @@ void canonicaliseStorageType(ir.StorageType outStorage)
 	outStorage.isCanonical = true;
 
 	// std.algorithm.sort explodes if this isn't a delegate. :/ (2013-05-07)
-	static bool storageSort(ir.StorageType.Kind a, ir.StorageType.Kind b)
+	/*global*/ static bool storageSort(ir.StorageType.Kind a, ir.StorageType.Kind b)
 	{
-		static int kindToInteger(ir.StorageType.Kind kind)
+		/*global*/ static int kindToInteger(ir.StorageType.Kind kind)
 		{
 			final switch (kind) with (ir.StorageType.Kind) {
 			case Scope: return 5;

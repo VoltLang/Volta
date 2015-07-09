@@ -3,8 +3,13 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.exceptions;
 
-import std.stdio : writefln;
-import std.string : format;
+version(Volt) {
+	import watt.io : writefln;
+	import watt.text.format : format;
+} else {
+	import std.stdio : writefln;
+	import std.string : format;
+}
 
 import volt.token.location;
 

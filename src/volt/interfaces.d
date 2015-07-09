@@ -2,8 +2,12 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.interfaces;
 
-import std.string : indexOf;
-import std.array : replace;
+version(Volt) {
+	import watt.text.string : indexOf, replace;
+} else {
+	import std.string : indexOf;
+	import std.array : replace;
+}
 
 import volt.token.location;
 import ir = volt.ir.ir;
@@ -647,9 +651,10 @@ public:
 
 	final string replaceEscapes(string file)
 	{
-		enum e = "%@execdir%";
-		enum a = "%@arch%";
-		enum p = "%@platform%";
+		// @todo enum *
+		string e = "%@execdir%";
+		string a = "%@arch%";
+		string p = "%@platform%";
 		size_t ret;
 
 		ret = indexOf(file, e);

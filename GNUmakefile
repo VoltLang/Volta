@@ -141,4 +141,15 @@ package: all
 	@cp -r ./rt/src/* .pkg/rt/
 	@tar -czf volt.tar.gz .pkg/*
 
-.PHONY: all clean run debug license
+VIV_SRC= \
+	src/volt/errors.d \
+	src/volt/exceptions.d \
+	src/volt/interfaces.d \
+	src/volt/ir/*.d \
+	src/volt/token/location.d \
+	src/volt/token/token.d \
+
+viv:
+	@./volt --emit-bitcode -o .obj/involt.bc $(VIV_SRC)
+
+.PHONY: all clean run debug license viv

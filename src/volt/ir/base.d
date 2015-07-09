@@ -223,7 +223,7 @@ public:
 
 	string[] strings()
 	{
-		string[] ret = new string[identifiers.length];
+		string[] ret = new string[](identifiers.length);
 
 		foreach (i, identifier; identifiers) {
 			ret[i] = identifier.value;
@@ -269,7 +269,7 @@ public:
  */
 string nodeToString(Node node)
 {
-	return nodeToString(node.nodeType);
+	return nodeToString(node.nodeType());
 }
 
 /**

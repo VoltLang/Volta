@@ -61,7 +61,7 @@ public:
 		if (begin.filename != end.filename || begin.line > end.line) {
 			return _default;
 		} else {
-			return end.opSub(begin);
+			return end.opSub(/*ref*/ begin);
 		}
 	}
 
