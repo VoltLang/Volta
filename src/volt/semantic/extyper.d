@@ -1762,7 +1762,11 @@ void rewritePropertyFunctionAssign(Context ctx, ref ir.Exp e, ir.BinOp bin)
 void extypeTypeLookup(Context ctx, ref ir.Exp exp, ir.Postfix[] postfixIdents, ir.Type type)
 {
 	if (postfixIdents.length != 1) {
-		throw makeExpected(type, "max or min");
+		throw makeExpected(type, "max, min, or init");
+	}
+	if (postfixIdents[0].identifier.value == "init") {
+		exp = getDefaultInit(exp.location, ctx.lp, ctx.current, type);
+		return;
 	}
 	if (postfixIdents[0].identifier.value != "max" && postfixIdents[0].identifier.value != "min") {
 		throw makeExpected(type, "max or min");
