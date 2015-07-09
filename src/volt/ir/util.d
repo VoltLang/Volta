@@ -2,12 +2,12 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.ir.util;
 
+import std.algorithm : sort;
 import std.conv : to;
 
 import volt.errors;
 import volt.interfaces;
 import volt.token.location;
-import volt.semantic.util : canonicaliseStorageType;
 import volt.util.string : unescapeString;
 import ir = volt.ir.ir;
 import volt.ir.copy;
@@ -1517,4 +1517,77 @@ void buildForStatement(Location loc, LanguagePass lp, ir.Scope parent, ir.Exp le
 	forStatement.test = buildBinOp(loc, ir.BinOp.Op.Less, buildExpReference(loc, ivar, ivar.name), copyExp(length));
 	forStatement.increments ~= buildIncrement(loc, buildExpReference(loc, ivar, ivar.name));
 	forStatement.block = buildBlockStat(loc, forStatement, parent);
+}
+
+/**
+ * Canonises a StorageType in place.
+ * The ordering of StorageKinds is made consistent,
+ * and duplicate kinds are compressed into one.
+ */
+void canonicaliseStorageType(ir.StorageType outStorage)
+{
+	if (outStorage.isCanonical) {
+		return;
+	}
+	outStorage.isCanonical = true;
+
+	// std.algorithm.sort explodes if this isn't a delegate. :/ (2013-05-07)
+	static bool storageSort(ir.StorageType.Kind a, ir.StorageType.Kind b)
+	{
+		static int kindToInteger(ir.StorageType.Kind kind)
+		{
+			final switch (kind) with (ir.StorageType.Kind) {
+			case Scope: return 5;
+			case Ref, Out: return 4;  // It cannot be both.
+			case Immutable: return 3;
+			case Const: return 2;
+			case Auto: return 0;
+			}
+		}
+
+		return kindToInteger(a) > kindToInteger(b);
+	}
+
+	ir.StorageType.Kind[] prestorages;
+
+	ir.StorageType current = null, next = outStorage;
+	do {
+		current = next;
+		prestorages ~= current.type;
+		next = cast(ir.StorageType) current.base;
+	} while (next !is null);
+
+	sort!storageSort(prestorages);
+
+	ir.StorageType.Kind[] storages;
+	bool seenImmutable;
+	foreach (i, storageKind; prestorages) {
+		if (storageKind == ir.StorageType.Kind.Immutable) {
+			seenImmutable = true;
+		}
+		if (storageKind == ir.StorageType.Kind.Const && seenImmutable) {
+			continue;  // immutable overrides const.
+		}
+		if (i < prestorages.length - 1 && prestorages[i+1] == storageKind) {
+			// e.g. const const int should become const int.
+			continue;
+		} if (prestorages.length > 1 && storageKind == ir.StorageType.Kind.Auto) {
+			continue;
+		} else {
+			storages ~= storageKind;
+		}
+	}
+
+	foreach (i, storageKind; storages) {
+		if (i == 0) {
+			outStorage.type = storageKind;
+			outStorage.mangledName = "";
+		} else {
+			ir.StorageType st;
+			outStorage.base = st = buildStorageType(outStorage.location, storageKind, current);
+			outStorage = st;
+			st.isCanonical = true;
+		}
+	}
+	outStorage.base = current.base;
 }
