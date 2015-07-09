@@ -83,6 +83,19 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ref ir.Exp exp, ir.Constant c)
+	{
+		// Convert interface Constants.
+		auto iface = cast(ir._Interface) realType(c.type);
+		if (iface !is null) {
+			lp.actualize(iface);
+			assert(iface.layoutStruct !is null);
+			c.type = buildPtrSmart(c.location, buildPtrSmart(c.location, iface.layoutStruct));
+		}
+		return Continue;
+
+	}
+
 	override Status enter(ir.Variable v)
 	{
 		// Convert Interface variables to their internal struct.
