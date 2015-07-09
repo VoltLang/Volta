@@ -32,15 +32,22 @@ ir.Node[] parseVariable(TokenStream ts)
 		return [parseAlias(ts)];
 	}
 
+	auto loc = ts.peek.location;
+	auto global = matchIf(ts, TokenType.Global);
 	ir.Type base = parseType(ts);
 	if (ts.lookahead(1).type == TokenType.Comma ||
 		ts.lookahead(1).type == TokenType.Semicolon ||
 		ts.lookahead(1).type == TokenType.Assign) {
 		// Normal declaration.
+		if (global) {
+			throw makeUnexpected(loc, "global");
+		}
 		return reallyParseVariable(ts, base);
 	} else if (ts.lookahead(1).type == TokenType.OpenParen) {
 		// Function!
-		return [parseFunction(ts, base)];
+		auto fn = parseFunction(ts, base);
+		fn.isGlobal = global;
+		return [fn];
 	} else {
 		throw makeExpected(ts.peek.location, "declaration");
 	}

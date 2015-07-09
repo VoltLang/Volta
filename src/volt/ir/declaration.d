@@ -288,6 +288,9 @@ public:
 	 */
 	bool isAutoReturn;
 
+	/// This inline function shouldn't be able to access the hidden scope.
+	bool isGlobal;
+
 public:
 	this() { super(NodeType.Function); }
 }
