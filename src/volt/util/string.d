@@ -1,14 +1,16 @@
 module volt.util.string;
 
-import std.conv;
-import std.utf;
+version(Volt) {
+	import watt.conv : toInt;
+	import watt.text.utf : encode;
+} else {
+	import std.conv : parse, ConvException;
+	import std.utf : encode;
+}
 
 import volt.errors;
 import volt.token.location;
 
-alias unescape!char unescapeString;
-alias unescape!wchar unescapeWstring;
-alias unescape!dchar unescapeDstring;
 
 bool isHex(dchar d)
 {
@@ -23,32 +25,41 @@ bool isHex(dchar d)
 	}
 }
 
-immutable(void)[] unescape(T)(Location location, const T[] s)
+
+immutable(void)[] unescapeString(Location location, const char[] s)
 {
-	T[] output;
+	char[] output;
 
 	bool escaping, hexing, unicoding;
-	dchar[] hexchars;
+	char[] hexchars;
 	foreach (c; s) {
 		// \uXXXX
 		if (unicoding) {
 			if (!isHex(c)) {
 				if (hexchars.length == 4) {
 					ushort i;
-					try {
-						i = parse!ushort(hexchars, 16);
-					} catch (ConvException) {
-						throw makeExpected(location, "unicode codepoint specification");
+					version(Volt) {
+						i = cast(ushort)toInt(hexchars, 16);
+					} else {
+						try {
+							i = parse!ushort(hexchars, 16);
+						} catch (ConvException) {
+							throw makeExpected(location, "unicode codepoint specification");
+						}
 					}
 					encode(output, i);
 					unicoding = false;
 					continue;
 				} else if (hexchars.length == 8) {
 					uint i;
-					try {
-						i = parse!uint(hexchars, 16);
-					} catch (ConvException) {
-						throw makeExpected(location, "unicode codepoint specification");
+					version(Volt) {
+						i = cast(uint)toInt(hexchars, 16);
+					} else {
+						try {
+							i = parse!uint(hexchars, 16);
+						} catch (ConvException) {
+							throw makeExpected(location, "unicode codepoint specification");
+						}
 					}
 					encode(output, i);
 					unicoding = false;
@@ -59,10 +70,14 @@ immutable(void)[] unescape(T)(Location location, const T[] s)
 			}
 			if (hexchars.length == 8) {
 				uint i;
-				try {
-					i = parse!uint(hexchars, 16);
-				} catch (ConvException) {
-					throw makeExpected(location, "unicode codepoint specification");
+				version(Volt) {
+					i = cast(uint)toInt(hexchars, 16);
+				} else {
+					try {
+						i = parse!uint(hexchars, 16);
+					} catch (ConvException) {
+						throw makeExpected(location, "unicode codepoint specification");
+					}
 				}
 				encode(output, i);
 				unicoding = false;
@@ -79,10 +94,14 @@ immutable(void)[] unescape(T)(Location location, const T[] s)
 			}
 			hexchars ~= c;
 			if (hexchars.length == 2) {
-				try {
-					output ~= parse!ubyte(hexchars, 16);
-				} catch (ConvException) {
-					throw makeExpected(location, "hex digit");
+				version(Volt) {
+					output ~= cast(char)toInt(hexchars, 16);
+				} else {
+					try {
+						output ~= parse!ubyte(hexchars, 16);
+					} catch (ConvException) {
+						throw makeExpected(location, "hex digit");
+					}
 				}
 				hexing = false;
 				hexchars.length = 0;
@@ -104,7 +123,7 @@ immutable(void)[] unescape(T)(Location location, const T[] s)
 				case 'r': encode(output, '\r'); break;
 				case 't': encode(output, '\t'); break;
 				case 'v': encode(output, '\v'); break;
-				case '0': encode(output, 0); break;
+				case '0': encode(output, '\0'); break;
 				case 'x':
 					escaping = false;
 					hexing = true;
@@ -206,5 +225,9 @@ string cleanComment(string comment, out bool isBackwardsComment)
 		}
 	}
 
-	return outbuf.idup;
+	version(Volt) {
+		return cast(immutable(char)[])new outbuf[0 .. $];
+	} else {
+		return outbuf.idup;
+	}
 }

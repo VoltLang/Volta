@@ -146,6 +146,7 @@ VIV_SRC= \
 	src/volt/exceptions.d \
 	src/volt/interfaces.d \
 	src/volt/ir/*.d \
+	src/volt/util/string.d \
 	src/volt/token/location.d \
 	src/volt/token/token.d \
 

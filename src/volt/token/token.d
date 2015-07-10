@@ -16,7 +16,7 @@ import volt.token.location;
  * another are implicitly concatenated. I warn you of this out of experience.
  */
 
-/*global*/ string[183] tokenToString = [
+/*global*/ static string[183] tokenToString = [
 "none", "identifier", "string literal", "character literal",
 "integer literal", "float literal", "abstract", "alias", "align",
 "asm", "assert", "auto", "body", "bool", "break", "byte", "case",
