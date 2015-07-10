@@ -142,6 +142,7 @@ package: all
 	@tar -czf volt.tar.gz .pkg/*
 
 VIV_SRC= \
+	src/volt/main.volt \
 	src/volt/errors.d \
 	src/volt/exceptions.d \
 	src/volt/interfaces.d \
@@ -151,8 +152,8 @@ VIV_SRC= \
 	src/volt/token/token.d \
 
 viv: $(TARGET)
-	@echo "  VOLTA  viv.bc"
-	@./$(TARGET) --emit-bitcode -o .obj/viv.bc $(VIV_SRC)
+	@echo "  VOLTA  viv.exe"
+	@./$(TARGET) -o viv.exe $(VIV_SRC)
 
 
 .PHONY: all clean run debug license viv
