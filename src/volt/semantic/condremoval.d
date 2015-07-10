@@ -212,6 +212,9 @@ protected:
 			}
 
 			return true;
+		} else if (auto unit = cast(ir.Unittest) node) {
+			// @todo Handle unittest
+			return true;
 		} else {
 			// Not a Condition at all.
 			return false;
