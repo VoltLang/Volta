@@ -3024,10 +3024,12 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, Context ctx, ir.Scope nest
 		} else {
 			panicAssert(fes, fs.initVars.length == 1);
 			indexVar = buildVariable(l, ctx.lp.settings.getSizeT(l),
-									 ir.Variable.Storage.Function, "i", indexAssign);
+			                         ir.Variable.Storage.Function, "i", indexAssign);
 			elementVar = fs.initVars[0];
-			fs.initVars ~= indexVar;
 		}
+		// Move element var to statements so it can be const/immutable.
+		fs.initVars = [indexVar];
+		fs.block.statements = [cast(ir.Node)elementVar] ~ fs.block.statements;
 
 		auto st = cast(ir.StorageType) elementVar.type;
 		if (st !is null && st.type == ir.StorageType.Kind.Ref) {
@@ -3059,9 +3061,8 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, Context ctx, ir.Scope nest
 		auto incRef = buildExpReference(indexVar.location, indexVar, indexVar.name);
 		auto accessRef = buildExpReference(indexVar.location, indexVar, indexVar.name);
 		auto eRef = buildExpReference(elementVar.location, elementVar, elementVar.name);
-		auto assign = buildAssign(incRef.location, eRef,
-								  buildIndex(incRef.location, fes.aggregate, accessRef));
-		fs.block.statements = buildExpStat(assign.location, assign) ~ fs.block.statements;
+		elementVar.assign = buildIndex(incRef.location, fes.aggregate, accessRef);
+
 		fs.increments ~= fes.reverse ? buildDecrement(incRef.location, incRef) :
 									   buildIncrement(incRef.location, incRef);
 		return fs;
