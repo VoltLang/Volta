@@ -145,7 +145,6 @@ class Throwable
 	const(char)* throwFile;
 	size_t throwLine;
 
-
 	this(string message)
 	{
 		this.message = message;
@@ -155,9 +154,14 @@ class Throwable
 
 class Exception : Throwable
 {
-	this(string message)
+	string file;
+	size_t line;
+
+	this(string message, string file = __FILE__, size_t line = __LINE__)
 	{
 		super(message);
+		this.file = file;
+		this.line = line;
 		return;
 	}
 }
