@@ -149,7 +149,7 @@ VIV_SRC= \
 	src/volt/token/location.d \
 	src/volt/token/token.d \
 
-viv:
-	@./volt --emit-bitcode -o .obj/involt.bc $(VIV_SRC)
+viv: $(TARGET)
+	@./$(TARGET) --emit-bitcode -o .obj/involt.bc $(VIV_SRC)
 
 .PHONY: all clean run debug license viv
