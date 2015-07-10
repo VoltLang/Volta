@@ -2053,12 +2053,19 @@ void extypePostfixIndex(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 // object.foo(1) into foo(object, 1);
 void extypePostfixUFCS(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 {
-	if (postfix.op != ir.Postfix.Op.Call) {
+	auto l = postfix.location;
+	ir.Postfix child;
+	if (postfix.op == ir.Postfix.Op.Call) {
+		child = cast(ir.Postfix) postfix.child;
+		if (child is null || child.child is null || child.identifier is null) {
+			return;
+		}
+	} else if (postfix.op == ir.Postfix.Op.Identifier) {
+		child = postfix;
+	} else {
 		return;
 	}
-	auto l = postfix.location;
-	auto child = cast(ir.Postfix) postfix.child;
-	if (child is null || child.child is null || child.identifier is null) {
+	if (child.identifier is null) {
 		return;
 	}
 
@@ -2076,7 +2083,18 @@ void extypePostfixUFCS(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		}
 	}
 
-	auto store = lookup(ctx.lp, ctx.current, l, child.identifier.value);
+	auto store = ctx.current.getStore(child.identifier.value);
+	if (store !is null && store.functions.length == 0) {
+		/* If we've found a variable that's not a function in this
+		 * scope, we're not interested. This works around code where
+		 * the lookup is the same as a variable under construction
+		 *    right = node.right
+		 * which will cause the WorkTracker to complain about a
+		 * circular dependency if we go through lookup.
+		 */
+		return;
+	}
+	store = lookup(ctx.lp, ctx.current, l, child.identifier.value);
 	if (store is null || store.functions.length == 0) {
 		return;
 	}
@@ -2090,9 +2108,15 @@ void extypePostfixUFCS(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	if (fn is null) {
 		return;
 	}
-	panicAssert(postfix, fn !is null);
-	postfix.child = buildExpReference(l, fn, fn.name);
-	postfix.arguments = arguments;
+	if (postfix.op != ir.Postfix.Op.Call && fn.type.isProperty) {
+		exp = postfix = buildCall(l, buildExpReference(l, fn, fn.name), arguments);
+	} else if (postfix.op != ir.Postfix.Op.Call && !fn.type.isProperty) {
+		return;
+	} else {
+		panicAssert(postfix, fn !is null);
+		postfix.child = buildExpReference(l, fn, fn.name);
+		postfix.arguments = arguments;
+	}
 
 	ir.StorageType.Kind kind;
 	if (isRef(fn.type.params[0], kind)) {
