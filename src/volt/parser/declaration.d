@@ -34,6 +34,9 @@ ir.Node[] parseVariable(TokenStream ts)
 
 	auto loc = ts.peek.location;
 	auto global = matchIf(ts, TokenType.Global);
+	if (!global) {
+		global = matchIf(ts, TokenType.Static);  // Deprecate after self-hosting etc.
+	}
 	ir.Type base = parseType(ts);
 	if (ts.lookahead(1).type == TokenType.Comma ||
 		ts.lookahead(1).type == TokenType.Semicolon ||

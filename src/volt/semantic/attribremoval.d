@@ -244,7 +244,7 @@ protected:
 			case Abstract:
 				fn.isAbstract = true;
 				break;
-			case Local, Global:
+			case Local, Global, Static:
 				with (ir.Function.Kind) {
 				if (fn.kind == Constructor) {
 					if (attr.kind == ir.Attribute.Kind.Local) {
@@ -270,9 +270,6 @@ protected:
 				assert(constant._string[0] == '\"');
 				assert(constant._string[$-1] == '\"');
 				fn.mangledName = constant._string[1..$-1];
-				break;
-			case Static:
-				fn.kind = ir.Function.Kind.Function;
 				break;
 			case Label:
 				fn.type.forceLabel = true;
@@ -302,6 +299,7 @@ protected:
 			case Protected:
 				d.access = ir.Access.Protected;
 				break;
+			case Static:
 			case Global:
 				d.storage = ir.Variable.Storage.Global;
 				break;
