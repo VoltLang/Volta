@@ -20,11 +20,13 @@ public:
 	Location location;
 }
 
-class CommaExp : IntExp
+class AssignExp : IntExp
 {
-public:
+	BinOp.Op op;
 	TernaryExp left;
-	CommaExp right;  // Optional.
+	AssignExp right;  // Optional.
+	bool taggedRef;
+	bool taggedOut;
 }
 
 class TernaryExp : IntExp
@@ -34,8 +36,6 @@ public:
 	BinExp condition;
 	TernaryExp ifTrue;  // Optional.
 	TernaryExp ifFalse;  // Optional.
-	bool taggedRef;
-	bool taggedOut;
 }
 
 class BinExp : IntExp
@@ -111,7 +111,7 @@ public:
 	bool isArray;
 	TernaryExp exp;  // new int[binExp]
 	bool hasArgumentList;
-	TernaryExp[] argumentList;  // new int(argumentList)
+	AssignExp[] argumentList;  // new int(argumentList)
 }
 
 // new foo[3 .. 6];  // duplicate array foo.
@@ -137,7 +137,7 @@ public:
 	Postfix.Op op;
 	PrimaryExp primary;  // Only in parent postfixes.
 	PostfixExp postfix;  // Optional.
-	TernaryExp[] arguments;  // Optional.
+	AssignExp[] arguments;  // Optional.
 	string[] labels;     // Optional, only in calls (func(a:1, b:3)).
 	Identifier identifier;  // Optional.
 }
@@ -184,9 +184,9 @@ public:
 	volt.ir.declaration.Type type;
 	Exp exp;
 	string _string;      // Optional.
-	TernaryExp[] keys;
-	TernaryExp[] arguments;  // Optional.
-	TernaryExp[] tlargs;   // Optional.
+	AssignExp[] keys;
+	AssignExp[] arguments;  // Optional.
+	AssignExp[] tlargs;   // Optional.
 	IsExp isExp;  // Optional.
 	FunctionLiteral functionLiteral;  // Optional.
 	TraitsExp trait;  // If op == Traits.
