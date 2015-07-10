@@ -151,6 +151,8 @@ VIV_SRC= \
 	src/volt/token/token.d \
 
 viv: $(TARGET)
-	@./$(TARGET) --emit-bitcode -o .obj/involt.bc $(VIV_SRC)
+	@echo "  VOLTA  viv.bc"
+	@./$(TARGET) --emit-bitcode -o .obj/viv.bc $(VIV_SRC)
+
 
 .PHONY: all clean run debug license viv
