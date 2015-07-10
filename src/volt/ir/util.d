@@ -46,7 +46,11 @@ ir.QualifiedName buildQualifiedName(Location loc, string value)
  */
 ir.QualifiedName buildQualifiedName(Location loc, string[] value...)
 {
-	auto idents = new ir.Identifier[value.length];
+	version(Volt) {
+		auto idents = new ir.Identifier[](value.length);
+	} else {
+		auto idents = new ir.Identifier[value.length];
+	}
 	foreach (i, val; value) {
 		idents[i] = new ir.Identifier(val);
 		idents[i].location = loc;
@@ -75,7 +79,7 @@ ir.QualifiedName buildQualifiedNameSmart(ir.Identifier i)
  */
 ir.Scope getScopeFromType(ir.Type type)
 {
-	switch (type.nodeType) with (ir.NodeType) {
+	switch (type.nodeType()) with (ir.NodeType) {
 	case TypeReference:
 		auto asTypeRef = cast(ir.TypeReference) type;
 		assert(asTypeRef !is null);
@@ -142,6 +146,7 @@ ir.Scope getScopeFromStore(ir.Store store)
 	case Alias:
 		throw panic(store.node.location, "unresolved alias");
 	}
+	version(Volt) assert(false);
 }
 
 /**
@@ -153,7 +158,7 @@ ir.Scope getScopeFromStore(ir.Store store)
  */
 ir.Type copyTypeSmart(Location loc, ir.Type type)
 {
-	switch (type.nodeType) with (ir.NodeType) {
+	switch (type.nodeType()) with (ir.NodeType) {
 	case PrimitiveType:
 		auto pt = cast(ir.PrimitiveType)type;
 		pt = new ir.PrimitiveType(pt.type);
@@ -231,11 +236,12 @@ ir.Type copyTypeSmart(Location loc, ir.Type type)
 	case Union:
 	case Enum:
 		auto s = getScopeFromType(type);
-		/// @todo Get fully qualified name for type.
+		// / @todo Get fully qualified name for type.
 		return buildTypeReference(loc, type, s !is null ? s.name : null);
 	default:
-		throw panicUnhandled(type, to!string(type.nodeType));
+		throw panicUnhandled(type, ir.nodeToString(type));
 	}
+	version(Volt) assert(false);
 }
 
 ir.TypeReference buildTypeReference(Location loc, ir.Type type, string[] names...)
@@ -339,7 +345,11 @@ ir.ArrayLiteral buildArrayLiteralSmart(Location loc, ir.Type type, ir.Exp[] exps
 	auto literal = new ir.ArrayLiteral();
 	literal.location = loc;
 	literal.type = copyTypeSmart(loc, type);
-	literal.values = exps.dup;
+	version(Volt) {
+		literal.values = new exps[0 .. $];
+	} else {
+		literal.values = exps.dup;
+	}
 	return literal;
 }
 
@@ -348,7 +358,11 @@ ir.StructLiteral buildStructLiteralSmart(Location loc, ir.Type type, ir.Exp[] ex
 	auto literal = new ir.StructLiteral();
 	literal.location = loc;
 	literal.type = copyTypeSmart(loc, type);
-	literal.exps = exps.dup;
+	version(Volt) {
+		literal.exps = new exps[0 .. $];
+	} else {
+		literal.exps = exps.dup;
+	}
 	return literal;
 }
 
@@ -357,7 +371,11 @@ ir.UnionLiteral buildUnionLiteralSmart(Location loc, ir.Type type, ir.Exp[] exps
 	auto literal = new ir.UnionLiteral();
 	literal.location = loc;
 	literal.type = copyTypeSmart(loc, type);
-	literal.exps = exps.dup;
+	version(Volt) {
+		literal.exps = new exps[0 .. $];
+	} else {
+		literal.exps = exps.dup;
+	}
 	return literal;
 }
 
@@ -432,7 +450,11 @@ ir.Variable copyVariableSmart(Location loc, ir.Variable right)
 
 ir.Variable[] copyVariablesSmart(Location loc, ir.Variable[] vars)
 {
-	auto outVars = new ir.Variable[vars.length];
+	version(Volt) {
+		auto outVars = new ir.Variable[](vars.length);
+	} else {
+		auto outVars = new ir.Variable[vars.length];
+	}
 	foreach (i, var; vars) {
 		outVars[i] = copyVariableSmart(loc, var);
 	}
@@ -444,7 +466,11 @@ ir.Variable[] copyVariablesSmart(Location loc, ir.Variable[] vars)
  */
 ir.Exp[] getExpRefs(Location loc, ir.FunctionParam[] vars)
 {
-	auto erefs = new ir.Exp[vars.length];
+	version(Volt) {
+		auto erefs = new ir.Exp[](vars.length);
+	} else {
+		auto erefs = new ir.Exp[vars.length];
+	}
 	foreach (i, var; vars) {
 		erefs[i] = buildExpReference(loc, var, var.name);
 	}
@@ -568,7 +594,7 @@ ir.Constant buildConstantNull(Location loc, ir.Type base)
 /**
  * Gets a size_t Constant and fills it with a value.
  */
-ir.Constant buildConstantSizeT(Location loc, LanguagePass lp, int val)
+ir.Constant buildConstantSizeT(Location loc, LanguagePass lp, uint val)
 {
 	auto c = new ir.Constant();
 	c.location = loc;
@@ -705,7 +731,11 @@ ir.Unary buildNew(Location loc, ir.Type type, string name, ir.Exp[] arguments...
 	new_.op = ir.Unary.Op.New;
 	new_.type = buildTypeReference(loc, type, name);
 	new_.hasArgumentList = arguments.length > 0;
-	new_.argumentList = arguments.dup;
+	version(Volt) {
+		new_.argumentList = new arguments[0 .. $];
+	} else {
+		new_.argumentList = arguments.dup;
+	}
 	return new_;
 }
 
@@ -716,7 +746,11 @@ ir.Unary buildNewSmart(Location loc, ir.Type type, ir.Exp[] arguments...)
 	new_.op = ir.Unary.Op.New;
  	new_.type = copyTypeSmart(loc, type);
 	new_.hasArgumentList = arguments.length > 0;
-	new_.argumentList = arguments.dup;
+	version(Volt) {
+		new_.argumentList = new arguments[0 .. $];
+	} else {
+		new_.argumentList = arguments.dup;
+	}
 	return new_;
 }
 
@@ -776,7 +810,11 @@ ir.Postfix buildSlice(Location loc, ir.Exp child, ir.Exp[] args...)
 	slice.location = loc;
 	slice.op = ir.Postfix.Op.Slice;
 	slice.child = child;
-	slice.arguments = args.dup;
+	version(Volt) {
+		slice.arguments = new args[0 .. $];
+	} else {
+		slice.arguments = args.dup;
+	}
 
 	return slice;
 }
@@ -830,7 +868,11 @@ ir.Postfix buildCall(Location loc, ir.Exp child, ir.Exp[] args)
 	call.location = loc;
 	call.op = ir.Postfix.Op.Call;
 	call.child = child;
-	call.arguments = args.dup;
+	version(Volt) {
+		call.arguments = new args[0 .. $];
+	} else {
+		call.arguments = args.dup;
+	}
 
 	return call;
 }
@@ -1047,7 +1089,9 @@ ir.Exp buildVaArgEnd(Location loc, ir.Exp vlexp)
 
 ir.StatementExp buildInternalArrayLiteralSmart(Location loc, ir.Type atype, ir.Exp[] exps)
 {
-	assert(atype.nodeType == ir.NodeType.ArrayType);
+	if (atype.nodeType() != ir.NodeType.ArrayType)
+		throw panic(atype, "must be array type");
+
 	auto sexp = new ir.StatementExp();
 	sexp.location = loc;
 	auto var = buildVariableSmart(loc, copyTypeSmart(loc, atype), ir.Variable.Storage.Function, "array");
@@ -1066,7 +1110,9 @@ ir.StatementExp buildInternalArrayLiteralSmart(Location loc, ir.Type atype, ir.E
 
 ir.StatementExp buildInternalStaticArrayLiteralSmart(Location loc, ir.Type atype, ir.Exp[] exps)
 {
-	assert(atype.nodeType == ir.NodeType.StaticArrayType);
+	if (atype.nodeType() != ir.NodeType.StaticArrayType)
+		throw panic(atype, "must be staticarray type");
+
 	auto sexp = new ir.StatementExp();
 	sexp.location = loc;
 	auto var = buildVariableSmart(loc, copyTypeSmart(loc, atype), ir.Variable.Storage.Function, "sarray");
@@ -1082,7 +1128,9 @@ ir.StatementExp buildInternalStaticArrayLiteralSmart(Location loc, ir.Type atype
 
 ir.StatementExp buildInternalArrayLiteralSliceSmart(Location loc, ir.Type atype, ir.Type[] types, int[] sizes, int totalSize, ir.Function memcpyFn, ir.Exp[] exps)
 {
-	assert(atype.nodeType == ir.NodeType.ArrayType);
+	if (atype.nodeType() != ir.NodeType.ArrayType)
+		throw panic(atype, "must be array type");
+
 	auto sexp = new ir.StatementExp();
 	sexp.location = loc;
 	auto var = buildVariableSmart(loc, copyTypeSmart(loc, atype), ir.Variable.Storage.Function, "array");
@@ -1099,7 +1147,7 @@ ir.StatementExp buildInternalArrayLiteralSliceSmart(Location loc, ir.Type atype,
 		auto evassign = buildAssign(loc, buildExpReference(loc, evar), exp);
 		buildExpStat(loc, sexp, evassign);
 
-		ir.Exp dst = buildAdd(loc, buildAccess(loc, buildExpReference(loc, var), "ptr"), buildConstantUint(loc, offset));
+		ir.Exp dst = buildAdd(loc, buildAccess(loc, buildExpReference(loc, var), "ptr"), buildConstantUint(loc, cast(uint)offset));
 		ir.Exp src = buildCastToVoidPtr(loc, buildAddrOf(loc, buildExpReference(loc, evar)));
 		ir.Exp len = buildConstantUint(loc, cast(uint) sizes[i]);
 		ir.Exp aln = buildConstantInt(loc, 0);
@@ -1196,7 +1244,11 @@ ir.BlockStatement buildBlockStat(Location loc, ir.Node introducingNode, ir.Scope
 {
 	auto ret = new ir.BlockStatement();
 	ret.location = loc;
-	ret.statements = statements.dup;
+	version(Volt) {
+		ret.statements = new statements[0 .. $];
+	} else {
+		ret.statements = statements.dup;
+	}
 	ret.myScope = new ir.Scope(_scope, introducingNode is null ? ret : introducingNode, "block");
 
 	return ret;
@@ -1562,7 +1614,11 @@ void canonicaliseStorageType(ir.StorageType outStorage)
 		next = cast(ir.StorageType) current.base;
 	} while (next !is null);
 
-	sort!storageSort(prestorages);
+	version(Volt) {
+		sort(cast(int[])prestorages);
+	} else {
+		sort!storageSort(prestorages);
+	}
 
 	ir.StorageType.Kind[] storages;
 	bool seenImmutable;

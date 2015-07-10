@@ -655,16 +655,16 @@ public:
 		string e = "%@execdir%";
 		string a = "%@arch%";
 		string p = "%@platform%";
-		size_t ret;
+		ptrdiff_t ret;
 
 		ret = indexOf(file, e);
-		if (ret != size_t.max)
+		if (ret != -1)
 			file = replace(file, e, execDir);
 		ret = indexOf(file, a);
-		if (ret != size_t.max)
+		if (ret != -1)
 			file = replace(file, a, archStr);
 		ret = indexOf(file, p);
-		if (ret != size_t.max)
+		if (ret != -1)
 			file = replace(file, p, platformStr);
 
 		return file;

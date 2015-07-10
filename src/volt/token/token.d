@@ -49,8 +49,12 @@ import volt.token.location;
  * and that the enum starts at zero and increases sequentially
  * (i.e. adding a member increases TokenType.max).
  */
-static assert(TokenType.min == 0);
-static assert(tokenToString.length == TokenType.max + 1, "the tokenToString array and TokenType enum are out of sync.");
+version(Volt) {
+	// @todo static assert
+} else {
+	static assert(TokenType.min == 0);
+	static assert(tokenToString.length == TokenType.max + 1, "the tokenToString array and TokenType enum are out of sync.");
+}
 
 enum TokenType
 {

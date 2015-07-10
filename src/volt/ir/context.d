@@ -3,6 +3,7 @@
 module volt.ir.context;
 
 version(Volt) {
+	import watt.conv : toString;
 	import watt.text.format : format;
 } else {
 	import std.string : format;
@@ -295,7 +296,11 @@ public:
 
 	string genAnonIdent()
 	{
-		return "__anon" ~ to!string(anon++);
+		version(Volt) {
+			return "__anon" ~ .toString(anon++);
+		} else {
+			return "__anon" ~ to!string(anon++);
+		}
 	}
 
 	/**
@@ -387,7 +392,7 @@ public:
 		}
 		errorOn(n, name);
 		ir.Store store;
-		if (n.nodeType == ir.NodeType.FunctionParam) {
+		if (n.nodeType() == ir.NodeType.FunctionParam) {
 			store = new Store(this, n, name, Store.Kind.FunctionParam);
 		} else {
 			store = new Store(this, n, name, Store.Kind.Value);
