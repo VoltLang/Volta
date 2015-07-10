@@ -489,6 +489,7 @@ public:
 	bool simpleTrace; ///< The --simple-trace argument.
 	bool writeDocs; ///< The --doc argument.
 	bool writeJson; ///< The --json argument.
+	bool depArgTags; ///< The --dep-argtags argument;
 
 	Platform platform;
 	Arch arch;

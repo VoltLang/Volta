@@ -1528,10 +1528,14 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			if (!isLValue(postfix.arguments[i])) {
 				throw makeNotLValue(postfix.arguments[i]);
 			}
-			if (stype == ir.StorageType.Kind.Ref && postfix.argumentTags[i] != ir.Postfix.TagKind.Ref) {
+			if (stype == ir.StorageType.Kind.Ref &&
+			    postfix.argumentTags[i] != ir.Postfix.TagKind.Ref &&
+			    !ctx.lp.settings.depArgTags) {
 				throw makeNotTaggedRef(postfix.arguments[i]);
 			}
-			if (stype == ir.StorageType.Kind.Out && postfix.argumentTags[i] != ir.Postfix.TagKind.Out) {
+			if (stype == ir.StorageType.Kind.Out &&
+			    postfix.argumentTags[i] != ir.Postfix.TagKind.Out &&
+			    !ctx.lp.settings.depArgTags) {
 				throw makeNotTaggedOut(postfix.arguments[i]);
 			}
 		}

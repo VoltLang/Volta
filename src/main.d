@@ -251,6 +251,9 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 		case "--json":
 			settings.writeJson = true;
 			continue;
+		case "--dep-argtags":
+			settings.depArgTags = true;
+			continue;
 		default:
 		}
 
