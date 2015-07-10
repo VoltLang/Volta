@@ -34,7 +34,7 @@ Token match(TokenStream ts, TokenType type, string file = __FILE__, size_t line 
 	if (t.type == type)
 		return ts.get();
 
-	throw makeExpected(t.location, tokenToString[type], t.value, file, line);
+	throw makeExpected(t.location, type.tokenToString, t.value, file, line);
 }
 
 bool matchIf(TokenStream ts, TokenType type)

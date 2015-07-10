@@ -6,7 +6,7 @@ module volt.token.token;
 import volt.token.location;
 
 /* If you're adding a new token, be sure to update:
- *   - the tokenToString array. Keep it alphabetical, and update its length.
+ *   - the _tokenToString array. Keep it alphabetical, and update its length.
  *   - the TokenType enum, again keep it alphabetical. It's _vital_ that the order
  *     is the same in the TokenType enum and the tokenToString array.
  *   - if you're adding a keyword, add it to identifierType.
@@ -15,8 +15,7 @@ import volt.token.location;
  * to keep commas between elements -- two string literals straight after one
  * another are implicitly concatenated. I warn you of this out of experience.
  */
-
-/*global*/ static string[183] tokenToString = [
+enum immutable(string)[] _tokenToString = [
 "none", "identifier", "string literal", "character literal",
 "integer literal", "float literal", "abstract", "alias", "align",
 "asm", "assert", "auto", "body", "bool", "break", "byte", "case",
@@ -53,7 +52,7 @@ version(Volt) {
 	// @todo static assert
 } else {
 	static assert(TokenType.min == 0);
-	static assert(tokenToString.length == TokenType.max + 1, "the tokenToString array and TokenType enum are out of sync.");
+	static assert(_tokenToString.length == TokenType.max + 1, "the tokenToString array and TokenType enum are out of sync.");
 }
 
 enum TokenType
@@ -164,6 +163,11 @@ enum TokenType
 
 	Begin,
 	End,
+}
+
+@property string tokenToString(TokenType token)
+{
+	return _tokenToString[token];
 }
 
 /**

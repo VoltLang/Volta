@@ -2092,7 +2092,7 @@ public:
 
 	override Status visit(ir.PrimitiveType type)
 	{
-		wf(tokenToString[type.type]);
+		wf(type.type.tokenToString);
 		return Continue;
 	}
 
