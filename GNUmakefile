@@ -113,6 +113,7 @@ clean:
 	@rm -rf $(TARGET) .obj
 	@rm -f rt/libvrt-host.bc
 	@rm -f $(RT_TARGETS) $(RT_HOST)
+	@rm -f viv
 	@rm -rf .pkg
 	@rm -rf volt.tar.gz
 
@@ -152,8 +153,8 @@ VIV_SRC= \
 	src/volt/token/token.d \
 
 viv: $(TARGET)
-	@echo "  VOLTA  viv.exe"
-	@./$(TARGET) -o viv.exe $(VIV_SRC)
+	@echo "  VOLTA  viv"
+	@./$(TARGET) --dep-argtags -o viv $(VIV_SRC)
 
 
 .PHONY: all clean run debug license viv

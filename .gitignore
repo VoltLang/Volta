@@ -2,6 +2,8 @@
 # Build system
 /volt
 /volt.*
+/viv
+/viv.*
 .obj
 .pkg
 *.tar.gz
