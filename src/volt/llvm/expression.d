@@ -534,7 +534,13 @@ void handleCast(State state, Location loc, Type newType, Value result)
 
 	auto newTypeArray = cast(ArrayType)newType;
 	auto oldTypeArray = cast(ArrayType)oldType;
-	if (result.isPointer && (newTypeArray !is null && oldTypeArray !is null)) {
+	if (newTypeArray !is null && oldTypeArray !is null) {
+		// At one point we didn't call makePointer because arrays
+		// should always be references. But for function returns they
+		// aren't. Now we haven't run into cases before this change
+		// where they weren't pointers so this is probably safe. But
+		// at one point I clearly thought this was wrong todo.
+		makePointer(state, result);
 		return handleCastArray(state, loc, newType, result);
 	}
 
@@ -565,7 +571,9 @@ void handleCast(State state, Location loc, Type newType, Value result)
 	    (oldTypePtr !is null || oldTypePrim !is null))
 		return handleCastPointerPrim(state, loc, newTypePtr, newTypePrim, result);
 
-	throw panicUnhandled(loc, to!string(newType.irType.nodeType));
+	throw panicUnhandled(loc,
+		to!string(oldType.irType.nodeType) ~ " -> " ~
+		to!string(newType.irType.nodeType));
 }
 
 /**
