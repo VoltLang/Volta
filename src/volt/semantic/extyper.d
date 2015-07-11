@@ -2365,7 +2365,8 @@ bool opOverloadRewrite(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 	if (_agg is null) {
 		return false;
 	}
-	string overfn = overloadName(binop.op);
+	bool neg = binop.op == ir.BinOp.Op.NotEqual;
+	string overfn = overloadName(neg ? ir.BinOp.Op.Equal : binop.op);
 	if (overfn.length == 0) {
 		return false;
 	}
@@ -2376,6 +2377,9 @@ bool opOverloadRewrite(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 	auto fn = selectFunction(ctx.lp, ctx.current, store.functions, [binop.right], l);
 	assert(fn !is null);
 	exp = buildCall(l, buildCreateDelegate(l, binop.left, buildExpReference(l, fn, overfn)), [binop.right]);
+	if (neg) {
+		exp = buildNot(l, exp);
+	}
 	return true;
 }
 

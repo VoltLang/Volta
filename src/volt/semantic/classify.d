@@ -1102,8 +1102,7 @@ ir.Aggregate opOverloadableOrNull(ir.Type t)
 string overloadName(ir.BinOp.Op op)
 {
 	switch (op) with (ir.BinOp.Op) {
-	case NotEqual: return "opNotEqual";
-	case Equal:    return "opEqual";
+	case Equal:    return "opEquals";
 	case Sub:      return "opSub";
 	case Add:      return "opAdd";
 	case Mul:      return "opMul";
