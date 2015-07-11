@@ -46,7 +46,7 @@ public:
 		loc.column = begin.column;
 
 		if (line != begin.line) {
-			loc.length = -1; // End of line
+			loc.length = cast(size_t)-1; // End of line
 		} else {
 			assert(begin.column <= column);
 			loc.length = column + length - begin.column;

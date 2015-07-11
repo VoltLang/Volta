@@ -1186,7 +1186,7 @@ bool lexPragma(TokenWriter tw)
 	if (lineNumber == 0) {
 		throw makeExpected(tw.source.location, "line number greater than zero");
 	}
-	tw.changeCurrentLocation(filename, lineNumber);
+	tw.changeCurrentLocation(filename, cast(size_t)lineNumber);
 
 	skipWhitespace(tw);
 
