@@ -177,7 +177,7 @@ body
 
 private bool ifDocCommentsUntilEndThenSkip(TokenStream ts)
 {
-	size_t n = 0;
+	int n = 0;
 	TokenType tt;
 	do {
 		tt = ts.lookahead(n++).type;
@@ -677,7 +677,11 @@ ir.Attribute parseAttribute(TokenStream ts, bool inModule = false)
 	case TokenType.Align:
 		match(ts, TokenType.OpenParen);
 		auto intTok = match(ts, TokenType.IntegerLiteral);
-		attr.alignAmount = to!int(intTok.value);
+		version(Volt) {
+			attr.alignAmount = toInt(intTok.value);
+		} else {
+			attr.alignAmount = to!int(intTok.value);
+		}
 		match(ts, TokenType.CloseParen);
 		break;
 	case TokenType.At:

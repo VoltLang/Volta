@@ -3,8 +3,8 @@
 module volt.parser.declaration;
 
 version(Volt) {
-	import watt.conv;
-	import watt.text.format;
+	import watt.conv : toInt;
+	import watt.text.format : format;
 } else {
 	import std.string : format;
 }
@@ -54,13 +54,14 @@ ir.Node[] parseVariable(TokenStream ts)
 	} else {
 		throw makeExpected(ts.peek.location, "declaration");
 	}
+	version(Volt) assert(false);
 }
 
 ir.Variable[] parseJustVariable(TokenStream ts)
 {
 	ir.Type base = parseType(ts);
 	ir.Node[] nodes = reallyParseVariable(ts, base);
-	auto vars = new ir.Variable[nodes.length];
+	auto vars = new ir.Variable[](nodes.length);
 	foreach (i, node; nodes) {
 		vars[i] = cast(ir.Variable) node;
 		assert(vars[i] !is null, "reallyParseVariable parsed non variable");
@@ -115,7 +116,11 @@ ir.Node[] reallyParseVariable(TokenStream ts, ir.Type base)
 			try {
 				d.assign = parseExp(ts);
 			} catch (CompilerError e) {
-				throw new CompilerError(e.location, e.msg, e, true);
+				version(Volt) {
+					throw new CompilerError(e.location, e.message, e, true);
+				} else {
+					throw new CompilerError(e.location, e.msg, e, true);
+				}
 			}
 		}
 		decls ~= d;
@@ -363,7 +368,8 @@ ir.Variable parseParameter(TokenStream ts)
 // Parse things that go on the end of types like * or []. If none, base is returned.
 ir.Type parseTypeSigils(TokenStream ts, Location origin, ir.Type base)
 {
-	LOOP: while (true) switch (ts.peek.type) {
+	bool loop = true;
+	while (loop) switch (ts.peek.type) {
 	case TokenType.Asterix:
 		auto end = ts.get();
 		auto p = new ir.PointerType();
@@ -387,7 +393,11 @@ ir.Type parseTypeSigils(TokenStream ts, Location origin, ir.Type base)
 			auto a = new ir.StaticArrayType();
 			a.location = end.location - origin;
 			a.base = base;
-			a.length = to!int(integer.value);
+			version(Volt) {
+				a.length = toInt(integer.value);
+			} else {
+				a.length = to!int(integer.value);
+			}
 			base = a;
 		} else {
 			// Associative array.
@@ -400,7 +410,7 @@ ir.Type parseTypeSigils(TokenStream ts, Location origin, ir.Type base)
 		}
 		break;
 	default:
-		break LOOP;
+		loop = false;
 	}
 	return base;
 }

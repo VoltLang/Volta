@@ -5,6 +5,7 @@ module volt.parser.expression;
 
 version(Volt) {
 	import watt.conv;
+	import watt.text.utf;
 } else {
 	import std.conv;
 	import std.utf;
@@ -76,7 +77,7 @@ class ExpOrOp
 		this.op = op;
 	}
 
-	bool isExp()
+	@property bool isExp()
 	{
 		return exp !is null;
 	}
@@ -236,12 +237,21 @@ ir.Exp postfixToExp(Location location, intir.PostfixExp postfix, ir.Exp seed = n
 		if (exp.op == ir.Postfix.Op.Identifier) {
 			assert(postfix.identifier !is null);
 			exp.identifier = postfix.identifier;
-		} else foreach (arg; postfix.arguments) with (ir.Postfix.TagKind) {
+		} else foreach (arg; postfix.arguments) {
 			exp.arguments ~= assignToExp(arg);
-			exp.argumentTags ~= arg.taggedRef ? Ref : (arg.taggedOut ? Out : None);
+			ir.Postfix.TagKind r;
+			if (arg.taggedRef) {
+				r = ir.Postfix.TagKind.Ref;
+			} else if (arg.taggedOut) {
+				r = ir.Postfix.TagKind.Out;
+			} else {
+				r = ir.Postfix.TagKind.None;
+			}
+			exp.argumentTags ~= r;
 		}
 		return postfixToExp(location, postfix.postfix, exp);
 	}
+	version(Volt) assert(false);
 }
 
 ir.Exp primaryToExp(intir.PrimaryExp primary)
@@ -325,8 +335,13 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 			c.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Dchar);
 			c.type.location = primary.location;
 			auto str = cast(string) c.arrayData;
-			size_t index;
-			c.u._ulong = decodeFront(str, index);
+			version(Volt) {
+				size_t index;
+				c.u._ulong = decode(str, index);
+			} else {
+				size_t index;
+				c.u._ulong = decodeFront(str, index);
+			}
 		}
 		exp = c;
 		break;
@@ -344,9 +359,19 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 			c._string = c._string[0 .. $-1];
 		}
 		if (base == ir.PrimitiveType.Kind.Float) {
-			c.u._float = to!float(c._string);
+			version(Volt) {
+				c.u._float = 0.0f;
+				assert(false);
+			} else {
+				c.u._float = to!float(c._string);
+			}
 		} else {
-			c.u._double = to!double(c._string);
+			version(Volt) {
+				c.u._double = 0.0;
+				assert(false);
+			} else {
+				c.u._double = to!double(c._string);
+			}
 		}
 		c.type = new ir.PrimitiveType(base);
 		c.type.location = primary.location;
@@ -382,7 +407,11 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		if (c._string.length > 2 && (c._string[0 .. 2] == "0x" || c._string[0 .. 2] == "0b")) {
 			auto prefix = c._string[0 .. 2];
 			c._string = c._string[2 .. $];
-			auto v = to!ulong(c._string, prefix == "0x" ? 16 : 2);
+			version(Volt) {
+				auto v = toUlong(c._string, prefix == "0x" ? 16 : 2);
+			} else {
+				auto v = to!ulong(c._string, prefix == "0x" ? 16 : 2);
+			}
 			if (v > uint.max) {
 				if (!explicitBase)
 					base = ir.PrimitiveType.Kind.Long;
@@ -393,42 +422,41 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 				c.u._int = cast(int)v;
 			}
 		} else {
+			// Checking should have been done in the lexer.
+			version(Volt) {
+				auto v = toUlong(c._string);
+			} else {
+				auto v = to!ulong(c._string);
+			}
+
 			switch (base) with (ir.PrimitiveType.Kind) {
 			case Int:
-				try {
-					c.u._int = to!int(c._string);
-				} catch (ConvOverflowException) {
-					if (explicitBase) {
-						throw makeInvalidIntegerLiteral(c.location);
-					}
-					base = Long;
-					try {
-						c.u._long = to!long(c._string);
-					} catch (ConvOverflowException) {
-						throw makeInvalidIntegerLiteral(c.location);
-					}
+				if (v <= int.max) {
+					c.u._int = cast(int)v;
+				} else if (explicitBase) {
+					c.u._long = cast(long)v;
+				} else {
+					throw makeInvalidIntegerLiteral(c.location);
 				}
 				break;
 			case Uint:
-				try {
-					c.u._uint = to!uint(c._string);
-				} catch (ConvOverflowException) {
-					if (explicitBase) {
-						throw makeInvalidIntegerLiteral(c.location);
-					}
-					base = Ulong;
-					try {
-						c.u._ulong = to!ulong(c._string);
-					} catch (ConvOverflowException) {
-						throw makeInvalidIntegerLiteral(c.location);
-					}
+				if (v <= uint.max) {
+					c.u._uint = cast(uint)v;
+				} else if (explicitBase) {
+					c.u._ulong = v;
+				} else {
+					throw makeInvalidIntegerLiteral(c.location);
 				}
 				break;
 			case Long:
-				c.u._long = to!long(c._string);
+				if (v <= long.max) {
+					c.u._long = cast(long)v;
+				} else {
+					throw makeInvalidIntegerLiteral(c.location);
+				}
 				break;
 			case Ulong:
-				c.u._ulong = to!ulong(c._string);
+				c.u._ulong = v;
 				break;
 			default:
 				assert(false);
@@ -614,7 +642,7 @@ ir.IsExp parseIsExp(TokenStream ts)
 			if (ie.compType == ir.IsExp.Comparison.None) {
 				throw makeExpected(ts.peek.location, "'==' or ':'");
 			}
-			switch (ts.peek.type) {
+			switch (ts.peek.type) with(TokenType) {
 			case Struct, Union, Class, Enum, Interface, Function,
 				 Delegate, Super, Const, Immutable, Inout, Shared,
 				 Return:
@@ -690,6 +718,7 @@ ir.FunctionLiteral parseFunctionLiteral(TokenStream ts)
 		fn.block = parseBlock(ts);
 		return fn;
 	}
+	version(Volt) assert(false);
 }
 
 ir.TraitsExp parseTraitsExp(TokenStream ts)

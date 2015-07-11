@@ -72,12 +72,14 @@ ir.Statement[] parseStatement(TokenStream ts)
 		} else {
 			goto default;
 		}
+		version(Volt) assert(false);
 	case TokenType.Final:
 		if (ts.lookahead(1).type == TokenType.Switch) {
 			goto case TokenType.Switch;
 		} else {
 			goto default;
 		}
+		version(Volt) assert(false);
 	case TokenType.Static:
 		if (ts.lookahead(1).type == TokenType.If) {
 			goto case TokenType.Version;
@@ -86,6 +88,7 @@ ir.Statement[] parseStatement(TokenStream ts)
 		} else {
 			goto default;
 		}
+		version(Volt) assert(false);
 	case TokenType.Assert:
 		return [parseAssertStatement(ts)];
 	case TokenType.Version:
@@ -111,6 +114,7 @@ ir.Statement[] parseStatement(TokenStream ts)
 			return cast(ir.Statement[]) node;
 		}
 	}
+	version(Volt) assert(false);
 }
 
 /* Try to parse as a declaration first because

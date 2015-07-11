@@ -181,7 +181,7 @@ public:
 
 public:
 	Type op;
-	volt.ir.declaration.Type type;
+	.Type type;
 	Exp exp;
 	string _string;      // Optional.
 	AssignExp[] keys;

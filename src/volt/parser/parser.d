@@ -75,7 +75,7 @@ protected:
 
 		ir.Token t;
 		while((t = ts.get()).type != TokenType.End) {
-			string l = t.location.toString;
+			string l = t.location.toString();
 			string tStr = t.type.tokenToString;
 			string v = t.value;
 			writefln("%s %s \"%s\"", l, tStr, v);
