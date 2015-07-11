@@ -479,7 +479,7 @@ string[] archList = [
 ];
 
 string[][] tripleList = [
-	/**
+	/*
 	 * The subsystem will controll if llc emits coff or ELF object files.
 	 *
 	 * - i686-mingw32 emits ELF object files.
@@ -492,7 +492,7 @@ string[][] tripleList = [
 		null,
 	],
 
-	/**
+	/*
 	 * This is what clang uses for Linux.
 	 */
 	[
@@ -501,7 +501,7 @@ string[][] tripleList = [
 		null,
 	],
 
-	/**
+	/*
 	 * This is what clang uses for OSX.
 	 */
 	[
@@ -510,7 +510,7 @@ string[][] tripleList = [
 		null,
 	],
 
-	/**
+	/*
 	 * This is what emscripten uses.
 	 */
 	[

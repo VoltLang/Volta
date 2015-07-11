@@ -236,7 +236,7 @@ ir.Type copyTypeSmart(Location loc, ir.Type type)
 	case Union:
 	case Enum:
 		auto s = getScopeFromType(type);
-		// / @todo Get fully qualified name for type.
+		// @todo Get fully qualified name for type.
 		return buildTypeReference(loc, type, s !is null ? s.name : null);
 	default:
 		throw panicUnhandled(type, ir.nodeToString(type));

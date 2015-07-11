@@ -112,7 +112,7 @@ public:
 			return Continue;
 		}
 		if (functionDepth > 0) {
-			/// @todo mangle static variables, but we need static for that.
+			// @todo mangle static variables, but we need static for that.
 			return Continue;
 		}
 		if (aggregateDepth == 0) {

@@ -19,9 +19,9 @@ public:
 		ContinueParent,
 	}
 
-	alias Status.Stop Stop;
-	alias Status.Continue Continue;
-	alias Status.ContinueParent ContinueParent;
+	alias Stop = Status.Stop;
+	alias Continue = Status.Continue;
+	alias ContinueParent = Status.ContinueParent;
 
 public abstract:
 
@@ -200,9 +200,9 @@ public abstract:
 	Status debugVisitNode(ir.Node n);
 }
 
-alias Visitor.Status.Stop VisitorStop;
-alias Visitor.Status.Continue VisitorContinue;
-alias Visitor.Status.ContinueParent VisitorContinueParent;
+alias VisitorStop = Visitor.Status.Stop;
+alias VisitorContinue = Visitor.Status.Continue;
+alias VisitorContinueParent = Visitor.Status.ContinueParent;
 
 /// A visitor that does nothing.
 class NullVisitor : Visitor

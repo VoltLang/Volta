@@ -512,7 +512,7 @@ public:
 		llvmType = LLVMStructCreateNamed(state.context, mangled);
 		super(state, irType, true, llvmType);
 
-		/// @todo check packing.
+		// @todo check packing.
 		uint index;
 		LLVMTypeRef[] mt;
 
@@ -525,7 +525,7 @@ public:
 			if (var.storage != ir.Variable.Storage.Field)
 				return;
 
-			/// @todo handle anon types.
+			// @todo handle anon types.
 			assert(var.name !is null);
 
 			indices[var.name] = index++;
@@ -582,7 +582,7 @@ public:
 			if (var.storage != ir.Variable.Storage.Field)
 				return;
 
-			/// @todo handle anon members.
+			// @todo handle anon members.
 			assert(var.name !is null);
 
 			indices[var.name] = index++;
@@ -593,7 +593,7 @@ public:
 			handle(m);
 		}
 
-		/// @todo check packing.
+		// @todo check packing.
 		LLVMTypeRef[1] mt;
 		mt[0] = LLVMArrayType(state.ubyteType.llvmType, irType.totalSize);
 		LLVMStructSetBody(llvmType, mt, false);

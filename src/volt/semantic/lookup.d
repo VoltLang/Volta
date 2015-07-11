@@ -190,7 +190,7 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 		}
 	}
 
-	/// @todo Error if we found multiple matches in importedScopes.
+	// @todo Error if we found multiple matches in importedScopes.
 
 	return null;
 }

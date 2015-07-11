@@ -10,7 +10,7 @@ import ir = volt.ir.ir;
  * and that the node list @list be ignored, return false to indicate
  * that @n replaced with @list.
  */
-alias bool delegate(ir.Node n, out ir.Node[] list) ReplaceDg;
+alias ReplaceDg = bool delegate(ir.Node n, out ir.Node[] list);
 
 /**
  * Loops over all the given nodes and calls @replaceDg for each,

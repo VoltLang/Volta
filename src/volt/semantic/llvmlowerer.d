@@ -180,7 +180,7 @@ public:
 
 	override Status leave(ref ir.Exp exp, ir.BinOp binOp)
 	{
-		/**
+		/*
 		 * We do this on the leave function so we know that
 		 * any children has been lowered as well.
 		 */

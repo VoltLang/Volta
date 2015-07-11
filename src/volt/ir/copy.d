@@ -437,7 +437,7 @@ ir.Node copyNode(ir.Node n)
 	case Class:
 	case Interface:
 		auto t = cast(ir.Type)n;
-		return copyTypeSmart(t.location, t);  // / @todo do correctly.
+		return copyTypeSmart(t.location, t);  // @todo do correctly.
 	case QualifiedName:
 	case Identifier:
 	case Module:

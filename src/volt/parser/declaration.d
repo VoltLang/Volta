@@ -33,23 +33,23 @@ ir.Node[] parseVariable(TokenStream ts)
 	}
 
 	auto loc = ts.peek.location;
-	auto global = matchIf(ts, TokenType.Global);
-	if (!global) {
-		global = matchIf(ts, TokenType.Static);  // Deprecate after self-hosting etc.
+	auto _global = matchIf(ts, TokenType.Global);
+	if (!_global) {
+		_global = matchIf(ts, TokenType.Static);  // Deprecate after self-hosting etc.
 	}
 	ir.Type base = parseType(ts);
 	if (ts.lookahead(1).type == TokenType.Comma ||
 		ts.lookahead(1).type == TokenType.Semicolon ||
 		ts.lookahead(1).type == TokenType.Assign) {
 		// Normal declaration.
-		if (global) {
+		if (_global) {
 			throw makeUnexpected(loc, "global");
 		}
 		return reallyParseVariable(ts, base);
 	} else if (ts.lookahead(1).type == TokenType.OpenParen) {
 		// Function!
 		auto fn = parseFunction(ts, base);
-		fn.isGlobal = global;
+		fn.isGlobal = _global;
 		return [fn];
 	} else {
 		throw makeExpected(ts.peek.location, "declaration");

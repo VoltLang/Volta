@@ -32,7 +32,7 @@ public:
 	}
 
 protected:
-	override size_t toHash() nothrow @trusted
+	override nothrow @trusted size_t toHash()
 	{
 		return *cast(size_t*)&node;
 	}
