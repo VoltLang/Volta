@@ -5,7 +5,7 @@
 module volt.token.stream;
 
 version(Volt) {
-
+	import watt.text.string : strip, indexOf;
 } else {
 	import std.string : strip, indexOf;
 }
@@ -84,9 +84,9 @@ public:
 	 * Side-effects:
 	 *   None.
 	 */
-	int opEquals(TokenType type)
+	bool opEquals(TokenType type)
 	{
-		return typeid(int).equals(&peek.type, &type);
+		return type == peek().type;
 	}
 
 	/**
@@ -245,8 +245,8 @@ public:
 	}
 
 	/**
-	 * True if we found @{ on its own, so apply the last doccomment
-	 * multiple times, until we see a matching number of @}s.
+	 * True if we found @ { on its own, so apply the last doccomment
+	 * multiple times, until we see a matching number of @ }s.
 	 */
 	@property bool inMultiCommentBlock()
 	{

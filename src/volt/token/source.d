@@ -4,8 +4,9 @@
 module volt.token.source;
 
 version(Volt) {
-	import watt.text.format;
-	import watt.io.file;
+	import watt.text.format : format;
+	import watt.text.utf : decode, validate;
+	import watt.io.file : read;
 } else {
 	import std.file : read;
 	import std.utf : validate, decode;
@@ -15,7 +16,8 @@ version(Volt) {
 import volt.errors : panic;
 import volt.token.location : Location;
 
-alias size_t Mark;
+
+alias Mark = size_t;
 
 
 /**
@@ -127,8 +129,9 @@ public:
 	{
 		bool lookEOF = false;
 
-		if (mChar != '#' || lookahead(1, lookEOF) != '!')
+		if (mChar != '#' || lookahead(1, lookEOF) != '!') {
 			return;
+		}
 
 		// We have a script line start, read the rest of the line.
 		while (next() != '\n' && !eof) {}
@@ -189,7 +192,7 @@ public:
 	 * Side-effects:
 	 *   None.
 	 */
-	dchar current()
+	@property dchar current()
 	{
 		return mChar;
 	}
@@ -211,7 +214,7 @@ public:
 	{
 		if (n == 0) return mChar;
 
-		for (int i; i < n; i++) {
+		for (size_t i; i < n; i++) {
 			dchar c = decodeChar();
 			if (c == dchar.init) {
 				lookaheadEOF = true;

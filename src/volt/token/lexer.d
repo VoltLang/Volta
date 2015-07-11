@@ -3,11 +3,12 @@
 module volt.token.lexer;
 
 version(Volt) {
-	import core.stdc.time;
-	import watt.conv;
-	import watt.text.ascii;
-	import watt.text.format;
-	import watt.text.utf;
+	import core.stdc.time : time, localtime;
+	import watt.conv : toInt;
+	import watt.text.ascii : isDigit, isAlpha, isWhite;
+	import watt.text.format : format;
+	import watt.text.utf : encode;
+	import watt.text.string : indexOf;
 } else {
 	import std.uni : isWhite, isAlpha;
 	import std.utf : toUTF8;
@@ -79,9 +80,13 @@ private:
  */
 void match(Source src, dchar c)
 {
-	auto cur = src.current;
+	dchar cur = src.current;
 	if (cur != c) {
-		throw makeExpected(src.location, to!string(c), to!string(cur));
+		version(Volt) {
+			throw makeExpected(src.location, encode(c), encode(cur));
+		} else {
+			throw makeExpected(src.location, to!string(c), to!string(cur));
+		}
 	}
 
 	// Advance to the next character.
@@ -203,7 +208,9 @@ void skipLineComment(TokenWriter tw)
 	match(tw.source, '/');
 	while (tw.source.current != '\n') {
 		tw.source.next();
-		if (tw.source.eof) return;
+		if (tw.source.eof) {
+			return;
+		}
 	}
 
 	addIfDocComment(tw, commentToken, tw.source.sliceFrom(mark), "//");
@@ -807,14 +814,26 @@ bool lexQString(TokenWriter tw)
 		nesting = false;
 		if (isdalpha(tw.source.current, Position.Start)) {
 			char[] buf;
-			buf ~= tw.source.current;
+			version(Volt) {
+				buf ~= encode(tw.source.current);
+			} else {
+				buf ~= to!string(tw.source.current);
+			}
 			tw.source.next();
 			while (isdalpha(tw.source.current, Position.MiddleOrEnd)) {
-				buf ~= tw.source.current;
+				version(Volt) {
+					buf ~= encode(tw.source.current);
+				} else {
+					buf ~= to!string(tw.source.current);
+				}
 				tw.source.next();
 			}
 			match(tw.source, '\n');
-			identdelim = buf.idup;
+			version(Volt) {
+				identdelim = cast(string)new buf[0 .. $];
+			} else {
+				identdelim = buf.idup;
+			}
 		} else {
 			opendelimiter = tw.source.current;
 			closedelimiter = tw.source.current;
@@ -823,7 +842,7 @@ bool lexQString(TokenWriter tw)
 
 	if (identdelim is null) match(tw.source, opendelimiter);
 	int nest = 1;
-	LOOP: while (true) {
+	while (true) {
 		if (tw.source.eof) {
 			throw makeExpected(token.location, "string literal terminator.");
 		}
@@ -845,15 +864,20 @@ bool lexQString(TokenWriter tw)
 			break;
 		} else if (identdelim !is null && tw.source.current == '\n') {
 			size_t look = 1;
+			bool restart;
 			while (look - 1 < identdelim.length) {
 				dchar c = tw.source.lookahead(look, leof);
 				if (leof) {
 					throw makeExpected(token.location, "string literal terminator.");
 				}
 				if (c != identdelim[look - 1]) {
-					continue LOOP;
+					restart = true;
+					break;
 				}
 				look++;
+			}
+			if (restart) {
+				continue;
 			}
 			for (int i; 0 < look; i++) {
 				tw.source.next();
@@ -910,10 +934,17 @@ bool lexTokenString(TokenWriter tw)
  * Consume characters from the source from the characters array until you can't.
  * Returns: the number of characters consumed, not counting underscores.
  */
-size_t consume(Source src, dchar[] characters...)
+size_t consume(Source src, const(dchar)[] characters...)
 {
 	size_t consumed;
-	while (characters.count(src.current) > 0) {
+	static bool isIn(const(dchar)[] chars, dchar arg) {
+		foreach(c; chars) {
+			if (c == arg)
+				return true;
+		}
+		return false;
+	}
+	while (isIn(characters, src.current)) {
 		if (src.current != '_') consumed++;
 		src.next();
 	}
@@ -935,7 +966,11 @@ string removeUnderscores(string s)
 		}
 		output[i++] = c;
 	}
-	return i == s.length ? s : output[0 .. i].idup;
+	version(Volt) {
+		return i == s.length ? s : cast(string)new output[0 .. i];
+	} else {
+		return i == s.length ? s : output[0 .. i].idup;
+	}
 }
 
 /**
@@ -1005,7 +1040,7 @@ bool lexNumber(TokenWriter tw)
 
 	token.type = TokenType.IntegerLiteral;
 	token.value = tw.source.sliceFrom(mark);
-	token.value = toUTF8(array(removeUnderscores(token.value)));
+	token.value = removeUnderscores(token.value);
 	tw.addToken(token);
 
 	return true;
@@ -1022,7 +1057,7 @@ bool lexReal(TokenWriter tw)
 	{
 		token.type = TokenType.FloatLiteral;
 		token.value = tw.source.sliceFrom(mark);
-		token.value = toUTF8(array(removeUnderscores(token.value)));
+		token.value = removeUnderscores(token.value);
 		tw.addToken(token);
 		return true;
 	}
@@ -1125,7 +1160,11 @@ bool lexPragma(TokenWriter tw)
 	if (Int.type != TokenType.IntegerLiteral) {
 		throw makeExpected(Int.location, "integer literal");
 	}
-	int lineNumber = to!int(Int.value);
+	version(Volt) {
+		int lineNumber = toInt(Int.value);
+	} else {
+		int lineNumber = to!int(Int.value);
+	}
 	tw.pop();
 
 	skipWhitespace(tw);
@@ -1137,7 +1176,11 @@ bool lexPragma(TokenWriter tw)
 		buf ~= tw.source.next();
 	}
 	match(tw.source, '"');
-	string filename = toUTF8(buf);
+	version(Volt) {
+		string filename = encode(buf);
+	} else {
+		string filename = toUTF8(buf);
+	}
 
 	assert(lineNumber >= 0);
 	if (lineNumber == 0) {
