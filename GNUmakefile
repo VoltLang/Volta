@@ -152,9 +152,9 @@ VIV_SRC= \
 	src/volt/token/*.d \
 	src/volt/parser/*.d
 
-viv: $(TARGET)
+viv: $(TARGET) $(VIV_SRC)
 	@echo "  VOLTA  viv"
 	@./$(TARGET) --dep-argtags -o viv $(VIV_SRC)
-
+	@./viv $(VIV_SRC)
 
 .PHONY: all clean run debug license viv
