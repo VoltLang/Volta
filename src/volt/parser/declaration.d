@@ -23,7 +23,6 @@ import volt.parser.toplevel;
 import volt.parser.declaration;
 import volt.parser.statements;
 import volt.token.location;
-import volt.semantic.classify;
 
 
 ir.Node[] parseVariable(TokenStream ts)
@@ -296,9 +295,6 @@ ir.Variable[] parseParameterList(TokenStream ts, ir.CallableType parentCallable)
 		auto var = parseParameter(ts);
 		// foo(int a, int[] b...)
 		if (matchIf(ts, TokenType.TripleDot)) {
-			if (!isArray(var.type)) {
-				throw makeExpected(ts.peek.location, "array argument for homogenous variadic");
-			}
 			if (ts.peek.type != TokenType.CloseParen) {
 				throw makeExpected(ts.peek.location, "homogenous variadic argument to be final argument");
 			}
