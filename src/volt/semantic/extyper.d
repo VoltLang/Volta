@@ -2507,12 +2507,15 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 		return;
 	}
 
+	auto larray = cast(ir.ArrayType)realType(ltype);
+	auto rarray = cast(ir.ArrayType)realType(rtype);
 	if ((binop.op == ir.BinOp.Op.Cat || binop.op == ir.BinOp.Op.CatAssign) &&
-	    ltype.nodeType == ir.NodeType.ArrayType) {
+	    (larray !is null || rarray !is null)) {
 		if (binop.op == ir.BinOp.Op.CatAssign && effectivelyConst(ltype)) {
 			throw makeCannotModify(binop, ltype);
 		}
-		extypeCat(ctx, binop, cast(ir.ArrayType)ltype, rtype);
+		bool swapped = binop.op != ir.BinOp.Op.CatAssign && larray is null;
+		extypeCat(ctx, swapped ? binop.right : binop.left, swapped ? binop.left : binop.right, swapped ? rarray : larray, swapped ? ltype : rtype);
 		return;
 	}
 
@@ -2535,7 +2538,7 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 /**
  * Ensure concatentation is sound.
  */
-void extypeCat(Context ctx, ir.BinOp bin, ir.ArrayType left, ir.Type right)
+void extypeCat(Context ctx, ref ir.Exp lexp, ref ir.Exp rexp, ir.ArrayType left, ir.Type right)
 {
 	if (typesEqual(left, right) ||
 	    typesEqual(right, left.base)) {
@@ -2545,7 +2548,7 @@ void extypeCat(Context ctx, ir.BinOp bin, ir.ArrayType left, ir.Type right)
 	void getClass(ir.Type t, ref int depth, ref ir.Class _class)
 	{
 		depth = 0;
-		_class = cast(ir.Class)t;
+		_class = cast(ir.Class)realType(t);
 		auto array = cast(ir.ArrayType)realType(t);
 		while (array !is null && _class is null) {
 			depth++;
@@ -2572,16 +2575,26 @@ void extypeCat(Context ctx, ir.BinOp bin, ir.ArrayType left, ir.Type right)
 	int ldepth, rdepth;
 	getClass(left, ldepth, lclass);
 	getClass(right, rdepth, rclass);
-	if (lclass !is null && rclass !is null && ldepth == rdepth) {
+	if (lclass !is null && rclass !is null) {
 		auto _class = commonParent(lclass, rclass);
-		auto l = bin.location;
-		if (lclass !is _class) {
-			bin.left = buildCastSmart(buildDeepArraySmart(l, ldepth, _class), bin.left);
+		if (ldepth >= 1 && ldepth == rdepth) {
+			auto l = lexp.location;
+			if (lclass !is _class) {
+				lexp = buildCastSmart(buildDeepArraySmart(l, ldepth, _class), lexp);
+			}
+			if (rclass !is _class) {
+				rexp = buildCastSmart(buildDeepArraySmart(l, rdepth, _class), rexp);
+			}
+			return;
+		} else if (ldepth == 0 || rdepth == 0) {
+			if (ldepth == 0 && lclass !is _class) {
+				lexp = buildCastSmart(_class, lexp);
+				return;
+			} else if (rdepth == 0 && rclass !is _class) {
+				rexp = buildCastSmart(_class, rexp);
+				return;
+			}
 		}
-		if (rclass !is _class) {
-			bin.right = buildCastSmart(buildDeepArraySmart(l, rdepth, _class), bin.right);
-		}
-		return;
 	}
 
 	auto rarray = cast(ir.ArrayType) realType(right);
@@ -2589,8 +2602,8 @@ void extypeCat(Context ctx, ir.BinOp bin, ir.ArrayType left, ir.Type right)
 		return;
 	}
 
-	extypeAssign(ctx, bin.right, rarray is null ? left.base : left);
-	bin.right = buildCastSmart(left.base, bin.right);
+	extypeAssign(ctx, rexp, rarray is null ? left.base : left);
+	rexp = buildCastSmart(left.base, rexp);
 }
 
 void extypeTernary(Context ctx, ir.Ternary ternary)
