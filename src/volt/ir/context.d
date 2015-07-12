@@ -392,7 +392,7 @@ public:
 		}
 		errorOn(n, name);
 		ir.Store store;
-		if (n.nodeType() == ir.NodeType.FunctionParam) {
+		if (n.nodeType == ir.NodeType.FunctionParam) {
 			store = new Store(this, n, name, Store.Kind.FunctionParam);
 		} else {
 			store = new Store(this, n, name, Store.Kind.Value);

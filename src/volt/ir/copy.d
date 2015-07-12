@@ -320,7 +320,7 @@ ir.QualifiedName copy(ir.QualifiedName old)
  */
 ir.Type copyType(ir.Type t)
 {
-	switch (t.nodeType()) with (ir.NodeType) {
+	switch (t.nodeType) with (ir.NodeType) {
 	case PrimitiveType:
 		return copy(cast(ir.PrimitiveType)t);
 	case PointerType:
@@ -377,7 +377,7 @@ ir.Exp copyExp(Location location, ir.Exp exp)
  */
 ir.Node copyNode(ir.Node n)
 {
-	final switch (n.nodeType()) with (ir.NodeType) {
+	final switch (n.nodeType) with (ir.NodeType) {
 	case Invalid:
 		auto msg = format("cannot copy '%s'", ir.nodeToString(n));
 		throw panic(n.location, msg);

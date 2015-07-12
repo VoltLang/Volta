@@ -79,7 +79,7 @@ ir.QualifiedName buildQualifiedNameSmart(ir.Identifier i)
  */
 ir.Scope getScopeFromType(ir.Type type)
 {
-	switch (type.nodeType()) with (ir.NodeType) {
+	switch (type.nodeType) with (ir.NodeType) {
 	case TypeReference:
 		auto asTypeRef = cast(ir.TypeReference) type;
 		assert(asTypeRef !is null);
@@ -158,7 +158,7 @@ ir.Scope getScopeFromStore(ir.Store store)
  */
 ir.Type copyTypeSmart(Location loc, ir.Type type)
 {
-	switch (type.nodeType()) with (ir.NodeType) {
+	switch (type.nodeType) with (ir.NodeType) {
 	case PrimitiveType:
 		auto pt = cast(ir.PrimitiveType)type;
 		pt = new ir.PrimitiveType(pt.type);
@@ -1089,7 +1089,7 @@ ir.Exp buildVaArgEnd(Location loc, ir.Exp vlexp)
 
 ir.StatementExp buildInternalArrayLiteralSmart(Location loc, ir.Type atype, ir.Exp[] exps)
 {
-	if (atype.nodeType() != ir.NodeType.ArrayType)
+	if (atype.nodeType != ir.NodeType.ArrayType)
 		throw panic(atype, "must be array type");
 
 	auto sexp = new ir.StatementExp();
@@ -1110,7 +1110,7 @@ ir.StatementExp buildInternalArrayLiteralSmart(Location loc, ir.Type atype, ir.E
 
 ir.StatementExp buildInternalStaticArrayLiteralSmart(Location loc, ir.Type atype, ir.Exp[] exps)
 {
-	if (atype.nodeType() != ir.NodeType.StaticArrayType)
+	if (atype.nodeType != ir.NodeType.StaticArrayType)
 		throw panic(atype, "must be staticarray type");
 
 	auto sexp = new ir.StatementExp();
@@ -1128,7 +1128,7 @@ ir.StatementExp buildInternalStaticArrayLiteralSmart(Location loc, ir.Type atype
 
 ir.StatementExp buildInternalArrayLiteralSliceSmart(Location loc, ir.Type atype, ir.Type[] types, int[] sizes, int totalSize, ir.Function memcpyFn, ir.Exp[] exps)
 {
-	if (atype.nodeType() != ir.NodeType.ArrayType)
+	if (atype.nodeType != ir.NodeType.ArrayType)
 		throw panic(atype, "must be array type");
 
 	auto sexp = new ir.StatementExp();

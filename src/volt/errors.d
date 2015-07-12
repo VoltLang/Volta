@@ -745,7 +745,7 @@ string typesString(ir.Type[] types)
 string errorString(ir.Type type)
 {
 	assert(type !is null);
-	switch(type.nodeType()) with(ir.NodeType) {
+	switch(type.nodeType) with(ir.NodeType) {
 	case PrimitiveType:
 		ir.PrimitiveType prim = cast(ir.PrimitiveType)type;
 		return toLower(format("%s", prim.type));
@@ -770,7 +770,7 @@ string errorString(ir.Type type)
 	case DelegateType:
 		ir.CallableType c = cast(ir.CallableType)type;
 
-		string ctype = type.nodeType() == FunctionType ? "function" : "delegate";
+		string ctype = type.nodeType == FunctionType ? "function" : "delegate";
 
 		string params;
 		if (c.params.length > 0) {

@@ -47,7 +47,7 @@ abstract class Declaration : Node
 	Attribute[] userAttrs;
 	string oldname;  // Optional. Used for righting lookups of renamed identifiers in nested functions.
 
-	@property Kind declKind() { return cast(Kind)nodeType(); }
+	@property Kind declKind() { return cast(Kind)nodeType; }
 	this(NodeType nt) { super(nt); }
 }
 

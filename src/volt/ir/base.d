@@ -180,7 +180,7 @@ public:
 	Location location;
 
 	/// Retrieve the NodeType for this Node.
-	NodeType nodeType() { return mNodeType; }
+	@property NodeType nodeType() { return mNodeType; }
 
 	/// Documentation comment attached to this node, if any.
 	string docComment;
@@ -269,7 +269,7 @@ public:
  */
 string nodeToString(Node node)
 {
-	return nodeToString(node.nodeType());
+	return nodeToString(node.nodeType);
 }
 
 /**
