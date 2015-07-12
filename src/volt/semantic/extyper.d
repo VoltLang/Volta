@@ -2542,6 +2542,48 @@ void extypeCat(Context ctx, ir.BinOp bin, ir.ArrayType left, ir.Type right)
 		return;
 	}
 
+	void getClass(ir.Type t, ref int depth, ref ir.Class _class)
+	{
+		depth = 0;
+		_class = cast(ir.Class)t;
+		auto array = cast(ir.ArrayType)realType(t);
+		while (array !is null && _class is null) {
+			depth++;
+			_class = cast(ir.Class)realType(array.base);
+			array = cast(ir.ArrayType)realType(array.base);
+		}
+	}
+
+	ir.Type buildDeepArraySmart(Location location, int depth, ir.Type base)
+	{
+		ir.ArrayType array = new ir.ArrayType();
+		array.location = location;
+		auto firstArray = array;
+		for (size_t i = 1; i < depth; ++i) {
+			array.base = new ir.ArrayType();
+			array.base.location = location;
+			array = cast(ir.ArrayType)array.base;
+		}
+		array.base = copyTypeSmart(location, base);
+		return firstArray;
+	}
+
+	ir.Class lclass, rclass;
+	int ldepth, rdepth;
+	getClass(left, ldepth, lclass);
+	getClass(right, rdepth, rclass);
+	if (lclass !is null && rclass !is null && ldepth == rdepth) {
+		auto _class = commonParent(lclass, rclass);
+		auto l = bin.location;
+		if (lclass !is _class) {
+			bin.left = buildCastSmart(buildDeepArraySmart(l, ldepth, _class), bin.left);
+		}
+		if (rclass !is _class) {
+			bin.right = buildCastSmart(buildDeepArraySmart(l, rdepth, _class), bin.right);
+		}
+		return;
+	}
+
 	auto rarray = cast(ir.ArrayType) realType(right);
 	if (rarray !is null && isImplicitlyConvertable(rarray.base, left.base)) {
 		return;
