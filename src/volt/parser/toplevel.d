@@ -814,7 +814,7 @@ package ir.Condition parseCondition(TokenStream ts)
 	case TokenType.Debug:
 		condition.kind = ir.Condition.Kind.Debug;
 		ts.get();
-		break;
+		return condition;
 	case TokenType.Static:
 		condition.kind = ir.Condition.Kind.StaticIf;
 		ts.get();
