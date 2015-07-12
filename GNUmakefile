@@ -155,6 +155,6 @@ VIV_SRC= \
 viv: $(TARGET) $(VIV_SRC)
 	@echo "  VOLTA  viv"
 	@./$(TARGET) --dep-argtags -o viv $(VIV_SRC)
-	@./viv $(VIV_SRC)
+	@./viv $(DSRC) src/volt/main.volt
 
 .PHONY: all clean run debug license viv
