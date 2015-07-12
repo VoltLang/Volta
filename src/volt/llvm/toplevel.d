@@ -204,17 +204,19 @@ public:
 		return ContinueParent;
 	}
 
+	// Have to move this here for now.
+	struct Block
+	{
+		ir.SwitchCase _case;
+		LLVMBasicBlockRef block;
+	}
+
 	override Status enter(ir.SwitchStatement ss)
 	{
 		assert(state.currentFall);
 
 		auto cond = state.getValue(ss.condition);
 
-		struct Block
-		{
-			ir.SwitchCase _case;
-			LLVMBasicBlockRef block;
-		}
 		Block[] blocks;
 
 		auto oldCases = state.currentSwitchCases; 
