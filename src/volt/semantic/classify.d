@@ -780,27 +780,45 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 			}
 		}
 
-		bool inFPRange(T)()
+		bool inFloatRange()
 		{
-			if (primitive.type == Int) {
-				return constant.u._int >= T.min_normal && constant.u._int <= T.max;
-			} else if (primitive.type == Uint) {
-				return constant.u._uint >= T.min_normal && constant.u._uint <= T.max;
-			} else if (primitive.type == Long) {
-				return constant.u._long >= T.min_normal && constant.u._long <= T.max;
-			} else if (primitive.type == Ulong) {
-				return constant.u._ulong >= T.min_normal && constant.u._ulong <= T.max;
-			} else if (primitive.type == Float) {
-				return constant.u._float >= T.min_normal && constant.u._float <= T.max;
-			} else if (primitive.type == Double) {
-				return constant.u._double >= T.min_normal && constant.u._double <= T.max;
-			} else {
+			switch(primitive.type) with (ir.PrimitiveType.Kind) {
+			case Int:
+				return constant.u._int >= float.min_normal && constant.u._int <= float.max;
+			case Uint:
+				return constant.u._uint >= float.min_normal && constant.u._uint <= float.max;
+			case Long:
+				return constant.u._long >= float.min_normal && constant.u._long <= float.max;
+			case Ulong:
+				return constant.u._ulong >= float.min_normal && constant.u._ulong <= float.max;
+			case Float:
+				return constant.u._float >= float.min_normal && constant.u._float <= float.max;
+			case Double:
+				return constant.u._double >= float.min_normal && constant.u._double <= float.max;
+			default:
 				assert(false);
 			}
 		}
 
-		alias inFPRange!float inFloatRange;
-		alias inFPRange!double inDoubleRange;
+		bool inDoubleRange()
+		{
+			switch(primitive.type) with (ir.PrimitiveType.Kind) {
+			case Int:
+				return constant.u._int >= double.min_normal && constant.u._int <= double.max;
+			case Uint:
+				return constant.u._uint >= double.min_normal && constant.u._uint <= double.max;
+			case Long:
+				return constant.u._long >= double.min_normal && constant.u._long <= double.max;
+			case Ulong:
+				return constant.u._ulong >= double.min_normal && constant.u._ulong <= double.max;
+			case Float:
+				return constant.u._double >= double.min_normal && constant.u._double <= double.max;
+			case Double:
+				return constant.u._double >= double.min_normal && constant.u._double <= double.max;
+			default:
+				assert(false);
+			}
+		}
 
 		switch (t.type) {
 		case Ubyte, Char: return inUnsignedRange(ubyte.max);
