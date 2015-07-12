@@ -184,26 +184,37 @@ void handleAssign(State state, ir.BinOp bin, Value result)
 
 void handleBoolCompare(State state, ir.BinOp bin, Value result)
 {
+	assert(bin.op == ir.BinOp.Op.AndAnd || bin.op == ir.BinOp.Op.OrOr);
 	Value left = result;
 	Value right = new Value();
+	bool and = bin.op == ir.BinOp.Op.AndAnd;
+
+	LLVMBasicBlockRef oldBlock, rightBlock, endBlock;
+	rightBlock = LLVMAppendBasicBlockInContext(
+			state.context, state.currentFunc, "compRight");
+	endBlock = LLVMAppendBasicBlockInContext(
+			state.context, state.currentFunc, "compDone");
 
 	state.getValue(bin.left, left);
-	state.getValue(bin.right, right);
+	LLVMBuildCondBr(state.builder, left.value,
+		and ? rightBlock : endBlock,
+		and ? endBlock : rightBlock);
+	oldBlock = state.currentBlock; // Need the block for phi.
 
-	// The frontend should have made sure that both are bools.
-	switch(bin.op) with (ir.BinOp.Op) {
-	case AndAnd:
-		result.value = LLVMBuildAnd(state.builder, left.value, right.value, "");
-		break;
-	case OrOr:
-		result.value = LLVMBuildOr(state.builder, left.value, right.value, "");
-		break;
-	//case XorXor:
-	//	result.value = LLVMBuildXor(state.builder, left.value, right.value, "");
-	//	break;
-	default:
-		throw panic(bin.location, "error");
-	}
+	LLVMMoveBasicBlockAfter(rightBlock, state.currentBlock);
+	state.startBlock(rightBlock);
+	state.getValue(bin.right, right);
+	LLVMBuildBr(state.builder, endBlock);
+	rightBlock = state.currentBlock; // Need to update the block for phi.
+
+	LLVMMoveBasicBlockAfter(endBlock, rightBlock);
+	state.startBlock(endBlock);
+
+	auto v = LLVMConstInt(state.boolType.llvmType, !and, false);
+	auto phi = LLVMBuildPhi(state.builder, left.type.llvmType, "");
+	LLVMAddIncoming(
+		phi, [v, right.value], [oldBlock, rightBlock]);
+	result.value = phi;
 }
 
 void handleIs(State state, ir.BinOp bin, Value result)
