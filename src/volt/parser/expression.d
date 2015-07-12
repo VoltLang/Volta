@@ -15,6 +15,8 @@ version(Volt) {
 
 	private float toFloat(string s) { return to!float(s); }
 	private double toDouble(string s) { return to!double(s); }
+	private ulong toUlong(string s, int base = 10) { return to!ulong(s, base); }
+	private int toInt(string s) { return to!int(s); }
 }
 
 import ir = volt.ir.ir;
@@ -403,11 +405,7 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		if (c._string.length > 2 && (c._string[0 .. 2] == "0x" || c._string[0 .. 2] == "0b")) {
 			auto prefix = c._string[0 .. 2];
 			c._string = c._string[2 .. $];
-			version(Volt) {
-				auto v = toUlong(c._string, prefix == "0x" ? 16 : 2);
-			} else {
-				auto v = to!ulong(c._string, prefix == "0x" ? 16 : 2);
-			}
+			auto v = toUlong(c._string, prefix == "0x" ? 16 : 2);
 			if (v > uint.max) {
 				if (!explicitBase)
 					base = ir.PrimitiveType.Kind.Long;
@@ -419,11 +417,7 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 			}
 		} else {
 			// Checking should have been done in the lexer.
-			version(Volt) {
-				auto v = toUlong(c._string);
-			} else {
-				auto v = to!ulong(c._string);
-			}
+			auto v = toUlong(c._string);
 
 			switch (base) with (ir.PrimitiveType.Kind) {
 			case Int:

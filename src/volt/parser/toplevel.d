@@ -3,9 +3,11 @@
 module volt.parser.toplevel;
 
 version(Volt) {
-	import watt.conv;
+	import watt.conv : toInt;
 } else {
 	import std.conv : to;
+
+	private int toInt(string s) { return to!int(s); }
 }
 
 import ir = volt.ir.ir;
@@ -678,11 +680,7 @@ ir.Attribute parseAttribute(TokenStream ts, bool inModule = false)
 	case TokenType.Align:
 		match(ts, TokenType.OpenParen);
 		auto intTok = match(ts, TokenType.IntegerLiteral);
-		version(Volt) {
-			attr.alignAmount = toInt(intTok.value);
-		} else {
-			attr.alignAmount = to!int(intTok.value);
-		}
+		attr.alignAmount = toInt(intTok.value);
 		match(ts, TokenType.CloseParen);
 		break;
 	case TokenType.At:

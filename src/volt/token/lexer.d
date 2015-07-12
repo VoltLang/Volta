@@ -18,6 +18,9 @@ version(Volt) {
 	import std.array : array;
 	import std.algorithm : count;
 	import std.c.time : time, localtime;
+
+	private int toInt(string s) { return to!int(s); }
+	private string encode(dchar d) { return to!string(d); }
 }
 
 import volt.token.location : Location;
@@ -82,11 +85,7 @@ void match(Source src, dchar c)
 {
 	dchar cur = src.current;
 	if (cur != c) {
-		version(Volt) {
-			throw makeExpected(src.location, encode(c), encode(cur));
-		} else {
-			throw makeExpected(src.location, to!string(c), to!string(cur));
-		}
+		throw makeExpected(src.location, encode(c), encode(cur));
 	}
 
 	// Advance to the next character.
@@ -814,18 +813,10 @@ bool lexQString(TokenWriter tw)
 		nesting = false;
 		if (isdalpha(tw.source.current, Position.Start)) {
 			char[] buf;
-			version(Volt) {
-				buf ~= encode(tw.source.current);
-			} else {
-				buf ~= to!string(tw.source.current);
-			}
+			buf ~= encode(tw.source.current);
 			tw.source.next();
 			while (isdalpha(tw.source.current, Position.MiddleOrEnd)) {
-				version(Volt) {
-					buf ~= encode(tw.source.current);
-				} else {
-					buf ~= to!string(tw.source.current);
-				}
+				buf ~= encode(tw.source.current);
 				tw.source.next();
 			}
 			match(tw.source, '\n');
@@ -1160,11 +1151,7 @@ bool lexPragma(TokenWriter tw)
 	if (Int.type != TokenType.IntegerLiteral) {
 		throw makeExpected(Int.location, "integer literal");
 	}
-	version(Volt) {
-		int lineNumber = toInt(Int.value);
-	} else {
-		int lineNumber = to!int(Int.value);
-	}
+	int lineNumber = toInt(Int.value);
 	tw.pop();
 
 	skipWhitespace(tw);

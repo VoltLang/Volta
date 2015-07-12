@@ -6,7 +6,10 @@ version(Volt) {
 	import watt.conv : toInt;
 	import watt.text.format : format;
 } else {
+	import std.conv : to;
 	import std.string : format;
+
+	private int toInt(string s) { return to!int(s); }
 }
 
 import ir = volt.ir.ir;
@@ -389,11 +392,7 @@ ir.Type parseTypeSigils(TokenStream ts, Location origin, ir.Type base)
 			auto a = new ir.StaticArrayType();
 			a.location = end.location - origin;
 			a.base = base;
-			version(Volt) {
-				a.length = toInt(integer.value);
-			} else {
-				a.length = to!int(integer.value);
-			}
+			a.length = toInt(integer.value);
 			base = a;
 		} else {
 			// Associative array.
