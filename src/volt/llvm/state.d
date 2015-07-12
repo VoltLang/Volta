@@ -166,16 +166,31 @@ public:
 	{
 		if (mIndexVar !is null)
 			return mIndexVar;
-		return mIndexVar = LLVMBuildAlloca(
+		auto bb = LLVMGetFirstBasicBlock(currentFunc);
+		auto val = LLVMGetFirstInstruction(bb);
+		LLVMPositionBuilderBefore(builder, val);
+
+		mIndexVar = LLVMBuildAlloca(
 			builder, intType.llvmType, "__index");
+
+		LLVMPositionBuilderAtEnd(builder, currentBlock);
+		return mIndexVar;
 	}
 
 	override LLVMValueRef ehExceptionVar()
 	{
 		if (mExceptionVar !is null)
 			return mExceptionVar;
-		return mExceptionVar = LLVMBuildAlloca(
+
+		auto bb = LLVMGetFirstBasicBlock(currentFunc);
+		auto val = LLVMGetFirstInstruction(bb);
+		LLVMPositionBuilderBefore(builder, val);
+
+		mExceptionVar = LLVMBuildAlloca(
 			builder, voidPtrType.llvmType, "__exception");
+
+		LLVMPositionBuilderAtEnd(builder, currentBlock);
+		return mExceptionVar;
 	}
 
 	override LLVMBasicBlockRef ehResumeBlock()
