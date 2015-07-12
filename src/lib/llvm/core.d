@@ -33,6 +33,7 @@ alias lib.llvm.c.Core.LLVMAddGlobal LLVMAddGlobal;
 alias lib.llvm.c.Core.LLVMBuildGEP LLVMBuildGEP;
 alias lib.llvm.c.Core.LLVMBuildInBoundsGEP LLVMBuildInBoundsGEP;
 alias lib.llvm.c.Core.LLVMStructTypeInContext LLVMStructTypeInContext;
+alias lib.llvm.c.Core.LLVMAddIncoming LLVMAddIncoming;
 
 void LLVMSetTarget(LLVMModuleRef mod, string str)
 {
@@ -161,13 +162,20 @@ LLVMValueRef LLVMBuildGEP(LLVMBuilderRef b, LLVMValueRef ptr,
 }
 
 LLVMValueRef LLVMBuildInBoundsGEP(LLVMBuilderRef b, LLVMValueRef ptr,
-	                              LLVMValueRef[] i,
+                                  LLVMValueRef[] i,
                                   string name)
 {
 	char[1024] stack;
 	auto namez = nullTerminate(stack, name);
 
 	return LLVMBuildInBoundsGEP(b, ptr, i.ptr, cast(uint)i.length, namez);
+}
+
+void LLVMAddIncoming(LLVMValueRef phi, LLVMValueRef[] iv,
+                     LLVMBasicBlockRef[] ib)
+{
+	assert(iv.length == ib.length);
+	LLVMAddIncoming(phi, iv.ptr, ib.ptr, cast(int)iv.length);
 }
 
 /**

@@ -86,12 +86,41 @@ void handleTernary(State state, ir.Ternary t, Value result)
 	Value ifTrue = result;
 	Value ifFalse = new Value();
 	Value condition =  new Value();
+	LLVMBasicBlockRef trueBlock, falseBlock, endBlock;
 
-	state.getValue(t.ifTrue, ifTrue);
-	state.getValue(t.ifFalse, ifFalse);
+	// @todo this function could in theory figure out if
+	// values are constant and emit their blocks.
+
+	trueBlock = LLVMAppendBasicBlockInContext(
+			state.context, state.currentFunc, "ternTrueBlock");
+	falseBlock = LLVMAppendBasicBlockInContext(
+		state.context, state.currentFunc, "ternFalseBlock");
+	endBlock = LLVMAppendBasicBlockInContext(
+			state.context, state.currentFunc, "ternEndBlock");
+
 	state.getValue(t.condition, condition);
+	LLVMBuildCondBr(state.builder, condition.value, trueBlock, falseBlock);
 
-	ifTrue.value = LLVMBuildSelect(state.builder, condition.value, ifTrue.value, ifFalse.value, "");
+	LLVMMoveBasicBlockAfter(trueBlock, state.currentBlock);
+	state.startBlock(trueBlock);
+	state.getValue(t.ifTrue, ifTrue);
+	LLVMBuildBr(state.builder, endBlock);
+	trueBlock = state.currentBlock; // Need to update the block
+
+
+	LLVMMoveBasicBlockAfter(falseBlock, state.currentBlock);
+	state.startBlock(falseBlock);
+	state.getValue(t.ifFalse, ifFalse);
+	LLVMBuildBr(state.builder, endBlock);
+	falseBlock = state.currentBlock; // Need to update the block
+
+	LLVMMoveBasicBlockAfter(endBlock, falseBlock);
+	state.startBlock(endBlock);
+
+	auto phi = LLVMBuildPhi(state.builder, ifFalse.type.llvmType, "");
+	LLVMAddIncoming(
+		phi, [ifTrue.value, ifFalse.value], [trueBlock, falseBlock]);
+	result.value = phi;
 }
 
 
