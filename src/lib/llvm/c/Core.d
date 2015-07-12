@@ -61,7 +61,7 @@ extern(C):
  * @{
  */
 
-alias int LLVMBool;
+alias LLVMBool = int;
 
 /* Opaque types. */
 
@@ -69,7 +69,7 @@ alias int LLVMBool;
  * The top-level container for all LLVM global data. See the LLVMContext class.
  */
 struct LLVMContext {}
-alias LLVMContext* LLVMContextRef;
+alias  LLVMContextRef = LLVMContext*;
 
 /**
  * The top-level container for all other LLVM Intermediate Representation (IR)
@@ -78,7 +78,7 @@ alias LLVMContext* LLVMContextRef;
  * @see llvm::Module
  */
 struct LLVMModule {}
-alias LLVMModule* LLVMModuleRef;
+alias  LLVMModuleRef = LLVMModule*;
 
 /**
  * Each value in the LLVM IR has a type, an LLVMTypeRef.
@@ -86,7 +86,7 @@ alias LLVMModule* LLVMModuleRef;
  * @see llvm::Type
  */
 struct LLVMType {}
-alias LLVMType* LLVMTypeRef;
+alias  LLVMTypeRef = LLVMType*;
 
 /**
  * Represents an individual value in LLVM IR.
@@ -94,7 +94,7 @@ alias LLVMType* LLVMTypeRef;
  * This models llvm::Value.
  */
 struct LLVMValue {}
-alias LLVMValue* LLVMValueRef;
+alias  LLVMValueRef = LLVMValue*;
 
 /**
  * Represents a basic block of instruction in LLVM IR.
@@ -102,7 +102,7 @@ alias LLVMValue* LLVMValueRef;
  * This models llvm::BasicBlock.
  */
 struct LLVMBasicBlock {}
-alias LLVMBasicBlock* LLVMBasicBlockRef;
+alias  LLVMBasicBlockRef = LLVMBasicBlock*;
 
 /**
  * Represents an LLVM basic block builder.
@@ -110,7 +110,7 @@ alias LLVMBasicBlock* LLVMBasicBlockRef;
  * This models llvm::IRBuilder.
  */
 struct LLVMBuilder {}
-alias LLVMBuilder* LLVMBuilderRef;
+alias  LLVMBuilderRef = LLVMBuilder*;
 
 /**
  * Interface used to provide a module to JIT or interpreter.
@@ -118,7 +118,7 @@ alias LLVMBuilder* LLVMBuilderRef;
  * different type to keep binary compatibility.
  */
 struct LLVMModuleProvider {}
-alias LLVMModuleProvider* LLVMModuleProviderRef;
+alias  LLVMModuleProviderRef = LLVMModuleProvider*;
 
 /**
  * Used to provide a module to JIT or interpreter.
@@ -126,22 +126,22 @@ alias LLVMModuleProvider* LLVMModuleProviderRef;
  * @see llvm::MemoryBuffer
  */
 struct LLVMMemoryBuffer {}
-alias LLVMMemoryBuffer* LLVMMemoryBufferRef;
+alias  LLVMMemoryBufferRef = LLVMMemoryBuffer*;
 
 /** @see llvm::PassManagerBase */
 struct LLVMPassManager {}
-alias LLVMPassManager* LLVMPassManagerRef;
+alias  LLVMPassManagerRef = LLVMPassManager*;
 
 /** @see llvm::PassRegistry */
 struct LLVMPassRegistry {}
-alias LLVMPassRegistry* LLVMPassRegistryRef;
+alias  LLVMPassRegistryRef = LLVMPassRegistry*;
 
 /**
  * Used to get the users and usees of a Value.
  *
  * @see llvm::Use */
 struct LLVMUse {}
-alias LLVMUse* LLVMUseRef;
+alias  LLVMUseRef = LLVMUse*;
 
 enum LLVMAttribute {
     ZExt       = 1<<0,

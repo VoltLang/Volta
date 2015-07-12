@@ -14,26 +14,26 @@ public import lib.llvm.c.Core;
 
 
 // Need to do this for all overloaded functions.
-alias lib.llvm.c.Core.LLVMSetTarget LLVMSetTarget;
-alias lib.llvm.c.Core.LLVMSetDataLayout LLVMSetDataLayout;
-alias lib.llvm.c.Core.LLVMModuleCreateWithNameInContext LLVMModuleCreateWithNameInContext;
-alias lib.llvm.c.Core.LLVMFunctionType LLVMFunctionType;
-alias lib.llvm.c.Core.LLVMStructCreateNamed LLVMStructCreateNamed;
-alias lib.llvm.c.Core.LLVMGetStructName LLVMGetStructNamez;
-alias lib.llvm.c.Core.LLVMStructSetBody LLVMStructSetBody;
-alias lib.llvm.c.Core.LLVMConstNamedStruct LLVMConstNamedStruct;
-alias lib.llvm.c.Core.LLVMConstStringInContext LLVMConstStringInContext;
-alias lib.llvm.c.Core.LLVMConstArray LLVMConstArray;
-alias lib.llvm.c.Core.LLVMConstInBoundsGEP LLVMConstInBoundsGEP;
-alias lib.llvm.c.Core.LLVMAddFunction LLVMAddFunction;
-alias lib.llvm.c.Core.LLVMBuildCall LLVMBuildCall;
-alias lib.llvm.c.Core.LLVMBuildInvoke LLVMBuildInvoke;
-alias lib.llvm.c.Core.LLVMBuildAlloca LLVMBuildAlloca;
-alias lib.llvm.c.Core.LLVMAddGlobal LLVMAddGlobal;
-alias lib.llvm.c.Core.LLVMBuildGEP LLVMBuildGEP;
-alias lib.llvm.c.Core.LLVMBuildInBoundsGEP LLVMBuildInBoundsGEP;
-alias lib.llvm.c.Core.LLVMStructTypeInContext LLVMStructTypeInContext;
-alias lib.llvm.c.Core.LLVMAddIncoming LLVMAddIncoming;
+alias LLVMSetTarget = lib.llvm.c.Core.LLVMSetTarget;
+alias LLVMSetDataLayout = lib.llvm.c.Core.LLVMSetDataLayout;
+alias LLVMModuleCreateWithNameInContext = lib.llvm.c.Core.LLVMModuleCreateWithNameInContext;
+alias LLVMFunctionType = lib.llvm.c.Core.LLVMFunctionType;
+alias LLVMStructCreateNamed = lib.llvm.c.Core.LLVMStructCreateNamed;
+alias LLVMGetStructNamez = lib.llvm.c.Core.LLVMGetStructName;
+alias LLVMStructSetBody = lib.llvm.c.Core.LLVMStructSetBody;
+alias LLVMConstNamedStruct = lib.llvm.c.Core.LLVMConstNamedStruct;
+alias LLVMConstStringInContext = lib.llvm.c.Core.LLVMConstStringInContext;
+alias LLVMConstArray = lib.llvm.c.Core.LLVMConstArray;
+alias LLVMConstInBoundsGEP = lib.llvm.c.Core.LLVMConstInBoundsGEP;
+alias LLVMAddFunction = lib.llvm.c.Core.LLVMAddFunction;
+alias LLVMBuildCall = lib.llvm.c.Core.LLVMBuildCall;
+alias LLVMBuildInvoke = lib.llvm.c.Core.LLVMBuildInvoke;
+alias LLVMBuildAlloca = lib.llvm.c.Core.LLVMBuildAlloca;
+alias LLVMAddGlobal = lib.llvm.c.Core.LLVMAddGlobal;
+alias LLVMBuildGEP = lib.llvm.c.Core.LLVMBuildGEP;
+alias LLVMBuildInBoundsGEP = lib.llvm.c.Core.LLVMBuildInBoundsGEP;
+alias LLVMStructTypeInContext = lib.llvm.c.Core.LLVMStructTypeInContext;
+alias LLVMAddIncoming = lib.llvm.c.Core.LLVMAddIncoming;
 
 void LLVMSetTarget(LLVMModuleRef mod, string str)
 {

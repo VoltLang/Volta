@@ -9,7 +9,12 @@ import lib.llvm.core;
 public import lib.llvm.c.TargetMachine;
 
 
-alias lib.llvm.c.TargetMachine.LLVMGetTargetFromName LLVMGetTargetFromName;
+alias LLVMGetTargetFromName = lib.llvm.c.TargetMachine.LLVMGetTargetFromName;
+alias LLVMGetTargetFromTriple = lib.llvm.c.TargetMachine.LLVMGetTargetFromTriple;
+alias LLVMCreateTargetMachine = lib.llvm.c.TargetMachine.LLVMCreateTargetMachine;
+alias LLVMTargetMachineEmitToFile = lib.llvm.c.TargetMachine.LLVMTargetMachineEmitToFile;
+alias LLVMTargetMachineEmitToMemoryBuffer = lib.llvm.c.TargetMachine.LLVMTargetMachineEmitToMemoryBuffer;
+
 
 LLVMTargetRef LLVMGetTargetFromName(string name)
 {
@@ -17,8 +22,6 @@ LLVMTargetRef LLVMGetTargetFromName(string name)
 	return lib.llvm.c.TargetMachine.LLVMGetTargetFromName(
 		nullTerminate(stack, name));
 }
-
-alias lib.llvm.c.TargetMachine.LLVMGetTargetFromTriple LLVMGetTargetFromTriple;
 
 bool LLVMGetTargetFromTriple(string triple, LLVMTargetRef* outTarget,
                                  ref string errorMessage)
@@ -62,8 +65,6 @@ string LLVMGetTargetMachineFeatureString(LLVMTargetMachineRef machine)
 	return handleAndDisposeMessage(&msg);
 }
 
-alias lib.llvm.c.TargetMachine.LLVMCreateTargetMachine LLVMCreateTargetMachine;
-
 LLVMTargetMachineRef LLVMCreateTargetMachine(LLVMTargetRef target,
                                              string triple,
                                              string cpu,
@@ -84,9 +85,6 @@ LLVMTargetMachineRef LLVMCreateTargetMachine(LLVMTargetRef target,
 		level, reloc, codeModel);
 }
 
-alias lib.llvm.c.TargetMachine.LLVMTargetMachineEmitToFile
-	LLVMTargetMachineEmitToFile;
-
 bool LLVMTargetMachineEmitToFile(LLVMTargetMachineRef machine,
                                  LLVMModuleRef mod,
                                  string filename,
@@ -102,9 +100,6 @@ bool LLVMTargetMachineEmitToFile(LLVMTargetMachineRef machine,
 	errorMessage = handleAndDisposeMessage(&msg);
 	return ret;
 }
-
-alias lib.llvm.c.TargetMachine.LLVMTargetMachineEmitToMemoryBuffer
-	LLVMTargetMachineEmitToMemoryBuffer;
 
 bool LLVMTargetMachineEmitToMemoryBuffer(LLVMTargetMachineRef machine,
                                          LLVMModuleRef mod,

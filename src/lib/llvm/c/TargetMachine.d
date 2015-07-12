@@ -28,9 +28,9 @@ import lib.llvm.c.Target;
 extern(C):
 
 struct LLVMTargetMachine {}
-alias  LLVMTargetMachine* LLVMTargetMachineRef;
+alias  LLVMTargetMachineRef = LLVMTargetMachine*;
 struct LLVMTarget {}
-alias  LLVMTarget* LLVMTargetRef;
+alias  LLVMTargetRef = LLVMTarget*;
 
 enum LLVMCodeGenOptLevel
 {

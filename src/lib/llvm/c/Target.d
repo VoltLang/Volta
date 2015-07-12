@@ -41,9 +41,9 @@ enum LLVMByteOrdering
 }
 
 struct LLVMTargetData {}
-alias  LLVMTargetData* LLVMTargetDataRef;
+alias  LLVMTargetDataRef = LLVMTargetData*;
 struct LLVMTargetLibraryInfo {}
-alias  LLVMTargetLibraryInfo* LLVMTargetLibraryInfoRef;
+alias  LLVMTargetLibraryInfoRef = LLVMTargetLibraryInfo*;
 
 /* A lot of targets are missing here but X86 is assumed safe */
 void LLVMInitializeX86TargetInfo();
