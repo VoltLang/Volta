@@ -211,13 +211,13 @@ public:
 			return Continue;
 		}
 
-		if (unary.type.nodeType == ir.NodeType.ArrayType && unary.argumentList.length > 0) {
+		auto asArray = cast(ir.ArrayType) realType(unary.type);
+
+		if (asArray !is null && unary.argumentList.length > 0) {
 			if (unary.argumentList.length != 1) {
 				throw panic(unary.location, "multidimensional arrays unsupported at the moment.");
 			}
 			// WIP, doesn't consider multiple outputs of the same function.
-			auto asArray = cast(ir.ArrayType) unary.type;
-			assert(asArray !is null);
 			auto allocFn = createArrayAllocFunction(unary.location, lp, thisModule.myScope, asArray);
 			thisModule.children.nodes = allocFn ~ thisModule.children.nodes;
 			thisModule.myScope.addFunction(allocFn, allocFn.name);
@@ -236,7 +236,7 @@ public:
 			exp = call;
 
 			return Continue;
-		} else if (unary.hasArgumentList) {
+		} else if (asArray is null && unary.hasArgumentList) {
 			auto _class = cast(ir.Class) realType(unary.type);
 			assert(_class !is null);
 			auto ctor = selectFunction(lp, current, _class.userConstructors, unary.argumentList, unary.location);
