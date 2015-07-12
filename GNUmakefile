@@ -150,6 +150,7 @@ VIV_SRC= \
 	src/volt/ir/*.d \
 	src/volt/util/string.d \
 	src/volt/token/*.d \
+	src/volt/parser/*.d
 
 viv: $(TARGET)
 	@echo "  VOLTA  viv"
