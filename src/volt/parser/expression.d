@@ -6,9 +6,15 @@ module volt.parser.expression;
 version(Volt) {
 	import watt.conv;
 	import watt.text.utf;
+
+	float toFloat(string) { return 0.0f; }
+	double toDouble(string) { return 0.0; }
 } else {
-	import std.conv;
+	import std.conv : to;
 	import std.utf;
+
+	private float toFloat(string s) { return to!float(s); }
+	private double toDouble(string s) { return to!double(s); }
 }
 
 import ir = volt.ir.ir;
@@ -359,19 +365,9 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 			c._string = c._string[0 .. $-1];
 		}
 		if (base == ir.PrimitiveType.Kind.Float) {
-			version(Volt) {
-				c.u._float = 0.0f;
-				assert(false);
-			} else {
-				c.u._float = to!float(c._string);
-			}
+			c.u._float = toFloat(c._string);
 		} else {
-			version(Volt) {
-				c.u._double = 0.0;
-				assert(false);
-			} else {
-				c.u._double = to!double(c._string);
-			}
+			c.u._double = toDouble(c._string);
 		}
 		c.type = new ir.PrimitiveType(base);
 		c.type.location = primary.location;
