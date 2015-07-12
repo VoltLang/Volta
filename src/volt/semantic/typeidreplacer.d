@@ -47,32 +47,7 @@ public:
 	{
 		assert(_typeid.type !is null);
 
-		auto asTR = cast(ir.TypeReference) _typeid.type;
-		ir.Aggregate asAggr;
-		if (asTR !is null) {
-			asAggr = cast(ir.Aggregate) asTR.type;
-		}
-
-		if (asAggr !is null) {
-			assert(asAggr.typeInfo !is null);
-			exp = buildExpReference(exp.location, asAggr.typeInfo, asAggr.typeInfo.name);
-			return Continue;
-		}
-
-		string name = getTypeInfoVarName(_typeid.type);
-		auto typeidStore = lookupOnlyThisScope(lp, thisModule.myScope, exp.location, name);
-		if (typeidStore !is null) {
-			auto asVar = cast(ir.Variable) typeidStore.node;
-			exp = buildExpReference(exp.location, asVar, asVar.name);
-			return Continue;
-		}
-
-
-		ir.Variable literalVar = buildTypeInfo(lp, thisModule.myScope, _typeid.type);
-
-		thisModule.children.nodes = literalVar ~ thisModule.children.nodes;
-		thisModule.myScope.addValue(literalVar, literalVar.name);
-
+		auto literalVar = getTypeInfo(lp, thisModule, _typeid.type);
 		exp = buildExpReference(exp.location, literalVar, literalVar.name);
 
 		return Continue;

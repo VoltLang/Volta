@@ -26,16 +26,36 @@ string getTypeInfoVarName(ir.Type type)
 }
 
 /**
- * Builds a complete TypeInfo, for use on none aggregate Types.
+ * Returns the type info for type, builds a complete TypeInfo if needed.
  */
-ir.Variable buildTypeInfo(LanguagePass lp, ir.Scope current, ir.Type type)
+ir.Variable getTypeInfo(LanguagePass lp, ir.Module mod, ir.Type type)
 {
+	auto asTR = cast(ir.TypeReference)type;
+	auto asAggr = asTR !is null ? cast(ir.Aggregate)asTR.type : null;
+	if (asAggr !is null) {
+		createAggregateVar(lp, asAggr);
+		return asAggr.typeInfo;
+	}
+
 	if (type.mangledName is null) {
 		type.mangledName = mangle(type);
 	}
+	string name = getTypeInfoVarName(type);
 
-	auto assign = buildTypeInfoLiteral(lp, current, type);
-	return buildTypeInfoVariable(lp, type, assign, false);
+	auto typeidStore = lookupOnlyThisScope(lp, mod.myScope, mod.location, name);
+	if (typeidStore !is null) {
+		auto asVar = cast(ir.Variable) typeidStore.node;
+		return asVar;
+	}
+
+	auto literalVar = buildTypeInfoVariable(lp, type, null, false);
+
+	mod.children.nodes = literalVar ~ mod.children.nodes;
+	mod.myScope.addValue(literalVar, literalVar.name);
+
+	literalVar.assign = buildTypeInfoLiteral(lp, mod, type);
+
+	return literalVar;
 }
 
 /**
@@ -46,7 +66,6 @@ void createAggregateVar(LanguagePass lp, ir.Aggregate aggr)
 	if (aggr.typeInfo !is null) {
 		return;
 	}
-
 	aggr.typeInfo = buildTypeInfoVariable(lp, aggr, null, true);
 	aggr.members.nodes ~= aggr.typeInfo;
 }
@@ -61,7 +80,8 @@ void fileInAggregateVar(LanguagePass lp, ir.Aggregate aggr)
 		return;
 	}
 
-	aggr.typeInfo.assign = buildTypeInfoLiteral(lp, aggr.myScope, aggr);
+	auto mod = getModuleFromScope(aggr.myScope);
+	aggr.typeInfo.assign = buildTypeInfoLiteral(lp, mod, aggr);
 }
 
 
@@ -85,7 +105,7 @@ ir.Variable buildTypeInfoVariable(LanguagePass lp, ir.Type type, ir.Exp assign, 
 	return literalVar;
 }
 
-ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Scope current, ir.Type type)
+ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type type)
 {
 	assert(type.mangledName !is null);
 
@@ -94,7 +114,7 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Scope current, ir.Type 
 	int typeSize = size(type.location, lp, type);
 	auto typeConstant = buildConstantSizeT(type.location, lp, typeSize);
 
-	int typeTag = typeToRuntimeConstant(lp, current, type);
+	int typeTag = typeToRuntimeConstant(lp, mod.myScope, type);
 	auto typeTagConstant = new ir.Constant();
 	typeTagConstant.location = type.location;
 	typeTagConstant.u._int = typeTag;
@@ -154,8 +174,7 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Scope current, ir.Type 
 		}
 		assert(base !is null);
 
-		auto baseVar = buildTypeInfo(lp, current, base);
-		getModuleFromScope(current).children.nodes ~= baseVar;
+		auto baseVar = getTypeInfo(lp, mod, base);
 		literal.exps ~= buildExpReference(type.location, baseVar);
 	} else {
 		literal.exps ~= buildConstantNull(type.location, lp.typeInfoClass);
@@ -171,10 +190,8 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Scope current, ir.Type 
 	// TypeInfo.key and TypeInfo.value.
 	auto asAA = cast(ir.AAType)type;
 	if (asAA !is null) {
-		auto keyVar = buildTypeInfo(lp, current, asAA.key);
-		auto valVar = buildTypeInfo(lp, current, asAA.value);
-		getModuleFromScope(current).children.nodes ~= keyVar;
-		getModuleFromScope(current).children.nodes ~= valVar;
+		auto keyVar = getTypeInfo(lp, mod, asAA.key);
+		auto valVar = getTypeInfo(lp, mod, asAA.value);
 		literal.exps ~= buildExpReference(type.location, keyVar);
 		literal.exps ~= buildExpReference(type.location, valVar);
 	} else {
@@ -185,14 +202,12 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Scope current, ir.Type 
 	// TypeInfo.ret and args.
 	auto asCallable = cast(ir.CallableType)type;
 	if (asCallable !is null) {
-		auto retVar = buildTypeInfo(lp, current, asCallable.ret);
-		getModuleFromScope(current).children.nodes ~= retVar;
+		auto retVar = getTypeInfo(lp, mod, asCallable.ret);
 		literal.exps ~= buildExpReference(type.location, retVar);
 
 		ir.Exp[] exps;
 		foreach (param; asCallable.params) {
-			auto var = buildTypeInfo(lp, current, param);
-			getModuleFromScope(current).children.nodes ~= var;
+			auto var = getTypeInfo(lp, mod, param);
 			exps ~= buildExpReference(type.location, var);
 		}
 
