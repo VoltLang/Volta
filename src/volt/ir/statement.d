@@ -212,7 +212,7 @@ class LabelStatement : Statement
 {
 public:
 	string label;
-	Statement[] childStatement;
+	Node[] childStatement;
 
 public:
 	this() { super(NodeType.LabelStatement); }

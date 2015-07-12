@@ -14,7 +14,7 @@ import volt.parser.expression;
 import volt.parser.toplevel;
 
 
-ir.Statement[] parseStatement(TokenStream ts)
+ir.Node[] parseStatement(TokenStream ts)
 {
 	eatComments(ts);
 	scope (exit) eatComments(ts);
@@ -93,8 +93,7 @@ ir.Statement[] parseStatement(TokenStream ts)
 		return [parseAssertStatement(ts)];
 	case TokenType.Version:
 	case TokenType.Debug:
-		ir.Statement[] condstate = [parseConditionStatement(ts)];
-		return condstate;
+		return [parseConditionStatement(ts)];
 	case TokenType.Mixin:
 		return [parseMixinStatement(ts)];
 	default:
@@ -111,7 +110,7 @@ ir.Statement[] parseStatement(TokenStream ts)
 
 		} else {
 			// return a regular declaration
-			return cast(ir.Statement[]) node;
+			return node;
 		}
 	}
 	version(Volt) assert(false);
