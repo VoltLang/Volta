@@ -104,7 +104,7 @@ immutable(void)[] unescapeString(Location location, const char[] s)
 					}
 				}
 				hexing = false;
-				hexchars.length = 0;
+				hexchars = null;
 			}
 			continue;
 		}
@@ -127,11 +127,11 @@ immutable(void)[] unescapeString(Location location, const char[] s)
 				case 'x':
 					escaping = false;
 					hexing = true;
-					hexchars.length = 0;
+					hexchars = null;
 					continue;
 				case 'u', 'U':
 					unicoding = true;
-					hexchars.length = 0;
+					hexchars = null;
 					continue;
 				// @todo Named character entities. http://www.w3.org/TR/html5/named-character-references.html
 				default:

@@ -37,7 +37,7 @@ ir.BlockStatement copy(ir.BlockStatement bs)
 {
 	auto b = new ir.BlockStatement();
 	b.location = bs.location;
-	b.statements.length = bs.statements.length;
+	b.statements = new ir.Node[](bs.statements.length);
 	foreach (size_t i, stmt; bs.statements) {
 		b.statements[i] = copyNode(stmt);
 	}
@@ -82,7 +82,6 @@ ir.TokenExp copy(ir.TokenExp te)
 	return newte;
 }
 
-
 ir.TypeExp copy(ir.TypeExp te)
 {
 	auto newte = new ir.TypeExp();
@@ -97,7 +96,7 @@ ir.ArrayLiteral copy(ir.ArrayLiteral ar)
 	newar.location = ar.location;
 	if (ar.type !is null)
 		newar.type = copyType(ar.type);
-	newar.values.length = ar.values.length;
+	newar.values = new ir.Exp[](ar.values.length);
 	foreach (size_t i, value; ar.values) {
 		newar.values[i] = copyExp(value);
 	}
@@ -133,11 +132,12 @@ ir.Postfix copy(ir.Postfix pfix)
 	newpfix.location = pfix.location;
 	newpfix.op = pfix.op;
 	newpfix.child = copyExp(pfix.child);
-	newpfix.arguments.length = pfix.arguments.length;
+	newpfix.arguments = new ir.Exp[](pfix.arguments.length);
 	foreach (size_t i, arg; pfix.arguments) {
 		newpfix.arguments[i] = copyExp(arg);
 	}
-	newpfix.argumentTags.length = pfix.argumentTags.length;
+	newpfix.argumentTags =
+		new ir.Postfix.TagKind[](pfix.argumentTags.length);
 	foreach (size_t i, argTag; pfix.argumentTags) {
 		newpfix.argumentTags[i] = argTag;
 	}
@@ -162,7 +162,7 @@ ir.Unary copy(ir.Unary unary)
 	if (unary.type !is null) {
 		newunary.type = copyType(unary.type);
 	}
-	newunary.argumentList.length = unary.argumentList.length;
+	newunary.argumentList = new ir.Exp[](unary.argumentList.length);
 	foreach (size_t i, arg; unary.argumentList) {
 		newunary.argumentList[i] = copyExp(arg);
 	}
@@ -225,7 +225,7 @@ ir.FunctionType copy(ir.FunctionType old)
 	auto ft = new ir.FunctionType(old);
 	ft.location = old.location;
 	ft.ret = copyType(old.ret);
-	ft.params.length = old.params.length;
+	ft.params = new ir.Type[](old.params.length);
 	foreach(size_t i, ptype; old.params) {
 		ft.params[i] = copyType(ptype);
 	}
@@ -237,7 +237,7 @@ ir.DelegateType copy(ir.DelegateType old)
 	auto dg = new ir.DelegateType(old);
 	dg.location = old.location;
 	dg.ret = copyType(old.ret);
-	dg.params.length = old.params.length;
+	dg.params = new ir.Type[](old.params.length);
 	foreach(size_t i, ptype; old.params) {
 		dg.params[i] = copyType(ptype);
 	}
@@ -305,11 +305,9 @@ ir.QualifiedName copy(ir.QualifiedName old)
 {
 	auto q = new ir.QualifiedName();
 	q.location = old.location;
-	q.identifiers.length = old.identifiers.length;
+	q.identifiers = new ir.Identifier[](old.identifiers.length);
 	foreach (size_t i, oldId; old.identifiers) {
-		auto id = new ir.Identifier(oldId.value);
-		id.location = old.location;
-		q.identifiers[i] = id;
+		q.identifiers[i] = copy(oldId);
 	}
 	return q;
 }
