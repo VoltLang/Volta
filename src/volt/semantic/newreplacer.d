@@ -211,7 +211,9 @@ public:
 			return Continue;
 		}
 
-		auto asArray = cast(ir.ArrayType) realType(unary.type);
+		auto rtype = realType(unary.type);
+		auto asArray = cast(ir.ArrayType) rtype;
+		auto asClass = cast(ir.Class) rtype;
 
 		if (asArray !is null && unary.argumentList.length > 0) {
 			if (unary.argumentList.length != 1) {
@@ -236,11 +238,9 @@ public:
 			exp = call;
 
 			return Continue;
-		} else if (asArray is null && unary.hasArgumentList) {
-			auto _class = cast(ir.Class) realType(unary.type);
-			assert(_class !is null);
-			auto ctor = selectFunction(lp, current, _class.userConstructors, unary.argumentList, unary.location);
-			exp = buildClassConstructionWrapper(unary.location, lp, current, _class, ctor, allocDgVar, unary.argumentList);
+		} else if (asClass !is null && unary.hasArgumentList) {
+			auto ctor = selectFunction(lp, current, asClass.userConstructors, unary.argumentList, unary.location);
+			exp = buildClassConstructionWrapper(unary.location, lp, current, asClass, ctor, allocDgVar, unary.argumentList);
 
 			return Continue;
 		}

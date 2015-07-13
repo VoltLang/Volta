@@ -29,6 +29,11 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeCannotDup(Location l, ir.Type type, string file = __FILE__, const size_t line = __LINE__)
+{
+	return new CompilerError(l, format("Cannot duplicate type '%s'.", type.errorString()), file, line);
+}
+
 CompilerException makeCannotSlice(Location l, ir.Type type, string file = __FILE__, const size_t line = __LINE__)
 {
 	return new CompilerError(l, format("Cannot slice type '%s'.", type.errorString()), file, line);

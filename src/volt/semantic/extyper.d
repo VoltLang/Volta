@@ -2232,8 +2232,17 @@ void handleDup(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 
 	auto sexp = buildStatementExp(l);
 	auto type = getExpType(ctx.lp, _unary.value, ctx.current);
+	auto asStatic = cast(ir.StaticArrayType)realType(type);
+	if (asStatic !is null) {
+		type = buildArrayTypeSmart(asStatic.location, asStatic.base);
+	}
 
-	if (realType(type).nodeType == ir.NodeType.AAType) {
+	auto rtype = realType(type);
+	if (rtype.nodeType != ir.NodeType.AAType && rtype.nodeType != ir.NodeType.ArrayType) {
+		throw makeCannotDup(l, rtype);
+	}
+
+	if (rtype.nodeType == ir.NodeType.AAType) {
 		if (!_unary.fullShorthand) {
 			// Actual indices were used, which makes no sense for AAs.
 			throw makeExpected(l, format("new %s[..]", _unary.dupName));
