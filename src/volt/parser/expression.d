@@ -424,7 +424,7 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 			case Int:
 				if (v <= int.max) {
 					c.u._int = cast(int)v;
-				} else if (explicitBase) {
+				} else if (!explicitBase) {
 					c.u._long = cast(long)v;
 				} else {
 					throw makeInvalidIntegerLiteral(c.location);
@@ -433,7 +433,7 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 			case Uint:
 				if (v <= uint.max) {
 					c.u._uint = cast(uint)v;
-				} else if (explicitBase) {
+				} else if (!explicitBase) {
 					c.u._ulong = v;
 				} else {
 					throw makeInvalidIntegerLiteral(c.location);
