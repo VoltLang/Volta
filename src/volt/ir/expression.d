@@ -211,6 +211,7 @@ public:
 	string[] argumentLabels;  // foo(age:7);
 	Identifier identifier;  // op == Identifier
 	ExpReference memberFunction;
+	Exp templateInstance;
 	bool isImplicitPropertyCall;
 
 public:

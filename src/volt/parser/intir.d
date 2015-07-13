@@ -140,6 +140,7 @@ public:
 	AssignExp[] arguments;  // Optional.
 	string[] labels;     // Optional, only in calls (func(a:1, b:3)).
 	Identifier identifier;  // Optional.
+	Exp templateInstance;
 }
 
 class PrimaryExp : IntExp

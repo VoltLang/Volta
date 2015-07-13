@@ -1074,6 +1074,12 @@ intir.PostfixExp parsePostfixExp(TokenStream ts, int depth=0)
 	switch (ts.peek.type) {
 	case TokenType.Dot:
 		ts.get();
+		auto twoAhead = ts.lookahead(2).type;
+		if (ts.lookahead(1).type == TokenType.Bang &&
+			twoAhead != TokenType.Is && twoAhead != TokenType.Assign) {
+			exp.templateInstance = parseExp(ts);
+			break;
+		}
 		exp.identifier = parseIdentifier(ts);
 		exp.op = ir.Postfix.Op.Identifier;
 		exp.postfix = parsePostfixExp(ts, depth);

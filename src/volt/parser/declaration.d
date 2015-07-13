@@ -39,6 +39,7 @@ ir.Node[] parseVariable(TokenStream ts)
 	if (!_global) {
 		_global = matchIf(ts, TokenType.Static);  // Deprecate after self-hosting etc.
 	}
+
 	ir.Type base = parseType(ts);
 	if (ts.lookahead(1).type == TokenType.Comma ||
 		ts.lookahead(1).type == TokenType.Semicolon ||
