@@ -2,10 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.classify;
 
-import std.range : array, retro;
 import std.conv : to;
 import std.string : format;
-import std.math : isNaN;
 
 import ir = volt.ir.ir;
 
@@ -13,9 +11,9 @@ import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 import volt.semantic.context;
-import volt.semantic.lookup;
-import volt.semantic.ctfe;
-import volt.semantic.typer;
+import volt.semantic.lookup : ensureResolved;
+import volt.semantic.ctfe : evaluate;
+import volt.semantic.typer : realType;
 
 /**
  * If the given scope is in a function, return it. Otherwise, return null.
@@ -106,7 +104,7 @@ int size(Location location, LanguagePass lp, ir.Node node)
 		assert(_static !is null);
 		return size(location, lp, _static.base) * cast(int)_static.length;
 	default:
-		throw panicUnhandled(node, to!string(node.nodeType));
+		throw panicUnhandled(node, ir.nodeToString(node));
 	}
 }
 
@@ -173,7 +171,7 @@ size_t alignment(Location location, LanguagePass lp, ir.Type node)
 		assert(_static !is null);
 		return alignment(location, lp, _static.base) * cast(int)_static.length;
 	default:
-		throw panicUnhandled(node, to!string(node.nodeType));
+		throw panicUnhandled(node, ir.nodeToString(node));
 	}
 }
 
