@@ -189,6 +189,7 @@ public:
 	 */
 	Store store;
 
+	Exp templateInstance;  ///< Not with id. Optional.
 
 public:
 	this() { super(NodeType.Alias); }

@@ -82,8 +82,23 @@ ir.Alias parseAlias(TokenStream ts)
 	match(ts, TokenType.Assign);
 
 	size_t pos = ts.save();
+
+	size_t i = 1;
+	bool bang;
+	while (ts.lookahead(i).type != TokenType.Semicolon && ts.lookahead(i).type != TokenType.End) {
+		bang = ts.lookahead(i).type == TokenType.Bang;
+		if (bang) {
+			break;
+		}
+		i++;
+	}
+
 	try {
-		a.id = parseQualifiedName(ts);
+		if (bang) {
+			a.templateInstance = parseExp(ts);
+		} else {
+			a.id = parseQualifiedName(ts);
+		}
 		match(ts, TokenType.Semicolon);
 
 	} catch (CompilerError e) {
