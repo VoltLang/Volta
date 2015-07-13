@@ -551,8 +551,15 @@ public:
 class TemplateInstanceExp : Exp
 {
 public:
+	struct TypeOrExp
+	{
+		Exp exp;
+		Type type;
+	}
+
+public:
 	string name;
-	Type[] types;
+	TypeOrExp[] types;
 
 public:
 	this() { super(NodeType.TemplateInstanceExp); }

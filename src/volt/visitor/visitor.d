@@ -2131,7 +2131,11 @@ Visitor.Status acceptTemplateInstanceExp(ref ir.Exp exp, ir.TemplateInstanceExp 
 	}
 
 	foreach (type; texp.types) {
-		status = accept(type, av);
+		if (type.type !is null) {
+			status = accept(type.type, av);
+		} else {
+			status = acceptExp(type.exp, av);
+		}
 		if (status == VisitorContinueParent) {
 			continue;
 		} else if (status == VisitorStop) {

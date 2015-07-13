@@ -1985,7 +1985,11 @@ public:
 	{
 		wf(texp.name, "!(");
 		foreach (i, type; texp.types) {
-			accept(type, this);
+			if (type.type !is null) {
+				accept(type.type, this);
+			} else {
+				accept(type.exp, this);
+			}
 			if (i < texp.types.length - 1) {
 				wf(", ");
 			} else {

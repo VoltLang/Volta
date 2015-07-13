@@ -1140,12 +1140,24 @@ intir.PrimaryExp parsePrimaryExp(TokenStream ts)
 			exp._template.name = token.value;
 			if (matchIf(ts, TokenType.OpenParen)) {
 				while (ts.peek.type != ir.TokenType.CloseParen) {
-					exp._template.types ~= parseType(ts);
+					ir.TemplateInstanceExp.TypeOrExp tOrE;
+					try {
+						tOrE.type = parseType(ts);
+					} catch (CompilerError) {
+						tOrE.exp = parseExp(ts);
+					}
+					exp._template.types ~= tOrE;
 					matchIf(ts, TokenType.Comma);
 				}
 				match(ts, TokenType.CloseParen);
 			} else {
-				exp._template.types ~= parseType(ts);
+				ir.TemplateInstanceExp.TypeOrExp tOrE;
+				try {
+					tOrE.type = parseType(ts);
+				} catch (CompilerError) {
+					tOrE.exp = parseExp(ts);
+				}
+				exp._template.types ~= tOrE;
 			}
 			break;
 		}
