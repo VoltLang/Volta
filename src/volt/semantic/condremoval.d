@@ -46,62 +46,67 @@ public:
 
 	override Status enter(ir.Module m)
 	{
-		m.children.nodes = manipNodes(m.children.nodes, &removeConditionals);
+		m.children.nodes = manipNodes(m.children.nodes);
 		return Continue;
 	}
 
 	override Status enter(ir.BlockStatement bs)
 	{
-		bs.statements = manipNodes(bs.statements, &removeConditionals);
+		bs.statements = manipNodes(bs.statements);
 		return Continue;
 	}
 
 	override Status enter(ir.Function fn)
 	{
-		if (fn.inContract !is null)
-			fn.inContract.statements = manipNodes(fn.inContract.statements, &removeConditionals);
-		if (fn.outContract !is null)
-			fn.outContract.statements = manipNodes(fn.outContract.statements, &removeConditionals);
-		if (fn._body !is null)
-			fn._body.statements = manipNodes(fn._body.statements, &removeConditionals);
+		if (fn.inContract !is null) {
+			fn.inContract.statements = manipNodes(fn.inContract.statements);
+		}
+		if (fn.outContract !is null) {
+			fn.outContract.statements = manipNodes(fn.outContract.statements);
+		}
+		if (fn._body !is null) {
+			fn._body.statements = manipNodes(fn._body.statements);
+		}
 		return Continue;
 	}
 
 	override Status enter(ir.Unittest u)
 	{
-		u._body.statements = manipNodes(u._body.statements, &removeConditionals);
+		u._body.statements = manipNodes(u._body.statements);
 		return Continue;
 	}
 
 	override Status enter(ir.Struct s)
 	{
-		s.members.nodes = manipNodes(s.members.nodes, &removeConditionals);
+		s.members.nodes = manipNodes(s.members.nodes);
 		return Continue;
 	}
 
 	override Status enter(ir.Class c)
 	{
-		c.members.nodes = manipNodes(c.members.nodes, &removeConditionals);
+		c.members.nodes = manipNodes(c.members.nodes);
 		return Continue;
 	}
 
 	override Status enter(ir.Attribute a)
 	{
-		if (a.members !is null)
-			a.members.nodes = manipNodes(a.members.nodes, &removeConditionals);
+		if (a.members !is null) {
+			a.members.nodes = manipNodes(a.members.nodes);
+		}
 		return Continue;
 	}
 
 	override Status enter(ir._Interface i)
 	{
-		i.members.nodes = manipNodes(i.members.nodes, &removeConditionals);
+		i.members.nodes = manipNodes(i.members.nodes);
 		return Continue;
 	}
 
 	override Status enter(ir.Condition c)
 	{
-		if (c.kind != ir.Condition.Kind.StaticIf)
+		if (c.kind != ir.Condition.Kind.StaticIf) {
 			return Continue;
+		}
 		throw panic(c, "should not find condition here.");
 	}
 
@@ -190,7 +195,7 @@ protected:
 			}
 
 			if (ret.length > 0) {
-				ret = manipNodes(ret, &removeConditionals);
+				ret = manipNodes(ret);
 			}
 
 			return true;
@@ -211,7 +216,7 @@ protected:
 			}
 
 			if (ret.length > 0) {
-				ret = manipNodes(ret, &removeConditionals);
+				ret = manipNodes(ret);
 			}
 
 			return true;
@@ -221,6 +226,19 @@ protected:
 		} else {
 			// Not a Condition at all.
 			return false;
+		}
+		version(Volt) assert(false);
+	}
+
+	/**
+	 * @todo Remove when not compiling under D.
+	 */
+	ir.Node[] manipNodes(ir.Node[] nodes)
+	{
+	 	version(Volt) {
+			return .manipNodes(nodes, removeConditionals);
+		} else {
+			return .manipNodes(nodes, &removeConditionals);
 		}
 	}
 }

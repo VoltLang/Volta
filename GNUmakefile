@@ -152,7 +152,9 @@ VIV_SRC= \
 	src/volt/util/string.d \
 	src/volt/token/*.d \
 	src/volt/parser/*.d \
-	src/volt/visitor/visitor.d
+	src/volt/visitor/manip.d \
+	src/volt/visitor/visitor.d \
+	src/volt/semantic/condremoval.d
 
 
 viv: $(TARGET) $(VIV_SRC)
