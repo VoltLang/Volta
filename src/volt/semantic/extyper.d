@@ -1968,7 +1968,7 @@ void extypePostfixIdentifier(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	// Now do the looping.
 	do {
 		if (store is null) {
-			/// @todo keep track of what the context was that we looked into.
+			// @todo keep track of what the context was that we looked into.
 			throw makeFailedLookup(loc, ident);
 		}
 
@@ -2772,6 +2772,14 @@ void handleNestedParams(Context ctx, ir.Function fn)
 	}
 }
 
+// Moved here for now.
+struct ArrayCase
+{
+	ir.Exp originalExp;
+	ir.SwitchCase _case;
+	ir.IfStatement lastIf;
+}
+
 /**
  * Ensure that a given switch statement is semantically sound.
  * Errors on bad final switches (doesn't cover all enum members, not on an enum at all),
@@ -2790,13 +2798,6 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 				buildAccess(l, buildTypeidSmart(l, asArray.base), "size"));
 		ss.condition = buildCall(ss.condition.location, ctx.lp.hashFunc, [ptr, length]);
 		conditionType = buildUint(ss.condition.location);
-	}
-
-	struct ArrayCase
-	{
-		ir.Exp originalExp;
-		ir.SwitchCase _case;
-		ir.IfStatement lastIf;
 	}
 	ArrayCase[uint] arrayCases;
 	size_t[] toRemove;  // Indices of cases that have been folded into a collision case.
