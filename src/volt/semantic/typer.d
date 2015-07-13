@@ -549,7 +549,7 @@ ir.Type getPostfixSliceType(LanguagePass lp, ir.Postfix postfix, ir.Scope curren
 		array = cast(ir.ArrayType) type;
 		assert(array !is null);
 	} else {
-		throw makeBadOperation(postfix);
+		throw makeCannotSlice(postfix.location, type);
 	}
 
 	if (array is null) {

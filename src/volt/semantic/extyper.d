@@ -955,7 +955,7 @@ void extypeIdentifierExp(Context ctx, ref ir.Exp e, ir.IdentifierExp i)
 	case Type:
 	case Alias:
 	case Scope:
-		throw panicUnhandled(i, i.value);
+		return;
 	}
 }
 

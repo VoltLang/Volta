@@ -29,6 +29,11 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeCannotSlice(Location l, ir.Type type, string file = __FILE__, const size_t line = __LINE__)
+{
+	return new CompilerError(l, format("Cannot slice type '%s'.", type.errorString()), file, line);
+}
+
 CompilerException makeCallClass(Location loc, ir.Class _class, string file = __FILE__, const size_t line = __LINE__)
 {
 	return new CompilerError(loc, format("Attempted to call class '%s'. Did you forget a new?", _class.name));
