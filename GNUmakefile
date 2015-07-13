@@ -142,6 +142,7 @@ package: all
 	@cp -r ./rt/src/* .pkg/rt/
 	@tar -czf volt.tar.gz .pkg/*
 
+VIV_ALL_SRC = $(DSRC) src/volt/main.volt
 VIV_SRC= \
 	src/volt/main.volt \
 	src/volt/errors.d \
@@ -155,6 +156,19 @@ VIV_SRC= \
 viv: $(TARGET) $(VIV_SRC)
 	@echo "  VOLTA  viv"
 	@./$(TARGET) --dep-argtags -o viv $(VIV_SRC)
-	@./viv $(DSRC) src/volt/main.volt
 
-.PHONY: all clean run debug license viv
+# Note these should not depend on target
+voltaic-syntax:
+	@echo "  VOLTA  <source>"
+	@$(VOLT) -E $(VIV_ALL_SRC)
+
+voltaic-viv:
+	@echo "  VOLTA  viv"
+	@$(VOLT) --dep-argtags -o viv $(VIV_SRC)
+
+voltaic-viv-syntax:
+	@echo "  VIV    <source>"
+	@./viv $(VIV_ALL_SRC)
+
+
+.PHONY: all clean run debug license voltaic-syntax voltaic-viv voltaic-viv-syntax
