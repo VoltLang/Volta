@@ -214,6 +214,8 @@ public:
 
 	TopLevelBlock members;
 
+	Attribute chain; ///< for "public abstract:"
+
 	QualifiedName userAttributeName;  ///< Optional.
 	Exp[] arguments;  ///< If kind == UserAttribute or MangledName.
 	UserAttribute userAttribute;  ///< Filled in by the exptyper.

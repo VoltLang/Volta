@@ -770,6 +770,13 @@ ir.Attribute parseAttribute(TokenStream ts, bool inModule = false)
 		}
 	} else {
 		attr.members = parseOneTopLevelBlock(ts, inModule);
+		if (attr.members !is null &&
+		    attr.members.nodes.length == 1 &&
+		    attr.members.nodes[0].nodeType == ir.NodeType.Attribute) {
+			attr.chain = cast(ir.Attribute)attr.members.nodes[0];
+			attr.members.nodes = null;
+			attr.members = null;
+		}
 	}
 
 	return attr;

@@ -509,16 +509,27 @@ protected:
 
 	ir.Node[] attrManip(ir.Attribute attr)
 	{
+		auto stack = [attr];
 		attrPush(attr);
+
+		// Take care of chaining.
+		while(attr.chain !is null) {
+			attr = attr.chain;
+			attrPush(attr);
+			stack ~= attr;
+		}
 
 		if (attr.members is null) {
 			return null;
 		}
 
 		scope(exit) {
-			if (attr.members.nodes.length > 0)
-		    	ctxPop(attr);
-			attrPop(attr);
+			if (attr.members.nodes.length > 0) {
+				ctxPop(attr);
+			}
+			foreach_reverse(a; stack) {
+				attrPop(a);
+			}
 		}
 
 		if (attr.members.nodes.length > 0) {

@@ -463,8 +463,10 @@ public:
 
 		wfln(" {");
 		mIndent++;
-		foreach (member; attr.members.nodes) {
-			accept(member, this);
+		if (attr.members !is null) {
+			foreach (member; attr.members.nodes) {
+				accept(member, this);
+			}
 		}
 		mIndent--;
 		twfln("}");
