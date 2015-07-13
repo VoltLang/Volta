@@ -382,8 +382,9 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 		bool explicitBase;
 
 		// If there are any suffixes, change the type to match.
-		while (c._string[$-1] == 'u' || c._string[$-1] == 'U' ||
-			   c._string[$-1] == 'L') {
+		while (c._string[$-1] == 'u' ||
+		       c._string[$-1] == 'U' ||
+		       c._string[$-1] == 'L') {
 			if (c._string[$-1] == 'u' || c._string[$-1] == 'U') {
 				explicitBase = true;
 				if (base == ir.PrimitiveType.Kind.Long) {
