@@ -108,6 +108,9 @@ public:
 protected:
 	bool evaluateCondition(ir.Condition c)
 	{
+		if (c.kind == ir.Condition.Kind.Debug) {
+			return lp.settings.debugEnabled;
+		}
 		bool[] stack;
 		evaluate(c, c.exp, stack);
 		assert(stack.length == 1);
