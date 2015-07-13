@@ -3,14 +3,13 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.visitor.visitor;
 
-import std.conv : to;
-import std.string : format;
+import watt.text.format : format;
 
 import volt.errors;
 import ir = volt.ir.ir;
 
 
-class Visitor
+abstract class Visitor
 {
 public:
 	enum Status {
@@ -205,7 +204,7 @@ alias VisitorContinue = Visitor.Status.Continue;
 alias VisitorContinueParent = Visitor.Status.ContinueParent;
 
 /// A visitor that does nothing.
-class NullVisitor : Visitor
+abstract class NullVisitor : Visitor
 {
 public:
 override:
@@ -624,8 +623,9 @@ Visitor.Status accept(ir.Node n, Visitor av)
 	case FunctionSetType:
 	case FunctionSet:
 	case Comma:
-		throw panicUnhandled(n, to!string(n.nodeType));
+		throw panicUnhandled(n, ir.nodeToString(n));
 	}
+	version(Volt) assert(false);
 }
 
 Visitor.Status acceptExp(ref ir.Exp exp, Visitor av)
@@ -683,7 +683,7 @@ Visitor.Status acceptExp(ref ir.Exp exp, Visitor av)
 	case VaArgExp:
 		return acceptVaArgExp(exp, cast(ir.VaArgExp)exp, av);
 	default:
-		throw panicUnhandled(exp, to!string(exp.nodeType));
+		throw panicUnhandled(exp, ir.nodeToString(exp));
 	}
 }
 
@@ -1275,7 +1275,7 @@ Visitor.Status acceptBlockStatement(ir.BlockStatement b, Visitor av)
 
 	// Use a for in lieu of a foreach so that all nodes will be visited if a Visitor modifies it.
 	auto statements = b.statements;
-	for (int i = 0; i < statements.length; ++i) {
+	for (size_t i = 0; i < statements.length; ++i) {
 		status = accept(statements[i], av);
 		if (status != VisitorContinue) {
 			return parentContinue(status);

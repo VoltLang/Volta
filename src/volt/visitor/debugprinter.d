@@ -5,6 +5,7 @@ module volt.visitor.debugprinter;
 import std.stdio : writefln, writef;
 import std.stream : Stream, File, FileMode;
 import std.cstream : dout;
+import std.conv : to;
 
 import volt.token.token;
 

@@ -6,6 +6,7 @@ module volt.visitor.prettyprinter;
 import std.stream : Stream, File, FileMode;
 import std.cstream : dout;
 import std.string : format;
+import std.conv : to;
 
 import volt.token.token;
 
