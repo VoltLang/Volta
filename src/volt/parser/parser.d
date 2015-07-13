@@ -2,12 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.parser.parser;
 
-version(Volt) {
-	import watt.io;
-	import watt.text.format;
-} else {
-	import std.stdio : writefln;
-}
+import watt.io.std : writefln;
 
 import volt.token.location : Location;
 import volt.token.lexer : lex;

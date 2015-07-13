@@ -1,6 +1,6 @@
 module volt.main;
 
-import watt.io;
+import watt.io.std : output;
 import watt.conv : toString;
 
 import volt.exceptions;

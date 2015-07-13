@@ -3,21 +3,8 @@
 module volt.parser.expression;
 // Most of these can pass through to a lower function, see the IR.
 
-version(Volt) {
-	import watt.conv;
-	import watt.text.utf;
-
-	float toFloat(string) { return 0.0f; }
-	double toDouble(string) { return 0.0; }
-} else {
-	import std.conv : to;
-	import std.utf;
-
-	private float toFloat(string s) { return to!float(s); }
-	private double toDouble(string s) { return to!double(s); }
-	private ulong toUlong(string s, int base = 10) { return to!ulong(s, base); }
-	private int toInt(string s) { return to!int(s); }
-}
+import watt.conv : toInt, toUlong, toFloat, toDouble;
+import watt.text.utf : decode;
 
 import ir = volt.ir.ir;
 import intir = volt.parser.intir;
@@ -343,13 +330,8 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 			c.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Dchar);
 			c.type.location = primary.location;
 			auto str = cast(string) c.arrayData;
-			version(Volt) {
-				size_t index;
-				c.u._ulong = decode(str, index);
-			} else {
-				size_t index;
-				c.u._ulong = decodeFront(str, index);
-			}
+			size_t index;
+			c.u._ulong = decode(str, index);
 		}
 		exp = c;
 		break;

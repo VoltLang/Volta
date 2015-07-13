@@ -3,15 +3,9 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.token.source;
 
-version(Volt) {
-	import watt.text.format : format;
-	import watt.text.utf : decode, validate;
-	import watt.io.file : read;
-} else {
-	import std.file : read;
-	import std.utf : validate, decode;
-	import std.string : format;
-}
+import watt.io.file : read;
+import watt.text.format : format;
+import watt.text.utf : decode, validate;
 
 import volt.errors : panic;
 import volt.token.location : Location;

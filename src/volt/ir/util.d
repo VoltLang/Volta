@@ -3,11 +3,9 @@
 module volt.ir.util;
 
 version(Volt) {
-	import watt.algorithm;
-	import watt.conv;
+	import watt.algorithm : sort;
 } else {
 	import std.algorithm : sort;
-	import std.conv : to;
 }
 
 import volt.errors;

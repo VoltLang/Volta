@@ -2,15 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.parser.declaration;
 
-version(Volt) {
-	import watt.conv : toInt;
-	import watt.text.format : format;
-} else {
-	import std.conv : to;
-	import std.string : format;
-
-	private int toInt(string s) { return to!int(s); }
-}
+import watt.conv : toInt;
+import watt.text.format : format;
 
 import ir = volt.ir.ir;
 import volt.ir.util;

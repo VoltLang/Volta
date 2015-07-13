@@ -2,12 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.ir.context;
 
-version(Volt) {
-	import watt.conv : toString;
-	import watt.text.format : format;
-} else {
-	import std.string : format;
-}
+import watt.conv : toString;
+import watt.text.format : format;
 
 import volt.errors;
 import volt.ir.base;
@@ -296,11 +292,7 @@ public:
 
 	string genAnonIdent()
 	{
-		version(Volt) {
-			return "__anon" ~ .toString(anon++);
-		} else {
-			return "__anon" ~ to!string(anon++);
-		}
+		return "__anon" ~ .toString(anon++);
 	}
 
 	/**

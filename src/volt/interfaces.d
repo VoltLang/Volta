@@ -2,12 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.interfaces;
 
-version(Volt) {
-	import watt.text.string : indexOf, replace;
-} else {
-	import std.string : indexOf;
-	import std.array : replace;
-}
+import watt.text.string : indexOf, replace;
 
 import volt.token.location;
 import ir = volt.ir.ir;

@@ -4,24 +4,15 @@ module volt.token.lexer;
 
 version(Volt) {
 	import core.stdc.time : time, localtime;
-	import watt.conv : toInt;
-	import watt.text.ascii : isDigit, isAlpha, isWhite;
-	import watt.text.format : format;
-	import watt.text.utf : encode;
-	import watt.text.string : indexOf;
 } else {
-	import std.uni : isWhite, isAlpha;
-	import std.utf : toUTF8;
-	import std.conv : to;
-	import std.string : format, indexOf;
-	import std.ascii : isDigit;
-	import std.array : array;
-	import std.algorithm : count;
 	import std.c.time : time, localtime;
-
-	private int toInt(string s) { return to!int(s); }
-	private string encode(dchar d) { return to!string(d); }
 }
+
+import watt.text.ascii : isDigit, isAlpha, isWhite;
+import watt.text.format : format;
+import watt.text.string : indexOf;
+import watt.conv : toInt;
+import watt.text.utf : encode;
 
 import volt.token.location : Location;
 import volt.token.source : Source, Mark;
@@ -1163,11 +1154,7 @@ bool lexPragma(TokenWriter tw)
 		buf ~= tw.source.next();
 	}
 	match(tw.source, '"');
-	version(Volt) {
-		string filename = encode(buf);
-	} else {
-		string filename = toUTF8(buf);
-	}
+	string filename = encode(buf);
 
 	assert(lineNumber >= 0);
 	if (lineNumber == 0) {

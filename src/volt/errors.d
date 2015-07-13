@@ -2,18 +2,14 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.errors;
 
-version(Volt) {
-	import watt.conv;
-	import watt.text.format;
-} else {
-	import std.conv : to;
-	import std.string : format, toLower;
-}
+import watt.conv : toLower;
+import watt.text.format : format;
 
 import ir = volt.ir.ir;
 
 import volt.exceptions;
 import volt.token.location;
+
 
 // Not sure of the best home for this guy.
 void warning(Location loc, string message)

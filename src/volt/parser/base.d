@@ -4,11 +4,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.parser.base;
 
-version(Volt) {
-	import watt.text.format;
-} else {
-	import std.string : format;
-}
+import watt.text.format : format;
 
 import volt.errors;
 import volt.token.token;

@@ -1,12 +1,7 @@
 module volt.util.string;
 
-version(Volt) {
-	import watt.conv : toInt;
-	import watt.text.utf : encode;
-} else {
-	import std.conv : parse, ConvException;
-	import std.utf : encode;
-}
+import watt.conv : toInt, ConvException;
+import watt.text.utf : encode;
 
 import volt.errors;
 import volt.token.location;
@@ -38,28 +33,20 @@ immutable(void)[] unescapeString(Location location, const char[] s)
 			if (!isHex(c)) {
 				if (hexchars.length == 4) {
 					ushort i;
-					version(Volt) {
+					try {
 						i = cast(ushort)toInt(hexchars, 16);
-					} else {
-						try {
-							i = parse!ushort(hexchars, 16);
-						} catch (ConvException) {
-							throw makeExpected(location, "unicode codepoint specification");
-						}
+					} catch (ConvException) {
+						throw makeExpected(location, "unicode codepoint specification");
 					}
 					encode(output, i);
 					unicoding = false;
 					continue;
 				} else if (hexchars.length == 8) {
 					uint i;
-					version(Volt) {
+					try {
 						i = cast(uint)toInt(hexchars, 16);
-					} else {
-						try {
-							i = parse!uint(hexchars, 16);
-						} catch (ConvException) {
-							throw makeExpected(location, "unicode codepoint specification");
-						}
+					} catch (ConvException) {
+						throw makeExpected(location, "unicode codepoint specification");
 					}
 					encode(output, i);
 					unicoding = false;
@@ -70,14 +57,10 @@ immutable(void)[] unescapeString(Location location, const char[] s)
 			}
 			if (hexchars.length == 8) {
 				uint i;
-				version(Volt) {
+				try {
 					i = cast(uint)toInt(hexchars, 16);
-				} else {
-					try {
-						i = parse!uint(hexchars, 16);
-					} catch (ConvException) {
-						throw makeExpected(location, "unicode codepoint specification");
-					}
+				} catch (ConvException) {
+					throw makeExpected(location, "unicode codepoint specification");
 				}
 				encode(output, i);
 				unicoding = false;
@@ -94,14 +77,10 @@ immutable(void)[] unescapeString(Location location, const char[] s)
 			}
 			hexchars ~= c;
 			if (hexchars.length == 2) {
-				version(Volt) {
+				try {
 					output ~= cast(char)toInt(hexchars, 16);
-				} else {
-					try {
-						output ~= parse!ubyte(hexchars, 16);
-					} catch (ConvException) {
-						throw makeExpected(location, "hex digit");
-					}
+				} catch (ConvException) {
+					throw makeExpected(location, "hex digit");
 				}
 				hexing = false;
 				hexchars = null;

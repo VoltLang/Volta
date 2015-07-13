@@ -2,19 +2,12 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.ir.copy;
 
-version(Volt) {
-	import watt.text.format : format;
-	import watt.conv : toString;
-} else {
-	import std.conv : to;
-	import std.string : format;
-}
+import watt.text.format : format;
 
 import ir = volt.ir.ir;
 import volt.errors;
 import volt.ir.util;
 import volt.token.location;
-
 
 
 ir.Constant copy(ir.Constant cnst)
