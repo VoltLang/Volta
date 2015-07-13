@@ -1685,7 +1685,7 @@ public:
 
 	override Status enter(ref ir.Exp, ir.Unary unary)
 	{
-		switch (unary.op) {
+		final switch (unary.op) {
 		case ir.Unary.Op.AddrOf: wf("&"); break;
 		case ir.Unary.Op.Increment: wf("++"); break;
 		case ir.Unary.Op.Decrement: wf("--"); break;
@@ -1713,7 +1713,24 @@ public:
 				}
 			}
 			break;
-		default: assert(false);
+		case ir.Unary.Op.TypeIdent:
+			wf("typeid(");
+			if (unary.value !is null) {
+				acceptExp(unary.value, this);
+			} else if (unary.type !is null) {
+				accept(unary.type, this);
+			} else {
+				assert(false);
+			}
+			wf(")");
+			break;
+		case ir.Unary.Op.Dup:
+			wf("(");
+			acceptExp(unary.value, this);
+			wf(").dup");
+			break;
+		case ir.Unary.Op.None:
+			assert(false);
 		}
 
 		if (unary.value !is null) {

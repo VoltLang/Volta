@@ -163,7 +163,6 @@ public:
 	 * Root
 	 *
 	 */
-	override Status enter(ir.Module n) { enterNode(n); return Continue; }
 	override Status leave(ir.Module n) { leaveNode(n); return Continue; }
 	override Status enter(ir.TopLevelBlock n) { enterNode(n); return Continue; }
 	override Status leave(ir.TopLevelBlock n) { leaveNode(n); return Continue; }
@@ -198,6 +197,17 @@ public:
 
 	override Status visit(ir.QualifiedName n) { visitNode(n); return Continue; }
 
+
+	override Status enter(ir.Module n)
+	{
+		ln();
+		mLastIndent = mIndent;
+		if (mIndent != 0)
+			ln();
+		twf(["(", ir.nodeToString(n), " \"", n.name.toString(), "\" ", getNodeAddressString(n)]);
+		mLastIndent = mIndent++;
+		return Continue;
+	}
 
 	override Status enter(ir.MixinFunction n)
 	{
