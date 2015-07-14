@@ -7,6 +7,7 @@ import volt.exceptions;
 import volt.token.source;
 import volt.token.lexer;
 import volt.token.token;
+import volt.parser.stream;
 import volt.parser.toplevel;
 import ir = volt.ir.ir;
 
@@ -47,8 +48,8 @@ void doFile(string arg)
 	auto src = new Source(arg);
 	output.writef("  VIV    %s", arg);
 	output.flush();
-	auto ts = lex(src);
-	ts.get();  // Eat TokenType.Begin.
-	auto mod = parseModule(ts);
+	auto ps = new ParserStream(lex(src));
+	ps.get();
+	auto mod = parseModule(ps);
 	output.writefln(" ... done");
 }

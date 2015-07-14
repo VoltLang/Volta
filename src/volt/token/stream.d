@@ -12,7 +12,7 @@ public import volt.token.token;
 /**
  * Class used by the parser to read lexed tokens.
  */
-final class TokenStream
+class TokenStream
 {
 public:
 	Token lastDocComment;
@@ -52,7 +52,7 @@ public:
 	 * Side-effects:
 	 *   Sets mIndex = 0.
 	 */
-	void reset()
+	final void reset()
 	{
 		mIndex = 0;
 	}
@@ -63,7 +63,7 @@ public:
 	 * Side-effects:
 	 *   Increments mIndex.
 	 */
-	Token get()
+	final Token get()
 	{
 		doDocCommentBlocks();
 		auto retval = mTokens[mIndex];
@@ -79,7 +79,7 @@ public:
 	 * Side-effects:
 	 *   None.
 	 */
-	bool opEquals(TokenType type)
+	final bool opEquals(TokenType type)
 	{
 		return type == peek.type;
 	}
@@ -91,7 +91,7 @@ public:
 	 * Side-effects:
 	 *   None.
 	 */
-	int opEquals(TokenType[] types)
+	final int opEquals(TokenType[] types)
 	in {
 		assert(types.length > 0);
 	}
@@ -110,7 +110,7 @@ public:
 	 * Side-effects:
 	 *   None.
 	 */
-	@property Token peek()
+	final @property Token peek()
 	{
 		return mTokens[mIndex];
 	}
@@ -124,7 +124,7 @@ public:
 	 * Side-effects:
 	 *   None.
 	 */
-	@property Token previous()
+	final @property Token previous()
 	{
 		return lookbehind(1);
 	}
@@ -135,7 +135,7 @@ public:
 	 * Side-effects:
 	 *   None.
 	 */
-	Token lookahead(size_t n)
+	final Token lookahead(size_t n)
 	{
 		if (n == 0) {
 			return peek;
@@ -158,7 +158,7 @@ public:
 	 * Side-effects:
 	 *   None.
 	 */
-	Token lookbehind(size_t n)
+	final Token lookbehind(size_t n)
 	{
 		if (n > mIndex)
 			throw panic("Token array access out of bounds");
@@ -171,7 +171,7 @@ public:
 	 * Side-effects:
 	 *   None.
 	 */
-	size_t save()
+	final size_t save()
 	{
 		return mIndex;
 	}
@@ -182,13 +182,13 @@ public:
 	 * Side-effects:
 	 *   mIndex is set to index.
 	 */
-	void restore(size_t index)
+	final void restore(size_t index)
 	{
 		assert(index < mTokens.length);
 		mIndex = index;
 	}
 
-	void pushCommentLevel()
+	final void pushCommentLevel()
 	{
 		if (inMultiCommentBlock && mComment.length > 0) {
 			auto oldComment = mComment[$-1];
@@ -198,7 +198,7 @@ public:
 		}
 	}
 
-	void popCommentLevel()
+	final void popCommentLevel()
 	{
 		assert(mComment.length > 0);
 		string oldComment;
@@ -217,7 +217,7 @@ public:
 	}
 
 	/// Add a comment to the current comment level.
-	void addComment(Token comment)
+	final void addComment(Token comment)
 	{
 		assert(comment.type == TokenType.DocComment);
 		auto raw = strip(comment.value);
@@ -229,7 +229,7 @@ public:
 	}
 
 	/// Retrieve and clear the current comment.
-	string comment()
+	final string comment()
 	{
 		assert(mComment.length >= 1);
 		auto str = mComment[$-1];
@@ -243,14 +243,13 @@ public:
 	 * True if we found @ { on its own, so apply the last doccomment
 	 * multiple times, until we see a matching number of @ }s.
 	 */
-	@property bool inMultiCommentBlock()
+	final @property bool inMultiCommentBlock()
 	{
 		return multiDepth > 0;
 	}
 
 private:
-
-	void doDocCommentBlocks()
+	final void doDocCommentBlocks()
 	{
 		if (mTokens[mIndex].type != TokenType.DocComment) {
 			return;

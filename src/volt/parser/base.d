@@ -7,8 +7,8 @@ module volt.parser.base;
 import watt.text.format : format;
 
 import volt.errors;
-import volt.token.token;
-import volt.token.stream;
+import volt.token.token : Token, TokenType, tokenToString;
+import volt.parser.stream : ParserStream;
 
 import ir = volt.ir.ir;
 
@@ -22,21 +22,21 @@ import ir = volt.ir.ir;
  * Side-effects:
  *     Advances the tokenstream if current token is of @type.
  */
-Token match(TokenStream ts, TokenType type, string file = __FILE__, size_t line = __LINE__)
+Token match(ParserStream ps, TokenType type, string file = __FILE__, size_t line = __LINE__)
 {
-	auto t = ts.peek;
+	auto t = ps.peek;
 
 	// Condition true is good path.
 	if (t.type == type)
-		return ts.get();
+		return ps.get();
 
 	throw makeExpected(t.location, type.tokenToString, t.value, file, line);
 }
 
-bool matchIf(TokenStream ts, TokenType type)
+bool matchIf(ParserStream ps, TokenType type)
 {
-	if (ts.peek.type == type) {
-		ts.get();
+	if (ps.peek.type == type) {
+		ps.get();
 		return true;
 	} else {
 		return false;
@@ -46,18 +46,18 @@ bool matchIf(TokenStream ts, TokenType type)
 /**
  * Add all doccomment tokens to the current comment level.
  */
-void eatComments(TokenStream ts)
+void eatComments(ParserStream ps)
 {
-	while (ts.peek.type == TokenType.DocComment) {
-		auto commentTok = match(ts, TokenType.DocComment);
+	while (ps.peek.type == TokenType.DocComment) {
+		auto commentTok = match(ps, TokenType.DocComment);
 		if (commentTok.isBackwardsComment) {
-			if (ts.retroComment is null) {
+			if (ps.retroComment is null) {
 				throw makeStrayDocComment(commentTok.location);
 			} else {
-				*ts.retroComment = commentTok.value;
+				*ps.retroComment = commentTok.value;
 			}
 		} else {
-			ts.addComment(commentTok);
+			ps.addComment(commentTok);
 		}
 	}
 }
@@ -65,25 +65,25 @@ void eatComments(TokenStream ts)
 /**
  *
  */
-ir.QualifiedName parseQualifiedName(TokenStream ts, bool allowLeadingDot = false)
+ir.QualifiedName parseQualifiedName(ParserStream ps, bool allowLeadingDot = false)
 {
 	auto name = new ir.QualifiedName();
-	auto t = ts.peek;
+	auto t = ps.peek;
 	auto startLocation = t.location;
 
 	// Consume any leading dots if allowed, if not allowed
 	// the below while loop match will cause an error.
 	if (allowLeadingDot && t.type == TokenType.Dot) {
-		t = match(ts, TokenType.Dot);
+		t = match(ps, TokenType.Dot);
 		name.leadingDot = true;
 	}
 
 	// Consume all identifier dot pairs.
 	do {
-		name.identifiers ~= parseIdentifier(ts);
+		name.identifiers ~= parseIdentifier(ps);
 
-		if (ts == TokenType.Dot) {
-			t = match(ts, TokenType.Dot);
+		if (ps == TokenType.Dot) {
+			t = match(ps, TokenType.Dot);
 		} else {
 			break;
 		}
@@ -97,9 +97,9 @@ ir.QualifiedName parseQualifiedName(TokenStream ts, bool allowLeadingDot = false
 /**
  *
  */
-ir.Identifier parseIdentifier(TokenStream ts)
+ir.Identifier parseIdentifier(ParserStream ps)
 {
-	auto t = match(ts, TokenType.Identifier);
+	auto t = match(ps, TokenType.Identifier);
 	auto i = new ir.Identifier();
 
 	i.value = t.value;

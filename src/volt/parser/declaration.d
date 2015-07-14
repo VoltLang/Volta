@@ -11,52 +11,52 @@ import volt.ir.copy;
 
 import volt.exceptions;
 import volt.errors;
-import volt.token.stream;
 
+import volt.token.location;
 import volt.parser.base;
+import volt.parser.stream : Token, ParserStream;
 import volt.parser.expression;
 import volt.parser.toplevel;
 import volt.parser.declaration;
 import volt.parser.statements;
-import volt.token.location;
 
 
-ir.Node[] parseVariable(TokenStream ts)
+ir.Node[] parseVariable(ParserStream ps)
 {
-	if (ts.peek.type == TokenType.Alias) {
-		return [parseAlias(ts)];
+	if (ps.peek.type == TokenType.Alias) {
+		return [parseAlias(ps)];
 	}
 
-	auto loc = ts.peek.location;
-	auto _global = matchIf(ts, TokenType.Global);
+	auto loc = ps.peek.location;
+	auto _global = matchIf(ps, TokenType.Global);
 	if (!_global) {
-		_global = matchIf(ts, TokenType.Static);  // Deprecate after self-hosting etc.
+		_global = matchIf(ps, TokenType.Static);  // Deprecate after self-hosting etc.
 	}
 
-	ir.Type base = parseType(ts);
-	if (ts.lookahead(1).type == TokenType.Comma ||
-		ts.lookahead(1).type == TokenType.Semicolon ||
-		ts.lookahead(1).type == TokenType.Assign) {
+	ir.Type base = parseType(ps);
+	if (ps.lookahead(1).type == TokenType.Comma ||
+		ps.lookahead(1).type == TokenType.Semicolon ||
+		ps.lookahead(1).type == TokenType.Assign) {
 		// Normal declaration.
 		if (_global) {
 			throw makeUnexpected(loc, "global");
 		}
-		return reallyParseVariable(ts, base);
-	} else if (ts.lookahead(1).type == TokenType.OpenParen) {
+		return reallyParseVariable(ps, base);
+	} else if (ps.lookahead(1).type == TokenType.OpenParen) {
 		// Function!
-		auto fn = parseFunction(ts, base);
+		auto fn = parseFunction(ps, base);
 		fn.isGlobal = _global;
 		return [fn];
 	} else {
-		throw makeExpected(ts.peek.location, "declaration");
+		throw makeExpected(ps.peek.location, "declaration");
 	}
 	version(Volt) assert(false);
 }
 
-ir.Variable[] parseJustVariable(TokenStream ts)
+ir.Variable[] parseJustVariable(ParserStream ps)
 {
-	ir.Type base = parseType(ts);
-	ir.Node[] nodes = reallyParseVariable(ts, base);
+	ir.Type base = parseType(ps);
+	ir.Node[] nodes = reallyParseVariable(ps, base);
 	auto vars = new ir.Variable[](nodes.length);
 	foreach (i, node; nodes) {
 		vars[i] = cast(ir.Variable) node;
@@ -65,22 +65,22 @@ ir.Variable[] parseJustVariable(TokenStream ts)
 	return vars;
 }
 
-ir.Alias parseAlias(TokenStream ts)
+ir.Alias parseAlias(ParserStream ps)
 {
 	auto a = new ir.Alias();
-	a.location = ts.peek.location;
+	a.location = ps.peek.location;
 
-	match(ts, TokenType.Alias);
-	auto nameTok = match(ts, TokenType.Identifier);
+	match(ps, TokenType.Alias);
+	auto nameTok = match(ps, TokenType.Identifier);
 	a.name = nameTok.value;
-	match(ts, TokenType.Assign);
+	match(ps, TokenType.Assign);
 
-	size_t pos = ts.save();
+	size_t pos = ps.save();
 
 	size_t i = 1;
 	bool bang;
-	while (ts.lookahead(i).type != TokenType.Semicolon && ts.lookahead(i).type != TokenType.End) {
-		bang = ts.lookahead(i).type == TokenType.Bang;
+	while (ps.lookahead(i).type != TokenType.Semicolon && ps.lookahead(i).type != TokenType.End) {
+		bang = ps.lookahead(i).type == TokenType.Bang;
 		if (bang) {
 			break;
 		}
@@ -89,43 +89,43 @@ ir.Alias parseAlias(TokenStream ts)
 
 	try {
 		if (bang) {
-			a.templateInstance = parseExp(ts);
+			a.templateInstance = parseExp(ps);
 		} else {
-			a.id = parseQualifiedName(ts);
+			a.id = parseQualifiedName(ps);
 		}
-		match(ts, TokenType.Semicolon);
+		match(ps, TokenType.Semicolon);
 
 	} catch (CompilerError e) {
 		if (e.neverIgnore) {
 			throw e;
 		}
-		ts.restore(pos);
+		ps.restore(pos);
 
 		a.id = null;
-		a.type = parseType(ts);
-		match(ts, TokenType.Semicolon);
+		a.type = parseType(ps);
+		match(ps, TokenType.Semicolon);
 	}
 
-	a.docComment = ts.comment();
-	ts.retroComment = &a.docComment;
+	a.docComment = ps.comment();
+	ps.retroComment = &a.docComment;
 	return a;
 }
 
-ir.Node[] reallyParseVariable(TokenStream ts, ir.Type base)
+ir.Node[] reallyParseVariable(ParserStream ps, ir.Type base)
 {
 	ir.Node[] decls;
 
 	while (true) {
 		auto d = new ir.Variable();
-		d.location = ts.peek.location;
-		d.docComment = ts.comment();
+		d.location = ps.peek.location;
+		d.docComment = ps.comment();
 		d.type = base;
-		auto nameTok = match(ts, TokenType.Identifier);
+		auto nameTok = match(ps, TokenType.Identifier);
 		d.name = nameTok.value;
-		if (ts.peek.type == TokenType.Assign) {
-			match(ts, TokenType.Assign);
+		if (ps.peek.type == TokenType.Assign) {
+			match(ps, TokenType.Assign);
 			try {
-				d.assign = parseExp(ts);
+				d.assign = parseExp(ps);
 			} catch (CompilerError e) {
 				version(Volt) {
 					throw new CompilerError(e.location, e.message, e, true);
@@ -136,217 +136,217 @@ ir.Node[] reallyParseVariable(TokenStream ts, ir.Type base)
 		}
 		decls ~= d;
 
-		if (ts.peek.type == TokenType.Comma) {
+		if (ps.peek.type == TokenType.Comma) {
 			// Need to copy this on multiple.
 			base = copyType(base);
-			ts.get();
+			ps.get();
 		} else {
 			break;
 		}
 	}
-	match(ts, TokenType.Semicolon);
+	match(ps, TokenType.Semicolon);
 
-	ts.retroComment = &decls[0].docComment;
+	ps.retroComment = &decls[0].docComment;
 
 	return decls;
 }
 
-ir.Type parseType(TokenStream ts)
+ir.Type parseType(ParserStream ps)
 {
-	Location origin = ts.peek.location;
+	Location origin = ps.peek.location;
 
 	ir.Type base;
-	switch (ts.peek.type) {
+	switch (ps.peek.type) {
 	case TokenType.Void, TokenType.Char, TokenType.Byte, TokenType.Ubyte,
 		 TokenType.Short, TokenType.Ushort, TokenType.Int, TokenType.Uint,
 		 TokenType.Long, TokenType.Ulong, TokenType.Float, TokenType.Double,
 		 TokenType.Real, TokenType.Bool, TokenType.Wchar, TokenType.Dchar:
-		base = parsePrimitiveType(ts);
+		base = parsePrimitiveType(ps);
 		break;
 	case TokenType.Auto, TokenType.Const, TokenType.Immutable,
 		 TokenType.Scope:
-		base = parseStorageType(ts);
+		base = parseStorageType(ps);
 		break;
 	case TokenType.Identifier, TokenType.Dot:
-		base = parseTypeReference(ts);
+		base = parseTypeReference(ps);
 		break;
 	case TokenType.Typeof:
-		base = parseTypeOf(ts);
+		base = parseTypeOf(ps);
 		break;
 	default:
-		throw makeExpected(ts.peek.location, "primitive type");
+		throw makeExpected(ps.peek.location, "primitive type");
 	}
 
-	base = parseTypeSigils(ts, origin, base);
+	base = parseTypeSigils(ps, origin, base);
 
-	switch (ts.peek.type) {
+	switch (ps.peek.type) {
 	case TokenType.Function:
-		base = parseFunctionType(ts, base);
-		base.location = ts.peek.location - origin;
-		base = parseTypeSigils(ts, origin, base);
+		base = parseFunctionType(ps, base);
+		base.location = ps.peek.location - origin;
+		base = parseTypeSigils(ps, origin, base);
 		break;
 	case TokenType.Delegate:
-		base = parseDelegateType(ts, base);
-		base.location = ts.peek.location - origin;
-		base = parseTypeSigils(ts, origin, base);
+		base = parseDelegateType(ps, base);
+		base.location = ps.peek.location - origin;
+		base = parseTypeSigils(ps, origin, base);
 		break;
 	default:
 		break;
 	}
 
-	base.location = ts.peek.location - origin;
-	base.docComment = ts.comment();
+	base.location = ps.peek.location - origin;
+	base.docComment = ps.comment();
 	return base;
 }
 
-ir.TypeOf parseTypeOf(TokenStream ts)
+ir.TypeOf parseTypeOf(ParserStream ps)
 {
 	auto typeOf = new ir.TypeOf();
-	typeOf.location = ts.peek.location;
-	match(ts, TokenType.Typeof);
-	match(ts, TokenType.OpenParen);
-	typeOf.exp = parseExp(ts);
-	match(ts, TokenType.CloseParen);
+	typeOf.location = ps.peek.location;
+	match(ps, TokenType.Typeof);
+	match(ps, TokenType.OpenParen);
+	typeOf.exp = parseExp(ps);
+	match(ps, TokenType.CloseParen);
 	return typeOf;
 }
 
-ir.TypeReference parseTypeReference(TokenStream ts)
+ir.TypeReference parseTypeReference(ParserStream ps)
 {
 	auto typeReference = new ir.TypeReference();
-	typeReference.location = ts.peek.location;
+	typeReference.location = ps.peek.location;
 
-	typeReference.id = parseQualifiedName(ts, true);
+	typeReference.id = parseQualifiedName(ps, true);
 
 	assert(typeReference.id.identifiers.length > 0);
-	typeReference.docComment = ts.comment();
+	typeReference.docComment = ps.comment();
 	return typeReference;
 }
 
-ir.StorageType parseStorageType(TokenStream ts)
+ir.StorageType parseStorageType(ParserStream ps)
 {
 	auto storageType = new ir.StorageType();
-	storageType.location = ts.peek.location;
+	storageType.location = ps.peek.location;
 
-	storageType.type = cast(ir.StorageType.Kind) ts.peek.type;
-	ts.get();
+	storageType.type = cast(ir.StorageType.Kind) ps.peek.type;
+	ps.get();
 
-	if (ts == [TokenType.Identifier, TokenType.Semicolon] ||
-		ts == [TokenType.Identifier, TokenType.Assign, TokenType.Void, TokenType.Semicolon]) {
-		throw makeCannotInfer(ts.peek.location);
-	} else if (matchIf(ts, TokenType.OpenParen)) {
-		storageType.base = parseType(ts);
-		match(ts, TokenType.CloseParen);
-	} else if (!(ts == [TokenType.Identifier, TokenType.Assign])) {
-		storageType.base = parseType(ts);
+	if (ps == [TokenType.Identifier, TokenType.Semicolon] ||
+		ps == [TokenType.Identifier, TokenType.Assign, TokenType.Void, TokenType.Semicolon]) {
+		throw makeCannotInfer(ps.peek.location);
+	} else if (matchIf(ps, TokenType.OpenParen)) {
+		storageType.base = parseType(ps);
+		match(ps, TokenType.CloseParen);
+	} else if (!(ps == [TokenType.Identifier, TokenType.Assign])) {
+		storageType.base = parseType(ps);
 	}
 
-	storageType.docComment = ts.comment();
+	storageType.docComment = ps.comment();
 	return storageType;
 }
 
-ir.FunctionType parseFunctionType(TokenStream ts, ir.Type base)
+ir.FunctionType parseFunctionType(ParserStream ps, ir.Type base)
 {
 	auto fn = new ir.FunctionType();
-	fn.location = ts.peek.location;
-	fn.docComment = ts.comment();
+	fn.location = ps.peek.location;
+	fn.docComment = ps.comment();
 
 	fn.ret = base;
-	match(ts, TokenType.Function);
-	fn.params = parseParameterListFPtr(ts, fn);
+	match(ps, TokenType.Function);
+	fn.params = parseParameterListFPtr(ps, fn);
 
 	return fn;
 }
 
-ir.DelegateType parseDelegateType(TokenStream ts, ir.Type base)
+ir.DelegateType parseDelegateType(ParserStream ps, ir.Type base)
 {
 	auto fn = new ir.DelegateType();
-	fn.location = ts.peek.location;
+	fn.location = ps.peek.location;
 
 	fn.ret = base;
-	match(ts, TokenType.Delegate);
-	fn.params = parseParameterListFPtr(ts, fn);
+	match(ps, TokenType.Delegate);
+	fn.params = parseParameterListFPtr(ps, fn);
 
-	fn.docComment = ts.comment();
+	fn.docComment = ps.comment();
 	return fn;
 }
 
-ir.Type[] parseParameterListFPtr(TokenStream ts, ir.CallableType parentCallable)
+ir.Type[] parseParameterListFPtr(ParserStream ps, ir.CallableType parentCallable)
 {
 	ir.Type[] types;
 
-	match(ts, TokenType.OpenParen);
-	while (ts.peek.type != TokenType.CloseParen) {
-		if (matchIf(ts, TokenType.TripleDot)) {
+	match(ps, TokenType.OpenParen);
+	while (ps.peek.type != TokenType.CloseParen) {
+		if (matchIf(ps, TokenType.TripleDot)) {
 			parentCallable.hasVarArgs = true;
 			break;
 		}
-		auto var = parseParameter(ts);
+		auto var = parseParameter(ps);
 		types ~= var.type;
-		if (ts.peek.type == TokenType.Comma) {
-			ts.get();
+		if (ps.peek.type == TokenType.Comma) {
+			ps.get();
 		}
 	}
-	match(ts, TokenType.CloseParen);
+	match(ps, TokenType.CloseParen);
 
 	return types;
 }
 
-ir.Variable[] parseParameterList(TokenStream ts, ir.CallableType parentCallable)
+ir.Variable[] parseParameterList(ParserStream ps, ir.CallableType parentCallable)
 {
 	ir.Variable[] vars;
 
-	match(ts, TokenType.OpenParen);
-	while (ts.peek.type != TokenType.CloseParen) {
-		if (matchIf(ts, TokenType.TripleDot)) {
+	match(ps, TokenType.OpenParen);
+	while (ps.peek.type != TokenType.CloseParen) {
+		if (matchIf(ps, TokenType.TripleDot)) {
 			if (parentCallable is null) {
-				throw makeExpected(ts.peek.location, "function or delegate");
+				throw makeExpected(ps.peek.location, "function or delegate");
 			}
 			parentCallable.hasVarArgs = true;
 			break;
 		}
-		auto var = parseParameter(ts);
+		auto var = parseParameter(ps);
 		// foo(int a, int[] b...)
-		if (matchIf(ts, TokenType.TripleDot)) {
-			if (ts.peek.type != TokenType.CloseParen) {
-				throw makeExpected(ts.peek.location, "homogenous variadic argument to be final argument");
+		if (matchIf(ps, TokenType.TripleDot)) {
+			if (ps.peek.type != TokenType.CloseParen) {
+				throw makeExpected(ps.peek.location, "homogenous variadic argument to be final argument");
 			}
 			parentCallable.hasVarArgs = false;
 			parentCallable.homogenousVariadic = true;
 		}
 		vars ~= var;
 		// foo(int a, int b, ...)
-		if (ts.peek.type == TokenType.Comma) {
-			ts.get();
-			if (matchIf(ts, TokenType.TripleDot)) {
-				if (ts.peek.type != TokenType.CloseParen) {
-					throw makeExpected(ts.peek.location, "var args to be last argument");
+		if (ps.peek.type == TokenType.Comma) {
+			ps.get();
+			if (matchIf(ps, TokenType.TripleDot)) {
+				if (ps.peek.type != TokenType.CloseParen) {
+					throw makeExpected(ps.peek.location, "var args to be last argument");
 				}
 				parentCallable.hasVarArgs = true;
 			}
 		}
 	}
-	match(ts, TokenType.CloseParen);
+	match(ps, TokenType.CloseParen);
 
 	return vars;
 }
 
-ir.Variable parseParameter(TokenStream ts)
+ir.Variable parseParameter(ParserStream ps)
 {
 	ir.Variable p = new ir.Variable();
 	p.storage = ir.Variable.Storage.Function;
-	Location origin = ts.peek.location;
+	Location origin = ps.peek.location;
 
 	/// @todo intermixed ref
 	bool isOut, isIn, isRef;
-	isRef = matchIf(ts, TokenType.Ref);
+	isRef = matchIf(ps, TokenType.Ref);
 	if (!isRef) {
-		isOut = matchIf(ts, TokenType.Out);
+		isOut = matchIf(ps, TokenType.Out);
 	}
 	if (!isOut && !isRef) {
-		isIn = matchIf(ts, TokenType.In);
+		isIn = matchIf(ps, TokenType.In);
 	}
 
-	p.type = parseType(ts);
+	p.type = parseType(ps);
 	if (isRef || isOut) {
 		auto s = new ir.StorageType();
 		s.location = p.type.location;
@@ -355,49 +355,49 @@ ir.Variable parseParameter(TokenStream ts)
 		p.type = s;
 	}
 	if (isIn) {
-		auto constStorage = buildStorageType(ts.peek.location, ir.StorageType.Kind.Const, p.type);
-		auto scopeStorage = buildStorageType(ts.peek.location, ir.StorageType.Kind.Scope, constStorage);
+		auto constStorage = buildStorageType(ps.peek.location, ir.StorageType.Kind.Const, p.type);
+		auto scopeStorage = buildStorageType(ps.peek.location, ir.StorageType.Kind.Scope, constStorage);
 		p.type = scopeStorage;
 	}
-	if (ts.peek.type == TokenType.Identifier) {
-		Token name = match(ts, TokenType.Identifier);
+	if (ps.peek.type == TokenType.Identifier) {
+		Token name = match(ps, TokenType.Identifier);
 		p.name = name.value;
-		if (matchIf(ts, TokenType.Assign)) {
-			p.assign = parseExp(ts);
+		if (matchIf(ps, TokenType.Assign)) {
+			p.assign = parseExp(ps);
 		}
-	} else if (ts.peek.type != TokenType.Comma && ts.peek.type != TokenType.CloseParen) {
-		throw makeExpected(ts.peek.location, "',', ')', or an identifier", ts.peek.value);
+	} else if (ps.peek.type != TokenType.Comma && ps.peek.type != TokenType.CloseParen) {
+		throw makeExpected(ps.peek.location, "',', ')', or an identifier", ps.peek.value);
 	}
-	p.location = ts.peek.location - origin;
+	p.location = ps.peek.location - origin;
 
 	return p;
 }
 
 // Parse things that go on the end of types like * or []. If none, base is returned.
-ir.Type parseTypeSigils(TokenStream ts, Location origin, ir.Type base)
+ir.Type parseTypeSigils(ParserStream ps, Location origin, ir.Type base)
 {
 	bool loop = true;
-	while (loop) switch (ts.peek.type) {
+	while (loop) switch (ps.peek.type) {
 	case TokenType.Asterix:
-		auto end = ts.get();
+		auto end = ps.get();
 		auto p = new ir.PointerType();
 		p.location = end.location - origin;
 		p.base = base;
 		base = p;
 		break;
 	case TokenType.OpenBracket:
-		ts.get();
-		if (ts.peek.type == TokenType.CloseBracket) {
+		ps.get();
+		if (ps.peek.type == TokenType.CloseBracket) {
 			// Dynamic array.
-			auto end = match(ts, TokenType.CloseBracket);
+			auto end = match(ps, TokenType.CloseBracket);
 			auto a = new ir.ArrayType();
 			a.location = end.location - origin;
 			a.base = base;
 			base = a;
-		} else if (ts.peek.type == TokenType.IntegerLiteral) {
+		} else if (ps.peek.type == TokenType.IntegerLiteral) {
 			// Static array.
-			auto integer = ts.get();
-			auto end = match(ts, TokenType.CloseBracket);
+			auto integer = ps.get();
+			auto end = match(ps, TokenType.CloseBracket);
 			auto a = new ir.StaticArrayType();
 			a.location = end.location - origin;
 			a.base = base;
@@ -407,9 +407,9 @@ ir.Type parseTypeSigils(TokenStream ts, Location origin, ir.Type base)
 			// Associative array.
 			auto a = new ir.AAType();
 			a.value = base;
-			a.key = parseType(ts);
-			a.location = ts.peek.location - origin;
-			match(ts, TokenType.CloseBracket);
+			a.key = parseType(ps);
+			a.location = ps.peek.location - origin;
+			match(ps, TokenType.CloseBracket);
 			base = a;
 		}
 		break;
@@ -419,34 +419,34 @@ ir.Type parseTypeSigils(TokenStream ts, Location origin, ir.Type base)
 	return base;
 }
 
-package ir.Type parsePrimitiveType(TokenStream ts)
+package ir.Type parsePrimitiveType(ParserStream ps)
 {
 	auto ptype = new ir.PrimitiveType();
-	ptype.location = ts.peek.location;
-	ptype.type = cast(ir.PrimitiveType.Kind) ts.peek.type;
+	ptype.location = ps.peek.location;
+	ptype.type = cast(ir.PrimitiveType.Kind) ps.peek.type;
 
-	ts.get();
+	ps.get();
 	return ptype;
 }
 
-ir.Function parseFunction(TokenStream ts, ir.Type base)
+ir.Function parseFunction(ParserStream ps, ir.Type base)
 {
 	auto fn = new ir.Function();
 	fn.type = new ir.FunctionType();
 	fn.docComment = base.docComment;
-	ts.pushCommentLevel();
-	scope (exit) ts.popCommentLevel();
+	ps.pushCommentLevel();
+	scope (exit) ps.popCommentLevel();
 
 	// <int> add(int a, int b) { }
 	fn.type.ret = base;
 
 	// int <add>(int a, int b) {}
-	auto nameTok = match(ts, TokenType.Identifier);
+	auto nameTok = match(ps, TokenType.Identifier);
 	fn.name = nameTok.value;
 	fn.location = nameTok.location;
 
 	// int add<(int a, int b)> {}
-	auto params = parseParameterList(ts, fn.type);
+	auto params = parseParameterList(ps, fn.type);
 	foreach (i, param; params) {
 		fn.type.params ~= param.type;
 		auto p = new ir.FunctionParam();
@@ -457,89 +457,89 @@ ir.Function parseFunction(TokenStream ts, ir.Type base)
 		p.fn = fn;
 		fn.params ~= p;
 	}
-	//fn.type.params = parseParameterList(ts, fn.type);
-	fn.type.location = ts.previous.location - fn.type.ret.location;
+	//fn.type.params = parseParameterList(ps, fn.type);
+	fn.type.location = ps.previous.location - fn.type.ret.location;
 
-	bool inBlocks = ts.peek.type != TokenType.Semicolon;
+	bool inBlocks = ps.peek.type != TokenType.Semicolon;
 	while (inBlocks) {
 		bool _in, _out;
-		switch (ts.peek.type) {
+		switch (ps.peek.type) {
 		case TokenType.In:
 			// <in> { }
 			if (_in) {
-				throw makeMultipleOutBlocks(ts.peek.location);
+				throw makeMultipleOutBlocks(ps.peek.location);
 			}
 			_in = true;
-			match(ts, TokenType.In);
-			fn.inContract = parseBlock(ts);
+			match(ps, TokenType.In);
+			fn.inContract = parseBlock(ps);
 			break;
 		case TokenType.Out:
 			// <out>
 			if (_out) {
-				throw makeMultipleOutBlocks(ts.peek.location);
+				throw makeMultipleOutBlocks(ps.peek.location);
 			}
 			_out = true;
-			match(ts, TokenType.Out);
-			if (ts.peek.type == TokenType.OpenParen) {
+			match(ps, TokenType.Out);
+			if (ps.peek.type == TokenType.OpenParen) {
 				// out <(result)>
-				match(ts, TokenType.OpenParen);
-				auto identTok = match(ts, TokenType.Identifier);
+				match(ps, TokenType.OpenParen);
+				auto identTok = match(ps, TokenType.Identifier);
 				fn.outParameter = identTok.value;
-				match(ts, TokenType.CloseParen);
+				match(ps, TokenType.CloseParen);
 			}
-			fn.outContract = parseBlock(ts);
+			fn.outContract = parseBlock(ps);
 			break;
 		case TokenType.OpenBrace:
 		case TokenType.Body:
-			if (ts.peek.type == TokenType.Body) {
-				ts.get();
+			if (ps.peek.type == TokenType.Body) {
+				ps.get();
 			}
 			inBlocks = false;
-			fn._body = parseBlock(ts);
+			fn._body = parseBlock(ps);
 			break;
 		default:
-			throw makeExpected(ts.peek.location, "block declaration");
+			throw makeExpected(ps.peek.location, "block declaration");
 		}
 	}
-	if (ts.peek.type == TokenType.Semicolon) {
-		ts.get();
+	if (ps.peek.type == TokenType.Semicolon) {
+		ps.get();
 	}
 
 	return fn;
 }
 
-ir.BlockStatement parseBlock(TokenStream ts)
+ir.BlockStatement parseBlock(ParserStream ps)
 {
 	auto bs = new ir.BlockStatement();
-	bs.location = ts.peek.location;
+	bs.location = ps.peek.location;
 
-	match(ts, TokenType.OpenBrace);
-	eatComments(ts);
-	while (ts != TokenType.CloseBrace) {
-		eatComments(ts);
-		bs.statements ~= parseStatement(ts);
+	match(ps, TokenType.OpenBrace);
+	eatComments(ps);
+	while (ps != TokenType.CloseBrace) {
+		eatComments(ps);
+		bs.statements ~= parseStatement(ps);
 	}
-	match(ts, TokenType.CloseBrace);
+	match(ps, TokenType.CloseBrace);
 
 	return bs;
 }
 
-ir.EnumDeclaration parseEnumDeclaration(TokenStream ts)
+ir.EnumDeclaration parseEnumDeclaration(ParserStream ps)
 {
 	auto edecl = new ir.EnumDeclaration();
-	edecl.location = ts.peek.location;
+	edecl.location = ps.peek.location;
 
-	auto nameTok = match(ts, TokenType.Identifier);
+	auto nameTok = match(ps, TokenType.Identifier);
 	edecl.name = nameTok.value;
 
-	if (matchIf(ts, TokenType.Assign)) {
-		edecl.assign = parseExp(ts);
+	if (matchIf(ps, TokenType.Assign)) {
+		edecl.assign = parseExp(ps);
 	}
 
-	edecl.docComment = ts.comment();
+	edecl.docComment = ps.comment();
 	if (edecl.docComment.length == 0) {
-		ts.retroComment = &edecl.docComment;
+		ps.retroComment = &edecl.docComment;
 	}
-	eatComments(ts);
+	eatComments(ps);
 	return edecl;
 }

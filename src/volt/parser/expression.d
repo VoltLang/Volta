@@ -14,15 +14,16 @@ import volt.ir.util;
 import volt.exceptions;
 import volt.errors;
 import volt.token.location;
-import volt.token.stream;
+import volt.token.token : TokenType;
+import volt.parser.stream : ParserStream;
 import volt.parser.base;
 import volt.parser.declaration;
 import volt.util.string;
 
 
-ir.Exp parseExp(TokenStream ts)
+ir.Exp parseExp(ParserStream ps)
 {
-	auto assignExp = parseAssignExp(ts);
+	auto assignExp = parseAssignExp(ps);
 	return assignToExp(assignExp);
 }
 
@@ -523,51 +524,51 @@ ir.Exp primaryToExp(intir.PrimaryExp primary)
 	return exp;
 }
 
-private intir.AssignExp[] _parseArgumentList(TokenStream ts, TokenType endChar = TokenType.CloseParen)
+private intir.AssignExp[] _parseArgumentList(ParserStream ps, TokenType endChar = TokenType.CloseParen)
 {
 	intir.AssignExp[] pexps;
-	while (ts.peek.type != endChar) {
-		if (ts.peek.type == TokenType.End) {
-			throw makeExpected(ts.peek.location, "end of argument list");
+	while (ps.peek.type != endChar) {
+		if (ps.peek.type == TokenType.End) {
+			throw makeExpected(ps.peek.location, "end of argument list");
 		}
-		pexps ~= parseAssignExp(ts);
-		if (ts.peek.type != endChar) {
-			match(ts, TokenType.Comma);
+		pexps ~= parseAssignExp(ps);
+		if (ps.peek.type != endChar) {
+			match(ps, TokenType.Comma);
 		}
 	}
 
 	return pexps;
 }
 
-private intir.AssignExp[] _parseArgumentList(TokenStream ts, ref string[] labels, TokenType endChar = TokenType.CloseParen)
+private intir.AssignExp[] _parseArgumentList(ParserStream ps, ref string[] labels, TokenType endChar = TokenType.CloseParen)
 {
 	intir.AssignExp[] pexps;
-	while (ts.peek.type != endChar) {
-		if (ts.peek.type == TokenType.End) {
-			throw makeExpected(ts.peek.location, "end of argument list");
+	while (ps.peek.type != endChar) {
+		if (ps.peek.type == TokenType.End) {
+			throw makeExpected(ps.peek.location, "end of argument list");
 		}
-		if (ts.peek.type == TokenType.Identifier && ts.lookahead(1).type == TokenType.Colon) {
-			auto ident = match(ts, TokenType.Identifier);
+		if (ps.peek.type == TokenType.Identifier && ps.lookahead(1).type == TokenType.Colon) {
+			auto ident = match(ps, TokenType.Identifier);
 			labels ~= ident.value;
-			match(ts, TokenType.Colon);
+			match(ps, TokenType.Colon);
 		}
-		pexps ~= parseAssignExp(ts);
-		if (ts.peek.type != endChar) {
-			match(ts, TokenType.Comma);
+		pexps ~= parseAssignExp(ps);
+		if (ps.peek.type != endChar) {
+			match(ps, TokenType.Comma);
 		}
 	}
 
 	if (labels.length != 0 && labels.length != pexps.length) {
-		throw makeAllArgumentsMustBeLabelled(ts.peek.location);
+		throw makeAllArgumentsMustBeLabelled(ps.peek.location);
 	}
 
 	return pexps;
 }
 
-// Parse an argument list from ts. Will end with ts.peek == endChar.
-ir.Exp[] parseArgumentList(TokenStream ts, TokenType endChar = TokenType.CloseParen)
+// Parse an argument list from ps. Will end with ps.peek == endChar.
+ir.Exp[] parseArgumentList(ParserStream ps, TokenType endChar = TokenType.CloseParen)
 {
-	intir.AssignExp[] pexps = _parseArgumentList(ts, endChar);
+	intir.AssignExp[] pexps = _parseArgumentList(ps, endChar);
 
 	ir.Exp[] outexps;
 	foreach (exp; pexps) {
@@ -578,159 +579,159 @@ ir.Exp[] parseArgumentList(TokenStream ts, TokenType endChar = TokenType.ClosePa
 	return outexps;
 }
 
-ir.IsExp parseIsExp(TokenStream ts)
+ir.IsExp parseIsExp(ParserStream ps)
 {
 	auto ie = new ir.IsExp();
-	ie.location = ts.peek.location;
+	ie.location = ps.peek.location;
 
-	match(ts, TokenType.Is);
-	match(ts, TokenType.OpenParen);
-	ie.type = parseType(ts);
+	match(ps, TokenType.Is);
+	match(ps, TokenType.OpenParen);
+	ie.type = parseType(ps);
 
-	do switch (ts.peek.type) with (TokenType) {
+	do switch (ps.peek.type) with (TokenType) {
 		case CloseParen:
 			break;
 		case Identifier:
 			if (ie.identifier.length > 0) {
-				throw makeExpected(ts.peek.location, "is expression");
+				throw makeExpected(ps.peek.location, "is expression");
 			}
-			auto nameTok = match(ts, Identifier);
+			auto nameTok = match(ps, Identifier);
 			ie.identifier = nameTok.value;
 			break;
 		case Colon:
 			if (ie.compType != ir.IsExp.Comparison.None) {
-				throw makeExpected(ts.peek.location, "is expression");
+				throw makeExpected(ps.peek.location, "is expression");
 			}
-			ts.get();
+			ps.get();
 			ie.compType = ir.IsExp.Comparison.Implicit;
 			break;
 		case DoubleAssign:
 			if (ie.compType != ir.IsExp.Comparison.None) {
-				throw makeExpected(ts.peek.location, "is expression");
+				throw makeExpected(ps.peek.location, "is expression");
 			}
-			ts.get();
+			ps.get();
 			ie.compType = ir.IsExp.Comparison.Exact;
 			break;
 		default:
 			if (ie.compType == ir.IsExp.Comparison.None) {
-				throw makeExpected(ts.peek.location, "'==' or ':'");
+				throw makeExpected(ps.peek.location, "'==' or ':'");
 			}
-			switch (ts.peek.type) with(TokenType) {
+			switch (ps.peek.type) with(TokenType) {
 			case Struct, Union, Class, Enum, Interface, Function,
 				 Delegate, Super, Const, Immutable, Inout, Shared,
 				 Return:
-				ie.specialisation = cast(ir.IsExp.Specialisation) ts.peek.type;
-				ts.get();
+				ie.specialisation = cast(ir.IsExp.Specialisation) ps.peek.type;
+				ps.get();
 				break;
 			default:
 				ie.specialisation = ir.IsExp.Specialisation.Type;
-				ie.specType = parseType(ts);
+				ie.specType = parseType(ps);
 				break;
 			}
 			break;
-	} while (ts.peek.type != TokenType.CloseParen);
-	match(ts, TokenType.CloseParen);
+	} while (ps.peek.type != TokenType.CloseParen);
+	match(ps, TokenType.CloseParen);
 
 	return ie;
 }
 
-ir.FunctionLiteral parseFunctionLiteral(TokenStream ts)
+ir.FunctionLiteral parseFunctionLiteral(ParserStream ps)
 {
 	auto fn = new ir.FunctionLiteral();
-	fn.location = ts.peek.location;
+	fn.location = ps.peek.location;
 
-	switch (ts.peek.type) {
+	switch (ps.peek.type) {
 	case TokenType.Function:
-		ts.get();
+		ps.get();
 		fn.isDelegate = false;
 		break;
 	case TokenType.Delegate:
-		ts.get();
+		ps.get();
 		fn.isDelegate = true;
 		break;
 	case TokenType.Identifier:
 		fn.isDelegate = true;
-		auto nameTok = match(ts, TokenType.Identifier);
+		auto nameTok = match(ps, TokenType.Identifier);
 		fn.singleLambdaParam = nameTok.value;
-		match(ts, TokenType.Assign);
-		match(ts, TokenType.Greater);
-		fn.lambdaExp = parseExp(ts);
+		match(ps, TokenType.Assign);
+		match(ps, TokenType.Greater);
+		fn.lambdaExp = parseExp(ps);
 		return fn;
 	default:
 		fn.isDelegate = true;
 		break;
 	}
 
-	if (ts.peek.type != TokenType.OpenParen) {
-		fn.returnType = parseType(ts);
+	if (ps.peek.type != TokenType.OpenParen) {
+		fn.returnType = parseType(ps);
 	}
 
-	match(ts, TokenType.OpenParen);
-	while (ts.peek.type != TokenType.CloseParen) {
+	match(ps, TokenType.OpenParen);
+	while (ps.peek.type != TokenType.CloseParen) {
 		auto param = new ir.FunctionParameter();
-		param.location = ts.peek.location;
-		param.type = parseType(ts);
-		if (ts.peek.type == TokenType.Identifier) {
-			auto nameTok = match(ts, TokenType.Identifier);
+		param.location = ps.peek.location;
+		param.type = parseType(ps);
+		if (ps.peek.type == TokenType.Identifier) {
+			auto nameTok = match(ps, TokenType.Identifier);
 			param.name = nameTok.value;
 		}
 		fn.params ~= param;
-		matchIf(ts, TokenType.Comma);
+		matchIf(ps, TokenType.Comma);
 	}
-	match(ts, TokenType.CloseParen);
+	match(ps, TokenType.CloseParen);
 
-	if (ts.peek.type == TokenType.Assign) {
+	if (ps.peek.type == TokenType.Assign) {
 		if (!fn.isDelegate || fn.returnType !is null) {
-			throw makeExpected(ts.peek.location, "lambda expression.", true);
+			throw makeExpected(ps.peek.location, "lambda expression.", true);
 		}
-		match(ts, TokenType.Assign);
-		match(ts, TokenType.Greater);
-		fn.lambdaExp = parseExp(ts);
+		match(ps, TokenType.Assign);
+		match(ps, TokenType.Greater);
+		fn.lambdaExp = parseExp(ps);
 		return fn;
 	} else {
-		fn.block = parseBlock(ts);
+		fn.block = parseBlock(ps);
 		return fn;
 	}
 	version(Volt) assert(false);
 }
 
-ir.TraitsExp parseTraitsExp(TokenStream ts)
+ir.TraitsExp parseTraitsExp(ParserStream ps)
 {
 	auto texp = new ir.TraitsExp();
-	texp.location = ts.peek.location;
+	texp.location = ps.peek.location;
 
-	match(ts, TokenType.__Traits);
-	match(ts, TokenType.OpenParen);
+	match(ps, TokenType.__Traits);
+	match(ps, TokenType.OpenParen);
 
-	auto nameTok = match(ts, TokenType.Identifier);
+	auto nameTok = match(ps, TokenType.Identifier);
 	switch (nameTok.value) {
 	case "getAttribute":
 		texp.op = ir.TraitsExp.Op.GetAttribute;
-		match(ts, TokenType.Comma);
-		texp.target = parseQualifiedName(ts);
-		match(ts, TokenType.Comma);
-		texp.qname = parseQualifiedName(ts);
+		match(ps, TokenType.Comma);
+		texp.target = parseQualifiedName(ps);
+		match(ps, TokenType.Comma);
+		texp.qname = parseQualifiedName(ps);
 		break;
 	default:
 		throw makeExpected(nameTok.location, "__traits identifier");
 	}
 
-	match(ts, TokenType.CloseParen);
+	match(ps, TokenType.CloseParen);
 	return texp;
 }
 
 /*** ugly intir stuff ***/
 
-intir.AssignExp parseAssignExp(TokenStream ts)
+intir.AssignExp parseAssignExp(ParserStream ps)
 {
 	auto exp = new intir.AssignExp();
-	exp.taggedRef = matchIf(ts, TokenType.Ref);
+	exp.taggedRef = matchIf(ps, TokenType.Ref);
 	if (!exp.taggedRef) {
-		exp.taggedOut = matchIf(ts, TokenType.Out);
+		exp.taggedOut = matchIf(ps, TokenType.Out);
 	}
-	auto origin = ts.peek.location;
-	exp.left = parseTernaryExp(ts);
-	switch (ts.peek.type) {
+	auto origin = ps.peek.location;
+	exp.left = parseTernaryExp(ps);
+	switch (ps.peek.type) {
 	case TokenType.Assign:
 		exp.op = ir.BinOp.Op.Assign; break;
 	case TokenType.PlusAssign:
@@ -763,43 +764,43 @@ intir.AssignExp parseAssignExp(TokenStream ts)
 		exp.op = ir.BinOp.Op.None; break;
 	}
 	if (exp.op != ir.BinOp.Op.None) {
-		ts.get();
-		exp.right = parseAssignExp(ts);
+		ps.get();
+		exp.right = parseAssignExp(ps);
 	}
-	exp.location = ts.peek.location - origin;
+	exp.location = ps.peek.location - origin;
 	return exp;
 }
 
-intir.TernaryExp parseTernaryExp(TokenStream ts)
+intir.TernaryExp parseTernaryExp(ParserStream ps)
 {
 	auto exp = new intir.TernaryExp();
-	auto origin = ts.peek.location;
-	exp.condition = parseBinExp(ts);
-	if (ts.peek.type == TokenType.QuestionMark) {
-		ts.get();
+	auto origin = ps.peek.location;
+	exp.condition = parseBinExp(ps);
+	if (ps.peek.type == TokenType.QuestionMark) {
+		ps.get();
 		exp.isTernary = true;
-		exp.ifTrue = parseTernaryExp(ts);
-		match(ts, TokenType.Colon);
-		exp.ifFalse = parseTernaryExp(ts);
+		exp.ifTrue = parseTernaryExp(ps);
+		match(ps, TokenType.Colon);
+		exp.ifFalse = parseTernaryExp(ps);
 	}
-	exp.location = ts.peek.location - origin;
+	exp.location = ps.peek.location - origin;
 
 	return exp;
 }
 
-intir.BinExp parseBinExp(TokenStream ts)
+intir.BinExp parseBinExp(ParserStream ps)
 {
 	auto exp = new intir.BinExp();
-	exp.location = ts.peek.location;
-	exp.left = parseUnaryExp(ts);
+	exp.location = ps.peek.location;
+	exp.left = parseUnaryExp(ps);
 
-	switch (ts.peek.type) {
+	switch (ps.peek.type) {
 	case TokenType.Bang:
-		if (ts.lookahead(1).type == TokenType.Is) {
-			ts.get();
+		if (ps.lookahead(1).type == TokenType.Is) {
+			ps.get();
 			exp.op = ir.BinOp.Op.NotIs;
-		} else if (ts.lookahead(1).type == TokenType.In) {
-			ts.get();
+		} else if (ps.lookahead(1).type == TokenType.In) {
+			ps.get();
 			exp.op = ir.BinOp.Op.NotIn;
 		} else {
 			goto default;
@@ -855,84 +856,84 @@ intir.BinExp parseBinExp(TokenStream ts)
 		exp.op = ir.BinOp.Op.None; break;
 	}
 	if (exp.op != ir.BinOp.Op.None) {
-		ts.get();
-		exp.right = parseBinExp(ts);
+		ps.get();
+		exp.right = parseBinExp(ps);
 	}
 
-	exp.location.spanTo(ts.previous.location);
+	exp.location.spanTo(ps.previous.location);
 	return exp;
 }
 
-intir.UnaryExp parseUnaryExp(TokenStream ts)
+intir.UnaryExp parseUnaryExp(ParserStream ps)
 {
 	auto exp = new intir.UnaryExp();
-	auto origin = ts.peek.location;
-	switch (ts.peek.type) {
+	auto origin = ps.peek.location;
+	switch (ps.peek.type) {
 	case TokenType.Ampersand:
-		match(ts, TokenType.Ampersand);
+		match(ps, TokenType.Ampersand);
 		exp.op = ir.Unary.Op.AddrOf;
-		exp.unaryExp = parseUnaryExp(ts);
+		exp.unaryExp = parseUnaryExp(ps);
 		break;
 	case TokenType.DoublePlus:
-		match(ts, TokenType.DoublePlus);
+		match(ps, TokenType.DoublePlus);
 		exp.op = ir.Unary.Op.Increment;
-		exp.unaryExp = parseUnaryExp(ts);
+		exp.unaryExp = parseUnaryExp(ps);
 		break;
 	case TokenType.DoubleDash:
-		match(ts, TokenType.DoubleDash);
+		match(ps, TokenType.DoubleDash);
 		exp.op = ir.Unary.Op.Decrement;
-		exp.unaryExp = parseUnaryExp(ts);
+		exp.unaryExp = parseUnaryExp(ps);
 		break;
 	case TokenType.Asterix:
-		match(ts, TokenType.Asterix);
+		match(ps, TokenType.Asterix);
 		exp.op = ir.Unary.Op.Dereference;
-		exp.unaryExp = parseUnaryExp(ts);
+		exp.unaryExp = parseUnaryExp(ps);
 		break;
 	case TokenType.Dash:
-		match(ts, TokenType.Dash);
+		match(ps, TokenType.Dash);
 		exp.op = ir.Unary.Op.Minus;
-		exp.unaryExp = parseUnaryExp(ts);
+		exp.unaryExp = parseUnaryExp(ps);
 		break;
 	case TokenType.Plus:
-		match(ts, TokenType.Plus);
+		match(ps, TokenType.Plus);
 		exp.op = ir.Unary.Op.Plus;
-		exp.unaryExp = parseUnaryExp(ts);
+		exp.unaryExp = parseUnaryExp(ps);
 		break;
 	case TokenType.Bang:
-		match(ts, TokenType.Bang);
+		match(ps, TokenType.Bang);
 		exp.op = ir.Unary.Op.Not;
-		exp.unaryExp = parseUnaryExp(ts);
+		exp.unaryExp = parseUnaryExp(ps);
 		break;
 	case TokenType.Tilde:
-		match(ts, TokenType.Tilde);
+		match(ps, TokenType.Tilde);
 		exp.op = ir.Unary.Op.Complement;
-		exp.unaryExp = parseUnaryExp(ts);
+		exp.unaryExp = parseUnaryExp(ps);
 		break;
 	case TokenType.Cast:
 		exp.op = ir.Unary.Op.Cast;
-		exp.castExp = parseCastExp(ts);
+		exp.castExp = parseCastExp(ps);
 		break;
 	case TokenType.New:
-		parseNewOrDup(ts, exp);
+		parseNewOrDup(ps, exp);
 		break;
 	default:
-		exp.postExp = parsePostfixExp(ts);
+		exp.postExp = parsePostfixExp(ps);
 		break;
 	}
-	exp.location = ts.peek.location - origin;
+	exp.location = ps.peek.location - origin;
 
 	return exp;
 }
 
-void parseNewOrDup(TokenStream ts, ref intir.UnaryExp exp)
+void parseNewOrDup(ParserStream ps, ref intir.UnaryExp exp)
 {
-	auto mark = ts.save();
+	auto mark = ps.save();
 
 	bool parseNew = true;
-	match(ts, TokenType.New);
+	match(ps, TokenType.New);
 	int bracketDepth;
-	while (ts.peek.type != TokenType.Semicolon && ts.peek.type != TokenType.End) {
-		auto t = ts.get();
+	while (ps.peek.type != TokenType.Semicolon && ps.peek.type != TokenType.End) {
+		auto t = ps.get();
 		if (t.type == TokenType.OpenBracket) {
 			bracketDepth++;
 			continue;
@@ -952,14 +953,14 @@ void parseNewOrDup(TokenStream ts, ref intir.UnaryExp exp)
 			}
 		}
 	}
-	ts.restore(mark);
+	ps.restore(mark);
 
 	if (parseNew) {
 		exp.op = ir.Unary.Op.New;
-		exp.newExp = parseNewExp(ts);
+		exp.newExp = parseNewExp(ps);
 	} else {
 		exp.op = ir.Unary.Op.Dup;
-		exp.dupExp = parseDupExp(ts);
+		exp.dupExp = parseDupExp(ps);
 	}
 }
 
@@ -978,131 +979,131 @@ private intir.TernaryExp toTernary(intir.PrimaryExp exp)
 	return t;
 }
 
-intir.DupExp parseDupExp(TokenStream ts)
+intir.DupExp parseDupExp(ParserStream ps)
 {
-	auto start = match(ts, TokenType.New);
+	auto start = match(ps, TokenType.New);
 
 	auto dupExp = new intir.DupExp();
-	dupExp.name = parseQualifiedName(ts);
-	match(ts, TokenType.OpenBracket);
-	if (ts.peek.type == TokenType.DoubleDot) {
+	dupExp.name = parseQualifiedName(ps);
+	match(ps, TokenType.OpenBracket);
+	if (ps.peek.type == TokenType.DoubleDot) {
 		// new foo[..];
-		match(ts, TokenType.DoubleDot);
+		match(ps, TokenType.DoubleDot);
 		auto beginning = new intir.PrimaryExp();
-		beginning.location = ts.peek.location;
+		beginning.location = ps.peek.location;
 		beginning._string = "0";
 		beginning.op = intir.PrimaryExp.Type.IntegerLiteral;
 		auto end = new intir.PrimaryExp();
-		end.location = ts.peek.location;
+		end.location = ps.peek.location;
 		end.op = intir.PrimaryExp.Type.Dollar;
 		dupExp.beginning = toTernary(beginning);
 		dupExp.end = toTernary(end);
 		dupExp.shorthand = true;
 	} else {
 		// new foo[a..b];
-		dupExp.beginning = parseTernaryExp(ts);
-		match(ts, TokenType.DoubleDot);
-		dupExp.end = parseTernaryExp(ts);
+		dupExp.beginning = parseTernaryExp(ps);
+		match(ps, TokenType.DoubleDot);
+		dupExp.end = parseTernaryExp(ps);
 	}
-	match(ts, TokenType.CloseBracket);
+	match(ps, TokenType.CloseBracket);
 
 	return dupExp;
 }
 
-intir.NewExp parseNewExp(TokenStream ts)
+intir.NewExp parseNewExp(ParserStream ps)
 {
-	auto start = match(ts, TokenType.New);
+	auto start = match(ps, TokenType.New);
 
 	auto newExp = new intir.NewExp();
-	newExp.type = parseType(ts);
+	newExp.type = parseType(ps);
 
-	if (matchIf(ts, TokenType.OpenParen)) {
+	if (matchIf(ps, TokenType.OpenParen)) {
 		newExp.hasArgumentList = true;
-		newExp.argumentList = _parseArgumentList(ts);
-		match(ts, TokenType.CloseParen);
+		newExp.argumentList = _parseArgumentList(ps);
+		match(ps, TokenType.CloseParen);
 	}
 
-	newExp.location = ts.peek.location - start.location;
+	newExp.location = ps.peek.location - start.location;
 	return newExp;
 }
 
-intir.CastExp parseCastExp(TokenStream ts)
+intir.CastExp parseCastExp(ParserStream ps)
 {
 	// XXX: No idea if this is correct
 
-	auto start = match(ts, TokenType.Cast);
-	match(ts, TokenType.OpenParen);
+	auto start = match(ps, TokenType.Cast);
+	match(ps, TokenType.OpenParen);
 
 	auto exp = new intir.CastExp();
-	exp.type = parseType(ts);
+	exp.type = parseType(ps);
 
-	auto stop = match(ts, TokenType.CloseParen);
+	auto stop = match(ps, TokenType.CloseParen);
 	exp.location = stop.location - start.location;
 
-	exp.unaryExp = parseUnaryExp(ts);
+	exp.unaryExp = parseUnaryExp(ps);
 
 	return exp;
 }
 
-intir.PostfixExp parsePostfixExp(TokenStream ts, int depth=0)
+intir.PostfixExp parsePostfixExp(ParserStream ps, int depth=0)
 {
 	depth++;
 	auto exp = new intir.PostfixExp();
-	auto origin = ts.peek.location;
+	auto origin = ps.peek.location;
 	if (depth == 1) {
-		exp.primary = parsePrimaryExp(ts);
+		exp.primary = parsePrimaryExp(ps);
 	}
 
-	switch (ts.peek.type) {
+	switch (ps.peek.type) {
 	case TokenType.Dot:
-		ts.get();
-		auto twoAhead = ts.lookahead(2).type;
-		if (ts.lookahead(1).type == TokenType.Bang &&
+		ps.get();
+		auto twoAhead = ps.lookahead(2).type;
+		if (ps.lookahead(1).type == TokenType.Bang &&
 			twoAhead != TokenType.Is && twoAhead != TokenType.Assign) {
-			exp.templateInstance = parseExp(ts);
+			exp.templateInstance = parseExp(ps);
 			break;
 		}
-		exp.identifier = parseIdentifier(ts);
+		exp.identifier = parseIdentifier(ps);
 		exp.op = ir.Postfix.Op.Identifier;
-		exp.postfix = parsePostfixExp(ts, depth);
+		exp.postfix = parsePostfixExp(ps, depth);
 		break;
 	case TokenType.DoublePlus:
-		ts.get();
+		ps.get();
 		exp.op = ir.Postfix.Op.Increment;
-		exp.postfix = parsePostfixExp(ts, depth);
+		exp.postfix = parsePostfixExp(ps, depth);
 		break;
 	case TokenType.DoubleDash:
-		ts.get();
+		ps.get();
 		exp.op = ir.Postfix.Op.Decrement;
-		exp.postfix = parsePostfixExp(ts, depth);
+		exp.postfix = parsePostfixExp(ps, depth);
 		break;
 	case TokenType.OpenParen:
-		ts.get();
-		exp.arguments = _parseArgumentList(ts, exp.labels);
-		match(ts, TokenType.CloseParen);
+		ps.get();
+		exp.arguments = _parseArgumentList(ps, exp.labels);
+		match(ps, TokenType.CloseParen);
 		exp.op = ir.Postfix.Op.Call;
-		exp.postfix = parsePostfixExp(ts, depth);
+		exp.postfix = parsePostfixExp(ps, depth);
 		break;
 	case TokenType.OpenBracket:
-		ts.get();
-		if (ts.peek.type == TokenType.CloseBracket) {
+		ps.get();
+		if (ps.peek.type == TokenType.CloseBracket) {
 			exp.op = ir.Postfix.Op.Slice;
 		} else {
-			exp.arguments ~= parseAssignExp(ts);
-			if (ts.peek.type == TokenType.DoubleDot) {
+			exp.arguments ~= parseAssignExp(ps);
+			if (ps.peek.type == TokenType.DoubleDot) {
 				exp.op = ir.Postfix.Op.Slice;
-				ts.get();
-				exp.arguments ~= parseAssignExp(ts);
+				ps.get();
+				exp.arguments ~= parseAssignExp(ps);
 			} else {
 				exp.op = ir.Postfix.Op.Index;
-				if (ts.peek.type == TokenType.Comma) {
-					ts.get();
+				if (ps.peek.type == TokenType.Comma) {
+					ps.get();
 				}
-				exp.arguments ~= _parseArgumentList(ts, TokenType.CloseBracket);
+				exp.arguments ~= _parseArgumentList(ps, TokenType.CloseBracket);
 			}
 		}
-		match(ts, TokenType.CloseBracket);
-		exp.postfix = parsePostfixExp(ts, depth);
+		match(ps, TokenType.CloseBracket);
+		exp.postfix = parsePostfixExp(ps, depth);
 		break;
 	default:
 		break;
@@ -1111,40 +1112,40 @@ intir.PostfixExp parsePostfixExp(TokenStream ts, int depth=0)
 	return exp;
 }
 
-intir.PrimaryExp parsePrimaryExp(TokenStream ts)
+intir.PrimaryExp parsePrimaryExp(ParserStream ps)
 {
 	auto exp = new intir.PrimaryExp();
-	auto origin = ts.peek.location;
-	switch (ts.peek.type) {
+	auto origin = ps.peek.location;
+	switch (ps.peek.type) {
 	case TokenType.Identifier:
-		if (ts == [TokenType.Identifier, TokenType.Assign, TokenType.Greater]) {
+		if (ps == [TokenType.Identifier, TokenType.Assign, TokenType.Greater]) {
 			goto case TokenType.Delegate;
 		}
-		auto token = ts.get();
-		if (ts.peek.type == TokenType.Bang && ts.lookahead(1).type != TokenType.Is) {
-			ts.get();
+		auto token = ps.get();
+		if (ps.peek.type == TokenType.Bang && ps.lookahead(1).type != TokenType.Is) {
+			ps.get();
 			exp.op = intir.PrimaryExp.Type.TemplateInstance;
 			exp._template = new ir.TemplateInstanceExp();
 			exp._template.location = origin;
 			exp._template.name = token.value;
-			if (matchIf(ts, TokenType.OpenParen)) {
-				while (ts.peek.type != ir.TokenType.CloseParen) {
+			if (matchIf(ps, TokenType.OpenParen)) {
+				while (ps.peek.type != ir.TokenType.CloseParen) {
 					ir.TemplateInstanceExp.TypeOrExp tOrE;
 					try {
-						tOrE.type = parseType(ts);
+						tOrE.type = parseType(ps);
 					} catch (CompilerError) {
-						tOrE.exp = parseExp(ts);
+						tOrE.exp = parseExp(ps);
 					}
 					exp._template.types ~= tOrE;
-					matchIf(ts, TokenType.Comma);
+					matchIf(ps, TokenType.Comma);
 				}
-				match(ts, TokenType.CloseParen);
+				match(ps, TokenType.CloseParen);
 			} else {
 				ir.TemplateInstanceExp.TypeOrExp tOrE;
 				try {
-					tOrE.type = parseType(ts);
+					tOrE.type = parseType(ps);
 				} catch (CompilerError) {
-					tOrE.exp = parseExp(ts);
+					tOrE.exp = parseExp(ps);
 				}
 				exp._template.types ~= tOrE;
 			}
@@ -1154,142 +1155,142 @@ intir.PrimaryExp parsePrimaryExp(TokenStream ts)
 		exp.op = intir.PrimaryExp.Type.Identifier;
 		break;
 	case TokenType.Dot:
-		ts.get();
-		auto token = match(ts, TokenType.Identifier);
+		ps.get();
+		auto token = match(ps, TokenType.Identifier);
 		exp._string = token.value;
 		exp.op = intir.PrimaryExp.Type.DotIdentifier;
 		break;
 	case TokenType.This:
-		ts.get();
+		ps.get();
 		exp.op = intir.PrimaryExp.Type.This;
 		break;
 	case TokenType.Super:
-		ts.get();
+		ps.get();
 		exp.op = intir.PrimaryExp.Type.Super;
 		break;
 	case TokenType.Null:
-		ts.get();
+		ps.get();
 		exp.op = intir.PrimaryExp.Type.Null;
 		break;
 	case TokenType.True:
-		ts.get();
+		ps.get();
 		exp.op = intir.PrimaryExp.Type.True;
 		break;
 	case TokenType.False:
-		ts.get();
+		ps.get();
 		exp.op = intir.PrimaryExp.Type.False;
 		break;
 	case TokenType.Dollar:
-		ts.get();
+		ps.get();
 		exp.op = intir.PrimaryExp.Type.Dollar;
 		break;
 	case TokenType.IntegerLiteral:
-		auto token = ts.get();
+		auto token = ps.get();
 		exp._string = token.value;
 		exp.op = intir.PrimaryExp.Type.IntegerLiteral;
 		break;
 	case TokenType.FloatLiteral:
-		auto token = ts.get();
+		auto token = ps.get();
 		exp._string = token.value;
 		exp.op = intir.PrimaryExp.Type.FloatLiteral;
 		break;
 	case TokenType.StringLiteral:
-		auto token = ts.get();
+		auto token = ps.get();
 		exp._string = token.value;
 		exp.op = intir.PrimaryExp.Type.StringLiteral;
 		break;
 	case TokenType.__File__:
-		auto token = ts.get();
+		auto token = ps.get();
 		exp.op = intir.PrimaryExp.Type.File;
 		break;
 	case TokenType.__Line__:
-		auto token = ts.get();
+		auto token = ps.get();
 		exp.op = intir.PrimaryExp.Type.Line;
 		break;
 	case TokenType.__Function__:
-		auto token = ts.get();
+		auto token = ps.get();
 		exp.op = intir.PrimaryExp.Type.FunctionName;
 		break;
 	case TokenType.__Pretty_Function__:
-		auto token = ts.get();
+		auto token = ps.get();
 		exp.op = intir.PrimaryExp.Type.PrettyFunctionName;
 		break;
 	case TokenType.CharacterLiteral:
-		auto token = ts.get();
+		auto token = ps.get();
 		exp._string = token.value;
 		exp.op = intir.PrimaryExp.Type.CharLiteral;
 		break;
 	case TokenType.Assert:
-		ts.get();
-		match(ts, TokenType.OpenParen);
-		exp.arguments ~= parseAssignExp(ts);
-		if (ts.peek.type == TokenType.Comma) {
-			ts.get();
-			exp.arguments ~= parseAssignExp(ts);
+		ps.get();
+		match(ps, TokenType.OpenParen);
+		exp.arguments ~= parseAssignExp(ps);
+		if (ps.peek.type == TokenType.Comma) {
+			ps.get();
+			exp.arguments ~= parseAssignExp(ps);
 		}
-		match(ts, TokenType.CloseParen);
+		match(ps, TokenType.CloseParen);
 		exp.op = intir.PrimaryExp.Type.Assert;
 		break;
 	case TokenType.Import:
-		ts.get();
-		match(ts, TokenType.OpenParen);
-		exp.arguments ~= parseAssignExp(ts);
-		match(ts, TokenType.CloseParen);
+		ps.get();
+		match(ps, TokenType.OpenParen);
+		exp.arguments ~= parseAssignExp(ps);
+		match(ps, TokenType.CloseParen);
 		exp.op = intir.PrimaryExp.Type.Import;
 		break;
 	case TokenType.OpenBracket:
 		size_t i;
 		bool isAA;
-		while (ts.lookahead(i).type != TokenType.CloseBracket) {
-			if (ts.lookahead(i).type == TokenType.Colon) {
+		while (ps.lookahead(i).type != TokenType.CloseBracket) {
+			if (ps.lookahead(i).type == TokenType.Colon) {
 				isAA = true;
 			}
 			i++;
-			if (ts.lookahead(i).type == TokenType.Comma ||
-				ts.lookahead(i).type == TokenType.End) {
+			if (ps.lookahead(i).type == TokenType.Comma ||
+				ps.lookahead(i).type == TokenType.End) {
 				break;
 			}
 		}
 		if (!isAA) {
-			ts.get();
-			exp.arguments = _parseArgumentList(ts, TokenType.CloseBracket);
-			match(ts, TokenType.CloseBracket);
+			ps.get();
+			exp.arguments = _parseArgumentList(ps, TokenType.CloseBracket);
+			match(ps, TokenType.CloseBracket);
 			exp.op = intir.PrimaryExp.Type.ArrayLiteral;
 		} else {
-			ts.get();
-			while (ts.peek.type != TokenType.CloseBracket) {
-				exp.keys ~= parseAssignExp(ts);
-				match(ts, TokenType.Colon);
-				exp.arguments ~= parseAssignExp(ts);
-				if (ts.peek.type == TokenType.Comma) {
-					ts.get();
+			ps.get();
+			while (ps.peek.type != TokenType.CloseBracket) {
+				exp.keys ~= parseAssignExp(ps);
+				match(ps, TokenType.Colon);
+				exp.arguments ~= parseAssignExp(ps);
+				if (ps.peek.type == TokenType.Comma) {
+					ps.get();
 				}
 			}
-			match(ts, TokenType.CloseBracket);
+			match(ps, TokenType.CloseBracket);
 			assert(exp.keys.length == exp.arguments.length);
 			exp.op = intir.PrimaryExp.Type.AssocArrayLiteral;
 		}
 		break;
 	case TokenType.OpenParen:
-		if (isFunctionLiteral(ts)) {
+		if (isFunctionLiteral(ps)) {
 			goto case TokenType.Delegate;
 		}
-		match(ts, TokenType.OpenParen);
-		if (isUnambiguouslyParenType(ts)) {
+		match(ps, TokenType.OpenParen);
+		if (isUnambiguouslyParenType(ps)) {
 			exp.op = intir.PrimaryExp.Type.Type;
-			exp.type = parseType(ts);
-			match(ts, TokenType.CloseParen);
-			match(ts, TokenType.Dot);
-			if (matchIf(ts, TokenType.Typeid)) {
+			exp.type = parseType(ps);
+			match(ps, TokenType.CloseParen);
+			match(ps, TokenType.Dot);
+			if (matchIf(ps, TokenType.Typeid)) {
 				exp.op = intir.PrimaryExp.Type.Typeid;
 			} else {
-				auto nameTok = match(ts, TokenType.Identifier);
+				auto nameTok = match(ps, TokenType.Identifier);
 				exp._string = nameTok.value;
 			}
 			break;
 		}
-		exp.tlargs ~= parseAssignExp(ts);
-		match(ts, TokenType.CloseParen);
+		exp.tlargs ~= parseAssignExp(ps);
+		match(ps, TokenType.CloseParen);
 		exp.op = intir.PrimaryExp.Type.ParenExp;
 		break;
 	case TokenType.Bool, TokenType.Ubyte, TokenType.Byte,
@@ -1299,78 +1300,78 @@ intir.PrimaryExp parsePrimaryExp(TokenStream ts)
 		 TokenType.Double, TokenType.Real, TokenType.Char,
 		 TokenType.Wchar, TokenType.Dchar:
 		exp.op = intir.PrimaryExp.Type.Type;
-		exp.type = parsePrimitiveType(ts);
-		match(ts, TokenType.Dot);
-		if (matchIf(ts, TokenType.Typeid)) {
+		exp.type = parsePrimitiveType(ps);
+		match(ps, TokenType.Dot);
+		if (matchIf(ps, TokenType.Typeid)) {
 			exp.op = intir.PrimaryExp.Type.Typeid;
 		} else {
-			auto nameTok = match(ts, TokenType.Identifier);
+			auto nameTok = match(ps, TokenType.Identifier);
 			exp._string = nameTok.value;
 		}
 		break;
 	case TokenType.OpenBrace:
-		ts.get();
+		ps.get();
 		exp.op = intir.PrimaryExp.Type.StructLiteral;
-		while (ts.peek.type != TokenType.CloseBrace) {
-			exp.arguments ~= parseAssignExp(ts);
-			matchIf(ts, TokenType.Comma);
+		while (ps.peek.type != TokenType.CloseBrace) {
+			exp.arguments ~= parseAssignExp(ps);
+			matchIf(ps, TokenType.Comma);
 		}
-		match(ts, TokenType.CloseBrace);
+		match(ps, TokenType.CloseBrace);
 		break;
 	case TokenType.Typeid:
-		ts.get();
+		ps.get();
 		exp.op = intir.PrimaryExp.Type.Typeid;
-		match(ts, TokenType.OpenParen);
-		if (ts.peek.type == TokenType.Identifier) {
-			auto nameTok = ts.get();
+		match(ps, TokenType.OpenParen);
+		if (ps.peek.type == TokenType.Identifier) {
+			auto nameTok = ps.get();
 			exp._string = nameTok.value;
 		}  else {
-			auto mark = ts.save();
+			auto mark = ps.save();
 			try {
-				exp.type = parseType(ts);
+				exp.type = parseType(ps);
 			} catch (CompilerError err) {
 				if (err.neverIgnore) {
 					throw err;
 				}
-				ts.restore(mark);
-				exp.exp = parseExp(ts);
+				ps.restore(mark);
+				exp.exp = parseExp(ps);
 			}
 		}
-		match(ts, TokenType.CloseParen);
+		match(ps, TokenType.CloseParen);
 		break;
 	case TokenType.Is:
 		exp.op = intir.PrimaryExp.Type.Is;
-		exp.isExp = parseIsExp(ts);
+		exp.isExp = parseIsExp(ps);
 		break;
 	case TokenType.Function, TokenType.Delegate:
 		exp.op = intir.PrimaryExp.Type.FunctionLiteral;
-		exp.functionLiteral = parseFunctionLiteral(ts);
+		exp.functionLiteral = parseFunctionLiteral(ps);
 		break;
 	case TokenType.__Traits:
 		exp.op = intir.PrimaryExp.Type.Traits;
-		exp.trait = parseTraitsExp(ts);
+		exp.trait = parseTraitsExp(ps);
 		break;
 	case TokenType.VaArg:
 		exp.op = intir.PrimaryExp.Type.VaArg;
-		exp.vaexp = parseVaArgExp(ts);
+		exp.vaexp = parseVaArgExp(ps);
 		break;
 	default:
-		auto mark = ts.save();
+		auto mark = ps.save();
 		try {
 			exp.op = intir.PrimaryExp.Type.FunctionLiteral;
-			exp.functionLiteral = parseFunctionLiteral(ts);
+			exp.functionLiteral = parseFunctionLiteral(ps);
 		} catch (CompilerError) {
-			ts.restore(mark);
-			throw makeExpected(ts.peek.location, "primary expression");
+			ps.restore(mark);
+			throw makeExpected(ps.peek.location, "primary expression");
 		}
 		break;
 	}
 
-	exp.location = ts.peek.location - origin;
+	exp.location = ps.peek.location - origin;
 
-	if (ts == [TokenType.Dot, TokenType.Typeid] && exp.op != intir.PrimaryExp.Type.Typeid) {
-		ts.get();
-		ts.get();
+	if (ps == [TokenType.Dot, TokenType.Typeid] && exp.op != intir.PrimaryExp.Type.Typeid) {
+		ps.get();
+		ps.get();
 		exp.exp = primaryToExp(exp);
 		exp.op = intir.PrimaryExp.Type.Typeid;
 		assert(exp.type is null);
@@ -1379,26 +1380,26 @@ intir.PrimaryExp parsePrimaryExp(TokenStream ts)
 	return exp;
 }
 
-ir.VaArgExp parseVaArgExp(TokenStream ts)
+ir.VaArgExp parseVaArgExp(ParserStream ps)
 {
 	auto vaexp = new ir.VaArgExp();
-	vaexp.location = ts.peek.location;
-	match(ts, TokenType.VaArg);
-	match(ts, TokenType.Bang);
-	bool paren = matchIf(ts, TokenType.OpenParen);
-	vaexp.type = parseType(ts);
+	vaexp.location = ps.peek.location;
+	match(ps, TokenType.VaArg);
+	match(ps, TokenType.Bang);
+	bool paren = matchIf(ps, TokenType.OpenParen);
+	vaexp.type = parseType(ps);
 	if (paren) {
-		match(ts, TokenType.CloseParen);
+		match(ps, TokenType.CloseParen);
 	}
-	match(ts, TokenType.OpenParen);
-	vaexp.arg = parseExp(ts);
-	match(ts, TokenType.CloseParen);
+	match(ps, TokenType.OpenParen);
+	vaexp.arg = parseExp(ps);
+	match(ps, TokenType.CloseParen);
 	return vaexp;
 }
 
-bool isUnambiguouslyParenType(TokenStream ts)
+bool isUnambiguouslyParenType(ParserStream ps)
 {
-	switch (ts.peek.type) with (TokenType) {
+	switch (ps.peek.type) with (TokenType) {
 	case Bool, Byte, Short, Int, Long,
 		 Char, Ubyte, Ushort, Uint, Ulong,
 		 Dchar, Wchar, Void:
@@ -1408,16 +1409,16 @@ bool isUnambiguouslyParenType(TokenStream ts)
 	}
 }
 
-// Returns: true if the TokenStream is at a function literal.
-bool isFunctionLiteral(TokenStream ts)
+// Returns: true if the ParserStream is at a function literal.
+bool isFunctionLiteral(ParserStream ps)
 {
-	if (ts.peek.type == TokenType.Function || ts.peek.type == TokenType.Delegate) {
+	if (ps.peek.type == TokenType.Function || ps.peek.type == TokenType.Delegate) {
 		return true;
 	}
-	auto mark = ts.save();
-	if (ts.peek.type != TokenType.OpenParen) {
+	auto mark = ps.save();
+	if (ps.peek.type != TokenType.OpenParen) {
 		try {
-			auto tmp = parseType(ts);
+			auto tmp = parseType(ps);
 			return true;
 		} catch (CompilerError e) {
 			return false;
@@ -1425,27 +1426,27 @@ bool isFunctionLiteral(TokenStream ts)
 		assert(false);
 	}
 
-	assert(ts.peek.type == TokenType.OpenParen);
+	assert(ps.peek.type == TokenType.OpenParen);
 	int parenDepth;
-	while (!(parenDepth == 0 && ts.peek.type == TokenType.CloseParen)) {
-		ts.get();
-		if (ts.peek.type == TokenType.OpenParen) {
+	while (!(parenDepth == 0 && ps.peek.type == TokenType.CloseParen)) {
+		ps.get();
+		if (ps.peek.type == TokenType.OpenParen) {
 			parenDepth++;
 		}
-		if (ts.peek.type == TokenType.CloseParen && parenDepth > 0) {
+		if (ps.peek.type == TokenType.CloseParen && parenDepth > 0) {
 			parenDepth--;
 		}
 	}
-	match(ts, TokenType.CloseParen);
+	match(ps, TokenType.CloseParen);
 
-	if (ts.peek.type == TokenType.OpenBrace) {
-		ts.restore(mark);
+	if (ps.peek.type == TokenType.OpenBrace) {
+		ps.restore(mark);
 		return true;
-	} else if (ts == [TokenType.Assign, TokenType.Greater]) {
-		ts.restore(mark);
+	} else if (ps == [TokenType.Assign, TokenType.Greater]) {
+		ps.restore(mark);
 		return true;
 	} else {
-		ts.restore(mark);
+		ps.restore(mark);
 		return false;
 	}
 	assert(false);

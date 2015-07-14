@@ -6,16 +6,16 @@ import watt.io.std : writefln;
 
 import volt.token.location : Location;
 import volt.token.lexer : lex;
-import volt.token.token : tokenToString;
+import volt.token.token : TokenType, tokenToString;
 import volt.token.source : Source;
-import volt.token.stream : TokenType, TokenStream;
 
 import ir = volt.ir.ir;
 
+import volt.interfaces : Frontend;
 import volt.parser.base : match;
+import volt.parser.stream : ParserStream;
 import volt.parser.toplevel : parseModule;
 import volt.parser.statements : parseStatement;
-import volt.interfaces : Frontend;
 
 
 class Parser : Frontend
@@ -28,28 +28,28 @@ public:
 	{
 		auto src = new Source(source, loc);
 		src.skipScriptLine();
-		auto ts = lex(src);
+		auto ps = new ParserStream(lex(src));
 		if (dumpLex)
-			doDumpLex(ts);
+			doDumpLex(ps);
 
 		// Skip Begin.
-		match(ts, TokenType.Begin);
+		match(ps, TokenType.Begin);
 
-		return .parseModule(ts);
+		return .parseModule(ps);
 	}
 
 	ir.Node[] parseStatements(string source, Location loc)
 	{
 		auto src = new Source(source, loc);
-		auto ts = lex(src);
+		auto ps = new ParserStream(lex(src));
 		if (dumpLex)
-			doDumpLex(ts);
+			doDumpLex(ps);
 
-		match(ts, TokenType.Begin);
+		match(ps, TokenType.Begin);
 
 		ir.Node[] ret;
-		while (ts != TokenType.End) {
-			ret ~= parseStatement(ts);
+		while (ps != TokenType.End) {
+			ret ~= parseStatement(ps);
 		}
 
 		return ret;
@@ -61,15 +61,15 @@ public:
 	}
 
 protected:
-	void doDumpLex(TokenStream ts)
+	void doDumpLex(ParserStream ps)
 	{
 		writefln("Dumping lexing:");
 
 		// Skip first begin
-		ts.get();
+		ps.get();
 
 		ir.Token t;
-		while((t = ts.get()).type != TokenType.End) {
+		while((t = ps.get()).type != TokenType.End) {
 			string l = t.location.toString();
 			string tStr = t.type.tokenToString;
 			string v = t.value;
@@ -78,6 +78,6 @@ protected:
 
 		writefln("");
 
-		ts.reset();
+		ps.reset();
 	}
 }

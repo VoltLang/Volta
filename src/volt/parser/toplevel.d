@@ -18,30 +18,30 @@ import volt.parser.statements : parseMixinStatement;
 import volt.parser.expression;
 
 
-ir.Module parseModule(TokenStream ts)
+ir.Module parseModule(ParserStream ps)
 {
-	auto initLocation = ts.peek.location;
-	ts.pushCommentLevel();
-	eatComments(ts);
-	auto t = match(ts, TokenType.Module);
-	auto qn = parseQualifiedName(ts);
-	match(ts, TokenType.Semicolon);
+	auto initLocation = ps.peek.location;
+	ps.pushCommentLevel();
+	eatComments(ps);
+	auto t = match(ps, TokenType.Module);
+	auto qn = parseQualifiedName(ps);
+	match(ps, TokenType.Semicolon);
 
 	auto mod = new ir.Module();
 	mod.location = initLocation;
 	mod.name = qn;
-	mod.docComment = ts.comment();
-	ts.popCommentLevel();
+	mod.docComment = ps.comment();
+	ps.popCommentLevel();
 
-	mod.children = parseTopLevelBlock(ts, TokenType.End, true);
+	mod.children = parseTopLevelBlock(ps, TokenType.End, true);
 
 	mod.children.nodes = [
 			createImport(mod.location, "defaultsymbols", false),
 			createImport(mod.location, "object", true)
 		] ~ mod.children.nodes;
 
-	if (ts.multiDepth > 0) {
-		throw makeExpected(ts.peek.location, "@}");
+	if (ps.multiDepth > 0) {
+		throw makeExpected(ps.peek.location, "@}");
 	}
 	return mod;
 }
@@ -59,65 +59,65 @@ ir.Node createImport(Location location, string name, bool _static)
 	return _import;
 }
 
-ir.TopLevelBlock parseOneTopLevelBlock(TokenStream ts, bool inModule = false)
+ir.TopLevelBlock parseOneTopLevelBlock(ParserStream ps, bool inModule = false)
 out(result)
 {
 	assert(result !is null);
 }
 body
 {
-	eatComments(ts);
+	eatComments(ps);
 	auto tlb = new ir.TopLevelBlock();
-	tlb.location = ts.peek.location;
+	tlb.location = ps.peek.location;
 
-	switch (ts.peek.type) {
+	switch (ps.peek.type) {
 		case TokenType.Import:
-			tlb.nodes ~= parseImport(ts, inModule);
+			tlb.nodes ~= parseImport(ps, inModule);
 			break;
 		case TokenType.Unittest:
-			tlb.nodes ~= parseUnittest(ts);
+			tlb.nodes ~= parseUnittest(ps);
 			break;
 		case TokenType.This:
-			tlb.nodes ~= parseConstructor(ts);
+			tlb.nodes ~= parseConstructor(ps);
 			break;
 		case TokenType.Tilde:  // XXX: Is this unambiguous?
-			tlb.nodes ~= parseDestructor(ts);
+			tlb.nodes ~= parseDestructor(ps);
 			break;
 		case TokenType.Union:
-			tlb.nodes ~= parseUnion(ts);
+			tlb.nodes ~= parseUnion(ps);
 			break;
 		case TokenType.Struct:
-			tlb.nodes ~= parseStruct(ts);
+			tlb.nodes ~= parseStruct(ps);
 			break;
 		case TokenType.Class:
-			tlb.nodes ~= parseClass(ts);
+			tlb.nodes ~= parseClass(ps);
 			break;
 		case TokenType.Interface:
-			tlb.nodes ~= parseInterface(ts);
+			tlb.nodes ~= parseInterface(ps);
 			break;
 		case TokenType.Enum:
-			tlb.nodes ~= parseEnum(ts);
+			tlb.nodes ~= parseEnum(ps);
 			break;
 		case TokenType.Mixin:
-			auto next = ts.lookahead(1).type;
+			auto next = ps.lookahead(1).type;
 			if (next == TokenType.Function) {
-				tlb.nodes ~= parseMixinFunction(ts);
+				tlb.nodes ~= parseMixinFunction(ps);
 			} else if (next == TokenType.Template) {
-				tlb.nodes ~= parseMixinTemplate(ts);
+				tlb.nodes ~= parseMixinTemplate(ps);
 			} else {
-				auto err = ts.lookahead(1);
+				auto err = ps.lookahead(1);
 				throw makeExpected(err.location, "'function' or 'template'");
 			}
 			break;
 		case TokenType.Const:
-			if (ts.lookahead(1).type == TokenType.OpenParen) {
+			if (ps.lookahead(1).type == TokenType.OpenParen) {
 				goto default;
 			} else {
 				goto case;
 			}
 		case TokenType.At:
-			if (ts.lookahead(1).type == TokenType.Interface) {
-				tlb.nodes ~= parseUserAttribute(ts);
+			if (ps.lookahead(1).type == TokenType.Interface) {
+				tlb.nodes ~= parseUserAttribute(ps);
 				break;
 			} else {
 				goto case;
@@ -139,55 +139,55 @@ body
 		case TokenType.Inout:
 		case TokenType.Nothrow:
 		case TokenType.Pure:
-			tlb.nodes ~= parseAttribute(ts, inModule);
+			tlb.nodes ~= parseAttribute(ps, inModule);
 			break;
 		case TokenType.Version:
 		case TokenType.Debug:
-			tlb.nodes ~= parseConditionTopLevel(ts, inModule);
+			tlb.nodes ~= parseConditionTopLevel(ps, inModule);
 			break;
 		case TokenType.Static:
-			auto next = ts.lookahead(1).type;
+			auto next = ps.lookahead(1).type;
 			if (next == TokenType.Tilde) {
 				goto case TokenType.Tilde;
 			} else if (next == TokenType.This) {
 				goto case TokenType.This;
 			} else if (next == TokenType.Assert) {
-				tlb.nodes ~= parseStaticAssert(ts);
+				tlb.nodes ~= parseStaticAssert(ps);
 			} else if (next == TokenType.If) {
 				goto case TokenType.Version;
 			} else {
-				tlb.nodes ~= parseAttribute(ts, inModule);
+				tlb.nodes ~= parseAttribute(ps, inModule);
 			}
 			break;
 		case TokenType.Semicolon:
 			// Just ignore EmptyTopLevel
-			match(ts, TokenType.Semicolon);
+			match(ps, TokenType.Semicolon);
 			break;
 		default:
-			tlb.nodes ~= parseVariable(ts);
+			tlb.nodes ~= parseVariable(ps);
 			break;
 	}
 
 	return tlb;
 }
 
-private bool ifDocCommentsUntilEndThenSkip(TokenStream ts)
+private bool ifDocCommentsUntilEndThenSkip(ParserStream ps)
 {
 	size_t n = 0;
 	TokenType tt;
 	do {
-		tt = ts.lookahead(n++).type;
+		tt = ps.lookahead(n++).type;
 	} while (tt == TokenType.DocComment);
 	if (tt == TokenType.End) {
 		foreach (size_t i; 0 .. n) {
-			ts.get();
+			ps.get();
 		}
 		return true;
 	}
 	return false;
 }
 
-ir.TopLevelBlock parseTopLevelBlock(TokenStream ts, TokenType end, bool inModule = false)
+ir.TopLevelBlock parseTopLevelBlock(ParserStream ps, TokenType end, bool inModule = false)
 out(result)
 {
 	assert(result !is null);
@@ -195,106 +195,106 @@ out(result)
 body
 {
 	auto tlb = new ir.TopLevelBlock();
-	tlb.location = ts.peek.location;
+	tlb.location = ps.peek.location;
 
-	ts.pushCommentLevel();
+	ps.pushCommentLevel();
 
-	while (ts.peek.type != end && ts.peek.type != TokenType.End) {
-		if (ifDocCommentsUntilEndThenSkip(ts)) {
+	while (ps.peek.type != end && ps.peek.type != TokenType.End) {
+		if (ifDocCommentsUntilEndThenSkip(ps)) {
 			continue;
 		}
 
-		auto tmp = parseOneTopLevelBlock(ts, inModule);
+		auto tmp = parseOneTopLevelBlock(ps, inModule);
 		if (tmp.nodeType != ir.NodeType.Attribute) {
-			ts.popCommentLevel();
-			ts.pushCommentLevel();
+			ps.popCommentLevel();
+			ps.pushCommentLevel();
 		}
 		tlb.nodes ~= tmp.nodes;
 	}
 
-	ts.popCommentLevel();
+	ps.popCommentLevel();
 
 	return tlb;
 }
 
-ir.Node parseImport(TokenStream ts, bool inModule)
+ir.Node parseImport(ParserStream ps, bool inModule)
 {
 	if (!inModule) {
-		throw makeNonTopLevelImport(ts.peek.location);
+		throw makeNonTopLevelImport(ps.peek.location);
 	}
 
 	auto _import = new ir.Import();
-	_import.location = ts.peek.location;
-	match(ts, TokenType.Import);
+	_import.location = ps.peek.location;
+	match(ps, TokenType.Import);
 
-	if (ts == [TokenType.Identifier, TokenType.Assign]) {
+	if (ps == [TokenType.Identifier, TokenType.Assign]) {
 		// import <a = b.c>
-		_import.bind = parseIdentifier(ts);
-		match(ts, TokenType.Assign);
-		_import.name = parseQualifiedName(ts);
+		_import.bind = parseIdentifier(ps);
+		match(ps, TokenType.Assign);
+		_import.name = parseQualifiedName(ps);
 	} else {
 		// No import bind.
-		_import.name = parseQualifiedName(ts);
+		_import.name = parseQualifiedName(ps);
 	}
 
 	// Parse out any aliases.
-	if (matchIf(ts, TokenType.Colon)) {
+	if (matchIf(ps, TokenType.Colon)) {
 		// import a : <b, c = d>
 		bool first = true;
 		do {
-			if (matchIf(ts, TokenType.Comma)) {
+			if (matchIf(ps, TokenType.Comma)) {
 				if (first) {
-					throw makeExpected(ts.peek.location, "identifier");
+					throw makeExpected(ps.peek.location, "identifier");
 				}
 			}
 			first = false;
 			ir.Identifier name, assign;
-			name = parseIdentifier(ts);
-			if (matchIf(ts, TokenType.Assign)) {
+			name = parseIdentifier(ps);
+			if (matchIf(ps, TokenType.Assign)) {
 				// import a : b, <c = d>
-				assign = parseIdentifier(ts);
+				assign = parseIdentifier(ps);
 			}
 			_import.aliases ~= [name, assign];
-		} while (ts.peek.type == TokenType.Comma);
+		} while (ps.peek.type == TokenType.Comma);
 	}
 
-	match(ts, TokenType.Semicolon);
+	match(ps, TokenType.Semicolon);
 	return _import;
 }
 
-ir.Unittest parseUnittest(TokenStream ts)
+ir.Unittest parseUnittest(ParserStream ps)
 {
 	auto u = new ir.Unittest();
-	u.location = ts.peek.location;
+	u.location = ps.peek.location;
 
-	match(ts, TokenType.Unittest);
-	u._body = parseBlock(ts);
+	match(ps, TokenType.Unittest);
+	u._body = parseBlock(ps);
 
-	u.docComment = ts.comment();
+	u.docComment = ps.comment();
 	return u;
 }
 
-ir.Function parseConstructor(TokenStream ts)
+ir.Function parseConstructor(ParserStream ps)
 {
 	auto c = new ir.Function();
 	c.kind = ir.Function.Kind.Constructor;
 	c.name = "__ctor";
-	c.docComment = ts.comment();
+	c.docComment = ps.comment();
 
 	// XXX: Change to local/global.
-	if (matchIf(ts, TokenType.Static)) {
+	if (matchIf(ps, TokenType.Static)) {
 		c.kind = ir.Function.Kind.LocalConstructor;
 	}
-	//if (matchIf(ts, TokenType.Local)) {
+	//if (matchIf(ps, TokenType.Local)) {
 	//	c.kind = ir.Function.Kind.LocalConstructor;
-	//} else if (matchIf(ts, TokenType.Global)) {
+	//} else if (matchIf(ps, TokenType.Global)) {
 	//	c.kind = ir.Function.Kind.GlobalConstructor;
 	//}
 
 	// Get the location of this.
-	c.location = ts.peek.location;
+	c.location = ps.peek.location;
 
-	match(ts, TokenType.This);
+	match(ps, TokenType.This);
 
 	auto pt = new ir.PrimitiveType();
 	pt.type = ir.PrimitiveType.Kind.Void;
@@ -302,7 +302,7 @@ ir.Function parseConstructor(TokenStream ts)
 
 	c.type = new ir.FunctionType();
 	c.type.ret = pt;
-	auto params = parseParameterList(ts, c.type);
+	auto params = parseParameterList(ps, c.type);
 	foreach (i, param; params) {
 		c.type.params ~= param.type;
 		auto p = new ir.FunctionParam();
@@ -316,73 +316,73 @@ ir.Function parseConstructor(TokenStream ts)
 	bool inBlocks = true;
 	while (inBlocks) {
 		bool _in, _out;
-		switch (ts.peek.type) {
+		switch (ps.peek.type) {
 		case TokenType.In:
 			// <in> { }
 			if (_in) {
-				throw makeMultipleOutBlocks(ts.peek.location);
+				throw makeMultipleOutBlocks(ps.peek.location);
 			}
 			_in = true;
-			match(ts, TokenType.In);
-			c.inContract = parseBlock(ts);
+			match(ps, TokenType.In);
+			c.inContract = parseBlock(ps);
 			break;
 		case TokenType.Out:
 			// <out>
 			if (_out) {
-				throw makeMultipleOutBlocks(ts.peek.location);
+				throw makeMultipleOutBlocks(ps.peek.location);
 			}
 			_out = true;
-			match(ts, TokenType.Out);
-			if (ts.peek.type == TokenType.OpenParen) {
+			match(ps, TokenType.Out);
+			if (ps.peek.type == TokenType.OpenParen) {
 				// out <(result)>
-				match(ts, TokenType.OpenParen);
-				auto identTok = match(ts, TokenType.Identifier);
+				match(ps, TokenType.OpenParen);
+				auto identTok = match(ps, TokenType.Identifier);
 				c.outParameter = identTok.value;
-				match(ts, TokenType.CloseParen);
+				match(ps, TokenType.CloseParen);
 			}
-			c.outContract = parseBlock(ts);
+			c.outContract = parseBlock(ps);
 			break;
 		case TokenType.OpenBrace:
 		case TokenType.Body:
-			if (ts.peek.type == TokenType.Body) {
-				ts.get();
+			if (ps.peek.type == TokenType.Body) {
+				ps.get();
 			}
 			inBlocks = false;
-			c._body = parseBlock(ts);
+			c._body = parseBlock(ps);
 			break;
 		default:
-			throw makeExpected(ts.peek.location, "block declaration");
+			throw makeExpected(ps.peek.location, "block declaration");
 		}
 	}
 
 	return c;
 }
 
-ir.Function parseDestructor(TokenStream ts)
+ir.Function parseDestructor(ParserStream ps)
 {
 	auto d = new ir.Function();
 	d.kind = ir.Function.Kind.Destructor;
 	d.name = "__dtor";
-	d.docComment = ts.comment();
+	d.docComment = ps.comment();
 
 	// XXX: Change to local/global or local/shared.
-	if (matchIf(ts, TokenType.Static)) {
+	if (matchIf(ps, TokenType.Static)) {
 		d.kind = ir.Function.Kind.LocalDestructor;
 	}
-	//if (matchIf(ts, TokenType.Local)) {
+	//if (matchIf(ps, TokenType.Local)) {
 	//	d.kind = ir.Function.Kind.LocalDestructor;
-	//} else if (matchIf(ts, TokenType.Global)) {
+	//} else if (matchIf(ps, TokenType.Global)) {
 	//	d.kind = ir.Function.Kind.GlobalDestructor;
 	//}
 
-	match(ts, TokenType.Tilde);
+	match(ps, TokenType.Tilde);
 
 	// Get the location of ~this.
-	d.location = ts.peek.location - ts.previous.location;
+	d.location = ps.peek.location - ps.previous.location;
 
-	match(ts, TokenType.This);
-	match(ts, TokenType.OpenParen);
-	match(ts, TokenType.CloseParen);
+	match(ps, TokenType.This);
+	match(ps, TokenType.OpenParen);
+	match(ps, TokenType.CloseParen);
 
 	auto pt = new ir.PrimitiveType();
 	pt.type = ir.PrimitiveType.Kind.Void;
@@ -390,159 +390,159 @@ ir.Function parseDestructor(TokenStream ts)
 
 	d.type = new ir.FunctionType();
 	d.type.ret = pt;
-	d._body = parseBlock(ts);
+	d._body = parseBlock(ps);
 
 	return d;
 }
 
-ir.Class parseClass(TokenStream ts)
+ir.Class parseClass(ParserStream ps)
 {
 	auto c = new ir.Class();
-	c.location = ts.peek.location;
-	c.docComment = ts.comment();
+	c.location = ps.peek.location;
+	c.docComment = ps.comment();
 
-	match(ts, TokenType.Class);
-	auto nameTok = match(ts, TokenType.Identifier);
+	match(ps, TokenType.Class);
+	auto nameTok = match(ps, TokenType.Identifier);
 	c.name = nameTok.value;
-	if (matchIf(ts, TokenType.Colon)) {
-		c.parent = parseQualifiedName(ts);
-		while (ts.peek.type != TokenType.OpenBrace) {
-			match(ts, TokenType.Comma);
-			c.interfaces ~= parseQualifiedName(ts);
+	if (matchIf(ps, TokenType.Colon)) {
+		c.parent = parseQualifiedName(ps);
+		while (ps.peek.type != TokenType.OpenBrace) {
+			match(ps, TokenType.Comma);
+			c.interfaces ~= parseQualifiedName(ps);
 		}
 	}
 
-	match(ts, TokenType.OpenBrace);
-	c.members = parseTopLevelBlock(ts, TokenType.CloseBrace);
-	match(ts, TokenType.CloseBrace);
+	match(ps, TokenType.OpenBrace);
+	c.members = parseTopLevelBlock(ps, TokenType.CloseBrace);
+	match(ps, TokenType.CloseBrace);
 
 	return c;
 }
 
-ir._Interface parseInterface(TokenStream ts)
+ir._Interface parseInterface(ParserStream ps)
 {
 	auto i = new ir._Interface();
-	i.location = ts.peek.location;
-	i.docComment = ts.comment();
+	i.location = ps.peek.location;
+	i.docComment = ps.comment();
 
-	match(ts, TokenType.Interface);
-	auto nameTok = match(ts, TokenType.Identifier);
+	match(ps, TokenType.Interface);
+	auto nameTok = match(ps, TokenType.Identifier);
 	i.name = nameTok.value;
-	if (matchIf(ts, TokenType.Colon)) {
-		while (ts.peek.type != TokenType.OpenBrace) {
-			i.interfaces ~= parseQualifiedName(ts);
-			if (ts.peek.type != TokenType.OpenBrace) {
-				match(ts, TokenType.Comma);
+	if (matchIf(ps, TokenType.Colon)) {
+		while (ps.peek.type != TokenType.OpenBrace) {
+			i.interfaces ~= parseQualifiedName(ps);
+			if (ps.peek.type != TokenType.OpenBrace) {
+				match(ps, TokenType.Comma);
 			}
 		}
 	}
 
-	match(ts, TokenType.OpenBrace);
-	i.members = parseTopLevelBlock(ts, TokenType.CloseBrace);
-	match(ts, TokenType.CloseBrace);
+	match(ps, TokenType.OpenBrace);
+	i.members = parseTopLevelBlock(ps, TokenType.CloseBrace);
+	match(ps, TokenType.CloseBrace);
 
 	return i;
 }
 
-ir.Union parseUnion(TokenStream ts)
+ir.Union parseUnion(ParserStream ps)
 {
 	auto u = new ir.Union();
-	u.location = ts.peek.location;
-	u.docComment = ts.comment();
+	u.location = ps.peek.location;
+	u.docComment = ps.comment();
 
-	match(ts, TokenType.Union);
-	if (ts.peek.type == TokenType.Identifier) {
-		auto nameTok = match(ts, TokenType.Identifier);
+	match(ps, TokenType.Union);
+	if (ps.peek.type == TokenType.Identifier) {
+		auto nameTok = match(ps, TokenType.Identifier);
 		u.name = nameTok.value;
 	} else {
 		throw makeUnsupported(u.location, "anonymous union declarations");
 	}
 
-	if (ts.peek.type == TokenType.Semicolon) {
+	if (ps.peek.type == TokenType.Semicolon) {
 		if (u.name.length == 0) {
-			match(ts, TokenType.OpenBrace);
-			match(ts, TokenType.Semicolon);
+			match(ps, TokenType.OpenBrace);
+			match(ps, TokenType.Semicolon);
 		} else {
 			throw makeUnsupported(u.location, "opaque union declarations");
 		}
-// 		match(ts, TokenType.Semicolon);
+// 		match(ps, TokenType.Semicolon);
 	} else {
-		match(ts, TokenType.OpenBrace);
-		u.members = parseTopLevelBlock(ts, TokenType.CloseBrace);
-		match(ts, TokenType.CloseBrace);
+		match(ps, TokenType.OpenBrace);
+		u.members = parseTopLevelBlock(ps, TokenType.CloseBrace);
+		match(ps, TokenType.CloseBrace);
 	}
 
 	return u;
 }
 
-ir.Struct parseStruct(TokenStream ts)
+ir.Struct parseStruct(ParserStream ps)
 {
 	auto s = new ir.Struct();
-	s.location = ts.peek.location;
-	s.docComment = ts.comment();
+	s.location = ps.peek.location;
+	s.docComment = ps.comment();
 
-	match(ts, TokenType.Struct);
-	if (ts.peek.type == TokenType.Identifier) {
-		auto nameTok = match(ts, TokenType.Identifier);
+	match(ps, TokenType.Struct);
+	if (ps.peek.type == TokenType.Identifier) {
+		auto nameTok = match(ps, TokenType.Identifier);
 		s.name = nameTok.value;
 	} else {
 		throw makeUnsupported(s.location, "anonymous struct declarations");
 	}
 
-	if (ts.peek.type == TokenType.Semicolon) {
+	if (ps.peek.type == TokenType.Semicolon) {
 		throw makeUnsupported(s.location, "opaque struct declarations");
-// 		match(ts, TokenType.Semicolon);
+// 		match(ps, TokenType.Semicolon);
 	} else {
-		match(ts, TokenType.OpenBrace);
-		s.members = parseTopLevelBlock(ts, TokenType.CloseBrace);
-		match(ts, TokenType.CloseBrace);
+		match(ps, TokenType.OpenBrace);
+		s.members = parseTopLevelBlock(ps, TokenType.CloseBrace);
+		match(ps, TokenType.CloseBrace);
 	}
 
 	return s;
 }
 
-ir.Node[] parseEnum(TokenStream ts)
+ir.Node[] parseEnum(ParserStream ps)
 {
 	ir.Node[] output;
-	auto origin = ts.peek.location;
+	auto origin = ps.peek.location;
 
-	match(ts, TokenType.Enum);
+	match(ps, TokenType.Enum);
 
 	ir.Enum namedEnum;
 
 	ir.Type base;
-	if (matchIf(ts, TokenType.Colon)) {
-		base = parseType(ts);
-	} else if (ts == [TokenType.Identifier, TokenType.Colon] || ts == [TokenType.Identifier, TokenType.OpenBrace]) {
+	if (matchIf(ps, TokenType.Colon)) {
+		base = parseType(ps);
+	} else if (ps == [TokenType.Identifier, TokenType.Colon] || ps == [TokenType.Identifier, TokenType.OpenBrace]) {
 		// Named enum.
 		namedEnum = new ir.Enum();
 		namedEnum.location = origin;
-		namedEnum.docComment = ts.comment();
-		auto nameTok = match(ts, TokenType.Identifier);
+		namedEnum.docComment = ps.comment();
+		auto nameTok = match(ps, TokenType.Identifier);
 		namedEnum.name = nameTok.value;
-		if (matchIf(ts, TokenType.Colon)) {
-			namedEnum.base = parseType(ts);
+		if (matchIf(ps, TokenType.Colon)) {
+			namedEnum.base = parseType(ps);
 		} else {
-			namedEnum.base = buildStorageType(ts.peek.location, ir.StorageType.Kind.Auto, null);
+			namedEnum.base = buildStorageType(ps.peek.location, ir.StorageType.Kind.Auto, null);
 		}
 		base = namedEnum;
 		output ~= namedEnum;
 	} else {
-		base = buildPrimitiveType(ts.peek.location, ir.PrimitiveType.Kind.Int);
+		base = buildPrimitiveType(ps.peek.location, ir.PrimitiveType.Kind.Int);
 	}
 	assert(base !is null);
 
-	if (matchIf(ts, TokenType.OpenBrace)) {
+	if (matchIf(ps, TokenType.OpenBrace)) {
 		ir.EnumDeclaration prevEnum;
 
 		// Better error printing.
-		if (ts.peek.type == TokenType.CloseBrace) {
+		if (ps.peek.type == TokenType.CloseBrace) {
 			throw makeExpected(origin, "member");
 		}
 
 		while (true) {
-			eatComments(ts);
-			auto ed = parseEnumDeclaration(ts);
+			eatComments(ps);
+			auto ed = parseEnumDeclaration(ps);
 			ed.prevEnum = prevEnum;
 			prevEnum = ed;
 			if (namedEnum !is null) {
@@ -558,33 +558,33 @@ ir.Node[] parseEnum(TokenStream ts)
 				output ~= ed;
 			}
 
-			if (matchIf(ts, TokenType.CloseBrace)) {
+			if (matchIf(ps, TokenType.CloseBrace)) {
 				break;
 			}
-			if (matchIf(ts, TokenType.Comma)) {
-				eatComments(ts);
-				if (matchIf(ts, TokenType.CloseBrace)) {
+			if (matchIf(ps, TokenType.Comma)) {
+				eatComments(ps);
+				if (matchIf(ps, TokenType.CloseBrace)) {
 					break;
 				} else {
 					continue;
 				}
 			}
 
-			throw makeExpected(ts.peek.location, "',' or '}'");
+			throw makeExpected(ps.peek.location, "',' or '}'");
 		}
 
 	} else {
 		if (namedEnum !is null) {
-			throw makeExpected(ts.peek.location, "'{'");
+			throw makeExpected(ps.peek.location, "'{'");
 		}
-		if (ts != [TokenType.Identifier, TokenType.Assign]) {
-			base = parseType(ts);
+		if (ps != [TokenType.Identifier, TokenType.Assign]) {
+			base = parseType(ps);
 		} else {
-			base = buildStorageType(ts.peek.location, ir.StorageType.Kind.Auto, null);
+			base = buildStorageType(ps.peek.location, ir.StorageType.Kind.Auto, null);
 		}
 
-		auto ed = parseEnumDeclaration(ts);
-		match(ts, TokenType.Semicolon);
+		auto ed = parseEnumDeclaration(ps);
+		match(ps, TokenType.Semicolon);
 
 		ed.type = base;
 		output ~= ed;
@@ -593,66 +593,66 @@ ir.Node[] parseEnum(TokenStream ts)
 	return output;
 }
 
-ir.MixinFunction parseMixinFunction(TokenStream ts)
+ir.MixinFunction parseMixinFunction(ParserStream ps)
 {
 	auto m = new ir.MixinFunction();
-	m.location = ts.peek.location;
-	m.docComment = ts.comment();
+	m.location = ps.peek.location;
+	m.docComment = ps.comment();
 
-	match(ts, TokenType.Mixin);
-	match(ts, TokenType.Function);
+	match(ps, TokenType.Mixin);
+	match(ps, TokenType.Function);
 	
-	auto nameTok = match(ts, TokenType.Identifier);
+	auto nameTok = match(ps, TokenType.Identifier);
 	m.name = nameTok.value;
 	
 	// TODO allow arguments
-	match(ts, TokenType.OpenParen);
-	match(ts, TokenType.CloseParen);
+	match(ps, TokenType.OpenParen);
+	match(ps, TokenType.CloseParen);
 	
-	m.raw = parseBlock(ts);
+	m.raw = parseBlock(ps);
 
 	return m;
 }
 
-ir.MixinTemplate parseMixinTemplate(TokenStream ts)
+ir.MixinTemplate parseMixinTemplate(ParserStream ps)
 {
 	auto m = new ir.MixinTemplate();
-	m.location = ts.peek.location;
-	m.docComment = ts.comment();
+	m.location = ps.peek.location;
+	m.docComment = ps.comment();
 
-	match(ts, TokenType.Mixin);
-	match(ts, TokenType.Template);
+	match(ps, TokenType.Mixin);
+	match(ps, TokenType.Template);
 	
-	auto nameTok = match(ts, TokenType.Identifier);
+	auto nameTok = match(ps, TokenType.Identifier);
 	m.name = nameTok.value;
 	
 	// TODO allow arguments
-	match(ts, TokenType.OpenParen);
-	match(ts, TokenType.CloseParen);
+	match(ps, TokenType.OpenParen);
+	match(ps, TokenType.CloseParen);
 
-	match(ts, TokenType.OpenBrace);
-	m.raw = parseTopLevelBlock(ts, TokenType.CloseBrace);
-	match(ts, TokenType.CloseBrace);
+	match(ps, TokenType.OpenBrace);
+	m.raw = parseTopLevelBlock(ps, TokenType.CloseBrace);
+	match(ps, TokenType.CloseBrace);
 
 	return m;
 }
 
-ir.Attribute parseAttribute(TokenStream ts, bool inModule = false)
+ir.Attribute parseAttribute(ParserStream ps, bool inModule = false)
 {
 	auto attr = new ir.Attribute();
-	attr.location = ts.peek.location;
+	attr.location = ps.peek.location;
 
 	// Not something we normally do,
 	// but in this case makes the code easier.
-	auto token = ts.get();
+	auto token = ps.get();
 
 	switch (token.type) {
 	case TokenType.Extern:
-		if (matchIf(ts, TokenType.OpenParen)) {
-			auto linkageTok = match(ts, TokenType.Identifier);
+		if (matchIf(ps, TokenType.OpenParen)) {
+			auto linkageTok = match(ps, TokenType.Identifier);
 			switch (linkageTok.value) {
 			case "C":
-				if (matchIf(ts, TokenType.DoublePlus)) {
+				if (matchIf(ps, TokenType.DoublePlus)) {
 					attr.kind = ir.Attribute.Kind.LinkageCPlusPlus;
 				} else {
 					attr.kind = ir.Attribute.Kind.LinkageC;
@@ -666,66 +666,66 @@ ir.Attribute parseAttribute(TokenStream ts, bool inModule = false)
 			default:
 				throw makeExpected(linkageTok.location, "'C', 'C++', 'D', 'Windows', 'Pascal', 'System', or 'Volt'");
 			}
-			match(ts, TokenType.CloseParen);
+			match(ps, TokenType.CloseParen);
 		} else {
 			attr.kind = ir.Attribute.Kind.Extern;
 		}
 		break;
 	case TokenType.Align:
-		match(ts, TokenType.OpenParen);
-		auto intTok = match(ts, TokenType.IntegerLiteral);
+		match(ps, TokenType.OpenParen);
+		auto intTok = match(ps, TokenType.IntegerLiteral);
 		attr.alignAmount = toInt(intTok.value);
-		match(ts, TokenType.CloseParen);
+		match(ps, TokenType.CloseParen);
 		break;
 	case TokenType.At:
-		if (ts.peek.type != TokenType.Identifier) {
-			throw makeExpected(ts.peek.location, "identifier");
+		if (ps.peek.type != TokenType.Identifier) {
+			throw makeExpected(ps.peek.location, "identifier");
 		}
-		switch (ts.peek.value) {
+		switch (ps.peek.value) {
 		case "disable":
-			auto nameTok = match(ts, TokenType.Identifier);
+			auto nameTok = match(ps, TokenType.Identifier);
 			attr.kind = ir.Attribute.Kind.Disable;
 			break;
 		case "property":
-			auto nameTok = match(ts, TokenType.Identifier);
+			auto nameTok = match(ps, TokenType.Identifier);
 			attr.kind = ir.Attribute.Kind.Property;
 			break;
 		case "trusted":
-			auto nameTok = match(ts, TokenType.Identifier);
+			auto nameTok = match(ps, TokenType.Identifier);
 			attr.kind = ir.Attribute.Kind.Trusted;
 			break;
 		case "system":
-			auto nameTok = match(ts, TokenType.Identifier);
+			auto nameTok = match(ps, TokenType.Identifier);
 			attr.kind = ir.Attribute.Kind.System;
 			break;
 		case "safe":
-			auto nameTok = match(ts, TokenType.Identifier);
+			auto nameTok = match(ps, TokenType.Identifier);
 			attr.kind = ir.Attribute.Kind.Safe;
 			break;
 		case "loadDynamic":
-			auto nameTok = match(ts, TokenType.Identifier);
+			auto nameTok = match(ps, TokenType.Identifier);
 			attr.kind = ir.Attribute.Kind.LoadDynamic;
 			break;
 		case "mangledName":
-			auto nameTok = match(ts, TokenType.Identifier);
+			auto nameTok = match(ps, TokenType.Identifier);
 			attr.kind = ir.Attribute.Kind.MangledName;
-			match(ts, TokenType.OpenParen);
-			attr.arguments ~= parseExp(ts);
-			match(ts, TokenType.CloseParen);
+			match(ps, TokenType.OpenParen);
+			attr.arguments ~= parseExp(ps);
+			match(ps, TokenType.CloseParen);
 			break;
 		case "label":
-			auto nameTok = match(ts, TokenType.Identifier);
+			auto nameTok = match(ps, TokenType.Identifier);
 			attr.kind = ir.Attribute.Kind.Label;
 			break;
 		default:
 			attr.kind = ir.Attribute.Kind.UserAttribute;
-			attr.userAttributeName = parseQualifiedName(ts);
-			if (matchIf(ts, TokenType.OpenParen)) {
-				while (ts.peek.type != TokenType.CloseParen) {
-					attr.arguments ~= parseExp(ts);
-					matchIf(ts, TokenType.Comma);
+			attr.userAttributeName = parseQualifiedName(ps);
+			if (matchIf(ps, TokenType.OpenParen)) {
+				while (ps.peek.type != TokenType.CloseParen) {
+					attr.arguments ~= parseExp(ps);
+					matchIf(ps, TokenType.Comma);
 				}
-				match(ts, TokenType.CloseParen);
+				match(ps, TokenType.CloseParen);
 			}
 			break;
 		}
@@ -755,21 +755,21 @@ ir.Attribute parseAttribute(TokenStream ts, bool inModule = false)
 		assert(false);
 	}
 
-	if (matchIf(ts, TokenType.OpenBrace)) {
-		if (ts.comment().length > 0) {
-			throw makeDocCommentAppliesToMultiple(ts.lastDocComment.location);
+	if (matchIf(ps, TokenType.OpenBrace)) {
+		if (ps.comment().length > 0) {
+			throw makeDocCommentAppliesToMultiple(ps.lastDocComment.location);
 		}
-		attr.members = parseTopLevelBlock(ts, TokenType.CloseBrace, inModule);
-		match(ts, TokenType.CloseBrace);
-	} else if (matchIf(ts, TokenType.Colon)) {
+		attr.members = parseTopLevelBlock(ps, TokenType.CloseBrace, inModule);
+		match(ps, TokenType.CloseBrace);
+	} else if (matchIf(ps, TokenType.Colon)) {
 		/* Have the semantic passes apply this attribute as
 		 * doing it in the parser would require context.
 		 */
-		if (ts.comment().length > 0 && !ts.inMultiCommentBlock) {
-			throw makeDocCommentAppliesToMultiple(ts.lastDocComment.location);
+		if (ps.comment().length > 0 && !ps.inMultiCommentBlock) {
+			throw makeDocCommentAppliesToMultiple(ps.lastDocComment.location);
 		}
 	} else {
-		attr.members = parseOneTopLevelBlock(ts, inModule);
+		attr.members = parseOneTopLevelBlock(ps, inModule);
 		if (attr.members !is null &&
 		    attr.members.nodes.length == 1 &&
 		    attr.members.nodes[0].nodeType == ir.NodeType.Attribute) {
@@ -782,110 +782,110 @@ ir.Attribute parseAttribute(TokenStream ts, bool inModule = false)
 	return attr;
 }
 
-ir.StaticAssert parseStaticAssert(TokenStream ts)
+ir.StaticAssert parseStaticAssert(ParserStream ps)
 {
 	auto sa = new ir.StaticAssert();
-	sa.location = ts.peek.location;
-	sa.docComment = ts.comment();
+	sa.location = ps.peek.location;
+	sa.docComment = ps.comment();
 
-	match(ts, TokenType.Static);
-	match(ts, TokenType.Assert);
-	match(ts, TokenType.OpenParen);
-	sa.exp = parseExp(ts);
-	if (matchIf(ts, TokenType.Comma)) {
-		sa.message = parseExp(ts);
+	match(ps, TokenType.Static);
+	match(ps, TokenType.Assert);
+	match(ps, TokenType.OpenParen);
+	sa.exp = parseExp(ps);
+	if (matchIf(ps, TokenType.Comma)) {
+		sa.message = parseExp(ps);
 	}
-	match(ts, TokenType.CloseParen);
-	match(ts, TokenType.Semicolon);
+	match(ps, TokenType.CloseParen);
+	match(ps, TokenType.Semicolon);
 
 	return sa;
 }
 
-package ir.Condition parseCondition(TokenStream ts)
+package ir.Condition parseCondition(ParserStream ps)
 {
 	auto condition = new ir.Condition();
-	condition.location = ts.peek.location;
+	condition.location = ps.peek.location;
 
-	switch (ts.peek.type) {
+	switch (ps.peek.type) {
 	case TokenType.Version:
 		condition.kind = ir.Condition.Kind.Version;
-		ts.get();
-		match(ts, TokenType.OpenParen);
+		ps.get();
+		match(ps, TokenType.OpenParen);
 		break;
 	case TokenType.Debug:
 		condition.kind = ir.Condition.Kind.Debug;
-		ts.get();
+		ps.get();
 		return condition;
 	case TokenType.Static:
 		condition.kind = ir.Condition.Kind.StaticIf;
-		ts.get();
-		match(ts, TokenType.If);
-		match(ts, TokenType.OpenParen);
+		ps.get();
+		match(ps, TokenType.If);
+		match(ps, TokenType.OpenParen);
 		break;
 	default:
-		throw makeExpected(ts.peek.location, "'version', 'debug', or 'static'");
+		throw makeExpected(ps.peek.location, "'version', 'debug', or 'static'");
 	}
 
-	condition.exp = parseExp(ts);
-	match(ts, TokenType.CloseParen);
+	condition.exp = parseExp(ps);
+	match(ps, TokenType.CloseParen);
 
 	return condition;
 }
 
-ir.ConditionTopLevel parseConditionTopLevel(TokenStream ts, bool inModule = false)
+ir.ConditionTopLevel parseConditionTopLevel(ParserStream ps, bool inModule = false)
 {
 	auto ctl = new ir.ConditionTopLevel();
-	ctl.location = ts.peek.location;
-	ctl.docComment = ts.comment();
+	ctl.location = ps.peek.location;
+	ctl.docComment = ps.comment();
 
-	ctl.condition = parseCondition(ts);
-	if (matchIf(ts, TokenType.Colon)) {
+	ctl.condition = parseCondition(ps);
+	if (matchIf(ps, TokenType.Colon)) {
 		// Colons are implictly converted into braces; the IR knows nothing of colons.
-		ctl.members = parseTopLevelBlock(ts, TokenType.CloseBrace, inModule);
+		ctl.members = parseTopLevelBlock(ps, TokenType.CloseBrace, inModule);
 		return ctl;  // Else blocks aren't tied to colon conditionals.
-	} else if (matchIf(ts, TokenType.OpenBrace)) {
-		ctl.members = parseTopLevelBlock(ts, TokenType.CloseBrace, inModule);
-		match(ts, TokenType.CloseBrace);
+	} else if (matchIf(ps, TokenType.OpenBrace)) {
+		ctl.members = parseTopLevelBlock(ps, TokenType.CloseBrace, inModule);
+		match(ps, TokenType.CloseBrace);
 	} else {
-		ctl.members = parseOneTopLevelBlock(ts, inModule);
+		ctl.members = parseOneTopLevelBlock(ps, inModule);
 	}
 
-	if (matchIf(ts, TokenType.Else)) {
+	if (matchIf(ps, TokenType.Else)) {
 		ctl.elsePresent = true;
-		if (matchIf(ts, TokenType.Colon)) {
+		if (matchIf(ps, TokenType.Colon)) {
 			// Colons are implictly converted into braces; the IR knows nothing of colons.
-			ctl.members = parseTopLevelBlock(ts, TokenType.CloseBrace, inModule);
-		} else if (matchIf(ts, TokenType.OpenBrace)) {
-			ctl._else = parseTopLevelBlock(ts, TokenType.CloseBrace, inModule);
-			match(ts, TokenType.CloseBrace);
+			ctl.members = parseTopLevelBlock(ps, TokenType.CloseBrace, inModule);
+		} else if (matchIf(ps, TokenType.OpenBrace)) {
+			ctl._else = parseTopLevelBlock(ps, TokenType.CloseBrace, inModule);
+			match(ps, TokenType.CloseBrace);
 		} else {
-			ctl._else = parseOneTopLevelBlock(ts, inModule);
+			ctl._else = parseOneTopLevelBlock(ps, inModule);
 		}
 	}
 
 	return ctl;
 }
 
-ir.UserAttribute parseUserAttribute(TokenStream ts)
+ir.UserAttribute parseUserAttribute(ParserStream ps)
 {
 	auto ui = new ir.UserAttribute();
-	ui.location = ts.peek.location;
-	ui.docComment = ts.comment();
+	ui.location = ps.peek.location;
+	ui.docComment = ps.comment();
 
-	match(ts, TokenType.At);
-	match(ts, TokenType.Interface);
-	auto nameTok = match(ts, TokenType.Identifier);
+	match(ps, TokenType.At);
+	match(ps, TokenType.Interface);
+	auto nameTok = match(ps, TokenType.Identifier);
 	ui.name = nameTok.value;
 
 	if (ui.name[0] >= 'a' && ui.name[0] <= 'z') {
-		throw makeExpected(ts.peek.location, "upper case letter or '_'");
+		throw makeExpected(ps.peek.location, "upper case letter or '_'");
 	}
 
-	match(ts, TokenType.OpenBrace);
-	while (ts.peek.type != TokenType.CloseBrace) {
-		ui.fields ~= parseJustVariable(ts);
+	match(ps, TokenType.OpenBrace);
+	while (ps.peek.type != TokenType.CloseBrace) {
+		ui.fields ~= parseJustVariable(ps);
 	}
-	match(ts, TokenType.CloseBrace);
+	match(ps, TokenType.CloseBrace);
 
 	return ui;
 }

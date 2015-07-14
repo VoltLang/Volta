@@ -14,12 +14,12 @@ import watt.text.string : indexOf;
 import watt.conv : toInt;
 import watt.text.utf : encode;
 
+import volt.errors;
+import volt.util.string : cleanComment;
 import volt.token.location : Location;
 import volt.token.source : Source, Mark;
-import volt.token.stream : Token, TokenType, TokenStream, identifierType;
+import volt.token.token : Token, TokenType, identifierType;
 import volt.token.writer : TokenWriter;
-import volt.util.string : cleanComment;
-import volt.errors;
 
 /**
  * Tokenizes a string pretending to be at the given location.
@@ -28,9 +28,9 @@ import volt.errors;
  *   CompilerError on errors.
  *
  * Returns:
- *   A TokenStream filled with tokens.
+ *   A ParserStream filled with tokens.
  */
-TokenStream lex(string src, Location loc)
+Token[] lex(string src, Location loc)
 {
 	return lex(new Source(src, loc));
 }
@@ -45,9 +45,9 @@ TokenStream lex(string src, Location loc)
  *   CompilerError on errors.
  *
  * Returns:
- *   A TokenStream filled with tokens.
+ *   A ParserStream filled with tokens.
  */
-TokenStream lex(Source source)
+Token[] lex(Source source)
 {
 	auto tw = new TokenWriter(source);
 
@@ -58,7 +58,7 @@ TokenStream lex(Source source)
 		throw makeUnexpected(tw.source.location, format("%s", tw.source.current));
 	} while (tw.lastAdded.type != TokenType.End);
 
-	return tw.getStream();
+	return tw.getTokens();
 }
 
 private:

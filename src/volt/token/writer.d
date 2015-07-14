@@ -92,7 +92,7 @@ public:
 	}
 
 	/**
-	 * Create a TokenStream from this writer's tokens.
+	 * Returns this writer's tokens.
 	 *
 	 * TODO: Currently this function will leave the writer in a bit of a
 	 *       odd state. Since it resets the tokens but not the source.
@@ -100,14 +100,12 @@ public:
 	 * Side-effects:
 	 *   Remove all tokens from this writer, and reinitializes the writer.
 	 */
-	TokenStream getStream()
+	Token[] getTokens()
 	{
 		auto ret = new Token[](mLength);
 		ret[] = mTokens[0 .. mLength];
 		initTokenArray();
-
-		auto tstream = new TokenStream(ret);
-		return tstream;
+		return ret;
 	}
 
 	/**
