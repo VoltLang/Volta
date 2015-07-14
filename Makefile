@@ -6,7 +6,7 @@ RDMD=rdmd
 DMD=dmd
 VOLT=volt.exe
 VRT=rt/rt.bc
-DFLAGS=--build-only --compiler=$(DMD) -of$(EXE) -gc -wi -debug LLVM.lib $(FLAGS)
+DFLAGS=--build-only --compiler=$(DMD) -of$(VOLT) -gc -wi -debug LLVM.lib $(FLAGS)
 RT_SRC = \
 	rt/src/object.volt \
 	rt/src/vrt/vmain.volt \
