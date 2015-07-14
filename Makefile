@@ -37,7 +37,7 @@ all:
 	$(VOLT) --no-stdlib --emit-bitcode -I rt/src -o rt/rt.bc $(RT_SRC) $(VFLAGS)
 
 viv:
-	$(VOLT) --dep-argtags -o viv $(VIV_SRC)
+	$(VOLT) --dep-argtags -o viv $(VIV_SRC) $(VFLAGS)
 
 .PHONY: all viv
 
