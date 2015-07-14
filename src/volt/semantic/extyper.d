@@ -3091,8 +3091,23 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, Context ctx, ir.Scope nest
 		panicAssert(fes, fes.endIntegerRange !is null);
 		panicAssert(fes, fes.itervars.length == 1);
 		auto v = fs.initVars[0];
-		if (v.type is null) {
-			v.type = buildInt(v.location);
+		auto begin = realType(getExpType(ctx.lp, fes.beginIntegerRange, ctx.current));
+		auto end = realType(getExpType(ctx.lp, fes.endIntegerRange, ctx.current));
+		if (!isIntegral(begin) || !isIntegral(end)) {
+			throw makeExpected(fes.beginIntegerRange.location, "integral beginning and end of range");
+		}
+		ir.Type defaultType = buildInt(l);
+		if (!typesEqual(begin, end)) {
+			auto beginsz = size(l, ctx.lp, begin);
+			auto endsz = size(l, ctx.lp, end);
+			if (beginsz > endsz) {
+				defaultType = begin;
+			} else {
+				defaultType = end;
+			}
+		}
+		if (v.type is null || !typesEqual(v.type, defaultType)) {
+			v.type = copyType(defaultType);
 		}
 		v.assign = fes.reverse ?
 			buildSub(l, fes.endIntegerRange, buildConstantInt(l, 1)) :
@@ -3102,7 +3117,7 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, Context ctx, ir.Scope nest
 		auto incRef = buildExpReference(v.location, v, v.name);
 		fs.test = buildBinOp(l,
 							 fes.reverse ? ir.BinOp.Op.GreaterEqual : ir.BinOp.Op.Less,
-							 cmpRef, fes.reverse ? fes.beginIntegerRange : fes.endIntegerRange);
+							 cmpRef, buildCastSmart(l, defaultType, fes.reverse ? fes.beginIntegerRange : fes.endIntegerRange));
 		fs.increments ~= fes.reverse ? buildDecrement(v.location, incRef) :
 						 buildIncrement(v.location, incRef);
 		return fs;
