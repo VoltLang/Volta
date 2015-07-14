@@ -401,7 +401,7 @@ ir.Type parseTypeSigils(TokenStream ts, Location origin, ir.Type base)
 			auto a = new ir.StaticArrayType();
 			a.location = end.location - origin;
 			a.base = base;
-			a.length = toInt(integer.value);
+			a.length = cast(size_t)toInt(integer.value);
 			base = a;
 		} else {
 			// Associative array.

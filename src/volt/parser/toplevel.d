@@ -173,13 +173,13 @@ body
 
 private bool ifDocCommentsUntilEndThenSkip(TokenStream ts)
 {
-	int n = 0;
+	size_t n = 0;
 	TokenType tt;
 	do {
 		tt = ts.lookahead(n++).type;
 	} while (tt == TokenType.DocComment);
 	if (tt == TokenType.End) {
-		foreach (i; 0 .. n) {
+		foreach (size_t i; 0 .. n) {
 			ts.get();
 		}
 		return true;
