@@ -2435,6 +2435,18 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 		return;
 	}
 
+	auto lclass = cast(ir.Class)ltype;
+	auto rclass = cast(ir.Class)rtype;
+	if (lclass !is null && rclass !is null && !typesEqual(lclass, rclass)) {
+		auto common = commonParent(lclass, rclass);
+		if (lclass !is common) {
+			binop.left = buildCastSmart(exp.location, common, binop.left);
+		}
+		if (rclass !is common) {
+			binop.right = buildCastSmart(exp.location, common, binop.right);
+		}
+	}
+
 	// key in aa => some_vrt_call(aa, key)
 	if (binop.op == ir.BinOp.Op.In) {
 		auto asAA = cast(ir.AAType) rtype;
