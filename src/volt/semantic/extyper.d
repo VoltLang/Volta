@@ -3106,6 +3106,9 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, Context ctx, ir.Scope nest
 				defaultType = end;
 			}
 		}
+		if (v.type !is null) {
+			ctx.lp.ensureResolved(ctx.current, v.type);
+		}
 		if (v.type is null || !typesEqual(v.type, defaultType)) {
 			v.type = copyType(defaultType);
 		}
