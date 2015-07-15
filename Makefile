@@ -38,6 +38,7 @@ all:
 
 viv:
 	$(VOLT) --dep-argtags -o viv $(VIV_SRC) $(VFLAGS)
+	viv src/*.d src/lib/llvm/*.d src/lib/llvm/c/*.d src/volt/*.d src/volt/ir/*.d src/volt/llvm/*.d src/volt/parser/*.d src/volt/semantic/*.d src/volt/token/*.d src/volt/util/*.d src/volt/visitor/*.d
 
 .PHONY: all viv
 
