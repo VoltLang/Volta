@@ -164,11 +164,11 @@ viv: $(TARGET) $(VIV_SRC)
 # Note these should not depend on target
 voltaic-syntax:
 	@echo "  VOLTA  <source>"
-	@$(VOLT) -E $(VIV_ALL_SRC)
+	@$(VOLT) --internal-perf -E $(VIV_ALL_SRC)
 
 voltaic-viv:
 	@echo "  VOLTA  viv"
-	@$(VOLT) --dep-argtags -o viv $(VIV_SRC)
+	@$(VOLT) --internal-perf --dep-argtags -o viv $(VIV_SRC)
 
 voltaic-viv-syntax:
 	@echo "  VIV    <source>"
