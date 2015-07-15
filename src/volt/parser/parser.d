@@ -3,6 +3,7 @@
 module volt.parser.parser;
 
 import watt.io.std : writefln;
+import watt.text.format : format;
 
 import volt.token.location : Location;
 import volt.token.lexer : lex;
@@ -11,12 +12,41 @@ import volt.token.source : Source;
 
 import ir = volt.ir.ir;
 
+import volt.errors : makeError, panic;
 import volt.interfaces : Frontend;
-import volt.parser.base : match;
-import volt.parser.stream : ParserStream;
+import volt.parser.base : ParseStatus, ParserStream, ParserPanic;
 import volt.parser.toplevel : parseModule;
 import volt.parser.statements : parseStatement;
 
+
+private void checkError(ParserStream ps, ParseStatus status)
+{
+	if (status) {
+		return;
+	}
+
+	auto e = ps.parserErrors[0];
+	auto msg = e.errorMessage();
+	auto p = cast(ParserPanic)e;
+
+	void addExtraInfo() {
+		msg ~= format(" (peek:%s)", ps.peek.value);
+		foreach (err; ps.parserErrors) {
+			msg ~= format("\n%s: %s (from %s:%s)",
+			              err.location.toString(),
+			              err.errorMessage(),
+			              err.raiseFile, err.raiseLine);
+		}
+	}
+
+	if (p !is null) {
+		addExtraInfo();
+		throw panic(e.location, msg, e.raiseFile, e.raiseLine);
+	} else {
+		debug addExtraInfo();
+		throw makeError(e.location, msg, e.raiseFile, e.raiseLine);
+	}
+}
 
 class Parser : Frontend
 {
@@ -32,10 +62,11 @@ public:
 		if (dumpLex)
 			doDumpLex(ps);
 
-		// Skip Begin.
-		match(ps, TokenType.Begin);
+		ps.get(); // Skip, stream already checks for Begin.
 
-		return .parseModule(ps);
+		ir.Module mod;
+		checkError(ps, parseModule(ps, mod));
+		return mod;
 	}
 
 	ir.Node[] parseStatements(string source, Location loc)
@@ -45,11 +76,13 @@ public:
 		if (dumpLex)
 			doDumpLex(ps);
 
-		match(ps, TokenType.Begin);
+		ps.get(); // Skip, stream already checks for Begin.
 
 		ir.Node[] ret;
 		while (ps != TokenType.End) {
-			ret ~= parseStatement(ps);
+			ir.Node[] nodes;
+			checkError(ps, parseStatement(ps, nodes));
+			ret ~= nodes;
 		}
 
 		return ret;

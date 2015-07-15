@@ -14,17 +14,22 @@ import volt.errors;
 
 import volt.token.location;
 import volt.parser.base;
-import volt.parser.stream : Token, ParserStream;
 import volt.parser.expression;
 import volt.parser.toplevel;
 import volt.parser.declaration;
 import volt.parser.statements;
 
 
-ir.Node[] parseVariable(ParserStream ps)
+ParseStatus parseVariable(ParserStream ps, out ir.Node[] nodes)
 {
-	if (ps.peek.type == TokenType.Alias) {
-		return [parseAlias(ps)];
+	if (ps == TokenType.Alias) {
+		ir.Alias a;
+		auto succeeded = parseAlias(ps, a);
+		if (!succeeded) {
+			return parseFailed(ps, ir.NodeType.Variable);
+		}
+		nodes = [a];
+		return Succeeded;
 	}
 
 	auto loc = ps.peek.location;
@@ -33,47 +38,69 @@ ir.Node[] parseVariable(ParserStream ps)
 		_global = matchIf(ps, TokenType.Static);  // Deprecate after self-hosting etc.
 	}
 
-	ir.Type base = parseType(ps);
+	ir.Type base;
+	auto succeeded = parseType(ps, base);
+	if (!succeeded) {
+		return parseFailed(ps, ir.NodeType.Variable);
+	}
 	if (ps.lookahead(1).type == TokenType.Comma ||
 		ps.lookahead(1).type == TokenType.Semicolon ||
 		ps.lookahead(1).type == TokenType.Assign) {
 		// Normal declaration.
 		if (_global) {
-			throw makeUnexpected(loc, "global");
+			return unexpectedToken(ps, ir.NodeType.Variable);
 		}
-		return reallyParseVariable(ps, base);
+		// No need to report variable here since its allready reported.
+		return reallyParseVariable(ps, base, nodes);
 	} else if (ps.lookahead(1).type == TokenType.OpenParen) {
 		// Function!
-		auto fn = parseFunction(ps, base);
+		ir.Function fn;
+		succeeded = parseFunction(ps, fn, base);
+		if (!succeeded) {
+			return parseFailed(ps, ir.NodeType.Variable);
+		}
 		fn.isGlobal = _global;
-		return [fn];
+		nodes = [fn];
+		return Succeeded;
 	} else {
-		throw makeExpected(ps.peek.location, "declaration");
+		return parseExpected(ps, ps.peek.location, ir.NodeType.Variable, "declaration");
 	}
 	version(Volt) assert(false);
 }
 
-ir.Variable[] parseJustVariable(ParserStream ps)
+ParseStatus parseJustVariable(ParserStream ps, out ir.Variable[] vars)
 {
-	ir.Type base = parseType(ps);
-	ir.Node[] nodes = reallyParseVariable(ps, base);
-	auto vars = new ir.Variable[](nodes.length);
+	ir.Type base;
+	auto succeeded = parseType(ps, base);
+	if (!succeeded) {
+		return parseFailed(ps, ir.NodeType.Variable);
+	}
+	ir.Node[] nodes;
+	// No need to report variable here since its allready reported.
+	succeeded = reallyParseVariable(ps, base, nodes);
+	if (!succeeded) {
+		return succeeded;
+	}
+	vars = new ir.Variable[](nodes.length);
 	foreach (i, node; nodes) {
 		vars[i] = cast(ir.Variable) node;
 		assert(vars[i] !is null, "reallyParseVariable parsed non variable");
 	}
-	return vars;
+	return Succeeded;
 }
 
-ir.Alias parseAlias(ParserStream ps)
+ParseStatus parseAlias(ParserStream ps, out ir.Alias a)
 {
-	auto a = new ir.Alias();
+	a = new ir.Alias();
 	a.location = ps.peek.location;
 
-	match(ps, TokenType.Alias);
-	auto nameTok = match(ps, TokenType.Identifier);
+	if (ps != [TokenType.Alias, TokenType.Identifier, TokenType.Assign]) {
+		return unexpectedToken(ps, a);
+	}
+	ps.get();
+	auto nameTok = ps.get();
 	a.name = nameTok.value;
-	match(ps, TokenType.Assign);
+	ps.get();
 
 	size_t pos = ps.save();
 
@@ -87,51 +114,71 @@ ir.Alias parseAlias(ParserStream ps)
 		i++;
 	}
 
-	try {
+	ParseStatus succeeded = Succeeded;
+	do { // Poor mans goto.
 		if (bang) {
-			a.templateInstance = parseExp(ps);
+			succeeded = parseExp(ps, a.templateInstance);
+			if (!succeeded) {
+				succeeded = unexpectedToken(ps, a);
+				break;
+			}
 		} else {
-			a.id = parseQualifiedName(ps);
+			succeeded = parseQualifiedName(ps, a.id);
+			if (!succeeded) {
+				succeeded = parseFailed(ps, a);
+				break;
+			}
 		}
-		match(ps, TokenType.Semicolon);
+		if (ps != TokenType.Semicolon) {
+			succeeded = unexpectedToken(ps, a);
+		} else {
+			ps.get();
+		}
+	} while(false);
 
-	} catch (CompilerError e) {
-		if (e.neverIgnore) {
-			throw e;
+	if (!succeeded) {
+		if (ps.neverIgnoreError) {
+			return Failed;
 		}
 		ps.restore(pos);
+		ps.resetErrors();
 
 		a.id = null;
-		a.type = parseType(ps);
-		match(ps, TokenType.Semicolon);
+		succeeded = parseType(ps, a.type);
+		if (!succeeded) {
+			return parseFailed(ps, a);
+		}
+		succeeded = match(ps, a, TokenType.Semicolon);
+		if (!succeeded) {
+			return succeeded;
+		}
 	}
 
 	a.docComment = ps.comment();
 	ps.retroComment = &a.docComment;
-	return a;
+	return Succeeded;
 }
 
-ir.Node[] reallyParseVariable(ParserStream ps, ir.Type base)
+ParseStatus reallyParseVariable(ParserStream ps, ir.Type base, out ir.Node[] decls)
 {
-	ir.Node[] decls;
-
 	while (true) {
 		auto d = new ir.Variable();
 		d.location = ps.peek.location;
 		d.docComment = ps.comment();
 		d.type = base;
-		auto nameTok = match(ps, TokenType.Identifier);
+		Token nameTok;
+		auto succeeded = match(ps, d, TokenType.Identifier, nameTok);
+		if (!succeeded) {
+			return succeeded;
+		}
 		d.name = nameTok.value;
 		if (ps.peek.type == TokenType.Assign) {
-			match(ps, TokenType.Assign);
-			try {
-				d.assign = parseExp(ps);
-			} catch (CompilerError e) {
-				version(Volt) {
-					throw new CompilerError(e.location, e.message, e, true);
-				} else {
-					throw new CompilerError(e.location, e.msg, e, true);
-				}
+			ps.get();
+			succeeded = parseExp(ps, d.assign);
+			if (!succeeded) {
+				parseFailed(ps, d);
+				ps.neverIgnoreError = true;
+				return Failed;
 			}
 		}
 		decls ~= d;
@@ -144,18 +191,20 @@ ir.Node[] reallyParseVariable(ParserStream ps, ir.Type base)
 			break;
 		}
 	}
-	match(ps, TokenType.Semicolon);
+	auto succeeded = match(ps, ir.NodeType.Variable, TokenType.Semicolon);
+	if (!succeeded) {
+		return succeeded;
+	}
 
 	ps.retroComment = &decls[0].docComment;
 
-	return decls;
+	return Succeeded;
 }
 
-ir.Type parseType(ParserStream ps)
+ParseStatus parseType(ParserStream ps, out ir.Type base)
 {
 	Location origin = ps.peek.location;
 
-	ir.Type base;
 	switch (ps.peek.type) {
 	case TokenType.Void, TokenType.Char, TokenType.Byte, TokenType.Ubyte,
 		 TokenType.Short, TokenType.Ushort, TokenType.Int, TokenType.Uint,
@@ -165,30 +214,68 @@ ir.Type parseType(ParserStream ps)
 		break;
 	case TokenType.Auto, TokenType.Const, TokenType.Immutable,
 		 TokenType.Scope:
-		base = parseStorageType(ps);
+		ir.StorageType st;
+		auto succeeded = parseStorageType(ps, st);
+		if (!succeeded) {
+			return parseFailed(ps, ir.NodeType.StorageType);
+		}
+		base = st;
 		break;
 	case TokenType.Identifier, TokenType.Dot:
-		base = parseTypeReference(ps);
+		ir.TypeReference tr;
+		auto succeeded = parseTypeReference(ps, tr);
+		if (!succeeded) {
+			return parseFailed(ps, ir.NodeType.TypeOf);
+		}
+		base = tr;
 		break;
 	case TokenType.Typeof:
-		base = parseTypeOf(ps);
+		ir.TypeOf t;
+		auto succeeded = parseTypeOf(ps, t);
+		if (!succeeded) {
+			return parseFailed(ps, ir.NodeType.TypeOf);
+		}
+		base = t;
 		break;
 	default:
-		throw makeExpected(ps.peek.location, "primitive type");
+		return parseExpected(ps, ps.peek.location, ir.NodeType.Invalid, "primitive type");
 	}
 
-	base = parseTypeSigils(ps, origin, base);
+	ir.Type tmp;
+	auto succeeded = parseTypeSigils(ps, tmp, origin, base);
+	if (!succeeded) {
+		parseFailed(ps, ir.NodeType.Function);
+	}
+	base = tmp;
 
 	switch (ps.peek.type) {
 	case TokenType.Function:
-		base = parseFunctionType(ps, base);
+		ir.FunctionType fn;
+		succeeded = parseFunctionType(ps, fn, base);
+		if (!succeeded) {
+			return parseFailed(ps, ir.NodeType.Function);
+		}
+		base = fn;
 		base.location = ps.peek.location - origin;
-		base = parseTypeSigils(ps, origin, base);
+		succeeded = parseTypeSigils(ps, tmp, origin, base);
+		if (!succeeded) {
+			return parseFailed(ps, ir.NodeType.Function);
+		}
+		base = tmp;
 		break;
 	case TokenType.Delegate:
-		base = parseDelegateType(ps, base);
+		ir.DelegateType fn;
+		succeeded = parseDelegateType(ps, fn, base);
+		if (!succeeded) {
+			return parseFailed(ps, ir.NodeType.Function);
+		}
+		base = fn;
 		base.location = ps.peek.location - origin;
-		base = parseTypeSigils(ps, origin, base);
+		succeeded = parseTypeSigils(ps, tmp, origin, base);
+		if (!succeeded) {
+			return parseFailed(ps, ir.NodeType.Function);
+		}
+		base = tmp;
 		break;
 	default:
 		break;
@@ -196,35 +283,47 @@ ir.Type parseType(ParserStream ps)
 
 	base.location = ps.peek.location - origin;
 	base.docComment = ps.comment();
-	return base;
+	return Succeeded;
 }
 
-ir.TypeOf parseTypeOf(ParserStream ps)
+ParseStatus parseTypeOf(ParserStream ps, out ir.TypeOf typeOf)
 {
-	auto typeOf = new ir.TypeOf();
+	typeOf = new ir.TypeOf();
 	typeOf.location = ps.peek.location;
-	match(ps, TokenType.Typeof);
-	match(ps, TokenType.OpenParen);
-	typeOf.exp = parseExp(ps);
-	match(ps, TokenType.CloseParen);
-	return typeOf;
+	if (ps != [TokenType.Typeof, TokenType.OpenParen]) {
+		return parseFailed(ps, typeOf);
+	}
+	ps.get();
+	ps.get();
+	auto succeeded = parseExp(ps, typeOf.exp);
+	if (!succeeded) {
+		return parseFailed(ps, typeOf);
+	}
+	if (ps != TokenType.CloseParen) {
+		return unexpectedToken(ps, typeOf);
+	}
+	ps.get();
+	return Succeeded;
 }
 
-ir.TypeReference parseTypeReference(ParserStream ps)
+ParseStatus parseTypeReference(ParserStream ps, out ir.TypeReference typeReference)
 {
-	auto typeReference = new ir.TypeReference();
+	typeReference = new ir.TypeReference();
 	typeReference.location = ps.peek.location;
 
-	typeReference.id = parseQualifiedName(ps, true);
+	auto succeeded = parseQualifiedName(ps, typeReference.id, true);
+	if (!succeeded) {
+		return parseFailed(ps, ir.NodeType.TypeReference);
+	}
 
 	assert(typeReference.id.identifiers.length > 0);
 	typeReference.docComment = ps.comment();
-	return typeReference;
+	return Succeeded;
 }
 
-ir.StorageType parseStorageType(ParserStream ps)
+ParseStatus parseStorageType(ParserStream ps, out ir.StorageType storageType)
 {
-	auto storageType = new ir.StorageType();
+	storageType = new ir.StorageType();
 	storageType.location = ps.peek.location;
 
 	storageType.type = cast(ir.StorageType.Kind) ps.peek.type;
@@ -232,107 +331,135 @@ ir.StorageType parseStorageType(ParserStream ps)
 
 	if (ps == [TokenType.Identifier, TokenType.Semicolon] ||
 		ps == [TokenType.Identifier, TokenType.Assign, TokenType.Void, TokenType.Semicolon]) {
-		throw makeCannotInfer(ps.peek.location);
+		parseExpected(ps, ps.peek.location, storageType, "explicit type");
+		ps.neverIgnoreError = true;
+		return Failed;
 	} else if (matchIf(ps, TokenType.OpenParen)) {
-		storageType.base = parseType(ps);
-		match(ps, TokenType.CloseParen);
+		auto succeeded = parseType(ps, storageType.base);
+		if (!succeeded) {
+			return parseFailed(ps, storageType);
+		}
+		succeeded = match(ps, storageType, TokenType.CloseParen);
+		if (!succeeded) {
+			return succeeded;
+		}
 	} else if (!(ps == [TokenType.Identifier, TokenType.Assign])) {
-		storageType.base = parseType(ps);
+		auto succeeded = parseType(ps, storageType.base);
+		if (!succeeded) {
+			return parseFailed(ps, storageType);
+		}
 	}
 
 	storageType.docComment = ps.comment();
-	return storageType;
+	return Succeeded;
 }
 
-ir.FunctionType parseFunctionType(ParserStream ps, ir.Type base)
+ParseStatus parseFunctionType(ParserStream ps, out ir.FunctionType fn, ir.Type base)
 {
-	auto fn = new ir.FunctionType();
+	fn = new ir.FunctionType();
 	fn.location = ps.peek.location;
 	fn.docComment = ps.comment();
 
 	fn.ret = base;
-	match(ps, TokenType.Function);
-	fn.params = parseParameterListFPtr(ps, fn);
+	auto succeeded = match(ps, fn, TokenType.Function);
+	if (!succeeded) {
+		return succeeded;
+	}
+	succeeded = parseParameterListFPtr(ps, fn.params, fn);
+	if (!succeeded) {
+		return parseFailed(ps, fn);
+	}
 
-	return fn;
+	return Succeeded;
 }
 
-ir.DelegateType parseDelegateType(ParserStream ps, ir.Type base)
+ParseStatus parseDelegateType(ParserStream ps, out ir.DelegateType fn, ir.Type base)
 {
-	auto fn = new ir.DelegateType();
+	fn = new ir.DelegateType();
 	fn.location = ps.peek.location;
 
 	fn.ret = base;
-	match(ps, TokenType.Delegate);
-	fn.params = parseParameterListFPtr(ps, fn);
+	auto succeeded = match(ps, fn, TokenType.Delegate);
+	if (!succeeded) {
+		return succeeded;
+	}
+	succeeded = parseParameterListFPtr(ps, fn.params, fn);
+	if (!succeeded) {
+		return parseFailed(ps, fn);
+	}
 
 	fn.docComment = ps.comment();
-	return fn;
+	return Succeeded;
 }
 
-ir.Type[] parseParameterListFPtr(ParserStream ps, ir.CallableType parentCallable)
+ParseStatus parseParameterListFPtr(ParserStream ps, out ir.Type[] types, ir.CallableType parentCallable)
 {
-	ir.Type[] types;
-
-	match(ps, TokenType.OpenParen);
+	auto succeeded = match(ps, ir.NodeType.Variable, TokenType.OpenParen);
+	if (!succeeded) {
+		return succeeded;
+	}
 	while (ps.peek.type != TokenType.CloseParen) {
 		if (matchIf(ps, TokenType.TripleDot)) {
 			parentCallable.hasVarArgs = true;
 			break;
 		}
-		auto var = parseParameter(ps);
-		types ~= var.type;
-		if (ps.peek.type == TokenType.Comma) {
-			ps.get();
+		ir.Variable var;
+		succeeded = parseParameter(ps, var);
+		if (!succeeded) {
+			return parseFailed(ps, ir.NodeType.Variable);
 		}
+		types ~= var.type;
+		matchIf(ps, TokenType.Comma);
 	}
-	match(ps, TokenType.CloseParen);
-
-	return types;
+	return match(ps, ir.NodeType.Variable, TokenType.CloseParen);
 }
 
-ir.Variable[] parseParameterList(ParserStream ps, ir.CallableType parentCallable)
+ParseStatus parseParameterList(ParserStream ps, out ir.Variable[] vars, ir.CallableType parentCallable)
 {
-	ir.Variable[] vars;
-
-	match(ps, TokenType.OpenParen);
+	auto succeeded = match(ps, ir.NodeType.Function, TokenType.OpenParen);
+	if (!succeeded) {
+		return succeeded;
+	}
 	while (ps.peek.type != TokenType.CloseParen) {
 		if (matchIf(ps, TokenType.TripleDot)) {
 			if (parentCallable is null) {
-				throw makeExpected(ps.peek.location, "function or delegate");
+				return unexpectedToken(ps, ir.NodeType.Function);
 			}
 			parentCallable.hasVarArgs = true;
 			break;
 		}
-		auto var = parseParameter(ps);
+		ir.Variable var;
+		succeeded = parseParameter(ps, var);
+		if (!succeeded) {
+			return parseFailed(ps, ir.NodeType.Function);
+		}
 		// foo(int a, int[] b...)
 		if (matchIf(ps, TokenType.TripleDot)) {
 			if (ps.peek.type != TokenType.CloseParen) {
-				throw makeExpected(ps.peek.location, "homogenous variadic argument to be final argument");
+				return parseExpected(ps, ps.peek.location, ir.NodeType.Function, 
+				                     "homogenous variadic argument to be final argument");
 			}
 			parentCallable.hasVarArgs = false;
 			parentCallable.homogenousVariadic = true;
 		}
 		vars ~= var;
 		// foo(int a, int b, ...)
-		if (ps.peek.type == TokenType.Comma) {
-			ps.get();
+		if (matchIf(ps, TokenType.Comma)) {
 			if (matchIf(ps, TokenType.TripleDot)) {
 				if (ps.peek.type != TokenType.CloseParen) {
-					throw makeExpected(ps.peek.location, "var args to be last argument");
+					return parseExpected(ps, ps.peek.location, ir.NodeType.Function,
+					                     "varargs to be final argument");
 				}
 				parentCallable.hasVarArgs = true;
 			}
 		}
 	}
-	match(ps, TokenType.CloseParen);
-
-	return vars;
+	return match(ps, ir.NodeType.Function, TokenType.CloseParen);
 }
 
-ir.Variable parseParameter(ParserStream ps)
+ParseStatus parseParameter(ParserStream ps, out ir.Variable p)
 {
-	ir.Variable p = new ir.Variable();
+	p = new ir.Variable();
 	p.storage = ir.Variable.Storage.Function;
 	Location origin = ps.peek.location;
 
@@ -346,7 +473,10 @@ ir.Variable parseParameter(ParserStream ps)
 		isIn = matchIf(ps, TokenType.In);
 	}
 
-	p.type = parseType(ps);
+	auto succeeded = parseType(ps, p.type);
+	if (!succeeded) {
+		return parseFailed(ps, p);
+	}
 	if (isRef || isOut) {
 		auto s = new ir.StorageType();
 		s.location = p.type.location;
@@ -360,63 +490,77 @@ ir.Variable parseParameter(ParserStream ps)
 		p.type = scopeStorage;
 	}
 	if (ps.peek.type == TokenType.Identifier) {
-		Token name = match(ps, TokenType.Identifier);
+		Token name = ps.get();
 		p.name = name.value;
 		if (matchIf(ps, TokenType.Assign)) {
-			p.assign = parseExp(ps);
+			succeeded = parseExp(ps, p.assign);
+			if (!succeeded) {
+				return parseFailed(ps, p);
+			}
 		}
 	} else if (ps.peek.type != TokenType.Comma && ps.peek.type != TokenType.CloseParen) {
-		throw makeExpected(ps.peek.location, "',', ')', or an identifier", ps.peek.value);
+		return parseExpected(ps, ps.peek.location, p, "',', ')', or an identifier");
 	}
 	p.location = ps.peek.location - origin;
 
-	return p;
+	return Succeeded;
 }
 
 // Parse things that go on the end of types like * or []. If none, base is returned.
-ir.Type parseTypeSigils(ParserStream ps, Location origin, ir.Type base)
+ParseStatus parseTypeSigils(ParserStream ps, out ir.Type outType, Location origin, ir.Type base)
 {
+	outType = base;
 	bool loop = true;
 	while (loop) switch (ps.peek.type) {
 	case TokenType.Asterix:
 		auto end = ps.get();
 		auto p = new ir.PointerType();
 		p.location = end.location - origin;
-		p.base = base;
-		base = p;
+		p.base = outType;
+		outType = p;
 		break;
 	case TokenType.OpenBracket:
 		ps.get();
 		if (ps.peek.type == TokenType.CloseBracket) {
 			// Dynamic array.
-			auto end = match(ps, TokenType.CloseBracket);
+			auto end = ps.get();
 			auto a = new ir.ArrayType();
 			a.location = end.location - origin;
-			a.base = base;
-			base = a;
+			a.base = outType;
+			outType = a;
 		} else if (ps.peek.type == TokenType.IntegerLiteral) {
 			// Static array.
 			auto integer = ps.get();
-			auto end = match(ps, TokenType.CloseBracket);
+			Token end;
+			auto succeeded = match(ps, outType, TokenType.CloseBracket, end);
+			if (!succeeded) {
+				return succeeded;
+			}
 			auto a = new ir.StaticArrayType();
 			a.location = end.location - origin;
-			a.base = base;
+			a.base = outType;
 			a.length = cast(size_t)toInt(integer.value);
-			base = a;
+			outType = a;
 		} else {
 			// Associative array.
 			auto a = new ir.AAType();
 			a.value = base;
-			a.key = parseType(ps);
+			auto succeeded = parseType(ps, a.key);
+			if (!succeeded) {
+				return parseFailed(ps, outType);
+			}
 			a.location = ps.peek.location - origin;
-			match(ps, TokenType.CloseBracket);
-			base = a;
+			succeeded = match(ps, outType, TokenType.CloseBracket);
+			if (!succeeded) {
+				return succeeded;
+			}
+			outType = a;
 		}
 		break;
 	default:
 		loop = false;
 	}
-	return base;
+	return Succeeded;
 }
 
 package ir.Type parsePrimitiveType(ParserStream ps)
@@ -429,9 +573,9 @@ package ir.Type parsePrimitiveType(ParserStream ps)
 	return ptype;
 }
 
-ir.Function parseFunction(ParserStream ps, ir.Type base)
+ParseStatus parseFunction(ParserStream ps, out ir.Function fn, ir.Type base)
 {
-	auto fn = new ir.Function();
+	fn = new ir.Function();
 	fn.type = new ir.FunctionType();
 	fn.docComment = base.docComment;
 	ps.pushCommentLevel();
@@ -441,12 +585,20 @@ ir.Function parseFunction(ParserStream ps, ir.Type base)
 	fn.type.ret = base;
 
 	// int <add>(int a, int b) {}
-	auto nameTok = match(ps, TokenType.Identifier);
+	Token nameTok;
+	auto succeeded = match(ps, fn, TokenType.Identifier, nameTok);
+	if (!succeeded) {
+		return succeeded;
+	}
 	fn.name = nameTok.value;
 	fn.location = nameTok.location;
 
 	// int add<(int a, int b)> {}
-	auto params = parseParameterList(ps, fn.type);
+	ir.Variable[] params;
+	succeeded = parseParameterList(ps, params, fn.type);
+	if (!succeeded) {
+		return parseFailed(ps, fn);
+	}
 	foreach (i, param; params) {
 		fn.type.params ~= param.type;
 		auto p = new ir.FunctionParam();
@@ -465,29 +617,38 @@ ir.Function parseFunction(ParserStream ps, ir.Type base)
 		bool _in, _out;
 		switch (ps.peek.type) {
 		case TokenType.In:
+			ps.get();
 			// <in> { }
 			if (_in) {
-				throw makeMultipleOutBlocks(ps.peek.location);
+				return parseExpected(ps, ps.peek.location, fn, "only one in block");
 			}
 			_in = true;
-			match(ps, TokenType.In);
-			fn.inContract = parseBlock(ps);
+			succeeded = parseBlock(ps, fn.inContract);
+			if (!succeeded) {
+				return parseFailed(ps, fn);
+			}
 			break;
 		case TokenType.Out:
+			ps.get();
 			// <out>
 			if (_out) {
-				throw makeMultipleOutBlocks(ps.peek.location);
+				return parseExpected(ps, ps.peek.location, fn, "only one out block");
 			}
 			_out = true;
-			match(ps, TokenType.Out);
 			if (ps.peek.type == TokenType.OpenParen) {
+				ps.get();
 				// out <(result)>
-				match(ps, TokenType.OpenParen);
-				auto identTok = match(ps, TokenType.Identifier);
+				if (ps != [TokenType.Identifier, TokenType.CloseParen]) {
+					return unexpectedToken(ps, fn);
+				}
+				auto identTok = ps.get();
 				fn.outParameter = identTok.value;
-				match(ps, TokenType.CloseParen);
+				ps.get();
 			}
-			fn.outContract = parseBlock(ps);
+			succeeded = parseBlock(ps, fn.outContract);
+			if (!succeeded) {
+				return parseFailed(ps, fn);
+			}
 			break;
 		case TokenType.OpenBrace:
 		case TokenType.Body:
@@ -495,51 +656,79 @@ ir.Function parseFunction(ParserStream ps, ir.Type base)
 				ps.get();
 			}
 			inBlocks = false;
-			fn._body = parseBlock(ps);
+			succeeded = parseBlock(ps, fn._body);
+			if (!succeeded) {
+				return parseFailed(ps, fn);
+			}
 			break;
 		default:
-			throw makeExpected(ps.peek.location, "block declaration");
+			return parseExpected(ps, ps.peek.location, fn, "block declaration");
 		}
 	}
-	if (ps.peek.type == TokenType.Semicolon) {
-		ps.get();
-	}
+	matchIf(ps, TokenType.Semicolon);
 
-	return fn;
+	return Succeeded;
 }
 
-ir.BlockStatement parseBlock(ParserStream ps)
+/**
+ * This parses a function block, different from BlockStatement.
+ *
+ * void func()
+ * out (result) <{ ... }>
+ * in <{ ... }>
+ * body <{ ... }>
+ */
+ParseStatus parseBlock(ParserStream ps, out ir.BlockStatement bs)
 {
-	auto bs = new ir.BlockStatement();
+	bs = new ir.BlockStatement();
 	bs.location = ps.peek.location;
 
-	match(ps, TokenType.OpenBrace);
-	eatComments(ps);
-	while (ps != TokenType.CloseBrace) {
-		eatComments(ps);
-		bs.statements ~= parseStatement(ps);
+	auto succeeded = match(ps, bs, TokenType.OpenBrace);
+	if (!succeeded) {
+		return succeeded;
 	}
-	match(ps, TokenType.CloseBrace);
 
-	return bs;
+	succeeded = eatComments(ps);
+	if (!succeeded) {
+		return succeeded;
+	}
+	while (ps != TokenType.CloseBrace) {
+		succeeded = eatComments(ps);
+		if (!succeeded) {
+			return succeeded;
+		}
+		ir.Node[] nodes;
+		succeeded = parseStatement(ps, nodes);
+		if (!succeeded) {
+			return parseFailed(ps, bs);
+		}
+		bs.statements ~= nodes;
+	}
+	return match(ps, bs, TokenType.CloseBrace);
 }
 
-ir.EnumDeclaration parseEnumDeclaration(ParserStream ps)
+ParseStatus parseEnumDeclaration(ParserStream ps, out ir.EnumDeclaration edecl)
 {
-	auto edecl = new ir.EnumDeclaration();
+	edecl = new ir.EnumDeclaration();
 	edecl.location = ps.peek.location;
 
-	auto nameTok = match(ps, TokenType.Identifier);
+	Token nameTok;
+	auto succeeded = match(ps, edecl, TokenType.Identifier, nameTok);
+	if (!succeeded) {
+		return succeeded;
+	}
 	edecl.name = nameTok.value;
 
 	if (matchIf(ps, TokenType.Assign)) {
-		edecl.assign = parseExp(ps);
+		succeeded = parseExp(ps, edecl.assign);
+		if (!succeeded) {
+			return parseFailed(ps, edecl);
+		}
 	}
 
 	edecl.docComment = ps.comment();
 	if (edecl.docComment.length == 0) {
 		ps.retroComment = &edecl.docComment;
 	}
-	eatComments(ps);
-	return edecl;
+	return eatComments(ps);
 }
