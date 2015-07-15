@@ -10,6 +10,7 @@ import std.process : wait, spawnShell;
 import std.stdio : stderr, stdout;
 
 import volt.util.path;
+import volt.util.perf : perf;
 import volt.exceptions;
 import volt.interfaces;
 import volt.errors;
@@ -269,6 +270,7 @@ protected:
 
 	int intCompile()
 	{
+
 		ir.Module[] mods;
 
 		void debugPrint(string msg, string s)
@@ -292,6 +294,8 @@ protected:
 		}
 		scope(failure) debugPasses();
 
+		perf.tag("parsing");
+
 		// Load all modules to be compiled.
 		// Don't run phase 1 on them yet.
 		auto dp = new DocPrinter(languagePass);
@@ -313,6 +317,7 @@ protected:
 		auto lp = cast(VoltLanguagePass)languagePass;
 		lp.setupOneTruePointers();
 
+		perf.tag("phase1");
 		// Force phase 1 to be executed on the modules.
 		foreach (mod; mods)
 			languagePass.phase1(mod);
@@ -321,14 +326,17 @@ protected:
 		foreach (mod; mModulesByName)
 			dmdIsStupid ~= mod;
 
+		perf.tag("phase2");
 		// All modules need to be run trough phase2.
 		languagePass.phase2(dmdIsStupid);
 
+		perf.tag("phase3");
 		// All modules need to be run trough phase3.
 		languagePass.phase3(dmdIsStupid);
 
 		debugPasses();
 
+		perf.tag("backend");
 		if (settings.noBackend)
 			return 0;
 
@@ -402,11 +410,13 @@ protected:
 			return 0;
 		}
 
+		perf.tag("link");
 		// And finally call the linker.
 		ret = nativeLink(mLinker, obj, of);
 		if (ret)
 			return 0;
 
+		perf.tag("exit");
 		return 0;
 	}
 

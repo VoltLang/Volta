@@ -13,10 +13,20 @@ import volt.license;
 import volt.interfaces;
 import volt.controller;
 import volt.util.path;
+import volt.util.perf : perf;
 
+bool doPerfPrint;
 
 int main(string[] args)
 {
+	perf.tag("setup");
+	scope(exit) {
+		perf.tag("done");
+		if (doPerfPrint) {
+			perf.print();
+		}
+	}
+
 	string[] files;
 	auto cmd = args[0];
 	args = args[1 .. $];
@@ -218,9 +228,6 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 		case "--no-catch":
 			settings.noCatch = true;
 			continue;
-		case "--internal-dbg":
-			settings.internalDebug = true;
-			continue;
 		case "--no-stdlib":
 			settings.noStdLib = true;
 			continue;
@@ -253,6 +260,12 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 			continue;
 		case "--dep-argtags":
 			settings.depArgTags = true;
+			continue;
+		case "--internal-dbg":
+			settings.internalDebug = true;
+			continue;
+		case "--internal-perf":
+			doPerfPrint = true;
 			continue;
 		default:
 		}
@@ -355,13 +368,15 @@ bool printUsage()
 	writefln("\t--emit-bitcode   Emit LLVM bitcode (implies -c).");
 	writefln("\t-S,--no-backend  Stop compilation before the backend.");
 	writefln("\t--no-catch       For compiler debugging purposes.");
-	writefln("\t--internal-dbg   Enables internal debug printing.");
 	writeln();
 	writefln("\t--no-stdlib      Don't include any stdlib (from config or arguments)");
 	writefln("\t--stdlib-I       Apply this include before any other -I");
 	writefln("\t                 (ignored if --no-stdlib was given)");
 	writefln("\t--stdlib-file    Apply this file first but only when linking");
 	writefln("\t                 (ignored if --no-stdlib was given)");
+	writeln();
+	writefln("\t--internal-dbg   Enables internal debug printing.");
+	writefln("\t--internal-perf  Enables internal performance timings.");
 	return false;
 }
 
@@ -371,4 +386,3 @@ bool printLicense()
 		writefln(license);
 	return false;
 }
-
