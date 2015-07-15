@@ -2379,7 +2379,7 @@ bool opOverloadRewrite(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 	if (overfn.length == 0) {
 		return false;
 	}
-	auto store = lookupOnlyThisScope(ctx.lp, _agg.myScope, l, overfn);
+	auto store = lookupAsThisScope(ctx.lp, _agg.myScope, l, overfn);
 	if (store is null || store.functions.length == 0) {
 		throw makeAggregateDoesNotDefineOverload(exp.location, _agg, overfn);
 	}
@@ -2407,7 +2407,7 @@ bool opOverloadRewriteIndex(Context ctx, ir.Postfix pfix, ref ir.Exp exp)
 		return false;
 	}
 	auto name = overloadIndexName();
-	auto store = lookupOnlyThisScope(ctx.lp, _agg.myScope, exp.location, name);
+	auto store = lookupAsThisScope(ctx.lp, _agg.myScope, exp.location, name);
 	if (store is null || store.functions.length == 0) {
 		throw makeAggregateDoesNotDefineOverload(exp.location, _agg, name);
 	}
