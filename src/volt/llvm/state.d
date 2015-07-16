@@ -498,12 +498,17 @@ string[][] tripleList = [
 	 * The subsystem will controll if llc emits coff or ELF object files.
 	 *
 	 * - i686-mingw32 emits ELF object files.
-	 * - i686-pc-mingw32 emits COFF object files.
-	 * - i686-w64-mingw32 emits COFF object files.
+	 * - i686-pc-mingw32 emits COFF object files, used with mingw32.
+	 * - i686-w64-mingw32 emits COFF object files, used with mingw64.
+	 *
+	 * These are now translated into:
+	 *
+	 * - i686-pc-windows-gnu - mingw32
+	 * - i686-w64-windows-gnu - mingw64
 	 */
 	[
-		"i686-pc-mingw32",
-		"x86_64-w64-mingw32",
+		"i686-w64-windows-gnu",
+		"x86_64-w64-windows-gnu",
 		null,
 	],
 
