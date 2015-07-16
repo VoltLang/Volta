@@ -19,7 +19,7 @@ version (X86) {
 	enum vrt_eh_return_0 = 0;
 	enum vrt_eh_return_1 = 1;
 } else {
-	static assert("platform unsupported");
+	static assert("arch not supported");
 }
 
 /**
