@@ -35,7 +35,21 @@ public:
 	void transform(ir.Module m)
 	{
 		thisModule = m;
-		accept(m, this);
+
+		super.enter(m);
+
+		assert(m.children !is null);
+
+		// Only accept imports directly in the module.
+		foreach(n; m.children.nodes) {
+			if (n.nodeType == ir.NodeType.Import) {
+				handleImport(cast(ir.Import)n);
+			} else {
+				accept(n, this);
+			}
+		}
+
+		super.leave(m);
 	}
 
 	void close()
@@ -43,6 +57,11 @@ public:
 	}
 
 	override Status enter(ir.Import i)
+	{
+		throw makeNonTopLevelImport(i.location);
+	}
+
+	void handleImport(ir.Import i)
 	{
 		auto mod = lp.getModule(i.name);
 		if (mod is null) {
@@ -101,7 +120,5 @@ public:
 				bindScope.addAlias(a, a.name, mod.myScope);
 			}
 		}
-
-		return Continue;
 	}
 }

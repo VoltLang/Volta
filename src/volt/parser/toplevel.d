@@ -33,7 +33,7 @@ ir.Module parseModule(ParserStream ps)
 	mod.docComment = ps.comment();
 	ps.popCommentLevel();
 
-	mod.children = parseTopLevelBlock(ps, TokenType.End, true);
+	mod.children = parseTopLevelBlock(ps, TokenType.End);
 
 	mod.children.nodes = [
 			createImport(mod.location, "defaultsymbols", false),
@@ -59,7 +59,7 @@ ir.Node createImport(Location location, string name, bool _static)
 	return _import;
 }
 
-ir.TopLevelBlock parseOneTopLevelBlock(ParserStream ps, bool inModule = false)
+ir.TopLevelBlock parseOneTopLevelBlock(ParserStream ps)
 out(result)
 {
 	assert(result !is null);
@@ -72,7 +72,7 @@ body
 
 	switch (ps.peek.type) {
 		case TokenType.Import:
-			tlb.nodes ~= parseImport(ps, inModule);
+			tlb.nodes ~= parseImport(ps);
 			break;
 		case TokenType.Unittest:
 			tlb.nodes ~= parseUnittest(ps);
@@ -139,11 +139,11 @@ body
 		case TokenType.Inout:
 		case TokenType.Nothrow:
 		case TokenType.Pure:
-			tlb.nodes ~= parseAttribute(ps, inModule);
+			tlb.nodes ~= parseAttribute(ps);
 			break;
 		case TokenType.Version:
 		case TokenType.Debug:
-			tlb.nodes ~= parseConditionTopLevel(ps, inModule);
+			tlb.nodes ~= parseConditionTopLevel(ps);
 			break;
 		case TokenType.Static:
 			auto next = ps.lookahead(1).type;
@@ -156,7 +156,7 @@ body
 			} else if (next == TokenType.If) {
 				goto case TokenType.Version;
 			} else {
-				tlb.nodes ~= parseAttribute(ps, inModule);
+				tlb.nodes ~= parseAttribute(ps);
 			}
 			break;
 		case TokenType.Semicolon:
@@ -187,7 +187,7 @@ private bool ifDocCommentsUntilEndThenSkip(ParserStream ps)
 	return false;
 }
 
-ir.TopLevelBlock parseTopLevelBlock(ParserStream ps, TokenType end, bool inModule = false)
+ir.TopLevelBlock parseTopLevelBlock(ParserStream ps, TokenType end)
 out(result)
 {
 	assert(result !is null);
@@ -204,7 +204,7 @@ body
 			continue;
 		}
 
-		auto tmp = parseOneTopLevelBlock(ps, inModule);
+		auto tmp = parseOneTopLevelBlock(ps);
 		if (tmp.nodeType != ir.NodeType.Attribute) {
 			ps.popCommentLevel();
 			ps.pushCommentLevel();
@@ -217,12 +217,8 @@ body
 	return tlb;
 }
 
-ir.Node parseImport(ParserStream ps, bool inModule)
+ir.Node parseImport(ParserStream ps)
 {
-	if (!inModule) {
-		throw makeNonTopLevelImport(ps.peek.location);
-	}
-
 	auto _import = new ir.Import();
 	_import.location = ps.peek.location;
 	match(ps, TokenType.Import);
@@ -637,7 +633,7 @@ ir.MixinTemplate parseMixinTemplate(ParserStream ps)
 	return m;
 }
 
-ir.Attribute parseAttribute(ParserStream ps, bool inModule = false)
+ir.Attribute parseAttribute(ParserStream ps)
 {
 	auto attr = new ir.Attribute();
 	attr.location = ps.peek.location;
@@ -759,7 +755,7 @@ ir.Attribute parseAttribute(ParserStream ps, bool inModule = false)
 		if (ps.comment().length > 0) {
 			throw makeDocCommentAppliesToMultiple(ps.lastDocComment.location);
 		}
-		attr.members = parseTopLevelBlock(ps, TokenType.CloseBrace, inModule);
+		attr.members = parseTopLevelBlock(ps, TokenType.CloseBrace);
 		match(ps, TokenType.CloseBrace);
 	} else if (matchIf(ps, TokenType.Colon)) {
 		/* Have the semantic passes apply this attribute as
@@ -769,7 +765,7 @@ ir.Attribute parseAttribute(ParserStream ps, bool inModule = false)
 			throw makeDocCommentAppliesToMultiple(ps.lastDocComment.location);
 		}
 	} else {
-		attr.members = parseOneTopLevelBlock(ps, inModule);
+		attr.members = parseOneTopLevelBlock(ps);
 		if (attr.members !is null &&
 		    attr.members.nodes.length == 1 &&
 		    attr.members.nodes[0].nodeType == ir.NodeType.Attribute) {
@@ -832,7 +828,7 @@ package ir.Condition parseCondition(ParserStream ps)
 	return condition;
 }
 
-ir.ConditionTopLevel parseConditionTopLevel(ParserStream ps, bool inModule = false)
+ir.ConditionTopLevel parseConditionTopLevel(ParserStream ps)
 {
 	auto ctl = new ir.ConditionTopLevel();
 	ctl.location = ps.peek.location;
@@ -841,25 +837,25 @@ ir.ConditionTopLevel parseConditionTopLevel(ParserStream ps, bool inModule = fal
 	ctl.condition = parseCondition(ps);
 	if (matchIf(ps, TokenType.Colon)) {
 		// Colons are implictly converted into braces; the IR knows nothing of colons.
-		ctl.members = parseTopLevelBlock(ps, TokenType.CloseBrace, inModule);
+		ctl.members = parseTopLevelBlock(ps, TokenType.CloseBrace);
 		return ctl;  // Else blocks aren't tied to colon conditionals.
 	} else if (matchIf(ps, TokenType.OpenBrace)) {
-		ctl.members = parseTopLevelBlock(ps, TokenType.CloseBrace, inModule);
+		ctl.members = parseTopLevelBlock(ps, TokenType.CloseBrace);
 		match(ps, TokenType.CloseBrace);
 	} else {
-		ctl.members = parseOneTopLevelBlock(ps, inModule);
+		ctl.members = parseOneTopLevelBlock(ps);
 	}
 
 	if (matchIf(ps, TokenType.Else)) {
 		ctl.elsePresent = true;
 		if (matchIf(ps, TokenType.Colon)) {
 			// Colons are implictly converted into braces; the IR knows nothing of colons.
-			ctl.members = parseTopLevelBlock(ps, TokenType.CloseBrace, inModule);
+			ctl.members = parseTopLevelBlock(ps, TokenType.CloseBrace);
 		} else if (matchIf(ps, TokenType.OpenBrace)) {
-			ctl._else = parseTopLevelBlock(ps, TokenType.CloseBrace, inModule);
+			ctl._else = parseTopLevelBlock(ps, TokenType.CloseBrace);
 			match(ps, TokenType.CloseBrace);
 		} else {
-			ctl._else = parseOneTopLevelBlock(ps, inModule);
+			ctl._else = parseOneTopLevelBlock(ps);
 		}
 	}
 
