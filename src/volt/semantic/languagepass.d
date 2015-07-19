@@ -63,7 +63,7 @@ public:
 	 * @}
 	 */
 
-private:
+protected:
 	WorkTracker mTracker;
 	ir.Module[string] mModules;
 
