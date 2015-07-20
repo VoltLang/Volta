@@ -53,6 +53,37 @@ public:
 	{
 	}
 
+	override Status enter(ir.ReturnStatement ret)
+	{
+		if (ret.exp is null) {
+			return Continue;
+		}
+
+		// find the function which the return statement belongs to
+		ir.Function fn;
+		auto s = current;
+		do {
+			s = s.parent;
+			fn = cast(ir.Function) s.node;
+		} while (fn is null);
+
+		// return type of the function is void
+		auto retType = cast(ir.PrimitiveType) fn.type.ret;
+		if (retType is null || retType.type != ir.PrimitiveType.Kind.Void) {
+			return Continue;
+		}
+
+		auto expStat = buildExpStat(ret.location, ret.exp);
+		ret.exp = null;
+
+		auto owning = cast(ir.BlockStatement) current.node;
+		assert(owning !is null);
+		assert(owning.statements[$-1] is ret);
+		owning.statements = owning.statements[0..$-1] ~ expStat ~ ret;
+
+		return Continue;
+	}
+
 	override Status enter(ir.BlockStatement bs)
 	{
 		super.enter(bs);
