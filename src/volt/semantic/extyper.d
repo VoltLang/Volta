@@ -4050,14 +4050,6 @@ public:
 	override Status visit(ref ir.Exp exp, ir.IdentifierExp ie)
 	{
 		auto oldexp = exp;
-		if (!ie.globalLookup) {
-			auto oldExp = exp;
-			if (exp !is oldExp) {
-				acceptExp(exp, this);
-				return ContinueParent;
-			}
-		}
-
 		extypeIdentifierExp(ctx, exp, ie);
 		if (oldexp !is exp) {
 			return acceptExp(exp, this);
