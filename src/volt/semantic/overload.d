@@ -98,7 +98,9 @@ int matchLevel(bool homogenous, ir.Type argument, ir.Type parameter)
 	if (typesEqual(argument, parameter)) {
 		return 4;
 	}
-	if (typesEqual(removeRefAndOut(argument), removeRefAndOut(parameter))) {
+	argument = removeRefAndOut(argument);
+	parameter = removeRefAndOut(parameter);
+	if (typesEqual(argument, parameter)) {
 		return 3;
 	}
 	auto asConst = new ir.StorageType();
