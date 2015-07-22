@@ -1335,7 +1335,7 @@ private void rewriteVarargs(Context ctx, ir.CallableType asFunctionType, ir.Post
 		auto typeId = buildTypeidSmart(postfix.location, etype);
 		typeidsLiteral.values ~= typeId;
 		types ~= etype;
-		sizes ~= size(postfix.location, ctx.lp, etype);
+		sizes ~= size(ctx.lp, etype);
 		totalSize += sizes[$-1];
 	}
 
@@ -2872,7 +2872,7 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 							auto constant = cast(ir.Constant) e;
 							if (constant !is null) {
 								if (sz == 0) {
-									sz = size(ss.location, ctx.lp, constant.type);
+									sz = size(ctx.lp, constant.type);
 									assert(sz > 0);
 								}
 								switch (sz) {
@@ -2889,7 +2889,7 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 							if (cexp !is null) {
 								assert(cexp.op == ir.Unary.Op.Cast);
 								assert(sz == 0);
-								sz = size(ss.location, ctx.lp, cexp.type);
+								sz = size(ctx.lp, cexp.type);
 								assert(sz == 8);
 								addExp(cexp.value);
 								return;
@@ -3098,8 +3098,8 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, Context ctx, ir.Scope nest
 		}
 		ir.Type defaultType = buildInt(l);
 		if (!typesEqual(begin, end)) {
-			auto beginsz = size(l, ctx.lp, begin);
-			auto endsz = size(l, ctx.lp, end);
+			auto beginsz = size(ctx.lp, begin);
+			auto endsz = size(ctx.lp, end);
 			if (beginsz > endsz) {
 				defaultType = begin;
 			} else {

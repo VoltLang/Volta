@@ -55,7 +55,7 @@ int size(ir.PrimitiveType.Kind kind)
 	}
 }
 
-int size(Location location, LanguagePass lp, ir.Node node)
+int size(LanguagePass lp, ir.Node node)
 {
 	switch (node.nodeType) with (ir.NodeType) {
 	case PrimitiveType:
@@ -66,12 +66,12 @@ int size(Location location, LanguagePass lp, ir.Node node)
 		auto asStruct = cast(ir.Struct) node;
 		assert(asStruct !is null);
 		lp.actualize(asStruct);
-		return structSize(location, lp, asStruct);
+		return structSize(lp, asStruct);
 	case Union:
 		auto asUnion = cast(ir.Union) node;
 		assert(asUnion !is null);
 		lp.actualize(asUnion);
-		return unionSize(location, lp, asUnion);
+		return unionSize(lp, asUnion);
 	case Class:
 	case Interface:
 		return lp.settings.isVersionSet("V_P64") ? 8 : 4;
@@ -79,12 +79,12 @@ int size(Location location, LanguagePass lp, ir.Node node)
 		auto asEnum = cast(ir.Enum) node;
 		assert(asEnum !is null);
 		lp.resolve(asEnum);
-		return size(location, lp, asEnum.base);
+		return size(lp, asEnum.base);
 
 	case Variable:
 		auto asVariable = cast(ir.Variable) node;
 		assert(asVariable !is null);
-		return size(location, lp, asVariable.type);
+		return size(lp, asVariable.type);
 	case PointerType, FunctionType, DelegateType:
 		return lp.settings.isVersionSet("V_P64") ? 8 : 4;
 	case ArrayType:
@@ -94,15 +94,15 @@ int size(Location location, LanguagePass lp, ir.Node node)
 	case TypeReference:
 		auto asTR = cast(ir.TypeReference) node;
 		assert(asTR !is null);
-		return size(location, lp, asTR.type);
+		return size(lp, asTR.type);
 	case StorageType:
 		auto asST = cast(ir.StorageType) node;
 		assert(asST !is null);
-		return size(location, lp, asST.base);
+		return size(lp, asST.base);
 	case StaticArrayType:
 		auto _static = cast(ir.StaticArrayType) node;
 		assert(_static !is null);
-		return size(location, lp, _static.base) * cast(int)_static.length;
+		return size(lp, _static.base) * cast(int)_static.length;
 	default:
 		throw panicUnhandled(node, ir.nodeToString(node));
 	}
@@ -130,7 +130,7 @@ size_t alignment(LanguagePass lp, ir.PrimitiveType.Kind kind)
 	}
 }
 
-size_t alignment(Location location, LanguagePass lp, ir.Type node)
+size_t alignment(LanguagePass lp, ir.Type node)
 {
 	switch (node.nodeType) with (ir.NodeType) {
 	case ArrayType:
@@ -153,23 +153,23 @@ size_t alignment(Location location, LanguagePass lp, ir.Type node)
 		auto asEnum = cast(ir.Enum) node;
 		assert(asEnum !is null);
 		lp.resolve(asEnum);
-		return alignment(location, lp, asEnum.base);
+		return alignment(lp, asEnum.base);
 	case Variable:
 		auto asVariable = cast(ir.Variable) node;
 		assert(asVariable !is null);
-		return alignment(location, lp, asVariable.type);
+		return alignment(lp, asVariable.type);
 	case TypeReference:
 		auto asTR = cast(ir.TypeReference) node;
 		assert(asTR !is null);
-		return alignment(location, lp, asTR.type);
+		return alignment(lp, asTR.type);
 	case StorageType:
 		auto asST = cast(ir.StorageType) node;
 		assert(asST !is null);
-		return alignment(location, lp, asST.base);
+		return alignment(lp, asST.base);
 	case StaticArrayType:
 		auto _static = cast(ir.StaticArrayType) node;
 		assert(_static !is null);
-		return alignment(location, lp, _static.base) * cast(int)_static.length;
+		return alignment(lp, _static.base) * cast(int)_static.length;
 	default:
 		throw panicUnhandled(node, ir.nodeToString(node));
 	}
@@ -475,7 +475,7 @@ bool acceptableForUserAttribute(LanguagePass lp, ir.Scope current, ir.Type type)
 }
 
 /// Returns the size of a given Struct, in bytes.
-int structSize(Location location, LanguagePass lp, ir.Struct s)
+int structSize(LanguagePass lp, ir.Struct s)
 {
 	int sizeAccumulator;
 	foreach (node; s.members.nodes) {
@@ -485,8 +485,8 @@ int structSize(Location location, LanguagePass lp, ir.Struct s)
 			continue;
 		}
 
-		int a = cast(int)alignment(location, lp, asVar.type);
-		int size = .size(location, lp, asVar.type);
+		int a = cast(int)alignment(lp, asVar.type);
+		int size = .size(lp, asVar.type);
 		if (sizeAccumulator % a) {
 			sizeAccumulator += (a - (sizeAccumulator % a)) + size;
 		} else {
@@ -497,7 +497,7 @@ int structSize(Location location, LanguagePass lp, ir.Struct s)
 }
 
 /// Returns the size of a given Union, in bytes.
-int unionSize(Location location, LanguagePass lp, ir.Union u)
+int unionSize(LanguagePass lp, ir.Union u)
 {
 	int sizeAccumulator;
 	foreach (node; u.members.nodes) {
@@ -506,7 +506,7 @@ int unionSize(Location location, LanguagePass lp, ir.Union u)
 			continue;
 		}
 
-		auto s = size(location, lp, node);
+		auto s = size(lp, node);
 		if (s > sizeAccumulator)
 			sizeAccumulator = s;
 	}

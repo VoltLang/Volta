@@ -636,7 +636,7 @@ public:
 
 		foreach (size_t i; 0 .. indices.length) {
 			auto t = volt.semantic.typer.getExpType(state.lp, ul.exps[i], utype.myScope);
-			auto sz = volt.semantic.classify.size(t.location, state.lp, t);
+			auto sz = volt.semantic.classify.size(state.lp, t);
 			if (sz > lastSize) {
 				vals[0] = state.getConstant(ul.exps[i]);
 				lastSize = sz;

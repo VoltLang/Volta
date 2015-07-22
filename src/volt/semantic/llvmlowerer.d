@@ -623,8 +623,8 @@ public:
 			return;
 		}
 
-		int fromSz = size(loc, lp, fromArray.base);
-		int toSz = size(loc, lp, toArray.base);
+		int fromSz = size(lp, fromArray.base);
+		int toSz = size(lp, toArray.base);
 		int biggestSz = fromSz > toSz ? fromSz : toSz;
 		bool decreasing = fromSz > toSz;
 
@@ -737,7 +737,7 @@ public:
 			buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, left, left.name), "ptr")),
 			buildBinOp(loc, ir.BinOp.Op.Mul,
 				buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
-				buildConstantSizeT(loc, lp, size(loc, lp, ltype.base))
+				buildConstantSizeT(loc, lp, size(lp, ltype.base))
 			),
 			buildConstantInt(loc, 0),
 			buildConstantFalse(loc)
@@ -836,11 +836,11 @@ public:
 
 		args = [
 			cast(ir.Exp)
-			buildAdd(loc, buildExpReference(loc, allocated, allocated.name), buildConstantSizeT(loc, lp, size(loc, lp, ltype.base))),
+			buildAdd(loc, buildExpReference(loc, allocated, allocated.name), buildConstantSizeT(loc, lp, size(lp, ltype.base))),
 			buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, left, left.name), "ptr")),
 			buildBinOp(loc, ir.BinOp.Op.Mul,
 				buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
-				buildConstantSizeT(loc, lp, size(loc, lp, ltype.base))
+				buildConstantSizeT(loc, lp, size(lp, ltype.base))
 			),
 			buildConstantInt(loc, 0),
 			buildConstantFalse(loc)
@@ -886,7 +886,7 @@ public:
 		auto fnMove = getLlvmMemMove(loc);
 		auto expRef = buildExpReference(loc, fnMove, fnMove.name);
 
-		auto typeSize = size(loc, lp, type.base);
+		auto typeSize = size(lp, type.base);
 
 		ir.Exp[] args = [
 			cast(ir.Exp)
@@ -894,7 +894,7 @@ public:
 			buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, right, "right"), "ptr")),
 			buildBinOp(loc, ir.BinOp.Op.Mul,
 				buildAccess(loc, buildExpReference(loc, left, "left"), "length"),
-				buildConstantSizeT(loc, lp, size(loc, lp, type.base))
+				buildConstantSizeT(loc, lp, size(lp, type.base))
 				),
 			buildConstantInt(loc, 0),
 			buildConstantFalse(loc)
@@ -971,7 +971,7 @@ public:
 			buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, left, left.name), "ptr")),
 			buildBinOp(loc, ir.BinOp.Op.Mul,
 				buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
-				buildConstantSizeT(loc, lp, size(loc, lp, type.base))
+				buildConstantSizeT(loc, lp, size(lp, type.base))
 			),
 			buildConstantInt(loc, 0),
 			buildConstantFalse(loc)
@@ -985,13 +985,13 @@ public:
 				buildExpReference(loc, allocated, allocated.name),
 				buildBinOp(loc, ir.BinOp.Op.Mul,
 					buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
-					buildConstantSizeT(loc, lp, size(loc, lp, type.base))
+					buildConstantSizeT(loc, lp, size(lp, type.base))
 				)
 			),
 			buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, right, right.name), "ptr")),
 			buildBinOp(loc, ir.BinOp.Op.Mul,
 				buildAccess(loc, buildExpReference(loc, right, right.name), "length"),
-				buildConstantSizeT(loc, lp, size(loc, lp, type.base))
+				buildConstantSizeT(loc, lp, size(lp, type.base))
 			),
 			buildConstantInt(loc, 0),
 			buildConstantFalse(loc)
@@ -1065,7 +1065,7 @@ public:
 					buildCastSmart(loc, buildVoidPtr(loc), buildAccess(loc, buildExpReference(loc, right, right.name), "ptr")),
 					cast(ir.Exp)buildBinOp(loc, ir.BinOp.Op.Mul,
 						buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
-						buildConstantSizeT(loc, lp, size(loc, lp, type.base))
+						buildConstantSizeT(loc, lp, size(lp, type.base))
 					)
 						
 				]),

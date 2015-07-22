@@ -201,14 +201,14 @@ ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class, size_t offset)
 			continue;
 		}
 		lp.resolve(_class.myScope, asVar);
-		offset += size(_class.location, lp, asVar);
+		offset += size(lp, asVar);
 		fields ~= copyVariableSmart(asVar.location, asVar);
 	}
 	assert(_class.interfaces.length == _class.parentInterfaces.length);
 	void addOffset(ir._Interface iface)
 	{
 		_class.interfaceOffsets ~= offset;
-		offset += size(_class.location, lp, buildSizeT(_class.location, lp));
+		offset += size(lp, buildSizeT(_class.location, lp));
 		auto var = buildVariableSmart(_class.location, buildPtrSmart(_class.location, iface.layoutStruct), ir.Variable.Storage.Field, mangle(iface));
 		fields ~= var;
 		assert(iface.interfaces.length == iface.parentInterfaces.length);
@@ -443,7 +443,7 @@ ir.Struct getClassLayoutStruct(ir.Class _class, LanguagePass lp, ref ir.Struct v
 	vtableStruct = buildStruct(_class.location, _class.members, _class.myScope, "__Vtable", tinfos ~ methodTypes);
 	auto vtableVar = buildVariableSmart(_class.location, buildPtrSmart(_class.location, vtableStruct), ir.Variable.Storage.Field, "__vtable");
 
-	auto fields = getClassFields(lp, _class, /* Account for the vtable: */ size(_class.location, lp, buildSizeT(_class.location, lp)));
+	auto fields = getClassFields(lp, _class, /* Account for the vtable: */ size(lp, buildSizeT(_class.location, lp)));
 	fields = vtableVar ~ fields;
 
 	auto layoutStruct = buildStruct(_class.location, _class.members, _class.myScope, "__layoutStruct", fields);

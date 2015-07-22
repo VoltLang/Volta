@@ -93,7 +93,7 @@ void actualizeUnion(LanguagePass lp, ir.Union u)
 			}
 
 			lp.resolve(u.myScope, field);
-			auto s = size(u.location, lp, field.type);
+			auto s = size(lp, field.type);
 			if (s > accum) {
 				accum = s;
 			}
