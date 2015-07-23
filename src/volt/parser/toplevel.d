@@ -171,7 +171,7 @@ body
 	return tlb;
 }
 
-private bool ifDocCommentsUntilEndThenSkip(ParserStream ps)
+bool ifDocCommentsUntilEndThenSkip(ParserStream ps)
 {
 	size_t n = 0;
 	TokenType tt;
