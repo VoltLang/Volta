@@ -94,6 +94,7 @@ int size(LanguagePass lp, ir.Node node)
 	case TypeReference:
 		auto asTR = cast(ir.TypeReference) node;
 		assert(asTR !is null);
+		assert(asTR.type !is null);
 		return size(lp, asTR.type);
 	case StorageType:
 		auto asST = cast(ir.StorageType) node;
