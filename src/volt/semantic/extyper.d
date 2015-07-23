@@ -521,6 +521,12 @@ void extypeAssignStaticArrayType(Context ctx, ref ir.Exp exp, ir.StaticArrayType
 		return;
 	}
 	alit = cast(ir.ArrayLiteral) exp;
+	if (alit is null) {
+		auto t = realType(getExpType(ctx.lp, exp, ctx.current));
+		if (typesEqual(t, atype)) {
+			return;
+		}
+	}
 	checkAlit();
 	exp = buildArrayLiteralSmart(exp.location, atype, alit.values);
 }
