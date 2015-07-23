@@ -60,12 +60,7 @@ public:
 		}
 
 		// find the function which the return statement belongs to
-		ir.Function fn;
-		auto s = current;
-		do {
-			s = s.parent;
-			fn = cast(ir.Function) s.node;
-		} while (fn is null);
+		auto fn = getParentFunction(current);
 
 		// return type of the function is void
 		auto retType = cast(ir.PrimitiveType) fn.type.ret;
