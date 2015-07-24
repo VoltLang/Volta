@@ -248,12 +248,16 @@ public:
 		);
 
 		foreach (pair; assocArray.pairs) {
-			auto store = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp,
+			auto key = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp,
+				copyTypeSmart(loc, aa.key), pair.key
+			);
+
+			auto value = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp,
 				copyTypeSmart(loc, aa.value), pair.value
 			);
 
 			buildAAInsert(loc, lp, thisModule, current, statExp,
-				 aa, var, pair.key, buildExpReference(loc, store), false, false
+				 aa, var, buildExpReference(loc, key), buildExpReference(loc, value), false, false
 			);
 		}
 
