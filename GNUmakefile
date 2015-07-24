@@ -88,7 +88,7 @@ RT_TARGETS = \
 	rt/libvrt-x86_64-osx.bc
 
 
-all: $(RT_TARGETS) $(RT_HOST)
+all: $(RT_HOST) $(RT_TARGETS)
 
 $(OBJ_DIR)/%.$(OBJ_TYPE) : src/%.d Makefile
 	@echo "  DMD    src/$*.d"
