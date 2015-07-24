@@ -428,7 +428,7 @@ public:
 				buildExpReference(loc, value, value.name)
 		);
 
-		statExp.exp = buildExpReference(loc, key, key.name);
+		statExp.exp = buildExpReference(loc, value, value.name);
 		exp = statExp;
 
 		return ContinueParent;
