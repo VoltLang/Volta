@@ -22,6 +22,13 @@ void debugPrinter(ir.Module m)
 	dp.close();
 }
 
+void debugPrintNode(ir.Node n)
+{
+	auto dp = new DebugPrinter();
+	dp.transformNode(n);
+	dp.close();
+}
+
 string getNodeAddressString(ir.Node node)
 {
 	return "0x" ~ to!string(*cast(size_t*)&node, 16);
@@ -108,6 +115,26 @@ public:
 
 		mStream = dout;
 		acceptExp(exp, this);
+		mStream.writefln();
+		mStream = null;
+	}
+
+	void transformNode(ir.Node n)
+	in {
+		assert(mStream is null);
+		assert(mFilename is null);
+	}
+	body {
+		assert(mStream is null);
+		assert(mFilename is null);
+
+		mStream = dout;
+		auto exp = cast(ir.Exp)n;
+		if (exp is null) {
+			accept(n, this);
+		} else {
+			acceptExp(exp, this);
+		}
 		mStream.writefln();
 		mStream = null;
 	}
