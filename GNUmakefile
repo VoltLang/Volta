@@ -50,9 +50,10 @@ CCOMP_FLAGS = $(CARCH) -c -o $@ $(CFLAGS)
 MCOMP_FLAGS = $(CARCH) -c -o $@ $(CFLAGS)
 DCOMP_FLAGS = -c -w -Isrc $(DDEFINES_) -of$@ $(DFLAGS)
 LINK_FLAGS = -of$(TARGET) $(OBJ) $(LDFLAGS_) $(patsubst -%, -L-%, $(LLVM_LDFLAGS)) -L-ldl -L-lstdc++
-RUN_FLAGS = --internal-dbg --no-stdlib -I rt/src $(RT_HOST) -l gc
-RUN_TARGET = a.out.exe
 
+RUN_SRC = test/test.volt
+RUN_FLAGS = --internal-dbg --no-stdlib -I rt/src $(RT_HOST) -l gc
+RUN_TARGET = a.out
 
 ifeq ($(UNAME),Linux)
   PLATFORM=linux
@@ -68,6 +69,7 @@ else
       # Not tested
       PLATFORM=windows
       TARGET = volt.exe
+      RUN_TARGET = a.out.exe
     endif
   endif
 endif
@@ -110,27 +112,26 @@ $(TARGET): $(OBJ) Makefile
 	@$(DMD) $(LINK_FLAGS)
 
 clean:
-	@rm -rf $(TARGET) .obj
-	@rm -f rt/libvrt-host.bc
+	@rm -rf $(TARGET) $(RUN_TARGET) .obj
 	@rm -f $(RT_TARGETS) $(RT_HOST)
 	@rm -f viv
 	@rm -rf .pkg
 	@rm -rf volt.tar.gz
 
-$(RUN_TARGET): $(TARGET) $(RT_HOST) test/simple.volt
+$(RUN_TARGET): $(TARGET) $(RT_HOST) $(RUN_SRC)
 	@echo "  VOLT   $(RUN_TARGET)"
-	@./$(TARGET) $(RUN_FLAGS) -o a.out.exe test/simple.volt
+	@./$(TARGET) $(RUN_FLAGS) -o $(RUN_TARGET) $(RUN_SRC)
 
 sanity: $(RUN_TARGET)
-	@echo "  SANITY a.out.exe"
-	@./a.out.exe; test $$? -eq 42
+	@echo "  SANITY $(RUN_TARGET)"
+	@./$(RUN_TARGET); test $$? -eq 42
 
 run: $(RUN_TARGET)
-	@echo "  RUN    a.out.exe"
-	@-./a.out.exe
+	@echo "  RUN    $(RUN_TARGET)"
+	@-./$(RUN_TARGET)
 
 debug: $(TARGET) $(RT_HOST)
-	@gdb --args ./$(TARGET) $(RUN_FLAGS) -o a.out.exe test/simple.volt
+	@gdb --args ./$(TARGET) $(RUN_FLAGS) -o $(RUN_TARGET) $(RUN_SRC)
 
 license: $(TARGET)
 	@./$(TARGET) --license
