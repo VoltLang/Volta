@@ -527,9 +527,9 @@ public:
 		auto loc = binOp.location;
 
 		auto leftType = getExpType(lp, binOp.left, current);
-		auto leftArrayType = cast(ir.ArrayType)leftType;
+		auto leftArrayType = cast(ir.ArrayType)realType(removeRefAndOut(leftType));
 		if (leftArrayType is null)
-			throw panic(binOp, "OH GOD!");
+			throw panic(binOp, "couldn't retrieve array type from cat assign.");
 
 		auto rightType = getExpType(lp, binOp.right, current);
 		if (typesEqual(rightType, leftArrayType.base)) {

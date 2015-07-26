@@ -2431,8 +2431,8 @@ bool opOverloadRewriteIndex(Context ctx, ir.Postfix pfix, ref ir.Exp exp)
  */
 void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 {
-	auto ltype = realType(getExpType(ctx.lp, binop.left, ctx.current));
-	auto rtype = realType(getExpType(ctx.lp, binop.right, ctx.current));
+	auto ltype = realType(removeRefAndOut(getExpType(ctx.lp, binop.left, ctx.current)));
+	auto rtype = realType(removeRefAndOut(getExpType(ctx.lp, binop.right, ctx.current)));
 
 	if (handleIfNull(ctx, rtype, binop.left)) return;
 	if (handleIfNull(ctx, ltype, binop.right)) return;
@@ -2534,8 +2534,8 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 		return;
 	}
 
-	auto larray = cast(ir.ArrayType)realType(ltype);
-	auto rarray = cast(ir.ArrayType)realType(rtype);
+	auto larray = cast(ir.ArrayType)ltype;
+	auto rarray = cast(ir.ArrayType)rtype;
 	if ((binop.op == ir.BinOp.Op.Cat || binop.op == ir.BinOp.Op.CatAssign) &&
 	    (larray !is null || rarray !is null)) {
 		if (binop.op == ir.BinOp.Op.CatAssign && effectivelyConst(ltype)) {
