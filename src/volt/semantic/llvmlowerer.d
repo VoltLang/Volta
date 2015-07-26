@@ -531,7 +531,11 @@ public:
 		if (leftArrayType is null)
 			throw panic(binOp, "couldn't retrieve array type from cat assign.");
 
-		auto rightType = getExpType(lp, binOp.right, current);
+		// Currently realType is not needed here, but if it ever was
+		// needed remember to realType leftArrayType.base as well,
+		// since realType will remove enum's as well.
+		auto rightType = removeRefAndOut(getExpType(lp, binOp.right, current));
+
 		if (typesEqual(rightType, leftArrayType.base)) {
 			// T[] ~ T
 			auto fn = getArrayAppendFunction(loc, leftArrayType, rightType, true);
