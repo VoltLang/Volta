@@ -11,7 +11,7 @@ import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 import volt.semantic.context;
-import volt.semantic.lookup : ensureResolved;
+import volt.semantic.lookup : ensureResolved, lookup;
 import volt.semantic.ctfe : evaluate;
 import volt.semantic.typer : realType;
 
@@ -307,18 +307,27 @@ bool isAssign(ir.Exp exp)
 	}
 }
 
-bool isLValue(ir.Exp exp)
+bool isLValue(LanguagePass lp, ir.Scope current, ir.Exp exp)
 {
 	switch (exp.nodeType) {
 	case ir.NodeType.IdentifierExp:
+		auto asIdentExp = cast(ir.IdentifierExp) exp;
+		assert(asIdentExp !is null);
+		auto store = lookup(lp, current, exp.location, asIdentExp.value);
+		return store !is null && (store.kind == ir.Store.Kind.Value || store.kind == ir.Store.Kind.FunctionParam);
 	case ir.NodeType.ExpReference: return true;
 	case ir.NodeType.Postfix:
 		auto asPostfix = cast(ir.Postfix) exp;
 		assert(asPostfix !is null);
-		if (asPostfix.op == ir.Postfix.Op.Index) {
-			return isLValue(asPostfix.child);
-		}
-		return asPostfix.op == ir.Postfix.Op.Identifier;
+		return asPostfix.op == ir.Postfix.Op.Identifier || isLValue(lp, current, asPostfix.child);
+	case ir.NodeType.Unary:
+		auto asUnary = cast(ir.Unary) exp;
+		assert(asUnary !is null);
+		return isLValue(lp, current, asUnary.value);
+	case ir.NodeType.StatementExp:
+		auto sexp = cast(ir.StatementExp) exp;
+		assert(sexp !is null);
+		return isLValue(lp, current, sexp.exp);
 	default:
 		return false;
 	}

@@ -1269,7 +1269,7 @@ private void rewriteVaStartAndEnd(Context ctx, ir.Function fn, ir.Postfix postfi
 		if (ptr is null || !isVoid(ptr.base)) {
 			throw makeExpected(postfix, "va_list argument");
 		}
-		if (!isLValue(postfix.arguments[0])) {
+		if (!isLValue(ctx.lp, ctx.current, postfix.arguments[0])) {
 			throw makeVaFooMustBeLValue(postfix.arguments[0].location, (fn is ctx.lp.vaStartFunc || fn is ctx.lp.vaCStartFunc) ? "va_start" : "va_end");
 		}
 		postfix.arguments[0] = buildAddrOf(postfix.arguments[0]);
@@ -1531,7 +1531,7 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	foreach (i; 0 .. asFunctionType.params.length) {
 		ir.StorageType.Kind stype;
 		if (isRef(asFunctionType.params[i], stype)) { 
-			if (!isLValue(postfix.arguments[i])) {
+			if (!isLValue(ctx.lp, ctx.current, postfix.arguments[i])) {
 				throw makeNotLValue(postfix.arguments[i]);
 			}
 			if (stype == ir.StorageType.Kind.Ref &&
@@ -2431,8 +2431,10 @@ bool opOverloadRewriteIndex(Context ctx, ir.Postfix pfix, ref ir.Exp exp)
  */
 void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 {
-	auto ltype = realType(removeRefAndOut(getExpType(ctx.lp, binop.left, ctx.current)));
-	auto rtype = realType(removeRefAndOut(getExpType(ctx.lp, binop.right, ctx.current)));
+	auto lraw = getExpType(ctx.lp, binop.left, ctx.current);
+	auto rraw = getExpType(ctx.lp, binop.right, ctx.current);
+	auto ltype = realType(removeRefAndOut(lraw));
+	auto rtype = realType(removeRefAndOut(rraw));
 
 	if (handleIfNull(ctx, rtype, binop.left)) return;
 	if (handleIfNull(ctx, ltype, binop.right)) return;
@@ -2486,6 +2488,9 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 	case AddAssign, SubAssign, MulAssign, DivAssign, ModAssign, AndAssign,
 	     OrAssign, XorAssign, CatAssign, LSAssign, SRSAssign, RSAssign, PowAssign, Assign:
 		// TODO this needs to be changed if there is operator overloading
+		if (!isLValue(ctx.lp, ctx.current, binop.left)) {
+			throw makeExpected(binop.left.location, "lvalue");
+		}
 		auto asPostfix = cast(ir.Postfix)binop.left;
 		if (asPostfix !is null) {
 			auto postfixLeft = getExpType(ctx.lp, asPostfix.child, ctx.current);
@@ -4027,7 +4032,7 @@ public:
 
 	override Status leave(ref ir.Exp exp, ir.VaArgExp vaexp)
 	{
-		if (!isLValue(vaexp.arg)) {
+		if (!isLValue(ctx.lp, ctx.current, vaexp.arg)) {
 			throw makeVaFooMustBeLValue(vaexp.arg.location, "va_exp");
 		}
 		if (ctx.currentFunction.type.linkage == ir.Linkage.C) {

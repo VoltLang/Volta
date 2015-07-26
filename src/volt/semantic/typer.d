@@ -789,7 +789,7 @@ ir.Type getPostfixIdentifierAssocArrayType(LanguagePass lp, ir.Postfix postfix, 
 
 ir.Type getPostfixIncDecType(LanguagePass lp, ir.Postfix postfix, ir.Scope currentScope)
 {
-	if (!isLValue(postfix.child)) {
+	if (!isLValue(lp, currentScope, postfix.child)) {
 		throw makeNotLValue(postfix);
 	}
 	auto otype = getExpType(lp, postfix.child, currentScope);
@@ -906,7 +906,7 @@ ir.Type getUnaryType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 
 ir.Type getUnaryIncDecType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 {
-	if (!isLValue(unary.value)) {
+	if (!isLValue(lp, currentScope, unary.value)) {
 		throw makeNotLValue(unary);
 	}
 	auto type = getExpType(lp, unary.value, currentScope);
@@ -990,7 +990,7 @@ ir.Type getUnaryDerefType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope
 
 ir.Type getUnaryAddrOfType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 {
-	if (!isLValue(unary.value)) {
+	if (!isLValue(lp, currentScope, unary.value)) {
 		throw makeNotLValue(unary);
 	}
 	auto type = getExpType(lp, unary.value, currentScope);
