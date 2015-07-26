@@ -19,7 +19,9 @@ int main(string[] args)
 		output.writefln("\n%s\n%s:%s", e.message, e.file, e.line);
 		return 1;
 	} catch (object.Throwable e) {
-		output.writefln("\nThrowable: '%s'\n%s:%s: '%s'", e.message, toString(e.throwFile), e.throwLine);
+		output.writefln("\nThrowable: '???'\n%s:%s: '%s'",
+		                /*e.classinfo.mangledName,*/ toString(e.throwFile),
+		                e.throwLine, e.message);
 		return 1;
 	}
 	assert(false);
@@ -37,7 +39,9 @@ int realMain(string[] args)
 		} catch (object.Exception e) {
 			output.writefln("\n%s\n%s:%s", e.message, e.file, e.line);
 		} catch (object.Throwable e) {
-			output.writefln("\nThrowable: '%s'\n%s:%s: '%s'", e.message, toString(e.throwFile), e.throwLine);
+			output.writefln("\nThrowable: '???'\n%s:%s: '%s'",
+			                /*e.classinfo.mangledName,*/ toString(e.throwFile),
+			                e.throwLine, e.message);
 		}
 	}
 	return 0;
