@@ -3752,6 +3752,9 @@ public:
 			auto retType = getExpType(ctx.lp, ret.exp, ctx.current);
 			if (fn.isAutoReturn) {
 				fn.type.ret = copyTypeSmart(retType.location, getExpType(ctx.lp, ret.exp, ctx.current));
+				if (cast(ir.NullType)fn.type.ret !is null) {
+					fn.type.ret = buildVoidPtr(ret.location);
+				}
 			}
 			auto st = cast(ir.StorageType)retType;
 			if (st !is null && st.type == ir.StorageType.Kind.Scope && mutableIndirection(st)) {
