@@ -66,8 +66,6 @@ extern(C) void vrt_gc_init()
 	GC_init();
 	//GC_set_java_finalization(1);
 	GC_java_finalization = 1;
-
-	return;
 }
 
 extern(C) AllocDg vrt_gc_get_alloc_dg()

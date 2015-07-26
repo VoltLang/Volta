@@ -18,15 +18,12 @@ extern(C) void vrt_eh_throw_slice_error(size_t length, size_t targetSize, const(
 	if ((length % targetSize) != 0) {
 		vrt_eh_throw(new object.Error("invalid array cast"), file, line);
 	}
-	return;
 }
 
 extern(C) void vrt_eh_personality_v0()
 {
-	return;
 }
 
 extern(C) void _Unwind_Resume()
 {
-	return;
 }

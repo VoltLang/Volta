@@ -1,4 +1,4 @@
-// Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2012-2015, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module object;
 
@@ -85,11 +85,6 @@ enum
 
 class TypeInfo
 {
-	this()
-	{
-		return;
-	}
-
 	size_t size;
 	int type;
 	char[] mangledName;
@@ -105,15 +100,7 @@ class TypeInfo
 
 class Object
 {
-	this()
-	{
-		return;
-	}
-
-	~this()
-	{
-		return;
-	}
+	~this() {}
 
 	string toString()
 	{
@@ -123,10 +110,6 @@ class Object
 
 class Attribute
 {
-	this()
-	{
-		return;
-	}
 }
 
 
@@ -148,7 +131,6 @@ class Throwable
 	this(string message)
 	{
 		this.message = message;
-		return;
 	}
 }
 
@@ -162,7 +144,6 @@ class Exception : Throwable
 		super(message);
 		this.file = file;
 		this.line = line;
-		return;
 	}
 }
 
@@ -171,7 +152,6 @@ class Error : Throwable
 	this(string message)
 	{
 		super(message);
-		return;
 	}
 }
 
@@ -180,7 +160,6 @@ class AssertError : Error
 	this(string message)
 	{
 		super(message);
-		return;
 	}
 }
 
@@ -191,7 +170,6 @@ class KeyNotFoundException : Exception
 	this(string message)
 	{
 		super(message);
-		return;
 	}
 }
 
