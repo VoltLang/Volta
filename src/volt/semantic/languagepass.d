@@ -36,6 +36,7 @@ import volt.semantic.typeidreplacer;
 import volt.semantic.importresolver;
 import volt.semantic.ctfe;
 import volt.semantic.cfg;
+import volt.semantic.scopereplacer;
 
 import volt.semantic.resolver;
 import volt.semantic.classresolver;
@@ -78,6 +79,7 @@ public:
 		if (settings.removeConditionalsOnly) {
 			return;
 		}
+		postParse ~= new ScopeReplacer();
 		postParse ~= new AttribRemoval(this);
 		postParse ~= new Gatherer(this);
 

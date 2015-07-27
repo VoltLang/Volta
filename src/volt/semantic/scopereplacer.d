@@ -1,18 +1,44 @@
 // Copyright © 2015, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.visitor.scopereplacer;
+module volt.semantic.scopereplacer;
 
 import watt.text.format;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
 
+import volt.interfaces;
 import volt.errors;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
+import volt.semantic.cfg;
 
-class ScopeReplacer : ScopeManager
+class ScopeReplacer : NullVisitor, Pass
 {
+	ir.Function[] functionStack;
+
+	override void transform(ir.Module m)
+	{
+		accept(m, this);
+	}
+
+	override void close()
+	{
+	}
+
+	override Status enter(ir.Function fn)
+	{
+		functionStack ~= fn;
+		return Continue;
+	}
+
+	override Status leave(ir.Function fn)
+	{
+		assert(functionStack.length > 0 && fn is functionStack[$-1]);
+		functionStack = functionStack[0 .. $-1];
+		return Continue;
+	}
+
 	override Status enter(ir.BlockStatement bs)
 	{
 		super.enter(bs);
@@ -43,15 +69,12 @@ class ScopeReplacer : ScopeManager
 		fn.name = generateName(ss);
 		fn.location = ss.location;
 		fn.kind = ir.Function.Kind.Function;
-		fn.myScope = new ir.Scope(current, fn, fn.name);
 
 		fn.type = new ir.FunctionType();
 		fn.type.location = ss.location;
-		fn.type.ret = copyTypeSmart(ss.location, p.type.ret);
+		fn.type.ret = buildVoid(ss.location);
 
-		// Not copying only works because we replace the SS entirely.
 		fn._body = ss.block;
-		fn._body.myScope.parent = fn.myScope;
 
 		return fn;
 	}
