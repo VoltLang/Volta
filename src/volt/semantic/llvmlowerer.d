@@ -14,6 +14,7 @@ import volt.interfaces;
 import volt.token.location;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
+import volt.visitor.scopereplacer;
 
 import volt.semantic.typer;
 import volt.semantic.mangle;
@@ -33,6 +34,7 @@ public:
 	LanguagePass lp;
 
 	ir.Module thisModule;
+	ScopeReplacer scopeReplacer;
 
 	bool V_P64;
 
@@ -41,11 +43,13 @@ public:
 	{
 		this.lp = lp;
 		this.V_P64 = lp.settings.isVersionSet("V_P64");
+		this.scopeReplacer = new ScopeReplacer();
 	}
 
 	override void transform(ir.Module m)
 	{
 		thisModule = m;
+		accept(m, scopeReplacer);
 		accept(m, this);
 	}
 

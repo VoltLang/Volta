@@ -25,6 +25,11 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeScopeOutsideFunction(Location l, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(l, "scope outside of function.", file, line);
+}
+
 CompilerException makeCannotDup(Location l, ir.Type type, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(l, format("Cannot duplicate type '%s'.", type.errorString()), file, line);

@@ -237,6 +237,13 @@ public:
 	FunctionParam[] params;
 	Function[] nestedFunctions;
 
+	/// The various scope (exit/success/failures) turned into inline functions.
+	/// @{
+	Function[] scopeSuccesses;
+	Function[] scopeExits;
+	Function[] scopeFailures;
+	/// @}
+
 	string name;  ///< Pre mangling.
 	string mangledName;
 
