@@ -22,7 +22,7 @@ import ir = volt.ir.ir;
  * Side-effects:
  *     Advances the tokenstream if current token is of @type.
  */
-Token match(ParserStream ps, TokenType type, string file = __FILE__, size_t line = __LINE__)
+Token match(ParserStream ps, TokenType type, string file = __FILE__, int line = __LINE__)
 {
 	auto t = ps.peek;
 

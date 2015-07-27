@@ -36,20 +36,20 @@ public:
 	string fixHint; // Optional
 
 public:
-	this(string message, CompilerError more, bool neverIgnore, string file = __FILE__, const size_t line = __LINE__)
+	this(string message, CompilerError more, bool neverIgnore, string file = __FILE__, const int line = __LINE__)
 	{
 		this.more = more;
 		this.neverIgnore = neverIgnore;
-		super(format(errorFormat(), message), file, line);
+		super(format(errorFormat(), message), file, cast(size_t)line);
 	}
 
-	this(Location loc, string message, CompilerError more, bool neverIgnore, string file = __FILE__, const size_t line = __LINE__)
+	this(Location loc, string message, CompilerError more, bool neverIgnore, string file = __FILE__, const int line = __LINE__)
 	{
 		this.more = more;
 		this.location = loc;
 		this.hasLocation = true;
 		this.neverIgnore = neverIgnore;
-		super(format(locationFormat(), loc.toString(), message), file, line);
+		super(format(locationFormat(), loc.toString(), message), file, cast(size_t)line);
 	}
 
 protected:
@@ -71,32 +71,32 @@ protected:
  */
 class CompilerError : CompilerException
 {
-	this(string message, string file = __FILE__, const size_t line = __LINE__)
+	this(string message, string file = __FILE__, const int line = __LINE__)
 	{
 		super(message, null, false, file, line);
 	}
 
-	this(string message, CompilerError more, string file = __FILE__, const size_t line = __LINE__)
+	this(string message, CompilerError more, string file = __FILE__, const int line = __LINE__)
 	{
 		super(message, more, false, file, line);
 	}
 
-	this(Location loc, string message, bool neverIgnore, string file = __FILE__, const size_t line = __LINE__)
+	this(Location loc, string message, bool neverIgnore, string file = __FILE__, const int line = __LINE__)
 	{
 		super(loc, message, null, neverIgnore, file, line);
 	}
 
-	this(Location loc, string message, string file = __FILE__, const size_t line = __LINE__)
+	this(Location loc, string message, string file = __FILE__, const int line = __LINE__)
 	{
 		super(loc, message, null, false, file, line);
 	}
 
-	this(Location loc, string message, CompilerError more, string file = __FILE__, const size_t line = __LINE__)
+	this(Location loc, string message, CompilerError more, string file = __FILE__, const int line = __LINE__)
 	{
 		super(loc, message, more, false, file, line);
 	}
 
-	this(Location loc, string message, CompilerError more, bool neverIgnore, string file = __FILE__, const size_t line = __LINE__)
+	this(Location loc, string message, CompilerError more, bool neverIgnore, string file = __FILE__, const int line = __LINE__)
 	{
 		super(loc, message, more, neverIgnore, file, line);
 	}
@@ -105,7 +105,7 @@ class CompilerError : CompilerException
 class MissingSemicolonError : CompilerError
 {
 public:
-	this(Location loc, string type, string file = __FILE__, const size_t line = __LINE__)
+	this(Location loc, string type, string file = __FILE__, const int line = __LINE__)
 	{
 		loc.column += loc.length;
 		loc.length = 1;
@@ -119,7 +119,7 @@ public:
 class PairMismatchError : CompilerError
 {
 public:
-	this(Location pairStart, Location loc, string type, string token, string file = __FILE__, const size_t line = __LINE__)
+	this(Location pairStart, Location loc, string type, string token, string file = __FILE__, const int line = __LINE__)
 	{
 		loc.column += loc.length;
 		loc.length = token.length;
@@ -140,12 +140,12 @@ public:
 	ptrdiff_t argNumber = unspecified;
 
 public:
-	this(Location loc, string message, string file = __FILE__, const size_t line = __LINE__)
+	this(Location loc, string message, string file = __FILE__, const int line = __LINE__)
 	{
 		super(loc, message, file, line);
 	}
 
-	this(Location loc, string message, ptrdiff_t argNumber, string file = __FILE__, const size_t line = __LINE__)
+	this(Location loc, string message, ptrdiff_t argNumber, string file = __FILE__, const int line = __LINE__)
 	{
 		this.argNumber = argNumber;
 		super(loc, message, file, line);
@@ -158,12 +158,12 @@ public:
 class CompilerPanic : CompilerException
 {
 public:
-	this(string message, string file = __FILE__, const size_t line = __LINE__)
+	this(string message, string file = __FILE__, const int line = __LINE__)
 	{
 		super(message, null, true, file, line);
 	}
 
-	this(Location loc, string message, string file = __FILE__, const size_t line = __LINE__)
+	this(Location loc, string message, string file = __FILE__, const int line = __LINE__)
 	{
 		super(loc, message, null, true, file, line);
 	}
@@ -180,7 +180,7 @@ override:
 	}
 }
 
-void errorMessageOnly(Location loc, string message, string file = __FILE__, const size_t line = __LINE__)
+void errorMessageOnly(Location loc, string message, string file = __FILE__, const int line = __LINE__)
 {
 	writefln(format("%s: error: %s", loc.toString(), message));
 }
