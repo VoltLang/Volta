@@ -3694,6 +3694,9 @@ public:
 		handleNestedThis(fn);
 		handleNestedParams(ctx, fn);
 		ctx.lp.resolve(ctx.current, fn);
+		if (fn.type.homogenousVariadic && !isArray(realType(fn.type.params[$-1]))) {
+			throw makeExpected(fn.params[$-1].location, "array type");
+		}
 		if (fn.outParameter.length > 0) {
 			assert(fn.outContract !is null);
 			auto l = fn.outContract.location;
