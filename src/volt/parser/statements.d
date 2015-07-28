@@ -448,12 +448,6 @@ ir.SwitchStatement parseSwitchStatement(ParserStream ps)
 		newCase.location = ps.peek.location;
 		switch (ps.peek.type) {
 		case TokenType.Default:
-			if (hadDefault) {
-				throw makeMultipleDefaults(ps.peek.location);
-			}
-			if (ss.isFinal) {
-				throw makeFinalSwitchWithDefault(ps.peek.location);
-			}
 			match(ps, TokenType.Default);
 			match(ps, TokenType.Colon);
 			hadDefault = true;
@@ -495,10 +489,6 @@ ir.SwitchStatement parseSwitchStatement(ParserStream ps)
 	}
 	while (braces--) {
 		match(ps, TokenType.CloseBrace);
-	}
-
-	if (!ss.isFinal && !hadDefault) {
-		throw makeNoDefaultCase(ss.location);
 	}
 
 	return ss;

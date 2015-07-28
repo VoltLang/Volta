@@ -2825,7 +2825,11 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 	ArrayCase[uint] arrayCases;
 	size_t[] toRemove;  // Indices of cases that have been folded into a collision case.
 
+	int defaultCount;
 	foreach (i, _case; ss.cases) {
+		if (_case.isDefault) {
+			defaultCount++;
+		}
 		void replaceWithHashIfNeeded(ref ir.Exp exp) 
 		{
 			if (exp !is null) {
@@ -2954,6 +2958,15 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 			replaceWithHashIfNeeded(exp);
 			extypeAssign(ctx, exp, conditionType);
 		}
+	}
+	if (!ss.isFinal && defaultCount == 0) {
+		throw makeNoDefaultCase(ss.location);
+	}
+	if (ss.isFinal && defaultCount > 0) {
+		throw makeFinalSwitchWithDefault(ss.location);
+	}
+	if (defaultCount > 1) {
+		throw makeMultipleDefaults(ss.location);
 	}
 
 	for (int i = cast(int) toRemove.length - 1; i >= 0; i--) {
