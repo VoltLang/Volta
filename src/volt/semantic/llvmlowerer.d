@@ -91,20 +91,21 @@ public:
 			return Continue;
 		}
 		ir.Node[] newTopVars;
+		ir.Node[] newStatements;
 		for (size_t i = 0; i < bs.statements.length; ++i) {
 			auto var = cast(ir.Variable) bs.statements[i];
 			if (var is null) {
+				newStatements ~= bs.statements[i];
 				continue;
 			}
 			auto l = bs.statements[i].location;
 			if (var.assign !is null) {
-				bs.statements[i] = buildExpStat(l, buildAssign(l, buildExpReference(l, var, var.name), var.assign));
+				newStatements ~= buildExpStat(l, buildAssign(l, buildExpReference(l, var, var.name), var.assign));
 				var.assign = null;
-			} else {
-				bs.statements = bs.statements[0 .. i] ~ bs.statements[i + 1 .. $];
 			}
 			newTopVars ~= var;
 		}
+		bs.statements = newStatements;
 		functionStack[$-1]._body.statements = newTopVars ~ functionStack[$-1]._body.statements;
 		return Continue;
 	}
