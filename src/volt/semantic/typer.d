@@ -268,7 +268,9 @@ ir.Type getExpReferenceType(LanguagePass lp, ir.ExpReference expref, ir.Scope cu
 	auto fn = cast(ir.Function) expref.decl;
 	if (fn !is null) {
 		if (fn.nestedHiddenParameter !is null) {
-			return buildStorageType(fn.location, ir.StorageType.Kind.Scope, new ir.DelegateType(fn.type));
+			auto t = new ir.DelegateType(fn.type);
+			t.isScope = true;
+			return t;
 		}
 		if (fn.type is null) {
 			throw panic(fn.location, format("function '%s' has null type", fn.name));

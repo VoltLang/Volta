@@ -53,6 +53,16 @@ abstract class Type : Node
 public:
 	string mangledName;  ///< Filled in with a pass.
 
+	/// StorageType flags.
+	/// @{
+	bool isConst;
+	bool isImmutable;
+	bool isScope;
+	/// @}
+
+	/// The type name as typed -- string vs immutable(char)[].
+	string glossedName;
+
 protected:
 	this(NodeType nt) { super(nt); }
 }
@@ -270,9 +280,10 @@ public:
 
 	Type ret;
 	Type[] params;
+	bool[] isArgRef;
+	bool[] isArgOut;
 	/// @todo Get rid of this once we've moved Function.Kind here.
 	bool hiddenParameter;
-	bool isScope;
 	bool hasVarArgs;
 	bool varArgsProcessed;
 	bool isProperty;
@@ -291,8 +302,12 @@ public:
 		ret = ctype.ret;
 		version(Volt) {
 			params = new ctype.params[0 .. $];
+			isArgRef = new ctype.isArgRef[0 .. $];
+			isArgOut = new ctype.isArgOut[0 .. $];
 		} else {
 			params = ctype.params.dup;
+			isArgRef = ctype.isArgRef.dup;
+			isArgOut = ctype.isArgOut.dup;
 		}
 		hiddenParameter = ctype.hiddenParameter;
 		isScope = ctype.isScope;
@@ -450,9 +465,6 @@ public:
 public:
 	Kind type;
 	Type base;  // Optional.
-	///< True if this storage chain has been processed into a canonical format.
-	bool isCanonical;
-
 
 public:
 	this() { super(NodeType.StorageType); }

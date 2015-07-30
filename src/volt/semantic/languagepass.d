@@ -31,6 +31,11 @@ import volt.semantic.lookup;
 import volt.semantic.strace;
 import volt.semantic.extyper;
 import volt.semantic.typeinfo;
+import volt.semantic.irverifier;
+import volt.semantic.ctfe;
+import volt.semantic.cfg;
+import volt.semantic.storageremoval;
+
 import volt.semantic.resolver;
 import volt.semantic.classify;
 import volt.semantic.irverifier;
@@ -308,7 +313,8 @@ public:
 		scope (exit)
 			w.done();
 
-		tr.type = lookupType(this, current, tr.id);
+		tr.type = flattenStorage(lookupType(this, current, tr.id));
+		tr.type.glossedName = tr.id.toString();
 	}
 
 	override void resolve(ir.Scope current, ir.Variable v)
@@ -325,6 +331,8 @@ public:
 		auto e = new ExTyper(this);
 		e.transform(current, v);
 
+		v.type = flattenStorage(v.type);
+
 		v.isResolved = true;
 	}
 
@@ -337,7 +345,8 @@ public:
 		}
 		ensureResolved(this, current, fn.type);
 		replaceVarArgsIfNeeded(this, fn);
-		foreach (ref param; fn.params) {
+		foreach (i, ref param; fn.params) {
+			fn.type.params[i] = flattenStorage(fn.type.params[i], fn.type, i);
 			if (param.assign !is null) {
 				auto texp = cast(ir.TokenExp) param.assign;
 				if (texp is null) {
@@ -346,13 +355,45 @@ public:
 				}
 			}
 		}
+		fn.type.ret = flattenStorage(fn.type.ret);
 		resolve(current, fn.userAttrs);
+	}
+
+	override void resolve(ir.Scope current, ir.ExpReference eref)
+	{
+		auto var = cast(ir.Variable) eref.decl;
+		if (var !is null) {
+			resolve(current, var);
+			return;
+		}
+		auto fn = cast(ir.Function) eref.decl;
+		if (fn !is null) {
+			resolve(current, fn);
+			return;
+		}
+		auto set = cast(ir.FunctionSet) eref.decl;
+		if (set !is null) {
+			foreach (setfn; set.functions) {
+				resolve(current, setfn);
+			}
+			return;
+		}
+		auto fparam = cast(ir.FunctionParam) eref.decl;
+		if (set !is null) {
+			fparam.fn.type.params[fparam.index] = flattenStorage(fparam.fn.type.params[fparam.index]);
+			return;
+		}
+		auto edecl = cast(ir.EnumDeclaration) eref.decl;
+		if (edecl !is null) {
+			edecl.type = flattenStorage(edecl.type);
+		}
 	}
 
 	override void resolve(ir.Alias a)
 	{
-		if (!a.resolved)
+		if (!a.resolved) {
 			resolve(a.store);
+		}
 	}
 
 	override void resolve(ir.Store s)
@@ -380,6 +421,7 @@ public:
 			return;
 		}
 
+		ed.type = flattenStorage(ed.type);
 		auto e = new ExTyper(this);
 		e.transform(current, ed);
 	}
@@ -388,6 +430,8 @@ public:
 	{
 		ensureResolved(this, current, at.value);
 		ensureResolved(this, current, at.key);
+		at.key = flattenStorage(at.key);
+		at.value = flattenStorage(at.value);
 
 		auto base = at.key;
 
@@ -431,6 +475,7 @@ public:
 
 	override void doResolve(ir.Enum e)
 	{
+		e.base = flattenStorage(e.base);
 		resolveEnum(this, e);
 	}
 

@@ -378,7 +378,9 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 		auto c = new ir.Constant();
 		c._string = primary._string;
 		// c.type = immutable(char)[]
-		c.type = buildArrayType(primary.location, buildStorageType(primary.location, ir.StorageType.Kind.Immutable, buildPrimitiveType(primary.location, ir.PrimitiveType.Kind.Char)));
+		auto atype = buildArrayType(primary.location, buildPrimitiveType(primary.location, ir.PrimitiveType.Kind.Char));
+		atype.base.isImmutable = true;
+		c.type = atype;
 		assert((c._string[$-1] == '"' || c._string[$-1] == '`') && c._string.length >= 2);
 		c.arrayData = unescapeString(primary.location, c._string[1 .. $-1]);
 		exp = c;

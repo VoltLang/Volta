@@ -507,8 +507,6 @@ void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 	auto throwFn = lp.ehThrowFunc;
 
 	auto thenState = buildBlockStat(loc, statExp, current);
-	auto s = buildStorageType(loc, ir.StorageType.Kind.Immutable, buildChar(loc));
-	canonicaliseStorageType(s);
 
 	auto knfClass = retrieveClassFromObject(lp, loc, "KeyNotFoundException");
 	auto throwableClass = retrieveClassFromObject(lp, loc, "Throwable");

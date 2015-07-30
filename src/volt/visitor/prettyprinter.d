@@ -2151,6 +2151,9 @@ protected:
 	{
 		if (qn.leadingDot)
 			wf(".");
+		if (qn.identifiers.length == 0) {
+			return;
+		}
 		wf(qn.identifiers[0].value);
 
 		foreach(id; qn.identifiers[1 .. $]) {

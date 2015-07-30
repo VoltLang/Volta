@@ -1085,11 +1085,7 @@ void handleCreateDelegate(State state, ir.Postfix postfix, Value result)
 		throw panic(postfix, "func isn't FunctionType");
 
 	auto irFn = cast(ir.FunctionType)fn.irType;
-	auto irDg = new ir.DelegateType();
-	irDg.ret = irFn.ret;
-	irDg.linkage = irFn.linkage;
-	irDg.location = postfix.location;
-	irDg.params = irFn.params.dup;
+	auto irDg = new ir.DelegateType(irFn);
 	irDg.mangledName = volt.semantic.mangle.mangle(irDg);
 
 	auto dg = cast(DelegateType)state.fromIr(irDg);
@@ -1166,13 +1162,14 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 		auto v = new Value();
 		state.getValueAnyForm(arg, v);
 
-		ir.StorageType.Kind dummy;
-		if (i < ct.ct.params.length && volt.semantic.classify.isRef(ct.ct.params[i], dummy)) {
+		if (i < ct.ct.params.length && (ct.ct.isArgRef[i] || ct.ct.isArgOut[i])) {
 			makePointer(state, v);
+			llvmArgs[i] = LLVMBuildBitCast(state.builder, v.value,
+				LLVMPointerType(ct.params[i].llvmType, 0), "");
 		} else {
 			makeNonPointer(state, v);
+			llvmArgs[i] = v.value;
 		}
-		llvmArgs[i] = v.value;
 	}
 
 	result.value = state.buildCallOrInvoke(result.value, llvmArgs);
@@ -1250,6 +1247,13 @@ void handleExpReference(State state, ir.ExpReference expRef, Value result)
 		auto fn = cast(ir.Function)expRef.decl;
 		result.isPointer = false;
 		result.value = state.getFunctionValue(fn, result.type);
+
+		auto ft = cast(FunctionType)result.type;
+		volt.ir.util.addStorage(ft.ct, fn.type);
+		foreach (i, p; fn.type.params) {
+			volt.ir.util.addStorage(ft.ct.params[i], fn.type.params[i]);
+		}
+
 		break;
 	case Variable:
 		auto var = cast(ir.Variable)expRef.decl;

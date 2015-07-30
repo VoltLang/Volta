@@ -333,61 +333,6 @@ bool isLValue(LanguagePass lp, ir.Scope current, ir.Exp exp)
 	}
 }
 
-bool isImmutable(ir.Type type)
-{
-	if (type is null) {
-		return false;
-	}
-	auto storage = cast(ir.StorageType) type;
-	if (storage is null) {
-		return false;
-	}
-	while (storage !is null) {
-		if (storage.type == ir.StorageType.Kind.Immutable) {
-			return true;
-		}
-		storage = cast(ir.StorageType) storage.base;
-	}
-	return false;
-}
-
-bool isRef(ir.Type type, out ir.StorageType.Kind kind)
-{
-	if (type is null) {
-		return false;
-	}
-	auto storage = cast(ir.StorageType) type;
-	if (storage is null) {
-		return false;
-	}
-	while (storage !is null) {
-		if (storage.type == ir.StorageType.Kind.Ref || storage.type == ir.StorageType.Kind.Out) {
-			kind = storage.type;
-			return true;
-		}
-		storage = cast(ir.StorageType) storage.base;
-	}
-	return false;
-}
-
-bool isConst(ir.Type type)
-{
-	if (type is null) {
-		return false;
-	}
-	auto storage = cast(ir.StorageType) type;
-	if (storage is null) {
-		return false;
-	}
-	while (storage !is null) {
-		if (storage.type == ir.StorageType.Kind.Const) {
-			return true;
-		}
-		storage = cast(ir.StorageType) storage.base;
-	}
-	return false;
-}
-
 bool isRefVar(ir.Exp exp)
 {
 	auto asExpRef = cast(ir.ExpReference) exp;
@@ -398,8 +343,7 @@ bool isRefVar(ir.Exp exp)
 	if (asVar is null) {
 		return false;
 	}
-	ir.StorageType.Kind dummy;
-	return isRef(asVar.type, dummy);
+	return asVar.fn.type.isArgRef[asVar.index] || asVar.fn.type.isArgOut[asVar.index];
 }
 
 bool isFunctionMemberOrConstructor(ir.Function fn)
@@ -529,13 +473,7 @@ int unionSize(LanguagePass lp, ir.Union u)
 
 bool effectivelyConst(ir.Type type)
 {
-	auto asStorageType = cast(ir.StorageType) type;
-	if (asStorageType is null) {
-		return false;
-	}
-
-	auto t = asStorageType.type;
-	with (ir.StorageType.Kind) return t == Const || t == Immutable;
+	return type.isConst || type.isImmutable;
 }
 
 bool isPointer(ir.Type t)
@@ -869,7 +807,6 @@ ir.Type removeRefAndOut(ir.Type type)
 	auto outType = new ir.StorageType();
 	outType.type = stype.type;
 	outType.location = type.location;
-	outType.isCanonical = stype.isCanonical;
 	outType.base = removeRefAndOut(stype.base);
 	return outType;
 }
@@ -890,10 +827,11 @@ ir.Type removeConstAndImmutable(ir.Type type)
 	auto outType = new ir.StorageType();
 	outType.type = stype.type;
 	outType.location = type.location;
-	outType.isCanonical = stype.isCanonical;
 	outType.base = removeConstAndImmutable(outType.base);
 	return outType;
 }
+
+enum IgnoreStorage = true;
 
 /**
  * Determines whether the two given types are the same.
@@ -901,8 +839,15 @@ ir.Type removeConstAndImmutable(ir.Type type)
  * Not similar. Not implicitly convertable. The _same_ type.
  * Returns: true if they're the same, false otherwise.
  */
-bool typesEqual(ir.Type a, ir.Type b)
+bool typesEqual(ir.Type a, ir.Type b, bool ignoreStorage=false)
 {
+	if (!ignoreStorage) {
+		if (a.isConst != b.isConst ||
+		    a.isImmutable != b.isImmutable ||
+		    a.isScope != b.isScope) {
+			return false;
+		}
+	}
 	if (a is b) {
 		return true;
 	}
@@ -918,44 +863,44 @@ bool typesEqual(ir.Type a, ir.Type b)
 		auto ap = cast(ir.StaticArrayType) a;
 		auto bp = cast(ir.StaticArrayType) b;
 		assert(ap !is null && bp !is null);
-		return ap.length && bp.length && typesEqual(ap.base, bp.base);
+		return ap.length && bp.length && typesEqual(ap.base, bp.base, ignoreStorage);
 	} else if (a.nodeType == ir.NodeType.PointerType &&
 	           b.nodeType == ir.NodeType.PointerType) {
 		auto ap = cast(ir.PointerType) a;
 		auto bp = cast(ir.PointerType) b;
 		assert(ap !is null && bp !is null);
-		return typesEqual(ap.base, bp.base);
+		return typesEqual(ap.base, bp.base, ignoreStorage);
 	} else if (a.nodeType == ir.NodeType.ArrayType &&
 	           b.nodeType == ir.NodeType.ArrayType) {
 		auto ap = cast(ir.ArrayType) a;
 		auto bp = cast(ir.ArrayType) b;
 		assert(ap !is null && bp !is null);
-		return typesEqual(ap.base, bp.base);
+		return typesEqual(ap.base, bp.base, ignoreStorage);
 	} else if (a.nodeType == ir.NodeType.AAType &&
 	           b.nodeType == ir.NodeType.AAType) {
 		auto ap = cast(ir.AAType) a;
 		auto bp = cast(ir.AAType) b;
 		assert(ap !is null && bp !is null);
-		return typesEqual(ap.key, bp.key) && typesEqual(ap.value, bp.value);
+		return typesEqual(ap.key, bp.key, ignoreStorage) && typesEqual(ap.value, bp.value, ignoreStorage);
 	} else if (a.nodeType == ir.NodeType.TypeReference &&
 	           b.nodeType == ir.NodeType.TypeReference) {
 		auto ap = cast(ir.TypeReference) a;
 		auto bp = cast(ir.TypeReference) b;
 		assert(ap !is null && bp !is null);
 		assert(ap.type !is null && bp.type !is null);
-		return typesEqual(ap.type, bp.type);
+		return typesEqual(ap.type, bp.type, ignoreStorage);
 	} else if (a.nodeType == ir.NodeType.TypeReference) {
 		// Need to discard any TypeReference on either side.
 		auto ap = cast(ir.TypeReference) a;
 		assert(ap !is null);
 		assert(ap.type !is null);
-		return typesEqual(ap.type, b);
+		return typesEqual(ap.type, b, ignoreStorage);
 	} else if (b.nodeType == ir.NodeType.TypeReference) {
 		// Need to discard any TypeReference on either side.
 		auto bp = cast(ir.TypeReference) b;
 		assert(bp !is null);
 		assert(bp.type !is null);
-		return typesEqual(a, bp.type);
+		return typesEqual(a, bp.type, ignoreStorage);
 	} else if ((a.nodeType == ir.NodeType.FunctionType &&
 	            b.nodeType == ir.NodeType.FunctionType) ||
 		   (a.nodeType == ir.NodeType.DelegateType &&
@@ -969,18 +914,21 @@ bool typesEqual(ir.Type a, ir.Type b)
 			return false;
 		if (ap.hiddenParameter != bp.hiddenParameter)
 			return false;
-		auto ret = typesEqual(ap.ret, bp.ret);
+		auto ret = typesEqual(ap.ret, bp.ret, ignoreStorage);
 		if (!ret)
 			return false;
 		for (int i; i < apLength; i++)
-			if (!typesEqual(ap.params[i], bp.params[i]))
+			if (!typesEqual(ap.params[i], bp.params[i], ignoreStorage))
 				return false;
 		return true;
-	} else if (a.nodeType == ir.NodeType.StorageType &&
+	} else if (a.nodeType == ir.NodeType.StorageType ||
 			   b.nodeType == ir.NodeType.StorageType) {
-		auto ap = cast(ir.StorageType) a;
-		auto bp = cast(ir.StorageType) b;
-		return ap.type == bp.type && typesEqual(ap.base, bp.base);
+		auto sta = cast(ir.StorageType)a;
+		auto stb = cast(ir.StorageType)b;
+		if ((sta !is null && sta.base is null) || (stb !is null && stb.base is null)) {
+			return false;
+		}
+		throw panic(a.location, "tested storage type for equality");
 	}
 
 	return false;

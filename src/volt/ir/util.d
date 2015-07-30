@@ -156,36 +156,42 @@ ir.Scope getScopeFromStore(ir.Store store)
  */
 ir.Type copyTypeSmart(Location loc, ir.Type type)
 {
+	ir.Type outType;
 	switch (type.nodeType) with (ir.NodeType) {
 	case PrimitiveType:
 		auto pt = cast(ir.PrimitiveType)type;
 		pt = new ir.PrimitiveType(pt.type);
 		pt.location = loc;
-		return pt;
+		outType = pt;
+		break;
 	case PointerType:
 		auto pt = cast(ir.PointerType)type;
 		pt = new ir.PointerType(copyTypeSmart(loc, pt.base));
 		pt.location = loc;
-		return pt;
+		outType = pt;
+		break;
 	case ArrayType:
 		auto at = cast(ir.ArrayType)type;
 		at = new ir.ArrayType(copyTypeSmart(loc, at.base));
 		at.location = loc;
-		return at;
+		outType = at;
+		break;
 	case StaticArrayType:
 		auto asSat = cast(ir.StaticArrayType)type;
 		auto sat = new ir.StaticArrayType();
 		sat.location = loc;
 		sat.base = copyTypeSmart(loc, asSat.base);
 		sat.length = asSat.length;
-		return sat;
+		outType = sat;
+		break;
 	case AAType:
 		auto asAA = cast(ir.AAType)type;
 		auto aa = new ir.AAType();
 		aa.location = loc;
 		aa.value = copyTypeSmart(loc, asAA.value);
 		aa.key = copyTypeSmart(loc, asAA.key);
-		return aa;
+		outType = aa;
+		break;
 	case FunctionType:
 		auto asFt = cast(ir.FunctionType)type;
 		auto ft = new ir.FunctionType(asFt);
@@ -194,14 +200,16 @@ ir.Type copyTypeSmart(Location loc, ir.Type type)
 		foreach(i, ref t; ft.params) {
 			t = copyTypeSmart(loc, t);
 		}
-		return ft;
+		outType = ft;
+		break;
 	case FunctionSetType:
 		auto asFset = cast(ir.FunctionSetType)type;
 		auto fset = new ir.FunctionSetType();
 		fset.location = loc;
 		fset.set = asFset.set;
 		fset.isFromCreateDelegate = asFset.isFromCreateDelegate;
-		return fset;
+		outType = fset;
+		break;
 	case DelegateType:
 		auto asDg = cast(ir.DelegateType)type;
 		auto dg = new ir.DelegateType(asDg);
@@ -210,23 +218,26 @@ ir.Type copyTypeSmart(Location loc, ir.Type type)
 		foreach(i, ref t; dg.params) {
 			t = copyTypeSmart(loc, t);
 		}
-		return dg;
+		outType = dg;
+		break;
 	case StorageType:
 		auto asSt = cast(ir.StorageType)type;
 		auto st = new ir.StorageType();
 		st.location = loc;
 		if (asSt.base !is null) st.base = copyTypeSmart(loc, asSt.base);
 		st.type = asSt.type;
-		st.isCanonical = asSt.isCanonical;
-		return st;
+		outType = st;
+		break;
 	case TypeReference:
 		auto tr = cast(ir.TypeReference)type;
 		assert(tr.type !is null);
-		return copyTypeSmart(loc, tr.type);
+		outType = copyTypeSmart(loc, tr.type);
+		break;
 	case NullType:
 		auto nt = new ir.NullType();
 		nt.location = type.location;
-		return nt;
+		outType = nt;
+		break;
 	case UserAttribute:
 	case Interface:
 	case Struct:
@@ -235,11 +246,13 @@ ir.Type copyTypeSmart(Location loc, ir.Type type)
 	case Enum:
 		auto s = getScopeFromType(type);
 		// @todo Get fully qualified name for type.
-		return buildTypeReference(loc, type, s !is null ? s.name : null);
+		outType = buildTypeReference(loc, type, s !is null ? s.name : null);
+		break;
 	default:
 		throw panicUnhandled(type, ir.nodeToString(type));
 	}
-	version(Volt) assert(false);
+	addStorage(outType, type);
+	return outType;
 }
 
 ir.TypeReference buildTypeReference(Location loc, ir.Type type, string[] names...)
@@ -309,8 +322,9 @@ ir.PrimitiveType buildReal(Location loc) { return buildPrimitiveType(loc, ir.Pri
  */
 ir.ArrayType buildString(Location loc)
 {
-	auto stor = buildStorageType(loc, ir.StorageType.Kind.Immutable, buildChar(loc));
-	return buildArrayType(loc, stor);
+	auto c = buildChar(loc);
+	c.isImmutable = true;
+	return buildArrayType(loc, c);
 }
 
 ir.ArrayType buildStringArray(Location loc)
@@ -615,9 +629,9 @@ ir.Constant buildConstantString(Location loc, string val, bool escape = true)
 	auto c = new ir.Constant();
 	c.location = loc;
 	c._string = val;
-	auto stor = buildStorageType(loc, ir.StorageType.Kind.Immutable, buildChar(loc));
-	canonicaliseStorageType(stor);
-	c.type = buildArrayType(loc, stor);
+	auto atype = buildArrayType(loc, buildChar(loc));
+	atype.base.isImmutable = true;
+	c.type = atype;
 	if (escape) {
 		c.arrayData = unescapeString(loc, c._string);
 	} else {
@@ -999,6 +1013,8 @@ ir.FunctionParam addParam(Location loc, ir.Function fn, ir.Type type, string nam
 	auto var = buildFunctionParam(loc, fn.type.params.length, name, fn);
 
 	fn.type.params ~= type;
+	fn.type.isArgOut ~= false;
+	fn.type.isArgRef ~= false;
 
 	fn.params ~= var;
 	fn.myScope.addValue(var, name);
@@ -1274,6 +1290,8 @@ ir.FunctionType buildFunctionTypeSmart(Location loc, ir.Type ret, ir.Type[] args
 	type.ret = copyType(ret);
 	foreach (arg; args) {
 		type.params ~= copyType(arg);
+		type.isArgRef ~= false;
+		type.isArgOut ~= false;
 	}
 	return type;
 }
@@ -1574,79 +1592,12 @@ void buildForStatement(Location loc, LanguagePass lp, ir.Scope parent, ir.Exp le
 	forStatement.block = buildBlockStat(loc, forStatement, parent);
 }
 
-/**
- * Canonises a StorageType in place.
- * The ordering of StorageKinds is made consistent,
- * and duplicate kinds are compressed into one.
- */
-void canonicaliseStorageType(ir.StorageType outStorage)
+void addStorage(ir.Type dest, ir.Type src)
 {
-	if (outStorage.isCanonical) {
+	if (dest is null || src is null) {
 		return;
 	}
-	outStorage.isCanonical = true;
-
-	// std.algorithm.sort explodes if this isn't a delegate. :/ (2013-05-07)
-	/*global*/ static bool storageSort(ir.StorageType.Kind a, ir.StorageType.Kind b)
-	{
-		/*global*/ static int kindToInteger(ir.StorageType.Kind kind)
-		{
-			final switch (kind) with (ir.StorageType.Kind) {
-			case Scope: return 5;
-			case Ref, Out: return 4;  // It cannot be both.
-			case Immutable: return 3;
-			case Const: return 2;
-			case Auto: return 0;
-			}
-		}
-
-		return kindToInteger(a) > kindToInteger(b);
-	}
-
-	ir.StorageType.Kind[] prestorages;
-
-	ir.StorageType current = null, next = outStorage;
-	do {
-		current = next;
-		prestorages ~= current.type;
-		next = cast(ir.StorageType) current.base;
-	} while (next !is null);
-
-	version(Volt) {
-		sort(cast(int[])prestorages);
-	} else {
-		sort!storageSort(prestorages);
-	}
-
-	ir.StorageType.Kind[] storages;
-	bool seenImmutable;
-	foreach (i, storageKind; prestorages) {
-		if (storageKind == ir.StorageType.Kind.Immutable) {
-			seenImmutable = true;
-		}
-		if (storageKind == ir.StorageType.Kind.Const && seenImmutable) {
-			continue;  // immutable overrides const.
-		}
-		if (i < prestorages.length - 1 && prestorages[i+1] == storageKind) {
-			// e.g. const const int should become const int.
-			continue;
-		} if (prestorages.length > 1 && storageKind == ir.StorageType.Kind.Auto) {
-			continue;
-		} else {
-			storages ~= storageKind;
-		}
-	}
-
-	foreach (i, storageKind; storages) {
-		if (i == 0) {
-			outStorage.type = storageKind;
-			outStorage.mangledName = "";
-		} else {
-			ir.StorageType st;
-			outStorage.base = st = buildStorageType(outStorage.location, storageKind, current);
-			outStorage = st;
-			st.isCanonical = true;
-		}
-	}
-	outStorage.base = current.base;
+	if (!dest.isConst) dest.isConst = src.isConst;
+	if (!dest.isImmutable) dest.isImmutable = src.isImmutable;
+	if (!dest.isScope) dest.isScope = src.isScope;
 }

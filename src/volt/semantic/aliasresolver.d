@@ -9,6 +9,7 @@ import volt.errors;
 
 import volt.semantic.lookup;
 import volt.semantic.util : ensureResolved;
+import volt.semantic.storageremoval;
 
 
 /**
@@ -21,6 +22,7 @@ void resolveAlias(LanguagePass lp, ir.Store s)
 	scope(exit) a.resolved = true;
 
 	if (a.type !is null) {
+		a.type = flattenStorage(a.type);
 		ensureResolved(lp, s.s, a.type);
 		return s.markAliasResolved(a.type);
 	}

@@ -68,8 +68,23 @@ public:
 
 	override Status enter(ir.StorageType st)
 	{
-		if (!st.isCanonical) {
-			throw panic(st, "uncanonicalised storage type found in IR.");
+		throw panic(st, "storage type found in IR.");
+	}
+
+	override Status enter(ir.FunctionType ct)
+	{
+		if (ct.params.length != ct.isArgRef.length ||
+		    ct.params.length != ct.isArgOut.length) {
+			throw panic(ct, "isArg[Ref|Out] length doesn't match");
+		}
+		return Continue;
+	}
+
+	override Status enter(ir.DelegateType ct)
+	{
+		if (ct.params.length != ct.isArgRef.length ||
+		    ct.params.length != ct.isArgOut.length) {
+			throw panic(ct, "isArg[Ref|Out] length doesn't match");
 		}
 		return Continue;
 	}

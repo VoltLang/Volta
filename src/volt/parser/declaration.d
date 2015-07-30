@@ -377,6 +377,8 @@ ParseStatus parseFunctionType(ParserStream ps, out ir.FunctionType fn, ir.Type b
 	if (!succeeded) {
 		return parseFailed(ps, fn);
 	}
+	fn.isArgRef = new bool[](fn.params.length);
+	fn.isArgOut = new bool[](fn.params.length);
 
 	return Succeeded;
 }
@@ -395,6 +397,8 @@ ParseStatus parseDelegateType(ParserStream ps, out ir.DelegateType fn, ir.Type b
 	if (!succeeded) {
 		return parseFailed(ps, fn);
 	}
+	fn.isArgRef = new bool[](fn.params.length);
+	fn.isArgOut = new bool[](fn.params.length);
 
 	fn.docComment = ps.comment();
 	return Succeeded;
@@ -616,6 +620,8 @@ ParseStatus parseFunction(ParserStream ps, out ir.Function fn, ir.Type base)
 	}
 	foreach (i, param; params) {
 		fn.type.params ~= param.type;
+		fn.type.isArgRef ~= false;
+		fn.type.isArgOut ~= false;
 		auto p = new ir.FunctionParam();
 		p.location = param.location;
 		p.name = param.name;

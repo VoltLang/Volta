@@ -389,6 +389,7 @@ public:
 	Type ret;
 	LLVMTypeRef llvmCallType;
 	ir.CallableType ct;
+	Type[] params;
 
 public:
 	this(State state, ir.CallableType ct, bool passByVal,
@@ -407,8 +408,8 @@ class FunctionType : CallableType
 public:
 	static FunctionType fromIr(State state, ir.FunctionType ft)
 	{
-		Type ret;
 		Type[] params;
+		Type ret;
 
 		ret = state.fromIr(ft.ret);
 		foreach(int i, param; ft.params) {
@@ -434,14 +435,14 @@ public:
 private:
 	this(State state, ir.FunctionType ft, Type ret, Type[] params)
 	{
+		this.params = params;
 		LLVMTypeRef[] args;
 		args.length = ft.params.length + ft.hiddenParameter;
 
 		this.ret = ret;
 		foreach(int i, type; params) {
 			args[i] = type.llvmType;
-			ir.StorageType.Kind dummy;
-			if (volt.semantic.classify.isRef(ft.params[i], dummy)) {
+			if (ft.isArgRef[i] || ft.isArgOut[i]) {
 				args[i] = LLVMPointerType(args[i], 0);
 			}
 		}
@@ -477,16 +478,19 @@ public:
 
 		LLVMTypeRef[] args;
 		args.length = dt.params.length + 1;
+		params.length = dt.params.length + 1;
 
 		foreach(int i, param; dt.params) {
 			auto type = state.fromIr(param);
+			params[i] = type;
 			args[i] = type.llvmType;
 			ir.StorageType.Kind dummy;
-			if (volt.semantic.classify.isRef(param, dummy)) {
+			if (dt.isArgRef[i] || dt.isArgOut[i]) {
 				args[i] = LLVMPointerType(args[i], 0);
 			}
 		}
 		args[$-1] = state.voidPtrType.llvmType;
+		params[$-1] = state.voidPtrType;
 
 		llvmCallType = LLVMFunctionType(ret.llvmType, args, dt.hasVarArgs);
 		llvmCallPtrType = LLVMPointerType(llvmCallType, 0);
@@ -638,7 +642,9 @@ public:
 			throw panic("union literal has the wrong number of initializers");
 		}
 
-		auto utype = cast(ir.Union) irType;
+		auto asTr = cast(ir.TypeReference) irType;
+		assert(asTr !is null);
+		auto utype = cast(ir.Union) asTr.type;
 		if (utype is null) {
 			throw panic("couldn't retrieve ir union from union");
 		}
@@ -670,23 +676,7 @@ public:
  */
 Type fromIr(State state, ir.Type irType)
 {
-	if (irType.nodeType == ir.NodeType.TypeReference) {
-		auto tr = cast(ir.TypeReference)irType;
-		assert(tr !is null);
-
-		if (tr.type is null)
-			throw panic(irType.location, "TypeReference with null type");
-
-		return state.fromIr(tr.type);
-	} else if (irType.nodeType == ir.NodeType.StorageType) {
-		auto st = cast(ir.StorageType)irType;
-		assert(st !is null);
-
-		if (st.base is null)
-			throw panic(irType.location, "StorageType with null base");
-
-		return state.fromIr(st.base);
-	}
+	Type result;
 
 	if (irType.mangledName is null) {
 		auto m = addMangledName(irType);
@@ -696,7 +686,8 @@ Type fromIr(State state, ir.Type irType)
 
 	auto test = state.getTypeNoCreate(irType.mangledName);
 	if (test !is null) {
-		return test;
+		result = test;
+		return result;
 	}
 
 	auto scrubbed = scrubStorage(irType);
@@ -705,7 +696,8 @@ Type fromIr(State state, ir.Type irType)
 	if (scrubbed.mangledName != irType.mangledName) {
 		state.addType(type, irType.mangledName);
 	}
-	return type;
+	result = type;
+	return result;
 }
 
 Type fromIrImpl(State state, ir.Type irType)
@@ -759,6 +751,18 @@ Type fromIrImpl(State state, ir.Type irType)
 	case AAType:
 		auto aa = cast(ir.AAType)irType;
 		return state.voidPtrType;
+	case TypeReference:
+		auto tr = cast(ir.TypeReference)irType;
+		assert(cast(ir.Aggregate)tr.type !is null);
+		if (auto _class = cast(ir.Class)tr.type) {
+			auto ptr = buildPtrSmart(_class.location, _class.layoutStruct);
+			addMangledName(ptr);
+			return fromIr(state, ptr);
+		} else {
+			auto ret = fromIrImpl(state, tr.type);
+			ret.irType = tr;
+			return ret;
+		}
 	default:
 		auto emsg = format("Can't translate type %s (%s)", irType.nodeType, irType.mangledName);
 		throw panic(irType.location, emsg);
@@ -836,76 +840,86 @@ void buildCommonTypes(State state, bool V_P64)
  */
 ir.Type scrubStorage(ir.Type type)
 {
+	ir.Type outType;
 	switch (type.nodeType) with (ir.NodeType) {
 	case PrimitiveType:
 		auto asPt = cast(ir.PrimitiveType)type;
 		auto pt = new ir.PrimitiveType(asPt.type);
 		pt.location = asPt.location;
-		addMangledName(pt);
-		return pt;
+		outType = pt;
+		break;
 	case PointerType:
 		auto asPt = cast(ir.PointerType)type;
-		auto pt = new ir.PointerType(scrubStorage(asPt.base));
+		auto pt = new ir.PointerType();
 		pt.location = asPt.location;
-		addMangledName(pt);
-		return pt;
+		pt.base = scrubStorage(asPt.base);
+		outType = pt;
+		break;
 	case ArrayType:
 		auto asAt = cast(ir.ArrayType)type;
-		auto at = new ir.ArrayType(scrubStorage(asAt.base));
+		auto at = new ir.ArrayType();
 		at.location = asAt.location;
-		addMangledName(at);
-		return at;
+		at.base = scrubStorage(asAt.base);
+		outType = at;
+		break;
 	case StaticArrayType:
 		auto asSat = cast(ir.StaticArrayType)type;
 		auto sat = new ir.StaticArrayType();
 		sat.location = asSat.location;
 		sat.base = scrubStorage(asSat.base);
 		sat.length = asSat.length;
-		addMangledName(sat);
-		return sat;
+		outType = sat;
+		break;
 	case AAType:
 		auto asAA = cast(ir.AAType)type;
 		auto aa = new ir.AAType();
 		aa.location = asAA.location;
 		aa.value = scrubStorage(asAA.value);
 		aa.key = scrubStorage(asAA.key);
-		addMangledName(aa);
-		return aa;
+		outType = aa;
+		break;
 	case FunctionType:
 		auto asFt = cast(ir.FunctionType)type;
 		auto ft = new ir.FunctionType(asFt);
 		ft.location = asFt.location;
 		ft.ret = scrubStorage(ft.ret);
-		foreach(ref t; ft.params) {
+		foreach(i, ref t; ft.params) {
 			t = scrubStorage(t);
 		}
-		addMangledName(ft);
-		return ft;
+		// TODO a better fix for this.
+		ft.isConst = false;
+		ft.isScope = false;
+		ft.isImmutable = false;
+		outType = ft;
+		break;
 	case DelegateType:
 		auto asDg = cast(ir.DelegateType)type;
 		auto dg = new ir.DelegateType(asDg);
 		dg.location = asDg.location;
 		dg.ret = scrubStorage(dg.ret);
-		foreach(ref t; dg.params) {
+		foreach(i, ref t; dg.params) {
 			t = scrubStorage(t);
 		}
-		addMangledName(dg);
-		return dg;
-	case StorageType:
-		auto asSt = cast(ir.StorageType)type;
-		if (asSt.type != ir.StorageType.Kind.Ref && asSt.type != ir.StorageType.Kind.Out) {
-			return scrubStorage(asSt.base);
-		}
-		auto at = new ir.StorageType();
-		at.location = asSt.location;
-		at.type = asSt.type;
-		at.base = scrubStorage(asSt.base);
-		addMangledName(at);
-		return at;
+		// TODO a better fix for this.
+		dg.isConst = false;
+		dg.isScope = false;
+		dg.isImmutable = false;
+		outType = dg;
+		break;
 	case TypeReference:
-		auto tr = cast(ir.TypeReference)type;
-		return scrubStorage(tr.type);
+		auto asTr = cast(ir.TypeReference)type;
+		if (cast(ir.Aggregate)asTr.type is null) {
+			outType = scrubStorage(asTr.type);
+			break;
+		}
+		auto tr = new ir.TypeReference();
+		tr.type = asTr.type;
+		tr.location = asTr.location;
+		tr.type = asTr.type;
+		outType = tr;
+		break;
 	case UserAttribute:
+	case StorageType:
 	case Interface:
 	case Struct:
 	case Union:
@@ -915,6 +929,9 @@ ir.Type scrubStorage(ir.Type type)
 	default:
 		assert(false, "foo " ~ to!string(type.nodeType));
 	}
+	addMangledName(outType);
+	assert(outType.mangledName[0] != 'e');
+	return outType;
 }
 
 /**

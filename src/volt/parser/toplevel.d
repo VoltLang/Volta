@@ -455,6 +455,8 @@ ParseStatus parseConstructor(ParserStream ps, out ir.Function c)
 
 	foreach (i, param; params) {
 		c.type.params ~= param.type;
+		c.type.isArgRef ~= false;
+		c.type.isArgOut ~= false;
 		auto p = new ir.FunctionParam();
 		p.location = param.location;
 		p.name = param.name;

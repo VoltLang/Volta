@@ -98,16 +98,15 @@ int matchLevel(bool homogenous, ir.Type argument, ir.Type parameter)
 	if (typesEqual(argument, parameter)) {
 		return 4;
 	}
-	argument = removeRefAndOut(argument);
-	parameter = removeRefAndOut(parameter);
-	if (typesEqual(argument, parameter)) {
+	if (typesEqual(argument, parameter, IgnoreStorage)) {
 		return 3;
 	}
-	auto asConst = new ir.StorageType();
-	asConst.location = argument.location;
-	asConst.type = ir.StorageType.Kind.Const;
-	asConst.base = argument;
-	if (typesEqual(asConst, parameter)) {
+
+	auto oldConst = argument.isConst;
+	argument.isConst = true;
+	auto equalAsConst = typesEqual(argument, parameter);
+	argument.isConst = oldConst;
+	if (equalAsConst) {
 		return 3;
 	}
 

@@ -277,6 +277,11 @@ public:
 	abstract void resolve(ir.Scope current, ir.Attribute a);
 
 	/**
+	 * Resolves an ExpReference, forwarding the decl appropriately.
+	 */
+	abstract void resolve(ir.Scope current, ir.ExpReference eref);
+
+	/**
 	 * Resolves an EnumDeclaration setting its value.
 	 *
 	 * @throws CompilerError on failure to resolve the enum value.

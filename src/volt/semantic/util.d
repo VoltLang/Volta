@@ -223,7 +223,6 @@ void ensureResolved(LanguagePass lp, ir.Scope current, ir.Type type)
 		return ensureResolved(lp, current, sat.base);
 	case StorageType:
 		auto st = cast(ir.StorageType)type;
-		canonicaliseStorageType(st);
 		// For auto and friends.
 		if (st.base is null)
 			return;

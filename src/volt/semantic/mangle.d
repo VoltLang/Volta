@@ -63,6 +63,15 @@ private:
 
 void mangleType(ir.Type t, ref string mangledString)
 {
+	if (t.isScope) {
+		 mangledString ~= "e";
+	}
+	if (t.isConst) {
+		 mangledString ~= "o";
+	}
+	if (t.isImmutable) {
+		 mangledString ~= "m";
+	}
 	switch (t.nodeType) with (ir.NodeType) {
 	case PrimitiveType:
 		auto asPrim = cast(ir.PrimitiveType) t;
@@ -190,6 +199,12 @@ void mangleCallableType(ir.CallableType ct, ref string mangledString)
 {
 	mangleLinkage(ct.linkage, mangledString);
 	foreach (i, param; ct.params) {
+		if (ct.isArgRef[i]) {
+			 mangledString ~= "r";
+		}
+		if (ct.isArgOut[i]) {
+			 mangledString ~= "O";
+		}
 		mangleType(param, mangledString);
 	}
 	mangledString ~= "Z";  // This would be difference with variadics.

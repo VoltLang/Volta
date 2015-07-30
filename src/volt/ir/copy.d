@@ -218,9 +218,14 @@ ir.FunctionType copy(ir.FunctionType old)
 	auto ft = new ir.FunctionType(old);
 	ft.location = old.location;
 	ft.ret = copyType(old.ret);
+	panicAssert(old, old.params.length == old.isArgRef.length && old.params.length == old.isArgOut.length);
 	ft.params = new ir.Type[](old.params.length);
+	ft.isArgOut = new bool[](old.isArgOut.length);
+	ft.isArgRef = new bool[](old.isArgRef.length);
 	foreach(size_t i, ptype; old.params) {
 		ft.params[i] = copyType(ptype);
+		ft.isArgOut[i] = old.isArgOut[i];
+		ft.isArgRef[i] = old.isArgRef[i];
 	}
 	return ft;
 }
@@ -230,9 +235,14 @@ ir.DelegateType copy(ir.DelegateType old)
 	auto dg = new ir.DelegateType(old);
 	dg.location = old.location;
 	dg.ret = copyType(old.ret);
+	panicAssert(old, old.params.length == old.isArgRef.length && old.params.length == old.isArgOut.length);
 	dg.params = new ir.Type[](old.params.length);
+	dg.isArgOut = new bool[](old.isArgOut.length);
+	dg.isArgRef = new bool[](old.isArgRef.length);
 	foreach(size_t i, ptype; old.params) {
 		dg.params[i] = copyType(ptype);
+		dg.isArgOut[i] = old.isArgOut[i];
+		dg.isArgRef[i] = old.isArgRef[i];
 	}
 	return dg;
 }
@@ -245,7 +255,6 @@ ir.StorageType copy(ir.StorageType old)
 		st.base = copyType(old.base);
 	}
 	st.type = old.type;
-	st.isCanonical = old.isCanonical;
 	return st;
 }
 
