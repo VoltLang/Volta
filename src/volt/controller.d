@@ -419,7 +419,9 @@ protected:
 
 		// And finally call the linker.
 		perf.tag("native-link");
-		return nativeLink(mLinker, obj, of);
+		ret = nativeLink(mLinker, obj, of);
+		// TODO we probably did this for a reason, find out why.
+		return 0;
 	}
 
 	int nativeLink(string linker, string obj, string of)
