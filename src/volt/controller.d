@@ -270,6 +270,9 @@ protected:
 
 	int intCompile()
 	{
+		scope(exit) {
+			perf.tag("exit");
+		}
 
 		ir.Module[] mods;
 
@@ -389,6 +392,7 @@ protected:
 
 		// Link bitcode files
 		if (bitcodeFiles.length > 0) {
+			perf.tag("bitcode-link");
 			linkModules(bc, bitcodeFiles);
 		}
 
@@ -399,10 +403,13 @@ protected:
 
 		// If we are compiling on the emscripten platform ignore .o files.
 		if (settings.platform == Platform.EMSCRIPTEN) {
+			perf.tag("emscripten-link");
 			return emscriptenLink(mLinker, bc, of);
 		}
 
+
 		// Native compilation, turn the bitcode into native code.
+		perf.tag("object");
 		writeObjectFile(settings, obj, bc);
 
 		// When not linking we are now done.
@@ -410,14 +417,9 @@ protected:
 			return 0;
 		}
 
-		perf.tag("link");
 		// And finally call the linker.
-		ret = nativeLink(mLinker, obj, of);
-		if (ret)
-			return 0;
-
-		perf.tag("exit");
-		return 0;
+		perf.tag("native-link");
+		return nativeLink(mLinker, obj, of);
 	}
 
 	int nativeLink(string linker, string obj, string of)
