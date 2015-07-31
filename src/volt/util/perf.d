@@ -5,6 +5,9 @@ private import std.stdio : writefln;
 
 /**
  * Very simple perfing code, just gets timing info.
+ *
+ * Yes these times are not super accurate and will drift a lot
+ * over time. So don't be using these for missile guidence.
  */
 struct Perf
 {
@@ -25,13 +28,17 @@ struct Perf
 			max = s.length > max ? s.length : max;
 		}
 
+		writefln("%*s            part          total", max + 1, "");
+		long s;
 		for (size_t i = 1; i < times.length; i++) {
 			auto t = times[i].ticks() - times[i-1].ticks();
 			auto tps = MonoTime.ticksPerSecond() / 100000;
 			t = t / tps;
-			writefln("%*s: %6s.%02s msec",
+			s += t;
+			writefln("%*s: %6s.%02s msec %6s.%02s msec",
 			         max + 1, names[i-1],
-			         t / 100, t % 100);
+			         t / 100, t % 100,
+			         s / 100, s % 100);
 		}
 	}
 }
