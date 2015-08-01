@@ -1,15 +1,11 @@
 module volt.main;
 
 import watt.io.std : output;
+import watt.io.file : read;
 import watt.conv : toString;
 
-import volt.exceptions;
-import volt.token.source;
-import volt.token.lexer;
-import volt.token.token;
-import volt.parser.stream;
-import volt.parser.toplevel;
-import ir = volt.ir.ir;
+import volt.token.location : Location;
+import volt.parser.parser : Parser;
 
 int main(string[] args)
 {
@@ -49,11 +45,10 @@ int realMain(string[] args)
 
 void doFile(string arg)
 {
-	auto src = new Source(arg);
-	output.writef("  VIV    %s", arg);
-	output.flush();
-	auto ps = new ParserStream(lex(src));
-	ps.get();
-	auto mod = parseModule(ps);
-	output.writefln(" ... done");
+	Location loc;
+	loc.filename = arg;
+
+	auto p = new Parser();
+	auto src = cast(string) read(loc.filename);
+	auto m = p.parseNewFile(src, loc);
 }
