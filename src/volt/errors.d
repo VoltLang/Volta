@@ -75,11 +75,6 @@ CompilerException makeGotoOutsideOfSwitch(Location loc, string file = __FILE__, 
 	return new CompilerError(loc, "goto outside of switch statement.", file, line);
 }
 
-CompilerException makeDocCommentAppliesToMultiple(Location loc, string file = __FILE__, const int line = __LINE__)
-{
-	return new CompilerError(loc, "doc comment would apply to multiple declarations.", file, line);
-}
-
 CompilerException makeStrayDocComment(Location loc, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(loc, "stray documentation comment.", file, line);
@@ -164,18 +159,6 @@ CompilerException makeUnmatchedLabel(Location loc, string label, string file = _
 	auto emsg = format("no parameter matches argument label '%s'.", label);
 	auto unl = new CompilerError(loc, emsg, file, line);
 	return unl;
-}
-
-CompilerException makeAllArgumentsMustBeLabelled(Location loc, string file = __FILE__, const int line = __LINE__)
-{
-	auto allarg = new CompilerError(loc, "number of labels in call doesn't match number of arguments.", file, line);
-	return allarg;
-}
-
-CompilerException makeInvalidIntegerLiteral(Location loc, string file = __FILE__, const int line = __LINE__)
-{
-	auto inve = new CompilerError(loc, "integer literal too large.", file, line);
-	return inve;
 }
 
 CompilerException makeDollarOutsideOfIndex(ir.Constant constant, string file = __FILE__, const int line = __LINE__)
