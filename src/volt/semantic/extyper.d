@@ -3388,6 +3388,42 @@ void transformForeaches(Context ctx, ir.BlockStatement bs)
 	}
 }
 
+bool isInternalVariable(ir.Class c, ir.Variable v)
+{
+	foreach (ivar; c.ifaceVariables) {
+		if (ivar is v) {
+			return true;
+		}
+	}
+	return v is c.typeInfo || v is c.vtableVariable || v is c.initVariable;
+}
+
+void writeVariableAssignsIntoCtors(Context ctx, ir.Class _class)
+{
+	foreach (n; _class.members.nodes) {
+		auto v = cast(ir.Variable) n;
+		if (v is null || v.assign is null ||
+			isInternalVariable(_class, v) ||
+		   !(v.storage != ir.Variable.Storage.Local && 
+		    v.storage != ir.Variable.Storage.Global)) {
+			continue;
+		}
+		foreach (ctor; _class.userConstructors) {
+			assert(ctor.thisHiddenParameter !is null);
+			auto eref = buildExpReference(ctor.thisHiddenParameter.location, ctor.thisHiddenParameter, ctor.thisHiddenParameter.name);
+			auto assign = buildAssign(ctor.location, buildAccess(ctor.location, eref, v.name), v.assign);
+			auto stat = new ir.ExpStatement();
+			stat.location = ctor.location;
+			stat.exp = copyExp(assign);
+			ctor._body.statements = stat ~ ctor._body.statements;
+		}
+		v.assign = null;
+		if (isConst(v.type) || isImmutable(v.type)) {
+			throw makeConstField(v);
+		}
+	}
+}
+
 /**
  * If type casting were to be strict, type T could only
  * go to type T without an explicit cast. Implicit casts
@@ -3581,6 +3617,7 @@ public:
 	override Status leave(ir.Class c)
 	{
 		checkAnonymousVariables(ctx, c);
+		writeVariableAssignsIntoCtors(ctx, c);
 		ctx.leave(c);
 		return Continue;
 	}
@@ -3644,27 +3681,11 @@ public:
 		ensureResolved(ctx.lp, ctx.current, v.type);
 
 		bool inAggregate = (cast(ir.Aggregate) ctx.current.node) !is null;
-		if (inAggregate && v.storage != ir.Variable.Storage.Local && v.storage != ir.Variable.Storage.Global) {
-			if (v.assign !is null) {
-				auto _class = cast(ir.Class) ctx.current.node;
-				if (_class !is null) {
-					foreach (ctor; _class.userConstructors) {
-						assert(ctor.thisHiddenParameter !is null);
-						auto eref = buildExpReference(ctor.thisHiddenParameter.location, ctor.thisHiddenParameter, ctor.thisHiddenParameter.name);
-						auto assign = buildAssign(ctor.location, buildAccess(ctor.location, eref, v.name), v.assign);
-						auto stat = new ir.ExpStatement();
-						stat.location = ctor.location;
-						stat.exp = copyExp(assign);
-						ctor._body.statements = stat ~ ctor._body.statements;
-					}
-					v.assign = null;
-				} else {
-					throw makeAssignToNonStaticField(v);
-				}
-			}
-			if (isConst(v.type) || isImmutable(v.type)) {
-				throw makeConstField(v);
-			}
+		if (inAggregate && v.assign !is null && ctx.current.node.nodeType != ir.NodeType.Class && (v.storage != ir.Variable.Storage.Global && v.storage != ir.Variable.Storage.Local)) {
+			throw makeAssignToNonStaticField(v);
+		}
+		if (inAggregate && (isConst(v.type) || isImmutable(v.type))) {
+			throw makeConstField(v);
 		}
 
 		replaceTypeOfIfNeeded(ctx, v.type);
