@@ -7,7 +7,12 @@ HOST_MACHINE := $(strip $(shell uname -m))
 UNAME ?= $(HOST_UNAME)
 MACHINE ?= $(strip $(shell uname -m))
 LLVM_CONFIG ?= llvm-config
-LLVM_LDFLAGS = $(shell $(LLVM_CONFIG) --libs core analysis bitwriter bitreader linker target x86codegen) $(shell $(LLVM_CONFIG) --ldflags)
+LLVM_LDFLAGS = $(shell $(LLVM_CONFIG) --libs core analysis bitwriter bitreader linker target x86codegen)
+ifeq ($(shell echo "$(LLVM_CONFIG) --system-libs &> /dev/null && echo OK" | bash -t), OK)
+  LLVM_LDFLAGS := $(LLVM_LDFLAGS) $(shell $(LLVM_CONFIG) --ldflags --system-libs)
+else
+  LLVM_LDFLAGS := $(LLVM_LDFLAGS) $(shell $(LLVM_CONFIG) --ldflags)
+endif
 
 ifeq ($(strip $(DMD)),)
   DMD := $(shell which gdmd)
