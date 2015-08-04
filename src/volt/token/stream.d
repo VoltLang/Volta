@@ -4,7 +4,6 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.token.stream;
 
-import watt.text.string : strip, indexOf;
 import volt.errors : panic, makeStrayDocComment, makeExpected;
 public import volt.token.token;
 
@@ -14,15 +13,9 @@ public import volt.token.token;
  */
 class TokenStream
 {
-public:
-	Token lastDocComment;
-	string* retroComment;  ///< For backwards doc comments (like this one).
-	int multiDepth;
-
-private:
+protected:
 	Token[] mTokens;
 	size_t mIndex;
-	string[] mComment;
 
 public:
 	/**
@@ -41,8 +34,6 @@ public:
 		if (tokens[$-1].type != TokenType.End)
 			throw panic("Token stream not terminated correctly");
 
-		pushCommentLevel();
-
 		this.mTokens = tokens;
 	}
 
@@ -55,22 +46,6 @@ public:
 	final void reset()
 	{
 		mIndex = 0;
-	}
-
-	/**
-	 * Get the current token and advances the stream to the next token.
-	 *
-	 * Side-effects:
-	 *   Increments mIndex.
-	 */
-	final Token get()
-	{
-		doDocCommentBlocks();
-		auto retval = mTokens[mIndex];
-		if (mIndex < mTokens.length - 1) {
-			mIndex++;
-		}
-		return retval;
 	}
 
 	/**
@@ -186,93 +161,5 @@ public:
 	{
 		assert(index < mTokens.length);
 		mIndex = index;
-	}
-
-	final void pushCommentLevel()
-	{
-		if (inMultiCommentBlock && mComment.length > 0) {
-			auto oldComment = mComment[$-1];
-			mComment ~= oldComment;
-		} else {
-			mComment ~= [""];
-		}
-	}
-
-	final void popCommentLevel()
-	{
-		assert(mComment.length > 0);
-		string oldComment;
-		if (inMultiCommentBlock) {
-			oldComment = mComment[$-1];
-		}
-		if (mComment[$-1].length && !inMultiCommentBlock) {
-			assert(lastDocComment !is null);
-			auto e = makeStrayDocComment(lastDocComment.location);
-			e.neverIgnore = true;
-			throw e;
-		}
-		if (mComment.length >= 0) {
-			mComment[$-1] = oldComment;
-		}
-	}
-
-	/// Add a comment to the current comment level.
-	final void addComment(Token comment)
-	{
-		assert(comment.type == TokenType.DocComment);
-		auto raw = strip(comment.value);
-		if (raw == "@{" || raw == "@}") {
-			return;
-		}
-		mComment[$-1] ~= comment.value;
-		lastDocComment = comment;
-	}
-
-	/// Retrieve and clear the current comment.
-	final string comment()
-	{
-		assert(mComment.length >= 1);
-		auto str = mComment[$-1];
-		if (!inMultiCommentBlock) {
-			mComment[$-1] = "";
-		}
-		return str;
-	}
-
-	/**
-	 * True if we found @ { on its own, so apply the last doccomment
-	 * multiple times, until we see a matching number of @ }s.
-	 */
-	final @property bool inMultiCommentBlock()
-	{
-		return multiDepth > 0;
-	}
-
-private:
-	final void doDocCommentBlocks()
-	{
-		if (mTokens[mIndex].type != TokenType.DocComment) {
-			return;
-		}
-		auto openIndex = mTokens[mIndex].value.indexOf("@{");
-		if (openIndex >= 0) {
-			auto precomment = strip(mTokens[mIndex].value[0 .. openIndex]);
-			if (precomment.length > 0) {
-				mComment[$-1] ~= precomment;
-			}
-			multiDepth++;
-			return;
-		}
-		if (mTokens[mIndex].value.indexOf("@}") >= 0) {
-			if (!inMultiCommentBlock) {
-				auto e = makeExpected(mTokens[mIndex].location, "@{");
-				e.neverIgnore = true;
-				throw e;
-			}
-			multiDepth--;
-			if (multiDepth == 0 && mComment.length > 0) {
-				mComment[$-1] = "";
-			}
-		}
 	}
 }
