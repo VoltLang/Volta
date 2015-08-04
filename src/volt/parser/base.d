@@ -332,7 +332,7 @@ ParseStatus eatComments(ParserStream ps)
 			if (ps.retroComment is null) {
 				return strayDocComment(ps, commentTok.location);
 			} else {
-				*ps.retroComment = commentTok.value;
+				ps.retroComment.docComment = commentTok.value;
 			}
 		} else {
 			ps.addComment(commentTok);
@@ -424,7 +424,7 @@ public:
 	bool neverIgnoreError;
 
 	Token lastDocComment;
-	string* retroComment;  ///< For backwards doc comments (like this one).
+	ir.Node retroComment;  ///< For backwards doc comments (like this one).
 	int multiDepth;
 
 private:

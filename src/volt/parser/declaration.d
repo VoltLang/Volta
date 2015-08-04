@@ -155,7 +155,7 @@ ParseStatus parseAlias(ParserStream ps, out ir.Alias a)
 	}
 
 	a.docComment = ps.comment();
-	ps.retroComment = &a.docComment;
+	ps.retroComment = a;
 	return Succeeded;
 }
 
@@ -196,7 +196,7 @@ ParseStatus reallyParseVariable(ParserStream ps, ir.Type base, out ir.Node[] dec
 		return succeeded;
 	}
 
-	ps.retroComment = &decls[0].docComment;
+	ps.retroComment = decls[0];
 
 	return Succeeded;
 }
@@ -728,7 +728,7 @@ ParseStatus parseEnumDeclaration(ParserStream ps, out ir.EnumDeclaration edecl)
 
 	edecl.docComment = ps.comment();
 	if (edecl.docComment.length == 0) {
-		ps.retroComment = &edecl.docComment;
+		ps.retroComment = edecl;
 	}
 	return eatComments(ps);
 }
