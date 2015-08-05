@@ -418,6 +418,8 @@ bool isFunctionMemberOrConstructor(ir.Function fn)
 	case Function:
 	case LocalMember:
 	case GlobalMember:
+	case Nested:
+	case GlobalNested:
 		return false;
 	}
 }
@@ -438,6 +440,8 @@ bool isFunctionStatic(ir.Function fn)
 	case Function:
 	case LocalMember:
 	case GlobalMember:
+	case GlobalNested:
+	case Nested:
 		return true;
 	}
 }

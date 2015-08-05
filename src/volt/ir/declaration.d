@@ -209,7 +209,7 @@ public:
 	/**
 	 * Used to specify function type.
 	 *
-	 * Some types have hidden arguemnts, like the this arguement
+	 * Some types have hidden arguments, like the this argument
 	 * for member functions, constructors and destructors.
 	 */
 	enum Kind {
@@ -224,6 +224,8 @@ public:
 		LocalDestructor,  ///< local ~this() {}
 		GlobalConstructor,  ///< global this() {}
 		GlobalDestructor,  ///< global ~this() {}
+		Nested,  ///< void aFunction() { void foo() {} }
+		GlobalNested,  ///< void aFunction() { global void foo() {} }
 	}
 
 

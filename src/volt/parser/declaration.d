@@ -59,6 +59,9 @@ ParseStatus parseVariable(ParserStream ps, out ir.Node[] nodes)
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Variable);
 		}
+		if (_global && fn.kind == ir.Function.Kind.Nested) {
+			fn.kind = ir.Function.Kind.GlobalNested;
+		}
 		fn.isGlobal = _global;
 		nodes = [fn];
 		return Succeeded;
@@ -578,8 +581,15 @@ ParseStatus parseFunction(ParserStream ps, out ir.Function fn, ir.Type base)
 	fn = new ir.Function();
 	fn.type = new ir.FunctionType();
 	fn.docComment = base.docComment;
+	ps.functionDepth++;
 	ps.pushCommentLevel();
-	scope (exit) ps.popCommentLevel();
+	scope (exit) {
+		if (ps.functionDepth > 1 && fn !is null) {
+			fn.kind = ir.Function.Kind.Nested;
+		}
+		ps.functionDepth--;
+		ps.popCommentLevel();
+	}
 
 	// <int> add(int a, int b) { }
 	fn.type.ret = base;

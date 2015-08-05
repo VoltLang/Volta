@@ -1347,10 +1347,12 @@ public:
 			wf("local ");
 			goto case Member;
 		case GlobalMember:
-			wf("local ");
+		case GlobalNested:
+			wf("global ");
 			goto case Member;
 		case Invalid:
 		case Function:
+		case Nested:
 		case Member:
 			accept(fn.type.ret, this);
 			wf(" ");
