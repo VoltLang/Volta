@@ -19,7 +19,7 @@ import volt.parser.toplevel : parseModule;
 import volt.parser.statements : parseStatement;
 
 
-private void checkError(ParserStream ps, ParseStatus status)
+void checkError(ParserStream ps, ParseStatus status)
 {
 	if (status) {
 		return;
