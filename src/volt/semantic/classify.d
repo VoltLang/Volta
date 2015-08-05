@@ -754,7 +754,7 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 		{
 			if (primitive.type == Int) {
 				return constant.u._int >= 0 && cast(ulong) constant.u._int <= max;
-			} else if (primitive.type == Uint) {
+			} else if (primitive.type == Uint || primitive.type == Dchar) {
 				return constant.u._uint <= max;
 			} else if (primitive.type == Long) {
 				return constant.u._long >= 0 && cast(ulong) constant.u._long <= max;

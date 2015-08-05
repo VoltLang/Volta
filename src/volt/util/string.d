@@ -25,48 +25,51 @@ immutable(void)[] unescapeString(Location location, const char[] s)
 {
 	char[] output;
 
-	bool escaping, hexing, unicoding;
+	bool escaping, hexing;
+	int unicoding;
 	char[] hexchars;
 	foreach (c; s) {
 		// \uXXXX
 		if (unicoding) {
 			if (!isHex(c)) {
-				if (hexchars.length == 4) {
-					ushort i;
-					try {
-						i = cast(ushort)toInt(hexchars, 16);
-					} catch (ConvException) {
-						throw makeExpected(location, "unicode codepoint specification");
-					}
-					encode(output, i);
-					unicoding = false;
-					continue;
-				} else if (hexchars.length == 8) {
+				if (hexchars.length == unicoding) {
 					uint i;
 					try {
 						i = cast(uint)toInt(hexchars, 16);
 					} catch (ConvException) {
 						throw makeExpected(location, "unicode codepoint specification");
 					}
-					encode(output, i);
-					unicoding = false;
+					if (hexchars.length == 4) {
+						encode(output, i);
+					} else if (hexchars.length == 8) {
+						encode(output, cast(ushort)i);
+					} else {
+						assert(false);
+					}
+					unicoding = 0;
 					continue;
 				} else { 
 					throw makeExpected(location, "unicode codepoint specification");
 				}
 			}
-			if (hexchars.length == 8) {
+			hexchars ~= c;
+			if (hexchars.length == unicoding) {
 				uint i;
 				try {
 					i = cast(uint)toInt(hexchars, 16);
 				} catch (ConvException) {
 					throw makeExpected(location, "unicode codepoint specification");
 				}
-				encode(output, i);
-				unicoding = false;
+				if (hexchars.length == 4) {
+					encode(output, i);
+				} else if (hexchars.length == 8) {
+					encode(output, cast(ushort)i);
+				} else {
+					assert(false);
+				}
+				unicoding = 0;
 				continue;
 			}
-			hexchars ~= c;
 			continue;
 		}
 
@@ -108,8 +111,14 @@ immutable(void)[] unescapeString(Location location, const char[] s)
 					hexing = true;
 					hexchars = null;
 					continue;
-				case 'u', 'U':
-					unicoding = true;
+				case 'u':
+					escaping = false;
+					unicoding = 4;
+					hexchars = null;
+					continue;
+				case 'U':
+					escaping = false;
+					unicoding = 8;
 					hexchars = null;
 					continue;
 				// @todo Named character entities. http://www.w3.org/TR/html5/named-character-references.html
@@ -129,7 +138,13 @@ immutable(void)[] unescapeString(Location location, const char[] s)
 	}
 
 	if (escaping) {
-		throw makeExpected(location, "valid escape.");
+		throw makeExpected(location, "valid escape");
+	}
+
+	if (unicoding == 4) {
+		throw makeExpected(location, "valid unicode escape, \\uXXXX");
+	} else if (unicoding == 8) {
+		throw makeExpected(location, "valid unicode escape, \\UXXXXXXXX");
 	}
 
 	return cast(immutable(void)[]) output;
