@@ -62,7 +62,6 @@ ParseStatus parseVariable(ParserStream ps, out ir.Node[] nodes)
 		if (_global && fn.kind == ir.Function.Kind.Nested) {
 			fn.kind = ir.Function.Kind.GlobalNested;
 		}
-		fn.isGlobal = _global;
 		nodes = [fn];
 		return Succeeded;
 	} else {
