@@ -1192,3 +1192,9 @@ bool containsMatchingFunction(ir.Function[] fns, ir.Function fnToMatch)
 	}
 	return false;
 }
+
+bool isNested(ir.Function fn)
+{
+	return fn.kind == ir.Function.Kind.Nested ||
+	       fn.kind == ir.Function.Kind.GlobalNested;
+}

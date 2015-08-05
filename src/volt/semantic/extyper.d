@@ -2784,7 +2784,7 @@ void handleNestedParams(Context ctx, ir.Function fn)
 			}
 			bop.isInternalNestedAssign = true;
 			ir.Node n = buildExpStat(l.location, bop);
-			if (fn.nestedHiddenParameter !is null) {
+			if (isNested(fn)) {
 				// Nested function.
 				fn._body.statements = n ~ fn._body.statements;
 			} else {
