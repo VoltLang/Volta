@@ -26,7 +26,7 @@ immutable(void)[] unescapeString(Location location, const char[] s)
 	char[] output;
 
 	bool escaping, hexing;
-	int unicoding;
+	size_t unicoding;
 	char[] hexchars;
 	foreach (c; s) {
 		// \uXXXX
