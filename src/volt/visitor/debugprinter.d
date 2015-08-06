@@ -55,23 +55,20 @@ class DebugPrinter : Visitor, Pass, Backend
 protected:
 	string mFilename;
 	Stream mStream;
+	void delegate(string) mSink;
 
 	int mIndent;
 	int mLastIndent;
 	string mIndentText;
 
 public:
-	this(string indentText = null)
+	this(string indentText = "\t", void delegate(string) sink = null)
 	{
-		if (indentText is null) {
-			version (Windows) {
-				mIndentText = "  ";
-			} else {
-				mIndentText = "\t";
-			}
-		} else {
-			mIndentText = indentText;
+		version (Windows) if (indentText == "\t") {
+			indentText = " ";
 		}
+		mIndentText = indentText;
+		mSink = sink;
 	}
 
 	void close()
@@ -99,9 +96,22 @@ public:
 		assert(mFilename is null);
 
 		mStream = dout;
+		void sink(string s)
+		{
+			mStream.writef("%s", s);
+		}
+		bool sinkWasNull;
+		if (mSink is null) {
+			mSink = &sink;
+			sinkWasNull = true;
+		}
+
 		accept(m, this);
-		mStream.writefln();
+		mSink("\n");
 		mStream = null;
+		if (sinkWasNull) {
+			mSink = null;
+		}
 	}
 
 	void transform(ref ir.Exp exp)
@@ -114,9 +124,22 @@ public:
 		assert(mFilename is null);
 
 		mStream = dout;
+		void sink(string s)
+		{
+			mStream.writef("%s", s);
+		}
+		bool sinkWasNull;
+		if (mSink is null) {
+			mSink = &sink;
+			sinkWasNull = true;
+		}
+
 		acceptExp(exp, this);
-		mStream.writefln();
+		mSink("\n");
 		mStream = null;
+		if (sinkWasNull) {
+			mSink = null;
+		}
 	}
 
 	void transformNode(ir.Node n)
@@ -129,14 +152,27 @@ public:
 		assert(mFilename is null);
 
 		mStream = dout;
+		void sink(string s)
+		{
+			mStream.writef("%s", s);
+		}
+		bool sinkWasNull;
+		if (mSink is null) {
+			mSink = &sink;
+			sinkWasNull = true;
+		}
+
 		auto exp = cast(ir.Exp)n;
 		if (exp is null) {
 			accept(n, this);
 		} else {
 			acceptExp(exp, this);
 		}
-		mStream.writefln();
+		mSink("\n");
 		mStream = null;
+		if (sinkWasNull) {
+			mSink = null;
+		}
 	}
 
 
@@ -495,9 +531,9 @@ protected:
 	void twf(string[] strings...)
 	{
 		for(int i; i < mIndent; i++)
-			mStream.writef(mIndentText);
+			mSink(mIndentText);
 		foreach (s; strings) {
-			mStream.writef(s);
+			mSink(s);
 		}
 	}
 
@@ -505,18 +541,23 @@ protected:
 	{
 		foreach (s; strings) {
 			twf(s);
-			mStream.writefln();
+			ln();
 		}
 	}
 
 	void wf(string[] strings...)
 	{
 		foreach (s; strings) {
-			mStream.writef(s);
+			mSink(s);
 		}
 	}
 
-	void wf(size_t i) { mStream.writef("%s", i); }
-	void wfln(string str) { wf(str); mStream.writefln(); }
-	void ln() { mStream.writefln(); }
+	void wf(size_t i)
+	{
+		string s = format("%s", i);
+		mSink(s);
+	}
+
+	void wfln(string str) { wf(str); ln(); }
+	void ln() { mSink("\n"); }
 }

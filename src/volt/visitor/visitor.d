@@ -687,6 +687,19 @@ Visitor.Status acceptExp(ref ir.Exp exp, Visitor av)
 	}
 }
 
+/**
+ * For getting a string from PrettyPrinter and DebugPrinter.
+ */
+struct StringBuffer
+{
+	string str;
+
+	void sink(string s)
+	{
+		str ~= s;
+	}
+}
+
 /*
  * Top levels.
  */
