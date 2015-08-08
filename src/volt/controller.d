@@ -9,6 +9,8 @@ import std.file : remove, exists;
 import std.process : wait, spawnShell;
 import std.stdio : stderr, stdout;
 
+import watt.text.diff;
+
 import volt.util.path;
 import volt.util.perf : perf;
 import volt.exceptions;
@@ -20,6 +22,7 @@ import volt.semantic.languagepass;
 import volt.llvm.backend;
 import volt.util.mangledecoder;
 
+import volt.visitor.visitor;
 import volt.visitor.prettyprinter;
 import volt.visitor.debugprinter;
 import volt.visitor.docprinter;
@@ -150,6 +153,15 @@ public:
 		}
 
 		return m;
+	}
+
+	ir.Module[] getCommandLineModules()
+	{
+		auto mods = new ir.Module[](mSourceFiles.length);
+		foreach (i, fname; mSourceFiles) {
+			mods[i] = mModulesByFile[fname];
+		}
+		return mods;
 	}
 
 	void close()
@@ -320,22 +332,32 @@ protected:
 		auto lp = cast(VoltLanguagePass)languagePass;
 		lp.setupOneTruePointers();
 
+		auto commandLineMods = getCommandLineModules();
+		auto ppstrs = new string[](commandLineMods.length);
+		auto dpstrs = new string[](commandLineMods.length);
+
+		preDiff(commandLineMods, "Phase 1", ppstrs, dpstrs);
 		perf.tag("phase1");
 		// Force phase 1 to be executed on the modules.
 		foreach (mod; mods)
 			languagePass.phase1(mod);
+		postDiff(commandLineMods, ppstrs, dpstrs);
 
 		ir.Module[] dmdIsStupid;
 		foreach (mod; mModulesByName)
 			dmdIsStupid ~= mod;
 
+		preDiff(commandLineMods, "Phase 2", ppstrs, dpstrs);
 		perf.tag("phase2");
-		// All modules need to be run trough phase2.
+		// All modules need to be run through phase2.
 		languagePass.phase2(dmdIsStupid);
+		postDiff(commandLineMods, ppstrs, dpstrs);
 
+		preDiff(commandLineMods, "Phase 3", ppstrs, dpstrs);
 		perf.tag("phase3");
-		// All modules need to be run trough phase3.
+		// All modules need to be run through phase3.
 		languagePass.phase3(dmdIsStupid);
+		postDiff(commandLineMods, ppstrs, dpstrs);
 
 		debugPasses();
 
@@ -468,6 +490,49 @@ protected:
 		this.frontend = f;
 		this.languagePass = lp;
 		this.backend = b;
+	}
+
+	private void preDiff(ir.Module[] mods, string title, string[] ppstrs, string[] dpstrs)
+	{
+		if (!settings.internalDiff) {
+			return;
+		}
+		assert(mods.length == ppstrs.length && mods.length == dpstrs.length);
+		StringBuffer ppBuf, dpBuf;
+		auto diffPP = new PrettyPrinter(" ", &ppBuf.sink);
+		auto diffDP = new DebugPrinter(" ", &dpBuf.sink);
+		foreach (i, m; mods) {
+			ppBuf.clear();
+			dpBuf.clear();
+			stdout.writefln("Transformations performed by %s:", title);
+			diffPP.transform(m);
+			diffDP.transform(m);
+			ppstrs[i] = ppBuf.str;
+			dpstrs[i] = dpBuf.str;
+		}
+		diffPP.close();
+		diffDP.close();
+	}
+
+	private void postDiff(ir.Module[] mods, string[] ppstrs, string[] dpstrs)
+	{
+		if (!settings.internalDiff) {
+			return;
+		}
+		assert(mods.length == ppstrs.length && mods.length == dpstrs.length);
+		StringBuffer sb;
+		auto pp = new PrettyPrinter(" ", &sb.sink);
+		auto dp = new DebugPrinter(" ", &sb.sink);
+		foreach (i, m; mods) {
+			sb.clear();
+			pp.transform(m);
+			diff(ppstrs[i], sb.str);
+			sb.clear();
+			dp.transform(m);
+			diff(dpstrs[i], sb.str);
+		}
+		pp.close();
+		dp.close();
 	}
 }
 

@@ -16,6 +16,8 @@ import ir = volt.ir.ir;
 interface Controller
 {
 	ir.Module getModule(ir.QualifiedName name);
+	/// Get the modules given on the command line.
+	ir.Module[] getCommandLineModules();
 
 	void close();
 }
@@ -485,6 +487,7 @@ public:
 	bool writeDocs; ///< The --doc argument.
 	bool writeJson; ///< The --json argument.
 	bool depArgTags; ///< The --dep-argtags argument;
+	bool internalDiff; ///< The --internal-diff argument.
 
 	Platform platform;
 	Arch arch;

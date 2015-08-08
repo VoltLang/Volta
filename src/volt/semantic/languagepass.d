@@ -498,6 +498,7 @@ public:
 			return;
 		m.hasPhase1 = true;
 
+
 		foreach(pass; postParse) {
 			debugPrint("Phase 1 %s.", m.name);
 			pass.transform(m);

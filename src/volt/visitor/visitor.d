@@ -694,6 +694,11 @@ struct StringBuffer
 {
 	string str;
 
+	void clear()
+	{
+		str = "";
+	}
+
 	void sink(string s)
 	{
 		str ~= s;

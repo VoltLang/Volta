@@ -267,6 +267,9 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 		case "--internal-perf":
 			doPerfPrint = true;
 			continue;
+		case "--internal-diff":
+			settings.internalDiff = true;
+			continue;
 		default:
 		}
 
@@ -377,6 +380,7 @@ bool printUsage()
 	writeln();
 	writefln("\t--internal-dbg   Enables internal debug printing.");
 	writefln("\t--internal-perf  Enables internal performance timings.");
+	writefln("\t--internal-diff  Enables internal debug diff printing.");
 	return false;
 }
 

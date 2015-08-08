@@ -445,7 +445,7 @@ public:
 		case MangledName:
 			twf("@MangledName(");
 			assert(attr.arguments.length == 1);
-			accept(attr.arguments[0], this);
+			acceptExp(attr.arguments[0], this);
 			wf(")");
 			break;
 		case UserAttribute:
