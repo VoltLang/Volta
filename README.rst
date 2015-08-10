@@ -50,7 +50,7 @@ DMD environmental variable to be "<somewhere>/osx/bin/dmd" or put the folder
 For LLVM version 3.6, you can :code:`brew install homebrew/versions/llvm36`, then
 add :code:`/usr/local/Cellar/llvm36/3.6.2/lib/llvm-3.6/bin` on your $PATH (you may
 remove it afterwards). The reason for doing so is, that Homebrew doesn't properly 
-link old versions - like LLVM v3.6. For example, :code:`llvm-config` won't be callable, 
+link non-core-only versions - like LLVM v3.6 if it comes from :code:`homebrew/versions/llvm36`. For example, :code:`llvm-config` won't be callable, 
 but only :code:`llvm-config-3.6`.
 
 Without Homebrew, just download LLVM from the LLVM homepage, and put the bin folder 
