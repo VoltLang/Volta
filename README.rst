@@ -47,11 +47,11 @@ then just extract the contents of dmd.2.<version>.zip <somewhere> and set the
 DMD environmental variable to be "<somewhere>/osx/bin/dmd" or put the folder 
 "<somewhere>/osx/bin" on the path.
 
-For LLVM version 3.4, you can :code:`brew install homebrew/versions/llvm36`, then
-add :code:`/usr/local/Cellar/llvm34/3.4.2/lib/llvm-3.4/bin` on your $PATH (you may
+For LLVM version 3.6, you can :code:`brew install homebrew/versions/llvm36`, then
+add :code:`/usr/local/Cellar/llvm36/3.6.2/lib/llvm-3.6/bin` on your $PATH (you may
 remove it afterwards). The reason for doing so is, that Homebrew doesn't properly 
-link old versions - like LLVM v3.4. For example, :code:`llvm-config` won't be callable, 
-but only :code:`llvm-config-3.4`.
+link old versions - like LLVM v3.6. For example, :code:`llvm-config` won't be callable, 
+but only :code:`llvm-config-3.6`.
 
 Without Homebrew, just download LLVM from the LLVM homepage, and put the bin folder 
 inside the unpacked tarball on the PATH, the builds system needs :code:`llvm-config` and the
