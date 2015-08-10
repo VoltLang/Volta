@@ -12,8 +12,8 @@ As Volt is written in D, a compiler for D is needed. GDC, LDC and DMD should
 be able to compile Volt. Once Volt is capable enough the compiler will be
 ported to Volt and become self-hosting.
 
-Volt uses LLVM as a backend to generate binary code. Currently version 3.4 is
-used and required.
+Volt uses LLVM as a backend to generate binary code. Version 3.4 is the least
+supported version.
 
 
 Linux
