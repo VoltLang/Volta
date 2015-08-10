@@ -32,8 +32,6 @@ enum _Unwind_Action
 	END_OF_STACK  = 16
 }
 
-alias _Unwind_Exception_Cleanup_Fn = void function(_Unwind_Reason_Code, _Unwind_Exception*);
-
 // XXX The IA-64 ABI says that this structure must be double-word aligned.
 // We probably don't follow that.
 version (Windows) {
@@ -58,6 +56,8 @@ version (Windows) {
 		uintptr_t private_2;
 	}
 }
+
+alias _Unwind_Exception_Cleanup_Fn = void function(_Unwind_Reason_Code, _Unwind_Exception*);
 
 struct _Unwind_Context {}
 
