@@ -34,14 +34,45 @@ Some versions of LLVM on Linux depend on being linked with tinfo, but don't tell
 Mac
 ***
 
-There are no packages of GDC for Mac so DMD should be used. To install it
-just extract the contents of dmd.2.<version>.zip <somewhere> and set the
-DMD environmental variable to be "<somewhere>/osx/bin/dmd" or put the folder
+There are no packages of GDC for Mac so DMD should be used. To install it,
+the easiest way is using `Homebrew <http://brew.sh>`_. If you don't have it,
+install it from http://brew.sh
+
+Then, in a terminal : ::
+
+  brew install dmd
+  
+If you prefer not to use Homebrew, then download DMD from : http://dlang.org/download.html, 
+then just extract the contents of dmd.2.<version>.zip <somewhere> and set the 
+DMD environmental variable to be "<somewhere>/osx/bin/dmd" or put the folder 
 "<somewhere>/osx/bin" on the path.
 
-Download llvm from the llvm homepage, and put the bin folder inside the
-unpacked tarball on the PATH, the builds system needs llvm-config and the
+For LLVM version 3.4, you can :code:`brew install homebrew/versions/llvm34`, then
+add :code:`/usr/local/Cellar/llvm34/3.4.2/lib/llvm-3.4/bin` on your $PATH (you may
+remove it afterwards). The reason for doing so is, that Homebrew doesn't properly 
+link old versions - like LLVM v3.4. For example, :code:`llvm-config` won't be callable, 
+but only :code:`llvm-config-3.4`.
+
+Without Homebrew, just download LLVM from the LLVM homepage, and put the bin folder 
+inside the unpacked tarball on the PATH, the builds system needs :code:`llvm-config` and the
 compiler requires some helpers from there to link.
+
+Volt also requires the Boehm GC : ::
+
+  brew install bdw-gc
+
+Or, without Homebrew : ::
+
+  curl http://www.hboehm.info/gc/gc_source/gc-7.4.2.tar.gz -o gc-7.4.2.tar.gz
+  tar xfv gc-7.4.2.tar.gz 
+  cd gc-7.4.2
+  git clone git://github.com/ivmai/libatomic_ops.git
+  ./configure 
+  make -j9
+  
+Then, copy :code:`libgc.la` and :code:`libcord.la` to the :code:`rt` folder.
+
+Finally, run :code:`make` and :code:`make run`. If the latter exits with Error 42, you're all set up !
 
 
 Windows
