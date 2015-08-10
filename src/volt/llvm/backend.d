@@ -19,6 +19,7 @@ import lib.llvm.c.Initialization;
 
 import volt.llvm.state;
 import volt.llvm.toplevel;
+import volt.llvm.dibuilder;
 
 
 /**
@@ -92,6 +93,7 @@ public:
 
 		try {
 			state.compile(m);
+			diCompileUnit(state);
 		} catch (Throwable t) {
 			if (mDump) {
 				stdout.writefln("Caught \"%s\" dumping module:", t.classinfo.name);
