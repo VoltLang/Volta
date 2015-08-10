@@ -29,7 +29,9 @@ To get GDC and LLVM on Ubuntu do this:
 For DMD known working are DMD 2.067.1 and above. To setup DMD just follow the
 Mac instructions.
 
-Some versions of LLVM on Linux depend on being linked with tinfo, but don't tell llvm-config that. If you see a link failure involving del_setterm or similar, add -ltinfo to the LLVM_LDFLAGS variable in the GNUMakefile.
+Some versions of LLVM on Linux depend on being linked with tinfo, but don't
+tell llvm-config that. If you see a link failure involving del_setterm or
+similar, add -ltinfo to the LLVM_LDFLAGS variable in the GNUMakefile.
 
 Mac
 ***
@@ -41,21 +43,22 @@ install it from http://brew.sh
 Then, in a terminal : ::
 
   brew install dmd
-  
-If you prefer not to use Homebrew, then download DMD from : http://dlang.org/download.html, 
-then just extract the contents of dmd.2.<version>.zip <somewhere> and set the 
-DMD environmental variable to be "<somewhere>/osx/bin/dmd" or put the folder 
-"<somewhere>/osx/bin" on the path.
 
-For LLVM version 3.6, you can :code:`brew install homebrew/versions/llvm36`, then
-add :code:`/usr/local/Cellar/llvm36/3.6.2/lib/llvm-3.6/bin` on your $PATH (you may
-remove it afterwards). The reason for doing so is, that Homebrew doesn't properly 
-link non-core-only versions - like LLVM v3.6 if it comes from :code:`homebrew/versions/llvm36`. For example, :code:`llvm-config` won't be callable, 
-but only :code:`llvm-config-3.6`.
+If you prefer not to use Homebrew, then download DMD from :
+http://dlang.org/download.html, then just extract the contents of
+dmd.2.<version>.zip <somewhere> and set the DMD environmental variable to be
+"<somewhere>/osx/bin/dmd" or put the folder "<somewhere>/osx/bin" on the path.
 
-Without Homebrew, just download LLVM from the LLVM homepage, and put the bin folder 
-inside the unpacked tarball on the PATH, the builds system needs :code:`llvm-config` and the
-compiler requires some helpers from there to link.
+For LLVM version 3.6, you can :code:`brew install homebrew/versions/llvm36`,
+then add :code:`/usr/local/Cellar/llvm36/3.6.2/lib/llvm-3.6/bin` on your $PATH
+(you may remove it afterwards). The reason for doing so is, that Homebrew
+doesn't properly link non-core-only versions - like LLVM v3.6 if it comes from
+:code:`homebrew/versions/llvm36`. For example, :code:`llvm-config` won't be
+callable, but only :code:`llvm-config-3.6`.
+
+Without Homebrew, just download LLVM from the LLVM homepage, and put the bin
+folder inside the unpacked tarball on the PATH, the builds system needs
+:code:`llvm-config` and the compiler requires some helpers from there to link.
 
 Volt also requires the Boehm GC : ::
 
@@ -64,35 +67,36 @@ Volt also requires the Boehm GC : ::
 Or, without Homebrew : ::
 
   curl http://www.hboehm.info/gc/gc_source/gc-7.4.2.tar.gz -o gc-7.4.2.tar.gz
-  tar xfv gc-7.4.2.tar.gz 
+  tar xfv gc-7.4.2.tar.gz
   cd gc-7.4.2
   git clone git://github.com/ivmai/libatomic_ops.git
-  ./configure 
+  ./configure
   make -j9
-  
+
 Then, copy :code:`libgc.la` and :code:`libcord.la` to the :code:`rt` folder.
 
-Finally, run :code:`make` and :code:`make run`. If the latter exits with Error 42, you're all set up !
+Finally, run :code:`make` and :code:`make run`. If the latter exits with Error
+42, you're all set up !
 
 
 Windows
 *******
 
-The only compiler that has been used to compile Volta on Windows is DMD.
-Install DMD and MinGW. Using MinGW's bash prompt, compile LLVM -- be sure
-to use --enable-shared and build a DLL.
+The only compiler that has been used to compile Volta on Windows is DMD. Install
+DMD and MinGW. Using MinGW's bash prompt, compile LLVM -- be sure to use
+--enable-shared and build a DLL.
 
-Once compiled, put the LLVM tools and DLL in your PATH, in with the D tools
-is probably the simplest place. Run `implib /p:64 LLVM.lib <thellvmdll>` and
-place that in the Volta directory. Run make (the digital mars one, not MinGW)
-and with a bit of luck, you should have a working volt.exe. 
+Once compiled, put the LLVM tools and DLL in your PATH, in with the D tools is
+probably the simplest place. Run `implib /p:64 LLVM.lib <thellvmdll>` and place
+that in the Volta directory. Run make (the digital mars one, not MinGW) and with
+a bit of luck, you should have a working volt.exe.
 
 Other
 *****
 
-For other platforms you need probably need to compile it you can get the
-latest version from here https://bitbucket.org/goshawk/gdc/wiki/Home
-Cross compiling on Linux to Windows is confirmed working.
+For other platforms you need probably need to compile it you can get the latest
+version from here https://bitbucket.org/goshawk/gdc/wiki/Home Cross compiling on
+Linux to Windows is confirmed working.
 
 
 Building
