@@ -2191,6 +2191,47 @@ void handleNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 	if (!_unary.hasArgumentList) {
 		return;
 	}
+
+	auto st = cast(ir.StorageType) _unary.type;
+	if (st !is null && st.type == ir.StorageType.Kind.Auto) {
+		if (_unary.argumentList.length == 0) {
+			throw makeExpected(_unary, "argument(s)");
+		}
+		_unary.type = copyTypeSmart(_unary.location, getExpType(ctx.lp, _unary.argumentList[0], ctx.current));
+	}
+	auto array = cast(ir.ArrayType) _unary.type;
+	if (array !is null) {
+		if (_unary.argumentList.length == 0) {
+			throw makeExpected(_unary, "argument(s)");
+		}
+		bool isArraySize = isIntegral(getExpType(ctx.lp, _unary.argumentList[0], ctx.current));
+		foreach (arg; _unary.argumentList) {
+			auto type = getExpType(ctx.lp, arg, ctx.current);
+			if (isIntegral(type)) {
+				if (isArraySize) {
+					// multi/one-dimensional array:
+					//   new type[](1)
+					//   new type[](1, 2, ...)
+					continue;
+				}
+				throw makeExpected(arg, "array");
+			} else if (isArraySize) {
+				throw makeExpected(arg, "array size");
+			}
+
+			// it's a concatenation or copy:
+			//   new type[](array1)
+			//   new type[](array1, array2, ...)
+			auto asArray = cast(ir.ArrayType) type;
+			if (asArray is null) {
+				throw makeExpected(arg, "array");
+			}
+			if (!typesEqual(asArray, array) && !isImplicitlyConvertable(asArray, array)) {
+				throw makeBadImplicitCast(arg, asArray, array);
+			}
+		}
+	}
+
 	auto tr = cast(ir.TypeReference) _unary.type;
 	if (tr is null) {
 		return;

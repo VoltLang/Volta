@@ -16,6 +16,7 @@ import volt.semantic.lookup;
 import volt.semantic.mangle;
 import volt.semantic.overload;
 import volt.semantic.typer;
+import volt.semantic.llvmlowerer;
 
 
 ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scope baseScope, ir.ArrayType atype, string name)
@@ -109,6 +110,19 @@ ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scop
 	fn._body.statements ~= returnStatement;
 
 	return fn;
+}
+
+ir.Function getArrayAllocFunction(Location location, LanguagePass lp, ir.Module thisModule, ir.ArrayType atype)
+{
+	auto arrayMangledName = mangle(atype);
+	string name = "__arrayAlloc" ~ arrayMangledName;
+	auto allocFn = lookupFunction(lp, thisModule.myScope, location, name);
+	if (allocFn is null) {
+		allocFn = createArrayAllocFunction(location, lp, thisModule.myScope, atype, name);
+		thisModule.children.nodes = allocFn ~ thisModule.children.nodes;
+		thisModule.myScope.addFunction(allocFn, allocFn.name);
+	}
+	return allocFn;
 }
 
 ir.StatementExp buildClassConstructionWrapper(Location loc, LanguagePass lp, ir.Scope current, ir.Class _class, ir.Function constructor, ir.Variable allocDgVar, ir.Exp[] exps)
@@ -214,43 +228,128 @@ public:
 		auto asClass = cast(ir.Class) rtype;
 
 		if (asArray !is null && unary.argumentList.length > 0) {
-			if (unary.argumentList.length != 1) {
-				throw panic(unary.location, "multidimensional arrays unsupported at the moment.");
+			if (isIntegral(getExpType(lp, unary.argumentList[0], current))) {
+				return handleArrayNew(exp, unary, asArray);
 			}
-
-			auto arrayMangledName = mangle(asArray);
-			string name = "__arrayAlloc" ~ arrayMangledName;
-			auto allocFn = lookupFunction(lp, thisModule.myScope, unary.location, name);
-			if (allocFn is null) {
-				allocFn = createArrayAllocFunction(unary.location, lp, thisModule.myScope, asArray, name);
-				thisModule.children.nodes = allocFn ~ thisModule.children.nodes;
-				thisModule.myScope.addFunction(allocFn, allocFn.name);
-			}
-
-			auto _ref = new ir.ExpReference();
-			_ref.location = unary.location;
-			_ref.idents ~= allocFn.name;
-			_ref.decl = allocFn;
-
-			auto call = new ir.Postfix();
-			call.location = unary.location;
-			call.op = ir.Postfix.Op.Call;
-			call.arguments ~= buildCast(unary.location, lp.settings.getSizeT(unary.location), unary.argumentList[0]);
-			call.child = _ref;
-
-			exp = call;
-
-			return Continue;
+			return handleArrayCopy(exp, unary, asArray);
 		} else if (asClass !is null && unary.hasArgumentList) {
-			auto ctor = selectFunction(lp, current, asClass.userConstructors, unary.argumentList, unary.location);
-			exp = buildClassConstructionWrapper(unary.location, lp, current, asClass, ctor, allocDgVar, unary.argumentList);
-
-			return Continue;
+			return handleClass(exp, unary, asClass);
 		}
 
+		return handleOther(exp, unary);
+	}
+
+	protected Status handleArrayNew(ref ir.Exp exp, ir.Unary unary, ir.ArrayType array)
+	{
+		if (unary.argumentList.length != 1) {
+			throw panic(unary.location, "multidimensional arrays unsupported at the moment.");
+		}
+
+		auto allocFn = getArrayAllocFunction(unary.location, lp, thisModule, array);
+
+		auto _ref = new ir.ExpReference();
+		_ref.location = unary.location;
+		_ref.idents ~= allocFn.name;
+		_ref.decl = allocFn;
+
+		auto call = new ir.Postfix();
+		call.location = unary.location;
+		call.op = ir.Postfix.Op.Call;
+		call.arguments ~= buildCast(unary.location, lp.settings.getSizeT(unary.location), unary.argumentList[0]);
+		call.child = _ref;
+
+		exp = call;
+
+		return Continue;
+	}
+
+	protected Status handleArrayCopy(ref ir.Exp exp, ir.Unary unary, ir.ArrayType array)
+	{
+		auto loc = unary.location;
+		auto allocFn = getArrayAllocFunction(loc, lp, thisModule, array);
+		auto copyFn = getLlvmMemCopy(loc, lp);
+
+		auto statExp = buildStatementExp(loc);
+
+		auto offset = buildVariable(
+			loc, lp.settings.getSizeT(loc), ir.Variable.Storage.Function,
+			"offset", buildConstantSizeT(loc, lp, 0)
+		);
+		statExp.statements ~= offset;
+
+		ir.Variable[] variables = new ir.Variable[](unary.argumentList.length);
+		ir.Exp sizeExp = buildConstantSizeT(loc, lp, 0);
+		foreach (size_t i, arg; unary.argumentList) {
+			auto var = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp, getExpType(lp, arg, current), arg);
+			sizeExp = buildAdd(loc, sizeExp, buildAccess(loc, buildExpReference(loc, var, var.name), "length"));
+			variables[i] = var;
+		}
+		auto newArray = buildVariable(
+			loc, copyTypeSmart(loc, array), ir.Variable.Storage.Function,
+			"newArray", buildCall(loc, allocFn, [sizeExp], allocFn.name)
+		);
+		statExp.statements ~= newArray;
+
+		foreach (size_t i, arg; unary.argumentList) {
+			auto source = variables[i];
+
+			ir.Exp[] args = [
+				cast(ir.Exp)
+				buildAdd(loc,
+					buildCastToVoidPtr(loc, buildAccess(loc,
+						buildExpReference(loc, newArray, newArray.name), "ptr"
+					)),
+					buildExpReference(loc, offset, offset.name)
+				),
+				buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, source, source.name), "ptr")),
+				buildBinOp(loc, ir.BinOp.Op.Mul,
+					buildAccess(loc, buildExpReference(loc, source, source.name), "length"),
+					buildConstantSizeT(loc, lp, size(lp, array.base))
+				),
+				buildConstantInt(loc, 0),
+				buildConstantFalse(loc)
+			];
+			buildExpStat(loc, statExp, buildCall(loc, copyFn, args, copyFn.name));
+
+			if (i+1 == unary.argumentList.length) {
+				// last iteration, skip advancing the offset.
+				continue;
+			}
+
+			buildExpStat(loc, statExp,
+				buildAssign(loc,
+					buildExpReference(loc, offset, offset.name),
+					buildAdd(loc,
+						buildExpReference(loc, offset, offset.name),
+						buildBinOp(loc, ir.BinOp.Op.Mul,
+							buildAccess(loc, buildExpReference(loc, source, source.name), "length"),
+							buildConstantSizeT(loc, lp, size(lp, array.base))
+						),
+					)
+				)
+			);
+		}
+
+		statExp.exp = buildExpReference(loc, newArray, newArray.name);
+		exp = statExp;
+
+		return Continue;
+	}
+
+	protected Status handleClass(ref ir.Exp exp, ir.Unary unary, ir.Class clazz)
+	{
+		auto ctor = selectFunction(lp, current, clazz.userConstructors, unary.argumentList, unary.location);
+		exp = buildClassConstructionWrapper(unary.location, lp, current, clazz, ctor, allocDgVar, unary.argumentList);
+
+		return Continue;
+	}
+
+	protected Status handleOther(ref ir.Exp exp, ir.Unary unary)
+	{
 		exp = createAllocDgCall(allocDgVar, lp, unary.location, unary.type);
 
 		return Continue;
 	}
 }
+
 
