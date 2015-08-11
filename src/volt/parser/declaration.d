@@ -146,6 +146,12 @@ ParseStatus parseAlias(ParserStream ps, out ir.Alias a)
 		ps.resetErrors();
 
 		a.id = null;
+		if (ps == TokenType.Extern) {
+			succeeded = parseAttribute(ps, a.externAttr, true);
+			if (!succeeded) {
+				return parseFailed(ps, a);
+			}
+		}
 		succeeded = parseType(ps, a.type);
 		if (!succeeded) {
 			return parseFailed(ps, a);

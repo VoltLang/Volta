@@ -169,6 +169,8 @@ public:
 	 */
 	string name;
 
+	Attribute externAttr;  ///< Non null type.
+
 	/**
 	 * The @p Type names are associated with.
 	 *

@@ -927,7 +927,7 @@ ParseStatus parseMixinTemplate(ParserStream ps, out ir.MixinTemplate m)
 	return match(ps, ir.NodeType.MixinTemplate, TokenType.CloseBrace);
 }
 
-ParseStatus parseAttribute(ParserStream ps, out ir.Attribute attr)
+ParseStatus parseAttribute(ParserStream ps, out ir.Attribute attr, bool noTopLevel=false)
 {
 	attr = new ir.Attribute();
 	attr.location = ps.peek.location;
@@ -953,6 +953,7 @@ ParseStatus parseAttribute(ParserStream ps, out ir.Attribute attr)
 			case "Pascal": attr.kind = ir.Attribute.Kind.LinkagePascal; break;
 			case "System": attr.kind = ir.Attribute.Kind.LinkageSystem; break;
 			case "Volt": attr.kind = ir.Attribute.Kind.LinkageVolt; break;
+			case "C++": attr.kind = ir.Attribute.Kind.LinkageCPlusPlus; break;
 			default:
 				return unexpectedToken(ps, attr);
 			}
@@ -1075,6 +1076,10 @@ ParseStatus parseAttribute(ParserStream ps, out ir.Attribute attr)
 	case TokenType.Pure: attr.kind = ir.Attribute.Kind.Pure; break;
 	default:
 		assert(false);
+	}
+
+	if (noTopLevel && ps != TokenType.OpenBrace) {
+		return Succeeded;
 	}
 
 	if (matchIf(ps, TokenType.OpenBrace)) {
