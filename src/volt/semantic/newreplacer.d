@@ -18,10 +18,8 @@ import volt.semantic.overload;
 import volt.semantic.typer;
 
 
-ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scope baseScope, ir.ArrayType atype)
+ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scope baseScope, ir.ArrayType atype, string name)
 {
-	auto arrayMangledName = mangle(atype);
-
 	auto ftype = new ir.FunctionType();
 	ftype.location = location;
 	ftype.ret = copyTypeSmart(location, atype);
@@ -30,7 +28,7 @@ ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scop
 	auto fn = new ir.Function();
 	fn.location = location;
 	fn.type = ftype;
-	fn.name = "__arrayAlloc" ~ arrayMangledName;
+	fn.name = name;
 	fn.mangledName = fn.name;
 	fn.kind = ir.Function.Kind.Function;
 	fn.isWeakLink = true;
@@ -219,10 +217,15 @@ public:
 			if (unary.argumentList.length != 1) {
 				throw panic(unary.location, "multidimensional arrays unsupported at the moment.");
 			}
-			// WIP, doesn't consider multiple outputs of the same function.
-			auto allocFn = createArrayAllocFunction(unary.location, lp, thisModule.myScope, asArray);
-			thisModule.children.nodes = allocFn ~ thisModule.children.nodes;
-			thisModule.myScope.addFunction(allocFn, allocFn.name);
+
+			auto arrayMangledName = mangle(asArray);
+			string name = "__arrayAlloc" ~ arrayMangledName;
+			auto allocFn = lookupFunction(lp, thisModule.myScope, unary.location, name);
+			if (allocFn is null) {
+				allocFn = createArrayAllocFunction(unary.location, lp, thisModule.myScope, asArray, name);
+				thisModule.children.nodes = allocFn ~ thisModule.children.nodes;
+				thisModule.myScope.addFunction(allocFn, allocFn.name);
+			}
 
 			auto _ref = new ir.ExpReference();
 			_ref.location = unary.location;

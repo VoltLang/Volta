@@ -223,6 +223,21 @@ ir.Type lookupType(LanguagePass lp, ir.Scope _scope, ir.QualifiedName id)
 }
 
 /**
+* This function is used to retrive cached
+* versions of helper functions.
+*/
+ir.Function lookupFunction(LanguagePass lp, ir.Scope _scope, Location loc, string name)
+{
+	// Lookup the copy function for this type of array.
+	auto store = lookupOnlyThisScope(lp, _scope, loc, name);
+	if (store !is null && store.kind == ir.Store.Kind.Function) {
+		assert(store.functions.length == 1);
+		return store.functions[0];
+	}
+	return null;
+}
+
+/**
  * Retrive from the object module a store with the given name.
  * Throws: CompilerPanic on failure.
  * Returns: Always a valid value.

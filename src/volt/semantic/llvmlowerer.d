@@ -686,7 +686,7 @@ public:
 		else
 			name = "__appendArray" ~ ltype.mangledName ~ rtype.mangledName;
 
-		auto fn = lookupFunction(loc, name);
+		auto fn = lookupFunction(lp, thisModule.myScope, loc, name);
 		if (fn !is null)
 			return fn;
 
@@ -792,7 +792,7 @@ public:
 
 		string name = "__prependArray" ~ ltype.mangledName ~ rtype.mangledName;
 
-		auto fn = lookupFunction(loc, name);
+		auto fn = lookupFunction(lp, thisModule.myScope, loc, name);
 		if (fn !is null)
 			return fn;
 
@@ -876,7 +876,7 @@ public:
 			type.mangledName = mangle(type);
 
 		auto name = "__copyArray" ~ type.mangledName;
-		auto fn = lookupFunction(loc, name);
+		auto fn = lookupFunction(lp, thisModule.myScope, loc, name);
 		if (fn !is null)
 			return fn;
 
@@ -920,7 +920,8 @@ public:
 			name = "__concatAssignArray" ~ type.mangledName;
 		else
 			name = "__concatArray" ~ type.mangledName;
-		auto fn = lookupFunction(loc, name);
+		auto fn = lookupFunction(lp, thisModule.myScope, loc, name);
+
 		if(fn !is null)
 			return fn;
 
@@ -1036,7 +1037,7 @@ public:
 			name = "__cmpNotArray" ~ type.mangledName;
 		else
 			name = "__cmpArray" ~ type.mangledName;
-		auto fn = lookupFunction(loc, name);
+		auto fn = lookupFunction(lp, thisModule.myScope, loc, name);
 		if (fn !is null)
 			return fn;
 
@@ -1094,21 +1095,6 @@ public:
 		auto name64 = "__llvm_memcpy_p0i8_p0i8_i64";
 		auto name = V_P64 ? name64 : name32;
 		return retrieveFunctionFromObject(lp, loc, name);
-	}
-
-	/**
-	 * This function is used to retrive cached
-	 * versions of the helper functions.
-	 */
-	ir.Function lookupFunction(Location loc, string name)
-	{
-		// Lookup the copy function for this type of array.
-		auto store = lookupOnlyThisScope(lp, thisModule.myScope, loc, name);
-		if (store !is null && store.kind == ir.Store.Kind.Function) {
-			assert(store.functions.length == 1);
-			return store.functions[0];
-		}
-		return null;
 	}
 
 	void buildAAInsert(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope current,
