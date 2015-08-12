@@ -492,6 +492,8 @@ public:
 	Platform platform;
 	Arch arch;
 
+	string identStr; ///< Compiler identifier string.
+
 	string execDir; ///< Set on create.
 	string platformStr; ///< Derived from platform.
 	string archStr; ///< Derived from arch.
@@ -545,6 +547,7 @@ public:
 
 	final void processConfigs()
 	{
+		identStr = "Volta 0.0.1";
 		setVersionsFromOptions();
 		setAligmentsFromOptions();
 		replaceMacros();
