@@ -134,7 +134,8 @@ run: $(RUN_TARGET)
 	@echo "  RUN    $(RUN_TARGET)"
 	@-./$(RUN_TARGET)
 
-debug: $(TARGET) $(RT_HOST)
+debug: $(TARGET)
+	@gdb --args ./$(TARGET) --no-stdlib --emit-bitcode -I rt/src -o $(RT_HOST) $(RT_SRC)
 	@gdb --args ./$(TARGET) $(RUN_FLAGS) -o $(RUN_TARGET) $(RUN_SRC)
 
 license: $(TARGET)
