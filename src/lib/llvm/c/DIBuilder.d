@@ -11,7 +11,7 @@
 |* the LLVM intermediate representation.                                      *|
 |*                                                                            *|
 \*===----------------------------------------------------------------------===*/
-module lib.llvm.c.dibuilder;
+module lib.llvm.c.DIBuilder;
 
 import lib.llvm.c.Core;
 
