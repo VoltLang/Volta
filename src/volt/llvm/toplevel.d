@@ -6,6 +6,7 @@ import lib.llvm.core;
 
 import volt.errors;
 import volt.visitor.visitor;
+import volt.llvm.di : diVariable;
 import volt.llvm.interfaces;
 
 
@@ -165,6 +166,7 @@ public:
 				init = LLVMConstNull(type.llvmType);
 			}
 			LLVMSetInitializer(v, init);
+			state.diVariable(v, var, type);
 			break;
 		}
 

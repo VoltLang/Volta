@@ -5,6 +5,7 @@ module volt.llvm.interfaces;
 import volt.errors;
 
 public import lib.llvm.core;
+public import lib.llvm.c.DIBuilder;
 
 public import volt.interfaces;
 public import ir = volt.ir.ir;
@@ -67,6 +68,7 @@ public:
 
 	LLVMContextRef context;
 	LLVMBuilderRef builder;
+	LLVMDIBuilderRef diBuilder;
 	LLVMModuleRef mod;
 
 	BlockPath path;
@@ -90,6 +92,14 @@ public:
 	 * @}
 	 */
 
+	/**
+	 * Debug helper variables.
+	 * @{
+	 */
+	LLVMValueRef diCU;
+	/**
+	 * @}
+	 */
 
 	LLVMValueRef currentFunc;
 	bool currentFall; ///< Tracking for auto branch generation.

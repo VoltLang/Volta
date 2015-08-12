@@ -12,6 +12,7 @@ import volt.visitor.visitor;
 import volt.token.location;
 import volt.semantic.lookup;
 
+import volt.llvm.di : diCompileUnit, diFinalize;
 import volt.llvm.constant;
 import volt.llvm.toplevel;
 import volt.llvm.expression;
@@ -77,6 +78,7 @@ public:
 		this.context = LLVMContextCreate();
 		this.mod = LLVMModuleCreateWithNameInContext(name, context);
 		this.builder = LLVMCreateBuilderInContext(context);
+		this.diBuilder = LLVMCreateDIBuilder(mod);
 		this.lp = lp;
 
 		setTargetAndLayout();
@@ -84,6 +86,8 @@ public:
 
 		this.llvmTrap = LLVMAddFunction(mod, "llvm.trap", voidFunctionType.llvmCallType);
 		visitor = new LlvmVisitor(this);
+
+		this.diCU = diCompileUnit(this);
 	}
 
 	~this()
@@ -94,17 +98,20 @@ public:
 
 	override void close()
 	{
+		LLVMDisposeDIBuilder(diBuilder);
 		LLVMDisposeBuilder(builder);
 		LLVMDisposeModule(mod);
 		LLVMContextDispose(context);
 
 		mod = null;
 		builder = null;
+		diBuilder = null;
 	}
 
 	override void compile(ir.Module m)
 	{
-		return visitor.compile(m);
+		visitor.compile(m);
+		this.diFinalize();
 	}
 
 	override void evaluateStatement(ir.Node node)

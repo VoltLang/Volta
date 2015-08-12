@@ -10,6 +10,7 @@ import ir = volt.ir.ir;
 import volt.ir.util;
 
 import volt.errors;
+import volt.llvm.di : diBaseType;
 import volt.llvm.constant;
 import volt.llvm.interfaces;
 static import volt.semantic.mangle;
@@ -26,6 +27,7 @@ public:
 	ir.Type irType;
 	LLVMTypeRef llvmType;
 	bool structType; // Is the type a LLVM struct.
+	LLVMValueRef diType;
 
 protected:
 	this(State state, ir.Type irType, bool structType, LLVMTypeRef llvmType)
@@ -132,6 +134,7 @@ public:
 		}
 
 		super(state, pt, false, llvmType);
+		diType = state.diBaseType(pt.type);
 	}
 
 	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
