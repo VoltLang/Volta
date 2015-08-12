@@ -1275,9 +1275,17 @@ ParseStatus parseNewExp(ParserStream ps, out intir.NewExp newExp)
 	}
 
 	newExp = new intir.NewExp();
-	succeeded = parseType(ps, newExp.type);
-	if (!succeeded) {
-		return parseFailed(ps, ir.NodeType.Unary);
+	if (ps.peek.type == TokenType.Auto) {
+		auto st = new ir.StorageType();
+		st.location = ps.peek.location;
+		st.type = ir.StorageType.Kind.Auto;
+		ps.get();
+		newExp.type = st;
+	} else {
+		succeeded = parseType(ps, newExp.type);
+		if (!succeeded) {
+			return parseFailed(ps, ir.NodeType.Unary);
+		}
 	}
 
 	if (matchIf(ps, TokenType.OpenParen)) {
