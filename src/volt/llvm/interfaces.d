@@ -130,7 +130,7 @@ public:
 	 * LLVM intrinsic.
 	 * @{
 	 */
-	LLVMValueRef llvmTrap;
+	@property abstract LLVMValueRef llvmTrap();
 	/**
 	 * @}
 	 */

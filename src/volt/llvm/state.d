@@ -60,6 +60,7 @@ protected:
 	/*
 	 * Lazily created & cached.
 	 */
+	LLVMValueRef mTrapFunc;
 	LLVMValueRef mPersonalityFunc;
 	LLVMValueRef mTypeIdFunc;
 	LLVMTypeRef mLandingType;
@@ -84,7 +85,6 @@ public:
 		setTargetAndLayout();
 		buildCommonTypes(this, lp.settings.isVersionSet("V_P64"));
 
-		this.llvmTrap = LLVMAddFunction(mod, "llvm.trap", voidFunctionType.llvmCallType);
 		visitor = new LlvmVisitor(this);
 
 		this.diCU = diCompileUnit(this);
@@ -138,6 +138,13 @@ public:
 	 *
 	 */
 
+	override LLVMValueRef llvmTrap()
+	{
+		if (mTrapFunc !is null) {
+			return mTrapFunc;
+		}
+		return mTrapFunc = LLVMAddFunction(mod, "llvm.trap", voidFunctionType.llvmCallType);
+	}
 
 	override LLVMValueRef ehPersonalityFunc()
 	{
