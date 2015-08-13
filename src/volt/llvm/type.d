@@ -10,7 +10,7 @@ import ir = volt.ir.ir;
 import volt.ir.util;
 
 import volt.errors;
-import volt.llvm.di : diBaseType;
+import volt.llvm.di : diBaseType, diPointerType;
 import volt.llvm.constant;
 import volt.llvm.interfaces;
 static import volt.semantic.mangle;
@@ -134,7 +134,7 @@ public:
 		}
 
 		super(state, pt, false, llvmType);
-		diType = state.diBaseType(pt.type);
+		diType = state.diBaseType(this, pt.type);
 	}
 
 	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
@@ -211,6 +211,7 @@ private:
 			llvmType = LLVMPointerType(base.llvmType, 0);
 		}
 		super(state, pt, false, llvmType);
+		diType = state.diPointerType(pt, base);
 	}
 }
 

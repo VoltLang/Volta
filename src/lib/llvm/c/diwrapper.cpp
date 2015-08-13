@@ -809,6 +809,17 @@ LLVMValueRef LLVMDIBuilderCreateBasicType(LLVMDIBuilderRef builder,
                   ->createBasicType(name, sizeInBits, alignInBits, Encoding));
 }
 
+LLVMValueRef LLVMDIBuilderCreatePointerType(LLVMDIBuilderRef builder,
+                                            LLVMValueRef pointeeTy,
+                                            uint64_t SizeInBits,
+                                            uint64_t AlignInBits,
+                                            const char *Name, size_t NameLen) {
+  StringRef N(Name, NameLen);
+  auto T = unwrapMDAs<DIType>(pointeeTy);
+  return wrap(unwrap(builder)->createPointerType(
+       T, SizeInBits, AlignInBits, N));
+}
+
 LLVMValueRef LLVMDIBuilderCreateGlobalVariable(
     LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
     size_t NameLen, const char *LinkageName, size_t LinkageNameLen,

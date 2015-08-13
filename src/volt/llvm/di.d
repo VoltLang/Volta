@@ -110,7 +110,8 @@ version (UseDIBuilder) {
 		LLVMDIBuilderFinalize(state.diBuilder);
 	}
 
-	LLVMValueRef diBaseType(State state, ir.PrimitiveType.Kind kind)
+	LLVMValueRef diBaseType(State state, PrimitiveType pt,
+	                        ir.PrimitiveType.Kind kind)
 	{
 		if (state.diBuilder is null) {
 			return null;
@@ -188,6 +189,21 @@ version (UseDIBuilder) {
 			alignment, encoding);
 	}
 
+	LLVMValueRef diPointerType(State state, ir.PointerType pt, Type base)
+	{
+		// Can't emit debuginfo without base debug info.
+		if (base.diType is null) {
+			return null;
+		}
+
+		auto size = cast(size_t).size(state.lp, pt);
+		auto alignment = .alignment(state.lp, pt);
+
+		return LLVMDIBuilderCreatePointerType(
+			state.diBuilder, base.diType, size, alignment,
+			pt.mangledName.ptr, pt.mangledName.length);
+	}
+
 	void diVariable(State state, LLVMValueRef var, ir.Variable irVar,
 	                Type type)
 	{
@@ -252,6 +268,7 @@ private:
 	void diStart(State state) {}
 	void diFinalize(State state) {}
 	LLVMValueRef diCompileUnit(State state) { return null; }
-	LLVMValueRef diBaseType(State state, ir.PrimitiveType.Kind kind) { return null; }
+	LLVMValueRef diBaseType(State state, PrimitiveType pt, ir.PrimitiveType.Kind kind) { return null; }
+	LLVMValueRef diPointerType(State state, ir.PointerType pt, Type base) { return null; }
 	void diVariable(State state, LLVMValueRef var, ir.Variable irVar, Type type) {}
 }
