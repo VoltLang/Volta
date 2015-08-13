@@ -262,7 +262,7 @@ LLVMValueRef LLVMDIBuilderCreateClassType(
     uint64_t AlignInBits, uint64_t OffsetInBits, unsigned Flags,
     LLVMValueRef DerivedFrom, LLVMValueRef *Elements, unsigned ElementsNum,
     LLVMValueRef VTableHolder, LLVMValueRef TemplateParms,
-    const char *UniqueIdentifier, unsigned UniqueIdentifierLen);
+    const char *UniqueIdentifier, size_t UniqueIdentifierLen);
 
 /// Create debugging information entry for a struct.
 /// \param Scope        Scope in which this struct is defined.
@@ -281,7 +281,7 @@ LLVMValueRef LLVMDIBuilderCreateStructType(
     uint64_t AlignInBits, unsigned Flags, LLVMValueRef DerivedFrom,
     LLVMValueRef *Elements, unsigned ElementsNum,
     LLVMValueRef VTableHolder, unsigned RunTimeLang,
-    const char *UniqueIdentifier, unsigned UniqueIdentifierLen);
+    const char *UniqueIdentifier, size_t UniqueIdentifierLen);
 
 /// Create debugging information entry for an union.
 /// \param Scope        Scope in which this union is defined.
@@ -299,7 +299,7 @@ LLVMValueRef LLVMDIBuilderCreateUnionType(
     size_t NameLen, LLVMValueRef File, unsigned LineNumber, uint64_t SizeInBits,
     uint64_t AlignInBits, unsigned Flags, LLVMValueRef *Elements,
     unsigned ElementsNum, unsigned RunTimeLang, const char *UniqueIdentifier,
-    unsigned UniqueIdentifierLen);
+    size_t UniqueIdentifierLen);
 
 /// Create debugging information for template type parameter.
 /// \param Scope        Scope in which this type is defined.
@@ -370,7 +370,7 @@ LLVMValueRef LLVMDIBuilderCreateEnumerationType(
     size_t NameLen, LLVMValueRef File, unsigned LineNumber,
     uint64_t SizeInBits, uint64_t AlignInBits,
     LLVMValueRef Elements, unsigned ElementsNum, LLVMValueRef UnderlyingType,
-    const char *UniqueIdentifier, unsigned UniqueIdentifierLen);
+    const char *UniqueIdentifier, size_t UniqueIdentifierLen);
 
 /// Create subroutine type.
 /// \param File            File in which this subroutine is defined.
@@ -390,7 +390,7 @@ LLVMValueRef LLVMDIBuilderCreateSubroutineType(LLVMDIBuilderRef builder,
 /// \param UniqueIdentifier A unique identifier for the type.
 LLVMValueRef LLVMDIBuilderCreateExternalTypeRef(
     LLVMDIBuilder builder, unsigned Tag, LLVMValueRef File,
-    const char *UniqueIdentifier, unsigned UniqueIdentifierLen);
+    const char *UniqueIdentifier, size_t UniqueIdentifierLen);
 
 /// Create a new DIType with "artificial" flag set.
 LLVMValueRef LLVMDIBuilderCreateArtificialType(LLVMDIBuilderRef builder,
@@ -406,14 +406,14 @@ LLVMValueRef LLVMDIBuilderCreateForwardDecl(
     LLVMDIBuilderRef builder, unsigned Tag, const char *Name, size_t NameLen,
     LLVMValueRef Scope, LLVMValueRef File, unsigned Line, unsigned RuntimeLang,
     uint64_t SizeInBits, uint64_t AlignInBits,
-    const char *UniqueIdentifier, unsigned UniqueIdentifierLen);
+    const char *UniqueIdentifier, size_t UniqueIdentifierLen);
 
 /// Create a temporary forward-declared type.
 LLVMValueRef LLVMDIBuilderCreateReplaceableCompositeType(
     LLVMDIBuilderRef builder, unsigned Tag, const char *Name, size_t NameLen,
     LLVMValueRef Scope, LLVMValueRef File, unsigned Line, unsigned RuntimeLang,
     uint64_t SizeInBits, uint64_t AlignInBits, unsigned Flags,
-    const char *UniqueIdentifier, unsigned UniqueIdentifierLen);
+    const char *UniqueIdentifier, size_t UniqueIdentifierLen);
 
 /// Retain DIType* in a module even if it is not referenced
 /// through debug info anchors.
@@ -620,7 +620,9 @@ LLVMValueRef LLVMDIBuilderInsertDbgValueIntrinsicBefore(
     LLVMValueRef VarInfo, LLVMValueRef InsertBefore);
 
 void LLVMDIBuilderReplaceStructBody(LLVMDIBuilderRef builder,
-                                    LLVMValueRef Struct, LLVMValueRef NewBody);
+                                    LLVMValueRef Struct,
+                                    LLVMValueRef *Elements,
+                                    unsigned ElementsNum);
 
 #ifdef __cplusplus
 }
@@ -820,6 +822,49 @@ LLVMValueRef LLVMDIBuilderCreatePointerType(LLVMDIBuilderRef builder,
        T, SizeInBits, AlignInBits, N));
 }
 
+LLVMValueRef LLVMDIBuilderCreateMemberType(
+    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
+    size_t NameLen, LLVMValueRef File, unsigned LineNo, uint64_t SizeInBits,
+    uint64_t AlignInBits, uint64_t OffsetInBits, unsigned Flags,
+    LLVMValueRef Ty) {
+
+  StringRef N(Name, NameLen);
+  auto T = unwrapMDAs<DIType>(Ty);
+  auto F = unwrapMDAs<DIFile>(File);
+  auto S = unwrapMDAs<DIScope>(Scope);
+  return wrap(unwrap(builder)->createMemberType(S, N, F, LineNo,
+                                                SizeInBits, AlignInBits,
+                                                OffsetInBits, Flags, T));
+}
+
+LLVMValueRef LLVMDIBuilderCreateStructType(
+    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
+    size_t NameLen, LLVMValueRef File, unsigned LineNumber, uint64_t SizeInBits,
+    uint64_t AlignInBits, unsigned Flags, LLVMValueRef DerivedFrom,
+    LLVMValueRef *Elements, unsigned ElementsNum,
+    LLVMValueRef VTableHolder, unsigned RunTimeLang,
+    const char *UniqueIdentifier, size_t UniqueIdentifierLen) {
+
+  StringRef N(Name, NameLen);
+  StringRef UI(UniqueIdentifier, UniqueIdentifierLen);
+  auto B = unwrap(builder);
+  auto S = unwrapMDAs<DIScope>(Scope);
+  auto F = unwrapMDAs<DIFile>(File);
+  auto DF = unwrapMDAs<DIType>(DerivedFrom);
+  auto VTH = unwrapMDAs<DIType>(VTableHolder);
+
+  SmallVector<Metadata *, 8> MDs;
+  for(int i = 0; i < ElementsNum; i++) {
+    auto *MD = unwrapMD(Elements[i]);
+    // TODO Extract?
+    MDs.push_back(MD);
+  }
+
+  return wrap(B->createStructType(
+      S, N, F, LineNumber, SizeInBits, AlignInBits, Flags, DF,
+      B->getOrCreateArray(MDs), RunTimeLang, VTH, UI));
+}
+
 LLVMValueRef LLVMDIBuilderCreateGlobalVariable(
     LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
     size_t NameLen, const char *LinkageName, size_t LinkageNameLen,
@@ -837,4 +882,25 @@ LLVMValueRef LLVMDIBuilderCreateGlobalVariable(
   return wrap(unwrap(builder)->createGlobalVariable(
       S, StringRef(Name, NameLen), StringRef(LinkageName, LinkageNameLen),
       F, LineNo, T, IsLocalToUnit, C, D));
+}
+
+void LLVMDIBuilderReplaceStructBody(LLVMDIBuilderRef builder,
+                                    LLVMValueRef Struct,
+                                    LLVMValueRef *Elements,
+                                    unsigned ElementsNum) {
+  auto B = unwrap(builder);
+  auto fwd = unwrapMDAs<DICompositeType>(Struct);
+
+  SmallVector<Metadata *, 8> MDs;
+  for(int i = 0; i < ElementsNum; i++) {
+    auto *MD = unwrapMD(Elements[i]);
+    // TODO Extract?
+    MDs.push_back(MD);
+  }
+
+#if LLVM_VERSION_MINOR >= 7
+  fwd->replaceElements(B->getOrCreateArray(MDs));
+#else
+  B->replaceArrays(fwd, B->getOrCreateArray(MDs));
+#endif
 }

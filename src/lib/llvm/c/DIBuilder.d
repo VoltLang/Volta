@@ -271,7 +271,7 @@ LLVMValueRef LLVMDIBuilderCreateStructType(
     ulong AlignInBits, uint Flags, LLVMValueRef DerivedFrom,
     LLVMValueRef *Elements, uint ElementsNum,
     LLVMValueRef VTableHolder, uint RunTimeLang,
-    const(char) *UniqueIdentifier, uint UniqueIdentifierLen);
+    const(char) *UniqueIdentifier, size_t UniqueIdentifierLen);
 
 /// Create debugging information entry for an union.
 /// \param Scope        Scope in which this union is defined.
@@ -609,9 +609,11 @@ LLVMValueRef LLVMDIBuilderInsertDbgValueIntrinsicBefore(
     LLVMDIBuilderRef builder, LLVMValueRef Val, ulong Offset,
     LLVMValueRef VarInfo, LLVMValueRef InsertBefore);
 
-void LLVMDIBuilderReplaceStructBody(LLVMDIBuilderRef builder,
-                                    LLVMValueRef Struct, LLVMValueRef NewBody);
 
+void LLVMDIBuilderReplaceStructBody(LLVMDIBuilderRef builder,
+                                    LLVMValueRef Struct,
+                                    LLVMValueRef *Elements,
+                                    uint ElementsNum);
 
 /**
  * @}

@@ -11,6 +11,7 @@ import volt.llvm.interfaces;
 
 import volt.errors;
 
+
 /*
  *
  * Dwarf enums.
@@ -238,6 +239,47 @@ version (UseDIBuilder) {
 			null);
 	}
 
+	LLVMValueRef diStruct(State state, ir.Type t)
+	{
+		return LLVMDIBuilderCreateStructType(
+			state.diBuilder,
+			state.diCU,
+			t.mangledName.ptr, t.mangledName.length,
+			state.diFile(t), cast(uint)t.location.line,
+			.size(state.lp, t) * 8, .alignment(state.lp, t) * 8, 0,
+			null,
+			null, 0,
+			null,
+			0,
+			t.mangledName.ptr, t.mangledName.length);
+	}
+
+	/**
+	 * Used by Array and Delegates.
+	 */
+	LLVMValueRef[] diTupleStructBody(State state, Type p,
+	                                 Type[2] t, string[2] names)
+	{
+		auto di = new LLVMValueRef[](2);
+		size_t s0 = cast(size_t).size(state.lp, t[0].irType) * 8;
+		size_t s1 = cast(size_t).size(state.lp, t[1].irType) * 8;
+		size_t a0 = cast(size_t).alignment(state.lp, t[0].irType) * 8;
+		size_t a1 = cast(size_t).alignment(state.lp, t[1].irType) * 8;
+
+		di[0] = LLVMDIBuilderCreateMemberType(
+			state.diBuilder, state.diCU,
+			names[0].ptr, names[0].length,
+			state.diFile(p.irType), cast(uint)p.irType.location.line,
+			s0, a0, 0, 0, t[0].diType);
+		di[1] = LLVMDIBuilderCreateMemberType(
+			state.diBuilder, state.diCU,
+			names[1].ptr, names[1].length,
+			state.diFile(p.irType), cast(uint)p.irType.location.line,
+			s1, a1, s0, 0, t[1].diType);
+
+		return di;
+	}
+
 private:
 	LLVMValueRef diString(State state, const(char)[] str)
 	{
@@ -260,10 +302,28 @@ private:
 		return state.diNode(state.diString(file), state.diString(dir));
 	}
 
+	LLVMValueRef diFile(State state, ir.Node n)
+	{
+		return state.diNode(
+			state.diString(n.location.filename),
+			state.diString(state.lp.settings.execDir));
+	}
+
 } else {
 
 	extern(C) LLVMDIBuilderRef LLVMCreateDIBuilder(LLVMModuleRef) { return null; }
 	extern(C) void LLVMDisposeDIBuilder(LLVMDIBuilderRef builder) {}
+	extern(C) LLVMValueRef LLVMDIBuilderCreateStructType(
+		LLVMDIBuilderRef builder, LLVMValueRef Scope, const(char)* Name,
+		size_t NameLen, LLVMValueRef File, uint LineNumber, ulong SizeInBits,
+		ulong AlignInBits, uint Flags, LLVMValueRef DerivedFrom,
+		LLVMValueRef *Elements, uint ElementsNum,
+		LLVMValueRef VTableHolder, uint RunTimeLang,
+		const (char)* UniqueIdentifier, size_t UniqueIdentifierLen) { return null; }
+	extern(C) void LLVMDIBuilderReplaceStructBody(LLVMDIBuilderRef builder,
+	                                              LLVMValueRef Struct,
+	                                              LLVMValueRef *Elements,
+	                                              uint ElementsNum) {}
 
 	void diStart(State state) {}
 	void diFinalize(State state) {}
@@ -271,4 +331,6 @@ private:
 	LLVMValueRef diBaseType(State state, PrimitiveType pt, ir.PrimitiveType.Kind kind) { return null; }
 	LLVMValueRef diPointerType(State state, ir.PointerType pt, Type base) { return null; }
 	void diVariable(State state, LLVMValueRef var, ir.Variable irVar, Type type) {}
+	LLVMValueRef diStruct(State state, ir.Type t) { return null; }
+	LLVMValueRef[] diTupleStructBody(State state, Type p, Type[2] t, string[2] names) { return null; }
 }

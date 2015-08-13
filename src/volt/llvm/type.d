@@ -10,7 +10,7 @@ import ir = volt.ir.ir;
 import volt.ir.util;
 
 import volt.errors;
-import volt.llvm.di : diBaseType, diPointerType;
+import volt.llvm.di : diBaseType, diPointerType, diStruct, diTupleStructBody;
 import volt.llvm.constant;
 import volt.llvm.interfaces;
 static import volt.semantic.mangle;
@@ -235,6 +235,7 @@ public:
 public:
 	this(State state, ir.ArrayType at)
 	{
+		diType = diStruct(state, at);
 		llvmType = LLVMStructCreateNamed(state.context, at.mangledName);
 		super(state, at, true, llvmType, diType);
 
@@ -259,6 +260,18 @@ public:
 		mt[lengthIndex] = lengthType.llvmType;
 
 		LLVMStructSetBody(llvmType, mt, false);
+
+		if (ptrType.diType is null || lengthType.diType is null) {
+			return;
+		}
+
+		static assert(ptrIndex < lengthIndex);
+		auto di = diTupleStructBody(state, cast(Type)this,
+			[ptrType, lengthType],
+			["ptr", "length"]);
+
+		LLVMDIBuilderReplaceStructBody(state.diBuilder, diType,
+		                               di.ptr, cast(uint)di.length);
 	}
 
 	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
