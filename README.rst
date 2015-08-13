@@ -83,13 +83,18 @@ Windows
 *******
 
 The only compiler that has been used to compile Volta on Windows is DMD. Install
-DMD and MinGW. Using MinGW's bash prompt, compile LLVM -- be sure to use
+DMD and MinGW. You'll want a 32 bit MingW that outputs DWARF exception information.
+
+Using MinGW's bash prompt, compile LLVM -- be sure to use
 --enable-shared and build a DLL.
 
 Once compiled, put the LLVM tools and DLL in your PATH, in with the D tools is
-probably the simplest place. Run `implib /p:64 LLVM.lib <thellvmdll>` and place
-that in the Volta directory. Run make (the digital mars one, not MinGW) and with
-a bit of luck, you should have a working volt.exe.
+probably the simplest place. Run `implib /p:128 LLVM.lib <thellvmdll>` and place
+that in the Volta directory. Run make (Digital Mars or GNU make should work) and with a bit of luck, you should have a working volt.exe.
+
+You'll need to link with the BoehmGC (http://www.hboehm.info/gc/). The MingW you compiled LLVM should suffice.
+
+These directions need to be expanded, but hopefully this has pointed you in the right direction.
 
 Other
 *****
