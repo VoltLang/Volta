@@ -117,16 +117,12 @@ public:
 	ir.Module getModule(ir.QualifiedName name)
 	{
 		auto p = name.toString() in mModulesByName;
-		ir.Module m;
-
-		if (p !is null)
-			m = *p;
+		if (p !is null) {
+			return *p;
+		}
 
 		string[] validPaths;
 		foreach (path; mIncludes) {
-			if (m !is null)
-				break;
-
 			auto paths = genPossibleFilenames(path, name.strings);
 
 			foreach (possiblePath; paths) {
@@ -136,23 +132,14 @@ public:
 			}
 		}
 
-		if (m is null) {
-			if (validPaths.length == 0) {
-				return null;
-			}
-			if (validPaths.length > 1) {
-				throw makeMultipleValidModules(name, validPaths);
-			}
-			m = loadAndParse(validPaths[0]);
+		if (validPaths.length == 0) {
+			return null;
+		}
+		if (validPaths.length > 1) {
+			throw makeMultipleValidModules(name, validPaths);
 		}
 
-		// Need to make sure that this module can
-		// be used by other modules.
-		if (m !is null) {
-			languagePass.phase1(m);
-		}
-
-		return m;
+		return loadAndParse(validPaths[0]);
 	}
 
 	ir.Module[] getCommandLineModules()

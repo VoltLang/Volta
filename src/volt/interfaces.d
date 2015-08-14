@@ -15,7 +15,9 @@ import ir = volt.ir.ir;
  */
 interface Controller
 {
+	/// Load a module source from file system.
 	ir.Module getModule(ir.QualifiedName name);
+
 	/// Get the modules given on the command line.
 	ir.Module[] getCommandLineModules();
 

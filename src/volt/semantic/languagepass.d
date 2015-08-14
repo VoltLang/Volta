@@ -238,7 +238,16 @@ public:
 
 	override ir.Module getModule(ir.QualifiedName name)
 	{ 
-		return controller.getModule(name);
+		auto m = controller.getModule(name);
+		if (m is null) {
+			return null;
+		}
+
+		// Need to make sure that this module can
+		// be used by other modules.
+		phase1(m);
+
+		return m;
 	}
 
 
