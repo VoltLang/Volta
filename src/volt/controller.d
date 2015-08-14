@@ -330,6 +330,11 @@ protected:
 			languagePass.phase1(mod);
 		postDiff(commandLineMods, ppstrs, dpstrs);
 
+
+		if (settings.removeConditionalsOnly) {
+			return 0;
+		}
+
 		// New modules have been loaded,
 		// make sure to run everthing on them.
 		auto allMods = mModulesByName.values.dup;
@@ -349,8 +354,9 @@ protected:
 		debugPasses();
 
 		perf.tag("backend");
-		if (settings.noBackend)
+		if (settings.noBackend) {
 			return 0;
+		}
 
 		// We will be modifing this later on,
 		// but we don't want to change mBitcodeFiles.
