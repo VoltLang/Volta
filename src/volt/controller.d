@@ -330,20 +330,20 @@ protected:
 			languagePass.phase1(mod);
 		postDiff(commandLineMods, ppstrs, dpstrs);
 
-		ir.Module[] dmdIsStupid;
-		foreach (mod; mModulesByName)
-			dmdIsStupid ~= mod;
+		// New modules have been loaded,
+		// make sure to run everthing on them.
+		auto allMods = mModulesByName.values.dup;
 
 		preDiff(commandLineMods, "Phase 2", ppstrs, dpstrs);
 		perf.tag("phase2");
 		// All modules need to be run through phase2.
-		languagePass.phase2(dmdIsStupid);
+		languagePass.phase2(allMods);
 		postDiff(commandLineMods, ppstrs, dpstrs);
 
 		preDiff(commandLineMods, "Phase 3", ppstrs, dpstrs);
 		perf.tag("phase3");
 		// All modules need to be run through phase3.
-		languagePass.phase3(dmdIsStupid);
+		languagePass.phase3(allMods);
 		postDiff(commandLineMods, ppstrs, dpstrs);
 
 		debugPasses();
