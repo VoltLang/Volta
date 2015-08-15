@@ -182,6 +182,9 @@ public:
 	/// Retrieve the NodeType for this Node.
 	@property NodeType nodeType() { return mNodeType; }
 
+	/// Retrieve the unique id of this node.
+	@property size_t uniqueId() { return mUniqueId; }
+
 	/// Documentation comment attached to this node, if any.
 	string docComment;
 
@@ -189,10 +192,13 @@ protected:
 	this(NodeType nt)
 	{
 		this.mNodeType = nt;
+		this.mUniqueId = mUniqueIdCounter++;
 	}
 
 private:
 	NodeType mNodeType;
+	size_t mUniqueId;
+	static size_t mUniqueIdCounter; // We are single threaded.
 }
 
 /**
