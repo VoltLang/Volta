@@ -16,7 +16,7 @@ import ir = volt.ir.ir;
 interface Controller
 {
 	/// Load a module source from file system.
-	ir.Module getModule(ir.QualifiedName name);
+	ir.Module loadModule(ir.QualifiedName name);
 
 	/// Get the modules given on the command line.
 	ir.Module[] getCommandLineModules();
@@ -202,9 +202,25 @@ public:
 	abstract void close();
 
 	/**
-	 * Helper function, often just routed to the Controller.
+	 * Used by the Controller to store classes it loads from arguments.
+	 *
+	 * The controller does not need to call addModule when it has loaded a
+	 * module via its loadModule function.
+	 */
+	abstract void addModule(ir.Module mod);
+
+	/**
+	 * Returns a already loaded module or loads it from file.
+	 *
+	 * The expected behavior of the langauge pass is to call the Controller
+	 * to load the module.
 	 */
 	abstract ir.Module getModule(ir.QualifiedName name);
+
+	/**
+	 * Retuns all currently loaded modules.
+	 */
+	abstract ir.Module[] getModules();
 
 	/*
 	 *

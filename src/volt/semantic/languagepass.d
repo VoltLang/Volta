@@ -236,11 +236,28 @@ public:
 		phase2([objectModule]);
 	}
 
+	override void addModule(ir.Module m)
+	{
+		auto str = m.name.toString();
+
+		if (str in mModules) {
+			throw makeAlreadyLoaded(m, m.location.filename);
+		}
+
+		mModules[str] = m;
+	}
+
 	override ir.Module getModule(ir.QualifiedName name)
-	{ 
-		auto m = controller.getModule(name);
-		if (m is null) {
-			return null;
+	{
+		auto str = name.toString();
+		ir.Module m;
+
+		auto p = str in mModules;
+		if (p is null) {
+			m = controller.loadModule(name);
+			mModules[str] = m;
+		} else {
+			m = *p;
 		}
 
 		// Need to make sure that this module can
@@ -248,6 +265,11 @@ public:
 		phase1(m);
 
 		return m;
+	}
+
+	override ir.Module[] getModules()
+	{
+		return mModules.values.dup;
 	}
 
 

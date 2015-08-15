@@ -50,14 +50,14 @@ protected:
 	string[] mSourceFiles;
 	string[] mBitcodeFiles;
 	string[] mObjectFiles;
-	ir.Module[string] mModulesByName;
-	ir.Module[string] mModulesByFile;
 
 	string[] mLibraryFiles;
 	string[] mLibraryPaths;
 
 	string[] mFrameworkNames;
 	string[] mFrameworkPaths;
+
+	ir.Module[] mCommandLineModules;
 
 public:
 	this(Settings s)
@@ -114,13 +114,8 @@ public:
 	/**
 	 * Retrieve a Module by its name. Returns null if none is found.
 	 */
-	ir.Module getModule(ir.QualifiedName name)
+	override ir.Module loadModule(ir.QualifiedName name)
 	{
-		auto p = name.toString() in mModulesByName;
-		if (p !is null) {
-			return *p;
-		}
-
 		string[] validPaths;
 		foreach (path; mIncludes) {
 			auto paths = genPossibleFilenames(path, name.strings);
@@ -142,16 +137,12 @@ public:
 		return loadAndParse(validPaths[0]);
 	}
 
-	ir.Module[] getCommandLineModules()
+	override ir.Module[] getCommandLineModules()
 	{
-		auto mods = new ir.Module[](mSourceFiles.length);
-		foreach (i, fname; mSourceFiles) {
-			mods[i] = mModulesByFile[fname];
-		}
-		return mods;
+		return mCommandLineModules;
 	}
 
-	void close()
+	override void close()
 	{
 		frontend.close();
 		languagePass.close();
@@ -251,20 +242,8 @@ protected:
 		Location loc;
 		loc.filename = file;
 
-		if (file in mModulesByFile) {
-			return mModulesByFile[file];
-		}
-
 		auto src = cast(string) read(loc.filename);
-		auto m = frontend.parseNewFile(src, loc);
-		if (m.name.toString() in mModulesByName) {
-			throw makeAlreadyLoaded(m, file);
-		}
-
-		mModulesByFile[file] = m;
-		mModulesByName[m.name.toString()] = m;
-
-		return m;
+		return frontend.parseNewFile(src, loc);
 	}
 
 	int intCompile()
@@ -272,8 +251,6 @@ protected:
 		scope(exit) {
 			perf.tag("exit");
 		}
-
-		ir.Module[] mods;
 
 		void debugPrint(string msg, string s)
 		{
@@ -288,7 +265,7 @@ protected:
 			if (settings.internalDebug && !debugPassesRun) {
 				debugPassesRun = true;
 				foreach(pass; debugVisitors) {
-					foreach(mod; mods) {
+					foreach(mod; mCommandLineModules) {
 						pass.transform(mod);
 					}
 				}
@@ -304,13 +281,17 @@ protected:
 		auto jp = new JsonPrinter(languagePass);
 		foreach (file; mSourceFiles) {
 			debugPrint("Parsing %s.", file);
-			mods ~= loadAndParse(file);
+
+			auto m = loadAndParse(file);
+			languagePass.addModule(m);
+			mCommandLineModules ~= m;
+
 			if (settings.writeDocs) {
-				dp.transform(mods[$-1]);
+				dp.transform(m);
 			}
 		}
 		if (settings.writeJson) {
-			jp.transform(mods);
+			jp.transform(mCommandLineModules);
 		}
 
 		// After we have loaded all of the modules
@@ -319,37 +300,40 @@ protected:
 		auto lp = cast(VoltLanguagePass)languagePass;
 		lp.setupOneTruePointers();
 
-		auto commandLineMods = getCommandLineModules();
-		auto ppstrs = new string[](commandLineMods.length);
-		auto dpstrs = new string[](commandLineMods.length);
+		// Setup diff buffers.
+		auto ppstrs = new string[](mCommandLineModules.length);
+		auto dpstrs = new string[](mCommandLineModules.length);
 
-		preDiff(commandLineMods, "Phase 1", ppstrs, dpstrs);
+		preDiff(mCommandLineModules, "Phase 1", ppstrs, dpstrs);
 		perf.tag("phase1");
+
 		// Force phase 1 to be executed on the modules.
-		foreach (mod; mods)
-			languagePass.phase1(mod);
-		postDiff(commandLineMods, ppstrs, dpstrs);
+		// This might load new modules.
+		foreach (m; mCommandLineModules) {
+			languagePass.phase1(m);
+		}
+		postDiff(mCommandLineModules, ppstrs, dpstrs);
 
-
+		// We are done now.
 		if (settings.removeConditionalsOnly) {
 			return 0;
 		}
 
 		// New modules have been loaded,
 		// make sure to run everthing on them.
-		auto allMods = mModulesByName.values.dup;
+		auto allMods = languagePass.getModules();
 
-		preDiff(commandLineMods, "Phase 2", ppstrs, dpstrs);
+		preDiff(mCommandLineModules, "Phase 2", ppstrs, dpstrs);
 		perf.tag("phase2");
 		// All modules need to be run through phase2.
 		languagePass.phase2(allMods);
-		postDiff(commandLineMods, ppstrs, dpstrs);
+		postDiff(mCommandLineModules, ppstrs, dpstrs);
 
-		preDiff(commandLineMods, "Phase 3", ppstrs, dpstrs);
+		preDiff(mCommandLineModules, "Phase 3", ppstrs, dpstrs);
 		perf.tag("phase3");
 		// All modules need to be run through phase3.
 		languagePass.phase3(allMods);
-		postDiff(commandLineMods, ppstrs, dpstrs);
+		postDiff(mCommandLineModules, ppstrs, dpstrs);
 
 		debugPasses();
 
@@ -363,11 +347,11 @@ protected:
 		string[] bitcodeFiles = mBitcodeFiles;
 		string[] temporaryFiles;
 
-		foreach (mod; mods) {
+		foreach (m; mCommandLineModules) {
 			string o = temporaryFilename(".bc");
 			backend.setTarget(o, TargetType.LlvmBitcode);
-			debugPrint("Backend %s.", mod.name.toString());
-			backend.compile(mod);
+			debugPrint("Backend %s.", m.name.toString());
+			backend.compile(m);
 			bitcodeFiles ~= o;
 			temporaryFiles ~= o;
 		}
