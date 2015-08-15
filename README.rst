@@ -19,19 +19,19 @@ supported version.
 Linux
 *****
 
-For Linux's with GDC packaged (like Ubuntu) it is the recommended compiler.
-To get GDC and LLVM on Ubuntu do this:
+Building Volt requires a D compiler as well as llvm::
 
-::
+    # Ubuntu / Debian
+    $ sudo apt-get install gdc llvm
 
-  $ sudo apt-get install gdc llvm
+    # Arch Linux
+    $ sudo pacman -S dmd libphobos llvm
 
-For DMD known working are DMD 2.067.1 and above. To setup DMD just follow the
-Mac instructions.
 
-Some versions of LLVM on Linux depend on being linked with tinfo, but don't
-tell llvm-config that. If you see a link failure involving del_setterm or
-similar, add -ltinfo to the LLVM_LDFLAGS variable in the GNUMakefile.
+Instead of installing GDC on Ubuntu or Debian you can use the
+`D-APT <http://d-apt.sourceforge.net/>`_ repository to install DMD.
+Alternativly you can also use the `official binaries <http://dlang.org/download.html>`_.
+
 
 Mac
 ***
@@ -40,7 +40,7 @@ There are no packages of GDC for Mac so DMD should be used. To install it,
 the easiest way is using `Homebrew <http://brew.sh>`_. If you don't have it,
 install it from http://brew.sh
 
-Then, in a terminal : ::
+Then, in a terminal::
 
   brew install dmd
 
@@ -60,11 +60,11 @@ Without Homebrew, just download LLVM from the LLVM homepage, and put the bin
 folder inside the unpacked tarball on the PATH, the builds system needs
 :code:`llvm-config` and the compiler requires some helpers from there to link.
 
-Volt also requires the Boehm GC : ::
+Volt also requires the Boehm GC::
 
   brew install bdw-gc
 
-Or, without Homebrew : ::
+Or, without Homebrew::
 
   curl http://www.hboehm.info/gc/gc_source/gc-7.4.2.tar.gz -o gc-7.4.2.tar.gz
   tar xfv gc-7.4.2.tar.gz
@@ -96,6 +96,7 @@ You'll need to link with the BoehmGC (http://www.hboehm.info/gc/). The MingW you
 
 These directions need to be expanded, but hopefully this has pointed you in the right direction.
 
+
 Other
 *****
 
@@ -122,6 +123,38 @@ Running
   $ make run
 
 
+Compiling
+---------
+
+After running :code:`make` you have a ready to use Volt compiler! You usually want to link
+with the runtime and `Watt <https://github.com/VoltLang/Watt/>`_. Volt has a special configuration
+file which you can use for compiler options you always want to include::
+
+  --stdlib-file
+  %@execdir%/rt/libvrt-%@arch%-%@platform%.bc
+  --stdlib-I
+  %@execdir%/rt/src
+  --stdlib-fi le
+  %@execdir%/../Watt/libwatt-%@arch%-%@platform%.bc
+  --stdlib-I
+  %@execdir%/../Watt/src
+  -L
+  %@execdir%
+  -l
+  gc
+  -l
+  dl
+
+You need to place this file as :code:`volt.conf` next to the Volt binary.
+Every line represents one argument passed via commandline. :code:`%@execdir%` gets replaced with the
+path to the Volt binary, :code:`%@arch%` with the current architecture and :code:`%@platform` with
+the current platform.
+
+After setting everything up you can test the compiler::
+
+  $ ./volt test/test.volt
+
+
 Contributing
 ============
 
@@ -136,3 +169,4 @@ Things to consider:
    hard condition.
  * That was short wasn't it? Just remember don't be a dick, have fun and there
    will be cake! That is all!
+
