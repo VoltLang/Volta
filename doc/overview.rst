@@ -30,3 +30,44 @@ The IR is an abstract representation of the source file. That is to say, where t
 The parser is a recursive descent parser, and is handwritten. That is, it starts at ``parseModule``, the top-most IR node, and works its way down and gives you back an ir.Module with all your functions and variables and whatever attached to it.
 
 All members of the IR tree are based on an ir.Node. Each node has a nodeType; an enum that tells you what member it is. A Location, that gives you the source filename, line number, and column number of where in the source file that IR node corresponds to. It also has an optional documentation comment attached in the docComment member, but that's not important right now.
+
+Parsing
+-------
+
+Once you've got that in mind, the parser is pretty simple. It looks at the next token, determines what needs to be parsed, then generates the IR node needed, while consuming tokens, until it finds an error or runs out of source code.
+
+Semantic
+========
+
+So now we have one or more ir.Modules from the parser corresponding to the source files we were given. The backend works on these modules too, but they're not ready for that yet. The backend only works on a subset of the IR tree (see the IRVerifier for details), so the semantic phase massages the IR into an appropriate shape.
+
+Essentially, the semantic phase makes the IR a lot more verbose. ``auto i = 3;``` will become ``int i; i = 3;``. Your fancy ``foreach`` statements will be lowered into simple ``for`` statements. The backend only knows how to generate top level functions, so methods and inline functions need to be hoisted to top level functions, with their context becoming structs.
+
+Also, in theory, the IR should be verified sound by the time the semantic phase is done with it. No errors (in the user's code) should be detected in the backend. For example, the backend shouldn't need to check that ``cast(int) var;`` is safe or sound -- it will assume it is.
+
+So as you can imagine, all of the above is a fair amount of work, and doing it in one giant nest of functions is out of the question. All the transformations are broken into passes. A ``Pass`` is a simple interface. It has a method ``transform`` that takes a module, and a method ``close`` that takes no arguments, for cleaning up.
+
+Visitor
+-------
+
+It's probably obvious, but these passes are going to spend a lot of time traversing the IR tree looking at things. The visitor code implements a visitor pattern for visiting the Volt IR, so the passes can inherit from the Visitor interface (or usually, the NullVisitor object -- an implementation of Visitor that does nothing for each node), and then call accept on themselves to traverse the tree.
+
+Passes
+------
+
+The passes work like a pipeline. They're run one after the other, on the same module, and each subsequent pass works on the result of the prior. So every pass after the conditional removal pass can assume they'll not see a static if or version block. Speaking of which, let's briefly go over the passes. Some are more significant than others.
+
+ConditionalRemoval
+------------------
+This pass evaluates version blocks, debug blocks, static ifs and the like, and removes blocks of code that need to be removed. Most of the code in this pass is concerned with the pruning of the tree, and making sure it still looks sane afterwards.
+
+
+ScopeReplacer
+-------------
+
+Takes the scope (exit/success/failure) blocks from functions, turns them into inline function, and adds a reference to the new function to a list on the parent Function object.
+
+AttribRemoval
+-------------
+
+Attributes are those flags that work on top level blocks, that you can place colons after. ``public``, ``private``, ``extern``, etc. This pass works out what nodes which attributes apply to, and turns them into appropriate fields -- Functions will have their access and linkage fields set, and so on.
