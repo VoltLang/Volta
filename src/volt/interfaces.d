@@ -380,7 +380,7 @@ public:
 	 *
 	 */
 
-	abstract void phase1(ir.Module m);
+	abstract void phase1(ir.Module[] m);
 
 	abstract void phase2(ir.Module[] m);
 

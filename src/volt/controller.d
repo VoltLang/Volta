@@ -309,9 +309,7 @@ protected:
 
 		// Force phase 1 to be executed on the modules.
 		// This might load new modules.
-		foreach (m; mCommandLineModules) {
-			languagePass.phase1(m);
-		}
+		languagePass.phase1(mCommandLineModules);
 		postDiff(mCommandLineModules, ppstrs, dpstrs);
 
 		// We are done now.
@@ -325,12 +323,14 @@ protected:
 
 		preDiff(mCommandLineModules, "Phase 2", ppstrs, dpstrs);
 		perf.tag("phase2");
+
 		// All modules need to be run through phase2.
 		languagePass.phase2(allMods);
 		postDiff(mCommandLineModules, ppstrs, dpstrs);
 
 		preDiff(mCommandLineModules, "Phase 3", ppstrs, dpstrs);
 		perf.tag("phase3");
+
 		// All modules need to be run through phase3.
 		languagePass.phase3(allMods);
 		postDiff(mCommandLineModules, ppstrs, dpstrs);

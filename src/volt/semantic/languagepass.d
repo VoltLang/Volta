@@ -95,6 +95,16 @@ public:
 		passes3 ~= new IrVerifier();
 	}
 
+	override void close()
+	{
+		foreach(pass; postParse)
+			pass.close();
+		foreach(pass; passes2)
+			pass.close();
+		foreach(pass; passes3)
+			pass.close();
+	}
+
 	/**
 	 * This functions sets up the pointers to the often used
 	 * inbuilt classes, such as object.Object and object.TypeInfo.
@@ -523,12 +533,12 @@ public:
 	 */
 
 
-	override void phase1(ir.Module m)
+	final void phase1(ir.Module m)
 	{
-		if (m.hasPhase1)
+		if (m.hasPhase1) {
 			return;
+		}
 		m.hasPhase1 = true;
-
 
 		foreach(pass; postParse) {
 			debugPrint("Phase 1 %s.", m.name);
@@ -545,39 +555,30 @@ public:
 		impRes.transform(m);
 	}
 
-	override void phase2(ir.Module[] mods)
+	final void phase2(ir.Module m)
 	{
-		foreach(m; mods) {
-			if (m.hasPhase2)
-				continue;
-			m.hasPhase2 = true;
+		if (m.hasPhase2) {
+			return;
+		}
+		m.hasPhase2 = true;
 
-			foreach(pass; passes2) {
-				debugPrint("Phase 2 %s.", m.name);
-				pass.transform(m);
-			}
+		foreach(pass; passes2) {
+			debugPrint("Phase 2 %s.", m.name);
+			pass.transform(m);
 		}
 	}
 
-	override void phase3(ir.Module[] mods)
+	final void phase3(ir.Module m)
 	{
-		foreach(m; mods) {
-			foreach(pass; passes3) {
-				debugPrint("Phase 3 %s.", m.name);
-				pass.transform(m);
-			}
+		foreach(pass; passes3) {
+			debugPrint("Phase 3 %s.", m.name);
+			pass.transform(m);
 		}
 	}
 
-	override void close()
-	{
-		foreach(pass; postParse)
-			pass.close();
-		foreach(pass; passes2)
-			pass.close();
-		foreach(pass; passes3)
-			pass.close();
-	}
+	override void phase1(ir.Module[] ms) { foreach(m; ms) { phase1(m); } }
+	override void phase2(ir.Module[] ms) { foreach(m; ms) { phase2(m); } }
+	override void phase3(ir.Module[] ms) { foreach(m; ms) { phase3(m); } }
 
 
 	/*
