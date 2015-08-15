@@ -689,7 +689,8 @@ void extypeAssignAAType(Context ctx, ref ir.Exp exp, ir.AAType aatype)
 			}
 		}
 		// Otherwise, verboten.
-		throw makeBadAAAssign(exp.location);
+		// throw makeBadAAAssign(exp.location);
+		return;
 	}
 
 	throw makeBadImplicitCast(exp, rtype, aatype);
