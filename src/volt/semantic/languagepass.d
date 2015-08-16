@@ -69,9 +69,9 @@ private:
 	ir.Module[string] mModules;
 
 public:
-	this(Settings settings, Frontend frontend, Controller controller)
+	this(Driver driver, Settings settings, Frontend frontend)
 	{
-		super(settings, frontend, controller);
+		super(driver, settings, frontend);
 
 		mTracker = new WorkTracker();
 
@@ -108,7 +108,7 @@ public:
 	/**
 	 * This functions sets up the pointers to the often used
 	 * inbuilt classes, such as object.Object and object.TypeInfo.
-	 * This needs to be called after the Controller is fully setup.
+	 * This needs to be called after the Driver is fully setup.
 	 */
 	void setupOneTruePointers()
 	{
@@ -264,7 +264,7 @@ public:
 
 		auto p = str in mModules;
 		if (p is null) {
-			m = controller.loadModule(name);
+			m = driver.loadModule(name);
 			mModules[str] = m;
 		} else {
 			m = *p;

@@ -11,7 +11,7 @@ version (Windows) {
 
 import volt.license;
 import volt.interfaces;
-import volt.controller;
+import volt.driver;
 import volt.util.path;
 import volt.util.perf : perf;
 
@@ -47,7 +47,7 @@ int main(string[] args)
 		return 0;
 	}
 
-	auto vc = new VoltController(settings);
+	auto vc = new VoltDriver(settings);
 	vc.addFiles(files);
 	int ret = vc.compile();
 	vc.close();

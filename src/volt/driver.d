@@ -1,6 +1,6 @@
 // Copyright © 2012-2014, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.controller;
+module volt.driver;
 
 import core.exception;
 import std.algorithm : endsWith;
@@ -30,10 +30,10 @@ import volt.visitor.jsonprinter;
 
 
 /**
- * Default implementation of @link volt.interfaces.Controller Controller@endlink, replace
+ * Default implementation of @link volt.interfaces.Driver Driver@endlink, replace
  * this if you wish to change the basic operation of the compiler.
  */
-class VoltController : Controller
+class VoltDriver : Driver
 {
 public:
 	Settings settings;
@@ -67,7 +67,7 @@ public:
 		auto p = new Parser();
 		p.dumpLex = false;
 
-		auto lp = new VoltLanguagePass(s, p, this);
+		auto lp = new VoltLanguagePass(this, s, p);
 
 		auto b = new LlvmBackend(lp);
 

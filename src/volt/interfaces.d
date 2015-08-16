@@ -13,7 +13,7 @@ import ir = volt.ir.ir;
  * abstracts away several IO related functions. Such as looking up
  * module files and printing error messages.
  */
-interface Controller
+interface Driver
 {
 	/// Load a module source from file system.
 	ir.Module loadModule(ir.QualifiedName name);
@@ -103,9 +103,9 @@ interface Pass
 abstract class LanguagePass
 {
 public:
+	Driver driver;
 	Settings settings;
 	Frontend frontend;
-	Controller controller;
 
 	/**
 	 * Cached lookup items.
@@ -187,22 +187,22 @@ public:
 	/* @} */
 
 public:
-	this(Settings settings, Frontend frontend, Controller controller)
+	this(Driver driver, Settings settings, Frontend frontend)
 	out {
+		assert(this.driver !is null);
 		assert(this.settings !is null);
 		assert(this.frontend !is null);
-		assert(this.controller !is null);
 	}
 	body {
+		this.driver = driver;
 		this.settings = settings;
 		this.frontend = frontend;
-		this.controller = controller;
 	}
 
 	abstract void close();
 
 	/**
-	 * Used by the Controller to store classes it loads from arguments.
+	 * Used by the Driver to store classes it loads from arguments.
 	 *
 	 * The controller does not need to call addModule when it has loaded a
 	 * module via its loadModule function.
@@ -212,7 +212,7 @@ public:
 	/**
 	 * Returns a already loaded module or loads it from file.
 	 *
-	 * The expected behavior of the langauge pass is to call the Controller
+	 * The expected behavior of the langauge pass is to call the Driver
 	 * to load the module.
 	 */
 	abstract ir.Module getModule(ir.QualifiedName name);

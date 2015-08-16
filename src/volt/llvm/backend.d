@@ -22,8 +22,8 @@ import volt.llvm.toplevel;
 
 
 /**
- * Main interface for the @link volt.interfaces.Controller
- * Controller@endlink to the llvm backend.
+ * Main interface for the @link volt.interfaces.Driver
+ * Driver@endlink to the llvm backend.
  */
 class LlvmBackend : Backend
 {
