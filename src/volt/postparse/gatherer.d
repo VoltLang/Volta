@@ -72,6 +72,7 @@ void gather(LanguagePass lp, ir.Scope current, ir.Variable v, Where where, ir.Fu
 		functionStack[$-1].renamedVariables ~= v;
 	}
 
+	// TODO Move to semantic.
 	auto shadowStore = findShadowed(lp, current, v.location, v.name);
 	if (shadowStore !is null) {
 		throw makeShadowsDeclaration(v, shadowStore.node);
@@ -548,6 +549,7 @@ public:
 		if (mFunctionStack.length == 0) {
 			throw panic(bs.location, "block statement outside of function");
 		}
+		// TODO: Move to lowerer.
 		emitNestedStructs(mFunctionStack[$-1], bs);
 		return Continue;
 	}

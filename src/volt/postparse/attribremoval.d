@@ -222,6 +222,7 @@ protected:
 				fn.type.isScope = true;
 				break;
 			case Property:
+				// TODO move to semantic.
 				if (fn.type.params.length == 0) {
 					if (isVoid(fn.type.ret)) {
 						throw makeInvalidType(fn, buildVoid(fn.location));

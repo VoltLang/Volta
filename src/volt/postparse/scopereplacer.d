@@ -11,7 +11,6 @@ import volt.interfaces;
 import volt.errors;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
-import volt.semantic.cfg;
 
 
 class ScopeReplacer : NullVisitor, Pass

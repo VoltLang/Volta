@@ -74,6 +74,10 @@ public:
 		} else if (i.aliases.length == 0 && i.bind is null) { // static import a; OR import a;
 			ir.Scope parent = thisModule.myScope;
 			foreach (ident; i.name.identifiers[0 .. $-1]) {
+				// TODO Instead just create a alias and insert.
+				// You could make it specielt type on the Alias
+				// so we can get a proper error message, like:
+				// "error: import $I from module $M not found."
 				auto name = ident.value;
 				auto store = lookup(lp, parent, ident.location, name);
 				if (store !is null) {
