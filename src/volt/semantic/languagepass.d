@@ -8,41 +8,41 @@ import std.stdio : stdout;
 import ir = volt.ir.ir;
 import volt.ir.util;
 
-import volt.interfaces;
 import volt.errors;
+import volt.interfaces;
 
 import volt.token.location;
 
 import volt.util.worktracker;
 
+import volt.visitor.docprinter;
 import volt.visitor.debugprinter;
 import volt.visitor.prettyprinter;
-import volt.visitor.docprinter;
 
+import volt.lowerer.llvmlowerer;
+import volt.lowerer.newreplacer;
+import volt.lowerer.manglewriter;
+import volt.lowerer.typeidreplacer;
+
+import volt.semantic.cfg;
 import volt.semantic.util;
+import volt.semantic.ctfe;
 import volt.semantic.lookup;
-import volt.semantic.classify;
-import volt.semantic.typeinfo;
-
+import volt.semantic.strace;
 import volt.semantic.extyper;
 import volt.semantic.gatherer;
+import volt.semantic.typeinfo;
+import volt.semantic.resolver;
+import volt.semantic.classify;
 import volt.semantic.irverifier;
 import volt.semantic.condremoval;
-import volt.semantic.newreplacer;
-import volt.semantic.llvmlowerer;
-import volt.semantic.manglewriter;
-import volt.semantic.attribremoval;
-import volt.semantic.typeidreplacer;
-import volt.semantic.importresolver;
-import volt.semantic.ctfe;
-import volt.semantic.cfg;
-import volt.semantic.scopereplacer;
-
-import volt.semantic.resolver;
 import volt.semantic.classresolver;
 import volt.semantic.aliasresolver;
+import volt.semantic.attribremoval;
+import volt.semantic.scopereplacer;
+import volt.semantic.importresolver;
 import volt.semantic.userattrresolver;
-import volt.semantic.strace;
+
 
 
 /**

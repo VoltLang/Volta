@@ -1,6 +1,6 @@
 // Copyright © 2012-2013, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.semantic.newreplacer;
+module volt.lowerer.newreplacer;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
@@ -11,12 +11,12 @@ import volt.errors;
 import volt.token.location;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
-import volt.semantic.classify;
+import volt.lowerer.llvmlowerer;
+import volt.semantic.typer;
 import volt.semantic.lookup;
 import volt.semantic.mangle;
+import volt.semantic.classify;
 import volt.semantic.overload;
-import volt.semantic.typer;
-import volt.semantic.llvmlowerer;
 
 
 ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scope baseScope, ir.ArrayType atype, string name)

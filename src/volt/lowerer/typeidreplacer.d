@@ -1,6 +1,6 @@
 // Copyright © 2012-2013, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.semantic.typeidreplacer;
+module volt.lowerer.typeidreplacer;
 
 import std.string : format;
 
