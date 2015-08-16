@@ -30,19 +30,19 @@ import volt.semantic.ctfe;
 import volt.semantic.lookup;
 import volt.semantic.strace;
 import volt.semantic.extyper;
-import volt.semantic.gatherer;
 import volt.semantic.typeinfo;
 import volt.semantic.resolver;
 import volt.semantic.classify;
 import volt.semantic.irverifier;
-import volt.semantic.condremoval;
 import volt.semantic.classresolver;
 import volt.semantic.aliasresolver;
-import volt.semantic.attribremoval;
-import volt.semantic.scopereplacer;
-import volt.semantic.importresolver;
 import volt.semantic.userattrresolver;
 
+import volt.postparse.gatherer;
+import volt.postparse.condremoval;
+import volt.postparse.attribremoval;
+import volt.postparse.scopereplacer;
+import volt.postparse.importresolver;
 
 
 /**

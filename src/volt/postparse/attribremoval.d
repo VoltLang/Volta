@@ -1,8 +1,6 @@
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.semantic.attribremoval;
-
-import std.stdio : writefln;
+module volt.postparse.attribremoval;
 
 import volt.ir.util;
 

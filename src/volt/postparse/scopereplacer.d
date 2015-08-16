@@ -1,6 +1,6 @@
 // Copyright © 2015, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.semantic.scopereplacer;
+module volt.postparse.scopereplacer;
 
 import watt.text.format;
 
@@ -12,6 +12,7 @@ import volt.errors;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
 import volt.semantic.cfg;
+
 
 class ScopeReplacer : NullVisitor, Pass
 {

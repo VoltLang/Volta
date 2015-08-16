@@ -163,7 +163,7 @@ VIV_SRC= \
 	src/volt/parser/*.d \
 	src/volt/visitor/manip.d \
 	src/volt/visitor/visitor.d \
-	src/volt/semantic/condremoval.d
+	src/volt/postparse/condremoval.d
 
 
 viv: $(TARGET) $(VIV_SRC)

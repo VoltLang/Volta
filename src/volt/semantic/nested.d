@@ -12,9 +12,9 @@ import volt.interfaces;
 import volt.visitor.manip;
 import volt.visitor.visitor;
 import volt.semantic.lookup;
-import volt.semantic.gatherer;
 import volt.semantic.context;
 import volt.semantic.classify : isNested, isRef;
+import volt.postparse.gatherer;
 
 void emitNestedStructs(ir.Function parentFunction, ir.BlockStatement bs)
 {

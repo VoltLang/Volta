@@ -1,7 +1,7 @@
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // Copyright © 2012, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.semantic.importresolver;
+module volt.postparse.importresolver;
 
 import std.string : format;
 
