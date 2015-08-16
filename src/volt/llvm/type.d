@@ -26,11 +26,12 @@ class Type
 public:
 	ir.Type irType;
 	LLVMTypeRef llvmType;
-	bool structType; // Is the type a LLVM struct.
 	LLVMValueRef diType;
+	bool structType; // Is the type a LLVM struct.
 
 protected:
-	this(State state, ir.Type irType, bool structType, LLVMTypeRef llvmType)
+	this(State state, ir.Type irType, bool structType,
+	     LLVMTypeRef llvmType, LLVMValueRef diType)
 	in {
 		assert(state !is null);
 		assert(irType !is null);
@@ -45,6 +46,7 @@ protected:
 		this.irType = irType;
 		this.structType = structType;
 		this.llvmType = llvmType;
+		this.diType = diType;
 	}
 
 public:
@@ -62,7 +64,8 @@ class VoidType : Type
 public:
 	this(State state, ir.PrimitiveType pt)
 	{
-		super(state, pt, false, LLVMVoidTypeInContext(state.context));
+		super(state, pt, false, LLVMVoidTypeInContext(state.context),
+		      null);
 	}
 }
 
@@ -133,7 +136,7 @@ public:
 			throw panic(pt.location, "PrmitiveType.Void not handled");
 		}
 
-		super(state, pt, false, llvmType);
+		super(state, pt, false, llvmType, null);
 		diType = state.diBaseType(this, pt.type);
 	}
 
@@ -203,15 +206,14 @@ private:
 	this(State state, ir.PointerType pt, Type base)
 	{
 		this.base = base;
-
-		auto voidT = cast(VoidType) base;
-		if (voidT !is null) {
-			llvmType = LLVMPointerType(LLVMInt8TypeInContext(state.context), 0);
+		if (base.isVoid) {
+			llvmType = LLVMPointerType(
+				LLVMInt8TypeInContext(state.context), 0);
 		} else {
 			llvmType = LLVMPointerType(base.llvmType, 0);
 		}
-		super(state, pt, false, llvmType);
 		diType = state.diPointerType(pt, base);
+		super(state, pt, false, llvmType, diType);
 	}
 }
 
@@ -234,11 +236,11 @@ public:
 	this(State state, ir.ArrayType at)
 	{
 		llvmType = LLVMStructCreateNamed(state.context, at.mangledName);
-		super(state, at, true, llvmType);
+		super(state, at, true, llvmType, diType);
 
 		// Avoid creating void[] arrays turn them into ubyte[] instead.
 		base = state.fromIr(at.base);
-		if (base is state.voidType) {
+		if (base.isVoid) {
 			base = state.ubyteType;
 		}
 
@@ -339,7 +341,7 @@ public:
 
 		length = cast(uint)sat.length;
 		llvmType = LLVMArrayType(base.llvmType, length);
-		super(state, sat, true, llvmType);
+		super(state, sat, true, llvmType, null);
 	}
 
 	LLVMValueRef fromArrayLiteral(State state, ir.ArrayLiteral al)
@@ -379,10 +381,11 @@ public:
 	ir.CallableType ct;
 
 public:
-	this(State state, ir.CallableType ct, bool passByVal, LLVMTypeRef llvmType)
+	this(State state, ir.CallableType ct, bool passByVal,
+	     LLVMTypeRef llvmType, LLVMValueRef diType)
 	{
 		this.ct = ct;
-		super(state, ct, passByVal, llvmType);
+		super(state, ct, passByVal, llvmType, diType);
 	}
 }
 
@@ -439,7 +442,7 @@ private:
 
 		llvmCallType = LLVMFunctionType(ret.llvmType, args, ft.hasVarArgs && ft.linkage == ir.Linkage.C);
 		llvmType = LLVMPointerType(llvmCallType, 0);
-		super(state, ft, false, llvmType);
+		super(state, ft, false, llvmType, diType);
 	}
 }
 
@@ -458,7 +461,7 @@ public:
 	this(State state, ir.DelegateType dt)
 	{
 		llvmType = LLVMStructCreateNamed(state.context, dt.mangledName);
-		super(state, dt, true, llvmType);
+		super(state, dt, true, llvmType, diType);
 
 		ret = state.fromIr(dt.ret);
 
@@ -514,7 +517,7 @@ public:
 		auto mangled = c !is null ? c.mangledName : irType.mangledName;
 
 		llvmType = LLVMStructCreateNamed(state.context, mangled);
-		super(state, irType, true, llvmType);
+		super(state, irType, true, llvmType, diType);
 
 		// @todo check packing.
 		uint index;
@@ -575,7 +578,7 @@ public:
 	this(State state, ir.Union irType)
 	{
 		llvmType = LLVMStructCreateNamed(state.context, irType.mangledName);
-		super(state, irType, true, llvmType);
+		super(state, irType, true, llvmType, diType);
 
 		uint index;
 		void handle(ir.Node m) {
@@ -912,4 +915,12 @@ string addMangledName(ir.Type irType)
 	string m = volt.semantic.mangle.mangle(irType);
 	irType.mangledName = m;
 	return m;
+}
+
+/**
+ * Helper function to tell if a type is Void.
+ */
+@property bool isVoid(Type type)
+{
+	return cast(VoidType)type !is null;
 }
