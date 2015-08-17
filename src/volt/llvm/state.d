@@ -12,7 +12,7 @@ import volt.visitor.visitor;
 import volt.token.location;
 import volt.semantic.lookup;
 
-import volt.llvm.di : diCompileUnit, diFinalize;
+import volt.llvm.di;
 import volt.llvm.constant;
 import volt.llvm.toplevel;
 import volt.llvm.expression;

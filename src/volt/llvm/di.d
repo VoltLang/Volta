@@ -320,6 +320,9 @@ version (UseDIBuilder) {
 		                           di.ptr, cast(uint)di.length);
 	}
 
+	alias LLVMCreateDIBuilder = lib.llvm.c.DIBuilder.LLVMCreateDIBuilder;
+	alias LLVMDisposeDIBuilder = lib.llvm.c.DIBuilder.LLVMDisposeDIBuilder;
+
 private:
 	LLVMValueRef diString(State state, const(char)[] str)
 	{
@@ -353,13 +356,6 @@ private:
 
 	extern(C) LLVMDIBuilderRef LLVMCreateDIBuilder(LLVMModuleRef) { return null; }
 	extern(C) void LLVMDisposeDIBuilder(LLVMDIBuilderRef builder) {}
-	extern(C) LLVMValueRef LLVMDIBuilderCreateStructType(
-		LLVMDIBuilderRef builder, LLVMValueRef Scope, const(char)* Name,
-		size_t NameLen, LLVMValueRef File, uint LineNumber, ulong SizeInBits,
-		ulong AlignInBits, uint Flags, LLVMValueRef DerivedFrom,
-		LLVMValueRef *Elements, uint ElementsNum,
-		LLVMValueRef VTableHolder, uint RunTimeLang,
-		const (char)* UniqueIdentifier, size_t UniqueIdentifierLen) { return null; }
 
 	void diStart(State state) {}
 	void diFinalize(State state) {}

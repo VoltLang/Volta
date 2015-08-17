@@ -5,7 +5,7 @@ module volt.llvm.interfaces;
 import volt.errors;
 
 public import lib.llvm.core;
-public import lib.llvm.c.DIBuilder;
+public import lib.llvm.c.DIBuilder : LLVMDIBuilderRef;
 
 public import volt.interfaces;
 public import ir = volt.ir.ir;
