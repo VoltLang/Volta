@@ -610,10 +610,10 @@ LLVMValueRef LLVMDIBuilderInsertDbgValueIntrinsicBefore(
     LLVMValueRef VarInfo, LLVMValueRef InsertBefore);
 
 
-void LLVMDIBuilderReplaceStructBody(LLVMDIBuilderRef builder,
-                                    LLVMValueRef Struct,
-                                    LLVMValueRef *Elements,
-                                    uint ElementsNum);
+void LLVMDIBuilderStructSetBody(LLVMDIBuilderRef builder,
+                                LLVMValueRef Struct,
+                                LLVMValueRef *Elements,
+                                uint ElementsNum);
 
 /**
  * @}

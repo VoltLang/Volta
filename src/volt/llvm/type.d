@@ -10,7 +10,7 @@ import ir = volt.ir.ir;
 import volt.ir.util;
 
 import volt.errors;
-import volt.llvm.di : diBaseType, diPointerType, diStruct, diTupleStructBody;
+import volt.llvm.di : diBaseType, diPointerType, diStruct, diStructSetBody;
 import volt.llvm.constant;
 import volt.llvm.interfaces;
 static import volt.semantic.mangle;
@@ -266,12 +266,9 @@ public:
 		}
 
 		static assert(ptrIndex < lengthIndex);
-		auto di = diTupleStructBody(state, cast(Type)this,
+		diStructSetBody(state, cast(Type)this,
 			[ptrType, lengthType],
 			["ptr", "length"]);
-
-		LLVMDIBuilderReplaceStructBody(state.diBuilder, diType,
-		                               di.ptr, cast(uint)di.length);
 	}
 
 	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
@@ -529,21 +526,23 @@ public:
 		auto c = cast(ir.Class)irType.loweredNode;
 		auto mangled = c !is null ? c.mangledName : irType.mangledName;
 
+		diType = state.diStruct(irType);
 		llvmType = LLVMStructCreateNamed(state.context, mangled);
 		super(state, irType, true, llvmType, diType);
 
 		// @todo check packing.
 		uint index;
 		LLVMTypeRef[] mt;
+		ir.Variable[] vars;
 
-		void handle(ir.Node m)
-		{
+		foreach(m; irType.members.nodes) {
+
 			auto var = cast(ir.Variable)m;
 			if (var is null)
-				return;
+				continue;
 
 			if (var.storage != ir.Variable.Storage.Field)
-				return;
+				continue;
 
 			// @todo handle anon types.
 			assert(var.name !is null);
@@ -551,14 +550,12 @@ public:
 			indices[var.name] = index++;
 			auto t = state.fromIr(var.type);
 			mt ~= t.llvmType;
+			vars ~= var;
 			types ~= t;
-		}
-		
-		foreach(m; irType.members.nodes) {
-			handle(m);
 		}
 
 		LLVMStructSetBody(llvmType, mt, false);
+		diStructSetBody(state, diType, vars);
 	}
 
 	LLVMValueRef fromStructLiteral(State state, ir.StructLiteral sl)

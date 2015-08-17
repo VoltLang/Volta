@@ -251,15 +251,54 @@ version (UseDIBuilder) {
 			null, 0,
 			null,
 			0,
-			t.mangledName.ptr, t.mangledName.length);
+			null, 0);
+			//t.mangledName.ptr, t.mangledName.length);
+	}
+
+	void diStructSetBody(State state, LLVMValueRef diType,
+	                     ir.Variable[] elms)
+	{
+		auto di = new LLVMValueRef[](elms.length);
+		size_t offset;
+
+		foreach (i, elm; elms) {
+			auto d = state.fromIr(elm.type).diType;
+			if (d is null) {
+				return;
+			}
+
+			size_t size = cast(size_t).size(state.lp, elm.type) * 8;
+			size_t alignment = .alignment(state.lp, elm.type) * 8;
+
+			// Adjust offset to alignment
+			if (offset % alignment) {
+				offset += alignment - (offset % alignment);
+			}
+
+			di[i] = LLVMDIBuilderCreateMemberType(
+				state.diBuilder, state.diCU,
+				elm.name.ptr, elm.name.length,
+				state.diFile(elm), cast(uint)elm.location.line,
+				size, alignment, offset, 0, d);
+
+			offset += size;
+		}
+
+		LLVMDIBuilderStructSetBody(state.diBuilder, diType,
+		                           di.ptr, cast(uint)di.length);
 	}
 
 	/**
 	 * Used by Array and Delegates.
 	 */
-	LLVMValueRef[] diTupleStructBody(State state, Type p,
-	                                 Type[2] t, string[2] names)
+	void diStructSetBody(State state, Type p, Type[2] t, string[2] names)
 	{
+		if (p.diType is null ||
+		    t[0].diType is null ||
+		    t[1].diType is null) {
+			return;
+		}
+
 		auto di = new LLVMValueRef[](2);
 		size_t s0 = cast(size_t).size(state.lp, t[0].irType) * 8;
 		size_t s1 = cast(size_t).size(state.lp, t[1].irType) * 8;
@@ -277,7 +316,8 @@ version (UseDIBuilder) {
 			state.diFile(p.irType), cast(uint)p.irType.location.line,
 			s1, a1, s0, 0, t[1].diType);
 
-		return di;
+		LLVMDIBuilderStructSetBody(state.diBuilder, p.diType,
+		                           di.ptr, cast(uint)di.length);
 	}
 
 private:
@@ -320,10 +360,6 @@ private:
 		LLVMValueRef *Elements, uint ElementsNum,
 		LLVMValueRef VTableHolder, uint RunTimeLang,
 		const (char)* UniqueIdentifier, size_t UniqueIdentifierLen) { return null; }
-	extern(C) void LLVMDIBuilderReplaceStructBody(LLVMDIBuilderRef builder,
-	                                              LLVMValueRef Struct,
-	                                              LLVMValueRef *Elements,
-	                                              uint ElementsNum) {}
 
 	void diStart(State state) {}
 	void diFinalize(State state) {}
@@ -332,5 +368,6 @@ private:
 	LLVMValueRef diPointerType(State state, ir.PointerType pt, Type base) { return null; }
 	void diVariable(State state, LLVMValueRef var, ir.Variable irVar, Type type) {}
 	LLVMValueRef diStruct(State state, ir.Type t) { return null; }
-	LLVMValueRef[] diTupleStructBody(State state, Type p, Type[2] t, string[2] names) { return null; }
+	void diStructSetBody(State state, Type p, Type[2] t, string[2] names) {}
+	void diStructSetBody(State state, LLVMValueRef diType, ir.Variable[] elms) {}
 }

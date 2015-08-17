@@ -619,10 +619,10 @@ LLVMValueRef LLVMDIBuilderInsertDbgValueIntrinsicBefore(
     LLVMDIBuilderRef builder, LLVMValueRef Val, uint64_t Offset,
     LLVMValueRef VarInfo, LLVMValueRef InsertBefore);
 
-void LLVMDIBuilderReplaceStructBody(LLVMDIBuilderRef builder,
-                                    LLVMValueRef Struct,
-                                    LLVMValueRef *Elements,
-                                    unsigned ElementsNum);
+void LLVMDIBuilderStructSetBody(LLVMDIBuilderRef builder,
+                                LLVMValueRef Struct,
+                                LLVMValueRef *Elements,
+                                unsigned ElementsNum);
 
 #ifdef __cplusplus
 }
@@ -884,10 +884,10 @@ LLVMValueRef LLVMDIBuilderCreateGlobalVariable(
       F, LineNo, T, IsLocalToUnit, C, D));
 }
 
-void LLVMDIBuilderReplaceStructBody(LLVMDIBuilderRef builder,
-                                    LLVMValueRef Struct,
-                                    LLVMValueRef *Elements,
-                                    unsigned ElementsNum) {
+void LLVMDIBuilderStructSetBody(LLVMDIBuilderRef builder,
+                                LLVMValueRef Struct,
+                                LLVMValueRef *Elements,
+                                unsigned ElementsNum) {
   auto B = unwrap(builder);
   auto fwd = unwrapMDAs<DICompositeType>(Struct);
 
