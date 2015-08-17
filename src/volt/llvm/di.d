@@ -320,6 +320,28 @@ version (UseDIBuilder) {
 		                           di.ptr, cast(uint)di.length);
 	}
 
+	LLVMValueRef diFunctionType(State state, Type ret, Type[] args)
+	{
+		// Add one for ret type.
+		LLVMValueRef[] types = new LLVMValueRef[](args.length + 1);
+
+		// Hold on to your butts (keep an eye on i).
+		for (int i; i < args.length;) {
+			auto t = args[i].diType;
+			if (t is null) {
+				return null;
+			}
+
+			types[++i] = t;
+		}
+
+		auto file = diFile(state, ret.irType);
+
+		return LLVMDIBuilderCreateSubroutineType(
+			state.diBuilder, file, types.ptr,
+			cast(uint)types.length, 0);
+	}
+
 	alias LLVMCreateDIBuilder = lib.llvm.c.DIBuilder.LLVMCreateDIBuilder;
 	alias LLVMDisposeDIBuilder = lib.llvm.c.DIBuilder.LLVMDisposeDIBuilder;
 
@@ -366,4 +388,5 @@ private:
 	LLVMValueRef diStruct(State state, ir.Type t) { return null; }
 	void diStructSetBody(State state, Type p, Type[2] t, string[2] names) {}
 	void diStructSetBody(State state, LLVMValueRef diType, ir.Variable[] elms) {}
+	LLVMValueRef diFunctionType(State state, Type ret, Type[] args) { return null; }
 }

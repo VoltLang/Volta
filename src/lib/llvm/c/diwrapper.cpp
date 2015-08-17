@@ -380,7 +380,7 @@ LLVMValueRef LLVMDIBuilderCreateEnumerationType(
 ///                        These flags are used to emit dwarf attributes.
 LLVMValueRef LLVMDIBuilderCreateSubroutineType(LLVMDIBuilderRef builder,
                                                LLVMValueRef File,
-                                               LLVMValueRef* ParameterTypes,
+                                               LLVMValueRef *ParameterTypes,
                                                unsigned ParameterTypesNum,
                                                unsigned Flags);
 
@@ -688,6 +688,7 @@ DEFINE_MAV_WRAP(DIObjCProperty)
 DEFINE_MAV_WRAP(DICompositeType)
 DEFINE_MAV_WRAP(DITemplateValueParameter)
 DEFINE_MAV_WRAP(DIGlobalVariable)
+DEFINE_MAV_WRAP(DISubroutineType)
 
 inline Metadata *unwrapMD(LLVMValueRef Val)
 {
@@ -863,6 +864,24 @@ LLVMValueRef LLVMDIBuilderCreateStructType(
   return wrap(B->createStructType(
       S, N, F, LineNumber, SizeInBits, AlignInBits, Flags, DF,
       B->getOrCreateArray(MDs), RunTimeLang, VTH, UI));
+}
+
+LLVMValueRef LLVMDIBuilderCreateSubroutineType(LLVMDIBuilderRef builder,
+                                               LLVMValueRef File,
+                                               LLVMValueRef *ParameterTypes,
+                                               unsigned ParameterTypesNum,
+                                               unsigned Flags) {
+  auto B = unwrap(builder);
+  auto F = unwrapMDAs<DIFile>(File);
+
+  SmallVector<Metadata *, 8> MDs;
+  for (int i = 0; i < ParameterTypesNum; i++) {
+    auto *MD = unwrapMD(ParameterTypes[i]);
+    // TODO Extract?
+    MDs.push_back(MD);
+  }
+
+  return wrap(B->createSubroutineType(F, B->getOrCreateTypeArray(MDs), Flags));
 }
 
 LLVMValueRef LLVMDIBuilderCreateGlobalVariable(

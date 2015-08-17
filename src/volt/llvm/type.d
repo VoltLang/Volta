@@ -8,7 +8,8 @@ import ir = volt.ir.ir;
 import volt.ir.util;
 
 import volt.errors;
-import volt.llvm.di : diBaseType, diPointerType, diStruct, diStructSetBody;
+import volt.llvm.di : diBaseType, diPointerType, diStruct, diStructSetBody,
+                      diFunctionType;
 import volt.llvm.constant;
 import volt.llvm.interfaces;
 static import volt.semantic.mangle;
@@ -439,23 +440,35 @@ private:
 	this(State state, ir.FunctionType ft, Type ret, Type[] params)
 	{
 		this.params = params;
-		LLVMTypeRef[] args;
-		args.length = ft.params.length + cast(uint)ft.hiddenParameter;
-
 		this.ret = ret;
+		LLVMTypeRef[] args;
+		Type[] di;
+
+		args = new typeof(args)(ft.params.length + ft.hiddenParameter);
+		di = new typeof(di)(ft.params.length + ft.hiddenParameter);
+
 		foreach (i, type; params) {
-			args[i] = type.llvmType;
 			if (ft.isArgRef[i] || ft.isArgOut[i]) {
-				args[i] = LLVMPointerType(args[i], 0);
+				auto irPtr = new ir.PointerType(type.irType);
+				addMangledName(irPtr);
+				auto ptrType = cast(PointerType)state.fromIr(irPtr);
+
+				args[i] = ptrType.llvmType;
+				di[i] = type;
+			} else {
+				args[i] = type.llvmType;
+				di[i] = type;
 			}
 		}
 
 		if (ft.hiddenParameter) {
 			args[$-1] = state.voidPtrType.llvmType;
+			di[$-1] = state.voidPtrType;
 		}
 
 		llvmCallType = LLVMFunctionType(ret.llvmType, args, ft.hasVarArgs && ft.linkage == ir.Linkage.C);
 		llvmType = LLVMPointerType(llvmCallType, 0);
+		diType = diFunctionType(state, ret, di);
 		super(state, ft, false, llvmType, diType);
 	}
 }
