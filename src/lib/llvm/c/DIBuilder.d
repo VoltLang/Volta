@@ -250,7 +250,7 @@ LLVMValueRef LLVMDIBuilderCreateClassType(
     LLVMDIBuilderRef builder, LLVMValueRef Scope, const(char) *Name,
     size_t NameLen, LLVMValueRef File, uint LineNumber, ulong SizeInBits,
     ulong AlignInBits, ulong OffsetInBits, uint Flags,
-    LLVMValueRef DerivedFrom, LLVMValueRef *Elements, uint ElementsNum,
+    LLVMValueRef DerivedFrom, LLVMValueRef *Elements, size_t ElementsNum,
     LLVMValueRef VTableHolder, LLVMValueRef TemplateParms,
     const(char) *UniqueIdentifier, uint UniqueIdentifierLen);
 
@@ -269,7 +269,7 @@ LLVMValueRef LLVMDIBuilderCreateStructType(
     LLVMDIBuilderRef builder, LLVMValueRef Scope, const(char) *Name,
     size_t NameLen, LLVMValueRef File, uint LineNumber, ulong SizeInBits,
     ulong AlignInBits, uint Flags, LLVMValueRef DerivedFrom,
-    LLVMValueRef *Elements, uint ElementsNum,
+    LLVMValueRef *Elements, size_t ElementsNum,
     LLVMValueRef VTableHolder, uint RunTimeLang,
     const(char) *UniqueIdentifier, size_t UniqueIdentifierLen);
 
@@ -288,7 +288,7 @@ LLVMValueRef LLVMDIBuilderCreateUnionType(
     LLVMDIBuilderRef builder, LLVMValueRef Scope, const(char) *Name,
     size_t NameLen, LLVMValueRef File, uint LineNumber, ulong SizeInBits,
     ulong AlignInBits, uint Flags, LLVMValueRef *Elements,
-    uint ElementsNum, uint RunTimeLang, const(char) *UniqueIdentifier,
+    size_t ElementsNum, uint RunTimeLang, const(char) *UniqueIdentifier,
     uint UniqueIdentifierLen);
 
 /// Create debugging information for template type parameter.
@@ -359,7 +359,7 @@ LLVMValueRef LLVMDIBuilderCreateEnumerationType(
     LLVMDIBuilderRef builder, LLVMValueRef Scope, const(char) *Name,
     size_t NameLen, LLVMValueRef File, uint LineNumber,
     ulong SizeInBits, ulong AlignInBits,
-    LLVMValueRef Elements, uint ElementsNum, LLVMValueRef UnderlyingType,
+    LLVMValueRef Elements, size_t ElementsNum, LLVMValueRef UnderlyingType,
     const(char) *UniqueIdentifier, uint UniqueIdentifierLen);
 
 /// Create subroutine type.
@@ -613,7 +613,7 @@ LLVMValueRef LLVMDIBuilderInsertDbgValueIntrinsicBefore(
 void LLVMDIBuilderStructSetBody(LLVMDIBuilderRef builder,
                                 LLVMValueRef Struct,
                                 LLVMValueRef *Elements,
-                                uint ElementsNum);
+                                size_t ElementsNum);
 
 /**
  * @}

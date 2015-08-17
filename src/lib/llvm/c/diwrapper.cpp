@@ -260,7 +260,7 @@ LLVMValueRef LLVMDIBuilderCreateClassType(
     LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
     size_t NameLen, LLVMValueRef File, unsigned LineNumber, uint64_t SizeInBits,
     uint64_t AlignInBits, uint64_t OffsetInBits, unsigned Flags,
-    LLVMValueRef DerivedFrom, LLVMValueRef *Elements, unsigned ElementsNum,
+    LLVMValueRef DerivedFrom, LLVMValueRef *Elements, size_t ElementsNum,
     LLVMValueRef VTableHolder, LLVMValueRef TemplateParms,
     const char *UniqueIdentifier, size_t UniqueIdentifierLen);
 
@@ -279,7 +279,7 @@ LLVMValueRef LLVMDIBuilderCreateStructType(
     LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
     size_t NameLen, LLVMValueRef File, unsigned LineNumber, uint64_t SizeInBits,
     uint64_t AlignInBits, unsigned Flags, LLVMValueRef DerivedFrom,
-    LLVMValueRef *Elements, unsigned ElementsNum,
+    LLVMValueRef *Elements, size_t ElementsNum,
     LLVMValueRef VTableHolder, unsigned RunTimeLang,
     const char *UniqueIdentifier, size_t UniqueIdentifierLen);
 
@@ -298,7 +298,7 @@ LLVMValueRef LLVMDIBuilderCreateUnionType(
     LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
     size_t NameLen, LLVMValueRef File, unsigned LineNumber, uint64_t SizeInBits,
     uint64_t AlignInBits, unsigned Flags, LLVMValueRef *Elements,
-    unsigned ElementsNum, unsigned RunTimeLang, const char *UniqueIdentifier,
+    size_t ElementsNum, unsigned RunTimeLang, const char *UniqueIdentifier,
     size_t UniqueIdentifierLen);
 
 /// Create debugging information for template type parameter.
@@ -369,7 +369,7 @@ LLVMValueRef LLVMDIBuilderCreateEnumerationType(
     LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
     size_t NameLen, LLVMValueRef File, unsigned LineNumber,
     uint64_t SizeInBits, uint64_t AlignInBits,
-    LLVMValueRef Elements, unsigned ElementsNum, LLVMValueRef UnderlyingType,
+    LLVMValueRef Elements, size_t ElementsNum, LLVMValueRef UnderlyingType,
     const char *UniqueIdentifier, size_t UniqueIdentifierLen);
 
 /// Create subroutine type.
@@ -622,7 +622,7 @@ LLVMValueRef LLVMDIBuilderInsertDbgValueIntrinsicBefore(
 void LLVMDIBuilderStructSetBody(LLVMDIBuilderRef builder,
                                 LLVMValueRef Struct,
                                 LLVMValueRef *Elements,
-                                unsigned ElementsNum);
+                                size_t ElementsNum);
 
 #ifdef __cplusplus
 }
@@ -841,7 +841,7 @@ LLVMValueRef LLVMDIBuilderCreateStructType(
     LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
     size_t NameLen, LLVMValueRef File, unsigned LineNumber, uint64_t SizeInBits,
     uint64_t AlignInBits, unsigned Flags, LLVMValueRef DerivedFrom,
-    LLVMValueRef *Elements, unsigned ElementsNum,
+    LLVMValueRef *Elements, size_t ElementsNum,
     LLVMValueRef VTableHolder, unsigned RunTimeLang,
     const char *UniqueIdentifier, size_t UniqueIdentifierLen) {
 
@@ -887,7 +887,7 @@ LLVMValueRef LLVMDIBuilderCreateGlobalVariable(
 void LLVMDIBuilderStructSetBody(LLVMDIBuilderRef builder,
                                 LLVMValueRef Struct,
                                 LLVMValueRef *Elements,
-                                unsigned ElementsNum) {
+                                size_t ElementsNum) {
   auto B = unwrap(builder);
   auto fwd = unwrapMDAs<DICompositeType>(Struct);
 
