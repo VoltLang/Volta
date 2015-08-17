@@ -71,3 +71,44 @@ AttribRemoval
 -------------
 
 Attributes are those flags that work on top level blocks, that you can place colons after. ``public``, ``private``, ``extern``, etc. This pass works out what nodes which attributes apply to, and turns them into appropriate fields -- Functions will have their access and linkage fields set, and so on.
+
+Gatherer
+--------
+
+The gatherer creates scopes on things and then adds variables to the correct scope. 
+
+ExTyper
+-------
+
+The most complex pass of the semantic phase. Short for 'explicit typer', the ExTyper does what it needs to do to ensure everything is explicitly typed. auto variables will be inferred afterwards, implicit casts (say ``int`` to ``long``) will have explicit casts inserted. Foreach statements will become for statements, and so on.
+
+CFGBuilder
+----------
+
+The CFGBuilder builds a Control Flow Graph for each function, and uses it to determine if a return statement is missing, etc.
+
+IRVerifier
+----------
+
+Ensures that the IR is in a state fit to be sent to the backend. This is run twice, once after the CFGBuilder, and then again just before the backend proper.
+
+LlvmLowerer
+-----------
+
+Does the final run of lowering. Mostly turns syntax into explicit calls into runtime functions. That is to say, lowers the IR so that LLVM knows what to do with it.
+
+NewReplacer
+-----------
+
+Similar to the LlvmLowerer, but just for ``new``. This is isn't just bundled elsewhere because the ``new`` operator does a lot of things, so it justifies having its own pass.
+
+TypeidReplacer
+--------------
+
+Replaces ``typeid`` expressions with code that will create ``TypeInfo`` instances as appropriate.
+
+MangleWriter
+------------
+
+Goes over everything in the IR tree and 'mangles' it. Mangling is the process of generating a name for a type or function that won't clash with things with the same name for whatever reason -- so the linker can discern overloaded functions, types in different modules with the same name, and so on.
+
