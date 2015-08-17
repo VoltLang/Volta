@@ -265,6 +265,9 @@ public:
 		auto p = str in mModules;
 		if (p is null) {
 			m = driver.loadModule(name);
+			if (m is null) {
+				return null;
+			}
 			mModules[str] = m;
 		} else {
 			m = *p;
