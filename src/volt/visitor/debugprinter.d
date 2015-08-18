@@ -447,7 +447,11 @@ protected:
 	{
 		if (mIndent != 0)
 			ln();
-		twf(["(", node.docComment, ir.nodeToString(node), " ", getNodeAddressString(node)]);
+		if (auto t = cast(ir.Type)node) {
+			twf(["(", node.docComment, ir.nodeToString(node), " ", getNodeAddressString(node), " \"", t.mangledName, "\""]);
+		} else {
+			twf(["(", node.docComment, ir.nodeToString(node), " ", getNodeAddressString(node)]);
+		}
 		mLastIndent = mIndent++;
 	}
 
@@ -455,7 +459,11 @@ protected:
 	{
 		if (mIndent != 0)
 			ln();
-		twf(["(", node.docComment, ir.nodeToString(node), " ", extra, " ", getNodeAddressString(node)]);
+		if (auto t = cast(ir.Type)node) {
+			twf(["(", node.docComment, ir.nodeToString(node), " ", extra, " ", getNodeAddressString(node), " \"", t.mangledName, "\""]);
+		} else {
+			twf(["(", node.docComment, ir.nodeToString(node), " ", extra, " ", getNodeAddressString(node)]);
+		}
 		mLastIndent = mIndent++;
 	}
 
@@ -524,7 +532,11 @@ protected:
 	void visitNode(ir.Node node)
 	{
 		ln();
-		twf(["(", node.docComment, ir.nodeToString(node), " ", getNodeAddressString(node), ")"]);
+		if (auto t = cast(ir.Type)node) {
+			twf(["(", node.docComment, ir.nodeToString(node), " ", getNodeAddressString(node), " \"", t.mangledName, "\")"]);
+		} else {
+			twf(["(", node.docComment, ir.nodeToString(node), " ", getNodeAddressString(node), ")"]);
+		}
 		mLastIndent = mIndent;
 	}
 

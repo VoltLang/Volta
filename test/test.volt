@@ -3,6 +3,8 @@
 //T has-passed:no
 module test;
 
+void a(out int c){}
+void b(int c){}
 
 int main()
 {
