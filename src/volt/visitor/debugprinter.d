@@ -447,11 +447,8 @@ protected:
 	{
 		if (mIndent != 0)
 			ln();
-		if (auto t = cast(ir.Type)node) {
-			twf(["(", node.docComment, ir.nodeToString(node), " ", getNodeAddressString(node), " \"", t.mangledName, "\""]);
-		} else {
-			twf(["(", node.docComment, ir.nodeToString(node), " ", getNodeAddressString(node)]);
-		}
+		twf(["(", node.docComment, ir.nodeToString(node), " ", getNodeAddressString(node)]);
+		printTypeFields(node);
 		mLastIndent = mIndent++;
 	}
 
@@ -459,12 +456,25 @@ protected:
 	{
 		if (mIndent != 0)
 			ln();
-		if (auto t = cast(ir.Type)node) {
-			twf(["(", node.docComment, ir.nodeToString(node), " ", extra, " ", getNodeAddressString(node), " \"", t.mangledName, "\""]);
-		} else {
-			twf(["(", node.docComment, ir.nodeToString(node), " ", extra, " ", getNodeAddressString(node)]);
-		}
+
+		twf(["(", node.docComment, ir.nodeToString(node), " ", extra, " ", getNodeAddressString(node)]);
+		printTypeFields(node);
 		mLastIndent = mIndent++;
+	}
+
+	void printTypeFields(ir.Node node)
+	{
+		auto t = cast(ir.Type)node;
+		if (t is null) {
+			return;
+		}
+
+		wf("\n");
+		twf("  .mangledName \"", t.mangledName, "\"\n");
+		twf("  .glossedName \"", t.glossedName, "\"\n");
+		twf("  .isConst ", to!string(t.isConst), "\n");
+		twf("  .isScope ", to!string(t.isConst), "\n");
+		twf("  .isImmutable ", to!string(t.isImmutable));
 	}
 
 	void leaveNode(ir.Node node)
@@ -532,11 +542,9 @@ protected:
 	void visitNode(ir.Node node)
 	{
 		ln();
-		if (auto t = cast(ir.Type)node) {
-			twf(["(", node.docComment, ir.nodeToString(node), " ", getNodeAddressString(node), " \"", t.mangledName, "\")"]);
-		} else {
-			twf(["(", node.docComment, ir.nodeToString(node), " ", getNodeAddressString(node), ")"]);
-		}
+		twf("(", node.docComment, ir.nodeToString(node), " ", getNodeAddressString(node));
+		printTypeFields(node);
+		wf(")");
 		mLastIndent = mIndent;
 	}
 
