@@ -1205,6 +1205,12 @@ Visitor.Status acceptFunction(ir.Function fn, Visitor av)
 			return status;
 	}
 
+	if (fn.nestedHiddenParameter !is null) {
+		status = accept(fn.nestedHiddenParameter, av);
+		if (status == VisitorStop)
+			return status;
+	}
+
 	if (fn.inContract !is null) {
 		status = accept(fn.inContract, av);
 		if (status == VisitorStop)
