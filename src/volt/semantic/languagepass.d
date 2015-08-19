@@ -292,7 +292,6 @@ public:
 	 *
 	 */
 
-
 	override void gather(ir.Scope current, ir.BlockStatement bs)
 	{
 		auto g = new Gatherer(this);
@@ -375,15 +374,6 @@ public:
 		e.transform(current, a);
 	}
 
-	override void resolve(ir.Enum e)
-	{
-		if (e.resolved) {
-			return;
-		}
-
-		resolveEnum(this, e);
-	}
-
 	override void resolve(ir.Scope current, ir.EnumDeclaration ed)
 	{
 		if (ed.resolved) {
@@ -432,6 +422,18 @@ public:
 		throw makeInvalidAAKey(at);
 	}
 
+
+	/*
+	 *
+	 * DoResolve functions.
+	 *
+	 */
+
+	override void doResolve(ir.Enum e)
+	{
+		resolveEnum(this, e);
+	}
+
 	override void doResolve(ir.Struct s)
 	{
 		resolve(s.myScope.parent, s.userAttrs);
@@ -475,7 +477,7 @@ public:
 
 	override void doActualize(ir._Interface i)
 	{
-		super.resolve(i);
+		resolveNamed(i);
 
 		auto w = mTracker.add(i, "actualizing interface");
 		scope (exit)
@@ -486,7 +488,7 @@ public:
 
 	override void doActualize(ir.Struct s)
 	{
-		super.resolve(s);
+		resolveNamed(s);
 
 		auto w = mTracker.add(s, "actualizing struct");
 		scope (exit)
@@ -497,7 +499,7 @@ public:
 
 	override void doActualize(ir.Union u)
 	{
-		super.resolve(u);
+		resolveNamed(u);
 
 		auto w = mTracker.add(u, "actualizing union");
 		scope (exit)
@@ -508,7 +510,7 @@ public:
 
 	override void doActualize(ir.Class c)
 	{
-		super.resolve(c);
+		resolveNamed(c);
 
 		auto w = mTracker.add(c, "actualizing class");
 		scope (exit)
@@ -519,7 +521,7 @@ public:
 
 	override void doActualize(ir.UserAttribute ua)
 	{
-		super.resolve(ua);
+		resolveNamed(ua);
 
 		auto w = mTracker.add(ua, "actualizing user attribute");
 		scope (exit)

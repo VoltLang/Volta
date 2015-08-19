@@ -393,7 +393,7 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
 		auto asClass = cast(ir.Class)node;
 		assert(asClass !is null);
 
-		lp.resolve(asClass);
+		lp.resolveNamed(asClass);
 		if (asClass.parentClass is null) {
 			assert(asClass.parent is null);
 			return false;

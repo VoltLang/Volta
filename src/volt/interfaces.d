@@ -277,13 +277,6 @@ public:
 	abstract void resolve(ir.Scope current, ir.Attribute a);
 
 	/**
-	 * Resolves an Enum making it usable externaly.
-	 *
-	 * @throws CompilerError on failure to resolve the enum.
-	 */
-	abstract void resolve(ir.Enum e);
-
-	/**
 	 * Resolves an EnumDeclaration setting its value.
 	 *
 	 * @throws CompilerError on failure to resolve the enum value.
@@ -298,33 +291,41 @@ public:
 	abstract void resolve(ir.Scope current, ir.AAType at);
 
 	/**
+	 * Resolves an Enum making it usable externaly, done on lookup of it.
+	 *
+	 * @throws CompilerError on failure to resolve the enum.
+	 */
+	final void resolveNamed(ir.Enum e)
+	{ if (!e.isResolved) doResolve(e); }
+
+	/**
 	 * Resolves a Struct, done on lookup of it.
 	 */
-	final void resolve(ir.Struct s)
+	final void resolveNamed(ir.Struct s)
 	{ if (!s.isResolved) doResolve(s); }
 
 	/**
 	 * Resolves a Union, done on lookup of it.
 	 */
-	final void resolve(ir.Union u)
+	final void resolveNamed(ir.Union u)
 	{ if (!u.isResolved) doResolve(u); }
 
 	/**
 	 * Resolves a Class, making sure the parent class is populated.
 	 */
-	final void resolve(ir.Class c)
+	final void resolveNamed(ir.Class c)
 	{ if (!c.isResolved) doResolve(c); }
 
 	/**
 	 * Resolves an Interface.
 	 */
-	final void resolve(ir._Interface i)
+	final void resolveNamed(ir._Interface i)
 	{ if (!i.isResolved) doResolve(i); }
 
 	/**
 	 * Resolves a UserAttribute, done on lookup of it.
 	 */
-	final void resolve(ir.UserAttribute au)
+	final void resolveNamed(ir.UserAttribute au)
 	{ if (!au.isResolved) doResolve(au); }
 
 	/**
@@ -394,6 +395,7 @@ public:
 	 */
 
 protected:
+	abstract void doResolve(ir.Enum e);
 	abstract void doResolve(ir._Interface i);
 	abstract void doResolve(ir.Class c);
 	abstract void doResolve(ir.Union u);

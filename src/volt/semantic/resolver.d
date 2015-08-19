@@ -36,7 +36,7 @@ import volt.semantic.typer : getExpType;
 void resolveEnum(LanguagePass lp, ir.Enum e)
 {
 	ensureResolved(lp, e.myScope.parent, e.base);
-	e.resolved = true;
+	e.isResolved = true;
 
 	// Do some extra error checking on out.
 	scope (success) {

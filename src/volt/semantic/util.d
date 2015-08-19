@@ -178,18 +178,21 @@ ir.Store ensureResolved(LanguagePass lp, ir.Store s)
 		lp.resolve(s.parent, ed);
 		return s;
 	case Type:
-		if (s.node.nodeType == ir.NodeType.Class) {
+		if (s.node.nodeType == ir.NodeType.Enum) {
+			auto e = cast(ir.Enum)s.node;
+			lp.resolveNamed(e);
+		} else if (s.node.nodeType == ir.NodeType.Class) {
 			auto c = cast(ir.Class)s.node;
-			lp.resolve(c);
+			lp.resolveNamed(c);
 		} else if (s.node.nodeType == ir.NodeType.Struct) {
 			auto st = cast(ir.Struct)s.node;
-			lp.resolve(st);
+			lp.resolveNamed(st);
 		} else if (s.node.nodeType == ir.NodeType.Enum) {
 			auto st = cast(ir.Enum)s.node;
-			lp.resolve(st);
+			lp.resolveNamed(st);
 		} else if (s.node.nodeType == ir.NodeType.Interface) {
 			auto i = cast(ir._Interface)s.node;
-			lp.resolve(i);
+			lp.resolveNamed(i);
 		}
 		return s;
 	case Scope:
@@ -244,7 +247,7 @@ void ensureResolved(LanguagePass lp, ir.Scope current, ir.Type type)
 		return lp.resolve(current, tr);
 	case Enum:
 		auto e = cast(ir.Enum)type;
-		return lp.resolve(e);
+		return lp.resolveNamed(e);
 	case AAType:
 		auto at = cast(ir.AAType)type;
 		lp.resolve(current, at);

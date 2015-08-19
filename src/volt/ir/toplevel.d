@@ -364,6 +364,8 @@ public:
 class Enum : Type
 {
 public:
+	bool isResolved;
+
 	Access access; ///< default public.
 	string name;  ///< Optional.
 	Scope myScope;
@@ -375,8 +377,6 @@ public:
 	 * what the declarations can be initialised with.
 	 */
 	Type base;
-
-	bool resolved;
 
 public:
 	this() { super(NodeType.Enum); }

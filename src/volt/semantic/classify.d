@@ -78,7 +78,7 @@ int size(LanguagePass lp, ir.Node node)
 	case Enum:
 		auto asEnum = cast(ir.Enum) node;
 		assert(asEnum !is null);
-		lp.resolve(asEnum);
+		lp.resolveNamed(asEnum);
 		return size(lp, asEnum.base);
 
 	case Variable:
@@ -153,7 +153,7 @@ size_t alignment(LanguagePass lp, ir.Type node)
 	case Enum:
 		auto asEnum = cast(ir.Enum) node;
 		assert(asEnum !is null);
-		lp.resolve(asEnum);
+		lp.resolveNamed(asEnum);
 		return alignment(lp, asEnum.base);
 	case Variable:
 		auto asVariable = cast(ir.Variable) node;

@@ -375,7 +375,7 @@ void extypeAssignClass(Context ctx, ref ir.Exp exp, ir.Class _class)
 	if (rightClass is null) {
 		throw makeBadImplicitCast(exp, type, _class);
 	}
-	ctx.lp.resolve(rightClass);
+	ctx.lp.resolveNamed(rightClass);
 
 	/// Check for converting child classes into parent classes.
 	if (_class !is null && rightClass !is null) {
@@ -3665,7 +3665,7 @@ public:
 
 	override Status enter(ir.Enum e)
 	{
-		ctx.lp.resolve(e);
+		ctx.lp.resolveNamed(e);
 		ctx.enter(e);
 		return Continue;
 	}
