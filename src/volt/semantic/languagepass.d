@@ -332,7 +332,7 @@ public:
 	override void resolve(ir.Scope current, ir.Function fn)
 	{
 		if ((fn.kind == ir.Function.Kind.Function ||
-		    (cast(ir.Class) current.node) is null) &&
+		    (cast(ir.Class) fn.myScope.parent.node) is null) &&
 		    fn.isMarkedOverride) {
 			throw makeMarkedOverrideDoesNotOverride(fn, fn);
 		}
