@@ -71,6 +71,22 @@ public:
 		throw panic(st, "storage type found in IR.");
 	}
 
+	override Status visit(ir.TypeReference tr)
+	{
+		if (tr.type is null) {
+			throw panic(tr, "TypeReference.type is null");
+		}
+		if (tr.type.nodeType != ir.NodeType.Enum &&
+		    tr.type.nodeType != ir.NodeType.Class &&
+		    tr.type.nodeType != ir.NodeType.Union &&
+		    tr.type.nodeType != ir.NodeType.Struct &&
+		    tr.type.nodeType != ir.NodeType.Interface &&
+		    tr.type.nodeType != ir.NodeType.UserAttribute) {
+			throw panic(tr, "TypeReference.type is points to invalid class");
+		}
+		return Continue;
+	}
+
 	override Status enter(ir.FunctionType ct)
 	{
 		if (ct.params.length != ct.isArgRef.length ||
