@@ -240,18 +240,34 @@ void stripPointerBases(ir.Type toType, ref uint flag)
 	}
 }
 
-ir.Type arrayAndBaseStorage(ir.ArrayType toType, ir.Type seed=null)
+/**
+ * Given a type, return a type that will have every storage flag
+ * that are nested within it, by going into array and pointer bases, etc.
+ */
+ir.Type accumulateStorage(ir.Type toType, ir.Type seed=null)
 {
 	if (seed is null) {
 		seed = new ir.NullType();
 	}
-	auto asArray = cast(ir.ArrayType)toType.base;
+	addStorage(seed, toType);
+
+	auto asArray = cast(ir.ArrayType)toType;
 	if (asArray !is null) {
-		return arrayAndBaseStorage(asArray, seed);
-	} else {
-		addStorage(seed, toType.base);
-		return seed;
+		return accumulateStorage(asArray.base, seed);
 	}
+
+	auto asPointer = cast(ir.PointerType)toType;
+	if (asPointer !is null) {
+		return accumulateStorage(asPointer.base, seed);
+	}
+
+	auto asAA = cast(ir.AAType)toType;
+	if (asAA !is null) {
+		seed = accumulateStorage(asAA.key, seed);
+		return accumulateStorage(asAA.value, seed);
+	}
+
+	return seed;
 }
 
 void appendDefaultArguments(Context ctx, ir.Location loc, ref ir.Exp[] arguments, ir.Function fn)
@@ -427,11 +443,11 @@ bool willConvertArray(ir.Type l, ir.Type r, ref uint flag, ir.Exp* exp = null)
 		return false;
 	}
 
-	auto astore = arrayAndBaseStorage(atype);
+	auto astore = accumulateStorage(atype);
 	auto rarr = cast(ir.ArrayType) removeRefAndOut(r);
 	ir.Type rstore;
 	if (rarr !is null) {
-		rstore = arrayAndBaseStorage(rarr);
+		rstore = accumulateStorage(rarr);
 	}
 	bool badImmutable = atype.isImmutable && rstore !is null && !rstore.isImmutable && !rstore.isConst;
 	if (rarr !is null && typesEqual(atype, rarr, IgnoreStorage) && !badImmutable && !astore.isScope) {
@@ -471,7 +487,7 @@ void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ref 
 		return;
 	}
 
-	auto astore = arrayAndBaseStorage(atype);
+	auto astore = accumulateStorage(atype);
 	auto rtype = ctx.overrideType !is null ? ctx.overrideType : realType(getExpType(ctx.lp, exp, ctx.current));
 
 	auto stype = cast(ir.StaticArrayType) rtype;
@@ -629,7 +645,7 @@ ir.Type flagitiseStorage(ir.Type type, ref uint flag)
 
 
 
-void handleAssign(Context ctx, ref ir.Type toType, ref ir.Exp exp, ref uint toFlag)
+void handleAssign(Context ctx, ref ir.Type toType, ref ir.Exp exp, ref uint toFlag, bool copying=false)
 {
 	auto rtype = getExpType(ctx.lp, exp, ctx.current);
 	auto storage = cast(ir.StorageType) toType;
@@ -646,11 +662,13 @@ void handleAssign(Context ctx, ref ir.Type toType, ref ir.Exp exp, ref uint toFl
 	toType = flagitiseStorage(toType, toFlag);
 	uint rflag;
 	rtype = flagitiseStorage(rtype, rflag);
-	if (toType.isScope && ctx.isVarAssign) {
+	auto lt = accumulateStorage(toType);
+	auto rt = accumulateStorage(rtype);
+	if (lt.isScope && ctx.isVarAssign) {
 		exp = buildCastSmart(exp.location, toType, exp);
-	} else if (rtype.isConst && !toType.isConst && mutableIndirection(originalTo)) {
+	} else if (rt.isConst && !effectivelyConst(lt) && mutableIndirection(originalTo) && !copying) {
 		throw makeBadImplicitCast(exp, originalRtype, originalTo);
-	} else if (mutableIndirection(originalTo) && rtype.isScope && !toType.isScope) {
+	} else if (mutableIndirection(originalTo) && !lt.isImmutable && rt.isScope && !lt.isScope && !copying) {
 		throw makeBadImplicitCast(exp, originalRtype, originalTo);
 	}
 }
@@ -699,15 +717,15 @@ void rewriteOverloadedProperty(Context ctx, ref ir.Exp exp, bool nested = false)
 	}
 }
 
-void extypeAssignDispatch(Context ctx, ref ir.Exp exp, ir.Type type)
+void extypeAssignDispatch(Context ctx, ref ir.Exp exp, ir.Type type, bool copying=false)
 {
 	rewriteOverloadedProperty(ctx, exp);
 	uint flag;
-	handleAssign(ctx, type, exp, flag);
+	handleAssign(ctx, type, exp, flag, copying);
 	switch (type.nodeType) {
 	case ir.NodeType.StorageType:
 		auto storage = cast(ir.StorageType) type;
-		extypeAssignDispatch(ctx, exp, storage.base);
+		extypeAssignDispatch(ctx, exp, storage.base, copying);
 		break;
 	case ir.NodeType.TypeReference:
 		auto tr = cast(ir.TypeReference) type;
@@ -824,12 +842,12 @@ void extypePass(Context ctx, ref ir.Exp exp, ir.Type type)
 	extypeAssign(ctx, exp, type);
 }
 
-void extypeAssign(Context ctx, ref ir.Exp exp, ir.Type type)
+void extypeAssign(Context ctx, ref ir.Exp exp, ir.Type type, bool copying=false)
 {
 	handleIfStructLiteral(ctx, type, exp);
 	if (handleIfNull(ctx, type, exp)) return;
 
-	extypeAssignDispatch(ctx, exp, type);
+	extypeAssignDispatch(ctx, exp, type, copying);
 }
 
 /**
@@ -2551,7 +2569,12 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 			throw makeCannotModify(binop, ltype);
 		}
 
-		extypeAssign(ctx, binop.right, ltype);
+		auto postfixl = cast(ir.Postfix)binop.left;
+		auto postfixr = cast(ir.Postfix)binop.right;
+		bool copying = postfixl !is null && postfixr !is null &&
+			postfixl.op == ir.Postfix.Op.Slice &&
+			postfixr.op == ir.Postfix.Op.Slice;
+		extypeAssign(ctx, binop.right, ltype, copying);
 
 		return;
 	}
