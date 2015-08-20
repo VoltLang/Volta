@@ -702,28 +702,50 @@ string typesString(ir.Type[] types)
 
 string errorString(ir.Type type)
 {
+	string outString;
+	string suffix;
+	if (type.isConst) {
+		outString ~= "const(";
+		suffix ~= ")";
+	}
+	if (type.isImmutable) {
+		outString ~= "immutable(";
+		suffix ~= ")";
+	}
+	if (type.isScope) {
+		outString ~= "scope(";
+		suffix ~= ")";
+	}
+
 	assert(type !is null);
 	switch(type.nodeType) with(ir.NodeType) {
 	case PrimitiveType:
 		ir.PrimitiveType prim = cast(ir.PrimitiveType)type;
-		return toLower(format("%s", prim.type));
+		outString ~= toLower(format("%s", prim.type));
+		break;
 	case TypeReference:
 		ir.TypeReference tr = cast(ir.TypeReference)type;
-		return tr.type.errorString();
+		outString ~= tr.type.errorString();
+		break;
 	case PointerType:
 		ir.PointerType pt = cast(ir.PointerType)type;
-		return format("%s*", pt.base.errorString());
+		outString ~= format("%s*", pt.base.errorString());
+		break;
 	case NullType:
-		return "null";
+		outString = "null";
+		break;
 	case ArrayType:
 		ir.ArrayType at = cast(ir.ArrayType)type;
-		return format("%s[]", at.base.errorString());
+		outString ~= format("%s[]", at.base.errorString());
+		break;
 	case StaticArrayType:
 		ir.StaticArrayType sat = cast(ir.StaticArrayType)type;
-		return format("%s[%d]", sat.base.errorString(), sat.length);
+		outString ~= format("%s[%d]", sat.base.errorString(), sat.length);
+		break;
 	case AAType:
 		ir.AAType aat = cast(ir.AAType)type;
-		return format("%s[%s]", aat.value.errorString(), aat.key.errorString());
+		outString ~= format("%s[%s]", aat.value.errorString(), aat.key.errorString());
+		break;
 	case FunctionType:
 	case DelegateType:
 		ir.CallableType c = cast(ir.CallableType)type;
@@ -738,18 +760,22 @@ string errorString(ir.Type type)
 			}
 		}
 
-		return format("%s %s(%s)", c.ret.errorString(), ctype, params);
+		outString ~= format("%s %s(%s)", c.ret.errorString(), ctype, params);
+		break;
 	case StorageType:
 		ir.StorageType st = cast(ir.StorageType)type;
-		return format("%s(%s)", toLower(format("%s", st.type)), st.base.errorString());
+		outString ~= format("%s(%s)", toLower(format("%s", st.type)), st.base.errorString());
+		break;
 	case Class:
 	case Struct:
 		auto agg = cast(ir.Aggregate)type;
 		assert(agg !is null);
-		return agg.name;
+		outString ~= agg.name;
+		break;
 	default:
-		return type.toString();
+		outString ~= type.toString();
+		break;
 	}
 
-	assert(0);
+	return outString ~ suffix;
 }
