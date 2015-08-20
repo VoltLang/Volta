@@ -253,13 +253,6 @@ public:
 	abstract void resolve(ir.Scope current, ir.Function fn);
 
 	/**
-	 * Resolves a unresolved TypeReference in the given scope.
-	 * The TypeReference's type is set to the looked up type,
-	 * should type be not null nothing is done.
-	 */
-	abstract void resolve(ir.Scope s, ir.TypeReference tr);
-
-	/**
 	 * Resolves a unresolved alias store, the store can
 	 * change type to Type, either the field myAlias or
 	 * type is set.
@@ -289,11 +282,20 @@ public:
 	abstract void resolve(ir.Scope current, ir.EnumDeclaration ed);
 
 	/**
-	 * Resolves an AAType and checks if the Key-Type is compatible
+	 * Resolves a type and flattes any storage types.
+	 *
+	 * Ensure that there are no unresolved TypeRefences in the given type.
+	 * Stops when encountering the first resolved TypeReference.
+	 *
+	 * TypeReference - Resolves a unresolved TypeReference in the given
+	 * scope. The TypeReference's type is set to the looked up type,
+	 * should type be not null nothing is done.
+	 *
+	 * AAType - Resolves and checks if the Key-Type is compatible.
 	 *
 	 * @throws CompilerError on invalid Key-Type
 	 */
-	abstract void resolve(ir.Scope current, ir.AAType at);
+	abstract ir.Type resolve(ir.Scope current, ir.Type type);
 
 	/**
 	 * Resolves an Enum making it usable externaly, done on lookup of it.

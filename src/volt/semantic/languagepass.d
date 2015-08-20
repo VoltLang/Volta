@@ -304,19 +304,6 @@ public:
 		g.close();
 	}
 
-	override void resolve(ir.Scope current, ir.TypeReference tr)
-	{
-		if (tr.type !is null)
-			return;
-
-		auto w = mTracker.add(tr, "resolving type");
-		scope (exit)
-			w.done();
-
-		tr.type = flattenStorage(lookupType(this, current, tr.id));
-		tr.type.glossedName = tr.id.toString();
-	}
-
 	override void resolve(ir.Scope current, ir.Variable v)
 	{
 		if (v.isResolved)
@@ -328,10 +315,10 @@ public:
 
 		resolve(current, v.userAttrs);
 
+		v.type = resolve(current, v.type);
+
 		auto e = new ExTyper(this);
 		e.transform(current, v);
-
-		v.type = flattenStorage(v.type);
 
 		v.isResolved = true;
 	}
@@ -343,10 +330,12 @@ public:
 		    fn.isMarkedOverride) {
 			throw makeMarkedOverrideDoesNotOverride(fn, fn);
 		}
-		ensureResolved(this, current, fn.type);
+
 		replaceVarArgsIfNeeded(this, fn);
+
+		fn.type = cast(ir.FunctionType)resolve(current, fn.type);
+
 		foreach (i, ref param; fn.params) {
-			fn.type.params[i] = flattenStorage(fn.type.params[i], fn.type, i);
 			if (param.assign !is null) {
 				auto texp = cast(ir.TokenExp) param.assign;
 				if (texp is null) {
@@ -355,7 +344,6 @@ public:
 				}
 			}
 		}
-		fn.type.ret = flattenStorage(fn.type.ret);
 		resolve(current, fn.userAttrs);
 	}
 
@@ -426,44 +414,15 @@ public:
 		e.transform(current, ed);
 	}
 
-	override void resolve(ir.Scope current, ir.AAType at)
+	override ir.Type resolve(ir.Scope current, ir.Type t)
 	{
-		ensureResolved(this, current, at.value);
-		ensureResolved(this, current, at.key);
-		at.key = flattenStorage(at.key);
-		at.value = flattenStorage(at.value);
+		auto w = mTracker.add(t, "resolving type");
+		scope (exit)
+			w.done();
 
-		auto base = at.key;
-
-		auto tr = cast(ir.TypeReference)base;
-		if (tr !is null) {
-			base = tr.type;
-		}
-
-		if (base.nodeType() == ir.NodeType.Struct ||
-		    base.nodeType() == ir.NodeType.Class) {
-			return;
-		}
-
-		if (base.nodeType() == ir.NodeType.ArrayType) {
-			base = (cast(ir.ArrayType)base).base;
-		} else if (base.nodeType() == ir.NodeType.StaticArrayType) {
-			base = (cast(ir.StaticArrayType)base).base;
-		}
-
-		auto st = cast(ir.StorageType)base;
-		if (st !is null &&
-	  	    (st.type == ir.StorageType.Kind.Immutable ||
-		     st.type == ir.StorageType.Kind.Const)) {
-			base = st.base;
-		}
-
-		auto prim = cast(ir.PrimitiveType)base;
-		if (prim !is null) {
-			return;
-		}
-
-		throw makeInvalidAAKey(at);
+		t = resolveType(this, current, t);
+		t = flattenStorage(t);
+		return t;
 	}
 
 
@@ -475,7 +434,6 @@ public:
 
 	override void doResolve(ir.Enum e)
 	{
-		e.base = flattenStorage(e.base);
 		resolveEnum(this, e);
 	}
 

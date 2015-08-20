@@ -407,7 +407,6 @@ bool isVariableStatic(ir.Variable var)
 
 bool acceptableForUserAttribute(LanguagePass lp, ir.Scope current, ir.Type type)
 {
-	ensureResolved(lp, current, type);
 	auto asPrim = cast(ir.PrimitiveType) type;
 	if (asPrim !is null) {
 		return true;

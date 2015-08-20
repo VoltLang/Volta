@@ -92,8 +92,8 @@ ir.Type getExpType(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 	auto result = getExpTypeImpl(lp, exp, currentScope);
 	while (result.nodeType == ir.NodeType.TypeReference) {
 		auto asTR = cast(ir.TypeReference) result;
-		assert(asTR !is null);
-		ensureResolved(lp, currentScope, asTR);
+		panicAssert(exp, asTR !is null);
+		panicAssert(asTR, asTR.type !is null);
 		result = asTR.type;
 	}
 	auto storage = cast(ir.StorageType) result;
@@ -942,7 +942,7 @@ ir.Type getUnaryNoneType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 
 ir.Type getUnaryCastType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 {
-	ensureResolved(lp, currentScope, unary.type);
+	unary.type = lp.resolve(currentScope, unary.type);
 	return unary.type;
 }
 
@@ -1003,7 +1003,7 @@ ir.Type getUnaryAddrOfType(LanguagePass lp, ir.Unary unary, ir.Scope currentScop
 
 ir.Type getUnaryNewType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 {
-	ensureResolved(lp, currentScope, unary.type);
+	unary.type = lp.resolve(currentScope, unary.type);
 
 	if (!unary.hasArgumentList) {
 		auto pointer = new ir.PointerType(unary.type);

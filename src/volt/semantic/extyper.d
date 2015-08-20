@@ -815,7 +815,6 @@ void extypeAssignInterface(Context ctx, ref ir.Exp exp, ir._Interface iface)
 
 void extypePass(Context ctx, ref ir.Exp exp, ir.Type type)
 {
-	ensureResolved(ctx.lp, ctx.current, type);
 	auto ptr = cast(ir.PointerType) realType(type, true, true);
 	// string literals implicitly convert to typeof(string.ptr)
 	auto constant = cast(ir.Constant) exp;
@@ -827,7 +826,6 @@ void extypePass(Context ctx, ref ir.Exp exp, ir.Type type)
 
 void extypeAssign(Context ctx, ref ir.Exp exp, ir.Type type)
 {
-	ensureResolved(ctx.lp, ctx.current, type);
 	handleIfStructLiteral(ctx, type, exp);
 	if (handleIfNull(ctx, type, exp)) return;
 
@@ -1328,7 +1326,6 @@ private void rewriteVarargs(Context ctx, ir.CallableType asFunctionType, ir.Post
 	ir.Type[] types;
 	foreach (i, _exp; varArgsSlice) {
 		auto etype = getExpType(ctx.lp, _exp, ctx.current);
-		ensureResolved(ctx.lp, ctx.current, etype);
 		auto typeId = buildTypeidSmart(postfix.location, etype);
 		typeidsLiteral.values ~= typeId;
 		types ~= etype;
@@ -2793,7 +2790,7 @@ void handleNestedParams(Context ctx, ir.Function fn)
 	foreach (i, param; fn.params) {
 		if (!param.hasBeenNested) {
 			param.hasBeenNested = true;
-			ensureResolved(ctx.lp, ctx.current, param.type);
+
 			auto type = param.type;
 			bool refParam = fn.type.isArgRef[i] || fn.type.isArgOut[i];
 			if (refParam) {
@@ -3162,9 +3159,8 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, Context ctx, ir.Scope nest
 			}
 		}
 		if (v.type !is null) {
-			ctx.lp.ensureResolved(ctx.current, v.type);
+			v.type = ctx.lp.resolve(ctx.current, v.type);
 		}
-		v.type = flattenStorage(v.type);
 		defaultType = flattenStorage(defaultType);
 		if (v.type is null || !typesEqual(v.type, defaultType)) {
 			v.type = copyType(defaultType);
@@ -3184,8 +3180,6 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, Context ctx, ir.Scope nest
 	}
 
 	auto aggType = realType(getExpType(ctx.lp, fes.aggregate, ctx.current), true, true);
-
-	ensureResolved(ctx.lp, ctx.current, aggType);
 
 	// foreach (i, e; array) => for (size_t i = 0; i < array.length; i++) auto e = array[i]; ...
 	// foreach_reverse (i, e; array) => for (size_t i = array.length - 1; i+1 >= 0; i--) auto e = array[i]; ..
@@ -3227,7 +3221,6 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, Context ctx, ir.Scope nest
 		if (st !is null && st.type == ir.StorageType.Kind.Auto) {
 			auto asArray = cast(ir.ArrayType) aggType;
 			panicAssert(fes, asArray !is null);
-			ensureResolved(ctx.lp, ctx.current, elementVar.type);
 			elementVar.type = copyTypeSmart(asArray.base.location, asArray.base);
 			assert(elementVar.type !is null);
 		}
@@ -3519,8 +3512,6 @@ public:
 		ctx.setupFromScope(current);
 		scope (exit) ctx.reset();
 
-		ensureResolved(ctx.lp, ctx.current, ed.type);
-
 		ir.EnumDeclaration[] edStack;
 		ir.Exp prevExp;
 
@@ -3549,7 +3540,7 @@ public:
 
 	void resolve(ir.EnumDeclaration ed, ir.Exp prevExp)
 	{
-		ensureResolved(ctx.lp, ctx.current, ed.type);
+		ed.type = ctx.lp.resolve(ctx.current, ed.type);
 
 		if (ed.assign is null) {
 			if (prevExp is null) {
@@ -3683,13 +3674,11 @@ public:
 
 	override Status enter(ir.StorageType st)
 	{
-		ensureResolved(ctx.lp, ctx.current, st);
 		return Continue;
 	}
 
 	override Status enter(ir.FunctionParam p)
 	{
-		ensureResolved(ctx.lp, ctx.current, p.type);
 		return Continue;
 	}
 
@@ -3710,8 +3699,7 @@ public:
 		}
 		enterFirstVariable = true;
 
-		ensureResolved(ctx.lp, ctx.current, v.type);
-		v.type = flattenStorage(v.type);
+		v.type = ctx.lp.resolve(ctx.current, v.type);
 
 		bool inAggregate = (cast(ir.Aggregate) ctx.current.node) !is null;
 		if (inAggregate && v.assign !is null && ctx.current.node.nodeType != ir.NodeType.Class && (v.storage != ir.Variable.Storage.Global && v.storage != ir.Variable.Storage.Local)) {
@@ -3729,6 +3717,9 @@ public:
 			extypeAssign(ctx, v.assign, v.type);
 		}
 
+		// TODO flattenStorages shouldn't be needed.
+		v.type = flattenStorage(v.type);
+
 		replaceStorageIfNeeded(v.type);
 		accept(v.type, this);
 
@@ -3744,6 +3735,9 @@ public:
 		if (fn.isAutoReturn) {
 			fn.type.ret = buildVoid(fn.type.ret.location);
 		}
+
+		fn.type = cast(ir.FunctionType)ctx.lp.resolve(fn.myScope.parent, fn.type);
+
 		if (fn.name == "main" && fn.type.linkage == ir.Linkage.Volt) {
 			if (fn.params.length == 0) {
 				addParam(fn.location, fn, buildStringArray(fn.location), "");
@@ -4035,8 +4029,8 @@ public:
 			}
 			_typeid.exp = null;
 		}
-		ensureResolved(ctx.lp, ctx.current, _typeid.type);
-		_typeid.type = flattenStorage(_typeid.type);
+
+		_typeid.type = ctx.lp.resolve(ctx.current, _typeid.type);
 		replaceTypeOfIfNeeded(ctx, _typeid.type);
 		return Continue;
 	}
@@ -4076,14 +4070,15 @@ public:
 
 	override Status enter(ref ir.Exp exp, ir.Unary _unary)
 	{
-		_unary.type = flattenStorage(_unary.type);
+		if (_unary.type !is null) {
+			_unary.type = ctx.lp.resolve(ctx.current, _unary.type);
+		}
 		return Continue;
 	}
 
 	override Status leave(ref ir.Exp exp, ir.Unary _unary)
 	{
 		if (_unary.type !is null) {
-			ensureResolved(ctx.lp, ctx.current, _unary.type);
 			replaceTypeOfIfNeeded(ctx, _unary.type);
 		}
 		extypeUnary(ctx, exp, _unary);
@@ -4098,13 +4093,13 @@ public:
 
 	override Status enter(ref ir.Exp exp, ir.TypeExp te)
 	{
-		ensureResolved(ctx.lp, ctx.current, te.type);
+		te.type = ctx.lp.resolve(ctx.current, te.type);
 		return Continue;
 	}
 
 	override Status enter(ref ir.Exp exp, ir.VaArgExp vaexp)
 	{
-		ensureResolved(ctx.lp, ctx.current, vaexp.type);
+		vaexp.type = ctx.lp.resolve(ctx.current, vaexp.type);
 		return Continue;
 	}
 
@@ -4149,7 +4144,7 @@ public:
 
 	override Status enter(ref ir.Exp exp, ir.Constant constant)
 	{
-		constant.type = flattenStorage(constant.type);
+		constant.type = ctx.lp.resolve(ctx.current, constant.type);
 		if (constant._string == "$" && isIntegral(constant.type)) {
 			if (ctx.lastIndexChild is null) {
 				throw makeDollarOutsideOfIndex(constant);
