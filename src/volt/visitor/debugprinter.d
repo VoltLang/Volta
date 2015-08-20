@@ -473,7 +473,7 @@ protected:
 		twf("  .mangledName \"", t.mangledName, "\"\n");
 		twf("  .glossedName \"", t.glossedName, "\"\n");
 		twf("  .isConst ", to!string(t.isConst), "\n");
-		twf("  .isScope ", to!string(t.isConst), "\n");
+		twf("  .isScope ", to!string(t.isScope), "\n");
 		twf("  .isImmutable ", to!string(t.isImmutable));
 	}
 
