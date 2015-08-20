@@ -21,7 +21,7 @@ private void printDiff(size_t[] c, size_t w,
 {
 	if (i > 0 && j > 0 && a[i] == b[j]) {
 		printDiff(c, w, a, b, i-1, j-1);
-		writefln("%s", a[i]);
+		writefln(" %s", a[i]);
 	} else if (j > 0 && (i == 0 || c[i*w+(j-1)] >= c[(i-1)*w+j])) {
 		printDiff(c, w, a, b, i, j-1);
 		writefln("+%s", b[j]);
