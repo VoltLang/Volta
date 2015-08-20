@@ -502,11 +502,11 @@ protected:
 		auto dp = new DebugPrinter(" ", &sb.sink);
 		foreach (i, m; mods) {
 			sb.clear();
-			pp.transform(m);
-			diff(ppstrs[i], sb.str);
-			sb.clear();
 			dp.transform(m);
 			diff(dpstrs[i], sb.str);
+			sb.clear();
+			pp.transform(m);
+			diff(ppstrs[i], sb.str);
 		}
 		pp.close();
 		dp.close();
