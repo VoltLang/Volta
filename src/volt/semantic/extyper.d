@@ -3738,10 +3738,12 @@ public:
 			handleIfStructLiteral(ctx, v.type, v.assign);
 			acceptExp(v.assign, this);
 			extypeAssign(ctx, v.assign, v.type);
+			// TODO flattenStorages shouldn't be needed.
+			// The below code leaves a StorageType in the ir.
+			// const i = 2;
+			v.type = flattenStorage(v.type);
 		}
 
-		// TODO flattenStorages shouldn't be needed.
-		v.type = flattenStorage(v.type);
 
 		replaceStorageIfNeeded(v.type);
 		accept(v.type, this);
