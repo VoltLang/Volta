@@ -1238,8 +1238,10 @@ public:
 
 	override Status enter(ir.PointerType pointer)
 	{
+		wStorageTypes(pointer);
 		accept(pointer.base, this);
 		wf("*");
+		wAfterStorageTypes(pointer);
 		return ContinueParent;
 	}
 
@@ -1255,8 +1257,10 @@ public:
 
 	override Status enter(ir.ArrayType array)
 	{
+		wStorageTypes(array);
 		accept(array.base, this);
 		wf("[]");
+		wAfterStorageTypes(array);
 		return ContinueParent;
 	}
 
@@ -1267,10 +1271,12 @@ public:
 
 	override Status enter(ir.StaticArrayType array)
 	{
+		wStorageTypes(array);
 		accept(array.base, this);
 		wf("[");
 		wf(array.length);
 		wf("]");
+		wAfterStorageTypes(array);
 		return ContinueParent;
 	}
 
@@ -1281,10 +1287,12 @@ public:
 
 	override Status enter(ir.AAType array)
 	{
+		wStorageTypes(array);
 		accept(array.value, this);
 		wf("[");
 		accept(array.key, this);
 		wf("]");
+		wAfterStorageTypes(array);
 		return ContinueParent;
 	}
 
@@ -1293,6 +1301,12 @@ public:
 		accept(fn.ret, this);
 		wf(" function(");
 		foreach (i, param; fn.params) {
+			if (fn.isArgRef[i]) {
+				wf("ref ");
+			}
+			if (fn.isArgOut[i]) {
+				wf("out ");
+			}
 			accept(param, this);
 			if (i < fn.params.length - 1) {
 				wf(", ");
@@ -1315,6 +1329,12 @@ public:
 		accept(fn.ret, this);
 		wf(" delegate(");
 		foreach (i, param; fn.params) {
+			if (fn.isArgRef[i]) {
+				wf("ref ");
+			}
+			if (fn.isArgOut[i]) {
+				wf("out ");
+			}
 			accept(param, this);
 			if (i < fn.params.length - 1) {
 				wf(", ");
@@ -1380,6 +1400,12 @@ public:
 		}
 
 		foreach (i, param; fn.params) {
+			if (fn.type.isArgRef[i]) {
+				wf("ref ");
+			}
+			if (fn.type.isArgOut[i]) {
+				wf("out ");
+			}
 			accept(param.type, this);
 			if (param.name.length > 0) {
 				wf(" ");
@@ -2118,13 +2144,17 @@ public:
 
 	override Status visit(ir.PrimitiveType type)
 	{
+		wStorageTypes(type);
 		wf(type.type.tokenToString);
+		wAfterStorageTypes(type);
 		return Continue;
 	}
 
 	override Status visit(ir.TypeReference tr)
 	{
+		wStorageTypes(tr);
 		wf(tr.id);
+		wAfterStorageTypes(tr);
 		return Continue;
 	}
 
@@ -2210,5 +2240,32 @@ protected:
 	void ln()
 	{
 		mSink("\n");
+	}
+
+	/// Print storage types.
+	void wStorageTypes(ir.Type t)
+	{
+		if (t.isConst) {
+			wf("const(");
+		}
+		if (t.isImmutable) {
+			wf("immutable(");
+		}
+		if (t.isScope) {
+			wf("scope(");
+		}
+	}
+
+	void wAfterStorageTypes(ir.Type t)
+	{
+		if (t.isConst) {
+			wf(")");
+		}
+		if (t.isImmutable) {
+			wf(")");
+		}
+		if (t.isScope) {
+			wf(")");
+		}
 	}
 }
