@@ -62,11 +62,8 @@ protected:
 	string mIndentText;
 
 public:
-	this(string indentText = "\t", void delegate(string) sink = null)
+	this(string indentText = " ", void delegate(string) sink = null)
 	{
-		version (Windows) if (indentText == "\t") {
-			indentText = " ";
-		}
 		mIndentText = indentText;
 		mSink = sink;
 	}
