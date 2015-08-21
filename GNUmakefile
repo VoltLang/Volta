@@ -3,6 +3,7 @@
 #
 DMD ?= $(shell which dmd)
 CXX ?= $(shell which g++)
+VOLT ?= ./$(TARGET)
 HOST_UNAME := $(strip $(shell uname))
 HOST_MACHINE := $(strip $(shell uname -m))
 UNAME ?= $(HOST_UNAME)
