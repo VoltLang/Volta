@@ -509,7 +509,7 @@ LexStatus lexSymbol(TokenWriter tw)
 	case '~':
 		return lexSymbolOrSymbolAssign(tw, '~', TokenType.Tilde, TokenType.TildeAssign);
 	case '#':
-		return lexPragma(tw);
+		return lexHashLine(tw);
 	default:
 		break;
 	}
@@ -1226,7 +1226,7 @@ LexStatus lexReal(TokenWriter tw)
 	return stop();
 }
 
-LexStatus lexPragma(TokenWriter tw)
+LexStatus lexHashLine(TokenWriter tw)
 {
 	if (!match(tw, '#')) {
 		return Failed;
