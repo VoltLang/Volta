@@ -20,6 +20,7 @@ import volt.token.location : Location;
 import volt.token.source : Source, Mark;
 import volt.token.token : Token, TokenType, identifierType;
 import volt.token.writer : TokenWriter;
+import volt.token.lexererror;
 
 /**
  * Tokenizes a string pretending to be at the given location.
@@ -55,7 +56,14 @@ Token[] lex(Source source)
 		if (lexNext(tw))
 			continue;
 
-		throw makeUnexpected(tw.source.location, format("%s", tw.source.current));
+		assert(tw.errors.length > 0);
+		foreach (err; tw.errors) {
+			auto lpe = cast(LexerPanicError) err;
+			if (lpe !is null) {
+				throw lpe.panicException;
+			}
+		}
+		throw makeError(tw.errors[0].location, tw.errors[0].errorMessage());
 	} while (tw.lastAdded.type != TokenType.End);
 
 	return tw.getTokens();
@@ -64,23 +72,95 @@ Token[] lex(Source source)
 private:
 
 /**
- * Match and advance if matched.
+ * Advance and return true if matched. Adds an error and returns false otherwise.
  *
  * Side-effects:
  *   If @src.current and @c matches, advances source to next character.
- *
- * Throws:
- *   CompilerError if @src.current did not match @c.
  */
-void match(Source src, dchar c)
+bool match(TokenWriter tw, dchar c)
 {
-	dchar cur = src.current;
+	dchar cur = tw.source.current;
 	if (cur != c) {
-		throw makeExpected(src.location, encode(c), encode(cur));
+		tw.errors ~= new LexerStringError(LexerError.Kind.Expected, tw.source.location, cur, encode(c));
+		return false;
 	}
 
 	// Advance to the next character.
-	src.next();
+	tw.source.next();
+	return true;
+}
+
+/**
+ * Call match for every character in a given string.
+ * Returns false if any match fails, true otherwise.
+ *
+ * Side-effects:
+ *   Same as calling match repeatedly.
+ */
+bool match(TokenWriter tw, string s)
+{
+	foreach (c; s) {
+		if (!match(tw, c)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+/// Returns true if something has been matched, false otherwise. No errors generated.
+bool matchIf(TokenWriter tw, dchar c)
+{
+	if (tw.source.current == c) {
+		tw.source.next();
+		return true;
+	} else {
+		return false;
+	}
+}
+
+/**
+ * Add a LexFailed error with the given string.
+ */
+LexStatus lexFailed(TokenWriter tw, string s)
+{
+	tw.errors ~= new LexerStringError(LexerError.Kind.LexFailed,
+	                                  tw.source.location, tw.source.current, s);
+	return Failed;
+}
+
+/**
+ * Add an Expected error with the given string.
+ */
+LexStatus lexExpected(TokenWriter tw, Location loc, string s)
+{
+	tw.errors ~= new LexerStringError(LexerError.Kind.Expected,
+	                                  loc, tw.source.current, s);
+	return Failed;
+}
+
+/**
+ * Calls lexExpected with tw.source.location.
+ */
+LexStatus lexExpected(TokenWriter tw, string s)
+{
+	return lexExpected(tw, tw.source.location, s);
+}
+
+LexStatus lexUnsupported(TokenWriter tw, Location loc, string s)
+{
+	tw.errors ~= new LexerStringError(LexerError.Kind.Unsupported, loc, tw.source.current, s);
+	return Failed;
+}
+
+LexStatus lexUnsupported(TokenWriter tw, string s)
+{
+	return lexUnsupported(tw, tw.source.location, s);
+}
+
+LexStatus lexPanic(TokenWriter tw, Location loc, string msg)
+{
+	tw.errors ~= new LexerPanicError(loc, tw.source.current, panic(loc, msg));
+	return Failed;
 }
 
 Token currentLocationToken(TokenWriter tw)
@@ -111,7 +191,7 @@ bool isdalpha(dchar c, Position position)
 	}
 }
 
-bool lexNext(TokenWriter tw)
+LexStatus lexNext(TokenWriter tw)
 {
 	TokenType type = nextLex(tw);
 
@@ -132,7 +212,7 @@ bool lexNext(TokenWriter tw)
 		break;
 	}
 
-	return false;
+	return Failed;
 }
 
 /// Return which TokenType to try and lex next.
@@ -171,12 +251,13 @@ TokenType nextLex(TokenWriter tw)
 	return TokenType.Symbol;
 }
 
-void skipWhitespace(TokenWriter tw)
+LexStatus skipWhitespace(TokenWriter tw)
 {
 	while (isWhite(tw.source.current)) {
 		tw.source.next();
 		if (tw.source.eof) break;
 	}
+	return Succeeded;
 }
 
 void addIfDocComment(TokenWriter tw, Token commentToken, string s, string docsignifier)
@@ -190,23 +271,26 @@ void addIfDocComment(TokenWriter tw, Token commentToken, string s, string docsig
 	tw.addToken(commentToken);
 }
 
-void skipLineComment(TokenWriter tw)
+LexStatus skipLineComment(TokenWriter tw)
 {
 	auto commentToken = currentLocationToken(tw);
 	auto mark = tw.source.save();
 
-	match(tw.source, '/');
+	if (!match(tw, '/')) {
+		return lexPanic(tw, tw.source.location, "expected '/'");
+	}
 	while (tw.source.current != '\n') {
 		tw.source.next();
 		if (tw.source.eof) {
-			return;
+			return Succeeded;
 		}
 	}
 
 	addIfDocComment(tw, commentToken, tw.source.sliceFrom(mark), "//");
+	return Succeeded;
 }
 
-void skipBlockComment(TokenWriter tw)
+LexStatus skipBlockComment(TokenWriter tw)
 {
 	auto commentToken = currentLocationToken(tw);
 	auto mark = tw.source.save();
@@ -214,17 +298,14 @@ void skipBlockComment(TokenWriter tw)
 	bool looping = true;
 	while (looping) {
 		if (tw.source.eof) {
-			throw makeExpected(tw.source.location, "end of block comment");
+			return lexExpected(tw, "end of block comment");
 		}
-		if (tw.source.current == '/') {
-			match(tw.source, '/');
+		if (matchIf(tw, '/')) {
 			if (tw.source.current == '*') {
 				warning(tw.source.location, "'/*' inside of block comment.");
 			}
-		} else if (tw.source.current == '*') {
-			match(tw.source, '*');
-			if (tw.source.current == '/') {
-				match(tw.source, '/');
+		} else if (matchIf(tw, '*')) {
+			if (matchIf(tw, '/')) {
 				looping = false;
 			}
 		} else {
@@ -233,9 +314,10 @@ void skipBlockComment(TokenWriter tw)
 	}
 
 	addIfDocComment(tw, commentToken, tw.source.sliceFrom(mark), "**");
+	return Succeeded;
 }
 
-void skipNestingComment(TokenWriter tw)
+LexStatus skipNestingComment(TokenWriter tw)
 {
 	auto commentToken = currentLocationToken(tw);
 	auto mark = tw.source.save();
@@ -243,16 +325,13 @@ void skipNestingComment(TokenWriter tw)
 	int depth = 1;
 	while (depth > 0) {
 		if (tw.source.eof) {
-			throw makeExpected(tw.source.location, "end of nested comment");
+			return lexExpected(tw, "end of nested comment");
 		}
-		if (tw.source.current == '+') {
-			match(tw.source, '+');
-			if (tw.source.current == '/') {
-				match(tw.source, '/');
+		if (matchIf(tw, '+')) {
+			if (matchIf(tw, '/')) {
 				depth--;
 			}
-		} else if (tw.source.current == '/') {
-			match(tw.source, '/');
+		} else if (matchIf(tw, '/')) {
 			if (tw.source.current == '+') {
 				depth++;
 			}
@@ -262,23 +341,24 @@ void skipNestingComment(TokenWriter tw)
 	}
 
 	addIfDocComment(tw, commentToken, tw.source.sliceFrom(mark), "++");
+	return Succeeded;
 }
 
-bool lexEOF(TokenWriter tw)
+LexStatus lexEOF(TokenWriter tw)
 {
 	if (!tw.source.eof) {
-		return false;
+		return lexFailed(tw, "eof");
 	}
 
 	auto eof = currentLocationToken(tw);
 	eof.type = TokenType.End;
 	eof.value = "EOF";
 	tw.addToken(eof);
-	return true;
+	return Succeeded;
 }
 
 // This is a bit of a dog's breakfast.
-bool lexIdentifier(TokenWriter tw)
+LexStatus lexIdentifier(TokenWriter tw)
 {
 	assert(isAlpha(tw.source.current) || tw.source.current == '_' || tw.source.current == '@');
 
@@ -293,25 +373,27 @@ bool lexIdentifier(TokenWriter tw)
 
 	identToken.value = tw.source.sliceFrom(m);
 	if (identToken.value.length == 0) {
-		throw panic(identToken.location, "empty identifier string.");
+		return lexPanic(tw, identToken.location, "empty identifier string.");
 	}
 	if (identToken.value[0] == '@') {
 		auto i = identifierType(identToken.value);
 		if (i == TokenType.Identifier) {
-			throw makeExpected(identToken.location, "@attribute");
+			return lexExpected(tw, identToken.location, "@attribute");
 		}
 	}
 
-
-	bool retval = lexSpecialToken(tw, identToken);
-	if (retval) return true;
+	auto succeeded = lexSpecialToken(tw, identToken);
+	if (succeeded) {
+		return Succeeded;
+	}
+	tw.errors = [];
 	identToken.type = identifierType(identToken.value);
 	tw.addToken(identToken);
 
-	return true;
+	return Succeeded;
 }
 
-bool lexSpecialToken(TokenWriter tw, Token token)
+LexStatus lexSpecialToken(TokenWriter tw, Token token)
 {
 	const string[12] months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 	const string[7] days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -326,11 +408,11 @@ bool lexSpecialToken(TokenWriter tw, Token token)
 		                     tm.tm_mday,
 		                     1900 + tm.tm_year);
 		tw.addToken(token);
-		return true;
+		return Succeeded;
 
 	case "__EOF__":
 		tw.source.eof = true;
-		return true;
+		return Succeeded;
 
 	case "__TIME__":
 		auto thetime = time(null);
@@ -339,7 +421,7 @@ bool lexSpecialToken(TokenWriter tw, Token token)
 		token.value = format(`"%02s:%02s:%02s"`, tm.tm_hour, tm.tm_min,
 		                     tm.tm_sec);
 		tw.addToken(token);
-		return true;
+		return Succeeded;
 
 	case "__TIMESTAMP__":
 		auto thetime = time(null);
@@ -350,24 +432,24 @@ bool lexSpecialToken(TokenWriter tw, Token token)
 		                     tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec,
 		                     1900 + tm.tm_year);
 		tw.addToken(token);
-		return true;
+		return Succeeded;
 
 	case "__VENDOR__":
 		token.type = TokenType.StringLiteral;
 		token.value = "N/A";
 		tw.addToken(token);
-		return true;
+		return Succeeded;
 	case "__VERSION__":
 		token.type = TokenType.IntegerLiteral;
 		token.value = "N/A";
 		tw.addToken(token);
-		return true;
+		return Succeeded;
 	default:
-		return false;
+		return lexFailed(tw, "special token");
 	}
 }
 
-bool lexSymbol(TokenWriter tw)
+LexStatus lexSymbol(TokenWriter tw)
 {
 	switch (tw.source.current) {
 	case '/':
@@ -431,23 +513,22 @@ bool lexSymbol(TokenWriter tw)
 	default:
 		break;
 	}
-	return false;
+	return lexFailed(tw, "symbol");
 }
 
-bool lexCaret(TokenWriter tw)
+LexStatus lexCaret(TokenWriter tw)
 {
 	auto token = currentLocationToken(tw);
 	auto mark = tw.source.save();
 	token.type = TokenType.Caret;
-	match(tw.source, '^');
+	if (!match(tw, '^')) {
+		return Failed;
+	}
 
-	if (tw.source.current == '=') {
-		match(tw.source, '=');
+	if (matchIf(tw, '=')) {
 		token.type = TokenType.CaretAssign;
-	} else if (tw.source.current == '^') {
-		match(tw.source, '^');
-		if (tw.source.current == '=') {
-			match(tw.source, '=');
+	} else if (matchIf(tw, '^')) {
+		if (matchIf(tw, '=')) {
 			token.type = TokenType.DoubleCaretAssign;
 		} else {
 			token.type = TokenType.DoubleCaret;
@@ -456,30 +537,31 @@ bool lexCaret(TokenWriter tw)
 
 	token.value = tw.source.sliceFrom(mark);
 	tw.addToken(token);
-	return true;
+	return Succeeded;
 }
 
-bool lexSlash(TokenWriter tw)
+LexStatus lexSlash(TokenWriter tw)
 {
 	auto token = currentLocationToken(tw);
 	auto mark = tw.source.save();
 	auto type = TokenType.Slash;
-	match(tw.source, '/');
+	if (!match(tw, '/')) {
+		return Failed;
+	}
 
 	switch (tw.source.current) {
 	case '=':
-		match(tw.source, '=');
+		if (!match(tw, '=')) {
+			return Failed;
+		}
 		type = TokenType.SlashAssign;
 		break;
 	case '/':
-		skipLineComment(tw);
-		return true;
+		return skipLineComment(tw);
 	case '*':
-		skipBlockComment(tw);
-		return true;
+		return skipBlockComment(tw);
 	case '+':
-		skipNestingComment(tw);
-		return true;
+		return skipNestingComment(tw);
 	default:
 		break;
 	}
@@ -488,21 +570,24 @@ bool lexSlash(TokenWriter tw)
 	token.value = tw.source.sliceFrom(mark);
 	tw.addToken(token);
 
-	return true;
+	return Succeeded;
 }
 
-bool lexDot(TokenWriter tw)
+LexStatus lexDot(TokenWriter tw)
 {
 	auto token = currentLocationToken(tw);
 	auto mark = tw.source.save();
 	auto type = TokenType.Dot;
-	match(tw.source, '.');
+	if (!match(tw, '.')) {
+		return Failed;
+	}
 
 	switch (tw.source.current) {
 	case '.':
-		match(tw.source, '.');
-		if (tw.source.current == '.') {
-			match(tw.source, '.');
+		if (!match(tw, '.')) {
+			return Failed;
+		}
+		if (matchIf(tw, '.')) {
 			type = TokenType.TripleDot;
 		} else {
 			type = TokenType.DoubleDot;
@@ -516,21 +601,21 @@ bool lexDot(TokenWriter tw)
 	token.value = tw.source.sliceFrom(mark);
 	tw.addToken(token);
 
-	return true;
+	return Succeeded;
 }
 
-bool lexSymbolOrSymbolAssignOrDoubleSymbol(TokenWriter tw, dchar c, TokenType symbol, TokenType symbolAssign, TokenType doubleSymbol)
+LexStatus lexSymbolOrSymbolAssignOrDoubleSymbol(TokenWriter tw, dchar c, TokenType symbol, TokenType symbolAssign, TokenType doubleSymbol)
 {
 	auto token = currentLocationToken(tw);
 	auto mark = tw.source.save();
 	auto type = symbol;
-	match(tw.source, c);
+	if (!match(tw, c)) {
+		return Failed;
+	}
 
-	if (tw.source.current == '=') {
-		match(tw.source, '=');
+	if (matchIf(tw, '=')) {
 		type = symbolAssign;
-	} else if (tw.source.current == c) {
-		match(tw.source, c);
+	} else if (matchIf(tw, c)) {
 		type = doubleSymbol;
 	}
 
@@ -538,29 +623,32 @@ bool lexSymbolOrSymbolAssignOrDoubleSymbol(TokenWriter tw, dchar c, TokenType sy
 	token.value = tw.source.sliceFrom(mark);
 	tw.addToken(token);
 
-	return true;
+	return Succeeded;
 }
 
-bool lexSingleSymbol(TokenWriter tw, dchar c, TokenType symbol)
+LexStatus lexSingleSymbol(TokenWriter tw, dchar c, TokenType symbol)
 {
 	auto token = currentLocationToken(tw);
 	auto mark = tw.source.save();
-	match(tw.source, c);
+	if (!match(tw, c)) {
+		return Failed;
+	}
 	token.type = symbol;
 	token.value = tw.source.sliceFrom(mark);
 	tw.addToken(token);
-	return true;
+	return Succeeded;
 }
 
-bool lexSymbolOrSymbolAssign(TokenWriter tw, dchar c, TokenType symbol, TokenType symbolAssign)
+LexStatus lexSymbolOrSymbolAssign(TokenWriter tw, dchar c, TokenType symbol, TokenType symbolAssign)
 {
 	auto token = currentLocationToken(tw);
 	auto mark = tw.source.save();
 	auto type = symbol;
-	match(tw.source, c);
+	if (!match(tw, c)) {
+		return Failed;
+	}
 
-	if (tw.source.current == '=') {
-		match(tw.source, '=');
+	if (matchIf(tw, '=')) {
 		type = symbolAssign;
 	}
 
@@ -568,43 +656,42 @@ bool lexSymbolOrSymbolAssign(TokenWriter tw, dchar c, TokenType symbol, TokenTyp
 	token.value = tw.source.sliceFrom(mark);
 	tw.addToken(token);
 
-	return true;
+	return Succeeded;
 }
 
-bool lexOpenParen(TokenWriter tw)
+LexStatus lexOpenParen(TokenWriter tw)
 {
 	Mark m = tw.source.save();
 	auto token = currentLocationToken(tw);
-	match(tw.source, '(');
+	if (!match(tw, '(')) {
+		return Failed;
+	}
 	token.type = TokenType.OpenParen;
 	token.value = tw.source.sliceFrom(m);
 	tw.addToken(token);
 
-	return true;
+	return Succeeded;
 }
 
-bool lexLess(TokenWriter tw)
+LexStatus lexLess(TokenWriter tw)
 {
 	auto token = currentLocationToken(tw);
 	auto mark = tw.source.save();
 	token.type = TokenType.Less;
-	match(tw.source, '<');
+	if (!match(tw, '<')) {
+		return Failed;
+	}
 
-	if (tw.source.current == '=') {
-		match(tw.source, '=');
+	if (matchIf(tw, '=')) {
 		token.type = TokenType.LessAssign;
-	} else if (tw.source.current == '<') {
-		match(tw.source, '<');
-		if (tw.source.current == '=') {
-			match(tw.source, '=');
+	} else if (matchIf(tw, '<')) {
+		if (matchIf(tw, '=')) {
 			token.type = TokenType.DoubleLessAssign;
 		} else {
 			token.type = TokenType.DoubleLess;
 		}
-	} else if (tw.source.current == '>') {
-		match(tw.source, '>');
-		if (tw.source.current == '=') {
-			match(tw.source, '=');
+	} else if (matchIf(tw, '>')) {
+		if (matchIf(tw, '=')) {
 			token.type = TokenType.LessGreaterAssign;
 		} else {
 			token.type = TokenType.LessGreater;
@@ -613,28 +700,25 @@ bool lexLess(TokenWriter tw)
 
 	token.value = tw.source.sliceFrom(mark);
 	tw.addToken(token);
-	return true;
+	return Succeeded;
 }
 
-bool lexGreater(TokenWriter tw)
+LexStatus lexGreater(TokenWriter tw)
 {
 	auto token = currentLocationToken(tw);
 	auto mark = tw.source.save();
 	token.type = TokenType.Greater;
-	match(tw.source, '>');
+	if (!match(tw, '>')) {
+		return Failed;
+	}
 
-	if (tw.source.current == '=') {
-		match(tw.source, '=');
+	if (matchIf(tw, '=')) {
 		token.type = TokenType.GreaterAssign;
-	} else if (tw.source.current == '>') {
-		match(tw.source, '>');
-		if (tw.source.current == '=') {
-			match(tw.source, '=');
+	} else if (matchIf(tw, '>')) {
+		if (matchIf(tw, '=')) {
 			token.type = TokenType.DoubleGreaterAssign;
-		} else if (tw.source.current == '>') {
-			match(tw.source, '>');
-			if (tw.source.current == '=') {
-				match(tw.source, '=');
+		} else if (matchIf(tw, '>')) {
+			if (matchIf(tw, '=')) {
 				token.type = TokenType.TripleGreaterAssign;
 			} else {
 				token.type = TokenType.TripleGreater;
@@ -646,38 +730,34 @@ bool lexGreater(TokenWriter tw)
 
 	token.value = tw.source.sliceFrom(mark);
 	tw.addToken(token);
-	return true;
+	return Succeeded;
 }
 
-bool lexBang(TokenWriter tw)
+LexStatus lexBang(TokenWriter tw)
 {
 	auto token = currentLocationToken(tw);
 	auto mark = tw.source.save();
 	token.type = TokenType.Bang;
-	match(tw.source, '!');
+	if (!match(tw, '!')) {
+		return Failed;
+	}
 
-	if (tw.source.current == '=') {
-		match(tw.source, '=');
+	if (matchIf(tw, '=')) {
 		token.type = TokenType.BangAssign;
-	} else if (tw.source.current == '>') {
-		match(tw.source, '>');
+	} else if (matchIf(tw, '>')) {
 		if (tw.source.current == '=') {
 			token.type = TokenType.BangGreaterAssign;
 		} else {
 			token.type = TokenType.BangGreater;
 		}
-	} else if (tw.source.current == '<') {
-		match(tw.source, '<');
-		if (tw.source.current == '>') {
-			match(tw.source, '>');
-			if (tw.source.current == '=') {
-				match(tw.source, '=');
+	} else if (matchIf(tw, '<')) {
+		if (matchIf(tw, '>')) {
+			if (matchIf(tw, '=')) {
 				token.type = TokenType.BangLessGreaterAssign;
 			} else {
 				token.type = TokenType.BangLessGreater;
 			}
-		} else if (tw.source.current == '=') {
-			match(tw.source, '=');
+		} else if (matchIf(tw, '=')) {
 			token.type = TokenType.BangLessAssign;
 		} else {
 			token.type = TokenType.BangLess;
@@ -686,36 +766,39 @@ bool lexBang(TokenWriter tw)
 
 	token.value = tw.source.sliceFrom(mark);
 	tw.addToken(token);
-	return true;
+	return Succeeded;
 }
 
 // Escape sequences are not expanded inside of the lexer.
 
-bool lexCharacter(TokenWriter tw)
+LexStatus lexCharacter(TokenWriter tw)
 {
 	auto token = currentLocationToken(tw);
 	auto mark = tw.source.save();
-	match(tw.source, '\'');
+	if (!match(tw, '\'')) {
+		return Failed;
+	}
 	while (tw.source.current != '\'') {
 		if (tw.source.eof) {
-			throw makeExpected(token.location, "`'`");
+			return lexExpected(tw, token.location, "`'`");
 		}
-		if (tw.source.current == '\\') {
-			match(tw.source, '\\');
+		if (matchIf(tw, '\\')) {
 			tw.source.next();
 		} else {
 			tw.source.next();
 		}
 	}
-	match(tw.source, '\'');
+	if (!match(tw, '\'')) {
+		return Failed;
+	}
 
 	token.type = TokenType.CharacterLiteral;
 	token.value = tw.source.sliceFrom(mark);
 	tw.addToken(token);
-	return true;
+	return Succeeded;
 }
 
-bool lexString(TokenWriter tw)
+LexStatus lexString(TokenWriter tw)
 {
 	auto token = currentLocationToken(tw);
 	auto mark = tw.source.save();
@@ -723,14 +806,12 @@ bool lexString(TokenWriter tw)
 	bool raw;
 	bool postfix = true;
 
-	if (tw.source.current == 'r') {
-		match(tw.source, 'r');
+	if (matchIf(tw, 'r')) {
 		raw = true;
 		terminator = '"';
 	} else if (tw.source.current == 'q') {
 		return lexQString(tw);
-	} else if (tw.source.current == 'x') {
-		match(tw.source, 'x');
+	} else if (matchIf(tw, 'x')) {
 		raw = false;
 		terminator = '"';
 	} else if (tw.source.current == '`') {
@@ -740,35 +821,40 @@ bool lexString(TokenWriter tw)
 		raw = false;
 		terminator = '"';
 	} else {
-		return false;
+		return lexFailed(tw, "string");
 	}
 
-	match(tw.source, terminator);
+	if (!match(tw, terminator)) {
+		return Failed;
+	}
 	while (tw.source.current != terminator) {
 		if (tw.source.eof) {
-			throw makeExpected(token.location, "string literal terminator.");
+			return lexExpected(tw, token.location, "string literal terminator");
 		}
-		if (!raw && tw.source.current == '\\') {
-			match(tw.source, '\\');
+		if (!raw && matchIf(tw, '\\')) {
 			tw.source.next();
 		} else {
 			tw.source.next();
 		}
 	}
-	match(tw.source, terminator);
+	if (!match(tw, terminator)) {
+		return Failed;
+	}
 	dchar postfixc = tw.source.current;
 	if ((postfixc == 'c' || postfixc == 'w' || postfixc == 'd') && postfix) {
-		match(tw.source, postfixc);
+		if (!match(tw, postfixc)) {
+			return Failed;
+		}
 	}
 
 	token.type = TokenType.StringLiteral;
 	token.value = tw.source.sliceFrom(mark);
 	tw.addToken(token);
 
-	return true;
+	return Succeeded;
 }
 
-bool lexQString(TokenWriter tw)
+LexStatus lexQString(TokenWriter tw)
 {
 	auto token = currentLocationToken(tw);
 	token.type = TokenType.StringLiteral;
@@ -777,8 +863,9 @@ bool lexQString(TokenWriter tw)
 	if (tw.source.lookahead(1, leof) == '{') {
 		return lexTokenString(tw);
 	}
-	match(tw.source, 'q');
-	match(tw.source, '"');
+	if (!match(tw, "q\"")) {
+		return Failed;
+	}
 
 	dchar opendelimiter, closedelimiter;
 	bool nesting = true;
@@ -810,7 +897,9 @@ bool lexQString(TokenWriter tw)
 				buf ~= encode(tw.source.current);
 				tw.source.next();
 			}
-			match(tw.source, '\n');
+			if (!match(tw, '\n')) {
+				return Failed;
+			}
 			version(Volt) {
 				identdelim = cast(string)new buf[0 .. $];
 			} else {
@@ -822,20 +911,22 @@ bool lexQString(TokenWriter tw)
 		}
 	}
 
-	if (identdelim is null) match(tw.source, opendelimiter);
+	if (identdelim is null && !match(tw, opendelimiter)) {
+		return Failed;
+	}
 	int nest = 1;
 	while (true) {
 		if (tw.source.eof) {
-			throw makeExpected(token.location, "string literal terminator.");
+			return lexExpected(tw, token.location, "string literal terminator");
 		}
-		if (tw.source.current == opendelimiter) {
-			match(tw.source, opendelimiter);
+		if (matchIf(tw, opendelimiter)) {
 			nest++;
-		} else if (tw.source.current == closedelimiter) {
-			match(tw.source, closedelimiter);
+		} else if (matchIf(tw, closedelimiter)) {
 			nest--;
 			if (nest == 0) {
-				match(tw.source, '"');
+				if (!match(tw, '"')) {
+					return Failed;
+				}
 			}
 		} else {
 			tw.source.next();
@@ -850,7 +941,7 @@ bool lexQString(TokenWriter tw)
 			while (look - 1 < identdelim.length) {
 				dchar c = tw.source.lookahead(look, leof);
 				if (leof) {
-					throw makeExpected(token.location, "string literal terminator.");
+					return lexExpected(tw, token.location, "string literal terminator");
 				}
 				if (c != identdelim[look - 1]) {
 					restart = true;
@@ -864,34 +955,38 @@ bool lexQString(TokenWriter tw)
 			for (int i; 0 < look; i++) {
 				tw.source.next();
 			}
-			match(tw.source, '"');
+			if (!match(tw, '"')) {
+				return Failed;
+			}
 			break;
-		} else if (tw.source.current == closedelimiter) {
-			match(tw.source, closedelimiter);
-			match(tw.source, '"');
+		} else if (matchIf(tw, closedelimiter)) {
+			if (!match(tw, '"')) {
+				return Failed;
+			}
 			break;
 		}
 	}
 
 	token.value = tw.source.sliceFrom(mark);
 	tw.addToken(token);
-	return true;
+	return Succeeded;
 }
 
-bool lexTokenString(TokenWriter tw)
+LexStatus lexTokenString(TokenWriter tw)
 {
 	auto token = currentLocationToken(tw);
 	token.type = TokenType.StringLiteral;
 	auto mark = tw.source.save();
-	match(tw.source, 'q');
-	match(tw.source, '{');
+	if (!match(tw, "q{")) {
+		return Failed;
+	}
 	auto dummystream = new TokenWriter(tw.source);
 
 	int nest = 1;
 	while (nest > 0) {
-		bool retval = lexNext(dummystream);
-		if (!retval) {
-			throw makeExpected(dummystream.source.location, "token");
+		auto succeeded = lexNext(dummystream);
+		if (!succeeded) {
+			return lexExpected(tw, "token");
 		}
 		switch (dummystream.lastAdded.type) {
 		case TokenType.OpenBrace:
@@ -901,7 +996,7 @@ bool lexTokenString(TokenWriter tw)
 			nest--;
 			break;
 		case TokenType.End:
-			throw makeExpected(dummystream.source.location, "end of token string literal");
+			return lexExpected(tw, "end of token string literal");
 		default:
 			break;
 		}
@@ -909,7 +1004,7 @@ bool lexTokenString(TokenWriter tw)
 
 	token.value = tw.source.sliceFrom(mark);
 	tw.addToken(token);
-	return true;
+	return Succeeded;
 }
 
 /**
@@ -959,7 +1054,7 @@ string removeUnderscores(string s)
  * Lex an integer literal and add the resulting token to tw.
  * If it detects the number is floating point, it will call lexReal directly.
  */
-bool lexNumber(TokenWriter tw)
+LexStatus lexNumber(TokenWriter tw)
 {
 	auto token = currentLocationToken(tw);
 	auto src = new Source(tw.source);
@@ -973,7 +1068,7 @@ bool lexNumber(TokenWriter tw)
 			src.next();
 			auto consumed = consume(src, '0', '1', '_');
 			if (consumed == 0) {
-				throw makeExpected(src.location, "binary digit");
+				return lexExpected(tw, src.location, "binary digit");
 			}
 		} else if (src.current == 'x' || src.current == 'X') {
 			// Hexadecimal literal.
@@ -984,14 +1079,14 @@ bool lexNumber(TokenWriter tw)
 			                             'A', 'B', 'C', 'D', 'E', 'F', '_');
 			if ((src.current == '.' && src.lookahead(1, tmp) != '.') || src.current == 'p' || src.current == 'P') return lexReal(tw);
 			if (consumed == 0) {
-				throw makeExpected(src.location, "hexadecimal digit");
+				return lexExpected(tw, src.location, "hexadecimal digit");
 			}
 		} else if (src.current == '1' || src.current == '2' || src.current == '3' || src.current == '4' || src.current == '5' ||
 				src.current == '6' || src.current == '7') {
 			/* This used to be an octal literal, which are gone.
 			 * DMD treats this as an error, so we do too.
 			 */
-			throw makeUnsupported(src.location, "octal literals");
+			return lexUnsupported(tw, src.location, "octal literals");
 		} else if (src.current == 'f' || src.current == 'F' || (src.current == '.' && src.lookahead(1, tmp) != '.')) {
 			return lexReal(tw);
 		}
@@ -1002,7 +1097,7 @@ bool lexNumber(TokenWriter tw)
 		consume(src, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '_');
 		if (src.current == '.' && src.lookahead(1, tmp) != '.') return lexReal(tw);
 	} else {
-		throw makeExpected(src.location, "integer literal");
+		return lexExpected(tw, src.location, "integer literal");
 	}
 
 	if (src.current == 'f' || src.current == 'F' || src.current == 'e' || src.current == 'E') {
@@ -1025,30 +1120,30 @@ bool lexNumber(TokenWriter tw)
 	token.value = removeUnderscores(token.value);
 	tw.addToken(token);
 
-	return true;
+	return Succeeded;
 }
 
 /// Lex a floating literal and add the resulting token to tw.
-bool lexReal(TokenWriter tw)
+LexStatus lexReal(TokenWriter tw)
 {
 	auto token = currentLocationToken(tw);
 	auto mark = tw.source.save();
 	bool skipRealPrologue;
 
-	bool stop()
+	LexStatus stop()
 	{
 		token.type = TokenType.FloatLiteral;
 		token.value = tw.source.sliceFrom(mark);
 		token.value = removeUnderscores(token.value);
 		tw.addToken(token);
-		return true;
+		return Succeeded;
 	}
 
 	if (tw.source.current == '.') {
 		// .n
 		tw.source.next();
 		if (!isDigit(tw.source.current)) {
-			throw makeExpected(tw.source.location, "digit after decimal point");
+			return lexExpected(tw, "digit after decimal point");
 		}
 		tw.source.next();
 		consume(tw.source, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '_');
@@ -1065,7 +1160,7 @@ bool lexReal(TokenWriter tw)
 			                                   'a', 'b', 'c', 'd', 'e', 'f',
 			                                   'A', 'B', 'C', 'D', 'E', 'F', '_');
 			if (consumed == 0) {
-				throw makeExpected(tw.source.location, "hexadecimal digit");
+				return lexExpected(tw, "hexadecimal digit");
 			}
 			if (tw.source.current == 'p' || tw.source.current == 'P') {
 				tw.source.next();
@@ -1074,7 +1169,7 @@ bool lexReal(TokenWriter tw)
 				}
 				skipRealPrologue = true;
 			} else {
-				throw makeExpected(tw.source.location, "exponent");
+				return lexExpected(tw, "exponent");
 			}
 		} else {
 			// 0.n
@@ -1085,27 +1180,31 @@ bool lexReal(TokenWriter tw)
 					tw.source.next();
 					consume(tw.source, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '_');
 				}
-				match(tw.source, '.');
+				if (!match(tw, '.')) {
+					return Failed;
+				}
 				consume(tw.source, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '_');
 				if (tw.source.current == 'L' || tw.source.current == 'f' || tw.source.current == 'F') {
 					tw.source.next();
 					return stop();
 				}
 			} else {
-				throw makeExpected(tw.source.location, "non-zero digit, '_', or decimal point");
+				return lexExpected(tw, "non-zero digit, '_', or decimal point");
 			}
 		}
 	} else if (isDigit(tw.source.current)) {
 		// n.n
 		consume(tw.source, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '_');
-		match(tw.source, '.');
+		if (!match(tw, '.')) {
+			return Failed;
+		}
 		consume(tw.source, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '_');
 		if (tw.source.current == 'L' || tw.source.current == 'f' || tw.source.current == 'F') {
 			tw.source.next();
 			return stop();
 		}
 	} else {
-		throw makeExpected(tw.source.location, "floating point literal");
+		return lexExpected(tw, "floating point literal");
 	}
 
 	if (tw.source.current == 'e' || tw.source.current == 'E' || skipRealPrologue) {
@@ -1116,7 +1215,7 @@ bool lexReal(TokenWriter tw)
 			}
 		}
 		if (!isDigit(tw.source.current)) {
-			throw makeExpected(tw.source.location, "digit");
+			return lexExpected(tw, "digit");
 		}
 		consume(tw.source, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '_');
 		if (tw.source.current == 'L' || tw.source.current == 'f' || tw.source.current == 'F') {
@@ -1127,20 +1226,23 @@ bool lexReal(TokenWriter tw)
 	return stop();
 }
 
-bool lexPragma(TokenWriter tw)
+LexStatus lexPragma(TokenWriter tw)
 {
-	match(tw.source, '#');
+	if (!match(tw, '#')) {
+		return Failed;
+	}
 	skipWhitespace(tw);
-	match(tw.source, 'l');
-	match(tw.source, 'i');
-	match(tw.source, 'n');
-	match(tw.source, 'e');
+	if (!match(tw, "line")) {
+		return Failed;
+	}
 	skipWhitespace(tw);
 
-	lexNumber(tw);
+	if (!lexNumber(tw)) {
+		return Failed;
+	}
 	Token Int = tw.lastAdded;
 	if (Int.type != TokenType.IntegerLiteral) {
-		throw makeExpected(Int.location, "integer literal");
+		return lexExpected(tw, Int.location, "integer literal");
 	}
 	int lineNumber = toInt(Int.value);
 	tw.pop();
@@ -1148,21 +1250,25 @@ bool lexPragma(TokenWriter tw)
 	skipWhitespace(tw);
 
 	// Why yes, these do use a magical kind of string literal. Thanks for noticing! >_<
-	match(tw.source, '"');
+	if (!match(tw, '"')) {
+		return Failed;
+	}
 	dchar[] buf;
 	while (tw.source.current != '"') {
 		buf ~= tw.source.next();
 	}
-	match(tw.source, '"');
+	if (!match(tw, '"')) {
+		return Failed;
+	}
 	string filename = encode(buf);
 
 	assert(lineNumber >= 0);
 	if (lineNumber == 0) {
-		throw makeExpected(tw.source.location, "line number greater than zero");
+		return lexExpected(tw, "line number greater than zero");
 	}
 	tw.changeCurrentLocation(filename, cast(size_t)lineNumber);
 
 	skipWhitespace(tw);
 
-	return true;
+	return Succeeded;
 }

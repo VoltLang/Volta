@@ -6,6 +6,7 @@ module volt.token.writer;
 
 import volt.token.source;
 import volt.token.stream;
+import volt.token.lexererror;
 
 
 /**
@@ -13,6 +14,9 @@ import volt.token.stream;
  */
 final class TokenWriter
 {
+public:
+	LexerError[] errors;
+
 private:
 	Source mSource;
 	size_t mLength;
