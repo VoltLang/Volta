@@ -15,7 +15,7 @@ alias Mark = size_t;
 
 
 /**
- * Class for handling reading of D source code.
+ * Class for handling reading of Volt source code.
  *
  * Upon loading or getting source the ctor will validate the source
  * code to make sure that it is Utf-8 and the BOM is valid.
@@ -37,26 +37,6 @@ private:
 	size_t mIndex;
 
 public:
-	/**
-	 * Open the given file and validate it as a utf8 source.
-	 *
-	 * Side-effects:
-	 *   Puts all the other fields into known good states.
-	 *
-	 * Throws:
-	 *   CompilerPanic if source BOM is not valid.
-	 *   UtfException if source is not utf8.
-	 */
-	this(string filename)
-	{
-		source = cast(string)read(filename);
-		location.filename = filename;
-
-		this(source, location);
-
-		skipScriptLine();
-	}
-
 	/**
 	 * Sets the source to string and the current location
 	 * and validate it as a utf8 source.
@@ -242,17 +222,6 @@ public:
 	string sliceFrom(Mark mark)
 	{
 		return source[mark .. mIndex - 1];
-	}
-
-	/**
-	 * Make a new Source object in the same state as this one.
-	 *
-	 * Side-effects:
-	 *   None.
-	 */
-	Source dup()
-	{
-		return new Source(this);
 	}
 
 	/**
