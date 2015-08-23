@@ -16,7 +16,8 @@ import volt.token.location;
  * another are implicitly concatenated. I warn you of this out of experience.
  */
 enum immutable(string)[] _tokenToString = [
-"none", "identifier", "string literal", "character literal",
+"none", "BEGIN", "END", "DocComment",
+"identifier", "string literal", "character literal",
 "integer literal", "float literal", "abstract", "alias", "align",
 "asm", "assert", "auto", "body", "bool", "break", "byte", "case",
 "cast", "catch", "cdouble", "cent", "cfloat", "char", "class",
@@ -40,7 +41,6 @@ enum immutable(string)[] _tokenToString = [
 "!<=", "!>", "!>=", "(", ")", "[", "]", "{", "}", "?", ",", ";",
 ":", "$", "=", "==", "*", "*=", "%", "%=", "^", "^=", "^^", "^^=", "~", "~=",
 "@",
-"symbol", "number", "DocComment", "BEGIN", "EOF"
 ];
 
 /**
@@ -58,6 +58,11 @@ version(Volt) {
 enum TokenType
 {
 	None = 0,
+
+	// Special
+	Begin,
+	End,
+	DocComment,
 
 	// Literals
 	Identifier,
@@ -156,13 +161,6 @@ enum TokenType
 	Tilde,                  // ~
 	TildeAssign,            // ~=
 	At,                     // @
-
-	Symbol,
-	Number,
-	DocComment,
-
-	Begin,
-	End,
 }
 
 @property string tokenToString(TokenType token)

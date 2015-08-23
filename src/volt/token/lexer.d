@@ -193,34 +193,42 @@ bool isdalpha(dchar c, Position position)
 
 LexStatus lexNext(TokenWriter tw)
 {
-	TokenType type = nextLex(tw);
+	auto type = nextLex(tw);
 
-	switch (type) {
-	case TokenType.End:
-		return lexEOF(tw);
-	case TokenType.Identifier:
+	final switch (type) with (NextLex) {
+	case Identifier:
 		return lexIdentifier(tw);
-	case TokenType.CharacterLiteral:
+	case CharacterLiteral:
 		return lexCharacter(tw);
-	case TokenType.StringLiteral:
+	case StringLiteral:
 		return lexString(tw);
-	case TokenType.Symbol:
+	case Symbol:
 		return lexSymbol(tw);
-	case TokenType.Number:
+	case Number:
 		return lexNumber(tw);
-	default:
-		break;
+	case End:
+		return lexEOF(tw);
 	}
 
-	return Failed;
+	version (Volt) assert(false);
+}
+
+enum NextLex
+{
+	Identifier,
+	CharacterLiteral,
+	StringLiteral,
+	Symbol,
+	Number,
+	End,
 }
 
 /// Return which TokenType to try and lex next.
-TokenType nextLex(TokenWriter tw)
+NextLex nextLex(TokenWriter tw)
 {
 	skipWhitespace(tw);
 	if (tw.source.eof) {
-		return TokenType.End;
+		return NextLex.End;
 	}
 
 	if (isAlpha(tw.source.current) || tw.source.current == '_') {
@@ -228,27 +236,27 @@ TokenType nextLex(TokenWriter tw)
 		if (tw.source.current == 'r' || tw.source.current == 'q' || tw.source.current == 'x') {
 			dchar oneAhead = tw.source.lookahead(1, lookaheadEOF);
 			if (oneAhead == '"') {
-				return TokenType.StringLiteral;
+				return NextLex.StringLiteral;
 			} else if (tw.source.current == 'q' && oneAhead == '{') {
-				return TokenType.StringLiteral;
+				return NextLex.StringLiteral;
 			}
 		}
-		return TokenType.Identifier;
+		return NextLex.Identifier;
 	}
 
 	if (tw.source.current == '\'') {
-		return TokenType.CharacterLiteral;
+		return NextLex.CharacterLiteral;
 	}
 
 	if (tw.source.current == '"' || tw.source.current == '`') {
-		return TokenType.StringLiteral;
+		return NextLex.StringLiteral;
 	}
 
 	if (isDigit(tw.source.current)) {
-		return TokenType.Number;
+		return NextLex.Number;
 	}
 
-	return TokenType.Symbol;
+	return NextLex.Symbol;
 }
 
 LexStatus skipWhitespace(TokenWriter tw)
