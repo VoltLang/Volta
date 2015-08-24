@@ -226,7 +226,8 @@ enum NextLex
 /// Return which TokenType to try and lex next.
 NextLex nextLex(TokenWriter tw)
 {
-	skipWhitespace(tw);
+	tw.source.skipWhitespace();
+
 	if (tw.source.eof) {
 		return NextLex.End;
 	}
@@ -259,15 +260,6 @@ NextLex nextLex(TokenWriter tw)
 	return NextLex.Symbol;
 }
 
-LexStatus skipWhitespace(TokenWriter tw)
-{
-	while (isWhite(tw.source.current)) {
-		tw.source.next();
-		if (tw.source.eof) break;
-	}
-	return Succeeded;
-}
-
 void addIfDocComment(TokenWriter tw, Token commentToken, string s, string docsignifier)
 {
 	auto closeIndex = s.indexOf("@}");
@@ -287,12 +279,7 @@ LexStatus skipLineComment(TokenWriter tw)
 	if (!match(tw, '/')) {
 		return lexPanic(tw, tw.source.location, "expected '/'");
 	}
-	while (tw.source.current != '\n') {
-		tw.source.next();
-		if (tw.source.eof) {
-			return Succeeded;
-		}
-	}
+	tw.source.skipEndOfLine();
 
 	addIfDocComment(tw, commentToken, tw.source.sliceFrom(mark), "//");
 	return Succeeded;
@@ -1239,11 +1226,11 @@ LexStatus lexHashLine(TokenWriter tw)
 	if (!match(tw, '#')) {
 		return Failed;
 	}
-	skipWhitespace(tw);
+	tw.source.skipWhitespace();
 	if (!match(tw, "line")) {
 		return Failed;
 	}
-	skipWhitespace(tw);
+	tw.source.skipWhitespace();
 
 	if (!lexNumber(tw)) {
 		return Failed;
@@ -1255,7 +1242,7 @@ LexStatus lexHashLine(TokenWriter tw)
 	int lineNumber = toInt(Int.value);
 	tw.pop();
 
-	skipWhitespace(tw);
+	tw.source.skipWhitespace();
 
 	// Why yes, these do use a magical kind of string literal. Thanks for noticing! >_<
 	if (!match(tw, '"')) {
@@ -1276,7 +1263,7 @@ LexStatus lexHashLine(TokenWriter tw)
 	}
 	tw.changeCurrentLocation(filename, cast(size_t)lineNumber);
 
-	skipWhitespace(tw);
+	tw.source.skipWhitespace();
 
 	return Succeeded;
 }

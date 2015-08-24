@@ -4,8 +4,9 @@
 module volt.token.source;
 
 import watt.io.file : read;
-import watt.text.format : format;
 import watt.text.utf : decode, validate;
+import watt.text.ascii : isWhite;
+import watt.text.format : format;
 
 import volt.errors : panic;
 import volt.token.location : Location;
@@ -108,7 +109,34 @@ public:
 		}
 
 		// We have a script line start, read the rest of the line.
-		while (next() != '\n' && !eof) {}
+		skipEndOfLine();
+	}
+
+	/**
+	 * Used to skip whitespace in the source file,
+	 * as defined by watt.text.ascii.isWhite.
+	 *
+	 * Side-effects:
+	 *   @arg @see next
+	 */
+	void skipWhitespace()
+	{
+		while (isWhite(mChar) && !eof) {
+			next();
+		}
+	}
+
+	/**
+	 * Skips till character after next end of line or eof.
+	 *
+	 * Side-effects:
+	 *   @arg @see next
+	 */
+	void skipEndOfLine()
+	{
+		while (mChar != '\n' && !eof) {
+			next();
+		}
 	}
 
 	dchar decodeChar()
