@@ -92,27 +92,27 @@ void handleTernary(State state, ir.Ternary t, Value result)
 	// values are constant and emit their blocks.
 
 	trueBlock = LLVMAppendBasicBlockInContext(
-			state.context, state.currentFunc, "ternTrueBlock");
+			state.context, state.func, "ternTrueBlock");
 	falseBlock = LLVMAppendBasicBlockInContext(
-		state.context, state.currentFunc, "ternFalseBlock");
+		state.context, state.func, "ternFalseBlock");
 	endBlock = LLVMAppendBasicBlockInContext(
-			state.context, state.currentFunc, "ternEndBlock");
+			state.context, state.func, "ternEndBlock");
 
 	state.getValue(t.condition, condition);
 	LLVMBuildCondBr(state.builder, condition.value, trueBlock, falseBlock);
 
-	LLVMMoveBasicBlockAfter(trueBlock, state.currentBlock);
+	LLVMMoveBasicBlockAfter(trueBlock, state.block);
 	state.startBlock(trueBlock);
 	state.getValue(t.ifTrue, ifTrue);
 	LLVMBuildBr(state.builder, endBlock);
-	trueBlock = state.currentBlock; // Need to update the block
+	trueBlock = state.block; // Need to update the block
 
 
-	LLVMMoveBasicBlockAfter(falseBlock, state.currentBlock);
+	LLVMMoveBasicBlockAfter(falseBlock, state.block);
 	state.startBlock(falseBlock);
 	state.getValue(t.ifFalse, ifFalse);
 	LLVMBuildBr(state.builder, endBlock);
-	falseBlock = state.currentBlock; // Need to update the block
+	falseBlock = state.block; // Need to update the block
 
 	LLVMMoveBasicBlockAfter(endBlock, falseBlock);
 	state.startBlock(endBlock);
@@ -191,21 +191,21 @@ void handleBoolCompare(State state, ir.BinOp bin, Value result)
 
 	LLVMBasicBlockRef oldBlock, rightBlock, endBlock;
 	rightBlock = LLVMAppendBasicBlockInContext(
-			state.context, state.currentFunc, "compRight");
+			state.context, state.func, "compRight");
 	endBlock = LLVMAppendBasicBlockInContext(
-			state.context, state.currentFunc, "compDone");
+			state.context, state.func, "compDone");
 
 	state.getValue(bin.left, left);
 	LLVMBuildCondBr(state.builder, left.value,
 		and ? rightBlock : endBlock,
 		and ? endBlock : rightBlock);
-	oldBlock = state.currentBlock; // Need the block for phi.
+	oldBlock = state.block; // Need the block for phi.
 
-	LLVMMoveBasicBlockAfter(rightBlock, state.currentBlock);
+	LLVMMoveBasicBlockAfter(rightBlock, state.block);
 	state.startBlock(rightBlock);
 	state.getValue(bin.right, right);
 	LLVMBuildBr(state.builder, endBlock);
-	rightBlock = state.currentBlock; // Need to update the block for phi.
+	rightBlock = state.block; // Need to update the block for phi.
 
 	LLVMMoveBasicBlockAfter(endBlock, rightBlock);
 	state.startBlock(endBlock);

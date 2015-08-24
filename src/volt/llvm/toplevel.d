@@ -54,16 +54,13 @@ public:
 
 		LLVMAddFunctionAttr(llvmFunc, LLVMAttribute.UWTable);
 
-		auto oldPath = state.path;
-		auto oldFall = state.currentFall;
-		auto oldFunc = state.currentFunc;
-		auto oldBlock = state.currentBlock;
+		State.FunctionState old = state.fnState;
+		state.fnState = State.FunctionState();
 
-		state.path = new BlockPath();
-		state.currentFall = true;
-		state.currentFunc = llvmFunc;
-		state.currentBlock = LLVMAppendBasicBlock(llvmFunc, "entry");
-		LLVMPositionBuilderAtEnd(b, state.currentBlock);
+		state.fnState.fall = true;
+		state.fnState.func = llvmFunc;
+		state.fnState.block = LLVMAppendBasicBlock(llvmFunc, "entry");
+		LLVMPositionBuilderAtEnd(b, state.block);
 
 		if (fn.kind == ir.Function.Kind.GlobalConstructor) {
 			state.globalConstructors ~= llvmFunc;
@@ -106,7 +103,7 @@ public:
 			accept(n, this);
 
 		// Assume language pass knows what it is doing.
-		if (state.currentFall) {
+		if (state.fall) {
 			LLVMBuildCall(state.builder, state.llvmTrap, null);
 			LLVMBuildUnreachable(state.builder);
 		}
@@ -114,14 +111,11 @@ public:
 		// Clean up
 		state.onFunctionClose();
 
-		state.path = oldPath;
-		state.currentFall = oldFall;
-		state.currentFunc = oldFunc;
-		state.currentBlock = oldBlock;
+		state.fnState = old;
 
 		// Reset builder for nested functions.
-		if (state.currentBlock !is null) {
-			LLVMPositionBuilderAtEnd(b, state.currentBlock);
+		if (state.block !is null) {
+			LLVMPositionBuilderAtEnd(b, state.block);
 		}
 
 		return ContinueParent;
@@ -137,7 +131,7 @@ public:
 		case Field:
 			break;
 		case Function, Nested:
-			assert(state.currentFunc !is null);
+			assert(state.func !is null);
 
 			auto v = state.getVariableValue(var, type);
 
@@ -182,7 +176,7 @@ public:
 
 	override Status enter(ir.ReturnStatement ret)
 	{
-		assert(state.currentFall);
+		assert(state.fall);
 
 		if (ret.exp is null) {
 			LLVMBuildRet(b, null);
@@ -190,14 +184,14 @@ public:
 			LLVMBuildRet(b, state.getValue(ret.exp));
 		}
 
-		state.currentFall = false;
+		state.fnState.fall = false;
 
 		return ContinueParent;
 	}
 
 	override Status enter(ir.ExpStatement exps)
 	{
-		assert(state.currentFall);
+		assert(state.fall);
 
 		// XXX: Should we do something here?
 		auto ret = state.getValue(exps.exp);
@@ -214,29 +208,29 @@ public:
 
 	override Status enter(ir.SwitchStatement ss)
 	{
-		assert(state.currentFall);
+		assert(state.fall);
 
 		auto cond = state.getValue(ss.condition);
 
 		Block[] blocks;
 
-		auto oldCases = state.currentSwitchCases; 
-		auto oldDefault = state.currentSwitchDefault;
-		state.currentSwitchCases = null;
+		auto old = state.fnState.swi;
+		state.fnState.swi = State.SwitchState();
 		// Even final switches have an (invalid) default case.
-		state.currentSwitchDefault = LLVMAppendBasicBlockInContext(state.context, state.currentFunc, "defaultCase");
+		state.fnState.swi.def = LLVMAppendBasicBlockInContext(state.context, state.func, "defaultCase");
 		ir.BlockStatement defaultStatements;
-		auto _switch = LLVMBuildSwitch(state.builder, cond, state.currentSwitchDefault, cast(uint)(ss.cases.length));
+		auto _switch = LLVMBuildSwitch(state.builder, cond, state.switchDefault, cast(uint)(ss.cases.length));
 
 		foreach (_case; ss.cases) {
 			if (_case.firstExp !is null) acceptExp(_case.firstExp, this);
 			void addVal(LLVMValueRef val, LLVMBasicBlockRef block)
 			{
+				LLVMBasicBlockRef tmp;
 				auto i = LLVMConstIntGetSExtValue(val);
-				if ((i in state.currentSwitchCases) !is null) {
+				if (state.switchGetCase(i, tmp)) {
 					throw makeSwitchDuplicateCase(_case);
 				} else {
-					state.currentSwitchCases[i] = block;
+					state.switchSetCase(i, block);
 				}
 				LLVMAddCase(_switch, val, block);
 			}
@@ -253,7 +247,7 @@ public:
 			if (_case.isDefault) {
 				defaultStatements = _case.statements;
 			} else {
-				auto block = LLVMAppendBasicBlockInContext(state.context, state.currentFunc, "switchCase");
+				auto block = LLVMAppendBasicBlockInContext(state.context, state.func, "switchCase");
 				if (_case.firstExp !is null && _case.secondExp !is null) {
 					// case A: .. case B:
 					auto aval = state.getValue(_case.firstExp);
@@ -275,7 +269,7 @@ public:
 				blocks ~= Block(_case, block);
 			}
 		}
-		auto outBlock = LLVMAppendBasicBlockInContext(state.context, state.currentFunc, "endSwitch");
+		auto outBlock = LLVMAppendBasicBlockInContext(state.context, state.func, "endSwitch");
 
 		// Generate code for each case.
 		auto breakBlock = state.replaceBreakBlock(outBlock);
@@ -283,9 +277,9 @@ public:
 			state.startBlock(block.block);
 			doNewBlock(block.block, block._case.statements, i == blocks.length - 1 ? outBlock : blocks[i+1].block);
 		}
-		state.startBlock(state.currentSwitchDefault);
+		state.startBlock(state.switchDefault);
 		if (defaultStatements !is null) {
-			doNewBlock(state.currentSwitchDefault, defaultStatements, outBlock);
+			doNewBlock(state.switchDefault, defaultStatements, outBlock);
 		} else {
 			// No default block (e.g. final switches)
 			LLVMBuildCall(state.builder, state.llvmTrap, null);
@@ -294,11 +288,10 @@ public:
 		state.replaceBreakBlock(breakBlock);
 
 		// Continue generating code after the switch.
-		LLVMMoveBasicBlockAfter(outBlock, state.currentBlock);
+		LLVMMoveBasicBlockAfter(outBlock, state.block);
 		state.startBlock(outBlock);
 
-		state.currentSwitchDefault = oldDefault;
-		state.currentSwitchCases = oldCases;
+		state.fnState.swi = old;
 
 		return ContinueParent;
 	}
@@ -308,9 +301,9 @@ public:
 		LLVMBasicBlockRef landingPad, tryDone;
 
 		landingPad = LLVMAppendBasicBlockInContext(
-			state.context, state.currentFunc, "landingPad");
+			state.context, state.func, "landingPad");
 		tryDone = LLVMAppendBasicBlockInContext(
-			state.context, state.currentFunc, "tryDone");
+			state.context, state.func, "tryDone");
 
 		auto iVar = state.ehIndexVar;
 		auto eVar = state.ehExceptionVar;
@@ -318,19 +311,19 @@ public:
 		/*
 		 * The try body.
 		 */
-		auto old = state.path;
-		state.path = new BlockPath();
-		state.path.landingBlock = landingPad;
+		auto old = state.fnState.path;
+		state.fnState.path = State.PathState();
+		state.fnState.path.landingBlock = landingPad;
 		accept(t.tryBlock, this);
-		state.path = old;
-		if (state.currentFall) {
+		state.fnState.path = old;
+		if (state.fall) {
 			LLVMBuildBr(state.builder, tryDone);
 		}
 
 		/*
 		 * Landing pad.
 		 */
-		LLVMMoveBasicBlockAfter(landingPad, state.currentBlock);
+		LLVMMoveBasicBlockAfter(landingPad, state.block);
 		state.startBlock(landingPad);
 		auto lp = LLVMBuildLandingPad(
 			state.builder, state.ehLandingType,
@@ -356,14 +349,14 @@ public:
 
 			LLVMBasicBlockRef thenBlock, elseBlock;
 			thenBlock = LLVMAppendBasicBlockInContext(
-					state.context, state.currentFunc, "ifTrue");
+					state.context, state.func, "ifTrue");
 
 			elseBlock = LLVMAppendBasicBlockInContext(
-					state.context, state.currentFunc, "ifFalse");
+					state.context, state.func, "ifFalse");
 
 
 			LLVMBuildCondBr(state.builder, test, thenBlock, elseBlock);
-			LLVMMoveBasicBlockAfter(thenBlock, state.currentBlock);
+			LLVMMoveBasicBlockAfter(thenBlock, state.block);
 			state.startBlock(thenBlock);
 
 			auto ptr = state.getVariableValue(v, type);
@@ -372,11 +365,11 @@ public:
 
 			accept(t.catchBlocks[index], this);
 
-			if (state.currentFall) {
+			if (state.fall) {
 				LLVMBuildBr(state.builder, tryDone);
 			}
 
-			LLVMMoveBasicBlockAfter(elseBlock, state.currentBlock);
+			LLVMMoveBasicBlockAfter(elseBlock, state.block);
 			state.startBlock(elseBlock);
 		}
 
@@ -395,7 +388,7 @@ public:
 		/*
 		 * Everything after the try statement.
 		 */
-		LLVMMoveBasicBlockAfter(tryDone, state.currentBlock);
+		LLVMMoveBasicBlockAfter(tryDone, state.block);
 		state.startBlock(tryDone);
 
 		return ContinueParent;
@@ -403,7 +396,7 @@ public:
 
 	override Status enter(ir.IfStatement ifs)
 	{
-		assert(state.currentFall);
+		assert(state.fall);
 
 		auto cond = state.getValue(ifs.exp);
 
@@ -411,12 +404,12 @@ public:
 		LLVMBasicBlockRef thenBlock, elseBlock, endBlock;
 
 		thenBlock = LLVMAppendBasicBlockInContext(
-			state.context, state.currentFunc, "ifTrue");
+			state.context, state.func, "ifTrue");
 		if (hasElse)
 			elseBlock = LLVMAppendBasicBlockInContext(
-				state.context, state.currentFunc, "ifFalse");
+				state.context, state.func, "ifFalse");
 		endBlock = LLVMAppendBasicBlockInContext(
-			state.context, state.currentFunc, "endIf");
+			state.context, state.func, "endIf");
 
 		// Condition placed in the current block.
 		LLVMBuildCondBr(state.builder, cond, thenBlock,
@@ -431,7 +424,7 @@ public:
 		}
 
 		// And the out block.
-		LLVMMoveBasicBlockAfter(endBlock, state.currentBlock);
+		LLVMMoveBasicBlockAfter(endBlock, state.block);
 		state.startBlock(endBlock);
 
 		return ContinueParent;
@@ -439,16 +432,16 @@ public:
 
 	override Status enter(ir.WhileStatement w)
 	{
-		assert(state.currentFall);
+		assert(state.fall);
 
 		LLVMBasicBlockRef whileCond, whileBody, whileOut;
 
 		whileCond = LLVMAppendBasicBlockInContext(
-			state.context, state.currentFunc, "whileCond");
+			state.context, state.func, "whileCond");
 		whileBody = LLVMAppendBasicBlockInContext(
-			state.context, state.currentFunc, "whileBody");
+			state.context, state.func, "whileBody");
 		whileOut = LLVMAppendBasicBlockInContext(
-			state.context, state.currentFunc, "whileOut");
+			state.context, state.func, "whileOut");
 
 		// Make continue jump to the cond block, and break to out.
 		auto saveBre = state.replaceBreakBlock(whileOut);
@@ -466,7 +459,7 @@ public:
 		doNewBlock(whileBody, w.block, whileCond);
 
 		// Switch out block
-		LLVMMoveBasicBlockAfter(whileOut, state.currentBlock);
+		LLVMMoveBasicBlockAfter(whileOut, state.block);
 		state.startBlock(whileOut);
 		state.replaceBreakBlock(saveBre);
 		state.replaceContinueBlock(saveCon);
@@ -476,16 +469,16 @@ public:
 
 	override Status enter(ir.DoStatement d)
 	{
-		assert(state.currentFall);
+		assert(state.fall);
 
 		LLVMBasicBlockRef doCond, doBody, doOut;
 
 		doBody = LLVMAppendBasicBlockInContext(
-			state.context, state.currentFunc, "doBody");
+			state.context, state.func, "doBody");
 		doCond = LLVMAppendBasicBlockInContext(
-			state.context, state.currentFunc, "doCond");
+			state.context, state.func, "doCond");
 		doOut = LLVMAppendBasicBlockInContext(
-			state.context, state.currentFunc, "doOut");
+			state.context, state.func, "doOut");
 
 		// Make continue jump to the cond block, and break to out.
 		auto saveBre = state.replaceBreakBlock(doOut);
@@ -498,13 +491,13 @@ public:
 		doNewBlock(doBody, d.block, doCond);
 
 		// Do the while statement part
-		LLVMMoveBasicBlockAfter(doCond, state.currentBlock);
+		LLVMMoveBasicBlockAfter(doCond, state.block);
 		state.startBlock(doCond);
 		auto cond = state.getValue(d.condition);
 		LLVMBuildCondBr(state.builder, cond, doBody, doOut);
 
 		// Switch out block
-		LLVMMoveBasicBlockAfter(doOut, state.currentBlock);
+		LLVMMoveBasicBlockAfter(doOut, state.block);
 		state.startBlock(doOut);
 		state.replaceBreakBlock(saveBre);
 		state.replaceContinueBlock(saveCon);
@@ -517,15 +510,15 @@ public:
 		LLVMBasicBlockRef forCond, forBody, forPost, forOut;
 
 		forCond = LLVMAppendBasicBlockInContext(
-			state.context, state.currentFunc, "forCond");
+			state.context, state.func, "forCond");
 		forBody = LLVMAppendBasicBlockInContext(
-			state.context, state.currentFunc, "forBody");
+			state.context, state.func, "forBody");
 		forPost = LLVMAppendBasicBlockInContext(
-			state.context, state.currentFunc, "forPost");
+			state.context, state.func, "forPost");
 		forOut = LLVMAppendBasicBlockInContext(
-			state.context, state.currentFunc, "forOut");
+			state.context, state.func, "forOut");
 
-		// Init stuff go into the currentBlock
+		// Init stuff go into the fnState.block
 		foreach(var; f.initVars)
 			enter(var);
 		foreach(exp; f.initExps)
@@ -552,7 +545,7 @@ public:
 		doNewBlock(forBody, f.block, forPost);
 
 		// For post block
-		LLVMMoveBasicBlockAfter(forPost, state.currentBlock);
+		LLVMMoveBasicBlockAfter(forPost, state.block);
 		state.startBlock(forPost);
 
 		foreach(exp; f.increments) {
@@ -563,7 +556,7 @@ public:
 		LLVMBuildBr(state.builder, forCond);
 
 		// For out block
-		LLVMMoveBasicBlockAfter(forOut, state.currentBlock);
+		LLVMMoveBasicBlockAfter(forOut, state.block);
 		state.startBlock(forOut);
 		state.replaceBreakBlock(saveBre);
 		state.replaceContinueBlock(saveCon);
@@ -573,26 +566,26 @@ public:
 
 	override Status visit(ir.ContinueStatement cs)
 	{
-		assert(state.currentContinueBlock !is null);
+		assert(state.continueBlock !is null);
 
 		if (cs.label !is null)
 			throw panic(cs.location, "labled continue statements not supported");
 
-		LLVMBuildBr(state.builder, state.currentContinueBlock);
-		state.currentFall = false;
+		LLVMBuildBr(state.builder, state.continueBlock);
+		state.fnState.fall = false;
 
 		return Continue;
 	}
 
 	override Status visit(ir.BreakStatement bs)
 	{
-		assert(state.currentBreakBlock !is null);
+		assert(state.breakBlock !is null);
 
 		if (bs.label !is null)
 			throw panic(bs.location, "labled break statements not supported");
 
-		LLVMBuildBr(state.builder, state.currentBreakBlock);
-		state.currentFall = false;
+		LLVMBuildBr(state.builder, state.breakBlock);
+		state.fnState.fall = false;
 
 		return Continue;
 	}
@@ -600,17 +593,18 @@ public:
 	override Status leave(ir.GotoStatement gs)
 	{
 		if (gs.isDefault) {
-			LLVMBuildBr(state.builder, state.currentSwitchDefault);
-			state.currentFall = false;
+			LLVMBuildBr(state.builder, state.switchDefault);
+			state.fnState.fall = false;
 		} else if (gs.isCase) {
 			if (gs.exp is null) {
-				state.currentFall = true;
+				state.fnState.fall = true;
 			} else {
 				auto v = state.getValue(gs.exp);
 				auto i = LLVMConstIntGetSExtValue(v);
-				if (auto p = i in state.currentSwitchCases) {
-					LLVMBuildBr(state.builder, *p);
-					state.currentFall = false;
+				LLVMBasicBlockRef b;
+				if (state.switchGetCase(i, b)) {
+					LLVMBuildBr(state.builder, b);
+					state.fnState.fall = false;
 				} else {
 					throw makeExpected(gs.location, "valid case");
 				}
@@ -629,7 +623,7 @@ public:
 	
 		state.getValue(t.exp);
 		LLVMBuildUnreachable(state.builder);
-		state.currentFall = false;
+		state.fnState.fall = false;
 
 		return Continue;
 	}
@@ -676,10 +670,10 @@ public:
 	void doNewBlock(LLVMBasicBlockRef b, ir.BlockStatement bs,
 	                LLVMBasicBlockRef fall)
 	{
-		LLVMMoveBasicBlockAfter(b, state.currentBlock);
+		LLVMMoveBasicBlockAfter(b, state.block);
 		state.startBlock(b);
 		accept(bs, this);
-		if (state.currentFall)
+		if (state.fall)
 			LLVMBuildBr(state.builder, fall);
 	}
 

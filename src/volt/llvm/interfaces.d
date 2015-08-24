@@ -13,16 +13,7 @@ public import ir = volt.ir.ir;
 public import volt.llvm.type;
 
 
-final class BlockPath
-{
-public:
-	ir.Node node;
-	BlockPath prev;
 
-	LLVMBasicBlockRef landingBlock;
-	LLVMBasicBlockRef continueBlock;
-	LLVMBasicBlockRef breakBlock;
-}
 
 /**
  * Represents a single LLVMValueRef plus the associated high level type.
@@ -71,14 +62,55 @@ public:
 	LLVMDIBuilderRef diBuilder;
 	LLVMModuleRef mod;
 
-	BlockPath path;
+	static struct PathState
+	{
+	public:
+		LLVMBasicBlockRef landingBlock;
+		LLVMBasicBlockRef continueBlock;
+		LLVMBasicBlockRef breakBlock;
+	}
 
-	LLVMBasicBlockRef currentBlock;
-	final @property LLVMBasicBlockRef currentBreakBlock() { return path.breakBlock; }
-	final @property LLVMBasicBlockRef currentContinueBlock() { return path.continueBlock; }
-	final @property LLVMBasicBlockRef currentLandingBlock() { return path.landingBlock; }
-	LLVMBasicBlockRef currentSwitchDefault;
-	LLVMBasicBlockRef[long] currentSwitchCases;
+	static struct SwitchState
+	{
+		LLVMBasicBlockRef def;
+		LLVMBasicBlockRef[long] cases;
+	}
+
+	static struct FunctionState
+	{
+		LLVMValueRef func;
+		bool fall; ///< Tracking for auto branch generation.
+
+		PathState path;
+		LLVMBasicBlockRef block;
+
+		SwitchState swi;
+	}
+
+	FunctionState fnState;
+
+	final @property LLVMValueRef func() { return fnState.func; }
+	final @property bool fall() { return fnState.fall; }
+	final @property LLVMBasicBlockRef block() { return fnState.block; }
+	final @property PathState path() { return fnState.path; }
+
+	final @property LLVMBasicBlockRef breakBlock() { return fnState.path.breakBlock; }
+	final @property LLVMBasicBlockRef continueBlock() { return fnState.path.continueBlock; }
+	final @property LLVMBasicBlockRef landingBlock() { return fnState.path.landingBlock; }
+
+	final @property LLVMBasicBlockRef switchDefault() { return fnState.swi.def; }
+	final LLVMBasicBlockRef switchSetCase(long val, LLVMBasicBlockRef ret)
+	{ fnState.swi.cases[val] = ret; return ret; }
+	final bool switchGetCase(long val, out LLVMBasicBlockRef ret)
+	{
+		auto p = val in fnState.swi.cases;
+		if (p is null) {
+			return false;
+		}
+		ret = *p;
+		return true;
+	}
+
 
 	/**
 	 * Global and local constructors and destructors.
@@ -100,9 +132,6 @@ public:
 	/**
 	 * @}
 	 */
-
-	LLVMValueRef currentFunc;
-	bool currentFall; ///< Tracking for auto branch generation.
 
 	/**
 	 * Cached type for convenience.
@@ -284,19 +313,9 @@ public:
 	 */
 	void startBlock(LLVMBasicBlockRef b)
 	{
-		currentFall = true;
-		currentBlock = b;
-		LLVMPositionBuilderAtEnd(builder, currentBlock);
-	}
-
-	/**
-	 * Replaces the current blockpath.
-	 */
-	BlockPath replacePath(BlockPath p)
-	{
-		auto t = path;
-		path = p;
-		return t;
+		fnState.fall = true;
+		fnState.block = b;
+		LLVMPositionBuilderAtEnd(builder, fnState.block);
 	}
 
 	/**
@@ -304,8 +323,8 @@ public:
 	 */
 	LLVMBasicBlockRef replaceContinueBlock(LLVMBasicBlockRef b)
 	{
-		auto t = path.continueBlock;
-		path.continueBlock = b;
+		auto t = fnState.path.continueBlock;
+		fnState.path.continueBlock = b;
 		return t;
 	}
 
@@ -314,8 +333,8 @@ public:
 	 */
 	LLVMBasicBlockRef replaceBreakBlock(LLVMBasicBlockRef b)
 	{
-		auto t = path.breakBlock;
-		path.breakBlock = b;
+		auto t = fnState.path.breakBlock;
+		fnState.path.breakBlock = b;
 		return t;
 	}
 }

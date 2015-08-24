@@ -180,14 +180,14 @@ public:
 	{
 		if (mIndexVar !is null)
 			return mIndexVar;
-		auto bb = LLVMGetFirstBasicBlock(currentFunc);
+		auto bb = LLVMGetFirstBasicBlock(func);
 		auto val = LLVMGetFirstInstruction(bb);
 		LLVMPositionBuilderBefore(builder, val);
 
 		mIndexVar = LLVMBuildAlloca(
 			builder, intType.llvmType, "__index");
 
-		LLVMPositionBuilderAtEnd(builder, currentBlock);
+		LLVMPositionBuilderAtEnd(builder, block);
 		return mIndexVar;
 	}
 
@@ -196,14 +196,14 @@ public:
 		if (mExceptionVar !is null)
 			return mExceptionVar;
 
-		auto bb = LLVMGetFirstBasicBlock(currentFunc);
+		auto bb = LLVMGetFirstBasicBlock(func);
 		auto val = LLVMGetFirstInstruction(bb);
 		LLVMPositionBuilderBefore(builder, val);
 
 		mExceptionVar = LLVMBuildAlloca(
 			builder, voidPtrType.llvmType, "__exception");
 
-		LLVMPositionBuilderAtEnd(builder, currentBlock);
+		LLVMPositionBuilderAtEnd(builder, block);
 		return mExceptionVar;
 	}
 
@@ -213,14 +213,14 @@ public:
 			return mResumeBlock;
 
 		auto b = LLVMAppendBasicBlockInContext(
-			context, currentFunc, "resume");
+			context, func, "resume");
 		LLVMPositionBuilderAtEnd(builder, b);
 
 		auto v = LLVMGetUndef(ehLandingType);
 		v = LLVMBuildInsertValue(builder, v, LLVMBuildLoad(builder, ehExceptionVar, ""), 0, "");
 		v = LLVMBuildInsertValue(builder, v, LLVMBuildLoad(builder, ehIndexVar, ""), 1, "");
 		LLVMBuildResume(builder, v);
-		LLVMPositionBuilderAtEnd(builder, currentBlock);
+		LLVMPositionBuilderAtEnd(builder, block);
 
 		return mResumeBlock = b;
 	}
@@ -231,7 +231,7 @@ public:
 			return mExitBlock;
 		}
 		auto b = LLVMAppendBasicBlockInContext(
-			context, currentFunc, "exit");
+			context, func, "exit");
 		LLVMPositionBuilderAtEnd(builder, b);
 
 		return mExitBlock = b;
@@ -239,15 +239,15 @@ public:
 
 	override LLVMValueRef buildCallOrInvoke(LLVMValueRef fn, LLVMValueRef[] args)
 	{
-		if (path.landingBlock is null) {
+		if (landingBlock is null) {
 			return LLVMBuildCall(builder, fn, args);
 		} else {
 			auto b = LLVMAppendBasicBlockInContext(
-				context, currentFunc, "");
-			auto ret = LLVMBuildInvoke(builder, fn, args, b, path.landingBlock);
-			LLVMMoveBasicBlockAfter(b, currentBlock);
+				context, func, "");
+			auto ret = LLVMBuildInvoke(builder, fn, args, b, landingBlock);
+			LLVMMoveBasicBlockAfter(b, block);
 			LLVMPositionBuilderAtEnd(builder, b);
-			currentBlock = b;
+			fnState.block = b;
 			return ret;
 		}
 	}
@@ -255,16 +255,14 @@ public:
 	override void onFunctionClose()
 	{
 		if (mResumeBlock !is null) {
-			LLVMMoveBasicBlockAfter(mResumeBlock, currentBlock);
+			LLVMMoveBasicBlockAfter(mResumeBlock, block);
 		}
 
 		mResumeBlock = null;
 		mIndexVar = null;
 		mExceptionVar = null;
 
-		currentFall = false;
-		currentFunc = null;
-		currentBlock = null;
+		fnState = FunctionState();
 	}
 
 
@@ -360,7 +358,7 @@ public:
 		case Field:
 			throw panic(var.location, "field variable refered directly");
 		case Function, Nested:
-			if (currentFunc is null)
+			if (func is null)
 				throw panic(var.location,
 					"non-local/global variable in non-function scope");
 			if (var.useBaseStorage)
@@ -409,7 +407,7 @@ public:
 
 		llvmType = type.llvmType;
 
-		if (currentFunc is null)
+		if (func is null)
 			throw panic(var.location, "non-local/global variable in non-function scope");
 		v = LLVMBuildAlloca(builder, llvmType, var.name);
 
