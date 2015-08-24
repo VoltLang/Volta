@@ -470,7 +470,7 @@ LexStatus lexSymbol(TokenWriter tw)
 	case '!':
 		return lexBang(tw);
 	case '(':
-		return lexOpenParen(tw);
+		return lexSingleSymbol(tw, '(', TokenType.OpenParen);
 	case ')':
 		return lexSingleSymbol(tw, ')', TokenType.CloseParen);
 	case '[':
@@ -509,6 +509,61 @@ LexStatus lexSymbol(TokenWriter tw)
 		break;
 	}
 	return lexFailed(tw, "symbol");
+}
+
+LexStatus lexSingleSymbol(TokenWriter tw, dchar c, TokenType symbol)
+{
+	auto token = currentLocationToken(tw);
+	auto mark = tw.source.save();
+	if (!match(tw, c)) {
+		return Failed;
+	}
+	token.type = symbol;
+	token.value = tw.source.sliceFrom(mark);
+	tw.addToken(token);
+	return Succeeded;
+}
+
+LexStatus lexSymbolOrSymbolAssign(TokenWriter tw, dchar c, TokenType symbol, TokenType symbolAssign)
+{
+	auto token = currentLocationToken(tw);
+	auto mark = tw.source.save();
+	auto type = symbol;
+	if (!match(tw, c)) {
+		return Failed;
+	}
+
+	if (matchIf(tw, '=')) {
+		type = symbolAssign;
+	}
+
+	token.type = type;
+	token.value = tw.source.sliceFrom(mark);
+	tw.addToken(token);
+
+	return Succeeded;
+}
+
+LexStatus lexSymbolOrSymbolAssignOrDoubleSymbol(TokenWriter tw, dchar c, TokenType symbol, TokenType symbolAssign, TokenType doubleSymbol)
+{
+	auto token = currentLocationToken(tw);
+	auto mark = tw.source.save();
+	auto type = symbol;
+	if (!match(tw, c)) {
+		return Failed;
+	}
+
+	if (matchIf(tw, '=')) {
+		type = symbolAssign;
+	} else if (matchIf(tw, c)) {
+		type = doubleSymbol;
+	}
+
+	token.type = type;
+	token.value = tw.source.sliceFrom(mark);
+	tw.addToken(token);
+
+	return Succeeded;
 }
 
 LexStatus lexCaret(TokenWriter tw)
@@ -594,75 +649,6 @@ LexStatus lexDot(TokenWriter tw)
 
 	token.type = type;
 	token.value = tw.source.sliceFrom(mark);
-	tw.addToken(token);
-
-	return Succeeded;
-}
-
-LexStatus lexSymbolOrSymbolAssignOrDoubleSymbol(TokenWriter tw, dchar c, TokenType symbol, TokenType symbolAssign, TokenType doubleSymbol)
-{
-	auto token = currentLocationToken(tw);
-	auto mark = tw.source.save();
-	auto type = symbol;
-	if (!match(tw, c)) {
-		return Failed;
-	}
-
-	if (matchIf(tw, '=')) {
-		type = symbolAssign;
-	} else if (matchIf(tw, c)) {
-		type = doubleSymbol;
-	}
-
-	token.type = type;
-	token.value = tw.source.sliceFrom(mark);
-	tw.addToken(token);
-
-	return Succeeded;
-}
-
-LexStatus lexSingleSymbol(TokenWriter tw, dchar c, TokenType symbol)
-{
-	auto token = currentLocationToken(tw);
-	auto mark = tw.source.save();
-	if (!match(tw, c)) {
-		return Failed;
-	}
-	token.type = symbol;
-	token.value = tw.source.sliceFrom(mark);
-	tw.addToken(token);
-	return Succeeded;
-}
-
-LexStatus lexSymbolOrSymbolAssign(TokenWriter tw, dchar c, TokenType symbol, TokenType symbolAssign)
-{
-	auto token = currentLocationToken(tw);
-	auto mark = tw.source.save();
-	auto type = symbol;
-	if (!match(tw, c)) {
-		return Failed;
-	}
-
-	if (matchIf(tw, '=')) {
-		type = symbolAssign;
-	}
-
-	token.type = type;
-	token.value = tw.source.sliceFrom(mark);
-	tw.addToken(token);
-
-	return Succeeded;
-}
-
-LexStatus lexOpenParen(TokenWriter tw)
-{
-	Mark m = tw.source.save();
-	auto token = currentLocationToken(tw);
-	if (!match(tw, '(')) {
-		return Failed;
-	}
-	token.type = TokenType.OpenParen;
-	token.value = tw.source.sliceFrom(m);
 	tw.addToken(token);
 
 	return Succeeded;
