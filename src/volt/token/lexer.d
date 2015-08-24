@@ -506,9 +506,9 @@ LexStatus lexSymbol(TokenWriter tw)
 	case '#':
 		return lexHashLine(tw);
 	default:
-		break;
+		return lexFailed(tw, "symbol");
 	}
-	return lexFailed(tw, "symbol");
+	version (Volt) assert(false);
 }
 
 LexStatus lexSingleSymbol(TokenWriter tw, dchar c, TokenType symbol)
