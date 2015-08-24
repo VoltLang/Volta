@@ -112,19 +112,6 @@ public:
 		return ret;
 	}
 
-	/**
-	 * Set the location to newFilename(line:1).
-	 *
-	 * Side-effects:
-	 *   Updates the attached source location field.
-	 */
-	void changeCurrentLocation(string newFilename, size_t newLine)
-	{
-		mSource.location.filename = newFilename;
-		mSource.location.line = newLine;
-		return;
-	}
-
 private:
 	/**
 	 * Create a Begin token add set the token array

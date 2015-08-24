@@ -95,6 +95,16 @@ public:
 	}
 
 	/**
+	 * Set the location to newFilename(line:1).
+	 */
+	void changeCurrentLocation(string newFilename, size_t newLine)
+	{
+		location.filename = newFilename;
+		location.line = newLine;
+		return;
+	}
+
+	/**
 	 * Used to skip the first script line in D sources.
 	 *
 	 * Side-effects:
