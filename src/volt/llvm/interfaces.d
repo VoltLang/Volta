@@ -70,6 +70,8 @@ public:
 		LLVMBasicBlockRef landingBlock;
 		LLVMBasicBlockRef continueBlock;
 		LLVMBasicBlockRef breakBlock;
+
+		LLVMValueRef[] success;
 	}
 
 	static struct SwitchState

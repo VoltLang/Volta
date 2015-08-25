@@ -110,7 +110,11 @@ public:
 
 		// Clean up
 		state.onFunctionClose();
+
 		state.fnState = old;
+		if (fn.isLoweredScopeExit || fn.isLoweredScopeSuccess) {
+			state.fnState.path.success ~= llvmFunc;
+		}
 
 		// Reset builder for nested functions.
 		if (state.block !is null) {
@@ -176,6 +180,8 @@ public:
 	override Status enter(ir.ReturnStatement ret)
 	{
 		assert(state.fall);
+
+		handleScopeSuccessTo(null);
 
 		if (ret.exp is null) {
 			LLVMBuildRet(b, null);
@@ -575,6 +581,10 @@ public:
 			accept(s, this);
 		}
 
+		if (state.fall) {
+			handleScopeSuccessTo(old);
+		}
+
 		state.popPath();
 		return ContinueParent;
 	}
@@ -586,6 +596,8 @@ public:
 		if (cs.label !is null) {
 			throw panic(cs.location, "labled continue statements not supported");
 		}
+
+		handleScopeSuccessTo(p);
 
 		LLVMBuildBr(state.builder, p.continueBlock);
 		state.fnState.fall = false;
@@ -601,6 +613,8 @@ public:
 			throw panic(bs.location, "labled break statements not supported");
 		}
 
+		handleScopeSuccessTo(p);
+
 		LLVMBuildBr(state.builder, p.breakBlock);
 		state.fnState.fall = false;
 
@@ -609,6 +623,10 @@ public:
 
 	override Status leave(ir.GotoStatement gs)
 	{
+		// Goto will exit the scope just as if it was a break.
+		auto p = state.findBreak();
+		handleScopeSuccessTo(p);
+
 		if (gs.isDefault) {
 			LLVMBuildBr(state.builder, state.switchDefault);
 			state.fnState.fall = false;
@@ -635,6 +653,8 @@ public:
 
 	override Status leave(ir.ThrowStatement t)
 	{
+		// Should not call success here.
+
 		if (t.exp is null) {
 			throw panic(t.location, "empty throw statement");
 		}
@@ -694,6 +714,31 @@ public:
 		if (state.fall)
 			LLVMBuildBr(state.builder, fall);
 	}
+
+	void handleScopeSuccessTo(State.PathState to)
+	{
+		LLVMValueRef[] funcs;
+		auto p = state.path;
+		while (p !is to) {
+			if (p.success.length > 0) {
+				funcs = p.success ~ funcs;
+			}
+			p = p.prev;
+		}
+
+		if (funcs.length == 0) {
+			return;
+		}
+
+		auto value = LLVMBuildBitCast(
+			state.builder, state.fnState.nested,
+			state.voidPtrType.llvmType, "");
+		auto arg = [value];
+		foreach_reverse (fn; funcs) {
+			state.buildCallOrInvoke(fn, arg);
+		}
+	}
+
 
 	/*
 	 * Ignore but pass.
