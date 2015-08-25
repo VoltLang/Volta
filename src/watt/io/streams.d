@@ -1,3 +1,3 @@
-module watt.io.stream;
+module watt.io.streams;
 
 import std.stream : OutputStream;
