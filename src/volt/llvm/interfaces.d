@@ -62,9 +62,11 @@ public:
 	LLVMDIBuilderRef diBuilder;
 	LLVMModuleRef mod;
 
-	static struct PathState
+	static final class PathState
 	{
 	public:
+		PathState prev;
+
 		LLVMBasicBlockRef landingBlock;
 		LLVMBasicBlockRef continueBlock;
 		LLVMBasicBlockRef breakBlock;
@@ -96,10 +98,6 @@ public:
 	final @property LLVMBasicBlockRef block() { return fnState.block; }
 	final @property PathState path() { return fnState.path; }
 
-	final @property LLVMBasicBlockRef breakBlock() { return fnState.path.breakBlock; }
-	final @property LLVMBasicBlockRef continueBlock() { return fnState.path.continueBlock; }
-	final @property LLVMBasicBlockRef landingBlock() { return fnState.path.landingBlock; }
-
 	final @property LLVMBasicBlockRef switchDefault() { return fnState.swi.def; }
 	final LLVMBasicBlockRef switchSetCase(long val, LLVMBasicBlockRef ret)
 	{ fnState.swi.cases[val] = ret; return ret; }
@@ -111,6 +109,38 @@ public:
 		}
 		ret = *p;
 		return true;
+	}
+
+	final PathState findLanding()
+	{
+		auto p = path;
+		assert(p !is null);
+		while (p !is null && p.landingBlock is null) {
+			p = p.prev;
+		}
+		return p;
+	}
+
+	final PathState findContinue()
+	{
+		auto p = path;
+		assert(p !is null);
+		while (p.continueBlock is null) {
+			p = p.prev;
+			assert(p !is null);
+		}
+		return p;
+	}
+
+	final PathState findBreak()
+	{
+		auto p = path;
+		assert(p !is null);
+		while (p.breakBlock is null) {
+			p = p.prev;
+			assert(p !is null);
+		}
+		return p;
 	}
 
 
@@ -338,5 +368,23 @@ public:
 		auto t = fnState.path.breakBlock;
 		fnState.path.breakBlock = b;
 		return t;
+	}
+
+	/**
+	 * Push a new Path, setting prev as needed.
+	 */
+	void pushPath()
+	{
+		auto p = new PathState();
+		p.prev = path;
+		fnState.path = p;
+	}
+
+	/**
+	 * Pop a PathState.
+	 */
+	void popPath()
+	{
+		fnState.path = path.prev;
 	}
 }

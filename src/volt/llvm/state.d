@@ -239,12 +239,15 @@ public:
 
 	override LLVMValueRef buildCallOrInvoke(LLVMValueRef fn, LLVMValueRef[] args)
 	{
-		if (landingBlock is null) {
+		auto p = findLanding();
+
+		if (p is null) {
 			return LLVMBuildCall(builder, fn, args);
 		} else {
+			assert(p.landingBlock !is null);
 			auto b = LLVMAppendBasicBlockInContext(
 				context, func, "");
-			auto ret = LLVMBuildInvoke(builder, fn, args, b, landingBlock);
+			auto ret = LLVMBuildInvoke(builder, fn, args, b, p.landingBlock);
 			LLVMMoveBasicBlockAfter(b, block);
 			LLVMPositionBuilderAtEnd(builder, b);
 			fnState.block = b;

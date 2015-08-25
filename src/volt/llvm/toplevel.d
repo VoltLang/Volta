@@ -99,8 +99,8 @@ public:
 			state.makeNestVariable(nestVar, v);
 		}
 
-		foreach(n; fn._body.statements)
-			accept(n, this);
+		// Go over the function body.
+		accept(fn._body, this);
 
 		// Assume language pass knows what it is doing.
 		if (state.fall) {
@@ -110,7 +110,6 @@ public:
 
 		// Clean up
 		state.onFunctionClose();
-
 		state.fnState = old;
 
 		// Reset builder for nested functions.
@@ -311,11 +310,14 @@ public:
 		/*
 		 * The try body.
 		 */
-		auto old = state.fnState.path;
-		state.fnState.path = State.PathState();
-		state.fnState.path.landingBlock = landingPad;
+		assert(state.path.landingBlock is null);
+		state.path.landingBlock = landingPad;
+
 		accept(t.tryBlock, this);
-		state.fnState.path = old;
+
+		// Reset the landing pad.
+		state.path.landingBlock = null;
+
 		if (state.fall) {
 			LLVMBuildBr(state.builder, tryDone);
 		}
@@ -564,14 +566,28 @@ public:
 		return ContinueParent;
 	}
 
+	override Status enter(ir.BlockStatement bs)
+	{
+		auto old = state.path;
+		state.pushPath();
+
+		foreach (s; bs.statements) {
+			accept(s, this);
+		}
+
+		state.popPath();
+		return ContinueParent;
+	}
+
 	override Status visit(ir.ContinueStatement cs)
 	{
-		assert(state.continueBlock !is null);
+		auto p = state.findContinue();
 
-		if (cs.label !is null)
+		if (cs.label !is null) {
 			throw panic(cs.location, "labled continue statements not supported");
+		}
 
-		LLVMBuildBr(state.builder, state.continueBlock);
+		LLVMBuildBr(state.builder, p.continueBlock);
 		state.fnState.fall = false;
 
 		return Continue;
@@ -579,12 +595,13 @@ public:
 
 	override Status visit(ir.BreakStatement bs)
 	{
-		assert(state.breakBlock !is null);
+		auto p = state.findBreak();
 
-		if (bs.label !is null)
+		if (bs.label !is null) {
 			throw panic(bs.location, "labled break statements not supported");
+		}
 
-		LLVMBuildBr(state.builder, state.breakBlock);
+		LLVMBuildBr(state.builder, p.breakBlock);
 		state.fnState.fall = false;
 
 		return Continue;
@@ -597,17 +614,18 @@ public:
 			state.fnState.fall = false;
 		} else if (gs.isCase) {
 			if (gs.exp is null) {
+				// TODO XXX this is a bug.
 				state.fnState.fall = true;
 			} else {
 				auto v = state.getValue(gs.exp);
 				auto i = LLVMConstIntGetSExtValue(v);
 				LLVMBasicBlockRef b;
-				if (state.switchGetCase(i, b)) {
-					LLVMBuildBr(state.builder, b);
-					state.fnState.fall = false;
-				} else {
+
+				if (!state.switchGetCase(i, b)) {
 					throw makeExpected(gs.location, "valid case");
 				}
+				LLVMBuildBr(state.builder, b);
+				state.fnState.fall = false;
 			}
 		} else {
 			throw panic(gs.location, "non switch goto");
@@ -677,7 +695,6 @@ public:
 			LLVMBuildBr(state.builder, fall);
 	}
 
-
 	/*
 	 * Ignore but pass.
 	 */
@@ -690,5 +707,6 @@ public:
 	override Status leave(ir.Function fn) { assert(false); }
 	override Status leave(ir.IfStatement i) { assert(false); }
 	override Status leave(ir.ExpStatement e) { assert(false); }
+	override Status leave(ir.BlockStatement b) { assert(false); }
 	override Status leave(ir.ReturnStatement r) { assert(false); }
 }
