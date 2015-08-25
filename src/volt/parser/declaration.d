@@ -592,7 +592,7 @@ ParseStatus parseFunction(ParserStream ps, out ir.Function fn, ir.Type base)
 	fn.docComment = base.docComment;
 	ps.functionDepth++;
 	ps.pushCommentLevel();
-	scope (exit) {
+	scope (success) {
 		if (ps.functionDepth > 1 && fn !is null) {
 			fn.kind = ir.Function.Kind.Nested;
 		}
