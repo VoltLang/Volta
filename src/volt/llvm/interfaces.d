@@ -81,6 +81,8 @@ public:
 		LLVMValueRef func;
 		bool fall; ///< Tracking for auto branch generation.
 
+		LLVMValueRef nested; ///< Nested value
+
 		PathState path;
 		LLVMBasicBlockRef block;
 

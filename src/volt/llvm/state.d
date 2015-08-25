@@ -365,6 +365,10 @@ public:
 				throw panic(var.location,
 					"useBaseStorage can not be used on function variables");
 			v = LLVMBuildAlloca(builder, llvmType, var.name);
+			if (var.name == "__nested") {
+				assert(fnState.nested is null);
+				fnState.nested = v;
+			}
 			break;
 		case Local:
 			v = LLVMAddGlobal(mod, llvmType, var.mangledName);
@@ -459,6 +463,9 @@ public:
 
 		v = LLVMBuildBitCast(builder, v, llvmType, "__nested");
 		valueStore[k] = Store(v, type);
+
+		assert(fnState.nested is null);
+		fnState.nested = v;
 	}
 
 	override void addType(Type type, string mangledName)
