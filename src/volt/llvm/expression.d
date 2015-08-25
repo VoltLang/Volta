@@ -493,7 +493,11 @@ void handleBinOpPrimitive(State state, Location loc, ir.BinOp.Op binOp,
 		break;
 	case SRS:
 		assert(!pt.floating);
-		op = LLVMOpcode.AShr;
+		if (pt.signed) {
+			op = LLVMOpcode.AShr;
+		} else {
+			op = LLVMOpcode.LShr;
+		}
 		break;
 	case RS:
 		assert(!pt.floating);
