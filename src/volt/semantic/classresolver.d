@@ -583,7 +583,7 @@ void emitVtableVariable(LanguagePass lp, ir.Class _class)
 	void addInterfaceInstance(ir._Interface iface, ir.Class fromParent, size_t i)
 	{
 		auto var = buildVariableSmart(l, iface.layoutStruct, ir.Variable.Storage.Global, format("__iface%s_instance", mangle(iface)));
-		var.mangledName = "_V__Interface_" ~ mangle(iface);
+		var.mangledName =  "_V__Interface_" ~ _class.mangledName ~ "_" ~ mangle(iface);
 		var.assign = getInterfaceStructAssign(lp, fromParent, _class.myScope, iface, i);
 		_class.members.nodes ~= var;
 		_class.myScope.addValue(var, var.name);
