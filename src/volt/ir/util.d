@@ -8,12 +8,14 @@ version(Volt) {
 	import std.algorithm : sort;
 }
 
+import ir = volt.ir.ir;
+
 import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 import volt.util.string : unescapeString;
-import ir = volt.ir.ir;
 import volt.ir.copy;
+
 
 /**
  * Builds an identifier exp from a string.

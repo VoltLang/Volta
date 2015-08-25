@@ -7,7 +7,6 @@ import ir = volt.ir.ir;
 import volt.errors;
 import volt.interfaces;
 import volt.token.location;
-import volt.visitor.debugprinter : getNodeAddressString;
 import volt.semantic.extyper;
 
 
@@ -171,8 +170,8 @@ private:
 	{
 		debug if (mCurrent !is ctx) {
 			auto str = "invalid scope layout should be " ~
-			           getNodeAddressString(n) ~ " is " ~
-			           getNodeAddressString(mCurrent.node);
+			           ir.getNodeAddressString(n) ~ " is " ~
+			           ir.getNodeAddressString(mCurrent.node);
 			throw panic(n.location, str);
 		}
 

@@ -8,7 +8,6 @@ import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 import volt.visitor.visitor;
-import volt.visitor.debugprinter;
 import volt.visitor.scopemanager;
 import volt.semantic.classify;
 
@@ -48,7 +47,7 @@ public:
 		if (t in mNodes) {
 			auto str = format(
 				"%s \"%s\" node found more then once in IR",
-				getNodeAddressString(n), to!string(n.nodeType));
+				ir.getNodeAddressString(n), to!string(n.nodeType));
 			throw panic(n, str);
 		}
 		mNodes[t] = mCount++;
@@ -62,7 +61,7 @@ public:
 			return Continue;
 		}
 		auto str = format("%s invalid variable found in IR",
-		                  getNodeAddressString(v));
+		                  ir.getNodeAddressString(v));
 		throw panic(v, str);
 	}
 
@@ -131,7 +130,7 @@ public:
 				break;
 			default:
 				auto str = format("%s invalid node '%s' in toplevel block",
-				                  getNodeAddressString(n),
+				                  ir.getNodeAddressString(n),
 				                  to!string(n.nodeType));
 				throw panic(n, str);
 			}
@@ -171,7 +170,7 @@ public:
 				break;
 			default:
 				auto str = format("(%s) invalid node '%s' in block statement",
-				                  getNodeAddressString(n),
+				                  ir.getNodeAddressString(n),
 				                  to!string(n.nodeType));
 				throw panic(n, str);
 			}
@@ -183,7 +182,7 @@ public:
 	override Status visit(ref ir.Exp exp, ir.IdentifierExp ie)
 	{
 		auto str = format("%s IdentifierExp '%s' left in IR.",
-		                  getNodeAddressString(ie), ie.value);
+		                  ir.getNodeAddressString(ie), ie.value);
 		throw panic(ie, str);
 	}
 

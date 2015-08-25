@@ -29,15 +29,6 @@ void debugPrintNode(ir.Node n)
 	dp.close();
 }
 
-string getNodeAddressString(ir.Node node)
-{
-	version (Volt) {
-		return toString(cast(void*)node);
-	} else {
-		return "0x" ~ toString(cast(void*)node);
-	}
-}
-
 class DebugMarker : Pass
 {
 protected:
@@ -48,7 +39,7 @@ public:
 
 	override void transform(ir.Module m)
 	{
-		writefln("%s %s \"%s\"", mText, getNodeAddressString(m), m.name.toString);
+		writefln("%s %s \"%s\"", mText, ir.getNodeAddressString(m), m.name.toString);
 	}
 
 	override void close() {}
@@ -234,7 +225,7 @@ public:
 		mLastIndent = mIndent;
 		if (mIndent != 0)
 			ln();
-		twf(["(", ir.nodeToString(n), " \"", n.name.toString(), "\" ", getNodeAddressString(n)]);
+		twf(["(", ir.nodeToString(n), " \"", n.name.toString(), "\" ", ir.getNodeAddressString(n)]);
 		mLastIndent = mIndent++;
 		return Continue;
 	}
@@ -414,7 +405,7 @@ protected:
 	{
 		if (mIndent != 0)
 			ln();
-		twf(["(", node.docComment, ir.nodeToString(node), " ", getNodeAddressString(node)]);
+		twf(["(", node.docComment, ir.nodeToString(node), " ", ir.getNodeAddressString(node)]);
 		printTypeFields(node);
 		mLastIndent = mIndent++;
 	}
@@ -424,7 +415,7 @@ protected:
 		if (mIndent != 0)
 			ln();
 
-		twf(["(", node.docComment, ir.nodeToString(node), " ", extra, " ", getNodeAddressString(node)]);
+		twf(["(", node.docComment, ir.nodeToString(node), " ", extra, " ", ir.getNodeAddressString(node)]);
 		printTypeFields(node);
 		mLastIndent = mIndent++;
 	}
@@ -461,7 +452,7 @@ protected:
 
 		ln();
 		if (r !is null) {
-			twf(["-> ", ir.nodeToString(r), " ", getNodeAddressString(r)]);
+			twf(["-> ", ir.nodeToString(r), " ", ir.getNodeAddressString(r)]);
 			visitNamed(r);
 		} else {
 			twf("-> null");
@@ -509,7 +500,7 @@ protected:
 	void visitNode(ir.Node node)
 	{
 		ln();
-		twf("(", node.docComment, ir.nodeToString(node), " ", getNodeAddressString(node));
+		twf("(", node.docComment, ir.nodeToString(node), " ", ir.getNodeAddressString(node));
 		printTypeFields(node);
 		wf(")");
 		mLastIndent = mIndent;

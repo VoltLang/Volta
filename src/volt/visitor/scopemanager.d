@@ -7,7 +7,6 @@ import ir = volt.ir.ir;
 import volt.errors;
 
 import volt.visitor.visitor;
-import volt.visitor.debugprinter;
 
 
 class ScopeManager : NullVisitor
@@ -34,8 +33,8 @@ public:
 	{
 		if (current !is m.myScope) {
 			auto str = "invalid scope layout should be " ~
-			           getNodeAddressString(m) ~ " is " ~
-			           getNodeAddressString(current.node);
+			           ir.getNodeAddressString(m) ~ " is " ~
+			           ir.getNodeAddressString(current.node);
 			throw panic(m.location, str);
 		}
 
@@ -54,8 +53,8 @@ public:
 	{
 		if (current !is s.myScope) {
 			auto str = "invalid scope layout should be " ~
-			           getNodeAddressString(s) ~ " is " ~
-			           getNodeAddressString(current.node);
+			           ir.getNodeAddressString(s) ~ " is " ~
+			           ir.getNodeAddressString(current.node);
 			throw panic(s.location, str);
 		}
 
@@ -74,8 +73,8 @@ public:
 	{
 		if (current !is u.myScope) {
 			auto str = "invalid scope layout should be " ~
-			           getNodeAddressString(u) ~ " is " ~
-			           getNodeAddressString(current.node);
+			           ir.getNodeAddressString(u) ~ " is " ~
+			           ir.getNodeAddressString(current.node);
 			throw panic(u.location, str);
 		}
 
@@ -94,8 +93,8 @@ public:
 	{
 		if (current !is c.myScope) {
 			auto str = "invalid scope layout should be " ~
-			           getNodeAddressString(c) ~ " is " ~
-			           getNodeAddressString(current.node);
+			           ir.getNodeAddressString(c) ~ " is " ~
+			           ir.getNodeAddressString(current.node);
 			throw panic(c.location, str);
 		}
 
@@ -114,8 +113,8 @@ public:
 	{
 		if (current !is i.myScope) {
 			auto str = "invalid scope layout should be " ~
-			           getNodeAddressString(i) ~ " is " ~
-			           getNodeAddressString(current.node);
+			           ir.getNodeAddressString(i) ~ " is " ~
+			           ir.getNodeAddressString(current.node);
 			throw panic(i.location, str);
 		}
 
@@ -134,8 +133,8 @@ public:
 	{
 		if (current !is ui.myScope) {
 			auto str = "invalid scope layout should be " ~
-			           getNodeAddressString(ui) ~ " is " ~
-			           getNodeAddressString(current.node);
+			           ir.getNodeAddressString(ui) ~ " is " ~
+			           ir.getNodeAddressString(current.node);
 			throw panic(ui.location, str);
 		}
 		current = current.parent;
@@ -165,8 +164,8 @@ public:
 
 		if (current !is fn.myScope) {
 			auto str = "invalid scope layout should be " ~
-			           getNodeAddressString(fn) ~ " is " ~
-			           getNodeAddressString(current.node);
+			           ir.getNodeAddressString(fn) ~ " is " ~
+			           ir.getNodeAddressString(current.node);
 			throw panic(fn.location, str);
 		}
 
@@ -186,8 +185,8 @@ public:
 	{
 		if (current !is bs.myScope) {
 			auto str = "invalid scope layout should be " ~
-			           getNodeAddressString(bs) ~ " is " ~
-			           getNodeAddressString(current.node);
+			           ir.getNodeAddressString(bs) ~ " is " ~
+			           ir.getNodeAddressString(current.node);
 			throw panic(bs.location, str);
 		}
 
@@ -206,8 +205,8 @@ public:
 	{
 		if (current !is e.myScope) {
 			auto str = "invalid scope layout should be " ~
-			           getNodeAddressString(e) ~ " is " ~
-			           getNodeAddressString(current.node);
+			           ir.getNodeAddressString(e) ~ " is " ~
+			           ir.getNodeAddressString(current.node);
 			throw panic(e.location, str);
 		}
 

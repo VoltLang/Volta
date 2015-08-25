@@ -3,6 +3,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.ir.base;
 
+import watt.conv : toString;
+
 public import volt.token.location : Location;
 public import volt.token.token : Token, TokenType;
 
@@ -376,5 +378,17 @@ string nodeToString(NodeType nodeType)
 	case StatementExp: return "StatementExp";
 	case TokenExp: return "TokenExp";
 	case VaArgExp: return "VaArgExp";
+	}
+}
+
+/**
+ * For debugging helpers.
+ */
+string getNodeAddressString(Node node)
+{
+	version (Volt) {
+		return toString(cast(void*)node);
+	} else {
+		return "0x" ~ toString(cast(void*)node);
 	}
 }
