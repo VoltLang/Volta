@@ -2,10 +2,10 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.visitor.debugprinter;
 
-import std.stdio : writefln, writef;
-import std.stream : Stream, File, FileMode;
-import std.cstream : dout;
-import std.conv : to;
+
+import watt.io.streams : OutputStream;
+import watt.io.std : writefln, writef, output;
+import watt.conv : toString;
 
 import volt.token.token;
 
@@ -31,7 +31,11 @@ void debugPrintNode(ir.Node n)
 
 string getNodeAddressString(ir.Node node)
 {
-	return "0x" ~ to!string(*cast(size_t*)&node, 16);
+	version (Volt) {
+		return toString(cast(void*)node);
+	} else {
+		return "0x" ~ toString(cast(void*)node);
+	}
 }
 
 class DebugMarker : Pass
@@ -42,19 +46,19 @@ protected:
 public:
 	this(string text) { mText = text; }
 
-	override void close() {}
-
 	override void transform(ir.Module m)
 	{
 		writefln("%s %s \"%s\"", mText, getNodeAddressString(m), m.name.toString);
 	}
+
+	override void close() {}
 }
 
-class DebugPrinter : Visitor, Pass, Backend
+class DebugPrinter : Visitor, Pass/*, Backend */
 {
 protected:
 	string mFilename;
-	Stream mStream;
+	OutputStream mStream;
 	void delegate(string) mSink;
 
 	int mIndent;
@@ -68,13 +72,6 @@ public:
 		mSink = sink;
 	}
 
-	void close()
-	{
-		mFilename = null;
-		assert(mStream is null);
-		assert(mFilename is null);
-	}
-
 
 	/*
 	 *
@@ -82,8 +79,14 @@ public:
 	 *
 	 */
 
+	override void close()
+	{
+		mFilename = null;
+		assert(mStream is null);
+		assert(mFilename is null);
+	}
 
-	void transform(ir.Module m)
+	override void transform(ir.Module m)
 	in {
 		assert(mStream is null);
 		assert(mFilename is null);
@@ -92,14 +95,18 @@ public:
 		assert(mStream is null);
 		assert(mFilename is null);
 
-		mStream = dout;
+		mStream = output;
 		void sink(string s)
 		{
 			mStream.writef("%s", s);
 		}
 		bool sinkWasNull;
 		if (mSink is null) {
-			mSink = &sink;
+			version (Volt) {
+				mSink = cast(typeof(mSink))sink;
+			} else {
+				mSink = &sink;
+			}
 			sinkWasNull = true;
 		}
 
@@ -111,7 +118,7 @@ public:
 		}
 	}
 
-	void transform(ref ir.Exp exp)
+	void transformExp(ref ir.Exp exp)
 	in {
 		assert(mStream is null);
 		assert(mFilename is null);
@@ -120,14 +127,18 @@ public:
 		assert(mStream is null);
 		assert(mFilename is null);
 
-		mStream = dout;
+		mStream = output;
 		void sink(string s)
 		{
 			mStream.writef("%s", s);
 		}
 		bool sinkWasNull;
 		if (mSink is null) {
-			mSink = &sink;
+			version (Volt) {
+				mSink = cast(typeof(mSink))sink;
+			} else {
+				mSink = &sink;
+			}
 			sinkWasNull = true;
 		}
 
@@ -148,14 +159,18 @@ public:
 		assert(mStream is null);
 		assert(mFilename is null);
 
-		mStream = dout;
+		mStream = output;
 		void sink(string s)
 		{
 			mStream.writef("%s", s);
 		}
 		bool sinkWasNull;
 		if (mSink is null) {
-			mSink = &sink;
+			version (Volt) {
+				mSink = cast(typeof(mSink))sink;
+			} else {
+				mSink = &sink;
+			}
 			sinkWasNull = true;
 		}
 
@@ -170,51 +185,6 @@ public:
 		if (sinkWasNull) {
 			mSink = null;
 		}
-	}
-
-
-	/*
-	 *
-	 * Backend.
-	 *
-	 */
-
-
-	TargetType[] supported()
-	{
-		return [TargetType.DebugPrinting];
-	}
-
-	void setTarget(string filename, TargetType type)
-	in {
-		assert(mStream is null);
-		assert(mFilename is null);
-		assert(type == TargetType.DebugPrinting);
-	}
-	body {
-		if (type != TargetType.DebugPrinting)
-			throw new Exception("Unsupported target type");
-
-		mFilename = filename;
-	}
-
-	void compile(ir.Module m)
-	in {
-		assert(mStream is null);
-		assert(mFilename !is null);
-	}
-	body {
-		scope(exit)
-			mFilename = null;
-
-		mStream = new File(mFilename, FileMode.OutNew);
-		scope(exit) {
-			mStream.flush();
-			mStream.close();
-			mStream = null;
-		}
-
-		accept(m, this);
 	}
 
 
@@ -384,11 +354,11 @@ public:
 	/*
 	 * Expression Nodes.
 	 */
-	override Status enter(ref ir.Exp, ir.Postfix n) { enterNode(n, to!string(n.op)); return Continue; }
+	override Status enter(ref ir.Exp, ir.Postfix n) { enterNode(n, .toString(n.op)); return Continue; }
 	override Status leave(ref ir.Exp, ir.Postfix n) { leaveNode(n); return Continue; }
-	override Status enter(ref ir.Exp, ir.Unary n) { enterNode(n, to!string(n.op)); return Continue; }
+	override Status enter(ref ir.Exp, ir.Unary n) { enterNode(n, .toString(n.op)); return Continue; }
 	override Status leave(ref ir.Exp, ir.Unary n) { leaveNode(n); return Continue; }
-	override Status enter(ref ir.Exp, ir.BinOp n) { enterNode(n, to!string(n.op)); return Continue; }
+	override Status enter(ref ir.Exp, ir.BinOp n) { enterNode(n, .toString(n.op)); return Continue; }
 	override Status leave(ref ir.Exp, ir.BinOp n) { leaveNode(n); return Continue; }
 	override Status enter(ref ir.Exp, ir.Ternary n) { enterNode(n); return Continue; }
 	override Status leave(ref ir.Exp, ir.Ternary n) { leaveNode(n); return Continue; }
@@ -469,9 +439,9 @@ protected:
 		wf("\n");
 		twf("  .mangledName \"", t.mangledName, "\"\n");
 		twf("  .glossedName \"", t.glossedName, "\"\n");
-		twf("  .isConst ", to!string(t.isConst), "\n");
-		twf("  .isScope ", to!string(t.isScope), "\n");
-		twf("  .isImmutable ", to!string(t.isImmutable));
+		twf("  .isConst ", .toString(t.isConst), "\n");
+		twf("  .isScope ", .toString(t.isScope), "\n");
+		twf("  .isImmutable ", .toString(t.isImmutable));
 	}
 
 	void leaveNode(ir.Node node)
