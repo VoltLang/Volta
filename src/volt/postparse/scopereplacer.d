@@ -50,11 +50,21 @@ class ScopeReplacer : NullVisitor, Pass
 			if (functionStack.length == 0) {
 				throw makeScopeOutsideFunction(ss.location);
 			}
+			auto p = functionStack[$-1];
 			auto fn = scopeStatementToFunction(ss);
 			final switch (ss.kind) with (ir.ScopeStatement.Kind) {
-			case Exit: functionStack[$-1].scopeExits ~= fn; break;
-			case Success: functionStack[$-1].scopeSuccesses ~= fn; break;
-			case Failure: functionStack[$-1].scopeFailures ~= fn; break;
+			case Exit:
+				p.scopeExits ~= fn;
+				fn.isLoweredScopeExit = true;
+				break;
+			case Success:
+				p.scopeSuccesses ~= fn;
+				fn.isLoweredScopeSuccess = true;
+				break;
+			case Failure:
+				p.scopeFailures ~= fn;
+				fn.isLoweredScopeFailure = true;
+				break;
 			}
 			bs.statements[i] = fn;
 		}
@@ -90,4 +100,3 @@ class ScopeReplacer : NullVisitor, Pass
 		}
 	}
 }
-

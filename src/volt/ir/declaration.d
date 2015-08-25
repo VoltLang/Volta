@@ -300,6 +300,16 @@ public:
 	 */
 	bool isAutoReturn;
 
+	/**
+	 * Is this a function a lowered construct, like scope.
+	 * @{
+	 */
+	bool isLoweredScopeExit;
+	bool isLoweredScopeFailure;
+	bool isLoweredScopeSuccess;
+	/// @}
+
+
 public:
 	this() { super(NodeType.Function); }
 }
