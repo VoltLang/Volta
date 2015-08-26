@@ -2,8 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.lowerer.llvmlowerer;
 
-import std.string : format;
-import std.file : baseName;
+import watt.text.format : format;
 
 import ir = volt.ir.ir;
 import volt.ir.copy;
@@ -15,12 +14,12 @@ import volt.token.location;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
 
+import volt.semantic.util;
 import volt.semantic.typer;
 import volt.semantic.mangle;
 import volt.semantic.lookup;
-import volt.semantic.classify;
-import volt.semantic.util;
 import volt.semantic.nested;
+import volt.semantic.classify;
 import volt.semantic.classresolver;
 
 
@@ -1283,7 +1282,7 @@ public:
 		//     vrt_throw_slice_error(arr.length, typeid(T).size);
 		auto ln = buildAccess(loc, buildExpReference(loc, var), "length");
 		auto sz = buildAccess(loc, buildTypeidSmart(loc, toArray.base), "size");
-		ir.Exp fname = buildConstantString(loc, format(`%s`, baseName(exp.location.filename)));
+		ir.Exp fname = buildConstantString(loc, exp.location.filename);
 		ir.Exp lineNum = buildConstantSizeT(loc, lp, cast(int) exp.location.line);
 		auto rtCall = buildCall(loc, buildExpReference(loc, lp.ehThrowSliceErrorFunc), [buildAccess(loc, fname, "ptr"), lineNum]);
 		auto bs = buildBlockStat(loc, rtCall, current, buildExpStat(loc, rtCall));

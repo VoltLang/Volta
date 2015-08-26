@@ -2,16 +2,15 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.lowerer.manglewriter;
 
-import std.conv;
-import std.stdio;
-
 import ir = volt.ir.ir;
 
 import volt.errors;
 import volt.interfaces;
 import volt.visitor.visitor;
-import volt.semantic.classify;
+
 import volt.semantic.mangle;
+import volt.semantic.classify;
+
 
 /**
  * Apply mangle symbols to Types and Functions.
