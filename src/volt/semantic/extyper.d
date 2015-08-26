@@ -1605,6 +1605,12 @@ bool replaceExpReferenceIfNeeded(Context ctx,
 		if (isFunctionStatic(asFn)) {
 			return false;
 		}
+		if (asFn.kind == ir.Function.Kind.Member) {
+			auto ffn = getParentFunction(ctx.current);
+			if (ffn !is null && ffn.nestStruct !is null && eRef.idents.length == 1) {
+				nestedLookup = buildAccess(eRef.location, buildExpReference(eRef.location, ffn.nestedVariable), "this");
+			}
+		}
 		break;
 	case Variable:
 		auto asVar = cast(ir.Variable)decl;
@@ -1679,7 +1685,7 @@ bool replaceExpReferenceIfNeeded(Context ctx,
 	}
 
 	if (eRef.decl.declKind == ir.Declaration.Kind.Function) {
-		exp = buildCreateDelegate(eRef.location, thisRef, eRef);
+		exp = buildCreateDelegate(eRef.location, nestedLookup !is null ? nestedLookup : thisRef, eRef);
 	} else {
 		if (nestedLookup !is null) {
 			exp = nestedLookup; 
