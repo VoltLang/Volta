@@ -1282,7 +1282,7 @@ public:
 		//     vrt_throw_slice_error(arr.length, typeid(T).size);
 		auto ln = buildAccess(loc, buildExpReference(loc, var), "length");
 		auto sz = buildAccess(loc, buildTypeidSmart(loc, toArray.base), "size");
-		ir.Exp fname = buildConstantString(loc, exp.location.filename);
+		ir.Exp fname = buildConstantString(loc, exp.location.filename, false);
 		ir.Exp lineNum = buildConstantSizeT(loc, lp, cast(int) exp.location.line);
 		auto rtCall = buildCall(loc, buildExpReference(loc, lp.ehThrowSliceErrorFunc), [fname, lineNum]);
 		auto bs = buildBlockStat(loc, rtCall, current, buildExpStat(loc, rtCall));
