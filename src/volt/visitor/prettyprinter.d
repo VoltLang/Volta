@@ -3,17 +3,15 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.visitor.prettyprinter;
 
-import std.stream : Stream, File, FileMode;
-import std.cstream : dout;
-import std.string : format;
-import std.conv : to;
+import watt.conv : toString;
+import watt.io.streams : OutputStream;
+import watt.io.std : writefln, writef, output;
 
-import volt.token.token;
+import ir = volt.ir.ir;
 
 import volt.errors;
 import volt.interfaces;
-
-import ir = volt.ir.ir;
+import volt.token.token;
 import volt.visitor.visitor;
 
 
@@ -24,11 +22,11 @@ void prettyPrinter(ir.Module m)
 	pp.close();
 }
 
-class PrettyPrinter : Visitor, Pass, Backend
+class PrettyPrinter : Visitor, Pass
 {
 protected:
 	string mFilename;
-	Stream mStream;
+	OutputStream mStream;
 	void delegate(string) mSink;
 
 	int mIndent;
@@ -41,7 +39,7 @@ public:
 		mSink = sink;
 	}
 
-	void close()
+	override void close()
 	{
 		mFilename = null;
 		assert(mStream is null);
@@ -56,7 +54,7 @@ public:
 	 */
 
 
-	void transform(ir.Module m)
+	override void transform(ir.Module m)
 	in {
 		assert(mStream is null);
 		assert(mFilename is null);
@@ -65,14 +63,18 @@ public:
 		assert(mStream is null);
 		assert(mFilename is null);
 
-		mStream = dout;
+		mStream = output;
 		void sink(string s)
 		{
 			mStream.writef("%s", s);
 		}
 		bool sinkWasNull;
 		if (mSink is null) {
-			mSink = &sink;
+			version (Volt) {
+				mSink = cast(typeof(mSink))sink;
+			} else {
+				mSink = &sink;
+			}
 			sinkWasNull = true;
 		}
 
@@ -84,54 +86,9 @@ public:
 		}
 	}
 
-	void transform(ir.Type t)
+	void transformType(ir.Type t)
 	{
 		accept(t, this);
-	}
-
-
-	/*
-	 *
-	 * Backend.
-	 *
-	 */
-
-
-	TargetType[] supported()
-	{
-		return [TargetType.VoltCode];
-	}
-
-	void setTarget(string filename, TargetType type)
-	in {
-		assert(mStream is null);
-		assert(mFilename is null);
-		assert(type == TargetType.VoltCode);
-	}
-	body {
-		if (type != TargetType.VoltCode)
-			throw new Exception("Unsupported target type");
-
-		mFilename = filename;
-	}
-
-	void compile(ir.Module m)
-	in {
-		assert(mStream is null);
-		assert(mFilename !is null);
-	}
-	body {
-		scope(exit)
-			mFilename = null;
-
-		mStream = new File(mFilename, FileMode.OutNew);
-		scope(exit) {
-			mStream.flush();
-			mStream.close();
-			mStream = null;
-		}
-
-		accept(m, this);
 	}
 
 
@@ -1540,7 +1497,7 @@ public:
 		auto asPrim = cast(ir.PrimitiveType) constant.type;
 		if (asPrim !is null) {
 			switch (asPrim.type) with (ir.PrimitiveType.Kind) {
-			case Bool: wf(to!string(constant.u._bool)); break;
+			case Bool: wf(.toString(constant.u._bool)); break;
 			case Uint: wf(constant.u._uint); break;
 			case Int: wf(constant.u._int); break;
 			case Long: wf(constant.u._long); break;

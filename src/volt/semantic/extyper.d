@@ -3,6 +3,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.extyper;
 
+import std.conv : to;
 import std.algorithm : remove;
 import std.array : insertInPlace;
 
@@ -4227,7 +4228,7 @@ public:
 		}
 
 		if (fexp.type == ir.TokenExp.Type.PrettyFunction) {
-			pp.transform(foundFunction.type.ret);
+			pp.transformType(foundFunction.type.ret);
 			buf ~= " ";
 		}
 
@@ -4238,7 +4239,7 @@ public:
 		if (fexp.type == ir.TokenExp.Type.PrettyFunction) {
 			buf ~= "(";
 			foreach (i, ptype; ctx.currentFunction.type.params) {
-				pp.transform(ptype);
+				pp.transformType(ptype);
 				if (i < ctx.currentFunction.type.params.length - 1) {
 					buf ~= ", ";
 				}

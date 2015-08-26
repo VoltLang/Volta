@@ -2,16 +2,14 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.visitor.debugprinter;
 
-
+import watt.conv : toString;
 import watt.io.streams : OutputStream;
 import watt.io.std : writefln, writef, output;
-import watt.conv : toString;
-
-import volt.token.token;
-
-import volt.interfaces;
 
 import ir = volt.ir.ir;
+
+import volt.interfaces;
+import volt.token.token;
 import volt.visitor.visitor;
 
 
@@ -45,7 +43,7 @@ public:
 	override void close() {}
 }
 
-class DebugPrinter : Visitor, Pass/*, Backend */
+class DebugPrinter : Visitor, Pass
 {
 protected:
 	string mFilename;

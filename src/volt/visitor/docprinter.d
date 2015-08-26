@@ -2,16 +2,18 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.visitor.docprinter;
 
-import std.stdio;
-import std.string;
-import std.path;
+import std.stdio : File;
+import std.path : dirSeparator;
 import std.file : mkdir;
+
+import watt.text.format : format;
 
 import ir = volt.ir.ir;
 
-import volt.interfaces;
 import volt.errors;
+import volt.interfaces;
 import volt.visitor.visitor;
+
 
 enum DEFAULT_STYLE = "
 div.module { background: #eeeeee; }

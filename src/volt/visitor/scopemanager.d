@@ -5,7 +5,6 @@ module volt.visitor.scopemanager;
 import ir = volt.ir.ir;
 
 import volt.errors;
-
 import volt.visitor.visitor;
 
 

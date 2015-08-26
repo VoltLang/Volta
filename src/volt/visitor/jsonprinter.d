@@ -2,13 +2,14 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.visitor.jsonprinter;
 
-import std.stdio;
+import std.stdio : File;
 
 import ir = volt.ir.ir;
 
-import volt.interfaces;
 import volt.errors;
+import volt.interfaces;
 import volt.visitor.visitor;
+
 
 private struct Entry
 {

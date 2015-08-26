@@ -5,8 +5,9 @@ module volt.visitor.visitor;
 
 import watt.text.format : format;
 
-import volt.errors;
 import ir = volt.ir.ir;
+
+import volt.errors;
 
 
 abstract class Visitor
