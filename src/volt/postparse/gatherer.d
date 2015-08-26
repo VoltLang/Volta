@@ -3,7 +3,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.postparse.gatherer;
 
-import std.string : format;
+import watt.text.format : format;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
@@ -13,7 +13,6 @@ import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 import volt.visitor.visitor;
-import volt.semantic.lookup;
 import volt.semantic.nested;
 
 

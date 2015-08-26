@@ -7,8 +7,8 @@ import volt.ir.util;
 import ir = volt.ir.ir;
 import volt.errors;
 import volt.interfaces;
-import volt.visitor.visitor;
 import volt.visitor.manip;
+import volt.visitor.visitor;
 import volt.semantic.classify;
 
 

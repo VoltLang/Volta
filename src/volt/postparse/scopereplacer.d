@@ -2,13 +2,13 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.postparse.scopereplacer;
 
-import watt.text.format;
+import watt.text.format : format;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
 
-import volt.interfaces;
 import volt.errors;
+import volt.interfaces;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
 
