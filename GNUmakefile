@@ -164,6 +164,9 @@ VIV_SRC= \
 	src/volt/parser/*.d \
 	src/volt/visitor/manip.d \
 	src/volt/visitor/visitor.d \
+	src/volt/visitor/scopemanager.d \
+	src/volt/visitor/debugprinter.d \
+	src/volt/postparse/scopereplacer.d \
 	src/volt/postparse/condremoval.d
 
 
