@@ -183,7 +183,9 @@ void resolveEnum(LanguagePass lp, ir.Enum e)
 
 void actualizeStruct(LanguagePass lp, ir.Struct s)
 {
-		createAggregateVar(lp, s);
+		if (s.loweredNode is null) {
+			createAggregateVar(lp, s);
+		}
 
 		foreach (n; s.members.nodes) {
 			auto field = cast(ir.Variable)n;
@@ -197,7 +199,9 @@ void actualizeStruct(LanguagePass lp, ir.Struct s)
 
 		s.isActualized = true;
 
-		fileInAggregateVar(lp, s);
+		if (s.loweredNode is null) {
+			fileInAggregateVar(lp, s);
+		}
 }
 
 void actualizeUnion(LanguagePass lp, ir.Union u)
