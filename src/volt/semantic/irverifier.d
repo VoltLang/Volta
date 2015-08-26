@@ -9,6 +9,7 @@ import volt.interfaces;
 import volt.token.location;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
+
 import volt.semantic.classify;
 
 
@@ -47,7 +48,7 @@ public:
 		if (t in mNodes) {
 			auto str = format(
 				"%s \"%s\" node found more then once in IR",
-				ir.getNodeAddressString(n), to!string(n.nodeType));
+				ir.getNodeAddressString(n), ir.nodeToString(n));
 			throw panic(n, str);
 		}
 		mNodes[t] = mCount++;
@@ -131,7 +132,7 @@ public:
 			default:
 				auto str = format("%s invalid node '%s' in toplevel block",
 				                  ir.getNodeAddressString(n),
-				                  to!string(n.nodeType));
+				                  ir.nodeToString(n));
 				throw panic(n, str);
 			}
 		}
@@ -171,7 +172,7 @@ public:
 			default:
 				auto str = format("(%s) invalid node '%s' in block statement",
 				                  ir.getNodeAddressString(n),
-				                  to!string(n.nodeType));
+				                  ir.nodeToString(n));
 				throw panic(n, str);
 			}
 		}

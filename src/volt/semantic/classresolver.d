@@ -6,17 +6,17 @@ module volt.semantic.classresolver;
 import ir = volt.ir.ir;
 import volt.ir.util;
 
-import volt.interfaces;
 import volt.errors;
-
+import volt.interfaces;
 import volt.token.location;
 
-import volt.semantic.classify;
+import volt.semantic.util;
 import volt.semantic.mangle;
 import volt.semantic.lookup;
-import volt.semantic.util;
-import volt.semantic.overload;
+import volt.semantic.classify;
 import volt.semantic.typeinfo;
+import volt.semantic.overload;
+
 
 void actualizeInterface(LanguagePass lp, ir._Interface i)
 {

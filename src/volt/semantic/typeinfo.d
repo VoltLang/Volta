@@ -3,17 +3,18 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.typeinfo;
 
-import std.string : format;
+import watt.text.format : format;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
 
 import volt.exceptions;
 import volt.interfaces;
-import volt.semantic.classify;
+
+import volt.semantic.typer;
 import volt.semantic.lookup;
 import volt.semantic.mangle;
-import volt.semantic.typer;
+import volt.semantic.classify;
 
 
 /**

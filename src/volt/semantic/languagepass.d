@@ -3,14 +3,13 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.languagepass;
 
-import std.stdio : stdout;
+import watt.io.std : output;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
 
 import volt.errors;
 import volt.interfaces;
-
 import volt.token.location;
 
 import volt.util.worktracker;
@@ -27,20 +26,16 @@ import volt.lowerer.typeidreplacer;
 import volt.semantic.cfg;
 import volt.semantic.util;
 import volt.semantic.ctfe;
-import volt.semantic.lookup;
 import volt.semantic.strace;
+import volt.semantic.lookup;
 import volt.semantic.extyper;
-import volt.semantic.typeinfo;
-import volt.semantic.irverifier;
-import volt.semantic.ctfe;
-import volt.semantic.cfg;
-import volt.semantic.storageremoval;
-
 import volt.semantic.resolver;
 import volt.semantic.classify;
+import volt.semantic.typeinfo;
 import volt.semantic.irverifier;
 import volt.semantic.classresolver;
 import volt.semantic.aliasresolver;
+import volt.semantic.storageremoval;
 import volt.semantic.userattrresolver;
 
 import volt.postparse.gatherer;
@@ -617,7 +612,7 @@ public:
 	private void debugPrint(string msg, ir.QualifiedName name)
 	{
 		if (settings.internalDebug) {
-			stdout.writefln(msg, name);
+			output.writefln(msg, name);
 		}
 	}
 }

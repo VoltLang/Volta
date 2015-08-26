@@ -6,9 +6,10 @@ import ir = volt.ir.ir;
 import volt.ir.util;
 
 import volt.errors;
-import volt.semantic.typer : realType;
 import volt.visitor.visitor : StringBuffer;
 import volt.visitor.prettyprinter : PrettyPrinter;
+
+import volt.semantic.typer : realType;
 
 
 /**

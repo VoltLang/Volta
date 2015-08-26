@@ -2,11 +2,12 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.mangle;
 
-import std.conv;
-import std.string;
+import watt.conv : toString;
+import watt.text.format : format;
+
+import ir = volt.ir.ir;
 
 import volt.errors;
-import ir = volt.ir.ir;
 
 
 /**
@@ -155,7 +156,7 @@ void mangleType(ir.Type t, ref string mangledString)
 		auto asSA = cast(ir.StaticArrayType) t;
 		assert(asSA !is null);
 		mangledString ~= "at";
-		mangledString ~= to!string(asSA.length);
+		mangledString ~= toString(asSA.length);
 		mangleType(asSA.base, mangledString);
 		break;
 	case StorageType:

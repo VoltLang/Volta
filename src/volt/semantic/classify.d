@@ -2,18 +2,19 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.classify;
 
-import std.conv : to;
-import std.string : format;
+import watt.text.format : format;
 
 import ir = volt.ir.ir;
 
 import volt.errors;
 import volt.interfaces;
 import volt.token.location;
-import volt.semantic.context;
-import volt.semantic.lookup : ensureResolved, lookup;
+
 import volt.semantic.ctfe : evaluate;
 import volt.semantic.typer : realType;
+import volt.semantic.lookup : ensureResolved, lookup;
+import volt.semantic.context;
+
 
 /**
  * If the given scope is in a function, return it. Otherwise, return null.

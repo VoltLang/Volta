@@ -4,9 +4,11 @@
 module volt.semantic.context;
 
 import ir = volt.ir.ir;
+
 import volt.errors;
 import volt.interfaces;
 import volt.token.location;
+
 import volt.semantic.extyper;
 
 

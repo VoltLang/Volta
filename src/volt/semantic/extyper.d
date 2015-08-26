@@ -5,8 +5,12 @@ module volt.semantic.extyper;
 
 import std.algorithm : remove;
 import std.array : insertInPlace;
-import std.conv : to;
-import std.string : format, translate;
+
+version (Windows) {
+	import std.string : translate;
+}
+
+import watt.text.format : format;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
@@ -16,22 +20,25 @@ import volt.errors;
 import volt.interfaces;
 import volt.util.string;
 import volt.token.location;
+
 import volt.visitor.visitor;
+import volt.visitor.iexpreplace;
 import volt.visitor.scopemanager;
 import volt.visitor.prettyprinter;
-import volt.visitor.iexpreplace;
-import volt.semantic.userattrresolver;
-import volt.semantic.classify;
-import volt.semantic.classresolver;
-import volt.semantic.lookup;
-import volt.semantic.typer;
+
 import volt.semantic.util;
 import volt.semantic.ctfe;
-import volt.semantic.overload;
+import volt.semantic.typer;
 import volt.semantic.nested;
-import volt.semantic.context;
 import volt.semantic.mangle;
+import volt.semantic.lookup;
+import volt.semantic.context;
+import volt.semantic.classify;
+import volt.semantic.overload;
+import volt.semantic.classresolver;
 import volt.semantic.storageremoval;
+import volt.semantic.userattrresolver;
+
 
 /**
  * Returns true if argument converts into parameter.

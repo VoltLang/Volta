@@ -2,22 +2,19 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.util;
 
-import std.array : array;
-import std.string : format;
+import watt.text.format : format;
 
 import ir = volt.ir.ir;
 import volt.ir.copy;
 import volt.ir.util;
-import volt.ir.copy;
 
 import volt.errors;
 import volt.interfaces;
 import volt.token.location;
-import volt.semantic.classify;
-import volt.semantic.lookup;
+
 import volt.semantic.typer : getExpType;
-import volt.semantic.ctfe;
-import volt.semantic.classify;
+import volt.semantic.lookup : lookup, lookupOnlyThisScope;
+import volt.semantic.classify : getParentFunction;
 
 
 /// If e is a reference to a no-arg property function, turn it into a call.
@@ -260,7 +257,7 @@ void replaceTraits(ref ir.Exp exp, ir.TraitsExp traits, LanguagePass lp, ir.Modu
 		name = _struct.name;
 		break;
 	default:
-		assert(false, to!string(store.node.nodeType));
+		assert(false, ir.nodeToString(store.node));
 	}
 
 	ir.Attribute userAttribute;

@@ -3,8 +3,8 @@
 // Routines to retrieve the types of expressions.
 module volt.semantic.typer;
 
-import std.conv : to;
-import std.string : format;
+import watt.conv : toString;
+import watt.text.format : format;
 
 import ir = volt.ir.ir;
 import volt.ir.copy;
@@ -14,10 +14,12 @@ import volt.exceptions;
 import volt.errors;
 import volt.interfaces;
 import volt.token.location;
-import volt.semantic.classify;
-import volt.semantic.lookup;
+
 import volt.semantic.util;
+import volt.semantic.lookup;
+import volt.semantic.classify;
 import volt.semantic.overload;
+
 
 /// Look up a Variable and return its type.
 ir.Type declTypeLookup(Location loc, LanguagePass lp, ir.Scope _scope, string name)
@@ -197,7 +199,7 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 		assert(asVaArgExp !is null);
 		return getVaArgType(lp, asVaArgExp, currentScope);
 	default:
-		throw panicUnhandled(exp, to!string(exp.nodeType));
+		throw panicUnhandled(exp, ir.nodeToString(exp));
 	}
 }
 
@@ -529,7 +531,7 @@ ir.Type getPostfixType(LanguagePass lp, ir.Postfix postfix, ir.Scope currentScop
 	case CreateDelegate:
 		return getPostfixCreateDelegateType(lp, postfix, currentScope);
 	default:
-		throw panicUnhandled(postfix, to!string(postfix.op));
+		throw panicUnhandled(postfix, toString(postfix.op));
 	}
 }
 

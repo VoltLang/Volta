@@ -1,17 +1,18 @@
 module volt.semantic.ctfe;
 
-import std.conv : to;
-import std.string : format;
+import watt.text.format : format;
 
 import ir = volt.ir.ir;
 import volt.ir.copy;
 import volt.ir.util;
 
-import volt.exceptions;
 import volt.errors;
+import volt.exceptions;
 import volt.interfaces;
 import volt.token.location;
+
 import volt.semantic.lookup;
+
 
 ir.Constant evaluateOrNull(LanguagePass lp, ir.Scope current, ir.Exp exp)
 {

@@ -5,7 +5,8 @@ module volt.semantic.resolver;
 
 import std.algorithm : sort;
 import std.array : array;
-import std.string : format;
+
+import watt.text.format : format;
 
 import ir = volt.ir.ir;
 import volt.ir.copy;

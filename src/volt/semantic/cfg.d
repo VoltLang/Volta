@@ -1,15 +1,18 @@
 module volt.semantic.cfg;
 
-import volt.interfaces;
-import volt.errors;
-import volt.visitor.visitor;
-import volt.visitor.scopemanager;
-import volt.token.location;
-import volt.semantic.classify;
-import volt.semantic.typer;
-import volt.semantic.ctfe;
 import ir = volt.ir.ir;
 import volt.ir.util;
+
+import volt.interfaces;
+import volt.errors;
+import volt.token.location;
+import volt.visitor.visitor;
+import volt.visitor.scopemanager;
+
+import volt.semantic.ctfe;
+import volt.semantic.typer;
+import volt.semantic.classify;
+
 
 /// A single node in the execution graph.
 class Block

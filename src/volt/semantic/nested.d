@@ -2,18 +2,21 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.nested;
 
-import std.conv : to;
+import watt.conv : toString;
 
-import volt.errors;
 import ir = volt.ir.ir;
 import volt.ir.copy;
 import volt.ir.util;
+
+import volt.errors;
 import volt.interfaces;
 import volt.visitor.manip;
 import volt.visitor.visitor;
+
 import volt.semantic.lookup;
 import volt.semantic.context;
 import volt.semantic.classify : isNested;
+
 
 void emitNestedStructs(ir.Function parentFunction, ir.BlockStatement bs)
 {
@@ -30,7 +33,7 @@ void emitNestedStructs(ir.Function parentFunction, ir.BlockStatement bs)
 			}
 			parentFunction.nestedFunctions ~= fn;
 			fn.oldname = fn.name;
-			fn.name = fn.name ~ to!string(parentFunction.nestedFunctions.length - 1);
+			fn.name = fn.name ~ toString(parentFunction.nestedFunctions.length - 1);
 		}
 		if (parentFunction.nestStruct is null) {
 			parentFunction.nestStruct = createAndAddNestedStruct(parentFunction, bs);
@@ -41,7 +44,7 @@ void emitNestedStructs(ir.Function parentFunction, ir.BlockStatement bs)
 
 ir.Struct createAndAddNestedStruct(ir.Function fn, ir.BlockStatement bs)
 {
-	auto s = buildStruct(fn.location, "__Nested" ~ to!string(cast(void*)fn), []);
+	auto s = buildStruct(fn.location, "__Nested" ~ toString(cast(void*)fn), []);
 	auto decl = buildVariable(fn.location, buildTypeReference(s.location, s, "__Nested"), ir.Variable.Storage.Function, "__nested");
 	fn.nestedVariable = decl;
 	bs.statements = s ~ (decl ~ bs.statements);

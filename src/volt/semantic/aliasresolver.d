@@ -7,8 +7,8 @@ import ir = volt.ir.ir;
 import volt.interfaces;
 import volt.errors;
 
-import volt.semantic.lookup;
 import volt.semantic.util : ensureResolved;
+import volt.semantic.lookup;
 import volt.semantic.storageremoval;
 
 
