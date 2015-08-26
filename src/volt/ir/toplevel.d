@@ -228,11 +228,17 @@ public:
 }
 
 /**
- * Aggregate is a base class for Struct, Union & Class.
+ * Named is a base class for named types, like Enum, Struct, Class and so on.
+ * This is slightly different from Aggregate since Enum is not a Aggregate,
+ * but is a named type.
+ *
+ * @ingroup irNode irTopLevel irType irDecl
  */
-abstract class Aggregate : Type
+abstract class Named : Type
 {
 public:
+	bool isResolved;
+
 	string name; ///< Unmangled name of the NamedType.
 	Access access; ///< default public.
 
@@ -240,15 +246,24 @@ public:
 
 	Variable typeInfo;  ///< Filled in by the semantic pass.
 
+public:
+	this(NodeType nt) { super(nt); }
+}
+
+/**
+ * Aggregate is a base class for Struct, Union & Class.
+ *
+ * @ingroup irNode irTopLevel irType irDecl
+ */
+abstract class Aggregate : Named
+{
+public:
 	Attribute[] userAttrs;
 	Aggregate[] anonymousAggregates;
 	Variable[] anonymousVars;
 
-
-
 	TopLevelBlock members; ///< Toplevel nodes.
 
-	bool isResolved;
 	bool isActualized;
 
 public:
@@ -361,14 +376,9 @@ public:
  *
  * @ingroup irNode irTopLevel irType irDecl
  */
-class Enum : Type
+class Enum : Named
 {
 public:
-	bool isResolved;
-
-	Access access; ///< default public.
-	string name;  ///< Optional.
-	Scope myScope;
 	EnumDeclaration[] members; ///< At least one.
 	/**
 	 * With an anonymous enum, the base type (specified with a colon)

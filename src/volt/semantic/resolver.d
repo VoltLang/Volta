@@ -77,8 +77,8 @@ ir.Type resolveType(LanguagePass lp, ir.Scope current, ir.Type type)
 	case TypeReference:
 		auto tr = cast(ir.TypeReference)type;
 		lp.resolveTR(current, tr);
-		if (cast(ir.Aggregate)tr.type !is null ||
-		    cast(ir.Enum)tr.type !is null) {
+
+		if (cast(ir.Named)tr.type !is null) {
 			return type;
 		} else {
 			resolveType(lp, current, tr.type);

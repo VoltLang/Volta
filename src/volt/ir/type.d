@@ -118,7 +118,6 @@ public:
 		Real = TokenType.Real,
 	}
 
-
 public:
 	Kind type;
 
