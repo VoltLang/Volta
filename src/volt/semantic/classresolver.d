@@ -300,6 +300,19 @@ ir.Function[] getClassMethodFunctions(LanguagePass lp, ir.Class _class)
 {
 	ir.Function[][] methodss = getClassMethods(lp, _class.myScope, _class);
 
+	ir.Function[] ifaceMethods;
+	foreach (iface; _class.parentInterfaces) {
+		ifaceMethods ~= getInterfaceFunctions(lp, iface);
+	}
+	foreach (method; methodss[$-1]) {
+		auto fns = getPotentialOverrideFunctions(ifaceMethods, method);
+		if (fns.length > 0 && !method.isMarkedOverride) {
+			throw makeNeedOverride(method, fns[0]);
+		} else if (fns.length > 0 && method.isMarkedOverride) {
+			method.isOverridingInterface = true;
+		}
+	}
+
 	size_t outIndex;
 	ir.Function[] outMethods;
 	foreach (ref methods; methodss) {
@@ -328,13 +341,15 @@ ir.Function[] getClassMethodFunctions(LanguagePass lp, ir.Class _class)
 			if (noPriorMethods && method.isMarkedOverride) {
 				throw makeMarkedOverrideDoesNotOverride(method, method);
 			}
-			if (method.isMarkedOverride) {
+			if (method.isMarkedOverride && !method.isOverridingInterface) {
 				continue;
 			}
 			outMethods ~= method;
 			method.vtableIndex = cast(int)outIndex++;
 		}
 	}
+
+
 	return outMethods;
 }
 
@@ -364,7 +379,7 @@ bool overrideFunctionsIfNeeded(LanguagePass lp, ir.Function childFunction, ref i
 	auto toConsider = getPotentialOverrideFunctions(parentSet, childFunction);
 
 	if (toConsider.length == 0) {
-		if (childFunction.isMarkedOverride) {
+		if (childFunction.isMarkedOverride && !childFunction.isOverridingInterface) {
 			throw makeMarkedOverrideDoesNotOverride(childFunction, childFunction);
 		}
 		return false;

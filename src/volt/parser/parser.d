@@ -54,7 +54,7 @@ public:
 	bool dumpLex;
 
 public:
-	ir.Module parseNewFile(string source, Location loc)
+	override ir.Module parseNewFile(string source, Location loc)
 	{
 		auto src = new Source(source, loc);
 		src.skipScriptLine();
@@ -69,7 +69,7 @@ public:
 		return mod;
 	}
 
-	ir.Node[] parseStatements(string source, Location loc)
+	override ir.Node[] parseStatements(string source, Location loc)
 	{
 		auto src = new Source(source, loc);
 		auto ps = new ParserStream(lex(src));
@@ -88,7 +88,7 @@ public:
 		return ret;
 	}
 
-	void close()
+	override void close()
 	{
 
 	}

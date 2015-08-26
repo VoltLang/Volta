@@ -292,6 +292,12 @@ public:
 
 	bool isMarkedOverride;
 
+	/**
+	 * Marks this method as marked as overriding an interface method.
+	 * (So don't do the things you'd normally do to an overriding method.)
+	 */
+	bool isOverridingInterface;
+
 	bool isAbstract;
 
 	/**
