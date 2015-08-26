@@ -306,9 +306,17 @@ ir.Function[] getClassMethodFunctions(LanguagePass lp, ir.Class _class)
 	}
 	foreach (method; methodss[$-1]) {
 		auto fns = getPotentialOverrideFunctions(ifaceMethods, method);
-		if (fns.length > 0 && !method.isMarkedOverride) {
-			throw makeNeedOverride(method, fns[0]);
-		} else if (fns.length > 0 && method.isMarkedOverride) {
+		ir.Type[] params = method.type.params.dup;
+		if (fns.length == 0) {
+			continue;
+		}
+		auto fn = selectFunction(lp, fns, params, method.location, DoNotThrow);
+		if (fn is null) {
+			continue;
+		}
+		if (!method.isMarkedOverride) {
+			throw makeNeedOverride(method, fn);
+		} else if (method.isMarkedOverride) {
 			method.isOverridingInterface = true;
 		}
 	}
