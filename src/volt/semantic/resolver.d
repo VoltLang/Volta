@@ -81,10 +81,12 @@ ir.Type resolveType(LanguagePass lp, ir.Scope current, ir.Type type)
 		    cast(ir.Enum)tr.type !is null) {
 			return type;
 		} else {
-			//scope(failure) debugPrintNode(tr);
 			resolveType(lp, current, tr.type);
 			assert(tr.type !is null);
-			return copyTypeSmart(tr.location, tr.type);
+
+			auto ret = copyTypeSmart(tr.location, tr.type);
+			ret.glossedName = tr.id.toString();
+			return ret;
 		}
 	case Enum:
 		auto e = cast(ir.Enum)type;
@@ -111,7 +113,6 @@ void resolveTR(LanguagePass lp, ir.Scope current, ir.TypeReference tr)
 		return;
 
 	tr.type = lookupType(lp, current, tr.id);
-	tr.type.glossedName = tr.id.toString();
 	assert(tr.type !is null);
 }
 
