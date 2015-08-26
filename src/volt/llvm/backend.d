@@ -108,6 +108,7 @@ public:
 		string result;
 		auto failed = LLVMVerifyModule(mod, result);
 		if (failed) {
+			LLVMDumpModule(mod);
 			stderr.writefln("%s", result);
 			throw panic("Module verification failed.");
 		}
