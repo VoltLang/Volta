@@ -517,8 +517,8 @@ void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 					buildConstantString(loc, `Key does not exist`)
 					]),
 				),
-			buildAccess(loc, buildConstantString(loc, loc.filename), "ptr"),
-			cast(ir.Exp)buildConstantSizeT(loc, lp, cast(int)loc.line)],
+			buildConstantString(loc, loc.filename),
+			buildConstantSizeT(loc, lp, cast(int)loc.line)],
 		throwFn.name));
 
 	buildIfStat(loc, statExp,
@@ -797,7 +797,7 @@ public:
 		auto fn = lp.ehThrowFunc;
 		auto eRef = buildExpReference(t.location, fn, "vrt_eh_throw");
 		t.exp = buildCall(t.location, eRef, [t.exp,
-			buildAccess(t.location, buildConstantString(t.location, t.location.filename, false), "ptr"),
+			buildConstantString(t.location, t.location.filename, false),
 			buildConstantSizeT(t.location, lp, cast(int)t.location.line)]);
 		return Continue;
 	}
@@ -1284,7 +1284,7 @@ public:
 		auto sz = buildAccess(loc, buildTypeidSmart(loc, toArray.base), "size");
 		ir.Exp fname = buildConstantString(loc, exp.location.filename);
 		ir.Exp lineNum = buildConstantSizeT(loc, lp, cast(int) exp.location.line);
-		auto rtCall = buildCall(loc, buildExpReference(loc, lp.ehThrowSliceErrorFunc), [buildAccess(loc, fname, "ptr"), lineNum]);
+		auto rtCall = buildCall(loc, buildExpReference(loc, lp.ehThrowSliceErrorFunc), [fname, lineNum]);
 		auto bs = buildBlockStat(loc, rtCall, current, buildExpStat(loc, rtCall));
 		auto check = buildBinOp(loc, ir.BinOp.Op.NotEqual, buildBinOp(loc, ir.BinOp.Op.Mod, ln, sz), buildConstantSizeT(loc, lp, 0));
 		auto _if = buildIfStat(loc, check, bs);

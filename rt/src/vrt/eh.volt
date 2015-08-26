@@ -49,7 +49,7 @@ extern(C) void vrt_eh_delete(
 /**
  * Throws a exception.
  */
-extern(C) void vrt_eh_throw(object.Throwable t, const(char)* file, size_t line)
+extern(C) void vrt_eh_throw(object.Throwable t, string file, size_t line)
 {
 	auto e = new vrt_eh_exception;
 
@@ -65,7 +65,7 @@ extern(C) void vrt_eh_throw(object.Throwable t, const(char)* file, size_t line)
 	exit(-1);
 }
 
-extern(C) void vrt_eh_throw_slice_error(const(char)* file, size_t line)
+extern(C) void vrt_eh_throw_slice_error(string file, size_t line)
 {
 	vrt_eh_throw(new object.Error("invalid array cast"), file, line);
 }

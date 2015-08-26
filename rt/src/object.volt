@@ -125,7 +125,7 @@ class Throwable
 	string message;
 
 	// These two are updated each time the exception is thrown.
-	const(char)* throwFile;
+	string throwFile;
 	size_t throwLine;
 
 	this(string message)
@@ -203,8 +203,8 @@ extern(C) {
  * Exception handling functions
  */
 extern(C) {
-	void vrt_eh_throw(Throwable, const(char)* file, size_t line);
-	void vrt_eh_throw_slice_error(const(char)*, size_t);
+	void vrt_eh_throw(Throwable, string filename, size_t line);
+	void vrt_eh_throw_slice_error(string filename, size_t line);
 	void vrt_eh_personality_v0();
 }
 

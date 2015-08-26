@@ -38,8 +38,9 @@ extern(C) int main(int c, char** argv)
 		auto name = ti[ti.length - 1].mangledName;
 		auto msg = t.message;
 
-		object.vrt_printf("%s:%i Uncaught exception\n%*s: %*s\n",
-			t.throwFile, cast(int)t.throwLine,
+		object.vrt_printf("%.*s:%i Uncaught exception\n%.*s: %.*s\n",
+			cast(int)t.throwFile.length, t.throwFile.ptr,
+			cast(int)t.throwLine,
 			cast(int)name.length, name.ptr,
 			cast(int)msg.length, msg.ptr);
 
