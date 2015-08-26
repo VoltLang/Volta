@@ -1,3 +1,6 @@
+// Copyright © 2013-2015, Bernard Helyer.  All rights reserved.
+// Copyright © 2013-2015, Jakob Bornecrantz.  All rights reserved.
+// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.ctfe;
 
 import watt.text.format : format;

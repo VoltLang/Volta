@@ -1,3 +1,5 @@
+// Copyright © 2014-2015, Bernard Helyer.  All rights reserved.
+// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.cfg;
 
 import ir = volt.ir.ir;
