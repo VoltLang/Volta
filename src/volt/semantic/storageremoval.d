@@ -6,8 +6,6 @@ import ir = volt.ir.ir;
 import volt.ir.util;
 
 import volt.errors;
-import volt.visitor.visitor : StringBuffer;
-import volt.visitor.prettyprinter : PrettyPrinter;
 
 import volt.semantic.typer : realType;
 
@@ -29,17 +27,6 @@ ir.Type flattenStorage(ir.Type type, ir.CallableType ct=null, size_t ctIndex=0)
 	if (type is null) {
 		return null;
 	}
-
-/+
-	XXX Disabled for now, this was really really really slow.
-	if (type.glossedName == "") {
-		StringBuffer sb;
-		auto pp = new PrettyPrinter(" ", &sb.sink);
-		pp.transform(type);
-		type.glossedName = sb.str;
-		pp.close();
-	}
-+/
 
 	switch (type.nodeType) with (ir.NodeType) {
 	case StorageType:
