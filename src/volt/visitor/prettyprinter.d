@@ -1319,6 +1319,13 @@ public:
 		ln();
 		twf("");
 
+		if (fn.mangledName !is null) {
+			wf("@mangledName(\"");
+			wf(fn.mangledName);
+			wfln("\")");
+			twf("");
+		}
+
 		final switch(fn.kind) with (ir.Function.Kind) {
 		case LocalMember:
 			wf("local ");
@@ -1333,7 +1340,7 @@ public:
 		case Member:
 			accept(fn.type.ret, this);
 			wf(" ");
-			wf(fn.mangledName);
+			wf(fn.name);
 			wf("(");
 			break;
 		case Constructor:
