@@ -2794,7 +2794,7 @@ void handleNestedThis(ir.Function fn)
 		auto r = buildExpReference(fn.location, tv, tv.name);
 		r.doNotRewriteAsNestedLookup = true;
 		ir.Node n = buildExpStat(l.location, buildAssign(l.location, l, r));
-		fn._body.statements.insertInPlace(index++, n);
+		fn._body.statements.insertInPlace(index, n);
 	}
 }
 
