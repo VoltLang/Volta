@@ -2198,7 +2198,7 @@ protected:
 		mSink(s);
 	}
 
-	void wf(size_t i)
+	void wf(ulong i)
 	{
 		string s = format("%s", i);
 		mSink(s);
