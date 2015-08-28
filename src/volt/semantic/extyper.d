@@ -54,7 +54,7 @@ void replaceStorageIfNeeded(ref ir.Type type)
  * This handles implicitly typing null.
  * Generic function used by assign and other functions.
  */
-bool handleIfNull(Context ctx, ir.Type left, ref ir.Exp right)
+bool handleIfNull(ExtyperContext ctx, ir.Type left, ref ir.Exp right)
 {
 	auto rightType = getExpType(ctx.lp, right, ctx.current);
 	if (rightType.nodeType != ir.NodeType.NullType) {
@@ -67,7 +67,7 @@ bool handleIfNull(Context ctx, ir.Type left, ref ir.Exp right)
 /**
  * This handles implicitly typing a struct literal.
  */
-void handleIfStructLiteral(Context ctx, ir.Type left, ref ir.Exp right)
+void handleIfStructLiteral(ExtyperContext ctx, ir.Type left, ref ir.Exp right)
 {
 	ir.StructLiteral asLit;
 	auto arrayLit = cast(ir.ArrayLiteral) right;
@@ -109,7 +109,7 @@ void handleIfStructLiteral(Context ctx, ir.Type left, ref ir.Exp right)
 /**
  * Implicitly convert PrimitiveTypes to bools for 'if' and friends.
  */
-void extypeCastToBool(Context ctx, ref ir.Exp exp)
+void extypeCastToBool(ExtyperContext ctx, ref ir.Exp exp)
 {
 	auto t = getExpType(ctx.lp, exp, ctx.current);
 	if (t.nodeType == ir.NodeType.PrimitiveType) {
@@ -124,7 +124,7 @@ void extypeCastToBool(Context ctx, ref ir.Exp exp)
 /**
  * Forbids mutably indirect types being implicitly casted to scope.
  */
-void rejectBadScopeAssign(Context ctx, ref ir.Exp exp, ir.Type type)
+void rejectBadScopeAssign(ExtyperContext ctx, ref ir.Exp exp, ir.Type type)
 {
 	auto storage = cast(ir.StorageType) realType(type);
 	if (storage is null) {
@@ -137,7 +137,7 @@ void rejectBadScopeAssign(Context ctx, ref ir.Exp exp, ir.Type type)
 	}
 }
 
-void extypeAssignTypeReference(Context ctx, ref ir.Exp exp, ir.TypeReference tr)
+void extypeAssignTypeReference(ExtyperContext ctx, ref ir.Exp exp, ir.TypeReference tr)
 {
 	extypeAssign(ctx, exp, tr.type);
 }
@@ -156,7 +156,7 @@ void stripPointerBases(ir.Type toType, ref uint flag)
 	}
 }
 
-void appendDefaultArguments(Context ctx, ir.Location loc, ref ir.Exp[] arguments, ir.Function fn)
+void appendDefaultArguments(ExtyperContext ctx, ir.Location loc, ref ir.Exp[] arguments, ir.Function fn)
 {
 	if (fn !is null && arguments.length < fn.params.length) {
 		ir.Exp[] overflow;
@@ -186,7 +186,7 @@ void appendDefaultArguments(Context ctx, ir.Location loc, ref ir.Exp[] arguments
  * Handles implicit pointer casts. To void*, immutable(T)* to const(T)*
  * T* to const(T)* and the like.
  */
-void extypeAssignPointerType(Context ctx, ref ir.Exp exp, ir.PointerType ptr, uint flag)
+void extypeAssignPointerType(ExtyperContext ctx, ref ir.Exp exp, ir.PointerType ptr, uint flag)
 {
 	ir.PointerType pcopy = cast(ir.PointerType) copyTypeSmart(exp.location, ptr);
 	assert(pcopy !is null);
@@ -232,7 +232,7 @@ void extypeAssignPointerType(Context ctx, ref ir.Exp exp, ir.PointerType ptr, ui
 /**
  * Implicit primitive casts (smaller to larger).
  */
-void extypeAssignPrimitiveType(Context ctx, ref ir.Exp exp, ir.PrimitiveType lprim)
+void extypeAssignPrimitiveType(ExtyperContext ctx, ref ir.Exp exp, ir.PrimitiveType lprim)
 {
 	auto rtype = getExpType(ctx.lp, exp, ctx.current);
 	auto rprim = cast(ir.PrimitiveType) realType(rtype, true, true);
@@ -264,7 +264,7 @@ void extypeAssignPrimitiveType(Context ctx, ref ir.Exp exp, ir.PrimitiveType lpr
 /**
  * Handles converting child classes to parent classes.
  */
-void extypeAssignClass(Context ctx, ref ir.Exp exp, ir.Class _class)
+void extypeAssignClass(ExtyperContext ctx, ref ir.Exp exp, ir.Class _class)
 {
 	auto type = realType(getExpType(ctx.lp, exp, ctx.current), true, true);
 	assert(type !is null);
@@ -288,7 +288,7 @@ void extypeAssignClass(Context ctx, ref ir.Exp exp, ir.Class _class)
 	}
 }
 
-void extypeAssignEnum(Context ctx, ref ir.Exp exp, ir.Enum e)
+void extypeAssignEnum(ExtyperContext ctx, ref ir.Exp exp, ir.Enum e)
 {
 	auto rtype = getExpType(ctx.lp, exp, ctx.current);
 	if (typesEqual(e, rtype)) {
@@ -303,7 +303,7 @@ void extypeAssignEnum(Context ctx, ref ir.Exp exp, ir.Enum e)
 /**
  * Handles assigning an overloaded function to a delegate.
  */
-void extypeAssignCallableType(Context ctx, ref ir.Exp exp, ir.CallableType ctype)
+void extypeAssignCallableType(ExtyperContext ctx, ref ir.Exp exp, ir.CallableType ctype)
 {
 	auto rtype = ctx.overrideType !is null ? ctx.overrideType : realType(getExpType(ctx.lp, exp, ctx.current), true, true);
 	if (typesEqual(ctype, rtype, IgnoreStorage)) {
@@ -326,7 +326,7 @@ void extypeAssignCallableType(Context ctx, ref ir.Exp exp, ir.CallableType ctype
  * Handles casting arrays of non mutably indirect types with
  * differing storage types.
  */
-void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ref uint flag)
+void extypeAssignArrayType(ExtyperContext ctx, ref ir.Exp exp, ir.ArrayType atype, ref uint flag)
 {
 	auto alit = cast(ir.ArrayLiteral) exp;
 	if (alit !is null && alit.values.length == 0) {
@@ -350,7 +350,7 @@ void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ref 
 	throw makeBadImplicitCast(exp, rtype, atype);
 }
 
-void extypeAssignStaticArrayType(Context ctx, ref ir.Exp exp, ir.StaticArrayType atype, ref uint flag)
+void extypeAssignStaticArrayType(ExtyperContext ctx, ref ir.Exp exp, ir.StaticArrayType atype, ref uint flag)
 {
 	ir.ArrayLiteral alit;
 	void checkAlit()
@@ -389,7 +389,7 @@ void extypeAssignStaticArrayType(Context ctx, ref ir.Exp exp, ir.StaticArrayType
  * Handles casting arrays of non mutably indirect types with
  * differing storage types.
  */
-version (none) void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ref uint flag)
+version (none) void extypeAssignArrayType(ExtyperContext ctx, ref ir.Exp exp, ir.ArrayType atype, ref uint flag)
 {
 	auto acopy = copyTypeSmart(exp.location, atype);
 	stripArrayBases(acopy, flag);
@@ -425,7 +425,7 @@ version (none) void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayT
 	throw makeBadImplicitCast(exp, rtype, atype);
 }
 
-void extypeAssignAAType(Context ctx, ref ir.Exp exp, ir.AAType aatype)
+void extypeAssignAAType(ExtyperContext ctx, ref ir.Exp exp, ir.AAType aatype)
 {
 	auto rtype = ctx.overrideType !is null ? ctx.overrideType : getExpType(ctx.lp, exp, ctx.current);
 	if (exp.nodeType == ir.NodeType.AssocArray && typesEqual(aatype, rtype)) {
@@ -492,7 +492,7 @@ ir.Type flagitiseStorage(ir.Type type, ref uint flag)
 
 
 
-void handleAssign(Context ctx, ref ir.Type toType, ref ir.Exp exp, ref uint toFlag, bool copying=false)
+void handleAssign(ExtyperContext ctx, ref ir.Type toType, ref ir.Exp exp, ref uint toFlag, bool copying=false)
 {
 	auto rtype = getExpType(ctx.lp, exp, ctx.current);
 	auto storage = cast(ir.StorageType) toType;
@@ -520,7 +520,7 @@ void handleAssign(Context ctx, ref ir.Type toType, ref ir.Exp exp, ref uint toFl
 	}
 }
 
-void rewriteOverloadedProperty(Context ctx, ref ir.Exp exp, bool nested = false)
+void rewriteOverloadedProperty(ExtyperContext ctx, ref ir.Exp exp, bool nested = false)
 {
 	auto pfix = cast(ir.Postfix) exp;
 	if (pfix !is null && !nested) {
@@ -564,7 +564,7 @@ void rewriteOverloadedProperty(Context ctx, ref ir.Exp exp, bool nested = false)
 	}
 }
 
-void extypeAssignDispatch(Context ctx, ref ir.Exp exp, ir.Type type, bool copying=false)
+void extypeAssignDispatch(ExtyperContext ctx, ref ir.Exp exp, ir.Type type, bool copying=false)
 {
 	rewriteOverloadedProperty(ctx, exp);
 	uint flag;
@@ -627,7 +627,7 @@ void extypeAssignDispatch(Context ctx, ref ir.Exp exp, ir.Type type, bool copyin
 	}
 }
 
-void extypeAssignInterface(Context ctx, ref ir.Exp exp, ir._Interface iface)
+void extypeAssignInterface(ExtyperContext ctx, ref ir.Exp exp, ir._Interface iface)
 {
 	auto type = realType(getExpType(ctx.lp, exp, ctx.current));
 
@@ -678,7 +678,7 @@ void extypeAssignInterface(Context ctx, ref ir.Exp exp, ir._Interface iface)
 	throw makeBadImplicitCast(exp, type, iface);
 }
 
-void extypePass(Context ctx, ref ir.Exp exp, ir.Type type)
+void extypePass(ExtyperContext ctx, ref ir.Exp exp, ir.Type type)
 {
 	auto ptr = cast(ir.PointerType) realType(type, true, true);
 	// string literals implicitly convert to typeof(string.ptr)
@@ -689,7 +689,7 @@ void extypePass(Context ctx, ref ir.Exp exp, ir.Type type)
 	extypeAssign(ctx, exp, type);
 }
 
-void extypeAssign(Context ctx, ref ir.Exp exp, ir.Type type, bool copying=false)
+void extypeAssign(ExtyperContext ctx, ref ir.Exp exp, ir.Type type, bool copying=false)
 {
 	handleIfStructLiteral(ctx, type, exp);
 	if (handleIfNull(ctx, type, exp)) return;
@@ -701,7 +701,7 @@ void extypeAssign(Context ctx, ref ir.Exp exp, ir.Type type, bool copying=false)
  * If qname has a child of name leaf, returns an expression looking it up.
  * Otherwise, null is returned.
  */
-ir.Exp withLookup(Context ctx, ref ir.Exp exp, ir.Scope current, string leaf, ir.Postfix pleaf = null)
+ir.Exp withLookup(ExtyperContext ctx, ref ir.Exp exp, ir.Scope current, string leaf, ir.Postfix pleaf = null)
 {
 	ir.Exp access = buildAccess(exp.location, copyExp(exp), leaf);
 	ir.Class _class;
@@ -729,7 +729,7 @@ ir.Exp withLookup(Context ctx, ref ir.Exp exp, ir.Scope current, string leaf, ir
 /**
  * Replace IdentifierExps with ExpReferences.
  */
-void extypeIdentifierExp(Context ctx, ref ir.Exp e, ir.IdentifierExp i)
+void extypeIdentifierExp(ExtyperContext ctx, ref ir.Exp e, ir.IdentifierExp i)
 {
 	auto current = i.globalLookup ? getModuleFromScope(ctx.current).myScope : ctx.current;
 
@@ -819,7 +819,7 @@ void extypeIdentifierExp(Context ctx, ref ir.Exp e, ir.IdentifierExp i)
 	}
 }
 
-bool replaceAAPostfixesIfNeeded(Context ctx, ir.Postfix postfix, ref ir.Exp exp)
+bool replaceAAPostfixesIfNeeded(ExtyperContext ctx, ir.Postfix postfix, ref ir.Exp exp)
 {
 	auto l = postfix.location;
 	if (postfix.op == ir.Postfix.Op.Call) {
@@ -919,7 +919,7 @@ bool replaceAAPostfixesIfNeeded(Context ctx, ir.Postfix postfix, ref ir.Exp exp)
 	assert(false);
 }
 
-void handleArgumentLabelsIfNeeded(Context ctx, ir.Postfix postfix, ir.Function fn, ref ir.Exp exp)
+void handleArgumentLabelsIfNeeded(ExtyperContext ctx, ir.Postfix postfix, ir.Function fn, ref ir.Exp exp)
 {
 	if (fn is null) {
 		return;
@@ -1006,7 +1006,7 @@ private ir.Postfix[] getPostfixChain(ir.Postfix postfix)
 }
 
 // Given a.foo, if a is a pointer to a class, turn it into (*a).foo.
-private void dereferenceInitialClass(Context ctx, ref ir.Postfix[] postfixes)
+private void dereferenceInitialClass(ExtyperContext ctx, ref ir.Postfix[] postfixes)
 {
 	auto lastType = getExpType(ctx.lp, postfixes[$-1].child, ctx.current);
 	if (isPointerToClass(lastType)) {
@@ -1014,7 +1014,7 @@ private void dereferenceInitialClass(Context ctx, ref ir.Postfix[] postfixes)
 	}
 }
 
-private bool transformToCreateDelegate(Context ctx, ref ir.Exp exp, ir.Postfix[] postfixes)
+private bool transformToCreateDelegate(ExtyperContext ctx, ref ir.Exp exp, ir.Postfix[] postfixes)
 {
 	if (postfixes[0].op == ir.Postfix.Op.Call) {
 		return false;
@@ -1097,7 +1097,7 @@ private bool transformToCreateDelegate(Context ctx, ref ir.Exp exp, ir.Postfix[]
 	return true;
 }
 
-private void errorIfScopeParent(Context ctx, ir.CallableType asFunctionType, ir.Postfix postfix)
+private void errorIfScopeParent(ExtyperContext ctx, ir.CallableType asFunctionType, ir.Postfix postfix)
 {
 	if (asFunctionType.isScope && postfix.child.nodeType == ir.NodeType.Postfix) {
 		auto asPostfix = cast(ir.Postfix) postfix.child;
@@ -1112,7 +1112,7 @@ private void errorIfScopeParent(Context ctx, ir.CallableType asFunctionType, ir.
 }
 
 // Hand check va_start(vl) and va_end(vl), then modify their calls.
-private void rewriteVaStartAndEnd(Context ctx, ir.Function fn, ir.Postfix postfix, ref ir.Exp exp)
+private void rewriteVaStartAndEnd(ExtyperContext ctx, ir.Function fn, ir.Postfix postfix, ref ir.Exp exp)
 {
 	if (fn is ctx.lp.vaStartFunc || fn is ctx.lp.vaEndFunc || fn is ctx.lp.vaCStartFunc || fn is ctx.lp.vaCEndFunc) {
 		if (postfix.arguments.length != 1) {
@@ -1145,7 +1145,7 @@ private void rewriteVaStartAndEnd(Context ctx, ir.Function fn, ir.Postfix postfi
 	}
 }
 
-private void rewriteVarargs(Context ctx, ir.CallableType asFunctionType, ir.Postfix postfix)
+private void rewriteVarargs(ExtyperContext ctx, ir.CallableType asFunctionType, ir.Postfix postfix)
 {
 	if (!asFunctionType.hasVarArgs ||
 		asFunctionType.linkage != ir.Linkage.Volt) {
@@ -1201,7 +1201,7 @@ private void rewriteVarargs(Context ctx, ir.CallableType asFunctionType, ir.Post
 	postfix.arguments = argsSlice ~ typeidsLiteral ~ buildInternalArrayLiteralSliceSmart(postfix.location, buildArrayType(postfix.location, buildVoid(postfix.location)), types, sizes, totalSize, ctx.lp.memcpyFunc, varArgsSlice);
 }
 
-private void resolvePostfixOverload(Context ctx, ir.Postfix postfix, ir.ExpReference eref, ref ir.Function fn, ref ir.CallableType asFunctionType, ref ir.FunctionSetType asFunctionSet, bool reeval)
+private void resolvePostfixOverload(ExtyperContext ctx, ir.Postfix postfix, ir.ExpReference eref, ref ir.Function fn, ref ir.CallableType asFunctionType, ref ir.FunctionSetType asFunctionSet, bool reeval)
 {
 	if (eref is null) {
 		throw panic(postfix.location, "expected expref");
@@ -1220,7 +1220,7 @@ private void resolvePostfixOverload(Context ctx, ir.Postfix postfix, ir.ExpRefer
  * Rewrite a call to a homogenous variadic if needed.
  * Makes individual parameters at the end into an array.
  */
-private void rewriteHomogenousVariadic(Context ctx, ir.CallableType asFunctionType, ir.Postfix postfix)
+private void rewriteHomogenousVariadic(ExtyperContext ctx, ir.CallableType asFunctionType, ir.Postfix postfix)
 {
 	if (!asFunctionType.homogenousVariadic) {
 		return;
@@ -1252,7 +1252,7 @@ private void rewriteHomogenousVariadic(Context ctx, ir.CallableType asFunctionTy
 }
 
 // If a postfix operates directly on a struct via a function call, put it in a variable first.
-bool handleStructLookupViaFunctionCall(Context ctx, ref ir.Exp exp, ir.Postfix[] postfixes)
+bool handleStructLookupViaFunctionCall(ExtyperContext ctx, ref ir.Exp exp, ir.Postfix[] postfixes)
 {
 	// Verify that this expression takes the form Function().something, where Function() returns a struct or union.
 	ir.Type t;
@@ -1301,7 +1301,7 @@ bool handleStructLookupViaFunctionCall(Context ctx, ref ir.Exp exp, ir.Postfix[]
  * Turns identifier postfixes into CreateDelegates, and resolves property function
  * calls in postfixes, type safe varargs, and explicit constructor calls.
  */
-void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
+void extypeLeavePostfix(ExtyperContext ctx, ref ir.Exp exp, ir.Postfix postfix)
 {
 	if (replaceAAPostfixesIfNeeded(ctx, postfix, exp)) {
 		return;
@@ -1419,7 +1419,7 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
  * directly but instead this function is called after they have been
  * rewritten and the ExpReference has been resolved to a single Function.
  */
-bool replaceExpReferenceIfNeeded(Context ctx,
+bool replaceExpReferenceIfNeeded(ExtyperContext ctx,
                                  ir.Type referredType, ref ir.Exp exp, ir.ExpReference eRef)
 {
 	// Hold onto your hats because this is ugly!
@@ -1537,7 +1537,7 @@ bool replaceExpReferenceIfNeeded(Context ctx,
 }
 
 /// Rewrite foo.prop = 3 into foo.prop(3).
-void rewritePropertyFunctionAssign(Context ctx, ref ir.Exp e, ir.BinOp bin)
+void rewritePropertyFunctionAssign(ExtyperContext ctx, ref ir.Exp e, ir.BinOp bin)
 {
 	if (bin.op != ir.BinOp.Op.Assign) {
 		return;
@@ -1627,7 +1627,7 @@ void rewritePropertyFunctionAssign(Context ctx, ref ir.Exp e, ir.BinOp bin)
 /**
  * Handles <type>.<identifier>, like 'int.min' and the like.
  */
-void extypeTypeLookup(Context ctx, ref ir.Exp exp, ir.Postfix[] postfixIdents, ir.Type type)
+void extypeTypeLookup(ExtyperContext ctx, ref ir.Exp exp, ir.Postfix[] postfixIdents, ir.Type type)
 {
 	if (postfixIdents.length != 1) {
 		throw makeExpected(type, "max, min, or init");
@@ -1697,7 +1697,7 @@ void extypeTypeLookup(Context ctx, ref ir.Exp exp, ir.Postfix[] postfixIdents, i
 /**
  * Turn identifier postfixes into <ExpReference>.ident.
  */
-void extypePostfixIdentifier(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
+void extypePostfixIdentifier(ExtyperContext ctx, ref ir.Exp exp, ir.Postfix postfix)
 {
 	if (postfix.op != ir.Postfix.Op.Identifier)
 		return;
@@ -1906,7 +1906,7 @@ void extypePostfixIdentifier(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	}
 }
 
-void extypePostfixIndex(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
+void extypePostfixIndex(ExtyperContext ctx, ref ir.Exp exp, ir.Postfix postfix)
 {
 	if (postfix.op != ir.Postfix.Op.Index)
 		return;
@@ -1919,7 +1919,7 @@ void extypePostfixIndex(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 }
 
 // object.foo(1) into foo(object, 1);
-void extypePostfixUFCS(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
+void extypePostfixUFCS(ExtyperContext ctx, ref ir.Exp exp, ir.Postfix postfix)
 {
 	auto l = postfix.location;
 	ir.Postfix child;
@@ -1994,7 +1994,7 @@ void extypePostfixUFCS(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	}
 }
 
-void extypePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
+void extypePostfix(ExtyperContext ctx, ref ir.Exp exp, ir.Postfix postfix)
 {
 	if (opOverloadRewriteIndex(ctx, postfix, exp)) {
 		return;
@@ -2009,7 +2009,7 @@ void extypePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
  * Stops casting to an overloaded function name, casting from null, and wires
  * up some runtime magic needed for classes.
  */
-void handleCastTo(Context ctx, ref ir.Exp exp, ir.Unary unary)
+void handleCastTo(ExtyperContext ctx, ref ir.Exp exp, ir.Unary unary)
 {
 	assert(unary.type !is null);
 	assert(unary.value !is null);
@@ -2042,7 +2042,7 @@ void handleCastTo(Context ctx, ref ir.Exp exp, ir.Unary unary)
 /**
  * Type new expressions.
  */
-void handleNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
+void handleNew(ExtyperContext ctx, ref ir.Exp exp, ir.Unary _unary)
 {
 	assert(_unary.type !is null);
 
@@ -2124,7 +2124,7 @@ void handleNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 /**
  * Lower. 'new foo[0 .. $]' expressions.
  */
-void handleDup(Context ctx, ref ir.Exp exp, ir.Unary _unary)
+void handleDup(ExtyperContext ctx, ref ir.Exp exp, ir.Unary _unary)
 {
 	panicAssert(_unary, _unary.dupName !is null);
 	panicAssert(_unary, _unary.dupBeginning !is null);
@@ -2169,7 +2169,7 @@ void handleDup(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 	exp = sexp;
 }
 
-void extypeUnary(Context ctx, ref ir.Exp exp, ir.Unary _unary)
+void extypeUnary(ExtyperContext ctx, ref ir.Exp exp, ir.Unary _unary)
 {
 	switch (_unary.op) with (ir.Unary.Op) {
 	case Cast:
@@ -2186,7 +2186,7 @@ void extypeUnary(Context ctx, ref ir.Exp exp, ir.Unary _unary)
  * Everyone's favourite: integer promotion! :D!
  * In general, converts to the largest type needed in a binary expression.
  */
-void extypeBinOp(Context ctx, ir.BinOp bin, ir.PrimitiveType lprim, ir.PrimitiveType rprim)
+void extypeBinOp(ExtyperContext ctx, ir.BinOp bin, ir.PrimitiveType lprim, ir.PrimitiveType rprim)
 {
 	auto leftsz = size(lprim.type);
 	auto rightsz = size(rprim.type);
@@ -2272,7 +2272,7 @@ void extypeBinOp(Context ctx, ir.BinOp bin, ir.PrimitiveType lprim, ir.Primitive
  * If the given binop is working on an aggregate
  * that overloads that operator, rewrite a call to that overload.
  */
-bool opOverloadRewrite(Context ctx, ir.BinOp binop, ref ir.Exp exp)
+bool opOverloadRewrite(ExtyperContext ctx, ir.BinOp binop, ref ir.Exp exp)
 {
 	auto l = exp.location;
 	auto _agg = opOverloadableOrNull(getExpType(ctx.lp, binop.left, ctx.current));
@@ -2301,7 +2301,7 @@ bool opOverloadRewrite(Context ctx, ir.BinOp binop, ref ir.Exp exp)
  * If this postfix operates on an aggregate with an index
  * operator overload, rewrite it.
  */
-bool opOverloadRewriteIndex(Context ctx, ir.Postfix pfix, ref ir.Exp exp)
+bool opOverloadRewriteIndex(ExtyperContext ctx, ir.Postfix pfix, ref ir.Exp exp)
 {
 	if (pfix.op != ir.Postfix.Op.Index) {
 		return false;
@@ -2328,7 +2328,7 @@ bool opOverloadRewriteIndex(Context ctx, ir.Postfix pfix, ref ir.Exp exp)
  * binary of storage types, otherwise forwards to assign or primitive
  * specific functions.
  */
-void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
+void extypeBinOp(ExtyperContext ctx, ir.BinOp binop, ref ir.Exp exp)
 {
 	auto lraw = getExpType(ctx.lp, binop.left, ctx.current);
 	auto rraw = getExpType(ctx.lp, binop.right, ctx.current);
@@ -2474,7 +2474,7 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 /**
  * Ensure concatentation is sound.
  */
-void extypeCat(Context ctx, ref ir.Exp lexp, ref ir.Exp rexp, ir.ArrayType left, ir.Type right)
+void extypeCat(ExtyperContext ctx, ref ir.Exp lexp, ref ir.Exp rexp, ir.ArrayType left, ir.Type right)
 {
 	if (typesEqual(left, right) ||
 	    typesEqual(right, left.base)) {
@@ -2542,7 +2542,7 @@ void extypeCat(Context ctx, ref ir.Exp lexp, ref ir.Exp rexp, ir.ArrayType left,
 	rexp = buildCastSmart(left.base, rexp);
 }
 
-void extypeTernary(Context ctx, ir.Ternary ternary)
+void extypeTernary(ExtyperContext ctx, ir.Ternary ternary)
 {
 	auto trueType = realType(getExpType(ctx.lp, ternary.ifTrue, ctx.current));
 	auto falseType = realType(getExpType(ctx.lp, ternary.ifFalse, ctx.current));
@@ -2574,7 +2574,7 @@ void extypeTernary(Context ctx, ir.Ternary ternary)
 }
 
 /// Replace TypeOf with its expression's type, if needed.
-void replaceTypeOfIfNeeded(Context ctx, ref ir.Type type)
+void replaceTypeOfIfNeeded(ExtyperContext ctx, ref ir.Type type)
 {
 	auto asTypeOf = cast(ir.TypeOf) realType(type);
 	if (asTypeOf is null) {
@@ -2588,7 +2588,7 @@ void replaceTypeOfIfNeeded(Context ctx, ref ir.Type type)
 /**
  * Ensure that a thrown type inherits from Throwable.
  */
-void extypeThrow(Context ctx, ir.ThrowStatement t)
+void extypeThrow(ExtyperContext ctx, ir.ThrowStatement t)
 {
 	auto throwable = cast(ir.Class) retrieveTypeFromObject(ctx.lp, t.location, "Throwable");
 	assert(throwable !is null);
@@ -2641,7 +2641,7 @@ void handleNestedThis(ir.Function fn)
  * Given a nested function fn, add its parameters to the nested
  * struct and insert statements after the nested declaration.
  */
-void handleNestedParams(Context ctx, ir.Function fn)
+void handleNestedParams(ExtyperContext ctx, ir.Function fn)
 {
 	ctx.lp.resolve(ctx.current, fn);
 	auto np = fn.nestedVariable;
@@ -2715,7 +2715,7 @@ struct ArrayCase
  * oldCondition is the switches condition prior to the extyper being run on it.
  * It's a bit of a hack, but we need the unprocessed enum to evaluate final switches.
  */
-void verifySwitchStatement(Context ctx, ir.SwitchStatement ss, ir.Exp oldCondition)
+void verifySwitchStatement(ExtyperContext ctx, ir.SwitchStatement ss, ir.Exp oldCondition)
 {
 	auto conditionType = realType(getExpType(ctx.lp, ss.condition, ctx.current), false, true);
 	auto originalCondition = ss.condition;
@@ -2906,7 +2906,7 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss, ir.Exp oldConditi
  * Check a given Aggregate's anonymous structs/unions
  * (if any) for name collisions.
  */
-void checkAnonymousVariables(Context ctx, ir.Aggregate agg)
+void checkAnonymousVariables(ExtyperContext ctx, ir.Aggregate agg)
 {
 	if (agg.anonymousAggregates.length == 0) {
 		return;
@@ -2934,7 +2934,7 @@ void checkAnonymousVariables(Context ctx, ir.Aggregate agg)
 }
 
 /// Turn a runtime assert into an if and a throw.
-ir.Node transformRuntimeAssert(Context ctx, ir.AssertStatement as)
+ir.Node transformRuntimeAssert(ExtyperContext ctx, ir.AssertStatement as)
 {
 	if (as.isStatic) {
 		throw panic(as.location, "expected runtime assert");
@@ -2952,7 +2952,7 @@ ir.Node transformRuntimeAssert(Context ctx, ir.AssertStatement as)
 	return ifS;
 }
 
-void replaceGlobalArrayLiteralIfNeeded(Context ctx, ir.Variable var)
+void replaceGlobalArrayLiteralIfNeeded(ExtyperContext ctx, ir.Variable var)
 {
 	auto mod = getModuleFromScope(ctx.current);
 
@@ -2994,7 +2994,7 @@ void replaceGlobalArrayLiteralIfNeeded(Context ctx, ir.Variable var)
 	return;
 }
 
-void transformArrayLiteralIfNeeded(Context ctx, ref ir.Exp exp, ir.ArrayLiteral al)
+void transformArrayLiteralIfNeeded(ExtyperContext ctx, ref ir.Exp exp, ir.ArrayLiteral al)
 {
 	if (al.values.length == 0 || !ctx.isInFunction) {
 		return;
@@ -3010,7 +3010,7 @@ void transformArrayLiteralIfNeeded(Context ctx, ref ir.Exp exp, ir.ArrayLiteral 
  * The ForStatement create takes several nodes directly; that is
  * to say, the original foreach and the new for cannot coexist.
  */
-ir.ForStatement foreachToFor(ir.ForeachStatement fes, Context ctx, ir.Scope nestedScope, ref int aggregateForeaches, out string[] replacers, out ir.Function nestedFunction)
+ir.ForStatement foreachToFor(ir.ForeachStatement fes, ExtyperContext ctx, ir.Scope nestedScope, ref int aggregateForeaches, out string[] replacers, out ir.Function nestedFunction)
 {
 	auto l = fes.location;
 	auto fs = new ir.ForStatement();
@@ -3249,7 +3249,7 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, Context ctx, ir.Scope nest
 	throw makeExpected(l, "foreach aggregate type");
 }
 
-void transformForeaches(Context ctx, ir.BlockStatement bs)
+void transformForeaches(ExtyperContext ctx, ir.BlockStatement bs)
 {
 	ir.Function nestedFunction;
 	ir.ForeachStatement lastFes;
@@ -3306,7 +3306,7 @@ bool isInternalVariable(ir.Class c, ir.Variable v)
 	return v is c.typeInfo || v is c.vtableVariable || v is c.initVariable;
 }
 
-void writeVariableAssignsIntoCtors(Context ctx, ir.Class _class)
+void writeVariableAssignsIntoCtors(ExtyperContext ctx, ir.Class _class)
 {
 	foreach (n; _class.members.nodes) {
 		auto v = cast(ir.Variable) n;
@@ -3333,6 +3333,21 @@ void writeVariableAssignsIntoCtors(Context ctx, ir.Class _class)
 }
 
 /**
+ * Special Context for just this file.
+ */
+class ExtyperContext : Context
+{
+public:
+	ExTyper etyper;
+
+public:
+	this(LanguagePass lp)
+	{
+		super(lp);
+	}
+}
+
+/**
  * If type casting were to be strict, type T could only
  * go to type T without an explicit cast. Implicit casts
  * are places where the language deems automatic conversion
@@ -3350,7 +3365,7 @@ class ExTyper : NullVisitor, Pass
 public:
 	bool enterFirstVariable;
 	int nestedDepth;
-	Context ctx;
+	ExtyperContext ctx;
 
 public:
 	override void transform(ir.Module m)
@@ -4112,7 +4127,7 @@ public:
 public:
 	this(LanguagePass lp)
 	{
-		ctx = new Context(lp);
+		ctx = new ExtyperContext(lp);
 		ctx.etyper = this;
 	}
 }

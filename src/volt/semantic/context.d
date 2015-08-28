@@ -9,16 +9,13 @@ import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 
-import volt.semantic.extyper;
 
-
-final class Context
+class Context
 {
 public:
 	LanguagePass lp;
 	bool isVarAssign;
 	ir.Type overrideType;
-	ExTyper etyper;
 
 private:
 	ir.Scope mCurrent;
@@ -38,7 +35,7 @@ public:
 	/**
 	 * Setup the context from a empty state.
 	 */
-	void setupFromScope(ir.Scope _scope)
+	final void setupFromScope(ir.Scope _scope)
 	{
 		auto current = _scope;
 		while  (current !is null) {
@@ -54,7 +51,7 @@ public:
 	/**
 	 * Reset the context allowing it to be resued.
 	 */
-	void reset()
+	final void reset()
 	{
 		foreach(ref f; mFunctionStack[0 .. mLength]) {
 			f = null;
@@ -67,33 +64,33 @@ public:
 	 * State getter functions.
 	 */
 
-	@property ir.Scope current()
+	final @property ir.Scope current()
 	{
 		return mCurrent;
 	}
 
-	@property ir.Function parentFunction()
+	final @property ir.Function parentFunction()
 	{
 		return mFunctionStack[mParentIndex];
 	}
 
-	@property ir.Function currentFunction()
+	final @property ir.Function currentFunction()
 	{
 		return mLength == 0 ? null : mFunctionStack[mLength-1];
 	}
 
-	@property bool isNested()
+	final @property bool isNested()
 	{
 		assert(mLength > 1);
 		return mFunctionStack[mLength-2] !is null;
 	}
 
-	@property bool isFunction()
+	final @property bool isFunction()
 	{
 		return currentFunction !is null;
 	}
 
-	@property ir.Exp lastIndexChild()
+	final @property ir.Exp lastIndexChild()
 	{
 		return mIndexChildren.length > 0 ? mIndexChildren[$-1] : null;
 	}
@@ -102,51 +99,51 @@ public:
 	 * Traversal functions.
 	 */
 
-	void enter(ir.Module m) { assert(mCurrent is null); mThisModule = m; push(m, m.myScope, null); }
-	void enter(ir.Struct s) { push(s, s.myScope, null); }
-	void enter(ir.Union u) { push(u, u.myScope, null); }
-	void enter(ir.Class c) { push(c, c.myScope, null); }
-	void enter(ir._Interface i) { push(i, i.myScope, null); }
-	void enter(ir.UserAttribute ui) { push(ui, ui.myScope, null); }
-	void enter(ir.Enum e) { push(e, e.myScope, null); }
-	void enter(ir.Function fn) { push(fn, fn.myScope, fn); }
-	void enter(ir.BlockStatement bs) { mCurrent = bs.myScope; }
+	final void enter(ir.Module m) { assert(mCurrent is null); mThisModule = m; push(m, m.myScope, null); }
+	final void enter(ir.Struct s) { push(s, s.myScope, null); }
+	final void enter(ir.Union u) { push(u, u.myScope, null); }
+	final void enter(ir.Class c) { push(c, c.myScope, null); }
+	final void enter(ir._Interface i) { push(i, i.myScope, null); }
+	final void enter(ir.UserAttribute ui) { push(ui, ui.myScope, null); }
+	final void enter(ir.Enum e) { push(e, e.myScope, null); }
+	final void enter(ir.Function fn) { push(fn, fn.myScope, fn); }
+	final void enter(ir.BlockStatement bs) { mCurrent = bs.myScope; }
 
-	void leave(ir.Module m) { pop(m, m.myScope, null); }
-	void leave(ir.Struct s) { pop(s, s.myScope, null); }
-	void leave(ir.Union u) { pop(u, u.myScope, null); }
-	void leave(ir.Class c) { pop(c, c.myScope, null); }
-	void leave(ir._Interface i) { pop(i, i.myScope, null); }
-	void leave(ir.UserAttribute ui) { pop(ui, ui.myScope, null); }
-	void leave(ir.Enum e) { pop(e, e.myScope, null); }
-	void leave(ir.Function fn) { pop(fn, fn.myScope, fn); }
-	void leave(ir.BlockStatement bs) { mCurrent = mCurrent.parent; }
+	final void leave(ir.Module m) { pop(m, m.myScope, null); }
+	final void leave(ir.Struct s) { pop(s, s.myScope, null); }
+	final void leave(ir.Union u) { pop(u, u.myScope, null); }
+	final void leave(ir.Class c) { pop(c, c.myScope, null); }
+	final void leave(ir._Interface i) { pop(i, i.myScope, null); }
+	final void leave(ir.UserAttribute ui) { pop(ui, ui.myScope, null); }
+	final void leave(ir.Enum e) { pop(e, e.myScope, null); }
+	final void leave(ir.Function fn) { pop(fn, fn.myScope, fn); }
+	final void leave(ir.BlockStatement bs) { mCurrent = mCurrent.parent; }
 
 	/*
 	 * Keep track of index expressions for $ -> array.length replacement.
 	 */
-	void enter(ir.Postfix postfix)
+	final void enter(ir.Postfix postfix)
 	{
 		if (postfix.op == ir.Postfix.Op.Index || postfix.op == ir.Postfix.Op.Slice) {
 			mIndexChildren ~= postfix.child;
 		}
 	}
 
-	void leave(ir.Postfix postfix)
+	final void leave(ir.Postfix postfix)
 	{
 		if (postfix.op == ir.Postfix.Op.Index || postfix.op == ir.Postfix.Op.Slice) {
 			mIndexChildren = mIndexChildren[0 .. $-1];
 		}
 	}
 
-	void enter(ir.Unary unary)
+	final void enter(ir.Unary unary)
 	{
 		if (unary.op == ir.Unary.Op.Dup) {
 			mIndexChildren ~= unary.value;
 		}
 	}
 
-	void leave(ir.Unary unary)
+	final void leave(ir.Unary unary)
 	{
 		if (unary.op == ir.Unary.Op.Dup) {
 			mIndexChildren = mIndexChildren[0 .. $-1];
