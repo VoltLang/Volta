@@ -2,12 +2,6 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.ir.util;
 
-version(Volt) {
-	import watt.algorithm : sort;
-} else {
-	import std.algorithm : sort;
-}
-
 import ir = volt.ir.ir;
 
 import volt.errors;
