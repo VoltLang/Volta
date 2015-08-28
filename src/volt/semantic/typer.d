@@ -198,6 +198,8 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 		auto asVaArgExp = cast(ir.VaArgExp) exp;
 		assert(asVaArgExp !is null);
 		return getVaArgType(lp, asVaArgExp, currentScope);
+	case IsExp:
+		return buildBool(exp.location);
 	default:
 		throw panicUnhandled(exp, ir.nodeToString(exp));
 	}
