@@ -40,96 +40,6 @@ import volt.semantic.userattrresolver;
 
 
 /**
- * Returns true if argument converts into parameter.
- */
-bool willConvert(ir.Type argument, ir.Type parameter)
-{
-	bool oldArgConst = argument.isConst;
-	bool oldArgImmutable = argument.isImmutable;
-	bool oldParamConst = parameter.isConst;
-	bool oldParamImmutable = parameter.isImmutable;
-	if (!mutableIndirection(argument)) {
-		argument.isConst = false;
-		argument.isImmutable = false;
-	}
-	if (!mutableIndirection(parameter)) {
-		parameter.isConst = false;
-		parameter.isImmutable = false;
-	}
-	scope (exit) {
-		argument.isConst = oldArgConst;
-		argument.isImmutable = oldArgImmutable;
-		parameter.isConst = oldParamConst;
-		parameter.isImmutable = oldParamImmutable;
-	}
-	if (typesEqual(argument, parameter)) {
-		return true;
-	}
-
-	argument = realType(argument);
-	parameter = realType(parameter);
-
-	switch (argument.nodeType) with (ir.NodeType) {
-	case PrimitiveType:
-		auto rprim = cast(ir.PrimitiveType) argument;
-		auto lprim = cast(ir.PrimitiveType) parameter;
-		if (rprim is null || lprim is null) {
-			return false;
-		}
-		if (isUnsigned(rprim.type) != isUnsigned(lprim.type)) {
-			return false;
-		}
-		return size(rprim.type) <= size(lprim.type);
-	case Enum:
-	case TypeReference:
-		assert(false);
-	case Class:
-		bool implements(ir._Interface _iface, ir.Class _class)
-		{
-			foreach (i; _class.parentInterfaces) {
-				if (i is _iface) {
-					return true;
-				}
-			}
-			return false;
-		}
-		auto lclass = cast(ir.Class) ifTypeRefDeRef(parameter);
-		auto liface = cast(ir._Interface) ifTypeRefDeRef(parameter);
-		auto rclass = cast(ir.Class) ifTypeRefDeRef(argument);
-		auto riface = cast(ir._Interface) ifTypeRefDeRef(argument);
-		if ((liface !is null && rclass !is null) || (lclass !is null && riface !is null)) {
-			return implements(liface is null ? riface : liface, lclass is null ? rclass : lclass);
-		}
-		if (lclass is null || rclass is null) {
-			return false;
-		}
-		return isOrInheritsFrom(rclass, lclass);
-	case ArrayType:
-		uint dummy;
-		return willConvertArray(parameter, argument, dummy);
-	case PointerType:
-		auto ptr = cast(ir.PointerType) parameter;
-		if (ptr is null || !isVoid(ptr.base)) {
-			return false;
-		} else {
-			return true;
-		}
-	case NullType:
-		auto nt = realType(parameter).nodeType;
-		with (ir.NodeType) {
-			return nt == PointerType || nt == Class || nt == ArrayType || nt == AAType || nt == DelegateType;
-		}
-	default: return false;
-	}
-}
-
-bool willConvert(Context ctx, ir.Type type, ir.Exp exp)
-{
-	auto rtype = getExpType(ctx.lp, exp, ctx.current);
-	return willConvert(type, rtype);
-}
-
-/**
  * This handles the auto that has been filled in, removing the auto storage.
  */
 void replaceStorageIfNeeded(ref ir.Type type)
@@ -244,36 +154,6 @@ void stripPointerBases(ir.Type toType, ref uint flag)
 	default:
 		break;
 	}
-}
-
-/**
- * Given a type, return a type that will have every storage flag
- * that are nested within it, by going into array and pointer bases, etc.
- */
-ir.Type accumulateStorage(ir.Type toType, ir.Type seed=null)
-{
-	if (seed is null) {
-		seed = new ir.NullType();
-	}
-	addStorage(seed, toType);
-
-	auto asArray = cast(ir.ArrayType)toType;
-	if (asArray !is null) {
-		return accumulateStorage(asArray.base, seed);
-	}
-
-	auto asPointer = cast(ir.PointerType)toType;
-	if (asPointer !is null) {
-		return accumulateStorage(asPointer.base, seed);
-	}
-
-	auto asAA = cast(ir.AAType)toType;
-	if (asAA !is null) {
-		seed = accumulateStorage(asAA.key, seed);
-		return accumulateStorage(asAA.value, seed);
-	}
-
-	return seed;
 }
 
 void appendDefaultArguments(Context ctx, ir.Location loc, ref ir.Exp[] arguments, ir.Function fn)
@@ -442,45 +322,6 @@ void extypeAssignCallableType(Context ctx, ref ir.Exp exp, ir.CallableType ctype
 	throw makeBadImplicitCast(exp, rtype, ctype);
 }
 
-bool willConvertArray(ir.Type l, ir.Type r, ref uint flag, ir.Exp* exp = null)
-{
-	auto atype = cast(ir.ArrayType) realType(removeRefAndOut(l));
-	if (atype is null) {
-		return false;
-	}
-
-	auto astore = accumulateStorage(atype);
-	auto rarr = cast(ir.ArrayType) removeRefAndOut(r);
-	ir.Type rstore;
-	if (rarr !is null) {
-		rstore = accumulateStorage(rarr);
-	}
-	bool badImmutable = atype.isImmutable && rstore !is null && !rstore.isImmutable && !rstore.isConst;
-	if (rarr !is null && typesEqual(atype, rarr, IgnoreStorage) && !badImmutable && !astore.isScope) {
-		return true;
-	}
-
-	auto ctype = cast(ir.CallableType) atype;
-	if (ctype !is null && ctype.homogenousVariadic && rarr is null) {
-		return true;
-	}
-
-	auto aclass = cast(ir.Class) realType(atype.base);
-	ir.Class rclass;
-	if (rarr !is null) {
-		rclass = cast(ir.Class) realType(rarr.base);
-	}
-	if (rclass !is null) {
-		if (inheritsFrom(rclass, aclass)) {
-			if (exp !is null)
-				*exp = buildCastSmart(exp.location, buildArrayType(exp.location, aclass), *exp);
-			return true;
-		}
-	}
-
-	return false;
-}
-
 /**
  * Handles casting arrays of non mutably indirect types with
  * differing storage types.
@@ -497,12 +338,12 @@ void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ref 
 	auto rtype = ctx.overrideType !is null ? ctx.overrideType : realType(getExpType(ctx.lp, exp, ctx.current));
 
 	auto stype = cast(ir.StaticArrayType) rtype;
-	if (stype !is null && willConvertArray(atype, buildArrayType(exp.location, stype.base), flag, &exp)) {
+	if (stype !is null && willConvertArray(atype, buildArrayType(exp.location, stype.base), flag, exp)) {
 		exp = buildCastSmart(exp.location, atype, exp);
 		return;
 	}
 
-	if (willConvertArray(atype, rtype, flag, &exp)) {
+	if (willConvertArray(atype, rtype, flag, exp)) {
 		return;
 	}
 

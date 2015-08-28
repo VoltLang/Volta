@@ -5,15 +5,151 @@ module volt.semantic.overload;
 import std.algorithm : sort;
 
 import ir = volt.ir.ir;
+import volt.ir.util;
 
 import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 
-import volt.semantic.classify;
+import volt.semantic.util;
 import volt.semantic.typer;
-import volt.semantic.extyper;
+import volt.semantic.context;
+import volt.semantic.classify;
 
+
+/**
+ * Returns true if argument converts into parameter.
+ */
+bool willConvert(Context ctx, ir.Type type, ir.Exp exp)
+{
+	auto rtype = getExpType(ctx.lp, exp, ctx.current);
+	return willConvert(type, rtype);
+}
+
+/**
+ * Returns true if argument converts into parameter.
+ */
+bool willConvert(ir.Type argument, ir.Type parameter)
+{
+	bool oldArgConst = argument.isConst;
+	bool oldArgImmutable = argument.isImmutable;
+	bool oldParamConst = parameter.isConst;
+	bool oldParamImmutable = parameter.isImmutable;
+	if (!mutableIndirection(argument)) {
+		argument.isConst = false;
+		argument.isImmutable = false;
+	}
+	if (!mutableIndirection(parameter)) {
+		parameter.isConst = false;
+		parameter.isImmutable = false;
+	}
+	scope (exit) {
+		argument.isConst = oldArgConst;
+		argument.isImmutable = oldArgImmutable;
+		parameter.isConst = oldParamConst;
+		parameter.isImmutable = oldParamImmutable;
+	}
+	if (typesEqual(argument, parameter)) {
+		return true;
+	}
+
+	argument = realType(argument);
+	parameter = realType(parameter);
+
+	switch (argument.nodeType) with (ir.NodeType) {
+	case PrimitiveType:
+		auto rprim = cast(ir.PrimitiveType) argument;
+		auto lprim = cast(ir.PrimitiveType) parameter;
+		if (rprim is null || lprim is null) {
+			return false;
+		}
+		if (isUnsigned(rprim.type) != isUnsigned(lprim.type)) {
+			return false;
+		}
+		return size(rprim.type) <= size(lprim.type);
+	case Enum:
+	case TypeReference:
+		assert(false);
+	case Class:
+		bool implements(ir._Interface _iface, ir.Class _class)
+		{
+			foreach (i; _class.parentInterfaces) {
+				if (i is _iface) {
+					return true;
+				}
+			}
+			return false;
+		}
+		auto lclass = cast(ir.Class) ifTypeRefDeRef(parameter);
+		auto liface = cast(ir._Interface) ifTypeRefDeRef(parameter);
+		auto rclass = cast(ir.Class) ifTypeRefDeRef(argument);
+		auto riface = cast(ir._Interface) ifTypeRefDeRef(argument);
+		if ((liface !is null && rclass !is null) || (lclass !is null && riface !is null)) {
+			return implements(liface is null ? riface : liface, lclass is null ? rclass : lclass);
+		}
+		if (lclass is null || rclass is null) {
+			return false;
+		}
+		return isOrInheritsFrom(rclass, lclass);
+	case ArrayType:
+		uint dummyInt;
+		ir.Exp dummyExp;
+		return willConvertArray(parameter, argument, dummyInt, dummyExp);
+	case PointerType:
+		auto ptr = cast(ir.PointerType) parameter;
+		if (ptr is null || !isVoid(ptr.base)) {
+			return false;
+		} else {
+			return true;
+		}
+	case NullType:
+		auto nt = realType(parameter).nodeType;
+		with (ir.NodeType) {
+			return nt == PointerType || nt == Class || nt == ArrayType || nt == AAType || nt == DelegateType;
+		}
+	default: return false;
+	}
+}
+
+bool willConvertArray(ir.Type l, ir.Type r, ref uint flag, ref ir.Exp exp)
+{
+	auto atype = cast(ir.ArrayType) realType(removeRefAndOut(l));
+	if (atype is null) {
+		return false;
+	}
+
+	auto astore = accumulateStorage(atype);
+	auto rarr = cast(ir.ArrayType) removeRefAndOut(r);
+	ir.Type rstore;
+	if (rarr !is null) {
+		rstore = accumulateStorage(rarr);
+	}
+	bool badImmutable = atype.isImmutable && rstore !is null && !rstore.isImmutable && !rstore.isConst;
+	if (rarr !is null && typesEqual(atype, rarr, IgnoreStorage) && !badImmutable && !astore.isScope) {
+		return true;
+	}
+
+	auto ctype = cast(ir.CallableType) atype;
+	if (ctype !is null && ctype.homogenousVariadic && rarr is null) {
+		return true;
+	}
+
+	auto aclass = cast(ir.Class) realType(atype.base);
+	ir.Class rclass;
+	if (rarr !is null) {
+		rclass = cast(ir.Class) realType(rarr.base);
+	}
+	if (rclass !is null) {
+		if (inheritsFrom(rclass, aclass)) {
+			if (exp !is null) {
+				exp = buildCastSmart(exp.location, buildArrayType(exp.location, aclass), exp);
+			}
+			return true;
+		}
+	}
+
+	return false;
+}
 
 /**
  * Okay, so here's a rough description of how function overload resolution

@@ -17,6 +17,36 @@ import volt.semantic.lookup : lookup, lookupOnlyThisScope;
 import volt.semantic.classify : getParentFunction;
 
 
+/**
+ * Given a type, return a type that will have every storage flag
+ * that are nested within it, by going into array and pointer bases, etc.
+ */
+ir.Type accumulateStorage(ir.Type toType, ir.Type seed=null)
+{
+	if (seed is null) {
+		seed = new ir.NullType();
+	}
+	addStorage(seed, toType);
+
+	auto asArray = cast(ir.ArrayType)toType;
+	if (asArray !is null) {
+		return accumulateStorage(asArray.base, seed);
+	}
+
+	auto asPointer = cast(ir.PointerType)toType;
+	if (asPointer !is null) {
+		return accumulateStorage(asPointer.base, seed);
+	}
+
+	auto asAA = cast(ir.AAType)toType;
+	if (asAA !is null) {
+		seed = accumulateStorage(asAA.key, seed);
+		return accumulateStorage(asAA.value, seed);
+	}
+
+	return seed;
+}
+
 /// If e is a reference to a no-arg property function, turn it into a call.
 /// Returns: the CallableType called, if any, null otherwise.
 ir.CallableType propertyToCallIfNeeded(Location loc, LanguagePass lp, ref ir.Exp e, ir.Scope current, ir.Postfix[] postfixStack)
