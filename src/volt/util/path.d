@@ -13,12 +13,7 @@ version (Windows) {
 	static assert(false);
 }
 
-import std.file : read, exists;
-import std.string : indexOf;
-import std.array : replace;
-import std.path : dirName, dirSeparator;
-import std.random : uniform;
-import std.process : environment;
+import watt.path : dirName, dirSeparator;
 
 
 /**
@@ -29,8 +24,9 @@ string[] genPossibleFilenames(string dir, string[] names)
 	string[] paths;
 	auto ret = dir;
 
-	foreach(name; names)
+	foreach(name; names) {
 		ret ~= dirSeparator ~ name;
+	}
 	paths ~= ret ~ ".volt";
 	paths ~= ret ~ dirSeparator ~ "package.volt";
 

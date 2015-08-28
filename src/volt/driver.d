@@ -5,7 +5,7 @@ module volt.driver;
 import core.exception;
 import std.algorithm : endsWith;
 import std.path : dirSeparator;
-import std.file : remove, exists;
+import std.file : remove, exists, read;
 import std.process : wait, spawnShell;
 import std.stdio : stderr, stdout;
 
