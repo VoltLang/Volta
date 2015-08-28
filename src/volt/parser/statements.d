@@ -26,7 +26,7 @@ ParseStatus parseStatement(ParserStream ps, out ir.Node[] nodes)
 		ir.Import _import;
 		succeeded = parseImport(ps, _import);
 		if (!succeeded) {
-			return parseFailed(ps, ir.NodeType.TopLevelBlock);
+			return succeeded;
 		}
 		nodes = [_import];
 		return eatComments(ps);
