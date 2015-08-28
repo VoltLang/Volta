@@ -117,6 +117,12 @@ void handleTernary(State state, ir.Ternary t, Value result)
 	LLVMMoveBasicBlockAfter(endBlock, falseBlock);
 	state.startBlock(endBlock);
 
+	// Using ternary to select between two void returning functions?
+	if (result.type is state.voidType) {
+		// Better hope that the frontend knows what it is doing.
+		result.value = null;
+		return;
+	}
 	auto phi = LLVMBuildPhi(state.builder, ifFalse.type.llvmType, "");
 	LLVMAddIncoming(
 		phi, [ifTrue.value, ifFalse.value], [trueBlock, falseBlock]);
