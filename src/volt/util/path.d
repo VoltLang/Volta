@@ -3,16 +3,6 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.util.path;
 
-version (Windows) {
-	import core.sys.windows.windows : GetModuleFileNameA;
-} else version (darwin) {
-	extern(C) int _NSGetExecutablePath(char*, uint*);
-} else version (Posix) {
-	import core.sys.posix.unistd : readlink;
-} else {
-	static assert(false);
-}
-
 import watt.path : dirName, dirSeparator;
 
 
@@ -31,40 +21,4 @@ string[] genPossibleFilenames(string dir, string[] names)
 	paths ~= ret ~ dirSeparator ~ "package.volt";
 
 	return paths;
-}
-
-/**
- * Return the path to the dir that the executable is in.
- */
-string getExecDir()
-{
-	char[512] stack;
-
-	version (Windows) {
-
-		auto ret = GetModuleFileNameA(null, stack.ptr, 512);
-
-	} else version (linux) {
-
-		auto ret = readlink("/proc/self/exe", stack.ptr, 512);
-
-	} else version (darwin) {
-
-		uint size = cast(uint)stack.length;
-		auto ret = _NSGetExecutablePath(stack.ptr, &size);
-		if (ret != 0 || size == 0)
-			ret = -1;
-		else
-			ret = cast(int)size;
-
-	} else {
-
-		static assert(false);
-
-	}
-
-	if (ret < 1)
-		throw new Exception("could not get exe path");
-
-	return dirName(stack[0 .. cast(size_t)ret]).idup;
 }

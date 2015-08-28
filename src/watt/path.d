@@ -36,3 +36,48 @@ string temporaryFilename(string extension = "")
 	return filename;
 }
 
+version (Windows) {
+	import core.sys.windows.windows : GetModuleFileNameA;
+} else version (linux) {
+	import core.sys.posix.unistd : readlink;
+} else version (darwin) {
+	extern(C) int _NSGetExecutablePath(char*, uint*);
+}
+
+/**
+ * Return the path to the dir that the executable is in.
+ */
+string getExecDir()
+{
+	char[512] stack;
+
+	version (Windows) {
+
+		auto ret = GetModuleFileNameA(null, stack.ptr, 512);
+
+	} else version (linux) {
+
+		auto ret = readlink("/proc/self/exe", stack.ptr, 512);
+
+	} else version (darwin) {
+
+		uint size = cast(uint)stack.length;
+		auto ret = _NSGetExecutablePath(stack.ptr, &size);
+		if (ret != 0 || size == 0) {
+			ret = -1;
+		} else {
+			ret = cast(int)size;
+		}
+
+	} else {
+
+		static assert(false);
+
+	}
+
+	if (ret < 1) {
+		throw new Exception("could not get exe path");
+	}
+
+	return dirName(stack[0 .. cast(size_t)ret]).idup;
+}

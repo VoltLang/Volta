@@ -2,6 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module main;
 
+import watt.path : getExecDir;
+
 import std.stdio : File, writeln, writefln;
 import std.string : chomp, toLower;
 version (Windows) {
