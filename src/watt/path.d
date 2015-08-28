@@ -5,7 +5,9 @@ module watt.path;
 
 import std.random : uniform;
 import std.process : environment;
-import std.file : exists;
+import std.file : exists, mkdir;
+import std.path : dirSeparator;
+
 
 import watt.math.random;
 

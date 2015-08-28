@@ -2,10 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.visitor.docprinter;
 
-import std.stdio : File;
-import std.path : dirSeparator;
-import std.file : mkdir;
-
+import watt.path : mkdir, dirSeparator;
+import watt.io.streams : OutputFileStream;
 import watt.text.format : format;
 
 import ir = volt.ir.ir;
@@ -34,7 +32,7 @@ public:
 	LanguagePass lp;
 
 protected:
-	File mHtmlFile;
+	OutputFileStream mHtmlFile;
 	size_t mTransformCount;
 
 public:
@@ -52,9 +50,9 @@ public:
 			} catch (Exception) {
 			}
 		}
-		char[] filename = lp.settings.docDir.length == 0 ? "".dup : (lp.settings.docDir ~ dirSeparator).dup;
+		string filename = lp.settings.docDir.length == 0 ? "" : (lp.settings.docDir ~ dirSeparator);
 		if (lp.settings.docOutput.length > 0) {
-			filename ~= lp.settings.docOutput.dup;
+			filename ~= lp.settings.docOutput;
 			if (mTransformCount >= 2) {
 				throw makeExpected(m, "only one file with -do switch");
 			}
@@ -65,7 +63,7 @@ public:
 			}
 			filename ~= ".html";
 		}
-		mHtmlFile.open(filename.idup, "w");
+		mHtmlFile = new OutputFileStream(filename);
 		accept(m, this);
 	}
 
@@ -243,31 +241,31 @@ public:
 protected:
 	void outputComment(ir.Node node)
 	{
-		mHtmlFile.writeln("<pre>", node.docComment, "</pre>");
+		mHtmlFile.writefln("<pre>%s</pre>", node.docComment);
 	}
 
 	void openTag(string tag)
 	{
-		mHtmlFile.write("<" ~ tag ~ ">");
+		mHtmlFile.writef("<%s>", tag);
 	}
 
 	void closeTag(string tag)
 	{
-		mHtmlFile.writeln("</" ~ tag ~ ">");
+		mHtmlFile.writefln("</%s>", tag);
 	}
 
 	void writeHtmlOpening(string title)
 	{
-		mHtmlFile.writeln("<!DOCTYPE html>");
+		wln("<!DOCTYPE html>");
 
 		openTag("html lang=\"en\"");
 		openTag("head");
-		mHtmlFile.writeln(`<meta charset="UTF-8">`);
+		wln(`<meta charset="UTF-8">`);
 		openTag("title");
-		mHtmlFile.writeln(title);
+		wln(title);
 		closeTag("title");
 		openTag("style");
-		mHtmlFile.write(DEFAULT_STYLE);
+		w(DEFAULT_STYLE);
 		closeTag("style");
 		closeTag("head");
 		openTag("body");
@@ -277,5 +275,15 @@ protected:
 	{
 		closeTag("body");
 		closeTag("html");
+	}
+
+	void w(string f)
+	{
+		mHtmlFile.writef("%s", f);
+	}
+
+	void wln(string f)
+	{
+		mHtmlFile.writef("%s", f);
 	}
 }
