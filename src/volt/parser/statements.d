@@ -22,6 +22,14 @@ ParseStatus parseStatement(ParserStream ps, out ir.Node[] nodes)
 	case TokenType.Semicolon:
 		// Just ignore EmptyStatements
 		return match(ps, ir.NodeType.Invalid, TokenType.Semicolon);
+	case TokenType.Import:
+		ir.Import _import;
+		succeeded = parseImport(ps, _import);
+		if (!succeeded) {
+			return parseFailed(ps, ir.NodeType.TopLevelBlock);
+		}
+		nodes = [_import];
+		return eatComments(ps);
 	case TokenType.Return:
 		ir.ReturnStatement r;
 		succeeded = parseReturnStatement(ps, r);
