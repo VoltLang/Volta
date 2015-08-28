@@ -160,6 +160,7 @@ VIV_SRC= \
 	src/volt/interfaces.d \
 	src/volt/ir/*.d \
 	src/volt/util/string.d \
+	src/volt/util/worktracker.d \
 	src/volt/token/*.d \
 	src/volt/parser/*.d \
 	src/volt/visitor/manip.d \

@@ -304,7 +304,7 @@ public:
 		if (v.isResolved)
 			return;
 
-		auto w = mTracker.add(v, "resolving variable");
+		auto w = mTracker.add(v, Work.Action.Resolve);
 		scope (exit)
 			w.done();
 
@@ -381,7 +381,7 @@ public:
 
 	override void resolve(ir.Store s)
 	{
-		auto w = mTracker.add(s.node, "resolving alias");
+		auto w = mTracker.add(s.node, Work.Action.Resolve);
 		scope (exit)
 			w.done();
 
@@ -411,7 +411,7 @@ public:
 
 	override ir.Type resolve(ir.Scope current, ir.Type t)
 	{
-		auto w = mTracker.add(t, "resolving type");
+		auto w = mTracker.add(t, Work.Action.Resolve);
 		scope (exit)
 			w.done();
 
@@ -477,7 +477,7 @@ public:
 	{
 		resolveNamed(i);
 
-		auto w = mTracker.add(i, "actualizing interface");
+		auto w = mTracker.add(i, Work.Action.Actualize);
 		scope (exit)
 			w.done();
 
@@ -488,7 +488,7 @@ public:
 	{
 		resolveNamed(s);
 
-		auto w = mTracker.add(s, "actualizing struct");
+		auto w = mTracker.add(s, Work.Action.Actualize);
 		scope (exit)
 			w.done();
 
@@ -499,7 +499,7 @@ public:
 	{
 		resolveNamed(u);
 
-		auto w = mTracker.add(u, "actualizing union");
+		auto w = mTracker.add(u, Work.Action.Actualize);
 		scope (exit)
 			w.done();
 
@@ -510,7 +510,7 @@ public:
 	{
 		resolveNamed(c);
 
-		auto w = mTracker.add(c, "actualizing class");
+		auto w = mTracker.add(c, Work.Action.Actualize);
 		scope (exit)
 			w.done();
 
@@ -521,7 +521,7 @@ public:
 	{
 		resolveNamed(ua);
 
-		auto w = mTracker.add(ua, "actualizing user attribute");
+		auto w = mTracker.add(ua, Work.Action.Actualize);
 		scope (exit)
 			w.done();
 
