@@ -2,7 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.overload;
 
-import std.algorithm : sort, max;
+import std.algorithm : sort;
 
 import ir = volt.ir.ir;
 
@@ -203,7 +203,9 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 				if (atype !is null && isVoid(atype.base)) {
 					matchLevels ~= 2;
 				} else {
-					matchLevels ~= max(.matchLevel(true, arg, arr.base), .matchLevel(true, arg, arr));
+					auto ml1 = .matchLevel(true, arg, arr.base);
+					auto ml2 = .matchLevel(true, arg, arr);
+					matchLevels ~= ml1 > ml2 ? ml1 : ml2;
 					// Given foo(T[]...) and foo(T) passing a T, the latter should be preferred.
 					if (matchLevels[$-1] == 4) {
 						matchLevels[$-1] = 3;
