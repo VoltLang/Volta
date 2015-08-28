@@ -10,6 +10,7 @@ import std.process : wait, spawnShell;
 import std.stdio : stderr, stdout;
 
 import watt.text.diff;
+import watt.path : temporaryFilename;
 
 import volt.util.path;
 import volt.util.perf : perf;
