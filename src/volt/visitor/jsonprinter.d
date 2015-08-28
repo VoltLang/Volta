@@ -1,8 +1,9 @@
 // Copyright © 2014, Bernard Helyer.  All rights reserved.
+// Copyright © 2015, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.visitor.jsonprinter;
 
-import std.stdio : File;
+import watt.io.streams : OutputFileStream;
 
 import ir = volt.ir.ir;
 
@@ -23,8 +24,9 @@ public:
 	LanguagePass lp;
 	Entry[] functions, variables, enums, structs, classes;
 	ir.Module currentModule;
-	File fp;
+	OutputFileStream mFile;
 
+public:
 	this(LanguagePass lp)
 	{
 		this.lp = lp;
@@ -36,7 +38,7 @@ public:
 			currentModule = mod;
 			accept(mod, this);
 		}
-		fp.open(lp.settings.jsonOutput, "w");
+		mFile = new OutputFileStream(lp.settings.jsonOutput);
 		w("{\n");
 		writeArray("functions", functions, ",\n");
 		writeArray("variables", variables, ",\n");
@@ -49,7 +51,10 @@ public:
 	override Status enter(ir.Function fn)
 	{
 		if (fn.docComment.length > 0) {
-			functions ~= Entry(currentModule.name.toString() ~ "." ~ fn.name, fn.docComment);
+			Entry e;
+			e.name = currentModule.name.toString() ~ "." ~ fn.name;
+			e.comment = fn.docComment;
+			functions ~= e;
 		}
 		return Continue;
 	}
@@ -57,15 +62,21 @@ public:
 	override Status enter(ir.Variable v)
 	{
 		if (v.docComment.length > 0) {
-			variables ~= Entry(currentModule.name.toString() ~ "." ~ v.name, v.docComment);
+			Entry e;
+			e.name = currentModule.name.toString() ~ "." ~ v.name;
+			e.comment = v.docComment;
+			variables ~= e;
 		}
 		return Continue;
 	}
 
-	override Status enter(ir.Enum e)
+	override Status enter(ir.Enum en)
 	{
-		if (e.docComment.length > 0) {
-			enums ~= Entry(currentModule.name.toString() ~ "." ~ e.name, e.docComment);
+		if (en.docComment.length > 0) {
+			Entry e;
+			e.name = currentModule.name.toString() ~ "." ~ en.name;
+			e.comment = en.docComment;
+			enums ~= e;
 		}
 		return Continue;
 	}
@@ -73,7 +84,10 @@ public:
 	override Status enter(ir.Struct s)
 	{
 		if (s.docComment.length > 0) {
-			structs ~= Entry(currentModule.name.toString() ~ "." ~ s.name, s.docComment);
+			Entry e;
+			e.name = currentModule.name.toString() ~ "." ~ s.name;
+			e.comment = s.docComment;
+			structs ~= e;
 		}
 		return Continue;
 	}
@@ -81,7 +95,10 @@ public:
 	override Status enter(ir.Class c)
 	{
 		if (c.docComment.length > 0) {
-			classes ~= Entry(currentModule.name.toString() ~ "." ~ c.name, c.docComment);
+			Entry e;
+			e.name = currentModule.name.toString() ~ "." ~ c.name;
+			e.comment = c.docComment;
+			classes ~= e;
 		}
 		return Continue;
 	}
@@ -104,7 +121,7 @@ private:
 
 	void w(string s)
 	{
-		fp.writef(`%s`, s);
+		mFile.writef(`%s`, s);
 	}
 
 	/// Add quotes to s and make it a JSON string (w/ escaping etc).
@@ -123,6 +140,6 @@ private:
 			default: outString ~= c; break;
 			}
 		}
-		fp.writef(`"%s"`, outString);
+		mFile.writef(`"%s"`, outString);
 	}
 }
