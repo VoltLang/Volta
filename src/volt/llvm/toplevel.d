@@ -183,10 +183,21 @@ public:
 
 		handleScopeSuccessTo(null);
 
-		if (ret.exp is null) {
+		Value val;
+		if (ret.exp !is null) {
+			val = new Value();
+			state.getValue(ret.exp, val);
+
+			// Handle void returning functions.
+			if (val.type is state.voidType) {
+				val = null;
+			}
+		}
+
+		if (val is null) {
 			LLVMBuildRet(b, null);
 		} else {
-			LLVMBuildRet(b, state.getValue(ret.exp));
+			LLVMBuildRet(b, val.value);
 		}
 
 		state.fnState.fall = false;
