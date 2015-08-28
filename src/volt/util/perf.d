@@ -1,4 +1,9 @@
+// Copyright © 2015, Jakob Bornecrantz.  All rights reserved.
+// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.util.perf;
+
+
+version (D_Version2):
 
 private import core.time : MonoTime;
 private import std.stdio : writefln;
