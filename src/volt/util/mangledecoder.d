@@ -1,11 +1,12 @@
 module volt.util.mangledecoder;
 
-import std.ascii : isDigit;
-import std.conv : to;
+import watt.conv : toInt;
+import watt.text.ascii : isDigit;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
 import volt.token.location;
+
 
 /// Take the first n characters from s, advance s by n characters, and return the result.
 string take(ref string s, size_t n)
@@ -23,7 +24,7 @@ int takeDigit(ref string mangledString)
 		numbuf ~= mangledString[0];
 		mangledString = mangledString[1 .. $];
 	}
-	return to!int(numbuf);
+	return toInt(numbuf);
 }
 
 ir.Identifier takeNameSegment(ref string mangledString)
