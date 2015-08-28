@@ -509,11 +509,16 @@ public:
 	override Status enter(ir.Condition c)
 	{
 		final switch (c.kind) with (ir.Condition.Kind) {
+		case Debug:
+			twf("debug ");
+			if (c.exp !is null) {
+				wf("(");
+				acceptExp(c.exp, this);
+				wf(")");
+			}
+			return ContinueParent;
 		case Version:
 			twf("version (");
-			break;
-		case Debug:
-			twf("debug (");
 			break;
 		case StaticIf:
 			twf("static if (");
