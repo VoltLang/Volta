@@ -233,7 +233,7 @@ protected:
 					}
 				} else {
 					if (fn.type.params.length != 1) {
-						throw makeWrongNumberOfArguments(fn, fn.type.params.length, isVoid(fn.type.ret) ? 0 : 1);
+						throw makeWrongNumberOfArguments(fn, fn.type.params.length, isVoid(fn.type.ret) ? 0U : 1U);
 					}
 				}
 				fn.type.isProperty = true;
