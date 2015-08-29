@@ -168,7 +168,7 @@ size_t alignment(LanguagePass lp, ir.Type node)
 	case StaticArrayType:
 		auto _static = cast(ir.StaticArrayType) node;
 		assert(_static !is null);
-		return alignment(lp, _static.base) * cast(int)_static.length;
+		return alignment(lp, _static.base) * _static.length;
 	default:
 		throw panicUnhandled(node, ir.nodeToString(node));
 	}
