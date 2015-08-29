@@ -10,7 +10,6 @@ import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 
-import volt.semantic.lookup : lookup;
 import volt.semantic.context;
 
 
@@ -334,10 +333,7 @@ bool isLValue(LanguagePass lp, ir.Scope current, ir.Exp exp)
 {
 	switch (exp.nodeType) {
 	case ir.NodeType.IdentifierExp:
-		auto asIdentExp = cast(ir.IdentifierExp) exp;
-		assert(asIdentExp !is null);
-		auto store = lookup(lp, current, exp.location, asIdentExp.value);
-		return store !is null && (store.kind == ir.Store.Kind.Value || store.kind == ir.Store.Kind.FunctionParam);
+		throw panic(exp, "IdentifierExp left in ir (run ExTyper)");
 	case ir.NodeType.ExpReference: return true;
 	case ir.NodeType.Postfix:
 		auto asPostfix = cast(ir.Postfix) exp;
