@@ -206,7 +206,7 @@ void actualizeUnion(LanguagePass lp, ir.Union u)
 {
 		createAggregateVar(lp, u);
 
-		uint accum;
+		size_t accum;
 		foreach (n; u.members.nodes) {
 			if (n.nodeType == ir.NodeType.Function) {
 				throw makeExpected(n, "field");

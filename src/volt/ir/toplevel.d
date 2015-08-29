@@ -340,7 +340,7 @@ public:
 class Union : Aggregate
 {
 public:
-	int totalSize; // Total size in memory.
+	size_t totalSize; // Total size in memory.
 
 public:
 	this() { super(NodeType.Union); }

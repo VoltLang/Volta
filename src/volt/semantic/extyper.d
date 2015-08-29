@@ -1194,7 +1194,8 @@ private void rewriteVarargs(ExtyperContext ctx, ir.CallableType asFunctionType, 
 		auto typeId = buildTypeidSmart(postfix.location, etype);
 		typeidsLiteral.values ~= typeId;
 		types ~= etype;
-		sizes ~= size(ctx.lp, etype);
+		// TODO this probably isn't right.
+		sizes ~= cast(int)size(ctx.lp, etype);
 		totalSize += sizes[$-1];
 	}
 
@@ -2233,7 +2234,7 @@ void extypeBinOp(ExtyperContext ctx, ir.BinOp bin, ir.PrimitiveType lprim, ir.Pr
 
 
 	auto intsz = size(ir.PrimitiveType.Kind.Int);
-	int largestsz;
+	size_t largestsz;
 	ir.Type largestType;
 
 	if ((isFloatingPoint(lprim) && isFloatingPoint(rprim)) || (isIntegral(lprim) && isIntegral(rprim))) {

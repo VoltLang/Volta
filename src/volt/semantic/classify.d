@@ -19,7 +19,10 @@ import volt.semantic.context;
  *
  */
 
-int size(ir.PrimitiveType.Kind kind)
+/**
+ * Returns the size of a given ir.PrimitiveType in bytes.
+ */
+size_t size(ir.PrimitiveType.Kind kind)
 {
 	final switch (kind) with (ir.PrimitiveType.Kind) {
 	case Void: return 1;
@@ -41,7 +44,10 @@ int size(ir.PrimitiveType.Kind kind)
 	}
 }
 
-int size(LanguagePass lp, ir.Node node)
+/**
+ * Returns the size of a given ir.Type in bytes.
+ */
+size_t size(LanguagePass lp, ir.Node node)
 {
 	switch (node.nodeType) with (ir.NodeType) {
 	case PrimitiveType:
@@ -95,8 +101,10 @@ int size(LanguagePass lp, ir.Node node)
 	}
 }
 
-/// Returns the size of a given Struct, in bytes.
-int structSize(LanguagePass lp, ir.Struct s)
+/**
+ * Returns the size of a given ir.Struct in bytes.
+ */
+size_t structSize(LanguagePass lp, ir.Struct s)
 {
 	int sizeAccumulator;
 	foreach (node; s.members.nodes) {
@@ -106,8 +114,8 @@ int structSize(LanguagePass lp, ir.Struct s)
 			continue;
 		}
 
-		int a = cast(int)alignment(lp, asVar.type);
-		int size = .size(lp, asVar.type);
+		auto a = alignment(lp, asVar.type);
+		auto size = .size(lp, asVar.type);
 		if (sizeAccumulator % a) {
 			sizeAccumulator += (a - (sizeAccumulator % a)) + size;
 		} else {
@@ -117,10 +125,12 @@ int structSize(LanguagePass lp, ir.Struct s)
 	return sizeAccumulator;
 }
 
-/// Returns the size of a given Union, in bytes.
-int unionSize(LanguagePass lp, ir.Union u)
+/**
+ * Returns the size of a given ir.Union in bytes.
+ */
+size_t unionSize(LanguagePass lp, ir.Union u)
 {
-	int sizeAccumulator;
+	size_t sizeAccumulator;
 	foreach (node; u.members.nodes) {
 		// If it's not a Variable, it shouldn't take up space.
 		if (node.nodeType != ir.NodeType.Variable) {

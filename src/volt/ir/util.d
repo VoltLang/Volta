@@ -602,16 +602,16 @@ ir.Constant buildConstantNull(Location loc, ir.Type base)
 /**
  * Gets a size_t Constant and fills it with a value.
  */
-ir.Constant buildConstantSizeT(Location loc, LanguagePass lp, uint val)
+ir.Constant buildConstantSizeT(Location loc, LanguagePass lp, size_t val)
 {
 	auto c = new ir.Constant();
 	c.location = loc;
 	auto prim = lp.settings.getSizeT(loc);
 	// Uh, I assume just c._uint = val would work, but I can't test it here, so just be safe.
 	if (prim.type == ir.PrimitiveType.Kind.Ulong) {
-		c.u._ulong = val;
+		c.u._ulong = cast(ulong)val;
 	} else {
-		c.u._uint = val;
+		c.u._uint = cast(uint)val;
 	}
 	c.type = prim;
 	return c;

@@ -616,7 +616,7 @@ public:
 
 		// @todo check packing.
 		LLVMTypeRef[1] mt;
-		mt[0] = LLVMArrayType(state.ubyteType.llvmType, irType.totalSize);
+		mt[0] = LLVMArrayType(state.ubyteType.llvmType, cast(uint)irType.totalSize);
 		LLVMStructSetBody(llvmType, mt, false);
 	}
 
@@ -655,7 +655,7 @@ public:
 		}
 		auto vals = new LLVMValueRef[](1);
 
-		int lastSize = 0;
+		size_t lastSize = 0;
 
 		foreach (size_t i; 0 .. indices.length) {
 			auto t = volt.semantic.typer.getExpType(state.lp, ul.exps[i], utype.myScope);

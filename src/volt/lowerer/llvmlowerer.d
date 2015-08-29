@@ -1265,9 +1265,9 @@ public:
 			return;
 		}
 
-		int fromSz = size(lp, fromArray.base);
-		int toSz = size(lp, toArray.base);
-		int biggestSz = fromSz > toSz ? fromSz : toSz;
+		auto fromSz = size(lp, fromArray.base);
+		auto toSz = size(lp, toArray.base);
+		auto biggestSz = fromSz > toSz ? fromSz : toSz;
 		bool decreasing = fromSz > toSz;
 
 		// ({

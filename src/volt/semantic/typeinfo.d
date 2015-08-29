@@ -112,7 +112,7 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 
 	type = realType(type, false, true);  // Strip storage type.
 
-	int typeSize = size(lp, type);
+	auto typeSize = size(lp, type);
 	auto typeConstant = buildConstantSizeT(type.location, lp, typeSize);
 
 	int typeTag = typeToRuntimeConstant(lp, mod.myScope, type);
