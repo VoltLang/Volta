@@ -12,7 +12,6 @@ import volt.visitor.visitor;
 import volt.visitor.scopemanager;
 
 import volt.semantic.ctfe;
-import volt.semantic.typer;
 import volt.semantic.classify;
 
 
