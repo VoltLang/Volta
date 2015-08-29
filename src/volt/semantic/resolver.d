@@ -28,6 +28,39 @@ import volt.semantic.typeinfo;
  */
 
 /**
+ * Resolves an alias, either setting the myalias field
+ * or turning it into a type.
+ */
+void resolveAlias(LanguagePass lp, ir.Alias a)
+{
+	auto s = a.store;
+	scope(exit) {
+		a.isResolved = true;
+	}
+
+	if (a.type !is null) {
+		a.type = lp.resolve(s.s, a.type);
+		return s.markAliasResolved(a.type);
+	}
+
+	ir.Store ret;
+	if (s.s is s.parent) {
+		// Normal alias.
+		ret = lookup(lp, s.s, a.id);
+	} else {
+		// Import alias.
+		assert(a.id.identifiers.length == 1);
+		ret = lookupAsImportScope(lp, s.s, a.location, a.id.identifiers[0].value);
+	}
+
+	if (ret is null) {
+		throw makeFailedLookup(a, a.id.toString);
+	}
+
+	s.markAliasResolved(ret);
+}
+
+/**
  * Ensure that there are no unresolved TypeRefences in the given
  * type. Stops when encountering the first resolved TypeReference.
  */

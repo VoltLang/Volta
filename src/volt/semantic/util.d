@@ -181,7 +181,8 @@ ir.Store ensureResolved(LanguagePass lp, ir.Store s)
 {
 	final switch (s.kind) with (ir.Store.Kind) {
 	case Alias:
-		lp.resolve(s);
+		auto a = cast(ir.Alias)s.node;
+		lp.resolve(a);
 		while (s.myAlias !is null) {
 			s = s.myAlias;
 		}

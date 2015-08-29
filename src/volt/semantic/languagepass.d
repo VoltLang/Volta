@@ -34,7 +34,6 @@ import volt.semantic.classify;
 import volt.semantic.typeinfo;
 import volt.semantic.irverifier;
 import volt.semantic.classresolver;
-import volt.semantic.aliasresolver;
 import volt.semantic.storageremoval;
 import volt.semantic.userattrresolver;
 
@@ -375,22 +374,6 @@ public:
 		}
 	}
 
-	override void resolve(ir.Alias a)
-	{
-		if (!a.resolved) {
-			resolve(a.store);
-		}
-	}
-
-	override void resolve(ir.Store s)
-	{
-		auto w = mTracker.add(s.node, Work.Action.Resolve);
-		scope (exit)
-			w.done();
-
-		resolveAlias(this, s);
-	}
-
 	override void resolve(ir.Scope current, ir.Attribute a)
 	{
 		if (!needsResolving(a)) {
@@ -430,6 +413,19 @@ public:
 	 *
 	 */
 
+	override void doResolve(ir.Alias a)
+	{
+		assert(a.store !is null);
+		assert(a.store.node is a);
+
+		auto w = mTracker.add(a, Work.Action.Resolve);
+		scope (exit) {
+			w.done();
+		}
+
+		resolveAlias(this, a);
+	}
+
 	override void doResolve(ir.Enum e)
 	{
 		resolveEnum(this, e);
@@ -440,7 +436,6 @@ public:
 		resolve(s.myScope.parent, s.userAttrs);
 		s.isResolved = true;
 		resolve(s.myScope, s.members);
-
 	}
 
 	override void doResolve(ir.Union u)

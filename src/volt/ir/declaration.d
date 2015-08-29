@@ -160,7 +160,7 @@ class Alias : Node
 {
 public:
 	Access access;
-	bool resolved;
+	bool isResolved;
 
 	/**
 	 * The names to associate with the alias.

@@ -258,11 +258,9 @@ public:
 	 * type is set.
 	 *
 	 * @throws CompilerError on failure to resolve alias.
-	 * @{
 	 */
-	abstract void resolve(ir.Store s);
-	abstract void resolve(ir.Alias a);
-	/* @} */
+	final void resolve(ir.Alias a)
+	{ if (!a.isResolved) doResolve(a); }
 
 	/**
 	 * Resolves an Attribute, for UserAttribute usages.
@@ -402,6 +400,7 @@ public:
 	 */
 
 protected:
+	abstract void doResolve(ir.Alias a);
 	abstract void doResolve(ir.Enum e);
 	abstract void doResolve(ir._Interface i);
 	abstract void doResolve(ir.Class c);

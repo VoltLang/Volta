@@ -121,7 +121,7 @@ public:
 				} else {
 					a = buildAliasSmart(_alias[0].location, _alias[0].value, _alias[1]);
 				}
-				bindScope.addAlias(a, a.name, mod.myScope);
+				a.store = bindScope.addAlias(a, a.name, mod.myScope);
 			}
 		}
 	}
