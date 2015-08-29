@@ -10,8 +10,7 @@ import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 
-import volt.semantic.typer : realType;
-import volt.semantic.lookup : ensureResolved, lookup;
+import volt.semantic.lookup : lookup;
 import volt.semantic.context;
 
 
@@ -174,6 +173,30 @@ size_t alignment(LanguagePass lp, ir.Type node)
 	default:
 		throw panicUnhandled(node, ir.nodeToString(node));
 	}
+}
+
+/**
+ * Remove types masking a type (e.g. enum).
+ */
+ir.Type realType(ir.Type t, bool stripEnum = true, bool stripStorage = false)
+{
+	auto tr = cast(ir.TypeReference) t;
+	if (tr !is null) {
+		return realType(tr.type, stripEnum, stripStorage);
+	}
+	if (stripEnum) {
+		auto e = cast(ir.Enum) t;
+		if (e !is null) {
+			return realType(e.base, stripEnum, stripStorage);
+		}
+	}
+	if (stripStorage) {
+		auto st = cast(ir.StorageType) t;
+		if (st !is null) {
+			return realType(st.base, stripEnum, stripStorage);
+		}
+	}
+	return t;
 }
 
 /**
