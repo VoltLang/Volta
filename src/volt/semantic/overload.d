@@ -54,7 +54,7 @@ ir.Function selectFunction(LanguagePass lp, ir.Scope current, ir.Function[] func
 	foreach (arg; arguments) {
 		types ~= getExpType(lp, arg, current);
 	}
-	return selectFunction(lp, functions, types, location, throwOnError);
+	return selectFunction(lp, functions, types, arguments, location, throwOnError);
 }
 
 ir.Function selectFunction(LanguagePass lp, ir.Scope current, ir.FunctionSet fset, ir.Exp[] arguments, Location location, bool throwOnError = ThrowOnError)
@@ -63,7 +63,7 @@ ir.Function selectFunction(LanguagePass lp, ir.Scope current, ir.FunctionSet fse
 	foreach (arg; arguments) {
 		types ~= getExpType(lp, arg, current);
 	}
-	return selectFunction(lp, fset, types, location, throwOnError);
+	return selectFunction(lp, fset, types, arguments, location, throwOnError);
 }
 
 ir.Function selectFunction(LanguagePass lp, ir.FunctionSet fset, ir.Variable[] arguments, Location location, bool throwOnError = ThrowOnError)
@@ -72,7 +72,7 @@ ir.Function selectFunction(LanguagePass lp, ir.FunctionSet fset, ir.Variable[] a
 	foreach (arg; arguments) {
 		types ~= arg.type;
 	}
-	return selectFunction(lp, fset, types, location, throwOnError);
+	return selectFunction(lp, fset, types, [], location, throwOnError);
 }
 
 ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Variable[] arguments, Location location, bool throwOnError)
@@ -81,7 +81,7 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Variable
 	foreach (arg; arguments) {
 		types ~= arg.type;
 	}
-	return selectFunction(lp, functions, types, location, throwOnError);
+	return selectFunction(lp, functions, types, [], location, throwOnError);
 }
 
 ir.Type ifTypeRefDeRef(ir.Type t)
@@ -94,12 +94,16 @@ ir.Type ifTypeRefDeRef(ir.Type t)
 	}
 }
 
-int matchLevel(bool homogenous, ir.Type argument, ir.Type parameter)
+int matchLevel(bool homogenous, ir.Type argument, ir.Type parameter, ir.Exp exp=null)
 {
 	if (typesEqual(argument, parameter)) {
 		return 4;
 	}
 	if (typesEqual(argument, parameter, IgnoreStorage)) {
+		return 3;
+	}
+	auto prim = cast(ir.PrimitiveType) parameter;
+	if (prim !is null && exp !is null && fitsInPrimitive(prim, exp)) {
 		return 3;
 	}
 
@@ -152,7 +156,12 @@ bool specialisationComparison(ir.Function a, ir.Function b)
 
 ir.Function selectFunction(LanguagePass lp, ir.FunctionSet fset, ir.Type[] arguments, Location location, bool throwOnError = ThrowOnError)
 {
-	auto fn = selectFunction(lp, fset.functions, arguments, location, throwOnError);
+	return selectFunction(lp, fset, arguments, [], location, throwOnError);
+}
+
+ir.Function selectFunction(LanguagePass lp, ir.FunctionSet fset, ir.Type[] arguments, ir.Exp[] exps, Location location, bool throwOnError = ThrowOnError)
+{
+	auto fn = selectFunction(lp, fset.functions, arguments, exps, location, throwOnError);
 	if (fn is null) {
 		return null;
 	}
@@ -160,6 +169,11 @@ ir.Function selectFunction(LanguagePass lp, ir.FunctionSet fset, ir.Type[] argum
 }
 
 ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] arguments, Location location, bool throwOnError = ThrowOnError)
+{
+	return selectFunction(lp, functions, arguments, [], location, throwOnError);
+}
+
+ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] arguments, ir.Exp[] exps, Location location, bool throwOnError = ThrowOnError)
 {
 	assert(functions.length > 0);
 
@@ -190,7 +204,8 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 				matchLevels ~= 4;
 			} else {
 				bool homogenous = fn.type.homogenousVariadic && i == fn.type.params.length - 1;
-				matchLevels ~= .matchLevel(homogenous, arguments[i], param);
+				auto exp = i < exps.length ? exps[i] : null;
+				matchLevels ~= .matchLevel(homogenous, arguments[i], param, exp);
 			}
 		}
 		if (fn.type.homogenousVariadic) {
