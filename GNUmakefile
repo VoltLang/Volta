@@ -163,6 +163,8 @@ VIV_SRC= \
 	src/volt/token/*.d \
 	src/volt/parser/*.d \
 	src/volt/visitor/*.d \
+	src/volt/semantic/lookup.d \
+	src/volt/semantic/nested.d \
 	src/volt/semantic/context.d \
 	src/volt/semantic/classify.d \
 	src/volt/postparse/scopereplacer.d \
