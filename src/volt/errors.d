@@ -42,17 +42,17 @@ CompilerException makeCannotSlice(Location l, ir.Type type, string file = __FILE
 
 CompilerException makeCallClass(Location loc, ir.Class _class, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(loc, format("Attempted to call class '%s'. Did you forget a new?", _class.name));
+	return new CompilerError(loc, format("Attempted to call class '%s'. Did you forget a new?", _class.name), file, line);
 }
 
 CompilerException makeMixedSignedness(Location loc, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(loc, format("Expression mixes unsigned and signed values."));
+	return new CompilerError(loc, format("Expression mixes unsigned and signed values."), file, line);
 }
 
 CompilerException makeStaticArrayLengthMismatch(Location loc, size_t expectedLength, size_t gotLength, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(loc, format("Expected literal of length %s, got %s.", expectedLength, gotLength));
+	return new CompilerError(loc, format("Expected literal of length %s, got %s.", expectedLength, gotLength), file, line);
 }
 
 CompilerException makeDoesNotImplement(Location loc, ir.Class _class, ir._Interface iface, ir.Function fn, string file = __FILE__, const int line = __LINE__)
