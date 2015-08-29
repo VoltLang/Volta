@@ -3596,6 +3596,8 @@ public:
 		}
 		enterFirstVariable = true;
 
+		// Fix up type as best as possible.
+		accept(v.type, this);
 		v.type = ctx.lp.resolve(ctx.current, v.type);
 
 		bool inAggregate = (cast(ir.Aggregate) ctx.current.node) !is null;
