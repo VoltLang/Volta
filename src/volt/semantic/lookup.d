@@ -60,8 +60,8 @@ ir.Store lookupAsImportScope(LanguagePass lp, ir.Scope _scope, Location loc, str
 		return ensureResolved(lp, store);
 	}
 
-	bool[ir.Scope] checked;
-	store = lookupPublicImportScope(lp, _scope, loc, name, checked);
+	PublicImportContext ctx;
+	store = lookupPublicImportScope(lp, _scope, loc, name, ctx);
 	if (store !is null) {
 		return ensureResolved(lp, store);
 	}
@@ -69,7 +69,14 @@ ir.Store lookupAsImportScope(LanguagePass lp, ir.Scope _scope, Location loc, str
 	return null;
 }
 
-private ir.Store lookupPublicImportScope(LanguagePass lp, ir.Scope _scope, Location loc, string name, bool[ir.Scope] checked)
+private struct PublicImportContext
+{
+	bool[ir.Scope] checked;
+}
+
+private ir.Store lookupPublicImportScope(LanguagePass lp, ir.Scope _scope,
+                                         Location loc, string name,
+                                         ref PublicImportContext ctx)
 {
 	foreach (i, submod; _scope.importedModules) {
 		if (_scope.importedAccess[i] == ir.Access.Public) {
@@ -77,11 +84,11 @@ private ir.Store lookupPublicImportScope(LanguagePass lp, ir.Scope _scope, Locat
 			if (store !is null) {
 				return ensureResolved(lp, store);
 			}
-			if (submod.myScope in checked) {
+			if (submod.myScope in ctx.checked) {
 				continue;
 			}
-			checked[submod.myScope] = true;
-			store = lookupPublicImportScope(lp, submod.myScope, loc, name, checked);
+			ctx.checked[submod.myScope] = true;
+			store = lookupPublicImportScope(lp, submod.myScope, loc, name, ctx);
 			if (store !is null) {
 				return ensureResolved(lp, store);
 			}
@@ -97,7 +104,7 @@ private ir.Store lookupPublicImportScope(LanguagePass lp, ir.Scope _scope, Locat
  */
 ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
 {
-	auto last = cast(int)qn.identifiers.length - 1;
+	auto last = qn.identifiers.length - 1;
 	auto current = qn.leadingDot ? getTopScope(_scope) : _scope;
 
 	foreach (i, id; qn.identifiers) {
@@ -182,8 +189,8 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 		}
 
 		/// Check publically imported modules.
-		bool[ir.Scope] checked;
-		store = lookupPublicImportScope(lp, mod.myScope, loc, name, checked);
+		PublicImportContext ctx;
+		store = lookupPublicImportScope(lp, mod.myScope, loc, name, ctx);
 		if (store !is null) {
 			return ensureResolved(lp, store);
 		}
@@ -404,6 +411,7 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
 	default:
 		throw panic(node.location, format("unexpected nodetype %s", node.nodeType));
 	}
+	version (Volt) assert(false);
 }
 
 /**
@@ -460,6 +468,7 @@ ir.Store ensureResolved(LanguagePass lp, ir.Store s)
 	case FunctionParam:
 		return s;
 	}
+	version (Volt) assert(false);
 }
 
 /**
