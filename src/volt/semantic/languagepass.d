@@ -137,11 +137,14 @@ public:
 			}
 		}
 
-		ir.EnumDeclaration getEnum(string name)
+		int getEnum(string name)
 		{
 			auto ed = cast(ir.EnumDeclaration)s.getStore(name).node;
 			check(ed, name);
-			return ed;
+			assert(ed.assign !is null);
+			auto constant = evaluate(this, s, ed.assign);
+			assert(constant !is null);
+			return constant.u._int;
 		}
 
 		ir.Class getClass(string name)

@@ -153,37 +153,37 @@ public:
 	 * Type id constants for TypeInfo.
 	 * @{
 	 */
-	ir.EnumDeclaration TYPE_STRUCT;
-	ir.EnumDeclaration TYPE_CLASS;
-	ir.EnumDeclaration TYPE_INTERFACE;
-	ir.EnumDeclaration TYPE_UNION;
-	ir.EnumDeclaration TYPE_ENUM;
-	ir.EnumDeclaration TYPE_ATTRIBUTE;
-	ir.EnumDeclaration TYPE_USER_ATTRIBUTE;
+	int TYPE_STRUCT;
+	int TYPE_CLASS;
+	int TYPE_INTERFACE;
+	int TYPE_UNION;
+	int TYPE_ENUM;
+	int TYPE_ATTRIBUTE;
+	int TYPE_USER_ATTRIBUTE;
 
-	ir.EnumDeclaration TYPE_VOID;
-	ir.EnumDeclaration TYPE_UBYTE;
-	ir.EnumDeclaration TYPE_BYTE;
-	ir.EnumDeclaration TYPE_CHAR;
-	ir.EnumDeclaration TYPE_BOOL;
-	ir.EnumDeclaration TYPE_USHORT;
-	ir.EnumDeclaration TYPE_SHORT;
-	ir.EnumDeclaration TYPE_WCHAR;
-	ir.EnumDeclaration TYPE_UINT;
-	ir.EnumDeclaration TYPE_INT;
-	ir.EnumDeclaration TYPE_DCHAR;
-	ir.EnumDeclaration TYPE_FLOAT;
-	ir.EnumDeclaration TYPE_ULONG;
-	ir.EnumDeclaration TYPE_LONG;
-	ir.EnumDeclaration TYPE_DOUBLE;
-	ir.EnumDeclaration TYPE_REAL;
+	int TYPE_VOID;
+	int TYPE_UBYTE;
+	int TYPE_BYTE;
+	int TYPE_CHAR;
+	int TYPE_BOOL;
+	int TYPE_USHORT;
+	int TYPE_SHORT;
+	int TYPE_WCHAR;
+	int TYPE_UINT;
+	int TYPE_INT;
+	int TYPE_DCHAR;
+	int TYPE_FLOAT;
+	int TYPE_ULONG;
+	int TYPE_LONG;
+	int TYPE_DOUBLE;
+	int TYPE_REAL;
 
-	ir.EnumDeclaration TYPE_POINTER;
-	ir.EnumDeclaration TYPE_ARRAY;
-	ir.EnumDeclaration TYPE_STATIC_ARRAY;
-	ir.EnumDeclaration TYPE_AA;
-	ir.EnumDeclaration TYPE_FUNCTION;
-	ir.EnumDeclaration TYPE_DELEGATE;
+	int TYPE_POINTER;
+	int TYPE_ARRAY;
+	int TYPE_STATIC_ARRAY;
+	int TYPE_AA;
+	int TYPE_FUNCTION;
+	int TYPE_DELEGATE;
 	/* @} */
 
 public:

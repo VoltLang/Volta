@@ -10,7 +10,6 @@ import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 
-import volt.semantic.ctfe : evaluate;
 import volt.semantic.typer : realType;
 import volt.semantic.lookup : ensureResolved, lookup;
 import volt.semantic.context;
@@ -1012,48 +1011,41 @@ bool isOrInheritsFrom(ir.Class a, ir.Class b)
 
 int typeToRuntimeConstant(LanguagePass lp, ir.Scope current, ir.Type type)
 {
-	int evaluate(ir.EnumDeclaration ed)
-	{
-		assert(ed.assign !is null);
-		auto constant = .evaluate(lp, current, ed.assign);
-		return constant.u._int;
-	}
-
 	type = realType(type);
 	switch (type.nodeType) with (ir.NodeType) {
-	case Struct: return evaluate(lp.TYPE_STRUCT);
-	case Class: return evaluate(lp.TYPE_CLASS);
-	case Interface: return evaluate(lp.TYPE_INTERFACE);
-	case Union: return evaluate(lp.TYPE_UNION);
-	case Enum: return evaluate(lp.TYPE_ENUM);
-	case Attribute: return evaluate(lp.TYPE_ATTRIBUTE);
-	case UserAttribute: return evaluate(lp.TYPE_USER_ATTRIBUTE);
+	case Struct: return lp.TYPE_STRUCT;
+	case Class: return lp.TYPE_CLASS;
+	case Interface: return lp.TYPE_INTERFACE;
+	case Union: return lp.TYPE_UNION;
+	case Enum: return lp.TYPE_ENUM;
+	case Attribute: return lp.TYPE_ATTRIBUTE;
+	case UserAttribute: return lp.TYPE_USER_ATTRIBUTE;
 	case PrimitiveType:
 		auto prim = cast(ir.PrimitiveType) type;
 		final switch (prim.type) with (ir.PrimitiveType.Kind) {
-		case Void: return evaluate(lp.TYPE_VOID);
-		case Ubyte: return evaluate(lp.TYPE_UBYTE);
-		case Byte: return evaluate(lp.TYPE_BYTE);
-		case Char: return evaluate(lp.TYPE_CHAR);
-		case Bool: return evaluate(lp.TYPE_BOOL);
-		case Ushort: return evaluate(lp.TYPE_USHORT);
-		case Short: return evaluate(lp.TYPE_SHORT);
-		case Wchar: return evaluate(lp.TYPE_WCHAR);
-		case Uint: return evaluate(lp.TYPE_UINT);
-		case Int: return evaluate(lp.TYPE_INT);
-		case Dchar: return evaluate(lp.TYPE_DCHAR);
-		case Float: return evaluate(lp.TYPE_FLOAT);
-		case Ulong: return evaluate(lp.TYPE_ULONG);
-		case Long: return evaluate(lp.TYPE_LONG);
-		case Double: return evaluate(lp.TYPE_DOUBLE);
-		case Real: return evaluate(lp.TYPE_REAL);
+		case Void: return lp.TYPE_VOID;
+		case Ubyte: return lp.TYPE_UBYTE;
+		case Byte: return lp.TYPE_BYTE;
+		case Char: return lp.TYPE_CHAR;
+		case Bool: return lp.TYPE_BOOL;
+		case Ushort: return lp.TYPE_USHORT;
+		case Short: return lp.TYPE_SHORT;
+		case Wchar: return lp.TYPE_WCHAR;
+		case Uint: return lp.TYPE_UINT;
+		case Int: return lp.TYPE_INT;
+		case Dchar: return lp.TYPE_DCHAR;
+		case Float: return lp.TYPE_FLOAT;
+		case Ulong: return lp.TYPE_ULONG;
+		case Long: return lp.TYPE_LONG;
+		case Double: return lp.TYPE_DOUBLE;
+		case Real: return lp.TYPE_REAL;
 		}
-	case PointerType: return evaluate(lp.TYPE_POINTER);
-	case ArrayType: return evaluate(lp.TYPE_ARRAY);
-	case StaticArrayType: return evaluate(lp.TYPE_STATIC_ARRAY);
-	case AAType: return evaluate(lp.TYPE_AA);
-	case FunctionType: return evaluate(lp.TYPE_FUNCTION);
-	case DelegateType: return evaluate(lp.TYPE_DELEGATE);
+	case PointerType: return lp.TYPE_POINTER;
+	case ArrayType: return lp.TYPE_ARRAY;
+	case StaticArrayType: return lp.TYPE_STATIC_ARRAY;
+	case AAType: return lp.TYPE_AA;
+	case FunctionType: return lp.TYPE_FUNCTION;
+	case DelegateType: return lp.TYPE_DELEGATE;
 	case StorageType:
 		auto storage = cast(ir.StorageType) type;
 		return typeToRuntimeConstant(lp, current, storage.base);
