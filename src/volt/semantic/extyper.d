@@ -812,9 +812,19 @@ void extypeIdentifierExp(ExtyperContext ctx, ref ir.Exp e, ir.IdentifierExp i)
 		return;
 	case Template:
 		throw panic(i, "template used as a value.");
-	case Type:
-	case Alias:
 	case Scope:
+	case Type:
+		auto named = cast(ir.Named) store.node;
+		if (named is null) {
+			goto case Alias;
+		}
+		auto se = new ir.StoreExp();
+		se.location = i.location;
+		se.idents = [i.value];
+		se.store = store;
+		e = se;
+		return;
+	case Alias:
 		return;
 	}
 }
@@ -1705,6 +1715,7 @@ void extypePostfixIdentifier(ExtyperContext ctx, ref ir.Exp exp, ir.Postfix post
 
 	ir.Postfix[] postfixIdents; // In reverse order.
 	ir.IdentifierExp identExp; // The top of the stack.
+	ir.StoreExp storeExp; // Top of the stack, rest start it.
 	ir.IdentifierExp firstExp;
 	ir.Postfix currentP = postfix;
 
@@ -1735,6 +1746,11 @@ void extypePostfixIdentifier(ExtyperContext ctx, ref ir.Exp exp, ir.Postfix post
 			auto typeExp = cast(ir.TypeExp) currentP.child;
 			extypeTypeLookup(ctx, exp, postfixIdents, typeExp.type);
 			return;
+		} else if (currentP.child.nodeType == ir.NodeType.StoreExp) {
+			storeExp = cast(ir.StoreExp) currentP.child;
+			assert(storeExp !is null);
+			assert(storeExp.store !is null);
+			break;
 		} else {
 			// For instance typeid(int).mangledName.
 			return;
@@ -1808,7 +1824,7 @@ void extypePostfixIdentifier(ExtyperContext ctx, ref ir.Exp exp, ir.Postfix post
 
 	// First do the identExp lookup.
 	// postfix is in an unknown context at this point.
-	{
+	if (identExp !is null) {
 		_scope = ctx.current;
 		loc = identExp.location;
 		ident = identExp.value;
@@ -1828,7 +1844,13 @@ void extypePostfixIdentifier(ExtyperContext ctx, ref ir.Exp exp, ir.Postfix post
 			_scope = getModuleFromScope(_scope).myScope;
 		}
 		store = lookup(ctx.lp, _scope, loc, ident);
+	} else if (storeExp) {
+		store = storeExp.store;
+		_scope = getScopeFromStore(store);
+	} else {
+		throw panic(exp, "neither identExp or storeExp is set");
 	}
+
 
 	// Now do the looping.
 	do {
@@ -1854,11 +1876,14 @@ void extypePostfixIdentifier(ExtyperContext ctx, ref ir.Exp exp, ir.Postfix post
 				throw panic(postfix, "missing scope");
 
 			if (postfixIdents.length == 0) {
-				auto _class = cast(ir.Class) store.node;
-				if (_class !is null) {
-					throw makeCallClass(postfix.location, _class);
+				auto named = cast(ir.Named) store.node;
+				if (named !is null) {
+					auto se = new ir.StoreExp();
+					se.location = exp.location;
+					se.store = store;
+					exp = se;
+					return;
 				}
-
 				throw makeInvalidUseOfStore(postfix, store);
 			}
 
