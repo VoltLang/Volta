@@ -60,7 +60,11 @@ public:
 	override Status enter(ir.TopLevelBlock tlb)
 	{
 		// Filter out any Attributes.
-		tlb.nodes = manipNodes(tlb.nodes, &nodeManipDg);
+		version (Volt) {
+			tlb.nodes = manipNodes(tlb.nodes, nodeManipDg);
+		} else {
+			tlb.nodes = manipNodes(tlb.nodes, &nodeManipDg);
+		}
 		return ContinueParent;
 	}
 
@@ -452,7 +456,7 @@ protected:
 		}
 	}
 
-	Context ctxTop()
+	@property Context ctxTop()
 	{
 		return mCtx[$-1];
 	}
@@ -474,8 +478,8 @@ protected:
 
 	void ctxPop(ir.Node node)
 	{
-		while (mStack.length > 0 && attrTop().members is null) {
-			attrPop(attrTop());
+		while (mStack.length > 0 && attrTop.members is null) {
+			attrPop(attrTop);
 		}
 
 		if (node !is ctxTop.node) {
@@ -485,7 +489,7 @@ protected:
 		this.mCtx = mCtx[0 .. $-1];
 	}
 
-	ir.Attribute attrTop()
+	@property ir.Attribute attrTop()
 	{
 		return mStack[$-1];
 	}
@@ -533,7 +537,11 @@ protected:
 
 		if (attr.members.nodes.length > 0) {
 			ctxPush(attr, true);
-			return manipNodes(attr.members.nodes, &nodeManipDg);
+			version (Volt) {
+				return manipNodes(attr.members.nodes, nodeManipDg);
+			} else {
+				return manipNodes(attr.members.nodes, &nodeManipDg);
+			}
 		} else {
 			return null;
 		}
@@ -574,7 +582,7 @@ public:
 	/*
 	 * Pass.
 	 */
-	void transform(ir.Module m)
+	override void transform(ir.Module m)
 	{
 		assert(mStack.length == 0);
 		assert(mCtx.length == 0);
@@ -583,7 +591,7 @@ public:
 		mCtx = [];
 	}
 
-	void close()
+	override void close()
 	{
 	}
 }
