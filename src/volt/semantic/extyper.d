@@ -3,8 +3,6 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.extyper;
 
-import std.conv : to;
-import std.algorithm : remove;
 import std.array : insertInPlace;
 
 version (Windows) {
@@ -784,7 +782,7 @@ void extypeAssignDispatch(Context ctx, ref ir.Exp exp, ir.Type type, bool copyin
 		}
 		throw makeBadImplicitCast(exp, rtype, type);
 	default:
-		throw panicUnhandled(exp, to!string(type.nodeType));
+		throw panicUnhandled(exp, toString(type.nodeType));
 	}
 }
 
@@ -1931,7 +1929,7 @@ void extypePostfixIdentifier(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			assert(fp !is null);
 			_ref.decl = fp;
 		} else {
-			throw panicUnhandled(_ref, to!string(store.kind));
+			throw panicUnhandled(_ref, toString(store.kind));
 		}
 
 		// Sanity check.
@@ -2833,7 +2831,7 @@ void handleNestedParams(Context ctx, ir.Function fn)
 			if (refParam) {
 				type = buildPtrSmart(param.location, param.type);
 			}
-			auto name = param.name != "" ? param.name : "__anonparam_" ~ to!string(index);
+			auto name = param.name != "" ? param.name : "__anonparam_" ~ toString(index);
 			auto var = buildVariableSmart(param.location, type, ir.Variable.Storage.Field, name);
 			addVarToStructSmart(ns, var);
 			// Insert an assignment of the param to the nest struct.
@@ -3038,7 +3036,7 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss, ir.Exp oldConditi
 	}
 
 	for (int i = cast(int) toRemove.length - 1; i >= 0; i--) {
-		ss.cases = remove(ss.cases, toRemove[i]);
+		ss.cases = ss.cases[0 .. i] ~ ss.cases[i .. $];
 	}
 
 	auto asEnum = cast(ir.Enum) conditionType;
@@ -3258,7 +3256,7 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, Context ctx, ir.Scope nest
 			{
 				return buildIndex(l, fes.aggregate, buildExpReference(l, indexVar, indexVar.name));
 			}
-			ctx.current.addExpressionDelegate(elementVar, &dg, elementVar.name ~ to!string(cast(size_t) cast(void*) fs));
+			ctx.current.addExpressionDelegate(elementVar, &dg, elementVar.name ~ toString(cast(size_t) cast(void*) fs));
 			st = cast(ir.StorageType) st.base;
 		}
 		if (st !is null && st.type == ir.StorageType.Kind.Auto) {
