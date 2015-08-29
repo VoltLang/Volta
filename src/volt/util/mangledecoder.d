@@ -134,7 +134,7 @@ ir.Type mangledToType(ref string mangledString)
 	case "a":
 		if (mangledString[0] == 't') {
 			mangledString.take(1);
-			int length = mangledString.takeDigit();
+			auto length = cast(size_t)mangledString.takeDigit();
 			return buildStaticArrayTypeSmart(location, length, mangledString.mangledToType());
 		}
 		return buildArrayTypeSmart(location, mangledString.mangledToType());
