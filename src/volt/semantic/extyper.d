@@ -1640,19 +1640,43 @@ void rewritePropertyFunctionAssign(ExtyperContext ctx, ref ir.Exp e, ir.BinOp bi
  */
 void extypeTypeLookup(ExtyperContext ctx, ref ir.Exp exp, ir.Postfix[] postfixIdents, ir.Type type)
 {
+	bool max;
+	auto prim = cast(ir.PrimitiveType) realType(type);
+	auto pointer = cast(ir.PointerType) realType(type);
+
 	if (postfixIdents.length != 1) {
-		throw makeExpected(type, "max, min, or init");
+		if (prim !is null && isFloatingPoint(prim.type)) {
+			throw makeExpected(type, "max, min_normal, or init");
+		} else {
+			throw makeExpected(type, "max, min, or init");
+		}
 	}
-	if (postfixIdents[0].identifier.value == "init") {
+
+	switch (postfixIdents[0].identifier.value) {
+	case "init":
 		exp = getDefaultInit(exp.location, ctx.lp, ctx.current, type);
 		return;
+	case "max":
+		max = true;
+		break;
+	case "min":
+		if (prim !is null && isFloatingPoint(prim.type)) {
+			throw makeExpected(type, "max, min_normal, or init");
+		}
+		break;
+	case "min_normal":
+		if (prim is null || !isFloatingPoint(prim.type)) {
+			throw makeExpected(type, "max, min, or init");
+		}
+		break;
+	default:
+		if (prim !is null && isFloatingPoint(prim.type)) {
+			throw makeExpected(type, "max, min_normal, or init");
+		} else {
+			throw makeExpected(type, "max, min, or init");
+		}
 	}
-	if (postfixIdents[0].identifier.value != "max" && postfixIdents[0].identifier.value != "min") {
-		throw makeExpected(type, "max or min");
-	}
-	bool max = postfixIdents[0].identifier.value == "max";
 
-	auto pointer = cast(ir.PointerType) realType(type);
 	if (pointer !is null) {
 		if (ctx.lp.settings.isVersionSet("V_LP64")) {
 			exp = buildConstantInt(type.location, max ? 8 : 0);
@@ -1662,7 +1686,6 @@ void extypeTypeLookup(ExtyperContext ctx, ref ir.Exp exp, ir.Postfix[] postfixId
 		return;
 	}
 
-	auto prim = cast(ir.PrimitiveType) realType(type);
 	if (prim is null) {
 		throw makeExpected(type, "primitive type");
 	}
@@ -1700,7 +1723,13 @@ void extypeTypeLookup(ExtyperContext ctx, ref ir.Exp exp, ir.Postfix[] postfixId
 		 */
 		exp = buildConstantUlong(prim.location, max ? 9223372036854775807UL : -9223372036854775808UL);
 		break;
-	case Float, Double, Real, Void:
+	case Float:
+		exp = buildConstantFloat(prim.location, max ? float.max : float.min_normal);
+		break;
+	case Double:
+		exp = buildConstantDouble(prim.location, max ? double.max : double.min_normal);
+		break;
+	case Real, Void:
 		throw makeExpected(prim, "integral type");
 	}
 }
