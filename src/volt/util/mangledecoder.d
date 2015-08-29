@@ -32,7 +32,7 @@ ir.Identifier takeNameSegment(ref string mangledString)
 	int count = mangledString.takeDigit();
 
 	auto ident = new ir.Identifier();
-	ident.value = mangledString.take(count);
+	ident.value = mangledString.take(cast(size_t)count);
 	return ident;
 }
 
