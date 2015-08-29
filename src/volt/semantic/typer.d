@@ -162,6 +162,10 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 		auto asTypeExp = cast(ir.TypeExp) exp;
 		assert(asTypeExp !is null);
 		return getTypeExpType(lp, asTypeExp);
+	case StoreExp:
+		auto asStoreExp = cast(ir.StoreExp) exp;
+		assert(asStoreExp !is null);
+		return getStoreExpType(lp, asStoreExp);
 	case StatementExp:
 		auto asStatementExp = cast(ir.StatementExp) exp;
 		assert(asStatementExp !is null);
@@ -204,6 +208,17 @@ ir.Type getStatementExpType(LanguagePass lp, ir.StatementExp se, ir.Scope curren
 ir.Type getTypeExpType(LanguagePass lp, ir.TypeExp te)
 {
 	return te.type;
+}
+
+ir.Type getStoreExpType(LanguagePass lp, ir.StoreExp se)
+{
+	assert(se.store !is null);
+	auto t = cast(ir.Type) se.store.node;
+	if (t !is null) {
+		return t;
+	}
+
+	return null;
 }
 
 ir.Type getStructLiteralType(LanguagePass lp, ir.StructLiteral slit)

@@ -83,6 +83,19 @@ ir.TypeExp copy(ir.TypeExp te)
 	return newte;
 }
 
+ir.StoreExp copy(ir.StoreExp se)
+{
+	auto newse = new ir.StoreExp();
+	newse.location = se.location;
+	newse.store = se.store;
+	version(Volt) {
+		newse.idents = new se.idents[0 .. $];
+	} else {
+		newse.idents = se.idents.dup;
+	}
+	return newse;
+}
+
 ir.ArrayLiteral copy(ir.ArrayLiteral ar)
 {
 	auto newar = new ir.ArrayLiteral();
@@ -401,6 +414,9 @@ ir.Node copyNode(ir.Node n)
 	case TypeExp:
 		auto te = cast(ir.TypeExp)n;
 		return copy(te);
+	case StoreExp:
+		auto se = cast(ir.StoreExp)n;
+		return copy(se);
 	case ArrayLiteral:
 		auto ar = cast(ir.ArrayLiteral)n;
 		return copy(ar);

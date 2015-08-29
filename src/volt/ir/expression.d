@@ -5,6 +5,7 @@ module volt.ir.expression;
 
 import volt.ir.base;
 import volt.ir.type;
+import volt.ir.context;
 import volt.ir.declaration;
 import volt.ir.toplevel;
 import volt.ir.statement;
@@ -541,6 +542,25 @@ public:
 
 public:
 	this() { super(NodeType.TypeExp); }
+}
+
+/**
+ * A StoreExp is used when a NamedType is used in an expression within a
+ * WithStatement, like so: with (Class.Enum) { int val = DeclInEnum; }.
+ *
+ * It needs to be a Scope and not a Type because it can refer to packages
+ * and modules. And we need to restart the postfix resolver process.
+ *
+ * @ingroup irNode irExp
+ */
+class StoreExp : Exp
+{
+public:
+	string[] idents;
+	Store store;
+
+public:
+	this() { super(NodeType.StoreExp); }
 }
 
 /**

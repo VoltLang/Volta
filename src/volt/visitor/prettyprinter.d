@@ -2100,6 +2100,19 @@ public:
 		return Continue;
 	}
 
+	override Status visit(ref ir.Exp, ir.StoreExp e)
+	{
+		if (e.idents.length > 1) for (int i = cast(int)e.idents.length - 1; i > 0; --i) {
+			wf(e.idents[i]);
+			if (i > 1) {
+				wf(".");
+			}
+		} else if (e.idents.length == 1) {
+			wf(e.idents[0]);
+		}
+		return Continue;
+	}
+
 	/*
 	 *
 	 * Base stuff.

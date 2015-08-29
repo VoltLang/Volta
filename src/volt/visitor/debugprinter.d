@@ -386,6 +386,7 @@ public:
 	override Status visit(ref ir.Exp, ir.ExpReference n) { visitRef(n, n.decl); return Continue; }
 	override Status visit(ref ir.Exp, ir.TraitsExp n) { visitNode(n); return Continue; }
 	override Status visit(ref ir.Exp, ir.TokenExp n) { visitNode(n); return Continue; }
+	override Status visit(ref ir.Exp, ir.StoreExp n) { visitRef(n, n.store is null ? null : n.store.node ); return Continue; }
 
 	override Status debugVisitNode(ir.Node n) { return Continue; }
 
