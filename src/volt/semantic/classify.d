@@ -13,23 +13,11 @@ import volt.token.location;
 import volt.semantic.context;
 
 
-/**
- * If the given scope is in a function, return it. Otherwise, return null.
+/*
+ *
+ * Size and alignment functions.
+ *
  */
-ir.Function getParentFunction(ir.Scope current)
-{
-	auto fn = cast(ir.Function) current.node;
-	if (fn !is null) {
-		return fn;
-	}
-
-	auto bs = cast(ir.BlockStatement) current.node;
-	if (bs !is null) {
-		return getParentFunction(current.parent);
-	}
-
-	return null;
-}
 
 int size(ir.PrimitiveType.Kind kind)
 {
@@ -107,6 +95,45 @@ int size(LanguagePass lp, ir.Node node)
 	}
 }
 
+/// Returns the size of a given Struct, in bytes.
+int structSize(LanguagePass lp, ir.Struct s)
+{
+	int sizeAccumulator;
+	foreach (node; s.members.nodes) {
+		// If it's not a Variable, or not a field, it shouldn't take up space.
+		auto asVar = cast(ir.Variable)node;
+		if (asVar is null || asVar.storage != ir.Variable.Storage.Field) {
+			continue;
+		}
+
+		int a = cast(int)alignment(lp, asVar.type);
+		int size = .size(lp, asVar.type);
+		if (sizeAccumulator % a) {
+			sizeAccumulator += (a - (sizeAccumulator % a)) + size;
+		} else {
+			sizeAccumulator += size;
+		}
+	}
+	return sizeAccumulator;
+}
+
+/// Returns the size of a given Union, in bytes.
+int unionSize(LanguagePass lp, ir.Union u)
+{
+	int sizeAccumulator;
+	foreach (node; u.members.nodes) {
+		// If it's not a Variable, it shouldn't take up space.
+		if (node.nodeType != ir.NodeType.Variable) {
+			continue;
+		}
+
+		auto s = size(lp, node);
+		if (s > sizeAccumulator)
+			sizeAccumulator = s;
+	}
+	return sizeAccumulator;
+}
+
 size_t alignment(LanguagePass lp, ir.PrimitiveType.Kind kind)
 {
 	final switch (kind) with (ir.PrimitiveType.Kind) {
@@ -174,6 +201,13 @@ size_t alignment(LanguagePass lp, ir.Type node)
 	}
 }
 
+
+/*
+ *
+ * Type classifier functions.
+ *
+ */
+
 /**
  * Remove types masking a type (e.g. enum).
  */
@@ -197,6 +231,7 @@ ir.Type realType(ir.Type t, bool stripEnum = true, bool stripStorage = false)
 	}
 	return t;
 }
+
 
 /**
  * A type without mutable indirection is a pure value type --
@@ -257,11 +292,6 @@ bool mutableIndirection(ir.Type t)
 	}
 }
 
-bool canTransparentlyReferToBase(ir.StorageType storage)
-{
-	return storage.type == ir.StorageType.Kind.Auto || storage.type == ir.StorageType.Kind.Ref;
-}
-
 bool isAuto(ir.Type t)
 {
 	auto s = cast(ir.StorageType) t;
@@ -313,115 +343,9 @@ bool isArray(ir.Type t)
 	return (cast(ir.ArrayType) t) !is null;
 }
 
-bool isAssign(ir.Exp exp)
+bool canTransparentlyReferToBase(ir.StorageType storage)
 {
-	auto bop = cast(ir.BinOp) exp;
-	if (bop is null) {
-		return false;
-	}
-	switch (bop.op) with (ir.BinOp.Op) {
-	case Assign, AddAssign, SubAssign, MulAssign, DivAssign, ModAssign,
-		AndAssign, OrAssign, XorAssign, CatAssign, LSAssign, SRSAssign,
-		RSAssign, PowAssign:
-		return true;
-	default:
-		return false;
-	}
-}
-
-bool isLValue(LanguagePass lp, ir.Scope current, ir.Exp exp)
-{
-	switch (exp.nodeType) {
-	case ir.NodeType.IdentifierExp:
-		throw panic(exp, "IdentifierExp left in ir (run ExTyper)");
-	case ir.NodeType.ExpReference: return true;
-	case ir.NodeType.Postfix:
-		auto asPostfix = cast(ir.Postfix) exp;
-		assert(asPostfix !is null);
-		return asPostfix.op == ir.Postfix.Op.Identifier || isLValue(lp, current, asPostfix.child);
-	case ir.NodeType.Unary:
-		auto asUnary = cast(ir.Unary) exp;
-		assert(asUnary !is null);
-		return isLValue(lp, current, asUnary.value);
-	case ir.NodeType.StatementExp:
-		auto sexp = cast(ir.StatementExp) exp;
-		assert(sexp !is null);
-		return isLValue(lp, current, sexp.exp);
-	default:
-		return false;
-	}
-}
-
-bool isRefVar(ir.Exp exp)
-{
-	auto asExpRef = cast(ir.ExpReference) exp;
-	if (asExpRef is null) {
-		return false;
-	}
-	auto asVar = cast(ir.FunctionParam) asExpRef.decl;
-	if (asVar is null) {
-		return false;
-	}
-	return asVar.fn.type.isArgRef[asVar.index] || asVar.fn.type.isArgOut[asVar.index];
-}
-
-bool isFunctionMemberOrConstructor(ir.Function fn)
-{
-	final switch (fn.kind) with (ir.Function.Kind) {
-	case Invalid:
-		assert(false);
-	case Member:
-	case Constructor:
-	case Destructor:
-	case LocalConstructor:
-	case LocalDestructor:
-	case GlobalConstructor:
-	case GlobalDestructor:
-		return true;
-	case Function:
-	case LocalMember:
-	case GlobalMember:
-	case Nested:
-	case GlobalNested:
-		return false;
-	}
-}
-
-bool isFunctionStatic(ir.Function fn)
-{
-	final switch (fn.kind) with (ir.Function.Kind) {
-	case Invalid:
-	case Constructor:
-	case Destructor:
-	case LocalConstructor:
-	case LocalDestructor:
-	case GlobalConstructor:
-	case GlobalDestructor:
-		assert(false);
-	case Member:
-		return false;
-	case Function:
-	case LocalMember:
-	case GlobalMember:
-	case GlobalNested:
-	case Nested:
-		return true;
-	}
-}
-
-bool isVariableStatic(ir.Variable var)
-{
-	final switch (var.storage) with (ir.Variable.Storage) {
-	case Invalid:
-		assert(false);
-	case Field:
-		return false;
-	case Function:
-	case Nested:
-	case Local:
-	case Global:
-		return true;
-	}
+	return storage.type == ir.StorageType.Kind.Auto || storage.type == ir.StorageType.Kind.Ref;
 }
 
 bool acceptableForUserAttribute(LanguagePass lp, ir.Scope current, ir.Type type)
@@ -448,45 +372,6 @@ bool acceptableForUserAttribute(LanguagePass lp, ir.Scope current, ir.Type type)
 	}
 
 	return false;
-}
-
-/// Returns the size of a given Struct, in bytes.
-int structSize(LanguagePass lp, ir.Struct s)
-{
-	int sizeAccumulator;
-	foreach (node; s.members.nodes) {
-		// If it's not a Variable, or not a field, it shouldn't take up space.
-		auto asVar = cast(ir.Variable)node;
-		if (asVar is null || asVar.storage != ir.Variable.Storage.Field) {
-			continue;
-		}
-
-		int a = cast(int)alignment(lp, asVar.type);
-		int size = .size(lp, asVar.type);
-		if (sizeAccumulator % a) {
-			sizeAccumulator += (a - (sizeAccumulator % a)) + size;
-		} else {
-			sizeAccumulator += size;
-		}
-	}
-	return sizeAccumulator;
-}
-
-/// Returns the size of a given Union, in bytes.
-int unionSize(LanguagePass lp, ir.Union u)
-{
-	int sizeAccumulator;
-	foreach (node; u.members.nodes) {
-		// If it's not a Variable, it shouldn't take up space.
-		if (node.nodeType != ir.NodeType.Variable) {
-			continue;
-		}
-
-		auto s = size(lp, node);
-		if (s > sizeAccumulator)
-			sizeAccumulator = s;
-	}
-	return sizeAccumulator;
 }
 
 bool effectivelyConst(ir.Type type)
@@ -541,12 +426,12 @@ bool isFloatingPoint(ir.Type t)
 bool isFloatingPoint(ir.PrimitiveType.Kind kind)
 {
 	switch (kind) with (ir.PrimitiveType.Kind) {
-		case Float:
-		case Double:
-		case Real:
-			return true;
-		default:
-			return false;
+	case Float:
+	case Double:
+	case Real:
+		return true;
+	default:
+		return false;
 	}
 }
 
@@ -602,6 +487,258 @@ bool isVoid(ir.Type type)
 	return primitive.type == ir.PrimitiveType.Kind.Void;
 }
 
+/**
+ * Return a view of the given type without ref or out.
+ * Doesn't copy internally, so don't place the result into the IR.
+ */
+ir.Type removeRefAndOut(ir.Type type)
+{
+	assert(type !is null);
+	auto stype = cast(ir.StorageType)type;
+	if (stype is null) {
+		return type;
+	}
+	if (stype.type == ir.StorageType.Kind.Ref || stype.type == ir.StorageType.Kind.Out) {
+		return removeRefAndOut(stype.base);
+	}
+	auto outType = new ir.StorageType();
+	outType.type = stype.type;
+	outType.location = type.location;
+	outType.base = removeRefAndOut(stype.base);
+	return outType;
+}
+
+/**
+ * Return a view of the given type without const or immutable.
+ * Doesn't copy internally, so don't place the result into the IR.
+ */
+ir.Type removeConstAndImmutable(ir.Type type)
+{
+	auto stype = cast(ir.StorageType)type;
+	if (stype is null) {
+		return type;
+	}
+	if (stype.type == ir.StorageType.Kind.Const || stype.type == ir.StorageType.Kind.Immutable) {
+		return removeConstAndImmutable(stype.base);
+	}
+	auto outType = new ir.StorageType();
+	outType.type = stype.type;
+	outType.location = type.location;
+	outType.base = removeConstAndImmutable(outType.base);
+	return outType;
+}
+
+/**
+ * Making the code more readable.
+ */
+enum IgnoreStorage = true;
+
+/**
+ * Determines whether the two given types are the same.
+ *
+ * Not similar. Not implicitly convertable. The _same_ type.
+ * Returns: true if they're the same, false otherwise.
+ */
+bool typesEqual(ir.Type a, ir.Type b, bool ignoreStorage = false)
+{
+	if (!ignoreStorage) {
+		if (a.isConst != b.isConst ||
+		    a.isImmutable != b.isImmutable ||
+		    a.isScope != b.isScope) {
+			return false;
+		}
+	}
+	if (a is b) {
+		return true;
+	}
+
+	if (a.nodeType == ir.NodeType.PrimitiveType &&
+	    b.nodeType == ir.NodeType.PrimitiveType) {
+		auto ap = cast(ir.PrimitiveType) a;
+		auto bp = cast(ir.PrimitiveType) b;
+		assert(ap !is null && bp !is null);
+		return ap.type == bp.type;
+	} else if (a.nodeType == ir.NodeType.StaticArrayType &&
+			   b.nodeType == ir.NodeType.StaticArrayType) {
+		auto ap = cast(ir.StaticArrayType) a;
+		auto bp = cast(ir.StaticArrayType) b;
+		assert(ap !is null && bp !is null);
+		return ap.length && bp.length && typesEqual(ap.base, bp.base, ignoreStorage);
+	} else if (a.nodeType == ir.NodeType.PointerType &&
+	           b.nodeType == ir.NodeType.PointerType) {
+		auto ap = cast(ir.PointerType) a;
+		auto bp = cast(ir.PointerType) b;
+		assert(ap !is null && bp !is null);
+		return typesEqual(ap.base, bp.base, ignoreStorage);
+	} else if (a.nodeType == ir.NodeType.ArrayType &&
+	           b.nodeType == ir.NodeType.ArrayType) {
+		auto ap = cast(ir.ArrayType) a;
+		auto bp = cast(ir.ArrayType) b;
+		assert(ap !is null && bp !is null);
+		return typesEqual(ap.base, bp.base, ignoreStorage);
+	} else if (a.nodeType == ir.NodeType.AAType &&
+	           b.nodeType == ir.NodeType.AAType) {
+		auto ap = cast(ir.AAType) a;
+		auto bp = cast(ir.AAType) b;
+		assert(ap !is null && bp !is null);
+		return typesEqual(ap.key, bp.key, ignoreStorage) && typesEqual(ap.value, bp.value, ignoreStorage);
+	} else if (a.nodeType == ir.NodeType.TypeReference &&
+	           b.nodeType == ir.NodeType.TypeReference) {
+		auto ap = cast(ir.TypeReference) a;
+		auto bp = cast(ir.TypeReference) b;
+		assert(ap !is null && bp !is null);
+		assert(ap.type !is null && bp.type !is null);
+		return typesEqual(ap.type, bp.type, ignoreStorage);
+	} else if (a.nodeType == ir.NodeType.TypeReference) {
+		// Need to discard any TypeReference on either side.
+		auto ap = cast(ir.TypeReference) a;
+		assert(ap !is null);
+		assert(ap.type !is null);
+		return typesEqual(ap.type, b, ignoreStorage);
+	} else if (b.nodeType == ir.NodeType.TypeReference) {
+		// Need to discard any TypeReference on either side.
+		auto bp = cast(ir.TypeReference) b;
+		assert(bp !is null);
+		assert(bp.type !is null);
+		return typesEqual(a, bp.type, ignoreStorage);
+	} else if ((a.nodeType == ir.NodeType.FunctionType &&
+	            b.nodeType == ir.NodeType.FunctionType) ||
+		   (a.nodeType == ir.NodeType.DelegateType &&
+	            b.nodeType == ir.NodeType.DelegateType)) {
+		auto ap = cast(ir.CallableType) a;
+		auto bp = cast(ir.CallableType) b;
+		assert(ap !is null && bp !is null);
+
+		size_t apLength = ap.params.length, bpLength = bp.params.length;
+		if (apLength != bpLength)
+			return false;
+		if (ap.hiddenParameter != bp.hiddenParameter)
+			return false;
+		auto ret = typesEqual(ap.ret, bp.ret, ignoreStorage);
+		if (!ret)
+			return false;
+		for (int i; i < apLength; i++)
+			if (!typesEqual(ap.params[i], bp.params[i], ignoreStorage))
+				return false;
+		return true;
+	} else if (a.nodeType == ir.NodeType.StorageType ||
+			   b.nodeType == ir.NodeType.StorageType) {
+		auto sta = cast(ir.StorageType)a;
+		auto stb = cast(ir.StorageType)b;
+		if ((sta !is null && sta.base is null) || (stb !is null && stb.base is null)) {
+			return false;
+		}
+		throw panic(a.location, "tested storage type for equality");
+	}
+
+	return false;
+}
+
+int typeToRuntimeConstant(LanguagePass lp, ir.Scope current, ir.Type type)
+{
+	type = realType(type);
+	switch (type.nodeType) with (ir.NodeType) {
+	case Struct: return lp.TYPE_STRUCT;
+	case Class: return lp.TYPE_CLASS;
+	case Interface: return lp.TYPE_INTERFACE;
+	case Union: return lp.TYPE_UNION;
+	case Enum: return lp.TYPE_ENUM;
+	case Attribute: return lp.TYPE_ATTRIBUTE;
+	case UserAttribute: return lp.TYPE_USER_ATTRIBUTE;
+	case PrimitiveType:
+		auto prim = cast(ir.PrimitiveType) type;
+		final switch (prim.type) with (ir.PrimitiveType.Kind) {
+		case Void: return lp.TYPE_VOID;
+		case Ubyte: return lp.TYPE_UBYTE;
+		case Byte: return lp.TYPE_BYTE;
+		case Char: return lp.TYPE_CHAR;
+		case Bool: return lp.TYPE_BOOL;
+		case Ushort: return lp.TYPE_USHORT;
+		case Short: return lp.TYPE_SHORT;
+		case Wchar: return lp.TYPE_WCHAR;
+		case Uint: return lp.TYPE_UINT;
+		case Int: return lp.TYPE_INT;
+		case Dchar: return lp.TYPE_DCHAR;
+		case Float: return lp.TYPE_FLOAT;
+		case Ulong: return lp.TYPE_ULONG;
+		case Long: return lp.TYPE_LONG;
+		case Double: return lp.TYPE_DOUBLE;
+		case Real: return lp.TYPE_REAL;
+		}
+	case PointerType: return lp.TYPE_POINTER;
+	case ArrayType: return lp.TYPE_ARRAY;
+	case StaticArrayType: return lp.TYPE_STATIC_ARRAY;
+	case AAType: return lp.TYPE_AA;
+	case FunctionType: return lp.TYPE_FUNCTION;
+	case DelegateType: return lp.TYPE_DELEGATE;
+	case StorageType:
+		auto storage = cast(ir.StorageType) type;
+		return typeToRuntimeConstant(lp, current, storage.base);
+	default:
+		throw panicUnhandled(type, "typeToRuntimeConstant");
+	}
+}
+
+
+/*
+ *
+ * Expression functions.
+ *
+ */
+
+bool isAssign(ir.Exp exp)
+{
+	auto bop = cast(ir.BinOp) exp;
+	if (bop is null) {
+		return false;
+	}
+	switch (bop.op) with (ir.BinOp.Op) {
+	case Assign, AddAssign, SubAssign, MulAssign, DivAssign, ModAssign,
+		AndAssign, OrAssign, XorAssign, CatAssign, LSAssign, SRSAssign,
+		RSAssign, PowAssign:
+		return true;
+	default:
+		return false;
+	}
+}
+
+bool isLValue(LanguagePass lp, ir.Scope current, ir.Exp exp)
+{
+	switch (exp.nodeType) {
+	case ir.NodeType.IdentifierExp:
+		throw panic(exp, "IdentifierExp left in ir (run ExTyper)");
+	case ir.NodeType.ExpReference: return true;
+	case ir.NodeType.Postfix:
+		auto asPostfix = cast(ir.Postfix) exp;
+		assert(asPostfix !is null);
+		return asPostfix.op == ir.Postfix.Op.Identifier || isLValue(lp, current, asPostfix.child);
+	case ir.NodeType.Unary:
+		auto asUnary = cast(ir.Unary) exp;
+		assert(asUnary !is null);
+		return isLValue(lp, current, asUnary.value);
+	case ir.NodeType.StatementExp:
+		auto sexp = cast(ir.StatementExp) exp;
+		assert(sexp !is null);
+		return isLValue(lp, current, sexp.exp);
+	default:
+		return false;
+	}
+}
+
+bool isRefVar(ir.Exp exp)
+{
+	auto asExpRef = cast(ir.ExpReference) exp;
+	if (asExpRef is null) {
+		return false;
+	}
+	auto asVar = cast(ir.FunctionParam) asExpRef.decl;
+	if (asVar is null) {
+		return false;
+	}
+	return asVar.fn.type.isArgRef[asVar.index] || asVar.fn.type.isArgOut[asVar.index];
+}
+
+
 bool isComparison(ir.BinOp.Op t)
 {
 	switch (t) with (ir.BinOp.Op) {
@@ -624,10 +761,6 @@ bool isConstant(ir.Exp e)
 	return e.nodeType == ir.NodeType.Constant || e.nodeType == ir.NodeType.Typeid || e.nodeType == ir.NodeType.ClassLiteral;
 }
 
-bool isInFunction(Context ctx)
-{
-	return ctx.current.node.nodeType == ir.NodeType.Function || ctx.current.node.nodeType == ir.NodeType.BlockStatement;
-}
 
 bool isValidPointerArithmeticOperation(ir.BinOp.Op t)
 {
@@ -812,149 +945,128 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 	assert(false);
 }
 
-/**
- * Return a view of the given type without ref or out.
- * Doesn't copy internally, so don't place the result into the IR.
- */
-ir.Type removeRefAndOut(ir.Type type)
-{
-	assert(type !is null);
-	auto stype = cast(ir.StorageType)type;
-	if (stype is null) {
-		return type;
-	}
-	if (stype.type == ir.StorageType.Kind.Ref || stype.type == ir.StorageType.Kind.Out) {
-		return removeRefAndOut(stype.base);
-	}
-	auto outType = new ir.StorageType();
-	outType.type = stype.type;
-	outType.location = type.location;
-	outType.base = removeRefAndOut(stype.base);
-	return outType;
-}
 
-/**
- * Return a view of the given type without const or immutable.
- * Doesn't copy internally, so don't place the result into the IR.
- */
-ir.Type removeConstAndImmutable(ir.Type type)
-{
-	auto stype = cast(ir.StorageType)type;
-	if (stype is null) {
-		return type;
-	}
-	if (stype.type == ir.StorageType.Kind.Const || stype.type == ir.StorageType.Kind.Immutable) {
-		return removeConstAndImmutable(stype.base);
-	}
-	auto outType = new ir.StorageType();
-	outType.type = stype.type;
-	outType.location = type.location;
-	outType.base = removeConstAndImmutable(outType.base);
-	return outType;
-}
-
-enum IgnoreStorage = true;
-
-/**
- * Determines whether the two given types are the same.
+/*
  *
- * Not similar. Not implicitly convertable. The _same_ type.
- * Returns: true if they're the same, false otherwise.
+ * Function and variable functions.
+ *
  */
-bool typesEqual(ir.Type a, ir.Type b, bool ignoreStorage=false)
+
+/**
+ * If the given scope is in a function, return it. Otherwise, return null.
+ */
+ir.Function getParentFunction(ir.Scope current)
 {
-	if (!ignoreStorage) {
-		if (a.isConst != b.isConst ||
-		    a.isImmutable != b.isImmutable ||
-		    a.isScope != b.isScope) {
-			return false;
-		}
+	auto fn = cast(ir.Function) current.node;
+	if (fn !is null) {
+		return fn;
 	}
-	if (a is b) {
+
+	auto bs = cast(ir.BlockStatement) current.node;
+	if (bs !is null) {
+		return getParentFunction(current.parent);
+	}
+
+	return null;
+}
+
+bool isInFunction(Context ctx)
+{
+	return ctx.current.node.nodeType == ir.NodeType.Function || ctx.current.node.nodeType == ir.NodeType.BlockStatement;
+}
+
+
+bool isFunctionMemberOrConstructor(ir.Function fn)
+{
+	final switch (fn.kind) with (ir.Function.Kind) {
+	case Invalid:
+		assert(false);
+	case Member:
+	case Constructor:
+	case Destructor:
+	case LocalConstructor:
+	case LocalDestructor:
+	case GlobalConstructor:
+	case GlobalDestructor:
+		return true;
+	case Function:
+	case LocalMember:
+	case GlobalMember:
+	case Nested:
+	case GlobalNested:
+		return false;
+	}
+}
+
+bool isFunctionStatic(ir.Function fn)
+{
+	final switch (fn.kind) with (ir.Function.Kind) {
+	case Invalid:
+	case Constructor:
+	case Destructor:
+	case LocalConstructor:
+	case LocalDestructor:
+	case GlobalConstructor:
+	case GlobalDestructor:
+		assert(false);
+	case Member:
+		return false;
+	case Function:
+	case LocalMember:
+	case GlobalMember:
+	case GlobalNested:
+	case Nested:
 		return true;
 	}
+}
 
-	if (a.nodeType == ir.NodeType.PrimitiveType &&
-	    b.nodeType == ir.NodeType.PrimitiveType) {
-		auto ap = cast(ir.PrimitiveType) a;
-		auto bp = cast(ir.PrimitiveType) b;
-		assert(ap !is null && bp !is null);
-		return ap.type == bp.type;
-	} else if (a.nodeType == ir.NodeType.StaticArrayType &&
-			   b.nodeType == ir.NodeType.StaticArrayType) {
-		auto ap = cast(ir.StaticArrayType) a;
-		auto bp = cast(ir.StaticArrayType) b;
-		assert(ap !is null && bp !is null);
-		return ap.length && bp.length && typesEqual(ap.base, bp.base, ignoreStorage);
-	} else if (a.nodeType == ir.NodeType.PointerType &&
-	           b.nodeType == ir.NodeType.PointerType) {
-		auto ap = cast(ir.PointerType) a;
-		auto bp = cast(ir.PointerType) b;
-		assert(ap !is null && bp !is null);
-		return typesEqual(ap.base, bp.base, ignoreStorage);
-	} else if (a.nodeType == ir.NodeType.ArrayType &&
-	           b.nodeType == ir.NodeType.ArrayType) {
-		auto ap = cast(ir.ArrayType) a;
-		auto bp = cast(ir.ArrayType) b;
-		assert(ap !is null && bp !is null);
-		return typesEqual(ap.base, bp.base, ignoreStorage);
-	} else if (a.nodeType == ir.NodeType.AAType &&
-	           b.nodeType == ir.NodeType.AAType) {
-		auto ap = cast(ir.AAType) a;
-		auto bp = cast(ir.AAType) b;
-		assert(ap !is null && bp !is null);
-		return typesEqual(ap.key, bp.key, ignoreStorage) && typesEqual(ap.value, bp.value, ignoreStorage);
-	} else if (a.nodeType == ir.NodeType.TypeReference &&
-	           b.nodeType == ir.NodeType.TypeReference) {
-		auto ap = cast(ir.TypeReference) a;
-		auto bp = cast(ir.TypeReference) b;
-		assert(ap !is null && bp !is null);
-		assert(ap.type !is null && bp.type !is null);
-		return typesEqual(ap.type, bp.type, ignoreStorage);
-	} else if (a.nodeType == ir.NodeType.TypeReference) {
-		// Need to discard any TypeReference on either side.
-		auto ap = cast(ir.TypeReference) a;
-		assert(ap !is null);
-		assert(ap.type !is null);
-		return typesEqual(ap.type, b, ignoreStorage);
-	} else if (b.nodeType == ir.NodeType.TypeReference) {
-		// Need to discard any TypeReference on either side.
-		auto bp = cast(ir.TypeReference) b;
-		assert(bp !is null);
-		assert(bp.type !is null);
-		return typesEqual(a, bp.type, ignoreStorage);
-	} else if ((a.nodeType == ir.NodeType.FunctionType &&
-	            b.nodeType == ir.NodeType.FunctionType) ||
-		   (a.nodeType == ir.NodeType.DelegateType &&
-	            b.nodeType == ir.NodeType.DelegateType)) {
-		auto ap = cast(ir.CallableType) a;
-		auto bp = cast(ir.CallableType) b;
-		assert(ap !is null && bp !is null);
-
-		size_t apLength = ap.params.length, bpLength = bp.params.length;
-		if (apLength != bpLength)
-			return false;
-		if (ap.hiddenParameter != bp.hiddenParameter)
-			return false;
-		auto ret = typesEqual(ap.ret, bp.ret, ignoreStorage);
-		if (!ret)
-			return false;
-		for (int i; i < apLength; i++)
-			if (!typesEqual(ap.params[i], bp.params[i], ignoreStorage))
-				return false;
+bool isVariableStatic(ir.Variable var)
+{
+	final switch (var.storage) with (ir.Variable.Storage) {
+	case Invalid:
+		assert(false);
+	case Field:
+		return false;
+	case Function:
+	case Nested:
+	case Local:
+	case Global:
 		return true;
-	} else if (a.nodeType == ir.NodeType.StorageType ||
-			   b.nodeType == ir.NodeType.StorageType) {
-		auto sta = cast(ir.StorageType)a;
-		auto stb = cast(ir.StorageType)b;
-		if ((sta !is null && sta.base is null) || (stb !is null && stb.base is null)) {
-			return false;
-		}
-		throw panic(a.location, "tested storage type for equality");
 	}
+}
 
+
+bool isNested(ir.Variable.Storage s)
+{
+	with (ir.Variable.Storage) {
+		return s == Nested;
+	}
+}
+
+/// Returns true if one of fns's types match fnToMatch. False otherwise.
+/// (If fns is empty, this function returns false).
+bool containsMatchingFunction(ir.Function[] fns, ir.Function fnToMatch)
+{
+	foreach (fn; fns) {
+		if (typesEqual(fn.type, fnToMatch.type)) {
+			return true;
+		}
+	}
 	return false;
 }
+
+bool isNested(ir.Function fn)
+{
+	return fn.kind == ir.Function.Kind.Nested ||
+	       fn.kind == ir.Function.Kind.GlobalNested;
+}
+
+
+/*
+ *
+ * Aggregate functions.
+ *
+ */
 
 /// Retrieves the types of Variables in _struct, in the order they appear.
 ir.Type[] getStructFieldTypes(ir.Struct _struct)
@@ -1028,51 +1140,6 @@ bool isOrInheritsFrom(ir.Class a, ir.Class b)
 	}
 }
 
-int typeToRuntimeConstant(LanguagePass lp, ir.Scope current, ir.Type type)
-{
-	type = realType(type);
-	switch (type.nodeType) with (ir.NodeType) {
-	case Struct: return lp.TYPE_STRUCT;
-	case Class: return lp.TYPE_CLASS;
-	case Interface: return lp.TYPE_INTERFACE;
-	case Union: return lp.TYPE_UNION;
-	case Enum: return lp.TYPE_ENUM;
-	case Attribute: return lp.TYPE_ATTRIBUTE;
-	case UserAttribute: return lp.TYPE_USER_ATTRIBUTE;
-	case PrimitiveType:
-		auto prim = cast(ir.PrimitiveType) type;
-		final switch (prim.type) with (ir.PrimitiveType.Kind) {
-		case Void: return lp.TYPE_VOID;
-		case Ubyte: return lp.TYPE_UBYTE;
-		case Byte: return lp.TYPE_BYTE;
-		case Char: return lp.TYPE_CHAR;
-		case Bool: return lp.TYPE_BOOL;
-		case Ushort: return lp.TYPE_USHORT;
-		case Short: return lp.TYPE_SHORT;
-		case Wchar: return lp.TYPE_WCHAR;
-		case Uint: return lp.TYPE_UINT;
-		case Int: return lp.TYPE_INT;
-		case Dchar: return lp.TYPE_DCHAR;
-		case Float: return lp.TYPE_FLOAT;
-		case Ulong: return lp.TYPE_ULONG;
-		case Long: return lp.TYPE_LONG;
-		case Double: return lp.TYPE_DOUBLE;
-		case Real: return lp.TYPE_REAL;
-		}
-	case PointerType: return lp.TYPE_POINTER;
-	case ArrayType: return lp.TYPE_ARRAY;
-	case StaticArrayType: return lp.TYPE_STATIC_ARRAY;
-	case AAType: return lp.TYPE_AA;
-	case FunctionType: return lp.TYPE_FUNCTION;
-	case DelegateType: return lp.TYPE_DELEGATE;
-	case StorageType:
-		auto storage = cast(ir.StorageType) type;
-		return typeToRuntimeConstant(lp, current, storage.base);
-	default:
-		throw panicUnhandled(type, "typeToRuntimeConstant");
-	}
-}
-
 bool isPointerToClass(ir.Type t)
 {
 	auto ptr = cast(ir.PointerType) realType(t);
@@ -1081,39 +1148,6 @@ bool isPointerToClass(ir.Type t)
 	}
 	auto _class = cast(ir.Class) realType(ptr.base);
 	return _class !is null;
-}
-
-ir.Aggregate opOverloadableOrNull(ir.Type t)
-{
-	auto _agg = cast(ir.Aggregate) realType(t);
-	if (_agg is null || _agg.nodeType == ir.NodeType.UserAttribute) {
-		return null;
-	}
-	return _agg;
-}
-
-string overloadName(ir.BinOp.Op op)
-{
-	switch (op) with (ir.BinOp.Op) {
-	case Equal:    return "opEquals";
-	case Sub:      return "opSub";
-	case Add:      return "opAdd";
-	case Mul:      return "opMul";
-	case Div:      return "opDiv";
-	default:       return "";
-	}
-}
-
-string overloadIndexName()
-{
-	return "opIndex";
-}
-
-bool isNested(ir.Variable.Storage s)
-{
-	with (ir.Variable.Storage) {
-		return s == Nested;
-	}
 }
 
 /**
@@ -1144,20 +1178,29 @@ ir.Class commonParent(ir.Class a, ir.Class b)
 	return a;
 }
 
-/// Returns true if one of fns's types match fnToMatch. False otherwise.
-/// (If fns is empty, this function returns false).
-bool containsMatchingFunction(ir.Function[] fns, ir.Function fnToMatch)
+
+ir.Aggregate opOverloadableOrNull(ir.Type t)
 {
-	foreach (fn; fns) {
-		if (typesEqual(fn.type, fnToMatch.type)) {
-			return true;
-		}
+	auto _agg = cast(ir.Aggregate) realType(t);
+	if (_agg is null || _agg.nodeType == ir.NodeType.UserAttribute) {
+		return null;
 	}
-	return false;
+	return _agg;
 }
 
-bool isNested(ir.Function fn)
+string overloadName(ir.BinOp.Op op)
 {
-	return fn.kind == ir.Function.Kind.Nested ||
-	       fn.kind == ir.Function.Kind.GlobalNested;
+	switch (op) with (ir.BinOp.Op) {
+	case Equal:    return "opEquals";
+	case Sub:      return "opSub";
+	case Add:      return "opAdd";
+	case Mul:      return "opMul";
+	case Div:      return "opDiv";
+	default:       return "";
+	}
+}
+
+string overloadIndexName()
+{
+	return "opIndex";
 }
