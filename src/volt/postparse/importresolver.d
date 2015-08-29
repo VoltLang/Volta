@@ -32,7 +32,7 @@ public:
 		this.lp = lp;
 	}
 
-	void transform(ir.Module m)
+	override void transform(ir.Module m)
 	{
 		thisModule = m;
 
@@ -52,7 +52,7 @@ public:
 		super.leave(m);
 	}
 
-	void close()
+	override void close()
 	{
 	}
 
