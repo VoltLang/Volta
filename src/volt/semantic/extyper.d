@@ -2872,8 +2872,11 @@ struct ArrayCase
  * Ensure that a given switch statement is semantically sound.
  * Errors on bad final switches (doesn't cover all enum members, not on an enum at all),
  * and checks for doubled up cases.
+ *
+ * oldCondition is the switches condition prior to the extyper being run on it.
+ * It's a bit of a hack, but we need the unprocessed enum to evaluate final switches.
  */
-void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
+void verifySwitchStatement(Context ctx, ir.SwitchStatement ss, ir.Exp oldCondition)
 {
 	auto conditionType = realType(getExpType(ctx.lp, ss.condition, ctx.current), false, true);
 	auto originalCondition = ss.condition;
@@ -3040,7 +3043,10 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 
 	auto asEnum = cast(ir.Enum) conditionType;
 	if (asEnum is null && ss.isFinal) {
-		throw makeExpected(ss, "enum type for final switch");
+		asEnum = cast(ir.Enum)realType(getExpType(ctx.lp, oldCondition, ctx.current), false, true);
+		if (asEnum is null) {
+			throw makeExpected(ss, "enum type for final switch");
+		}
 	}
 	size_t caseCount;
 	foreach (_case; ss.cases) {
@@ -3961,7 +3967,12 @@ public:
 
 	override Status enter(ir.SwitchStatement ss)
 	{
-		verifySwitchStatement(ctx, ss);
+		/* Bit of a mess. We need to process the condition so the typer's happy,
+		 * but we need the old expression to evaluate final switches. Hence this mess.
+		 */
+		auto oldCondition = ss.condition;
+		acceptExp(ss.condition, this);
+		verifySwitchStatement(ctx, ss, oldCondition);
 		return Continue;
 	}
 
