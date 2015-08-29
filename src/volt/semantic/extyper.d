@@ -3987,6 +3987,8 @@ public:
 		if (!as.isStatic) {
 			return Continue;
 		}
+		as.condition = evaluate(ctx.lp, ctx.current, as.condition);
+		as.message = evaluate(ctx.lp, ctx.current, as.message);
 		auto cond = cast(ir.Constant) as.condition;
 		auto msg = cast(ir.Constant) as.message;
 		if ((cond is null || msg is null) || (!isBool(cond.type) || !isString(msg.type))) {
