@@ -154,7 +154,6 @@ package: all
 
 VIV_ALL_SRC = $(DSRC) src/volt/main.volt
 VIV_SRC= \
-	src/volt/main.volt \
 	src/volt/errors.d \
 	src/volt/exceptions.d \
 	src/volt/interfaces.d \
@@ -163,12 +162,12 @@ VIV_SRC= \
 	src/volt/token/*.d \
 	src/volt/parser/*.d \
 	src/volt/visitor/*.d \
+	src/volt/postparse/*.d \
 	src/volt/semantic/lookup.d \
 	src/volt/semantic/nested.d \
 	src/volt/semantic/context.d \
 	src/volt/semantic/classify.d \
-	src/volt/postparse/scopereplacer.d \
-	src/volt/postparse/condremoval.d
+	src/volt/main.volt
 
 
 viv: $(TARGET) $(VIV_SRC)
