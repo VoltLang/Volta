@@ -700,6 +700,10 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 				return constant.u._ulong <= max;
 			} else if (primitive.type == Float || primitive.type == Double) {
 				return false;
+			} else if (primitive.type == Char) {
+				return true;
+			} else if (primitive.type == Dchar) {
+				return constant.u._uint < cast(uint) max;
 			} else if (primitive.type == Bool) {
 				return true;
 			} else {
