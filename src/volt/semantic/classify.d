@@ -95,7 +95,7 @@ size_t size(LanguagePass lp, ir.Node node)
 	case StaticArrayType:
 		auto _static = cast(ir.StaticArrayType) node;
 		assert(_static !is null);
-		return size(lp, _static.base) * cast(int)_static.length;
+		return size(lp, _static.base) * _static.length;
 	default:
 		throw panicUnhandled(node, ir.nodeToString(node));
 	}
@@ -106,7 +106,7 @@ size_t size(LanguagePass lp, ir.Node node)
  */
 size_t structSize(LanguagePass lp, ir.Struct s)
 {
-	int sizeAccumulator;
+	size_t sizeAccumulator;
 	foreach (node; s.members.nodes) {
 		// If it's not a Variable, or not a field, it shouldn't take up space.
 		auto asVar = cast(ir.Variable)node;
@@ -627,7 +627,7 @@ bool typesEqual(ir.Type a, ir.Type b, bool ignoreStorage = false)
 		auto ret = typesEqual(ap.ret, bp.ret, ignoreStorage);
 		if (!ret)
 			return false;
-		for (int i; i < apLength; i++)
+		for (size_t i; i < apLength; i++)
 			if (!typesEqual(ap.params[i], bp.params[i], ignoreStorage))
 				return false;
 		return true;
