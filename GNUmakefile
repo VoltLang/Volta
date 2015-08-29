@@ -164,6 +164,7 @@ VIV_SRC= \
 	src/volt/visitor/*.d \
 	src/volt/postparse/*.d \
 	src/volt/semantic/ctfe.d \
+	src/volt/semantic/strace.d \
 	src/volt/semantic/mangle.d \
 	src/volt/semantic/lookup.d \
 	src/volt/semantic/nested.d \
