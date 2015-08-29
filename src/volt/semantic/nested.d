@@ -9,11 +9,7 @@ import volt.ir.copy;
 import volt.ir.util;
 
 import volt.errors;
-import volt.interfaces;
-import volt.visitor.manip;
-import volt.visitor.visitor;
 
-import volt.semantic.lookup;
 import volt.semantic.context;
 import volt.semantic.classify : isNested;
 
