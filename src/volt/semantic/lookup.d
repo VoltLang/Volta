@@ -12,8 +12,6 @@ import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 
-import volt.semantic.util : ensureResolved;
-
 
 /**
  * Look up an identifier in this scope only. 
@@ -405,6 +403,62 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
 		return true;
 	default:
 		throw panic(node.location, format("unexpected nodetype %s", node.nodeType));
+	}
+}
+
+/**
+ * Resolves a store making sure the node it points to is
+ * resolved, the function returns the store that a alias
+ * is pointing to. Not the alias itself.
+ */
+ir.Store ensureResolved(LanguagePass lp, ir.Store s)
+{
+	final switch (s.kind) with (ir.Store.Kind) {
+	case Alias:
+		auto a = cast(ir.Alias)s.node;
+		lp.resolve(a);
+		while (s.myAlias !is null) {
+			s = s.myAlias;
+			return s;
+		}
+		return s;
+	case Value:
+		auto var = cast(ir.Variable)s.node;
+		lp.resolve(s.parent, var);
+		return s;
+	case Function:
+		foreach (fn; s.functions) {
+			lp.resolve(s.parent, fn);
+		}
+		return s;
+	case EnumDeclaration:
+		auto ed = cast(ir.EnumDeclaration)s.node;
+		assert(ed !is null);
+		lp.resolve(s.parent, ed);
+		return s;
+	case Type:
+		if (s.node.nodeType == ir.NodeType.Enum) {
+			auto e = cast(ir.Enum)s.node;
+			lp.resolveNamed(e);
+		} else if (s.node.nodeType == ir.NodeType.Class) {
+			auto c = cast(ir.Class)s.node;
+			lp.resolveNamed(c);
+		} else if (s.node.nodeType == ir.NodeType.Struct) {
+			auto st = cast(ir.Struct)s.node;
+			lp.resolveNamed(st);
+		} else if (s.node.nodeType == ir.NodeType.Enum) {
+			auto st = cast(ir.Enum)s.node;
+			lp.resolveNamed(st);
+		} else if (s.node.nodeType == ir.NodeType.Interface) {
+			auto i = cast(ir._Interface)s.node;
+			lp.resolveNamed(i);
+		}
+		return s;
+	case Scope:
+	case Template:
+	case Expression:
+	case FunctionParam:
+		return s;
 	}
 }
 

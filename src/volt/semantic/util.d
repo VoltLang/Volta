@@ -174,59 +174,6 @@ void replaceVarArgsIfNeeded(LanguagePass lp, ir.Function fn)
 	}
 }
 
-/**
- * Ensures that a Store is a resolved alias.
- */
-ir.Store ensureResolved(LanguagePass lp, ir.Store s)
-{
-	final switch (s.kind) with (ir.Store.Kind) {
-	case Alias:
-		auto a = cast(ir.Alias)s.node;
-		lp.resolve(a);
-		while (s.myAlias !is null) {
-			s = s.myAlias;
-		}
-		return s;
-	case Value:
-		auto var = cast(ir.Variable)s.node;
-		lp.resolve(s.parent, var);
-		return s;
-	case Function:
-		foreach (fn; s.functions) {
-			lp.resolve(s.parent, fn);
-		}
-		return s;
-	case EnumDeclaration:
-		auto ed = cast(ir.EnumDeclaration)s.node;
-		assert(ed !is null);
-		lp.resolve(s.parent, ed);
-		return s;
-	case Type:
-		if (s.node.nodeType == ir.NodeType.Enum) {
-			auto e = cast(ir.Enum)s.node;
-			lp.resolveNamed(e);
-		} else if (s.node.nodeType == ir.NodeType.Class) {
-			auto c = cast(ir.Class)s.node;
-			lp.resolveNamed(c);
-		} else if (s.node.nodeType == ir.NodeType.Struct) {
-			auto st = cast(ir.Struct)s.node;
-			lp.resolveNamed(st);
-		} else if (s.node.nodeType == ir.NodeType.Enum) {
-			auto st = cast(ir.Enum)s.node;
-			lp.resolveNamed(st);
-		} else if (s.node.nodeType == ir.NodeType.Interface) {
-			auto i = cast(ir._Interface)s.node;
-			lp.resolveNamed(i);
-		}
-		return s;
-	case Scope:
-	case Template:
-	case Expression:
-	case FunctionParam:
-		return s;
-	}
-}
-
 /// Get a UserAttribute struct literal from a user Attribute.
 ir.ClassLiteral getAttributeLiteral(ir.UserAttribute ua, ir.Attribute attr)
 {
