@@ -476,11 +476,12 @@ interface Backend
  * they are available on multiple platforms.
  *
  * Posix on Linux and OSX.
- * Windows on MinGW.
+ * Windows on MinGW and MSVC.
  */
 enum Platform
 {
 	MinGW,
+	MSVC,
 	Linux,
 	OSX,
 	EMSCRIPTEN,
@@ -645,6 +646,11 @@ public:
 			platformStr = "mingw";
 			setVersionIdentifier("Windows");
 			setVersionIdentifier("MinGW");
+			break;
+		case MSVC:
+			platformStr = "msvc";
+			setVersionIdentifier("Windows");
+			setVersionIdentifier("MSVC");
 			break;
 		case Linux:
 			platformStr = "linux";

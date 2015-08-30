@@ -527,10 +527,23 @@ string[][] tripleList = [
 	 *
 	 * - i686-pc-windows-gnu - mingw32
 	 * - i686-w64-windows-gnu - mingw64
+	 *
+	 * For linking with MSVC
+	 *
+	 * - x86_64-pc-windows-msvc
 	 */
 	[
 		"i686-w64-windows-gnu",
 		"x86_64-w64-windows-gnu",
+		null,
+	],
+
+	/*
+	 * MSVC platform, see above comment.
+	 */
+	[
+		null,
+		"x86_64-pc-windows-msvc",
 		null,
 	],
 

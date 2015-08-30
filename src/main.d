@@ -112,6 +112,9 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 		case "mingw":
 			settings.platform = Platform.MinGW;
 			break;
+		case "msvc":
+			settings.platform = Platform.MSVC;
+			break;
 		case "linux":
 			settings.platform = Platform.Linux;
 			break;
