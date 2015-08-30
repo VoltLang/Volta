@@ -3,11 +3,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.extyper;
 
-version (Windows) {
-	import std.string : translate;
-}
-
 import watt.text.format : format;
+import watt.text.string : replace;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
@@ -4124,8 +4121,7 @@ public:
 		if (fexp.type == ir.TokenExp.Type.File) {
 			string fname = fexp.location.filename;
 			version (Windows) {
-				string[dchar] transTable = ['\\': "/"];
-				fname = translate(fname, transTable);
+				fname = fname.replace("\\", "/");
 			}
 			exp = buildConstantString(fexp.location, fname);
 			return Continue;
