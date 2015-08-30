@@ -221,11 +221,9 @@ body
 		case TokenType.Synchronized:
 		case TokenType.Override:
 		case TokenType.Abstract:
-		case TokenType.Global:
-		case TokenType.Local:
 		case TokenType.Inout:
 		case TokenType.Nothrow:
-		case TokenType.Pure:
+		case TokenType.Pure: // WARNING Global/Local jumps here.
 			ir.Attribute a;
 			succeeded = parseAttribute(ps, a);
 			if (!succeeded) {
@@ -233,6 +231,15 @@ body
 			}
 			tlb.nodes ~= a;
 			break;
+		case TokenType.Global:
+		case TokenType.Local:
+			auto next = ps.lookahead(1).type;
+			if (next == TokenType.Tilde) {
+				goto case TokenType.Tilde;
+			} else if (next == TokenType.This) {
+				goto case TokenType.This;
+			}
+			goto case TokenType.Pure; // To attribute parsing.
 		case TokenType.Version:
 		case TokenType.Debug:
 			ir.ConditionTopLevel c;
@@ -422,15 +429,16 @@ ParseStatus parseConstructor(ParserStream ps, out ir.Function c)
 	c.name = "__ctor";
 	c.docComment = ps.comment();
 
-	// XXX: Change to local/global.
+	// TODO (selfhost) Remove
 	if (matchIf(ps, TokenType.Static)) {
-		c.kind = ir.Function.Kind.LocalConstructor;
+		c.kind = ir.Function.Kind.GlobalConstructor;
 	}
-	//if (matchIf(ps, TokenType.Local)) {
-	//	c.kind = ir.Function.Kind.LocalConstructor;
-	//} else if (matchIf(ps, TokenType.Global)) {
-	//	c.kind = ir.Function.Kind.GlobalConstructor;
-	//}
+
+	if (matchIf(ps, TokenType.Local)) {
+		c.kind = ir.Function.Kind.LocalConstructor;
+	} else if (matchIf(ps, TokenType.Global)) {
+		c.kind = ir.Function.Kind.GlobalConstructor;
+	}
 
 	// Get the location of this.
 	c.location = ps.peek.location;
@@ -538,15 +546,16 @@ ParseStatus parseDestructor(ParserStream ps, out ir.Function d)
 	d.name = "__dtor";
 	d.docComment = ps.comment();
 
-	// XXX: Change to local/global or local/shared.
+	// TODO (selfhost) Remove
 	if (matchIf(ps, TokenType.Static)) {
-		d.kind = ir.Function.Kind.LocalDestructor;
+		d.kind = ir.Function.Kind.GlobalDestructor;
 	}
-	//if (matchIf(ps, TokenType.Local)) {
-	//	d.kind = ir.Function.Kind.LocalDestructor;
-	//} else if (matchIf(ps, TokenType.Global)) {
-	//	d.kind = ir.Function.Kind.GlobalDestructor;
-	//}
+
+	if (matchIf(ps, TokenType.Local)) {
+		d.kind = ir.Function.Kind.LocalDestructor;
+	} else if (matchIf(ps, TokenType.Global)) {
+		d.kind = ir.Function.Kind.GlobalDestructor;
+	}
 
 	if (ps.peek.type != TokenType.Tilde) {
 		return unexpectedToken(ps, ir.NodeType.Function);

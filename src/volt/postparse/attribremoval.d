@@ -247,18 +247,12 @@ protected:
 			case Abstract:
 				fn.isAbstract = true;
 				break;
-			case Local, Global, Static:
+			case Static: // TODO (selfhost) remove.
+			case Local, Global:
 				with (ir.Function.Kind) {
-				if (fn.kind == Constructor) {
-					if (attr.kind == ir.Attribute.Kind.Local) {
-						throw panic(attr.location, "local constructors are unimplemented.");
-					}
-					fn.kind = attr.kind == ir.Attribute.Kind.Local ? LocalConstructor : GlobalConstructor;
-				} else if (fn.kind == Destructor) {
-					if (attr.kind == ir.Attribute.Kind.Local) {
-						throw panic(attr.location, "local destructors are unimplemented.");
-					}
-					fn.kind = attr.kind == ir.Attribute.Kind.Local ? LocalDestructor : GlobalDestructor;
+				if (fn.kind == Constructor ||
+				    fn.kind == Destructor) {
+					// We do not make (con|de)structors like this.
 				} else {
 					fn.kind = ir.Function.Kind.Function;
 				}
