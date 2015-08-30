@@ -581,6 +581,11 @@ string[][] layoutList = [
 		layoutWinLinux64,
 		null,
 	],
+	[ // MSVC
+		layoutWinLinux32,
+		layoutWinLinux64,
+		null,
+	],
 	[ // Linux
 		layoutWinLinux32,
 		layoutWinLinux64,
