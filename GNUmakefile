@@ -88,6 +88,7 @@ RT_SRC = $(shell find rt/src -name "*.volt")
 RT_TARGETS = \
 	rt/libvrt-le32-emscripten.bc \
 	rt/libvrt-x86-mingw.bc \
+	rt/libvrt-x86_64-mingw.bc \
 	rt/libvrt-x86_64-msvc.bc \
 	rt/libvrt-x86-linux.bc \
 	rt/libvrt-x86_64-linux.bc \
