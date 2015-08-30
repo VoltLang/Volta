@@ -1,3 +1,3 @@
 module watt.io.file;
 
-import std.file : read;
+import std.file : read, exists, remove;

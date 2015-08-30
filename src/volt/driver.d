@@ -1,16 +1,14 @@
-// Copyright © 2012-2014, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2012-2015, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.driver;
 
-import core.exception;
-import std.algorithm : endsWith;
-import std.path : dirSeparator;
-import std.file : remove, exists, read;
-import std.process : wait, spawnShell;
-import std.stdio : stderr, stdout;
+import io = watt.io.std : output, error;
 
-import watt.text.diff;
-import watt.path : temporaryFilename;
+import watt.path : temporaryFilename, dirSeparator;
+import watt.process : spawnProcess, wait;
+import watt.io.file : remove, exists, read;
+import watt.text.diff : diff;
+import watt.text.string : endsWith;
 
 import volt.util.path;
 import volt.util.perf : perf;
@@ -210,24 +208,28 @@ public:
 		} else try {
 			ret = intCompile();
 		} catch (CompilerPanic e) {
-			stderr.writefln(e.msg);
-			if (e.file !is null)
-				stderr.writefln("%s:%s", e.file, e.line);
+			io.error.writefln(e.msg);
+			if (e.file !is null) {
+				io.error.writefln("%s:%s", e.file, e.line);
+			}
 			return 2;
 		} catch (CompilerError e) {
-			stderr.writefln(e.msg);
-			debug if (e.file !is null)
-				stderr.writefln("%s:%s", e.file, e.line);
+			io.error.writefln(e.msg);
+			debug if (e.file !is null) {
+				io.error.writefln("%s:%s", e.file, e.line);
+			}
 			return 1;
 		} catch (Exception e) {
-			stderr.writefln("panic: %s", e.msg);
-			if (e.file !is null)
-				stderr.writefln("%s:%s", e.file, e.line);
+			io.error.writefln("panic: %s", e.msg);
+			if (e.file !is null) {
+				io.error.writefln("%s:%s", e.file, e.line);
+			}
 			return 2;
 		} catch (Error e) {
-			stderr.writefln("panic: %s", e.msg);
-			if (e.file !is null)
-				stderr.writefln("%s:%s", e.file, e.line);
+			io.error.writefln("panic: %s", e.msg);
+			if (e.file !is null) {
+				io.error.writefln("%s:%s", e.file, e.line);
+			}
 			return 2;
 		}
 
@@ -256,7 +258,7 @@ protected:
 		void debugPrint(string msg, string s)
 		{
 			if (settings.internalDebug) {
-				stdout.writefln(msg, s);
+				io.output.writefln(msg, s);
 			}
 		}
 
@@ -426,40 +428,36 @@ protected:
 
 	int nativeLink(string linker, string obj, string of)
 	{
-		string objInputFiles;
+		string[] args = ["-o", of];
+
 		foreach (objectFile; mObjectFiles) {
-			objInputFiles ~= objectFile ~ " ";
+			args ~= objectFile;
 		}
-		string objLibraryPaths;
+
+		// Needs to be after other object files.
+		args ~= obj;
+
 		foreach (libraryPath; mLibraryPaths) {
-			objLibraryPaths ~= " -L" ~ libraryPath;
+			args ~= "-L" ~ libraryPath;
 		}
-		string objLibraryFiles;
 		foreach (libraryFile; mLibraryFiles) {
-			objLibraryFiles ~= " -l" ~ libraryFile;
+			args ~= "-l" ~ libraryFile;
 		}
-		string objFrameworkPaths;
 		foreach (frameworkPath; mFrameworkPaths) {
-			objLibraryPaths ~= " -F " ~ frameworkPath;
+			args ~= "-F";
+			args ~= frameworkPath;
 		}
-		string objFrameworkNames;
 		foreach (frameworkName; mFrameworkNames) {
-			objFrameworkNames ~= " -framework " ~ frameworkName;
+			args ~= "-framework";
+			args ~= frameworkName;
 		}
 
-		objInputFiles ~= " " ~ obj;
-
-		string cmd = format("%s -o \"%s\" %s%s%s%s%s", linker, of,
-		                    objInputFiles, objLibraryPaths, objLibraryFiles,
-		                    objFrameworkPaths, objFrameworkNames);
-
-		return wait(spawnShell(cmd));
+		return spawnProcess(linker, args).wait();
 	}
 
 	int emscriptenLink(string linker, string bc, string of)
 	{
-		string cmd = format("%s -o \"%s\" %s", linker, of, bc);
-		return wait(spawnShell(cmd));
+		return spawnProcess(linker, ["-o", of, bc]).wait();
 	}
 
 	this(Settings s, Frontend f, LanguagePass lp, Backend b)
@@ -482,7 +480,7 @@ protected:
 		foreach (i, m; mods) {
 			ppBuf.clear();
 			dpBuf.clear();
-			stdout.writefln("Transformations performed by %s:", title);
+			io.output.writefln("Transformations performed by %s:", title);
 			diffPP.transform(m);
 			diffDP.transform(m);
 			ppstrs[i] = ppBuf.str;
