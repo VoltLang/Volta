@@ -2,7 +2,6 @@
 // See copyright notice and license in src/lib/llvm/core.d.
 module lib.llvm.analysis;
 
-import std.conv : to;
 import lib.llvm.core;
 public import lib.llvm.c.Analysis;
 

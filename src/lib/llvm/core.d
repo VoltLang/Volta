@@ -8,8 +8,8 @@
  */
 module lib.llvm.core;
 
-import std.conv : to;
-import std.string : toStringz;
+import watt.conv : toString, toStringz;
+
 public import lib.llvm.c.Core;
 
 
@@ -67,7 +67,7 @@ LLVMTypeRef LLVMStructTypeInContext(LLVMContextRef c,
 	                                LLVMBool packed)
 {
 	return lib.llvm.c.Core.LLVMStructTypeInContext(
-		c, types.ptr, cast(int)types.length, packed);
+		c, types.ptr, cast(uint)types.length, packed);
 }
 
 LLVMTypeRef LLVMStructCreateNamed(LLVMContextRef c, string name)
@@ -86,7 +86,7 @@ LLVMValueRef LLVMConstNamedStruct(LLVMTypeRef structType,
 
 string LLVMGetStructName(LLVMTypeRef t)
 {
-	return to!string(lib.llvm.c.Core.LLVMGetStructName(t));
+	return toString(lib.llvm.c.Core.LLVMGetStructName(t));
 }
 
 void LLVMStructSetBody(LLVMTypeRef t, LLVMTypeRef[] types, LLVMBool packed)
@@ -175,7 +175,7 @@ void LLVMAddIncoming(LLVMValueRef phi, LLVMValueRef[] iv,
                      LLVMBasicBlockRef[] ib)
 {
 	assert(iv.length == ib.length);
-	LLVMAddIncoming(phi, iv.ptr, ib.ptr, cast(int)iv.length);
+	lib.llvm.c.Core.LLVMAddIncoming(phi, iv.ptr, ib.ptr, cast(uint)iv.length);
 }
 
 /**
@@ -185,8 +185,9 @@ void LLVMAddIncoming(LLVMValueRef phi, LLVMValueRef[] iv,
  */
 const(char)* nullTerminate(char[] stack, string str)
 {
-	if (str.length + 1 > stack.length)
+	if (str.length + 1 > stack.length) {
 		return toStringz(str);
+	}
 	stack[0 .. str.length] = str[];
 	stack[str.length] = 0;
 	return stack.ptr;
@@ -197,9 +198,11 @@ const(char)* nullTerminate(char[] stack, string str)
  */
 string handleAndDisposeMessage(const(char)** msg)
 {
-	if (msg is null || *msg is null)
+	if (msg is null || *msg is null) {
 		return null;
-	auto ret = to!string(*msg);
+	}
+
+	auto ret = toString(*msg);
 	LLVMDisposeMessage(*msg);
 	*msg = null;
 	return ret;
@@ -210,7 +213,7 @@ string handleAndDisposeMessage(const(char)** msg)
  */
 
 
-string llvmLicense = `
+enum string llvmLicense = `
 ==============================================================================
 LLVM Release License
 ==============================================================================
@@ -258,6 +261,7 @@ SOFTWARE.
 
 import volt.license;
 
+version (D_Version2):
 static this()
 {
 	licenseArray ~= llvmLicense;

@@ -2,8 +2,7 @@
 // See copyright notice and license in src/lib/llvm/core.d.
 module lib.llvm.targetmachine;
 
-
-import std.conv : to;
+import watt.conv;
 
 import lib.llvm.core;
 public import lib.llvm.c.TargetMachine;
@@ -38,12 +37,12 @@ bool LLVMGetTargetFromTriple(string triple, LLVMTargetRef* outTarget,
 
 string LLVMGetTargetName(LLVMTargetRef target)
 {
-	return to!string(lib.llvm.c.TargetMachine.LLVMGetTargetName(target));
+	return toString(lib.llvm.c.TargetMachine.LLVMGetTargetName(target));
 }
 
 string LLVMGetTargetDescription(LLVMTargetRef target)
 {
-	return to!string(lib.llvm.c.TargetMachine.LLVMGetTargetDescription(target));
+	return toString(lib.llvm.c.TargetMachine.LLVMGetTargetDescription(target));
 }
 
 string LLVMGetTargetMachineTriple(LLVMTargetMachineRef machine)

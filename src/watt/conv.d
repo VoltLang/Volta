@@ -1,7 +1,7 @@
 module watt.conv;
 
 private import std.conv;
-import std.string : toLower;
+import std.string : toLower, toStringz;
 
 alias toInt = to!int;
 alias toUlong = to!ulong;

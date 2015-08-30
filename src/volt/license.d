@@ -5,7 +5,7 @@ module volt.license;
 /**
  * This is the license for the volt compiler.
  */
-string license = `
+enum string license = `
 Copyright © 2010-2012, Bernard Helyer.  All rights reserved.
 Copyright © 2010-2011, Jakob Ovrum.  All rights reserved.
 Copyright © 2012, Jakob Bornecrantz. All rights reserved.
@@ -35,7 +35,8 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 `;
 
-string[] licenseArray;
+version (D_Version2):
+static string[] licenseArray;
 
 static this()
 {
