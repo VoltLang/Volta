@@ -2,8 +2,6 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.llvm.constant;
 
-import std.conv : to;
-
 import volt.errors;
 import volt.ir.util;
 
@@ -44,7 +42,7 @@ void getConstantValue(State state, ir.Exp exp, Value result)
 	default:
 		auto str = format(
 			"could not get constant from expression '%s'",
-			to!string(exp.nodeType));
+			ir.nodeToString(exp));
 		throw panic(exp.location, str);
 	}
 }
@@ -60,7 +58,7 @@ void handleUnary(State state, ir.Unary asUnary, Value result)
 	case Minus:
 		return handlePlusMinus(state, asUnary, result);
 	default:
-		throw panicUnhandled(asUnary, to!string(asUnary.op));
+		throw panicUnhandled(asUnary, ir.nodeToString(asUnary));
 	}
 }
 

@@ -2,8 +2,6 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.llvm.type;
 
-import std.conv : to;
-
 import lib.llvm.core;
 
 import ir = volt.ir.ir;
@@ -927,7 +925,7 @@ ir.Type scrubStorage(ir.Type type)
 	case Enum:
 		return type;
 	default:
-		assert(false, "foo " ~ to!string(type.nodeType));
+		throw panicUnhandled(type, ir.nodeToString(type.nodeType));
 	}
 	addMangledName(outType);
 	assert(outType.mangledName[0] != 'e');

@@ -2,8 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.llvm.backend;
 
-import std.string : toStringz;
-import std.stdio : stderr, stdout;
+import io = watt.io.std;
 
 import volt.errors;
 import volt.interfaces;
@@ -88,20 +87,20 @@ public:
 		}
 
 		if (mDump)
-			stdout.writefln("Compiling module");
+			io.output.writefln("Compiling module");
 
 		try {
 			state.compile(m);
 		} catch (Throwable t) {
 			if (mDump) {
-				stdout.writefln("Caught \"%s\" dumping module:", t.classinfo.name);
+				io.output.writefln("Caught \"%s\" dumping module:", t.classinfo.name);
 				LLVMDumpModule(mod);
 			}
 			throw t;
 		}
 
 		if (mDump) {
-			stdout.writefln("Dumping module");
+			io.output.writefln("Dumping module");
 			LLVMDumpModule(mod);
 		}
 
@@ -109,7 +108,7 @@ public:
 		auto failed = LLVMVerifyModule(mod, result);
 		if (failed) {
 			LLVMDumpModule(mod);
-			stderr.writefln("%s", result);
+			io.error.writefln("%s", result);
 			throw panic("Module verification failed.");
 		}
 
@@ -123,7 +122,7 @@ LLVMModuleRef loadModule(LLVMContextRef ctx, string filename)
 
 	auto mod = LLVMModuleFromFileInContext(ctx, filename, msg);
 	if (msg !is null && mod !is null)
-		stderr.writefln("%s", msg); // Warnings
+		io.error.writefln("%s", msg); // Warnings
 	if (mod is null)
 		throw makeNoLoadBitcodeFile(filename, msg);
 
@@ -158,7 +157,7 @@ void linkModules(string output, string[] inputs...)
 
 		bool ret = LLVMLinkModules(dst, src, LLVMLinkerMode.DestroySource, msg);
 		if (msg !is null)
-			stderr.writefln("%s", msg);
+			io.error.writefln("%s", msg);
 		if (ret)
 			throw makeNoLinkModule(filename, msg);
 	}
@@ -210,7 +209,7 @@ void writeObjectFile(Settings settings, string output, string input)
 		LLVMCodeGenFileType.Object, msg) != 0;
 
 	if (msg !is null && !ret)
-		stderr.writefln("%s", msg); // Warnings
+		io.error.writefln("%s", msg); // Warnings
 	if (ret)
 		throw makeNoWriteObjectFile(output, msg);
 }
