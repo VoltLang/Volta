@@ -58,15 +58,16 @@ public:
 	 */
 	enum Kind
 	{
-		Alias,
-		Value,
 		Type,
+		Value,
 		Scope,
+		Alias,
+		Merge,
 		Function,
 		Template,
-		EnumDeclaration,
-		FunctionParam,
 		Expression,
+		FunctionParam,
+		EnumDeclaration,
 	}
 
 
@@ -97,6 +98,11 @@ public:
 	 * Overloaded functions.
 	 */
 	Function[] functions;
+
+	/**
+	 * Merging of aliases and functions, used if Kind is Merge.
+	 */
+	Alias[] aliases;
 
 	/**
 	 * Store pointed to by alias.
@@ -312,9 +318,26 @@ public:
 		assert(name !is null);
 	}
 	body {
-		errorOn(n, name);
+
 		auto store = new Store(this, n, name, look, Store.Kind.Alias);
-		symbols[name] = store;
+
+		auto ret = name in symbols;
+		if (ret is null) {
+			symbols[name] = store;
+			return store;
+		}
+		auto merge = *ret;
+
+		if (merge.kind == Store.Kind.Alias) {
+			merge = new Store(this, n, name, Store.Kind.Merge);
+			symbols[name] = merge;
+		} else if (merge.kind == Store.Kind.Function) {
+			merge.kind = Store.Kind.Merge;
+		} else if (merge.kind != Store.Kind.Merge) {
+			errorDefined(n, name);
+		}
+
+		merge.aliases ~= n;
 		return store;
 	}
 
@@ -415,10 +438,26 @@ public:
 			auto store = new Store(this, fn, name);
 			symbols[name] = store;
 			return store;
-		} else if (ret.kind == Store.Kind.Function) {
-			ret.functions ~= fn;
-			return *ret;
 		}
+
+		auto merge = *ret;
+		if (ret.kind == Store.Kind.Function ||
+		    ret.kind == Store.Kind.Merge) {
+			merge.functions ~= fn;
+			return merge;
+		}
+
+		if (merge.kind == Store.Kind.Alias) {
+			auto store = new Store(this, fn, name);
+			store.kind = Store.Kind.Merge;
+			symbols[name] = store;
+
+			auto a = cast(Alias) merge.node;
+			assert(a !is null);
+			store.aliases ~= a;
+			return store;
+		}
+
 		errorDefined(fn, name);
 		assert(false);
 	}

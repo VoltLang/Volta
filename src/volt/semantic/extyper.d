@@ -824,6 +824,7 @@ void extypeIdentifierExp(ExtyperContext ctx, ref ir.Exp e, ir.IdentifierExp i)
 		se.store = store;
 		e = se;
 		return;
+	case Merge:
 	case Alias:
 		return;
 	}
@@ -1941,6 +1942,7 @@ void extypePostfixIdentifier(ExtyperContext ctx, ref ir.Exp exp, ir.Postfix post
 		case Template:
 		case Expression:
 			throw makeInvalidUseOfStore(postfix, store);
+		case Merge:
 		case Alias:
 			throw panic(postfix, "alias scope");
 		}

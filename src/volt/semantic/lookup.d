@@ -422,6 +422,10 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
 ir.Store ensureResolved(LanguagePass lp, ir.Store s)
 {
 	final switch (s.kind) with (ir.Store.Kind) {
+	case Merge:
+		lp.resolve(s);
+		assert(s.kind == Function);
+		return s;
 	case Alias:
 		auto a = cast(ir.Alias)s.node;
 		lp.resolve(a);

@@ -296,6 +296,12 @@ public:
 	abstract ir.Type resolve(ir.Scope current, ir.Type type);
 
 	/**
+	 * Resolves an ir.Store that is of kind Merge. Afterwards the kind
+	 * is changed to kind Function, since only functions can be merged.
+	 */
+	abstract void resolve(ir.Store);
+
+	/**
 	 * Resolves an Enum making it usable externaly, done on lookup of it.
 	 *
 	 * @throws CompilerError on failure to resolve the enum.

@@ -137,6 +137,7 @@ ir.Scope getScopeFromStore(ir.Store store)
 	case EnumDeclaration:
 	case Expression:
 		return null;
+	case Merge:
 	case Alias:
 		throw panic(store.node.location, "unresolved alias");
 	}

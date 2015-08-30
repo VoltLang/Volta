@@ -406,6 +406,31 @@ public:
 		return t;
 	}
 
+	override void resolve(ir.Store s)
+	{
+		assert(s.kind == ir.Store.Kind.Merge);
+		assert(s.aliases.length > 0);
+
+		// Can't use Resolve action since we will resolve the alias soon.
+		auto w = mTracker.add(s.aliases[0], Work.Action.Actualize);
+		scope (exit) {
+			w.done();
+		}
+
+		foreach (a; s.aliases) {
+			auto f = ensureResolved(this, a.store);
+			if (f.kind != ir.Store.Kind.Function) {
+				throw makeBadMerge(a, s);
+			}
+			s.functions ~= f.functions;
+		}
+		foreach (fn; s.functions) {
+			resolve(s.parent, fn);
+		}
+
+		s.aliases = null;
+		s.kind = ir.Store.Kind.Function;
+	}
 
 	/*
 	 *

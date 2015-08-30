@@ -25,6 +25,11 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeBadMerge(ir.Alias a, ir.Store s, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(a.location, "can not merge alias since it is not a Function.", file, line);
+}
+
 CompilerException makeScopeOutsideFunction(Location l, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(l, "scope outside of function.", file, line);
