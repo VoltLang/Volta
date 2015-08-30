@@ -4,11 +4,14 @@
 /volt.*
 /viv
 /viv.*
+/LLVM.*
+build.bat
 .obj
 .pkg
 *.tar.gz
 
 # Temporary files produced by the compiler
+*.obj
 *.ll
 *.bc
 *.o
