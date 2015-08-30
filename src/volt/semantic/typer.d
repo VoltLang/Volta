@@ -740,6 +740,7 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 		}
 		return t;
 	}
+	version (Volt) assert(false);
 }
 
 ir.Type getPostfixIdentifierArrayType(LanguagePass lp, ir.Postfix postfix, ir.ArrayType arrayType, ir.Scope currentScope)
@@ -961,7 +962,7 @@ ir.Type getUnaryDerefType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope
 		}
 		assert(kinds.length == locations.length);
 		ir.StorageType outStorage = new ir.StorageType();
-		for (int i = 0; i < kinds.length; ++i) {
+		for (size_t i = 0; i < kinds.length; ++i) {
 			auto kind = kinds[i];
 			auto location = locations[i];
 			outStorage.type = kind;

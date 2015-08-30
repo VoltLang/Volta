@@ -180,12 +180,20 @@ ir.ClassLiteral getAttributeLiteral(ir.UserAttribute ua, ir.Attribute attr)
 	auto cliteral = new ir.ClassLiteral();
 	cliteral.location = attr.location;
 	cliteral.type = copyTypeSmart(ua.layoutClass.location, ua.layoutClass);
-	cliteral.exps = attr.arguments.dup;
+	version (Volt) {
+		cliteral.exps = new ir.Exp[](attr.arguments);
+	} else {
+		cliteral.exps = attr.arguments.dup;
+	}
 
 	if (attr.arguments.length > ua.fields.length) {
 		throw makeWrongNumberOfArguments(attr, attr.arguments.length, ua.fields.length);
 	} else {
-		cliteral.exps = attr.arguments.dup;
+		version (Volt) {
+			cliteral.exps = new ir.Exp[](attr.arguments);
+		} else {
+			cliteral.exps = attr.arguments.dup;
+		}
 		foreach (field; ua.fields[attr.arguments.length .. $]) {
 			if (field.assign is null) {
 				throw makeExpected(field, "initialiser");
@@ -312,4 +320,5 @@ ir.Exp getDefaultInit(Location l, LanguagePass lp, ir.Scope current, ir.Type t)
 	default:
 		throw panicUnhandled(l, format("%s", t.nodeType));
 	}
+	version (Volt) assert(false);
 }

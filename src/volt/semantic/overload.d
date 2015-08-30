@@ -102,11 +102,10 @@ bool willConvert(ir.Type argument, ir.Type parameter)
 		}
 	case NullType:
 		auto nt = realType(parameter).nodeType;
-		with (ir.NodeType) {
-			return nt == PointerType || nt == Class || nt == ArrayType || nt == AAType || nt == DelegateType;
-		}
+		return nt == PointerType || nt == Class || nt == ArrayType || nt == AAType || nt == DelegateType;
 	default: return false;
 	}
+	version (Volt) assert(false);
 }
 
 bool willConvertArray(ir.Type l, ir.Type r, ref uint flag, ref ir.Exp exp)
@@ -264,6 +263,7 @@ int matchLevel(bool homogenous, ir.Type argument, ir.Type parameter, ir.Exp exp=
 		}
 		return 1;
 	}
+	version (Volt) assert(false);
 }
 
 bool specialisationComparison(ir.Function a, ir.Function b)
@@ -377,7 +377,7 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 		int defaultArguments;
 		if (correctNumberOfArguments(fn, defaultArguments)) {
 			outFunctions ~= fn;
-		} else if (fn.params.length == arguments.length + defaultArguments) {
+		} else if (fn.params.length == arguments.length + cast(size_t)defaultArguments) {
 			outFunctions ~= fn;
 		} else if (fn.type.homogenousVariadic && arguments.length >= fn.params.length) {
 			outFunctions ~= fn;
