@@ -3,7 +3,7 @@
 module vrt.eh_stub;
 
 
-version (Emscripten):
+version (Emscripten || MSVC):
 
 extern(C) void exit(int);
 
