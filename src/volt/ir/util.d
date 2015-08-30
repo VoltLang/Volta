@@ -1598,3 +1598,12 @@ void addStorage(ir.Type dest, ir.Type src)
 	if (!dest.isImmutable) dest.isImmutable = src.isImmutable;
 	if (!dest.isScope) dest.isScope = src.isScope;
 }
+
+void insertInPlace(ref ir.Node[] list, size_t index, ir.Node node)
+{
+	version (Volt) {
+		assert(false);
+	} else {
+		list = list[0 .. index] ~ node ~ list[index .. $];
+	}
+}

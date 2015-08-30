@@ -3,8 +3,6 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.extyper;
 
-import std.array : insertInPlace;
-
 version (Windows) {
 	import std.string : translate;
 }
