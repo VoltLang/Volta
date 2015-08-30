@@ -5,8 +5,8 @@ module volt.util.perf;
 
 version (D_Version2):
 
+import watt.io.std : writefln;
 private import core.time : MonoTime;
-private import std.stdio : writefln;
 
 /**
  * Very simple perfing code, just gets timing info.
