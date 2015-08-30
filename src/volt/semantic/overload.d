@@ -2,8 +2,6 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.overload;
 
-import std.algorithm : sort;
-
 import ir = volt.ir.ir;
 import volt.ir.util;
 
@@ -413,7 +411,12 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 		}
 	}
 
-	sort!specialisationComparison(matchedFunctions);
+	version (Volt) {
+		assert(false);
+	} else {
+		import std.algorithm : sort;
+		sort!specialisationComparison(matchedFunctions);
+	}
 	if (matchedFunctions.length == 1 || specialisationComparison(matchedFunctions[0], matchedFunctions[1]) > 0) {
 		if (highestMatchLevel > 1) {
 			return matchedFunctions[0];
