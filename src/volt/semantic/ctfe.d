@@ -44,6 +44,18 @@ ir.Constant evaluate(LanguagePass lp, ir.Scope current, ir.Exp exp)
 	case ir.NodeType.Postfix:
 		auto pfix = cast(ir.Postfix) exp;
 		return evaluatePostfix(lp, current, pfix);
+	case ir.NodeType.IdentifierExp:
+		auto iexp = cast(ir.IdentifierExp) exp;
+		auto store = lookup(lp, current, iexp.location, iexp.value);
+		auto edecl = cast(ir.EnumDeclaration) store.node;
+		if (edecl !is null) {
+			return evaluate(lp, current, edecl.assign);
+		}
+		auto _exp = cast(ir.Exp) store.node;
+		if (_exp is null) {
+			goto default;
+		}
+		return evaluate(lp, current, _exp);
 	default:
 		throw makeNotAvailableInCTFE(exp, exp);
 	}
