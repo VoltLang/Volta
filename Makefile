@@ -11,6 +11,7 @@ RT_SRC = \
 	rt/src/object.volt \
 	rt/src/vrt/vmain.volt \
 	rt/src/vrt/gc.volt \
+	rt/src/vrt/gc_stub.volt \
 	rt/src/vrt/clazz.volt \
 	rt/src/vrt/hash.volt \
 	rt/src/vrt/aa.volt \
