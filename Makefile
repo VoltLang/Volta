@@ -19,7 +19,6 @@ RT_SRC = \
 	rt/src/vrt/unwind.volt \
 	rt/src/vrt/dwarf.volt
 VIV_SRC= \
-	src/volt/main.volt \
 	src/volt/errors.d \
 	src/volt/exceptions.d \
 	src/volt/interfaces.d \
@@ -30,7 +29,15 @@ VIV_SRC= \
 	src/volt/parser/*.d \
 	src/volt/visitor/*.d \
 	src/volt/postparse/scopereplacer.d \
-	src/volt/postparse/condremoval.d
+	src/volt/postparse/condremoval.d \
+	src/volt/semantic/ctfe.d \
+	src/volt/semantic/strace.d \
+	src/volt/semantic/mangle.d \
+	src/volt/semantic/lookup.d \
+	src/volt/semantic/nested.d \
+	src/volt/semantic/context.d \
+	src/volt/semantic/classify.d \
+	src/volt/main.volt
 
 # rules
 all:
