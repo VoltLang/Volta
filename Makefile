@@ -37,6 +37,9 @@ VIV_SRC= \
 	src/volt/semantic/nested.d \
 	src/volt/semantic/context.d \
 	src/volt/semantic/classify.d \
+	src/volt/semantic/overload.d \
+	src/volt/semantic/util.d \
+	src/volt/semantic/typer.d \
 	src/volt/main.volt
 
 # rules
