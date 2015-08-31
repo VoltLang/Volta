@@ -94,14 +94,14 @@ public:
 			}
 		}
 
-		if (settings.linker is null) {
-			if (settings.platform == Platform.EMSCRIPTEN) {
-				mLinker = "emcc";
-			} else {
-				mLinker = "gcc";
-			}
-		} else {
+		if (settings.linker !is null) {
 			mLinker = settings.linker;
+		} else if (settings.platform == Platform.EMSCRIPTEN) {
+			mLinker = "emcc";
+		} else if (settings.platform == Platform.MSVC) {
+			mLinker = "link.exe";
+		} else {
+			mLinker = "gcc";
 		}
 
 		debugVisitors ~= new DebugMarker("Running DebugPrinter:");
@@ -428,15 +428,20 @@ protected:
 
 	int nativeLink(string linker, string obj, string of)
 	{
+		if (settings.platform == Platform.MSVC) {
+			return msvcLink(linker, obj, of);
+		} else {
+			return gccLink(linker, obj, of);
+		}
+	}
+
+	int gccLink(string linker, string obj, string of)
+	{
 		string[] args = ["-o", of];
 
-		foreach (objectFile; mObjectFiles) {
+		foreach (objectFile; mObjectFiles ~ obj) {
 			args ~= objectFile;
 		}
-
-		// Needs to be after other object files.
-		args ~= obj;
-
 		foreach (libraryPath; mLibraryPaths) {
 			args ~= "-L" ~ libraryPath;
 		}
@@ -455,8 +460,31 @@ protected:
 		return spawnProcess(linker, args).wait();
 	}
 
+	int msvcLink(string linker, string obj, string of)
+	{
+		string[] args = [
+			"/MACHINE:x64",
+			"/defaultlib:libcmt",
+			"/defaultlib:oldnames",
+			"/nologo",
+			"/out:" ~ of];
+
+		foreach (objectFile; mObjectFiles ~ obj) {
+			args ~= objectFile;
+		}
+		foreach (libraryPath; mLibraryPaths) {
+			args ~= "/LIBPATH:" ~ libraryPath;
+		}
+		foreach (libraryFile; mLibraryFiles) {
+			args ~= libraryFile;
+		}
+
+		return spawnProcess(linker, args).wait();
+	}
+
 	int emscriptenLink(string linker, string bc, string of)
 	{
+		string[] args = ["-o", of];
 		return spawnProcess(linker, ["-o", of, bc]).wait();
 	}
 
