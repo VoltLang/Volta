@@ -2,6 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.overload;
 
+import watt.algorithm;
+
 import ir = volt.ir.ir;
 import volt.ir.util;
 
@@ -266,8 +268,11 @@ int matchLevel(bool homogenous, ir.Type argument, ir.Type parameter, ir.Exp exp=
 	version (Volt) assert(false);
 }
 
-bool specialisationComparison(ir.Function a, ir.Function b)
+bool specialisationComparison(object.Object ao, object.Object bo)
 {
+	auto a = cast(ir.Function) ao;
+	auto b = cast(ir.Function) bo;
+	assert(a !is null && b !is null);
 	if (a.type.params.length != b.type.params.length) {
 		auto longer = a.params.length > b.params.length ? a : b;
 		assert(longer.params[$-1].assign !is null);
@@ -362,14 +367,14 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 				}
 			}
 		}
-		int matchLevel = int.max;
+		int _matchLevel = int.max;
 		foreach (l; matchLevels) {
-			if (l <= matchLevel) {
-				matchLevel = l;
+			if (l <= _matchLevel) {
+				_matchLevel = l;
 			}
 		}
-		assert(matchLevel < int.max);
-		return matchLevel;
+		assert(_matchLevel < int.max);
+		return _matchLevel;
 	}
 
 	ir.Function[] outFunctions;
@@ -412,10 +417,10 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 	}
 
 	version (Volt) {
-		assert(false);
+		bool cmp(object.Object a, object.Object b) { return specialisationComparison(a, b); }
+		sort(cast(object.Object[])matchedFunctions, cmp);
 	} else {
-		import std.algorithm : sort;
-		sort!specialisationComparison(matchedFunctions);
+		sort(cast(object.Object[])matchedFunctions, &specialisationComparison);
 	}
 	if (matchedFunctions.length == 1 || specialisationComparison(matchedFunctions[0], matchedFunctions[1]) > 0) {
 		if (highestMatchLevel > 1) {
@@ -432,4 +437,5 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 	} else {
 		return null;
 	}
+	version (Volt) assert(false);
 }
