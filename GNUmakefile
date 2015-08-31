@@ -76,15 +76,17 @@ else
   endif
 endif
 
-OBJ_DIR = .obj/$(PLATFORM)-$(MACHINE)
+include sources.mk
 DSRC = $(shell find src -name "*.d")
-DOBJ = $(patsubst src/%.d, $(OBJ_DIR)/%.$(OBJ_TYPE), $(DSRC))
 CXXSRC = $(shell find src -name "*.cpp")
+VIV_ALL_SRC = $(DSRC) src/volt/main.volt
+
+OBJ_DIR = .obj/$(PLATFORM)-$(MACHINE)
+DOBJ = $(patsubst src/%.d, $(OBJ_DIR)/%.$(OBJ_TYPE), $(DSRC))
 CXXOBJ = $(patsubst src/%.cpp, $(OBJ_DIR)/%.$(OBJ_TYPE), $(CXXSRC))
 OBJ = $(DOBJ) $(EXTRA_OBJ)
 
 RT_HOST = rt/libvrt-host.bc
-RT_SRC = $(shell find rt/src -name "*.volt")
 RT_TARGETS = \
 	rt/libvrt-le32-emscripten.bc \
 	rt/libvrt-x86-mingw.bc \
@@ -153,30 +155,6 @@ package: all
 	@cp $(RT_TARGETS) .pkg/
 	@cp -r ./rt/src/* .pkg/rt/
 	@tar -czf volt.tar.gz .pkg/*
-
-VIV_ALL_SRC = $(DSRC) src/volt/main.volt
-VIV_SRC= \
-	src/volt/errors.d \
-	src/volt/exceptions.d \
-	src/volt/interfaces.d \
-	src/volt/ir/*.d \
-	src/volt/util/*.d \
-	src/volt/token/*.d \
-	src/volt/parser/*.d \
-	src/volt/visitor/*.d \
-	src/volt/postparse/*.d \
-	src/volt/semantic/ctfe.d \
-	src/volt/semantic/strace.d \
-	src/volt/semantic/mangle.d \
-	src/volt/semantic/lookup.d \
-	src/volt/semantic/nested.d \
-	src/volt/semantic/context.d \
-	src/volt/semantic/classify.d \
-	src/volt/semantic/overload.d \
-	src/volt/semantic/util.d \
-	src/volt/semantic/typer.d \
-	src/volt/main.volt
-
 
 viv: $(TARGET) $(VIV_SRC)
 	@echo "  VOLTA  viv"
