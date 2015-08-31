@@ -579,7 +579,7 @@ ir.Type getPostfixCreateDelegateType(LanguagePass lp, ir.Postfix postfix, ir.Sco
 	if (fn is null) {
 		throw err;
 	}
-	if (!isFunctionMemberOrConstructor(fn)) {
+	if (fn.kind != ir.Function.Kind.Nested && !isFunctionMemberOrConstructor(fn)) {
 		throw makeCallingStaticThroughInstance(postfix, fn);
 	}
 
