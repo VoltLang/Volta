@@ -371,10 +371,15 @@ public:
 		}
 
 		auto litConst = LLVMConstArray(base.llvmType, alVals);
-		auto litGlobal = LLVMAddGlobal(state.mod, LLVMTypeOf(litConst), "");
-		LLVMSetGlobalConstant(litGlobal, true);
-		LLVMSetInitializer(litGlobal, litConst);
-		return litGlobal;
+
+		/*
+		 * This was apperently wrong
+		 *
+		 * auto litGlobal = LLVMAddGlobal(state.mod, LLVMTypeOf(litConst), "");
+		 * LLVMSetGlobalConstant(litGlobal, true);
+		 * LLVMSetInitializer(litGlobal, litConst);
+		 */
+		return litConst;
 	}
 }
 
