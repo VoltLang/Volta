@@ -245,7 +245,7 @@ void extypeAssignPrimitiveType(ExtyperContext ctx, ref ir.Exp exp, ir.PrimitiveT
 	auto lunsigned = isUnsigned(lprim.type);
 	auto runsigned = isUnsigned(rprim.type);
 
-	if (lunsigned != runsigned && !fitsInPrimitive(lprim, exp) && rsize >= lsize) {
+	if (lunsigned != runsigned && !fitsInPrimitive(lprim, exp)) {
 		throw makeBadImplicitCast(exp, rprim, lprim);
 	}
 
@@ -2264,6 +2264,7 @@ void extypeBinOp(ExtyperContext ctx, ir.BinOp bin, ir.PrimitiveType lprim, ir.Pr
 		bool leftUnsigned = isUnsigned(lprim.type);
 		bool rightUnsigned = isUnsigned(rprim.type);
 		if (leftUnsigned != rightUnsigned) {
+			// Cast constants.
 			if (leftUnsigned) {
 				if (fitsInPrimitive(lprim, bin.right)) {
 					bin.right = buildCastSmart(lprim, bin.right);
