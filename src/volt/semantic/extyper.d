@@ -3384,6 +3384,37 @@ void writeVariableAssignsIntoCtors(ExtyperContext ctx, ir.Class _class)
 	}
 }
 
+class GotoReplacer : NullVisitor
+{
+public:
+	override Status enter(ir.GotoStatement gs)
+	{
+		assert(exp !is null);
+		if (gs.isCase && gs.exp is null) {
+			gs.exp = copyExp(exp);
+		}
+		return Continue;
+	}
+
+public:
+	ir.Exp exp;
+}
+
+/**
+ * Given a switch statement, replace 'goto case' with an explicit
+ * jump to the next case.
+ */
+void replaceGotoCase(ExtyperContext ctx, ir.SwitchStatement ss)
+{
+	auto gr = new GotoReplacer();
+	foreach_reverse (sc; ss.cases) {
+		if (gr.exp !is null) {
+			accept(sc.statements, gr);
+		}
+		gr.exp = sc.exps.length > 0 ? sc.exps[0] : sc.firstExp;
+	}
+}
+
 /**
  * Special Context for just this file.
  */
@@ -3881,6 +3912,12 @@ public:
 		auto oldCondition = ss.condition;
 		acceptExp(ss.condition, this);
 		verifySwitchStatement(ctx, ss, oldCondition);
+		return Continue;
+	}
+
+	override Status leave(ir.SwitchStatement ss)
+	{
+		replaceGotoCase(ctx, ss);
 		return Continue;
 	}
 
