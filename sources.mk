@@ -22,6 +22,7 @@ VIV_SRC= \
 	src/volt/token/*.d \
 	src/volt/parser/*.d \
 	src/volt/visitor/*.d \
+	src/volt/lowerer/*.d \
 	src/volt/postparse/*.d \
 	src/volt/semantic/ctfe.d \
 	src/volt/semantic/util.d \
