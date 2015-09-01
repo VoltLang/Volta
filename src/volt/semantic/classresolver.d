@@ -306,7 +306,11 @@ ir.Function[] getClassMethodFunctions(LanguagePass lp, ir.Class _class)
 	}
 	foreach (method; methodss[$-1]) {
 		auto fns = getPotentialOverrideFunctions(ifaceMethods, method);
-		ir.Type[] params = method.type.params.dup;
+		version (Volt) {
+			ir.Type[] params = new ir.Type[](method.type.params);
+		} else {
+			ir.Type[] params = method.type.params.dup;
+		}
 		if (fns.length == 0) {
 			continue;
 		}
@@ -337,7 +341,11 @@ ir.Function[] getClassMethodFunctions(LanguagePass lp, ir.Class _class)
 			fns ~= method;
 			if (fns.length > 0) {
 				// Ensure that this function is the only overload possibility for itself in its own class.
-				ir.Type[] params = method.type.params.dup;
+				version (Volt) {
+					ir.Type[] params = new ir.Type[](method.type.params);
+				} else {
+					ir.Type[] params = method.type.params.dup;
+				}
 				if (method.type.homogenousVariadic) {
 					auto atype = cast(ir.ArrayType) params[$ - 1];
 					panicAssert(method, atype !is null);
@@ -483,7 +491,7 @@ ir.Class[] getInheritanceChain(ir.Class _class)
 		_class = _class.parentClass;
 	}
 
-	auto outClasses = new ir.Class[reverseClasses.length];
+	auto outClasses = new ir.Class[](reverseClasses.length);
 	for (size_t i = reverseClasses.length - 1, j = 0; i < reverseClasses.length; --i, ++j) {
 		auto rClass = reverseClasses[i];
 		outClasses[j] = rClass;
@@ -494,7 +502,7 @@ ir.Class[] getInheritanceChain(ir.Class _class)
 
 ir.Exp[] getTypeInfos(ir.Class[] classes)
 {
-	auto tinfos = new ir.Exp[classes.length];
+	auto tinfos = new ir.Exp[](classes.length);
 	foreach (i, _class; classes) {
 		tinfos[i] = buildTypeidSmart(_class.location, _class);
 	}
