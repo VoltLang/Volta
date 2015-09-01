@@ -518,7 +518,7 @@ void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 					]),
 				),
 			buildConstantString(loc, loc.filename),
-			buildConstantSizeT(loc, lp, cast(int)loc.line)],
+			buildConstantSizeT(loc, lp, loc.line)],
 		throwFn.name));
 
 	buildIfStat(loc, statExp,
@@ -638,7 +638,11 @@ ir.Exp buildStructAAKeyCast(Location l, LanguagePass lp, ir.Module thisModule, i
 		}
 	}
 
-	aggdg = &gatherAggregate;
+	version (Volt) {
+		aggdg = cast(typeof(aggdg))gatherAggregate;
+	} else {
+		aggdg = &gatherAggregate;
+	}
 
 	gatherType(realType(aa.key), key, sexp.statements);
 
@@ -798,7 +802,7 @@ public:
 		auto eRef = buildExpReference(t.location, fn, "vrt_eh_throw");
 		t.exp = buildCall(t.location, eRef, [t.exp,
 			buildConstantString(t.location, t.location.filename, false),
-			buildConstantSizeT(t.location, lp, cast(int)t.location.line)]);
+			buildConstantSizeT(t.location, lp, t.location.line)]);
 		return Continue;
 	}
 
@@ -841,6 +845,7 @@ public:
 		default:
 			return Continue;
 		}
+		version (Volt) assert(false);
 	}
 
 	override Status leave(ref ir.Exp exp, ir.BinOp binOp)
@@ -862,6 +867,7 @@ public:
 		default:
 			return Continue;
 		}
+		version (Volt) assert(false);
 	}
 
 	override Status visit(ref ir.Exp exp, ir.TraitsExp traits)
@@ -961,12 +967,14 @@ public:
 			return Continue;
 		}
 		bool isNested;
-		PARENT: foreach (pf; functionStack) {
+		foreach (pf; functionStack) {
 			foreach (nf; pf.nestedFunctions) {
 				if (fn is nf) {
 					isNested = true;
-					break PARENT;
 				}
+			}
+			if (isNested) {
+				break;
 			}
 		}
 		if (!isNested) {
@@ -1283,7 +1291,7 @@ public:
 		auto ln = buildAccess(loc, buildExpReference(loc, var), "length");
 		auto sz = buildAccess(loc, buildTypeidSmart(loc, toArray.base), "size");
 		ir.Exp fname = buildConstantString(loc, exp.location.filename, false);
-		ir.Exp lineNum = buildConstantSizeT(loc, lp, cast(int) exp.location.line);
+		ir.Exp lineNum = buildConstantSizeT(loc, lp, exp.location.line);
 		auto rtCall = buildCall(loc, buildExpReference(loc, lp.ehThrowSliceErrorFunc), [fname, lineNum]);
 		auto bs = buildBlockStat(loc, rtCall, current, buildExpStat(loc, rtCall));
 		auto check = buildBinOp(loc, ir.BinOp.Op.NotEqual, buildBinOp(loc, ir.BinOp.Op.Mod, ln, sz), buildConstantSizeT(loc, lp, 0));
