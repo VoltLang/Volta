@@ -20,7 +20,7 @@ import volt.parser.declaration;
 import volt.parser.statements;
 
 
-ParseStatus parseVariable(ParserStream ps, out ir.Node[] nodes)
+ParseStatus parseVariable(ParserStream ps, NodeSinkDg dg)
 {
 	if (ps == TokenType.Alias) {
 		ir.Alias a;
@@ -28,7 +28,7 @@ ParseStatus parseVariable(ParserStream ps, out ir.Node[] nodes)
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Variable);
 		}
-		nodes = [a];
+		dg(a);
 		return Succeeded;
 	}
 
@@ -51,7 +51,7 @@ ParseStatus parseVariable(ParserStream ps, out ir.Node[] nodes)
 			return unexpectedToken(ps, ir.NodeType.Variable);
 		}
 		// No need to report variable here since its allready reported.
-		return reallyParseVariable(ps, base, nodes);
+		return reallyParseVariable(ps, base, dg);
 	} else if (ps.lookahead(1).type == TokenType.OpenParen) {
 		// Function!
 		ir.Function fn;
@@ -62,7 +62,7 @@ ParseStatus parseVariable(ParserStream ps, out ir.Node[] nodes)
 		if (_global && fn.kind == ir.Function.Kind.Nested) {
 			fn.kind = ir.Function.Kind.GlobalNested;
 		}
-		nodes = [fn];
+		dg(fn);
 		return Succeeded;
 	} else {
 		return parseExpected(ps, ps.peek.location, ir.NodeType.Variable, "declaration");
@@ -70,7 +70,7 @@ ParseStatus parseVariable(ParserStream ps, out ir.Node[] nodes)
 	version(Volt) assert(false);
 }
 
-ParseStatus parseJustVariable(ParserStream ps, out ir.Variable[] vars)
+ParseStatus parseJustVariable(ParserStream ps, NodeSinkDg dg)
 {
 	ir.Type base;
 	auto succeeded = parseType(ps, base);
@@ -79,14 +79,13 @@ ParseStatus parseJustVariable(ParserStream ps, out ir.Variable[] vars)
 	}
 	ir.Node[] nodes;
 	// No need to report variable here since its allready reported.
-	succeeded = reallyParseVariable(ps, base, nodes);
+	succeeded = reallyParseVariable(ps, base, dg);
 	if (!succeeded) {
 		return succeeded;
 	}
-	vars = new ir.Variable[](nodes.length);
 	foreach (i, node; nodes) {
-		vars[i] = cast(ir.Variable) node;
-		assert(vars[i] !is null, "reallyParseVariable parsed non variable");
+		dg(node);
+		assert(cast(ir.Variable) node !is null, "reallyParseVariable parsed non variable");
 	}
 	return Succeeded;
 }
@@ -167,8 +166,9 @@ ParseStatus parseAlias(ParserStream ps, out ir.Alias a)
 	return Succeeded;
 }
 
-ParseStatus reallyParseVariable(ParserStream ps, ir.Type base, out ir.Node[] decls)
+ParseStatus reallyParseVariable(ParserStream ps, ir.Type base, NodeSinkDg dg)
 {
+	ir.Variable first;
 	while (true) {
 		auto d = new ir.Variable();
 		d.location = ps.peek.location;
@@ -189,7 +189,11 @@ ParseStatus reallyParseVariable(ParserStream ps, ir.Type base, out ir.Node[] dec
 				return Failed;
 			}
 		}
-		decls ~= d;
+		dg(d);
+
+		if (first is null) {
+			first = d;
+		}
 
 		if (ps.peek.type == TokenType.Comma) {
 			// Need to copy this on multiple.
@@ -204,7 +208,7 @@ ParseStatus reallyParseVariable(ParserStream ps, ir.Type base, out ir.Node[] dec
 		return succeeded;
 	}
 
-	ps.retroComment = decls[0];
+	ps.retroComment = first;
 
 	return Succeeded;
 }
@@ -713,18 +717,18 @@ ParseStatus parseBlock(ParserStream ps, out ir.BlockStatement bs)
 	if (!succeeded) {
 		return succeeded;
 	}
+	auto sink = new NodeSink();
 	while (ps != TokenType.CloseBrace) {
 		succeeded = eatComments(ps);
 		if (!succeeded) {
 			return succeeded;
 		}
-		ir.Node[] nodes;
-		succeeded = parseStatement(ps, nodes);
+		succeeded = parseStatement(ps, sink.push);
 		if (!succeeded) {
 			return parseFailed(ps, bs);
 		}
-		bs.statements ~= nodes;
 	}
+	bs.statements = sink.array;
 	return match(ps, bs, TokenType.CloseBrace);
 }
 

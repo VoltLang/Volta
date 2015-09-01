@@ -14,7 +14,7 @@ import ir = volt.ir.ir;
 
 import volt.errors : makeError, panic;
 import volt.interfaces : Frontend;
-import volt.parser.base : ParseStatus, ParserStream, ParserPanic;
+import volt.parser.base : ParseStatus, ParserStream, ParserPanic, NodeSink;
 import volt.parser.toplevel : parseModule;
 import volt.parser.statements : parseStatement;
 
@@ -78,14 +78,11 @@ public:
 
 		ps.get(); // Skip, stream already checks for Begin.
 
-		ir.Node[] ret;
+		auto sink = new NodeSink();
 		while (ps != TokenType.End) {
-			ir.Node[] nodes;
-			checkError(ps, parseStatement(ps, nodes));
-			ret ~= nodes;
+			checkError(ps, parseStatement(ps, sink.push));
 		}
-
-		return ret;
+		return sink.array;
 	}
 
 	override void close()

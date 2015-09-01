@@ -7,6 +7,8 @@ module volt.parser.base;
 import watt.text.format : format;
 import watt.text.string : strip, indexOf;
 
+import ir = volt.ir.ir;
+
 import volt.errors;
 import volt.exceptions;
 import volt.token.token : Token, TokenType, tokenToString;
@@ -20,8 +22,11 @@ import volt.parser.errors : ParserError, ParserUnexpectedToken,
                             ParserExpected;
 
 
-import ir = volt.ir.ir;
-
+/*
+ *
+ * Misc.
+ *
+ */
 
 enum ParseStatus {
 	Succeeded = 1,
@@ -29,6 +34,67 @@ enum ParseStatus {
 }
 alias Succeeded = ParseStatus.Succeeded;
 alias Failed = ParseStatus.Failed;
+
+/**
+ * Just for convenience.
+ */
+alias NodeSinkDg = void delegate(ir.Node n);
+
+/**
+ * Used as a sink for functions that return multiple nodes.
+ */
+class NodeSink
+{
+private:
+	ir.Node[16] mInlineStorage;
+	ir.Node[] mArray;
+	size_t mNum;
+
+public:
+	this()
+	{
+		mArray = mInlineStorage;
+		mNum = 0;
+	}
+
+	version(D_Version2) {
+		final NodeSinkDg push() { return &push; }
+	}
+
+	void push(ir.Node n)
+	{
+		if (mNum + 1 > mArray.length) {
+			auto t = new ir.Node[](mArray.length * 2);
+			t[0 .. mNum] = mArray[0 .. mNum];
+			mArray = t;
+		}
+		mArray[mNum++] = n;
+	}
+
+	void pushNodes(ir.Node[] nodes)
+	{
+		while (mNum + nodes.length + 1 > mArray.length) {
+			auto t = new ir.Node[](mArray.length * 2);
+			t[0 .. mNum] = mArray[0 .. mNum];
+			mArray = t;
+		}
+		mArray[mNum .. nodes.length] = nodes[];
+		mNum += nodes.length;
+	}
+
+	@property ir.Node[] array()
+	{
+		if (mArray.length > 16) {
+			return mArray[0 .. mNum];
+		}
+
+		version (Volt) {
+			return new ir.Node[](mArray[0 .. mNum]);
+		} else {
+			return mArray[0 .. mNum].dup;
+		}
+	}
+}
 
 
 /*

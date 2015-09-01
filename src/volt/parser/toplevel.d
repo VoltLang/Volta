@@ -94,6 +94,8 @@ body
 	tlb = new ir.TopLevelBlock();
 	tlb.location = ps.peek.location;
 
+	auto sink = new NodeSink();
+
 	switch (ps.peek.type) {
 		case TokenType.Import:
 			ir.Import _import;
@@ -101,7 +103,7 @@ body
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.TopLevelBlock);
 			}
-			tlb.nodes ~= _import;
+			sink.push(_import);
 			break;
 		case TokenType.Unittest:
 			ir.Unittest u;
@@ -109,7 +111,7 @@ body
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.TopLevelBlock);
 			}
-			tlb.nodes ~= u;
+			sink.push(u);
 			break;
 		case TokenType.This:
 			ir.Function c;
@@ -117,7 +119,7 @@ body
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.TopLevelBlock);
 			}
-			tlb.nodes ~= c;
+			sink.push(c);
 			break;
 		case TokenType.Tilde:  // XXX: Is this unambiguous?
 			ir.Function d;
@@ -125,7 +127,7 @@ body
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.TopLevelBlock);
 			}
-			tlb.nodes ~= d;
+			sink.push(d);
 			break;
 		case TokenType.Union:
 			ir.Union u;
@@ -133,7 +135,7 @@ body
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.TopLevelBlock);
 			}
-			tlb.nodes ~= u;
+			sink.push(u);
 			break;
 		case TokenType.Struct:
 			ir.Struct s;
@@ -141,7 +143,7 @@ body
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.TopLevelBlock);
 			}
-			tlb.nodes ~= s;
+			sink.push(s);
 			break;
 		case TokenType.Class:
 			ir.Class c;
@@ -149,7 +151,7 @@ body
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.TopLevelBlock);
 			}
-			tlb.nodes ~= c;
+			sink.push(c);
 			break;
 		case TokenType.Interface:
 			ir._Interface i;
@@ -157,7 +159,7 @@ body
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.TopLevelBlock);
 			}
-			tlb.nodes ~= i;
+			sink.push(i);
 			break;
 		case TokenType.Enum:
 			ir.Node[] nodes;
@@ -165,7 +167,7 @@ body
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.TopLevelBlock);
 			}
-			tlb.nodes ~= nodes;
+			sink.pushNodes(nodes);
 			break;
 		case TokenType.Mixin:
 			auto next = ps.lookahead(1).type;
@@ -175,14 +177,14 @@ body
 				if (!succeeded) {
 					return parseFailed(ps, ir.NodeType.TopLevelBlock);
 				}
-				tlb.nodes ~= m;
+				sink.push(m);
 			} else if (next == TokenType.Template) {
 				ir.MixinTemplate m;
 				succeeded = parseMixinTemplate(ps, m);
 				if (!succeeded) {
 					return parseFailed(ps, ir.NodeType.TopLevelBlock);
 				}
-				tlb.nodes ~= m;
+				sink.push(m);
 			} else {
 				return unexpectedToken(ps, ir.NodeType.TopLevelBlock);
 			}
@@ -200,7 +202,7 @@ body
 				if (!succeeded) {
 					return parseFailed(ps, ir.NodeType.TopLevelBlock);
 				}
-				tlb.nodes ~= ui;
+				sink.push(ui);
 				break;
 			} else {
 				goto case;
@@ -229,7 +231,7 @@ body
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.TopLevelBlock);
 			}
-			tlb.nodes ~= a;
+			sink.push(a);
 			break;
 		case TokenType.Global:
 		case TokenType.Local:
@@ -247,7 +249,7 @@ body
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.TopLevelBlock);
 			}
-			tlb.nodes ~= c;
+			sink.push(c);
 			break;
 		case TokenType.Static:
 			auto next = ps.lookahead(1).type;
@@ -261,7 +263,7 @@ body
 				if (!succeeded) {
 					return parseFailed(ps, ir.NodeType.TopLevelBlock);
 				}
-				tlb.nodes ~= s;
+				sink.push(s);
 			} else if (next == TokenType.If) {
 				goto case TokenType.Version;
 			} else {
@@ -270,7 +272,7 @@ body
 				if (!succeeded) {
 					return parseFailed(ps, ir.NodeType.TopLevelBlock);
 				}
-				tlb.nodes ~= a;
+				sink.push(a);
 			}
 			break;
 		case TokenType.Semicolon:
@@ -278,15 +280,16 @@ body
 			ps.get();
 			break;
 		default:
-			ir.Node[] nodes;
-			succeeded = parseVariable(ps, nodes);
+			succeeded = parseVariable(ps, sink.push);
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.TopLevelBlock);
 			}
-			tlb.nodes ~= nodes;
 			break;
 	}
 
+	tlb.nodes = sink.array;
+
+	assert(tlb.nodes.length > 0);
 	assert(tlb.nodes[$-1] !is null);
 	return Succeeded;
 }
@@ -1276,13 +1279,19 @@ ParseStatus parseUserAttribute(ParserStream ps, out ir.UserAttribute ui)
 		return unexpectedToken(ps, ui);
 	}
 	ps.get();
+	auto sink = new NodeSink();
 	while (ps.peek.type != TokenType.CloseBrace) {
-		ir.Variable[] vars;
-		succeeded = parseJustVariable(ps, vars);
+		succeeded = parseJustVariable(ps, sink.push);
 		if (!succeeded) {
 			return parseFailed(ps, ui);
 		}
-		ui.fields ~= vars;
+	}
+
+	auto arr = sink.array;
+	ui.fields = new ir.Variable[](arr.length);
+	foreach(i, ref var; ui.fields) {
+		var = cast(ir.Variable) arr[i];
+		assert(var !is null);
 	}
 
 	return match(ps, ir.NodeType.UserAttribute, TokenType.CloseBrace);
