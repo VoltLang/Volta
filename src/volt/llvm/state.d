@@ -138,7 +138,7 @@ public:
 	 *
 	 */
 
-	override LLVMValueRef llvmTrap()
+	@property override LLVMValueRef llvmTrap()
 	{
 		if (mTrapFunc !is null) {
 			return mTrapFunc;
@@ -146,7 +146,7 @@ public:
 		return mTrapFunc = LLVMAddFunction(mod, "llvm.trap", voidFunctionType.llvmCallType);
 	}
 
-	override LLVMValueRef ehPersonalityFunc()
+	@property override LLVMValueRef ehPersonalityFunc()
 	{
 		if (mPersonalityFunc !is null) {
 			return mPersonalityFunc;
@@ -155,18 +155,19 @@ public:
 		return mPersonalityFunc = getFunctionValue(lp.ehPersonalityFunc, type);
 	}
 
-	override LLVMValueRef ehTypeIdFunc()
+	@property override LLVMValueRef ehTypeIdFunc()
 	{
 		if (mTypeIdFunc !is null) {
 			return mTypeIdFunc;
 		}
 
+		auto fn = retrieveFunctionFromObject(lp, irMod.location, "__llvm_typeid_for");
+
 		Type type;
-		auto fn = retrieveFunctionFromObject(lp, Location(), "__llvm_typeid_for");
 		return mTypeIdFunc = getFunctionValue(fn, type);
 	}
 
-	override LLVMTypeRef ehLandingType()
+	@property override LLVMTypeRef ehLandingType()
 	{
 		if (mLandingType !is null) {
 			return mLandingType;
@@ -176,7 +177,7 @@ public:
 			[voidPtrType.llvmType, intType.llvmType], false);
 	}
 
-	override LLVMValueRef ehIndexVar()
+	@property override LLVMValueRef ehIndexVar()
 	{
 		if (mIndexVar !is null)
 			return mIndexVar;
@@ -191,7 +192,7 @@ public:
 		return mIndexVar;
 	}
 
-	override LLVMValueRef ehExceptionVar()
+	@property override LLVMValueRef ehExceptionVar()
 	{
 		if (mExceptionVar !is null)
 			return mExceptionVar;
@@ -207,7 +208,7 @@ public:
 		return mExceptionVar;
 	}
 
-	override LLVMBasicBlockRef ehResumeBlock()
+	@property override LLVMBasicBlockRef ehResumeBlock()
 	{
 		if (mResumeBlock !is null)
 			return mResumeBlock;
@@ -225,7 +226,7 @@ public:
 		return mResumeBlock = b;
 	}
 
-	override LLVMBasicBlockRef ehExitBlock()
+	@property override LLVMBasicBlockRef ehExitBlock()
 	{
 		if (mExitBlock !is null) {
 			return mExitBlock;

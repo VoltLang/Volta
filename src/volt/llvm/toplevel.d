@@ -275,7 +275,7 @@ public:
 						throw panic(ss.location, "invalid case range");
 					}
 					while (ai <= bi) {
-						auto val = LLVMConstInt(typ, ai++, false); 
+						auto val = LLVMConstInt(typ, cast(ulong)ai++, false);
 						addVal(val, block);
 					}
 				} else {
@@ -347,7 +347,7 @@ public:
 		auto lp = LLVMBuildLandingPad(
 			state.builder, state.ehLandingType,
 			state.ehPersonalityFunc,
-			cast(int)t.catchVars.length, "");
+			cast(uint)t.catchVars.length, "");
 		auto e = LLVMBuildExtractValue(state.builder, lp, 0, "");
 		LLVMBuildStore(state.builder, e, eVar);
 		auto i = LLVMBuildExtractValue(state.builder, lp, 1, "");
@@ -694,7 +694,7 @@ public:
 			LLVMValueRef[] structs;
 			foreach (fn; arr) {
 				// These version blocks brought to you by LLVM being terrible.
-				int priority = 2;
+				uint priority = 2;
 				version (Windows) priority = 1;
 				if (m.name.strings == ["vrt", "vmain"]) {
 					priority = 1;

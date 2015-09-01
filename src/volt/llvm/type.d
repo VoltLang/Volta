@@ -149,12 +149,12 @@ public:
 			}
 		}
 
-		long val;
+		ulong val;
 		if (boolean) {
 			if (cnst.u._bool)
 				val = 1;
 		} else if (signed) {
-			val = cnst.u._long;
+			val = cast(ulong)cnst.u._long;
 		} else if (bits == 8) {
 			assert(cnst.arrayData.length == 1);
 			val = (cast(ubyte[])cnst.arrayData)[0];
@@ -167,7 +167,7 @@ public:
 
 	LLVMValueRef fromNumber(State state, long val)
 	{
-		return LLVMConstInt(llvmType, val, signed);
+		return LLVMConstInt(llvmType, cast(ulong)val, signed);
 	}
 }
 
@@ -182,7 +182,7 @@ public:
 public:
 	static PointerType fromIr(State state, ir.PointerType pt)
 	{
-		auto base = state.fromIr(pt.base);
+		auto base = .fromIr(state, pt.base);
 
 		// Pointers can via structs reference themself.
 		auto test = state.getTypeNoCreate(pt.mangledName);
@@ -409,9 +409,9 @@ public:
 		Type[] params;
 		Type ret;
 
-		ret = state.fromIr(ft.ret);
-		foreach(int i, param; ft.params) {
-			params ~= state.fromIr(param);
+		ret = .fromIr(state, ft.ret);
+		foreach(param; ft.params) {
+			params ~= .fromIr(state, param);
 		}
 
 		// FunctionPointers can via structs reference themself.
@@ -435,10 +435,10 @@ private:
 	{
 		this.params = params;
 		LLVMTypeRef[] args;
-		args.length = ft.params.length + ft.hiddenParameter;
+		args.length = ft.params.length + cast(uint)ft.hiddenParameter;
 
 		this.ret = ret;
-		foreach(int i, type; params) {
+		foreach(i, type; params) {
 			args[i] = type.llvmType;
 			if (ft.isArgRef[i] || ft.isArgOut[i]) {
 				args[i] = LLVMPointerType(args[i], 0);
@@ -463,8 +463,8 @@ class DelegateType : CallableType
 public:
 	LLVMTypeRef llvmCallPtrType;
 
-	enum size_t voidPtrIndex = 0;
-	enum size_t funcIndex = 1;
+	enum uint voidPtrIndex = 0;
+	enum uint funcIndex = 1;
 
 public:
 	this(State state, ir.DelegateType dt)
@@ -478,7 +478,7 @@ public:
 		args.length = dt.params.length + 1;
 		params.length = dt.params.length + 1;
 
-		foreach(int i, param; dt.params) {
+		foreach(i, param; dt.params) {
 			auto type = state.fromIr(param);
 			params[i] = type;
 			args[i] = type.llvmType;
@@ -651,18 +651,20 @@ public:
 		if (count != 1) {
 			throw panic("union with more than one member");
 		}
-		auto vals = new LLVMValueRef[](1);
 
 		size_t lastSize = 0;
+		ir.Exp lastExp;
 
-		foreach (size_t i; 0 .. indices.length) {
-			auto t = volt.semantic.typer.getExpType(state.lp, ul.exps[i], utype.myScope);
-			auto sz = volt.semantic.classify.size(state.lp, t);
+		foreach (i, t; types) {
+			auto sz = volt.semantic.classify.size(state.lp, t.irType);
 			if (sz > lastSize) {
-				vals[0] = state.getConstant(ul.exps[i]);
+				lastExp = ul.exps[i];
 				lastSize = sz;
 			}
 		}
+
+		auto vals = new LLVMValueRef[](1);
+		vals[0] = state.getConstant(lastExp);
 
 		return LLVMConstNamedStruct(llvmType, vals);
 	}
@@ -765,6 +767,8 @@ Type fromIrImpl(State state, ir.Type irType)
 		auto emsg = format("Can't translate type %s (%s)", irType.nodeType, irType.mangledName);
 		throw panic(irType.location, emsg);
 	}
+
+	version (Volt) assert(false);
 }
 
 /**

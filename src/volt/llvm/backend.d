@@ -54,24 +54,24 @@ public:
 		}
 	}
 
-	void close()
+	override void close()
 	{
 		mFilename = null;
 		// XXX: Shutdown LLVM.
 	}
 
-	TargetType[] supported()
+	override TargetType[] supported()
 	{
 		return [TargetType.LlvmBitcode];
 	}
 
-	void setTarget(string filename, TargetType type)
+	override void setTarget(string filename, TargetType type)
 	{
 		mFilename = filename;
 		mTargetType = type;
 	}
 
-	void compile(ir.Module m)
+	override void compile(ir.Module m)
 	in {
 		assert(mFilename !is null);
 	}
@@ -91,9 +91,13 @@ public:
 
 		try {
 			state.compile(m);
-		} catch (Throwable t) {
+		} catch (object.Throwable t) {
 			if (mDump) {
-				io.output.writefln("Caught \"%s\" dumping module:", t.classinfo.name);
+				version (Volt) {
+					io.output.writefln("Caught \"???\" dumping module:");
+				} else {
+					io.output.writefln("Caught \"%s\" dumping module:", t.classinfo.name);
+				}
 				LLVMDumpModule(mod);
 			}
 			throw t;

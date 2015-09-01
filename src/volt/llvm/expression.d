@@ -4,6 +4,8 @@ module volt.llvm.expression;
 
 import watt.conv : toString;
 
+static import volt.ir.util;
+
 import volt.token.location : Location;
 import volt.errors;
 
@@ -828,7 +830,7 @@ void handleIncDec(State state, ir.Unary unary, Value result)
 	auto primType = cast(PrimitiveType)result.type;
 	if (ptrType !is null) {
 		auto v = isInc ? 1 : -1;
-		auto c = LLVMConstInt(LLVMInt32TypeInContext(state.context), v, true);
+		auto c = LLVMConstInt(LLVMInt32TypeInContext(state.context), cast(uint)v, true);
 		value = LLVMBuildGEP(state.builder, read, [c], "");
 	} else if (primType !is null) {
 		auto op = isInc ? LLVMOpcode.Add : LLVMOpcode.Sub;
@@ -930,7 +932,7 @@ void handlePostId(State state, ir.Postfix postfix, Value result)
 			index = *ptr;
 		}
 
-		getFieldFromAggregate(state, postfix.location, result, cast(int) index, st.types[index], result);
+		getFieldFromAggregate(state, postfix.location, result, index, st.types[index], result);
 
 	} else if (at !is null) {
 		if (postfix.identifier.value == "ptr") {
@@ -939,7 +941,7 @@ void handlePostId(State state, ir.Postfix postfix, Value result)
 			index = ArrayType.lengthIndex;
 		}
 
-		getFieldFromAggregate(state, postfix.location, result, cast(int) index, at.types[index], result);
+		getFieldFromAggregate(state, postfix.location, result, index, at.types[index], result);
 
 	} else if (sat !is null) {
 		if (postfix.identifier.value == "ptr") {
@@ -1112,9 +1114,9 @@ void handleCreateDelegate(State state, ir.Postfix postfix, Value result)
 	auto v = LLVMBuildAlloca(state.builder, dg.llvmType, "");
 
 	auto funcPtr = LLVMBuildStructGEP(
-		state.builder, v, dg.funcIndex, "");
+		state.builder, v, DelegateType.funcIndex, "");
 	auto voidPtrPtr = LLVMBuildStructGEP(
-		state.builder, v, dg.voidPtrIndex, "");
+		state.builder, v, DelegateType.voidPtrIndex, "");
 
 	LLVMBuildStore(state.builder, func.value, funcPtr);
 	LLVMBuildStore(state.builder, instance.value, voidPtrPtr);
@@ -1126,7 +1128,7 @@ void handleCreateDelegate(State state, ir.Postfix postfix, Value result)
 
 void handleCall(State state, ir.Postfix postfix, Value result)
 {
-	auto llvmArgs = new LLVMValueRef[postfix.arguments.length];
+	auto llvmArgs = new LLVMValueRef[](postfix.arguments.length);
 
 	// Special case create delegate children to save
 	// a bunch of created delegates in the LLVM IR.
@@ -1157,8 +1159,8 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 
 		ret = dt.ret;
 
-		auto func = LLVMBuildStructGEP(state.builder, result.value, dt.funcIndex, "");
-		auto voidPtr = LLVMBuildStructGEP(state.builder, result.value, dt.voidPtrIndex, "");
+		auto func = LLVMBuildStructGEP(state.builder, result.value, DelegateType.funcIndex, "");
+		auto voidPtr = LLVMBuildStructGEP(state.builder, result.value, DelegateType.voidPtrIndex, "");
 
 		func = LLVMBuildLoad(state.builder, func, "");
 		voidPtr = LLVMBuildLoad(state.builder, voidPtr, "");
@@ -1170,7 +1172,7 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 	}
 	assert(ct !is null);
 
-	foreach(int i, arg; postfix.arguments) {
+	foreach(i, arg; postfix.arguments) {
 		auto v = new Value();
 		state.getValueAnyForm(arg, v);
 
@@ -1214,7 +1216,7 @@ void handleIncDec(State state, ir.Postfix postfix, Value result)
 	auto primType = cast(PrimitiveType)result.type;
 	if (ptrType !is null) {
 		auto v = isInc ? 1 : -1;
-		auto c = LLVMConstInt(LLVMInt32TypeInContext(state.context), v, true);
+		auto c = LLVMConstInt(LLVMInt32TypeInContext(state.context), cast(uint)v, true);
 		store = LLVMBuildGEP(state.builder, value, [c], "");
 	} else if (primType !is null) {
 		auto op = isInc ? LLVMOpcode.Add : LLVMOpcode.Sub;
@@ -1347,7 +1349,7 @@ void getCreateDelegateValues(State state, ir.Postfix postfix, Value instance, Va
 		func.type = st;
 		func.isPointer = true;
 		auto i = index + 1; // Offset by one.
-		getFieldFromAggregate(state, postfix.location, func, i, st.types[i], func);
+		getFieldFromAggregate(state, postfix.location, func, cast(uint)i, st.types[i], func);
 		makeNonPointer(state, func);
 	} else {
 		state.getValue(postfix.memberFunction, func);

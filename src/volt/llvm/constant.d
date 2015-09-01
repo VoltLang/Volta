@@ -8,6 +8,8 @@ import volt.ir.util;
 import volt.llvm.common;
 import volt.llvm.interfaces;
 
+static import volt.semantic.mangle;
+
 
 void getConstantValue(State state, ir.Exp exp, Value result)
 {

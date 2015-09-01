@@ -58,7 +58,7 @@ void getArrayFromStaticArray(State state, Location loc, Value result)
  * Sets the type of result to the given type.
  */
 void getFieldFromAggregate(State state, Location loc, Value left,
-                           int index, Type resultType, Value result)
+                           uint index, Type resultType, Value result)
 {
 	auto type = left.type;
 	auto v = left.value;
@@ -83,7 +83,7 @@ void getFieldFromAggregate(State state, Location loc, Value left,
  * Note only value form.
  */
 LLVMValueRef getValueFromAggregate(State state, Location loc,
-                                   Value left, int index)
+                                   Value left, uint index)
 {
 	auto type = left.type;
 	auto v = left.value;
@@ -142,8 +142,8 @@ void makeStructTemp(State state, Location loc,
 	result.isPointer = true;
 	result.type = type;
 
-	foreach (int i, member; members) {
-		auto dst = LLVMBuildStructGEP(state.builder, v, i, "");
+	foreach (i, member; members) {
+		auto dst = LLVMBuildStructGEP(state.builder, v, cast(uint)i, "");
 		LLVMBuildStore(state.builder, member, dst);
 	}
 }
