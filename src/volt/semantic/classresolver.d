@@ -533,7 +533,7 @@ ir.Exp getInterfaceStructAssign(LanguagePass lp, ir.Class _class, ir.Scope _scop
 	assert(iface.layoutStruct !is null);
 	auto l = _class.location;
 	ir.Exp[] exps;
-	exps ~= buildConstantSizeT(l, lp, cast(int) _class.interfaceOffsets[ifaceIndex]);
+	exps ~= buildConstantSizeT(l, lp, _class.interfaceOffsets[ifaceIndex]);
 	auto fns = getInterfaceFunctions(lp, iface);
 
 	foreach (fn; fns) {

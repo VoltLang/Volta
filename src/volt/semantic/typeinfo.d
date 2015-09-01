@@ -183,7 +183,7 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 
 	// TypeInfo.staticArrayLength.
 	if (asStaticArray !is null) {
-		literal.exps ~= buildConstantSizeT(type.location, lp, cast(int) asStaticArray.length);
+		literal.exps ~= buildConstantSizeT(type.location, lp, asStaticArray.length);
 	} else {
 		literal.exps ~= buildConstantSizeT(type.location, lp, 0);
 	}
