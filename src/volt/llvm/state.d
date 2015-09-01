@@ -266,7 +266,7 @@ public:
 		mIndexVar = null;
 		mExceptionVar = null;
 
-		fnState = FunctionState();
+		version (D_Version2) fnState = FunctionState.init;
 	}
 
 
@@ -316,7 +316,7 @@ public:
 			}
 		}
 
-		valueStore[k] = Store(v, type);
+		version (D_Version2) valueStore[k] = Store(v, type);
 		return v;
 	}
 
@@ -392,7 +392,7 @@ public:
 			break;
 		}
 
-		valueStore[k] = Store(v, type);
+		version (D_Version2) valueStore[k] = Store(v, type);
 		return v;
 	}
 
@@ -419,7 +419,7 @@ public:
 			throw panic(var.location, "non-local/global variable in non-function scope");
 		v = LLVMBuildAlloca(builder, llvmType, var.name);
 
-		valueStore[k] = Store(v, type);
+		version (D_Version2) valueStore[k] = Store(v, type);
 		return v;
 	}
 
@@ -429,7 +429,7 @@ public:
 		assert((k in valueStore) is null);
 
 		auto type = this.fromIr(var.type);
-		valueStore[k] = Store(v, type);
+		version (D_Version2) valueStore[k] = Store(v, type);
 	}
 
 	override void makeThisVariable(ir.Variable var, LLVMValueRef v)
@@ -453,7 +453,7 @@ public:
 		}
 
 		v = LLVMBuildBitCast(builder, v, llvmType, "this");
-		valueStore[k] = Store(v, type);
+		version (D_Version2) valueStore[k] = Store(v, type);
 	}
 
 	override void makeNestVariable(ir.Variable var, LLVMValueRef v)
@@ -466,7 +466,7 @@ public:
 		llvmType = LLVMPointerType(type.llvmType, 0);
 
 		v = LLVMBuildBitCast(builder, v, llvmType, "__nested");
-		valueStore[k] = Store(v, type);
+		version(D_Version2) valueStore[k] = Store(v, type);
 
 		assert(fnState.nested is null);
 		fnState.nested = v;
@@ -510,13 +510,13 @@ protected:
 /**
  * Used to select LLVMTarget.
  */
-string[] archList = [
+static string[] archList = [
 	"x86",
 	"x86-64",
-	null
+	null,
 ];
 
-string[][] tripleList = [
+static string[][] tripleList = [
 	/*
 	 * The subsystem will controll if llc emits coff or ELF object files.
 	 *
@@ -543,7 +543,7 @@ string[][] tripleList = [
 	 * MSVC platform, see above comment.
 	 */
 	[
-		null,
+		cast(string)null,
 		"x86_64-pc-windows-msvc",
 		null,
 	],
@@ -563,20 +563,20 @@ string[][] tripleList = [
 	[
 		"i386-apple-macosx10.7.0",
 		"x86_64-apple-macosx10.7.0",
-		null,
+		cast(string)null,
 	],
 
 	/*
 	 * This is what emscripten uses.
 	 */
 	[
-		null,
+		cast(string)null,
 		null,
 		"le32-unknown-nacl",
 	],
 ];
 
-string[][] layoutList = [
+static string[][] layoutList = [
 	[ // MinGW
 		layoutWinLinux32,
 		layoutWinLinux64,
@@ -598,7 +598,7 @@ string[][] layoutList = [
 		null,
 	],
 	[ // Emscripten
-		null,
+		cast(string)null,
 		null,
 		layoutEmscripten,
 	],

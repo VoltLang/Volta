@@ -107,7 +107,7 @@ void makeArrayTemp(State state, Location loc, ArrayType at,
                    LLVMValueRef ptr, LLVMValueRef len,
                    Value result)
 {
-	static assert(ArrayType.ptrIndex == 0);
+	version (D_Version2) static assert(ArrayType.ptrIndex == 0);
 	makeStructTemp(state, loc, at, "arrayTemp",
 	               [ptr, len], result);
 }
@@ -119,7 +119,7 @@ void makeDelegateTemp(State state, Location loc, DelegateType dt,
                       LLVMValueRef voidPtr, LLVMValueRef funcPtr,
                       Value result)
 {
-	static assert(DelegateType.voidPtrIndex == 0);
+	version (D_Version2) static assert(DelegateType.voidPtrIndex == 0);
 	makeStructTemp(state, loc, dt, "delegateTemp",
 	               [voidPtr, funcPtr], result);
 }

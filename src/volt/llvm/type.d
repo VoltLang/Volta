@@ -257,14 +257,14 @@ public:
 		mt[ptrIndex] = ptrType.llvmType;
 		mt[lengthIndex] = lengthType.llvmType;
 
-		LLVMStructSetBody(llvmType, mt, false);
+		LLVMStructSetBody(llvmType, mt[], false);
 
 		if (ptrType.diType is null || lengthType.diType is null) {
 			return;
 		}
 
-		static assert(ptrIndex < lengthIndex);
-		diStructSetBody(state, cast(Type)this,
+		version (D_Version2) static assert(ptrIndex < lengthIndex);
+		version (D_Version2) diStructSetBody(state, cast(Type)this,
 			[ptrType, lengthType],
 			["ptr", "length"]);
 	}
@@ -280,13 +280,13 @@ public:
 		ind[0] = LLVMConstNull(lengthType.llvmType);
 		ind[1] = LLVMConstNull(lengthType.llvmType);
 
-		auto strGep = LLVMConstInBoundsGEP(strGlobal, ind);
+		auto strGep = LLVMConstInBoundsGEP(strGlobal, ind[]);
 
 		LLVMValueRef[2] vals;
 		vals[lengthIndex] = lengthType.fromNumber(state, cast(long)cnst.arrayData.length);
 		vals[ptrIndex] = strGep;
 
-		return LLVMConstNamedStruct(llvmType, vals);
+		return LLVMConstNamedStruct(llvmType, vals[]);
 	}
 
 	LLVMValueRef fromArrayLiteral(State state, ir.ArrayLiteral al)
@@ -298,7 +298,7 @@ public:
 			LLVMValueRef[2] vals;
 			vals[lengthIndex] = LLVMConstNull(lengthType.llvmType);
 			vals[ptrIndex] = LLVMConstNull(ptrType.llvmType);
-			return LLVMConstNamedStruct(llvmType, vals);
+			return LLVMConstNamedStruct(llvmType, vals[]);
 		}
 
 		LLVMValueRef[] alVals;
@@ -316,13 +316,13 @@ public:
 		ind[0] = LLVMConstNull(lengthType.llvmType);
 		ind[1] = LLVMConstNull(lengthType.llvmType);
 
-		auto strGep = LLVMConstInBoundsGEP(litGlobal, ind);
+		auto strGep = LLVMConstInBoundsGEP(litGlobal, ind[]);
 
 		LLVMValueRef[2] vals;
 		vals[lengthIndex] = lengthType.fromNumber(state, cast(long)al.values.length);
 		vals[ptrIndex] = strGep;
 
-		return LLVMConstNamedStruct(llvmType, vals);
+		return LLVMConstNamedStruct(llvmType, vals[]);
 	}
 }
 
@@ -497,7 +497,7 @@ public:
 		mt[voidPtrIndex] = state.voidPtrType.llvmType;
 		mt[funcIndex] = llvmCallPtrType;
 
-		LLVMStructSetBody(llvmType, mt, false);
+		LLVMStructSetBody(llvmType, mt[], false);
 	}
 
 	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
@@ -615,7 +615,7 @@ public:
 		// @todo check packing.
 		LLVMTypeRef[1] mt;
 		mt[0] = LLVMArrayType(state.ubyteType.llvmType, cast(uint)irType.totalSize);
-		LLVMStructSetBody(llvmType, mt, false);
+		LLVMStructSetBody(llvmType, mt[], false);
 	}
 
 	LLVMValueRef fromStructLiteral(State state, ir.StructLiteral sl)
