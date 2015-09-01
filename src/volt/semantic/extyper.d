@@ -239,17 +239,7 @@ void extypeAssignPrimitiveType(ExtyperContext ctx, ref ir.Exp exp, ir.PrimitiveT
 		return;
 	}
 
-	auto lsize = size(lprim.type);
-	auto rsize = size(rprim.type);
-
-	auto lunsigned = isUnsigned(lprim.type);
-	auto runsigned = isUnsigned(rprim.type);
-
-	if (lunsigned != runsigned && !fitsInPrimitive(lprim, exp)) {
-		throw makeBadImplicitCast(exp, rprim, lprim);
-	}
-
-	if (rsize > lsize && !fitsInPrimitive(lprim, exp)) {
+	if (!isImplicitlyConvertable(rprim, lprim) && !fitsInPrimitive(lprim, exp)) {
 		throw makeBadImplicitCast(exp, rprim, lprim);
 	}
 

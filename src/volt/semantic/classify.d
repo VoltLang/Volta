@@ -406,6 +406,15 @@ bool isIntegral(ir.Type t)
 	return isIntegral(prim.type);
 }
 
+bool isIntegralOrBool(ir.Type t)
+{
+	auto prim = cast(ir.PrimitiveType)t;
+	if (prim is null) {
+		return false;
+	}
+	return isIntegralOrBool(prim.type);
+}
+
 bool isIntegral(ir.PrimitiveType.Kind kind)
 {
 	switch (kind) with (ir.PrimitiveType.Kind) {
@@ -423,6 +432,16 @@ bool isIntegral(ir.PrimitiveType.Kind kind)
 		return true;
 	default:
 		return false;
+	}
+	version (Volt) assert(false);
+}
+
+bool isIntegralOrBool(ir.PrimitiveType.Kind kind)
+{
+	if (kind == ir.PrimitiveType.Kind.Bool) {
+		return true;
+	} else {
+		return isIntegral(kind);
 	}
 	version (Volt) assert(false);
 }
@@ -803,17 +822,33 @@ bool isImplicitlyConvertable(ir.Type from, ir.Type to)
 		return typesEqual(to, fstorage.base) || isImplicitlyConvertable(fstorage.base, to);
 	}
 
-	if (fprim is null || tprim is null)
+	if (fprim is null || tprim is null) {
 		return false;
+	}
 
 	auto fromsz = size(fprim.type);
 	auto tosz = size(tprim.type);
 	
-	if (isIntegral(from) && isIntegral(to)) {
-		if (isUnsigned(fprim.type) != isUnsigned(tprim.type))
-			return false;
+	if (isIntegralOrBool(from) && isIntegral(to)) {
+		// to is unsigned.
+		if (isUnsigned(tprim.type)) {
+			if (isUnsigned(fprim.type)) {
+				// uint is implicitly convertable to uint
+				return fromsz <= tosz;
+			} else {
+				// can not implicitly cast signed to unsigned.
+				return false;
+			}
+		}
 
-		return fromsz <= tosz; // int is implicitly convertable to int
+		// to is signed.
+		if (isUnsigned(fprim.type)) {
+			// ushort is implicitly convertable to uint
+			return fromsz < tosz;
+		} else {
+			// int is implicitly convertable to int
+			return fromsz <= tosz;
+		}
 	}
 	
 	if (isFloatingPoint(from) && isFloatingPoint(to))
