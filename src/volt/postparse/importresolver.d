@@ -12,7 +12,6 @@ import volt.errors;
 import volt.interfaces;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
-import volt.semantic.lookup;
 
 
 /**
@@ -74,12 +73,8 @@ public:
 		} else if (i.aliases.length == 0 && i.bind is null) { // static import a; OR import a;
 			ir.Scope parent = thisModule.myScope;
 			foreach (ident; i.name.identifiers[0 .. $-1]) {
-				// TODO Instead just create a alias and insert.
-				// You could make it specielt type on the Alias
-				// so we can get a proper error message, like:
-				// "error: import $I from module $M not found."
 				auto name = ident.value;
-				auto store = lookup(lp, parent, ident.location, name);
+				auto store = parent.getStore(name);
 				if (store !is null) {
 					if (store.s is null) {
 						throw makeExpected(store.node.location, "scope");
@@ -91,7 +86,7 @@ public:
 					parent = s;
 				}
 			}
-			auto store = lookup(lp, parent, i.location, i.name.identifiers[$-1].value);
+			auto store = parent.getStore(i.name.identifiers[$-1].value);
 			if (store !is null) {
 				if (i.isStatic && store.s !is mod.myScope) {
 					throw makeExpected(i.location, "unique module");
