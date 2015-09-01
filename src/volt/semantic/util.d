@@ -293,8 +293,14 @@ ir.Exp getDefaultInit(Location l, LanguagePass lp, ir.Scope current, ir.Type t)
 			return buildCastSmart(l, t, buildConstantInt(l, 0));
 		}
 	case ir.NodeType.ArrayType:
-	case ir.NodeType.StaticArrayType:
 		return buildArrayLiteralSmart(l, t, []);
+	case ir.NodeType.StaticArrayType:
+		auto sat = cast(ir.StaticArrayType) t;
+		auto exps = new ir.Exp[](sat.length);
+		foreach (ref e; exps) {
+			e = getDefaultInit(l, lp, current, sat.base);
+		}
+		return buildArrayLiteralSmart(l, t, exps);
 	case ir.NodeType.PointerType:
 	case ir.NodeType.Class:
 	case ir.NodeType.DelegateType:
