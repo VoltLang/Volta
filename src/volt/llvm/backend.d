@@ -156,7 +156,7 @@ void linkModules(string output, string[] inputs...)
 	scope(exit)
 		LLVMDisposeModule(dst);
 
-	foreach(filename; inputs[1 .. $]) {
+	foreach (filename; inputs[1 .. $]) {
 		src = loadModule(ctx, filename);
 
 		bool ret = LLVMLinkModules(dst, src, LLVMLinkerMode.DestroySource, msg);

@@ -507,7 +507,7 @@ protected:
 
 	void twf(string[] strings...)
 	{
-		for(int i; i < mIndent; i++)
+		for (int i; i < mIndent; i++)
 			mSink(mIndentText);
 		foreach (s; strings) {
 			mSink(s);

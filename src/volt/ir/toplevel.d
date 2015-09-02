@@ -442,7 +442,7 @@ public:
 	 */
 	enum Kind
 	{
-		/// version(identifier) {}
+		/// version (identifier) {}
 		Version,
 		/// debug {}, debug (identifier) {}
 		Debug,
@@ -476,9 +476,9 @@ public:
 	/// If a else is following.
 	bool elsePresent;
 
-	/// version(foo) { @<members> }
+	/// version (foo) { @<members> }
 	TopLevelBlock members;
-	/// version(foo) { @<members> } else { @<_else> }
+	/// version (foo) { @<members> } else { @<_else> }
 	TopLevelBlock _else;
 
 

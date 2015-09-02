@@ -219,7 +219,7 @@ string cleanComment(string comment, out bool isBackwardsComment)
 		}
 	}
 
-	version(Volt) {
+	version (Volt) {
 		return cast(immutable(char)[])new outbuf[0 .. $];
 	} else {
 		return outbuf.idup;

@@ -71,7 +71,7 @@ public:
 		assert(types.length > 0);
 	}
 	body {
-		foreach(uint i, right; types) {
+		foreach (uint i, right; types) {
 			TokenType left = lookahead(i).type;
 			if (left != right)
 				return 0;

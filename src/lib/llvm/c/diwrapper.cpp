@@ -854,7 +854,7 @@ LLVMValueRef LLVMDIBuilderCreateStructType(
   auto VTH = unwrapMDAs<DIType>(VTableHolder);
 
   SmallVector<Metadata *, 8> MDs;
-  for(int i = 0; i < ElementsNum; i++) {
+  for (int i = 0; i < ElementsNum; i++) {
     auto *MD = unwrapMD(Elements[i]);
     // TODO Extract?
     MDs.push_back(MD);
@@ -892,7 +892,7 @@ void LLVMDIBuilderStructSetBody(LLVMDIBuilderRef builder,
   auto fwd = unwrapMDAs<DICompositeType>(Struct);
 
   SmallVector<Metadata *, 8> MDs;
-  for(int i = 0; i < ElementsNum; i++) {
+  for (int i = 0; i < ElementsNum; i++) {
     auto *MD = unwrapMD(Elements[i]);
     // TODO Extract?
     MDs.push_back(MD);

@@ -53,7 +53,7 @@ public:
 	 */
 	final void reset()
 	{
-		foreach(ref f; mFunctionStack[0 .. mLength]) {
+		foreach (ref f; mFunctionStack[0 .. mLength]) {
 			f = null;
 		}
 		mLength = 0;

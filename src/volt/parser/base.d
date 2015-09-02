@@ -57,7 +57,7 @@ public:
 		mNum = 0;
 	}
 
-	version(D_Version2) {
+	version (D_Version2) {
 		final NodeSinkDg push() { return &push; }
 	}
 

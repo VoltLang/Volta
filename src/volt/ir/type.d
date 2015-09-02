@@ -299,7 +299,7 @@ public:
 		location = ctype.location;
 		linkage = ctype.linkage;
 		ret = ctype.ret;
-		version(Volt) {
+		version (Volt) {
 			params = new ctype.params[0 .. $];
 			isArgRef = new ctype.isArgRef[0 .. $];
 			isArgOut = new ctype.isArgOut[0 .. $];

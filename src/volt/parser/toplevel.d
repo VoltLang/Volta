@@ -1289,7 +1289,7 @@ ParseStatus parseUserAttribute(ParserStream ps, out ir.UserAttribute ui)
 
 	auto arr = sink.array;
 	ui.fields = new ir.Variable[](arr.length);
-	foreach(i, ref var; ui.fields) {
+	foreach (i, ref var; ui.fields) {
 		var = cast(ir.Variable) arr[i];
 		assert(var !is null);
 	}

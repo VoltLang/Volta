@@ -96,11 +96,11 @@ public:
 
 	override void close()
 	{
-		foreach(pass; postParse)
+		foreach (pass; postParse)
 			pass.close();
-		foreach(pass; passes2)
+		foreach (pass; passes2)
 			pass.close();
-		foreach(pass; passes3)
+		foreach (pass; passes3)
 			pass.close();
 	}
 
@@ -566,7 +566,7 @@ public:
 		}
 		m.hasPhase1 = true;
 
-		foreach(pass; postParse) {
+		foreach (pass; postParse) {
 			debugPrint("Phase 1 %s.", m.name);
 			pass.transform(m);
 		}
@@ -588,7 +588,7 @@ public:
 		}
 		m.hasPhase2 = true;
 
-		foreach(pass; passes2) {
+		foreach (pass; passes2) {
 			debugPrint("Phase 2 %s.", m.name);
 			pass.transform(m);
 		}
@@ -596,15 +596,15 @@ public:
 
 	final void phase3(ir.Module m)
 	{
-		foreach(pass; passes3) {
+		foreach (pass; passes3) {
 			debugPrint("Phase 3 %s.", m.name);
 			pass.transform(m);
 		}
 	}
 
-	override void phase1(ir.Module[] ms) { foreach(m; ms) { phase1(m); } }
-	override void phase2(ir.Module[] ms) { foreach(m; ms) { phase2(m); } }
-	override void phase3(ir.Module[] ms) { foreach(m; ms) { phase3(m); } }
+	override void phase1(ir.Module[] ms) { foreach (m; ms) { phase1(m); } }
+	override void phase2(ir.Module[] ms) { foreach (m; ms) { phase2(m); } }
+	override void phase3(ir.Module[] ms) { foreach (m; ms) { phase3(m); } }
 
 
 	/*

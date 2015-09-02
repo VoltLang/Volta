@@ -29,7 +29,7 @@ struct Perf
 	void print()
 	{
 		size_t max;
-		foreach(s; names) {
+		foreach (s; names) {
 			max = s.length > max ? s.length : max;
 		}
 

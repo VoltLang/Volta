@@ -27,7 +27,7 @@ ir.Function getArrayAppendFunction(Location loc, LanguagePass lp, ir.Module this
 {
 	if (ltype.mangledName is null)
 		ltype.mangledName = mangle(ltype);
-	if(rtype.mangledName is null)
+	if (rtype.mangledName is null)
 		rtype.mangledName = mangle(rtype);
 
 	string name;
@@ -46,7 +46,7 @@ ir.Function getArrayAppendFunction(Location loc, LanguagePass lp, ir.Module this
 	fn.type.ret = copyTypeSmart(loc, ltype);
 
 	ir.FunctionParam left, right;
-	if(isAssignment)
+	if (isAssignment)
 		left = addParam(loc, fn, buildPtrSmart(loc, ltype), "left");
 	else
 		left = addParamSmart(loc, fn, ltype, "left");
@@ -137,7 +137,7 @@ ir.Function getArrayPrependFunction(Location loc, LanguagePass lp, ir.Module thi
 {
 	if (ltype.mangledName is null)
 		ltype.mangledName = mangle(ltype);
-	if(rtype.mangledName is null)
+	if (rtype.mangledName is null)
 		rtype.mangledName = mangle(rtype);
 
 	string name = "__prependArray" ~ ltype.mangledName ~ rtype.mangledName;
@@ -262,17 +262,17 @@ ir.Function getArrayCopyFunction(Location loc, LanguagePass lp, ir.Module thisMo
 
 ir.Function getArrayConcatFunction(Location loc, LanguagePass lp, ir.Module thisModule, ir.ArrayType type, bool isAssignment)
 {
-	if(type.mangledName is null)
+	if (type.mangledName is null)
 		type.mangledName = mangle(type);
 
 	string name;
-	if(isAssignment)
+	if (isAssignment)
 		name = "__concatAssignArray" ~ type.mangledName;
 	else
 		name = "__concatArray" ~ type.mangledName;
 	auto fn = lookupFunction(lp, thisModule.myScope, loc, name);
 
-	if(fn !is null)
+	if (fn !is null)
 		return fn;
 
 	fn = buildFunction(loc, thisModule.children, thisModule.myScope, name);
@@ -281,7 +281,7 @@ ir.Function getArrayConcatFunction(Location loc, LanguagePass lp, ir.Module this
 	fn.type.ret = copyTypeSmart(loc, type);
 
 	ir.FunctionParam left;
-	if(isAssignment)
+	if (isAssignment)
 		left = addParam(loc, fn, buildPtrSmart(loc, type), "left");
 	else
 		left = addParamSmart(loc, fn, type, "left");
@@ -379,7 +379,7 @@ ir.Function getArrayConcatFunction(Location loc, LanguagePass lp, ir.Module this
 
 ir.Function getArrayCmpFunction(Location loc, LanguagePass lp, ir.Module thisModule, ir.ArrayType type, bool notEqual)
 {
-	if(type.mangledName is null)
+	if (type.mangledName is null)
 		type.mangledName = mangle(type);
 
 	string name;

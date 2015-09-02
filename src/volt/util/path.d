@@ -14,7 +14,7 @@ string[] genPossibleFilenames(string dir, string[] names)
 	string[] paths;
 	auto ret = dir;
 
-	foreach(name; names) {
+	foreach (name; names) {
 		ret ~= dirSeparator ~ name;
 	}
 	paths ~= ret ~ ".volt";

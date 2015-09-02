@@ -154,7 +154,7 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 		settings.jsonOutput = path;
 	}
 
-	foreach(arg; args)  {
+	foreach (arg; args)  {
 		if (argHandler !is null) {
 			argHandler(arg);
 			argHandler = null;
@@ -311,7 +311,7 @@ bool getLinesFromFile(string file, ref string[] lines)
 {
 	try {
 		auto f = File(file);
-		foreach(line; f.byLine) {
+		foreach (line; f.byLine) {
 			if (line.length > 0 && line[0] != '#') {
 				lines ~= chomp(line).idup;
 			}
@@ -391,7 +391,7 @@ bool printUsage()
 
 bool printLicense()
 {
-	foreach(license; licenseArray)
+	foreach (license; licenseArray)
 		writefln(license);
 	return false;
 }

@@ -72,7 +72,7 @@ public:
 			state.localDestructors ~= llvmFunc;
 		}
 
-		foreach(uint i, p; fn.params) {
+		foreach (uint i, p; fn.params) {
 			if (p.name is null)
 				continue;
 
@@ -538,9 +538,9 @@ public:
 			state.context, state.func, "forOut");
 
 		// Init stuff go into the fnState.block
-		foreach(var; f.initVars)
+		foreach (var; f.initVars)
 			enter(var);
-		foreach(exp; f.initExps)
+		foreach (exp; f.initExps)
 			state.getValue(exp);
 
 		// Make continue jump to the post block, and break to out.
@@ -567,7 +567,7 @@ public:
 		LLVMMoveBasicBlockAfter(forPost, state.block);
 		state.startBlock(forPost);
 
-		foreach(exp; f.increments) {
+		foreach (exp; f.increments) {
 			state.getValue(exp);
 		}
 

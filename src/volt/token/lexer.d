@@ -2,7 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.token.lexer;
 
-version(Volt) {
+version (Volt) {
 	import core.stdc.time : time, localtime;
 } else {
 	import std.c.time : time, localtime;
@@ -878,7 +878,7 @@ LexStatus lexQString(TokenWriter tw)
 			if (!match(tw, '\n')) {
 				return Failed;
 			}
-			version(Volt) {
+			version (Volt) {
 				identdelim = cast(string)new buf[0 .. $];
 			} else {
 				identdelim = buf.idup;
@@ -993,7 +993,7 @@ size_t consume(Source src, const(dchar)[] characters...)
 {
 	size_t consumed;
 	static bool isIn(const(dchar)[] chars, dchar arg) {
-		foreach(c; chars) {
+		foreach (c; chars) {
 			if (c == arg)
 				return true;
 		}
@@ -1021,7 +1021,7 @@ string removeUnderscores(string s)
 		}
 		output[i++] = c;
 	}
-	version(Volt) {
+	version (Volt) {
 		return i == s.length ? s : cast(string)new output[0 .. i];
 	} else {
 		return i == s.length ? s : output[0 .. i].idup;

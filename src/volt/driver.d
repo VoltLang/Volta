@@ -174,7 +174,7 @@ public:
 
 	void addFiles(string[] files)
 	{
-		foreach(file; files)
+		foreach (file; files)
 			addFile(file);
 	}
 
@@ -190,13 +190,13 @@ public:
 
 	void addLibrarys(string[] libs)
 	{
-		foreach(lib; libs)
+		foreach (lib; libs)
 			addLibrary(lib);
 	}
 
 	void addLibraryPaths(string[] paths)
 	{
-		foreach(path; paths)
+		foreach (path; paths)
 			addLibraryPath(path);
 	}
 
@@ -267,8 +267,8 @@ protected:
 		{
 			if (settings.internalDebug && !debugPassesRun) {
 				debugPassesRun = true;
-				foreach(pass; debugVisitors) {
-					foreach(mod; mCommandLineModules) {
+				foreach (pass; debugVisitors) {
+					foreach (mod; mCommandLineModules) {
 						pass.transform(mod);
 					}
 				}

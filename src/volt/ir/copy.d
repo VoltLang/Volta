@@ -18,7 +18,7 @@ ir.Constant copy(ir.Constant cnst)
 	c.u._ulong = cnst.u._ulong;
 	c._string = cnst._string;
 	c.isNull = cnst.isNull;
-	version(Volt) {
+	version (Volt) {
 		c.arrayData = new cnst.arrayData[0 .. $];
 	} else {
 		c.arrayData = cnst.arrayData.idup;
@@ -88,7 +88,7 @@ ir.StoreExp copy(ir.StoreExp se)
 	auto newse = new ir.StoreExp();
 	newse.location = se.location;
 	newse.store = se.store;
-	version(Volt) {
+	version (Volt) {
 		newse.idents = new se.idents[0 .. $];
 	} else {
 		newse.idents = se.idents.dup;
@@ -113,7 +113,7 @@ ir.ExpReference copy(ir.ExpReference er)
 {
 	auto newer = new ir.ExpReference();
 	newer.location = er.location;
-	version(Volt) {
+	version (Volt) {
 		newer.idents = new er.idents[0 .. $];
 	} else {
 		newer.idents = er.idents.dup;
@@ -235,7 +235,7 @@ ir.FunctionType copy(ir.FunctionType old)
 	ft.params = new ir.Type[](old.params.length);
 	ft.isArgOut = new bool[](old.isArgOut.length);
 	ft.isArgRef = new bool[](old.isArgRef.length);
-	foreach(size_t i, ptype; old.params) {
+	foreach (size_t i, ptype; old.params) {
 		ft.params[i] = copyType(ptype);
 		ft.isArgOut[i] = old.isArgOut[i];
 		ft.isArgRef[i] = old.isArgRef[i];
@@ -252,7 +252,7 @@ ir.DelegateType copy(ir.DelegateType old)
 	dg.params = new ir.Type[](old.params.length);
 	dg.isArgOut = new bool[](old.isArgOut.length);
 	dg.isArgRef = new bool[](old.isArgRef.length);
-	foreach(size_t i, ptype; old.params) {
+	foreach (size_t i, ptype; old.params) {
 		dg.params[i] = copyType(ptype);
 		dg.isArgOut[i] = old.isArgOut[i];
 		dg.isArgRef[i] = old.isArgRef[i];
@@ -300,7 +300,7 @@ ir.Typeid copy(ir.Typeid old)
 		tid.type = copyType(old.type);
 	}
 	if (old.ident !is null) {
-		version(Volt) {
+		version (Volt) {
 			tid.ident = new old.ident[0 .. $];
 		} else {
 			tid.ident = tid.ident.dup;

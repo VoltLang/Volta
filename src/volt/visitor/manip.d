@@ -32,7 +32,7 @@ ir.Node[] manipNodes(ir.Node[] nodes, ReplaceDg replaceDg)
 		}
 	}
 
-	foreach(node; nodes) {
+	foreach (node; nodes) {
 		ir.Node[] list;
 		auto replace = replaceDg(node, list);
 

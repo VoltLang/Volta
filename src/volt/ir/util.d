@@ -40,7 +40,7 @@ ir.QualifiedName buildQualifiedName(Location loc, string value)
  */
 ir.QualifiedName buildQualifiedName(Location loc, string[] value...)
 {
-	version(Volt) {
+	version (Volt) {
 		auto idents = new ir.Identifier[](value.length);
 	} else {
 		auto idents = new ir.Identifier[value.length];
@@ -193,7 +193,7 @@ ir.Type copyTypeSmart(Location loc, ir.Type type)
 		auto ft = new ir.FunctionType(asFt);
 		ft.location = loc;
 		ft.ret = copyTypeSmart(loc, ft.ret);
-		foreach(i, ref t; ft.params) {
+		foreach (i, ref t; ft.params) {
 			t = copyTypeSmart(loc, t);
 		}
 		outType = ft;
@@ -211,7 +211,7 @@ ir.Type copyTypeSmart(Location loc, ir.Type type)
 		auto dg = new ir.DelegateType(asDg);
 		dg.location = loc;
 		dg.ret = copyTypeSmart(loc, dg.ret);
-		foreach(i, ref t; dg.params) {
+		foreach (i, ref t; dg.params) {
 			t = copyTypeSmart(loc, t);
 		}
 		outType = dg;
@@ -353,7 +353,7 @@ ir.ArrayLiteral buildArrayLiteralSmart(Location loc, ir.Type type, ir.Exp[] exps
 	auto literal = new ir.ArrayLiteral();
 	literal.location = loc;
 	literal.type = copyTypeSmart(loc, type);
-	version(Volt) {
+	version (Volt) {
 		literal.values = new exps[0 .. $];
 	} else {
 		literal.values = exps.dup;
@@ -366,7 +366,7 @@ ir.StructLiteral buildStructLiteralSmart(Location loc, ir.Type type, ir.Exp[] ex
 	auto literal = new ir.StructLiteral();
 	literal.location = loc;
 	literal.type = copyTypeSmart(loc, type);
-	version(Volt) {
+	version (Volt) {
 		literal.exps = new exps[0 .. $];
 	} else {
 		literal.exps = exps.dup;
@@ -379,7 +379,7 @@ ir.UnionLiteral buildUnionLiteralSmart(Location loc, ir.Type type, ir.Exp[] exps
 	auto literal = new ir.UnionLiteral();
 	literal.location = loc;
 	literal.type = copyTypeSmart(loc, type);
-	version(Volt) {
+	version (Volt) {
 		literal.exps = new exps[0 .. $];
 	} else {
 		literal.exps = exps.dup;
@@ -458,7 +458,7 @@ ir.Variable copyVariableSmart(Location loc, ir.Variable right)
 
 ir.Variable[] copyVariablesSmart(Location loc, ir.Variable[] vars)
 {
-	version(Volt) {
+	version (Volt) {
 		auto outVars = new ir.Variable[](vars.length);
 	} else {
 		auto outVars = new ir.Variable[vars.length];
@@ -474,7 +474,7 @@ ir.Variable[] copyVariablesSmart(Location loc, ir.Variable[] vars)
  */
 ir.Exp[] getExpRefs(Location loc, ir.FunctionParam[] vars)
 {
-	version(Volt) {
+	version (Volt) {
 		auto erefs = new ir.Exp[](vars.length);
 	} else {
 		auto erefs = new ir.Exp[vars.length];
@@ -739,7 +739,7 @@ ir.Unary buildNew(Location loc, ir.Type type, string name, ir.Exp[] arguments...
 	new_.op = ir.Unary.Op.New;
 	new_.type = buildTypeReference(loc, type, name);
 	new_.hasArgumentList = arguments.length > 0;
-	version(Volt) {
+	version (Volt) {
 		new_.argumentList = new arguments[0 .. $];
 	} else {
 		new_.argumentList = arguments.dup;
@@ -754,7 +754,7 @@ ir.Unary buildNewSmart(Location loc, ir.Type type, ir.Exp[] arguments...)
 	new_.op = ir.Unary.Op.New;
  	new_.type = copyTypeSmart(loc, type);
 	new_.hasArgumentList = arguments.length > 0;
-	version(Volt) {
+	version (Volt) {
 		new_.argumentList = new arguments[0 .. $];
 	} else {
 		new_.argumentList = arguments.dup;
@@ -818,7 +818,7 @@ ir.Postfix buildSlice(Location loc, ir.Exp child, ir.Exp[] args...)
 	slice.location = loc;
 	slice.op = ir.Postfix.Op.Slice;
 	slice.child = child;
-	version(Volt) {
+	version (Volt) {
 		slice.arguments = new args[0 .. $];
 	} else {
 		slice.arguments = args.dup;
@@ -876,7 +876,7 @@ ir.Postfix buildCall(Location loc, ir.Exp child, ir.Exp[] args)
 	call.location = loc;
 	call.op = ir.Postfix.Op.Call;
 	call.child = child;
-	version(Volt) {
+	version (Volt) {
 		call.arguments = new args[0 .. $];
 	} else {
 		call.arguments = args.dup;
@@ -1254,7 +1254,7 @@ ir.BlockStatement buildBlockStat(Location loc, ir.Node introducingNode, ir.Scope
 {
 	auto ret = new ir.BlockStatement();
 	ret.location = loc;
-	version(Volt) {
+	version (Volt) {
 		ret.statements = new statements[0 .. $];
 	} else {
 		ret.statements = statements.dup;

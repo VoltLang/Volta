@@ -701,7 +701,7 @@ string typesString(ir.Type[] types)
 		}
 	}
 	buf ~= ")";
-	version(Volt) {
+	version (Volt) {
 		return cast(string)new buf[0 .. $];
 	} else {
 		return buf.idup;

@@ -303,7 +303,7 @@ public:
 
 		LLVMValueRef[] alVals;
 		alVals.length = al.values.length;
-		foreach(uint i, exp; al.values) {
+		foreach (uint i, exp; al.values) {
 			alVals[i] = state.getConstant(exp);
 		}
 
@@ -366,7 +366,7 @@ public:
 
 		LLVMValueRef[] alVals;
 		alVals.length = al.values.length;
-		foreach(uint i, exp; al.values) {
+		foreach (uint i, exp; al.values) {
 			alVals[i] = state.getConstant(exp);
 		}
 
@@ -415,7 +415,7 @@ public:
 		Type ret;
 
 		ret = .fromIr(state, ft.ret);
-		foreach(param; ft.params) {
+		foreach (param; ft.params) {
 			params ~= .fromIr(state, param);
 		}
 
@@ -443,7 +443,7 @@ private:
 		args.length = ft.params.length + cast(uint)ft.hiddenParameter;
 
 		this.ret = ret;
-		foreach(i, type; params) {
+		foreach (i, type; params) {
 			args[i] = type.llvmType;
 			if (ft.isArgRef[i] || ft.isArgOut[i]) {
 				args[i] = LLVMPointerType(args[i], 0);
@@ -483,7 +483,7 @@ public:
 		args.length = dt.params.length + 1;
 		params.length = dt.params.length + 1;
 
-		foreach(i, param; dt.params) {
+		foreach (i, param; dt.params) {
 			auto type = state.fromIr(param);
 			params[i] = type;
 			args[i] = type.llvmType;
@@ -542,7 +542,7 @@ public:
 		LLVMTypeRef[] mt;
 		ir.Variable[] vars;
 
-		foreach(m; irType.members.nodes) {
+		foreach (m; irType.members.nodes) {
 
 			auto var = cast(ir.Variable)m;
 			if (var is null)
@@ -574,7 +574,7 @@ public:
 			throw panic("struct literal has the wrong number of initializers");
 		}
 
-		foreach(uint i, ref val; vals) {
+		foreach (uint i, ref val; vals) {
 			val = state.getConstant(sl.exps[i]);
 		}
 
@@ -613,7 +613,7 @@ public:
 			types ~= state.fromIr(var.type);
 		}
 
-		foreach(m; irType.members.nodes) {
+		foreach (m; irType.members.nodes) {
 			handle(m);
 		}
 
@@ -632,7 +632,7 @@ public:
 			throw panic("struct literal has the wrong number of initializers");
 		}
 
-		foreach(uint i, ref val; vals) {
+		foreach (uint i, ref val; vals) {
 			val = state.getConstant(sl.exps[i]);
 		}
 
@@ -888,7 +888,7 @@ ir.Type scrubStorage(ir.Type type)
 		auto ft = new ir.FunctionType(asFt);
 		ft.location = asFt.location;
 		ft.ret = scrubStorage(ft.ret);
-		foreach(i, ref t; ft.params) {
+		foreach (i, ref t; ft.params) {
 			t = scrubStorage(t);
 		}
 		// TODO a better fix for this.
@@ -902,7 +902,7 @@ ir.Type scrubStorage(ir.Type type)
 		auto dg = new ir.DelegateType(asDg);
 		dg.location = asDg.location;
 		dg.ret = scrubStorage(dg.ret);
-		foreach(i, ref t; dg.params) {
+		foreach (i, ref t; dg.params) {
 			t = scrubStorage(t);
 		}
 		// TODO a better fix for this.

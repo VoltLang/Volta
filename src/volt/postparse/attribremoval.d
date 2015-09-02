@@ -155,7 +155,7 @@ protected:
 	 */
 	void applyAttributes(ir.Import i, ir.Attribute[] attrs)
 	{
-		foreach(attr; attrs) {
+		foreach (attr; attrs) {
 			switch(attr.kind) with (ir.Attribute.Kind) {
 			case Public:
 				i.access = ir.Access.Public;
@@ -183,7 +183,7 @@ protected:
 	 */
 	void applyAttributes(ir.Function fn, ir.Attribute[] attrs)
 	{
-		foreach(attr; attrs) {
+		foreach (attr; attrs) {
 			switch(attr.kind) with (ir.Attribute.Kind) {
 			case LinkageVolt:
 				fn.type.linkage = ir.Linkage.Volt;
@@ -282,7 +282,7 @@ protected:
 	 */
 	void applyAttributes(ir.Variable d, ir.Attribute[] attrs)
 	{
-		foreach(attr; attrs) {
+		foreach (attr; attrs) {
 			switch(attr.kind) with (ir.Attribute.Kind) {
 			case Public:
 				d.access = ir.Access.Public;
@@ -342,7 +342,7 @@ protected:
 	 */
 	void applyAttributes(ir.Aggregate s, ir.Attribute[] attrs)
 	{
-		foreach(attr; attrs) {
+		foreach (attr; attrs) {
 			switch(attr.kind) with (ir.Attribute.Kind) {
 			case Public:
 				s.access = ir.Access.Public;
@@ -377,7 +377,7 @@ protected:
 	 */
 	void applyAttributes(ir._Interface i, ir.Attribute[] attrs)
 	{
-		foreach(attr; attrs) {
+		foreach (attr; attrs) {
 			switch(attr.kind) with (ir.Attribute.Kind) {
 			case Public:
 				i.access = ir.Access.Public;
@@ -405,7 +405,7 @@ protected:
 	 */
 	void applyAttributes(ir.Enum e, ir.Attribute[] attrs)
 	{
-		foreach(attr; attrs) {
+		foreach (attr; attrs) {
 			switch(attr.kind) with (ir.Attribute.Kind) {
 			case Public:
 				e.access = ir.Access.Public;
@@ -430,7 +430,7 @@ protected:
 	 */
 	void applyAttributes(ir.Alias a, ir.Attribute[] attrs)
 	{
-		foreach(attr; attrs) {
+		foreach (attr; attrs) {
 			switch(attr.kind) with (ir.Attribute.Kind) {
 			case Public:
 				a.access = ir.Access.Public;

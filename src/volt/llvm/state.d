@@ -466,7 +466,7 @@ public:
 		llvmType = LLVMPointerType(type.llvmType, 0);
 
 		v = LLVMBuildBitCast(builder, v, llvmType, "__nested");
-		version(D_Version2) valueStore[k] = Store(v, type);
+		version (D_Version2) valueStore[k] = Store(v, type);
 
 		assert(fnState.nested is null);
 		fnState.nested = v;

@@ -74,7 +74,7 @@ public:
 		}
 
 		auto str = "circular dependancy detected";
-		foreach(s; mStack) {
+		foreach (s; mStack) {
 			str ~= "\n" ~ s.description;
 		}
 		throw makeError(w.node.location, str);

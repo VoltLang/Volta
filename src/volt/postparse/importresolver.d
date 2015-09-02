@@ -40,7 +40,7 @@ public:
 		assert(m.children !is null);
 
 		// Only accept imports directly in the module.
-		foreach(n; m.children.nodes) {
+		foreach (n; m.children.nodes) {
 			if (n.nodeType == ir.NodeType.Import) {
 				handleImport(cast(ir.Import)n);
 			} else {

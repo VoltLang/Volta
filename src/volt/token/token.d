@@ -48,7 +48,7 @@ enum immutable(string)[] _tokenToString = [
  * and that the enum starts at zero and increases sequentially
  * (i.e. adding a member increases TokenType.max).
  */
-version(Volt) {
+version (Volt) {
 	// @todo static assert
 } else {
 	static assert(TokenType.min == 0);

@@ -235,7 +235,7 @@ protected:
 	 */
 	ir.Node[] manipNodes(ir.Node[] nodes)
 	{
-	 	version(Volt) {
+		version (Volt) {
 			return .manipNodes(nodes, removeConditionals);
 		} else {
 			return .manipNodes(nodes, &removeConditionals);

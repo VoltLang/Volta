@@ -1172,7 +1172,7 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 	}
 	assert(ct !is null);
 
-	foreach(i, arg; postfix.arguments) {
+	foreach (i, arg; postfix.arguments) {
 		auto v = new Value();
 		state.getValueAnyForm(arg, v);
 

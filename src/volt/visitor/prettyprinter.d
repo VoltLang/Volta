@@ -2168,7 +2168,7 @@ protected:
 		}
 		wf(qn.identifiers[0].value);
 
-		foreach(id; qn.identifiers[1 .. $]) {
+		foreach (id; qn.identifiers[1 .. $]) {
 			wf(".");
 			wf(id.value);
 		}
