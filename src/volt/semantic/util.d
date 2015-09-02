@@ -306,6 +306,7 @@ ir.Exp getDefaultInit(Location l, LanguagePass lp, ir.Scope current, ir.Type t)
 	case ir.NodeType.DelegateType:
 	case ir.NodeType.AAType:
 	case ir.NodeType.Interface:
+	case ir.NodeType.FunctionType:
 		return buildConstantNull(l, t);
 	case ir.NodeType.Struct:
 	case ir.NodeType.Union:
