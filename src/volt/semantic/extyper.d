@@ -909,7 +909,15 @@ bool replaceAAPostfixesIfNeeded(ExtyperContext ctx, ir.Postfix postfix, ref ir.E
 		auto rtFn = buildExpReference(l, ctx.lp.aaRehash, ctx.lp.aaRehash.name);
 		exp = buildCall(l, rtFn, arg);
 		return true;
+	case "get":
+		return false;
+	case "remove":
+		return false;
 	default:
+		auto store = lookup(ctx.lp, ctx.current, postfix.location, postfix.identifier.value);
+		if (store is null || store.functions.length == 0) {
+			throw makeBadBuiltin(postfix.location, aa, postfix.identifier.value);
+		}
 		return false;
 	}
 	assert(false);

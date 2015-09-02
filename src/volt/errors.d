@@ -25,6 +25,11 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeBadBuiltin(Location l, ir.Type t, string field, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(l, format("type %s doesn't have built-in field '%s'.", typeString(t), field), file, line);
+}
+
 CompilerException makeBadMerge(ir.Alias a, ir.Store s, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(a.location, "cannot merge alias as it is not a function.", file, line);
