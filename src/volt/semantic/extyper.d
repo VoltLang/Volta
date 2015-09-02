@@ -1891,6 +1891,9 @@ void extypePostfixIdentifier(ExtyperContext ctx, ref ir.Exp exp, ir.Postfix post
 			if (prim !is null) {
 				extypeTypeLookup(ctx, exp, postfixIdents, prim);
 				return;
+			} else if (postfixIdents.length > 0 && postfixIdents[0].identifier.value == "init") {
+				extypeTypeLookup(ctx, exp, postfixIdents, lastType);
+				return;
 			}
 			goto case Scope;
 		case Scope:
