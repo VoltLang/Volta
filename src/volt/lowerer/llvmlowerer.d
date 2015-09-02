@@ -845,7 +845,6 @@ public:
 		default:
 			return Continue;
 		}
-		version (Volt) assert(false);
 	}
 
 	override Status leave(ref ir.Exp exp, ir.BinOp binOp)
@@ -867,7 +866,6 @@ public:
 		default:
 			return Continue;
 		}
-		version (Volt) assert(false);
 	}
 
 	override Status visit(ref ir.Exp exp, ir.TraitsExp traits)

@@ -44,7 +44,7 @@ ir.Store findShadowed(LanguagePass lp, ir.Scope _scope, Location loc, string nam
 	} else {
 		return null;
 	}
-	version (Volt) assert(false);
+	version (Volt) assert(false); // If
 }
 
 /*

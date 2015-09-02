@@ -363,7 +363,6 @@ ir.Type copyType(ir.Type t)
 	default:
 		throw panicUnhandled(t, ir.nodeToString(t));
 	}
-	version(Volt) assert(false);
 }
 
 /**
@@ -512,5 +511,5 @@ ir.Node copyNode(ir.Node n)
 	case VaArgExp:
 		goto case Invalid;
 	}
-	version(Volt) assert(false);
+	version (Volt) assert(false); // ???
 }

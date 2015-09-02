@@ -67,7 +67,7 @@ ParseStatus parseVariable(ParserStream ps, NodeSinkDg dg)
 	} else {
 		return parseExpected(ps, ps.peek.location, ir.NodeType.Variable, "declaration");
 	}
-	version(Volt) assert(false);
+	version (Volt) assert(false); // If
 }
 
 ParseStatus parseJustVariable(ParserStream ps, NodeSinkDg dg)

@@ -111,7 +111,6 @@ bool willConvert(ir.Type argument, ir.Type parameter)
 		return nt == PointerType || nt == Class || nt == ArrayType || nt == AAType || nt == DelegateType;
 	default: return false;
 	}
-	version (Volt) assert(false);
 }
 
 bool willConvertStaticArray(ir.Type l, ir.Type r, ref uint flag, ref ir.Exp exp)
@@ -279,7 +278,7 @@ int matchLevel(bool homogenous, ir.Type argument, ir.Type parameter, ir.Exp exp=
 		}
 		return 1;
 	}
-	version (Volt) assert(false);
+	version (Volt) assert(false); // If
 }
 
 bool specialisationComparison(object.Object ao, object.Object bo)
@@ -451,5 +450,5 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 	} else {
 		return null;
 	}
-	version (Volt) assert(false);
+	version (Volt) assert(false); // If
 }

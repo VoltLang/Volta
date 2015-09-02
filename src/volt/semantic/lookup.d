@@ -411,7 +411,6 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
 	default:
 		throw panic(node.location, format("unexpected nodetype %s", node.nodeType));
 	}
-	version (Volt) assert(false);
 }
 
 /**
@@ -472,7 +471,6 @@ ir.Store ensureResolved(LanguagePass lp, ir.Store s)
 	case FunctionParam:
 		return s;
 	}
-	version (Volt) assert(false);
 }
 
 /**

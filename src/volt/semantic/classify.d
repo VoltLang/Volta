@@ -99,7 +99,6 @@ size_t size(LanguagePass lp, ir.Node node)
 	default:
 		throw panicUnhandled(node, ir.nodeToString(node));
 	}
-	version (Volt) assert(false);
 }
 
 /**
@@ -210,7 +209,6 @@ size_t alignment(LanguagePass lp, ir.Type node)
 	default:
 		throw panicUnhandled(node, ir.nodeToString(node));
 	}
-	version (Volt) assert(false);
 }
 
 
@@ -433,7 +431,6 @@ bool isIntegral(ir.PrimitiveType.Kind kind)
 	default:
 		return false;
 	}
-	version (Volt) assert(false);
 }
 
 bool isIntegralOrBool(ir.PrimitiveType.Kind kind)
@@ -443,7 +440,6 @@ bool isIntegralOrBool(ir.PrimitiveType.Kind kind)
 	} else {
 		return isIntegral(kind);
 	}
-	version (Volt) assert(false);
 }
 
 bool isFloatingPoint(ir.Type t)
@@ -465,7 +461,6 @@ bool isFloatingPoint(ir.PrimitiveType.Kind kind)
 	default:
 		return false;
 	}
-	version (Volt) assert(false);
 }
 
 bool isUnsigned(ir.PrimitiveType.Kind kind)
@@ -483,7 +478,6 @@ bool isUnsigned(ir.PrimitiveType.Kind kind)
 	default:
 		return true;
 	}
-	version (Volt) assert(false);
 }
 
 bool isOkayForPointerArithmetic(ir.PrimitiveType.Kind kind)
@@ -501,7 +495,6 @@ bool isOkayForPointerArithmetic(ir.PrimitiveType.Kind kind)
 	default:
 		return false;
 	}
-	version (Volt) assert(false);
 }
 
 bool isInt(ir.Type type)
@@ -1048,7 +1041,6 @@ bool isFunctionMemberOrConstructor(ir.Function fn)
 	case GlobalNested:
 		return false;
 	}
-	version (Volt) assert(false);
 }
 
 bool isFunctionStatic(ir.Function fn)
@@ -1071,7 +1063,6 @@ bool isFunctionStatic(ir.Function fn)
 	case Nested:
 		return true;
 	}
-	version (Volt) assert(false);
 }
 
 bool isVariableStatic(ir.Variable var)
@@ -1087,7 +1078,6 @@ bool isVariableStatic(ir.Variable var)
 	case Global:
 		return true;
 	}
-	version (Volt) assert(false);
 }
 
 

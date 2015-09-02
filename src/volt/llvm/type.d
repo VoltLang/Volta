@@ -772,8 +772,6 @@ Type fromIrImpl(State state, ir.Type irType)
 		auto emsg = format("Can't translate type %s (%s)", irType.nodeType, irType.mangledName);
 		throw panic(irType.location, emsg);
 	}
-
-	version (Volt) assert(false);
 }
 
 /**

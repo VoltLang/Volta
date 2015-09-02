@@ -629,7 +629,6 @@ Visitor.Status accept(ir.Node n, Visitor av)
 	case Comma:
 		throw panicUnhandled(n, ir.nodeToString(n));
 	}
-	version(Volt) assert(false);
 }
 
 Visitor.Status acceptExp(ref ir.Exp exp, Visitor av)

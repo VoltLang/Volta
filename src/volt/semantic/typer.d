@@ -740,7 +740,8 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 		}
 		return t;
 	}
-	version (Volt) assert(false);
+
+	version (Volt) assert(false); // If
 }
 
 ir.Type getPostfixIdentifierArrayType(LanguagePass lp, ir.Postfix postfix, ir.ArrayType arrayType, ir.Scope currentScope)

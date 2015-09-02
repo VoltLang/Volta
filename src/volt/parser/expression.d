@@ -850,7 +850,7 @@ ParseStatus parseFunctionLiteral(ParserStream ps, out ir.FunctionLiteral fn)
 		}
 		return Succeeded;
 	}
-	version(Volt) assert(false);
+	version (Volt) assert(false); // If
 }
 
 ParseStatus parseTraitsExp(ParserStream ps, out ir.TraitsExp texp)

@@ -194,14 +194,14 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		} else {
 			goto default;
 		}
-		version(Volt) assert(false);
+		version (Volt) assert(false); // If
 	case TokenType.Final:
 		if (ps.lookahead(1).type == TokenType.Switch) {
 			goto case TokenType.Switch;
 		} else {
 			goto default;
 		}
-		version(Volt) assert(false);
+		version (Volt) assert(false); // If/Case
 	case TokenType.Static:
 		if (ps.lookahead(1).type == TokenType.If) {
 			goto case TokenType.Version;
@@ -210,7 +210,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		} else {
 			goto default;
 		}
-		version(Volt) assert(false);
+		version (Volt) assert(false); // If/Case
 	case TokenType.Assert:
 		ir.AssertStatement a;
 		succeeded = parseAssertStatement(ps, a);
@@ -268,7 +268,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		}
 		return eatComments(ps);
 	}
-	version(Volt) assert(false);
+	version (Volt) assert(false); // If
 }
 
 /* Try to parse as a declaration first because

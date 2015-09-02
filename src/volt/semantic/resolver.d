@@ -135,7 +135,6 @@ ir.Type resolveType(LanguagePass lp, ir.Scope current, ir.Type type)
 	default:
 		throw panicUnhandled(type, ir.nodeToString(type));
 	}
-	version (Volt) assert(false);
 }
 
 void resolveTR(LanguagePass lp, ir.Scope current, ir.TypeReference tr)

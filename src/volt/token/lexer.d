@@ -209,8 +209,6 @@ LexStatus lexNext(TokenWriter tw)
 	case End:
 		return lexEOF(tw);
 	}
-
-	version (Volt) assert(false);
 }
 
 enum NextLex
@@ -508,7 +506,6 @@ LexStatus lexSymbol(TokenWriter tw)
 	default:
 		return lexFailed(tw, "symbol");
 	}
-	version (Volt) assert(false);
 }
 
 LexStatus lexSingleSymbol(TokenWriter tw, dchar c, TokenType symbol)

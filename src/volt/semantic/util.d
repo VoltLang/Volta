@@ -327,5 +327,4 @@ ir.Exp getDefaultInit(Location l, LanguagePass lp, ir.Scope current, ir.Type t)
 	default:
 		throw panicUnhandled(l, format("%s", t.nodeType));
 	}
-	version (Volt) assert(false);
 }

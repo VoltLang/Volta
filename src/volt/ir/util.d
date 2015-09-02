@@ -141,7 +141,6 @@ ir.Scope getScopeFromStore(ir.Store store)
 	case Alias:
 		throw panic(store.node.location, "unresolved alias");
 	}
-	version(Volt) assert(false);
 }
 
 /**
