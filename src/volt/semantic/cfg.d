@@ -273,8 +273,18 @@ public:
 		currentSwitchStatement = ss;
 
 		auto currentBlock = block;
+		size_t empty;
 		foreach (i, _case; ss.cases) {
 			currentSwitchBlocks[i] = new Block(currentBlock);
+			if (_case.statements.statements.length == 0) {
+				/* If it's empty, consider it as terminating.
+				 */
+				currentSwitchBlocks[i].mTerminates = true;
+				empty++;
+			}
+		}
+		if (empty == ss.cases.length) {
+			throw makeExpected(ss.location, "at least one case with a body");
 		}
 
 		foreach (i, _case; ss.cases) {
