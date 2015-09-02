@@ -546,7 +546,21 @@ CompilerException makeInvalidThis(ir.Node node, ir.Type was, ir.Type expected, s
 
 CompilerException makeNotMember(ir.Node node, ir.Type aggregate, string member, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(node.location, format("'%s' has no member '%s'", aggregate.errorString(), member), file, line);
+	auto pfix = cast(ir.Postfix) node;
+	string emsg = format("'%s' has no member '%s'.", aggregate.errorString(), member);
+	if (pfix !is null && pfix.child.nodeType == ir.NodeType.ExpReference) {
+		auto eref = cast(ir.ExpReference) pfix.child;
+		auto var = cast(ir.Variable)eref.decl;
+		string name;
+		foreach (i, id; eref.idents) {
+			name ~= id;
+			if (i < eref.idents.length - 1) {
+				name ~= ".";
+			}
+		}
+		emsg = format("instance '%s' (of type '%s') has no member '%s'.", name, aggregate.errorString(), member);
+	}
+	return new CompilerError(node.location, emsg, file, line);
 }
 
 CompilerException makeNotMember(Location location, string aggregate, string member, string file = __FILE__, const int line = __LINE__)
