@@ -187,6 +187,7 @@ public:
 	/// Generate blocks from an if statement.
 	override Status enter(ir.IfStatement ifs)
 	{
+		// TODO: This chokes on nested ifs -- break it up, and don't do it all at once.
 		ensureNonNullBlock(ifs.location);
 		auto currentBlock = block;
 		auto thenBlock = block = new Block(currentBlock);
