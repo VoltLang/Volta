@@ -17,8 +17,7 @@ VIV_SRC= \
 	src/volt/exceptions.d \
 	src/volt/interfaces.d \
 	src/volt/ir/*.d \
-	src/volt/util/string.d \
-	src/volt/util/worktracker.d \
+	src/volt/util/*.d \
 	src/volt/token/*.d \
 	src/volt/parser/*.d \
 	src/volt/visitor/*.d \
