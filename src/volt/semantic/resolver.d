@@ -135,6 +135,7 @@ ir.Type resolveType(LanguagePass lp, ir.Scope current, ir.Type type)
 	default:
 		throw panicUnhandled(type, ir.nodeToString(type));
 	}
+	version (Volt) assert(false);
 }
 
 void resolveTR(LanguagePass lp, ir.Scope current, ir.TypeReference tr)
@@ -158,16 +159,16 @@ void resolveAA(LanguagePass lp, ir.Scope current, ir.AAType at)
 		base = tr.type;
 	}
 
-	if (base.nodeType() == ir.NodeType.Struct ||
-	    base.nodeType() == ir.NodeType.Class) {
+	if (base.nodeType == ir.NodeType.Struct ||
+	    base.nodeType == ir.NodeType.Class) {
 		return;
 	}
 
 	bool needsConstness;
-	if (base.nodeType() == ir.NodeType.ArrayType) {
+	if (base.nodeType == ir.NodeType.ArrayType) {
 		base = (cast(ir.ArrayType)base).base;
 		needsConstness = true;
-	} else if (base.nodeType() == ir.NodeType.StaticArrayType) {
+	} else if (base.nodeType == ir.NodeType.StaticArrayType) {
 		base = (cast(ir.StaticArrayType)base).base;
 		needsConstness = true;
 	}
