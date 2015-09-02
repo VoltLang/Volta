@@ -34,7 +34,7 @@ import volt.semantic.typeinfo;
 void resolveAlias(LanguagePass lp, ir.Alias a)
 {
 	auto s = a.store;
-	scope(exit) {
+	scope (exit) {
 		a.isResolved = true;
 	}
 

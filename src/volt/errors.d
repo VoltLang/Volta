@@ -721,7 +721,7 @@ string errorString(ir.Type type)
 		suffix ~= ")";
 	}
 	if (type.isScope) {
-		outString ~= "scope(";
+		outString ~= "scope (";
 		suffix ~= ")";
 	}
 

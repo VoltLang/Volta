@@ -22,7 +22,7 @@ bool doPerfPrint;
 int main(string[] args)
 {
 	perf.tag("setup");
-	scope(exit) {
+	scope (exit) {
 		perf.tag("done");
 		if (doPerfPrint) {
 			perf.print();

@@ -520,7 +520,7 @@ protected:
 			return null;
 		}
 
-		scope(exit) {
+		scope (exit) {
 			if (attr.members.nodes.length > 0) {
 				ctxPop(attr);
 			}

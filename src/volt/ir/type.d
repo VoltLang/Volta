@@ -433,7 +433,7 @@ public:
  * scope
  * const/immutable/inout
  *  
- * const(scope(T))) => scope(const(T)))
+ * const(scope (T))) => scope (const(T)))
  *
  * The Kinds Scope, Const, Immutable, Ref, and Out are
  * mangled as 'e', 'o', 'm', 'r', and 'O' respectively.

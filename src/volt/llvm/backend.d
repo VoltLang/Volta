@@ -76,12 +76,12 @@ public:
 		assert(mFilename !is null);
 	}
 	body {
-		scope(exit)
+		scope (exit)
 			mFilename = null;
 
 		auto state = new VoltState(lp, m);
 		auto mod = state.mod;
-		scope(exit) {
+		scope (exit) {
 			state.close();
 			mFilename = null;
 		}
@@ -149,11 +149,11 @@ void linkModules(string output, string[] inputs...)
 		return;
 
 	ctx = LLVMContextCreate();
-	scope(exit)
+	scope (exit)
 		LLVMContextDispose(ctx);
 
 	dst = loadModule(ctx, inputs[0]);
-	scope(exit)
+	scope (exit)
 		LLVMDisposeModule(dst);
 
 	foreach (filename; inputs[1 .. $]) {
@@ -181,13 +181,13 @@ void writeObjectFile(Settings settings, string output, string input)
 
 	// Need a context to load the module into.
 	auto ctx = LLVMContextCreate();
-	scope(exit)
+	scope (exit)
 		LLVMContextDispose(ctx);
 
 
 	// Load the module from file.
 	auto mod = loadModule(ctx, input);
-	scope(exit)
+	scope (exit)
 		LLVMDisposeModule(mod);
 
 
@@ -202,7 +202,7 @@ void writeObjectFile(Settings settings, string output, string input)
 		LLVMCodeGenOptLevel.Default,
 		LLVMRelocMode.Default,
 		LLVMCodeModel.Default);
-	scope(exit)
+	scope (exit)
 		LLVMDisposeTargetMachine(machine);
 
 

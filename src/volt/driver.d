@@ -251,7 +251,7 @@ protected:
 
 	int intCompile()
 	{
-		scope(exit) {
+		scope (exit) {
 			perf.tag("exit");
 		}
 
@@ -274,7 +274,7 @@ protected:
 				}
 			}
 		}
-		scope(failure) debugPasses();
+		scope (failure) debugPasses();
 
 		perf.tag("parsing");
 
@@ -361,7 +361,7 @@ protected:
 
 		string bc, obj, of;
 
-		scope(exit) {
+		scope (exit) {
 			foreach (f; temporaryFiles)
 				f.remove();
 			

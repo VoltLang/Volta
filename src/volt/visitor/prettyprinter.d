@@ -1447,7 +1447,7 @@ public:
 		case Auto: wf("auto("); break;
 		case Const: wf("const("); break;
 		case Immutable: wf("immutable("); break;
-		case Scope: wf("scope("); break;
+		case Scope: wf("scope ("); break;
 		case Ref: wf("ref("); break;
 		case Out: wf("out("); break;
 		}
@@ -2234,7 +2234,7 @@ protected:
 			wf("immutable(");
 		}
 		if (t.isScope) {
-			wf("scope(");
+			wf("scope (");
 		}
 	}
 
