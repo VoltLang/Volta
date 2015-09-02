@@ -91,6 +91,10 @@ bool willConvert(ir.Type argument, ir.Type parameter)
 			return false;
 		}
 		return isOrInheritsFrom(rclass, lclass);
+	case StaticArrayType:
+		uint dummyInt;
+		ir.Exp dummyExp;
+		return willConvertStaticArray(parameter, argument, dummyInt, dummyExp);
 	case ArrayType:
 		uint dummyInt;
 		ir.Exp dummyExp;
@@ -108,6 +112,16 @@ bool willConvert(ir.Type argument, ir.Type parameter)
 	default: return false;
 	}
 	version (Volt) assert(false);
+}
+
+bool willConvertStaticArray(ir.Type l, ir.Type r, ref uint flag, ref ir.Exp exp)
+{
+	auto sa = cast(ir.StaticArrayType) r;
+	if (sa is null) {
+		return false;
+	}
+	auto at = buildArrayTypeSmart(sa.location, sa.base);
+	return willConvertArray(l, at, flag, exp);
 }
 
 bool willConvertArray(ir.Type l, ir.Type r, ref uint flag, ref ir.Exp exp)
