@@ -27,7 +27,7 @@ void warning(Location loc, string message)
 
 CompilerException makeBadMerge(ir.Alias a, ir.Store s, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(a.location, "can not merge alias since it is not a Function.", file, line);
+	return new CompilerError(a.location, "cannot merge alias as it is not a function.", file, line);
 }
 
 CompilerException makeScopeOutsideFunction(Location l, string file = __FILE__, const int line = __LINE__)
@@ -490,23 +490,7 @@ CompilerException makeExpectedContext(ir.Node node, ir.Node node2, string file =
 
 CompilerException makeBadImplicitCast(ir.Node node, ir.Type from, ir.Type to, string file = __FILE__, const int line = __LINE__)
 {
-	string mainFrom = from.glossedName;
-	if (mainFrom.length == 0) {
-		mainFrom = from.errorString();
-	}
-	string extraFrom = " ";
-	if (from.errorString() != mainFrom) {
-		extraFrom = format(" (aka '%s') ", from.errorString());
-	}
-	string mainTo = to.glossedName;
-	if (mainTo.length == 0) {
-		mainTo = to.errorString();
-	}
-	string extraTo = "";
-	if (to.errorString() != mainTo) {
-		extraTo = format(" (aka '%s') ", to.errorString());
-	}
-	string emsg = format("cannot implicitly convert '%s'%sto '%s'%s.", mainFrom, extraFrom, mainTo, extraTo);
+	string emsg = format("cannot implicitly convert %s to %s.", typeString(from), typeString(to));
 	return new CompilerError(node.location, emsg, file, line);
 }
 
@@ -783,4 +767,17 @@ string errorString(ir.Type type)
 	}
 
 	return outString ~ suffix;
+}
+
+string typeString(ir.Type t)
+{
+	string s = t.glossedName;
+	if (s.length == 0) {
+		s = t.errorString();
+	}
+	s = format("'%s'", s);
+	if (t.glossedName.length != 0) {
+		s = format("%s (aka '%s')", s, t.errorString());
+	}
+	return s;
 }
