@@ -222,6 +222,27 @@ public:
 	 */
 	abstract ir.Module[] getModules();
 
+
+	/*
+	 *
+	 * Circular dependancy checker.
+	 *
+	 */
+
+	alias DoneDg = void delegate();
+
+	/**
+	 * These functions are used to assure that no circular dependancies
+	 * happens when resolving nodes like: Class, Function, Variables, etc.
+	 * @{
+	 */
+	abstract DoneDg startResolving(ir.Node n);
+	abstract DoneDg startActualizing(ir.Node n);
+	/**
+	 * @}
+	 */
+
+
 	/*
 	 *
 	 * Resolve functions.
@@ -239,28 +260,11 @@ public:
 	abstract void gather(ir.Scope current, ir.BlockStatement bs);
 
 	/**
-	 * Resolves a Variable making it usable externaly.
-	 *
-	 * @throws CompilerError on failure to resolve variable.
-	 */
-	abstract void resolve(ir.Scope current, ir.Variable v);
-
-	/**
 	 * Resolves a Function making it usable externaly,
 	 *
 	 * @throws CompilerError on failure to resolve function.
 	 */
 	abstract void resolve(ir.Scope current, ir.Function fn);
-
-	/**
-	 * Resolves a unresolved alias store, the store can
-	 * change type to Type, either the field myAlias or
-	 * type is set.
-	 *
-	 * @throws CompilerError on failure to resolve alias.
-	 */
-	final void resolve(ir.Alias a)
-	{ if (!a.isResolved) doResolve(a); }
 
 	/**
 	 * Resolves an Attribute, for UserAttribute usages.
@@ -300,6 +304,24 @@ public:
 	 * is changed to kind Function, since only functions can be merged.
 	 */
 	abstract void resolve(ir.Store);
+
+	/**
+	 * Resolves a Variable making it usable externaly.
+	 *
+	 * @throws CompilerError on failure to resolve variable.
+	 */
+	final void resolve(ir.Scope current, ir.Variable v)
+	{ if (!v.isResolved) doResolve(current, v); }
+
+	/**
+	 * Resolves a unresolved alias store, the store can
+	 * change type to Type, either the field myAlias or
+	 * type is set.
+	 *
+	 * @throws CompilerError on failure to resolve alias.
+	 */
+	final void resolve(ir.Alias a)
+	{ if (!a.isResolved) doResolve(a); }
 
 	/**
 	 * Resolves an Enum making it usable externaly, done on lookup of it.
@@ -406,6 +428,7 @@ public:
 	 */
 
 protected:
+	abstract void doResolve(ir.Scope current, ir.Variable v);
 	abstract void doResolve(ir.Alias a);
 	abstract void doResolve(ir.Enum e);
 	abstract void doResolve(ir._Interface i);

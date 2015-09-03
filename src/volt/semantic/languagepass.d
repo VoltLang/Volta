@@ -290,6 +290,23 @@ public:
 
 	/*
 	 *
+	 * Circular dependancy checker.
+	 *
+	 */
+
+	override DoneDg startResolving(ir.Node n)
+	{
+		return &mTracker.add(n, Work.Action.Resolve).done;
+	}
+
+	override DoneDg startActualizing(ir.Node n)
+	{
+		return &mTracker.add(n, Work.Action.Actualize).done;
+	}
+
+
+	/*
+	 *
 	 * Resolver functions.
 	 *
 	 */
@@ -301,24 +318,7 @@ public:
 		g.close();
 	}
 
-	override void resolve(ir.Scope current, ir.Variable v)
-	{
-		if (v.isResolved)
-			return;
 
-		auto w = mTracker.add(v, Work.Action.Resolve);
-		scope (exit)
-			w.done();
-
-		resolve(current, v.userAttrs);
-
-		v.type = resolve(current, v.type);
-
-		auto e = new ExTyper(this);
-		e.transform(current, v);
-
-		v.isResolved = true;
-	}
 
 	override void resolve(ir.Scope current, ir.Function fn)
 	{
@@ -432,11 +432,18 @@ public:
 		s.kind = ir.Store.Kind.Function;
 	}
 
+
 	/*
 	 *
 	 * DoResolve functions.
 	 *
 	 */
+
+	override void doResolve(ir.Scope current, ir.Variable v)
+	{
+		auto e = new ExTyper(this);
+		e.transform(current, v);
+	}
 
 	override void doResolve(ir.Alias a)
 	{
@@ -625,10 +632,10 @@ public:
 	{
 		foreach (node; members.nodes) {
 			auto var = cast(ir.Variable) node;
-			if (var is null) {
+			if (var is null || var.isResolved) {
 				continue;
 			}
-			resolve(current, var);
+			doResolve(current, var);
 		}
 	}
 

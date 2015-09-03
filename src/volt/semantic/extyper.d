@@ -3448,7 +3448,6 @@ public:
 class ExTyper : NullVisitor, Pass
 {
 public:
-	bool enterFirstVariable;
 	int nestedDepth;
 	ExtyperContext ctx;
 
@@ -3477,7 +3476,6 @@ public:
 		ctx.setupFromScope(current);
 		scope (exit) ctx.reset();
 
-		this.enterFirstVariable = true;
 		accept(v, this);
 	}
 
@@ -3680,20 +3678,22 @@ public:
 
 	override Status enter(ir.Variable v)
 	{
-		ctx.isVarAssign = true;
-		scope (exit) ctx.isVarAssign = false;
-		// This has to be done this way, because the order in
-		// which the calls in this and the visiting functions
-		// are executed matters.
-		if (!enterFirstVariable) {
-			v.hasBeenDeclared = true;
-			ctx.lp.resolve(ctx.current, v);
-			if (v.assign !is null) {
-				rejectBadScopeAssign(ctx, v.assign, v.type);
-			}
+		if (v.isResolved) {
 			return ContinueParent;
 		}
-		enterFirstVariable = true;
+
+		auto done = ctx.lp.startResolving(v);
+		ctx.isVarAssign = true;
+
+		scope (exit) {
+			ctx.isVarAssign = false;
+			done();
+		}
+
+		v.hasBeenDeclared = true;
+		foreach (u; v.userAttrs) {
+			ctx.lp.resolve(ctx.current, u);
+		}
 
 		// Fix up type as best as possible.
 		accept(v.type, this);
@@ -3719,7 +3719,6 @@ public:
 			v.type = flattenStorage(v.type);
 		}
 
-
 		replaceStorageIfNeeded(v.type);
 		accept(v.type, this);
 
@@ -3727,6 +3726,7 @@ public:
 			replaceGlobalArrayLiteralIfNeeded(ctx, v);
 		}
 
+		v.isResolved = true;
 		return ContinueParent;
 	}
 
