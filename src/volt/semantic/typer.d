@@ -736,11 +736,8 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 		assert(asDecl !is null);
 		return asDecl.type;
 	} else if (store.kind == ir.Store.Kind.Function) {
-		if (store.functions[0].type.isProperty) {
-			if (store.functions.length > 1) {
-				throw makeExpected(postfix.location, "arguments for overloaded function set");
-			}
-			return store.functions[0].type.ret;
+		if (store.functions.length == 1) {
+			return store.functions[0].type;
 		}
 		return buildSetType(postfix.location, store.functions);
 	} else if (store.kind == ir.Store.Kind.EnumDeclaration) {

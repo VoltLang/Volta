@@ -518,7 +518,21 @@ void rewriteOverloadedProperty(ExtyperContext ctx, ref ir.Exp exp, bool nested =
 	if (rtype is null) {
 		return;
 	}
-	if (rtype.nodeType == ir.NodeType.FunctionSetType) {
+	auto ftype = cast(ir.FunctionType)rtype;
+	if (ftype !is null && ftype.isProperty && ftype.params.length == 0 && pfix !is null && pfix.identifier !is null) {
+		auto ctype = cast(ir.Aggregate)realType(getExpType(ctx.lp, pfix.child, ctx.current));
+		if (ctype !is null) {
+			auto store = lookupOnlyThisScope(ctx.lp, ctype.myScope, pfix.location, pfix.identifier.value);
+			if (store !is null) {
+				ir.Function fn = selectFunction(ctx.lp, ctx.current, store.functions, [], pfix.location);
+				if (fn !is null) {
+					ir.Postfix call = buildMemberCall(pfix.location, pfix.child, buildExpReference(pfix.location, fn, fn.name), fn.name, []);
+					call.isImplicitPropertyCall = true;
+					exp = call;
+				}
+			}
+		}
+	} else if (rtype.nodeType == ir.NodeType.FunctionSetType) {
 		auto err = makeCannotInfer(exp.location);
 		auto fsett = cast(ir.FunctionSetType)rtype;
 		auto set = fsett.set;
