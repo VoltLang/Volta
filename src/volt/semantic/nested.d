@@ -42,6 +42,7 @@ ir.Struct createAndAddNestedStruct(ir.Function fn, ir.BlockStatement bs)
 {
 	auto s = buildStruct(fn.location, "__Nested" ~ toString(cast(void*)fn), []);
 	auto decl = buildVariable(fn.location, buildTypeReference(s.location, s, "__Nested"), ir.Variable.Storage.Function, "__nested");
+	decl.isResolved = true;
 	fn.nestedVariable = decl;
 	bs.statements = s ~ (decl ~ bs.statements);
 	return s;

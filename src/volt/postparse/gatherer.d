@@ -187,6 +187,7 @@ void addScope(ir.Scope current, ir.Function fn, ir.Type thisType, ir.Function[] 
 		assert(ns !is null);
 		auto tr = buildTypeReference(ns.location, ns, "__Nested");
 		auto decl = buildVariable(fn.location, tr, ir.Variable.Storage.Function, "__nested");
+		decl.isResolved = true;
 		if (fn.nestedHiddenParameter is null) {
 			// XXX: Note __nested is not added to any scope.
 			// XXX: Instead make sure that nestedHiddenParameter is visited (and as such visited)

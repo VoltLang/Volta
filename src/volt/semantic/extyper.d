@@ -3330,6 +3330,7 @@ void transformForeaches(ExtyperContext ctx, ir.BlockStatement bs)
 			assert(ns.myScope !is null);
 			auto tr = buildTypeReference(ns.location, ns, "__Nested");
 			auto decl = buildVariable(nestedFunction.location, tr, ir.Variable.Storage.Function, "__nested");
+			decl.isResolved = true;
 			if (nestedFunction.nestedHiddenParameter is null) {
 				nestedFunction.nestedHiddenParameter = decl;
 				nestedFunction.nestedVariable = decl;
@@ -3798,6 +3799,7 @@ public:
 		if (e !is null && realType(type).nodeType == ir.NodeType.Class) {
 			auto var = buildVariableSmart(ws.block.location, type, ir.Variable.Storage.Function, ws.block.myScope.genAnonIdent());
 			var.assign = e;
+			var.isResolved = true;
 			ws.block.statements = var ~ ws.block.statements;
 			ws.exp = buildExpReference(var.location, var, var.name);
 		}

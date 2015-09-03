@@ -95,6 +95,7 @@ ir.Variable buildTypeInfoVariable(LanguagePass lp, ir.Type type, ir.Exp assign, 
 
 	auto literalVar = new ir.Variable();
 	literalVar.location = type.location;
+	literalVar.isResolved = true;
 	literalVar.assign = assign;
 	literalVar.type = buildTypeReference(type.location, lp.typeInfoClass, lp.typeInfoClass.name);
 	literalVar.mangledName = varName;

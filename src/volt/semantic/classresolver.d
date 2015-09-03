@@ -572,6 +572,7 @@ void buildInstanceVariable(LanguagePass lp, ir.Class _class)
 
 	auto l = _class.location;
 	_class.initVariable = buildVariableSmart(l, _class.layoutStruct, ir.Variable.Storage.Global, "__cinit");
+	_class.initVariable.isResolved = true;
 
 	ir.Exp[] exps;
 	exps ~= buildAddrOf(l, _class.vtableVariable, _class.vtableVariable.name);
@@ -637,6 +638,7 @@ void emitVtableVariable(LanguagePass lp, ir.Class _class)
 	assign.type = copyTypeSmart(l, _class.vtableStruct);
 
 	_class.vtableVariable = buildVariableSmart(l, _class.vtableStruct, ir.Variable.Storage.Global, "__vtable_instance");
+	_class.vtableVariable.isResolved = true;
 	_class.vtableVariable.mangledName = "_V__Vtable_" ~ mangle(_class);
 	_class.vtableVariable.assign = assign;
 	_class.members.nodes ~= _class.vtableVariable;

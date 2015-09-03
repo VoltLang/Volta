@@ -348,11 +348,16 @@ public:
 	{
 		auto var = cast(ir.Variable) eref.decl;
 		if (var !is null) {
-			resolve(current, var);
+			// This is not correct scope.
+			if (!var.isResolved) {
+				debugPrintNode(eref);
+				assert(false);
+			}
 			return;
 		}
 		auto fn = cast(ir.Function) eref.decl;
 		if (fn !is null) {
+			// This is not correct scope.
 			resolve(current, fn);
 			return;
 		}
