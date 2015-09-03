@@ -30,17 +30,18 @@ int realMain(string[] args)
 		output.writefln("usage: %s [files]\n", args[0]);
 		return 1;
 	}
-	foreach (arg; args[1 .. args.length]) {
-		auto ret = expandIfGlob(arg);
-		foreach (file; ret) {
-			try {
-				doFile(file);
-			} catch (object.Exception e) {
-				output.writefln("\n%s\n%s:%s", e.message, e.file, e.line);
-			} catch (object.Throwable e) {
-				output.writefln("\nThrowable: '???'\n%s:%s: '%s'",
-				                e.throwFile, e.throwLine, e.message);
-			}
+
+	string[] files;
+	handleArgs(args[1 .. $], ref files);
+
+	foreach (file; files) {
+		try {
+			doFile(file);
+		} catch (object.Exception e) {
+			output.writefln("\n%s\n%s:%s", e.message, e.file, e.line);
+		} catch (object.Throwable e) {
+			output.writefln("\nThrowable: '???'\n%s:%s: '%s'",
+			                e.throwFile, e.throwLine, e.message);
 		}
 	}
 	return 0;
@@ -56,39 +57,23 @@ void doFile(string arg)
 	auto m = p.parseNewFile(src, loc);
 }
 
-string[] expandIfGlob(string input)
+void handleArgs(string[] args, ref string[] files)
 {
-	version (Windows) {
-		input = input.replace("/", "\\");
+	void file(string arg) {
+		files ~= arg;
 	}
 
-	if (isGlob(input)) {
-		auto dir = dirName(input);
-		auto name = baseName(input);
-
-		// Just let it explode later on.
-		if (isGlob(dir)) {
-			return [input];
+	foreach(arg; args) {
+		version (Windows) {
+			arg = arg.replace("/", "\\");
 		}
 
-		string[] ret;
-
-		void dg(string file) {
-			ret ~= dir ~ dirSeparator ~ file;
-			version (Windows) {
-				ret[$-1] = ret[$-1].replace("\\", "/");
-			}
+		auto barg = baseName(arg);
+		if (barg.length > 2 && barg[0 .. 2] == "*.") {
+			searchDir(dirName(arg), barg, file);
+			continue;
 		}
 
-		searchDir(dir, name, dg);
-
-		return ret;
+		file(arg);
 	}
-
-	return [input];
-}
-
-bool isGlob(string str)
-{
-	return str.indexOf("*") >= 0;
 }
