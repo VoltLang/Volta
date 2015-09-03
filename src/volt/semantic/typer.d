@@ -637,6 +637,19 @@ void retrieveScope(LanguagePass lp, ir.Node tt, ir.Postfix postfix, ref ir.Scope
 		assert(asEnum !is null);
 		_scope = asEnum.myScope;
 		emsg = format("enum '%s' has no member '%s'.", asEnum.name, postfix.identifier.value);
+	} else if (tt.nodeType == ir.NodeType.FunctionSetType) {
+		auto fset = cast(ir.FunctionSetType) tt;
+		ir.Function[] properties;
+		foreach (fn; fset.set.functions) {
+			if (fn.type.isProperty && fn.params.length == 0) {
+				properties ~= fn;
+			}
+		}
+		if (properties.length == 1) {
+			return retrieveScope(lp, properties[0].type.ret, postfix, _scope, _class, emsg);
+		} else {
+			throw makeNotMember(postfix, cast(ir.Type) tt, postfix.identifier.value);
+		}
 	} else {
 		auto type = cast(ir.Type) tt;
 		assert(type !is null);
