@@ -59,10 +59,6 @@ void doFile(string arg)
 
 void handleArgs(string[] args, ref string[] files)
 {
-	void file(string arg) {
-		files ~= arg;
-	}
-
 	foreach(arg; args) {
 		version (Windows) {
 			arg = arg.replace("/", "\\");
@@ -70,10 +66,17 @@ void handleArgs(string[] args, ref string[] files)
 
 		auto barg = baseName(arg);
 		if (barg.length > 2 && barg[0 .. 2] == "*.") {
-			searchDir(dirName(arg), barg, file);
+
+			auto dir = dirName(arg);
+
+			void file(string str) {
+				files ~= dir ~ dirSeparator ~ str;
+			}
+
+			searchDir(dir, barg, file);
 			continue;
 		}
 
-		file(arg);
+		files ~= arg;
 	}
 }
