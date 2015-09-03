@@ -3458,6 +3458,17 @@ public:
 		accept(m, this);
 	}
 
+	override void close()
+	{
+	}
+
+
+	/*
+	 *
+	 * Called by the LanguagePass.
+	 *
+	 */
+
 	/**
 	 * For out of band checking of Variables.
 	 */
@@ -3520,7 +3531,7 @@ public:
 		}
 	}
 
-	void resolve(ir.EnumDeclaration ed, ir.Exp prevExp)
+	private void resolve(ir.EnumDeclaration ed, ir.Exp prevExp)
 	{
 		ed.type = ctx.lp.resolve(ctx.current, ed.type);
 
@@ -3550,9 +3561,12 @@ public:
 		ed.resolved = true;
 	}
 
-	override void close()
-	{
-	}
+
+	/*
+	 *
+	 * Visitor
+	 *
+	 */
 
 	override Status enter(ir.Module m)
 	{
@@ -3770,12 +3784,12 @@ public:
 		return Continue;
 	}
 
+
 	/*
 	 *
 	 * Statements.
 	 *
 	 */
-
 
 	override Status enter(ir.WithStatement ws)
 	{
@@ -3975,7 +3989,6 @@ public:
 	 *
 	 */
 
-
 	override Status enter(ir.FunctionType ftype)
 	{
 		replaceTypeOfIfNeeded(ctx, ftype.ret);
@@ -3987,17 +4000,14 @@ public:
 		replaceTypeOfIfNeeded(ctx, dtype.ret);
 		return Continue;
 	}
-	enum Kind
-	{
-		Alias,
-		Value,
-		Type,
-		Scope,
-		Function,
-		Template,
-		EnumDeclaration,
-		FunctionParam,
-	}
+
+
+	/*
+	 *
+	 * Expressions.
+	 *
+	 */
+
 	override Status enter(ref ir.Exp exp, ir.Typeid _typeid)
 	{
 		if (_typeid.ident.length > 0) {
@@ -4033,13 +4043,6 @@ public:
 		replaceTypeOfIfNeeded(ctx, _typeid.type);
 		return Continue;
 	}
-
-	/*
-	 *
-	 * Expressions.
-	 *
-	 */
-
 
 	/// If this is an assignment to a @property function, turn it into a function call.
 	override Status leave(ref ir.Exp e, ir.BinOp bin)
