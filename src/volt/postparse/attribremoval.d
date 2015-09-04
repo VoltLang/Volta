@@ -9,7 +9,6 @@ import volt.errors;
 import volt.interfaces;
 import volt.visitor.manip;
 import volt.visitor.visitor;
-import volt.semantic.classify;
 
 
 /**
@@ -226,16 +225,6 @@ protected:
 				fn.type.isScope = true;
 				break;
 			case Property:
-				// TODO move to semantic.
-				if (fn.type.params.length == 0) {
-					if (isVoid(fn.type.ret)) {
-						throw makeInvalidType(fn, buildVoid(fn.location));
-					}
-				} else {
-					if (fn.type.params.length != 1) {
-						throw makeWrongNumberOfArguments(fn, fn.type.params.length, isVoid(fn.type.ret) ? 0U : 1U);
-					}
-				}
 				fn.type.isProperty = true;
 				break;
 			case UserAttribute:
@@ -261,7 +250,7 @@ protected:
 			case MangledName:
 				assert(attr.arguments.length == 1);
 				auto constant = cast(ir.Constant) attr.arguments[0];
-				if (constant is null || !isString(constant.type) || constant._string.length <= 2) {
+				if (constant is null || constant._string.length <= 2 || constant._string[0] != '\"') {
 					throw makeExpected(attr, "non empty string literal argument to MangledName.");
 				}
 				assert(constant._string[0] == '\"');

@@ -3750,6 +3750,11 @@ public:
 		if (fn.isAutoReturn) {
 			fn.type.ret = buildVoid(fn.type.ret.location);
 		}
+		if (fn.type.isProperty && fn.type.params.length == 0 && isVoid(fn.type.ret)) {
+			throw makeInvalidType(fn, buildVoid(fn.location));
+		} else if (fn.type.isProperty && fn.type.params.length > 1) {
+			throw makeWrongNumberOfArguments(fn, fn.type.params.length, isVoid(fn.type.ret) ? 0U : 1U);
+		}
 
 		fn.type = cast(ir.FunctionType)ctx.lp.resolve(fn.myScope.parent, fn.type);
 
