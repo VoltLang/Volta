@@ -116,7 +116,7 @@ ParseStatus parsePanic(ParserStream ps, Location loc,
 ParseStatus unexpectedToken(ParserStream ps, ir.NodeType ntype,
                             string file = __FILE__, const int line = __LINE__)
 {
-	string found = ps.peek.type.tokenToString;
+	string found = tokenToString(ps.peek.type);
 	auto e = new ParserUnexpectedToken(ps.peek.location, ntype, found,
 	                                   file, line);
 	ps.parserErrors ~= e;
