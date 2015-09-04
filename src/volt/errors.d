@@ -25,6 +25,11 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeOverriddenNeedsProperty(ir.Function f, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(f.location, format("function '%s' is not marked @property, but overrides @property function.", f.name), file, line);
+}
+
 CompilerException makeBadBuiltin(Location l, ir.Type t, string field, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(l, format("type %s doesn't have built-in field '%s'.", typeString(t), field), file, line);

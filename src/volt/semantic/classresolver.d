@@ -412,6 +412,9 @@ bool overrideFunctionsIfNeeded(LanguagePass lp, ir.Function childFunction, ref i
 				assert(childFunction !is parentFunction);
 				throw makeNeedOverride(childFunction, parentFunction);
 			}
+			if (parentFunction.type.isProperty && !childFunction.type.isProperty) {
+				throw makeOverriddenNeedsProperty(childFunction);
+			}
 			parentFunction = childFunction;
 			return true;
 		}
