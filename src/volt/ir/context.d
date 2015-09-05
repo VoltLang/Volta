@@ -116,6 +116,9 @@ public:
 	 */
 	Exp delegate(Location) expressionDelegate;
 
+	/// Public except for binds from private imports.
+	Access access = Access.Public;
+
 
 public:
 	/**

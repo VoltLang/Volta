@@ -172,6 +172,18 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 
 	auto asMod = getModuleFromScope(_scope);
 	assert(asMod !is null);
+	bool failed, succeeded;
+	foreach (mod; asMod.myScope.importedModules) {
+		auto store = mod.myScope.getStore(name);
+		if (store !is null && store.access == ir.Access.Private) {
+			failed = asMod.myScope !is mod.myScope;
+		} else if (store !is null) {
+			succeeded = true;
+		}
+	}
+	if (!succeeded && failed) {
+		throw makeUsedBindFromPrivateImport(loc, name);
+	}
 
 	foreach (i, mod; asMod.myScope.importedModules) {
 		auto store = mod.myScope.getStore(name);

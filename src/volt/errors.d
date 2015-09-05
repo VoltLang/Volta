@@ -25,6 +25,11 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeUsedBindFromPrivateImport(Location loc, string bind, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, format("'%s' is a bind from a private import.", bind), file, line);
+}
+
 CompilerException makeOverriddenNeedsProperty(ir.Function f, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(f.location, format("function '%s' is not marked @property, but overrides @property function.", f.name), file, line);

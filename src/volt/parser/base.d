@@ -11,7 +11,7 @@ import ir = volt.ir.ir;
 
 import volt.errors;
 import volt.exceptions;
-import volt.token.token : Token, TokenType, tokenToString;
+public import volt.token.token : Token, TokenType, tokenToString;
 import volt.token.stream : TokenStream;
 import volt.token.location : Location;
 import volt.parser.errors : ParserError, ParserUnexpectedToken,
