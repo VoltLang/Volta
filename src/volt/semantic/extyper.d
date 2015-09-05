@@ -1899,13 +1899,19 @@ void extypePostfixIdentifier(ExtyperContext ctx, ref ir.Exp exp, ir.Postfix post
 		lastType = null;
 		final switch(store.kind) with (ir.Store.Kind) {
 		case Type:
+			// TODO This can be made more generic. For instance is
+			// the type Named (that is has a scope) and is not the
+			// next identifier init  we can goto scope. For all
+			// other types and if identifier is init call
+			// extypeTypeLookup.
 			lastType = cast(ir.Type) store.node;
 			assert(lastType !is null);
 			auto prim = cast(ir.PrimitiveType) lastType;
 			if (prim !is null) {
 				extypeTypeLookup(ctx, exp, postfixIdents, prim);
 				return;
-			} else if (postfixIdents.length > 0 && postfixIdents[0].identifier.value == "init") {
+			} else if (postfixIdents.length > 0 &&
+			           postfixIdents[0].identifier.value == "init") {
 				extypeTypeLookup(ctx, exp, postfixIdents, lastType);
 				return;
 			}
