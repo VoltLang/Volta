@@ -47,6 +47,7 @@ ir.Store findShadowed(LanguagePass lp, ir.Scope _scope, Location loc, string nam
 	version (Volt) assert(false); // If
 }
 
+
 /*
  *
  * Add named declarations to scopes.
@@ -151,12 +152,12 @@ void gather(ir.Scope current, ir.UserAttribute ua, Where where)
 	current.addType(ua, ua.name);
 }
 
+
 /*
  *
  * Adding scopes to nodes.
  *
  */
-
 
 void addScope(ir.Module m)
 {
@@ -203,6 +204,9 @@ void addScope(ir.Scope current, ir.Function fn, ir.Type thisType, ir.Function[] 
 	}
 
 	if (thisType is null || fn.kind == ir.Function.Kind.Function) {
+		assert(fn.kind != ir.Function.Kind.Member &&
+		       fn.kind != ir.Function.Kind.Destructor &&
+		       fn.kind != ir.Function.Kind.Constructor);
 		return;
 	}
 
