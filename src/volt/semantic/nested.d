@@ -75,7 +75,9 @@ bool replaceNested(ref ir.Exp exp, ir.ExpReference eref, ir.Variable nestParam)
 		return false;
 	}
 	exp = buildAccess(exp.location, buildExpReference(nestParam.location, nestParam, nestParam.name), name);
-	if (fp !is null && (fp.fn.type.isArgRef[fp.index] || fp.fn.type.isArgOut[fp.index])) {
+	if (fp !is null &&
+	    (fp.fn.type.isArgRef[fp.index] ||
+	     fp.fn.type.isArgOut[fp.index])) {
 		exp = buildDeref(exp.location, exp);
 	}
 	return true;
@@ -85,7 +87,8 @@ void insertBinOpAssignsForNestedVariableAssigns(ir.BlockStatement bs)
 {
 	for (size_t i = 0; i < bs.statements.length; ++i) {
 		auto var = cast(ir.Variable) bs.statements[i];
-		if (var is null || !isNested(var.storage)) {
+		if (var is null ||
+		    !isNested(var.storage)) {
 			continue;
 		}
 		if (var.assign is null) {
@@ -100,29 +103,37 @@ void insertBinOpAssignsForNestedVariableAssigns(ir.BlockStatement bs)
 
 void tagNestedVariables(Context ctx, ir.Variable var, ir.Store store, ref ir.Exp e)
 {
-	if (!ctx.isFunction || ctx.currentFunction.nestStruct is null) {
+	if (!ctx.isFunction ||
+	    ctx.currentFunction.nestStruct is null) {
 		return;
 	}
-	if (ctx.current.nestedDepth > store.parent.nestedDepth) {
-		assert(ctx.currentFunction.nestStruct !is null);
-		if (var.storage != ir.Variable.Storage.Field && !isNested(var.storage)) {
-			// If we're tagging a global variable, just ignore it.
-			if (var.storage == ir.Variable.Storage.Local || var.storage == ir.Variable.Storage.Global) {
-				return;
-			}
-			if (var.name == "this") {
-				var.storage = ir.Variable.Storage.Nested;
-				return;
-			}
-			addVarToStructSmart(ctx.currentFunction.nestStruct, var);
-			var.storage = ir.Variable.Storage.Nested;
-		} else if (var.storage == ir.Variable.Storage.Field) {
-			if (ctx.currentFunction.nestedHiddenParameter is null) {
-				return;
-			}
-			auto nref = buildExpReference(var.location, ctx.currentFunction.nestedHiddenParameter, ctx.currentFunction.nestedHiddenParameter.name);
-			auto a = buildAccess(var.location, nref, "this");
-			e = buildAccess(a.location, a, var.name);
+
+	if (ctx.current.nestedDepth <= store.parent.nestedDepth) {
+		return;
+	}
+
+	assert(ctx.currentFunction.nestStruct !is null);
+	if (var.storage != ir.Variable.Storage.Field &&
+	    !isNested(var.storage)) {
+		// If we're tagging a global variable, just ignore it.
+		if (var.storage == ir.Variable.Storage.Local ||
+		    var.storage == ir.Variable.Storage.Global) {
+			return;
 		}
+
+		var.storage = ir.Variable.Storage.Nested;
+
+		// Skip adding this variables to nested struct.
+		if (var.name == "this") {
+			return;
+		}
+		addVarToStructSmart(ctx.currentFunction.nestStruct, var);
+	} else if (var.storage == ir.Variable.Storage.Field) {
+		if (ctx.currentFunction.nestedHiddenParameter is null) {
+			return;
+		}
+		auto nref = buildExpReference(var.location, ctx.currentFunction.nestedHiddenParameter, ctx.currentFunction.nestedHiddenParameter.name);
+		auto a = buildAccess(var.location, nref, "this");
+		e = buildAccess(a.location, a, var.name);
 	}
 }
