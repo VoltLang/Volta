@@ -182,12 +182,15 @@ void addScope(ir.Scope current, ir.Function fn, ir.Type thisType, ir.Function[] 
 		}
 	}
 
-	if (current.node.nodeType == ir.NodeType.BlockStatement) {
+	if (current.node.nodeType == ir.NodeType.BlockStatement ||
+	    fn.kind == ir.Function.Kind.Nested) {
 		auto ns = functionStack[0].nestStruct;
 		assert(ns !is null);
 		auto tr = buildTypeReference(ns.location, ns, "__Nested");
 		auto decl = buildVariable(fn.location, tr, ir.Variable.Storage.Function, "__nested");
 		decl.isResolved = true;
+		decl.specialInitValue = true;
+
 		if (fn.nestedHiddenParameter is null) {
 			// XXX: Note __nested is not added to any scope.
 			// XXX: Instead make sure that nestedHiddenParameter is visited (and as such visited)
@@ -195,6 +198,7 @@ void addScope(ir.Scope current, ir.Function fn, ir.Type thisType, ir.Function[] 
 			fn.nestedVariable = decl;
 			fn.nestStruct = ns;
 			fn.type.hiddenParameter = true;
+			fn._body.statements = decl ~ fn._body.statements;
 		}
 	}
 
