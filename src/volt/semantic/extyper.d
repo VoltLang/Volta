@@ -1899,27 +1899,29 @@ void extypePostfixIdentifier(ExtyperContext ctx, ref ir.Exp exp, ir.Postfix post
 		lastType = null;
 		final switch(store.kind) with (ir.Store.Kind) {
 		case Type:
-			// TODO This can be made more generic. For instance is
-			// the type Named (that is has a scope) and is not the
-			// next identifier init  we can goto scope. For all
-			// other types and if identifier is init call
-			// extypeTypeLookup.
+
 			lastType = cast(ir.Type) store.node;
 			assert(lastType !is null);
-			auto prim = cast(ir.PrimitiveType) lastType;
-			if (prim !is null) {
-				extypeTypeLookup(ctx, exp, postfixIdents, prim);
-				return;
-			} else if (postfixIdents.length > 0 &&
-			           postfixIdents[0].identifier.value == "init") {
+
+			// If the type is a named type or if the identifier is
+			// not "init" we will lookup symbols there.
+			// If type is not a Named type look for inbuilt
+			// identifier values using extypeTypeLookup.
+			// If the next identifier is "init" use the same
+			// function to create a init value.
+			auto named = cast(ir.Named) lastType;
+			if (named is null ||
+			    (postfixIdents.length > 0 &&
+			     postfixIdents[0].identifier.value == "init")) {
 				extypeTypeLookup(ctx, exp, postfixIdents, lastType);
 				return;
 			}
 			goto case Scope;
 		case Scope:
 			_scope = getScopeFromStore(store);
-			if (_scope is null)
+			if (_scope is null) {
 				throw panic(postfix, "missing scope");
+			}
 
 			if (postfixIdents.length == 0) {
 				auto named = cast(ir.Named) store.node;
