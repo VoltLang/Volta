@@ -3524,10 +3524,21 @@ void replaceGotoCase(Context ctx, ir.SwitchStatement ss)
 class ExTyper : NullVisitor, Pass
 {
 public:
-	int nestedDepth;
 	Context ctx;
 
 public:
+	this(LanguagePass lp)
+	{
+		ctx = new Context(lp, this);
+	}
+
+
+	/*
+	 *
+	 * Pass.
+	 *
+	 */
+
 	override void transform(ir.Module m)
 	{
 		accept(m, this);
@@ -4299,11 +4310,5 @@ public:
 
 		exp = buildConstantString(fexp.location, buf.idup);
 		return Continue;
-	}
-
-public:
-	this(LanguagePass lp)
-	{
-		ctx = new Context(lp, this);
 	}
 }
