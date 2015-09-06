@@ -8,12 +8,15 @@ import ir = volt.ir.ir;
 import volt.errors;
 import volt.interfaces;
 import volt.token.location;
+import volt.visitor.visitor;
 
 
 class Context
 {
 public:
 	LanguagePass lp;
+	Visitor extyper;
+
 	bool isVarAssign;
 	ir.Type overrideType;
 
@@ -27,9 +30,10 @@ private:
 	ir.Exp[] mIndexChildren;
 
 public:
-	this(LanguagePass lp)
+	this(LanguagePass lp, Visitor extyper)
 	{
 		this.lp = lp;
+		this.extyper = extyper;
 	}
 
 	/**
