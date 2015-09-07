@@ -30,13 +30,23 @@ interface Driver
  */
 interface Frontend
 {
-	ir.Module parseNewFile(string source, Location loc);
+	/**
+	 * Parse a module and all its children from the given source.
+	 * Filename is the file from which file the source was loaded from.
+	 *
+	 * Returns:
+	 *   The parsed module.
+	 */
+	ir.Module parseNewFile(string source, string filename);
 
 	/**
 	 * Parse a zero or more statements from a string, does not
 	 * need to start with '{' or end with a '}'.
 	 *
 	 * Used for string mixins in functions.
+	 *
+	 * Returns:
+	 *   Returns the parsed statements.
 	 */
 	ir.Node[] parseStatements(string source, Location loc);
 

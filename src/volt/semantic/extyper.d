@@ -4261,7 +4261,7 @@ public:
 			exp = buildConstantString(fexp.location, fname);
 			return Continue;
 		} else if (fexp.type == ir.TokenExp.Type.Line) {
-			exp = buildConstantInt(fexp.location, cast(int) (fexp.location.line + 1));
+			exp = buildConstantInt(fexp.location, cast(int) fexp.location.line);
 			return Continue;
 		}
 

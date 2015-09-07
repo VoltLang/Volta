@@ -47,14 +47,11 @@ int realMain(string[] args)
 	return 0;
 }
 
-void doFile(string arg)
+void doFile(string file)
 {
-	Location loc;
-	loc.filename = arg;
-
+	auto src = cast(string) read(file);
 	auto p = new Parser();
-	auto src = cast(string) read(loc.filename);
-	auto m = p.parseNewFile(src, loc);
+	auto m = p.parseNewFile(src, file);
 }
 
 void handleArgs(string[] args, ref string[] files)

@@ -22,19 +22,6 @@ import volt.token.token : Token, TokenType, identifierType;
 import volt.token.writer : TokenWriter;
 import volt.token.lexererror;
 
-/**
- * Tokenizes a string pretending to be at the given location.
- *
- * Throws:
- *   CompilerError on errors.
- *
- * Returns:
- *   A ParserStream filled with tokens.
- */
-Token[] lex(string src, Location loc)
-{
-	return lex(new Source(src, loc));
-}
 
 /**
  * Tokenizes a source file.

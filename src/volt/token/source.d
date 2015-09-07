@@ -48,7 +48,7 @@ public:
 	 * Throws:
 	 *   UtfException if the source is not valid utf8.
 	 */
-	this(string s, Location location)
+	this(string s, string filename)
 	{
 		source = s;
 		checkBOM();
@@ -56,7 +56,8 @@ public:
 
 		next();
 
-		this.location = location;
+		location.filename = filename;
+		location.line = 1;
 	}
 
 	/**

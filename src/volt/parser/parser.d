@@ -54,13 +54,15 @@ public:
 	bool dumpLex;
 
 public:
-	override ir.Module parseNewFile(string source, Location loc)
+	override ir.Module parseNewFile(string source, string filename)
 	{
-		auto src = new Source(source, loc);
+		auto src = new Source(source, filename);
 		src.skipScriptLine();
+
 		auto ps = new ParserStream(lex(src));
-		if (dumpLex)
+		if (dumpLex) {
 			doDumpLex(ps);
+		}
 
 		ps.get(); // Skip, stream already checks for Begin.
 
@@ -71,10 +73,13 @@ public:
 
 	override ir.Node[] parseStatements(string source, Location loc)
 	{
-		auto src = new Source(source, loc);
+		auto src = new Source(source, loc.filename);
+		src.changeCurrentLocation(loc.filename, loc.line);
+
 		auto ps = new ParserStream(lex(src));
-		if (dumpLex)
+		if (dumpLex) {
 			doDumpLex(ps);
+		}
 
 		ps.get(); // Skip, stream already checks for Begin.
 

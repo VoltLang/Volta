@@ -242,11 +242,8 @@ protected:
 	 */
 	ir.Module loadAndParse(string file)
 	{
-		Location loc;
-		loc.filename = file;
-
-		auto src = cast(string) read(loc.filename);
-		return frontend.parseNewFile(src, loc);
+		auto src = cast(string) read(file);
+		return frontend.parseNewFile(src, file);
 	}
 
 	int intCompile()

@@ -23,7 +23,7 @@ public:
 public:
 	string toString()
 	{
-		return format("%s:%s:%s", filename, line + 1, column);
+		return format("%s:%s:%s", filename, line, column);
 	}
 
 	/**
