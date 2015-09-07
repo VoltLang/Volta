@@ -536,14 +536,14 @@ public:
 	bool noLink; ///< The -c argument
 	bool emitBitcode; ///< The --emit-bitcode argument.
 	bool noCatch; ///< The --no-catch argument.
-	bool internalDebug; ///< The --internal-dbg argument.
 	bool noStdLib; ///< The --no-stdlib argument.
 	bool removeConditionalsOnly; ///< The -E argument.
 	bool simpleTrace; ///< The --simple-trace argument.
 	bool writeDocs; ///< The --doc argument.
 	bool writeJson; ///< The --json argument.
-	bool depArgTags; ///< The --dep-argtags argument;
+	bool internalD; ///< The --internal-d argument;
 	bool internalDiff; ///< The --internal-diff argument.
+	bool internalDebug; ///< The --internal-dbg argument.
 
 	Platform platform;
 	Arch arch;

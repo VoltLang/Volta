@@ -167,7 +167,7 @@ voltaic-syntax:
 
 voltaic-viv:
 	@echo "  VOLTA  viv"
-	@$(VOLT) --internal-perf --dep-argtags -o viv $(VIV_SRC)
+	@$(VOLT) --internal-perf --internal-d -o viv $(VIV_SRC)
 
 voltaic-viv-syntax:
 	@echo "  VIV    <source>"

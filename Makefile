@@ -16,7 +16,7 @@ all:
 	$(VOLT) --no-stdlib --emit-bitcode -I rt/src -o rt/rt.bc $(RT_SRC) $(VFLAGS)
 
 viv:
-	$(VOLT) --dep-argtags -o viv.exe $(VIV_SRC) $(VFLAGS)
+	$(VOLT) --internal-d -o viv.exe $(VIV_SRC) $(VFLAGS)
 	viv src/*.d src/lib/llvm/*.d src/lib/llvm/c/*.d src/volt/*.d src/volt/ir/*.d src/volt/llvm/*.d src/volt/parser/*.d src/volt/semantic/*.d src/volt/token/*.d src/volt/util/*.d src/volt/visitor/*.d
 
 .PHONY: all viv

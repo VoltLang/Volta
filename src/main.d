@@ -263,8 +263,8 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 		case "--json":
 			settings.writeJson = true;
 			continue;
-		case "--dep-argtags":
-			settings.depArgTags = true;
+		case "--internal-d":
+			settings.internalD = true;
 			continue;
 		case "--internal-dbg":
 			settings.internalDebug = true;
@@ -383,6 +383,7 @@ bool printUsage()
 	writefln("\t--stdlib-file    Apply this file first but only when linking");
 	writefln("\t                 (ignored if --no-stdlib was given)");
 	writeln();
+	writefln("\t--internal-d     Enables internal D friendlier rules.");
 	writefln("\t--internal-dbg   Enables internal debug printing.");
 	writefln("\t--internal-perf  Enables internal performance timings.");
 	writefln("\t--internal-diff  Enables internal debug diff printing.");

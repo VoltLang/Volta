@@ -1457,12 +1457,12 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			}
 			if (asFunctionType.isArgRef[i] &&
 			    postfix.argumentTags[i] != ir.Postfix.TagKind.Ref &&
-			    !ctx.lp.settings.depArgTags) {
+			    !ctx.lp.settings.internalD) {
 				throw makeNotTaggedRef(postfix.arguments[i]);
 			}
 			if (asFunctionType.isArgOut[i] &&
 			    postfix.argumentTags[i] != ir.Postfix.TagKind.Out &&
-			    !ctx.lp.settings.depArgTags) {
+			    !ctx.lp.settings.internalD) {
 				throw makeNotTaggedOut(postfix.arguments[i]);
 			}
 		}
