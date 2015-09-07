@@ -62,6 +62,10 @@ public:
 
 	void handleImport(ir.Import i)
 	{
+		if (i.isStatic && i.access != ir.Access.Private) {
+			throw makeExpected(i.location, format("static import '%s' to be private", i.name));
+
+		}
 		auto mod = lp.getModule(i.name);
 		if (mod is null) {
 			throw makeCannotImport(i, i);
