@@ -20,7 +20,7 @@ import volt.token.location : Location;
 import volt.token.source : Source, Mark;
 import volt.token.token : Token, TokenType, identifierType;
 import volt.token.writer : TokenWriter;
-import volt.token.lexererror;
+import volt.token.error;
 
 
 /**

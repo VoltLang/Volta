@@ -4,9 +4,9 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.token.writer;
 
+import volt.token.error;
 import volt.token.source;
 import volt.token.stream;
-import volt.token.lexererror;
 
 
 /**
