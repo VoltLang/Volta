@@ -3,6 +3,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.classresolver;
 
+import watt.text.format : format;
+
 import ir = volt.ir.ir;
 import volt.ir.util;
 

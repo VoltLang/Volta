@@ -15,7 +15,7 @@ import volt.token.location;
 
 import volt.parser.base;
 import volt.parser.declaration;
-import volt.parser.statements : parseMixinStatement;
+public import volt.parser.statements : parseMixinStatement;
 import volt.parser.expression;
 
 

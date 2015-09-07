@@ -5,6 +5,7 @@ module volt.visitor.debugprinter;
 import watt.conv : toString;
 import watt.io.streams : OutputStream;
 import watt.io.std : writefln, writef, output;
+import watt.text.format : format;
 
 import ir = volt.ir.ir;
 

@@ -4,6 +4,7 @@ module volt.errors;
 
 import watt.conv : toLower;
 import watt.text.format : format;
+import watt.io.std : writefln;
 
 import ir = volt.ir.ir;
 
