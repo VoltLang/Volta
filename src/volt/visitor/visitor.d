@@ -396,7 +396,10 @@ Visitor.Status parentContinue(Visitor.Status s)
 
 
 Visitor.Status accept(ir.Node n, Visitor av)
-{
+out (result) {
+	assert(result != VisitorContinueParent);
+}
+body {
 	auto status = av.debugVisitNode(n);
 	if (status != VisitorContinue) {
 		return parentContinue(status);
