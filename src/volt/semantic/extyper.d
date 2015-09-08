@@ -1280,22 +1280,22 @@ private void resolvePostfixOverload(Context ctx, ir.Postfix postfix,
  */
 private void rewriteHomogenousVariadic(Context ctx,
                                        ir.CallableType asFunctionType,
-                                       ir.Postfix postfix)
+                                       ref ir.Exp[] arguments)
 {
-	if (!asFunctionType.homogenousVariadic) {
+	if (!asFunctionType.homogenousVariadic || arguments.length == 0) {
 		return;
 	}
 	auto i = asFunctionType.params.length - 1;
-	auto etype = getExpType(ctx.lp, postfix.arguments[i], ctx.current);
+	auto etype = getExpType(ctx.lp, arguments[i], ctx.current);
 	auto arr = cast(ir.ArrayType) asFunctionType.params[i];
 	if (arr is null) {
-		throw panic(postfix.location, "homogenous variadic not array type");
+		throw panic(arguments[0].location, "homogenous variadic not array type");
 	}
 	if (willConvert(etype, arr)) {
 		return;
 	}
 	if (!typesEqual(etype, arr)) {
-		auto exps = postfix.arguments[i .. $];
+		auto exps = arguments[i .. $];
 		if (exps.length == 1) {
 			auto alit = cast(ir.ArrayLiteral) exps[0];
 			if (alit !is null && alit.values.length == 0) {
@@ -1305,8 +1305,8 @@ private void rewriteHomogenousVariadic(Context ctx,
 		foreach (ref aexp; exps) {
 			extypePass(ctx, aexp, arr.base);
 		}
-		postfix.arguments[i] = buildInternalArrayLiteralSmart(postfix.location, asFunctionType.params[i], exps);
-		postfix.arguments.length = i + 1;
+		arguments[i] = buildInternalArrayLiteralSmart(arguments[0].location, asFunctionType.params[i], exps);
+		arguments.length = i + 1;
 		return;
 	}
 }
@@ -1449,7 +1449,7 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		throw makeWrongNumberOfArguments(postfix, postfix.arguments.length, asFunctionType.params.length);
 	}
 	assert(asFunctionType.params.length <= postfix.arguments.length);
-	rewriteHomogenousVariadic(ctx, asFunctionType, postfix);
+	rewriteHomogenousVariadic(ctx, asFunctionType, postfix.arguments);
 	foreach (i; 0 .. asFunctionType.params.length) {
 		if (asFunctionType.isArgRef[i] || asFunctionType.isArgOut[i]) {
 			if (!isLValue(ctx.lp, ctx.current, postfix.arguments[i])) {
@@ -2246,6 +2246,9 @@ void handleNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 	appendDefaultArguments(ctx, _unary.location, _unary.argumentList, fn);
 
 	ctx.lp.resolve(ctx.current, fn);
+	if (_unary.argumentList.length > 0) {
+		rewriteHomogenousVariadic(ctx, fn.type, _unary.argumentList);
+	}
 
 	for (size_t i = 0; i < _unary.argumentList.length; ++i) {
 		extypeAssign(ctx, _unary.argumentList[i], fn.type.params[i]);
