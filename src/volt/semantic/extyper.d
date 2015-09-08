@@ -569,7 +569,10 @@ void rewriteOverloadedProperty(Context ctx, ref ir.Exp exp,
 			} else if (fn.thisHiddenParameter !is null) {
 				auto pofix = cast(ir.Postfix)exp;
 				if (pofix is null) {
-					throw makeExpected(l, "postfix");
+					ir.Exp tmpexp = buildAccess(l, buildIdentifierExp(l, "this"), fn.name);
+					extypePostfix(ctx, tmpexp, cast(ir.Postfix)tmpexp);
+					pofix = cast(ir.Postfix)tmpexp;
+					assert(pofix !is null);
 				}
 				call = buildMemberCall(l, pofix.child, buildExpReference(l, fn, fn.name), fn.name, []);
 				call.isImplicitPropertyCall = true;
