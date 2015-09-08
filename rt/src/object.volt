@@ -2,6 +2,28 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module object;
 
+
+/**
+ * The string type.
+ */
+alias string = immutable(char)[];
+
+/**
+ * These are two types are aliases to integer types that are large enough to
+ * offset the entire available address space.
+ * @{
+ */
+version (V_P64) {
+	alias size_t = ulong;
+	alias ptrdiff_t = long;
+} else {
+	alias size_t = uint;
+	alias ptrdiff_t = int;
+}
+/**
+ * @}
+ */
+
 /**
  * This is all up in the air. But here is how its intended to work.
  *

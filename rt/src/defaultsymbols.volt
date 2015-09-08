@@ -1,12 +1,12 @@
+/**
+ * This file is included all modules (except object and this module).
+ */
 module defaultsymbols;
 
-version (V_P64) {
-	alias size_t = ulong;
-	alias ptrdiff_t = long;
-} else {
-	alias size_t = uint;
-	alias ptrdiff_t = int;
-}
+static import object;
 
-alias string = immutable(char)[];
+alias size_t    = object.size_t;
+alias ptrdiff_t = object.ptrdiff_t;
+
+alias string    = object.string;
 alias Exception = object.Exception;
