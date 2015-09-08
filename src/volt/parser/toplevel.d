@@ -54,14 +54,23 @@ ParseStatus parseModule(ParserStream ps, out ir.Module mod)
 		return parseFailed(ps, ir.NodeType.Module);
 	}
 
+	if (ps.multiDepth > 0) {
+		return parseExpected(ps, ps.peek.location, ir.NodeType.Module, "@}");
+	}
+
+	// Don't include the default modules in themselves.
+	// Maybe move to gather or import resolver?
+	if (mod.name.identifiers.length == 1 &&
+	    (mod.name.identifiers[0].value == "object" ||
+	     mod.name.identifiers[0].value == "defaultsymbols")) {
+		return Succeeded;
+	}
+
 	mod.children.nodes = [
 			createImport(mod.location, "defaultsymbols", false),
 			createImport(mod.location, "object", true)
 		] ~ mod.children.nodes;
 
-	if (ps.multiDepth > 0) {
-		return parseExpected(ps, ps.peek.location, ir.NodeType.Module, "@}");
-	}
 	return Succeeded;
 }
 
