@@ -144,7 +144,7 @@ void fillInClassLayoutIfNeeded(LanguagePass lp, ir.Class c)
 
 void fillInParentIfNeeded(LanguagePass lp, ir.Class c)
 {
-	if (c.isObject) {
+	if (c.isObject || c.parentClass !is null) {
 		return;
 	}
 
