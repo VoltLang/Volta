@@ -381,46 +381,6 @@ void extypeAssignStaticArrayType(Context ctx, ref ir.Exp exp, ir.StaticArrayType
 	exp = buildArrayLiteralSmart(exp.location, atype, alit.values);
 }
 
-/**
- * Handles casting arrays of non mutably indirect types with
- * differing storage types.
- */
-version (none) void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ref uint flag)
-{
-	auto acopy = copyTypeSmart(exp.location, atype);
-	stripArrayBases(acopy, flag);
-	auto rtype = ctx.overrideType !is null ? ctx.overrideType : realType(getExpType(ctx.lp, exp, ctx.current));
-	auto rarr = cast(ir.ArrayType) copyTypeSmart(exp.location, rtype);
-	uint rflag;
-	if (rarr !is null) {
-		stripArrayBases(rarr, rflag);
-	}
-	bool badImmutable = (flag & ir.StorageType.STORAGE_IMMUTABLE) != 0 && ((rflag & ir.StorageType.STORAGE_IMMUTABLE) == 0 && (rflag & ir.StorageType.STORAGE_CONST) == 0);
-	if (typesEqual(acopy, rarr !is null ? rarr : rtype) && 
-		!badImmutable && (flag & ir.StorageType.STORAGE_SCOPE) == 0) {
-		return;
-	}
-
-	auto ctype = cast(ir.CallableType) atype;
-	if (ctype !is null && ctype.homogenousVariadic && rarr is null) {
-		return;
-	}
-
-	auto aclass = cast(ir.Class) realType(atype.base);
-	ir.Class rclass;
-	if (rarr !is null) {
-		rclass = cast(ir.Class) realType(rarr.base);
-	}
-	if (rclass !is null) {
-		if (inheritsFrom(rclass, aclass)) {
-			exp = buildCastSmart(exp.location, buildArrayType(exp.location, aclass), exp);
-			return;
-		}
-	}
-
-	throw makeBadImplicitCast(exp, rtype, atype);
-}
-
 void extypeAssignAAType(Context ctx, ref ir.Exp exp, ir.AAType aatype)
 {
 	auto rtype = ctx.overrideType !is null ? ctx.overrideType : getExpType(ctx.lp, exp, ctx.current);
