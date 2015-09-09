@@ -1606,3 +1606,16 @@ void insertInPlace(ref ir.Node[] list, size_t index, ir.Node node)
 		list = list[0 .. index] ~ node ~ list[index .. $];
 	}
 }
+
+ir.StoreExp buildStoreExp(Location loc, ir.Store store, string[] idents...)
+{
+	auto sexp = new ir.StoreExp();
+	sexp.location = loc;
+	sexp.store = store;
+	version (Volt) {
+		sexp.idents = new idents[0 .. $];
+	} else {
+		sexp.idents = idents.dup;
+	}
+	return sexp;
+}

@@ -33,7 +33,9 @@ ir.Type declTypeLookup(Location loc, LanguagePass lp, ir.Scope _scope, string na
 	}
 
 	if (store.kind == ir.Store.Kind.Scope) {
-		throw panic(loc, "got scope");
+		auto nt = new ir.NullType();
+		nt.location = loc;
+		return nt;  // !!! ScopeType?
 	}
 
 	auto d = cast(ir.Variable) store.node;
@@ -839,7 +841,15 @@ ir.Type getPostfixIndexType(LanguagePass lp, ir.Postfix postfix, ir.Scope curren
 		assert(aa !is null);
 		base = aa.value;
 	} else {
-		throw makeBadOperation(postfix);
+		auto named = cast(ir.Named) type;
+		if (named is null) {
+			throw makeBadOperation(postfix);
+		}
+		auto store = named.myScope.getStore(overloadIndexName());
+		if (store is null || store.functions.length != 1) {
+			throw makeBadOperation(postfix);
+		}
+		base = store.functions[0].type.ret;
 	}
 
 	assert(base !is null);

@@ -530,8 +530,10 @@ void rewriteOverloadedProperty(Context ctx, ref ir.Exp exp,
 				auto pofix = cast(ir.Postfix)exp;
 				if (pofix is null) {
 					ir.Exp tmpexp = buildAccess(l, buildIdentifierExp(l, "this"), fn.name);
-					extypePostfix(ctx, tmpexp, cast(ir.Postfix)tmpexp);
 					pofix = cast(ir.Postfix)tmpexp;
+
+					// This is for nested functions.
+					acceptExp(pofix.child, ctx.extyper);
 					assert(pofix !is null);
 				}
 				call = buildMemberCall(l, pofix.child, buildExpReference(l, fn, fn.name), fn.name, []);
@@ -705,7 +707,7 @@ ir.Exp withLookup(Context ctx, ref ir.Exp exp, ir.Scope current,
 		return null;
 	}
 	if (exp.nodeType == ir.NodeType.IdentifierExp) {
-		extypeLeavePostfix(ctx, access, cast(ir.Postfix) access);
+		extypeLeavePostfix(ctx, access, cast(ir.Postfix) access, null);
 	}
 	return access;
 }
@@ -729,6 +731,7 @@ void extypeIdentifierExp(Context ctx, ref ir.Exp e, ir.IdentifierExp i)
 			throw makeWithCreatesAmbiguity(withExp.location);
 		}
 		rewriteExp = _rewriteExp;
+		rewriteExp.location = e.location;
 		// Continue to ensure no ambiguity.
 	}
 	if (rewriteExp !is null) {
@@ -1275,75 +1278,24 @@ private void rewriteHomogenousVariadic(Context ctx,
 }
 
 /**
- * If a postfix operates directly on a struct via a
- * function call, put it in a variable first.
- */
-bool handleStructLookupViaFunctionCall(Context ctx, ref ir.Exp exp,
-                                       ir.Postfix[] postfixes)
-{
-	// Verify that this expression takes the form Function().something,
-	// where Function() returns a struct or union.
-	ir.Type t;
-	size_t i;
-	// We don't care how many postfixes are attached to the call,
-	// so find the first one.
-	for (i = 1; i < postfixes.length; ++i) {
-		t = realType(getExpType(ctx.lp, postfixes[i], ctx.current));
-		auto s = cast(ir.Struct) t;
-		auto u = cast(ir.Union) t;
-
-		// A @property lookup. The call isn't there yet,
-		// but we want the whole postfix, so rewrite it now.
-		auto ct = cast(ir.CallableType) t;
-		if (s is null && u is null && ct !is null && ct.isProperty) {
-			s = cast(ir.Struct) realType(ct.ret);
-			u = cast(ir.Union) realType(ct.ret);
-			if (s !is null || u !is null) {
-				break;
-			}
-		}
-
-		if ((s is null && u is null) ||
-		    postfixes[i].op != ir.Postfix.Op.Call) {
-			continue;
-		} else {
-			break;
-		}
-	}
-	if (i >= postfixes.length) {
-		return false;
-	}
-	assert(t !is null);
-
-	// StructType anonVar = Function();
-	auto l = postfixes[0].location;
-	auto sexp = buildStatementExp(l);
-	auto var = buildVariableAnonSmart(l, ctx.currentFunction._body, sexp, t, postfixes[i]);
-	// anonVar.something
-	postfixes[i-1].child = buildExpReference(l, var, var.name);
-	auto estat = buildExpStat(l, sexp, postfixes[0]);
-	sexp.originalExp = exp;
-	sexp.exp = copyExp(estat.exp);
-	exp = sexp;
-	return true;
-}
-
-/**
  * Turns identifier postfixes into CreateDelegates,
  * and resolves property function calls in postfixes,
  * type safe varargs, and explicit constructor calls.
  */
-void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
+void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp parent)
 {
+	foreach (ref arg; postfix.arguments) {
+		acceptExp(arg, ctx.extyper);
+	}
+
+	extypePostfixIndex(ctx, exp, postfix);
+
 	if (replaceAAPostfixesIfNeeded(ctx, postfix, exp)) {
 		return;
 	}
 	ir.Postfix[] postfixes = getPostfixChain(postfix);
 
 	dereferenceInitialClass(ctx, postfixes);
-	if (handleStructLookupViaFunctionCall(ctx, exp, postfixes)) {
-		return;
-	}
 	if (transformToCreateDelegate(ctx, exp, postfixes)) {
 		return;
 	}
@@ -1660,25 +1612,33 @@ void rewritePropertyFunctionAssign(Context ctx, ref ir.Exp e,
 /**
  * Handles <type>.<identifier>, like 'int.min' and the like.
  */
-void extypeTypeLookup(Context ctx, ref ir.Exp exp,
-                      ir.Postfix[] postfixIdents, ir.Type type)
+bool typeLookup(Context ctx, ref ir.Exp exp)
 {
+	auto postfix = cast(ir.Postfix) exp;
+	if (postfix is null && postfix.identifier is null) {
+		return false;
+	}
+	auto type = getExpType(ctx.lp, postfix.child, ctx.current);
+	auto value = postfix.identifier.value;
+
 	bool max;
 	auto prim = cast(ir.PrimitiveType) realType(type);
 	auto pointer = cast(ir.PointerType) realType(type);
 
-	if (postfixIdents.length != 1) {
-		if (prim !is null && isFloatingPoint(prim.type)) {
-			throw makeExpected(type, "max, min_normal, or init");
-		} else {
-			throw makeExpected(type, "max, min, or init");
-		}
+	if (prim is null && pointer is null) {
+		return false;
 	}
 
-	switch (postfixIdents[0].identifier.value) {
+	auto eref = cast(ir.ExpReference) postfix.child;
+	if (eref !is null) {
+		// An instance. Let the normal lookup stuff generate the error message.
+		return false;
+	}
+
+	switch (value) {
 	case "init":
 		exp = getDefaultInit(exp.location, ctx.lp, ctx.current, type);
-		return;
+		return true;
 	case "max":
 		max = true;
 		break;
@@ -1693,11 +1653,7 @@ void extypeTypeLookup(Context ctx, ref ir.Exp exp,
 		}
 		break;
 	default:
-		if (prim !is null && isFloatingPoint(prim.type)) {
-			throw makeExpected(type, "max, min_normal, or init");
-		} else {
-			throw makeExpected(type, "max, min, or init");
-		}
+		return false;
 	}
 
 	if (pointer !is null) {
@@ -1706,7 +1662,7 @@ void extypeTypeLookup(Context ctx, ref ir.Exp exp,
 		} else {
 			exp = buildConstantInt(type.location, max ? 4 : 0);
 		}
-		return;
+		return true;
 	}
 
 	if (prim is null) {
@@ -1755,11 +1711,112 @@ void extypeTypeLookup(Context ctx, ref ir.Exp exp,
 	case Real, Void:
 		throw makeExpected(prim, "integral type");
 	}
+	return true;
+}
+
+/// Get a Store from the child of a pre-proceassed postfix chain.
+ir.Store getStore(Context ctx, ir.Exp exp)
+{
+	auto sexp = cast(ir.StoreExp) exp;
+	if (sexp !is null) {
+		return sexp.store;
+	}
+	auto ident = cast(ir.IdentifierExp) exp;
+	if (ident is null) {
+		return null;
+	}
+	return lookup(ctx.lp, ctx.current, exp.location, ident.value);
 }
 
 /**
  * Turn identifier postfixes into <ExpReference>.ident.
  */
+bool consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes, ref ir.Exp exp, ir.Exp parent)
+{
+	// Remove int.max etc.
+	ir.Exp e = postfixes[0];
+	if (typeLookup(ctx, e)) {
+		if (postfixes.length > 1) {
+			postfixes[1].child = e;
+			postfixes = postfixes[1 .. $];
+		} else {
+			exp = e;
+			postfixes = [];
+		}
+		return true;
+	}
+
+	// Get the store of the child or bail.
+	auto store = getStore(ctx, postfixes[0].child);
+	if (store is null) {
+		return false;
+	}
+
+	// Get a scope from said store.
+	auto base = store.s;
+	if (base is null) {
+		auto named = cast(ir.Named) store.node;
+		if (named !is null) {
+			base = named.myScope;
+		} else {
+			return false;
+		}
+	}
+
+
+	/* Get a declaration from the next identifier segment,
+	 * replace with an expreference?
+	 */
+	string name;
+	ir.Declaration decl;
+
+	size_t i;
+	for (i = 0; i < postfixes.length; ++i) {
+		auto postfix = postfixes[i];
+		if (postfix.identifier is null) {
+			break;
+		}
+		store = lookupAsImportScope(ctx.lp, base, postfix.location, postfix.identifier.value);
+		if (store is null) {
+			return false;
+		}
+		name = postfix.identifier.value;
+
+
+		ir.Exp toReplace;
+
+		decl = cast(ir.Declaration) store.node;
+		if (decl !is null) {
+			toReplace = buildExpReference(decl.location, decl, name);
+		}
+
+		auto named = cast(ir.Named) store.node;
+		if (named !is null) {
+			toReplace = buildStoreExp(named.location, store, name);
+		}
+
+		if (toReplace is null && store.s !is null) {
+			base = store.s;
+			continue;
+		}
+
+		if (toReplace !is null) {
+			if (i+1 >= postfixes.length) {
+				exp = toReplace;
+				postfixes = [];
+			} else {
+				postfixes[i+1].child = toReplace;
+				postfixes = postfixes[i+1 .. $];
+			}
+			return true;
+		}
+	}
+
+
+	return false;
+}
+
+/+
 void extypePostfixIdentifier(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 {
 	if (postfix.op != ir.Postfix.Op.Identifier)
@@ -1796,7 +1853,7 @@ void extypePostfixIdentifier(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			break;
 		} else if (currentP.child.nodeType == ir.NodeType.TypeExp) {
 			auto typeExp = cast(ir.TypeExp) currentP.child;
-			extypeTypeLookup(ctx, exp, postfixIdents, typeExp.type);
+			//typeLookup(ctx, postfixIdents[0]);
 			return;
 		} else if (currentP.child.nodeType == ir.NodeType.StoreExp) {
 			storeExp = cast(ir.StoreExp) currentP.child;
@@ -1929,7 +1986,7 @@ void extypePostfixIdentifier(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			if (named is null ||
 			    (postfixIdents.length > 0 &&
 			     postfixIdents[0].identifier.value == "init")) {
-				extypeTypeLookup(ctx, exp, postfixIdents, lastType);
+				//extypeTypeLookup(ctx, exp, postfixIdents, lastType);
 				return;
 			}
 			goto case Scope;
@@ -1996,6 +2053,7 @@ void extypePostfixIdentifier(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		replaceExpReferenceIfNeeded(ctx, lastType, postfix.child, _ref);
 	}
 }
++/
 
 void extypePostfixIndex(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 {
@@ -2010,22 +2068,22 @@ void extypePostfixIndex(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 }
 
 // object.foo(1) into foo(object, 1);
-void extypePostfixUFCS(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
+bool extypePostfixUFCS(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 {
 	auto l = postfix.location;
 	ir.Postfix child;
 	if (postfix.op == ir.Postfix.Op.Call) {
 		child = cast(ir.Postfix) postfix.child;
 		if (child is null || child.child is null || child.identifier is null) {
-			return;
+			return false;
 		}
 	} else if (postfix.op == ir.Postfix.Op.Identifier) {
 		child = postfix;
 	} else {
-		return;
+		return false;
 	}
 	if (child.identifier is null) {
-		return;
+		return false;
 	}
 
 	auto type = realType(tryToGetExpType(ctx.lp, child.child, ctx.current));
@@ -2033,14 +2091,14 @@ void extypePostfixUFCS(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	if (type is null ||
 	    (type.nodeType == ir.NodeType.AAType &&
 	     (fnn == "remove" || fnn == "get"))) {
-		return;
+		return false;
 	}
 
 	auto agg = cast(ir.Aggregate) type;
 	if (agg !is null) {
 		auto store = lookupAsThisScope(ctx.lp, agg.myScope, l, child.identifier.value);
 		if (store !is null) {
-			return;
+			return false;
 		}
 	}
 
@@ -2053,11 +2111,11 @@ void extypePostfixUFCS(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		 * which will cause the WorkTracker to complain about a
 		 * circular dependency if we go through lookup.
 		 */
-		return;
+		return false;
 	}
 	store = lookup(ctx.lp, ctx.current, l, child.identifier.value);
 	if (store is null || store.functions.length == 0) {
-		return;
+		return false;
 	}
 
 	auto arguments = new ir.Exp[](postfix.arguments.length + 1);
@@ -2067,12 +2125,12 @@ void extypePostfixUFCS(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 
 	auto fn = selectFunction(ctx.lp, ctx.current, store.functions, arguments, l, DoNotThrow);
 	if (fn is null) {
-		return;
+		return false;
 	}
 	if (postfix.op != ir.Postfix.Op.Call && fn.type.isProperty) {
 		exp = postfix = buildCall(l, buildExpReference(l, fn, fn.name), arguments);
 	} else if (postfix.op != ir.Postfix.Op.Call && !fn.type.isProperty) {
-		return;
+		return false;
 	} else {
 		panicAssert(postfix, fn !is null);
 		postfix.child = buildExpReference(l, fn, fn.name);
@@ -2085,17 +2143,94 @@ void extypePostfixUFCS(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	} else {
 		postfix.argumentTags = ir.Postfix.TagKind.None ~ postfix.argumentTags;
 	}
+
+	return true;
 }
 
+/+
 void extypePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 {
+	rewriteSuperIfNeeded(exp, postfix, ctx.current, ctx.lp);
+	//extypePostfixIdentifier(ctx, exp, postfix);
+	extypePostfixUFCS(ctx, exp, postfix);
+}
++/
+
+ir.Postfix[] collectPostfixes(ir.Postfix postfix)
+{
+	if (postfix.child.nodeType == ir.NodeType.Postfix) {
+		return collectPostfixes(cast(ir.Postfix) postfix.child) ~ postfix;
+	} else {
+		return [postfix];
+	}
+}
+
+void extypeNewPostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp parent)
+{
 	if (opOverloadRewriteIndex(ctx, postfix, exp)) {
+		acceptExp(exp, ctx.extyper);
 		return;
 	}
-	rewriteSuperIfNeeded(exp, postfix, ctx.current, ctx.lp);
-	extypePostfixIdentifier(ctx, exp, postfix);
-	extypePostfixIndex(ctx, exp, postfix);
-	extypePostfixUFCS(ctx, exp, postfix);
+	if (extypePostfixUFCS(ctx, exp, postfix)) {
+		acceptExp(exp, ctx.extyper);
+		return;
+	}
+
+	auto allPostfixes = collectPostfixes(postfix);
+
+	ir.Exp dummy = allPostfixes[0];
+	rewriteSuperIfNeeded(dummy, allPostfixes[0], ctx.current, ctx.lp);
+	allPostfixes[0] = cast(ir.Postfix) dummy;
+	assert(allPostfixes[0] !is null);
+
+	// Setup the stack of Index postfixes, needed for var[0 .. $].
+	foreach_reverse (p; allPostfixes) {
+		ctx.enter(p);
+	}
+
+	// Process first none postfix exp, often a IdentifierExp.
+	// 'ident'.field.prop
+	// 'typeid(int)'.mangledName
+	// 'int'.max
+	acceptExp(allPostfixes[0].child, ctx.extyper);
+
+	// Now process the list of postfixes.
+	while (allPostfixes.length > 0) {
+		auto working = allPostfixes[0];
+
+		if (working.op == ir.Postfix.Op.Identifier &&
+		    consumeIdentsIfScopesOrTypes(ctx, allPostfixes, exp, parent)) {
+			continue;
+		}
+
+		// popFront this way we advance and know if we have more.
+		allPostfixes = allPostfixes[1 .. $];
+
+		if (allPostfixes.length == 0) {
+			// Exp points to the field in parent where the initial
+			// postfix is stored.
+
+			// The last element should be exp.
+			assert(working is exp);
+
+			extypeLeavePostfix(ctx, exp, working, parent);
+		} else {
+			// Set the next in line as parent. This allows handling
+			// of bar.ufcs(4, 5) and the like.
+			auto tmp = allPostfixes[0];
+
+			// Make sure we haven't rewritten this yet.
+			assert(tmp.child is working);
+
+			extypeLeavePostfix(ctx, tmp.child, working, tmp);
+		}
+
+		// Well this works just because consumeIdentsIfScopesOrTypes
+		// only removes postfix identifiers, and ctx only cares about
+		// postfix index and slice.
+		ctx.leave(working);
+	}
+	// The postfix parameter is stale now, don't touch it.
 }
 
 /**
@@ -4108,6 +4243,7 @@ public:
 	{
 		rewritePropertyFunctionAssign(ctx, e, bin);
 		rewriteOverloadedProperty(ctx, bin.left);
+
 		// If not rewritten.
 		if (e is bin) {
 			extypeBinOp(ctx, bin, e);
@@ -4117,16 +4253,8 @@ public:
 
 	override Status enter(ref ir.Exp exp, ir.Postfix postfix)
 	{
-		ctx.enter(postfix);
-		extypePostfix(ctx, exp, postfix);
-		return Continue;
-	}
-
-	override Status leave(ref ir.Exp exp, ir.Postfix postfix)
-	{
-		ctx.leave(postfix);
-		extypeLeavePostfix(ctx, exp, postfix);
-		return Continue;
+		extypeNewPostfix(ctx, exp, postfix, null);
+		return ContinueParent;
 	}
 
 	override Status enter(ref ir.Exp exp, ir.Unary _unary)

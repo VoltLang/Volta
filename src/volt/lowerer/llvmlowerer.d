@@ -919,6 +919,7 @@ public:
 
 	override Status leave(ref ir.Exp exp, ir.Postfix postfix)
 	{
+		handleStructLookupViaFunctionCall(lp, current, exp, postfix);
 		switch(postfix.op) {
 		case ir.Postfix.Op.Index:
 			return handleIndex(exp, postfix);
@@ -1339,4 +1340,63 @@ bool isInterfacePointer(LanguagePass lp, ir.Postfix pfix, ir.Scope current, out 
 	}
 	iface = cast(ir._Interface) _struct.loweredNode;
 	return iface !is null;
+}
+
+/**
+ * If a postfix operates directly on a struct via a
+ * function call, put it in a variable first.
+ */
+bool handleStructLookupViaFunctionCall(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Postfix postfix)
+{
+	ir.Postfix[] postfixes;
+	do {
+		postfixes ~= postfix;
+		postfix = cast(ir.Postfix) postfix.child;
+	} while (postfix !is null);
+
+	// Verify that this expression takes the form Function().something,
+	// where Function() returns a struct or union.
+	ir.Type t;
+	size_t i;
+	// We don't care how many postfixes are attached to the call,
+	// so find the first one.
+	for (i = 1; i < postfixes.length; ++i) {
+		t = realType(tryToGetExpType(lp, postfixes[i], current));
+		auto s = cast(ir.Struct) t;
+		auto u = cast(ir.Union) t;
+
+		// A @property lookup. The call isn't there yet,
+		// but we want the whole postfix, so rewrite it now.
+		auto ct = cast(ir.CallableType) t;
+		if (s is null && u is null && ct !is null && ct.isProperty) {
+			s = cast(ir.Struct) realType(ct.ret);
+			u = cast(ir.Union) realType(ct.ret);
+			if (s !is null || u !is null) {
+				break;
+			}
+		}
+
+		if ((s is null && u is null) ||
+		    postfixes[i].op != ir.Postfix.Op.Call) {
+			continue;
+		} else {
+			break;
+		}
+	}
+	if (i >= postfixes.length) {
+		return false;
+	}
+	assert(t !is null);
+
+	// StructType anonVar = Function();
+	auto l = postfixes[0].location;
+	auto sexp = buildStatementExp(l);
+	auto var = buildVariableAnonSmart(l, getParentFunction(current)._body, sexp, t, postfixes[i]);
+	// anonVar.something
+	postfixes[i-1].child = buildExpReference(l, var, var.name);
+	auto estat = buildExpStat(l, sexp, postfixes[0]);
+	sexp.originalExp = exp;
+	sexp.exp = copyExp(estat.exp);
+	exp = sexp;
+	return true;
 }

@@ -56,6 +56,13 @@ ir.Constant evaluate(LanguagePass lp, ir.Scope current, ir.Exp exp)
 			goto default;
 		}
 		return evaluate(lp, current, _exp);
+	case ir.NodeType.ExpReference:
+		auto eref = cast(ir.ExpReference) exp;
+		auto edecl = cast(ir.EnumDeclaration) eref.decl;
+		if (edecl !is null) {
+			return evaluate(lp, current, edecl.assign);
+		}
+		goto default;
 	default:
 		throw makeNotAvailableInCTFE(exp, exp);
 	}
