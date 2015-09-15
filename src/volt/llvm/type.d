@@ -448,6 +448,7 @@ class FunctionType : CallableType
 {
 public:
 	LLVMTypeRef llvmCallType;
+	LLVMValueRef diCallType;
 
 public:
 	static FunctionType fromIr(State state, ir.FunctionType ft)
@@ -511,7 +512,7 @@ private:
 
 		llvmCallType = LLVMFunctionType(ret.llvmType, args, ft.hasVarArgs && ft.linkage == ir.Linkage.C);
 		llvmType = LLVMPointerType(llvmCallType, 0);
-		diType = diFunctionType(state, ret, di);
+		diType = diFunctionType(state, ret, di, ft.mangledName, diCallType);
 		super(state, ft, llvmType, diType);
 	}
 }

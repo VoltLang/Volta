@@ -49,16 +49,19 @@ public:
 		Type type;
 		auto llvmFunc = state.getFunctionValue(fn, type);
 		auto llvmType = type.llvmType;
-		auto ct = cast(CallableType)type;
-		assert(ct !is null);
+		auto ft = cast(FunctionType) type;
+		assert(ft !is null);
+
+		auto di = diFunction(state, fn, llvmFunc, ft);
 
 		LLVMAddFunctionAttr(llvmFunc, LLVMAttribute.UWTable);
 
 		State.FunctionState old = state.fnState;
-		version (D_Version2) state.fnState = State.FunctionState.init;
+		state.fnState = State.FunctionState.init;
 
 		state.fnState.fall = true;
 		state.fnState.func = llvmFunc;
+		state.fnState.di = di;
 		state.fnState.block = LLVMAppendBasicBlock(llvmFunc, "entry");
 		LLVMPositionBuilderAtEnd(b, state.block);
 

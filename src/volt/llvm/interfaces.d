@@ -82,6 +82,8 @@ public:
 	static struct FunctionState
 	{
 		LLVMValueRef func;
+		LLVMValueRef di;
+
 		bool fall; ///< Tracking for auto branch generation.
 
 		LLVMValueRef nested; ///< Nested value

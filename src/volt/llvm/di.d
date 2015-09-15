@@ -333,10 +333,14 @@ version (UseDIBuilder) {
 		                           di.ptr, cast(uint)di.length);
 	}
 
-	LLVMValueRef diFunctionType(State state, Type ret, Type[] args)
+	LLVMValueRef diFunctionType(State state, Type ret, Type[] args,
+	                            string mangledName, out LLVMValueRef diCallType)
 	{
 		// Add one for ret type.
 		LLVMValueRef[] types = new LLVMValueRef[](args.length + 1);
+
+		// Ret goes first.
+		types[0] = ret.diType;
 
 		// Hold on to your butts (keep an eye on i).
 		for (int i; i < args.length;) {
@@ -350,9 +354,36 @@ version (UseDIBuilder) {
 
 		auto file = diFile(state, ret.irType);
 
-		return LLVMDIBuilderCreateSubroutineType(
+		diCallType = LLVMDIBuilderCreateSubroutineType(
 			state.diBuilder, file, types.ptr,
 			cast(uint)types.length, 0);
+
+		size_t size, alignment;
+		state.voidPtrType.irType.getSizeAndAlignment(
+			state.lp, size, alignment);
+
+		return LLVMDIBuilderCreatePointerType(
+			state.diBuilder, diCallType, size, alignment,
+			mangledName.ptr, mangledName.length);
+	}
+
+	LLVMValueRef diFunction(State state, ir.Function irFn,
+	                        LLVMValueRef fn, FunctionType ft)
+	{
+		auto file = diFile(state,
+			irFn.location.filename,
+			state.lp.settings.execDir);
+		LLVMValueRef _scope = file;
+		string name = irFn.mangledName;
+		string link = null;
+
+		assert(file !is null && _scope !is null);
+
+		return LLVMDIBuilderCreateFunction(state.diBuilder, _scope,
+			name.ptr, name.length, null, 0,
+			file, cast(uint) irFn.location.line, ft.diCallType,
+			false, true, cast(uint) irFn.location.line, 0,
+			false, fn, null, null);
 	}
 
 	alias LLVMCreateDIBuilder = lib.llvm.c.DIBuilder.LLVMCreateDIBuilder;
@@ -402,7 +433,10 @@ private:
 	LLVMValueRef diStruct(State state, ir.Type t) { return null; }
 	void diStructSetBody(State state, Type p, Type[2] t, string[2] names) {}
 	void diStructSetBody(State state, LLVMValueRef diType, ir.Variable[] elms) {}
-	LLVMValueRef diFunctionType(State state, Type ret, Type[] args) { return null; }
+	LLVMValueRef diFunctionType(State state, Type ret, Type[] args,
+	                            string mangledName, out LLVMValueRef diCallType) { return null; }
+	LLVMValueRef diFunction(State state, ir.Function irFn,
+	                        LLVMValueRef fn, FunctionType ft) { return null; }
 }
 
 

@@ -689,6 +689,7 @@ DEFINE_MAV_WRAP(DICompositeType)
 DEFINE_MAV_WRAP(DITemplateValueParameter)
 DEFINE_MAV_WRAP(DIGlobalVariable)
 DEFINE_MAV_WRAP(DISubroutineType)
+DEFINE_MAV_WRAP(DISubprogram)
 
 inline Metadata *unwrapMD(LLVMValueRef Val)
 {
@@ -901,6 +902,31 @@ LLVMValueRef LLVMDIBuilderCreateGlobalVariable(
   return wrap(unwrap(builder)->createGlobalVariable(
       S, StringRef(Name, NameLen), StringRef(LinkageName, LinkageNameLen),
       F, LineNo, T, IsLocalToUnit, C, D));
+}
+
+LLVMValueRef LLVMDIBuilderCreateFunction(
+    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
+    size_t NameLen, const char *LinkageName, size_t LinkageNameLen,
+    LLVMValueRef File, unsigned LineNo, LLVMValueRef Ty, bool isLocalToUnit,
+    bool isDefinition, unsigned ScopeLine, unsigned Flags, bool isOptimized,
+    LLVMValueRef Fn, LLVMValueRef TParam, LLVMValueRef Decl) {
+  StringRef N(Name, NameLen);
+  StringRef LN(LinkageName, LinkageNameLen);
+  auto B = unwrap(builder);
+  auto S = unwrapMDAs<DIScope>(Scope);
+  auto F = unwrapMDAs<DIFile>(File);
+  auto T = unwrapMDAs<DISubroutineType>(Ty);
+  auto FN = dyn_cast<Function>(unwrap(Fn));
+#if LLVM_VERSION_MINOR >= 7
+  auto TP = unwrapMDAs<MDNode>(TParam);
+  auto D = unwrapMDAs<MDNode>(Decl);
+#else
+  auto TP = dyn_cast_or_null<MDNode>(unwrapMD(TParam));
+  auto D = dyn_cast_or_null<MDNode>(unwrapMD(Decl));
+#endif
+
+  return wrap(B->createFunction(S, N, LN, F, LineNo, T, isLocalToUnit,
+	 isDefinition, ScopeLine, Flags, isOptimized, FN, TP, D));
 }
 
 void LLVMDIBuilderStructSetBody(LLVMDIBuilderRef builder,
