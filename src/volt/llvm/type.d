@@ -487,28 +487,23 @@ public:
 public:
 	this(State state, ir.DelegateType dt)
 	{
+		diType = diStruct(state, dt);
 		llvmType = LLVMStructCreateNamed(state.context, dt.mangledName);
 		super(state, dt, true, llvmType, diType);
 
-		ret = state.fromIr(dt.ret);
+		auto irFuncType = new ir.FunctionType(dt);
+		irFuncType.hiddenParameter = true;
 
-		LLVMTypeRef[] args;
-		args.length = dt.params.length + 1;
-		params.length = dt.params.length + 1;
+		addMangledName(irFuncType);
 
-		foreach (i, param; dt.params) {
-			auto type = state.fromIr(param);
-			params[i] = type;
-			args[i] = type.llvmType;
-			ir.StorageType.Kind dummy;
-			if (dt.isArgRef[i] || dt.isArgOut[i]) {
-				args[i] = LLVMPointerType(args[i], 0);
-			}
-		}
-		args[$-1] = state.voidPtrType.llvmType;
-		params[$-1] = state.voidPtrType;
+		auto funcType = cast(FunctionType)state.fromIr(irFuncType);
 
-		llvmCallType = LLVMFunctionType(ret.llvmType, args, dt.hasVarArgs);
+		ret = funcType.ret;
+		params = funcType.params;
+
+		assert(funcType !is null);
+
+		llvmCallType = funcType.llvmCallType;
 		llvmCallPtrType = LLVMPointerType(llvmCallType, 0);
 
 		LLVMTypeRef[2] mt;
@@ -516,6 +511,11 @@ public:
 		mt[funcIndex] = llvmCallPtrType;
 
 		LLVMStructSetBody(llvmType, mt[], false);
+
+		version (D_Version2) static assert(voidPtrIndex < funcIndex);
+		diStructSetBody(state, this,
+			[state.voidPtrType, funcType],
+			["ptr", "func"]);
 	}
 
 	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
