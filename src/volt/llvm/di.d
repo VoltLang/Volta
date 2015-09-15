@@ -192,16 +192,22 @@ version (UseDIBuilder) {
 
 	LLVMValueRef diPointerType(State state, ir.PointerType pt, Type base)
 	{
-		// Can't emit debuginfo without base debug info.
-		if (base.diType is null) {
+		LLVMValueRef diType;
+
+		if (base.isVoid) {
+			diType = null; // Yes!
+		} else if (base.diType is null) {
+			// Can't emit debuginfo without base debug info.
 			return null;
+		} else {
+			diType = base.diType;
 		}
 
 		auto size = cast(size_t).size(state.lp, pt);
 		auto alignment = .alignment(state.lp, pt);
 
 		return LLVMDIBuilderCreatePointerType(
-			state.diBuilder, base.diType, size, alignment,
+			state.diBuilder, diType, size, alignment,
 			pt.mangledName.ptr, pt.mangledName.length);
 	}
 
