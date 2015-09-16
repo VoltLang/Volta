@@ -934,13 +934,13 @@ ir.Type scrubStorage(ir.Type type)
 		outType = tr;
 		break;
 	case UserAttribute:
-	case StorageType:
 	case Interface:
 	case Struct:
 	case Union:
 	case Class:
 	case Enum:
 		return type;
+	case StorageType:
 	default:
 		throw panicUnhandled(type, ir.nodeToString(type.nodeType));
 	}
