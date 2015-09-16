@@ -618,12 +618,29 @@ public:
 private:
 	this(State state, ir.Struct irType)
 	{
-		auto c = cast(ir.Class)irType.loweredNode;
+		auto c = cast(ir.Class) irType.loweredNode;
 		auto mangled = c !is null ? c.mangledName : irType.mangledName;
 
 		diType = state.diStruct(irType);
 		llvmType = LLVMStructCreateNamed(state.context, mangled);
 		super(state, irType, llvmType, diType);
+
+		// This is adds the "reference" part of the class.
+		if (c !is null) {
+			auto ptr = buildPtrSmart(c.location, irType);
+			addMangledName(ptr);
+			addMangledName(ptr.base);
+
+			auto old = ptr.mangledName;
+			ptr.mangledName = mangled;
+
+			auto p = PointerType.fromIr(state, ptr);
+
+			state.addType(p, old);
+			// This type is now aliased as:
+			// pC3foo5Clazz14__layoutStruct
+			// C3foo5Clazz
+		}
 
 		// @todo check packing.
 		uint index;
@@ -662,6 +679,7 @@ class UnionType : Type
 public:
 	uint[string] indices;
 	Type[] types;
+	ir.Union utype;
 
 public:
 	static UnionType fromIr(State state, ir.Union irType)
@@ -691,13 +709,6 @@ public:
 			throw panic("union literal has the wrong number of initializers");
 		}
 
-		auto asTr = cast(ir.TypeReference) irType;
-		assert(asTr !is null);
-		auto utype = cast(ir.Union) asTr.type;
-		if (utype is null) {
-			throw panic("couldn't retrieve ir union from union");
-		}
-
 		uint count = LLVMCountStructElementTypes(llvmType);
 		if (count != 1) {
 			throw panic("union with more than one member");
@@ -723,7 +734,8 @@ public:
 private:
 	this(State state, ir.Union irType)
 	{
-		llvmType = LLVMStructCreateNamed(state.context, irType.mangledName);
+		this.llvmType = LLVMStructCreateNamed(state.context, irType.mangledName);
+		this.utype = irType;
 		super(state, irType, llvmType, diType);
 
 		uint index;
@@ -827,9 +839,8 @@ Type fromIrImpl(State state, ir.Type irType)
 		return fromIr(state, _enum.base);
 	case Class:
 		auto _class = cast(ir.Class)irType;
-		auto pointer = buildPtrSmart(_class.location, _class.layoutStruct);
-		addMangledName(pointer);
-		return fromIr(state, pointer);
+		StructType.fromIr(state, _class.layoutStruct);
+		return state.getTypeNoCreate(_class.mangledName);
 	case UserAttribute:
 		auto attr = cast(ir.UserAttribute)irType;
 		assert(attr !is null);
@@ -837,16 +848,15 @@ Type fromIrImpl(State state, ir.Type irType)
 		goto case Class;
 	case TypeReference:
 		auto tr = cast(ir.TypeReference)irType;
+
 		assert(cast(ir.Aggregate)tr.type !is null);
-		if (auto _class = cast(ir.Class)tr.type) {
-			auto ptr = buildPtrSmart(_class.location, _class.layoutStruct);
-			addMangledName(ptr);
-			return fromIr(state, ptr);
-		} else {
-			auto ret = fromIrImpl(state, tr.type);
-			ret.irType = tr;
-			return ret;
+
+		auto ret = fromIrImpl(state, tr.type);
+		if (tr.mangledName != ret.irType.mangledName) {
+			// Used for UserAttributes lowered class.
+			state.addType(ret, tr.mangledName);
 		}
+		return ret;
 	default:
 		auto emsg = format("Can't translate type %s (%s)", irType.nodeType, irType.mangledName);
 		throw panic(irType.location, emsg);
