@@ -59,6 +59,12 @@ public:
 class VoidType : Type
 {
 public:
+	static VoidType fromIr(State state, ir.PrimitiveType pt)
+	{
+		return new VoidType(state, pt);
+	}
+
+private:
 	this(State state, ir.PrimitiveType pt)
 	{
 		super(state, pt, LLVMVoidTypeInContext(state.context), null);
@@ -77,6 +83,44 @@ public:
 	uint bits;
 
 public:
+	static PrimitiveType fromIr(State state, ir.PrimitiveType pt)
+	{
+		return new PrimitiveType(state, pt);
+	}
+
+	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
+	{
+		if (floating) {
+			if (bits == 32) {
+				return LLVMConstReal(llvmType, cnst.u._float);
+			} else {
+				assert(bits == 64);
+				return LLVMConstReal(llvmType, cnst.u._double);
+			}
+		}
+
+		ulong val;
+		if (boolean) {
+			if (cnst.u._bool)
+				val = 1;
+		} else if (signed) {
+			val = cast(ulong)cnst.u._long;
+		} else if (bits == 8) {
+			assert(cnst.arrayData.length == 1);
+			val = (cast(ubyte[])cnst.arrayData)[0];
+		} else {
+			val = cnst.u._ulong;
+		}
+
+		return LLVMConstInt(llvmType, val, signed);
+	}
+
+	LLVMValueRef fromNumber(State state, long val)
+	{
+		return LLVMConstInt(llvmType, cast(ulong)val, signed);
+	}
+
+private:
 	this(State state, ir.PrimitiveType pt)
 	{
 		final switch(pt.type) with (ir.PrimitiveType.Kind) {
@@ -134,38 +178,6 @@ public:
 
 		super(state, pt, llvmType, null);
 		diType = state.diBaseType(this, pt.type);
-	}
-
-	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
-	{
-		if (floating) {
-			if (bits == 32) {
-				return LLVMConstReal(llvmType, cnst.u._float);
-			} else {
-				assert(bits == 64);
-				return LLVMConstReal(llvmType, cnst.u._double);
-			}
-		}
-
-		ulong val;
-		if (boolean) {
-			if (cnst.u._bool)
-				val = 1;
-		} else if (signed) {
-			val = cast(ulong)cnst.u._long;
-		} else if (bits == 8) {
-			assert(cnst.arrayData.length == 1);
-			val = (cast(ubyte[])cnst.arrayData)[0];
-		} else {
-			val = cnst.u._ulong;
-		}
-
-		return LLVMConstInt(llvmType, val, signed);
-	}
-
-	LLVMValueRef fromNumber(State state, long val)
-	{
-		return LLVMConstInt(llvmType, cast(ulong)val, signed);
 	}
 }
 
@@ -229,42 +241,15 @@ public:
 	enum size_t lengthIndex = 1;
 
 public:
-	this(State state, ir.ArrayType at)
+	static ArrayType fromIr(State state, ir.ArrayType at)
 	{
-		diType = diStruct(state, at);
-		llvmType = LLVMStructCreateNamed(state.context, at.mangledName);
-		super(state, at, llvmType, diType);
+		.fromIr(state, at.base);
 
-		// Avoid creating void[] arrays turn them into ubyte[] instead.
-		base = state.fromIr(at.base);
-		if (base.isVoid) {
-			base = state.ubyteType;
+		auto test = state.getTypeNoCreate(at.mangledName);
+		if (test !is null) {
+			return cast(ArrayType)test;
 		}
-
-		auto irPtr = new ir.PointerType(base.irType);
-		addMangledName(irPtr);
-		ptrType = cast(PointerType)state.fromIr(irPtr);
-		base = ptrType.base;
-
-		lengthType = state.sizeType;
-
-		types[ptrIndex] = ptrType;
-		types[lengthIndex] = lengthType;
-
-		LLVMTypeRef[2] mt;
-		mt[ptrIndex] = ptrType.llvmType;
-		mt[lengthIndex] = lengthType.llvmType;
-
-		LLVMStructSetBody(llvmType, mt[], false);
-
-		if (ptrType.diType is null || lengthType.diType is null) {
-			return;
-		}
-
-		version (D_Version2) static assert(ptrIndex < lengthIndex);
-		version (D_Version2) diStructSetBody(state, cast(Type)this,
-			[ptrType, lengthType],
-			["ptr", "length"]);
+		return new ArrayType(state, at);
 	}
 
 	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
@@ -322,6 +307,45 @@ public:
 
 		return LLVMConstNamedStruct(llvmType, vals[]);
 	}
+
+private:
+	this(State state, ir.ArrayType at)
+	{
+		diType = diStruct(state, at);
+		llvmType = LLVMStructCreateNamed(state.context, at.mangledName);
+		super(state, at, llvmType, diType);
+
+		// Avoid creating void[] arrays turn them into ubyte[] instead.
+		base = state.fromIr(at.base);
+		if (base.isVoid) {
+			base = state.ubyteType;
+		}
+
+		auto irPtr = new ir.PointerType(base.irType);
+		addMangledName(irPtr);
+		ptrType = cast(PointerType)state.fromIr(irPtr);
+		base = ptrType.base;
+
+		lengthType = state.sizeType;
+
+		types[ptrIndex] = ptrType;
+		types[lengthIndex] = lengthType;
+
+		LLVMTypeRef[2] mt;
+		mt[ptrIndex] = ptrType.llvmType;
+		mt[lengthIndex] = lengthType.llvmType;
+
+		LLVMStructSetBody(llvmType, mt[], false);
+
+		if (ptrType.diType is null || lengthType.diType is null) {
+			return;
+		}
+
+		version (D_Version2) static assert(ptrIndex < lengthIndex);
+		version (D_Version2) diStructSetBody(state, cast(Type)this,
+			[ptrType, lengthType],
+			["ptr", "length"]);
+	}
 }
 
 /**
@@ -337,17 +361,15 @@ public:
 	PointerType ptrType;
 
 public:
-	this(State state, ir.StaticArrayType sat)
+	static StaticArrayType fromIr(State state, ir.StaticArrayType sat)
 	{
-		auto irArray = new ir.ArrayType(sat.base);
-		addMangledName(irArray);
-		arrayType = cast(ArrayType)state.fromIr(irArray);
-		base = arrayType.base;
-		ptrType = arrayType.ptrType;
+		.fromIr(state, sat.base);
 
-		length = cast(uint)sat.length;
-		llvmType = LLVMArrayType(base.llvmType, length);
-		super(state, sat, llvmType, null);
+		auto test = state.getTypeNoCreate(sat.mangledName);
+		if (test !is null) {
+			return cast(StaticArrayType)test;
+		}
+		return new StaticArrayType(state, sat);
 	}
 
 	LLVMValueRef fromArrayLiteral(State state, ir.ArrayLiteral al)
@@ -378,6 +400,20 @@ public:
 		 * LLVMSetInitializer(litGlobal, litConst);
 		 */
 		return litConst;
+	}
+
+private:
+	this(State state, ir.StaticArrayType sat)
+	{
+		auto irArray = new ir.ArrayType(sat.base);
+		addMangledName(irArray);
+		arrayType = cast(ArrayType)state.fromIr(irArray);
+		base = arrayType.base;
+		ptrType = arrayType.ptrType;
+
+		length = cast(uint)sat.length;
+		llvmType = LLVMArrayType(base.llvmType, length);
+		super(state, sat, llvmType, null);
 	}
 }
 
@@ -484,6 +520,37 @@ public:
 	enum uint funcIndex = 1;
 
 public:
+	static DelegateType fromIr(State state, ir.DelegateType dg)
+	{
+		Type[] params;
+		Type ret;
+
+		ret = .fromIr(state, dg.ret);
+		foreach (param; dg.params) {
+			.fromIr(state, param);
+		}
+
+		// FunctionPointers can via structs reference themself.
+		auto test = state.getTypeNoCreate(dg.mangledName);
+		if (test !is null) {
+			return cast(DelegateType)test;
+		}
+		return new DelegateType(state, dg);
+	}
+
+	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
+	{
+		if (!cnst.isNull) {
+			throw panic(cnst.location, "can only fromConstant null pointers.");
+		}
+		LLVMValueRef[2] vals;
+		auto vptr = LLVMPointerType(LLVMInt8TypeInContext(state.context), 0);
+		vals[0] = LLVMConstNull(vptr);
+		vals[1] = LLVMConstNull(vptr);
+		return LLVMConstNamedStruct(llvmType, vals.ptr, 2);
+	}
+
+private:
 	this(State state, ir.DelegateType dt)
 	{
 		diType = diStruct(state, dt);
@@ -515,18 +582,6 @@ public:
 			[state.voidPtrType, funcType],
 			["ptr", "func"]);
 	}
-
-	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
-	{
-		if (!cnst.isNull) {
-			throw panic(cnst.location, "can only fromConstant null pointers.");
-		}
-		LLVMValueRef[2] vals;
-		auto vptr = LLVMPointerType(LLVMInt8TypeInContext(state.context), 0);
-		vals[0] = LLVMConstNull(vptr);
-		vals[1] = LLVMConstNull(vptr);
-		return LLVMConstNamedStruct(llvmType, vals.ptr, 2);
-	}
 }
 
 /**
@@ -539,6 +594,28 @@ public:
 	Type[] types;
 
 public:
+	static StructType fromIr(State state, ir.Struct irType)
+	{
+		return new StructType(state, irType);
+	}
+
+	LLVMValueRef fromStructLiteral(State state, ir.StructLiteral sl)
+	{
+		LLVMValueRef[] vals;
+		vals.length = indices.length;
+
+		if (vals.length != sl.exps.length) {
+			throw panic("struct literal has the wrong number of initializers");
+		}
+
+		foreach (uint i, ref val; vals) {
+			val = state.getConstant(sl.exps[i]);
+		}
+
+		return LLVMConstNamedStruct(llvmType, vals);
+	}
+
+private:
 	this(State state, ir.Struct irType)
 	{
 		auto c = cast(ir.Class)irType.loweredNode;
@@ -575,22 +652,6 @@ public:
 		LLVMStructSetBody(llvmType, mt, false);
 		diStructSetBody(state, diType, vars);
 	}
-
-	LLVMValueRef fromStructLiteral(State state, ir.StructLiteral sl)
-	{
-		LLVMValueRef[] vals;
-		vals.length = indices.length;
-
-		if (vals.length != sl.exps.length) {
-			throw panic("struct literal has the wrong number of initializers");
-		}
-
-		foreach (uint i, ref val; vals) {
-			val = state.getConstant(sl.exps[i]);
-		}
-
-		return LLVMConstNamedStruct(llvmType, vals);
-	}
 }
 
 /**
@@ -603,35 +664,9 @@ public:
 	Type[] types;
 
 public:
-	this(State state, ir.Union irType)
+	static UnionType fromIr(State state, ir.Union irType)
 	{
-		llvmType = LLVMStructCreateNamed(state.context, irType.mangledName);
-		super(state, irType, llvmType, diType);
-
-		uint index;
-		void handle(ir.Node m) {
-			auto var = cast(ir.Variable)m;
-			if (var is null)
-				return;
-
-			if (var.storage != ir.Variable.Storage.Field)
-				return;
-
-			// @todo handle anon members.
-			assert(var.name !is null);
-
-			indices[var.name] = index++;
-			types ~= state.fromIr(var.type);
-		}
-
-		foreach (m; irType.members.nodes) {
-			handle(m);
-		}
-
-		// @todo check packing.
-		LLVMTypeRef[1] mt;
-		mt[0] = LLVMArrayType(state.ubyteType.llvmType, cast(uint)irType.totalSize);
-		LLVMStructSetBody(llvmType, mt[], false);
+		return new UnionType(state, irType);
 	}
 
 	LLVMValueRef fromStructLiteral(State state, ir.StructLiteral sl)
@@ -684,6 +719,38 @@ public:
 
 		return LLVMConstNamedStruct(llvmType, vals);
 	}
+
+private:
+	this(State state, ir.Union irType)
+	{
+		llvmType = LLVMStructCreateNamed(state.context, irType.mangledName);
+		super(state, irType, llvmType, diType);
+
+		uint index;
+		void handle(ir.Node m) {
+			auto var = cast(ir.Variable)m;
+			if (var is null)
+				return;
+
+			if (var.storage != ir.Variable.Storage.Field)
+				return;
+
+			// @todo handle anon members.
+			assert(var.name !is null);
+
+			indices[var.name] = index++;
+			types ~= state.fromIr(var.type);
+		}
+
+		foreach (m; irType.members.nodes) {
+			handle(m);
+		}
+
+		// @todo check packing.
+		LLVMTypeRef[1] mt;
+		mt[0] = LLVMArrayType(state.ubyteType.llvmType, cast(uint)irType.totalSize);
+		LLVMStructSetBody(llvmType, mt[], false);
+	}
 }
 
 /**
@@ -726,31 +793,38 @@ Type fromIrImpl(State state, ir.Type irType)
 	switch(irType.nodeType) with (ir.NodeType) {
 	case PrimitiveType:
 		auto pt = cast(ir.PrimitiveType)irType;
-		if (pt.type == ir.PrimitiveType.Kind.Void)
-			return new .VoidType(state, pt);
-		else
-			return new .PrimitiveType(state, pt);
+		if (pt.type == ir.PrimitiveType.Kind.Void) {
+			return .VoidType.fromIr(state, pt);
+		} else {
+			return .PrimitiveType.fromIr(state, pt);
+		}
 	case PointerType:
 		auto pt = cast(ir.PointerType)irType;
 		return .PointerType.fromIr(state, pt);
 	case ArrayType:
 		auto at = cast(ir.ArrayType)irType;
-		return new .ArrayType(state, at);
+		return .ArrayType.fromIr(state, at);
 	case StaticArrayType:
 		auto sat = cast(ir.StaticArrayType)irType;
-		return new .StaticArrayType(state, sat);
+		return .StaticArrayType.fromIr(state, sat);
 	case FunctionType:
 		auto ft = cast(ir.FunctionType)irType;
 		return .FunctionType.fromIr(state, ft);
 	case DelegateType:
 		auto dt = cast(ir.DelegateType)irType;
-		return new .DelegateType(state, dt);
+		return .DelegateType.fromIr(state, dt);
 	case Struct:
 		auto strct = cast(ir.Struct)irType;
-		return new .StructType(state, strct);
+		return .StructType.fromIr(state, strct);
 	case Union:
 		auto u = cast(ir.Union)irType;
-		return new .UnionType(state, u);
+		return .UnionType.fromIr(state, u);
+	case AAType:
+		auto aa = cast(ir.AAType)irType;
+		return state.voidPtrType;
+	case Enum:
+		auto _enum = cast(ir.Enum)irType;
+		return fromIr(state, _enum.base);
 	case Class:
 		auto _class = cast(ir.Class)irType;
 		auto pointer = buildPtrSmart(_class.location, _class.layoutStruct);
@@ -761,12 +835,6 @@ Type fromIrImpl(State state, ir.Type irType)
 		assert(attr !is null);
 		irType = attr.layoutClass;
 		goto case Class;
-	case Enum:
-		auto _enum = cast(ir.Enum)irType;
-		return fromIr(state, _enum.base);
-	case AAType:
-		auto aa = cast(ir.AAType)irType;
-		return state.voidPtrType;
 	case TypeReference:
 		auto tr = cast(ir.TypeReference)irType;
 		assert(cast(ir.Aggregate)tr.type !is null);
