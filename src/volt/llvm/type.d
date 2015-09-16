@@ -388,7 +388,6 @@ abstract class CallableType : Type
 {
 public:
 	Type ret;
-	LLVMTypeRef llvmCallType;
 	ir.CallableType ct;
 	Type[] params;
 
@@ -406,6 +405,9 @@ public:
  */
 class FunctionType : CallableType
 {
+public:
+	LLVMTypeRef llvmCallType;
+
 public:
 	static FunctionType fromIr(State state, ir.FunctionType ft)
 	{
@@ -500,8 +502,7 @@ public:
 
 		assert(funcType !is null);
 
-		llvmCallType = funcType.llvmCallType;
-		llvmCallPtrType = LLVMPointerType(llvmCallType, 0);
+		llvmCallPtrType = funcType.llvmType;
 
 		LLVMTypeRef[2] mt;
 		mt[voidPtrIndex] = state.voidPtrType.llvmType;
