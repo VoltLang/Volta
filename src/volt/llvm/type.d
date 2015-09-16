@@ -26,11 +26,10 @@ public:
 	ir.Type irType;
 	LLVMTypeRef llvmType;
 	LLVMValueRef diType;
-	bool structType; // Is the type a LLVM struct.
 
 protected:
-	this(State state, ir.Type irType, bool structType,
-	     LLVMTypeRef llvmType, LLVMValueRef diType)
+	this(State state, ir.Type irType, LLVMTypeRef llvmType,
+	     LLVMValueRef diType)
 	in {
 		assert(state !is null);
 		assert(irType !is null);
@@ -43,7 +42,6 @@ protected:
 		state.addType(this, irType.mangledName);
 
 		this.irType = irType;
-		this.structType = structType;
 		this.llvmType = llvmType;
 		this.diType = diType;
 	}
@@ -63,8 +61,7 @@ class VoidType : Type
 public:
 	this(State state, ir.PrimitiveType pt)
 	{
-		super(state, pt, false, LLVMVoidTypeInContext(state.context),
-		      null);
+		super(state, pt, LLVMVoidTypeInContext(state.context), null);
 	}
 }
 
@@ -135,7 +132,7 @@ public:
 			throw panic(pt.location, "PrmitiveType.Void not handled");
 		}
 
-		super(state, pt, false, llvmType, null);
+		super(state, pt, llvmType, null);
 		diType = state.diBaseType(this, pt.type);
 	}
 
@@ -212,7 +209,7 @@ private:
 			llvmType = LLVMPointerType(base.llvmType, 0);
 		}
 		diType = state.diPointerType(pt, base);
-		super(state, pt, false, llvmType, diType);
+		super(state, pt, llvmType, diType);
 	}
 }
 
@@ -236,7 +233,7 @@ public:
 	{
 		diType = diStruct(state, at);
 		llvmType = LLVMStructCreateNamed(state.context, at.mangledName);
-		super(state, at, true, llvmType, diType);
+		super(state, at, llvmType, diType);
 
 		// Avoid creating void[] arrays turn them into ubyte[] instead.
 		base = state.fromIr(at.base);
@@ -350,7 +347,7 @@ public:
 
 		length = cast(uint)sat.length;
 		llvmType = LLVMArrayType(base.llvmType, length);
-		super(state, sat, true, llvmType, null);
+		super(state, sat, llvmType, null);
 	}
 
 	LLVMValueRef fromArrayLiteral(State state, ir.ArrayLiteral al)
@@ -396,11 +393,11 @@ public:
 	Type[] params;
 
 public:
-	this(State state, ir.CallableType ct, bool passByVal,
+	this(State state, ir.CallableType ct,
 	     LLVMTypeRef llvmType, LLVMValueRef diType)
 	{
 		this.ct = ct;
-		super(state, ct, passByVal, llvmType, diType);
+		super(state, ct, llvmType, diType);
 	}
 }
 
@@ -469,7 +466,7 @@ private:
 		llvmCallType = LLVMFunctionType(ret.llvmType, args, ft.hasVarArgs && ft.linkage == ir.Linkage.C);
 		llvmType = LLVMPointerType(llvmCallType, 0);
 		diType = diFunctionType(state, ret, di);
-		super(state, ft, false, llvmType, diType);
+		super(state, ft, llvmType, diType);
 	}
 }
 
@@ -489,7 +486,7 @@ public:
 	{
 		diType = diStruct(state, dt);
 		llvmType = LLVMStructCreateNamed(state.context, dt.mangledName);
-		super(state, dt, true, llvmType, diType);
+		super(state, dt, llvmType, diType);
 
 		auto irFuncType = new ir.FunctionType(dt);
 		irFuncType.hiddenParameter = true;
@@ -548,7 +545,7 @@ public:
 
 		diType = state.diStruct(irType);
 		llvmType = LLVMStructCreateNamed(state.context, mangled);
-		super(state, irType, true, llvmType, diType);
+		super(state, irType, llvmType, diType);
 
 		// @todo check packing.
 		uint index;
@@ -608,7 +605,7 @@ public:
 	this(State state, ir.Union irType)
 	{
 		llvmType = LLVMStructCreateNamed(state.context, irType.mangledName);
-		super(state, irType, true, llvmType, diType);
+		super(state, irType, llvmType, diType);
 
 		uint index;
 		void handle(ir.Node m) {
