@@ -10,7 +10,6 @@ import volt.token.location : Location;
 import volt.errors;
 
 import volt.llvm.common;
-import volt.llvm.aggregate;
 import volt.llvm.interfaces;
 static import volt.semantic.mangle;
 static import volt.semantic.classify;
