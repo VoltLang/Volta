@@ -8,17 +8,15 @@ import ir = volt.ir.ir;
 import volt.ir.util;
 
 import volt.errors;
-import volt.llvm.di : diBaseType, diPointerType, diStruct, diStructSetBody,
-                      diFunctionType;
-import volt.llvm.constant;
 import volt.llvm.interfaces;
+
 static import volt.semantic.mangle;
 static import volt.semantic.classify;
-static import volt.semantic.typer;
 
 
 /**
- * Base class for a LLVM backend types.
+ * Base class for a LLVM backend types. Contains a refernce to the irType
+ * for this type, the llvmType and the debugging info for this type.
  */
 class Type
 {
@@ -26,6 +24,12 @@ public:
 	ir.Type irType;
 	LLVMTypeRef llvmType;
 	LLVMValueRef diType;
+
+public:
+	LLVMValueRef fromConstant(State, ir.Constant) { assert(false); }
+	LLVMValueRef fromArrayLiteral(State, ir.ArrayLiteral) { assert(false); }
+	LLVMValueRef fromUnionLiteral(State, ir.UnionLiteral) { assert(false); }
+	LLVMValueRef fromStructLiteral(State, ir.StructLiteral) { assert(false); }
 
 protected:
 	this(State state, ir.Type irType, LLVMTypeRef llvmType,
@@ -44,12 +48,6 @@ protected:
 		this.irType = irType;
 		this.llvmType = llvmType;
 		this.diType = diType;
-	}
-
-public:
-	LLVMValueRef fromConstant(State state, ir.Constant cnst)
-	{
-		throw panic(cnst.location, "Can't from constant");
 	}
 }
 
@@ -272,7 +270,7 @@ public:
 		return LLVMConstNamedStruct(llvmType, vals[]);
 	}
 
-	LLVMValueRef fromArrayLiteral(State state, ir.ArrayLiteral al)
+	override LLVMValueRef fromArrayLiteral(State state, ir.ArrayLiteral al)
 	{
 		assert(state.fromIr(al.type) is this);
 
@@ -372,7 +370,7 @@ public:
 		return new StaticArrayType(state, sat);
 	}
 
-	LLVMValueRef fromArrayLiteral(State state, ir.ArrayLiteral al)
+	override LLVMValueRef fromArrayLiteral(State state, ir.ArrayLiteral al)
 	{
 		assert(state.fromIr(al.type) is this);
 
@@ -599,7 +597,7 @@ public:
 		return new StructType(state, irType);
 	}
 
-	LLVMValueRef fromStructLiteral(State state, ir.StructLiteral sl)
+	override LLVMValueRef fromStructLiteral(State state, ir.StructLiteral sl)
 	{
 		LLVMValueRef[] vals;
 		vals.length = indices.length;
@@ -687,23 +685,7 @@ public:
 		return new UnionType(state, irType);
 	}
 
-	LLVMValueRef fromStructLiteral(State state, ir.StructLiteral sl)
-	{
-		LLVMValueRef[] vals;
-		vals.length = indices.length;
-
-		if (vals.length != sl.exps.length) {
-			throw panic("struct literal has the wrong number of initializers");
-		}
-
-		foreach (uint i, ref val; vals) {
-			val = state.getConstant(sl.exps[i]);
-		}
-
-		return LLVMConstNamedStruct(llvmType, vals);
-	}
-
-	LLVMValueRef fromUnionLiteral(State state, ir.UnionLiteral ul)
+	override LLVMValueRef fromUnionLiteral(State state, ir.UnionLiteral ul)
 	{
 		if (indices.length != ul.exps.length) {
 			throw panic("union literal has the wrong number of initializers");

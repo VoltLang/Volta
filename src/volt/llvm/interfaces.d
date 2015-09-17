@@ -10,6 +10,7 @@ public import lib.llvm.c.DIBuilder : LLVMDIBuilderRef;
 public import volt.interfaces;
 public import ir = volt.ir.ir;
 
+public import volt.llvm.di;
 public import volt.llvm.type;
 
 
@@ -45,7 +46,7 @@ public:
 /**
  * Collection of objects used by pretty much all of the translation
  * code. It isn't called Module, Context or Builder because it will
- * collide in meaning with language concepts.
+ * collide in meaning with LLVM and language concepts.
  *
  * One is created for each Volt module that is compiled.
  */

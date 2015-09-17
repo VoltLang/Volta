@@ -2,74 +2,38 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.llvm.common;
 
-import lib.llvm.core;
-
-import volt.errors;
 import volt.ir.util;
 import volt.llvm.interfaces;
 
 
-/*
- *
+/**
  * Common handle functions for both inline and constants.
  *
+ * All of the error checking should have been done in other passes and
+ * unimplemented features is checked for in the called functions.
+ * @{
  */
+void handleConstant(State state, ir.Constant asConst, Value result)
+{
+	auto type = state.fromIr(asConst.type);
 
+	result.isPointer = false;
+	result.type = type;
+	result.value = type.fromConstant(state, asConst);
+}
 
 void handleArrayLiteral(State state, ir.ArrayLiteral al, Value result)
 {
-	auto at = cast(ir.ArrayType)al.type;
-	if (at is null) {
-		auto tr = cast(ir.TypeReference)al.type;
-		if (tr !is null) {
-			at = cast(ir.ArrayType)tr.type;
-		}
-	}
-
-	if (at is null) {
-		handleStaticArrayLiteral(state, al, result);
-		return;
-	}
-
-	auto type = cast(ArrayType)state.fromIr(at);
+	auto type = state.fromIr(al.type);
 
 	result.isPointer = false;
 	result.type = type;
 	result.value = type.fromArrayLiteral(state, al);
 }
 
-void handleStaticArrayLiteral(State state, ir.ArrayLiteral al, Value result)
-{
-	auto at = cast(ir.StaticArrayType)al.type;
-	if (at is null) {
-		auto tr = cast(ir.TypeReference)al.type;
-		if (tr !is null) {
-			at = cast(ir.StaticArrayType)tr.type;
-		}
-	}
-
-	if (at is null) {
-		throw panic(al.location, "array literal type must be ArrayType or TypeReference");
-	}
-
-	auto type = cast(StaticArrayType)state.fromIr(at);
-
-	result.isPointer = true;
-	result.type = type;
-	result.value = type.fromArrayLiteral(state, al);
-}
-
 void handleStructLiteral(State state, ir.StructLiteral sl, Value result)
 {
-	auto tr = cast(ir.TypeReference)sl.type;
-	if (tr is null)
-		throw panic(sl.location, "struct literal type must be TypeReference");
-
-	auto st = cast(ir.Struct)tr.type;
-	if (st is null)
-		throw panic(sl.location, "struct literal type must be TypeReference");
-
-	auto type = cast(StructType)state.fromIr(st);
+	auto type = state.fromIr(sl.type);
 
 	result.isPointer = false;
 	result.type = type;
@@ -78,20 +42,7 @@ void handleStructLiteral(State state, ir.StructLiteral sl, Value result)
 
 void handleUnionLiteral(State state, ir.UnionLiteral ul, Value result)
 {
-	auto tr = cast(ir.TypeReference)ul.type;
-	if (tr is null) {
-		throw panic(ul.location, "union literal type must be a TypeReference");
-	}
-
-	auto ut = cast(ir.Union)tr.type;
-	if (ut is null) {
-		throw panic(ul.location, "union literal type must resolve to Union");
-	}
-
-	auto type = cast(UnionType)state.fromIr(ut);
-	if (type is null) {
-		throw panic(ul.location, "couldn't retrieve UnionType");
-	}
+	auto type = state.fromIr(ul.type);
 
 	result.isPointer = false;
 	result.type = type;
@@ -101,15 +52,16 @@ void handleUnionLiteral(State state, ir.UnionLiteral ul, Value result)
 void handleClassLiteral(State state, ir.ClassLiteral cl, Value result)
 {
 	auto tr = cast(ir.TypeReference)cl.type;
-	if (tr is null)
-		throw panic(cl.location, "class literal type must be TypeReference");
+	assert(tr !is null);
 
 	auto _class = cast(ir.Class)tr.type;
-	if (_class is null)
-		throw panic(cl.location, "class literal type must be TypeReference");
+	assert(_class !is null);
 
 	auto pt = cast(PointerType)state.fromIr(_class);
+	assert(pt !is null);
+
 	auto st = cast(StructType)pt.base;
+	assert(st !is null);
 
 	auto sl = new ir.StructLiteral();
 	sl.location = cl.location;
@@ -134,16 +86,6 @@ void handleClassLiteral(State state, ir.ClassLiteral cl, Value result)
 		result.value = g;
 	}
 }
-
-void handleConstant(State state, ir.Constant asConst, Value result)
-{
-	assert(asConst.type !is null);
-
-	// All of the error checking should have been
-	// done in other passes and unimplemented features
-	// is checked for in the called functions.
-
-	result.isPointer = false;
-	result.type = state.fromIr(asConst.type);
-	result.value = result.type.fromConstant(state, asConst);
-}
+/**
+ * @}
+ */
