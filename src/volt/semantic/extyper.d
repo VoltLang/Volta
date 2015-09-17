@@ -483,8 +483,8 @@ void rewriteOverloadedProperty(Context ctx, ref ir.Exp exp,
 {
 	auto pfix = cast(ir.Postfix) exp;
 	if (pfix !is null && !nested) {
-		auto postfixes = getPostfixChain(pfix);
-		foreach_reverse (ref postfix; postfixes) {
+		auto postfixes = collectPostfixes(pfix);
+		foreach (ref postfix; postfixes) {
 			rewriteOverloadedProperty(ctx, postfix.child, true);
 		}
 	}
@@ -1003,40 +1003,29 @@ void handleArgumentLabelsIfNeeded(Context ctx, ir.Postfix postfix,
 	exp = postfix;
 }
 
-// Given a postfix, return an array of postfixes of every postfix child. The initial postfix is the first element.
-private ir.Postfix[] getPostfixChain(ir.Postfix postfix)
-{
-	ir.Postfix[] postfixes;
-	do {
-		postfixes ~= postfix;
-		postfix = cast(ir.Postfix) postfix.child;
-	} while (postfix !is null);
-	return postfixes;
-}
-
 // Given a.foo, if a is a pointer to a class, turn it into (*a).foo.
 private void dereferenceInitialClass(Context ctx,
                                      ref ir.Postfix[] postfixes)
 {
-	auto lastType = getExpType(ctx.lp, postfixes[$-1].child, ctx.current);
+	auto lastType = getExpType(ctx.lp, postfixes[0].child, ctx.current);
 	if (isPointerToClass(lastType)) {
-		postfixes[$-1].child = buildDeref(postfixes[$-1].child.location, postfixes[$-1].child);
+		postfixes[0].child = buildDeref(postfixes[0].child.location, postfixes[0].child);
 	}
 }
 
 private bool transformToCreateDelegate(Context ctx, ref ir.Exp exp,
                                        ir.Postfix[] postfixes)
 {
-	if (postfixes[0].op == ir.Postfix.Op.Call) {
+	if (postfixes[$-1].op == ir.Postfix.Op.Call) {
 		return false;
 	}
 
-	auto type = getExpType(ctx.lp, postfixes[0].child, ctx.current);
+	auto type = getExpType(ctx.lp, postfixes[$-1].child, ctx.current);
 	/* If we end up with a identifier postfix that points
 	 * at a struct, and retrieves a member function, then
 	 * transform the op from Identifier to CreatePostfix.
 	 */
-	if (postfixes[0].identifier !is null) {
+	if (postfixes[$-1].identifier !is null) {
 		auto asStorage = cast(ir.StorageType) realType(type);
 		if (asStorage !is null &&
 		    canTransparentlyReferToBase(asStorage)) {
@@ -1062,28 +1051,28 @@ private bool transformToCreateDelegate(Context ctx, ref ir.Exp exp,
 			scopes ~= aa.myScope;
 		}
 		ir.Variable aggVar;
-		auto store = lookupAsThisScope(ctx.lp, aggScope, postfixes[0].location, postfixes[0].identifier.value);
+		auto store = lookupAsThisScope(ctx.lp, aggScope, postfixes[$-1].location, postfixes[$-1].identifier.value);
 		foreach (i, _scope; scopes) {
-			auto tmpStore = lookupAsThisScope(ctx.lp, _scope, postfixes[0].location, postfixes[0].identifier.value);
+			auto tmpStore = lookupAsThisScope(ctx.lp, _scope, postfixes[$-1].location, postfixes[$-1].identifier.value);
 			if (tmpStore is null) {
 				continue;
 			}
 			if (store !is null) {
-				throw makeAnonymousAggregateRedefines(agg.anonymousAggregates[i], postfixes[0].identifier.value);
+				throw makeAnonymousAggregateRedefines(agg.anonymousAggregates[i], postfixes[$-1].identifier.value);
 			}
 			store = tmpStore;
 			aggVar = agg.anonymousVars[i];
 			// Keep checking to ensure anon aggs don't mask one another.
 		}
 		if (aggVar !is null) {
-			assert(postfixes[0].identifier !is null);
-			auto origLookup = postfixes[0].identifier.value;
-			postfixes[0].identifier.value = aggVar.name;
-			exp = buildAccess(postfixes[0].location, postfixes[0], origLookup);
+			assert(postfixes[$-1].identifier !is null);
+			auto origLookup = postfixes[$-1].identifier.value;
+			postfixes[$-1].identifier.value = aggVar.name;
+			exp = buildAccess(postfixes[$-1].location, postfixes[$-1], origLookup);
 			return true;
 		}
 		if (store is null) {
-			throw makeNotMember(postfixes[0], type, postfixes[0].identifier.value);
+			throw makeNotMember(postfixes[$-1], type, postfixes[$-1].identifier.value);
 		}
 
 		if (store.kind != ir.Store.Kind.Function) {
@@ -1093,18 +1082,18 @@ private bool transformToCreateDelegate(Context ctx, ref ir.Exp exp,
 		assert(store.functions.length > 0, store.name);
 
 		auto funcref = new ir.ExpReference();
-		funcref.location = postfixes[0].identifier.location;
-		auto _ref = cast(ir.ExpReference) postfixes[0].child;
+		funcref.location = postfixes[$-1].identifier.location;
+		auto _ref = cast(ir.ExpReference) postfixes[$-1].child;
 		if (_ref !is null) funcref.idents = _ref.idents;
-		funcref.idents ~= postfixes[0].identifier.value;
-		funcref.decl = buildSet(postfixes[0].identifier.location, store.functions, funcref);
+		funcref.idents ~= postfixes[$-1].identifier.value;
+		funcref.decl = buildSet(postfixes[$-1].identifier.location, store.functions, funcref);
 		ir.FunctionSet set = cast(ir.FunctionSet) funcref.decl;
 		if (set !is null) assert(set.functions.length > 0);
-		postfixes[0].op = ir.Postfix.Op.CreateDelegate;
-		postfixes[0].memberFunction = funcref;
+		postfixes[$-1].op = ir.Postfix.Op.CreateDelegate;
+		postfixes[$-1].memberFunction = funcref;
 	}
 
-	propertyToCallIfNeeded(postfixes[0].location, ctx.lp, exp, ctx.current, postfixes);
+	propertyToCallIfNeeded(postfixes[$-1].location, ctx.lp, exp, ctx.current, postfixes);
 
 	return true;
 }
@@ -1293,7 +1282,7 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp 
 	if (replaceAAPostfixesIfNeeded(ctx, postfix, exp)) {
 		return;
 	}
-	ir.Postfix[] postfixes = getPostfixChain(postfix);
+	ir.Postfix[] postfixes = collectPostfixes(postfix);
 
 	dereferenceInitialClass(ctx, postfixes);
 	if (transformToCreateDelegate(ctx, exp, postfixes)) {

@@ -49,7 +49,7 @@ ir.Type accumulateStorage(ir.Type toType, ir.Type seed=null)
 
 /// If e is a reference to a no-arg property function, turn it into a call.
 /// Returns: the CallableType called, if any, null otherwise.
-ir.CallableType propertyToCallIfNeeded(Location loc, LanguagePass lp, ref ir.Exp e, ir.Scope current, ir.Postfix[] postfixStack)
+ir.CallableType propertyToCallIfNeeded(Location loc, LanguagePass lp, ref ir.Exp e, ir.Scope current, ir.Postfix[] postfixes)
 {
 	auto asRef = cast(ir.ExpReference) e;
 	if (asRef !is null) {
@@ -58,7 +58,7 @@ ir.CallableType propertyToCallIfNeeded(Location loc, LanguagePass lp, ref ir.Exp
 		}
 	}
 
-	if (postfixStack.length > 0 && postfixStack[0].isImplicitPropertyCall) {
+	if (postfixes.length > 0 && postfixes[$-1].isImplicitPropertyCall) {
 		return null;
 	}
 
