@@ -131,6 +131,11 @@ public:
 		return v.value;
 	}
 
+	override void getConstantValueAnyForm(ir.Exp exp, Value result)
+	{
+		.getConstantValue(this, exp, result);
+	}
+
 
 	/*
 	 *

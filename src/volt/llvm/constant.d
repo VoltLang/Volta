@@ -13,34 +13,36 @@ static import volt.semantic.mangle;
 
 void getConstantValue(State state, ir.Exp exp, Value result)
 {
+	result.isPointer = false;
 	switch (exp.nodeType) with (ir.NodeType) {
-	case Constant:
-		auto cnst = cast(ir.Constant)exp;
-		return handleConstant(state, cnst, result);
-	case ArrayLiteral:
-		auto al = cast(ir.ArrayLiteral)exp;
-		handleArrayLiteral(state, al, result);
-		break;
-	case StructLiteral:
-		auto sl = cast(ir.StructLiteral)exp;
-		handleStructLiteral(state, sl, result);
-		break;
-	case UnionLiteral:
-		auto ul = cast(ir.UnionLiteral)exp;
-		handleUnionLiteral(state, ul, result);
-		break;
-	case ExpReference:
-		auto expRef = cast(ir.ExpReference)exp;
-		handleExpReference(state, expRef, result);
-		break;
 	case Unary:
 		auto asUnary = cast(ir.Unary)exp;
-		return handleUnary(state, asUnary, result);
+		assert(asUnary !is null);
+		return handleConstUnary(state, asUnary, result);
+	case Constant:
+		auto cnst = cast(ir.Constant)exp;
+		assert(cnst !is null);
+		return handleConstant(state, cnst, result);
+	case ExpReference:
+		auto expRef = cast(ir.ExpReference)exp;
+		assert(expRef !is null);
+		return handleConstExpReference(state, expRef, result);
+	case ArrayLiteral:
+		auto al = cast(ir.ArrayLiteral)exp;
+		assert(al !is null);
+		return handleArrayLiteral(state, al, result);
+	case StructLiteral:
+		auto sl = cast(ir.StructLiteral)exp;
+		assert(sl !is null);
+		return handleStructLiteral(state, sl, result);
+	case UnionLiteral:
+		auto ul = cast(ir.UnionLiteral)exp;
+		assert(ul !is null);
+		return handleUnionLiteral(state, ul, result);
 	case ClassLiteral:
 		auto literal = cast(ir.ClassLiteral)exp;
 		assert(literal !is null);
-		handleClassLiteral(state, literal, result);
-		break;
+		return handleClassLiteral(state, literal, result);
 	default:
 		auto str = format(
 			"could not get constant from expression '%s'",
@@ -49,29 +51,32 @@ void getConstantValue(State state, ir.Exp exp, Value result)
 	}
 }
 
-void handleUnary(State state, ir.Unary asUnary, Value result)
+private:
+/*
+ *
+ * Handle functions.
+ *
+ */
+
+void handleConstUnary(State state, ir.Unary asUnary, Value result)
 {
 	switch (asUnary.op) with (ir.Unary.Op) {
 	case Cast:
-		return handleCast(state, asUnary, result);
+		return handleConstCast(state, asUnary, result);
 	case AddrOf:
-		return handleAddrOf(state, asUnary, result);
-	case Plus:
-	case Minus:
-		return handlePlusMinus(state, asUnary, result);
+		return handleConstAddrOf(state, asUnary, result);
+	case Plus, Minus:
+		return handleConstPlusMinus(state, asUnary, result);
 	default:
 		throw panicUnhandled(asUnary, ir.nodeToString(asUnary));
 	}
 }
 
-void handleAddrOf(State state, ir.Unary de, Value result)
+void handleConstAddrOf(State state, ir.Unary de, Value result)
 {
 	auto expRef = cast(ir.ExpReference)de.value;
-	if (expRef is null)
-		throw panic(de.value.location, "not a ExpReference");
-
-	if (expRef.decl.declKind != ir.Declaration.Kind.Variable)
-		throw panic(de.value.location, "must be a variable");
+	assert(expRef !is null);
+	assert(expRef.decl.declKind == ir.Declaration.Kind.Variable);
 
 	auto var = cast(ir.Variable)expRef.decl;
 	Type type;
@@ -88,26 +93,27 @@ void handleAddrOf(State state, ir.Unary de, Value result)
 	result.isPointer = false;
 }
 
-void handlePlusMinus(State state, ir.Unary asUnary, Value result)
+void handleConstPlusMinus(State state, ir.Unary asUnary, Value result)
 {
-	state.getConstantValue(asUnary.value, result);
+	getConstantValue(state, asUnary.value, result);
 
 	auto primType = cast(PrimitiveType)result.type;
-	if (primType is null)
-		throw panic(asUnary.location, "must be primitive type");
+	assert(primType !is null);
+	assert(!result.isPointer);
 
-	if (asUnary.op == ir.Unary.Op.Minus)
+	if (asUnary.op == ir.Unary.Op.Minus) {
 		result.value = LLVMConstNeg(result.value);
+	}
 }
 
-void handleCast(State state, ir.Unary asUnary, Value result)
+void handleConstCast(State state, ir.Unary asUnary, Value result)
 {
 	void error(string t) {
 		auto str = format("error unary constant expression '%s'", t);
 		throw panic(asUnary.location, str);
 	}
 
-	state.getConstantValue(asUnary.value, result);
+	getConstantValue(state, asUnary.value, result);
 
 	auto newType = state.fromIr(asUnary.type);
 	auto oldType = result.type;
@@ -137,19 +143,10 @@ void handleCast(State state, ir.Unary asUnary, Value result)
 		}
 	}
 
-	error("not a handle cast type");
+	throw makeError(asUnary.location, "not a handle cast type");
 }
 
-
-/*
- *
- * Misc functions.
- *
- */
-
-
-
-void handleExpReference(State state, ir.ExpReference expRef, Value result)
+void handleConstExpReference(State state, ir.ExpReference expRef, Value result)
 {
 	switch(expRef.decl.declKind) with (ir.Declaration.Kind) {
 	case Function:
@@ -184,8 +181,9 @@ void handleExpReference(State state, ir.ExpReference expRef, Value result)
 		 * implicitly we can allow them trough. We use this for typeid.
 		 * This might seem backwards but it works out.
 		 */
-		if (!var.useBaseStorage)
+		if (!var.useBaseStorage) {
 			throw panic(expRef.location, "variables needs '&' for constants");
+		}
 
 		Type type;
 		auto v = state.getVariableValue(var, type);

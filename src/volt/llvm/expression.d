@@ -10,7 +10,6 @@ import volt.token.location : Location;
 import volt.errors;
 
 import volt.llvm.common;
-import volt.llvm.constant;
 import volt.llvm.aggregate;
 import volt.llvm.interfaces;
 static import volt.semantic.mangle;
@@ -1281,8 +1280,7 @@ void handleExpReference(State state, ir.ExpReference expRef, Value result)
 		break;
 	case EnumDeclaration:
 		auto ed = cast(ir.EnumDeclaration)expRef.decl;
-		result.isPointer = false;
-		getConstantValue(state, ed.assign, result);
+		state.getConstantValueAnyForm(ed.assign, result);
 		break;
 	default:
 		throw panicUnhandled(expRef.location, toString(expRef.decl.declKind));

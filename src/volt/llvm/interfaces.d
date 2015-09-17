@@ -13,8 +13,6 @@ public import ir = volt.ir.ir;
 public import volt.llvm.type;
 
 
-
-
 /**
  * Represents a single LLVMValueRef plus the associated high level type.
  *
@@ -289,6 +287,12 @@ public:
 	 * does not require that state.builder is set.
 	 */
 	abstract LLVMValueRef getConstant(ir.Exp exp);
+
+	/**
+	 * Returns the value, without doing any checking if it is
+	 * in reference form or not.
+	 */
+	abstract void getConstantValueAnyForm(ir.Exp exp, Value result);
 
 	/*
 	 *

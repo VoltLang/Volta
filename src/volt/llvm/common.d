@@ -143,6 +143,7 @@ void handleConstant(State state, ir.Constant asConst, Value result)
 	// done in other passes and unimplemented features
 	// is checked for in the called functions.
 
+	result.isPointer = false;
 	result.type = state.fromIr(asConst.type);
 	result.value = result.type.fromConstant(state, asConst);
 }
