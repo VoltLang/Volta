@@ -26,10 +26,10 @@ public:
 	LLVMValueRef diType;
 
 public:
-	LLVMValueRef fromConstant(State, ir.Constant) { assert(false); }
-	LLVMValueRef fromArrayLiteral(State, ir.ArrayLiteral) { assert(false); }
-	LLVMValueRef fromUnionLiteral(State, ir.UnionLiteral) { assert(false); }
-	LLVMValueRef fromStructLiteral(State, ir.StructLiteral) { assert(false); }
+	void fromConstant(State, ir.Constant, Value) { assert(false); }
+	void fromArrayLiteral(State, ir.ArrayLiteral, Value) { assert(false); }
+	void fromUnionLiteral(State, ir.UnionLiteral, Value) { assert(false); }
+	void fromStructLiteral(State, ir.StructLiteral, Value) { assert(false); }
 
 protected:
 	this(State state, ir.Type irType, LLVMTypeRef llvmType,
@@ -86,31 +86,34 @@ public:
 		return new PrimitiveType(state, pt);
 	}
 
-	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
+	override void fromConstant(State state, ir.Constant cnst, Value result)
 	{
+		LLVMValueRef r;
 		if (floating) {
 			if (bits == 32) {
-				return LLVMConstReal(llvmType, cnst.u._float);
+				r = LLVMConstReal(llvmType, cnst.u._float);
 			} else {
 				assert(bits == 64);
-				return LLVMConstReal(llvmType, cnst.u._double);
+				r = LLVMConstReal(llvmType, cnst.u._double);
 			}
-		}
-
-		ulong val;
-		if (boolean) {
-			if (cnst.u._bool)
-				val = 1;
-		} else if (signed) {
-			val = cast(ulong)cnst.u._long;
-		} else if (bits == 8) {
-			assert(cnst.arrayData.length == 1);
-			val = (cast(ubyte[])cnst.arrayData)[0];
 		} else {
-			val = cnst.u._ulong;
+			ulong val;
+			if (boolean) {
+				val = cnst.u._bool;
+			} else if (signed) {
+				val = cast(ulong)cnst.u._long;
+			} else if (bits == 8) {
+				assert(cnst.arrayData.length == 1);
+				val = (cast(ubyte[])cnst.arrayData)[0];
+			} else {
+				val = cnst.u._ulong;
+			}
+			r = LLVMConstInt(llvmType, val, signed);
 		}
 
-		return LLVMConstInt(llvmType, val, signed);
+		result.type = this;
+		result.value = r;
+		result.isPointer = false;
 	}
 
 	LLVMValueRef fromNumber(State state, long val)
@@ -200,12 +203,15 @@ public:
 		return new PointerType(state, pt, base);
 	}
 
-	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
+	override void fromConstant(State state, ir.Constant cnst, Value result)
 	{
 		if (!cnst.isNull) {
 			throw panic(cnst.location, "can only fromConstant null pointers.");
 		}
-		return LLVMConstPointerNull(llvmType);
+
+		result.type = this;
+		result.value = LLVMConstPointerNull(llvmType);
+		result.isPointer = false;
 	}
 
 private:
@@ -250,7 +256,7 @@ public:
 		return new ArrayType(state, at);
 	}
 
-	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
+	override void fromConstant(State state, ir.Constant cnst, Value result)
 	{
 		auto strConst = LLVMConstStringInContext(state.context, cast(char[])cnst.arrayData, false);
 		auto strGlobal = LLVMAddGlobal(state.mod, LLVMTypeOf(strConst), "");
@@ -267,10 +273,12 @@ public:
 		vals[lengthIndex] = lengthType.fromNumber(state, cast(long)cnst.arrayData.length);
 		vals[ptrIndex] = strGep;
 
-		return LLVMConstNamedStruct(llvmType, vals[]);
+		result.type = this;
+		result.value = LLVMConstNamedStruct(llvmType, vals[]);
+		result.isPointer = false;
 	}
 
-	override LLVMValueRef fromArrayLiteral(State state, ir.ArrayLiteral al)
+	override void fromArrayLiteral(State state, ir.ArrayLiteral al, Value result)
 	{
 		assert(state.fromIr(al.type) is this);
 
@@ -279,7 +287,11 @@ public:
 			LLVMValueRef[2] vals;
 			vals[lengthIndex] = LLVMConstNull(lengthType.llvmType);
 			vals[ptrIndex] = LLVMConstNull(ptrType.llvmType);
-			return LLVMConstNamedStruct(llvmType, vals[]);
+
+			result.type = this;
+			result.value = LLVMConstNamedStruct(llvmType, vals[]);
+			result.isPointer = false;
+			return;
 		}
 
 		LLVMValueRef[] alVals;
@@ -303,7 +315,9 @@ public:
 		vals[lengthIndex] = lengthType.fromNumber(state, cast(long)al.values.length);
 		vals[ptrIndex] = strGep;
 
-		return LLVMConstNamedStruct(llvmType, vals[]);
+		result.type = this;
+		result.value = LLVMConstNamedStruct(llvmType, vals[]);
+		result.isPointer = false;
 	}
 
 private:
@@ -370,7 +384,7 @@ public:
 		return new StaticArrayType(state, sat);
 	}
 
-	override LLVMValueRef fromArrayLiteral(State state, ir.ArrayLiteral al)
+	override void fromArrayLiteral(State state, ir.ArrayLiteral al, Value result)
 	{
 		assert(state.fromIr(al.type) is this);
 
@@ -388,16 +402,9 @@ public:
 			alVals[i] = state.getConstant(exp);
 		}
 
-		auto litConst = LLVMConstArray(base.llvmType, alVals);
-
-		/*
-		 * This was apperently wrong
-		 *
-		 * auto litGlobal = LLVMAddGlobal(state.mod, LLVMTypeOf(litConst), "");
-		 * LLVMSetGlobalConstant(litGlobal, true);
-		 * LLVMSetInitializer(litGlobal, litConst);
-		 */
-		return litConst;
+		result.type = this;
+		result.value = LLVMConstArray(base.llvmType, alVals);
+		result.isPointer = false;
 	}
 
 private:
@@ -461,12 +468,15 @@ public:
 		return new FunctionType(state, ft, ret, params);
 	}
 
-	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
+	override void fromConstant(State state, ir.Constant cnst, Value result)
 	{
 		if (!cnst.isNull) {
 			throw panic(cnst.location, "can only fromConstant null pointers.");
 		}
-		return LLVMConstPointerNull(llvmType);
+
+		result.type = this;
+		result.value = LLVMConstPointerNull(llvmType);
+		result.isPointer = false;
 	}
 
 private:
@@ -536,7 +546,7 @@ public:
 		return new DelegateType(state, dg);
 	}
 
-	override LLVMValueRef fromConstant(State state, ir.Constant cnst)
+	override void fromConstant(State state, ir.Constant cnst, Value result)
 	{
 		if (!cnst.isNull) {
 			throw panic(cnst.location, "can only fromConstant null pointers.");
@@ -545,7 +555,10 @@ public:
 		auto vptr = LLVMPointerType(LLVMInt8TypeInContext(state.context), 0);
 		vals[0] = LLVMConstNull(vptr);
 		vals[1] = LLVMConstNull(vptr);
-		return LLVMConstNamedStruct(llvmType, vals.ptr, 2);
+
+		result.type = this;
+		result.value = LLVMConstNamedStruct(llvmType, vals.ptr, 2);
+		result.isPointer = false;
 	}
 
 private:
@@ -597,7 +610,7 @@ public:
 		return new StructType(state, irType);
 	}
 
-	override LLVMValueRef fromStructLiteral(State state, ir.StructLiteral sl)
+	override void fromStructLiteral(State state, ir.StructLiteral sl, Value result)
 	{
 		LLVMValueRef[] vals;
 		vals.length = indices.length;
@@ -610,7 +623,9 @@ public:
 			val = state.getConstant(sl.exps[i]);
 		}
 
-		return LLVMConstNamedStruct(llvmType, vals);
+		result.type = this;
+		result.value = LLVMConstNamedStruct(llvmType, vals);
+		result.isPointer = false;
 	}
 
 private:
@@ -685,7 +700,7 @@ public:
 		return new UnionType(state, irType);
 	}
 
-	override LLVMValueRef fromUnionLiteral(State state, ir.UnionLiteral ul)
+	override void fromUnionLiteral(State state, ir.UnionLiteral ul, Value result)
 	{
 		if (indices.length != ul.exps.length) {
 			throw panic("union literal has the wrong number of initializers");
@@ -710,7 +725,9 @@ public:
 		auto vals = new LLVMValueRef[](1);
 		vals[0] = state.getConstant(lastExp);
 
-		return LLVMConstNamedStruct(llvmType, vals);
+		result.type = this;
+		result.value = LLVMConstNamedStruct(llvmType, vals);
+		result.isPointer = false;
 	}
 
 private:

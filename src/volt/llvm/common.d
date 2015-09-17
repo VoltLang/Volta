@@ -16,37 +16,25 @@ import volt.llvm.interfaces;
 void handleConstant(State state, ir.Constant asConst, Value result)
 {
 	auto type = state.fromIr(asConst.type);
-
-	result.isPointer = false;
-	result.type = type;
-	result.value = type.fromConstant(state, asConst);
+	type.fromConstant(state, asConst, result);
 }
 
 void handleArrayLiteral(State state, ir.ArrayLiteral al, Value result)
 {
 	auto type = state.fromIr(al.type);
-
-	result.isPointer = false;
-	result.type = type;
-	result.value = type.fromArrayLiteral(state, al);
+	type.fromArrayLiteral(state, al, result);
 }
 
 void handleStructLiteral(State state, ir.StructLiteral sl, Value result)
 {
 	auto type = state.fromIr(sl.type);
-
-	result.isPointer = false;
-	result.type = type;
-	result.value = type.fromStructLiteral(state, sl);
+	type.fromStructLiteral(state, sl, result);
 }
 
 void handleUnionLiteral(State state, ir.UnionLiteral ul, Value result)
 {
 	auto type = state.fromIr(ul.type);
-
-	result.isPointer = false;
-	result.type = type;
-	result.value = type.fromUnionLiteral(state, ul);
+	type.fromUnionLiteral(state, ul, result);
 }
 
 void handleClassLiteral(State state, ir.ClassLiteral cl, Value result)
@@ -70,16 +58,12 @@ void handleClassLiteral(State state, ir.ClassLiteral cl, Value result)
 	sl.exps ~= buildAddrOf(cl.location, eref);
 	sl.exps ~= cl.exps;
 
-	auto v = st.fromStructLiteral(state, sl);
+	st.fromStructLiteral(state, sl, result);
 
-	if (cl.useBaseStorage) {
-		result.isPointer = false;
-		result.type = st;
-		result.value = v;
-	} else {
+	if (!cl.useBaseStorage) {
 		auto g = LLVMAddGlobal(state.mod, st.llvmType, "");
 		LLVMSetGlobalConstant(g, true);
-		LLVMSetInitializer(g, v);
+		LLVMSetInitializer(g, result.value);
 
 		result.isPointer = false;
 		result.type = pt;
