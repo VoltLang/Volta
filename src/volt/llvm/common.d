@@ -16,25 +16,25 @@ import volt.llvm.interfaces;
 void handleConstant(State state, ir.Constant asConst, Value result)
 {
 	auto type = state.fromIr(asConst.type);
-	type.fromConstant(state, asConst, result);
+	type.from(state, asConst, result);
 }
 
 void handleArrayLiteral(State state, ir.ArrayLiteral al, Value result)
 {
 	auto type = state.fromIr(al.type);
-	type.fromArrayLiteral(state, al, result);
+	type.from(state, al, result);
 }
 
 void handleStructLiteral(State state, ir.StructLiteral sl, Value result)
 {
 	auto type = state.fromIr(sl.type);
-	type.fromStructLiteral(state, sl, result);
+	type.from(state, sl, result);
 }
 
 void handleUnionLiteral(State state, ir.UnionLiteral ul, Value result)
 {
 	auto type = state.fromIr(ul.type);
-	type.fromUnionLiteral(state, ul, result);
+	type.from(state, ul, result);
 }
 
 void handleClassLiteral(State state, ir.ClassLiteral cl, Value result)
@@ -58,7 +58,7 @@ void handleClassLiteral(State state, ir.ClassLiteral cl, Value result)
 	sl.exps ~= buildAddrOf(cl.location, eref);
 	sl.exps ~= cl.exps;
 
-	st.fromStructLiteral(state, sl, result);
+	st.from(state, sl, result);
 
 	if (!cl.useBaseStorage) {
 		auto g = LLVMAddGlobal(state.mod, st.llvmType, "");

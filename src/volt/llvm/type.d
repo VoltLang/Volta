@@ -26,10 +26,10 @@ public:
 	LLVMValueRef diType;
 
 public:
-	void fromConstant(State, ir.Constant, Value) { assert(false); }
-	void fromArrayLiteral(State, ir.ArrayLiteral, Value) { assert(false); }
-	void fromUnionLiteral(State, ir.UnionLiteral, Value) { assert(false); }
-	void fromStructLiteral(State, ir.StructLiteral, Value) { assert(false); }
+	void from(State, ir.Constant, Value) { assert(false); }
+	void from(State, ir.ArrayLiteral, Value) { assert(false); }
+	void from(State, ir.UnionLiteral, Value) { assert(false); }
+	void from(State, ir.StructLiteral, Value) { assert(false); }
 
 protected:
 	this(State state, ir.Type irType, LLVMTypeRef llvmType,
@@ -86,7 +86,7 @@ public:
 		return new PrimitiveType(state, pt);
 	}
 
-	override void fromConstant(State state, ir.Constant cnst, Value result)
+	override void from(State state, ir.Constant cnst, Value result)
 	{
 		LLVMValueRef r;
 		if (floating) {
@@ -203,10 +203,10 @@ public:
 		return new PointerType(state, pt, base);
 	}
 
-	override void fromConstant(State state, ir.Constant cnst, Value result)
+	override void from(State state, ir.Constant cnst, Value result)
 	{
 		if (!cnst.isNull) {
-			throw panic(cnst.location, "can only fromConstant null pointers.");
+			throw panic(cnst.location, "can only from null pointers.");
 		}
 
 		result.type = this;
@@ -256,7 +256,7 @@ public:
 		return new ArrayType(state, at);
 	}
 
-	override void fromConstant(State state, ir.Constant cnst, Value result)
+	override void from(State state, ir.Constant cnst, Value result)
 	{
 		auto strConst = LLVMConstStringInContext(state.context, cast(char[])cnst.arrayData, false);
 		auto strGlobal = LLVMAddGlobal(state.mod, LLVMTypeOf(strConst), "");
@@ -278,7 +278,7 @@ public:
 		result.isPointer = false;
 	}
 
-	override void fromArrayLiteral(State state, ir.ArrayLiteral al, Value result)
+	override void from(State state, ir.ArrayLiteral al, Value result)
 	{
 		assert(state.fromIr(al.type) is this);
 
@@ -384,7 +384,7 @@ public:
 		return new StaticArrayType(state, sat);
 	}
 
-	override void fromArrayLiteral(State state, ir.ArrayLiteral al, Value result)
+	override void from(State state, ir.ArrayLiteral al, Value result)
 	{
 		assert(state.fromIr(al.type) is this);
 
@@ -468,10 +468,10 @@ public:
 		return new FunctionType(state, ft, ret, params);
 	}
 
-	override void fromConstant(State state, ir.Constant cnst, Value result)
+	override void from(State state, ir.Constant cnst, Value result)
 	{
 		if (!cnst.isNull) {
-			throw panic(cnst.location, "can only fromConstant null pointers.");
+			throw panic(cnst.location, "can only from null pointers.");
 		}
 
 		result.type = this;
@@ -546,10 +546,10 @@ public:
 		return new DelegateType(state, dg);
 	}
 
-	override void fromConstant(State state, ir.Constant cnst, Value result)
+	override void from(State state, ir.Constant cnst, Value result)
 	{
 		if (!cnst.isNull) {
-			throw panic(cnst.location, "can only fromConstant null pointers.");
+			throw panic(cnst.location, "can only from null pointers.");
 		}
 		LLVMValueRef[2] vals;
 		auto vptr = LLVMPointerType(LLVMInt8TypeInContext(state.context), 0);
@@ -610,7 +610,7 @@ public:
 		return new StructType(state, irType);
 	}
 
-	override void fromStructLiteral(State state, ir.StructLiteral sl, Value result)
+	override void from(State state, ir.StructLiteral sl, Value result)
 	{
 		LLVMValueRef[] vals;
 		vals.length = indices.length;
@@ -700,7 +700,7 @@ public:
 		return new UnionType(state, irType);
 	}
 
-	override void fromUnionLiteral(State state, ir.UnionLiteral ul, Value result)
+	override void from(State state, ir.UnionLiteral ul, Value result)
 	{
 		if (indices.length != ul.exps.length) {
 			throw panic("union literal has the wrong number of initializers");
