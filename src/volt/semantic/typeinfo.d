@@ -81,7 +81,7 @@ void fileInAggregateVar(LanguagePass lp, ir.Aggregate aggr)
 		return;
 	}
 
-	auto mod = getModuleFromScope(aggr.myScope);
+	auto mod = getModuleFromScope(aggr.location, aggr.myScope);
 	aggr.typeInfo.assign = buildTypeInfoLiteral(lp, mod, aggr);
 }
 

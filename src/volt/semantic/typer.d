@@ -410,7 +410,7 @@ ir.Type getIdentifierExpType(LanguagePass lp, ir.IdentifierExp identifierExp, ir
 {
 	if (identifierExp.type is null) {
 		if (identifierExp.globalLookup) {
-			identifierExp.type = declTypeLookup(identifierExp.location, lp, getTopScope(currentScope), identifierExp.value);
+			identifierExp.type = declTypeLookup(identifierExp.location, lp, getTopScope(identifierExp.location, currentScope), identifierExp.value);
 		} else {
 			identifierExp.type = declTypeLookup(identifierExp.location, lp, currentScope, identifierExp.value);
 		}

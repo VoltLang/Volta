@@ -1406,7 +1406,7 @@ bool handleStructLookupViaFunctionCall(LanguagePass lp, ir.Scope current, ref ir
 
 void replaceGlobalArrayLiteralIfNeeded(LanguagePass lp, ir.Scope current, ir.Variable var)
 {
-	auto mod = getModuleFromScope(current);
+	auto mod = getModuleFromScope(var.location, current);
 
 	auto al = cast(ir.ArrayLiteral) var.assign;
 	if (al is null) {

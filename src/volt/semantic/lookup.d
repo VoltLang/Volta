@@ -104,7 +104,7 @@ private ir.Store lookupPublicImportScope(LanguagePass lp, ir.Scope _scope,
 ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
 {
 	auto last = qn.identifiers.length - 1;
-	auto current = qn.leadingDot ? getTopScope(_scope) : _scope;
+	auto current = qn.leadingDot ? getTopScope(qn.location, _scope) : _scope;
 
 	foreach (i, id; qn.identifiers) {
 		ir.Store store;
@@ -169,7 +169,7 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 		current = current.parent;
 	}
 
-	auto asMod = getModuleFromScope(_scope);
+	auto asMod = getModuleFromScope(loc, _scope);
 	assert(asMod !is null);
 	bool failed, succeeded;
 	foreach (mod; asMod.myScope.importedModules) {
@@ -301,7 +301,7 @@ ir.Class retrieveClassFromObject(LanguagePass lp, Location loc, string name)
  * Get the module in the bottom of the given _scope chain.
  * @throws CompilerPanic if no module at bottom of chain.
  */
-ir.Module getModuleFromScope(ir.Scope _scope)
+ir.Module getModuleFromScope(Location loc, ir.Scope _scope)
 {
 	while (_scope !is null) {
 		auto m = cast(ir.Module)_scope.node;
@@ -315,16 +315,16 @@ ir.Module getModuleFromScope(ir.Scope _scope)
 			throw panic(m.location, "module scope has parent");
 		return m;
 	}
-	throw panic("scope chain without module base");
+	throw panic(loc, "scope chain without module base");
 }
 
 /**
  * Given a scope, get the oldest parent -- this is the module of that scope.
  * @throws CompilerPanic if no module at bottom of chain.
  */
-ir.Scope getTopScope(ir.Scope _scope)
+ir.Scope getTopScope(Location loc, ir.Scope _scope)
 {
-	auto m = getModuleFromScope(_scope);
+	auto m = getModuleFromScope(loc, _scope);
 	return m.myScope;
 }
 

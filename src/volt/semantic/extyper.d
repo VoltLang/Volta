@@ -717,7 +717,7 @@ ir.Exp withLookup(Context ctx, ref ir.Exp exp, ir.Scope current,
  */
 void extypeIdentifierExp(Context ctx, ref ir.Exp e, ir.IdentifierExp i)
 {
-	auto current = i.globalLookup ? getModuleFromScope(ctx.current).myScope : ctx.current;
+	auto current = i.globalLookup ? getModuleFromScope(i.location, ctx.current).myScope : ctx.current;
 
 	// Rewrite expressions that rely on a with block lookup.
 	ir.Exp rewriteExp;
@@ -2936,7 +2936,7 @@ ir.Node transformRuntimeAssert(Context ctx, ir.AssertStatement as)
 
 void replaceGlobalArrayLiteralIfNeeded(Context ctx, ir.Variable var)
 {
-	auto mod = getModuleFromScope(ctx.current);
+	auto mod = getModuleFromScope(var.location, ctx.current);
 
 	auto al = cast(ir.ArrayLiteral) var.assign;
 	if (al is null) {
