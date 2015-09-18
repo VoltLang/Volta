@@ -214,8 +214,13 @@ version (UseDIBuilder) {
 	void diVariable(State state, LLVMValueRef var, ir.Variable irVar,
 	                Type type)
 	{
+		if (irVar.useBaseStorage) {
+			auto pt = cast(PointerType) type;
+			type = pt !is null ? pt.base : null;
+		}
+
 		// Can't emit debuginfo without type debug info.
-		if (type.diType is null) {
+		if (type is null || type.diType is null) {
 			return;
 		}
 
