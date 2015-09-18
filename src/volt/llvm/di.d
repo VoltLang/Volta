@@ -118,8 +118,8 @@ version (UseDIBuilder) {
 			return null;
 		}
 
-		size_t size = cast(size_t).size(kind) * 8;
-		size_t alignment = .alignment(state.lp, kind) * 8;
+		size_t size, alignment;
+		pt.irType.getSizeAndAlignment(state.lp, size, alignment);
 		DwAte encoding;
 		string name;
 
@@ -203,8 +203,8 @@ version (UseDIBuilder) {
 			diType = base.diType;
 		}
 
-		auto size = cast(size_t).size(state.lp, pt);
-		auto alignment = .alignment(state.lp, pt);
+		size_t size, alignment;
+		pt.getSizeAndAlignment(state.lp, size, alignment);
 
 		return LLVMDIBuilderCreatePointerType(
 			state.diBuilder, diType, size, alignment,
@@ -252,12 +252,15 @@ version (UseDIBuilder) {
 
 	LLVMValueRef diStruct(State state, ir.Type t)
 	{
+		size_t size, alignment;
+		t.getSizeAndAlignment(state.lp, size, alignment);
+
 		return LLVMDIBuilderCreateStructType(
 			state.diBuilder,
 			state.diCU,
 			t.mangledName.ptr, t.mangledName.length,
 			state.diFile(t), cast(uint)t.location.line,
-			.size(state.lp, t) * 8, .alignment(state.lp, t) * 8, 0,
+			size, alignment, 0,
 			null,
 			null, 0,
 			null,
@@ -278,8 +281,8 @@ version (UseDIBuilder) {
 				return;
 			}
 
-			size_t size = cast(size_t).size(state.lp, elm.type) * 8;
-			size_t alignment = .alignment(state.lp, elm.type) * 8;
+			size_t size, alignment;
+			elm.type.getSizeAndAlignment(state.lp, size, alignment);
 
 			// Adjust offset to alignment
 			if (offset % alignment) {
@@ -311,10 +314,9 @@ version (UseDIBuilder) {
 		}
 
 		auto di = new LLVMValueRef[](2);
-		size_t s0 = cast(size_t).size(state.lp, t[0].irType) * 8;
-		size_t s1 = cast(size_t).size(state.lp, t[1].irType) * 8;
-		size_t a0 = cast(size_t).alignment(state.lp, t[0].irType) * 8;
-		size_t a1 = cast(size_t).alignment(state.lp, t[1].irType) * 8;
+		size_t s0, s1, a0, a1;
+		t[0].irType.getSizeAndAlignment(state.lp, s0, a0);
+		t[1].irType.getSizeAndAlignment(state.lp, s1, a1);
 
 		di[0] = LLVMDIBuilderCreateMemberType(
 			state.diBuilder, state.diCU,
@@ -400,4 +402,18 @@ private:
 	void diStructSetBody(State state, Type p, Type[2] t, string[2] names) {}
 	void diStructSetBody(State state, LLVMValueRef diType, ir.Variable[] elms) {}
 	LLVMValueRef diFunctionType(State state, Type ret, Type[] args) { return null; }
+}
+
+
+private:
+
+/**
+ * Retrive size and alignment for type in bits (not in bytes as the
+ * rest of the compiler keep track of it).
+ */
+void getSizeAndAlignment(ir.Type t, LanguagePass lp,
+                         out size_t s, out size_t a)
+{
+	s = cast(size_t).size(lp, t) * 8;
+	a = .alignment(lp, t) * 8;
 }
