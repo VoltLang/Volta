@@ -48,6 +48,23 @@ ir.Store lookupAsThisScope(LanguagePass lp, ir.Scope _scope, Location loc, strin
 }
 
 /**
+ * Lookup in this scope and parent class scopes, if any.
+ * Does not consult imports of any kind.
+ */
+ir.Store lookupOnlyThisScopeAndClassParents(LanguagePass lp, ir.Scope _scope, Location loc, string name)
+{
+	ir.Class _class;
+	do {
+		auto ret = lookupInGivenScopeOnly(lp, _scope, loc, name);
+		if (ret !is null)
+			return ensureResolved(lp, ret);
+	} while (getClassParentsScope(lp, _scope, _scope, _class));
+
+	return null;
+}
+
+
+/**
  * Lookup up as identifier in this scope, and any public imports.
  * Used for rebinding imports.
  * Returns the store or null if no match was found.

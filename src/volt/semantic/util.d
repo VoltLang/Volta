@@ -14,8 +14,38 @@ import volt.token.location;
 
 import volt.semantic.typer : getExpType;
 import volt.semantic.lookup : lookup, lookupInGivenScopeOnly;
+import volt.semantic.context : Context;
 import volt.semantic.classify : getParentFunction;
 
+
+/**
+ * Return a array of postfixes from a tree of postfixes,
+ * starting with the innermost child.
+ */
+ir.Postfix[] collectPostfixes(ir.Postfix postfix)
+{
+	if (postfix.child !is null && postfix.child.nodeType == ir.NodeType.Postfix) {
+		return collectPostfixes(cast(ir.Postfix) postfix.child) ~ postfix;
+	} else {
+		return [postfix];
+	}
+}
+
+/**
+ * Get a Store from the child of a pre-proceassed postfix chain.
+ */
+ir.Store getStore(Context ctx, ir.Exp exp)
+{
+	auto sexp = cast(ir.StoreExp) exp;
+	if (sexp !is null) {
+		return sexp.store;
+	}
+	auto ident = cast(ir.IdentifierExp) exp;
+	if (ident is null) {
+		return null;
+	}
+	return lookup(ctx.lp, ctx.current, exp.location, ident.value);
+}
 
 /**
  * Given a type, return a type that will have every storage flag

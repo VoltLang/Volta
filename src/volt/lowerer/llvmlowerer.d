@@ -949,24 +949,23 @@ public:
 		if (isInterfacePointer(lp, postfix, current, iface)) {
 			assert(iface !is null);
 			auto cpostfix = cast(ir.Postfix) postfix.child;  // TODO: Calling returned interfaces directly.
-			if (cpostfix is null || cpostfix.identifier is null) {
+			if (cpostfix is null || cpostfix.memberFunction is null) {
 				throw makeExpected(exp.location, "interface");
 			}
-			auto store = lookupAsThisScope(lp, iface.myScope, postfix.location, cpostfix.identifier.value);
-			if (store is null) {
-				throw makeExpected(postfix.location, "method");
+			auto fn = cast(ir.Function) cpostfix.memberFunction.decl;
+			if (fn is null) {
+				throw makeExpected(exp.location, "method");
 			}
-			if (store.functions.length == 0) {
-				throw makeExpected(postfix.location, "method");
-			}
-			if (store.functions.length > 1) {
-				assert(false, "todo: generate default args and cross-ref");
-			}
-			//
 			auto l = exp.location;
 			auto handle = buildCastToVoidPtr(l, buildSub(l, buildCastSmart(l, buildPtrSmart(l, buildUbyte(l)), copyExp(cpostfix.child)), buildAccess(l, buildDeref(l, copyExp(cpostfix.child)), "__offset")));
-			exp = buildCall(l, buildAccess(l, buildDeref(l, copyExp(cpostfix.child)), mangle(null, store.functions[0])), postfix.arguments ~ handle);
+			exp = buildCall(l, buildAccess(l, buildDeref(l, copyExp(cpostfix.child)), mangle(null, fn)), postfix.arguments ~ handle);
 		}
+		return Continue;
+	}
+
+	override Status leave(ref ir.Exp exp, ir.PropertyExp prop)
+	{
+		handleProperty(lp, exp, prop);
 		return Continue;
 	}
 

@@ -447,8 +447,6 @@ ir.Type flagitiseStorage(ir.Type type, ref uint flag)
 	return type;
 }
 
-
-
 void handleAssign(Context ctx, ref ir.Type toType, ref ir.Exp exp,
                   ref uint toFlag, bool copying = false)
 {
@@ -549,7 +547,6 @@ void rewriteOverloadedProperty(Context ctx, ref ir.Exp exp,
 void extypeAssignDispatch(Context ctx, ref ir.Exp exp, ir.Type type,
                           bool copying = false)
 {
-	rewriteOverloadedProperty(ctx, exp);
 	uint flag;
 	handleAssign(ctx, type, exp, flag, copying);
 	switch (type.nodeType) {
@@ -707,15 +704,28 @@ ir.Exp withLookup(Context ctx, ref ir.Exp exp, ir.Scope current,
 		return null;
 	}
 	if (exp.nodeType == ir.NodeType.IdentifierExp) {
-		extypeLeavePostfix(ctx, access, cast(ir.Postfix) access, null);
+		extypePostfix(ctx, access, cast(ir.Postfix) access, null);
 	}
 	return access;
 }
 
 /**
- * Replace IdentifierExps with ExpReferences.
+ * Replace IdentifierExps with another exp, often ExpReference.
+ *
+ * Will ensure that the other exp is also accepted.
  */
-void extypeIdentifierExp(Context ctx, ref ir.Exp e, ir.IdentifierExp i)
+void extypeIdentifierExp(Context ctx, ref ir.Exp e, ir.IdentifierExp i, ir.Exp parent)
+{
+	extypeIdentifierExpNoRevisit(ctx, e, i, parent);
+	if (i !is e) {
+		acceptExp(e, ctx.extyper);
+	}
+}
+
+/**
+ * No revisit version of the above function.
+ */
+void extypeIdentifierExpNoRevisit(Context ctx, ref ir.Exp e, ir.IdentifierExp i, ir.Exp parent)
 {
 	auto current = i.globalLookup ? getModuleFromScope(i.location, ctx.current).myScope : ctx.current;
 
@@ -776,6 +786,21 @@ void extypeIdentifierExp(Context ctx, ref ir.Exp e, ir.IdentifierExp i)
 		e = _ref;
 		return;
 	case Function:
+		// Handle property.
+		if (rewriteIfPropertyStore(e, null, i.value, parent, store)) {
+			auto prop = cast(ir.PropertyExp) e;
+			bool isMember = (prop.getFn !is null &&
+					 prop.getFn.kind == ir.Function.Kind.Member) ||
+			                (prop.setFns.length > 0 &&
+			                 prop.setFns[0].kind == ir.Function.Kind.Member);
+			if (!isMember) {
+				return;
+			}
+
+			prop.child = buildIdentifierExp(i.location, "this");
+			return;
+		}
+
 		foreach (fn; store.functions) {
 			if (fn.nestedHiddenParameter !is null &&
 			    store.functions.length > 1) {
@@ -1003,14 +1028,22 @@ void handleArgumentLabelsIfNeeded(Context ctx, ir.Postfix postfix,
 	exp = postfix;
 }
 
-// Given a.foo, if a is a pointer to a class, turn it into (*a).foo.
+/// Given a.foo, if a is a pointer to a class, turn it into (*a).foo.
 private void dereferenceInitialClass(Context ctx,
                                      ref ir.Postfix[] postfixes)
 {
 	auto lastType = getExpType(ctx.lp, postfixes[0].child, ctx.current);
-	if (isPointerToClass(lastType)) {
-		postfixes[0].child = buildDeref(postfixes[0].child.location, postfixes[0].child);
+	dereferenceInitialClass(postfixes[0], lastType);
+}
+
+/// Given a.foo, if a is a pointer to a class, turn it into (*a).foo.
+private void dereferenceInitialClass(ir.Postfix postfix, ir.Type type)
+{
+	if (!isPointerToClass(type)) {
+		return;
 	}
+
+	postfix.child = buildDeref(postfix.child.location, postfix.child);
 }
 
 private bool transformToCreateDelegate(Context ctx, ref ir.Exp exp,
@@ -1093,7 +1126,7 @@ private bool transformToCreateDelegate(Context ctx, ref ir.Exp exp,
 		postfixes[$-1].memberFunction = funcref;
 	}
 
-	propertyToCallIfNeeded(postfixes[$-1].location, ctx.lp, exp, ctx.current, postfixes);
+	//propertyToCallIfNeeded(postfixes[$-1].location, ctx.lp, exp, ctx.current, postfixes);
 
 	return true;
 }
@@ -1277,15 +1310,18 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp 
 		acceptExp(arg, ctx.extyper);
 	}
 
+	if (postfixIdentifier(ctx, exp, postfix, parent)) {
+		return;
+	}
+
 	extypePostfixIndex(ctx, exp, postfix);
 
 	if (replaceAAPostfixesIfNeeded(ctx, postfix, exp)) {
 		return;
 	}
-	ir.Postfix[] postfixes = collectPostfixes(postfix);
 
-	dereferenceInitialClass(ctx, postfixes);
-	if (transformToCreateDelegate(ctx, exp, postfixes)) {
+	// Following only applies to function calls.
+	if (postfix.op != ir.Postfix.Op.Call) {
 		return;
 	}
 
@@ -1331,10 +1367,17 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp 
 			}
 		}
 	}
+
+	if (postfix.op == ir.Postfix.Op.Call) {
+		auto callable = cast(ir.CallableType) realType(getExpType(ctx.lp, postfix.child, ctx.current));
+		if (callable is null) {
+			throw makeError(postfix.location, "calling uncallable expression.");
+		}
+	}
+
 	if (asFunctionType is null) {
 		return;
 	}
-
 
 	handleArgumentLabelsIfNeeded(ctx, postfix, fn, exp);
 
@@ -1395,13 +1438,6 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp 
 bool replaceExpReferenceIfNeeded(Context ctx,
                                  ir.Type referredType, ref ir.Exp exp, ir.ExpReference eRef)
 {
-	// Hold onto your hats because this is ugly!
-	// But this needs to be run after this function has early out
-	// or rewritten the lookup.
-	scope (success) {
-		propertyToCallIfNeeded(exp.location, ctx.lp, exp, ctx.current, null);
-	}
-
 	// For vtable and property.
 	if (eRef.rawReference) {
 		return false;
@@ -1703,20 +1739,6 @@ bool typeLookup(Context ctx, ref ir.Exp exp)
 	return true;
 }
 
-/// Get a Store from the child of a pre-proceassed postfix chain.
-ir.Store getStore(Context ctx, ir.Exp exp)
-{
-	auto sexp = cast(ir.StoreExp) exp;
-	if (sexp !is null) {
-		return sexp.store;
-	}
-	auto ident = cast(ir.IdentifierExp) exp;
-	if (ident is null) {
-		return null;
-	}
-	return lookup(ctx.lp, ctx.current, exp.location, ident.value);
-}
-
 /**
  * Turn identifier postfixes into <ExpReference>.ident.
  */
@@ -1897,22 +1919,298 @@ bool extypePostfixUFCS(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	return true;
 }
 
-ir.Postfix[] collectPostfixes(ir.Postfix postfix)
+/**
+ * This function will check for ufcs functions on a Identifier postfix,
+ * it assumes we have already looked for a field and not found anything.
+ *
+ * Volt does not support property ufcs functions.
+ */
+void postfixIdentifierUFCS(Context ctx, ref ir.Exp exp,
+                           ir.Postfix postfix, ir.Exp parent)
 {
-	if (postfix.child.nodeType == ir.NodeType.Postfix) {
-		return collectPostfixes(cast(ir.Postfix) postfix.child) ~ postfix;
-	} else {
-		return [postfix];
+	assert(postfix.identifier !is null);
+
+	auto store = lookup(ctx.lp, ctx.current, postfix.location, postfix.identifier.value);
+	if (store is null || store.functions.length == 0) {
+		throw makeNoFieldOrPropertyOrUFCS(postfix.location, postfix.identifier.value);
 	}
+
+	bool isProp;
+	foreach (fn; store.functions) {
+		if (isProp && !fn.type.isProperty) {
+			throw makeError(postfix, "concidering both regular and property functions");
+		}
+
+		isProp = fn.type.isProperty;
+	}
+
+	if (isProp) {
+		throw makeError(postfix, "concidering property functions for UFCS which is not supported");
+	}
+
+	// This is here to so that it errors
+	ir.Postfix call = cast(ir.Postfix) parent;
+	if (call is null || call.op != ir.Postfix.Op.Call) {
+		throw makeNoFieldOrPropertyOrIsUFCSWithoutCall(postfix.location, postfix.identifier.value);
+	}
+
+	// Before we call selectFunction we need to extype the args.
+	// @TODO This will be done twice, which is not the best of things.
+	foreach (ref arg; postfix.arguments) {
+		acceptExp(arg, ctx.extyper);
+	}
+
+	// Should we really call selectFunction here?
+	auto arguments = postfix.child ~ call.arguments;
+	auto fn = selectFunction(ctx.lp, ctx.current, store.functions, arguments, postfix.location);
+
+	if (fn is null) {
+		throw makeNoFieldOrPropertyOrUFCS(postfix.location, postfix.identifier.value);
+	}
+
+	call.arguments = arguments;
+	call.child = buildExpReference(postfix.location, fn, fn.name);
+	// We are done, make sure that the rebuilt call isn't messed with when
+	// it get visited again by the extypePostfix function.
+
+	auto theTag = ir.Postfix.TagKind.None;
+	if (fn.type.isArgRef[0]) {
+		theTag = ir.Postfix.TagKind.Ref;
+	} else if (fn.type.isArgOut[0]) {
+		theTag = ir.Postfix.TagKind.Out;
+	}
+
+	call.argumentTags = theTag ~ postfix.argumentTags;
 }
 
-void extypeNewPostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp parent)
+bool builtInField(ir.Type type, string field)
+{
+	auto aa = cast(ir.AAType) type;
+	if (aa !is null) {
+		return field == "length" ||
+			field == "get" ||
+			field == "remove" ||
+			field == "keys" ||
+			field == "values";
+	}
+	auto array = cast(ir.ArrayType) type;
+	auto sarray = cast(ir.StaticArrayType) type;
+	return (sarray !is null || array !is null) && (field == "ptr" || field == "length");
+}
+
+/**
+ * Rewrite exp if the store contains any property functions, works
+ * for both PostfixExp and IdentifierExp.
+ *
+ * Child can be null.
+ */
+bool rewriteIfPropertyStore(ref ir.Exp exp, ir.Exp child, string name,
+                            ir.Exp parent, ir.Store store)
+{
+	if (store.functions.length == 0) {
+		return false;
+	}
+
+	ir.Function   getFn;
+	ir.Function[] setFns;
+
+	foreach (fn; store.functions) {
+		if (!fn.type.isProperty) {
+			continue;
+		}
+
+		if (fn.type.params.length > 1) {
+			throw panic(fn, "property function with more than one argument.");
+		} else if (fn.type.params.length == 1) {
+			setFns ~= fn;
+			continue;
+		}
+
+		// fn.params.length is 0
+
+		if (getFn !is null) {
+			throw makeError(exp.location, "multiple zero argument properties found.");
+		}
+		getFn = fn;
+	}
+
+	if (getFn is null && setFns.length == 0) {
+		return false;
+	}
+
+	bool isAssign = parent !is null &&
+	                parent.nodeType == ir.NodeType.BinOp &&
+	                (cast(ir.BinOp) parent).op == ir.BinOp.Op.Assign;
+	assert(!isAssign || (cast(ir.BinOp) parent).left is exp);
+
+	if (!isAssign && getFn is null) {
+		throw makeError(exp.location, "no zero argument property found.");
+	}
+
+	exp = buildProperty(exp.location, name, child, getFn, setFns);
+
+	return true;
+}
+
+/**
+ * Handling cases:
+ *
+ * inst.field               ( Any parent )
+ * inst.inbuilt<field/prop> ( Any parent (no set inbuilt in Volt) )
+ * inst.prop                ( Any parent )
+ * inst.method              ( Any parent but Postfix.Op.Call )
+ *
+ * Check if there is a call on these cases.
+ *
+ * inst.inbuilt<function>() ( Postfix.Op.Call )
+ * inst.method()            ( Postfix.Op.Call )
+ * inst.ufcs()              ( Postfix.Op.Call )
+ *
+ * Error otherwise.
+ */
+bool postfixIdentifier(Context ctx, ref ir.Exp exp,
+                       ir.Postfix postfix, ir.Exp parent)
+{
+	if (postfix.op != ir.Postfix.Op.Identifier) {
+		return false;
+	}
+
+	string field = postfix.identifier.value;
+
+	ir.Type oldType = getExpType(ctx.lp, postfix.child, ctx.current);
+	ir.Type type = realType(oldType, false, false);
+	assert(type !is null);
+	assert(type.nodeType != ir.NodeType.FunctionSetType);
+	if (builtInField(type, field)) {
+		return false;
+	}
+
+	// If we are pointing to a pointer to a class.
+	dereferenceInitialClass(postfix, oldType);
+
+	// Get store for ident on type, do not look for ufcs functions.
+	ir.Store store;
+	auto _scope = getScopeFromType(type);
+	if (_scope !is null) {
+		store = lookupAsThisScope(ctx.lp, _scope, postfix.location, field);
+	}
+
+	if (store is null) {
+		// Check if there is a UFCS function.
+		// Note that Volt doesn't not support UFCS get/set properties
+		// unlike D which does, this is because we are going to
+		// remove properties in favor for C# properties.
+
+		postfixIdentifierUFCS(ctx, exp, postfix, parent);
+
+		// postfixIdentifierUFCS will error so if we get here all is good.
+		return true;
+	}
+
+	// We are looking up via a instance error on static vars and types.
+	// The two following cases are handled by the consumeIdents code:
+	// pkg.mod.Class.staticVar
+	// pkg.mod.Class.Enum
+	//
+	// But this is an error:
+	// pkg.mode.Class instance;
+	// instance.Enum
+	// instance.staticVar
+	//
+	// @todo will the code be stupid and do this:
+	// staticVar++ --> lowered to this.staticVar++ in a member function.
+	//
+	//if (<check>) {
+	//	throw makeBadLookup();
+	//}
+
+	// Is the store a field on the object.
+	auto store2 = lookupOnlyThisScopeAndClassParents(ctx.lp, _scope, postfix.location, field);
+	auto var2 = cast(ir.Variable) store2.node;
+	if (store2 !is null && var2 !is null &&
+	    var2.storage == ir.Variable.Storage.Field) {
+		return true;
+	}
+
+	// What if store (not store2) points at a field? Check and error.
+	auto var = cast(ir.Variable) store.node;
+	if (var !is null &&
+	    var.storage == ir.Variable.Storage.Field) {
+		throw makeAccessThroughWrongType(postfix.location, field);
+	}
+
+	// Check if the store is a property, for property _only_ members
+	// on the class/struct.
+	if (rewriteIfPropertyStore(exp, postfix.child,
+	                           field,
+	                           parent, store)) {
+		return true;
+	}
+
+	// Check for member functions and static ufcs functions here. Static
+	// ufcs functions can be overloaded with member functions in theory.
+	// But for now if that is the case just error, because its just a too
+	// deep a rabbit hole to go down into.
+	auto parentPostfix = cast(ir.Postfix) parent;
+	if (parentPostfix !is null &&
+	    parentPostfix.op == ir.Postfix.Op.Call &&
+	    store.functions.length > 0) {
+		size_t members;
+		foreach (func; store.functions) {
+			if (func.kind == ir.Function.Kind.Member ||
+			    func.kind == ir.Function.Kind.Destructor) {
+				members++;
+			}
+		}
+
+		// @TODO check this in postfixCall handling.
+		if (members != store.functions.length) {
+			if (members) {
+				// @TODO Not a real error.
+				throw makeError(postfix, "mixing static and member functions");
+			} else {
+				//throw makeCanNotLookupStaticVia
+				throw makeError(postfix.location, "looking up '" ~ field ~ "' static function via instance.");
+			}
+		}
+
+		auto fnSet = buildSet(
+			postfix.location, store.functions);
+		auto expRef = buildExpReference(
+			postfix.location, fnSet, field);
+		exp = buildCreateDelegate(
+			postfix.location, postfix.child, expRef);
+		return true;
+	}
+
+	// If parent isn't a call, make sure we only have a single member
+	// function, that is a regular CreateDelegate expression.
+	if (store.functions.length > 0 &&
+	    (parentPostfix is null ||
+	     parentPostfix.op != ir.Postfix.Op.Call)) {
+
+		if (store.functions.length > 1) {
+			//throw makeCanNotPickMemberfunction
+			throw makeError(postfix.location, "cannot select member function '" ~ field ~ "'");
+		} else if (store.functions[0].kind != ir.Function.Kind.Member) {
+			//throw makeCanNotLookupStaticVia
+			throw makeError(postfix.location, "looking up '" ~ field ~ "' static function via instance.");
+		}
+
+		auto fn = store.functions[0];
+		exp = buildCreateDelegate(
+			postfix.location,
+			postfix.child,
+			buildExpReference(postfix.location, fn, fn.name));
+		return true;
+	}
+
+	throw makeNoFieldOrPropOrUFCS(postfix);
+}
+
+void extypePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp parent)
 {
 	if (opOverloadRewriteIndex(ctx, postfix, exp)) {
-		acceptExp(exp, ctx.extyper);
-		return;
-	}
-	if (extypePostfixUFCS(ctx, exp, postfix)) {
 		acceptExp(exp, ctx.extyper);
 		return;
 	}
@@ -1933,7 +2231,13 @@ void extypeNewPostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp pa
 	// 'ident'.field.prop
 	// 'typeid(int)'.mangledName
 	// 'int'.max
-	acceptExp(allPostfixes[0].child, ctx.extyper);
+	auto top = allPostfixes[0];
+	if (top.child.nodeType == ir.NodeType.IdentifierExp) {
+		auto ie = cast(ir.IdentifierExp) top.child;
+		extypeIdentifierExp(ctx, top.child, ie, top);
+	} else {
+		acceptExp(allPostfixes[0].child, ctx.extyper);
+	}
 
 	// Now process the list of postfixes.
 	while (allPostfixes.length > 0) {
@@ -2299,6 +2603,36 @@ bool opOverloadRewriteIndex(Context ctx, ir.Postfix pfix, ref ir.Exp exp)
 	return true;
 }
 
+bool extypeBinOpPropertyAssign(Context ctx, ir.BinOp binop, ref ir.Exp exp)
+{
+	if (binop.op != ir.BinOp.Op.Assign) {
+		return false;
+	}
+	auto p = cast(ir.PropertyExp) binop.left;
+	if (p is null) {
+		return false;
+	}
+
+	auto args = [binop.right];
+	auto fn = selectFunction(
+		ctx.lp, ctx.current,
+		p.setFns, args,
+		binop.location, DoNotThrow);
+
+	auto name = p.identifier.value;
+	auto expRef = buildExpReference(binop.location, fn, name);
+
+	if (p.child is null) {
+		exp = buildCall(binop.location, expRef, args);
+	} else {
+		exp = buildMemberCall(binop.location,
+		                      p.child,
+		                      expRef, name, args);
+	}
+
+	return true;
+}
+
 /**
  * Handles logical operators (making a && b result in a bool),
  * binary of storage types, otherwise forwards to assign or primitive
@@ -2306,10 +2640,15 @@ bool opOverloadRewriteIndex(Context ctx, ir.Postfix pfix, ref ir.Exp exp)
  */
 void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 {
+	if (extypeBinOpPropertyAssign(ctx, binop, exp)) {
+		return;
+	}
+
 	auto lraw = getExpType(ctx.lp, binop.left, ctx.current);
 	auto rraw = getExpType(ctx.lp, binop.right, ctx.current);
 	auto ltype = realType(removeRefAndOut(lraw));
 	auto rtype = realType(removeRefAndOut(rraw));
+
 
 	if (handleIfNull(ctx, rtype, binop.left)) return;
 	if (handleIfNull(ctx, ltype, binop.right)) return;
@@ -3984,21 +4323,29 @@ public:
 	}
 
 	/// If this is an assignment to a @property function, turn it into a function call.
-	override Status leave(ref ir.Exp e, ir.BinOp bin)
+	override Status enter(ref ir.Exp e, ir.BinOp bin)
 	{
-		rewritePropertyFunctionAssign(ctx, e, bin);
-		rewriteOverloadedProperty(ctx, bin.left);
+		if (bin.left.nodeType == ir.NodeType.Postfix) {
+			auto postfix = cast(ir.Postfix) bin.left;
+			extypePostfix(ctx, bin.left, postfix, e);
+		} else if (bin.left.nodeType == ir.NodeType.IdentifierExp) {
+			auto ie = cast(ir.IdentifierExp) bin.left;
+			extypeIdentifierExp(ctx, bin.left, ie, e);
+		} else {
+			acceptExp(bin.left, this);
+		}
+		acceptExp(bin.right, this);
 
 		// If not rewritten.
 		if (e is bin) {
 			extypeBinOp(ctx, bin, e);
 		}
-		return Continue;
+		return ContinueParent;
 	}
 
 	override Status enter(ref ir.Exp exp, ir.Postfix postfix)
 	{
-		extypeNewPostfix(ctx, exp, postfix, null);
+		extypePostfix(ctx, exp, postfix, null);
 		return ContinueParent;
 	}
 
@@ -4068,11 +4415,7 @@ public:
 
 	override Status visit(ref ir.Exp exp, ir.IdentifierExp ie)
 	{
-		auto oldexp = exp;
-		extypeIdentifierExp(ctx, exp, ie);
-		if (oldexp !is exp) {
-			return acceptExp(exp, this);
-		}
+		extypeIdentifierExp(ctx, exp, ie, null);
 		return Continue;
 	}
 

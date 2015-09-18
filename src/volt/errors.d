@@ -26,6 +26,27 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeNoFieldOrPropOrUFCS(ir.Postfix postfix, string file = __FILE__, const int line=__LINE__)
+{
+	assert(postfix.identifier !is null);
+	return new CompilerError(postfix.location, format("'%s' is not field, property, or UFCS function.", postfix.identifier.value), file, line);
+}
+
+CompilerException makeAccessThroughWrongType(Location loc, string field, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, format("accessing field '%s' through incorrect type.", field), file, line);
+}
+
+CompilerException makeNoFieldOrPropertyOrIsUFCSWithoutCall(Location loc, string value, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, format("'%s' is not a field, or it is not a property, or it is a UFCS function, but has no call.", value), file, line);
+}
+
+CompilerException makeNoFieldOrPropertyOrUFCS(Location loc, string value, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, format("'%s' is neither field, nor property, nor a UFCS function.", value), file, line);
+}
+
 CompilerException makeUsedBindFromPrivateImport(Location loc, string bind, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(loc, format("'%s' is a bind from a private import.", bind), file, line);
