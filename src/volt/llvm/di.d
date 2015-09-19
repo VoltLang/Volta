@@ -119,10 +119,6 @@ version (UseDIBuilder) {
 
 	LLVMValueRef diBaseType(State state, ir.PrimitiveType pt)
 	{
-		if (state.diBuilder is null) {
-			return null;
-		}
-
 		size_t size, alignment;
 		pt.getSizeAndAlignment(state.lp, size, alignment);
 		DwAte encoding;
@@ -201,10 +197,8 @@ version (UseDIBuilder) {
 
 		if (base.isVoid) {
 			diType = null; // Yes!
-		} else if (base.diType is null) {
-			// Can't emit debuginfo without base debug info.
-			return null;
 		} else {
+			assert(base !is null);
 			diType = base.diType;
 		}
 
@@ -221,13 +215,12 @@ version (UseDIBuilder) {
 	{
 		if (irVar.useBaseStorage) {
 			auto pt = cast(PointerType) type;
-			type = pt !is null ? pt.base : null;
+			assert(pt !is null);
+			type = pt.base;
 		}
 
-		// Can't emit debuginfo without type debug info.
-		if (type is null || type.diType is null) {
-			return;
-		}
+		assert(type !is null);
+		assert(type.diType !is null);
 
 		auto file = diFile(state,
 			state.irMod.location.filename,
@@ -282,9 +275,7 @@ version (UseDIBuilder) {
 
 		foreach (i, elm; elms) {
 			auto d = state.fromIr(elm.type).diType;
-			if (d is null) {
-				return;
-			}
+			assert(d !is null);
 
 			size_t size, alignment;
 			elm.type.getSizeAndAlignment(state.lp, size, alignment);
@@ -312,14 +303,12 @@ version (UseDIBuilder) {
 	 */
 	void diStructSetBody(State state, Type p, Type[2] t, string[2] names)
 	{
-		if (p.diType is null ||
-		    t[0].diType is null ||
-		    t[1].diType is null) {
-			return;
-		}
+		assert(p !is null && p.diType !is null);
+		assert(t[0] !is null && t[0].diType !is null);
+		assert(t[1] !is null && t[1].diType !is null);
 
 		auto di = new LLVMValueRef[](2);
-		size_t s0, s1, a0, a1;
+		size_t s0, s1, a0, a1, offset;
 		t[0].irType.getSizeAndAlignment(state.lp, s0, a0);
 		t[1].irType.getSizeAndAlignment(state.lp, s1, a1);
 
@@ -332,7 +321,7 @@ version (UseDIBuilder) {
 			state.diBuilder, state.diCU,
 			names[1].ptr, names[1].length,
 			state.diFile(p.irType), cast(uint)p.irType.location.line,
-			s1, a1, s0, 0, t[1].diType);
+			s1, a1, offset, 0, t[1].diType);
 
 		LLVMDIBuilderStructSetBody(state.diBuilder, p.diType,
 		                           di.ptr, cast(uint)di.length);
@@ -344,17 +333,15 @@ version (UseDIBuilder) {
 		// Add one for ret type.
 		LLVMValueRef[] types = new LLVMValueRef[](args.length + 1);
 
-		// Ret goes first.
+		// Ret goes first, this can be null because of VoidType.
 		types[0] = ret.diType;
 
 		// Hold on to your butts (keep an eye on i).
-		for (int i; i < args.length;) {
-			auto t = args[i].diType;
-			if (t is null) {
-				return null;
-			}
+		for (int i; i < args.length; i++) {
 
-			types[++i] = t;
+			assert(args[i] !is null && args[i].diType !is null);
+
+			types[i + 1] = args[i].diType;
 		}
 
 		auto file = diFile(state, ret.irType);
