@@ -576,7 +576,9 @@ void buildInstanceVariable(LanguagePass lp, ir.Class _class)
 	}
 
 	auto l = _class.location;
-	_class.initVariable = buildVariableSmart(l, _class.layoutStruct, ir.Variable.Storage.Global, "__cinit");
+	_class.initVariable = buildVariableSmart(
+		l, _class.layoutStruct, ir.Variable.Storage.Global, "__cinit");
+	_class.initVariable.mangledName = "_V__cinit_" ~ _class.mangledName;
 	_class.initVariable.isResolved = true;
 
 	ir.Exp[] exps;
