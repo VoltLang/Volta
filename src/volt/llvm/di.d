@@ -111,19 +111,24 @@ version (UseDIBuilder) {
 		LLVMDIBuilderFinalize(state.diBuilder);
 	}
 
-	LLVMValueRef diBaseType(State state, PrimitiveType pt,
-	                        ir.PrimitiveType.Kind kind)
+	LLVMValueRef diUnspecifiedType(State state, ir.Type t)
+	{
+		return LLVMDIBuilderCreateUnspecifiedType(
+			state.diBuilder, null, 0);
+	}
+
+	LLVMValueRef diBaseType(State state, ir.PrimitiveType pt)
 	{
 		if (state.diBuilder is null) {
 			return null;
 		}
 
 		size_t size, alignment;
-		pt.irType.getSizeAndAlignment(state.lp, size, alignment);
+		pt.getSizeAndAlignment(state.lp, size, alignment);
 		DwAte encoding;
 		string name;
 
-		final switch(kind) with (ir.PrimitiveType.Kind) {
+		final switch(pt.type) with (ir.PrimitiveType.Kind) {
 		case Bool:
 			name = "bool";
 			encoding = DwAte.Boolean;
@@ -427,7 +432,8 @@ private:
 	void diStart(State state) {}
 	void diFinalize(State state) {}
 	LLVMValueRef diCompileUnit(State state) { return null; }
-	LLVMValueRef diBaseType(State state, PrimitiveType pt, ir.PrimitiveType.Kind kind) { return null; }
+	LLVMValueRef diUnspecifiedType(State state, ir.Type t) { return null; }
+	LLVMValueRef diBaseType(State state, ir.PrimitiveType pt) { return null; }
 	LLVMValueRef diPointerType(State state, ir.PointerType pt, Type base) { return null; }
 	void diVariable(State state, LLVMValueRef var, ir.Variable irVar, Type type) {}
 	LLVMValueRef diStruct(State state, ir.Type t) { return null; }

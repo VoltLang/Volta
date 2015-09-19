@@ -102,7 +102,8 @@ LLVMValueRef LLVMDIBuilderCreateEnumerator(LLVMDIBuilderRef builder,
                                            uint64_t Val);
 
 /// Create a DWARF unspecified type.
-LLVMValueRef LLVMDIBuilderCreateUnspecifiedType(LLVMDIBuilderRef builder);
+LLVMValueRef LLVMDIBuilderCreateUnspecifiedType(
+    LLVMDIBuilderRef builder, const char *Name, size_t NameLen);
 
 /// createNullPtrType - Create C++0x nullptr type.
 LLVMValueRef LLVMDIBuilderCreateNullPtr(LLVMDIBuilderRef builder);
@@ -801,6 +802,13 @@ LLVMValueRef LLVMDIBuilderCreateFile(LLVMDIBuilderRef builder,
   StringRef F(File, FileLen);
   StringRef D(Dir, DirLen);
   return wrap(unwrap(builder)->createFile(F, D));
+}
+
+LLVMValueRef LLVMDIBuilderCreateUnspecifiedType(
+    LLVMDIBuilderRef builder, const char *Name, size_t NameLen) {
+  StringRef N(Name, NameLen);
+  auto B = unwrap(builder);
+  return wrap(B->createUnspecifiedType(N));
 }
 
 LLVMValueRef LLVMDIBuilderCreateBasicType(LLVMDIBuilderRef builder,

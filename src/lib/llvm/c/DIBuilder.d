@@ -92,7 +92,8 @@ LLVMValueRef LLVMDIBuilderCreateEnumerator(LLVMDIBuilderRef builder,
                                            ulong Val);
 
 /// Create a DWARF unspecified type.
-LLVMValueRef LLVMDIBuilderCreateUnspecifiedType(LLVMDIBuilderRef builder);
+LLVMValueRef LLVMDIBuilderCreateUnspecifiedType(
+    LLVMDIBuilderRef builder, const(char) *Name, size_t NameLen);
 
 /// createNullPtrType - Create C++0x nullptr type.
 LLVMValueRef LLVMDIBuilderCreateNullPtr(LLVMDIBuilderRef builder);

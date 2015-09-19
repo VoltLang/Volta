@@ -38,6 +38,9 @@ protected:
 		assert(state !is null);
 		assert(irType !is null);
 		assert(llvmType !is null);
+		version (UseDIBuilder) assert(diType !is null ||
+		                              cast(VoidType) this !is null);
+
 
 		assert(irType.mangledName !is null);
 		assert(state.getTypeNoCreate(irType.mangledName) is null);
@@ -65,7 +68,8 @@ public:
 private:
 	this(State state, ir.PrimitiveType pt)
 	{
-		super(state, pt, LLVMVoidTypeInContext(state.context), null);
+		llvmType = LLVMVoidTypeInContext(state.context);
+		super(state, pt, llvmType, diType);
 	}
 }
 
@@ -177,8 +181,8 @@ private:
 			throw panic(pt.location, "PrmitiveType.Void not handled");
 		}
 
-		super(state, pt, llvmType, null);
-		diType = state.diBaseType(this, pt.type);
+		diType = diBaseType(state, pt);
+		super(state, pt, llvmType, diType);
 	}
 }
 
@@ -418,7 +422,8 @@ private:
 
 		length = cast(uint)sat.length;
 		llvmType = LLVMArrayType(base.llvmType, length);
-		super(state, sat, llvmType, null);
+		diType = diUnspecifiedType(state, irType);
+		super(state, sat, llvmType, diType);
 	}
 }
 
@@ -735,6 +740,7 @@ private:
 	this(State state, ir.Union irType)
 	{
 		this.llvmType = LLVMStructCreateNamed(state.context, irType.mangledName);
+		this.diType = diUnspecifiedType(state, irType);
 		this.utype = irType;
 		super(state, irType, llvmType, diType);
 
