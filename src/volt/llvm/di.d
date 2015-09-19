@@ -312,6 +312,14 @@ version (UseDIBuilder) {
 		t[0].irType.getSizeAndAlignment(state.lp, s0, a0);
 		t[1].irType.getSizeAndAlignment(state.lp, s1, a1);
 
+
+		// Adjust offset to alignment
+		if (s0 % a1) {
+			offset = s0 + a1 - (offset % a1);
+		} else {
+			offset = s0;
+		}
+
 		di[0] = LLVMDIBuilderCreateMemberType(
 			state.diBuilder, state.diCU,
 			names[0].ptr, names[0].length,
