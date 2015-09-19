@@ -73,6 +73,11 @@ void getValueAnyForm(State state, ir.Exp exp, Value result)
 	default:
 		throw panicUnhandled(exp, ir.nodeToString(exp));
 	}
+
+	// We unset the position here so we don't leak the wrong position
+	// to following instruction, easier to find unset instructions then
+	// some with wrong position.
+	diUnsetPosition(state);
 }
 
 private:
@@ -186,6 +191,9 @@ void handleAssign(State state, ir.BinOp bin, Value result)
 	state.getValue(bin.right, right);
 	state.getValueRef(bin.left, left);
 
+	// Set debug info location, getValue will have reset it.
+	diSetPosition(state, bin.location);
+
 	// Not returned.
 	LLVMBuildStore(state.builder, right.value, left.value);
 }
@@ -204,6 +212,10 @@ void handleBoolCompare(State state, ir.BinOp bin, Value result)
 			state.context, state.func, "compDone");
 
 	state.getValue(bin.left, left);
+
+	// Set debug info location, getValue(left) will have reset it.
+	diSetPosition(state, bin.location);
+
 	LLVMBuildCondBr(state.builder, left.value,
 		and ? rightBlock : endBlock,
 		and ? endBlock : rightBlock);
@@ -217,6 +229,9 @@ void handleBoolCompare(State state, ir.BinOp bin, Value result)
 
 	LLVMMoveBasicBlockAfter(endBlock, rightBlock);
 	state.startBlock(endBlock);
+
+	// Set debug info location, getValue(right) will have reset it.
+	diSetPosition(state, bin.location);
 
 	auto v = LLVMConstInt(state.boolType.llvmType, !and, false);
 	auto phi = LLVMBuildPhi(state.builder, left.type.llvmType, "");
@@ -242,6 +257,9 @@ void handleIs(State state, ir.BinOp bin, Value result)
 		LLVMOpcode.Or;
 
 	auto loc = bin.location;
+
+	// This debug info location is set on all following instructions.
+	diSetPosition(state, bin.location);
 
 	auto dg = cast(DelegateType)result.type;
 	if (dg !is null) {
@@ -354,6 +372,9 @@ void handleCompare(State state, ir.BinOp bin, Value result)
 		throw panic(bin.location, "error");
 	}
 
+	// Debug info
+	diSetPosition(state, bin.location);
+
 	LLVMValueRef v;
 	if (pt.floating) {
 		v = LLVMBuildFCmp(state.builder, fpr, left.value, right.value, "");
@@ -398,12 +419,20 @@ void handleBinOpAssign(State state, ir.BinOp bin, Value result)
 	if (pt is null)
 		throw panic(bin, "right hand value must be of primitive type");
 
-	handleBinOpNonAssign(state, bin.location, op, left, right, right);
+	// Set debug info location, helper needs this.
+	diSetPosition(state, bin.location);
+
+	handleBinOpNonAssignHelper(state, bin.location, op,
+	                           left, right, right);
 
 	// Not returned.
 	LLVMBuildStore(state.builder, right.value, result.value);
 }
 
+/**
+ * Sets up values and calls helper functions to handle BinOp, will leave
+ * debug info location set on builder.
+ */
 void handleBinOpNonAssign(State state, ir.BinOp bin, Value result)
 {
 	Value left = new Value();
@@ -412,13 +441,19 @@ void handleBinOpNonAssign(State state, ir.BinOp bin, Value result)
 	state.getValueAnyForm(bin.left, left);
 	state.getValueAnyForm(bin.right, right);
 
-	handleBinOpNonAssign(state, bin.location, bin.op,
-	                       left, right, result);
+	handleBinOpNonAssignHelper(state, bin.location, bin.op,
+	                           left, right, result);
 }
 
-void handleBinOpNonAssign(State state, Location loc, ir.BinOp.Op binOp,
-                          Value left, Value right, Value result)
+/**
+ * Helper function that does the bin operation, sets debug info location on
+ * builder and will not unset it.
+ */
+void handleBinOpNonAssignHelper(State state, ref Location loc, ir.BinOp.Op binOp,
+                                Value left, Value right, Value result)
 {
+	diSetPosition(state, loc);
+
 	makeNonPointer(state, left);
 	makeNonPointer(state, right);
 
@@ -439,6 +474,10 @@ void handleBinOpNonAssign(State state, Location loc, ir.BinOp.Op binOp,
 	handleBinOpPrimitive(state, loc, binOp, pt, left, right, result);
 }
 
+/**
+ * Pointer artithmetic, caller have to flip left and right. Assumes debug
+ * info location already set.
+ */
 void handleBinOpPointer(State state, Location loc, ir.BinOp.Op binOp,
                         Value ptr, Value other, Value result)
 {
@@ -464,6 +503,9 @@ void handleBinOpPointer(State state, Location loc, ir.BinOp.Op binOp,
 	result.value = LLVMBuildGEP(state.builder, ptr.value, [val], "");
 }
 
+/**
+ * Primitive artithmetic, assumes debug info location already set.
+ */
 void handleBinOpPrimitive(State state, Location loc, ir.BinOp.Op binOp,
                           PrimitiveType pt,
 	                      Value left, Value right, Value result)
@@ -1076,10 +1118,11 @@ void handleSliceTwo(State state, ir.Postfix postfix, Value result)
 
 	ptr = LLVMBuildGEP(state.builder, left.value, [start.value], "");
 
-	// Subtract start from end to get the length, which returned in end. 
-	handleBinOpNonAssign(state, postfix.location,
-	                     ir.BinOp.Op.Sub,
-	                     end, start, end);
+	// Subtract start from end to get the length, which returned in end.
+	// Will set and leave debug info location and we want that.
+	handleBinOpNonAssignHelper(state, postfix.location,
+	                           ir.BinOp.Op.Sub,
+	                           end, start, end);
 	len = end.value;
 
 	makeArrayTemp(state, postfix.location, at, ptr, len, result);
