@@ -2,6 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.llvm.di;
 
+import volt.token.location;
 import ir = volt.ir.ir;
 import lib.llvm.core;
 import lib.llvm.c.DIBuilder;
@@ -53,6 +54,17 @@ enum DwAte
  */
 
 version (UseDIBuilder) {
+
+	void diSetPosition(State state, ref Location loc)
+	{
+		LLVMBuilderAssociatePosition(state.builder, cast(int)loc.line,
+			cast(int)loc.column, state.fnState.di);
+	}
+
+	void diUnsetPosition(State state)
+	{
+		LLVMBuilderDeassociatePosition(state.builder);
+	}
 
 	LLVMValueRef diCompileUnit(State state)
 	{
@@ -478,6 +490,8 @@ private:
 	extern(C) LLVMDIBuilderRef LLVMCreateDIBuilder(LLVMModuleRef) { return null; }
 	extern(C) void LLVMDisposeDIBuilder(LLVMDIBuilderRef builder) {}
 
+	void diSetPosition(State, ref Location) {}
+	void diUnsetPosition(State) {}
 	void diStart(State state) {}
 	void diFinalize(State state) {}
 	LLVMValueRef diCompileUnit(State state) { return null; }
