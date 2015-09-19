@@ -235,13 +235,13 @@ version (UseDIBuilder) {
 			scope_ = state.diCU;
 		}
 
+		string name = irVar.mangledName;
+		string link = null;
 		LLVMDIBuilderCreateGlobalVariable(
 			state.diBuilder,
 			scope_,
-			irVar.name.ptr,
-			irVar.name.length,
-			irVar.mangledName.ptr,
-			irVar.mangledName.length,
+			name.ptr, name.length,
+			link.ptr, link.length,
 			file,
 			0,
 			type.diType,
