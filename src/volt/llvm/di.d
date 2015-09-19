@@ -452,10 +452,69 @@ version (UseDIBuilder) {
 			false, fn, null, null);
 	}
 
+	void diAutoVariable(State state, ir.Variable var,
+	                    LLVMValueRef val, Type type)
+	{
+		string name = var.name;
+		auto file = diFile(state, var);
+		auto loc = diLocation(state, state.fnState.di, var.location);
+		auto expr = LLVMDIBuilderCreateExpression(
+			state.diBuilder, null, 0);
+
+		auto valinfo = LLVMDIBuilderCreateAutoVariable(
+			state.diBuilder, state.fnState.di,
+			name.ptr, name.length,
+			file, cast(uint) var.location.line,
+			type.diType,
+			false, // AlwaysPreserve
+			0);
+		LLVMDIBuilderInsertDeclare(
+			state.diBuilder,
+			val,
+			valinfo,
+			expr, // Expr
+			loc, // DL
+			state.block);
+	}
+
+	void diParameterVariable(State state, ir.FunctionParam var,
+	                         LLVMValueRef val, Type type)
+	{
+		string name = var.name;
+		auto file = diFile(state, var);
+		auto loc = diLocation(state, state.fnState.di, var.location);
+		auto expr = LLVMDIBuilderCreateExpression(
+			state.diBuilder, null, 0);
+
+		auto valinfo = LLVMDIBuilderCreateParameterVariable(
+			state.diBuilder, state.fnState.di,
+			name.ptr, name.length,
+			cast(int) var.index + 1,
+			file, cast(uint) var.location.line,
+			type.diType,
+			false, // AlwaysPreserve
+			0);
+		LLVMDIBuilderInsertDeclare(
+			state.diBuilder,
+			val,
+			valinfo,
+			expr, // Expr
+			loc, // DL
+			state.block);
+	}
+
 	alias LLVMCreateDIBuilder = lib.llvm.c.DIBuilder.LLVMCreateDIBuilder;
 	alias LLVMDisposeDIBuilder = lib.llvm.c.DIBuilder.LLVMDisposeDIBuilder;
 
 private:
+	LLVMValueRef diLocation(State state, LLVMValueRef _scope,
+	                        ref Location loc)
+	{
+		return LLVMDIBuilderCreateLocation(
+			state.diBuilder, cast(uint) loc.line,
+			cast(ushort) loc.column, _scope);
+	}
+
 	LLVMValueRef diString(State state, const(char)[] str)
 	{
 		return LLVMMDStringInContext(
@@ -509,6 +568,8 @@ private:
 	                            string mangledName, out LLVMValueRef diCallType) { return null; }
 	LLVMValueRef diFunction(State state, ir.Function irFn,
 	                        LLVMValueRef fn, FunctionType ft) { return null; }
+	void diAutoVariable(State state, ir.Variable var, LLVMValueRef val, Type type) {}
+	void diParameterVariable(State state, ir.FunctionParam var, LLVMValueRef val, Type type) {}
 }
 
 

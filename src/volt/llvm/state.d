@@ -373,17 +373,26 @@ public:
 		case Field:
 			throw panic(var.location, "field variable refered directly");
 		case Function, Nested:
-			if (func is null)
+			if (func is null) {
 				throw panic(var.location,
 					"non-local/global variable in non-function scope");
-			if (var.useBaseStorage)
+			}
+			if (var.useBaseStorage) {
 				throw panic(var.location,
 					"useBaseStorage can not be used on function variables");
+			}
+
+			diSetPosition(this, var.location);
 			v = LLVMBuildAlloca(builder, llvmType, var.name);
+
+			diAutoVariable(this, var, v, type);
+			diUnsetPosition(this);
+
 			if (var.name == "__nested") {
 				assert(fnState.nested is null);
 				fnState.nested = v;
 			}
+
 			break;
 		case Local:
 			v = LLVMAddGlobal(mod, llvmType, var.mangledName);
@@ -426,9 +435,15 @@ public:
 
 		llvmType = type.llvmType;
 
-		if (func is null)
+		if (func is null) {
 			throw panic(var.location, "non-local/global variable in non-function scope");
+		}
+
+		diSetPosition(this, var.location);
 		v = LLVMBuildAlloca(builder, llvmType, var.name);
+
+		diParameterVariable(this, var, v, type);
+		diUnsetPosition(this);
 
 		version (D_Version2) valueStore[k] = Store(v, type);
 		return v;

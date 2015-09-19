@@ -80,6 +80,11 @@ LLVMValueRef LLVMDIBuilderCreateCompileUnit(
     const char* SplitName, size_t SplitNameLen,
     LLVMDebugEmission EmissionKind, ulong DWOiD, LLVMBool EmitDebugInfo);
 
+/// Create a location descriptor to hold debugging information
+/// for a location.
+LLVMValueRef LLVMDIBuilderCreateLocation(LLVMDIBuilderRef builder, uint Line,
+                                         ushort Column, LLVMValueRef Scope);
+
 /// Create a file descriptor to hold debugging information
 /// for a file.
 LLVMValueRef LLVMDIBuilderCreateFile(LLVMDIBuilderRef builder,
@@ -445,6 +450,35 @@ LLVMValueRef LLVMDIBuilderCreateTempGlobalVariableFwdDecl(
     LLVMValueRef File, uint LineNo, LLVMValueRef Ty, bool IsLocalToUnit,
     LLVMValueRef Val, LLVMValueRef Decl);
 
+/// Create a new descriptor for an auto variable.  This is a local variable
+/// that is not a subprogram parameter.
+///
+/// \c Scope must be a \a DILocalScope, and thus its scope chain eventually
+/// leads to a \a DISubprogram.
+///
+/// If \c AlwaysPreserve, this variable will be referenced from its
+/// containing subprogram, and will survive some optimizations.
+LLVMValueRef LLVMDIBuilderCreateAutoVariable(
+    LLVMDIBuilderRef builder, LLVMValueRef Scope, const(char) *Name,
+    size_t NameLen, LLVMValueRef File, uint LineNo,
+    LLVMValueRef Ty, bool AlwaysPreserve, uint Flags);
+
+/// Create a new descriptor for a parameter variable.
+///
+/// \c Scope must be a \a DILocalScope, and thus its scope chain eventually
+/// leads to a \a DISubprogram.
+///
+/// \c ArgNo is the index (starting from \c 1) of this variable in the
+/// subprogram parameters.  \c ArgNo should not conflict with other
+/// parameters of the same subprogram.
+///
+/// If \c AlwaysPreserve, this variable will be referenced from its
+/// containing subprogram, and will survive some optimizations.
+LLVMValueRef LLVMDIBuilderCreateParameterVariable(
+    LLVMDIBuilderRef builder, LLVMValueRef Scope, const(char) *Name,
+    size_t NameLen, uint ArgNo, LLVMValueRef File, uint LineNo,
+    LLVMValueRef Ty, bool AlwaysPreserve, uint Flags);
+
 /// Create a new descriptor for the specified subprogram.
 /// See comments in DISubprogram* for descriptions of these fields.
 /// \param Scope         Function scope.
@@ -577,8 +611,8 @@ LLVMValueRef LLVMDIBuilderCreateImportedDeclaration(
 /// \param DL          Debug info location.
 /// \param InsertAtEnd Location for the new intrinsic.
 LLVMValueRef LLVMDIBuilderInsertDeclare(
-    LLVMDIBuilderRef builder, LLVMValueRef ValInfo, LLVMValueRef Expr,
-    LLVMValueRef DL, LLVMBasicBlockRef InsertAtEnd);
+    LLVMDIBuilderRef builder, LLVMValueRef Storage, LLVMValueRef ValInfo,
+    LLVMValueRef Expr, LLVMValueRef DL, LLVMBasicBlockRef InsertAtEnd);
 
 /// Insert a new llvm.dbg.declare intrinsic call.
 /// \param Storage      llvm::Value of the variable
@@ -587,8 +621,8 @@ LLVMValueRef LLVMDIBuilderInsertDeclare(
 /// \param DL           Debug info location.
 /// \param InsertBefore Location for the new intrinsic.
 LLVMValueRef LLVMDIBuilderInsertDeclareBefore(
-    LLVMDIBuilderRef builder, LLVMValueRef ValInfo, LLVMValueRef Expr,
-    LLVMValueRef DL, LLVMValueRef InsertBefore);
+    LLVMDIBuilderRef builder, LLVMValueRef Storage, LLVMValueRef ValInfo,
+    LLVMValueRef Expr, LLVMValueRef DL, LLVMValueRef InsertBefore);
 
 /// insertDbgValueIntrinsic - Insert a new llvm.dbg.value intrinsic call.
 /// @param Val          llvm::Value of the variable
@@ -609,6 +643,12 @@ LLVMValueRef LLVMDIBuilderInsertDgbValueInstrinsic(
 LLVMValueRef LLVMDIBuilderInsertDbgValueIntrinsicBefore(
     LLVMDIBuilderRef builder, LLVMValueRef Val, ulong Offset,
     LLVMValueRef VarInfo, LLVMValueRef InsertBefore);
+
+/// createExpression - Create a new descriptor for the specified
+/// variable which has a complex address expression for its address.
+/// \param Addr        An array of complex address operations.
+LLVMValueRef LLVMDIBuilderCreateExpression(
+    LLVMDIBuilderRef builder, ulong *Addr, size_t AddrNum);
 
 
 void LLVMDIBuilderStructSetBody(LLVMDIBuilderRef builder,
