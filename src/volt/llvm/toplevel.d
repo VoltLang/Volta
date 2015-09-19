@@ -197,11 +197,15 @@ public:
 			}
 		}
 
+		diSetPosition(state, ret.location);
+
 		if (val is null) {
 			LLVMBuildRet(b, null);
 		} else {
 			LLVMBuildRet(b, val.value);
 		}
+
+		diUnsetPosition(state);
 
 		state.fnState.fall = false;
 
