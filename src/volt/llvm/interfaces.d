@@ -7,6 +7,7 @@ import volt.errors;
 public import lib.llvm.core;
 public import lib.llvm.c.DIBuilder : LLVMDIBuilderRef;
 
+public import volt.token.location;
 public import volt.interfaces;
 public import ir = volt.ir.ir;
 
@@ -343,7 +344,8 @@ public:
 	 * Builds either a call or a invoke. If invoke automatically
 	 * sets up a catch basic block and sets the currentBlock to it.
 	 */
-	abstract LLVMValueRef buildCallOrInvoke(LLVMValueRef fn, LLVMValueRef[] args);
+	abstract LLVMValueRef buildCallOrInvoke(ref Location loc,
+	                                        LLVMValueRef fn, LLVMValueRef[] args);
 
 	/**
 	 * Start using a new basic block, setting currentBlock.

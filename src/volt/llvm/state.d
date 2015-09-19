@@ -243,9 +243,15 @@ public:
 		return mExitBlock = b;
 	}
 
-	override LLVMValueRef buildCallOrInvoke(LLVMValueRef fn, LLVMValueRef[] args)
+	override LLVMValueRef buildCallOrInvoke(ref Location loc,
+	                                        LLVMValueRef fn, LLVMValueRef[] args)
 	{
 		auto p = findLanding();
+
+		diSetPosition(this, loc);
+		scope (success) {
+			diUnsetPosition(this);
+		}
 
 		if (p is null) {
 			return LLVMBuildCall(builder, fn, args);

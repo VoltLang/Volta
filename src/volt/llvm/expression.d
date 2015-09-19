@@ -1184,7 +1184,7 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 		}
 	}
 
-	result.value = state.buildCallOrInvoke(result.value, llvmArgs);
+	result.value = state.buildCallOrInvoke(postfix.location, result.value, llvmArgs);
 	auto irc = cast(ir.CallableType) result.type.irType;
 	if (irc !is null) switch (irc.linkage) {
 	case ir.Linkage.Windows:

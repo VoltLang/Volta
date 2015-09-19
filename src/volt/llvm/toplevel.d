@@ -184,7 +184,7 @@ public:
 	{
 		assert(state.fall);
 
-		handleScopeSuccessTo(null);
+		handleScopeSuccessTo(ret.location, null);
 
 		Value val;
 		if (ret.exp !is null) {
@@ -600,7 +600,8 @@ public:
 		}
 
 		if (state.fall) {
-			handleScopeSuccessTo(old);
+			// TODO Add a endBraceLocation field to BlockStatement.
+			handleScopeSuccessTo(bs.location, old);
 		}
 
 		state.popPath();
@@ -615,7 +616,7 @@ public:
 			throw panic(cs.location, "labled continue statements not supported");
 		}
 
-		handleScopeSuccessTo(p);
+		handleScopeSuccessTo(cs.location, p);
 
 		LLVMBuildBr(state.builder, p.continueBlock);
 		state.fnState.fall = false;
@@ -631,7 +632,7 @@ public:
 			throw panic(bs.location, "labled break statements not supported");
 		}
 
-		handleScopeSuccessTo(p);
+		handleScopeSuccessTo(bs.location, p);
 
 		LLVMBuildBr(state.builder, p.breakBlock);
 		state.fnState.fall = false;
@@ -643,7 +644,7 @@ public:
 	{
 		// Goto will exit the scope just as if it was a break.
 		auto p = state.findBreak();
-		handleScopeSuccessTo(p);
+		handleScopeSuccessTo(gs.location, p);
 
 		if (gs.isDefault) {
 			LLVMBuildBr(state.builder, state.switchDefault);
@@ -733,7 +734,7 @@ public:
 			LLVMBuildBr(state.builder, fall);
 	}
 
-	void handleScopeSuccessTo(State.PathState to)
+	void handleScopeSuccessTo(ref Location loc, State.PathState to)
 	{
 		LLVMValueRef[] funcs;
 		auto p = state.path;
@@ -753,7 +754,7 @@ public:
 			state.voidPtrType.llvmType, "");
 		auto arg = [value];
 		foreach_reverse (fn; funcs) {
-			state.buildCallOrInvoke(fn, arg);
+			state.buildCallOrInvoke(loc, fn, arg);
 		}
 	}
 
