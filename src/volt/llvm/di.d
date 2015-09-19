@@ -210,6 +210,23 @@ version (UseDIBuilder) {
 			pt.mangledName.ptr, pt.mangledName.length);
 	}
 
+	LLVMValueRef diStaticArrayType(State state, ir.StaticArrayType sat,
+	                               Type type)
+	{
+		assert(type !is null && type.diType !is null);
+
+		size_t size, alignment;
+		sat.getSizeAndAlignment(state.lp, size, alignment);
+
+		LLVMValueRef[1] sub;
+		sub[0] = LLVMDIBuilderGetOrCreateRange(
+			state.diBuilder, 0, cast(long) sat.length);
+
+		return LLVMDIBuilderCreateArrayType(
+			state.diBuilder, size, alignment, type.diType,
+			sub.ptr, sub.length);
+	}
+
 	void diVariable(State state, LLVMValueRef var, ir.Variable irVar,
 	                Type type)
 	{
@@ -467,6 +484,7 @@ private:
 	LLVMValueRef diUnspecifiedType(State state, ir.Type t) { return null; }
 	LLVMValueRef diBaseType(State state, ir.PrimitiveType pt) { return null; }
 	LLVMValueRef diPointerType(State state, ir.PointerType pt, Type base) { return null; }
+	LLVMValueRef diStaticArrayType(State, ir.StaticArrayType, Type) { return null; }
 	void diVariable(State state, LLVMValueRef var, ir.Variable irVar, Type type) {}
 	LLVMValueRef diUnion(State state, ir.Type t) { return null; }
 	void diUnionSetBody(State state, LLVMValueRef diType, ir.Variable[] elms) {}

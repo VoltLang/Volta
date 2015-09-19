@@ -422,7 +422,7 @@ private:
 
 		length = cast(uint)sat.length;
 		llvmType = LLVMArrayType(base.llvmType, length);
-		diType = diUnspecifiedType(state, irType);
+		diType = diStaticArrayType(state, sat, base);
 		super(state, sat, llvmType, diType);
 	}
 }

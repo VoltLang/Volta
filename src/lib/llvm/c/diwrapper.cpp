@@ -344,7 +344,7 @@ LLVMValueRef LLVMDIBuilderCreateTemplatePackParameter(
 /// \param Subscripts   Subscripts.
 LLVMValueRef LLVMDIBuilderCreateArrayType(
     LLVMDIBuilderRef builder, uint64_t Size, uint64_t AlignInBits,
-    LLVMValueRef Ty, LLVMValueRef *Subscripts, unsigned Count);
+    LLVMValueRef Ty, LLVMValueRef *Subscripts, size_t SubscriptsNum);
 
 /// Create debugging information entry for a vector type.
 /// \param Size         Array size.
@@ -353,7 +353,7 @@ LLVMValueRef LLVMDIBuilderCreateArrayType(
 /// \param Subscripts   Subscripts.
 LLVMValueRef LLVMDIBuilderCreateVectorType(
     LLVMDIBuilderRef builder, uint64_t Size, uint64_t AlignInBits,
-    LLVMValueRef Ty, LLVMValueRef *Subscripts, unsigned SubscriptsNum);
+    LLVMValueRef Ty, LLVMValueRef *Subscripts, size_t SubscriptsNum);
 
 /// Create debugging information entry for an
 /// enumeration.
@@ -691,6 +691,7 @@ DEFINE_MAV_WRAP(DITemplateValueParameter)
 DEFINE_MAV_WRAP(DIGlobalVariable)
 DEFINE_MAV_WRAP(DISubroutineType)
 DEFINE_MAV_WRAP(DISubprogram)
+DEFINE_MAV_WRAP(DISubrange)
 
 inline Metadata *unwrapMD(LLVMValueRef Val)
 {
@@ -898,6 +899,22 @@ LLVMValueRef LLVMDIBuilderCreateUnionType(
       B->getOrCreateArray(MDs), RunTimeLang, UI));
 }
 
+LLVMValueRef LLVMDIBuilderCreateArrayType(
+    LLVMDIBuilderRef builder, uint64_t Size, uint64_t AlignInBits,
+    LLVMValueRef Ty, LLVMValueRef *Subscripts, size_t SubscriptsNum) {
+
+  auto B = unwrap(builder);
+  auto T = unwrapMDAs<DIType>(Ty);
+  SmallVector<Metadata *, 8> MDs;
+  for(int i = 0; i < SubscriptsNum; i++) {
+    auto *MD = unwrapMD(Subscripts[i]);
+    // TODO Extract?
+    MDs.push_back(MD);
+  }
+  return wrap(B->createArrayType(
+      Size, AlignInBits, T, B->getOrCreateArray(MDs)));
+}
+
 LLVMValueRef LLVMDIBuilderCreateSubroutineType(LLVMDIBuilderRef builder,
                                                LLVMValueRef File,
                                                LLVMValueRef *ParameterTypes,
@@ -914,6 +931,11 @@ LLVMValueRef LLVMDIBuilderCreateSubroutineType(LLVMDIBuilderRef builder,
   }
 
   return wrap(B->createSubroutineType(F, B->getOrCreateTypeArray(MDs), Flags));
+}
+
+LLVMValueRef LLVMDIBuilderGetOrCreateRange(LLVMDIBuilderRef builder, int64_t Lo,
+                                           int64_t Hi) {
+  return wrap(unwrap(builder)->getOrCreateSubrange(Lo, Hi));
 }
 
 LLVMValueRef LLVMDIBuilderCreateGlobalVariable(
