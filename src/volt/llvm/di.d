@@ -377,14 +377,15 @@ private:
 
 	LLVMValueRef diFile(State state, const(char)[] file, const(char)[] dir)
 	{
-		return state.diNode(state.diString(file), state.diString(dir));
+		return LLVMDIBuilderCreateFile(state.diBuilder,
+			file.ptr, file.length, dir.ptr, dir.length);
 	}
 
 	LLVMValueRef diFile(State state, ir.Node n)
 	{
-		return state.diNode(
-			state.diString(n.location.filename),
-			state.diString(state.lp.settings.execDir));
+		return diFile(state,
+			n.location.filename,
+			state.lp.settings.execDir);
 	}
 
 } else {
