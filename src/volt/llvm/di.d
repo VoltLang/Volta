@@ -224,13 +224,13 @@ version (UseDIBuilder) {
 			return;
 		}
 
+		auto file = diFile(state,
+			state.irMod.location.filename,
+			state.lp.settings.execDir);
+
 		LLVMValueRef scope_;
 		if (LLVMGetDebugMetadataVersion() == 2) {
-			string file = state.irMod.location.filename;
-			string dir = state.lp.settings.execDir;
-			scope_ = state.diNode(
-				state.diString("0x29"),
-				state.diFile(file, dir));
+			scope_ = state.diNode(state.diString("0x29"), file);
 		} else {
 			scope_ = state.diCU;
 		}
@@ -242,7 +242,7 @@ version (UseDIBuilder) {
 			irVar.name.length,
 			irVar.mangledName.ptr,
 			irVar.mangledName.length,
-			null,
+			file,
 			0,
 			type.diType,
 			false,
