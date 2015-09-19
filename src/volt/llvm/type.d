@@ -669,11 +669,13 @@ private:
 		foreach (m; irType.members.nodes) {
 
 			auto var = cast(ir.Variable)m;
-			if (var is null)
+			if (var is null) {
 				continue;
+			}
 
-			if (var.storage != ir.Variable.Storage.Field)
+			if (var.storage != ir.Variable.Storage.Field) {
 				continue;
+			}
 
 			// @todo handle anon types.
 			assert(var.name !is null);
@@ -740,34 +742,37 @@ private:
 	this(State state, ir.Union irType)
 	{
 		this.llvmType = LLVMStructCreateNamed(state.context, irType.mangledName);
-		this.diType = diUnspecifiedType(state, irType);
+		this.diType = diUnion(state, irType);
 		this.utype = irType;
 		super(state, irType, llvmType, diType);
 
 		uint index;
-		void handle(ir.Node m) {
-			auto var = cast(ir.Variable)m;
-			if (var is null)
-				return;
+		ir.Variable[] vars;
 
-			if (var.storage != ir.Variable.Storage.Field)
-				return;
+		foreach (m; irType.members.nodes) {
+
+			auto var = cast(ir.Variable)m;
+			if (var is null) {
+				continue;
+			}
+
+			if (var.storage != ir.Variable.Storage.Field) {
+				continue;
+			}
 
 			// @todo handle anon members.
 			assert(var.name !is null);
 
 			indices[var.name] = index++;
 			types ~= state.fromIr(var.type);
-		}
-
-		foreach (m; irType.members.nodes) {
-			handle(m);
+			vars ~= var;
 		}
 
 		// @todo check packing.
 		LLVMTypeRef[1] mt;
 		mt[0] = LLVMArrayType(state.ubyteType.llvmType, cast(uint)irType.totalSize);
 		LLVMStructSetBody(llvmType, mt[], false);
+		diUnionSetBody(state, diType, vars);
 	}
 }
 

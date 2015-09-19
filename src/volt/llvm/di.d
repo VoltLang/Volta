@@ -248,27 +248,62 @@ version (UseDIBuilder) {
 			null);
 	}
 
+	LLVMValueRef diUnion(State state, ir.Type t)
+	{
+		size_t size, alignment;
+		t.getSizeAndAlignment(state.lp, size, alignment);
+
+		string name = t.mangledName;
+		string uni = null;
+
+		return LLVMDIBuilderCreateUnionType(
+			state.diBuilder,
+			state.diCU,
+			name.ptr, name.length,
+			state.diFile(t), cast(uint)t.location.line,
+			size, alignment,
+			0,        // Flags
+			null, 0,  // Elements
+			0,        // RunTimeLang
+			uni.ptr, uni.length);
+	}
+
+	void diUnionSetBody(State state, LLVMValueRef diType,
+	                     ir.Variable[] elms)
+	{
+		diSetAggregateBody(state, diType, elms, ir.NodeType.Union);
+	}
+
 	LLVMValueRef diStruct(State state, ir.Type t)
 	{
 		size_t size, alignment;
 		t.getSizeAndAlignment(state.lp, size, alignment);
+
+		string name = t.mangledName;
+		string uni = null;
 
 		return LLVMDIBuilderCreateStructType(
 			state.diBuilder,
 			state.diCU,
 			t.mangledName.ptr, t.mangledName.length,
 			state.diFile(t), cast(uint)t.location.line,
-			size, alignment, 0,
-			null,
-			null, 0,
-			null,
-			0,
-			null, 0);
-			//t.mangledName.ptr, t.mangledName.length);
+			size, alignment,
+			0,        // Flags
+			null,     // DerivedFrom
+			null, 0,  // Elements
+			null,     // VTableHolder
+			0,        // RunTimeLang
+			uni.ptr, uni.length);
 	}
 
 	void diStructSetBody(State state, LLVMValueRef diType,
 	                     ir.Variable[] elms)
+	{
+		diSetAggregateBody(state, diType, elms, ir.NodeType.Struct);
+	}
+
+	void diSetAggregateBody(State state, LLVMValueRef diType,
+	                        ir.Variable[] elms, ir.NodeType kind)
 	{
 		auto di = new LLVMValueRef[](elms.length);
 		size_t offset;
@@ -291,7 +326,9 @@ version (UseDIBuilder) {
 				state.diFile(elm), cast(uint)elm.location.line,
 				size, alignment, offset, 0, d);
 
-			offset += size;
+			if (kind != ir.NodeType.Union) {
+				offset += size;
+			}
 		}
 
 		LLVMDIBuilderStructSetBody(state.diBuilder, diType,
@@ -431,6 +468,8 @@ private:
 	LLVMValueRef diBaseType(State state, ir.PrimitiveType pt) { return null; }
 	LLVMValueRef diPointerType(State state, ir.PointerType pt, Type base) { return null; }
 	void diVariable(State state, LLVMValueRef var, ir.Variable irVar, Type type) {}
+	LLVMValueRef diUnion(State state, ir.Type t) { return null; }
+	void diUnionSetBody(State state, LLVMValueRef diType, ir.Variable[] elms) {}
 	LLVMValueRef diStruct(State state, ir.Type t) { return null; }
 	void diStructSetBody(State state, Type p, Type[2] t, string[2] names) {}
 	void diStructSetBody(State state, LLVMValueRef diType, ir.Variable[] elms) {}

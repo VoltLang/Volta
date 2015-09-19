@@ -875,6 +875,29 @@ LLVMValueRef LLVMDIBuilderCreateStructType(
       B->getOrCreateArray(MDs), RunTimeLang, VTH, UI));
 }
 
+LLVMValueRef LLVMDIBuilderCreateUnionType(
+    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
+    size_t NameLen, LLVMValueRef File, unsigned LineNumber, uint64_t SizeInBits,
+    uint64_t AlignInBits, unsigned Flags, LLVMValueRef *Elements,
+    size_t ElementsNum, unsigned RunTimeLang, const char *UniqueIdentifier,
+    size_t UniqueIdentifierLen) {
+
+  StringRef N(Name, NameLen);
+  StringRef UI(UniqueIdentifier, UniqueIdentifierLen);
+  auto B = unwrap(builder);
+  auto S = unwrapMDAs<DIScope>(Scope);
+  auto F = unwrapMDAs<DIFile>(File);
+  SmallVector<Metadata *, 8> MDs;
+  for(int i = 0; i < ElementsNum; i++) {
+    auto *MD = unwrapMD(Elements[i]);
+    // TODO Extract?
+    MDs.push_back(MD);
+  }
+  return wrap(B->createUnionType(
+      S, N, F, LineNumber, SizeInBits, AlignInBits, Flags,
+      B->getOrCreateArray(MDs), RunTimeLang, UI));
+}
+
 LLVMValueRef LLVMDIBuilderCreateSubroutineType(LLVMDIBuilderRef builder,
                                                LLVMValueRef File,
                                                LLVMValueRef *ParameterTypes,

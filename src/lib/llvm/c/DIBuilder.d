@@ -290,7 +290,7 @@ LLVMValueRef LLVMDIBuilderCreateUnionType(
     size_t NameLen, LLVMValueRef File, uint LineNumber, ulong SizeInBits,
     ulong AlignInBits, uint Flags, LLVMValueRef *Elements,
     size_t ElementsNum, uint RunTimeLang, const(char) *UniqueIdentifier,
-    uint UniqueIdentifierLen);
+    size_t UniqueIdentifierLen);
 
 /// Create debugging information for template type parameter.
 /// \param Scope        Scope in which this type is defined.
