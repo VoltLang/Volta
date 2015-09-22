@@ -774,6 +774,9 @@ public:
 			assert(iface.layoutStruct !is null);
 			v.type = buildPtrSmart(v.location, buildPtrSmart(v.location, iface.layoutStruct));
 		}
+		if (functionStack.length == 0) {
+			replaceGlobalArrayLiteralIfNeeded(lp, current, v);
+		}
 		return Continue;
 	}
 
@@ -1399,4 +1402,46 @@ bool handleStructLookupViaFunctionCall(LanguagePass lp, ir.Scope current, ref ir
 	sexp.exp = copyExp(estat.exp);
 	exp = sexp;
 	return true;
+}
+
+void replaceGlobalArrayLiteralIfNeeded(LanguagePass lp, ir.Scope current, ir.Variable var)
+{
+	auto mod = getModuleFromScope(current);
+
+	auto al = cast(ir.ArrayLiteral) var.assign;
+	if (al is null) {
+		return;
+	}
+
+	// Retrieve a named function from the current module, asserting that it is of type kind.
+	// Returns the first matching function, or null otherwise.
+	ir.Function getNamedTopLevelFunction(string name, ir.Function.Kind kind)
+	{
+		foreach (node; mod.children.nodes) {
+			auto fn = cast(ir.Function) node;
+			if (fn is null || fn.name != name) {
+				continue;
+			}
+			if (fn.kind != kind) {
+				throw panic(al.location, format("expected function kind '%s'", fn.kind));
+			}
+			return fn;
+		}
+		return null;
+	}
+
+	auto name = "__globalInitialiser_" ~ mod.name.toString();
+	auto fn = getNamedTopLevelFunction(name, ir.Function.Kind.GlobalConstructor);
+	if (fn is null) {
+		fn = buildGlobalConstructor(al.location, mod.children, mod.myScope, name);
+	}
+
+	auto at = getExpType(lp, al, current);
+	auto sexp = buildInternalArrayLiteralSmart(al.location, at, al.values);
+	sexp.originalExp = al;
+	auto assign = buildExpStat(al.location, buildAssign(al.location, buildExpReference(al.location, var, var.name), sexp));
+	fn._body.statements ~= assign;
+	var.assign = null;
+
+	return;
 }
