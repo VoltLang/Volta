@@ -498,7 +498,7 @@ void rewriteOverloadedProperty(Context ctx, ref ir.Exp exp,
 	    pfix.identifier !is null) {
 		auto ctype = cast(ir.Aggregate)realType(getExpType(ctx.lp, pfix.child, ctx.current));
 		if (ctype !is null) {
-			auto store = lookupOnlyThisScope(ctx.lp, ctype.myScope, pfix.location, pfix.identifier.value);
+			auto store = lookupInGivenScopeOnly(ctx.lp, ctype.myScope, pfix.location, pfix.identifier.value);
 			if (store !is null) {
 				ir.Function fn = selectFunction(ctx.lp, ctx.current, store.functions, [], pfix.location);
 				if (fn !is null) {
@@ -702,7 +702,7 @@ ir.Exp withLookup(Context ctx, ref ir.Exp exp, ir.Scope current,
 	if (eScope is null) {
 		throw makeBadWithType(exp.location);
 	}
-	auto store = lookupOnlyThisScope(ctx.lp, eScope, exp.location, leaf);
+	auto store = lookupInGivenScopeOnly(ctx.lp, eScope, exp.location, leaf);
 	if (store is null) {
 		return null;
 	}
@@ -1466,7 +1466,7 @@ bool replaceExpReferenceIfNeeded(Context ctx,
 	}
 
 	string ident = eRef.idents[$-1];
-	auto store = lookupOnlyThisScope(ctx.lp, expressionAgg.myScope, exp.location, ident);
+	auto store = lookupInGivenScopeOnly(ctx.lp, expressionAgg.myScope, exp.location, ident);
 	if (store !is null && store.node !is eRef.decl) {
 		if (eRef.decl.nodeType !is ir.NodeType.FunctionParam) {
 			bool found = false;
@@ -1568,7 +1568,7 @@ void rewritePropertyFunctionAssign(Context ctx, ref ir.Exp e,
 		if (asClass is null) {
 			return;
 		}
-		auto functionStore = lookupOnlyThisScope(ctx.lp, asClass.myScope, bin.location, functionName);
+		auto functionStore = lookupInGivenScopeOnly(ctx.lp, asClass.myScope, bin.location, functionName);
 		if (functionStore is null) {
 			return;
 		}
@@ -2738,7 +2738,7 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss,
 					if (tmpScope is null) {
 						continue;
 					}
-					auto store = lookupOnlyThisScope(ctx.lp, tmpScope, _case.location, iexp.value);
+					auto store = lookupInGivenScopeOnly(ctx.lp, tmpScope, _case.location, iexp.value);
 					if (store is null) {
 						continue;
 					}

@@ -13,7 +13,7 @@ import volt.interfaces;
 import volt.token.location;
 
 import volt.semantic.typer : getExpType;
-import volt.semantic.lookup : lookup, lookupOnlyThisScope;
+import volt.semantic.lookup : lookup, lookupInGivenScopeOnly;
 import volt.semantic.classify : getParentFunction;
 
 
@@ -142,10 +142,10 @@ ir.Variable getThisVar(Location location, LanguagePass lp, ir.Scope _scope)
 	if (fn is null) {
 		throw panic(location, "getThisVar called for scope outside of function.");
 	}
-	auto thisStore = lookupOnlyThisScope(lp, fn.myScope, location, "this");
+	auto thisStore = lookupInGivenScopeOnly(lp, fn.myScope, location, "this");
 	if (thisStore is null) {
 		if (fn.nestStruct !is null) {
-			thisStore = lookupOnlyThisScope(lp, fn.nestStruct.myScope, location, "this");
+			thisStore = lookupInGivenScopeOnly(lp, fn.nestStruct.myScope, location, "this");
 		}
 		if (thisStore is null) {
 			throw makeCallingWithoutInstance(location);

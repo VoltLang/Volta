@@ -43,7 +43,7 @@ ir.Variable getTypeInfo(LanguagePass lp, ir.Module mod, ir.Type type)
 	}
 	string name = getTypeInfoVarName(type);
 
-	auto typeidStore = lookupOnlyThisScope(lp, mod.myScope, mod.location, name);
+	auto typeidStore = lookupInGivenScopeOnly(lp, mod.myScope, mod.location, name);
 	if (typeidStore !is null) {
 		auto asVar = cast(ir.Variable) typeidStore.node;
 		return asVar;

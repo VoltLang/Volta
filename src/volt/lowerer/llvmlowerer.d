@@ -629,7 +629,7 @@ ir.Exp buildStructAAKeyCast(Location l, LanguagePass lp, ir.Module thisModule, i
 			if (var.name == "") {
 				continue;
 			}
-			auto store = lookupOnlyThisScope(lp, agg.myScope, l, var.name);
+			auto store = lookupInGivenScopeOnly(lp, agg.myScope, l, var.name);
 			if (store is null) {
 				continue;
 			}

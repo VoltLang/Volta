@@ -14,11 +14,10 @@ import volt.token.location;
 
 
 /**
- * Look up an identifier in this scope only. 
- * Doesn't check parent scopes, parent classes, imports, or anywhere else but the
- * given scope.
+ * Look up an identifier in the given scope only. Doesn't check parent scopes,
+ * parent classes, imports, or anywhere else but the given scope.
  */
-ir.Store lookupOnlyThisScope(LanguagePass lp, ir.Scope _scope, Location loc, string name)
+ir.Store lookupInGivenScopeOnly(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 {
 	auto store = _scope.getStore(name);
 	if (store !is null) {
@@ -55,7 +54,7 @@ ir.Store lookupAsThisScope(LanguagePass lp, ir.Scope _scope, Location loc, strin
  */
 ir.Store lookupAsImportScope(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 {
-	auto store = lookupOnlyThisScope(lp, _scope, loc, name);
+	auto store = lookupInGivenScopeOnly(lp, _scope, loc, name);
 	if (store !is null) {
 		return ensureResolved(lp, store);
 	}
@@ -247,7 +246,7 @@ ir.Type lookupType(LanguagePass lp, ir.Scope _scope, ir.QualifiedName id)
 ir.Function lookupFunction(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 {
 	// Lookup the copy function for this type of array.
-	auto store = lookupOnlyThisScope(lp, _scope, loc, name);
+	auto store = lookupInGivenScopeOnly(lp, _scope, loc, name);
 	if (store !is null && store.kind == ir.Store.Kind.Function) {
 		assert(store.functions.length == 1);
 		return store.functions[0];
