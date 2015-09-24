@@ -2128,7 +2128,7 @@ public:
 	override Status visit(ir.PrimitiveType type)
 	{
 		wStorageTypes(type);
-		wf(type.type.tokenToString);
+		wf(type.type.tokenToString());
 		wAfterStorageTypes(type);
 		return Continue;
 	}
