@@ -303,7 +303,7 @@ public:
 		block = new Block();
 		size_t parents;
 		foreach (_block; currentSwitchBlocks) {
-			if (!_block.mGoto && !_block.terminates()) {
+			if (!_block.mGoto && !_block.terminates) {
 				block.addParent(_block);
 				parents++;
 			}
