@@ -961,14 +961,14 @@ void handleArgumentLabelsIfNeeded(Context ctx, ir.Postfix postfix,
 		foreach (label; postfix.argumentLabels) {
 			labels[label] = true;
 		}
-		foreach (arg, exp; defaults) {
-			if (exp is null) {
+		foreach (arg, def; defaults) {
+			if (def is null) {
 				continue;
 			}
 			if (auto p = arg in labels) {
 				continue;
 			}
-			postfix.arguments ~= exp;
+			postfix.arguments ~= def;
 			postfix.argumentLabels ~= arg;
 			postfix.argumentTags ~= ir.Postfix.TagKind.None;
 		}
