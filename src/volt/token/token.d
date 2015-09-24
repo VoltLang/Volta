@@ -163,7 +163,7 @@ enum TokenType
 	At,                     // @
 }
 
-@property string tokenToString(TokenType token)
+string tokenToString(TokenType token)
 {
 	return _tokenToString[token];
 }
