@@ -382,6 +382,8 @@ public:
 	override Status leave(ref ir.Exp, ir.StatementExp n) { leaveNode(n); return Continue; }
 	override Status enter(ref ir.Exp, ir.VaArgExp n) { enterNode(n); return Continue; }
 	override Status leave(ref ir.Exp, ir.VaArgExp n) { leaveNode(n); return Continue; }
+	override Status enter(ref ir.Exp, ir.PropertyExp n) { enterNode(n); return Continue; }
+	override Status leave(ref ir.Exp, ir.PropertyExp n) { leaveNode(n); return Continue; }
 
 
 	override Status visit(ref ir.Exp, ir.ExpReference n) { visitRef(n, n.decl); return Continue; }

@@ -1815,6 +1815,21 @@ public:
 		return ContinueParent;
 	}
 
+	override Status enter(ref ir.Exp exp, ir.PropertyExp prop)
+	{
+		if (prop.child !is null) {
+			acceptExp(prop.child, this);
+			wf(".");
+		}
+		wf(prop.identifier.value);
+		return ContinueParent;
+	}
+
+	override Status leave(ref ir.Exp, ir.PropertyExp)
+	{
+		assert(false);
+	}
+
 	override Status enter(ref ir.Exp, ir.Typeid ti)
 	{
 		wf("typeid(");

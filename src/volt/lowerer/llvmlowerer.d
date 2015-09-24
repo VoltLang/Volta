@@ -666,6 +666,22 @@ ir.Exp buildStructAAKeyCast(Location l, LanguagePass lp, ir.Module thisModule, i
 	return buildCastSmart(l, buildArrayType(l, buildVoid(l)), sexp);
 }
 
+void handleProperty(LanguagePass lp, ref ir.Exp exp, ir.PropertyExp prop)
+{
+	assert (prop.getFn !is null);
+
+	auto name = prop.identifier.value;
+	auto expRef = buildExpReference(prop.location, prop.getFn, name);
+
+	if (prop.child is null) {
+		exp = buildCall(prop.location, expRef, []);
+	} else {
+		exp = buildMemberCall(prop.location,
+		                      prop.child,
+		                      expRef, name, []);
+	}
+}
+
 /**
  * Lowers misc things needed by the LLVM backend.
  */

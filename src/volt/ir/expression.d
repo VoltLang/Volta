@@ -220,6 +220,25 @@ public:
 }
 
 /**
+ * A looked up postfix operation is appended to an expression.
+ *
+ * @ingroup irNode irExp
+ */
+class PropertyExp : Exp
+{
+public:
+	Exp child;  // If the property lives on a Aggregate.
+
+	Function   getFn;  ///< For property get.
+	Function[] setFns; ///< For property sets.
+
+	Identifier identifier;  // Looked up name.
+
+public:
+	this() { super(NodeType.PropertyExp); }
+}
+
+/**
  * A Constant is a literal value of a given type.
  *
  * @ingroup irNode irExp

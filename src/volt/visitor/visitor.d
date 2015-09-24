@@ -191,6 +191,8 @@ public abstract:
 	Visitor.Status leave(ref ir.Exp, ir.StatementExp);
 	Visitor.Status enter(ref ir.Exp, ir.VaArgExp);
 	Visitor.Status leave(ref ir.Exp, ir.VaArgExp);
+	Visitor.Status enter(ref ir.Exp, ir.PropertyExp);
+	Visitor.Status leave(ref ir.Exp, ir.PropertyExp);
 
 	Visitor.Status visit(ref ir.Exp, ir.IdentifierExp);
 	Visitor.Status visit(ref ir.Exp, ir.ExpReference);
@@ -371,6 +373,8 @@ override:
 	Status leave(ref ir.Exp, ir.StatementExp){ return Continue; }
 	Status enter(ref ir.Exp, ir.VaArgExp){ return Continue; }
 	Status leave(ref ir.Exp, ir.VaArgExp){ return Continue; }
+	Status enter(ref ir.Exp, ir.PropertyExp){ return Continue; }
+	Status leave(ref ir.Exp, ir.PropertyExp){ return Continue; }
 
 	Status visit(ref ir.Exp, ir.ExpReference){ return Continue; }
 	Status visit(ref ir.Exp, ir.IdentifierExp){ return Continue; }
@@ -507,6 +511,7 @@ body {
 	case StatementExp:
 	case TokenExp:
 	case VaArgExp:
+	case PropertyExp:
 		throw panic(n.location, "can not visit expressions");
 
 	/*
@@ -690,6 +695,8 @@ Visitor.Status acceptExp(ref ir.Exp exp, Visitor av)
 		return acceptStatementExp(exp, cast(ir.StatementExp)exp, av);
 	case VaArgExp:
 		return acceptVaArgExp(exp, cast(ir.VaArgExp)exp, av);
+	case PropertyExp:
+		return acceptPropertyExp(exp, cast(ir.PropertyExp)exp, av);
 	default:
 		throw panicUnhandled(exp, ir.nodeToString(exp));
 	}
@@ -2242,6 +2249,23 @@ Visitor.Status acceptVaArgExp(ref ir.Exp exp, ir.VaArgExp vaexp, Visitor av)
 	}
 
 	return av.leave(exp, vaexp);
+}
+
+Visitor.Status acceptPropertyExp(ref ir.Exp exp, ir.PropertyExp prop, Visitor av)
+{
+	auto status = av.enter(exp, prop);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	if (prop.child !is null) {
+		status = acceptExp(prop.child, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	return av.leave(exp, prop);
 }
 
 Visitor.Status acceptExpReference(ref ir.Exp exp, ir.ExpReference expref, Visitor av)

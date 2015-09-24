@@ -915,6 +915,19 @@ ir.Postfix buildCreateDelegate(Location loc, ir.Exp child, ir.ExpReference fn)
 	return postfix;
 }
 
+ir.PropertyExp buildProperty(Location loc, string name, ir.Exp child,
+                             ir.Function getFn, ir.Function[] setFns)
+{
+	auto prop = new ir.PropertyExp();
+	prop.location = loc;
+	prop.child = child;
+	prop.identifier = new ir.Identifier(name);
+	prop.identifier.location = loc;
+	prop.getFn  = getFn;
+	prop.setFns = setFns;
+	return prop;
+}
+
 /**
  * Builds a postfix call.
  */

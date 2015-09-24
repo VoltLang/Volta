@@ -182,6 +182,9 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 		return getVaArgType(lp, asVaArgExp, currentScope);
 	case IsExp:
 		return buildBool(exp.location);
+	case PropertyExp:
+		auto prop = cast(ir.PropertyExp) exp;
+		return getPropertyExpType(lp, prop, currentScope);
 	default:
 		throw panicUnhandled(exp, ir.nodeToString(exp));
 	}
@@ -558,6 +561,12 @@ ir.Type getPostfixSliceType(LanguagePass lp, ir.Postfix postfix, ir.Scope curren
 	}
 
 	return array;
+}
+
+ir.Type getPropertyExpType(LanguagePass lp, ir.PropertyExp prop, ir.Scope currentScope)
+{
+	assert(prop.getFn !is null);
+	return prop.getFn.type.ret;
 }
 
 ir.Type getPostfixCreateDelegateType(LanguagePass lp, ir.Postfix postfix, ir.Scope currentScope)

@@ -180,6 +180,21 @@ ir.Unary copy(ir.Unary unary)
 	return newunary;
 }
 
+ir.PropertyExp copy(ir.PropertyExp old)
+{
+	auto prop = new ir.PropertyExp();
+	prop.location = old.location;
+	prop.getFn  = old.getFn;
+	prop.setFns = old.setFns;
+	if (old.child !is null) {
+		prop.child = copyExp(old.child);
+	}
+	if (old.identifier !is null) {
+		prop.identifier = copy(old.identifier);
+	}
+	return prop;
+}
+
 /*
  *
  * Type copy
@@ -428,6 +443,9 @@ ir.Node copyNode(ir.Node n)
 	case Postfix:
 		auto pfix = cast(ir.Postfix)n;
 		return copy(pfix);
+	case PropertyExp:
+		auto pe = cast(ir.PropertyExp)n;
+		return copy(pe);
 	case Unary:
 		auto unary = cast(ir.Unary)n;
 		return copy(unary);
