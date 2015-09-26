@@ -1675,13 +1675,13 @@ bool typeLookup(Context ctx, ref ir.Exp exp)
 		exp = buildConstantInt(prim.location, max? 32767 : -32768);
 		break;
 	case Uint, Dchar:
-		exp = buildConstantUint(prim.location, max ? 4294967295U : 0);
+		exp = buildConstantUint(prim.location, max ? 4294967295U : 0U);
 		break;
 	case Int:
 		exp = buildConstantInt(prim.location, max ? 2147483647 : -2147483648);
 		break;
 	case Ulong:
-		exp = buildConstantUlong(prim.location, max ? 18446744073709551615UL : 0);
+		exp = buildConstantUlong(prim.location, max ? 18446744073709551615UL : 0UL);
 		break;
 	case Long:
 		/* We use a ulong here because -9223372036854775808 is not converted as a string
@@ -2429,7 +2429,11 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 			throw makeCannotModify(binop, ltype);
 		}
 		bool swapped = binop.op != ir.BinOp.Op.CatAssign && larray is null;
-		extypeCat(ctx, swapped ? binop.right : binop.left, swapped ? binop.left : binop.right, swapped ? rarray : larray, swapped ? ltype : rtype);
+		if (swapped) {
+			extypeCat(ctx, binop.right, binop.left, rarray, ltype);
+		} else {
+			extypeCat(ctx, binop.left, binop.right, larray, rtype);
+		}
 		return;
 	}
 
@@ -2479,7 +2483,7 @@ void extypeCat(Context ctx, ref ir.Exp lexp, ref ir.Exp rexp,
 		ir.ArrayType array = new ir.ArrayType();
 		array.location = location;
 		auto firstArray = array;
-		for (size_t i = 1; i < depth; ++i) {
+		for (size_t i = 1; i < cast(size_t) depth; ++i) {
 			array.base = new ir.ArrayType();
 			array.base.location = location;
 			array = cast(ir.ArrayType)array.base;
