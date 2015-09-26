@@ -77,44 +77,6 @@ ir.Type accumulateStorage(ir.Type toType, ir.Type seed=null)
 	return seed;
 }
 
-/// If e is a reference to a no-arg property function, turn it into a call.
-/// Returns: the CallableType called, if any, null otherwise.
-ir.CallableType propertyToCallIfNeeded(Location loc, LanguagePass lp, ref ir.Exp e, ir.Scope current, ir.Postfix[] postfixes)
-{
-	auto asRef = cast(ir.ExpReference) e;
-	if (asRef !is null) {
-		if (asRef.rawReference) {
-			return null;
-		}
-	}
-
-	if (postfixes.length > 0 && postfixes[$-1].isImplicitPropertyCall) {
-		return null;
-	}
-
-	auto t = getExpType(lp, e, current);
-	if (t.nodeType == ir.NodeType.FunctionType || t.nodeType == ir.NodeType.DelegateType) {
-		auto asCallable = cast(ir.CallableType) t;
-		if (asCallable is null) {
-			return null;
-		}
-		if (asCallable.isProperty && asCallable.params.length == 0) {
-			auto oldPostfix = cast(ir.Postfix) e;
-			auto postfix = buildCall(loc, e, null);
-			postfix.isImplicitPropertyCall = true;
-			e = postfix;
-			if (oldPostfix !is null) {
-				oldPostfix.isImplicitPropertyCall = true;
-			}
-			if (asRef !is null) {
-				asRef.rawReference = true;
-			}
-			return asCallable;
-		}
-	}
-	return null;
-}
-
 ir.Type handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
 {
 	if (rightType.nodeType == ir.NodeType.NullType) {
@@ -193,7 +155,6 @@ void replaceVarArgsIfNeeded(LanguagePass lp, ir.Function fn)
 	if (fn.type.hasVarArgs &&
 	    !fn.type.varArgsProcessed &&
 	    fn.type.linkage == ir.Linkage.Volt) {
-		auto current = fn.myScope.parent;
 		auto tinfoClass = lp.typeInfoClass;
 		auto tr = buildTypeReference(fn.location, tinfoClass, tinfoClass.name);
 		auto array = buildArrayType(fn.location, tr);
