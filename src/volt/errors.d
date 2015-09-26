@@ -454,15 +454,19 @@ CompilerException makeBadAANullAssign(Location location, string file = __FILE__,
  *
  */
 
-CompilerException makeUnsupported(Location location, string feature, string file = __FILE__, const int line = __LINE__)
+CompilerException makeError(ir.Node n, string s, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(location, format("unsupported feature, '%s'", feature), file, line);
+	return new CompilerError(n.location, s, file, line);
 }
 
 CompilerException makeError(Location location, string s, string file = __FILE__, const int line = __LINE__)
 {
-	// A hack for typer, for now.
 	return new CompilerError(location, s, file, line);
+}
+
+CompilerException makeUnsupported(Location location, string feature, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(location, format("unsupported feature, '%s'", feature), file, line);
 }
 
 CompilerException makeExpected(ir.Node node, string s, string file = __FILE__, const int line = __LINE__)
