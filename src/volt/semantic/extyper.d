@@ -1145,6 +1145,14 @@ private void rewriteHomogenousVariadic(Context ctx,
  */
 void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp parent)
 {
+	if (opOverloadRewriteIndex(ctx, postfix, exp)) {
+		postfix = cast(ir.Postfix) exp;
+		if (postfix !is null) {
+			acceptExp(exp, ctx.extyper);
+			return;
+		}
+	}
+
 	ctx.enter(postfix);
 	foreach (ref arg; postfix.arguments) {
 		acceptExp(arg, ctx.extyper);
@@ -1777,11 +1785,6 @@ bool postfixIdentifier(Context ctx, ref ir.Exp exp,
 
 void extypePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp parent)
 {
-	if (opOverloadRewriteIndex(ctx, postfix, exp)) {
-		acceptExp(exp, ctx.extyper);
-		return;
-	}
-
 	auto allPostfixes = collectPostfixes(postfix);
 
 	ir.Exp dummy = allPostfixes[0];
