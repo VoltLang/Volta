@@ -2895,7 +2895,7 @@ void replaceGlobalArrayLiteralIfNeeded(Context ctx, ir.Variable var)
 void transformArrayLiteralIfNeeded(Context ctx, ref ir.Exp exp,
                                    ir.ArrayLiteral al)
 {
-	if (al.values.length == 0 || !ctx.isInFunction) {
+	if (al.values.length == 0 || !ctx.isInFunction()) {
 		return;
 	}
 	auto at = getExpType(ctx.lp, al, ctx.current);
@@ -3165,7 +3165,7 @@ void transformForeaches(Context ctx, ir.BlockStatement bs)
 		lastFes = fes;
 		string[] replacers;
 		auto forStatement = foreachToFor(fes, ctx, ctx.current, aggregateForeaches, replacers, nestedFunction);
-		int toAdd = 1;
+		size_t toAdd = 1;
 
 		if (nestedFunction !is null) {
 			if (ctx.currentFunction.nestStruct is null) {
@@ -3567,7 +3567,7 @@ public:
 		replaceStorageIfNeeded(v.type);
 		accept(v.type, this);
 
-		if (!ctx.isInFunction) {
+		if (!ctx.isInFunction()) {
 			replaceGlobalArrayLiteralIfNeeded(ctx, v);
 		}
 
@@ -4063,6 +4063,11 @@ public:
 			buf ~= ")";
 		}
 
+		version (Volt) {
+			auto str = new string[](buf);
+		} else {
+			auto str = buf.idup;
+		}
 		exp = buildConstantString(fexp.location, buf.idup);
 		return Continue;
 	}
