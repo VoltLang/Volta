@@ -2634,7 +2634,16 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss,
 				int replaced;
 				foreach (wexp; ss.withs) {
 					auto etype = getExpType(ctx.lp, wexp, ctx.current);
-					auto iexp = cast(ir.IdentifierExp) exp;
+					ir.IdentifierExp iexp;
+					auto pfix = cast(ir.Postfix) exp;
+					ir.Postfix[] pfixes;
+					if (pfix !is null) {
+						pfixes = collectPostfixes(pfix);
+						iexp = cast(ir.IdentifierExp) pfixes[0].child;
+					}
+					if (iexp is null) {
+						iexp = cast(ir.IdentifierExp) exp;
+					}
 					if (iexp is null) {
 						continue;
 					}
@@ -2651,6 +2660,10 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss,
 						continue;
 					}
 					auto decl = cast(ir.Declaration) store.node;
+					if (decl is null && pfixes.length > 0) {
+						pfixes[0].child = buildAccess(exp.location, copyExp(wexp), iexp.value);
+						continue;
+					}
 					if (decl is null) {
 						continue;
 					}
