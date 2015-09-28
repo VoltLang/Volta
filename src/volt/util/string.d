@@ -157,14 +157,12 @@ immutable(void)[] unescapeString(Location location, const char[] s)
  * This needs to correspond with the implementation
  * in vrt.string in the runtime. 
  */
-uint hash(void* ptr, size_t length)
+uint hash(ubyte[] array)
 {
 	uint h = 5381;
 
-	ubyte* uptr = cast(ubyte*) ptr;
-
-	for (size_t i = 0; i < length; i++) {
-		h = ((h << 5) + h) + uptr[i];
+	for (size_t i = 0; i < array.length; i++) {
+		h = ((h << 5) + h) + array[i];
 	}
 
 	return h;

@@ -2683,7 +2683,7 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss,
 						assert(constant._string[0] == '\"');
 						assert(constant._string[$-1] == '\"');
 						auto str = constant._string[1..$-1];
-						h = hash(cast(void*) str.ptr, str.length * str[0].sizeof);
+						h = hash(cast(ubyte[]) str);
 					} else {
 						auto alit = cast(ir.ArrayLiteral) exp;
 						assert(alit !is null);
@@ -2727,9 +2727,9 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss,
 							addExp(e);
 						}
 						if (sz == 8) {
-							h = hash(longArrayData.ptr, longArrayData.length * ulong.sizeof);
+							h = hash(cast(ubyte[]) longArrayData);
 						} else {
-							h = hash(intArrayData.ptr, intArrayData.length * uint.sizeof);
+							h = hash(cast(ubyte[]) intArrayData);
 						}
 					}
 					if (auto p = h in arrayCases) {
