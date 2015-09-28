@@ -1145,9 +1145,11 @@ private void rewriteHomogenousVariadic(Context ctx,
  */
 void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp parent)
 {
+	ctx.enter(postfix);
 	foreach (ref arg; postfix.arguments) {
 		acceptExp(arg, ctx.extyper);
 	}
+	ctx.leave(postfix);
 
 	if (postfixIdentifier(ctx, exp, postfix, parent)) {
 		return;
@@ -1787,11 +1789,6 @@ void extypePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp paren
 	allPostfixes[0] = cast(ir.Postfix) dummy;
 	assert(allPostfixes[0] !is null);
 
-	// Setup the stack of Index postfixes, needed for var[0 .. $].
-	foreach_reverse (p; allPostfixes) {
-		ctx.enter(p);
-	}
-
 	// Process first none postfix exp, often a IdentifierExp.
 	// 'ident'.field.prop
 	// 'typeid(int)'.mangledName
@@ -1834,11 +1831,6 @@ void extypePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp paren
 
 			extypeLeavePostfix(ctx, tmp.child, working, tmp);
 		}
-
-		// Well this works just because consumeIdentsIfScopesOrTypes
-		// only removes postfix identifiers, and ctx only cares about
-		// postfix index and slice.
-		ctx.leave(working);
 	}
 	// The postfix parameter is stale now, don't touch it.
 }
