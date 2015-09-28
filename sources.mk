@@ -35,5 +35,6 @@ VIV_SRC= \
 	src/volt/semantic/classify.d \
 	src/volt/semantic/overload.d \
 	src/volt/semantic/classresolver.d \
+	src/volt/semantic/storageremoval.d \
 	src/volt/semantic/userattrresolver.d \
 	src/volt/main.volt
