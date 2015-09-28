@@ -15,7 +15,7 @@ import volt.token.location;
 import volt.semantic.typer : getExpType;
 import volt.semantic.lookup : lookup, lookupInGivenScopeOnly;
 import volt.semantic.context : Context;
-import volt.semantic.classify : getParentFunction;
+import volt.semantic.classify : getParentFunction, realType, isFloatingPoint;
 
 
 /**
@@ -318,4 +318,109 @@ ir.Exp getDefaultInit(Location l, LanguagePass lp, ir.Scope current, ir.Type t)
 	default:
 		throw panicUnhandled(l, format("%s", t.nodeType));
 	}
+}
+
+/**
+ * Handles <type>.<identifier>, like 'int.min' and the like.
+ */
+bool typeLookup(LanguagePass lp, ir.Scope current, ref ir.Exp exp)
+{
+	auto postfix = cast(ir.Postfix) exp;
+	if (postfix is null || postfix.identifier is null) {
+		return false;
+	}
+	auto type = getExpType(lp, postfix.child, current);
+	auto value = postfix.identifier.value;
+
+	bool max;
+	auto prim = cast(ir.PrimitiveType) realType(type);
+	auto pointer = cast(ir.PointerType) realType(type);
+
+	if (prim is null && pointer is null) {
+		return false;
+	}
+
+	auto eref = cast(ir.ExpReference) postfix.child;
+	if (eref !is null) {
+		// An instance. Let the normal lookup stuff generate the error message.
+		return false;
+	}
+
+	switch (value) {
+	case "init":
+		exp = getDefaultInit(exp.location, lp, current, type);
+		return true;
+	case "max":
+		max = true;
+		break;
+	case "min":
+		if (prim !is null && isFloatingPoint(prim.type)) {
+			throw makeExpected(type, "max, min_normal, or init");
+		}
+		break;
+	case "min_normal":
+		if (prim is null || !isFloatingPoint(prim.type)) {
+			throw makeExpected(type, "max, min, or init");
+		}
+		break;
+	default:
+		return false;
+	}
+
+	if (pointer !is null) {
+		if (lp.settings.isVersionSet("V_LP64")) {
+			exp = buildConstantInt(type.location, max ? 8 : 0);
+		} else {
+			exp = buildConstantInt(type.location, max ? 4 : 0);
+		}
+		return true;
+	}
+
+	if (prim is null) {
+		throw makeExpected(type, "primitive type");
+	}
+
+	final switch (prim.type) with (ir.PrimitiveType.Kind) {
+	case Bool:
+		exp = buildConstantInt(prim.location, max ? 1 : 0);
+		break;
+	case Ubyte, Char:
+		exp = buildConstantInt(prim.location, max ? 255 : 0);
+		break;
+	case Byte:
+		exp = buildConstantInt(prim.location, max ? 127 : -128);
+		break;
+	case Ushort, Wchar:
+		exp = buildConstantInt(prim.location, max ? 65535 : 0);
+		break;
+	case Short:
+		exp = buildConstantInt(prim.location, max? 32767 : -32768);
+		break;
+	case Uint, Dchar:
+		exp = buildConstantUint(prim.location, max ? 4294967295U : 0U);
+		break;
+	case Int:
+		exp = buildConstantInt(prim.location, max ? 2147483647 : -2147483648);
+		break;
+	case Ulong:
+		exp = buildConstantUlong(prim.location, max ? 18446744073709551615UL : 0UL);
+		break;
+	case Long:
+		/* We use a ulong here because -9223372036854775808 is not converted as a string
+		 * with a - on the front, but just the number 9223372036854775808 that is in a
+		 * Unary minus expression. And because it's one more than will fit in a long, we
+		 * have to use the next size up.
+		 */
+		exp = buildConstantUlong(prim.location, max ? 9223372036854775807UL : -9223372036854775808UL);
+		break;
+	case Float:
+		exp = buildConstantFloat(prim.location, max ? float.max : float.min_normal);
+		break;
+	case Double:
+		exp = buildConstantDouble(prim.location, max ? double.max : double.min_normal);
+		break;
+	case Real, Void:
+		throw makeExpected(prim, "integral type");
+	}
+	return true;
 }
