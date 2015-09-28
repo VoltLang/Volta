@@ -453,12 +453,12 @@ public:
 	}
 
 	/// For bitfields.
-	enum STORAGE_AUTO      = 0x00000001;
-	enum STORAGE_CONST     = 0x00000002;
-	enum STORAGE_IMMUTABLE = 0x00000004;
-	enum STORAGE_SCOPE     = 0x00000008;
-	enum STORAGE_REF       = 0x00000010;
-	enum STORAGE_OUT       = 0x00000020;
+	enum uint STORAGE_AUTO      = 0x00000001;
+	enum uint STORAGE_CONST     = 0x00000002;
+	enum uint STORAGE_IMMUTABLE = 0x00000004;
+	enum uint STORAGE_SCOPE     = 0x00000008;
+	enum uint STORAGE_REF       = 0x00000010;
+	enum uint STORAGE_OUT       = 0x00000020;
 
 
 public:
