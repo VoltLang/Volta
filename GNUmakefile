@@ -99,7 +99,7 @@ RT_TARGETS = \
 RT_BIN_TARGETS = \
 	rt/libvrt-x86-mingw.o \
 	rt/libvrt-x86_64-mingw.o \
-	rt/libvrt-x86_64-msvc.obj \
+	rt/libvrt-x86_64-msvc.o \
 	rt/libvrt-x86-linux.o \
 	rt/libvrt-x86_64-linux.o \
 	rt/libvrt-x86-osx.o \
@@ -128,12 +128,6 @@ $(RT_TARGETS): $(TARGET) $(RT_SRC)
 		--platform $(shell echo $@ | sed "s,rt/libvrt-[^-]*-\([^.]*\).bc,\1,")
 
 rt/%.o : rt/%.bc
-	@echo "  VOLT   $@"
-	@./$(TARGET) --no-stdlib -o $@ -c -I rt/src $? \
-		--arch $(shell echo $@ | sed "s,rt/libvrt-\([^-]*\)-[^.]*.*,\1,") \
-		--platform $(shell echo $@ | sed "s,rt/libvrt-[^-]*-\([^.]*\).*,\1,")
-
-rt/%.obj : rt/%.bc
 	@echo "  VOLT   $@"
 	@./$(TARGET) --no-stdlib -o $@ -c -I rt/src $? \
 		--arch $(shell echo $@ | sed "s,rt/libvrt-\([^-]*\)-[^.]*.*,\1,") \
