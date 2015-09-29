@@ -166,7 +166,7 @@ license: $(TARGET)
 package: all
 	@mkdir -p .pkg/rt
 	@cp volt .pkg/
-	@cp $(RT_TARGETS) .pkg/
+	@cp $(RT_TARGETS) $(RT_BIN_TARGETS) .pkg/
 	@cp -r ./rt/src/* .pkg/rt/
 	@tar -czf volt.tar.gz .pkg/*
 
