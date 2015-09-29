@@ -359,18 +359,14 @@ protected:
 		string bc, obj, of;
 
 		scope (exit) {
-			foreach (f; temporaryFiles)
+			foreach (f; temporaryFiles) {
 				f.remove();
-			
-			if (bc.exists() && !settings.emitBitcode)
-				bc.remove();
-
-			if (obj.exists() && !settings.noLink)
-				obj.remove();
+			}
 		}
 
 		int ret;
 
+		// Setup files bc.
 		if (settings.emitBitcode) {
 			bc = settings.getOutput(DEFAULT_BC);
 		} else {
@@ -379,17 +375,11 @@ protected:
 				bitcodeFiles = null;
 			} else {
 				bc = temporaryFilename(".bc");
+				temporaryFiles ~= bc;
 			}
 		}
 
-		if (settings.noLink) {
-			obj = settings.getOutput(DEFAULT_OBJ);
-		} else {
-			of = settings.getOutput(DEFAULT_EXE);
-			obj = temporaryFilename(".o");
-		}
-
-		// Link bitcode files
+		// Link bitcode files.
 		if (bitcodeFiles.length > 0) {
 			perf.tag("bitcode-link");
 			linkModules(bc, bitcodeFiles);
@@ -400,12 +390,20 @@ protected:
 			return 0;
 		}
 
+		// Setup object files and output for linking.
+		if (settings.noLink) {
+			obj = settings.getOutput(DEFAULT_OBJ);
+		} else {
+			of = settings.getOutput(DEFAULT_EXE);
+			obj = temporaryFilename(".o");
+			temporaryFiles ~= obj;
+		}
+
 		// If we are compiling on the emscripten platform ignore .o files.
 		if (settings.platform == Platform.EMSCRIPTEN) {
 			perf.tag("emscripten-link");
 			return emscriptenLink(mLinker, bc, of);
 		}
-
 
 		// Native compilation, turn the bitcode into native code.
 		perf.tag("object");
