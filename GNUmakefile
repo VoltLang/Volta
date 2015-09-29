@@ -96,9 +96,17 @@ RT_TARGETS = \
 	rt/libvrt-x86_64-linux.bc \
 	rt/libvrt-x86-osx.bc \
 	rt/libvrt-x86_64-osx.bc
+RT_BIN_TARGETS = \
+	rt/libvrt-x86-mingw.o \
+	rt/libvrt-x86_64-mingw.o \
+	rt/libvrt-x86_64-msvc.obj \
+	rt/libvrt-x86-linux.o \
+	rt/libvrt-x86_64-linux.o \
+	rt/libvrt-x86-osx.o \
+	rt/libvrt-x86_64-osx.o
 
 
-all: $(RT_HOST) $(RT_TARGETS)
+all: $(RT_HOST) $(RT_TARGETS) $(RT_BIN_TARGETS)
 
 $(OBJ_DIR)/%.$(OBJ_TYPE) : src/%.cpp Makefile
 	@echo "  CXX    src/$*.cpp"
@@ -118,6 +126,18 @@ $(RT_TARGETS): $(TARGET) $(RT_SRC)
 	@./$(TARGET) --no-stdlib --emit-bitcode -I rt/src -o $@ $(RT_SRC) \
 		--arch $(shell echo $@ | sed "s,rt/libvrt-\([^-]*\)-[^.]*.bc,\1,") \
 		--platform $(shell echo $@ | sed "s,rt/libvrt-[^-]*-\([^.]*\).bc,\1,")
+
+rt/%.o : rt/%.bc
+	@echo "  VOLT   $@"
+	@./$(TARGET) --no-stdlib -o $@ -c -I rt/src $? \
+		--arch $(shell echo $@ | sed "s,rt/libvrt-\([^-]*\)-[^.]*.*,\1,") \
+		--platform $(shell echo $@ | sed "s,rt/libvrt-[^-]*-\([^.]*\).*,\1,")
+
+rt/%.obj : rt/%.bc
+	@echo "  VOLT   $@"
+	@./$(TARGET) --no-stdlib -o $@ -c -I rt/src $? \
+		--arch $(shell echo $@ | sed "s,rt/libvrt-\([^-]*\)-[^.]*.*,\1,") \
+		--platform $(shell echo $@ | sed "s,rt/libvrt-[^-]*-\([^.]*\).*,\1,")
 
 $(TARGET): $(OBJ) Makefile
 	@echo "  LD     $@"
