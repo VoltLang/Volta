@@ -154,6 +154,7 @@ public:
 			case WhileStatement:
 			case DoStatement:
 			case ForStatement:
+			case ForeachStatement:
 			case BreakStatement:
 			case ContinueStatement:
 			case ExpStatement:

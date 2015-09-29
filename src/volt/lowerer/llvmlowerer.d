@@ -2,6 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.lowerer.llvmlowerer;
 
+import watt.conv : toString;
 import watt.text.format : format;
 
 import ir = volt.ir.ir;
@@ -13,6 +14,7 @@ import volt.interfaces;
 import volt.token.location;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
+import volt.visitor.nodereplace;
 
 import volt.lowerer.array;
 
@@ -23,6 +25,7 @@ import volt.semantic.lookup;
 import volt.semantic.nested;
 import volt.semantic.classify;
 import volt.semantic.classresolver;
+import volt.semantic.overload;
 
 
 void buildAAInsert(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope current,
@@ -319,6 +322,7 @@ public:
 	override Status enter(ir.BlockStatement bs)
 	{
 		super.enter(bs);
+		transformForeaches(lp, current, functionStack[$-1], bs);
 		insertBinOpAssignsForNestedVariableAssigns(bs);
 		/* Hoist declarations out of blocks and place them at the top of the function, to avoid
 		 * alloc()ing in a loop. Name collisions aren't an issue, as the generated assign statements
@@ -344,6 +348,13 @@ public:
 		}
 		bs.statements = newStatements;
 		functionStack[$-1]._body.statements = newTopVars ~ functionStack[$-1]._body.statements;
+
+		return Continue;
+	}
+
+	override Status leave(ir.BlockStatement bs)
+	{
+		super.leave(bs);
 		return Continue;
 	}
 
@@ -481,7 +492,17 @@ public:
 		auto statExp = buildStatementExp(loc);
 
 		auto aaNewFn = retrieveFunctionFromObject(lp, loc, "vrt_aa_new");
-		auto var = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp,
+
+		auto bs = cast(ir.BlockStatement)current.node;
+		if (bs is null) {
+			auto fn = cast(ir.Function)current.node;
+			if (fn !is null) {
+				bs = fn._body;
+			}
+		}
+		panicAssert(exp, bs !is null);
+
+		auto var = buildVariableAnonSmart(loc, bs, statExp,
 			copyTypeSmart(loc, aa), buildCall(loc, aaNewFn, [
 				buildTypeidSmart(loc, aa.value),
 				buildTypeidSmart(loc, aa.key)
@@ -489,11 +510,11 @@ public:
 		);
 
 		foreach (pair; assocArray.pairs) {
-			auto key = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp,
+			auto key = buildVariableAnonSmart(loc, bs, statExp,
 				copyTypeSmart(loc, aa.key), pair.key
 			);
 
-			auto value = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp,
+			auto value = buildVariableAnonSmart(loc, bs, statExp,
 				copyTypeSmart(loc, aa.value), pair.value
 			);
 
@@ -659,14 +680,23 @@ public:
 		assert(asPostfix.op == ir.Postfix.Op.Index);
 		auto statExp = buildStatementExp(loc);
 
-		auto var = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp,
+		auto bs = cast(ir.BlockStatement)current.node;
+		if (bs is null) {
+			auto fn = cast(ir.Function)current.node;
+			if (fn !is null) {
+				bs = fn._body;
+			}
+		}
+		panicAssert(exp, bs !is null);
+
+		auto var = buildVariableAnonSmart(loc, bs, statExp,
 			buildPtrSmart(loc, aa), buildAddrOf(loc, asPostfix.child)
 		);
 
-		auto key = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp,
+		auto key = buildVariableAnonSmart(loc, bs, statExp,
 			copyTypeSmart(loc, aa.key), asPostfix.arguments[0]
 		);
-		auto value = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp,
+		auto value = buildVariableAnonSmart(loc, bs, statExp,
 			copyTypeSmart(loc, aa.value), binOp.right
 		);
 
@@ -1011,4 +1041,234 @@ void replaceGlobalArrayLiteralIfNeeded(LanguagePass lp, ir.Scope current, ir.Var
 	var.assign = null;
 
 	return;
+}
+
+/**
+ * Rewrites a given foreach statement (fes) into a for statement.
+ * The ForStatement create takes several nodes directly; that is
+ * to say, the original foreach and the new for cannot coexist.
+ */
+ir.ForStatement foreachToFor(ir.ForeachStatement fes, LanguagePass lp,
+                             ir.Scope current)
+{
+	auto l = fes.location;
+	auto fs = new ir.ForStatement();
+	fs.location = l;
+	panicAssert(fes, fes.itervars.length == 1 || fes.itervars.length == 2);
+	fs.initVars = fes.itervars;
+	fs.block = fes.block;
+
+	// foreach (i; 5 .. 7) => for (int i = 5; i < 7; i++)
+	// foreach_reverse (i; 5 .. 7) => for (int i = 7 - 1; i >= 5; i--)
+	if (fes.beginIntegerRange !is null) {
+		panicAssert(fes, fes.endIntegerRange !is null);
+		panicAssert(fes, fes.itervars.length == 1);
+		auto v = fs.initVars[0];
+		auto begin = realType(getExpType(lp, fes.beginIntegerRange, current));
+		auto end = realType(getExpType(lp, fes.endIntegerRange, current));
+		if (!isIntegral(begin) || !isIntegral(end)) {
+			throw makeExpected(fes.beginIntegerRange.location, "integral beginning and end of range");
+		}
+		panicAssert(fes, typesEqual(begin, end));
+		if (v.type !is null) {
+			v.type = lp.resolve(current, v.type);
+		}
+		if (v.type is null) {
+			v.type = copyType(begin);
+		}
+		v.assign = fes.reverse ?
+			buildSub(l, fes.endIntegerRange, buildConstantInt(l, 1)) :
+			fes.beginIntegerRange;
+
+		auto cmpRef = buildExpReference(v.location, v, v.name);
+		auto incRef = buildExpReference(v.location, v, v.name);
+		fs.test = buildBinOp(l,
+							 fes.reverse ? ir.BinOp.Op.GreaterEqual : ir.BinOp.Op.Less,
+							 cmpRef, buildCastSmart(l, begin, fes.reverse ? fes.beginIntegerRange : fes.endIntegerRange));
+		fs.increments ~= fes.reverse ? buildDecrement(v.location, incRef) :
+						 buildIncrement(v.location, incRef);
+		return fs;
+	}
+
+	auto aggType = realType(getExpType(lp, fes.aggregate, current), true, true);
+
+	// foreach (e; a) => foreach (e; auto _anon = a) 
+	auto sexp = buildStatementExp(l);
+	auto anonVar = buildVariableAnonSmart(l, current, sexp, aggType, fes.aggregate);
+	anonVar.type.mangledName = mangle(aggType);
+	scope (exit) fs.initVars = anonVar ~ fs.initVars;
+	ir.ExpReference aggref() { return buildExpReference(l, anonVar, anonVar.name); }
+	fes.aggregate = aggref();
+
+	// foreach (i, e; array) => for (size_t i = 0; i < array.length; i++) auto e = array[i]; ...
+	// foreach_reverse (i, e; array) => for (size_t i = array.length - 1; i+1 >= 0; i--) auto e = array[i]; ..
+	if (aggType.nodeType == ir.NodeType.ArrayType || aggType.nodeType == ir.NodeType.StaticArrayType) {
+		// i = 0 / i = array.length
+		ir.Variable indexVar, elementVar;
+		ir.Exp indexAssign;
+		if (!fes.reverse) {
+			indexAssign = buildConstantSizeT(l, lp, 0);
+		} else {
+			indexAssign = buildSub(l, buildAccess(l, aggref(), "length"), buildConstantSizeT(l, lp, 1));
+		}
+		if (fs.initVars.length == 2) {
+			indexVar = fs.initVars[0];
+			if (indexVar.type is null) {
+				indexVar.type = lp.settings.getSizeT(l);
+			}
+			indexVar.assign = copyExp(indexAssign);
+			elementVar = fs.initVars[1];
+		} else {
+			panicAssert(fes, fs.initVars.length == 1);
+			indexVar = buildVariable(l, lp.settings.getSizeT(l),
+			                         ir.Variable.Storage.Function, "i", indexAssign);
+			elementVar = fs.initVars[0];
+		}
+		// Move element var to statements so it can be const/immutable.
+		fs.initVars = [indexVar];
+		fs.block.statements = [cast(ir.Node)elementVar] ~ fs.block.statements;
+
+		auto st = cast(ir.StorageType) elementVar.type;
+		if (st !is null && st.type == ir.StorageType.Kind.Ref) {
+			ir.Exp dg(Location l)
+			{
+				return buildIndex(l, aggref(), buildExpReference(l, indexVar, indexVar.name));
+			}
+			version (Volt) {
+				current.addExpressionDelegate(elementVar, cast(ir.Exp delegate(Location)) dg, elementVar.name ~ toString(cast(size_t) cast(void*) fs));
+			} else {
+				current.addExpressionDelegate(elementVar, &dg, elementVar.name ~ toString(cast(size_t) cast(void*) fs));
+			}
+			st = cast(ir.StorageType) st.base;
+		}
+		if (st !is null && st.type == ir.StorageType.Kind.Auto) {
+			auto asArray = cast(ir.ArrayType) aggType;
+			panicAssert(fes, asArray !is null);
+			elementVar.type = copyTypeSmart(asArray.base.location, asArray.base);
+			assert(elementVar.type !is null);
+		}
+
+		// i < array.length / i + 1 >= 0
+		auto tref = buildExpReference(indexVar.location, indexVar, indexVar.name);
+		auto rtref = buildAdd(l, tref, buildConstantSizeT(l, lp, 1));
+		auto length = buildAccess(l, fes.aggregate, "length");
+		auto zero = buildConstantSizeT(l, lp, 0);
+		fs.test = buildBinOp(l, fes.reverse ? ir.BinOp.Op.NotEqual : ir.BinOp.Op.Less,
+							 fes.reverse ? rtref : tref,
+							 fes.reverse ? zero : length);
+
+		// auto e = array[i]; i++/i--
+		auto incRef = buildExpReference(indexVar.location, indexVar, indexVar.name);
+		auto accessRef = buildExpReference(indexVar.location, indexVar, indexVar.name);
+		auto eRef = buildExpReference(elementVar.location, elementVar, elementVar.name);
+		elementVar.assign = buildIndex(incRef.location, aggref(), accessRef);
+
+		fs.increments ~= fes.reverse ? buildDecrement(incRef.location, incRef) :
+									   buildIncrement(incRef.location, incRef);
+
+		foreach (i, ivar; fes.itervars) {
+			if (!fes.refvars[i]) {
+				continue;
+			}
+			if (i == 0 && fes.itervars.length > 1) {
+				throw makeError(fes.location, "cannot mark index as ref.");
+			}
+			auto nr = new ExpReferenceReplacer(ivar, elementVar.assign);
+			accept(fs.block, nr);
+		}
+
+		return fs;
+	}
+
+	// foreach (k, v; aa) => for (size_t i; i < aa.keys.length; i++) k = aa.keys[i]; v = aa[k];
+	// foreach_reverse => error, as order is undefined.
+	auto aa = cast(ir.AAType) aggType;
+	if (aa !is null) {
+		ir.Exp buildAACall(ir.Function fn, ir.Type outType)
+		{
+			auto eref = buildExpReference(l, fn, fn.name);
+			return buildCastSmart(l, outType, buildCall(l, eref, [buildCastToVoidPtr(l, aggref())]));
+		}
+
+		if (fes.reverse) {
+			throw makeForeachReverseOverAA(fes);
+		}
+		if (fs.initVars.length != 1 && fs.initVars.length != 2) {
+			throw makeExpected(fes.location, "1 or 2 iteration variables");
+		}
+
+		auto valVar = fs.initVars[0];
+		ir.Variable keyVar;
+		if (fs.initVars.length == 2) {
+			keyVar = valVar;
+			valVar = fs.initVars[1];
+		} else {
+			keyVar = buildVariable(l, null, ir.Variable.Storage.Function, format("%sk", fs.block.myScope.nestedDepth));
+			fs.initVars ~= keyVar;
+		}
+
+		auto vstor = cast(ir.StorageType) valVar.type;
+		if (vstor !is null && vstor.type == ir.StorageType.Kind.Auto) {
+			valVar.type = null;
+		}
+
+		auto kstor = cast(ir.StorageType) keyVar.type;
+		if (kstor !is null && kstor.type == ir.StorageType.Kind.Auto) {
+			keyVar.type = null;
+		}
+
+		if (valVar.type is null) {
+			valVar.type = copyTypeSmart(l, aa.value);
+		}
+		if (keyVar.type is null) {
+			keyVar.type = copyTypeSmart(l, aa.key);
+		}
+		auto indexVar = buildVariable(
+			l,
+			lp.settings.getSizeT(l),
+			ir.Variable.Storage.Function,
+			format("%si", fs.block.myScope.nestedDepth),
+			buildConstantSizeT(l, lp, 0)
+		);
+		assert(keyVar.type !is null);
+		assert(valVar.type !is null);
+		assert(indexVar.type !is null);
+		fs.initVars ~= indexVar;
+
+		// i < aa.keys.length
+		auto index = buildExpReference(l, indexVar, indexVar.name);
+		auto len = buildAACall(lp.aaGetLength, indexVar.type);
+		fs.test = buildBinOp(l, ir.BinOp.Op.Less, index, len);
+
+		// k = aa.keys[i]
+		auto kref = buildExpReference(l, keyVar, keyVar.name);
+		auto keys = buildAACall(lp.aaGetKeys, buildArrayTypeSmart(l, keyVar.type));
+		auto rh   = buildIndex(l, keys, buildExpReference(l, indexVar, indexVar.name));
+		fs.block.statements = buildExpStat(l, buildAssign(l, kref, rh)) ~ fs.block.statements;
+
+		// v = aa.values[i]
+		auto vref = buildExpReference(l, valVar, valVar.name);
+		auto vals = buildAACall(lp.aaGetValues, buildArrayTypeSmart(l, valVar.type));
+		auto rh2  = buildIndex(l, vals, buildExpReference(l, indexVar, indexVar.name));
+		fs.block.statements = buildExpStat(l, buildAssign(l, vref, rh2)) ~ fs.block.statements;
+
+		// i++
+		fs.increments ~= buildIncrement(l, buildExpReference(l, indexVar, indexVar.name));
+
+		return fs;
+	}
+
+	throw panic(l, "expected foreach aggregate type");
+}
+
+void transformForeaches(LanguagePass lp, ir.Scope current,
+                        ir.Function currentFunction, ir.BlockStatement bs)
+{
+	for (size_t i = 0; i < bs.statements.length; i++) {
+		auto fes = cast(ir.ForeachStatement) bs.statements[i];
+		if (fes is null) {
+			continue;
+		}
+		bs.statements[i] = foreachToFor(fes, lp, current);
+	}
 }

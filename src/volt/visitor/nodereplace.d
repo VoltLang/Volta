@@ -1,0 +1,32 @@
+module volt.visitor.nodereplace;
+
+import volt.visitor.visitor;
+
+import volt.ir.copy;
+
+class ExpReferenceReplacer : NullVisitor
+{
+public:
+	this(ir.Declaration decl, ir.Exp exp)
+	in {
+		assert(decl !is null);
+		assert(exp !is null);
+	}
+	body {
+		this.fromDecl = decl;
+		this.toExp = exp;
+	}
+
+public:
+	ir.Declaration fromDecl;
+	ir.Exp toExp;
+
+public:
+	override Status visit(ref ir.Exp exp, ir.ExpReference eref)
+	{
+		if (eref.decl is fromDecl) {
+			exp = copyExp(toExp);
+		}
+		return Continue;
+	}
+}

@@ -193,9 +193,11 @@ class ForeachStatement : Statement
 public:
 	bool reverse;
 	Variable[] itervars;
+	bool[] refvars;
 	Exp aggregate;
 	Exp beginIntegerRange, endIntegerRange;  // aggregate will be null.
 	BlockStatement block;
+	Named opApplyType;
 
 public:
 	this() { super(NodeType.ForeachStatement); }

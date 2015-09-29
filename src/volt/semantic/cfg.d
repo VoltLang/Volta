@@ -238,7 +238,14 @@ public:
 
 	override Status enter(ir.ForeachStatement fes)
 	{
-		throw panic(fes.location, "foreach after extyper");
+		ensureNonNullBlock(fes.location);
+		auto currentBlock = block;
+		auto fesBlock = block = new Block(currentBlock);
+		breakBlocks ~= fesBlock;
+		accept(fes.block, this);
+		breakBlocks = breakBlocks[0 .. $-1];
+		block = new Block(fesBlock);
+		return ContinueParent;
 	}
 
 	override Status enter(ir.DoStatement ds)

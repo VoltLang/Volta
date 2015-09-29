@@ -16,7 +16,7 @@ import volt.util.string;
 import volt.token.location;
 
 import volt.visitor.visitor;
-import volt.visitor.iexpreplace;
+import volt.visitor.nodereplace;
 import volt.visitor.scopemanager;
 import volt.visitor.prettyprinter;
 
@@ -2904,6 +2904,7 @@ void transformArrayLiteralIfNeeded(Context ctx, ref ir.Exp exp,
 	exp = sexp;
 }
 
+/+
 /**
  * Rewrites a given foreach statement (fes) into a for statement.
  * The ForStatement create takes several nodes directly; that is
@@ -3018,7 +3019,7 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, Context ctx,
 							 fes.reverse ? rtref : tref,
 							 fes.reverse ? zero : length);
 
-		// auto e = array[i]; i++/i--
+		// auto e = array[i]; i++ / i--
 		auto incRef = buildExpReference(indexVar.location, indexVar, indexVar.name);
 		auto accessRef = buildExpReference(indexVar.location, indexVar, indexVar.name);
 		auto eRef = buildExpReference(elementVar.location, elementVar, elementVar.name);
@@ -3043,7 +3044,7 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, Context ctx,
 		// Adjacent foreaches end up in the same nested struct, so these vars need unique names.
 		auto newName = format("%s%s", aggregateForeaches++, fs.initVars[0].name);
 		addParam(l, fn, st, newName);
-		auto replacer = new IdentifierExpReplacer(fs.initVars[0].name, newName);
+		auto replacer = new NodeReplacer(fs.initVars[0].name, newName);
 		accept(fes, replacer);
 
 		foreach (node; fes.block.statements) {
@@ -3150,7 +3151,102 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, Context ctx,
 
 	throw makeExpected(l, "foreach aggregate type");
 }
++/
 
+/**
+ * Process the types and expressions on a foreach.
+ * Foreaches become for loops before the backend sees them,
+ * but they still need to be made valid by the extyper.
+ */
+void extypeForeach(Context ctx, ir.ForeachStatement fes)
+{
+	void fillBlankVariable(size_t i, ir.Type t)
+	{
+		auto stype = cast(ir.StorageType) fes.itervars[i].type;
+		if (stype is null || stype.base !is null) {
+			return;
+		}
+		fes.itervars[i].type = copyTypeSmart(fes.itervars[i].location, t);
+	}
+
+	foreach (var; fes.itervars) {
+		auto storage = cast(ir.StorageType) var.type;
+		if (storage !is null && storage.type == ir.StorageType.Kind.Ref) {
+			fes.refvars ~= true;
+			var.type = storage.base;
+		} else {
+			fes.refvars ~= false;
+		}
+	}
+
+	if (fes.aggregate is null) {
+		auto a = cast(ir.PrimitiveType) getExpType(ctx.lp, fes.beginIntegerRange, ctx.current);
+		auto b = cast(ir.PrimitiveType) getExpType(ctx.lp, fes.endIntegerRange, ctx.current);
+		if (a is null || b is null) {
+			throw makeExpected(fes.beginIntegerRange.location, "primitive types");
+		}
+		if (!typesEqual(a, b)) {
+			auto asz = size(ctx.lp, a);
+			auto bsz = size(ctx.lp, b);
+			if (bsz > asz) {
+				extypeAssignPrimitiveType(ctx, fes.beginIntegerRange, b);
+				fillBlankVariable(0, b);
+			} else if (asz > bsz) {
+				extypeAssignPrimitiveType(ctx, fes.endIntegerRange, a);
+				fillBlankVariable(0, a);
+			} else {
+				auto ac = evaluateOrNull(ctx.lp, ctx.current, fes.beginIntegerRange);
+				auto bc = evaluateOrNull(ctx.lp, ctx.current, fes.endIntegerRange);
+				if (ac !is null) {
+					extypeAssignPrimitiveType(ctx, fes.beginIntegerRange, b);
+					fillBlankVariable(0, b);
+				} else if (bc !is null) {
+					extypeAssignPrimitiveType(ctx, fes.endIntegerRange, a);
+					fillBlankVariable(0, a);
+				}
+			}
+		}
+		fillBlankVariable(0, a);
+		return;
+	}
+
+	acceptExp(fes.aggregate, ctx.extyper);
+
+	auto aggType = realType(getExpType(ctx.lp, fes.aggregate, ctx.current), true, true);
+
+	ir.Type key, value;
+	switch (aggType.nodeType) {
+	case ir.NodeType.ArrayType:
+		auto asArray = cast(ir.ArrayType) aggType;
+		value = copyTypeSmart(fes.aggregate.location, asArray.base);
+		key = ctx.lp.settings.getSizeT(fes.location);
+		break;
+	case ir.NodeType.StaticArrayType:
+		auto asArray = cast(ir.StaticArrayType) aggType;
+		value = copyTypeSmart(fes.aggregate.location, asArray.base);
+		key = ctx.lp.settings.getSizeT(fes.location);
+		break;
+	case ir.NodeType.AAType:
+		auto asArray = cast(ir.AAType) aggType;
+		value = copyTypeSmart(fes.aggregate.location, asArray.value);
+		key = copyTypeSmart(fes.aggregate.location, asArray.key);
+		break;
+	default:
+		throw makeExpected(fes.aggregate.location, "array, static array, or associative array.");
+	}
+
+
+	if (fes.itervars.length == 2) {
+		fillBlankVariable(0, key);
+		fillBlankVariable(1, value);
+	} else if (fes.itervars.length == 1) {
+		fillBlankVariable(0, value);
+	} else {
+		throw makeExpected(fes.location, "one or two variables after foreach");
+	}
+}
+
+/+
 void transformForeaches(Context ctx, ir.BlockStatement bs)
 {
 	ir.Function nestedFunction;
@@ -3198,6 +3294,7 @@ void transformForeaches(Context ctx, ir.BlockStatement bs)
 		accept(bs.statements[i], ctx.extyper);
 	}
 }
++/
 
 bool isInternalVariable(ir.Class c, ir.Variable v)
 {
@@ -3718,6 +3815,33 @@ public:
 
 	override Status enter(ir.ForeachStatement fes)
 	{
+		if (fes.beginIntegerRange !is null) {
+			assert(fes.endIntegerRange !is null);
+			acceptExp(fes.beginIntegerRange, this);
+			acceptExp(fes.endIntegerRange, this);
+		}
+		extypeForeach(ctx, fes);
+		ctx.enter(fes.block);
+		foreach (ivar; fes.itervars) {
+			accept(ivar, this);
+		}
+		if (fes.aggregate !is null) {
+			auto aggType = realType(getExpType(ctx.lp, fes.aggregate, ctx.current));
+			if (fes.itervars.length == 2 &&
+				(aggType.nodeType == ir.NodeType.StaticArrayType || 
+				aggType.nodeType == ir.NodeType.ArrayType)) {
+				auto keysz = size(ctx.lp, fes.itervars[0].type);
+				auto sizetsz = size(ctx.lp, ctx.lp.settings.getSizeT(fes.location));
+				if (keysz < sizetsz) {
+					throw makeError(fes.location, format("index var '%s' isn't large enough to hold a size_t.", fes.itervars[0].name));
+				}
+			}
+		}
+		// fes.aggregate is visited by extypeForeach
+		foreach (ctxment; fes.block.statements) {
+			accept(ctxment, this);
+		}
+		ctx.leave(fes.block);
 		return ContinueParent;
 	}
 
@@ -3741,7 +3865,6 @@ public:
 		foreach (ctxment; fs.block.statements) {
 			accept(ctxment, this);
 		}
-		transformForeaches(ctx, fs.block);
 		ctx.leave(fs.block);
 
 		return ContinueParent;
@@ -3828,7 +3951,6 @@ public:
 
 	override Status leave(ir.BlockStatement bs)
 	{
-		transformForeaches(ctx, bs);
 		ctx.leave(bs);
 		return Continue;
 	}

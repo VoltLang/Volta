@@ -427,6 +427,8 @@ ir.Variable buildVariableAnonSmart(Location loc, ir.BlockStatement b,
                                    ir.StatementExp statExp,
                                    ir.Type type, ir.Exp assign)
 {
+	assert(b !is null);
+	assert(b.myScope !is null);
 	auto name = b.myScope.genAnonIdent();
 	auto var = buildVariable(loc, copyTypeSmart(loc, type), ir.Variable.Storage.Function, name, assign);
 	addVariable(b, statExp, var);
