@@ -204,13 +204,10 @@ void handleClassLiteral(State state, ir.ClassLiteral cl, Value result)
 	st.from(state, sl, result);
 
 	if (!cl.useBaseStorage) {
-		auto g = LLVMAddGlobal(state.mod, st.llvmType, "");
-		LLVMSetGlobalConstant(g, true);
-		LLVMSetInitializer(g, result.value);
-
 		result.isPointer = false;
 		result.type = pt;
-		result.value = g;
+		result.value = state.makeAnonGlobalConstant(
+			st.llvmType, result.value);
 	}
 }
 /**

@@ -263,9 +263,8 @@ public:
 	override void from(State state, ir.Constant cnst, Value result)
 	{
 		auto strConst = LLVMConstStringInContext(state.context, cast(char[])cnst.arrayData, false);
-		auto strGlobal = LLVMAddGlobal(state.mod, LLVMTypeOf(strConst), "");
-		LLVMSetGlobalConstant(strGlobal, true);
-		LLVMSetInitializer(strGlobal, strConst);
+		auto strGlobal = state.makeAnonGlobalConstant(
+			LLVMTypeOf(strConst), strConst);
 
 		LLVMValueRef[2] ind;
 		ind[0] = LLVMConstNull(lengthType.llvmType);
@@ -305,9 +304,8 @@ public:
 		}
 
 		auto litConst = LLVMConstArray(base.llvmType, alVals);
-		auto litGlobal = LLVMAddGlobal(state.mod, LLVMTypeOf(litConst), "");
-		LLVMSetGlobalConstant(litGlobal, true);
-		LLVMSetInitializer(litGlobal, litConst);
+		auto litGlobal = state.makeAnonGlobalConstant(
+			LLVMTypeOf(litConst), litConst);
 
 		LLVMValueRef[2] ind;
 		ind[0] = LLVMConstNull(lengthType.llvmType);

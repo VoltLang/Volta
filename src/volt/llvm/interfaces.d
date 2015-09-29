@@ -298,6 +298,21 @@ public:
 	 */
 	abstract void getConstantValueAnyForm(ir.Exp exp, Value result);
 
+	/**
+	 * Makes a private mergable global constant. Used for strings,
+	 * array literal and storage for struct literals.
+	 */
+	final LLVMValueRef makeAnonGlobalConstant(LLVMTypeRef t, LLVMValueRef val)
+	{
+		auto g = LLVMAddGlobal(mod, t, "");
+		LLVMSetGlobalConstant(g, true);
+		LLVMSetUnnamedAddr(g, true);
+		LLVMSetLinkage(g, LLVMLinkage.Private);
+		LLVMSetInitializer(g, val);
+		return g;
+	}
+
+
 	/*
 	 *
 	 * Value store functions.
