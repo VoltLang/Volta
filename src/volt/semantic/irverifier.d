@@ -31,7 +31,11 @@ private:
 public:
 	override void transform(ir.Module m)
 	{
-		mNodes = null;
+		version (Volt) {
+			mNodes = [];
+		} else {
+			mNodes = null;
+		}
 		mCount = 0;
 		accept(m, this);
 	}
