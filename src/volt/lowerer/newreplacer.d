@@ -12,7 +12,7 @@ import volt.token.location;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
 
-import volt.lowerer.llvmlowerer;
+import volt.lowerer.array;
 
 import volt.semantic.typer;
 import volt.semantic.lookup;
