@@ -1531,7 +1531,7 @@ void postfixIdentifierUFCS(Context ctx, ref ir.Exp exp,
 
 	// Before we call selectFunction we need to extype the args.
 	// @TODO This will be done twice, which is not the best of things.
-	foreach (ref arg; postfix.arguments) {
+	foreach (ref arg; call.arguments) {
 		acceptExp(arg, ctx.extyper);
 	}
 
@@ -1555,7 +1555,7 @@ void postfixIdentifierUFCS(Context ctx, ref ir.Exp exp,
 		theTag = ir.Postfix.TagKind.Out;
 	}
 
-	call.argumentTags = theTag ~ postfix.argumentTags;
+	call.argumentTags = theTag ~ call.argumentTags;
 }
 
 bool builtInField(ir.Type type, string field)
