@@ -730,12 +730,12 @@ bool isAssign(ir.Exp exp)
 	}
 }
 
-bool isAssignable(LanguagePass lp, ir.Scope current, ir.Exp exp)
+bool isAssignable(ir.Exp exp)
 {
 	return isLValueOrAssignable(exp, true);
 }
 
-bool isLValue(LanguagePass lp, ir.Scope current, ir.Exp exp)
+bool isLValue(ir.Exp exp)
 {
 	return isLValueOrAssignable(exp, false);
 }

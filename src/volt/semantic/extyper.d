@@ -1002,7 +1002,7 @@ private void rewriteVaStartAndEnd(Context ctx, ir.Function fn,
 		if (ptr is null || !isVoid(ptr.base)) {
 			throw makeExpected(postfix, "va_list argument");
 		}
-		if (!isLValue(ctx.lp, ctx.current, postfix.arguments[0])) {
+		if (!isLValue(postfix.arguments[0])) {
 			throw makeVaFooMustBeLValue(postfix.arguments[0].location, (fn is ctx.lp.vaStartFunc || fn is ctx.lp.vaCStartFunc) ? "va_start" : "va_end");
 		}
 		postfix.arguments[0] = buildAddrOf(postfix.arguments[0]);
@@ -1248,7 +1248,7 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp 
 	rewriteHomogenousVariadic(ctx, asFunctionType, postfix.arguments);
 	foreach (i; 0 .. asFunctionType.params.length) {
 		if (asFunctionType.isArgRef[i] || asFunctionType.isArgOut[i]) {
-			if (!isLValue(ctx.lp, ctx.current, postfix.arguments[i])) {
+			if (!isLValue(postfix.arguments[i])) {
 				throw makeNotLValue(postfix.arguments[i]);
 			}
 			if (asFunctionType.isArgRef[i] &&
@@ -2262,7 +2262,7 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 	case AddAssign, SubAssign, MulAssign, DivAssign, ModAssign, AndAssign,
 	     OrAssign, XorAssign, CatAssign, LSAssign, SRSAssign, RSAssign, PowAssign, Assign:
 		// TODO this needs to be changed if there is operator overloading
-		if (!isAssignable(ctx.lp, ctx.current, binop.left)) {
+		if (!isAssignable(binop.left)) {
 			throw makeExpected(binop.left.location, "lvalue");
 		}
 		auto asPostfix = cast(ir.Postfix)binop.left;
@@ -3959,7 +3959,7 @@ public:
 
 	override Status leave(ref ir.Exp exp, ir.VaArgExp vaexp)
 	{
-		if (!isLValue(ctx.lp, ctx.current, vaexp.arg)) {
+		if (!isLValue(vaexp.arg)) {
 			throw makeVaFooMustBeLValue(vaexp.arg.location, "va_exp");
 		}
 		if (ctx.currentFunction.type.linkage == ir.Linkage.C) {
