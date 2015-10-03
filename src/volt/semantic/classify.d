@@ -730,7 +730,17 @@ bool isAssign(ir.Exp exp)
 	}
 }
 
+bool isAssignable(LanguagePass lp, ir.Scope current, ir.Exp exp)
+{
+	return isLValueOrAssignable(exp, true);
+}
+
 bool isLValue(LanguagePass lp, ir.Scope current, ir.Exp exp)
+{
+	return isLValueOrAssignable(exp, false);
+}
+
+bool isLValueOrAssignable(ir.Exp exp, bool assign)
 {
 	switch (exp.nodeType) {
 	case ir.NodeType.IdentifierExp:
@@ -739,15 +749,17 @@ bool isLValue(LanguagePass lp, ir.Scope current, ir.Exp exp)
 	case ir.NodeType.Postfix:
 		auto asPostfix = cast(ir.Postfix) exp;
 		assert(asPostfix !is null);
-		return asPostfix.op == ir.Postfix.Op.Identifier || isLValue(lp, current, asPostfix.child);
+		return asPostfix.op == ir.Postfix.Op.Identifier ||
+		       asPostfix.op == ir.Postfix.Op.Index ||
+		       (asPostfix.op == ir.Postfix.Op.Slice && assign);
 	case ir.NodeType.Unary:
 		auto asUnary = cast(ir.Unary) exp;
 		assert(asUnary !is null);
-		return isLValue(lp, current, asUnary.value);
+		return isLValueOrAssignable(asUnary.value, assign);
 	case ir.NodeType.StatementExp:
 		auto sexp = cast(ir.StatementExp) exp;
 		assert(sexp !is null);
-		return isLValue(lp, current, sexp.exp);
+		return isLValueOrAssignable(sexp.exp, assign);
 	default:
 		return false;
 	}

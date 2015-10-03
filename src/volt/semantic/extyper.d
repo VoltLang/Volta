@@ -2262,7 +2262,7 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 	case AddAssign, SubAssign, MulAssign, DivAssign, ModAssign, AndAssign,
 	     OrAssign, XorAssign, CatAssign, LSAssign, SRSAssign, RSAssign, PowAssign, Assign:
 		// TODO this needs to be changed if there is operator overloading
-		if (!isLValue(ctx.lp, ctx.current, binop.left)) {
+		if (!isAssignable(ctx.lp, ctx.current, binop.left)) {
 			throw makeExpected(binop.left.location, "lvalue");
 		}
 		auto asPostfix = cast(ir.Postfix)binop.left;
