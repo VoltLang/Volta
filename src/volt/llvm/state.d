@@ -315,7 +315,12 @@ public:
 		auto llvmType = ft.llvmCallType;
 		auto v = LLVMAddFunction(mod, fn.mangledName, llvmType);
 		if (fn.isWeakLink) {
-			LLVMSetLinkage(v, LLVMLinkage.LinkOnceODR);
+			LLVMSetUnnamedAddr(v, true);
+			if (lp.settings.platform == Platform.MSVC) {
+				LLVMSetLinkage(v, LLVMLinkage.Internal);
+			} else {
+				LLVMSetLinkage(v, LLVMLinkage.LinkOnceODR);
+			}
 		}
 
 		// Needs to be done here, because this can not be set on a type.
@@ -407,8 +412,14 @@ public:
 			break;
 		case Global:
 			v = LLVMAddGlobal(mod, llvmType, var.mangledName);
-			if (var.isWeakLink)
-				LLVMSetLinkage(v, LLVMLinkage.LinkOnceODR);
+			if (var.isWeakLink) {
+				LLVMSetUnnamedAddr(v, true);
+				if (lp.settings.platform == Platform.MSVC) {
+					LLVMSetLinkage(v, LLVMLinkage.Private);
+				} else {
+					LLVMSetLinkage(v, LLVMLinkage.LinkOnceODR);
+				}
+			}
 			break;
 		}
 
