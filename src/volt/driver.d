@@ -433,6 +433,11 @@ protected:
 	int gccLink(string linker, string obj, string of)
 	{
 		string[] args = ["-o", of];
+		final switch (settings.arch) with (Arch) {
+		case X86: args ~= "-m32"; break;
+		case X86_64: args ~= "-m64"; break;
+		case LE32: throw panic("unsupported arch with gcc");
+		}
 
 		foreach (objectFile; mObjectFiles ~ obj) {
 			args ~= objectFile;
