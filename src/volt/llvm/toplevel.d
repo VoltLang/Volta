@@ -75,11 +75,11 @@ public:
 			state.localDestructors ~= llvmFunc;
 		}
 
-		foreach (uint i, p; fn.params) {
+		foreach (i, p; fn.params) {
 			if (p.name is null)
 				continue;
 
-			auto v = LLVMGetParam(llvmFunc, i);
+			auto v = LLVMGetParam(llvmFunc, cast(uint)i);
 
 			if (fn.type.isArgRef[i] || fn.type.isArgOut[i]) {
 				state.makeByValVariable(p, v);

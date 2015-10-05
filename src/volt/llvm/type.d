@@ -299,7 +299,7 @@ public:
 
 		LLVMValueRef[] alVals;
 		alVals.length = al.values.length;
-		foreach (uint i, exp; al.values) {
+		foreach (i, exp; al.values) {
 			alVals[i] = state.getConstant(exp);
 		}
 
@@ -400,7 +400,7 @@ public:
 
 		LLVMValueRef[] alVals;
 		alVals.length = al.values.length;
-		foreach (uint i, exp; al.values) {
+		foreach (i, exp; al.values) {
 			alVals[i] = state.getConstant(exp);
 		}
 
@@ -623,7 +623,7 @@ public:
 			throw panic("struct literal has the wrong number of initializers");
 		}
 
-		foreach (uint i, ref val; vals) {
+		foreach (i, ref val; vals) {
 			val = state.getConstant(sl.exps[i]);
 		}
 
