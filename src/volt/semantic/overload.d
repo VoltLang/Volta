@@ -351,16 +351,22 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 		}
 		int[] matchLevels;
 		foreach (i, param; fn.type.params) {
-			if (i >= arguments.length) {
+			if (i >= arguments.length && !fn.type.homogenousVariadic) {
 				assert(fn.params[i].assign !is null);
 				matchLevels ~= 4;
 			} else {
 				bool homogenous = fn.type.homogenousVariadic && i == fn.type.params.length - 1;
 				auto exp = i < exps.length ? exps[i] : null;
-				matchLevels ~= .matchLevel(homogenous, arguments[i], param, exp);
+				if (homogenous && i >= arguments.length) {
+					panicAssert(fn, i == fn.params.length - 1);
+					matchLevels ~= 3;
+					break;
+				} else {
+					matchLevels ~= .matchLevel(homogenous, arguments[i], param, exp);
+				}
 			}
 		}
-		if (fn.type.homogenousVariadic) {
+		if (fn.type.homogenousVariadic && arguments.length >= fn.params.length) {
 			matchLevels = matchLevels[0 .. $ - 1];
 			auto toCheck = arguments[fn.type.params.length - 1 .. $];
 			auto arr = cast(ir.ArrayType) realType(fn.type.params[$-1]);
@@ -386,7 +392,7 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 				_matchLevel = l;
 			}
 		}
-		assert(_matchLevel < int.max);
+		panicAssert(fn, _matchLevel < int.max);
 		return _matchLevel;
 	}
 
@@ -397,7 +403,8 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 			outFunctions ~= fn;
 		} else if (fn.params.length == arguments.length + cast(size_t)defaultArguments) {
 			outFunctions ~= fn;
-		} else if (fn.type.homogenousVariadic && arguments.length >= fn.params.length) {
+		} else if (fn.type.homogenousVariadic && arguments.length >= (fn.params.length - 1)) {
+			panicAssert(fn, fn.params.length > 0);
 			outFunctions ~= fn;
 		}
 	}
