@@ -3847,7 +3847,14 @@ public:
 		{
 			buf ~= s;
 		}
-		auto pp = new PrettyPrinter("\t", &sink);
+		version (Volt) {
+			// @TODO fix this.
+			// auto buf = new StringSink();
+			// auto pp = new PrettyPrinter("\t", buf.sink);
+			auto pp = new PrettyPrinter("\t", cast(void delegate(string))sink);
+		} else {
+			auto pp = new PrettyPrinter("\t", &sink);
+		}
 
 		string[] names;
 		ir.Scope scop = ctx.current;
@@ -3886,11 +3893,11 @@ public:
 		}
 
 		version (Volt) {
-			auto str = new string[](buf);
+			auto str = new string(buf);
 		} else {
 			auto str = buf.idup;
 		}
-		exp = buildConstantString(fexp.location, buf.idup);
+		exp = buildConstantString(fexp.location, str);
 		return Continue;
 	}
 }
