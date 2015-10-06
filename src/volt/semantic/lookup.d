@@ -544,7 +544,7 @@ ir.Type ensureType(ir.Scope _scope, Location loc, string name, ir.Store store)
 
 	auto asType = cast(ir.Type) store.node;
 	if (asType is null) {
-		throw makeExpected(loc, name);
+		throw makeError(loc, format("expected type, got '%s'.", name));
 	}
 
 	return asType;
