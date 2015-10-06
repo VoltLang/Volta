@@ -2744,7 +2744,8 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss,
 						p.lastIf = ifs;
 						toRemove ~= i;
 					} else {
-						arrayCases[h] = ArrayCase(exp, _case, null);
+						ArrayCase ac = {exp, _case, null};
+						arrayCases[h] = ac;
 					}
 					exp = buildConstantUint(exp.location, h);
 				}
