@@ -1895,7 +1895,7 @@ void handleNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 			throw makeExpected(_unary, "argument(s)");
 		}
 		bool isArraySize = isIntegral(getExpType(ctx.lp, _unary.argumentList[0], ctx.current));
-		foreach (arg; _unary.argumentList) {
+		foreach (ref arg; _unary.argumentList) {
 			auto type = getExpType(ctx.lp, arg, ctx.current);
 			if (isIntegral(type)) {
 				if (isArraySize) {
@@ -1918,6 +1918,20 @@ void handleNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 			}
 			if (!typesEqual(asArray, array) &&
 			    !isImplicitlyConvertable(asArray, array)) {
+				if (typesEqual(asArray, array, true) &&
+					(array.isConst || array.isImmutable ||
+					array.base.isConst || array.base.isImmutable ||
+					!mutableIndirection(array.base))) {
+					// char[] buf;
+					// auto str = new string(buf);
+					auto l = _unary.location;
+					auto sexp = buildStatementExp(l);
+					auto c = buildCastSmart(l, array, arg);
+					auto v = buildVariableAnonSmart(l, ctx.current, sexp, array, c);
+					sexp.exp = buildExpReference(l, v, v.name);
+					arg = sexp;
+					continue;
+				}
 				throw makeBadImplicitCast(arg, asArray, array);
 			}
 		}
