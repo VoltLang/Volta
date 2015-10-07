@@ -14,6 +14,7 @@ RT_SRC = \
 
 VIV_SRC= \
 	src/volt/errors.d \
+	src/volt/license.d \
 	src/volt/exceptions.d \
 	src/volt/interfaces.d \
 	src/volt/ir/*.d \
