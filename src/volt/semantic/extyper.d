@@ -1924,12 +1924,6 @@ void handleNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 					!mutableIndirection(array.base))) {
 					// char[] buf;
 					// auto str = new string(buf);
-					auto l = _unary.location;
-					auto sexp = buildStatementExp(l);
-					auto c = buildCastSmart(l, array, arg);
-					auto v = buildVariableAnonSmart(l, ctx.current, sexp, array, c);
-					sexp.exp = buildExpReference(l, v, v.name);
-					arg = sexp;
 					continue;
 				}
 				throw makeBadImplicitCast(arg, asArray, array);
