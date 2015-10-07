@@ -12,6 +12,7 @@ import volt.errors;
 
 import volt.semantic.context;
 import volt.semantic.classify : isNested;
+import volt.semantic.lookup : getModuleFromScope;
 
 
 void emitNestedStructs(ir.Function parentFunction, ir.BlockStatement bs)
@@ -21,15 +22,14 @@ void emitNestedStructs(ir.Function parentFunction, ir.BlockStatement bs)
 		if (fn is null) {
 			continue;
 		}
-		if (fn.oldname.length == 0) {
+		if (fn.suffix.length == 0) {
 			foreach (existingFn; parentFunction.nestedFunctions) {
 				if (fn.name == existingFn.oldname) {
 					throw makeCannotOverloadNested(fn, fn);
 				}
 			}
 			parentFunction.nestedFunctions ~= fn;
-			fn.oldname = fn.name;
-			fn.name = fn.name ~ toString(parentFunction.nestedFunctions.length - 1);
+			fn.suffix = toString(getModuleFromScope(parentFunction.location, parentFunction._body.myScope).getId());
 		}
 		if (parentFunction.nestStruct is null) {
 			parentFunction.nestStruct = createAndAddNestedStruct(parentFunction, bs);

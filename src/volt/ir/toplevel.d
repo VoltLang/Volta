@@ -81,8 +81,19 @@ public:
 
 	bool gathered;
 
+private:
+	size_t mId;
+
 public:
 	this() { super(NodeType.Module); }
+
+	/// Get a unique number for this module.
+	size_t getId()
+	{
+		auto id = mId;
+		mId++;
+		return id;
+	}
 }
 
 /**

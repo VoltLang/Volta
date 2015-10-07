@@ -53,7 +53,7 @@ string mangle(string[] names, ir.Function fn)
 {
 	string s = "Vf";
 	mangleName(names, s);
-	mangleString(fn.name, s);
+	mangleString(fn.name ~ fn.suffix, s);
 	mangleType(fn.type, s);
 	return s;
 }
