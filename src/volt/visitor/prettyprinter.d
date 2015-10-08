@@ -1464,6 +1464,23 @@ public:
 		assert(false);
 	}
 
+	override Status visit(ir.AutoType at)
+	{
+		if (at.explicitType !is null) {
+			return accept(at.explicitType, this);
+		}
+		if (at.isConst) {
+			wf("const");
+		} else if (at.isImmutable) {
+			wf("immutable");
+		} else if (at.isScope) {
+			wf("scope");
+		} else {
+			wf("auto");
+		}
+		return Continue;
+	}
+
 	override Status enter(ir.Alias a)
 	{
 		ln();

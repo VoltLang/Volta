@@ -324,6 +324,16 @@ ir.Typeid copy(ir.Typeid old)
 	return tid;
 }
 
+ir.AutoType copy(ir.AutoType old)
+{
+	auto at = new ir.AutoType();
+	at.location = old.location;
+	if (old.explicitType !is null) {
+		at.explicitType = copyType(old.explicitType);
+	}
+	return at;
+}
+
 /*
  *
  * Helpers.
@@ -452,6 +462,9 @@ ir.Node copyNode(ir.Node n)
 	case Typeid:
 		auto tid = cast(ir.Typeid)n;
 		return copy(tid);
+	case AutoType:
+		auto at = cast(ir.AutoType)n;
+		return copy(at);
 	case Enum:
 	case StatementExp:
 	case PrimitiveType:

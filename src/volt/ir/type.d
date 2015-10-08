@@ -468,3 +468,20 @@ public:
 public:
 	this() { super(NodeType.StorageType); }
 }
+
+/**
+ * For representing inferred types.
+ * auto a = 3;
+ * const b = 2;
+ *
+ * @ingroup irNode irType
+ */
+class AutoType : Type
+{
+public:
+	Type explicitType;  ///< The explicit type to replace this with.
+
+public:
+	this() { super(NodeType.AutoType); }
+}
+

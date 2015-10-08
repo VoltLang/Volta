@@ -148,6 +148,7 @@ public abstract:
 	Status visit(ir.PrimitiveType it);
 	Status visit(ir.TypeReference tr);
 	Status visit(ir.NullType nt);
+	Status visit(ir.AutoType at);
 
 
 	/*
@@ -331,6 +332,7 @@ override:
 	Status visit(ir.PrimitiveType it){ return Continue; }
 	Status visit(ir.TypeReference tr){ return Continue; }
 	Status visit(ir.NullType nt) { return Continue; }
+	Status visit(ir.AutoType at) { return Continue; }
 
 	/*
 	 * Expression Nodes.
@@ -625,6 +627,10 @@ body {
 		auto ed = cast(ir.EnumDeclaration) n;
 		assert(ed !is null);
 		return acceptEnumDeclaration(ed, av);
+	case AutoType:
+		auto at = cast(ir.AutoType) n;
+		assert(at !is null);
+		return av.visit(at);
 
 	/*
 	 * Failure fall through.

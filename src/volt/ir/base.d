@@ -74,6 +74,7 @@ enum NodeType
 	TypeOf,
 	NullType,
 	EnumDeclaration,
+	AutoType,
 
 	/* statements.d */
 	ReturnStatement,
@@ -382,6 +383,7 @@ string nodeToString(NodeType nodeType)
 	case TokenExp: return "TokenExp";
 	case VaArgExp: return "VaArgExp";
 	case PropertyExp: return "PropertyExp";
+	case AutoType: return "AutoType";
 	}
 }
 
