@@ -32,12 +32,11 @@ ir.Type flattenStorage(ir.Type type, ir.CallableType ct=null, size_t ctIndex=0)
 	case StorageType:
 		auto stype = cast(ir.StorageType) type;
 		auto base = stype.base;
-		if (base !is null) {
-			flattenOneStorage(stype, base, ct, ctIndex);
-			return flattenStorage(base);
-		} else {
-			return stype;
+		if (base is null) {
+			base = buildAutoType(type.location);
 		}
+		flattenOneStorage(stype, base, ct, ctIndex);
+		return flattenStorage(base);
 	case ArrayType:
 		auto atype = cast(ir.ArrayType) type;
 		atype.base = flattenStorage(atype.base);

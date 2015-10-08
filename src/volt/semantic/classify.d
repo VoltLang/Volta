@@ -257,6 +257,7 @@ ir.Type realType(ir.Type t, bool stripEnum = true, bool stripStorage = false)
  */
 bool mutableIndirection(ir.Type t)
 {
+	assert(t !is null);
 	switch (t.nodeType) with (ir.NodeType) {
 	case PrimitiveType:
 		return false;
@@ -297,6 +298,17 @@ bool mutableIndirection(ir.Type t)
 			return false;
 		}
 		return mutableIndirection(asStorageType.base);
+	case AutoType:
+		auto asAutoType = cast(ir.AutoType) t;
+		assert(asAutoType !is null);
+		assert(asAutoType.explicitType !is null);
+		if (asAutoType.isConst || asAutoType.isImmutable) {
+			return false;
+		}
+		if (asAutoType.explicitType is null) {
+			return false;
+		}
+		return mutableIndirection(asAutoType.explicitType);
 	default:
 		return true;
 	}
@@ -304,11 +316,8 @@ bool mutableIndirection(ir.Type t)
 
 bool isAuto(ir.Type t)
 {
-	auto s = cast(ir.StorageType) t;
-	if (s is null) {
-		return false;
-	}
-	return s.type == ir.StorageType.Kind.Auto;
+	auto a = cast(ir.AutoType) t;
+	return a !is null && a.explicitType is null;
 }
 
 bool isBool(ir.Type t)

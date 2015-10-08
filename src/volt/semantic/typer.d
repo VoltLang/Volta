@@ -80,6 +80,10 @@ ir.Type getExpType(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 	if (storage !is null && canTransparentlyReferToBase(storage)) {
 		result = storage.base;
 	}
+	auto at = cast(ir.AutoType) result;
+	if (at !is null && at.explicitType !is null) {
+		result = at.explicitType;
+	}
 	if (result is null) {
 		throw panic(exp.location, "null getExpType result.");
 	}

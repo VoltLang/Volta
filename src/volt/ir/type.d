@@ -480,6 +480,7 @@ class AutoType : Type
 {
 public:
 	Type explicitType;  ///< The explicit type to replace this with.
+	bool isForeachRef;
 
 public:
 	this() { super(NodeType.AutoType); }

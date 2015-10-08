@@ -36,13 +36,13 @@ import volt.semantic.userattrresolver;
 /**
  * This handles the auto that has been filled in, removing the auto storage.
  */
-void replaceStorageIfNeeded(ref ir.Type type)
+void replaceAutoIfNeeded(ref ir.Type type)
 {
-	auto storage = cast(ir.StorageType) type;
-	if (storage !is null &&
-	    storage.type == ir.StorageType.Kind.Auto &&
-	    storage.base !is null) {
-		type = storage.base;
+	auto autotype = cast(ir.AutoType) type;
+	if (autotype !is null && autotype.explicitType !is null) {
+		type = autotype.explicitType;
+		type = flattenStorage(type);
+		addStorage(type, autotype);
 	}
 }
 
@@ -117,42 +117,10 @@ void extypeCastToBool(Context ctx, ref ir.Exp exp)
 	exp = buildCastToBool(exp.location, exp);
 }
 
-/**
- * Forbids mutably indirect types being implicitly casted to scope.
- */
-void rejectBadScopeAssign(Context ctx, ref ir.Exp exp, ir.Type type)
-{
-	auto storage = cast(ir.StorageType) realType(type);
-	if (storage is null) {
-		return;
-	}
-	if (mutableIndirection(storage.base)) {
-		if (!ctx.isVarAssign ||
-		    (ctx.current.node.nodeType != ir.NodeType.Function &&
-		     ctx.current.node.nodeType != ir.NodeType.BlockStatement)) {
-			throw makeBadImplicitCast(exp, type, storage);
-		}
-	}
-}
-
 void extypeAssignTypeReference(Context ctx, ref ir.Exp exp,
                                ir.TypeReference tr)
 {
 	extypeAssign(ctx, exp, tr.type);
-}
-
-void stripPointerBases(ir.Type toType, ref uint flag)
-{
-	switch (toType.nodeType) {
-	case ir.NodeType.PointerType:
-		auto ptr = cast(ir.PointerType) toType;
-		assert(ptr !is null);
-		ptr.base = flagitiseStorage(ptr.base, flag);
-		stripPointerBases(ptr.base, flag);
-		break;
-	default:
-		break;
-	}
 }
 
 void appendDefaultArguments(Context ctx, ir.Location loc,
@@ -192,7 +160,6 @@ void extypeAssignPointerType(Context ctx, ref ir.Exp exp,
 	ir.PointerType pcopy =
 		cast(ir.PointerType) copyTypeSmart(exp.location, ptr);
 	assert(pcopy !is null);
-	stripPointerBases(pcopy, flag);
 
 	auto type = ctx.overrideType !is null ? ctx.overrideType : realType(getExpType(ctx.lp, exp, ctx.current));
 
@@ -207,8 +174,8 @@ void extypeAssignPointerType(Context ctx, ref ir.Exp exp,
 		return;
 	}
 
-	auto pbase = realBase(pcopy);
-	auto rbase = realBase(rcopy);
+	auto pbase = realBase(cast(ir.PointerType)flattenStorage(pcopy));
+	auto rbase = realBase(cast(ir.PointerType)flattenStorage(rcopy));
 	if (typesEqual(pcopy, rcopy)) {
 		return;
 	}
@@ -416,54 +383,27 @@ void extypeAssignAAType(Context ctx, ref ir.Exp exp, ir.AAType aatype)
 	throw makeBadImplicitCast(exp, rtype, aatype);
 }
 
-ir.Type flagitiseStorage(ir.Type type, ref uint flag)
-{
-	auto storage = cast(ir.StorageType) type;
-	while (storage !is null) {
-		final switch (storage.type) with (ir.StorageType) {
-		case Kind.Auto:
-			flag |= STORAGE_AUTO;
-			break;
-		case Kind.Const:
-			flag |= STORAGE_CONST;
-			break;
-		case Kind.Immutable:
-			flag |= STORAGE_IMMUTABLE;
-			break;
-		case Kind.Scope:
-			flag |= STORAGE_SCOPE;
-			break;
-		case Kind.Ref:
-			flag |= STORAGE_REF;
-			break;
-		case Kind.Out:
-			flag |= STORAGE_OUT;
-			break;
-		}
-		type = storage.base;
-		storage = cast(ir.StorageType) storage.base;
-	}
-	return type;
-}
-
 void handleAssign(Context ctx, ref ir.Type toType, ref ir.Exp exp,
                   ref uint toFlag, bool copying = false)
 {
 	auto rtype = getExpType(ctx.lp, exp, ctx.current);
-	auto storage = cast(ir.StorageType) toType;
+	auto autotype = cast(ir.AutoType) toType;
 	if (rtype.nodeType == ir.NodeType.FunctionSetType) {
-		if (storage !is null && storage.base is null) {
+		if (autotype !is null) {
 			throw makeCannotInfer(exp.location);
 		}
 	}
-	if (storage !is null && storage.base is null) {
-		storage.base = copyTypeSmart(exp.location, rtype);
+	if (autotype !is null) {
+		autotype.explicitType = copyTypeSmart(exp.location, rtype);
+		panicAssert(exp, autotype.explicitType.nodeType != ir.NodeType.AutoType);
+		if (!autotype.isConst && !autotype.isImmutable && !autotype.isScope) {
+			addStorage(autotype, rtype);
+		} else {
+			addStorage(autotype.explicitType, autotype);
+		}
 	}
 	auto originalRtype = rtype;
 	auto originalTo = toType;
-	toType = flagitiseStorage(toType, toFlag);
-	uint rflag;
-	rtype = flagitiseStorage(rtype, rflag);
 	auto lt = accumulateStorage(toType);
 	auto rt = accumulateStorage(rtype);
 	if (lt.isScope && ctx.isVarAssign) {
@@ -481,9 +421,9 @@ void extypeAssignDispatch(Context ctx, ref ir.Exp exp, ir.Type type,
 	uint flag;
 	handleAssign(ctx, type, exp, flag, copying);
 	switch (type.nodeType) {
-	case ir.NodeType.StorageType:
-		auto storage = cast(ir.StorageType) type;
-		extypeAssignDispatch(ctx, exp, storage.base, copying);
+	case ir.NodeType.AutoType:
+		auto autotype = cast(ir.AutoType) type;
+		extypeAssignDispatch(ctx, exp, autotype.explicitType, copying);
 		break;
 	case ir.NodeType.TypeReference:
 		auto tr = cast(ir.TypeReference) type;
@@ -969,22 +909,6 @@ private void dereferenceInitialClass(ir.Postfix postfix, ir.Type type)
 	postfix.child = buildDeref(postfix.child.location, postfix.child);
 }
 
-private void errorIfScopeParent(Context ctx,
-                                ir.CallableType asFunctionType,
-                                ir.Postfix postfix)
-{
-	if (asFunctionType.isScope && postfix.child.nodeType == ir.NodeType.Postfix) {
-		auto asPostfix = cast(ir.Postfix) postfix.child;
-		auto parentType = getExpType(ctx.lp, asPostfix.child, ctx.current);
-		if (mutableIndirection(parentType)) {
-			auto asStorageType = cast(ir.StorageType) realType(parentType);
-			if (asStorageType is null || asStorageType.type != ir.StorageType.Kind.Scope) {
-				throw makeBadCall(postfix, asFunctionType);
-			}
-		}
-	}
-}
-
 // Hand check va_start(vl) and va_end(vl), then modify their calls.
 private void rewriteVaStartAndEnd(Context ctx, ir.Function fn,
                                   ir.Postfix postfix, ref ir.Exp exp)
@@ -1197,10 +1121,6 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp 
 		fn = cast(ir.Function) eref.decl;
 		asFunctionType = cast(ir.CallableType) realType(type);
 		if (asFunctionType is null) {
-			auto _storage = cast(ir.StorageType) type;
-			if (_storage !is null) {
-				asFunctionType = cast(ir.CallableType) _storage.base;
-			}
 			if (asFunctionType is null) {
 				auto _class = cast(ir.Class) type;
 				if (_class !is null) {
@@ -1235,7 +1155,6 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp 
 	}
 
 	rewriteVaStartAndEnd(ctx, fn, postfix, exp);
-	errorIfScopeParent(ctx, asFunctionType, postfix);
 	rewriteVarargs(ctx, asFunctionType, postfix);
 
 	appendDefaultArguments(ctx, postfix.location, postfix.arguments, fn);
@@ -1882,8 +1801,8 @@ void handleNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 		return;
 	}
 
-	auto st = cast(ir.StorageType) _unary.type;
-	if (st !is null && st.type == ir.StorageType.Kind.Auto) {
+	auto at = cast(ir.AutoType) _unary.type;
+	if (at !is null) {
 		if (_unary.argumentList.length == 0) {
 			throw makeExpected(_unary, "argument(s)");
 		}
@@ -2292,8 +2211,6 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 		auto var = cast(ir.Variable) eref.decl;
 		assigningOutsideFunction = var !is null && var.storage != ir.Variable.Storage.Function;
 	}
-	auto st = cast(ir.StorageType) rtype;
-	auto lst = cast(ir.StorageType) ltype;
 	if (assigningOutsideFunction && rtype.isScope && mutableIndirection(ltype) && isAssign(exp) && !binop.isInternalNestedAssign) {
 		throw makeNoEscapeScope(exp.location);
 	}
@@ -2349,15 +2266,6 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 		auto rprim = cast(ir.PrimitiveType) rtype;
 		assert(lprim !is null && rprim !is null);
 		extypeBinOp(ctx, binop, lprim, rprim);
-	}
-
-	if (ltype.nodeType == ir.NodeType.StorageType ||
-	    rtype.nodeType == ir.NodeType.StorageType) {
-		if (ltype.nodeType == ir.NodeType.StorageType) {
-			binop.left = buildCastSmart(rtype, binop.left);
-		} else {
-			binop.right = buildCastSmart(ltype, binop.right);
-		}
 	}
 }
 
@@ -2921,18 +2829,18 @@ void extypeForeach(Context ctx, ir.ForeachStatement fes)
 {
 	void fillBlankVariable(size_t i, ir.Type t)
 	{
-		auto stype = cast(ir.StorageType) fes.itervars[i].type;
-		if (stype is null || stype.base !is null) {
+		auto atype = cast(ir.AutoType) fes.itervars[i].type;
+		if (atype is null || atype.explicitType !is null) {
 			return;
 		}
 		fes.itervars[i].type = copyTypeSmart(fes.itervars[i].location, t);
 	}
 
 	foreach (var; fes.itervars) {
-		auto storage = cast(ir.StorageType) var.type;
-		if (storage !is null && storage.type == ir.StorageType.Kind.Ref) {
+		auto at = cast(ir.AutoType) var.type;
+		if (at !is null && at.isForeachRef) {
 			fes.refvars ~= true;
-			var.type = storage.base;
+			var.type = at.explicitType;
 		} else {
 			fes.refvars ~= false;
 		}
@@ -3204,7 +3112,7 @@ public:
 		}
 
 		extypeAssign(ctx, ed.assign, ed.type);
-		replaceStorageIfNeeded(ed.type);
+		replaceAutoIfNeeded(ed.type);
 		accept(ed.type, this);
 
 		ed.resolved = true;
@@ -3364,13 +3272,9 @@ public:
 			handleIfStructLiteral(ctx, v.type, v.assign);
 			acceptExp(v.assign, this);
 			extypeAssign(ctx, v.assign, v.type);
-			// TODO flattenStorages shouldn't be needed.
-			// The below code leaves a StorageType in the ir.
-			// const i = 2;
-			v.type = flattenStorage(v.type);
 		}
 
-		replaceStorageIfNeeded(v.type);
+		replaceAutoIfNeeded(v.type);
 		accept(v.type, this);
 
 		if (!ctx.isInFunction()) {

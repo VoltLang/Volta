@@ -1278,11 +1278,10 @@ ParseStatus parseNewExp(ParserStream ps, out intir.NewExp newExp)
 
 	newExp = new intir.NewExp();
 	if (ps.peek.type == TokenType.Auto) {
-		auto st = new ir.StorageType();
-		st.location = ps.peek.location;
-		st.type = ir.StorageType.Kind.Auto;
+		auto at = new ir.AutoType();
+		at.location = ps.peek.location;
 		ps.get();
-		newExp.type = st;
+		newExp.type = at;
 	} else {
 		succeeded = parseType(ps, newExp.type);
 		if (!succeeded) {

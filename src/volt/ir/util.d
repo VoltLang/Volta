@@ -224,6 +224,15 @@ ir.Type copyTypeSmart(Location loc, ir.Type type)
 		st.type = asSt.type;
 		outType = st;
 		break;
+	case AutoType:
+		auto asAt = cast(ir.AutoType)type;
+		auto at = new ir.AutoType();
+		at.location = loc;
+		if (asAt.explicitType !is null) {
+			at.explicitType = copyTypeSmart(loc, asAt.explicitType);
+		}
+		outType = at;
+		break;
 	case TypeReference:
 		auto tr = cast(ir.TypeReference)type;
 		assert(tr.type !is null);
@@ -1633,4 +1642,11 @@ ir.StoreExp buildStoreExp(Location loc, ir.Store store, string[] idents...)
 		sexp.idents = idents.dup;
 	}
 	return sexp;
+}
+
+ir.AutoType buildAutoType(Location loc)
+{
+	auto at = new ir.AutoType();
+	at.location = loc;
+	return at;
 }

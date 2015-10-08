@@ -596,10 +596,7 @@ ParseStatus parseForeachStatement(ParserStream ps, out ir.ForeachStatement f)
 				return unexpectedToken(ps, f);
 			}
 			name = ps.get();
-			auto st = new ir.StorageType();
-			st.location = name.location;
-			st.type = ir.StorageType.Kind.Auto;
-			type = st;
+			type = buildAutoType(name.location);
 		} else {
 			auto succeeded = parseType(ps, type);
 			if (!succeeded) {
@@ -611,11 +608,11 @@ ParseStatus parseForeachStatement(ParserStream ps, out ir.ForeachStatement f)
 			name = ps.get();
 		}
 		if (isRef) {
-			auto st = new ir.StorageType();
-			st.location = type.location;
-			st.type = ir.StorageType.Kind.Ref;
-			st.base = type;
-			type = st;
+			auto at = new ir.AutoType();
+			at.location = type.location;
+			at.explicitType = type;
+			at.isForeachRef = true;
+			type = at;
 		}
 		f.itervars ~= new ir.Variable();
 		f.itervars[$-1].location = type.location;

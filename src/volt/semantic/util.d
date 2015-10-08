@@ -74,6 +74,11 @@ ir.Type accumulateStorage(ir.Type toType, ir.Type seed=null)
 		return accumulateStorage(asAA.value, seed);
 	}
 
+	auto asAuto = cast(ir.AutoType)toType;
+	if (asAuto !is null && asAuto.explicitType !is null) {
+		return accumulateStorage(asAuto.explicitType, seed);
+	}
+
 	return seed;
 }
 

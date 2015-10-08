@@ -328,9 +328,11 @@ ir.AutoType copy(ir.AutoType old)
 {
 	auto at = new ir.AutoType();
 	at.location = old.location;
+	at.isForeachRef = old.isForeachRef;
 	if (old.explicitType !is null) {
 		at.explicitType = copyType(old.explicitType);
 	}
+	addStorage(at, old);
 	return at;
 }
 

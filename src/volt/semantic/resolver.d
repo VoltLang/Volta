@@ -90,6 +90,13 @@ ir.Type resolveType(LanguagePass lp, ir.Scope current, ir.Type type)
 		}
 		st.base = resolveType(lp, current, st.base);
 		return type;
+	case AutoType:
+		auto at = cast(ir.AutoType)type;
+		if (at.explicitType is null) {
+			return type;
+		}
+		at.explicitType = resolveType(lp, current, at.explicitType);
+		return type;
 	case FunctionType:
 		auto ft = cast(ir.FunctionType)type;
 		ft.ret = resolveType(lp, current, ft.ret);
