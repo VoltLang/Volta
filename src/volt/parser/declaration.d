@@ -579,7 +579,7 @@ ParseStatus parseTypeSigils(ParserStream ps, out ir.Type outType, Location origi
 	return Succeeded;
 }
 
-package ir.Type parsePrimitiveType(ParserStream ps)
+ir.Type parsePrimitiveType(ParserStream ps)
 {
 	auto ptype = new ir.PrimitiveType();
 	ptype.location = ps.peek.location;

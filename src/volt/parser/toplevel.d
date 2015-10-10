@@ -359,6 +359,7 @@ ParseStatus parseImport(ParserStream ps, out ir.Import _import)
 {
 	_import = new ir.Import();
 	_import.location = ps.peek.location;
+	_import.access = ir.Access.Private;
 	auto succeeded = match(ps, _import, TokenType.Import);
 	if (!succeeded) {
 		return succeeded;
@@ -1165,7 +1166,7 @@ ParseStatus parseStaticAssert(ParserStream ps, out ir.StaticAssert sa)
 		[TokenType.CloseParen, TokenType.Semicolon]);
 }
 
-package ParseStatus parseCondition(ParserStream ps, out ir.Condition condition)
+ParseStatus parseCondition(ParserStream ps, out ir.Condition condition)
 {
 	condition = new ir.Condition();
 	condition.location = ps.peek.location;
