@@ -47,6 +47,17 @@ ir.Store findShadowed(LanguagePass lp, ir.Scope _scope, Location loc, string nam
 	version (Volt) assert(false); // If
 }
 
+bool isValidAccess(ir.Access access)
+{
+	switch (access) with (ir.Access) {
+	case Private, Public, Protected:
+	case Package: // Yes
+		return true;
+	default:
+		return false;
+	}
+}
+
 
 /*
  *
@@ -56,17 +67,22 @@ ir.Store findShadowed(LanguagePass lp, ir.Scope _scope, Location loc, string nam
 
 void gather(ir.Scope current, ir.EnumDeclaration e, Where where)
 {
+	// @TODO assert(e.access.isValidAccess());
 	current.addEnumDeclaration(e);
 }
 
 void gather(ir.Scope current, ir.Alias a, Where where)
 {
+	assert(a.access.isValidAccess());
 	assert(a.store is null);
+
 	a.store = current.addAlias(a, a.name, current);
 }
 
 void gather(LanguagePass lp, ir.Scope current, ir.Variable v, Where where, ir.Function[] functionStack)
 {
+	assert(v.access.isValidAccess());
+
 	if (functionStack.length > 1) {
 		v.oldname = v.name;
 		v.name = functionStack[$-1].name ~ v.name;
@@ -96,6 +112,8 @@ void gather(LanguagePass lp, ir.Scope current, ir.Variable v, Where where, ir.Fu
 
 void gather(ir.Scope current, ir.Function fn, Where where)
 {
+	assert(fn.access.isValidAccess());
+
 	if (fn.name !is null) {
 		current.addFunction(fn, fn.name);
 	}
@@ -114,41 +132,57 @@ void gather(ir.Scope current, ir.Function fn, Where where)
 
 void gather(ir.Scope current, ir.Struct s, Where where)
 {
+	assert(s.access.isValidAccess());
+
 	current.addType(s, s.name);
 }
 
 void gather(ir.Scope current, ir.Union u, Where where)
 {
+	assert(u.access.isValidAccess());
+
 	current.addType(u, u.name);
 }
 
 void gather(ir.Scope current, ir.Class c, Where where)
 {
+	assert(c.access.isValidAccess());
+
 	current.addType(c, c.name);
 }
 
 void gather(ir.Scope current, ir.Enum e, Where where)
 {
+	assert(e.access.isValidAccess());
+
 	current.addType(e, e.name);
 }
 
 void gather(ir.Scope current, ir._Interface i, Where where)
 {
+	assert(i.access.isValidAccess());
+
 	current.addType(i, i.name);
 }
 
 void gather(ir.Scope current, ir.MixinFunction mf, Where where)
 {
+	// @TODO assert(mf.access.isValidAccess());
+
 	current.addTemplate(mf, mf.name);
 }
 
 void gather(ir.Scope current, ir.MixinTemplate mt, Where where)
 {
+	// @TODO assert(mt.access.isValidAccess());
+
 	current.addTemplate(mt, mt.name);
 }
 
 void gather(ir.Scope current, ir.UserAttribute ua, Where where)
 {
+	// @TODO assert(ua.access.isValidAccess());
+
 	current.addType(ua, ua.name);
 }
 
