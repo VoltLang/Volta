@@ -7,14 +7,12 @@ These guidelines go for related tools like Tesla too.
 Indentation
 ===========
 Set your editor to emit real tabs, and display them with a size of four spaces when editing the Volt or Watt code.
-It's left to your better judgement whether or not you need to wrap your code or not (consider it after 80-100 columns or so). Usually when wrapping, you'll be passing parameters or somehow dealing with an open paren or assign on the previous line. In that case, indent with (four spaced) tabs as far as you can before the first character after the open paren/assign, then fill the rest with spaces as needed. (The ``\TTT`` represents a tab character. Please don't fill your code with it.)::
+It's left to your better judgement whether or not you need to wrap your code or not (consider it after 80-100 columns or so). When wrapping, use tabs to indent to the level of the last line, then uses spaces to align to after the first open paren (or first character otherwise). The \TTT represent tabs, the . characters represent spaces.::
 
-    aFunctionThatIsReallyReallyDescriptiveOnWhatItDoes(aLongParameter,
-    \TTT\TTT\TTT\TTT\TTT\TTT\TTT\TTT\TTT\TTT\TTT\TTT   bLongParameter);
-    areWeWritingJavaWithHungarianNotationOrSomethingVar = aLongParameter +
-    \TTT\TTT\TTT\TTT\TTT\TTT\TTT\TTT\TTT\TTT\TTT\TTT\TTT  bLongParameter;
-
-In other cases, just indent one extra tab on the new line.
+    \TTTaFunction(aLongParameter,
+    \TTT..........bLongParameter);
+    \TTTif ((foo ||
+    \TTT.....bar) && baz) {
 
 Braces
 ======
