@@ -605,6 +605,10 @@ void extypeIdentifierExp(Context ctx, ref ir.Exp e, ir.IdentifierExp i, ir.Exp p
  */
 void extypeIdentifierExpNoRevisit(Context ctx, ref ir.Exp e, ir.IdentifierExp i, ir.Exp parent)
 {
+	if (i.value == "super") {
+		return rewriteSuper(ctx.lp, ctx.current, i, cast(ir.Postfix) parent);
+	}
+
 	auto current = i.globalLookup ? getModuleFromScope(i.location, ctx.current).myScope : ctx.current;
 
 	// Rewrite expressions that rely on a with block lookup.
@@ -1711,11 +1715,6 @@ bool postfixIdentifier(Context ctx, ref ir.Exp exp,
 void extypePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp parent)
 {
 	auto allPostfixes = collectPostfixes(postfix);
-
-	ir.Exp dummy = allPostfixes[0];
-	rewriteSuperIfNeeded(dummy, allPostfixes[0], ctx.current, ctx.lp);
-	allPostfixes[0] = cast(ir.Postfix) dummy;
-	assert(allPostfixes[0] !is null);
 
 	// Process first none postfix exp, often a IdentifierExp.
 	// 'ident'.field.prop

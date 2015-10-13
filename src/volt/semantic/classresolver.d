@@ -52,15 +52,13 @@ void actualizeClass(LanguagePass lp, ir.Class c)
 	fileInAggregateVar(lp, c);
 }
 
-bool rewriteSuperIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, LanguagePass lp)
+void rewriteSuper(LanguagePass lp, ir.Scope _scope, ir.IdentifierExp ident, ir.Postfix p)
 {
-	auto ident = cast(ir.IdentifierExp) p.child;
-	if (ident is null) {
-		return false;
-	}
+	assert(ident.value == "super");
+	assert(p is null || ident is p.child);
 
-	if (ident.value != "super") {
-		return false;
+	if (p is null) {
+		throw makeFailedLookup(p, "super");
 	}
 
 	ir.Scope dummyScope;
@@ -71,25 +69,24 @@ bool rewriteSuperIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, LanguageP
 	_class = _class.parentClass;
 	assert(_class !is null);
 
-
 	if (p.op == ir.Postfix.Op.Call) {
-		return rewriteSuperCallIfNeeded(e, p, _scope, lp, _class);
+		return rewriteSuperCall(lp, _scope, ident, p, _class);
 	} else if (p.op == ir.Postfix.Op.Identifier) {
-		return rewriteSuperIdentifierIfNeeded(e, p, _scope, lp, _class);
+		return rewriteSuperIdentifier(lp, _scope, ident, p, _class);
 	} else {
 		throw makeFailedLookup(p, "super");
 	}
 }
 
-bool rewriteSuperIdentifierIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, LanguagePass lp, ir.Class _class)
+void rewriteSuperIdentifier(LanguagePass lp, ir.Scope _scope, ir.IdentifierExp ident, ir.Postfix p, ir.Class _class)
 {
 	assert(p.op == ir.Postfix.Op.Identifier);
-	auto thisVar = getThisVar(p.location, lp, _scope);
-	p.child = buildCastSmart(p.location, _class, buildExpReference(p.location, thisVar, "this"));
-	return true;
+
+	auto thisVar = getThisVar(ident.location, lp, _scope);
+	p.child = buildCastSmart(ident.location, _class, buildExpReference(p.location, thisVar, "this"));
 }
 
-bool rewriteSuperCallIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, LanguagePass lp, ir.Class _class)
+void rewriteSuperCall(LanguagePass lp, ir.Scope _scope, ir.IdentifierExp ident, ir.Postfix p, ir.Class _class)
 {
 	assert(p.op == ir.Postfix.Op.Call);
 
@@ -99,13 +96,12 @@ bool rewriteSuperCallIfNeeded(ref ir.Exp e, ir.Postfix p, ir.Scope _scope, Langu
 	}
 	asFunction.explicitCallToSuper = true;
 
-	auto thisVar = getThisVar(p.location, lp, _scope);
-	auto thisRef = buildExpReference(thisVar.location, thisVar, "this");
+	auto thisVar = getThisVar(ident.location, lp, _scope);
+	auto thisRef = buildExpReference(ident.location, thisVar, "this");
 
-	auto fn = selectFunction(lp, _scope, _class.userConstructors, p.arguments, e.location);
+	auto fn = selectFunction(lp, _scope, _class.userConstructors, p.arguments, ident.location);
 
-	p.child = buildCreateDelegate(p.location, thisRef, buildExpReference(p.location, fn, fn.name));
-	return true;
+	p.child = buildCreateDelegate(ident.location, thisRef, buildExpReference(ident.location, fn, fn.name));
 }
 
 
