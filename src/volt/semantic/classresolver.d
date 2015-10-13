@@ -101,7 +101,9 @@ void rewriteSuperCall(LanguagePass lp, ir.Scope _scope, ir.IdentifierExp ident, 
 
 	auto fn = selectFunction(lp, _scope, _class.userConstructors, p.arguments, ident.location);
 
-	p.child = buildCreateDelegate(ident.location, thisRef, buildExpReference(ident.location, fn, fn.name));
+	auto set = buildSet(ident.location, _class.userConstructors);
+	auto setRef = buildExpReference(ident.location, set, "super");
+	p.child = buildCreateDelegate(ident.location, thisRef, setRef);
 }
 
 
