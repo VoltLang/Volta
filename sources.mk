@@ -32,6 +32,7 @@ VIV_SRC= \
 	src/volt/semantic/mangle.d \
 	src/volt/semantic/lookup.d \
 	src/volt/semantic/nested.d \
+	src/volt/semantic/extyper.d \
 	src/volt/semantic/context.d \
 	src/volt/semantic/resolver.d \
 	src/volt/semantic/typeinfo.d \
