@@ -569,6 +569,44 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ref ir.Exp exp, ir.StructLiteral literal)
+	{
+		if (functionStack.length == 0) {
+			// Global struct literals can use LLVM's native handling.
+			return Continue;
+		}
+
+		/* Turn `Struct a = {1, "banana"};`
+		 * into `Struct a; a.firstField = 1; b.secondField = "banana";`.
+		 */
+
+		// Pull out the struct and its fields.
+		panicAssert(exp, literal.type !is null);
+		auto theStruct = cast(ir.Struct) realType(literal.type);
+		panicAssert(exp, theStruct !is null);
+		auto fields = getStructFieldVars(theStruct);
+		// The extyper should've caught this.
+		panicAssert(exp, fields.length >= literal.exps.length);
+
+		// Struct __anon;
+		auto l = exp.location;
+		auto sexp = buildStatementExp(l);
+		auto var = buildVariableAnonSmart(l, current, sexp, theStruct, null);
+
+		// Assign the literal expressions to the fields.
+		foreach (i, e; literal.exps) {
+			auto eref = buildExpReference(l, var, var.name);
+			auto lh = buildAccess(l, eref, fields[i].name);
+			auto assign = buildAssign(l, lh, e);
+			buildExpStat(l, sexp, assign);
+		}
+
+		sexp.exp = buildExpReference(l, var, var.name);
+		sexp.originalExp = exp;
+		exp = sexp;
+		return Continue;
+	}
+
 	override Status visit(ref ir.Exp exp, ir.ExpReference eref)
 	{
 		bool replaced = replaceNested(exp, eref, functionStack.length == 0 ? null : functionStack[$-1].nestedVariable);

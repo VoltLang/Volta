@@ -1149,6 +1149,22 @@ ir.Type[] getStructFieldTypes(ir.Struct _struct)
 	return types;
 }
 
+/// Retrieves the Variables in _struct, in the order they appear.
+ir.Variable[] getStructFieldVars(ir.Struct _struct)
+{
+	ir.Variable[] vars;
+
+	if (_struct.members !is null) foreach (node; _struct.members.nodes) {
+		auto asVar = cast(ir.Variable) node;
+		if (asVar is null) {
+			continue;
+		}
+		vars ~= asVar;
+	}
+
+	return vars;
+}
+
 ir.Function[] getStructFunctions(ir.Struct _struct)
 {
 	ir.Function[] functions;
