@@ -2,6 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.irverifier;
 
+import watt.text.format : format;
+
 import ir = volt.ir.ir;
 
 import volt.errors;
