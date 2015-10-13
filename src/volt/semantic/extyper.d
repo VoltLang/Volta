@@ -96,6 +96,12 @@ void handleIfStructLiteral(Context ctx, ir.Type left, ref ir.Exp right)
 	}
 
 	foreach (i, ref sexp; asLit.exps) {
+		if (!ctx.isFunction) {
+			if (evaluateOrNull(ctx.lp, ctx.current, sexp) is null) {
+				throw makeError(sexp.location,
+				                "non-constant expression in global struct literal.");
+			}
+		}
 		extypeAssign(ctx, sexp, types[i]);
 	}
 
