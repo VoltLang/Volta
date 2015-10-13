@@ -560,13 +560,10 @@ public:
 	Store getStore(string name)
 	{
 		auto ret = name in symbols;
-		if (ret is null)
+		if (ret is null) {
 			return null;
-		auto s = *ret;
-		while (s.myAlias !is null) {
-			s = s.myAlias;
 		}
-		return s;
+		return *ret;
 	}
 
 	/**
