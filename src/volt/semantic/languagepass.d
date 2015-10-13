@@ -111,8 +111,8 @@ public:
 	 */
 	void setupOneTruePointers()
 	{
-		objectModule =
-			getModule(buildQualifiedName(Location(), "object"));
+		Location loc;
+		objectModule = getModule(buildQualifiedName(loc, "object"));
 		if (objectModule is null) {
 			throw panic("could not find object module");
 		}
@@ -284,7 +284,11 @@ public:
 
 	override ir.Module[] getModules()
 	{
-		return mModules.values.dup;
+		version (Volt) {
+			return mModules.values;
+		} else {
+			return mModules.values.dup;
+		}
 	}
 
 
@@ -296,12 +300,20 @@ public:
 
 	override DoneDg startResolving(ir.Node n)
 	{
-		return &mTracker.add(n, Work.Action.Resolve).done;
+		version (Volt) {
+			return mTracker.add(n, Work.Action.Resolve).done;
+		} else {
+			return &mTracker.add(n, Work.Action.Resolve).done;
+		}
 	}
 
 	override DoneDg startActualizing(ir.Node n)
 	{
-		return &mTracker.add(n, Work.Action.Actualize).done;
+		version (Volt) {
+			return mTracker.add(n, Work.Action.Actualize).done;
+		} else {
+			return &mTracker.add(n, Work.Action.Actualize).done;
+		}
 	}
 
 
