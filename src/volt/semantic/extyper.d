@@ -2512,6 +2512,66 @@ struct ArrayCase
 	ir.IfStatement lastIf;
 }
 
+void replaceSwitchCaseWithWith(Context ctx, ir.SwitchStatement ss)
+{
+	if (ss.withs.length == 0) {
+		return;
+	}
+	void replaceCaseIfNeeded(ref ir.Exp exp)
+	{
+		// If the case needs to be rewritten via the switch's with(s), it's done here.
+		int replaced;
+		foreach (wexp; ss.withs) {
+			auto etype = getExpType(ctx.lp, wexp, ctx.current);
+			ir.IdentifierExp iexp;
+			auto pfix = cast(ir.Postfix) exp;
+			ir.Postfix[] pfixes;
+			if (pfix !is null) {
+				pfixes = collectPostfixes(pfix);
+				iexp = cast(ir.IdentifierExp) pfixes[0].child;
+			}
+			if (iexp is null) {
+				iexp = cast(ir.IdentifierExp) exp;
+			}
+			if (iexp is null) {
+				continue;
+			}
+			auto access = buildAccess(exp.location, wexp, iexp.value);
+			ir.Class dummyClass;
+			string dummyString;
+			ir.Scope tmpScope;
+			retrieveScope(ctx.lp, etype, access, tmpScope, dummyClass, dummyString);
+			if (tmpScope is null) {
+				continue;
+			}
+			auto store = lookupInGivenScopeOnly(ctx.lp, tmpScope, exp.location, iexp.value);
+			if (store is null) {
+				continue;
+			}
+			auto decl = cast(ir.Declaration) store.node;
+			if (decl is null && pfixes.length > 0) {
+				pfixes[0].child = buildAccess(exp.location, copyExp(wexp), iexp.value);
+				continue;
+			}
+			if (decl is null) {
+				continue;
+			}
+			exp = buildExpReference(exp.location, decl, iexp.value);
+		}
+	}
+	foreach (_case; ss.cases) {
+		if (_case.firstExp !is null) {
+			replaceCaseIfNeeded(_case.firstExp);
+		}
+		if (_case.secondExp !is null) {
+			replaceCaseIfNeeded(_case.secondExp);
+		}
+		foreach (ref exp; _case.exps) {
+			replaceCaseIfNeeded(exp);
+		}
+	}
+}
+
 /**
  * Ensure that a given switch statement is semantically sound.
  * Errors on bad final switches (doesn't cover all enum members, not on an enum at all),
@@ -2546,50 +2606,6 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss,
 		void replaceWithHashIfNeeded(ref ir.Exp exp) 
 		{
 			if (exp !is null) {
-				// If the case needs to be rewritten via the switch's with(s), it's done here.
-				int replaced;
-				foreach (wexp; ss.withs) {
-					auto etype = getExpType(ctx.lp, wexp, ctx.current);
-					ir.IdentifierExp iexp;
-					auto pfix = cast(ir.Postfix) exp;
-					ir.Postfix[] pfixes;
-					if (pfix !is null) {
-						pfixes = collectPostfixes(pfix);
-						iexp = cast(ir.IdentifierExp) pfixes[0].child;
-					}
-					if (iexp is null) {
-						iexp = cast(ir.IdentifierExp) exp;
-					}
-					if (iexp is null) {
-						continue;
-					}
-					auto access = buildAccess(_case.location, wexp, iexp.value);
-					ir.Class dummyClass;
-					string dummyString;
-					ir.Scope tmpScope;
-					retrieveScope(ctx.lp, etype, access, tmpScope, dummyClass, dummyString);
-					if (tmpScope is null) {
-						continue;
-					}
-					auto store = lookupInGivenScopeOnly(ctx.lp, tmpScope, _case.location, iexp.value);
-					if (store is null) {
-						continue;
-					}
-					auto decl = cast(ir.Declaration) store.node;
-					if (decl is null && pfixes.length > 0) {
-						pfixes[0].child = buildAccess(exp.location, copyExp(wexp), iexp.value);
-						continue;
-					}
-					if (decl is null) {
-						continue;
-					}
-					exp = buildExpReference(_case.location, decl, iexp.value);
-					replaced++;
-				}
-				if (replaced >= 2) {
-					throw makeWithCreatesAmbiguity(_case.location);
-				}
-				// Back to replacing cases with hashes if needed.
 				auto etype = getExpType(ctx.lp, exp, ctx.current);
 				if (isArray(etype)) {
 					uint h;
@@ -2601,7 +2617,9 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss,
 						auto str = constant._string[1..$-1];
 						h = hash(cast(ubyte[]) str);
 					} else {
-						auto alit = cast(ir.ArrayLiteral) exp;
+						auto sexp = cast(ir.StatementExp) exp;
+						assert(sexp !is null);
+						auto alit = cast(ir.ArrayLiteral) sexp.originalExp;
 						assert(alit !is null);
 						auto atype = cast(ir.ArrayType) etype;
 						assert(atype !is null);
@@ -3520,14 +3538,16 @@ public:
 		 */
 		auto oldCondition = ss.condition;
 		acceptExp(ss.condition, this);
+		foreach (ref wexp; ss.withs) {
+			acceptExp(wexp, this);
+		}
+		replaceSwitchCaseWithWith(ctx, ss);
+		foreach (_case; ss.cases) {
+			accept(_case, this);
+		}
 		verifySwitchStatement(ctx, ss, oldCondition);
-		return Continue;
-	}
-
-	override Status leave(ir.SwitchStatement ss)
-	{
 		replaceGotoCase(ctx, ss);
-		return Continue;
+		return ContinueParent;
 	}
 
 	override Status leave(ir.ThrowStatement t)
