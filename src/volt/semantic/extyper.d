@@ -2580,8 +2580,7 @@ void replaceSwitchCaseWithWith(Context ctx, ir.SwitchStatement ss)
  * oldCondition is the switches condition prior to the extyper being run on it.
  * It's a bit of a hack, but we need the unprocessed enum to evaluate final switches.
  */
-void verifySwitchStatement(Context ctx, ir.SwitchStatement ss,
-                           ir.Exp oldCondition)
+void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 {
 	auto conditionType = realType(getExpType(ctx.lp, ss.condition, ctx.current), false, true);
 	auto originalCondition = ss.condition;
@@ -2720,7 +2719,7 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss,
 
 	auto asEnum = cast(ir.Enum) conditionType;
 	if (asEnum is null && ss.isFinal) {
-		asEnum = cast(ir.Enum)realType(getExpType(ctx.lp, oldCondition, ctx.current), false, true);
+		asEnum = cast(ir.Enum)realType(getExpType(ctx.lp, ss.condition, ctx.current), false, true);
 		if (asEnum is null) {
 			throw makeExpected(ss, "enum type for final switch");
 		}
@@ -3486,10 +3485,6 @@ public:
 
 	override Status enter(ir.SwitchStatement ss)
 	{
-		/* Bit of a mess. We need to process the condition so the typer's happy,
-		 * but we need the old expression to evaluate final switches. Hence this mess.
-		 */
-		auto oldCondition = ss.condition;
 		acceptExp(ss.condition, this);
 		foreach (ref wexp; ss.withs) {
 			acceptExp(wexp, this);
@@ -3498,7 +3493,7 @@ public:
 		foreach (_case; ss.cases) {
 			accept(_case, this);
 		}
-		verifySwitchStatement(ctx, ss, oldCondition);
+		verifySwitchStatement(ctx, ss);
 		replaceGotoCase(ctx, ss);
 		return ContinueParent;
 	}
