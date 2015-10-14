@@ -457,6 +457,12 @@ public:
 		return Continue;
 	}
 
+	override Status leave(ref ir.Exp exp, ir.ArrayLiteral al)
+	{
+		transformArrayLiteralIfNeeded(lp, current, functionStack.length > 0, exp, al);
+		return Continue;
+	}
+
 	override Status leave(ref ir.Exp exp, ir.AssocArray assocArray)
 	{
 		auto loc = exp.location;
@@ -1286,4 +1292,19 @@ void transformForeaches(LanguagePass lp, ir.Scope current,
 		}
 		bs.statements[i] = foreachToFor(fes, lp, current);
 	}
+}
+
+void transformArrayLiteralIfNeeded(LanguagePass lp, ir.Scope current, bool inFunction, ref ir.Exp exp,
+                                   ir.ArrayLiteral al)
+{
+	if (al.values.length == 0 || !inFunction) {
+		return;
+	}
+	auto at = getExpType(lp, al, current);
+	if (at.nodeType == ir.NodeType.StaticArrayType) {
+		return;
+	}
+	auto sexp = buildInternalArrayLiteralSmart(al.location, at, al.values);
+	sexp.originalExp = al;
+	exp = sexp;
 }

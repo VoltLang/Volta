@@ -1123,8 +1123,11 @@ ir.Exp buildVaArgEnd(Location loc, ir.Exp vlexp)
 
 ir.StatementExp buildInternalArrayLiteralSmart(Location loc, ir.Type atype, ir.Exp[] exps)
 {
-	if (atype.nodeType != ir.NodeType.ArrayType)
+	if (atype.nodeType != ir.NodeType.ArrayType) {
 		throw panic(atype, "must be array type");
+	}
+	auto arr = cast(ir.ArrayType) atype;
+	panicAssert(atype, arr !is null);
 
 	auto sexp = new ir.StatementExp();
 	sexp.location = loc;
@@ -1135,7 +1138,7 @@ ir.StatementExp buildInternalArrayLiteralSmart(Location loc, ir.Type atype, ir.E
 	buildExpStat(loc, sexp, vassign);
 	foreach (i, exp; exps) {
 		auto slice = buildIndex(loc, buildExpReference(loc, var), buildConstantUint(loc, cast(uint) i));
-		auto assign = buildAssign(loc, slice, exp);
+		auto assign = buildAssign(loc, slice, buildCastSmart(arr.base, exp));
 		buildExpStat(loc, sexp, assign);
 	}
 	sexp.exp = buildExpReference(loc, var, var.name);
@@ -1144,8 +1147,9 @@ ir.StatementExp buildInternalArrayLiteralSmart(Location loc, ir.Type atype, ir.E
 
 ir.StatementExp buildInternalStaticArrayLiteralSmart(Location loc, ir.Type atype, ir.Exp[] exps)
 {
-	if (atype.nodeType != ir.NodeType.StaticArrayType)
+	if (atype.nodeType != ir.NodeType.StaticArrayType) {
 		throw panic(atype, "must be staticarray type");
+	}
 
 	auto sexp = new ir.StatementExp();
 	sexp.location = loc;

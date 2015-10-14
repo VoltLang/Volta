@@ -336,13 +336,6 @@ void extypeAssignStaticArrayType(Context ctx, ref ir.Exp exp, ir.StaticArrayType
 			extypeAssign(ctx, e, ltype);
 		}
 	}
-	auto se = cast(ir.StatementExp) exp;
-	if (se !is null) {
-		alit = cast(ir.ArrayLiteral) se.originalExp;
-		checkAlit();
-		exp = buildInternalStaticArrayLiteralSmart(exp.location, atype, alit.values);
-		return;
-	}
 	alit = cast(ir.ArrayLiteral) exp;
 	if (alit is null) {
 		auto t = realType(getExpType(ctx.lp, exp, ctx.current));
@@ -351,7 +344,7 @@ void extypeAssignStaticArrayType(Context ctx, ref ir.Exp exp, ir.StaticArrayType
 		}
 	}
 	checkAlit();
-	exp = buildArrayLiteralSmart(exp.location, atype, alit.values);
+	exp = buildInternalStaticArrayLiteralSmart(exp.location, atype, alit.values);
 }
 
 void extypeAssignAAType(Context ctx, ref ir.Exp exp, ir.AAType aatype)
@@ -2565,9 +2558,7 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 						auto str = constant._string[1..$-1];
 						h = hash(cast(ubyte[]) str);
 					} else {
-						auto sexp = cast(ir.StatementExp) exp;
-						assert(sexp !is null);
-						auto alit = cast(ir.ArrayLiteral) sexp.originalExp;
+						auto alit = cast(ir.ArrayLiteral) exp;
 						assert(alit !is null);
 						auto atype = cast(ir.ArrayType) etype;
 						assert(atype !is null);
@@ -2736,21 +2727,6 @@ ir.Node transformRuntimeAssert(Context ctx, ir.AssertStatement as)
 	auto thenBlock = buildBlockStat(l, null, ctx.current, theThrow);
 	auto ifS = buildIfStat(l, buildNot(l, as.condition), thenBlock);
 	return ifS;
-}
-
-void transformArrayLiteralIfNeeded(Context ctx, ref ir.Exp exp,
-                                   ir.ArrayLiteral al)
-{
-	if (al.values.length == 0 || !ctx.isInFunction()) {
-		return;
-	}
-
-	auto at = getExpType(ctx.lp, al, ctx.current);
-	auto sexp = buildInternalArrayLiteralSmart(al.location, at, al.values);
-	sexp.originalExp = al;
-	exp = sexp;
-
-	acceptExp(exp, ctx.extyper);
 }
 
 /**
@@ -3645,12 +3621,6 @@ public:
 		} else {
 			exp = buildVaArgCast(vaexp.location, vaexp);
 		}
-		return Continue;
-	}
-
-	override Status leave(ref ir.Exp exp, ir.ArrayLiteral al)
-	{
-		transformArrayLiteralIfNeeded(ctx, exp, al);
 		return Continue;
 	}
 
