@@ -172,7 +172,7 @@ package: all
 
 viv: $(TARGET) $(VIV_SRC)
 	@echo "  VOLTA  viv"
-	@./$(TARGET) --dep-argtags -o viv $(VIV_SRC)
+	@./$(TARGET) --internal-d -o viv $(VIV_SRC)
 
 # Note these should not depend on target
 voltaic-syntax:
