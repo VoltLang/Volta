@@ -952,7 +952,7 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 
 		bool inFloatRange()
 		{
-			switch(primitive.type) with (ir.PrimitiveType.Kind) {
+			switch(primitive.type) {
 			case Int:
 				return constant.u._int >= float.min_normal && constant.u._int <= float.max;
 			case Uint:
@@ -972,7 +972,7 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 
 		bool inDoubleRange()
 		{
-			switch(primitive.type) with (ir.PrimitiveType.Kind) {
+			switch(primitive.type) {
 			case Int:
 				return constant.u._int >= double.min_normal && constant.u._int <= double.max;
 			case Uint:
@@ -991,7 +991,7 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 		}
 
 		// Remove       vvvvvvvvvvvvvvvvvvvvvvvvvvvv   when fixed.
-		switch (t.type) with (ir.PrimitiveType.Kind) {
+		switch (t.type) {
 		case Ubyte, Char: return inUnsignedRange(ubyte.max);
 		case Byte: return inSignedRange(byte.min, byte.max);
 		case Ushort, Wchar: return inUnsignedRange(ushort.max);

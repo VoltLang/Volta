@@ -746,7 +746,7 @@ ParseStatus parseIsExp(ParserStream ps, out ir.IsExp ie)
 			if (ie.compType == ir.IsExp.Comparison.None) {
 				return parseExpected(ps, ps.peek.location, ir.NodeType.Identifier, "'==' or ':'");
 			}
-			switch (ps.peek.type) with(TokenType) {
+			switch (ps.peek.type) {
 			case Struct, Union, Class, Enum, Interface, Function,
 				 Delegate, Super, Const, Immutable, Inout, Shared,
 				 Return:
