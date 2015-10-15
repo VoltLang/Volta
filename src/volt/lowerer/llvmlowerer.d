@@ -1052,6 +1052,9 @@ void replaceGlobalArrayLiteralIfNeeded(LanguagePass lp, ir.Scope current, ir.Var
 	fn._body.statements ~= assign;
 	var.assign = null;
 
+	// Cfg isn't run after this so we need to be explicit about it.
+	buildReturnStat(al.location, fn._body);
+
 	return;
 }
 
