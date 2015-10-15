@@ -707,12 +707,23 @@ void extypeIdentifierExpNoRevisit(Context ctx, ref ir.Exp e, ir.IdentifierExp i,
 		return;
 	case Template:
 		throw panic(i, "template used as a value.");
-	case Scope:
 	case Type:
+		// Named types have a scope.
 		auto named = cast(ir.Named) store.node;
-		if (named is null) {
-			goto case Alias;
+		if (named !is null) {
+			goto case Scope;
 		}
+
+		auto t = cast(ir.Type) store.node;
+		assert(t !is null);
+
+		auto te = new ir.TypeExp();
+		te.location = i.location;
+		//te.idents = [i.value];
+		te.type = copyTypeSmart(i.location, t);
+		e = te;
+		return;
+	case Scope:
 		auto se = new ir.StoreExp();
 		se.location = i.location;
 		se.idents = [i.value];
@@ -721,7 +732,7 @@ void extypeIdentifierExpNoRevisit(Context ctx, ref ir.Exp e, ir.IdentifierExp i,
 		return;
 	case Merge:
 	case Alias:
-		return;
+		assert(false);
 	}
 }
 
@@ -1370,12 +1381,12 @@ bool consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes, ref i
 		if (postfix.identifier is null) {
 			break;
 		}
-		store = lookupAsImportScope(ctx.lp, base, postfix.location, postfix.identifier.value);
-		if (store is null) {
-			return false;
-		}
-		name = postfix.identifier.value;
 
+		name = postfix.identifier.value;
+		store = lookupAsImportScope(ctx.lp, base, postfix.location, name);
+		if (store is null) {
+			throw makeFailedLookup(postfix.location, name);
+		}
 
 		ir.Exp toReplace;
 
@@ -1405,7 +1416,6 @@ bool consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes, ref i
 			return true;
 		}
 	}
-
 
 	return false;
 }

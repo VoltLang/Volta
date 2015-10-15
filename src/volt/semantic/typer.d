@@ -70,6 +70,10 @@ ir.Type declTypeLookup(Location loc, LanguagePass lp, ir.Scope _scope, string na
 ir.Type getExpType(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 {
 	auto result = getExpTypeImpl(lp, exp, currentScope);
+	if (result is null) {
+		return null;
+	}
+
 	while (result.nodeType == ir.NodeType.TypeReference) {
 		auto asTR = cast(ir.TypeReference) result;
 		panicAssert(exp, asTR !is null);
