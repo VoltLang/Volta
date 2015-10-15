@@ -2744,10 +2744,13 @@ void transformArrayLiteralIfNeeded(Context ctx, ref ir.Exp exp,
 	if (al.values.length == 0 || !ctx.isInFunction()) {
 		return;
 	}
+
 	auto at = getExpType(ctx.lp, al, ctx.current);
 	auto sexp = buildInternalArrayLiteralSmart(al.location, at, al.values);
 	sexp.originalExp = al;
 	exp = sexp;
+
+	acceptExp(exp, ctx.extyper);
 }
 
 /**
@@ -3645,7 +3648,7 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ref ir.Exp exp, ir.ArrayLiteral al)
+	override Status leave(ref ir.Exp exp, ir.ArrayLiteral al)
 	{
 		transformArrayLiteralIfNeeded(ctx, exp, al);
 		return Continue;
