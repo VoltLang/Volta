@@ -990,7 +990,6 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 			}
 		}
 
-		// Remove       vvvvvvvvvvvvvvvvvvvvvvvvvvvv   when fixed.
 		switch (t.type) {
 		case Ubyte, Char: return inUnsignedRange(ubyte.max);
 		case Byte: return inSignedRange(byte.min, byte.max);
