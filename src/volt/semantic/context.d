@@ -28,6 +28,7 @@ private:
 	uint mParentIndex;
 	ir.Function[] mFunctionStack;
 	ir.Exp[] mIndexChildren;
+	ir.Exp[] mWithExps;
 
 public:
 	this(LanguagePass lp, Visitor extyper)
@@ -83,6 +84,11 @@ public:
 		return mLength == 0 ? null : mFunctionStack[mLength-1];
 	}
 
+	final @property ir.Exp[] withExps()
+	{
+		return mWithExps;
+	}
+
 	final @property bool isNested()
 	{
 		assert(mLength > 1);
@@ -122,6 +128,26 @@ public:
 	final void leave(ir.Enum e) { pop(e, e.myScope, null); }
 	final void leave(ir.Function fn) { pop(fn, fn.myScope, fn); }
 	final void leave(ir.BlockStatement bs) { mCurrent = mCurrent.parent; }
+
+	/**
+	 * Keep track of with statements and switch withs.
+	 */
+	final void pushWith(ir.Exp exp)
+	{
+		mWithExps ~= exp;
+	}
+
+	/**
+	 * Keep track of with statements and switch withs.
+	 */
+	final void popWith(ir.Exp exp)
+	{
+		if (mWithExps[$-1] !is exp) {
+			throw panic(exp, "invalid layout");
+		}
+
+		mWithExps = mWithExps[0 .. $-1];
+	}
 
 	/*
 	 * Keep track of index expressions for $ -> array.length replacement.

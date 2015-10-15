@@ -562,7 +562,7 @@ void extypeAssign(Context ctx, ref ir.Exp exp, ir.Type type,
  * Otherwise, null is returned.
  */
 ir.Exp withLookup(Context ctx, ref ir.Exp exp, ir.Scope current,
-                  string leaf, ir.Postfix pleaf = null)
+                  string leaf)
 {
 	ir.Exp access = buildAccess(exp.location, copyExp(exp), leaf);
 	ir.Class _class;
@@ -613,14 +613,13 @@ void extypeIdentifierExpNoRevisit(Context ctx, ref ir.Exp e, ir.IdentifierExp i,
 
 	// Rewrite expressions that rely on a with block lookup.
 	ir.Exp rewriteExp;
-	foreach (withStatement; current.withStatements) {
-		auto withExp = withStatement.exp;
+	foreach_reverse (withExp; ctx.withExps) {
 		auto _rewriteExp = withLookup(ctx, withExp, current, i.value);
 		if (_rewriteExp is null) {
 			continue;
 		}
 		if (rewriteExp !is null) {
-			throw makeWithCreatesAmbiguity(withExp.location);
+			throw makeWithCreatesAmbiguity(i.location);
 		}
 		rewriteExp = _rewriteExp;
 		rewriteExp.location = e.location;
@@ -628,7 +627,7 @@ void extypeIdentifierExpNoRevisit(Context ctx, ref ir.Exp e, ir.IdentifierExp i,
 	}
 	if (rewriteExp !is null) {
 		auto store = lookup(ctx.lp, current, i.location, i.value);
-		if (store !is null) {
+		if (store !is null && isStoreLocal(ctx.lp, ctx.current, store)) {
 			throw makeWithCreatesAmbiguity(i.location);
 		}
 		e = rewriteExp;
@@ -2512,66 +2511,6 @@ struct ArrayCase
 	ir.IfStatement lastIf;
 }
 
-void replaceSwitchCaseWithWith(Context ctx, ir.SwitchStatement ss)
-{
-	if (ss.withs.length == 0) {
-		return;
-	}
-	void replaceCaseIfNeeded(ref ir.Exp exp)
-	{
-		// If the case needs to be rewritten via the switch's with(s), it's done here.
-		int replaced;
-		foreach (wexp; ss.withs) {
-			auto etype = getExpType(ctx.lp, wexp, ctx.current);
-			ir.IdentifierExp iexp;
-			auto pfix = cast(ir.Postfix) exp;
-			ir.Postfix[] pfixes;
-			if (pfix !is null) {
-				pfixes = collectPostfixes(pfix);
-				iexp = cast(ir.IdentifierExp) pfixes[0].child;
-			}
-			if (iexp is null) {
-				iexp = cast(ir.IdentifierExp) exp;
-			}
-			if (iexp is null) {
-				continue;
-			}
-			auto access = buildAccess(exp.location, wexp, iexp.value);
-			ir.Class dummyClass;
-			string dummyString;
-			ir.Scope tmpScope;
-			retrieveScope(ctx.lp, etype, access, tmpScope, dummyClass, dummyString);
-			if (tmpScope is null) {
-				continue;
-			}
-			auto store = lookupInGivenScopeOnly(ctx.lp, tmpScope, exp.location, iexp.value);
-			if (store is null) {
-				continue;
-			}
-			auto decl = cast(ir.Declaration) store.node;
-			if (decl is null && pfixes.length > 0) {
-				pfixes[0].child = buildAccess(exp.location, copyExp(wexp), iexp.value);
-				continue;
-			}
-			if (decl is null) {
-				continue;
-			}
-			exp = buildExpReference(exp.location, decl, iexp.value);
-		}
-	}
-	foreach (_case; ss.cases) {
-		if (_case.firstExp !is null) {
-			replaceCaseIfNeeded(_case.firstExp);
-		}
-		if (_case.secondExp !is null) {
-			replaceCaseIfNeeded(_case.secondExp);
-		}
-		foreach (ref exp; _case.exps) {
-			replaceCaseIfNeeded(exp);
-		}
-	}
-}
-
 /**
  * Ensure that a given switch statement is semantically sound.
  * Errors on bad final switches (doesn't cover all enum members, not on an enum at all),
@@ -3329,6 +3268,8 @@ public:
 
 	override Status enter(ir.WithStatement ws)
 	{
+		acceptExp(ws.exp, this);
+
 		auto e = cast(ir.Unary) ws.exp;
 		auto type = getExpType(ctx.lp, ws.exp, ctx.current);
 		if (e !is null && realType(type).nodeType == ir.NodeType.Class) {
@@ -3338,7 +3279,12 @@ public:
 			ws.block.statements = var ~ ws.block.statements;
 			ws.exp = buildExpReference(var.location, var, var.name);
 		}
-		return Continue;
+
+		ctx.pushWith(ws.exp);
+		accept(ws.block, this);
+		ctx.popWith(ws.exp);
+
+		return ContinueParent;
 	}
 
 	override Status enter(ir.ReturnStatement ret)
@@ -3486,15 +3432,22 @@ public:
 	override Status enter(ir.SwitchStatement ss)
 	{
 		acceptExp(ss.condition, this);
+
 		foreach (ref wexp; ss.withs) {
 			acceptExp(wexp, this);
+			ctx.pushWith(wexp);
 		}
-		replaceSwitchCaseWithWith(ctx, ss);
+
 		foreach (_case; ss.cases) {
 			accept(_case, this);
 		}
+
 		verifySwitchStatement(ctx, ss);
 		replaceGotoCase(ctx, ss);
+
+		foreach_reverse(wexp; ss.withs) {
+			ctx.popWith(wexp);
+		}
 		return ContinueParent;
 	}
 

@@ -1128,6 +1128,35 @@ bool isNested(ir.Function fn)
 
 /*
  *
+ * Store functions.
+ *
+ */
+
+/**
+ * Used to determin wether a store is local to a function and therefore
+ * can not be shadowed by a with statement.
+ */
+bool isStoreLocal(LanguagePass lp, ir.Scope current, ir.Store store)
+{
+	if (store.kind != ir.Store.Kind.Value) {
+		return false;
+	}
+
+	auto var = cast(ir.Variable) store.node;
+	assert(var !is null);
+
+	if (var.storage != ir.Variable.Storage.Function &&
+	    var.storage != ir.Variable.Storage.Nested) {
+		return false;
+	}
+
+	// Yes this is a variable.
+	return true;
+}
+
+
+/*
+ *
  * Aggregate functions.
  *
  */
