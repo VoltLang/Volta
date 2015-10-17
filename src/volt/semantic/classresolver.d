@@ -617,7 +617,7 @@ void emitVtableVariable(LanguagePass lp, ir.Class _class)
 	assert(_class.interfaces.length == _class.parentInterfaces.length);
 	void addInterfaceInstance(ir._Interface iface, ir.Class fromParent, size_t i)
 	{
-		auto var = buildVariableSmart(l, iface.layoutStruct, ir.Variable.Storage.Global, format("__iface%s_instance", mangle(iface)));
+		auto var = buildVariableSmart(l, iface.layoutStruct, ir.Variable.Storage.Global, format("%s", mangle(iface)));
 		var.mangledName =  "_V__Interface_" ~ _class.mangledName ~ "_" ~ mangle(iface);
 		var.assign = getInterfaceStructAssign(lp, fromParent, _class.myScope, iface, i);
 		_class.members.nodes ~= var;

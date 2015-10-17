@@ -318,6 +318,7 @@ public:
 				newStatements ~= buildExpStat(l, buildAssign(l, buildExpReference(l, var, var.name), var.assign));
 				var.assign = null;
 			}
+			accept(var, this);
 			newTopVars ~= var;
 		}
 		bs.statements = newStatements;
@@ -332,49 +333,10 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ref ir.Exp exp, ir.Constant c)
-	{
-		// Convert interface Constants.
-		auto iface = cast(ir._Interface) realType(c.type);
-		if (iface !is null) {
-			lp.actualize(iface);
-			assert(iface.layoutStruct !is null);
-			c.type = buildPtrSmart(c.location, buildPtrSmart(c.location, iface.layoutStruct));
-		}
-		return Continue;
-
-	}
-
 	override Status enter(ir.Variable v)
 	{
-		// Convert Interface variables to their internal struct.
-		auto iface = cast(ir._Interface) realType(v.type);
-		if (iface !is null) {
-			lp.actualize(iface);
-			assert(iface.layoutStruct !is null);
-			v.type = buildPtrSmart(v.location, buildPtrSmart(v.location, iface.layoutStruct));
-		}
 		if (functionStack.length == 0) {
 			replaceGlobalArrayLiteralIfNeeded(lp, current, v);
-		}
-		return Continue;
-	}
-
-	override Status enter(ir.Function fn)
-	{
-		super.enter(fn);
-		// Convert Interfaces in parameters and return types to their internal struct.
-		foreach (ref p; fn.type.params) {
-			auto iface = cast(ir._Interface) realType(p);
-			if (iface !is null) {
-				assert(iface.layoutStruct !is null);
-				p = buildPtrSmart(p.location, buildPtrSmart(p.location, iface.layoutStruct));
-			}
-		}
-		auto retIface = cast(ir._Interface) realType(fn.type.ret);
-		if (retIface !is null) {
-			assert(retIface.layoutStruct !is null);
-			fn.type.ret = buildPtrSmart(fn.location, buildPtrSmart(fn.location, retIface.layoutStruct));
 		}
 		return Continue;
 	}
@@ -513,6 +475,7 @@ public:
 	{
 		replaceInterfaceCastIfNeeded(exp.location, lp, current, uexp, exp);
 		replaceArrayCastIfNeeded(exp.location, lp, current, uexp, exp);
+
 		return Continue;
 	}
 
@@ -886,6 +849,10 @@ public:
 		if (iface is null) {
 			return;
 		}
+		auto agg = cast(ir.Aggregate) realType(getExpType(lp, uexp.value, current));
+		if (agg is null) {
+			return;
+		}
 		exp = buildAddrOf(loc, buildAccess(loc, uexp.value, mangle(iface)));
 	}
 
@@ -971,6 +938,10 @@ bool isInterfacePointer(LanguagePass lp, ir.Postfix pfix, ir.Scope current, out 
 		return false;
 	}
 	auto t = getExpType(lp, pfix.child, current);
+	iface = cast(ir._Interface) realType(t);
+	if (iface !is null) {
+		return true;
+	}
 	auto ptr = cast(ir.PointerType) realType(t);
 	if (ptr is null) {
 		return false;
@@ -1308,3 +1279,4 @@ void transformArrayLiteralIfNeeded(LanguagePass lp, ir.Scope current, bool inFun
 	sexp.originalExp = al;
 	exp = sexp;
 }
+

@@ -633,31 +633,66 @@ public:
 	}
 
 private:
-	this(State state, ir.Struct irType)
+	string getMangled(ir.Struct irType)
 	{
 		auto c = cast(ir.Class) irType.loweredNode;
-		auto mangled = c !is null ? c.mangledName : irType.mangledName;
+		if (c !is null) {
+			return c.mangledName;
+		}
 
-		diType = state.diStruct(irType);
-		llvmType = LLVMStructCreateNamed(state.context, mangled);
-		super(state, irType, llvmType, diType);
+		auto i = cast(ir._Interface) irType.loweredNode;
+		if (i !is null) {
+			return i.mangledName;
+		}
 
-		// This is adds the "reference" part of the class.
+		return irType.mangledName;
+	}
+
+	void createAlias(State state, ir.Struct irType, string mangled)
+	{
+		auto c = cast(ir.Class) irType.loweredNode;
 		if (c !is null) {
 			auto ptr = buildPtrSmart(c.location, irType);
 			addMangledName(ptr);
 			addMangledName(ptr.base);
 
-			auto old = ptr.mangledName;
-			ptr.mangledName = mangled;
+			auto p = .PointerType.fromIr(state, ptr);
 
-			auto p = PointerType.fromIr(state, ptr);
-
-			state.addType(p, old);
+			state.addType(p, mangled);
 			// This type is now aliased as:
 			// pC3foo5Clazz14__layoutStruct
 			// C3foo5Clazz
+			return;
 		}
+
+		auto i = cast(ir._Interface) irType.loweredNode;
+		if (i !is null) {
+			auto ptr = buildPtrSmart(i.location, irType);
+			auto ptrptr = buildPtr(i.location, ptr);
+			addMangledName(ptrptr);
+			addMangledName(ptr);
+			addMangledName(ptr.base);
+
+			.PointerType.fromIr(state, ptr);
+			auto p = .PointerType.fromIr(state, ptrptr);
+
+			state.addType(p, mangled);
+			// This type is now aliased as:
+			// ppI3foo5Iface14__layoutStruct
+			// I3foo5Iface
+			return;
+		}
+	}
+
+	this(State state, ir.Struct irType)
+	{
+		auto mangled = getMangled(irType);
+
+		diType = state.diStruct(irType);
+		llvmType = LLVMStructCreateNamed(state.context, mangled);
+		super(state, irType, llvmType, diType);
+
+		createAlias(state, irType, mangled);
 
 		// @todo check packing.
 		uint index;
@@ -850,6 +885,10 @@ Type fromIrImpl(State state, ir.Type irType)
 		auto _class = cast(ir.Class)irType;
 		StructType.fromIr(state, _class.layoutStruct);
 		return state.getTypeNoCreate(_class.mangledName);
+	case Interface:
+		auto _iface = cast(ir._Interface)irType;
+		StructType.fromIr(state, _iface.layoutStruct);
+		return state.getTypeNoCreate(_iface.mangledName);
 	case UserAttribute:
 		auto attr = cast(ir.UserAttribute)irType;
 		assert(attr !is null);
