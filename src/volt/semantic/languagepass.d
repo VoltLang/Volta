@@ -459,7 +459,7 @@ public:
 	override void doResolve(ir.Scope current, ir.Variable v)
 	{
 		auto e = new ExTyper(this);
-		e.transform(current, v);
+		e.resolve(current, v);
 	}
 
 	override void doResolve(ir.Alias a)

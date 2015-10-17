@@ -2889,6 +2889,60 @@ void replaceGotoCase(Context ctx, ir.SwitchStatement ss)
 	}
 }
 
+
+/*
+ *
+ * Resolver functions.
+ *
+ */
+
+/**
+ * Resolves a Variable.
+ */
+void resolveVariable(Context ctx, ir.Variable v)
+{
+	auto done = ctx.lp.startResolving(v);
+	ctx.isVarAssign = true;
+
+	scope (success) {
+		ctx.isVarAssign = false;
+		done();
+	}
+
+	v.hasBeenDeclared = true;
+	foreach (u; v.userAttrs) {
+		ctx.lp.resolve(ctx.current, u);
+	}
+
+	// Fix up type as best as possible.
+	accept(v.type, ctx.extyper);
+	v.type = ctx.lp.resolve(ctx.current, v.type);
+
+	bool inAggregate = (cast(ir.Aggregate) ctx.current.node) !is null;
+	if (inAggregate && v.assign !is null &&
+	    ctx.current.node.nodeType != ir.NodeType.Class &&
+            (v.storage != ir.Variable.Storage.Global &&
+             v.storage != ir.Variable.Storage.Local)) {
+		throw makeAssignToNonStaticField(v);
+	}
+
+	if (inAggregate && (v.type.isConst || v.type.isImmutable)) {
+		throw makeConstField(v);
+	}
+
+	replaceTypeOfIfNeeded(ctx, v.type);
+
+	if (v.assign !is null) {
+		handleIfStructLiteral(ctx, v.type, v.assign);
+		acceptExp(v.assign, ctx.extyper);
+		extypeAssign(ctx, v.assign, v.type);
+	}
+
+	replaceAutoIfNeeded(v.type);
+	accept(v.type, ctx.extyper);
+	v.isResolved = true;
+}
+
 /**
  * If type casting were to be strict, type T could only
  * go to type T without an explicit cast. Implicit casts
@@ -2939,10 +2993,10 @@ public:
 	/**
 	 * For out of band checking of Variables.
 	 */
-	void transform(ir.Scope current, ir.Variable v)
+	void resolve(ir.Scope current, ir.Variable v)
 	{
 		ctx.setupFromScope(current);
-		scope (exit) ctx.reset();
+		scope (success) ctx.reset();
 
 		accept(v, this);
 	}
@@ -3146,46 +3200,9 @@ public:
 
 	override Status enter(ir.Variable v)
 	{
-		if (v.isResolved) {
-			return ContinueParent;
+		if (!v.isResolved) {
+			resolveVariable(ctx, v);
 		}
-
-		auto done = ctx.lp.startResolving(v);
-		ctx.isVarAssign = true;
-
-		scope (exit) {
-			ctx.isVarAssign = false;
-			done();
-		}
-
-		v.hasBeenDeclared = true;
-		foreach (u; v.userAttrs) {
-			ctx.lp.resolve(ctx.current, u);
-		}
-
-		// Fix up type as best as possible.
-		accept(v.type, this);
-		v.type = ctx.lp.resolve(ctx.current, v.type);
-
-		bool inAggregate = (cast(ir.Aggregate) ctx.current.node) !is null;
-		if (inAggregate && v.assign !is null && ctx.current.node.nodeType != ir.NodeType.Class && (v.storage != ir.Variable.Storage.Global && v.storage != ir.Variable.Storage.Local)) {
-			throw makeAssignToNonStaticField(v);
-		}
-		if (inAggregate && (v.type.isConst || v.type.isImmutable)) {
-			throw makeConstField(v);
-		}
-
-		replaceTypeOfIfNeeded(ctx, v.type);
-
-		if (v.assign !is null) {
-			handleIfStructLiteral(ctx, v.type, v.assign);
-			acceptExp(v.assign, this);
-			extypeAssign(ctx, v.assign, v.type);
-		}
-
-		replaceAutoIfNeeded(v.type);
-		accept(v.type, this);
-		v.isResolved = true;
 		return ContinueParent;
 	}
 
