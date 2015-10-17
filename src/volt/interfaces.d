@@ -270,16 +270,14 @@ public:
 	abstract void gather(ir.Scope current, ir.BlockStatement bs);
 
 	/**
-	 * Resolves a Function making it usable externaly,
-	 *
-	 * @throws CompilerError on failure to resolve function.
-	 */
-	abstract void resolve(ir.Scope current, ir.Function fn);
-
-	/**
 	 * Resolves an Attribute, for UserAttribute usages.
 	 */
 	abstract void resolve(ir.Scope current, ir.Attribute a);
+
+	/**
+	 * Resolve a set of user attributes.
+	 */
+	abstract void resolve(ir.Scope current, ir.Attribute[] userAttrs);
 
 	/**
 	 * Resolves an ExpReference, forwarding the decl appropriately.
@@ -314,6 +312,14 @@ public:
 	 * is changed to kind Function, since only functions can be merged.
 	 */
 	abstract void resolve(ir.Store);
+
+	/**
+	 * Resolves a Function making it usable externaly,
+	 *
+	 * @throws CompilerError on failure to resolve function.
+	 */
+	final void resolve(ir.Scope current, ir.Function fn)
+	{ if (!fn.isResolved) doResolve(current, fn); }
 
 	/**
 	 * Resolves a Variable making it usable externaly.
@@ -439,6 +445,7 @@ public:
 
 protected:
 	abstract void doResolve(ir.Scope current, ir.Variable v);
+	abstract void doResolve(ir.Scope current, ir.Function fn);
 	abstract void doResolve(ir.Alias a);
 	abstract void doResolve(ir.Enum e);
 	abstract void doResolve(ir._Interface i);

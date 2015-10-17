@@ -330,30 +330,11 @@ public:
 		g.close();
 	}
 
-
-
-	override void resolve(ir.Scope current, ir.Function fn)
+	override void resolve(ir.Scope current, ir.Attribute[] userAttrs)
 	{
-		if ((fn.kind == ir.Function.Kind.Function ||
-		    (cast(ir.Class) fn.myScope.parent.node) is null) &&
-		    fn.isMarkedOverride) {
-			throw makeMarkedOverrideDoesNotOverride(fn, fn);
+		foreach (a; userAttrs) {
+			resolve(current, a);
 		}
-
-		replaceVarArgsIfNeeded(this, fn);
-
-		fn.type = cast(ir.FunctionType)resolve(current, fn.type);
-
-		foreach (i, ref param; fn.params) {
-			if (param.assign !is null) {
-				auto texp = cast(ir.TokenExp) param.assign;
-				if (texp is null) {
-					param.assign = evaluate(
-						this, current, param.assign);
-				}
-			}
-		}
-		resolve(current, fn.userAttrs);
 	}
 
 	override void resolve(ir.Scope current, ir.ExpReference eref)
@@ -361,7 +342,7 @@ public:
 		auto var = cast(ir.Variable) eref.decl;
 		if (var !is null) {
 			// This is not correct scope.
-			if (!var.isResolved) {
+			debug if (!var.isResolved) {
 				debugPrintNode(eref);
 				assert(false);
 			}
@@ -370,13 +351,19 @@ public:
 		auto fn = cast(ir.Function) eref.decl;
 		if (fn !is null) {
 			// This is not correct scope.
-			resolve(current, fn);
+			debug if (!fn.isResolved) {
+				debugPrintNode(eref);
+				assert(false);
+			}
 			return;
 		}
 		auto set = cast(ir.FunctionSet) eref.decl;
 		if (set !is null) {
-			foreach (setfn; set.functions) {
-				resolve(current, setfn);
+			debug foreach (setfn; set.functions) {
+				if (!setfn.isResolved) {
+					debugPrintNode(eref);
+					assert(false);
+				}
 			}
 			return;
 		}
@@ -441,9 +428,6 @@ public:
 			}
 			s.functions ~= f.functions;
 		}
-		foreach (fn; s.functions) {
-			resolve(s.parent, fn);
-		}
 
 		s.aliases = null;
 		s.kind = ir.Store.Kind.Function;
@@ -460,6 +444,12 @@ public:
 	{
 		auto e = new ExTyper(this);
 		e.resolve(current, v);
+	}
+
+	override void doResolve(ir.Scope current, ir.Function fn)
+	{
+		auto e = new ExTyper(this);
+		e.resolve(current, fn);
 	}
 
 	override void doResolve(ir.Alias a)
@@ -637,13 +627,6 @@ public:
 	 *
 	 */
 
-
-	private void resolve(ir.Scope current, ir.Attribute[] userAttrs)
-	{
-		foreach (a; userAttrs) {
-			resolve(current, a);
-		}
-	}
 
 	private void resolve(ir.Scope current, ir.TopLevelBlock members)
 	{

@@ -76,7 +76,11 @@ public:
 	}
 
 public:
-	/// The access level of this @p Variable, which determines how it interacts with other modules.
+	/// Has the extyper checked this variable.
+	bool isResolved;
+
+	/// The access level of this @p Variable, which determines how
+	/// it interacts with other modules.
 	Access access;
 
 	/// The underlying @p Type this @p Variable is an instance of.
@@ -94,8 +98,6 @@ public:
 
 	// For exported symbols.
 	Linkage linkage;
-
-	bool isResolved;   ///< Has the extyper checked this variable.
 
 	bool isWeakLink;   ///< Only for global variables.
 
@@ -232,6 +234,9 @@ public:
 
 
 public:
+	/// Has the extyper checked this function.
+	bool isResolved;
+
 	Access access;  ///< defalt public.
 
 	Scope myScope; ///< Needed for params

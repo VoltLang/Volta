@@ -2450,7 +2450,6 @@ void handleNestedThis(ir.Function fn)
  */
 void handleNestedParams(Context ctx, ir.Function fn)
 {
-	ctx.lp.resolve(ctx.current, fn);
 	auto np = fn.nestedVariable;
 	auto ns = fn.nestStruct;
 	if (np is null || ns is null) {
@@ -2943,6 +2942,92 @@ void resolveVariable(Context ctx, ir.Variable v)
 	v.isResolved = true;
 }
 
+void resolveFunction(Context ctx, ir.Function fn)
+{
+	auto done = ctx.lp.startResolving(fn);
+	scope (success) done();
+
+	if (fn.isAutoReturn) {
+		fn.type.ret = buildVoid(fn.type.ret.location);
+	}
+
+	if (fn.type.isProperty &&
+	    fn.type.params.length == 0 &&
+	    isVoid(fn.type.ret)) {
+		throw makeInvalidType(fn, buildVoid(fn.location));
+	} else if (fn.type.isProperty &&
+	           fn.type.params.length > 1) {
+		throw makeWrongNumberOfArguments(fn, fn.type.params.length, isVoid(fn.type.ret) ? 0U : 1U);
+	}
+
+	fn.type = cast(ir.FunctionType)ctx.lp.resolve(fn.myScope.parent, fn.type);
+
+
+	if (fn.name == "main" && fn.type.linkage == ir.Linkage.Volt) {
+
+		if (fn.params.length == 0) {
+			addParam(fn.location, fn, buildStringArray(fn.location), "");
+		} else if (fn.params.length > 1) {
+			throw makeInvalidMainSignature(fn);
+		}
+
+		auto arr = cast(ir.ArrayType) fn.type.params[0];
+		if (arr is null ||
+		    !isString(realType(arr.base)) ||
+		    (!isVoid(fn.type.ret) && !isInt(fn.type.ret))) {
+			throw makeInvalidMainSignature(fn);
+		}
+	}
+
+
+	if (fn.nestStruct !is null &&
+	    fn.thisHiddenParameter !is null &&
+	    !ctx.isFunction) {
+		auto cvar = copyVariableSmart(fn.thisHiddenParameter.location, fn.thisHiddenParameter);
+		addVarToStructSmart(fn.nestStruct, cvar);
+	}
+
+
+	handleNestedThis(fn);
+	handleNestedParams(ctx, fn);
+
+	if ((fn.kind == ir.Function.Kind.Function ||
+	     (cast(ir.Class) fn.myScope.parent.node) is null) &&
+	    fn.isMarkedOverride) {
+		throw makeMarkedOverrideDoesNotOverride(fn, fn);
+	}
+
+	replaceVarArgsIfNeeded(ctx.lp, fn);
+
+	ctx.lp.resolve(ctx.current, fn.userAttrs);
+
+	if (fn.type.homogenousVariadic && !isArray(realType(fn.type.params[$-1]))) {
+		throw makeExpected(fn.params[$-1].location, "array type");
+	}
+
+	if (fn.outParameter.length > 0) {
+		assert(fn.outContract !is null);
+		auto l = fn.outContract.location;
+		auto var = buildVariableSmart(l, copyTypeSmart(l, fn.type.ret), ir.Variable.Storage.Function, fn.outParameter);
+		fn.outContract.statements = var ~ fn.outContract.statements;
+		fn.outContract.myScope.addValue(var, var.name);
+	}
+
+	foreach (i, ref param; fn.params) {
+		if (param.assign is null) {
+			continue;
+		}
+		auto texp = cast(ir.TokenExp) param.assign;
+		if (texp !is null) {
+			continue;
+		}
+
+		param.assign = evaluate(ctx.lp, ctx.current, param.assign);
+	}
+
+	fn.isResolved = true;
+}
+
 /**
  * If type casting were to be strict, type T could only
  * go to type T without an explicit cast. Implicit casts
@@ -2999,6 +3084,17 @@ public:
 		scope (success) ctx.reset();
 
 		accept(v, this);
+	}
+
+	/**
+	 * For out of band checking of Functions.
+	 */
+	void resolve(ir.Scope current, ir.Function fn)
+	{
+		ctx.setupFromScope(current);
+		scope (success) ctx.reset();
+
+		resolveFunction(ctx, fn);
 	}
 
 	/**
@@ -3208,59 +3304,16 @@ public:
 
 	override Status enter(ir.Function fn)
 	{
-		if (fn.isAutoReturn) {
-			fn.type.ret = buildVoid(fn.type.ret.location);
-		}
-		if (fn.type.isProperty && fn.type.params.length == 0 && isVoid(fn.type.ret)) {
-			throw makeInvalidType(fn, buildVoid(fn.location));
-		} else if (fn.type.isProperty && fn.type.params.length > 1) {
-			throw makeWrongNumberOfArguments(fn, fn.type.params.length, isVoid(fn.type.ret) ? 0U : 1U);
+		if (!fn.isResolved) {
+			resolveFunction(ctx, fn);
 		}
 
-		fn.type = cast(ir.FunctionType)ctx.lp.resolve(fn.myScope.parent, fn.type);
-
-		if (fn.name == "main" && fn.type.linkage == ir.Linkage.Volt) {
-			if (fn.params.length == 0) {
-				addParam(fn.location, fn, buildStringArray(fn.location), "");
-			} else if (fn.params.length > 1) {
-				throw makeInvalidMainSignature(fn);
-			}
-			if (!isVoid(fn.type.ret) && !isInt(fn.type.ret)) {
-				throw makeInvalidMainSignature(fn);
-			}
-		}
-		if (fn.nestStruct !is null && fn.thisHiddenParameter !is null && !ctx.isFunction) {
-			auto cvar = copyVariableSmart(fn.thisHiddenParameter.location, fn.thisHiddenParameter);
-			addVarToStructSmart(fn.nestStruct, cvar);
-		}
-		handleNestedThis(fn);
-		handleNestedParams(ctx, fn);
-		ctx.lp.resolve(ctx.current, fn);
-		if (fn.type.homogenousVariadic && !isArray(realType(fn.type.params[$-1]))) {
-			throw makeExpected(fn.params[$-1].location, "array type");
-		}
-		if (fn.outParameter.length > 0) {
-			assert(fn.outContract !is null);
-			auto l = fn.outContract.location;
-			auto var = buildVariableSmart(l, copyTypeSmart(l, fn.type.ret), ir.Variable.Storage.Function, fn.outParameter);
-			fn.outContract.statements = var ~ fn.outContract.statements;
-			fn.outContract.myScope.addValue(var, var.name);
-		}
 		ctx.enter(fn);
 		return Continue;
 	}
 
 	override Status leave(ir.Function fn)
 	{
-		if (fn.name == "main" && fn.type.linkage == ir.Linkage.Volt) {
-			if (fn.params.length != 1) {
-				throw panic(fn.location, "unnormalised main");
-			}
-			auto arr = cast(ir.ArrayType) fn.type.params[0];
-			if (arr is null || !isString(realType(arr.base))) {
-				throw makeInvalidMainSignature(fn);
-			}
-		}
 		ctx.leave(fn);
 		return Continue;
 	}
