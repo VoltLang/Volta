@@ -3022,6 +3022,9 @@ void resolveFunction(Context ctx, ir.Function fn)
 			continue;
 		}
 
+		// We don't extype TokenExp because we want it to be resolved
+		// at the call site not where it was defined.
+		acceptExp(param.assign, ctx.extyper);
 		param.assign = evaluate(ctx.lp, ctx.current, param.assign);
 	}
 
