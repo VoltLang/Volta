@@ -40,11 +40,7 @@ ir.Store getStore(Context ctx, ir.Exp exp)
 	if (sexp !is null) {
 		return sexp.store;
 	}
-	auto ident = cast(ir.IdentifierExp) exp;
-	if (ident is null) {
-		return null;
-	}
-	return lookup(ctx.lp, ctx.current, exp.location, ident.value);
+	return null;
 }
 
 /**

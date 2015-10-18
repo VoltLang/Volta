@@ -64,7 +64,6 @@ ir.IdentifierExp copy(ir.IdentifierExp ie)
 	i.location = ie.location;
 	i.globalLookup = ie.globalLookup;
 	i.value = ie.value;
-	i.type = ie.type is null ? null : copyNode(ie.type);
 	return i;
 }
 

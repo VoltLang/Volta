@@ -326,8 +326,6 @@ public:
 	bool globalLookup;  // Leading dot.
 	string value;
 
-	Node type;
-
 public:
 	this() { super(NodeType.IdentifierExp); }
 	this(string s)

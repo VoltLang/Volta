@@ -21,46 +21,6 @@ import volt.semantic.classify;
 import volt.semantic.overload;
 
 
-/// Look up a Variable and return its type.
-ir.Type declTypeLookup(Location loc, LanguagePass lp, ir.Scope _scope, string name)
-{
-	auto store = lookup(lp, _scope, loc, name);
-	if (store is null) {
-		throw makeFailedLookup(loc, name);
-	}
-	if (store.kind == ir.Store.Kind.Function) {
-		return buildSetType(loc, store.functions);
-	}
-
-	if (store.kind == ir.Store.Kind.Scope) {
-		auto nt = new ir.NullType();
-		nt.location = loc;
-		return nt;  // !!! ScopeType?
-	}
-
-	auto d = cast(ir.Variable) store.node;
-	if (d !is null) {
-		return d.type;
-	}
-	auto ed = cast(ir.EnumDeclaration) store.node;
-	if (ed !is null) {
-		return ed.type;
-	}
-	auto fp = cast(ir.FunctionParam) store.node;
-	if (fp !is null) {
-		return fp.type;
-	}
-	auto e = cast(ir.Enum) store.node;
-	if (e !is null) {
-		return e;
-	}
-	auto t = cast(ir.Type) store.node;
-	if (t !is null) {
-		return t;
-	}
-	throw makeExpected(loc, "type");
-}
-
 /**
  * Get the type of a given expression.
  *

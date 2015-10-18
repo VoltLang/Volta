@@ -615,10 +615,6 @@ void extypeIdentifierExpNoRevisit(Context ctx, ref ir.Exp e, ir.IdentifierExp i,
 	}
 	// With rewriting is completed after this point, and regular lookup logic resumes.
 
-	if (i.type is null) {
-		i.type = declTypeLookup(i.location, ctx.lp, current, i.value);
-	}
-
 	auto store = lookup(ctx.lp, current, i.location, i.value);
 	if (store is null) {
 		throw makeFailedLookup(i, i.value);
