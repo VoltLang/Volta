@@ -3607,7 +3607,7 @@ public:
 	 *
 	 */
 
-	override Status enter(ref ir.Exp exp, ir.Typeid _typeid)
+	override Status leave(ref ir.Exp exp, ir.Typeid _typeid)
 	{
 		if (_typeid.ident.length > 0) {
 			auto store = lookup(ctx.lp, ctx.current, _typeid.location, _typeid.ident);
