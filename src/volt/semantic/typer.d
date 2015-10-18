@@ -120,10 +120,6 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 		auto asConstant = cast(ir.Constant) exp;
 		assert(asConstant !is null);
 		return getConstantType(lp, asConstant);
-	case IdentifierExp:
-		auto asIdentifierExp = cast(ir.IdentifierExp) exp;
-		assert(asIdentifierExp !is null);
-		return getIdentifierExpType(lp, asIdentifierExp, currentScope);
 	case ArrayLiteral:
 		auto asLiteral = cast(ir.ArrayLiteral) exp;
 		assert(asLiteral !is null);
@@ -415,21 +411,6 @@ ir.Type getTypeidType(LanguagePass lp, ir.Typeid _typeid, ir.Scope currentScope)
 ir.Type getConstantType(LanguagePass lp, ir.Constant constant)
 {
 	return constant.type;
-}
-
-ir.Type getIdentifierExpType(LanguagePass lp, ir.IdentifierExp identifierExp, ir.Scope currentScope)
-{
-	if (identifierExp.type is null) {
-		if (identifierExp.globalLookup) {
-			identifierExp.type = declTypeLookup(identifierExp.location, lp, getTopScope(identifierExp.location, currentScope), identifierExp.value);
-		} else {
-			identifierExp.type = declTypeLookup(identifierExp.location, lp, currentScope, identifierExp.value);
-		}
-	}
-	assert(identifierExp.type !is null);
-	auto asType = cast(ir.Type) identifierExp.type;
-	assert(asType !is null);
-	return asType;
 }
 
 ir.Type getCommonSubtype(Location l, ir.Type[] types)
