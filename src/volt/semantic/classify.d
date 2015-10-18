@@ -723,6 +723,31 @@ int typeToRuntimeConstant(LanguagePass lp, ir.Scope current, ir.Type type)
  *
  */
 
+/**
+ * Is the given exp a backend constant, this is the minimum that
+ * a backend needs to implement in order to fully support Volt.
+ *
+ * Backends may support more.
+ */
+bool isBackendConstant(ir.Exp exp)
+{
+	if (exp.nodeType == ir.NodeType.Constant) {
+		return true;
+	}
+
+	auto eref = cast(ir.ExpReference) exp;
+	if (eref is null || eref.decl is null) {
+		return false;
+	}
+
+	if (eref.decl.nodeType != ir.NodeType.Function) {
+		return false;
+	}
+
+	// This is a ExpReference pointing to a function.
+	return true;
+}
+
 bool isAssign(ir.Exp exp)
 {
 	auto bop = cast(ir.BinOp) exp;
@@ -1167,7 +1192,8 @@ ir.Type[] getStructFieldTypes(ir.Struct _struct)
 
 	if (_struct.members !is null) foreach (node; _struct.members.nodes) {
 		auto asVar = cast(ir.Variable) node;
-		if (asVar is null) {
+		if (asVar is null ||
+		    asVar.storage != ir.Variable.Storage.Field) {
 			continue;
 		}
 		types ~= asVar.type;

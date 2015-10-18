@@ -80,34 +80,21 @@ void handleIfStructLiteral(Context ctx, ir.Type left, ref ir.Exp right)
 	} else {
 		asLit = cast(ir.StructLiteral) right;
 	}
-	if (asLit is null || asLit.type !is null)
-		return;
 
-	assert(asLit !is null);
+	if (asLit is null ||
+	    asLit.type !is null) {
+		return;
+	}
 
 	auto asStruct = cast(ir.Struct) realType(left);
 	if (asStruct is null) {
 		throw makeBadImplicitCast(right, getExpType(ctx.lp, right, ctx.current), left);
 	}
 
-	ir.Type[] types = getStructFieldTypes(asStruct);
-
-	if (types.length < asLit.exps.length) {
-		throw makeBadImplicitCast(right, getExpType(ctx.lp, right, ctx.current), left);
-	}
-
-	foreach (i, ref sexp; asLit.exps) {
-		if (!ctx.isFunction) {
-			if (evaluateOrNull(ctx.lp, ctx.current, sexp) is null) {
-				throw makeError(sexp.location,
-				                "non-constant expression in global struct literal.");
-			}
-		}
-		extypeAssign(ctx, sexp, types[i]);
-	}
-
 	asLit.type = buildTypeReference(right.location, asStruct, asStruct.name);
 }
+
+
 
 /**
  * Implicitly convert PrimitiveTypes to bools for 'if' and friends.
@@ -2380,6 +2367,43 @@ void extypeTernary(Context ctx, ir.Ternary ternary)
 	}
 }
 
+void extypeStructLiteral(Context ctx, ir.StructLiteral sl)
+{
+	if (sl.type is null) {
+		throw makeError(sl, "can deduce type of struct literal");
+	}
+
+	auto asStruct = cast(ir.Struct) realType(sl.type);
+	assert(asStruct !is null);
+	ir.Type[] types = getStructFieldTypes(asStruct);
+
+	// @TODO fill out with T.init
+	if (types.length != sl.exps.length) {
+		throw makeError(sl, "wrong number of arguments to struct literal");
+	}
+
+	foreach (i, ref sexp; sl.exps) {
+
+		if (ctx.isFunction) {
+			extypeAssign(ctx, sexp, types[i]);
+			continue;
+		}
+
+		if (isBackendConstant(sexp)) {
+			extypeAssign(ctx, sexp, types[i]);
+			continue;
+		}
+
+		auto n = evaluateOrNull(ctx.lp, ctx.current, sexp);
+		if (n is null) {
+			throw makeError(sexp.location, "non-constant expression in global struct literal.");
+		}
+
+		sexp = n;
+		extypeAssign(ctx, sexp, types[i]);
+	}
+}
+
 /// Replace TypeOf with its expression's type, if needed.
 void replaceTypeOfIfNeeded(Context ctx, ref ir.Type type)
 {
@@ -3721,6 +3745,12 @@ public:
 			// Rewrite $ to (arrayName.length).
 			exp = buildAccess(l, copyExp(ctx.lastIndexChild), "length");
 		}
+		return Continue;
+	}
+
+	override Status leave(ref ir.Exp exp, ir.StructLiteral sl)
+	{
+		extypeStructLiteral(ctx, sl);
 		return Continue;
 	}
 
