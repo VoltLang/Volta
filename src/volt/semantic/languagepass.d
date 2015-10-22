@@ -421,6 +421,11 @@ public:
 			w.done();
 		}
 
+		foreach (fn; s.functions) {
+			assert(s.parent is fn.myScope.parent);
+			LanguagePass.resolve(fn.myScope.parent, fn);
+		}
+
 		foreach (a; s.aliases) {
 			auto f = ensureResolved(this, a.store);
 			if (f.kind != ir.Store.Kind.Function) {
