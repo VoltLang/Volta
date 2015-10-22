@@ -95,7 +95,7 @@ extern(C) void vrt_gc_shutdown()
 	}
 }
 
-void* gcMalloc(TypeInfo typeinfo, size_t count, void *ptr)
+void* gcMalloc(void *ptr, TypeInfo typeinfo, size_t count)
 {
 	void* memory;
 	size_t size;

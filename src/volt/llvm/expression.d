@@ -1171,6 +1171,8 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 {
 	auto llvmArgs = new LLVMValueRef[](postfix.arguments.length);
 
+	size_t offset;
+
 	// Special case create delegate children to save
 	// a bunch of created delegates in the LLVM IR.
 	auto childAsPostfix = cast(ir.Postfix)postfix.child;
@@ -1180,7 +1182,8 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 		auto instance = new Value();
 		getCreateDelegateValues(state, childAsPostfix, instance, result);
 
-		llvmArgs ~= LLVMBuildBitCast(state.builder, instance.value, state.voidPtrType.llvmType, "");
+		llvmArgs = LLVMBuildBitCast(state.builder, instance.value, state.voidPtrType.llvmType, "") ~ llvmArgs;
+		offset = 1;
 
 	} else {
 		state.getValueAnyForm(postfix.child, result);
@@ -1206,7 +1209,8 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 		func = LLVMBuildLoad(state.builder, func, "");
 		voidPtr = LLVMBuildLoad(state.builder, voidPtr, "");
 
-		llvmArgs ~= voidPtr;
+		llvmArgs = voidPtr ~ llvmArgs;
+		offset = 1;
 		result.value = func;
 	} else {
 		throw panic(postfix.location, "can not call this thing");
@@ -1217,13 +1221,14 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 		auto v = new Value();
 		state.getValueAnyForm(arg, v);
 
+
 		if (i < ct.ct.params.length && (ct.ct.isArgRef[i] || ct.ct.isArgOut[i])) {
 			makePointer(state, v);
-			llvmArgs[i] = LLVMBuildBitCast(state.builder, v.value,
+			llvmArgs[i+offset] = LLVMBuildBitCast(state.builder, v.value,
 				LLVMPointerType(ct.params[i].llvmType, 0), "");
 		} else {
 			makeNonPointer(state, v);
-			llvmArgs[i] = v.value;
+			llvmArgs[i+offset] = v.value;
 		}
 	}
 

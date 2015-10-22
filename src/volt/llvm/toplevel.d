@@ -75,13 +75,14 @@ public:
 			state.localDestructors ~= llvmFunc;
 		}
 
-		foreach (i, p; fn.params) {
+		size_t offset = fn.type.hiddenParameter;
+		foreach (irIndex, p; fn.params) {
 			if (p.name is null)
 				continue;
 
-			auto v = LLVMGetParam(llvmFunc, cast(uint)i);
+			auto v = LLVMGetParam(llvmFunc, cast(uint)(irIndex + offset));
 
-			if (fn.type.isArgRef[i] || fn.type.isArgOut[i]) {
+			if (fn.type.isArgRef[irIndex] || fn.type.isArgOut[irIndex]) {
 				state.makeByValVariable(p, v);
 			} else {
 				auto t = state.fromIr(p.type);
@@ -92,13 +93,13 @@ public:
 
 		ir.Variable thisVar = fn.thisHiddenParameter;
 		if (thisVar !is null) {
-			auto v = LLVMGetParam(llvmFunc, cast(uint)fn.type.params.length);
+			auto v = LLVMGetParam(llvmFunc, 0);
 			state.makeThisVariable(thisVar, v);
 		}
 
 		ir.Variable nestVar = fn.nestedHiddenParameter;
 		if (nestVar !is null) {
-			auto v = LLVMGetParam(llvmFunc, cast(uint)fn.type.params.length);
+			auto v = LLVMGetParam(llvmFunc, 0);
 			state.makeNestVariable(nestVar, v);
 		}
 

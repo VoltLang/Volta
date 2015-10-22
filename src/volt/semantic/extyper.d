@@ -1184,7 +1184,7 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp 
 		// Explicit constructor call.
 		auto tvar = getThisVar(postfix.location, ctx.lp, ctx.current);
 		auto tref = buildExpReference(postfix.location, tvar, "this");
-		postfix.arguments ~= buildCastToVoidPtr(postfix.location, tref);
+		postfix.arguments = buildCastToVoidPtr(postfix.location, tref) ~ postfix.arguments;
 	}
 }
 

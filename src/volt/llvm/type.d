@@ -494,23 +494,24 @@ private:
 		args = new typeof(args)(ft.params.length + ft.hiddenParameter);
 		di = new typeof(di)(ft.params.length + ft.hiddenParameter);
 
+		size_t offset = ft.hiddenParameter;
 		foreach (i, type; params) {
 			if (ft.isArgRef[i] || ft.isArgOut[i]) {
 				auto irPtr = new ir.PointerType(type.irType);
 				addMangledName(irPtr);
 				auto ptrType = cast(PointerType)state.fromIr(irPtr);
 
-				args[i] = ptrType.llvmType;
-				di[i] = type;
+				args[i+offset] = ptrType.llvmType;
+				di[i+offset] = type;
 			} else {
-				args[i] = type.llvmType;
-				di[i] = type;
+				args[i+offset] = type.llvmType;
+				di[i+offset] = type;
 			}
 		}
 
 		if (ft.hiddenParameter) {
-			args[$-1] = state.voidPtrType.llvmType;
-			di[$-1] = state.voidPtrType;
+			args[0] = state.voidPtrType.llvmType;
+			di[0] = state.voidPtrType;
 		}
 
 		llvmCallType = LLVMFunctionType(ret.llvmType, args, ft.hasVarArgs && ft.linkage == ir.Linkage.C);

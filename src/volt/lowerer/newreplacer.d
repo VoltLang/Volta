@@ -142,8 +142,7 @@ ir.StatementExp buildClassConstructionWrapper(Location loc, LanguagePass lp, ir.
 	// thisVar.this(cast(void*) thisVar)
 	auto eref = buildExpReference(loc, constructor, "this");
 	auto exp = buildCall(loc, eref, null);
-	exp.arguments ~= exps;
-	exp.arguments ~= buildCast(loc, buildVoidPtr(loc), buildExpReference(loc, thisVar, "thisVar"));
+	exp.arguments = buildCast(loc, buildVoidPtr(loc), buildExpReference(loc, thisVar, "thisVar")) ~ exps;
 	buildExpStat(loc, sexp, exp);
 
 	return sexp;

@@ -501,7 +501,7 @@ public:
 			}
 			auto l = exp.location;
 			auto handle = buildCastToVoidPtr(l, buildSub(l, buildCastSmart(l, buildPtrSmart(l, buildUbyte(l)), copyExp(cpostfix.child)), buildAccess(l, buildDeref(l, copyExp(cpostfix.child)), "__offset")));
-			exp = buildCall(l, buildAccess(l, buildDeref(l, copyExp(cpostfix.child)), mangle(null, fn)), postfix.arguments ~ handle);
+			exp = buildCall(l, buildAccess(l, buildDeref(l, copyExp(cpostfix.child)), mangle(null, fn)), handle ~ postfix.arguments);
 		}
 		return Continue;
 	}
