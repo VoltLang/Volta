@@ -2,6 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.llvm.constant;
 
+import watt.text.format : format;
+
 import volt.errors;
 import volt.ir.util;
 
