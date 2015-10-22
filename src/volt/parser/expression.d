@@ -382,7 +382,12 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 		atype.base.isImmutable = true;
 		c.type = atype;
 		assert((c._string[$-1] == '"' || c._string[$-1] == '`') && c._string.length >= 2);
-		c.arrayData = unescapeString(primary.location, c._string[1 .. $-1]);
+		if (c._string[0] == '`' || c._string[0] == 'r') {
+			int start = c._string[0] == '`' ? 1 : 2;
+			c.arrayData = cast(immutable(void)[]) c._string[cast(size_t)start .. $-1];
+		} else {
+			c.arrayData = unescapeString(primary.location, c._string[1 .. $-1]);
+		}
 		exp = c;
 		break;
 	case intir.PrimaryExp.Type.CharLiteral:
