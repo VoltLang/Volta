@@ -23,23 +23,6 @@ VIV_SRC= \
 	src/volt/parser/*.d \
 	src/volt/visitor/*.d \
 	src/volt/lowerer/*.d \
+	src/volt/semantic/*.d \
 	src/volt/postparse/*.d \
-	src/volt/semantic/cfg.d \
-	src/volt/semantic/ctfe.d \
-	src/volt/semantic/util.d \
-	src/volt/semantic/typer.d \
-	src/volt/semantic/strace.d \
-	src/volt/semantic/mangle.d \
-	src/volt/semantic/lookup.d \
-	src/volt/semantic/nested.d \
-	src/volt/semantic/extyper.d \
-	src/volt/semantic/context.d \
-	src/volt/semantic/resolver.d \
-	src/volt/semantic/typeinfo.d \
-	src/volt/semantic/classify.d \
-	src/volt/semantic/overload.d \
-	src/volt/semantic/irverifier.d \
-	src/volt/semantic/classresolver.d \
-	src/volt/semantic/storageremoval.d \
-	src/volt/semantic/userattrresolver.d \
 	src/volt/main.volt
