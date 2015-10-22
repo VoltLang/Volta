@@ -423,7 +423,7 @@ public:
 
 		foreach (fn; s.functions) {
 			assert(s.parent is fn.myScope.parent);
-			LanguagePass.resolve(fn.myScope.parent, fn);
+			super.resolve(fn.myScope.parent, fn);
 		}
 
 		foreach (a; s.aliases) {
