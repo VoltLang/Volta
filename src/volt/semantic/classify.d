@@ -911,6 +911,11 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 		if (constant !is null) {
 			return constant;
 		}
+		auto eref = cast(ir.ExpReference) exp;
+		if (eref !is null && eref.decl.nodeType == ir.NodeType.EnumDeclaration) {
+			auto edecl = cast(ir.EnumDeclaration) eref.decl;
+			return removeCast(edecl.assign);
+		}
 		auto unary = cast(ir.Unary) exp;
 		while (unary !is null && unary.op == ir.Unary.Op.Cast) {
 			return removeCast(unary.value);
