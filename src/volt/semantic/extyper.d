@@ -1366,8 +1366,12 @@ bool consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes, ref i
 
 		ir.Exp toReplace;
 
+		if (store.functions.length > 1) {
+			toReplace = buildExpReference(postfix.location, buildSet(postfix.location, store.functions), name);
+		}
+
 		decl = cast(ir.Declaration) store.node;
-		if (decl !is null) {
+		if (decl !is null && toReplace is null) {
 			toReplace = buildExpReference(decl.location, decl, name);
 		}
 
