@@ -224,7 +224,7 @@ private:
 	this(State state, ir.PointerType pt, Type base)
 	{
 		this.base = base;
-		if (base.isVoid) {
+		if (base.isVoid()) {
 			llvmType = LLVMPointerType(
 				LLVMInt8TypeInContext(state.context), 0);
 		} else {
@@ -333,7 +333,7 @@ private:
 
 		// Avoid creating void[] arrays turn them into ubyte[] instead.
 		base = state.fromIr(at.base);
-		if (base.isVoid) {
+		if (base.isVoid()) {
 			base = state.ubyteType;
 		}
 
@@ -1092,7 +1092,7 @@ string addMangledName(ir.Type irType)
 /**
  * Helper function to tell if a type is Void.
  */
-@property bool isVoid(Type type)
+bool isVoid(Type type)
 {
 	return cast(VoidType)type !is null;
 }
