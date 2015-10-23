@@ -258,14 +258,15 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		}
 
 		version (Volt) {
-			succeeded = parseVariableOrExpression(ps, cast(NodeSinkDg)func);
+			auto succeeded2 = parseVariableOrExpression(ps, cast(NodeSinkDg)func);
 		} else {
-			succeeded = parseVariableOrExpression(ps, &func);
+			auto succeeded2 = parseVariableOrExpression(ps, &func);
 		}
 
-		if (!succeeded) {
+		if (!succeeded || !succeeded2) {
 			return succeeded;
 		}
+		succeeded = succeeded2;
 		return eatComments(ps);
 	}
 	version (Volt) assert(false); // If
