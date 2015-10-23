@@ -2,6 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.llvm.expression;
 
+import watt.text.format : format;
 import watt.conv : toString;
 
 static import volt.ir.util;

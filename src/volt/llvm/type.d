@@ -4,6 +4,8 @@ module volt.llvm.type;
 
 import lib.llvm.core;
 
+import watt.text.format : format;
+
 import ir = volt.ir.ir;
 import volt.ir.util;
 
