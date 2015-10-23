@@ -285,7 +285,7 @@ public:
 
 	override void from(State state, ir.ArrayLiteral al, Value result)
 	{
-		assert(state.fromIr(al.type) is this);
+		assert(.fromIr(state, al.type) is this);
 
 		// Handle null.
 		if (al.values.length == 0) {
@@ -332,14 +332,14 @@ private:
 		super(state, at, llvmType, diType);
 
 		// Avoid creating void[] arrays turn them into ubyte[] instead.
-		base = state.fromIr(at.base);
+		base = .fromIr(state, at.base);
 		if (base.isVoid()) {
 			base = state.ubyteType;
 		}
 
 		auto irPtr = new ir.PointerType(base.irType);
 		addMangledName(irPtr);
-		ptrType = cast(PointerType)state.fromIr(irPtr);
+		ptrType = cast(PointerType) .fromIr(state, irPtr);
 		base = ptrType.base;
 
 		lengthType = state.sizeType;
@@ -390,7 +390,7 @@ public:
 
 	override void from(State state, ir.ArrayLiteral al, Value result)
 	{
-		assert(state.fromIr(al.type) is this);
+		assert(.fromIr(state, al.type) is this);
 
 		// Handle null.
 		version (none) if (al.values.length == 0) {
@@ -416,7 +416,7 @@ private:
 	{
 		auto irArray = new ir.ArrayType(sat.base);
 		addMangledName(irArray);
-		arrayType = cast(ArrayType)state.fromIr(irArray);
+		arrayType = cast(ArrayType) .fromIr(state, irArray);
 		base = arrayType.base;
 		ptrType = arrayType.ptrType;
 
@@ -501,7 +501,7 @@ private:
 			if (ft.isArgRef[i] || ft.isArgOut[i]) {
 				auto irPtr = new ir.PointerType(type.irType);
 				addMangledName(irPtr);
-				auto ptrType = cast(PointerType)state.fromIr(irPtr);
+				auto ptrType = cast(PointerType) .fromIr(state, irPtr);
 
 				args[i+offset] = ptrType.llvmType;
 				di[i+offset] = type;
@@ -580,7 +580,7 @@ private:
 
 		addMangledName(irFuncType);
 
-		auto funcType = cast(FunctionType)state.fromIr(irFuncType);
+		auto funcType = cast(FunctionType) .fromIr(state, irFuncType);
 
 		ret = funcType.ret;
 		params = funcType.params;
@@ -717,7 +717,7 @@ private:
 			assert(var.name !is null);
 
 			indices[var.name] = index++;
-			auto t = state.fromIr(var.type);
+			auto t = .fromIr(state, var.type);
 			mt ~= t.llvmType;
 			vars ~= var;
 			types ~= t;
@@ -800,7 +800,7 @@ private:
 			assert(var.name !is null);
 
 			indices[var.name] = index++;
-			types ~= state.fromIr(var.type);
+			types ~= .fromIr(state, var.type);
 			vars ~= var;
 		}
 
