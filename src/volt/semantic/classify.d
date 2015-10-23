@@ -923,6 +923,11 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 		return null;
 	}
 
+	auto ternary = cast(ir.Ternary) e;
+	if (ternary !is null) {
+		return fitsInPrimitive(t, ternary.ifTrue) && fitsInPrimitive(t, ternary.ifFalse);
+	}
+
 	auto constant = removeCast(e);
 	if (constant is null) {
 		return false;
