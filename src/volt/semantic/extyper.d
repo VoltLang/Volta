@@ -593,7 +593,7 @@ void extypeIdentifierExpNoRevisit(Context ctx, ref ir.Exp e, ir.IdentifierExp i,
 
 	// Rewrite expressions that rely on a with block lookup.
 	ir.Exp rewriteExp;
-	foreach_reverse (withExp; ctx.withExps) {
+	if (!i.globalLookup) foreach_reverse (withExp; ctx.withExps) {
 		auto _rewriteExp = withLookup(ctx, withExp, current, i.value);
 		if (_rewriteExp is null) {
 			continue;
