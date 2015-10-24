@@ -17,8 +17,11 @@ VIV_SRC= \
 	src/volt/license.d \
 	src/volt/exceptions.d \
 	src/volt/interfaces.d \
+	src/lib/llvm/*.d \
+	src/lib/llvm/c/*.d \
 	src/volt/ir/*.d \
 	src/volt/util/*.d \
+	src/volt/llvm/*.d \
 	src/volt/token/*.d \
 	src/volt/parser/*.d \
 	src/volt/visitor/*.d \
