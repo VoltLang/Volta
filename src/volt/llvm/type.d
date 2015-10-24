@@ -493,8 +493,8 @@ private:
 		LLVMTypeRef[] args;
 		Type[] di;
 
-		args = new typeof(args)(ft.params.length + cast(size_t)ft.hiddenParameter);
-		di = new typeof(di)(ft.params.length + cast(size_t)ft.hiddenParameter);
+		args = new typeof(args)(ft.params.length + ft.hiddenParameter);
+		di = new typeof(di)(ft.params.length + ft.hiddenParameter);
 
 		size_t offset = ft.hiddenParameter;
 		foreach (i, type; params) {
@@ -596,7 +596,7 @@ private:
 		LLVMStructSetBody(llvmType, mt[], false);
 
 		version (D_Version2) static assert(voidPtrIndex < funcIndex);
-		version (D_Version2) diStructSetBody(state, this,
+		diStructSetBody(state, this,
 			[state.voidPtrType, funcType],
 			["ptr", "func"]);
 	}
