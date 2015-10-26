@@ -336,6 +336,13 @@ bool typeLookup(LanguagePass lp, ir.Scope current, ref ir.Exp exp)
 	bool max;
 	auto prim = cast(ir.PrimitiveType) realType(type);
 	auto pointer = cast(ir.PointerType) realType(type);
+	auto _struct = cast(ir.Struct) realType(type);
+	auto _union = cast(ir.Union) realType(type);
+
+	if ((_struct !is null || _union !is null) && postfix.identifier.value == "init") {
+		exp = getDefaultInit(exp.location, lp, current, type);
+		return true;
+	}
 
 	if (prim is null && pointer is null) {
 		return false;
