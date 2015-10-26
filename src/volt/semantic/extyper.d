@@ -290,6 +290,23 @@ void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ref 
 		return;
 	}
 
+	if (alit !is null) {
+		auto aatype = cast(ir.ArrayType)realType(alit.type);
+		panicAssert(exp, atype !is null);
+		void nullCheckArrayLiteral(ir.ArrayLiteral lit)
+		{
+			foreach (ref val; lit.values) {
+				auto lit2 = cast(ir.ArrayLiteral) val;
+				if (lit2 !is null) {
+					nullCheckArrayLiteral(lit2);
+				} else {
+					handleIfNull(ctx, aatype.base, val);
+				}
+			}
+		}
+		nullCheckArrayLiteral(alit);
+	}
+
 	auto astore = accumulateStorage(atype);
 	auto rtype = ctx.overrideType !is null ? ctx.overrideType : realType(getExpType(ctx.lp, exp, ctx.current));
 
