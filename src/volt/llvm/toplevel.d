@@ -215,7 +215,7 @@ public:
 
 	override Status enter(ir.ExpStatement exps)
 	{
-		assert(state.fall);
+		panicAssert(exps, state.fall);
 
 		// XXX: Should we do something here?
 		auto ret = state.getValue(exps.exp);
