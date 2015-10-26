@@ -125,13 +125,18 @@ bool willConvertStaticArray(ir.Type l, ir.Type r, ref uint flag, ref ir.Exp exp)
 
 bool willConvertArray(ir.Type l, ir.Type r, ref uint flag, ref ir.Exp exp)
 {
+	auto rarr = cast(ir.ArrayType) removeRefAndOut(r);
+	auto stype = cast(ir.StaticArrayType) realType(removeRefAndOut(l));
+	if (stype !is null && rarr !is null) {
+		return willConvert(rarr.base, stype.base);  // The extyper will check the length.
+	}
+
 	auto atype = cast(ir.ArrayType) realType(removeRefAndOut(l));
 	if (atype is null) {
 		return false;
 	}
 
 	auto astore = accumulateStorage(atype);
-	auto rarr = cast(ir.ArrayType) removeRefAndOut(r);
 	ir.Type rstore;
 	if (rarr !is null) {
 		rstore = accumulateStorage(rarr);
