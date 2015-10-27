@@ -1018,19 +1018,30 @@ void replaceGlobalArrayLiteralIfNeeded(LanguagePass lp, ir.Scope current, ir.Var
 
 	auto name = "__globalInitialiser_" ~ mod.name.toString();
 	auto fn = getNamedTopLevelFunction(name, ir.Function.Kind.GlobalConstructor);
+	bool retrieved = true;
 	if (fn is null) {
+		retrieved = false;
 		fn = buildGlobalConstructor(al.location, mod.children, mod.myScope, name);
+	}
+	if (fn._body.statements.length > 0) {
+		panicAssert(var, fn._body.statements[$-1].nodeType == ir.NodeType.ReturnStatement);
 	}
 
 	auto at = getExpType(lp, al, current);
 	auto sexp = buildInternalArrayLiteralSmart(al.location, at, al.values);
 	sexp.originalExp = al;
 	auto assign = buildExpStat(al.location, buildAssign(al.location, buildExpReference(al.location, var, var.name), sexp));
-	fn._body.statements ~= assign;
+	if (fn._body.statements.length > 0) {
+		fn._body.statements = fn._body.statements[0 .. $-1] ~ assign ~ fn._body.statements[$-1];
+	} else {
+		fn._body.statements ~= assign;
+	}
 	var.assign = null;
 
 	// Cfg isn't run after this so we need to be explicit about it.
-	buildReturnStat(al.location, fn._body);
+	if (!retrieved) {
+		buildReturnStat(al.location, fn._body);
+	}
 
 	return;
 }
