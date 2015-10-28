@@ -276,6 +276,19 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 			settings.internalDiff = true;
 			continue;
 		default:
+			if (arg.length > 2) {
+				switch (arg[0 .. 2]) {
+				case "-l":
+					libraryFile(arg[2 .. $]);
+					continue;
+				case "-L":
+					libraryPath(arg[2 .. $]);
+					continue;
+				default:
+					break;
+				}
+			}
+			break;
 		}
 
 		version (Windows) {
