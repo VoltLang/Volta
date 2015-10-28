@@ -359,27 +359,38 @@ ir.QualifiedName copy(ir.QualifiedName old)
  */
 ir.Type copyType(ir.Type t)
 {
+	ir.Type newt;
 	switch (t.nodeType) with (ir.NodeType) {
 	case PrimitiveType:
-		return copy(cast(ir.PrimitiveType)t);
+		newt = copy(cast(ir.PrimitiveType)t);
+		break;
 	case PointerType:
-		return copy(cast(ir.PointerType)t);
+		newt = copy(cast(ir.PointerType)t);
+		break;
 	case ArrayType:
-		return copy(cast(ir.ArrayType)t);
+		newt = copy(cast(ir.ArrayType)t);
+		break;
 	case StaticArrayType:
-		return copy(cast(ir.StaticArrayType)t);
+		newt = copy(cast(ir.StaticArrayType)t);
+		break;
 	case AAType:
-		return copy(cast(ir.AAType)t);
+		newt = copy(cast(ir.AAType)t);
+		break;
 	case FunctionType:
-		return copy(cast(ir.FunctionType)t);
+		newt = copy(cast(ir.FunctionType)t);
+		break;
 	case DelegateType:
-		return copy(cast(ir.DelegateType)t);
+		newt = copy(cast(ir.DelegateType)t);
+		break;
 	case StorageType:
-		return copy(cast(ir.StorageType)t);
+		newt = copy(cast(ir.StorageType)t);
+		break;
 	case TypeReference:
-		return copy(cast(ir.TypeReference)t);
+		newt = copy(cast(ir.TypeReference)t);
+		break;
 	case NullType:
-		return copy(cast(ir.NullType)t);
+		newt = copy(cast(ir.NullType)t);
+		break;
 	case Interface:
 	case Struct:
 	case Class:
@@ -389,6 +400,8 @@ ir.Type copyType(ir.Type t)
 	default:
 		throw panicUnhandled(t, ir.nodeToString(t));
 	}
+	addStorage(newt, t);
+	return newt;
 }
 
 /**
