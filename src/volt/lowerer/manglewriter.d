@@ -33,7 +33,7 @@ public:
 
 	override void transform(ir.Module m)
 	{
-		parentNames = m.name.strings();
+		parentNames = m.name.strings;
 		accept(m, this);
 	}
 

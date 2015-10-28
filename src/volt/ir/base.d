@@ -232,7 +232,7 @@ public:
 		return str;
 	}
 
-	string[] strings()
+	@property string[] strings()
 	{
 		string[] ret = new string[](identifiers.length);
 
