@@ -80,26 +80,6 @@ void handleIfStructLiteral(Context ctx, ir.Type left, ref ir.Exp right)
 	asLit.type = buildTypeReference(right.location, asStruct, asStruct.name);
 }
 
-/**
- * Implicitly convert PrimitiveTypes to bools for 'if' and friends.
- *
- * @TODO Maybe this should also handle pointer conversion to bool?
- * @TODO This should check that the type is implicitly convertable to bool.
- *
- * Currently done for ifs but not other code.
- */
-void implicitlyCastToBool(Context ctx, ref ir.Exp exp)
-{
-	auto t = getExpType(ctx.lp, exp, ctx.current);
-	if (t.nodeType == ir.NodeType.PrimitiveType) {
-		auto asPrimitive = cast(ir.PrimitiveType) realType(t);
-		if (asPrimitive.type == ir.PrimitiveType.Kind.Bool) {
-			return;
-		}
-	}
-	exp = buildCastToBool(exp.location, exp);
-}
-
 void appendDefaultArguments(Context ctx, ir.Location loc,
                             ref ir.Exp[] arguments, ir.Function fn)
 {
