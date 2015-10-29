@@ -17,7 +17,7 @@ module lib.llvm.c.Initialization;
 import lib.llvm.c.Core;
 
 
-extern (C):
+@loadDynamic extern(C):
 
 //void LLVMInitializeCore(LLVMPassRegistryRef R);
 void LLVMInitializeTransformUtils(LLVMPassRegistryRef R);

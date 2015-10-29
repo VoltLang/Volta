@@ -24,7 +24,7 @@ module lib.llvm.c.Target;
 import lib.llvm.c.Core;
 
 
-extern(C):
+@loadDynamic extern(C):
 
 
 /**

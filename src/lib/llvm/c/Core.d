@@ -14,7 +14,9 @@
 module lib.llvm.c.Core;
 
 
-extern(C):
+version (D_Version2) enum loadDynamic = 0;
+
+@loadDynamic extern(C):
 
 /**
  * @defgroup LLVMC LLVM-C: C interface to LLVM

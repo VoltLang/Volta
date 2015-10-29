@@ -6,7 +6,9 @@ import lib.llvm.core;
 public import lib.llvm.c.Linker;
 
 
+/+
 alias LLVMLinkModules = lib.llvm.c.Linker.LLVMLinkModules;
++/
 
 bool LLVMLinkModules(LLVMModuleRef dst, LLVMModuleRef src,
                      LLVMLinkerMode mode, ref string outMsg)

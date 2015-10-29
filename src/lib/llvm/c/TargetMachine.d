@@ -25,7 +25,7 @@ import lib.llvm.c.Core;
 import lib.llvm.c.Target;
 
 
-extern(C):
+@loadDynamic extern(C):
 
 struct LLVMTargetMachine {}
 alias  LLVMTargetMachineRef = LLVMTargetMachine*;

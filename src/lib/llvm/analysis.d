@@ -7,7 +7,9 @@ public import lib.llvm.c.Analysis;
 
 
 // Need to do this for all overloaded functions.
+/+
 alias LLVMVerifyModule = lib.llvm.c.Analysis.LLVMVerifyModule;
++/
 
 bool LLVMVerifyModule(LLVMModuleRef mod)
 {

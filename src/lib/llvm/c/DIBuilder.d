@@ -16,6 +16,8 @@ module lib.llvm.c.DIBuilder;
 import lib.llvm.c.Core;
 
 
+@loadDynamic extern(C):
+
 /**
  * @defgroup LLVMC DIBuilder: C interface to DIBuilder
  * @ingroup LLVMC
@@ -32,7 +34,6 @@ struct LLVMDIBuilder {}
 alias LLVMDIBuilderRef = LLVMDIBuilder*;
 
 
-extern(C):
 LLVMDIBuilderRef LLVMCreateDIBuilder(LLVMModuleRef module_);
 void LLVMDisposeDIBuilder(LLVMDIBuilderRef builder);
 LLVMValueRef LLVMDIBuilderGetCU(LLVMDIBuilderRef builder);
