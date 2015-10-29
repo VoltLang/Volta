@@ -78,26 +78,44 @@ ir.Type accumulateStorage(ir.Type toType, ir.Type seed=null)
 	return seed;
 }
 
-ir.Type handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
+/**
+ * This handles implicitly typing null.
+ * Generic function used by assign and other functions.
+ */
+bool handleIfNull(Context ctx, ir.Type left, ref ir.Exp right)
 {
-	if (rightType.nodeType == ir.NodeType.NullType) {
-		auto constant = cast(ir.Constant) right;
-		if (constant is null) {
-			throw panic(right.location, "non constant null");
-		}
+	auto rightType = getExpType(ctx.lp, right, ctx.current);
+	if (rightType.nodeType != ir.NodeType.NullType) {
+		return false;
+	}
 
-		while (true) switch (left.nodeType) with (ir.NodeType) {
+	handleNull(left, right, rightType);
+
+	return true;
+}
+
+void handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
+{
+	assert(rightType.nodeType == ir.NodeType.NullType);
+
+	auto constant = cast(ir.Constant) right;
+	if (constant is null) {
+		throw panic(right.location, "non constant null");
+	}
+
+	while (true) {
+		switch (left.nodeType) with (ir.NodeType) {
 		case PointerType:
 			constant.type = buildVoidPtr(right.location);
 			right = buildCastSmart(right.location, left, right);
-			return copyTypeSmart(right.location, left);
+			return;
 		case ArrayType:
 			right = buildArrayLiteralSmart(right.location, left);
-			return copyTypeSmart(right.location, left);
+			return;
 		case FunctionType, DelegateType:
 			auto t = copyTypeSmart(right.location, left);
 			constant.type = t;
-			return t;
+			return;
 		case TypeReference:
 			auto tr = cast(ir.TypeReference) left;
 			assert(tr !is null);
@@ -108,7 +126,7 @@ ir.Type handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
 			if (_class !is null) {
 				auto t = copyTypeSmart(right.location, _class);
 				constant.type = t;
-				return t;
+				return;
 			}
 			goto default;
 		case Interface:
@@ -116,17 +134,13 @@ ir.Type handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
 			if (_interface !is null) {
 				auto t = copyTypeSmart(right.location, _interface);
 				constant.type = t;
-				return t;
+				return;
 			}
 			goto default;
-		case StorageType:
-			auto storage = cast(ir.StorageType) left;
-			return handleNull(storage.base, right, rightType);
 		default:
 			throw makeBadImplicitCast(right, rightType, left);
 		}
 	}
-	return null;
 }
 
 ir.Variable getThisVar(Location location, LanguagePass lp, ir.Scope _scope)

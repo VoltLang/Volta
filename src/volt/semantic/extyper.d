@@ -48,20 +48,6 @@ void replaceAutoIfNeeded(ref ir.Type type)
 }
 
 /**
- * This handles implicitly typing null.
- * Generic function used by assign and other functions.
- */
-bool handleIfNull(Context ctx, ir.Type left, ref ir.Exp right)
-{
-	auto rightType = getExpType(ctx.lp, right, ctx.current);
-	if (rightType.nodeType != ir.NodeType.NullType) {
-		return false;
-	}
-
-	return handleNull(left, right, rightType) !is null;
-}
-
-/**
  * This handles implicitly typing a struct literal.
  */
 void handleIfStructLiteral(Context ctx, ir.Type left, ref ir.Exp right)
@@ -1784,7 +1770,7 @@ void handleCastTo(Context ctx, ref ir.Exp exp, ir.Unary unary)
 	}
 
 	// Handling cast(Foo)null
-	if (handleNull(unary.type, unary.value, type) !is null) {
+	if (handleIfNull(ctx, unary.type, unary.value)) {
 		exp = unary.value;
 		return;
 	}
