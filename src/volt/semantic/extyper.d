@@ -80,8 +80,6 @@ void handleIfStructLiteral(Context ctx, ir.Type left, ref ir.Exp right)
 	asLit.type = buildTypeReference(right.location, asStruct, asStruct.name);
 }
 
-
-
 /**
  * Implicitly convert PrimitiveTypes to bools for 'if' and friends.
  */
@@ -95,12 +93,6 @@ void extypeCastToBool(Context ctx, ref ir.Exp exp)
 		}
 	}
 	exp = buildCastToBool(exp.location, exp);
-}
-
-void extypeAssignTypeReference(Context ctx, ref ir.Exp exp,
-                               ir.TypeReference tr)
-{
-	extypeAssign(ctx, exp, tr.type);
 }
 
 void appendDefaultArguments(Context ctx, ir.Location loc,
@@ -128,6 +120,19 @@ void appendDefaultArguments(Context ctx, ir.Location loc,
 			acceptExp(arguments[$-1], ctx.extyper);
 		}
 	}
+}
+
+
+/*
+ *
+ * extypeAssign* code.
+ *
+ */
+
+void extypeAssignTypeReference(Context ctx, ref ir.Exp exp,
+                               ir.TypeReference tr)
+{
+	extypeAssign(ctx, exp, tr.type);
 }
 
 /**
@@ -373,8 +378,63 @@ void extypeAssignAAType(Context ctx, ref ir.Exp exp, ir.AAType aatype)
 	throw makeBadImplicitCast(exp, rtype, aatype);
 }
 
-void handleAssign(Context ctx, ref ir.Type toType, ref ir.Exp exp,
-                  ref uint toFlag, bool copying = false)
+void extypeAssignInterface(Context ctx, ref ir.Exp exp,
+                           ir._Interface iface)
+{
+	auto type = realType(getExpType(ctx.lp, exp, ctx.current));
+
+	auto eiface = cast(ir._Interface)type;
+	if (eiface !is null) {
+		if (typesEqual(iface, eiface)) {
+			return;
+		} else {
+			throw panic(exp.location, "todo interface to different interface.");
+		}
+	}
+
+	auto ctype = cast(ir.Class) type;
+	if (ctype is null) {
+		throw makeExpected(exp.location, "class");
+	}
+	bool checkInterface(ir._Interface i)
+	{
+		if (i is iface) {
+			exp = buildCastSmart(exp.location, i, exp);
+			return true;
+		}
+		foreach (piface; i.parentInterfaces) {
+			if (checkInterface(piface)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	bool checkClass(ir.Class _class)
+	{
+		if (_class is null) {
+			return false;
+		}
+		foreach (i, classIface; _class.parentInterfaces) {
+			if (checkInterface(classIface)) {
+				return true;
+			}
+		}
+		if (checkClass(_class.parentClass)) {
+			return true;
+		}
+		return false;
+	}
+	if (checkClass(ctype)) {
+		return;
+	}
+	throw makeBadImplicitCast(exp, type, iface);
+}
+
+/**
+ * Yes really that name, no idea what this function does tho.
+ */
+void extypeAssignHandleAssign(Context ctx, ref ir.Type toType, ref ir.Exp exp,
+                              ref uint toFlag, bool copying = false)
 {
 	auto rtype = getExpType(ctx.lp, exp, ctx.current);
 	auto autotype = cast(ir.AutoType) toType;
@@ -409,7 +469,7 @@ void extypeAssignDispatch(Context ctx, ref ir.Exp exp, ir.Type type,
                           bool copying = false)
 {
 	uint flag;
-	handleAssign(ctx, type, exp, flag, copying);
+	extypeAssignHandleAssign(ctx, type, exp, flag, copying);
 	switch (type.nodeType) {
 	case ir.NodeType.AutoType:
 		auto autotype = cast(ir.AutoType) type;
@@ -468,56 +528,13 @@ void extypeAssignDispatch(Context ctx, ref ir.Exp exp, ir.Type type,
 	}
 }
 
-void extypeAssignInterface(Context ctx, ref ir.Exp exp,
-                           ir._Interface iface)
+void extypeAssign(Context ctx, ref ir.Exp exp, ir.Type type,
+                  bool copying = false)
 {
-	auto type = realType(getExpType(ctx.lp, exp, ctx.current));
+	handleIfStructLiteral(ctx, type, exp);
+	if (handleIfNull(ctx, type, exp)) return;
 
-	auto eiface = cast(ir._Interface)type;
-	if (eiface !is null) {
-		if (typesEqual(iface, eiface)) {
-			return;
-		} else {
-			throw panic(exp.location, "todo interface to different interface.");
-		}
-	}
-
-	auto ctype = cast(ir.Class) type;
-	if (ctype is null) {
-		throw makeExpected(exp.location, "class");
-	}
-	bool checkInterface(ir._Interface i)
-	{
-		if (i is iface) {
-			exp = buildCastSmart(exp.location, i, exp);
-			return true;
-		}
-		foreach (piface; i.parentInterfaces) {
-			if (checkInterface(piface)) {
-				return true;
-			}
-		}
-		return false;
-	}
-	bool checkClass(ir.Class _class)
-	{
-		if (_class is null) {
-			return false;
-		}
-		foreach (i, classIface; _class.parentInterfaces) {
-			if (checkInterface(classIface)) {
-				return true;
-			}
-		}
-		if (checkClass(_class.parentClass)) {
-			return true;
-		}
-		return false;
-	}
-	if (checkClass(ctype)) {
-		return;
-	}
-	throw makeBadImplicitCast(exp, type, iface);
+	extypeAssignDispatch(ctx, exp, type, copying);
 }
 
 void extypePass(Context ctx, ref ir.Exp exp, ir.Type type)
@@ -531,14 +548,12 @@ void extypePass(Context ctx, ref ir.Exp exp, ir.Type type)
 	extypeAssign(ctx, exp, type);
 }
 
-void extypeAssign(Context ctx, ref ir.Exp exp, ir.Type type,
-                  bool copying = false)
-{
-	handleIfStructLiteral(ctx, type, exp);
-	if (handleIfNull(ctx, type, exp)) return;
 
-	extypeAssignDispatch(ctx, exp, type, copying);
-}
+/*
+ *
+ * Here ends extypeAssign* code.
+ *
+ */
 
 /**
  * If qname has a child of name leaf, returns an expression looking it up.
