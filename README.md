@@ -1,29 +1,31 @@
 # Volt
 
-Volt is a systems level programing, that aims to be safe by default but still
-allowing you access to the nitty gritty low level details. Pretty much all of
+Volt is a systems level programming language, that aims to be safe by default but
+still allowing you access to nitty gritty low level details. All of
 the code in [Volta], [Watt] and other official Volt repos are under the
-`BOOST (ver. 1.0) license`. Except for bindings that are licensed under the origanl
-license of the project, like [LLVM] which is used by Volta to produce the
-binaries.
+`BOOST (ver. 1.0) license` except for bindings, those are licenced under their
+original license. For instance, [LLVM], which is used by Volta to
+generate code.
 
 ## Volta
 
-Is the compiler for the language. This repo also contains the small runtime,
-needed to implement the language. But not the standard library.
+Volta is the compiler for the language. This repo also contains the runtime,
+code needed to support language features. The runtime is not the standard library,
+which is code that supports software development in general. That can be found
+in the [Watt](https://github.com/VoltLang/Watt) repository.
 
 ## Documentation
 
-You can find getting started guide
+You can find a getting started guide
 [here](http://www.volt-lang.org/doc/setup/volta.html), information about the
-language [here](http://www.volt-lang.org/doc/volt.html) and a overview of the
-compiler [here](http://www.volt-lang.org/doc/overview.html). A index of
-documentation can be found [here](http://www.volt-lang.org/doc/).
+language [here](http://www.volt-lang.org/doc/volt.html) and an overview of the
+compiler [here](http://www.volt-lang.org/doc/overview.html). An index of
+the documentation exists [here](http://www.volt-lang.org/doc/).
 
 ## Contributing
 
 Please feel free to contribute. Contributing is easy! Just send us your code.
-Diffs are appreciated, in git format; Github pull requests are excellent.
+Diffs are appreciated, in git format; GitHub pull requests are excellent.
 
 Things to consider:
 
