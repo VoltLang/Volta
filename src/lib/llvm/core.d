@@ -14,7 +14,6 @@ public import lib.llvm.c.Core;
 
 
 // Need to do this for all overloaded functions.
-/+
 alias LLVMSetTarget = lib.llvm.c.Core.LLVMSetTarget;
 alias LLVMSetDataLayout = lib.llvm.c.Core.LLVMSetDataLayout;
 alias LLVMModuleCreateWithNameInContext = lib.llvm.c.Core.LLVMModuleCreateWithNameInContext;
@@ -35,7 +34,6 @@ alias LLVMBuildGEP = lib.llvm.c.Core.LLVMBuildGEP;
 alias LLVMBuildInBoundsGEP = lib.llvm.c.Core.LLVMBuildInBoundsGEP;
 alias LLVMStructTypeInContext = lib.llvm.c.Core.LLVMStructTypeInContext;
 alias LLVMAddIncoming = lib.llvm.c.Core.LLVMAddIncoming;
-+/
 
 void LLVMSetTarget(LLVMModuleRef mod, string str)
 {

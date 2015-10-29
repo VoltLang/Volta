@@ -8,14 +8,12 @@ import lib.llvm.core;
 public import lib.llvm.c.TargetMachine;
 
 
-/+
+// Need to do this for all overloaded functions.
 alias LLVMGetTargetFromName = lib.llvm.c.TargetMachine.LLVMGetTargetFromName;
 alias LLVMGetTargetFromTriple = lib.llvm.c.TargetMachine.LLVMGetTargetFromTriple;
 alias LLVMCreateTargetMachine = lib.llvm.c.TargetMachine.LLVMCreateTargetMachine;
 alias LLVMTargetMachineEmitToFile = lib.llvm.c.TargetMachine.LLVMTargetMachineEmitToFile;
 alias LLVMTargetMachineEmitToMemoryBuffer = lib.llvm.c.TargetMachine.LLVMTargetMachineEmitToMemoryBuffer;
-+/
-
 
 LLVMTargetRef LLVMGetTargetFromName(string name)
 {
