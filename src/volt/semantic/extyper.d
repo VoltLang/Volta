@@ -82,8 +82,13 @@ void handleIfStructLiteral(Context ctx, ir.Type left, ref ir.Exp right)
 
 /**
  * Implicitly convert PrimitiveTypes to bools for 'if' and friends.
+ *
+ * @TODO Maybe this should also handle pointer conversion to bool?
+ * @TODO This should check that the type is implicitly convertable to bool.
+ *
+ * Currently done for ifs but not other code.
  */
-void extypeCastToBool(Context ctx, ref ir.Exp exp)
+void implicitlyCastToBool(Context ctx, ref ir.Exp exp)
 {
 	auto t = getExpType(ctx.lp, exp, ctx.current);
 	if (t.nodeType == ir.NodeType.PrimitiveType) {
@@ -3434,7 +3439,7 @@ public:
 			if (isPointer(t)) {
 				ifs.exp = buildBinOp(l, ir.BinOp.Op.NotIs, ifs.exp, buildConstantNull(l, t));
 			} else {
-				extypeCastToBool(ctx, ifs.exp);
+				implicitlyCastToBool(ctx, ifs.exp);
 			}
 		}
 		if (ifs.autoName.length > 0) {
@@ -3499,7 +3504,7 @@ public:
 
 		if (fs.test !is null) {
 			acceptExp(fs.test, this);
-			extypeCastToBool(ctx, fs.test);
+			implicitlyCastToBool(ctx, fs.test);
 		}
 		foreach (ref increment; fs.increments) {
 			acceptExp(increment, this);
@@ -3516,7 +3521,7 @@ public:
 	{
 		if (ws.condition !is null) {
 			acceptExp(ws.condition, this);
-			extypeCastToBool(ctx, ws.condition);
+			implicitlyCastToBool(ctx, ws.condition);
 		}
 
 		accept(ws.block, this);
@@ -3530,7 +3535,7 @@ public:
 
 		if (ds.condition !is null) {
 			acceptExp(ds.condition, this);
-			extypeCastToBool(ctx, ds.condition);
+			implicitlyCastToBool(ctx, ds.condition);
 		}
 
 		return ContinueParent;
