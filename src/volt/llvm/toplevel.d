@@ -688,14 +688,14 @@ public:
 
 	override Status leave(ir.Module m)
 	{
-		void globalAppendArray(LLVMValueRef[] arr, const(char)* name)
+		void globalAppendArray(LLVMValueRef[] arr, string name)
 		{
 			if (arr.length == 0) {
 				return;
 			}
 			auto fnty = LLVMTypeOf(arr[0]);
 			auto stypes = [LLVMInt32TypeInContext(state.context), fnty];
-			auto _struct = LLVMStructTypeInContext(state.context, stypes.ptr, 2, false);
+			auto _struct = LLVMStructTypeInContext(state.context, stypes, false);
 			auto array = LLVMArrayType(_struct, cast(uint) arr.length);
 			auto gval = LLVMAddGlobal(state.mod, array, name);
 			LLVMSetLinkage(gval, LLVMLinkage.Appending);
@@ -712,7 +712,7 @@ public:
 				auto vals = [LLVMConstInt(LLVMInt32TypeInContext(state.context), priority, false), fn];
 				structs ~= LLVMConstStructInContext(state.context, vals.ptr, 2, false);
 			}
-			auto lit = LLVMConstArray(_struct, structs.ptr, cast(uint) arr.length);
+			auto lit = LLVMConstArray(_struct, structs);
 			LLVMSetInitializer(gval, lit);
 		}
 

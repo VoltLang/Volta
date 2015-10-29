@@ -11,14 +11,14 @@ alias LLVMVerifyModule = lib.llvm.c.Analysis.LLVMVerifyModule;
 
 bool LLVMVerifyModule(LLVMModuleRef mod)
 {
-	return cast(bool)LLVMVerifyModule(
+	return cast(bool).lib.llvm.c.Analysis.LLVMVerifyModule(
 		mod, LLVMVerifierFailureAction.ReturnStatus, null);
 }
 
 bool LLVMVerifyModule(LLVMModuleRef mod, out string ret)
 {
 	const(char)* str;
-	auto b =  cast(bool)LLVMVerifyModule(
+	auto b =  cast(bool).lib.llvm.c.Analysis.LLVMVerifyModule(
 		mod, LLVMVerifierFailureAction.ReturnStatus, &str);
 
 	ret = handleAndDisposeMessage(&str);

@@ -158,7 +158,7 @@ LLVMValueRef LLVMBuildGEP(LLVMBuilderRef b, LLVMValueRef ptr,
 	char[1024] stack;
 	auto namez = nullTerminate(stack, name);
 
-	return LLVMBuildGEP(b, ptr, i.ptr, cast(uint)i.length, namez);
+	return lib.llvm.c.Core.LLVMBuildGEP(b, ptr, i.ptr, cast(uint)i.length, namez);
 }
 
 LLVMValueRef LLVMBuildInBoundsGEP(LLVMBuilderRef b, LLVMValueRef ptr,
@@ -168,7 +168,7 @@ LLVMValueRef LLVMBuildInBoundsGEP(LLVMBuilderRef b, LLVMValueRef ptr,
 	char[1024] stack;
 	auto namez = nullTerminate(stack, name);
 
-	return LLVMBuildInBoundsGEP(b, ptr, i.ptr, cast(uint)i.length, namez);
+	return lib.llvm.c.Core.LLVMBuildInBoundsGEP(b, ptr, i.ptr, cast(uint)i.length, namez);
 }
 
 void LLVMAddIncoming(LLVMValueRef phi, LLVMValueRef[] iv,

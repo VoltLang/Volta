@@ -564,7 +564,7 @@ public:
 		vals[1] = LLVMConstNull(vptr);
 
 		result.type = this;
-		result.value = LLVMConstNamedStruct(llvmType, vals.ptr, 2);
+		result.value = LLVMConstNamedStruct(llvmType, vals);
 		result.isPointer = false;
 	}
 
