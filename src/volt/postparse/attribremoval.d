@@ -537,23 +537,6 @@ protected:
 			auto attr = cast(ir.Attribute)node;
 			ret = attrManip(attr);
 			return true;
-		case Function:
-			auto fn = cast(ir.Function)node;
-			accept(fn, this);
-			if (!fn.loadDynamic) {
-				return false;
-			}
-			if (fn._body !is null) {
-				throw makeCannotLoadDynamic(node, fn);
-			}
-			auto var = new ir.Variable();
-			var.location = fn.location;
-			var.name = fn.name;
-			var.type = fn.type;
-			var.access = fn.access;
-			var.storage = ir.Variable.Storage.Global;
-			ret = [cast(ir.Node)var];
-			return true;
 		default:
 			accept(node, this);
 			return false;

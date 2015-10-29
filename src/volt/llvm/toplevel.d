@@ -41,14 +41,21 @@ public:
 
 	override Status enter(ir.Function fn)
 	{
+		Type type;
+		auto llvmFunc = state.getFunctionValue(fn, type);
+		auto llvmType = type.llvmType;
+
+		if (fn.loadDynamic) {
+			auto init = LLVMConstNull(llvmType);
+			LLVMSetInitializer(llvmFunc, init);
+			return ContinueParent;
+		}
+
 		// Don't export unused functions.
 		if (fn._body is null) {
 			return ContinueParent;
 		}
 
-		Type type;
-		auto llvmFunc = state.getFunctionValue(fn, type);
-		auto llvmType = type.llvmType;
 		auto ft = cast(FunctionType) type;
 		assert(ft !is null);
 
@@ -154,8 +161,9 @@ public:
 			break;
 		case Local:
 		case Global:
-			if (var.isExtern)
+			if (var.isExtern) {
 				break;
+			}
 
 			LLVMValueRef init;
 			auto v = state.getVariableValue(var, type);

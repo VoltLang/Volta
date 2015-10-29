@@ -309,26 +309,35 @@ public:
 			throw panic(fn.location, "invalid function kind");
 		}
 
-		// The simple stuff, declare that mofo.
+		LLVMValueRef v;
 		type = this.fromIr(fn.type);
 		auto ft = cast(FunctionType)type;
-		auto llvmType = ft.llvmCallType;
-		auto v = LLVMAddFunction(mod, fn.mangledName, llvmType);
-		if (fn.isWeakLink) {
-			LLVMSetUnnamedAddr(v, true);
-			if (lp.settings.platform == Platform.MSVC) {
-				LLVMSetLinkage(v, LLVMLinkage.Internal);
-			} else {
-				LLVMSetLinkage(v, LLVMLinkage.LinkOnceODR);
-			}
-		}
 
-		// Needs to be done here, because this can not be set on a type.
-		if (fn.type.linkage == ir.Linkage.Windows) {
-			if (lp.settings.arch == Arch.X86_64) {
-				LLVMSetFunctionCallConv(v, LLVMCallConv.X86_64_Win64);
-			} else {
-				LLVMSetFunctionCallConv(v, LLVMCallConv.X86Stdcall);
+		if (fn.loadDynamic) {
+			auto llvmType = ft.llvmType;
+
+			v = LLVMAddGlobal(mod, llvmType, fn.mangledName);
+			assert(!fn.isWeakLink);
+		} else {
+			// The simple stuff, declare that mofo.
+			auto llvmType = ft.llvmCallType;
+			v = LLVMAddFunction(mod, fn.mangledName, llvmType);
+			if (fn.isWeakLink) {
+				LLVMSetUnnamedAddr(v, true);
+				if (lp.settings.platform == Platform.MSVC) {
+					LLVMSetLinkage(v, LLVMLinkage.Internal);
+				} else {
+					LLVMSetLinkage(v, LLVMLinkage.LinkOnceODR);
+				}
+			}
+
+			// Needs to be done here, because this can not be set on a type.
+			if (fn.type.linkage == ir.Linkage.Windows) {
+				if (lp.settings.arch == Arch.X86_64) {
+					LLVMSetFunctionCallConv(v, LLVMCallConv.X86_64_Win64);
+				} else {
+					LLVMSetFunctionCallConv(v, LLVMCallConv.X86Stdcall);
+				}
 			}
 		}
 

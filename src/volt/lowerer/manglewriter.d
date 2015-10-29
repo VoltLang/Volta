@@ -71,12 +71,18 @@ public:
 		assert(fn.name !is null);
 
 		/// @todo check other linkage as well.
+		/// @TODO this should live in the mangle code.
 		if (fn.mangledName !is null) {
 			// Do nothing.
 		} else if (fn.name == "main" &&
 		           fn.type.linkage != ir.Linkage.C) {
 			fn.mangledName = "vmain";
-		} else if (fn.type.linkage == ir.Linkage.C || fn.type.linkage == ir.Linkage.Windows) {
+		} else if (fn.loadDynamic) {
+			// @TODO mangle this so that it becomes a variable.
+			assert(fn.name !is null);
+			fn.mangledName = mangle(parentNames, fn);
+		} else if (fn.type.linkage == ir.Linkage.C ||
+		           fn.type.linkage == ir.Linkage.Windows) {
 			fn.mangledName = fn.name;
 		} else {
 			assert(fn.name !is null);

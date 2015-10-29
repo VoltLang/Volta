@@ -3068,6 +3068,10 @@ void resolveFunction(Context ctx, ir.Function fn)
 		param.assign = evaluate(ctx.lp, ctx.current, param.assign);
 	}
 
+	if (fn.loadDynamic && fn._body !is null) {
+		throw makeCannotLoadDynamic(fn, fn);
+	}
+
 	fn.isResolved = true;
 }
 

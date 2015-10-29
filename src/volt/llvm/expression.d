@@ -1306,7 +1306,7 @@ void handleExpReference(State state, ir.ExpReference expRef, Value result)
 	switch(expRef.decl.declKind) with (ir.Declaration.Kind) {
 	case Function:
 		auto fn = cast(ir.Function)expRef.decl;
-		result.isPointer = false;
+		result.isPointer = fn.loadDynamic;
 		result.value = state.getFunctionValue(fn, result.type);
 
 		auto ft = cast(FunctionType)result.type;
