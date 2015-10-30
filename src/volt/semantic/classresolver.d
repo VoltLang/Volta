@@ -15,6 +15,7 @@ import volt.token.location;
 import volt.semantic.util;
 import volt.semantic.mangle;
 import volt.semantic.lookup;
+import volt.semantic.context : Context;
 import volt.semantic.classify;
 import volt.semantic.typeinfo;
 import volt.semantic.overload;
@@ -50,6 +51,45 @@ void actualizeClass(LanguagePass lp, ir.Class c)
 	c.isActualized = true;
 
 	fileInAggregateVar(lp, c);
+}
+
+void rewriteThis(Context ctx, ref ir.Exp e, ir.IdentifierExp ident, ir.Postfix p)
+{
+	assert(ident !is null);
+	assert(ident.value == "this");
+	assert(p is null || ident is p.child);
+
+	auto thisVar = getThisVar(ident.location, ctx.lp, ctx.current);
+	if (thisVar is null) {
+		throw makeExpectedContext(ident, null);
+	}
+	auto thisRef = getThisReference(ident.location, ctx, thisVar);
+
+	auto op = p !is null ? p.op : ir.Postfix.Op.Identifier;
+
+	if (p is null || p.op != ir.Postfix.Op.Call) {
+		// The simple default.
+		e = thisRef;
+		return;
+	}
+
+	return rewriteThisCall(ctx, ident, p, thisVar, thisRef);
+}
+
+void rewriteThisCall(Context ctx, ir.IdentifierExp ident, ir.Postfix p,
+                     ir.Variable thisVar, ir.Exp thisRef)
+{
+	assert(p.op == ir.Postfix.Op.Call);
+
+	auto type = realType(thisVar.type);
+	auto _class = cast(ir.Class) type;
+	if (_class is null) {
+		throw makeExpected(ident.location, "class");
+	}
+
+	auto set = buildSet(ident.location, _class.userConstructors);
+	auto setRef = buildExpReference(ident.location, set, "this");
+	p.child = buildCreateDelegate(ident.location, thisRef, setRef);
 }
 
 void rewriteSuper(LanguagePass lp, ir.Scope _scope, ir.IdentifierExp ident, ir.Postfix p)

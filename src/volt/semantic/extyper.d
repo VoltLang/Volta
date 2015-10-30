@@ -590,8 +590,12 @@ ir.Exp withLookup(Context ctx, ref ir.Exp exp, ir.Scope current,
  */
 void extypeIdentifierExp(Context ctx, ref ir.Exp e, ir.IdentifierExp i, ir.Exp parent)
 {
-	if (i.value == "super") {
+	switch (i.value) {
+	case "this":
+		return rewriteThis(ctx, e, i, cast(ir.Postfix) parent);
+	case "super":
 		return rewriteSuper(ctx.lp, ctx.current, i, cast(ir.Postfix) parent);
+	default:
 	}
 
 	auto current = i.globalLookup ? getModuleFromScope(i.location, ctx.current).myScope : ctx.current;
