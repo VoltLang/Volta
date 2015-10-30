@@ -54,11 +54,12 @@ void actualizeClass(LanguagePass lp, ir.Class c)
 
 void rewriteSuper(LanguagePass lp, ir.Scope _scope, ir.IdentifierExp ident, ir.Postfix p)
 {
+	assert(ident !is null);
 	assert(ident.value == "super");
 	assert(p is null || ident is p.child);
 
 	if (p is null) {
-		throw makeFailedLookup(p, "super");
+		throw makeExpected(ident.location, "call or identifier postfix");
 	}
 
 	ir.Scope dummyScope;
@@ -66,14 +67,17 @@ void rewriteSuper(LanguagePass lp, ir.Scope _scope, ir.IdentifierExp ident, ir.P
 	if (!getFirstClass(_scope, dummyScope, _class)) {
 		throw makeExpectedContext(ident, null);
 	}
+
+	// This is super, get the parent class.
 	_class = _class.parentClass;
 	assert(_class !is null);
 
-	if (p.op == ir.Postfix.Op.Call) {
+	switch (p.op) with (ir.Postfix.Op) {
+	case Call:
 		return rewriteSuperCall(lp, _scope, ident, p, _class);
-	} else if (p.op == ir.Postfix.Op.Identifier) {
+	case Identifier:
 		return rewriteSuperIdentifier(lp, _scope, ident, p, _class);
-	} else {
+	default:
 		throw makeFailedLookup(p, "super");
 	}
 }
@@ -83,7 +87,8 @@ void rewriteSuperIdentifier(LanguagePass lp, ir.Scope _scope, ir.IdentifierExp i
 	assert(p.op == ir.Postfix.Op.Identifier);
 
 	auto thisVar = getThisVar(ident.location, lp, _scope);
-	p.child = buildCastSmart(ident.location, _class, buildExpReference(p.location, thisVar, "this"));
+	auto eref = buildExpReference(p.location, thisVar, "this");
+	p.child = buildCastSmart(ident.location, _class, eref);
 }
 
 void rewriteSuperCall(LanguagePass lp, ir.Scope _scope, ir.IdentifierExp ident, ir.Postfix p, ir.Class _class)
