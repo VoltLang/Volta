@@ -80,29 +80,38 @@ void handleIfStructLiteral(Context ctx, ir.Type left, ref ir.Exp right)
 	asLit.type = buildTypeReference(right.location, asStruct, asStruct.name);
 }
 
+/**
+ * Does what the name implies.
+ *
+ * Checks if fn is null and is okay with more arguments the parameters.
+ */
 void appendDefaultArguments(Context ctx, ir.Location loc,
                             ref ir.Exp[] arguments, ir.Function fn)
 {
-	if (fn !is null && arguments.length < fn.params.length) {
-		ir.Exp[] overflow;
-		foreach (p; fn.params[arguments.length .. $]) {
-			if (p.assign is null) {
-				throw makeExpected(loc, "default argument");
-			}
-			overflow ~= p.assign;
+	// Nothing to do.
+	// Variadic functions may have more arguments then parameters.
+	if (fn is null || arguments.length >= fn.params.length) {
+		return;
+	}
+
+	ir.Exp[] overflow;
+	foreach (p; fn.params[arguments.length .. $]) {
+		if (p.assign is null) {
+			throw makeExpected(loc, "default argument");
 		}
-		auto oldLength = arguments.length;
-		foreach (i, ee; overflow) {
-			auto constant = cast(ir.Constant) ee;
-			if (constant is null) {
-				auto texp = cast(ir.TokenExp) ee;
-				assert(texp !is null);
-				texp.location = loc;
-				arguments ~= texp;
-			} else {
-				arguments ~= copyExp(loc, ee);
-			}
+		overflow ~= p.assign;
+	}
+
+	foreach (i, ee; overflow) {
+		auto texp = cast(ir.TokenExp) ee;
+		if (texp !is null) {
+			texp.location = loc;
+			arguments ~= texp;
+
 			acceptExp(arguments[$-1], ctx.extyper);
+		} else {
+			assert(ee.nodeType == ir.NodeType.Constant);
+			arguments ~= copyExp(loc, ee);
 		}
 	}
 }
