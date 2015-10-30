@@ -264,7 +264,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		}
 
 		if (!succeeded || !succeeded2) {
-			return succeeded;
+			return Failed;
 		}
 		succeeded = succeeded2;
 		return eatComments(ps);
