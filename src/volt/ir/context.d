@@ -65,7 +65,6 @@ public:
 		Merge,
 		Function,
 		Template,
-		Expression,
 		FunctionParam,
 		EnumDeclaration,
 	}
@@ -108,13 +107,6 @@ public:
 	 * Store pointed to by alias.
 	 */
 	Store myAlias;
-
-	/**
-	 * If Kind is Expression, this delegate is used to replace
-	 * the IdentifierExp with another expression. It's null
-	 * otherwise.
-	 */
-	Exp delegate(Location) expressionDelegate;
 
 	/// Public except for binds from private imports.
 	Access access = Access.Public;
@@ -190,22 +182,6 @@ public:
 		this.parent = parent;
 		this.node = ed;
 		this.kind = Kind.EnumDeclaration;
-	}
-
-	/**
-	 * Used in foreach statements to transparently replace
-	 * element variable lookups with index operations into
-	 * the foreach's array.
-	 */
-	this(Scope parent, Node n, Exp delegate(Location) dg, string name)
-	in {
-		assert(n !is null);
-	}
-	body {
-		this.parent = parent;
-		this.expressionDelegate = dg;
-		this.kind = Kind.Expression;
-		this.node = n;
 	}
 
 	void markAliasResolved(Store s)
@@ -502,27 +478,6 @@ public:
 		errorOn(e, e.name);
 		auto store = new Store(this, e, e.name);
 		symbols[e.name] = store;
-		return store;
-	}
-
-	/**
-	 * Add an expression delegate store to the scope.
-	 *
-	 * Throws:
-	 *   CompilerPanic if anoter symbol of the same name is found.
-	 *
-	 * Side-effects:
-	 *   None.
-	 */
-	Store addExpressionDelegate(Node loc, Exp delegate(Location) dg, string name)
-	in {
-		assert(dg !is null);
-		assert(name.length > 0);
-	}
-	body {
-		errorOn(loc, name);
-		auto store = new Store(this, loc, dg, name);
-		symbols[name] = store;
 		return store;
 	}
 

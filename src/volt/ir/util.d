@@ -135,7 +135,6 @@ ir.Scope getScopeFromStore(ir.Store store)
 	case FunctionParam:
 	case Template:
 	case EnumDeclaration:
-	case Expression:
 		return null;
 	case Merge:
 	case Alias:

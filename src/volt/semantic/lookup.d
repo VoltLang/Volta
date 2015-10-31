@@ -495,7 +495,6 @@ ir.Store ensureResolved(LanguagePass lp, ir.Store s)
 		return s;
 	case Scope:
 	case Template:
-	case Expression:
 	case FunctionParam:
 		return s;
 	}

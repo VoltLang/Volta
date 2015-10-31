@@ -689,10 +689,6 @@ void extypeIdentifierExpNoRevisit(Context ctx, ref ir.Exp e, ir.IdentifierExp i,
 		assert(ed.assign !is null);
 		e = copyExp(ed.assign);
 		return;
-	case Expression:
-		assert(store.expressionDelegate !is null);
-		e = store.expressionDelegate(e.location);
-		return;
 	case Template:
 		throw panic(i, "template used as a value.");
 	case Type:
