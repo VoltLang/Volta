@@ -1131,25 +1131,6 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, LanguagePass lp,
 		fs.initVars = [indexVar];
 		fs.block.statements = [cast(ir.Node)elementVar] ~ fs.block.statements;
 
-		auto st = cast(ir.StorageType) elementVar.type;
-		if (st !is null && st.type == ir.StorageType.Kind.Ref) {
-			ir.Exp dg(Location l)
-			{
-				return buildIndex(l, aggref(), buildExpReference(l, indexVar, indexVar.name));
-			}
-			version (Volt) {
-				current.addExpressionDelegate(elementVar, cast(ir.Exp delegate(Location)) dg, elementVar.name ~ toString(cast(size_t) cast(void*) fs));
-			} else {
-				current.addExpressionDelegate(elementVar, &dg, elementVar.name ~ toString(cast(size_t) cast(void*) fs));
-			}
-			st = cast(ir.StorageType) st.base;
-		}
-		if (st !is null && st.type == ir.StorageType.Kind.Auto) {
-			auto asArray = cast(ir.ArrayType) aggType;
-			panicAssert(fes, asArray !is null);
-			elementVar.type = copyTypeSmart(asArray.base.location, asArray.base);
-			assert(elementVar.type !is null);
-		}
 
 		// i < array.length / i + 1 >= 0
 		auto tref = buildExpReference(indexVar.location, indexVar, indexVar.name);
