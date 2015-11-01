@@ -628,16 +628,21 @@ public:
 
 	final void replaceMacros()
 	{
-		foreach (ref f; includePaths)
+		foreach (ref f; includePaths) {
 			f = replaceEscapes(f);
-		foreach (ref f; libraryPaths)
+		}
+		foreach (ref f; libraryPaths) {
 			f = replaceEscapes(f);
-		foreach (ref f; libraryFiles)
+		}
+		foreach (ref f; libraryFiles) {
 			f = replaceEscapes(f);
-		foreach (ref f; stdFiles)
+		}
+		foreach (ref f; stdFiles) {
 			f = replaceEscapes(f);
-		foreach (ref f; stdIncludePaths)
+		}
+		foreach (ref f; stdIncludePaths) {
 			f = replaceEscapes(f);
+		}
 	}
 
 	final void setAligmentsFromOptions()
@@ -738,14 +743,17 @@ public:
 		ptrdiff_t ret;
 
 		ret = indexOf(file, e);
-		if (ret != -1)
+		if (ret != -1) {
 			file = replace(file, e, execDir);
+		}
 		ret = indexOf(file, a);
-		if (ret != -1)
+		if (ret != -1) {
 			file = replace(file, a, archStr);
+		}
 		ret = indexOf(file, p);
-		if (ret != -1)
+		if (ret != -1) {
 			file = replace(file, p, platformStr);
+		}
 
 		return file;
 	}
