@@ -32,7 +32,6 @@ ir.Constant evaluateOrNull(LanguagePass lp, ir.Scope current, ir.Exp exp)
 
 ir.Constant evaluate(LanguagePass lp, ir.Scope current, ir.Exp exp)
 {
-	typeLookup(lp, current, exp);  // int.max etc
 	switch (exp.nodeType) {
 	case ir.NodeType.BinOp:
 		auto binop = cast(ir.BinOp) exp;

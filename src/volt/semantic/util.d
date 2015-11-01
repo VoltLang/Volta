@@ -52,15 +52,22 @@ ir.Postfix[] collectPostfixes(ir.Postfix postfix)
 }
 
 /**
- * Get a Store from the child of a pre-proceassed postfix chain.
+ * Get a Store or Type from the child of a pre-proceassed postfix chain.
  */
-ir.Store getStore(Context ctx, ir.Exp exp)
+bool getIfStoreOrTypeExp(ir.Exp exp, out ir.Store store, out ir.Type type)
 {
-	auto sexp = cast(ir.StoreExp) exp;
-	if (sexp !is null) {
-		return sexp.store;
+	// Get type or store from child, otherwise the child should be a value.
+	if (auto se = cast(ir.StoreExp) exp) {
+		store = se.store;
+		type = cast(ir.Named) store.node;
+	} else if (auto te = cast(ir.TypeExp) exp) {
+		type = te.type;
+	} else {
+		// @TODO check that child is a value.
+		return false;
 	}
-	return null;
+
+	return true;
 }
 
 /**
@@ -358,13 +365,12 @@ ir.Exp getDefaultInit(Location l, LanguagePass lp, ir.Scope current, ir.Type t)
 /**
  * Handles <type>.<identifier>, like 'int.min' and the like.
  */
-bool typeLookup(LanguagePass lp, ir.Scope current, ref ir.Exp exp)
+bool typeLookup(Context ctx, ref ir.Exp exp, ir.Type type)
 {
 	auto postfix = cast(ir.Postfix) exp;
 	if (postfix is null || postfix.identifier is null) {
 		return false;
 	}
-	auto type = getExpType(lp, postfix.child, current);
 	auto value = postfix.identifier.value;
 
 	bool max;
@@ -374,7 +380,7 @@ bool typeLookup(LanguagePass lp, ir.Scope current, ref ir.Exp exp)
 	auto named = cast(ir.Named)realt;
 
 	if (named !is null && postfix.identifier.value == "init") {
-		exp = getDefaultInit(exp.location, lp, current, type);
+		exp = getDefaultInit(exp.location, ctx.lp, ctx.current, type);
 		return true;
 	}
 
@@ -390,7 +396,7 @@ bool typeLookup(LanguagePass lp, ir.Scope current, ref ir.Exp exp)
 
 	switch (value) {
 	case "init":
-		exp = getDefaultInit(exp.location, lp, current, type);
+		exp = getDefaultInit(exp.location, ctx.lp, ctx.current, type);
 		return true;
 	case "max":
 		max = true;
@@ -410,7 +416,7 @@ bool typeLookup(LanguagePass lp, ir.Scope current, ref ir.Exp exp)
 	}
 
 	if (pointer !is null) {
-		if (lp.settings.isVersionSet("V_LP64")) {
+		if (ctx.lp.settings.isVersionSet("V_LP64")) {
 			exp = buildConstantInt(type.location, max ? 8 : 0);
 		} else {
 			exp = buildConstantInt(type.location, max ? 4 : 0);

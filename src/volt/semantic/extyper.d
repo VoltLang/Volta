@@ -1320,26 +1320,34 @@ bool replaceExpReferenceIfNeeded(Context ctx,
 /**
  * Turn identifier postfixes into <ExpReference>.ident.
  */
-bool consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes, ref ir.Exp exp, ir.Exp parent)
+bool consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes,
+                                  ref ir.Exp exp, ir.Exp parent)
 {
-	// Remove int.max etc.
-	ir.Exp e = postfixes[0];
-	if (typeLookup(ctx.lp, ctx.current, e)) {
-		if (postfixes.length > 1) {
-			postfixes[1].child = e;
-			postfixes = postfixes[1 .. $];
-		} else {
-			exp = e;
-			postfixes = [];
-		}
-		return true;
-	}
+	ir.Store store;
+	ir.Type type;
 
-	// Get the store of the child or bail.
-	auto store = getStore(ctx, postfixes[0].child);
-	if (store is null) {
+	if (!getIfStoreOrTypeExp(postfixes[0].child, store, type)) {
 		return false;
 	}
+
+	if (type !is null) {
+		// Remove int.max etc.
+		ir.Exp e = postfixes[0];
+		if (typeLookup(ctx, e, type)) {
+			if (postfixes.length > 1) {
+				postfixes[1].child = e;
+				postfixes = postfixes[1 .. $];
+			} else {
+				exp = e;
+				postfixes = [];
+			}
+			return true;
+		} else if (store is null) {
+			return false;
+		}
+	}
+
+	assert(store !is null);
 
 	// Get a scope from said store.
 	auto base = store.s;
@@ -1351,7 +1359,6 @@ bool consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes, ref i
 			return false;
 		}
 	}
-
 
 	/* Get a declaration from the next identifier segment,
 	 * replace with an expreference?
