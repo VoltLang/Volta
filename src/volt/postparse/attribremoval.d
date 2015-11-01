@@ -20,7 +20,7 @@ import volt.visitor.visitor;
 class AttribRemoval : NullVisitor, Pass
 {
 public:
-	LanguagePass lp;
+	Settings settings;
 
 protected:
 	ir.Attribute[] mStack;
@@ -42,9 +42,9 @@ protected:
 	}
 
 public:
-	this(LanguagePass lp)
+	this(Settings settings)
 	{
-		this.lp = lp;
+		this.settings = settings;
 	}
 
 	/*
@@ -200,7 +200,7 @@ protected:
 				fn.type.linkage = ir.Linkage.Pascal;
 				break;
 			case LinkageSystem:
-				if (lp.settings.platform == Platform.MinGW) {
+				if (settings.platform == Platform.MinGW) {
 					fn.type.linkage = ir.Linkage.Windows;
 				} else {
 					fn.type.linkage = ir.Linkage.C;
@@ -308,7 +308,7 @@ protected:
 				d.linkage = ir.Linkage.Pascal;
 				break;
 			case LinkageSystem:
-				if (lp.settings.platform == Platform.MinGW) {
+				if (settings.platform == Platform.MinGW) {
 					d.linkage = ir.Linkage.Windows;
 				} else {
 					d.linkage = ir.Linkage.C;

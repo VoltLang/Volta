@@ -74,13 +74,13 @@ public:
 
 		mTracker = new WorkTracker();
 
-		postParse ~= new ConditionalRemoval(this);
+		postParse ~= new ConditionalRemoval(settings);
 		if (settings.removeConditionalsOnly) {
 			return;
 		}
 		postParse ~= new ScopeReplacer();
-		postParse ~= new AttribRemoval(this);
-		postParse ~= new Gatherer(this);
+		postParse ~= new AttribRemoval(settings);
+		postParse ~= new Gatherer();
 
 		passes2 ~= new SimpleTrace(this);
 		passes2 ~= new ExTyper(this);
@@ -325,7 +325,7 @@ public:
 
 	override void gather(ir.Scope current, ir.BlockStatement bs)
 	{
-		auto g = new Gatherer(this);
+		auto g = new Gatherer();
 		g.transform(current, bs);
 		g.close();
 	}

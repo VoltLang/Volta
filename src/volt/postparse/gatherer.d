@@ -23,7 +23,7 @@ enum Where
 	Function,
 }
 
-ir.Store findShadowed(LanguagePass lp, ir.Scope _scope, Location loc, string name)
+ir.Store findShadowed(ir.Scope _scope, Location loc, string name)
 {
 	// BlockStatements attached directly to a function have their .node set to that function.
 	if (_scope.node.nodeType != ir.NodeType.Function && _scope.node.nodeType != ir.NodeType.BlockStatement) {
@@ -40,7 +40,7 @@ ir.Store findShadowed(LanguagePass lp, ir.Scope _scope, Location loc, string nam
 		if (_scope.node.nodeType == ir.NodeType.Function && _scope.parent.node.nodeType == ir.NodeType.Function) {
 			return null;
 		}
-		return findShadowed(lp, _scope.parent, loc, name);
+		return findShadowed(_scope.parent, loc, name);
 	} else {
 		return null;
 	}
@@ -79,7 +79,7 @@ void gather(ir.Scope current, ir.Alias a, Where where)
 	a.store = current.addAlias(a, a.name, current);
 }
 
-void gather(LanguagePass lp, ir.Scope current, ir.Variable v, Where where, ir.Function[] functionStack)
+void gather(ir.Scope current, ir.Variable v, Where where, ir.Function[] functionStack)
 {
 	assert(v.access.isValidAccess());
 
@@ -90,7 +90,7 @@ void gather(LanguagePass lp, ir.Scope current, ir.Variable v, Where where, ir.Fu
 	}
 
 	// TODO Move to semantic.
-	auto shadowStore = findShadowed(lp, current, v.location, v.name);
+	auto shadowStore = findShadowed(current, v.location, v.name);
 	if (shadowStore !is null) {
 		throw makeShadowsDeclaration(v, shadowStore.node);
 	}
@@ -353,9 +353,6 @@ void addScope(ir.Scope current, ir.UserAttribute ua)
  */
 class Gatherer : NullVisitor, Pass
 {
-public:
-	LanguagePass lp;
-
 protected:
 	Where[] mWhere;
 	ir.Scope[] mScope;
@@ -364,14 +361,11 @@ protected:
 	ir.Module mModule;
 
 public:
-	this(LanguagePass lp)
-	{
-		this.lp = lp;
-	}
-
-	override void close()
-	{
-	}
+	/*
+	 *
+	 * Pass functions.
+	 *
+	 */
 
 	override void transform(ir.Module m)
 	{
@@ -394,6 +388,12 @@ public:
 		pop();
 		assert(mWhere.length == 0);
 	}
+
+	override void close()
+	{
+
+	}
+
 
 	/*
 	 *
@@ -479,7 +479,7 @@ public:
 
 	override Status enter(ir.Variable v)
 	{
-		gather(lp, current, v, where, mFunctionStack);
+		gather(current, v, where, mFunctionStack);
 		return Continue;
 	}
 
@@ -550,7 +550,7 @@ public:
 	{
 		enter(fes.block);
 		foreach (var; fes.itervars) {
-			gather(lp, current, var, where, mFunctionStack);
+			gather(current, var, where, mFunctionStack);
 		}
 		if (fes.aggregate !is null) acceptExp(fes.aggregate, this);
 		if (fes.beginIntegerRange !is null) {
@@ -569,7 +569,7 @@ public:
 	{
 		enter(fs.block);
 		foreach (var; fs.initVars) {
-			gather(lp, current, var, where, mFunctionStack);
+			gather(current, var, where, mFunctionStack);
 		}
 		acceptExp(fs.test, this);
 		foreach (ref inc; fs.increments) {
