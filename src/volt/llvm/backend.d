@@ -76,8 +76,9 @@ public:
 		assert(mFilename !is null);
 	}
 	body {
-		scope (exit)
+		scope (exit) {
 			mFilename = null;
+		}
 
 		auto state = new VoltState(lp, m);
 		auto mod = state.mod;
@@ -86,8 +87,9 @@ public:
 			mFilename = null;
 		}
 
-		if (mDump)
+		if (mDump) {
 			io.output.writefln("Compiling module");
+		}
 
 		try {
 			state.compile(m);
@@ -125,10 +127,12 @@ LLVMModuleRef loadModule(LLVMContextRef ctx, string filename)
 	string msg;
 
 	auto mod = LLVMModuleFromFileInContext(ctx, filename, msg);
-	if (msg !is null && mod !is null)
+	if (msg !is null && mod !is null) {
 		io.error.writefln("%s", msg); // Warnings
-	if (mod is null)
+	}
+	if (mod is null) {
 		throw makeNoLoadBitcodeFile(filename, msg);
+	}
 
 	return mod;
 }
@@ -145,30 +149,36 @@ void linkModules(string output, string[] inputs...)
 	string msg;
 
 	if (inputs.length == 1 &&
-	    output == inputs[0])
+	    output == inputs[0]) {
 		return;
+	}
 
 	ctx = LLVMContextCreate();
-	scope (exit)
+	scope (exit) {
 		LLVMContextDispose(ctx);
+	}
 
 	dst = loadModule(ctx, inputs[0]);
-	scope (exit)
+	scope (exit) {
 		LLVMDisposeModule(dst);
+	}
 
 	foreach (filename; inputs[1 .. $]) {
 		src = loadModule(ctx, filename);
 
 		bool ret = LLVMLinkModules(dst, src, LLVMLinkerMode.DestroySource, msg);
-		if (msg !is null)
+		if (msg !is null) {
 			io.error.writefln("%s", msg);
-		if (ret)
+		}
+		if (ret) {
 			throw makeNoLinkModule(filename, msg);
+		}
 	}
 
 	auto ret = LLVMWriteBitcodeToFile(dst, output);
-	if (ret)
+	if (ret) {
 		throw makeNoWriteBitcodeFile(output, msg);
+	}
 }
 
 void writeObjectFile(Settings settings, string output, string input)
@@ -176,19 +186,22 @@ void writeObjectFile(Settings settings, string output, string input)
 	auto arch = archList[settings.arch];
 	auto triple = tripleList[settings.platform][settings.arch];
 	auto layout = layoutList[settings.platform][settings.arch];
-	if (arch is null || triple is null || layout is null)
+	if (arch is null || triple is null || layout is null) {
 		throw makeArchNotSupported();
+	}
 
 	// Need a context to load the module into.
 	auto ctx = LLVMContextCreate();
-	scope (exit)
+	scope (exit) {
 		LLVMContextDispose(ctx);
+	}
 
 
 	// Load the module from file.
 	auto mod = loadModule(ctx, input);
-	scope (exit)
+	scope (exit) {
 		LLVMDisposeModule(mod);
+	}
 
 
 	// Load the target mc/assmbler.
@@ -202,8 +215,9 @@ void writeObjectFile(Settings settings, string output, string input)
 		LLVMCodeGenOptLevel.Default,
 		LLVMRelocMode.Default,
 		LLVMCodeModel.Default);
-	scope (exit)
+	scope (exit) {
 		LLVMDisposeTargetMachine(machine);
+	}
 
 
 	// Write the module to the file
@@ -212,8 +226,10 @@ void writeObjectFile(Settings settings, string output, string input)
 		machine, mod, output,
 		LLVMCodeGenFileType.Object, msg) != 0;
 
-	if (msg !is null && !ret)
+	if (msg !is null && !ret) {
 		io.error.writefln("%s", msg); // Warnings
-	if (ret)
+	}
+	if (ret) {
 		throw makeNoWriteObjectFile(output, msg);
+	}
 }
