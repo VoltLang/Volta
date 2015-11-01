@@ -41,7 +41,6 @@ class ScopeReplacer : NullVisitor, Pass
 
 	override Status enter(ir.BlockStatement bs)
 	{
-		super.enter(bs);
 		foreach (i, node; bs.statements) {
 			auto ss = cast(ir.ScopeStatement) node;
 			if (ss is null) {
