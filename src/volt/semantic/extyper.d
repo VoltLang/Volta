@@ -1071,7 +1071,8 @@ private void rewriteHomogenousVariadic(Context ctx,
  * and resolves property function calls in postfixes,
  * type safe varargs, and explicit constructor calls.
  */
-void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp parent)
+void extypePostfixLeave(Context ctx, ref ir.Exp exp, ir.Postfix postfix,
+                        ir.Exp parent)
 {
 	if (opOverloadRewriteIndex(ctx, postfix, exp)) {
 		postfix = cast(ir.Postfix) exp;
@@ -1081,11 +1082,13 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp 
 		}
 	}
 
-	ctx.enter(postfix);
-	foreach (ref arg; postfix.arguments) {
-		acceptExp(arg, ctx.extyper);
+	if (postfix.arguments.length > 0) {
+		ctx.enter(postfix);
+		foreach (ref arg; postfix.arguments) {
+			acceptExp(arg, ctx.extyper);
+		}
+		ctx.leave(postfix);
 	}
-	ctx.leave(postfix);
 
 	if (postfixIdentifier(ctx, exp, postfix, parent)) {
 		return;
@@ -1751,7 +1754,7 @@ void extypePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp paren
 			// The last element should be exp.
 			assert(working is exp);
 
-			extypeLeavePostfix(ctx, exp, working, parent);
+			extypePostfixLeave(ctx, exp, working, parent);
 		} else {
 			// Set the next in line as parent. This allows handling
 			// of bar.ufcs(4, 5) and the like.
@@ -1760,7 +1763,7 @@ void extypePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp paren
 			// Make sure we haven't rewritten this yet.
 			assert(tmp.child is working);
 
-			extypeLeavePostfix(ctx, tmp.child, working, tmp);
+			extypePostfixLeave(ctx, tmp.child, working, tmp);
 		}
 	}
 	// The postfix parameter is stale now, don't touch it.
