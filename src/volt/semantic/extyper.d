@@ -1212,14 +1212,14 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
  * directly but instead this function is called after they have been
  * rewritten and the ExpReference has been resolved to a single Function.
  */
-bool replaceExpReferenceIfNeeded(Context ctx,
-                                 ir.Type referredType, ref ir.Exp exp, ir.ExpReference eRef)
+bool replaceExpReferenceIfNeeded(Context ctx, ir.Type referredType,
+                                 ref ir.Exp exp, ir.ExpReference eRef)
 {
 	// For vtable and property.
 	if (eRef.rawReference) {
 		return false;
 	}
-	
+
 	// Early out on static vars.
 	// Or function sets.
 	auto decl = eRef.decl;
@@ -1638,7 +1638,9 @@ bool postfixIdentifier(Context ctx, ref ir.Exp exp,
 	//}
 
 	// Is the store a field on the object.
-	auto store2 = lookupOnlyThisScopeAndClassParents(ctx.lp, _scope, postfix.location, field);
+	auto store2 = lookupOnlyThisScopeAndClassParents(ctx.lp, _scope,
+	                                                 postfix.location,
+	                                                 field);
 	auto var2 = cast(ir.Variable) store2.node;
 	if (store2 !is null && var2 !is null &&
 	    var2.storage == ir.Variable.Storage.Field) {
@@ -1654,9 +1656,7 @@ bool postfixIdentifier(Context ctx, ref ir.Exp exp,
 
 	// Check if the store is a property, for property _only_ members
 	// on the class/struct.
-	if (rewriteIfPropertyStore(exp, postfix.child,
-	                           field,
-	                           parent, store)) {
+	if (rewriteIfPropertyStore(exp, postfix.child, field, parent, store)) {
 		return true;
 	}
 
@@ -1687,10 +1687,8 @@ bool postfixIdentifier(Context ctx, ref ir.Exp exp,
 			}
 		}
 
-		auto fnSet = buildSet(
-			postfix.location, store.functions);
-		auto expRef = buildExpReference(
-			postfix.location, fnSet, field);
+		auto fnSet = buildSet(postfix.location, store.functions);
+		auto expRef = buildExpReference(postfix.location, fnSet, field);
 		exp = buildCreateDelegate(
 			postfix.location, postfix.child, expRef);
 		return true;
