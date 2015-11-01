@@ -1100,7 +1100,11 @@ void extypePostfixLeave(Context ctx, ref ir.Exp exp, ir.Postfix postfix,
 		return;
 	}
 
-	// Following only applies to function calls.
+	extypePostfixCall(ctx, exp, postfix);
+}
+
+void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
+{
 	if (postfix.op != ir.Postfix.Op.Call) {
 		return;
 	}
@@ -1144,11 +1148,9 @@ void extypePostfixLeave(Context ctx, ref ir.Exp exp, ir.Postfix postfix,
 		}
 	}
 
-	if (postfix.op == ir.Postfix.Op.Call) {
-		auto callable = cast(ir.CallableType) realType(getExpType(ctx.lp, postfix.child, ctx.current));
-		if (callable is null) {
-			throw makeError(postfix.location, "calling uncallable expression.");
-		}
+	auto callable = cast(ir.CallableType) realType(getExpType(ctx.lp, postfix.child, ctx.current));
+	if (callable is null) {
+		throw makeError(postfix.location, "calling uncallable expression.");
 	}
 
 	if (asFunctionType is null) {
