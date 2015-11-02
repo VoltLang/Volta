@@ -66,7 +66,7 @@ size_t size(LanguagePass lp, ir.Node node)
 		return unionSize(lp, asUnion);
 	case Class:
 	case Interface:
-		return lp.settings.isVersionSet("V_P64") ? 8U : 4U;
+		return lp.ver.isVersionSet("V_P64") ? 8U : 4U;
 	case Enum:
 		auto asEnum = cast(ir.Enum) node;
 		assert(asEnum !is null);
@@ -78,11 +78,11 @@ size_t size(LanguagePass lp, ir.Node node)
 		assert(asVariable !is null);
 		return size(lp, asVariable.type);
 	case PointerType, FunctionType, DelegateType:
-		return lp.settings.isVersionSet("V_P64") ? 8U : 4U;
+		return lp.ver.isVersionSet("V_P64") ? 8U : 4U;
 	case ArrayType:
-		return lp.settings.isVersionSet("V_P64") ? 16U : 8U;
+		return lp.ver.isVersionSet("V_P64") ? 16U : 8U;
 	case AAType:
-		return lp.settings.isVersionSet("V_P64") ? 8U : 4U;
+		return lp.ver.isVersionSet("V_P64") ? 8U : 4U;
 	case TypeReference:
 		auto asTR = cast(ir.TypeReference) node;
 		assert(asTR !is null);

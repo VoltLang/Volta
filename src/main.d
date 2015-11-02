@@ -33,23 +33,24 @@ int main(string[] args)
 	auto cmd = args[0];
 	args = args[1 .. $];
 
-	auto settings = new Settings(getExecDir());
+	auto ver = new VersionSet();
+	auto settings = new Settings(getExecDir(), ver);
 	setDefault(settings);
 
-	if (!handleArgs(getConfigLines(), files, settings))
+	if (!handleArgs(getConfigLines(), files, ver, settings))
 		return 0;
 
-	if (!handleArgs(args, files, settings))
+	if (!handleArgs(args, files, ver, settings))
 		return 0;
 
-	settings.processConfigs();
+	settings.processConfigs(ver);
 
 	if (files.length == 0) {
 		writefln("%s: no input files", cmd);
 		return 0;
 	}
 
-	auto vc = new VoltDriver(settings);
+	auto vc = new VoltDriver(ver, settings);
 	vc.addFiles(files);
 	int ret = vc.compile();
 	vc.close();
@@ -57,7 +58,7 @@ int main(string[] args)
 	return ret;
 }
 
-bool handleArgs(string[] args, ref string[] files, Settings settings)
+bool handleArgs(string[] args, ref string[] files, VersionSet ver, Settings settings)
 {
 	void delegate(string) argHandler;
 	int i;
@@ -72,7 +73,7 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 	}
 
 	void versionIdentifier(string ident) {
-		settings.setVersionIdentifier(ident);
+		ver.setVersionIdentifier(ident);
 	}
 
 	void libraryFile(string file) {
@@ -169,7 +170,7 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 				return false;
 			}
 
-			if (!handleArgs(lines, files, settings))
+			if (!handleArgs(lines, files, ver, settings))
 				return false;
 
 			continue;
@@ -205,7 +206,7 @@ bool handleArgs(string[] args, ref string[] files, Settings settings)
 			settings.warningsEnabled = true;
 			continue;
 		case "-d":
-			settings.debugEnabled = true;
+			ver.debugEnabled = true;
 			continue;
 		case "-c":
 			settings.noLink = true;

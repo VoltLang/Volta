@@ -68,13 +68,13 @@ private:
 	ir.Module[string] mModules;
 
 public:
-	this(Driver driver, Settings settings, Frontend frontend)
+	this(Driver driver, VersionSet ver, Settings settings, Frontend frontend)
 	{
-		super(driver, settings, frontend);
+		super(driver, ver, settings, frontend);
 
 		mTracker = new WorkTracker();
 
-		postParse ~= new ConditionalRemoval(settings);
+		postParse ~= new ConditionalRemoval(ver);
 		if (settings.removeConditionalsOnly) {
 			return;
 		}

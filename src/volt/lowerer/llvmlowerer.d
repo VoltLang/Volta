@@ -280,7 +280,7 @@ public:
 	this(LanguagePass lp)
 	{
 		this.lp = lp;
-		this.V_P64 = lp.settings.isVersionSet("V_P64");
+		this.V_P64 = lp.ver.isVersionSet("V_P64");
 	}
 
 	override void transform(ir.Module m)

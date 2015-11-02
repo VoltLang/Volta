@@ -35,6 +35,7 @@ import volt.visitor.jsonprinter;
 class VoltDriver : Driver
 {
 public:
+	VersionSet ver;
 	Settings settings;
 	Frontend frontend;
 	LanguagePass languagePass;
@@ -59,14 +60,19 @@ protected:
 	ir.Module[] mCommandLineModules;
 
 public:
-	this(Settings s)
-	{
+	this(VersionSet ver, Settings s)
+	in {
+		assert(s !is null);
+		assert(ver !is null);
+	}
+	body {
+		this.ver = ver;
 		this.settings = s;
 
 		auto p = new Parser();
 		p.dumpLex = false;
 
-		auto lp = new VoltLanguagePass(this, s, p);
+		auto lp = new VoltLanguagePass(this, ver, s, p);
 
 		auto b = new LlvmBackend(lp);
 

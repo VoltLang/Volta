@@ -113,6 +113,7 @@ interface Pass
 abstract class LanguagePass
 {
 public:
+	VersionSet ver;
 	Driver driver;
 	Settings settings;
 	Frontend frontend;
@@ -197,13 +198,15 @@ public:
 	/* @} */
 
 public:
-	this(Driver driver, Settings settings, Frontend frontend)
+	this(Driver driver, VersionSet ver, Settings settings, Frontend frontend)
 	out {
+		assert(this.ver !is null);
 		assert(this.driver !is null);
 		assert(this.settings !is null);
 		assert(this.frontend !is null);
 	}
 	body {
+		this.ver = ver;
 		this.driver = driver;
 		this.settings = settings;
 		this.frontend = frontend;
@@ -548,7 +551,6 @@ final class Settings
 {
 public:
 	bool warningsEnabled; ///< The -w argument.
-	bool debugEnabled; ///< The -d argument.
 	bool noBackend; ///< The -S argument.
 	bool noLink; ///< The -c argument
 	bool emitBitcode; ///< The --emit-bitcode argument.
@@ -606,22 +608,20 @@ public:
 
 
 private:
-	/// If the ident exists and is true, it's set, if false it's reserved.
-	bool[string] mVersionIdentifiers;
-	/// If the ident exists, it's set.
-	bool[string] mDebugIdentifiers;
+	VersionSet ver;
+
 
 public:
-	this(string execDir)
+	this(string execDir, VersionSet ver)
 	{
-		setDefaultVersionIdentifiers();
+		this.ver = ver;
 		this.execDir = execDir;
 	}
 
-	final void processConfigs()
+	final void processConfigs(VersionSet ver)
 	{
 		identStr = "Volta 0.0.1";
-		setVersionsFromOptions();
+		setVersionsFromOptions(ver);
 		setAligmentsFromOptions();
 		replaceMacros();
 	}
@@ -684,53 +684,53 @@ public:
 		}
 	}
 
-	final void setVersionsFromOptions()
+	final void setVersionsFromOptions(VersionSet ver)
 	{
 		final switch (platform) with (Platform) {
 		case MinGW:
 			platformStr = "mingw";
-			setVersionIdentifier("Windows");
-			setVersionIdentifier("MinGW");
+			ver.setVersionIdentifier("Windows");
+			ver.setVersionIdentifier("MinGW");
 			break;
 		case MSVC:
 			platformStr = "msvc";
-			setVersionIdentifier("Windows");
-			setVersionIdentifier("MSVC");
+			ver.setVersionIdentifier("Windows");
+			ver.setVersionIdentifier("MSVC");
 			break;
 		case Linux:
 			platformStr = "linux";
-			setVersionIdentifier("Linux");
-			setVersionIdentifier("Posix");
+			ver.setVersionIdentifier("Linux");
+			ver.setVersionIdentifier("Posix");
 			break;
 		case OSX:
 			platformStr = "osx";
-			setVersionIdentifier("OSX");
-			setVersionIdentifier("Posix");
+			ver.setVersionIdentifier("OSX");
+			ver.setVersionIdentifier("Posix");
 			break;
 		case EMSCRIPTEN:
 			platformStr = "emscripten";
-			setVersionIdentifier("Emscripten");
+			ver.setVersionIdentifier("Emscripten");
 			break;
 		}
 
 		final switch (arch) with (Arch) {
 		case X86:
 			archStr = "x86";
-			setVersionIdentifier("X86");
-			setVersionIdentifier("LittleEndian");
-			setVersionIdentifier("V_P32");
+			ver.setVersionIdentifier("X86");
+			ver.setVersionIdentifier("LittleEndian");
+			ver.setVersionIdentifier("V_P32");
 			break;
 		case X86_64:
 			archStr = "x86_64";
-			setVersionIdentifier("X86_64");
-			setVersionIdentifier("LittleEndian");
-			setVersionIdentifier("V_P64");
+			ver.setVersionIdentifier("X86_64");
+			ver.setVersionIdentifier("LittleEndian");
+			ver.setVersionIdentifier("V_P64");
 			break;
 		case LE32:
 			archStr = "le32";
-			setVersionIdentifier("LE32");
-			setVersionIdentifier("LittleEndian");
-			setVersionIdentifier("V_P32");
+			ver.setVersionIdentifier("LE32");
+			ver.setVersionIdentifier("LittleEndian");
+			ver.setVersionIdentifier("V_P32");
 		}
 	}
 
@@ -756,6 +756,41 @@ public:
 		}
 
 		return file;
+	}
+
+	final ir.PrimitiveType getSizeT(Location loc)
+	{
+		ir.PrimitiveType pt;
+		if (ver.isVersionSet("V_P64")) {
+			pt = new ir.PrimitiveType(ir.PrimitiveType.Kind.Ulong);
+		} else {
+			pt = new ir.PrimitiveType(ir.PrimitiveType.Kind.Uint);
+		}
+		pt.location = loc;
+		return pt;
+	}
+}
+
+/**
+ * A set of version/debug identifiers.
+ */
+final class VersionSet
+{
+public:
+	bool debugEnabled;
+
+
+private:
+	/// If the ident exists and is true, it's set, if false it's reserved.
+	bool[string] mVersionIdentifiers;
+	/// If the ident exists, it's set.
+	bool[string] mDebugIdentifiers;
+
+
+public:
+	this()
+	{
+		setDefaultVersionIdentifiers();
 	}
 
 	/// Throws: Exception if ident is reserved.
@@ -801,18 +836,6 @@ public:
 		return (ident in mDebugIdentifiers) !is null;
 	}
 
-	final ir.PrimitiveType getSizeT(Location loc)
-	{
-		ir.PrimitiveType pt;
-		if (isVersionSet("V_P64")) {
-			pt = new ir.PrimitiveType(ir.PrimitiveType.Kind.Ulong);
-		} else {
-			pt = new ir.PrimitiveType(ir.PrimitiveType.Kind.Uint);
-		}
-		pt.location = loc;
-		return pt;
-	}
-
 private:
 	final void setDefaultVersionIdentifiers()
 	{
@@ -831,17 +854,17 @@ private:
 
 unittest
 {
-	auto settings = new Settings(".");
-	assert(!settings.isVersionSet("none"));
-	assert(settings.isVersionSet("all"));
-	settings.setVersionIdentifier("foo");
-	assert(settings.isVersionSet("foo"));
-	assert(!settings.isDebugSet("foo"));
-	settings.setDebugIdentifier("foo");
-	assert(settings.isDebugSet("foo"));
+	auto ver = new VersionSet(".");
+	assert(!ver.isVersionSet("none"));
+	assert(ver.isVersionSet("all"));
+	ver.setVersionIdentifier("foo");
+	assert(ver.isVersionSet("foo"));
+	assert(!ver.isDebugSet("foo"));
+	ver.setDebugIdentifier("foo");
+	assert(ver.isDebugSet("foo"));
 
 	try {
-		settings.setVersionIdentifier("none");
+		ver.setVersionIdentifier("none");
 		assert(false);
 	} catch (Exception e) {
 	}

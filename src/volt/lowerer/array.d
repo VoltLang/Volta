@@ -28,7 +28,7 @@ ir.Function getLlvmMemMove(Location loc, LanguagePass lp)
 {
 	auto name32 = "__llvm_memmove_p0i8_p0i8_i32";
 	auto name64 = "__llvm_memmove_p0i8_p0i8_i64";
-	auto name = lp.settings.isVersionSet("V_P64") ? name64 : name32;
+	auto name = lp.ver.isVersionSet("V_P64") ? name64 : name32;
 	return retrieveFunctionFromObject(lp, loc, name);
 }
 
@@ -36,7 +36,7 @@ ir.Function getLlvmMemCopy(Location loc, LanguagePass lp)
 {
 	auto name32 = "__llvm_memcpy_p0i8_p0i8_i32";
 	auto name64 = "__llvm_memcpy_p0i8_p0i8_i64";
-	auto name = lp.settings.isVersionSet("V_P64") ? name64 : name32;
+	auto name = lp.ver.isVersionSet("V_P64") ? name64 : name32;
 	return retrieveFunctionFromObject(lp, loc, name);
 }
 
