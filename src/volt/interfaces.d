@@ -607,14 +607,9 @@ public:
 	Alignments alignment;
 
 
-private:
-	VersionSet ver;
-
-
 public:
-	this(string execDir, VersionSet ver)
+	this(string execDir)
 	{
-		this.ver = ver;
 		this.execDir = execDir;
 	}
 

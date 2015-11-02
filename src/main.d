@@ -34,7 +34,7 @@ int main(string[] args)
 	args = args[1 .. $];
 
 	auto ver = new VersionSet();
-	auto settings = new Settings(getExecDir(), ver);
+	auto settings = new Settings(getExecDir());
 	setDefault(settings);
 
 	if (!handleArgs(getConfigLines(), files, ver, settings))
