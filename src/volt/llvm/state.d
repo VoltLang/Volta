@@ -83,7 +83,7 @@ public:
 		this.lp = lp;
 
 		setTargetAndLayout();
-		buildCommonTypes(this, lp.ver.isVersionSet("V_P64"));
+		buildCommonTypes(this, lp.ver.isP64);
 
 		visitor = new LlvmVisitor(this);
 

@@ -824,6 +824,15 @@ public:
 		return (ident in mDebugIdentifiers) !is null;
 	}
 
+	/**
+	 * Quick helpers to get version flags.
+	 * @{
+	 */
+	@property bool isP64() { return isVersionSet("V_P64"); }
+	/**
+	 * @}
+	 */
+
 private:
 	final void setDefaultVersionIdentifiers()
 	{

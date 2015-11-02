@@ -416,7 +416,7 @@ bool typeLookup(Context ctx, ref ir.Exp exp, ir.Type type)
 	}
 
 	if (pointer !is null) {
-		if (ctx.lp.ver.isVersionSet("V_LP64")) {
+		if (ctx.lp.ver.isP64) {
 			exp = buildConstantInt(type.location, max ? 8 : 0);
 		} else {
 			exp = buildConstantInt(type.location, max ? 4 : 0);

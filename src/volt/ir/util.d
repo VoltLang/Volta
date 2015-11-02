@@ -323,7 +323,7 @@ ir.PrimitiveType buildReal(Location loc) { return buildPrimitiveType(loc, ir.Pri
 ir.PrimitiveType buildSizeT(Location loc, LanguagePass lp)
 {
 	ir.PrimitiveType pt;
-	if (lp.ver.isVersionSet("V_P64")) {
+	if (lp.ver.isP64) {
 		pt = new ir.PrimitiveType(ir.PrimitiveType.Kind.Ulong);
 	} else {
 		pt = new ir.PrimitiveType(ir.PrimitiveType.Kind.Uint);
