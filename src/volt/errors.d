@@ -322,14 +322,14 @@ CompilerException makeArchNotSupported(string file = __FILE__, const int line = 
 	return new CompilerError("arch not supported on current platform.", file, line);
 }
 
-CompilerException makeNotTaggedOut(ir.Exp exp, string file = __FILE__, const int line = __LINE__)
+CompilerException makeNotTaggedOut(ir.Exp exp, size_t i, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(exp.location, "out parameter not tagged as out.", file, line);
+	return new CompilerError(exp.location, format("argument (no. %s) is not tagged as out.", i+1), file, line);
 }
 
-CompilerException makeNotTaggedRef(ir.Exp exp, string file = __FILE__, const int line = __LINE__)
+CompilerException makeNotTaggedRef(ir.Exp exp, size_t i, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(exp.location, "ref parameter not tagged as ref.", file, line);
+	return new CompilerError(exp.location, format("argument (no. %s) is not tagged as ref.", i+1), file, line);
 }
 
 CompilerException makeFunctionNameOutsideOfFunction(ir.TokenExp fexp, string file = __FILE__, const int line = __LINE__)

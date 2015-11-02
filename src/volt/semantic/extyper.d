@@ -1177,12 +1177,12 @@ void extypeLeavePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp 
 			if (asFunctionType.isArgRef[i] &&
 			    postfix.argumentTags[i] != ir.Postfix.TagKind.Ref &&
 			    !ctx.lp.settings.internalD) {
-				throw makeNotTaggedRef(postfix.arguments[i]);
+				throw makeNotTaggedRef(postfix.arguments[i], i);
 			}
 			if (asFunctionType.isArgOut[i] &&
 			    postfix.argumentTags[i] != ir.Postfix.TagKind.Out &&
 			    !ctx.lp.settings.internalD) {
-				throw makeNotTaggedOut(postfix.arguments[i]);
+				throw makeNotTaggedOut(postfix.arguments[i], i);
 			}
 		}
 		extypePass(ctx, postfix.arguments[i], asFunctionType.params[i]);
