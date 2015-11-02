@@ -974,7 +974,7 @@ void handleStructLookupViaFunctionCall(LanguagePass lp, ir.Scope current, ref ir
 		return;
 	}
 
-	auto type = realType(tryToGetExpType(lp, postfix.child, current));
+	auto type = realType(getExpType(lp, postfix.child, current));
 	if (type.nodeType != ir.NodeType.Union &&
 	    type.nodeType != ir.NodeType.Struct) {
 		return;

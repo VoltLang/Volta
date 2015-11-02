@@ -55,22 +55,6 @@ ir.Type getExpType(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 }
 
 /**
- * Same as getExpType, but will return null if no type can be retrieved.
- *
- * This is mainly useful if you're doing something like getting types from
- * component parts of postfix expressions and the like, as a partial expression
- * may not comprise a valid type.
- */
-ir.Type tryToGetExpType(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
-{
-	try {
-		return getExpType(lp, exp, currentScope);
-	} catch (CompilerException) {
-		return null;
-	}
-}
-
-/**
  * Retrieve the type of the given expression.
  */
 ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
