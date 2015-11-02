@@ -757,18 +757,6 @@ public:
 
 		return file;
 	}
-
-	final ir.PrimitiveType getSizeT(Location loc)
-	{
-		ir.PrimitiveType pt;
-		if (ver.isVersionSet("V_P64")) {
-			pt = new ir.PrimitiveType(ir.PrimitiveType.Kind.Ulong);
-		} else {
-			pt = new ir.PrimitiveType(ir.PrimitiveType.Kind.Uint);
-		}
-		pt.location = loc;
-		return pt;
-	}
 }
 
 /**

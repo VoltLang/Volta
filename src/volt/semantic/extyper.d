@@ -807,7 +807,7 @@ bool replaceAAPostfixesIfNeeded(Context ctx, ir.Postfix postfix, ref ir.Exp exp)
 		return true;
 	case "length":
 		auto rtFn = buildExpReference(l, ctx.lp.aaGetLength, ctx.lp.aaGetLength.name);
-		auto type = ctx.lp.settings.getSizeT(l);
+		auto type = buildSizeT(l, ctx.lp);
 		exp = buildDeref(l, buildCastSmart(l, buildPtrSmart(l, type), buildCall(l, rtFn, arg)));
 		return true;
 	case "rehash":
@@ -1934,8 +1934,8 @@ void handleDup(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 		return;
 	}
 
-	auto length = buildSub(l, buildCastSmart(l, ctx.lp.settings.getSizeT(l), _unary.dupEnd), 
-		buildCastSmart(l, ctx.lp.settings.getSizeT(l), _unary.dupBeginning));
+	auto length = buildSub(l, buildCastSmart(l, buildSizeT(l, ctx.lp), _unary.dupEnd),
+		buildCastSmart(l, buildSizeT(l, ctx.lp), _unary.dupBeginning));
 	auto newExp = buildNewSmart(l, type, length);
 	auto var = buildVariableAnonSmart(l, ctx.current, sexp, type, newExp);
 	auto evar = buildExpReference(l, var, var.name);
@@ -2835,12 +2835,12 @@ void extypeForeach(Context ctx, ir.ForeachStatement fes)
 	case ir.NodeType.ArrayType:
 		auto asArray = cast(ir.ArrayType) aggType;
 		value = copyTypeSmart(fes.aggregate.location, asArray.base);
-		key = ctx.lp.settings.getSizeT(fes.location);
+		key = buildSizeT(fes.location, ctx.lp);
 		break;
 	case ir.NodeType.StaticArrayType:
 		auto asArray = cast(ir.StaticArrayType) aggType;
 		value = copyTypeSmart(fes.aggregate.location, asArray.base);
-		key = ctx.lp.settings.getSizeT(fes.location);
+		key = buildSizeT(fes.location, ctx.lp);
 		break;
 	case ir.NodeType.AAType:
 		auto asArray = cast(ir.AAType) aggType;
@@ -3473,7 +3473,7 @@ public:
 				(aggType.nodeType == ir.NodeType.StaticArrayType || 
 				aggType.nodeType == ir.NodeType.ArrayType)) {
 				auto keysz = size(ctx.lp, fes.itervars[0].type);
-				auto sizetsz = size(ctx.lp, ctx.lp.settings.getSizeT(fes.location));
+				auto sizetsz = size(ctx.lp, buildSizeT(fes.location, ctx.lp));
 				if (keysz < sizetsz) {
 					throw makeError(fes.location, format("index var '%s' isn't large enough to hold a size_t.", fes.itervars[0].name));
 				}

@@ -718,7 +718,7 @@ ir.Type getPostfixIdentifierArrayType(LanguagePass lp, ir.Postfix postfix, ir.Ar
 {
 	switch (postfix.identifier.value) {
 	case "length":
-		return lp.settings.getSizeT(postfix.location);
+		return buildSizeT(postfix.location, lp);
 	case "ptr":
 		auto pointer = new ir.PointerType(arrayType.base);
 		pointer.location = postfix.location;
@@ -732,7 +732,7 @@ ir.Type getPostfixIdentifierStaticArrayType(LanguagePass lp, ir.Postfix postfix,
 {
 	switch (postfix.identifier.value) {
 	case "length":
-		return lp.settings.getSizeT(postfix.location);
+		return buildSizeT(postfix.location, lp);
 	case "ptr":
 		auto pointer = new ir.PointerType(arrayType.base);
 		pointer.location = postfix.location;

@@ -163,7 +163,7 @@ ir.Exp createAllocDgCall(ir.Variable allocDgVar, LanguagePass lp, Location locat
 	auto countConst = new ir.Constant();
 	countConst.location = location;
 	countConst.u._ulong = 0;
-	countConst.type = lp.settings.getSizeT(location);
+	countConst.type = buildSizeT(location, lp);
 
 	auto pfixCall = new ir.Postfix();
 	pfixCall.location = location;
@@ -173,7 +173,7 @@ ir.Exp createAllocDgCall(ir.Variable allocDgVar, LanguagePass lp, Location locat
 	if (countArg is null) {
 		pfixCall.arguments ~= countConst;
 	} else {
-		pfixCall.arguments ~= buildCast(location, lp.settings.getSizeT(location), countArg);
+		pfixCall.arguments ~= buildCast(location, buildSizeT(location, lp), countArg);
 	}
 
 	if (!suppressCast) {
@@ -256,7 +256,7 @@ public:
 		auto call = new ir.Postfix();
 		call.location = unary.location;
 		call.op = ir.Postfix.Op.Call;
-		call.arguments ~= buildCast(unary.location, lp.settings.getSizeT(unary.location), unary.argumentList[0]);
+		call.arguments ~= buildCast(unary.location, buildSizeT(unary.location, lp), unary.argumentList[0]);
 		call.child = _ref;
 
 		exp = call;
@@ -273,7 +273,7 @@ public:
 		auto statExp = buildStatementExp(loc);
 
 		auto offset = buildVariable(
-			loc, lp.settings.getSizeT(loc), ir.Variable.Storage.Function,
+			loc, buildSizeT(loc, lp), ir.Variable.Storage.Function,
 			"offset", buildConstantSizeT(loc, lp, 0)
 		);
 		statExp.statements ~= offset;

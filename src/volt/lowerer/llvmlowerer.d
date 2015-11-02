@@ -1117,13 +1117,13 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, LanguagePass lp,
 		if (fs.initVars.length == 2) {
 			indexVar = fs.initVars[0];
 			if (indexVar.type is null) {
-				indexVar.type = lp.settings.getSizeT(l);
+				indexVar.type = buildSizeT(l, lp);
 			}
 			indexVar.assign = copyExp(indexAssign);
 			elementVar = fs.initVars[1];
 		} else {
 			panicAssert(fes, fs.initVars.length == 1);
-			indexVar = buildVariable(l, lp.settings.getSizeT(l),
+			indexVar = buildVariable(l, buildSizeT(l, lp),
 			                         ir.Variable.Storage.Function, "i", indexAssign);
 			elementVar = fs.initVars[0];
 		}
@@ -1209,7 +1209,7 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, LanguagePass lp,
 		}
 		auto indexVar = buildVariable(
 			l,
-			lp.settings.getSizeT(l),
+			buildSizeT(l, lp),
 			ir.Variable.Storage.Function,
 			format("%si", fs.block.myScope.nestedDepth),
 			buildConstantSizeT(l, lp, 0)

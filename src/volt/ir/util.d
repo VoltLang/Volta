@@ -316,10 +316,21 @@ ir.PrimitiveType buildInt(Location loc) { return buildPrimitiveType(loc, ir.Prim
 ir.PrimitiveType buildUint(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Uint); }
 ir.PrimitiveType buildLong(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Long); }
 ir.PrimitiveType buildUlong(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Ulong); }
-ir.PrimitiveType buildSizeT(Location loc, LanguagePass lp) { return lp.settings.getSizeT(loc); }
 ir.PrimitiveType buildFloat(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Float); }
 ir.PrimitiveType buildDouble(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Double); }
 ir.PrimitiveType buildReal(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Real); }
+
+ir.PrimitiveType buildSizeT(Location loc, LanguagePass lp)
+{
+	ir.PrimitiveType pt;
+	if (lp.ver.isVersionSet("V_P64")) {
+		pt = new ir.PrimitiveType(ir.PrimitiveType.Kind.Ulong);
+	} else {
+		pt = new ir.PrimitiveType(ir.PrimitiveType.Kind.Uint);
+	}
+	pt.location = loc;
+	return pt;
+}
 
 /**
  * Build a string (immutable(char)[]) type.
@@ -624,7 +635,7 @@ ir.Constant buildConstantSizeT(Location loc, LanguagePass lp, size_t val)
 {
 	auto c = new ir.Constant();
 	c.location = loc;
-	auto prim = lp.settings.getSizeT(loc);
+	auto prim = buildSizeT(loc, lp);
 	// Uh, I assume just c._uint = val would work, but I can't test it here, so just be safe.
 	if (prim.type == ir.PrimitiveType.Kind.Ulong) {
 		c.u._ulong = cast(ulong)val;
