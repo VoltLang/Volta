@@ -215,6 +215,17 @@ public:
 	Exp templateInstance;
 	bool isImplicitPropertyCall;
 
+	/**
+	 * Used in CreateDelegate postfixes to suppress going via the vtable
+	 * on classes when a member function is being called.
+	 *
+	 * super.'func'();
+	 * ParentClass.'func'();
+	 */
+	bool supressVtableLookup;
+
+	bool hackSuperLookup; // super.'func'();
+
 public:
 	this() { super(NodeType.Postfix); }
 }

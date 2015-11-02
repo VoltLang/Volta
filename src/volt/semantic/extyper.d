@@ -1689,8 +1689,11 @@ bool postfixIdentifier(Context ctx, ref ir.Exp exp,
 
 		auto fnSet = buildSet(postfix.location, store.functions);
 		auto expRef = buildExpReference(postfix.location, fnSet, field);
-		exp = buildCreateDelegate(
+		auto cdg = buildCreateDelegate(
 			postfix.location, postfix.child, expRef);
+		// @TODO Better way for super.'func'(); to work correctly.
+		cdg.supressVtableLookup = postfix.hackSuperLookup;
+		exp = cdg;
 		return true;
 	}
 

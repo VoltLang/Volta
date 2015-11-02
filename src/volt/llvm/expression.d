@@ -1373,7 +1373,8 @@ void getCreateDelegateValues(State state, ir.Postfix postfix, Value instance, Va
 
 	// See if the function should be gotten from the vtable.
 	int index = -1;
-	if (postfix.memberFunction !is null) {
+	if (postfix.memberFunction !is null &&
+	    !postfix.supressVtableLookup) {
 		auto asFunction = cast(ir.Function) postfix.memberFunction.decl;
 		assert(asFunction !is null);
 		index = asFunction.vtableIndex;

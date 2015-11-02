@@ -89,6 +89,7 @@ void rewriteSuperIdentifier(LanguagePass lp, ir.Scope _scope, ir.IdentifierExp i
 	auto thisVar = getThisVar(ident.location, lp, _scope);
 	auto eref = buildExpReference(p.location, thisVar, "this");
 	p.child = buildCastSmart(ident.location, _class, eref);
+	p.hackSuperLookup = true;
 }
 
 void rewriteSuperCall(LanguagePass lp, ir.Scope _scope, ir.IdentifierExp ident, ir.Postfix p, ir.Class _class)
