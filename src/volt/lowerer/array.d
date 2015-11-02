@@ -452,20 +452,43 @@ ir.Function getArrayCmpFunction(Location loc, LanguagePass lp, ir.Module thisMod
 		thenState
 	);
 
-	buildReturnStat(loc, fn._body,
-		buildBinOp(loc, notEqual ? ir.BinOp.Op.NotEqual : ir.BinOp.Op.Equal,
-			buildCall(loc, memCmpExpRef, [
-				buildCastSmart(loc, buildVoidPtr(loc), buildAccess(loc, buildExpReference(loc, left, left.name), "ptr")),
-				buildCastSmart(loc, buildVoidPtr(loc), buildAccess(loc, buildExpReference(loc, right, right.name), "ptr")),
-				cast(ir.Exp)buildBinOp(loc, ir.BinOp.Op.Mul,
-					buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
-					buildConstantSizeT(loc, lp, size(lp, type.base))
-				)
+	auto childArray = cast(ir.ArrayType) type.base;
+	if (childArray !is null) {
+		/* for (size_t i = 0; i < left.length; ++i) {
+		 *     if (left[i] !=/== right[i]) {
+		 *         return true;
+		 *     }
+		 * }
+		 * return false;
+		 */
+		ir.ForStatement forLoop;
+		ir.Variable iVar;
+		buildForStatement(loc, lp, fn._body.myScope, buildAccess(loc, buildExpReference(loc, left, left.name), "length"), forLoop, iVar);
+		auto l = buildIndex(loc, buildExpReference(loc, left, left.name), buildExpReference(loc, iVar, iVar.name));
+		auto r = buildIndex(loc, buildExpReference(loc, right, right.name), buildExpReference(loc, iVar, iVar.name));
+		auto cmp = buildBinOp(loc, notEqual ? ir.BinOp.Op.NotEqual : ir.BinOp.Op.Equal, l, r);
+		auto then = buildBlockStat(loc, null, forLoop.block.myScope);
+		buildReturnStat(loc, then, buildConstantBool(loc, true));
+		auto ifs = buildIfStat(loc, cmp, then);
+		forLoop.block.statements ~= ifs;
+		fn._body.statements ~= forLoop;
+		buildReturnStat(loc, fn._body, buildConstantBool(loc, false));
+	} else {
+		buildReturnStat(loc, fn._body,
+			buildBinOp(loc, notEqual ? ir.BinOp.Op.NotEqual : ir.BinOp.Op.Equal,
+				buildCall(loc, memCmpExpRef, [
+					buildCastSmart(loc, buildVoidPtr(loc), buildAccess(loc, buildExpReference(loc, left, left.name), "ptr")),
+					buildCastSmart(loc, buildVoidPtr(loc), buildAccess(loc, buildExpReference(loc, right, right.name), "ptr")),
+					cast(ir.Exp)buildBinOp(loc, ir.BinOp.Op.Mul,
+						buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
+						buildConstantSizeT(loc, lp, size(lp, type.base))
+					)
 
-			]),
-			buildConstantInt(loc, 0)
-		)
-	);
+				]),
+				buildConstantInt(loc, 0)
+			)
+		);
+	}
 
 	return fn;
 }
