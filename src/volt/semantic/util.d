@@ -29,12 +29,33 @@ import volt.semantic.classify : getParentFunction, realType, isFloatingPoint;
 void implicitlyCastToBool(Context ctx, ref ir.Exp exp)
 {
 	auto t = getExpType(ctx.lp, exp, ctx.current);
-	if (t.nodeType == ir.NodeType.PrimitiveType) {
-		auto asPrimitive = cast(ir.PrimitiveType) realType(t);
+	auto type = realType(t);
+	switch (type.nodeType) with (ir.NodeType) {
+	case PrimitiveType:
+		auto asPrimitive = cast(ir.PrimitiveType) type;
 		if (asPrimitive.type == ir.PrimitiveType.Kind.Bool) {
 			return;
 		}
+		break;
+	case ir.NodeType.Class:
+	case ir.NodeType.PointerType:
+	case ir.NodeType.FunctionType:
+	case ir.NodeType.DelegateType:
+	case ir.NodeType.ArrayType:
+		t = getExpType(ctx.lp, exp, ctx.current);
+		auto cnst = buildConstantNull(exp.location, t);
+		exp = buildBinOp(exp.location, ir.BinOp.Op.NotIs, exp, cnst);
+		return;
+	case ir.NodeType.StaticArrayType:
+	case ir.NodeType.AAType:
+	case ir.NodeType.Interface:
+	case ir.NodeType.Struct:
+	case ir.NodeType.Union:
+		throw makeBadImplicitCast(exp, buildBool(exp.location), t);
+	default:
+		throw panicUnhandled(exp, ir.nodeToString(exp));
 	}
+
 	exp = buildCastToBool(exp.location, exp);
 }
 

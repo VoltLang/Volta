@@ -3430,23 +3430,36 @@ public:
 	override Status enter(ir.IfStatement ifs)
 	{
 		auto l = ifs.location;
-		ir.Exp exp;
-		ir.Type t;
 		if (ifs.exp !is null) {
-			exp = ifs.exp;
 			acceptExp(ifs.exp, this);
-			t = getExpType(ctx.lp, ifs.exp, ctx.current);
-			if (isPointer(t)) {
-				ifs.exp = buildBinOp(l, ir.BinOp.Op.NotIs, ifs.exp, buildConstantNull(l, t));
-			} else {
-				implicitlyCastToBool(ctx, ifs.exp);
-			}
 		}
+
 		if (ifs.autoName.length > 0) {
-			assert(exp !is null);
-			auto var = buildVariable(l, copyTypeSmart(l, t), ir.Variable.Storage.Function, ifs.autoName, copyExp(exp));
+			assert(ifs.exp !is null);
+			assert(ifs.thenState !is null);
+
+			auto t = getExpType(ctx.lp, ifs.exp, ctx.current);
+			auto var = buildVariable(l,
+					copyTypeSmart(l, t),
+					ir.Variable.Storage.Function,
+					ifs.autoName);
+
+			// Resolve the variable making it propper and usable.
+			resolveVariable(ctx, var);
+
+			// A hack to work around exp getting resolved twice.
+			var.assign = ifs.exp;
+
+			auto eref = buildExpReference(l, var);
+			ifs.exp = buildStatementExp(l, [var], eref);
+
+			// Add it to its proper scope.
 			ifs.thenState.myScope.addValue(var, var.name);
-			ifs.thenState.statements = var ~ ifs.thenState.statements;
+		}
+
+		// Need to do this after any autoName rewriting.
+		if (ifs.exp !is null) {
+			implicitlyCastToBool(ctx, ifs.exp);
 		}
 
 		if (ifs.thenState !is null) {
