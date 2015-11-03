@@ -1002,7 +1002,11 @@ LLVMValueRef LLVMDIBuilderCreateSubroutineType(LLVMDIBuilderRef builder,
     MDs.push_back(MD);
   }
 
+#if LLVM_VERSION_MINOR >= 8
+  return wrap(B->createSubroutineType(B->getOrCreateTypeArray(MDs), Flags));
+#else
   return wrap(B->createSubroutineType(F, B->getOrCreateTypeArray(MDs), Flags));
+#endif
 }
 
 LLVMValueRef LLVMDIBuilderGetOrCreateRange(LLVMDIBuilderRef builder, int64_t Lo,
