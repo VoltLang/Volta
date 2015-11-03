@@ -25,11 +25,18 @@ ir.Node[] manipNodes(ir.Node[] nodes, ReplaceDg replaceDg)
 	size_t size;
 
 	void ensureSpaceFor(size_t e) {
-		auto newSize = size + e;
-
-		while(ret.length < newSize) {
-			ret.length = ret.length * 2 + 3;
+		if (ret.length >= size + e) {
+			return;
 		}
+
+		size_t newSize = ret.length;
+		while (newSize < size + e) {
+			newSize += newSize * 2 + 1;
+		}
+
+		auto old = ret;
+		ret = new ir.Node[](newSize);
+		ret[0 .. size] = old[0 .. size];
 	}
 
 	foreach (node; nodes) {
