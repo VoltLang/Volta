@@ -254,7 +254,9 @@ ir.Function[][] getClassMethods(LanguagePass lp, ir.Scope current, ir.Class _cla
 	if (_class.parentClass !is null) {
 		methods ~= getClassMethods(lp, _class.parentClass.myScope, _class.parentClass);
 	}
-	methods.length++;
+
+	methods ~= cast(ir.Function[][])[[]];
+
 	foreach (node; _class.members.nodes) {
 		auto asFunction = cast(ir.Function) node;
 		if (asFunction is null) {
