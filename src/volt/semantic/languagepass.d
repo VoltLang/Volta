@@ -96,12 +96,15 @@ public:
 
 	override void close()
 	{
-		foreach (pass; postParse)
+		foreach (pass; postParse) {
 			pass.close();
-		foreach (pass; passes2)
+		}
+		foreach (pass; passes2) {
 			pass.close();
-		foreach (pass; passes3)
+		}
+		foreach (pass; passes3) {
 			pass.close();
+		}
 	}
 
 	/**
@@ -520,8 +523,9 @@ public:
 		resolveNamed(i);
 
 		auto w = mTracker.add(i, Work.Action.Actualize);
-		scope (exit)
+		scope (exit) {
 			w.done();
+		}
 
 		actualizeInterface(this, i);
 	}
@@ -542,8 +546,9 @@ public:
 		resolveNamed(u);
 
 		auto w = mTracker.add(u, Work.Action.Actualize);
-		scope (exit)
+		scope (exit) {
 			w.done();
+		}
 
 		actualizeUnion(this, u);
 	}
@@ -553,8 +558,9 @@ public:
 		resolveNamed(c);
 
 		auto w = mTracker.add(c, Work.Action.Actualize);
-		scope (exit)
+		scope (exit) {
 			w.done();
+		}
 
 		actualizeClass(this, c);
 	}
@@ -564,8 +570,9 @@ public:
 		resolveNamed(ua);
 
 		auto w = mTracker.add(ua, Work.Action.Actualize);
-		scope (exit)
+		scope (exit) {
 			w.done();
+		}
 
 		actualizeUserAttribute(this, ua);
 	}
