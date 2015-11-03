@@ -187,11 +187,13 @@ protected:
 
 			// Conditional Statement.
 			if (evaluateCondition(condstat.condition)) {
-				if (condstat.block !is null)
+				if (condstat.block !is null) {
 					ret = condstat.block.statements;
+				}
 			} else {
-				if (condstat._else !is null)
+				if (condstat._else !is null) {
 					ret = condstat._else.statements;
+				}
 			}
 
 			if (ret.length > 0) {
@@ -208,11 +210,13 @@ protected:
 
 			// Conditional Top Level.
 			if (evaluateCondition(cond.condition)) {
-				if (cond.members !is null)
+				if (cond.members !is null) {
 					ret = cond.members.nodes;
+				}
 			} else {
-				if (cond._else !is null)
+				if (cond._else !is null) {
 					ret = cond._else.nodes;
+				}
 			}
 
 			if (ret.length > 0) {
