@@ -98,6 +98,7 @@ class PrimitiveType : Type
 {
 public:
 	enum Kind {
+		Invalid,
 		Void = TokenType.Void,
 		Bool = TokenType.Bool,
 
@@ -444,6 +445,7 @@ class StorageType : Type
 {
 public:
 	enum Kind {
+		Invalid,
 		Auto = TokenType.Auto,
 		Const = TokenType.Const,
 		Immutable = TokenType.Immutable,

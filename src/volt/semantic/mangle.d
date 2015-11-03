@@ -169,6 +169,8 @@ void mangleType(ir.Type t, ref string mangledString)
 		case Immutable: mangledString ~= "m"; break;
 		case Ref: mangledString ~= "r"; break;
 		case Out: mangledString ~= "O"; break;
+		case ir.StorageType.Kind.Invalid:
+			throw panic(asST, "invalid storage type");
 		}
 		if (asST.base is null) {
 			mangledString ~= "???NULLBASE???";
@@ -262,6 +264,8 @@ void manglePrimitiveType(ir.PrimitiveType t, ref string mangledString)
 	case Void:
 		mangledString ~= "v";
 		break;
+	case Invalid:
+		throw panic(t, "invalid primitive kind");
 	}
 }
 

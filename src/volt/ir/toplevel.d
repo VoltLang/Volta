@@ -456,6 +456,7 @@ public:
 	 */
 	enum Kind
 	{
+		Invalid,
 		/// version (identifier) {}
 		Version,
 		/// debug {}, debug (identifier) {}

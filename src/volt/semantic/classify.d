@@ -41,6 +41,7 @@ size_t size(ir.PrimitiveType.Kind kind)
 	case Float: return 4;
 	case Double: return 8;
 	case Real: return 8;
+	case Invalid: throw panic(Location.init, "invalid primitive kind");
 	}
 }
 
@@ -163,6 +164,7 @@ size_t alignment(LanguagePass lp, ir.PrimitiveType.Kind kind)
 	case Float: return lp.settings.alignment.float32;
 	case Double: return lp.settings.alignment.float64;
 	case Real: return lp.settings.alignment.float64;
+	case Invalid: throw panic(Location.init, "invalid primitive kind");
 	}
 }
 
@@ -701,6 +703,8 @@ int typeToRuntimeConstant(LanguagePass lp, ir.Scope current, ir.Type type)
 		case Long: return lp.TYPE_LONG;
 		case Double: return lp.TYPE_DOUBLE;
 		case Real: return lp.TYPE_REAL;
+		case ir.PrimitiveType.Kind.Invalid:
+			throw panic(prim, "invalid primitive kind");
 		}
 	case PointerType: return lp.TYPE_POINTER;
 	case ArrayType: return lp.TYPE_ARRAY;

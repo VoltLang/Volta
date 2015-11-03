@@ -178,9 +178,11 @@ private:
 			llvmType = LLVMDoubleTypeInContext(state.context);
 			break;
 		case Real:
-			throw panic(pt.location, "PrmitiveType.Real not handled");
+			throw panic(pt, "PrmitiveType.Real not handled");
 		case Void:
-			throw panic(pt.location, "PrmitiveType.Void not handled");
+			throw panic(pt, "PrmitiveType.Void not handled");
+		case Invalid:
+			throw panic(pt, "PrmitiveType.Invalid not handled");
 		}
 
 		diType = diBaseType(state, pt);

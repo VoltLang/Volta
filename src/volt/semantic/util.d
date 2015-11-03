@@ -469,6 +469,8 @@ bool typeLookup(Context ctx, ref ir.Exp exp, ir.Type type)
 		break;
 	case Real, Void:
 		throw makeExpected(prim, "integral type");
+	case Invalid:
+		throw panic(prim, "invalid primitive kind");
 	}
 	return true;
 }

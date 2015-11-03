@@ -38,6 +38,7 @@ import volt.ir.toplevel;
 abstract class Declaration : Node
 {
 	enum Kind {
+		Invalid,
 		Function = NodeType.Function,
 		Variable = NodeType.Variable,
 		EnumDeclaration = NodeType.EnumDeclaration,

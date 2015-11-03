@@ -85,6 +85,7 @@ void flattenOneStorage(ir.StorageType stype, ir.Type type,
 		}
 		break;
 	case Auto: break;
+	case Invalid: throw panic(stype, "invalid storage type");
 	}
 }
 

@@ -840,8 +840,6 @@ ir.Type getTernaryType(LanguagePass lp, ir.Ternary ternary, ir.Scope currentScop
 ir.Type getUnaryType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 {
 	final switch (unary.op) with (ir.Unary.Op) {
-	case None:
-		return getUnaryNoneType(lp, unary, currentScope);
 	case Cast:
 		return getUnaryCastType(lp, unary, currentScope);
 	case Dereference:
@@ -862,6 +860,8 @@ ir.Type getUnaryType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 		return getUnaryIncDecType(lp, unary, currentScope);
 	case TypeIdent:
 		throw panicUnhandled(unary, "unary TypeIdent");
+	case None:
+		throw panicUnhandled(unary, "unary None");
 	}
 }
 
@@ -892,11 +892,6 @@ ir.Type getUnaryComplementType(LanguagePass lp, ir.Unary unary, ir.Scope current
 ir.Type getUnaryNotType(LanguagePass lp, ir.Unary unary)
 {
 	return buildBool(unary.location);
-}
-
-ir.Type getUnaryNoneType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
-{
-	return getExpType(lp, unary.value, currentScope);
 }
 
 ir.Type getUnaryCastType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)

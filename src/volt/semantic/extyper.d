@@ -1253,6 +1253,8 @@ bool replaceExpReferenceIfNeeded(Context ctx, ir.Type referredType,
 	case EnumDeclaration:
 	case FunctionSet:
 		return false;
+	case Invalid:
+		throw panic(decl, "invalid declKind");
 	}
 
 	auto thisVar = getThisVar(eRef.location, ctx.lp, ctx.current);

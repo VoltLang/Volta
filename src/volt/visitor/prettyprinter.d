@@ -359,7 +359,6 @@ public:
 	{
 		ln();
 		final switch (attr.kind) with (ir.Attribute.Kind) {
-		case Invalid: twf(">INVALID<"); break;
 		case Synchronized: twf("synchronized"); break;
 		case Static: twf("static"); break;
 		case Scope: twf("scope"); break;
@@ -419,6 +418,8 @@ public:
 			}
 			wf(")");
 			break;
+		case Invalid:
+			throw panicUnhandled(attr, "attribute kind");
 		}
 
 		wfln(" {");
@@ -525,6 +526,8 @@ public:
 		case StaticIf:
 			twf("static if (");
 			break;
+		case Invalid:
+			throw panicUnhandled(c, "condition");
 		}
 		acceptExp(c.exp, this);
 		wf(")");
@@ -1452,6 +1455,8 @@ public:
 		case Scope: wf("scope ("); break;
 		case Ref: wf("ref("); break;
 		case Out: wf("out("); break;
+		case Invalid:
+			throw panicUnhandled(type, "storagetype");
 		}
 		if (type.base !is null) {
 			accept(type.base, this);
@@ -1746,7 +1751,7 @@ public:
 			wf(").dup");
 			break;
 		case ir.Unary.Op.None:
-			assert(false);
+			throw panicUnhandled(unary, "unary op");
 		}
 
 		if (unary.value !is null) {
@@ -2161,7 +2166,7 @@ public:
 	override Status visit(ir.PrimitiveType type)
 	{
 		wStorageTypes(type);
-		wf(type.type.tokenToString());
+		wf(tokenToString(cast(TokenType)type.type));
 		wAfterStorageTypes(type);
 		return Continue;
 	}
