@@ -196,6 +196,8 @@ version (UseDIBuilder) {
 			break;
 		case Void, Real:
 			return null;
+		case Invalid:
+			throw panicUnhandled(pt, "primitivetype");
 		}
 
 		return LLVMDIBuilderCreateBasicType(
