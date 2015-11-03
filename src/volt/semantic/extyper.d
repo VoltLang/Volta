@@ -1061,7 +1061,7 @@ private void rewriteHomogenousVariadic(Context ctx,
 			extypePass(ctx, aexp, arr.base);
 		}
 		arguments[i] = buildInternalArrayLiteralSmart(arguments[0].location, asFunctionType.params[i], exps);
-		arguments.length = i + 1;
+		arguments = arguments[0 .. i + 1];
 		return;
 	}
 }
@@ -2656,7 +2656,7 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 						auto c = p._case.statements.myScope;
 						auto aBlock = buildBlockStat(exp.location, p._case.statements, c, aStatements);
 						auto bBlock = buildBlockStat(exp.location, p._case.statements, c, bStatements);
-						p._case.statements.statements.length = 0;
+						p._case.statements.statements = null;
 
 						auto cmp = buildBinOp(exp.location, ir.BinOp.Op.Equal, copyExp(exp), copyExp(originalCondition));
 						auto ifs = buildIfStat(exp.location, p._case.statements, cmp, aBlock, bBlock);
@@ -3665,7 +3665,7 @@ public:
 			default:
 				throw panicUnhandled(_typeid, "store kind");
 			}
-			_typeid.ident.length = 0;
+			_typeid.ident = null;
 		}
 		if (_typeid.exp !is null) {
 			_typeid.type = getExpType(ctx.lp, _typeid.exp, ctx.current);

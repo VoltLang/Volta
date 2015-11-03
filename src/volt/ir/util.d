@@ -1486,11 +1486,11 @@ ir.Class getClass(ir.Type t)
 
 ir.Type buildStaticArrayTypeSmart(Location loc, size_t length, ir.Type base)
 {
-	auto sa = new ir.StaticArrayType();
-	sa.location = loc;
-	sa.length = length;
-	sa.base = copyTypeSmart(loc, base);
-	return sa;
+	auto sat = new ir.StaticArrayType();
+	sat.location = loc;
+	sat.length = length;
+	sat.base = copyTypeSmart(loc, base);
+	return sat;
 }
 
 ir.Type buildAATypeSmart(Location loc, ir.Type key, ir.Type value)

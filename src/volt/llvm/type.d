@@ -301,8 +301,7 @@ public:
 			return;
 		}
 
-		LLVMValueRef[] alVals;
-		alVals.length = al.values.length;
+		auto alVals = new LLVMValueRef[](al.values.length);
 		foreach (i, exp; al.values) {
 			alVals[i] = state.getConstant(exp);
 		}
@@ -402,8 +401,7 @@ public:
 			return LLVMConstNamedStruct(llvmType, vals);
 		}
 
-		LLVMValueRef[] alVals;
-		alVals.length = al.values.length;
+		auto alVals = new LLVMValueRef[](al.values.length);
 		foreach (i, exp; al.values) {
 			alVals[i] = state.getConstant(exp);
 		}
@@ -621,8 +619,7 @@ public:
 
 	override void from(State state, ir.StructLiteral sl, Value result)
 	{
-		LLVMValueRef[] vals;
-		vals.length = indices.length;
+		auto vals = new LLVMValueRef[](indices.length);
 
 		if (vals.length != sl.exps.length) {
 			throw panic("struct literal has the wrong number of initializers");

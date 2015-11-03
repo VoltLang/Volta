@@ -184,8 +184,11 @@ private:
 	void push(ir.Node n, ir.Scope ctx, ir.Function fn)
 	{
 		size_t len = mFunctionStack.length;
-		if (mLength + 1 > mFunctionStack.length)
-			mFunctionStack.length = len * 2 + 3;
+		if (mLength + 1 > len) {
+			auto newStack = new ir.Function[](len * 2 + 3);
+			newStack[0 .. len] = mFunctionStack[0 .. len];
+			mFunctionStack = newStack;
+		}
 
 		if (fn !is null && currentFunction is null) {
 			mParentIndex = mLength;

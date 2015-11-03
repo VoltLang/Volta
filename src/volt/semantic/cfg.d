@@ -143,7 +143,7 @@ public:
 
 	override void close()
 	{
-		blocks.length = 0;
+		blocks = null;
 		return;
 	}
 
