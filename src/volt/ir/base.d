@@ -138,6 +138,7 @@ enum NodeType
  * @ingroup irNode
  */
 enum Access {
+	Invalid,
 	Public = TokenType.Public,
 	Private = TokenType.Private,
 	Package = TokenType.Package,

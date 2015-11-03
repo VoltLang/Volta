@@ -81,7 +81,7 @@ public:
 
 	/// The access level of this @p Variable, which determines how
 	/// it interacts with other modules.
-	Access access;
+	Access access = Access.Public;
 
 	/// The underlying @p Type this @p Variable is an instance of.
 	Type type;
@@ -161,8 +161,10 @@ public:
 class Alias : Node
 {
 public:
-	Access access;
 	bool isResolved;
+
+	/// Usability from other modules.
+	Access access = Access.Public;
 
 	/**
 	 * The names to associate with the alias.
@@ -237,7 +239,8 @@ public:
 	/// Has the extyper checked this function.
 	bool isResolved;
 
-	Access access;  ///< defalt public.
+	/// Usability from other modules.
+	Access access = Access.Public;
 
 	Scope myScope; ///< Needed for params
 

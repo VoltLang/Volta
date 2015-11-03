@@ -250,8 +250,10 @@ abstract class Named : Type
 public:
 	bool isResolved;
 
+	/// Usability from other modules.
+	Access access = Access.Public;
+
 	string name; ///< Unmangled name of the NamedType.
-	Access access; ///< default public.
 
 	Scope myScope; ///< Context for this NamedType.
 
