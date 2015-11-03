@@ -193,8 +193,6 @@ public:
 	{
 		assert(state.fall);
 
-		handleScopeSuccessTo(ret.location, null);
-
 		Value val;
 		if (ret.exp !is null) {
 			val = new Value();
@@ -205,6 +203,8 @@ public:
 				val = null;
 			}
 		}
+
+		handleScopeSuccessTo(ret.location, null);
 
 		diSetPosition(state, ret.location);
 
