@@ -193,7 +193,7 @@ voltaic-viviv:
 
 voltaic-viv-syntax:
 	@echo "  VIV    <source>"
-	@./viv $(VIV_ALL_SRC)
+	@./viv -E $(VIV_ALL_SRC)
 
 
 .PHONY: all clean run debug license voltaic-syntax voltaic-viv voltaic-viv-syntax
