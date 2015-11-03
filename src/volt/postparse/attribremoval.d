@@ -2,9 +2,9 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.postparse.attribremoval;
 
+import ir = volt.ir.ir;
 import volt.ir.util;
 
-import ir = volt.ir.ir;
 import volt.errors;
 import volt.interfaces;
 import volt.visitor.manip;
@@ -446,17 +446,19 @@ protected:
 
 	void ctxPush(ir.Node node, bool inherit = false)
 	{
-		auto mCtx = new Context(node);
+		auto ctx = new Context(node);
 
-		mCtx.node = node;
-		mCtx.oldStack = this.mStack;
-		if (inherit)
-			mCtx.stack = this.mStack ~ ctxTop.stack;
-		else
-			mCtx.stack = this.mStack;
+		ctx.node = node;
+		ctx.oldStack = this.mStack;
 
-		this.mCtx ~= mCtx;
-		this.mStack = null; // Stack has been saved.
+		if (inherit) {
+			ctx.stack = mStack ~ ctxTop.stack;
+		} else {
+			ctx.stack = mStack;
+		}
+
+		mCtx ~= ctx;
+		mStack = null; // Stack has been saved.
 	}
 
 	void ctxPop(ir.Node node)
@@ -468,8 +470,9 @@ protected:
 		if (node !is ctxTop.node) {
 			throw panic(node, "invalid attribute stack layout");
 		}
-		this.mStack = ctxTop.oldStack;
-		this.mCtx = mCtx[0 .. $-1];
+
+		mStack = ctxTop.oldStack;
+		mCtx = mCtx[0 .. $-1];
 	}
 
 	@property ir.Attribute attrTop()
