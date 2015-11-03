@@ -177,6 +177,7 @@ public:
 	 */
 	enum Kind
 	{
+		Invalid,
 		LinkageVolt,
 		LinkageC,
 		LinkageCPlusPlus,

@@ -359,6 +359,7 @@ public:
 	{
 		ln();
 		final switch (attr.kind) with (ir.Attribute.Kind) {
+		case Invalid: twf(">INVALID<"); break;
 		case Synchronized: twf("synchronized"); break;
 		case Static: twf("static"); break;
 		case Scope: twf("scope"); break;
