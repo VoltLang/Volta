@@ -89,8 +89,15 @@ public:
 
 			auto v = LLVMGetParam(llvmFunc, cast(uint)(irIndex + offset));
 
-			if (fn.type.isArgRef[irIndex] || fn.type.isArgOut[irIndex]) {
+			if (fn.type.isArgRef[irIndex]) {
 				state.makeByValVariable(p, v);
+			} else if (fn.type.isArgOut[irIndex]) {
+				state.makeByValVariable(p, v);
+				// Default init the variable.
+				Type initType;
+				auto initV = state.getVariableValue(p, initType);
+				auto initC = LLVMConstNull(initType.llvmType);
+				LLVMBuildStore(state.builder, initC, initV);
 			} else {
 				auto t = state.fromIr(p.type);
 				auto a = state.getVariableValue(p, t);
