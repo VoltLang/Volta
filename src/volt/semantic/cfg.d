@@ -285,9 +285,11 @@ public:
 		foreach (i, _case; ss.cases) {
 			currentSwitchBlocks[i] = new Block(currentBlock);
 			if (_case.statements.statements.length == 0) {
-				/* If it's empty, consider it as terminating.
+				/* If it's empty, consider it as terminating,
+				 * except if it is the last case.
 				 */
-				currentSwitchBlocks[i].mTerminates = true;
+				currentSwitchBlocks[i].terminates =
+					_case !is ss.cases[$-1];
 				empty++;
 			}
 		}
