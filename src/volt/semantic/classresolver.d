@@ -255,7 +255,11 @@ ir.Function[][] getClassMethods(LanguagePass lp, ir.Scope current, ir.Class _cla
 		methods ~= getClassMethods(lp, _class.parentClass.myScope, _class.parentClass);
 	}
 
-	methods ~= cast(ir.Function[][])[[]];
+	/* Really no better way... */ {
+		auto n = new ir.Function[][](methods.length + 1);
+		n[0 .. methods.length] = methods[];
+		methods = n;
+	}
 
 	foreach (node; _class.members.nodes) {
 		auto asFunction = cast(ir.Function) node;
