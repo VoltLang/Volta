@@ -1648,11 +1648,7 @@ void addStorage(ir.Type dest, ir.Type src)
 
 void insertInPlace(ref ir.Node[] list, size_t index, ir.Node node)
 {
-	version (Volt) {
-		assert(false);
-	} else {
-		list = list[0 .. index] ~ node ~ list[index .. $];
-	}
+	list = list[0 .. index] ~ node ~ list[index .. $];
 }
 
 ir.StoreExp buildStoreExp(Location loc, ir.Store store, string[] idents...)
