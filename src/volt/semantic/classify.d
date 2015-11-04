@@ -117,11 +117,7 @@ size_t structSize(LanguagePass lp, ir.Struct s)
 
 		auto a = alignment(lp, asVar.type);
 		auto size = .size(lp, asVar.type);
-		if (sizeAccumulator % a) {
-			sizeAccumulator += (a - (sizeAccumulator % a)) + size;
-		} else {
-			sizeAccumulator += size;
-		}
+		sizeAccumulator = calcAlignment(a, sizeAccumulator) + size;
 	}
 	return sizeAccumulator;
 }
@@ -143,6 +139,27 @@ size_t unionSize(LanguagePass lp, ir.Union u)
 			sizeAccumulator = s;
 	}
 	return sizeAccumulator;
+}
+
+/**
+ * Returns the offset adjusted to alignment.
+ */
+size_t calcAlignment(size_t a, size_t offset)
+{
+	if (offset % a) {
+		return offset + (a - (offset % a));
+	} else {
+		return offset;
+	}
+}
+
+/**
+ * Returns the offset adjusted to alignment of type.
+ */
+size_t calcAlignment(LanguagePass lp, ir.Type t, size_t offset)
+{
+	auto a = alignment(lp, t);
+	return calcAlignment(a, offset);
 }
 
 size_t alignment(LanguagePass lp, ir.PrimitiveType.Kind kind)
