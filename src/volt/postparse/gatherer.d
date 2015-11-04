@@ -26,7 +26,8 @@ enum Where
 ir.Store findShadowed(ir.Scope _scope, Location loc, string name)
 {
 	// BlockStatements attached directly to a function have their .node set to that function.
-	if (_scope.node.nodeType != ir.NodeType.Function && _scope.node.nodeType != ir.NodeType.BlockStatement) {
+	if (_scope.node.nodeType != ir.NodeType.Function &&
+	    _scope.node.nodeType != ir.NodeType.BlockStatement) {
 		return null;
 	}
 
@@ -37,7 +38,8 @@ ir.Store findShadowed(ir.Scope _scope, Location loc, string name)
 	}
 
 	if (_scope.parent !is null) {
-		if (_scope.node.nodeType == ir.NodeType.Function && _scope.parent.node.nodeType == ir.NodeType.Function) {
+		if (_scope.node.nodeType == ir.NodeType.Function &&
+		    _scope.parent.node.nodeType == ir.NodeType.Function) {
 			return null;
 		}
 		return findShadowed(_scope.parent, loc, name);
