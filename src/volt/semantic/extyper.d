@@ -2590,94 +2590,97 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 
 	int defaultCount;
 	foreach (i, _case; ss.cases) {
-		if (_case.isDefault) {
-			defaultCount++;
-		}
 		void replaceWithHashIfNeeded(ref ir.Exp exp) 
 		{
-			if (exp !is null) {
-				auto etype = getExpType(ctx.lp, exp, ctx.current);
-				if (isArray(etype)) {
-					uint h;
-					auto constant = cast(ir.Constant) exp;
+			if (exp is null) {
+				return;
+			}
+
+			auto etype = getExpType(ctx.lp, exp, ctx.current);
+			if (!isArray(etype)) {
+				return;
+			}
+
+			uint h;
+			auto constant = cast(ir.Constant) exp;
+			if (constant !is null) {
+				assert(isString(etype));
+				assert(constant._string[0] == '\"');
+				assert(constant._string[$-1] == '\"');
+				auto str = constant._string[1..$-1];
+				h = hash(cast(ubyte[]) str);
+			} else {
+				auto alit = cast(ir.ArrayLiteral) exp;
+				assert(alit !is null);
+				auto atype = cast(ir.ArrayType) etype;
+				assert(atype !is null);
+				uint[] intArrayData;
+				ulong[] longArrayData;
+				size_t sz;
+				void addExp(ir.Exp e)
+				{
+					auto constant = cast(ir.Constant) e;
 					if (constant !is null) {
-						assert(isString(etype));
-						assert(constant._string[0] == '\"');
-						assert(constant._string[$-1] == '\"');
-						auto str = constant._string[1..$-1];
-						h = hash(cast(ubyte[]) str);
-					} else {
-						auto alit = cast(ir.ArrayLiteral) exp;
-						assert(alit !is null);
-						auto atype = cast(ir.ArrayType) etype;
-						assert(atype !is null);
-						uint[] intArrayData;
-						ulong[] longArrayData;
-						size_t sz;
-						void addExp(ir.Exp e)
-						{
-							auto constant = cast(ir.Constant) e;
-							if (constant !is null) {
-								if (sz == 0) {
-									sz = size(ctx.lp, constant.type);
-									assert(sz > 0);
-								}
-								switch (sz) {
-								case 8:
-									longArrayData ~= constant.u._ulong;
-									break;
-								default:
-									intArrayData ~= constant.u._uint;
-									break;
-								}
-								return;
-							}
-							auto cexp = cast(ir.Unary) e;
-							if (cexp !is null) {
-								assert(cexp.op == ir.Unary.Op.Cast);
-								assert(sz == 0);
-								sz = size(ctx.lp, cexp.type);
-								assert(sz == 8);
-								addExp(cexp.value);
-								return;
-							}
-
-							auto type = getExpType(ctx.lp, exp, ctx.current);
-							throw makeSwitchBadType(ss, type);
+						if (sz == 0) {
+							sz = size(ctx.lp, constant.type);
+							assert(sz > 0);
 						}
-						foreach (e; alit.values) {
-							addExp(e);
+						switch (sz) {
+						case 8:
+							longArrayData ~= constant.u._ulong;
+							break;
+						default:
+							intArrayData ~= constant.u._uint;
+							break;
 						}
-						if (sz == 8) {
-							h = hash(cast(ubyte[]) longArrayData);
-						} else {
-							h = hash(cast(ubyte[]) intArrayData);
-						}
+						return;
 					}
-					if (auto p = h in arrayCases) {
-						auto aStatements = _case.statements.statements;
-						auto bStatements = p._case.statements.statements;
-						auto c = p._case.statements.myScope;
-						auto aBlock = buildBlockStat(exp.location, p._case.statements, c, aStatements);
-						auto bBlock = buildBlockStat(exp.location, p._case.statements, c, bStatements);
-						p._case.statements.statements = null;
-
-						auto cmp = buildBinOp(exp.location, ir.BinOp.Op.Equal, copyExp(exp), copyExp(originalCondition));
-						auto ifs = buildIfStat(exp.location, p._case.statements, cmp, aBlock, bBlock);
-						p._case.statements.statements[0] = ifs;
-						if (p.lastIf !is null) {
-							p.lastIf.thenState.myScope.parent = ifs.elseState.myScope;
-							p.lastIf.elseState.myScope.parent = ifs.elseState.myScope;
-						}
-						p.lastIf = ifs;
-						toRemove ~= i;
-					} else {
-						ArrayCase ac = {exp, _case, null};
-						arrayCases[h] = ac;
+					auto cexp = cast(ir.Unary) e;
+					if (cexp !is null) {
+						assert(cexp.op == ir.Unary.Op.Cast);
+						assert(sz == 0);
+						sz = size(ctx.lp, cexp.type);
+						assert(sz == 8);
+						addExp(cexp.value);
+						return;
 					}
-					exp = buildConstantUint(exp.location, h);
+					auto type = getExpType(ctx.lp, exp, ctx.current);
+					throw makeSwitchBadType(ss, type);
+				}
+				foreach (e; alit.values) {
+					addExp(e);
+				}
+				if (sz == 8) {
+					h = hash(cast(ubyte[]) longArrayData);
+				} else {
+					h = hash(cast(ubyte[]) intArrayData);
 				}
 			}
+			if (auto p = h in arrayCases) {
+				auto aStatements = _case.statements.statements;
+				auto bStatements = p._case.statements.statements;
+				auto c = p._case.statements.myScope;
+				auto aBlock = buildBlockStat(exp.location, p._case.statements, c, aStatements);
+				auto bBlock = buildBlockStat(exp.location, p._case.statements, c, bStatements);
+				p._case.statements.statements = null;
+				auto cmp = buildBinOp(exp.location, ir.BinOp.Op.Equal, copyExp(exp), copyExp(originalCondition));
+				auto ifs = buildIfStat(exp.location, p._case.statements, cmp, aBlock, bBlock);
+				p._case.statements.statements[0] = ifs;
+				if (p.lastIf !is null) {
+					p.lastIf.thenState.myScope.parent = ifs.elseState.myScope;
+					p.lastIf.elseState.myScope.parent = ifs.elseState.myScope;
+				}
+				p.lastIf = ifs;
+				toRemove ~= i;
+			} else {
+				ArrayCase ac = {exp, _case, null};
+				arrayCases[h] = ac;
+			}
+			exp = buildConstantUint(exp.location, h);
+		}
+
+		if (_case.isDefault) {
+			defaultCount++;
 		}
 		if (_case.firstExp !is null) {
 			replaceWithHashIfNeeded(_case.firstExp);
@@ -2692,6 +2695,7 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 			extypeAssign(ctx, exp, conditionType);
 		}
 	}
+
 	if (!ss.isFinal && defaultCount == 0) {
 		throw makeNoDefaultCase(ss.location);
 	}
@@ -2723,6 +2727,7 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 		}
 		caseCount += _case.exps.length;
 	}
+
 	if (ss.isFinal && caseCount != asEnum.members.length) {
 		throw makeFinalSwitchBadCoverage(ss);
 	}
