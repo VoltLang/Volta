@@ -1302,10 +1302,12 @@ ir.BlockStatement buildBlockStat(Location loc, ir.Node introducingNode, ir.Scope
 {
 	auto ret = new ir.BlockStatement();
 	ret.location = loc;
-	version (Volt) {
-		ret.statements = new statements[0 .. $];
-	} else {
-		ret.statements = statements.dup;
+	if (statements.length > 0) {
+		version (Volt) {
+			ret.statements = new statements[0 .. $];
+		} else {
+			ret.statements = statements.dup;
+		}
 	}
 	ret.myScope = new ir.Scope(_scope, introducingNode is null ? ret : introducingNode, "block");
 
