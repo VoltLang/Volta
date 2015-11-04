@@ -190,8 +190,18 @@ void fillInInterfacesIfNeeded(LanguagePass lp, ir.Class c)
 	}
 }
 
-ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class, size_t offset)
+ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class, ref size_t offset)
 {
+	void addSize(ir.Type n)
+	{
+		auto a = alignment(lp, n);
+		auto sz = size(lp, n);
+		if (sz % a) {
+			offset += (a - (sz & a)) + sz;
+		} else {
+			offset += sz;
+		}
+	}
 	ir.Variable[] fields;
 	if (_class.parentClass !is null) {
 		fields ~= getClassFields(lp, _class.parentClass, offset);
@@ -205,14 +215,14 @@ ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class, size_t offset)
 			continue;
 		}
 		lp.resolve(_class.myScope, asVar);
-		offset += size(lp, asVar);
+		addSize(asVar.type);
 		fields ~= copyVariableSmart(asVar.location, asVar);
 	}
 	assert(_class.interfaces.length == _class.parentInterfaces.length);
 	void addOffset(ir._Interface iface)
 	{
 		_class.interfaceOffsets ~= offset;
-		offset += size(lp, buildSizeT(_class.location, lp));
+		addSize(buildSizeT(_class.location, lp));
 		auto var = buildVariableSmart(_class.location, buildPtrSmart(_class.location, iface.layoutStruct), ir.Variable.Storage.Field, mangle(iface));
 		fields ~= var;
 		assert(iface.interfaces.length == iface.parentInterfaces.length);
@@ -487,7 +497,8 @@ ir.Struct getClassLayoutStruct(ir.Class _class, LanguagePass lp, ref ir.Struct v
 	vtableStruct = buildStruct(_class.location, _class.members, _class.myScope, "__Vtable", tinfos ~ methodTypes);
 	auto vtableVar = buildVariableSmart(_class.location, buildPtrSmart(_class.location, vtableStruct), ir.Variable.Storage.Field, "__vtable");
 
-	auto fields = getClassFields(lp, _class, /* Account for the vtable: */ size(lp, buildSizeT(_class.location, lp)));
+	auto sz = size(lp, buildSizeT(_class.location, lp));  // Account for vtable.
+	auto fields = getClassFields(lp, _class, sz);
 	fields = vtableVar ~ fields;
 
 	auto layoutStruct = buildStruct(_class.location, _class.members, _class.myScope, "__layoutStruct", fields);
