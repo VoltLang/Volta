@@ -405,7 +405,7 @@ CompilerException makeNotAvailableInCTFE(ir.Node node, ir.Node feature, string f
 
 CompilerException makeShadowsDeclaration(ir.Node a, ir.Node b, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(a.location, format("shadows declaration at %s.", b.location), file, line);
+	return new CompilerError(a.location, format("shadows declaration at %s.", b.location.toString()), file, line);
 }
 
 CompilerException makeMultipleDefaults(Location location, string file = __FILE__, const int line = __LINE__)
@@ -435,7 +435,7 @@ CompilerException makeMultipleOutBlocks(Location location, string file = __FILE_
 
 CompilerException makeNeedOverride(ir.Function overrider, ir.Function overridee, string file = __FILE__, const int line = __LINE__)
 {
-	string emsg = format("function '%s' overrides function at %s but is not marked with 'override'.", overrider.name, overridee.location);
+	string emsg = format("function '%s' overrides function at %s but is not marked with 'override'.", overrider.name, overridee.location.toString());
 	return new CompilerError(overrider.location, emsg, file, line);
 }
 
