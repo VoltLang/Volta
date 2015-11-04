@@ -325,7 +325,7 @@ ir.Type[] expsToTypes(LanguagePass lp, ir.Exp[] exps, ir.Scope currentScope)
 /**
  * Gets a default value (The .init -- 0, or null, usually) for a given type.
  */
-ir.Exp getDefaultInit(Location l, LanguagePass lp, ir.Scope current, ir.Type t)
+ir.Exp getDefaultInit(Location l, LanguagePass lp, ir.Type t)
 {
 	if (t is null) {
 		throw panic(l, "null type");
@@ -333,10 +333,10 @@ ir.Exp getDefaultInit(Location l, LanguagePass lp, ir.Scope current, ir.Type t)
 	switch (t.nodeType) {
 	case ir.NodeType.TypeReference:
 		auto tr = cast(ir.TypeReference) t;
-		return getDefaultInit(l, lp, current, tr.type);
+		return getDefaultInit(l, lp, tr.type);
 	case ir.NodeType.Enum:
 		auto e = cast(ir.Enum) t;
-		return getDefaultInit(l, lp, current, e.base);
+		return getDefaultInit(l, lp, e.base);
 	case ir.NodeType.PrimitiveType:
 		auto pt = cast(ir.PrimitiveType) t;
 		if (pt.type == ir.PrimitiveType.Kind.Float) {
@@ -352,7 +352,7 @@ ir.Exp getDefaultInit(Location l, LanguagePass lp, ir.Scope current, ir.Type t)
 		auto sat = cast(ir.StaticArrayType) t;
 		auto exps = new ir.Exp[](sat.length);
 		foreach (ref e; exps) {
-			e = getDefaultInit(l, lp, current, sat.base);
+			e = getDefaultInit(l, lp, sat.base);
 		}
 		return buildArrayLiteralSmart(l, t, exps);
 	case ir.NodeType.PointerType:
@@ -371,7 +371,7 @@ ir.Exp getDefaultInit(Location l, LanguagePass lp, ir.Scope current, ir.Type t)
 			if (var is null || var is _struct.typeInfo) {
 				continue;
 			}
-			exps ~= getDefaultInit(l, lp, current, var.type);
+			exps ~= getDefaultInit(l, lp, var.type);
 		}
 		if (t.nodeType == ir.NodeType.Union) {
 			return buildUnionLiteralSmart(l, _struct, exps);
@@ -401,7 +401,7 @@ bool typeLookup(Context ctx, ref ir.Exp exp, ir.Type type)
 	auto named = cast(ir.Named)realt;
 
 	if (named !is null && postfix.identifier.value == "init") {
-		exp = getDefaultInit(exp.location, ctx.lp, ctx.current, type);
+		exp = getDefaultInit(exp.location, ctx.lp, type);
 		return true;
 	}
 
@@ -417,7 +417,7 @@ bool typeLookup(Context ctx, ref ir.Exp exp, ir.Type type)
 
 	switch (value) {
 	case "init":
-		exp = getDefaultInit(exp.location, ctx.lp, ctx.current, type);
+		exp = getDefaultInit(exp.location, ctx.lp, type);
 		return true;
 	case "max":
 		max = true;

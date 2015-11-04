@@ -625,7 +625,7 @@ void buildInstanceVariable(LanguagePass lp, ir.Class _class)
 			exps ~= buildAddrOf(l, iv, iv.name);
 			continue;
 		}
-		exps ~= getDefaultInit(l, lp, _class.myScope, var.type);
+		exps ~= getDefaultInit(l, lp, var.type);
 	}
 
 	_class.initVariable.assign = buildStructLiteralSmart(l, _class.layoutStruct, exps);
