@@ -999,6 +999,10 @@ private void rewriteVarargs(Context ctx,ir.CallableType asFunctionType,
 	ir.Type[] types;
 	foreach (i, _exp; varArgsSlice) {
 		auto etype = getExpType(ctx.lp, _exp, ctx.current);
+		if (ctx.lp.settings.internalD &&
+		    realType(etype).nodeType == ir.NodeType.Struct) {
+			warning(_exp.location, "passing struct to vaarg function");
+		}
 		auto typeId = buildTypeidSmart(postfix.location, etype);
 		typeidsLiteral.values ~= typeId;
 		types ~= etype;
