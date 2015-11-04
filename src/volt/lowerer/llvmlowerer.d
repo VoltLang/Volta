@@ -298,33 +298,55 @@ public:
 		super.enter(bs);
 		transformForeaches(lp, current, functionStack[$-1], bs);
 		insertBinOpAssignsForNestedVariableAssigns(bs);
-		/* Hoist declarations out of blocks and place them at the top of the function, to avoid
-		 * alloc()ing in a loop. Name collisions aren't an issue, as the generated assign statements
-		 * are already tied to the correct variable.
+
+		/* Hoist declarations out of blocks and place them at the top
+		 * of the function, to avoid alloc()ing in a loop. Name
+		 * collisions aren't an issue, as the generated assign
+		  * statements are already tied to the correct variable.
 		 */
-		if (functionStack.length == 0) {
+		auto top = functionStack[$-1]._body;
+		if (functionStack.length == 0 ||
+		    top is bs) {
 			return Continue;
 		}
+
 		ir.Node[] newTopVars;
-		ir.Node[] newStatements;
 		for (size_t i = 0; i < bs.statements.length; ++i) {
 			auto var = cast(ir.Variable) bs.statements[i];
 			if (var is null) {
-				newStatements ~= bs.statements[i];
+				accept(bs.statements[i], this);
 				continue;
 			}
+
 			auto l = bs.statements[i].location;
-			if (var.assign !is null) {
-				newStatements ~= buildExpStat(l, buildAssign(l, buildExpReference(l, var, var.name), var.assign));
-				var.assign = null;
+
+			if (!var.specialInitValue) {
+				ir.Exp assign;
+				if (var.assign !is null) {
+					assign = var.assign;
+					var.assign = null;
+
+					acceptExp(assign, this);
+				} else {
+					assign = getDefaultInit(l, lp, var.type);
+				}
+
+				auto eref = buildExpReference(l, var, var.name);
+				auto a = buildAssign(l, eref, assign);
+
+				bs.statements[i] = buildExpStat(l, a);
+			} else {
+				bs.statements[i] = buildBlockStat(l, null, bs.myScope);
 			}
+
 			accept(var, this);
 			newTopVars ~= var;
 		}
-		bs.statements = newStatements;
-		functionStack[$-1]._body.statements = newTopVars ~ functionStack[$-1]._body.statements;
 
-		return Continue;
+		top.statements = newTopVars ~ top.statements;
+		super.leave(bs);
+
+		return ContinueParent;
 	}
 
 	override Status leave(ir.BlockStatement bs)
