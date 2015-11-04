@@ -192,20 +192,23 @@ void fillInInterfacesIfNeeded(LanguagePass lp, ir.Class c)
 
 ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class, ref size_t offset)
 {
+	version (D_Version2) import std.stdio;
+
 	void addSize(ir.Type n)
 	{
 		auto a = alignment(lp, n);
 		auto sz = size(lp, n);
-		if (sz % a) {
-			offset += (a - (sz & a)) + sz;
-		} else {
-			offset += sz;
-		}
+
+		offset = calcAlignment(a, offset) + sz;
 	}
+
 	ir.Variable[] fields;
 	if (_class.parentClass !is null) {
 		fields ~= getClassFields(lp, _class.parentClass, offset);
+	} else {
+		offset = size(lp, buildSizeT(_class.location, lp));  // Account for vtable.
 	}
+
 	foreach (node; _class.members.nodes) {
 		auto asVar = cast(ir.Variable) node;
 		if (asVar is null) {
@@ -221,8 +224,10 @@ ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class, ref size_t offset
 	assert(_class.interfaces.length == _class.parentInterfaces.length);
 	void addOffset(ir._Interface iface)
 	{
+		auto t = buildSizeT(_class.location, lp);
+		offset = calcAlignment(lp, t, offset);
 		_class.interfaceOffsets ~= offset;
-		addSize(buildSizeT(_class.location, lp));
+		addSize(t);
 		auto var = buildVariableSmart(_class.location, buildPtrSmart(_class.location, iface.layoutStruct), ir.Variable.Storage.Field, mangle(iface));
 		fields ~= var;
 		assert(iface.interfaces.length == iface.parentInterfaces.length);
@@ -497,8 +502,8 @@ ir.Struct getClassLayoutStruct(ir.Class _class, LanguagePass lp, ref ir.Struct v
 	vtableStruct = buildStruct(_class.location, _class.members, _class.myScope, "__Vtable", tinfos ~ methodTypes);
 	auto vtableVar = buildVariableSmart(_class.location, buildPtrSmart(_class.location, vtableStruct), ir.Variable.Storage.Field, "__vtable");
 
-	auto sz = size(lp, buildSizeT(_class.location, lp));  // Account for vtable.
-	auto fields = getClassFields(lp, _class, sz);
+	size_t dummy;
+	auto fields = getClassFields(lp, _class, dummy);
 	fields = vtableVar ~ fields;
 
 	auto layoutStruct = buildStruct(_class.location, _class.members, _class.myScope, "__layoutStruct", fields);
