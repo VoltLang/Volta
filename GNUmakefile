@@ -187,6 +187,10 @@ voltaic-viv:
 	@echo "  VOLTA  viv"
 	@$(VOLT) --internal-perf --internal-d -o viv $(VIV_SRC)
 
+voltaic-viviv:
+	@echo "  VIV    viviv"
+	@./viv --internal-perf --internal-d -o viviv $(VIV_SRC)
+
 voltaic-viv-syntax:
 	@echo "  VIV    <source>"
 	@./viv $(VIV_ALL_SRC)
