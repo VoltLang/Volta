@@ -68,15 +68,14 @@ public:
 	body {
 		this.ver = ver;
 		this.settings = s;
+		this.frontend = new Parser();
 
-		auto p = new Parser();
-		p.dumpLex = false;
+		Driver drv = this;
+		languagePass = new VoltLanguagePass(drv, ver, s, frontend);
 
-		auto lp = new VoltLanguagePass(this, ver, s, p);
-
-		auto b = new LlvmBackend(lp);
-
-		this(s, p, lp, b);
+		if (!s.noBackend) {
+			backend = new LlvmBackend(languagePass);
+		}
 
 		mIncludes = settings.includePaths;
 
@@ -151,7 +150,9 @@ public:
 	{
 		frontend.close();
 		languagePass.close();
-		backend.close();
+		if (backend !is null) {
+			backend.close();
+		}
 
 		settings = null;
 		frontend = null;
@@ -343,10 +344,10 @@ protected:
 
 		debugPasses();
 
-		perf.tag("backend");
 		if (settings.noBackend) {
 			return 0;
 		}
+		perf.tag("backend");
 
 		// We will be modifing this later on,
 		// but we don't want to change mBitcodeFiles.
@@ -492,14 +493,6 @@ protected:
 	{
 		string[] args = ["-o", of];
 		return spawnProcess(linker, ["-o", of, bc]).wait();
-	}
-
-	this(Settings s, Frontend f, LanguagePass lp, Backend b)
-	{
-		this.settings = s;
-		this.frontend = f;
-		this.languagePass = lp;
-		this.backend = b;
 	}
 
 	private void preDiff(ir.Module[] mods, string title, string[] ppstrs, string[] dpstrs)
