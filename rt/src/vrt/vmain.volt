@@ -36,7 +36,7 @@ extern(C) int main(int c, char** argv)
 		// For lack of T.classinfo
 		auto ti = **cast(object.TypeInfo[]**)t;
 		auto name = ti[ti.length - 1].mangledName;
-		auto msg = t.message;
+		auto msg = t.msg;
 
 		object.vrt_printf("%.*s:%i Uncaught exception\n%.*s: %.*s\n",
 			cast(int)t.throwFile.length, t.throwFile.ptr,

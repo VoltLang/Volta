@@ -144,7 +144,7 @@ class Attribute
 
 class Throwable
 {
-	string message;
+	string msg;
 
 	// These two are updated each time the exception is thrown.
 	string throwFile;
@@ -154,9 +154,9 @@ class Throwable
 	string file;
 	size_t line;
 
-	this(string message, string file = __FILE__, size_t line = __LINE__)
+	this(string msg, string file = __FILE__, size_t line = __LINE__)
 	{
-		this.message = message;
+		this.msg = msg;
 		this.file = file;
 		this.line = line;
 	}
@@ -164,25 +164,25 @@ class Throwable
 
 class Exception : Throwable
 {
-	this(string message, string file = __FILE__, size_t line = __LINE__)
+	this(string msg, string file = __FILE__, size_t line = __LINE__)
 	{
-		super(message, file, line);
+		super(msg, file, line);
 	}
 }
 
 class Error : Throwable
 {
-	this(string message, string file = __FILE__, size_t line = __LINE__)
+	this(string msg, string file = __FILE__, size_t line = __LINE__)
 	{
-		super(message, file, line);
+		super(msg, file, line);
 	}
 }
 
 class AssertError : Error
 {
-	this(string message, string file = __FILE__, size_t line = __LINE__)
+	this(string msg, string file = __FILE__, size_t line = __LINE__)
 	{
-		super(message, file, line);
+		super(msg, file, line);
 	}
 }
 
@@ -190,9 +190,9 @@ class AssertError : Error
 // TODO: move to core.exception (llvmlowerer!)
 class KeyNotFoundException : Exception
 {
-	this(string message)
+	this(string msg)
 	{
-		super(message);
+		super(msg);
 	}
 }
 

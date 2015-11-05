@@ -12,7 +12,7 @@ extern(C) void vrt_eh_throw(object.Throwable t, string file, size_t line)
 	object.vrt_printf("###EXCEPTION###\n%.*s:%i %*.s\n".ptr,
 		cast(int)file.length, file.ptr,
 		cast(int)line,
-		cast(int)t.message.length, t.message.ptr);
+		cast(int)t.msg.length, t.msg.ptr);
 	exit(-1);
 }
 

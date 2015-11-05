@@ -14,11 +14,11 @@ int main(string[] args)
 	try {
 		return realMain(args);
 	} catch (object.Exception e) {
-		output.writefln("\n%s\n%s:%s", e.message, e.file, e.line);
+		output.writefln("\n%s\n%s:%s", e.msg, e.file, e.line);
 		return 1;
 	} catch (object.Throwable e) {
 		output.writefln("\nThrowable: '???'\n%s:%s: '%s'",
-		                e.throwFile, e.throwLine, e.message);
+		                e.throwFile, e.throwLine, e.msg);
 		return 1;
 	}
 	assert(false);
@@ -38,10 +38,10 @@ int realMain(string[] args)
 		try {
 			doFile(file);
 		} catch (object.Exception e) {
-			output.writefln("\n%s\n%s:%s", e.message, e.file, e.line);
+			output.writefln("\n%s\n%s:%s", e.msg, e.file, e.line);
 		} catch (object.Throwable e) {
 			output.writefln("\nThrowable: '???'\n%s:%s: '%s'",
-			                e.throwFile, e.throwLine, e.message);
+			                e.throwFile, e.throwLine, e.msg);
 		}
 	}
 	return 0;
