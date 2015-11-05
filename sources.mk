@@ -1,6 +1,7 @@
 
 RT_SRC = \
 	rt/src/object.volt \
+	rt/src/defaultsymbols.volt \
 	rt/src/vrt/vmain.volt \
 	rt/src/vrt/gc.volt \
 	rt/src/vrt/gc_stub.volt \
