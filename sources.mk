@@ -14,10 +14,7 @@ RT_SRC = \
 	rt/src/vrt/dwarf.volt
 
 VIV_SRC= \
-	src/volt/errors.d \
-	src/volt/license.d \
-	src/volt/exceptions.d \
-	src/volt/interfaces.d \
+	src/volt/*.d \
 	src/lib/llvm/*.d \
 	src/lib/llvm/c/*.d \
 	src/volt/ir/*.d \
