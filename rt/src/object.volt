@@ -150,38 +150,39 @@ class Throwable
 	string throwFile;
 	size_t throwLine;
 
-	this(string message)
-	{
-		this.message = message;
-	}
-}
-
-class Exception : Throwable
-{
+	// These are manually supplied
 	string file;
 	size_t line;
 
 	this(string message, string file = __FILE__, size_t line = __LINE__)
 	{
-		super(message);
+		this.message = message;
 		this.file = file;
 		this.line = line;
 	}
 }
 
+class Exception : Throwable
+{
+	this(string message, string file = __FILE__, size_t line = __LINE__)
+	{
+		super(message, file, line);
+	}
+}
+
 class Error : Throwable
 {
-	this(string message)
+	this(string message, string file = __FILE__, size_t line = __LINE__)
 	{
-		super(message);
+		super(message, file, line);
 	}
 }
 
 class AssertError : Error
 {
-	this(string message)
+	this(string message, string file = __FILE__, size_t line = __LINE__)
 	{
-		super(message);
+		super(message, file, line);
 	}
 }
 
