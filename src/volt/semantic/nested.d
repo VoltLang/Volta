@@ -15,7 +15,7 @@ import volt.semantic.classify : isNested;
 import volt.semantic.lookup : getModuleFromScope;
 
 
-void emitNestedStructs(ir.Function parentFunction, ir.BlockStatement bs)
+void emitNestedStructs(ir.Function parentFunction, ir.BlockStatement bs, ref ir.Struct[] structs)
 {
 	for (size_t i = 0; i < bs.statements.length; ++i) {
 		auto fn = cast(ir.Function) bs.statements[i];
@@ -32,9 +32,10 @@ void emitNestedStructs(ir.Function parentFunction, ir.BlockStatement bs)
 			fn.suffix = toString(getModuleFromScope(parentFunction.location, parentFunction._body.myScope).getId());
 		}
 		if (parentFunction.nestStruct is null) {
-			parentFunction.nestStruct = createAndAddNestedStruct(parentFunction, bs);
+			parentFunction.nestStruct = createAndAddNestedStruct(parentFunction, parentFunction._body);
+			structs ~= parentFunction.nestStruct;
 		}
-		emitNestedStructs(parentFunction, fn._body);
+		emitNestedStructs(parentFunction, fn._body, structs);
 	}
 }
 

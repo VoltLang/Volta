@@ -503,8 +503,10 @@ public:
 
 	override Status enter(ir.Struct s)
 	{
-		addScope(current, s);
-		gather(current, s, where);
+		if (s.myScope is null) {
+			addScope(current, s);
+			gather(current, s, where);
+		}
 		push(s.myScope, s);
 		return Continue;
 	}
@@ -593,7 +595,11 @@ public:
 			throw panic(bs.location, "block statement outside of function");
 		}
 		// TODO: Move to lowerer.
-		emitNestedStructs(mFunctionStack[$-1], bs);
+		ir.Struct[] structs;
+		emitNestedStructs(mFunctionStack[$-1], bs, structs);
+		foreach (_s; structs) {
+			accept(_s, this);
+		}
 		return Continue;
 	}
 
