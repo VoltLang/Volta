@@ -3,6 +3,16 @@
 module volt.util.perf;
 
 
+version (Volt) {
+	struct Perf
+	{
+		void tag(string) {}
+		void print() {}
+	}
+
+	static Perf perf;
+}
+
 version (D_Version2):
 
 import watt.io.std : writefln;
