@@ -39,6 +39,7 @@ LDFLAGS ?= $(DEBUG_DFLAGS)
 DDEFINES_ = $(DDEFINES)
 LDFLAGS_ = $(DFLAGS) $(LDFLAGS)
 TARGET = volt
+VIV_TARGET = viv
 CCOMP_FLAGS = $(CARCH) -c -o $@ $(CFLAGS)
 MCOMP_FLAGS = $(CARCH) -c -o $@ $(CFLAGS)
 DCOMP_FLAGS = -c -w -Isrc $(DDEFINES_) -of$@ $(DFLAGS)
@@ -67,10 +68,12 @@ else
       # Not tested
       PLATFORM = windows
       TARGET = volt.exe
+      VIV_TARGET = viv.exe
     else
       # Not tested
       PLATFORM=windows
       TARGET = volt.exe
+      VIV_TARGET = viv.exe
       RUN_TARGET = a.out.exe
     endif
   endif
@@ -170,9 +173,10 @@ package: all
 	@cp -r ./rt/src/* .pkg/rt/
 	@tar -czf volt.tar.gz .pkg/*
 
-viv: $(TARGET) $(VIV_SRC)
-	@echo "  VOLTA  viv"
-	@./$(TARGET) --internal-d -o viv $(VIV_SRC)
+$(VIV_TARGET): $(TARGET) $(VIV_SRC)
+	@echo "  VOLTA  $(VIV_TARGET)"
+	@$(VOLT) --internal-perf --internal-d -o $(VIV_TARGET) $(VIV_SRC)
+
 
 # Note these should not depend on target
 voltaic-syntax:
