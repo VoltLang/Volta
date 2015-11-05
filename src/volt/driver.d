@@ -8,6 +8,7 @@ import watt.path : temporaryFilename, dirSeparator;
 import watt.process : spawnProcess, wait;
 import watt.io.file : remove, exists, read;
 import watt.text.diff : diff;
+import watt.text.format : format;
 import watt.text.string : endsWith;
 
 import volt.util.path;
@@ -226,13 +227,13 @@ public:
 				io.error.writefln("%s:%s", e.file, e.line);
 			}
 			return 1;
-		} catch (Exception e) {
+		} catch (object.Exception e) {
 			io.error.writefln("panic: %s", e.msg);
 			if (e.file !is null) {
 				io.error.writefln("%s:%s", e.file, e.line);
 			}
 			return 2;
-		} catch (Error e) {
+		} catch (object.Error e) {
 			io.error.writefln("panic: %s", e.msg);
 			if (e.file !is null) {
 				io.error.writefln("%s:%s", e.file, e.line);
@@ -502,8 +503,13 @@ protected:
 		}
 		assert(mods.length == ppstrs.length && mods.length == dpstrs.length);
 		StringBuffer ppBuf, dpBuf;
-		auto diffPP = new PrettyPrinter(" ", &ppBuf.sink);
-		auto diffDP = new DebugPrinter(" ", &dpBuf.sink);
+		version (Volt) {
+			auto diffPP = new PrettyPrinter(" ", ppBuf.sink);
+			auto diffDP = new DebugPrinter(" ", dpBuf.sink);
+		} else {
+			auto diffPP = new PrettyPrinter(" ", &ppBuf.sink);
+			auto diffDP = new DebugPrinter(" ", &dpBuf.sink);
+		}
 		foreach (i, m; mods) {
 			ppBuf.clear();
 			dpBuf.clear();
@@ -524,8 +530,13 @@ protected:
 		}
 		assert(mods.length == ppstrs.length && mods.length == dpstrs.length);
 		StringBuffer sb;
-		auto pp = new PrettyPrinter(" ", &sb.sink);
-		auto dp = new DebugPrinter(" ", &sb.sink);
+		version (Volt) {
+			auto pp = new PrettyPrinter(" ", sb.sink);
+			auto dp = new DebugPrinter(" ", sb.sink);
+		} else {
+			auto pp = new PrettyPrinter(" ", &sb.sink);
+			auto dp = new DebugPrinter(" ", &sb.sink);
+		}
 		foreach (i, m; mods) {
 			sb.clear();
 			dp.transform(m);
