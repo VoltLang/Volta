@@ -38,7 +38,9 @@ public:
 
 	override void transform(ir.Module m)
 	{
-		writefln("%s %s \"%s\"", mText, ir.getNodeAddressString(m), m.name.toString);
+		writefln("%s %s \"%s\"", mText,
+		         ir.getNodeAddressString(m),
+		         m.name.toString());
 	}
 
 	override void close() {}
