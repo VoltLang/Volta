@@ -368,7 +368,8 @@ ir.Exp getDefaultInit(Location l, LanguagePass lp, ir.Type t)
 		ir.Exp[] exps;
 		foreach (n; _struct.members.nodes) {
 			auto var = cast(ir.Variable) n;
-			if (var is null || var is _struct.typeInfo) {
+			if (var is null || var is _struct.typeInfo ||
+			    var.storage != ir.Variable.Storage.Field) {
 				continue;
 			}
 			exps ~= getDefaultInit(l, lp, var.type);
