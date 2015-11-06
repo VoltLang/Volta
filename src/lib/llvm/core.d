@@ -261,7 +261,6 @@ SOFTWARE.
 
 import volt.license;
 
-version (D_Version2):
 static this()
 {
 	licenseArray ~= llvmLicense;

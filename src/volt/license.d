@@ -35,7 +35,6 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 `;
 
-version (D_Version2):
 static string[] licenseArray;
 
 static this()
