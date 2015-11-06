@@ -7,6 +7,7 @@ import io = watt.io.std : output, error;
 import watt.path : temporaryFilename, dirSeparator;
 import watt.process : spawnProcess, wait;
 import watt.io.file : remove, exists, read;
+import watt.conv : toLower;
 import watt.text.diff : diff;
 import watt.text.format : format;
 import watt.text.string : endsWith;

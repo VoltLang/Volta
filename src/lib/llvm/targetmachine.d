@@ -2,7 +2,7 @@
 // See copyright notice and license in src/lib/llvm/core.d.
 module lib.llvm.targetmachine;
 
-import watt.conv;
+import watt.conv : toString;
 
 import lib.llvm.core;
 public import lib.llvm.c.TargetMachine;
