@@ -26,4 +26,4 @@ VIV_SRC= \
 	src/volt/lowerer/*.d \
 	src/volt/semantic/*.d \
 	src/volt/postparse/*.d \
-	src/volt/main.volt
+	src/main.d

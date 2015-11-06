@@ -82,7 +82,7 @@ endif
 include sources.mk
 DSRC = $(shell find src -name "*.d")
 CXXSRC = $(shell find src -name "*.cpp")
-VIV_ALL_SRC = $(DSRC) src/volt/main.volt
+VIV_ALL_SRC = $(DSRC)
 
 OBJ_DIR = .obj/$(PLATFORM)-$(MACHINE)
 DOBJ = $(patsubst src/%.d, $(OBJ_DIR)/%.$(OBJ_TYPE), $(DSRC))
