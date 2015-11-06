@@ -359,7 +359,7 @@ private:
 		}
 
 		version (D_Version2) static assert(ptrIndex < lengthIndex);
-		version (D_Version2) diStructSetBody(state, cast(Type)this,
+		diStructSetBody(state, cast(Type)this,
 			[ptrType, lengthType],
 			["ptr", "length"]);
 	}

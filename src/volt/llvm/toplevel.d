@@ -254,7 +254,7 @@ public:
 		Block[] blocks;
 
 		auto old = state.fnState.swi;
-		version (D_Version2) state.fnState.swi = State.SwitchState.init;
+		state.fnState.swi = State.SwitchState.init;
 		// Even final switches have an (invalid) default case.
 		state.fnState.swi.def = LLVMAppendBasicBlockInContext(state.context, state.func, "defaultCase");
 		ir.BlockStatement defaultStatements;
@@ -305,7 +305,8 @@ public:
 					addExp(_case.firstExp, block);
 					foreach (exp; _case.exps) addExp(exp, block);
 				}
-				version (D_Version2) blocks ~= Block(_case, block);
+				Block add = { _case, block };
+				blocks ~= add;
 			}
 		}
 		auto outBlock = LLVMAppendBasicBlockInContext(state.context, state.func, "endSwitch");

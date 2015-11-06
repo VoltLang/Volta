@@ -277,7 +277,7 @@ public:
 		mIndexVar = null;
 		mExceptionVar = null;
 
-		version (D_Version2) fnState = FunctionState.init;
+		fnState = FunctionState.init;
 	}
 
 
@@ -341,7 +341,8 @@ public:
 			}
 		}
 
-		version (D_Version2) valueStore[k] = Store(v, type);
+		Store add = { v, type };
+		valueStore[k] = add;
 		return v;
 	}
 
@@ -360,8 +361,9 @@ public:
 			return ret.value;
 		}
 
-		if (var.type is null)
+		if (var.type is null) {
 			throw panic(var.location, "variable without type");
+		}
 
 		type = this.fromIr(var.type);
 		LLVMValueRef v;
@@ -432,7 +434,8 @@ public:
 			break;
 		}
 
-		version (D_Version2) valueStore[k] = Store(v, type);
+		Store add = { v, type };
+		valueStore[k] = add;
 		return v;
 	}
 
@@ -465,7 +468,8 @@ public:
 		diParameterVariable(this, var, v, type);
 		diUnsetPosition(this);
 
-		version (D_Version2) valueStore[k] = Store(v, type);
+		Store add = { v, type };
+		valueStore[k] = add;
 		return v;
 	}
 
@@ -475,7 +479,8 @@ public:
 		assert((k in valueStore) is null);
 
 		auto type = this.fromIr(var.type);
-		version (D_Version2) valueStore[k] = Store(v, type);
+		Store add = { v, type };
+		valueStore[k] = add;
 	}
 
 	override void makeThisVariable(ir.Variable var, LLVMValueRef v)
@@ -499,7 +504,8 @@ public:
 		}
 
 		v = LLVMBuildBitCast(builder, v, llvmType, "this");
-		version (D_Version2) valueStore[k] = Store(v, type);
+		Store add = { v, type };
+		valueStore[k] = add;
 	}
 
 	override void makeNestVariable(ir.Variable var, LLVMValueRef v)
@@ -512,7 +518,8 @@ public:
 		llvmType = LLVMPointerType(type.llvmType, 0);
 
 		v = LLVMBuildBitCast(builder, v, llvmType, "__nested");
-		version (D_Version2) valueStore[k] = Store(v, type);
+		Store add = { v, type };
+		valueStore[k] = add;
 
 		assert(fnState.nested is null);
 		fnState.nested = v;
