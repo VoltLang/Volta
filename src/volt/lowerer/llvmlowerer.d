@@ -297,7 +297,7 @@ public:
 	{
 		super.enter(bs);
 		transformForeaches(lp, current, functionStack[$-1], bs);
-		insertBinOpAssignsForNestedVariableAssigns(bs);
+		insertBinOpAssignsForNestedVariableAssigns(lp, bs);
 
 		/* Hoist declarations out of blocks and place them at the top
 		 * of the function, to avoid alloc()ing in a loop. Name

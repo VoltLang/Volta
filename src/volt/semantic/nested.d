@@ -10,9 +10,11 @@ import volt.ir.util;
 
 import volt.errors;
 
+import volt.interfaces;
+import volt.semantic.util;
+import volt.semantic.lookup : getModuleFromScope;
 import volt.semantic.context;
 import volt.semantic.classify : isNested;
-import volt.semantic.lookup : getModuleFromScope;
 
 
 void emitNestedStructs(ir.Function parentFunction, ir.BlockStatement bs, ref ir.Struct[] structs)
@@ -84,7 +86,7 @@ bool replaceNested(ref ir.Exp exp, ir.ExpReference eref, ir.Variable nestParam)
 	return true;
 }
 
-void insertBinOpAssignsForNestedVariableAssigns(ir.BlockStatement bs)
+void insertBinOpAssignsForNestedVariableAssigns(LanguagePass lp, ir.BlockStatement bs)
 {
 	for (size_t i = 0; i < bs.statements.length; ++i) {
 		auto var = cast(ir.Variable) bs.statements[i];
@@ -92,13 +94,22 @@ void insertBinOpAssignsForNestedVariableAssigns(ir.BlockStatement bs)
 		    !isNested(var.storage)) {
 			continue;
 		}
-		if (var.assign is null) {
+
+		version (none) {
 			bs.statements = bs.statements[0 .. i] ~ bs.statements[i + 1 .. $];
 			i--;
-		} else {
-			auto assign = buildAssign(var.location, buildExpReference(var.location, var, var.name), var.assign);
-			bs.statements[i] = buildExpStat(assign.location, assign);
 		}
+
+		ir.Exp value;
+		if (var.assign is null) {
+			value = getDefaultInit(var.location, lp, var.type);
+		} else {
+			value = var.assign;
+		}
+
+		auto eref = buildExpReference(var.location, var, var.name);
+		auto assign = buildAssign(var.location, eref, value);
+		bs.statements[i] = buildExpStat(assign.location, assign);
 	}
 }
 
