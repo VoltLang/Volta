@@ -53,6 +53,9 @@ extern(C) void* vrt_aa_new(TypeInfo value, TypeInfo key)
 
 extern(C) size_t vrt_aa_get_length(void* rbtv)
 {
+	if (rbtv is null) {
+		return 0;
+	}
 	RedBlackTree* rbt = cast(RedBlackTree*)rbtv;
 	return rbt.length;
 }
