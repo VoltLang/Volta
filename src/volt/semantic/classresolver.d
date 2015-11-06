@@ -192,8 +192,6 @@ void fillInInterfacesIfNeeded(LanguagePass lp, ir.Class c)
 
 ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class, ref size_t offset)
 {
-	version (D_Version2) import std.stdio;
-
 	void addSize(ir.Type n)
 	{
 		auto a = alignment(lp, n);
