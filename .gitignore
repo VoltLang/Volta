@@ -4,6 +4,8 @@
 /volt.*
 /viv
 /viv.*
+/viviv
+/viviv.*
 /LLVM.*
 build.bat
 .obj
