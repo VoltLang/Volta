@@ -60,6 +60,12 @@ protected:
 
 	ir.Module[] mCommandLineModules;
 
+	/// Temporary files created during compile.
+	string[] mTemporaryFiles;
+
+	/// Used to track if we should debug print on error.
+	bool mDebugPassesRun;
+
 public:
 	this(VersionSet ver, Settings s)
 	in {
@@ -116,6 +122,13 @@ public:
 		debugVisitors ~= new PrettyPrinter();
 	}
 
+
+	/*
+	 *
+	 * Driver functions.
+	 *
+	 */
+
 	/**
 	 * Retrieve a Module by its name. Returns null if none is found.
 	 */
@@ -161,11 +174,19 @@ public:
 		backend = null;
 	}
 
+
+	/*
+	 *
+	 * Misc functions.
+	 *
+	 */
+
 	void addFile(string file)
 	{
 		file = settings.replaceEscapes(file);
 		version (Windows) {
-			file = toLower(file);  // VOLT TEST.VOLT  REM Reppin' MS-DOS
+			// VOLT TEST.VOLT  REM Reppin' MS-DOS
+			file = toLower(file);
 		}
 
 		if (endsWith(file, ".d", ".volt") > 0) {
@@ -182,39 +203,32 @@ public:
 
 	void addFiles(string[] files)
 	{
-		foreach (file; files)
+		foreach (file; files) {
 			addFile(file);
-	}
-
-	void addLibrary(string lib)
-	{
-		mLibraryFiles ~= lib;
-	}
-
-	void addLibraryPath(string path)
-	{
-		mLibraryPaths ~= path;
-	}
-
-	void addLibrarys(string[] libs)
-	{
-		foreach (lib; libs)
-			addLibrary(lib);
-	}
-
-	void addLibraryPaths(string[] paths)
-	{
-		foreach (path; paths)
-			addLibraryPath(path);
+		}
 	}
 
 	int compile()
 	{
-		int ret;
+		mDebugPassesRun = false;
+		scope (success) {
+			debugPasses();
+
+			foreach (f; mTemporaryFiles) {
+				if (f.exists()) {
+					f.remove();
+				}
+			}
+
+			perf.tag("exit");
+		}
+
 		if (settings.noCatch) {
-			ret = intCompile();
-		} else try {
-			ret = intCompile();
+			return intCompile();
+		}
+
+		try {
+			return intCompile();
 		} catch (CompilerPanic e) {
 			io.error.writefln(e.msg);
 			if (e.file !is null) {
@@ -227,26 +241,20 @@ public:
 				io.error.writefln("%s:%s", e.file, e.line);
 			}
 			return 1;
-		} catch (object.Exception e) {
-			io.error.writefln("panic: %s", e.msg);
-			if (e.file !is null) {
-				io.error.writefln("%s:%s", e.file, e.line);
-			}
-			return 2;
-		} catch (object.Error e) {
-			io.error.writefln("panic: %s", e.msg);
-			if (e.file !is null) {
-				io.error.writefln("%s:%s", e.file, e.line);
+		} catch (object.Throwable t) {
+			io.error.writefln("panic: %s", t.msg);
+			if (t.file !is null) {
+				io.error.writefln("%s:%s", t.file, t.line);
 			}
 			return 2;
 		}
 
-		return ret;
+		version (Volt) assert(false);
 	}
 
 protected:
 	/**
-	 * Loads a file and parses it, also adds it to the loaded modules.
+	 * Loads a file and parses it.
 	 */
 	ir.Module loadAndParse(string file)
 	{
@@ -256,31 +264,6 @@ protected:
 
 	int intCompile()
 	{
-		scope (exit) {
-			perf.tag("exit");
-		}
-
-		void debugPrint(string msg, string s)
-		{
-			if (settings.internalDebug) {
-				io.output.writefln(msg, s);
-			}
-		}
-
-		bool debugPassesRun = false;
-		void debugPasses()
-		{
-			if (settings.internalDebug && !debugPassesRun) {
-				debugPassesRun = true;
-				foreach (pass; debugVisitors) {
-					foreach (mod; mCommandLineModules) {
-						pass.transform(mod);
-					}
-				}
-			}
-		}
-		scope (failure) debugPasses();
-
 		perf.tag("parsing");
 
 		// Load all modules to be compiled.
@@ -302,6 +285,13 @@ protected:
 			jp.transform(mCommandLineModules);
 		}
 
+		// Skip setting up the pointers incase object
+		// was not loaded, after that we are done.
+		if (settings.removeConditionalsOnly) {
+			languagePass.phase1(mCommandLineModules);
+			return 0;
+		}
+
 		// After we have loaded all of the modules
 		// setup the pointers, this allows for suppling
 		// a user defined object module.
@@ -319,11 +309,6 @@ protected:
 		// This might load new modules.
 		languagePass.phase1(mCommandLineModules);
 		postDiff(mCommandLineModules, ppstrs, dpstrs);
-
-		// We are done now.
-		if (settings.removeConditionalsOnly) {
-			return 0;
-		}
 
 		// New modules have been loaded,
 		// make sure to run everthing on them.
@@ -353,7 +338,7 @@ protected:
 		// We will be modifing this later on,
 		// but we don't want to change mBitcodeFiles.
 		string[] bitcodeFiles = mBitcodeFiles;
-		string[] temporaryFiles;
+
 
 		foreach (m; mCommandLineModules) {
 			string o = temporaryFilename(".bc");
@@ -361,18 +346,10 @@ protected:
 			debugPrint("Backend %s.", m.name.toString());
 			backend.compile(m);
 			bitcodeFiles ~= o;
-			temporaryFiles ~= o;
+			mTemporaryFiles ~= o;
 		}
 
 		string bc, obj, of;
-
-		scope (exit) {
-			foreach (f; temporaryFiles) {
-				f.remove();
-			}
-		}
-
-		int ret;
 
 		// Setup files bc.
 		if (settings.emitBitcode) {
@@ -383,7 +360,7 @@ protected:
 				bitcodeFiles = null;
 			} else {
 				bc = temporaryFilename(".bc");
-				temporaryFiles ~= bc;
+				mTemporaryFiles ~= bc;
 			}
 		}
 
@@ -404,7 +381,7 @@ protected:
 		} else {
 			of = settings.getOutput(DEFAULT_EXE);
 			obj = temporaryFilename(".o");
-			temporaryFiles ~= obj;
+			mTemporaryFiles ~= obj;
 		}
 
 		// If we are compiling on the emscripten platform ignore .o files.
@@ -424,9 +401,7 @@ protected:
 
 		// And finally call the linker.
 		perf.tag("native-link");
-		ret = nativeLink(mLinker, obj, of);
-		// TODO we probably did this for a reason, find out why.
-		return 0;
+		return nativeLink(mLinker, obj, of);
 	}
 
 	int nativeLink(string linker, string obj, string of)
@@ -496,11 +471,35 @@ protected:
 		return spawnProcess(linker, ["-o", of, bc]).wait();
 	}
 
-	private void preDiff(ir.Module[] mods, string title, string[] ppstrs, string[] dpstrs)
+private:
+	/**
+	 * If we are debugging print messages.
+	 */
+	void debugPrint(string msg, string s)
+	{
+		if (settings.internalDebug) {
+			io.output.writefln(msg, s);
+		}
+	}
+
+	void debugPasses()
+	{
+		if (settings.internalDebug && !mDebugPassesRun) {
+			mDebugPassesRun = true;
+			foreach (pass; debugVisitors) {
+				foreach (mod; mCommandLineModules) {
+					pass.transform(mod);
+				}
+			}
+		}
+	}
+
+	void preDiff(ir.Module[] mods, string title, string[] ppstrs, string[] dpstrs)
 	{
 		if (!settings.internalDiff) {
 			return;
 		}
+
 		assert(mods.length == ppstrs.length && mods.length == dpstrs.length);
 		StringBuffer ppBuf, dpBuf;
 		version (Volt) {
@@ -523,7 +522,7 @@ protected:
 		diffDP.close();
 	}
 
-	private void postDiff(ir.Module[] mods, string[] ppstrs, string[] dpstrs)
+	void postDiff(ir.Module[] mods, string[] ppstrs, string[] dpstrs)
 	{
 		if (!settings.internalDiff) {
 			return;
