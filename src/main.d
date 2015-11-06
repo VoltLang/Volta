@@ -39,11 +39,13 @@ int main(string[] args)
 	auto settings = new Settings(getExecDir());
 	setDefault(settings);
 
-	if (!handleArgs(getConfigLines(), files, ver, settings))
+	if (!handleArgs(getConfigLines(), files, ver, settings)) {
 		return 0;
+	}
 
-	if (!handleArgs(args, files, ver, settings))
+	if (!handleArgs(args, files, ver, settings)) {
 		return 0;
+	}
 
 	settings.processConfigs(ver);
 
@@ -471,7 +473,8 @@ bool printUsage()
 
 bool printLicense()
 {
-	foreach (license; licenseArray)
+	foreach (license; licenseArray) {
 		writefln(license);
+	}
 	return false;
 }
