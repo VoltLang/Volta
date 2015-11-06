@@ -232,7 +232,11 @@ extern(C) void* vrt_aa_in_binop_array(void* rbtv, void[] key)
 	if (tn is null) {
 		return null;
 	}
-	return &tn.value.ptr;
+	if (rbt.value.size < typeid(TreeStore).size) {
+		return cast(void*)&tn.value;
+	} else {
+		return tn.value.ptr;
+	}
 }
 
 extern(C) void* vrt_aa_in_binop_primitive(void* rbtv, ulong key)
@@ -246,7 +250,11 @@ extern(C) void* vrt_aa_in_binop_primitive(void* rbtv, ulong key)
 	if (tn is null) {
 		return null;
 	}
-	return &tn.value.ptr;
+	if (rbt.value.size < typeid(TreeStore).size) {
+		return cast(void*)&tn.value;
+	} else {
+		return tn.value.ptr;
+	}
 }
 
 private void vrt_aa_rotate_left(RedBlackTree* rbt, TreeNode* node)
