@@ -272,6 +272,7 @@ public:
 					state.switchSetCase(i, block);
 				}
 				LLVMAddCase(_switch, val, block);
+				version (Volt) return; // If, throw?
 			}
 
 			void addExp(ir.Exp exp, LLVMBasicBlockRef block)
