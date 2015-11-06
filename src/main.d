@@ -2,14 +2,16 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module main;
 
-import watt.path : getExecDir;
-
-import std.stdio : File, writeln, writefln;
-import std.string : chomp, toLower;
 version (Windows) {
 	import std.file : SpanMode, dirEntries;
 	import std.path : baseName, dirName;
 }
+
+import watt.path : getExecDir, dirSeparator;
+import watt.conv : toLower;
+import watt.io.std : writefln;
+import watt.io.file : exists, read;
+import watt.text.string : splitLines;
 
 import volt.license;
 import volt.interfaces;
@@ -17,7 +19,7 @@ import volt.driver;
 import volt.util.path;
 import volt.util.perf : perf;
 
-bool doPerfPrint;
+static bool doPerfPrint;
 
 int main(string[] args)
 {
@@ -182,25 +184,53 @@ bool handleArgs(string[] args, ref string[] files, VersionSet ver, Settings sett
 		case "-license", "--license":
 			return printLicense();
 		case "-D":
-			argHandler = &versionIdentifier;
+			version (Volt) {
+				argHandler = cast(typeof(argHandler))versionIdentifier;
+			} else {
+				argHandler = &versionIdentifier;
+			}
 			continue;
 		case "-o":
-			argHandler = &outputFile;
+			version (Volt) {
+				argHandler = cast(typeof(argHandler))outputFile;
+			} else {
+				argHandler = &outputFile;
+			}
 			continue;
 		case "-I":
-			argHandler = &includePath;
+			version (Volt) {
+				argHandler = cast(typeof(argHandler))includePath;
+			} else {
+				argHandler = &includePath;
+			}
 			continue;
 		case "-L":
-			argHandler = &libraryPath;
+			version (Volt) {
+				argHandler = cast(typeof(argHandler))libraryPath;
+			} else {
+				argHandler = &libraryPath;
+			}
 			continue;
 		case "-l":
-			argHandler = &libraryFile;
+			version (Volt) {
+				argHandler = cast(typeof(argHandler))libraryFile;
+			} else {
+				argHandler = &libraryFile;
+			}
 			continue;
 		case "-F":
-			argHandler = &frameworkPath;
+			version (Volt) {
+				argHandler = cast(typeof(argHandler))frameworkPath;
+			} else {
+				argHandler = &frameworkPath;
+			}
 			continue;
 		case "-framework", "--framework":
-			argHandler = &frameworkName;
+			version (Volt) {
+				argHandler = cast(typeof(argHandler))frameworkName;
+			} else {
+				argHandler = &frameworkName;
+			}
 			continue;
 		case "-w":
 			settings.warningsEnabled = true;
@@ -216,13 +246,25 @@ bool handleArgs(string[] args, ref string[] files, VersionSet ver, Settings sett
 			settings.noBackend = true;
 			continue;
 		case "--arch":
-			argHandler = &arch;
+			version (Volt) {
+				argHandler = cast(typeof(argHandler))arch;
+			} else {
+				argHandler = &arch;
+			}
 			continue;
 		case "--platform":
-			argHandler = &platform;
+			version (Volt) {
+				argHandler = cast(typeof(argHandler))platform;
+			} else {
+				argHandler = &platform;
+			}
 			continue;
 		case "--linker":
-			argHandler = &linker;
+			version (Volt) {
+				argHandler = cast(typeof(argHandler))linker;
+			} else {
+				argHandler = &linker;
+			}
 			continue;
 		case "--emit-bitcode":
 			settings.emitBitcode = true;
@@ -238,10 +280,18 @@ bool handleArgs(string[] args, ref string[] files, VersionSet ver, Settings sett
 			settings.noStdLib = true;
 			continue;
 		case "--stdlib-file":
-			argHandler = &stdFile;
+			version (Volt) {
+				argHandler = cast(typeof(argHandler))stdFile;
+			} else {
+				argHandler = &stdFile;
+			}
 			continue;
 		case "--stdlib-I":
-			argHandler = &stdIncludePath;
+			version (Volt) {
+				argHandler = cast(typeof(argHandler))stdIncludePath;
+			} else {
+				argHandler = &stdIncludePath;
+			}
 			continue;
 		case "--simple-trace":
 			settings.simpleTrace = true;
@@ -251,15 +301,27 @@ bool handleArgs(string[] args, ref string[] files, VersionSet ver, Settings sett
 			continue;
 		case "--doc-dir":
 			settings.writeDocs = true;
-			argHandler = &docDir;
+			version (Volt) {
+				argHandler = cast(typeof(argHandler))docDir;
+			} else {
+				argHandler = &docDir;
+			}
 			continue;
 		case "-do":
 			settings.writeDocs = true;
-			argHandler = &docOutput;
+			version (Volt) {
+				argHandler = cast(typeof(argHandler))docOutput;
+			} else {
+				argHandler = &docOutput;
+			}
 			continue;
 		case "-jo":
 			settings.writeJson = true;
-			argHandler = &jsonOutput;
+			version (Volt) {
+				argHandler = cast(typeof(argHandler))jsonOutput;
+			} else {
+				argHandler = &jsonOutput;
+			}
 			continue;
 		case "--json":
 			settings.writeJson = true;
@@ -323,15 +385,16 @@ string[] getConfigLines()
 
 bool getLinesFromFile(string file, ref string[] lines)
 {
-	try {
-		auto f = File(file);
-		foreach (line; f.byLine) {
-			if (line.length > 0 && line[0] != '#') {
-				lines ~= chomp(line).idup;
-			}
-		}
-	} catch {
+	if (!exists(file)) {
 		return false;
+	}
+
+	auto src = cast(string) read(file);
+
+	foreach (line; splitLines(src)) {
+		if (line.length > 0 && line[0] != '#') {
+			lines ~= line;
+		}
 	}
 	return true;
 }
@@ -341,7 +404,9 @@ void setDefault(Settings settings)
 	// Only MinGW is supported.
 	version (Windows) {
 		settings.platform = Platform.MinGW;
-	} else version (linux) {
+	} else version (linux) { // D2
+		settings.platform = Platform.Linux;
+	} else version (Linux) { // Volt
 		settings.platform = Platform.Linux;
 	} else version (OSX) {
 		settings.platform = Platform.OSX;
@@ -382,21 +447,21 @@ bool printUsage()
 	writefln("\t--doc-dir        Specify a base directory for documentation (implies --doc).");
 	writefln("\t-do              Specify documentation output name (implies --doc).");
 	writefln("\t-jo              Specify json output name (implies --json).");
-	writeln();
+	writefln("");
 	writefln("\t--arch           Select processer architecture: 'x86', 'x86_64', 'le32'");
 	writefln("\t--platform       Select platform: 'mingw', 'linux', 'osx', 'emscripten'");
-	writeln();
+	writefln("");
 	writefln("\t--linker linker  Linking program to use for linking.");
 	writefln("\t--emit-bitcode   Emit LLVM bitcode (implies -c).");
 	writefln("\t-S,--no-backend  Stop compilation before the backend.");
 	writefln("\t--no-catch       For compiler debugging purposes.");
-	writeln();
+	writefln("");
 	writefln("\t--no-stdlib      Don't include any stdlib (from config or arguments)");
 	writefln("\t--stdlib-I       Apply this include before any other -I");
 	writefln("\t                 (ignored if --no-stdlib was given)");
 	writefln("\t--stdlib-file    Apply this file first but only when linking");
 	writefln("\t                 (ignored if --no-stdlib was given)");
-	writeln();
+	writefln("");
 	writefln("\t--internal-d     Enables internal D friendlier rules.");
 	writefln("\t--internal-dbg   Enables internal debug printing.");
 	writefln("\t--internal-perf  Enables internal performance timings.");
