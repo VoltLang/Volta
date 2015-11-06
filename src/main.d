@@ -38,7 +38,6 @@ int main(string[] args)
 	auto ver = new VersionSet();
 	auto settings = new Settings(getExecDir());
 	setDefault(settings);
-	version (Volt) settings.noBackend = true;
 
 	if (!handleArgs(getConfigLines(), files, ver, settings)) {
 		return 0;

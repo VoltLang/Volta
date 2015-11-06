@@ -20,7 +20,7 @@ module lib.llvm.c.Analysis;
 import lib.llvm.c.Core;
 
 
-@loadDynamic extern(C):
+extern(C):
 
 enum LLVMVerifierFailureAction {
   AbortProcess, /* verifier will print to stderr and abort() */

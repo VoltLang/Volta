@@ -19,7 +19,7 @@ module lib.llvm.c.Linker;
 import lib.llvm.c.Core;
 
 
-@loadDynamic extern(C):
+extern(C):
 
 enum LLVMLinkerMode
 {

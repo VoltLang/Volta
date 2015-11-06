@@ -20,7 +20,7 @@ module lib.llvm.c.BitWriter;
 import lib.llvm.c.Core;
 
 
-@loadDynamic extern(C):
+extern(C):
 
 /*===-- Operations on modules ---------------------------------------------===*/
 

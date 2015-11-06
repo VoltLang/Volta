@@ -175,7 +175,7 @@ package: all
 
 $(VIV_TARGET): $(TARGET) $(VIV_SRC)
 	@echo "  VOLTA  $(VIV_TARGET)"
-	@$(VOLT) --internal-perf --internal-d -o $(VIV_TARGET) $(VIV_SRC)
+	@$(VOLT) --internal-perf --internal-d -o $(VIV_TARGET) $(VIV_SRC) $(LLVM_LDFLAGS)
 
 
 # Note these should not depend on target
@@ -185,11 +185,11 @@ voltaic-syntax:
 
 voltaic-viv:
 	@echo "  VOLTA  viv"
-	@$(VOLT) --internal-perf --internal-d -o viv $(VIV_SRC)
+	@$(VOLT) --internal-perf --internal-d -o viv $(VIV_SRC) $(LLVM_LDFLAGS)
 
 voltaic-viviv:
 	@echo "  VIV    viviv"
-	@./viv --internal-perf --internal-d -o viviv $(VIV_SRC)
+	@./viv --internal-perf --internal-d -o viviv $(VIV_SRC) $(LLVM_LDFLAGS)
 
 voltaic-viv-sanity:
 	@echo "  VIV    $(RUN_TARGET)"

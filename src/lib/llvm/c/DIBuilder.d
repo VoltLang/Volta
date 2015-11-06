@@ -16,7 +16,7 @@ module lib.llvm.c.DIBuilder;
 import lib.llvm.c.Core;
 
 
-@loadDynamic extern(C):
+extern(C):
 
 /**
  * @defgroup LLVMC DIBuilder: C interface to DIBuilder

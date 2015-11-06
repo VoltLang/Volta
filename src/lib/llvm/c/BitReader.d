@@ -24,7 +24,7 @@ module lib.llvm.c.BitReader;
 import lib.llvm.c.Core;
 
 
-@loadDynamic extern(C):
+extern(C):
 
 /**
  * @defgroup LLVMCBitReader Bit Reader
