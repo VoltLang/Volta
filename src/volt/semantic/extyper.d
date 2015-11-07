@@ -2395,7 +2395,7 @@ void extypeTernary(Context ctx, ir.Ternary ternary)
 void extypeStructLiteral(Context ctx, ir.StructLiteral sl)
 {
 	if (sl.type is null) {
-		throw makeError(sl, "can deduce type of struct literal");
+		throw makeError(sl, "can't deduce type of struct literal");
 	}
 
 	auto asStruct = cast(ir.Struct) realType(sl.type);
