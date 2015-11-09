@@ -186,6 +186,15 @@ class AssertError : Error
 	}
 }
 
+class MalformedUTF8Exception : Exception
+{
+	this(string msg = "malformed UTF-8 stream",
+	     string file = __FILE__, size_t line = __LINE__)
+	{
+		super(msg, file, line);
+	}
+}
+
 // Thrown if Key does not exist in AA
 // TODO: move to core.exception (llvmlowerer!)
 class KeyNotFoundException : Exception
@@ -253,6 +262,14 @@ extern(C) {
 	void[] vrt_aa_get_aa(void* rbtv, void[] key, void[] _default);
 	ulong vrt_aa_get_ap(void* rbtv, void[] key, ulong _default);
 	void[] vrt_aa_get_pa(void* rbtv, ulong key, void[] _default);
+}
+
+/*
+ * Unicode functions.
+ */
+extern (C) {
+	dchar vrt_decode_u8_d(string str, ref size_t index);
+	dchar vrt_reverse_decode_u8_d(string str, ref size_t index);
 }
 
 /*

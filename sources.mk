@@ -11,7 +11,8 @@ RT_SRC = \
 	rt/src/vrt/eh.volt \
 	rt/src/vrt/eh_stub.volt \
 	rt/src/vrt/unwind.volt \
-	rt/src/vrt/dwarf.volt
+	rt/src/vrt/dwarf.volt \
+	rt/src/vrt/utf.volt
 
 VIV_SRC= \
 	src/volt/*.d \
