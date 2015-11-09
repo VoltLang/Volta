@@ -378,7 +378,7 @@ public:
 		auto i = LLVMBuildExtractValue(state.builder, lp, 1, "");
 		LLVMBuildStore(state.builder, i, iVar);
 
-		foreach (size_t index, v; t.catchVars) {
+		foreach (index, v; t.catchVars) {
 			Type type;
 			auto asTR = cast(ir.TypeReference)v.type;
 			ir.Class c = cast(ir.Class)asTR.type;

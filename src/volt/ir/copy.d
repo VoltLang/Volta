@@ -31,7 +31,7 @@ ir.BlockStatement copy(ir.BlockStatement bs)
 	auto b = new ir.BlockStatement();
 	b.location = bs.location;
 	b.statements = new ir.Node[](bs.statements.length);
-	foreach (size_t i, stmt; bs.statements) {
+	foreach (i, stmt; bs.statements) {
 		b.statements[i] = copyNode(stmt);
 	}
 
@@ -102,7 +102,7 @@ ir.ArrayLiteral copy(ir.ArrayLiteral ar)
 	if (ar.type !is null)
 		newar.type = copyType(ar.type);
 	newar.values = new ir.Exp[](ar.values.length);
-	foreach (size_t i, value; ar.values) {
+	foreach (i, value; ar.values) {
 		newar.values[i] = copyExp(value);
 	}
 	return newar;
@@ -138,12 +138,12 @@ ir.Postfix copy(ir.Postfix pfix)
 	newpfix.op = pfix.op;
 	newpfix.child = copyExp(pfix.child);
 	newpfix.arguments = new ir.Exp[](pfix.arguments.length);
-	foreach (size_t i, arg; pfix.arguments) {
+	foreach (i, arg; pfix.arguments) {
 		newpfix.arguments[i] = copyExp(arg);
 	}
 	newpfix.argumentTags =
 		new ir.Postfix.TagKind[](pfix.argumentTags.length);
-	foreach (size_t i, argTag; pfix.argumentTags) {
+	foreach (i, argTag; pfix.argumentTags) {
 		newpfix.argumentTags[i] = argTag;
 	}
 	if (pfix.identifier !is null) {
@@ -168,7 +168,7 @@ ir.Unary copy(ir.Unary unary)
 		newunary.type = copyType(unary.type);
 	}
 	newunary.argumentList = new ir.Exp[](unary.argumentList.length);
-	foreach (size_t i, arg; unary.argumentList) {
+	foreach (i, arg; unary.argumentList) {
 		newunary.argumentList[i] = copyExp(arg);
 	}
 	if (unary.dupName !is null) {
@@ -249,7 +249,7 @@ ir.FunctionType copy(ir.FunctionType old)
 	ft.params = new ir.Type[](old.params.length);
 	ft.isArgOut = new bool[](old.isArgOut.length);
 	ft.isArgRef = new bool[](old.isArgRef.length);
-	foreach (size_t i, ptype; old.params) {
+	foreach (i, ptype; old.params) {
 		ft.params[i] = copyType(ptype);
 		ft.isArgOut[i] = old.isArgOut[i];
 		ft.isArgRef[i] = old.isArgRef[i];
@@ -266,7 +266,7 @@ ir.DelegateType copy(ir.DelegateType old)
 	dg.params = new ir.Type[](old.params.length);
 	dg.isArgOut = new bool[](old.isArgOut.length);
 	dg.isArgRef = new bool[](old.isArgRef.length);
-	foreach (size_t i, ptype; old.params) {
+	foreach (i, ptype; old.params) {
 		dg.params[i] = copyType(ptype);
 		dg.isArgOut[i] = old.isArgOut[i];
 		dg.isArgRef[i] = old.isArgRef[i];
@@ -347,7 +347,7 @@ ir.QualifiedName copy(ir.QualifiedName old)
 	auto q = new ir.QualifiedName();
 	q.location = old.location;
 	q.identifiers = new ir.Identifier[](old.identifiers.length);
-	foreach (size_t i, oldId; old.identifiers) {
+	foreach (i, oldId; old.identifiers) {
 		q.identifiers[i] = copy(oldId);
 	}
 	return q;

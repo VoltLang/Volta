@@ -280,7 +280,7 @@ public:
 
 		ir.Variable[] variables = new ir.Variable[](unary.argumentList.length);
 		ir.Exp sizeExp = buildConstantSizeT(loc, lp, 0);
-		foreach (size_t i, arg; unary.argumentList) {
+		foreach (i, arg; unary.argumentList) {
 			auto var = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp, getExpType(lp, arg, current), arg);
 			sizeExp = buildAdd(loc, sizeExp, buildAccess(loc, buildExpReference(loc, var, var.name), "length"));
 			variables[i] = var;
@@ -291,7 +291,7 @@ public:
 		);
 		statExp.statements ~= newArray;
 
-		foreach (size_t i, arg; unary.argumentList) {
+		foreach (i, arg; unary.argumentList) {
 			auto source = variables[i];
 
 			ir.Exp[] args = [
