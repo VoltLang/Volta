@@ -196,4 +196,22 @@ public:
 
 	override Status leave(ir.TopLevelBlock tlb) { assert(false); }
 	override Status leave(ir.BlockStatement bs) { assert(false); }
+
+	override Status enter(ir.Class n) { checkStorage(n); return super.enter(n); }
+	override Status enter(ir.Struct n) { checkStorage(n); return super.enter(n); }
+	override Status enter(ir.Union n) { checkStorage(n); return super.enter(n); }
+	override Status enter(ir.Enum n) { checkStorage(n); return super.enter(n); }
+	override Status enter(ir.UserAttribute n) { checkStorage(n); return super.enter(n); }
+	override Status enter(ir._Interface n) { checkStorage(n); return super.enter(n); }
+
+	void checkStorage(ir.Type t)
+	{
+		if (t.isConst || t.isImmutable || t.isScope) {
+			if (auto n = cast(ir.Named) t) {
+				throw panic(t, "type '" ~ n.name ~ "' storage modifiers has been modified");
+			} else {
+				throw panic(t, "type storage modifiers has been modified");
+			}
+		}
+	}
 }
