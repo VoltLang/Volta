@@ -1640,6 +1640,8 @@ void buildForStatement(Location loc, LanguagePass lp, ir.Scope parent, ir.Exp le
 
 void addStorage(ir.Type dest, ir.Type src)
 {
+	auto named = cast(ir.Named) dest;
+	panicAssert(dest, named is null);
 	if (dest is null || src is null) {
 		return;
 	}
