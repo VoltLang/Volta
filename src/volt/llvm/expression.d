@@ -1308,13 +1308,6 @@ void handleExpReference(State state, ir.ExpReference expRef, Value result)
 		auto fn = cast(ir.Function)expRef.decl;
 		result.isPointer = fn.loadDynamic;
 		result.value = state.getFunctionValue(fn, result.type);
-
-		auto ft = cast(FunctionType)result.type;
-		volt.ir.util.addStorage(ft.ct, fn.type);
-		foreach (i, p; fn.type.params) {
-			volt.ir.util.addStorage(ft.ct.params[i], fn.type.params[i]);
-		}
-
 		break;
 	case Variable:
 		auto var = cast(ir.Variable)expRef.decl;
