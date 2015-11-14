@@ -29,32 +29,32 @@ bool willConvert(Context ctx, ir.Type type, ir.Exp exp)
 /**
  * Returns true if argument converts into parameter.
  */
-bool willConvert(ir.Type argument, ir.Type parameter)
+bool willConvert(ir.Type arg, ir.Type param)
 {
-	bool oldArgConst = argument.isConst;
-	bool oldArgImmutable = argument.isImmutable;
-	bool oldParamConst = parameter.isConst;
-	bool oldParamImmutable = parameter.isImmutable;
-	if (!mutableIndirection(argument)) {
-		argument.isConst = false;
-		argument.isImmutable = false;
+	bool oldArgConst = arg.isConst;
+	bool oldArgImmutable = arg.isImmutable;
+	bool oldParamConst = param.isConst;
+	bool oldParamImmutable = param.isImmutable;
+	if (!mutableIndirection(arg)) {
+		arg.isConst = false;
+		arg.isImmutable = false;
 	}
-	if (!mutableIndirection(parameter)) {
-		parameter.isConst = false;
-		parameter.isImmutable = false;
+	if (!mutableIndirection(param)) {
+		param.isConst = false;
+		param.isImmutable = false;
 	}
 	scope (exit) {
-		argument.isConst = oldArgConst;
-		argument.isImmutable = oldArgImmutable;
-		parameter.isConst = oldParamConst;
-		parameter.isImmutable = oldParamImmutable;
+		arg.isConst = oldArgConst;
+		arg.isImmutable = oldArgImmutable;
+		param.isConst = oldParamConst;
+		param.isImmutable = oldParamImmutable;
 	}
-	if (typesEqual(argument, parameter)) {
+	if (typesEqual(arg, param)) {
 		return true;
 	}
 
-	argument = realType(argument);
-	parameter = realType(parameter);
+	auto argument = realType(arg);
+	auto parameter = realType(param);
 
 	switch (argument.nodeType) with (ir.NodeType) {
 	case PrimitiveType:
