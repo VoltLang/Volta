@@ -451,6 +451,7 @@ void extypeAssignHandleAssign(Context ctx, ref ir.Type toType, ref ir.Exp exp,
 	auto lt = accumulateStorage(toType);
 	auto rt = accumulateStorage(rtype);
 	if (lt.isScope && ctx.isVarAssign) {
+		replaceAutoIfNeeded(toType);  // Get rid of scope now.
 		exp = buildCastSmart(exp.location, toType, exp);
 	} else if (rt.isConst && !effectivelyConst(lt) && mutableIndirection(originalTo) && !copying) {
 		throw makeBadImplicitCast(exp, originalRtype, originalTo);
