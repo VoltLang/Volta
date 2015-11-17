@@ -1216,12 +1216,12 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
  * directly but instead this function is called after they have been
  * rewritten and the ExpReference has been resolved to a single Function.
  */
-bool replaceExpReferenceIfNeeded(Context ctx, ir.Type referredType,
+void replaceExpReferenceIfNeeded(Context ctx, ir.Type referredType,
                                  ref ir.Exp exp, ir.ExpReference eRef)
 {
 	// For vtable and property.
 	if (eRef.rawReference) {
-		return false;
+		return;
 	}
 
 	// Early out on static vars.
@@ -1232,7 +1232,7 @@ bool replaceExpReferenceIfNeeded(Context ctx, ir.Type referredType,
 	case Function:
 		auto asFn = cast(ir.Function)decl;
 		if (isFunctionStatic(asFn)) {
-			return false;
+			return;
 		}
 		if (asFn.kind == ir.Function.Kind.Member) {
 			auto ffn = getParentFunction(ctx.current);
@@ -1249,14 +1249,14 @@ bool replaceExpReferenceIfNeeded(Context ctx, ir.Type referredType,
 			nestedLookup = buildAccess(eRef.location, access, eRef.idents[$-1]);
 		}
 		if (isVariableStatic(asVar)) {
-			return false;
+			return;
 		}
 		break;
 	case FunctionParam:
-		return false;
+		return;
 	case EnumDeclaration:
 	case FunctionSet:
-		return false;
+		return;
 	case Invalid:
 		throw panic(decl, "invalid declKind");
 	}
@@ -1325,7 +1325,7 @@ bool replaceExpReferenceIfNeeded(Context ctx, ir.Type referredType,
 		}
 	}
 
-	return true;
+	return;
 }
 
 /**
