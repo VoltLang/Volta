@@ -138,6 +138,10 @@ extern(C) void[] vrt_aa_get_pa(void* rbtv, ulong key, void[] _default)
 
 private TreeNode* vrt_aa_lookup_node_primitive(void* rbtv, ulong key)
 {
+	if (rbtv is null) {
+		return null;
+	}
+
 	RedBlackTree* rbt = cast(RedBlackTree*)rbtv;
 	TreeNode* node = rbt.root;
 
@@ -156,6 +160,10 @@ private TreeNode* vrt_aa_lookup_node_primitive(void* rbtv, ulong key)
 
 private TreeNode* vrt_aa_lookup_node_array(void* rbtv, void[] key)
 {
+	if (rbtv is null) {
+		return null;
+	}
+
 	RedBlackTree* rbt = cast(RedBlackTree*)rbtv;
 	TreeNode* node = rbt.root;
 
