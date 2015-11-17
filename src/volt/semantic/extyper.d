@@ -671,16 +671,22 @@ void extypeIdentifierExpNoRevisit(Context ctx, ref ir.Exp e, ir.IdentifierExp i,
 			return;
 		}
 
+		// Nested function checking.
 		foreach (fn; store.functions) {
-			if (fn.nestedHiddenParameter !is null &&
-			    store.functions.length > 1) {
-				throw makeCannotOverloadNested(fn, fn);
-			} else if (fn.nestedHiddenParameter !is null) {
-				_ref.decl = store.functions[0];
-				e = _ref;
-				return;
+			if (fn.nestedHiddenParameter is null) {
+				continue;
 			}
+
+			if (store.functions.length > 1) {
+				throw makeCannotOverloadNested(fn, fn);
+			}
+
+			_ref.decl = store.functions[0];
+			e = _ref;
+			return;
 		}
+
+		// Member or Regular function.
 		_ref.decl = buildSet(i.location, store.functions);
 		e = _ref;
 		return;
