@@ -1166,10 +1166,10 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, LanguagePass lp,
 
 		// i < array.length / i + 1 >= 0
 		auto tref = buildExpReference(indexVar.location, indexVar, indexVar.name);
-		auto rtref = buildAdd(l, tref, buildConstantSizeT(l, lp, 1));
+		auto rtref = buildDecrement(l, tref);
 		auto length = buildAccess(l, fes.aggregate, "length");
 		auto zero = buildConstantSizeT(l, lp, 0);
-		fs.test = buildBinOp(l, fes.reverse ? ir.BinOp.Op.NotEqual : ir.BinOp.Op.Less,
+		fs.test = buildBinOp(l, fes.reverse ? ir.BinOp.Op.Greater : ir.BinOp.Op.Less,
 							 fes.reverse ? rtref : tref,
 							 fes.reverse ? zero : length);
 
@@ -1187,8 +1187,6 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, LanguagePass lp,
 			} else {
 				elementVar.assign = buildCall(l, dfn, [aggref(),
 				                              buildExpReference(indexVar.location, indexVar, indexVar.name)]);
-				auto lvar = buildExpReference(indexVar.location, indexVar, indexVar.name);
-				fs.test = buildBinOp(l, ir.BinOp.Op.Greater, buildDecrement(lvar.location, lvar), buildConstantSizeT(l, lp, 0));
 			}
 		} else {
 			elementVar.assign = buildIndex(incRef.location, aggref(), accessRef);
