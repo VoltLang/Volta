@@ -4,6 +4,7 @@
 module volt.visitor.jsonprinter;
 
 import watt.io.streams : OutputFileStream;
+import watt.text.utf : encode;
 
 import ir = volt.ir.ir;
 
@@ -128,7 +129,7 @@ private:
 	void wq(string s)
 	{
 		char[] outString;
-		foreach (c; s) {
+		foreach (dchar c; s) {
 			switch (c) {
 			case '"': outString ~= `\"`; break;
 			case '\n': outString ~= `\n`; break;
@@ -137,7 +138,7 @@ private:
 			case '\f': outString ~= `\f`; break;
 			case '\b': outString ~= `\b`; break;
 			case '\\': outString ~= `\\` ; break;
-			default: outString ~= c; break;
+			default: encode(outString, c); break;
 			}
 		}
 		mFile.writef(`"%s"`, outString);

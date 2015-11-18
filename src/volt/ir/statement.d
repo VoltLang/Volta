@@ -199,6 +199,9 @@ public:
 	BlockStatement block;
 	Named opApplyType;
 
+	/// If this is non null, the lowerer will decode strings with this.
+	Function decodeFunction;
+
 public:
 	this() { super(NodeType.ForeachStatement); }
 }

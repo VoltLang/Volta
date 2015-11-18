@@ -2790,10 +2790,15 @@ ir.Node transformRuntimeAssert(Context ctx, ir.AssertStatement as)
  */
 void extypeForeach(Context ctx, ir.ForeachStatement fes)
 {
-	void fillBlankVariable(size_t i, ir.Type t)
+	bool isBlankVariable(size_t i)
 	{
 		auto atype = cast(ir.AutoType) fes.itervars[i].type;
-		if (atype is null || atype.explicitType !is null) {
+		return atype !is null && atype.explicitType is null;
+	}
+
+	void fillBlankVariable(size_t i, ir.Type t)
+	{
+		if (!isBlankVariable(i)) {
 			return;
 		}
 		fes.itervars[i].type = copyTypeSmart(fes.itervars[i].location, t);
@@ -2843,6 +2848,40 @@ void extypeForeach(Context ctx, ir.ForeachStatement fes)
 	acceptExp(fes.aggregate, ctx.extyper);
 
 	auto aggType = realType(getExpType(ctx.lp, fes.aggregate, ctx.current), true, true);
+
+	if (!isString(aggType)) foreach (i, ivar; fes.itervars) {
+		if (!isBlankVariable(i)) {
+			throw makeDoNotSpecifyForeachType(fes.itervars[i].location, fes.itervars[i].name);
+		}
+	} else  {
+		if (fes.itervars.length != 1 && fes.itervars.length != 2) {
+			throw makeExpected(fes.location, "one or two iteration variables");
+		}
+		size_t charIndex = fes.itervars.length == 2 ? 1 : 0;
+		foreach (i, ivar; fes.itervars) {// isString(aggType)
+			if (i == charIndex && !isChar(fes.itervars[i].type)) {
+				throw makeExpected(fes.itervars[i].location, "'char', 'wchar', or 'dchar'");
+			} else if (i != charIndex && !isBlankVariable(i)) {
+				throw makeDoNotSpecifyForeachType(fes.itervars[i].location, fes.itervars[i].name);
+			}
+		}
+		auto asArray = cast(ir.ArrayType)realType(aggType);
+		panicAssert(fes, asArray !is null);
+		auto fromPtype = cast(ir.PrimitiveType)realType(asArray.base);
+		auto toPtype = cast(ir.PrimitiveType)realType(fes.itervars[charIndex].type);
+		panicAssert(fes, fromPtype !is null && toPtype !is null);
+		if (!typesEqual(fromPtype, toPtype, IgnoreStorage)) {
+			if (toPtype.type != ir.PrimitiveType.Kind.Dchar ||
+			    fromPtype.type != ir.PrimitiveType.Kind.Char) {
+				throw panic(fes.location, "only char to dchar foreach decoding is currently supported.");
+			}
+			if (!fes.reverse) {
+				fes.decodeFunction = ctx.lp.utfDecode_u8_d;
+			} else {
+				fes.decodeFunction = ctx.lp.utfReverseDecode_u8_d;
+			}
+		}
+	}
 
 	ir.Type key, value;
 	switch (aggType.nodeType) {

@@ -28,7 +28,7 @@ immutable(void)[] unescapeString(Location location, const char[] s)
 	bool escaping, hexing;
 	size_t unicoding;
 	char[] hexchars;
-	foreach (c; s) {
+	foreach (dchar c; s) {
 		// \uXXXX
 		if (unicoding) {
 			if (!isHex(c)) {
@@ -52,7 +52,7 @@ immutable(void)[] unescapeString(Location location, const char[] s)
 					throw makeExpected(location, "unicode codepoint specification");
 				}
 			}
-			hexchars ~= c;
+			encode(hexchars, c);
 			if (hexchars.length == unicoding) {
 				uint i;
 				try {
@@ -78,7 +78,7 @@ immutable(void)[] unescapeString(Location location, const char[] s)
 			if (!isHex(c)) {
 				throw makeExpected(location, "hex digit");
 			}
-			hexchars ~= c;
+			encode(hexchars, c);
 			if (hexchars.length == 2) {
 				try {
 					output ~= cast(char)toInt(hexchars, 16);
@@ -133,7 +133,7 @@ immutable(void)[] unescapeString(Location location, const char[] s)
 			escaping = true;
 			continue;
 		} else {
-			output ~= c;
+			encode(output, c);
 		}
 	}
 
@@ -187,7 +187,7 @@ string cleanComment(string comment, out bool isBackwardsComment)
 
 	char[] outbuf;
 	bool ignoreWhitespace = true;
-	foreach (i, c; comment) {
+	foreach (i, dchar c; comment) {
 		if (i == comment.length - 1 && commentChar != '/' && c == '/') {
 			continue;
 		}
@@ -212,7 +212,7 @@ string cleanComment(string comment, out bool isBackwardsComment)
 			break;
 		default:
 			ignoreWhitespace = false;
-			outbuf ~= c;
+			encode(outbuf, c);
 			break;
 		}
 	}

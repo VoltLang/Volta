@@ -26,6 +26,11 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeDoNotSpecifyForeachType(Location loc, string varname, string file = __FILE__, const int line  = __LINE__)
+{
+	return new CompilerError(loc, format("foreach variable '%s' has explicit type attached.", varname), file, line);
+}
+
 CompilerException makeNoFieldOrPropOrUFCS(ir.Postfix postfix, string file = __FILE__, const int line=__LINE__)
 {
 	assert(postfix.identifier !is null);

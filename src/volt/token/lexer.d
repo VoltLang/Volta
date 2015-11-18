@@ -86,7 +86,7 @@ bool match(TokenWriter tw, dchar c)
  */
 bool match(TokenWriter tw, string s)
 {
-	foreach (c; s) {
+	foreach (dchar c; s) {
 		if (!match(tw, c)) {
 			return false;
 		}
@@ -980,7 +980,7 @@ size_t consume(Source src, const(dchar)[] characters...)
 {
 	size_t consumed;
 	static bool isIn(const(dchar)[] chars, dchar arg) {
-		foreach (c; chars) {
+		foreach (dchar c; chars) {
 			if (c == arg)
 				return true;
 		}
@@ -1002,7 +1002,7 @@ string removeUnderscores(string s)
 {
 	auto output = new char[](s.length);
 	size_t i;
-	foreach (c; s) {
+	foreach (char c; s) {
 		if (c == '_') {
 			continue;
 		}

@@ -1134,7 +1134,7 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, LanguagePass lp,
 		if (!fes.reverse) {
 			indexAssign = buildConstantSizeT(l, lp, 0);
 		} else {
-			indexAssign = buildSub(l, buildAccess(l, aggref(), "length"), buildConstantSizeT(l, lp, 1));
+			indexAssign = buildAccess(l, aggref(), "length");
 		}
 		if (fs.initVars.length == 2) {
 			indexVar = fs.initVars[0];
@@ -1149,9 +1149,19 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, LanguagePass lp,
 			                         ir.Variable.Storage.Function, "i", indexAssign);
 			elementVar = fs.initVars[0];
 		}
+
 		// Move element var to statements so it can be const/immutable.
 		fs.initVars = [indexVar];
 		fs.block.statements = [cast(ir.Node)elementVar] ~ fs.block.statements;
+
+		ir.Variable nextIndexVar;  // This is what we pass when decoding strings.
+		if (fes.decodeFunction !is null && !fes.reverse) {
+			auto ivar = buildExpReference(indexVar.location, indexVar, indexVar.name);
+			nextIndexVar = buildVariable(l, buildSizeT(l, lp),
+			                             ir.Variable.Storage.Function, "__nexti", ivar);
+			fs.initVars ~= nextIndexVar;
+		}
+
 
 
 		// i < array.length / i + 1 >= 0
@@ -1167,10 +1177,26 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, LanguagePass lp,
 		auto incRef = buildExpReference(indexVar.location, indexVar, indexVar.name);
 		auto accessRef = buildExpReference(indexVar.location, indexVar, indexVar.name);
 		auto eRef = buildExpReference(elementVar.location, elementVar, elementVar.name);
-		elementVar.assign = buildIndex(incRef.location, aggref(), accessRef);
+		if (fes.decodeFunction !is null) {  // foreach (i, dchar c; str)
+			auto dfn = buildExpReference(l, fes.decodeFunction, fes.decodeFunction.name);
+			if (!fes.reverse) {
+				elementVar.assign = buildCall(l, dfn, [aggref(), buildExpReference(l, nextIndexVar, nextIndexVar.name)]);
+				auto lvar = buildExpReference(indexVar.location, indexVar, indexVar.name);
+				auto rvar = buildExpReference(nextIndexVar.location, nextIndexVar, nextIndexVar.name);
+				fs.increments ~= buildAssign(l, lvar, rvar);
+			} else {
+				elementVar.assign = buildCall(l, dfn, [aggref(),
+				                              buildExpReference(indexVar.location, indexVar, indexVar.name)]);
+				auto lvar = buildExpReference(indexVar.location, indexVar, indexVar.name);
+				fs.test = buildBinOp(l, ir.BinOp.Op.Greater, buildDecrement(lvar.location, lvar), buildConstantSizeT(l, lp, 0));
+			}
+		} else {
+			elementVar.assign = buildIndex(incRef.location, aggref(), accessRef);
+			fs.increments ~= fes.reverse ? buildDecrement(incRef.location, incRef) :
+			                               buildIncrement(incRef.location, incRef);
+		}
 
-		fs.increments ~= fes.reverse ? buildDecrement(incRef.location, incRef) :
-									   buildIncrement(incRef.location, incRef);
+
 
 		foreach (i, ivar; fes.itervars) {
 			if (!fes.refvars[i]) {

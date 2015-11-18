@@ -348,32 +348,26 @@ bool isBool(ir.Type t)
 	return p.type == ir.PrimitiveType.Kind.Bool;
 }
 
-/// TODO: non char strings, non immutable strings.
+/// Is this an array of characters?
 bool isString(ir.Type t)
 {
-	auto stor = cast(ir.StorageType) t;
-	if (stor !is null) {
-		return isString(stor.base);
-	}
-	auto arr = cast(ir.ArrayType) t;
+	auto arr = cast(ir.ArrayType) realType(t);
 	if (arr is null) {
 		return false;
 	}
-	auto old = arr.base;
-	do {
-		stor = cast(ir.StorageType) old;
-		if (stor !is null) {
-			old = stor.base;
-		}
-	} while (stor !is null);
-	auto prim = cast(ir.PrimitiveType) old;
+	return isChar(arr.base);
+}
+
+/// Is this type a character type?
+bool isChar(ir.Type t)
+{
+	auto prim = cast(ir.PrimitiveType) realType(t);
 	if (prim is null) {
 		return false;
 	}
-	if (prim.type == ir.PrimitiveType.Kind.Char) {
-		return true;
-	}
-	return false;
+	return prim.type == ir.PrimitiveType.Kind.Char ||
+	       prim.type == ir.PrimitiveType.Kind.Wchar ||
+	       prim.type == ir.PrimitiveType.Kind.Dchar;
 }
 
 bool isArray(ir.Type t)

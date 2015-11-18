@@ -158,6 +158,9 @@ public:
 	ir.Function aaDeletePrimitive;
 	ir.Function aaDeleteArray;
 	ir.Function aaDup;
+
+	ir.Function utfDecode_u8_d;
+	ir.Function utfReverseDecode_u8_d;
 	/* @} */
 
 	/**

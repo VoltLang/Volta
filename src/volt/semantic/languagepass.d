@@ -218,6 +218,9 @@ public:
 		aaDeleteArray = getFunction("vrt_aa_delete_array");
 		aaDup = getFunction("vrt_aa_dup");
 
+		utfDecode_u8_d = getFunction("vrt_decode_u8_d");
+		utfReverseDecode_u8_d = getFunction("vrt_reverse_decode_u8_d");
+
 		TYPE_STRUCT = getEnum("TYPE_STRUCT");
 		TYPE_CLASS = getEnum("TYPE_CLASS");
 		TYPE_INTERFACE = getEnum("TYPE_INTERFACE");
