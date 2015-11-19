@@ -182,16 +182,16 @@ public:
 	 */
 	dchar next()
 	{
-		mChar = decodeChar(mIndex);
+		if (mChar == '\n') {
+			location.line++;
+			location.column = 0;
+		}
+
+		mChar = decodeChar(mNextIndex);
 		if (mChar == dchar.init) {
 			eof = true;
 			mIndex = source.length + 1;
 			return mChar;
-		}
-
-		if (mChar == '\n') {
-			location.line++;
-			location.column = 0;
 		}
 
 		location.column++;
