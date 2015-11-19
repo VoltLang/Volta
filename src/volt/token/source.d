@@ -35,7 +35,9 @@ private:
 	/// The current unicode character.
 	dchar mChar;
 	/// Pointer into the string for the next character.
-	size_t mIndex;
+	size_t mNextIndex;
+	/// The index for mChar
+	size_t mLastIndex;
 
 public:
 	/**
@@ -69,7 +71,8 @@ public:
 		this.location = src.location;
 		this.eof = src.eof;
 		this.mChar = src.mChar;
-		this.mIndex = src.mIndex;
+		this.mNextIndex = src.mNextIndex;
+		this.mLastIndex = src.mLastIndex;
 	}
 
 	/**
@@ -152,13 +155,13 @@ public:
 
 	dchar decodeChar()
 	{
-		size_t tmpIndex = mIndex;
+		size_t tmpIndex = mNextIndex;
 		return decodeChar(tmpIndex);
 	}
 
 	dchar decodeChar(ref size_t index)
 	{
-		if (mIndex >= source.length) {
+		if (mNextIndex >= source.length) {
 			return dchar.init;
 		}
 
@@ -187,10 +190,12 @@ public:
 			location.column = 0;
 		}
 
+		mLastIndex = mNextIndex;
 		mChar = decodeChar(mNextIndex);
 		if (mChar == dchar.init) {
 			eof = true;
-			mIndex = source.length + 1;
+			mNextIndex = source.length;
+			mLastIndex = mNextIndex;
 			return mChar;
 		}
 
@@ -248,7 +253,7 @@ public:
 	 */
 	Mark save()
 	{
-		return mIndex - 1;
+		return mLastIndex;
 	}
 
 	/**
@@ -260,7 +265,7 @@ public:
 	 */
 	string sliceFrom(Mark mark)
 	{
-		return source[mark .. mIndex - 1];
+		return source[mark .. mLastIndex];
 	}
 
 	/**
@@ -279,7 +284,8 @@ public:
 				"attempted to sync different sources");
 		}
 		this.location = src.location;
-		this.mIndex = src.mIndex;
+		this.mNextIndex = src.mNextIndex;
+		this.mLastIndex = src.mLastIndex;
 		this.mChar = src.mChar;
 		this.eof = src.eof;
 	}
