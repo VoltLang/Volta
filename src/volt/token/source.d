@@ -230,19 +230,21 @@ public:
 	 */
 	dchar lookahead(size_t n, out bool lookaheadEOF)
 	{
-		if (n == 0) return mChar;
+		if (n == 0) {
+			lookaheadEOF = eof;
+			return mChar;
+		}
 
+		dchar c;
+		auto index = mNextIndex;
 		for (size_t i; i < n; i++) {
-			dchar c = decodeChar();
+			c = decodeChar(index);
 			if (c == dchar.init) {
 				lookaheadEOF = true;
 				return dchar.init;
 			}
-			if (i == n - 1) {
-				return c;
-			}
 		}
-		assert(false);
+		return c;
 	}
 
 	/**
