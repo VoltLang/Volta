@@ -27,34 +27,20 @@ public:
 	}
 
 	/**
-	 * Difference between two locations
+	 * Difference between two locations.
 	 * end - begin == begin ... end
+	 * @see difference
 	 */
 	Location opSub(ref Location begin)
 	{
-		if (begin.filename != filename ||
-		    begin.line > line) {
-			return begin;
-		}
-
-		Location loc;
-		loc.filename = filename;
-		loc.line = begin.line;
-		loc.column = begin.column;
-
-		if (line != begin.line) {
-			loc.length = cast(size_t)-1; // End of line
-		} else {
-			assert(begin.column <= column);
-			loc.length = column + length - begin.column;
-		}
-
-		return loc;
+		return difference(/*ref*/ this,/*ref*/ begin,/*ref*/ begin);
 	}
 
 	/**
-	 * Same as opSub, but on mismatch of filename or
-	 * if begin is after end _default is returned.
+	 * Difference between two locations.
+	 * end - begin == begin ... end
+	 * On mismatch of filename or if begin is after
+	 * end _default is returned.
 	 */
 	static Location difference(ref Location end, ref Location begin,
 	                           ref Location _default)
@@ -62,9 +48,21 @@ public:
 		if (begin.filename != end.filename ||
 		    begin.line > end.line) {
 			return _default;
-		} else {
-			return end.opSub(/*ref*/ begin);
 		}
+
+		Location loc;
+		loc.filename = begin.filename;
+		loc.line = begin.line;
+		loc.column = begin.column;
+
+		if (end.line != begin.line) {
+			loc.length = size_t.max; // End of line.
+		} else {
+			assert(begin.column <= end.column);
+			loc.length = end.column + end.length - begin.column;
+		}
+
+		return loc;
 	}
 
 	void spanTo(ref Location end)
