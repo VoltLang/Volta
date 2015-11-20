@@ -1,7 +1,7 @@
-// Copyright © 2010, Bernard Helyer.  All rights reserved.
+// Copyright © 2012-2015, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2010-2015, Bernard Helyer.  All rights reserved.
 // Copyright © 2011, Jakob Ovrum.  All rights reserved.
-// Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
-// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+// See copyright notice in src/diode/license.volt (BOOST ver. 1.0).
 module volt.token.location;
 
 import watt.text.format : format;
@@ -32,7 +32,8 @@ public:
 	 */
 	Location opSub(ref Location begin)
 	{
-		if (begin.filename != filename || begin.line > line) {
+		if (begin.filename != filename ||
+		    begin.line > line) {
 			return begin;
 		}
 
@@ -51,10 +52,15 @@ public:
 		return loc;
 	}
 
-	/// Same as opSub, but on mismatch of filename or if begin is after end _default is returned.
-	static Location difference(ref Location end, ref Location begin, ref Location _default)
+	/**
+	 * Same as opSub, but on mismatch of filename or
+	 * if begin is after end _default is returned.
+	 */
+	static Location difference(ref Location end, ref Location begin,
+	                           ref Location _default)
 	{
-		if (begin.filename != end.filename || begin.line > end.line) {
+		if (begin.filename != end.filename ||
+		    begin.line > end.line) {
 			return _default;
 		} else {
 			return end.opSub(/*ref*/ begin);
