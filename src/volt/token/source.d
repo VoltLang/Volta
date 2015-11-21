@@ -161,7 +161,7 @@ public:
 
 	dchar decodeChar(ref size_t index)
 	{
-		if (mNextIndex >= source.length) {
+		if (index >= source.length) {
 			return dchar.init;
 		}
 
