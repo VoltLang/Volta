@@ -687,48 +687,48 @@ public:
 		final switch (platform) with (Platform) {
 		case MinGW:
 			platformStr = "mingw";
-			ver.setVersionIdentifier("Windows");
-			ver.setVersionIdentifier("MinGW");
+			ver.overwriteVersionIdentifier("Windows");
+			ver.overwriteVersionIdentifier("MinGW");
 			break;
 		case MSVC:
 			platformStr = "msvc";
-			ver.setVersionIdentifier("Windows");
-			ver.setVersionIdentifier("MSVC");
+			ver.overwriteVersionIdentifier("Windows");
+			ver.overwriteVersionIdentifier("MSVC");
 			break;
 		case Linux:
 			platformStr = "linux";
-			ver.setVersionIdentifier("Linux");
-			ver.setVersionIdentifier("Posix");
+			ver.overwriteVersionIdentifier("Linux");
+			ver.overwriteVersionIdentifier("Posix");
 			break;
 		case OSX:
 			platformStr = "osx";
-			ver.setVersionIdentifier("OSX");
-			ver.setVersionIdentifier("Posix");
+			ver.overwriteVersionIdentifier("OSX");
+			ver.overwriteVersionIdentifier("Posix");
 			break;
 		case EMSCRIPTEN:
 			platformStr = "emscripten";
-			ver.setVersionIdentifier("Emscripten");
+			ver.overwriteVersionIdentifier("Emscripten");
 			break;
 		}
 
 		final switch (arch) with (Arch) {
 		case X86:
 			archStr = "x86";
-			ver.setVersionIdentifier("X86");
-			ver.setVersionIdentifier("LittleEndian");
-			ver.setVersionIdentifier("V_P32");
+			ver.overwriteVersionIdentifier("X86");
+			ver.overwriteVersionIdentifier("LittleEndian");
+			ver.overwriteVersionIdentifier("V_P32");
 			break;
 		case X86_64:
 			archStr = "x86_64";
-			ver.setVersionIdentifier("X86_64");
-			ver.setVersionIdentifier("LittleEndian");
-			ver.setVersionIdentifier("V_P64");
+			ver.overwriteVersionIdentifier("X86_64");
+			ver.overwriteVersionIdentifier("LittleEndian");
+			ver.overwriteVersionIdentifier("V_P64");
 			break;
 		case LE32:
 			archStr = "le32";
-			ver.setVersionIdentifier("LE32");
-			ver.setVersionIdentifier("LittleEndian");
-			ver.setVersionIdentifier("V_P32");
+			ver.overwriteVersionIdentifier("LE32");
+			ver.overwriteVersionIdentifier("LittleEndian");
+			ver.overwriteVersionIdentifier("V_P32");
 		}
 	}
 
@@ -765,6 +765,36 @@ final class VersionSet
 public:
 	bool debugEnabled;
 
+	/// These are always set
+	enum string[] defaultVersions = [
+		"all",
+		"Volt",
+	];
+
+	enum string[] reservedVersions = [
+		// Generic
+		"all",
+		"none",
+		"Volt",
+		// Arch
+		"X86",
+		"X86_64",
+		"LE32",
+		// Platforms
+		"Posix",
+		"Windows",
+		// Targets
+		"OSX",
+		"MSVC",
+		"Linux",
+		"MinGW",
+		"Solaris",
+		"FreeBSD",
+		"Emscripten",
+		// Misc
+		"V_P32",
+		"V_P64",
+	];
 
 private:
 	/// If the ident exists and is true, it's set, if false it's reserved.
@@ -776,7 +806,13 @@ private:
 public:
 	this()
 	{
-		setDefaultVersionIdentifiers();
+		foreach (r; reservedVersions) {
+			reserveVersionIdentifier(r);
+		}
+
+		foreach (d; defaultVersions) {
+			overwriteVersionIdentifier(d);
+		}
 	}
 
 	/// Throws: Exception if ident is reserved.
@@ -787,6 +823,12 @@ public:
 				throw new Exception("cannot set reserved identifier.");
 			}
 		}
+		mVersionIdentifiers[ident] = true;
+	}
+
+	/// Doesn't throw on ident reserve.
+	final void overwriteVersionIdentifier(string ident)
+	{
 		mVersionIdentifiers[ident] = true;
 	}
 
@@ -832,14 +874,6 @@ public:
 	 */
 
 private:
-	final void setDefaultVersionIdentifiers()
-	{
-		setVersionIdentifier("Volt");
-		setVersionIdentifier("all");
-
-		reserveVersionIdentifier("none");
-	}
-
 	/// Marks an identifier as unable to be set. Doesn't set the identifier.
 	final void reserveVersionIdentifier(string ident)
 	{
