@@ -2287,6 +2287,12 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 		auto rprim = cast(ir.PrimitiveType) rtype;
 		assert(lprim !is null && rprim !is null);
 		extypeBinOp(ctx, binop, lprim, rprim);
+		return;
+	}
+
+	if ((larray is null && rarray !is null) || (larray !is null && rarray is null) &&
+	    (binop.op != ir.BinOp.Op.CatAssign && binop.op != ir.BinOp.Op.Cat) ) {
+		throw makeError(binop.location, "non cat (~) operation involving array and non array.");
 	}
 }
 
