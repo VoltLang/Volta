@@ -100,6 +100,13 @@ bool willConvert(ir.Type arg, ir.Type param)
 		ir.Exp dummyExp;
 		return willConvertArray(parameter, argument, dummyInt, dummyExp);
 	case PointerType:
+		auto aptr = cast(ir.PointerType) argument;
+		auto astr = cast(ir.Struct) aptr.base;
+		if (astr !is null) {
+			if (typesEqual(parameter, cast(ir.Type)astr.loweredNode)) {
+				return true;
+			}
+		}
 		auto ptr = cast(ir.PointerType) parameter;
 		if (ptr is null || !isVoid(ptr.base)) {
 			return false;
