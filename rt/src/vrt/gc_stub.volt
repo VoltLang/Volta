@@ -8,16 +8,16 @@ import vrt.gc;
 
 extern(C):
 
-void* malloc(size_t);
+void* calloc(size_t num, size_t size);
 
 void* GC_malloc(size_t size_in_bytes)
 {
-	return malloc(size_in_bytes);
+	return calloc(1, size_in_bytes);
 }
 
 void* GC_malloc_atomic(size_t size_in_bytes)
 {
-	return malloc(size_in_bytes);
+	return calloc(1, size_in_bytes);
 }
 
 global int GC_java_finalization;
