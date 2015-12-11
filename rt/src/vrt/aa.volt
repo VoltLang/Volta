@@ -602,6 +602,9 @@ extern(C) bool vrt_aa_delete_array(void* rbtv, void[] key)
 // aa.keys
 extern (C) void[] vrt_aa_get_keys(void* rbtv)
 {
+	if (rbtv is null) {
+		return [];
+	}
 	auto rbt = cast(RedBlackTree*) rbtv;
 	auto arr = allocDg(rbt.key, rbt.length)[0 .. rbt.length * rbt.key.size];
 	size_t currentIndex;
@@ -612,6 +615,9 @@ extern (C) void[] vrt_aa_get_keys(void* rbtv)
 // aa.values
 extern (C) void[] vrt_aa_get_values(void* rbtv)
 {
+	if (rbtv is null) {
+		return [];
+	}
 	auto rbt = cast(RedBlackTree*) rbtv;
 	auto arr = allocDg(rbt.value, rbt.length)[0 .. rbt.length * rbt.value.size];
 	size_t currentIndex;
