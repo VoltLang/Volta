@@ -487,7 +487,9 @@ protected:
 
 	void attrPop(ir.Attribute attr)
 	{
-		assert(attrTop is attr);
+		if (attrTop !is attr) {
+			throw panic(attr, "invalid attribute stack layout");
+		}
 		mStack = mStack[0 .. $-1];
 	}
 
