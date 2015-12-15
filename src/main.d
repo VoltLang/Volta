@@ -3,7 +3,7 @@
 module main;
 
 version (Windows) {
-	import std.file : SpanMode, dirEntries;
+	import watt.io.file : searchDir;
 	import watt.path : baseName, dirName;
 }
 
@@ -359,10 +359,11 @@ bool handleArgs(string[] args, ref string[] files, VersionSet ver, Settings sett
 
 		version (Windows) {
 			auto barg = baseName(arg);
+			void addFile(string s) {
+				files ~= s;
+			}
 			if (barg.length > 2 && barg[0 .. 2] == "*.") {
-				foreach (file; dirEntries(dirName(arg), barg, SpanMode.shallow)) {
-					files ~= file;
-				}
+				searchDir(dirName(arg), barg, &addFile);
 				continue;
 			}
 		}
