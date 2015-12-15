@@ -363,7 +363,8 @@ bool handleArgs(string[] args, ref string[] files, VersionSet ver, Settings sett
 				files ~= s;
 			}
 			if (barg.length > 2 && barg[0 .. 2] == "*.") {
-				searchDir(dirName(arg), barg, &addFile);
+				version (Volt) searchDir(dirName(arg), barg, addFile);
+				else searchDir(dirName(arg), barg, &addFile);
 				continue;
 			}
 		}
