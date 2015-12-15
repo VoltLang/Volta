@@ -192,7 +192,7 @@ voltaic-viviv:
 	@./viv --internal-perf --internal-d -o viviv $(VIV_SRC)
 
 voltaic-viv-sanity:
-	@echo "  VIV    <source>"
+	@echo "  VIV    $(RUN_TARGET)"
 	@./viv $(RUN_FLAGS) -o $(RUN_TARGET) $(RUN_SRC)
 
 voltaic-viv-syntax:
