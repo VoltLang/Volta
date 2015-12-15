@@ -1190,8 +1190,9 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, LanguagePass lp,
 			}
 		} else {
 			elementVar.assign = buildIndex(incRef.location, aggref(), accessRef);
-			fs.increments ~= fes.reverse ? buildDecrement(incRef.location, incRef) :
-			                               buildIncrement(incRef.location, incRef);
+			if (!fes.reverse) {
+				fs.increments ~= buildIncrement(incRef.location, incRef);
+			}
 		}
 
 
