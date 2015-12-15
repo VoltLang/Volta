@@ -4,7 +4,7 @@ module main;
 
 version (Windows) {
 	import std.file : SpanMode, dirEntries;
-	import std.path : baseName, dirName;
+	import watt.path : baseName, dirName;
 }
 
 import watt.path : getExecDir, dirSeparator;
