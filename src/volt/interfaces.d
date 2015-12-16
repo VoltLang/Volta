@@ -577,6 +577,7 @@ public:
 	string archStr; ///< Derived from arch.
 
 	string linker; ///< The --linker argument
+	string[] xLinker; ///< Arguments to the linker, the -Xlinker argument.
 
 	string outputFile;
 	string[] includePaths; ///< The -I arguments.

@@ -160,6 +160,10 @@ bool handleArgs(string[] args, ref string[] files, VersionSet ver, Settings sett
 		settings.jsonOutput = path;
 	}
 
+	void xLinker(string s) {
+		settings.xLinker ~= s;
+	}
+
 	foreach (arg; args)  {
 		if (argHandler !is null) {
 			argHandler(arg);
@@ -341,6 +345,14 @@ bool handleArgs(string[] args, ref string[] files, VersionSet ver, Settings sett
 		case "--internal-diff":
 			settings.internalDiff = true;
 			continue;
+		case "-Xlinker":
+		case "--Xlinker":
+			version (Volt) {
+				argHandler = cast(typeof(argHandler))xLinker;
+			} else {
+				argHandler = &xLinker;
+			}
+			continue;
 		default:
 			if (arg.length > 2) {
 				switch (arg[0 .. 2]) {
@@ -457,6 +469,7 @@ bool printUsage()
 	writefln("\t--platform       Select platform: 'mingw', 'linux', 'osx', 'emscripten'");
 	writefln("");
 	writefln("\t--linker linker  Linking program to use for linking.");
+	writefln("\t-Xlinker arg     Add an argument when invoking the linker.");
 	writefln("\t--emit-bitcode   Emit LLVM bitcode (implies -c).");
 	writefln("\t-S,--no-backend  Stop compilation before the backend.");
 	writefln("\t--no-catch       For compiler debugging purposes.");

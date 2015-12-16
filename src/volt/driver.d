@@ -440,6 +440,9 @@ protected:
 			args ~= "-framework";
 			args ~= frameworkName;
 		}
+		foreach (xLink; settings.xLinker) {
+			args ~= xLink;
+		}
 
 		return spawnProcess(linker, args).wait();
 	}
@@ -461,6 +464,9 @@ protected:
 		}
 		foreach (libraryFile; mLibraryFiles) {
 			args ~= libraryFile;
+		}
+		foreach (xLink; settings.xLinker) {
+			args ~= xLink;
 		}
 
 		return spawnProcess(linker, args).wait();
