@@ -9,6 +9,8 @@ DMD=dmd
 VOLT=volt.exe
 VRT=rt/rt.bc
 DFLAGS=--build-only --compiler=$(DMD) -of$(VOLT) -gc -wi -debug LLVM.lib $(FLAGS)
+LLVM_DLL_DIR= # Insert path to LLVM DLLs for viv.
+LLVM_VIV_LDFLAGS=-Xlinker $(LLVM_DLL_DIR)\LLVMAnalysis.dll -Xlinker $(LLVM_DLL_DIR)\LLVMAsmParser.dll -Xlinker $(LLVM_DLL_DIR)\LLVMAsmPrinter.dll -Xlinker $(LLVM_DLL_DIR)\LLVMBitReader.dll -Xlinker $(LLVM_DLL_DIR)\LLVMBitWriter.dll -Xlinker $(LLVM_DLL_DIR)\LLVMCodeGen.dll -Xlinker $(LLVM_DLL_DIR)\LLVMCore.dll -Xlinker $(LLVM_DLL_DIR)\LLVMDebugInfo.dll -Xlinker $(LLVM_DLL_DIR)\LLVMExecutionEngine.dll -Xlinker $(LLVM_DLL_DIR)\LLVMInstCombine.dll -Xlinker $(LLVM_DLL_DIR)\LLVMInstrumentation.dll -Xlinker $(LLVM_DLL_DIR)\LLVMInterpreter.dll -Xlinker $(LLVM_DLL_DIR)\LLVMipa.dll -Xlinker $(LLVM_DLL_DIR)\LLVMipo.dll -Xlinker $(LLVM_DLL_DIR)\LLVMIRReader.dll -Xlinker $(LLVM_DLL_DIR)\LLVMJIT.dll -Xlinker $(LLVM_DLL_DIR)\LLVMLineEditor.dll -Xlinker $(LLVM_DLL_DIR)\LLVMLinker.dll -Xlinker $(LLVM_DLL_DIR)\LLVMLTO.dll -Xlinker $(LLVM_DLL_DIR)\LLVMMC.dll -Xlinker $(LLVM_DLL_DIR)\LLVMMCDisassembler.dll -Xlinker $(LLVM_DLL_DIR)\LLVMMCJIT.dll -Xlinker $(LLVM_DLL_DIR)\LLVMMCParser.dll -Xlinker $(LLVM_DLL_DIR)\LLVMObjCARCOpts.dll -Xlinker $(LLVM_DLL_DIR)\LLVMObject.dll -Xlinker $(LLVM_DLL_DIR)\LLVMOption.dll -Xlinker $(LLVM_DLL_DIR)\LLVMProfileData.dll -Xlinker $(LLVM_DLL_DIR)\LLVMRuntimeDyld.dll -Xlinker $(LLVM_DLL_DIR)\LLVMScalarOpts.dll -Xlinker $(LLVM_DLL_DIR)\LLVMSelectionDAG.dll -Xlinker $(LLVM_DLL_DIR)\LLVMSupport.dll -Xlinker $(LLVM_DLL_DIR)\LLVMTableGen.dll -Xlinker $(LLVM_DLL_DIR)\LLVMTarget.dll -Xlinker $(LLVM_DLL_DIR)\LLVMTransformUtils.dll -Xlinker $(LLVM_DLL_DIR)\LLVMVectorize.dll -Xlinker $(LLVM_DLL_DIR)\LLVMX86AsmParser.dll -Xlinker $(LLVM_DLL_DIR)\LLVMX86AsmPrinter.dll -Xlinker $(LLVM_DLL_DIR)\LLVMX86CodeGen.dll -Xlinker $(LLVM_DLL_DIR)\LLVMX86Desc.dll -Xlinker $(LLVM_DLL_DIR)\LLVMX86Disassembler.dll -Xlinker $(LLVM_DLL_DIR)\LLVMX86Info.dll -Xlinker $(LLVM_DLL_DIR)\LLVMX86Utils.dll
 
 # rules
 all:
@@ -17,7 +19,7 @@ all:
 	$(VOLT) --no-stdlib -c -I rt/src -o rt/rt.o rt/rt.bc
 
 viv:
-	$(VOLT) --internal-d -o viv.exe $(VIV_SRC) $(VFLAGS)
+	$(VOLT) --internal-d -o viv.exe $(VIV_SRC) $(VFLAGS) $(LLVM_VIV_LDFLAGS)
 	viv src/*.d src/lib/llvm/*.d src/lib/llvm/c/*.d src/volt/*.d src/volt/ir/*.d src/volt/llvm/*.d src/volt/parser/*.d src/volt/semantic/*.d src/volt/token/*.d src/volt/util/*.d src/volt/visitor/*.d
 
 .PHONY: all viv
