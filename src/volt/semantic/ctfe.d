@@ -124,7 +124,10 @@ ir.Type evaluateTypeof(LanguagePass lp, ir.Scope current, ir.Exp exp)
 	if (bop is null) {
 		throw makeNotAvailableInCTFE(exp, exp);
 	}
-	if (bop.op != ir.BinOp.Op.Add) {
+	if (bop.op != ir.BinOp.Op.Add &&
+	    bop.op != ir.BinOp.Op.Sub &&
+	    bop.op != ir.BinOp.Op.Mul &&
+	    bop.op != ir.BinOp.Op.Div) {
 		throw makeNotAvailableInCTFE(exp, exp);
 	}
 	auto lident = cast(ir.IdentifierExp)bop.left;
