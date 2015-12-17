@@ -65,9 +65,6 @@ ir.Constant evaluate(LanguagePass lp, ir.Scope current, ir.Exp exp)
 			return evaluate(lp, current, edecl.assign);
 		}
 		goto default;
-	case ir.NodeType.IsExp:
-		auto isExp = cast(ir.IsExp) exp;
-		return evaluateIsExp(lp, current, isExp);
 	default:
 		throw makeNotAvailableInCTFE(exp, exp);
 	}
@@ -92,91 +89,6 @@ bool needsEvaluation(ir.Exp exp)
 }
 
 private:
-
-ir.Constant evaluateIsExp(LanguagePass lp, ir.Scope current, ir.IsExp isExp)
-{
-	if (isExp.specialisation != ir.IsExp.Specialisation.Type ||
-	    isExp.compType != ir.IsExp.Comparison.Exact ||
-	    isExp.specType is null) {
-		throw makeNotAvailableInCTFE(isExp, isExp);
-	}
-	auto tof = cast(ir.TypeOf)isExp.type;
-	ir.Type left = isExp.type;
-	if (tof !is null) {
-		left = evaluateTypeof(lp, current, tof.exp);
-	}
-	return buildConstantBool(isExp.location, typesEqual(left, isExp.specType));
-}
-
-/**
- * Looks up the type of an expression in the context of a typeof() expression
- * nested in an is statement.
- */
-ir.Type evaluateTypeof(LanguagePass lp, ir.Scope current, ir.Exp exp)
-{
-	auto iexp = cast(ir.IdentifierExp)exp;
-	if (iexp !is null) {
-		auto var = getVariableFromIdentifier(lp, current, iexp);
-		return copyType(var.type);
-	}
-
-	auto bop = cast(ir.BinOp)exp;
-	if (bop is null) {
-		throw makeNotAvailableInCTFE(exp, exp);
-	}
-	if (bop.op != ir.BinOp.Op.Add &&
-	    bop.op != ir.BinOp.Op.Sub &&
-	    bop.op != ir.BinOp.Op.Mul &&
-	    bop.op != ir.BinOp.Op.Div) {
-		throw makeNotAvailableInCTFE(exp, exp);
-	}
-	auto lident = cast(ir.IdentifierExp)bop.left;
-	auto rident = cast(ir.IdentifierExp)bop.right;
-	if (lident is null || rident is null) {
-		throw makeNotAvailableInCTFE(exp, exp);
-	}
-	auto lvar = getVariableFromIdentifier(lp, current, lident);
-	auto rvar = getVariableFromIdentifier(lp, current, rident);
-
-	auto lprim = cast(ir.PrimitiveType)lvar.type;
-	auto rprim = cast(ir.PrimitiveType)rvar.type;
-	if (lprim is null || rprim is null) {
-		throw makeNotAvailableInCTFE(exp, exp);
-	}
-	auto lsz = size(lp, lprim);
-	auto rsz = size(lp, rprim);
-	ir.Type biggestType;
-	size_t biggestsz;
-	if (lsz > rsz) {
-		biggestType = lprim;
-		biggestsz = lsz;
-	} else {
-		biggestType = rprim;
-		biggestsz = rsz;
-	}
-	auto intsz = size(lp, buildInt(exp.location));
-	if (biggestsz < intsz) {
-		biggestsz = intsz;
-		biggestType = buildInt(exp.location);
-	}
-	return copyType(biggestType);
-}
-
-/**
- * Get a variable of an identifier in an is(typeof()) context.
- */
-ir.Variable getVariableFromIdentifier(LanguagePass lp, ir.Scope current, ir.IdentifierExp exp)
-{
-	auto store = lookup(lp, current, exp.location, exp.value);
-	if (store is null) {
-		throw makeNotAvailableInCTFE(exp, exp);
-	}
-	auto var = cast(ir.Variable)store.node;
-	if (var is null) {
-		throw makeNotAvailableInCTFE(exp, exp);
-	}
-	return var;
-}
 
 ir.Constant evaluatePostfix(LanguagePass lp, ir.Scope current, ir.Postfix pfix)
 {
