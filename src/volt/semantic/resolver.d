@@ -207,8 +207,9 @@ void resolveEnum(LanguagePass lp, ir.Enum e)
 	}
 
 	// If the base type isn't auto then we are done here.
-	if (!isAuto(e.base))
+	if (!isAuto(e.base)) {
 		return;
+	}
 
 	// Need to resolve the first member to set the type of the Enum.
 	auto first = e.members[0];
@@ -221,51 +222,51 @@ void resolveEnum(LanguagePass lp, ir.Enum e)
 
 void actualizeStruct(LanguagePass lp, ir.Struct s)
 {
-		if (s.loweredNode is null) {
-			createAggregateVar(lp, s);
+	if (s.loweredNode is null) {
+		createAggregateVar(lp, s);
+	}
+
+	foreach (n; s.members.nodes) {
+		auto field = cast(ir.Variable)n;
+		if (field is null ||
+		    field.storage != ir.Variable.Storage.Field) {
+			continue;
 		}
 
-		foreach (n; s.members.nodes) {
-			auto field = cast(ir.Variable)n;
-			if (field is null ||
-			    field.storage != ir.Variable.Storage.Field) {
-				continue;
-			}
+		lp.resolve(s.myScope, field);
+	}
 
-			lp.resolve(s.myScope, field);
-		}
+	s.isActualized = true;
 
-		s.isActualized = true;
-
-		if (s.loweredNode is null) {
-			fileInAggregateVar(lp, s);
-		}
+	if (s.loweredNode is null) {
+		fileInAggregateVar(lp, s);
+	}
 }
 
 void actualizeUnion(LanguagePass lp, ir.Union u)
 {
-		createAggregateVar(lp, u);
+	createAggregateVar(lp, u);
 
-		size_t accum;
-		foreach (n; u.members.nodes) {
-			if (n.nodeType == ir.NodeType.Function) {
-				throw makeExpected(n, "field");
-			}
-			auto field = cast(ir.Variable)n;
-			if (field is null ||
-			    field.storage != ir.Variable.Storage.Field) {
-				continue;
-			}
-
-			lp.resolve(u.myScope, field);
-			auto s = size(lp, field.type);
-			if (s > accum) {
-				accum = s;
-			}
+	size_t accum;
+	foreach (n; u.members.nodes) {
+		if (n.nodeType == ir.NodeType.Function) {
+			throw makeExpected(n, "field");
+		}
+		auto field = cast(ir.Variable)n;
+		if (field is null ||
+		    field.storage != ir.Variable.Storage.Field) {
+			continue;
 		}
 
-		u.totalSize = accum;
-		u.isActualized = true;
+		lp.resolve(u.myScope, field);
+		auto s = size(lp, field.type);
+		if (s > accum) {
+			accum = s;
+		}
+	}
 
-		fileInAggregateVar(lp, u);
+	u.totalSize = accum;
+	u.isActualized = true;
+
+	fileInAggregateVar(lp, u);
 }
