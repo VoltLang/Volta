@@ -3646,7 +3646,12 @@ public:
 			as.message = evaluate(ctx.lp, ctx.current, as.message);
 		}
 		auto cond = cast(ir.Constant) as.condition;
-		auto msg = cast(ir.Constant) as.message;
+		ir.Constant msg;
+		if (as.message !is null) {
+			msg = cast(ir.Constant) as.message;
+		} else {
+			msg = buildConstantString(as.location, "");
+		}
 		if ((cond is null || msg is null) || (!isBool(cond.type) || !isString(msg.type))) {
 			throw panicUnhandled(as, "non simple static asserts (bool and string literal only).");
 		}
