@@ -289,6 +289,7 @@ bool mutableIndirection(ir.Type t)
 	case Struct:
 		auto asStruct = cast(ir.Struct) t;
 		assert(asStruct !is null);
+		assert(asStruct.isActualized);
 		foreach (node; asStruct.members.nodes) {
 			auto asVar = cast(ir.Variable) node;
 			if (asVar is null ||
@@ -303,6 +304,7 @@ bool mutableIndirection(ir.Type t)
 	case Union:
 		auto asUnion = cast(ir.Union) t;
 		assert(asUnion !is null);
+		assert(asUnion.isActualized);
 		foreach (node; asUnion.members.nodes) {
 			auto asVar = cast(ir.Variable) node;
 			if (asVar is null ||

@@ -483,16 +483,12 @@ public:
 
 	override void doResolve(ir.Struct s)
 	{
-		resolve(s.myScope.parent, s.userAttrs);
-		s.isResolved = true;
-		resolve(s.myScope, s.members);
+		resolveStruct(this, s);
 	}
 
 	override void doResolve(ir.Union u)
 	{
-		resolve(u.myScope.parent, u.userAttrs);
-		u.isResolved = true;
-		resolve(u.myScope, u.members);
+		resolveUnion(this, u);
 	}
 
 	override void doResolve(ir.Class c)
@@ -535,25 +531,14 @@ public:
 
 	override void doActualize(ir.Struct s)
 	{
-		resolveNamed(s);
-
-		auto w = mTracker.add(s, Work.Action.Actualize);
-		scope (exit)
-			w.done();
-
-		actualizeStruct(this, s);
+		assert(!s.isResolved);
+		resolveStruct(this, s);
 	}
 
 	override void doActualize(ir.Union u)
 	{
-		resolveNamed(u);
-
-		auto w = mTracker.add(u, Work.Action.Actualize);
-		scope (exit) {
-			w.done();
-		}
-
-		actualizeUnion(this, u);
+		assert(!u.isResolved);
+		resolveUnion(this, u);
 	}
 
 	override void doActualize(ir.Class c)

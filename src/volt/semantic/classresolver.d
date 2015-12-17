@@ -488,6 +488,8 @@ ir.Struct getInterfaceLayoutStruct(ir._Interface iface, LanguagePass lp)
 	}
 	auto layoutStruct = buildStruct(l, iface.members, iface.myScope, "__ifaceVtable", fields);
 	layoutStruct.loweredNode = iface;
+	// This should be resolved now.
+	lp.resolveNamed(layoutStruct);
 	return layoutStruct;
 }
 

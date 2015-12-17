@@ -220,16 +220,30 @@ void resolveEnum(LanguagePass lp, ir.Enum e)
 	e.base = copyTypeSmart(e.location, type);
 }
 
-void actualizeStruct(LanguagePass lp, ir.Struct s)
+void resolveStruct(LanguagePass lp, ir.Struct s)
 {
+	auto done = lp.startResolving(s);
+	scope (exit) {
+		done();
+	}
+
+	lp.resolve(s.myScope.parent, s.userAttrs);
+
 	if (s.loweredNode is null) {
 		createAggregateVar(lp, s);
 	}
 
+	s.isResolved = true;
+
+	// Resolve fields.
 	foreach (n; s.members.nodes) {
+		if (n.nodeType != ir.NodeType.Variable) {
+			continue;
+		}
+
 		auto field = cast(ir.Variable)n;
-		if (field is null ||
-		    field.storage != ir.Variable.Storage.Field) {
+		assert(field !is null);
+		if (field.storage != ir.Variable.Storage.Field) {
 			continue;
 		}
 
@@ -243,21 +257,35 @@ void actualizeStruct(LanguagePass lp, ir.Struct s)
 	}
 }
 
-void actualizeUnion(LanguagePass lp, ir.Union u)
+void resolveUnion(LanguagePass lp, ir.Union u)
 {
+	auto done = lp.startResolving(u);
+	scope (exit) {
+		done();
+	}
+
+	lp.resolve(u.myScope.parent, u.userAttrs);
+
 	createAggregateVar(lp, u);
 
+	u.isResolved = true;
+
+	// Resolve fields.
 	size_t accum;
 	foreach (n; u.members.nodes) {
 		if (n.nodeType == ir.NodeType.Function) {
 			throw makeExpected(n, "field");
 		}
-		auto field = cast(ir.Variable)n;
-		if (field is null ||
-		    field.storage != ir.Variable.Storage.Field) {
+
+		if (n.nodeType != ir.NodeType.Variable) {
 			continue;
 		}
 
+		auto field = cast(ir.Variable)n;
+		assert(field !is null);
+		if (field.storage != ir.Variable.Storage.Field) {
+			continue;
+		}
 		lp.resolve(u.myScope, field);
 		auto s = size(lp, field.type);
 		if (s > accum) {
