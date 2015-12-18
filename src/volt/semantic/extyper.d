@@ -1980,6 +1980,9 @@ void extypeUnary(Context ctx, ref ir.Exp exp, ir.Unary _unary)
  */
 void extypeBinOp(Context ctx, ir.BinOp bin, ir.PrimitiveType lprim, ir.PrimitiveType rprim)
 {
+	auto intsz = size(ir.PrimitiveType.Kind.Int);
+	auto shortsz = size(ir.PrimitiveType.Kind.Short);
+
 	auto leftsz = size(lprim.type);
 	auto rightsz = size(rprim.type);
 
@@ -2001,7 +2004,8 @@ void extypeBinOp(Context ctx, ir.BinOp bin, ir.PrimitiveType lprim, ir.Primitive
 					leftsz = rightsz;
 				}
 			}
-			if (leftUnsigned != rightUnsigned) {
+			if (leftsz > shortsz && rightsz > shortsz &&
+			    leftUnsigned != rightUnsigned) {
 				throw makeMixedSignedness(bin.location);
 			}
 		}
@@ -2024,7 +2028,6 @@ void extypeBinOp(Context ctx, ir.BinOp bin, ir.PrimitiveType lprim, ir.Primitive
 		}
 	}
 
-	auto intsz = size(ir.PrimitiveType.Kind.Int);
 	size_t largestsz;
 	ir.Type largestType;
 
