@@ -301,6 +301,10 @@ void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ref 
 		return;
 	}
 
+	if (typesEqual(rtype, atype)) {
+		return;
+	}
+
 	if (willConvertArray(atype, rtype, flag, exp)) {
 		return;
 	}

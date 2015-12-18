@@ -154,7 +154,7 @@ bool willConvertArray(ir.Type l, ir.Type r, ref uint flag, ref ir.Exp exp)
 		rstore = accumulateStorage(rarr);
 	}
 	bool badImmutable = atype.isImmutable && rstore !is null && !rstore.isImmutable && !rstore.isConst;
-	if (rarr !is null && typesEqual(atype, rarr, IgnoreStorage) && !badImmutable && !astore.isScope) {
+	if (rarr !is null && typesEqual(atype, rarr, IgnoreStorage) && !badImmutable) {
 		return true;
 	}
 
