@@ -239,6 +239,19 @@ size_t alignment(LanguagePass lp, ir.Type node)
  *
  */
 
+bool isValidWithExp(ir.Exp exp)
+{
+	if (exp.nodeType == ir.NodeType.StoreExp ||
+	    exp.nodeType == ir.NodeType.ExpReference) {
+		return true;
+	} else if (exp.nodeType == ir.NodeType.Postfix) {
+		auto p = cast(ir.Postfix) exp;
+		return p.op == ir.Postfix.Op.Identifier;
+	} else {
+		return false;
+	}
+}
+
 /**
  * Remove types masking a type (e.g. enum).
  */

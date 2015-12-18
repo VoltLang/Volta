@@ -3477,14 +3477,8 @@ public:
 	{
 		acceptExp(ws.exp, this);
 
-		auto e = cast(ir.Unary) ws.exp;
-		auto type = getExpType(ctx.lp, ws.exp, ctx.current);
-		if (e !is null && realType(type).nodeType == ir.NodeType.Class) {
-			auto var = buildVariableSmart(ws.block.location, type, ir.Variable.Storage.Function, ws.block.myScope.genAnonIdent());
-			var.assign = e;
-			var.isResolved = true;
-			ws.block.statements = var ~ ws.block.statements;
-			ws.exp = buildExpReference(var.location, var, var.name);
+		if (!isValidWithExp(ws.exp)) {
+			throw makeExpected(ws.exp, "qualified identifier");
 		}
 
 		ctx.pushWith(ws.exp);
@@ -3655,6 +3649,9 @@ public:
 
 		foreach (ref wexp; ss.withs) {
 			acceptExp(wexp, this);
+			if (!isValidWithExp(wexp)) {
+				throw makeExpected(wexp, "qualified identifier");
+			}
 			ctx.pushWith(wexp);
 		}
 
