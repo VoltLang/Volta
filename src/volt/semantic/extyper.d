@@ -2008,8 +2008,12 @@ void extypeBinOp(Context ctx, ir.BinOp bin, ir.PrimitiveType lprim, ir.Primitive
 					leftsz = rightsz;
 				}
 			}
-			if (leftsz > shortsz && rightsz > shortsz &&
-			    leftUnsigned != rightUnsigned) {
+			bool smallerUnsigned = leftsz < rightsz ? leftUnsigned : rightUnsigned;
+			size_t smallersz = leftsz < rightsz ? leftsz : rightsz;
+			size_t biggersz = leftsz > rightsz ? leftsz : rightsz;
+			if ((leftsz <= shortsz && rightsz <= shortsz) || (smallerUnsigned && smallersz < biggersz)) {
+				// Safe.
+			} else if (leftUnsigned != rightUnsigned) {
 				throw makeMixedSignedness(bin.location);
 			}
 		}
