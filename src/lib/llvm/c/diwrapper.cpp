@@ -7,8 +7,8 @@
 |*                                                                            *|
 |*===----------------------------------------------------------------------===*|
 |*                                                                            *|
-|* This header declares the C interface to libLLVMCore.a, which implements    *|
-|* the LLVM intermediate representation.                                      *|
+|* This header declares the C interface to DIBuilder in libLLVMCore.a, which  *|
+|* implements the debug info creation.                                        *|
 |*                                                                            *|
 \*===----------------------------------------------------------------------===*/
 
@@ -20,13 +20,18 @@
 #ifdef __cplusplus
 
 #include "llvm-c/Core.h"
-#include "llvm-c/BitReader.h"
-#include "llvm/IR/DebugInfo.h"
-#include "llvm/IR/DIBuilder.h"
 
 
 extern "C" {
 #endif
+
+
+unsigned LLVMGetDebugMetadataVersion();
+
+void LLVMBuilderAssociatePosition(LLVMBuilderRef builder, int Row, int Col,
+                                  LLVMValueRef Scope);
+void LLVMBuilderDeassociatePosition(LLVMBuilderRef builder);
+
 
 /**
  * @defgroup LLVMC DIBuilder: C interface to DIBuilder
@@ -42,47 +47,24 @@ typedef enum {
 
 typedef struct LLVMDIBuilder *LLVMDIBuilderRef;
 
-
 LLVMDIBuilderRef LLVMCreateDIBuilder(LLVMModuleRef module);
 void LLVMDisposeDIBuilder(LLVMDIBuilderRef builder);
+
 LLVMValueRef LLVMDIBuilderGetCU(LLVMDIBuilderRef builder);
+
+/**
+ * Construct any deferred debug info descriptors.
+ *
+ * @see llvm::DIBuilder::finalize()
+ */
 void LLVMDIBuilderFinalize(LLVMDIBuilderRef builder);
-unsigned LLVMGetDebugMetadataVersion();
 
-
-void LLVMBuilderAssociatePosition(LLVMBuilderRef builder, int Row, int Col,
-                                  LLVMValueRef Scope);
-void LLVMBuilderDeassociatePosition(LLVMBuilderRef builder);
-
-
-/// A CompileUnit provides an anchor for all debugging
-/// information generated during this instance of compilation.
-/// \param Lang          Source programming language, eg. dwarf::DW_LANG_C99
-/// \param File          File name
-/// \param Dir           Directory
-/// \param Producer      Identify the producer of debugging information
-///                      and code.  Usually this is a compiler
-///                      version string.
-/// \param isOptimized   A boolean flag which indicates whether optimization
-///                      is enabled or not.
-/// \param Flags         This string lists command line options. This
-///                      string is directly embedded in debug info
-///                      output which may be used by a tool
-///                      analyzing generated debugging information.
-/// \param RV            This indicates runtime version for languages like
-///                      Objective-C.
-/// \param SplitName     The name of the file that we'll split debug info
-///                      out into.
-/// \param Kind          The kind of debug information to generate.
-/// \param DWOId         The DWOId if this is a split skeleton compile unit.
-/// \param EmitDebugInfo A boolean flag which indicates whether debug
-///                      information should be written to the final output or
-///                      not. When this is false, debug information annotations
-///                      will be present in the IL but they are not written to
-///                      the final assembly or object file. This supports
-///                      tracking source location information in the back end
-///                      without actually changing the output (e.g., when using
-///                      optimization remarks).
+/**
+ * A CompileUnit provides an anchor for all debugging
+ * information generated during this instance of compilation.
+ *
+ * @see llvm::DIBuilder::createCompileUnit()
+ */
 LLVMValueRef LLVMDIBuilderCreateCompileUnit(
     LLVMDIBuilderRef builder, unsigned Lang, const char *File, size_t FileLen,
     const char *Dir, size_t DirLen, const char *Producer, size_t ProducerLen,
@@ -90,198 +72,83 @@ LLVMValueRef LLVMDIBuilderCreateCompileUnit(
     const char* SplitName, size_t SplitNameLen,
     LLVMDebugEmissionKind EmissionKind, uint64_t DWOiD, LLVMBool EmitDebugInfo);
 
-/// Create a location descriptor to hold debugging information
-/// for a location.
+/**
+ * Create a location descriptor to hold debugging information
+ * for a location.
+ *
+ * @see llvm::DIBuilder::createLocation()
+ */
 LLVMValueRef LLVMDIBuilderCreateLocation(LLVMDIBuilderRef builder,
                                          unsigned Line, uint16_t Column,
                                          LLVMValueRef Scope);
 
-/// Create a file descriptor to hold debugging information
-/// for a file.
+/**
+ * Create a file descriptor to hold debugging information
+ * for a file.
+ *
+ * @see llvm::DIBuilder::createLocation()
+ */
 LLVMValueRef LLVMDIBuilderCreateFile(LLVMDIBuilderRef builder,
                                      const char *File, size_t FileLen,
                                      const char *Dir, size_t DirLen);
 
-/// Create a single enumerator value.
-LLVMValueRef LLVMDIBuilderCreateEnumerator(LLVMDIBuilderRef builder,
-                                           const char *Name, size_t NameLen,
-                                           uint64_t Val);
 
-/// Create a DWARF unspecified type.
+/**
+ * Create a DWARF unspecified type.
+ *
+ * @see llvm::DIBuilder::createUnspecifiedType()
+ */
 LLVMValueRef LLVMDIBuilderCreateUnspecifiedType(
     LLVMDIBuilderRef builder, const char *Name, size_t NameLen);
 
-/// createNullPtrType - Create C++0x nullptr type.
-LLVMValueRef LLVMDIBuilderCreateNullPtr(LLVMDIBuilderRef builder);
-
-/// Create debugging information entry for a basic
-/// type.
-/// \param Name        Type name.
-/// \param SizeInBits  Size of the type.
-/// \param AlignInBits Type alignment.
-/// \param Encoding    DWARF encoding code, e.g. dwarf::DW_ATE_float.
+/**
+ * Create debugging information entry for a basic type.
+ *
+ * @see llvm::DIBuilder::createBasicType()
+ */
 LLVMValueRef LLVMDIBuilderCreateBasicType(LLVMDIBuilderRef builder,
                                           const char *Name, size_t NameLen,
                                           uint64_t sizeInBits,
                                           uint64_t alignInBits,
                                           unsigned Encoding);
 
-/// Create debugging information entry for a qualified
-/// type, e.g. 'const int'.
-/// \param Tag         Tag identifing type, e.g. dwarf::TAG_volatile_type
-/// \param FromTy      Base Type.
+/**
+ * Create debugging information entry for a qualified
+ * type, e.g. 'const int'.
+ *
+ * @see llvm::DIBuilder::createQualifiedType()
+ */
 LLVMValueRef LLVMDIBuilderCreateQualifiedType(LLVMDIBuilderRef builder,
                                               unsigned Tag,
                                               LLVMValueRef FromTy);
 
-/// Create debugging information entry for a qualified type, e.g. 'const int'.
-/// \param Tag         Tag identifing type, e.g. dwarf::TAG_volatile_type
-/// \param FromTy      Base Type.
+/**
+ * Create debugging information entry for a pointer.
+ *
+ * @see llvm::DIBuilder::createPointerType()
+ */
 LLVMValueRef LLVMDIBuilderCreatePointerType(LLVMDIBuilderRef builder,
                                             LLVMValueRef pointeeTy,
                                             uint64_t SizeInBits,
                                             uint64_t AlignInBits,
                                             const char *Name, size_t NameLen);
 
-/// Create debugging information entry for a pointer to member.
-/// \param PointeeTy Type pointed to by this pointer.
-/// \param SizeInBits  Size.
-/// \param AlignInBits Alignment. (optional)
-/// \param Class Type for which this pointer points to members of.
-LLVMValueRef LLVMDIBuilderCreateMemberPointerType(LLVMValueRef PointeeTy,
-                                                  LLVMValueRef Class,
-                                                  uint64_t SizeInBits,
-                                                  uint64_t AlignInBits);
-
-/// Create debugging information entry for a c++
-/// style reference or rvalue reference type.
-LLVMValueRef LLVMDIBuilderCreateReferenceType(LLVMDIBuilderRef builder,
-                                              unsigned Tag, LLVMValueRef RTy);
-
-/// Create debugging information entry for a typedef.
-/// \param Ty          Original type.
-/// \param Name        Typedef name.
-/// \param File        File where this type is defined.
-/// \param LineNo      Line number.
-/// \param Context     The surrounding context for the typedef.
-LLVMValueRef LLVMDIBuilderCreateTypedef(LLVMDIBuilderRef builder,
-                                        LLVMValueRef Ty, const char *Name,
-                                        size_t NameLen, LLVMValueRef File,
-                                        unsigned LineNo, LLVMValueRef Context);
-
-/// Create debugging information entry for a 'friend'.
-LLVMValueRef LLVMDIBuilderCreateFriend(LLVMDIBuilderRef builder,
-                                       LLVMValueRef Ty, LLVMValueRef FriendTy);
-
-/// Create debugging information entry to establish
-/// inheritance relationship between two types.
-/// \param Ty           Original type.
-/// \param BaseTy       Base type. Ty is inherits from base.
-/// \param BaseOffset   Base offset.
-/// \param Flags        Flags to describe inheritance attribute,
-///                     e.g. private
-LLVMValueRef LLVMDIBuilderCreateInheritence(LLVMDIBuilderRef builder,
-                                            LLVMValueRef Ty,
-                                            LLVMValueRef BaseTy,
-                                            uint64_t BaseOffset,
-                                            unsigned flags);
-
-/// Create debugging information entry for a member.
-/// \param Scope        Member scope.
-/// \param Name         Member name.
-/// \param File         File where this member is defined.
-/// \param LineNo       Line number.
-/// \param SizeInBits   Member size.
-/// \param AlignInBits  Member alignment.
-/// \param OffsetInBits Member offset.
-/// \param Flags        Flags to encode member attribute, e.g. private
-/// \param Ty           Parent type.
+/**
+ * Create debugging information entry for a member.
+ *
+ * @see llvm::DIBuilder::createMemberType()
+ */
 LLVMValueRef LLVMDIBuilderCreateMemberType(
     LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
     size_t NameLen, LLVMValueRef File, unsigned LineNo, uint64_t SizeInBits,
     uint64_t AlignInBits, uint64_t OffsetInBits, unsigned Flags,
     LLVMValueRef Ty);
 
-/// Create debugging information entry for a C++ static data member.
-/// \param Scope      Member scope.
-/// \param Name       Member name.
-/// \param File       File where this member is declared.
-/// \param LineNo     Line number.
-/// \param Ty         Type of the static member.
-/// \param Flags      Flags to encode member attribute, e.g. private.
-/// \param Val        Const initializer of the member.
-LLVMValueRef LLVMDIBuilderCreateStaticMemberType(
-    LLVMValueRef Scope, const char *Name, size_t NameLen, LLVMValueRef File,
-    unsigned LineNo, unsigned Flags, LLVMValueRef Val);
-
-/// Create debugging information entry for Objective-C instance variable.
-/// \param Name         Member name.
-/// \param File         File where this member is defined.
-/// \param LineNo       Line number.
-/// \param SizeInBits   Member size.
-/// \param AlignInBits  Member alignment.
-/// \param OffsetInBits Member offset.
-/// \param Flags        Flags to encode member attribute, e.g. private
-/// \param Ty           Parent type.
-/// \param PropertyNode Property associated with this ivar.
-LLVMValueRef LLVMDIBuilderCreateObjCIVar(
-    LLVMDIBuilderRef builder, const char *Name, size_t NameLen,
-    LLVMValueRef File, unsigned LineNo, uint64_t SizeInBits,
-    uint64_t AlignInBits, uint64_t OffsetInBits, unsigned Flags,
-    LLVMValueRef Ty, LLVMValueRef PropertyNode);
-
-/// Create debugging information entry for Objective-C
-/// instance variable.
-/// \param Name         Member name.
-/// \param File         File where this member is defined.
-/// \param LineNo       Line number.
-/// \param SizeInBits   Member size.
-/// \param AlignInBits  Member alignment.
-/// \param OffsetInBits Member offset.
-/// \param Flags        Flags to encode member attribute, e.g. private
-/// \param Ty           Parent type.
-/// \param PropertyNode Property associated with this ivar.
-LLVMValueRef LLVMDIBuilderCreateObjCProperty(
-    LLVMDIBuilderRef builder, const char *Name, size_t NameLen,
-    LLVMValueRef File, unsigned LineNumber, const char *GetterName,
-    size_t GetterNameLen, const char *SetterName, size_t SetterNameLen,
-    unsigned PropertyAttributes, LLVMValueRef Ty);
-
-/// Create debugging information entry for a class.
-/// \param Scope        Scope in which this class is defined.
-/// \param Name         class name.
-/// \param File         File where this member is defined.
-/// \param LineNumber   Line number.
-/// \param SizeInBits   Member size.
-/// \param AlignInBits  Member alignment.
-/// \param OffsetInBits Member offset.
-/// \param Flags        Flags to encode member attribute, e.g. private
-/// \param Elements     class members.
-/// \param VTableHolder Debug info of the base class that contains vtable
-///                     for this type. This is used in
-///                     DW_AT_containing_type. See DWARF documentation
-///                     for more info.
-/// \param TemplateParms Template type parameters.
-/// \param UniqueIdentifier A unique identifier for the class.
-LLVMValueRef LLVMDIBuilderCreateClassType(
-    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
-    size_t NameLen, LLVMValueRef File, unsigned LineNumber, uint64_t SizeInBits,
-    uint64_t AlignInBits, uint64_t OffsetInBits, unsigned Flags,
-    LLVMValueRef DerivedFrom, LLVMValueRef *Elements, size_t ElementsNum,
-    LLVMValueRef VTableHolder, LLVMValueRef TemplateParms,
-    const char *UniqueIdentifier, size_t UniqueIdentifierLen);
-
-/// Create debugging information entry for a struct.
-/// \param Scope        Scope in which this struct is defined.
-/// \param Name         Struct name.
-/// \param File         File where this member is defined.
-/// \param LineNumber   Line number.
-/// \param SizeInBits   Member size.
-/// \param AlignInBits  Member alignment.
-/// \param Flags        Flags to encode member attribute, e.g. private
-/// \param Elements     Struct elements.
-/// \param RunTimeLang  Optional parameter, Objective-C runtime version.
-/// \param UniqueIdentifier A unique identifier for the struct.
+/**
+ * Create debugging information entry for an union.
+ *
+ * @see llvm::DIBuilder::createUnionType()
+ */
 LLVMValueRef LLVMDIBuilderCreateStructType(
     LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
     size_t NameLen, LLVMValueRef File, unsigned LineNumber, uint64_t SizeInBits,
@@ -290,17 +157,11 @@ LLVMValueRef LLVMDIBuilderCreateStructType(
     LLVMValueRef VTableHolder, unsigned RunTimeLang,
     const char *UniqueIdentifier, size_t UniqueIdentifierLen);
 
-/// Create debugging information entry for an union.
-/// \param Scope        Scope in which this union is defined.
-/// \param Name         Union name.
-/// \param File         File where this member is defined.
-/// \param LineNumber   Line number.
-/// \param SizeInBits   Member size.
-/// \param AlignInBits  Member alignment.
-/// \param Flags        Flags to encode member attribute, e.g. private
-/// \param Elements     Union elements.
-/// \param RunTimeLang  Optional parameter, Objective-C runtime version.
-/// \param UniqueIdentifier A unique identifier for the union.
+/**
+ * Create debugging information entry for an union.
+ *
+ * @see llvm::DIBuilder::createUnionType()
+ */
 LLVMValueRef LLVMDIBuilderCreateUnionType(
     LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
     size_t NameLen, LLVMValueRef File, unsigned LineNumber, uint64_t SizeInBits,
@@ -308,223 +169,97 @@ LLVMValueRef LLVMDIBuilderCreateUnionType(
     size_t ElementsNum, unsigned RunTimeLang, const char *UniqueIdentifier,
     size_t UniqueIdentifierLen);
 
-/// Create debugging information for template type parameter.
-/// \param Scope        Scope in which this type is defined.
-/// \param Name         Type parameter name.
-/// \param Ty           Parameter type.
-LLVMValueRef LLVMDIBuilderCreateTemplateTypeParameter(LLVMDIBuilderRef builder,
-    LLVMValueRef Scope, const char *Name, size_t NameLen, LLVMValueRef Ty);
-
-/// createTemplateValueParameter - Create debugging information for template
-/// value parameter.
-/// @param Scope        Scope in which this type is defined.
-/// @param Name         Value parameter name.
-/// @param Ty           Parameter type.
-/// @param Constant     Value as a Constant.
-LLVMValueRef LLVMDIBuilderCreateTemplateValueParameter(
-    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
-    size_t NameLen, LLVMValueRef Ty, LLVMValueRef ConstantV);
-
-/// Create debugging information for template
-/// type parameter.
-/// \param Scope        Scope in which this type is defined.
-/// \param Name         Type parameter name.
-/// \param Ty           Parameter type.
-LLVMValueRef LLVMDIBuilderCreateTemplateTemplateParameter(
-    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
-    size_t NameLen, LLVMValueRef Ty, const char *Val, size_t ValLen);
-
-/// Create debugging information for a template parameter pack.
-/// \param Scope        Scope in which this type is defined.
-/// \param Name         Value parameter name.
-/// \param Ty           Parameter type.
-/// \param Val          An array of types in the pack.
-LLVMValueRef LLVMDIBuilderCreateTemplatePackParameter(
-    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
-    size_t NameLen, LLVMValueRef Ty, LLVMValueRef *Val, unsigned ValCount);
-
-/// Create debugging information entry for an array.
-/// \param Size         Array size.
-/// \param AlignInBits  Alignment.
-/// \param Ty           Element type.
-/// \param Subscripts   Subscripts.
+/**
+ * Create debugging information entry for a array type.
+ *
+ * @see llvm::DIBuilder::createArrayType()
+ */
 LLVMValueRef LLVMDIBuilderCreateArrayType(
     LLVMDIBuilderRef builder, uint64_t Size, uint64_t AlignInBits,
     LLVMValueRef Ty, LLVMValueRef *Subscripts, size_t SubscriptsNum);
 
-/// Create debugging information entry for a vector type.
-/// \param Size         Array size.
-/// \param AlignInBits  Alignment.
-/// \param Ty           Element type.
-/// \param Subscripts   Subscripts.
+/**
+ * Create debugging information entry for a vector type.
+ *
+ * @see llvm::DIBuilder::createVectorType()
+ */
 LLVMValueRef LLVMDIBuilderCreateVectorType(
     LLVMDIBuilderRef builder, uint64_t Size, uint64_t AlignInBits,
     LLVMValueRef Ty, LLVMValueRef *Subscripts, size_t SubscriptsNum);
 
-/// Create debugging information entry for an
-/// enumeration.
-/// \param Scope          Scope in which this enumeration is defined.
-/// \param Name           Union name.
-/// \param File           File where this member is defined.
-/// \param LineNumber     Line number.
-/// \param SizeInBits     Member size.
-/// \param AlignInBits    Member alignment.
-/// \param Elements       Enumeration elements.
-/// \param UnderlyingType Underlying type of a C++11/ObjC fixed enum.
-/// \param UniqueIdentifier A unique identifier for the enum.
-LLVMValueRef LLVMDIBuilderCreateEnumerationType(
-    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
-    size_t NameLen, LLVMValueRef File, unsigned LineNumber,
-    uint64_t SizeInBits, uint64_t AlignInBits,
-    LLVMValueRef Elements, size_t ElementsNum, LLVMValueRef UnderlyingType,
-    const char *UniqueIdentifier, size_t UniqueIdentifierLen);
-
-/// Create subroutine type.
-/// \param File            File in which this subroutine is defined.
-/// \param ParameterTypes  An array of subroutine parameter types. This
-///                        includes return type at 0th index.
-/// \param Flags           E.g.: LValueReference.
-///                        These flags are used to emit dwarf attributes.
+/**
+ * Create subroutine type.
+ *
+ * @see llvm::DIBuilder::createSubroutineType()
+ */
 LLVMValueRef LLVMDIBuilderCreateSubroutineType(LLVMDIBuilderRef builder,
                                                LLVMValueRef File,
                                                LLVMValueRef *ParameterTypes,
                                                unsigned ParameterTypesNum,
                                                unsigned Flags);
 
-/// Create an external type reference.
-/// \param Tag              Dwarf TAG.
-/// \param File             File in which the type is defined.
-/// \param UniqueIdentifier A unique identifier for the type.
-LLVMValueRef LLVMDIBuilderCreateExternalTypeRef(
-    LLVMDIBuilder builder, unsigned Tag, LLVMValueRef File,
-    const char *UniqueIdentifier, size_t UniqueIdentifierLen);
-
-/// Create a new DIType with "artificial" flag set.
-LLVMValueRef LLVMDIBuilderCreateArtificialType(LLVMDIBuilderRef builder,
-                                               LLVMValueRef Ty);
-
-/// Create a new DIType* with the "object pointer"
-/// flag set.
-LLVMValueRef LLVMDIBuilderCreateObjectPointerType(LLVMDIBuilderRef builder,
-                                                  LLVMValueRef Ty);
-
-/// Create a permanent forward-declared type.
-LLVMValueRef LLVMDIBuilderCreateForwardDecl(
-    LLVMDIBuilderRef builder, unsigned Tag, const char *Name, size_t NameLen,
-    LLVMValueRef Scope, LLVMValueRef File, unsigned Line, unsigned RuntimeLang,
-    uint64_t SizeInBits, uint64_t AlignInBits,
-    const char *UniqueIdentifier, size_t UniqueIdentifierLen);
-
-/// Create a temporary forward-declared type.
-LLVMValueRef LLVMDIBuilderCreateReplaceableCompositeType(
-    LLVMDIBuilderRef builder, unsigned Tag, const char *Name, size_t NameLen,
-    LLVMValueRef Scope, LLVMValueRef File, unsigned Line, unsigned RuntimeLang,
-    uint64_t SizeInBits, uint64_t AlignInBits, unsigned Flags,
-    const char *UniqueIdentifier, size_t UniqueIdentifierLen);
-
-/// Retain DIType* in a module even if it is not referenced
-/// through debug info anchors.
+/**
+ * Retain DIType* in a module even if it is not referenced
+ * through debug info anchors.
+ *
+ * @see llvm::DIBuilder::retainType()
+ */
 void LLVMDIBuilderRetainType(LLVMDIBuilderRef builder, LLVMValueRef Ty);
 
-/// Create unspecified parameter type
-/// for a subroutine type.
+/**
+ * Create unspecified parameter type
+ * for a subroutine type.
+ *
+ * @see llvm::DIBuilder::createUnspecifiedParameter()
+ */
 LLVMValueRef LLVMDIBuilderCreateUnspecifiedParameter(LLVMDIBuilderRef builder);
 
-/// getOrCreateSubrange - Create a descriptor for a value range.  This
-/// implicitly uniques the values returned.
+/**
+ * Create a descriptor for a value range. This implicitly
+ * uniques the values returned.
+ *
+ * @see llvm::DIBuilder::getOrCreateRange()
+ */
 LLVMValueRef LLVMDIBuilderGetOrCreateRange(LLVMDIBuilderRef builder, int64_t Lo,
                                            int64_t Count);
 
-/// Create a new descriptor for the specified
-/// variable.
-/// \param Context     Variable scope.
-/// \param Name        Name of the variable.
-/// \param LinkageName Mangled  name of the variable.
-/// \param File        File where this variable is defined.
-/// \param LineNo      Line number.
-/// \param Ty          Variable Type.
-/// \param isLocalToUnit Boolean flag indicate whether this variable is
-///                      externally visible or not.
-/// \param Val         llvm::Value of the variable.
-/// \param Decl        Reference to the corresponding declaration.
+/**
+ * Create a new descriptor for the specified variable.
+ *
+ * @see llvm::DIBuilder::createGlobalVariable()
+ */
 LLVMValueRef LLVMDIBuilderCreateGlobalVariable(
     LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
     size_t NameLen, const char *LinkageName, size_t LinkageNameLen,
     LLVMValueRef File, uint LineNo, LLVMValueRef Ty, bool IsLocalToUnit,
     LLVMValueRef Val, LLVMValueRef Decl);
 
-/// Identical to createGlobalVariable
-/// except that the resulting DbgNode is temporary and meant to be RAUWed.
-LLVMValueRef LLVMDIBuilderCreateTempGlobalVariableFwdDecl(
-    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
-    size_t NameLen, const char *LinkageName, size_t LinkageNameLen,
-    LLVMValueRef File, uint LineNo, LLVMValueRef Ty, bool IsLocalToUnit,
-    LLVMValueRef Val, LLVMValueRef Decl);
-
-/// createLocalVariable - Create a new descriptor for the specified
-/// local variable.
-/// @param Tag         Dwarf TAG. Usually DW_TAG_auto_variable or
-///                    DW_TAG_arg_variable.
-/// @param Scope       Variable scope.
-/// @param Name        Variable name.
-/// @param File        File where this variable is defined.
-/// @param LineNo      Line number.
-/// @param Ty          Variable Type
-/// @param AlwaysPreserve Boolean. Set to true if debug info for this
-///                       variable should be preserved in optimized build.
-/// @param Flags       Flags, e.g. artificial variable.
-/// @param ArgNo       If this variable is an argument then this argument's
-///                    number. 1 indicates 1st argument.
-LLVMValueRef LLVMDIBuilderCreateLocalVariable(
-    LLVMDIBuilderRef builder, unsigned Tag, LLVMValueRef Scope,
-    const char *Name, size_t NameLen, LLVMValueRef File, unsigned LineNo,
-    LLVMValueRef Ty, bool AlwaysPreserve, unsigned Flags, unsigned ArgNo);
-
-/// Create a new descriptor for an auto variable.  This is a local variable
-/// that is not a subprogram parameter.
-///
-/// \c Scope must be a \a DILocalScope, and thus its scope chain eventually
-/// leads to a \a DISubprogram.
-///
-/// If \c AlwaysPreserve, this variable will be referenced from its
-/// containing subprogram, and will survive some optimizations.
+/**
+ * Create a new descriptor for an auto variable.  This is a local variable
+ * that is not a subprogram parameter.
+ *
+ * @see llvm::DIBuilder::createAutoVariable()
+ */
 LLVMValueRef LLVMDIBuilderCreateAutoVariable(
     LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
     size_t NameLen, LLVMValueRef File, unsigned LineNo,
     LLVMValueRef Ty, bool AlwaysPreserve, unsigned Flags);
 
-/// Create a new descriptor for a parameter variable.
-///
-/// \c Scope must be a \a DILocalScope, and thus its scope chain eventually
-/// leads to a \a DISubprogram.
-///
-/// \c ArgNo is the index (starting from \c 1) of this variable in the
-/// subprogram parameters.  \c ArgNo should not conflict with other
-/// parameters of the same subprogram.
-///
-/// If \c AlwaysPreserve, this variable will be referenced from its
-/// containing subprogram, and will survive some optimizations.
+/**
+ * Create a new descriptor for a parameter variable.
+ *
+ * @see llvm::DIBuilder::createAutoVariable()
+ */
 LLVMValueRef LLVMDIBuilderCreateParameterVariable(
     LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
     size_t NameLen, unsigned ArgNo, LLVMValueRef File, unsigned LineNo,
     LLVMValueRef Ty, bool AlwaysPreserve, unsigned Flags);
 
-/// Create a new descriptor for the specified subprogram.
-/// See comments in DISubprogram* for descriptions of these fields.
-/// \param Scope         Function scope.
-/// \param Name          Function name.
-/// \param LinkageName   Mangled function name.
-/// \param File          File where this variable is defined.
-/// \param LineNo        Line number.
-/// \param Ty            Function type.
-/// \param isLocalToUnit True if this function is not externally visible.
-/// \param isDefinition  True if this is a function definition.
-/// \param ScopeLine     Set to the beginning of the scope this starts
-/// \param Flags         e.g. is this function prototyped or not.
-///                      These flags are used to emit dwarf attributes.
-/// \param isOptimized   True if optimization is ON.
-/// \param Fn            llvm::Function pointer.
-/// \param TParam        Function template parameters.
+/**
+ * Create a new descriptor for the specified subprogram.
+ *
+ * @see llvm::DIBuilder::createFunction()
+ */
 LLVMValueRef LLVMDIBuilderCreateFunction(
     LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
     size_t NameLen, const char *LinkageName, size_t LinkageNameLen,
@@ -532,156 +267,68 @@ LLVMValueRef LLVMDIBuilderCreateFunction(
     bool isDefinition, unsigned ScopeLine, unsigned Flags, bool isOptimized,
     LLVMValueRef Fn, LLVMValueRef TParam, LLVMValueRef Decl);
 
-/// Identical to createFunction,
-/// except that the resulting DbgNode is meant to be RAUWed.
-LLVMValueRef LLVMDIBuilderCreateTempFunctionFwdDecl(
-    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
-    size_t NameLen, const char *LinkageName, size_t LinkageNameLen,
-    LLVMValueRef File, unsigned LineNo, LLVMValueRef Ty, bool isLocalToUnit,
-    bool isDefinition, unsigned ScopeLine, unsigned Flags, bool isOptimized,
-    LLVMValueRef Fn, LLVMValueRef TParam, LLVMValueRef Decl);
-
-/// Create a new descriptor for the specified C++ method.
-/// See comments in \a DISubprogram* for descriptions of these fields.
-/// \param Scope         Function scope.
-/// \param Name          Function name.
-/// \param LinkageName   Mangled function name.
-/// \param File          File where this variable is defined.
-/// \param LineNo        Line number.
-/// \param Ty            Function type.
-/// \param isLocalToUnit True if this function is not externally visible..
-/// \param isDefinition  True if this is a function definition.
-/// \param Virtuality    Attributes describing virtualness. e.g. pure
-///                      virtual function.
-/// \param VTableIndex   Index no of this method in virtual table.
-/// \param VTableHolder  Type that holds vtable.
-/// \param Flags         e.g. is this function prototyped or not.
-///                      This flags are used to emit dwarf attributes.
-/// \param isOptimized   True if optimization is ON.
-/// \param Fn            llvm::Function pointer.
-/// \param TParam        Function template parameters.
-LLVMValueRef LLVMDIBuilderCreateMethod(
-    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
-    size_t NameLen, const char *LinkageName, size_t LinkageNameLen,
-    LLVMValueRef File, unsigned LineNo, LLVMValueRef Ty, bool isLocalToUnit,
-    bool isDefintiion, unsigned Virtuality, unsigned VTableIndex,
-    LLVMValueRef VTableHolder, unsigned Flags, bool isOptimized,
-    LLVMValueRef Fn, LLVMValueRef TParam);
-
-/// This creates new descriptor for a namespace with the specified
-/// parent scope.
-/// \param Scope       Namespace scope
-/// \param Name        Name of this namespace
-/// \param File        Source file
-/// \param LineNo      Line number
-LLVMValueRef LLVMDIBuilderCreateNameSpace(LLVMDIBuilderRef builder,
-                                          LLVMValueRef Scope, const char *Name,
-                                          size_t NameLen, LLVMValueRef File,
-                                          unsigned LineNo);
-
-/// This creates new descriptor for a module with the specified
-/// parent scope.
-/// \param Scope       Parent scope
-/// \param Name        Name of this module
-/// \param ConfigurationMacros
-///                    A space-separated shell-quoted list of -D macro
-///                    definitions as they would appear on a command line.
-/// \param IncludePath The path to the module map file.
-/// \param ISysRoot    The clang system root (value of -isysroot).
-LLVMValueRef LLVMDIBuilderCreateModule(
-    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name, 
-    size_t NameLen, const char *ConfigurationMacros,
-    size_t ConfigurationMacrosLen, const char *IncludePath,
-    size_t IncludePathLen, const char *ISysRoot, size_t ISysRootLen);
-
-/// This creates a descriptor for a lexical block with a new file
-/// attached. This merely extends the existing
-/// lexical block as it crosses a file.
-/// \param Scope       Lexical block.
-/// \param File        Source file.
-/// \param Discriminator DWARF path discriminator value.
+/**
+ * This creates a descriptor for a lexical block
+ * with a new file attached. This merely extends
+ * the existing block.
+ *
+ * @see llvm::DIBuilder::createLexicalBlockFile()
+ */
 LLVMValueRef LLVMDIBuilderCreateLexicalBlockFile(LLVMDIBuilderRef builder,
                                                  LLVMValueRef Scope,
                                                  LLVMValueRef File,
                                                  unsigned Discriminator);
 
-/// createLexicalBlock - This creates a descriptor for a lexical block
-/// with the specified parent context.
-/// @param Scope       Parent lexical scope.
-/// @param File        Source file
-/// @param Line        Line number
-/// @param Col         Column number
+/**
+ * This creates a descriptor for a lexical block
+ * with the specified parent context.
+ *
+ * @see llvm::DIBuilder::createLexicalBlock()
+ */
 LLVMValueRef LLVMDIBuilderCreateLexicalBlock(LLVMDIBuilderRef builder,
                                              LLVMValueRef Scope,
                                              LLVMValueRef File, unsigned Line,
                                              unsigned Col);
 
-/// Create a descriptor for an imported module.
-/// \param Context The scope this module is imported into
-/// \param NSOrM The namespace or module being imported here
-/// \param Line Line number
-LLVMValueRef LLVMDIBuilderCreateImportedModule(LLVMDIBuilderRef builder,
-                                               LLVMValueRef Context,
-                                               LLVMValueRef NSOrM,
-                                               unsigned Line);
-
-/// Create a descriptor for an imported function.
-/// \param Context The scope this module is imported into
-/// \param Decl The declaration (or definition) of a function, type, or
-///             variable
-/// \param Line Line number
-LLVMValueRef LLVMDIBuilderCreateImportedDeclaration(
-    LLVMDIBuilderRef builder, LLVMValueRef Context, LLVMValueRef Decl,
-    unsigned Line, const char *Name, size_t NameLen);
-
-/// Insert a new llvm.dbg.declare intrinsic call.
-/// \param Storage     llvm::Value of the variable
-/// \param VarInfo     Variable's debug info descriptor.
-/// \param Expr        A complex location expression.
-/// \param DL          Debug info location.
-/// \param InsertAtEnd Location for the new intrinsic.
+/**
+ * Insert a new llvm.dbg.declare intrinsic call.
+ *
+ * @see llvm::DIBuilder::insertDeclare()
+ */
 LLVMValueRef LLVMDIBuilderInsertDeclare(
     LLVMDIBuilderRef builder, LLVMValueRef Storage, LLVMValueRef ValInfo,
     LLVMValueRef Expr, LLVMValueRef DL, LLVMBasicBlockRef InsertAtEnd);
 
-/// Insert a new llvm.dbg.declare intrinsic call.
-/// \param Storage      llvm::Value of the variable
-/// \param VarInfo      Variable's debug info descriptor.
-/// \param Expr         A complex location expression.
-/// \param DL           Debug info location.
-/// \param InsertBefore Location for the new intrinsic.
+/**
+ * Insert a new llvm.dbg.declare intrinsic call.
+ *
+ * @see llvm::DIBuilder::insertDeclare()
+ */
 LLVMValueRef LLVMDIBuilderInsertDeclareBefore(
     LLVMDIBuilderRef builder, LLVMValueRef Storage, LLVMValueRef ValInfo,
     LLVMValueRef Expr, LLVMValueRef DL, LLVMValueRef InsertBefore);
 
-
-/// insertDbgValueIntrinsic - Insert a new llvm.dbg.value intrinsic call.
-/// @param Val          llvm::Value of the variable
-/// @param Offset       Offset
-/// @param VarInfo      Variable's debug info descriptor.
-/// @param InsertAtEnd Location for the new intrinsic.
-LLVMValueRef LLVMDIBuilderInsertDgbValueInstrinsic(
-    LLVMDIBuilderRef builder, LLVMValueRef Val, uint64_t Offset,
-    LLVMValueRef VarInfo, LLVMBasicBlockRef InsertAtEnd);
-
-/// Insert a new llvm.dbg.value intrinsic call.
-/// \param Val          llvm::Value of the variable
-/// \param Offset       Offset
-/// \param VarInfo      Variable's debug info descriptor.
-/// \param Expr         A complex location expression.
-/// \param DL           Debug info location.
-/// \param InsertBefore Location for the new intrinsic.
-LLVMValueRef LLVMDIBuilderInsertDbgValueIntrinsicBefore(
-    LLVMDIBuilderRef builder, LLVMValueRef Val, uint64_t Offset,
-    LLVMValueRef VarInfo, LLVMValueRef InsertBefore);
-
-/// createExpression - Create a new descriptor for the specified
-/// variable which has a complex address expression for its address.
-/// \param Addr        An array of complex address operations.
+/**
+ * Create a new descriptor for the specified
+ * variable which has a complex address expression for its address.
+ *
+ * @see llvm::DIBuilder::insertDeclare()
+ */
 LLVMValueRef LLVMDIBuilderCreateExpression(
     LLVMDIBuilderRef builder, uint64_t *Addr, size_t AddrNum);
 
+/**
+ * Set the body of a struct debug info.
+ */
 void LLVMDIBuilderStructSetBody(LLVMDIBuilderRef builder,
+                                LLVMValueRef Struct,
+                                LLVMValueRef *Elements,
+                                size_t ElementsNum);
+
+/**
+ * Set the body of a union debug info.
+ */
+void LLVMDIBuilderUnionSetBody(LLVMDIBuilderRef builder,
                                 LLVMValueRef Struct,
                                 LLVMValueRef *Elements,
                                 size_t ElementsNum);
@@ -707,9 +354,10 @@ void LLVMDIBuilderStructSetBody(LLVMDIBuilderRef builder,
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm-c/Core.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/DIBuilder.h"
 
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/IR/DiagnosticInfo.h"
@@ -756,6 +404,8 @@ DEFINE_MAV_WRAP(DISubprogram)
 DEFINE_MAV_WRAP(DISubrange)
 DEFINE_MAV_WRAP(DIExpression)
 DEFINE_MAV_WRAP(DILocalVariable)
+DEFINE_MAV_WRAP(DILexicalBlockFile)
+DEFINE_MAV_WRAP(DILexicalBlock)
 
 inline Metadata *unwrapMD(LLVMValueRef Val)
 {
@@ -778,10 +428,6 @@ template<class T> inline T unwrapMDAs(LLVMValueRef V)
 #else
 #error "This version of LLVM is not supported"
 #endif
-
-
-#define XXX_TODO_TEST_ME_XXX() \
-  do { assert(0 && "TEST ME"); *(int*)nullptr = 0; } while(false)
 
 
 /*
@@ -894,6 +540,13 @@ LLVMValueRef LLVMDIBuilderCreateBasicType(LLVMDIBuilderRef builder,
                   ->createBasicType(name, sizeInBits, alignInBits, Encoding));
 }
 
+LLVMValueRef LLVMDIBuilderCreateQualifiedType(LLVMDIBuilderRef builder,
+                                              unsigned Tag,
+                                              LLVMValueRef FromTy) {
+  auto T = unwrapMDAs<DIType>(FromTy);
+  return wrap(unwrap(builder)->createQualifiedType(Tag, T));
+}
+
 LLVMValueRef LLVMDIBuilderCreatePointerType(LLVMDIBuilderRef builder,
                                             LLVMValueRef pointeeTy,
                                             uint64_t SizeInBits,
@@ -939,7 +592,6 @@ LLVMValueRef LLVMDIBuilderCreateStructType(
   SmallVector<Metadata *, 8> MDs;
   for (int i = 0; i < ElementsNum; i++) {
     auto *MD = unwrapMD(Elements[i]);
-    // TODO Extract?
     MDs.push_back(MD);
   }
 
@@ -963,7 +615,6 @@ LLVMValueRef LLVMDIBuilderCreateUnionType(
   SmallVector<Metadata *, 8> MDs;
   for(int i = 0; i < ElementsNum; i++) {
     auto *MD = unwrapMD(Elements[i]);
-    // TODO Extract?
     MDs.push_back(MD);
   }
   return wrap(B->createUnionType(
@@ -980,10 +631,24 @@ LLVMValueRef LLVMDIBuilderCreateArrayType(
   SmallVector<Metadata *, 8> MDs;
   for(int i = 0; i < SubscriptsNum; i++) {
     auto *MD = unwrapMD(Subscripts[i]);
-    // TODO Extract?
     MDs.push_back(MD);
   }
   return wrap(B->createArrayType(
+      Size, AlignInBits, T, B->getOrCreateArray(MDs)));
+}
+
+LLVMValueRef LLVMDIBuilderCreateVectorType(
+    LLVMDIBuilderRef builder, uint64_t Size, uint64_t AlignInBits,
+    LLVMValueRef Ty, LLVMValueRef *Subscripts, size_t SubscriptsNum) {
+
+  auto B = unwrap(builder);
+  auto T = unwrapMDAs<DIType>(Ty);
+  SmallVector<Metadata *, 8> MDs;
+  for(int i = 0; i < SubscriptsNum; i++) {
+    auto *MD = unwrapMD(Subscripts[i]);
+    MDs.push_back(MD);
+  }
+  return wrap(B->createVectorType(
       Size, AlignInBits, T, B->getOrCreateArray(MDs)));
 }
 
@@ -998,7 +663,6 @@ LLVMValueRef LLVMDIBuilderCreateSubroutineType(LLVMDIBuilderRef builder,
   SmallVector<Metadata *, 8> MDs;
   for (int i = 0; i < ParameterTypesNum; i++) {
     auto *MD = unwrapMD(ParameterTypes[i]);
-    // TODO Extract?
     MDs.push_back(MD);
   }
 
@@ -1007,6 +671,15 @@ LLVMValueRef LLVMDIBuilderCreateSubroutineType(LLVMDIBuilderRef builder,
 #else
   return wrap(B->createSubroutineType(F, B->getOrCreateTypeArray(MDs), Flags));
 #endif
+}
+
+void LLVMDIBuilderRetainType(LLVMDIBuilderRef builder, LLVMValueRef Ty) {
+  auto T = unwrapMDAs<DIType>(Ty);
+  unwrap(builder)->retainType(T);
+}
+
+LLVMValueRef LLVMDIBuilderCreateUnspecifiedParameter(LLVMDIBuilderRef builder) {
+  return wrap(unwrap(builder)->createUnspecifiedParameter());
 }
 
 LLVMValueRef LLVMDIBuilderGetOrCreateRange(LLVMDIBuilderRef builder, int64_t Lo,
@@ -1074,7 +747,9 @@ LLVMValueRef LLVMDIBuilderCreateFunction(
   auto F = unwrapMDAs<DIFile>(File);
   auto T = unwrapMDAs<DISubroutineType>(Ty);
   auto FN = dyn_cast<Function>(unwrap(Fn));
-#if LLVM_VERSION_MINOR >= 7
+
+#if LLVM_VERSION_MINOR >= 8
+#elif LLVM_VERSION_MINOR == 7
   auto TP = unwrapMDAs<MDNode>(TParam);
   auto D = unwrapMDAs<MDNode>(Decl);
 #else
@@ -1082,8 +757,37 @@ LLVMValueRef LLVMDIBuilderCreateFunction(
   auto D = dyn_cast_or_null<MDNode>(unwrapMD(Decl));
 #endif
 
+#if LLVM_VERSION_MINOR >= 8
+  auto SUB = B->createFunction(S, N, LN, F, LineNo, T, isLocalToUnit,
+	 isDefinition, ScopeLine, Flags, isOptimized);
+  FN->setSubprogram(SUB);
+  return wrap(SUB);
+#else
   return wrap(B->createFunction(S, N, LN, F, LineNo, T, isLocalToUnit,
 	 isDefinition, ScopeLine, Flags, isOptimized, FN, TP, D));
+#endif
+}
+
+LLVMValueRef LLVMDIBuilderCreateLexicalBlockFile(LLVMDIBuilderRef builder,
+                                                 LLVMValueRef Scope,
+                                                 LLVMValueRef File,
+                                                 unsigned Discriminator) {
+  auto B = unwrap(builder);
+  auto S = unwrapMDAs<DIScope>(Scope);
+  auto F = unwrapMDAs<DIFile>(File);
+
+  return wrap(B->createLexicalBlockFile(S, F, Discriminator));
+}
+
+LLVMValueRef LLVMDIBuilderCreateLexicalBlock(LLVMDIBuilderRef builder,
+                                             LLVMValueRef Scope,
+                                             LLVMValueRef File, unsigned Line,
+                                             unsigned Col) {
+  auto B = unwrap(builder);
+  auto S = unwrapMDAs<DIScope>(Scope);
+  auto F = unwrapMDAs<DIFile>(File);
+
+  return wrap(B->createLexicalBlock(S, F, Line, Col));
 }
 
 LLVMValueRef LLVMDIBuilderInsertDeclare(
@@ -1135,7 +839,26 @@ void LLVMDIBuilderStructSetBody(LLVMDIBuilderRef builder,
   SmallVector<Metadata *, 8> MDs;
   for (int i = 0; i < ElementsNum; i++) {
     auto *MD = unwrapMD(Elements[i]);
-    // TODO Extract?
+    MDs.push_back(MD);
+  }
+
+#if LLVM_VERSION_MINOR >= 7
+  fwd->replaceElements(B->getOrCreateArray(MDs));
+#else
+  B->replaceArrays(fwd, B->getOrCreateArray(MDs));
+#endif
+}
+
+void LLVMDIBuilderUnionSetBody(LLVMDIBuilderRef builder,
+                               LLVMValueRef Union,
+                               LLVMValueRef *Elements,
+                               size_t ElementsNum) {
+  auto B = unwrap(builder);
+  auto fwd = unwrapMDAs<DICompositeType>(Union);
+
+  SmallVector<Metadata *, 8> MDs;
+  for (int i = 0; i < ElementsNum; i++) {
+    auto *MD = unwrapMD(Elements[i]);
     MDs.push_back(MD);
   }
 
