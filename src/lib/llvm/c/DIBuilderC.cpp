@@ -8,7 +8,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the the C binding for DIBuilder
+// This file implements the the C binding for DIBuilder and some misc functions.
 //
 //===----------------------------------------------------------------------===//
 
@@ -86,7 +86,7 @@ template<class T> inline T unwrapMDAs(LLVMValueRef V)
 
 /*
  *
- * LLVMBuilder functions.
+ * Misc functions.
  *
  */ 
 
@@ -140,6 +140,7 @@ LLVMValueRef LLVMDIBuilderCreateCompileUnit(LLVMDIBuilderRef builder,
                                             LLVMDebugEmissionKind EmissionKind,
                                             uint64_t DWOiD,
                                             LLVMBool EmitDebugInfo) {
+
   DIBuilder::DebugEmissionKind Kind;
   switch (EmissionKind) {
   case LLVMDebugEmissionFull: Kind = DIBuilder::FullDebug; break;
@@ -164,6 +165,7 @@ LLVMValueRef LLVMDIBuilderCreateCompileUnit(LLVMDIBuilderRef builder,
 LLVMValueRef LLVMDIBuilderCreateLocation(LLVMDIBuilderRef builder,
                                          unsigned Line, uint16_t Column,
                                          LLVMValueRef Scope) {
+
   auto S = unwrapMDAs<DIScope>(Scope);
   DILocation *DI = DILocation::get(S->getContext(), Line, Column, S);
   return wrap(DI);
@@ -172,13 +174,16 @@ LLVMValueRef LLVMDIBuilderCreateLocation(LLVMDIBuilderRef builder,
 LLVMValueRef LLVMDIBuilderCreateFile(LLVMDIBuilderRef builder,
                                      const char *File, size_t FileLen,
                                      const char *Dir, size_t DirLen) {
+
   StringRef F(File, FileLen);
   StringRef D(Dir, DirLen);
   return wrap(unwrap(builder)->createFile(F, D));
 }
 
-LLVMValueRef LLVMDIBuilderCreateUnspecifiedType(
-    LLVMDIBuilderRef builder, const char *Name, size_t NameLen) {
+LLVMValueRef LLVMDIBuilderCreateUnspecifiedType(LLVMDIBuilderRef builder,
+                                                const char *Name,
+                                                size_t NameLen) {
+
   StringRef N(Name, NameLen);
   auto B = unwrap(builder);
   return wrap(B->createUnspecifiedType(N));
@@ -189,6 +194,7 @@ LLVMValueRef LLVMDIBuilderCreateBasicType(LLVMDIBuilderRef builder,
                                           uint64_t sizeInBits,
                                           uint64_t alignInBits,
                                           unsigned Encoding) {
+
   StringRef name(Name, NameLen);
   return wrap(unwrap(builder)
                   ->createBasicType(name, sizeInBits, alignInBits, Encoding));
@@ -206,6 +212,7 @@ LLVMValueRef LLVMDIBuilderCreatePointerType(LLVMDIBuilderRef builder,
                                             uint64_t SizeInBits,
                                             uint64_t AlignInBits,
                                             const char *Name, size_t NameLen) {
+
   StringRef N(Name, NameLen);
   auto T = unwrapMDAs<DIType>(pointeeTy);
   return wrap(unwrap(builder)->createPointerType(
@@ -227,13 +234,19 @@ LLVMValueRef LLVMDIBuilderCreateMemberType(
                                                 OffsetInBits, Flags, T));
 }
 
-LLVMValueRef LLVMDIBuilderCreateStructType(
-    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
-    size_t NameLen, LLVMValueRef File, unsigned LineNumber, uint64_t SizeInBits,
-    uint64_t AlignInBits, unsigned Flags, LLVMValueRef DerivedFrom,
-    LLVMValueRef *Elements, size_t ElementsNum,
-    LLVMValueRef VTableHolder, unsigned RunTimeLang,
-    const char *UniqueIdentifier, size_t UniqueIdentifierLen) {
+LLVMValueRef LLVMDIBuilderCreateStructType(LLVMDIBuilderRef builder,
+                                           LLVMValueRef Scope, const char *Name,
+                                           size_t NameLen, LLVMValueRef File,
+                                           unsigned LineNumber,
+                                           uint64_t SizeInBits,
+                                           uint64_t AlignInBits, unsigned Flags,
+                                           LLVMValueRef DerivedFrom,
+                                           LLVMValueRef *Elements,
+                                           size_t ElementsNum,
+                                           LLVMValueRef VTableHolder,
+                                           unsigned RunTimeLang,
+                                           const char *UniqueIdentifier,
+                                           size_t UniqueIdentifierLen) {
 
   StringRef N(Name, NameLen);
   StringRef UI(UniqueIdentifier, UniqueIdentifierLen);
@@ -254,12 +267,17 @@ LLVMValueRef LLVMDIBuilderCreateStructType(
       B->getOrCreateArray(MDs), RunTimeLang, VTH, UI));
 }
 
-LLVMValueRef LLVMDIBuilderCreateUnionType(
-    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
-    size_t NameLen, LLVMValueRef File, unsigned LineNumber, uint64_t SizeInBits,
-    uint64_t AlignInBits, unsigned Flags, LLVMValueRef *Elements,
-    size_t ElementsNum, unsigned RunTimeLang, const char *UniqueIdentifier,
-    size_t UniqueIdentifierLen) {
+LLVMValueRef LLVMDIBuilderCreateUnionType(LLVMDIBuilderRef builder,
+                                          LLVMValueRef Scope, const char *Name,
+                                          size_t NameLen, LLVMValueRef File,
+                                          unsigned LineNumber,
+                                          uint64_t SizeInBits,
+                                          uint64_t AlignInBits, unsigned Flags,
+                                          LLVMValueRef *Elements,
+                                          size_t ElementsNum,
+                                          unsigned RunTimeLang,
+                                          const char *UniqueIdentifier,
+                                          size_t UniqueIdentifierLen) {
 
   StringRef N(Name, NameLen);
   StringRef UI(UniqueIdentifier, UniqueIdentifierLen);
@@ -276,9 +294,11 @@ LLVMValueRef LLVMDIBuilderCreateUnionType(
       B->getOrCreateArray(MDs), RunTimeLang, UI));
 }
 
-LLVMValueRef LLVMDIBuilderCreateArrayType(
-    LLVMDIBuilderRef builder, uint64_t Size, uint64_t AlignInBits,
-    LLVMValueRef Ty, LLVMValueRef *Subscripts, size_t SubscriptsNum) {
+LLVMValueRef LLVMDIBuilderCreateArrayType(LLVMDIBuilderRef builder,
+                                          uint64_t Size, uint64_t AlignInBits,
+                                          LLVMValueRef Ty,
+                                          LLVMValueRef *Subscripts,
+                                          size_t SubscriptsNum) {
 
   auto B = unwrap(builder);
   auto T = unwrapMDAs<DIType>(Ty);
@@ -291,9 +311,11 @@ LLVMValueRef LLVMDIBuilderCreateArrayType(
       Size, AlignInBits, T, B->getOrCreateArray(MDs)));
 }
 
-LLVMValueRef LLVMDIBuilderCreateVectorType(
-    LLVMDIBuilderRef builder, uint64_t Size, uint64_t AlignInBits,
-    LLVMValueRef Ty, LLVMValueRef *Subscripts, size_t SubscriptsNum) {
+LLVMValueRef LLVMDIBuilderCreateVectorType(LLVMDIBuilderRef builder,
+                                           uint64_t Size, uint64_t AlignInBits,
+                                           LLVMValueRef Ty,
+                                           LLVMValueRef *Subscripts,
+                                           size_t SubscriptsNum) {
 
   auto B = unwrap(builder);
   auto T = unwrapMDAs<DIType>(Ty);
@@ -311,6 +333,7 @@ LLVMValueRef LLVMDIBuilderCreateSubroutineType(LLVMDIBuilderRef builder,
                                                LLVMValueRef *ParameterTypes,
                                                unsigned ParameterTypesNum,
                                                unsigned Flags) {
+
   auto B = unwrap(builder);
   auto F = unwrapMDAs<DIFile>(File);
 
@@ -341,11 +364,17 @@ LLVMValueRef LLVMDIBuilderGetOrCreateRange(LLVMDIBuilderRef builder, int64_t Lo,
   return wrap(unwrap(builder)->getOrCreateSubrange(Lo, Hi));
 }
 
-LLVMValueRef LLVMDIBuilderCreateGlobalVariable(
-    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
-    size_t NameLen, const char *LinkageName, size_t LinkageNameLen,
-    LLVMValueRef File, uint LineNo, LLVMValueRef Ty, bool IsLocalToUnit,
-    LLVMValueRef Val, LLVMValueRef Decl) {
+LLVMValueRef LLVMDIBuilderCreateGlobalVariable(LLVMDIBuilderRef builder,
+                                               LLVMValueRef Scope,
+                                               const char *Name, size_t NameLen,
+                                               const char *LinkageName,
+                                               size_t LinkageNameLen,
+                                               LLVMValueRef File, uint LineNo,
+                                               LLVMValueRef Ty,
+                                               bool IsLocalToUnit,
+                                               LLVMValueRef Val,
+                                               LLVMValueRef Decl) {
+
   auto S = unwrapMDAs<DIScope>(Scope);
   auto F = unwrapMDAs<DIFile>(File);
   auto T = unwrapMDAs<DIType>(Ty);
@@ -360,10 +389,14 @@ LLVMValueRef LLVMDIBuilderCreateGlobalVariable(
       F, LineNo, T, IsLocalToUnit, C, D));
 }
 
-LLVMValueRef LLVMDIBuilderCreateAutoVariable(
-    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
-    size_t NameLen, LLVMValueRef File, unsigned LineNo,
-    LLVMValueRef Ty, bool AlwaysPreserve, unsigned Flags) {
+LLVMValueRef LLVMDIBuilderCreateAutoVariable(LLVMDIBuilderRef builder,
+                                             LLVMValueRef Scope,
+                                             const char *Name,
+                                             size_t NameLen, LLVMValueRef File,
+                                             unsigned LineNo, LLVMValueRef Ty,
+                                             bool AlwaysPreserve,
+                                             unsigned Flags) {
+
   StringRef N(Name, NameLen);
   auto B = unwrap(builder);
   auto S = unwrapMDAs<DIScope>(Scope);
@@ -374,10 +407,17 @@ LLVMValueRef LLVMDIBuilderCreateAutoVariable(
     S, N, F, LineNo, T, AlwaysPreserve, Flags));
 }
 
-LLVMValueRef LLVMDIBuilderCreateParameterVariable(
-    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
-    size_t NameLen, unsigned ArgNo, LLVMValueRef File, unsigned LineNo,
-    LLVMValueRef Ty, bool AlwaysPreserve, unsigned Flags) {
+LLVMValueRef LLVMDIBuilderCreateParameterVariable(LLVMDIBuilderRef builder,
+                                                  LLVMValueRef Scope,
+                                                  const char *Name,
+                                                  size_t NameLen,
+                                                  unsigned ArgNo,
+                                                  LLVMValueRef File,
+                                                  unsigned LineNo,
+                                                  LLVMValueRef Ty,
+                                                  bool AlwaysPreserve,
+                                                  unsigned Flags) {
+
   StringRef N(Name, NameLen);
   auto B = unwrap(builder);
   auto S = unwrapMDAs<DIScope>(Scope);
@@ -388,12 +428,17 @@ LLVMValueRef LLVMDIBuilderCreateParameterVariable(
     S, N, ArgNo, F, LineNo, T, AlwaysPreserve, Flags));
 }
 
-LLVMValueRef LLVMDIBuilderCreateFunction(
-    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
-    size_t NameLen, const char *LinkageName, size_t LinkageNameLen,
-    LLVMValueRef File, unsigned LineNo, LLVMValueRef Ty, bool isLocalToUnit,
-    bool isDefinition, unsigned ScopeLine, unsigned Flags, bool isOptimized,
-    LLVMValueRef Fn, LLVMValueRef TParam, LLVMValueRef Decl) {
+LLVMValueRef LLVMDIBuilderCreateFunction(LLVMDIBuilderRef builder,
+                                         LLVMValueRef Scope,
+                                         const char *Name, size_t NameLen,
+                                         const char *LinkageName,
+                                         size_t LinkageNameLen,
+                                         LLVMValueRef File, unsigned LineNo,
+                                         LLVMValueRef Ty, bool isLocalToUnit,
+                                         bool isDefinition, unsigned ScopeLine,
+                                         unsigned Flags, bool isOptimized,
+                                         LLVMValueRef Fn, LLVMValueRef TParam,
+                                         LLVMValueRef Decl) {
   StringRef N(Name, NameLen);
   StringRef LN(LinkageName, LinkageNameLen);
   auto B = unwrap(builder);
@@ -437,6 +482,7 @@ LLVMValueRef LLVMDIBuilderCreateLexicalBlock(LLVMDIBuilderRef builder,
                                              LLVMValueRef Scope,
                                              LLVMValueRef File, unsigned Line,
                                              unsigned Col) {
+
   auto B = unwrap(builder);
   auto S = unwrapMDAs<DIScope>(Scope);
   auto F = unwrapMDAs<DIFile>(File);
@@ -444,9 +490,12 @@ LLVMValueRef LLVMDIBuilderCreateLexicalBlock(LLVMDIBuilderRef builder,
   return wrap(B->createLexicalBlock(S, F, Line, Col));
 }
 
-LLVMValueRef LLVMDIBuilderInsertDeclare(
-    LLVMDIBuilderRef builder, LLVMValueRef Storage, LLVMValueRef ValInfo,
-    LLVMValueRef Expr, LLVMValueRef DL, LLVMBasicBlockRef InsertAtEnd) {
+LLVMValueRef LLVMDIBuilderInsertDeclare(LLVMDIBuilderRef builder,
+                                        LLVMValueRef Storage,
+                                        LLVMValueRef ValInfo,
+                                        LLVMValueRef Expr, LLVMValueRef DL,
+                                        LLVMBasicBlockRef InsertAtEnd) {
+
   auto B = unwrap(builder);
   auto S = unwrap(Storage);
   auto V = unwrapMDAs<DILocalVariable>(ValInfo);
@@ -457,9 +506,13 @@ LLVMValueRef LLVMDIBuilderInsertDeclare(
   return wrap(B->insertDeclare(S, V, E, D, IAE));
 }
 
-LLVMValueRef LLVMDIBuilderInsertDeclareBefore(
-    LLVMDIBuilderRef builder, LLVMValueRef Storage, LLVMValueRef ValInfo,
-    LLVMValueRef Expr, LLVMValueRef DL, LLVMValueRef InsertBefore) {
+LLVMValueRef LLVMDIBuilderInsertDeclareBefore(LLVMDIBuilderRef builder,
+                                              LLVMValueRef Storage,
+                                              LLVMValueRef ValInfo,
+                                              LLVMValueRef Expr,
+                                              LLVMValueRef DL,
+                                              LLVMValueRef InsertBefore) {
+
   auto B = unwrap(builder);
   auto S = unwrap(Storage);
   auto V = unwrapMDAs<DILocalVariable>(ValInfo);
@@ -470,9 +523,9 @@ LLVMValueRef LLVMDIBuilderInsertDeclareBefore(
   return wrap(B->insertDeclare(S, V, E, D, IB));
 }
 
-LLVMValueRef LLVMDIBuilderCreateExpression(
-    LLVMDIBuilderRef builder, uint64_t *Addr, size_t AddrNum)
-{
+LLVMValueRef LLVMDIBuilderCreateExpression(LLVMDIBuilderRef builder,
+                                           uint64_t *Addr, size_t AddrNum) {
+
   auto B = unwrap(builder);
   SmallVector<uint64_t, 4> A;
 
@@ -483,10 +536,9 @@ LLVMValueRef LLVMDIBuilderCreateExpression(
   return wrap(B->createExpression(A));
 }
 
-void LLVMDIBuilderStructSetBody(LLVMDIBuilderRef builder,
-                                LLVMValueRef Struct,
-                                LLVMValueRef *Elements,
-                                size_t ElementsNum) {
+void LLVMDIBuilderStructSetBody(LLVMDIBuilderRef builder, LLVMValueRef Struct,
+                                LLVMValueRef *Elements, size_t ElementsNum) {
+
   auto B = unwrap(builder);
   auto fwd = unwrapMDAs<DICompositeType>(Struct);
 
@@ -503,10 +555,9 @@ void LLVMDIBuilderStructSetBody(LLVMDIBuilderRef builder,
 #endif
 }
 
-void LLVMDIBuilderUnionSetBody(LLVMDIBuilderRef builder,
-                               LLVMValueRef Union,
-                               LLVMValueRef *Elements,
-                               size_t ElementsNum) {
+void LLVMDIBuilderUnionSetBody(LLVMDIBuilderRef builder, LLVMValueRef Union,
+                               LLVMValueRef *Elements, size_t ElementsNum) {
+
   auto B = unwrap(builder);
   auto fwd = unwrapMDAs<DICompositeType>(Union);
 

@@ -7,32 +7,39 @@
 |*                                                                            *|
 |*===----------------------------------------------------------------------===*|
 |*                                                                            *|
-|* This header declares the C interface to DIBuilder in libLLVMCore.a, which  *|
-|* implements the debug info creation.                                        *|
+|* This header declares the C interface to DIBuilder in libLLVMCore.a.        *|
 |*                                                                            *|
 \*===----------------------------------------------------------------------===*/
 
 #ifndef LLVM_C_DIBUILDER_H
 #define LLVM_C_DIBUILDER_H
 
-#ifdef __cplusplus
-
 #include "llvm-c/Core.h"
 
-
+#ifdef __cplusplus
 extern "C" {
 #endif
 
+/**
+ * @defgroup LLVMCDebug C interface to LLVM misc debbuging functions.
+ *
+ * This module exposes parts of the LLVM library as a C API.
+ *
+ * @{
+ */
 
-unsigned LLVMGetDebugMetadataVersion();
+unsigned LLVMGetDebugMetadataVersion(void);
 
 void LLVMBuilderAssociatePosition(LLVMBuilderRef builder, int Row, int Col,
                                   LLVMValueRef Scope);
 void LLVMBuilderDeassociatePosition(LLVMBuilderRef builder);
 
+/**
+ * @}
+ */
 
 /**
- * @defgroup LLVMC DIBuilder: C interface to DIBuilder
+ * @defgroup LLVMCDIBuilder C interface to DIBuilder
  * @ingroup LLVMC
  *
  * @{
@@ -63,12 +70,19 @@ void LLVMDIBuilderFinalize(LLVMDIBuilderRef builder);
  *
  * @see llvm::DIBuilder::createCompileUnit()
  */
-LLVMValueRef LLVMDIBuilderCreateCompileUnit(
-    LLVMDIBuilderRef builder, unsigned Lang, const char *File, size_t FileLen,
-    const char *Dir, size_t DirLen, const char *Producer, size_t ProducerLen,
-    LLVMBool isOptimized, const char *Flags, size_t FlagsLen, unsigned RV,
-    const char* SplitName, size_t SplitNameLen,
-    LLVMDebugEmissionKind EmissionKind, uint64_t DWOiD, LLVMBool EmitDebugInfo);
+LLVMValueRef LLVMDIBuilderCreateCompileUnit(LLVMDIBuilderRef builder,
+                                            unsigned Lang, const char *File,
+                                            size_t FileLen, const char *Dir,
+                                            size_t DirLen,
+                                            const char *Producer,
+                                            size_t ProducerLen,
+                                            LLVMBool isOptimized,
+                                            const char *Flags, size_t FlagsLen,
+                                            unsigned RV, const char* SplitName,
+                                            size_t SplitNameLen,
+                                            LLVMDebugEmissionKind EmissionKind,
+                                            uint64_t DWOiD,
+                                            LLVMBool EmitDebugInfo);
 
 /**
  * Create a location descriptor to hold debugging information
@@ -96,8 +110,9 @@ LLVMValueRef LLVMDIBuilderCreateFile(LLVMDIBuilderRef builder,
  *
  * @see llvm::DIBuilder::createUnspecifiedType()
  */
-LLVMValueRef LLVMDIBuilderCreateUnspecifiedType(
-    LLVMDIBuilderRef builder, const char *Name, size_t NameLen);
+LLVMValueRef LLVMDIBuilderCreateUnspecifiedType(LLVMDIBuilderRef builder,
+                                                const char *Name,
+                                                size_t NameLen);
 
 /**
  * Create debugging information entry for a basic type.
@@ -136,54 +151,71 @@ LLVMValueRef LLVMDIBuilderCreatePointerType(LLVMDIBuilderRef builder,
  *
  * @see llvm::DIBuilder::createMemberType()
  */
-LLVMValueRef LLVMDIBuilderCreateMemberType(
-    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
-    size_t NameLen, LLVMValueRef File, unsigned LineNo, uint64_t SizeInBits,
-    uint64_t AlignInBits, uint64_t OffsetInBits, unsigned Flags,
-    LLVMValueRef Ty);
+LLVMValueRef LLVMDIBuilderCreateMemberType(LLVMDIBuilderRef builder,
+                                           LLVMValueRef Scope, const char *Name,
+                                           size_t NameLen, LLVMValueRef File,
+                                           unsigned LineNo, uint64_t SizeInBits,
+                                           uint64_t AlignInBits,
+                                           uint64_t OffsetInBits,
+                                           unsigned Flags, LLVMValueRef Ty);
 
 /**
  * Create debugging information entry for an union.
  *
  * @see llvm::DIBuilder::createUnionType()
  */
-LLVMValueRef LLVMDIBuilderCreateStructType(
-    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
-    size_t NameLen, LLVMValueRef File, unsigned LineNumber, uint64_t SizeInBits,
-    uint64_t AlignInBits, unsigned Flags, LLVMValueRef DerivedFrom,
-    LLVMValueRef *Elements, size_t ElementsNum,
-    LLVMValueRef VTableHolder, unsigned RunTimeLang,
-    const char *UniqueIdentifier, size_t UniqueIdentifierLen);
+LLVMValueRef LLVMDIBuilderCreateStructType(LLVMDIBuilderRef builder,
+                                           LLVMValueRef Scope, const char *Name,
+                                           size_t NameLen, LLVMValueRef File,
+                                           unsigned LineNumber,
+                                           uint64_t SizeInBits,
+                                           uint64_t AlignInBits, unsigned Flags,
+                                           LLVMValueRef DerivedFrom,
+                                           LLVMValueRef *Elements,
+                                           size_t ElementsNum,
+                                           LLVMValueRef VTableHolder,
+                                           unsigned RunTimeLang,
+                                           const char *UniqueIdentifier,
+                                           size_t UniqueIdentifierLen);
 
 /**
  * Create debugging information entry for an union.
  *
  * @see llvm::DIBuilder::createUnionType()
  */
-LLVMValueRef LLVMDIBuilderCreateUnionType(
-    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
-    size_t NameLen, LLVMValueRef File, unsigned LineNumber, uint64_t SizeInBits,
-    uint64_t AlignInBits, unsigned Flags, LLVMValueRef *Elements,
-    size_t ElementsNum, unsigned RunTimeLang, const char *UniqueIdentifier,
-    size_t UniqueIdentifierLen);
+LLVMValueRef LLVMDIBuilderCreateUnionType(LLVMDIBuilderRef builder,
+                                          LLVMValueRef Scope, const char *Name,
+                                          size_t NameLen, LLVMValueRef File,
+                                          unsigned LineNumber,
+                                          uint64_t SizeInBits,
+                                          uint64_t AlignInBits, unsigned Flags,
+                                          LLVMValueRef *Elements,
+                                          size_t ElementsNum,
+                                          unsigned RunTimeLang,
+                                          const char *UniqueIdentifier,
+                                          size_t UniqueIdentifierLen);
 
 /**
  * Create debugging information entry for a array type.
  *
  * @see llvm::DIBuilder::createArrayType()
  */
-LLVMValueRef LLVMDIBuilderCreateArrayType(
-    LLVMDIBuilderRef builder, uint64_t Size, uint64_t AlignInBits,
-    LLVMValueRef Ty, LLVMValueRef *Subscripts, size_t SubscriptsNum);
+LLVMValueRef LLVMDIBuilderCreateArrayType(LLVMDIBuilderRef builder,
+                                          uint64_t Size, uint64_t AlignInBits,
+                                          LLVMValueRef Ty,
+                                          LLVMValueRef *Subscripts,
+                                          size_t SubscriptsNum);
 
 /**
  * Create debugging information entry for a vector type.
  *
  * @see llvm::DIBuilder::createVectorType()
  */
-LLVMValueRef LLVMDIBuilderCreateVectorType(
-    LLVMDIBuilderRef builder, uint64_t Size, uint64_t AlignInBits,
-    LLVMValueRef Ty, LLVMValueRef *Subscripts, size_t SubscriptsNum);
+LLVMValueRef LLVMDIBuilderCreateVectorType(LLVMDIBuilderRef builder,
+                                           uint64_t Size, uint64_t AlignInBits,
+                                           LLVMValueRef Ty,
+                                           LLVMValueRef *Subscripts,
+                                           size_t SubscriptsNum);
 
 /**
  * Create subroutine type.
@@ -226,44 +258,63 @@ LLVMValueRef LLVMDIBuilderGetOrCreateRange(LLVMDIBuilderRef builder, int64_t Lo,
  *
  * @see llvm::DIBuilder::createGlobalVariable()
  */
-LLVMValueRef LLVMDIBuilderCreateGlobalVariable(
-    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
-    size_t NameLen, const char *LinkageName, size_t LinkageNameLen,
-    LLVMValueRef File, uint LineNo, LLVMValueRef Ty, bool IsLocalToUnit,
-    LLVMValueRef Val, LLVMValueRef Decl);
+LLVMValueRef LLVMDIBuilderCreateGlobalVariable(LLVMDIBuilderRef builder,
+                                               LLVMValueRef Scope,
+                                               const char *Name, size_t NameLen,
+                                               const char *LinkageName,
+                                               size_t LinkageNameLen,
+                                               LLVMValueRef File, uint LineNo,
+                                               LLVMValueRef Ty,
+                                               bool IsLocalToUnit,
+                                               LLVMValueRef Val,
+                                               LLVMValueRef Decl);
 
 /**
- * Create a new descriptor for an auto variable.  This is a local variable
+ * Create a new descriptor for an auto variable. This is a local variable
  * that is not a subprogram parameter.
  *
  * @see llvm::DIBuilder::createAutoVariable()
  */
-LLVMValueRef LLVMDIBuilderCreateAutoVariable(
-    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
-    size_t NameLen, LLVMValueRef File, unsigned LineNo,
-    LLVMValueRef Ty, bool AlwaysPreserve, unsigned Flags);
+LLVMValueRef LLVMDIBuilderCreateAutoVariable(LLVMDIBuilderRef builder,
+                                             LLVMValueRef Scope,
+                                             const char *Name,
+                                             size_t NameLen, LLVMValueRef File,
+                                             unsigned LineNo, LLVMValueRef Ty,
+                                             bool AlwaysPreserve,
+                                             unsigned Flags);
 
 /**
  * Create a new descriptor for a parameter variable.
  *
  * @see llvm::DIBuilder::createAutoVariable()
  */
-LLVMValueRef LLVMDIBuilderCreateParameterVariable(
-    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
-    size_t NameLen, unsigned ArgNo, LLVMValueRef File, unsigned LineNo,
-    LLVMValueRef Ty, bool AlwaysPreserve, unsigned Flags);
+LLVMValueRef LLVMDIBuilderCreateParameterVariable(LLVMDIBuilderRef builder,
+                                                  LLVMValueRef Scope,
+                                                  const char *Name,
+                                                  size_t NameLen,
+                                                  unsigned ArgNo,
+                                                  LLVMValueRef File,
+                                                  unsigned LineNo,
+                                                  LLVMValueRef Ty,
+                                                  bool AlwaysPreserve,
+                                                  unsigned Flags);
 
 /**
  * Create a new descriptor for the specified subprogram.
  *
  * @see llvm::DIBuilder::createFunction()
  */
-LLVMValueRef LLVMDIBuilderCreateFunction(
-    LLVMDIBuilderRef builder, LLVMValueRef Scope, const char *Name,
-    size_t NameLen, const char *LinkageName, size_t LinkageNameLen,
-    LLVMValueRef File, unsigned LineNo, LLVMValueRef Ty, bool isLocalToUnit,
-    bool isDefinition, unsigned ScopeLine, unsigned Flags, bool isOptimized,
-    LLVMValueRef Fn, LLVMValueRef TParam, LLVMValueRef Decl);
+LLVMValueRef LLVMDIBuilderCreateFunction(LLVMDIBuilderRef builder,
+                                         LLVMValueRef Scope,
+                                         const char *Name, size_t NameLen,
+                                         const char *LinkageName,
+                                         size_t LinkageNameLen,
+                                         LLVMValueRef File, unsigned LineNo,
+                                         LLVMValueRef Ty, bool isLocalToUnit,
+                                         bool isDefinition, unsigned ScopeLine,
+                                         unsigned Flags, bool isOptimized,
+                                         LLVMValueRef Fn, LLVMValueRef TParam,
+                                         LLVMValueRef Decl);
 
 /**
  * This creates a descriptor for a lexical block
@@ -293,18 +344,23 @@ LLVMValueRef LLVMDIBuilderCreateLexicalBlock(LLVMDIBuilderRef builder,
  *
  * @see llvm::DIBuilder::insertDeclare()
  */
-LLVMValueRef LLVMDIBuilderInsertDeclare(
-    LLVMDIBuilderRef builder, LLVMValueRef Storage, LLVMValueRef ValInfo,
-    LLVMValueRef Expr, LLVMValueRef DL, LLVMBasicBlockRef InsertAtEnd);
+LLVMValueRef LLVMDIBuilderInsertDeclare(LLVMDIBuilderRef builder,
+                                        LLVMValueRef Storage,
+                                        LLVMValueRef ValInfo,
+                                        LLVMValueRef Expr, LLVMValueRef DL,
+                                        LLVMBasicBlockRef InsertAtEnd);
 
 /**
  * Insert a new llvm.dbg.declare intrinsic call.
  *
  * @see llvm::DIBuilder::insertDeclare()
  */
-LLVMValueRef LLVMDIBuilderInsertDeclareBefore(
-    LLVMDIBuilderRef builder, LLVMValueRef Storage, LLVMValueRef ValInfo,
-    LLVMValueRef Expr, LLVMValueRef DL, LLVMValueRef InsertBefore);
+LLVMValueRef LLVMDIBuilderInsertDeclareBefore(LLVMDIBuilderRef builder,
+                                              LLVMValueRef Storage,
+                                              LLVMValueRef ValInfo,
+                                              LLVMValueRef Expr,
+                                              LLVMValueRef DL,
+                                              LLVMValueRef InsertBefore);
 
 /**
  * Create a new descriptor for the specified
@@ -312,24 +368,20 @@ LLVMValueRef LLVMDIBuilderInsertDeclareBefore(
  *
  * @see llvm::DIBuilder::insertDeclare()
  */
-LLVMValueRef LLVMDIBuilderCreateExpression(
-    LLVMDIBuilderRef builder, uint64_t *Addr, size_t AddrNum);
+LLVMValueRef LLVMDIBuilderCreateExpression(LLVMDIBuilderRef builder,
+                                           uint64_t *Addr, size_t AddrNum);
 
 /**
  * Set the body of a struct debug info.
  */
-void LLVMDIBuilderStructSetBody(LLVMDIBuilderRef builder,
-                                LLVMValueRef Struct,
-                                LLVMValueRef *Elements,
-                                size_t ElementsNum);
+void LLVMDIBuilderStructSetBody(LLVMDIBuilderRef builder, LLVMValueRef Struct,
+                                LLVMValueRef *Elements, size_t ElementsNum);
 
 /**
  * Set the body of a union debug info.
  */
-void LLVMDIBuilderUnionSetBody(LLVMDIBuilderRef builder,
-                                LLVMValueRef Struct,
-                                LLVMValueRef *Elements,
-                                size_t ElementsNum);
+void LLVMDIBuilderUnionSetBody(LLVMDIBuilderRef builder, LLVMValueRef Struct,
+                                LLVMValueRef *Elements, size_t ElementsNum);
 
 #ifdef __cplusplus
 }
