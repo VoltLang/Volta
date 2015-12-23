@@ -324,7 +324,9 @@ public:
 			v = LLVMAddFunction(mod, fn.mangledName, llvmType);
 			if (fn.isWeakLink) {
 				LLVMSetUnnamedAddr(v, true);
-				if (lp.settings.platform == Platform.MSVC) {
+				// For lack of COMDAT support.
+				if (lp.settings.platform == Platform.MSVC ||
+				    lp.settings.platform == Platform.MinGW) {
 					LLVMSetLinkage(v, LLVMLinkage.Internal);
 				} else {
 					LLVMSetLinkage(v, LLVMLinkage.LinkOnceODR);
@@ -425,8 +427,10 @@ public:
 			v = LLVMAddGlobal(mod, llvmType, var.mangledName);
 			if (var.isWeakLink) {
 				LLVMSetUnnamedAddr(v, true);
-				if (lp.settings.platform == Platform.MSVC) {
-					LLVMSetLinkage(v, LLVMLinkage.Private);
+				// For lack of COMDAT support.
+				if (lp.settings.platform == Platform.MSVC ||
+				    lp.settings.platform == Platform.MinGW) {
+					LLVMSetLinkage(v, LLVMLinkage.Internal);
 				} else {
 					LLVMSetLinkage(v, LLVMLinkage.LinkOnceODR);
 				}
