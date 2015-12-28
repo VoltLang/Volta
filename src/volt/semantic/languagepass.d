@@ -350,7 +350,7 @@ public:
 			// This is not correct scope.
 			debug if (!var.isResolved) {
 				debugPrintNode(eref);
-				assert(false);
+				panicAssert(eref, false);
 			}
 			return;
 		}
@@ -359,7 +359,7 @@ public:
 			// This is not correct scope.
 			debug if (!fn.isResolved) {
 				debugPrintNode(eref);
-				assert(false);
+				panicAssert(eref, false);
 			}
 			return;
 		}
@@ -368,7 +368,7 @@ public:
 			debug foreach (setfn; set.functions) {
 				if (!setfn.isResolved) {
 					debugPrintNode(eref);
-					assert(false);
+					panicAssert(eref, false);
 				}
 			}
 			return;
