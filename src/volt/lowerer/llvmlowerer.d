@@ -601,7 +601,7 @@ public:
 			return Continue;
 		}
 		auto np = functionStack[$-1].nestedVariable;
-		exp = buildCreateDelegate(exp.location, buildExpReference(np.location, np, np.name), eref);
+		exp = buildNestedReference(exp.location, functionStack[$-1], np, eref);
 
 		return Continue;
 	}
