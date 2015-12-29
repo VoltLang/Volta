@@ -438,6 +438,7 @@ bool overrideFunctionsIfNeeded(LanguagePass lp, ir.Function childFunction, ref i
 			if (parentFunction.type.isProperty && !childFunction.type.isProperty) {
 				throw makeOverriddenNeedsProperty(childFunction);
 			}
+			childFunction.vtableIndex = parentFunction.vtableIndex;
 			parentFunction = childFunction;
 			return true;
 		}
