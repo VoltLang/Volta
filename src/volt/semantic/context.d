@@ -26,6 +26,7 @@ private:
 
 	uint mLength;
 	uint mParentIndex;
+	uint mFunctionDepth;
 	ir.Function[] mFunctionStack;
 	ir.Exp[] mIndexChildren;
 	ir.Exp[] mWithExps;
@@ -82,6 +83,14 @@ public:
 	final @property ir.Function currentFunction()
 	{
 		return mLength == 0 ? null : mFunctionStack[mLength-1];
+	}
+
+	/**
+	 * Returns how many functions deep this context currently is.
+	 */
+	final @property uint functionDepth()
+	{
+		return mFunctionDepth;
 	}
 
 	final @property ir.Exp[] withExps()
@@ -183,6 +192,10 @@ public:
 private:
 	void push(ir.Node n, ir.Scope ctx, ir.Function fn)
 	{
+		if (fn !is null) {
+			mFunctionDepth++;
+		}
+
 		size_t len = mFunctionStack.length;
 		if (mLength + 1 > len) {
 			auto newStack = new ir.Function[](len * 2 + 3);
@@ -200,6 +213,10 @@ private:
 
 	void pop(ir.Node n, ir.Scope ctx, ir.Function fn)
 	{
+		if (fn !is null) {
+			mFunctionDepth--;
+		}
+
 		debug if (mCurrent !is ctx) {
 			auto str = "invalid scope layout should be " ~
 			           ir.getNodeAddressString(n) ~ " is " ~

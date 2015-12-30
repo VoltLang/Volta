@@ -3463,6 +3463,9 @@ public:
 
 	override Status enter(ir.Function fn)
 	{
+		if (ctx.functionDepth >= 2) {
+			throw makeError(fn.location, "nested functions may not have nested functions.");
+		}
 		if (!fn.isResolved) {
 			resolveFunction(ctx, fn);
 		}
