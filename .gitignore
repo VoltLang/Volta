@@ -26,3 +26,4 @@ b.bat
 
 # IDE files
 *.kdev*
+*.gdb_history
