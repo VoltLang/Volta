@@ -821,7 +821,7 @@ Type fromIr(State state, ir.Type irType)
 
 	if (irType.mangledName is null) {
 		auto m = addMangledName(irType);
-		auto str = format("mangledName not set (%s)", m);
+		auto str = format("mangledName not set (%s).", m);
 		warning(irType.location, str);
 	}
 

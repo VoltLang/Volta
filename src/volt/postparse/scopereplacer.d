@@ -55,7 +55,7 @@ class ScopeReplacer : NullVisitor, Pass
 			case Exit:
 				p.scopeExits ~= fn;
 				fn.isLoweredScopeExit = true;
-				warning(ss.location, "scope (exit) only partly supported");
+				warning(ss.location, "scope (exit) only partly supported.");
 				break;
 			case Success:
 				p.scopeSuccesses ~= fn;
@@ -64,7 +64,7 @@ class ScopeReplacer : NullVisitor, Pass
 			case Failure:
 				p.scopeFailures ~= fn;
 				fn.isLoweredScopeFailure = true;
-				warning(ss.location, "scope (failure) not supported");
+				warning(ss.location, "scope (failure) not supported.");
 				break;
 			}
 			bs.statements[i] = fn;
