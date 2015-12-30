@@ -2613,6 +2613,36 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 
 	int defaultCount;
 	foreach (i, _case; ss.cases) {
+		void addExp(ir.Exp e, ref ir.Exp exp, ref size_t sz, ref uint[] intArrayData, ref ulong[] longArrayData)
+		{
+			auto constant = cast(ir.Constant) e;
+			if (constant !is null) {
+				if (sz == 0) {
+					sz = size(ctx.lp, constant.type);
+					assert(sz > 0);
+				}
+				switch (sz) {
+				case 8:
+					longArrayData ~= constant.u._ulong;
+					break;
+				default:
+					intArrayData ~= constant.u._uint;
+					break;
+				}
+				return;
+			}
+			auto cexp = cast(ir.Unary) e;
+			if (cexp !is null) {
+				assert(cexp.op == ir.Unary.Op.Cast);
+				assert(sz == 0);
+				sz = size(ctx.lp, cexp.type);
+				assert(sz == 8);
+				addExp(cexp.value, exp, sz, intArrayData, longArrayData);
+				return;
+			}
+			auto type = getExpType(ctx.lp, exp, ctx.current);
+			throw makeSwitchBadType(ss, type);
+		}
 		void replaceWithHashIfNeeded(ref ir.Exp exp) 
 		{
 			if (exp is null) {
@@ -2640,38 +2670,9 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 				uint[] intArrayData;
 				ulong[] longArrayData;
 				size_t sz;
-				void addExp(ir.Exp e)
-				{
-					auto constant = cast(ir.Constant) e;
-					if (constant !is null) {
-						if (sz == 0) {
-							sz = size(ctx.lp, constant.type);
-							assert(sz > 0);
-						}
-						switch (sz) {
-						case 8:
-							longArrayData ~= constant.u._ulong;
-							break;
-						default:
-							intArrayData ~= constant.u._uint;
-							break;
-						}
-						return;
-					}
-					auto cexp = cast(ir.Unary) e;
-					if (cexp !is null) {
-						assert(cexp.op == ir.Unary.Op.Cast);
-						assert(sz == 0);
-						sz = size(ctx.lp, cexp.type);
-						assert(sz == 8);
-						addExp(cexp.value);
-						return;
-					}
-					auto type = getExpType(ctx.lp, exp, ctx.current);
-					throw makeSwitchBadType(ss, type);
-				}
+
 				foreach (e; alit.values) {
-					addExp(e);
+					addExp(e, exp, sz, intArrayData, longArrayData);
 				}
 				if (sz == 8) {
 					h = hash(cast(ubyte[]) longArrayData);
