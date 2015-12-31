@@ -7,7 +7,7 @@ version (Volt) {
 	struct Perf
 	{
 		void tag(string) {}
-		void print() {}
+		void print(string name) {}
 	}
 
 	static Perf perf;
@@ -36,25 +36,28 @@ struct Perf
 		times[$-1] = MonoTime.currTime;
 	}
 
-	void print()
+	void print(string name)
 	{
-		size_t max;
-		foreach (s; names) {
-			max = s.length > max ? s.length : max;
-		}
+		import std.stdio : File;
+		auto f = File("perf.cvs", "w");
 
-		writefln("%*s            part          total", max + 1, "");
-		long s;
+		f.write("name, total, ");
 		for (size_t i = 1; i < times.length; i++) {
-			auto t = times[i].ticks() - times[i-1].ticks();
-			auto tps = MonoTime.ticksPerSecond() / 100000;
-			t = t / tps;
-			s += t;
-			writefln("%*s: %6s.%02s msec %6s.%02s msec",
-			         max + 1, names[i-1],
-			         t / 100, t % 100,
-			         s / 100, s % 100);
+			f.writef("%s,", names[i-1]);
 		}
+		f.writeln();
+
+		f.writef("%s,", name);
+		ulong tps = MonoTime.ticksPerSecond() / 100000;
+		void write(ulong t) {
+			t = t / tps;
+			f.writef("%s.%02s,", t / 100, t % 100);
+		}
+		write(times[$-1].ticks() - times[0].ticks());
+		for (size_t i = 1; i < times.length; i++) {
+			write(times[i].ticks() - times[i-1].ticks());
+		}
+		f.writeln();
 	}
 }
 

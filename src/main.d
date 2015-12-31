@@ -23,11 +23,16 @@ static bool doPerfPrint;
 
 int main(string[] args)
 {
+	Settings settings;
 	perf.tag("setup");
 	scope (exit) {
 		perf.tag("done");
+		string name = "N/A";
+		if (settings !is null) {
+			name = settings.getOutput(name);
+		}
 		if (doPerfPrint) {
-			perf.print();
+			perf.print(name);
 		}
 	}
 
@@ -36,7 +41,7 @@ int main(string[] args)
 	args = args[1 .. $];
 
 	auto ver = new VersionSet();
-	auto settings = new Settings(getExecDir());
+	settings = new Settings(getExecDir());
 	setDefault(settings);
 
 	if (!handleArgs(getConfigLines(), files, ver, settings)) {

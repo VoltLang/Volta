@@ -234,8 +234,8 @@ ir.Exp buildStructAAKeyCast(Location l, LanguagePass lp, ir.Module thisModule, i
 	sexp.statements ~= outvar;
 
 	// barray.ptr = cast(ubyte*) array.ptr;
-	auto ptrcast = buildCastSmart(l, buildPtrSmart(l, buildUbyte(l)), buildAccess(l, eref(var), "ptr"));
-	auto ptrass = buildAssign(l, buildAccess(l, eref(outvar), "ptr"), ptrcast);
+	auto ptrcast = buildCastSmart(l, buildPtrSmart(l, buildUbyte(l)), buildArrayPtr(l, atype.base, eref(var)));
+	auto ptrass = buildAssign(l, buildArrayPtr(l, oarray.base, eref(outvar)), ptrcast);
 	buildExpStat(l, sexp, ptrass);
 
 	// barray.length = exps.length * typeid(ulong).size;
