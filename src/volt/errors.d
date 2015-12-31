@@ -28,13 +28,13 @@ void warning(Location loc, string message)
 
 CompilerException makeDoNotSpecifyForeachType(Location loc, string varname, string file = __FILE__, const int line  = __LINE__)
 {
-	return new CompilerError(loc, format("foreach variable '%s' has explicit type attached.", varname), file, line);
+	return new CompilerError(loc, format("foreach variables like '%s' may not have explicit type declarations.", varname), file, line);
 }
 
 CompilerException makeNoFieldOrPropOrUFCS(ir.Postfix postfix, string file = __FILE__, const int line=__LINE__)
 {
 	assert(postfix.identifier !is null);
-	return new CompilerError(postfix.location, format("'%s' is not field, property, or UFCS function.", postfix.identifier.value), file, line);
+	return new CompilerError(postfix.location, format("postfix lookups like '%s' must be field, property, or UFCS function.", postfix.identifier.value), file, line);
 }
 
 CompilerException makeAccessThroughWrongType(Location loc, string field, string file = __FILE__, const int line = __LINE__)
@@ -44,7 +44,7 @@ CompilerException makeAccessThroughWrongType(Location loc, string field, string 
 
 CompilerException makeNoFieldOrPropertyOrIsUFCSWithoutCall(Location loc, string value, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(loc, format("'%s' is not a field, or it is not a property, or it is a UFCS function, but has no call.", value), file, line);
+	return new CompilerError(loc, format("postfix lookups like '%s' that are not fields, properties, or UFCS functions must be a call.", value), file, line);
 }
 
 CompilerException makeNoFieldOrPropertyOrUFCS(Location loc, string value, string file = __FILE__, const int line = __LINE__)
@@ -54,17 +54,17 @@ CompilerException makeNoFieldOrPropertyOrUFCS(Location loc, string value, string
 
 CompilerException makeUsedBindFromPrivateImport(Location loc, string bind, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(loc, format("'%s' is a bind from a private import.", bind), file, line);
+	return new CompilerError(loc, format("may not bind from private import, as '%s' does.", bind), file, line);
 }
 
 CompilerException makeOverriddenNeedsProperty(ir.Function f, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(f.location, format("function '%s' is not marked @property, but overrides @property function.", f.name), file, line);
+	return new CompilerError(f.location, format("functions like '%s' that override @property functions must be marked @property themselves.", f.name), file, line);
 }
 
 CompilerException makeBadBuiltin(Location l, ir.Type t, string field, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(l, format("type %s doesn't have built-in field '%s'.", typeString(t), field), file, line);
+	return new CompilerError(l, format("type '%s' doesn't have built-in field '%s'.", typeString(t), field), file, line);
 }
 
 CompilerException makeBadMerge(ir.Alias a, ir.Store s, string file = __FILE__, const int line = __LINE__)
@@ -74,86 +74,86 @@ CompilerException makeBadMerge(ir.Alias a, ir.Store s, string file = __FILE__, c
 
 CompilerException makeScopeOutsideFunction(Location l, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(l, "scope outside of function.", file, line);
+	return new CompilerError(l, "scopes must be inside a function.", file, line);
 }
 
 CompilerException makeCannotDup(Location l, ir.Type type, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(l, format("Cannot duplicate type '%s'.", type.errorString()), file, line);
+	return new CompilerError(l, format("cannot duplicate type '%s'.", type.errorString()), file, line);
 }
 
 CompilerException makeCannotSlice(Location l, ir.Type type, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(l, format("Cannot slice type '%s'.", type.errorString()), file, line);
+	return new CompilerError(l, format("cannot slice type '%s'.", type.errorString()), file, line);
 }
 
 CompilerException makeCallClass(Location loc, ir.Class _class, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(loc, format("Attempted to call class '%s'. Did you forget a new?", _class.name), file, line);
+	return new CompilerError(loc, format("attempted to call class '%s'. Did you forget a new?", _class.name), file, line);
 }
 
 CompilerException makeMixedSignedness(Location loc, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(loc, format("Expression mixes unsigned and signed values."), file, line);
+	return new CompilerError(loc, format("expressions cannot mix signed and unsigned values."), file, line);
 }
 
 CompilerException makeStaticArrayLengthMismatch(Location loc, size_t expectedLength, size_t gotLength, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(loc, format("Expected literal of length %s, got %s.", expectedLength, gotLength), file, line);
+	return new CompilerError(loc, format("expected static array literal of length %s, got a length of %s.", expectedLength, gotLength), file, line);
 }
 
 CompilerException makeDoesNotImplement(Location loc, ir.Class _class, ir._Interface iface, ir.Function fn, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(loc, format("%s does not implement the %s method of interface %s.", _class.name, fn.name, iface.name), file, line);
+	return new CompilerError(loc, format("'%s' does not implement the '%s' method of interface '%s'.", _class.name, fn.name, iface.name), file, line);
 }
 
 CompilerException makeCaseFallsThrough(Location loc, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(loc, "Non empty switch case falls through.", file, line);
+	return new CompilerError(loc, "non-empty switch cases may not fall through.", file, line);
 }
 
 CompilerException makeNoNextCase(Location loc, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(loc, "No case to fall through to.", file, line);
+	return new CompilerError(loc, "case falls through, but there are no subsequent cases.", file, line);
 }
 
 CompilerException makeGotoOutsideOfSwitch(Location loc, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(loc, "goto outside of switch statement.", file, line);
+	return new CompilerError(loc, "goto must be inside a switch statement.", file, line);
 }
 
 CompilerException makeStrayDocComment(Location loc, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(loc, "stray documentation comment.", file, line);
+	return new CompilerError(loc, "documentation comment has nothing to document.", file, line);
 }
 
 CompilerException makeCallingWithoutInstance(Location loc, string file = __FILE__, const int line = __LINE__)
 {
-	auto wi = new CompilerError(loc, "calling instanced function without valid instance.", file, line);
+	auto wi = new CompilerError(loc, "instanced functions must be called with an instance.", file, line);
 	return wi;
 }
 
 CompilerException makeForceLabel(Location loc, ir.Function fun, string file = __FILE__, const int line = __LINE__)
 {
-	auto fl = new CompilerError(loc, format("call to @label function '%s' doesn't label arguments.", fun.name), file, line);
+	auto fl = new CompilerError(loc, format("calls to @label functions like '%s' must label their arguments.", fun.name), file, line);
 	return fl;
 }
 
 CompilerException makeNoEscapeScope(Location loc, string file = __FILE__, const int line = __LINE__)
 {
-	auto es = new CompilerError(loc, "assignment escapes scope type.", file, line);
+	auto es = new CompilerError(loc, "types marked scope may not remove their scope through assignment.", file, line);
 	return es;
 }
 
 CompilerException makeNoReturnScope(Location loc, string file = __FILE__, const int line = __LINE__)
 {
-	auto nrs = new CompilerError(loc, "returning scope type.", file, line);
+	auto nrs = new CompilerError(loc, "types marked scope may not be returned.", file, line);
 	return nrs;
 }
 
 CompilerException makeReturnValueExpected(Location loc, ir.Type type, string file = __FILE__, const int line = __LINE__)
 {
-	string emsg = format("return value of type '%s' expected", type.errorString());
+	string emsg = format("return value of type '%s' expected.", type.errorString());
 	return new CompilerError(loc, emsg, file, line);
 }
 
@@ -161,9 +161,9 @@ CompilerException makeNoLoadBitcodeFile(string filename, string msg, string file
 {
 	string err;
 	if (msg !is null) {
-		err = format("failed to read bitcode file '%s'\n%s", filename, msg);
+		err = format("failed to read bitcode file '%s'.\n%s", filename, msg);
 	} else {
-		err = format("failed to read bitcode file '%s'", filename);
+		err = format("failed to read bitcode file '%s'.", filename);
 	}
 	return new CompilerError(err, file, line);
 }
@@ -172,9 +172,9 @@ CompilerException makeNoWriteBitcodeFile(string filename, string msg, string fil
 {
 	string err;
 	if (msg !is null) {
-		err = format("failed to write object bitcode '%s'\n%s", filename, msg);
+		err = format("failed to write object bitcode '%s'.\n%s", filename, msg);
 	} else {
-		err = format("failed to write object bitcode '%s'", filename);
+		err = format("failed to write object bitcode '%s'.", filename);
 	}
 	return new CompilerError(err, file, line);
 }
@@ -183,9 +183,9 @@ CompilerException makeNoWriteObjectFile(string filename, string msg, string file
 {
 	string err;
 	if (msg !is null) {
-		err = format("failed to write object file '%s'\n%s", filename, msg);
+		err = format("failed to write object file '%s'.\n%s", filename, msg);
 	} else {
-		err = format("failed to write object file '%s'", filename);
+		err = format("failed to write object file '%s'.", filename);
 	}
 	return new CompilerError(err, file, line);
 }
@@ -194,9 +194,9 @@ CompilerException makeNoLinkModule(string filename, string msg, string file = __
 {
 	string err;
 	if (msg !is null) {
-		err = format("failed to link in module '%s'\n%s", filename, msg);
+		err = format("failed to link in module '%s'.\n%s", filename, msg);
 	} else {
-		err = format("failed to link in module '%s'", filename);
+		err = format("failed to link in module '%s'.", filename);
 	}
 	return new CompilerError(err, file, line);
 }
@@ -210,13 +210,13 @@ CompilerException makeUnmatchedLabel(Location loc, string label, string file = _
 
 CompilerException makeDollarOutsideOfIndex(ir.Constant constant, string file = __FILE__, const int line = __LINE__)
 {
-	auto doi = new CompilerError(constant.location, "'$' outside of index expression.", file, line);
+	auto doi = new CompilerError(constant.location, "'$' may only appear in an index expression.", file, line);
 	return doi;
 }
 
 CompilerException makeBreakOutOfLoop(Location loc, string file = __FILE__, const int line = __LINE__)
 {
-	auto e = new CompilerError(loc, "break outside of loop or switch.", file, line);
+	auto e = new CompilerError(loc, "break may only appear in a loop or switch.", file, line);
 	return e;
 }
 
@@ -228,13 +228,13 @@ CompilerException makeAggregateDoesNotDefineOverload(Location loc, ir.Aggregate 
 
 CompilerException makeBadWithType(Location loc, string file = __FILE__, const int line = __LINE__)
 {
-	auto e = new CompilerError(loc, "bad expression type for with statement.", file, line);
+	auto e = new CompilerError(loc, "with statement cannot use given expression.", file, line);
 	return e;
 }
 
 CompilerException makeForeachReverseOverAA(ir.ForeachStatement fes, string file = __FILE__, const int line = __LINE__)
 {
-	auto e = new CompilerError(fes.location, "foreach_reverse over associative array.", file, line);
+	auto e = new CompilerError(fes.location, "foreach_reverse cannot be used with an associative array.", file, line);
 	return e;
 }
 
@@ -266,7 +266,7 @@ CompilerException makeNoValidFunction(Location loc, string fname, ir.Type[] args
 
 CompilerException makeCVaArgsOnlyOperateOnSimpleTypes(Location loc, string file = __FILE__, const int line = __LINE__)
 {
-	auto e = new CompilerError(loc, "C varargs only supports retrieving simple types, due to an LLVM limitation.", file, line);
+	auto e = new CompilerError(loc, "C varargs only support retrieving simple types, due to an LLVM limitation.", file, line);
 	return e;
 }
 
@@ -318,23 +318,23 @@ CompilerException makeSwitchDuplicateCase(ir.Node node, string file = __FILE__, 
 
 CompilerException makeFinalSwitchBadCoverage(ir.Node node, string file = __FILE__, const int line = __LINE__)
 {
-	auto e = new CompilerError(node.location, "final switch statement doesn't cover all enum members.", file, line);
+	auto e = new CompilerError(node.location, "final switch statement must cover all enum members.", file, line);
 	return e;
 }
 
 CompilerException makeArchNotSupported(string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError("arch not supported on current platform.", file, line);
+	return new CompilerError("architecture not supported on current platform.", file, line);
 }
 
 CompilerException makeNotTaggedOut(ir.Exp exp, size_t i, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(exp.location, format("argument (no. %s) is not tagged as out.", i+1), file, line);
+	return new CompilerError(exp.location, format("arguments to out parameters (like no. %s) must be tagged as out.", i+1), file, line);
 }
 
 CompilerException makeNotTaggedRef(ir.Exp exp, size_t i, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(exp.location, format("argument (no. %s) is not tagged as ref.", i+1), file, line);
+	return new CompilerError(exp.location, format("arguments to ref parameters (like no. %s) must be tagged as ref.", i+1), file, line);
 }
 
 CompilerException makeFunctionNameOutsideOfFunction(ir.TokenExp fexp, string file = __FILE__, const int line = __LINE__)
@@ -375,22 +375,22 @@ CompilerException makeCallingStaticThroughInstance(ir.Node node, ir.Function fn,
 
 CompilerException makeMarkedOverrideDoesNotOverride(ir.Node node, ir.Function fn, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(node.location, format("function '%s' is marked as override but does not override any functions.", fn.name), file, line);
+	return new CompilerError(node.location, format("override functions like '%s' must override a function.", fn.name), file, line);
 }
 
 CompilerException makeAbstractHasToBeMember(ir.Node node, ir.Function fn, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(node.location, format("function '%s' is marked as abstract but is not a member of an abstract class.", fn.name), file, line);
+	return new CompilerError(node.location, format("abstract functions like '%s' must be a member of an abstract class.", fn.name), file, line);
 }
 
 CompilerException makeAbstractBodyNotEmpty(ir.Node node, ir.Function fn, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(node.location, format("function '%s' is marked as abstract but it has an implementation.", fn.name), file, line);
+	return new CompilerError(node.location, format("abstract functions like '%s' may not have an implementation.", fn.name), file, line);
 }
 
 CompilerException makeNewAbstract(ir.Node node, ir.Class _class, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(node.location, format("cannot create instance of abstract class '%s'.", _class.name), file, line);
+	return new CompilerError(node.location, format("abstract classes like '%s' may not be instantiated.", _class.name), file, line);
 }
 
 CompilerException makeBadAbstract(ir.Node node, ir.Attribute attr, string file = __FILE__, const int line = __LINE__)
@@ -415,17 +415,17 @@ CompilerException makeShadowsDeclaration(ir.Node a, ir.Node b, string file = __F
 
 CompilerException makeMultipleDefaults(Location location, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(location, "multiple default cases defined.", file, line);
+	return new CompilerError(location, "switches may not have multiple default cases.", file, line);
 }
 
 CompilerException makeFinalSwitchWithDefault(Location location, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(location, "final switch with default case.", file, line);
+	return new CompilerError(location, "final switches may not define a default case.", file, line);
 }
 
 CompilerException makeNoDefaultCase(Location location, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(location, "no default case.", file, line);
+	return new CompilerError(location, "switches must have a default case.", file, line);
 }
 
 CompilerException makeTryWithoutCatch(Location location, string file = __FILE__, const int line = __LINE__)
@@ -435,7 +435,7 @@ CompilerException makeTryWithoutCatch(Location location, string file = __FILE__,
 
 CompilerException makeMultipleOutBlocks(Location location, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(location, "multiple in blocks specified for single function.", file, line);
+	return new CompilerError(location, "a function may only have one in block defined.", file, line);
 }
 
 CompilerException makeNeedOverride(ir.Function overrider, ir.Function overridee, string file = __FILE__, const int line = __LINE__)
@@ -446,24 +446,24 @@ CompilerException makeNeedOverride(ir.Function overrider, ir.Function overridee,
 
 CompilerException makeThrowOnlyThrowable(ir.Exp exp, ir.Type type, string file = __FILE__, const int line = __LINE__)
 {
-	string emsg = format("can not throw expression of type '%s'", type.errorString());
+	string emsg = format("only types that inherit from object.Throwable may be thrown, not '%s'.", type.errorString());
 	return new CompilerError(exp.location, emsg, file, line);
 }
 
 CompilerException makeThrowNoInherits(ir.Exp exp, ir.Class clazz, string file = __FILE__, const int line = __LINE__)
 {
-	string emsg = format("can not throw class of type '%s' as it does not inherit from object.Throwable", clazz.errorString());
+	string emsg = format("only types that inherit from object.Throwable may be thrown, not class '%s'.", clazz.errorString());
 	return new CompilerError(exp.location, emsg, file, line);
 }
 
 CompilerException makeInvalidAAKey(ir.AAType aa, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(aa.location, format("'%s' is an invalid AA key", aa.key.errorString()), file, line);
+	return new CompilerError(aa.location, format("'%s' is an invalid AA key.", aa.key.errorString()), file, line);
 }
 
 CompilerException makeBadAAAssign(Location location, string file = __FILE__, const int line = __LINE__)
 {
-    return new CompilerError(location, "assigning AA's to each other is not allowed due to semantic inconsistencies.", file, line);
+    return new CompilerError(location, "may not assign associate arrays to prevent semantic inconsistencies.", file, line);
 }
 
 CompilerException makeBadAANullAssign(Location location, string file = __FILE__, const int line = __LINE__)
@@ -492,7 +492,7 @@ CompilerException makeError(Location location, string s, string file = __FILE__,
 
 CompilerException makeUnsupported(Location location, string feature, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(location, format("unsupported feature, '%s'", feature), file, line);
+	return new CompilerError(location, format("unsupported feature '%s'.", feature), file, line);
 }
 
 CompilerException makeExpected(ir.Node node, string s, string file = __FILE__, const int line = __LINE__)
@@ -536,7 +536,7 @@ CompilerException makeExpectedContext(ir.Node node, ir.Node node2, string file =
 
 CompilerException makeBadImplicitCast(ir.Node node, ir.Type from, ir.Type to, string file = __FILE__, const int line = __LINE__)
 {
-	string emsg = format("cannot implicitly convert %s to %s.", typeString(from), typeString(to));
+	string emsg = format("cannot implicitly convert '%s' to '%s'.", typeString(from), typeString(to));
 	return new CompilerError(node.location, emsg, file, line);
 }
 
@@ -557,7 +557,7 @@ CompilerException makeTypeIsNot(ir.Node node, ir.Type from, ir.Type to, string f
 
 CompilerException makeInvalidType(ir.Node node, ir.Type type, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(node.location, format("bad type '%s'", type.errorString()), file, line);
+	return new CompilerError(node.location, format("bad type '%s'.", type.errorString()), file, line);
 }
 
 CompilerException makeInvalidUseOfStore(ir.Node node, ir.Store store, string file = __FILE__, const int line = __LINE__)
@@ -581,7 +581,7 @@ CompilerException makeWithCreatesAmbiguity(Location loc, string file = __FILE__,
 
 CompilerException makeInvalidThis(ir.Node node, ir.Type was, ir.Type expected, string member, string file = __FILE__, const int line = __LINE__)
 {
-	string emsg = format("'this' is of type '%s' expected '%s' to access member '%s'", was.errorString(), expected.errorString(), member);
+	string emsg = format("'this' is of type '%s' expected '%s' to access member '%s'.", was.errorString(), expected.errorString(), member);
 	return new CompilerError(node.location, emsg, file, line);
 }
 
@@ -606,7 +606,7 @@ CompilerException makeNotMember(ir.Node node, ir.Type aggregate, string member, 
 
 CompilerException makeNotMember(Location location, string aggregate, string member, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(location, format("%s has no member '%s'", aggregate, member), file, line);
+	return new CompilerError(location, format("'%s' has no member '%s'.", aggregate, member), file, line);
 }
 
 CompilerException makeFailedLookup(ir.Node node, string lookup, string file = __FILE__, const int line = __LINE__)
@@ -616,12 +616,12 @@ CompilerException makeFailedLookup(ir.Node node, string lookup, string file = __
 
 CompilerException makeFailedLookup(Location location, string lookup, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(location, format("unidentified identifier '%s'", lookup), file, line);
+	return new CompilerError(location, format("unidentified identifier '%s'.", lookup), file, line);
 }
 
 CompilerException makeNonTopLevelImport(Location location, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(location, "Imports only allowed in top scope", file, line);
+	return new CompilerError(location, "imports must occur in the top scope.", file, line);
 }
 
 /*
@@ -649,7 +649,7 @@ CompilerException makeCannotDisambiguate(ir.Node node, ir.Function[] functions, 
 
 CompilerException makeCannotDisambiguate(Location location, ir.Function[] functions, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(location, format("no %s function (of %s possible) matches arguments.", functions[0].name, functions.length), file, line);
+	return new CompilerError(location, format("no '%s' function (of %s possible) matches arguments.", functions[0].name, functions.length), file, line);
 }
 
 CompilerException makeCannotInfer(ir.Location location, string file = __FILE__, const int line = __LINE__)
@@ -659,7 +659,7 @@ CompilerException makeCannotInfer(ir.Location location, string file = __FILE__, 
 
 CompilerException makeCannotLoadDynamic(ir.Node node, ir.Function fn, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(node.location, "can not @loadDynamic function with body", file, line);
+	return new CompilerError(node.location, "@loadDynamic function cannot have body.", file, line);
 }
 
 CompilerException makeMultipleFunctionsMatch(ir.Location location, ir.Function[] functions, string file = __FILE__, const int line = __LINE__)
@@ -677,7 +677,7 @@ CompilerException makeMultipleFunctionsMatch(ir.Location location, ir.Function[]
 
 CompilerException panicOhGod(ir.Node node, string file = __FILE__, const int line = __LINE__)
 {
-	return panic(node.location, "Oh god.", file, line);
+	return panic(node.location, "oh god.", file, line);
 }
 
 CompilerException panic(ir.Node node, string msg, string file = __FILE__, const int line = __LINE__)
@@ -707,25 +707,25 @@ CompilerException panicUnhandled(ir.Node node, string unhandled, string file = _
 
 CompilerException panicUnhandled(Location location, string unhandled, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerPanic(location, format("unhandled case '%s'", unhandled), file, line);
+	return new CompilerPanic(location, format("unhandled case '%s'.", unhandled), file, line);
 }
 
 CompilerException panicNotMember(ir.Node node, string aggregate, string field, string file = __FILE__, const int line = __LINE__)
 {
-	auto str = format("no field name '%s' in aggregate '%s' '%s'",
+	auto str = format("no field name '%s' in aggregate '%s' '%s'.",
 	                  field, aggregate, ir.nodeToString(node));
 	return new CompilerPanic(node.location, str, file, line);
 }
 
 CompilerException panicExpected(ir.Location location, string msg, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerPanic(location, format("expected %s", msg), file, line);
+	return new CompilerPanic(location, format("expected %s.", msg), file, line);
 }
 
 void panicAssert(ir.Node node, bool condition, string file = __FILE__, const int line = __LINE__)
 {
 	if (!condition) {
-		throw panic(node.location, "assertion failure", file, line);
+		throw panic(node.location, "assertion failure.", file, line);
 	}
 }
 
