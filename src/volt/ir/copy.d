@@ -554,6 +554,7 @@ ir.Node copyNode(ir.Node n)
 	case FunctionSet:
 	case FunctionSetType:
 	case VaArgExp:
+	case BuiltinExp:
 		goto case Invalid;
 	}
 	version (Volt) assert(false); // ???

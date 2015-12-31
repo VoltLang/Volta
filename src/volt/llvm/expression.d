@@ -71,6 +71,10 @@ void getValueAnyForm(State state, ir.Exp exp, Value result)
 		auto ve = cast(ir.VaArgExp)exp;
 		handleVaArgExp(state, ve, result);
 		break;
+	case BuiltinExp:
+		auto ie = cast(ir.BuiltinExp)exp;
+		handleBuiltinExp(state, ie, result);
+		break;
 	default:
 		throw panicUnhandled(exp, ir.nodeToString(exp));
 	}
@@ -1291,6 +1295,29 @@ void handleVaArgExp(State state, ir.VaArgExp vaexp, Value result)
 	state.getValueAnyForm(vaexp.arg, result);
 	auto ty = fromIr(state, vaexp.type);
 	result.value = LLVMBuildVAArg(state.builder, result.value, ty.llvmType, "");
+}
+
+void handleBuiltinExp(State state, ir.BuiltinExp inbuilt, Value result)
+{
+	switch (inbuilt.kind) with (ir.BuiltinExp.Kind) {
+	case ArrayPtr:
+		assert(inbuilt.children.length == 1);
+		state.getValueAnyForm(inbuilt.children[0], result);
+		auto at = cast(ArrayType)result.type;
+		auto sat = cast(StaticArrayType)result.type;
+
+		if (at !is null) {
+			getFieldFromAggregate(
+				state, inbuilt.location, result,
+				ArrayType.ptrIndex,
+				at.types[ArrayType.ptrIndex], result);
+		} else if (sat !is null) {
+			getPointerFromStaticArray(state, inbuilt.location, result);
+		}
+		break;
+	default:
+		throw panic(inbuilt, "unhandled");
+	}
 }
 
 void handleStatementExp(State state, ir.StatementExp statExp, Value result)

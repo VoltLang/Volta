@@ -670,7 +670,8 @@ ir.Constant buildConstantString(Location loc, string val, bool escape = true)
  */
 ir.Exp buildConstantCString(Location loc, string val, bool escape = true)
 {
-	return buildAccess(loc, buildConstantString(loc, val, escape), "ptr");
+	return buildArrayPtr(loc, buildChar(loc),
+	                     buildConstantString(loc, val, escape));
 }
 
 /**
@@ -800,6 +801,20 @@ ir.Typeid buildTypeidSmart(Location loc, ir.Type type)
 	t.location = loc;
 	t.type = copyTypeSmart(loc, type);
 	return t;
+}
+
+/**
+ *
+ *
+ */
+ir.BuiltinExp buildArrayPtr(Location loc, ir.Type base, ir.Exp child)
+{
+	auto ptr = buildPtr(loc, base);
+	auto builtin = new ir.BuiltinExp(
+		ir.BuiltinExp.Kind.ArrayPtr, ptr, [child]);
+	builtin.location = loc;
+
+	return builtin;
 }
 
 /**

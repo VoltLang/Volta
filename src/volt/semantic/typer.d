@@ -133,6 +133,9 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 	case PropertyExp:
 		auto prop = cast(ir.PropertyExp) exp;
 		return getPropertyExpType(lp, prop, currentScope);
+	case BuiltinExp:
+		auto inbuilt = cast(ir.BuiltinExp) exp;
+		return inbuilt.type;
 	default:
 		throw panicUnhandled(exp, ir.nodeToString(exp));
 	}

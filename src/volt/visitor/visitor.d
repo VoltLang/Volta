@@ -194,6 +194,8 @@ public abstract:
 	Visitor.Status leave(ref ir.Exp, ir.VaArgExp);
 	Visitor.Status enter(ref ir.Exp, ir.PropertyExp);
 	Visitor.Status leave(ref ir.Exp, ir.PropertyExp);
+	Visitor.Status enter(ref ir.Exp, ir.BuiltinExp);
+	Visitor.Status leave(ref ir.Exp, ir.BuiltinExp);
 
 	Visitor.Status visit(ref ir.Exp, ir.IdentifierExp);
 	Visitor.Status visit(ref ir.Exp, ir.ExpReference);
@@ -377,6 +379,8 @@ override:
 	Status leave(ref ir.Exp, ir.VaArgExp){ return Continue; }
 	Status enter(ref ir.Exp, ir.PropertyExp){ return Continue; }
 	Status leave(ref ir.Exp, ir.PropertyExp){ return Continue; }
+	Status enter(ref ir.Exp, ir.BuiltinExp){ return Continue; }
+	Status leave(ref ir.Exp, ir.BuiltinExp){ return Continue; }
 
 	Status visit(ref ir.Exp, ir.ExpReference){ return Continue; }
 	Status visit(ref ir.Exp, ir.IdentifierExp){ return Continue; }
@@ -514,6 +518,7 @@ body {
 	case TokenExp:
 	case VaArgExp:
 	case PropertyExp:
+	case BuiltinExp:
 		throw panic(n.location, "can not visit expressions");
 
 	/*
@@ -703,6 +708,8 @@ Visitor.Status acceptExp(ref ir.Exp exp, Visitor av)
 		return acceptVaArgExp(exp, cast(ir.VaArgExp)exp, av);
 	case PropertyExp:
 		return acceptPropertyExp(exp, cast(ir.PropertyExp)exp, av);
+	case BuiltinExp:
+		return acceptBuiltinExp(exp, cast(ir.BuiltinExp)exp, av);
 	default:
 		throw panicUnhandled(exp, ir.nodeToString(exp));
 	}
@@ -2272,6 +2279,25 @@ Visitor.Status acceptPropertyExp(ref ir.Exp exp, ir.PropertyExp prop, Visitor av
 	}
 
 	return av.leave(exp, prop);
+}
+
+Visitor.Status acceptBuiltinExp(ref ir.Exp exp, ir.BuiltinExp inbuilt, Visitor av)
+{
+	auto status = av.enter(exp, inbuilt);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	foreach (ref child; inbuilt.children) {
+		status = acceptExp(child, av);
+		if (status == VisitorContinueParent) {
+			continue;
+		} else if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	return av.leave(exp, inbuilt);
 }
 
 Visitor.Status acceptExpReference(ref ir.Exp exp, ir.ExpReference expref, Visitor av)

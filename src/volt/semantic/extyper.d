@@ -542,7 +542,8 @@ void extypePass(Context ctx, ref ir.Exp exp, ir.Type type)
 	// string literals implicitly convert to typeof(string.ptr)
 	auto constant = cast(ir.Constant) exp;
 	if (ptr !is null && constant !is null && constant._string.length != 0) {
-		exp = buildAccess(exp.location, exp, "ptr");
+		auto a = cast(ir.ArrayType) constant.type;
+		exp = buildArrayPtr(exp.location, a.base, exp);
 	}
 	extypeAssign(ctx, exp, type);
 }
@@ -946,7 +947,8 @@ private void rewriteVaStartAndEnd(Context ctx, ir.Function fn,
 		postfix.arguments[0] = buildAddrOf(postfix.arguments[0]);
 		if (fn is ctx.lp.vaStartFunc) {
 			assert(ctx.currentFunction.params[$-1].name == "_args");
-			postfix.arguments ~= buildAccess(postfix.location, buildExpReference(postfix.location, ctx.currentFunction.params[$-1], "_args"), "ptr");
+			auto eref = buildExpReference(postfix.location, ctx.currentFunction.params[$-1], "_args");
+			postfix.arguments ~= buildArrayPtr(postfix.location, buildVoid(postfix.location), eref);
 		}
 		if (ctx.currentFunction.type.linkage == ir.Linkage.Volt) {
 			if (fn is ctx.lp.vaStartFunc) {
@@ -1512,6 +1514,24 @@ void postfixIdentifierUFCS(Context ctx, ref ir.Exp exp,
 	call.argumentTags = theTag ~ call.argumentTags;
 }
 
+bool builtInField(Context ctx, ref ir.Exp exp, ir.Exp child, ir.Type type, string field)
+{
+	auto array = cast(ir.ArrayType) type;
+	auto sarray = cast(ir.StaticArrayType) type;
+	if (sarray is null && array is null) {
+		return false;
+	}
+	switch (field) {
+	case "ptr":
+		auto base = array is null ? sarray.base : array.base;
+		assert(base !is null);
+		exp = buildArrayPtr(base.location, base, child);
+		return true;
+	default:
+		return false;
+	}
+}
+
 bool builtInField(ir.Type type, string field)
 {
 	auto aa = cast(ir.AAType) type;
@@ -1610,6 +1630,9 @@ bool postfixIdentifier(Context ctx, ref ir.Exp exp,
 	ir.Type type = realType(oldType, false, false);
 	assert(type !is null);
 	assert(type.nodeType != ir.NodeType.FunctionSetType);
+	if (builtInField(ctx, exp, postfix.child, type, field)) {
+		return true;
+	}
 	if (builtInField(type, field)) {
 		return false;
 	}
@@ -2602,7 +2625,7 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 		auto l = ss.location;
 		auto asArray = cast(ir.ArrayType) conditionType;
 		assert(asArray !is null);
-		ir.Exp ptr = buildCastSmart(buildVoidPtr(l), buildAccess(l, copyExp(ss.condition), "ptr"));
+		ir.Exp ptr = buildCastSmart(buildVoidPtr(l), buildArrayPtr(l, asArray.base, ss.condition));
 		ir.Exp length = buildBinOp(l, ir.BinOp.Op.Mul, buildAccess(l, copyExp(ss.condition), "length"),
 				buildAccess(l, buildTypeidSmart(l, asArray.base), "size"));
 		ss.condition = buildCall(ss.condition.location, ctx.lp.hashFunc, [ptr, length]);

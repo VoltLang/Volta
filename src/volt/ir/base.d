@@ -129,6 +129,7 @@ enum NodeType
 	TokenExp,
 	VaArgExp,
 	PropertyExp,
+	BuiltinExp,
 }
 
 /**
@@ -385,6 +386,7 @@ string nodeToString(NodeType nodeType)
 	case VaArgExp: return "VaArgExp";
 	case PropertyExp: return "PropertyExp";
 	case AutoType: return "AutoType";
+	case BuiltinExp: return "BuiltinExp";
 	}
 }
 

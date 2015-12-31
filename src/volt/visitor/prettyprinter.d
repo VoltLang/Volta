@@ -1853,6 +1853,25 @@ public:
 		assert(false);
 	}
 
+	override Status enter(ref ir.Exp exp, ir.BuiltinExp inbuilt)
+	{
+		wf("<inbuilt>(");
+		auto arr = inbuilt.children;
+		foreach (i, ref c; arr) {
+			acceptExp(c, this);
+			if (i < arr.length - 1) {
+				wf(", ");
+			}
+		}
+		wf(")");
+		return ContinueParent;
+	}
+
+	override Status leave(ref ir.Exp, ir.BuiltinExp)
+	{
+		assert(false);
+	}
+
 	override Status enter(ref ir.Exp, ir.Typeid ti)
 	{
 		wf("typeid(");

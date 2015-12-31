@@ -676,3 +676,36 @@ public:
 	this() { super(NodeType.VaArgExp); }
 }
 
+/**
+ * Representing a expression that is working on inbuilt types.
+ *
+ * A lot of code assumes that this class not be subclassed,
+ * do not remove the final it.
+ */
+final class BuiltinExp : Exp
+{
+public:
+	enum Kind
+	{
+		Invalid,     ///< Invalid.
+		ArrayPtr,    ///< arr.ptr
+	}
+
+	Kind kind; ///< What kind of inbluilt is this.
+	Type type; ///< The type of this exp, helps keeping the typer simple.
+
+	Exp[] children; ///< Common child exp.
+
+public:
+	this(Kind kind, Type type, Exp[] children)
+	out {
+		assert(this.kind != Kind.Invalid);
+		assert(this.type !is null);
+	}
+	body {
+		super(NodeType.BuiltinExp);
+		this.kind = kind;
+		this.type = type;
+		this.children = children;
+	}
+}
