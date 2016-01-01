@@ -1202,7 +1202,7 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, LanguagePass lp,
 				continue;
 			}
 			if (i == 0 && fes.itervars.length > 1) {
-				throw makeError(fes.location, "cannot mark index as ref.");
+				throw makeForeachIndexRef(fes.location);
 			}
 			auto nr = new ExpReferenceReplacer(ivar, elementVar.assign);
 			accept(fs.block, nr);

@@ -145,7 +145,7 @@ void handleConstCast(State state, ir.Unary asUnary, Value result)
 		}
 	}
 
-	throw makeError(asUnary.location, "not a handle cast type");
+	throw makeError(asUnary.location, "not a handle cast type.");
 }
 
 void handleConstExpReference(State state, ir.ExpReference expRef, Value result)

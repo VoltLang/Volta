@@ -1469,14 +1469,14 @@ void postfixIdentifierUFCS(Context ctx, ref ir.Exp exp,
 	bool isProp;
 	foreach (fn; store.functions) {
 		if (isProp && !fn.type.isProperty) {
-			throw makeError(postfix, "concidering both regular and property functions");
+			throw makeError(postfix, format("functions for lookup '%s' match UFCS *and* @property functions.", postfix.identifier.value));
 		}
 
 		isProp = fn.type.isProperty;
 	}
 
 	if (isProp) {
-		throw makeError(postfix, "concidering property functions for UFCS which is not supported");
+		throw makeError(postfix, "an @property function may not be used for UFCS.");
 	}
 
 	// This is here to so that it errors
@@ -1593,7 +1593,7 @@ bool rewriteIfPropertyStore(ref ir.Exp exp, ir.Exp child, string name,
 	assert(!isAssign || (cast(ir.BinOp) parent).left is exp);
 
 	if (!isAssign && getFn is null) {
-		throw makeError(exp.location, "no zero argument property found.");
+		throw makeError(exp.location, "no zero argument properties found.");
 	}
 
 	exp = buildProperty(exp.location, name, child, getFn, setFns);
@@ -1719,7 +1719,7 @@ bool postfixIdentifier(Context ctx, ref ir.Exp exp,
 		if (members != store.functions.length) {
 			if (members) {
 				// @TODO Not a real error.
-				throw makeError(postfix, "mixing static and member functions");
+				throw makeError(postfix, "mixing static and member functions.");
 			} else {
 				//throw makeCanNotLookupStaticVia
 				throw makeError(postfix.location, "looking up '" ~ field ~ "' static function via instance.");
@@ -1744,7 +1744,7 @@ bool postfixIdentifier(Context ctx, ref ir.Exp exp,
 
 		if (store.functions.length > 1) {
 			//throw makeCanNotPickMemberfunction
-			throw makeError(postfix.location, "cannot select member function '" ~ field ~ "'");
+			throw makeError(postfix.location, "cannot select member function '" ~ field ~ "'.");
 		} else if (store.functions[0].kind != ir.Function.Kind.Member) {
 			//throw makeCanNotLookupStaticVia
 			throw makeError(postfix.location, "looking up '" ~ field ~ "' static function via instance.");
@@ -2442,7 +2442,7 @@ void extypeTernary(Context ctx, ir.Ternary ternary)
 void extypeStructLiteral(Context ctx, ir.StructLiteral sl)
 {
 	if (sl.type is null) {
-		throw makeError(sl, "can't deduce type of struct literal");
+		throw makeError(sl, "can't deduce type of struct literal.");
 	}
 
 	auto asStruct = cast(ir.Struct) realType(sl.type);
@@ -2451,7 +2451,7 @@ void extypeStructLiteral(Context ctx, ir.StructLiteral sl)
 
 	// @TODO fill out with T.init
 	if (types.length != sl.exps.length) {
-		throw makeError(sl, "wrong number of arguments to struct literal");
+		throw makeError(sl, "wrong number of arguments to struct literal.");
 	}
 
 	foreach (i, ref sexp; sl.exps) {

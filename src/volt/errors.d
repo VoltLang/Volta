@@ -26,6 +26,11 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeForeachIndexRef(Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, "may not mark a foreach index as ref.", file, line);
+}
+
 CompilerException makeDoNotSpecifyForeachType(Location loc, string varname, string file = __FILE__, const int line  = __LINE__)
 {
 	return new CompilerError(loc, format("foreach variables like '%s' may not have explicit type declarations.", varname), file, line);
