@@ -59,11 +59,9 @@ void rewriteThis(Context ctx, ref ir.Exp e, ir.IdentifierExp ident, ir.Postfix p
 	assert(ident.value == "this");
 	assert(p is null || ident is p.child);
 
-	auto thisVar = getThisVar(ident.location, ctx.lp, ctx.current);
-	if (thisVar is null) {
-		throw makeExpectedContext(ident, null);
-	}
-	auto thisRef = getThisReference(ident.location, ctx, thisVar);
+	ir.Variable thisVar;
+	auto thisRef = getThisReferenceNotNull(ident, ctx, thisVar);
+	assert(thisVar !is null);
 
 	auto op = p !is null ? p.op : ir.Postfix.Op.Identifier;
 
@@ -92,7 +90,7 @@ void rewriteThisCall(Context ctx, ir.IdentifierExp ident, ir.Postfix p,
 	p.child = buildCreateDelegate(ident.location, thisRef, setRef);
 }
 
-void rewriteSuper(LanguagePass lp, ir.Scope _scope, ir.IdentifierExp ident, ir.Postfix p)
+void rewriteSuper(Context ctx, ir.IdentifierExp ident, ir.Postfix p)
 {
 	assert(ident !is null);
 	assert(ident.value == "super");
@@ -104,9 +102,13 @@ void rewriteSuper(LanguagePass lp, ir.Scope _scope, ir.IdentifierExp ident, ir.P
 
 	ir.Scope dummyScope;
 	ir.Class _class;
-	if (!getFirstClass(_scope, dummyScope, _class)) {
+	if (!getFirstClass(ctx.current, dummyScope, _class)) {
 		throw makeExpectedContext(ident, null);
 	}
+	// TODO check for nested function, and dissallow.
+	// if (<check for nested function>) {
+	// 	throw makeNoSuperInNested(ident);
+	// }
 
 	// This is super, get the parent class.
 	_class = _class.parentClass;
@@ -114,35 +116,36 @@ void rewriteSuper(LanguagePass lp, ir.Scope _scope, ir.IdentifierExp ident, ir.P
 
 	switch (p.op) with (ir.Postfix.Op) {
 	case Call:
-		return rewriteSuperCall(lp, _scope, ident, p, _class);
+		return rewriteSuperCall(ctx, ident, p, _class);
 	case Identifier:
-		return rewriteSuperIdentifier(lp, _scope, ident, p, _class);
+		return rewriteSuperIdentifier(ctx, ident, p, _class);
 	default:
 		throw makeFailedLookup(p, "super");
 	}
 }
 
-void rewriteSuperIdentifier(LanguagePass lp, ir.Scope _scope, ir.IdentifierExp ident, ir.Postfix p, ir.Class _class)
+void rewriteSuperIdentifier(Context ctx, ir.IdentifierExp ident, ir.Postfix p, ir.Class _class)
 {
 	assert(p.op == ir.Postfix.Op.Identifier);
 
-	auto thisVar = getThisVar(ident.location, lp, _scope);
+	auto thisVar = getThisVarNotNull(ident, ctx);
 	auto eref = buildExpReference(p.location, thisVar, "this");
 	p.child = buildCastSmart(ident.location, _class, eref);
 	p.hackSuperLookup = true;
 }
 
-void rewriteSuperCall(LanguagePass lp, ir.Scope _scope, ir.IdentifierExp ident, ir.Postfix p, ir.Class _class)
+void rewriteSuperCall(Context ctx, ir.IdentifierExp ident, ir.Postfix p, ir.Class _class)
 {
 	assert(p.op == ir.Postfix.Op.Call);
 
-	auto asFunction = getParentFunction(_scope);
+	// TODO better function?
+	auto asFunction = getParentFunction(ctx.current);
 	if (asFunction is null) {
 		throw makeExpectedContext(p, asFunction);
 	}
 	asFunction.explicitCallToSuper = true;
 
-	auto thisVar = getThisVar(ident.location, lp, _scope);
+	auto thisVar = getThisVarNotNull(ident, ctx);
 	auto thisRef = buildExpReference(ident.location, thisVar, "this");
 
 	auto set = buildSet(ident.location, _class.userConstructors);

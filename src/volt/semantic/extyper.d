@@ -594,7 +594,7 @@ void extypeIdentifierExp(Context ctx, ref ir.Exp e, ir.IdentifierExp i, ir.Exp p
 	case "this":
 		return rewriteThis(ctx, e, i, cast(ir.Postfix) parent);
 	case "super":
-		return rewriteSuper(ctx.lp, ctx.current, i, cast(ir.Postfix) parent);
+		return rewriteSuper(ctx, i, cast(ir.Postfix) parent);
 	default:
 	}
 
@@ -669,7 +669,7 @@ void extypeIdentifierExp(Context ctx, ref ir.Exp e, ir.IdentifierExp i, ir.Exp p
 			}
 
 			ir.Variable var;
-			prop.child = getThisReference(i.location, ctx, var);
+			prop.child = getThisReferenceNotNull(i, ctx, var);
 			return;
 		}
 
@@ -1213,7 +1213,7 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 
 	if (thisCall) {
 		// Explicit constructor call.
-		auto tvar = getThisVar(postfix.location, ctx.lp, ctx.current);
+		auto tvar = getThisVarNotNull(postfix, ctx);
 		auto tref = buildExpReference(postfix.location, tvar, "this");
 		postfix.arguments = buildCastToVoidPtr(postfix.location, tref) ~ postfix.arguments;
 	}
@@ -1264,7 +1264,7 @@ void replaceExpReferenceIfNeeded(Context ctx, ref ir.Exp exp, ir.ExpReference eR
 
 	ir.Exp thisRef;
 	ir.Variable thisVar;
-	thisRef = getThisReference(eRef.location, ctx, thisVar);
+	thisRef = getThisReferenceNotNull(eRef, ctx, thisVar);
 	assert(thisRef !is null && thisVar !is null);
 
 	auto tr = cast(ir.TypeReference) thisVar.type;

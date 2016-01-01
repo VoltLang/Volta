@@ -191,42 +191,62 @@ void handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
 	}
 }
 
-ir.Variable getThisVar(Location location, LanguagePass lp, ir.Scope _scope)
+/**
+ * Get the this variable for this function.
+ *
+ * May return the this var field on the nested struct,
+ * use getThisReferenceNotNull if you want to safely
+ * get a expression pointing to the thisVar.
+ *
+ * Never returns null.
+ */
+ir.Variable getThisVarNotNull(ir.Node n, Context ctx)
 {
-	auto fn = getParentFunction(_scope);
+	// TODO Is there a function on the Context that is better?
+	auto fn = getParentFunction(ctx.current);
 	if (fn is null) {
-		throw panic(location, "getThisVar called for scope outside of function.");
+		throw panic(n, "getThisVar called for scope outside of function.");
 	}
-	auto thisStore = lookupInGivenScopeOnly(lp, fn.myScope, location, "this");
+
+	// TODO Field directly on ir.Function?
+	auto thisStore = lookupInGivenScopeOnly(
+		ctx.lp, fn.myScope, n.location, "this");
 	if (thisStore is null) {
 		if (fn.nestStruct !is null) {
-			thisStore = lookupInGivenScopeOnly(lp, fn.nestStruct.myScope, location, "this");
+			thisStore = lookupInGivenScopeOnly(
+				ctx.lp, fn.nestStruct.myScope,
+				n.location, "this");
 		}
 		if (thisStore is null) {
-			throw makeCallingWithoutInstance(location);
+			// TODO This needs to be a better, not all lookups are calls.
+			throw makeCallingWithoutInstance(n.location);
 		}
 	}
+
 	auto thisVar = cast(ir.Variable) thisStore.node;
 	if (thisVar is null) {
-		throw panic(location, "this is not variable.");
+		throw panic(n, "this is not variable.");
 	}
 	return thisVar;
 }
 
 /**
- * Returns a expression that is the this variable, handled nested functions as well.
+ * Returns a expression that is the this variable,
+ * safely handles nested functions as well.
+ *
+ * Never returns null.
  */
-ir.Exp getThisReference(Location loc, Context ctx, out ir.Variable thisVar)
+ir.Exp getThisReferenceNotNull(ir.Node n, Context ctx, out ir.Variable thisVar)
 {
-	thisVar = getThisVar(loc, ctx.lp, ctx.current);
+	thisVar = getThisVarNotNull(n, ctx);
 
 	ir.Exp thisRef;
 	// TODO Is there a function on the Context that is better?
 	auto ffn = getParentFunction(ctx.current);
 	if (ffn !is null && ffn.nestStruct !is null) {
-		return buildAccess(loc, buildExpReference(loc, ffn.nestedVariable), "this");
+		return buildAccess(n.location, buildExpReference(n.location, ffn.nestedVariable), "this");
 	} else {
-		return buildExpReference(loc, thisVar, "this");
+		return buildExpReference(n.location, thisVar, "this");
 	}
 }
 
