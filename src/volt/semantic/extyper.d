@@ -587,21 +587,8 @@ ir.Exp withLookup(Context ctx, ref ir.Exp exp, ir.Scope current,
 
 /**
  * Replace IdentifierExps with another exp, often ExpReference.
- *
- * Will ensure that the other exp is also accepted.
  */
 void extypeIdentifierExp(Context ctx, ref ir.Exp e, ir.IdentifierExp i, ir.Exp parent)
-{
-	extypeIdentifierExpNoRevisit(ctx, e, i, parent);
-	if (i !is e) {
-		acceptExp(e, ctx.extyper);
-	}
-}
-
-/**
- * No revisit version of the above function.
- */
-void extypeIdentifierExpNoRevisit(Context ctx, ref ir.Exp e, ir.IdentifierExp i, ir.Exp parent)
 {
 	if (i.value == "super") {
 		return rewriteSuper(ctx.lp, ctx.current, i, cast(ir.Postfix) parent);
@@ -629,6 +616,7 @@ void extypeIdentifierExpNoRevisit(Context ctx, ref ir.Exp e, ir.IdentifierExp i,
 			throw makeWithCreatesAmbiguity(i.location);
 		}
 		e = rewriteExp;
+		acceptExp(e, ctx.extyper);
 		return;
 	}
 	// With rewriting is completed after this point, and regular lookup logic resumes.
