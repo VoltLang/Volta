@@ -26,6 +26,81 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeIndexVarTooSmall(Location loc, string name, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, format("index variable '%s' is too small to hold a size_t.", name), file, line);
+}
+
+CompilerException makeNestedNested(Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, "nested functions may not have nested functions.", file, line);
+}
+
+CompilerException makeNonConstantStructLiteral(Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, "non-constant expression in global struct literal.", file, line);
+}
+
+CompilerException makeWrongNumberOfArgumentsToStructLiteral(Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, "wrong number of arguments to struct literal.", file, line);
+}
+
+CompilerException makeCannotDeduceStructLiteralType(Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, "cannot deduce struct literal's type.", file, line);
+}
+
+CompilerException makeArrayNonArrayNotCat(Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, "binary operations involving array and non array must be use concatenation (~).", file, line);
+}
+
+CompilerException makeCannotPickStaticFunction(Location loc, string name, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, format("cannot select static function '%s' through instance.", name), file, line);
+}
+
+CompilerException makeCannotPickMemberFunction(Location loc, string name, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, format("cannot select member function '%s'.", name), file, line);
+}
+
+CompilerException makeStaticViaInstance(Location loc, string name, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, format("looking up '%s' static function via instance.", name), file, line);
+}
+
+CompilerException makeMixingStaticMember(Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, "mixing static and member functions.", file, line);
+}
+
+CompilerException makeNoZeroProperties(Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, "no zero argument properties found.", file, line);
+}
+
+CompilerException makeMultipleZeroProperties(Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, "multiple zero argument properties found.", file, line);
+}
+
+CompilerException makeUFCSAsProperty(Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, "an @property function may not be used for UFCS.", file, line);
+}
+
+CompilerException makeUFCSAndProperty(Location loc, string name, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, format("functions for lookup '%s' match UFCS *and* @property functions.", name), file, line);
+}
+
+CompilerException makeCallingUncallable(Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, "calling uncallable expression.", file, line);
+}
+
 CompilerException makeForeachIndexRef(Location loc, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(loc, "may not mark a foreach index as ref.", file, line);

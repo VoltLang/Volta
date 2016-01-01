@@ -1166,7 +1166,7 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 
 	auto callable = cast(ir.CallableType) realType(getExpType(ctx.lp, postfix.child, ctx.current));
 	if (callable is null) {
-		throw makeError(postfix.location, "calling uncallable expression.");
+		throw makeCallingUncallable(postfix.location);
 	}
 
 	if (asFunctionType is null) {
@@ -1469,14 +1469,14 @@ void postfixIdentifierUFCS(Context ctx, ref ir.Exp exp,
 	bool isProp;
 	foreach (fn; store.functions) {
 		if (isProp && !fn.type.isProperty) {
-			throw makeError(postfix, format("functions for lookup '%s' match UFCS *and* @property functions.", postfix.identifier.value));
+			throw makeUFCSAndProperty(postfix.location, postfix.identifier.value);
 		}
 
 		isProp = fn.type.isProperty;
 	}
 
 	if (isProp) {
-		throw makeError(postfix, "an @property function may not be used for UFCS.");
+		throw makeUFCSAsProperty(postfix.location);
 	}
 
 	// This is here to so that it errors
@@ -1578,7 +1578,7 @@ bool rewriteIfPropertyStore(ref ir.Exp exp, ir.Exp child, string name,
 		// fn.params.length is 0
 
 		if (getFn !is null) {
-			throw makeError(exp.location, "multiple zero argument properties found.");
+			throw makeMultipleZeroProperties(exp.location);
 		}
 		getFn = fn;
 	}
@@ -1593,7 +1593,7 @@ bool rewriteIfPropertyStore(ref ir.Exp exp, ir.Exp child, string name,
 	assert(!isAssign || (cast(ir.BinOp) parent).left is exp);
 
 	if (!isAssign && getFn is null) {
-		throw makeError(exp.location, "no zero argument properties found.");
+		throw makeNoZeroProperties(exp.location);
 	}
 
 	exp = buildProperty(exp.location, name, child, getFn, setFns);
@@ -1718,11 +1718,9 @@ bool postfixIdentifier(Context ctx, ref ir.Exp exp,
 		// @TODO check this in postfixCall handling.
 		if (members != store.functions.length) {
 			if (members) {
-				// @TODO Not a real error.
-				throw makeError(postfix, "mixing static and member functions.");
+				throw makeMixingStaticMember(postfix.location);
 			} else {
-				//throw makeCanNotLookupStaticVia
-				throw makeError(postfix.location, "looking up '" ~ field ~ "' static function via instance.");
+				throw makeStaticViaInstance(postfix.location, field);
 			}
 		}
 
@@ -1743,11 +1741,9 @@ bool postfixIdentifier(Context ctx, ref ir.Exp exp,
 	     parentPostfix.op != ir.Postfix.Op.Call)) {
 
 		if (store.functions.length > 1) {
-			//throw makeCanNotPickMemberfunction
-			throw makeError(postfix.location, "cannot select member function '" ~ field ~ "'.");
+			throw makeCannotPickMemberFunction(postfix.location, field);
 		} else if (store.functions[0].kind != ir.Function.Kind.Member) {
-			//throw makeCanNotLookupStaticVia
-			throw makeError(postfix.location, "looking up '" ~ field ~ "' static function via instance.");
+			throw makeCannotPickStaticFunction(postfix.location, field);
 		}
 
 		auto fn = store.functions[0];
@@ -2332,7 +2328,7 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 
 	if ((larray is null && rarray !is null) || (larray !is null && rarray is null) &&
 	    (binop.op != ir.BinOp.Op.CatAssign && binop.op != ir.BinOp.Op.Cat) ) {
-		throw makeError(binop.location, "non cat (~) operation involving array and non array.");
+	    throw makeArrayNonArrayNotCat(binop.location);
 	}
 }
 
@@ -2442,7 +2438,7 @@ void extypeTernary(Context ctx, ir.Ternary ternary)
 void extypeStructLiteral(Context ctx, ir.StructLiteral sl)
 {
 	if (sl.type is null) {
-		throw makeError(sl, "can't deduce type of struct literal.");
+		throw makeCannotDeduceStructLiteralType(sl.location);
 	}
 
 	auto asStruct = cast(ir.Struct) realType(sl.type);
@@ -2451,7 +2447,7 @@ void extypeStructLiteral(Context ctx, ir.StructLiteral sl)
 
 	// @TODO fill out with T.init
 	if (types.length != sl.exps.length) {
-		throw makeError(sl, "wrong number of arguments to struct literal.");
+		throw makeWrongNumberOfArgumentsToStructLiteral(sl.location);
 	}
 
 	foreach (i, ref sexp; sl.exps) {
@@ -2468,7 +2464,7 @@ void extypeStructLiteral(Context ctx, ir.StructLiteral sl)
 
 		auto n = evaluateOrNull(ctx.lp, ctx.current, sexp);
 		if (n is null) {
-			throw makeError(sexp.location, "non-constant expression in global struct literal.");
+			throw makeNonConstantStructLiteral(sexp.location);
 		}
 
 		sexp = n;
@@ -3488,7 +3484,7 @@ public:
 	override Status enter(ir.Function fn)
 	{
 		if (ctx.functionDepth >= 2) {
-			throw makeError(fn.location, "nested functions may not have nested functions.");
+			throw makeNestedNested(fn.location);
 		}
 		if (!fn.isResolved) {
 			resolveFunction(ctx, fn);
@@ -3620,7 +3616,7 @@ public:
 				auto keysz = size(ctx.lp, fes.itervars[0].type);
 				auto sizetsz = size(ctx.lp, buildSizeT(fes.location, ctx.lp));
 				if (keysz < sizetsz) {
-					throw makeError(fes.location, format("index var '%s' isn't large enough to hold a size_t.", fes.itervars[0].name));
+					throw makeIndexVarTooSmall(fes.location, fes.itervars[0].name);
 				}
 			}
 		}
