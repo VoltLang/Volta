@@ -401,3 +401,11 @@ string getNodeAddressString(Node node)
 		return "0x" ~ toString(cast(void*)node);
 	}
 }
+
+/**
+ * For debugging helpers.
+ */
+string getNodeUniqueString(Node node)
+{
+	return toString(node.uniqueId);
+}
