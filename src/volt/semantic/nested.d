@@ -149,25 +149,3 @@ void tagNestedVariables(Context ctx, ir.Variable var, ir.Store store, ref ir.Exp
 		e = buildAccess(a.location, a, var.name);
 	}
 }
-
-/**
- * Make eref a CreateDelegate to the nested struct.
- * If the housing function (fn) and declaration the eref is referring to don't match,
- * then this is just like a call to buildCreateDelegate.
- * Otherwise, it's a recursive reference, and a unique nesting struct is created for it.
- */
-ir.Exp buildNestedReference(ir.Location loc, ir.Function fn, ir.Variable np, ir.ExpReference eref) {
-	if (fn !is eref.decl) {
-		// The function housing the reference is not the same as the reference, i.e. not recursive.
-		return buildCreateDelegate(loc, buildExpReference(np.location, np, np.name), eref);
-	}
-	/* This is a recursive reference. Give it its own nested struct so if it's a call, the original parameters
-	 * are not modified.
-	 */
-	auto sexp = buildStatementExp(loc);
-	auto newNested = buildVariableAnonSmart(loc, fn._body, sexp, fn.nestStruct, buildExpReference(loc, fn.nestedHiddenParameter, fn.nestedHiddenParameter.name));
-	auto callexp = buildCreateDelegate(loc, buildExpReference(loc, newNested, newNested.name), eref);
-	buildExpStat(loc, sexp, callexp);
-	sexp.exp = callexp;
-	return sexp;
-}
