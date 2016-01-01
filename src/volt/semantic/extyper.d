@@ -672,7 +672,8 @@ void extypeIdentifierExpNoRevisit(Context ctx, ref ir.Exp e, ir.IdentifierExp i,
 				return;
 			}
 
-			prop.child = buildIdentifierExp(i.location, "this");
+			ir.Variable var;
+			prop.child = getThisReference(i.location, ctx, var);
 			return;
 		}
 
