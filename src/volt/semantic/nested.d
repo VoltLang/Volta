@@ -56,27 +56,37 @@ bool replaceNested(ref ir.Exp exp, ir.ExpReference eref, ir.Variable nestParam)
 	if (eref.doNotRewriteAsNestedLookup) {
 		return false;
 	}
-	string name;
-	ir.Type type;
-
-	auto fp = cast(ir.FunctionParam) eref.decl;
-	if (fp is null || !fp.hasBeenNested) {
-		auto var = cast(ir.Variable) eref.decl;
-		if (var is null || !isNested(var.storage)) {
-			return false;
-		} else {
-			name = var.name;
-			type = var.type;
-		}
-	} else {
-		name = fp.name;
-		type = fp.type;
-	}
-	assert(name.length > 0);
-
 	if (nestParam is null) {
 		return false;
 	}
+
+	string name;
+	ir.Type type;
+	ir.FunctionParam fp;
+
+	switch (eref.decl.nodeType) with (ir.NodeType) {
+	case FunctionParam:
+		fp = cast(ir.FunctionParam) eref.decl;
+		if (!fp.hasBeenNested) {
+			return false;
+		}
+		name = fp.name;
+		type = fp.type;
+		break;
+	case Variable:
+		auto var = cast(ir.Variable) eref.decl;
+		if (!var.storage.isNested()) {
+			return false;
+		}
+		name = var.name;
+		type = var.type;
+		break;
+	default:
+		return false;
+	}
+
+	assert(name.length > 0);
+
 	exp = buildAccess(exp.location, buildExpReference(nestParam.location, nestParam, nestParam.name), name);
 	if (fp !is null &&
 	    (fp.fn.type.isArgRef[fp.index] ||
@@ -91,7 +101,7 @@ void insertBinOpAssignsForNestedVariableAssigns(LanguagePass lp, ir.BlockStateme
 	for (size_t i = 0; i < bs.statements.length; ++i) {
 		auto var = cast(ir.Variable) bs.statements[i];
 		if (var is null ||
-		    !isNested(var.storage)) {
+		    !var.storage.isNested()) {
 			continue;
 		}
 
