@@ -18,11 +18,10 @@ void warning(Location loc, string message)
 	writefln(format("%s: warning: %s", loc.toString(), message));
 }
 
+
 /*
  *
- *
  * Specific Errors
- *
  *
  */
 
@@ -554,9 +553,7 @@ CompilerException makeBadAANullAssign(Location location, string file = __FILE__,
 
 /*
  *
- *
  * General Util
- *
  *
  */
 
@@ -608,9 +605,7 @@ CompilerException makeExpectedContext(ir.Node node, ir.Node node2, string file =
 
 /*
  *
- *
  * Type Conversions
- *
  *
  */
 
@@ -645,11 +640,10 @@ CompilerException makeInvalidUseOfStore(ir.Node node, ir.Store store, string fil
 	return new CompilerError(node.location, format("invalid use of store '%s'.", store.name), file, line);
 }
 
+
 /*
  *
- *
- * Look ups
- *
+ * Lookups
  *
  */
 
@@ -704,11 +698,10 @@ CompilerException makeNonTopLevelImport(Location location, string file = __FILE_
 	return new CompilerError(location, "imports must occur in the top scope.", file, line);
 }
 
+
 /*
  *
- *
  * Functions
- *
  *
  */
 
@@ -747,11 +740,10 @@ CompilerException makeMultipleFunctionsMatch(ir.Location location, ir.Function[]
 	return new CompilerError(location, format("%s overloaded functions match call.", functions.length), file, line);
 }
 
+
 /*
  *
- *
  * Panics
- *
  *
  */
 
