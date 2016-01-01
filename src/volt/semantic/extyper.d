@@ -3192,22 +3192,6 @@ ir.Constant evaluateIsExp(Context ctx, ir.IsExp isExp)
 }
 
 /**
- * Get a variable of an identifier in an is(typeof()) context.
- */
-ir.Variable getVariableFromIdentifier(LanguagePass lp, ir.Scope current, ir.IdentifierExp exp)
-{
-	auto store = lookup(lp, current, exp.location, exp.value);
-	if (store is null) {
-		throw makeNotAvailableInCTFE(exp, exp);
-	}
-	auto var = cast(ir.Variable)store.node;
-	if (var is null) {
-		throw makeNotAvailableInCTFE(exp, exp);
-	}
-	return var;
-}
-
-/**
  * If type casting were to be strict, type T could only
  * go to type T without an explicit cast. Implicit casts
  * are places where the language deems automatic conversion
