@@ -213,6 +213,23 @@ ir.Variable getThisVar(Location location, LanguagePass lp, ir.Scope _scope)
 	return thisVar;
 }
 
+/**
+ * Returns a expression that is the this variable, handled nested functions as well.
+ */
+ir.Exp getThisReference(Location loc, Context ctx, out ir.Variable thisVar)
+{
+	thisVar = getThisVar(loc, ctx.lp, ctx.current);
+
+	ir.Exp thisRef;
+	// TODO Is there a function on the Context that is better?
+	auto ffn = getParentFunction(ctx.current);
+	if (ffn !is null && ffn.nestStruct !is null) {
+		return buildAccess(loc, buildExpReference(loc, ffn.nestedVariable), "this");
+	} else {
+		return buildExpReference(loc, thisVar, "this");
+	}
+}
+
 void replaceVarArgsIfNeeded(LanguagePass lp, ir.Function fn)
 {
 	if (fn.type.hasVarArgs &&

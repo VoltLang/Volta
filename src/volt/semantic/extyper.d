@@ -256,7 +256,7 @@ void extypeAssignCallableType(Context ctx, ref ir.Exp exp,
 		auto eRef = buildExpReference(exp.location, fn, fn.name);
 		fset.set.reference = eRef;
 		exp = eRef;
-		replaceExpReferenceIfNeeded(ctx, null, exp, eRef);
+		replaceExpReferenceIfNeeded(ctx, exp, eRef);
 		extypeAssignCallableType(ctx, exp, ctype);
 		return;
 	}
@@ -1041,7 +1041,7 @@ private void resolvePostfixOverload(Context ctx, ir.Postfix postfix,
 	asFunctionType = fn.type;
 
 	if (reeval) {
-		replaceExpReferenceIfNeeded(ctx, null, postfix.child, eref);
+		replaceExpReferenceIfNeeded(ctx, postfix.child, eref);
 	}
 }
 
@@ -1228,8 +1228,7 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
  * directly but instead this function is called after they have been
  * rewritten and the ExpReference has been resolved to a single Function.
  */
-void replaceExpReferenceIfNeeded(Context ctx, ir.Type referredType,
-                                 ref ir.Exp exp, ir.ExpReference eRef)
+void replaceExpReferenceIfNeeded(Context ctx, ref ir.Exp exp, ir.ExpReference eRef)
 {
 	// For vtable and property.
 	if (eRef.rawReference) {
@@ -1239,27 +1238,15 @@ void replaceExpReferenceIfNeeded(Context ctx, ir.Type referredType,
 	// Early out on static vars.
 	// Or function sets.
 	auto decl = eRef.decl;
-	ir.Exp nestedLookup;
 	final switch (decl.declKind) with (ir.Declaration.Kind) {
 	case Function:
 		auto asFn = cast(ir.Function)decl;
 		if (isFunctionStatic(asFn)) {
 			return;
 		}
-		if (asFn.kind == ir.Function.Kind.Member) {
-			auto ffn = getParentFunction(ctx.current);
-			if (ffn !is null && ffn.nestStruct !is null && eRef.idents.length == 1) {
-				nestedLookup = buildAccess(eRef.location, buildExpReference(eRef.location, ffn.nestedVariable), "this");
-			}
-		}
 		break;
 	case Variable:
 		auto asVar = cast(ir.Variable)decl;
-		auto ffn = getParentFunction(ctx.current);
-		if (ffn !is null && ffn.nestStruct !is null && eRef.idents.length > 0) {
-			auto access = buildAccess(eRef.location, buildExpReference(eRef.location, ffn.nestedVariable), "this");
-			nestedLookup = buildAccess(eRef.location, access, eRef.idents[$-1]);
-		}
 		if (isVariableStatic(asVar)) {
 			return;
 		}
@@ -1273,28 +1260,18 @@ void replaceExpReferenceIfNeeded(Context ctx, ir.Type referredType,
 		throw panic(decl, "invalid declKind");
 	}
 
-	auto thisVar = getThisVar(eRef.location, ctx.lp, ctx.current);
-	assert(thisVar !is null);
+	ir.Exp thisRef;
+	ir.Variable thisVar;
+	thisRef = getThisReference(eRef.location, ctx, thisVar);
+	assert(thisRef !is null && thisVar !is null);
 
 	auto tr = cast(ir.TypeReference) thisVar.type;
-	if (tr is null) {
-		throw panic(eRef, "not TypeReference thisVar");
-	}
+	assert(tr !is null);
 
 	auto thisAgg = cast(ir.Aggregate) tr.type;
-	if (thisAgg is null) {
-		throw panic(eRef, "thisVar not aggregate");
-	}
-
-	/// Use this for if type not provided.
-	if (referredType is null) {
-		referredType = thisAgg;
-	}
-
-	auto expressionAgg = cast(ir.Aggregate) referredType;
-	if (expressionAgg is null) {
-		throw panic(eRef, "referredType not Aggregate");
-	}
+	auto referredType = thisAgg;
+	auto expressionAgg = referredType;
+	assert(thisAgg !is null);
 
 	string ident = eRef.idents[$-1];
 	auto store = lookupInGivenScopeOnly(ctx.lp, expressionAgg.myScope, exp.location, ident);
@@ -1322,19 +1299,14 @@ void replaceExpReferenceIfNeeded(Context ctx, ir.Type referredType,
 		throw makeInvalidThis(eRef, thisAgg, expressionAgg, ident);
 	}
 
-	ir.Exp thisRef = buildExpReference(eRef.location, thisVar, "this");
 	if (thisClass !is expressionClass) {
 		thisRef = buildCastSmart(eRef.location, expressionClass, thisRef);
 	}
 
 	if (eRef.decl.declKind == ir.Declaration.Kind.Function) {
-		exp = buildCreateDelegate(eRef.location, nestedLookup !is null ? nestedLookup : thisRef, eRef);
+		exp = buildCreateDelegate(eRef.location, thisRef, eRef);
 	} else {
-		if (nestedLookup !is null) {
-			exp = nestedLookup; 
-		} else {
-			exp = buildAccess(eRef.location, thisRef, ident);
-		}
+		exp = buildAccess(eRef.location, thisRef, ident);
 	}
 
 	return;
@@ -3880,7 +3852,7 @@ public:
 	override Status visit(ref ir.Exp exp, ir.ExpReference eref)
 	{
 		ctx.lp.resolve(ctx.current, eref);
-		replaceExpReferenceIfNeeded(ctx, null, exp, eref);
+		replaceExpReferenceIfNeeded(ctx, exp, eref);
 		return Continue;
 	}
 
