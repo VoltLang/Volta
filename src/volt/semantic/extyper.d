@@ -2522,6 +2522,11 @@ void handleNestedParams(Context ctx, ir.Function fn)
 		return;
 	}
 
+	// Don't add parameters for nested functions.
+	if (fn.kind == ir.Function.Kind.Nested) {
+		return;
+	}
+
 	// This is needed for the parent function.
 	size_t index;
 	for (index = 0; index < fn._body.statements.length; ++index) {
