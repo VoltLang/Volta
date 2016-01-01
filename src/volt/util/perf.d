@@ -41,7 +41,7 @@ struct Perf
 		import std.stdio : File;
 		auto f = File("perf.cvs", "w");
 
-		f.write("name, total, ");
+		f.write("name,total,");
 		for (size_t i = 1; i < times.length; i++) {
 			f.writef("%s,", names[i-1]);
 		}
