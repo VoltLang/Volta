@@ -781,6 +781,17 @@ int typeToRuntimeConstant(LanguagePass lp, ir.Scope current, ir.Type type)
  */
 
 /**
+ * Does the given property need to have child set?
+ */
+bool isMember(ir.PropertyExp prop)
+{
+	return (prop.getFn !is null &&
+	        prop.getFn.kind == ir.Function.Kind.Member) ||
+	       (prop.setFns.length > 0 &&
+	        prop.setFns[0].kind == ir.Function.Kind.Member);
+}
+
+/**
  * Is the given exp a backend constant, this is the minimum that
  * a backend needs to implement in order to fully support Volt.
  *

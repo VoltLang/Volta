@@ -116,6 +116,325 @@ void appendDefaultArguments(Context ctx, ir.Location loc,
 	}
 }
 
+enum Parent
+{
+	NA,
+	Call,
+	AssignTarget,
+	AssignSource,
+}
+
+Parent classifyRelationship(ir.Exp child, ir.Exp parent)
+{
+	if (parent is null) {
+		return Parent.NA;
+	} else if (auto b = cast(ir.BinOp) parent) {
+		if (b.left is child) {
+			return Parent.AssignTarget;
+		} else if (b.right is child) {
+			return Parent.AssignSource;
+		} else {
+			assert(false);
+		}
+	} else if (auto p = cast(ir.Postfix) parent) {
+		return p.op == ir.Postfix.Op.Call ? Parent.Call : Parent.NA;
+	} else {
+		return Parent.NA;
+	}
+	version (Volt) assert(false);
+}
+
+
+/*
+ *
+ * Store resolution functions.
+ *
+ */
+
+enum StoreSource
+{
+	Instance,
+	Identifier,
+	StaticPostfix,
+}
+
+void handleStore(Context ctx, string ident, ref ir.Exp exp,
+                 ir.Store store, ir.Exp child, Parent parent,
+                 StoreSource via, bool supressVtableLookup = false)
+{
+	final switch (store.kind) with (ir.Store.Kind) {
+	case Type:
+		handleTypeStore(ctx, ident, exp, store, child, parent, via);
+		return;
+	case Scope:
+		handleScopeStore(ctx, ident, exp, store, child, parent, via);
+		return;
+	case Value:
+		handleValueStore(ctx, ident, exp, store, child, parent, via);
+		return;
+	case Function:
+		handleFunctionStore(ctx, ident, exp, store, child, parent, via,
+		                    supressVtableLookup);
+		return;
+	case FunctionParam:
+		handleFunctionParamStore(ctx, ident, exp, store, child, parent,
+		                         via);
+		return;
+	case EnumDeclaration:
+		handleEnumDeclarationStore(ctx, ident, exp, store, child,
+		                           parent, via);
+		return;
+	case Template:
+		throw panic(exp, "template used as a value.");
+	case Merge:
+	case Alias:
+		assert(false);
+	}
+}
+
+void handleFunctionStore(Context ctx, string ident, ref ir.Exp exp,
+                         ir.Store store, ir.Exp child, Parent parent,
+                         StoreSource via, bool supressVtableLookup = false)
+{
+	// Xor anybody?
+	assert(via == StoreSource.Instance && child !is null ||
+	       via != StoreSource.Instance && child is null);
+	auto fns = store.functions;
+	assert(fns.length > 0);
+
+	size_t members;
+	foreach (fn; fns) {
+		if (fn.kind == ir.Function.Kind.Member ||
+		    fn.kind == ir.Function.Kind.Destructor) {
+			members++;
+		}
+
+		// Check for nested functions.
+		if (fn.nestedHiddenParameter !is null) {
+			if (fns.length > 1) {
+				throw makeCannotOverloadNested(fn, fn);
+			}
+			if (fn.type.isProperty) {
+				throw panic("property nested functions not supported");
+			}
+			exp = buildExpReference(exp.location, fn, ident);
+			return;
+		}
+	}
+
+	// Check mixing member and non-member functions.
+	// @TODO Should this really be an error?
+	if (members != fns.length) {
+		if (members > 0) {
+			throw makeMixingStaticMember(exp.location);
+		}
+	}
+
+	// Handle property functions.
+	if (rewriteIfPropertyStore(exp, child, ident, parent, fns)) {
+
+		// Do we need to add a this reference?
+		auto prop = cast(ir.PropertyExp) exp;
+		if (child !is null || !prop.isMember()) {
+			return;
+		}
+
+		// Do the adding here.
+		ir.Variable var;
+		prop.child = getThisReferenceNotNull(exp, ctx, var);
+
+		// TODO check that function and child match.
+		// if (<checkMemberWantTypeMatchChildType>) {
+		//	throw makeWrongTypeOfThis(want, have);
+		//}
+
+		// Don't do any more processing on properties.
+		return;
+	}
+
+	if (members == 0 && via == StoreSource.Instance) {
+		throw makeStaticViaInstance(exp.location, ident);
+	}
+
+	// Check if we can do overloading.
+	if (fns.length > 1 &&
+	    parent != Parent.Call &&
+	    parent != Parent.AssignSource) {
+		// Even if they are mixed, this a good enough guess.
+		if (fns[0].kind == ir.Function.Kind.Member) {
+			throw makeCannotPickMemberFunction(exp.location, ident);
+		} else if (via == StoreSource.Instance) {
+			throw makeCannotPickStaticFunctionVia(exp.location, ident);
+		} else {
+			throw makeCannotPickStaticFunction(exp.location, ident);
+		}
+	}
+
+	// Do we need a instance?
+	// If we we're not given one get the this for the given context.
+	if (members > 0 && child is null) {
+		ir.Variable thisVar;
+		child = getThisReferenceNotNull(exp, ctx, thisVar);
+	}
+
+	ir.ExpReference eref;
+	if (fns.length == 1) {
+		eref = buildExpReference(exp.location, fns[0], ident);
+	} else {
+		auto set = buildSet(exp.location, fns);
+		eref = buildExpReference(exp.location, set, ident);
+	}
+
+	if (child !is null) {
+		assert(members > 0);
+		auto cdg = buildCreateDelegate(exp.location, child, eref);
+		cdg.supressVtableLookup = supressVtableLookup;
+		exp = cdg;
+	} else {
+		assert(members == 0);
+		exp = eref;
+	}
+}
+
+void handleValueStore(Context ctx, string ident, ref ir.Exp exp,
+                      ir.Store store, ir.Exp child, Parent parentKind, StoreSource via)
+{
+	// Xor anybody?
+	assert(via == StoreSource.Instance && child !is null ||
+	       via != StoreSource.Instance && child is null);
+
+	auto var = cast(ir.Variable) store.node;
+	assert(var !is null);
+	assert(var.storage != ir.Variable.Storage.Invalid);
+
+	ir.ExpReference makeEref() {
+		auto eref = new ir.ExpReference();
+		eref.idents = [ident];
+		eref.location = exp.location;
+		eref.decl = var;
+		return eref;
+	}
+
+	final switch (via) with (StoreSource) {
+	case Instance:
+		if (var.storage != ir.Variable.Storage.Field) {
+			throw makeAccessThroughWrongType(exp.location, ident);
+		}
+		// TODO check that field is from the this type.
+		break;
+	case Identifier:
+		if (var.storage == ir.Variable.Storage.Function &&
+		    !var.hasBeenDeclared) {
+			throw makeUsedBeforeDeclared(exp, var);
+		}
+
+		auto eref = makeEref();
+		// Set the exp.
+		exp = eref;
+
+		// Handle member functions accessing fields directly.
+		replaceExpReferenceIfNeeded(ctx, exp, eref);
+
+		// Handle nested variables.
+		tagNestedVariables(ctx, var, store, exp);
+
+		break;
+	case StaticPostfix:
+		final switch (var.storage) with (ir.Variable.Storage) {
+		case Invalid:
+			throw panic(exp, "invalid storage " ~ var.location.toString());
+		case Field:
+		case Function:
+		case Nested:
+			throw makeError(exp, "can not access fields and function variables via static lookups.");
+		case Local:
+		case Global:
+			// Just a simple variable lookup.
+			exp = makeEref();
+			break;
+		}
+		break;
+	}
+}
+
+void handleFunctionParamStore(Context ctx, string ident, ref ir.Exp exp,
+                              ir.Store store, ir.Exp child, Parent parent,
+                              StoreSource via)
+{
+	if (via == StoreSource.Instance) {
+		throw makeError(exp, "can not access function parameter via value");
+	}
+	auto fp = cast(ir.FunctionParam) store.node;
+	assert(fp !is null);
+
+	auto eref = new ir.ExpReference();
+	eref.idents = [ident];
+	eref.location = exp.location;
+	eref.decl = fp;
+	exp = eref;
+}
+
+void handleEnumDeclarationStore(Context ctx, string ident, ref ir.Exp exp,
+                                ir.Store store, ir.Exp child, Parent parent,
+                                StoreSource via)
+{
+	if (via == StoreSource.Instance) {
+		throw makeError(exp, "can not access enum via value");
+	}
+
+	auto ed = cast(ir.EnumDeclaration) store.node;
+	assert(ed !is null);
+	assert(ed.assign !is null);
+
+//	// TODO This logic warrants futher investigation.
+//	// The commented out code does not work, while the code below does.
+//	auto ed = cast(ir.EnumDeclaration) store.node;
+//	assert(ed !is null);
+//	assert(ed.assign !is null);
+//	exp = copyExp(ed.assign);
+
+	auto eref = new ir.ExpReference();
+	eref.idents = [ident];
+	eref.location = exp.location;
+	eref.decl = ed;
+	exp = eref;
+}
+
+void handleTypeStore(Context ctx, string ident, ref ir.Exp exp, ir.Store store,
+                     ir.Exp child, Parent parent, StoreSource via)
+{
+	if (via == StoreSource.Instance) {
+		throw makeError(exp, "can not access types via value");
+	}
+
+	if (store.myScope !is null) {
+		return handleScopeStore(ctx, ident, exp, store, child, parent, via);
+	}
+
+	auto t = cast(ir.Type) store.node;
+	assert(t !is null);
+
+	auto te = new ir.TypeExp();
+	te.location = exp.location;
+	//te.idents = [ident];
+	te.type = copyTypeSmart(exp.location, t);
+	exp = te;
+}
+
+void handleScopeStore(Context ctx, string ident, ref ir.Exp exp, ir.Store store,
+                      ir.Exp child, Parent parent, StoreSource via)
+{
+	if (via == StoreSource.Instance) {
+		throw makeError(exp, "can not access types via value");
+	}
+
+	auto se = new ir.StoreExp();
+	se.location = exp.location;
+	se.idents = [ident];
+	se.store = store;
+	exp = se;
+}
+
 
 /*
  *
@@ -623,115 +942,16 @@ void extypeIdentifierExp(Context ctx, ref ir.Exp e, ir.IdentifierExp i, ir.Exp p
 		acceptExp(e, ctx.extyper);
 		return;
 	}
-	// With rewriting is completed after this point, and regular lookup logic resumes.
 
+	// With rewriting is completed after this point, and regular lookup logic resumes.
 	auto store = lookup(ctx.lp, current, i.location, i.value);
 	if (store is null) {
 		throw makeFailedLookup(i, i.value);
 	}
 
-	auto _ref = new ir.ExpReference();
-	_ref.idents ~= i.value;
-	_ref.location = i.location;
-
-	final switch (store.kind) with (ir.Store.Kind) {
-	case Value:
-		auto var = cast(ir.Variable) store.node;
-		assert(var !is null);
-		if (!var.hasBeenDeclared &&
-		    var.storage == ir.Variable.Storage.Function) {
-			throw makeUsedBeforeDeclared(e, var);
-		}
-		_ref.decl = var;
-		e = _ref;
-		tagNestedVariables(ctx, var, store, e);
-
-		// Handle member functions accessing fields directly.
-		replaceExpReferenceIfNeeded(ctx, e, _ref);
-
-		return;
-	case FunctionParam:
-		auto fp = cast(ir.FunctionParam) store.node;
-		assert(fp !is null);
-		_ref.decl = fp;
-		e = _ref;
-		return;
-	case Function:
-		// Handle property.
-		if (rewriteIfPropertyStore(e, null, i.value, parent, store)) {
-			auto prop = cast(ir.PropertyExp) e;
-			bool isMember = (prop.getFn !is null &&
-					 prop.getFn.kind == ir.Function.Kind.Member) ||
-			                (prop.setFns.length > 0 &&
-			                 prop.setFns[0].kind == ir.Function.Kind.Member);
-			if (!isMember) {
-				return;
-			}
-
-			ir.Variable var;
-			prop.child = getThisReferenceNotNull(i, ctx, var);
-			return;
-		}
-
-		// Nested function checking.
-		foreach (fn; store.functions) {
-			if (fn.nestedHiddenParameter is null) {
-				continue;
-			}
-
-			if (store.functions.length > 1) {
-				throw makeCannotOverloadNested(fn, fn);
-			}
-
-			_ref.decl = store.functions[0];
-			e = _ref;
-			return;
-		}
-
-		// Member or Regular function.
-		_ref.decl = buildSet(i.location, store.functions);
-		e = _ref;
-
-		// Handle accessing functions directly from
-		// inside of other member functions.
-		replaceExpReferenceIfNeeded(ctx, e, _ref);
-
-		return;
-	case EnumDeclaration:
-		auto ed = cast(ir.EnumDeclaration) store.node;
-		assert(ed !is null);
-		assert(ed.assign !is null);
-		e = copyExp(ed.assign);
-		return;
-	case Template:
-		throw panic(i, "template used as a value.");
-	case Type:
-		// Named types have a scope.
-		auto named = cast(ir.Named) store.node;
-		if (named !is null) {
-			goto case Scope;
-		}
-
-		auto t = cast(ir.Type) store.node;
-		assert(t !is null);
-
-		auto te = new ir.TypeExp();
-		te.location = i.location;
-		//te.idents = [i.value];
-		te.type = copyTypeSmart(i.location, t);
-		e = te;
-		return;
-	case Scope:
-		auto se = new ir.StoreExp();
-		se.location = i.location;
-		se.idents = [i.value];
-		se.store = store;
-		e = se;
-		return;
-	case Merge:
-	case Alias:
-		assert(false);
-	}
+	auto parentKind = classifyRelationship(i, parent);
+	handleStore(ctx, i.value, e, store, null, parentKind,
+	            StoreSource.Identifier);
 }
 
 bool replaceAAPostfixesIfNeeded(Context ctx, ir.Postfix postfix, ref ir.Exp exp)
@@ -1320,89 +1540,93 @@ void replaceExpReferenceIfNeeded(Context ctx, ref ir.Exp exp, ir.ExpReference eR
 bool consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes,
                                   ref ir.Exp exp, ir.Exp parent)
 {
-	ir.Store store;
-	ir.Type type;
+	ir.Store lookStore; // The store that we are look in.
+	ir.Scope lookScope; // The scope attached to the lookStore.
+	ir.Type lookType;   // If lookStore is a type, the type.
 
-	if (!getIfStoreOrTypeExp(postfixes[0].child, store, type)) {
+	// Only consume identifiers.
+	if (postfixes[0].op != ir.Postfix.Op.Identifier) {
 		return false;
 	}
 
-	if (type !is null) {
-		// Remove int.max etc.
-		ir.Exp e = postfixes[0];
-		if (typeLookup(ctx, e, type)) {
-			if (postfixes.length > 1) {
-				postfixes[1].child = e;
-				postfixes = postfixes[1 .. $];
-			} else {
-				exp = e;
-				postfixes = [];
-			}
+	void setupArrayAndExp(ir.Exp toReplace, size_t i)
+	{
+		if (i+1 >= postfixes.length) {
+			exp = toReplace;
+			postfixes = [];
+		} else {
+			postfixes[i+1].child = toReplace;
+			postfixes = postfixes[i+1 .. $];
+		}
+	}
+
+	if (!getIfStoreOrTypeExp(postfixes[0].child, lookStore, lookType)) {
+		return false;
+	}
+
+	// Early out on type only.
+	if (lookStore is null) {
+		assert(lookType !is null);
+		ir.Exp toReplace = postfixes[0];
+		if (typeLookup(ctx, toReplace, lookType)) {
+			setupArrayAndExp(toReplace, 0);
 			return true;
-		} else if (store is null) {
+		} else { // We have no scope to look in.
 			return false;
 		}
 	}
 
-	assert(store !is null);
+	// Get a scope from said lookStore.
+	lookScope = lookStore.myScope;
+	assert(lookScope !is null);
 
-	// Get a scope from said store.
-	auto base = store.myScope;
-	assert(base !is null);
-
-	/* Get a declaration from the next identifier segment,
-	 * replace with an expreference?
-	 */
-	string name;
-	ir.Declaration decl;
-
-	size_t i;
-	for (i = 0; i < postfixes.length; ++i) {
-		auto postfix = postfixes[i];
-		if (postfix.identifier is null) {
-			break;
+	// Loop over the identifiers.
+	foreach (i, postfix; postfixes) {
+		// First check type.
+		if (lookType !is null) {
+			// Remove int.max etc.
+			ir.Exp toReplace = postfixes[i];
+			if (typeLookup(ctx, toReplace, lookType)) {
+				setupArrayAndExp(toReplace, i);
+				return true;
+			}
 		}
 
-		name = postfix.identifier.value;
-		store = lookupAsImportScope(ctx.lp, base, postfix.location, name);
+		// Do the actual lookup.
+		assert(postfix.identifier !is null);
+		string name = postfix.identifier.value;
+		auto store = lookupAsImportScope(ctx.lp, lookScope, postfix.location, name);
 		if (store is null) {
 			throw makeFailedLookup(postfix.location, name);
 		}
 
-		ir.Exp toReplace;
-
-		if (store.functions.length > 1) {
-			toReplace = buildExpReference(postfix.location, buildSet(postfix.location, store.functions), name);
-		}
-
-		decl = cast(ir.Declaration) store.node;
-		if (decl !is null && toReplace is null) {
-			toReplace = buildExpReference(decl.location, decl, name);
-		}
-
-		auto named = cast(ir.Named) store.node;
-		if (named !is null) {
-			toReplace = buildStoreExp(named.location, store, name);
-		}
-
-		if (toReplace is null && store.myScope !is null) {
-			base = store.myScope;
+		// Not the last ident, and this store has a scope.
+		if (i+1 < postfixes.length &&
+		    postfixes[i+1].op == ir.Postfix.Op.Identifier &&
+		    store.myScope !is null) {
+			lookStore = store;
+			lookScope = store.myScope;
+			lookType = cast(ir.Type) lookStore.node;
 			continue;
 		}
 
-		if (toReplace !is null) {
-			if (i+1 >= postfixes.length) {
-				exp = toReplace;
-				postfixes = [];
-			} else {
-				postfixes[i+1].child = toReplace;
-				postfixes = postfixes[i+1 .. $];
-			}
-			return true;
+		auto parentKind = Parent.NA;
+		// Are we the last postfix.
+		if (i+1 >= postfixes.length) {
+			parentKind = classifyRelationship(postfix, parent);
+		} else {
+			parentKind = classifyRelationship(postfix, postfixes[i+1]);
 		}
+
+		// Temporary set.
+		ir.Exp toReplace = postfix;
+		handleStore(ctx, name, toReplace, store, null, parentKind,
+		            StoreSource.StaticPostfix);
+		setupArrayAndExp(toReplace, i);
+		return true;
 	}
 
-	return false;
+	assert(false);
 }
 
 void extypePostfixIndex(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
@@ -1533,16 +1757,16 @@ bool builtInField(ir.Type type, string field)
  * Child can be null.
  */
 bool rewriteIfPropertyStore(ref ir.Exp exp, ir.Exp child, string name,
-                            ir.Exp parent, ir.Store store)
+                            Parent parent, ir.Function[] funcs)
 {
-	if (store.functions.length == 0) {
+	if (funcs.length == 0) {
 		return false;
 	}
 
 	ir.Function   getFn;
 	ir.Function[] setFns;
 
-	foreach (fn; store.functions) {
+	foreach (fn; funcs) {
 		if (!fn.type.isProperty) {
 			continue;
 		}
@@ -1566,12 +1790,7 @@ bool rewriteIfPropertyStore(ref ir.Exp exp, ir.Exp child, string name,
 		return false;
 	}
 
-	bool isAssign = parent !is null &&
-	                parent.nodeType == ir.NodeType.BinOp &&
-	                (cast(ir.BinOp) parent).op == ir.BinOp.Op.Assign;
-	assert(!isAssign || (cast(ir.BinOp) parent).left is exp);
-
-	if (!isAssign && getFn is null) {
+	if (parent != Parent.AssignTarget && getFn is null) {
 		throw makeNoZeroProperties(exp.location);
 	}
 
@@ -1656,84 +1875,24 @@ bool postfixIdentifier(Context ctx, ref ir.Exp exp,
 	//}
 
 	// Is the store a field on the object.
-	auto store2 = lookupOnlyThisScopeAndClassParents(ctx.lp, _scope,
-	                                                 postfix.location,
-	                                                 field);
-	auto var2 = cast(ir.Variable) store2.node;
-	if (store2 !is null && var2 !is null &&
-	    var2.storage == ir.Variable.Storage.Field) {
-		return true;
-	}
+	auto store2 = lookupOnlyThisScopeAndClassParents(
+		ctx.lp, _scope, postfix.location, field);
+	assert(store2 !is null);
 
-	// What if store (not store2) points at a field? Check and error.
+	// What if store and store2 fields does not match?
+	// TODO this should be handled by the handleStore functions,
+	// pereferedly looking at childs type and see if they match.
 	auto var = cast(ir.Variable) store.node;
-	if (var !is null &&
+	auto var2 = cast(ir.Variable) store.node;
+	if (var !is null && var !is var2 &&
 	    var.storage == ir.Variable.Storage.Field) {
 		throw makeAccessThroughWrongType(postfix.location, field);
 	}
 
-	// Check if the store is a property, for property _only_ members
-	// on the class/struct.
-	if (rewriteIfPropertyStore(exp, postfix.child, field, parent, store)) {
-		return true;
-	}
-
-	// Check for member functions and static ufcs functions here. Static
-	// ufcs functions can be overloaded with member functions in theory.
-	// But for now if that is the case just error, because its just a too
-	// deep a rabbit hole to go down into.
-	auto parentPostfix = cast(ir.Postfix) parent;
-	if (parentPostfix !is null &&
-	    parentPostfix.op == ir.Postfix.Op.Call &&
-	    store.functions.length > 0) {
-		size_t members;
-		foreach (func; store.functions) {
-			if (func.kind == ir.Function.Kind.Member ||
-			    func.kind == ir.Function.Kind.Destructor) {
-				members++;
-			}
-		}
-
-		// @TODO check this in postfixCall handling.
-		if (members != store.functions.length) {
-			if (members) {
-				throw makeMixingStaticMember(postfix.location);
-			} else {
-				throw makeStaticViaInstance(postfix.location, field);
-			}
-		}
-
-		auto fnSet = buildSet(postfix.location, store.functions);
-		auto expRef = buildExpReference(postfix.location, fnSet, field);
-		auto cdg = buildCreateDelegate(
-			postfix.location, postfix.child, expRef);
-		// @TODO Better way for super.'func'(); to work correctly.
-		cdg.supressVtableLookup = postfix.hackSuperLookup;
-		exp = cdg;
-		return true;
-	}
-
-	// If parent isn't a call, make sure we only have a single member
-	// function, that is a regular CreateDelegate expression.
-	if (store.functions.length > 0 &&
-	    (parentPostfix is null ||
-	     parentPostfix.op != ir.Postfix.Op.Call)) {
-
-		if (store.functions.length > 1) {
-			throw makeCannotPickMemberFunction(postfix.location, field);
-		} else if (store.functions[0].kind != ir.Function.Kind.Member) {
-			throw makeCannotPickStaticFunction(postfix.location, field);
-		}
-
-		auto fn = store.functions[0];
-		exp = buildCreateDelegate(
-			postfix.location,
-			postfix.child,
-			buildExpReference(postfix.location, fn, fn.name));
-		return true;
-	}
-
-	throw makeNoFieldOrPropOrUFCS(postfix);
+	auto parentKind = classifyRelationship(exp, parent);
+	handleStore(ctx, field, exp, store, postfix.child, parentKind,
+	            StoreSource.Instance, postfix.hackSuperLookup);
+	return true;
 }
 
 void extypePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp parent)
@@ -3795,7 +3954,15 @@ public:
 		} else {
 			acceptExp(bin.left, this);
 		}
-		acceptExp(bin.right, this);
+		if (bin.right.nodeType == ir.NodeType.Postfix) {
+			auto postfix = cast(ir.Postfix) bin.right;
+			extypePostfix(ctx, bin.right, postfix, e);
+		} else if (bin.right.nodeType == ir.NodeType.IdentifierExp) {
+			auto ie = cast(ir.IdentifierExp) bin.right;
+			extypeIdentifierExp(ctx, bin.right, ie, e);
+		} else {
+			acceptExp(bin.right, this);
+		}
 
 		// If not rewritten.
 		if (e is bin) {

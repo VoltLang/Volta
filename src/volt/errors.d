@@ -57,6 +57,11 @@ CompilerException makeArrayNonArrayNotCat(Location loc, string file = __FILE__, 
 
 CompilerException makeCannotPickStaticFunction(Location loc, string name, string file = __FILE__, const int line = __LINE__)
 {
+	return new CompilerError(loc, format("cannot select static function '%s'.", name), file, line);
+}
+
+CompilerException makeCannotPickStaticFunctionVia(Location loc, string name, string file = __FILE__, const int line = __LINE__)
+{
 	return new CompilerError(loc, format("cannot select static function '%s' through instance.", name), file, line);
 }
 
