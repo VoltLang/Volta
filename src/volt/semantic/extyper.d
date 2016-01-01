@@ -653,6 +653,10 @@ void extypeIdentifierExpNoRevisit(Context ctx, ref ir.Exp e, ir.IdentifierExp i,
 		_ref.decl = var;
 		e = _ref;
 		tagNestedVariables(ctx, var, store, e);
+
+		// Handle member functions accessing fields directly.
+		replaceExpReferenceIfNeeded(ctx, e, _ref);
+
 		return;
 	case FunctionParam:
 		auto fp = cast(ir.FunctionParam) store.node;
@@ -695,6 +699,11 @@ void extypeIdentifierExpNoRevisit(Context ctx, ref ir.Exp e, ir.IdentifierExp i,
 		// Member or Regular function.
 		_ref.decl = buildSet(i.location, store.functions);
 		e = _ref;
+
+		// Handle accessing functions directly from
+		// inside of other member functions.
+		replaceExpReferenceIfNeeded(ctx, e, _ref);
+
 		return;
 	case EnumDeclaration:
 		auto ed = cast(ir.EnumDeclaration) store.node;
@@ -3853,7 +3862,6 @@ public:
 	override Status visit(ref ir.Exp exp, ir.ExpReference eref)
 	{
 		ctx.lp.resolve(ctx.current, eref);
-		replaceExpReferenceIfNeeded(ctx, exp, eref);
 		return Continue;
 	}
 
