@@ -1348,11 +1348,7 @@ bool consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes,
 
 	// Get a scope from said store.
 	auto base = store.myScope;
-	if (base is null) {
-		auto named = cast(ir.Named) store.node;
-		assert(named !is null);
-		base = named.myScope;
-	}
+	assert(base !is null);
 
 	/* Get a declaration from the next identifier segment,
 	 * replace with an expreference?
