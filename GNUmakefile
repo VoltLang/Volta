@@ -193,7 +193,7 @@ voltaic-viviv:
 
 voltaic-viv-sanity:
 	@echo "  VIV    $(RUN_TARGET)"
-	@./viv $(RUN_FLAGS) -o $(RUN_TARGET) $(RUN_SRC)
+	@./viv -o $(RUN_TARGET) $(RUN_SRC)
 
 voltaic-viv-syntax:
 	@echo "  VIV    <source>"
