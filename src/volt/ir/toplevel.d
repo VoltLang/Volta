@@ -562,15 +562,12 @@ public:
  *
  * @ingroup irNode irTopLevel
  */
-class UserAttribute : Type
+class UserAttribute : Named
 {
 public:
-	string name;
 	Variable[] fields;
-	Scope myScope;
 	Class layoutClass;
 
-	bool isResolved;
 	bool isActualized;
 
 public:
