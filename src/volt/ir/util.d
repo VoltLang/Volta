@@ -125,7 +125,7 @@ ir.Scope getScopeFromStore(ir.Store store)
 {
 	final switch(store.kind) with (ir.Store.Kind) {
 	case Scope:
-		return store.s;
+		return store.myScope;
 	case Type:
 		auto type = cast(ir.Type)store.node;
 		assert(type !is null);

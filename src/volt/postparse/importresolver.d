@@ -80,10 +80,10 @@ public:
 				auto name = ident.value;
 				auto store = parent.getStore(name);
 				if (store !is null) {
-					if (store.s is null) {
+					if (store.myScope is null) {
 						throw makeExpected(store.node.location, "scope");
 					}
-					parent = store.s;
+					parent = store.myScope;
 				} else {
 					auto s = new ir.Scope(parent, ident, name);
 					parent.addScope(ident, s, name);
@@ -92,7 +92,7 @@ public:
 			}
 			auto store = parent.getStore(i.name.identifiers[$-1].value);
 			if (store !is null) {
-				if (i.isStatic && store.s !is mod.myScope) {
+				if (i.isStatic && store.myScope !is mod.myScope) {
 					throw makeExpected(i.location, "unique module");
 				}
 			} else {

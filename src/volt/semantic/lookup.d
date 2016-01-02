@@ -203,7 +203,7 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 
 	foreach (i, mod; asMod.myScope.importedModules) {
 		auto store = mod.myScope.getStore(name);
-		if (store !is null && store.s !is null) {
+		if (store !is null && store.myScope !is null) {
 			// If this is a private module, don't use it.
 			auto asImport = cast(ir.Import) store.node;
 			if (asImport !is null) {

@@ -1347,14 +1347,11 @@ bool consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes,
 	assert(store !is null);
 
 	// Get a scope from said store.
-	auto base = store.s;
+	auto base = store.myScope;
 	if (base is null) {
 		auto named = cast(ir.Named) store.node;
-		if (named !is null) {
-			base = named.myScope;
-		} else {
-			return false;
-		}
+		assert(named !is null);
+		base = named.myScope;
 	}
 
 	/* Get a declaration from the next identifier segment,
@@ -1392,8 +1389,8 @@ bool consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes,
 			toReplace = buildStoreExp(named.location, store, name);
 		}
 
-		if (toReplace is null && store.s !is null) {
-			base = store.s;
+		if (toReplace is null && store.myScope !is null) {
+			base = store.myScope;
 			continue;
 		}
 

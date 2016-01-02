@@ -39,18 +39,19 @@ void resolveAlias(LanguagePass lp, ir.Alias a)
 	}
 
 	if (a.type !is null) {
-		a.type = lp.resolve(s.s, a.type);
+		assert(s.lookScope is s.parent);
+		a.type = lp.resolve(s.parent, a.type);
 		return s.markAliasResolved(a.type);
 	}
 
 	ir.Store ret;
-	if (s.s is s.parent) {
+	if (s.lookScope is s.parent) {
 		// Normal alias.
-		ret = lookup(lp, s.s, a.id);
+		ret = lookup(lp, s.lookScope, a.id);
 	} else {
 		// Import alias.
 		assert(a.id.identifiers.length == 1);
-		ret = lookupAsImportScope(lp, s.s, a.location, a.id.identifiers[0].value);
+		ret = lookupAsImportScope(lp, s.lookScope, a.location, a.id.identifiers[0].value);
 	}
 
 	if (ret is null) {

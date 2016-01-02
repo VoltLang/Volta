@@ -88,10 +88,15 @@ public:
 	Node node;
 
 	/**
-	 * For Scope this context, node might point to owning node.
-	 * For Alias the scope into which the alias should be resolved from.
+	 * The scope for this context, node might point to owning node,
+	 * the exception being Scope, which does not have a owning node.
 	 */
-	Scope s;
+	Scope myScope;
+
+	/**
+	 * The scope from which the alias should be resolved.
+	 */
+	Scope lookScope;
 
 	/**
 	 * Overloaded functions.
@@ -145,9 +150,9 @@ public:
 		this.kind = kind;
 		this.parent = parent;
 		if (look is null) {
-			this.s = parent;
+			this.lookScope = parent;
 		} else {
-			this.s = look;
+			this.lookScope = look;
 		}
 	}
 
@@ -338,7 +343,7 @@ public:
 
 		auto store = new Store(this, n, name, Store.Kind.Scope);
 		symbols[name] = store;
-		store.s = s;
+		store.myScope = s;
 		return store;
 	}
 
