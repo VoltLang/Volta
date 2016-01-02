@@ -135,6 +135,7 @@ void gather(ir.Scope current, ir.Function fn, Where where)
 void gather(ir.Scope current, ir.Struct s, Where where)
 {
 	assert(s.access.isValidAccess());
+	assert(s.myScope !is null);
 
 	current.addType(s, s.name);
 }
@@ -142,6 +143,7 @@ void gather(ir.Scope current, ir.Struct s, Where where)
 void gather(ir.Scope current, ir.Union u, Where where)
 {
 	assert(u.access.isValidAccess());
+	assert(u.myScope !is null);
 
 	current.addType(u, u.name);
 }
@@ -149,6 +151,7 @@ void gather(ir.Scope current, ir.Union u, Where where)
 void gather(ir.Scope current, ir.Class c, Where where)
 {
 	assert(c.access.isValidAccess());
+	assert(c.myScope !is null);
 
 	current.addType(c, c.name);
 }
@@ -156,6 +159,7 @@ void gather(ir.Scope current, ir.Class c, Where where)
 void gather(ir.Scope current, ir.Enum e, Where where)
 {
 	assert(e.access.isValidAccess());
+	assert(e.myScope !is null);
 
 	current.addType(e, e.name);
 }
@@ -163,6 +167,7 @@ void gather(ir.Scope current, ir.Enum e, Where where)
 void gather(ir.Scope current, ir._Interface i, Where where)
 {
 	assert(i.access.isValidAccess());
+	assert(i.myScope !is null);
 
 	current.addType(i, i.name);
 }
@@ -183,7 +188,8 @@ void gather(ir.Scope current, ir.MixinTemplate mt, Where where)
 
 void gather(ir.Scope current, ir.UserAttribute ua, Where where)
 {
-	// @TODO assert(ua.access.isValidAccess());
+	assert(ua.access.isValidAccess());
+	assert(ua.myScope !is null);
 
 	current.addType(ua, ua.name);
 }
@@ -487,16 +493,16 @@ public:
 
 	override Status enter(ir.Class c)
 	{
-		gather(current, c, where);
 		addScope(current, c, where);
+		gather(current, c, where);
 		push(c.myScope, c);
 		return Continue;
 	}
 
 	override Status enter(ir._Interface i)
 	{
-		gather(current, i, where);
 		addScope(current, i);
+		gather(current, i, where);
 		push(i.myScope, i);
 		return Continue;
 	}
@@ -521,16 +527,16 @@ public:
 
 	override Status enter(ir.UserAttribute ua)
 	{
-		gather(current, ua, where);
 		addScope(current, ua);
+		gather(current, ua, where);
 		push(ua.myScope, ua);
 		return Continue;
 	}
 
 	override Status enter(ir.Enum e)
 	{
-		gather(current, e, where);
 		addScope(current, e);
+		gather(current, e, where);
 		push(e.myScope, e);
 		return Continue;
 	}

@@ -367,6 +367,13 @@ public:
 		errorOn(n, name);
 		auto store = new Store(this, n, name, Store.Kind.Type);
 		symbols[name] = store;
+
+		auto named = cast(ir.Named) n;
+		if (named !is null) {
+			assert(named.myScope !is null);
+			store.myScope = named.myScope;
+		}
+
 		return store;
 	}
 
