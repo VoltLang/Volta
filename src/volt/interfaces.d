@@ -656,7 +656,7 @@ public:
 			alignment.float32 = 4;
 			alignment.float64 = 4; // abi 4, prefered 8
 			alignment.ptr = 4;
-			alignment.aggregate = 8;
+			alignment.aggregate = 8; // abi X, prefered 8
 			break;
 		case X86_64:
 			alignment.int1 = 1;
@@ -667,7 +667,7 @@ public:
 			alignment.float32 = 4;
 			alignment.float64 = 8;
 			alignment.ptr = 8;
-			alignment.aggregate = 8;
+			alignment.aggregate = 8; // abi X, prefered 8
 			break;
 		case LE32:
 			alignment.int1 = 1;
@@ -678,7 +678,7 @@ public:
 			alignment.float32 = 4;
 			alignment.float64 = 8;
 			alignment.ptr = 4;
-			alignment.aggregate = 8;
+			alignment.aggregate = 8; // abi X, prefered 8
 			break;
 		}
 	}

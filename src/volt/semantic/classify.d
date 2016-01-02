@@ -190,10 +190,11 @@ size_t alignment(LanguagePass lp, ir.PrimitiveType.Kind kind)
 size_t alignment(LanguagePass lp, ir.Type node)
 {
 	switch (node.nodeType) with (ir.NodeType) {
+	case Struct:
+		auto s = cast(ir.Struct) node;
+		return structAlignment(lp, s);
 	case ArrayType:
 	case DelegateType:
-	case Struct:
-		return lp.settings.alignment.aggregate;
 	case AAType:
 	case PointerType:
 	case FunctionType:
@@ -232,6 +233,28 @@ size_t alignment(LanguagePass lp, ir.Type node)
 	}
 }
 
+/**
+ * Returns the size of a given ir.Struct in bytes.
+ */
+size_t structAlignment(LanguagePass lp, ir.Struct s)
+{
+	lp.actualize(s);
+
+	size_t accumulator = 1;
+	foreach (node; s.members.nodes) {
+		// If it's not a Variable, or not a field, it shouldn't take up space.
+		auto asVar = cast(ir.Variable)node;
+		if (asVar is null || asVar.storage != ir.Variable.Storage.Field) {
+			continue;
+		}
+
+		auto a = alignment(lp, asVar.type);
+		if (a > accumulator) {
+			accumulator = a;
+		}
+	}
+	return accumulator;
+}
 
 /*
  *
