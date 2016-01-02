@@ -610,28 +610,13 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 	ir.Class _class;
 	string emsg;
 
-	/* If postfix.child is an identifier expression, we check to see if it
-	 * refers to a module. If it is, we fill in _scope and emsg and jump
-	 * to the lookup. 
-	 *
-	 * This is unpleasant, sure, but it allows the get*Type functions to return
-	 * a Type rather than a Node (as a module is not a Type) that we would have
-	 * to if we had to retrieve modules through the mechanism we get the other
-	 * scopes.
-	 */
-	auto asIdentifierExp = cast(ir.IdentifierExp) postfix.child;
+	// Old code handled this case, we no longer need this.
+	assert(null is cast(ir.IdentifierExp) postfix.child);
+
 	ir.Type type;
 	ir.Aggregate agg;
 	ir.PointerType asPointer;
-	bool skipScopeRetrieval ;
-	if (asIdentifierExp !is null) {
-		auto store = lookup(lp, currentScope, asIdentifierExp.location, asIdentifierExp.value);
-		if (store !is null && store.s !is null) {
-			_scope = store.s;
-			emsg = format("module '%s' did not have member '%s'.", asIdentifierExp.value, postfix.identifier.value);
-			skipScopeRetrieval = true;
-		}
-	}
+	bool skipScopeRetrieval = false;
 
 	if (!skipScopeRetrieval) {
 		type = realType(getExpType(lp, postfix.child, currentScope), false, true);
