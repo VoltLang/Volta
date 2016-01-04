@@ -980,18 +980,13 @@ void handlePostId(State state, ir.Postfix postfix, Value result)
 		getFieldFromAggregate(state, postfix.location, result, index, st.types[index], result);
 
 	} else if (at !is null) {
-		if (postfix.identifier.value == "ptr") {
-			index = ArrayType.ptrIndex;
-		} else {
-			index = ArrayType.lengthIndex;
-		}
-
-		getFieldFromAggregate(state, postfix.location, result, index, at.types[index], result);
+		assert(postfix.identifier.value == "length");
+		getFieldFromAggregate(state, postfix.location, result,
+		                      ArrayType.lengthIndex,
+		                      at.types[ArrayType.lengthIndex], result);
 
 	} else if (sat !is null) {
-		if (postfix.identifier.value == "ptr") {
-			return getPointerFromStaticArray(state, postfix.location, result);
-		}
+		assert(postfix.identifier.value == "length");
 
 		auto t = state.sizeType;
 		result.value = LLVMConstInt(t.llvmType, sat.length, false);
