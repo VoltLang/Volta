@@ -51,7 +51,7 @@ public:
 		auto l = fn.location;
 		auto eref = buildExpReference(l, lp.printfFunc, "vrt_printf");
 		auto call = buildCall(l, eref, [buildConstantCString(l, "%s\n", false),
-			cast(ir.Exp) buildAccess(l, buildTokenExp(l, ir.TokenExp.Type.Function), "ptr")]);
+			cast(ir.Exp) buildArrayPtr(l, buildString(l), buildTokenExp(l, ir.TokenExp.Type.Function))]);
 		auto estat = buildExpStat(l, call);
 		// Add the print to the top of the function.
 		fn._body.statements = estat ~ fn._body.statements;

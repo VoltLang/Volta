@@ -804,8 +804,9 @@ ir.Typeid buildTypeidSmart(Location loc, ir.Type type)
 }
 
 /**
- *
- *
+ * Builds a BuiltinExp of ArrayPtr type. Make sure the type you
+ * pass in is the base of the array and that the child exp is
+ * not a pointer to an array.
  */
 ir.BuiltinExp buildArrayPtr(Location loc, ir.Type base, ir.Exp child)
 {
@@ -1220,7 +1221,7 @@ ir.StatementExp buildInternalArrayLiteralSliceSmart(Location loc, ir.Type atype,
 		auto evassign = buildAssign(loc, buildExpReference(loc, evar), exp);
 		buildExpStat(loc, sexp, evassign);
 
-		ir.Exp dst = buildAdd(loc, buildAccess(loc, buildExpReference(loc, var), "ptr"), buildConstantUint(loc, cast(uint)offset));
+		ir.Exp dst = buildAdd(loc, buildArrayPtr(loc, var.type, buildExpReference(loc, var)), buildConstantUint(loc, cast(uint)offset));
 		ir.Exp src = buildCastToVoidPtr(loc, buildAddrOf(loc, buildExpReference(loc, evar)));
 		ir.Exp len = buildConstantUint(loc, cast(uint) sizes[i]);
 		ir.Exp aln = buildConstantInt(loc, 0);

@@ -297,12 +297,12 @@ public:
 			ir.Exp[] args = [
 				cast(ir.Exp)
 				buildAdd(loc,
-					buildCastToVoidPtr(loc, buildAccess(loc,
-						buildExpReference(loc, newArray, newArray.name), "ptr"
+					buildCastToVoidPtr(loc, buildArrayPtr(loc, newArray.type,
+						buildExpReference(loc, newArray, newArray.name)
 					)),
 					buildExpReference(loc, offset, offset.name)
 				),
-				buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, source, source.name), "ptr")),
+				buildCastToVoidPtr(loc, buildArrayPtr(loc, source.type, buildExpReference(loc, source, source.name))),
 				buildBinOp(loc, ir.BinOp.Op.Mul,
 					buildAccess(loc, buildExpReference(loc, source, source.name), "length"),
 					buildConstantSizeT(loc, lp, size(lp, array.base))

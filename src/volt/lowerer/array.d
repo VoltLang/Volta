@@ -112,10 +112,17 @@ ir.Function getArrayAppendFunction(Location loc, LanguagePass lp, ir.Module this
 		)
 	);
 
+	ir.Exp leftPtr;
+	if (isAssignment) {
+		leftPtr = buildArrayPtr(loc, left.type, buildDeref(loc, buildExpReference(loc, left, left.name)));
+	} else {
+		leftPtr = buildArrayPtr(loc, left.type, buildExpReference(loc, left, left.name));
+	}
+
 	args = [
 		cast(ir.Exp)
 		buildExpReference(loc, allocated, allocated.name),
-		buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, left, left.name), "ptr")),
+		buildCastToVoidPtr(loc, leftPtr),
 		buildBinOp(loc, ir.BinOp.Op.Mul,
 			buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
 			buildConstantSizeT(loc, lp, size(lp, ltype.base))
@@ -221,7 +228,7 @@ ir.Function getArrayPrependFunction(Location loc, LanguagePass lp, ir.Module thi
 	args = [
 		cast(ir.Exp)
 		buildAdd(loc, buildExpReference(loc, allocated, allocated.name), buildConstantSizeT(loc, lp, size(lp, ltype.base))),
-		buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, left, left.name), "ptr")),
+		buildCastToVoidPtr(loc, buildArrayPtr(loc, left.type, buildExpReference(loc, left, left.name))),
 		buildBinOp(loc, ir.BinOp.Op.Mul,
 			buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
 			buildConstantSizeT(loc, lp, size(lp, ltype.base))
@@ -276,8 +283,8 @@ ir.Function getArrayCopyFunction(Location loc, LanguagePass lp, ir.Module thisMo
 
 	ir.Exp[] args = [
 		cast(ir.Exp)
-		buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, left, "left"), "ptr")),
-		buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, right, "right"), "ptr")),
+		buildCastToVoidPtr(loc, buildArrayPtr(loc, left.type, buildExpReference(loc, left, "left"))),
+		buildCastToVoidPtr(loc, buildArrayPtr(loc, right.type, buildExpReference(loc, right, "right"))),
 		buildBinOp(loc, ir.BinOp.Op.Mul,
 			buildAccess(loc, buildExpReference(loc, left, "left"), "length"),
 			buildConstantSizeT(loc, lp, size(lp, type.base))
@@ -356,10 +363,17 @@ ir.Function getArrayConcatFunction(Location loc, LanguagePass lp, ir.Module this
 		)
 	);
 
+	ir.Exp leftPtr;
+	if (isAssignment) {
+		leftPtr = buildArrayPtr(loc, left.type, buildDeref(loc, buildExpReference(loc, left, left.name)));
+	} else {
+		leftPtr = buildArrayPtr(loc, left.type, buildExpReference(loc, left, left.name));
+	}
+
 	args = [
 		cast(ir.Exp)
 		buildExpReference(loc, allocated, allocated.name),
-		buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, left, left.name), "ptr")),
+		buildCastToVoidPtr(loc, leftPtr),
 		buildBinOp(loc, ir.BinOp.Op.Mul,
 			buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
 			buildConstantSizeT(loc, lp, size(lp, type.base))
@@ -379,7 +393,7 @@ ir.Function getArrayConcatFunction(Location loc, LanguagePass lp, ir.Module this
 				buildConstantSizeT(loc, lp, size(lp, type.base))
 			)
 		),
-		buildCastToVoidPtr(loc, buildAccess(loc, buildExpReference(loc, right, right.name), "ptr")),
+		buildCastToVoidPtr(loc, buildArrayPtr(loc, right.type, buildExpReference(loc, right, right.name))),
 		buildBinOp(loc, ir.BinOp.Op.Mul,
 			buildAccess(loc, buildExpReference(loc, right, right.name), "length"),
 			buildConstantSizeT(loc, lp, size(lp, type.base))
@@ -477,8 +491,8 @@ ir.Function getArrayCmpFunction(Location loc, LanguagePass lp, ir.Module thisMod
 		buildReturnStat(loc, fn._body,
 			buildBinOp(loc, notEqual ? ir.BinOp.Op.NotEqual : ir.BinOp.Op.Equal,
 				buildCall(loc, memCmpExpRef, [
-					buildCastSmart(loc, buildVoidPtr(loc), buildAccess(loc, buildExpReference(loc, left, left.name), "ptr")),
-					buildCastSmart(loc, buildVoidPtr(loc), buildAccess(loc, buildExpReference(loc, right, right.name), "ptr")),
+					buildCastSmart(loc, buildVoidPtr(loc), buildArrayPtr(loc, left.type, buildExpReference(loc, left, left.name))),
+					buildCastSmart(loc, buildVoidPtr(loc), buildArrayPtr(loc, right.type, buildExpReference(loc, right, right.name))),
 					cast(ir.Exp)buildBinOp(loc, ir.BinOp.Op.Mul,
 						buildAccess(loc, buildExpReference(loc, left, left.name), "length"),
 						buildConstantSizeT(loc, lp, size(lp, type.base))
