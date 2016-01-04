@@ -1483,15 +1483,27 @@ void postfixIdentifierUFCS(Context ctx, ref ir.Exp exp,
 
 bool builtInField(Context ctx, ref ir.Exp exp, ir.Exp child, ir.Type type, string field)
 {
+	bool isPointer;
+	auto ptr = cast(ir.PointerType) type;
+	if (ptr !is null) {
+		isPointer = true;
+		type = ptr.base;
+	}
+
 	auto array = cast(ir.ArrayType) type;
 	auto sarray = cast(ir.StaticArrayType) type;
 	if (sarray is null && array is null) {
 		return false;
 	}
+
 	switch (field) {
 	case "ptr":
 		auto base = array is null ? sarray.base : array.base;
 		assert(base !is null);
+
+		if (isPointer) {
+			child = buildDeref(exp.location, child);
+		}
 		exp = buildArrayPtr(base.location, base, child);
 		return true;
 	default:
