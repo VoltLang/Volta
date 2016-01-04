@@ -1313,6 +1313,8 @@ void handleBuiltinExp(State state, ir.BuiltinExp inbuilt, Value result)
 				at.types[ArrayType.ptrIndex], result);
 		} else if (sat !is null) {
 			getPointerFromStaticArray(state, inbuilt.location, result);
+		} else {
+			throw panic(inbuilt.location, "bad array ptr built-in.");
 		}
 		break;
 	default:
