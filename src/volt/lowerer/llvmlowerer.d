@@ -1050,7 +1050,7 @@ void replaceGlobalArrayLiteralIfNeeded(LanguagePass lp, ir.Scope current, ir.Var
 	}
 
 	auto at = getExpType(lp, al, current);
-	auto sexp = buildInternalArrayLiteralSmart(al.location, at, al.values);
+	auto sexp = buildInternalArrayLiteralSmart(al.location, at, al.exps);
 	sexp.originalExp = al;
 	auto assign = buildExpStat(al.location, buildAssign(al.location, buildExpReference(al.location, var, var.name), sexp));
 	if (fn._body.statements.length > 0) {
@@ -1277,7 +1277,7 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, LanguagePass lp,
 		auto rh   = buildIndex(l, keys, buildExpReference(l, indexVar, indexVar.name));
 		fs.block.statements = buildExpStat(l, buildAssign(l, kref, rh)) ~ fs.block.statements;
 
-		// v = aa.values[i]
+		// v = aa.exps[i]
 		auto vref = buildExpReference(l, valVar, valVar.name);
 		auto vals = buildAACall(lp.aaGetValues, buildArrayTypeSmart(l, valVar.type));
 		auto rh2  = buildIndex(l, vals, buildExpReference(l, indexVar, indexVar.name));
@@ -1307,14 +1307,14 @@ void transformForeaches(LanguagePass lp, ir.Scope current,
 void transformArrayLiteralIfNeeded(LanguagePass lp, ir.Scope current, bool inFunction, ref ir.Exp exp,
                                    ir.ArrayLiteral al)
 {
-	if (al.values.length == 0 || !inFunction) {
+	if (al.exps.length == 0 || !inFunction) {
 		return;
 	}
 	auto at = getExpType(lp, al, current);
 	if (at.nodeType == ir.NodeType.StaticArrayType) {
 		return;
 	}
-	auto sexp = buildInternalArrayLiteralSmart(al.location, at, al.values);
+	auto sexp = buildInternalArrayLiteralSmart(al.location, at, al.exps);
 	sexp.originalExp = al;
 	exp = sexp;
 }

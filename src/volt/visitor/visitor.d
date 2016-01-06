@@ -1918,7 +1918,7 @@ Visitor.Status acceptArrayLiteral(ref ir.Exp exp, ir.ArrayLiteral array, Visitor
 		}
 	}
 
-	foreach (ref childExp; array.values) {
+	foreach (ref childExp; array.exps) {
 		status = acceptExp(childExp, av);
 		if (status == VisitorStop) {
 			return VisitorStop;

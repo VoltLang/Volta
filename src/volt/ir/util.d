@@ -381,9 +381,9 @@ ir.ArrayLiteral buildArrayLiteralSmart(Location loc, ir.Type type, ir.Exp[] exps
 	literal.location = loc;
 	literal.type = copyTypeSmart(loc, type);
 	version (Volt) {
-		literal.values = new exps[0 .. $];
+		literal.exps = new exps[0 .. $];
 	} else {
-		literal.values = exps.dup;
+		literal.exps = exps.dup;
 	}
 	return literal;
 }

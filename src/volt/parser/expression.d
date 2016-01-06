@@ -526,7 +526,7 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 			if (!succeeded) {
 				return parseFailed(ps, c);
 			}
-			c.values ~= e;
+			c.exps ~= e;
 		}
 		exp = c;
 		break;

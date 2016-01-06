@@ -101,9 +101,9 @@ ir.ArrayLiteral copy(ir.ArrayLiteral ar)
 	newar.location = ar.location;
 	if (ar.type !is null)
 		newar.type = copyType(ar.type);
-	newar.values = new ir.Exp[](ar.values.length);
-	foreach (i, value; ar.values) {
-		newar.values[i] = copyExp(value);
+	newar.exps = new ir.Exp[](ar.exps.length);
+	foreach (i, value; ar.exps) {
+		newar.exps[i] = copyExp(value);
 	}
 	return newar;
 }

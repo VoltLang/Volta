@@ -78,7 +78,7 @@ bool needsEvaluation(ir.Exp exp)
 		return false;
 	case ArrayLiteral:
 		auto ar = cast(ir.ArrayLiteral) exp;
-		foreach (value; ar.values) {
+		foreach (value; ar.exps) {
 			if (needsEvaluation(value))
 				return true;
 		}

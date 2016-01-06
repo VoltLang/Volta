@@ -413,9 +413,9 @@ ir.Type getArrayLiteralType(LanguagePass lp, ir.ArrayLiteral arrayLiteral, ir.Sc
 		return arrayLiteral.type;
 	}
 	ir.Type base;
-	if (arrayLiteral.values.length > 0) {
+	if (arrayLiteral.exps.length > 0) {
 		/// @todo figure out common subtype stuff. For now, D1 stylin'.
-		base = getCommonSubtype(arrayLiteral.location, expsToTypes(lp, arrayLiteral.values, currentScope));
+		base = getCommonSubtype(arrayLiteral.location, expsToTypes(lp, arrayLiteral.exps, currentScope));
 		base = copyTypeSmart(arrayLiteral.location, base);
 	} else {
 		base = new ir.PrimitiveType(ir.PrimitiveType.Kind.Void);

@@ -43,6 +43,28 @@ protected:
 }
 
 /**
+ * Base class for literal expressions.
+ *
+ * @ingroup irNode irExp
+ */
+abstract class LiteralExp : Exp
+{
+public:
+	/**
+	 * The extyper will tag literals with their types,
+	 * so that (say) something like
+	 *     Struct s = {};
+	 * can be handled flexibly (like sending the right hand side
+	 * somewhere and still have code know what it is for instance).
+	 */
+	Exp[] exps;
+	Type type;
+
+protected:
+	this(NodeType nt) { super(nt); }
+}
+
+/**
  * A ternary expression is a short hand if statement in the form of an expression. 
  * 
  * condition ? ifTrue : ifFalse
@@ -284,11 +306,10 @@ public:
  *
  * @ingroup irNode irExp
  */
-class ArrayLiteral : Exp
+class ArrayLiteral : LiteralExp
 {
 public:
-	Exp[] values;
-	Type type;  ///< The type of the array. e.g. [1, 2, 3], type would be int[], not int.
+	// LiteralExp.type would be the type of the array. e.g. [1, 2, 3], type would be int[], not int.
 
 public:
 	this() { super(NodeType.ArrayLiteral); }
@@ -463,7 +484,7 @@ public:
  *
  * @ingroup irNode irExp
  */
-class FunctionLiteral : Exp
+class FunctionLiteral : Exp  // Not a LiteralExp for now -- these aren't implemented anyway.
 {
 public:
 	bool isDelegate;
@@ -504,33 +525,29 @@ public:
 }
 
 /// A StructLiteral is an expression form of a struct.
-class StructLiteral : Exp
+class StructLiteral : LiteralExp
 {
 public:
-	Exp[] exps;
-	Type type;  ///< Filled in Later.
 
 public:
 	this() { super(NodeType.StructLiteral); }
 }
 
 /// A UnionLiteral is a compiler internal expression form of a struct
-class UnionLiteral : Exp
+class UnionLiteral : LiteralExp
 {
 public:
-	Exp[] exps;
-	Type type;
 
 public:
 	this() { super(NodeType.UnionLiteral); }
 }
 
 /// A ClassLiteral is a compiler internal expression form of a class.
-class ClassLiteral : Exp
+class ClassLiteral : LiteralExp
 {
 public:
-	Exp[] exps;  ///< Values for the fields in the class.
-	Type type;  ///< The class this literal represents.
+	// LiteralExp.exps is the values for the fields in the class.
+	// LiteralExp.type is the class this literal represents.
 
 	/// See Variable.useBaseStorage, should be set for literals.
 	bool useBaseStorage;

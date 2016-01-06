@@ -59,7 +59,7 @@ void handleIfStructLiteral(Context ctx, ir.Type left, ref ir.Exp right)
 		if (array is null) {
 			return;
 		}
-		foreach (ref value; arrayLit.values) {
+		foreach (ref value; arrayLit.exps) {
 			handleIfStructLiteral(ctx, realType(array.base), value);
 		}
 		return;
@@ -589,7 +589,7 @@ void extypeAssignCallableType(Context ctx, ref ir.Exp exp,
 void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ref uint flag)
 {
 	auto alit = cast(ir.ArrayLiteral) exp;
-	if (alit !is null && alit.values.length == 0) {
+	if (alit !is null && alit.exps.length == 0) {
 		exp = buildArrayLiteralSmart(exp.location, atype, []);
 		return;
 	}
@@ -599,7 +599,7 @@ void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ref 
 		panicAssert(exp, atype !is null);
 		void nullCheckArrayLiteral(ir.ArrayLiteral lit)
 		{
-			foreach (ref val; lit.values) {
+			foreach (ref val; lit.exps) {
 				auto lit2 = cast(ir.ArrayLiteral) val;
 				if (lit2 !is null) {
 					nullCheckArrayLiteral(lit2);
@@ -639,11 +639,11 @@ void extypeAssignStaticArrayType(Context ctx, ref ir.Exp exp, ir.StaticArrayType
 		if (alit is null) {
 			throw makeExpected(exp.location, "array literal");
 		}
-		if (alit.values.length != atype.length) {
-			throw makeStaticArrayLengthMismatch(exp.location, atype.length, alit.values.length);
+		if (alit.exps.length != atype.length) {
+			throw makeStaticArrayLengthMismatch(exp.location, atype.length, alit.exps.length);
 		}
 		auto ltype = realType(atype.base);
-		foreach (ref e; alit.values) {
+		foreach (ref e; alit.exps) {
 			acceptExp(e, ctx.extyper);
 			extypeAssign(ctx, e, ltype);
 		}
@@ -656,7 +656,7 @@ void extypeAssignStaticArrayType(Context ctx, ref ir.Exp exp, ir.StaticArrayType
 		}
 	}
 	checkAlit();
-	exp = buildInternalStaticArrayLiteralSmart(exp.location, atype, alit.values);
+	exp = buildInternalStaticArrayLiteralSmart(exp.location, atype, alit.exps);
 }
 
 void extypeAssignAAType(Context ctx, ref ir.Exp exp, ir.AAType aatype)
@@ -668,7 +668,7 @@ void extypeAssignAAType(Context ctx, ref ir.Exp exp, ir.AAType aatype)
 	}
 
 	if (exp.nodeType == ir.NodeType.ArrayLiteral &&
-	    (cast(ir.ArrayLiteral)exp).values.length == 0) {
+	    (cast(ir.ArrayLiteral)exp).exps.length == 0) {
 		auto aa = new ir.AssocArray();
 		aa.location = exp.location;
 		aa.type = copyTypeSmart(exp.location, aatype);
@@ -1238,7 +1238,7 @@ private void rewriteVarargs(Context ctx,ir.CallableType asFunctionType,
 			warning(_exp.location, "passing struct to var-arg function.");
 		}
 		auto typeId = buildTypeidSmart(postfix.location, etype);
-		typeidsLiteral.values ~= typeId;
+		typeidsLiteral.exps ~= typeId;
 		types ~= etype;
 		// TODO this probably isn't right.
 		sizes ~= cast(int)size(ctx.lp, etype);
@@ -1291,7 +1291,7 @@ private void rewriteHomogenousVariadic(Context ctx,
 		auto exps = arguments[i .. $];
 		if (exps.length == 1) {
 			auto alit = cast(ir.ArrayLiteral) exps[0];
-			if (alit !is null && alit.values.length == 0) {
+			if (alit !is null && alit.exps.length == 0) {
 				exps = [];
 			}
 		}
@@ -2847,7 +2847,7 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 				ulong[] longArrayData;
 				size_t sz;
 
-				foreach (e; alit.values) {
+				foreach (e; alit.exps) {
 					addExp(e, exp, sz, intArrayData, longArrayData);
 				}
 				if (sz == 8) {

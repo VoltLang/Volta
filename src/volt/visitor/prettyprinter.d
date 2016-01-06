@@ -1563,9 +1563,9 @@ public:
 	override Status enter(ref ir.Exp, ir.ArrayLiteral array)
 	{
 		wf("[");
-		foreach (i, exp; array.values) {
+		foreach (i, exp; array.exps) {
 			acceptExp(exp, this);
-			if (i < array.values.length - 1) {
+			if (i < array.exps.length - 1) {
 				wf(", ");
 			}
 		}
