@@ -1428,6 +1428,7 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 				throw makeNotTaggedOut(postfix.arguments[i], i);
 			}
 		}
+		tagLiteralType(postfix.arguments[i], asFunctionType.params[i]);
 		extypePass(ctx, postfix.arguments[i], asFunctionType.params[i]);
 	}
 
@@ -2435,6 +2436,7 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 		bool copying = postfixl !is null && postfixr !is null &&
 			postfixl.op == ir.Postfix.Op.Slice &&
 			postfixr.op == ir.Postfix.Op.Slice;
+		tagLiteralType(binop.right, ltype);
 		extypeAssign(ctx, binop.right, ltype, copying);
 
 		return;
@@ -3227,7 +3229,17 @@ void resolveVariable(Context ctx, ir.Variable v)
 
 	if (v.assign !is null) {
 		handleIfStructLiteral(ctx, v.type, v.assign);
+		if (!isAuto(v.type)) {
+			tagLiteralType(v.assign, v.type);
+		}
 		acceptExp(v.assign, ctx.extyper);
+		if (isAuto(v.type)) {
+			auto rtype = getExpType(ctx.lp, v.assign, ctx.current);
+			if (rtype.nodeType == ir.NodeType.FunctionSetType) {
+				throw makeCannotInfer(v.assign.location);
+			}
+			v.type = copyTypeSmart(v.assign.location, rtype);
+		}
 		extypeAssign(ctx, v.assign, v.type);
 	}
 
@@ -3346,6 +3358,68 @@ ir.Constant evaluateIsExp(Context ctx, ir.IsExp isExp)
 		throw makeNotAvailableInCTFE(isExp, isExp);
 	}
 	return buildConstantBool(isExp.location, typesEqual(isExp.type, isExp.specType));
+}
+
+/**
+ * Given a expression and a type, if the expression is a literal,
+ * tag it (and its subexpressions) with the type.
+ */
+void tagLiteralType(ir.Exp exp, ir.Type type)
+{
+	auto literal = cast(ir.LiteralExp)exp;
+	if (literal is null) {
+		return;
+	}
+	literal.type = copyTypeSmart(exp.location, type);
+
+	switch (literal.nodeType) with (ir.NodeType) {
+	case ArrayLiteral:
+		ir.Type base;
+		auto atype = cast(ir.ArrayType)realType(type);
+		if (atype !is null) {
+			base = atype.base;
+		}
+		auto satype = cast(ir.StaticArrayType)realType(type);
+		if (satype !is null) {
+			base = satype.base;
+		}
+		auto aatype = cast(ir.AAType)realType(type);
+		if (aatype is null && base is null) {
+			throw makeUnexpected(exp.location, "array literal");
+		}
+
+		auto alit = cast(ir.ArrayLiteral)exp;
+		panicAssert(exp, alit !is null);
+		foreach (val; alit.exps) {
+			if (aatype !is null) {
+				auto aapair = cast(ir.AAPair)val;
+				if (aapair is null) {
+					throw makeExpected(exp.location, "associative array pair");
+				}
+				tagLiteralType(aapair.key, aatype.key);
+				tagLiteralType(aapair.value, aatype.value);
+			} else {
+				tagLiteralType(val, base);
+			}
+		}
+		break;
+	case StructLiteral:
+		auto stype = cast(ir.Struct)realType(type);
+		auto slit = cast(ir.StructLiteral)exp;
+		if (stype is null || slit is null) {
+			throw panic(exp.location, "tagging struct literal as not an struct.");
+		}
+		auto vars = getStructFieldVars(stype);
+		if (slit.exps.length > vars.length) {
+			throw makeWrongNumberOfArgumentsToStructLiteral(exp.location);
+		}
+		foreach (i, val; slit.exps) {
+			tagLiteralType(val, vars[i].type);
+		}
+		break;
+	default:
+		throw panicUnhandled(exp.location, "literal type");
+	}
 }
 
 /**
