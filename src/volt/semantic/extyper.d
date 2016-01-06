@@ -1537,7 +1537,7 @@ void replaceExpReferenceIfNeeded(Context ctx, ref ir.Exp exp, ir.ExpReference eR
 /**
  * Turn identifier postfixes into <ExpReference>.ident.
  */
-bool consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes,
+void consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes,
                                   ref ir.Exp exp, ir.Exp parent)
 {
 	ir.Store lookStore; // The store that we are look in.
@@ -1546,7 +1546,7 @@ bool consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes,
 
 	// Only consume identifiers.
 	if (postfixes[0].op != ir.Postfix.Op.Identifier) {
-		return false;
+		return;
 	}
 
 	void setupArrayAndExp(ir.Exp toReplace, size_t i)
@@ -1561,7 +1561,7 @@ bool consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes,
 	}
 
 	if (!getIfStoreOrTypeExp(postfixes[0].child, lookStore, lookType)) {
-		return false;
+		return;
 	}
 
 	// Early out on type only.
@@ -1570,10 +1570,9 @@ bool consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes,
 		ir.Exp toReplace = postfixes[0];
 		if (typeLookup(ctx, toReplace, lookType)) {
 			setupArrayAndExp(toReplace, 0);
-			return true;
-		} else { // We have no scope to look in.
-			return false;
 		}
+		// We have no scope to look in.
+		return;
 	}
 
 	// Get a scope from said lookStore.
@@ -1588,7 +1587,7 @@ bool consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes,
 			ir.Exp toReplace = postfixes[i];
 			if (typeLookup(ctx, toReplace, lookType)) {
 				setupArrayAndExp(toReplace, i);
-				return true;
+				return;
 			}
 		}
 
@@ -1623,7 +1622,7 @@ bool consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes,
 		handleStore(ctx, name, toReplace, store, null, parentKind,
 		            StoreSource.StaticPostfix);
 		setupArrayAndExp(toReplace, i);
-		return true;
+		return;
 	}
 
 	assert(false);
@@ -1911,15 +1910,13 @@ void extypePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp paren
 		acceptExp(allPostfixes[0].child, ctx.extyper);
 	}
 
+	consumeIdentsIfScopesOrTypes(ctx, allPostfixes, exp, parent);
+
 	// Now process the list of postfixes.
 	while (allPostfixes.length > 0) {
+
+		// front
 		auto working = allPostfixes[0];
-
-		if (working.op == ir.Postfix.Op.Identifier &&
-		    consumeIdentsIfScopesOrTypes(ctx, allPostfixes, exp, parent)) {
-			continue;
-		}
-
 		// popFront this way we advance and know if we have more.
 		allPostfixes = allPostfixes[1 .. $];
 
