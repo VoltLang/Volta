@@ -1294,7 +1294,7 @@ void handleVaArgExp(State state, ir.VaArgExp vaexp, Value result)
 
 void handleBuiltinExp(State state, ir.BuiltinExp inbuilt, Value result)
 {
-	switch (inbuilt.kind) with (ir.BuiltinExp.Kind) {
+	final switch (inbuilt.kind) with (ir.BuiltinExp.Kind) {
 	case ArrayPtr:
 		assert(inbuilt.children.length == 1);
 		state.getValueAnyForm(inbuilt.children[0], result);
@@ -1312,7 +1312,27 @@ void handleBuiltinExp(State state, ir.BuiltinExp inbuilt, Value result)
 			throw panic(inbuilt.location, "bad array ptr built-in.");
 		}
 		break;
-	default:
+	case ArrayLength:
+		assert(inbuilt.children.length == 1);
+		state.getValueAnyForm(inbuilt.children[0], result);
+		auto at = cast(ArrayType)result.type;
+		auto sat = cast(StaticArrayType)result.type;
+
+		if (at !is null) {
+			getFieldFromAggregate(
+				state, inbuilt.location, result,
+				ArrayType.lengthIndex,
+				at.types[ArrayType.lengthIndex], result);
+		} else if (sat !is null) {
+			auto t = state.sizeType;
+			result.value = LLVMConstInt(t.llvmType, sat.length, false);
+			result.isPointer = false;
+			result.type = t;
+		} else {
+			throw panic(inbuilt.location, "bad array ptr built-in.");
+		}
+		break;
+	case Invalid:
 		throw panic(inbuilt, "unhandled");
 	}
 }

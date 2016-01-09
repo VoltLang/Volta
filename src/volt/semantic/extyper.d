@@ -1291,7 +1291,14 @@ bool builtInField(Context ctx, ref ir.Exp exp, ir.Exp child, ir.Type type, strin
 		}
 		exp = buildArrayPtr(exp.location, base, child);
 		return true;
+	case "length":
+		if (isPointer) {
+			child = buildDeref(exp.location, child);
+		}
+		exp = buildArrayLength(exp.location, ctx.lp, child);
+		return true;
 	default:
+		// Error?
 		return false;
 	}
 }
@@ -1306,9 +1313,7 @@ bool builtInField(ir.Type type, string field)
 			field == "keys" ||
 			field == "values";
 	}
-	auto array = cast(ir.ArrayType) type;
-	auto sarray = cast(ir.StaticArrayType) type;
-	return (sarray !is null || array !is null) && (field == "ptr" || field == "length");
+	return false;
 }
 
 /**

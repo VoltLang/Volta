@@ -819,6 +819,20 @@ ir.BuiltinExp buildArrayPtr(Location loc, ir.Type base, ir.Exp child)
 }
 
 /**
+ * Builds a BuiltinExp of ArrayLength type. Make sure the child exp is
+ * not a pointer to an array.
+ */
+ir.BuiltinExp buildArrayLength(Location loc, LanguagePass lp, ir.Exp child)
+{
+	auto st = buildSizeT(loc, lp);
+	auto builtin = new ir.BuiltinExp(
+		ir.BuiltinExp.Kind.ArrayLength, st, [child]);
+	builtin.location = loc;
+
+	return builtin;
+}
+
+/**
  * Build a postfix Identifier expression.
  */
 ir.Postfix buildAccess(Location loc, ir.Exp exp, string name)
