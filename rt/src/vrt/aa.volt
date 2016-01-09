@@ -48,7 +48,7 @@ extern(C) void* vrt_aa_new(TypeInfo value, TypeInfo key)
 	rbt.key = key;
 	rbt.length = 0;
 
-	return rbt;
+	return cast(void*)rbt;
 }
 
 extern(C) size_t vrt_aa_get_length(void* rbtv)
@@ -89,7 +89,7 @@ extern(C) void* vrt_aa_dup(void* rbtv)
 	auto newRbt = cast(RedBlackTree*)vrt_aa_new(rbt.value, rbt.key);
 	newRbt.root = vrt_aa_dup_treenode(rbt.root);
 	newRbt.length = rbt.length;
-	return newRbt;
+	return cast(void*)newRbt;
 }
 
 // vrt_aa_get_keyvalue (e.g. vrt_aa_get_pa key == primitive, value == array)
@@ -196,13 +196,13 @@ extern(C) bool vrt_aa_in_primitive(void* rbtv, ulong key, void* ret)
 	}
 
 	RedBlackTree* rbt = cast(RedBlackTree*)rbtv;
-	TreeNode* node = vrt_aa_lookup_node_primitive(rbt, key);
+	TreeNode* node = vrt_aa_lookup_node_primitive(rbtv, key);
 	if (node is null) {
 		return false;
 	}
 
 	if (rbt.value.size < typeid(TreeStore).size) {
-		memcpy(ret, &(node.value), rbt.value.size);
+		memcpy(ret, cast(void*)&(node.value), rbt.value.size);
 	} else {
 		memcpy(ret, node.value.ptr, rbt.value.size);
 	}
@@ -216,13 +216,13 @@ extern(C) bool vrt_aa_in_array(void* rbtv, void[] key, void* ret)
 	}
 
 	RedBlackTree* rbt = cast(RedBlackTree*)rbtv;
-	TreeNode* node = vrt_aa_lookup_node_array(rbt, key);
+	TreeNode* node = vrt_aa_lookup_node_array(rbtv, key);
 	if (node is null) {
 		return false;
 	}
 
 	if (rbt.value.size < typeid(TreeStore).size) {
-		memcpy(ret, &(node.value), rbt.value.size);
+		memcpy(ret, cast(void*)&(node.value), rbt.value.size);
 	} else {
 		memcpy(ret, node.value.ptr, rbt.value.size);
 	}
@@ -236,7 +236,7 @@ extern(C) void* vrt_aa_in_binop_array(void* rbtv, void[] key)
 	}
 
 	RedBlackTree* rbt = cast(RedBlackTree*)rbtv;
-	TreeNode* tn = vrt_aa_lookup_node_array(rbt, key);
+	TreeNode* tn = vrt_aa_lookup_node_array(rbtv, key);
 	if (tn is null) {
 		return null;
 	}
@@ -254,7 +254,7 @@ extern(C) void* vrt_aa_in_binop_primitive(void* rbtv, ulong key)
 	}
 
 	RedBlackTree* rbt = cast(RedBlackTree*)rbtv;
-	TreeNode* tn = vrt_aa_lookup_node_primitive(rbt, key);
+	TreeNode* tn = vrt_aa_lookup_node_primitive(rbtv, key);
 	if (tn is null) {
 		return null;
 	}
@@ -315,7 +315,7 @@ extern(C) void vrt_aa_insert_primitive(void* rbtv, ulong key, void* value)
 	inserted_node.red = true; // we have to check the rules afterwards and fix the tree!
 
 	if (rbt.value.size < typeid(TreeStore).size) {
-		memcpy(&(inserted_node.value), value, rbt.value.size);
+		memcpy(cast(void*)&(inserted_node.value), value, rbt.value.size);
 	} else {
 		// allocate more memory for value
 		void* mem = allocDg(rbt.value, 1);
@@ -375,7 +375,7 @@ extern(C) void vrt_aa_insert_array(void* rbtv, void[] key, void* value)
 	inserted_node.red = true; // we have to check the rules afterwards and fix the tree!
 
 	if (rbt.value.size < typeid(TreeStore).size) {
-		memcpy(&(inserted_node.value), value, rbt.value.size);
+		memcpy(cast(void*)&(inserted_node.value), value, rbt.value.size);
 	} else {
 		void* mem = allocDg(rbt.value, 1);
 		memcpy(mem, value, rbt.value.size);
@@ -522,7 +522,7 @@ extern(C) bool vrt_aa_delete_primitive(void* rbtv, ulong key)
 {
 	RedBlackTree* rbt = cast(RedBlackTree*) rbtv;
 	TreeNode* child;
-	TreeNode* node = vrt_aa_lookup_node_primitive(rbt, key);
+	TreeNode* node = vrt_aa_lookup_node_primitive(cast(void*)rbt, key);
 
 	if (node is null) {
 		// Key did not exist
@@ -572,7 +572,7 @@ extern(C) bool vrt_aa_delete_array(void* rbtv, void[] key)
 {
 	RedBlackTree* rbt = cast(RedBlackTree*)rbtv;
 	TreeNode* child;
-	TreeNode* node = vrt_aa_lookup_node_array(rbt, key);
+	TreeNode* node = vrt_aa_lookup_node_array(rbtv, key);
 
 	if (node is null) {
 		return false;
