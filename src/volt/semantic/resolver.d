@@ -218,7 +218,7 @@ void resolveEnum(LanguagePass lp, ir.Enum e)
 
 	assert(first !is null && first.assign !is null);
 	auto type = getExpType(lp, first.assign, e.myScope);
-	e.base = copyTypeSmart(e.location, type);
+	e.base = realType(copyTypeSmart(e.location, type));
 }
 
 void resolveStruct(LanguagePass lp, ir.Struct s)

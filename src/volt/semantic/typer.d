@@ -409,9 +409,6 @@ ir.Type getCommonSubtype(Location l, ir.Type[] types)
 
 ir.Type getArrayLiteralType(LanguagePass lp, ir.ArrayLiteral arrayLiteral, ir.Scope currentScope)
 {
-	if (arrayLiteral.type !is null) {
-		return arrayLiteral.type;
-	}
 	ir.Type base;
 	if (arrayLiteral.exps.length > 0) {
 		/// @todo figure out common subtype stuff. For now, D1 stylin'.
@@ -420,6 +417,10 @@ ir.Type getArrayLiteralType(LanguagePass lp, ir.ArrayLiteral arrayLiteral, ir.Sc
 	} else {
 		base = new ir.PrimitiveType(ir.PrimitiveType.Kind.Void);
 		base.location = arrayLiteral.location;
+	}
+	auto asClass = cast(ir.Class)realType(base);
+	if (asClass is null && arrayLiteral.type !is null) {
+		return arrayLiteral.type;
 	}
 	assert(base !is null);
 	arrayLiteral.type = new ir.ArrayType(base);

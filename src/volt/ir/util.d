@@ -1654,6 +1654,15 @@ void buildForStatement(Location loc, LanguagePass lp, ir.Scope parent, ir.Exp le
 	forStatement.block = buildBlockStat(loc, forStatement, parent);
 }
 
+void addStorageIgnoreNamed(ir.Type dest, ir.Type src)
+{
+	auto named = cast(ir.Named)dest;
+	if (named !is null) {
+		return;
+	}
+	addStorage(dest, src);
+}
+
 void addStorage(ir.Type dest, ir.Type src)
 {
 	auto named = cast(ir.Named) dest;

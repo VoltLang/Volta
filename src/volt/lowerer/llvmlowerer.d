@@ -496,7 +496,9 @@ public:
 	override Status leave(ref ir.Exp exp, ir.Unary uexp)
 	{
 		replaceInterfaceCastIfNeeded(exp.location, lp, current, uexp, exp);
-		replaceArrayCastIfNeeded(exp.location, lp, current, uexp, exp);
+		if (functionStack.length > 0) {
+			replaceArrayCastIfNeeded(exp.location, lp, current, uexp, exp);
+		}
 
 		return Continue;
 	}
@@ -1018,7 +1020,13 @@ void replaceGlobalArrayLiteralIfNeeded(LanguagePass lp, ir.Scope current, ir.Var
 
 	auto al = cast(ir.ArrayLiteral) var.assign;
 	if (al is null) {
-		return;
+		auto _u = cast(ir.Unary)var.assign;
+		if (_u !is null) {
+			al = cast(ir.ArrayLiteral)_u.value;
+		}
+		if (al is null) {
+			return;
+		}
 	}
 
 	// Retrieve a named function from the current module, asserting that it is of type kind.

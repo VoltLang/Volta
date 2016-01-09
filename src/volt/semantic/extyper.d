@@ -29,6 +29,7 @@ import volt.semantic.lookup;
 import volt.semantic.context;
 import volt.semantic.classify;
 import volt.semantic.overload;
+import volt.semantic.implicit;
 import volt.semantic.classresolver;
 import volt.semantic.storageremoval;
 import volt.semantic.userattrresolver;
@@ -434,445 +435,6 @@ void handleScopeStore(Context ctx, string ident, ref ir.Exp exp, ir.Store store,
 	se.store = store;
 	exp = se;
 }
-
-
-/*
- *
- * extypeAssign* code.
- *
- */
-
-void extypeAssignTypeReference(Context ctx, ref ir.Exp exp,
-                               ir.TypeReference tr)
-{
-	extypeAssign(ctx, exp, tr.type);
-}
-
-/**
- * Handles implicit pointer casts. To void*, immutable(T)* to const(T)*
- * T* to const(T)* and the like.
- */
-void extypeAssignPointerType(Context ctx, ref ir.Exp exp,
-                             ir.PointerType ptr, uint flag)
-{
-	ir.PointerType pcopy =
-		cast(ir.PointerType) copyTypeSmart(exp.location, ptr);
-	assert(pcopy !is null);
-
-	auto type = ctx.overrideType !is null ? ctx.overrideType : realType(getExpType(ctx.lp, exp, ctx.current));
-
-	auto rp = cast(ir.PointerType) type;
-	if (rp is null) {
-		throw makeBadImplicitCast(exp, type, pcopy);
-	}
-	ir.PointerType rcopy =
-		cast(ir.PointerType) copyTypeSmart(exp.location, rp);
-	assert(rcopy !is null);
-	if (typesEqual(pcopy, rcopy)) {
-		return;
-	}
-
-	auto pbase = realBase(cast(ir.PointerType)flattenStorage(pcopy));
-	auto rbase = realBase(cast(ir.PointerType)flattenStorage(rcopy));
-	if (typesEqual(pcopy, rcopy)) {
-		return;
-	}
-
-	if (pbase.nodeType == ir.NodeType.PrimitiveType) {
-		auto asPrimitive = cast(ir.PrimitiveType) pbase;
-		assert(asPrimitive !is null);
-		if (asPrimitive.type == ir.PrimitiveType.Kind.Void) {
-			exp = buildCastSmart(pcopy, exp);
-			return;
-		}
-	}
-
-	if ((pbase.isConst && !rbase.isScope) ||
-		(pbase.isImmutable && rbase.isConst) ||
-		pbase.isScope && typesEqual(pbase, rbase, IgnoreStorage)) {
-		exp = buildCastSmart(pcopy, exp);
-		return;
-	}
-
-	throw makeBadImplicitCast(exp, type, pcopy);
-}
-
-/**
- * Implicit primitive casts (smaller to larger).
- */
-void extypeAssignPrimitiveType(Context ctx, ref ir.Exp exp, ir.PrimitiveType lprim)
-{
-	auto rtype = getExpType(ctx.lp, exp, ctx.current);
-	auto rprim = cast(ir.PrimitiveType) realType(rtype, true, true);
-	if (rprim is null) {
-		throw makeBadImplicitCast(exp, rtype, lprim);
-	}
-
-	if (typesEqual(lprim, rprim)) {
-		return;
-	}
-
-	if (!isImplicitlyConvertable(rprim, lprim) &&
-	    !fitsInPrimitive(lprim, exp)) {
-		throw makeBadImplicitCast(exp, rprim, lprim);
-	}
-
-	exp = buildCastSmart(lprim, exp);
-}
-
-/**
- * Handles converting child classes to parent classes.
- */
-void extypeAssignClass(Context ctx, ref ir.Exp exp, ir.Class _class)
-{
-	auto type = realType(getExpType(ctx.lp, exp, ctx.current), true, true);
-	assert(type !is null);
-
-	auto rightClass = cast(ir.Class) type;
-	if (rightClass is null) {
-		throw makeBadImplicitCast(exp, type, _class);
-	}
-	ctx.lp.resolveNamed(rightClass);
-
-	/// Check for converting child classes into parent classes.
-	if (_class !is null && rightClass !is null) {
-		if (inheritsFrom(rightClass, _class)) {
-			exp = buildCastSmart(exp.location, _class, exp);
-			return;
-		}
-	}
-
-	if (_class !is rightClass) {
-		throw makeBadImplicitCast(exp, rightClass, _class);
-	}
-}
-
-void extypeAssignEnum(Context ctx, ref ir.Exp exp, ir.Enum e)
-{
-	auto rtype = getExpType(ctx.lp, exp, ctx.current);
-	if (typesEqual(e, rtype)) {
-		return;
-	}
-
-	// TODO: This might need to be smarter.
-	extypeAssignDispatch(ctx, exp, e.base);
-}
-
-
-/**
- * Handles assigning an overloaded function to a delegate.
- */
-void extypeAssignCallableType(Context ctx, ref ir.Exp exp,
-                              ir.CallableType ctype)
-{
-	auto rtype = ctx.overrideType !is null ? ctx.overrideType : realType(getExpType(ctx.lp, exp, ctx.current), true, true);
-	if (typesEqual(ctype, rtype, IgnoreStorage)) {
-		return;
-	}
-	if (rtype.nodeType == ir.NodeType.FunctionSetType) {
-		auto fset = cast(ir.FunctionSetType) rtype;
-		auto fn = selectFunction(ctx.lp, fset.set, ctype.params, exp.location);
-		auto eRef = buildExpReference(exp.location, fn, fn.name);
-		fset.set.reference = eRef;
-		exp = eRef;
-		replaceExpReferenceIfNeeded(ctx, exp, eRef);
-		extypeAssignCallableType(ctx, exp, ctype);
-		return;
-	}
-	throw makeBadImplicitCast(exp, rtype, ctype);
-}
-
-/**
- * Handles casting arrays of non mutably indirect types with
- * differing storage types.
- */
-void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ref uint flag)
-{
-	auto alit = cast(ir.ArrayLiteral) exp;
-	if (alit !is null && alit.exps.length == 0) {
-		exp = buildArrayLiteralSmart(exp.location, atype, []);
-		return;
-	}
-
-	if (alit !is null) {
-		auto aatype = cast(ir.ArrayType)realType(alit.type);
-		panicAssert(exp, atype !is null);
-		void nullCheckArrayLiteral(ir.ArrayLiteral lit)
-		{
-			foreach (ref val; lit.exps) {
-				auto lit2 = cast(ir.ArrayLiteral) val;
-				if (lit2 !is null) {
-					nullCheckArrayLiteral(lit2);
-				} else {
-					handleIfNull(ctx, aatype.base, val);
-				}
-			}
-		}
-		nullCheckArrayLiteral(alit);
-	}
-
-	auto astore = accumulateStorage(atype);
-	auto rtype = ctx.overrideType !is null ? ctx.overrideType : realType(getExpType(ctx.lp, exp, ctx.current));
-
-	auto stype = cast(ir.StaticArrayType) rtype;
-	if (stype !is null && willConvertArray(atype, buildArrayType(exp.location, stype.base))) {
-		exp = buildCastSmart(exp.location, atype, exp);
-		return;
-	}
-
-	if (typesEqual(rtype, atype)) {
-		return;
-	}
-
-	if (willConvertArray(atype, rtype)) {
-		return;
-	}
-
-	throw makeBadImplicitCast(exp, rtype, atype);
-}
-
-void extypeAssignStaticArrayType(Context ctx, ref ir.Exp exp, ir.StaticArrayType atype, ref uint flag)
-{
-	ir.ArrayLiteral alit;
-	void checkAlit()
-	{
-		if (alit is null) {
-			throw makeExpected(exp.location, "array literal");
-		}
-		if (alit.exps.length != atype.length) {
-			throw makeStaticArrayLengthMismatch(exp.location, atype.length, alit.exps.length);
-		}
-		auto ltype = realType(atype.base);
-		foreach (ref e; alit.exps) {
-			acceptExp(e, ctx.extyper);
-			extypeAssign(ctx, e, ltype);
-		}
-	}
-	alit = cast(ir.ArrayLiteral) exp;
-	if (alit is null) {
-		auto t = realType(getExpType(ctx.lp, exp, ctx.current));
-		if (typesEqual(t, atype)) {
-			return;
-		}
-	}
-	checkAlit();
-	exp = buildInternalStaticArrayLiteralSmart(exp.location, atype, alit.exps);
-}
-
-void extypeAssignAAType(Context ctx, ref ir.Exp exp, ir.AAType aatype)
-{
-	auto rtype = ctx.overrideType !is null ? ctx.overrideType : getExpType(ctx.lp, exp, ctx.current);
-	if (exp.nodeType == ir.NodeType.AssocArray &&
-	    typesEqual(aatype, rtype)) {
-		return;
-	}
-
-	if (exp.nodeType == ir.NodeType.ArrayLiteral &&
-	    (cast(ir.ArrayLiteral)exp).exps.length == 0) {
-		auto aa = new ir.AssocArray();
-		aa.location = exp.location;
-		aa.type = copyTypeSmart(exp.location, aatype);
-		exp = aa;
-		return;
-	}
-
-	if (rtype.nodeType == ir.NodeType.AAType) {
-		// Allow assignment from vrt_aa_dup.
-		auto unary = cast(ir.Unary) exp;
-		if (unary !is null) {
-			auto pfix = cast(ir.Postfix) unary.value;
-			if (pfix !is null) {
-				auto fn = cast(ir.FunctionType) realType(getExpType(ctx.lp, pfix.child, ctx.current));
-				if (fn is ctx.lp.aaDup.type) {
-					return;
-				}
-			}
-		}
-		// Otherwise, verboten.
-		throw makeBadAAAssign(exp.location);
-	}
-
-	throw makeBadImplicitCast(exp, rtype, aatype);
-}
-
-void extypeAssignInterface(Context ctx, ref ir.Exp exp,
-                           ir._Interface iface)
-{
-	auto type = realType(getExpType(ctx.lp, exp, ctx.current));
-
-	auto eiface = cast(ir._Interface)type;
-	if (eiface !is null) {
-		if (typesEqual(iface, eiface)) {
-			return;
-		} else {
-			throw panic(exp.location, "todo interface to different interface.");
-		}
-	}
-
-	auto ctype = cast(ir.Class) type;
-	if (ctype is null) {
-		throw makeExpected(exp.location, "class");
-	}
-	bool checkInterface(ir._Interface i)
-	{
-		if (i is iface) {
-			exp = buildCastSmart(exp.location, i, exp);
-			return true;
-		}
-		foreach (piface; i.parentInterfaces) {
-			if (checkInterface(piface)) {
-				return true;
-			}
-		}
-		return false;
-	}
-	bool checkClass(ir.Class _class)
-	{
-		if (_class is null) {
-			return false;
-		}
-		foreach (i, classIface; _class.parentInterfaces) {
-			if (checkInterface(classIface)) {
-				return true;
-			}
-		}
-		if (checkClass(_class.parentClass)) {
-			return true;
-		}
-		return false;
-	}
-	if (checkClass(ctype)) {
-		return;
-	}
-	throw makeBadImplicitCast(exp, type, iface);
-}
-
-/**
- * Yes really that name, no idea what this function does tho.
- */
-void extypeAssignHandleAssign(Context ctx, ref ir.Type toType, ref ir.Exp exp,
-                              ref uint toFlag, bool copying = false)
-{
-	auto rtype = getExpType(ctx.lp, exp, ctx.current);
-	auto autotype = cast(ir.AutoType) toType;
-	if (rtype.nodeType == ir.NodeType.FunctionSetType) {
-		if (autotype !is null) {
-			throw makeCannotInfer(exp.location);
-		}
-	}
-	if (autotype !is null) {
-		autotype.explicitType = copyTypeSmart(exp.location, rtype);
-		panicAssert(exp, autotype.explicitType.nodeType != ir.NodeType.AutoType);
-		if (!autotype.isConst && !autotype.isImmutable && !autotype.isScope) {
-			addStorage(autotype, rtype);
-		} else {
-			addStorage(autotype.explicitType, autotype);
-		}
-	}
-	auto originalRtype = rtype;
-	auto originalTo = toType;
-	auto lt = accumulateStorage(toType);
-	auto rt = accumulateStorage(rtype);
-	if (lt.isScope && ctx.isVarAssign) {
-		replaceAutoIfNeeded(toType);  // Get rid of scope now.
-		exp = buildCastSmart(exp.location, toType, exp);
-	} else if (rt.isConst && !effectivelyConst(lt) && mutableIndirection(originalTo) && !copying) {
-		throw makeBadImplicitCast(exp, originalRtype, originalTo);
-	} else if (mutableIndirection(originalTo) && !lt.isImmutable && rt.isScope && !lt.isScope && !copying) {
-		throw makeBadImplicitCast(exp, originalRtype, originalTo);
-	}
-}
-
-void extypeAssignDispatch(Context ctx, ref ir.Exp exp, ir.Type type,
-                          bool copying = false)
-{
-	uint flag;
-	extypeAssignHandleAssign(ctx, type, exp, flag, copying);
-	switch (type.nodeType) {
-	case ir.NodeType.AutoType:
-		auto autotype = cast(ir.AutoType) type;
-		extypeAssignDispatch(ctx, exp, autotype.explicitType, copying);
-		break;
-	case ir.NodeType.TypeReference:
-		auto tr = cast(ir.TypeReference) type;
-		extypeAssignTypeReference(ctx, exp, tr);
-		break;
-	case ir.NodeType.PointerType:
-		auto ptr = cast(ir.PointerType) type;
-		extypeAssignPointerType(ctx, exp, ptr, flag);
-		break;
-	case ir.NodeType.PrimitiveType:
-		auto prim = cast(ir.PrimitiveType) type;
-		extypeAssignPrimitiveType(ctx, exp, prim);
-		break;
-	case ir.NodeType.Class:
-		auto _class = cast(ir.Class) type;
-		extypeAssignClass(ctx, exp, _class);
-		break;
-	case ir.NodeType.Enum:
-		auto e = cast(ir.Enum) type;
-		extypeAssignEnum(ctx, exp, e);
-		break;
-	case ir.NodeType.FunctionType:
-	case ir.NodeType.DelegateType:
-		auto ctype = cast(ir.CallableType) type;
-		extypeAssignCallableType(ctx, exp, ctype);
-		break;
-	case ir.NodeType.ArrayType:
-		auto atype = cast(ir.ArrayType) type;
-		extypeAssignArrayType(ctx, exp, atype, flag);
-		break;
-	case ir.NodeType.StaticArrayType:
-		auto atype = cast(ir.StaticArrayType) type;
-		extypeAssignStaticArrayType(ctx, exp, atype, flag);
-		break;
-	case ir.NodeType.AAType:
-		auto aatype = cast(ir.AAType) type;
-		extypeAssignAAType(ctx, exp, aatype);
-		break;
-	case ir.NodeType.Interface:
-		auto iface = cast(ir._Interface) type;
-		extypeAssignInterface(ctx, exp, iface);
-		break;
-	case ir.NodeType.Struct:
-	case ir.NodeType.Union:
-		auto rtype = getExpType(ctx.lp, exp, ctx.current);
-		if (typesEqual(type, rtype)) {
-			return;
-		}
-		throw makeBadImplicitCast(exp, rtype, type);
-	default:
-		throw panicUnhandled(exp, toString(type.nodeType));
-	}
-}
-
-void extypeAssign(Context ctx, ref ir.Exp exp, ir.Type type,
-                  bool copying = false)
-{
-	handleIfStructLiteral(ctx, type, exp);
-	if (handleIfNull(ctx, type, exp)) return;
-
-	extypeAssignDispatch(ctx, exp, type, copying);
-}
-
-void extypePass(Context ctx, ref ir.Exp exp, ir.Type type)
-{
-	auto ptr = cast(ir.PointerType) realType(type, true, true);
-	// string literals implicitly convert to typeof(string.ptr)
-	auto constant = cast(ir.Constant) exp;
-	if (ptr !is null && constant !is null && constant._string.length != 0) {
-		auto a = cast(ir.ArrayType) constant.type;
-		exp = buildArrayPtr(exp.location, a.base, exp);
-	}
-	extypeAssign(ctx, exp, type);
-}
-
-
-/*
- *
- * Here ends extypeAssign* code.
- *
- */
 
 /**
  * If qname has a child of name leaf, returns an expression looking it up.
@@ -1296,7 +858,7 @@ private void rewriteHomogenousVariadic(Context ctx,
 			}
 		}
 		foreach (ref aexp; exps) {
-			extypePass(ctx, aexp, arr.base);
+			checkAndConvertStringLiterals(ctx, arr.base, aexp);
 		}
 		arguments[i] = buildInternalArrayLiteralSmart(arguments[0].location, asFunctionType.params[i], exps);
 		arguments = arguments[0 .. i + 1];
@@ -1429,7 +991,7 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			}
 		}
 		tagLiteralType(postfix.arguments[i], asFunctionType.params[i]);
-		extypePass(ctx, postfix.arguments[i], asFunctionType.params[i]);
+		checkAndConvertStringLiterals(ctx, asFunctionType.params[i], postfix.arguments[i]);
 	}
 
 	if (thisCall) {
@@ -1637,7 +1199,7 @@ void extypePostfixIndex(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	auto type = getExpType(ctx.lp, postfix.child, ctx.current);
 	if (type.nodeType == ir.NodeType.AAType) {
 		auto aa = cast(ir.AAType)type;
-		extypeAssign(ctx, postfix.arguments[0], aa.key);
+		checkAndDoConvert(ctx, aa.key, postfix.arguments[0]);
 	}
 }
 
@@ -2067,7 +1629,7 @@ void handleNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 	}
 
 	for (size_t i = 0; i < _unary.argumentList.length; ++i) {
-		extypeAssign(ctx, _unary.argumentList[i], fn.type.params[i]);
+		checkAndDoConvert(ctx, fn.type.params[i], _unary.argumentList[i]);
 	}
 }
 
@@ -2345,6 +1907,9 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 	auto ltype = realType(removeRefAndOut(lraw));
 	auto rtype = realType(removeRefAndOut(rraw));
 
+	if (isAssign(exp)) {
+		checkConst(exp, ltype);
+	}
 
 	if (handleIfNull(ctx, rtype, binop.left)) return;
 	if (handleIfNull(ctx, ltype, binop.right)) return;
@@ -2371,7 +1936,7 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 		if (asAA is null) {
 			throw makeExpected(binop.right.location, "associative array");
 		}
-		extypeAssign(ctx, binop.left, asAA.key);
+		checkAndDoConvert(ctx, asAA.key, binop.left);
 		ir.Exp rtFn, key;
 		auto l = binop.location;
 		if (isArray(ltype)) {
@@ -2409,7 +1974,7 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 			    asPostfix.op == ir.Postfix.Op.Index) {
 				auto aa = cast(ir.AAType)postfixLeft;
 
-				extypeAssign(ctx, binop.right, aa.value);
+				checkAndDoConvert(ctx, aa.value, binop.right);
 			}
 		}
 		break;
@@ -2433,11 +1998,15 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 
 		auto postfixl = cast(ir.Postfix)binop.left;
 		auto postfixr = cast(ir.Postfix)binop.right;
-		bool copying = postfixl !is null && postfixr !is null &&
-			postfixl.op == ir.Postfix.Op.Slice &&
-			postfixr.op == ir.Postfix.Op.Slice;
+		bool copying = postfixl !is null && postfixl.op == ir.Postfix.Op.Slice;
 		tagLiteralType(binop.right, ltype);
-		extypeAssign(ctx, binop.right, ltype, copying);
+		if (copying) {
+			if (!typesEqual(ltype, rtype, IgnoreStorage)) {
+				throw makeExpectedTypeMatch(binop.location, ltype);
+			}
+		} else {
+			checkAndDoConvert(ctx, ltype, binop.right);
+		}
 
 		return;
 	}
@@ -2554,7 +2123,7 @@ void extypeCat(Context ctx, ref ir.Exp lexp, ref ir.Exp rexp,
 		return;
 	}
 
-	extypeAssign(ctx, rexp, rarray is null ? left.base : left);
+	checkAndDoConvert(ctx, rarray is null ? left.base : left, rexp);
 	rexp = buildCastSmart(left.base, rexp);
 }
 
@@ -2567,8 +2136,8 @@ void extypeTernary(Context ctx, ir.Ternary ternary)
 	auto bClass = cast(ir.Class) falseType;
 	if (aClass !is null && bClass !is null) {
 		auto common = commonParent(aClass, bClass);
-		extypeAssign(ctx, ternary.ifTrue, common);
-		extypeAssign(ctx, ternary.ifFalse, common);
+		checkAndDoConvert(ctx, common, ternary.ifTrue);
+		checkAndDoConvert(ctx, common, ternary.ifFalse);
 	} else {
 		// matchLevel lives in volt.semantic.overload.
 		int trueMatchLevel = trueType.nodeType == ir.NodeType.NullType ? 0 : matchLevel(false, trueType, falseType);
@@ -2577,9 +2146,9 @@ void extypeTernary(Context ctx, ir.Ternary ternary)
 		auto baseType = getExpType(ctx.lp, baseExp, ctx.current);
 		assert(baseType.nodeType != ir.NodeType.NullType);
 		if (trueMatchLevel > falseMatchLevel) {
-			extypeAssign(ctx, ternary.ifFalse, baseType);
+			checkAndDoConvert(ctx, baseType, ternary.ifFalse);
 		} else {
-			extypeAssign(ctx, ternary.ifTrue, baseType);
+			checkAndDoConvert(ctx, baseType, ternary.ifTrue);
 		}
 	}
 
@@ -2606,13 +2175,8 @@ void extypeStructLiteral(Context ctx, ir.StructLiteral sl)
 
 	foreach (i, ref sexp; sl.exps) {
 
-		if (ctx.isFunction) {
-			extypeAssign(ctx, sexp, types[i]);
-			continue;
-		}
-
-		if (isBackendConstant(sexp)) {
-			extypeAssign(ctx, sexp, types[i]);
+		if (ctx.isFunction || isBackendConstant(sexp)) {
+			checkAndDoConvert(ctx, types[i], sexp);
 			continue;
 		}
 
@@ -2622,7 +2186,7 @@ void extypeStructLiteral(Context ctx, ir.StructLiteral sl)
 		}
 
 		sexp = n;
-		extypeAssign(ctx, sexp, types[i]);
+		checkAndDoConvert(ctx, types[i], sexp);
 	}
 }
 
@@ -2886,15 +2450,15 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 		}
 		if (_case.firstExp !is null) {
 			replaceWithHashIfNeeded(_case.firstExp);
-			extypeAssign(ctx, _case.firstExp, conditionType);
+			checkAndDoConvert(ctx, conditionType, _case.firstExp);
 		}
 		if (_case.secondExp !is null) {
 			replaceWithHashIfNeeded(_case.secondExp);
-			extypeAssign(ctx, _case.secondExp, conditionType);
+			checkAndDoConvert(ctx, conditionType, _case.secondExp);
 		}
 		foreach (ref exp; _case.exps) {
 			replaceWithHashIfNeeded(exp);
-			extypeAssign(ctx, exp, conditionType);
+			checkAndDoConvert(ctx, conditionType, exp);
 		}
 	}
 
@@ -3026,19 +2590,19 @@ void extypeForeach(Context ctx, ir.ForeachStatement fes)
 			auto asz = size(ctx.lp, a);
 			auto bsz = size(ctx.lp, b);
 			if (bsz > asz) {
-				extypeAssignPrimitiveType(ctx, fes.beginIntegerRange, b);
+				checkAndDoConvert(ctx, b, fes.beginIntegerRange);
 				fillBlankVariable(0, b);
 			} else if (asz > bsz) {
-				extypeAssignPrimitiveType(ctx, fes.endIntegerRange, a);
+				checkAndDoConvert(ctx, a, fes.endIntegerRange);
 				fillBlankVariable(0, a);
 			} else {
 				auto ac = evaluateOrNull(ctx.lp, ctx.current, fes.beginIntegerRange);
 				auto bc = evaluateOrNull(ctx.lp, ctx.current, fes.endIntegerRange);
 				if (ac !is null) {
-					extypeAssignPrimitiveType(ctx, fes.beginIntegerRange, b);
+					checkAndDoConvert(ctx, b, fes.beginIntegerRange);
 					fillBlankVariable(0, b);
 				} else if (bc !is null) {
-					extypeAssignPrimitiveType(ctx, fes.endIntegerRange, a);
+					checkAndDoConvert(ctx, a, fes.endIntegerRange);
 					fillBlankVariable(0, a);
 				}
 			}
@@ -3233,19 +2797,35 @@ void resolveVariable(Context ctx, ir.Variable v)
 			tagLiteralType(v.assign, v.type);
 		}
 		acceptExp(v.assign, ctx.extyper);
+		auto rtype = getExpType(ctx.lp, v.assign, ctx.current);
 		if (isAuto(v.type)) {
-			auto rtype = getExpType(ctx.lp, v.assign, ctx.current);
-			if (rtype.nodeType == ir.NodeType.FunctionSetType) {
+			auto atype = cast(ir.AutoType)v.type;
+			if (rtype.nodeType == ir.NodeType.FunctionSetType || atype is null) {
 				throw makeCannotInfer(v.assign.location);
 			}
-			v.type = copyTypeSmart(v.assign.location, rtype);
+			atype.explicitType = copyTypeSmart(v.assign.location, rtype);
+		} else {
+			if (!willConvert(ctx, v.type, v.assign)) {
+				throw makeBadImplicitCast(v, rtype, v.type);
+			}
 		}
-		extypeAssign(ctx, v.assign, v.type);
+		replaceAutoIfNeeded(v.type);
+		doConvert(ctx, v.type, v.assign);
 	}
 
 	replaceAutoIfNeeded(v.type);
 	accept(v.type, ctx.extyper);
 	v.isResolved = true;
+}
+
+/**
+ * If type is effectively const, throw an error.
+ */
+void checkConst(ir.Node n, ir.Type type)
+{
+	if (effectivelyConst(type)) {
+		throw makeCannotModify(n, type);
+	}
 }
 
 void resolveFunction(Context ctx, ir.Function fn)
@@ -3505,7 +3085,7 @@ public:
 		assert(ua !is null);
 
 		foreach (i, ref arg; a.arguments) {
-			extypeAssign(ctx, a.arguments[i], ua.fields[i].type);
+			checkAndDoConvert(ctx, ua.fields[i].type, a.arguments[i]);
 			acceptExp(a.arguments[i], this);
 		}
 	}
@@ -3550,7 +3130,7 @@ public:
 				ed.assign = buildConstantInt(ed.location, 0);
 			} else {
 				auto loc = ed.location;
-				auto prevType = getExpType(ctx.lp, prevExp, ctx.current);
+				auto prevType = realType(getExpType(ctx.lp, prevExp, ctx.current));
 				if (!isIntegral(prevType)) {
 					throw makeTypeIsNot(ed, prevType, buildInt(ed.location));
 				}
@@ -3564,8 +3144,21 @@ public:
 			}
 		}
 
-		extypeAssign(ctx, ed.assign, ed.type);
-		replaceAutoIfNeeded(ed.type);
+		auto e = cast(ir.Enum)realType(ed.type, false);
+		auto rtype = getExpType(ctx.lp, ed.assign, ctx.current);
+		if (e !is null && isAuto(realType(e.base))) {
+			e.base = realType(e.base);
+			auto atype = cast(ir.AutoType)e.base;
+			atype.explicitType = realType(copyTypeSmart(ed.assign.location, rtype));
+			replaceAutoIfNeeded(e.base);
+		}
+		if (isAuto(realType(ed.type))) {
+			ed.type = realType(ed.type);
+			auto atype = cast(ir.AutoType)ed.type;
+			atype.explicitType = realType(copyTypeSmart(ed.assign.location, rtype));
+			replaceAutoIfNeeded(ed.type);
+		}
+		checkAndDoConvert(ctx, ed.type, ed.assign);
 		accept(ed.type, this);
 
 		ed.resolved = true;
@@ -3756,7 +3349,7 @@ public:
 			if (retType.isScope && mutableIndirection(retType)) {
 				throw makeNoReturnScope(ret.location);
 			}
-			extypeAssign(ctx, ret.exp, fn.type.ret);
+			checkAndDoConvert(ctx, fn.type.ret, ret.exp);
 		} else if (!isVoid(realType(fn.type.ret))) {
 			// No return expression on function returning a value.
 			throw makeReturnValueExpected(ret.location, fn.type.ret);

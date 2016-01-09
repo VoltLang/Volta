@@ -22,7 +22,7 @@ import volt.semantic.typer : realType;
  *
  * If type is null, null is returned.
  */
-ir.Type flattenStorage(ir.Type type, ir.CallableType ct=null, size_t ctIndex=0)
+ir.Type flattenStorage(ir.Type type, ir.CallableType ct=null, size_t ctIndex=0, bool ignoreNamed=false)
 {
 	if (type is null) {
 		return null;
@@ -46,7 +46,11 @@ ir.Type flattenStorage(ir.Type type, ir.CallableType ct=null, size_t ctIndex=0)
 		ptype.base = flattenStorage(ptype.base);
 		auto current = ptype;
 		while (current !is null) {
-			addStorage(current.base, current);
+			if (ignoreNamed) {
+				addStorageIgnoreNamed(current.base, current);
+			} else {
+				addStorage(current.base, current);
+			}
 			current = cast(ir.PointerType)current.base;
 		}
 		return ptype;
@@ -61,6 +65,11 @@ ir.Type flattenStorage(ir.Type type, ir.CallableType ct=null, size_t ctIndex=0)
 	default:
 		return type;
 	}
+}
+
+ir.Type flattenStorageIgnoreNamed(ir.Type type)
+{
+	return flattenStorage(type, null, 0, true);
 }
 
 /**

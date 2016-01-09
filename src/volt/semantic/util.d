@@ -130,7 +130,25 @@ ir.Type accumulateStorage(ir.Type toType, ir.Type seed=null)
 bool handleIfNull(Context ctx, ir.Type left, ref ir.Exp right)
 {
 	auto rightType = getExpType(ctx.lp, right, ctx.current);
-	if (rightType.nodeType != ir.NodeType.NullType) {
+	auto aliteral = cast(ir.LiteralExp)right;
+	if (aliteral !is null) {
+		ir.Type base;
+		auto atype = cast(ir.ArrayType)realType(aliteral.type);
+		if (atype !is null) {
+			base = atype.base;
+		}
+		auto stype = cast(ir.StaticArrayType)realType(aliteral.type);
+		if (stype !is null) {
+			base = stype.base;
+		}
+		bool changed;
+		foreach (ref val; aliteral.exps) {
+			if (handleIfNull(ctx, base, val)) {
+				changed = true;
+			}
+		}
+		return changed;
+	} else if (rightType.nodeType != ir.NodeType.NullType) {
 		return false;
 	}
 
@@ -529,4 +547,14 @@ bool typeLookup(Context ctx, ref ir.Exp exp, ir.Type type)
 		throw panic(prim, "invalid primitive kind");
 	}
 	return true;
+}
+
+ir.Type ifTypeRefDeRef(ir.Type t)
+{
+	auto tref = cast(ir.TypeReference) t;
+	if (tref is null) {
+		return t;
+	} else {
+		return tref.type;
+	}
 }

@@ -25,6 +25,11 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeExpectedTypeMatch(Location loc, ir.Type type, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, format("expected type %s for slice operation.", typeString(type)), file, line);
+}
+
 CompilerException makeIndexVarTooSmall(Location loc, string name, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(loc, format("index variable '%s' is too small to hold a size_t.", name), file, line);
