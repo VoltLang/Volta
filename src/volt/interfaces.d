@@ -884,7 +884,7 @@ private:
 
 unittest
 {
-	auto ver = new VersionSet(".");
+	auto ver = new VersionSet();
 	assert(!ver.isVersionSet("none"));
 	assert(ver.isVersionSet("all"));
 	ver.setVersionIdentifier("foo");
