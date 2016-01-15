@@ -857,6 +857,10 @@ bool isLValueOrAssignable(ir.Exp exp, bool assign)
 	case ir.NodeType.Unary:
 		auto asUnary = cast(ir.Unary) exp;
 		assert(asUnary !is null);
+		if (asUnary.op == ir.Unary.Op.Dereference) {
+			return true;
+		}
+		// TODO this is probably not true.
 		return isLValueOrAssignable(asUnary.value, assign);
 	case ir.NodeType.StatementExp:
 		auto sexp = cast(ir.StatementExp) exp;
