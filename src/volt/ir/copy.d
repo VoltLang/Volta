@@ -349,7 +349,7 @@ ir.Enum copy(ir.Enum old)
 	e.name = old.name;
 	e.myScope = copy(old.myScope);
 	e.members = new ir.EnumDeclaration[](old.members.length);
-	foreach (size_t i, member; old.members) {
+	foreach (i, member; old.members) {
 		e.members[i] = copy(member);
 	}
 	e.base = copyType(old.base);
@@ -397,17 +397,17 @@ ir.Class copy(ir.Class old)
 		c.parent = copy(old.parent);
 	}
 	c.interfaces = new ir.QualifiedName[](old.interfaces.length);
-	foreach (size_t i, iface; old.interfaces) {
+	foreach (i, iface; old.interfaces) {
 		c.interfaces[i] = copy(iface);
 	}
 	c.userConstructors = new ir.Function[](old.userConstructors.length);
-	foreach (size_t i, ctor; old.userConstructors) {
+	foreach (i, ctor; old.userConstructors) {
 		c.userConstructors[i] = copy(ctor);
 	}
 	c.vtableStruct = copy(old.vtableStruct);
 	c.vtableVariable = copy(old.vtableVariable);
 	c.ifaceVariables = new ir.Variable[](old.ifaceVariables.length);
-	foreach (size_t i, iv; old.ifaceVariables) {
+	foreach (i, iv; old.ifaceVariables) {
 		c.ifaceVariables[i] = copy(iv);
 	}
 	c.initVariable = copy(old.initVariable);
@@ -415,10 +415,10 @@ ir.Class copy(ir.Class old)
 		c.parentClass = copy(old.parentClass);
 	}
 	c.parentInterfaces = new ir._Interface[](old.parentInterfaces.length);
-	foreach (size_t i, piface; old.parentInterfaces) {
+	foreach (i, piface; old.parentInterfaces) {
 		c.parentInterfaces[i] = copy(piface);
 	}
-	c.interfaceOffsets = old.interfaceOffsets.dup;
+	c.interfaceOffsets = new old.interfaceOffsets[0 .. $];
 	c.layoutStruct = copy(old.layoutStruct);
 	c.isObject = old.isObject;
 	c.isAbstract = old.isAbstract;
@@ -430,11 +430,11 @@ ir._Interface copy(ir._Interface old)
 	auto ifa = new ir._Interface();
 	ifa.location = old.location;
 	ifa.interfaces = new ir.QualifiedName[](old.interfaces.length);
-	foreach (size_t i, iface; old.interfaces) {
+	foreach (i, iface; old.interfaces) {
 		ifa.interfaces[i] = copy(iface);
 	}
 	ifa.parentInterfaces = new ir._Interface[](old.parentInterfaces.length);
-	foreach (size_t i, piface; old.parentInterfaces) {
+	foreach (i, piface; old.parentInterfaces) {
 		ifa.parentInterfaces[i] = copy(piface);
 	}
 	if (old.layoutStruct !is null) {
@@ -463,7 +463,7 @@ ir.TopLevelBlock copy(ir.TopLevelBlock old)
 	auto tld = new ir.TopLevelBlock();
 	tld.location = old.location;
 	tld.nodes = new ir.Node[](old.nodes.length);
-	foreach (size_t i, node; old.nodes) {
+	foreach (i, node; old.nodes) {
 		tld.nodes[i] = copyNode(node);
 	}
 	return tld;
@@ -480,7 +480,7 @@ ir.Import copy(ir.Import old)
 		imp.bind = copy(old.bind);
 	}
 	imp.aliases = new ir.Identifier[][](old.aliases.length);
-	foreach (size_t i, a; old.aliases) {
+	foreach (i, a; old.aliases) {
 		ir.Identifier[2] idents;
 		idents[0] = copy(a[0]);
 		idents[1] = copy(a[1]);
@@ -519,7 +519,7 @@ ir.Attribute copy(ir.Attribute old)
 		a.userAttributeName = copy(old.userAttributeName);
 	}
 	a.arguments = new ir.Exp[](old.arguments.length);
-	foreach (size_t i, arg; old.arguments) {
+	foreach (i, arg; old.arguments) {
 		a.arguments[i] = copyExp(arg);
 	}
 	if (old.userAttribute !is null) {
@@ -569,7 +569,7 @@ ir.UserAttribute copy(ir.UserAttribute old)
 	ua.mangledName = old.mangledName;
 	ua.name = old.name;
 	ua.fields = new ir.Variable[](old.fields.length);
-	foreach (size_t i, filed; old.fields) {
+	foreach (i, filed; old.fields) {
 		ua.fields[i] = copy(filed);
 	}
 	if (old.myScope !is null) {
@@ -648,12 +648,12 @@ ir.Function copy(ir.Function old)
 	f.kind = old.kind;
 	f.type = copy(old.type);
 	f.params = new ir.FunctionParam[](old.params.length);
-	foreach (size_t i, param; old.params) {
+	foreach (i, param; old.params) {
 		f.params[i] = copy(param);
 		f.params[i].fn = f;
 	}
 	f.nestedFunctions = new ir.Function[](old.nestedFunctions.length);
-	foreach (size_t i, func; old.nestedFunctions) {
+	foreach (i, func; old.nestedFunctions) {
 		f.nestedFunctions[i] = copy(func);
 	}
 	f.name = old.name;
@@ -678,7 +678,7 @@ ir.Function copy(ir.Function old)
 		f.nestedVariable = copy(old.nestedVariable);
 	}
 	f.renamedVariables = new ir.Variable[](old.renamedVariables.length);
-	foreach (size_t i, var; old.renamedVariables) {
+	foreach (i, var; old.renamedVariables) {
 		f.renamedVariables[i] = copy(var);
 	}
 	if (old.nestStruct !is null) {
@@ -755,18 +755,18 @@ ir.ForStatement copy(ir.ForStatement old)
 	auto fs = new ir.ForStatement();
 	fs.location = old.location;
 	fs.initVars = new ir.Variable[](old.initVars.length);
-	foreach (size_t i, var; old.initVars) {
+	foreach (i, var; old.initVars) {
 		fs.initVars[i] = copy(var);
 	}
 	fs.initExps = new ir.Exp[](old.initExps.length);
-	foreach (size_t i, exp; old.initExps) {
+	foreach (i, exp; old.initExps) {
 		fs.initExps[i] = copyExp(exp);
 	}
 	if (old.test !is null) {
 		fs.test = copyExp(old.test);
 	}
 	fs.increments = new ir.Exp[](old.increments.length);
-	foreach (size_t i, exp; old.increments) {
+	foreach (i, exp; old.increments) {
 		fs.increments[i] = copyExp(exp);
 	}
 	fs.block = copy(old.block);
@@ -779,7 +779,7 @@ ir.ForeachStatement copy(ir.ForeachStatement old)
 	fs.location = old.location;
 	fs.reverse = old.reverse;
 	fs.itervars = new ir.Variable[](old.itervars.length);
-	foreach (size_t i, var; old.itervars) {
+	foreach (i, var; old.itervars) {
 		fs.itervars[i] = copy(var);
 	}
 	if (old.aggregate !is null) {
@@ -799,7 +799,7 @@ ir.LabelStatement copy(ir.LabelStatement old)
 	ls.location = old.location;
 	ls.label = old.label;
 	ls.childStatement = new ir.Node[](old.childStatement.length);
-	foreach (size_t i, stmt; old.childStatement) {
+	foreach (i, stmt; old.childStatement) {
 		ls.childStatement[i] = cast(ir.Statement)copyNode(stmt);
 	}
 	return ls;
@@ -820,11 +820,11 @@ ir.SwitchStatement copy(ir.SwitchStatement old)
 	ss.isFinal = old.isFinal;
 	ss.condition = copyExp(old.condition);
 	ss.cases = new ir.SwitchCase[](old.cases.length);
-	foreach (size_t i, c; old.cases) {
+	foreach (i, c; old.cases) {
 		ss.cases[i] = copy(c);
 	}
 	ss.withs = new ir.Exp[](old.withs.length);
-	foreach (size_t i, w; old.withs) {
+	foreach (i, w; old.withs) {
 		ss.withs[i] = copyExp(w);
 	}
 	return ss;
@@ -837,7 +837,7 @@ ir.SwitchCase copy(ir.SwitchCase old)
 	sc.firstExp = copyExp(old.firstExp);
 	sc.secondExp = copyExp(old.secondExp);
 	sc.exps = new ir.Exp[](old.exps.length);
-	foreach (size_t i, exp; old.exps) {
+	foreach (i, exp; old.exps) {
 		sc.exps[i] = copyExp(exp);
 	}
 	sc.isDefault = old.isDefault;
@@ -900,11 +900,11 @@ ir.TryStatement copy(ir.TryStatement old)
 	ts.location = old.location;
 	ts.tryBlock = copy(old.tryBlock);
 	ts.catchVars = new ir.Variable[](old.catchVars.length);
-	foreach (size_t i, var; old.catchVars) {
+	foreach (i, var; old.catchVars) {
 		ts.catchVars[i] = copy(var);
 	}
 	ts.catchBlocks = new ir.BlockStatement[](old.catchBlocks.length);
-	foreach (size_t i, var; old.catchBlocks) {
+	foreach (i, var; old.catchBlocks) {
 		ts.catchBlocks[i] = copy(var);
 	}
 	if (old.catchAll !is null) {
@@ -939,7 +939,7 @@ ir.PragmaStatement copy(ir.PragmaStatement old)
 	ps.location = old.location;
 	ps.type = old.type;
 	ps.arguments = new ir.Exp[](old.arguments.length);
-	foreach (size_t i, arg; old.arguments) {
+	foreach (i, arg; old.arguments) {
 		ps.arguments[i] = copyExp(arg);
 	}
 	ps.block = copy(old.block);
@@ -997,7 +997,7 @@ ir.AssocArray copy(ir.AssocArray old)
 	auto aa = new ir.AssocArray();
 	aa.location = old.location;
 	aa.pairs = new ir.AAPair[](old.pairs.length);
-	foreach (size_t i, pair; old.pairs) {
+	foreach (i, pair; old.pairs) {
 		aa.pairs[i] = copy(pair);
 	}
 	if (old.type !is null) {
@@ -1064,7 +1064,7 @@ ir.TemplateInstanceExp copy(ir.TemplateInstanceExp old)
 	tie.location = old.location;
 	tie.name = old.name;
 	tie.types = new ir.TemplateInstanceExp.TypeOrExp[](old.types.length);
-	foreach (size_t i, toe; old.types) {
+	foreach (i, toe; old.types) {
 		tie.types[i].exp = toe.exp is null ? null : copyExp(toe.exp);
 		tie.types[i].type = toe.type is null ? null : copyType(toe.type);
 	}
@@ -1080,7 +1080,7 @@ ir.FunctionLiteral copy(ir.FunctionLiteral old)
 		fl.returnType = copyType(old.returnType);
 	}
 	fl.params = new ir.FunctionParameter[](old.params.length);
-	foreach (size_t i, param; old.params) {
+	foreach (i, param; old.params) {
 		fl.params[i] = copy(param);
 	}
 	fl.block = copy(old.block);
@@ -1105,7 +1105,7 @@ ir.StructLiteral copy(ir.StructLiteral old)
 	auto sl = new ir.StructLiteral();
 	sl.location = old.location;
 	sl.exps = new ir.Exp[](old.exps.length);
-	foreach (size_t i, exp; old.exps) {
+	foreach (i, exp; old.exps) {
 		sl.exps[i] = copyExp(exp);
 	}
 	sl.type = copyType(old.type);
@@ -1117,7 +1117,7 @@ ir.UnionLiteral copy(ir.UnionLiteral old)
 	auto ul = new ir.UnionLiteral();
 	ul.location = old.location;
 	ul.exps = new ir.Exp[](old.exps.length);
-	foreach (size_t i, exp; old.exps) {
+	foreach (i, exp; old.exps) {
 		ul.exps[i] = copyExp(exp);
 	}
 	ul.type = copyType(old.type);
@@ -1129,7 +1129,7 @@ ir.ClassLiteral copy(ir.ClassLiteral old)
 	auto cl = new ir.ClassLiteral();
 	cl.location = old.location;
 	cl.exps = new ir.Exp[](old.exps.length);
-	foreach (size_t i, exp; old.exps) {
+	foreach (i, exp; old.exps) {
 		cl.exps[i] = copyExp(exp);
 	}
 	cl.type = copyType(old.type);
@@ -1157,7 +1157,7 @@ ir.FunctionSet copy(ir.FunctionSet old)
 	auto fs = new ir.FunctionSet();
 	fs.location = old.location;
 	fs.functions = new ir.Function[](old.functions.length);
-	foreach (size_t i, func; old.functions) {
+	foreach (i, func; old.functions) {
 		fs.functions[i] = copy(func);
 	}
 	if (old.reference !is null) {
@@ -1249,15 +1249,15 @@ void copyAggregate(ir.Aggregate _new, ir.Aggregate old)
 		_new.typeInfo = copy(old.typeInfo);
 	}
 	_new.userAttrs = new ir.Attribute[](old.userAttrs.length);
-	foreach (size_t i, attr; old.userAttrs) {
+	foreach (i, attr; old.userAttrs) {
 		_new.userAttrs[i] = copy(attr);
 	}
 	_new.anonymousAggregates = new ir.Aggregate[](old.anonymousAggregates.length);
-	foreach (size_t i, aggs; old.anonymousAggregates) {
+	foreach (i, aggs; old.anonymousAggregates) {
 		_new.anonymousAggregates[i] = cast(ir.Aggregate)copyNode(aggs);
 	}
 	_new.anonymousVars = new ir.Variable[](old.anonymousVars.length);
-	foreach (size_t i, var; old.anonymousVars) {
+	foreach (i, var; old.anonymousVars) {
 		_new.anonymousVars[i] = copy(var);
 	}
 	_new.members = copy(old.members);
@@ -1268,7 +1268,7 @@ void copyAggregate(ir.Aggregate _new, ir.Aggregate old)
 void copyDeclaration(ir.Declaration _new, ir.Declaration old)
 {
 	_new.userAttrs = new ir.Attribute[](old.userAttrs.length);
-	foreach (size_t i, attr; old.userAttrs) {
+	foreach (i, attr; old.userAttrs) {
 		_new.userAttrs[i] = copy(attr);
 	}
 	_new.oldname = old.oldname;
