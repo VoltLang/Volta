@@ -171,7 +171,7 @@ bool willConvertArray(ir.Type l, ir.Type r, ref uint flag, ref ir.Exp exp)
 	if (rclass !is null) {
 		if (inheritsFrom(rclass, aclass)) {
 			if (exp !is null) {
-				exp = buildCastSmart(exp.location, buildArrayType(exp.location, aclass), exp);
+				rarr.base = copyTypeSmart(rarr.location, aclass);
 			}
 			return true;
 		}
