@@ -163,20 +163,6 @@ bool willConvertArray(ir.Type l, ir.Type r, ref uint flag, ref ir.Exp exp)
 		return true;
 	}
 
-	auto aclass = cast(ir.Class) realType(atype.base);
-	ir.Class rclass;
-	if (rarr !is null) {
-		rclass = cast(ir.Class) realType(rarr.base);
-	}
-	if (rclass !is null) {
-		if (inheritsFrom(rclass, aclass)) {
-			if (exp !is null) {
-				rarr.base = copyTypeSmart(rarr.location, aclass);
-			}
-			return true;
-		}
-	}
-
 	return false;
 }
 

@@ -46,13 +46,13 @@ void buildAAInsert(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 	if (buildif) {
 		auto thenState = buildBlockStat(loc, statExp, current);
 		varExp = buildExpReference(loc, var, var.name);
+		ir.Exp[] args = [ cast(ir.Exp)buildTypeidSmart(loc, aa.value),
+		                  cast(ir.Exp)buildTypeidSmart(loc, aa.key)
+		];
 		buildExpStat(loc, thenState,
 			buildAssign(loc,
 				aaIsPointer ? buildDeref(loc, varExp) : varExp,
-				buildCall(loc, aaNewFn, [
-						buildTypeidSmart(loc, aa.value),
-						buildTypeidSmart(loc, aa.key)
-					], aaNewFn.name
+				buildCall(loc, aaNewFn, args, aaNewFn.name
 				)
 			)
 		);
@@ -96,7 +96,7 @@ void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 		buildCall(loc, throwFn, [
 			buildCastSmart(throwableClass,
 				buildNew(loc, knfClass, "KeyNotFoundException", [
-					buildConstantString(loc, `Key does not exist`)
+					cast(ir.Exp)buildConstantString(loc, `Key does not exist`)
 					]),
 				),
 			buildConstantString(loc, loc.filename),
@@ -468,8 +468,8 @@ public:
 
 		auto var = buildVariableAnonSmart(loc, bs, statExp,
 			copyTypeSmart(loc, aa), buildCall(loc, aaNewFn, [
-				buildTypeidSmart(loc, aa.value),
-				buildTypeidSmart(loc, aa.key)
+				cast(ir.Exp)buildTypeidSmart(loc, aa.value),
+				cast(ir.Exp)buildTypeidSmart(loc, aa.key)
 			], aaNewFn.name)
 		);
 
@@ -853,8 +853,8 @@ public:
 		sexp.statements ~= var;
 
 		// arr[0 .. sarr.length] = sarr[0 .. sarr.length];
-		auto left = buildSlice(loc, buildExpReference(loc, var, var.name), buildConstantSizeT(loc, lp, 0), getLength());
-		auto right = buildSlice(loc, copyExp(uexp.value), buildConstantSizeT(loc, lp, 0), getLength());
+		ir.Exp left = buildSlice(loc, buildExpReference(loc, var, var.name), buildConstantSizeT(loc, lp, 0), getLength());
+		ir.Exp right = buildSlice(loc, copyExp(uexp.value), buildConstantSizeT(loc, lp, 0), getLength());
 		auto fn = getArrayCopyFunction(loc, lp, thisModule, atype);
 		buildExpStat(loc, sexp, buildCall(loc, fn, [left, right], fn.name));
 
@@ -1180,13 +1180,13 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, LanguagePass lp,
 		if (fes.decodeFunction !is null) {  // foreach (i, dchar c; str)
 			auto dfn = buildExpReference(l, fes.decodeFunction, fes.decodeFunction.name);
 			if (!fes.reverse) {
-				elementVar.assign = buildCall(l, dfn, [aggref(), buildExpReference(l, nextIndexVar, nextIndexVar.name)]);
+				elementVar.assign = buildCall(l, dfn, [cast(ir.Exp)aggref(), cast(ir.Exp)buildExpReference(l, nextIndexVar, nextIndexVar.name)]);
 				auto lvar = buildExpReference(indexVar.location, indexVar, indexVar.name);
 				auto rvar = buildExpReference(nextIndexVar.location, nextIndexVar, nextIndexVar.name);
 				fs.increments ~= buildAssign(l, lvar, rvar);
 			} else {
-				elementVar.assign = buildCall(l, dfn, [aggref(),
-				                              buildExpReference(indexVar.location, indexVar, indexVar.name)]);
+				elementVar.assign = buildCall(l, dfn, [cast(ir.Exp)aggref(),
+				                              cast(ir.Exp)buildExpReference(indexVar.location, indexVar, indexVar.name)]);
 			}
 		} else {
 			elementVar.assign = buildIndex(incRef.location, aggref(), accessRef);
@@ -1218,7 +1218,7 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, LanguagePass lp,
 		ir.Exp buildAACall(ir.Function fn, ir.Type outType)
 		{
 			auto eref = buildExpReference(l, fn, fn.name);
-			return buildCastSmart(l, outType, buildCall(l, eref, [buildCastToVoidPtr(l, aggref())]));
+			return buildCastSmart(l, outType, buildCall(l, eref, [cast(ir.Exp)buildCastToVoidPtr(l, aggref())]));
 		}
 
 		if (fes.reverse) {

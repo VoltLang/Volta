@@ -3715,7 +3715,8 @@ public:
 			var.assign = ifs.exp;
 
 			auto eref = buildExpReference(l, var);
-			ifs.exp = buildStatementExp(l, [var], eref);
+			ir.Node[] vars = [cast(ir.Node)var];
+			ifs.exp = buildStatementExp(l, vars, eref);
 
 			// Add it to its proper scope.
 			ifs.thenState.myScope.addValue(var, var.name);
