@@ -615,7 +615,7 @@ void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ref 
 	auto rtype = ctx.overrideType !is null ? ctx.overrideType : realType(getExpType(ctx.lp, exp, ctx.current));
 
 	auto stype = cast(ir.StaticArrayType) rtype;
-	if (stype !is null && willConvertArray(atype, buildArrayType(exp.location, stype.base), flag, exp)) {
+	if (stype !is null && willConvertArray(atype, buildArrayType(exp.location, stype.base))) {
 		exp = buildCastSmart(exp.location, atype, exp);
 		return;
 	}
@@ -624,7 +624,7 @@ void extypeAssignArrayType(Context ctx, ref ir.Exp exp, ir.ArrayType atype, ref 
 		return;
 	}
 
-	if (willConvertArray(atype, rtype, flag, exp)) {
+	if (willConvertArray(atype, rtype)) {
 		return;
 	}
 

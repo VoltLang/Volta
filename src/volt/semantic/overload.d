@@ -94,11 +94,11 @@ bool willConvert(ir.Type arg, ir.Type param)
 	case StaticArrayType:
 		uint dummyInt;
 		ir.Exp dummyExp;
-		return willConvertStaticArray(parameter, argument, dummyInt, dummyExp);
+		return willConvertStaticArray(parameter, argument);
 	case ArrayType:
 		uint dummyInt;
 		ir.Exp dummyExp;
-		return willConvertArray(parameter, argument, dummyInt, dummyExp);
+		return willConvertArray(parameter, argument);
 	case PointerType:
 		auto aptr = cast(ir.PointerType) argument;
 		auto astr = cast(ir.Struct) aptr.base;
@@ -125,17 +125,17 @@ bool willConvert(ir.Type arg, ir.Type param)
 	}
 }
 
-bool willConvertStaticArray(ir.Type l, ir.Type r, ref uint flag, ref ir.Exp exp)
+bool willConvertStaticArray(ir.Type l, ir.Type r)
 {
 	auto sa = cast(ir.StaticArrayType) r;
 	if (sa is null) {
 		return false;
 	}
 	auto at = buildArrayTypeSmart(sa.location, sa.base);
-	return willConvertArray(l, at, flag, exp);
+	return willConvertArray(l, at);
 }
 
-bool willConvertArray(ir.Type l, ir.Type r, ref uint flag, ref ir.Exp exp)
+bool willConvertArray(ir.Type l, ir.Type r)
 {
 	auto rarr = cast(ir.ArrayType) removeRefAndOut(r);
 	auto stype = cast(ir.StaticArrayType) realType(removeRefAndOut(l));
