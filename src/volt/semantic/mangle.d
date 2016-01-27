@@ -179,7 +179,7 @@ void mangleType(ir.Type t, ref string mangledString)
 		}
 		break;
 	default:
-		throw panicUnhandled(t, "type in mangler");
+		throw panicUnhandled(t, format("%s in mangler", t.nodeType));
 	}
 }
 
