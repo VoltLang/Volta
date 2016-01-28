@@ -1727,7 +1727,7 @@ bool builtInField(Context ctx, ref ir.Exp exp, ir.Exp child, ir.Type type, strin
 		if (isPointer) {
 			child = buildDeref(exp.location, child);
 		}
-		exp = buildArrayPtr(base.location, base, child);
+		exp = buildArrayPtr(exp.location, base, child);
 		return true;
 	default:
 		return false;
