@@ -21,9 +21,6 @@ import volt.semantic.classify : getParentFunction, realType, isFloatingPoint;
 /**
  * Implicitly convert PrimitiveTypes to bools for 'if' and friends.
  *
- * @TODO Maybe this should also handle pointer conversion to bool?
- * @TODO This should check that the type is implicitly convertable to bool.
- *
  * Currently done for ifs but not other code.
  */
 void implicitlyCastToBool(Context ctx, ref ir.Exp exp)
