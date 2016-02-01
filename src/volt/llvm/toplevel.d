@@ -286,6 +286,8 @@ public:
 
 			if (_case.isDefault) {
 				defaultStatements = _case.statements;
+				Block add = { _case, state.fnState.swi.def };
+				blocks ~= add;
 			} else {
 				auto block = LLVMAppendBasicBlockInContext(state.context, state.func, "switchCase");
 				if (_case.firstExp !is null && _case.secondExp !is null) {
@@ -315,6 +317,9 @@ public:
 		// Generate code for each case.
 		auto breakBlock = state.replaceBreakBlock(outBlock);
 		foreach (i, block; blocks) {
+			if (block._case.isDefault) {
+				continue;
+			}
 			state.startBlock(block.block);
 			doNewBlock(block.block, block._case.statements, i == blocks.length - 1 ? outBlock : blocks[i+1].block);
 		}
