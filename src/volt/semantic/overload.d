@@ -297,7 +297,7 @@ ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] a
 		if (matchedFunctions.length > 1 && highestMatchLevel > 1) {
 			throw makeMultipleFunctionsMatch(location, matchedFunctions);
 		} else {
-			throw makeCannotDisambiguate(location, matchedFunctions);
+			throw makeCannotDisambiguate(location, matchedFunctions, arguments);
 		}
 	} else {
 		return null;

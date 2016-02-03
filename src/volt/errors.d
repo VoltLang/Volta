@@ -725,14 +725,14 @@ CompilerException makeBadCall(ir.Node node, ir.Type type, string file = __FILE__
 	return new CompilerError(node.location, format("cannot call '%s'.", type.errorString()), file, line);
 }
 
-CompilerException makeCannotDisambiguate(ir.Node node, ir.Function[] functions, string file = __FILE__, const int line = __LINE__)
+CompilerException makeCannotDisambiguate(ir.Node node, ir.Function[] functions, ir.Type[] args, string file = __FILE__, const int line = __LINE__)
 {
-	return makeCannotDisambiguate(node.location, functions, file, line);
+	return makeCannotDisambiguate(node.location, functions, args, file, line);
 }
 
-CompilerException makeCannotDisambiguate(Location location, ir.Function[] functions, string file = __FILE__, const int line = __LINE__)
+CompilerException makeCannotDisambiguate(Location location, ir.Function[] functions, ir.Type[] args, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(location, format("no '%s' function (of %s possible) matches arguments.", functions[0].name, functions.length), file, line);
+	return new CompilerError(location, format("no '%s' function (of %s possible) matches arguments '%s'.", functions[0].name, functions.length, typesString(args)), file, line);
 }
 
 CompilerException makeCannotInfer(ir.Location location, string file = __FILE__, const int line = __LINE__)
@@ -818,7 +818,7 @@ string typesString(ir.Type[] types)
 	char[] buf;
 	buf ~= "(";
 	foreach (i, type; types) {
-		buf ~= errorString(type);
+		buf ~= errorString(type, true);
 		if (i < types.length - 1) {
 			buf ~= ", ";
 		}
@@ -831,8 +831,11 @@ string typesString(ir.Type[] types)
 	}
 }
 
-string errorString(ir.Type type)
+string errorString(ir.Type type, bool alwaysGlossed = false)
 {
+	if (type.glossedName.length > 0 && alwaysGlossed) {
+		return type.glossedName;
+	}
 	string outString;
 	string suffix;
 	if (type.isConst) {
@@ -856,26 +859,26 @@ string errorString(ir.Type type)
 		break;
 	case TypeReference:
 		ir.TypeReference tr = cast(ir.TypeReference)type;
-		outString ~= tr.type.errorString();
+		outString ~= tr.type.errorString(alwaysGlossed);
 		break;
 	case PointerType:
 		ir.PointerType pt = cast(ir.PointerType)type;
-		outString ~= format("%s*", pt.base.errorString());
+		outString ~= format("%s*", pt.base.errorString(alwaysGlossed));
 		break;
 	case NullType:
 		outString = "null";
 		break;
 	case ArrayType:
 		ir.ArrayType at = cast(ir.ArrayType)type;
-		outString ~= format("%s[]", at.base.errorString());
+		outString ~= format("%s[]", at.base.errorString(alwaysGlossed));
 		break;
 	case StaticArrayType:
 		ir.StaticArrayType sat = cast(ir.StaticArrayType)type;
-		outString ~= format("%s[%d]", sat.base.errorString(), sat.length);
+		outString ~= format("%s[%d]", sat.base.errorString(alwaysGlossed), sat.length);
 		break;
 	case AAType:
 		ir.AAType aat = cast(ir.AAType)type;
-		outString ~= format("%s[%s]", aat.value.errorString(), aat.key.errorString());
+		outString ~= format("%s[%s]", aat.value.errorString(alwaysGlossed), aat.key.errorString(alwaysGlossed));
 		break;
 	case FunctionType:
 	case DelegateType:
@@ -885,17 +888,17 @@ string errorString(ir.Type type)
 
 		string params;
 		if (c.params.length > 0) {
-			params = c.params[0].errorString();
+			params = c.params[0].errorString(alwaysGlossed);
 			foreach (param; c.params[1 .. $]) {
-				params ~= ", " ~ param.errorString();
+				params ~= ", " ~ param.errorString(alwaysGlossed);
 			}
 		}
 
-		outString ~= format("%s %s(%s)", c.ret.errorString(), ctype, params);
+		outString ~= format("%s %s(%s)", c.ret.errorString(alwaysGlossed), ctype, params);
 		break;
 	case StorageType:
 		ir.StorageType st = cast(ir.StorageType)type;
-		outString ~= format("%s(%s)", toLower(format("%s", st.type)), st.base.errorString());
+		outString ~= format("%s(%s)", toLower(format("%s", st.type)), st.base.errorString(alwaysGlossed));
 		break;
 	case Class:
 	case Struct:

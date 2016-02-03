@@ -1517,7 +1517,7 @@ void handleCastTo(Context ctx, ref ir.Exp exp, ir.Unary unary)
 	auto type = realType(getExpType(ctx.lp, unary.value, ctx.current));
 	if (type.nodeType == ir.NodeType.FunctionSetType) {
 		auto fset = cast(ir.FunctionSetType) type;
-		throw makeCannotDisambiguate(unary, fset.set.functions);
+		throw makeCannotDisambiguate(unary, fset.set.functions, null);
 	}
 
 	// Handling cast(Foo)null
