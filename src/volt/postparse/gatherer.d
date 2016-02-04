@@ -13,7 +13,6 @@ import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 import volt.visitor.visitor;
-import volt.semantic.nested;
 
 
 enum Where
@@ -222,26 +221,6 @@ void addScope(ir.Scope current, ir.Function fn, ir.Type thisType, ir.Function[] 
 			if (var.name !is null) {
 				fn.myScope.addValue(var, var.name);
 			}
-		}
-	}
-
-	if (current.node.nodeType == ir.NodeType.BlockStatement ||
-	    fn.kind == ir.Function.Kind.Nested) {
-		auto ns = functionStack[0].nestStruct;
-		assert(ns !is null);
-		auto tr = buildTypeReference(ns.location, ns, "__Nested");
-		auto decl = buildVariable(fn.location, tr, ir.Variable.Storage.Function, "__nested");
-		decl.isResolved = true;
-		decl.specialInitValue = true;
-
-		if (fn.nestedHiddenParameter is null) {
-			// XXX: Note __nested is not added to any scope.
-			// XXX: Instead make sure that nestedHiddenParameter is visited (and as such visited)
-			fn.nestedHiddenParameter = decl;
-			fn.nestedVariable = decl;
-			fn.nestStruct = ns;
-			fn.type.hiddenParameter = true;
-			fn._body.statements = decl ~ fn._body.statements;
 		}
 	}
 
@@ -599,12 +578,6 @@ public:
 		// TODO: unittest stuff triggers this
 		if (mFunctionStack.length == 0) {
 			throw panic(bs.location, "block statement outside of function");
-		}
-		// TODO: Move to lowerer.
-		ir.Struct[] structs;
-		emitNestedStructs(mFunctionStack[$-1], bs, structs);
-		foreach (_s; structs) {
-			accept(_s, this);
 		}
 		return Continue;
 	}

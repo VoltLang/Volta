@@ -2226,29 +2226,30 @@ void extypeThrow(Context ctx, ir.ThrowStatement t)
 /**
  * Correct this references in nested functions.
  */
-void handleNestedThis(ir.Function fn)
+void handleNestedThis(ir.Function fn, ir.BlockStatement bs)
 {
+	bs = fn._body;
 	auto np = fn.nestedVariable;
 	auto ns = fn.nestStruct;
 	if (np is null || ns is null) {
 		return;
 	}
 	size_t index;
-	for (index = 0; index < fn._body.statements.length; ++index) {
-		if (fn._body.statements[index] is np) {
+	for (index = 0; index < bs.statements.length; ++index) {
+		if (bs.statements[index] is np) {
 			break;
 		}
 	}
-	if (++index >= fn._body.statements.length) {
+	if (++index >= bs.statements.length) {
 		return;
 	}
 	if (fn.thisHiddenParameter !is null) {
 		auto l = buildAccess(fn.location, buildExpReference(np.location, np, np.name), "this");
 		auto tv = fn.thisHiddenParameter;
-		auto r = buildExpReference(fn.location, tv, tv.name);
+		auto r = buildExpReference(bs.location, tv, tv.name);
 		r.doNotRewriteAsNestedLookup = true;
 		ir.Node n = buildExpStat(l.location, buildAssign(l.location, l, r));
-		fn._body.statements.insertInPlace(index, n);
+		bs.statements.insertInPlace(index, n);
 	}
 }
 
@@ -2256,7 +2257,7 @@ void handleNestedThis(ir.Function fn)
  * Given a nested function fn, add its parameters to the nested
  * struct and insert statements after the nested declaration.
  */
-void handleNestedParams(Context ctx, ir.Function fn)
+void handleNestedParams(Context ctx, ir.Function fn, ir.BlockStatement bs)
 {
 	auto np = fn.nestedVariable;
 	auto ns = fn.nestStruct;
@@ -2271,14 +2272,14 @@ void handleNestedParams(Context ctx, ir.Function fn)
 
 	// This is needed for the parent function.
 	size_t index;
-	for (index = 0; index < fn._body.statements.length; ++index) {
-		if (fn._body.statements[index] is np) {
+	for (index = 0; index < bs.statements.length; ++index) {
+		if (bs.statements[index] is np) {
 			break;
 		}
 	}
 	++index;
 
-	if (index > fn._body.statements.length) {
+	if (index > bs.statements.length) {
 		index = 0;  // We didn't find a usage, so put it at the start.
 	}
 
@@ -2309,10 +2310,10 @@ void handleNestedParams(Context ctx, ir.Function fn)
 			ir.Node n = buildExpStat(l.location, bop);
 			if (isNested(fn)) {
 				// Nested function.
-				fn._body.statements = n ~ fn._body.statements;
+				bs.statements = n ~ bs.statements;
 			} else {
 				// Parent function with nested children.
-				fn._body.statements.insertInPlace(index++, n);
+				bs.statements.insertInPlace(index++, n);
 			}
 		}
 	}
@@ -2826,10 +2827,51 @@ void checkConst(ir.Node n, ir.Type type)
 	}
 }
 
+void emitNestedFromBlock(Context ctx, ir.Function currentFunction, ir.BlockStatement bs, bool skipFunction = true)
+{
+	if (bs is null || (skipFunction && bs is currentFunction._body)) {
+		return;
+	}
+	ir.Struct[] structs;
+	emitNestedStructs(currentFunction, bs, structs);
+	foreach (_s; structs) {
+		accept(_s, ctx.extyper);
+	}
+	handleNestedParams(ctx, currentFunction, currentFunction._body);
+	handleNestedThis(currentFunction, bs);
+	if (currentFunction.nestStruct !is null &&
+	    currentFunction.thisHiddenParameter !is null &&
+	    currentFunction.kind != ir.Function.Kind.Nested &&
+	    currentFunction.nestStruct.myScope.getStore("this") is null) {
+		auto cvar = copyVariableSmart(currentFunction.thisHiddenParameter.location, currentFunction.thisHiddenParameter);
+		addVarToStructSmart(currentFunction.nestStruct, cvar);
+	}
+}
+
 void resolveFunction(Context ctx, ir.Function fn)
 {
 	auto done = ctx.lp.startResolving(fn);
 	scope (success) done();
+
+	if (ctx.current.node.nodeType == ir.NodeType.BlockStatement ||
+	    fn.kind == ir.Function.Kind.Nested) {
+		auto ns = ctx.parentFunction.nestStruct;
+		panicAssert(fn, ns !is null);
+		auto tr = buildTypeReference(ns.location, ns, "__Nested");
+		auto decl = buildVariable(fn.location, tr, ir.Variable.Storage.Function, "__nested");
+		decl.isResolved = true;
+		decl.specialInitValue = true;
+
+		if (fn.nestedHiddenParameter is null) {
+			// XXX: Note __nested is not added to any scope.
+			// XXX: Instead make sure that nestedHiddenParameter is visited (and as such visited)
+			fn.nestedHiddenParameter = decl;
+			fn.nestedVariable = decl;
+			fn.nestStruct = ns;
+			fn.type.hiddenParameter = true;
+			fn._body.statements = decl ~ fn._body.statements;
+		}
+	}
 
 	if (fn.isAutoReturn) {
 		fn.type.ret = buildVoid(fn.type.ret.location);
@@ -2862,18 +2904,6 @@ void resolveFunction(Context ctx, ir.Function fn)
 			throw makeInvalidMainSignature(fn);
 		}
 	}
-
-
-	if (fn.nestStruct !is null &&
-	    fn.thisHiddenParameter !is null &&
-	    !ctx.isFunction) {
-		auto cvar = copyVariableSmart(fn.thisHiddenParameter.location, fn.thisHiddenParameter);
-		addVarToStructSmart(fn.nestStruct, cvar);
-	}
-
-
-	handleNestedThis(fn);
-	handleNestedParams(ctx, fn);
 
 	if ((fn.kind == ir.Function.Kind.Function ||
 	     (cast(ir.Class) fn.myScope.parent.node) is null) &&
@@ -3297,6 +3327,9 @@ public:
 		}
 
 		ctx.enter(fn);
+
+		emitNestedFromBlock(ctx, fn, fn._body, false);
+
 		return Continue;
 	}
 
@@ -3410,8 +3443,9 @@ public:
 			acceptExp(fes.beginIntegerRange, this);
 			acceptExp(fes.endIntegerRange, this);
 		}
-		extypeForeach(ctx, fes);
+		emitNestedFromBlock(ctx, ctx.currentFunction, fes.block);
 		ctx.enter(fes.block);
+		extypeForeach(ctx, fes);
 		foreach (ivar; fes.itervars) {
 			accept(ivar, this);
 		}
@@ -3437,6 +3471,7 @@ public:
 
 	override Status enter(ir.ForStatement fs)
 	{
+		emitNestedFromBlock(ctx, ctx.currentFunction, fs.block);
 		ctx.enter(fs.block);
 		foreach (i; fs.initVars) {
 			accept(i, this);
@@ -3542,6 +3577,7 @@ public:
 
 	override Status enter(ir.BlockStatement bs)
 	{
+		emitNestedFromBlock(ctx, ctx.currentFunction, bs);
 		ctx.enter(bs);
 		// Translate runtime asserts before processing the block.
 		for (size_t i = 0; i < bs.statements.length; i++) {
