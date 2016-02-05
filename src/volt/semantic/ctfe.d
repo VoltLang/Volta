@@ -155,6 +155,8 @@ ir.Constant evaluateBinOp(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 	switch (binop.op) with (ir.BinOp.Op) {
 	case Add:
 		return evaluateBinOpAdd(lp, current, binop);
+	case Sub:
+		return evaluateBinOpSub(lp, current, binop);
 	case Equal:
 		return evaluateBinOpEqual(lp, current, binop);
 	case And:
@@ -181,6 +183,13 @@ ir.Constant evaluateBinOpAdd(LanguagePass lp, ir.Scope current, ir.BinOp binop)
 	auto left = evaluate(lp, current, binop.left);
 	auto right = evaluate(lp, current, binop.right);
 	return buildConstantInt(binop.location, left.u._int + right.u._int);
+}
+
+ir.Constant evaluateBinOpSub(LanguagePass lp, ir.Scope current, ir.BinOp binop)
+{
+	auto left = evaluate(lp, current, binop.left);
+	auto right = evaluate(lp, current, binop.right);
+	return buildConstantInt(binop.location, left.u._int - right.u._int);
 }
 
 ir.Constant evaluateBinOpAnd(LanguagePass lp, ir.Scope current, ir.BinOp binop)
