@@ -2263,6 +2263,12 @@ protected:
 		mSink(s);
 	}
 
+	void wf(uint i)
+	{
+		string s = format("%s", i);
+		mSink(s);
+	}
+
 	void wf(long l)
 	{
 		string s = format("%s", l);
