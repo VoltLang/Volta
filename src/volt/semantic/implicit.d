@@ -248,11 +248,38 @@ bool willConvertPrimitiveType(ir.Type parameter, ir.Type argument)
 	if (rprim is null || lprim is null) {
 		return false;
 	}
-	if (isUnsigned(rprim.type) != isUnsigned(lprim.type) &&
-	    rprim.type != ir.PrimitiveType.Kind.Bool) {
+
+	bool rightFloating = isFloatingPoint(rprim.type);
+	bool leftFloating = isFloatingPoint(lprim.type);
+	if (leftFloating != rightFloating) {
 		return false;
 	}
-	return size(rprim.type) <= size(lprim.type);
+	if (leftFloating && rightFloating) {
+		return size(rprim.type) <= size(lprim.type);
+	}
+
+	// We are now dealing with integers only.
+
+	// Bool an always be casted to any other integer type.
+	if (rprim.type == ir.PrimitiveType.Kind.Bool) {
+		return true;
+	}
+
+	bool rightUnsigned = isUnsigned(rprim.type);
+	bool leftUnsigned = isUnsigned(lprim.type);
+	// If they match, we can extend the bits.
+	if (rightUnsigned == leftUnsigned) {
+		return size(rprim.type) <= size(lprim.type);
+	}
+
+	// They are different, is it left that is unsigned.
+	// Always false since signed can never convert to unsigned.
+	if (leftUnsigned) {
+		return false;
+	}
+
+	// Smaller unsigned can fit into signed.
+	return size(rprim.type) < size(lprim.type);
 }
 
 bool willConvertFunctionSetType(ir.Type parameter, ir.Type argument)
