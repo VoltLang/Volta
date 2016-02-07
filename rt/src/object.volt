@@ -7,6 +7,8 @@ module object;
  * The string type.
  */
 alias string = immutable(char)[];
+alias wstring = immutable(wchar)[];
+alias dstring = immutable(dchar)[];
 
 /**
  * These are two types are aliases to integer types that are large enough to
