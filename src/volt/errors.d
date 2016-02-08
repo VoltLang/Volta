@@ -621,7 +621,7 @@ CompilerException makeExpectedContext(ir.Node node, ir.Node node2, string file =
 
 CompilerException makeBadImplicitCast(ir.Node node, ir.Type from, ir.Type to, string file = __FILE__, const int line = __LINE__)
 {
-	string emsg = format("cannot implicitly convert '%s' to '%s'.", typeString(from), typeString(to));
+	string emsg = format("cannot implicitly convert %s to %s.", typeString(from), typeString(to));
 	return new CompilerError(node.location, emsg, file, line);
 }
 
