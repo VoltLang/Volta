@@ -183,7 +183,9 @@ public:
 		attributeClass = getClass("Attribute");
 		assertErrorClass = getClass("AssertError");
 		arrayStruct = getStruct("ArrayStruct");
+		moduleInfoStruct = getStruct("ModuleInfo");
 		allocDgVariable = getVar("allocDg");
+		moduleInfoRoot = getVar("moduleInfoRoot");
 
 		// VA
 		vaStartFunc = getFunction("__volt_va_start");

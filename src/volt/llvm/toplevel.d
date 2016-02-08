@@ -2,6 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.llvm.toplevel;
 
+import watt.text.format : format;
+
 import lib.llvm.core;
 
 import volt.errors;
@@ -719,13 +721,7 @@ public:
 
 		auto structs = new LLVMValueRef[](arr.length);
 		foreach (i, fn; arr) {
-			// These version blocks brought to you by LLVM being terrible.
-			uint priority = 2;
-			version (Windows) priority = 1;
-			if (m.name.strings == ["vrt", "vmain"]) {
-				priority = 1;
-				version (Windows) priority = 2;
-			}
+			uint priority = 65535;
 			auto vals = [LLVMConstInt(LLVMInt32TypeInContext(state.context), priority, false), fn];
 			structs[i] = LLVMConstStructInContext(state.context, vals.ptr, 2, false);
 		}
@@ -736,15 +732,67 @@ public:
 		LLVMSetLinkage(gval, LLVMLinkage.Appending);
 	}
 
+	LLVMValueRef globalModuleInfo(ir.Module m)
+	{
+		string name = "_V__ModuleInfo_";
+		foreach (i; m.name.identifiers) {
+			name ~= format("%s%s", i.value.length, i.value);
+		}
+
+		auto t = cast(StructType)state.fromIr(state.lp.moduleInfoStruct);
+		assert(t !is null);
+		auto at = cast(ArrayType)t.types[1];
+		assert(at !is null);
+
+		LLVMValueRef[3] vals;
+		vals[0] = LLVMConstNull(t.types[0].llvmType);
+		vals[1] = at.from(state, state.globalConstructors);
+		vals[2] = at.from(state, state.globalDestructors);
+		auto lit = LLVMConstNamedStruct(t.llvmType, vals);
+
+		auto gval = LLVMAddGlobal(state.mod, t.llvmType, name);
+		LLVMSetInitializer(gval, lit);
+		return gval;
+	}
+
+	void makeModuleInfoFunction(ir.Module m)
+	{
+		Type t;
+
+		// Emit and get the ModuleInfo for this module.
+		auto gval = globalModuleInfo(m);
+
+		// Create 'real' ctor to add the module info to rootModuleInfo.
+		auto fn = LLVMAddFunction(state.mod, "__global_ctor",
+			state.voidFunctionType.llvmCallType);
+		LLVMSetLinkage(fn, LLVMLinkage.Internal);
+
+		auto b = LLVMAppendBasicBlock(fn, "entry");
+		LLVMPositionBuilderAtEnd(state.builder, b);
+
+		auto root = state.getVariableValue(state.lp.moduleInfoRoot, t);
+		auto first = LLVMBuildStructGEP(state.builder, gval, 0, "");
+		auto old = LLVMBuildLoad(state.builder, root, "");
+		LLVMBuildStore(state.builder, old, first);
+		LLVMBuildStore(state.builder, gval, root);
+		LLVMBuildRet(state.builder, null);
+
+		globalStructorArray(m, [fn], "llvm.global_ctors");
+	}
+
 	override Status leave(ir.Module m)
 	{
 		if (state.localConstructors.length > 0 || state.localDestructors.length > 0) {
 			throw panic(m.location, "local constructor or destructor made it into llvm backend.");
 		}
 
-		globalStructorArray(m, state.globalConstructors, "llvm.global_ctors");
-		globalStructorArray(m, state.globalDestructors, "llvm.global_dtors");
-		return Continue; 
+		if (state.globalConstructors.length > 0 ||
+		    state.globalDestructors.length > 0 ||
+		    state.localConstructors.length > 0 ||
+		    state.localDestructors.length > 0) {
+			makeModuleInfoFunction(m);
+		}
+		return Continue;
 	}
 
 	void doNewBlock(LLVMBasicBlockRef b, ir.BlockStatement bs,

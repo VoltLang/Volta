@@ -128,7 +128,9 @@ public:
 	ir.Class attributeClass;
 	ir.Class assertErrorClass;
 	ir.Struct arrayStruct;
+	ir.Struct moduleInfoStruct;
 	ir.Variable allocDgVariable;
+	ir.Variable moduleInfoRoot;
 
 	ir.Function vaStartFunc;
 	ir.Function vaEndFunc;

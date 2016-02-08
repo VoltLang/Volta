@@ -210,6 +210,22 @@ class KeyNotFoundException : Exception
 
 /*
  *
+ * Module support.
+ *
+ */
+
+struct ModuleInfo
+{
+	ModuleInfo* next;
+	void function()[] ctors;
+	void function()[] dtors;
+}
+
+@mangledName("_V__ModuleInfo_root") global ModuleInfo* moduleInfoRoot;
+
+
+/*
+ *
  * Runtime and internal helpers.
  *
  */

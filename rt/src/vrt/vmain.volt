@@ -12,18 +12,15 @@ extern(C) int vmain(string[] args);
 
 private extern (C) size_t strlen(const(char)*);
 
-global this()
-{
-	// Currently all the init that is needed for the GC.
-	vrt_gc_init();
-	allocDg = vrt_gc_get_alloc_dg();
-}
-
 /**
  * Main entry point, calls vmain.
  */
 extern(C) int main(int c, char** argv)
 {
+	// Currently all the init that is needed for the GC.
+	vrt_gc_init();
+	allocDg = vrt_gc_get_alloc_dg();
+
 	auto args = new string[](c);
 	for (size_t i = 0; i < args.length; i++) {
 		args[i] = cast(immutable(char)[]) argv[i][0 .. strlen(argv[i])];
@@ -31,7 +28,9 @@ extern(C) int main(int c, char** argv)
 
 	int ret;
 	try {
+		runGlobalCtors();
 		ret = vmain(args);
+		runGlobalDtors();
 	} catch (Throwable t) {
 		// For lack of T.classinfo
 		auto ti = **cast(object.TypeInfo[]**)t;
@@ -50,4 +49,26 @@ extern(C) int main(int c, char** argv)
 	vrt_gc_shutdown();
 
 	return ret;
+}
+
+void runGlobalCtors()
+{
+	auto mod = moduleInfoRoot;
+	while (mod !is null) {
+		foreach (fn; mod.ctors) {
+			fn();
+		}
+		mod = mod.next;
+	}
+}
+
+void runGlobalDtors()
+{
+	auto mod = moduleInfoRoot;
+	while (mod !is null) {
+		foreach (fn; mod.dtors) {
+			fn();
+		}
+		mod = mod.next;
+	}
 }
