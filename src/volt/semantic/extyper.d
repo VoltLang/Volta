@@ -948,13 +948,11 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		}
 	}
 
-	auto callable = cast(ir.CallableType) realType(getExpType(ctx.lp, postfix.child, ctx.current));
-	if (callable is null) {
-		throw makeCallingUncallable(postfix.location);
-	}
-
 	if (asFunctionType is null) {
-		return;
+		asFunctionType = cast(ir.CallableType)type;
+		if (asFunctionType is null) {
+			return;
+		}
 	}
 
 	handleArgumentLabelsIfNeeded(ctx, postfix, fn, exp);
