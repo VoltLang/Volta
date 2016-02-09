@@ -289,24 +289,33 @@ public:
 	{
 		assert(.fromIr(state, al.type) is this);
 
+		LLVMValueRef[] alVals;
+
 		// Handle null.
-		if (al.exps.length == 0) {
+		if (al.exps.length >= 0) {
+			alVals = new LLVMValueRef[](al.exps.length);
+			foreach (i, exp; al.exps) {
+				alVals[i] = state.getConstant(exp);
+			}
+		}
+
+		result.type = this;
+		result.value = from(state, alVals);
+		result.isPointer = false;
+	}
+
+	LLVMValueRef from(State state, LLVMValueRef[] arr)
+	{
+		// Handle null.
+		if (arr.length == 0) {
 			LLVMValueRef[2] vals;
 			vals[lengthIndex] = LLVMConstNull(lengthType.llvmType);
 			vals[ptrIndex] = LLVMConstNull(ptrType.llvmType);
 
-			result.type = this;
-			result.value = LLVMConstNamedStruct(llvmType, vals[]);
-			result.isPointer = false;
-			return;
+			return LLVMConstNamedStruct(llvmType, vals[]);
 		}
 
-		auto alVals = new LLVMValueRef[](al.exps.length);
-		foreach (i, exp; al.exps) {
-			alVals[i] = state.getConstant(exp);
-		}
-
-		auto litConst = LLVMConstArray(base.llvmType, alVals);
+		auto litConst = LLVMConstArray(base.llvmType, arr);
 		auto litGlobal = state.makeAnonGlobalConstant(
 			LLVMTypeOf(litConst), litConst);
 
@@ -317,12 +326,10 @@ public:
 		auto strGep = LLVMConstInBoundsGEP(litGlobal, ind[]);
 
 		LLVMValueRef[2] vals;
-		vals[lengthIndex] = lengthType.fromNumber(state, cast(long)al.exps.length);
+		vals[lengthIndex] = lengthType.fromNumber(state, cast(long)arr.length);
 		vals[ptrIndex] = strGep;
 
-		result.type = this;
-		result.value = LLVMConstNamedStruct(llvmType, vals[]);
-		result.isPointer = false;
+		return LLVMConstNamedStruct(llvmType, vals[]);
 	}
 
 private:
