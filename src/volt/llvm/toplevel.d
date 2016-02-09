@@ -708,42 +708,42 @@ public:
 		return Continue;
 	}
 
+	void globalStructorArray(ir.Module m, LLVMValueRef[] arr, string name)
+	{
+		if (arr.length == 0) {
+			return;
+		}
+		auto fnty = LLVMTypeOf(arr[0]);
+		auto stypes = [LLVMInt32TypeInContext(state.context), fnty];
+		auto _struct = LLVMStructTypeInContext(state.context, stypes, false);
+
+		auto structs = new LLVMValueRef[](arr.length);
+		foreach (i, fn; arr) {
+			// These version blocks brought to you by LLVM being terrible.
+			uint priority = 2;
+			version (Windows) priority = 1;
+			if (m.name.strings == ["vrt", "vmain"]) {
+				priority = 1;
+				version (Windows) priority = 2;
+			}
+			auto vals = [LLVMConstInt(LLVMInt32TypeInContext(state.context), priority, false), fn];
+			structs[i] = LLVMConstStructInContext(state.context, vals.ptr, 2, false);
+		}
+		auto array = LLVMArrayType(_struct, cast(uint) arr.length);
+		auto gval = LLVMAddGlobal(state.mod, array, name);
+		auto lit = LLVMConstArray(_struct, structs);
+		LLVMSetInitializer(gval, lit);
+		LLVMSetLinkage(gval, LLVMLinkage.Appending);
+	}
+
 	override Status leave(ir.Module m)
 	{
-		void globalAppendArray(LLVMValueRef[] arr, string name)
-		{
-			if (arr.length == 0) {
-				return;
-			}
-			auto fnty = LLVMTypeOf(arr[0]);
-			auto stypes = [LLVMInt32TypeInContext(state.context), fnty];
-			auto _struct = LLVMStructTypeInContext(state.context, stypes, false);
-			auto array = LLVMArrayType(_struct, cast(uint) arr.length);
-			auto gval = LLVMAddGlobal(state.mod, array, name);
-			LLVMSetLinkage(gval, LLVMLinkage.Appending);
-
-			LLVMValueRef[] structs;
-			foreach (fn; arr) {
-				// These version blocks brought to you by LLVM being terrible.
-				uint priority = 2;
-				version (Windows) priority = 1;
-				if (m.name.strings == ["vrt", "vmain"]) {
-					priority = 1;
-					version (Windows) priority = 2;
-				}
-				auto vals = [LLVMConstInt(LLVMInt32TypeInContext(state.context), priority, false), fn];
-				structs ~= LLVMConstStructInContext(state.context, vals.ptr, 2, false);
-			}
-			auto lit = LLVMConstArray(_struct, structs);
-			LLVMSetInitializer(gval, lit);
-		}
-
-		globalAppendArray(state.globalConstructors, "llvm.global_ctors");
-		globalAppendArray(state.globalDestructors, "llvm.global_dtors");
-
 		if (state.localConstructors.length > 0 || state.localDestructors.length > 0) {
 			throw panic(m.location, "local constructor or destructor made it into llvm backend.");
 		}
+
+		globalStructorArray(m, state.globalConstructors, "llvm.global_ctors");
+		globalStructorArray(m, state.globalDestructors, "llvm.global_dtors");
 		return Continue; 
 	}
 
