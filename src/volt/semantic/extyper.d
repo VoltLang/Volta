@@ -21,7 +21,7 @@ import volt.visitor.scopemanager;
 import volt.visitor.prettyprinter;
 
 import volt.semantic.util;
-import volt.semantic.ctfe;
+import volt.semantic.evaluate;
 import volt.semantic.typer;
 import volt.semantic.nested;
 import volt.semantic.mangle;
@@ -2283,7 +2283,6 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 		assert(false);
 	}
 }
-
 
 /*
  *
@@ -4600,7 +4599,8 @@ public:
 					throw makeTypeIsNot(ed, prevType, buildInt(ed.location));
 				}
 
-				auto add = buildAdd(loc, copyExp(prevExp), buildConstantInt(loc, 1));
+				ir.Exp add = buildAdd(loc, copyExp(prevExp), buildConstantInt(loc, 1));
+				extype(ctx, add, Parent.NA);
 				ed.assign = evaluate(ctx.lp, ctx.current, add);
 			}
 		} else {

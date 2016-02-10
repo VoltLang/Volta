@@ -26,7 +26,7 @@ import volt.semantic.lookup;
 import volt.semantic.nested;
 import volt.semantic.classify;
 import volt.semantic.classresolver;
-import volt.semantic.ctfe;
+import volt.semantic.evaluate;
 import volt.semantic.overload;
 
 /**

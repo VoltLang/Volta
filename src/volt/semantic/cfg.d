@@ -11,7 +11,7 @@ import volt.token.location;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
 
-import volt.semantic.ctfe;
+import volt.semantic.evaluate;
 import volt.semantic.classify;
 
 
