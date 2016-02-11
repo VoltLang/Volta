@@ -2,6 +2,7 @@
 # Find which compilers are installed.
 #
 DMD ?= $(shell which dmd)
+RDMD ?= $(shell which rdmd)
 CXX ?= $(shell which g++)
 VOLT ?= ./$(TARGET)
 HOST_UNAME := $(strip $(shell uname))
@@ -40,11 +41,9 @@ DDEFINES_ = $(DDEFINES)
 LDFLAGS_ = $(DFLAGS) $(LDFLAGS)
 TARGET = volt
 VIV_TARGET = viv
-CCOMP_FLAGS = $(CARCH) -c -o $@ $(CFLAGS)
-MCOMP_FLAGS = $(CARCH) -c -o $@ $(CFLAGS)
-DCOMP_FLAGS = -c -w -Isrc $(DDEFINES_) -of$@ $(DFLAGS)
-CXXCOMP_FLAGS = $(CARCH) -c -o $@ $(LLVM_CXXFLAGS) $(CXXFLAGS)
-LINK_FLAGS = -of$(TARGET) $(OBJ) $(LDFLAGS_) $(patsubst -%, -L-%, $(LLVM_LDFLAGS)) -L-ldl
+DCOMP_FLAGS = -w -Isrc $(DDEFINES_) $(DFLAGS)
+CXXCOMP_FLAGS = $(CARCH) $(LLVM_CXXFLAGS) $(CXXFLAGS)
+LINK_FLAGS = $(LDFLAGS_) $(patsubst -%, -L-%, $(LLVM_LDFLAGS)) -L-ldl
 
 RUN_SRC = test/test.volt
 RUN_FLAGS = --internal-dbg --no-stdlib -I rt/src $(RT_HOST) -l gc
@@ -113,12 +112,12 @@ all: $(RT_HOST) $(RT_TARGETS) $(RT_BIN_TARGETS)
 
 $(OBJ_DIR)/%.$(OBJ_TYPE) : src/%.cpp Makefile
 	@echo "  CXX    src/$*.cpp"
-	@$(CXX) $(CXXCOMP_FLAGS)  src/$*.cpp
+	@$(CXX) $(CXXCOMP_FLAGS) -c -o $@ src/$*.cpp
 
 $(OBJ_DIR)/%.$(OBJ_TYPE) : src/%.d Makefile
 	@echo "  DMD    src/$*.d"
 	@mkdir -p $(dir $@)
-	@$(DMD) $(DCOMP_FLAGS) src/$*.d
+	@$(DMD) $(DCOMP_FLAGS) -c -of$@ src/$*.d
 
 $(RT_HOST): $(TARGET) $(RT_SRC)
 	@echo "  VOLT   $@"
@@ -136,9 +135,13 @@ rt/%.o : rt/%.bc
 		--arch $(shell echo $@ | sed "s,rt/libvrt-\([^-]*\)-[^.]*.*,\1,") \
 		--platform $(shell echo $@ | sed "s,rt/libvrt-[^-]*-\([^.]*\).*,\1,")
 
-$(TARGET): $(OBJ) Makefile
-	@echo "  LD     $@"
-	@$(DMD) $(LINK_FLAGS)
+$(TARGET): $(OBJ)
+	@echo "  DMD    $@"
+	@$(DMD) $(LINK_FLAGS) -of$@ $(OBJ)
+
+rdmd: $(DSRC) $(EXTRA_OBJ)
+	@echo "  RDMD   $(TARGET)"
+	@rdmd --build-only $(DCOMP_FLAGS) $(LINK_FLAGS) -of$(TARGET) src/main.d $(EXTRA_OBJ)
 
 clean:
 	@rm -rf $(TARGET) $(RUN_TARGET) .obj
@@ -200,4 +203,4 @@ voltaic-viv-syntax:
 	@./viv -E $(VIV_ALL_SRC)
 
 
-.PHONY: all clean run debug license voltaic-syntax voltaic-viv voltaic-viv-syntax
+.PHONY: all clean rdmd run debug license voltaic-syntax voltaic-viv voltaic-viv-syntax
