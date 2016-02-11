@@ -121,74 +121,29 @@ public:
 
 bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings settings)
 {
-	// Handlers.
-	void file(string file) {
-		args ~= new Arg(file, Arg.Kind.File);
-	}
-
-	void outputFile(string file) {
-		args ~= new Arg(file, Arg.Kind.Output);
-	}
-
-	void includePath(string path) {
-		args ~= new Arg(path, Arg.Kind.IncludePath);
-	}
-
-	void versionIdentifier(string ident) {
-		args ~= new Arg(ident, Arg.Kind.Identifier);
+	void libraryName(string name) {
+		args ~= new Arg(name, Arg.Kind.LibraryName);
 	}
 
 	void libraryPath(string path) {
 		args ~= new Arg(path, Arg.Kind.LibraryPath);
 	}
 
-	void libraryName(string name) {
-		args ~= new Arg(name, Arg.Kind.LibraryName);
-	}
-
-	void frameworkPath(string path) {
-		args ~= new Arg(path, Arg.Kind.FrameworkPath);
-	}
-
-	void frameworkName(string name) {
-		args ~= new Arg(name, Arg.Kind.FrameworkName);
-	}
-
-	void linker(string l) {
-		args ~= new Arg(l, Arg.Kind.Linker);
-	}
-
-	void xLinker(string s) {
-		args ~= new Arg(s, Arg.Kind.Linker);
-	}
-
-	void stdFile(string file) {
-		auto arg = new Arg(file, Arg.Kind.File);
-		arg.cond = Arg.Conditional.Std;
-		args ~= arg;
-	}
-
-	void stdIncludePath(string path) {
-		auto arg = new Arg(path, Arg.Kind.IncludePath);
-		arg.cond = Arg.Conditional.Std;
-		args ~= arg;
-	}
-
-	void docDir(string path) {
-		args ~= new Arg(path, Arg.Kind.DocDir);
-	}
-
-	void docOutput(string path) {
-		args ~= new Arg(path, Arg.Kind.DocOutput);
-	}
-
-	void jsonOutput(string path) {
-		args ~= new Arg(path, Arg.Kind.JSONOutput);
-	}
-
-
 	ArgLooper looper;
 	looper.set(strArgs);
+
+	Arg makeArgNext(Arg.Kind kind) {
+		auto n = looper.next();
+		auto arg = new Arg(n, kind);
+		args ~= arg;
+		return arg;
+	}
+
+	Arg makeArg(Arg.Kind kind) {
+		auto arg = new Arg(kind);
+		args ~= arg;
+		return arg;
+	}
 
 	for (string arg = looper.nextOrNull();
 	     arg !is null;
@@ -208,7 +163,7 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 			continue;
 		}
 
-		switch (arg) {
+		switch (arg) with (Arg.Kind) {
 		// Special cased.
 		case "--help", "-h":
 			return printUsage();
@@ -223,13 +178,13 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 
 		// Regular args.
 		case "-D":
-			versionIdentifier(looper.next());
+			makeArgNext(Identifier);
 			continue;
 		case "-o":
-			outputFile(looper.next());
+			makeArgNext(Output);
 			continue;
 		case "-I":
-			includePath(looper.next());
+			makeArgNext(IncludePath);
 			continue;
 		case "-L":
 			libraryPath(looper.next());
@@ -238,49 +193,51 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 			libraryName(looper.next());
 			continue;
 		case "-F":
-			frameworkPath(looper.next());
+			makeArgNext(FrameworkPath);
 			continue;
 		case "-framework", "--framework":
-			frameworkName(looper.next());
+			makeArgNext(FrameworkName);
 			continue;
 		case "--linker":
-			linker(looper.next());
+			makeArgNext(Linker);
 			continue;
 		case "--stdlib-file":
-			stdFile(looper.next());
+			auto a = makeArgNext(File);
+			a.cond = Arg.Conditional.Std;
 			continue;
 		case "--stdlib-I":
-			stdIncludePath(looper.next());
+			auto a = makeArgNext(IncludePath);
+			a.cond = Arg.Conditional.Std;
 			continue;
 		case "--doc":
-			args ~= new Arg(Arg.Kind.DocDo);
+			makeArg(DocDo);
 			continue;
 		case "--doc-dir":
-			docDir(looper.next());
+			makeArgNext(DocDir);
 			continue;
 		case "-do":
-			docOutput(looper.next());
+			makeArgNext(DocOutput);
 			continue;
 		case "--json":
-			args ~= new Arg(Arg.Kind.JSONDo);
+			makeArg(JSONDo);
 			continue;
 		case "-jo":
-			jsonOutput(looper.next());
+			makeArgNext(JSONOutput);
 			continue;
 		case "-Xlinker", "--Xlinker":
-			xLinker(looper.next());
+			makeArgNext(LinkerArg);
 			continue;
 		case "--internal-d":
-			args ~= new Arg(Arg.Kind.InternalD);
+			makeArg(InternalD);
 			continue;
 		case "--internal-dbg":
-			args ~= new Arg(Arg.Kind.InternalDebug);
+			makeArg(InternalDebug);
 			continue;
 		case "--internal-perf":
-			args ~= new Arg(Arg.Kind.InternalPerf);
+			makeArg(InternalPerf);
 			continue;
 		case "--internal-diff":
-			args ~= new Arg(Arg.Kind.InternalDiff);
+			makeArg(InternalDiff);
 			continue;
 
 		// TODO Not yet converted!
@@ -313,6 +270,8 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 		case "--simple-trace":
 			settings.simpleTrace = true;
 			continue;
+
+		// Handle combined arguments.
 		default:
 			if (arg.length > 2) {
 				switch (arg[0 .. 2]) {
@@ -329,7 +288,7 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 			break;
 		}
 
-		file(arg);
+		args ~= new Arg(arg, Arg.Kind.File);
 	}
 
 	return true;
