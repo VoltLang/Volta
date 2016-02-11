@@ -17,6 +17,7 @@ import volt.util.perf : perf;
 import volt.exceptions;
 import volt.interfaces;
 import volt.errors;
+import volt.arg;
 
 import volt.parser.parser;
 import volt.semantic.languagepass;
@@ -92,11 +93,6 @@ public:
 
 		mFrameworkNames = settings.frameworkNames;
 		mFrameworkPaths = settings.frameworkPaths;
-
-		// Add the stdlib includes and files.
-		if (!settings.noStdLib) {
-			mIncludes = settings.stdIncludePaths ~ mIncludes;
-		}
 
 		// Should we add the standard library.
 		if (!settings.emitBitcode &&

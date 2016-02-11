@@ -25,6 +25,18 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeUnknownArch(string a, string file = __FILE__, const int line = __LINE__)
+{
+	auto str = format("unknown arch \"%s\"", a);
+	return new CompilerError(str, file, line);
+}
+
+CompilerException makeUnknownPlatform(string p, string file = __FILE__, const int line = __LINE__)
+{
+	auto str = format("unknown platform \"%s\"", p);
+	return new CompilerError(str, file, line);
+}
+
 CompilerException makeExpectedTypeMatch(Location loc, ir.Type type, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(loc, format("expected type %s for slice operation.", typeString(type)), file, line);

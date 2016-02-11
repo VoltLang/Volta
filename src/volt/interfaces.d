@@ -574,6 +574,7 @@ public:
 
 	string identStr; ///< Compiler identifier string.
 
+	string execCmd; ///< How where we launched.
 	string execDir; ///< Set on create.
 	string platformStr; ///< Derived from platform.
 	string archStr; ///< Derived from arch.
@@ -591,7 +592,6 @@ public:
 	string[] frameworkNames; ///< The --framework arguments.
 
 	string[] stdFiles; ///< The --stdlib-file arguements.
-	string[] stdIncludePaths; ///< The --stdlib-I arguments.
 
 	string docDir; ///< The --doc-dir argument.
 	string docOutput; ///< The -do argument.
@@ -614,8 +614,9 @@ public:
 
 
 public:
-	this(string execDir)
+	this(string cmd, string execDir)
 	{
+		this.execCmd = cmd;
 		this.execDir = execDir;
 	}
 
@@ -639,9 +640,6 @@ public:
 			f = replaceEscapes(f);
 		}
 		foreach (ref f; stdFiles) {
-			f = replaceEscapes(f);
-		}
-		foreach (ref f; stdIncludePaths) {
 			f = replaceEscapes(f);
 		}
 	}

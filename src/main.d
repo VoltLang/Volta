@@ -2,26 +2,21 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module main;
 
-version (Windows) {
-	import watt.io.file : searchDir;
-	import watt.path : baseName, dirName;
-}
-
-import watt.path : getExecDir, dirSeparator;
+import watt.path : getExecDir, dirSeparator, baseName, dirName;
 import watt.conv : toLower;
 import watt.io.std : writefln;
-import watt.io.file : exists, read;
+import watt.io.file : exists, read, searchDir;
 import watt.text.string : splitLines;
 
+import volt.arg;
 import volt.license;
 import volt.interfaces;
 import volt.driver;
 import volt.util.path;
 import volt.util.perf : perf;
 
-static bool doPerfPrint;
 
-int main(string[] args)
+int main(string[] strArgs)
 {
 	Settings settings;
 	perf.tag("setup");
@@ -36,28 +31,40 @@ int main(string[] args)
 		}
 	}
 
-	string[] files;
-	auto cmd = args[0];
-	args = args[1 .. $];
+	auto cmd = strArgs[0];
+	strArgs = strArgs[1 .. $];
 
 	auto ver = new VersionSet();
-	settings = new Settings(getExecDir());
+	settings = new Settings(cmd, getExecDir());
 	setDefault(settings);
 
-	if (!handleArgs(getConfigLines(), files, ver, settings)) {
-		return 0;
-	}
 
-	if (!handleArgs(args, files, ver, settings)) {
+	// Get a list of arguments.
+	Arg[] args;
+	string[] files;
+	try {
+
+		if (!handleArgs(getConfigLines(), args, ver, settings)) {
+			return 0;
+		}
+
+		if (!handleArgs(strArgs, args, ver, settings)) {
+			return 0;
+		}
+
+		filterArgs(args, files, ver, settings);
+
+		if (!checkArgs(files, settings)) {
+			return 0;
+		}
+
+	} catch (Exception e) {
+		writefln(e.msg);
 		return 0;
 	}
 
 	settings.processConfigs(ver);
-
-	if (files.length == 0) {
-		writefln("%s: no input files", cmd);
-		return 0;
-	}
+	settings.replaceMacros();
 
 	auto vc = new VoltDriver(ver, settings);
 	vc.addFiles(files);
@@ -67,113 +74,125 @@ int main(string[] args)
 	return ret;
 }
 
-bool handleArgs(string[] args, ref string[] files, VersionSet ver, Settings settings)
+bool checkArgs(string[] files, Settings settings)
 {
-	void delegate(string) argHandler;
-	int i;
+	if (files.length > 1 && settings.docOutput.length > 0) {
+		writefln("-do flag incompatible with multiple modules");
+		return false;
+	}
 
+	if (files.length == 0) {
+		writefln("%s: no input files", settings.execCmd);
+		return false;
+	}
+
+	return true;
+}
+
+struct ArgLooper
+{
+private:
+	size_t mI;
+	string[] mArgs;
+
+public:
+	void set(string[] args)
+	{
+		this.mArgs = args;
+		this.mI = 0;
+	}
+
+	string next()
+	{
+		if (mI >= mArgs.length) {
+			throw new Exception("missing argument");
+		}
+		return mArgs[mI++];
+	}
+
+	string nextOrNull()
+	{
+		if (mI >= mArgs.length) {
+			return null;
+		}
+		return mArgs[mI++];
+	}
+}
+
+bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings settings)
+{
 	// Handlers.
+	void file(string file) {
+		args ~= new Arg(file, Arg.Kind.File);
+	}
+
 	void outputFile(string file) {
-		settings.outputFile = file;
+		args ~= new Arg(file, Arg.Kind.Output);
 	}
 
 	void includePath(string path) {
-		settings.includePaths ~= path;
+		args ~= new Arg(path, Arg.Kind.IncludePath);
 	}
 
 	void versionIdentifier(string ident) {
-		ver.setVersionIdentifier(ident);
-	}
-
-	void libraryFile(string file) {
-		settings.libraryFiles ~= file;
+		args ~= new Arg(ident, Arg.Kind.Identifier);
 	}
 
 	void libraryPath(string path) {
-		settings.libraryPaths ~= path;
+		args ~= new Arg(path, Arg.Kind.LibraryPath);
+	}
+
+	void libraryName(string name) {
+		args ~= new Arg(name, Arg.Kind.LibraryName);
 	}
 
 	void frameworkPath(string path) {
-		settings.frameworkPaths ~= path;
+		args ~= new Arg(path, Arg.Kind.FrameworkPath);
 	}
 
 	void frameworkName(string name) {
-		settings.frameworkNames ~= name;
-	}
-
-	void arch(string a) {
-		switch (toLower(a)) {
-		case "x86":
-			settings.arch = Arch.X86;
-			break;
-		case "x86_64":
-			settings.arch = Arch.X86_64;
-			break;
-		case "le32":
-			settings.arch = Arch.LE32;
-			break;
-		default:
-			writefln("unknown arch \"%s\"", a);
-		}
-	}
-
-	void platform(string p) {
-		switch (toLower(p)) {
-		case "mingw":
-			settings.platform = Platform.MinGW;
-			break;
-		case "msvc":
-			settings.platform = Platform.MSVC;
-			break;
-		case "linux":
-			settings.platform = Platform.Linux;
-			break;
-		case "osx":
-			settings.platform = Platform.OSX;
-			break;
-		case "emscripten":
-			settings.platform = Platform.EMSCRIPTEN;
-			settings.arch = Arch.LE32;
-			break;
-		default:
-			writefln("unknown platform \"%s\"", p);
-		}
+		args ~= new Arg(name, Arg.Kind.FrameworkName);
 	}
 
 	void linker(string l) {
-		settings.linker = l;
-	}
-
-	void stdFile(string file) {
-		settings.stdFiles ~= file;
-	}
-
-	void stdIncludePath(string path) {
-		settings.stdIncludePaths ~= path;
-	}
-
-	void docDir(string path) {
-		settings.docDir = path;
-	}
-
-	void docOutput(string path) {
-		settings.docOutput = path;
-	}
-
-	void jsonOutput(string path) {
-		settings.jsonOutput = path;
+		args ~= new Arg(l, Arg.Kind.Linker);
 	}
 
 	void xLinker(string s) {
-		settings.xLinker ~= s;
+		args ~= new Arg(s, Arg.Kind.Linker);
 	}
 
-	foreach (arg; args)  {
-		if (argHandler !is null) {
-			argHandler(arg);
-			argHandler = null;
-			continue;
-		}
+	void stdFile(string file) {
+		auto arg = new Arg(file, Arg.Kind.File);
+		arg.cond = Arg.Conditional.Std;
+		args ~= arg;
+	}
+
+	void stdIncludePath(string path) {
+		auto arg = new Arg(path, Arg.Kind.IncludePath);
+		arg.cond = Arg.Conditional.Std;
+		args ~= arg;
+	}
+
+	void docDir(string path) {
+		args ~= new Arg(path, Arg.Kind.DocDir);
+	}
+
+	void docOutput(string path) {
+		args ~= new Arg(path, Arg.Kind.DocOutput);
+	}
+
+	void jsonOutput(string path) {
+		args ~= new Arg(path, Arg.Kind.JSONOutput);
+	}
+
+
+	ArgLooper looper;
+	looper.set(strArgs);
+
+	for (string arg = looper.nextOrNull();
+	     arg !is null;
+	     arg = looper.nextOrNull()) {
 
 		// Handle @file.txt arguments.
 		if (arg.length > 0 && arg[0] == '@') {
@@ -183,66 +202,88 @@ bool handleArgs(string[] args, ref string[] files, VersionSet ver, Settings sett
 				return false;
 			}
 
-			if (!handleArgs(lines, files, ver, settings))
+			if (!handleArgs(lines, args, ver, settings))
 				return false;
 
 			continue;
 		}
 
 		switch (arg) {
+		// Special cased.
 		case "--help", "-h":
 			return printUsage();
 		case "-license", "--license":
 			return printLicense();
+		case "--arch":
+			settings.arch = parseArch(looper.next());
+			continue;
+		case "--platform":
+			settings.platform = parsePlatform(looper.next());
+			continue;
+
+		// Regular args.
 		case "-D":
-			version (Volt) {
-				argHandler = cast(typeof(argHandler))versionIdentifier;
-			} else {
-				argHandler = &versionIdentifier;
-			}
+			versionIdentifier(looper.next());
 			continue;
 		case "-o":
-			version (Volt) {
-				argHandler = cast(typeof(argHandler))outputFile;
-			} else {
-				argHandler = &outputFile;
-			}
+			outputFile(looper.next());
 			continue;
 		case "-I":
-			version (Volt) {
-				argHandler = cast(typeof(argHandler))includePath;
-			} else {
-				argHandler = &includePath;
-			}
+			includePath(looper.next());
 			continue;
 		case "-L":
-			version (Volt) {
-				argHandler = cast(typeof(argHandler))libraryPath;
-			} else {
-				argHandler = &libraryPath;
-			}
+			libraryPath(looper.next());
 			continue;
 		case "-l":
-			version (Volt) {
-				argHandler = cast(typeof(argHandler))libraryFile;
-			} else {
-				argHandler = &libraryFile;
-			}
+			libraryName(looper.next());
 			continue;
 		case "-F":
-			version (Volt) {
-				argHandler = cast(typeof(argHandler))frameworkPath;
-			} else {
-				argHandler = &frameworkPath;
-			}
+			frameworkPath(looper.next());
 			continue;
 		case "-framework", "--framework":
-			version (Volt) {
-				argHandler = cast(typeof(argHandler))frameworkName;
-			} else {
-				argHandler = &frameworkName;
-			}
+			frameworkName(looper.next());
 			continue;
+		case "--linker":
+			linker(looper.next());
+			continue;
+		case "--stdlib-file":
+			stdFile(looper.next());
+			continue;
+		case "--stdlib-I":
+			stdIncludePath(looper.next());
+			continue;
+		case "--doc":
+			args ~= new Arg(Arg.Kind.DocDo);
+			continue;
+		case "--doc-dir":
+			docDir(looper.next());
+			continue;
+		case "-do":
+			docOutput(looper.next());
+			continue;
+		case "--json":
+			args ~= new Arg(Arg.Kind.JSONDo);
+			continue;
+		case "-jo":
+			jsonOutput(looper.next());
+			continue;
+		case "-Xlinker", "--Xlinker":
+			xLinker(looper.next());
+			continue;
+		case "--internal-d":
+			args ~= new Arg(Arg.Kind.InternalD);
+			continue;
+		case "--internal-dbg":
+			args ~= new Arg(Arg.Kind.InternalDebug);
+			continue;
+		case "--internal-perf":
+			args ~= new Arg(Arg.Kind.InternalPerf);
+			continue;
+		case "--internal-diff":
+			args ~= new Arg(Arg.Kind.InternalDiff);
+			continue;
+
+		// TODO Not yet converted!
 		case "-w":
 			settings.warningsEnabled = true;
 			continue;
@@ -255,27 +296,6 @@ bool handleArgs(string[] args, ref string[] files, VersionSet ver, Settings sett
 		case "-E":
 			settings.removeConditionalsOnly = true;
 			settings.noBackend = true;
-			continue;
-		case "--arch":
-			version (Volt) {
-				argHandler = cast(typeof(argHandler))arch;
-			} else {
-				argHandler = &arch;
-			}
-			continue;
-		case "--platform":
-			version (Volt) {
-				argHandler = cast(typeof(argHandler))platform;
-			} else {
-				argHandler = &platform;
-			}
-			continue;
-		case "--linker":
-			version (Volt) {
-				argHandler = cast(typeof(argHandler))linker;
-			} else {
-				argHandler = &linker;
-			}
 			continue;
 		case "--emit-bitcode":
 			settings.emitBitcode = true;
@@ -290,78 +310,14 @@ bool handleArgs(string[] args, ref string[] files, VersionSet ver, Settings sett
 		case "--no-stdlib":
 			settings.noStdLib = true;
 			continue;
-		case "--stdlib-file":
-			version (Volt) {
-				argHandler = cast(typeof(argHandler))stdFile;
-			} else {
-				argHandler = &stdFile;
-			}
-			continue;
-		case "--stdlib-I":
-			version (Volt) {
-				argHandler = cast(typeof(argHandler))stdIncludePath;
-			} else {
-				argHandler = &stdIncludePath;
-			}
-			continue;
 		case "--simple-trace":
 			settings.simpleTrace = true;
-			continue;
-		case "--doc":
-			settings.writeDocs = true;
-			continue;
-		case "--doc-dir":
-			settings.writeDocs = true;
-			version (Volt) {
-				argHandler = cast(typeof(argHandler))docDir;
-			} else {
-				argHandler = &docDir;
-			}
-			continue;
-		case "-do":
-			settings.writeDocs = true;
-			version (Volt) {
-				argHandler = cast(typeof(argHandler))docOutput;
-			} else {
-				argHandler = &docOutput;
-			}
-			continue;
-		case "-jo":
-			settings.writeJson = true;
-			version (Volt) {
-				argHandler = cast(typeof(argHandler))jsonOutput;
-			} else {
-				argHandler = &jsonOutput;
-			}
-			continue;
-		case "--json":
-			settings.writeJson = true;
-			continue;
-		case "--internal-d":
-			settings.internalD = true;
-			continue;
-		case "--internal-dbg":
-			settings.internalDebug = true;
-			continue;
-		case "--internal-perf":
-			doPerfPrint = true;
-			continue;
-		case "--internal-diff":
-			settings.internalDiff = true;
-			continue;
-		case "-Xlinker":
-		case "--Xlinker":
-			version (Volt) {
-				argHandler = cast(typeof(argHandler))xLinker;
-			} else {
-				argHandler = &xLinker;
-			}
 			continue;
 		default:
 			if (arg.length > 2) {
 				switch (arg[0 .. 2]) {
 				case "-l":
-					libraryFile(arg[2 .. $]);
+					libraryName(arg[2 .. $]);
 					continue;
 				case "-L":
 					libraryPath(arg[2 .. $]);
@@ -373,24 +329,7 @@ bool handleArgs(string[] args, ref string[] files, VersionSet ver, Settings sett
 			break;
 		}
 
-		version (Windows) {
-			auto barg = baseName(arg);
-			void addFile(string s) {
-				files ~= s;
-			}
-			if (barg.length > 2 && barg[0 .. 2] == "*.") {
-				version (Volt) searchDir(dirName(arg), barg, addFile);
-				else searchDir(dirName(arg), barg, &addFile);
-				continue;
-			}
-		}
-
-		files ~= arg;
-	}
-
-	if (files.length > 1 && settings.docOutput.length > 0) {
-		writefln("-do flag incompatible with multiple modules");
-		return false;
+		file(arg);
 	}
 
 	return true;
