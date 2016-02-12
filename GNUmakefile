@@ -141,7 +141,7 @@ $(TARGET): $(OBJ)
 
 rdmd: $(DSRC) $(EXTRA_OBJ)
 	@echo "  RDMD   $(TARGET)"
-	@rdmd --build-only $(DCOMP_FLAGS) $(LINK_FLAGS) -of$(TARGET) src/main.d $(EXTRA_OBJ)
+	@$(RDMD) --build-only --compiler=$(DMD) $(DCOMP_FLAGS) $(LINK_FLAGS) -of$(TARGET) src/main.d $(EXTRA_OBJ)
 
 clean:
 	@rm -rf $(TARGET) $(RUN_TARGET) .obj
