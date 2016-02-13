@@ -204,14 +204,6 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 		case "--linker":
 			makeArgNext(Linker);
 			continue;
-		case "--stdlib-file":
-			auto a = makeArgNext(File);
-			a.cond = Arg.Conditional.Std;
-			continue;
-		case "--stdlib-I":
-			auto a = makeArgNext(IncludePath);
-			a.cond = Arg.Conditional.Std;
-			continue;
 		case "--doc":
 			makeArg(DocDo);
 			continue;
@@ -242,8 +234,6 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 		case "--internal-diff":
 			makeArg(InternalDiff);
 			continue;
-
-		// TODO Not yet converted!
 		case "-w":
 			makeArg(Warnings);
 			continue;
@@ -259,8 +249,7 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 		case "--emit-bitcode":
 			makeArg(EmitBitcode);
 			continue;
-		case "--no-backend":
-		case "-S":
+		case "--no-backend", "-S":
 			makeArg(CompileOnly);
 			continue;
 		case "--no-catch":
@@ -268,6 +257,14 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 			continue;
 		case "--simple-trace":
 			makeArg(DebugSimpleTrace);
+			continue;
+		case "--stdlib-file":
+			auto a = makeArgNext(File);
+			a.cond = Arg.Conditional.Std;
+			continue;
+		case "--stdlib-I":
+			auto a = makeArgNext(IncludePath);
+			a.cond = Arg.Conditional.Std;
 			continue;
 
 		// Handle combined arguments.
