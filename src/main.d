@@ -175,6 +175,9 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 		case "--platform":
 			settings.platform = parsePlatform(looper.next());
 			continue;
+		case "--no-stdlib":
+			settings.noStdLib = true;
+			continue;
 
 		// Regular args.
 		case "-D":
@@ -242,33 +245,29 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 
 		// TODO Not yet converted!
 		case "-w":
-			settings.warningsEnabled = true;
+			makeArg(Warnings);
 			continue;
 		case "-d":
-			ver.debugEnabled = true;
+			makeArg(Debug);
 			continue;
 		case "-c":
-			settings.noLink = true;
+			makeArg(NoLink);
 			continue;
 		case "-E":
-			settings.removeConditionalsOnly = true;
-			settings.noBackend = true;
+			makeArg(PreprocessOnly);
 			continue;
 		case "--emit-bitcode":
-			settings.emitBitcode = true;
+			makeArg(EmitBitcode);
 			continue;
 		case "--no-backend":
 		case "-S":
-			settings.noBackend = true;
+			makeArg(CompileOnly);
 			continue;
 		case "--no-catch":
-			settings.noCatch = true;
-			continue;
-		case "--no-stdlib":
-			settings.noStdLib = true;
+			makeArg(InternalNoCatch);
 			continue;
 		case "--simple-trace":
-			settings.simpleTrace = true;
+			makeArg(DebugSimpleTrace);
 			continue;
 
 		// Handle combined arguments.

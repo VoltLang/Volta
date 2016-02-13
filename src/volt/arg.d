@@ -31,17 +31,35 @@ public:
 
 		Identifier,
 		IncludePath,
+		Warnings,
+		PreprocessOnly,  ///< -E
+		CompileOnly,     ///< -S
+
+		NoLink,
+
+		Linker,
+		LinkerArg,
 
 		LibraryPath,
 		LibraryName,
 
+		FrameworkPath,
+		FrameworkName,
+
+		Output,
+
+		Debug,
+		DebugSimpleTrace,
+
+		// Change this to be more like clang,
+		// -emit-llvm and select bitcode/text with -S.
+		EmitBitcode,     ///< --emit-bitcode
+
+		InternalNoCatch, ///< --no-catch
 		InternalDebug,
 		InternalPerf,
 		InternalDiff,
 		InternalD,
-
-		FrameworkPath,
-		FrameworkName,
 
 		DocDo,
 		DocDir,
@@ -49,11 +67,6 @@ public:
 
 		JSONDo,
 		JSONOutput,
-
-		Output,
-
-		Linker,
-		LinkerArg,
 	}
 
 	string arg;
@@ -96,6 +109,31 @@ void filterArgs(Arg[] args, ref string[] files, VersionSet ver, Settings setting
 		}
 
 		final switch (arg.kind) with (Arg.Kind) {
+		case Warnings:
+			settings.warningsEnabled = true;
+			break;
+		case NoLink:
+			settings.noLink = true;
+			break;
+		case PreprocessOnly:
+			settings.removeConditionalsOnly = true;
+			settings.noBackend = true; // TODO needed?
+			break;
+		case EmitBitcode:
+			settings.emitBitcode = true;
+			break;
+		case CompileOnly:
+			settings.noBackend = true;
+			break;
+		case Debug:
+			ver.debugEnabled = true;
+			break;
+		case DebugSimpleTrace:
+			settings.simpleTrace = true;
+			break;
+		case InternalNoCatch:
+			settings.noCatch = true;
+			break;
 		case InternalDebug:
 			settings.internalDebug = true;
 			break;
