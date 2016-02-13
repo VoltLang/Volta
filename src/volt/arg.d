@@ -35,6 +35,13 @@ public:
 		PreprocessOnly,  ///< -E
 		CompileOnly,     ///< -S
 
+		Debug,
+		DebugSimpleTrace,
+
+		Output,
+
+		EmitBitcode,     ///< --emit-bitcode
+
 		NoLink,
 
 		Linker,
@@ -46,27 +53,18 @@ public:
 		FrameworkPath,
 		FrameworkName,
 
-		Output,
-
-		Debug,
-		DebugSimpleTrace,
-
-		// Change this to be more like clang,
-		// -emit-llvm and select bitcode/text with -S.
-		EmitBitcode,     ///< --emit-bitcode
-
-		InternalNoCatch, ///< --no-catch
-		InternalDebug,
-		InternalPerf,
-		InternalDiff,
-		InternalD,
-
 		DocDo,
 		DocDir,
 		DocOutput,
 
 		JSONDo,
 		JSONOutput,
+
+		InternalD,
+		InternalDiff,
+		InternalPerf,
+		InternalDebug,
+		InternalNoCatch, ///< --no-catch
 	}
 
 	string arg;
@@ -109,88 +107,6 @@ void filterArgs(Arg[] args, ref string[] files, VersionSet ver, Settings setting
 		}
 
 		final switch (arg.kind) with (Arg.Kind) {
-		case Warnings:
-			settings.warningsEnabled = true;
-			break;
-		case NoLink:
-			settings.noLink = true;
-			break;
-		case PreprocessOnly:
-			settings.removeConditionalsOnly = true;
-			settings.noBackend = true; // TODO needed?
-			break;
-		case EmitBitcode:
-			settings.emitBitcode = true;
-			break;
-		case CompileOnly:
-			settings.noBackend = true;
-			break;
-		case Debug:
-			ver.debugEnabled = true;
-			break;
-		case DebugSimpleTrace:
-			settings.simpleTrace = true;
-			break;
-		case InternalNoCatch:
-			settings.noCatch = true;
-			break;
-		case InternalDebug:
-			settings.internalDebug = true;
-			break;
-		case InternalPerf:
-			doPerfPrint = true;
-			break;
-		case InternalDiff:
-			settings.internalDiff = true;
-			break;
-		case InternalD:
-			settings.internalD = true;
-			break;
-		case JSONDo:
-			settings.writeJson = true;
-			break;
-		case JSONOutput:
-			settings.writeJson = true;
-			settings.jsonOutput = arg.arg;
-			break;
-		case DocDo:
-			settings.writeDocs = true;
-			break;
-		case DocDir:
-			settings.writeDocs = true;
-			settings.docDir = arg.arg;
-			break;
-		case DocOutput:
-			settings.writeDocs = true;
-			settings.docOutput = arg.arg;
-			break;
-		case Identifier:
-			ver.setVersionIdentifier(arg.arg);
-			break;
-		case IncludePath:
-			settings.includePaths ~= arg.arg;
-			break;
-		case LibraryPath:
-			settings.libraryPaths ~= arg.arg;
-			break;
-		case LibraryName:
-			settings.libraryFiles ~= arg.arg;
-			break;
-		case Output:
-			settings.outputFile = arg.arg;
-			break;
-		case FrameworkPath:
-			settings.frameworkPaths ~= arg.arg;
-			break;
-		case FrameworkName:
-			settings.frameworkNames ~= arg.arg;
-			break;
-		case Linker:
-			settings.linker = arg.arg;
-			break;
-		case LinkerArg:
-			settings.xLinker ~= arg.arg;
-			break;
 		case File:
 			auto barg = baseName(arg.arg);
 			void addFile(string s) {
@@ -209,6 +125,97 @@ void filterArgs(Arg[] args, ref string[] files, VersionSet ver, Settings setting
 			} else {
 				files ~= arg.arg;
 			}
+			break;
+
+		case Identifier:
+			ver.setVersionIdentifier(arg.arg);
+			break;
+		case IncludePath:
+			settings.includePaths ~= arg.arg;
+			break;
+		case Warnings:
+			settings.warningsEnabled = true;
+			break;
+		case PreprocessOnly:
+			settings.removeConditionalsOnly = true;
+			settings.noBackend = true; // TODO needed?
+			break;
+		case CompileOnly:
+			settings.noBackend = true;
+			break;
+
+		case Debug:
+			ver.debugEnabled = true;
+			break;
+		case DebugSimpleTrace:
+			settings.simpleTrace = true;
+			break;
+
+		case Output:
+			settings.outputFile = arg.arg;
+			break;
+
+		case EmitBitcode:
+			settings.emitBitcode = true;
+			break;
+
+		case NoLink:
+			settings.noLink = true;
+			break;
+
+		case Linker:
+			settings.linker = arg.arg;
+			break;
+		case LinkerArg:
+			settings.xLinker ~= arg.arg;
+			break;
+		case LibraryPath:
+			settings.libraryPaths ~= arg.arg;
+			break;
+		case LibraryName:
+			settings.libraryFiles ~= arg.arg;
+			break;
+		case FrameworkPath:
+			settings.frameworkPaths ~= arg.arg;
+			break;
+		case FrameworkName:
+			settings.frameworkNames ~= arg.arg;
+			break;
+
+		case JSONDo:
+			settings.writeJson = true;
+			break;
+		case JSONOutput:
+			settings.writeJson = true;
+			settings.jsonOutput = arg.arg;
+			break;
+		case DocDo:
+			settings.writeDocs = true;
+			break;
+		case DocDir:
+			settings.writeDocs = true;
+			settings.docDir = arg.arg;
+			break;
+		case DocOutput:
+			settings.writeDocs = true;
+			settings.docOutput = arg.arg;
+			break;
+
+		case InternalD:
+			settings.internalD = true;
+			break;
+		case InternalDiff:
+			settings.internalDiff = true;
+			break;
+		case InternalPerf:
+			doPerfPrint = true;
+			break;
+		case InternalDebug:
+			settings.internalDebug = true;
+			break;
+		case InternalNoCatch:
+			settings.noCatch = true;
+			break;
 		}
 	}
 }
