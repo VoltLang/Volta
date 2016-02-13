@@ -97,12 +97,12 @@ void filterArgs(Arg[] args, ref string[] files, VersionSet ver, Settings setting
 		}
 
 		if (arg.cond & Arg.Conditional.Arch &&
-		    settings.arch == arg.condArch) {
+		    settings.arch != arg.condArch) {
 			continue;
 		}
 
 		if (arg.cond & Arg.Conditional.Platform &&
-		    settings.platform == arg.condPlatform) {
+		    settings.platform != arg.condPlatform) {
 			continue;
 		}
 

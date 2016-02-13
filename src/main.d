@@ -266,6 +266,11 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 			auto a = makeArgNext(IncludePath);
 			a.cond = Arg.Conditional.Std;
 			continue;
+		case "--if-linux-l":
+			auto a = makeArgNext(LibraryName);
+			a.cond = Arg.Conditional.Platform;
+			a.condPlatform = Platform.Linux;
+			continue;
 
 		// Handle combined arguments.
 		default:
