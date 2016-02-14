@@ -516,7 +516,7 @@ void extypeIdentifierExp(Context ctx, ref ir.Exp e, ir.IdentifierExp i, ir.Exp p
 	            StoreSource.Identifier);
 }
 
-bool replaceAAPostfixesIfNeeded(Context ctx, ir.Postfix postfix, ref ir.Exp exp)
+bool replaceAAPostfixesIfNeeded(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 {
 	auto l = postfix.location;
 	if (postfix.op == ir.Postfix.Op.Call) {
@@ -874,14 +874,6 @@ private void rewriteHomogenousVariadic(Context ctx,
 void extypePostfixLeave(Context ctx, ref ir.Exp exp, ir.Postfix postfix,
                         ir.Exp parent)
 {
-	if (opOverloadRewriteIndex(ctx, postfix, exp)) {
-		postfix = cast(ir.Postfix) exp;
-		if (postfix !is null) {
-			acceptExp(exp, ctx.extyper);
-			return;
-		}
-	}
-
 	if (postfix.arguments.length > 0) {
 		ctx.enter(postfix);
 		foreach (ref arg; postfix.arguments) {
@@ -890,24 +882,40 @@ void extypePostfixLeave(Context ctx, ref ir.Exp exp, ir.Postfix postfix,
 		ctx.leave(postfix);
 	}
 
-	if (postfixIdentifier(ctx, exp, postfix, parent)) {
+	if (opOverloadRewriteIndex(ctx, postfix, exp)) {
 		return;
 	}
 
-	extypePostfixIndex(ctx, exp, postfix);
-
-	if (replaceAAPostfixesIfNeeded(ctx, postfix, exp)) {
+	if (replaceAAPostfixesIfNeeded(ctx, exp, postfix)) {
 		return;
 	}
 
-	extypePostfixCall(ctx, exp, postfix);
+	final switch (postfix.op) with (ir.Postfix.Op) {
+	case Slice:
+	case CreateDelegate:
+		// TODO write checking code?
+		break;
+	case Increment:
+	case Decrement:
+		// TODO Check that child is a PrimtiveType.
+		return;
+	case Identifier:
+		extypePostfixIdentifier(ctx, exp, postfix, parent);
+		break;
+	case Call:
+		extypePostfixCall(ctx, exp, postfix);
+		break;
+	case Index:
+		extypePostfixIndex(ctx, exp, postfix);
+		break;
+	case None:
+		throw panic(postfix, "invalid op");
+	}
 }
 
 void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 {
-	if (postfix.op != ir.Postfix.Op.Call) {
-		return;
-	}
+	assert(postfix.op == ir.Postfix.Op.Call);
 
 	auto type = getExpType(ctx.lp, postfix.child, ctx.current);
 	bool thisCall;
@@ -1191,8 +1199,7 @@ void consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes,
 
 void extypePostfixIndex(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 {
-	if (postfix.op != ir.Postfix.Op.Index)
-		return;
+	assert(postfix.op == ir.Postfix.Op.Index);
 
 	auto type = getExpType(ctx.lp, postfix.child, ctx.current);
 	if (type.nodeType == ir.NodeType.AAType) {
@@ -1375,12 +1382,10 @@ bool rewriteIfPropertyStore(ref ir.Exp exp, ir.Exp child, string name,
  *
  * Error otherwise.
  */
-bool postfixIdentifier(Context ctx, ref ir.Exp exp,
-                       ir.Postfix postfix, ir.Exp parent)
+void extypePostfixIdentifier(Context ctx, ref ir.Exp exp,
+                             ir.Postfix postfix, ir.Exp parent)
 {
-	if (postfix.op != ir.Postfix.Op.Identifier) {
-		return false;
-	}
+	assert(postfix.op == ir.Postfix.Op.Identifier);
 
 	string field = postfix.identifier.value;
 
@@ -1389,10 +1394,12 @@ bool postfixIdentifier(Context ctx, ref ir.Exp exp,
 	assert(type !is null);
 	assert(type.nodeType != ir.NodeType.FunctionSetType);
 	if (builtInField(ctx, exp, postfix.child, type, field)) {
-		return true;
+		return;
 	}
 	if (builtInField(type, field)) {
-		return false;
+		// TODO might not be needed.
+		replaceAAPostfixesIfNeeded(ctx, exp, postfix);
+		return;
 	}
 
 	// If we are pointing to a pointer to a class.
@@ -1414,7 +1421,7 @@ bool postfixIdentifier(Context ctx, ref ir.Exp exp,
 		postfixIdentifierUFCS(ctx, exp, postfix, parent);
 
 		// postfixIdentifierUFCS will error so if we get here all is good.
-		return true;
+		return;
 	}
 
 	// We are looking up via a instance error on static vars and types.
@@ -1452,7 +1459,6 @@ bool postfixIdentifier(Context ctx, ref ir.Exp exp,
 	auto parentKind = classifyRelationship(exp, parent);
 	handleStore(ctx, field, exp, store, postfix.child, parentKind,
 	            StoreSource.Instance, postfix.hackSuperLookup);
-	return true;
 }
 
 void extypePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp parent)
@@ -1855,7 +1861,11 @@ bool opOverloadRewriteIndex(Context ctx, ir.Postfix pfix, ref ir.Exp exp)
 	assert(pfix.arguments.length > 0 && pfix.arguments[0] !is null);
 	auto fn = selectFunction(ctx.lp, ctx.current, store.functions, [pfix.arguments[0]], exp.location);
 	assert(fn !is null);
-	exp = buildCall(exp.location, buildCreateDelegate(exp.location, pfix.child, buildExpReference(exp.location, fn, name)), [pfix.arguments[0]]);
+	pfix = buildCall(exp.location, buildCreateDelegate(exp.location, pfix.child, buildExpReference(exp.location, fn, name)), [pfix.arguments[0]]);
+	exp = pfix;
+
+	extypePostfixCall(ctx, exp, pfix);
+
 	return true;
 }
 
