@@ -25,6 +25,12 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeInvalidIndexValue(ir.Node n, ir.Type type, string file = __FILE__, const int line = __LINE__)
+{
+	auto str = format("can not index %s.", typeString(type));
+	return new CompilerError(n.location, str, file, line);
+}
+
 CompilerException makeUnknownArch(string a, string file = __FILE__, const int line = __LINE__)
 {
 	auto str = format("unknown arch \"%s\"", a);

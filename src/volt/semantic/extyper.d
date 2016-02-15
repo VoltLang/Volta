@@ -1181,11 +1181,24 @@ void consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes,
 void extypePostfixIndex(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 {
 	assert(postfix.op == ir.Postfix.Op.Index);
+	assert(postfix.arguments.length == 1);
 
-	auto type = getExpType(ctx.lp, postfix.child, ctx.current);
-	if (type.nodeType == ir.NodeType.AAType) {
+	auto errorType = getExpType(ctx.lp, postfix.child, ctx.current);
+	auto type = realType(errorType);
+	switch (type.nodeType) with (ir.NodeType) {
+	case AAType:
 		auto aa = cast(ir.AAType)type;
 		checkAndDoConvert(ctx, aa.key, postfix.arguments[0]);
+		break;
+	case StaticArrayType:
+	case PointerType:
+	case ArrayType:
+		// TODO
+		//auto sizeT = buildSizeT(exp.location, ctx.lp);
+		//checkAndDoConvert(ctx, sizeT, postfix.arguments[0]);
+		break;
+	default:
+		throw makeInvalidIndexValue(exp, errorType);
 	}
 }
 
