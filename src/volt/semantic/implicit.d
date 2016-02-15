@@ -70,24 +70,6 @@ bool willConvert(Context ctx, ir.Type type, ir.Exp exp)
  */
 bool willConvert(ir.Type arg, ir.Type param)
 {
-	bool oldArgConst = arg.isConst;
-	bool oldArgImmutable = arg.isImmutable;
-	bool oldParamConst = param.isConst;
-	bool oldParamImmutable = param.isImmutable;
-	if (!mutableIndirection(arg)) {
-		arg.isConst = false;
-		arg.isImmutable = false;
-	}
-	if (!mutableIndirection(param)) {
-		param.isConst = false;
-		param.isImmutable = false;
-	}
-	scope (exit) {
-		arg.isConst = oldArgConst;
-		arg.isImmutable = oldArgImmutable;
-		param.isConst = oldParamConst;
-		param.isImmutable = oldParamImmutable;
-	}
 	assert(arg !is null);
 	assert(param !is null);
 	if (typesEqual(arg, param)) {
