@@ -1,5 +1,5 @@
-// Copyright © 2012-2014, Bernard Helyer.  All rights reserved.
-// Copyright © 2012-2014, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2012-2016, Bernard Helyer.  All rights reserved.
+// Copyright © 2012-2016, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.extyper;
 
@@ -403,6 +403,13 @@ void handleScopeStore(Context ctx, string ident, ref ir.Exp exp, ir.Store store,
 	exp = se;
 }
 
+
+/*
+ *
+ * extypeIdentifierExp code.
+ *
+ */
+
 /**
  * If qname has a child of name leaf, returns an expression looking it up.
  * Otherwise, null is returned.
@@ -482,6 +489,13 @@ void extypeIdentifierExp(Context ctx, ref ir.Exp e, ir.IdentifierExp i, ir.Exp p
 	handleStore(ctx, i.value, e, store, null, parentKind,
 	            StoreSource.Identifier);
 }
+
+
+/*
+ *
+ * extypePostfixExp code.
+ *
+ */
 
 bool replaceAAPostfixesIfNeeded(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 {
@@ -1476,11 +1490,18 @@ void extypePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp paren
 	// The postfix parameter is stale now, don't touch it.
 }
 
+
+/*
+ *
+ * extypeUnary code.
+ *
+ */
+
 /**
  * Stops casting to an overloaded function name, casting from null, and wires
  * up some runtime magic needed for classes.
  */
-void handleCastTo(Context ctx, ref ir.Exp exp, ir.Unary unary)
+void extypeUnaryCastTo(Context ctx, ref ir.Exp exp, ir.Unary unary)
 {
 	assert(unary.type !is null);
 	assert(unary.value !is null);
@@ -1513,7 +1534,7 @@ void handleCastTo(Context ctx, ref ir.Exp exp, ir.Unary unary)
 /**
  * Type new expressions.
  */
-void handleNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
+void extypeUnaryNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 {
 	assert(_unary.type !is null);
 
@@ -1607,7 +1628,7 @@ void handleNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 /**
  * Lower. 'new foo[0 .. $]' expressions.
  */
-void handleDup(Context ctx, ref ir.Exp exp, ir.Unary _unary)
+void extypeUnaryDup(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 {
 	panicAssert(_unary, _unary.dupName !is null);
 	panicAssert(_unary, _unary.dupBeginning !is null);
@@ -1674,14 +1695,21 @@ void extypeUnary(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 {
 	switch (_unary.op) with (ir.Unary.Op) {
 	case Cast:
-		return handleCastTo(ctx, exp, _unary);
+		return extypeUnaryCastTo(ctx, exp, _unary);
 	case New:
-		return handleNew(ctx, exp, _unary);
+		return extypeUnaryNew(ctx, exp, _unary);
 	case Dup:
-		return handleDup(ctx, exp, _unary);
+		return extypeUnaryDup(ctx, exp, _unary);
 	default:
 	}
 }
+
+
+/*
+ *
+ * extypeBinOp code.
+ *
+ */
 
 /**
  * Everyone's favourite: integer promotion! :D!
@@ -2029,6 +2057,13 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 	    throw makeArrayNonArrayNotCat(binop.location);
 	}
 }
+
+
+/*
+ *
+ * Other extype code.
+ *
+ */
 
 /**
  * Ensure concatentation is sound.
