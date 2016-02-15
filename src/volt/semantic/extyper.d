@@ -49,39 +49,6 @@ void replaceAutoIfNeeded(ref ir.Type type)
 }
 
 /**
- * This handles implicitly typing a struct literal.
- */
-void handleIfStructLiteral(Context ctx, ir.Type left, ref ir.Exp right)
-{
-	ir.StructLiteral asLit;
-	auto arrayLit = cast(ir.ArrayLiteral) right;
-	if (arrayLit !is null) {
-		auto array = cast(ir.ArrayType) realType(left);
-		if (array is null) {
-			return;
-		}
-		foreach (ref value; arrayLit.exps) {
-			handleIfStructLiteral(ctx, realType(array.base), value);
-		}
-		return;
-	} else {
-		asLit = cast(ir.StructLiteral) right;
-	}
-
-	if (asLit is null ||
-	    asLit.type !is null) {
-		return;
-	}
-
-	auto asStruct = cast(ir.Struct) realType(left);
-	if (asStruct is null) {
-		throw makeBadImplicitCast(right, getExpType(ctx.lp, right, ctx.current), left);
-	}
-
-	asLit.type = buildTypeReference(right.location, asStruct, asStruct.name);
-}
-
-/**
  * Does what the name implies.
  *
  * Checks if fn is null and is okay with more arguments the parameters.
@@ -2801,7 +2768,6 @@ void resolveVariable(Context ctx, ir.Variable v)
 	replaceTypeOfIfNeeded(ctx, v.type);
 
 	if (v.assign !is null) {
-		handleIfStructLiteral(ctx, v.type, v.assign);
 		if (!isAuto(v.type)) {
 			tagLiteralType(v.assign, v.type);
 		}
