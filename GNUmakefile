@@ -135,11 +135,11 @@ rt/%.o : rt/%.bc
 		--arch $(shell echo $@ | sed "s,rt/libvrt-\([^-]*\)-[^.]*.*,\1,") \
 		--platform $(shell echo $@ | sed "s,rt/libvrt-[^-]*-\([^.]*\).*,\1,")
 
-$(TARGET): $(OBJ)
+old.$(TARGET): $(OBJ)
 	@echo "  DMD    $@"
 	@$(DMD) $(LINK_FLAGS) -of$@ $(OBJ)
 
-rdmd: $(DSRC) $(EXTRA_OBJ)
+$(TARGET): $(DSRC) $(EXTRA_OBJ)
 	@echo "  RDMD   $(TARGET)"
 	@$(RDMD) --build-only --compiler=$(DMD) $(DCOMP_FLAGS) $(LINK_FLAGS) -of$(TARGET) src/main.d $(EXTRA_OBJ)
 
