@@ -335,6 +335,18 @@ ir.AutoType copy(ir.AutoType old)
 	return at;
 }
 
+ir.BuiltinExp copy(ir.BuiltinExp old)
+{
+	auto type = copyType(old.type);
+	auto exps = new ir.Exp[](old.children.length);
+	foreach (i, oldExp; old.children) {
+		exps[i] = copyExp(oldExp);
+	}
+	auto builtin = new ir.BuiltinExp(old.kind, type, exps);
+	builtin.location = old.location;
+	return builtin;
+}
+
 /*
  *
  * Helpers.
@@ -479,6 +491,9 @@ ir.Node copyNode(ir.Node n)
 	case AutoType:
 		auto at = cast(ir.AutoType)n;
 		return copy(at);
+	case BuiltinExp:
+		auto bi = cast(ir.BuiltinExp)n;
+		return copy(bi);
 	case Enum:
 	case StatementExp:
 	case PrimitiveType:
@@ -554,7 +569,6 @@ ir.Node copyNode(ir.Node n)
 	case FunctionSet:
 	case FunctionSetType:
 	case VaArgExp:
-	case BuiltinExp:
 		goto case Invalid;
 	}
 	version (Volt) assert(false); // ???
