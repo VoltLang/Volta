@@ -298,8 +298,7 @@ body
 
 	tlb.nodes = sink.array;
 
-	assert(tlb.nodes.length > 0);
-	assert(tlb.nodes[$-1] !is null);
+	assert(tlb.nodes.length == 0 || tlb.nodes[$-1] !is null);
 	return Succeeded;
 }
 
