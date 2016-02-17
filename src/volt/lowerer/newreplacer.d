@@ -282,7 +282,7 @@ public:
 		ir.Exp sizeExp = buildConstantSizeT(loc, lp, 0);
 		foreach (i, arg; unary.argumentList) {
 			auto var = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp, getExpType(lp, arg, current), arg);
-			sizeExp = buildAdd(loc, sizeExp, buildAccess(loc, buildExpReference(loc, var, var.name), "length"));
+			sizeExp = buildAdd(loc, sizeExp, buildArrayLength(loc, lp, buildExpReference(loc, var, var.name)));
 			variables[i] = var;
 		}
 		auto newArray = buildVariable(
@@ -304,7 +304,7 @@ public:
 				),
 				buildCastToVoidPtr(loc, buildArrayPtr(loc, source.type, buildExpReference(loc, source, source.name))),
 				buildBinOp(loc, ir.BinOp.Op.Mul,
-					buildAccess(loc, buildExpReference(loc, source, source.name), "length"),
+					buildArrayLength(loc, lp, buildExpReference(loc, source, source.name)),
 					buildConstantSizeT(loc, lp, size(lp, array.base))
 				),
 				buildConstantInt(loc, 0),
@@ -323,7 +323,7 @@ public:
 					buildAdd(loc,
 						buildExpReference(loc, offset, offset.name),
 						buildBinOp(loc, ir.BinOp.Op.Mul,
-							buildAccess(loc, buildExpReference(loc, source, source.name), "length"),
+							buildArrayLength(loc, lp, buildExpReference(loc, source, source.name)),
 							buildConstantSizeT(loc, lp, size(lp, array.base))
 						),
 					)

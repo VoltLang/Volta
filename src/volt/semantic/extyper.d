@@ -2374,7 +2374,7 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 		auto asArray = cast(ir.ArrayType) conditionType;
 		assert(asArray !is null);
 		ir.Exp ptr = buildCastSmart(buildVoidPtr(l), buildArrayPtr(l, asArray.base, ss.condition));
-		ir.Exp length = buildBinOp(l, ir.BinOp.Op.Mul, buildAccess(l, copyExp(ss.condition), "length"),
+		ir.Exp length = buildBinOp(l, ir.BinOp.Op.Mul, buildArrayLength(l, ctx.lp, copyExp(ss.condition)),
 				buildAccess(l, buildTypeidSmart(l, asArray.base), "size"));
 		ss.condition = buildCall(ss.condition.location, ctx.lp.hashFunc, [ptr, length]);
 		conditionType = buildUint(ss.condition.location);
@@ -3794,7 +3794,7 @@ public:
 			}
 			auto l = constant.location;
 			// Rewrite $ to (arrayName.length).
-			exp = buildAccess(l, copyExp(ctx.lastIndexChild), "length");
+			exp = buildArrayLength(l, ctx.lp, copyExp(ctx.lastIndexChild));
 		}
 		return Continue;
 	}

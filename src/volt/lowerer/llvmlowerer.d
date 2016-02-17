@@ -177,7 +177,7 @@ ir.Exp buildStructAAKeyCast(Location l, LanguagePass lp, ir.Module thisModule, i
 			auto atype = cast(ir.ArrayType)t;
 			ir.ForStatement forStatement;
 			ir.Variable index;
-			buildForStatement(l, lp, current, buildAccess(l, e, "length"), forStatement, index);
+			buildForStatement(l, lp, current, buildArrayLength(l, lp, e), forStatement, index);
 			gatherType(realType(atype.base), buildIndex(l, e, eref(index)), forStatement.block.statements);
 			sexp.statements ~= forStatement;
 			break;
@@ -239,8 +239,8 @@ ir.Exp buildStructAAKeyCast(Location l, LanguagePass lp, ir.Module thisModule, i
 	buildExpStat(l, sexp, ptrass);
 
 	// barray.length = exps.length * typeid(ulong).size;
-	auto lenaccess = buildAccess(l, eref(outvar), "length");
-	auto mul = buildBinOp(l, ir.BinOp.Op.Mul, buildAccess(l, eref(var), "length"), buildConstantSizeT(l, lp, 8));
+	auto lenaccess = buildArrayLength(l, lp, eref(outvar));
+	auto mul = buildBinOp(l, ir.BinOp.Op.Mul, buildArrayLength(l, lp, eref(var)), buildConstantSizeT(l, lp, 8));
 	auto lenass = buildAssign(l, lenaccess, mul);
 	buildExpStat(l, sexp, lenass);
 
@@ -370,6 +370,21 @@ public:
 		t.exp = buildCall(t.location, eRef, [t.exp,
 			buildConstantString(t.location, t.location.filename, false),
 			buildConstantSizeT(t.location, lp, t.location.line)]);
+		return Continue;
+	}
+
+	override Status enter(ref ir.Exp exp, ir.BuiltinExp inbuilt)
+	{
+		if (inbuilt.kind != ir.BuiltinExp.Kind.ArrayLength) {
+			return Continue;
+		}
+		if (inbuilt.children.length != 1) {
+			throw panic(inbuilt, "invalid array length built-in.");
+		}
+		auto ptr = cast(ir.PointerType)realType(getExpType(lp, inbuilt.children[0], current));
+		if (ptr !is null) {
+			inbuilt.children[0] = buildDeref(inbuilt.children[0].location, inbuilt.children[0]);
+		}
 		return Continue;
 	}
 
@@ -843,7 +858,7 @@ public:
 
 	protected void replaceStaticArrayToArray(Location loc, LanguagePass lp, ir.Scope current, ir.ArrayType atype, ir.StaticArrayType stype, ir.Unary uexp, ref ir.Exp exp)
 	{
-		ir.Exp getLength() { return buildAccess(loc, copyExp(uexp.value), "length"); }
+		ir.Exp getLength() { return buildArrayLength(loc, lp, copyExp(uexp.value)); }
 
 		// ({
 		auto sexp = new ir.StatementExp();
@@ -923,7 +938,7 @@ public:
 		sexp.statements ~= var;
 
 		//     vrt_throw_slice_error(arr.length, typeid(T).size);
-		auto ln = buildAccess(loc, buildExpReference(loc, var), "length");
+		auto ln = buildArrayLength(loc, lp, buildExpReference(loc, var));
 		auto sz = buildAccess(loc, buildTypeidSmart(loc, toArray.base), "size");
 		ir.Exp fname = buildConstantString(loc, exp.location.filename, false);
 		ir.Exp lineNum = buildConstantSizeT(loc, lp, exp.location.line);
@@ -939,8 +954,8 @@ public:
 		_out.assign = uexp;
 		sexp.statements ~= _out;
 
-		auto inLength = buildAccess(loc, buildExpReference(loc, var), "length");
-		auto outLength = buildAccess(loc, buildExpReference(loc, _out), "length");
+		auto inLength = buildArrayLength(loc, lp, buildExpReference(loc, var));
+		auto outLength = buildArrayLength(loc, lp, buildExpReference(loc, _out));
 		ir.Exp lengthTweak;
 		if (!decreasing) {
 			lengthTweak = buildBinOp(loc, ir.BinOp.Op.Div, inLength, buildConstantSizeT(loc, lp, biggestSz));
@@ -1142,7 +1157,7 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, LanguagePass lp,
 		if (!fes.reverse) {
 			indexAssign = buildConstantSizeT(l, lp, 0);
 		} else {
-			indexAssign = buildAccess(l, aggref(), "length");
+			indexAssign = buildArrayLength(l, lp, aggref());
 		}
 		if (fs.initVars.length == 2) {
 			indexVar = fs.initVars[0];
@@ -1175,7 +1190,7 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, LanguagePass lp,
 		// i < array.length / i + 1 >= 0
 		auto tref = buildExpReference(indexVar.location, indexVar, indexVar.name);
 		auto rtref = buildDecrement(l, tref);
-		auto length = buildAccess(l, fes.aggregate, "length");
+		auto length = buildArrayLength(l, lp, fes.aggregate);
 		auto zero = buildConstantSizeT(l, lp, 0);
 		fs.test = buildBinOp(l, fes.reverse ? ir.BinOp.Op.Greater : ir.BinOp.Op.Less,
 							 fes.reverse ? rtref : tref,
