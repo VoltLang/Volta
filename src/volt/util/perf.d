@@ -2,21 +2,9 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.util.perf;
 
+import watt.io.std : writefln, OutputFileStream;
+import mt = watt.io.monotonic;
 
-version (Volt) {
-	struct Perf
-	{
-		void tag(string) {}
-		void print(string name) {}
-	}
-
-	static Perf perf;
-}
-
-version (D_Version2):
-
-import watt.io.std : writefln;
-private import core.time : MonoTime;
 
 /**
  * Very simple perfing code, just gets timing info.
@@ -26,39 +14,38 @@ private import core.time : MonoTime;
  */
 struct Perf
 {
-	MonoTime[] times;
+	long[] times;
 	string[] names;
 
 	void tag(string tag)
 	{
-		times ~= MonoTime();
+		times ~= mt.ticks();
 		names ~= tag;
-		times[$-1] = MonoTime.currTime;
 	}
 
 	void print(string name)
 	{
-		import std.stdio : File;
-		auto f = File("perf.cvs", "w");
+		auto f = new OutputFileStream("perf.cvs");
 
-		f.write("name,total,");
+		f.writef("name,total,");
 		for (size_t i = 1; i < times.length; i++) {
 			f.writef("%s,", names[i-1]);
 		}
-		f.writeln();
+		f.writef("\n");
 
 		f.writef("%s,", name);
-		ulong tps = MonoTime.ticksPerSecond() / 100000;
-		void write(ulong t) {
-			t = t / tps;
-			f.writef("%s.%02s,", t / 100, t % 100);
+		void doWrite(long t) {
+			t = mt.convClockFreq(t, mt.ticksPerSecond, 1_000_000);
+			f.writef("%s,", t);
 		}
-		write(times[$-1].ticks() - times[0].ticks());
+		doWrite(times[$-1] - times[0]);
 		for (size_t i = 1; i < times.length; i++) {
-			write(times[i].ticks() - times[i-1].ticks());
+			doWrite(times[i] - times[i-1]);
 		}
-		f.writeln();
+		f.writef("\n");
+		f.flush();
+		f.close();
 	}
 }
 
-Perf perf;
+static Perf perf;
