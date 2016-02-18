@@ -373,21 +373,6 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ref ir.Exp exp, ir.BuiltinExp inbuilt)
-	{
-		if (inbuilt.kind != ir.BuiltinExp.Kind.ArrayLength) {
-			return Continue;
-		}
-		if (inbuilt.children.length != 1) {
-			throw panic(inbuilt, "invalid array length built-in.");
-		}
-		auto ptr = cast(ir.PointerType)realType(getExpType(lp, inbuilt.children[0], current));
-		if (ptr !is null) {
-			inbuilt.children[0] = buildDeref(inbuilt.children[0].location, inbuilt.children[0]);
-		}
-		return Continue;
-	}
-
 	override Status enter(ref ir.Exp exp, ir.BinOp binOp)
 	{
 		switch(binOp.op) with(ir.BinOp.Op) {

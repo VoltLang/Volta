@@ -88,15 +88,20 @@ ir.Function getArrayAppendFunction(Location loc, LanguagePass lp, ir.Module this
 
 	auto allocated = buildVarStatSmart(loc, fn._body, fn._body.myScope, buildVoidPtr(loc), "allocated");
 	auto count = buildVarStatSmart(loc, fn._body, fn._body.myScope, buildSizeT(loc, lp), "count");
-	ir.Exp leftlength;
-	auto leref = buildExpReference(loc, left, left.name);
-	leftlength = buildArrayLength(loc, lp, leref);
+	ir.Exp leftlength()
+	{
+		if (isAssignment) {
+			return buildArrayLength(loc, lp, buildDeref(loc, buildExpReference(loc, left, left.name)));
+		} else {
+			return buildArrayLength(loc, lp, buildExpReference(loc, left, left.name));
+		}
+	}
 
 	buildExpStat(loc, fn._body,
 		buildAssign(loc,
 			buildExpReference(loc, count, count.name),
 			buildAdd(loc,
-				leftlength,
+				leftlength(),
 				buildConstantSizeT(loc, lp, 1)
 			)
 		)
@@ -127,7 +132,7 @@ ir.Function getArrayAppendFunction(Location loc, LanguagePass lp, ir.Module this
 		buildExpReference(loc, allocated, allocated.name),
 		buildCastToVoidPtr(loc, leftPtr),
 		buildBinOp(loc, ir.BinOp.Op.Mul,
-			buildArrayLength(loc, lp, buildExpReference(loc, left, left.name)),
+			leftlength(),
 			buildConstantSizeT(loc, lp, size(lp, ltype.base))
 		),
 		buildConstantInt(loc, 0),
@@ -140,7 +145,7 @@ ir.Function getArrayAppendFunction(Location loc, LanguagePass lp, ir.Module this
 			buildDeref(loc,
 				buildAdd(loc,
 					buildCastSmart(loc, buildPtrSmart(loc, ltype.base), buildExpReference(loc, allocated, allocated.name)),
-					buildArrayLength(loc, lp, buildExpReference(loc, left, left.name))
+					leftlength()
 				)
 			),
 			buildExpReference(loc, right, right.name)
@@ -342,12 +347,20 @@ ir.Function getArrayConcatFunction(Location loc, LanguagePass lp, ir.Module this
 
 	auto allocated = buildVarStatSmart(loc, fn._body, fn._body.myScope, buildVoidPtr(loc), "allocated");
 	auto count = buildVarStatSmart(loc, fn._body, fn._body.myScope, buildSizeT(loc, lp), "count");
+	ir.Exp leftlength()
+	{
+		if (isAssignment) {
+			return buildArrayLength(loc, lp, buildDeref(loc, buildExpReference(loc, left, left.name)));
+		} else {
+			return buildArrayLength(loc, lp, buildExpReference(loc, left, left.name));
+		}
+	}
 
 	buildExpStat(loc, fn._body,
 		buildAssign(loc,
 			buildExpReference(loc, count, count.name),
 			buildAdd(loc,
-				buildArrayLength(loc, lp, buildExpReference(loc, left, left.name)),
+				leftlength(),
 				buildArrayLength(loc, lp, buildExpReference(loc, right, right.name))
 			)
 		)
@@ -378,7 +391,7 @@ ir.Function getArrayConcatFunction(Location loc, LanguagePass lp, ir.Module this
 		buildExpReference(loc, allocated, allocated.name),
 		buildCastToVoidPtr(loc, leftPtr),
 		buildBinOp(loc, ir.BinOp.Op.Mul,
-			buildArrayLength(loc, lp, buildExpReference(loc, left, left.name)),
+			leftlength(),
 			buildConstantSizeT(loc, lp, size(lp, type.base))
 		),
 		buildConstantInt(loc, 0),
@@ -392,7 +405,7 @@ ir.Function getArrayConcatFunction(Location loc, LanguagePass lp, ir.Module this
 		buildAdd(loc,
 			buildExpReference(loc, allocated, allocated.name),
 			buildBinOp(loc, ir.BinOp.Op.Mul,
-				buildArrayLength(loc, lp, buildExpReference(loc, left, left.name)),
+				leftlength(),
 				buildConstantSizeT(loc, lp, size(lp, type.base))
 			)
 		),

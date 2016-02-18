@@ -282,6 +282,7 @@ public:
 		ir.Exp sizeExp = buildConstantSizeT(loc, lp, 0);
 		foreach (i, arg; unary.argumentList) {
 			auto var = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp, getExpType(lp, arg, current), arg);
+			panicAssert(exp, (cast(ir.ArrayType)realType(var.type)) !is null);
 			sizeExp = buildAdd(loc, sizeExp, buildArrayLength(loc, lp, buildExpReference(loc, var, var.name)));
 			variables[i] = var;
 		}
@@ -293,6 +294,7 @@ public:
 
 		foreach (i, arg; unary.argumentList) {
 			auto source = variables[i];
+			panicAssert(exp, (cast(ir.ArrayType)realType(source.type)) !is null);
 
 			ir.Exp[] args = [
 				cast(ir.Exp)
