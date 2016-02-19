@@ -285,7 +285,7 @@ ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class, ref size_t offset
 
 ir.Function generateDefaultConstructor(LanguagePass lp, ir.Scope current, ir.Class _class)
 {
-	auto fn = buildFunction(_class.location, _class.members, current, "this");
+	auto fn = buildFunction(_class.location, _class.members, current, "__ctor");
 	fn.kind = ir.Function.Kind.Constructor;
 	buildReturnStat(fn.location, fn._body);
 
