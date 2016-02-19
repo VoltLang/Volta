@@ -87,6 +87,9 @@ void rewriteThisCall(Context ctx, ir.IdentifierExp ident, ir.Postfix p,
 
 	auto set = buildSet(ident.location, _class.userConstructors);
 	auto setRef = buildExpReference(ident.location, set, "this");
+	auto asRef = cast(ir.ExpReference)thisRef;
+	panicAssert(thisRef, asRef !is null);
+	asRef.isSuperOrThisCall = true;
 	p.child = buildCreateDelegate(ident.location, thisRef, setRef);
 }
 
@@ -143,10 +146,10 @@ void rewriteSuperCall(Context ctx, ir.IdentifierExp ident, ir.Postfix p, ir.Clas
 	if (asFunction is null) {
 		throw makeExpectedContext(p, asFunction);
 	}
-	asFunction.explicitCallToSuper = true;
 
 	auto thisVar = getThisVarNotNull(ident, ctx);
 	auto thisRef = buildExpReference(ident.location, thisVar, "this");
+	thisRef.isSuperOrThisCall = true;
 
 	auto set = buildSet(ident.location, _class.userConstructors);
 	auto setRef = buildExpReference(ident.location, set, "super");

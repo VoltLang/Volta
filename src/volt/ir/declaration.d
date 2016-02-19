@@ -293,10 +293,6 @@ public:
 	bool isWeakLink;
 
 	int vtableIndex = -1;  ///< If this is a member function, where in the vtable does it live?
-
-	/// True if this function has an explicit call to super in
-	bool explicitCallToSuper;
-
 	/// Will be turned into a function pointer.
 	bool loadDynamic;
 

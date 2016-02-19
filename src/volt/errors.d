@@ -25,6 +25,11 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeNoSuperCall(Location l, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(l, "expected explicit super call.");
+}
+
 CompilerException makeInvalidIndexValue(ir.Node n, ir.Type type, string file = __FILE__, const int line = __LINE__)
 {
 	auto str = format("can not index %s.", typeString(type));

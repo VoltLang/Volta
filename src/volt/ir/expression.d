@@ -519,6 +519,7 @@ public:
 	 * for that purpose.
 	 */
 	bool doNotRewriteAsNestedLookup;
+	bool isSuperOrThisCall;
 
 public:
 	this() { super(NodeType.ExpReference); }

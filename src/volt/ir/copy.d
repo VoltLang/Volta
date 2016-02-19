@@ -120,6 +120,7 @@ ir.ExpReference copy(ir.ExpReference er)
 	newer.decl = er.decl;
 	newer.rawReference = er.rawReference;
 	newer.doNotRewriteAsNestedLookup = er.doNotRewriteAsNestedLookup;
+	newer.isSuperOrThisCall = er.isSuperOrThisCall;
 	return newer;
 }
 

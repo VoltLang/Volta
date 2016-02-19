@@ -21,6 +21,7 @@ class Block
 public:
 	Block[] parents;  ///< Where execution could come from.
 	Block[] children;
+	bool superCall;  ///< For handling super calls in ctors.
 
 private:
 	bool mTerminates;  ///< Running this block ends execution of its function (e.g. return).
@@ -73,6 +74,8 @@ public:
 	}
 }
 
+// TODO: Make the canReach functions take a condition delegate instead of three similar funcs.
+
 /// Returns true if the given block can reach its function's entry point.
 bool canReachEntry(Block block)
 {
@@ -106,6 +109,21 @@ bool canReachEntryWithoutBreakOrGoto(Block block)
 	return false;
 }
 
+bool canReachEntryWithoutSuper(Block block)
+{
+	if (block.superCall) {
+		return false;
+	}
+	if (block.parents.length == 0) {
+		return true;
+	}
+	foreach (parent; block.parents) {
+		if (canReachEntryWithoutSuper(parent)) {
+			return true;
+		}
+	}
+	return false;
+}
 /// Builds and checks CFGs on Functions.
 class CFGBuilder : ScopeManager, Pass
 {
@@ -116,6 +134,7 @@ public:
 	ir.SwitchStatement currentSwitchStatement;
 	Block[] currentSwitchBlocks;
 	int currentCaseIndex = -1;
+	ir.Class[] classStack;
 
 public:
 	this(LanguagePass lp)
@@ -171,6 +190,23 @@ public:
 			}
 		}
 
+		if (fn.kind == ir.Function.Kind.Constructor && canReachEntryWithoutSuper(block)) {
+			panicAssert(fn, classStack.length > 0);
+			auto pclass = classStack[$-1].parentClass;
+			if (pclass !is null) {
+				bool noArgumentCtor;
+				foreach (ctor; pclass.userConstructors) {
+					if (ctor.type.params.length == 0) {
+						noArgumentCtor = true;
+						break;
+					}
+				}
+				if (!noArgumentCtor) {
+					throw makeNoSuperCall(fn.location);
+				}
+			}
+		}
+
 		blocks = blocks[0 .. $-1];
 		return Continue;
 	}
@@ -181,6 +217,15 @@ public:
 			// error!
 		}
 		block.terminates = true;
+		return Continue;
+	}
+
+	override Status visit(ref ir.Exp exp, ir.ExpReference eref)
+	{
+		if (eref.isSuperOrThisCall) {
+			ensureNonNullBlock(eref.location);
+			block.superCall = eref.isSuperOrThisCall;
+		}
 		return Continue;
 	}
 
@@ -333,6 +378,21 @@ public:
 		}
 		block.parents ~= block;
 		block.mBreak = true;
+		return Continue;
+	}
+
+	override Status enter(ir.Class c)
+	{
+		super.enter(c);
+		classStack ~= c;
+		return Continue;
+	}
+
+	override Status leave(ir.Class c)
+	{
+		super.leave(c);
+		panicAssert(c, classStack.length > 0 && classStack[$-1] is c);
+		classStack = classStack[0 .. $-1];
 		return Continue;
 	}
 
