@@ -173,7 +173,8 @@ void handleFunctionStore(Context ctx, string ident, ref ir.Exp exp,
 	size_t members;
 	foreach (fn; fns) {
 		if (fn.kind == ir.Function.Kind.Member ||
-		    fn.kind == ir.Function.Kind.Destructor) {
+		    fn.kind == ir.Function.Kind.Destructor ||
+		    fn.kind == ir.Function.Kind.Constructor) {
 			members++;
 		}
 
