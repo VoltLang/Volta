@@ -560,7 +560,9 @@ public:
 		foreach (var; fs.initVars) {
 			gather(current, var, where, mFunctionStack);
 		}
-		acceptExp(fs.test, this);
+		if (fs.test !is null) {
+			acceptExp(fs.test, this);
+		}
 		foreach (ref inc; fs.increments) {
 			acceptExp(inc, this);
 		}
