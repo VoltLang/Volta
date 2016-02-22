@@ -355,14 +355,6 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ir.Variable v)
-	{
-		if (functionStack.length == 0) {
-			replaceGlobalArrayLiteralIfNeeded(lp, current, v);
-		}
-		return Continue;
-	}
-
 	override Status leave(ir.ThrowStatement t)
 	{
 		auto fn = lp.ehThrowFunc;
@@ -1012,68 +1004,6 @@ void handleStructLookupViaFunctionCall(LanguagePass lp, ir.Scope current, ref ir
 	postfix.child = buildExpReference(loc, var, var.name);
 	statExp.exp = exp;
 	exp = statExp;
-}
-
-void replaceGlobalArrayLiteralIfNeeded(LanguagePass lp, ir.Scope current, ir.Variable var)
-{
-	auto mod = getModuleFromScope(var.location, current);
-
-	auto al = cast(ir.ArrayLiteral) var.assign;
-	if (al is null) {
-		auto _u = cast(ir.Unary)var.assign;
-		if (_u !is null) {
-			al = cast(ir.ArrayLiteral)_u.value;
-		}
-		if (al is null) {
-			return;
-		}
-	}
-
-	// Retrieve a named function from the current module, asserting that it is of type kind.
-	// Returns the first matching function, or null otherwise.
-	ir.Function getNamedTopLevelFunction(string name, ir.Function.Kind kind)
-	{
-		foreach (node; mod.children.nodes) {
-			auto fn = cast(ir.Function) node;
-			if (fn is null || fn.name != name) {
-				continue;
-			}
-			if (fn.kind != kind) {
-				throw panic(al.location, format("expected function kind '%s'", fn.kind));
-			}
-			return fn;
-		}
-		return null;
-	}
-
-	auto name = "__globalInitialiser_" ~ mod.name.toString();
-	auto fn = getNamedTopLevelFunction(name, ir.Function.Kind.GlobalConstructor);
-	bool retrieved = true;
-	if (fn is null) {
-		retrieved = false;
-		fn = buildGlobalConstructor(al.location, mod.children, mod.myScope, name);
-	}
-	if (fn._body.statements.length > 0) {
-		panicAssert(var, fn._body.statements[$-1].nodeType == ir.NodeType.ReturnStatement);
-	}
-
-	auto at = getExpType(lp, al, current);
-	auto sexp = buildInternalArrayLiteralSmart(al.location, at, al.exps);
-	sexp.originalExp = al;
-	auto assign = buildExpStat(al.location, buildAssign(al.location, buildExpReference(al.location, var, var.name), sexp));
-	if (fn._body.statements.length > 0) {
-		fn._body.statements = fn._body.statements[0 .. $-1] ~ assign ~ fn._body.statements[$-1];
-	} else {
-		fn._body.statements ~= assign;
-	}
-	var.assign = null;
-
-	// Cfg isn't run after this so we need to be explicit about it.
-	if (!retrieved) {
-		buildReturnStat(al.location, fn._body);
-	}
-
-	return;
 }
 
 /**
