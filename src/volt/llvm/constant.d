@@ -194,6 +194,12 @@ void handleConstExpReference(State state, ir.ExpReference expRef, Value result)
 		result.isPointer = false;
 		result.type = type;
 		break;
+	case EnumDeclaration:
+		auto edecl = cast(ir.EnumDeclaration)expRef.decl;
+		result.value = state.getConstant(edecl.assign);
+		result.isPointer = false;
+		result.type = state.fromIr(edecl.type);
+		break;
 	default:
 		throw panic(expRef.location, "invalid decl type");
 	}
