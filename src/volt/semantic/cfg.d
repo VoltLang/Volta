@@ -22,10 +22,8 @@ public:
 	Block[] parents;  ///< Where execution could come from.
 	Block[] children;
 	bool superCall;  ///< For handling super calls in ctors.
-
-private:
-	bool mTerminates;  ///< Running this block ends execution of its function (e.g. return).
-	bool mGoto, mBreak; ///< For handling switches, did this case have a goto or break?
+	bool terminates;  ///< Running this block ends execution of its function (e.g. return).
+	bool _goto, _break; ///< For handling switches, did this case have a goto or break?
 
 public:
 	this()
@@ -63,67 +61,45 @@ public:
 		}
 	}
 
-	@property void terminates(bool b)
+	bool canReachEntry()
 	{
-		mTerminates = b;
+		bool term(Block b) { return b.terminates; }
+		version (Volt) return canReachWithout(this, term);
+		else return canReachWithout(this, &term);
 	}
 
-	@property bool terminates()
+	bool canReachWithoutBreakGoto()
 	{
-		return mTerminates;
+		bool term(Block b) { return b._break || b._goto; }
+		version (Volt) return canReachWithout(this, term);
+		else return canReachWithout(this, &term);
+	}
+
+	bool canReachWithoutSuper()
+	{
+		bool term(Block b) { return b.superCall; }
+		version (Volt) return canReachWithout(this, term);
+		else return canReachWithout(this, &term);
 	}
 }
 
-// TODO: Make the canReach functions take a condition delegate instead of three similar funcs.
-
-/// Returns true if the given block can reach its function's entry point.
-bool canReachEntry(Block block)
+/// Returns true if the given block can reach the entry without dg returning true.
+bool canReachWithout(Block block, bool delegate(Block) dg)
 {
-	if (block.terminates) {
+	if (dg(block)) {
 		return false;
 	}
 	if (block.parents.length == 0) {
 		return true;
 	}
 	foreach (parent; block.parents) {
-		if (canReachEntry(parent)) {
+		if (canReachWithout(parent, dg)) {
 			return true;
 		}
 	}
 	return false;
 }
 
-bool canReachEntryWithoutBreakOrGoto(Block block)
-{
-	if (block.mBreak || block.mGoto) {
-		return false;
-	}
-	if (block.parents.length == 0) {
-		return true;
-	}
-	foreach (parent; block.parents) {
-		if (canReachEntryWithoutBreakOrGoto(parent)) {
-			return true;
-		}
-	}
-	return false;
-}
-
-bool canReachEntryWithoutSuper(Block block)
-{
-	if (block.superCall) {
-		return false;
-	}
-	if (block.parents.length == 0) {
-		return true;
-	}
-	foreach (parent; block.parents) {
-		if (canReachEntryWithoutSuper(parent)) {
-			return true;
-		}
-	}
-	return false;
-}
 /// Builds and checks CFGs on Functions.
 class CFGBuilder : ScopeManager, Pass
 {
@@ -182,7 +158,7 @@ public:
 			return Continue;
 		}
 		ensureNonNullBlock(fn.location);
-		if (canReachEntry(block)) {
+		if (block.canReachEntry()) {
 			if (isVoid(realType(fn.type.ret))) {
 				buildReturnStat(fn.location, fn._body);
 			} else {
@@ -190,7 +166,7 @@ public:
 			}
 		}
 
-		if (fn.kind == ir.Function.Kind.Constructor && canReachEntryWithoutSuper(block)) {
+		if (fn.kind == ir.Function.Kind.Constructor && block.canReachWithoutSuper()) {
 			panicAssert(fn, classStack.length > 0);
 			auto pclass = classStack[$-1].parentClass;
 			if (pclass !is null) {
@@ -348,7 +324,7 @@ public:
 			block = currentSwitchBlocks[i];
 			accept(_case.statements, this);
 			currentSwitchBlocks[i] = block;
-			if (canReachEntryWithoutBreakOrGoto(block) && _case.statements.statements.length > 0 && canReachEntry(block) && i < ss.cases.length - 1) {
+			if (block.canReachWithoutBreakGoto() && _case.statements.statements.length > 0 && block.canReachEntry() && i < ss.cases.length - 1) {
 				throw makeCaseFallsThrough(_case.location);
 			}
 			breakBlocks = breakBlocks[0 .. $-1];
@@ -357,7 +333,7 @@ public:
 		block = new Block();
 		size_t parents;
 		foreach (_block; currentSwitchBlocks) {
-			if (!_block.mGoto && !_block.terminates) {
+			if (!_block._goto && !_block.terminates) {
 				block.addParent(_block);
 				parents++;
 			}
@@ -377,7 +353,7 @@ public:
 			throw panic(cs.location, "labelled continue unimplemented");
 		}
 		block.parents ~= block;
-		block.mBreak = true;
+		block._break = true;
 		return Continue;
 	}
 
@@ -408,7 +384,7 @@ public:
 		if (currentSwitchStatement is null || currentCaseIndex < 0) {
 			throw makeGotoOutsideOfSwitch(gs.location);
 		}
-		block.mGoto = true;
+		block._goto = true;
 		if (gs.isDefault) {
 			// goto default;
 			foreach (i, _case; currentSwitchStatement.cases) {
@@ -517,7 +493,7 @@ public:
 		if (breakBlocks.length == 0) {
 			throw makeBreakOutOfLoop(bs.location);
 		}
-		block.mBreak = true;
+		block._break = true;
 		return Continue;
 	}
 
