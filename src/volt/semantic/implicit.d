@@ -410,5 +410,7 @@ void doConvertStaticArrayType(Context ctx, ir.StaticArrayType atype, ref ir.Exp 
 		}
 	}
 	checkAlit();
-	exp = buildInternalStaticArrayLiteralSmart(exp.location, atype, alit.exps);
+	if (ctx.functionDepth > 0) {
+		exp = buildInternalStaticArrayLiteralSmart(exp.location, atype, alit.exps);
+	}
 }
