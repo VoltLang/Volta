@@ -136,6 +136,8 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 	case BuiltinExp:
 		auto inbuilt = cast(ir.BuiltinExp) exp;
 		return inbuilt.type;
+	case StringImport:
+		return buildString(exp.location);
 	default:
 		throw panicUnhandled(exp, ir.nodeToString(exp));
 	}

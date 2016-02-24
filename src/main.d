@@ -246,6 +246,9 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 		case "-E":
 			makeArg(PreprocessOnly);
 			continue;
+		case "-J":
+			makeArgNext(StringImportPath);
+			continue;
 		case "--emit-bitcode":
 			makeArg(EmitBitcode);
 			continue;
@@ -356,6 +359,7 @@ bool printUsage()
 	writefln("\t-F path          Add a framework path.");
 	writefln("\t--framework name Add a framework.");
 	}
+	writefln("\t-J path          Define a path for string import to look for files.");
 	writefln("\t-D ident         Define a new version flag");
 	writefln("\t-w               Enable warnings.");
 	writefln("\t-d               Compile in debug mode.");

@@ -4,6 +4,7 @@ module volt.lowerer.llvmlowerer;
 
 import watt.conv : toString;
 import watt.text.format : format;
+import watt.io.file : read, exists;
 
 import ir = volt.ir.ir;
 import volt.ir.copy;
@@ -25,6 +26,7 @@ import volt.semantic.lookup;
 import volt.semantic.nested;
 import volt.semantic.classify;
 import volt.semantic.classresolver;
+import volt.semantic.ctfe;
 import volt.semantic.overload;
 
 
@@ -598,6 +600,31 @@ public:
 		exp = buildCreateDelegate(exp.location, buildExpReference(np.location, np, np.name), eref);
 
 		return Continue;
+	}
+
+	protected override Status enter(ref ir.Exp exp, ir.StringImport simport)
+	{
+		if (lp.settings.stringImportPaths.length == 0) {
+			throw makeNoStringImportPaths(exp.location);
+		}
+
+		auto constant = evaluateOrNull(lp, current, simport.filename);
+		if (constant is null || !isString(constant.type) ||
+		    constant._string.length < 3) {
+			throw makeStringImportWrongConstant(exp.location);
+		}
+
+		auto fname = constant._string[1 .. $-1];  // Remove string literal terminators.
+		foreach (path; lp.settings.stringImportPaths) {
+			string str;
+			try {
+				str = cast(string)read(path ~ "/" ~ fname);
+				exp = buildConstantString(exp.location, str, false);
+				return Continue;
+			} catch (Exception) {
+			}
+		}
+		throw makeImportFileOpenFailure(exp.location, fname);
 	}
 
 	protected Status handleIndex(ref ir.Exp exp, ir.Postfix postfix)

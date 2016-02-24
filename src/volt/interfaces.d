@@ -591,6 +591,8 @@ public:
 	string[] frameworkPaths; ///< The -F arguments.
 	string[] frameworkNames; ///< The --framework arguments.
 
+	string[] stringImportPaths; ///< The -J arguments.
+
 	string[] stdFiles; ///< The --stdlib-file arguements.
 
 	string docDir; ///< The --doc-dir argument.

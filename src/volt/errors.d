@@ -25,9 +25,24 @@ void warning(Location loc, string message)
  *
  */
 
+CompilerException makeNoStringImportPaths(Location l, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(l, "no string import file paths defined (use -J).", file, line);
+}
+
+CompilerException makeImportFileOpenFailure(Location l, string filename, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(l, format("couldn't open '%s' for reading.", filename), file, line);
+}
+
+CompilerException makeStringImportWrongConstant(Location l, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(l, "expected non empty string literal as argument to string import.", file, line);
+}
+
 CompilerException makeNoSuperCall(Location l, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(l, "expected explicit super call.");
+	return new CompilerError(l, "expected explicit super call.", file, line);
 }
 
 CompilerException makeInvalidIndexValue(ir.Node n, ir.Type type, string file = __FILE__, const int line = __LINE__)

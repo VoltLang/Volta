@@ -53,6 +53,8 @@ public:
 		FrameworkPath,
 		FrameworkName,
 
+		StringImportPath,
+
 		DocDo,
 		DocDir,
 		DocOutput,
@@ -181,7 +183,9 @@ void filterArgs(Arg[] args, ref string[] files, VersionSet ver, Settings setting
 		case FrameworkName:
 			settings.frameworkNames ~= arg.arg;
 			break;
-
+		case StringImportPath:
+			settings.stringImportPaths ~= arg.arg;
+			break;
 		case JSONDo:
 			settings.writeJson = true;
 			break;
