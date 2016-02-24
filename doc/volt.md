@@ -552,3 +552,11 @@ And as copying the entire array is a common operation, there's a shorthand for t
     auto newArray = new oldArray[..];
 
 The above syntax can be used to copy associate arrays, too.
+
+###String Import Expression
+
+    string str = import("filename.txt");
+
+Will look in the paths supplied to the compiler with the -J switch for 'filename.txt'. If it finds it, the import expression will be replaced with a string literal with the contents of that file.
+
+There are no default lookup paths provided, all string imports will fail if -J is not used at least once.
