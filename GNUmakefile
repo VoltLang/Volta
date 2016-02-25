@@ -112,6 +112,7 @@ all: $(RT_HOST) $(RT_TARGETS) $(RT_BIN_TARGETS)
 
 $(OBJ_DIR)/%.$(OBJ_TYPE) : src/%.cpp Makefile
 	@echo "  CXX    src/$*.cpp"
+	@mkdir -p $(dir $@)
 	@$(CXX) $(CXXCOMP_FLAGS) -c -o $@ src/$*.cpp
 
 $(OBJ_DIR)/%.$(OBJ_TYPE) : src/%.d Makefile
