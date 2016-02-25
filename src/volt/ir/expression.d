@@ -708,6 +708,7 @@ public:
 		Invalid,     ///< Invalid.
 		ArrayPtr,    ///< arr.ptr
 		ArrayLength, ///< arr.length
+		AALength,    ///< aa.length
 	}
 
 	Kind kind; ///< What kind of inbluilt is this.

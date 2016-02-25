@@ -429,6 +429,25 @@ public:
 		}
 	}
 
+	override Status enter(ref ir.Exp exp, ir.BuiltinExp builtin)
+	{
+		final switch (builtin.kind) with (ir.BuiltinExp.Kind) {
+		case ArrayPtr:
+		case ArrayLength:
+			break;
+		case AALength:
+			if (builtin.children.length != 1) {
+				throw panic(exp.location, "malformed BuiltinExp.");
+			}
+			auto rtfn = buildExpReference(exp.location, lp.aaGetLength, lp.aaGetLength.name);
+			exp = buildCall(exp.location, rtfn, builtin.children);
+			break;
+		case Invalid:
+			panicAssert(exp, false);
+		}
+		return Continue;
+	}
+
 	override Status visit(ref ir.Exp exp, ir.TraitsExp traits)
 	{
 		replaceTraits(exp, traits, lp, thisModule, current);
