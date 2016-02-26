@@ -2297,6 +2297,10 @@ Visitor.Status acceptBuiltinExp(ref ir.Exp exp, ir.BuiltinExp inbuilt, Visitor a
 		}
 	}
 
+	if (exp !is cast(ir.Exp)inbuilt) {
+		return acceptExp(exp, av);
+	}
+
 	return av.leave(exp, inbuilt);
 }
 

@@ -442,6 +442,20 @@ public:
 			auto rtfn = buildExpReference(exp.location, lp.aaGetLength, lp.aaGetLength.name);
 			exp = buildCall(exp.location, rtfn, builtin.children);
 			break;
+		case AAKeys:
+			if (builtin.children.length != 1) {
+				throw panic(exp.location, "malformed BuiltinExp.");
+			}
+			auto rtfn = buildExpReference(exp.location, lp.aaGetKeys, lp.aaGetKeys.name);
+			exp = buildCastSmart(exp.location, builtin.type, buildCall(exp.location, rtfn, builtin.children));
+			break;
+		case AAValues:
+			if (builtin.children.length != 1) {
+				throw panic(exp.location, "malformed BuiltinExp.");
+			}
+			auto rtfn = buildExpReference(exp.location, lp.aaGetValues, lp.aaGetValues.name);
+			exp = buildCastSmart(exp.location, builtin.type, buildCall(exp.location, rtfn, builtin.children));
+			break;
 		case Invalid:
 			panicAssert(exp, false);
 		}

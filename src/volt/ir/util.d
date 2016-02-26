@@ -846,6 +846,32 @@ ir.BuiltinExp buildAALength(Location loc, LanguagePass lp, ir.Exp[] child)
 }
 
 /**
+ * Builds a BuiltinExp of AAKeys type.
+ */
+ir.BuiltinExp buildAAKeys(Location loc, ir.AAType aa, ir.Exp[] child)
+{
+	auto st = buildArrayType(loc, aa.key);
+	auto builtin = new ir.BuiltinExp(
+		ir.BuiltinExp.Kind.AAKeys, st, child);
+	builtin.location = loc;
+
+	return builtin;
+}
+
+/**
+ * Builds a BuiltinExp of AAValues type.
+ */
+ir.BuiltinExp buildAAValues(Location loc, ir.AAType aa, ir.Exp[] child)
+{
+	auto st = buildArrayType(loc, aa.value);
+	auto builtin = new ir.BuiltinExp(
+		ir.BuiltinExp.Kind.AAValues, st, child);
+	builtin.location = loc;
+
+	return builtin;
+}
+
+/**
  * Build a postfix Identifier expression.
  */
 ir.Postfix buildAccess(Location loc, ir.Exp exp, string name)

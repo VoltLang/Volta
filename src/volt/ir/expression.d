@@ -709,6 +709,8 @@ public:
 		ArrayPtr,    ///< arr.ptr
 		ArrayLength, ///< arr.length
 		AALength,    ///< aa.length
+		AAKeys,
+		AAValues,
 	}
 
 	Kind kind; ///< What kind of inbluilt is this.
