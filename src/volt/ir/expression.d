@@ -712,6 +712,7 @@ public:
 		AAKeys,      ///< aa.keys
 		AAValues,    ///< aa.values
 		AARehash,    ///< aa.rehash
+		AAGet,       ///< aa.get
 	}
 
 	Kind kind; ///< What kind of inbluilt is this.

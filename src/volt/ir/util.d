@@ -810,7 +810,7 @@ ir.Typeid buildTypeidSmart(Location loc, ir.Type type)
  */
 ir.BuiltinExp buildArrayPtr(Location loc, ir.Type base, ir.Exp child)
 {
-	auto ptr = buildPtr(loc, base);
+	auto ptr = buildPtrSmart(loc, base);
 	auto builtin = new ir.BuiltinExp(
 		ir.BuiltinExp.Kind.ArrayPtr, ptr, [child]);
 	builtin.location = loc;
@@ -850,7 +850,7 @@ ir.BuiltinExp buildAALength(Location loc, LanguagePass lp, ir.Exp[] child)
  */
 ir.BuiltinExp buildAAKeys(Location loc, ir.AAType aa, ir.Exp[] child)
 {
-	auto st = buildArrayType(loc, aa.key);
+	auto st = buildArrayTypeSmart(loc, aa.key);
 	auto builtin = new ir.BuiltinExp(
 		ir.BuiltinExp.Kind.AAKeys, st, child);
 	builtin.location = loc;
@@ -863,7 +863,7 @@ ir.BuiltinExp buildAAKeys(Location loc, ir.AAType aa, ir.Exp[] child)
  */
 ir.BuiltinExp buildAAValues(Location loc, ir.AAType aa, ir.Exp[] child)
 {
-	auto st = buildArrayType(loc, aa.value);
+	auto st = buildArrayTypeSmart(loc, aa.value);
 	auto builtin = new ir.BuiltinExp(
 		ir.BuiltinExp.Kind.AAValues, st, child);
 	builtin.location = loc;
@@ -881,6 +881,17 @@ ir.BuiltinExp buildAARehash(Location loc, ir.Exp[] child)
 		ir.BuiltinExp.Kind.AAValues, st, child);
 	builtin.location = loc;
 
+	return builtin;
+}
+
+/**
+ * Builds a BuiltinExp of AAGet type.
+ */
+ir.BuiltinExp buildAAGet(Location loc, ir.AAType aa, ir.Exp[] child)
+{
+	auto builtin = new ir.BuiltinExp(
+		ir.BuiltinExp.Kind.AAGet, copyTypeSmart(loc, aa.value), child);
+	builtin.location = loc;
 	return builtin;
 }
 

@@ -463,6 +463,28 @@ public:
 			auto rtfn = buildExpReference(exp.location, lp.aaRehash, lp.aaRehash.name);
 			exp = buildCall(exp.location, rtfn, builtin.children);
 			break;
+		case AAGet:
+			if (builtin.children.length != 3) {
+				throw panic(exp.location, "malformed BuiltinExp.");
+			}
+			auto aa = cast(ir.AAType)realType(getExpType(lp, builtin.children[0], current));
+			if (aa is null) {
+				throw panic(exp.location, "malformed BuiltinExp.");
+			}
+			bool keyIsArray = isArray(realType(aa.key));
+			bool valIsArray = isArray(realType(aa.value));
+			ir.Exp rtfn;
+			if (keyIsArray && valIsArray) {
+				rtfn = buildExpReference(exp.location, lp.aaGetAA, lp.aaGetAA.name);
+			} else if (!keyIsArray && valIsArray) {
+				rtfn = buildExpReference(exp.location, lp.aaGetPA, lp.aaGetPA.name);
+			} else if (keyIsArray && !valIsArray) {
+				rtfn = buildExpReference(exp.location, lp.aaGetAP, lp.aaGetAP.name);
+			} else {
+				rtfn = buildExpReference(exp.location, lp.aaGetPP, lp.aaGetPP.name);
+			}
+			exp = buildCastSmart(exp.location, aa.value, buildCall(exp.location, rtfn, builtin.children));
+			return ContinueParent;
 		case Invalid:
 			panicAssert(exp, false);
 		}

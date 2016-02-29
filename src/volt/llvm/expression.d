@@ -1322,6 +1322,7 @@ void handleBuiltinExp(State state, ir.BuiltinExp inbuilt, Value result)
 	case AAKeys:
 	case AAValues:
 	case AARehash:
+	case AAGet:
 		throw panic(inbuilt, "unhandled");
 	}
 }
