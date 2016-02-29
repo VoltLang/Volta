@@ -872,6 +872,19 @@ ir.BuiltinExp buildAAValues(Location loc, ir.AAType aa, ir.Exp[] child)
 }
 
 /**
+ * Builds a BuiltinExp of AARehash type.
+ */
+ir.BuiltinExp buildAARehash(Location loc, ir.Exp[] child)
+{
+	auto st = buildVoid(loc);
+	auto builtin = new ir.BuiltinExp(
+		ir.BuiltinExp.Kind.AAValues, st, child);
+	builtin.location = loc;
+
+	return builtin;
+}
+
+/**
  * Build a postfix Identifier expression.
  */
 ir.Postfix buildAccess(Location loc, ir.Exp exp, string name)

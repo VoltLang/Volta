@@ -583,8 +583,7 @@ bool replaceAAPostfixesIfNeeded(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		exp = buildAALength(l, ctx.lp, arg);
 		return true;
 	case "rehash":
-		auto rtFn = buildExpReference(l, ctx.lp.aaRehash, ctx.lp.aaRehash.name);
-		exp = buildCall(l, rtFn, arg);
+		exp = buildAARehash(l, arg);
 		return true;
 	case "get":
 		return false;

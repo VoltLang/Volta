@@ -711,6 +711,7 @@ public:
 		AALength,    ///< aa.length
 		AAKeys,
 		AAValues,
+		AARehash,
 	}
 
 	Kind kind; ///< What kind of inbluilt is this.

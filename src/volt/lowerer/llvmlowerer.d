@@ -456,6 +456,13 @@ public:
 			auto rtfn = buildExpReference(exp.location, lp.aaGetValues, lp.aaGetValues.name);
 			exp = buildCastSmart(exp.location, builtin.type, buildCall(exp.location, rtfn, builtin.children));
 			break;
+		case AARehash:
+			if (builtin.children.length != 1) {
+				throw panic(exp.location, "malformed BuiltinExp.");
+			}
+			auto rtfn = buildExpReference(exp.location, lp.aaRehash, lp.aaRehash.name);
+			exp = buildCall(exp.location, rtfn, builtin.children);
+			break;
 		case Invalid:
 			panicAssert(exp, false);
 		}
