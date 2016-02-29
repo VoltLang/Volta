@@ -709,9 +709,9 @@ public:
 		ArrayPtr,    ///< arr.ptr
 		ArrayLength, ///< arr.length
 		AALength,    ///< aa.length
-		AAKeys,
-		AAValues,
-		AARehash,
+		AAKeys,      ///< aa.keys
+		AAValues,    ///< aa.values
+		AARehash,    ///< aa.rehash
 	}
 
 	Kind kind; ///< What kind of inbluilt is this.
