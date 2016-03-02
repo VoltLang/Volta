@@ -2,8 +2,6 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.ext.dwarf;
 
-import vrt.ext.stdc : exit;
-
 
 // True for now
 alias uintptr_t = size_t;
@@ -107,8 +105,7 @@ size_t dw_encoded_size(ubyte encoding)
 	case DW_EH_PE_sdata8:
 		return typeid(long).size;
 	default:
-		object.vrt_printf("%s: unhandled case\n", __FUNCTION__);
-		exit(-1);
+		object.vrt_panic("unhandled case");
 		break;
 	}
 	assert(false); // To please cfg detection
@@ -156,8 +153,7 @@ uintptr_t dw_read_encoded(const(ubyte)** data, ubyte encoding)
 		p += typeid(long).size;
 		break;
 	default:
-		object.vrt_printf("%s: unhandled case type: %x\n", __FUNCTION__.ptr, encoding);
-		exit(-1);
+		object.vrt_panic("unhandled case type");
 		break;
 	}
 
@@ -169,8 +165,7 @@ uintptr_t dw_read_encoded(const(ubyte)** data, ubyte encoding)
 			result += cast(uintptr_t)pc;
 			break;
 		default:
-			object.vrt_printf("%s: unhandled case encoding: %x\n", __FUNCTION__.ptr, encoding);
-			exit(-1);
+			object.vrt_panic("unhandled case encoding");
 			break;
 		}
 

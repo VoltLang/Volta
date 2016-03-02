@@ -5,16 +5,9 @@ module vrt.os.eh_stub;
 
 version (Emscripten || MSVC):
 
-import vrt.ext.stdc : exit;
-
-
 extern(C) void vrt_eh_throw(object.Throwable t, string file, size_t line)
 {
-	object.vrt_printf("###EXCEPTION###\n%.*s:%i '%.*s'\n".ptr,
-		cast(int)file.length, file.ptr,
-		cast(int)line,
-		cast(int)t.msg.length, t.msg.ptr);
-	exit(-1);
+	object.vrt_panic("###EXCEPTION###\n" ~ t.msg, file, line);
 }
 
 extern(C) void vrt_eh_throw_slice_error(size_t length, size_t targetSize, string file, size_t line)

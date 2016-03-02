@@ -231,6 +231,13 @@ struct ModuleInfo
  */
 
 /*
+ * For those very bad times.
+ */
+extern(C) {
+	void vrt_panic(const(char)[] msg, const(char)[] file = __FILE__, const size_t line = __LINE__);
+}
+
+/*
  * Language util functions
  */
 extern(C) {

@@ -7,6 +7,7 @@ RT_SRC = \
 	rt/src/vrt/ext/unwind.volt \
 	rt/src/vrt/ext/dwarf.volt \
 	rt/src/vrt/ext/stdc.volt \
+	rt/src/vrt/os/panic.volt \
 	rt/src/vrt/os/vmain.volt \
 	rt/src/vrt/os/gc.volt \
 	rt/src/vrt/os/gc_stub.volt \
