@@ -335,6 +335,10 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 			break;
 		}
 
+		if (arg.length > 1 &&
+		    arg[0] == '-') {
+			throw new Exception("Unknown argument: '" ~ arg ~ "'");
+		}
 		makeArgFile(arg);
 	}
 
