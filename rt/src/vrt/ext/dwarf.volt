@@ -105,7 +105,9 @@ size_t dw_encoded_size(ubyte encoding)
 	case DW_EH_PE_sdata8:
 		return typeid(long).size;
 	default:
-		object.vrt_panic("unhandled case");
+		char[][1] msgs;
+		msgs[0] = "unhandled case";
+		object.vrt_panic(msgs);
 		break;
 	}
 	assert(false); // To please cfg detection
@@ -153,7 +155,9 @@ uintptr_t dw_read_encoded(const(ubyte)** data, ubyte encoding)
 		p += typeid(long).size;
 		break;
 	default:
-		object.vrt_panic("unhandled case type");
+		char[][1] msgs;
+		msgs[0] = "unhandled case type";
+		object.vrt_panic(msgs);
 		break;
 	}
 
@@ -165,7 +169,9 @@ uintptr_t dw_read_encoded(const(ubyte)** data, ubyte encoding)
 			result += cast(uintptr_t)pc;
 			break;
 		default:
-			object.vrt_panic("unhandled case encoding");
+			char[][1] msgs;
+			msgs[0] = "unhandled case type";
+			object.vrt_panic(msgs);
 			break;
 		}
 

@@ -5,11 +5,15 @@ module vrt.os.panic;
 import vrt.ext.stdc : exit;
 
 
-extern(C) void vrt_panic(const(char)[] msg, const(char)[] file, int line)
+extern(C) void vrt_panic(const(char)[][] msgs, const(char)[] file, int line)
 {
-	object.vrt_printf("###PANIC###\n%.*s:%i '%.*s'\n".ptr,
+	object.vrt_printf("%.*s:%i: ###PANIC###\n",
 		cast(int)file.length, file.ptr,
-		cast(int)line,
-		cast(int)msg.length, msg.ptr);
+		cast(int)line);
+
+	foreach (msg; msgs) {
+		object.vrt_printf("%.*s\n", cast(int)msg.length, msg.ptr);
+	}
+
 	exit(-1);
 }

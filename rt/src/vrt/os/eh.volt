@@ -62,7 +62,9 @@ extern(C) void vrt_eh_throw(object.Throwable t, string file, size_t line)
 	e.t = t;
 
 	auto f = _Unwind_RaiseException(&e.e);
-	object.vrt_panic("FAILED TO RAISE EXCEPTION");
+	char[][1] msgs;
+	msgs[0] = "FAILED TO RAISE EXCEPTION";
+	object.vrt_panic(msgs);
 }
 
 extern(C) void vrt_eh_throw_slice_error(string file, size_t line)
