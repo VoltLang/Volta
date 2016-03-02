@@ -248,6 +248,15 @@ extern(C) {
 }
 
 /*
+ * Starting up.
+ */
+extern(C) {
+	int vrt_run_global_ctors();
+	int vrt_run_main(int argc, const(char)** argv, int function(string[]) args);
+	int vrt_run_global_dtors();
+}
+
+/*
  * GC functions
  */
 extern(C) {

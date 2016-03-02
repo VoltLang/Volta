@@ -6,31 +6,23 @@ import object;
 import vrt.ext.stdc : strlen;
 
 
-/**
- * While we could name this main and have the mangler renamit to vmain,
- * it wont work since we don't support overloaded functions.
- */
-extern(C) int vmain(string[] args);
-
-/**
- * Main entry point, calls vmain.
- */
-extern(C) int main(int c, char** argv)
+extern(C) int vrt_run_main(int argc, char** argv, int function(string[]) vmain)
 {
+
 	// Currently all the init that is needed for the GC.
 	vrt_gc_init();
 	allocDg = vrt_gc_get_alloc_dg();
 
-	auto args = new string[](c);
+	auto args = new string[](argc);
 	for (size_t i = 0; i < args.length; i++) {
 		args[i] = cast(immutable(char)[]) argv[i][0 .. strlen(argv[i])];
 	}
 
 	int ret;
 	try {
-		runGlobalCtors();
+		vrt_run_global_ctors();
 		ret = vmain(args);
-		runGlobalDtors();
+		vrt_run_global_dtors();
 	} catch (Throwable t) {
 		// For lack of T.classinfo
 		auto ti = **cast(object.TypeInfo[]**)t;
@@ -51,7 +43,7 @@ extern(C) int main(int c, char** argv)
 	return ret;
 }
 
-void runGlobalCtors()
+extern(C) void vrt_run_global_ctors()
 {
 	auto mod = moduleInfoRoot;
 	while (mod !is null) {
@@ -62,7 +54,7 @@ void runGlobalCtors()
 	}
 }
 
-void runGlobalDtors()
+extern(C) void vrt_run_global_dtors()
 {
 	auto mod = moduleInfoRoot;
 	while (mod !is null) {
@@ -71,4 +63,20 @@ void runGlobalDtors()
 		}
 		mod = mod.next;
 	}
+}
+
+version (!Metal):
+
+/**
+ * While we could name this main and have the mangler renamit to vmain,
+ * it wont work since we don't support overloaded functions.
+ */
+extern(C) int vmain(string[] args);
+
+/**
+ * Main entry point, calls vmain.
+ */
+extern(C) int main(int argc, char** argv)
+{
+	return vrt_run_main(argc, argv, vmain);
 }
