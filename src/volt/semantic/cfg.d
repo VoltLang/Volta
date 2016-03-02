@@ -173,7 +173,16 @@ public:
 				bool noArgumentCtor;
 				foreach (ctor; pclass.userConstructors) {
 					if (ctor.type.params.length == 0) {
+						panicAssert(ctor, !noArgumentCtor);
 						noArgumentCtor = true;
+						ir.Variable dummy;
+						auto v = fn.thisHiddenParameter;
+						panicAssert(fn, v !is null);
+						ir.Exp tv = buildExpReference(v.location, v, v.name);
+						tv = buildCastSmart(tv.location, buildVoidPtr(tv.location), tv);
+						auto call = buildCall(fn.location, buildExpReference(fn.location, ctor, ctor.name), [tv]);
+						panicAssert(ctor, ctor._body !is null);
+						fn._body.statements = buildExpStat(fn.location, call) ~ fn._body.statements;
 						break;
 					}
 				}
