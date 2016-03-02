@@ -3,7 +3,7 @@
 module vrt.vacuum.aa;
 
 import object;
-import vrt.ext.stdc : memcpy, memcmp;
+
 
 // Volts AA (Associative Array) Implementation
 // based on a Red-Black-Tree
@@ -173,7 +173,7 @@ private TreeNode* vrt_aa_lookup_node_array(void* rbtv, void[] key)
 		} else if (node.key.array.length > key.length) {
 			comparison = -1; // key.length is shorter
 		} else {
-			comparison = memcmp(node.key.array.ptr, key.ptr, key.length);
+			comparison = object.vrt_memcmp(node.key.array.ptr, key.ptr, key.length);
 		}
 
 		if (comparison < 0) {
@@ -201,9 +201,9 @@ extern(C) bool vrt_aa_in_primitive(void* rbtv, ulong key, void* ret)
 	}
 
 	if (rbt.value.size < typeid(TreeStore).size) {
-		memcpy(ret, cast(void*)&(node.value), rbt.value.size);
+		object.__llvm_memcpy(ret, cast(void*)&(node.value), rbt.value.size, 0, false);
 	} else {
-		memcpy(ret, node.value.ptr, rbt.value.size);
+		object.__llvm_memcpy(ret, node.value.ptr, rbt.value.size, 0, false);
 	}
 	return true;
 }
@@ -221,9 +221,9 @@ extern(C) bool vrt_aa_in_array(void* rbtv, void[] key, void* ret)
 	}
 
 	if (rbt.value.size < typeid(TreeStore).size) {
-		memcpy(ret, cast(void*)&(node.value), rbt.value.size);
+		object.__llvm_memcpy(ret, cast(void*)&(node.value), rbt.value.size, 0, false);
 	} else {
-		memcpy(ret, node.value.ptr, rbt.value.size);
+		object.__llvm_memcpy(ret, node.value.ptr, rbt.value.size, 0, false);
 	}
 	return true;
 }
@@ -314,11 +314,11 @@ extern(C) void vrt_aa_insert_primitive(void* rbtv, ulong key, void* value)
 	inserted_node.red = true; // we have to check the rules afterwards and fix the tree!
 
 	if (rbt.value.size < typeid(TreeStore).size) {
-		memcpy(cast(void*)&(inserted_node.value), value, rbt.value.size);
+		object.__llvm_memcpy(cast(void*)&(inserted_node.value), value, rbt.value.size, 0, false);
 	} else {
 		// allocate more memory for value
 		void* mem = allocDg(rbt.value, 1);
-		memcpy(mem, value, rbt.value.size);
+		object.__llvm_memcpy(mem, value, rbt.value.size, 0, false);
 		inserted_node.value.ptr = mem;
 	}
 
@@ -374,10 +374,10 @@ extern(C) void vrt_aa_insert_array(void* rbtv, void[] key, void* value)
 	inserted_node.red = true; // we have to check the rules afterwards and fix the tree!
 
 	if (rbt.value.size < typeid(TreeStore).size) {
-		memcpy(cast(void*)&(inserted_node.value), value, rbt.value.size);
+		object.__llvm_memcpy(cast(void*)&(inserted_node.value), value, rbt.value.size, 0, false);
 	} else {
 		void* mem = allocDg(rbt.value, 1);
-		memcpy(mem, value, rbt.value.size);
+		object.__llvm_memcpy(mem, value, rbt.value.size, 0, false);
 		inserted_node.value.ptr = mem;
 	}
 
@@ -394,7 +394,7 @@ extern(C) void vrt_aa_insert_array(void* rbtv, void[] key, void* value)
 			} else if (node.key.array.length > key.length) {
 				comparison = -1; // key.length is shorter
 			} else {
-				comparison = memcmp(node.key.array.ptr, key.ptr, key.length);
+				comparison = object.vrt_memcmp(node.key.array.ptr, key.ptr, key.length);
 			}
 
 			if (comparison < 0) {

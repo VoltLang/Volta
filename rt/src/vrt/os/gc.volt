@@ -4,7 +4,6 @@
 module vrt.os.gc;
 
 import object;
-import vrt.ext.stdc : memset, memcpy;
 
 
 version (Emscripten) {
@@ -115,11 +114,11 @@ void* gcMalloc(void *ptr, TypeInfo typeinfo, size_t count)
 		memory = GC_malloc(size);
 	} else {
 		memory = GC_malloc_atomic(size);
-		memset(memory, 0, size);
+		object.__llvm_memset(memory, 0, size, 0, false);
 	}
 
 	if (count == cast(size_t) -1) {
-		memcpy(memory, typeinfo.classInit, typeinfo.classSize);
+		object.__llvm_memcpy(memory, typeinfo.classInit, typeinfo.classSize, 0, false);
 	}
 
 	if (registerFinalizer) {
