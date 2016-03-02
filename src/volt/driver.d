@@ -47,6 +47,10 @@ public:
 	Pass[] debugVisitors;
 
 protected:
+	bool mLinkWithLinker;
+	bool mLinkWithCC;
+	bool mLinkWithMSVC;
+	string mCC;
 	string mLinker;
 
 	string[] mIncludes;
@@ -103,14 +107,22 @@ public:
 			}
 		}
 
+
 		if (settings.linker !is null) {
 			mLinker = settings.linker;
+			mLinkWithLinker = true;
+		} else if (settings.cc !is null) {
+			mCC = settings.cc;
+			mLinkWithCC = true;
 		} else if (settings.platform == Platform.EMSCRIPTEN) {
 			mLinker = "emcc";
+			mLinkWithCC = true;
 		} else if (settings.platform == Platform.MSVC) {
 			mLinker = "link.exe";
+			mLinkWithMSVC = true;
 		} else {
-			mLinker = "gcc";
+			mLinkWithCC = true;
+			mCC = "gcc";
 		}
 
 		debugVisitors ~= new DebugMarker("Running DebugPrinter:");
@@ -398,25 +410,32 @@ protected:
 
 		// And finally call the linker.
 		perf.tag("native-link");
-		return nativeLink(mLinker, obj, of);
+		return nativeLink(obj, of);
 	}
 
-	int nativeLink(string linker, string obj, string of)
+	int nativeLink(string obj, string of)
 	{
-		if (settings.platform == Platform.MSVC) {
-			return msvcLink(linker, obj, of);
+		if (mLinkWithMSVC) {
+			return msvcLink(mLinker, obj, of);
+		} else if (mLinkWithLinker) {
+			return ccLink(mLinker, false, obj, of);
+		} else if (mLinkWithCC) {
+			return ccLink(mCC, true, obj, of);
 		} else {
-			return gccLink(linker, obj, of);
+			assert(false);
 		}
 	}
 
-	int gccLink(string linker, string obj, string of)
+	int ccLink(string linker, bool cc, string obj, string of)
 	{
 		string[] args = ["-o", of];
-		final switch (settings.arch) with (Arch) {
-		case X86: args ~= "-m32"; break;
-		case X86_64: args ~= "-m64"; break;
-		case LE32: throw panic("unsupported arch with gcc");
+
+		if (cc) {
+			final switch (settings.arch) with (Arch) {
+			case X86: args ~= "-m32"; break;
+			case X86_64: args ~= "-m64"; break;
+			case LE32: throw panic("unsupported arch with cc");
+			}
 		}
 
 		foreach (objectFile; mObjectFiles ~ obj) {
@@ -436,8 +455,18 @@ protected:
 			args ~= "-framework";
 			args ~= frameworkName;
 		}
-		foreach (xLink; settings.xLinker) {
-			args ~= xLink;
+		if (cc) {
+			foreach (xcc; settings.xcc) {
+				args ~= xcc;
+			}
+			foreach (xLink; settings.xlinker) {
+				args ~= "--Xlinker";
+				args ~= xLink;
+			}
+		} else {
+			foreach (xLink; settings.xlinker) {
+				args ~= xLink;
+			}
 		}
 
 		return spawnProcess(linker, args).wait();
@@ -461,7 +490,9 @@ protected:
 		foreach (libraryFile; mLibraryFiles) {
 			args ~= libraryFile;
 		}
-		foreach (xLink; settings.xLinker) {
+		// We are using msvc link directly so this is
+		// linker arguments.
+		foreach (xLink; settings.xlinker) {
 			args ~= xLink;
 		}
 

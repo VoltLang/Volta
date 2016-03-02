@@ -201,9 +201,6 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 		case "-framework", "--framework":
 			makeArgNext(FrameworkName);
 			continue;
-		case "--linker":
-			makeArgNext(Linker);
-			continue;
 		case "--doc":
 			makeArg(DocDo);
 			continue;
@@ -218,6 +215,15 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 			continue;
 		case "-jo":
 			makeArgNext(JSONOutput);
+			continue;
+		case "-cc", "--cc":
+			makeArgNext(CCompiler);
+			continue;
+		case "-Xcc", "--Xcc":
+			makeArgNext(CCompilerArg);
+			continue;
+		case "-linker", "--linker":
+			makeArgNext(Linker);
 			continue;
 		case "-Xlinker", "--Xlinker":
 			makeArgNext(LinkerArg);

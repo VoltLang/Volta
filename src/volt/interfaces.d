@@ -580,8 +580,11 @@ public:
 	string platformStr; ///< Derived from platform.
 	string archStr; ///< Derived from arch.
 
+	string cc; ///< The --cc argument.
+	string[] xcc; ///< Arguments to cc, the --Xcc argument.
+
 	string linker; ///< The --linker argument
-	string[] xLinker; ///< Arguments to the linker, the -Xlinker argument.
+	string[] xlinker; ///< Arguments to the linker, the -Xlinker argument.
 
 	string outputFile;
 	string[] includePaths; ///< The -I arguments.

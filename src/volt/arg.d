@@ -44,6 +44,9 @@ public:
 
 		NoLink,
 
+		CCompiler,
+		CCompilerArg,
+
 		Linker,
 		LinkerArg,
 
@@ -165,11 +168,17 @@ void filterArgs(Arg[] args, ref string[] files, VersionSet ver, Settings setting
 			settings.noLink = true;
 			break;
 
+		case CCompiler:
+			settings.cc = arg.arg;
+			break;
+		case CCompilerArg:
+			settings.xcc ~= arg.arg;
+			break;
 		case Linker:
-			settings.linker = arg.arg;
+			settings.linker ~= arg.arg;
 			break;
 		case LinkerArg:
-			settings.xLinker ~= arg.arg;
+			settings.xlinker ~= arg.arg;
 			break;
 		case LibraryPath:
 			settings.libraryPaths ~= arg.arg;
