@@ -205,7 +205,7 @@ public:
 		} else if (endsWith(file, ".o", ".obj")) {
 			mObjectFiles ~= file;
 		} else {
-			auto str = format("unknown file type %s", file);
+			auto str = format("unknown file type '%s'", file);
 			throw new CompilerError(str);
 		}
 	}
