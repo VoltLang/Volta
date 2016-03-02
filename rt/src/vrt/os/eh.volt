@@ -3,7 +3,7 @@
 module vrt.eh;
 
 
-version (!Emscripten && !MSVC):
+version (!Emscripten && !MSVC && !Metal):
 
 import vrt.ext.unwind;
 import vrt.ext.dwarf;

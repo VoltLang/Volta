@@ -2,7 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.gc_stub;
 
-version (MSVC):
+version (MSVC || Metal):
 
 import vrt.os.gc;
 import vrt.ext.stdc : calloc;

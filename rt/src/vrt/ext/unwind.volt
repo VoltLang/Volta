@@ -3,7 +3,7 @@
 module vrt.ext.unwind;
 
 
-version(!Emscripten):
+version (!Emscripten && !MSVC && !Metal):
 
 extern(C):
 

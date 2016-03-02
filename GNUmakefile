@@ -91,17 +91,21 @@ OBJ = $(DOBJ) $(EXTRA_OBJ)
 RT_HOST = rt/libvrt-host.bc
 RT_TARGETS = \
 	rt/libvrt-le32-emscripten.bc \
+	rt/libvrt-x86_64-msvc.bc \
+	rt/libvrt-x86-metal.bc \
+	rt/libvrt-x86_64-metal.bc \
 	rt/libvrt-x86-mingw.bc \
 	rt/libvrt-x86_64-mingw.bc \
-	rt/libvrt-x86_64-msvc.bc \
 	rt/libvrt-x86-linux.bc \
 	rt/libvrt-x86_64-linux.bc \
 	rt/libvrt-x86-osx.bc \
 	rt/libvrt-x86_64-osx.bc
 RT_BIN_TARGETS = \
+	rt/libvrt-x86_64-msvc.o \
+	rt/libvrt-x86-metal.o \
+	rt/libvrt-x86_64-metal.o \
 	rt/libvrt-x86-mingw.o \
 	rt/libvrt-x86_64-mingw.o \
-	rt/libvrt-x86_64-msvc.o \
 	rt/libvrt-x86-linux.o \
 	rt/libvrt-x86_64-linux.o \
 	rt/libvrt-x86-osx.o \

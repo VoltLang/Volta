@@ -3,7 +3,7 @@
 module vrt.os.eh_stub;
 
 
-version (Emscripten || MSVC):
+version (Emscripten || MSVC || Metal):
 
 extern(C) void vrt_eh_throw(object.Throwable t, string file, size_t line)
 {

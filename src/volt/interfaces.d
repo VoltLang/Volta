@@ -533,6 +533,7 @@ enum Platform
 	Linux,
 	OSX,
 	EMSCRIPTEN,
+	Metal,
 }
 
 /**
@@ -711,6 +712,10 @@ public:
 		case EMSCRIPTEN:
 			platformStr = "emscripten";
 			ver.overwriteVersionIdentifier("Emscripten");
+			break;
+		case Metal:
+			platformStr = "metal";
+			ver.overwriteVersionIdentifier("Metal");
 			break;
 		}
 

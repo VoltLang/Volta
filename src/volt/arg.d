@@ -241,6 +241,8 @@ Arch parseArch(string a)
 Platform parsePlatform(string p)
 {
 	switch (toLower(p)) {
+	case "metal":
+		return Platform.Metal;
 	case "mingw":
 		return Platform.MinGW;
 	case "msvc":

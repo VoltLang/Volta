@@ -631,6 +631,15 @@ static string[][] tripleList = [
 		null,
 		"le32-unknown-nacl",
 	],
+
+	/*
+	 * Bare metal.
+	 */
+	[
+		"i686-pc-none-elf",
+		"x86_64-pc-none-elf",
+		null,
+	],
 ];
 
 static string[][] layoutList = [
@@ -659,6 +668,11 @@ static string[][] layoutList = [
 		null,
 		layoutEmscripten,
 	],
+	[ // Metal
+		layoutMetal32,
+		layoutMetal64,
+		null,
+	],
 ];
 
 /**
@@ -677,3 +691,9 @@ enum string layoutOSX64 = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64
  * The layout that emscripten uses.
  */
 enum string layoutEmscripten = "e-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-p:32:32:32-v128:32:32";
+
+/**
+ * Bare metal layout, grabbed from clang with target "X-pc-none-elf".
+ */
+enum string layoutMetal32 = "e-m:e-p:32:32-f64:32:64-f80:32-n8:16:32-S128";
+enum string layoutMetal64 = "e-m:e-i64:64-f80:128-n8:16:32:64-S128";
