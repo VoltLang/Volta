@@ -244,7 +244,6 @@ extern(C) {
 	void* vrt_handle_cast(void* obj, TypeInfo tinfo);
 	uint vrt_hash(void*, size_t);
 	@mangledName("memcmp") int vrt_memcmp(void*, void*, size_t);
-	@mangledName("printf") void vrt_printf(const(char)*, ...);
 }
 
 /*

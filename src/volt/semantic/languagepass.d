@@ -196,7 +196,6 @@ public:
 		// Util
 		hashFunc = getFunction("vrt_hash");
 		castFunc = getFunction("vrt_handle_cast");
-		printfFunc = getFunction("vrt_printf");
 		memcpyFunc = getFunction("__llvm_memcpy_p0i8_p0i8_i32");
 		memcmpFunc = getFunction("vrt_memcmp");
 

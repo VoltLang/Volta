@@ -47,6 +47,7 @@ public:
 		if (fn._body is null) {
 			return Continue;
 		}
+/+
 		// Build vrt_print(__FUNCTION__).
 		auto l = fn.location;
 		auto eref = buildExpReference(l, lp.printfFunc, "vrt_printf");
@@ -56,5 +57,7 @@ public:
 		// Add the print to the top of the function.
 		fn._body.statements = estat ~ fn._body.statements;
 		return Continue;
++/
+		assert(false);
 	}
 }

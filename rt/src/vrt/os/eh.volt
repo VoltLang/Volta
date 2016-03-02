@@ -88,7 +88,9 @@ extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
 
 	ubyte* data = _Unwind_GetLanguageSpecificData(ctx);
 	if (data is null) {
-		object.vrt_printf("%s:%u non region data\n", __FUNCTION__.ptr, __LINE__);
+		char[][1] msgs;
+		msgs[0] = "non region data";
+		object.vrt_panic(msgs);
 		return _Unwind_Reason_Code.FATAL_PHASE1_ERROR;
 	}
 
@@ -113,7 +115,9 @@ extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
 	if (lpStartEncoding == DW_EH_PE_omit) {
 		lpStartBase = funcStart;
 	} else {
-		object.vrt_printf("%s:%u unhandled lpStartEncoding\n", __FUNCTION__.ptr, __LINE__);
+		char[][1] msgs;
+		msgs[0] = "unhandled lpStartEncoding";
+		object.vrt_panic(msgs);
 		return _Unwind_Reason_Code.FATAL_PHASE1_ERROR;
 	}
 
@@ -149,7 +153,9 @@ extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
 	if (callSiteEncoding != DW_EH_PE_omit) {
 		callSiteTableLength = dw_read_uleb128(&data);
 	} else {
-		object.vrt_printf("%s:%u unhandled callingSiteEncoding\n", __FUNCTION__.ptr, __LINE__);
+		char[][1] msgs;
+		msgs[0] = "unhandled callingSiteEncoding";
+		object.vrt_panic(msgs);
 		return _Unwind_Reason_Code.FATAL_PHASE1_ERROR;
 	}
 
@@ -215,7 +221,9 @@ extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
 					actionPointer += cast(size_t)actionOffset;
 				}
 
-				object.vrt_printf("%s:%u unhandled case\n", __FUNCTION__.ptr, __LINE__);
+				char[][1] msgs;
+				msgs[0] = "unhandled case";
+				object.vrt_panic(msgs);
 				return _Unwind_Reason_Code.FATAL_PHASE1_ERROR;
 			}
 		}

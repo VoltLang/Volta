@@ -139,7 +139,6 @@ public:
 
 	ir.Function hashFunc;
 	ir.Function castFunc;
-	ir.Function printfFunc;
 	ir.Function memcpyFunc;
 	ir.Function memcmpFunc;
 

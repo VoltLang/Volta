@@ -6,7 +6,7 @@
 module vrt.ext.stdc;
 
 
-extern(C) size_t strlen(const(char)* str);
+extern(C) int printf(const(char)*, ...);
 
 extern(C) void* calloc(size_t num, size_t size);
 
