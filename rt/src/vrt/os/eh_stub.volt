@@ -5,7 +5,8 @@ module vrt.os.eh_stub;
 
 version (Emscripten || MSVC):
 
-extern(C) void exit(int);
+import vrt.ext.stdc : exit;
+
 
 extern(C) void vrt_eh_throw(object.Throwable t, string file, size_t line)
 {

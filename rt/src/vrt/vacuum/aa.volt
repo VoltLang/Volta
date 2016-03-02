@@ -3,14 +3,12 @@
 module vrt.vacuum.aa;
 
 import object;
+import vrt.ext.stdc : memcpy, memcmp;
 
 // Volts AA (Associative Array) Implementation
 // based on a Red-Black-Tree
 // http://en.wikipedia.org/wiki/Red%E2%80%93black_tree
 
-
-private extern(C) void* memcpy(void* destination, const(void)* source, size_t num);
-private extern(C) int memcmp(const(void)* ptr1, const(void)* ptr2, size_t num);
 
 private union TreeStore {
 	void* ptr;

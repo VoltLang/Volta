@@ -3,14 +3,14 @@
 module vrt.os.vmain;
 
 import object;
+import vrt.ext.stdc : strlen;
+
 
 /**
  * While we could name this main and have the mangler renamit to vmain,
  * it wont work since we don't support overloaded functions.
  */
 extern(C) int vmain(string[] args);
-
-private extern (C) size_t strlen(const(char)*);
 
 /**
  * Main entry point, calls vmain.

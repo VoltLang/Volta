@@ -2,8 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.ext.dwarf;
 
+import vrt.ext.stdc : exit;
 
-extern(C) void exit(int);
 
 // True for now
 alias uintptr_t = size_t;

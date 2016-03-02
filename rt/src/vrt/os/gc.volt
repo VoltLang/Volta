@@ -4,6 +4,7 @@
 module vrt.os.gc;
 
 import object;
+import vrt.ext.stdc : memset, memcpy;
 
 
 version (Emscripten) {
@@ -57,9 +58,6 @@ version (Emscripten) {
 	}
 
 }
-
-extern(C) void memset(void*, int, size_t);
-extern(C) void* memcpy(void*, void*, size_t);
 
 extern(C) void vrt_gc_init()
 {

@@ -2,6 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.vacuum.hash;
 
+
 /**
  * Generate a hash.
  * djb2 algorithm stolen from http://www.cse.yorku.ca/~oz/hash.html

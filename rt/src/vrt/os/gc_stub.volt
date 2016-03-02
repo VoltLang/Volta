@@ -5,10 +5,10 @@ module vrt.gc_stub;
 version (MSVC):
 
 import vrt.os.gc;
+import vrt.ext.stdc : calloc;
+
 
 extern(C):
-
-void* calloc(size_t num, size_t size);
 
 void* GC_malloc(size_t size_in_bytes)
 {
