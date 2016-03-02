@@ -484,7 +484,24 @@ public:
 				rtfn = buildExpReference(exp.location, lp.aaGetPP, lp.aaGetPP.name);
 			}
 			exp = buildCastSmart(exp.location, aa.value, buildCall(exp.location, rtfn, builtin.children));
-			return ContinueParent;
+			break;
+		case AARemove:
+			if (builtin.children.length != 2) {
+				throw panic(exp.location, "malformed BuiltinExp.");
+			}
+			auto aa = cast(ir.AAType)realType(getExpType(lp, builtin.children[0], current));
+			if (aa is null) {
+				throw panic(exp.location, "malformed BuiltinExp.");
+			}
+			bool keyIsArray = isArray(realType(aa.key));
+			ir.Exp rtfn;
+			if (keyIsArray) {
+				rtfn = buildExpReference(exp.location, lp.aaDeleteArray, lp.aaDeleteArray.name);
+			} else {
+				rtfn = buildExpReference(exp.location, lp.aaDeletePrimitive, lp.aaDeletePrimitive.name);
+			}
+			exp = buildCall(exp.location, rtfn, builtin.children);
+			break;
 		case Invalid:
 			panicAssert(exp, false);
 		}
@@ -1001,6 +1018,14 @@ public:
 		// auto arr = <exp>
 		auto var = buildVariableSmart(loc, copyTypeSmart(loc, fromArray), ir.Variable.Storage.Function, "arr");
 		var.assign = uexp.value;
+		var.createdByArrayCast = true;
+		auto eref = cast(ir.ExpReference)var.assign;
+		if (eref !is null) {
+			auto v  = cast(ir.Variable)eref.decl;
+			if (v !is null && v.createdByArrayCast) {
+				var.assign = v.assign;
+			}
+		}
 		sexp.statements ~= var;
 
 		//     vrt_throw_slice_error(arr.length, typeid(T).size);

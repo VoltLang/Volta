@@ -542,13 +542,11 @@ bool replaceAAPostfixesIfNeeded(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			args = new ir.Exp[](2);
 			args[0] = copyExp(child.child);
 			if (keyIsArray) {
-				rtFn = buildExpReference(l, ctx.lp.aaDeleteArray, ctx.lp.aaDeleteArray.name);
 				args[1] = buildCastSmart(l, buildArrayType(l, buildVoid(l)), postfix.arguments[0]);
 			} else {
-				rtFn = buildExpReference(l, ctx.lp.aaDeletePrimitive, ctx.lp.aaDeletePrimitive.name);
 				args[1] = buildCastSmart(l, buildUlong(l), postfix.arguments[0]);
 			}
-			exp = buildCall(l, rtFn, args);
+			exp = buildAARemove(l, args);
 		} else {
 			panicAssert(child, false);
 		}

@@ -896,6 +896,19 @@ ir.BuiltinExp buildAAGet(Location loc, ir.AAType aa, ir.Exp[] child)
 }
 
 /**
+ * Builds a BuiltinExp of AARemove type.
+ */
+ir.BuiltinExp buildAARemove(Location loc, ir.Exp[] child)
+{
+	auto st = buildBool(loc);
+	auto builtin = new ir.BuiltinExp(
+		ir.BuiltinExp.Kind.AARemove, st, child);
+	builtin.location = loc;
+
+	return builtin;
+}
+
+/**
  * Build a postfix Identifier expression.
  */
 ir.Postfix buildAccess(Location loc, ir.Exp exp, string name)

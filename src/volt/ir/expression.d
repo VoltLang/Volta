@@ -713,6 +713,7 @@ public:
 		AAValues,    ///< aa.values
 		AARehash,    ///< aa.rehash
 		AAGet,       ///< aa.get
+		AARemove,    ///< aa.remove
 	}
 
 	Kind kind; ///< What kind of inbluilt is this.

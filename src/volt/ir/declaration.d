@@ -141,6 +141,12 @@ public:
 	 */
 	bool specialInitValue;
 
+	/**
+	 * This variable was created as part of an
+	 * array cast. Used by the lowerer.
+	 */
+	bool createdByArrayCast;
+
 
 public:
 	this() { super(NodeType.Variable); }
