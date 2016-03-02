@@ -121,26 +121,65 @@ public:
 
 bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings settings)
 {
+	ArgLooper looper;
+	looper.set(strArgs);
+
+	Arg.Conditional cond;
+	int condPlatform;
+	int condArch;
+
+	void applyCond(Arg arg) {
+		if (cond == Arg.Conditional.None) {
+			return;
+		}
+		arg.condPlatform = condPlatform;
+		arg.condArch = condArch;
+		arg.cond = cond;
+		condPlatform = 0;
+		condArch = 0;
+		cond = Arg.Conditional.None;
+	}
+
+	void setCondP(Platform platform) {
+		cond |= Arg.Conditional.Platform;
+		condPlatform |= 1 << platform;
+	}
+
+	void setCondA(Arch arch) {
+		cond |= Arg.Conditional.Arch;
+		condArch |= 1 << arch;
+	}
+
 	void libraryName(string name) {
-		args ~= new Arg(name, Arg.Kind.LibraryName);
+		auto arg = new Arg(name, Arg.Kind.LibraryName);
+		applyCond(arg);
+		args ~= arg;
 	}
 
 	void libraryPath(string path) {
-		args ~= new Arg(path, Arg.Kind.LibraryPath);
+		auto arg = new Arg(path, Arg.Kind.LibraryPath);
+		applyCond(arg);
+		args ~= arg;
 	}
 
-	ArgLooper looper;
-	looper.set(strArgs);
+	Arg makeArgFile(string file) {
+		auto arg = new Arg(file, Arg.Kind.File);
+		applyCond(arg);
+		args ~= arg;
+		return arg;
+	}
 
 	Arg makeArgNext(Arg.Kind kind) {
 		auto n = looper.next();
 		auto arg = new Arg(n, kind);
+		applyCond(arg);
 		args ~= arg;
 		return arg;
 	}
 
 	Arg makeArg(Arg.Kind kind) {
 		auto arg = new Arg(kind);
+		applyCond(arg);
 		args ~= arg;
 		return arg;
 	}
@@ -267,19 +306,17 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 		case "--simple-trace":
 			makeArg(DebugSimpleTrace);
 			continue;
-		case "--stdlib-file":
-			auto a = makeArgNext(File);
-			a.cond = Arg.Conditional.Std;
+		case "--if-stdlib":
+			cond |= Arg.Conditional.Std;
 			continue;
-		case "--stdlib-I":
-			auto a = makeArgNext(IncludePath);
-			a.cond = Arg.Conditional.Std;
-			continue;
-		case "--if-linux-l":
-			auto a = makeArgNext(LibraryName);
-			a.cond = Arg.Conditional.Platform;
-			a.condPlatform = Platform.Linux;
-			continue;
+		case "--if-linux": setCondP(Platform.Linux); continue;
+		case "--if-osx": setCondP(Platform.OSX); continue;
+		case "--if-msvc": setCondP(Platform.MSVC); continue;
+		case "--if-mingw": setCondP(Platform.MinGW); continue;
+		case "--if-metal": setCondP(Platform.Metal); continue;
+		case "--if-x86": setCondA(Arch.X86); continue;
+		case "--if-x86_64": setCondA(Arch.X86_64); continue;
+		case "--if-le32": setCondA(Arch.LE32); continue;
 
 		// Handle combined arguments.
 		default:
@@ -298,7 +335,7 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 			break;
 		}
 
-		args ~= new Arg(arg, Arg.Kind.File);
+		makeArgFile(arg);
 	}
 
 	return true;

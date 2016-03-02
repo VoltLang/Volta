@@ -74,8 +74,8 @@ public:
 
 	string arg;
 
-	Arch condArch;
-	Platform condPlatform;
+	int condArch;
+	int condPlatform;
 
 	Kind kind;
 	Conditional cond;
@@ -102,12 +102,12 @@ void filterArgs(Arg[] args, ref string[] files, VersionSet ver, Settings setting
 		}
 
 		if (arg.cond & Arg.Conditional.Arch &&
-		    settings.arch != arg.condArch) {
+		    !(arg.condArch & (1 << settings.arch))) {
 			continue;
 		}
 
 		if (arg.cond & Arg.Conditional.Platform &&
-		    settings.platform != arg.condPlatform) {
+		    !(arg.condPlatform & (1 << settings.platform))) {
 			continue;
 		}
 
