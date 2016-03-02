@@ -4,7 +4,7 @@ module vrt.gc_stub;
 
 version (MSVC):
 
-import vrt.gc;
+import vrt.os.gc;
 
 extern(C):
 

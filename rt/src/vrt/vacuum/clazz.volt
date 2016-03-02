@@ -1,4 +1,4 @@
-module vrt.clazz;
+module vrt.vacuum.clazz;
 
 
 extern(C) void* vrt_handle_cast(void* obj, object.TypeInfo tinfo)

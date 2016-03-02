@@ -1,7 +1,7 @@
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // Copyright © 2013, David Herberth.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module vrt.gc;
+module vrt.os.gc;
 
 import object;
 

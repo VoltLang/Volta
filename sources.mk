@@ -1,18 +1,19 @@
 
 RT_SRC = \
-	rt/src/object.volt \
+	rt/src/vrt/vacuum/clazz.volt \
+	rt/src/vrt/vacuum/hash.volt \
+	rt/src/vrt/vacuum/utf.volt \
+	rt/src/vrt/vacuum/aa.volt \
+	rt/src/vrt/ext/unwind.volt \
+	rt/src/vrt/ext/dwarf.volt \
+	rt/src/vrt/os/vmain.volt \
+	rt/src/vrt/os/gc.volt \
+	rt/src/vrt/os/gc_stub.volt \
+	rt/src/vrt/os/eh.volt \
+	rt/src/vrt/os/eh_stub.volt \
 	rt/src/defaultsymbols.volt \
-	rt/src/vrt/vmain.volt \
-	rt/src/vrt/gc.volt \
-	rt/src/vrt/gc_stub.volt \
-	rt/src/vrt/clazz.volt \
-	rt/src/vrt/hash.volt \
-	rt/src/vrt/aa.volt \
-	rt/src/vrt/eh.volt \
-	rt/src/vrt/eh_stub.volt \
-	rt/src/vrt/unwind.volt \
-	rt/src/vrt/dwarf.volt \
-	rt/src/vrt/utf.volt
+	rt/src/object.volt
+
 
 VIV_SRC= \
 	src/volt/*.d \

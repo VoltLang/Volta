@@ -1,6 +1,6 @@
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module vrt.vmain;
+module vrt.os.vmain;
 
 import object;
 

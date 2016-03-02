@@ -1,6 +1,7 @@
 // Copyright © 2013, David Herberth.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module vrt.aa;
+module vrt.vacuum.aa;
+
 import object;
 
 // Volts AA (Associative Array) Implementation
