@@ -416,7 +416,7 @@ bool printUsage()
 	writefln("\t-jo              Specify json output name (implies --json).");
 	writefln("");
 	writefln("\t--arch           Select processer architecture: 'x86', 'x86_64', 'le32'");
-	writefln("\t--platform       Select platform: 'mingw', 'linux', 'osx', 'emscripten'");
+	writefln("\t--platform       Select platform: 'mingw', 'linux', 'osx', 'msvc', 'metal'");
 	writefln("");
 	writefln("\t--linker linker  Linking program to use for linking.");
 	writefln("\t-Xlinker arg     Add an argument when invoking the linker.");
@@ -425,10 +425,13 @@ bool printUsage()
 	writefln("\t--no-catch       For compiler debugging purposes.");
 	writefln("");
 	writefln("\t--no-stdlib      Don't include any stdlib (from config or arguments)");
-	writefln("\t--stdlib-I       Apply this include before any other -I");
-	writefln("\t                 (ignored if --no-stdlib was given)");
-	writefln("\t--stdlib-file    Apply this file first but only when linking");
-	writefln("\t                 (ignored if --no-stdlib was given)");
+	writefln("");
+	writefln("\t--if-stdlib      Only apply the following argument if using stdlib.");
+	writefln("\t--if-'platform'  Only apply the following argument if platform is this.");
+	writefln("\t--if-'arch'      Only apply the following argument if arch is this.");
+	writefln("\t                 (The if args are cumulative so that multiple");
+	writefln("\t                  arch & platforms or togther, like so:");
+	writefln("\t                  ('arch' || 'arch') && 'platform' && 'stdlib')");
 	writefln("");
 	writefln("\t--internal-d     Enables internal D friendlier rules.");
 	writefln("\t--internal-dbg   Enables internal debug printing.");
