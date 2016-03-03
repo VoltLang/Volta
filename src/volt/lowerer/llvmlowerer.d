@@ -1158,19 +1158,22 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, LanguagePass lp,
 		return fs;
 	}
 
-	auto aggType = realType(getExpType(lp, fes.aggregate, current), true, true);
 
 	// foreach (e; a) => foreach (e; auto _anon = a) 
 	auto sexp = buildStatementExp(l);
-	auto anonVar = buildVariableAnonSmart(l, current, sexp, aggType, fes.aggregate);
-	anonVar.type.mangledName = mangle(aggType);
-	scope (exit) fs.initVars = anonVar ~ fs.initVars;
-	ir.ExpReference aggref() { return buildExpReference(l, anonVar, anonVar.name); }
-	fes.aggregate = aggref();
 
 	// foreach (i, e; array) => for (size_t i = 0; i < array.length; i++) auto e = array[i]; ...
 	// foreach_reverse (i, e; array) => for (size_t i = array.length - 1; i+1 >= 0; i--) auto e = array[i]; ..
+	auto aggType = realType(getExpType(lp, fes.aggregate, current), true, true);
+
 	if (aggType.nodeType == ir.NodeType.ArrayType || aggType.nodeType == ir.NodeType.StaticArrayType) {
+		aggType = realType(getExpType(lp, buildSlice(l, fes.aggregate, []), current), true, true);
+		auto anonVar = buildVariableAnonSmart(l, current, sexp, aggType, buildSlice(l, fes.aggregate, []));
+		anonVar.type.mangledName = mangle(aggType);
+		scope (exit) fs.initVars = anonVar ~ fs.initVars;
+		ir.ExpReference aggref() { return buildExpReference(l, anonVar, anonVar.name); }
+		fes.aggregate = aggref();
+
 		// i = 0 / i = array.length
 		ir.Variable indexVar, elementVar;
 		ir.Exp indexAssign;
@@ -1256,12 +1259,17 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, LanguagePass lp,
 
 	// foreach (k, v; aa) => for (size_t i; i < aa.keys.length; i++) k = aa.keys[i]; v = aa[k];
 	// foreach_reverse => error, as order is undefined.
+	auto aaanonVar = buildVariableAnonSmart(l, current, sexp, aggType, fes.aggregate);
+	aaanonVar.type.mangledName = mangle(aggType);
+	scope (exit) fs.initVars = aaanonVar ~ fs.initVars;
+	ir.ExpReference aaaggref() { return buildExpReference(l, aaanonVar, aaanonVar.name); }
+	fes.aggregate = aaaggref();
 	auto aa = cast(ir.AAType) aggType;
 	if (aa !is null) {
 		ir.Exp buildAACall(ir.Function fn, ir.Type outType)
 		{
 			auto eref = buildExpReference(l, fn, fn.name);
-			return buildCastSmart(l, outType, buildCall(l, eref, [cast(ir.Exp)buildCastToVoidPtr(l, aggref())]));
+			return buildCastSmart(l, outType, buildCall(l, eref, [cast(ir.Exp)buildCastToVoidPtr(l, aaaggref())]));
 		}
 
 		if (fes.reverse) {
