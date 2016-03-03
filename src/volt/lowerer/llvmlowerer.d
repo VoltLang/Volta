@@ -1028,16 +1028,18 @@ public:
 		}
 		sexp.statements ~= var;
 
-		//     vrt_throw_slice_error(arr.length, typeid(T).size);
-		auto ln = buildArrayLength(loc, lp, buildExpReference(loc, var));
-		auto sz = buildAccess(loc, buildTypeidSmart(loc, toArray.base), "size");
-		ir.Exp fname = buildConstantString(loc, exp.location.filename, false);
-		ir.Exp lineNum = buildConstantSizeT(loc, lp, exp.location.line);
-		auto rtCall = buildCall(loc, buildExpReference(loc, lp.ehThrowSliceErrorFunc), [fname, lineNum]);
-		auto bs = buildBlockStat(loc, rtCall, current, buildExpStat(loc, rtCall));
-		auto check = buildBinOp(loc, ir.BinOp.Op.NotEqual, buildBinOp(loc, ir.BinOp.Op.Mod, ln, sz), buildConstantSizeT(loc, lp, 0));
-		auto _if = buildIfStat(loc, check, bs);
-		sexp.statements ~= _if;
+		if (fromSz % toSz) {
+			//     vrt_throw_slice_error(arr.length, typeid(T).size);
+			auto ln = buildArrayLength(loc, lp, buildExpReference(loc, var));
+			auto sz = buildAccess(loc, buildTypeidSmart(loc, toArray.base), "size");
+			ir.Exp fname = buildConstantString(loc, exp.location.filename, false);
+			ir.Exp lineNum = buildConstantSizeT(loc, lp, exp.location.line);
+			auto rtCall = buildCall(loc, buildExpReference(loc, lp.ehThrowSliceErrorFunc, lp.ehThrowSliceErrorFunc.name), [fname, lineNum]);
+			auto bs = buildBlockStat(loc, rtCall, current, buildExpStat(loc, rtCall));
+			auto check = buildBinOp(loc, ir.BinOp.Op.NotEqual, buildBinOp(loc, ir.BinOp.Op.Mod, ln, sz), buildConstantSizeT(loc, lp, 0));
+			auto _if = buildIfStat(loc, check, bs);
+			sexp.statements ~= _if;
+		}
 
 		// auto _out = <castexp>
 		auto _out = buildVariableSmart(loc, copyTypeSmart(loc, toArray), ir.Variable.Storage.Function, "_out");
@@ -1048,7 +1050,9 @@ public:
 		auto inLength = buildArrayLength(loc, lp, buildExpReference(loc, var));
 		auto outLength = buildArrayLength(loc, lp, buildExpReference(loc, _out));
 		ir.Exp lengthTweak;
-		if (!decreasing) {
+		if (fromSz == toSz) {
+			lengthTweak = inLength;
+		} else if (!decreasing) {
 			lengthTweak = buildBinOp(loc, ir.BinOp.Op.Div, inLength, buildConstantSizeT(loc, lp, biggestSz));
 		} else {
 			lengthTweak = buildBinOp(loc, ir.BinOp.Op.Mul, inLength, buildConstantSizeT(loc, lp, biggestSz));
