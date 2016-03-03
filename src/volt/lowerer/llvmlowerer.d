@@ -1016,21 +1016,14 @@ public:
 		sexp.location = loc;
 
 		// auto arr = <exp>
-		auto var = buildVariableSmart(loc, copyTypeSmart(loc, fromArray), ir.Variable.Storage.Function, "arr");
+		auto varName = "arr";
+		auto var = buildVariableSmart(loc, copyTypeSmart(loc, fromArray), ir.Variable.Storage.Function, varName);
 		var.assign = uexp.value;
-		var.createdByArrayCast = true;
-		auto eref = cast(ir.ExpReference)var.assign;
-		if (eref !is null) {
-			auto v  = cast(ir.Variable)eref.decl;
-			if (v !is null && v.createdByArrayCast) {
-				var.assign = v.assign;
-			}
-		}
 		sexp.statements ~= var;
 
 		if (fromSz % toSz) {
 			//     vrt_throw_slice_error(arr.length, typeid(T).size);
-			auto ln = buildArrayLength(loc, lp, buildExpReference(loc, var));
+			auto ln = buildArrayLength(loc, lp, buildExpReference(loc, var, varName));
 			auto sz = buildAccess(loc, buildTypeidSmart(loc, toArray.base), "size");
 			ir.Exp fname = buildConstantString(loc, exp.location.filename, false);
 			ir.Exp lineNum = buildConstantSizeT(loc, lp, exp.location.line);
@@ -1041,14 +1034,7 @@ public:
 			sexp.statements ~= _if;
 		}
 
-		// auto _out = <castexp>
-		auto _out = buildVariableSmart(loc, copyTypeSmart(loc, toArray), ir.Variable.Storage.Function, "_out");
-		uexp.value = buildExpReference(loc, var);
-		_out.assign = uexp;
-		sexp.statements ~= _out;
-
-		auto inLength = buildArrayLength(loc, lp, buildExpReference(loc, var));
-		auto outLength = buildArrayLength(loc, lp, buildExpReference(loc, _out));
+		auto inLength = buildArrayLength(loc, lp, buildExpReference(loc, var, varName));
 		ir.Exp lengthTweak;
 		if (fromSz == toSz) {
 			lengthTweak = inLength;
@@ -1057,10 +1043,11 @@ public:
 		} else {
 			lengthTweak = buildBinOp(loc, ir.BinOp.Op.Mul, inLength, buildConstantSizeT(loc, lp, biggestSz));
 		}
-		auto assign = buildAssign(loc, outLength, lengthTweak);
-		buildExpStat(loc, sexp, assign);
 
-		sexp.exp = buildExpReference(loc, _out);
+		auto ptrType = buildPtrSmart(loc, toArray.base);
+		auto ptrIn = buildArrayPtr(loc, fromArray.base, buildExpReference(loc, var, varName));
+		auto ptrOut = buildCast(loc, ptrType, ptrIn);
+		sexp.exp = buildSlice(loc, ptrOut, buildConstantSizeT(loc, lp, 0), lengthTweak);
 		exp = sexp;
 	}
 }
