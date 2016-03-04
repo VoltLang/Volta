@@ -53,7 +53,7 @@ void actualizeClass(LanguagePass lp, ir.Class c)
 	fileInAggregateVar(lp, c);
 }
 
-void rewriteThis(Context ctx, ref ir.Exp e, ir.IdentifierExp ident, bool isCall)
+ir.Type rewriteThis(Context ctx, ref ir.Exp e, ir.IdentifierExp ident, bool isCall)
 {
 	assert(ident !is null);
 	assert(ident.value == "this");
@@ -68,9 +68,10 @@ void rewriteThis(Context ctx, ref ir.Exp e, ir.IdentifierExp ident, bool isCall)
 
 	// The simple default.
 	e = thisRef;
+	return thisVar.type;
 }
 
-void rewriteThisCall(Context ctx, ref ir.Exp e, ir.IdentifierExp ident,
+ir.Type rewriteThisCall(Context ctx, ref ir.Exp e, ir.IdentifierExp ident,
                      ir.Variable thisVar, ir.Exp thisRef)
 {
 	auto type = realType(thisVar.type);
@@ -85,9 +86,11 @@ void rewriteThisCall(Context ctx, ref ir.Exp e, ir.IdentifierExp ident,
 	panicAssert(thisRef, asRef !is null);
 	asRef.isSuperOrThisCall = true;
 	e = buildCreateDelegate(ident.location, thisRef, setRef);
+
+	return buildVoid(e.location);
 }
 
-void rewriteSuper(Context ctx, ref ir.Exp e, ir.IdentifierExp ident,
+ir.Type rewriteSuper(Context ctx, ref ir.Exp e, ir.IdentifierExp ident,
                   bool isCall, bool isIdentifier)
 {
 	assert(ident !is null);
@@ -120,7 +123,7 @@ void rewriteSuper(Context ctx, ref ir.Exp e, ir.IdentifierExp ident,
 	}
 }
 
-void rewriteSuperIdentifier(ref ir.Exp e, ir.Class _class)
+ir.Type rewriteSuperIdentifier(ref ir.Exp e, ir.Class _class)
 {
 	// No better way of doing this. :-(
 	// Also assumes that the class has a valid scope.
@@ -129,9 +132,11 @@ void rewriteSuperIdentifier(ref ir.Exp e, ir.Class _class)
 	assert(store.node is _class);
 
 	e = buildStoreExp(e.location, store);
+
+	return _class;
 }
 
-void rewriteSuperCall(Context ctx, ref ir.Exp e, ir.Class _class)
+ir.Type rewriteSuperCall(Context ctx, ref ir.Exp e, ir.Class _class)
 {
 	auto thisVar = getThisVarNotNull(e, ctx);
 	auto thisRef = buildExpReference(e.location, thisVar, "this");
@@ -140,6 +145,8 @@ void rewriteSuperCall(Context ctx, ref ir.Exp e, ir.Class _class)
 	auto set = buildSet(e.location, _class.userConstructors);
 	auto setRef = buildExpReference(e.location, set, "super");
 	e = buildCreateDelegate(e.location, thisRef, setRef);
+
+	return buildVoid(e.location);
 }
 
 
