@@ -1907,17 +1907,24 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 		return;
 	}
 
-	auto lraw = getExpType(ctx.lp, binop.left, ctx.current);
-	auto rraw = getExpType(ctx.lp, binop.right, ctx.current);
-	auto ltype = realType(removeRefAndOut(lraw));
-	auto rtype = realType(removeRefAndOut(rraw));
+	ir.Type ltype, rtype;
+	{
+		auto lraw = getExpType(ctx.lp, binop.left, ctx.current);
+		auto rraw = getExpType(ctx.lp, binop.right, ctx.current);
+		ltype = realType(removeRefAndOut(lraw));
+		rtype = realType(removeRefAndOut(rraw));
+	}
 
 	if (isAssign(exp)) {
 		checkConst(exp, ltype);
 	}
 
-	if (handleIfNull(ctx, rtype, binop.left)) return;
-	if (handleIfNull(ctx, ltype, binop.right)) return;
+	if (handleIfNull(ctx, rtype, binop.left)) {
+		ltype = rtype; // Update the type.
+	}
+	if (handleIfNull(ctx, ltype, binop.right)) {
+		rtype = ltype; // Update the type.
+	}
 
 	if (opOverloadRewrite(ctx, binop, exp)) {
 		return;
@@ -1929,9 +1936,11 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 		auto common = commonParent(lclass, rclass);
 		if (lclass !is common) {
 			binop.left = buildCastSmart(exp.location, common, binop.left);
+			rtype = ltype;
 		}
 		if (rclass !is common) {
 			binop.right = buildCastSmart(exp.location, common, binop.right);
+			rtype = ltype;
 		}
 	}
 
@@ -2045,6 +2054,12 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 		return;
 	}
 
+	// We only get here if op != Cat && op != CatAssign.
+	if ((larray is null && rarray !is null) ||
+	    (larray !is null && rarray is null)) {
+	    throw makeArrayNonArrayNotCat(binop.location);
+	}
+
 	if (ltype.nodeType == ir.NodeType.PrimitiveType &&
 	    rtype.nodeType == ir.NodeType.PrimitiveType) {
 		auto lprim = cast(ir.PrimitiveType) ltype;
@@ -2054,9 +2069,35 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 		return;
 	}
 
-	if ((larray is null && rarray !is null) || (larray !is null && rarray is null) &&
-	    (binop.op != ir.BinOp.Op.CatAssign && binop.op != ir.BinOp.Op.Cat) ) {
-	    throw makeArrayNonArrayNotCat(binop.location);
+	// Handle 'exp' is 'exp', types must match.
+	// This needs to come after the primitive type check,
+	// But before the pointer arithmetic check.
+	if (binop.op == ir.BinOp.Op.NotIs ||
+	    binop.op == ir.BinOp.Op.Is) {
+		if (!typesEqual(ltype, rtype)) {
+			throw makeError(binop, "types must match for 'is'.");
+		}
+		return;
+	}
+
+	// Handle pointer arithmetics.
+	if (ltype.nodeType == ir.NodeType.PointerType) {
+		switch (binop.op) with (ir.BinOp.Op) {
+		case AddAssign, SubAssign, Add, Sub:
+			break;
+		default:
+			throw makeError(binop, "illegal pointer arithemetic.");
+		}
+		auto rprim = cast(ir.PrimitiveType) rtype;
+		if (rprim is null || !isOkayForPointerArithmetic(rprim.type)) {
+			throw makeError(binop, "illegal pointer arithemetic invalid type.");
+		}
+		return;
+	}
+
+	// Default
+	if (!typesEqual(ltype, rtype)) {
+		makeError(binop, "missmatch types.");
 	}
 }
 
