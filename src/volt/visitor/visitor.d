@@ -645,7 +645,6 @@ body {
 	case AAPair:
 	case FunctionSetType:
 	case FunctionSet:
-	case Comma:
 		throw panicUnhandled(n, ir.nodeToString(n));
 	}
 }

@@ -103,7 +103,6 @@ enum NodeType
 	AssertStatement,
 
 	/* expression.d */
-	Comma,
 	Constant,
 	BinOp,
 	Ternary,
@@ -359,7 +358,6 @@ string nodeToString(NodeType nodeType)
 	case ConditionStatement: return "ConditionStatement";
 	case MixinStatement: return "MixinStatement";
 	case AssertStatement: return "AssertStatement";
-	case Comma: return "Comma";
 	case Constant: return "Constant";
 	case BinOp: return "BinOp";
 	case Ternary: return "Ternary";

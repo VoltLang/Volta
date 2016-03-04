@@ -554,7 +554,6 @@ ir.Node copyNode(ir.Node n)
 	case ConditionStatement:
 	case MixinStatement:
 	case AssertStatement:
-	case Comma:
 	case Ternary:
 	case AssocArray:
 	case Assert:
