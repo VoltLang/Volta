@@ -185,6 +185,14 @@ void doConvert(Context ctx, ir.Type type, ref ir.Exp exp)
 		auto sarray = cast(ir.StaticArrayType)type;
 		doConvertStaticArrayType(ctx, sarray, exp);
 		return;
+	case ir.NodeType.ArrayType:
+		auto atype = cast(ir.ArrayType)type;
+		auto sarray = cast(ir.StaticArrayType)realType(getExpType(ctx.lp, exp, ctx.current));
+		if (sarray !is null && typesEqual(sarray.base, atype.base)) {
+			exp = buildSlice(exp.location, exp, []);
+			return;
+		}
+		goto default;
 	default:
 		if (rtype.nodeType == ir.NodeType.FunctionSetType) {
 			throw makeUnexpected(exp.location, "overloaded function set");
