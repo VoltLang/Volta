@@ -939,29 +939,6 @@ public:
 		return Continue;
 	}
 
-	protected void replaceStaticArrayToArray(Location loc, LanguagePass lp, ir.Scope current, ir.ArrayType atype, ir.StaticArrayType stype, ir.Unary uexp, ref ir.Exp exp)
-	{
-		ir.Exp getLength() { return buildArrayLength(loc, lp, copyExp(uexp.value)); }
-
-		// ({
-		auto sexp = new ir.StatementExp();
-		sexp.location = loc;
-
-		// auto arr = new T[](sarr.length);
-		auto var = buildVariableSmart(loc, copyTypeSmart(loc, atype), ir.Variable.Storage.Function, "arr");
-		var.assign = buildNewSmart(loc, atype, getLength());
-		sexp.statements ~= var;
-
-		// arr[0 .. sarr.length] = sarr[0 .. sarr.length];
-		ir.Exp left = buildSlice(loc, buildExpReference(loc, var, var.name), buildConstantSizeT(loc, lp, 0), getLength());
-		ir.Exp right = buildSlice(loc, copyExp(uexp.value), buildConstantSizeT(loc, lp, 0), getLength());
-		auto fn = getArrayCopyFunction(loc, lp, thisModule, atype);
-		buildExpStat(loc, sexp, buildCall(loc, fn, [left, right], fn.name));
-
-		sexp.exp = buildExpReference(loc, var, var.name);
-		exp = sexp;
-	}
-
 	protected void replaceInterfaceCastIfNeeded(Location loc, LanguagePass lp, ir.Scope current, ir.Unary uexp, ref ir.Exp exp)
 	{
 		if (uexp.op != ir.Unary.Op.Cast) {
@@ -992,9 +969,12 @@ public:
 		if (fromArray is null) {
 			auto stype = cast(ir.StaticArrayType) getExpType(lp, uexp.value, current);
 			if (stype !is null) {
-				replaceStaticArrayToArray(loc, lp, current, toArray, stype, uexp, exp);
+				uexp.value = buildSlice(exp.location, uexp.value, []);
+				fromArray = cast(ir.ArrayType)getExpType(lp, uexp.value, current);
+				panicAssert(exp, fromArray !is null);
+			} else {
+				return;
 			}
-			return;
 		}
 		if (typesEqual(toArray, fromArray)) {
 			return;
