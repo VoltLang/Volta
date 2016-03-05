@@ -88,6 +88,7 @@ enum Parent
 {
 	NA,
 	Call,
+	Identifier,
 	AssignTarget,
 	AssignSource,
 }
@@ -97,7 +98,9 @@ Parent classifyRelationship(ir.Exp child, ir.Exp parent)
 	if (parent is null) {
 		return Parent.NA;
 	} else if (auto b = cast(ir.BinOp) parent) {
-		if (b.left is child) {
+		if (b.op != ir.BinOp.Op.Assign) {
+			return Parent.NA;
+		}else if (b.left is child) {
 			return Parent.AssignTarget;
 		} else if (b.right is child) {
 			return Parent.AssignSource;
@@ -105,7 +108,14 @@ Parent classifyRelationship(ir.Exp child, ir.Exp parent)
 			assert(false);
 		}
 	} else if (auto p = cast(ir.Postfix) parent) {
-		return p.op == ir.Postfix.Op.Call ? Parent.Call : Parent.NA;
+		assert(p.child is child);
+		if (p.op == ir.Postfix.Op.Call) {
+			return Parent.Call;
+		} else if (p.op == ir.Postfix.Op.Identifier) {
+			return Parent.Identifier;
+		} else {
+			return Parent.NA;
+		}
 	} else {
 		return Parent.NA;
 	}
