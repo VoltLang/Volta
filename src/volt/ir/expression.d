@@ -716,12 +716,14 @@ public:
 		AARemove,    ///< aa.remove
 		AAIn,        ///< "foo" in aa
 		AADup,       ///< new aa[..]
+		UFCS,        ///< '(exp).func'()
 	}
 
 	Kind kind; ///< What kind of inbluilt is this.
 	Type type; ///< The type of this exp, helps keeping the typer simple.
 
 	Exp[] children; ///< Common child exp.
+	Function[] functions; ///< For UFCS.
 
 public:
 	this(Kind kind, Type type, Exp[] children)

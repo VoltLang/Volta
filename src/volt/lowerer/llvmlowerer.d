@@ -574,6 +574,7 @@ public:
 			exp = buildCall(l, rtFn, builtin.children);
 			exp = buildCastSmart(l, builtin.type, exp);
 			break;
+		case UFCS:
 		case Invalid:
 			panicAssert(exp, false);
 		}

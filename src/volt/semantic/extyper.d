@@ -878,6 +878,32 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 {
 	assert(postfix.op == ir.Postfix.Op.Call);
 
+	// This is a hack to handle UFCS
+	auto b = cast(ir.BuiltinExp) postfix.child;
+	if (b !is null && b.kind == ir.BuiltinExp.Kind.UFCS) {
+		// Should we really call selectFunction here?
+		auto arguments = b.children[0] ~ postfix.arguments;
+		auto fn = selectFunction(ctx.lp, ctx.current, b.functions, arguments, postfix.location);
+
+		if (fn is null) {
+			throw makeNoFieldOrPropertyOrUFCS(postfix.location, postfix.identifier.value);
+		}
+
+		postfix.arguments = arguments;
+		postfix.child = buildExpReference(postfix.location, fn, fn.name);
+		// We are done, make sure that the rebuilt call isn't messed with when
+		// it get visited again by the extypePostfix function.
+
+		auto theTag = ir.Postfix.TagKind.None;
+		if (fn.type.isArgRef[0]) {
+			theTag = ir.Postfix.TagKind.Ref;
+		} else if (fn.type.isArgOut[0]) {
+			theTag = ir.Postfix.TagKind.Out;
+		}
+
+		postfix.argumentTags = theTag ~ postfix.argumentTags;
+	}
+
 	auto type = getExpType(ctx.lp, postfix.child, ctx.current);
 	bool thisCall;
 
@@ -1217,33 +1243,10 @@ void postfixIdentifierUFCS(Context ctx, ref ir.Exp exp,
 		throw makeNoFieldOrPropertyOrIsUFCSWithoutCall(postfix.location, postfix.identifier.value);
 	}
 
-	// Before we call selectFunction we need to extype the args.
-	// @TODO This will be done twice, which is not the best of things.
-	foreach (ref arg; call.arguments) {
-		acceptExp(arg, ctx.extyper);
-	}
+	auto type = getExpType(ctx.lp, postfix.child, ctx.current);
+	auto set = buildSet(postfix.location, store.functions);
 
-	// Should we really call selectFunction here?
-	auto arguments = postfix.child ~ call.arguments;
-	auto fn = selectFunction(ctx.lp, ctx.current, store.functions, arguments, postfix.location);
-
-	if (fn is null) {
-		throw makeNoFieldOrPropertyOrUFCS(postfix.location, postfix.identifier.value);
-	}
-
-	call.arguments = arguments;
-	call.child = buildExpReference(postfix.location, fn, fn.name);
-	// We are done, make sure that the rebuilt call isn't messed with when
-	// it get visited again by the extypePostfix function.
-
-	auto theTag = ir.Postfix.TagKind.None;
-	if (fn.type.isArgRef[0]) {
-		theTag = ir.Postfix.TagKind.Ref;
-	} else if (fn.type.isArgOut[0]) {
-		theTag = ir.Postfix.TagKind.Out;
-	}
-
-	call.argumentTags = theTag ~ call.argumentTags;
+	exp = buildUFCS(postfix.location, type, postfix.child, store.functions);
 }
 
 bool builtInField(Context ctx, ref ir.Exp exp, ir.Exp child, ir.Type type, string field)

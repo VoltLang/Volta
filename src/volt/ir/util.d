@@ -920,6 +920,22 @@ ir.BuiltinExp buildAARemove(Location loc, ir.Exp[] child)
 	return builtin;
 }
 
+
+/**
+ * Builds a BuiltinExp of AARemove type.
+ */
+ir.BuiltinExp buildUFCS(Location loc, ir.Type type, ir.Exp child,
+                        ir.Function[] fns)
+{
+	auto builtin = new ir.BuiltinExp(
+		ir.BuiltinExp.Kind.UFCS, type, [child]);
+	builtin.location = loc;
+	builtin.functions = fns;
+
+	return builtin;
+}
+
+
 /**
  * Builds a BuiltinExp of AARemove type.
  */
