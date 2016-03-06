@@ -1487,6 +1487,12 @@ public:
 		return Continue;
 	}
 
+	override Status visit(ir.NoType at)
+	{
+		wf("<NoType>");
+		return Continue;
+	}
+
 	override Status enter(ir.Alias a)
 	{
 		ln();

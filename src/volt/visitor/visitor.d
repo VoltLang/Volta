@@ -149,6 +149,7 @@ public abstract:
 	Status visit(ir.TypeReference tr);
 	Status visit(ir.NullType nt);
 	Status visit(ir.AutoType at);
+	Status visit(ir.NoType at);
 
 
 	/*
@@ -335,6 +336,7 @@ override:
 	Status visit(ir.TypeReference tr){ return Continue; }
 	Status visit(ir.NullType nt) { return Continue; }
 	Status visit(ir.AutoType at) { return Continue; }
+	Status visit(ir.NoType at) { return Continue; }
 
 	/*
 	 * Expression Nodes.
@@ -636,6 +638,10 @@ body {
 		auto at = cast(ir.AutoType) n;
 		assert(at !is null);
 		return av.visit(at);
+	case NoType:
+		auto nt = cast(ir.NoType) n;
+		assert(nt !is null);
+		return av.visit(nt);
 
 	/*
 	 * Failure fall through.

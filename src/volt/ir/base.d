@@ -75,6 +75,7 @@ enum NodeType
 	NullType,
 	EnumDeclaration,
 	AutoType,
+	NoType,
 
 	/* statements.d */
 	ReturnStatement,
@@ -385,6 +386,7 @@ string nodeToString(NodeType nodeType)
 	case PropertyExp: return "PropertyExp";
 	case AutoType: return "AutoType";
 	case BuiltinExp: return "BuiltinExp";
+	case NoType: return "NoType";
 	}
 }
 

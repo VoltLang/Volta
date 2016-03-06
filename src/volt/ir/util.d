@@ -1790,3 +1790,10 @@ ir.AutoType buildAutoType(Location loc)
 	at.location = loc;
 	return at;
 }
+
+ir.NoType buildNoType(Location loc)
+{
+	auto nt = new ir.NoType();
+	nt.location = loc;
+	return nt;
+}

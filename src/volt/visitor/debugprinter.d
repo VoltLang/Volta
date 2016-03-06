@@ -342,6 +342,7 @@ public:
 	override Status visit(ir.PrimitiveType n) { visitNode(n); return Continue; }
 	override Status visit(ir.TypeReference n) { visitRef(n, n.type); return Continue; }
 	override Status visit(ir.AutoType n) { visitNode(n); return Continue; }
+	override Status visit(ir.NoType n) { visitNode(n); return Continue; }
 
 
 	/*

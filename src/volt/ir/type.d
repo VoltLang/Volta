@@ -488,3 +488,11 @@ public:
 	this() { super(NodeType.AutoType); }
 }
 
+/**
+ * For constructs that has no type, used to avoid nulls in the IR.
+ */
+class NoType : Type
+{
+public:
+	this() { super(NodeType.NoType); }
+}
