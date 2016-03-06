@@ -279,7 +279,8 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 		auto lprim = cast(ir.PrimitiveType) left;
 		auto rprim = cast(ir.PrimitiveType) right;
 		assert(lprim !is null && rprim !is null);
-		if (lprim.type.size() > rprim.type.size()) {
+		// We prefer the left side because of *Assign exps.
+		if (lprim.type.size() >= rprim.type.size()) {
 			return left;
 		} else {
 			return right;
