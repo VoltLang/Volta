@@ -714,13 +714,16 @@ bool typesEqual(ir.Type a, ir.Type b, bool ignoreStorage = false)
 				return false;
 		return true;
 	} else if (a.nodeType == ir.NodeType.StorageType ||
-			   b.nodeType == ir.NodeType.StorageType) {
+		   b.nodeType == ir.NodeType.StorageType) {
 		auto sta = cast(ir.StorageType)a;
 		auto stb = cast(ir.StorageType)b;
 		if ((sta !is null && sta.base is null) || (stb !is null && stb.base is null)) {
 			return false;
 		}
 		throw panic(a.location, "tested storage type for equality");
+	} else if (a.nodeType == ir.NodeType.NoType &&
+	           a.nodeType == ir.NodeType.NoType) {
+		return true;
 	}
 
 	return false;
