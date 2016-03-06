@@ -63,7 +63,7 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 	case Constant:
 		auto asConstant = cast(ir.Constant) exp;
 		assert(asConstant !is null);
-		return getConstantType(lp, asConstant);
+		return getConstantType(asConstant);
 	case ArrayLiteral:
 		auto asLiteral = cast(ir.ArrayLiteral) exp;
 		assert(asLiteral !is null);
@@ -83,7 +83,7 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 	case Typeid:
 		auto asTypeid = cast(ir.Typeid) exp;
 		assert(asTypeid !is null);
-		return getTypeidType(lp, asTypeid, currentScope);
+		return getTypeidType(lp, asTypeid);
 	case Postfix:
 		auto asPostfix = cast(ir.Postfix) exp;
 		assert(asPostfix !is null);
@@ -95,7 +95,7 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 	case ExpReference:
 		auto asExpRef = cast(ir.ExpReference) exp;
 		assert(asExpRef !is null);
-		return getExpReferenceType(lp, asExpRef, currentScope);
+		return getExpReferenceType(asExpRef);
 	case TraitsExp:
 		auto asTraits = cast(ir.TraitsExp) exp;
 		assert(asTraits !is null);
@@ -103,19 +103,19 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 	case StructLiteral:
 		auto asStructLiteral = cast(ir.StructLiteral) exp;
 		assert(asStructLiteral !is null);
-		return getStructLiteralType(lp, asStructLiteral);
+		return getStructLiteralType(asStructLiteral);
 	case ClassLiteral:
 		auto asClassLiteral = cast(ir.ClassLiteral) exp;
 		assert(asClassLiteral !is null);
-		return getClassLiteralType(lp, asClassLiteral);
+		return getClassLiteralType(asClassLiteral);
 	case TypeExp:
 		auto asTypeExp = cast(ir.TypeExp) exp;
 		assert(asTypeExp !is null);
-		return getTypeExpType(lp, asTypeExp);
+		return getTypeExpType(asTypeExp);
 	case StoreExp:
 		auto asStoreExp = cast(ir.StoreExp) exp;
 		assert(asStoreExp !is null);
-		return getStoreExpType(lp, asStoreExp);
+		return getStoreExpType(asStoreExp);
 	case StatementExp:
 		auto asStatementExp = cast(ir.StatementExp) exp;
 		assert(asStatementExp !is null);
@@ -123,16 +123,16 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 	case TokenExp:
 		auto asTokenExp = cast(ir.TokenExp) exp;
 		assert(asTokenExp !is null);
-		return getTokenExpType(lp, asTokenExp, currentScope);
+		return getTokenExpType(asTokenExp);
 	case VaArgExp:
 		auto asVaArgExp = cast(ir.VaArgExp) exp;
 		assert(asVaArgExp !is null);
-		return getVaArgType(lp, asVaArgExp, currentScope);
+		return getVaArgType(asVaArgExp);
 	case IsExp:
 		return buildBool(exp.location);
 	case PropertyExp:
 		auto prop = cast(ir.PropertyExp) exp;
-		return getPropertyExpType(lp, prop, currentScope);
+		return getPropertyExpType(prop);
 	case BuiltinExp:
 		auto inbuilt = cast(ir.BuiltinExp) exp;
 		return inbuilt.type;
@@ -143,12 +143,12 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 	}
 }
 
-ir.Type getVaArgType(LanguagePass lp, ir.VaArgExp vaexp, ir.Scope currentScope)
+ir.Type getVaArgType(ir.VaArgExp vaexp)
 {
 	return vaexp.type;
 }
 
-ir.Type getTokenExpType(LanguagePass lp, ir.TokenExp texp, ir.Scope currentScope)
+ir.Type getTokenExpType(ir.TokenExp texp)
 {
 	if (texp.type == ir.TokenExp.Type.Line) {
 		return buildInt(texp.location);
@@ -163,12 +163,12 @@ ir.Type getStatementExpType(LanguagePass lp, ir.StatementExp se, ir.Scope curren
 	return getExpType(lp, se.exp, currentScope);
 }
 
-ir.Type getTypeExpType(LanguagePass lp, ir.TypeExp te)
+ir.Type getTypeExpType(ir.TypeExp te)
 {
 	return te.type;
 }
 
-ir.Type getStoreExpType(LanguagePass lp, ir.StoreExp se)
+ir.Type getStoreExpType(ir.StoreExp se)
 {
 	assert(se.store !is null);
 	auto t = cast(ir.Type) se.store.node;
@@ -179,7 +179,7 @@ ir.Type getStoreExpType(LanguagePass lp, ir.StoreExp se)
 	return buildNoType(se.location);
 }
 
-ir.Type getStructLiteralType(LanguagePass lp, ir.StructLiteral slit)
+ir.Type getStructLiteralType(ir.StructLiteral slit)
 {
 	if (slit.type is null) {
 		throw panic(slit.location, "null struct literal");
@@ -187,15 +187,15 @@ ir.Type getStructLiteralType(LanguagePass lp, ir.StructLiteral slit)
 	return slit.type;
 }
 
-ir.Type getClassLiteralType(LanguagePass lp, ir.ClassLiteral clit)
+ir.Type getClassLiteralType(ir.ClassLiteral clit)
 {
 	return clit.type;
 }
 
-ir.Type getTraitsExpType(LanguagePass lp, ir.TraitsExp traits, ir.Scope _scope)
+ir.Type getTraitsExpType(LanguagePass lp, ir.TraitsExp traits, ir.Scope currentScope)
 {
 	assert(traits.op == ir.TraitsExp.Op.GetAttribute);
-	auto store = lookup(lp, _scope, traits.qname);
+	auto store = lookup(lp, currentScope, traits.qname);
 	auto attr = cast(ir.UserAttribute) store.node;
 	if (attr is null) {
 		throw makeExpected(traits, "@inteface");
@@ -204,7 +204,7 @@ ir.Type getTraitsExpType(LanguagePass lp, ir.TraitsExp traits, ir.Scope _scope)
 	return attr.layoutClass;
 }
 
-ir.Type getExpReferenceType(LanguagePass lp, ir.ExpReference expref, ir.Scope currentScope)
+ir.Type getExpReferenceType(ir.ExpReference expref)
 {
 	if (expref.decl is null) {
 		throw panic(expref.location, "unable to type expression reference.");
@@ -352,12 +352,12 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 	assert(false);
 }
 
-ir.Type getTypeidType(LanguagePass lp, ir.Typeid _typeid, ir.Scope currentScope)
+ir.Type getTypeidType(LanguagePass lp, ir.Typeid _typeid)
 {
 	return lp.typeInfoClass;
 }
 
-ir.Type getConstantType(LanguagePass lp, ir.Constant constant)
+ir.Type getConstantType(ir.Constant constant)
 {
 	return constant.type;
 }
@@ -466,7 +466,7 @@ ir.Type getPostfixType(LanguagePass lp, ir.Postfix postfix, ir.Scope currentScop
 	case Identifier:
 		return getPostfixIdentifierType(lp, postfix, currentScope);
 	case CreateDelegate:
-		return getPostfixCreateDelegateType(lp, postfix, currentScope);
+		return getPostfixCreateDelegateType(postfix);
 	default:
 		throw panicUnhandled(postfix, toString(postfix.op));
 	}
@@ -502,13 +502,13 @@ ir.Type getPostfixSliceType(LanguagePass lp, ir.Postfix postfix, ir.Scope curren
 	return array;
 }
 
-ir.Type getPropertyExpType(LanguagePass lp, ir.PropertyExp prop, ir.Scope currentScope)
+ir.Type getPropertyExpType(ir.PropertyExp prop)
 {
 	assert(prop.getFn !is null);
 	return prop.getFn.type.ret;
 }
 
-ir.Type getPostfixCreateDelegateType(LanguagePass lp, ir.Postfix postfix, ir.Scope currentScope)
+ir.Type getPostfixCreateDelegateType(ir.Postfix postfix)
 {
 	auto err = panic(postfix.location, "couldn't retrieve type from CreateDelegate postfix.");
 
@@ -632,15 +632,15 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 		if (type.nodeType == ir.NodeType.ArrayType) {
 			auto asArray = cast(ir.ArrayType) type;
 			assert(asArray !is null);
-			return getPostfixIdentifierArrayType(lp, postfix, asArray, currentScope);
+			return getPostfixIdentifierArrayType(lp, postfix, asArray);
 		} else if (type.nodeType == ir.NodeType.StaticArrayType) {
 			auto asStaticArray = cast(ir.StaticArrayType) type;
 			assert(asStaticArray !is null);
-			return getPostfixIdentifierStaticArrayType(lp, postfix, asStaticArray, currentScope);
+			return getPostfixIdentifierStaticArrayType(lp, postfix, asStaticArray);
 		} else if (type.nodeType == ir.NodeType.AAType) {
 			auto asAssocArray = cast(ir.AAType) type;
 			assert(asAssocArray !is null);
-			return getPostfixIdentifierAssocArrayType(lp, postfix, asAssocArray, currentScope);
+			return getPostfixIdentifierAssocArrayType(postfix, asAssocArray);
 		}
 
 		retrieveScope(lp, type, postfix, _scope, _class, emsg);
@@ -689,7 +689,7 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 	version (Volt) assert(false); // If
 }
 
-ir.Type getPostfixIdentifierArrayType(LanguagePass lp, ir.Postfix postfix, ir.ArrayType arrayType, ir.Scope currentScope)
+ir.Type getPostfixIdentifierArrayType(LanguagePass lp, ir.Postfix postfix, ir.ArrayType arrayType)
 {
 	switch (postfix.identifier.value) {
 	case "length":
@@ -703,7 +703,7 @@ ir.Type getPostfixIdentifierArrayType(LanguagePass lp, ir.Postfix postfix, ir.Ar
 	}
 }
 
-ir.Type getPostfixIdentifierStaticArrayType(LanguagePass lp, ir.Postfix postfix, ir.StaticArrayType arrayType, ir.Scope currentScope)
+ir.Type getPostfixIdentifierStaticArrayType(LanguagePass lp, ir.Postfix postfix, ir.StaticArrayType arrayType)
 {
 	switch (postfix.identifier.value) {
 	case "length":
@@ -717,7 +717,7 @@ ir.Type getPostfixIdentifierStaticArrayType(LanguagePass lp, ir.Postfix postfix,
 	}
 }
 
-ir.Type getPostfixIdentifierAssocArrayType(LanguagePass lp, ir.Postfix postfix, ir.AAType arrayType, ir.Scope currentScope)
+ir.Type getPostfixIdentifierAssocArrayType(ir.Postfix postfix, ir.AAType arrayType)
 {
 	switch (postfix.identifier.value) {
 	case "keys":
@@ -844,7 +844,7 @@ ir.Type getUnaryType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 	case Minus, Plus:
 		return getUnarySubAddType(lp, unary, currentScope);
 	case Not:
-		return getUnaryNotType(lp, unary);
+		return getUnaryNotType(unary);
 	case Complement:
 		return getUnaryComplementType(lp, unary, currentScope);
 	case Increment, Decrement:
@@ -880,7 +880,7 @@ ir.Type getUnaryComplementType(LanguagePass lp, ir.Unary unary, ir.Scope current
 	return getExpType(lp, unary.value, currentScope);
 }
 
-ir.Type getUnaryNotType(LanguagePass lp, ir.Unary unary)
+ir.Type getUnaryNotType(ir.Unary unary)
 {
 	return buildBool(unary.location);
 }
