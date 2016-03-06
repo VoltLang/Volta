@@ -452,9 +452,13 @@ void extypeIdentifierExp(Context ctx, ref ir.Exp e, ir.IdentifierExp i, ir.Exp p
 {
 	switch (i.value) {
 	case "this":
-		return rewriteThis(ctx, e, i, cast(ir.Postfix) parent);
+		auto parentKind = classifyRelationship(i, parent);
+		return rewriteThis(ctx, e, i, parentKind == Parent.Call);
 	case "super":
-		return rewriteSuper(ctx, i, cast(ir.Postfix) parent);
+		auto parentKind = classifyRelationship(i, parent);
+		return rewriteSuper(ctx, e, i,
+			parentKind == Parent.Call,
+			parentKind == Parent.Identifier);
 	default:
 	}
 

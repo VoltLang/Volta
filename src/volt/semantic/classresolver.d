@@ -53,32 +53,26 @@ void actualizeClass(LanguagePass lp, ir.Class c)
 	fileInAggregateVar(lp, c);
 }
 
-void rewriteThis(Context ctx, ref ir.Exp e, ir.IdentifierExp ident, ir.Postfix p)
+void rewriteThis(Context ctx, ref ir.Exp e, ir.IdentifierExp ident, bool isCall)
 {
 	assert(ident !is null);
 	assert(ident.value == "this");
-	assert(p is null || ident is p.child);
 
 	ir.Variable thisVar;
 	auto thisRef = getThisReferenceNotNull(ident, ctx, thisVar);
 	assert(thisVar !is null);
 
-	auto op = p !is null ? p.op : ir.Postfix.Op.Identifier;
-
-	if (p is null || p.op != ir.Postfix.Op.Call) {
-		// The simple default.
-		e = thisRef;
-		return;
+	if (isCall) {
+		return rewriteThisCall(ctx, e, ident, thisVar, thisRef);
 	}
 
-	return rewriteThisCall(ctx, ident, p, thisVar, thisRef);
+	// The simple default.
+	e = thisRef;
 }
 
-void rewriteThisCall(Context ctx, ir.IdentifierExp ident, ir.Postfix p,
+void rewriteThisCall(Context ctx, ref ir.Exp e, ir.IdentifierExp ident,
                      ir.Variable thisVar, ir.Exp thisRef)
 {
-	assert(p.op == ir.Postfix.Op.Call);
-
 	auto type = realType(thisVar.type);
 	auto _class = cast(ir.Class) type;
 	if (_class is null) {
@@ -90,16 +84,16 @@ void rewriteThisCall(Context ctx, ir.IdentifierExp ident, ir.Postfix p,
 	auto asRef = cast(ir.ExpReference)thisRef;
 	panicAssert(thisRef, asRef !is null);
 	asRef.isSuperOrThisCall = true;
-	p.child = buildCreateDelegate(ident.location, thisRef, setRef);
+	e = buildCreateDelegate(ident.location, thisRef, setRef);
 }
 
-void rewriteSuper(Context ctx, ir.IdentifierExp ident, ir.Postfix p)
+void rewriteSuper(Context ctx, ref ir.Exp e, ir.IdentifierExp ident,
+                  bool isCall, bool isIdentifier)
 {
 	assert(ident !is null);
 	assert(ident.value == "super");
-	assert(p is null || ident is p.child);
 
-	if (p is null) {
+	if (!isCall && !isIdentifier) {
 		throw makeExpected(ident.location, "call or identifier postfix");
 	}
 
@@ -117,46 +111,35 @@ void rewriteSuper(Context ctx, ir.IdentifierExp ident, ir.Postfix p)
 	_class = _class.parentClass;
 	assert(_class !is null);
 
-	switch (p.op) with (ir.Postfix.Op) {
-	case Call:
-		return rewriteSuperCall(ctx, ident, p, _class);
-	case Identifier:
-		return rewriteSuperIdentifier(ctx, ident, p, _class);
-	default:
-		throw makeFailedLookup(p, "super");
+	if (isCall) {
+		return rewriteSuperCall(ctx, e, _class);
+	} else if (isIdentifier) {
+		return rewriteSuperIdentifier(e, _class);
+	} else {
+		throw panic(e, "super");
 	}
 }
 
-void rewriteSuperIdentifier(Context ctx, ir.IdentifierExp ident, ir.Postfix p, ir.Class _class)
+void rewriteSuperIdentifier(ref ir.Exp e, ir.Class _class)
 {
-	assert(p.op == ir.Postfix.Op.Identifier);
-
 	// No better way of doing this. :-(
 	// Also assumes that the class has a valid scope.
 	auto store = _class.myScope.parent.getStore(_class.name);
 	assert(store !is null);
 	assert(store.node is _class);
 
-	p.child = buildStoreExp(ident.location, store);
+	e = buildStoreExp(e.location, store);
 }
 
-void rewriteSuperCall(Context ctx, ir.IdentifierExp ident, ir.Postfix p, ir.Class _class)
+void rewriteSuperCall(Context ctx, ref ir.Exp e, ir.Class _class)
 {
-	assert(p.op == ir.Postfix.Op.Call);
-
-	// TODO better function?
-	auto asFunction = getParentFunction(ctx.current);
-	if (asFunction is null) {
-		throw makeExpectedContext(p, asFunction);
-	}
-
-	auto thisVar = getThisVarNotNull(ident, ctx);
-	auto thisRef = buildExpReference(ident.location, thisVar, "this");
+	auto thisVar = getThisVarNotNull(e, ctx);
+	auto thisRef = buildExpReference(e.location, thisVar, "this");
 	thisRef.isSuperOrThisCall = true;
 
-	auto set = buildSet(ident.location, _class.userConstructors);
-	auto setRef = buildExpReference(ident.location, set, "super");
-	p.child = buildCreateDelegate(ident.location, thisRef, setRef);
+	auto set = buildSet(e.location, _class.userConstructors);
+	auto setRef = buildExpReference(e.location, set, "super");
+	e = buildCreateDelegate(e.location, thisRef, setRef);
 }
 
 
