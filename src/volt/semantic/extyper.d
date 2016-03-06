@@ -1981,13 +1981,12 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 		return;
 	}
 
-	switch(binop.op) with(ir.BinOp.Op) {
-	case AddAssign, SubAssign, MulAssign, DivAssign, ModAssign, AndAssign,
-	     OrAssign, XorAssign, CatAssign, LSAssign, SRSAssign, RSAssign, PowAssign, Assign:
-		// TODO this needs to be changed if there is operator overloading
+	// Check for lvalue and touch up aa[key] = 'left'.
+	if (binop.op.isAssign()) {
 		if (!isAssignable(binop.left)) {
 			throw makeExpected(binop.left.location, "lvalue");
 		}
+
 		auto asPostfix = cast(ir.Postfix)binop.left;
 		if (asPostfix !is null) {
 			auto postfixLeft = getExpType(ctx.lp, asPostfix.child, ctx.current);
@@ -1999,8 +1998,6 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 				checkAndDoConvert(ctx, aa.value, binop.right);
 			}
 		}
-		break;
-	default: break;
 	}
 
 	bool assigningOutsideFunction;
