@@ -131,10 +131,13 @@ void rewriteSuperIdentifier(Context ctx, ir.IdentifierExp ident, ir.Postfix p, i
 {
 	assert(p.op == ir.Postfix.Op.Identifier);
 
-	auto thisVar = getThisVarNotNull(ident, ctx);
-	auto eref = buildExpReference(p.location, thisVar, "this");
-	p.child = buildCastSmart(ident.location, _class, eref);
-	p.hackSuperLookup = true;
+	// No better way of doing this. :-(
+	// Also assumes that the class has a valid scope.
+	auto store = _class.myScope.parent.getStore(_class.name);
+	assert(store !is null);
+	assert(store.node is _class);
+
+	p.child = buildStoreExp(ident.location, store);
 }
 
 void rewriteSuperCall(Context ctx, ir.IdentifierExp ident, ir.Postfix p, ir.Class _class)

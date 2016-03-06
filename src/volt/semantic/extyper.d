@@ -136,9 +136,8 @@ enum StoreSource
 	StaticPostfix,
 }
 
-void handleStore(Context ctx, string ident, ref ir.Exp exp,
-                 ir.Store store, ir.Exp child, Parent parent,
-                 StoreSource via, bool supressVtableLookup = false)
+void handleStore(Context ctx, string ident, ref ir.Exp exp, ir.Store store,
+                 ir.Exp child, Parent parent,StoreSource via)
 {
 	final switch (store.kind) with (ir.Store.Kind) {
 	case Type:
@@ -151,8 +150,7 @@ void handleStore(Context ctx, string ident, ref ir.Exp exp,
 		handleValueStore(ctx, ident, exp, store, child, parent, via);
 		return;
 	case Function:
-		handleFunctionStore(ctx, ident, exp, store, child, parent, via,
-		                    supressVtableLookup);
+		handleFunctionStore(ctx, ident, exp, store, child, parent, via);
 		return;
 	case FunctionParam:
 		handleFunctionParamStore(ctx, ident, exp, store, child, parent,
@@ -172,7 +170,7 @@ void handleStore(Context ctx, string ident, ref ir.Exp exp,
 
 void handleFunctionStore(Context ctx, string ident, ref ir.Exp exp,
                          ir.Store store, ir.Exp child, Parent parent,
-                         StoreSource via, bool supressVtableLookup = false)
+                         StoreSource via)
 {
 	// Xor anybody?
 	assert(via == StoreSource.Instance && child !is null ||
@@ -263,7 +261,7 @@ void handleFunctionStore(Context ctx, string ident, ref ir.Exp exp,
 	if (child !is null) {
 		assert(members > 0);
 		auto cdg = buildCreateDelegate(exp.location, child, eref);
-		cdg.supressVtableLookup = supressVtableLookup;
+		cdg.supressVtableLookup = via == StoreSource.StaticPostfix;
 		exp = cdg;
 	} else {
 		assert(members == 0);
@@ -1447,7 +1445,7 @@ void extypePostfixIdentifier(Context ctx, ref ir.Exp exp,
 
 	auto parentKind = classifyRelationship(exp, parent);
 	handleStore(ctx, field, exp, store, postfix.child, parentKind,
-	            StoreSource.Instance, postfix.hackSuperLookup);
+	            StoreSource.Instance);
 }
 
 void extypePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp parent)

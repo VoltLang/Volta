@@ -246,8 +246,6 @@ public:
 	 */
 	bool supressVtableLookup;
 
-	bool hackSuperLookup; // super.'func'();
-
 public:
 	this() { super(NodeType.Postfix); }
 }
