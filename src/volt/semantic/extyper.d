@@ -2596,7 +2596,29 @@ ir.Type extypeBuiltinExp(Context ctx, ref ir.Exp exp, Parent parent)
  *
  */
 
-ir.Type extype(Context ctx, ref ir.Exp exp, Parent parent)
+version (all) {
+	ir.Type extype(Context ctx, ref ir.Exp exp, Parent parent)
+	{
+		auto r = extypeUnchecked(ctx, exp, parent);
+		auto o = getExpType(ctx.lp, exp, ctx.current);
+		if (r is null) {
+			throw panic(exp, "extype returned null");
+		}
+		if (o is null) {
+			throw panic(exp, "getExtType returned null");
+		}
+		if (!typesEqual(r, o)) {
+			hackTypeWarning(exp, r, o);
+			assert(typesEqual(r, o));
+			return o;
+		}
+		return r;
+	}
+} else {
+	alias extype = extypeUnchecked;
+}
+
+ir.Type extypeUnchecked(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	switch (exp.nodeType) with (ir.NodeType) {
 	case Constant:

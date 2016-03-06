@@ -18,6 +18,13 @@ void warning(Location loc, string message)
 	writefln(format("%s: warning: %s", loc.toString(), message));
 }
 
+void hackTypeWarning(ir.Node n, ir.Type nt, ir.Type ot)
+{
+	auto str = format("%s: warning: types differ (new) %s vs (old) %s",
+	       n.location.toString(), typeString(nt), typeString(ot));
+	writefln(str);
+}
+
 
 /*
  *
