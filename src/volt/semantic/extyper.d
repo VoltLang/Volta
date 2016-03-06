@@ -256,13 +256,9 @@ void handleFunctionStore(Context ctx, string ident, ref ir.Exp exp,
 		child = getThisReferenceNotNull(exp, ctx, thisVar);
 	}
 
-	ir.ExpReference eref;
-	if (fns.length == 1) {
-		eref = buildExpReference(exp.location, fns[0], ident);
-	} else {
-		auto set = buildSet(exp.location, fns);
-		eref = buildExpReference(exp.location, set, ident);
-	}
+	// Will return the first function directly if there is only one.
+	ir.Declaration decl = buildSet(exp.location, fns);
+	ir.ExpReference eref = buildExpReference(exp.location, decl, ident);
 
 	if (child !is null) {
 		assert(members > 0);
