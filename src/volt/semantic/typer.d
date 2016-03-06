@@ -505,8 +505,11 @@ ir.Type getPostfixSliceType(LanguagePass lp, ir.Postfix postfix, ir.Scope curren
 
 ir.Type getPropertyExpType(ir.PropertyExp prop)
 {
-	assert(prop.getFn !is null);
-	return prop.getFn.type.ret;
+	if (prop.getFn is null) {
+		return buildNoType(prop.location);
+	} else {
+		return prop.getFn.type.ret;
+	}
 }
 
 ir.Type getPostfixCreateDelegateType(ir.Postfix postfix)
