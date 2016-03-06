@@ -176,7 +176,7 @@ ir.Type getStoreExpType(LanguagePass lp, ir.StoreExp se)
 		return t;
 	}
 
-	return null;
+	return buildNoType(se.location);
 }
 
 ir.Type getStructLiteralType(LanguagePass lp, ir.StructLiteral slit)

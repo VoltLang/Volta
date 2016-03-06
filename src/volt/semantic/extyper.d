@@ -2251,8 +2251,11 @@ void replaceTypeOfIfNeeded(Context ctx, ref ir.Type type)
 		assert(type.nodeType != ir.NodeType.TypeOf);
 		return;
 	}
-
-	type = copyTypeSmart(asTypeOf.location, getExpType(ctx.lp, asTypeOf.exp, ctx.current));
+	auto t = getExpType(ctx.lp, asTypeOf.exp, ctx.current);
+	if (t.nodeType == ir.NodeType.NoType) {
+		throw makeError(asTypeOf.exp, "expression has no type.");
+	}
+	type = copyTypeSmart(asTypeOf.location, t);
 }
 
 /**
