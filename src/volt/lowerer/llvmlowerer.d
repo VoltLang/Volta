@@ -1144,10 +1144,10 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, LanguagePass lp,
 
 	// foreach (i, e; array) => for (size_t i = 0; i < array.length; i++) auto e = array[i]; ...
 	// foreach_reverse (i, e; array) => for (size_t i = array.length - 1; i+1 >= 0; i--) auto e = array[i]; ..
-	auto aggType = realType(getExpType(lp, fes.aggregate, current), true, true);
+	auto aggType = realType(getExpType(lp, fes.aggregate, current));
 
 	if (aggType.nodeType == ir.NodeType.ArrayType || aggType.nodeType == ir.NodeType.StaticArrayType) {
-		aggType = realType(getExpType(lp, buildSlice(l, fes.aggregate, []), current), true, true);
+		aggType = realType(getExpType(lp, buildSlice(l, fes.aggregate, []), current));
 		auto anonVar = buildVariableAnonSmart(l, current, sexp, aggType, buildSlice(l, fes.aggregate, []));
 		anonVar.type.mangledName = mangle(aggType);
 		scope (exit) fs.initVars = anonVar ~ fs.initVars;

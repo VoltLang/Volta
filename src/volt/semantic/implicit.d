@@ -28,7 +28,7 @@ import volt.semantic.storageremoval;
  */
 void checkAndConvertStringLiterals(Context ctx, ir.Type type, ref ir.Exp exp)
 {
-	auto ptr = cast(ir.PointerType) realType(type, true, true);
+	auto ptr = cast(ir.PointerType) realType(type);
 	auto constant = cast(ir.Constant) exp;
 	if (ptr !is null && constant !is null && constant._string.length != 0) {
 		auto a = cast(ir.ArrayType) constant.type;
@@ -55,7 +55,7 @@ void checkAndDoConvert(Context ctx, ir.Type type, ref ir.Exp exp)
  */
 bool willConvert(Context ctx, ir.Type type, ir.Exp exp)
 {
-	auto prim = cast(ir.PrimitiveType)realType(type, true, true);
+	auto prim = cast(ir.PrimitiveType) realType(type);
 	if (prim !is null && fitsInPrimitive(prim, exp)) {
 		return true;
 	}

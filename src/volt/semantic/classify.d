@@ -278,24 +278,25 @@ bool isValidWithExp(ir.Exp exp)
 /**
  * Remove types masking a type (e.g. enum).
  */
-ir.Type realType(ir.Type t, bool stripEnum = true, bool stripStorage = false)
+ir.Type realType(ir.Type t, bool stripEnum = true)
 {
+	if (t is null) {
+		return null;
+	}
+
 	auto tr = cast(ir.TypeReference) t;
 	if (tr !is null) {
-		return realType(tr.type, stripEnum, stripStorage);
+		return realType(tr.type, stripEnum);
 	}
 	if (stripEnum) {
 		auto e = cast(ir.Enum) t;
 		if (e !is null) {
-			return realType(e.base, stripEnum, stripStorage);
+			return realType(e.base, stripEnum);
 		}
 	}
-	if (stripStorage) {
-		auto st = cast(ir.StorageType) t;
-		if (st !is null) {
-			return realType(st.base, stripEnum, stripStorage);
-		}
-	}
+
+	assert(t.nodeType != ir.NodeType.StorageType);
+
 	return t;
 }
 

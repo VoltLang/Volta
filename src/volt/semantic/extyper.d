@@ -426,7 +426,7 @@ ir.Exp withLookup(Context ctx, ref ir.Exp exp, ir.Scope current,
 	ir.Class _class;
 	string emsg;
 	ir.Scope eScope;
-	auto type = realType(getExpType(ctx.lp, exp, current), false, true);
+	auto type = realType(getExpType(ctx.lp, exp, current), false);
 	if (exp.nodeType == ir.NodeType.Postfix) {
 		retrieveScope(ctx.lp, type, cast(ir.Postfix)exp, eScope, _class, emsg);
 	} else {
@@ -1381,7 +1381,7 @@ void extypePostfixIdentifier(Context ctx, ref ir.Exp exp,
 	string field = postfix.identifier.value;
 
 	ir.Type oldType = getExpType(ctx.lp, postfix.child, ctx.current);
-	ir.Type type = realType(oldType, false, false);
+	ir.Type type = realType(oldType, false);
 	assert(type !is null);
 	assert(type.nodeType != ir.NodeType.FunctionSetType);
 	if (builtInField(ctx, exp, postfix.child, type, field)) {
@@ -2400,7 +2400,7 @@ struct ArrayCase
  */
 void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 {
-	auto conditionType = realType(getExpType(ctx.lp, ss.condition, ctx.current), false, true);
+	auto conditionType = realType(getExpType(ctx.lp, ss.condition, ctx.current), false);
 	auto originalCondition = ss.condition;
 	if (isArray(conditionType)) {
 		auto l = ss.location;
@@ -2540,7 +2540,7 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 
 	auto asEnum = cast(ir.Enum) conditionType;
 	if (asEnum is null && ss.isFinal) {
-		asEnum = cast(ir.Enum)realType(getExpType(ctx.lp, ss.condition, ctx.current), false, true);
+		asEnum = cast(ir.Enum)realType(getExpType(ctx.lp, ss.condition, ctx.current), false);
 		if (asEnum is null) {
 			throw makeExpected(ss, "enum type for final switch");
 		}
@@ -2675,7 +2675,7 @@ void extypeForeach(Context ctx, ir.ForeachStatement fes)
 
 	acceptExp(fes.aggregate, ctx.extyper);
 
-	auto aggType = realType(getExpType(ctx.lp, fes.aggregate, ctx.current), true, true);
+	auto aggType = realType(getExpType(ctx.lp, fes.aggregate, ctx.current));
 
 	if (!isString(aggType)) foreach (i, ivar; fes.itervars) {
 		if (!isBlankVariable(i)) {

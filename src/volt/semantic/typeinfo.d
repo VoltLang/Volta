@@ -115,7 +115,7 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 {
 	assert(type.mangledName !is null);
 
-	type = realType(type, false, true);  // Strip storage type.
+	type = realType(type, false);  // Strip storage type.
 
 	auto typeSize = size(lp, type);
 	auto typeConstant = buildConstantSizeT(type.location, lp, typeSize);

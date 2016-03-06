@@ -484,7 +484,7 @@ ir.Type getPostfixSliceType(LanguagePass lp, ir.Postfix postfix, ir.Scope curren
 	ir.Type base;
 	ir.ArrayType array;
 
-	auto type = realType(getExpType(lp, postfix.child, currentScope), true, true);
+	auto type = realType(getExpType(lp, postfix.child, currentScope));
 	if (type.nodeType == ir.NodeType.PointerType) {
 		auto pointer = cast(ir.PointerType) type;
 		assert(pointer !is null);
@@ -632,7 +632,7 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 	bool skipScopeRetrieval = false;
 
 	if (!skipScopeRetrieval) {
-		type = realType(getExpType(lp, postfix.child, currentScope), false, true);
+		type = realType(getExpType(lp, postfix.child, currentScope), false);
 		asPointer = cast(ir.PointerType) type;
 		if (asPointer !is null && (asPointer.base.nodeType == ir.NodeType.ArrayType 
 			|| asPointer.base.nodeType == ir.NodeType.StaticArrayType)) {
@@ -747,7 +747,7 @@ ir.Type getPostfixIncDecType(LanguagePass lp, ir.Postfix postfix, ir.Scope curre
 		throw makeNotLValue(postfix);
 	}
 	auto otype = getExpType(lp, postfix.child, currentScope);
-	auto type = realType(otype, true, true);
+	auto type = realType(otype);
 
 	if (type.nodeType == ir.NodeType.PointerType) {
 		return type;
@@ -765,7 +765,7 @@ ir.Type getPostfixIndexType(LanguagePass lp, ir.Postfix postfix, ir.Scope curren
 {
 	ir.Type base;
 
-	auto type = realType(getExpType(lp, postfix.child, currentScope), true, true);
+	auto type = realType(getExpType(lp, postfix.child, currentScope));
 
 	if (type.nodeType == ir.NodeType.PointerType) {
 		auto pointer = cast(ir.PointerType) type;
