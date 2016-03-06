@@ -911,7 +911,7 @@ bool isConstant(ir.Exp e)
 bool isValidPointerArithmeticOperation(ir.BinOp.Op t)
 {
 	switch (t) with (ir.BinOp.Op) {
-	case Add, Sub:
+	case Add, Sub, AddAssign, SubAssign:
 		return true;
 	default:
 		return false;
