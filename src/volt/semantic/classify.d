@@ -825,7 +825,12 @@ bool isAssign(ir.Exp exp)
 	if (bop is null) {
 		return false;
 	}
-	switch (bop.op) with (ir.BinOp.Op) {
+	return bop.op.isAssign();
+}
+
+bool isAssign(ir.BinOp.Op op)
+{
+	switch (op) with (ir.BinOp.Op) {
 	case Assign, AddAssign, SubAssign, MulAssign, DivAssign, ModAssign,
 		AndAssign, OrAssign, XorAssign, CatAssign, LSAssign, SRSAssign,
 		RSAssign, PowAssign:

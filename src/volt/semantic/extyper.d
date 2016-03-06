@@ -1923,7 +1923,7 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 		rtype = realType(removeRefAndOut(rraw));
 	}
 
-	if (isAssign(exp)) {
+	if (binop.op.isAssign()) {
 		checkConst(exp, ltype);
 	}
 

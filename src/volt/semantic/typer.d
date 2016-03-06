@@ -270,10 +270,16 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 		return boolType;
 	}
 
-	if (effectivelyConst(left) && bin.op == ir.BinOp.Op.Assign) {
-		throw makeCannotModify(bin, left);
+	if (effectivelyConst(left)) {
+		if (bin.op.isAssign()) {
+			throw makeCannotModify(bin, left);
+		} else {
+			left = copyTypeSmart(bin.location, left);
+			left.isConst = false;
+			left.isImmutable = false;
+		}
 	}
-	
+
 	if (left.nodeType == ir.NodeType.PrimitiveType &&
 		right.nodeType == ir.NodeType.PrimitiveType) {
 		auto lprim = cast(ir.PrimitiveType) left;
