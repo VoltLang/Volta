@@ -339,6 +339,7 @@ ir.ArrayType buildString(Location loc)
 {
 	auto c = buildChar(loc);
 	c.isImmutable = true;
+	c.glossedName = "string"; // For readability.
 	return buildArrayType(loc, c);
 }
 
