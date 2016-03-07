@@ -374,7 +374,7 @@ bool willConvertArray(ir.Type l, ir.Type r)
 	}
 	bool badImmutable = atype.isImmutable && rstore !is null &&
 	                    !rstore.isImmutable && !rstore.isConst;
-	if (rarr !is null && typesEqual(atype, rarr, IgnoreStorage) &&
+	if (rarr !is null && typesEqual(deepStripStorage(atype), deepStripStorage(rarr), IgnoreStorage) &&
 	    !badImmutable) {
 		return true;
 	}
