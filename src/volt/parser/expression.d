@@ -755,6 +755,9 @@ ParseStatus parseIsExp(ParserStream ps, out ir.IsExp ie)
 			case Struct, Union, Class, Enum, Interface, Function,
 				 Delegate, Super, Const, Immutable, Inout, Shared,
 				 Return:
+				if (ps.lookahead(1).type != CloseParen) {
+					goto default;
+				}
 				ie.specialisation = cast(ir.IsExp.Specialisation) ps.peek.type;
 				ps.get();
 				break;
