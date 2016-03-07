@@ -837,7 +837,8 @@ ir.Type getPostfixCallType(LanguagePass lp, ir.Postfix postfix, ir.Scope current
 
 ir.Type getTernaryType(LanguagePass lp, ir.Ternary ternary, ir.Scope currentScope)
 {
-	return getExpType(lp, ternary.ifTrue, currentScope);
+	auto itype = getExpType(lp, ternary.ifTrue, currentScope);
+	return removeStorageFields(itype);
 }
 
 ir.Type getUnaryType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
