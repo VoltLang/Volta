@@ -21,7 +21,7 @@ bool isHex(dchar d)
 }
 
 
-immutable(void)[] unescapeString(Location location, const char[] s)
+immutable(void)[] unescapeString(Location location, const(char)[] s)
 {
 	char[] output;
 

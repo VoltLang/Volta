@@ -63,8 +63,8 @@ extern(C) void vrt_eh_throw(object.Throwable t, string file, size_t line)
 
 	auto f = _Unwind_RaiseException(&e.e);
 	char[][1] msgs;
-	msgs[0] = "FAILED TO RAISE EXCEPTION";
-	object.vrt_panic(msgs);
+	msgs[0] = cast(char[])"FAILED TO RAISE EXCEPTION";
+	object.vrt_panic(cast(char[][])msgs);
 }
 
 extern(C) void vrt_eh_throw_slice_error(string file, size_t line)
@@ -89,8 +89,8 @@ extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
 	ubyte* data = _Unwind_GetLanguageSpecificData(ctx);
 	if (data is null) {
 		char[][1] msgs;
-		msgs[0] = "non region data";
-		object.vrt_panic(msgs);
+		msgs[0] = cast(char[])"non region data";
+		object.vrt_panic(cast(char[][])msgs);
 		return _Unwind_Reason_Code.FATAL_PHASE1_ERROR;
 	}
 
@@ -116,8 +116,8 @@ extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
 		lpStartBase = funcStart;
 	} else {
 		char[][1] msgs;
-		msgs[0] = "unhandled lpStartEncoding";
-		object.vrt_panic(msgs);
+		msgs[0] = cast(char[])"unhandled lpStartEncoding";
+		object.vrt_panic(cast(char[][])msgs);
 		return _Unwind_Reason_Code.FATAL_PHASE1_ERROR;
 	}
 
@@ -154,8 +154,8 @@ extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
 		callSiteTableLength = dw_read_uleb128(&data);
 	} else {
 		char[][1] msgs;
-		msgs[0] = "unhandled callingSiteEncoding";
-		object.vrt_panic(msgs);
+		msgs[0] = cast(char[])"unhandled callingSiteEncoding";
+		object.vrt_panic(cast(char[][])msgs);
 		return _Unwind_Reason_Code.FATAL_PHASE1_ERROR;
 	}
 
@@ -222,8 +222,8 @@ extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
 				}
 
 				char[][1] msgs;
-				msgs[0] = "unhandled case";
-				object.vrt_panic(msgs);
+				msgs[0] = cast(char[])"unhandled case";
+				object.vrt_panic(cast(char[][])msgs);
 				return _Unwind_Reason_Code.FATAL_PHASE1_ERROR;
 			}
 		}

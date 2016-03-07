@@ -24,11 +24,11 @@ extern(C) int vrt_run_main(int argc, char** argv, int function(string[]) vmain)
 		// For lack of T.classinfo
 		auto ti = **cast(object.TypeInfo[]**)t;
 		char[][3] msgs;
-		msgs[0] = "Uncaught exception";
-		msgs[1] = ti[ti.length - 1].mangledName;
-		msgs[2] = t.msg;
+		msgs[0] = cast(char[])"Uncaught exception";
+		msgs[1] = cast(char[])ti[ti.length - 1].mangledName;
+		msgs[2] = cast(char[])t.msg;
 
-		object.vrt_panic(msgs, t.throwFile, t.throwLine);
+		object.vrt_panic(cast(char[][])msgs, t.throwFile, t.throwLine);
 	}
 
 	object.vrt_gc_shutdown();

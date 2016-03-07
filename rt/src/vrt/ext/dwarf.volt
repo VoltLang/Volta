@@ -106,8 +106,8 @@ size_t dw_encoded_size(ubyte encoding)
 		return typeid(long).size;
 	default:
 		char[][1] msgs;
-		msgs[0] = "unhandled case";
-		object.vrt_panic(msgs);
+		msgs[0] = cast(char[])"unhandled case";
+		object.vrt_panic(cast(char[][])msgs);
 		break;
 	}
 	assert(false); // To please cfg detection
@@ -156,8 +156,8 @@ uintptr_t dw_read_encoded(const(ubyte)** data, ubyte encoding)
 		break;
 	default:
 		char[][1] msgs;
-		msgs[0] = "unhandled case type";
-		object.vrt_panic(msgs);
+		msgs[0] = cast(char[])"unhandled case type";
+		object.vrt_panic(cast(char[][])msgs);
 		break;
 	}
 
@@ -170,8 +170,8 @@ uintptr_t dw_read_encoded(const(ubyte)** data, ubyte encoding)
 			break;
 		default:
 			char[][1] msgs;
-			msgs[0] = "unhandled case type";
-			object.vrt_panic(msgs);
+			msgs[0] = cast(char[])"unhandled case type";
+			object.vrt_panic(cast(char[][])msgs);
 			break;
 		}
 

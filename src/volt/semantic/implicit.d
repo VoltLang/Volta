@@ -205,10 +205,10 @@ void doConvert(Context ctx, ir.Type type, ref ir.Exp exp)
 
 private:
 
-bool badConst(ir.Type a, ir.Type b)
+bool badConst(ir.Type a, ir.Type b, bool ignoreMutability = false)
 {
 	if (a is null || b is null || a.nodeType != b.nodeType ||
-	    !mutableIndirection(a)) {
+	    (!mutableIndirection(a) && !ignoreMutability)) {
 		// It might be a type mismatch, but it's not a const error.
 		return false;
 	}
@@ -218,13 +218,13 @@ bool badConst(ir.Type a, ir.Type b)
 	case ArrayType:
 		auto aatype = cast(ir.ArrayType)a;
 		auto batype = cast(ir.ArrayType)b;
-		return .badConst(aatype.base, batype.base) ||
+		return .badConst(aatype.base, batype.base, true) ||
 		       (a.isConst && !effectivelyConst(b) &&
 			   !effectivelyConst(batype.base));
 	case PointerType:
 		auto aptr = cast(ir.PointerType)a;
 		auto bptr = cast(ir.PointerType)b;
-		return .badConst(aptr.base, bptr.base) || badConst;
+		return .badConst(aptr.base, bptr.base, true) || badConst;
 	default:
 		return badConst;
 	}
@@ -372,7 +372,7 @@ bool willConvertArray(ir.Type l, ir.Type r)
 	if (rarr !is null) {
 		rstore = accumulateStorage(rarr);
 	}
-	bool badImmutable = atype.isImmutable && rstore !is null &&
+	bool badImmutable = astore.isImmutable && rstore !is null &&
 	                    !rstore.isImmutable && !rstore.isConst;
 	if (rarr !is null && typesEqual(deepStripStorage(atype), deepStripStorage(rarr), IgnoreStorage) &&
 	    !badImmutable) {

@@ -7,10 +7,10 @@ version (Emscripten || MSVC || Metal):
 
 extern(C) void vrt_eh_throw(object.Throwable t, string file, size_t line)
 {
-	char[][2] msgs;
+	const(char)[][2] msgs;
 	msgs[0] = "###EXCEPTION###\n";
-	msgs[1] = t.msg;
-	object.vrt_panic(msgs, file, line);
+	msgs[1] = cast(char[])t.msg;
+	object.vrt_panic(cast(char[][])msgs, file, line);
 }
 
 extern(C) void vrt_eh_throw_slice_error(size_t length, size_t targetSize, string file, size_t line)
