@@ -3838,6 +3838,13 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ref ir.Exp exp, ir.IsExp isExp)
+	{
+		isExp.type = flattenStorage(isExp.type);
+		isExp.specType = flattenStorage(isExp.specType);
+		return Continue;
+	}
+
 	override Status leave(ref ir.Exp exp, ir.IsExp isExp)
 	{
 		exp = evaluateIsExp(ctx, isExp);
