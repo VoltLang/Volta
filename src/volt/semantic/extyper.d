@@ -1911,6 +1911,8 @@ bool extypeBinOpPropertyAssign(Context ctx, ir.BinOp binop, ref ir.Exp exp)
  */
 void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 {
+	bool isAssign = .isAssign(binop.op);
+
 	if (extypeBinOpPropertyAssign(ctx, binop, exp)) {
 		return;
 	}
@@ -1923,7 +1925,7 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 		rtype = realType(removeRefAndOut(rraw));
 	}
 
-	if (binop.op.isAssign()) {
+	if (isAssign) {
 		checkConst(exp, ltype);
 	}
 
@@ -1982,7 +1984,7 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 	}
 
 	// Check for lvalue and touch up aa[key] = 'left'.
-	if (binop.op.isAssign()) {
+	if (isAssign) {
 		if (!isAssignable(binop.left)) {
 			throw makeExpected(binop.left.location, "lvalue");
 		}
@@ -2000,12 +2002,22 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 		}
 	}
 
+	if (!isAssign) {
+		// We may return any of these types, remove storage modifiers
+		// its a value we return not a reference to them.
+		ltype = removeStorageFields(ltype);
+		rtype = removeStorageFields(rtype);
+	} else {
+		// No need to scrub the storage from the source if we are
+		// assigning, we will always return the ltype in that case.
+	}
+
 	bool assigningOutsideFunction;
 	if (auto eref = cast(ir.ExpReference)binop.left) {
 		auto var = cast(ir.Variable) eref.decl;
 		assigningOutsideFunction = var !is null && var.storage != ir.Variable.Storage.Function;
 	}
-	if (assigningOutsideFunction && rtype.isScope && mutableIndirection(ltype) && isAssign(exp) && !binop.isInternalNestedAssign) {
+	if (assigningOutsideFunction && rtype.isScope && mutableIndirection(ltype) && isAssign && !binop.isInternalNestedAssign) {
 		throw makeNoEscapeScope(exp.location);
 	}
 

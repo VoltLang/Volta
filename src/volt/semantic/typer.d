@@ -263,6 +263,7 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 {
 	ir.Type left = getExpType(lp, bin.left, currentScope);
 	ir.Type right = getExpType(lp, bin.right, currentScope);
+	bool assign = bin.op.isAssign();
 
 	if (isComparison(bin.op)) {
 		auto boolType = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
@@ -270,14 +271,15 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 		return boolType;
 	}
 
-	if (effectivelyConst(left)) {
-		if (bin.op.isAssign()) {
-			throw makeCannotModify(bin, left);
-		} else {
-			left = copyTypeSmart(bin.location, left);
-			left.isConst = false;
-			left.isImmutable = false;
-		}
+	if (effectivelyConst(left) && assign) {
+		throw makeCannotModify(bin, left);
+	}
+
+	if ((left.isConst | left.isImmutable | left.isScope) && !assign) {
+		left = copyTypeSmart(bin.location, left);
+		left.isConst = false;
+		left.isImmutable = false;
+		left.isScope = false;
 	}
 
 	if (left.nodeType == ir.NodeType.PrimitiveType &&

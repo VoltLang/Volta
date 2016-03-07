@@ -19,6 +19,26 @@ import volt.semantic.classify : getParentFunction, realType, isFloatingPoint;
 
 
 /**
+ * Remove the given types storage modifiers. Only the given type is modified,
+ * any sub types are left unchanged. If no modification is made returns the
+ * given type. Will do a deep copy if modification is needed.
+ *
+ * const(const(char)[]) -> const(char)[].
+ */
+ir.Type removeStorageFields(ir.Type t)
+{
+	if (!t.isConst && !t.isImmutable && !t.isScope) {
+		return t;
+	}
+
+	t = copyTypeSmart(t.location, t);
+	t.isScope = false;
+	t.isConst = false;
+	t.isImmutable = false;
+	return t;
+}
+
+/**
  * Implicitly convert PrimitiveTypes to bools for 'if' and friends.
  *
  * Currently done for ifs but not other code.
