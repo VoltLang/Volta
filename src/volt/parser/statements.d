@@ -2,6 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.parser.statements;
 
+import watt.text.ascii;
+
 import ir = volt.ir.ir;
 import volt.ir.util;
 
@@ -207,6 +209,14 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 			goto case TokenType.Version;
 		} else if (ps.lookahead(1).type == TokenType.Assert) {
 			goto case TokenType.Assert;
+		} else if (ps.lookahead(1).type == TokenType.Is) {
+			ir.AssertStatement as;
+			succeeded = parseStaticIs(ps, as);
+			if (!succeeded) {
+				return succeeded;
+			}
+			dg(as);
+			return eatComments(ps);
 		} else {
 			goto default;
 		}
@@ -1329,5 +1339,35 @@ ParseStatus parseMixinStatement(ParserStream ps, out ir.MixinStatement ms)
 	}
 	ps.get();
 
+	return Succeeded;
+}
+
+ParseStatus parseStaticIs(ParserStream ps, out ir.AssertStatement as)
+{
+	ps.get();
+	ir.IsExp isExp;
+	ps.saveTokens();
+	auto succeeded = parseIsExp(ps, isExp);
+	if (!succeeded) {
+		return parseFailed(ps, ir.NodeType.IsExp);
+	}
+	Token[] tokens = ps.doneSavingTokens();
+	as = new ir.AssertStatement();
+	as.location = isExp.location;
+	as.isStatic = true;
+	as.condition = isExp;
+	string msg = "";
+	foreach (token; tokens) {
+		msg ~= token.value;
+		auto c = token.value.length == 0 ? ' ' : token.value[0];
+		switch (c) {
+		case '[', ']', '(', ')', '{', '}':
+			break;
+		default:
+			msg ~= " ";
+			break;
+		}
+	}
+	as.message = buildConstantString(isExp.location, msg);
 	return Succeeded;
 }

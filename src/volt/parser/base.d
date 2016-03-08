@@ -496,6 +496,8 @@ public:
 
 private:
 	string[] mComment;
+	Token[] mSavedTokens;
+	bool mSavingTokens;
 
 public:
 	this(Token[] tokens)
@@ -517,7 +519,23 @@ public:
 		if (mIndex < mTokens.length - 1) {
 			mIndex++;
 		}
+		if (mSavingTokens) {
+			mSavedTokens ~= retval;
+		}
 		return retval;
+	}
+
+	void saveTokens()
+	{
+		mSavingTokens = true;
+		mSavedTokens = [];
+	}
+
+	Token[] doneSavingTokens()
+	{
+		assert(mSavingTokens);
+		mSavingTokens = false;
+		return mSavedTokens;
 	}
 
 	void resetErrors()
