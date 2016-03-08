@@ -910,6 +910,17 @@ ir.BuiltinExp buildAARemove(Location loc, ir.Exp[] child)
 }
 
 /**
+ * Builds a BuiltinExp of AARemove type.
+ */
+ir.BuiltinExp buildAAIn(Location loc, ir.AAType aa, ir.Exp[] child)
+{
+	auto p = buildPtrSmart(loc, aa.value);
+	auto bi = new ir.BuiltinExp(ir.BuiltinExp.Kind.AAIn, p, child);
+	bi.location = loc;
+	return bi;
+}
+
+/**
  * Build a postfix Identifier expression.
  */
 ir.Postfix buildAccess(Location loc, ir.Exp exp, string name)

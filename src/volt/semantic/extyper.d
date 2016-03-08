@@ -1961,25 +1961,15 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 			throw makeExpected(binop.right.location, "associative array");
 		}
 		checkAndDoConvert(ctx, asAA.key, binop.left);
-		ir.Exp rtFn, key;
 		auto l = binop.location;
+		ir.Exp rtFn, key;
 		if (isArray(ltype)) {
-			rtFn = buildExpReference(l, ctx.lp.aaInArray, ctx.lp.aaInArray.name);
 			key = buildCast(l, buildArrayType(l, buildVoid(l)), copyExp(binop.left));
 		} else {
-			rtFn = buildExpReference(l, ctx.lp.aaInPrimitive, ctx.lp.aaInPrimitive.name);
 			key = buildCast(l, buildUlong(l), copyExp(binop.left));
 		}
-		assert(rtFn !is null);
 		assert(key !is null);
-
-		auto args = new ir.Exp[](2);
-		args[0] = copyExp(binop.right);
-		args[1] = key;
-
-		auto retptr = buildPtrSmart(l, asAA.value);
-		auto call = buildCall(l, rtFn, args);
-		exp = buildCast(l, retptr, call);
+		exp = buildAAIn(l, asAA, [copyExp(binop.right), binop.left]);
 		return;
 	}
 

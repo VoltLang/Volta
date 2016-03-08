@@ -502,6 +502,27 @@ public:
 			}
 			exp = buildCall(exp.location, rtfn, builtin.children);
 			break;
+		case AAIn:
+			if (builtin.children.length != 2) {
+				throw panic(exp.location, "malformed BuiltinExp.");
+			}
+			auto aa = cast(ir.AAType)realType(getExpType(lp, builtin.children[0], current));
+			if (aa is null) {
+				throw panic(exp.location, "malformed BuiltinExp.");
+			}
+			bool keyIsArray = isArray(realType(aa.key));
+			ir.Exp rtfn;
+			auto l = exp.location;
+			if (keyIsArray) {
+				rtfn = buildExpReference(exp.location, lp.aaInArray, lp.aaInArray.name);
+				builtin.children[1] = buildCast(l, buildArrayType(l, buildVoid(l)), copyExp(builtin.children[1]));
+			} else {
+				rtfn = buildExpReference(exp.location, lp.aaInPrimitive, lp.aaInPrimitive.name);
+				builtin.children[1] = buildCast(l, buildUlong(l), copyExp(builtin.children[1]));
+			}
+			exp = buildCall(exp.location, rtfn, builtin.children);
+			exp = buildCast(l, builtin.type, exp);
+			break;
 		case Invalid:
 			panicAssert(exp, false);
 		}
