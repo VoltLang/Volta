@@ -287,11 +287,14 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 		auto lprim = cast(ir.PrimitiveType) left;
 		auto rprim = cast(ir.PrimitiveType) right;
 		assert(lprim !is null && rprim !is null);
-		// We prefer the left side because of *Assign exps.
-		if (lprim.type.size() >= rprim.type.size()) {
-			return left;
+		// Keep the left completely intact if assign.
+		// For other ops, remove the charness of a type.
+		if (assign) {
+			return lprim;
+		} else if (lprim.type.size() >= rprim.type.size()) {
+			return charToInteger(lprim);
 		} else {
-			return right;
+			return charToInteger(rprim);
 		}
 	} else if (left.nodeType == ir.NodeType.PointerType &&
 			   right.nodeType == ir.NodeType.PointerType) {

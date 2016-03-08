@@ -19,6 +19,25 @@ import volt.semantic.classify : getParentFunction, realType, isFloatingPoint;
 
 
 /**
+ * Turn a [|w|d]char into [ubyte|ushort|uint] type.
+ */
+ir.PrimitiveType charToInteger(ir.PrimitiveType pt)
+{
+	ir.PrimitiveType.Kind type;
+	switch (pt.type) with (ir.PrimitiveType.Kind) {
+	case Char: type = Ubyte; break;
+	case Wchar: type = Ushort; break;
+	case Dchar: type = Uint; break;
+	default:
+		return pt;
+	}
+
+	pt = cast(ir.PrimitiveType) copyType(pt);
+	pt.type = type;
+	return pt;
+}
+
+/**
  * Remove the given types storage modifiers. Only the given type is modified,
  * any sub types are left unchanged. If no modification is made returns the
  * given type. Will do a deep copy if modification is needed.
