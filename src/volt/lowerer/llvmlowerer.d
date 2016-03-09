@@ -432,6 +432,7 @@ public:
 
 	override Status enter(ref ir.Exp exp, ir.BuiltinExp builtin)
 	{
+		auto l = exp.location;
 		final switch (builtin.kind) with (ir.BuiltinExp.Kind) {
 		case ArrayPtr:
 		case ArrayLength:
@@ -474,6 +475,16 @@ public:
 			}
 			bool keyIsArray = isArray(realType(aa.key));
 			bool valIsArray = isArray(realType(aa.value));
+			if (keyIsArray) {
+				builtin.children[1] = buildCastSmart(l, buildArrayType(l, buildVoid(l)), builtin.children[1]);
+			} else {
+				builtin.children[1] = buildCastSmart(l, buildUlong(l), builtin.children[1]);
+			}
+			if (valIsArray) {
+				builtin.children[2] = buildCastSmart(l, buildArrayType(l, buildVoid(l)), builtin.children[2]);
+			} else {
+				builtin.children[2] = buildCastSmart(l, buildUlong(l), builtin.children[2]);
+			}
 			ir.Exp rtfn;
 			if (keyIsArray && valIsArray) {
 				rtfn = buildExpReference(exp.location, lp.aaGetAA, lp.aaGetAA.name);
@@ -498,8 +509,10 @@ public:
 			ir.Exp rtfn;
 			if (keyIsArray) {
 				rtfn = buildExpReference(exp.location, lp.aaDeleteArray, lp.aaDeleteArray.name);
+				builtin.children[1] = buildCastSmart(l, buildArrayType(l, buildVoid(l)), builtin.children[1]);
 			} else {
 				rtfn = buildExpReference(exp.location, lp.aaDeletePrimitive, lp.aaDeletePrimitive.name);
+				builtin.children[1] = buildCastSmart(l, buildUlong(l), builtin.children[1]);
 			}
 			exp = buildCall(exp.location, rtfn, builtin.children);
 			break;
@@ -513,7 +526,6 @@ public:
 			}
 			bool keyIsArray = isArray(realType(aa.key));
 			ir.Exp rtfn;
-			auto l = exp.location;
 			if (keyIsArray) {
 				rtfn = buildExpReference(exp.location, lp.aaInArray, lp.aaInArray.name);
 				builtin.children[1] = buildCast(l, buildArrayType(l, buildVoid(l)), copyExp(builtin.children[1]));
@@ -528,7 +540,6 @@ public:
 			if (builtin.children.length != 1) {
 				throw panic(exp.location, "malformed BuiltinExp.");
 			}
-			auto l = exp.location;
 			auto rtFn = buildExpReference(l, lp.aaDup, lp.aaDup.name);
 			exp = buildCall(l, rtFn, builtin.children);
 			exp = buildCastSmart(l, builtin.type, exp);

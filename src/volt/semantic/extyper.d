@@ -532,16 +532,8 @@ bool replaceAAPostfixesIfNeeded(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			}
 			args = new ir.Exp[](3);
 			args[0] = copyExp(child.child);
-			if (keyIsArray) {
-				args[1] = buildCastSmart(l, buildArrayType(l, buildVoid(l)), postfix.arguments[0]);
-			} else {
-				args[1] = buildCastSmart(l, buildUlong(l), postfix.arguments[0]);
-			}
-			if (valIsArray) {
-				args[2] = buildCastSmart(l, buildArrayType(l, buildVoid(l)), postfix.arguments[1]);
-			} else {
-				args[2] = buildCastSmart(l, buildUlong(l), postfix.arguments[1]);
-			}
+			args[1] = copyExp(postfix.arguments[0]);
+			args[2] = copyExp(postfix.arguments[1]);
 			exp = buildAAGet(l, aa, args);
 		} else if (child.identifier.value == "remove") {
 			if (postfix.arguments.length != 1) {
@@ -549,11 +541,7 @@ bool replaceAAPostfixesIfNeeded(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			}
 			args = new ir.Exp[](2);
 			args[0] = copyExp(child.child);
-			if (keyIsArray) {
-				args[1] = buildCastSmart(l, buildArrayType(l, buildVoid(l)), postfix.arguments[0]);
-			} else {
-				args[1] = buildCastSmart(l, buildUlong(l), postfix.arguments[0]);
-			}
+			args[1] = copyExp(postfix.arguments[0]);
 			exp = buildAARemove(l, args);
 		} else {
 			panicAssert(child, false);
