@@ -2276,7 +2276,7 @@ void extypeThrow(Context ctx, ir.ThrowStatement t)
 	auto throwable = cast(ir.Class) retrieveTypeFromObject(ctx.lp, t.location, "Throwable");
 	assert(throwable !is null);
 
-	auto type = getExpType(ctx.lp, t.exp, ctx.current);
+	auto type = realType(getExpType(ctx.lp, t.exp, ctx.current), false);
 	auto asClass = cast(ir.Class) type;
 	if (asClass is null) {
 		throw makeThrowOnlyThrowable(t.exp, type);
@@ -3845,7 +3845,9 @@ public:
 
 	override Status enter(ref ir.Exp exp, ir.IsExp isExp)
 	{
+		isExp.type = ctx.lp.resolve(ctx.current, isExp.type);
 		isExp.type = flattenStorage(isExp.type);
+		isExp.specType = ctx.lp.resolve(ctx.current, isExp.specType);
 		isExp.specType = flattenStorage(isExp.specType);
 		return Continue;
 	}

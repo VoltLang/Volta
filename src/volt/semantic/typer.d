@@ -34,16 +34,23 @@ ir.Type getExpType(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 		return null;
 	}
 
-	while (result.nodeType == ir.NodeType.TypeReference) {
-		auto asTR = cast(ir.TypeReference) result;
-		panicAssert(exp, asTR !is null);
-		panicAssert(asTR, asTR.type !is null);
-		result = asTR.type;
+	// Validate the returned types.
+	debug {
+		if  (result.nodeType == ir.NodeType.TypeReference) {
+			auto asTR = cast(ir.TypeReference) result;
+			panicAssert(exp, asTR !is null);
+			panicAssert(asTR, asTR.type !is null);
+			auto named = cast(ir.Named) asTR.type;
+			panicAssert(asTR, named !is null);
+		}
 	}
+
+	// TODO remove me when we get the-amazing-typeresolver
 	auto storage = cast(ir.StorageType) result;
 	if (storage !is null && canTransparentlyReferToBase(storage)) {
 		result = storage.base;
 	}
+	// TODO remove me when we get the-amazing-typeresolver
 	auto at = cast(ir.AutoType) result;
 	if (at !is null && at.explicitType !is null) {
 		result = at.explicitType;
@@ -381,8 +388,8 @@ ir.Type getCommonSubtype(Location l, ir.Type[] types)
 		if (typesEqual(element, proposed)) {
 			return true;
 		}
-		auto aclass = cast(ir.Class) element;
-		auto bclass = cast(ir.Class) proposed;
+		auto aclass = cast(ir.Class) realType(element, false);
+		auto bclass = cast(ir.Class) realType(proposed, false);
 		if (aclass is null || bclass is null) {
 			return false;
 		}
