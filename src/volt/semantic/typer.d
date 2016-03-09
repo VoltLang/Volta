@@ -748,6 +748,8 @@ ir.Type getPostfixIdentifierAssocArrayType(ir.Postfix postfix, ir.AAType arrayTy
 		return buildArrayTypeSmart(postfix.location, arrayType.value);
 	case "get":
 		return buildFunctionTypeSmart(postfix.location, arrayType.key, arrayType.value);
+	case "remove":
+		return buildFunctionTypeSmart(postfix.location, buildBool(postfix.location), arrayType.key);
 	default:
 		throw makeFailedLookup(postfix, postfix.identifier.value);
 	}
