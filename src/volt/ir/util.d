@@ -921,6 +921,17 @@ ir.BuiltinExp buildAAIn(Location loc, ir.AAType aa, ir.Exp[] child)
 }
 
 /**
+ * Builds a BuiltinExp of AADup type.
+ */
+ir.BuiltinExp buildAADup(Location loc, ir.AAType aa, ir.Exp[] child)
+{
+	auto p = copyTypeSmart(loc, aa);
+	auto bi = new ir.BuiltinExp(ir.BuiltinExp.Kind.AADup, p, child);
+	bi.location = loc;
+	return bi;
+}
+
+/**
  * Build a postfix Identifier expression.
  */
 ir.Postfix buildAccess(Location loc, ir.Exp exp, string name)

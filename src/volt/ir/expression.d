@@ -713,6 +713,7 @@ public:
 		AAGet,       ///< aa.get
 		AARemove,    ///< aa.remove
 		AAIn,        ///< "foo" in aa
+		AADup,       ///< new aa[..];
 	}
 
 	Kind kind; ///< What kind of inbluilt is this.

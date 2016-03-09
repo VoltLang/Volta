@@ -523,6 +523,15 @@ public:
 			exp = buildCall(exp.location, rtfn, builtin.children);
 			exp = buildCast(l, builtin.type, exp);
 			break;
+		case AADup:
+			if (builtin.children.length != 1) {
+				throw panic(exp.location, "malformed BuiltinExp.");
+			}
+			auto l = exp.location;
+			auto rtFn = buildExpReference(l, lp.aaDup, lp.aaDup.name);
+			exp = buildCall(l, rtFn, builtin.children);
+			exp = buildCastSmart(l, builtin.type, exp);
+			break;
 		case Invalid:
 			panicAssert(exp, false);
 		}

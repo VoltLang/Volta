@@ -1667,8 +1667,9 @@ void extypeUnaryDup(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 			// Actual indices were used, which makes no sense for AAs.
 			throw makeExpected(l, format("new %s[..]", _unary.dupName));
 		}
-		exp = buildCall(l, buildExpReference(l, ctx.lp.aaDup, ctx.lp.aaDup.name), [_unary.value]);
-		exp = buildCastSmart(l, type, exp);
+		auto aa = cast(ir.AAType)rtype;
+		panicAssert(rtype, aa !is null);
+		exp = buildAADup(l, aa, [_unary.value]);
 		return;
 	}
 
