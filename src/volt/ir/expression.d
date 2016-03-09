@@ -187,6 +187,7 @@ public:
 	bool hasArgumentList;
 	Type type;  // with Cast and New.
 	Exp[] argumentList;  // With new StringObject("foo", "bar");
+	Function ctor; ///< The constructor to call.
 
 	// These are only for Dup.
 	QualifiedName dupName;

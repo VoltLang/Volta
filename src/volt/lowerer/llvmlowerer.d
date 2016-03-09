@@ -94,13 +94,14 @@ void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 	auto knfClass = retrieveClassFromObject(lp, loc, "KeyNotFoundException");
 	auto throwableClass = retrieveClassFromObject(lp, loc, "Throwable");
 
+	auto _new = buildNew(loc, knfClass, "KeyNotFoundException", [
+			cast(ir.Exp)buildConstantString(loc, `Key does not exist`)
+				]);
+	_new.ctor = knfClass.userConstructors[0];
+
 	buildExpStat(loc, thenState,
 		buildCall(loc, throwFn, [
-			buildCastSmart(throwableClass,
-				buildNew(loc, knfClass, "KeyNotFoundException", [
-					cast(ir.Exp)buildConstantString(loc, `Key does not exist`)
-					]),
-				),
+			buildCastSmart(throwableClass, _new),
 			buildConstantString(loc, loc.filename),
 			buildConstantSizeT(loc, lp, loc.line)],
 		throwFn.name));

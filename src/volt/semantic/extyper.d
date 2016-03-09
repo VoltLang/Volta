@@ -1623,9 +1623,11 @@ void extypeUnaryNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 	ctx.lp.actualize(_class);
 
 	auto fn = selectFunction(ctx.lp, ctx.current, _class.userConstructors, _unary.argumentList, _unary.location);
-	appendDefaultArguments(ctx, _unary.location, _unary.argumentList, fn);
+	_unary.ctor = fn;
 
 	ctx.lp.resolve(ctx.current, fn);
+
+	appendDefaultArguments(ctx, _unary.location, _unary.argumentList, fn);
 	if (_unary.argumentList.length > 0) {
 		rewriteHomogenousVariadic(ctx, fn.type, _unary.argumentList);
 	}

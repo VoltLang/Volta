@@ -341,9 +341,8 @@ public:
 
 	protected Status handleClass(ref ir.Exp exp, ir.Unary unary, ir.Class clazz)
 	{
-		auto ctor = selectFunction(lp, current, clazz.userConstructors, unary.argumentList, unary.location);
-		exp = buildClassConstructionWrapper(unary.location, lp, current, clazz, ctor, allocDgVar, unary.argumentList);
-
+		assert(unary.ctor !is null);
+		exp = buildClassConstructionWrapper(unary.location, lp, current, clazz, unary.ctor, allocDgVar, unary.argumentList);
 		return Continue;
 	}
 
