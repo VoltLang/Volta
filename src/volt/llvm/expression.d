@@ -1318,6 +1318,7 @@ void handleBuiltinExp(State state, ir.BuiltinExp inbuilt, Value result)
 		}
 		break;
 	case Invalid:
+	case ArrayDup:
 	case AALength:
 	case AAKeys:
 	case AAValues:

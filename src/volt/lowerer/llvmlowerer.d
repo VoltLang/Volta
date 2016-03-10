@@ -437,6 +437,36 @@ public:
 		case ArrayPtr:
 		case ArrayLength:
 			break;
+		case ArrayDup:
+			if (builtin.children.length != 3) {
+				throw panic(exp.location, "malformed BuiltinExp.");
+			}
+			auto sexp = buildStatementExp(l);
+			auto type = builtin.type;
+			auto asStatic = cast(ir.StaticArrayType)realType(type);
+			ir.Exp value = builtin.children[0];
+			value = buildSlice(l, value, []);
+			auto valueVar = buildVariableAnonSmart(l, current, sexp, type, value);
+			value = buildExpReference(l, valueVar, valueVar.name);
+
+			auto startCast = buildCastSmart(l, buildSizeT(l, lp), builtin.children[1]);
+			auto startVar = buildVariableAnonSmart(l, current, sexp, buildSizeT(l, lp), startCast);
+			auto start = buildExpReference(l, startVar, startVar.name);
+			auto endCast = buildCastSmart(l, buildSizeT(l, lp), builtin.children[2]);
+			auto endVar = buildVariableAnonSmart(l, current, sexp, buildSizeT(l, lp), endCast);
+			auto end = buildExpReference(l, endVar, endVar.name);
+
+
+			auto length = buildSub(l, end, start);
+			auto newExp = buildNewSmart(l, type, length);
+			auto var = buildVariableAnonSmart(l, current, sexp, type, newExp);
+			auto evar = buildExpReference(l, var, var.name);
+			auto sliceL = buildSlice(l, evar, copyExp(start), copyExp(end));
+			auto sliceR = buildSlice(l, value, copyExp(start), copyExp(end));
+
+			sexp.exp = buildAssign(l, sliceL, sliceR);
+			exp = sexp;
+			break;
 		case AALength:
 			if (builtin.children.length != 1) {
 				throw panic(exp.location, "malformed BuiltinExp.");

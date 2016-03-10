@@ -1626,7 +1626,7 @@ void extypeUnaryNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 }
 
 /**
- * Lower. 'new foo[0 .. $]' expressions.
+ * Lower 'new foo[0 .. $]' expressions to BuiltinExps.
  */
 void extypeUnaryDup(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 {
@@ -1639,7 +1639,6 @@ void extypeUnaryDup(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 		throw makeExpected(l, "function context");
 	}
 
-	auto sexp = buildStatementExp(l);
 	auto type = getExpType(ctx.lp, _unary.value, ctx.current);
 	auto asStatic = cast(ir.StaticArrayType)realType(type);
 	if (asStatic !is null) {
@@ -1660,36 +1659,9 @@ void extypeUnaryDup(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 		auto aa = cast(ir.AAType)rtype;
 		panicAssert(rtype, aa !is null);
 		exp = buildAADup(l, aa, [_unary.value]);
-		return;
+	} else {
+		exp = buildArrayDup(l, rtype, [copyExp(_unary.value), copyExp(_unary.dupBeginning), copyExp(_unary.dupEnd)]);
 	}
-
-
-	ir.Exp value = _unary.value;
-	if (asStatic !is null) {
-		value = buildSlice(l, value,
-			buildConstantSizeT(l, ctx.lp, 0),
-			buildConstantSizeT(l, ctx.lp, asStatic.length));
-	}
-	auto valueVar = buildVariableAnonSmart(l, ctx.current, sexp, type, value);
-	value = buildExpReference(l, valueVar, valueVar.name);
-
-	auto startCast = buildCastSmart(l, buildSizeT(l, ctx.lp), _unary.dupBeginning);
-	auto startVar = buildVariableAnonSmart(l, ctx.current, sexp, buildSizeT(l, ctx.lp), startCast);
-	auto start = buildExpReference(l, startVar, startVar.name);
-	auto endCast = buildCastSmart(l, buildSizeT(l, ctx.lp), _unary.dupEnd);
-	auto endVar = buildVariableAnonSmart(l, ctx.current, sexp, buildSizeT(l, ctx.lp), endCast);
-	auto end = buildExpReference(l, endVar, endVar.name);
-
-
-	auto length = buildSub(l, end, start);
-	auto newExp = buildNewSmart(l, type, length);
-	auto var = buildVariableAnonSmart(l, ctx.current, sexp, type, newExp);
-	auto evar = buildExpReference(l, var, var.name);
-	auto sliceL = buildSlice(l, evar, copyExp(start), copyExp(end));
-	auto sliceR = buildSlice(l, value, copyExp(start), copyExp(end));
-
-	sexp.exp = buildAssign(l, sliceL, sliceR);
-	exp = sexp;
 }
 
 void extypeUnary(Context ctx, ref ir.Exp exp, ir.Unary _unary)

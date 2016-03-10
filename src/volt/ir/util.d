@@ -834,6 +834,17 @@ ir.BuiltinExp buildArrayLength(Location loc, LanguagePass lp, ir.Exp child)
 }
 
 /**
+ * Builds an ArrayDup BuiltinExp.
+ */
+ir.BuiltinExp buildArrayDup(Location loc, ir.Type t, ir.Exp[] children)
+{
+	auto bi = new ir.BuiltinExp(
+		ir.BuiltinExp.Kind.ArrayDup, copyTypeSmart(loc, t), children);
+	bi.location = loc;
+	return bi;
+}
+
+/**
  * Builds a BuiltinExp of AALength type.
  */
 ir.BuiltinExp buildAALength(Location loc, LanguagePass lp, ir.Exp[] child)

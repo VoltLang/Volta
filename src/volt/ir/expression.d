@@ -707,6 +707,7 @@ public:
 		Invalid,     ///< Invalid.
 		ArrayPtr,    ///< arr.ptr
 		ArrayLength, ///< arr.length
+		ArrayDup,    ///< new arr[..]
 		AALength,    ///< aa.length
 		AAKeys,      ///< aa.keys
 		AAValues,    ///< aa.values
@@ -714,7 +715,7 @@ public:
 		AAGet,       ///< aa.get
 		AARemove,    ///< aa.remove
 		AAIn,        ///< "foo" in aa
-		AADup,       ///< new aa[..];
+		AADup,       ///< new aa[..]
 	}
 
 	Kind kind; ///< What kind of inbluilt is this.
