@@ -508,9 +508,12 @@ void extypeIdentifierExp(Context ctx, ref ir.Exp e, ir.IdentifierExp i, ir.Exp p
 
 bool replaceAAPostfixesIfNeeded(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 {
-	auto l = postfix.location;
-	if (postfix.op == ir.Postfix.Op.Call) {
+	auto l = exp.location;
+
+	switch (postfix.op) with (ir.Postfix.Op) {
+	case Call:
 		assert(postfix.identifier is null);
+
 		auto child = cast(ir.Postfix) postfix.child;
 		if (child is null || child.identifier is null) {
 			return false;
@@ -519,69 +522,62 @@ bool replaceAAPostfixesIfNeeded(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		if (aa is null) {
 			return false;
 		}
-		if (child.identifier.value != "get" && child.identifier.value != "remove") {
-			return false;
-		}
-		bool keyIsArray = isArray(realType(aa.key));
-		bool valIsArray = isArray(realType(aa.value));
-		ir.ExpReference rtFn;
-		ir.Exp[] args;
-		if (child.identifier.value == "get") {
+
+		switch (child.identifier.value) {
+		case "get":
 			if (postfix.arguments.length != 2) {
 				return false;
 			}
-			args = new ir.Exp[](3);
-			args[0] = copyExp(child.child);
-			args[1] = copyExp(postfix.arguments[0]);
-			args[2] = copyExp(postfix.arguments[1]);
+			auto args = new ir.Exp[](3);
+			args[0] = child.child;
+			args[1] = postfix.arguments[0];
+			args[2] = postfix.arguments[1];
 			exp = buildAAGet(l, aa, args);
-		} else if (child.identifier.value == "remove") {
+			return true;
+		case "remove":
 			if (postfix.arguments.length != 1) {
 				return false;
 			}
-			args = new ir.Exp[](2);
-			args[0] = copyExp(child.child);
-			args[1] = copyExp(postfix.arguments[0]);
+			auto args = new ir.Exp[](2);
+			args[0] = child.child;
+			args[1] = postfix.arguments[0];
 			exp = buildAARemove(l, args);
-		} else {
-			panicAssert(child, false);
+			return true;
+		default:
+			return false;
 		}
-		return true;
-	}
 
-	if (postfix.identifier is null) {
-		return false;
-	}
-	auto aa = cast(ir.AAType) realType(getExpType(ctx.lp, postfix.child, ctx.current));
-	if (aa is null) {
-		return false;
-	}
-	ir.Exp[] arg = [copyExp(postfix.child)];
-	switch (postfix.identifier.value) {
-	case "keys":
-		exp = buildAAKeys(l, aa, arg);
-		return true;
-	case "values":
-		exp = buildAAValues(l, aa, arg);
-		return true;
-	case "length":
-		exp = buildAALength(l, ctx.lp, arg);
-		return true;
-	case "rehash":
-		exp = buildAARehash(l, arg);
-		return true;
-	case "get":
-		return false;
-	case "remove":
-		return false;
-	default:
-		auto store = lookup(ctx.lp, ctx.current, postfix.location, postfix.identifier.value);
-		if (store is null || store.functions.length == 0) {
-			throw makeBadBuiltin(postfix.location, aa, postfix.identifier.value);
+	case Identifier:
+		auto aa = cast(ir.AAType) realType(getExpType(ctx.lp, postfix.child, ctx.current));
+		if (aa is null) {
+			return false;
 		}
+
+		switch (postfix.identifier.value) {
+		case "keys":
+			exp = buildAAKeys(l, aa, [postfix.child]);
+			return true;
+		case "values":
+			exp = buildAAValues(l, aa, [postfix.child]);
+			return true;
+		case "length":
+			exp = buildAALength(l, ctx.lp, [postfix.child]);
+			return true;
+		case "rehash":
+			exp = buildAARehash(l, [postfix.child]);
+			return true;
+		case "get", "remove":
+			return true;
+		default:
+			auto store = lookup(ctx.lp, ctx.current, postfix.location, postfix.identifier.value);
+			if (store is null || store.functions.length == 0) {
+				throw makeBadBuiltin(postfix.location, aa, postfix.identifier.value);
+			}
+			return false;
+		}
+	default:
 		return false;
 	}
-	assert(false);
 }
 
 void handleArgumentLabelsIfNeeded(Context ctx, ir.Postfix postfix,
