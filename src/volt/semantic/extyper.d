@@ -440,7 +440,7 @@ ir.Exp withLookup(Context ctx, ref ir.Exp exp, ir.Scope current,
 		return null;
 	}
 	if (exp.nodeType == ir.NodeType.IdentifierExp) {
-		extypePostfix(ctx, access, cast(ir.Postfix) access, null);
+		extypePostfix(ctx, access, Parent.NA);
 	}
 	return access;
 }
@@ -833,7 +833,7 @@ private void rewriteHomogenousVariadic(Context ctx,
  * type safe varargs, and explicit constructor calls.
  */
 void extypePostfixLeave(Context ctx, ref ir.Exp exp, ir.Postfix postfix,
-                        ir.Exp parent)
+                        Parent parent)
 {
 	if (postfix.arguments.length > 0) {
 		ctx.enter(postfix);
@@ -1094,7 +1094,7 @@ void replaceExpReferenceIfNeeded(Context ctx, ref ir.Exp exp, ir.ExpReference eR
  * Turn identifier postfixes into <ExpReference>.ident.
  */
 void consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes,
-                                  ref ir.Exp exp, ir.Exp parent)
+                                  ref ir.Exp exp, Parent parent)
 {
 	ir.Store lookStore; // The store that we are look in.
 	ir.Scope lookScope; // The scope attached to the lookStore.
@@ -1168,7 +1168,7 @@ void consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes,
 		auto parentKind = Parent.NA;
 		// Are we the last postfix.
 		if (i+1 >= postfixes.length) {
-			parentKind = classifyRelationship(postfix, parent);
+			parentKind = parent;
 		} else {
 			parentKind = classifyRelationship(postfix, postfixes[i+1]);
 		}
@@ -1215,7 +1215,7 @@ void extypePostfixIndex(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
  * Volt does not support property ufcs functions.
  */
 void postfixIdentifierUFCS(Context ctx, ref ir.Exp exp,
-                           ir.Postfix postfix, ir.Exp parent)
+                           ir.Postfix postfix, Parent parent)
 {
 	assert(postfix.identifier !is null);
 
@@ -1238,8 +1238,7 @@ void postfixIdentifierUFCS(Context ctx, ref ir.Exp exp,
 	}
 
 	// This is here to so that it errors
-	ir.Postfix call = cast(ir.Postfix) parent;
-	if (call is null || call.op != ir.Postfix.Op.Call) {
+	if (parent != Parent.Call) {
 		throw makeNoFieldOrPropertyOrIsUFCSWithoutCall(postfix.location, postfix.identifier.value);
 	}
 
@@ -1365,7 +1364,7 @@ bool rewriteIfPropertyStore(ref ir.Exp exp, ir.Exp child, string name,
  * Error otherwise.
  */
 void extypePostfixIdentifier(Context ctx, ref ir.Exp exp,
-                             ir.Postfix postfix, ir.Exp parent)
+                             ir.Postfix postfix, Parent parent)
 {
 	assert(postfix.op == ir.Postfix.Op.Identifier);
 
@@ -1438,13 +1437,13 @@ void extypePostfixIdentifier(Context ctx, ref ir.Exp exp,
 		throw makeAccessThroughWrongType(postfix.location, field);
 	}
 
-	auto parentKind = classifyRelationship(exp, parent);
-	handleStore(ctx, field, exp, store, postfix.child, parentKind,
+	handleStore(ctx, field, exp, store, postfix.child, parent,
 	            StoreSource.Instance);
 }
 
-void extypePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp parent)
+void extypePostfix(Context ctx, ref ir.Exp exp, Parent parent)
 {
+	auto postfix = cast(ir.Postfix)exp;
 	auto allPostfixes = collectPostfixes(postfix);
 
 	// Process first none postfix exp, often a IdentifierExp.
@@ -1485,7 +1484,8 @@ void extypePostfix(Context ctx, ref ir.Exp exp, ir.Postfix postfix, ir.Exp paren
 			// Make sure we haven't rewritten this yet.
 			assert(tmp.child is working);
 
-			extypePostfixLeave(ctx, tmp.child, working, tmp);
+			auto parentKind = classifyRelationship(working, tmp);
+			extypePostfixLeave(ctx, tmp.child, working, parentKind);
 		}
 	}
 	// The postfix parameter is stale now, don't touch it.
@@ -3700,8 +3700,8 @@ public:
 	override Status enter(ref ir.Exp e, ir.BinOp bin)
 	{
 		if (bin.left.nodeType == ir.NodeType.Postfix) {
-			auto postfix = cast(ir.Postfix) bin.left;
-			extypePostfix(ctx, bin.left, postfix, e);
+			auto parentKind = classifyRelationship(bin.left, e);
+			extypePostfix(ctx, bin.left, parentKind);
 		} else if (bin.left.nodeType == ir.NodeType.IdentifierExp) {
 			auto ie = cast(ir.IdentifierExp) bin.left;
 			extypeIdentifierExp(ctx, bin.left, ie, e);
@@ -3709,8 +3709,8 @@ public:
 			acceptExp(bin.left, this);
 		}
 		if (bin.right.nodeType == ir.NodeType.Postfix) {
-			auto postfix = cast(ir.Postfix) bin.right;
-			extypePostfix(ctx, bin.right, postfix, e);
+			auto parentKind = classifyRelationship(bin.left, e);
+			extypePostfix(ctx, bin.right, parentKind);
 		} else if (bin.right.nodeType == ir.NodeType.IdentifierExp) {
 			auto ie = cast(ir.IdentifierExp) bin.right;
 			extypeIdentifierExp(ctx, bin.right, ie, e);
@@ -3727,7 +3727,7 @@ public:
 
 	override Status enter(ref ir.Exp exp, ir.Postfix postfix)
 	{
-		extypePostfix(ctx, exp, postfix, null);
+		extypePostfix(ctx, exp, Parent.NA);
 		return ContinueParent;
 	}
 
