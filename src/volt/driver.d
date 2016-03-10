@@ -460,7 +460,7 @@ protected:
 				args ~= xcc;
 			}
 			foreach (xLink; settings.xlinker) {
-				args ~= "--Xlinker";
+				args ~= "-Xlinker";
 				args ~= xLink;
 			}
 		} else {
