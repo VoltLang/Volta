@@ -419,28 +419,19 @@ void handleScopeStore(Context ctx, string ident, ref ir.Exp exp, ir.Store store,
  * If qname has a child of name leaf, returns an expression looking it up.
  * Otherwise, null is returned.
  */
-ir.Exp withLookup(Context ctx, ref ir.Exp exp, ir.Scope current,
-                  string leaf)
+ir.Exp withLookup(Context ctx, ir.Exp withExp, ir.Scope current, string leaf)
 {
-	ir.Exp access = buildAccess(exp.location, copyExp(exp), leaf);
-	ir.Class _class;
-	string emsg;
-	ir.Scope eScope;
-	auto type = realType(getExpType(ctx.lp, exp, current), false);
-	if (exp.nodeType == ir.NodeType.Postfix) {
-		retrieveScope(ctx.lp, type, cast(ir.Postfix)exp, eScope, _class, emsg);
-	} else {
-		retrieveScope(ctx.lp, type, cast(ir.Postfix)access, eScope, _class, emsg);
-	}
+	ir.Postfix access = buildAccess(withExp.location, copyExp(withExp), leaf);
+	ir.Class _class; string emsg; ir.Scope eScope;
+
+	auto type = realType(getExpType(ctx.lp, withExp, current), false);
+	retrieveScope(ctx.lp, type, access, eScope, _class, emsg);
 	if (eScope is null) {
-		throw makeBadWithType(exp.location);
+		throw makeBadWithType(withExp.location);
 	}
-	auto store = lookupInGivenScopeOnly(ctx.lp, eScope, exp.location, leaf);
+	auto store = lookupInGivenScopeOnly(ctx.lp, eScope, withExp.location, leaf);
 	if (store is null) {
 		return null;
-	}
-	if (exp.nodeType == ir.NodeType.IdentifierExp) {
-		extypePostfix(ctx, access, Parent.NA);
 	}
 	return access;
 }
