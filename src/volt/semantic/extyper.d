@@ -2583,6 +2583,14 @@ ir.Node transformRuntimeAssert(Context ctx, ir.AssertStatement as)
  */
 void extypeForeach(Context ctx, ir.ForeachStatement fes)
 {
+	if (fes.itervars.length == 0) {
+		if (fes.beginIntegerRange is null || fes.endIntegerRange is null) {
+			throw makeExpected(fes.location, "variable");
+		}
+		fes.itervars ~= buildVariable(fes.location, buildAutoType(fes.location),
+			ir.Variable.Storage.Function, ctx.current.genAnonIdent());
+	}
+
 	bool isBlankVariable(size_t i)
 	{
 		auto atype = cast(ir.AutoType) fes.itervars[i].type;

@@ -598,43 +598,45 @@ ParseStatus parseForeachStatement(ParserStream ps, out ir.ForeachStatement f)
 	}
 	ps.get();
 
-	while (ps != TokenType.Semicolon) {
-		bool isRef = matchIf(ps, TokenType.Ref);
-		ir.Type type;
-		ir.Token name;
-		if (ps == [TokenType.Identifier, TokenType.Comma] || ps == [TokenType.Identifier, TokenType.Semicolon]) {
-			if (ps != TokenType.Identifier) {
-				return unexpectedToken(ps, f);
+	if (ps != [TokenType.IntegerLiteral, TokenType.DoubleDot]) {
+		while (ps != TokenType.Semicolon) {
+			bool isRef = matchIf(ps, TokenType.Ref);
+			ir.Type type;
+			ir.Token name;
+			if (ps == [TokenType.Identifier, TokenType.Comma] || ps == [TokenType.Identifier, TokenType.Semicolon]) {
+				if (ps != TokenType.Identifier) {
+					return unexpectedToken(ps, f);
+				}
+				name = ps.get();
+				type = buildAutoType(name.location);
+			} else {
+				auto succeeded = parseType(ps, type);
+				if (!succeeded) {
+					return parseFailed(ps, f);
+				}
+				if (ps != TokenType.Identifier) {
+					return unexpectedToken(ps, f);
+				}
+				name = ps.get();
 			}
-			name = ps.get();
-			type = buildAutoType(name.location);
-		} else {
-			auto succeeded = parseType(ps, type);
-			if (!succeeded) {
-				return parseFailed(ps, f);
+			if (isRef) {
+				auto at = new ir.AutoType();
+				at.location = type.location;
+				at.explicitType = type;
+				at.isForeachRef = true;
+				type = at;
 			}
-			if (ps != TokenType.Identifier) {
-				return unexpectedToken(ps, f);
-			}
-			name = ps.get();
+			f.itervars ~= new ir.Variable();
+			f.itervars[$-1].location = type.location;
+			f.itervars[$-1].type = type;
+			f.itervars[$-1].name = name.value;
+			matchIf(ps, TokenType.Comma);
 		}
-		if (isRef) {
-			auto at = new ir.AutoType();
-			at.location = type.location;
-			at.explicitType = type;
-			at.isForeachRef = true;
-			type = at;
+		if (ps != TokenType.Semicolon) {
+			return unexpectedToken(ps, f);
 		}
-		f.itervars ~= new ir.Variable();
-		f.itervars[$-1].location = type.location;
-		f.itervars[$-1].type = type;
-		f.itervars[$-1].name = name.value;
-		matchIf(ps, TokenType.Comma);
+		ps.get();
 	}
-	if (ps != TokenType.Semicolon) {
-		return unexpectedToken(ps, f);
-	}
-	ps.get();
 
 	ir.Exp firstExp;
 	auto succeeded = parseExp(ps, firstExp);
