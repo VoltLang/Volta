@@ -560,3 +560,44 @@ The above syntax can be used to copy associate arrays, too.
 Will look in the paths supplied to the compiler with the -J switch for 'filename.txt'. If it finds it, the import expression will be replaced with a string literal with the contents of that file.
 
 There are no default lookup paths provided, all string imports will fail if -J is not used at least once.
+
+##Statements
+
+In addition to statements that will be familiar to any C programmer, `if`, `while`, `for`, and so on, Volt includes a `foreach` statement for quickly looping over arrays and the like. The syntax is familiar to the loops in D, but there are several differences.
+
+    auto array = [4, 5, 6];
+    foreach (e; array) {
+        writefln("%s", e);  // Prints "1", then "2", then "3".
+    }
+
+In general, the foreach statement can be described as follows.
+
+    foreach ((<index>, )<element>; <aggregate>) { ... }
+
+That is to say, if there are two identifiers before the ';' the first is the index (the current count of iterations of this loop), and the second is the element (the value of this iteration). If there is only one, it just contains the element. These declare variables in the foreach block, but there is a large difference to regular variables: you cannot declare their type.
+
+If the aggregate is not an associative array, the index is always of type `size_t` and the element is the type of one element of the aggregate (e.g. if the aggregate is `int[]`, then the element is of type `int`).
+
+If the aggregate *is* an associative array, then the index is the key, and the element is the value.
+
+    auto aa = ["hello":2];
+    foreach (v; aa) {
+        writefln("%s", v);  // Prints the value, "2".
+    }
+    foreach (k, v; aa) {
+        writefln("%s %s", k, v);  // Prints "hello 2".
+    }
+
+You can also use `foreach` to iterate over an integer range.
+
+    foreach (i; 0 .. 10) {
+        writefln("%s", i);   // Prints "0", then "1", and so on, until "9".
+    }
+
+If you don't need the element in this case, it can be omitted.
+
+    foreach (0 .. 10) {
+        // Runs 10 times.
+    }
+
+Using the `foreach_reverse` keyword instead of `foreach` makes the foreach do all of the above, but backwards.
