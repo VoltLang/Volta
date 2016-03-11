@@ -293,18 +293,6 @@ bool willConvertPointer(ir.Type parameter, ir.Type argument)
 		return false;
 	}
 	auto aptr = cast(ir.PointerType) argument;
-	auto astr = cast(ir.Struct) aptr.base;
-	if (astr !is null) {
-		/* @TODO Remove
-		 * Hack for Tesla's overloading/024.
-		 * The proper fix is to make the Postfix.Call code
-		 * run on constructor call.
-		 */
-		auto loweredType = cast(ir.Type)astr.loweredNode;
-		if (loweredType !is null && typesEqual(parameter, loweredType)) {
-			return true;
-		}
-	}
 	auto ptr = cast(ir.PointerType) parameter;
 	if (ptr is null) {
 		return false;
