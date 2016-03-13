@@ -865,12 +865,15 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 {
 	assert(postfix.op == ir.Postfix.Op.Call);
 
+	ir.Function fn;
+	ir.CallableType asFunctionType;
+
 	// This is a hack to handle UFCS
 	auto b = cast(ir.BuiltinExp) postfix.child;
 	if (b !is null && b.kind == ir.BuiltinExp.Kind.UFCS) {
 		// Should we really call selectFunction here?
 		auto arguments = b.children[0] ~ postfix.arguments;
-		auto fn = selectFunction(ctx.lp, ctx.current, b.functions, arguments, postfix.location);
+		fn = selectFunction(ctx.lp, ctx.current, b.functions, arguments, postfix.location);
 
 		if (fn is null) {
 			throw makeNoFieldOrPropertyOrUFCS(postfix.location, postfix.identifier.value);
@@ -889,53 +892,49 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		}
 
 		postfix.argumentTags = theTag ~ postfix.argumentTags;
-	}
+		asFunctionType = fn.type;
 
-	auto type = getExpType(ctx.lp, postfix.child, ctx.current);
-	bool thisCall;
+	} else {
 
-	ir.CallableType asFunctionType;
-	auto asFunctionSet = cast(ir.FunctionSetType) realType(type);
-	ir.Function fn;
+		auto childType = getExpType(ctx.lp, postfix.child, ctx.current);
 
-	auto eref = cast(ir.ExpReference) postfix.child;
-	bool reeval = true;
+		auto eref = cast(ir.ExpReference) postfix.child;
+		bool reeval = true;
 
-	if (eref is null) {
-		reeval = false;
-		auto pchild = cast(ir.Postfix) postfix.child;
-		if (pchild !is null) {
-			eref = cast(ir.ExpReference) pchild.memberFunction;
-		}
-	}
-
-	if (asFunctionSet !is null) {
-		resolvePostfixOverload(ctx, postfix, eref, fn, asFunctionType, asFunctionSet, reeval);
-	} else if (eref !is null) {
-		fn = cast(ir.Function) eref.decl;
-		asFunctionType = cast(ir.CallableType) realType(type);
-		if (asFunctionType is null) {
-			if (asFunctionType is null) {
-				auto _class = cast(ir.Class) type;
-				if (_class !is null) {
-					// this(blah);
-					fn = selectFunction(ctx.lp, ctx.current, _class.userConstructors, postfix.arguments, postfix.location);
-					asFunctionType = fn.type;
-					eref.decl = fn;
-					thisCall = true;
-				} else {
-					throw makeBadCall(postfix, type);
-				}
+		if (eref is null) {
+			reeval = false;
+			auto pchild = cast(ir.Postfix) postfix.child;
+			if (pchild !is null) {
+				eref = cast(ir.ExpReference) pchild.memberFunction;
 			}
 		}
-	}
 
-	if (asFunctionType is null) {
-		asFunctionType = cast(ir.CallableType)type;
+		auto asFunctionSet = cast(ir.FunctionSetType) realType(childType);
+		if (asFunctionSet !is null) {
+			resolvePostfixOverload(ctx, postfix, eref, fn,
+			                       asFunctionType, asFunctionSet,
+			                       reeval);
+		} else if (eref !is null) {
+			fn = cast(ir.Function) eref.decl;
+			if (fn !is null) {
+				asFunctionType = fn.type;
+			}
+		}
+
 		if (asFunctionType is null) {
-			return;
+			asFunctionType = cast(ir.CallableType) realType(childType);
+		}
+
+		if (asFunctionType is null) {
+			throw makeBadCall(postfix, childType);
 		}
 	}
+
+	assert(asFunctionType !is null);
+
+	// All of the selecting function work has been done,
+	// and we have a single function or function type to call.
+	// Tho fn might be null.
 
 	handleArgumentLabelsIfNeeded(ctx, postfix, fn, exp);
 
@@ -972,13 +971,6 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		}
 		tagLiteralType(postfix.arguments[i], asFunctionType.params[i]);
 		checkAndConvertStringLiterals(ctx, asFunctionType.params[i], postfix.arguments[i]);
-	}
-
-	if (thisCall) {
-		// Explicit constructor call.
-		auto tvar = getThisVarNotNull(postfix, ctx);
-		auto tref = buildExpReference(postfix.location, tvar, "this");
-		postfix.arguments = buildCastToVoidPtr(postfix.location, tref) ~ postfix.arguments;
 	}
 }
 
