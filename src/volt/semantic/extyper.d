@@ -3639,6 +3639,29 @@ public:
 	 *
 	 */
 
+	override Status leave(ref ir.Exp exp, ir.ArrayLiteral al)
+	{
+		auto at = cast(ir.ArrayType)realType(al.type);
+		if (at is null) {
+			return Continue;
+		}
+		foreach (ref e; al.exps) {
+			auto c = cast(ir.Constant)e;
+			if (c is null) {
+				continue;
+			}
+			auto et = getExpType(ctx.lp, e, ctx.current);
+			auto prim = cast(ir.PrimitiveType)realType(et);
+			if (prim is null) {
+				continue;
+			}
+			if (!typesEqual(et, at.base) && willConvert(ctx, at.base, e)) {
+				e = buildCastSmart(exp.location, at.base, e);
+			}
+		}
+		return Continue;
+	}
+
 	override Status leave(ref ir.Exp exp, ir.Typeid _typeid)
 	{
 		if (_typeid.ident.length > 0) {
