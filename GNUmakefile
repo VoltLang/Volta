@@ -192,7 +192,7 @@ $(VIV_TARGET): $(TARGET) $(VIV_SRC)
 
 $(VIVIV_TARGET): $(VIV_TARGET) $(VIV_SRC)
 	@echo "  VOLTA  $(VIVIV_TARGET)"
-	@$(VIV_TARGET) --internal-perf --internal-d -o $(VIV_TARGET) $(VIV_SRC) $(LLVM_LDFLAGS)
+	@$(VIV_TARGET) --internal-perf --internal-d -o $(VIVIV_TARGET) $(VIV_SRC) $(LLVM_LDFLAGS)
 
 
 # Note these should not depend on target
