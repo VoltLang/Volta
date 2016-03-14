@@ -41,6 +41,10 @@ ir.Type flattenStorage(ir.Type type, ir.CallableType ct=null, size_t ctIndex=0, 
 		auto atype = cast(ir.ArrayType) type;
 		atype.base = flattenStorage(atype.base);
 		return atype;
+	case StaticArrayType:
+		auto satype = cast(ir.StaticArrayType)type;
+		satype.base = flattenStorage(satype.base);
+		return satype;
 	case PointerType:
 		auto ptype = cast(ir.PointerType) type;
 		ptype.base = flattenStorage(ptype.base);
