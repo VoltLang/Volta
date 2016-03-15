@@ -79,7 +79,7 @@ void appendDefaultArguments(Context ctx, ir.Location loc,
 			acceptExp(arguments[$-1], ctx.extyper);
 		} else {
 			assert(ee.nodeType == ir.NodeType.Constant);
-			arguments ~= copyExp(loc, ee);
+			arguments ~= copyExp(ee.location, ee);
 		}
 	}
 }
@@ -613,6 +613,7 @@ void handleArgumentLabelsIfNeeded(Context ctx, ir.Postfix postfix,
 				continue;
 			}
 			postfix.arguments ~= def;
+			postfix.arguments[$-1].location = def.location;
 			postfix.argumentLabels ~= arg;
 			postfix.argumentTags ~= ir.Postfix.TagKind.None;
 		}
