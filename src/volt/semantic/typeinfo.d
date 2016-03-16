@@ -10,6 +10,7 @@ import volt.ir.util;
 
 import volt.exceptions;
 import volt.interfaces;
+import volt.errors;
 
 import volt.semantic.typer;
 import volt.semantic.lookup;
@@ -221,6 +222,26 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 	} else {
 		literal.exps ~= buildConstantNull(type.location, lp.typeInfoClass);
 		literal.exps ~= buildArrayLiteralSmart(type.location, buildArrayType(type.location, lp.typeInfoClass));
+	}
+
+	// TypeInfo.classinfo
+	if (asClass !is null) {
+		auto cinfoLiteral = new ir.ClassLiteral();
+		cinfoLiteral.location = type.location;
+		cinfoLiteral.type = buildTypeReference(type.location, lp.classInfoClass, lp.classInfoClass.name);
+		ir.Exp[] interfaceLits;
+		panicAssert(asClass, asClass.parentInterfaces.length <= asClass.interfaceOffsets.length);
+		foreach (i, iface; asClass.parentInterfaces) {
+			auto lit = new ir.ClassLiteral();
+			lit.type = buildTypeReference(type.location, lp.interfaceInfoClass, lp.interfaceInfoClass.name);
+			lit.location = type.location;
+			lit.exps ~= buildConstantSizeT(type.location, lp, asClass.interfaceOffsets[i]);
+			interfaceLits ~= lit;
+		}
+		cinfoLiteral.exps ~= buildArrayLiteralSmart(type.location, buildArrayType(type.location, lp.interfaceInfoClass), interfaceLits);
+		literal.exps ~= cinfoLiteral;
+	} else {
+		literal.exps ~= buildConstantNull(type.location, lp.classInfoClass);
 	}
 
 	return literal;

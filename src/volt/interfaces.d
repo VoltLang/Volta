@@ -127,6 +127,8 @@ public:
 	ir.Class typeInfoClass;
 	ir.Class attributeClass;
 	ir.Class assertErrorClass;
+	ir.Class classInfoClass;
+	ir.Class interfaceInfoClass;
 	ir.Struct arrayStruct;
 	ir.Struct moduleInfoStruct;
 	ir.Variable allocDgVariable;

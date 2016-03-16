@@ -120,6 +120,17 @@ class TypeInfo
 	TypeInfo key, value;  // For AAs.
 	TypeInfo ret;  // For functions and delegates.
 	TypeInfo[] args;  // For functions and delegates.
+	ClassInfo classinfo;  // For objects.
+}
+
+class ClassInfo
+{
+	InterfaceInfo[] interfaces;
+}
+
+class InterfaceInfo
+{
+	size_t offset;
 }
 
 class Object

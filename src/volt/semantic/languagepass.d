@@ -182,6 +182,8 @@ public:
 		typeInfoClass = getClass("TypeInfo");
 		attributeClass = getClass("Attribute");
 		assertErrorClass = getClass("AssertError");
+		classInfoClass = getClass("ClassInfo");
+		interfaceInfoClass = getClass("InterfaceInfo");
 		arrayStruct = getStruct("ArrayStruct");
 		moduleInfoStruct = getStruct("ModuleInfo");
 		allocDgVariable = getVar("allocDg");
