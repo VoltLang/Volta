@@ -12,6 +12,8 @@ import volt.exceptions;
 import volt.interfaces;
 import volt.errors;
 
+import volt.token.location;
+
 import volt.semantic.typer;
 import volt.semantic.lookup;
 import volt.semantic.mangle;
@@ -226,23 +228,33 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 
 	// TypeInfo.classinfo
 	if (asClass !is null) {
-		auto cinfoLiteral = new ir.ClassLiteral();
-		cinfoLiteral.location = type.location;
-		cinfoLiteral.type = buildTypeReference(type.location, lp.classInfoClass, lp.classInfoClass.name);
-		ir.Exp[] interfaceLits;
-		panicAssert(asClass, asClass.parentInterfaces.length <= asClass.interfaceOffsets.length);
-		foreach (i, iface; asClass.parentInterfaces) {
-			auto lit = new ir.ClassLiteral();
-			lit.type = buildTypeReference(type.location, lp.interfaceInfoClass, lp.interfaceInfoClass.name);
-			lit.location = type.location;
-			lit.exps ~= buildConstantSizeT(type.location, lp, asClass.interfaceOffsets[i]);
-			interfaceLits ~= lit;
-		}
-		cinfoLiteral.exps ~= buildArrayLiteralSmart(type.location, buildArrayType(type.location, lp.interfaceInfoClass), interfaceLits);
-		literal.exps ~= cinfoLiteral;
+		literal.exps ~= getClassInfo(type.location, lp, asClass);
 	} else {
 		literal.exps ~= buildConstantNull(type.location, lp.classInfoClass);
 	}
 
 	return literal;
+}
+
+ir.ClassLiteral getClassInfo(Location l, LanguagePass lp, ir.Class asClass)
+{
+	auto cinfoLiteral = new ir.ClassLiteral();
+	cinfoLiteral.location = l;
+	cinfoLiteral.type = buildTypeReference(l, lp.classInfoClass, lp.classInfoClass.name);
+	ir.Exp[] interfaceLits;
+	panicAssert(asClass, asClass.parentInterfaces.length <= asClass.interfaceOffsets.length);
+	foreach (i, iface; asClass.parentInterfaces) {
+		auto lit = new ir.ClassLiteral();
+		lit.type = buildTypeReference(l, lp.interfaceInfoClass, lp.interfaceInfoClass.name);
+		lit.location = l;
+		lit.exps ~= buildConstantSizeT(l, lp, asClass.interfaceOffsets[i]);
+		interfaceLits ~= lit;
+	}
+	cinfoLiteral.exps ~= buildArrayLiteralSmart(l, buildArrayType(l, lp.interfaceInfoClass), interfaceLits);
+	if (asClass.parentClass !is null) {
+		cinfoLiteral.exps ~= getClassInfo(l, lp, asClass.parentClass);
+	} else {
+		cinfoLiteral.exps ~= buildConstantNull(l, lp.classInfoClass);
+	}
+	return cinfoLiteral;
 }

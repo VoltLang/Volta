@@ -126,6 +126,7 @@ class TypeInfo
 class ClassInfo
 {
 	InterfaceInfo[] interfaces;
+	ClassInfo base;
 }
 
 class InterfaceInfo
