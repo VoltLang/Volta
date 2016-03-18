@@ -11,10 +11,12 @@ extern(C) void* vrt_handle_cast(void* obj, object.TypeInfo tinfo)
 		if (list[i] is tinfo) {
 			return obj;
 		}
-		foreach (iface; list[i].classinfo.interfaces) {
-			if (iface.mangledName == tinfo.mangledName) {
-				ubyte* ptr = cast(ubyte*)obj;
-				return cast(void*)(ptr + iface.offset);
+		if (tinfo.type == object.TYPE_INTERFACE) {
+			foreach (iface; list[i].classinfo.interfaces) {
+				if (iface.mangledName == tinfo.mangledName) {
+					ubyte* ptr = cast(ubyte*)obj;
+					return cast(void*)(ptr + iface.offset);
+				}
 			}
 		}
 	}
