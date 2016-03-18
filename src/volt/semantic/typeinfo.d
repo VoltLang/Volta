@@ -228,7 +228,7 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 
 	// TypeInfo.classinfo
 	if (asClass !is null) {
-		literal.exps ~= getClassInfo(type.location, lp, asClass);
+		literal.exps ~= getClassInfo(type.location, mod, lp, asClass);
 	} else {
 		literal.exps ~= buildConstantNull(type.location, lp.classInfoClass);
 	}
@@ -236,7 +236,7 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 	return literal;
 }
 
-ir.ClassLiteral getClassInfo(Location l, LanguagePass lp, ir.Class asClass)
+ir.ClassLiteral getClassInfo(Location l, ir.Module mod, LanguagePass lp, ir.Class asClass)
 {
 	auto cinfoLiteral = new ir.ClassLiteral();
 	cinfoLiteral.location = l;
@@ -247,12 +247,23 @@ ir.ClassLiteral getClassInfo(Location l, LanguagePass lp, ir.Class asClass)
 		auto lit = new ir.ClassLiteral();
 		lit.type = buildTypeReference(l, lp.interfaceInfoClass, lp.interfaceInfoClass.name);
 		lit.location = l;
+
+		auto mangledNameConstant = new ir.Constant();
+		mangledNameConstant.location = iface.location;
+		if (iface.mangledName is null) {
+			iface.mangledName = mangle(iface);
+		}
+		mangledNameConstant._string = iface.mangledName;
+		mangledNameConstant.arrayData = cast(immutable(void)[]) mangledNameConstant._string;
+		mangledNameConstant.type = new ir.ArrayType(new ir.PrimitiveType(ir.PrimitiveType.Kind.Char));
+		lit.exps ~= mangledNameConstant;
+
 		lit.exps ~= buildConstantSizeT(l, lp, asClass.interfaceOffsets[i]);
 		interfaceLits ~= lit;
 	}
 	cinfoLiteral.exps ~= buildArrayLiteralSmart(l, buildArrayType(l, lp.interfaceInfoClass), interfaceLits);
 	if (asClass.parentClass !is null) {
-		cinfoLiteral.exps ~= getClassInfo(l, lp, asClass.parentClass);
+		cinfoLiteral.exps ~= getClassInfo(l, mod, lp, asClass.parentClass);
 	} else {
 		cinfoLiteral.exps ~= buildConstantNull(l, lp.classInfoClass);
 	}

@@ -131,6 +131,7 @@ class ClassInfo
 
 class InterfaceInfo
 {
+	char[] mangledName;
 	size_t offset;
 }
 

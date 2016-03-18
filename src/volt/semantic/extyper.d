@@ -1499,7 +1499,10 @@ void extypeUnaryCastTo(Context ctx, ref ir.Exp exp, ir.Unary unary)
 		return;
 	}
 
-	auto to = getClass(unary.type);
+	ir.Type to = getClass(unary.type);
+	if (to is null) {
+		to = cast(ir._Interface)realType(unary.type);
+	}
 	auto from = getClass(type);
 
 	if (to is null || from is null || to is from) {
