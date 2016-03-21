@@ -287,8 +287,6 @@ ir.Type realType(ir.Type t, bool stripEnum = true)
 		}
 	}
 
-	assert(t.nodeType != ir.NodeType.StorageType);
-
 	return t;
 }
 

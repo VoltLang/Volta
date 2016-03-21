@@ -159,25 +159,6 @@ void mangleType(ir.Type t, ref string mangledString)
 		mangledString ~= toString(asSA.length);
 		mangleType(asSA.base, mangledString);
 		break;
-	case StorageType:
-		auto asST = cast(ir.StorageType) t;
-		assert(asST !is null);
-		final switch (asST.type) with (ir.StorageType.Kind) {
-		case Auto: mangledString ~= "?"; break;  // the autos may be left in during -E.
-		case Scope: mangledString ~= "e"; break;
-		case Const: mangledString ~= "o"; break;
-		case Immutable: mangledString ~= "m"; break;
-		case Ref: mangledString ~= "r"; break;
-		case Out: mangledString ~= "O"; break;
-		case ir.StorageType.Kind.Invalid:
-			throw panic(asST, "invalid storage type");
-		}
-		if (asST.base is null) {
-			mangledString ~= "???NULLBASE???";
-		} else {
-			mangleType(asST.base, mangledString);
-		}
-		break;
 	default:
 		throw panicUnhandled(t, format("%s in mangler", t.nodeType));
 	}
