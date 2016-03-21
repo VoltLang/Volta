@@ -331,23 +331,6 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 		}
 		assert(pointer !is null);
 		return pointer;
-	} else if ((left.nodeType == ir.NodeType.StorageType && right.nodeType != ir.NodeType.StorageType) ||
-			   (left.nodeType != ir.NodeType.StorageType && right.nodeType == ir.NodeType.StorageType)) {
-		ir.StorageType storage = cast(ir.StorageType) left;
-		ir.Type other = right;
-		if (storage is null) {
-			storage = cast(ir.StorageType) right;
-			other = left;
-		}
-		assert(storage !is null);
-		while (storage.base.nodeType == ir.NodeType.StorageType) {
-			storage = cast(ir.StorageType) storage.base;
-		}
-		assert(storage !is null);
-		if (!mutableIndirection(storage.base) && isImplicitlyConvertable(storage.base, other)) {
-			return other;
-		}
-		throw makeBadImplicitCast(bin, right, left);
 	} else {
 		auto lt = cast(ir.Type) realType(left);
 		auto rt = cast(ir.Type) realType(right);
@@ -590,10 +573,6 @@ void retrieveScope(LanguagePass lp, ir.Node tt, ir.Postfix postfix, ref ir.Scope
 		auto asTR = cast(ir.TypeReference) tt;
 		assert(asTR !is null);
 		retrieveScope(lp, asTR.type, postfix, _scope, _class, emsg);
-	} else if (tt.nodeType == ir.NodeType.StorageType) {
-		auto asStorage = cast(ir.StorageType) tt;
-		assert(asStorage !is null);
-		retrieveScope(lp, asStorage.base, postfix, _scope, _class, emsg);
 	} else if (tt.nodeType == ir.NodeType.Enum) {
 		auto asEnum = cast(ir.Enum) tt;
 		assert(asEnum !is null);
@@ -822,12 +801,6 @@ ir.Type getPostfixCallType(LanguagePass lp, ir.Postfix postfix, ir.Scope current
 		}
 	} else {
 		ftype = cast(ir.CallableType) type;
-		if (ftype is null) {
-			auto _storage = cast(ir.StorageType) type;
-			if (_storage !is null) {
-				ftype = cast(ir.CallableType) _storage.base;
-			}
-		}
 	}
 
 	if (ftype is null) {
