@@ -1870,8 +1870,8 @@ void extypeBinOp(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 	{
 		auto lraw = getExpType(ctx.lp, binop.left, ctx.current);
 		auto rraw = getExpType(ctx.lp, binop.right, ctx.current);
-		ltype = realType(removeRefAndOut(lraw));
-		rtype = realType(removeRefAndOut(rraw));
+		ltype = realType(lraw);
+		rtype = realType(rraw);
 	}
 
 	if (isAssign) {
@@ -3318,11 +3318,6 @@ public:
 	{
 		ctx.lp.resolve(ctx.current, ed);
 		return ContinueParent;
-	}
-
-	override Status enter(ir.StorageType st)
-	{
-		return Continue;
 	}
 
 	override Status enter(ir.FunctionParam p)

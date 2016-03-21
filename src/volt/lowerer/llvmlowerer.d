@@ -976,14 +976,14 @@ public:
 		auto loc = binOp.location;
 
 		auto leftType = getExpType(lp, binOp.left, current);
-		auto leftArrayType = cast(ir.ArrayType)realType(removeRefAndOut(leftType));
+		auto leftArrayType = cast(ir.ArrayType)realType(leftType);
 		if (leftArrayType is null)
 			throw panic(binOp, "couldn't retrieve array type from cat assign.");
 
 		// Currently realType is not needed here, but if it ever was
 		// needed remember to realType leftArrayType.base as well,
 		// since realType will remove enum's as well.
-		auto rightType = removeRefAndOut(getExpType(lp, binOp.right, current));
+		auto rightType = getExpType(lp, binOp.right, current);
 
 		if (typesEqual(rightType, leftArrayType.base)) {
 			// T[] ~ T

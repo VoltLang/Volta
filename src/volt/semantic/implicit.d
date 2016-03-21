@@ -335,14 +335,14 @@ bool willConvertClass(ir.Type parameter, ir.Type argument)
 
 bool willConvertArray(ir.Type l, ir.Type r)
 {
-	auto rarr = cast(ir.ArrayType) removeRefAndOut(r);
-	auto stype = cast(ir.StaticArrayType) realType(removeRefAndOut(l));
+	auto rarr = cast(ir.ArrayType) r;
+	auto stype = cast(ir.StaticArrayType) realType(l);
 	if (stype !is null && rarr !is null) {
 		// The extyper will check the length.
 		return willConvert(stype.base, rarr.base);
 	}
-	stype = cast(ir.StaticArrayType)realType(removeRefAndOut(r));
-	auto larr = cast(ir.ArrayType)realType(removeRefAndOut(l));
+	stype = cast(ir.StaticArrayType)realType(r);
+	auto larr = cast(ir.ArrayType)realType(l);
 	if (stype !is null && larr !is null) {
 		return willConvert(larr.base, stype.base);
 	}
@@ -351,7 +351,7 @@ bool willConvertArray(ir.Type l, ir.Type r)
 		return false;
 	}
 
-	auto atype = cast(ir.ArrayType) realType(removeRefAndOut(l));
+	auto atype = cast(ir.ArrayType) realType(l);
 	if (atype is null) {
 		return false;
 	}

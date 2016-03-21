@@ -86,10 +86,6 @@ size_t size(LanguagePass lp, ir.Node node)
 		assert(asTR !is null);
 		assert(asTR.type !is null);
 		return size(lp, asTR.type);
-	case StorageType:
-		auto asST = cast(ir.StorageType) node;
-		assert(asST !is null);
-		return size(lp, asST.base);
 	case StaticArrayType:
 		auto _static = cast(ir.StaticArrayType) node;
 		assert(_static !is null);
@@ -220,10 +216,6 @@ size_t alignment(LanguagePass lp, ir.Type node)
 		auto asTR = cast(ir.TypeReference) node;
 		assert(asTR !is null);
 		return alignment(lp, asTR.type);
-	case StorageType:
-		auto asST = cast(ir.StorageType) node;
-		assert(asST !is null);
-		return alignment(lp, asST.base);
 	case StaticArrayType:
 		auto _static = cast(ir.StaticArrayType) node;
 		assert(_static !is null);
@@ -353,13 +345,6 @@ bool mutableIndirection(ir.Type t)
 			}
 		}
 		return false;
-	case StorageType:
-		auto asStorageType = cast(ir.StorageType) t;
-		assert(asStorageType !is null);
-		if (asStorageType.type == ir.StorageType.Kind.Immutable || asStorageType.type == ir.StorageType.Kind.Const) {
-			return false;
-		}
-		return mutableIndirection(asStorageType.base);
 	case AutoType:
 		auto asAutoType = cast(ir.AutoType) t;
 		assert(asAutoType !is null);
@@ -418,21 +403,11 @@ bool isArray(ir.Type t)
 	return (cast(ir.ArrayType) t) !is null;
 }
 
-bool canTransparentlyReferToBase(ir.StorageType storage)
-{
-	return storage.type == ir.StorageType.Kind.Auto || storage.type == ir.StorageType.Kind.Ref;
-}
-
 bool acceptableForUserAttribute(LanguagePass lp, ir.Scope current, ir.Type type)
 {
 	auto asPrim = cast(ir.PrimitiveType) type;
 	if (asPrim !is null) {
 		return true;
-	}
-
-	auto asStorage = cast(ir.StorageType) type;
-	if (asStorage !is null) {
-		return acceptableForUserAttribute(lp, current, asStorage.base);
 	}
 
 	auto asArray = cast(ir.ArrayType) type;
@@ -581,47 +556,6 @@ bool isVoid(ir.Type type)
 }
 
 /**
- * Return a view of the given type without ref or out.
- * Doesn't copy internally, so don't place the result into the IR.
- */
-ir.Type removeRefAndOut(ir.Type type)
-{
-	assert(type !is null);
-	auto stype = cast(ir.StorageType)type;
-	if (stype is null) {
-		return type;
-	}
-	if (stype.type == ir.StorageType.Kind.Ref || stype.type == ir.StorageType.Kind.Out) {
-		return removeRefAndOut(stype.base);
-	}
-	auto outType = new ir.StorageType();
-	outType.type = stype.type;
-	outType.location = type.location;
-	outType.base = removeRefAndOut(stype.base);
-	return outType;
-}
-
-/**
- * Return a view of the given type without const or immutable.
- * Doesn't copy internally, so don't place the result into the IR.
- */
-ir.Type removeConstAndImmutable(ir.Type type)
-{
-	auto stype = cast(ir.StorageType)type;
-	if (stype is null) {
-		return type;
-	}
-	if (stype.type == ir.StorageType.Kind.Const || stype.type == ir.StorageType.Kind.Immutable) {
-		return removeConstAndImmutable(stype.base);
-	}
-	auto outType = new ir.StorageType();
-	outType.type = stype.type;
-	outType.location = type.location;
-	outType.base = removeConstAndImmutable(outType.base);
-	return outType;
-}
-
-/**
  * Making the code more readable.
  */
 enum IgnoreStorage = true;
@@ -714,14 +648,6 @@ bool typesEqual(ir.Type a, ir.Type b, bool ignoreStorage = false)
 			if (!typesEqual(ap.params[i], bp.params[i], ignoreStorage))
 				return false;
 		return true;
-	} else if (a.nodeType == ir.NodeType.StorageType ||
-		   b.nodeType == ir.NodeType.StorageType) {
-		auto sta = cast(ir.StorageType)a;
-		auto stb = cast(ir.StorageType)b;
-		if ((sta !is null && sta.base is null) || (stb !is null && stb.base is null)) {
-			return false;
-		}
-		throw panic(a.location, "tested storage type for equality");
 	} else if (a.nodeType == ir.NodeType.NoType &&
 	           a.nodeType == ir.NodeType.NoType) {
 		return true;
@@ -769,9 +695,6 @@ int typeToRuntimeConstant(LanguagePass lp, ir.Scope current, ir.Type type)
 	case AAType: return lp.TYPE_AA;
 	case FunctionType: return lp.TYPE_FUNCTION;
 	case DelegateType: return lp.TYPE_DELEGATE;
-	case StorageType:
-		auto storage = cast(ir.StorageType) type;
-		return typeToRuntimeConstant(lp, current, storage.base);
 	default:
 		throw panicUnhandled(type, "typeToRuntimeConstant");
 	}
@@ -931,16 +854,6 @@ bool isImplicitlyConvertable(ir.Type from, ir.Type to)
 {
 	auto fprim = cast(ir.PrimitiveType)from;
 	auto tprim = cast(ir.PrimitiveType)to;
-
-	auto tstorage = cast(ir.StorageType) to;
-	if (tstorage !is null) {
-		return typesEqual(from, tstorage.base) || isImplicitlyConvertable(from, tstorage.base);
-	}
-
-	auto fstorage = cast(ir.StorageType) from;
-	if (fstorage !is null) {
-		return typesEqual(to, fstorage.base) || isImplicitlyConvertable(fstorage.base, to);
-	}
 
 	if (fprim is null || tprim is null) {
 		return false;
