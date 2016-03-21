@@ -1265,19 +1265,6 @@ bool builtInField(Context ctx, ref ir.Exp exp, ir.Exp child, ir.Type type, strin
 	}
 }
 
-bool builtInField(ir.Type type, string field)
-{
-	auto aa = cast(ir.AAType) type;
-	if (aa !is null) {
-		return field == "length" ||
-			field == "get" ||
-			field == "remove" ||
-			field == "keys" ||
-			field == "values";
-	}
-	return false;
-}
-
 /**
  * Rewrite exp if the store contains any property functions, works
  * for both PostfixExp and IdentifierExp.
@@ -1355,11 +1342,6 @@ void extypePostfixIdentifier(Context ctx, ref ir.Exp exp,
 	assert(type !is null);
 	assert(type.nodeType != ir.NodeType.FunctionSetType);
 	if (builtInField(ctx, exp, postfix.child, type, field)) {
-		return;
-	}
-	if (builtInField(type, field)) {
-		// TODO might not be needed.
-		replaceAAPostfixesIfNeeded(ctx, exp, postfix);
 		return;
 	}
 
