@@ -8,12 +8,12 @@ import volt.errors;
 import volt.interfaces;
 
 import lib.llvm.core;
-import lib.llvm.linker;
 import lib.llvm.analysis;
 import lib.llvm.bitreader;
 import lib.llvm.bitwriter;
 import lib.llvm.targetmachine;
 import lib.llvm.c.Target;
+import lib.llvm.c.Linker;
 import lib.llvm.c.Initialization;
 
 import volt.llvm.state;
@@ -166,10 +166,7 @@ void linkModules(string output, string[] inputs...)
 	foreach (filename; inputs[1 .. $]) {
 		src = loadModule(ctx, filename);
 
-		bool ret = LLVMLinkModules(dst, src, LLVMLinkerMode.DestroySource, msg);
-		if (msg !is null) {
-			io.error.writefln("%s", msg);
-		}
+		auto ret = LLVMLinkModules2(dst, src);
 		if (ret) {
 			throw makeNoLinkModule(filename, msg);
 		}
