@@ -717,6 +717,7 @@ public:
 		AAIn,        ///< "foo" in aa
 		AADup,       ///< new aa[..]
 		UFCS,        ///< '(exp).func'()
+		Classinfo,   ///< obj.classinfo
 	}
 
 	Kind kind; ///< What kind of inbluilt is this.

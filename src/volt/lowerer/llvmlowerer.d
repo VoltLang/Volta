@@ -574,6 +574,29 @@ public:
 			exp = buildCall(l, rtFn, builtin.children);
 			exp = buildCastSmart(l, builtin.type, exp);
 			break;
+		case Classinfo:
+			panicAssert(exp, builtin.children.length == 1);
+			auto iface = cast(ir._Interface)realType(getExpType(lp, builtin.children[0], current));
+			auto ti = buildPtrSmart(l, buildPtrSmart(l, buildArrayType(l, copyTypeSmart(l, lp.typeInfoClass))));
+			auto sexp = buildStatementExp(l);
+			ir.Exp ptr = buildCastToVoidPtr(l, builtin.children[0]);
+			if (iface !is null) {
+				/* We need the class vtable. Each interface instance holds the
+				 * amount it's set forward from the beginning of the class one,
+				 * as the first entry in the interface layout table,
+				 * so we just do `**cast(size_t**)cast(void*)iface` to get at it.
+				 * Then we subtract that value from the pointer.
+				 */
+				auto offset = buildDeref(l, buildDeref(l, buildCastSmart(l, buildPtrSmart(l, buildPtrSmart(l, buildSizeT(l, lp))), copyExp(l, ptr))));
+				ptr = buildSub(l, ptr, offset);
+			}
+			auto tinfos = buildDeref(l, buildDeref(l, buildCastSmart(l, ti, ptr)));
+			auto tvar = buildVariableAnonSmart(l, current, sexp, buildArrayType(l, copyTypeSmart(l, lp.typeInfoClass)), tinfos);
+			ir.Exp tlen = buildArrayLength(l, lp, buildExpReference(l, tvar, tvar.name));
+			tlen = buildSub(l, tlen, buildConstantSizeT(l, lp, 1));
+			sexp.exp = buildIndex(l, buildExpReference(l, tvar, tvar.name), tlen);
+			exp = buildAccess(l, sexp, "_classinfo");
+			break;
 		case UFCS:
 		case Invalid:
 			panicAssert(exp, false);

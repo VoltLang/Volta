@@ -937,6 +937,18 @@ ir.BuiltinExp buildUFCS(Location loc, ir.Type type, ir.Exp child,
 
 
 /**
+ * Builds a BuiltinExp of Classinfo type.
+ */
+ir.BuiltinExp buildClassinfo(Location loc, ir.Type type, ir.Exp child)
+{
+	auto kind = ir.BuiltinExp.Kind.Classinfo;
+	auto builtin = new ir.BuiltinExp(kind, type, [child]);
+	builtin.location = loc;
+	return builtin;
+}
+
+
+/**
  * Builds a BuiltinExp of AARemove type.
  */
 ir.BuiltinExp buildAAIn(Location loc, ir.AAType aa, ir.Exp[] child)

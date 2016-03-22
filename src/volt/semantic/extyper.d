@@ -1237,6 +1237,16 @@ bool builtInField(Context ctx, ref ir.Exp exp, ir.Exp child, ir.Type type, strin
 		type = ptr.base;
 	}
 
+	auto clazz = cast(ir.Class)type;
+	auto iface = cast(ir._Interface)type;
+	if (clazz !is null || iface !is null) switch (field) {
+	case "classinfo":
+		exp = buildClassinfo(exp.location, copyTypeSmart(exp.location, ctx.lp.classInfoClass), child);
+		return true;
+	default:
+		return false;
+	}
+
 	auto array = cast(ir.ArrayType) type;
 	auto sarray = cast(ir.StaticArrayType) type;
 	if (sarray is null && array is null) {
