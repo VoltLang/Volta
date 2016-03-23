@@ -198,7 +198,7 @@ $(VIVIV_TARGET): $(VIV_TARGET) $(VIV_SRC)
 # Note these should not depend on target
 voltaic-syntax:
 	@echo "  VOLTA  <source>"
-	@$(VOLT) --internal-perf -E $(VIV_ALL_SRC)
+	@$(VOLT) --internal-perf -E $(VIV_SRC)
 
 voltaic-viv:
 	@echo "  VOLTA  $(VIV_TARGET)"
@@ -214,7 +214,7 @@ voltaic-viv-sanity:
 
 voltaic-viv-syntax:
 	@echo "  VIV    <source>"
-	@./viv -E $(VIV_ALL_SRC)
+	@./viv -E $(VIV_SRC)
 
 
 .PHONY: all clean rdmd run debug license voltaic-syntax voltaic-viv voltaic-viv-syntax
