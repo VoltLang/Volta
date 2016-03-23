@@ -7,6 +7,8 @@ include sources.mk
 RDMD=rdmd
 DMD=dmd
 VOLT=volt.exe
+VIV=viv.exe
+VIVIV=viviv.exe
 VRT=rt/rt.bc
 DFLAGS=--build-only --compiler=$(DMD) -of$(VOLT) -gc -wi -debug LLVM.lib $(FLAGS)
 LLVM_DLL_DIR= # Insert path to LLVM DLLs for viv.
@@ -19,8 +21,10 @@ all:
 	$(VOLT) --no-stdlib -c -I rt/src -o rt/rt.o rt/rt.bc
 
 viv:
-	$(VOLT) --internal-d -o viv.exe $(VIV_SRC) $(VFLAGS) $(LLVM_VIV_LDFLAGS)
-	viv src/*.d src/lib/llvm/*.d src/lib/llvm/c/*.d src/volt/*.d src/volt/ir/*.d src/volt/llvm/*.d src/volt/parser/*.d src/volt/semantic/*.d src/volt/token/*.d src/volt/util/*.d src/volt/visitor/*.d
+	$(VOLT) --internal-d -o $(VIV) $(VIV_SRC) $(VFLAGS) $(LLVM_VIV_LDFLAGS)
 
-.PHONY: all viv
+viviv:
+	$(VIV) --internal-d -o $(VIVIV) $(VIV_SRC) $(VFLAGS) $(LLVM_VIV_LDFLAGS)
+
+.PHONY: all viv viviv
 
