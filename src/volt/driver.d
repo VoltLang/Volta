@@ -108,7 +108,11 @@ public:
 		}
 
 
-		if (settings.linker !is null) {
+		if (settings.linker !is null &&
+		    settings.platform == Platform.MSVC) {
+			mLinker = settings.linker;
+			mLinkWithMSVC = true;
+		} else if (settings.linker !is null) {
 			mLinker = settings.linker;
 			mLinkWithLinker = true;
 		} else if (settings.cc !is null) {
