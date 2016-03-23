@@ -1,8 +1,7 @@
 module watt.io.streams;
 
-import std.stream : OutputStream;
+import std.stream : OutputStream, BufferedFile, FileMode;
 
-import std.stream;
 class OutputFileStream : BufferedFile
 {
 	this(string filename)

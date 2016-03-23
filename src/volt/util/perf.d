@@ -2,7 +2,9 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.util.perf;
 
-import watt.io.std : writefln, OutputFileStream;
+import watt.io.std : writefln;
+import watt.io.streams : OutputFileStream;
+
 import mt = watt.io.monotonic;
 
 
