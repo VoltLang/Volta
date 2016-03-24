@@ -109,7 +109,7 @@ ir.Function getArrayAppendFunction(Location loc, LanguagePass lp, ir.Module this
 
 	args = [
 		cast(ir.Exp)
-		buildTypeidSmart(loc, ltype.base),
+		buildTypeidSmart(loc, lp, ltype.base),
 		buildExpReference(loc, count, count.name)
 	];
 
@@ -222,7 +222,7 @@ ir.Function getArrayPrependFunction(Location loc, LanguagePass lp, ir.Module thi
 
 	args = [
 		cast(ir.Exp)
-		buildTypeidSmart(loc, ltype.base),
+		buildTypeidSmart(loc, lp, ltype.base),
 		buildExpReference(loc, count, count.name)
 	];
 
@@ -368,7 +368,7 @@ ir.Function getArrayConcatFunction(Location loc, LanguagePass lp, ir.Module this
 
 	args = [
 		cast(ir.Exp)
-		buildTypeidSmart(loc, type.base),
+		buildTypeidSmart(loc, lp, type.base),
 		buildExpReference(loc, count, count.name)
 	];
 

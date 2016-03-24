@@ -529,7 +529,7 @@ ir.Struct getInterfaceLayoutStruct(ir._Interface iface, LanguagePass lp)
 ir.Struct getClassLayoutStruct(ir.Class _class, LanguagePass lp, ref ir.Struct vtableStruct)
 {
 	auto methodTypes = getClassMethodTypeVariables(lp, _class);
-	auto tinfo = lp.typeInfoClass;
+	auto tinfo = lp.classInfoClass;
 	auto tinfos = buildVariableSmart(_class.location, buildArrayTypeSmart(_class.location, tinfo), ir.Variable.Storage.Field, "tinfos");
 
 	vtableStruct = buildStruct(_class.location, _class.members, _class.myScope, "__Vtable", tinfos ~ methodTypes);
@@ -670,7 +670,7 @@ void emitVtableVariable(LanguagePass lp, ir.Class _class)
 {
 	auto l = _class.location;
 	auto addrs = getClassMethodAddrOfs(lp, _class);
-	auto tinfo = lp.typeInfoClass;
+	auto tinfo = lp.classInfoClass;
 	auto classes = getInheritanceChain(_class);
 	auto tinfos = getTypeInfos(classes);
 	auto tinfosArr = buildArrayLiteralSmart(l, buildArrayTypeSmart(l, tinfo), tinfos);

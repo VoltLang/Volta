@@ -748,7 +748,7 @@ private void rewriteVarargs(Context ctx,ir.CallableType asFunctionType,
 		    realType(etype).nodeType == ir.NodeType.Struct) {
 			warning(_exp.location, "passing struct to var-arg function.");
 		}
-		auto typeId = buildTypeidSmart(postfix.location, etype);
+		auto typeId = buildTypeidSmart(postfix.location, ctx.lp, etype);
 		typeidsLiteral.exps ~= typeId;
 		types ~= etype;
 		// TODO this probably isn't right.
@@ -1509,7 +1509,7 @@ void extypeUnaryCastTo(Context ctx, ref ir.Exp exp, ir.Unary unary)
 	}
 
 	auto fnref = buildExpReference(unary.location, ctx.lp.castFunc, "vrt_handle_cast");
-	auto tid = buildTypeidSmart(unary.location, to);
+	auto tid = buildTypeidSmart(unary.location, ctx.lp, to);
 	auto val = buildCastToVoidPtr(unary.location, unary.value);
 	unary.value = buildCall(unary.location, fnref, [val, cast(ir.Exp)tid]);
 }
@@ -2358,7 +2358,7 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 		assert(asArray !is null);
 		ir.Exp ptr = buildCastSmart(buildVoidPtr(l), buildArrayPtr(l, asArray.base, ss.condition));
 		ir.Exp length = buildBinOp(l, ir.BinOp.Op.Mul, buildArrayLength(l, ctx.lp, copyExp(ss.condition)),
-				buildAccess(l, buildTypeidSmart(l, asArray.base), "size"));
+				buildAccess(l, buildTypeidSmart(l, ctx.lp, asArray.base), "size"));
 		ss.condition = buildCall(ss.condition.location, ctx.lp.hashFunc, [ptr, length]);
 		conditionType = buildUint(ss.condition.location);
 	}

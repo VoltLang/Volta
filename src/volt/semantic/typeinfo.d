@@ -61,7 +61,9 @@ ir.Variable getTypeInfo(LanguagePass lp, ir.Module mod, ir.Type type)
 	mod.children.nodes = literalVar ~ mod.children.nodes;
 	mod.myScope.addValue(literalVar, literalVar.name);
 
-	literalVar.assign = buildTypeInfoLiteral(lp, mod, type);
+	auto lit = buildTypeInfoLiteral(lp, mod, type);
+	literalVar.assign = lit;
+	literalVar.type = copyTypeSmart(type.location, lit.type);
 
 	return literalVar;
 }
@@ -89,7 +91,9 @@ void fileInAggregateVar(LanguagePass lp, ir.Aggregate aggr)
 	}
 
 	auto mod = getModuleFromScope(aggr.location, aggr.myScope);
-	aggr.typeInfo.assign = buildTypeInfoLiteral(lp, mod, aggr);
+	auto lit = buildTypeInfoLiteral(lp, mod, aggr);
+	aggr.typeInfo.assign = lit;
+	aggr.typeInfo.type = copyTypeSmart(aggr.location, lit.type);
 }
 
 
@@ -184,7 +188,7 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 		assert(base !is null);
 
 		auto baseVar = getTypeInfo(lp, mod, base);
-		literal.exps ~= buildExpReference(type.location, baseVar);
+		literal.exps ~= buildTypeInfoCast(lp, buildExpReference(type.location, baseVar));
 	} else {
 		literal.exps ~= buildConstantNull(type.location, lp.typeInfoClass);
 	}
@@ -201,8 +205,8 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 	if (asAA !is null) {
 		auto keyVar = getTypeInfo(lp, mod, asAA.key);
 		auto valVar = getTypeInfo(lp, mod, asAA.value);
-		literal.exps ~= buildExpReference(type.location, keyVar);
-		literal.exps ~= buildExpReference(type.location, valVar);
+		literal.exps ~= buildTypeInfoCast(lp, buildExpReference(type.location, keyVar));
+		literal.exps ~= buildTypeInfoCast(lp, buildExpReference(type.location, valVar));
 	} else {
 		literal.exps ~= buildConstantNull(type.location, lp.typeInfoClass);
 		literal.exps ~= buildConstantNull(type.location, lp.typeInfoClass);
@@ -212,12 +216,12 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 	auto asCallable = cast(ir.CallableType)type;
 	if (asCallable !is null) {
 		auto retVar = getTypeInfo(lp, mod, asCallable.ret);
-		literal.exps ~= buildExpReference(type.location, retVar);
+		literal.exps ~= buildTypeInfoCast(lp, buildExpReference(type.location, retVar));
 
 		ir.Exp[] exps;
 		foreach (param; asCallable.params) {
 			auto var = getTypeInfo(lp, mod, param);
-			exps ~= buildExpReference(type.location, var);
+			exps ~= buildTypeInfoCast(lp, buildExpReference(type.location, var));
 		}
 
 		literal.exps ~= buildArrayLiteralSmart(type.location, buildArrayType(type.location, lp.typeInfoClass), exps);
@@ -228,19 +232,16 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 
 	// TypeInfo.classinfo
 	if (asClass !is null) {
+		literal.type = buildTypeReference(type.location, lp.classInfoClass, lp.classInfoClass.name);
 		literal.exps ~= getClassInfo(type.location, mod, lp, asClass);
-	} else {
-		literal.exps ~= buildConstantNull(type.location, lp.classInfoClass);
 	}
 
 	return literal;
 }
 
-ir.ClassLiteral getClassInfo(Location l, ir.Module mod, LanguagePass lp, ir.Class asClass)
+ir.Exp[] getClassInfo(Location l, ir.Module mod, LanguagePass lp, ir.Class asClass)
 {
-	auto cinfoLiteral = new ir.ClassLiteral();
-	cinfoLiteral.location = l;
-	cinfoLiteral.type = buildTypeReference(l, lp.classInfoClass, lp.classInfoClass.name);
+	ir.Exp[] exps;
 	ir.Exp[] interfaceLits;
 	panicAssert(asClass, asClass.parentInterfaces.length <= asClass.interfaceOffsets.length);
 	foreach (i, iface; asClass.parentInterfaces) {
@@ -261,11 +262,6 @@ ir.ClassLiteral getClassInfo(Location l, ir.Module mod, LanguagePass lp, ir.Clas
 		lit.exps ~= buildConstantSizeT(l, lp, asClass.interfaceOffsets[i]);
 		interfaceLits ~= lit;
 	}
-	cinfoLiteral.exps ~= buildArrayLiteralSmart(l, buildArrayType(l, lp.interfaceInfoClass), interfaceLits);
-	if (asClass.parentClass !is null) {
-		cinfoLiteral.exps ~= getClassInfo(l, mod, lp, asClass.parentClass);
-	} else {
-		cinfoLiteral.exps ~= buildConstantNull(l, lp.classInfoClass);
-	}
-	return cinfoLiteral;
+	exps ~= buildArrayLiteralSmart(l, buildArrayType(l, lp.interfaceInfoClass), interfaceLits);
+	return exps;
 }

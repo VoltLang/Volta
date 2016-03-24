@@ -805,6 +805,14 @@ ir.Typeid buildTypeidSmart(Location loc, ir.Type type)
 }
 
 /**
+ * Build a typeid casting if needed.
+ */
+ir.Exp buildTypeidSmart(Location loc, LanguagePass lp, ir.Type type)
+{
+	return buildCastSmart(loc, lp.typeInfoClass, buildTypeidSmart(loc, type));
+}
+
+/**
  * Builds a BuiltinExp of ArrayPtr type. Make sure the type you
  * pass in is the base of the array and that the child exp is
  * not a pointer to an array.
@@ -1857,4 +1865,10 @@ ir.NoType buildNoType(Location loc)
 	auto nt = new ir.NoType();
 	nt.location = loc;
 	return nt;
+}
+
+/// Build a cast to a TypeInfo.
+ir.Exp buildTypeInfoCast(LanguagePass lp, ir.Exp e)
+{
+	return buildCastSmart(e.location, lp.typeInfoClass, e);
 }

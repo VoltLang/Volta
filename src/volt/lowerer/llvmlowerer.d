@@ -48,8 +48,8 @@ void buildAAInsert(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 	if (buildif) {
 		auto thenState = buildBlockStat(loc, statExp, current);
 		varExp = buildExpReference(loc, var, var.name);
-		ir.Exp[] args = [ cast(ir.Exp)buildTypeidSmart(loc, aa.value),
-		                  cast(ir.Exp)buildTypeidSmart(loc, aa.key)
+		ir.Exp[] args = [ cast(ir.Exp)buildTypeidSmart(loc, lp, aa.value),
+		                  cast(ir.Exp)buildTypeidSmart(loc, lp, aa.key)
 		];
 		buildExpStat(loc, thenState,
 			buildAssign(loc,
@@ -577,7 +577,7 @@ public:
 		case Classinfo:
 			panicAssert(exp, builtin.children.length == 1);
 			auto iface = cast(ir._Interface)realType(getExpType(lp, builtin.children[0], current));
-			auto ti = buildPtrSmart(l, buildPtrSmart(l, buildArrayType(l, copyTypeSmart(l, lp.typeInfoClass))));
+			auto ti = buildPtrSmart(l, buildPtrSmart(l, buildArrayType(l, copyTypeSmart(l, lp.classInfoClass))));
 			auto sexp = buildStatementExp(l);
 			ir.Exp ptr = buildCastToVoidPtr(l, builtin.children[0]);
 			if (iface !is null) {
@@ -591,11 +591,11 @@ public:
 				ptr = buildSub(l, ptr, offset);
 			}
 			auto tinfos = buildDeref(l, buildDeref(l, buildCastSmart(l, ti, ptr)));
-			auto tvar = buildVariableAnonSmart(l, current, sexp, buildArrayType(l, copyTypeSmart(l, lp.typeInfoClass)), tinfos);
+			auto tvar = buildVariableAnonSmart(l, current, sexp, buildArrayType(l, copyTypeSmart(l, lp.classInfoClass)), tinfos);
 			ir.Exp tlen = buildArrayLength(l, lp, buildExpReference(l, tvar, tvar.name));
 			tlen = buildSub(l, tlen, buildConstantSizeT(l, lp, 1));
 			sexp.exp = buildIndex(l, buildExpReference(l, tvar, tvar.name), tlen);
-			exp = buildAccess(l, sexp, "_classinfo");
+			exp = buildCastSmart(l, lp.classInfoClass, sexp);
 			break;
 		case UFCS:
 		case Invalid:
@@ -637,8 +637,8 @@ public:
 
 		auto var = buildVariableAnonSmart(loc, bs, statExp,
 			copyTypeSmart(loc, aa), buildCall(loc, aaNewFn, [
-				cast(ir.Exp)buildTypeidSmart(loc, aa.value),
-				cast(ir.Exp)buildTypeidSmart(loc, aa.key)
+				cast(ir.Exp)buildTypeidSmart(loc, lp, aa.value),
+				cast(ir.Exp)buildTypeidSmart(loc, lp, aa.key)
 			], aaNewFn.name)
 		);
 
@@ -1100,7 +1100,7 @@ public:
 		if (fromSz % toSz) {
 			//     vrt_throw_slice_error(arr.length, typeid(T).size);
 			auto ln = buildArrayLength(loc, lp, buildExpReference(loc, var, varName));
-			auto sz = buildAccess(loc, buildTypeidSmart(loc, toArray.base), "size");
+			auto sz = buildAccess(loc, buildTypeidSmart(loc, lp, toArray.base), "size");
 			ir.Exp fname = buildConstantString(loc, exp.location.filename, false);
 			ir.Exp lineNum = buildConstantSizeT(loc, lp, exp.location.line);
 			auto rtCall = buildCall(loc, buildExpReference(loc, lp.ehThrowSliceErrorFunc, lp.ehThrowSliceErrorFunc.name), [fname, lineNum]);

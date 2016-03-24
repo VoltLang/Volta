@@ -156,9 +156,10 @@ ir.Exp createAllocDgCall(ir.Variable allocDgVar, LanguagePass lp, Location locat
 	adRef.idents ~= "allocDg";
 	adRef.decl = allocDgVar;
 
-	auto tidExp = new ir.Typeid();
-	tidExp.location = location;
-	tidExp.type = copyTypeSmart(location, type);
+	auto _tidExp = new ir.Typeid();
+	_tidExp.location = location;
+	_tidExp.type = copyTypeSmart(location, type);
+	auto tidExp = buildCastSmart(location, lp.typeInfoClass, _tidExp);
 
 	auto countConst = new ir.Constant();
 	countConst.location = location;
