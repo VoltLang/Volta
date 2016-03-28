@@ -525,7 +525,7 @@ ir.Type getPostfixCreateDelegateType(ir.Postfix postfix)
 		throw err;
 	}
 	if (fn.kind != ir.Function.Kind.Nested && !isFunctionMemberOrConstructor(fn)) {
-		throw makeCallingStaticThroughInstance(postfix, fn);
+		throw panic(postfix.location, "static function called through instance");
 	}
 
 	auto dg = new ir.DelegateType(fn.type);
