@@ -589,7 +589,7 @@ void retrieveScope(LanguagePass lp, ir.Node tt, ir.Postfix postfix, ref ir.Scope
 		if (properties.length == 1) {
 			return retrieveScope(lp, properties[0].type.ret, postfix, _scope, _class, emsg);
 		} else {
-			throw makeNotMember(postfix, cast(ir.Type) tt, postfix.identifier.value);
+			throw panic(postfix.location, "bad scope lookup");
 		}
 	} else {
 		auto type = cast(ir.Type) tt;
