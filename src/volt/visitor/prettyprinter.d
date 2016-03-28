@@ -1899,9 +1899,6 @@ public:
 	{
 		wf("is(");
 		accept(isExp.type, this);
-		if (isExp.identifier.length > 0) {
-			wf(" ", isExp.identifier);
-		}
 		if (isExp.compType != ir.IsExp.Comparison.None) {
 			if (isExp.compType == ir.IsExp.Comparison.Implicit) {
 				wf(" : ");

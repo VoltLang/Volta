@@ -454,7 +454,6 @@ public:
 
 public:
 	Type type;
-	string identifier;  // Optional.
 	Specialisation specialisation;
 	Type specType;  // If specialisation == Type.
 	Comparison compType;

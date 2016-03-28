@@ -727,12 +727,12 @@ ParseStatus parseIsExp(ParserStream ps, out ir.IsExp ie)
 		case CloseParen:
 			break;
 		case Identifier:
-			if (ie.identifier.length > 0) {
-				return parseExpected(ps, ps.peek.location, ir.NodeType.Identifier, "is expression");
+			succeeded = parseType(ps, ie.specType);
+			if (!succeeded) {
+				return parseFailed(ps, ie);
 			}
-			auto nameTok = ps.get();
-			ie.identifier = nameTok.value;
-			break;
+			ie.specialisation = ir.IsExp.Specialisation.Type;
+			return match(ps, ie, TokenType.CloseParen);
 		case Colon:
 			if (ie.compType != ir.IsExp.Comparison.None) {
 				return parseExpected(ps, ps.peek.location, ir.NodeType.Identifier, "is expression");
