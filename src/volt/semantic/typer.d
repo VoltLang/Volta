@@ -482,7 +482,7 @@ ir.Type getPostfixSliceType(LanguagePass lp, ir.Postfix postfix, ir.Scope curren
 		array = cast(ir.ArrayType) type;
 		assert(array !is null);
 	} else {
-		throw makeCannotSlice(postfix.location, type);
+		throw panic(postfix.location, "unsliceable type sliced");
 	}
 
 	if (array is null) {

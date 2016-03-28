@@ -841,6 +841,13 @@ void extypePostfixLeave(Context ctx, ref ir.Exp exp, ir.Postfix postfix,
 
 	final switch (postfix.op) with (ir.Postfix.Op) {
 	case Slice:
+		auto t = realType(getExpType(ctx.lp, postfix.child, ctx.current));
+		auto nt = t.nodeType;
+		if (nt != ir.NodeType.PointerType && nt != ir.NodeType.StaticArrayType &&
+		    nt != ir.NodeType.ArrayType) {
+			throw makeCannotSlice(postfix.location, t);
+		}
+		break;
 	case CreateDelegate:
 		// TODO write checking code?
 		break;
