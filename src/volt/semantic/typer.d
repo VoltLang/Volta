@@ -646,7 +646,7 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 				continue;
 			}
 			if (store !is null) {
-				throw makeAnonymousAggregateRedefines(aa, postfix.identifier.value);
+				throw panic(aa.location, "bad anonymous aggregate redefine");
 			}
 			store = tmpStore;
 		}
