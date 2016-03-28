@@ -592,9 +592,7 @@ void retrieveScope(LanguagePass lp, ir.Node tt, ir.Postfix postfix, ref ir.Scope
 			throw panic(postfix.location, "bad scope lookup");
 		}
 	} else {
-		auto type = cast(ir.Type) tt;
-		assert(type !is null);
-		throw makeNotMember(postfix, type, postfix.identifier.value);
+		throw panic(postfix.location, "bad scope lookup");
 	}
 }
 
