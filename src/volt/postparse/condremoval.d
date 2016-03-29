@@ -56,16 +56,16 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ir.Function fn)
+	override Status enter(ir.Function func)
 	{
-		if (fn.inContract !is null) {
-			fn.inContract.statements = manipNodes(fn.inContract.statements);
+		if (func.inContract !is null) {
+			func.inContract.statements = manipNodes(func.inContract.statements);
 		}
-		if (fn.outContract !is null) {
-			fn.outContract.statements = manipNodes(fn.outContract.statements);
+		if (func.outContract !is null) {
+			func.outContract.statements = manipNodes(func.outContract.statements);
 		}
-		if (fn._body !is null) {
-			fn._body.statements = manipNodes(fn._body.statements);
+		if (func._body !is null) {
+			func._body.statements = manipNodes(func._body.statements);
 		}
 		return Continue;
 	}

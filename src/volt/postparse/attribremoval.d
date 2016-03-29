@@ -74,11 +74,11 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ir.Function fn)
+	override Status enter(ir.Function func)
 	{
-		applyAttributes(fn, ctxTop.stack);
-		applyAttributes(fn, mStack);
-		ctxPush(fn);
+		applyAttributes(func, ctxTop.stack);
+		applyAttributes(func, mStack);
+		ctxPush(func);
 		return Continue;
 	}
 
@@ -135,7 +135,7 @@ public:
 		return Continue;
 	}
 
-	override Status leave(ir.Function fn) { ctxPop(fn); return Continue; }
+	override Status leave(ir.Function func) { ctxPop(func); return Continue; }
 	override Status leave(ir.Struct s) { ctxPop(s); return Continue; }
 	override Status leave(ir.Union u) { ctxPop(u); return Continue; }
 	override Status leave(ir.Class c) { ctxPop(c); return Continue; }
@@ -180,70 +180,70 @@ protected:
 	/**
 	 * Loops over all attributes and applies them.
 	 */
-	void applyAttributes(ir.Function fn, ir.Attribute[] attrs)
+	void applyAttributes(ir.Function func, ir.Attribute[] attrs)
 	{
 		foreach (attr; attrs) {
 			switch(attr.kind) with (ir.Attribute.Kind) {
 			case LinkageVolt:
-				fn.type.linkage = ir.Linkage.Volt;
+				func.type.linkage = ir.Linkage.Volt;
 				break;
 			case LinkageC:
-				fn.type.linkage = ir.Linkage.C;
+				func.type.linkage = ir.Linkage.C;
 				break;
 			case LinkageCPlusPlus:
-				fn.type.linkage = ir.Linkage.CPlusPlus;
+				func.type.linkage = ir.Linkage.CPlusPlus;
 				break;
 			case LinkageWindows:
-				fn.type.linkage = ir.Linkage.Windows;
+				func.type.linkage = ir.Linkage.Windows;
 				break;
 			case LinkagePascal:
-				fn.type.linkage = ir.Linkage.Pascal;
+				func.type.linkage = ir.Linkage.Pascal;
 				break;
 			case LinkageSystem:
 				if (settings.platform == Platform.MinGW) {
-					fn.type.linkage = ir.Linkage.Windows;
+					func.type.linkage = ir.Linkage.Windows;
 				} else {
-					fn.type.linkage = ir.Linkage.C;
+					func.type.linkage = ir.Linkage.C;
 				}
 				break;
 			case LoadDynamic:
-				fn.loadDynamic = true;
+				func.loadDynamic = true;
 				break;
 			case Public:
-				fn.access = ir.Access.Public;
+				func.access = ir.Access.Public;
 				break;
 			case Private:
-				fn.access = ir.Access.Private;
+				func.access = ir.Access.Private;
 				break;
 			case Package:
-				fn.access = ir.Access.Package;
+				func.access = ir.Access.Package;
 				break;
 			case Protected:
-				fn.access = ir.Access.Protected;
+				func.access = ir.Access.Protected;
 				break;
 			case Scope:
-				fn.type.isScope = true;
+				func.type.isScope = true;
 				break;
 			case Property:
-				fn.type.isProperty = true;
+				func.type.isProperty = true;
 				break;
 			case UserAttribute:
-				fn.userAttrs ~= attr;
+				func.userAttrs ~= attr;
 				break;
 			case Override:
-				fn.isMarkedOverride = true;
+				func.isMarkedOverride = true;
 				break;
 			case Abstract:
-				fn.isAbstract = true;
+				func.isAbstract = true;
 				break;
 			case Static: // TODO (selfhost) remove.
 			case Local, Global:
 				with (ir.Function.Kind) {
-				if (fn.kind == Constructor ||
-				    fn.kind == Destructor) {
+				if (func.kind == Constructor ||
+				    func.kind == Destructor) {
 					// We do not make (con|de)structors like this.
 				} else {
-					fn.kind = ir.Function.Kind.Function;
+					func.kind = ir.Function.Kind.Function;
 				}
 				} // with
 				break;
@@ -255,10 +255,10 @@ protected:
 				}
 				assert(constant._string[0] == '\"');
 				assert(constant._string[$-1] == '\"');
-				fn.mangledName = constant._string[1..$-1];
+				func.mangledName = constant._string[1..$-1];
 				break;
 			case Label:
-				fn.type.forceLabel = true;
+				func.type.forceLabel = true;
 				break;
 			default:
 				// Warn?

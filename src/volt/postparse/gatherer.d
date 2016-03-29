@@ -111,22 +111,22 @@ void gather(ir.Scope current, ir.Variable v, Where where, ir.Function[] function
 		ir.Variable.Storage.Field;
 }
 
-void gather(ir.Scope current, ir.Function fn, Where where)
+void gather(ir.Scope current, ir.Function func, Where where)
 {
-	assert(fn.access.isValidAccess());
+	assert(func.access.isValidAccess());
 
-	if (fn.name !is null) {
-		current.addFunction(fn, fn.name);
+	if (func.name !is null) {
+		current.addFunction(func, func.name);
 	}
 
-	if (fn.kind == ir.Function.Kind.Invalid) {
+	if (func.kind == ir.Function.Kind.Invalid) {
 		if (where == Where.TopLevel) {
-			fn.kind = ir.Function.Kind.Member;
+			func.kind = ir.Function.Kind.Member;
 		} else {
-			if (fn.isAbstract) {
-				throw makeAbstractHasToBeMember(fn, fn);
+			if (func.isAbstract) {
+				throw makeAbstractHasToBeMember(func, func);
 			}
-			fn.kind = ir.Function.Kind.Function;
+			func.kind = ir.Function.Kind.Function;
 		}
 	}
 }
@@ -208,33 +208,33 @@ void addScope(ir.Module m)
 	m.myScope = new ir.Scope(m, name);
 }
 
-void addScope(ir.Scope current, ir.Function fn, ir.Type thisType, ir.Function[] functionStack)
+void addScope(ir.Scope current, ir.Function func, ir.Type thisType, ir.Function[] functionStack)
 {
-	fn.myScope = new ir.Scope(current, fn, fn.name);
+	func.myScope = new ir.Scope(current, func, func.name);
 
-	if (fn._body !is null) {
-		foreach (var; fn.params) {
+	if (func._body !is null) {
+		foreach (var; func.params) {
 			if (current.node.nodeType == ir.NodeType.BlockStatement) {
 				var.oldname = var.name;
-				var.name = fn.name ~ var.name;
+				var.name = func.name ~ var.name;
 			}
 			if (var.name !is null) {
-				fn.myScope.addValue(var, var.name);
+				func.myScope.addValue(var, var.name);
 			}
 		}
 	}
 
-	if (thisType is null || fn.kind == ir.Function.Kind.Function) {
-		assert(fn.kind != ir.Function.Kind.Member &&
-		       fn.kind != ir.Function.Kind.Destructor &&
-		       fn.kind != ir.Function.Kind.Constructor);
+	if (thisType is null || func.kind == ir.Function.Kind.Function) {
+		assert(func.kind != ir.Function.Kind.Member &&
+		       func.kind != ir.Function.Kind.Destructor &&
+		       func.kind != ir.Function.Kind.Constructor);
 		return;
 	}
 
 	auto tr = buildTypeReference(thisType.location, thisType,  "__this");
 
 	auto thisVar = new ir.Variable();
-	thisVar.location = fn.location;
+	thisVar.location = func.location;
 	thisVar.type = tr;
 	thisVar.name = "this";
 	thisVar.storage = ir.Variable.Storage.Function;
@@ -242,8 +242,8 @@ void addScope(ir.Scope current, ir.Function fn, ir.Type thisType, ir.Function[] 
 	thisVar.useBaseStorage = cast(ir.Class)thisType !is null;
 
 	// Don't add it, it will get added by the variable code.
-	fn.thisHiddenParameter = thisVar;
-	fn.type.hiddenParameter = true;
+	func.thisHiddenParameter = thisVar;
+	func.type.hiddenParameter = true;
 }
 
 void addScope(ir.Scope current, ir.BlockStatement bs)
@@ -411,16 +411,16 @@ public:
 		}
 	}
 
-	void push(ir.Function fn)
+	void push(ir.Function func)
 	{
-		push(fn.myScope);
-		mFunctionStack ~= fn;
+		push(func.myScope);
+		mFunctionStack ~= func;
 	}
 
-	void pop(ir.Function fn)
+	void pop(ir.Function func)
 	{
 		pop();
-		assert(fn is mFunctionStack[$-1]);
+		assert(func is mFunctionStack[$-1]);
 		mFunctionStack = mFunctionStack[0 .. $-1];
 	}
 
@@ -520,17 +520,17 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ir.Function fn)
+	override Status enter(ir.Function func)
 	{
 		auto thisType = where == Where.TopLevel ? this.thisType : null;
 
-		gather(current, fn, where);
-		addScope(current, fn, thisType, mFunctionStack);
-		push(fn);
+		gather(current, func, where);
+		addScope(current, func, thisType, mFunctionStack);
+		push(func);
 
 		// I don't think this is the right place for this.
-		if (fn.isAbstract && fn._body !is null) {
-			throw makeAbstractBodyNotEmpty(fn, fn);
+		if (func.isAbstract && func._body !is null) {
+			throw makeAbstractBodyNotEmpty(func, func);
 		}
 		return Continue;
 	}
@@ -611,20 +611,20 @@ public:
 		 * correct strings that point to these renamed declarations
 		 * here.
 		 */
-		foreach (fn; mFunctionStack[0].nestedFunctions) {
-			if (s == fn.oldname) {
-				s = fn.name;
+		foreach (func; mFunctionStack[0].nestedFunctions) {
+			if (s == func.oldname) {
+				s = func.name;
 				return;
 			}
 		}
-		foreach_reverse(fn; mFunctionStack) {
-			foreach (var; fn.params) {
+		foreach_reverse(func; mFunctionStack) {
+			foreach (var; func.params) {
 				if (s == var.oldname) {
 					s = var.name;
 					return;
 				}
 			}
-			foreach (var; fn.renamedVariables) {
+			foreach (var; func.renamedVariables) {
 				if (s == var.oldname) {
 					s = var.name;
 				}
@@ -653,7 +653,7 @@ public:
 	override Status leave(ir.Struct s) { pop(s); return Continue; }
 	override Status leave(ir.Union u) { pop(u); return Continue; }
 	override Status leave(ir.Enum e) { pop(e); return Continue; }
-	override Status leave(ir.Function fn) { pop(fn); return Continue; }
+	override Status leave(ir.Function func) { pop(func); return Continue; }
 	override Status leave(ir.BlockStatement bs) { pop(); return Continue; }
 	override Status leave(ir._Interface i) { pop(i); return Continue; }
 	override Status leave(ir.UserAttribute ua) { pop(ua); return Continue; }

@@ -26,15 +26,15 @@ class ScopeReplacer : NullVisitor, Pass
 	{
 	}
 
-	override Status enter(ir.Function fn)
+	override Status enter(ir.Function func)
 	{
-		functionStack ~= fn;
+		functionStack ~= func;
 		return Continue;
 	}
 
-	override Status leave(ir.Function fn)
+	override Status leave(ir.Function func)
 	{
-		assert(functionStack.length > 0 && fn is functionStack[$-1]);
+		assert(functionStack.length > 0 && func is functionStack[$-1]);
 		functionStack = functionStack[0 .. $-1];
 		return Continue;
 	}
@@ -50,24 +50,24 @@ class ScopeReplacer : NullVisitor, Pass
 				throw makeScopeOutsideFunction(ss.location);
 			}
 			auto p = functionStack[$-1];
-			auto fn = scopeStatementToFunction(ss);
+			auto func = scopeStatementToFunction(ss);
 			final switch (ss.kind) with (ir.ScopeStatement.Kind) {
 			case Exit:
-				p.scopeExits ~= fn;
-				fn.isLoweredScopeExit = true;
+				p.scopeExits ~= func;
+				func.isLoweredScopeExit = true;
 				warning(ss.location, "scope (exit) only partly supported.");
 				break;
 			case Success:
-				p.scopeSuccesses ~= fn;
-				fn.isLoweredScopeSuccess = true;
+				p.scopeSuccesses ~= func;
+				func.isLoweredScopeSuccess = true;
 				break;
 			case Failure:
-				p.scopeFailures ~= fn;
-				fn.isLoweredScopeFailure = true;
+				p.scopeFailures ~= func;
+				func.isLoweredScopeFailure = true;
 				warning(ss.location, "scope (failure) not supported.");
 				break;
 			}
-			bs.statements[i] = fn;
+			bs.statements[i] = func;
 		}
 		return Continue;
 	}
@@ -76,18 +76,18 @@ class ScopeReplacer : NullVisitor, Pass
 	{
 		assert(functionStack.length > 0);
 		auto p = functionStack[$-1];
-		auto fn = new ir.Function();
-		fn.name = generateName(ss);
-		fn.location = ss.location;
-		fn.kind = ir.Function.Kind.Function;
+		auto func = new ir.Function();
+		func.name = generateName(ss);
+		func.location = ss.location;
+		func.kind = ir.Function.Kind.Function;
 
-		fn.type = new ir.FunctionType();
-		fn.type.location = ss.location;
-		fn.type.ret = buildVoid(ss.location);
+		func.type = new ir.FunctionType();
+		func.type.location = ss.location;
+		func.type.ret = buildVoid(ss.location);
 
-		fn._body = ss.block;
+		func._body = ss.block;
 
-		return fn;
+		return func;
 	}
 
 	private string generateName(ir.ScopeStatement ss)
