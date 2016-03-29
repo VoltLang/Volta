@@ -651,7 +651,7 @@ ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope c
 			store = tmpStore;
 		}
 		if (store is null) {
-			throw makeError(postfix.identifier.location, emsg);
+			throw panic(postfix.identifier.location, "null store");
 		}
 	}
 
