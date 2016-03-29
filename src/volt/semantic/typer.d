@@ -688,7 +688,7 @@ ir.Type getPostfixIdentifierArrayType(LanguagePass lp, ir.Postfix postfix, ir.Ar
 		pointer.location = postfix.location;
 		return pointer;
 	default:
-		throw makeFailedLookup(postfix, postfix.identifier.value);
+		throw panic(postfix.location, "bad identifier array lookup.");
 	}
 }
 
@@ -702,7 +702,7 @@ ir.Type getPostfixIdentifierStaticArrayType(LanguagePass lp, ir.Postfix postfix,
 		pointer.location = postfix.location;
 		return pointer;
 	default:
-		throw makeFailedLookup(postfix, postfix.identifier.value);
+		throw panic(postfix.location, "bad identifier static array lookup.");
 	}
 }
 
@@ -718,7 +718,7 @@ ir.Type getPostfixIdentifierAssocArrayType(ir.Postfix postfix, ir.AAType arrayTy
 	case "remove":
 		return buildFunctionTypeSmart(postfix.location, buildBool(postfix.location), arrayType.key);
 	default:
-		throw makeFailedLookup(postfix, postfix.identifier.value);
+		throw panic(postfix.location, "bad identifier aa lookup.");
 	}
 }
 
