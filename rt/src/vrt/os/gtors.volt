@@ -7,8 +7,8 @@ extern(C) void vrt_run_global_ctors()
 {
 	auto mod = object.moduleInfoRoot;
 	while (mod !is null) {
-		foreach (fn; mod.ctors) {
-			fn();
+		foreach (func; mod.ctors) {
+			func();
 		}
 		mod = mod.next;
 	}
@@ -18,8 +18,8 @@ extern(C) void vrt_run_global_dtors()
 {
 	auto mod = object.moduleInfoRoot;
 	while (mod !is null) {
-		foreach (fn; mod.dtors) {
-			fn();
+		foreach (func; mod.dtors) {
+			func();
 		}
 		mod = mod.next;
 	}

@@ -13,7 +13,7 @@ version (Emscripten) {
 		void* GC_MALLOC(size_t);
 		void* GC_MALLOC_ATOMIC(size_t);
 		void GC_REGISTER_FINALIZER_NO_ORDER(void* obj,
-		                                    GC_finalization_proc fn,
+		                                    GC_finalization_proc func,
 		                                    void* cd,
 		                                    GC_finalization_proc* ofn,
 		                                    void** ocd);
@@ -39,7 +39,7 @@ version (Emscripten) {
 		// Debian stable (sqeezy and wheezy libgc versions don't export that function)
 		//void GC_set_java_finalization(int on_off);
 		void GC_register_finalizer_no_order(void* obj,
-		                                    GC_finalization_proc fn,
+		                                    GC_finalization_proc func,
 		                                    void* cd,
 		                                    GC_finalization_proc* ofn,
 		                                    void** ocd);

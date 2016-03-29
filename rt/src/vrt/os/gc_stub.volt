@@ -26,7 +26,7 @@ void GC_init() {}
 void GC_gcollect() {}
 void GC_win32_free_heap() {}
 void GC_register_finalizer_no_order(void* obj,
-                                    GC_finalization_proc fn,
+                                    GC_finalization_proc func,
                                     void* cd,
                                     GC_finalization_proc* ofn,
                                     void** ocd) {}
