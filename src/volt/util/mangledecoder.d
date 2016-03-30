@@ -55,11 +55,11 @@ ir.Declaration mangledToDeclaration(string mangledString)
 		var.name = name.identifiers[$-1].value;
 		return var;
 	} else if (exportTag == "Vf") {
-		auto fn = new ir.Function();
-		fn.name = name.identifiers[$-1].value;
-		fn.type = cast(ir.FunctionType) mangledString.mangleToCallable();
-		assert(fn.type !is null);
-		return fn;
+		auto func = new ir.Function();
+		func.name = name.identifiers[$-1].value;
+		func.type = cast(ir.FunctionType) mangledString.mangleToCallable();
+		assert(func.type !is null);
+		return func;
 	}
 
 	assert(false);
