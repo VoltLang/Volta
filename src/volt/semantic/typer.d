@@ -195,7 +195,7 @@ ir.Type getTraitsExpType(LanguagePass lp, ir.TraitsExp traits, ir.Scope currentS
 	auto store = lookup(lp, currentScope, traits.qname);
 	auto attr = cast(ir.UserAttribute) store.node;
 	if (attr is null) {
-		throw makeExpected(traits, "@inteface");
+		throw panic(traits.location, "expected @interface");
 	}
 	lp.actualize(attr);
 	return attr.layoutClass;
@@ -269,7 +269,7 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 	}
 
 	if (effectivelyConst(left) && assign) {
-		throw makeCannotModify(bin, left);
+		throw panic(bin.location, "modifying const type expression passed to typer.");
 	}
 
 	if ((left.isConst | left.isImmutable | left.isScope) && !assign) {
@@ -302,7 +302,7 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 			boolType.location = bin.location;
 			return boolType;
 		} else {
-			throw makeBadImplicitCast(bin, right, left);
+			throw panic(bin.location, "bad bin op.");
 		}
 	} else if (left.nodeType == ir.NodeType.ArrayType ||
 			   right.nodeType == ir.NodeType.ArrayType) {
@@ -318,7 +318,7 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 	} else if ((left.nodeType == ir.NodeType.PointerType && right.nodeType != ir.NodeType.PointerType) ||
                (left.nodeType != ir.NodeType.PointerType && right.nodeType == ir.NodeType.PointerType)) {
 		if (!isValidPointerArithmeticOperation(bin.op)) {
-			throw makeBadImplicitCast(bin, right, left);
+			throw panic(bin.location, "bad bin op.");
 		}
 		ir.PrimitiveType prim;
 		ir.PointerType pointer;
@@ -337,7 +337,7 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 		if (lt !is null && rt !is null && typesEqual(lt, rt)) {
 			return lt;
 		} else {
-			throw makeBadImplicitCast(bin, right, left);
+			throw panic(bin.location, "bad bin op.");
 		}
 	}
 
@@ -726,7 +726,7 @@ ir.Type getPostfixIdentifierAssocArrayType(ir.Postfix postfix, ir.AAType arrayTy
 ir.Type getPostfixIncDecType(LanguagePass lp, ir.Postfix postfix, ir.Scope currentScope)
 {
 	if (!isLValue(postfix.child)) {
-		throw makeNotLValue(postfix);
+		throw panic(postfix.location, "expected lvalue.");
 	}
 	auto otype = getExpType(lp, postfix.child, currentScope);
 	auto type = realType(otype);
@@ -737,10 +737,10 @@ ir.Type getPostfixIncDecType(LanguagePass lp, ir.Postfix postfix, ir.Scope curre
 			   isOkayForPointerArithmetic((cast(ir.PrimitiveType)type).type)) {
 		return type;
 	} else if (effectivelyConst(otype)) {
-		throw makeCannotModify(postfix, otype);
+		throw panic(postfix.location, "modify const in typer.");
 	}
 
-	throw makeBadOperation(postfix);
+	throw panic(postfix.location, "bad postfix operation in typer.");
 }
 
 ir.Type getPostfixIndexType(LanguagePass lp, ir.Postfix postfix, ir.Scope currentScope)
@@ -768,11 +768,11 @@ ir.Type getPostfixIndexType(LanguagePass lp, ir.Postfix postfix, ir.Scope curren
 	} else {
 		auto named = cast(ir.Named) type;
 		if (named is null) {
-			throw makeBadOperation(postfix);
+			throw panic(postfix.location, "bad postfix operation in typer.");
 		}
 		auto store = named.myScope.getStore(overloadIndexName());
 		if (store is null || store.functions.length != 1) {
-			throw makeBadOperation(postfix);
+			throw panic(postfix.location, "bad postfix operation in typer.");
 		}
 		base = store.functions[0].type.ret;
 	}
@@ -792,7 +792,7 @@ ir.Type getPostfixCallType(LanguagePass lp, ir.Postfix postfix, ir.Scope current
 		auto fn = selectFunction(lp, currentScope, set.set, postfix.arguments, postfix.location);
 		if (set.isFromCreateDelegate) {
 			if (!isFunctionMemberOrConstructor(fn)) {
-				throw makeCallingStaticThroughInstance(postfix, fn);
+				throw panic(postfix.location, "calling static through instance in typer.");
 			}
 			ftype = new ir.DelegateType(fn.type);
 		} else {
@@ -803,7 +803,7 @@ ir.Type getPostfixCallType(LanguagePass lp, ir.Postfix postfix, ir.Scope current
 	}
 
 	if (ftype is null) {
-		throw makeBadCall(postfix, type);
+		throw panic(postfix.location, "bad call in typer.");
 	}
 
 	return ftype.ret;
@@ -846,7 +846,7 @@ ir.Type getUnaryType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 ir.Type getUnaryIncDecType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 {
 	if (!isLValue(unary.value)) {
-		throw makeNotLValue(unary);
+		throw panic(unary.location, "not lvalue for unary inc/dec in typer.");
 	}
 	auto type = getExpType(lp, unary.value, currentScope);
 
@@ -856,10 +856,10 @@ ir.Type getUnaryIncDecType(LanguagePass lp, ir.Unary unary, ir.Scope currentScop
 			   isOkayForPointerArithmetic((cast(ir.PrimitiveType)type).type)) {
 		return type;
 	} else if (effectivelyConst(type)) {
-		throw makeCannotModify(unary, type);
+		throw panic(unary.location, "modifying const type in typer.");
 	}
 
-	throw makeBadOperation(unary);
+	throw panic(unary.location, "bad unary operation in typer.");
 }
 
 ir.Type getUnaryComplementType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
@@ -882,7 +882,7 @@ ir.Type getUnaryDerefType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope
 {
 	auto type = getExpType(lp, unary.value, currentScope);
 	if (type.nodeType != ir.NodeType.PointerType) {
-		throw makeBadOperation(unary);
+		throw panic(unary.location, "bad unary operation in typer.");
 	}
 	auto asPointer = cast(ir.PointerType) type;
 	assert(asPointer !is null);
@@ -894,7 +894,7 @@ ir.Type getUnaryDerefType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope
 ir.Type getUnaryAddrOfType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 {
 	if (!isLValue(unary.value)) {
-		throw makeNotLValue(unary);
+		throw panic(unary.location, "non lvalue addrof in typer.");
 	}
 	auto type = getExpType(lp, unary.value, currentScope);
 	auto pointer = new ir.PointerType(type);
