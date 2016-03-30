@@ -2388,8 +2388,10 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 			auto cexp = cast(ir.Unary) e;
 			if (cexp !is null) {
 				assert(cexp.op == ir.Unary.Op.Cast);
-				assert(sz == 0);
-				sz = size(ctx.lp, cexp.type);
+				auto tmpsz = size(ctx.lp, cexp.type);
+				// If there were previous casts, they should be to the same type.
+				assert(sz == 0 || tmpsz == sz);
+				sz = tmpsz;
 				assert(sz == 8);
 				addExp(cexp.value, exp, sz, intArrayData, longArrayData);
 				return;
@@ -3639,6 +3641,17 @@ public:
 
 	override Status leave(ref ir.Exp exp, ir.ArrayLiteral al)
 	{
+		ir.Type base;
+		if (al.exps.length > 0) {
+			base = getCommonSubtype(al.location, expsToTypes(ctx.lp, al.exps, ctx.current));
+		} else {
+			base = buildVoid(al.location);
+		}
+		auto asClass = cast(ir.Class)realType(base);
+		if (al.type is null || asClass !is null) {
+			al.type = buildArrayTypeSmart(al.location, base);
+		}
+		panicAssert(al, al.type !is null);
 		auto at = cast(ir.ArrayType)realType(al.type);
 		if (at is null) {
 			return Continue;

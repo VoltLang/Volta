@@ -64,7 +64,7 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 	case ArrayLiteral:
 		auto asLiteral = cast(ir.ArrayLiteral) exp;
 		assert(asLiteral !is null);
-		return getArrayLiteralType(lp, asLiteral, currentScope);
+		return getArrayLiteralType(asLiteral);
 	case AssocArray:
 		auto asAssoc = cast(ir.AssocArray) exp;
 		assert(asAssoc !is null);
@@ -402,25 +402,12 @@ ir.Type getCommonSubtype(Location l, ir.Type[] types)
 	return candidate;
 }
 
-ir.Type getArrayLiteralType(LanguagePass lp, ir.ArrayLiteral arrayLiteral, ir.Scope currentScope)
+ir.Type getArrayLiteralType(ir.ArrayLiteral al)
 {
-	ir.Type base;
-	if (arrayLiteral.exps.length > 0) {
-		/// @todo figure out common subtype stuff. For now, D1 stylin'.
-		base = getCommonSubtype(arrayLiteral.location, expsToTypes(lp, arrayLiteral.exps, currentScope));
-		base = copyTypeSmart(arrayLiteral.location, base);
-	} else {
-		base = new ir.PrimitiveType(ir.PrimitiveType.Kind.Void);
-		base.location = arrayLiteral.location;
+	if (al.type is null) {
+		throw panic(al.location, "uninitialised array literal passed to typer.");
 	}
-	auto asClass = cast(ir.Class)realType(base);
-	if (asClass is null && arrayLiteral.type !is null) {
-		return arrayLiteral.type;
-	}
-	assert(base !is null);
-	arrayLiteral.type = new ir.ArrayType(base);
-	arrayLiteral.type.location = arrayLiteral.location;
-	return arrayLiteral.type;
+	return al.type;
 }
 
 ir.Type getAssocArrayType(LanguagePass lp, ir.AssocArray assocArray, ir.Scope currentScope)
