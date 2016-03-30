@@ -327,8 +327,8 @@ public:
 	 *
 	 * @throws CompilerError on failure to resolve function.
 	 */
-	final void resolve(ir.Scope current, ir.Function fn)
-	{ if (!fn.isResolved) doResolve(current, fn); }
+	final void resolve(ir.Scope current, ir.Function func)
+	{ if (!func.isResolved) doResolve(current, func); }
 
 	/**
 	 * Resolves a Variable making it usable externaly.
@@ -454,7 +454,7 @@ public:
 
 protected:
 	abstract void doResolve(ir.Scope current, ir.Variable v);
-	abstract void doResolve(ir.Scope current, ir.Function fn);
+	abstract void doResolve(ir.Scope current, ir.Function func);
 	abstract void doResolve(ir.Alias a);
 	abstract void doResolve(ir.Enum e);
 	abstract void doResolve(ir._Interface i);

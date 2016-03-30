@@ -229,9 +229,9 @@ CompilerException makeStaticArrayLengthMismatch(Location loc, size_t expectedLen
 	return new CompilerError(loc, format("expected static array literal of length %s, got a length of %s.", expectedLength, gotLength), file, line);
 }
 
-CompilerException makeDoesNotImplement(Location loc, ir.Class _class, ir._Interface iface, ir.Function fn, string file = __FILE__, const int line = __LINE__)
+CompilerException makeDoesNotImplement(Location loc, ir.Class _class, ir._Interface iface, ir.Function func, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(loc, format("'%s' does not implement the '%s' method of interface '%s'.", _class.name, fn.name, iface.name), file, line);
+	return new CompilerError(loc, format("'%s' does not implement the '%s' method of interface '%s'.", _class.name, func.name, iface.name), file, line);
 }
 
 CompilerException makeCaseFallsThrough(Location loc, string file = __FILE__, const int line = __LINE__)
@@ -347,9 +347,9 @@ CompilerException makeBreakOutOfLoop(Location loc, string file = __FILE__, const
 	return e;
 }
 
-CompilerException makeAggregateDoesNotDefineOverload(Location loc, ir.Aggregate agg, string fn, string file = __FILE__, const int line = __LINE__)
+CompilerException makeAggregateDoesNotDefineOverload(Location loc, ir.Aggregate agg, string func, string file = __FILE__, const int line = __LINE__)
 {
-	auto e = new CompilerError(loc, format("type '%s' does not define operator function '%s'.", agg.name, fn), file, line);
+	auto e = new CompilerError(loc, format("type '%s' does not define operator function '%s'.", agg.name, func), file, line);
 	return e;
 }
 
@@ -378,9 +378,9 @@ CompilerException makeAnonymousAggregateAtTopLevel(ir.Aggregate agg, string file
 	return e;
 }
 
-CompilerException makeInvalidMainSignature(ir.Function fn, string file = __FILE__, const int line = __LINE__)
+CompilerException makeInvalidMainSignature(ir.Function func, string file = __FILE__, const int line = __LINE__)
 {
-	auto e = new CompilerError(fn.location, "invalid main signature.", file, line);
+	auto e = new CompilerError(func.location, "invalid main signature.", file, line);
 	return e;
 }
 
@@ -479,9 +479,9 @@ CompilerException makeAlreadyLoaded(ir.Module m, string filename, string file = 
 	return new CompilerError(m.location, format("module %s already loaded '%s'.", m.name.toString(), filename), file, line);
 }
 
-CompilerException makeCannotOverloadNested(ir.Node node, ir.Function fn, string file = __FILE__, const int line = __LINE__)
+CompilerException makeCannotOverloadNested(ir.Node node, ir.Function func, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(node.location, format("cannot overload nested function '%s'.", fn.name), file, line);
+	return new CompilerError(node.location, format("cannot overload nested function '%s'.", func.name), file, line);
 }
 
 CompilerException makeUsedBeforeDeclared(ir.Node node, ir.Variable var, string file = __FILE__, const int line = __LINE__)
@@ -495,24 +495,24 @@ CompilerException makeStructConstructorsUnsupported(ir.Node node, string file = 
 	return new CompilerError(node.location, "struct constructors are currently unsupported.", file, line);
 }
 
-CompilerException makeCallingStaticThroughInstance(ir.Node node, ir.Function fn, string file = __FILE__, const int line = __LINE__)
+CompilerException makeCallingStaticThroughInstance(ir.Node node, ir.Function func, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(node.location, format("calling local or global function '%s' through instance variable.", fn.name), file, line);
+	return new CompilerError(node.location, format("calling local or global function '%s' through instance variable.", func.name), file, line);
 }
 
-CompilerException makeMarkedOverrideDoesNotOverride(ir.Node node, ir.Function fn, string file = __FILE__, const int line = __LINE__)
+CompilerException makeMarkedOverrideDoesNotOverride(ir.Node node, ir.Function func, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(node.location, format("override functions like '%s' must override a function.", fn.name), file, line);
+	return new CompilerError(node.location, format("override functions like '%s' must override a function.", func.name), file, line);
 }
 
-CompilerException makeAbstractHasToBeMember(ir.Node node, ir.Function fn, string file = __FILE__, const int line = __LINE__)
+CompilerException makeAbstractHasToBeMember(ir.Node node, ir.Function func, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(node.location, format("abstract functions like '%s' must be a member of an abstract class.", fn.name), file, line);
+	return new CompilerError(node.location, format("abstract functions like '%s' must be a member of an abstract class.", func.name), file, line);
 }
 
-CompilerException makeAbstractBodyNotEmpty(ir.Node node, ir.Function fn, string file = __FILE__, const int line = __LINE__)
+CompilerException makeAbstractBodyNotEmpty(ir.Node node, ir.Function func, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(node.location, format("abstract functions like '%s' may not have an implementation.", fn.name), file, line);
+	return new CompilerError(node.location, format("abstract functions like '%s' may not have an implementation.", func.name), file, line);
 }
 
 CompilerException makeNewAbstract(ir.Node node, ir.Class _class, string file = __FILE__, const int line = __LINE__)
@@ -778,7 +778,7 @@ CompilerException makeCannotInfer(ir.Location location, string file = __FILE__, 
 	return new CompilerError(location, "not enough information to infer type.", true, file, line);
 }
 
-CompilerException makeCannotLoadDynamic(ir.Node node, ir.Function fn, string file = __FILE__, const int line = __LINE__)
+CompilerException makeCannotLoadDynamic(ir.Node node, ir.Function func, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(node.location, "@loadDynamic function cannot have body.", file, line);
 }
