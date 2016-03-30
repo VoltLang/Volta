@@ -369,14 +369,14 @@ public:
 	 * Update reference to indicate function set has been resolved.
 	 * Returns the function passed to it.
 	 */
-	Function resolved(Function fn)
+	Function resolved(Function func)
 	{
 		if (reference !is null) {
-			reference.decl = fn;
+			reference.decl = func;
 		}
 		functions = null;
 		reference = null;
-		return fn;
+		return func;
 	}
 }
 
@@ -391,7 +391,7 @@ public:
 class FunctionParam : Declaration
 {
 public:
-	Function fn;
+	Function func;
 	size_t index;
 	Exp assign;
 	string name;  // Optional.
@@ -405,7 +405,7 @@ public:
 
 	@property Type type()
 	{
-		assert(fn !is null);
-		return fn.type.params[index];
+		assert(func !is null);
+		return func.type.params[index];
 	}
 }

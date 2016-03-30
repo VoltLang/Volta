@@ -811,7 +811,7 @@ bool isRefVar(ir.Exp exp)
 	if (asVar is null) {
 		return false;
 	}
-	return asVar.fn.type.isArgRef[asVar.index] || asVar.fn.type.isArgOut[asVar.index];
+	return asVar.func.type.isArgRef[asVar.index] || asVar.func.type.isArgOut[asVar.index];
 }
 
 

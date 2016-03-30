@@ -482,7 +482,7 @@ ParseStatus parseConstructor(ParserStream ps, out ir.Function c)
 		p.name = param.name;
 		p.index = i;
 		p.assign = param.assign;
-		p.fn = c;
+		p.func = c;
 		c.params ~= p;
 	}
 	bool inBlocks = true;

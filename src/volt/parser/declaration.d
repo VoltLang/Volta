@@ -631,7 +631,7 @@ ParseStatus parseFunction(ParserStream ps, out ir.Function fn, ir.Type base)
 		p.name = param.name;
 		p.index = i;
 		p.assign = param.assign;
-		p.fn = fn;
+		p.func = fn;
 		fn.params ~= p;
 	}
 	//fn.type.params = parseParameterList(ps, fn.type);

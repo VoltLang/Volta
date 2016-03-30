@@ -90,8 +90,8 @@ bool replaceNested(ref ir.Exp exp, ir.ExpReference eref, ir.Variable nestParam)
 
 	exp = buildAccess(exp.location, buildExpReference(nestParam.location, nestParam, nestParam.name), name);
 	if (fp !is null &&
-	    (fp.fn.type.isArgRef[fp.index] ||
-	     fp.fn.type.isArgOut[fp.index])) {
+	    (fp.func.type.isArgRef[fp.index] ||
+	     fp.func.type.isArgOut[fp.index])) {
 		exp = buildDeref(exp.location, exp);
 	}
 	return true;

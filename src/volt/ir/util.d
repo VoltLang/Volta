@@ -933,12 +933,12 @@ ir.BuiltinExp buildAARemove(Location loc, ir.Exp[] child)
  * Builds a BuiltinExp of AARemove type.
  */
 ir.BuiltinExp buildUFCS(Location loc, ir.Type type, ir.Exp child,
-                        ir.Function[] fns)
+                        ir.Function[] funcs)
 {
 	auto builtin = new ir.BuiltinExp(
 		ir.BuiltinExp.Kind.UFCS, type, [child]);
 	builtin.location = loc;
-	builtin.functions = fns;
+	builtin.functions = funcs;
 
 	return builtin;
 }
@@ -1090,7 +1090,7 @@ ir.Postfix buildCall(Location loc, ir.Exp child, ir.Exp[] args)
 	return call;
 }
 
-ir.Postfix buildMemberCall(Location loc, ir.Exp child, ir.ExpReference fn, string name, ir.Exp[] args)
+ir.Postfix buildMemberCall(Location loc, ir.Exp child, ir.ExpReference func, string name, ir.Exp[] args)
 {
 	auto lookup = new ir.Postfix();
 	lookup.location = loc;
@@ -1099,7 +1099,7 @@ ir.Postfix buildMemberCall(Location loc, ir.Exp child, ir.ExpReference fn, strin
 	lookup.identifier = new ir.Identifier();
 	lookup.identifier.location = loc;
 	lookup.identifier.value = name;
-	lookup.memberFunction = fn;
+	lookup.memberFunction = func;
 
 	auto call = new ir.Postfix();
 	call.location = loc;
@@ -1110,13 +1110,13 @@ ir.Postfix buildMemberCall(Location loc, ir.Exp child, ir.ExpReference fn, strin
 	return call;
 }
 
-ir.Postfix buildCreateDelegate(Location loc, ir.Exp child, ir.ExpReference fn)
+ir.Postfix buildCreateDelegate(Location loc, ir.Exp child, ir.ExpReference func)
 {
 	auto postfix = new ir.Postfix();
 	postfix.location = loc;
 	postfix.op = ir.Postfix.Op.CreateDelegate;
 	postfix.child = child;
-	postfix.memberFunction = fn;
+	postfix.memberFunction = func;
 	return postfix;
 }
 
@@ -1209,29 +1209,29 @@ ir.StatementExp buildStatementExp(Location loc, ir.Node[] stats, ir.Exp exp)
 	return stateExp;
 }
 
-ir.FunctionParam buildFunctionParam(Location loc, size_t index, string name, ir.Function fn)
+ir.FunctionParam buildFunctionParam(Location loc, size_t index, string name, ir.Function func)
 {
 	auto fparam = new ir.FunctionParam();
 	fparam.location = loc;
 	fparam.index = index;
 	fparam.name = name;
-	fparam.fn = fn;
+	fparam.func = func;
 	return fparam;
 }
 
 /**
  * Adds a variable argument to a function, also adds it to the scope.
  */
-ir.FunctionParam addParam(Location loc, ir.Function fn, ir.Type type, string name)
+ir.FunctionParam addParam(Location loc, ir.Function func, ir.Type type, string name)
 {
-	auto var = buildFunctionParam(loc, fn.type.params.length, name, fn);
+	auto var = buildFunctionParam(loc, func.type.params.length, name, func);
 
-	fn.type.params ~= type;
-	fn.type.isArgOut ~= false;
-	fn.type.isArgRef ~= false;
+	func.type.params ~= type;
+	func.type.isArgOut ~= false;
+	func.type.isArgRef ~= false;
 
-	fn.params ~= var;
-	fn.myScope.addValue(var, name);
+	func.params ~= var;
+	func.myScope.addValue(var, name);
 
 	return var;
 }
@@ -1239,9 +1239,9 @@ ir.FunctionParam addParam(Location loc, ir.Function fn, ir.Type type, string nam
 /**
  * Adds a variable argument to a function, also adds it to the scope.
  */
-ir.FunctionParam addParamSmart(Location loc, ir.Function fn, ir.Type type, string name)
+ir.FunctionParam addParamSmart(Location loc, ir.Function func, ir.Type type, string name)
 {
-	return addParam(loc, fn, copyTypeSmart(loc, type), name);
+	return addParam(loc, func, copyTypeSmart(loc, type), name);
 }
 
 /**
@@ -1521,24 +1521,24 @@ ir.FunctionType buildFunctionTypeSmart(Location loc, ir.Type ret, ir.Type[] args
 /// Builds a function without inserting it anywhere.
 ir.Function buildFunction(Location loc, ir.Scope _scope, string name, bool buildBody = true)
 {
-	auto fn = new ir.Function();
-	fn.name = name;
-	fn.location = loc;
-	fn.kind = ir.Function.Kind.Function;
-	fn.myScope = new ir.Scope(_scope, fn, fn.name);
+	auto func = new ir.Function();
+	func.name = name;
+	func.location = loc;
+	func.kind = ir.Function.Kind.Function;
+	func.myScope = new ir.Scope(_scope, func, func.name);
 
-	fn.type = new ir.FunctionType();
-	fn.type.location = loc;
-	fn.type.ret = new ir.PrimitiveType(ir.PrimitiveType.Kind.Void);
-	fn.type.ret.location = loc;
+	func.type = new ir.FunctionType();
+	func.type.location = loc;
+	func.type.ret = new ir.PrimitiveType(ir.PrimitiveType.Kind.Void);
+	func.type.ret.location = loc;
 
 	if (buildBody) {
-		fn._body = new ir.BlockStatement();
-		fn._body.location = loc;
-		fn._body.myScope = new ir.Scope(fn.myScope, fn._body, name);
+		func._body = new ir.BlockStatement();
+		func._body.location = loc;
+		func._body.myScope = new ir.Scope(func.myScope, func._body, name);
 	}
 
-	return fn;
+	return func;
 }
 
 /**
@@ -1547,19 +1547,19 @@ ir.Function buildFunction(Location loc, ir.Scope _scope, string name, bool build
  */
 ir.Function buildFunction(Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, string name, bool buildBody = true)
 {
-	auto fn = buildFunction(loc, _scope, name, buildBody);
+	auto func = buildFunction(loc, _scope, name, buildBody);
 
 	// Insert the struct into all the places.
-	_scope.addFunction(fn, fn.name);
-	tlb.nodes ~= fn;
-	return fn;
+	_scope.addFunction(func, func.name);
+	tlb.nodes ~= func;
+	return func;
 }
 
 ir.Function buildGlobalConstructor(Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, string name, bool buildBody = true)
 {
-	auto fn = buildFunction(loc, tlb, _scope, name, buildBody);
-	fn.kind = ir.Function.Kind.GlobalConstructor;
-	return fn;
+	auto func = buildFunction(loc, tlb, _scope, name, buildBody);
+	func.kind = ir.Function.Kind.GlobalConstructor;
+	return func;
 }
 
 /**

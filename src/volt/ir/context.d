@@ -161,15 +161,15 @@ public:
 	 * consumption but are instead called from the addFunction
 	 * member in Scope.
 	 */
-	this(Scope s, Function fn, string name)
+	this(Scope s, Function func, string name)
 	in {
-		assert(fn !is null);
+		assert(func !is null);
 	}
 	body {
 		this.name = name;
-		this.node = fn;
+		this.node = func;
 		this.parent = s;
-		this.functions = [fn];
+		this.functions = [func];
 		this.kind = Kind.Function;
 	}
 
@@ -415,16 +415,16 @@ public:
 	 * Side-effects:
 	 *   None.
 	 */
-	Store addFunction(Function fn, string name)
+	Store addFunction(Function func, string name)
 	in {
-		assert(fn !is null);
+		assert(func !is null);
 		assert(name !is null);
 	}
 	body {
 		auto ret = name in symbols;
 
 		if (ret is null) {
-			auto store = new Store(this, fn, name);
+			auto store = new Store(this, func, name);
 			symbols[name] = store;
 			return store;
 		}
@@ -432,12 +432,12 @@ public:
 		auto merge = *ret;
 		if (ret.kind == Store.Kind.Function ||
 		    ret.kind == Store.Kind.Merge) {
-			merge.functions ~= fn;
+			merge.functions ~= func;
 			return merge;
 		}
 
 		if (merge.kind == Store.Kind.Alias) {
-			auto store = new Store(this, fn, name);
+			auto store = new Store(this, func, name);
 			store.kind = Store.Kind.Merge;
 			symbols[name] = store;
 
@@ -447,7 +447,7 @@ public:
 			return store;
 		}
 
-		errorDefined(fn, name);
+		errorDefined(func, name);
 		assert(false);
 	}
 

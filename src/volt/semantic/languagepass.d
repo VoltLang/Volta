@@ -378,7 +378,7 @@ public:
 		}
 		auto fparam = cast(ir.FunctionParam) eref.decl;
 		if (set !is null) {
-			fparam.fn.type.params[fparam.index] = flattenStorage(fparam.fn.type.params[fparam.index]);
+			fparam.func.type.params[fparam.index] = flattenStorage(fparam.func.type.params[fparam.index]);
 			return;
 		}
 		auto edecl = cast(ir.EnumDeclaration) eref.decl;
