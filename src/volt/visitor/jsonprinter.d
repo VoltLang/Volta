@@ -49,12 +49,12 @@ public:
 		w("}\n");
 	}
 
-	override Status enter(ir.Function fn)
+	override Status enter(ir.Function func)
 	{
-		if (fn.docComment.length > 0) {
+		if (func.docComment.length > 0) {
 			Entry e;
-			e.name = currentModule.name.toString() ~ "." ~ fn.name;
-			e.comment = fn.docComment;
+			e.name = currentModule.name.toString() ~ "." ~ func.name;
+			e.comment = func.docComment;
 			functions ~= e;
 		}
 		return Continue;

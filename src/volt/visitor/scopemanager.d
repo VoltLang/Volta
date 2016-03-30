@@ -140,20 +140,20 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ir.Function fn)
+	override Status enter(ir.Function func)
 	{
-		functionStack ~= fn;
+		functionStack ~= func;
 		if (current.node.nodeType == ir.NodeType.BlockStatement) {
 			// Nested function.
 			nestedDepth++;
 		}
-		current = fn.myScope;
+		current = func.myScope;
 		return Continue;
 	}
 
-	override Status leave(ir.Function fn)
+	override Status leave(ir.Function func)
 	{
-		assert(functionStack.length > 0 && functionStack[$-1] is fn);
+		assert(functionStack.length > 0 && functionStack[$-1] is func);
 		functionStack = functionStack[0 .. $-1];
 		if (current.node.nodeType == ir.NodeType.BlockStatement) {
 			// Nested function.
@@ -161,11 +161,11 @@ public:
 			assert(nestedDepth >= 0);
 		}
 
-		if (current !is fn.myScope) {
+		if (current !is func.myScope) {
 			auto str = "invalid scope layout should be " ~
-			           ir.getNodeAddressString(fn) ~ " is " ~
+			           ir.getNodeAddressString(func) ~ " is " ~
 			           ir.getNodeAddressString(current.node);
-			throw panic(fn.location, str);
+			throw panic(func.location, str);
 		}
 
 		current = current.parent;

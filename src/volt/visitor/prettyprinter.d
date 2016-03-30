@@ -1263,58 +1263,58 @@ public:
 		return ContinueParent;
 	}
 
-	override Status enter(ir.FunctionType fn)
+	override Status enter(ir.FunctionType func)
 	{
-		accept(fn.ret, this);
+		accept(func.ret, this);
 		wf(" function(");
-		foreach (i, param; fn.params) {
-			if (fn.isArgRef[i]) {
+		foreach (i, param; func.params) {
+			if (func.isArgRef[i]) {
 				wf("ref ");
 			}
-			if (fn.isArgOut[i]) {
+			if (func.isArgOut[i]) {
 				wf("out ");
 			}
 			accept(param, this);
-			if (i < fn.params.length - 1) {
+			if (i < func.params.length - 1) {
 				wf(", ");
 			}
 		}
-		if (fn.hasVarArgs) {
+		if (func.hasVarArgs) {
 			wf(", ...");
 		}
 		wf(")");
 		return ContinueParent;
 	}
 
-	override Status leave(ir.FunctionType fn)
+	override Status leave(ir.FunctionType func)
 	{
 		return Continue;
 	}
 
-	override Status enter(ir.DelegateType fn)
+	override Status enter(ir.DelegateType func)
 	{
-		accept(fn.ret, this);
+		accept(func.ret, this);
 		wf(" delegate(");
-		foreach (i, param; fn.params) {
-			if (fn.isArgRef[i]) {
+		foreach (i, param; func.params) {
+			if (func.isArgRef[i]) {
 				wf("ref ");
 			}
-			if (fn.isArgOut[i]) {
+			if (func.isArgOut[i]) {
 				wf("out ");
 			}
 			accept(param, this);
-			if (i < fn.params.length - 1) {
+			if (i < func.params.length - 1) {
 				wf(", ");
 			}
 		}
-		if (fn.hasVarArgs) {
+		if (func.hasVarArgs) {
 			wf(", ...");
 		}
 		wf(")");
 		return ContinueParent;
 	}
 
-	override Status leave(ir.DelegateType fn)
+	override Status leave(ir.DelegateType func)
 	{
 		return Continue;
 	}
@@ -1324,19 +1324,19 @@ public:
 		return Continue;
 	}
 	
-	override Status enter(ir.Function fn)
+	override Status enter(ir.Function func)
 	{
 		ln();
 		twf("");
 
-		if (fn.mangledName !is null) {
+		if (func.mangledName !is null) {
 			wf("@mangledName(\"");
-			wf(fn.mangledName);
+			wf(func.mangledName);
 			wfln("\")");
 			twf("");
 		}
 
-		final switch(fn.kind) with (ir.Function.Kind) {
+		final switch(func.kind) with (ir.Function.Kind) {
 		case LocalMember:
 			wf("local ");
 			goto case Member;
@@ -1348,9 +1348,9 @@ public:
 		case Function:
 		case Nested:
 		case Member:
-			accept(fn.type.ret, this);
+			accept(func.type.ret, this);
 			wf(" ");
-			wf(fn.name);
+			wf(func.name);
 			wf("(");
 			break;
 		case Constructor:
@@ -1373,11 +1373,11 @@ public:
 			break;
 		}
 
-		foreach (i, param; fn.params) {
-			if (fn.type.isArgRef[i]) {
+		foreach (i, param; func.params) {
+			if (func.type.isArgRef[i]) {
 				wf("ref ");
 			}
-			if (fn.type.isArgOut[i]) {
+			if (func.type.isArgOut[i]) {
 				wf("out ");
 			}
 			accept(param.type, this);
@@ -1385,11 +1385,11 @@ public:
 				wf(" ");
 				wf(param.name);
 			}
-			if (i < fn.type.params.length - 1) {
+			if (i < func.type.params.length - 1) {
 				wf(", ");
 			}
 		}
-		if (fn.type.hasVarArgs) {
+		if (func.type.hasVarArgs) {
 			wf(", ...");
 		}
 		wf(")");
@@ -1403,34 +1403,34 @@ public:
 			mIndent--;
 		}
 
-		if (fn.inContract !is null) {
+		if (func.inContract !is null) {
 			ln();
 			twfln("in {");
-			printNodes(fn.inContract.statements);
+			printNodes(func.inContract.statements);
 			ln();
 			twfln("}");
 		}
 
-		if (fn.outContract !is null) {
-			if (fn.outParameter.length > 0) {
-				twfln("out (" ~ fn.outParameter ~ ") {");
+		if (func.outContract !is null) {
+			if (func.outParameter.length > 0) {
+				twfln("out (" ~ func.outParameter ~ ") {");
 			} else {
 				twfln("out {");
 			}
-			printNodes(fn.outContract.statements);
+			printNodes(func.outContract.statements);
 			ln();
 			twfln("}");
 		}
 
-		if (fn._body !is null) {
-			if (fn.inContract is null || fn.outContract is null) {
+		if (func._body !is null) {
+			if (func.inContract is null || func.outContract is null) {
 				twfln("body {");
 			} else {
 				ln();
 				twfln("{");
 			}
 
-			printNodes(fn._body.statements);
+			printNodes(func._body.statements);
 
 			ln();
 			twfln("}");
@@ -1441,7 +1441,7 @@ public:
 		return ContinueParent;
 	}
 
-	override Status leave(ir.Function fn)
+	override Status leave(ir.Function func)
 	{
 		return Continue;
 	}

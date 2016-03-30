@@ -128,12 +128,12 @@ public abstract:
 	Status leave(ir.StaticArrayType array);
 	Status enter(ir.AAType array);
 	Status leave(ir.AAType array);
-	Status enter(ir.FunctionType fn);
-	Status leave(ir.FunctionType fn);
-	Status enter(ir.DelegateType fn);
-	Status leave(ir.DelegateType fn);
-	Status enter(ir.Function fn);
-	Status leave(ir.Function fn);
+	Status enter(ir.FunctionType func);
+	Status leave(ir.FunctionType func);
+	Status enter(ir.DelegateType func);
+	Status leave(ir.DelegateType func);
+	Status enter(ir.Function func);
+	Status leave(ir.Function func);
 	Status enter(ir.StorageType type);
 	Status leave(ir.StorageType type);
 	Status enter(ir.Attribute attr);
@@ -315,12 +315,12 @@ override:
 	Status leave(ir.StaticArrayType array){ return Continue; }
 	Status enter(ir.AAType array){ return Continue; }
 	Status leave(ir.AAType array){ return Continue; }
-	Status enter(ir.FunctionType fn){ return Continue; }
-	Status leave(ir.FunctionType fn){ return Continue; }
-	Status enter(ir.DelegateType fn){ return Continue; }
-	Status leave(ir.DelegateType fn){ return Continue; }
-	Status enter(ir.Function fn){ return Continue; }
-	Status leave(ir.Function fn){ return Continue; }
+	Status enter(ir.FunctionType func){ return Continue; }
+	Status leave(ir.FunctionType func){ return Continue; }
+	Status enter(ir.DelegateType func){ return Continue; }
+	Status leave(ir.DelegateType func){ return Continue; }
+	Status enter(ir.Function func){ return Continue; }
+	Status leave(ir.Function func){ return Continue; }
 	Status enter(ir.StorageType type){ return Continue; }
 	Status leave(ir.StorageType type){ return Continue; }
 	Status enter(ir.Attribute attr){ return Continue; }
@@ -1176,93 +1176,93 @@ Visitor.Status acceptAAType(ir.AAType array, Visitor av)
 	return av.leave(array);
 }
 
-Visitor.Status acceptFunctionType(ir.FunctionType fn, Visitor av)
+Visitor.Status acceptFunctionType(ir.FunctionType func, Visitor av)
 {
-	auto status = av.enter(fn);
+	auto status = av.enter(func);
 	if (status != VisitorContinue) {
 		return parentContinue(status);
 	}
 
-	status = accept(fn.ret, av);
+	status = accept(func.ret, av);
 	if (status == VisitorStop) {
 		return VisitorStop;
 	}
 
-	foreach (type; fn.params) {
+	foreach (type; func.params) {
 		status = accept(type, av);
 		if (status == VisitorStop) {
 			return VisitorStop;
 		}
 	}
 
-	return av.leave(fn);
+	return av.leave(func);
 }
 
-Visitor.Status acceptDelegateType(ir.DelegateType fn, Visitor av)
+Visitor.Status acceptDelegateType(ir.DelegateType func, Visitor av)
 {
-	auto status = av.enter(fn);
+	auto status = av.enter(func);
 	if (status != VisitorContinue) {
 		return parentContinue(status);
 	}
 
-	status = accept(fn.ret, av);
+	status = accept(func.ret, av);
 	if (status == VisitorStop) {
 		return VisitorStop;
 	}
-	foreach (type; fn.params) {
+	foreach (type; func.params) {
 		status = accept(type, av);
 		if (status == VisitorStop) {
 			return VisitorStop;
 		}
 	}
 
-	return av.leave(fn);
+	return av.leave(func);
 }
 
-Visitor.Status acceptFunction(ir.Function fn, Visitor av)
+Visitor.Status acceptFunction(ir.Function func, Visitor av)
 {
-	auto status = av.enter(fn);
+	auto status = av.enter(func);
 	if (status != VisitorContinue) {
 		return parentContinue(status);
 	}
 
-	if (fn.type !is null) {
-		status = accept(fn.type, av);
+	if (func.type !is null) {
+		status = accept(func.type, av);
 		if (status == VisitorStop)
 			return status;
 	}
 
-	if (fn.thisHiddenParameter !is null) {
-		status = accept(fn.thisHiddenParameter, av);
+	if (func.thisHiddenParameter !is null) {
+		status = accept(func.thisHiddenParameter, av);
 		if (status == VisitorStop)
 			return status;
 	}
 
-	if (fn.nestedHiddenParameter !is null) {
-		status = accept(fn.nestedHiddenParameter, av);
+	if (func.nestedHiddenParameter !is null) {
+		status = accept(func.nestedHiddenParameter, av);
 		if (status == VisitorStop)
 			return status;
 	}
 
-	if (fn.inContract !is null) {
-		status = accept(fn.inContract, av);
+	if (func.inContract !is null) {
+		status = accept(func.inContract, av);
 		if (status == VisitorStop)
 			return status;
 	}
 
-	if (fn.outContract !is null) {
-		status = accept(fn.outContract, av);
+	if (func.outContract !is null) {
+		status = accept(func.outContract, av);
 		if (status == VisitorStop)
 			return status;
 	}
 
-	if (fn._body !is null) {
-		status = accept(fn._body, av);
+	if (func._body !is null) {
+		status = accept(func._body, av);
 		if (status == VisitorStop)
 			return status;
 	}
 
-	return av.leave(fn);
+	return av.leave(func);
 }
 
 Visitor.Status acceptEnumDeclaration(ir.EnumDeclaration ed, Visitor av)

@@ -93,17 +93,17 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ir.Function fn)
+	override Status enter(ir.Function func)
 	{
 		openTag(`div class="function"`);
 		openTag("h3");
-		mHtmlFile.write(format("function %s", fn.name));
+		mHtmlFile.write(format("function %s", func.name));
 		closeTag("h3");
-		outputComment(fn);
+		outputComment(func);
 		return Continue;
 	}
 
-	override Status leave(ir.Function fn)
+	override Status leave(ir.Function func)
 	{
 		closeTag(`div`);
 		return Continue;
