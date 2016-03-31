@@ -42,20 +42,20 @@ public:
 	/**
 	 * Visitor functions.
 	 */
-	override Status enter(ir.Function fn)
+	override Status enter(ir.Function func)
 	{
-		if (fn._body is null) {
+		if (func._body is null) {
 			return Continue;
 		}
 /+
 		// Build vrt_print(__FUNCTION__).
-		auto l = fn.location;
+		auto l = func.location;
 		auto eref = buildExpReference(l, lp.printfFunc, "vrt_printf");
 		auto call = buildCall(l, eref, [buildConstantCString(l, "%s\n", false),
 			cast(ir.Exp) buildArrayPtr(l, buildString(l), buildTokenExp(l, ir.TokenExp.Type.Function))]);
 		auto estat = buildExpStat(l, call);
 		// Add the print to the top of the function.
-		fn._body.statements = estat ~ fn._body.statements;
+		func._body.statements = estat ~ func._body.statements;
 		return Continue;
 +/
 		assert(false);

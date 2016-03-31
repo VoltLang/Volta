@@ -142,32 +142,32 @@ public:
 		return;
 	}
 
-	override Status enter(ir.Function fn)
+	override Status enter(ir.Function func)
 	{
-		super.enter(fn);
-		if (fn._body !is null) {
+		super.enter(func);
+		if (func._body !is null) {
 			blocks ~= new Block();  // Note: no parents.
 		}
 		return Continue;
 	}
 
-	override Status leave(ir.Function fn)
+	override Status leave(ir.Function func)
 	{
-		super.leave(fn);
-		if (fn._body is null) {
+		super.leave(func);
+		if (func._body is null) {
 			return Continue;
 		}
-		ensureNonNullBlock(fn.location);
+		ensureNonNullBlock(func.location);
 		if (block.canReachEntry()) {
-			if (isVoid(realType(fn.type.ret))) {
-				buildReturnStat(fn.location, fn._body);
+			if (isVoid(realType(func.type.ret))) {
+				buildReturnStat(func.location, func._body);
 			} else {
-				throw makeExpected(fn.location, "return statement");
+				throw makeExpected(func.location, "return statement");
 			}
 		}
 
-		if (fn.kind == ir.Function.Kind.Constructor && block.canReachWithoutSuper()) {
-			panicAssert(fn, classStack.length > 0);
+		if (func.kind == ir.Function.Kind.Constructor && block.canReachWithoutSuper()) {
+			panicAssert(func, classStack.length > 0);
 			auto pclass = classStack[$-1].parentClass;
 			if (pclass !is null) {
 				bool noArgumentCtor;
@@ -176,18 +176,18 @@ public:
 						panicAssert(ctor, !noArgumentCtor);
 						noArgumentCtor = true;
 						ir.Variable dummy;
-						auto v = fn.thisHiddenParameter;
-						panicAssert(fn, v !is null);
+						auto v = func.thisHiddenParameter;
+						panicAssert(func, v !is null);
 						ir.Exp tv = buildExpReference(v.location, v, v.name);
 						tv = buildCastSmart(tv.location, buildVoidPtr(tv.location), tv);
-						auto call = buildCall(fn.location, buildExpReference(fn.location, ctor, ctor.name), [tv]);
+						auto call = buildCall(func.location, buildExpReference(func.location, ctor, ctor.name), [tv]);
 						panicAssert(ctor, ctor._body !is null);
-						fn._body.statements = buildExpStat(fn.location, call) ~ fn._body.statements;
+						func._body.statements = buildExpStat(func.location, call) ~ func._body.statements;
 						break;
 					}
 				}
 				if (!noArgumentCtor) {
-					throw makeNoSuperCall(fn.location);
+					throw makeNoSuperCall(func.location);
 				}
 			}
 		}

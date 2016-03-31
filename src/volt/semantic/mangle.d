@@ -49,12 +49,12 @@ string mangle(string[] names, ir.Variable v)
  *
  * @todo figure out what to do about names argument.
  */
-string mangle(string[] names, ir.Function fn)
+string mangle(string[] names, ir.Function func)
 {
 	string s = "Vf";
 	mangleName(names, s);
-	mangleString(fn.name ~ fn.suffix, s);
-	mangleType(fn.type, s);
+	mangleString(func.name ~ func.suffix, s);
+	mangleType(func.type, s);
 	return s;
 }
 
@@ -164,19 +164,19 @@ void mangleType(ir.Type t, ref string mangledString)
 	}
 }
 
-void mangleFunctionType(ir.FunctionType fn, ref string mangledString)
+void mangleFunctionType(ir.FunctionType func, ref string mangledString)
 {
-	if (fn.hiddenParameter) {
+	if (func.hiddenParameter) {
 		mangledString ~= "M";
 	}
 	mangledString ~= "F";
-	mangleCallableType(fn, mangledString);
+	mangleCallableType(func, mangledString);
 }
 
-void mangleDelegateType(ir.DelegateType fn, ref string mangledString)
+void mangleDelegateType(ir.DelegateType func, ref string mangledString)
 {
 	mangledString ~= "D";
-	mangleCallableType(fn, mangledString);
+	mangleCallableType(func, mangledString);
 }
 
 void mangleCallableType(ir.CallableType ct, ref string mangledString)

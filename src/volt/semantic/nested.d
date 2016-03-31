@@ -20,34 +20,34 @@ import volt.semantic.classify : isNested;
 void emitNestedStructs(ir.Function parentFunction, ir.BlockStatement bs, ref ir.Struct[] structs)
 {
 	for (size_t i = 0; i < bs.statements.length; ++i) {
-		auto fn = cast(ir.Function) bs.statements[i];
-		if (fn is null) {
+		auto func = cast(ir.Function) bs.statements[i];
+		if (func is null) {
 			continue;
 		}
-		if (fn.suffix.length == 0) {
+		if (func.suffix.length == 0) {
 			foreach (existingFn; parentFunction.nestedFunctions) {
-				if (fn.name == existingFn.oldname) {
-					throw makeCannotOverloadNested(fn, fn);
+				if (func.name == existingFn.oldname) {
+					throw makeCannotOverloadNested(func, func);
 				}
 			}
-			parentFunction.nestedFunctions ~= fn;
-			fn.suffix = toString(getModuleFromScope(parentFunction.location, parentFunction._body.myScope).getId());
+			parentFunction.nestedFunctions ~= func;
+			func.suffix = toString(getModuleFromScope(parentFunction.location, parentFunction._body.myScope).getId());
 		}
 		if (parentFunction.nestStruct is null) {
 			parentFunction.nestStruct = createAndAddNestedStruct(parentFunction, parentFunction._body);
 			structs ~= parentFunction.nestStruct;
 		}
-		emitNestedStructs(parentFunction, fn._body, structs);
+		emitNestedStructs(parentFunction, func._body, structs);
 	}
 }
 
-ir.Struct createAndAddNestedStruct(ir.Function fn, ir.BlockStatement bs)
+ir.Struct createAndAddNestedStruct(ir.Function func, ir.BlockStatement bs)
 {
-	auto s = buildStruct(fn.location, "__Nested" ~ toString(cast(void*)fn), []);
+	auto s = buildStruct(func.location, "__Nested" ~ toString(cast(void*)func), []);
 	s.myScope = new ir.Scope(bs.myScope, s, s.name);
-	auto decl = buildVariable(fn.location, buildTypeReference(s.location, s, "__Nested"), ir.Variable.Storage.Function, "__nested");
+	auto decl = buildVariable(func.location, buildTypeReference(s.location, s, "__Nested"), ir.Variable.Storage.Function, "__nested");
 	decl.isResolved = true;
-	fn.nestedVariable = decl;
+	func.nestedVariable = decl;
 	bs.statements = s ~ (decl ~ bs.statements);
 	return s;
 }

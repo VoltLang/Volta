@@ -45,9 +45,9 @@ public:
 	{
 		auto current = _scope;
 		while  (current !is null) {
-			auto fn = cast(ir.Function) current.node;
-			if (fn !is null) {
-				push(fn, current, fn);
+			auto func = cast(ir.Function) current.node;
+			if (func !is null) {
+				push(func, current, func);
 			}
 			current = current.parent;
 		}
@@ -125,7 +125,7 @@ public:
 	final void enter(ir._Interface i) { push(i, i.myScope, null); }
 	final void enter(ir.UserAttribute ui) { push(ui, ui.myScope, null); }
 	final void enter(ir.Enum e) { push(e, e.myScope, null); }
-	final void enter(ir.Function fn) { push(fn, fn.myScope, fn); }
+	final void enter(ir.Function func) { push(func, func.myScope, func); }
 	final void enter(ir.BlockStatement bs) { mCurrent = bs.myScope; }
 
 	final void leave(ir.Module m) { pop(m, m.myScope, null); }
@@ -135,7 +135,7 @@ public:
 	final void leave(ir._Interface i) { pop(i, i.myScope, null); }
 	final void leave(ir.UserAttribute ui) { pop(ui, ui.myScope, null); }
 	final void leave(ir.Enum e) { pop(e, e.myScope, null); }
-	final void leave(ir.Function fn) { pop(fn, fn.myScope, fn); }
+	final void leave(ir.Function func) { pop(func, func.myScope, func); }
 	final void leave(ir.BlockStatement bs) { mCurrent = mCurrent.parent; }
 
 	/**
@@ -190,9 +190,9 @@ public:
 	}
 
 private:
-	void push(ir.Node n, ir.Scope ctx, ir.Function fn)
+	void push(ir.Node n, ir.Scope ctx, ir.Function func)
 	{
-		if (fn !is null) {
+		if (func !is null) {
 			mFunctionDepth++;
 		}
 
@@ -203,17 +203,17 @@ private:
 			mFunctionStack = newStack;
 		}
 
-		if (fn !is null && currentFunction is null) {
+		if (func !is null && currentFunction is null) {
 			mParentIndex = mLength;
 		}
 
-		mFunctionStack[mLength++] = fn;
+		mFunctionStack[mLength++] = func;
 		mCurrent = ctx;
 	}
 
-	void pop(ir.Node n, ir.Scope ctx, ir.Function fn)
+	void pop(ir.Node n, ir.Scope ctx, ir.Function func)
 	{
-		if (fn !is null) {
+		if (func !is null) {
 			mFunctionDepth--;
 		}
 

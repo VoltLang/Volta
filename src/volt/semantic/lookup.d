@@ -466,8 +466,8 @@ ir.Store ensureResolved(LanguagePass lp, ir.Store s)
 		lp.resolve(s.parent, var);
 		return s;
 	case Function:
-		foreach (fn; s.functions) {
-			lp.resolve(s.parent, fn);
+		foreach (func; s.functions) {
+			lp.resolve(s.parent, func);
 		}
 		return s;
 	case EnumDeclaration:

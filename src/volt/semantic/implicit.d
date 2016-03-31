@@ -279,8 +279,8 @@ bool willConvertFunctionSetType(ir.Type parameter, ir.Type argument)
 	if (fnparam is null) {
 		return false;
 	}
-	foreach (fn; fsettype.set.functions) {
-		if (typesEqual(fn.type, fnparam)) {
+	foreach (func; fsettype.set.functions) {
+		if (typesEqual(func.type, fnparam)) {
 			return true;
 		}
 	}

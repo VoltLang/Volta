@@ -1049,9 +1049,9 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
  */
 ir.Function getParentFunction(ir.Scope current)
 {
-	auto fn = cast(ir.Function) current.node;
-	if (fn !is null) {
-		return fn;
+	auto func = cast(ir.Function) current.node;
+	if (func !is null) {
+		return func;
 	}
 
 	auto bs = cast(ir.BlockStatement) current.node;
@@ -1068,9 +1068,9 @@ bool isInFunction(Context ctx)
 }
 
 
-bool isFunctionMemberOrConstructor(ir.Function fn)
+bool isFunctionMemberOrConstructor(ir.Function func)
 {
-	final switch (fn.kind) with (ir.Function.Kind) {
+	final switch (func.kind) with (ir.Function.Kind) {
 	case Invalid:
 		assert(false);
 	case Member:
@@ -1090,9 +1090,9 @@ bool isFunctionMemberOrConstructor(ir.Function fn)
 	}
 }
 
-bool isFunctionStatic(ir.Function fn)
+bool isFunctionStatic(ir.Function func)
 {
-	final switch (fn.kind) with (ir.Function.Kind) {
+	final switch (func.kind) with (ir.Function.Kind) {
 	case Invalid:
 	case Constructor:
 	case Destructor:
@@ -1137,18 +1137,18 @@ bool isNested(ir.Variable.Storage s)
 /// (If fns is empty, this function returns false).
 bool containsMatchingFunction(ir.Function[] fns, ir.Function fnToMatch)
 {
-	foreach (fn; fns) {
-		if (typesEqual(fn.type, fnToMatch.type)) {
+	foreach (func; fns) {
+		if (typesEqual(func.type, fnToMatch.type)) {
 			return true;
 		}
 	}
 	return false;
 }
 
-bool isNested(ir.Function fn)
+bool isNested(ir.Function func)
 {
-	return fn.kind == ir.Function.Kind.Nested ||
-	       fn.kind == ir.Function.Kind.GlobalNested;
+	return func.kind == ir.Function.Kind.Nested ||
+	       func.kind == ir.Function.Kind.GlobalNested;
 }
 
 

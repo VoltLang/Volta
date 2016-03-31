@@ -257,18 +257,18 @@ void handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
 ir.Variable getThisVarNotNull(ir.Node n, Context ctx)
 {
 	// TODO Is there a function on the Context that is better?
-	auto fn = getParentFunction(ctx.current);
-	if (fn is null) {
+	auto func = getParentFunction(ctx.current);
+	if (func is null) {
 		throw panic(n, "getThisVar called for scope outside of function.");
 	}
 
 	// TODO Field directly on ir.Function?
 	auto thisStore = lookupInGivenScopeOnly(
-		ctx.lp, fn.myScope, n.location, "this");
+		ctx.lp, func.myScope, n.location, "this");
 	if (thisStore is null) {
-		if (fn.nestStruct !is null) {
+		if (func.nestStruct !is null) {
 			thisStore = lookupInGivenScopeOnly(
-				ctx.lp, fn.nestStruct.myScope,
+				ctx.lp, func.nestStruct.myScope,
 				n.location, "this");
 		}
 		if (thisStore is null) {
@@ -304,18 +304,18 @@ ir.Exp getThisReferenceNotNull(ir.Node n, Context ctx, out ir.Variable thisVar)
 	}
 }
 
-void replaceVarArgsIfNeeded(LanguagePass lp, ir.Function fn)
+void replaceVarArgsIfNeeded(LanguagePass lp, ir.Function func)
 {
-	if (fn.type.hasVarArgs &&
-	    !fn.type.varArgsProcessed &&
-	    fn.type.linkage == ir.Linkage.Volt) {
+	if (func.type.hasVarArgs &&
+	    !func.type.varArgsProcessed &&
+	    func.type.linkage == ir.Linkage.Volt) {
 		auto tinfoClass = lp.typeInfoClass;
-		auto tr = buildTypeReference(fn.location, tinfoClass, tinfoClass.name);
-		auto array = buildArrayType(fn.location, tr);
-		auto argArray = buildArrayType(fn.location, buildVoid(fn.location));
-		addParam(fn.location, fn, array, "_typeids");
-		addParam(fn.location, fn, argArray, "_args");
-		fn.type.varArgsProcessed = true;
+		auto tr = buildTypeReference(func.location, tinfoClass, tinfoClass.name);
+		auto array = buildArrayType(func.location, tr);
+		auto argArray = buildArrayType(func.location, buildVoid(func.location));
+		addParam(func.location, func, array, "_typeids");
+		addParam(func.location, func, argArray, "_args");
+		func.type.varArgsProcessed = true;
 	}
 }
 
@@ -373,9 +373,9 @@ void replaceTraits(ref ir.Exp exp, ir.TraitsExp traits, LanguagePass lp, ir.Modu
 		name = var.name;
 		break;
 	case Function:
-		auto fn = cast(ir.Function) store.node;
-		userAttrs = fn.userAttrs;
-		name = fn.name;
+		auto func = cast(ir.Function) store.node;
+		userAttrs = func.userAttrs;
+		name = func.name;
 		break;
 	case Class:
 		auto _class = cast(ir.Class) store.node;

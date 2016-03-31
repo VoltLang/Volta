@@ -158,9 +158,9 @@ public:
 
 		ir.Function getFunction(string name)
 		{
-			auto fn = cast(ir.Function)s.getStore(name).node;
-			check(fn, name);
-			return fn;
+			auto func = cast(ir.Function)s.getStore(name).node;
+			check(func, name);
+			return func;
 		}
 
 		ir.Variable getVar(string name)
@@ -357,10 +357,10 @@ public:
 			}
 			return;
 		}
-		auto fn = cast(ir.Function) eref.decl;
-		if (fn !is null) {
+		auto func = cast(ir.Function) eref.decl;
+		if (func !is null) {
 			// This is not correct scope.
-			debug if (!fn.isResolved) {
+			debug if (!func.isResolved) {
 				debugPrintNode(eref);
 				panicAssert(eref, false);
 			}
@@ -430,9 +430,9 @@ public:
 			w.done();
 		}
 
-		foreach (fn; s.functions) {
-			assert(s.parent is fn.myScope.parent);
-			super.resolve(fn.myScope.parent, fn);
+		foreach (func; s.functions) {
+			assert(s.parent is func.myScope.parent);
+			super.resolve(func.myScope.parent, func);
 		}
 
 		foreach (a; s.aliases) {
@@ -460,10 +460,10 @@ public:
 		e.resolve(current, v);
 	}
 
-	override void doResolve(ir.Scope current, ir.Function fn)
+	override void doResolve(ir.Scope current, ir.Function func)
 	{
 		auto e = new ExTyper(this);
-		e.resolve(current, fn);
+		e.resolve(current, func);
 	}
 
 	override void doResolve(ir.Alias a)
