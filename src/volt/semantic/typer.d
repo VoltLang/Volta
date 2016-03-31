@@ -80,7 +80,7 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 	case Typeid:
 		auto asTypeid = cast(ir.Typeid) exp;
 		assert(asTypeid !is null);
-		return getTypeidType(lp, asTypeid);
+		return getTypeidType(asTypeid);
 	case Postfix:
 		auto asPostfix = cast(ir.Postfix) exp;
 		assert(asPostfix !is null);
@@ -344,7 +344,7 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 	assert(false);
 }
 
-ir.Type getTypeidType(LanguagePass lp, ir.Typeid _typeid)
+ir.Type getTypeidType(ir.Typeid _typeid)
 {
 	panicAssert(_typeid, _typeid.tinfoType !is null);
 	return _typeid.tinfoType;
