@@ -346,8 +346,8 @@ ir.Type getBinOpType(LanguagePass lp, ir.BinOp bin, ir.Scope currentScope)
 
 ir.Type getTypeidType(LanguagePass lp, ir.Typeid _typeid)
 {
-	auto clazz = cast(ir.Class)realType(_typeid.type);
-	return clazz is null ? lp.typeInfoClass : lp.classInfoClass;
+	panicAssert(_typeid, _typeid.tinfoType !is null);
+	return _typeid.tinfoType;
 }
 
 ir.Type getConstantType(ir.Constant constant)

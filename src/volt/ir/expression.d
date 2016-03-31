@@ -407,6 +407,7 @@ public:
 	Exp exp;  // Optional.
 	Type type;  // Optional.
 	string ident;  // Optional.
+	Type tinfoType;  // Optional.
 
 public:
 	this() { super(NodeType.Typeid); }

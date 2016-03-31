@@ -3706,6 +3706,13 @@ public:
 
 		_typeid.type = ctx.lp.resolve(ctx.current, _typeid.type);
 		replaceTypeOfIfNeeded(ctx, _typeid.type);
+
+		auto clazz = cast(ir.Class)realType(_typeid.type);
+		if (clazz is null) {
+			_typeid.tinfoType = ctx.lp.typeInfoClass;
+		} else {
+			_typeid.tinfoType = ctx.lp.classInfoClass;
+		}
 		return Continue;
 	}
 
