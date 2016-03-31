@@ -28,24 +28,24 @@ ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scop
 	ftype.ret = copyTypeSmart(location, atype);
 
 	/// @todo Change this sucker to buildFunction
-	auto fn = new ir.Function();
-	fn.location = location;
-	fn.type = ftype;
-	fn.name = name;
-	fn.mangledName = fn.name;
-	fn.kind = ir.Function.Kind.Function;
-	fn.isWeakLink = true;
-	fn.myScope = new ir.Scope(baseScope, fn, fn.name);
-	fn._body = new ir.BlockStatement();
-	fn._body.myScope = new ir.Scope(fn.myScope, fn._body, null);
-	fn._body.location = location;
+	auto func = new ir.Function();
+	func.location = location;
+	func.type = ftype;
+	func.name = name;
+	func.mangledName = func.name;
+	func.kind = ir.Function.Kind.Function;
+	func.isWeakLink = true;
+	func.myScope = new ir.Scope(baseScope, func, func.name);
+	func._body = new ir.BlockStatement();
+	func._body.myScope = new ir.Scope(func.myScope, func._body, null);
+	func._body.location = location;
 
-	auto countVar = addParam(location, fn, buildSizeT(location, lp), "count");
+	auto countVar = addParam(location, func, buildSizeT(location, lp), "count");
 
 	auto arrayStruct = lp.arrayStruct;
 	auto allocDgVar = lp.allocDgVariable;
 
-	auto arrayStructVar = buildVarStatSmart(location, fn._body, fn._body.myScope, arrayStruct, "from");
+	auto arrayStructVar = buildVarStatSmart(location, func._body, func._body.myScope, arrayStruct, "from");
 
 	auto ptrPfix = new ir.Postfix();
 	ptrPfix.location = location;
@@ -75,7 +75,7 @@ ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scop
 	expStatement.location = location;
 	expStatement.exp = ptrAssign;
 
-	fn._body.statements ~= expStatement;
+	func._body.statements ~= expStatement;
 
 	auto lengthAssign = new ir.BinOp();
 	lengthAssign.location = location;
@@ -87,7 +87,7 @@ ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scop
 	expStatement.location = location;
 	expStatement.exp = lengthAssign;
 
-	fn._body.statements ~= expStatement;
+	func._body.statements ~= expStatement;
 
 	auto addrOf = new ir.Unary();
 	addrOf.location = location;
@@ -109,9 +109,9 @@ ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scop
 	returnStatement.exp = deref;
 	returnStatement.location = location;
 
-	fn._body.statements ~= returnStatement;
+	func._body.statements ~= returnStatement;
 
-	return fn;
+	return func;
 }
 
 ir.Function getArrayAllocFunction(Location location, LanguagePass lp, ir.Module thisModule, ir.ArrayType atype)

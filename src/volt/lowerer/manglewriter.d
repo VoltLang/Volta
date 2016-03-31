@@ -66,37 +66,37 @@ public:
 	override Status enter(ir.Class c) { push(c.name); return Continue; }
 	override Status leave(ir.Class c) { pop(c.name); return Continue; }
 
-	override Status enter(ir.Function fn)
+	override Status enter(ir.Function func)
 	{
-		assert(fn.name !is null);
+		assert(func.name !is null);
 
 		/// @todo check other linkage as well.
 		/// @TODO this should live in the mangle code.
-		if (fn.mangledName !is null) {
+		if (func.mangledName !is null) {
 			// Do nothing.
-		} else if (fn.name == "main" &&
-		           fn.type.linkage != ir.Linkage.C) {
-			fn.mangledName = "vmain";
-		} else if (fn.loadDynamic) {
+		} else if (func.name == "main" &&
+		           func.type.linkage != ir.Linkage.C) {
+			func.mangledName = "vmain";
+		} else if (func.loadDynamic) {
 			// @TODO mangle this so that it becomes a variable.
-			assert(fn.name !is null);
-			fn.mangledName = mangle(parentNames, fn);
-		} else if (fn.type.linkage == ir.Linkage.C ||
-		           fn.type.linkage == ir.Linkage.Windows) {
-			fn.mangledName = fn.name;
+			assert(func.name !is null);
+			func.mangledName = mangle(parentNames, func);
+		} else if (func.type.linkage == ir.Linkage.C ||
+		           func.type.linkage == ir.Linkage.Windows) {
+			func.mangledName = func.name;
 		} else {
-			assert(fn.name !is null);
-			fn.mangledName = mangle(parentNames, fn);
+			assert(func.name !is null);
+			func.mangledName = mangle(parentNames, func);
 		}
 
-		push(fn.name);
+		push(func.name);
 		functionDepth++;
 		return Continue;
 	}
 
-	override Status leave(ir.Function fn)
+	override Status leave(ir.Function func)
 	{
-		pop(fn.name);
+		pop(func.name);
 		functionDepth--;
 		return Continue;
 	}

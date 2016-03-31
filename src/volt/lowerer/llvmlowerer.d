@@ -360,8 +360,8 @@ public:
 
 	override Status leave(ir.ThrowStatement t)
 	{
-		auto fn = lp.ehThrowFunc;
-		auto eRef = buildExpReference(t.location, fn, "vrt_eh_throw");
+		auto func = lp.ehThrowFunc;
+		auto eRef = buildExpReference(t.location, func, "vrt_eh_throw");
 		t.exp = buildCall(t.location, eRef, [t.exp,
 			buildConstantString(t.location, t.location.filename, false),
 			buildConstantSizeT(t.location, lp, t.location.line)]);
@@ -628,9 +628,9 @@ public:
 
 		auto bs = cast(ir.BlockStatement)current.node;
 		if (bs is null) {
-			auto fn = cast(ir.Function)current.node;
-			if (fn !is null) {
-				bs = fn._body;
+			auto func = cast(ir.Function)current.node;
+			if (func !is null) {
+				bs = func._body;
 			}
 		}
 		panicAssert(exp, bs !is null);
@@ -688,13 +688,13 @@ public:
 			if (cpostfix is null || cpostfix.memberFunction is null) {
 				throw makeExpected(exp.location, "interface");
 			}
-			auto fn = cast(ir.Function) cpostfix.memberFunction.decl;
-			if (fn is null) {
+			auto func = cast(ir.Function) cpostfix.memberFunction.decl;
+			if (func is null) {
 				throw makeExpected(exp.location, "method");
 			}
 			auto l = exp.location;
 			auto handle = buildCastToVoidPtr(l, buildSub(l, buildCastSmart(l, buildPtrSmart(l, buildUbyte(l)), copyExp(cpostfix.child)), buildAccess(l, buildDeref(l, copyExp(cpostfix.child)), "__offset")));
-			exp = buildCall(l, buildAccess(l, buildDeref(l, copyExp(cpostfix.child)), mangle(null, fn)), handle ~ postfix.arguments);
+			exp = buildCall(l, buildAccess(l, buildDeref(l, copyExp(cpostfix.child)), mangle(null, func)), handle ~ postfix.arguments);
 		}
 		return Continue;
 	}
@@ -750,8 +750,8 @@ public:
 			return Continue;
 		}
 
-		auto fn = cast(ir.Function) eref.decl;
-		if (fn is null) {
+		auto func = cast(ir.Function) eref.decl;
+		if (func is null) {
 			return Continue;
 		}
 		if (functionStack.length == 0 || functionStack[$-1].nestedVariable is null) {
@@ -760,7 +760,7 @@ public:
 		bool isNested;
 		foreach (pf; functionStack) {
 			foreach (nf; pf.nestedFunctions) {
-				if (fn is nf) {
+				if (func is nf) {
 					isNested = true;
 				}
 			}
@@ -867,8 +867,8 @@ public:
 		if (asPostfix.op != ir.Postfix.Op.Slice)
 			return Continue;
 
-		auto fn = getArrayCopyFunction(loc, lp, thisModule, leftType);
-		exp = buildCall(loc, fn, [asPostfix, binOp.right], fn.name);
+		auto func = getArrayCopyFunction(loc, lp, thisModule, leftType);
+		exp = buildCall(loc, func, [asPostfix, binOp.right], func.name);
 
 		return Continue;
 	}
@@ -881,9 +881,9 @@ public:
 
 		auto bs = cast(ir.BlockStatement)current.node;
 		if (bs is null) {
-			auto fn = cast(ir.Function)current.node;
-			if (fn !is null) {
-				bs = fn._body;
+			auto func = cast(ir.Function)current.node;
+			if (func !is null) {
+				bs = func._body;
 			}
 		}
 		panicAssert(exp, bs !is null);
@@ -978,17 +978,17 @@ public:
 
 		if (typesEqual(elementType, arrayType.base)) {
 			// T[] ~ T
-			ir.Function fn;
+			ir.Function func;
 			if (reversed) {
-				fn = getArrayPrependFunction(loc, lp, thisModule, arrayType, elementType);
+				func = getArrayPrependFunction(loc, lp, thisModule, arrayType, elementType);
 			} else {
-				fn = getArrayAppendFunction(loc, lp, thisModule, arrayType, elementType, false);
+				func = getArrayAppendFunction(loc, lp, thisModule, arrayType, elementType, false);
 			}
-			exp = buildCall(loc, fn, [binOp.left, binOp.right], fn.name);
+			exp = buildCall(loc, func, [binOp.left, binOp.right], func.name);
 		} else {
 			// T[] ~ T[]
-			auto fn = getArrayConcatFunction(loc, lp, thisModule, arrayType, false);
-			exp = buildCall(loc, fn, [binOp.left, binOp.right], fn.name);
+			auto func = getArrayConcatFunction(loc, lp, thisModule, arrayType, false);
+			exp = buildCall(loc, func, [binOp.left, binOp.right], func.name);
 		}
 
 		return Continue;
@@ -1010,11 +1010,11 @@ public:
 
 		if (typesEqual(rightType, leftArrayType.base)) {
 			// T[] ~ T
-			auto fn = getArrayAppendFunction(loc, lp, thisModule, leftArrayType, rightType, true);
-			exp = buildCall(loc, fn, [buildAddrOf(binOp.left), binOp.right], fn.name);
+			auto func = getArrayAppendFunction(loc, lp, thisModule, leftArrayType, rightType, true);
+			exp = buildCall(loc, func, [buildAddrOf(binOp.left), binOp.right], func.name);
 		} else {
-			auto fn = getArrayConcatFunction(loc, lp, thisModule, leftArrayType, true);
-			exp = buildCall(loc, fn, [buildAddrOf(binOp.left), binOp.right], fn.name);
+			auto func = getArrayConcatFunction(loc, lp, thisModule, leftArrayType, true);
+			exp = buildCall(loc, func, [buildAddrOf(binOp.left), binOp.right], func.name);
 		}
 
 		return Continue;
@@ -1029,8 +1029,8 @@ public:
 		if (leftArrayType is null)
 			return Continue;
 
-		auto fn = getArrayCmpFunction(loc, lp, thisModule, leftArrayType, binOp.op == ir.BinOp.Op.NotEqual);
-		exp = buildCall(loc, fn, [binOp.left, binOp.right], fn.name);
+		auto func = getArrayCmpFunction(loc, lp, thisModule, leftArrayType, binOp.op == ir.BinOp.Op.NotEqual);
+		exp = buildCall(loc, func, [binOp.left, binOp.right], func.name);
 
 		return Continue;
 	}
@@ -1342,9 +1342,9 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, LanguagePass lp,
 	fes.aggregate = aaaggref();
 	auto aa = cast(ir.AAType) aggType;
 	if (aa !is null) {
-		ir.Exp buildAACall(ir.Function fn, ir.Type outType)
+		ir.Exp buildAACall(ir.Function func, ir.Type outType)
 		{
-			auto eref = buildExpReference(l, fn, fn.name);
+			auto eref = buildExpReference(l, func, func.name);
 			return buildCastSmart(l, outType, buildCall(l, eref, [cast(ir.Exp)buildCastToVoidPtr(l, aaaggref())]));
 		}
 

@@ -63,31 +63,31 @@ ir.Function getArrayAppendFunction(Location loc, LanguagePass lp, ir.Module this
 		name = "__appendArray" ~ ltype.mangledName ~ rtype.mangledName;
 	}
 
-	auto fn = lookupFunction(lp, thisModule.myScope, loc, name);
-	if (fn !is null) {
-		return fn;
+	auto func = lookupFunction(lp, thisModule.myScope, loc, name);
+	if (func !is null) {
+		return func;
 	}
 
-	fn = buildFunction(loc, thisModule.children, thisModule.myScope, name);
-	fn.type.ret = copyTypeSmart(loc, ltype);
+	func = buildFunction(loc, thisModule.children, thisModule.myScope, name);
+	func.type.ret = copyTypeSmart(loc, ltype);
 
 	ir.FunctionParam left, right;
 	if (isAssignment) {
-		left = addParam(loc, fn, buildPtrSmart(loc, ltype), "left");
+		left = addParam(loc, func, buildPtrSmart(loc, ltype), "left");
 	} else {
-		left = addParamSmart(loc, fn, ltype, "left");
+		left = addParamSmart(loc, func, ltype, "left");
 	}
-	right = addParamSmart(loc, fn, rtype, "right");
+	right = addParamSmart(loc, func, rtype, "right");
 
-	auto fnAlloc = lp.allocDgVariable;
-	auto allocExpRef = buildExpReference(loc, fnAlloc, fnAlloc.name);
+	auto funcAlloc = lp.allocDgVariable;
+	auto allocExpRef = buildExpReference(loc, funcAlloc, funcAlloc.name);
 
-	auto fnCopy = getLlvmMemCopy(loc, lp);
+	auto funcCopy = getLlvmMemCopy(loc, lp);
 
 	ir.Exp[] args;
 
-	auto allocated = buildVarStatSmart(loc, fn._body, fn._body.myScope, buildVoidPtr(loc), "allocated");
-	auto count = buildVarStatSmart(loc, fn._body, fn._body.myScope, buildSizeT(loc, lp), "count");
+	auto allocated = buildVarStatSmart(loc, func._body, func._body.myScope, buildVoidPtr(loc), "allocated");
+	auto count = buildVarStatSmart(loc, func._body, func._body.myScope, buildSizeT(loc, lp), "count");
 	ir.Exp leftlength()
 	{
 		if (isAssignment) {
@@ -97,7 +97,7 @@ ir.Function getArrayAppendFunction(Location loc, LanguagePass lp, ir.Module this
 		}
 	}
 
-	buildExpStat(loc, fn._body,
+	buildExpStat(loc, func._body,
 		buildAssign(loc,
 			buildExpReference(loc, count, count.name),
 			buildAdd(loc,
@@ -113,7 +113,7 @@ ir.Function getArrayAppendFunction(Location loc, LanguagePass lp, ir.Module this
 		buildExpReference(loc, count, count.name)
 	];
 
-	buildExpStat(loc, fn._body,
+	buildExpStat(loc, func._body,
 		buildAssign(loc,
 			buildExpReference(loc, allocated, allocated.name),
 			buildCall(loc, allocExpRef, args)
@@ -138,9 +138,9 @@ ir.Function getArrayAppendFunction(Location loc, LanguagePass lp, ir.Module this
 		buildConstantInt(loc, 0),
 		buildConstantFalse(loc)
 	];
-	buildExpStat(loc, fn._body, buildCall(loc, buildExpReference(loc, fnCopy, fnCopy.name), args));
+	buildExpStat(loc, func._body, buildCall(loc, buildExpReference(loc, funcCopy, funcCopy.name), args));
 
-	buildExpStat(loc, fn._body,
+	buildExpStat(loc, func._body,
 		buildAssign(loc,
 			buildDeref(loc,
 				buildAdd(loc,
@@ -153,7 +153,7 @@ ir.Function getArrayAppendFunction(Location loc, LanguagePass lp, ir.Module this
 	);
 
 	if (isAssignment) {
-		buildExpStat(loc, fn._body,
+		buildExpStat(loc, func._body,
 			buildAssign(loc,
 				buildDeref(loc, buildExpReference(loc, left, left.name)),
 				buildSlice(loc,
@@ -162,9 +162,9 @@ ir.Function getArrayAppendFunction(Location loc, LanguagePass lp, ir.Module this
 				)
 			)
 		);
-		buildReturnStat(loc, fn._body, buildDeref(loc, buildExpReference(loc, left, left.name)));
+		buildReturnStat(loc, func._body, buildDeref(loc, buildExpReference(loc, left, left.name)));
 	} else {
-		buildReturnStat(loc, fn._body,
+		buildReturnStat(loc, func._body,
 			buildSlice(loc,
 				buildCastSmart(loc, buildPtrSmart(loc, ltype.base), buildExpReference(loc, allocated, allocated.name)),
 				[cast(ir.Exp)buildConstantSizeT(loc, lp, 0), buildExpReference(loc, count, count.name)]
@@ -172,7 +172,7 @@ ir.Function getArrayAppendFunction(Location loc, LanguagePass lp, ir.Module this
 		);
 	}
 
-	return fn;
+	return func;
 }
 
 ir.Function getArrayPrependFunction(Location loc, LanguagePass lp, ir.Module thisModule, ir.ArrayType ltype, ir.Type rtype)
@@ -186,31 +186,31 @@ ir.Function getArrayPrependFunction(Location loc, LanguagePass lp, ir.Module thi
 
 	string name = "__prependArray" ~ ltype.mangledName ~ rtype.mangledName;
 
-	auto fn = lookupFunction(lp, thisModule.myScope, loc, name);
-	if (fn !is null) {
-		return fn;
+	auto func = lookupFunction(lp, thisModule.myScope, loc, name);
+	if (func !is null) {
+		return func;
 	}
 
-	fn = buildFunction(loc, thisModule.children, thisModule.myScope, name);
-	fn.mangledName = fn.name;
-	fn.isWeakLink = true;
-	fn.type.ret = copyTypeSmart(loc, ltype);
+	func = buildFunction(loc, thisModule.children, thisModule.myScope, name);
+	func.mangledName = func.name;
+	func.isWeakLink = true;
+	func.type.ret = copyTypeSmart(loc, ltype);
 
 	ir.FunctionParam left, right;
-	right = addParamSmart(loc, fn, rtype, "left");
-	left = addParamSmart(loc, fn, ltype, "right");
+	right = addParamSmart(loc, func, rtype, "left");
+	left = addParamSmart(loc, func, ltype, "right");
 
-	auto fnAlloc = lp.allocDgVariable;
-	auto allocExpRef = buildExpReference(loc, fnAlloc, fnAlloc.name);
+	auto funcAlloc = lp.allocDgVariable;
+	auto allocExpRef = buildExpReference(loc, funcAlloc, funcAlloc.name);
 
-	auto fnCopy = getLlvmMemCopy(loc, lp);
+	auto funcCopy = getLlvmMemCopy(loc, lp);
 
 	ir.Exp[] args;
 
-	auto allocated = buildVarStatSmart(loc, fn._body, fn._body.myScope, buildVoidPtr(loc), "allocated");
-	auto count = buildVarStatSmart(loc, fn._body, fn._body.myScope, buildSizeT(loc, lp), "count");
+	auto allocated = buildVarStatSmart(loc, func._body, func._body.myScope, buildVoidPtr(loc), "allocated");
+	auto count = buildVarStatSmart(loc, func._body, func._body.myScope, buildSizeT(loc, lp), "count");
 
-	buildExpStat(loc, fn._body,
+	buildExpStat(loc, func._body,
 		buildAssign(loc,
 			buildExpReference(loc, count, count.name),
 			buildAdd(loc,
@@ -226,7 +226,7 @@ ir.Function getArrayPrependFunction(Location loc, LanguagePass lp, ir.Module thi
 		buildExpReference(loc, count, count.name)
 	];
 
-	buildExpStat(loc, fn._body,
+	buildExpStat(loc, func._body,
 		buildAssign(loc,
 			buildExpReference(loc, allocated, allocated.name),
 			buildCall(loc, allocExpRef, args)
@@ -244,9 +244,9 @@ ir.Function getArrayPrependFunction(Location loc, LanguagePass lp, ir.Module thi
 		buildConstantInt(loc, 0),
 		buildConstantFalse(loc)
 	];
-	buildExpStat(loc, fn._body, buildCall(loc, buildExpReference(loc, fnCopy, fnCopy.name), args));
+	buildExpStat(loc, func._body, buildCall(loc, buildExpReference(loc, funcCopy, funcCopy.name), args));
 
-	buildExpStat(loc, fn._body,
+	buildExpStat(loc, func._body,
 		buildAssign(loc,
 			buildDeref(loc,
 					buildCastSmart(loc, buildPtrSmart(loc, ltype.base), buildExpReference(loc, allocated, allocated.name)),
@@ -255,14 +255,14 @@ ir.Function getArrayPrependFunction(Location loc, LanguagePass lp, ir.Module thi
 		)
 	);
 
-	buildReturnStat(loc, fn._body,
+	buildReturnStat(loc, func._body,
 		buildSlice(loc,
 			buildCastSmart(loc, buildPtrSmart(loc, ltype.base), buildExpReference(loc, allocated, allocated.name)),
 			[cast(ir.Exp)buildConstantSizeT(loc, lp, 0), buildExpReference(loc, count, count.name)]
 		)
 	);
 
-	return fn;
+	return func;
 }
 
 ir.Function getArrayCopyFunction(Location loc, LanguagePass lp, ir.Module thisModule, ir.ArrayType type)
@@ -272,20 +272,20 @@ ir.Function getArrayCopyFunction(Location loc, LanguagePass lp, ir.Module thisMo
 	}
 
 	auto name = "__copyArray" ~ type.mangledName;
-	auto fn = lookupFunction(lp, thisModule.myScope, loc, name);
-	if (fn !is null) {
-		return fn;
+	auto func = lookupFunction(lp, thisModule.myScope, loc, name);
+	if (func !is null) {
+		return func;
 	}
 
-	fn = buildFunction(loc, thisModule.children, thisModule.myScope, name);
-	fn.mangledName = fn.name;
-	fn.isWeakLink = true;
-	fn.type.ret = copyTypeSmart(loc, type);
-	auto left = addParamSmart(loc, fn, type, "left");
-	auto right = addParamSmart(loc, fn, type, "right");
+	func = buildFunction(loc, thisModule.children, thisModule.myScope, name);
+	func.mangledName = func.name;
+	func.isWeakLink = true;
+	func.type.ret = copyTypeSmart(loc, type);
+	auto left = addParamSmart(loc, func, type, "left");
+	auto right = addParamSmart(loc, func, type, "right");
 
-	auto fnMove = getLlvmMemMove(loc, lp);
-	auto expRef = buildExpReference(loc, fnMove, fnMove.name);
+	auto funcMove = getLlvmMemMove(loc, lp);
+	auto expRef = buildExpReference(loc, funcMove, funcMove.name);
 
 	auto typeSize = size(lp, type.base);
 
@@ -300,11 +300,11 @@ ir.Function getArrayCopyFunction(Location loc, LanguagePass lp, ir.Module thisMo
 		buildConstantInt(loc, 0),
 		buildConstantFalse(loc)
 	];
-	buildExpStat(loc, fn._body, buildCall(loc, expRef, args));
+	buildExpStat(loc, func._body, buildCall(loc, expRef, args));
 
-	buildReturnStat(loc, fn._body, buildExpReference(loc, fn.params[0], "left"));
+	buildReturnStat(loc, func._body, buildExpReference(loc, func.params[0], "left"));
 
-	return fn;
+	return func;
 }
 
 ir.Function getArrayConcatFunction(Location loc, LanguagePass lp, ir.Module thisModule, ir.ArrayType type, bool isAssignment)
@@ -319,34 +319,34 @@ ir.Function getArrayConcatFunction(Location loc, LanguagePass lp, ir.Module this
 	} else {
 		name = "__concatArray" ~ type.mangledName;
 	}
-	auto fn = lookupFunction(lp, thisModule.myScope, loc, name);
+	auto func = lookupFunction(lp, thisModule.myScope, loc, name);
 
-	if (fn !is null) {
-		return fn;
+	if (func !is null) {
+		return func;
 	}
 
-	fn = buildFunction(loc, thisModule.children, thisModule.myScope, name);
-	fn.mangledName = fn.name;
-	fn.isWeakLink = true;
-	fn.type.ret = copyTypeSmart(loc, type);
+	func = buildFunction(loc, thisModule.children, thisModule.myScope, name);
+	func.mangledName = func.name;
+	func.isWeakLink = true;
+	func.type.ret = copyTypeSmart(loc, type);
 
 	ir.FunctionParam left;
 	if (isAssignment) {
-		left = addParam(loc, fn, buildPtrSmart(loc, type), "left");
+		left = addParam(loc, func, buildPtrSmart(loc, type), "left");
 	} else {
-		left = addParamSmart(loc, fn, type, "left");
+		left = addParamSmart(loc, func, type, "left");
 	}
-	auto right = addParamSmart(loc, fn, type, "right");
+	auto right = addParamSmart(loc, func, type, "right");
 
-	auto fnAlloc = lp.allocDgVariable;
-	auto allocExpRef = buildExpReference(loc, fnAlloc, fnAlloc.name);
+	auto funcAlloc = lp.allocDgVariable;
+	auto allocExpRef = buildExpReference(loc, funcAlloc, funcAlloc.name);
 
-	auto fnCopy = getLlvmMemCopy(loc, lp);
+	auto funcCopy = getLlvmMemCopy(loc, lp);
 
 	ir.Exp[] args;
 
-	auto allocated = buildVarStatSmart(loc, fn._body, fn._body.myScope, buildVoidPtr(loc), "allocated");
-	auto count = buildVarStatSmart(loc, fn._body, fn._body.myScope, buildSizeT(loc, lp), "count");
+	auto allocated = buildVarStatSmart(loc, func._body, func._body.myScope, buildVoidPtr(loc), "allocated");
+	auto count = buildVarStatSmart(loc, func._body, func._body.myScope, buildSizeT(loc, lp), "count");
 	ir.Exp leftlength()
 	{
 		if (isAssignment) {
@@ -356,7 +356,7 @@ ir.Function getArrayConcatFunction(Location loc, LanguagePass lp, ir.Module this
 		}
 	}
 
-	buildExpStat(loc, fn._body,
+	buildExpStat(loc, func._body,
 		buildAssign(loc,
 			buildExpReference(loc, count, count.name),
 			buildAdd(loc,
@@ -372,7 +372,7 @@ ir.Function getArrayConcatFunction(Location loc, LanguagePass lp, ir.Module this
 		buildExpReference(loc, count, count.name)
 	];
 
-	buildExpStat(loc, fn._body,
+	buildExpStat(loc, func._body,
 		buildAssign(loc,
 			buildExpReference(loc, allocated, allocated.name),
 			buildCall(loc, allocExpRef, args)
@@ -397,7 +397,7 @@ ir.Function getArrayConcatFunction(Location loc, LanguagePass lp, ir.Module this
 		buildConstantInt(loc, 0),
 		buildConstantFalse(loc)
 	];
-	buildExpStat(loc, fn._body, buildCall(loc, buildExpReference(loc, fnCopy, fnCopy.name), args));
+	buildExpStat(loc, func._body, buildCall(loc, buildExpReference(loc, funcCopy, funcCopy.name), args));
 
 
 	args = [
@@ -417,11 +417,11 @@ ir.Function getArrayConcatFunction(Location loc, LanguagePass lp, ir.Module this
 		buildConstantInt(loc, 0),
 		buildConstantFalse(loc)
 	];
-	buildExpStat(loc, fn._body, buildCall(loc, buildExpReference(loc, fnCopy, fnCopy.name), args));
+	buildExpStat(loc, func._body, buildCall(loc, buildExpReference(loc, funcCopy, funcCopy.name), args));
 
 
 	if (isAssignment) {
-		buildExpStat(loc, fn._body,
+		buildExpStat(loc, func._body,
 			buildAssign(loc,
 				buildDeref(loc, buildExpReference(loc, left, left.name)),
 				buildSlice(loc,
@@ -430,9 +430,9 @@ ir.Function getArrayConcatFunction(Location loc, LanguagePass lp, ir.Module this
 				)
 			)
 		);
-		buildReturnStat(loc, fn._body, buildDeref(loc, buildExpReference(loc, left, left.name)));
+		buildReturnStat(loc, func._body, buildDeref(loc, buildExpReference(loc, left, left.name)));
 	} else {
-		buildReturnStat(loc, fn._body,
+		buildReturnStat(loc, func._body,
 			buildSlice(loc,
 				buildCastSmart(loc, buildPtrSmart(loc, type.base), buildExpReference(loc, allocated, allocated.name)),
 				[cast(ir.Exp)buildConstantSizeT(loc, lp, 0), buildExpReference(loc, count, count.name)]
@@ -440,7 +440,7 @@ ir.Function getArrayConcatFunction(Location loc, LanguagePass lp, ir.Module this
 		);
 	}
 
-	return fn;
+	return func;
 }
 
 ir.Function getArrayCmpFunction(Location loc, LanguagePass lp, ir.Module thisModule, ir.ArrayType type, bool notEqual)
@@ -455,26 +455,26 @@ ir.Function getArrayCmpFunction(Location loc, LanguagePass lp, ir.Module thisMod
 	} else {
 		name = "__cmpArray" ~ type.mangledName;
 	}
-	auto fn = lookupFunction(lp, thisModule.myScope, loc, name);
-	if (fn !is null) {
-		return fn;
+	auto func = lookupFunction(lp, thisModule.myScope, loc, name);
+	if (func !is null) {
+		return func;
 	}
 
-	fn = buildFunction(loc, thisModule.children, thisModule.myScope, name);
-	fn.mangledName = fn.name;
-	fn.isWeakLink = true;
-	fn.type.ret = buildBool(loc);
+	func = buildFunction(loc, thisModule.children, thisModule.myScope, name);
+	func.mangledName = func.name;
+	func.isWeakLink = true;
+	func.type.ret = buildBool(loc);
 
-	auto left = addParamSmart(loc, fn, type, "left");
-	auto right = addParamSmart(loc, fn, type, "right");
+	auto left = addParamSmart(loc, func, type, "left");
+	auto right = addParamSmart(loc, func, type, "right");
 
 	auto memCmp = lp.memcmpFunc;
 	auto memCmpExpRef = buildExpReference(loc, memCmp, memCmp.name);
 
 
-	auto thenState = buildBlockStat(loc, fn, fn._body.myScope);
+	auto thenState = buildBlockStat(loc, func, func._body.myScope);
 	buildReturnStat(loc, thenState, buildConstantBool(loc, notEqual));
-	buildIfStat(loc, fn._body,
+	buildIfStat(loc, func._body,
 		buildBinOp(loc, ir.BinOp.Op.NotEqual,
 			buildArrayLength(loc, lp, buildExpReference(loc, left, left.name)),
 			buildArrayLength(loc, lp, buildExpReference(loc, right, right.name))
@@ -493,7 +493,7 @@ ir.Function getArrayCmpFunction(Location loc, LanguagePass lp, ir.Module thisMod
 		 */
 		ir.ForStatement forLoop;
 		ir.Variable iVar;
-		buildForStatement(loc, lp, fn._body.myScope, buildArrayLength(loc, lp, buildExpReference(loc, left, left.name)), forLoop, iVar);
+		buildForStatement(loc, lp, func._body.myScope, buildArrayLength(loc, lp, buildExpReference(loc, left, left.name)), forLoop, iVar);
 		auto l = buildIndex(loc, buildExpReference(loc, left, left.name), buildExpReference(loc, iVar, iVar.name));
 		auto r = buildIndex(loc, buildExpReference(loc, right, right.name), buildExpReference(loc, iVar, iVar.name));
 		auto cmp = buildBinOp(loc, notEqual ? ir.BinOp.Op.NotEqual : ir.BinOp.Op.Equal, l, r);
@@ -501,10 +501,10 @@ ir.Function getArrayCmpFunction(Location loc, LanguagePass lp, ir.Module thisMod
 		buildReturnStat(loc, then, buildConstantBool(loc, true));
 		auto ifs = buildIfStat(loc, cmp, then);
 		forLoop.block.statements ~= ifs;
-		fn._body.statements ~= forLoop;
-		buildReturnStat(loc, fn._body, buildConstantBool(loc, false));
+		func._body.statements ~= forLoop;
+		buildReturnStat(loc, func._body, buildConstantBool(loc, false));
 	} else {
-		buildReturnStat(loc, fn._body,
+		buildReturnStat(loc, func._body,
 			buildBinOp(loc, notEqual ? ir.BinOp.Op.NotEqual : ir.BinOp.Op.Equal,
 				buildCall(loc, memCmpExpRef, [
 					buildCastSmart(loc, buildVoidPtr(loc), buildArrayPtr(loc, left.type, buildExpReference(loc, left, left.name))),
@@ -520,5 +520,5 @@ ir.Function getArrayCmpFunction(Location loc, LanguagePass lp, ir.Module thisMod
 		);
 	}
 
-	return fn;
+	return func;
 }
