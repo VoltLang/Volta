@@ -774,47 +774,47 @@ ParseStatus parseIsExp(ParserStream ps, out ir.IsExp ie)
 	return match(ps, ie, TokenType.CloseParen);
 }
 
-ParseStatus parseFunctionLiteral(ParserStream ps, out ir.FunctionLiteral fn)
+ParseStatus parseFunctionLiteral(ParserStream ps, out ir.FunctionLiteral fl)
 {
-	fn = new ir.FunctionLiteral();
-	fn.location = ps.peek.location;
+	fl = new ir.FunctionLiteral();
+	fl.location = ps.peek.location;
 
 	switch (ps.peek.type) {
 	case TokenType.Function:
 		ps.get();
-		fn.isDelegate = false;
+		fl.isDelegate = false;
 		break;
 	case TokenType.Delegate:
 		ps.get();
-		fn.isDelegate = true;
+		fl.isDelegate = true;
 		break;
 	case TokenType.Identifier:
-		fn.isDelegate = true;
+		fl.isDelegate = true;
 		auto nameTok = ps.get();
-		fn.singleLambdaParam = nameTok.value;
+		fl.singleLambdaParam = nameTok.value;
 		auto succeeded = match(ps, ir.NodeType.Function, [TokenType.Assign, TokenType.Greater]);
 		if (!succeeded) {
 			return succeeded;
 		}
-		succeeded = parseExp(ps, fn.lambdaExp);
+		succeeded = parseExp(ps, fl.lambdaExp);
 		if (!succeeded) {
-			return parseFailed(ps, fn);
+			return parseFailed(ps, fl);
 		}
 		return Succeeded;
 	default:
-		fn.isDelegate = true;
+		fl.isDelegate = true;
 		break;
 	}
 
 	if (ps.peek.type != TokenType.OpenParen) {
-		auto succeeded = parseType(ps, fn.returnType);
+		auto succeeded = parseType(ps, fl.returnType);
 		if (!succeeded) {
-			return parseFailed(ps, fn);
+			return parseFailed(ps, fl);
 		}
 	}
 
 	if (ps != TokenType.OpenParen) {
-		return unexpectedToken(ps, fn);
+		return unexpectedToken(ps, fl);
 	}
 	ps.get();
 	while (ps.peek.type != TokenType.CloseParen) {
@@ -822,23 +822,23 @@ ParseStatus parseFunctionLiteral(ParserStream ps, out ir.FunctionLiteral fn)
 		param.location = ps.peek.location;
 		auto succeeded = parseType(ps, param.type);
 		if (!succeeded) {
-			return parseFailed(ps, fn);
+			return parseFailed(ps, fl);
 		}
 		if (ps.peek.type == TokenType.Identifier) {
 			auto nameTok = ps.get();
 			param.name = nameTok.value;
 		}
-		fn.params ~= param;
+		fl.params ~= param;
 		if (ps != TokenType.Comma) {
-			return unexpectedToken(ps, fn);
+			return unexpectedToken(ps, fl);
 		}
 		ps.get();
 	}
 	ps.get();  // CloseParen
 
 	if (ps.peek.type == TokenType.Assign) {
-		if (!fn.isDelegate || fn.returnType !is null) {
-			parseExpected(ps, ps.peek.location, fn, "lambda expression");
+		if (!fl.isDelegate || fl.returnType !is null) {
+			parseExpected(ps, ps.peek.location, fl, "lambda expression");
 			ps.neverIgnoreError = true;
 			return Failed;
 		}
@@ -846,15 +846,15 @@ ParseStatus parseFunctionLiteral(ParserStream ps, out ir.FunctionLiteral fn)
 		if (!succeeded) {
 			return succeeded;
 		}
-		succeeded = parseExp(ps, fn.lambdaExp);
+		succeeded = parseExp(ps, fl.lambdaExp);
 		if (!succeeded) {
-			return parseFailed(ps, fn);
+			return parseFailed(ps, fl);
 		}
 		return Succeeded;
 	} else {
-		auto succeeded = parseBlock(ps, fn.block);
+		auto succeeded = parseBlock(ps, fl.block);
 		if (!succeeded) {
-			return parseFailed(ps, fn);
+			return parseFailed(ps, fl);
 		}
 		return Succeeded;
 	}

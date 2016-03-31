@@ -303,13 +303,13 @@ ParseStatus parseVariableOrExpression(ParserStream ps, NodeSinkDg dg)
 
 	ps.restore(pos);
 	ps.resetErrors();
-	ir.Function fn;
+	ir.Function func;
 	ir.Type base;
 	succeeded = parseType(ps, base);
 	if (succeeded) {
-		succeeded = parseFunction(ps, fn, base);
+		succeeded = parseFunction(ps, func, base);
 		if (succeeded) {
-			dg(fn);
+			dg(func);
 			return Succeeded;
 		}
 	}
