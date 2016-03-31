@@ -41,27 +41,27 @@ public:
 	 */
 
 
-	override Status enter(ir.Function fn)
+	override Status enter(ir.Function func)
 	{
 		Type type;
-		auto llvmFunc = state.getFunctionValue(fn, type);
+		auto llvmFunc = state.getFunctionValue(func, type);
 		auto llvmType = type.llvmType;
 
-		if (fn.loadDynamic) {
+		if (func.loadDynamic) {
 			auto init = LLVMConstNull(llvmType);
 			LLVMSetInitializer(llvmFunc, init);
 			return ContinueParent;
 		}
 
 		// Don't export unused functions.
-		if (fn._body is null) {
+		if (func._body is null) {
 			return ContinueParent;
 		}
 
 		auto ft = cast(FunctionType) type;
 		assert(ft !is null);
 
-		auto di = diFunction(state, fn, llvmFunc, ft);
+		auto di = diFunction(state, func, llvmFunc, ft);
 
 		LLVMAddFunctionAttr(llvmFunc, LLVMAttribute.UWTable);
 
@@ -74,26 +74,26 @@ public:
 		state.fnState.block = LLVMAppendBasicBlock(llvmFunc, "entry");
 		LLVMPositionBuilderAtEnd(b, state.block);
 
-		if (fn.kind == ir.Function.Kind.GlobalConstructor) {
+		if (func.kind == ir.Function.Kind.GlobalConstructor) {
 			state.globalConstructors ~= llvmFunc;
-		} else if (fn.kind == ir.Function.Kind.GlobalDestructor) {
+		} else if (func.kind == ir.Function.Kind.GlobalDestructor) {
 			state.globalDestructors ~= llvmFunc;
-		} else if (fn.kind == ir.Function.Kind.LocalConstructor) {
+		} else if (func.kind == ir.Function.Kind.LocalConstructor) {
 			state.localConstructors ~= llvmFunc;
-		} else if (fn.kind == ir.Function.Kind.LocalDestructor) {
+		} else if (func.kind == ir.Function.Kind.LocalDestructor) {
 			state.localDestructors ~= llvmFunc;
 		}
 
-		size_t offset = fn.type.hiddenParameter;
-		foreach (irIndex, p; fn.params) {
+		size_t offset = func.type.hiddenParameter;
+		foreach (irIndex, p; func.params) {
 			if (p.name is null)
 				continue;
 
 			auto v = LLVMGetParam(llvmFunc, cast(uint)(irIndex + offset));
 
-			if (fn.type.isArgRef[irIndex]) {
+			if (func.type.isArgRef[irIndex]) {
 				state.makeByValVariable(p, v);
-			} else if (fn.type.isArgOut[irIndex]) {
+			} else if (func.type.isArgOut[irIndex]) {
 				state.makeByValVariable(p, v);
 				// Default init the variable.
 				Type initType;
@@ -107,20 +107,20 @@ public:
 			}
 		}
 
-		ir.Variable thisVar = fn.thisHiddenParameter;
+		ir.Variable thisVar = func.thisHiddenParameter;
 		if (thisVar !is null) {
 			auto v = LLVMGetParam(llvmFunc, 0);
 			state.makeThisVariable(thisVar, v);
 		}
 
-		ir.Variable nestVar = fn.nestedHiddenParameter;
+		ir.Variable nestVar = func.nestedHiddenParameter;
 		if (nestVar !is null) {
 			auto v = LLVMGetParam(llvmFunc, 0);
 			state.makeNestVariable(nestVar, v);
 		}
 
 		// Go over the function body.
-		accept(fn._body, this);
+		accept(func._body, this);
 
 		// Assume language pass knows what it is doing.
 		if (state.fall) {
@@ -132,7 +132,7 @@ public:
 		state.onFunctionClose();
 
 		state.fnState = old;
-		if (fn.isLoweredScopeExit || fn.isLoweredScopeSuccess) {
+		if (func.isLoweredScopeExit || func.isLoweredScopeSuccess) {
 			state.fnState.path.success ~= llvmFunc;
 		}
 
@@ -393,8 +393,8 @@ public:
 			value = LLVMBuildBitCast(state.builder, value, state.voidPtrType.llvmType, "");
 			LLVMAddClause(lp, value);
 
-			auto fn = state.ehTypeIdFunc;
-			auto test = LLVMBuildCall(state.builder, fn, [value]);
+			auto func = state.ehTypeIdFunc;
+			auto test = LLVMBuildCall(state.builder, func, [value]);
 			test = LLVMBuildICmp(state.builder, LLVMIntPredicate.EQ, test, i, "");
 
 
@@ -720,9 +720,9 @@ public:
 		auto _struct = LLVMStructTypeInContext(state.context, stypes, false);
 
 		auto structs = new LLVMValueRef[](arr.length);
-		foreach (i, fn; arr) {
+		foreach (i, func; arr) {
 			uint priority = 65535;
-			auto vals = [LLVMConstInt(LLVMInt32TypeInContext(state.context), priority, false), fn];
+			auto vals = [LLVMConstInt(LLVMInt32TypeInContext(state.context), priority, false), func];
 			structs[i] = LLVMConstStructInContext(state.context, vals.ptr, 2, false);
 		}
 		auto array = LLVMArrayType(_struct, cast(uint) arr.length);
@@ -763,11 +763,11 @@ public:
 		auto gval = globalModuleInfo(m);
 
 		// Create 'real' ctor to add the module info to rootModuleInfo.
-		auto fn = LLVMAddFunction(state.mod, "__global_ctor",
+		auto func = LLVMAddFunction(state.mod, "__global_ctor",
 			state.voidFunctionType.llvmCallType);
-		LLVMSetLinkage(fn, LLVMLinkage.Internal);
+		LLVMSetLinkage(func, LLVMLinkage.Internal);
 
-		auto b = LLVMAppendBasicBlock(fn, "entry");
+		auto b = LLVMAppendBasicBlock(func, "entry");
 		LLVMPositionBuilderAtEnd(state.builder, b);
 
 		auto root = state.getVariableValue(state.lp.moduleInfoRoot, t);
@@ -777,7 +777,7 @@ public:
 		LLVMBuildStore(state.builder, gval, root);
 		LLVMBuildRet(state.builder, null);
 
-		globalStructorArray(m, [fn], "llvm.global_ctors");
+		globalStructorArray(m, [func], "llvm.global_ctors");
 	}
 
 	override Status leave(ir.Module m)
@@ -824,8 +824,8 @@ public:
 			state.builder, state.fnState.nested,
 			state.voidPtrType.llvmType, "");
 		auto arg = [value];
-		foreach_reverse (fn; funcs) {
-			state.buildCallOrInvoke(loc, fn, arg);
+		foreach_reverse (func; funcs) {
+			state.buildCallOrInvoke(loc, func, arg);
 		}
 	}
 
@@ -839,7 +839,7 @@ public:
 	 * Should not enter.
 	 */
 	override Status leave(ir.Variable v) { assert(false); }
-	override Status leave(ir.Function fn) { assert(false); }
+	override Status leave(ir.Function f) { assert(false); }
 	override Status leave(ir.IfStatement i) { assert(false); }
 	override Status leave(ir.ExpStatement e) { assert(false); }
 	override Status leave(ir.BlockStatement b) { assert(false); }

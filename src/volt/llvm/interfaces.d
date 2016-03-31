@@ -324,7 +324,7 @@ public:
 	 *
 	 * If the value is not defined it will do so.
 	 */
-	abstract LLVMValueRef getFunctionValue(ir.Function fn, out Type type);
+	abstract LLVMValueRef getFunctionValue(ir.Function func, out Type type);
 
 	/**
 	 * Return the LLVMValueRef for the given Variable.
@@ -360,7 +360,8 @@ public:
 	 * sets up a catch basic block and sets the currentBlock to it.
 	 */
 	abstract LLVMValueRef buildCallOrInvoke(ref Location loc,
-	                                        LLVMValueRef fn, LLVMValueRef[] args);
+	                                        LLVMValueRef func,
+	                                        LLVMValueRef[] args);
 
 	/**
 	 * Start using a new basic block, setting currentBlock.

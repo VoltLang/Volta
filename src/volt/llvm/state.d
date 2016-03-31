@@ -166,10 +166,10 @@ public:
 			return mTypeIdFunc;
 		}
 
-		auto fn = retrieveFunctionFromObject(lp, irMod.location, "__llvm_typeid_for");
+		auto argFunc = retrieveFunctionFromObject(lp, irMod.location, "__llvm_typeid_for");
 
 		Type type;
-		return mTypeIdFunc = getFunctionValue(fn, type);
+		return mTypeIdFunc = getFunctionValue(argFunc, type);
 	}
 
 	@property override LLVMTypeRef ehLandingType()
@@ -244,7 +244,8 @@ public:
 	}
 
 	override LLVMValueRef buildCallOrInvoke(ref Location loc,
-	                                        LLVMValueRef fn, LLVMValueRef[] args)
+	                                        LLVMValueRef argFunc,
+	                                        LLVMValueRef[] args)
 	{
 		auto p = findLanding();
 
@@ -254,12 +255,12 @@ public:
 		}
 
 		if (p is null) {
-			return LLVMBuildCall(builder, fn, args);
+			return LLVMBuildCall(builder, argFunc, args);
 		} else {
 			assert(p.landingBlock !is null);
 			auto b = LLVMAppendBasicBlockInContext(
 				context, func, "");
-			auto ret = LLVMBuildInvoke(builder, fn, args, b, p.landingBlock);
+			auto ret = LLVMBuildInvoke(builder, argFunc, args, b, p.landingBlock);
 			LLVMMoveBasicBlockAfter(b, block);
 			LLVMPositionBuilderAtEnd(builder, b);
 			fnState.block = b;
@@ -292,9 +293,9 @@ public:
 	 *
 	 * If the value is not defined it will do so.
 	 */
-	override LLVMValueRef getFunctionValue(ir.Function fn, out Type type)
+	override LLVMValueRef getFunctionValue(ir.Function argFunc, out Type type)
 	{
-		auto k = *cast(size_t*)&fn;
+		auto k = *cast(size_t*)&argFunc;
 		auto ret = k in valueStore;
 
 		if (ret !is null) {
@@ -302,27 +303,27 @@ public:
 			return ret.value;
 		}
 
-		if (fn.type is null) {
-			throw panic(fn.location, "function without type");
+		if (argFunc.type is null) {
+			throw panic(argFunc.location, "function without type");
 		}
-		if (fn.kind == ir.Function.Kind.Invalid) {
-			throw panic(fn.location, "invalid function kind");
+		if (argFunc.kind == ir.Function.Kind.Invalid) {
+			throw panic(argFunc.location, "invalid function kind");
 		}
 
 		LLVMValueRef v;
-		type = this.fromIr(fn.type);
+		type = this.fromIr(argFunc.type);
 		auto ft = cast(FunctionType)type;
 
-		if (fn.loadDynamic) {
+		if (argFunc.loadDynamic) {
 			auto llvmType = ft.llvmType;
 
-			v = LLVMAddGlobal(mod, llvmType, fn.mangledName);
-			assert(!fn.isWeakLink);
+			v = LLVMAddGlobal(mod, llvmType, argFunc.mangledName);
+			assert(!argFunc.isWeakLink);
 		} else {
 			// The simple stuff, declare that mofo.
 			auto llvmType = ft.llvmCallType;
-			v = LLVMAddFunction(mod, fn.mangledName, llvmType);
-			if (fn.isWeakLink) {
+			v = LLVMAddFunction(mod, argFunc.mangledName, llvmType);
+			if (argFunc.isWeakLink) {
 				LLVMSetUnnamedAddr(v, true);
 				// For lack of COMDAT support.
 				if (lp.settings.platform == Platform.MSVC ||
@@ -334,7 +335,7 @@ public:
 			}
 
 			// Needs to be done here, because this can not be set on a type.
-			if (fn.type.linkage == ir.Linkage.Windows) {
+			if (argFunc.type.linkage == ir.Linkage.Windows) {
 				if (lp.settings.arch == Arch.X86_64) {
 					LLVMSetFunctionCallConv(v, LLVMCallConv.X86_64_Win64);
 				} else {

@@ -1120,11 +1120,11 @@ void handleCreateDelegate(State state, ir.Postfix postfix, Value result)
 
 	getCreateDelegateValues(state, postfix, instance, func);
 
-	auto fn = cast(FunctionType)func.type;
-	if (fn is null)
+	auto funcType = cast(FunctionType)func.type;
+	if (funcType is null)
 		throw panic(postfix, "func isn't FunctionType");
 
-	auto irFn = cast(ir.FunctionType)fn.irType;
+	auto irFn = cast(ir.FunctionType)funcType.irType;
 	auto irDg = new ir.DelegateType(irFn);
 	irDg.mangledName = volt.semantic.mangle.mangle(irDg);
 
@@ -1345,9 +1345,9 @@ void handleExpReference(State state, ir.ExpReference expRef, Value result)
 {
 	switch(expRef.decl.declKind) with (ir.Declaration.Kind) {
 	case Function:
-		auto fn = cast(ir.Function)expRef.decl;
-		result.isPointer = fn.loadDynamic;
-		result.value = state.getFunctionValue(fn, result.type);
+		auto func = cast(ir.Function)expRef.decl;
+		result.isPointer = func.loadDynamic;
+		result.value = state.getFunctionValue(func, result.type);
 		break;
 	case Variable:
 		auto var = cast(ir.Variable)expRef.decl;

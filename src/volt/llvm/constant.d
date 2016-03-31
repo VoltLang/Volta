@@ -152,10 +152,10 @@ void handleConstExpReference(State state, ir.ExpReference expRef, Value result)
 {
 	switch(expRef.decl.declKind) with (ir.Declaration.Kind) {
 	case Function:
-		auto fn = cast(ir.Function)expRef.decl;
-		assert(fn !is null);
+		auto func = cast(ir.Function)expRef.decl;
+		assert(func !is null);
 		result.isPointer = false;
-		result.value = state.getFunctionValue(fn, result.type);
+		result.value = state.getFunctionValue(func, result.type);
 		break;
 	case FunctionParam:
 		auto fp = cast(ir.FunctionParam)expRef.decl;

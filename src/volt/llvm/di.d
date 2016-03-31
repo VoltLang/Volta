@@ -436,7 +436,7 @@ version (UseDIBuilder) {
 	}
 
 	LLVMValueRef diFunction(State state, ir.Function irFn,
-	                        LLVMValueRef fn, FunctionType ft)
+	                        LLVMValueRef func, FunctionType ft)
 	{
 		auto file = diFile(state,
 			irFn.location.filename,
@@ -451,7 +451,7 @@ version (UseDIBuilder) {
 			name.ptr, name.length, null, 0,
 			file, cast(uint) irFn.location.line, ft.diCallType,
 			false, true, cast(uint) irFn.location.line, 0,
-			false, fn, null, null);
+			false, func, null, null);
 	}
 
 	void diAutoVariable(State state, ir.Variable var,
@@ -569,7 +569,7 @@ private:
 	LLVMValueRef diFunctionType(State state, Type ret, Type[] args,
 	                            string mangledName, out LLVMValueRef diCallType) { return null; }
 	LLVMValueRef diFunction(State state, ir.Function irFn,
-	                        LLVMValueRef fn, FunctionType ft) { return null; }
+	                        LLVMValueRef func, FunctionType ft) { return null; }
 	void diAutoVariable(State state, ir.Variable var, LLVMValueRef val, Type type) {}
 	void diParameterVariable(State state, ir.FunctionParam var, LLVMValueRef val, Type type) {}
 }
