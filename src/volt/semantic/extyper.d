@@ -3639,6 +3639,27 @@ public:
 	 *
 	 */
 
+	override Status leave(ref ir.Exp exp, ir.AssocArray aa)
+	{
+		ir.Type base;
+		if (aa.pairs.length > 0) {
+			auto p = aa.pairs[0];
+			base = buildAATypeSmart(aa.location,
+				getExpType(ctx.lp, p.key, ctx.current),
+				getExpType(ctx.lp, p.value, ctx.current),
+			);
+		} else {
+			base = aa.type;
+		}
+
+		panicAssert(exp, base !is null);
+		auto aaType = buildAATypeSmart(exp.location,
+			(cast(ir.AAType)base).key,
+			(cast(ir.AAType)base).value);
+		aa.type = aaType;
+		return Continue;
+	}
+
 	override Status leave(ref ir.Exp exp, ir.ArrayLiteral al)
 	{
 		ir.Type base;

@@ -68,7 +68,7 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 	case AssocArray:
 		auto asAssoc = cast(ir.AssocArray) exp;
 		assert(asAssoc !is null);
-		return getAssocArrayType(lp, asAssoc, currentScope);
+		return getAssocArrayType(asAssoc);
 	case Ternary:
 		auto asTernary = cast(ir.Ternary) exp;
 		assert(asTernary !is null);
@@ -410,26 +410,10 @@ ir.Type getArrayLiteralType(ir.ArrayLiteral al)
 	return al.type;
 }
 
-ir.Type getAssocArrayType(LanguagePass lp, ir.AssocArray assocArray, ir.Scope currentScope)
+ir.Type getAssocArrayType(ir.AssocArray aa)
 {
-	ir.Type base;
-	if (assocArray.pairs.length > 0) {
-		auto pair = assocArray.pairs[0];
-		base = buildAATypeSmart(assocArray.location,
-			getExpType(lp, pair.key, currentScope),
-			getExpType(lp, pair.value, currentScope)
-		);
-	} else {
-		base = assocArray.type;
-	}
-
-	assert(base !is null);
-	auto aaType = new ir.AAType();
-	aaType.key = (cast(ir.AAType)base).key;
-	aaType.value = (cast(ir.AAType)base).value;
-	assocArray.type = aaType;
-	assocArray.type.location = assocArray.location;
-	return base;
+	panicAssert(aa, aa.type !is null);
+	return aa.type;
 }
 
 ir.Type getPostfixType(LanguagePass lp, ir.Postfix postfix, ir.Scope currentScope)
