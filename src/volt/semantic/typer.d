@@ -790,7 +790,7 @@ ir.Type getUnaryType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 {
 	final switch (unary.op) with (ir.Unary.Op) {
 	case Cast:
-		return getUnaryCastType(lp, unary, currentScope);
+		return getUnaryCastType(unary);
 	case Dereference:
 		return getUnaryDerefType(lp, unary, currentScope);
 	case AddrOf:
@@ -843,9 +843,9 @@ ir.Type getUnaryNotType(ir.Unary unary)
 	return buildBool(unary.location);
 }
 
-ir.Type getUnaryCastType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
+ir.Type getUnaryCastType(ir.Unary unary)
 {
-	unary.type = lp.resolve(currentScope, unary.type);
+	panicAssert(unary, unary.type !is null);
 	return unary.type;
 }
 
