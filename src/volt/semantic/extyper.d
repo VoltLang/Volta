@@ -2463,6 +2463,35 @@ ir.Type extypeTypeExp(Context ctx, ref ir.Exp exp, Parent parent)
 	return te.type;
 }
 
+ir.Type extypeAssocArray(Context ctx, ref ir.Exp exp, Parent parent)
+{
+	auto aa = cast(ir.AssocArray) exp;
+
+	ir.Type base;
+	if (aa.pairs.length > 0) {
+		auto first = aa.pairs[0];
+		auto firstKey = extype(ctx, first.key, Parent.NA);
+		auto firstValue = extype(ctx, first.value, Parent.NA);
+
+		base = buildAATypeSmart(aa.location, firstKey, firstValue);
+
+		foreach (ref pair; aa.pairs[1 .. $]) {
+			extype(ctx, pair.key, Parent.NA);
+			extype(ctx, pair.value, Parent.NA);
+		}
+	} else {
+		base = aa.type;
+	}
+
+	panicAssert(exp, base !is null);
+	auto aaType = buildAATypeSmart(exp.location,
+		(cast(ir.AAType)base).key,
+		(cast(ir.AAType)base).value);
+	aa.type = aaType;
+
+	return aaType;
+}
+
 
 /*
  *
@@ -2471,13 +2500,6 @@ ir.Type extypeTypeExp(Context ctx, ref ir.Exp exp, Parent parent)
  */
 
 ir.Type extypeArrayLiteral(Context ctx, ref ir.Exp exp, Parent parent)
-{
-	// TODO XXX actualy implementation.
-	acceptExp(exp, ctx.extyper);
-	return getExpType(ctx.lp, exp, ctx.current);
-}
-
-ir.Type extypeAssocArray(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	// TODO XXX actualy implementation.
 	acceptExp(exp, ctx.extyper);
@@ -4123,27 +4145,6 @@ public:
 		return Continue;
 	}
 
-	override Status leave(ref ir.Exp exp, ir.AssocArray aa)
-	{
-		ir.Type base;
-		if (aa.pairs.length > 0) {
-			auto p = aa.pairs[0];
-			base = buildAATypeSmart(aa.location,
-				getExpType(ctx.lp, p.key, ctx.current),
-				getExpType(ctx.lp, p.value, ctx.current),
-			);
-		} else {
-			base = aa.type;
-		}
-
-		panicAssert(exp, base !is null);
-		auto aaType = buildAATypeSmart(exp.location,
-			(cast(ir.AAType)base).key,
-			(cast(ir.AAType)base).value);
-		aa.type = aaType;
-		return Continue;
-	}
-
 	override Status leave(ref ir.Exp exp, ir.ArrayLiteral al)
 	{
 		ir.Type base;
@@ -4328,6 +4329,13 @@ public:
 	 * Converted.
 	 *
 	 */
+
+	override Status leave(ref ir.Exp exp, ir.AssocArray) { assert(false); }
+	override Status enter(ref ir.Exp exp, ir.AssocArray)
+	{
+		extype(ctx, exp, Parent.NA);
+		return ContinueParent;
+	}
 
 	override Status leave(ref ir.Exp exp, ir.TypeExp) { assert(false); }
 	override Status enter(ref ir.Exp exp, ir.TypeExp)
