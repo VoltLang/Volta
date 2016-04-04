@@ -869,8 +869,6 @@ ir.Type getUnaryAddrOfType(LanguagePass lp, ir.Unary unary, ir.Scope currentScop
 
 ir.Type getUnaryNewType(LanguagePass lp, ir.Unary unary, ir.Scope currentScope)
 {
-	unary.type = lp.resolve(currentScope, unary.type);
-
 	if (!unary.hasArgumentList) {
 		auto pointer = new ir.PointerType(unary.type);
 		pointer.location = unary.location;
