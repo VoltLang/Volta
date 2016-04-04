@@ -2332,18 +2332,6 @@ Visitor.Status acceptAccessExp(ref ir.Exp exp, ir.AccessExp ae, Visitor av)
 		return VisitorStop;
 	}
 
-	status = accept(ae.field, av);
-	if (status == VisitorStop) {
-		return VisitorStop;
-	}
-
-	if (ae.aggregate !is null) {
-		status = accept(ae.aggregate, av);
-		if (status == VisitorStop) {
-			return VisitorStop;
-		}
-	}
-
 	return av.leave(exp, ae);
 }
 
