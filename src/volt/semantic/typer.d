@@ -96,7 +96,7 @@ ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 	case TraitsExp:
 		auto asTraits = cast(ir.TraitsExp) exp;
 		assert(asTraits !is null);
-		return getTraitsExpType(lp, asTraits, currentScope);
+		return getTraitsExpType(asTraits);
 	case StructLiteral:
 		auto asStructLiteral = cast(ir.StructLiteral) exp;
 		assert(asStructLiteral !is null);
@@ -189,16 +189,10 @@ ir.Type getClassLiteralType(ir.ClassLiteral clit)
 	return clit.type;
 }
 
-ir.Type getTraitsExpType(LanguagePass lp, ir.TraitsExp traits, ir.Scope currentScope)
+ir.Type getTraitsExpType(ir.TraitsExp te)
 {
-	assert(traits.op == ir.TraitsExp.Op.GetAttribute);
-	auto store = lookup(lp, currentScope, traits.qname);
-	auto attr = cast(ir.UserAttribute) store.node;
-	if (attr is null) {
-		throw panic(traits.location, "expected @interface");
-	}
-	lp.actualize(attr);
-	return attr.layoutClass;
+	panicAssert(te, te.type !is null);
+	return te.type;
 }
 
 ir.Type getExpReferenceType(ir.ExpReference expref)

@@ -570,6 +570,8 @@ public:
 	QualifiedName target;
 	QualifiedName qname;
 
+	Type type;  ///< Optional cache for typer.
+
 public:
 	this() { super(NodeType.TraitsExp); }
 }

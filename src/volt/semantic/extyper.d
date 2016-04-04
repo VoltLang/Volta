@@ -3639,6 +3639,21 @@ public:
 	 *
 	 */
 
+	override Status visit(ref ir.Exp exp, ir.TraitsExp te)
+	{
+		if (te.op != ir.TraitsExp.Op.GetAttribute) {
+			throw panicUnhandled(exp.location, "non get-attribute traits expression");
+		}
+		auto store = lookup(ctx.lp, ctx.current, te.qname);
+		auto attr = cast(ir.UserAttribute)store.node;
+		if (attr is null) {
+			throw panic(te.location, "expected @interface.");
+		}
+		ctx.lp.actualize(attr);
+		te.type = attr.layoutClass;
+		return Continue;
+	}
+
 	override Status leave(ref ir.Exp exp, ir.AssocArray aa)
 	{
 		ir.Type base;
