@@ -1878,6 +1878,19 @@ public:
 		assert(false);
 	}
 
+	override Status enter(ref ir.Exp exp, ir.AccessExp ae)
+	{
+		acceptExp(ae.child, this);
+		wf(".");
+		wf(ae.field.name);
+		return ContinueParent;
+	}
+
+	override Status leave(ref ir.Exp exp, ir.AccessExp ae)
+	{
+		assert(false);
+	}
+
 	override Status enter(ref ir.Exp, ir.Typeid ti)
 	{
 		wf("typeid(");

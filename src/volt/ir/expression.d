@@ -741,3 +741,22 @@ public:
 		this.children = children;
 	}
 }
+
+/**
+ * An expression that represents a simple identifier.identifier lookup.
+ *
+ * @ingroup irNode irExp
+ */
+class AccessExp : Exp
+{
+public:
+	Exp child;  ///< The instance we're looking up. (instance).field
+	Variable field;  ///< The field we're looking up. instance.(field)
+	Type aggregate;  ///< Cached instance type.
+
+public:
+	this()
+	{
+		super(NodeType.AccessExp);
+	}
+}
