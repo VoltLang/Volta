@@ -213,17 +213,17 @@ ir.Type getExpReferenceType(ir.ExpReference expref)
 		return var.type;
 	}
 
-	auto fn = cast(ir.Function) expref.decl;
-	if (fn !is null) {
-		if (fn.nestedHiddenParameter !is null) {
-			auto t = new ir.DelegateType(fn.type);
+	auto func = cast(ir.Function) expref.decl;
+	if (func !is null) {
+		if (func.nestedHiddenParameter !is null) {
+			auto t = new ir.DelegateType(func.type);
 			t.isScope = true;
 			return t;
 		}
-		if (fn.type is null) {
-			throw panic(fn.location, format("function '%s' has null type", fn.name));
+		if (func.type is null) {
+			throw panic(func.location, format("function '%s' has null type", func.name));
 		}
-		return fn.type;
+		return func.type;
 	}
 
 	auto ed = cast(ir.EnumDeclaration) expref.decl;
@@ -242,12 +242,12 @@ ir.Type getExpReferenceType(ir.ExpReference expref)
 		return fp.type;
 	}
 
-	auto fnset = cast(ir.FunctionSet) expref.decl;
-	panicAssert(fnset, fnset.functions.length > 0);
-	if (fnset !is null) {
-		auto ftype = fnset.type;
+	auto funcset = cast(ir.FunctionSet) expref.decl;
+	panicAssert(funcset, funcset.functions.length > 0);
+	if (funcset !is null) {
+		auto ftype = funcset.type;
 		assert(ftype.set.functions.length > 0);
-		panicAssert(fnset, ftype !is null);
+		panicAssert(funcset, ftype !is null);
 		return ftype;
 	}
 
@@ -490,15 +490,15 @@ ir.Type getPostfixCreateDelegateType(ir.Postfix postfix)
 		return ftype;
 	}
 
-	auto fn = cast(ir.Function) eref.decl;
-	if (fn is null) {
+	auto func = cast(ir.Function) eref.decl;
+	if (func is null) {
 		throw err;
 	}
-	if (fn.kind != ir.Function.Kind.Nested && !isFunctionMemberOrConstructor(fn)) {
+	if (func.kind != ir.Function.Kind.Nested && !isFunctionMemberOrConstructor(func)) {
 		throw panic(postfix.location, "static function called through instance");
 	}
 
-	auto dg = new ir.DelegateType(fn.type);
+	auto dg = new ir.DelegateType(func.type);
 	dg.location = postfix.location;
 	return dg;
 }
@@ -551,9 +551,9 @@ void retrieveScope(LanguagePass lp, ir.Node tt, ir.Postfix postfix, ref ir.Scope
 	} else if (tt.nodeType == ir.NodeType.FunctionSetType) {
 		auto fset = cast(ir.FunctionSetType) tt;
 		ir.Function[] properties;
-		foreach (fn; fset.set.functions) {
-			if (fn.type.isProperty && fn.params.length == 0) {
-				properties ~= fn;
+		foreach (func; fset.set.functions) {
+			if (func.type.isProperty && func.params.length == 0) {
+				properties ~= func;
 			}
 		}
 		if (properties.length == 1) {
@@ -758,14 +758,14 @@ ir.Type getPostfixCallType(LanguagePass lp, ir.Postfix postfix, ir.Scope current
 	auto set = cast(ir.FunctionSetType) type;
 	if (set !is null) {
 		assert(set.set.functions.length > 0);
-		auto fn = selectFunction(lp, currentScope, set.set, postfix.arguments, postfix.location);
+		auto func = selectFunction(lp, currentScope, set.set, postfix.arguments, postfix.location);
 		if (set.isFromCreateDelegate) {
-			if (!isFunctionMemberOrConstructor(fn)) {
+			if (!isFunctionMemberOrConstructor(func)) {
 				throw panic(postfix.location, "calling static through instance in typer.");
 			}
-			ftype = new ir.DelegateType(fn.type);
+			ftype = new ir.DelegateType(func.type);
 		} else {
-			ftype = fn.type;
+			ftype = func.type;
 		}
 	} else {
 		ftype = cast(ir.CallableType) type;

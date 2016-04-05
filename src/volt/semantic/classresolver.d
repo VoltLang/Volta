@@ -281,21 +281,21 @@ ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class, ref size_t offset
 
 ir.Function generateDefaultConstructor(LanguagePass lp, ir.Scope current, ir.Class _class)
 {
-	auto fn = buildFunction(_class.location, _class.members, current, "__ctor");
-	fn.kind = ir.Function.Kind.Constructor;
-	buildReturnStat(fn.location, fn._body);
+	auto func = buildFunction(_class.location, _class.members, current, "__ctor");
+	func.kind = ir.Function.Kind.Constructor;
+	buildReturnStat(func.location, func._body);
 
 	auto tr = buildTypeReference(_class.location, _class,  "__this");
 	auto thisVar = new ir.Variable();
-	thisVar.location = fn.location;
+	thisVar.location = func.location;
 	thisVar.type = tr;
 	thisVar.name = "this";
 	thisVar.storage = ir.Variable.Storage.Function;
 	thisVar.useBaseStorage = true;
-	fn.thisHiddenParameter = thisVar;
-	fn.type.hiddenParameter = true;
+	func.thisHiddenParameter = thisVar;
+	func.type.hiddenParameter = true;
 
-	return fn;
+	return func;
 }
 
 /// Get all the functions in an inheritance chain -- ignore overloading.
@@ -376,12 +376,12 @@ ir.Function[] getClassMethodFunctions(LanguagePass lp, ir.Class _class)
 		if (fns.length == 0) {
 			continue;
 		}
-		auto fn = selectFunction(lp, fns, params, method.location, DoNotThrow);
-		if (fn is null) {
+		auto func = selectFunction(lp, fns, params, method.location, DoNotThrow);
+		if (func is null) {
 			continue;
 		}
 		if (!method.isMarkedOverride) {
-			throw makeNeedOverride(method, fn);
+			throw makeNeedOverride(method, func);
 		} else if (method.isMarkedOverride) {
 			method.isOverridingInterface = true;
 		}
@@ -437,12 +437,12 @@ ir.Function[] getClassMethodFunctions(LanguagePass lp, ir.Class _class)
 ir.Function[] getPotentialOverrideFunctions(ir.Function[] functions, ir.Function considerFunction)
 {
 	ir.Function[] _out;
-	foreach (fn; functions) {
-		if (fn is considerFunction) {
+	foreach (func; functions) {
+		if (func is considerFunction) {
 			continue;
 		}
-		if (fn.name == considerFunction.name) {
-			_out ~= fn;
+		if (func.name == considerFunction.name) {
+			_out ~= func;
 		}
 	}
 	return _out;
@@ -584,11 +584,11 @@ ir.Function[] getInterfaceFunctions(LanguagePass lp, ir._Interface iface)
 	assert(iface.parentInterfaces.length == iface.interfaces.length);
 	ir.Function[] fns;
 	foreach (node; iface.members.nodes) {
-		auto fn = cast(ir.Function) node;
-		if (fn is null) {
+		auto func = cast(ir.Function) node;
+		if (func is null) {
 			continue;
 		}
-		fns ~= fn;
+		fns ~= func;
 	}
 	foreach (piface; iface.parentInterfaces) {
 		fns ~= getInterfaceFunctions(lp, piface);
@@ -605,14 +605,14 @@ ir.Exp getInterfaceStructAssign(LanguagePass lp, ir.Class _class, ir.Scope _scop
 	exps ~= buildConstantSizeT(l, lp, _class.interfaceOffsets[ifaceIndex]);
 	auto fns = getInterfaceFunctions(lp, iface);
 
-	foreach (fn; fns) {
-		auto store = lookupAsThisScope(lp, _scope, l, fn.name);
-		if (store is null || !containsMatchingFunction(store.functions, fn)) {
-			throw makeDoesNotImplement(l, _class, iface, fn);
+	foreach (func; fns) {
+		auto store = lookupAsThisScope(lp, _scope, l, func.name);
+		if (store is null || !containsMatchingFunction(store.functions, func)) {
+			throw makeDoesNotImplement(l, _class, iface, func);
 		}
 		foreach (sfn; store.functions) {
 			lp.resolve(_scope, sfn);
-			if (mangle(null, sfn) != mangle(null, fn)) {
+			if (mangle(null, sfn) != mangle(null, func)) {
 				continue;
 			}
 			auto eref = buildExpReference(l, sfn, mangle(null, sfn));
