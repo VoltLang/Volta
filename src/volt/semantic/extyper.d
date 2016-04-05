@@ -2509,112 +2509,112 @@ ir.Type extypeAssocArray(Context ctx, ref ir.Exp exp, Parent parent)
 
 ir.Type extypeArrayLiteral(Context ctx, ref ir.Exp exp, Parent parent)
 {
-	// TODO XXX actualy implementation.
+	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
 	return getExpType(ctx.lp, exp, ctx.current);
 }
 
 ir.Type extypeAssert(Context ctx, ref ir.Exp exp, Parent parent)
 {
-	// TODO XXX actualy implementation.
+	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
 	return getExpType(ctx.lp, exp, ctx.current);
 }
 
 ir.Type extypeStringImport(Context ctx, ref ir.Exp exp, Parent parent)
 {
-	// TODO XXX actualy implementation.
+	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
 	return getExpType(ctx.lp, exp, ctx.current);
 }
 
 ir.Type extypeTypeid(Context ctx, ref ir.Exp exp, Parent parent)
 {
-	// TODO XXX actualy implementation.
+	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
 	return getExpType(ctx.lp, exp, ctx.current);
 }
 
 ir.Type extypeFunctionLiteral(Context ctx, ref ir.Exp exp, Parent parent)
 {
-	// TODO XXX actualy implementation.
+	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
 	return getExpType(ctx.lp, exp, ctx.current);
 }
 
 ir.Type extypeExpReference(Context ctx, ref ir.Exp exp, Parent parent)
 {
-	// TODO XXX actualy implementation.
+	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
 	return getExpType(ctx.lp, exp, ctx.current);
 }
 
 ir.Type extypeUnionLiteral(Context ctx, ref ir.Exp exp, Parent parent)
 {
-	// TODO XXX actualy implementation.
+	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
 	return getExpType(ctx.lp, exp, ctx.current);
 }
 
 ir.Type extypeClassLiteral(Context ctx, ref ir.Exp exp, Parent parent)
 {
-	// TODO XXX actualy implementation.
+	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
 	return getExpType(ctx.lp, exp, ctx.current);
 }
 
 ir.Type extypeTraitsExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
-	// TODO XXX actualy implementation.
+	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
 	return getExpType(ctx.lp, exp, ctx.current);
 }
 
 ir.Type extypeStoreExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
-	// TODO XXX actualy implementation.
+	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
 	return getExpType(ctx.lp, exp, ctx.current);
 }
 
 ir.Type extypeTemplateInstanceExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
-	// TODO XXX actualy implementation.
+	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
 	return getExpType(ctx.lp, exp, ctx.current);
 }
 
 ir.Type extypeStatementExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
-	// TODO XXX actualy implementation.
+	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
 	return getExpType(ctx.lp, exp, ctx.current);
 }
 
 ir.Type extypeTokenExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
-	// TODO XXX actualy implementation.
+	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
 	return getExpType(ctx.lp, exp, ctx.current);
 }
 
 ir.Type extypeVaArgExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
-	// TODO XXX actualy implementation.
+	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
 	return getExpType(ctx.lp, exp, ctx.current);
 }
 
 ir.Type extypePropertyExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
-	// TODO XXX actualy implementation.
+	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
 	return getExpType(ctx.lp, exp, ctx.current);
 }
 
 ir.Type extypeBuiltinExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
-	// TODO XXX actualy implementation.
+	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
 	return getExpType(ctx.lp, exp, ctx.current);
 }
