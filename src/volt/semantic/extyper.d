@@ -324,7 +324,15 @@ ir.Type handleValueStore(Context ctx, string ident, ref ir.Exp exp,
 		if (var.storage != ir.Variable.Storage.Field) {
 			throw makeAccessThroughWrongType(exp.location, ident);
 		}
+
 		// TODO check that field is from the this type.
+		// TODO Hook up aggregate
+		auto ae = new ir.AccessExp();
+		ae.location = exp.location;
+		ae.child = child;
+		ae.field = var;
+
+		exp = ae;
 		break;
 	case Identifier:
 		if (var.storage == ir.Variable.Storage.Function &&

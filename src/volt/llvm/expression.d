@@ -23,6 +23,10 @@ static import volt.semantic.classify;
 void getValueAnyForm(State state, ir.Exp exp, Value result)
 {
 	switch(exp.nodeType) with (ir.NodeType) {
+	case AccessExp:
+		auto ae = cast(ir.AccessExp)exp;
+		handleAccessExp(state, ae, result);
+		break;
 	case Ternary:
 		auto ternary = cast(ir.Ternary)exp;
 		handleTernary(state, ternary, result);
@@ -1269,6 +1273,60 @@ void handleIncDec(State state, ir.Postfix postfix, Value result)
  * Misc functions.
  *
  */
+
+void handleAccessExp(State state, ir.AccessExp ae, Value result)
+{
+	auto b = state.builder;
+	uint index;
+
+	state.getValueAnyForm(ae.child, result);
+
+	auto st = cast(StructType)result.type;
+	auto ut = cast(UnionType)result.type;
+	auto pt = cast(PointerType)result.type;
+
+	if (pt !is null) {
+		st = cast(StructType)pt.base;
+		ut = cast(UnionType)pt.base;
+		if (st is null && ut is null) {
+			throw panic(ae, "pointed to value is not a struct or (static)array");
+		}
+
+		// We are looking at a pointer, make sure to load it.
+		makeNonPointer(state, result);
+		result.isPointer = true;
+		result.type = pt.base;
+	}
+
+	auto key = ae.field.name;
+
+	if (ut !is null) {
+		auto ptr = key in ut.indices;
+		if (ptr is null) {
+			throw panicNotMember(ae, ut.irType.mangledName, key);
+		} else {
+			index = *ptr;
+		}
+
+
+		makePointer(state, result);
+		result.type = ut.types[index];
+		auto t = LLVMPointerType(result.type.llvmType, 0);
+		result.value = LLVMBuildBitCast(state.builder, result.value, t, "");
+
+	} else if (st !is null) {
+		auto ptr = key in st.indices;
+		if (ptr is null) {
+			throw panicNotMember(ae, st.irType.mangledName, key);
+		} else {
+			index = *ptr;
+		}
+
+		getFieldFromAggregate(state, ae.location, result, index, st.types[index], result);
+	} else {
+		throw panic(ae, format("%s is not struct, array or pointer", ir.nodeToString(result.type.irType)));
+	}
+}
 
 void handleVaArgExp(State state, ir.VaArgExp vaexp, Value result)
 {

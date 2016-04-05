@@ -257,9 +257,11 @@ size_t structAlignment(LanguagePass lp, ir.Struct s)
 bool isValidWithExp(ir.Exp exp)
 {
 	if (exp.nodeType == ir.NodeType.StoreExp ||
-	    exp.nodeType == ir.NodeType.ExpReference) {
+	    exp.nodeType == ir.NodeType.ExpReference ||
+	    exp.nodeType == ir.NodeType.AccessExp) {
 		return true;
 	} else if (exp.nodeType == ir.NodeType.Postfix) {
+		// TODO Remove Postfix.Identifier case
 		auto p = cast(ir.Postfix) exp;
 		return p.op == ir.Postfix.Op.Identifier;
 	} else {
@@ -775,10 +777,13 @@ bool isLValue(ir.Exp exp)
 bool isLValueOrAssignable(ir.Exp exp, bool assign)
 {
 	switch (exp.nodeType) {
+	case ir.NodeType.AccessExp:
+		return true;
 	case ir.NodeType.IdentifierExp:
 		throw panic(exp, "IdentifierExp left in ir (run ExTyper)");
 	case ir.NodeType.ExpReference: return true;
 	case ir.NodeType.Postfix:
+		// TODO Remove Postfix.Identifier case
 		auto asPostfix = cast(ir.Postfix) exp;
 		assert(asPostfix !is null);
 		return asPostfix.op == ir.Postfix.Op.Identifier ||

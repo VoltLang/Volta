@@ -57,6 +57,10 @@ ir.Type getExpType(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 ir.Type getExpTypeImpl(LanguagePass lp, ir.Exp exp, ir.Scope currentScope)
 {
 	switch (exp.nodeType) with (ir.NodeType) {
+	case AccessExp:
+		auto ae = cast(ir.AccessExp) exp;
+		assert(ae !is null);
+		return ae.field.type;
 	case Constant:
 		auto asConstant = cast(ir.Constant) exp;
 		assert(asConstant !is null);

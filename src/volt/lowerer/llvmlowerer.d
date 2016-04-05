@@ -674,7 +674,6 @@ public:
 
 	override Status leave(ref ir.Exp exp, ir.Postfix postfix)
 	{
-		handleStructLookupViaFunctionCall(lp, current, exp, postfix);
 		switch(postfix.op) {
 		case ir.Postfix.Op.Index:
 			return handleIndex(exp, postfix);
@@ -740,6 +739,12 @@ public:
 		sexp.exp = buildExpReference(l, var, var.name);
 		sexp.originalExp = exp;
 		exp = sexp;
+		return Continue;
+	}
+
+	override Status leave(ref ir.Exp exp, ir.AccessExp ae)
+	{
+		handleStructLookupViaFunctionCall(lp, current, exp, ae);
 		return Continue;
 	}
 
@@ -1159,30 +1164,26 @@ bool isInterfacePointer(LanguagePass lp, ir.Postfix pfix, ir.Scope current, out 
  * If a postfix operates directly on a struct via a
  * function call, put it in a variable first.
  */
-void handleStructLookupViaFunctionCall(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Postfix postfix)
+void handleStructLookupViaFunctionCall(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.AccessExp ae)
 {
 	// This lists the cases where we need to rewrite (reversed).
-	if (postfix.op != ir.Postfix.Op.Identifier) {
-		return;
-	}
-
-	auto child = cast(ir.Postfix) postfix.child;
+	auto child = cast(ir.Postfix) ae.child;
 	if (child is null || child.op != ir.Postfix.Op.Call) {
 		return;
 	}
 
-	auto type = realType(getExpType(lp, postfix.child, current));
+	auto type = realType(getExpType(lp, ae.child, current));
 	if (type.nodeType != ir.NodeType.Union &&
 	    type.nodeType != ir.NodeType.Struct) {
 		return;
 	}
 
-	auto loc = postfix.location;
+	auto loc = ae.location;
 	auto statExp = buildStatementExp(loc);
 	auto host = getParentFunction(current);
 	auto var = buildVariableAnonSmart(loc, host._body, statExp, type,
-	                                  postfix.child);
-	postfix.child = buildExpReference(loc, var, var.name);
+	                                  ae.child);
+	ae.child = buildExpReference(loc, var, var.name);
 	statExp.exp = exp;
 	exp = statExp;
 }

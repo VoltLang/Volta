@@ -10,6 +10,16 @@ import volt.ir.util;
 import volt.token.location;
 
 
+ir.AccessExp copy(ir.AccessExp old)
+{
+	auto ae = new ir.AccessExp();
+	ae.location = old.location;
+	ae.child = copyExp(old.child);
+	ae.field = old.field;
+	ae.aggregate = old.aggregate;
+	return ae;
+}
+
 ir.Constant copy(ir.Constant cnst)
 {
 	auto c = new ir.Constant();
@@ -447,6 +457,9 @@ ir.Node copyNode(ir.Node n)
 		throw panic(n.location, msg);
 	case NonVisiting:
 		assert(false, "non-visiting node");
+	case AccessExp:
+		auto ae = cast(ir.AccessExp)n;
+		return copy(ae);
 	case Constant:
 		auto c = cast(ir.Constant)n;
 		return copy(c);
@@ -570,7 +583,6 @@ ir.Node copyNode(ir.Node n)
 	case FunctionSetType:
 	case VaArgExp:
 	case NoType:
-	case AccessExp:
 		goto case Invalid;
 	}
 	version (Volt) assert(false); // ???
