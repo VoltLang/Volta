@@ -51,19 +51,19 @@ void replaceAutoIfNeeded(ref ir.Type type)
 /**
  * Does what the name implies.
  *
- * Checks if fn is null and is okay with more arguments the parameters.
+ * Checks if func is null and is okay with more arguments the parameters.
  */
 void appendDefaultArguments(Context ctx, ir.Location loc,
-                            ref ir.Exp[] arguments, ir.Function fn)
+                            ref ir.Exp[] arguments, ir.Function func)
 {
 	// Nothing to do.
 	// Variadic functions may have more arguments then parameters.
-	if (fn is null || arguments.length >= fn.params.length) {
+	if (func is null || arguments.length >= func.params.length) {
 		return;
 	}
 
 	ir.Exp[] overflow;
-	foreach (p; fn.params[arguments.length .. $]) {
+	foreach (p; func.params[arguments.length .. $]) {
 		if (p.assign is null) {
 			throw makeExpected(loc, "default argument");
 		}
@@ -176,25 +176,25 @@ ir.Type handleFunctionStore(Context ctx, string ident, ref ir.Exp exp,
 	assert(fns.length > 0);
 
 	size_t members;
-	foreach (fn; fns) {
-		if (fn.kind == ir.Function.Kind.Member ||
-		    fn.kind == ir.Function.Kind.Destructor ||
-		    fn.kind == ir.Function.Kind.Constructor) {
+	foreach (func; fns) {
+		if (func.kind == ir.Function.Kind.Member ||
+		    func.kind == ir.Function.Kind.Destructor ||
+		    func.kind == ir.Function.Kind.Constructor) {
 			members++;
 		}
 
 		// Check for nested functions.
-		if (fn.nestedHiddenParameter !is null) {
+		if (func.nestedHiddenParameter !is null) {
 			if (fns.length > 1) {
-				throw makeCannotOverloadNested(fn, fn);
+				throw makeCannotOverloadNested(func, func);
 			}
-			if (fn.type.isProperty) {
+			if (func.type.isProperty) {
 				throw panic("property nested functions not supported");
 			}
 
-			exp = buildExpReference(exp.location, fn, ident);
+			exp = buildExpReference(exp.location, func, ident);
 
-			auto dg = new ir.DelegateType(fn.type);
+			auto dg = new ir.DelegateType(func.type);
 			dg.location = exp.location;
 			dg.isScope = true;
 			return dg;
@@ -278,8 +278,8 @@ ir.Type handleFunctionStore(Context ctx, string ident, ref ir.Exp exp,
 			set.type.isFromCreateDelegate = true;
 			ret = set.type;
 		} else {
-			auto fn = fns[0];
-			auto dg = new ir.DelegateType(fn.type);
+			auto func = fns[0];
+			auto dg = new ir.DelegateType(func.type);
 			dg.location = exp.location;
 			ret = dg;
 		}
@@ -634,15 +634,15 @@ ir.Type replaceAAPostfixesIfNeeded(Context ctx, ref ir.Exp exp, ir.Postfix postf
 }
 
 void handleArgumentLabelsIfNeeded(Context ctx, ir.Postfix postfix,
-                                  ir.Function fn, ref ir.Exp exp)
+                                  ir.Function func, ref ir.Exp exp)
 {
-	if (fn is null) {
+	if (func is null) {
 		return;
 	}
 	size_t[string] positions;
 	ir.Exp[string] defaults;
 	size_t defaultArgCount;
-	foreach (i, param; fn.params) {
+	foreach (i, param; func.params) {
 		defaults[param.name] = param.assign;
 		positions[param.name] = i;
 		if (param.assign !is null) {
@@ -651,8 +651,8 @@ void handleArgumentLabelsIfNeeded(Context ctx, ir.Postfix postfix,
 	}
 
 	if (postfix.argumentLabels.length == 0) {
-		if (fn.type.forceLabel && fn.type.params.length > defaultArgCount) {
-			throw makeForceLabel(exp.location, fn);
+		if (func.type.forceLabel && func.type.params.length > defaultArgCount) {
+			throw makeForceLabel(exp.location, func);
 		}
 		return;
 	}
@@ -662,7 +662,7 @@ void handleArgumentLabelsIfNeeded(Context ctx, ir.Postfix postfix,
 	}
 
 	// If they didn't provide all the arguments, try filling in any default arguments.
-	if (postfix.arguments.length < fn.params.length) {
+	if (postfix.arguments.length < func.params.length) {
 		bool[string] labels;
 		foreach (label; postfix.argumentLabels) {
 			labels[label] = true;
@@ -681,8 +681,8 @@ void handleArgumentLabelsIfNeeded(Context ctx, ir.Postfix postfix,
 		}
 	}
 
-	if (postfix.arguments.length != fn.params.length) {
-		throw makeWrongNumberOfArguments(postfix, postfix.arguments.length, fn.params.length);
+	if (postfix.arguments.length != func.params.length) {
+		throw makeWrongNumberOfArguments(postfix, postfix.arguments.length, func.params.length);
 	}
 
 	// Reorder arguments to match parameter order.
@@ -721,13 +721,13 @@ private void dereferenceInitialClass(ir.Postfix postfix, ir.Type type)
 }
 
 // Hand check va_start(vl) and va_end(vl), then modify their calls.
-private void rewriteVaStartAndEnd(Context ctx, ir.Function fn,
+private void rewriteVaStartAndEnd(Context ctx, ir.Function func,
                                   ir.Postfix postfix, ref ir.Exp exp)
 {
-	if (fn is ctx.lp.vaStartFunc ||
-	    fn is ctx.lp.vaEndFunc ||
-	    fn is ctx.lp.vaCStartFunc ||
-	    fn is ctx.lp.vaCEndFunc) {
+	if (func is ctx.lp.vaStartFunc ||
+	    func is ctx.lp.vaEndFunc ||
+	    func is ctx.lp.vaCStartFunc ||
+	    func is ctx.lp.vaCEndFunc) {
 		if (postfix.arguments.length != 1) {
 			throw makeWrongNumberOfArguments(postfix, postfix.arguments.length, 1);
 		}
@@ -737,19 +737,19 @@ private void rewriteVaStartAndEnd(Context ctx, ir.Function fn,
 			throw makeExpected(postfix, "va_list argument");
 		}
 		if (!isLValue(postfix.arguments[0])) {
-			throw makeVaFooMustBeLValue(postfix.arguments[0].location, (fn is ctx.lp.vaStartFunc || fn is ctx.lp.vaCStartFunc) ? "va_start" : "va_end");
+			throw makeVaFooMustBeLValue(postfix.arguments[0].location, (func is ctx.lp.vaStartFunc || func is ctx.lp.vaCStartFunc) ? "va_start" : "va_end");
 		}
 		postfix.arguments[0] = buildAddrOf(postfix.arguments[0]);
-		if (fn is ctx.lp.vaStartFunc) {
+		if (func is ctx.lp.vaStartFunc) {
 			assert(ctx.currentFunction.params[$-1].name == "_args");
 			auto eref = buildExpReference(postfix.location, ctx.currentFunction.params[$-1], "_args");
 			postfix.arguments ~= buildArrayPtr(postfix.location, buildVoid(postfix.location), eref);
 		}
 		if (ctx.currentFunction.type.linkage == ir.Linkage.Volt) {
-			if (fn is ctx.lp.vaStartFunc) {
+			if (func is ctx.lp.vaStartFunc) {
 				exp = buildVaArgStart(postfix.location, postfix.arguments[0], postfix.arguments[1]);
 				return;
-			} else if (fn is ctx.lp.vaEndFunc) {
+			} else if (func is ctx.lp.vaEndFunc) {
 				exp = buildVaArgEnd(postfix.location, postfix.arguments[0]);
 				return;
 			} else {
@@ -822,7 +822,7 @@ private void rewriteVarargs(Context ctx,ir.CallableType asFunctionType,
 }
 
 private void resolvePostfixOverload(Context ctx, ir.Postfix postfix,
-                                    ir.ExpReference eref, ref ir.Function fn,
+                                    ir.ExpReference eref, ref ir.Function func,
                                     ref ir.CallableType asFunctionType,
                                     ref ir.FunctionSetType asFunctionSet,
                                     bool reeval)
@@ -831,9 +831,9 @@ private void resolvePostfixOverload(Context ctx, ir.Postfix postfix,
 		throw panic(postfix.location, "expected expref");
 	}
 	asFunctionSet.set.reference = eref;
-	fn = selectFunction(ctx.lp, ctx.current, asFunctionSet.set, postfix.arguments, postfix.location);
-	eref.decl = fn;
-	asFunctionType = fn.type;
+	func = selectFunction(ctx.lp, ctx.current, asFunctionSet.set, postfix.arguments, postfix.location);
+	eref.decl = func;
+	asFunctionType = func.type;
 
 	if (reeval) {
 		replaceExpReferenceIfNeeded(ctx, postfix.child, eref);
@@ -936,7 +936,7 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 {
 	assert(postfix.op == ir.Postfix.Op.Call);
 
-	ir.Function fn;
+	ir.Function func;
 	ir.CallableType asFunctionType;
 
 	// This is a hack to handle UFCS
@@ -944,26 +944,26 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	if (b !is null && b.kind == ir.BuiltinExp.Kind.UFCS) {
 		// Should we really call selectFunction here?
 		auto arguments = b.children[0] ~ postfix.arguments;
-		fn = selectFunction(ctx.lp, ctx.current, b.functions, arguments, postfix.location);
+		func = selectFunction(ctx.lp, ctx.current, b.functions, arguments, postfix.location);
 
-		if (fn is null) {
+		if (func is null) {
 			throw makeNoFieldOrPropertyOrUFCS(postfix.location, postfix.identifier.value);
 		}
 
 		postfix.arguments = arguments;
-		postfix.child = buildExpReference(postfix.location, fn, fn.name);
+		postfix.child = buildExpReference(postfix.location, func, func.name);
 		// We are done, make sure that the rebuilt call isn't messed with when
 		// it get visited again by the extypePostfix function.
 
 		auto theTag = ir.Postfix.TagKind.None;
-		if (fn.type.isArgRef[0]) {
+		if (func.type.isArgRef[0]) {
 			theTag = ir.Postfix.TagKind.Ref;
-		} else if (fn.type.isArgOut[0]) {
+		} else if (func.type.isArgOut[0]) {
 			theTag = ir.Postfix.TagKind.Out;
 		}
 
 		postfix.argumentTags = theTag ~ postfix.argumentTags;
-		asFunctionType = fn.type;
+		asFunctionType = func.type;
 
 	} else {
 
@@ -982,13 +982,13 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 
 		auto asFunctionSet = cast(ir.FunctionSetType) realType(childType);
 		if (asFunctionSet !is null) {
-			resolvePostfixOverload(ctx, postfix, eref, fn,
+			resolvePostfixOverload(ctx, postfix, eref, func,
 			                       asFunctionType, asFunctionSet,
 			                       reeval);
 		} else if (eref !is null) {
-			fn = cast(ir.Function) eref.decl;
-			if (fn !is null) {
-				asFunctionType = fn.type;
+			func = cast(ir.Function) eref.decl;
+			if (func !is null) {
+				asFunctionType = func.type;
 			}
 		}
 
@@ -1005,19 +1005,19 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 
 	// All of the selecting function work has been done,
 	// and we have a single function or function type to call.
-	// Tho fn might be null.
+	// Tho func might be null.
 
-	handleArgumentLabelsIfNeeded(ctx, postfix, fn, exp);
+	handleArgumentLabelsIfNeeded(ctx, postfix, func, exp);
 
 	// Not providing an argument to a homogenous variadic function.
 	if (asFunctionType.homogenousVariadic && postfix.arguments.length + 1 == asFunctionType.params.length) {
 		postfix.arguments ~= buildArrayLiteralSmart(postfix.location, asFunctionType.params[$-1], []);
 	}
 
-	rewriteVaStartAndEnd(ctx, fn, postfix, exp);
+	rewriteVaStartAndEnd(ctx, func, postfix, exp);
 	rewriteVarargs(ctx, asFunctionType, postfix);
 
-	appendDefaultArguments(ctx, postfix.location, postfix.arguments, fn);
+	appendDefaultArguments(ctx, postfix.location, postfix.arguments, func);
 	if (!(asFunctionType.hasVarArgs || asFunctionType.params.length > 0 && asFunctionType.homogenousVariadic) &&
 	    postfix.arguments.length != asFunctionType.params.length) {
 		throw makeWrongNumberOfArguments(postfix, postfix.arguments.length, asFunctionType.params.length);
@@ -1106,8 +1106,8 @@ void replaceExpReferenceIfNeeded(Context ctx, ref ir.Exp exp, ir.ExpReference eR
 	if (store !is null && store.node !is eRef.decl) {
 		if (eRef.decl.nodeType !is ir.NodeType.FunctionParam) {
 			bool found = false;
-			foreach (fn; store.functions) {
-				if (fn is eRef.decl) {
+			foreach (func; store.functions) {
+				if (func is eRef.decl) {
 					found = true;
 				}
 			}
@@ -1278,12 +1278,12 @@ void postfixIdentifierUFCS(Context ctx, ref ir.Exp exp,
 	}
 
 	bool isProp;
-	foreach (fn; store.functions) {
-		if (isProp && !fn.type.isProperty) {
+	foreach (func; store.functions) {
+		if (isProp && !func.type.isProperty) {
 			throw makeUFCSAndProperty(postfix.location, postfix.identifier.value);
 		}
 
-		isProp = fn.type.isProperty;
+		isProp = func.type.isProperty;
 	}
 
 	if (isProp) {
@@ -1368,24 +1368,24 @@ bool rewriteIfPropertyStore(ref ir.Exp exp, ir.Exp child, string name,
 	ir.Function   getFn;
 	ir.Function[] setFns;
 
-	foreach (fn; funcs) {
-		if (!fn.type.isProperty) {
+	foreach (func; funcs) {
+		if (!func.type.isProperty) {
 			continue;
 		}
 
-		if (fn.type.params.length > 1) {
-			throw panic(fn, "property function with more than one argument.");
-		} else if (fn.type.params.length == 1) {
-			setFns ~= fn;
+		if (func.type.params.length > 1) {
+			throw panic(func, "property function with more than one argument.");
+		} else if (func.type.params.length == 1) {
+			setFns ~= func;
 			continue;
 		}
 
-		// fn.params.length is 0
+		// func.params.length is 0
 
 		if (getFn !is null) {
 			throw makeMultipleZeroProperties(exp.location);
 		}
-		getFn = fn;
+		getFn = func;
 	}
 
 	if (getFn is null && setFns.length == 0) {
@@ -1670,18 +1670,18 @@ void extypeUnaryNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 	// Needed because of userConstructors.
 	ctx.lp.actualize(_class);
 
-	auto fn = selectFunction(ctx.lp, ctx.current, _class.userConstructors, _unary.argumentList, _unary.location);
-	_unary.ctor = fn;
+	auto func = selectFunction(ctx.lp, ctx.current, _class.userConstructors, _unary.argumentList, _unary.location);
+	_unary.ctor = func;
 
-	ctx.lp.resolve(ctx.current, fn);
+	ctx.lp.resolve(ctx.current, func);
 
-	appendDefaultArguments(ctx, _unary.location, _unary.argumentList, fn);
+	appendDefaultArguments(ctx, _unary.location, _unary.argumentList, func);
 	if (_unary.argumentList.length > 0) {
-		rewriteHomogenousVariadic(ctx, fn.type, _unary.argumentList);
+		rewriteHomogenousVariadic(ctx, func.type, _unary.argumentList);
 	}
 
 	for (size_t i = 0; i < _unary.argumentList.length; ++i) {
-		checkAndDoConvert(ctx, fn.type.params[i], _unary.argumentList[i]);
+		checkAndDoConvert(ctx, func.type.params[i], _unary.argumentList[i]);
 	}
 }
 
@@ -1924,14 +1924,14 @@ ir.Type opOverloadRewrite(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 	if (store is null || store.functions.length == 0) {
 		throw makeAggregateDoesNotDefineOverload(exp.location, _agg, overfn);
 	}
-	auto fn = selectFunction(ctx.lp, ctx.current, store.functions, [binop.right], l);
-	assert(fn !is null);
-	exp = buildCall(l, buildCreateDelegate(l, binop.left, buildExpReference(l, fn, overfn)), [binop.right]);
+	auto func = selectFunction(ctx.lp, ctx.current, store.functions, [binop.right], l);
+	assert(func !is null);
+	exp = buildCall(l, buildCreateDelegate(l, binop.left, buildExpReference(l, func, overfn)), [binop.right]);
 	if (neg) {
 		exp = buildNot(l, exp);
 		return buildBool(binop.location);
 	} else {
-		return fn.type.ret;
+		return func.type.ret;
 	}
 }
 
@@ -1955,15 +1955,15 @@ ir.Type opOverloadRewriteIndex(Context ctx, ir.Postfix pfix, ref ir.Exp exp)
 		throw makeAggregateDoesNotDefineOverload(exp.location, _agg, name);
 	}
 	assert(pfix.arguments.length > 0 && pfix.arguments[0] !is null);
-	auto fn = selectFunction(ctx.lp, ctx.current, store.functions, [pfix.arguments[0]], exp.location);
-	assert(fn !is null);
-	pfix = buildCall(exp.location, buildCreateDelegate(exp.location, pfix.child, buildExpReference(exp.location, fn, name)), [pfix.arguments[0]]);
+	auto func = selectFunction(ctx.lp, ctx.current, store.functions, [pfix.arguments[0]], exp.location);
+	assert(func !is null);
+	pfix = buildCall(exp.location, buildCreateDelegate(exp.location, pfix.child, buildExpReference(exp.location, func, name)), [pfix.arguments[0]]);
 	exp = pfix;
 
 	extypePostfixCall(ctx, exp, pfix);
 
 	// TODO
-	return fn.type.ret;
+	return func.type.ret;
 }
 
 ir.Type extypeBinOpPropertyAssign(Context ctx, ir.BinOp binop, ref ir.Exp exp)
@@ -1977,13 +1977,13 @@ ir.Type extypeBinOpPropertyAssign(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 	}
 
 	auto args = [binop.right];
-	auto fn = selectFunction(
+	auto func = selectFunction(
 		ctx.lp, ctx.current,
 		p.setFns, args,
 		binop.location, DoNotThrow);
 
 	auto name = p.identifier.value;
-	auto expRef = buildExpReference(binop.location, fn, name);
+	auto expRef = buildExpReference(binop.location, func, name);
 
 	if (p.child is null) {
 		exp = buildCall(binop.location, expRef, args);
@@ -1993,7 +1993,7 @@ ir.Type extypeBinOpPropertyAssign(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 		                      expRef, name, args);
 	}
 
-	return fn.type.ret;
+	return func.type.ret;
 }
 
 /**
@@ -2757,11 +2757,11 @@ void extypeThrow(Context ctx, ir.ThrowStatement t)
 /**
  * Correct this references in nested functions.
  */
-void handleNestedThis(ir.Function fn, ir.BlockStatement bs)
+void handleNestedThis(ir.Function func, ir.BlockStatement bs)
 {
-	bs = fn._body;
-	auto np = fn.nestedVariable;
-	auto ns = fn.nestStruct;
+	bs = func._body;
+	auto np = func.nestedVariable;
+	auto ns = func.nestStruct;
 	if (np is null || ns is null) {
 		return;
 	}
@@ -2774,9 +2774,9 @@ void handleNestedThis(ir.Function fn, ir.BlockStatement bs)
 	if (++index >= bs.statements.length) {
 		return;
 	}
-	if (fn.thisHiddenParameter !is null) {
-		auto l = buildAccess(fn.location, buildExpReference(np.location, np, np.name), "this");
-		auto tv = fn.thisHiddenParameter;
+	if (func.thisHiddenParameter !is null) {
+		auto l = buildAccess(func.location, buildExpReference(np.location, np, np.name), "this");
+		auto tv = func.thisHiddenParameter;
 		auto r = buildExpReference(bs.location, tv, tv.name);
 		r.doNotRewriteAsNestedLookup = true;
 		ir.Node n = buildExpStat(l.location, buildAssign(l.location, l, r));
@@ -2785,19 +2785,19 @@ void handleNestedThis(ir.Function fn, ir.BlockStatement bs)
 }
 
 /**
- * Given a nested function fn, add its parameters to the nested
+ * Given a nested function func, add its parameters to the nested
  * struct and insert statements after the nested declaration.
  */
-void handleNestedParams(Context ctx, ir.Function fn, ir.BlockStatement bs)
+void handleNestedParams(Context ctx, ir.Function func, ir.BlockStatement bs)
 {
-	auto np = fn.nestedVariable;
-	auto ns = fn.nestStruct;
+	auto np = func.nestedVariable;
+	auto ns = func.nestStruct;
 	if (np is null || ns is null) {
 		return;
 	}
 
 	// Don't add parameters for nested functions.
-	if (fn.kind == ir.Function.Kind.Nested) {
+	if (func.kind == ir.Function.Kind.Nested) {
 		return;
 	}
 
@@ -2814,12 +2814,12 @@ void handleNestedParams(Context ctx, ir.Function fn, ir.BlockStatement bs)
 		index = 0;  // We didn't find a usage, so put it at the start.
 	}
 
-	foreach (i, param; fn.params) {
+	foreach (i, param; func.params) {
 		if (!param.hasBeenNested) {
 			param.hasBeenNested = true;
 
 			auto type = param.type;
-			bool refParam = fn.type.isArgRef[i] || fn.type.isArgOut[i];
+			bool refParam = func.type.isArgRef[i] || func.type.isArgOut[i];
 			if (refParam) {
 				type = buildPtrSmart(param.location, param.type);
 			}
@@ -2839,7 +2839,7 @@ void handleNestedParams(Context ctx, ir.Function fn, ir.BlockStatement bs)
 			}
 			bop.isInternalNestedAssign = true;
 			ir.Node n = buildExpStat(l.location, bop);
-			if (isNested(fn)) {
+			if (isNested(func)) {
 				// Nested function.
 				bs.statements = n ~ bs.statements;
 			} else {
@@ -3043,12 +3043,12 @@ void checkAnonymousVariables(Context ctx, ir.Aggregate agg)
 	bool[string] names;
 	foreach (anonAgg; agg.anonymousAggregates) foreach (n; anonAgg.members.nodes) {
 		auto var = cast(ir.Variable) n;
-		auto fn = cast(ir.Function) n;
+		auto func = cast(ir.Function) n;
 		string name;
 		if (var !is null) {
 			name = var.name;
-		} else if (fn !is null) {
-			name = fn.name;
+		} else if (func !is null) {
+			name = func.name;
 		} else {
 			continue;
 		}
@@ -3388,86 +3388,86 @@ void emitNestedFromBlock(Context ctx, ir.Function currentFunction, ir.BlockState
 	}
 }
 
-void resolveFunction(Context ctx, ir.Function fn)
+void resolveFunction(Context ctx, ir.Function func)
 {
-	auto done = ctx.lp.startResolving(fn);
+	auto done = ctx.lp.startResolving(func);
 	scope (success) done();
 
 	if (ctx.current.node.nodeType == ir.NodeType.BlockStatement ||
-	    fn.kind == ir.Function.Kind.Nested) {
+	    func.kind == ir.Function.Kind.Nested) {
 		auto ns = ctx.parentFunction.nestStruct;
-		panicAssert(fn, ns !is null);
+		panicAssert(func, ns !is null);
 		auto tr = buildTypeReference(ns.location, ns, "__Nested");
-		auto decl = buildVariable(fn.location, tr, ir.Variable.Storage.Function, "__nested");
+		auto decl = buildVariable(func.location, tr, ir.Variable.Storage.Function, "__nested");
 		decl.isResolved = true;
 		decl.specialInitValue = true;
 
-		if (fn.nestedHiddenParameter is null) {
+		if (func.nestedHiddenParameter is null) {
 			// XXX: Note __nested is not added to any scope.
 			// XXX: Instead make sure that nestedHiddenParameter is visited (and as such visited)
-			fn.nestedHiddenParameter = decl;
-			fn.nestedVariable = decl;
-			fn.nestStruct = ns;
-			fn.type.hiddenParameter = true;
-			fn._body.statements = decl ~ fn._body.statements;
+			func.nestedHiddenParameter = decl;
+			func.nestedVariable = decl;
+			func.nestStruct = ns;
+			func.type.hiddenParameter = true;
+			func._body.statements = decl ~ func._body.statements;
 		}
 	}
 
-	if (fn.isAutoReturn) {
-		fn.type.ret = buildVoid(fn.type.ret.location);
+	if (func.isAutoReturn) {
+		func.type.ret = buildVoid(func.type.ret.location);
 	}
 
-	if (fn.type.isProperty &&
-	    fn.type.params.length == 0 &&
-	    isVoid(fn.type.ret)) {
-		throw makeInvalidType(fn, buildVoid(fn.location));
-	} else if (fn.type.isProperty &&
-	           fn.type.params.length > 1) {
-		throw makeWrongNumberOfArguments(fn, fn.type.params.length, isVoid(fn.type.ret) ? 0U : 1U);
+	if (func.type.isProperty &&
+	    func.type.params.length == 0 &&
+	    isVoid(func.type.ret)) {
+		throw makeInvalidType(func, buildVoid(func.location));
+	} else if (func.type.isProperty &&
+	           func.type.params.length > 1) {
+		throw makeWrongNumberOfArguments(func, func.type.params.length, isVoid(func.type.ret) ? 0U : 1U);
 	}
 
-	fn.type = cast(ir.FunctionType)ctx.lp.resolve(fn.myScope.parent, fn.type);
+	func.type = cast(ir.FunctionType)ctx.lp.resolve(func.myScope.parent, func.type);
 
 
-	if (fn.name == "main" && fn.type.linkage == ir.Linkage.Volt) {
+	if (func.name == "main" && func.type.linkage == ir.Linkage.Volt) {
 
-		if (fn.params.length == 0) {
-			addParam(fn.location, fn, buildStringArray(fn.location), "");
-		} else if (fn.params.length > 1) {
-			throw makeInvalidMainSignature(fn);
+		if (func.params.length == 0) {
+			addParam(func.location, func, buildStringArray(func.location), "");
+		} else if (func.params.length > 1) {
+			throw makeInvalidMainSignature(func);
 		}
 
-		auto arr = cast(ir.ArrayType) fn.type.params[0];
+		auto arr = cast(ir.ArrayType) func.type.params[0];
 		if (arr is null ||
 		    !isString(realType(arr.base)) ||
-		    (!isVoid(fn.type.ret) && !isInt(fn.type.ret))) {
-			throw makeInvalidMainSignature(fn);
+		    (!isVoid(func.type.ret) && !isInt(func.type.ret))) {
+			throw makeInvalidMainSignature(func);
 		}
 	}
 
-	if ((fn.kind == ir.Function.Kind.Function ||
-	     (cast(ir.Class) fn.myScope.parent.node) is null) &&
-	    fn.isMarkedOverride) {
-		throw makeMarkedOverrideDoesNotOverride(fn, fn);
+	if ((func.kind == ir.Function.Kind.Function ||
+	     (cast(ir.Class) func.myScope.parent.node) is null) &&
+	    func.isMarkedOverride) {
+		throw makeMarkedOverrideDoesNotOverride(func, func);
 	}
 
-	replaceVarArgsIfNeeded(ctx.lp, fn);
+	replaceVarArgsIfNeeded(ctx.lp, func);
 
-	ctx.lp.resolve(ctx.current, fn.userAttrs);
+	ctx.lp.resolve(ctx.current, func.userAttrs);
 
-	if (fn.type.homogenousVariadic && !isArray(realType(fn.type.params[$-1]))) {
-		throw makeExpected(fn.params[$-1].location, "array type");
+	if (func.type.homogenousVariadic && !isArray(realType(func.type.params[$-1]))) {
+		throw makeExpected(func.params[$-1].location, "array type");
 	}
 
-	if (fn.outParameter.length > 0) {
-		assert(fn.outContract !is null);
-		auto l = fn.outContract.location;
-		auto var = buildVariableSmart(l, copyTypeSmart(l, fn.type.ret), ir.Variable.Storage.Function, fn.outParameter);
-		fn.outContract.statements = var ~ fn.outContract.statements;
-		fn.outContract.myScope.addValue(var, var.name);
+	if (func.outParameter.length > 0) {
+		assert(func.outContract !is null);
+		auto l = func.outContract.location;
+		auto var = buildVariableSmart(l, copyTypeSmart(l, func.type.ret), ir.Variable.Storage.Function, func.outParameter);
+		func.outContract.statements = var ~ func.outContract.statements;
+		func.outContract.myScope.addValue(var, var.name);
 	}
 
-	foreach (i, ref param; fn.params) {
+	foreach (i, ref param; func.params) {
 		if (param.assign is null) {
 			continue;
 		}
@@ -3482,11 +3482,11 @@ void resolveFunction(Context ctx, ir.Function fn)
 		param.assign = evaluate(ctx.lp, ctx.current, param.assign);
 	}
 
-	if (fn.loadDynamic && fn._body !is null) {
-		throw makeCannotLoadDynamic(fn, fn);
+	if (func.loadDynamic && func._body !is null) {
+		throw makeCannotLoadDynamic(func, func);
 	}
 
-	fn.isResolved = true;
+	func.isResolved = true;
 }
 
 /**
@@ -3612,12 +3612,12 @@ public:
 	/**
 	 * For out of band checking of Functions.
 	 */
-	void resolve(ir.Scope current, ir.Function fn)
+	void resolve(ir.Scope current, ir.Function func)
 	{
 		ctx.setupFromScope(current);
 		scope (success) ctx.reset();
 
-		resolveFunction(ctx, fn);
+		resolveFunction(ctx, func);
 	}
 
 	/**
@@ -3833,25 +3833,25 @@ public:
 		return ContinueParent;
 	}
 
-	override Status enter(ir.Function fn)
+	override Status enter(ir.Function func)
 	{
 		if (ctx.functionDepth >= 2) {
-			throw makeNestedNested(fn.location);
+			throw makeNestedNested(func.location);
 		}
-		if (!fn.isResolved) {
-			resolveFunction(ctx, fn);
+		if (!func.isResolved) {
+			resolveFunction(ctx, func);
 		}
 
-		ctx.enter(fn);
+		ctx.enter(func);
 
-		emitNestedFromBlock(ctx, fn, fn._body, false);
+		emitNestedFromBlock(ctx, func, func._body, false);
 
 		return Continue;
 	}
 
-	override Status leave(ir.Function fn)
+	override Status leave(ir.Function func)
 	{
-		ctx.leave(fn);
+		ctx.leave(func);
 		return Continue;
 	}
 
@@ -3879,27 +3879,27 @@ public:
 
 	override Status enter(ir.ReturnStatement ret)
 	{
-		auto fn = getParentFunction(ctx.current);
-		if (fn is null) {
+		auto func = getParentFunction(ctx.current);
+		if (func is null) {
 			throw panic(ret, "return statement outside of function.");
 		}
 
 		if (ret.exp !is null) {
 			acceptExp(ret.exp, this);
 			auto retType = getExpType(ctx.lp, ret.exp, ctx.current);
-			if (fn.isAutoReturn) {
-				fn.type.ret = copyTypeSmart(retType.location, getExpType(ctx.lp, ret.exp, ctx.current));
-				if (cast(ir.NullType)fn.type.ret !is null) {
-					fn.type.ret = buildVoidPtr(ret.location);
+			if (func.isAutoReturn) {
+				func.type.ret = copyTypeSmart(retType.location, getExpType(ctx.lp, ret.exp, ctx.current));
+				if (cast(ir.NullType)func.type.ret !is null) {
+					func.type.ret = buildVoidPtr(ret.location);
 				}
 			}
 			if (retType.isScope && mutableIndirection(retType)) {
 				throw makeNoReturnScope(ret.location);
 			}
-			checkAndDoConvert(ctx, fn.type.ret, ret.exp);
-		} else if (!isVoid(realType(fn.type.ret))) {
+			checkAndDoConvert(ctx, func.type.ret, ret.exp);
+		} else if (!isVoid(realType(func.type.ret))) {
 			// No return expression on function returning a value.
-			throw makeReturnValueExpected(ret.location, fn.type.ret);
+			throw makeReturnValueExpected(ret.location, func.type.ret);
 		}
 
 		return ContinueParent;
