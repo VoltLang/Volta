@@ -367,9 +367,6 @@ LexStatus lexIdentifier(TokenWriter tw)
 		return Succeeded;
 	}
 	tw.errors = [];
-	if (identToken.value == "fn") {
-		warning(identToken.location, "Found 'fn'");
-	}
 	identToken.type = identifierType(identToken.value);
 	tw.addToken(identToken);
 
