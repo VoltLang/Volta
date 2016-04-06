@@ -24,17 +24,17 @@ enum immutable(string)[] _tokenToString = [
 "const", "continue", "creal", "dchar", "debug", "default",
 "delegate", "delete", "deprecated", "do", "double", "else", "enum",
 "export", "extern", "false", "final", "finally", "float", "for",
-"foreach", "foreach_reverse", "function", "global", "goto", "idouble", "if",
-"ifloat", "immutable", "import", "in", "inout", "int", "interface",
-"invariant", "ireal", "is", "lazy", "local", "long", "macro", "mixin", "module",
-"new", "nothrow", "null", "out", "override", "package", "pragma",
+"foreach", "foreach_reverse", "fn", "function", "global", "goto", "idouble",
+"if", "ifloat", "immutable", "import", "in", "inout", "int", "interface",
+"invariant", "ireal", "is", "lazy", "local", "long", "macro", "mixin",
+"module", "new", "nothrow", "null", "out", "override", "package", "pragma",
 "private", "protected", "public", "pure", "real", "ref", "return",
 "scope", "shared", "short", "static", "struct", "super",
 "switch", "synchronized", "template", "this", "throw", "true",
 "try", "typedef", "typeid", "typeof", "ubyte", "ucent", "uint",
-"ulong", "union", "unittest", "ushort", "va_arg", "version", "void", "volatile",
-"wchar", "while", "with", "__FILE__", "__FUNCTION__", "__LINE__", "__PRETTY_FUNCTION__",
-"__thread", "__traits",
+"ulong", "union", "unittest", "ushort", "va_arg", "version", "void",
+"volatile", "wchar", "while", "with", "__FILE__", "__FUNCTION__", "__LINE__",
+"__PRETTY_FUNCTION__", "__thread", "__traits",
 "/", "/=", ".", "..", "...", "&", "&=", "&&", "|", "|=", "||",
 "-", "-=", "--", "+", "+=", "++", "<", "<=", "<<", "<<=", "<>", "<>=",
 ">", ">=", ">>=", ">>>=", ">>", ">>>", "!", "!=", "!<>", "!<>=", "!<",
@@ -80,7 +80,7 @@ enum TokenType
 	Deprecated, Do, Double,
 	Else, Enum, Export, Extern,
 	False, Final, Finally, Float, For, Foreach,
-	ForeachReverse, Function,
+	ForeachReverse, Fn, Function,
 	Global, Goto,
 	Idouble, If, Ifloat, Immutable, Import, In,
 	Inout, Int, Interface, Invariant, Ireal, Is,
@@ -231,6 +231,7 @@ TokenType identifierType(string ident)
 	case "for":                 return For;
 	case "foreach":             return Foreach;
 	case "foreach_reverse":     return ForeachReverse;
+	case "fn":                  return Fn;
 	case "function":            return Function;
 	case "global":              return Global;
 	case "goto":                return Goto;
