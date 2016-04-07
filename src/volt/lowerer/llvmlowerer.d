@@ -219,7 +219,7 @@ ir.Exp buildStructAAKeyCast(Location l, LanguagePass lp, ir.Module thisModule, i
 				continue;
 			}
 			auto rtype = realType(var.type);
-			gatherType(rtype, buildAccess(l, copyExp(key), var.name), sexp.statements);
+			gatherType(rtype, buildAccessExp(l, copyExp(key), var), sexp.statements);
 		}
 	}
 
@@ -692,8 +692,18 @@ public:
 				throw makeExpected(exp.location, "method");
 			}
 			auto l = exp.location;
-			auto handle = buildCastToVoidPtr(l, buildSub(l, buildCastSmart(l, buildPtrSmart(l, buildUbyte(l)), copyExp(cpostfix.child)), buildAccess(l, buildDeref(l, copyExp(cpostfix.child)), "__offset")));
-			exp = buildCall(l, buildAccess(l, buildDeref(l, copyExp(cpostfix.child)), mangle(null, func)), handle ~ postfix.arguments);
+			auto agg = cast(ir._Interface)realType(getExpType(lp, cpostfix.child, current));
+			panicAssert(postfix, agg !is null);
+			auto store = lookupInGivenScopeOnly(lp, agg.layoutStruct.myScope, l, "__offset");
+			auto fstore = lookupInGivenScopeOnly(lp, agg.layoutStruct.myScope, l, mangle(null, func));
+			panicAssert(postfix, store !is null);
+			panicAssert(postfix, fstore !is null);
+			auto var = cast(ir.Variable)store.node;
+			auto fvar = cast(ir.Variable)fstore.node;
+			panicAssert(postfix, var !is null);
+			panicAssert(postfix, fvar !is null);
+			auto handle = buildCastToVoidPtr(l, buildSub(l, buildCastSmart(l, buildPtrSmart(l, buildUbyte(l)), copyExp(cpostfix.child)), buildAccessExp(l, buildDeref(l, copyExp(cpostfix.child)), var)));
+			exp = buildCall(l, buildAccessExp(l, buildDeref(l, copyExp(cpostfix.child)), fvar), handle ~ postfix.arguments);
 		}
 		return Continue;
 	}
@@ -731,7 +741,7 @@ public:
 		// Assign the literal expressions to the fields.
 		foreach (i, e; literal.exps) {
 			auto eref = buildExpReference(l, var, var.name);
-			auto lh = buildAccess(l, eref, fields[i].name);
+			auto lh = buildAccessExp(l, eref, fields[i]);
 			auto assign = buildAssign(l, lh, e);
 			buildExpStat(l, sexp, assign);
 		}
@@ -750,7 +760,7 @@ public:
 
 	override Status visit(ref ir.Exp exp, ir.ExpReference eref)
 	{
-		bool replaced = replaceNested(exp, eref, functionStack.length == 0 ? null : functionStack[$-1].nestedVariable);
+		bool replaced = replaceNested(lp, exp, eref, functionStack.length == 0 ? null : functionStack[$-1].nestedVariable);
 		if (replaced) {
 			return Continue;
 		}
@@ -1053,7 +1063,11 @@ public:
 		if (agg is null) {
 			return;
 		}
-		exp = buildAddrOf(loc, buildAccess(loc, uexp.value, mangle(iface)));
+		auto store = lookupInGivenScopeOnly(lp, agg.myScope, loc, mangle(iface));
+		panicAssert(uexp, store !is null);
+		auto var = cast(ir.Variable)store.node;
+		panicAssert(uexp, var !is null);
+		exp = buildAddrOf(loc, buildAccessExp(loc, uexp.value, var));
 	}
 
 	protected void replaceArrayCastIfNeeded(Location loc, LanguagePass lp, ir.Scope current, ir.Unary uexp, ref ir.Exp exp)
@@ -1105,7 +1119,7 @@ public:
 		if (fromSz % toSz) {
 			//     vrt_throw_slice_error(arr.length, typeid(T).size);
 			auto ln = buildArrayLength(loc, lp, buildExpReference(loc, var, varName));
-			auto sz = buildAccess(loc, buildTypeidSmart(loc, lp, toArray.base), "size");
+			auto sz = getSizeOf(loc, lp, toArray.base);
 			ir.Exp fname = buildConstantString(loc, exp.location.filename, false);
 			ir.Exp lineNum = buildConstantSizeT(loc, lp, exp.location.line);
 			auto rtCall = buildCall(loc, buildExpReference(loc, lp.ehThrowSliceErrorFunc, lp.ehThrowSliceErrorFunc.name), [fname, lineNum]);
