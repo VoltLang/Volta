@@ -1134,7 +1134,9 @@ void replaceExpReferenceIfNeeded(Context ctx, ref ir.Exp exp, ir.ExpReference eR
 	if (eRef.decl.declKind == ir.Declaration.Kind.Function) {
 		exp = buildCreateDelegate(eRef.location, thisRef, eRef);
 	} else {
-		exp = buildAccess(eRef.location, thisRef, ident);
+		auto var = cast(ir.Variable)eRef.decl;
+		panicAssert(eRef, var !is null);
+		exp = buildAccessExp(eRef.location, thisRef, var);
 	}
 
 	return;
@@ -2619,6 +2621,13 @@ ir.Type extypeBuiltinExp(Context ctx, ref ir.Exp exp, Parent parent)
 	return getExpType(ctx.lp, exp, ctx.current);
 }
 
+ir.Type extypeAccessExp(Context ctx, ref ir.Exp exp, Parent parent)
+{
+	// TODO XXX actually implement.
+	acceptExp(exp, ctx.extyper);
+	return getExpType(ctx.lp, exp, ctx.current);
+}
+
 
 /*
  *
@@ -2703,6 +2712,8 @@ ir.Type extypeUnchecked(Context ctx, ref ir.Exp exp, Parent parent)
 		return extypePropertyExp(ctx, exp, parent);
 	case BuiltinExp:
 		return extypeBuiltinExp(ctx, exp, parent);
+	case AccessExp:
+		return extypeAccessExp(ctx, exp, parent);
 	default:
 		assert(false, "unknown exp");
 	}
@@ -2775,7 +2786,7 @@ void handleNestedThis(ir.Function func, ir.BlockStatement bs)
 		return;
 	}
 	if (func.thisHiddenParameter !is null) {
-		auto l = buildAccess(func.location, buildExpReference(np.location, np, np.name), "this");
+		auto l = buildAccessExp(func.location, buildExpReference(np.location, np, np.name), func.thisHiddenParameter);
 		auto tv = func.thisHiddenParameter;
 		auto r = buildExpReference(bs.location, tv, tv.name);
 		r.doNotRewriteAsNestedLookup = true;
@@ -2828,7 +2839,7 @@ void handleNestedParams(Context ctx, ir.Function func, ir.BlockStatement bs)
 			addVarToStructSmart(ns, var);
 			// Insert an assignment of the param to the nest struct.
 
-			auto l = buildAccess(param.location, buildExpReference(np.location, np, np.name), name);
+			auto l = buildAccessExp(param.location, buildExpReference(np.location, np, np.name), var);
 			auto r = buildExpReference(param.location, param, name);
 			r.doNotRewriteAsNestedLookup = true;
 			ir.BinOp bop;
@@ -2876,7 +2887,7 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 		assert(asArray !is null);
 		ir.Exp ptr = buildCastSmart(buildVoidPtr(l), buildArrayPtr(l, asArray.base, ss.condition));
 		ir.Exp length = buildBinOp(l, ir.BinOp.Op.Mul, buildArrayLength(l, ctx.lp, copyExp(ss.condition)),
-				buildAccess(l, buildTypeidSmart(l, ctx.lp, asArray.base), "size"));
+				getSizeOf(l, ctx.lp, asArray.base));
 		ss.condition = buildCall(ss.condition.location, ctx.lp.hashFunc, [ptr, length]);
 		conditionType = buildUint(ss.condition.location);
 	}
@@ -3244,7 +3255,7 @@ void writeVariableAssignsIntoCtors(Context ctx, ir.Class _class)
 		foreach (ctor; _class.userConstructors) {
 			assert(ctor.thisHiddenParameter !is null);
 			auto eref = buildExpReference(ctor.thisHiddenParameter.location, ctor.thisHiddenParameter, ctor.thisHiddenParameter.name);
-			auto assign = buildAssign(ctor.location, buildAccess(ctor.location, eref, v.name), v.assign);
+			auto assign = buildAssign(ctor.location, buildAccessExp(ctor.location, eref, v), v.assign);
 			auto stat = new ir.ExpStatement();
 			stat.location = ctor.location;
 			stat.exp = copyExp(assign);
@@ -4247,7 +4258,7 @@ public:
 			}
 			vaexp.arg = buildAddrOf(vaexp.location, copyExp(vaexp.arg));
 		} else {
-			exp = buildVaArgCast(vaexp.location, vaexp);
+			exp = getVaArgCast(vaexp.location, ctx.lp, vaexp);
 		}
 		return Continue;
 	}

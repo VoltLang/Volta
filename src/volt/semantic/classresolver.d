@@ -266,6 +266,7 @@ ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class, ref size_t offset
 		_class.interfaceOffsets ~= offset;
 		addSize(t);
 		auto var = buildVariableSmart(_class.location, buildPtrSmart(_class.location, iface.layoutStruct), ir.Variable.Storage.Field, mangle(iface));
+
 		fields ~= var;
 		assert(iface.interfaces.length == iface.parentInterfaces.length);
 		foreach (piface; iface.parentInterfaces) {

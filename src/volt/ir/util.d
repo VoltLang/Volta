@@ -1280,33 +1280,6 @@ ir.ExpStatement buildExpStat(Location loc, ir.StatementExp stat, ir.Exp exp)
 	return ret;
 }
 
-ir.StatementExp buildVaArgCast(Location loc, ir.VaArgExp vaexp)
-{
-	auto sexp = new ir.StatementExp();
-	sexp.location = loc;
-
-	auto ptrToPtr = buildVariableSmart(loc, buildPtrSmart(loc, buildVoidPtr(loc)), ir.Variable.Storage.Function, "ptrToPtr");
-	ptrToPtr.assign = buildAddrOf(loc, vaexp.arg);
-	sexp.statements ~= ptrToPtr;
-
-	auto cpy = buildVariableSmart(loc, buildVoidPtr(loc), ir.Variable.Storage.Function, "cpy");
-	cpy.assign = buildDeref(loc, buildExpReference(loc, ptrToPtr));
-	sexp.statements ~= cpy;
-
-	auto vlderef = buildDeref(loc, buildExpReference(loc, ptrToPtr));
-	auto tid = buildTypeidSmart(loc, vaexp.type);
-	auto sz = buildAccess(loc, tid, "size");
-	auto assign = buildAddAssign(loc, vlderef, sz);
-	buildExpStat(loc, sexp, assign);
-
-	auto ptr = buildPtrSmart(loc, vaexp.type);
-	auto _cast = buildCastSmart(loc, ptr, buildExpReference(loc, cpy));
-	auto deref = buildDeref(loc, _cast);
-	sexp.exp = deref;
-
-	return sexp;
-}
-
 ir.ThrowStatement buildThrowStatement(Location loc, ir.Exp exp)
 {
 	auto ts = new ir.ThrowStatement();

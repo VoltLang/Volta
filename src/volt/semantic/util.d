@@ -12,7 +12,7 @@ import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 
-import volt.semantic.typer : getExpType;
+import volt.semantic.typer : getExpType, getTypeidType;
 import volt.semantic.lookup : lookup, lookupInGivenScopeOnly;
 import volt.semantic.context : Context;
 import volt.semantic.classify : getParentFunction, realType, isFloatingPoint;
@@ -298,7 +298,7 @@ ir.Exp getThisReferenceNotNull(ir.Node n, Context ctx, out ir.Variable thisVar)
 	// TODO Is there a function on the Context that is better?
 	auto ffn = getParentFunction(ctx.current);
 	if (ffn !is null && ffn.nestStruct !is null) {
-		return buildAccess(n.location, buildExpReference(n.location, ffn.nestedVariable), "this");
+		return buildAccessExp(n.location, buildExpReference(n.location, ffn.nestedVariable), thisVar);
 	} else {
 		return buildExpReference(n.location, thisVar, "this");
 	}
@@ -596,4 +596,42 @@ ir.Type ifTypeRefDeRef(ir.Type t)
 	} else {
 		return tref.type;
 	}
+}
+
+ir.AccessExp getSizeOf(Location loc, LanguagePass lp, ir.Type type)
+{
+	auto unary = cast(ir.Unary)buildTypeidSmart(loc, lp, type);
+	panicAssert(type, unary !is null);
+	auto store = lookupInGivenScopeOnly(lp, lp.typeInfoClass.myScope, loc, "size");
+	panicAssert(type, store !is null);
+	auto var = cast(ir.Variable)store.node;
+	panicAssert(type, var !is null);
+	return buildAccessExp(loc, unary, var);
+}
+
+ir.StatementExp getVaArgCast(Location loc, LanguagePass lp, ir.VaArgExp vaexp)
+{
+	auto sexp = new ir.StatementExp();
+	sexp.location = loc;
+
+	auto ptrToPtr = buildVariableSmart(loc, buildPtrSmart(loc, buildVoidPtr(loc)), ir.Variable.Storage.Function, "ptrToPtr");
+	ptrToPtr.assign = buildAddrOf(loc, vaexp.arg);
+	sexp.statements ~= ptrToPtr;
+
+	auto cpy = buildVariableSmart(loc, buildVoidPtr(loc), ir.Variable.Storage.Function, "cpy");
+	cpy.assign = buildDeref(loc, buildExpReference(loc, ptrToPtr));
+	sexp.statements ~= cpy;
+
+	auto vlderef = buildDeref(loc, buildExpReference(loc, ptrToPtr));
+	auto tid = buildTypeidSmart(loc, vaexp.type);
+	auto sz = getSizeOf(loc, lp, vaexp.type);
+	auto assign = buildAddAssign(loc, vlderef, sz);
+	buildExpStat(loc, sexp, assign);
+
+	auto ptr = buildPtrSmart(loc, vaexp.type);
+	auto _cast = buildCastSmart(loc, ptr, buildExpReference(loc, cpy));
+	auto deref = buildDeref(loc, _cast);
+	sexp.exp = deref;
+
+	return sexp;
 }

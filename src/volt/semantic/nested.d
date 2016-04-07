@@ -12,9 +12,9 @@ import volt.errors;
 
 import volt.interfaces;
 import volt.semantic.util;
-import volt.semantic.lookup : getModuleFromScope;
+import volt.semantic.lookup : getModuleFromScope, lookupInGivenScopeOnly;
 import volt.semantic.context;
-import volt.semantic.classify : isNested;
+import volt.semantic.classify : isNested, realType;
 
 
 void emitNestedStructs(ir.Function parentFunction, ir.BlockStatement bs, ref ir.Struct[] structs)
@@ -52,7 +52,7 @@ ir.Struct createAndAddNestedStruct(ir.Function func, ir.BlockStatement bs)
 	return s;
 }
 
-bool replaceNested(ref ir.Exp exp, ir.ExpReference eref, ir.Variable nestParam)
+bool replaceNested(LanguagePass lp, ref ir.Exp exp, ir.ExpReference eref, ir.Variable nestParam)
 {
 	if (eref.doNotRewriteAsNestedLookup) {
 		return false;
@@ -88,7 +88,14 @@ bool replaceNested(ref ir.Exp exp, ir.ExpReference eref, ir.Variable nestParam)
 
 	assert(name.length > 0);
 
-	exp = buildAccess(exp.location, buildExpReference(nestParam.location, nestParam, nestParam.name), name);
+	auto agg = cast(ir.Aggregate)realType(nestParam.type);
+	panicAssert(eref, agg !is null);
+	auto store = lookupInGivenScopeOnly(lp, agg.myScope, eref.location, name);
+	panicAssert(eref, store !is null);
+	auto v = cast(ir.Variable)store.node;
+	panicAssert(eref, v !is null);
+
+	exp = buildAccessExp(exp.location, buildExpReference(nestParam.location, nestParam, nestParam.name), v);
 	if (fp !is null &&
 	    (fp.func.type.isArgRef[fp.index] ||
 	     fp.func.type.isArgOut[fp.index])) {
@@ -156,7 +163,14 @@ void tagNestedVariables(Context ctx, ir.Variable var, ir.Store store, ref ir.Exp
 			return;
 		}
 		auto nref = buildExpReference(var.location, ctx.currentFunction.nestedHiddenParameter, ctx.currentFunction.nestedHiddenParameter.name);
-		auto a = buildAccess(var.location, nref, "this");
-		e = buildAccess(a.location, a, var.name);
+		auto nstore = lookupInGivenScopeOnly(ctx.lp, ctx.currentFunction.nestStruct.myScope, var.location, "this");
+		panicAssert(var, nstore !is null);
+		auto nvar = cast(ir.Variable)nstore.node;
+		panicAssert(var, nvar !is null);
+		auto cagg = cast(ir.Aggregate)realType(nvar.type);
+		auto cstore = lookupInGivenScopeOnly(ctx.lp, cagg.myScope, var.location, var.name);
+		auto cvar = cast(ir.Variable)cstore.node;
+		auto a = buildAccessExp(var.location, nref, nvar);
+		e = buildAccessExp(a.location, a, cvar);
 	}
 }
