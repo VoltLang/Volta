@@ -994,6 +994,16 @@ ir.Postfix buildAccess(Location loc, ir.Exp exp, string name)
 	return access;
 }
 
+ir.AccessExp buildAccessExp(Location loc, ir.Exp child, ir.Variable field)
+{
+	auto ae = new ir.AccessExp();
+	ae.location = loc;
+	ae.child = child;
+	ae.field = field;
+
+	return ae;
+}
+
 /**
  * Builds a chain of postfix lookups from a QualifiedName.
  * These are only useful before the extyper runs.
