@@ -45,68 +45,15 @@ ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scop
 	auto arrayStruct = lp.arrayStruct;
 	auto allocDgVar = lp.allocDgVariable;
 
-	auto arrayStructVar = buildVarStatSmart(location, func._body, func._body.myScope, arrayStruct, "from");
-
-	auto ptrPfix = new ir.Postfix();
-	ptrPfix.location = location;
-	ptrPfix.op = ir.Postfix.Op.Identifier;
-	ptrPfix.child = buildExpReference(location, arrayStructVar, "from");
-	ptrPfix.identifier = new ir.Identifier();
-	ptrPfix.identifier.location = location;
-	ptrPfix.identifier.value = "ptr";
-
-	auto lengthPfix = new ir.Postfix();
-	lengthPfix.location = location;
-	lengthPfix.op = ir.Postfix.Op.Identifier;
-	lengthPfix.child = buildExpReference(location, arrayStructVar, "from");
-	lengthPfix.identifier = new ir.Identifier();
-	lengthPfix.identifier.location = location;
-	lengthPfix.identifier.value = "length";
-
-	auto ptrAssign = new ir.BinOp();
-	ptrAssign.location = location;
-	ptrAssign.op = ir.BinOp.Op.Assign;
-	ptrAssign.left = ptrPfix;
-	ptrAssign.right = createAllocDgCall(
+	auto allocCall = createAllocDgCall(
 		allocDgVar, lp, location, atype.base,
-		buildExpReference(location, countVar, "count"), true);
-
-	auto expStatement = new ir.ExpStatement();
-	expStatement.location = location;
-	expStatement.exp = ptrAssign;
-
-	func._body.statements ~= expStatement;
-
-	auto lengthAssign = new ir.BinOp();
-	lengthAssign.location = location;
-	lengthAssign.op = ir.BinOp.Op.Assign;
-	lengthAssign.left = lengthPfix;
-	lengthAssign.right = buildExpReference(location, countVar, "count");
-
-	expStatement = new ir.ExpStatement();
-	expStatement.location = location;
-	expStatement.exp = lengthAssign;
-
-	func._body.statements ~= expStatement;
-
-	auto addrOf = new ir.Unary();
-	addrOf.location = location;
-	addrOf.op = ir.Unary.Op.AddrOf;
-	addrOf.value = buildExpReference(location, arrayStructVar, "from");
-
-	auto arrayPointer = new ir.PointerType(copyTypeSmart(location, atype));
-	arrayPointer.location = location;
-
-	auto _cast = new ir.Unary(arrayPointer, addrOf);
-	_cast.location = location;
-
-	auto deref = new ir.Unary();
-	deref.location = location;
-	deref.op = ir.Unary.Op.Dereference;
-	deref.value = _cast;
+		buildExpReference(location, countVar, "count"));
+	auto slice = buildSlice(location, allocCall,
+		buildConstantSizeT(location, lp, 0),
+		buildExpReference(location, countVar, "count"));
 
 	auto returnStatement = new ir.ReturnStatement();
-	returnStatement.exp = deref;
+	returnStatement.exp = slice;
 	returnStatement.location = location;
 
 	func._body.statements ~= returnStatement;
@@ -149,7 +96,7 @@ ir.StatementExp buildClassConstructionWrapper(Location loc, LanguagePass lp, ir.
 }
 
 
-ir.Exp createAllocDgCall(ir.Variable allocDgVar, LanguagePass lp, Location location, ir.Type type, ir.Exp countArg = null, bool suppressCast = false)
+ir.Exp createAllocDgCall(ir.Variable allocDgVar, LanguagePass lp, Location location, ir.Type type, ir.Exp countArg = null)
 {
 	auto adRef = new ir.ExpReference();
 	adRef.location = location;
@@ -177,22 +124,11 @@ ir.Exp createAllocDgCall(ir.Variable allocDgVar, LanguagePass lp, Location locat
 		pfixCall.arguments ~= buildCast(location, buildSizeT(location, lp), countArg);
 	}
 
-	if (!suppressCast) {
-		auto asTR = cast(ir.TypeReference) type;
-		if (asTR !is null) {
-			suppressCast = asTR.type.nodeType == ir.NodeType.Class;
-		}
-	}
-
-	if (!suppressCast) {
-		auto result = new ir.PointerType(copyTypeSmart(location, type));
-		result.location = location;
-		auto resultCast = new ir.Unary(result, pfixCall);
-		resultCast.location = location;
-		return resultCast;
-	} else {
-		return pfixCall;
-	}
+	auto result = new ir.PointerType(copyTypeSmart(location, type));
+	result.location = location;
+	auto resultCast = new ir.Unary(result, pfixCall);
+	resultCast.location = location;
+	return resultCast;
 }
 	
 class NewReplacer : ScopeManager, Pass
