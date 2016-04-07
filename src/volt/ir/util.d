@@ -981,7 +981,7 @@ ir.BuiltinExp buildAADup(Location loc, ir.AAType aa, ir.Exp[] child)
 /**
  * Build a postfix Identifier expression.
  */
-ir.Postfix buildAccess(Location loc, ir.Exp exp, string name)
+ir.Postfix buildPostfixIdentifier(Location loc, ir.Exp exp, string name)
 {
 	auto access = new ir.Postfix();
 	access.location = loc;
@@ -1008,7 +1008,7 @@ ir.AccessExp buildAccessExp(Location loc, ir.Exp child, ir.Variable field)
  * Builds a chain of postfix lookups from a QualifiedName.
  * These are only useful before the extyper runs.
  */
-ir.Postfix buildAccess(Location loc, ir.QualifiedName qname, string name)
+ir.Postfix buildPostfixIdentifier(Location loc, ir.QualifiedName qname, string name)
 {
 	ir.Exp current = buildIdentifierExp(loc, qname.identifiers[0].value);
 	foreach (ident; qname.identifiers[1 .. $]) {
@@ -1021,7 +1021,7 @@ ir.Postfix buildAccess(Location loc, ir.QualifiedName qname, string name)
 		pfix.identifier.value = ident.value;
 		current = pfix;
 	}
-	return buildAccess(loc, current, name);
+	return buildPostfixIdentifier(loc, current, name);
 }
 
 /**

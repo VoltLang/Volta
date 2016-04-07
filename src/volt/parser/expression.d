@@ -231,7 +231,7 @@ ParseStatus unaryToExp(ParserStream ps, intir.UnaryExp unary, out ir.Exp exp)
 			if (constant is null || constant._string != "$") {
 				return;
 			}
-			rexp = buildAccess(rexp.location, u.dupName, "length");
+			rexp = buildPostfixIdentifier(rexp.location, u.dupName, "length");
 		}
 		u.location = unary.dupExp.location;
 		u.op = unary.op;
@@ -242,7 +242,7 @@ ParseStatus unaryToExp(ParserStream ps, intir.UnaryExp unary, out ir.Exp exp)
 		} else {
 			auto qname = copy(u.dupName);
 			qname.identifiers = qname.identifiers[0 .. $-1];
-			u.value = buildAccess(u.location, qname, u.dupName.identifiers[$-1].value);
+			u.value = buildPostfixIdentifier(u.location, qname, u.dupName.identifiers[$-1].value);
 		}
 		auto succeeded = ternaryToExp(ps, unary.dupExp.beginning, u.dupBeginning);
 		if (!succeeded) {

@@ -476,7 +476,7 @@ ir.Type handleScopeStore(Context ctx, string ident, ref ir.Exp exp, ir.Store sto
  */
 ir.Exp withLookup(Context ctx, ir.Exp withExp, ir.Scope current, string leaf)
 {
-	ir.Postfix access = buildAccess(withExp.location, copyExp(withExp), leaf);
+	ir.Postfix access = buildPostfixIdentifier(withExp.location, copyExp(withExp), leaf);
 	ir.Class _class; string emsg; ir.Scope eScope;
 
 	auto type = realType(getExpType(ctx.lp, withExp, current), false);
