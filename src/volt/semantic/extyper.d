@@ -76,7 +76,7 @@ void appendDefaultArguments(Context ctx, ir.Location loc,
 			texp.location = loc;
 			arguments ~= texp;
 
-			acceptExp(arguments[$-1], ctx.extyper);
+			extype(ctx, arguments[$-1], Parent.NA);
 		} else {
 			assert(ee.nodeType == ir.NodeType.Constant);
 			arguments ~= copyExp(ee.location, ee);
@@ -888,7 +888,7 @@ ir.Type extypePostfixLeave(Context ctx, ref ir.Exp exp, ir.Postfix postfix,
 	if (postfix.arguments.length > 0) {
 		ctx.enter(postfix);
 		foreach (ref arg; postfix.arguments) {
-			acceptExp(arg, ctx.extyper);
+			extype(ctx, arg, Parent.NA);
 		}
 		ctx.leave(postfix);
 	}
@@ -1502,12 +1502,11 @@ ir.Type extypePostfix(Context ctx, ref ir.Exp exp, Parent parent)
 	// 'ident'.field.prop
 	// 'typeid(int)'.mangledName
 	// 'int'.max
-	auto top = allPostfixes[0];
-	if (top.child.nodeType == ir.NodeType.IdentifierExp) {
+	{
+		auto top = allPostfixes[0];
 		auto parentKind = classifyRelationship(top.child, top);
-		extypeIdentifierExp(ctx, top.child, parentKind);
-	} else {
-		acceptExp(allPostfixes[0].child, ctx.extyper);
+		// Need to be forced to unchecked here.
+		extypeUnchecked(ctx, allPostfixes[0].child, parentKind);
 	}
 
 	auto ret = consumeIdentsIfScopesOrTypes(ctx, allPostfixes, exp, parent);
@@ -3162,7 +3161,7 @@ void extypeForeach(Context ctx, ir.ForeachStatement fes)
 		return;
 	}
 
-	acceptExp(fes.aggregate, ctx.extyper);
+	extype(ctx, fes.aggregate, Parent.NA);
 
 	auto aggType = realType(getExpType(ctx.lp, fes.aggregate, ctx.current));
 
@@ -3346,8 +3345,8 @@ void resolveVariable(Context ctx, ir.Variable v)
 		if (!isAuto(v.type)) {
 			tagLiteralType(v.assign, v.type);
 		}
-		acceptExp(v.assign, ctx.extyper);
-		auto rtype = getExpType(ctx.lp, v.assign, ctx.current);
+
+		auto rtype = extype(ctx, v.assign, Parent.NA);
 		if (isAuto(v.type)) {
 			auto atype = cast(ir.AutoType)v.type;
 			if (rtype.nodeType == ir.NodeType.FunctionSetType || atype is null) {
@@ -3489,7 +3488,7 @@ void resolveFunction(Context ctx, ir.Function func)
 
 		// We don't extype TokenExp because we want it to be resolved
 		// at the call site not where it was defined.
-		acceptExp(param.assign, ctx.extyper);
+		extype(ctx, param.assign, Parent.NA);
 		param.assign = evaluate(ctx.lp, ctx.current, param.assign);
 	}
 
@@ -3646,7 +3645,7 @@ public:
 
 		foreach (i, ref arg; a.arguments) {
 			checkAndDoConvert(ctx, ua.fields[i].type, a.arguments[i]);
-			acceptExp(a.arguments[i], this);
+			extype(ctx, a.arguments[i], Parent.NA);
 		}
 	}
 
@@ -3698,7 +3697,7 @@ public:
 				ed.assign = evaluate(ctx.lp, ctx.current, buildAdd(loc, copyExp(prevExp), buildConstantInt(loc, 1)));
 			}
 		} else {
-			acceptExp(ed.assign, this);
+			extype(ctx, ed.assign, Parent.NA);
 			if (needsEvaluation(ed.assign)) {
 				ed.assign = evaluate(ctx.lp, ctx.current, ed.assign);
 			}
@@ -3875,7 +3874,7 @@ public:
 
 	override Status enter(ir.WithStatement ws)
 	{
-		acceptExp(ws.exp, this);
+		extype(ctx, ws.exp, Parent.NA);
 
 		if (!isValidWithExp(ws.exp)) {
 			throw makeExpected(ws.exp, "qualified identifier");
@@ -3896,7 +3895,7 @@ public:
 		}
 
 		if (ret.exp !is null) {
-			acceptExp(ret.exp, this);
+			extype(ctx, ret.exp, Parent.NA);
 			auto retType = getExpType(ctx.lp, ret.exp, ctx.current);
 			if (func.isAutoReturn) {
 				func.type.ret = copyTypeSmart(retType.location, getExpType(ctx.lp, ret.exp, ctx.current));
@@ -3920,7 +3919,7 @@ public:
 	{
 		auto l = ifs.location;
 		if (ifs.exp !is null) {
-			acceptExp(ifs.exp, this);
+			extype(ctx, ifs.exp, Parent.NA);
 		}
 
 		if (ifs.autoName.length > 0) {
@@ -3967,8 +3966,8 @@ public:
 	{
 		if (fes.beginIntegerRange !is null) {
 			assert(fes.endIntegerRange !is null);
-			acceptExp(fes.beginIntegerRange, this);
-			acceptExp(fes.endIntegerRange, this);
+			extype(ctx, fes.beginIntegerRange, Parent.NA);
+			extype(ctx, fes.endIntegerRange, Parent.NA);
 		}
 		emitNestedFromBlock(ctx, ctx.currentFunction, fes.block);
 		ctx.enter(fes.block);
@@ -4004,15 +4003,15 @@ public:
 			accept(i, this);
 		}
 		foreach (ref i; fs.initExps) {
-			acceptExp(i, this);
+			extype(ctx, i, Parent.NA);
 		}
 
 		if (fs.test !is null) {
-			acceptExp(fs.test, this);
+			extype(ctx, fs.test, Parent.NA);
 			implicitlyCastToBool(ctx, fs.test);
 		}
 		foreach (ref increment; fs.increments) {
-			acceptExp(increment, this);
+			extype(ctx, increment, Parent.NA);
 		}
 		foreach (ctxment; fs.block.statements) {
 			accept(ctxment, this);
@@ -4025,7 +4024,7 @@ public:
 	override Status enter(ir.WhileStatement ws)
 	{
 		if (ws.condition !is null) {
-			acceptExp(ws.condition, this);
+			extype(ctx, ws.condition, Parent.NA);
 			implicitlyCastToBool(ctx, ws.condition);
 		}
 
@@ -4039,7 +4038,7 @@ public:
 		accept(ds.block, this);
 
 		if (ds.condition !is null) {
-			acceptExp(ds.condition, this);
+			extype(ctx, ds.condition, Parent.NA);
 			implicitlyCastToBool(ctx, ds.condition);
 		}
 
@@ -4048,10 +4047,10 @@ public:
 
 	override Status enter(ir.SwitchStatement ss)
 	{
-		acceptExp(ss.condition, this);
+		extype(ctx, ss.condition, Parent.NA);
 
 		foreach (ref wexp; ss.withs) {
-			acceptExp(wexp, this);
+			extype(ctx, wexp, Parent.NA);
 			if (!isValidWithExp(wexp)) {
 				throw makeExpected(wexp, "qualified identifier");
 			}
