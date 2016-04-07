@@ -906,9 +906,6 @@ void handleIncDec(State state, ir.Unary unary, Value result)
 void handlePostfix(State state, ir.Postfix postfix, Value result)
 {
 	switch(postfix.op) with (ir.Postfix.Op) {
-	case Identifier:
-		handlePostId(state, postfix, result);
-		break;
 	case Index:
 		handleIndex(state, postfix, result);
 		break;
@@ -927,63 +924,6 @@ void handlePostfix(State state, ir.Postfix postfix, Value result)
 		break;
 	default:
 		throw panicUnhandled(postfix.location, toString(postfix.op));
-	}
-}
-
-void handlePostId(State state, ir.Postfix postfix, Value result)
-{
-	auto b = state.builder;
-	uint index;
-
-	state.getValueAnyForm(postfix.child, result);
-
-	auto st = cast(StructType)result.type;
-	auto ut = cast(UnionType)result.type;
-	auto at = cast(ArrayType)result.type;
-	auto sat = cast(StaticArrayType)result.type;
-	auto pt = cast(PointerType)result.type;
-
-	if (pt !is null) {
-		st = cast(StructType)pt.base;
-		ut = cast(UnionType)pt.base;
-		at = cast(ArrayType)pt.base;
-		sat = cast(StaticArrayType)pt.base;
-		if (st is null && ut is null && at is null && sat is null)
-			throw panic(postfix.child.location, "pointed to value is not a struct or (static)array");
-
-		// We are looking at a pointer, make sure to load it.
-		makeNonPointer(state, result);
-		result.isPointer = true;
-		result.type = pt.base;
-	}
-
-	if (ut !is null) {
-		auto key = postfix.identifier.value;
-		auto ptr = key in ut.indices;
-		if (ptr is null) {
-			throw panicNotMember(postfix, ut.irType.mangledName, key);
-		} else {
-			index = *ptr;
-		}
-
-
-		makePointer(state, result);
-		result.type = ut.types[index];
-		auto t = LLVMPointerType(result.type.llvmType, 0);
-		result.value = LLVMBuildBitCast(state.builder, result.value, t, "");
-
-	} else if (st !is null) {
-		auto key = postfix.identifier.value;
-		auto ptr = key in st.indices;
-		if (ptr is null) {
-			throw panicNotMember(postfix, st.irType.mangledName, key);
-		} else {
-			index = *ptr;
-		}
-
-		getFieldFromAggregate(state, postfix.location, result, index, st.types[index], result);
-	} else {
-		throw panic(postfix.child.location, format("%s is not struct, array or pointer", ir.nodeToString(result.type.irType)));
 	}
 }
 
