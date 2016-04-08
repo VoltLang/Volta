@@ -51,7 +51,7 @@ import volt.semantic.implicit;
 enum ThrowOnError = true;
 enum DoNotThrow = false;
 
-ir.Function selectFunction(ir.Scope current, ir.Function[] functions, ir.Exp[] arguments, Location location, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(ir.Function[] functions, ir.Exp[] arguments, Location location, bool throwOnError = ThrowOnError)
 {
 	ir.Type[] types;
 	foreach (arg; arguments) {
@@ -60,7 +60,7 @@ ir.Function selectFunction(ir.Scope current, ir.Function[] functions, ir.Exp[] a
 	return selectFunction(functions, types, arguments, location, throwOnError);
 }
 
-ir.Function selectFunction(ir.Scope current, ir.FunctionSet fset, ir.Exp[] arguments, Location location, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(ir.FunctionSet fset, ir.Exp[] arguments, Location location, bool throwOnError = ThrowOnError)
 {
 	ir.Type[] types;
 	foreach (arg; arguments) {

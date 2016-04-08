@@ -831,7 +831,7 @@ private void resolvePostfixOverload(Context ctx, ir.Postfix postfix,
 		throw panic(postfix.location, "expected expref");
 	}
 	asFunctionSet.set.reference = eref;
-	func = selectFunction(ctx.current, asFunctionSet.set, postfix.arguments, postfix.location);
+	func = selectFunction(asFunctionSet.set, postfix.arguments, postfix.location);
 	eref.decl = func;
 	asFunctionType = func.type;
 
@@ -944,7 +944,7 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	if (b !is null && b.kind == ir.BuiltinExp.Kind.UFCS) {
 		// Should we really call selectFunction here?
 		auto arguments = b.children[0] ~ postfix.arguments;
-		func = selectFunction(ctx.current, b.functions, arguments, postfix.location);
+		func = selectFunction(b.functions, arguments, postfix.location);
 
 		if (func is null) {
 			throw makeNoFieldOrPropertyOrUFCS(postfix.location, postfix.identifier.value);
@@ -1671,7 +1671,7 @@ void extypeUnaryNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 	// Needed because of userConstructors.
 	ctx.lp.actualize(_class);
 
-	auto func = selectFunction(ctx.current, _class.userConstructors, _unary.argumentList, _unary.location);
+	auto func = selectFunction(_class.userConstructors, _unary.argumentList, _unary.location);
 	_unary.ctor = func;
 
 	ctx.lp.resolve(ctx.current, func);
@@ -1925,7 +1925,7 @@ ir.Type opOverloadRewrite(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 	if (store is null || store.functions.length == 0) {
 		throw makeAggregateDoesNotDefineOverload(exp.location, _agg, overfn);
 	}
-	auto func = selectFunction(ctx.current, store.functions, [binop.right], l);
+	auto func = selectFunction(store.functions, [binop.right], l);
 	assert(func !is null);
 	exp = buildCall(l, buildCreateDelegate(l, binop.left, buildExpReference(l, func, overfn)), [binop.right]);
 	if (neg) {
@@ -1956,7 +1956,7 @@ ir.Type opOverloadRewriteIndex(Context ctx, ir.Postfix pfix, ref ir.Exp exp)
 		throw makeAggregateDoesNotDefineOverload(exp.location, _agg, name);
 	}
 	assert(pfix.arguments.length > 0 && pfix.arguments[0] !is null);
-	auto func = selectFunction(ctx.current, store.functions, [pfix.arguments[0]], exp.location);
+	auto func = selectFunction(store.functions, [pfix.arguments[0]], exp.location);
 	assert(func !is null);
 	pfix = buildCall(exp.location, buildCreateDelegate(exp.location, pfix.child, buildExpReference(exp.location, func, name)), [pfix.arguments[0]]);
 	exp = pfix;
@@ -1979,7 +1979,6 @@ ir.Type extypeBinOpPropertyAssign(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 
 	auto args = [binop.right];
 	auto func = selectFunction(
-		ctx.current,
 		p.setFns, args,
 		binop.location, DoNotThrow);
 
