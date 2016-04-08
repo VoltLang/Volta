@@ -4167,7 +4167,7 @@ public:
 	{
 		ir.Type base;
 		if (al.exps.length > 0) {
-			base = getCommonSubtype(al.location, expsToTypes(ctx.lp, al.exps, ctx.current));
+			base = getCommonSubtype(al.location, expsToTypes(al.exps));
 		} else {
 			base = buildVoid(al.location);
 		}

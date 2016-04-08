@@ -404,7 +404,7 @@ void replaceTraits(ref ir.Exp exp, ir.TraitsExp traits, LanguagePass lp, ir.Modu
 	exp = getAttributeLiteral(userAttribute.userAttribute, userAttribute);
 }
 
-ir.Type[] expsToTypes(LanguagePass lp, ir.Exp[] exps, ir.Scope currentScope)
+ir.Type[] expsToTypes(ir.Exp[] exps)
 {
 	auto types = new ir.Type[](exps.length);
 	for (size_t i = 0; i < exps.length; i++) {
