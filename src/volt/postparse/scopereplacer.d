@@ -64,7 +64,7 @@ private:
 		if (t.finallyBlock is null) {
 			return t;
 		}
-		panicAssert(t, functionStack.length == 0);
+		panicAssert(t, functionStack.length > 0);
 
 		warning(t.finallyBlock.location, "finally { ... } only partly supported.");
 
