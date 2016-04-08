@@ -389,7 +389,7 @@ public:
 			if (asPostfix is null)
 				return Continue;
 
-			auto leftType = getExpType(asPostfix.child, current);
+			auto leftType = getExpType(asPostfix.child);
 			if (leftType !is null &&
 			    leftType.nodeType == ir.NodeType.AAType &&
 			    asPostfix.op == ir.Postfix.Op.Index) {
@@ -499,7 +499,7 @@ public:
 			if (builtin.children.length != 3) {
 				throw panic(exp.location, "malformed BuiltinExp.");
 			}
-			auto aa = cast(ir.AAType)realType(getExpType(builtin.children[0], current));
+			auto aa = cast(ir.AAType)realType(getExpType(builtin.children[0]));
 			if (aa is null) {
 				throw panic(exp.location, "malformed BuiltinExp.");
 			}
@@ -531,7 +531,7 @@ public:
 			if (builtin.children.length != 2) {
 				throw panic(exp.location, "malformed BuiltinExp.");
 			}
-			auto aa = cast(ir.AAType)realType(getExpType(builtin.children[0], current));
+			auto aa = cast(ir.AAType)realType(getExpType(builtin.children[0]));
 			if (aa is null) {
 				throw panic(exp.location, "malformed BuiltinExp.");
 			}
@@ -550,7 +550,7 @@ public:
 			if (builtin.children.length != 2) {
 				throw panic(exp.location, "malformed BuiltinExp.");
 			}
-			auto aa = cast(ir.AAType)realType(getExpType(builtin.children[0], current));
+			auto aa = cast(ir.AAType)realType(getExpType(builtin.children[0]));
 			if (aa is null) {
 				throw panic(exp.location, "malformed BuiltinExp.");
 			}
@@ -576,7 +576,7 @@ public:
 			break;
 		case Classinfo:
 			panicAssert(exp, builtin.children.length == 1);
-			auto iface = cast(ir._Interface)realType(getExpType(builtin.children[0], current));
+			auto iface = cast(ir._Interface)realType(getExpType(builtin.children[0]));
 			auto ti = buildPtrSmart(l, buildPtrSmart(l, buildArrayType(l, copyTypeSmart(l, lp.classInfoClass))));
 			auto sexp = buildStatementExp(l);
 			ir.Exp ptr = buildCastToVoidPtr(l, builtin.children[0]);
@@ -619,7 +619,7 @@ public:
 	override Status leave(ref ir.Exp exp, ir.AssocArray assocArray)
 	{
 		auto loc = exp.location;
-		auto aa = cast(ir.AAType)getExpType(exp, current);
+		auto aa = cast(ir.AAType)getExpType(exp);
 		assert(aa !is null);
 
 		auto statExp = buildStatementExp(loc);
@@ -692,7 +692,7 @@ public:
 				throw makeExpected(exp.location, "method");
 			}
 			auto l = exp.location;
-			auto agg = cast(ir._Interface)realType(getExpType(cpostfix.child, current));
+			auto agg = cast(ir._Interface)realType(getExpType(cpostfix.child));
 			panicAssert(postfix, agg !is null);
 			auto store = lookupInGivenScopeOnly(lp, agg.layoutStruct.myScope, l, "__offset");
 			auto fstore = lookupInGivenScopeOnly(lp, agg.layoutStruct.myScope, l, mangle(null, func));
@@ -819,7 +819,7 @@ public:
 
 	protected Status handleIndex(ref ir.Exp exp, ir.Postfix postfix)
 	{
-		auto type = getExpType(postfix.child, current);
+		auto type = getExpType(postfix.child);
 		switch (type.nodeType) with(ir.NodeType) {
 			case AAType:
 				return handleIndexAA(exp, postfix, cast(ir.AAType)type);
@@ -862,7 +862,7 @@ public:
 		if (asPostfix is null)
 			return Continue;
 
-		auto leftType = getExpType(asPostfix, current);
+		auto leftType = getExpType(asPostfix);
 		if (leftType is null)
 			return Continue;
 
@@ -976,8 +976,8 @@ public:
 	{
 		auto loc = binOp.location;
 
-		auto leftType = getExpType(binOp.left, current);
-		auto rightType = getExpType(binOp.right, current);
+		auto leftType = getExpType(binOp.left);
+		auto rightType = getExpType(binOp.right);
 
 		auto arrayType = cast(ir.ArrayType)leftType;
 		auto elementType = rightType;
@@ -1013,7 +1013,7 @@ public:
 	{
 		auto loc = binOp.location;
 
-		auto leftType = getExpType(binOp.left, current);
+		auto leftType = getExpType(binOp.left);
 		auto leftArrayType = cast(ir.ArrayType)realType(leftType);
 		if (leftArrayType is null)
 			throw panic(binOp, "couldn't retrieve array type from cat assign.");
@@ -1021,7 +1021,7 @@ public:
 		// Currently realType is not needed here, but if it ever was
 		// needed remember to realType leftArrayType.base as well,
 		// since realType will remove enum's as well.
-		auto rightType = getExpType(binOp.right, current);
+		auto rightType = getExpType(binOp.right);
 
 		if (typesEqual(rightType, leftArrayType.base)) {
 			// T[] ~ T
@@ -1039,7 +1039,7 @@ public:
 	{
 		auto loc = binOp.location;
 
-		auto leftType = getExpType(binOp.left, current);
+		auto leftType = getExpType(binOp.left);
 		auto leftArrayType = cast(ir.ArrayType)leftType;
 		if (leftArrayType is null)
 			return Continue;
@@ -1059,7 +1059,7 @@ public:
 		if (iface is null) {
 			return;
 		}
-		auto agg = cast(ir.Aggregate) realType(getExpType(uexp.value, current));
+		auto agg = cast(ir.Aggregate) realType(getExpType(uexp.value));
 		if (agg is null) {
 			return;
 		}
@@ -1080,12 +1080,12 @@ public:
 		if (toArray is null) {
 			return;
 		}
-		auto fromArray = cast(ir.ArrayType) getExpType(uexp.value, current);
+		auto fromArray = cast(ir.ArrayType) getExpType(uexp.value);
 		if (fromArray is null) {
-			auto stype = cast(ir.StaticArrayType) getExpType(uexp.value, current);
+			auto stype = cast(ir.StaticArrayType) getExpType(uexp.value);
 			if (stype !is null) {
 				uexp.value = buildSlice(exp.location, uexp.value, []);
-				fromArray = cast(ir.ArrayType)getExpType(uexp.value, current);
+				fromArray = cast(ir.ArrayType)getExpType(uexp.value);
 				panicAssert(exp, fromArray !is null);
 			} else {
 				return;
@@ -1153,7 +1153,7 @@ bool isInterfacePointer(LanguagePass lp, ir.Postfix pfix, ir.Scope current, out 
 	if (pfix is null) {
 		return false;
 	}
-	auto t = getExpType(pfix.child, current);
+	auto t = getExpType(pfix.child);
 	iface = cast(ir._Interface) realType(t);
 	if (iface !is null) {
 		return true;
@@ -1186,7 +1186,7 @@ void handleStructLookupViaFunctionCall(LanguagePass lp, ir.Scope current, ref ir
 		return;
 	}
 
-	auto type = realType(getExpType(ae.child, current));
+	auto type = realType(getExpType(ae.child));
 	if (type.nodeType != ir.NodeType.Union &&
 	    type.nodeType != ir.NodeType.Struct) {
 		return;
@@ -1223,8 +1223,8 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, LanguagePass lp,
 		panicAssert(fes, fes.endIntegerRange !is null);
 		panicAssert(fes, fes.itervars.length == 1);
 		auto v = fs.initVars[0];
-		auto begin = realType(getExpType(fes.beginIntegerRange, current));
-		auto end = realType(getExpType(fes.endIntegerRange, current));
+		auto begin = realType(getExpType(fes.beginIntegerRange));
+		auto end = realType(getExpType(fes.endIntegerRange));
 		if (!isIntegral(begin) || !isIntegral(end)) {
 			throw makeExpected(fes.beginIntegerRange.location, "integral beginning and end of range");
 		}
@@ -1255,10 +1255,10 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, LanguagePass lp,
 
 	// foreach (i, e; array) => for (size_t i = 0; i < array.length; i++) auto e = array[i]; ...
 	// foreach_reverse (i, e; array) => for (size_t i = array.length - 1; i+1 >= 0; i--) auto e = array[i]; ..
-	auto aggType = realType(getExpType(fes.aggregate, current));
+	auto aggType = realType(getExpType(fes.aggregate));
 
 	if (aggType.nodeType == ir.NodeType.ArrayType || aggType.nodeType == ir.NodeType.StaticArrayType) {
-		aggType = realType(getExpType(buildSlice(l, fes.aggregate, []), current));
+		aggType = realType(getExpType(buildSlice(l, fes.aggregate, [])));
 		auto anonVar = buildVariableAnonSmart(l, current, sexp, aggType, buildSlice(l, fes.aggregate, []));
 		anonVar.type.mangledName = mangle(aggType);
 		scope (exit) fs.initVars = anonVar ~ fs.initVars;
@@ -1452,7 +1452,7 @@ void transformArrayLiteralIfNeeded(LanguagePass lp, ir.Scope current, bool inFun
 	if (al.exps.length == 0 || !inFunction) {
 		return;
 	}
-	auto at = getExpType(al, current);
+	auto at = getExpType(al);
 	if (at.nodeType == ir.NodeType.StaticArrayType) {
 		return;
 	}

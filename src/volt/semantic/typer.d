@@ -27,9 +27,9 @@ import volt.semantic.overload;
  * If the operation of the expression isn't semantically valid
  * for the given type, a CompilerError is thrown.
  */
-ir.Type getExpType(ir.Exp exp, ir.Scope currentScope)
+ir.Type getExpType(ir.Exp exp)
 {
-	auto result = getExpTypeImpl(exp, currentScope);
+	auto result = getExpTypeImpl(exp);
 	if (result is null) {
 		return null;
 	}
@@ -54,7 +54,7 @@ ir.Type getExpType(ir.Exp exp, ir.Scope currentScope)
 /**
  * Retrieve the type of the given expression.
  */
-ir.Type getExpTypeImpl(ir.Exp exp, ir.Scope currentScope)
+ir.Type getExpTypeImpl(ir.Exp exp)
 {
 	switch (exp.nodeType) with (ir.NodeType) {
 	case AccessExp:
@@ -76,11 +76,11 @@ ir.Type getExpTypeImpl(ir.Exp exp, ir.Scope currentScope)
 	case Ternary:
 		auto asTernary = cast(ir.Ternary) exp;
 		assert(asTernary !is null);
-		return getTernaryType(asTernary, currentScope);
+		return getTernaryType(asTernary);
 	case Unary:
 		auto asUnary = cast(ir.Unary) exp;
 		assert(asUnary !is null);
-		return getUnaryType(asUnary, currentScope);
+		return getUnaryType(asUnary);
 	case Typeid:
 		auto asTypeid = cast(ir.Typeid) exp;
 		assert(asTypeid !is null);
@@ -88,11 +88,11 @@ ir.Type getExpTypeImpl(ir.Exp exp, ir.Scope currentScope)
 	case Postfix:
 		auto asPostfix = cast(ir.Postfix) exp;
 		assert(asPostfix !is null);
-		return getPostfixType(asPostfix, currentScope);
+		return getPostfixType(asPostfix);
 	case BinOp:
 		auto asBinOp = cast(ir.BinOp) exp;
 		assert(asBinOp !is null);
-		return getBinOpType(asBinOp, currentScope);
+		return getBinOpType(asBinOp);
 	case ExpReference:
 		auto asExpRef = cast(ir.ExpReference) exp;
 		assert(asExpRef !is null);
@@ -120,7 +120,7 @@ ir.Type getExpTypeImpl(ir.Exp exp, ir.Scope currentScope)
 	case StatementExp:
 		auto asStatementExp = cast(ir.StatementExp) exp;
 		assert(asStatementExp !is null);
-		return getStatementExpType(asStatementExp, currentScope);
+		return getStatementExpType(asStatementExp);
 	case TokenExp:
 		auto asTokenExp = cast(ir.TokenExp) exp;
 		assert(asTokenExp !is null);
@@ -158,10 +158,10 @@ ir.Type getTokenExpType(ir.TokenExp texp)
 	}
 }
 
-ir.Type getStatementExpType(ir.StatementExp se, ir.Scope currentScope)
+ir.Type getStatementExpType(ir.StatementExp se)
 {
 	assert(se.exp !is null);
-	return getExpType(se.exp, currentScope);
+	return getExpType(se.exp);
 }
 
 ir.Type getTypeExpType(ir.TypeExp te)
@@ -254,10 +254,10 @@ ir.Type getExpReferenceType(ir.ExpReference expref)
 	throw panic(expref.location, "unable to type expression reference.");
 }
 
-ir.Type getBinOpType(ir.BinOp bin, ir.Scope currentScope)
+ir.Type getBinOpType(ir.BinOp bin)
 {
-	ir.Type left = getExpType(bin.left, currentScope);
-	ir.Type right = getExpType(bin.right, currentScope);
+	ir.Type left = getExpType(bin.left);
+	ir.Type right = getExpType(bin.right);
 	bool assign = bin.op.isAssign();
 
 	if (isComparison(bin.op)) {
@@ -414,17 +414,17 @@ ir.Type getAssocArrayType(ir.AssocArray aa)
 	return aa.type;
 }
 
-ir.Type getPostfixType(ir.Postfix postfix, ir.Scope currentScope)
+ir.Type getPostfixType(ir.Postfix postfix)
 {
 	switch (postfix.op) with (ir.Postfix.Op) {
 	case Index:
-		return getPostfixIndexType(postfix, currentScope);
+		return getPostfixIndexType(postfix);
 	case Slice:
-		return getPostfixSliceType(postfix, currentScope);
+		return getPostfixSliceType(postfix);
 	case Call:
-		return getPostfixCallType(postfix, currentScope);
+		return getPostfixCallType(postfix);
 	case Increment, Decrement:
-		return getPostfixIncDecType(postfix, currentScope);
+		return getPostfixIncDecType(postfix);
 	case Identifier:
 		panicAssert(postfix, false);
 		assert(false);
@@ -435,12 +435,12 @@ ir.Type getPostfixType(ir.Postfix postfix, ir.Scope currentScope)
 	}
 }
 
-ir.Type getPostfixSliceType(ir.Postfix postfix, ir.Scope currentScope)
+ir.Type getPostfixSliceType(ir.Postfix postfix)
 {
 	ir.Type base;
 	ir.ArrayType array;
 
-	auto type = realType(getExpType(postfix.child, currentScope));
+	auto type = realType(getExpType(postfix.child));
 	if (type.nodeType == ir.NodeType.PointerType) {
 		auto pointer = cast(ir.PointerType) type;
 		assert(pointer !is null);
@@ -567,12 +567,12 @@ void retrieveScope(ir.Node tt, ir.Postfix postfix, ref ir.Scope _scope, ref ir.C
 	}
 }
 
-ir.Type getPostfixIncDecType(ir.Postfix postfix, ir.Scope currentScope)
+ir.Type getPostfixIncDecType(ir.Postfix postfix)
 {
 	if (!isLValue(postfix.child)) {
 		throw panic(postfix.location, "expected lvalue.");
 	}
-	auto otype = getExpType(postfix.child, currentScope);
+	auto otype = getExpType(postfix.child);
 	auto type = realType(otype);
 
 	if (type.nodeType == ir.NodeType.PointerType) {
@@ -587,11 +587,11 @@ ir.Type getPostfixIncDecType(ir.Postfix postfix, ir.Scope currentScope)
 	throw panic(postfix.location, "bad postfix operation in typer.");
 }
 
-ir.Type getPostfixIndexType(ir.Postfix postfix, ir.Scope currentScope)
+ir.Type getPostfixIndexType(ir.Postfix postfix)
 {
 	ir.Type base;
 
-	auto type = realType(getExpType(postfix.child, currentScope));
+	auto type = realType(getExpType(postfix.child));
 
 	if (type.nodeType == ir.NodeType.PointerType) {
 		auto pointer = cast(ir.PointerType) type;
@@ -625,9 +625,9 @@ ir.Type getPostfixIndexType(ir.Postfix postfix, ir.Scope currentScope)
 	return base;
 }
 
-ir.Type getPostfixCallType(ir.Postfix postfix, ir.Scope currentScope)
+ir.Type getPostfixCallType(ir.Postfix postfix)
 {
-	auto type = getExpType(postfix.child, currentScope);
+	auto type = getExpType(postfix.child);
 	auto ftype = cast(ir.CallableType) type;
 
 	if (ftype is null) {
@@ -637,33 +637,33 @@ ir.Type getPostfixCallType(ir.Postfix postfix, ir.Scope currentScope)
 	return ftype.ret;
 }
 
-ir.Type getTernaryType(ir.Ternary ternary, ir.Scope currentScope)
+ir.Type getTernaryType(ir.Ternary ternary)
 {
-	auto itype = getExpType(ternary.ifTrue, currentScope);
+	auto itype = getExpType(ternary.ifTrue);
 	return removeStorageFields(itype);
 }
 
-ir.Type getUnaryType(ir.Unary unary, ir.Scope currentScope)
+ir.Type getUnaryType(ir.Unary unary)
 {
 	final switch (unary.op) with (ir.Unary.Op) {
 	case Cast:
 		return getUnaryCastType(unary);
 	case Dereference:
-		return getUnaryDerefType(unary, currentScope);
+		return getUnaryDerefType(unary);
 	case AddrOf:
-		return getUnaryAddrOfType(unary, currentScope);
+		return getUnaryAddrOfType(unary);
 	case New:
-		return getUnaryNewType(unary, currentScope);
+		return getUnaryNewType(unary);
 	case Dup:
 		throw panic(unary.location, "tried to type dup exp.");
 	case Minus, Plus:
-		return getUnarySubAddType(unary, currentScope);
+		return getUnarySubAddType(unary);
 	case Not:
 		return getUnaryNotType(unary);
 	case Complement:
-		return getUnaryComplementType(unary, currentScope);
+		return getUnaryComplementType(unary);
 	case Increment, Decrement:
-		return getUnaryIncDecType(unary, currentScope);
+		return getUnaryIncDecType(unary);
 	case TypeIdent:
 		throw panicUnhandled(unary, "unary TypeIdent");
 	case None:
@@ -671,12 +671,12 @@ ir.Type getUnaryType(ir.Unary unary, ir.Scope currentScope)
 	}
 }
 
-ir.Type getUnaryIncDecType(ir.Unary unary, ir.Scope currentScope)
+ir.Type getUnaryIncDecType(ir.Unary unary)
 {
 	if (!isLValue(unary.value)) {
 		throw panic(unary.location, "not lvalue for unary inc/dec in typer.");
 	}
-	auto type = getExpType(unary.value, currentScope);
+	auto type = getExpType(unary.value);
 
 	if (type.nodeType == ir.NodeType.PointerType) {
 		return type;
@@ -690,9 +690,9 @@ ir.Type getUnaryIncDecType(ir.Unary unary, ir.Scope currentScope)
 	throw panic(unary.location, "bad unary operation in typer.");
 }
 
-ir.Type getUnaryComplementType(ir.Unary unary, ir.Scope currentScope)
+ir.Type getUnaryComplementType(ir.Unary unary)
 {
-	return getExpType(unary.value, currentScope);
+	return getExpType(unary.value);
 }
 
 ir.Type getUnaryNotType(ir.Unary unary)
@@ -706,9 +706,9 @@ ir.Type getUnaryCastType(ir.Unary unary)
 	return unary.type;
 }
 
-ir.Type getUnaryDerefType(ir.Unary unary, ir.Scope currentScope)
+ir.Type getUnaryDerefType(ir.Unary unary)
 {
-	auto type = getExpType(unary.value, currentScope);
+	auto type = getExpType(unary.value);
 	if (type.nodeType != ir.NodeType.PointerType) {
 		throw panic(unary.location, "bad unary operation in typer.");
 	}
@@ -719,18 +719,18 @@ ir.Type getUnaryDerefType(ir.Unary unary, ir.Scope currentScope)
 	return t;
 }
 
-ir.Type getUnaryAddrOfType(ir.Unary unary, ir.Scope currentScope)
+ir.Type getUnaryAddrOfType(ir.Unary unary)
 {
 	if (!isLValue(unary.value)) {
 		throw panic(unary.location, "non lvalue addrof in typer.");
 	}
-	auto type = getExpType(unary.value, currentScope);
+	auto type = getExpType(unary.value);
 	auto pointer = new ir.PointerType(type);
 	pointer.location = unary.location;
 	return pointer;
 }
 
-ir.Type getUnaryNewType(ir.Unary unary, ir.Scope currentScope)
+ir.Type getUnaryNewType(ir.Unary unary)
 {
 	if (!unary.hasArgumentList) {
 		auto pointer = new ir.PointerType(unary.type);
@@ -742,8 +742,8 @@ ir.Type getUnaryNewType(ir.Unary unary, ir.Scope currentScope)
 	}
 }
 
-ir.Type getUnarySubAddType(ir.Unary unary, ir.Scope currentScope)
+ir.Type getUnarySubAddType(ir.Unary unary)
 {
-	auto type = getExpType(unary.value, currentScope);
+	auto type = getExpType(unary.value);
 	return type;
 }

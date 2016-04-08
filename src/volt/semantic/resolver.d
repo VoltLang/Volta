@@ -217,7 +217,7 @@ void resolveEnum(LanguagePass lp, ir.Enum e)
 	lp.resolve(e.myScope, first);
 
 	assert(first !is null && first.assign !is null);
-	auto type = getExpType(first.assign, e.myScope);
+	auto type = getExpType(first.assign);
 	e.base = realType(copyTypeSmart(e.location, type));
 }
 

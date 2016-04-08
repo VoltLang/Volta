@@ -44,7 +44,7 @@ void checkAndConvertStringLiterals(Context ctx, ir.Type type, ref ir.Exp exp)
 void checkAndDoConvert(Context ctx, ir.Type type, ref ir.Exp exp)
 {
 	if (!willConvert(ctx, type, exp)) {
-		auto rtype = getExpType(exp, ctx.current);
+		auto rtype = getExpType(exp);
 		throw makeBadImplicitCast(exp, rtype, type);
 	}
 	doConvert(ctx, type, exp);
@@ -59,7 +59,7 @@ bool willConvert(Context ctx, ir.Type type, ir.Exp exp)
 	if (prim !is null && fitsInPrimitive(prim, exp)) {
 		return true;
 	}
-	auto rtype = getExpType(exp, ctx.current);
+	auto rtype = getExpType(exp);
 	assert(type !is null);
 	assert(rtype !is null);
 	return willConvert(rtype, type);
@@ -169,7 +169,7 @@ bool willConvertInterface(ir.Type l, ir.Type r)
 void doConvert(Context ctx, ir.Type type, ref ir.Exp exp)
 {
 	handleIfNull(ctx, type, exp);
-	auto rtype = getExpType(exp, ctx.current);
+	auto rtype = getExpType(exp);
 	switch (type.nodeType) {
 	case ir.NodeType.AAType:
 		auto alit = cast(ir.ArrayLiteral)exp;
@@ -187,7 +187,7 @@ void doConvert(Context ctx, ir.Type type, ref ir.Exp exp)
 		return;
 	case ir.NodeType.ArrayType:
 		auto atype = cast(ir.ArrayType)type;
-		auto sarray = cast(ir.StaticArrayType)realType(getExpType(exp, ctx.current));
+		auto sarray = cast(ir.StaticArrayType)realType(getExpType(exp));
 		if (sarray !is null && typesEqual(sarray.base, atype.base)) {
 			exp = buildSlice(exp.location, exp, []);
 			return;
@@ -400,7 +400,7 @@ void doConvertStaticArrayType(Context ctx, ir.StaticArrayType atype, ref ir.Exp 
 	}
 	alit = cast(ir.ArrayLiteral) exp;
 	if (alit is null) {
-		auto t = realType(getExpType(exp, ctx.current));
+		auto t = realType(getExpType(exp));
 		if (typesEqual(t, atype)) {
 			return;
 		}

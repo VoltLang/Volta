@@ -55,7 +55,7 @@ ir.Function selectFunction(ir.Scope current, ir.Function[] functions, ir.Exp[] a
 {
 	ir.Type[] types;
 	foreach (arg; arguments) {
-		types ~= getExpType(arg, current);
+		types ~= getExpType(arg);
 	}
 	return selectFunction(functions, types, arguments, location, throwOnError);
 }
@@ -64,7 +64,7 @@ ir.Function selectFunction(ir.Scope current, ir.FunctionSet fset, ir.Exp[] argum
 {
 	ir.Type[] types;
 	foreach (arg; arguments) {
-		types ~= getExpType(arg, current);
+		types ~= getExpType(arg);
 	}
 	return selectFunction(fset, types, arguments, location, throwOnError);
 }
