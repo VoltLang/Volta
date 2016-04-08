@@ -166,7 +166,7 @@ public:
 		auto asClass = cast(ir.Class) rtype;
 
 		if (asArray !is null && unary.argumentList.length > 0) {
-			if (isIntegral(getExpType(lp, unary.argumentList[0], current))) {
+			if (isIntegral(getExpType(unary.argumentList[0], current))) {
 				return handleArrayNew(exp, unary, asArray);
 			}
 			return handleArrayCopy(exp, unary, asArray);
@@ -218,7 +218,7 @@ public:
 		ir.Variable[] variables = new ir.Variable[](unary.argumentList.length);
 		ir.Exp sizeExp = buildConstantSizeT(loc, lp, 0);
 		foreach (i, arg; unary.argumentList) {
-			auto var = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp, getExpType(lp, arg, current), arg);
+			auto var = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp, getExpType(arg, current), arg);
 			panicAssert(exp, (cast(ir.ArrayType)realType(var.type)) !is null);
 			sizeExp = buildAdd(loc, sizeExp, buildArrayLength(loc, lp, buildExpReference(loc, var, var.name)));
 			variables[i] = var;

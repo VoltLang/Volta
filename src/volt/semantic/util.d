@@ -64,7 +64,7 @@ ir.Type removeStorageFields(ir.Type t)
  */
 void implicitlyCastToBool(Context ctx, ref ir.Exp exp)
 {
-	auto t = getExpType(ctx.lp, exp, ctx.current);
+	auto t = getExpType(exp, ctx.current);
 	auto type = realType(t);
 	switch (type.nodeType) with (ir.NodeType) {
 	case PrimitiveType:
@@ -78,7 +78,7 @@ void implicitlyCastToBool(Context ctx, ref ir.Exp exp)
 	case ir.NodeType.FunctionType:
 	case ir.NodeType.DelegateType:
 	case ir.NodeType.ArrayType:
-		t = getExpType(ctx.lp, exp, ctx.current);
+		t = getExpType(exp, ctx.current);
 		auto cnst = buildConstantNull(exp.location, t);
 		exp = buildBinOp(exp.location, ir.BinOp.Op.NotIs, exp, cnst);
 		return;
@@ -168,7 +168,7 @@ ir.Type accumulateStorage(ir.Type toType, ir.Type seed=null)
  */
 bool handleIfNull(Context ctx, ir.Type left, ref ir.Exp right)
 {
-	auto rightType = getExpType(ctx.lp, right, ctx.current);
+	auto rightType = getExpType(right, ctx.current);
 	auto aliteral = cast(ir.LiteralExp)right;
 	if (aliteral !is null) {
 		ir.Type base;
@@ -408,7 +408,7 @@ ir.Type[] expsToTypes(LanguagePass lp, ir.Exp[] exps, ir.Scope currentScope)
 {
 	auto types = new ir.Type[](exps.length);
 	for (size_t i = 0; i < exps.length; i++) {
-		types[i] = getExpType(lp, exps[i], currentScope);
+		types[i] = getExpType(exps[i], currentScope);
 	}
 	return types;
 }

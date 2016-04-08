@@ -51,40 +51,40 @@ import volt.semantic.implicit;
 enum ThrowOnError = true;
 enum DoNotThrow = false;
 
-ir.Function selectFunction(LanguagePass lp, ir.Scope current, ir.Function[] functions, ir.Exp[] arguments, Location location, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(ir.Scope current, ir.Function[] functions, ir.Exp[] arguments, Location location, bool throwOnError = ThrowOnError)
 {
 	ir.Type[] types;
 	foreach (arg; arguments) {
-		types ~= getExpType(lp, arg, current);
+		types ~= getExpType(arg, current);
 	}
-	return selectFunction(lp, functions, types, arguments, location, throwOnError);
+	return selectFunction(functions, types, arguments, location, throwOnError);
 }
 
-ir.Function selectFunction(LanguagePass lp, ir.Scope current, ir.FunctionSet fset, ir.Exp[] arguments, Location location, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(ir.Scope current, ir.FunctionSet fset, ir.Exp[] arguments, Location location, bool throwOnError = ThrowOnError)
 {
 	ir.Type[] types;
 	foreach (arg; arguments) {
-		types ~= getExpType(lp, arg, current);
+		types ~= getExpType(arg, current);
 	}
-	return selectFunction(lp, fset, types, arguments, location, throwOnError);
+	return selectFunction(fset, types, arguments, location, throwOnError);
 }
 
-ir.Function selectFunction(LanguagePass lp, ir.FunctionSet fset, ir.Variable[] arguments, Location location, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(ir.FunctionSet fset, ir.Variable[] arguments, Location location, bool throwOnError = ThrowOnError)
 {
 	ir.Type[] types;
 	foreach (arg; arguments) {
 		types ~= arg.type;
 	}
-	return selectFunction(lp, fset, types, [], location, throwOnError);
+	return selectFunction(fset, types, [], location, throwOnError);
 }
 
-ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Variable[] arguments, Location location, bool throwOnError)
+ir.Function selectFunction(ir.Function[] functions, ir.Variable[] arguments, Location location, bool throwOnError)
 {
 	ir.Type[] types;
 	foreach (arg; arguments) {
 		types ~= arg.type;
 	}
-	return selectFunction(lp, functions, types, [], location, throwOnError);
+	return selectFunction(functions, types, [], location, throwOnError);
 }
 
 int matchLevel(bool homogenous, ir.Type argument, ir.Type parameter, ir.Exp exp=null)
@@ -151,26 +151,26 @@ bool specialisationComparison(object.Object ao, object.Object bo)
 	return atob && !btoa;
 }
 
-ir.Function selectFunction(LanguagePass lp, ir.FunctionSet fset, ir.Type[] arguments, Location location, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(ir.FunctionSet fset, ir.Type[] arguments, Location location, bool throwOnError = ThrowOnError)
 {
-	return selectFunction(lp, fset, arguments, [], location, throwOnError);
+	return selectFunction(fset, arguments, [], location, throwOnError);
 }
 
-ir.Function selectFunction(LanguagePass lp, ir.FunctionSet fset, ir.Type[] arguments, ir.Exp[] exps, Location location, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(ir.FunctionSet fset, ir.Type[] arguments, ir.Exp[] exps, Location location, bool throwOnError = ThrowOnError)
 {
-	auto func = selectFunction(lp, fset.functions, arguments, exps, location, throwOnError);
+	auto func = selectFunction(fset.functions, arguments, exps, location, throwOnError);
 	if (func is null) {
 		return null;
 	}
 	return fset.resolved(func);
 }
 
-ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] arguments, Location location, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, Location location, bool throwOnError = ThrowOnError)
 {
-	return selectFunction(lp, functions, arguments, [], location, throwOnError);
+	return selectFunction(functions, arguments, [], location, throwOnError);
 }
 
-ir.Function selectFunction(LanguagePass lp, ir.Function[] functions, ir.Type[] arguments, ir.Exp[] exps, Location location, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ir.Exp[] exps, Location location, bool throwOnError = ThrowOnError)
 {
 	assert(functions.length > 0);
 

@@ -377,7 +377,7 @@ ir.Function[] getClassMethodFunctions(LanguagePass lp, ir.Class _class)
 		if (fns.length == 0) {
 			continue;
 		}
-		auto func = selectFunction(lp, fns, params, method.location, DoNotThrow);
+		auto func = selectFunction(fns, params, method.location, DoNotThrow);
 		if (func is null) {
 			continue;
 		}
@@ -414,7 +414,7 @@ ir.Function[] getClassMethodFunctions(LanguagePass lp, ir.Class _class)
 					panicAssert(method, atype !is null);
 					params[$ - 1] = atype.base;
 				}
-				auto tmp = selectFunction(lp, fns, params, method.location);
+				auto tmp = selectFunction(fns, params, method.location);
 			}
 
 			if (noPriorMethods && method.isMarkedOverride) {
@@ -464,7 +464,7 @@ bool overrideFunctionsIfNeeded(LanguagePass lp, ir.Function childFunction, ref i
 		return false;
 	}
 
-	ir.Function selectedFunction = selectFunction(lp, toConsider, childFunction.type.params, childFunction.location, DoNotThrow);
+	ir.Function selectedFunction = selectFunction(toConsider, childFunction.type.params, childFunction.location, DoNotThrow);
 	if (selectedFunction is null) {
 		return false;
 	}

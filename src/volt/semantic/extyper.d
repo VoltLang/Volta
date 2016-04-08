@@ -479,8 +479,8 @@ ir.Exp withLookup(Context ctx, ir.Exp withExp, ir.Scope current, string leaf)
 	ir.Postfix access = buildPostfixIdentifier(withExp.location, copyExp(withExp), leaf);
 	ir.Class _class; string emsg; ir.Scope eScope;
 
-	auto type = realType(getExpType(ctx.lp, withExp, current), false);
-	retrieveScope(ctx.lp, type, access, eScope, _class, emsg);
+	auto type = realType(getExpType(withExp, current), false);
+	retrieveScope(type, access, eScope, _class, emsg);
 	if (eScope is null) {
 		throw makeBadWithType(withExp.location);
 	}
@@ -563,7 +563,7 @@ ir.Type replaceAAPostfixesIfNeeded(Context ctx, ref ir.Exp exp, ir.Postfix postf
 		if (child is null || child.identifier is null) {
 			return null;
 		}
-		auto aa = cast(ir.AAType) realType(getExpType(ctx.lp, child.child, ctx.current));
+		auto aa = cast(ir.AAType) realType(getExpType(child.child, ctx.current));
 		if (aa is null) {
 			return null;
 		}
@@ -597,7 +597,7 @@ ir.Type replaceAAPostfixesIfNeeded(Context ctx, ref ir.Exp exp, ir.Postfix postf
 		}
 
 	case Identifier:
-		auto aa = cast(ir.AAType) realType(getExpType(ctx.lp, postfix.child, ctx.current));
+		auto aa = cast(ir.AAType) realType(getExpType(postfix.child, ctx.current));
 		if (aa is null) {
 			return null;
 		}
@@ -731,7 +731,7 @@ private void rewriteVaStartAndEnd(Context ctx, ir.Function func,
 		if (postfix.arguments.length != 1) {
 			throw makeWrongNumberOfArguments(postfix, postfix.arguments.length, 1);
 		}
-		auto etype = getExpType(ctx.lp, postfix.arguments[0], ctx.current);
+		auto etype = getExpType(postfix.arguments[0], ctx.current);
 		auto ptr = cast(ir.PointerType) etype;
 		if (ptr is null || !isVoid(ptr.base)) {
 			throw makeExpected(postfix, "va_list argument");
@@ -805,7 +805,7 @@ private void rewriteVarargs(Context ctx,ir.CallableType asFunctionType,
 	int totalSize;
 	ir.Type[] types;
 	foreach (i, _exp; varArgsSlice) {
-		auto etype = getExpType(ctx.lp, _exp, ctx.current);
+		auto etype = getExpType(_exp, ctx.current);
 		if (ctx.lp.settings.internalD &&
 		    realType(etype).nodeType == ir.NodeType.Struct) {
 			warning(_exp.location, "passing struct to var-arg function.");
@@ -831,7 +831,7 @@ private void resolvePostfixOverload(Context ctx, ir.Postfix postfix,
 		throw panic(postfix.location, "expected expref");
 	}
 	asFunctionSet.set.reference = eref;
-	func = selectFunction(ctx.lp, ctx.current, asFunctionSet.set, postfix.arguments, postfix.location);
+	func = selectFunction(ctx.current, asFunctionSet.set, postfix.arguments, postfix.location);
 	eref.decl = func;
 	asFunctionType = func.type;
 
@@ -852,7 +852,7 @@ private void rewriteHomogenousVariadic(Context ctx,
 		return;
 	}
 	auto i = asFunctionType.params.length - 1;
-	auto etype = getExpType(ctx.lp, arguments[i], ctx.current);
+	auto etype = getExpType(arguments[i], ctx.current);
 	auto arr = cast(ir.ArrayType) asFunctionType.params[i];
 	if (arr is null) {
 		throw panic(arguments[0].location, "homogenous variadic not array type");
@@ -903,7 +903,7 @@ ir.Type extypePostfixLeave(Context ctx, ref ir.Exp exp, ir.Postfix postfix,
 
 	final switch (postfix.op) with (ir.Postfix.Op) {
 	case Slice:
-		auto t = realType(getExpType(ctx.lp, postfix.child, ctx.current));
+		auto t = realType(getExpType(postfix.child, ctx.current));
 		auto nt = t.nodeType;
 		if (nt != ir.NodeType.PointerType && nt != ir.NodeType.StaticArrayType &&
 		    nt != ir.NodeType.ArrayType) {
@@ -929,7 +929,7 @@ ir.Type extypePostfixLeave(Context ctx, ref ir.Exp exp, ir.Postfix postfix,
 		throw panic(postfix, "invalid op");
 	}
 
-	return getExpType(ctx.lp, exp, ctx.current);
+	return getExpType(exp, ctx.current);
 }
 
 void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
@@ -944,7 +944,7 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	if (b !is null && b.kind == ir.BuiltinExp.Kind.UFCS) {
 		// Should we really call selectFunction here?
 		auto arguments = b.children[0] ~ postfix.arguments;
-		func = selectFunction(ctx.lp, ctx.current, b.functions, arguments, postfix.location);
+		func = selectFunction(ctx.current, b.functions, arguments, postfix.location);
 
 		if (func is null) {
 			throw makeNoFieldOrPropertyOrUFCS(postfix.location, postfix.identifier.value);
@@ -967,7 +967,7 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 
 	} else {
 
-		auto childType = getExpType(ctx.lp, postfix.child, ctx.current);
+		auto childType = getExpType(postfix.child, ctx.current);
 
 		auto eref = cast(ir.ExpReference) postfix.child;
 		bool reeval = true;
@@ -1179,7 +1179,7 @@ ir.Type consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes,
 		if (typeLookup(ctx, toReplace, lookType)) {
 			setupArrayAndExp(toReplace, 0);
 			// TODO XXX replace
-			return getExpType(ctx.lp, exp, ctx.current);
+			return getExpType(exp, ctx.current);
 		}
 		// We have no scope to look in.
 		return null;
@@ -1198,7 +1198,7 @@ ir.Type consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes,
 			if (typeLookup(ctx, toReplace, lookType)) {
 				setupArrayAndExp(toReplace, i);
 				// TODO XXX replace
-				return getExpType(ctx.lp, exp, ctx.current);
+				return getExpType(exp, ctx.current);
 			}
 		}
 
@@ -1244,7 +1244,7 @@ void extypePostfixIndex(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	assert(postfix.op == ir.Postfix.Op.Index);
 	assert(postfix.arguments.length == 1);
 
-	auto errorType = getExpType(ctx.lp, postfix.child, ctx.current);
+	auto errorType = getExpType(postfix.child, ctx.current);
 	auto type = realType(errorType);
 	switch (type.nodeType) with (ir.NodeType) {
 	case AAType:
@@ -1297,7 +1297,7 @@ void postfixIdentifierUFCS(Context ctx, ref ir.Exp exp,
 		throw makeNoFieldOrPropertyOrIsUFCSWithoutCall(postfix.location, postfix.identifier.value);
 	}
 
-	auto type = getExpType(ctx.lp, postfix.child, ctx.current);
+	auto type = getExpType(postfix.child, ctx.current);
 	auto set = buildSet(postfix.location, store.functions);
 
 	exp = buildUFCS(postfix.location, type, postfix.child, store.functions);
@@ -1426,7 +1426,7 @@ ir.Type extypePostfixIdentifier(Context ctx, ref ir.Exp exp,
 
 	string field = postfix.identifier.value;
 
-	ir.Type oldType = getExpType(ctx.lp, postfix.child, ctx.current);
+	ir.Type oldType = getExpType(postfix.child, ctx.current);
 	ir.Type type = realType(oldType, false);
 	assert(type !is null);
 	assert(type.nodeType != ir.NodeType.FunctionSetType);
@@ -1454,7 +1454,7 @@ ir.Type extypePostfixIdentifier(Context ctx, ref ir.Exp exp,
 
 		// postfixIdentifierUFCS will error so if we get here all is good.
 		// TODO XXX replace
-		return getExpType(ctx.lp, exp, ctx.current);
+		return getExpType(exp, ctx.current);
 	}
 
 	// We are looking up via a instance error on static vars and types.
@@ -1562,7 +1562,7 @@ void extypeUnaryCastTo(Context ctx, ref ir.Exp exp, ir.Unary unary)
 	assert(unary.type !is null);
 	assert(unary.value !is null);
 
-	auto type = realType(getExpType(ctx.lp, unary.value, ctx.current));
+	auto type = realType(getExpType(unary.value, ctx.current));
 	if (type.nodeType == ir.NodeType.FunctionSetType) {
 		auto fset = cast(ir.FunctionSetType) type;
 		throw makeCannotDisambiguate(unary, fset.set.functions, null);
@@ -1606,16 +1606,16 @@ void extypeUnaryNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 		if (_unary.argumentList.length == 0) {
 			throw makeExpected(_unary, "argument(s)");
 		}
-		_unary.type = copyTypeSmart(_unary.location, getExpType(ctx.lp, _unary.argumentList[0], ctx.current));
+		_unary.type = copyTypeSmart(_unary.location, getExpType(_unary.argumentList[0], ctx.current));
 	}
 	auto array = cast(ir.ArrayType) _unary.type;
 	if (array !is null) {
 		if (_unary.argumentList.length == 0) {
 			throw makeExpected(_unary, "argument(s)");
 		}
-		bool isArraySize = isIntegral(getExpType(ctx.lp, _unary.argumentList[0], ctx.current));
+		bool isArraySize = isIntegral(getExpType(_unary.argumentList[0], ctx.current));
 		foreach (ref arg; _unary.argumentList) {
-			auto type = getExpType(ctx.lp, arg, ctx.current);
+			auto type = getExpType(arg, ctx.current);
 			if (isIntegral(type)) {
 				if (isArraySize) {
 					// multi/one-dimensional array:
@@ -1671,7 +1671,7 @@ void extypeUnaryNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 	// Needed because of userConstructors.
 	ctx.lp.actualize(_class);
 
-	auto func = selectFunction(ctx.lp, ctx.current, _class.userConstructors, _unary.argumentList, _unary.location);
+	auto func = selectFunction(ctx.current, _class.userConstructors, _unary.argumentList, _unary.location);
 	_unary.ctor = func;
 
 	ctx.lp.resolve(ctx.current, func);
@@ -1700,7 +1700,7 @@ void extypeUnaryDup(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 		throw makeExpected(l, "function context");
 	}
 
-	auto type = getExpType(ctx.lp, _unary.value, ctx.current);
+	auto type = getExpType(_unary.value, ctx.current);
 	auto asStatic = cast(ir.StaticArrayType)realType(type);
 	if (asStatic !is null) {
 		type = buildArrayTypeSmart(asStatic.location, asStatic.base);
@@ -1752,15 +1752,15 @@ ir.Type extypeUnary(Context ctx, ref ir.Exp exp, Parent parent)
 	case Cast:
 		extypeUnaryCastTo(ctx, exp, unary);
 		// TODO XXX replace
-		return getExpType(ctx.lp, exp, ctx.current);
+		return getExpType(exp, ctx.current);
 	case New:
 		extypeUnaryNew(ctx, exp, unary);
 		// TODO XXX replace
-		return getExpType(ctx.lp, exp, ctx.current);
+		return getExpType(exp, ctx.current);
 	case Dup:
 		extypeUnaryDup(ctx, exp, unary);
 		// TODO XXX replace
-		return getExpType(ctx.lp, exp, ctx.current);
+		return getExpType(exp, ctx.current);
 	case Not:
 	case Plus:
 	case Minus:
@@ -1774,7 +1774,7 @@ ir.Type extypeUnary(Context ctx, ref ir.Exp exp, Parent parent)
 		// TODO Check if pointer
 	case TypeIdent:
 		// TODO XXX replace
-		return getExpType(ctx.lp, exp, ctx.current);
+		return getExpType(exp, ctx.current);
 	case None:
 		assert(false);
 	}
@@ -1912,7 +1912,7 @@ ir.Type extypeBinOp(Context ctx, ir.BinOp bin, ir.PrimitiveType lprim, ir.Primit
 ir.Type opOverloadRewrite(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 {
 	auto l = exp.location;
-	auto _agg = opOverloadableOrNull(getExpType(ctx.lp, binop.left, ctx.current));
+	auto _agg = opOverloadableOrNull(getExpType(binop.left, ctx.current));
 	if (_agg is null) {
 		return null;
 	}
@@ -1925,7 +1925,7 @@ ir.Type opOverloadRewrite(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 	if (store is null || store.functions.length == 0) {
 		throw makeAggregateDoesNotDefineOverload(exp.location, _agg, overfn);
 	}
-	auto func = selectFunction(ctx.lp, ctx.current, store.functions, [binop.right], l);
+	auto func = selectFunction(ctx.current, store.functions, [binop.right], l);
 	assert(func !is null);
 	exp = buildCall(l, buildCreateDelegate(l, binop.left, buildExpReference(l, func, overfn)), [binop.right]);
 	if (neg) {
@@ -1945,7 +1945,7 @@ ir.Type opOverloadRewriteIndex(Context ctx, ir.Postfix pfix, ref ir.Exp exp)
 	if (pfix.op != ir.Postfix.Op.Index) {
 		return null;
 	}
-	auto type = getExpType(ctx.lp, pfix.child, ctx.current);
+	auto type = getExpType(pfix.child, ctx.current);
 	auto _agg = opOverloadableOrNull(type);
 	if (_agg is null) {
 		return null;
@@ -1956,7 +1956,7 @@ ir.Type opOverloadRewriteIndex(Context ctx, ir.Postfix pfix, ref ir.Exp exp)
 		throw makeAggregateDoesNotDefineOverload(exp.location, _agg, name);
 	}
 	assert(pfix.arguments.length > 0 && pfix.arguments[0] !is null);
-	auto func = selectFunction(ctx.lp, ctx.current, store.functions, [pfix.arguments[0]], exp.location);
+	auto func = selectFunction(ctx.current, store.functions, [pfix.arguments[0]], exp.location);
 	assert(func !is null);
 	pfix = buildCall(exp.location, buildCreateDelegate(exp.location, pfix.child, buildExpReference(exp.location, func, name)), [pfix.arguments[0]]);
 	exp = pfix;
@@ -1979,7 +1979,7 @@ ir.Type extypeBinOpPropertyAssign(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 
 	auto args = [binop.right];
 	auto func = selectFunction(
-		ctx.lp, ctx.current,
+		ctx.current,
 		p.setFns, args,
 		binop.location, DoNotThrow);
 
@@ -2152,7 +2152,7 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 
 		auto asPostfix = cast(ir.Postfix)binop.left;
 		if (asPostfix !is null) {
-			auto postfixLeft = getExpType(ctx.lp, asPostfix.child, ctx.current);
+			auto postfixLeft = getExpType(asPostfix.child, ctx.current);
 			if (postfixLeft !is null &&
 			    postfixLeft.nodeType == ir.NodeType.AAType &&
 			    asPostfix.op == ir.Postfix.Op.Index) {
@@ -2512,119 +2512,119 @@ ir.Type extypeArrayLiteral(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
-	return getExpType(ctx.lp, exp, ctx.current);
+	return getExpType(exp, ctx.current);
 }
 
 ir.Type extypeAssert(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
-	return getExpType(ctx.lp, exp, ctx.current);
+	return getExpType(exp, ctx.current);
 }
 
 ir.Type extypeStringImport(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
-	return getExpType(ctx.lp, exp, ctx.current);
+	return getExpType(exp, ctx.current);
 }
 
 ir.Type extypeTypeid(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
-	return getExpType(ctx.lp, exp, ctx.current);
+	return getExpType(exp, ctx.current);
 }
 
 ir.Type extypeFunctionLiteral(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
-	return getExpType(ctx.lp, exp, ctx.current);
+	return getExpType(exp, ctx.current);
 }
 
 ir.Type extypeExpReference(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
-	return getExpType(ctx.lp, exp, ctx.current);
+	return getExpType(exp, ctx.current);
 }
 
 ir.Type extypeUnionLiteral(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
-	return getExpType(ctx.lp, exp, ctx.current);
+	return getExpType(exp, ctx.current);
 }
 
 ir.Type extypeClassLiteral(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
-	return getExpType(ctx.lp, exp, ctx.current);
+	return getExpType(exp, ctx.current);
 }
 
 ir.Type extypeTraitsExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
-	return getExpType(ctx.lp, exp, ctx.current);
+	return getExpType(exp, ctx.current);
 }
 
 ir.Type extypeStoreExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
-	return getExpType(ctx.lp, exp, ctx.current);
+	return getExpType(exp, ctx.current);
 }
 
 ir.Type extypeTemplateInstanceExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
-	return getExpType(ctx.lp, exp, ctx.current);
+	return getExpType(exp, ctx.current);
 }
 
 ir.Type extypeStatementExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
-	return getExpType(ctx.lp, exp, ctx.current);
+	return getExpType(exp, ctx.current);
 }
 
 ir.Type extypeTokenExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
-	return getExpType(ctx.lp, exp, ctx.current);
+	return getExpType(exp, ctx.current);
 }
 
 ir.Type extypeVaArgExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
-	return getExpType(ctx.lp, exp, ctx.current);
+	return getExpType(exp, ctx.current);
 }
 
 ir.Type extypePropertyExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
-	return getExpType(ctx.lp, exp, ctx.current);
+	return getExpType(exp, ctx.current);
 }
 
 ir.Type extypeBuiltinExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
-	return getExpType(ctx.lp, exp, ctx.current);
+	return getExpType(exp, ctx.current);
 }
 
 ir.Type extypeAccessExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
-	return getExpType(ctx.lp, exp, ctx.current);
+	return getExpType(exp, ctx.current);
 }
 
 
@@ -2638,7 +2638,7 @@ version (all) {
 	ir.Type extype(Context ctx, ref ir.Exp exp, Parent parent)
 	{
 		auto r = extypeUnchecked(ctx, exp, parent);
-		auto o = getExpType(ctx.lp, exp, ctx.current);
+		auto o = getExpType(exp, ctx.current);
 		if (r is null) {
 			throw panic(exp, "extype returned null");
 		}
@@ -2734,7 +2734,7 @@ void replaceTypeOfIfNeeded(Context ctx, ref ir.Type type)
 		assert(type.nodeType != ir.NodeType.TypeOf);
 		return;
 	}
-	auto t = getExpType(ctx.lp, asTypeOf.exp, ctx.current);
+	auto t = getExpType(asTypeOf.exp, ctx.current);
 	if (t.nodeType == ir.NodeType.NoType) {
 		throw makeError(asTypeOf.exp, "expression has no type.");
 	}
@@ -2749,7 +2749,7 @@ void extypeThrow(Context ctx, ir.ThrowStatement t)
 	auto throwable = cast(ir.Class) retrieveTypeFromObject(ctx.lp, t.location, "Throwable");
 	assert(throwable !is null);
 
-	auto type = realType(getExpType(ctx.lp, t.exp, ctx.current), false);
+	auto type = realType(getExpType(t.exp, ctx.current), false);
 	auto asClass = cast(ir.Class) type;
 	if (asClass is null) {
 		throw makeThrowOnlyThrowable(t.exp, type);
@@ -2878,7 +2878,7 @@ struct ArrayCase
  */
 void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 {
-	auto conditionType = realType(getExpType(ctx.lp, ss.condition, ctx.current), false);
+	auto conditionType = realType(getExpType(ss.condition, ctx.current), false);
 	auto originalCondition = ss.condition;
 	if (isArray(conditionType)) {
 		auto l = ss.location;
@@ -2924,7 +2924,7 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 				addExp(cexp.value, exp, sz, intArrayData, longArrayData);
 				return;
 			}
-			auto type = getExpType(ctx.lp, exp, ctx.current);
+			auto type = getExpType(exp, ctx.current);
 			throw makeSwitchBadType(ss, type);
 		}
 		void replaceWithHashIfNeeded(ref ir.Exp exp) 
@@ -2933,7 +2933,7 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 				return;
 			}
 
-			auto etype = getExpType(ctx.lp, exp, ctx.current);
+			auto etype = getExpType(exp, ctx.current);
 			if (!isArray(etype)) {
 				return;
 			}
@@ -3020,7 +3020,7 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 
 	auto asEnum = cast(ir.Enum) conditionType;
 	if (asEnum is null && ss.isFinal) {
-		asEnum = cast(ir.Enum)realType(getExpType(ctx.lp, ss.condition, ctx.current), false);
+		asEnum = cast(ir.Enum)realType(getExpType(ss.condition, ctx.current), false);
 		if (asEnum is null) {
 			throw makeExpected(ss, "enum type for final switch");
 		}
@@ -3131,8 +3131,8 @@ void extypeForeach(Context ctx, ir.ForeachStatement fes)
 	}
 
 	if (fes.aggregate is null) {
-		auto a = cast(ir.PrimitiveType) getExpType(ctx.lp, fes.beginIntegerRange, ctx.current);
-		auto b = cast(ir.PrimitiveType) getExpType(ctx.lp, fes.endIntegerRange, ctx.current);
+		auto a = cast(ir.PrimitiveType) getExpType(fes.beginIntegerRange, ctx.current);
+		auto b = cast(ir.PrimitiveType) getExpType(fes.endIntegerRange, ctx.current);
 		if (a is null || b is null) {
 			throw makeExpected(fes.beginIntegerRange.location, "primitive types");
 		}
@@ -3163,7 +3163,7 @@ void extypeForeach(Context ctx, ir.ForeachStatement fes)
 
 	extype(ctx, fes.aggregate, Parent.NA);
 
-	auto aggType = realType(getExpType(ctx.lp, fes.aggregate, ctx.current));
+	auto aggType = realType(getExpType(fes.aggregate, ctx.current));
 
 	if (!isString(aggType)) foreach (i, ivar; fes.itervars) {
 		if (!isBlankVariable(i)) {
@@ -3689,7 +3689,7 @@ public:
 				ed.assign = buildConstantInt(ed.location, 0);
 			} else {
 				auto loc = ed.location;
-				auto prevType = realType(getExpType(ctx.lp, prevExp, ctx.current));
+				auto prevType = realType(getExpType(prevExp, ctx.current));
 				if (!isIntegral(prevType)) {
 					throw makeTypeIsNot(ed, prevType, buildInt(ed.location));
 				}
@@ -3704,7 +3704,7 @@ public:
 		}
 
 		auto e = cast(ir.Enum)realType(ed.type, false);
-		auto rtype = getExpType(ctx.lp, ed.assign, ctx.current);
+		auto rtype = getExpType(ed.assign, ctx.current);
 		if (e !is null && isAuto(realType(e.base))) {
 			e.base = realType(e.base);
 			auto atype = cast(ir.AutoType)e.base;
@@ -3896,9 +3896,9 @@ public:
 
 		if (ret.exp !is null) {
 			extype(ctx, ret.exp, Parent.NA);
-			auto retType = getExpType(ctx.lp, ret.exp, ctx.current);
+			auto retType = getExpType(ret.exp, ctx.current);
 			if (func.isAutoReturn) {
-				func.type.ret = copyTypeSmart(retType.location, getExpType(ctx.lp, ret.exp, ctx.current));
+				func.type.ret = copyTypeSmart(retType.location, getExpType(ret.exp, ctx.current));
 				if (cast(ir.NullType)func.type.ret !is null) {
 					func.type.ret = buildVoidPtr(ret.location);
 				}
@@ -3926,7 +3926,7 @@ public:
 			assert(ifs.exp !is null);
 			assert(ifs.thenState !is null);
 
-			auto t = getExpType(ctx.lp, ifs.exp, ctx.current);
+			auto t = getExpType(ifs.exp, ctx.current);
 			auto var = buildVariable(l,
 					copyTypeSmart(l, t),
 					ir.Variable.Storage.Function,
@@ -3976,7 +3976,7 @@ public:
 			accept(ivar, this);
 		}
 		if (fes.aggregate !is null) {
-			auto aggType = realType(getExpType(ctx.lp, fes.aggregate, ctx.current));
+			auto aggType = realType(getExpType(fes.aggregate, ctx.current));
 			if (fes.itervars.length == 2 &&
 				(aggType.nodeType == ir.NodeType.StaticArrayType || 
 				aggType.nodeType == ir.NodeType.ArrayType)) {
@@ -4185,7 +4185,7 @@ public:
 			if (c is null) {
 				continue;
 			}
-			auto et = getExpType(ctx.lp, e, ctx.current);
+			auto et = getExpType(e, ctx.current);
 			auto prim = cast(ir.PrimitiveType)realType(et);
 			if (prim is null) {
 				continue;
@@ -4219,7 +4219,7 @@ public:
 			_typeid.ident = null;
 		}
 		if (_typeid.exp !is null) {
-			_typeid.type = getExpType(ctx.lp, _typeid.exp, ctx.current);
+			_typeid.type = getExpType(_typeid.exp, ctx.current);
 			if ((cast(ir.Aggregate) _typeid.type) !is null) {
 				_typeid.type = buildTypeReference(_typeid.type.location, _typeid.type);
 			} else {
