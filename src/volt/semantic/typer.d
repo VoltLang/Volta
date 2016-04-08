@@ -426,7 +426,8 @@ ir.Type getPostfixType(LanguagePass lp, ir.Postfix postfix, ir.Scope currentScop
 	case Increment, Decrement:
 		return getPostfixIncDecType(lp, postfix, currentScope);
 	case Identifier:
-		return getPostfixIdentifierType(lp, postfix, currentScope);
+		panicAssert(postfix, false);
+		assert(false);
 	case CreateDelegate:
 		return getPostfixCreateDelegateType(postfix);
 	default:
@@ -563,132 +564,6 @@ void retrieveScope(LanguagePass lp, ir.Node tt, ir.Postfix postfix, ref ir.Scope
 		}
 	} else {
 		throw panic(postfix.location, "bad scope lookup");
-	}
-}
-
-ir.Type getPostfixIdentifierType(LanguagePass lp, ir.Postfix postfix, ir.Scope currentScope)
-{
-	ir.Scope _scope;
-	ir.Class _class;
-	string emsg;
-
-	// Old code handled this case, we no longer need this.
-	assert(null is cast(ir.IdentifierExp) postfix.child);
-
-	ir.Type type;
-	ir.Aggregate agg;
-	ir.PointerType asPointer;
-	bool skipScopeRetrieval = false;
-
-	if (!skipScopeRetrieval) {
-		type = realType(getExpType(lp, postfix.child, currentScope), false);
-		asPointer = cast(ir.PointerType) type;
-		if (asPointer !is null && (asPointer.base.nodeType == ir.NodeType.ArrayType 
-			|| asPointer.base.nodeType == ir.NodeType.StaticArrayType)) {
-			type = asPointer.base;
-		}
-
-		if (type.nodeType == ir.NodeType.ArrayType) {
-			auto asArray = cast(ir.ArrayType) type;
-			assert(asArray !is null);
-			return getPostfixIdentifierArrayType(lp, postfix, asArray);
-		} else if (type.nodeType == ir.NodeType.StaticArrayType) {
-			auto asStaticArray = cast(ir.StaticArrayType) type;
-			assert(asStaticArray !is null);
-			return getPostfixIdentifierStaticArrayType(lp, postfix, asStaticArray);
-		} else if (type.nodeType == ir.NodeType.AAType) {
-			auto asAssocArray = cast(ir.AAType) type;
-			assert(asAssocArray !is null);
-			return getPostfixIdentifierAssocArrayType(postfix, asAssocArray);
-		}
-
-		retrieveScope(lp, type, postfix, _scope, _class, emsg);
-		agg = cast(ir.Aggregate) realType(type);
-	}
-
-	auto store = lookupAsThisScope(lp, _scope, postfix.location, postfix.identifier.value);
-
-	if (store is null) {
-		if (agg !is null) foreach (aa; agg.anonymousAggregates) {
-			assert(postfix.identifier !is null);
-			auto tmpStore = lookupAsThisScope(lp, aa.myScope, postfix.location, postfix.identifier.value);
-			if (tmpStore is null) {
-				continue;
-			}
-			if (store !is null) {
-				throw panic(aa.location, "bad anonymous aggregate redefine");
-			}
-			store = tmpStore;
-		}
-		if (store is null) {
-			throw panic(postfix.identifier.location, "null store");
-		}
-	}
-
-	if (store.kind == ir.Store.Kind.Value) {
-		auto asDecl = cast(ir.Variable) store.node;
-		assert(asDecl !is null);
-		return asDecl.type;
-	} else if (store.kind == ir.Store.Kind.Function) {
-		if (store.functions.length == 1) {
-			return store.functions[0].type;
-		}
-		return buildSetType(postfix.location, store.functions);
-	} else if (store.kind == ir.Store.Kind.EnumDeclaration) {
-		auto asEnumDecl = cast(ir.EnumDeclaration) store.node;
-		return asEnumDecl.type;
-	} else {
-		auto t = cast(ir.Type) store.node;
-		if (t is null) {
-			throw panic(postfix.location, "unhandled postfix type retrieval.");
-		}
-		return t;
-	}
-
-	version (Volt) assert(false); // If
-}
-
-ir.Type getPostfixIdentifierArrayType(LanguagePass lp, ir.Postfix postfix, ir.ArrayType arrayType)
-{
-	switch (postfix.identifier.value) {
-	case "length":
-		return buildSizeT(postfix.location, lp);
-	case "ptr":
-		auto pointer = new ir.PointerType(arrayType.base);
-		pointer.location = postfix.location;
-		return pointer;
-	default:
-		throw panic(postfix.location, "bad identifier array lookup.");
-	}
-}
-
-ir.Type getPostfixIdentifierStaticArrayType(LanguagePass lp, ir.Postfix postfix, ir.StaticArrayType arrayType)
-{
-	switch (postfix.identifier.value) {
-	case "length":
-		return buildSizeT(postfix.location, lp);
-	case "ptr":
-		auto pointer = new ir.PointerType(arrayType.base);
-		pointer.location = postfix.location;
-		return pointer;
-	default:
-		throw panic(postfix.location, "bad identifier static array lookup.");
-	}
-}
-
-ir.Type getPostfixIdentifierAssocArrayType(ir.Postfix postfix, ir.AAType arrayType)
-{
-	switch (postfix.identifier.value) {
-	case "keys":
-		return buildArrayTypeSmart(postfix.location, arrayType.key);
-	case "values":
-		return buildArrayTypeSmart(postfix.location, arrayType.value);
-	case "get":
-		return buildFunctionTypeSmart(postfix.location, arrayType.key, arrayType.value);
-	case "remove":
-		return buildFunctionTypeSmart(postfix.location, buildBool(postfix.location), arrayType.key);
-	default:
-		throw panic(postfix.location, "bad identifier aa lookup.");
 	}
 }
 
