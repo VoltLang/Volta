@@ -7,7 +7,7 @@ import volt.ir.util;
 
 import volt.errors;
 
-import volt.semantic.typer : realType;
+import volt.semantic.classify : realType;
 
 
 /**

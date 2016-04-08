@@ -16,9 +16,7 @@ import volt.interfaces;
 import volt.token.location;
 
 import volt.semantic.util;
-import volt.semantic.lookup;
 import volt.semantic.classify;
-import volt.semantic.overload;
 
 
 /**
