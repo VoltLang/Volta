@@ -15,7 +15,8 @@ import volt.token.location;
 import volt.semantic.typer : getExpType, getTypeidType;
 import volt.semantic.lookup : lookup, lookupInGivenScopeOnly;
 import volt.semantic.context : Context;
-import volt.semantic.classify : getParentFunction, realType, isFloatingPoint;
+import volt.semantic.classify : getParentFunction, realType, isFloatingPoint,
+	typesEqual, inheritsFrom;
 
 
 /**
@@ -634,4 +635,51 @@ ir.StatementExp getVaArgCast(Location loc, LanguagePass lp, ir.VaArgExp vaexp)
 	sexp.exp = deref;
 
 	return sexp;
+}
+
+ir.Type getCommonSubtype(Location l, ir.Type[] types)
+{
+	bool arrayElementSubtype(ir.Type element, ir.Type proposed)
+	{
+		if (typesEqual(element, proposed)) {
+			return true;
+		}
+		auto aclass = cast(ir.Class) realType(element, false);
+		auto bclass = cast(ir.Class) realType(proposed, false);
+		if (aclass is null || bclass is null) {
+			return false;
+		}
+		if (inheritsFrom(aclass, bclass)) {
+			return true;
+		}
+		return false;
+	}
+
+	size_t countMatch(ir.Type t)
+	{
+		size_t count = 0;
+		foreach (type; types) {
+			if (arrayElementSubtype(type, t)) {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	ir.Type candidate = types[0];
+	size_t count = countMatch(candidate);
+	while (count < types.length) {
+		auto _class = cast(ir.Class) realType(candidate);
+		if (_class is null) {
+			return candidate;  // @todo non class common subtyping.
+		}
+		if (_class.parentClass is null) {
+			// No common parent; volt is SI, this shouldn't happen.
+			throw panic(l, "no common subtype");
+		}
+		candidate = _class.parentClass;
+		count = countMatch(candidate);
+	}
+
+	return candidate;
 }
