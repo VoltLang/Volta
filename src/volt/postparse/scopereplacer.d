@@ -42,62 +42,64 @@ class ScopeReplacer : NullVisitor, Pass
 	override Status enter(ir.BlockStatement bs)
 	{
 		foreach (i, node; bs.statements) {
-			auto ss = cast(ir.ScopeStatement) node;
-			if (ss is null) {
-				continue;
-			}
-			if (functionStack.length == 0) {
-				throw makeScopeOutsideFunction(ss.location);
-			}
-			auto p = functionStack[$-1];
-			auto func = scopeStatementToFunction(ss);
-			final switch (ss.kind) with (ir.ScopeStatement.Kind) {
-			case Exit:
-				p.scopeExits ~= func;
-				func.isLoweredScopeExit = true;
-				warning(ss.location, "scope (exit) only partly supported.");
+			switch (node.nodeType) with (ir.NodeType) {
+			case ScopeStatement:
+				auto ss = cast(ir.ScopeStatement) node;
+				bs.statements[i] = handleScope(ss);
 				break;
-			case Success:
-				p.scopeSuccesses ~= func;
-				func.isLoweredScopeSuccess = true;
-				break;
-			case Failure:
-				p.scopeFailures ~= func;
-				func.isLoweredScopeFailure = true;
-				warning(ss.location, "scope (failure) not supported.");
-				break;
+			default:
 			}
-			bs.statements[i] = func;
 		}
 		return Continue;
 	}
 
-	private ir.Function scopeStatementToFunction(ir.ScopeStatement ss)
+
+private:
+	ir.Function handleScope(ir.ScopeStatement ss)
 	{
-		assert(functionStack.length > 0);
-		auto p = functionStack[$-1];
+		if (functionStack.length == 0) {
+			throw makeScopeOutsideFunction(ss.location);
+		}
+
+		final switch (ss.kind) with (ir.ScopeStatement.Kind) {
+		case Exit: warning(ss.location, "scope (exit) only partly supported."); break;
+		case Failure: warning(ss.location, "scope (failure) not supported."); break;
+		case Success: break;
+		}
+
+		return convertToFunction(ss.kind, ss.block, functionStack[$-1]);
+	}
+
+	ir.Function convertToFunction(ir.ScopeStatement.Kind kind, ir.BlockStatement block, ir.Function parent)
+	{
 		auto func = new ir.Function();
-		func.name = generateName(ss);
-		func.location = ss.location;
+		func.location = block.location;
 		func.kind = ir.Function.Kind.Function;
 
 		func.type = new ir.FunctionType();
-		func.type.location = ss.location;
-		func.type.ret = buildVoid(ss.location);
+		func.type.location = block.location;
+		func.type.ret = buildVoid(block.location);
 
-		func._body = ss.block;
+		func._body = block;
+
+		final switch (kind) with (ir.ScopeStatement.Kind) {
+		case Exit:
+			func.isLoweredScopeExit = true;
+			func.name = format("__v_scope_exit%s", parent.scopeExits.length);
+			parent.scopeExits ~= func;
+			break;
+		case Success:
+			func.isLoweredScopeSuccess = true;
+			func.name = format("__v_scope_success%s", parent.scopeSuccesses.length);
+			parent.scopeSuccesses ~= func;
+			break;
+		case Failure:
+			func.isLoweredScopeFailure = true;
+			func.name = format("__v_scope_failure%s", parent.scopeFailures.length);
+			parent.scopeFailures ~= func;
+			break;
+		}
 
 		return func;
-	}
-
-	private string generateName(ir.ScopeStatement ss)
-	{
-		assert(functionStack.length > 0);
-		auto p = functionStack[$-1];
-		final switch (ss.kind) with (ir.ScopeStatement.Kind) {
-		case Exit: return format("__v_scope_exit%s", p.scopeExits.length);
-		case Success: return format("__v_scope_success%s", p.scopeSuccesses.length);
-		case Failure: return format("__v_scope_failure%s", p.scopeFailures.length);
-		}
 	}
 }
