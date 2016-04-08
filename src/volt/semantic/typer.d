@@ -628,26 +628,10 @@ ir.Type getPostfixIndexType(ir.Postfix postfix, ir.Scope currentScope)
 ir.Type getPostfixCallType(ir.Postfix postfix, ir.Scope currentScope)
 {
 	auto type = getExpType(postfix.child, currentScope);
-
-	ir.CallableType ftype;
-	auto set = cast(ir.FunctionSetType) type;
-	if (set !is null) {
-		assert(set.set.functions.length > 0);
-		auto func = selectFunction(currentScope, set.set, postfix.arguments, postfix.location);
-		if (set.isFromCreateDelegate) {
-			if (!isFunctionMemberOrConstructor(func)) {
-				throw panic(postfix.location, "calling static through instance in typer.");
-			}
-			ftype = new ir.DelegateType(func.type);
-		} else {
-			ftype = func.type;
-		}
-	} else {
-		ftype = cast(ir.CallableType) type;
-	}
+	auto ftype = cast(ir.CallableType) type;
 
 	if (ftype is null) {
-		throw panic(postfix.location, "bad call in typer.");
+		throw panicUnhandled(postfix.location, ir.nodeToString(type));
 	}
 
 	return ftype.ret;
