@@ -43,6 +43,10 @@ class ScopeReplacer : NullVisitor, Pass
 	{
 		foreach (i, node; bs.statements) {
 			switch (node.nodeType) with (ir.NodeType) {
+			case TryStatement:
+				auto t = cast(ir.TryStatement) node;
+				bs.statements[i] = handleTry(t);
+				break;
 			case ScopeStatement:
 				auto ss = cast(ir.ScopeStatement) node;
 				bs.statements[i] = handleScope(ss);
@@ -55,6 +59,28 @@ class ScopeReplacer : NullVisitor, Pass
 
 
 private:
+	ir.Node handleTry(ir.TryStatement t)
+	{
+		if (t.finallyBlock is null) {
+			return t;
+		}
+		panicAssert(t, functionStack.length == 0);
+
+		warning(t.finallyBlock.location, "finally { ... } only partly supported.");
+
+		auto f = t.finallyBlock;
+		t.finallyBlock = null;
+
+		auto func = convertToFunction(
+			ir.ScopeStatement.Kind.Exit, f, functionStack[$-1]);
+
+		auto b = new ir.BlockStatement();
+		b.location = t.location;
+		b.statements = [func, t];
+
+		return b;
+	}
+
 	ir.Function handleScope(ir.ScopeStatement ss)
 	{
 		if (functionStack.length == 0) {
