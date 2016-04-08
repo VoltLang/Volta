@@ -412,15 +412,7 @@ public:
 class ScopeStatement : Statement
 {
 public:
-	enum Kind
-	{
-		Exit,
-		Success,
-		Failure,
-	}
-
-public:
-	Kind kind;
+	ScopeKind kind;
 	BlockStatement block;
 
 public:

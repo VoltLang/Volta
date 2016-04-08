@@ -1042,7 +1042,7 @@ public:
 	override Status enter(ir.ScopeStatement ss)
 	{
 		twf("scope (");
-		final switch (ss.kind) with (ir.ScopeStatement.Kind) {
+		final switch (ss.kind) with (ir.ScopeKind) {
 		case Exit: wfln("exit) {"); break;
 		case Success: wfln("success) {"); break;
 		case Failure: wfln("failure) {"); break;

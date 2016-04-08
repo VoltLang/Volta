@@ -72,7 +72,7 @@ private:
 		t.finallyBlock = null;
 
 		auto func = convertToFunction(
-			ir.ScopeStatement.Kind.Exit, f, functionStack[$-1]);
+			ir.ScopeKind.Exit, f, functionStack[$-1]);
 
 		auto b = new ir.BlockStatement();
 		b.location = t.location;
@@ -87,7 +87,7 @@ private:
 			throw makeScopeOutsideFunction(ss.location);
 		}
 
-		final switch (ss.kind) with (ir.ScopeStatement.Kind) {
+		final switch (ss.kind) with (ir.ScopeKind) {
 		case Exit: warning(ss.location, "scope (exit) only partly supported."); break;
 		case Failure: warning(ss.location, "scope (failure) not supported."); break;
 		case Success: break;
@@ -96,7 +96,7 @@ private:
 		return convertToFunction(ss.kind, ss.block, functionStack[$-1]);
 	}
 
-	ir.Function convertToFunction(ir.ScopeStatement.Kind kind, ir.BlockStatement block, ir.Function parent)
+	ir.Function convertToFunction(ir.ScopeKind kind, ir.BlockStatement block, ir.Function parent)
 	{
 		auto func = new ir.Function();
 		func.location = block.location;
@@ -108,7 +108,7 @@ private:
 
 		func._body = block;
 
-		final switch (kind) with (ir.ScopeStatement.Kind) {
+		final switch (kind) with (ir.ScopeKind) {
 		case Exit:
 			func.isLoweredScopeExit = true;
 			func.name = format("__v_scope_exit%s", parent.scopeExits.length);

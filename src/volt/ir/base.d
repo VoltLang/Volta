@@ -172,6 +172,18 @@ enum Linkage {
 }
 
 /**
+ * Used by ScopeStatement and other nodes.
+ *
+ * @ingroup irNode irStatement
+ */
+enum ScopeKind
+{
+	Exit,
+	Failure,
+	Success,
+}
+
+/**
  * Base class for all IR nodes.
  * 
  * A Node has a Location and a type. The Location points

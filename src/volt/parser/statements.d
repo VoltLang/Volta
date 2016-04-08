@@ -1209,7 +1209,7 @@ ParseStatus parseScopeStatement(ParserStream ps, out ir.ScopeStatement ss)
 		return unexpectedToken(ps, ss);
 	}
 	auto nameTok = ps.get();
-	switch (nameTok.value) with (ir.ScopeStatement.Kind) {
+	switch (nameTok.value) with (ir.ScopeKind) {
 	case "exit":
 		ss.kind = Exit;
 		break;
