@@ -346,52 +346,71 @@ public:
 
 	override Status enter(ir.TryStatement t)
 	{
-		LLVMBasicBlockRef landingPad, tryDone;
+		LLVMBasicBlockRef landingPad, catchBlock, tryDone;
 
 		landingPad = LLVMAppendBasicBlockInContext(
 			state.context, state.func, "landingPad");
 		tryDone = LLVMAppendBasicBlockInContext(
 			state.context, state.func, "tryDone");
+		catchBlock = LLVMAppendBasicBlockInContext(
+			state.context, state.func, "catchBlock");
 
-		auto iVar = state.ehIndexVar;
-		auto eVar = state.ehExceptionVar;
+
+		/*
+		 * Setup catch block, catch types and landingpad state.
+		 */
+		auto p = state.path;
+		assert(p.catchBlock is null);
+		assert(p.landingBlock is null);
+
+		p.catchBlock = catchBlock;
+		p.landingBlock = landingPad;
+		p.catchTypeInfos = new LLVMValueRef[](t.catchVars.length);
+		foreach (index, v; t.catchVars) {
+			Type type;
+			auto asTR = cast(ir.TypeReference) v.type;
+			ir.Class c = cast(ir.Class) asTR.type;
+			p.catchTypeInfos[index] = state.getVariableValue(c.typeInfo, type);
+		}
+
 
 		/*
 		 * The try body.
 		 */
-		assert(state.path.landingBlock is null);
-		state.path.landingBlock = landingPad;
-
 		accept(t.tryBlock, this);
-
-		// Reset the landing pad.
-		state.path.landingBlock = null;
 
 		if (state.fall) {
 			LLVMBuildBr(state.builder, tryDone);
 		}
 
+
 		/*
 		 * Landing pad.
 		 */
 		LLVMMoveBasicBlockAfter(landingPad, state.block);
-		state.startBlock(landingPad);
-		auto lp = LLVMBuildLandingPad(
-			state.builder, state.ehLandingType,
-			state.ehPersonalityFunc,
-			cast(uint)t.catchVars.length, "");
-		auto e = LLVMBuildExtractValue(state.builder, lp, 0, "");
-		LLVMBuildStore(state.builder, e, eVar);
-		auto i = LLVMBuildExtractValue(state.builder, lp, 1, "");
-		LLVMBuildStore(state.builder, i, iVar);
+		fillInLandingPad(landingPad, t.finallyBlock !is null);
 
+		// Reset the path.
+		p.catchBlock = null;
+		p.landingBlock = null;
+		p.catchTypeInfos = null;
+
+
+		/*
+		 * Catch code.
+		 */
+		LLVMBuildBr(state.builder, catchBlock);
+		LLVMMoveBasicBlockAfter(catchBlock, state.block);
+		state.startBlock(catchBlock);
+
+		auto e = LLVMBuildLoad(state.builder, state.ehExceptionVar, "");
+		auto i = LLVMBuildLoad(state.builder, state.ehIndexVar, "");
 		foreach (index, v; t.catchVars) {
 			Type type;
 			auto asTR = cast(ir.TypeReference)v.type;
 			ir.Class c = cast(ir.Class)asTR.type;
 			auto value = state.getVariableValue(c.typeInfo, type);
 			value = LLVMBuildBitCast(state.builder, value, state.voidPtrType.llvmType, "");
-			LLVMAddClause(lp, value);
 
 			auto func = state.ehTypeIdFunc;
 			auto test = LLVMBuildCall(state.builder, func, [value]);
@@ -428,7 +447,6 @@ public:
 		 * Finally block.
 		 */
 		if (t.finallyBlock !is null) {
-			LLVMSetCleanup(lp, true);
 			accept(t.finallyBlock, this);
 			LLVMBuildBr(state.builder, state.ehResumeBlock);
 			throw panic(t.finallyBlock, "does not support finally statements");
@@ -826,6 +844,32 @@ public:
 		auto arg = [value];
 		foreach_reverse (func; funcs) {
 			state.buildCallOrInvoke(loc, func, arg);
+		}
+	}
+
+	/*
+	 * Fills in the given landing pad.
+	 *
+	 * Side-effects:
+	 *   Will set the landingPad as the current working block.
+	 */
+	void fillInLandingPad(LLVMBasicBlockRef landingPad, bool setCleanup)
+	{
+		auto p = state.path;
+
+		state.startBlock(landingPad);
+		auto lp = LLVMBuildLandingPad(
+			state.builder, state.ehLandingType,
+			state.ehPersonalityFunc,
+			cast(uint)p.catchTypeInfos.length, "");
+		auto e = LLVMBuildExtractValue(state.builder, lp, 0, "");
+		LLVMBuildStore(state.builder, e, state.ehExceptionVar);
+		auto i = LLVMBuildExtractValue(state.builder, lp, 1, "");
+		LLVMBuildStore(state.builder, i, state.ehIndexVar);
+
+		LLVMSetCleanup(lp, setCleanup);
+		foreach (ti; p.catchTypeInfos) {
+			LLVMAddClause(lp, ti);
 		}
 	}
 

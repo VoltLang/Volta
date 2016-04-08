@@ -72,6 +72,10 @@ public:
 		LLVMBasicBlockRef breakBlock;
 
 		LLVMValueRef[] success;
+		LLVMValueRef[] fail;
+
+		LLVMBasicBlockRef catchBlock;
+		LLVMValueRef[] catchTypeInfos;
 	}
 
 	static struct SwitchState
@@ -120,6 +124,16 @@ public:
 		auto p = path;
 		assert(p !is null);
 		while (p !is null && p.landingBlock is null) {
+			p = p.prev;
+		}
+		return p;
+	}
+
+	final PathState findCatch()
+	{
+		auto p = path;
+		assert(p !is null);
+		while (p !is null && p.catchBlock is null) {
 			p = p.prev;
 		}
 		return p;
