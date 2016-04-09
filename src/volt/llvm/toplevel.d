@@ -130,16 +130,16 @@ public:
 
 		// Clean up
 		state.onFunctionClose();
-
 		state.fnState = old;
-		if (func.isLoweredScopeExit || func.isLoweredScopeSuccess) {
-			state.fnState.path.success ~= llvmFunc;
-		}
 
 		// Reset builder for nested functions.
 		if (state.block !is null) {
 			LLVMPositionBuilderAtEnd(b, state.block);
 		}
+		auto oldBlock = state.block;
+		state.startBlock(oldBlock);
+
+		handleScopedFunction(func, llvmFunc);
 
 		return ContinueParent;
 	}
@@ -359,9 +359,8 @@ public:
 		/*
 		 * Setup catch block, catch types and landingpad state.
 		 */
+		state.pushPath();
 		auto p = state.path;
-		assert(p.catchBlock is null);
-		assert(p.landingBlock is null);
 
 		p.catchBlock = catchBlock;
 		p.landingBlock = landingPad;
@@ -387,13 +386,13 @@ public:
 		/*
 		 * Landing pad.
 		 */
+		State.PathState dummy;
 		LLVMMoveBasicBlockAfter(landingPad, state.block);
-		fillInLandingPad(landingPad, t.finallyBlock !is null);
+		fillInLandingPad(landingPad, t.finallyBlock !is null, dummy);
+		assert(dummy is p);
 
 		// Reset the path.
-		p.catchBlock = null;
-		p.landingBlock = null;
-		p.catchTypeInfos = null;
+		state.popPath();
 
 
 		/*
@@ -825,26 +824,89 @@ public:
 
 	void handleScopeSuccessTo(ref Location loc, State.PathState to)
 	{
-		LLVMValueRef[] funcs;
+		LLVMValueRef[] arg;
+		void buildArgIfNeeded() {
+			if (arg.length) {
+				return;
+			}
+			auto value = LLVMBuildBitCast(
+				state.builder, state.fnState.nested,
+				state.voidPtrType.llvmType, "");
+			arg = [value];
+		}
+
+
 		auto p = state.path;
 		while (p !is to) {
-			if (p.success.length > 0) {
-				funcs = p.success ~ funcs;
+			foreach_reverse (index, func; p.scopeSuccess) {
+				if (func is null) {
+					continue;
+				}
+
+				buildArgIfNeeded();
+				auto pad = p.scopeLanding[index];
+				state.buildCallOrInvoke(loc, func, arg, pad);
 			}
 			p = p.prev;
 		}
+	}
 
-		if (funcs.length == 0) {
+	void handleScopedFunction(ir.Function func, LLVMValueRef llvmFunc)
+	{
+		auto success = func.isLoweredScopeExit | func.isLoweredScopeSuccess;
+		auto failure = func.isLoweredScopeExit | func.isLoweredScopeFailure;
+
+		// Nothing needs to be done
+		if (!success && !failure) {
 			return;
 		}
+
+		auto landingPath = state.findLanding();
+		state.path.scopeSuccess ~= success ? llvmFunc : null;
+		state.path.scopeFailure ~= failure ? llvmFunc : null;
+		state.path.scopeLanding ~= landingPath !is null ?
+			landingPath.landingBlock : null;
+
+		// Don't need to generate a landingPad
+		if (!failure) {
+			return;
+		}
+
+		auto oldBlock = state.block;
+		auto landingPad = LLVMAppendBasicBlockInContext(
+			state.context, state.func, "landingPad");
+
+		State.PathState catchPath;
+		fillInLandingPad(landingPad, true, catchPath);
 
 		auto value = LLVMBuildBitCast(
 			state.builder, state.fnState.nested,
 			state.voidPtrType.llvmType, "");
 		auto arg = [value];
-		foreach_reverse (func; funcs) {
-			state.buildCallOrInvoke(loc, func, arg);
+
+		auto p = state.path;
+		while (p !is null) {
+			foreach_reverse (loopFunc; p.scopeFailure) {
+				if (loopFunc is null) {
+					continue;
+				}
+				LLVMBuildCall(state.builder, loopFunc, arg);
+			}
+
+			if (p is catchPath) {
+				break;
+			}
+			p = p.prev;
 		}
+
+		state.path.landingBlock = landingPad;
+		if (catchPath is null) {
+			LLVMBuildBr(state.builder, state.ehResumeBlock);
+		} else {
+			LLVMBuildBr(state.builder, catchPath.catchBlock);
+		}
+
+		state.startBlock(oldBlock);
 	}
 
 	/*
@@ -853,26 +915,27 @@ public:
 	 * Side-effects:
 	 *   Will set the landingPad as the current working block.
 	 */
-	void fillInLandingPad(LLVMBasicBlockRef landingPad, bool setCleanup)
+	void fillInLandingPad(LLVMBasicBlockRef landingPad, bool setCleanup,
+	                      out State.PathState catchPath)
 	{
-		auto p = state.path;
+		catchPath = state.findCatch();
+		auto catches = catchPath !is null ? catchPath.catchTypeInfos : null;
 
 		state.startBlock(landingPad);
 		auto lp = LLVMBuildLandingPad(
 			state.builder, state.ehLandingType,
 			state.ehPersonalityFunc,
-			cast(uint)p.catchTypeInfos.length, "");
+			cast(uint)catches.length, "");
 		auto e = LLVMBuildExtractValue(state.builder, lp, 0, "");
 		LLVMBuildStore(state.builder, e, state.ehExceptionVar);
 		auto i = LLVMBuildExtractValue(state.builder, lp, 1, "");
 		LLVMBuildStore(state.builder, i, state.ehIndexVar);
 
 		LLVMSetCleanup(lp, setCleanup);
-		foreach (ti; p.catchTypeInfos) {
+		foreach (ti; catches) {
 			LLVMAddClause(lp, ti);
 		}
 	}
-
 
 	/*
 	 * Ignore but pass.

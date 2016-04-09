@@ -71,8 +71,9 @@ public:
 		LLVMBasicBlockRef continueBlock;
 		LLVMBasicBlockRef breakBlock;
 
-		LLVMValueRef[] success;
-		LLVMValueRef[] fail;
+		LLVMValueRef[] scopeSuccess;
+		LLVMValueRef[] scopeFailure;
+		LLVMBasicBlockRef[] scopeLanding;
 
 		LLVMBasicBlockRef catchBlock;
 		LLVMValueRef[] catchTypeInfos;
