@@ -97,6 +97,11 @@ public:
 		LLVMBasicBlockRef block;
 
 		SwitchState swi;
+
+		LLVMValueRef indexVar;
+		LLVMValueRef exceptionVar;
+		LLVMBasicBlockRef resumeBlock;
+		LLVMBasicBlockRef exitBlock;
 	}
 
 	FunctionState fnState;

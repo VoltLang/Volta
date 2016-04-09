@@ -64,10 +64,6 @@ protected:
 	LLVMValueRef mPersonalityFunc;
 	LLVMValueRef mTypeIdFunc;
 	LLVMTypeRef mLandingType;
-	LLVMValueRef mIndexVar;
-	LLVMValueRef mExceptionVar;
-	LLVMBasicBlockRef mResumeBlock;
-	LLVMBasicBlockRef mExitBlock;
 
 public:
 	this(LanguagePass lp, ir.Module irMod)
@@ -184,39 +180,43 @@ public:
 
 	@property override LLVMValueRef ehIndexVar()
 	{
-		if (mIndexVar !is null)
-			return mIndexVar;
+		if (fnState.indexVar !is null) {
+			return fnState.indexVar;
+		}
+
 		auto bb = LLVMGetFirstBasicBlock(func);
 		auto val = LLVMGetFirstInstruction(bb);
 		LLVMPositionBuilderBefore(builder, val);
 
-		mIndexVar = LLVMBuildAlloca(
+		fnState.indexVar = LLVMBuildAlloca(
 			builder, intType.llvmType, "__index");
 
 		LLVMPositionBuilderAtEnd(builder, block);
-		return mIndexVar;
+		return fnState.indexVar;
 	}
 
 	@property override LLVMValueRef ehExceptionVar()
 	{
-		if (mExceptionVar !is null)
-			return mExceptionVar;
+		if (fnState.exceptionVar !is null) {
+			return fnState.exceptionVar;
+		}
 
 		auto bb = LLVMGetFirstBasicBlock(func);
 		auto val = LLVMGetFirstInstruction(bb);
 		LLVMPositionBuilderBefore(builder, val);
 
-		mExceptionVar = LLVMBuildAlloca(
+		fnState.exceptionVar = LLVMBuildAlloca(
 			builder, voidPtrType.llvmType, "__exception");
 
 		LLVMPositionBuilderAtEnd(builder, block);
-		return mExceptionVar;
+		return fnState.exceptionVar;
 	}
 
 	@property override LLVMBasicBlockRef ehResumeBlock()
 	{
-		if (mResumeBlock !is null)
-			return mResumeBlock;
+		if (fnState.resumeBlock !is null) {
+			return fnState.resumeBlock;
+		}
 
 		auto b = LLVMAppendBasicBlockInContext(
 			context, func, "resume");
@@ -228,19 +228,20 @@ public:
 		LLVMBuildResume(builder, v);
 		LLVMPositionBuilderAtEnd(builder, block);
 
-		return mResumeBlock = b;
+		return fnState.resumeBlock = b;
 	}
 
 	@property override LLVMBasicBlockRef ehExitBlock()
 	{
-		if (mExitBlock !is null) {
-			return mExitBlock;
+		if (fnState.exitBlock !is null) {
+			return fnState.exitBlock;
 		}
+
 		auto b = LLVMAppendBasicBlockInContext(
 			context, func, "exit");
 		LLVMPositionBuilderAtEnd(builder, b);
 
-		return mExitBlock = b;
+		return fnState.exitBlock = b;
 	}
 
 	override LLVMValueRef buildCallOrInvoke(ref Location loc,
@@ -270,13 +271,9 @@ public:
 
 	override void onFunctionClose()
 	{
-		if (mResumeBlock !is null) {
-			LLVMMoveBasicBlockAfter(mResumeBlock, block);
+		if (fnState.resumeBlock !is null) {
+			LLVMMoveBasicBlockAfter(fnState.resumeBlock, block);
 		}
-
-		mResumeBlock = null;
-		mIndexVar = null;
-		mExceptionVar = null;
 
 		fnState = FunctionState.init;
 	}
