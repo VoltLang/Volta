@@ -377,10 +377,23 @@ public:
 	/**
 	 * Builds either a call or a invoke. If invoke automatically
 	 * sets up a catch basic block and sets the currentBlock to it.
+	 *
+	 * Gets the landingPad from the current state.
 	 */
 	abstract LLVMValueRef buildCallOrInvoke(ref Location loc,
 	                                        LLVMValueRef func,
 	                                        LLVMValueRef[] args);
+
+	/**
+	 * Builds either a call or a invoke. If invoke automatically
+	 * sets up a catch basic block and sets the currentBlock to it.
+	 *
+	 * Uses the given landingPad.
+	 */
+	abstract LLVMValueRef buildCallOrInvoke(ref Location loc,
+	                                        LLVMValueRef func,
+	                                        LLVMValueRef[] args,
+	                                        LLVMBasicBlockRef landingPad);
 
 	/**
 	 * Start using a new basic block, setting currentBlock.

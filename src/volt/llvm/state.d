@@ -249,19 +249,30 @@ public:
 	                                        LLVMValueRef[] args)
 	{
 		auto p = findLanding();
+		if (p is null) {
+			return buildCallOrInvoke(loc, argFunc, args, null);
+		} else {
+			return buildCallOrInvoke(loc, argFunc, args, p.landingBlock);
+		}
+	}
 
+	override LLVMValueRef buildCallOrInvoke(ref Location loc,
+	                                        LLVMValueRef argFunc,
+	                                        LLVMValueRef[] args,
+	                                        LLVMBasicBlockRef landingBlock)
+	{
 		diSetPosition(this, loc);
 		scope (success) {
 			diUnsetPosition(this);
 		}
 
-		if (p is null) {
+		if (landingBlock is null) {
 			return LLVMBuildCall(builder, argFunc, args);
 		} else {
-			assert(p.landingBlock !is null);
 			auto b = LLVMAppendBasicBlockInContext(
 				context, func, "");
-			auto ret = LLVMBuildInvoke(builder, argFunc, args, b, p.landingBlock);
+			auto ret = LLVMBuildInvoke(builder, argFunc, args, b,
+				landingBlock);
 			LLVMMoveBasicBlockAfter(b, block);
 			LLVMPositionBuilderAtEnd(builder, b);
 			fnState.block = b;
