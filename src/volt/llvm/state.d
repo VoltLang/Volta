@@ -266,7 +266,10 @@ public:
 			diUnsetPosition(this);
 		}
 
-		if (landingBlock is null) {
+		// If we don't have a landing pad or
+		// if the function is a llvm intrinsic
+		if (landingBlock is null ||
+		    LLVMGetIntrinsicID(argFunc) != 0) {
 			return LLVMBuildCall(builder, argFunc, args);
 		} else {
 			auto b = LLVMAppendBasicBlockInContext(
