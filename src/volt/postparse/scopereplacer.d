@@ -66,8 +66,6 @@ private:
 		}
 		panicAssert(t, functionStack.length > 0);
 
-		warning(t.finallyBlock.location, "finally { ... } only partly supported.");
-
 		auto f = t.finallyBlock;
 		t.finallyBlock = null;
 
@@ -85,12 +83,6 @@ private:
 	{
 		if (functionStack.length == 0) {
 			throw makeScopeOutsideFunction(ss.location);
-		}
-
-		final switch (ss.kind) with (ir.ScopeKind) {
-		case Exit: warning(ss.location, "scope (exit) only partly supported."); break;
-		case Failure: warning(ss.location, "scope (failure) not supported."); break;
-		case Success: break;
 		}
 
 		return convertToFunction(ss.kind, ss.block, functionStack[$-1]);
