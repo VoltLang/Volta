@@ -2624,6 +2624,45 @@ ir.Type extypeArrayLiteral(Context ctx, ref ir.Exp exp, Parent parent)
 	return al.type;
 }
 
+ir.Type extypeTypeid(Context ctx, ref ir.Exp exp, Parent parent)
+{
+	auto _typeid = cast(ir.Typeid) exp;
+
+	// Already extype:d this exp?
+	if (_typeid.tinfoType !is null) {
+		assert(_typeid.exp is null);
+		assert(_typeid.tinfoType !is null);
+		return _typeid.tinfoType;
+	}
+
+	if (_typeid.type !is null) {
+		accept(_typeid.type, ctx.extyper);
+	}
+	if (_typeid.exp !is null) {
+		_typeid.type = extype(ctx, _typeid.exp, Parent.NA);
+
+		if ((cast(ir.Aggregate) _typeid.type) !is null) {
+			_typeid.type = buildTypeReference(_typeid.type.location, _typeid.type);
+		} else {
+			_typeid.type = copyType(_typeid.type);
+		}
+
+		_typeid.exp = null;
+	}
+
+	_typeid.type = ctx.lp.resolve(ctx.current, _typeid.type);
+	replaceTypeOfIfNeeded(ctx, _typeid.type);
+
+	auto clazz = cast(ir.Class) realType(_typeid.type);
+	if (clazz is null) {
+		_typeid.tinfoType = ctx.lp.typeInfoClass;
+	} else {
+		_typeid.tinfoType = ctx.lp.classInfoClass;
+	}
+
+	return _typeid.tinfoType;
+}
+
 
 /*
  *
@@ -2639,13 +2678,6 @@ ir.Type extypeAssert(Context ctx, ref ir.Exp exp, Parent parent)
 }
 
 ir.Type extypeStringImport(Context ctx, ref ir.Exp exp, Parent parent)
-{
-	// TODO XXX actually implement.
-	acceptExp(exp, ctx.extyper);
-	return getExpType(exp);
-}
-
-ir.Type extypeTypeid(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
@@ -4243,46 +4275,6 @@ public:
 	 *
 	 */
 
-	override Status leave(ref ir.Exp exp, ir.Typeid) { assert(false); }
-	override Status enter(ref ir.Exp exp, ir.Typeid)
-	{
-		auto _typeid = cast(ir.Typeid) exp;
-
-		// Already extype:d this exp?
-		if (_typeid.tinfoType !is null) {
-			assert(_typeid.exp is null);
-			assert(_typeid.tinfoType !is null);
-			return ContinueParent;
-		}
-
-		if (_typeid.type !is null) {
-			accept(_typeid.type, ctx.extyper);
-		}
-		if (_typeid.exp !is null) {
-			_typeid.type = extype(ctx, _typeid.exp, Parent.NA);
-
-			if ((cast(ir.Aggregate) _typeid.type) !is null) {
-				_typeid.type = buildTypeReference(_typeid.type.location, _typeid.type);
-			} else {
-				_typeid.type = copyType(_typeid.type);
-			}
-
-			_typeid.exp = null;
-		}
-
-		_typeid.type = ctx.lp.resolve(ctx.current, _typeid.type);
-		replaceTypeOfIfNeeded(ctx, _typeid.type);
-
-		auto clazz = cast(ir.Class) realType(_typeid.type);
-		if (clazz is null) {
-			_typeid.tinfoType = ctx.lp.typeInfoClass;
-		} else {
-			_typeid.tinfoType = ctx.lp.classInfoClass;
-		}
-
-		return ContinueParent;
-	}
-
 	override Status visit(ref ir.Exp exp, ir.TokenExp fexp)
 	{
 		if (fexp.type == ir.TokenExp.Type.File) {
@@ -4362,6 +4354,13 @@ public:
 	 * Converted.
 	 *
 	 */
+
+	override Status leave(ref ir.Exp exp, ir.Typeid) { assert(false); }
+	override Status enter(ref ir.Exp exp, ir.Typeid)
+	{
+		extype(ctx, exp, Parent.NA);
+		return ContinueParent;
+	}
 
 	override Status leave(ref ir.Exp exp, ir.ArrayLiteral) { assert(false); }
 	override Status enter(ref ir.Exp exp, ir.ArrayLiteral)
