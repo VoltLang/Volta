@@ -2573,19 +2573,63 @@ ir.Type extypeTraitsExp(Context ctx, ref ir.Exp exp, Parent parent)
 	return te.type;
 }
 
+ir.Type extypeArrayLiteral(Context ctx, ref ir.Exp exp, Parent parent)
+{
+	auto al = cast(ir.ArrayLiteral) exp;
+	ir.Type base;
+
+	if (al.exps.length > 0) {
+		auto types = new ir.Type[](al.exps.length);
+
+		foreach (i, ref e; al.exps) {
+			types[i] = extype(ctx, e, Parent.NA);
+		}
+
+		base = getCommonSubtype(al.location, types);
+	} else {
+		base = buildVoid(al.location);
+	}
+
+	if (al.type !is null) {
+		accept(al.type, ctx.extyper);
+	}
+
+	auto asClass = cast(ir.Class) realType(base);
+	if (al.type is null || asClass !is null) {
+		al.type = buildArrayTypeSmart(al.location, base);
+	}
+
+	panicAssert(al, al.type !is null);
+
+	auto at = cast(ir.ArrayType) realType(al.type);
+	if (at is null) {
+		return al.type;
+	}
+
+	foreach (ref e; al.exps) {
+		auto c = cast(ir.Constant)e;
+		if (c is null) {
+			continue;
+		}
+		auto et = getExpType(e);
+		auto prim = cast(ir.PrimitiveType)realType(et);
+		if (prim is null) {
+			continue;
+		}
+		if (!typesEqual(et, at.base) && willConvert(ctx, at.base, e)) {
+			e = buildCastSmart(exp.location, at.base, e);
+		}
+	}
+
+	return al.type;
+}
+
 
 /*
  *
  * Stub functions.
  *
  */
-
-ir.Type extypeArrayLiteral(Context ctx, ref ir.Exp exp, Parent parent)
-{
-	// TODO XXX actually implement.
-	acceptExp(exp, ctx.extyper);
-	return getExpType(exp);
-}
 
 ir.Type extypeAssert(Context ctx, ref ir.Exp exp, Parent parent)
 {
@@ -4199,40 +4243,6 @@ public:
 	 *
 	 */
 
-	override Status leave(ref ir.Exp exp, ir.ArrayLiteral al)
-	{
-		ir.Type base;
-		if (al.exps.length > 0) {
-			base = getCommonSubtype(al.location, expsToTypes(al.exps));
-		} else {
-			base = buildVoid(al.location);
-		}
-		auto asClass = cast(ir.Class)realType(base);
-		if (al.type is null || asClass !is null) {
-			al.type = buildArrayTypeSmart(al.location, base);
-		}
-		panicAssert(al, al.type !is null);
-		auto at = cast(ir.ArrayType)realType(al.type);
-		if (at is null) {
-			return Continue;
-		}
-		foreach (ref e; al.exps) {
-			auto c = cast(ir.Constant)e;
-			if (c is null) {
-				continue;
-			}
-			auto et = getExpType(e);
-			auto prim = cast(ir.PrimitiveType)realType(et);
-			if (prim is null) {
-				continue;
-			}
-			if (!typesEqual(et, at.base) && willConvert(ctx, at.base, e)) {
-				e = buildCastSmart(exp.location, at.base, e);
-			}
-		}
-		return Continue;
-	}
-
 	override Status leave(ref ir.Exp exp, ir.Typeid _typeid)
 	{
 		if (_typeid.ident.length > 0) {
@@ -4355,6 +4365,13 @@ public:
 	 * Converted.
 	 *
 	 */
+
+	override Status leave(ref ir.Exp exp, ir.ArrayLiteral) { assert(false); }
+	override Status enter(ref ir.Exp exp, ir.ArrayLiteral)
+	{
+		extype(ctx, exp, Parent.NA);
+		return ContinueParent;
+	}
 
 	override Status visit(ref ir.Exp exp, ir.TraitsExp)
 	{
