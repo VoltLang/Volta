@@ -2500,6 +2500,31 @@ ir.Type extypeAssocArray(Context ctx, ref ir.Exp exp, Parent parent)
 	return aaType;
 }
 
+ir.Type extypeVaArgExp(Context ctx, ref ir.Exp exp, Parent parent)
+{
+	auto vaexp = cast(ir.VaArgExp) exp;
+
+	vaexp.type = ctx.lp.resolve(ctx.current, vaexp.type);
+	accept(vaexp.type, ctx.extyper);
+
+	auto t = extype(ctx, vaexp.arg, Parent.NA);
+
+	if (!isLValue(vaexp.arg)) {
+		throw makeVaFooMustBeLValue(vaexp.arg.location, "va_exp");
+	}
+	if (ctx.currentFunction.type.linkage == ir.Linkage.C) {
+		if (vaexp.type.nodeType != ir.NodeType.PrimitiveType &&
+				vaexp.type.nodeType != ir.NodeType.PointerType) {
+			throw makeCVaArgsOnlyOperateOnSimpleTypes(vaexp.location);
+		}
+		vaexp.arg = buildAddrOf(vaexp.location, copyExp(vaexp.arg));
+	} else {
+		exp = getVaArgCast(vaexp.location, ctx.lp, vaexp);
+	}
+
+	return vaexp.type;
+}
+
 
 /*
  *
@@ -2592,13 +2617,6 @@ ir.Type extypeStatementExp(Context ctx, ref ir.Exp exp, Parent parent)
 }
 
 ir.Type extypeTokenExp(Context ctx, ref ir.Exp exp, Parent parent)
-{
-	// TODO XXX actually implement.
-	acceptExp(exp, ctx.extyper);
-	return getExpType(exp);
-}
-
-ir.Type extypeVaArgExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
@@ -4239,28 +4257,6 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ref ir.Exp exp, ir.VaArgExp vaexp)
-	{
-		vaexp.type = ctx.lp.resolve(ctx.current, vaexp.type);
-		return Continue;
-	}
-
-	override Status leave(ref ir.Exp exp, ir.VaArgExp vaexp)
-	{
-		if (!isLValue(vaexp.arg)) {
-			throw makeVaFooMustBeLValue(vaexp.arg.location, "va_exp");
-		}
-		if (ctx.currentFunction.type.linkage == ir.Linkage.C) {
-			if (vaexp.type.nodeType != ir.NodeType.PrimitiveType && vaexp.type.nodeType != ir.NodeType.PointerType) {
-				throw makeCVaArgsOnlyOperateOnSimpleTypes(vaexp.location);
-			}
-			vaexp.arg = buildAddrOf(vaexp.location, copyExp(vaexp.arg));
-		} else {
-			exp = getVaArgCast(vaexp.location, ctx.lp, vaexp);
-		}
-		return Continue;
-	}
-
 	override Status visit(ref ir.Exp exp, ir.ExpReference eref)
 	{
 		ctx.lp.resolve(ctx.current, eref);
@@ -4346,6 +4342,13 @@ public:
 	 * Converted.
 	 *
 	 */
+
+	override Status leave(ref ir.Exp exp, ir.VaArgExp) { assert(false); }
+	override Status enter(ref ir.Exp exp, ir.VaArgExp)
+	{
+		extype(ctx, exp, Parent.NA);
+		return ContinueParent;
+	}
 
 	override Status leave(ref ir.Exp exp, ir.AssocArray) { assert(false); }
 	override Status enter(ref ir.Exp exp, ir.AssocArray)
