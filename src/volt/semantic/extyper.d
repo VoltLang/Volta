@@ -4243,47 +4243,44 @@ public:
 	 *
 	 */
 
-	override Status leave(ref ir.Exp exp, ir.Typeid _typeid)
+	override Status leave(ref ir.Exp exp, ir.Typeid) { assert(false); }
+	override Status enter(ref ir.Exp exp, ir.Typeid)
 	{
-		if (_typeid.ident.length > 0) {
-			auto store = lookup(ctx.lp, ctx.current, _typeid.location, _typeid.ident);
-			if (store is null) {
-				throw makeFailedLookup(_typeid, _typeid.ident);
-			}
-			switch (store.kind) with (ir.Store.Kind) {
-			case Type:
-				_typeid.type = buildTypeReference(_typeid.location, cast(ir.Type) store.node, _typeid.ident);
-				assert(_typeid.type !is null);
-				break;
-			case Value, EnumDeclaration, FunctionParam, Function:
-				auto decl = cast(ir.Declaration) store.node;
-				_typeid.exp = buildExpReference(_typeid.location, decl, _typeid.ident);
-				break;
-			default:
-				throw panicUnhandled(_typeid, "store kind");
-			}
-			_typeid.ident = null;
+		auto _typeid = cast(ir.Typeid) exp;
+
+		// Already extype:d this exp?
+		if (_typeid.tinfoType !is null) {
+			assert(_typeid.exp is null);
+			assert(_typeid.tinfoType !is null);
+			return ContinueParent;
+		}
+
+		if (_typeid.type !is null) {
+			accept(_typeid.type, ctx.extyper);
 		}
 		if (_typeid.exp !is null) {
-			_typeid.type = getExpType(_typeid.exp);
+			_typeid.type = extype(ctx, _typeid.exp, Parent.NA);
+
 			if ((cast(ir.Aggregate) _typeid.type) !is null) {
 				_typeid.type = buildTypeReference(_typeid.type.location, _typeid.type);
 			} else {
 				_typeid.type = copyType(_typeid.type);
 			}
+
 			_typeid.exp = null;
 		}
 
 		_typeid.type = ctx.lp.resolve(ctx.current, _typeid.type);
 		replaceTypeOfIfNeeded(ctx, _typeid.type);
 
-		auto clazz = cast(ir.Class)realType(_typeid.type);
+		auto clazz = cast(ir.Class) realType(_typeid.type);
 		if (clazz is null) {
 			_typeid.tinfoType = ctx.lp.typeInfoClass;
 		} else {
 			_typeid.tinfoType = ctx.lp.classInfoClass;
 		}
-		return Continue;
+
+		return ContinueParent;
 	}
 
 	override Status visit(ref ir.Exp exp, ir.TokenExp fexp)

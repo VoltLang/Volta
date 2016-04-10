@@ -324,13 +324,6 @@ ir.Typeid copy(ir.Typeid old)
 	if (old.type !is null) {
 		tid.type = copyType(old.type);
 	}
-	if (old.ident !is null) {
-		version (Volt) {
-			tid.ident = new old.ident[0 .. $];
-		} else {
-			tid.ident = tid.ident.dup;
-		}
-	}
 	return tid;
 }
 

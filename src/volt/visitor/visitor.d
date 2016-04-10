@@ -2025,13 +2025,12 @@ Visitor.Status acceptTypeid(ref ir.Exp exp, ir.Typeid ti, Visitor av)
 		return acceptExp(exp, av);
 	}
 
-	if (ti.ident.length == 0) {
-		if (ti.exp !is null) {
-			status = acceptExp(ti.exp, av);
-		} else {
-			status = accept(ti.type, av);
-		}
+	if (ti.exp !is null) {
+		status = acceptExp(ti.exp, av);
+	} else {
+		status = accept(ti.type, av);
 	}
+
 	if (status == VisitorStop) {
 		return VisitorStop;
 	}

@@ -365,9 +365,7 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 		break;
 	case intir.PrimaryExp.Type.Typeid:
 		auto ti = new ir.Typeid();
-		if (primary._string !is null) {
-			ti.ident = primary._string;
-		} else if (primary.exp !is null) {
+		if (primary.exp !is null) {
 			ti.exp = primary.exp;
 		} else {
 			ti.type = primary.type;
@@ -1767,22 +1765,17 @@ ParseStatus parsePrimaryExp(ParserStream ps, out intir.PrimaryExp exp)
 		if (!succeeded) {
 			return succeeded;
 		}
-		if (ps.peek.type == TokenType.Identifier) {
-			auto nameTok = ps.get();
-			exp._string = nameTok.value;
-		} else {
-			auto mark = ps.save();
+		auto mark = ps.save();
+		succeeded = parseExp(ps, exp.exp);
+		if (!succeeded) {
+			if (ps.neverIgnoreError) {
+				return Failed;
+			}
+			ps.restore(mark);
+			ps.resetErrors();
 			succeeded = parseType(ps, exp.type);
 			if (!succeeded) {
-				if (ps.neverIgnoreError) {
-					return Failed;
-				}
-				ps.restore(mark);
-				ps.resetErrors();
-				succeeded = parseExp(ps, exp.exp);
-				if (!succeeded) {
-					return parseFailed(ps, ir.NodeType.Typeid);
-				}
+				return parseFailed(ps, ir.NodeType.Typeid);
 			}
 		}
 		succeeded = match(ps, ir.NodeType.Typeid, TokenType.CloseParen);

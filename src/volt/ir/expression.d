@@ -406,7 +406,6 @@ public:
 	// One of these will be non empty.
 	Exp exp;  // Optional.
 	Type type;  // Optional.
-	string ident;  // Optional.
 	Type tinfoType;  // Optional.
 
 public:

@@ -632,14 +632,6 @@ public:
 		}
 	}
 
-	override Status enter(ref ir.Exp exp, ir.Typeid tid)
-	{
-		if (tid.ident.length > 0) {
-			replaceNestedNames(tid.ident);
-		}
-		return Continue;
-	}
-
 	override Status visit(ref ir.Exp exp, ir.IdentifierExp iexp)
 	{
 		if (!iexp.globalLookup) {
