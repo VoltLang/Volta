@@ -2663,6 +2663,84 @@ ir.Type extypeTypeid(Context ctx, ref ir.Exp exp, Parent parent)
 	return _typeid.tinfoType;
 }
 
+ir.Type extypeTokenExp(Context ctx, ref ir.Exp exp, Parent parent)
+{
+	auto fexp = cast(ir.TokenExp) exp;
+
+	if (fexp.type == ir.TokenExp.Type.File) {
+		string fname = fexp.location.filename;
+		version (Windows) {
+			fname = fname.replace("\\", "/");
+		}
+		ir.Constant c;
+		exp = c = buildConstantString(fexp.location, fname);
+		return c.type;
+	} else if (fexp.type == ir.TokenExp.Type.Line) {
+		ir.Constant c;
+		exp = c = buildConstantInt(fexp.location, cast(int) fexp.location.line);
+		return c.type;
+	}
+
+	char[] buf;
+	void sink(string s)
+	{
+		buf ~= s;
+	}
+	version (Volt) {
+		// @TODO fix this.
+		// auto buf = new StringSink();
+		// auto pp = new PrettyPrinter("\t", buf.sink);
+		auto pp = new PrettyPrinter("\t", cast(void delegate(string))sink);
+	} else {
+		auto pp = new PrettyPrinter("\t", &sink);
+	}
+
+	string[] names;
+	ir.Scope scop = ctx.current;
+	ir.Function foundFunction;
+	while (scop !is null) {
+		if (scop.node.nodeType != ir.NodeType.BlockStatement) {
+			names ~= scop.name;
+		}
+		if (scop.node.nodeType == ir.NodeType.Function) {
+			foundFunction = cast(ir.Function) scop.node;
+		}
+		scop = scop.parent;
+	}
+	if (foundFunction is null) {
+		throw makeFunctionNameOutsideOfFunction(fexp);
+	}
+
+	if (fexp.type == ir.TokenExp.Type.PrettyFunction) {
+		pp.transformType(foundFunction.type.ret);
+		buf ~= " ";
+	}
+
+	foreach_reverse (i, name; names) {
+		buf ~= name ~ (i > 0 ? "." : "");
+	}
+
+	if (fexp.type == ir.TokenExp.Type.PrettyFunction) {
+		buf ~= "(";
+		foreach (i, ptype; ctx.currentFunction.type.params) {
+			pp.transformType(ptype);
+			if (i < ctx.currentFunction.type.params.length - 1) {
+				buf ~= ", ";
+			}
+		}
+		buf ~= ")";
+	}
+
+	version (Volt) {
+		auto str = new string(buf);
+	} else {
+		auto str = buf.idup;
+	}
+	ir.Constant c;
+	exp = c = buildConstantString(fexp.location, str);
+	return c.type;
+}
+
 
 /*
  *
@@ -2720,13 +2798,6 @@ ir.Type extypeTemplateInstanceExp(Context ctx, ref ir.Exp exp, Parent parent)
 }
 
 ir.Type extypeStatementExp(Context ctx, ref ir.Exp exp, Parent parent)
-{
-	// TODO XXX actually implement.
-	acceptExp(exp, ctx.extyper);
-	return getExpType(exp);
-}
-
-ir.Type extypeTokenExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
@@ -4271,89 +4342,15 @@ public:
 
 	/*
 	 *
-	 * Expressions.
-	 *
-	 */
-
-	override Status visit(ref ir.Exp exp, ir.TokenExp fexp)
-	{
-		if (fexp.type == ir.TokenExp.Type.File) {
-			string fname = fexp.location.filename;
-			version (Windows) {
-				fname = fname.replace("\\", "/");
-			}
-			exp = buildConstantString(fexp.location, fname);
-			return Continue;
-		} else if (fexp.type == ir.TokenExp.Type.Line) {
-			exp = buildConstantInt(fexp.location, cast(int) fexp.location.line);
-			return Continue;
-		}
-
-		char[] buf;
-		void sink(string s)
-		{
-			buf ~= s;
-		}
-		version (Volt) {
-			// @TODO fix this.
-			// auto buf = new StringSink();
-			// auto pp = new PrettyPrinter("\t", buf.sink);
-			auto pp = new PrettyPrinter("\t", cast(void delegate(string))sink);
-		} else {
-			auto pp = new PrettyPrinter("\t", &sink);
-		}
-
-		string[] names;
-		ir.Scope scop = ctx.current;
-		ir.Function foundFunction;
-		while (scop !is null) {
-			if (scop.node.nodeType != ir.NodeType.BlockStatement) {
-				names ~= scop.name;
-			}
-			if (scop.node.nodeType == ir.NodeType.Function) {
-				foundFunction = cast(ir.Function) scop.node;
-			}
-			scop = scop.parent;
-		}
-		if (foundFunction is null) {
-			throw makeFunctionNameOutsideOfFunction(fexp);
-		}
-
-		if (fexp.type == ir.TokenExp.Type.PrettyFunction) {
-			pp.transformType(foundFunction.type.ret);
-			buf ~= " ";
-		}
-
-		foreach_reverse (i, name; names) {
-			buf ~= name ~ (i > 0 ? "." : "");
-		}
-
-		if (fexp.type == ir.TokenExp.Type.PrettyFunction) {
-			buf ~= "(";
-			foreach (i, ptype; ctx.currentFunction.type.params) {
-				pp.transformType(ptype);
-				if (i < ctx.currentFunction.type.params.length - 1) {
-					buf ~= ", ";
-				}
-			}
-			buf ~= ")";
-		}
-
-		version (Volt) {
-			auto str = new string(buf);
-		} else {
-			auto str = buf.idup;
-		}
-		exp = buildConstantString(fexp.location, str);
-		return Continue;
-	}
-
-
-	/*
-	 *
 	 * Converted.
 	 *
 	 */
+
+	override Status visit(ref ir.Exp exp, ir.TokenExp)
+	{
+		extype(ctx, exp, Parent.NA);
+		return Continue;
+	}
 
 	override Status leave(ref ir.Exp exp, ir.Typeid) { assert(false); }
 	override Status enter(ref ir.Exp exp, ir.Typeid)
