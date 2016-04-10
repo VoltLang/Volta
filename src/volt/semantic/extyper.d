@@ -2525,6 +2525,33 @@ ir.Type extypeVaArgExp(Context ctx, ref ir.Exp exp, Parent parent)
 	return vaexp.type;
 }
 
+ir.Type extypeExpReference(Context ctx, ref ir.Exp exp, Parent parent)
+{
+	auto eref = cast(ir.ExpReference) exp;
+	panicAssert(eref, eref.decl !is null);
+
+	ctx.lp.resolve(ctx.current, eref);
+
+	switch (eref.decl.nodeType) with (ir.NodeType) {
+	case Variable:
+		auto var = cast(ir.Variable) eref.decl;
+		return var.type;
+	case Function:
+		auto func = cast(ir.Function) eref.decl;
+		return func.type;
+	case EnumDeclaration:
+		auto ed = cast(ir.EnumDeclaration) eref.decl;
+		return ed.type;
+	case FunctionParam:
+		auto fp = cast(ir.FunctionParam) eref.decl;
+		return fp.type;
+	case FunctionSet:
+		auto set = cast(ir.FunctionSet) eref.decl;
+		return set.type;
+	default:
+		throw panicUnhandled(eref, "ExpReference case");
+	}
+}
 
 /*
  *
@@ -2561,13 +2588,6 @@ ir.Type extypeTypeid(Context ctx, ref ir.Exp exp, Parent parent)
 }
 
 ir.Type extypeFunctionLiteral(Context ctx, ref ir.Exp exp, Parent parent)
-{
-	// TODO XXX actually implement.
-	acceptExp(exp, ctx.extyper);
-	return getExpType(exp);
-}
-
-ir.Type extypeExpReference(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
@@ -4257,12 +4277,6 @@ public:
 		return Continue;
 	}
 
-	override Status visit(ref ir.Exp exp, ir.ExpReference eref)
-	{
-		ctx.lp.resolve(ctx.current, eref);
-		return Continue;
-	}
-
 	override Status visit(ref ir.Exp exp, ir.TokenExp fexp)
 	{
 		if (fexp.type == ir.TokenExp.Type.File) {
@@ -4342,6 +4356,12 @@ public:
 	 * Converted.
 	 *
 	 */
+
+	override Status visit(ref ir.Exp exp, ir.ExpReference)
+	{
+		extype(ctx, exp, Parent.NA);
+		return Continue;
+	}
 
 	override Status leave(ref ir.Exp exp, ir.VaArgExp) { assert(false); }
 	override Status enter(ref ir.Exp exp, ir.VaArgExp)
