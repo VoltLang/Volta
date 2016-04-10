@@ -2553,6 +2553,27 @@ ir.Type extypeExpReference(Context ctx, ref ir.Exp exp, Parent parent)
 	}
 }
 
+ir.Type extypeTraitsExp(Context ctx, ref ir.Exp exp, Parent parent)
+{
+	auto te = cast(ir.TraitsExp) exp;
+
+	if (te.op != ir.TraitsExp.Op.GetAttribute) {
+		throw panicUnhandled(exp.location, "non get-attribute traits expression");
+	}
+
+	auto store = lookup(ctx.lp, ctx.current, te.qname);
+	auto attr = cast(ir.UserAttribute) store.node;
+	if (attr is null) {
+		throw panic(te.location, "expected @interface.");
+	}
+
+	ctx.lp.actualize(attr);
+	te.type = attr.layoutClass;
+
+	return te.type;
+}
+
+
 /*
  *
  * Stub functions.
@@ -2602,13 +2623,6 @@ ir.Type extypeUnionLiteral(Context ctx, ref ir.Exp exp, Parent parent)
 }
 
 ir.Type extypeClassLiteral(Context ctx, ref ir.Exp exp, Parent parent)
-{
-	// TODO XXX actually implement.
-	acceptExp(exp, ctx.extyper);
-	return getExpType(exp);
-}
-
-ir.Type extypeTraitsExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	// TODO XXX actually implement.
 	acceptExp(exp, ctx.extyper);
@@ -4185,21 +4199,6 @@ public:
 	 *
 	 */
 
-	override Status visit(ref ir.Exp exp, ir.TraitsExp te)
-	{
-		if (te.op != ir.TraitsExp.Op.GetAttribute) {
-			throw panicUnhandled(exp.location, "non get-attribute traits expression");
-		}
-		auto store = lookup(ctx.lp, ctx.current, te.qname);
-		auto attr = cast(ir.UserAttribute)store.node;
-		if (attr is null) {
-			throw panic(te.location, "expected @interface.");
-		}
-		ctx.lp.actualize(attr);
-		te.type = attr.layoutClass;
-		return Continue;
-	}
-
 	override Status leave(ref ir.Exp exp, ir.ArrayLiteral al)
 	{
 		ir.Type base;
@@ -4356,6 +4355,12 @@ public:
 	 * Converted.
 	 *
 	 */
+
+	override Status visit(ref ir.Exp exp, ir.TraitsExp)
+	{
+		extype(ctx, exp, Parent.NA);
+		return Continue;
+	}
 
 	override Status visit(ref ir.Exp exp, ir.ExpReference)
 	{
