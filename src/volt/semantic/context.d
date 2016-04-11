@@ -43,14 +43,7 @@ public:
 	 */
 	final void setupFromScope(ir.Scope _scope)
 	{
-		auto current = _scope;
-		while  (current !is null) {
-			auto func = cast(ir.Function) current.node;
-			if (func !is null) {
-				push(func, current, func);
-			}
-			current = current.parent;
-		}
+		reversePush(_scope);
 		mCurrent = _scope;
 	}
 
@@ -190,6 +183,26 @@ public:
 	}
 
 private:
+	/**
+	 * This function is called from setupFromScope.
+	 *
+	 * Since we are called from a inner scope we need to get the outer most
+	 * scope and work our way back to the scope given to setupFromScope.
+	 *
+	 * TODO handle more then just functions, for example WithStatements.
+	 */
+	final void reversePush(ir.Scope _scope)
+	{
+		if (_scope.parent !is null) {
+			reversePush(_scope.parent);
+		}
+
+		auto func = cast(ir.Function) _scope.node;
+		if (func !is null) {
+			push(func, _scope, func);
+		}
+	}
+
 	void push(ir.Node n, ir.Scope ctx, ir.Function func)
 	{
 		if (func !is null) {
