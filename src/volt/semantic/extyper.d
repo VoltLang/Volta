@@ -2954,7 +2954,8 @@ void extypeThrow(Context ctx, ir.ThrowStatement t)
 	auto throwable = cast(ir.Class) retrieveTypeFromObject(ctx.lp, t.location, "Throwable");
 	assert(throwable !is null);
 
-	auto type = realType(getExpType(t.exp), false);
+	auto rawType = extype(ctx, t.exp, Parent.NA);
+	auto type = realType(rawType, false);
 	auto asClass = cast(ir.Class) type;
 	if (asClass is null) {
 		throw makeThrowOnlyThrowable(t.exp, type);
@@ -4263,7 +4264,16 @@ public:
 		}
 
 		foreach (_case; ss.cases) {
-			accept(_case, this);
+			if (_case.firstExp !is null) {
+				extype(ctx, _case.firstExp, Parent.NA);
+			}
+			if (_case.secondExp !is null) {
+				extype(ctx, _case.secondExp, Parent.NA);
+			}
+			foreach (ref exp; _case.exps) {
+				extype(ctx, exp, Parent.NA);
+			}
+			accept(_case.statements, this);
 		}
 
 		verifySwitchStatement(ctx, ss);
@@ -4275,16 +4285,12 @@ public:
 		return ContinueParent;
 	}
 
-	override Status leave(ir.ThrowStatement t)
+	override Status enter(ir.AssertStatement as)
 	{
-		extypeThrow(ctx, t);
-		return Continue;
-	}
+		extype(ctx, as.condition, Parent.NA);
 
-	override Status leave(ir.AssertStatement as)
-	{
 		if (!as.isStatic) {
-			return Continue;
+			return ContinueParent;
 		}
 		as.condition = evaluate(ctx.lp, ctx.current, as.condition);
 		if (as.message !is null) {
@@ -4303,28 +4309,55 @@ public:
 		if (!cond.u._bool) {
 			throw makeStaticAssert(as, msg._string);
 		}
-		return Continue;
+		return ContinueParent;
 	}
 
 	override Status enter(ir.BlockStatement bs)
 	{
 		emitNestedFromBlock(ctx, ctx.currentFunction, bs);
+
 		ctx.enter(bs);
-		// Translate runtime asserts before processing the block.
-		for (size_t i = 0; i < bs.statements.length; i++) {
-			auto as = cast(ir.AssertStatement) bs.statements[i];
-			if (as is null || as.isStatic) {
-				continue;
+
+		foreach (ref stat; bs.statements) {
+
+			// Translate runtime asserts before processing the block.
+			switch (stat.nodeType) with (ir.NodeType) {
+			case AssertStatement:
+				auto as = cast(ir.AssertStatement) stat;
+				if (as is null || as.isStatic) {
+					break;
+				}
+				stat = transformRuntimeAssert(ctx, as);
+				break;
+			default:
 			}
-			bs.statements[i] = transformRuntimeAssert(ctx, as);
+
+			accept(stat, this);
 		}
-		return Continue;
+
+		ctx.leave(bs);
+
+		return ContinueParent;
 	}
 
-	override Status leave(ir.BlockStatement bs)
+	override Status enter(ir.GotoStatement gs)
 	{
-		ctx.leave(bs);
-		return Continue;
+		if (gs.exp !is null) {
+			extype(ctx, gs.exp, Parent.NA);
+		}
+		return ContinueParent;
+	}
+
+	override Status enter(ir.ThrowStatement t)
+	{
+		extypeThrow(ctx, t);
+		return ContinueParent;
+	}
+
+	override Status enter(ir.ExpStatement es)
+	{
+		extype(ctx, es.exp, Parent.NA);
+		return ContinueParent;
 	}
 
 
@@ -4346,118 +4379,62 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.TypeOf tf)
+	{
+		extype(ctx, tf.exp, Parent.NA);
+		return ContinueParent;
+	}
+
 
 	/*
 	 *
-	 * Converted.
+	 * Error checking.
 	 *
 	 */
 
-	override Status visit(ref ir.Exp exp, ir.TokenExp)
-	{
-		extype(ctx, exp, Parent.NA);
-		return Continue;
-	}
+	override Status leave(ir.TypeOf n) { throw panic(n, "visitor"); }
 
-	override Status leave(ref ir.Exp exp, ir.Typeid) { assert(false); }
-	override Status enter(ref ir.Exp exp, ir.Typeid)
-	{
-		extype(ctx, exp, Parent.NA);
-		return ContinueParent;
-	}
+	override Status leave(ir.IfStatement n) { throw panic(n, "visitor"); }
+	override Status leave(ir.DoStatement n) { throw panic(n, "visitor"); }
+	override Status leave(ir.ForStatement n) { throw panic(n, "visitor"); }
+	override Status leave(ir.ExpStatement n) { throw panic(n, "visitor"); }
+	override Status leave(ir.WithStatement n) { throw panic(n, "visitor"); }
+	override Status leave(ir.GotoStatement n) { throw panic(n, "visitor"); }
+	override Status leave(ir.ThrowStatement n) { throw panic(n, "visitor"); }
+	override Status leave(ir.BlockStatement n) { throw panic(n, "visitor"); }
+	override Status leave(ir.WhileStatement n) { throw panic(n, "visitor"); }
+	override Status leave(ir.SwitchStatement n) { throw panic(n, "visitor"); }
+	override Status leave(ir.AssertStatement n) { throw panic(n, "visitor"); }
+	override Status leave(ir.ReturnStatement n) { throw panic(n, "visitor"); }
+	override Status leave(ir.ForeachStatement n) { throw panic(n, "visitor"); }
 
-	override Status leave(ref ir.Exp exp, ir.ArrayLiteral) { assert(false); }
-	override Status enter(ref ir.Exp exp, ir.ArrayLiteral)
-	{
-		extype(ctx, exp, Parent.NA);
-		return ContinueParent;
-	}
+	override Status enter(ref ir.Exp exp, ir.IsExp) { throw panic(exp, "visitor"); }
+	override Status leave(ref ir.Exp exp, ir.IsExp) { throw panic(exp, "visitor"); }
+	override Status enter(ref ir.Exp exp, ir.BinOp) { throw panic(exp, "visitor"); }
+	override Status leave(ref ir.Exp exp, ir.BinOp) { throw panic(exp, "visitor"); }
+	override Status enter(ref ir.Exp exp, ir.Unary) { throw panic(exp, "visitor"); }
+	override Status leave(ref ir.Exp exp, ir.Unary) { throw panic(exp, "visitor"); }
+	override Status enter(ref ir.Exp exp, ir.Typeid) { throw panic(exp, "visitor"); }
+	override Status leave(ref ir.Exp exp, ir.Typeid) { throw panic(exp, "visitor"); }
+	override Status enter(ref ir.Exp exp, ir.Postfix) { throw panic(exp, "visitor"); }
+	override Status leave(ref ir.Exp exp, ir.Postfix) { throw panic(exp, "visitor"); }
+	override Status enter(ref ir.Exp exp, ir.Ternary) { throw panic(exp, "visitor"); }
+	override Status leave(ref ir.Exp exp, ir.Ternary) { throw panic(exp, "visitor"); }
+	override Status enter(ref ir.Exp exp, ir.TypeExp) { throw panic(exp, "visitor"); }
+	override Status leave(ref ir.Exp exp, ir.TypeExp) { throw panic(exp, "visitor"); }
+	override Status enter(ref ir.Exp exp, ir.VaArgExp) { throw panic(exp, "visitor"); }
+	override Status leave(ref ir.Exp exp, ir.VaArgExp) { throw panic(exp, "visitor"); }
+	override Status enter(ref ir.Exp exp, ir.Constant) { throw panic(exp, "visitor"); }
+	override Status leave(ref ir.Exp exp, ir.Constant) { throw panic(exp, "visitor"); }
+	override Status enter(ref ir.Exp exp, ir.AssocArray) { throw panic(exp, "visitor"); }
+	override Status leave(ref ir.Exp exp, ir.AssocArray) { throw panic(exp, "visitor"); }
+	override Status enter(ref ir.Exp exp, ir.ArrayLiteral) { throw panic(exp, "visitor"); }
+	override Status leave(ref ir.Exp exp, ir.ArrayLiteral) { throw panic(exp, "visitor"); }
+	override Status enter(ref ir.Exp exp, ir.StructLiteral) { throw panic(exp, "visitor"); }
+	override Status leave(ref ir.Exp exp, ir.StructLiteral) { throw panic(exp, "visitor"); }
 
-	override Status visit(ref ir.Exp exp, ir.TraitsExp)
-	{
-		extype(ctx, exp, Parent.NA);
-		return Continue;
-	}
-
-	override Status visit(ref ir.Exp exp, ir.ExpReference)
-	{
-		extype(ctx, exp, Parent.NA);
-		return Continue;
-	}
-
-	override Status leave(ref ir.Exp exp, ir.VaArgExp) { assert(false); }
-	override Status enter(ref ir.Exp exp, ir.VaArgExp)
-	{
-		extype(ctx, exp, Parent.NA);
-		return ContinueParent;
-	}
-
-	override Status leave(ref ir.Exp exp, ir.AssocArray) { assert(false); }
-	override Status enter(ref ir.Exp exp, ir.AssocArray)
-	{
-		extype(ctx, exp, Parent.NA);
-		return ContinueParent;
-	}
-
-	override Status leave(ref ir.Exp exp, ir.TypeExp) { assert(false); }
-	override Status enter(ref ir.Exp exp, ir.TypeExp)
-	{
-		extype(ctx, exp, Parent.NA);
-		return ContinueParent;
-	}
-
-	override Status leave(ref ir.Exp e, ir.BinOp) { assert(false); }
-	override Status enter(ref ir.Exp e, ir.BinOp)
-	{
-		extype(ctx, e, Parent.NA);
-		return ContinueParent;
-	}
-
-	override Status leave(ref ir.Exp exp, ir.Postfix) { assert(false); }
-	override Status enter(ref ir.Exp exp, ir.Postfix)
-	{
-		extype(ctx, exp, Parent.NA);
-		return ContinueParent;
-	}
-
-	override Status leave(ref ir.Exp exp, ir.Unary) { assert(false); }
-	override Status enter(ref ir.Exp exp, ir.Unary)
-	{
-		extype(ctx, exp, Parent.NA);
-		return ContinueParent;
-	}
-
-	override Status leave(ref ir.Exp exp, ir.Ternary) { assert(false); }
-	override Status enter(ref ir.Exp exp, ir.Ternary)
-	{
-		extype(ctx, exp, Parent.NA);
-		return ContinueParent;
-	}
-
-	override Status leave(ref ir.Exp exp, ir.Constant) { assert(false); }
-	override Status enter(ref ir.Exp exp, ir.Constant)
-	{
-		extype(ctx, exp, Parent.NA);
-		return ContinueParent;
-	}
-
-	override Status leave(ref ir.Exp exp, ir.StructLiteral) { assert(false); }
-	override Status enter(ref ir.Exp exp, ir.StructLiteral)
-	{
-		extype(ctx, exp, Parent.NA);
-		return ContinueParent;
-	}
-
-	override Status leave(ref ir.Exp exp, ir.IsExp) { assert(false); }
-	override Status enter(ref ir.Exp exp, ir.IsExp)
-	{
-		extype(ctx, exp, Parent.NA);
-		return ContinueParent;
-	}
-
-	override Status visit(ref ir.Exp exp, ir.IdentifierExp)
-	{
-		extype(ctx, exp, Parent.NA);
-		return Continue;
-	}
+	override Status visit(ref ir.Exp exp, ir.TokenExp) { throw panic(exp, "visitor"); }
+	override Status visit(ref ir.Exp exp, ir.TraitsExp) { throw panic(exp, "visitor"); }
+	override Status visit(ref ir.Exp exp, ir.ExpReference) { throw panic(exp, "visitor"); }
+	override Status visit(ref ir.Exp exp, ir.IdentifierExp) { throw panic(exp, "visitor"); }
 }

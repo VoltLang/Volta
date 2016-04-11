@@ -394,7 +394,6 @@ void doConvertStaticArrayType(Context ctx, ir.StaticArrayType atype, ref ir.Exp 
 		}
 		auto ltype = realType(atype.base);
 		foreach (ref e; alit.exps) {
-			acceptExp(e, ctx.extyper);
 			checkAndDoConvert(ctx, ltype, e);
 		}
 	}
