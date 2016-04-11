@@ -2741,88 +2741,95 @@ ir.Type extypeTokenExp(Context ctx, ref ir.Exp exp, Parent parent)
 	return c.type;
 }
 
+ir.Type extypeStringImport(Context ctx, ref ir.Exp exp, Parent parent)
+{
+	auto str = cast(ir.StringImport) exp;
+
+	extype(ctx, str.filename, Parent.NA);
+
+	return buildString(exp.location);
+}
+
+ir.Type extypeStoreExp(Context ctx, ref ir.Exp exp, Parent parent)
+{
+	auto se = cast(ir.StoreExp) exp;
+	auto t = cast(ir.Type) se.store.node;
+	if (t !is null) {
+		return t;
+	}
+
+	return buildNoType(exp.location);
+}
+
+
 
 /*
  *
- * Stub functions.
+ * Shallow functions.
+ *
+ */
+
+ir.Type extypePropertyExp(Context ctx, ref ir.Exp exp, Parent parent)
+{
+	// No need to go deeper, assume already extyped.
+	auto prop = cast(ir.PropertyExp) exp;
+
+	if (prop.getFn is null) {
+		return buildNoType(prop.location);
+	} else {
+		return prop.getFn.type.ret;
+	}
+}
+
+ir.Type extypeBuiltinExp(Context ctx, ref ir.Exp exp, Parent parent)
+{
+	// No need to go deeper, assume already extyped.
+	auto be = cast(ir.BuiltinExp) exp;
+	return be.type;
+}
+
+ir.Type extypeAccessExp(Context ctx, ref ir.Exp exp, Parent parent)
+{
+	// No need to go deeper, assume already extyped.
+	auto access = cast(ir.AccessExp) exp;
+	return access.field.type;
+}
+
+
+/*
+ *
+ * Unhandled exps.
  *
  */
 
 ir.Type extypeAssert(Context ctx, ref ir.Exp exp, Parent parent)
 {
-	// TODO XXX actually implement.
-	acceptExp(exp, ctx.extyper);
-	return getExpType(exp);
-}
-
-ir.Type extypeStringImport(Context ctx, ref ir.Exp exp, Parent parent)
-{
-	// TODO XXX actually implement.
-	acceptExp(exp, ctx.extyper);
-	return getExpType(exp);
-}
-
-ir.Type extypeFunctionLiteral(Context ctx, ref ir.Exp exp, Parent parent)
-{
-	// TODO XXX actually implement.
-	acceptExp(exp, ctx.extyper);
-	return getExpType(exp);
-}
-
-ir.Type extypeUnionLiteral(Context ctx, ref ir.Exp exp, Parent parent)
-{
-	// TODO XXX actually implement.
-	acceptExp(exp, ctx.extyper);
-	return getExpType(exp);
-}
-
-ir.Type extypeClassLiteral(Context ctx, ref ir.Exp exp, Parent parent)
-{
-	// TODO XXX actually implement.
-	acceptExp(exp, ctx.extyper);
-	return getExpType(exp);
-}
-
-ir.Type extypeStoreExp(Context ctx, ref ir.Exp exp, Parent parent)
-{
-	// TODO XXX actually implement.
-	acceptExp(exp, ctx.extyper);
-	return getExpType(exp);
+	throw panicUnhandled(exp, "Assert (exp)");
 }
 
 ir.Type extypeTemplateInstanceExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
-	// TODO XXX actually implement.
-	acceptExp(exp, ctx.extyper);
-	return getExpType(exp);
+	throw panicUnhandled(exp, "TemplateInstanceExp");
 }
 
 ir.Type extypeStatementExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
-	// TODO XXX actually implement.
-	acceptExp(exp, ctx.extyper);
-	return getExpType(exp);
+	throw panicUnhandled(exp, "StatementExp");
 }
 
-ir.Type extypePropertyExp(Context ctx, ref ir.Exp exp, Parent parent)
+ir.Type extypeFunctionLiteral(Context ctx, ref ir.Exp exp, Parent parent)
 {
-	// TODO XXX actually implement.
-	acceptExp(exp, ctx.extyper);
-	return getExpType(exp);
+	throw panicUnhandled(exp, "FunctionLiteral");
 }
 
-ir.Type extypeBuiltinExp(Context ctx, ref ir.Exp exp, Parent parent)
+ir.Type extypeUnionLiteral(Context ctx, ref ir.Exp exp, Parent parent)
 {
-	// TODO XXX actually implement.
-	acceptExp(exp, ctx.extyper);
-	return getExpType(exp);
+	throw panicUnhandled(exp, "UnionLiteral");
 }
 
-ir.Type extypeAccessExp(Context ctx, ref ir.Exp exp, Parent parent)
+ir.Type extypeClassLiteral(Context ctx, ref ir.Exp exp, Parent parent)
 {
-	// TODO XXX actually implement.
-	acceptExp(exp, ctx.extyper);
-	return getExpType(exp);
+	throw panicUnhandled(exp, "ClassLiteral");
 }
 
 
