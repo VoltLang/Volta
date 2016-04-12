@@ -129,7 +129,7 @@ class ClassInfo : TypeInfo
 
 class InterfaceInfo
 {
-	char[] mangledName;
+	TypeInfo info;
 	size_t offset;
 }
 

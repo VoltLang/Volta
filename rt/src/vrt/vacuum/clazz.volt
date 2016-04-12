@@ -14,7 +14,7 @@ extern(C) void* vrt_handle_cast(void* obj, object.TypeInfo tinfo)
 		if (tinfo.type == object.TYPE_INTERFACE) {
 			auto cinfo = list[i];
 			foreach (iface; cinfo.interfaces) {
-				if (iface.mangledName == tinfo.mangledName) {
+				if (iface.info is tinfo) {
 					ubyte* ptr = cast(ubyte*)obj;
 					return cast(void*)(ptr + iface.offset);
 				}

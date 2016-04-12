@@ -245,15 +245,11 @@ ir.Exp[] getClassInfo(Location l, ir.Module mod, LanguagePass lp, ir.Class asCla
 		lit.type = buildTypeReference(l, lp.interfaceInfoClass, lp.interfaceInfoClass.name);
 		lit.location = l;
 
-		auto mangledNameConstant = new ir.Constant();
-		mangledNameConstant.location = iface.location;
 		if (iface.mangledName is null) {
 			iface.mangledName = mangle(iface);
 		}
-		mangledNameConstant._string = iface.mangledName;
-		mangledNameConstant.arrayData = cast(immutable(void)[]) mangledNameConstant._string;
-		mangledNameConstant.type = new ir.ArrayType(new ir.PrimitiveType(ir.PrimitiveType.Kind.Char));
-		lit.exps ~= mangledNameConstant;
+		auto ifaceVar = getTypeInfo(lp, mod, iface);
+		lit.exps ~= buildTypeInfoCast(lp, buildExpReference(l, ifaceVar));
 
 		lit.exps ~= buildConstantSizeT(l, lp, asClass.interfaceOffsets[i]);
 		interfaceLits ~= lit;
