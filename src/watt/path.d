@@ -5,7 +5,7 @@ module watt.path;
 
 import std.random : uniform;
 import std.process : environment;
-import std.file : exists, mkdir;
+import std.file : exists, mkdir, mkdirRecurse;
 import std.path : baseName, dirName, dirSeparator;
 
 
@@ -16,15 +16,21 @@ import watt.math.random;
  *
  * Params:
  *   extension = a string to be appended to the filename. Defaults to an empty string.
+ *   subdir = a directory in the temporary directory to place the file.
  *
  * Returns: an absolute path to a unique (as far as we can tell) filename. 
  */
-string temporaryFilename(string extension = "")
+string temporaryFilename(string extension = "", string subdir = "")
 {
 	version (Windows) {
 		string prefix = environment.get("TEMP") ~ '/';
 	} else {
 		string prefix = "/tmp/";
+	}
+
+	if (subdir != "") {
+		prefix ~= subdir ~ "/";
+		mkdirRecurse(prefix);
 	}
 
 	string filename;

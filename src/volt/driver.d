@@ -351,10 +351,11 @@ protected:
 		// We will be modifing this later on,
 		// but we don't want to change mBitcodeFiles.
 		string[] bitcodeFiles = mBitcodeFiles;
+		string subdir = getTemporarySubdirectoryName();
 
 
 		foreach (m; mCommandLineModules) {
-			string o = temporaryFilename(".bc");
+			string o = temporaryFilename(".bc", subdir);
 			backend.setTarget(o, TargetType.LlvmBitcode);
 			debugPrint("Backend %s.", m.name.toString());
 			backend.compile(m);
@@ -372,7 +373,7 @@ protected:
 				bc = bitcodeFiles[0];
 				bitcodeFiles = null;
 			} else {
-				bc = temporaryFilename(".bc");
+				bc = temporaryFilename(".bc", subdir);
 				mTemporaryFiles ~= bc;
 			}
 		}
@@ -393,7 +394,7 @@ protected:
 			obj = settings.getOutput(DEFAULT_OBJ);
 		} else {
 			of = settings.getOutput(DEFAULT_EXE);
-			obj = temporaryFilename(".o");
+			obj = temporaryFilename(".o", subdir);
 			mTemporaryFiles ~= obj;
 		}
 
