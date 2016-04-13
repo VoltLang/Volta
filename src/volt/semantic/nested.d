@@ -44,7 +44,7 @@ void emitNestedStructs(ir.Function parentFunction, ir.BlockStatement bs, ref ir.
 ir.Struct createAndAddNestedStruct(ir.Function func, ir.BlockStatement bs)
 {
 	auto s = buildStruct(func.location, "__Nested" ~ toString(cast(void*)func), []);
-	s.myScope = new ir.Scope(bs.myScope, s, s.name);
+	s.myScope = new ir.Scope(bs.myScope, s, s.name, bs.myScope.nestedDepth);
 	auto decl = buildVariable(func.location, buildTypeReference(s.location, s, "__Nested"), ir.Variable.Storage.Function, "__nested");
 	decl.isResolved = true;
 	func.nestedVariable = decl;

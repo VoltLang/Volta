@@ -85,7 +85,7 @@ public:
 					}
 					parent = store.myScope;
 				} else {
-					auto s = new ir.Scope(parent, ident, name);
+					auto s = new ir.Scope(parent, ident, name, parent.nestedDepth);
 					parent.addScope(ident, s, name);
 					parent = s;
 				}
@@ -107,7 +107,7 @@ public:
 			ir.Scope bindScope;
 
 			if (i.bind !is null) {
-				bindScope = new ir.Scope(null, i, i.bind.value);
+				bindScope = new ir.Scope(null, i, i.bind.value, 0);
 				current.addScope(i, bindScope, i.bind.value);
 			} else {
 				bindScope = thisModule.myScope;

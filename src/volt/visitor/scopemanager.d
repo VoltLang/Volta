@@ -12,7 +12,6 @@ class ScopeManager : NullVisitor
 {
 public:
 	ir.Scope current;
-	int nestedDepth;
 	ir.Function[] functionStack;
 
 private:
@@ -24,7 +23,6 @@ public:
 		assert(current is null);
 		mThisModule = m;
 		current = m.myScope;
-		current.nestedDepth = nestedDepth;
 		return Continue;
 	}
 
@@ -44,7 +42,6 @@ public:
 	override Status enter(ir.Struct s)
 	{
 		current = s.myScope;
-		current.nestedDepth = nestedDepth;
 		return Continue;
 	}
 
@@ -64,7 +61,6 @@ public:
 	override Status enter(ir.Union u)
 	{
 		current = u.myScope;
-		current.nestedDepth = nestedDepth;
 		return Continue;
 	}
 
@@ -84,7 +80,6 @@ public:
 	override Status enter(ir.Class c)
 	{
 		current = c.myScope;
-		current.nestedDepth = nestedDepth;
 		return Continue;
 	}
 
@@ -104,7 +99,6 @@ public:
 	override Status enter(ir._Interface i)
 	{
 		current = i.myScope;
-		current.nestedDepth = nestedDepth;
 		return Continue;
 	}
 
@@ -124,7 +118,6 @@ public:
 	override Status enter(ir.UserAttribute ui)
 	{
 		current = ui.myScope;
-		current.nestedDepth = nestedDepth;
 		return Continue;
 	}
 
@@ -143,10 +136,6 @@ public:
 	override Status enter(ir.Function func)
 	{
 		functionStack ~= func;
-		if (current.node.nodeType == ir.NodeType.BlockStatement) {
-			// Nested function.
-			nestedDepth++;
-		}
 		current = func.myScope;
 		return Continue;
 	}
@@ -155,11 +144,7 @@ public:
 	{
 		assert(functionStack.length > 0 && functionStack[$-1] is func);
 		functionStack = functionStack[0 .. $-1];
-		if (current.node.nodeType == ir.NodeType.BlockStatement) {
-			// Nested function.
-			nestedDepth--;
-			assert(nestedDepth >= 0);
-		}
+
 
 		if (current !is func.myScope) {
 			auto str = "invalid scope layout should be " ~
@@ -176,7 +161,6 @@ public:
 	override Status enter(ir.BlockStatement bs)
 	{
 		current = bs.myScope;
-		current.nestedDepth = nestedDepth;
 		return Continue;
 	}
 
@@ -196,7 +180,6 @@ public:
 	override Status enter(ir.Enum e)
 	{
 		current = e.myScope;
-		current.nestedDepth = nestedDepth;
 		return Continue;
 	}
 

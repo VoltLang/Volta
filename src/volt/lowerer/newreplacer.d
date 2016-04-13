@@ -35,9 +35,9 @@ ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scop
 	func.mangledName = func.name;
 	func.kind = ir.Function.Kind.Function;
 	func.isWeakLink = true;
-	func.myScope = new ir.Scope(baseScope, func, func.name);
+	func.myScope = new ir.Scope(baseScope, func, func.name, baseScope.nestedDepth);
 	func._body = new ir.BlockStatement();
-	func._body.myScope = new ir.Scope(func.myScope, func._body, null);
+	func._body.myScope = new ir.Scope(func.myScope, func._body, null, func.myScope.nestedDepth);
 	func._body.location = location;
 
 	auto countVar = addParam(location, func, buildSizeT(location, lp), "count");

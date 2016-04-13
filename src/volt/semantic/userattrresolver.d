@@ -54,7 +54,7 @@ void fillInUserAttributeLayoutClass(LanguagePass lp, ir.UserAttribute ua)
 	auto _class = new ir.Class();
 	_class.location = ua.location;
 	_class.name = ua.name;
-	_class.myScope = new ir.Scope(ua.myScope, _class, _class.name);
+	_class.myScope = new ir.Scope(ua.myScope, _class, _class.name, ua.myScope.nestedDepth);
 	_class.members = new ir.TopLevelBlock();
 	_class.members.location = ua.location;
 	ua.mangledName = mangle(ua);

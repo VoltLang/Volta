@@ -210,7 +210,12 @@ void addScope(ir.Module m)
 
 void addScope(ir.Scope current, ir.Function func, ir.Type thisType, ir.Function[] functionStack)
 {
-	func.myScope = new ir.Scope(current, func, func.name);
+	int nestedDepth = current.nestedDepth;
+	if (func.kind == ir.Function.Kind.Nested ||
+	    func.kind == ir.Function.Kind.GlobalNested) {
+		nestedDepth++;
+	}
+	func.myScope = new ir.Scope(current, func, func.name, nestedDepth);
 
 	if (func._body !is null) {
 		foreach (var; func.params) {
@@ -251,7 +256,7 @@ void addScope(ir.Scope current, ir.BlockStatement bs)
 	if (bs.myScope !is null) {
 		return;
 	}
-	bs.myScope = new ir.Scope(current, bs, "block");
+	bs.myScope = new ir.Scope(current, bs, "block", current.nestedDepth);
 }
 
 void addScope(ir.Scope current, ir.Struct s)
@@ -268,7 +273,7 @@ void addScope(ir.Scope current, ir.Struct s)
 		agg.members.nodes ~= agg.anonymousVars[$-1];
 	}
 	assert(s.myScope is null);
-	s.myScope = new ir.Scope(current, s, s.name);
+	s.myScope = new ir.Scope(current, s, s.name, current.nestedDepth);
 }
 
 void addScope(ir.Scope current, ir.Union u)
@@ -285,13 +290,13 @@ void addScope(ir.Scope current, ir.Union u)
 		agg.members.nodes ~= agg.anonymousVars[$-1];
 	}	
 	assert(u.myScope is null);
-	u.myScope = new ir.Scope(current, u, u.name);
+	u.myScope = new ir.Scope(current, u, u.name, current.nestedDepth);
 }
 
 void addScope(ir.Scope current, ir.Enum e)
 {
 	assert(e.myScope is null);
-	e.myScope = new ir.Scope(current, e, e.name);
+	e.myScope = new ir.Scope(current, e, e.name, current.nestedDepth);
 }
 
 void addScope(ir.Scope current, ir.Class c, Where where)
@@ -312,7 +317,7 @@ void addScope(ir.Scope current, ir.Class c, Where where)
 	}
 
 	assert(c.myScope is null);
-	c.myScope = new ir.Scope(current, c, c.name);
+	c.myScope = new ir.Scope(current, c, c.name, current.nestedDepth);
 }
 
 void addScope(ir.Scope current, ir._Interface i)
@@ -322,13 +327,13 @@ void addScope(ir.Scope current, ir._Interface i)
 	}
 
 	assert(i.myScope is null);
-	i.myScope = new ir.Scope(current, i, i.name);
+	i.myScope = new ir.Scope(current, i, i.name, current.nestedDepth);
 }
 
 void addScope(ir.Scope current, ir.UserAttribute ua)
 {
 	assert(ua.myScope is null);
-	ua.myScope = new ir.Scope(current, ua, ua.name);
+	ua.myScope = new ir.Scope(current, ua, ua.name, current.nestedDepth);
 }
 
 

@@ -265,11 +265,12 @@ public:
 	 * Side-effects:
 	 *   None.
 	 */
-	this(Scope parent, Node node, string name)
+	this(Scope parent, Node node, string name, int nestedDepth)
 	{
 		this.name = name;
 		this.node = node;
 		this.parent = parent;
+		this.nestedDepth = nestedDepth;
 		assert(this.node !is null);
 	}
 

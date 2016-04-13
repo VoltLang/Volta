@@ -1468,7 +1468,7 @@ ir.BlockStatement buildBlockStat(Location loc, ir.Node introducingNode, ir.Scope
 			ret.statements = statements.dup;
 		}
 	}
-	ret.myScope = new ir.Scope(_scope, introducingNode is null ? ret : introducingNode, "block");
+	ret.myScope = new ir.Scope(_scope, introducingNode is null ? ret : introducingNode, "block", _scope.nestedDepth);
 
 	return ret;
 }
@@ -1508,7 +1508,7 @@ ir.Function buildFunction(Location loc, ir.Scope _scope, string name, bool build
 	func.name = name;
 	func.location = loc;
 	func.kind = ir.Function.Kind.Function;
-	func.myScope = new ir.Scope(_scope, func, func.name);
+	func.myScope = new ir.Scope(_scope, func, func.name, _scope.nestedDepth);
 
 	func.type = new ir.FunctionType();
 	func.type.location = loc;
@@ -1518,7 +1518,7 @@ ir.Function buildFunction(Location loc, ir.Scope _scope, string name, bool build
 	if (buildBody) {
 		func._body = new ir.BlockStatement();
 		func._body.location = loc;
-		func._body.myScope = new ir.Scope(func.myScope, func._body, name);
+		func._body.myScope = new ir.Scope(func.myScope, func._body, name, func.myScope.nestedDepth);
 	}
 
 	return func;
@@ -1579,7 +1579,7 @@ ir.Struct buildStruct(Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, strin
 {
 	auto s = new ir.Struct();
 	s.name = name;
-	s.myScope = new ir.Scope(_scope, s, name);
+	s.myScope = new ir.Scope(_scope, s, name, _scope.nestedDepth);
 	s.location = loc;
 
 	s.members = new ir.TopLevelBlock();
