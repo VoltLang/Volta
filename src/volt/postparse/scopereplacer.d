@@ -92,7 +92,7 @@ private:
 	{
 		auto func = new ir.Function();
 		func.location = block.location;
-		func.kind = ir.Function.Kind.Function;
+		func.kind = ir.Function.Kind.Nested;
 
 		func.type = new ir.FunctionType();
 		func.type.location = block.location;
