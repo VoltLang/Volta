@@ -3819,6 +3819,8 @@ public:
 	 */
 	void resolve(ir.Scope current, ir.Variable v)
 	{
+		assert(!v.isResolved);
+
 		ctx.setupFromScope(current);
 		scope (success) ctx.reset();
 
@@ -3935,6 +3937,18 @@ public:
 	 * Visitor
 	 *
 	 */
+
+	override Status enter(ir.TopLevelBlock tlb)
+	{
+		// We do this to ensure that tlb.nodes doesn't change.
+		auto old = tlb.nodes;
+		foreach (n; tlb.nodes) {
+			accept(n, this);
+			panicAssert(n, old is tlb.nodes);
+		}
+
+		return ContinueParent;
+	}
 
 	override Status enter(ir.Module m)
 	{
