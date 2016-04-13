@@ -54,7 +54,7 @@ ir.Variable getTypeInfo(LanguagePass lp, ir.Module mod, ir.Type type)
 
 	auto literalVar = buildTypeInfoVariable(lp, type, null, false);
 
-	mod.children.nodes = literalVar ~ mod.children.nodes;
+	mod.children.nodes ~= literalVar;
 	mod.myScope.addValue(literalVar, literalVar.name);
 
 	auto lit = buildTypeInfoLiteral(lp, mod, type);
