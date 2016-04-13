@@ -35,11 +35,7 @@ string getTypeInfoVarName(ir.Type type)
 ir.Variable getTypeInfo(LanguagePass lp, ir.Module mod, ir.Type type)
 {
 	auto asTR = cast(ir.TypeReference)type;
-	auto asAggr = asTR !is null ? cast(ir.Aggregate)asTR.type : null;
-	auto iface = cast(ir._Interface) asAggr;
-	if (iface !is null) {
-		return getTypeInfo(lp, mod, iface);
-	}
+	auto asAggr = cast(ir.Aggregate) (asTR !is null ? asTR.type : type);
 	if (asAggr !is null) {
 		createAggregateVar(lp, asAggr);
 		return asAggr.typeInfo;

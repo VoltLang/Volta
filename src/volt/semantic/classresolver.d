@@ -23,6 +23,8 @@ import volt.semantic.overload;
 
 void actualizeInterface(LanguagePass lp, ir._Interface i)
 {
+	createAggregateVar(lp, i);
+
 	foreach (childI; i.interfaces) {
 		auto iface = cast(ir._Interface) lookupType(lp, i.myScope.parent, childI);
 		if (iface is null) {
@@ -33,6 +35,8 @@ void actualizeInterface(LanguagePass lp, ir._Interface i)
 	}
 	fillInInterfaceLayoutIfNeeded(lp, i);
 	i.isActualized = true;
+
+	fileInAggregateVar(lp, i);
 }
 
 void actualizeClass(LanguagePass lp, ir.Class c)
