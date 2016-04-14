@@ -59,7 +59,7 @@ ParseStatus parseVariable(ParserStream ps, NodeSinkDg dg)
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Variable);
 		}
-		if (_global && func.kind == ir.Function.Kind.Nested) {
+		if (_global && func.kind == ir.Function.Kind.Invalid) {
 			func.kind = ir.Function.Kind.GlobalNested;
 		}
 		dg(func);
@@ -594,13 +594,8 @@ ParseStatus parseFunction(ParserStream ps, out ir.Function func, ir.Type base)
 	func = new ir.Function();
 	func.type = new ir.FunctionType();
 	func.docComment = base.docComment;
-	ps.functionDepth++;
 	ps.pushCommentLevel();
 	scope (success) {
-		if (ps.functionDepth > 1 && func !is null) {
-			func.kind = ir.Function.Kind.Nested;
-		}
-		ps.functionDepth--;
 		ps.popCommentLevel();
 	}
 

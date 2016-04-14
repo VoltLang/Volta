@@ -492,7 +492,6 @@ public:
 	Token lastDocComment;
 	ir.Node retroComment;  ///< For backwards doc comments (like this one).
 	int multiDepth;
-	int functionDepth;
 
 private:
 	string[] mComment;

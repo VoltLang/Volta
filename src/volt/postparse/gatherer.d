@@ -527,7 +527,12 @@ public:
 
 	override Status enter(ir.Function func)
 	{
-		auto thisType = where == Where.TopLevel ? this.thisType : null;
+		ir.Type thisType;
+		if (where == Where.TopLevel ) {
+			thisType = this.thisType;
+		} else if (where == Where.Function && func.kind != ir.Function.Kind.GlobalNested) {
+			func.kind = ir.Function.Kind.Nested;
+		}
 
 		gather(current, func, where);
 		addScope(current, func, thisType, mFunctionStack);
