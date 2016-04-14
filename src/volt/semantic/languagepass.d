@@ -29,7 +29,6 @@ import volt.semantic.ctfe;
 import volt.semantic.strace;
 import volt.semantic.lookup;
 import volt.semantic.extyper;
-import volt.semantic.resolver;
 import volt.semantic.classify;
 import volt.semantic.typeinfo;
 import volt.semantic.irverifier;

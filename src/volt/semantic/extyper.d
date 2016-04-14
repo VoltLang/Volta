@@ -30,6 +30,7 @@ import volt.semantic.context;
 import volt.semantic.classify;
 import volt.semantic.overload;
 import volt.semantic.implicit;
+import volt.semantic.typeinfo;
 import volt.semantic.classresolver;
 import volt.semantic.userattrresolver;
 
@@ -2078,8 +2079,9 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 		return ret;
 	}
 
-	if (isAssign) {
-		checkConst(exp, ltype);
+	// If assign and left is effectively const, throw an error.
+	if (isAssign && effectivelyConst(ltype)) {
+		throw makeCannotModify(binop, ltype);
 	}
 
 	if (handleIfNull(ctx, rtype, binop.left)) {
@@ -2899,167 +2901,7 @@ ir.Type extypeUnchecked(Context ctx, ref ir.Exp exp, Parent parent)
 
 /*
  *
- * Type resolver functions.
- *
- */
-
-/**
- * Helper function to call into the ExTyper version.
- */
-ir.Type resolveType(LanguagePass lp, ir.Scope current, ref ir.Type type)
-{
-	auto extyper = new ExTyper(lp);
-	auto ctx = new Context(lp, extyper);
-	ctx.setupFromScope(current);
-	doResolveType(ctx, type, null, 0);
-	return resolveType(ctx, type);
-}
-
-/**
- * Flattens storage types, ensure that there are no unresolved TypeRefences in
- * the given type and in general ensures that the type is ready to be consumed.
- *
- * Stops when encountering the first resolved TypeReference.
- */
-ir.Type resolveType(Context ctx, ref ir.Type type)
-{
-	doResolveType(ctx, type, null, 0);
-	return type;
-}
-
-void doResolveType(Context ctx, ref ir.Type type,
-                   ir.CallableType ct, size_t ctIndex)
-{
-	switch (type.nodeType) with (ir.NodeType) {
-	case NoType:
-	case NullType:
-	case PrimitiveType:
-		return; // Nothing to do.
-	case PointerType:
-		auto pt = cast(ir.PointerType)type;
-		doResolveType(ctx, pt.base, null, 0);
-
-		auto current = pt;
-		while (current !is null) {
-			assert(cast(ir.Named) current.base is null);
-			addStorage(current.base, current);
-			current = cast(ir.PointerType) current.base;
-		}
-
-		return;
-	case ArrayType:
-		auto at = cast(ir.ArrayType)type;
-		return doResolveType(ctx, at.base, null, 0);
-	case StaticArrayType:
-		auto sat = cast(ir.StaticArrayType)type;
-		return doResolveType(ctx, sat.base, null, 0);
-	case AAType:
-		return doResolveAA(ctx, type);
-	case StorageType:
-		auto st = cast(ir.StorageType)type;
-		// For auto and friends.
-		if (st.base is null) {
-			st.base = buildAutoType(type.location);
-		}
-		flattenOneStorage(st, st.base, ct, ctIndex);
-		type = st.base;
-		return doResolveType(ctx, type, ct, ctIndex);
-	case AutoType:
-		auto at = cast(ir.AutoType)type;
-		if (at.explicitType is null) {
-			return;
-		}
-		type = at.explicitType;
-		return doResolveType(ctx, type, null, 0);
-	case FunctionType:
-		auto ft = cast(ir.FunctionType)type;
-		foreach (i, ref p; ft.params) {
-			doResolveType(ctx, p, ft, i);
-		}
-		return doResolveType(ctx, ft.ret, ft, 0);
-	case DelegateType:
-		auto dt = cast(ir.DelegateType)type;
-		foreach (i, ref p; dt.params) {
-			doResolveType(ctx, p, dt, i);
-		}
-		return doResolveType(ctx, dt.ret, dt, 0);
-	case TypeReference:
-		auto tr = cast(ir.TypeReference)type;
-
-		if (tr.type is null) {
-			tr.type = lookupType(ctx.lp, ctx.current, tr.id);
-		}
-		assert(tr.type !is null);
-
-		if (auto n = cast(ir.Named) tr.type) {
-			return;
-		}
-
-		// Assume tr.type is resolved.
-		type = copyTypeSmart(tr.location, tr.type);
-		type.glossedName = tr.id.toString();
-		addStorage(type, tr);
-		return;
-	case TypeOf:
-		auto to = cast(ir.TypeOf) type;
-		type = extype(ctx, to.exp, Parent.NA);
-		if (type.nodeType == ir.NodeType.NoType) {
-			throw makeError(to.exp, "expression has no type.");
-		}
-		type = copyTypeSmart(to.location, type);
-		return;
-	case Enum:
-	case Class:
-	case Struct:
-	case Union:
-	case Interface:
-		throw panic(type, "didn't not expect direct reference to Named type");
-	default:
-		throw panicUnhandled(type, ir.nodeToString(type));
-	}
-}
-
-void doResolveAA(Context ctx, ref ir.Type type)
-{
-	auto at = cast(ir.AAType) type;
-
-	doResolveType(ctx, at.key, null, 0);
-	doResolveType(ctx, at.value, null, 0);
-
-	auto base = at.key;
-
-	auto tr = cast(ir.TypeReference)base;
-	if (tr !is null) {
-		base = tr.type;
-	}
-
-	if (base.nodeType == ir.NodeType.Struct ||
-	    base.nodeType == ir.NodeType.Class) {
-		return;
-	}
-
-	bool needsConstness;
-	if (base.nodeType == ir.NodeType.ArrayType) {
-		base = (cast(ir.ArrayType)base).base;
-		needsConstness = true;
-	} else if (base.nodeType == ir.NodeType.StaticArrayType) {
-		base = (cast(ir.StaticArrayType)base).base;
-		needsConstness = true;
-	}
-
-	auto prim = cast(ir.PrimitiveType)base;
-	if (prim !is null &&
-	    (!needsConstness || (prim.isConst || prim.isImmutable))) {
-		return;
-	}
-
-	throw makeInvalidAAKey(at);
-}
-
-
-/*
- *
- * Here ends the type resolver code.
+ * Statement extype code.
  *
  */
 
@@ -3084,102 +2926,6 @@ void extypeThrow(Context ctx, ir.ThrowStatement t)
 
 	if (asClass !is throwable) {
 		t.exp = buildCastSmart(t.exp.location, throwable, t.exp);
-	}
-}
-
-/**
- * Correct this references in nested functions.
- */
-void handleNestedThis(ir.Function func, ir.BlockStatement bs)
-{
-	bs = func._body;
-	auto np = func.nestedVariable;
-	auto ns = func.nestStruct;
-	if (np is null || ns is null) {
-		return;
-	}
-	size_t index;
-	for (index = 0; index < bs.statements.length; ++index) {
-		if (bs.statements[index] is np) {
-			break;
-		}
-	}
-	if (++index >= bs.statements.length) {
-		return;
-	}
-	if (func.thisHiddenParameter !is null) {
-		auto l = buildAccessExp(func.location, buildExpReference(np.location, np, np.name), func.thisHiddenParameter);
-		auto tv = func.thisHiddenParameter;
-		auto r = buildExpReference(bs.location, tv, tv.name);
-		r.doNotRewriteAsNestedLookup = true;
-		ir.Node n = buildExpStat(l.location, buildAssign(l.location, l, r));
-		bs.statements.insertInPlace(index, n);
-	}
-}
-
-/**
- * Given a nested function func, add its parameters to the nested
- * struct and insert statements after the nested declaration.
- */
-void handleNestedParams(Context ctx, ir.Function func, ir.BlockStatement bs)
-{
-	auto np = func.nestedVariable;
-	auto ns = func.nestStruct;
-	if (np is null || ns is null) {
-		return;
-	}
-
-	// Don't add parameters for nested functions.
-	if (func.kind == ir.Function.Kind.Nested) {
-		return;
-	}
-
-	// This is needed for the parent function.
-	size_t index;
-	for (index = 0; index < bs.statements.length; ++index) {
-		if (bs.statements[index] is np) {
-			break;
-		}
-	}
-	++index;
-
-	if (index > bs.statements.length) {
-		index = 0;  // We didn't find a usage, so put it at the start.
-	}
-
-	foreach (i, param; func.params) {
-		if (!param.hasBeenNested) {
-			param.hasBeenNested = true;
-
-			auto type = param.type;
-			bool refParam = func.type.isArgRef[i] || func.type.isArgOut[i];
-			if (refParam) {
-				type = buildPtrSmart(param.location, param.type);
-			}
-			auto name = param.name != "" ? param.name : "__anonparam_" ~ toString(index);
-			auto var = buildVariableSmart(param.location, type, ir.Variable.Storage.Field, name);
-			addVarToStructSmart(ns, var);
-			// Insert an assignment of the param to the nest struct.
-
-			auto l = buildAccessExp(param.location, buildExpReference(np.location, np, np.name), var);
-			auto r = buildExpReference(param.location, param, name);
-			r.doNotRewriteAsNestedLookup = true;
-			ir.BinOp bop;
-			if (!refParam) {
-				bop = buildAssign(l.location, l, r);
-			} else {
-				bop = buildAssign(l.location, l, buildAddrOf(r.location, r));
-			}
-			bop.isInternalNestedAssign = true;
-			ir.Node n = buildExpStat(l.location, bop);
-			if (isNested(func)) {
-				// Nested function.
-				bs.statements = n ~ bs.statements;
-			} else {
-				// Parent function with nested children.
-				bs.statements.insertInPlace(index++, n);
-			}
-		}
 	}
 }
 
@@ -3365,56 +3111,6 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 }
 
 /**
- * Check a given Aggregate's anonymous structs/unions
- * (if any) for name collisions.
- */
-void checkAnonymousVariables(Context ctx, ir.Aggregate agg)
-{
-	if (agg.anonymousAggregates.length == 0) {
-		return;
-	}
-	bool[string] names;
-	foreach (anonAgg; agg.anonymousAggregates) foreach (n; anonAgg.members.nodes) {
-		auto var = cast(ir.Variable) n;
-		auto func = cast(ir.Function) n;
-		string name;
-		if (var !is null) {
-			name = var.name;
-		} else if (func !is null) {
-			name = func.name;
-		} else {
-			continue;
-		}
-		if ((name in names) !is null) {
-			throw makeAnonymousAggregateRedefines(anonAgg, name);
-		}
-		auto store = lookupAsThisScope(ctx.lp, agg.myScope, agg.location, name);
-		if (store !is null) {
-			throw makeAnonymousAggregateRedefines(anonAgg, name);
-		}
-	}
-}
-
-/// Turn a runtime assert into an if and a throw.
-ir.Node transformRuntimeAssert(Context ctx, ir.AssertStatement as)
-{
-	if (as.isStatic) {
-		throw panic(as.location, "expected runtime assert");
-	}
-	auto l = as.location;
-	ir.Exp message = as.message;
-	if (message is null) {
-		message = buildConstantString(l, "assertion failure");
-	}
-	assert(message !is null);
-	auto exception = buildNew(l, ctx.lp.assertErrorClass, "AssertError", message);
-	auto theThrow  = buildThrowStatement(l, exception);
-	auto thenBlock = buildBlockStat(l, null, ctx.current, theThrow);
-	auto ifS = buildIfStat(l, buildNot(l, as.condition), thenBlock);
-	return ifS;
-}
-
-/**
  * Process the types and expressions on a foreach.
  * Foreaches become for loops before the backend sees them,
  * but they still need to be made valid by the extyper.
@@ -3554,79 +3250,239 @@ void extypeForeach(Context ctx, ir.ForeachStatement fes)
 	}
 }
 
-bool isInternalVariable(ir.Class c, ir.Variable v)
-{
-	foreach (ivar; c.ifaceVariables) {
-		if (ivar is v) {
-			return true;
-		}
-	}
-	return v is c.typeInfo || v is c.vtableVariable || v is c.initVariable;
-}
-
-void writeVariableAssignsIntoCtors(Context ctx, ir.Class _class)
-{
-	foreach (n; _class.members.nodes) {
-		auto v = cast(ir.Variable) n;
-		if (v is null || v.assign is null ||
-			isInternalVariable(_class, v) ||
-		   !(v.storage != ir.Variable.Storage.Local && 
-		    v.storage != ir.Variable.Storage.Global)) {
-			continue;
-		}
-		foreach (ctor; _class.userConstructors) {
-			assert(ctor.thisHiddenParameter !is null);
-			auto eref = buildExpReference(ctor.thisHiddenParameter.location, ctor.thisHiddenParameter, ctor.thisHiddenParameter.name);
-			auto assign = buildAssign(ctor.location, buildAccessExp(ctor.location, eref, v), v.assign);
-			auto stat = new ir.ExpStatement();
-			stat.location = ctor.location;
-			stat.exp = copyExp(assign);
-			ctor._body.statements = stat ~ ctor._body.statements;
-		}
-		v.assign = null;
-		if (v.type.isConst || v.type.isImmutable) {
-			throw makeConstField(v);
-		}
-	}
-}
-
-class GotoReplacer : NullVisitor
-{
-public:
-	override Status enter(ir.GotoStatement gs)
-	{
-		assert(exp !is null);
-		if (gs.isCase && gs.exp is null) {
-			gs.exp = copyExp(exp);
-		}
-		return Continue;
-	}
-
-public:
-	ir.Exp exp;
-}
-
-/**
- * Given a switch statement, replace 'goto case' with an explicit
- * jump to the next case.
- */
-void replaceGotoCase(Context ctx, ir.SwitchStatement ss)
-{
-	auto gr = new GotoReplacer();
-	foreach_reverse (sc; ss.cases) {
-		if (gr.exp !is null) {
-			accept(sc.statements, gr);
-		}
-		gr.exp = sc.exps.length > 0 ? sc.exps[0] : sc.firstExp;
-	}
-}
-
 
 /*
  *
  * Resolver functions.
  *
  */
+
+/*
+ * These function do the actual resolving of various types
+ * and constructs in the Volt Langauge. They should only be
+ * used by the LanguagePass, and as such is not intended for
+ * use of other code, that could should call the resolve
+ * functions on the language pass instead.
+ */
+
+/**
+ * Helper function to call into the ExTyper version.
+ */
+ir.Type resolveType(LanguagePass lp, ir.Scope current, ref ir.Type type)
+{
+	auto extyper = new ExTyper(lp);
+	auto ctx = new Context(lp, extyper);
+	ctx.setupFromScope(current);
+	doResolveType(ctx, type, null, 0);
+	return resolveType(ctx, type);
+}
+
+/**
+ * Flattens storage types, ensure that there are no unresolved TypeRefences in
+ * the given type and in general ensures that the type is ready to be consumed.
+ *
+ * Stops when encountering the first resolved TypeReference.
+ */
+ir.Type resolveType(Context ctx, ref ir.Type type)
+{
+	doResolveType(ctx, type, null, 0);
+	return type;
+}
+
+void doResolveType(Context ctx, ref ir.Type type,
+                   ir.CallableType ct, size_t ctIndex)
+{
+	switch (type.nodeType) with (ir.NodeType) {
+	case NoType:
+	case NullType:
+	case PrimitiveType:
+		return; // Nothing to do.
+	case PointerType:
+		auto pt = cast(ir.PointerType)type;
+		doResolveType(ctx, pt.base, null, 0);
+
+		auto current = pt;
+		while (current !is null) {
+			assert(cast(ir.Named) current.base is null);
+			addStorage(current.base, current);
+			current = cast(ir.PointerType) current.base;
+		}
+
+		return;
+	case ArrayType:
+		auto at = cast(ir.ArrayType)type;
+		return doResolveType(ctx, at.base, null, 0);
+	case StaticArrayType:
+		auto sat = cast(ir.StaticArrayType)type;
+		return doResolveType(ctx, sat.base, null, 0);
+	case AAType:
+		return doResolveAA(ctx, type);
+	case StorageType:
+		auto st = cast(ir.StorageType)type;
+		// For auto and friends.
+		if (st.base is null) {
+			st.base = buildAutoType(type.location);
+		}
+		flattenOneStorage(st, st.base, ct, ctIndex);
+		type = st.base;
+		return doResolveType(ctx, type, ct, ctIndex);
+	case AutoType:
+		auto at = cast(ir.AutoType)type;
+		if (at.explicitType is null) {
+			return;
+		}
+		type = at.explicitType;
+		return doResolveType(ctx, type, null, 0);
+	case FunctionType:
+		auto ft = cast(ir.FunctionType)type;
+		foreach (i, ref p; ft.params) {
+			doResolveType(ctx, p, ft, i);
+		}
+		return doResolveType(ctx, ft.ret, ft, 0);
+	case DelegateType:
+		auto dt = cast(ir.DelegateType)type;
+		foreach (i, ref p; dt.params) {
+			doResolveType(ctx, p, dt, i);
+		}
+		return doResolveType(ctx, dt.ret, dt, 0);
+	case TypeReference:
+		auto tr = cast(ir.TypeReference)type;
+
+		if (tr.type is null) {
+			tr.type = lookupType(ctx.lp, ctx.current, tr.id);
+		}
+		assert(tr.type !is null);
+
+		if (auto n = cast(ir.Named) tr.type) {
+			return;
+		}
+
+		// Assume tr.type is resolved.
+		type = copyTypeSmart(tr.location, tr.type);
+		type.glossedName = tr.id.toString();
+		addStorage(type, tr);
+		return;
+	case TypeOf:
+		auto to = cast(ir.TypeOf) type;
+		type = extype(ctx, to.exp, Parent.NA);
+		if (type.nodeType == ir.NodeType.NoType) {
+			throw makeError(to.exp, "expression has no type.");
+		}
+		type = copyTypeSmart(to.location, type);
+		return;
+	case Enum:
+	case Class:
+	case Struct:
+	case Union:
+	case Interface:
+		throw panic(type, "didn't not expect direct reference to Named type");
+	default:
+		throw panicUnhandled(type, ir.nodeToString(type));
+	}
+}
+
+void doResolveAA(Context ctx, ref ir.Type type)
+{
+	auto at = cast(ir.AAType) type;
+
+	doResolveType(ctx, at.key, null, 0);
+	doResolveType(ctx, at.value, null, 0);
+
+	auto base = at.key;
+
+	auto tr = cast(ir.TypeReference)base;
+	if (tr !is null) {
+		base = tr.type;
+	}
+
+	if (base.nodeType == ir.NodeType.Struct ||
+	    base.nodeType == ir.NodeType.Class) {
+		return;
+	}
+
+	bool needsConstness;
+	if (base.nodeType == ir.NodeType.ArrayType) {
+		base = (cast(ir.ArrayType)base).base;
+		needsConstness = true;
+	} else if (base.nodeType == ir.NodeType.StaticArrayType) {
+		base = (cast(ir.StaticArrayType)base).base;
+		needsConstness = true;
+	}
+
+	auto prim = cast(ir.PrimitiveType)base;
+	if (prim !is null &&
+	    (!needsConstness || (prim.isConst || prim.isImmutable))) {
+		return;
+	}
+
+	throw makeInvalidAAKey(at);
+}
+
+/**
+ * Resolves an alias, either setting the myalias field
+ * or turning it into a type.
+ */
+void resolveAlias(LanguagePass lp, ir.Alias a)
+{
+	auto s = a.store;
+	scope (success) {
+		a.isResolved = true;
+	}
+
+	if (a.type !is null) {
+		assert(s.lookScope is s.parent);
+		resolveType(lp, s.parent, a.type);
+		return s.markAliasResolved(a.type);
+	}
+
+	ir.Store ret;
+	if (s.lookScope is s.parent) {
+		// Normal alias.
+		ret = lookup(lp, s.lookScope, a.id);
+	} else {
+		// Import alias.
+		assert(a.id.identifiers.length == 1);
+		ret = lookupAsImportScope(lp, s.lookScope, a.location, a.id.identifiers[0].value);
+	}
+
+	if (ret is null) {
+		throw makeFailedLookup(a, a.id.toString());
+	}
+
+	s.markAliasResolved(ret);
+}
+
+/**
+ * Will make sure that the Enum's type is set, and
+ * as such will resolve the first member since it
+ * decides the type of the rest of the enum.
+ */
+void resolveEnum(LanguagePass lp, ir.Enum e)
+{
+	e.isResolved = true;
+
+	resolveType(lp, e.myScope, e.base);
+
+	// Do some extra error checking on out.
+	scope (success) {
+		if (!isIntegral(e.base)) {
+			throw panic(e, "only integral enums are supported.");
+		}
+	}
+
+	// If the base type isn't auto then we are done here.
+	if (!isAuto(e.base)) {
+		return;
+	}
+
+	// Need to resolve the first member to set the type of the Enum.
+	auto first = e.members[0];
+	lp.resolve(e.myScope, first);
+
+	assert(first !is null && first.assign !is null);
+	auto type = getExpType(first.assign);
+	e.base = realType(copyTypeSmart(e.location, type));
+}
 
 /**
  * Resolves a Variable.
@@ -3682,37 +3538,6 @@ void resolveVariable(Context ctx, ir.Variable v)
 	}
 
 	v.isResolved = true;
-}
-
-/**
- * If type is effectively const, throw an error.
- */
-void checkConst(ir.Node n, ir.Type type)
-{
-	if (effectivelyConst(type)) {
-		throw makeCannotModify(n, type);
-	}
-}
-
-void emitNestedFromBlock(Context ctx, ir.Function currentFunction, ir.BlockStatement bs, bool skipFunction = true)
-{
-	if (bs is null || (skipFunction && bs is currentFunction._body)) {
-		return;
-	}
-	ir.Struct[] structs;
-	emitNestedStructs(currentFunction, bs, structs);
-	foreach (_s; structs) {
-		accept(_s, ctx.extyper);
-	}
-	handleNestedParams(ctx, currentFunction, currentFunction._body);
-	handleNestedThis(currentFunction, bs);
-	if (currentFunction.nestStruct !is null &&
-	    currentFunction.thisHiddenParameter !is null &&
-	    currentFunction.kind != ir.Function.Kind.Nested &&
-	    currentFunction.nestStruct.myScope.getStore("this") is null) {
-		auto cvar = copyVariableSmart(currentFunction.thisHiddenParameter.location, currentFunction.thisHiddenParameter);
-		addVarToStructSmart(currentFunction.nestStruct, cvar);
-	}
 }
 
 void resolveFunction(Context ctx, ir.Function func)
@@ -3819,6 +3644,178 @@ void resolveFunction(Context ctx, ir.Function func)
 	func.isResolved = true;
 }
 
+void resolveStruct(LanguagePass lp, ir.Struct s)
+{
+	auto done = lp.startResolving(s);
+	scope (exit) {
+		done();
+	}
+
+	lp.resolve(s.myScope.parent, s.userAttrs);
+
+	if (s.loweredNode is null) {
+		createAggregateVar(lp, s);
+	}
+
+	s.isResolved = true;
+
+	// Resolve fields.
+	foreach (n; s.members.nodes) {
+		if (n.nodeType != ir.NodeType.Variable) {
+			continue;
+		}
+
+		auto field = cast(ir.Variable)n;
+		assert(field !is null);
+		if (field.storage != ir.Variable.Storage.Field) {
+			continue;
+		}
+
+		lp.resolve(s.myScope, field);
+	}
+
+	s.isActualized = true;
+
+	if (s.loweredNode is null) {
+		fileInAggregateVar(lp, s);
+	}
+}
+
+void resolveUnion(LanguagePass lp, ir.Union u)
+{
+	auto done = lp.startResolving(u);
+	scope (exit) {
+		done();
+	}
+
+	lp.resolve(u.myScope.parent, u.userAttrs);
+
+	createAggregateVar(lp, u);
+
+	u.isResolved = true;
+
+	// Resolve fields.
+	size_t accum;
+	foreach (n; u.members.nodes) {
+		if (n.nodeType == ir.NodeType.Function) {
+			throw makeExpected(n, "field");
+		}
+
+		if (n.nodeType != ir.NodeType.Variable) {
+			continue;
+		}
+
+		auto field = cast(ir.Variable)n;
+		assert(field !is null);
+		if (field.storage != ir.Variable.Storage.Field) {
+			continue;
+		}
+		lp.resolve(u.myScope, field);
+		auto s = size(lp, field.type);
+		if (s > accum) {
+			accum = s;
+		}
+	}
+
+	u.totalSize = accum;
+	u.isActualized = true;
+
+	fileInAggregateVar(lp, u);
+}
+
+
+/*
+ *
+ * Misc helper functions.
+ *
+ */
+
+/**
+ * Check a given Aggregate's anonymous structs/unions
+ * (if any) for name collisions.
+ */
+void checkAnonymousVariables(Context ctx, ir.Aggregate agg)
+{
+	if (agg.anonymousAggregates.length == 0) {
+		return;
+	}
+	bool[string] names;
+	foreach (anonAgg; agg.anonymousAggregates) foreach (n; anonAgg.members.nodes) {
+		auto var = cast(ir.Variable) n;
+		auto func = cast(ir.Function) n;
+		string name;
+		if (var !is null) {
+			name = var.name;
+		} else if (func !is null) {
+			name = func.name;
+		} else {
+			continue;
+		}
+		if ((name in names) !is null) {
+			throw makeAnonymousAggregateRedefines(anonAgg, name);
+		}
+		auto store = lookupAsThisScope(ctx.lp, agg.myScope, agg.location, name);
+		if (store !is null) {
+			throw makeAnonymousAggregateRedefines(anonAgg, name);
+		}
+	}
+}
+
+/// Turn a runtime assert into an if and a throw.
+ir.Node transformRuntimeAssert(Context ctx, ir.AssertStatement as)
+{
+	if (as.isStatic) {
+		throw panic(as.location, "expected runtime assert");
+	}
+	auto l = as.location;
+	ir.Exp message = as.message;
+	if (message is null) {
+		message = buildConstantString(l, "assertion failure");
+	}
+	assert(message !is null);
+	auto exception = buildNew(l, ctx.lp.assertErrorClass, "AssertError", message);
+	auto theThrow  = buildThrowStatement(l, exception);
+	auto thenBlock = buildBlockStat(l, null, ctx.current, theThrow);
+	auto ifS = buildIfStat(l, buildNot(l, as.condition), thenBlock);
+	return ifS;
+}
+
+bool isInternalVariable(ir.Class c, ir.Variable v)
+{
+	foreach (ivar; c.ifaceVariables) {
+		if (ivar is v) {
+			return true;
+		}
+	}
+	return v is c.typeInfo || v is c.vtableVariable || v is c.initVariable;
+}
+
+void writeVariableAssignsIntoCtors(Context ctx, ir.Class _class)
+{
+	foreach (n; _class.members.nodes) {
+		auto v = cast(ir.Variable) n;
+		if (v is null || v.assign is null ||
+			isInternalVariable(_class, v) ||
+		   !(v.storage != ir.Variable.Storage.Local && 
+		    v.storage != ir.Variable.Storage.Global)) {
+			continue;
+		}
+		foreach (ctor; _class.userConstructors) {
+			assert(ctor.thisHiddenParameter !is null);
+			auto eref = buildExpReference(ctor.thisHiddenParameter.location, ctor.thisHiddenParameter, ctor.thisHiddenParameter.name);
+			auto assign = buildAssign(ctor.location, buildAccessExp(ctor.location, eref, v), v.assign);
+			auto stat = new ir.ExpStatement();
+			stat.location = ctor.location;
+			stat.exp = copyExp(assign);
+			ctor._body.statements = stat ~ ctor._body.statements;
+		}
+		v.assign = null;
+		if (v.type.isConst || v.type.isImmutable) {
+			throw makeConstField(v);
+		}
+	}
+}
+
 /**
  * Given a expression and a type, if the expression is a literal,
  * tag it (and its subexpressions) with the type.
@@ -3878,6 +3875,168 @@ void tagLiteralType(ir.Exp exp, ir.Type type)
 		break;
 	default:
 		throw panicUnhandled(exp.location, "literal type");
+	}
+}
+
+
+/*
+ *
+ * Nested code.
+ *
+ */
+
+void emitNestedFromBlock(Visitor extyper, ir.Function currentFunction, ir.BlockStatement bs, bool skipFunction = true)
+{
+	if (bs is null || (skipFunction && bs is currentFunction._body)) {
+		return;
+	}
+	ir.Struct[] structs;
+	emitNestedStructs(currentFunction, bs, structs);
+	foreach (_s; structs) {
+		accept(_s, extyper);
+	}
+	handleNestedParams(currentFunction, currentFunction._body);
+	handleNestedThis(currentFunction, bs);
+	if (currentFunction.nestStruct !is null &&
+	    currentFunction.thisHiddenParameter !is null &&
+	    currentFunction.kind != ir.Function.Kind.Nested &&
+	    currentFunction.nestStruct.myScope.getStore("this") is null) {
+		auto cvar = copyVariableSmart(currentFunction.thisHiddenParameter.location, currentFunction.thisHiddenParameter);
+		addVarToStructSmart(currentFunction.nestStruct, cvar);
+	}
+}
+
+/**
+ * Given a nested function func, add its parameters to the nested
+ * struct and insert statements after the nested declaration.
+ */
+void handleNestedParams(ir.Function func, ir.BlockStatement bs)
+{
+	auto np = func.nestedVariable;
+	auto ns = func.nestStruct;
+	if (np is null || ns is null) {
+		return;
+	}
+
+	// Don't add parameters for nested functions.
+	if (func.kind == ir.Function.Kind.Nested) {
+		return;
+	}
+
+	// This is needed for the parent function.
+	size_t index;
+	for (index = 0; index < bs.statements.length; ++index) {
+		if (bs.statements[index] is np) {
+			break;
+		}
+	}
+	++index;
+
+	if (index > bs.statements.length) {
+		index = 0;  // We didn't find a usage, so put it at the start.
+	}
+
+	foreach (i, param; func.params) {
+		if (!param.hasBeenNested) {
+			param.hasBeenNested = true;
+
+			auto type = param.type;
+			bool refParam = func.type.isArgRef[i] || func.type.isArgOut[i];
+			if (refParam) {
+				type = buildPtrSmart(param.location, param.type);
+			}
+			auto name = param.name != "" ? param.name : "__anonparam_" ~ toString(index);
+			auto var = buildVariableSmart(param.location, type, ir.Variable.Storage.Field, name);
+			addVarToStructSmart(ns, var);
+			// Insert an assignment of the param to the nest struct.
+
+			auto l = buildAccessExp(param.location, buildExpReference(np.location, np, np.name), var);
+			auto r = buildExpReference(param.location, param, name);
+			r.doNotRewriteAsNestedLookup = true;
+			ir.BinOp bop;
+			if (!refParam) {
+				bop = buildAssign(l.location, l, r);
+			} else {
+				bop = buildAssign(l.location, l, buildAddrOf(r.location, r));
+			}
+			bop.isInternalNestedAssign = true;
+			ir.Node n = buildExpStat(l.location, bop);
+			if (isNested(func)) {
+				// Nested function.
+				bs.statements = n ~ bs.statements;
+			} else {
+				// Parent function with nested children.
+				bs.statements.insertInPlace(index++, n);
+			}
+		}
+	}
+}
+
+/**
+ * Correct this references in nested functions.
+ */
+void handleNestedThis(ir.Function func, ir.BlockStatement bs)
+{
+	bs = func._body;
+	auto np = func.nestedVariable;
+	auto ns = func.nestStruct;
+	if (np is null || ns is null) {
+		return;
+	}
+	size_t index;
+	for (index = 0; index < bs.statements.length; ++index) {
+		if (bs.statements[index] is np) {
+			break;
+		}
+	}
+	if (++index >= bs.statements.length) {
+		return;
+	}
+	if (func.thisHiddenParameter !is null) {
+		auto l = buildAccessExp(func.location, buildExpReference(np.location, np, np.name), func.thisHiddenParameter);
+		auto tv = func.thisHiddenParameter;
+		auto r = buildExpReference(bs.location, tv, tv.name);
+		r.doNotRewriteAsNestedLookup = true;
+		ir.Node n = buildExpStat(l.location, buildAssign(l.location, l, r));
+		bs.statements.insertInPlace(index, n);
+	}
+}
+
+
+/*
+ *
+ * Goto replacement code.
+ *
+ */
+
+class GotoReplacer : NullVisitor
+{
+public:
+	override Status enter(ir.GotoStatement gs)
+	{
+		assert(exp !is null);
+		if (gs.isCase && gs.exp is null) {
+			gs.exp = copyExp(exp);
+		}
+		return Continue;
+	}
+
+public:
+	ir.Exp exp;
+}
+
+/**
+ * Given a switch statement, replace 'goto case' with an explicit
+ * jump to the next case.
+ */
+void replaceGotoCase(Context ctx, ir.SwitchStatement ss)
+{
+	auto gr = new GotoReplacer();
+	foreach_reverse (sc; ss.cases) {
+		if (gr.exp !is null) {
+			accept(sc.statements, gr);
+		}
+		gr.exp = sc.exps.length > 0 ? sc.exps[0] : sc.firstExp;
 	}
 }
 
@@ -4191,7 +4350,7 @@ public:
 
 		ctx.enter(func);
 
-		emitNestedFromBlock(ctx, func, func._body, false);
+		emitNestedFromBlock(this, func, func._body, false);
 
 		return Continue;
 	}
@@ -4306,7 +4465,7 @@ public:
 			extype(ctx, fes.beginIntegerRange, Parent.NA);
 			extype(ctx, fes.endIntegerRange, Parent.NA);
 		}
-		emitNestedFromBlock(ctx, ctx.currentFunction, fes.block);
+		emitNestedFromBlock(this, ctx.currentFunction, fes.block);
 		ctx.enter(fes.block);
 		extypeForeach(ctx, fes);
 		foreach (ivar; fes.itervars) {
@@ -4334,7 +4493,7 @@ public:
 
 	override Status enter(ir.ForStatement fs)
 	{
-		emitNestedFromBlock(ctx, ctx.currentFunction, fs.block);
+		emitNestedFromBlock(this, ctx.currentFunction, fs.block);
 		ctx.enter(fs.block);
 		foreach (i; fs.initVars) {
 			accept(i, this);
@@ -4445,7 +4604,7 @@ public:
 
 	override Status enter(ir.BlockStatement bs)
 	{
-		emitNestedFromBlock(ctx, ctx.currentFunction, bs);
+		emitNestedFromBlock(this, ctx.currentFunction, bs);
 
 		ctx.enter(bs);
 
