@@ -34,7 +34,6 @@ import volt.semantic.classify;
 import volt.semantic.typeinfo;
 import volt.semantic.irverifier;
 import volt.semantic.classresolver;
-import volt.semantic.storageremoval;
 import volt.semantic.userattrresolver;
 
 import volt.postparse.gatherer;
@@ -376,15 +375,6 @@ public:
 			}
 			return;
 		}
-		auto fparam = cast(ir.FunctionParam) eref.decl;
-		if (set !is null) {
-			fparam.func.type.params[fparam.index] = flattenStorage(fparam.func.type.params[fparam.index]);
-			return;
-		}
-		auto edecl = cast(ir.EnumDeclaration) eref.decl;
-		if (edecl !is null) {
-			edecl.type = flattenStorage(edecl.type);
-		}
 	}
 
 	override void resolve(ir.Scope current, ir.Attribute a)
@@ -403,20 +393,8 @@ public:
 			return;
 		}
 
-		ed.type = flattenStorage(ed.type);
 		auto e = new ExTyper(this);
 		e.transform(current, ed);
-	}
-
-	override ir.Type resolve(ir.Scope current, ir.Type t)
-	{
-		auto w = mTracker.add(t, Work.Action.Resolve);
-		scope (exit)
-			w.done();
-
-		t = resolveType(this, current, t);
-		t = flattenStorage(t);
-		return t;
 	}
 
 	override void resolve(ir.Store s)

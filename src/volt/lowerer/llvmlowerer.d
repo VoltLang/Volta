@@ -1229,9 +1229,6 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, LanguagePass lp,
 			throw makeExpected(fes.beginIntegerRange.location, "integral beginning and end of range");
 		}
 		panicAssert(fes, typesEqual(begin, end));
-		if (v.type !is null) {
-			v.type = lp.resolve(current, v.type);
-		}
 		if (v.type is null) {
 			v.type = copyType(begin);
 		}

@@ -31,22 +31,8 @@ import volt.semantic.classify;
 import volt.semantic.overload;
 import volt.semantic.implicit;
 import volt.semantic.classresolver;
-import volt.semantic.storageremoval;
 import volt.semantic.userattrresolver;
 
-
-/**
- * This handles the auto that has been filled in, removing the auto storage.
- */
-void replaceAutoIfNeeded(ref ir.Type type)
-{
-	auto autotype = cast(ir.AutoType) type;
-	if (autotype !is null && autotype.explicitType !is null) {
-		type = autotype.explicitType;
-		type = flattenStorage(type);
-		addStorage(type, autotype);
-	}
-}
 
 /**
  * Does what the name implies.
@@ -369,10 +355,6 @@ ir.Type handleValueStore(Context ctx, string ident, ref ir.Exp exp,
 	}
 
 	return var.type;
-}
-
-void resolveType()
-{
 }
 
 ir.Type handleFunctionParamStore(Context ctx, string ident, ref ir.Exp exp,
@@ -1735,9 +1717,7 @@ ir.Type extypeUnary(Context ctx, ref ir.Exp exp, Parent parent)
 	assert(unary !is null);
 
 	if (unary.type !is null) {
-		unary.type = ctx.lp.resolve(ctx.current, unary.type);
-		accept(unary.type, ctx.extyper);
-		replaceTypeOfIfNeeded(ctx, unary.type);
+		resolveType(ctx, unary.type);
 	}
 	if (unary.value !is null) {
 		extype(ctx, unary.value, Parent.NA);
@@ -2328,17 +2308,10 @@ ir.Type extypeIsExp(Context ctx, ref ir.Exp exp, Parent parent)
 
 	// We need to remove replace TypeOf, but we need
 	// to preserve extra type info like enum.
-
-	// TODO make a type extype function.
-	isExp.type = ctx.lp.resolve(ctx.current, isExp.type);
-	accept(isExp.type, ctx.extyper);
-	replaceTypeOfIfNeeded(ctx, isExp.type);
+	resolveType(ctx, isExp.type);
 
 	if (isExp.specType !is null) {
-		// TODO make a type extype function.
-		isExp.specType = ctx.lp.resolve(ctx.current, isExp.specType);
-		accept(isExp.specType, ctx.extyper);
-		replaceTypeOfIfNeeded(ctx, isExp.specType);
+		resolveType(ctx, isExp.specType);
 	}
 
 	ir.Constant c;
@@ -2444,10 +2417,8 @@ ir.Type extypeConstant(Context ctx, ref ir.Exp exp, Parent parent)
 	assert(constant !is null);
 	assert(constant.type !is null);
 
-	// TODO make a type extype function.
-	accept(constant.type, ctx.extyper);
+	resolveType(ctx, constant.type);
 
-	constant.type = ctx.lp.resolve(ctx.current, constant.type);
 	if (constant._string == "$" && isIntegral(constant.type)) {
 		if (ctx.lastIndexChild is null) {
 			throw makeDollarOutsideOfIndex(constant);
@@ -2469,8 +2440,7 @@ ir.Type extypeTypeExp(Context ctx, ref ir.Exp exp, Parent parent)
 	assert(te !is null);
 	assert(te.type !is null);
 
-	te.type = ctx.lp.resolve(ctx.current, te.type);
-	accept(te.type, ctx.extyper);
+	resolveType(ctx, te.type);
 
 	return te.type;
 }
@@ -2508,8 +2478,7 @@ ir.Type extypeVaArgExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	auto vaexp = cast(ir.VaArgExp) exp;
 
-	vaexp.type = ctx.lp.resolve(ctx.current, vaexp.type);
-	accept(vaexp.type, ctx.extyper);
+	resolveType(ctx, vaexp.type);
 
 	auto t = extype(ctx, vaexp.arg, Parent.NA);
 
@@ -2595,7 +2564,7 @@ ir.Type extypeArrayLiteral(Context ctx, ref ir.Exp exp, Parent parent)
 	}
 
 	if (al.type !is null) {
-		accept(al.type, ctx.extyper);
+		resolveType(ctx, al.type);
 	}
 
 	auto asClass = cast(ir.Class) realType(base);
@@ -2640,7 +2609,7 @@ ir.Type extypeTypeid(Context ctx, ref ir.Exp exp, Parent parent)
 	}
 
 	if (_typeid.type !is null) {
-		accept(_typeid.type, ctx.extyper);
+		resolveType(ctx, _typeid.type);
 	}
 	if (_typeid.exp !is null) {
 		_typeid.type = extype(ctx, _typeid.exp, Parent.NA);
@@ -2654,8 +2623,7 @@ ir.Type extypeTypeid(Context ctx, ref ir.Exp exp, Parent parent)
 		_typeid.exp = null;
 	}
 
-	_typeid.type = ctx.lp.resolve(ctx.current, _typeid.type);
-	replaceTypeOfIfNeeded(ctx, _typeid.type);
+	resolveType(ctx, _typeid.type);
 
 	auto clazz = cast(ir.Class) realType(_typeid.type);
 	if (clazz is null) {
@@ -2931,24 +2899,169 @@ ir.Type extypeUnchecked(Context ctx, ref ir.Exp exp, Parent parent)
 
 /*
  *
- * Here ends the expression extype code.
+ * Type resolver functions.
  *
  */
 
-/// Replace TypeOf with its expression's type, if needed.
-void replaceTypeOfIfNeeded(Context ctx, ref ir.Type type)
+/**
+ * Helper function to call into the ExTyper version.
+ */
+ir.Type resolveType(LanguagePass lp, ir.Scope current, ref ir.Type type)
 {
-	auto asTypeOf = cast(ir.TypeOf) realType(type);
-	if (asTypeOf is null) {
-		assert(type.nodeType != ir.NodeType.TypeOf);
+	auto extyper = new ExTyper(lp);
+	auto ctx = new Context(lp, extyper);
+	ctx.setupFromScope(current);
+	doResolveType(ctx, type, null, 0);
+	return resolveType(ctx, type);
+}
+
+/**
+ * Flattens storage types, ensure that there are no unresolved TypeRefences in
+ * the given type and in general ensures that the type is ready to be consumed.
+ *
+ * Stops when encountering the first resolved TypeReference.
+ */
+ir.Type resolveType(Context ctx, ref ir.Type type)
+{
+	doResolveType(ctx, type, null, 0);
+	return type;
+}
+
+void doResolveType(Context ctx, ref ir.Type type,
+                   ir.CallableType ct, size_t ctIndex)
+{
+	switch (type.nodeType) with (ir.NodeType) {
+	case NoType:
+	case NullType:
+	case PrimitiveType:
+		return; // Nothing to do.
+	case PointerType:
+		auto pt = cast(ir.PointerType)type;
+		doResolveType(ctx, pt.base, null, 0);
+
+		auto current = pt;
+		while (current !is null) {
+			assert(cast(ir.Named) current.base is null);
+			addStorage(current.base, current);
+			current = cast(ir.PointerType) current.base;
+		}
+
+		return;
+	case ArrayType:
+		auto at = cast(ir.ArrayType)type;
+		return doResolveType(ctx, at.base, null, 0);
+	case StaticArrayType:
+		auto sat = cast(ir.StaticArrayType)type;
+		return doResolveType(ctx, sat.base, null, 0);
+	case AAType:
+		return doResolveAA(ctx, type);
+	case StorageType:
+		auto st = cast(ir.StorageType)type;
+		// For auto and friends.
+		if (st.base is null) {
+			st.base = buildAutoType(type.location);
+		}
+		flattenOneStorage(st, st.base, ct, ctIndex);
+		type = st.base;
+		return doResolveType(ctx, type, ct, ctIndex);
+	case AutoType:
+		auto at = cast(ir.AutoType)type;
+		if (at.explicitType is null) {
+			return;
+		}
+		type = at.explicitType;
+		return doResolveType(ctx, type, null, 0);
+	case FunctionType:
+		auto ft = cast(ir.FunctionType)type;
+		foreach (i, ref p; ft.params) {
+			doResolveType(ctx, p, ft, i);
+		}
+		return doResolveType(ctx, ft.ret, ft, 0);
+	case DelegateType:
+		auto dt = cast(ir.DelegateType)type;
+		foreach (i, ref p; dt.params) {
+			doResolveType(ctx, p, dt, i);
+		}
+		return doResolveType(ctx, dt.ret, dt, 0);
+	case TypeReference:
+		auto tr = cast(ir.TypeReference)type;
+
+		if (tr.type is null) {
+			tr.type = lookupType(ctx.lp, ctx.current, tr.id);
+		}
+		assert(tr.type !is null);
+
+		if (auto n = cast(ir.Named) tr.type) {
+			return;
+		}
+
+		// Assume tr.type is resolved.
+		type = copyTypeSmart(tr.location, tr.type);
+		type.glossedName = tr.id.toString();
+		addStorage(type, tr);
+		return;
+	case TypeOf:
+		auto to = cast(ir.TypeOf) type;
+		type = extype(ctx, to.exp, Parent.NA);
+		if (type.nodeType == ir.NodeType.NoType) {
+			throw makeError(to.exp, "expression has no type.");
+		}
+		type = copyTypeSmart(to.location, type);
+		return;
+	case Enum:
+	case Class:
+	case Struct:
+	case Union:
+	case Interface:
+		throw panic(type, "didn't not expect direct reference to Named type");
+	default:
+		throw panicUnhandled(type, ir.nodeToString(type));
+	}
+}
+
+void doResolveAA(Context ctx, ref ir.Type type)
+{
+	auto at = cast(ir.AAType) type;
+
+	doResolveType(ctx, at.key, null, 0);
+	doResolveType(ctx, at.value, null, 0);
+
+	auto base = at.key;
+
+	auto tr = cast(ir.TypeReference)base;
+	if (tr !is null) {
+		base = tr.type;
+	}
+
+	if (base.nodeType == ir.NodeType.Struct ||
+	    base.nodeType == ir.NodeType.Class) {
 		return;
 	}
-	auto t = getExpType(asTypeOf.exp);
-	if (t.nodeType == ir.NodeType.NoType) {
-		throw makeError(asTypeOf.exp, "expression has no type.");
+
+	bool needsConstness;
+	if (base.nodeType == ir.NodeType.ArrayType) {
+		base = (cast(ir.ArrayType)base).base;
+		needsConstness = true;
+	} else if (base.nodeType == ir.NodeType.StaticArrayType) {
+		base = (cast(ir.StaticArrayType)base).base;
+		needsConstness = true;
 	}
-	type = copyTypeSmart(asTypeOf.location, t);
+
+	auto prim = cast(ir.PrimitiveType)base;
+	if (prim !is null &&
+	    (!needsConstness || (prim.isConst || prim.isImmutable))) {
+		return;
+	}
+
+	throw makeInvalidAAKey(at);
 }
+
+
+/*
+ *
+ * Here ends the type resolver code.
+ *
+ */
 
 /**
  * Ensure that a thrown type inherits from Throwable.
@@ -3534,8 +3647,7 @@ void resolveVariable(Context ctx, ir.Variable v)
 	}
 
 	// Fix up type as best as possible.
-	accept(v.type, ctx.extyper);
-	v.type = ctx.lp.resolve(ctx.current, v.type);
+	resolveType(ctx, v.type);
 
 	bool inAggregate = (cast(ir.Aggregate) ctx.current.node) !is null;
 	if (inAggregate && v.assign !is null &&
@@ -3549,8 +3661,6 @@ void resolveVariable(Context ctx, ir.Variable v)
 		throw makeConstField(v);
 	}
 
-	replaceTypeOfIfNeeded(ctx, v.type);
-
 	if (v.assign !is null) {
 		if (!isAuto(v.type)) {
 			tagLiteralType(v.assign, v.type);
@@ -3558,22 +3668,19 @@ void resolveVariable(Context ctx, ir.Variable v)
 
 		auto rtype = extype(ctx, v.assign, Parent.NA);
 		if (isAuto(v.type)) {
-			auto atype = cast(ir.AutoType)v.type;
+			auto atype = cast(ir.AutoType) v.type;
 			if (rtype.nodeType == ir.NodeType.FunctionSetType || atype is null) {
 				throw makeCannotInfer(v.assign.location);
 			}
-			atype.explicitType = copyTypeSmart(v.assign.location, rtype);
+			v.type = flattenAuto(atype, rtype);
 		} else {
 			if (!willConvert(ctx, v.type, v.assign)) {
 				throw makeBadImplicitCast(v, rtype, v.type);
 			}
 		}
-		replaceAutoIfNeeded(v.type);
 		doConvert(ctx, v.type, v.assign);
 	}
 
-	replaceAutoIfNeeded(v.type);
-	accept(v.type, ctx.extyper);
 	v.isResolved = true;
 }
 
@@ -3646,7 +3753,10 @@ void resolveFunction(Context ctx, ir.Function func)
 		throw makeWrongNumberOfArguments(func, func.type.params.length, isVoid(func.type.ret) ? 0U : 1U);
 	}
 
-	func.type = cast(ir.FunctionType)ctx.lp.resolve(func.myScope.parent, func.type);
+	// Ctx points the context surrounding the Function
+	ir.Type refType = func.type;
+	resolveType(ctx, refType);
+	func.type = cast(ir.FunctionType) refType;
 
 
 	if (func.name == "main" && func.type.linkage == ir.Linkage.Volt) {
@@ -3894,43 +4004,46 @@ public:
 
 	private void resolve(ir.EnumDeclaration ed, ir.Exp prevExp)
 	{
-		ed.type = ctx.lp.resolve(ctx.current, ed.type);
+		resolveType(ctx, ed.type);
 
+		ir.Type rtype;
 		if (ed.assign is null) {
 			if (prevExp is null) {
-				ed.assign = buildConstantInt(ed.location, 0);
+				ir.Constant c;
+				ed.assign = c = buildConstantInt(ed.location, 0);
+				rtype = c.type;
 			} else {
 				auto loc = ed.location;
-				auto prevType = realType(getExpType(prevExp));
+				rtype = getExpType(prevExp);
+				auto prevType = realType(rtype);
 				if (!isIntegral(prevType)) {
 					throw makeTypeIsNot(ed, prevType, buildInt(ed.location));
 				}
 
-				ed.assign = evaluate(ctx.lp, ctx.current, buildAdd(loc, copyExp(prevExp), buildConstantInt(loc, 1)));
+				auto add = buildAdd(loc, copyExp(prevExp), buildConstantInt(loc, 1));
+				ed.assign = evaluate(ctx.lp, ctx.current, add);
 			}
 		} else {
-			extype(ctx, ed.assign, Parent.NA);
+			rtype = extype(ctx, ed.assign, Parent.NA);
 			if (needsEvaluation(ed.assign)) {
 				ed.assign = evaluate(ctx.lp, ctx.current, ed.assign);
 			}
 		}
 
-		auto e = cast(ir.Enum)realType(ed.type, false);
-		auto rtype = getExpType(ed.assign);
+		auto e = cast(ir.Enum) realType(ed.type, false);
 		if (e !is null && isAuto(realType(e.base))) {
 			e.base = realType(e.base);
-			auto atype = cast(ir.AutoType)e.base;
-			atype.explicitType = realType(copyTypeSmart(ed.assign.location, rtype));
-			replaceAutoIfNeeded(e.base);
+			auto atype = cast(ir.AutoType) e.base;
+			auto t = realType(copyTypeSmart(ed.assign.location, rtype));
+			e.base = flattenAuto(atype, t);
 		}
 		if (isAuto(realType(ed.type))) {
 			ed.type = realType(ed.type);
-			auto atype = cast(ir.AutoType)ed.type;
-			atype.explicitType = realType(copyTypeSmart(ed.assign.location, rtype));
-			replaceAutoIfNeeded(ed.type);
+			auto atype = cast(ir.AutoType) ed.type;
+			auto t = realType(copyTypeSmart(ed.assign.location, rtype));
+			ed.type = flattenAuto(atype, t);
 		}
 		checkAndDoConvert(ctx, ed.type, ed.assign);
-		accept(ed.type, this);
 
 		ed.resolved = true;
 	}
@@ -4381,35 +4494,11 @@ public:
 
 	/*
 	 *
-	 * Types.
-	 *
-	 */
-
-	override Status enter(ir.FunctionType ftype)
-	{
-		replaceTypeOfIfNeeded(ctx, ftype.ret);
-		return Continue;
-	}
-
-	override Status enter(ir.DelegateType dtype)
-	{
-		replaceTypeOfIfNeeded(ctx, dtype.ret);
-		return Continue;
-	}
-
-	override Status enter(ir.TypeOf tf)
-	{
-		extype(ctx, tf.exp, Parent.NA);
-		return ContinueParent;
-	}
-
-
-	/*
-	 *
 	 * Error checking.
 	 *
 	 */
 
+	override Status enter(ir.TypeOf n) { throw panic(n, "visitor"); }
 	override Status leave(ir.TypeOf n) { throw panic(n, "visitor"); }
 
 	override Status leave(ir.IfStatement n) { throw panic(n, "visitor"); }

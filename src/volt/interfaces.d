@@ -301,22 +301,6 @@ public:
 	abstract void resolve(ir.Scope current, ir.EnumDeclaration ed);
 
 	/**
-	 * Resolves a type and flattes any storage types.
-	 *
-	 * Ensure that there are no unresolved TypeRefences in the given type.
-	 * Stops when encountering the first resolved TypeReference.
-	 *
-	 * TypeReference - Resolves a unresolved TypeReference in the given
-	 * scope. The TypeReference's type is set to the looked up type,
-	 * should type be not null nothing is done.
-	 *
-	 * AAType - Resolves and checks if the Key-Type is compatible.
-	 *
-	 * @throws CompilerError on invalid Key-Type
-	 */
-	abstract ir.Type resolve(ir.Scope current, ir.Type type);
-
-	/**
 	 * Resolves an ir.Store that is of kind Merge. Afterwards the kind
 	 * is changed to kind Function, since only functions can be merged.
 	 */

@@ -14,7 +14,7 @@ import volt.semantic.context;
 import volt.semantic.classify;
 import volt.semantic.typer;
 import volt.semantic.util;
-import volt.semantic.storageremoval;
+
 
 /**
  * @defgroup semanticImplicit Implicit Type Conversion

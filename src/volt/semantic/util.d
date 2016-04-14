@@ -59,6 +59,45 @@ ir.Type removeStorageFields(ir.Type t)
 }
 
 /**
+ * Resolves AutoType to the given type.
+ *
+ * Copies the storage from the auto type and returns the result.
+ */
+ir.Type flattenAuto(ir.AutoType atype, ir.Type type)
+{
+	type = copyTypeSmart(atype.location, type);
+	addStorage(type, atype);
+	atype.explicitType = type;
+	return type;
+}
+
+/**
+ * Turn stype into a flag, and attach it to type.
+ */
+void flattenOneStorage(ir.StorageType stype, ir.Type type,
+                       ir.CallableType ct, size_t ctIndex)
+{
+	final switch (stype.type) with (ir.StorageType.Kind) {
+	case Const: type.isConst = true; break;
+	case Immutable: type.isImmutable = true; break;
+	case Scope: type.isScope = true; break;
+	case Ref:
+	case Out:
+		if (ct is null) {
+			throw panic(stype.location, "ref attached to non parameter");
+		}
+		if (stype.type == Ref) {
+			ct.isArgRef[ctIndex] = true;
+		} else {
+			ct.isArgOut[ctIndex] = true;
+		}
+		break;
+	case Auto: break;
+	case Invalid: throw panic(stype, "invalid storage type");
+	}
+}
+
+/**
  * Implicitly convert PrimitiveTypes to bools for 'if' and friends.
  *
  * Currently done for ifs but not other code.
