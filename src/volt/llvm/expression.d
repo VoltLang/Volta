@@ -9,6 +9,7 @@ static import volt.ir.util;
 
 import volt.token.location : Location;
 import volt.errors;
+import ir = volt.ir.ir;
 
 import volt.llvm.common;
 import volt.llvm.interfaces;

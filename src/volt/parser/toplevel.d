@@ -12,6 +12,7 @@ import volt.exceptions;
 import volt.errors;
 import volt.token.stream;
 import volt.token.location;
+import volt.token.token : TokenType;
 
 import volt.parser.base;
 import volt.parser.declaration;

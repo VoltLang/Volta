@@ -18,6 +18,7 @@ import volt.exceptions;
 import volt.interfaces;
 import volt.errors;
 import volt.arg;
+import ir = volt.ir.ir;
 
 import volt.parser.parser;
 import volt.semantic.languagepass;

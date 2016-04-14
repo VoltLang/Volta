@@ -3,12 +3,11 @@
 module vrt.ext.unwind;
 
 
+import vrt.ext.stdc : uintptr_t;
+
 version (!Emscripten && !MSVC && !Metal):
 
 extern(C):
-
-// True for now
-alias uintptr_t = size_t;
 
 enum _Unwind_Reason_Code
 {

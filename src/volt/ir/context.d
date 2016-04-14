@@ -174,6 +174,19 @@ public:
 	}
 
 	/**
+	 * As above but for multiple functions at once.
+	 * Internal use only.
+	 */
+	this(Scope s, Function[] func, string name)
+	{
+		this.name = name;
+		this.node = func[0];
+		this.parent = s;
+		this.functions = func;
+		this.kind = Kind.Function;
+	}
+
+	/**
 	 * Used for enums.
 	 * The name will usually be the name of the enum declaration.
 	 * Not really intended for general consumption, but called from the

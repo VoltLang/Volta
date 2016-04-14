@@ -201,6 +201,7 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 		throw makeUsedBindFromPrivateImport(loc, name);
 	}
 
+	ir.Store[] stores;
 	foreach (i, mod; asMod.myScope.importedModules) {
 		auto store = mod.myScope.getStore(name);
 		if (store !is null && store.myScope !is null) {
@@ -212,21 +213,58 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 				}
 			}
 		}
-		if (store !is null) {
-			return ensureResolved(lp, store);
+		if (store !is null && store.access == ir.Access.Public) {
+			stores ~= store;
+			continue;
 		}
 
 		/// Check publically imported modules.
 		PublicImportContext ctx;
 		store = lookupPublicImportScope(lp, mod.myScope, loc, name, ctx);
 		if (store !is null) {
-			return ensureResolved(lp, store);
+			stores ~= store;
+			continue;
 		}
 	}
 
-	// @todo Error if we found multiple matches in importedScopes.
+	if (stores.length == 0) {
+		return null;
+	}
 
-	return null;
+	// We're only interested in seeing each Store once. Remove duplicates.
+	ir.Store[] uniqueStores;
+	foreach (store; stores) {
+		bool unique = true;
+		foreach (ustore; uniqueStores) {
+			if (ustore is store) {
+				unique = false;
+				break;
+			}
+		}
+		if (unique) {
+			uniqueStores ~= store;
+		}
+	}
+	stores = uniqueStores;
+	assert(stores.length >= 1);
+
+	if (stores.length == 1) {
+		return ensureResolved(lp, stores[0]);
+	}
+
+	ir.Function[] fns;
+	foreach (store; stores) {
+		ensureResolved(lp, store);
+		// @todo Error if we found multiple matches in importedScopes.
+		if (store.functions.length == 0) {
+			throw makeMultipleMatches(loc, name);
+		}
+		fns ~= store.functions;
+	}
+
+	auto store = new ir.Store(_scope, fns, fns[0].name);
+	ensureResolved(lp, store);
+	return store;
 }
 
 /**

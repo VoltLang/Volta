@@ -371,6 +371,10 @@ ir.Type handleValueStore(Context ctx, string ident, ref ir.Exp exp,
 	return var.type;
 }
 
+void resolveType()
+{
+}
+
 ir.Type handleFunctionParamStore(Context ctx, string ident, ref ir.Exp exp,
                                  ir.Store store, ir.Exp child, Parent parent,
                                  StoreSource via)

@@ -11,3 +11,6 @@ extern(C) int printf(const(char)*, ...);
 extern(C) void* calloc(size_t num, size_t size);
 
 extern(C) void exit(int);
+
+// True for now.
+alias uintptr_t = size_t;

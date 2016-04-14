@@ -6,6 +6,7 @@ import io = watt.io.std;
 
 import volt.errors;
 import volt.interfaces;
+import ir = volt.ir.ir;
 
 import lib.llvm.core;
 import lib.llvm.analysis;

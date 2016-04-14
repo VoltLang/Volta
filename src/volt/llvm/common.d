@@ -5,6 +5,7 @@ module volt.llvm.common;
 import volt.token.location;
 
 import volt.ir.util;
+import ir = volt.ir.ir;
 import volt.llvm.interfaces;
 
 

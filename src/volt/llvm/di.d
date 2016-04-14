@@ -5,7 +5,7 @@ module volt.llvm.di;
 import volt.token.location;
 import ir = volt.ir.ir;
 import lib.llvm.core;
-import lib.llvm.c.DIBuilder;
+import lib.llvm.c.DIBuilder : LLVMDIBuilderRef;
 
 import volt.semantic.classify : size, alignment;
 import volt.llvm.interfaces;

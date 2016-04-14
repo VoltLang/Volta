@@ -6,6 +6,7 @@ import watt.text.format : format;
 
 import volt.errors;
 import volt.ir.util;
+import ir = volt.ir.ir;
 
 import volt.llvm.common;
 import volt.llvm.interfaces;

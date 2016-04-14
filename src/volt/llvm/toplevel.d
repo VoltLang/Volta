@@ -10,6 +10,7 @@ import volt.errors;
 import volt.visitor.visitor;
 import volt.llvm.di : diVariable;
 import volt.llvm.interfaces;
+import ir = volt.ir.ir;
 
 
 class LlvmVisitor : NullVisitor

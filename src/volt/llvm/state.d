@@ -6,6 +6,7 @@ import lib.llvm.core;
 
 import volt.errors;
 import volt.interfaces;
+import ir = volt.ir.ir;
 
 import volt.visitor.visitor;
 

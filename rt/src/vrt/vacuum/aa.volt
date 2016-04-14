@@ -2,8 +2,6 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.vacuum.aa;
 
-import object;
-
 
 // Volts AA (Associative Array) Implementation
 // based on a Red-Black-Tree
@@ -34,12 +32,12 @@ private struct RedBlackTree
 	TreeNode* root;
 	size_t length;
 
-	TypeInfo value;
-	TypeInfo key;
+	object.TypeInfo value;
+	object.TypeInfo key;
 }
 
 
-extern(C) void* vrt_aa_new(TypeInfo value, TypeInfo key)
+extern(C) void* vrt_aa_new(object.TypeInfo value, object.TypeInfo key)
 {
 	RedBlackTree* rbt = new RedBlackTree;
 	rbt.root = null;
@@ -317,7 +315,7 @@ extern(C) void vrt_aa_insert_primitive(void* rbtv, ulong key, void* value)
 		object.__llvm_memcpy(cast(void*)&(inserted_node.value), value, rbt.value.size, 0, false);
 	} else {
 		// allocate more memory for value
-		void* mem = allocDg(rbt.value, 1);
+		void* mem = object.allocDg(rbt.value, 1);
 		object.__llvm_memcpy(mem, value, rbt.value.size, 0, false);
 		inserted_node.value.ptr = mem;
 	}
@@ -376,7 +374,7 @@ extern(C) void vrt_aa_insert_array(void* rbtv, void[] key, void* value)
 	if (rbt.value.size < typeid(TreeStore).size) {
 		object.__llvm_memcpy(cast(void*)&(inserted_node.value), value, rbt.value.size, 0, false);
 	} else {
-		void* mem = allocDg(rbt.value, 1);
+		void* mem = object.allocDg(rbt.value, 1);
 		object.__llvm_memcpy(mem, value, rbt.value.size, 0, false);
 		inserted_node.value.ptr = mem;
 	}
@@ -605,7 +603,7 @@ extern (C) void[] vrt_aa_get_keys(void* rbtv)
 		return [];
 	}
 	auto rbt = cast(RedBlackTree*) rbtv;
-	auto arr = allocDg(rbt.key, rbt.length)[0 .. rbt.length * rbt.key.size];
+	auto arr = object.allocDg(rbt.key, rbt.length)[0 .. rbt.length * rbt.key.size];
 	size_t currentIndex;
 	vrt_aa_walk(rbt.root, true, rbt.key.size, ref arr, ref currentIndex);
 	return arr;
@@ -618,7 +616,7 @@ extern (C) void[] vrt_aa_get_values(void* rbtv)
 		return [];
 	}
 	auto rbt = cast(RedBlackTree*) rbtv;
-	auto arr = allocDg(rbt.value, rbt.length)[0 .. rbt.length * rbt.value.size];
+	auto arr = object.allocDg(rbt.value, rbt.length)[0 .. rbt.length * rbt.value.size];
 	size_t currentIndex;
 	vrt_aa_walk(rbt.root, false, rbt.value.size, ref arr, ref currentIndex);
 	return arr;

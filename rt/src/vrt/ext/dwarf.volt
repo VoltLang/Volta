@@ -3,8 +3,7 @@
 module vrt.ext.dwarf;
 
 
-// True for now
-alias uintptr_t = size_t;
+import vrt.ext.stdc : uintptr_t;
 
 struct DW_Context
 {

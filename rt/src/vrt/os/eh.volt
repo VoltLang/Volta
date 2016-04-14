@@ -7,7 +7,7 @@ version (!Emscripten && !MSVC && !Metal):
 
 import vrt.ext.unwind;
 import vrt.ext.dwarf;
-import vrt.ext.stdc : exit;
+import vrt.ext.stdc : exit, uintptr_t;
 
 
 /*

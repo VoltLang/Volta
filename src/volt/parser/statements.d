@@ -10,6 +10,7 @@ import volt.ir.util;
 import volt.errors;
 import volt.exceptions;
 import volt.token.stream;
+import volt.token.token : TokenType, Token;
 
 import volt.parser.base;
 import volt.parser.declaration;

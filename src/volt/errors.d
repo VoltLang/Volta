@@ -32,6 +32,11 @@ void hackTypeWarning(ir.Node n, ir.Type nt, ir.Type ot)
  *
  */
 
+CompilerException makeMultipleMatches(Location l, string name, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(l, format("multiple imports contain a symbol '%s'.", name), file, line);
+}
+
 CompilerException makeNoStringImportPaths(Location l, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(l, "no string import file paths defined (use -J).", file, line);
