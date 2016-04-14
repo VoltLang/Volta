@@ -43,5 +43,5 @@ string unsafeToString(const(char)* str)
 		str++;
 	}
 	auto len = cast(size_t)str - cast(size_t)start;
-	return (cast(immutable(char*))start)[0 .. len];
+	return (cast(immutable(char)*)start)[0 .. len];
 }
