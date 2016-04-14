@@ -148,6 +148,7 @@ public:
 
 	override Status enter(ir.BlockStatement bs)
 	{
+		checkDepth(bs.myScope);
 		foreach (n; bs.statements) {
 			switch (n.nodeType) with (ir.NodeType) {
 			case BlockStatement:
@@ -197,12 +198,18 @@ public:
 	override Status leave(ir.TopLevelBlock tlb) { assert(false); }
 	override Status leave(ir.BlockStatement bs) { assert(false); }
 
-	override Status enter(ir.Class n) { checkStorage(n); return super.enter(n); }
-	override Status enter(ir.Struct n) { checkStorage(n); return super.enter(n); }
-	override Status enter(ir.Union n) { checkStorage(n); return super.enter(n); }
+	override Status enter(ir.Class n) { check(n); return super.enter(n); }
+	override Status enter(ir.Struct n) { check(n); return super.enter(n); }
+	override Status enter(ir.Union n) { check(n); return super.enter(n); }
 	override Status enter(ir.Enum n) { checkStorage(n); return super.enter(n); }
 	override Status enter(ir.UserAttribute n) { checkStorage(n); return super.enter(n); }
-	override Status enter(ir._Interface n) { checkStorage(n); return super.enter(n); }
+	override Status enter(ir._Interface n) { check(n); return super.enter(n); }
+
+	void check(ir.Aggregate a)
+	{
+		checkDepth(a.myScope);
+		checkStorage(a);
+	}
 
 	void checkStorage(ir.Type t)
 	{
@@ -212,6 +219,17 @@ public:
 			} else {
 				throw panic(t, "type storage modifiers has been modified");
 			}
+		}
+	}
+
+	void checkDepth(ir.Scope _scope)
+	{
+		auto fns = cast(int)functionStack.length;
+		auto expectedDepth = fns <= 1 ? 0 : fns - 1;
+		if (expectedDepth != _scope.nestedDepth) {
+			auto str = format("nested depth incorrectly set to %s, expected %s.",
+			                  _scope.nestedDepth, expectedDepth);
+			throw panic(_scope.node.location, str);
 		}
 	}
 }
