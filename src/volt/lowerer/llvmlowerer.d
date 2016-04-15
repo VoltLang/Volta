@@ -760,7 +760,8 @@ public:
 
 	override Status visit(ref ir.Exp exp, ir.ExpReference eref)
 	{
-		bool replaced = replaceNested(lp, exp, eref, functionStack.length == 0 ? null : functionStack[$-1].nestedVariable);
+		ir.Function currentFunc = functionStack.length == 0 ? null : functionStack[$-1];
+		bool replaced = replaceNested(lp, exp, eref, currentFunc);
 		if (replaced) {
 			return Continue;
 		}
@@ -772,18 +773,18 @@ public:
 		if (functionStack.length == 0 || functionStack[$-1].nestedVariable is null) {
 			return Continue;
 		}
-		bool isNested;
+		bool isnested;
 		foreach (pf; functionStack) {
 			foreach (nf; pf.nestedFunctions) {
 				if (func is nf) {
-					isNested = true;
+					isnested = true;
 				}
 			}
-			if (isNested) {
+			if (isnested) {
 				break;
 			}
 		}
-		if (!isNested) {
+		if (!isnested) {
 			return Continue;
 		}
 		auto np = functionStack[$-1].nestedVariable;

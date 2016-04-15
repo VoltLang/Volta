@@ -52,12 +52,17 @@ ir.Struct createAndAddNestedStruct(ir.Function func, ir.BlockStatement bs)
 	return s;
 }
 
-bool replaceNested(LanguagePass lp, ref ir.Exp exp, ir.ExpReference eref, ir.Variable nestParam)
+bool replaceNested(LanguagePass lp, ref ir.Exp exp, ir.ExpReference eref, ir.Function currentFunction)
 {
 	if (eref.doNotRewriteAsNestedLookup) {
 		return false;
 	}
-	if (nestParam is null) {
+	if (currentFunction is null) {
+		return false;
+	}
+	auto nestParam = currentFunction.nestedVariable;
+	auto nestStruct = currentFunction.nestStruct;
+	if (nestParam is null || nestStruct is null) {
 		return false;
 	}
 
@@ -78,6 +83,11 @@ bool replaceNested(LanguagePass lp, ref ir.Exp exp, ir.ExpReference eref, ir.Var
 		auto var = cast(ir.Variable) eref.decl;
 		if (!var.storage.isNested()) {
 			return false;
+		}
+		auto store = lookupInGivenScopeOnly(lp, nestStruct.myScope, exp.location, var.name);
+		// Skip adding this variables to nested struct.
+		if (var.name != "this" && store is null) {
+			addVarToStructSmart(nestStruct, var);
 		}
 		name = var.name;
 		type = var.type;
@@ -152,12 +162,6 @@ void tagNestedVariables(Context ctx, ir.Variable var, ir.Store store, ref ir.Exp
 		}
 
 		var.storage = ir.Variable.Storage.Nested;
-
-		// Skip adding this variables to nested struct.
-		if (var.name == "this") {
-			return;
-		}
-		addVarToStructSmart(ctx.currentFunction.nestStruct, var);
 	} else if (var.storage == ir.Variable.Storage.Field) {
 		if (ctx.currentFunction.nestedHiddenParameter is null) {
 			return;
