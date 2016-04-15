@@ -358,6 +358,7 @@ public:
 		auto store = new Store(this, n, name, Store.Kind.Scope);
 		symbols[name] = store;
 		store.myScope = s;
+		store.access = Access.Private;
 		return store;
 	}
 
@@ -382,7 +383,7 @@ public:
 		auto store = new Store(this, n, name, Store.Kind.Type);
 		symbols[name] = store;
 
-		auto named = cast(ir.Named) n;
+		auto named = cast(Named) n;
 		if (named !is null) {
 			assert(named.myScope !is null);
 			store.myScope = named.myScope;
@@ -409,8 +410,8 @@ public:
 			throw panic(n.location, "null name passed to addValue");
 		}
 		errorOn(n, name);
-		ir.Store store;
-		if (n.nodeType == ir.NodeType.FunctionParam) {
+		Store store;
+		if (n.nodeType == NodeType.FunctionParam) {
 			store = new Store(this, n, name, Store.Kind.FunctionParam);
 		} else {
 			store = new Store(this, n, name, Store.Kind.Value);
@@ -552,7 +553,7 @@ public:
 	{
 		Declaration[] variables;
 		foreach (store; symbols.values) {
-			auto variable = cast(ir.Variable) store.node;
+			auto variable = cast(Variable) store.node;
 			if (variable is null || variable.storage != Variable.Storage.Nested) {
 				continue;
 			}
