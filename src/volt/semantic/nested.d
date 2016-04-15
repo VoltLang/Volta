@@ -81,6 +81,22 @@ bool replaceNested(LanguagePass lp, ref ir.Exp exp, ir.ExpReference eref, ir.Fun
 		break;
 	case Variable:
 		auto var = cast(ir.Variable) eref.decl;
+		if (var.storage == ir.Variable.Storage.Field) {
+			if (currentFunction.nestedHiddenParameter is null) {
+				return false;
+			}
+			auto nref = buildExpReference(var.location, currentFunction.nestedHiddenParameter, currentFunction.nestedHiddenParameter.name);
+			auto nstore = lookupInGivenScopeOnly(lp, currentFunction.nestStruct.myScope, var.location, "this");
+			panicAssert(var, nstore !is null);
+			auto nvar = cast(ir.Variable)nstore.node;
+			panicAssert(var, nvar !is null);
+			auto cagg = cast(ir.Aggregate)realType(nvar.type);
+			auto cstore = lookupInGivenScopeOnly(lp, cagg.myScope, var.location, var.name);
+			auto cvar = cast(ir.Variable)cstore.node;
+			auto a = buildAccessExp(var.location, nref, nvar);
+			exp = buildAccessExp(a.location, a, cvar);
+			return true;
+		}
 		if (!var.storage.isNested()) {
 			return false;
 		}
@@ -162,19 +178,5 @@ void tagNestedVariables(Context ctx, ir.Variable var, ir.Store store, ref ir.Exp
 		}
 
 		var.storage = ir.Variable.Storage.Nested;
-	} else if (var.storage == ir.Variable.Storage.Field) {
-		if (ctx.currentFunction.nestedHiddenParameter is null) {
-			return;
-		}
-		auto nref = buildExpReference(var.location, ctx.currentFunction.nestedHiddenParameter, ctx.currentFunction.nestedHiddenParameter.name);
-		auto nstore = lookupInGivenScopeOnly(ctx.lp, ctx.currentFunction.nestStruct.myScope, var.location, "this");
-		panicAssert(var, nstore !is null);
-		auto nvar = cast(ir.Variable)nstore.node;
-		panicAssert(var, nvar !is null);
-		auto cagg = cast(ir.Aggregate)realType(nvar.type);
-		auto cstore = lookupInGivenScopeOnly(ctx.lp, cagg.myScope, var.location, var.name);
-		auto cvar = cast(ir.Variable)cstore.node;
-		auto a = buildAccessExp(var.location, nref, nvar);
-		e = buildAccessExp(a.location, a, cvar);
 	}
 }
