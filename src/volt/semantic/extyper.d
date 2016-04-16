@@ -2905,10 +2905,36 @@ ir.Type extypeUnchecked(Context ctx, ref ir.Exp exp, Parent parent)
  *
  */
 
+void extypeBlockStatement(Context ctx, ir.BlockStatement bs)
+{
+	emitNestedFromBlock(ctx.extyper, ctx.currentFunction, bs);
+
+	ctx.enter(bs);
+
+	foreach (ref stat; bs.statements) {
+
+		// Translate runtime asserts before processing the block.
+		switch (stat.nodeType) with (ir.NodeType) {
+		case AssertStatement:
+			auto as = cast(ir.AssertStatement) stat;
+			if (as is null || as.isStatic) {
+				break;
+			}
+			stat = transformRuntimeAssert(ctx, as);
+			break;
+		default:
+		}
+
+		accept(stat, ctx.extyper);
+	}
+
+	ctx.leave(bs);
+}
+
 /**
  * Ensure that a thrown type inherits from Throwable.
  */
-void extypeThrow(Context ctx, ir.ThrowStatement t)
+void extypeThrowStatement(Context ctx, ir.ThrowStatement t)
 {
 	auto throwable = cast(ir.Class) retrieveTypeFromObject(ctx.lp, t.location, "Throwable");
 	assert(throwable !is null);
@@ -3140,11 +3166,46 @@ void extypeSwitchStatement(Context ctx, ir.SwitchStatement ss)
 }
 
 /**
+ * Merge with below function.
+ */
+void extypeForeachStatement(Context ctx, ir.ForeachStatement fes)
+{
+	if (fes.beginIntegerRange !is null) {
+		assert(fes.endIntegerRange !is null);
+		extype(ctx, fes.beginIntegerRange, Parent.NA);
+		extype(ctx, fes.endIntegerRange, Parent.NA);
+	}
+	emitNestedFromBlock(ctx.extyper, ctx.currentFunction, fes.block);
+	ctx.enter(fes.block);
+	processForeach(ctx, fes);
+	foreach (ivar; fes.itervars) {
+		accept(ivar, ctx.extyper);
+	}
+	if (fes.aggregate !is null) {
+		auto aggType = realType(getExpType(fes.aggregate));
+		if (fes.itervars.length == 2 &&
+			(aggType.nodeType == ir.NodeType.StaticArrayType ||
+			aggType.nodeType == ir.NodeType.ArrayType)) {
+			auto keysz = size(ctx.lp, fes.itervars[0].type);
+			auto sizetsz = size(ctx.lp, buildSizeT(fes.location, ctx.lp));
+			if (keysz < sizetsz) {
+				throw makeIndexVarTooSmall(fes.location, fes.itervars[0].name);
+			}
+		}
+	}
+	// fes.aggregate is visited by extypeForeach
+	foreach (ctxment; fes.block.statements) {
+		accept(ctxment, ctx.extyper);
+	}
+	ctx.leave(fes.block);
+}
+
+/**
  * Process the types and expressions on a foreach.
  * Foreaches become for loops before the backend sees them,
  * but they still need to be made valid by the extyper.
  */
-void extypeForeach(Context ctx, ir.ForeachStatement fes)
+void processForeach(Context ctx, ir.ForeachStatement fes)
 {
 	if (fes.itervars.length == 0) {
 		if (fes.beginIntegerRange is null || fes.endIntegerRange is null) {
@@ -3277,6 +3338,172 @@ void extypeForeach(Context ctx, ir.ForeachStatement fes)
 	} else {
 		throw makeExpected(fes.location, "one or two variables after foreach");
 	}
+}
+
+void extypeWithStatement(Context ctx, ir.WithStatement ws)
+{
+	extype(ctx, ws.exp, Parent.NA);
+
+	if (!isValidWithExp(ws.exp)) {
+		throw makeExpected(ws.exp, "qualified identifier");
+	}
+
+	ctx.pushWith(ws.exp);
+	accept(ws.block, ctx.extyper);
+	ctx.popWith(ws.exp);
+}
+
+void extypeReturnStatement(Context ctx, ir.ReturnStatement ret)
+{
+	auto func = getParentFunction(ctx.current);
+	if (func is null) {
+		throw panic(ret, "return statement outside of function.");
+	}
+
+	if (ret.exp !is null) {
+		extype(ctx, ret.exp, Parent.NA);
+		auto retType = getExpType(ret.exp);
+		if (func.isAutoReturn) {
+			func.type.ret = copyTypeSmart(retType.location, getExpType(ret.exp));
+			if (cast(ir.NullType)func.type.ret !is null) {
+				func.type.ret = buildVoidPtr(ret.location);
+			}
+		}
+		if (retType.isScope && mutableIndirection(retType)) {
+			throw makeNoReturnScope(ret.location);
+		}
+		checkAndDoConvert(ctx, func.type.ret, ret.exp);
+	} else if (!isVoid(realType(func.type.ret))) {
+		// No return expression on function returning a value.
+		throw makeReturnValueExpected(ret.location, func.type.ret);
+	}
+}
+
+void extypeIfStatement(Context ctx, ir.IfStatement ifs)
+{
+	auto l = ifs.location;
+	if (ifs.exp !is null) {
+		extype(ctx, ifs.exp, Parent.NA);
+	}
+
+	if (ifs.autoName.length > 0) {
+		assert(ifs.exp !is null);
+		assert(ifs.thenState !is null);
+
+		auto t = getExpType(ifs.exp);
+		auto var = buildVariable(l,
+				copyTypeSmart(l, t),
+				ir.Variable.Storage.Function,
+				ifs.autoName);
+
+		// Resolve the variable making it propper and usable.
+		resolveVariable(ctx, var);
+
+		// A hack to work around exp getting resolved twice.
+		var.assign = ifs.exp;
+
+		auto eref = buildExpReference(l, var);
+		ir.Node[] vars = [cast(ir.Node)var];
+		ifs.exp = buildStatementExp(l, vars, eref);
+
+		// Add it to its proper scope.
+		ifs.thenState.myScope.addValue(var, var.name);
+	}
+
+	// Need to do this after any autoName rewriting.
+	if (ifs.exp !is null) {
+		implicitlyCastToBool(ctx, ifs.exp);
+	}
+
+	if (ifs.thenState !is null) {
+		accept(ifs.thenState, ctx.extyper);
+	}
+
+	if (ifs.elseState !is null) {
+		accept(ifs.elseState, ctx.extyper);
+	}
+}
+
+void extypeForStatement(Context ctx, ir.ForStatement fs)
+{
+	emitNestedFromBlock(ctx.extyper, ctx.currentFunction, fs.block);
+	ctx.enter(fs.block);
+	foreach (i; fs.initVars) {
+		accept(i, ctx.extyper);
+	}
+	foreach (ref i; fs.initExps) {
+		extype(ctx, i, Parent.NA);
+	}
+
+	if (fs.test !is null) {
+		extype(ctx, fs.test, Parent.NA);
+		implicitlyCastToBool(ctx, fs.test);
+	}
+	foreach (ref increment; fs.increments) {
+		extype(ctx, increment, Parent.NA);
+	}
+	foreach (ctxment; fs.block.statements) {
+		accept(ctxment, ctx.extyper);
+	}
+	ctx.leave(fs.block);
+}
+
+void extypeWhileStatement(Context ctx, ir.WhileStatement ws)
+{
+	if (ws.condition !is null) {
+		extype(ctx, ws.condition, Parent.NA);
+		implicitlyCastToBool(ctx, ws.condition);
+	}
+
+	accept(ws.block, ctx.extyper);
+}
+
+void extypeDoStatement(Context ctx, ir.DoStatement ds)
+{
+	accept(ds.block, ctx.extyper);
+
+	if (ds.condition !is null) {
+		extype(ctx, ds.condition, Parent.NA);
+		implicitlyCastToBool(ctx, ds.condition);
+	}
+}
+
+void extypeAssertStatement(Context ctx, ir.AssertStatement as)
+{
+	extype(ctx, as.condition, Parent.NA);
+
+	if (!as.isStatic) {
+		return;
+	}
+	as.condition = evaluate(ctx.lp, ctx.current, as.condition);
+	if (as.message !is null) {
+		as.message = evaluate(ctx.lp, ctx.current, as.message);
+	}
+	auto cond = cast(ir.Constant) as.condition;
+	ir.Constant msg;
+	if (as.message !is null) {
+		msg = cast(ir.Constant) as.message;
+	} else {
+		msg = buildConstantString(as.location, "");
+	}
+	if ((cond is null || msg is null) || (!isBool(cond.type) || !isString(msg.type))) {
+		throw panicUnhandled(as, "non simple static asserts (bool and string literal only).");
+	}
+	if (!cond.u._bool) {
+		throw makeStaticAssert(as, msg._string);
+	}
+}
+
+void extypeGotoStatement(Context ctx, ir.GotoStatement gs)
+{
+	if (gs.exp !is null) {
+		extype(ctx, gs.exp, Parent.NA);
+	}
+}
+
+void extypeExpStatement(Context ctx, ir.ExpStatement es)
+{
+	extype(ctx, es.exp, Parent.NA);
 }
 
 
@@ -4393,262 +4620,79 @@ public:
 
 	/*
 	 *
-	 * Statements.
+	 * Converted.
 	 *
 	 */
 
 	override Status enter(ir.WithStatement ws)
 	{
-		extype(ctx, ws.exp, Parent.NA);
-
-		if (!isValidWithExp(ws.exp)) {
-			throw makeExpected(ws.exp, "qualified identifier");
-		}
-
-		ctx.pushWith(ws.exp);
-		accept(ws.block, this);
-		ctx.popWith(ws.exp);
-
+		extypeWithStatement(ctx, ws);
 		return ContinueParent;
 	}
 
 	override Status enter(ir.ReturnStatement ret)
 	{
-		auto func = getParentFunction(ctx.current);
-		if (func is null) {
-			throw panic(ret, "return statement outside of function.");
-		}
-
-		if (ret.exp !is null) {
-			extype(ctx, ret.exp, Parent.NA);
-			auto retType = getExpType(ret.exp);
-			if (func.isAutoReturn) {
-				func.type.ret = copyTypeSmart(retType.location, getExpType(ret.exp));
-				if (cast(ir.NullType)func.type.ret !is null) {
-					func.type.ret = buildVoidPtr(ret.location);
-				}
-			}
-			if (retType.isScope && mutableIndirection(retType)) {
-				throw makeNoReturnScope(ret.location);
-			}
-			checkAndDoConvert(ctx, func.type.ret, ret.exp);
-		} else if (!isVoid(realType(func.type.ret))) {
-			// No return expression on function returning a value.
-			throw makeReturnValueExpected(ret.location, func.type.ret);
-		}
-
+		extypeReturnStatement(ctx, ret);
 		return ContinueParent;
 	}
 
 	override Status enter(ir.IfStatement ifs)
 	{
-		auto l = ifs.location;
-		if (ifs.exp !is null) {
-			extype(ctx, ifs.exp, Parent.NA);
-		}
-
-		if (ifs.autoName.length > 0) {
-			assert(ifs.exp !is null);
-			assert(ifs.thenState !is null);
-
-			auto t = getExpType(ifs.exp);
-			auto var = buildVariable(l,
-					copyTypeSmart(l, t),
-					ir.Variable.Storage.Function,
-					ifs.autoName);
-
-			// Resolve the variable making it propper and usable.
-			resolveVariable(ctx, var);
-
-			// A hack to work around exp getting resolved twice.
-			var.assign = ifs.exp;
-
-			auto eref = buildExpReference(l, var);
-			ir.Node[] vars = [cast(ir.Node)var];
-			ifs.exp = buildStatementExp(l, vars, eref);
-
-			// Add it to its proper scope.
-			ifs.thenState.myScope.addValue(var, var.name);
-		}
-
-		// Need to do this after any autoName rewriting.
-		if (ifs.exp !is null) {
-			implicitlyCastToBool(ctx, ifs.exp);
-		}
-
-		if (ifs.thenState !is null) {
-			accept(ifs.thenState, this);
-		}
-
-		if (ifs.elseState !is null) {
-			accept(ifs.elseState, this);
-		}
-
+		extypeIfStatement(ctx, ifs);
 		return ContinueParent;
 	}
 
 	override Status enter(ir.ForeachStatement fes)
 	{
-		if (fes.beginIntegerRange !is null) {
-			assert(fes.endIntegerRange !is null);
-			extype(ctx, fes.beginIntegerRange, Parent.NA);
-			extype(ctx, fes.endIntegerRange, Parent.NA);
-		}
-		emitNestedFromBlock(this, ctx.currentFunction, fes.block);
-		ctx.enter(fes.block);
-		extypeForeach(ctx, fes);
-		foreach (ivar; fes.itervars) {
-			accept(ivar, this);
-		}
-		if (fes.aggregate !is null) {
-			auto aggType = realType(getExpType(fes.aggregate));
-			if (fes.itervars.length == 2 &&
-				(aggType.nodeType == ir.NodeType.StaticArrayType || 
-				aggType.nodeType == ir.NodeType.ArrayType)) {
-				auto keysz = size(ctx.lp, fes.itervars[0].type);
-				auto sizetsz = size(ctx.lp, buildSizeT(fes.location, ctx.lp));
-				if (keysz < sizetsz) {
-					throw makeIndexVarTooSmall(fes.location, fes.itervars[0].name);
-				}
-			}
-		}
-		// fes.aggregate is visited by extypeForeach
-		foreach (ctxment; fes.block.statements) {
-			accept(ctxment, this);
-		}
-		ctx.leave(fes.block);
+		extypeForeachStatement(ctx, fes);
 		return ContinueParent;
 	}
 
 	override Status enter(ir.ForStatement fs)
 	{
-		emitNestedFromBlock(this, ctx.currentFunction, fs.block);
-		ctx.enter(fs.block);
-		foreach (i; fs.initVars) {
-			accept(i, this);
-		}
-		foreach (ref i; fs.initExps) {
-			extype(ctx, i, Parent.NA);
-		}
-
-		if (fs.test !is null) {
-			extype(ctx, fs.test, Parent.NA);
-			implicitlyCastToBool(ctx, fs.test);
-		}
-		foreach (ref increment; fs.increments) {
-			extype(ctx, increment, Parent.NA);
-		}
-		foreach (ctxment; fs.block.statements) {
-			accept(ctxment, this);
-		}
-		ctx.leave(fs.block);
-
+		extypeForStatement(ctx, fs);
 		return ContinueParent;
 	}
 
 	override Status enter(ir.WhileStatement ws)
 	{
-		if (ws.condition !is null) {
-			extype(ctx, ws.condition, Parent.NA);
-			implicitlyCastToBool(ctx, ws.condition);
-		}
-
-		accept(ws.block, this);
-
+		extypeWhileStatement(ctx, ws);
 		return ContinueParent;
 	}
 
 	override Status enter(ir.DoStatement ds)
 	{
-		accept(ds.block, this);
-
-		if (ds.condition !is null) {
-			extype(ctx, ds.condition, Parent.NA);
-			implicitlyCastToBool(ctx, ds.condition);
-		}
-
+		extypeDoStatement(ctx, ds);
 		return ContinueParent;
 	}
 
 	override Status enter(ir.AssertStatement as)
 	{
-		extype(ctx, as.condition, Parent.NA);
-
-		if (!as.isStatic) {
-			return ContinueParent;
-		}
-		as.condition = evaluate(ctx.lp, ctx.current, as.condition);
-		if (as.message !is null) {
-			as.message = evaluate(ctx.lp, ctx.current, as.message);
-		}
-		auto cond = cast(ir.Constant) as.condition;
-		ir.Constant msg;
-		if (as.message !is null) {
-			msg = cast(ir.Constant) as.message;
-		} else {
-			msg = buildConstantString(as.location, "");
-		}
-		if ((cond is null || msg is null) || (!isBool(cond.type) || !isString(msg.type))) {
-			throw panicUnhandled(as, "non simple static asserts (bool and string literal only).");
-		}
-		if (!cond.u._bool) {
-			throw makeStaticAssert(as, msg._string);
-		}
+		extypeAssertStatement(ctx, as);
 		return ContinueParent;
 	}
 
 	override Status enter(ir.BlockStatement bs)
 	{
-		emitNestedFromBlock(this, ctx.currentFunction, bs);
-
-		ctx.enter(bs);
-
-		foreach (ref stat; bs.statements) {
-
-			// Translate runtime asserts before processing the block.
-			switch (stat.nodeType) with (ir.NodeType) {
-			case AssertStatement:
-				auto as = cast(ir.AssertStatement) stat;
-				if (as is null || as.isStatic) {
-					break;
-				}
-				stat = transformRuntimeAssert(ctx, as);
-				break;
-			default:
-			}
-
-			accept(stat, this);
-		}
-
-		ctx.leave(bs);
-
+		extypeBlockStatement(ctx, bs);
 		return ContinueParent;
 	}
 
 	override Status enter(ir.GotoStatement gs)
 	{
-		if (gs.exp !is null) {
-			extype(ctx, gs.exp, Parent.NA);
-		}
+		extypeGotoStatement(ctx, gs);
 		return ContinueParent;
 	}
 
 	override Status enter(ir.ExpStatement es)
 	{
-		extype(ctx, es.exp, Parent.NA);
+		extypeExpStatement(ctx, es);
 		return ContinueParent;
 	}
 
-
-	/*
-	 *
-	 * Converted.
-	 *
-	 */
-
 	override Status enter(ir.ThrowStatement t)
 	{
-		extypeThrow(ctx, t);
+		extypeThrowStatement(ctx, t);
 		return ContinueParent;
 	}
 
