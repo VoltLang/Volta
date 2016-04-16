@@ -2912,20 +2912,78 @@ void extypeBlockStatement(Context ctx, ir.BlockStatement bs)
 	ctx.enter(bs);
 
 	foreach (ref stat; bs.statements) {
-
-		// Translate runtime asserts before processing the block.
 		switch (stat.nodeType) with (ir.NodeType) {
-		case AssertStatement:
-			auto as = cast(ir.AssertStatement) stat;
-			if (as is null || as.isStatic) {
-				break;
+		// True form (non-casting)
+		case AssertStatement: extypeAssertStatement(ctx, stat); break;
+		case TryStatement: extypeTryStatement(ctx, stat); break;
+		case ContinueStatement: break;
+		case BreakStatement: break;
+		// False form (casting)
+		case WithStatement:
+			auto s = cast(ir.WithStatement) stat;
+			extypeWithStatement(ctx, s);
+			break;
+		case ReturnStatement:
+			auto s = cast(ir.ReturnStatement) stat;
+			extypeReturnStatement(ctx, s);
+			break;
+		case IfStatement:
+			auto s = cast(ir.IfStatement) stat;
+			extypeIfStatement(ctx, s);
+			break;
+		case ForeachStatement:
+			auto s = cast(ir.ForeachStatement) stat;
+			extypeForeachStatement(ctx, s);
+			break;
+		case ForStatement:
+			auto s = cast(ir.ForStatement) stat;
+			extypeForStatement(ctx, s);
+			break;
+		case WhileStatement:
+			auto s = cast(ir.WhileStatement) stat;
+			extypeWhileStatement(ctx, s);
+			break;
+		case DoStatement:
+			auto s = cast(ir.DoStatement) stat;
+			extypeDoStatement(ctx, s);
+			break;
+		case BlockStatement:
+			auto s = cast(ir.BlockStatement) stat;
+			extypeBlockStatement(ctx, s);
+			break;
+		case GotoStatement:
+			auto s = cast(ir.GotoStatement) stat;
+			extypeGotoStatement(ctx, s);
+			break;
+		case ExpStatement:
+			auto s = cast(ir.ExpStatement) stat;
+			extypeExpStatement(ctx, s);
+			break;
+		case ThrowStatement:
+			auto s = cast(ir.ThrowStatement) stat;
+			extypeThrowStatement(ctx, s);
+			break;
+		case SwitchStatement:
+			auto s = cast(ir.SwitchStatement) stat;
+			extypeSwitchStatement(ctx, s);
+			break;
+		// Non-statements
+		case Variable:
+			auto var = cast(ir.Variable) stat;
+			if (!var.isResolved) {
+				resolveVariable(ctx, var);
 			}
-			stat = transformRuntimeAssert(ctx, as);
+			break;
+		// Visiting
+		case Function:
+			accept(stat, ctx.extyper);
+			break;
+		case Struct:
+			accept(stat, ctx.extyper);
 			break;
 		default:
+			throw panicUnhandled(stat, ir.nodeToString(stat));
 		}
-
-		accept(stat, ctx.extyper);
 	}
 
 	ctx.leave(bs);
@@ -2995,7 +3053,7 @@ void extypeSwitchStatement(Context ctx, ir.SwitchStatement ss)
 		foreach (ref exp; _case.exps) {
 			extype(ctx, exp, Parent.NA);
 		}
-		accept(_case.statements, ctx.extyper);
+		extypeBlockStatement(ctx, _case.statements);
 	}
 
 	if (isArray(conditionType)) {
@@ -3194,10 +3252,8 @@ void extypeForeachStatement(Context ctx, ir.ForeachStatement fes)
 		}
 	}
 	// fes.aggregate is visited by extypeForeach
-	foreach (ctxment; fes.block.statements) {
-		accept(ctxment, ctx.extyper);
-	}
 	ctx.leave(fes.block);
+	extypeBlockStatement(ctx, fes.block);
 }
 
 /**
@@ -3349,7 +3405,7 @@ void extypeWithStatement(Context ctx, ir.WithStatement ws)
 	}
 
 	ctx.pushWith(ws.exp);
-	accept(ws.block, ctx.extyper);
+	extypeBlockStatement(ctx, ws.block);
 	ctx.popWith(ws.exp);
 }
 
@@ -3416,11 +3472,11 @@ void extypeIfStatement(Context ctx, ir.IfStatement ifs)
 	}
 
 	if (ifs.thenState !is null) {
-		accept(ifs.thenState, ctx.extyper);
+		extypeBlockStatement(ctx, ifs.thenState);
 	}
 
 	if (ifs.elseState !is null) {
-		accept(ifs.elseState, ctx.extyper);
+		extypeBlockStatement(ctx, ifs.elseState);
 	}
 }
 
@@ -3442,10 +3498,8 @@ void extypeForStatement(Context ctx, ir.ForStatement fs)
 	foreach (ref increment; fs.increments) {
 		extype(ctx, increment, Parent.NA);
 	}
-	foreach (ctxment; fs.block.statements) {
-		accept(ctxment, ctx.extyper);
-	}
 	ctx.leave(fs.block);
+	extypeBlockStatement(ctx, fs.block);
 }
 
 void extypeWhileStatement(Context ctx, ir.WhileStatement ws)
@@ -3455,12 +3509,12 @@ void extypeWhileStatement(Context ctx, ir.WhileStatement ws)
 		implicitlyCastToBool(ctx, ws.condition);
 	}
 
-	accept(ws.block, ctx.extyper);
+	extypeBlockStatement(ctx, ws.block);
 }
 
 void extypeDoStatement(Context ctx, ir.DoStatement ds)
 {
-	accept(ds.block, ctx.extyper);
+	extypeBlockStatement(ctx, ds.block);
 
 	if (ds.condition !is null) {
 		extype(ctx, ds.condition, Parent.NA);
@@ -3468,13 +3522,18 @@ void extypeDoStatement(Context ctx, ir.DoStatement ds)
 	}
 }
 
-void extypeAssertStatement(Context ctx, ir.AssertStatement as)
+void extypeAssertStatement(Context ctx, ref ir.Node n)
 {
-	extype(ctx, as.condition, Parent.NA);
+	auto as = cast(ir.AssertStatement) n;
 
 	if (!as.isStatic) {
-		return;
+		ir.IfStatement ifs;
+		n = ifs = transformRuntimeAssert(ctx, as);
+		return extypeIfStatement(ctx, ifs);
 	}
+
+	extype(ctx, as.condition, Parent.NA);
+
 	as.condition = evaluate(ctx.lp, ctx.current, as.condition);
 	if (as.message !is null) {
 		as.message = evaluate(ctx.lp, ctx.current, as.message);
@@ -3491,6 +3550,26 @@ void extypeAssertStatement(Context ctx, ir.AssertStatement as)
 	}
 	if (!cond.u._bool) {
 		throw makeStaticAssert(as, msg._string);
+	}
+}
+
+void extypeTryStatement(Context ctx, ref ir.Node n)
+{
+	auto t = cast(ir.TryStatement) n;
+
+	extypeBlockStatement(ctx, t.tryBlock);
+
+	foreach (i, v; t.catchVars) {
+		extypeBlockStatement(ctx, t.catchBlocks[i]);
+	}
+
+	if (t.catchAll !is null) {
+		extypeBlockStatement(ctx, t.catchAll);
+	}
+
+
+	if (t.finallyBlock !is null) {
+		extypeBlockStatement(ctx, t.finallyBlock);
 	}
 }
 
@@ -4018,7 +4097,7 @@ void checkAnonymousVariables(Context ctx, ir.Aggregate agg)
 }
 
 /// Turn a runtime assert into an if and a throw.
-ir.Node transformRuntimeAssert(Context ctx, ir.AssertStatement as)
+ir.IfStatement transformRuntimeAssert(Context ctx, ir.AssertStatement as)
 {
 	if (as.isStatic) {
 		throw panic(as.location, "expected runtime assert");
@@ -4582,11 +4661,6 @@ public:
 		return ContinueParent;
 	}
 
-	override Status enter(ir.FunctionParam p)
-	{
-		return Continue;
-	}
-
 	override Status enter(ir.Variable v)
 	{
 		if (!v.isResolved) {
@@ -4608,97 +4682,30 @@ public:
 
 		emitNestedFromBlock(this, func, func._body, false);
 
-		return Continue;
-	}
+		if (func.thisHiddenParameter !is null &&
+		    !func.thisHiddenParameter.isResolved) {
+			resolveVariable(ctx, func.thisHiddenParameter);
+		}
 
-	override Status leave(ir.Function func)
-	{
+		if (func.nestedHiddenParameter !is null &&
+		    !func.nestedHiddenParameter.isResolved) {
+			resolveVariable(ctx, func.nestedHiddenParameter);
+		}
+
+		if (func.inContract !is null) {
+			extypeBlockStatement(ctx, func.inContract);
+		}
+
+		if (func.outContract !is null) {
+			extypeBlockStatement(ctx, func.outContract);
+		}
+
+		if (func._body !is null) {
+			extypeBlockStatement(ctx, func._body);
+		}
+
 		ctx.leave(func);
-		return Continue;
-	}
 
-
-	/*
-	 *
-	 * Converted.
-	 *
-	 */
-
-	override Status enter(ir.WithStatement ws)
-	{
-		extypeWithStatement(ctx, ws);
-		return ContinueParent;
-	}
-
-	override Status enter(ir.ReturnStatement ret)
-	{
-		extypeReturnStatement(ctx, ret);
-		return ContinueParent;
-	}
-
-	override Status enter(ir.IfStatement ifs)
-	{
-		extypeIfStatement(ctx, ifs);
-		return ContinueParent;
-	}
-
-	override Status enter(ir.ForeachStatement fes)
-	{
-		extypeForeachStatement(ctx, fes);
-		return ContinueParent;
-	}
-
-	override Status enter(ir.ForStatement fs)
-	{
-		extypeForStatement(ctx, fs);
-		return ContinueParent;
-	}
-
-	override Status enter(ir.WhileStatement ws)
-	{
-		extypeWhileStatement(ctx, ws);
-		return ContinueParent;
-	}
-
-	override Status enter(ir.DoStatement ds)
-	{
-		extypeDoStatement(ctx, ds);
-		return ContinueParent;
-	}
-
-	override Status enter(ir.AssertStatement as)
-	{
-		extypeAssertStatement(ctx, as);
-		return ContinueParent;
-	}
-
-	override Status enter(ir.BlockStatement bs)
-	{
-		extypeBlockStatement(ctx, bs);
-		return ContinueParent;
-	}
-
-	override Status enter(ir.GotoStatement gs)
-	{
-		extypeGotoStatement(ctx, gs);
-		return ContinueParent;
-	}
-
-	override Status enter(ir.ExpStatement es)
-	{
-		extypeExpStatement(ctx, es);
-		return ContinueParent;
-	}
-
-	override Status enter(ir.ThrowStatement t)
-	{
-		extypeThrowStatement(ctx, t);
-		return ContinueParent;
-	}
-
-	override Status enter(ir.SwitchStatement ss)
-	{
-		extypeSwitchStatement(ctx, ss);
 		return ContinueParent;
 	}
 
@@ -4709,22 +4716,44 @@ public:
 	 *
 	 */
 
+	override Status leave(ir.Function n) { throw panic(n, "visitor"); }
+	override Status enter(ir.FunctionParam n) { throw panic(n, "visitor"); }
+	override Status leave(ir.FunctionParam n) { throw panic(n, "visitor"); }
+
 	override Status enter(ir.TypeOf n) { throw panic(n, "visitor"); }
 	override Status leave(ir.TypeOf n) { throw panic(n, "visitor"); }
 
+	override Status enter(ir.IfStatement n) { throw panic(n, "visitor"); }
 	override Status leave(ir.IfStatement n) { throw panic(n, "visitor"); }
+	override Status enter(ir.DoStatement n) { throw panic(n, "visitor"); }
 	override Status leave(ir.DoStatement n) { throw panic(n, "visitor"); }
+	override Status enter(ir.ForStatement n) { throw panic(n, "visitor"); }
 	override Status leave(ir.ForStatement n) { throw panic(n, "visitor"); }
+	override Status enter(ir.TryStatement n) { throw panic(n, "visitor"); }
+	override Status leave(ir.TryStatement n) { throw panic(n, "visitor"); }
+	override Status enter(ir.ExpStatement n) { throw panic(n, "visitor"); }
 	override Status leave(ir.ExpStatement n) { throw panic(n, "visitor"); }
+	override Status enter(ir.WithStatement n) { throw panic(n, "visitor"); }
 	override Status leave(ir.WithStatement n) { throw panic(n, "visitor"); }
+	override Status enter(ir.GotoStatement n) { throw panic(n, "visitor"); }
 	override Status leave(ir.GotoStatement n) { throw panic(n, "visitor"); }
+	override Status enter(ir.ThrowStatement n) { throw panic(n, "visitor"); }
 	override Status leave(ir.ThrowStatement n) { throw panic(n, "visitor"); }
+	override Status enter(ir.BlockStatement n) { throw panic(n, "visitor"); }
 	override Status leave(ir.BlockStatement n) { throw panic(n, "visitor"); }
+	override Status enter(ir.WhileStatement n) { throw panic(n, "visitor"); }
 	override Status leave(ir.WhileStatement n) { throw panic(n, "visitor"); }
+	override Status enter(ir.SwitchStatement n) { throw panic(n, "visitor"); }
 	override Status leave(ir.SwitchStatement n) { throw panic(n, "visitor"); }
+	override Status enter(ir.AssertStatement n) { throw panic(n, "visitor"); }
 	override Status leave(ir.AssertStatement n) { throw panic(n, "visitor"); }
+	override Status enter(ir.ReturnStatement n) { throw panic(n, "visitor"); }
 	override Status leave(ir.ReturnStatement n) { throw panic(n, "visitor"); }
+	override Status enter(ir.ForeachStatement n) { throw panic(n, "visitor"); }
 	override Status leave(ir.ForeachStatement n) { throw panic(n, "visitor"); }
+
+	override Status visit(ir.BreakStatement n) { throw panic(n, "visitor"); }
+	override Status visit(ir.ContinueStatement n) { throw panic(n, "visitor"); }
 
 	override Status enter(ref ir.Exp exp, ir.IsExp) { throw panic(exp, "visitor"); }
 	override Status leave(ref ir.Exp exp, ir.IsExp) { throw panic(exp, "visitor"); }
