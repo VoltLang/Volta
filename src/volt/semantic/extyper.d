@@ -2945,10 +2945,33 @@ struct ArrayCase
  * oldCondition is the switches condition prior to the extyper being run on it.
  * It's a bit of a hack, but we need the unprocessed enum to evaluate final switches.
  */
-void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
+void extypeSwitchStatement(Context ctx, ir.SwitchStatement ss)
 {
-	auto conditionType = realType(getExpType(ss.condition), false);
+	auto conditionType = extype(ctx, ss.condition, Parent.NA);
 	auto originalCondition = ss.condition;
+	conditionType = realType(conditionType);
+
+	foreach (ref wexp; ss.withs) {
+		extype(ctx, wexp, Parent.NA);
+		if (!isValidWithExp(wexp)) {
+			throw makeExpected(wexp, "qualified identifier");
+		}
+		ctx.pushWith(wexp);
+	}
+
+	foreach (_case; ss.cases) {
+		if (_case.firstExp !is null) {
+			extype(ctx, _case.firstExp, Parent.NA);
+		}
+		if (_case.secondExp !is null) {
+			extype(ctx, _case.secondExp, Parent.NA);
+		}
+		foreach (ref exp; _case.exps) {
+			extype(ctx, exp, Parent.NA);
+		}
+		accept(_case.statements, ctx.extyper);
+	}
+
 	if (isArray(conditionType)) {
 		auto l = ss.location;
 		auto asArray = cast(ir.ArrayType) conditionType;
@@ -3107,6 +3130,12 @@ void verifySwitchStatement(Context ctx, ir.SwitchStatement ss)
 
 	if (ss.isFinal && caseCount != asEnum.members.length) {
 		throw makeFinalSwitchBadCoverage(ss);
+	}
+
+	replaceGotoCase(ctx, ss);
+
+	foreach_reverse(wexp; ss.withs) {
+		ctx.popWith(wexp);
 	}
 }
 
@@ -4541,40 +4570,6 @@ public:
 		return ContinueParent;
 	}
 
-	override Status enter(ir.SwitchStatement ss)
-	{
-		extype(ctx, ss.condition, Parent.NA);
-
-		foreach (ref wexp; ss.withs) {
-			extype(ctx, wexp, Parent.NA);
-			if (!isValidWithExp(wexp)) {
-				throw makeExpected(wexp, "qualified identifier");
-			}
-			ctx.pushWith(wexp);
-		}
-
-		foreach (_case; ss.cases) {
-			if (_case.firstExp !is null) {
-				extype(ctx, _case.firstExp, Parent.NA);
-			}
-			if (_case.secondExp !is null) {
-				extype(ctx, _case.secondExp, Parent.NA);
-			}
-			foreach (ref exp; _case.exps) {
-				extype(ctx, exp, Parent.NA);
-			}
-			accept(_case.statements, this);
-		}
-
-		verifySwitchStatement(ctx, ss);
-		replaceGotoCase(ctx, ss);
-
-		foreach_reverse(wexp; ss.withs) {
-			ctx.popWith(wexp);
-		}
-		return ContinueParent;
-	}
-
 	override Status enter(ir.AssertStatement as)
 	{
 		extype(ctx, as.condition, Parent.NA);
@@ -4638,15 +4633,28 @@ public:
 		return ContinueParent;
 	}
 
+	override Status enter(ir.ExpStatement es)
+	{
+		extype(ctx, es.exp, Parent.NA);
+		return ContinueParent;
+	}
+
+
+	/*
+	 *
+	 * Converted.
+	 *
+	 */
+
 	override Status enter(ir.ThrowStatement t)
 	{
 		extypeThrow(ctx, t);
 		return ContinueParent;
 	}
 
-	override Status enter(ir.ExpStatement es)
+	override Status enter(ir.SwitchStatement ss)
 	{
-		extype(ctx, es.exp, Parent.NA);
+		extypeSwitchStatement(ctx, ss);
 		return ContinueParent;
 	}
 
