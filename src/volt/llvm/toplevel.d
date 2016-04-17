@@ -75,6 +75,9 @@ public:
 		state.fnState.block = LLVMAppendBasicBlock(llvmFunc, "entry");
 		LLVMPositionBuilderAtEnd(b, state.block);
 
+		// Set position for various setup instructions.
+		diSetPosition(state, func.location);
+
 		if (func.kind == ir.Function.Kind.GlobalConstructor) {
 			state.globalConstructors ~= llvmFunc;
 		} else if (func.kind == ir.Function.Kind.GlobalDestructor) {
@@ -119,6 +122,9 @@ public:
 			auto v = LLVMGetParam(llvmFunc, 0);
 			state.makeNestVariable(nestVar, v);
 		}
+
+		// Reset position.
+		diUnsetPosition(state);
 
 		// Go over the function body.
 		accept(func._body, this);
