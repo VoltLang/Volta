@@ -2916,6 +2916,7 @@ void extypeBlockStatement(Context ctx, ir.BlockStatement bs)
 		// True form (non-casting)
 		case AssertStatement: extypeAssertStatement(ctx, stat); break;
 		case TryStatement: extypeTryStatement(ctx, stat); break;
+		case Function: actualizeFunction(ctx, stat); break;
 		case ContinueStatement: break;
 		case BreakStatement: break;
 		// False form (casting)
@@ -2973,10 +2974,6 @@ void extypeBlockStatement(Context ctx, ir.BlockStatement bs)
 			if (!var.isResolved) {
 				resolveVariable(ctx, var);
 			}
-			break;
-		// Visiting
-		case Function:
-			accept(stat, ctx.extyper);
 			break;
 		// Shows up but doesn't need to be visited.
 		// Nested structs for functions.
@@ -3588,6 +3585,65 @@ void extypeExpStatement(Context ctx, ir.ExpStatement es)
 	extype(ctx, es.exp, Parent.NA);
 }
 
+
+/*
+ *
+ * Actualize functions.
+ *
+ */
+
+void actualizeFunction(Context ctx, ref ir.Node n)
+{
+	auto func = cast(ir.Function) n;
+	if (func.isActualized) {
+		return;
+	}
+	if (!func.isResolved) {
+		resolveFunction(ctx, func);
+	}
+	auto done = ctx.lp.startActualizing(func);
+	scope (success) {
+		done();
+	}
+
+
+	// Error checking
+	if (ctx.functionDepth >= 2) {
+		throw makeNestedNested(func.location);
+	}
+
+
+	// Visiting children.
+	ctx.enter(func);
+
+	emitNestedFromBlock(ctx.extyper, func, func._body, false);
+
+	if (func.thisHiddenParameter !is null &&
+	    !func.thisHiddenParameter.isResolved) {
+		resolveVariable(ctx, func.thisHiddenParameter);
+	}
+
+	if (func.nestedHiddenParameter !is null &&
+	    !func.nestedHiddenParameter.isResolved) {
+		resolveVariable(ctx, func.nestedHiddenParameter);
+	}
+
+	if (func.inContract !is null) {
+		extypeBlockStatement(ctx, func.inContract);
+	}
+
+	if (func.outContract !is null) {
+		extypeBlockStatement(ctx, func.outContract);
+	}
+
+	if (func._body !is null) {
+		extypeBlockStatement(ctx, func._body);
+	}
+
+	ctx.leave(func);
+
+	func.isActualized = true;
+}
 
 /*
  *
@@ -4674,41 +4730,13 @@ public:
 
 	override Status enter(ir.Function func)
 	{
-		if (ctx.functionDepth >= 2) {
-			throw makeNestedNested(func.location);
-		}
-		if (!func.isResolved) {
-			resolveFunction(ctx, func);
+		if (func.isActualized) {
+			return ContinueParent;
 		}
 
-		ctx.enter(func);
-
-		emitNestedFromBlock(this, func, func._body, false);
-
-		if (func.thisHiddenParameter !is null &&
-		    !func.thisHiddenParameter.isResolved) {
-			resolveVariable(ctx, func.thisHiddenParameter);
-		}
-
-		if (func.nestedHiddenParameter !is null &&
-		    !func.nestedHiddenParameter.isResolved) {
-			resolveVariable(ctx, func.nestedHiddenParameter);
-		}
-
-		if (func.inContract !is null) {
-			extypeBlockStatement(ctx, func.inContract);
-		}
-
-		if (func.outContract !is null) {
-			extypeBlockStatement(ctx, func.outContract);
-		}
-
-		if (func._body !is null) {
-			extypeBlockStatement(ctx, func._body);
-		}
-
-		ctx.leave(func);
-
+		ir.Node n = func;
+		actualizeFunction(ctx, n);
+		assert(n is func);
 		return ContinueParent;
 	}
 

@@ -239,6 +239,8 @@ public:
 public:
 	/// Has the extyper checked this function.
 	bool isResolved;
+	/// Has the extyper checked the body of this function.
+	bool isActualized;
 
 	/// Usability from other modules.
 	Access access = Access.Public;
