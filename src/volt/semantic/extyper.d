@@ -2914,59 +2914,29 @@ void extypeBlockStatement(Context ctx, ir.BlockStatement bs)
 	foreach (ref stat; bs.statements) {
 		switch (stat.nodeType) with (ir.NodeType) {
 		// True form (non-casting)
-		case AssertStatement: extypeAssertStatement(ctx, stat); break;
-		case TryStatement: extypeTryStatement(ctx, stat); break;
-		case Function: actualizeFunction(ctx, stat); break;
-		case ContinueStatement: break;
 		case BreakStatement: break;
+		case ContinueStatement: break;
+		case Function: actualizeFunction(ctx, stat); break;
+		case DoStatement: extypeDoStatement(ctx, stat); break;
+		case IfStatement: extypeIfStatement(ctx, stat); break;
+		case TryStatement: extypeTryStatement(ctx, stat); break;
+		case ForStatement: extypeForStatement(ctx, stat); break;
+		case WithStatement: extypeWithStatement(ctx, stat); break;
+		case GotoStatement: extypeGotoStatement(ctx, stat); break;
+		case ThrowStatement: extypeThrowStatement(ctx, stat); break;
+		case WhileStatement: extypeWhileStatement(ctx, stat); break;
+		case ReturnStatement: extypeReturnStatement(ctx, stat); break;
+		case AssertStatement: extypeAssertStatement(ctx, stat); break;
+		case SwitchStatement: extypeSwitchStatement(ctx, stat); break;
+		case ForeachStatement: extypeForeachStatement(ctx, stat); break;
 		// False form (casting)
-		case WithStatement:
-			auto s = cast(ir.WithStatement) stat;
-			extypeWithStatement(ctx, s);
-			break;
-		case ReturnStatement:
-			auto s = cast(ir.ReturnStatement) stat;
-			extypeReturnStatement(ctx, s);
-			break;
-		case IfStatement:
-			auto s = cast(ir.IfStatement) stat;
-			extypeIfStatement(ctx, s);
-			break;
-		case ForeachStatement:
-			auto s = cast(ir.ForeachStatement) stat;
-			extypeForeachStatement(ctx, s);
-			break;
-		case ForStatement:
-			auto s = cast(ir.ForStatement) stat;
-			extypeForStatement(ctx, s);
-			break;
-		case WhileStatement:
-			auto s = cast(ir.WhileStatement) stat;
-			extypeWhileStatement(ctx, s);
-			break;
-		case DoStatement:
-			auto s = cast(ir.DoStatement) stat;
-			extypeDoStatement(ctx, s);
-			break;
 		case BlockStatement:
 			auto s = cast(ir.BlockStatement) stat;
 			extypeBlockStatement(ctx, s);
 			break;
-		case GotoStatement:
-			auto s = cast(ir.GotoStatement) stat;
-			extypeGotoStatement(ctx, s);
-			break;
 		case ExpStatement:
-			auto s = cast(ir.ExpStatement) stat;
-			extypeExpStatement(ctx, s);
-			break;
-		case ThrowStatement:
-			auto s = cast(ir.ThrowStatement) stat;
-			extypeThrowStatement(ctx, s);
-			break;
-		case SwitchStatement:
-			auto s = cast(ir.SwitchStatement) stat;
-			extypeSwitchStatement(ctx, s);
+			auto es = cast(ir.ExpStatement) stat;
+			extype(ctx, es.exp, Parent.NA);
 			break;
 		// Non-statements
 		case Variable:
@@ -2992,8 +2962,9 @@ void extypeBlockStatement(Context ctx, ir.BlockStatement bs)
 /**
  * Ensure that a thrown type inherits from Throwable.
  */
-void extypeThrowStatement(Context ctx, ir.ThrowStatement t)
+void extypeThrowStatement(Context ctx, ref ir.Node n)
 {
+	auto t = cast(ir.ThrowStatement) n;
 	auto throwable = cast(ir.Class) retrieveTypeFromObject(ctx.lp, t.location, "Throwable");
 	assert(throwable !is null);
 
@@ -3029,8 +3000,9 @@ struct ArrayCase
  * oldCondition is the switches condition prior to the extyper being run on it.
  * It's a bit of a hack, but we need the unprocessed enum to evaluate final switches.
  */
-void extypeSwitchStatement(Context ctx, ir.SwitchStatement ss)
+void extypeSwitchStatement(Context ctx, ref ir.Node n)
 {
+	auto ss = cast(ir.SwitchStatement) n;
 	auto conditionType = extype(ctx, ss.condition, Parent.NA);
 	auto originalCondition = ss.condition;
 	conditionType = realType(conditionType);
@@ -3226,8 +3198,10 @@ void extypeSwitchStatement(Context ctx, ir.SwitchStatement ss)
 /**
  * Merge with below function.
  */
-void extypeForeachStatement(Context ctx, ir.ForeachStatement fes)
+void extypeForeachStatement(Context ctx, ref ir.Node n)
 {
+	auto fes = cast(ir.ForeachStatement) n;
+
 	if (fes.beginIntegerRange !is null) {
 		assert(fes.endIntegerRange !is null);
 		extype(ctx, fes.beginIntegerRange, Parent.NA);
@@ -3396,8 +3370,10 @@ void processForeach(Context ctx, ir.ForeachStatement fes)
 	}
 }
 
-void extypeWithStatement(Context ctx, ir.WithStatement ws)
+void extypeWithStatement(Context ctx, ref ir.Node n)
 {
+	auto ws = cast(ir.WithStatement) n;
+
 	extype(ctx, ws.exp, Parent.NA);
 
 	if (!isValidWithExp(ws.exp)) {
@@ -3409,8 +3385,10 @@ void extypeWithStatement(Context ctx, ir.WithStatement ws)
 	ctx.popWith(ws.exp);
 }
 
-void extypeReturnStatement(Context ctx, ir.ReturnStatement ret)
+void extypeReturnStatement(Context ctx, ref ir.Node n)
 {
+	auto ret = cast(ir.ReturnStatement) n;
+
 	auto func = getParentFunction(ctx.current);
 	if (func is null) {
 		throw panic(ret, "return statement outside of function.");
@@ -3435,8 +3413,9 @@ void extypeReturnStatement(Context ctx, ir.ReturnStatement ret)
 	}
 }
 
-void extypeIfStatement(Context ctx, ir.IfStatement ifs)
+void extypeIfStatement(Context ctx, ref ir.Node n)
 {
+	auto ifs = cast(ir.IfStatement) n;
 	auto l = ifs.location;
 	if (ifs.exp !is null) {
 		extype(ctx, ifs.exp, Parent.NA);
@@ -3480,8 +3459,10 @@ void extypeIfStatement(Context ctx, ir.IfStatement ifs)
 	}
 }
 
-void extypeForStatement(Context ctx, ir.ForStatement fs)
+void extypeForStatement(Context ctx, ref ir.Node n)
 {
+	auto fs = cast(ir.ForStatement) n;
+
 	emitNestedFromBlock(ctx.extyper, ctx.currentFunction, fs.block);
 	ctx.enter(fs.block);
 	foreach (i; fs.initVars) {
@@ -3502,8 +3483,10 @@ void extypeForStatement(Context ctx, ir.ForStatement fs)
 	extypeBlockStatement(ctx, fs.block);
 }
 
-void extypeWhileStatement(Context ctx, ir.WhileStatement ws)
+void extypeWhileStatement(Context ctx, ref ir.Node n)
 {
+	auto ws = cast(ir.WhileStatement) n;
+
 	if (ws.condition !is null) {
 		extype(ctx, ws.condition, Parent.NA);
 		implicitlyCastToBool(ctx, ws.condition);
@@ -3512,8 +3495,10 @@ void extypeWhileStatement(Context ctx, ir.WhileStatement ws)
 	extypeBlockStatement(ctx, ws.block);
 }
 
-void extypeDoStatement(Context ctx, ir.DoStatement ds)
+void extypeDoStatement(Context ctx, ref ir.Node n)
 {
+	auto ds = cast(ir.DoStatement) n;
+
 	extypeBlockStatement(ctx, ds.block);
 
 	if (ds.condition !is null) {
@@ -3527,9 +3512,8 @@ void extypeAssertStatement(Context ctx, ref ir.Node n)
 	auto as = cast(ir.AssertStatement) n;
 
 	if (!as.isStatic) {
-		ir.IfStatement ifs;
-		n = ifs = transformRuntimeAssert(ctx, as);
-		return extypeIfStatement(ctx, ifs);
+		n = transformRuntimeAssert(ctx, as);
+		return extypeIfStatement(ctx, n);
 	}
 
 	extype(ctx, as.condition, Parent.NA);
@@ -3573,16 +3557,13 @@ void extypeTryStatement(Context ctx, ref ir.Node n)
 	}
 }
 
-void extypeGotoStatement(Context ctx, ir.GotoStatement gs)
+void extypeGotoStatement(Context ctx, ref ir.Node n)
 {
+	auto gs = cast(ir.GotoStatement) n;
+
 	if (gs.exp !is null) {
 		extype(ctx, gs.exp, Parent.NA);
 	}
-}
-
-void extypeExpStatement(Context ctx, ir.ExpStatement es)
-{
-	extype(ctx, es.exp, Parent.NA);
 }
 
 
