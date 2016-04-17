@@ -2916,7 +2916,6 @@ void extypeBlockStatement(Context ctx, ir.BlockStatement bs)
 		// True form (non-casting)
 		case BreakStatement: break;
 		case ContinueStatement: break;
-		case Function: actualizeFunction(ctx, stat); break;
 		case DoStatement: extypeDoStatement(ctx, stat); break;
 		case IfStatement: extypeIfStatement(ctx, stat); break;
 		case TryStatement: extypeTryStatement(ctx, stat); break;
@@ -2938,12 +2937,13 @@ void extypeBlockStatement(Context ctx, ir.BlockStatement bs)
 			auto es = cast(ir.ExpStatement) stat;
 			extype(ctx, es.exp, Parent.NA);
 			break;
-		// Non-statements
+		case Function:
+			auto func = cast(ir.Function) stat;
+			actualizeFunction(ctx, func);
+			break;
 		case Variable:
 			auto var = cast(ir.Variable) stat;
-			if (!var.isResolved) {
-				resolveVariable(ctx, var);
-			}
+			resolveVariable(ctx, var);
 			break;
 		// Shows up but doesn't need to be visited.
 		// Nested structs for functions.
@@ -3207,12 +3207,17 @@ void extypeForeachStatement(Context ctx, ref ir.Node n)
 		extype(ctx, fes.beginIntegerRange, Parent.NA);
 		extype(ctx, fes.endIntegerRange, Parent.NA);
 	}
+
 	emitNestedFromBlock(ctx.extyper, ctx.currentFunction, fes.block);
+
 	ctx.enter(fes.block);
+
 	processForeach(ctx, fes);
+
 	foreach (ivar; fes.itervars) {
-		accept(ivar, ctx.extyper);
+		resolveVariable(ctx, ivar);
 	}
+
 	if (fes.aggregate !is null) {
 		auto aggType = realType(getExpType(fes.aggregate));
 		if (fes.itervars.length == 2 &&
@@ -3225,8 +3230,10 @@ void extypeForeachStatement(Context ctx, ref ir.Node n)
 			}
 		}
 	}
+
 	// fes.aggregate is visited by extypeForeach
 	ctx.leave(fes.block);
+
 	extypeBlockStatement(ctx, fes.block);
 }
 
@@ -3464,9 +3471,11 @@ void extypeForStatement(Context ctx, ref ir.Node n)
 	auto fs = cast(ir.ForStatement) n;
 
 	emitNestedFromBlock(ctx.extyper, ctx.currentFunction, fs.block);
+
 	ctx.enter(fs.block);
-	foreach (i; fs.initVars) {
-		accept(i, ctx.extyper);
+
+	foreach (ivar; fs.initVars) {
+		resolveVariable(ctx, ivar);
 	}
 	foreach (ref i; fs.initExps) {
 		extype(ctx, i, Parent.NA);
@@ -3479,7 +3488,9 @@ void extypeForStatement(Context ctx, ref ir.Node n)
 	foreach (ref increment; fs.increments) {
 		extype(ctx, increment, Parent.NA);
 	}
+
 	ctx.leave(fs.block);
+
 	extypeBlockStatement(ctx, fs.block);
 }
 
@@ -3573,15 +3584,15 @@ void extypeGotoStatement(Context ctx, ref ir.Node n)
  *
  */
 
-void actualizeFunction(Context ctx, ref ir.Node n)
+void actualizeFunction(Context ctx, ir.Function func)
 {
-	auto func = cast(ir.Function) n;
 	if (func.isActualized) {
 		return;
 	}
-	if (!func.isResolved) {
-		resolveFunction(ctx, func);
-	}
+
+	// Ensured that function is resolved
+	resolveFunction(ctx, func);
+
 	auto done = ctx.lp.startActualizing(func);
 	scope (success) {
 		done();
@@ -3625,6 +3636,7 @@ void actualizeFunction(Context ctx, ref ir.Node n)
 
 	func.isActualized = true;
 }
+
 
 /*
  *
@@ -3864,18 +3876,21 @@ void resolveEnum(LanguagePass lp, ir.Enum e)
  */
 void resolveVariable(Context ctx, ir.Variable v)
 {
+	if (v.isResolved) {
+		return;
+	}
+
+
 	auto done = ctx.lp.startResolving(v);
 	ctx.isVarAssign = true;
-
 	scope (success) {
 		ctx.isVarAssign = false;
 		done();
 	}
 
 	v.hasBeenDeclared = true;
-	foreach (u; v.userAttrs) {
-		ctx.lp.resolve(ctx.current, u);
-	}
+
+	ctx.lp.resolve(ctx.current, v.userAttrs);
 
 	// Fix up type as best as possible.
 	resolveType(ctx, v.type);
@@ -3917,8 +3932,15 @@ void resolveVariable(Context ctx, ir.Variable v)
 
 void resolveFunction(Context ctx, ir.Function func)
 {
+	if (func.isResolved) {
+		return;
+	}
+
+
 	auto done = ctx.lp.startResolving(func);
 	scope (success) done();
+
+	ctx.lp.resolve(func.myScope.parent, func.userAttrs);
 
 	if (ctx.current.node.nodeType == ir.NodeType.BlockStatement ||
 	    func.kind == ir.Function.Kind.Nested) {
@@ -3983,8 +4005,6 @@ void resolveFunction(Context ctx, ir.Function func)
 
 	replaceVarArgsIfNeeded(ctx.lp, func);
 
-	ctx.lp.resolve(ctx.current, func.userAttrs);
-
 	if (func.type.homogenousVariadic && !isArray(realType(func.type.params[$-1]))) {
 		throw makeExpected(func.params[$-1].location, "array type");
 	}
@@ -4021,16 +4041,15 @@ void resolveFunction(Context ctx, ir.Function func)
 
 void resolveStruct(LanguagePass lp, ir.Struct s)
 {
-	auto done = lp.startResolving(s);
-	scope (exit) {
-		done();
+	if (s.isActualized) {
+		return;
 	}
+
+
+	auto done = lp.startResolving(s);
+	scope (success) done();
 
 	lp.resolve(s.myScope.parent, s.userAttrs);
-
-	if (s.loweredNode is null) {
-		createAggregateVar(lp, s);
-	}
 
 	s.isResolved = true;
 
@@ -4052,20 +4071,22 @@ void resolveStruct(LanguagePass lp, ir.Struct s)
 	s.isActualized = true;
 
 	if (s.loweredNode is null) {
+		createAggregateVar(lp, s);
 		fileInAggregateVar(lp, s);
 	}
 }
 
 void resolveUnion(LanguagePass lp, ir.Union u)
 {
-	auto done = lp.startResolving(u);
-	scope (exit) {
-		done();
+	if (u.isActualized) {
+		return;
 	}
 
-	lp.resolve(u.myScope.parent, u.userAttrs);
 
-	createAggregateVar(lp, u);
+	auto done = lp.startResolving(u);
+	scope (success) done();
+
+	lp.resolve(u.myScope.parent, u.userAttrs);
 
 	u.isResolved = true;
 
@@ -4095,6 +4116,7 @@ void resolveUnion(LanguagePass lp, ir.Union u)
 	u.totalSize = accum;
 	u.isActualized = true;
 
+	createAggregateVar(lp, u);
 	fileInAggregateVar(lp, u);
 }
 
@@ -4472,7 +4494,7 @@ public:
 		ctx.setupFromScope(current);
 		scope (success) ctx.reset();
 
-		accept(v, this);
+		resolveVariable(ctx, v);
 	}
 
 	/**
@@ -4480,6 +4502,8 @@ public:
 	 */
 	void resolve(ir.Scope current, ir.Function func)
 	{
+		assert(!func.isResolved);
+
 		ctx.setupFromScope(current);
 		scope (success) ctx.reset();
 
@@ -4492,7 +4516,7 @@ public:
 	void transform(ir.Scope current, ir.Attribute a)
 	{
 		ctx.setupFromScope(current);
-		scope (exit) ctx.reset();
+		scope (success) ctx.reset();
 
 		basicValidateUserAttribute(ctx.lp, ctx.current, a);
 
@@ -4500,15 +4524,15 @@ public:
 		assert(ua !is null);
 
 		foreach (i, ref arg; a.arguments) {
-			checkAndDoConvert(ctx, ua.fields[i].type, a.arguments[i]);
 			extype(ctx, a.arguments[i], Parent.NA);
+			checkAndDoConvert(ctx, ua.fields[i].type, a.arguments[i]);
 		}
 	}
 
 	void transform(ir.Scope current, ir.EnumDeclaration ed)
 	{
 		ctx.setupFromScope(current);
-		scope (exit) ctx.reset();
+		scope (success) ctx.reset();
 
 		ir.EnumDeclaration[] edStack;
 		ir.Exp prevExp;
@@ -4711,13 +4735,7 @@ public:
 
 	override Status enter(ir.Function func)
 	{
-		if (func.isActualized) {
-			return ContinueParent;
-		}
-
-		ir.Node n = func;
-		actualizeFunction(ctx, n);
-		assert(n is func);
+		actualizeFunction(ctx, func);
 		return ContinueParent;
 	}
 
