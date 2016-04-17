@@ -87,7 +87,7 @@ Parent classifyRelationship(ir.Exp child, ir.Exp parent)
 	} else if (auto b = cast(ir.BinOp) parent) {
 		if (b.op != ir.BinOp.Op.Assign) {
 			return Parent.NA;
-		}else if (b.left is child) {
+		} else if (b.left is child) {
 			return Parent.AssignTarget;
 		} else if (b.right is child) {
 			return Parent.AssignSource;
