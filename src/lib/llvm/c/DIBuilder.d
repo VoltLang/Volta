@@ -18,11 +18,38 @@ import lib.llvm.c.Core;
 
 extern(C):
 
+
+/**
+ * @defgroup LLVMCDebug C interface to LLVM misc debbuging functions.
+ *
+ * This module exposes parts of the LLVM library as a C API.
+ *
+ * @{
+ */
+
 uint LLVMGetDebugMetadataVersion();
 
 void LLVMBuilderAssociatePosition(LLVMBuilderRef builder, int Row, int Col,
                                   LLVMValueRef Scope);
 void LLVMBuilderDeassociatePosition(LLVMBuilderRef builder);
+
+/**
+ * Return the associated DISubprogram.
+ *
+ * @see llvm::Function::getSubprogram()
+ */
+LLVMValueRef LLVMGetSubprogram(LLVMValueRef Fn);
+
+/**
+ * Sets the DISubprogram for the given function.
+ *
+ * @see llvm::Function::setSubprogram()
+ */
+void LLVMSetSubprogram(LLVMValueRef Fn, LLVMValueRef Sub);
+
+/**
+ * @}
+ */
 
 
 /**
@@ -258,7 +285,7 @@ LLVMValueRef LLVMDIBuilderCreateFunction(
     size_t NameLen, const(char)* LinkageName, size_t LinkageNameLen,
     LLVMValueRef File, uint LineNo, LLVMValueRef Ty, bool isLocalToUnit,
     bool isDefinition, uint ScopeLine, uint Flags, bool isOptimized,
-    LLVMValueRef Fn, LLVMValueRef TParam, LLVMValueRef Decl);
+    LLVMValueRef TParam, LLVMValueRef Decl);
 
 /**
  * This creates a descriptor for a lexical block

@@ -448,11 +448,13 @@ version (UseDIBuilder) {
 
 		assert(file !is null && _scope !is null);
 
-		return LLVMDIBuilderCreateFunction(state.diBuilder, _scope,
+		auto ret = LLVMDIBuilderCreateFunction(state.diBuilder, _scope,
 			name.ptr, name.length, null, 0,
 			file, cast(uint) irFn.location.line, ft.diCallType,
 			false, true, cast(uint) irFn.location.line, 0,
-			false, func, null, null);
+			false, null, null);
+		LLVMSetSubprogram(func, ret);
+		return ret;
 	}
 
 	void diAutoVariable(State state, ir.Variable var,

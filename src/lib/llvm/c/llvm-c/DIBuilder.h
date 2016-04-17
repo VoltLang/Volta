@@ -35,8 +35,23 @@ void LLVMBuilderAssociatePosition(LLVMBuilderRef builder, int Row, int Col,
 void LLVMBuilderDeassociatePosition(LLVMBuilderRef builder);
 
 /**
+ * Return the associated DISubprogram.
+ *
+ * @see llvm::Function::getSubprogram()
+ */
+LLVMValueRef LLVMGetSubprogram(LLVMValueRef Fn);
+
+/**
+ * Sets the DISubprogram for the given function.
+ *
+ * @see llvm::Function::setSubprogram()
+ */
+void LLVMSetSubprogram(LLVMValueRef Fn, LLVMValueRef Sub);
+
+/**
  * @}
  */
+
 
 /**
  * @defgroup LLVMCDIBuilder C interface to DIBuilder
@@ -313,7 +328,7 @@ LLVMValueRef LLVMDIBuilderCreateFunction(LLVMDIBuilderRef builder,
                                          LLVMValueRef Ty, bool isLocalToUnit,
                                          bool isDefinition, unsigned ScopeLine,
                                          unsigned Flags, bool isOptimized,
-                                         LLVMValueRef Fn, LLVMValueRef TParam,
+                                         LLVMValueRef TParam,
                                          LLVMValueRef Decl);
 
 /**

@@ -74,7 +74,6 @@ template<class T> inline T* unwrapMDAs(LLVMValueRef V)
  *
  */ 
 
-
 unsigned LLVMGetDebugMetadataVersion()
 {
   return DEBUG_METADATA_VERSION;
@@ -90,13 +89,25 @@ void LLVMBuilderDeassociatePosition(LLVMBuilderRef builder) {
   unwrap(builder)->SetCurrentDebugLocation(DebugLoc());
 }
 
+LLVMValueRef LLVMGetSubprogram(LLVMValueRef Fn)
+{
+  auto FN = dyn_cast<Function>(unwrap(Fn));
+  return wrap(FN->getSubprogram());
+}
+
+void LLVMSetSubprogram(LLVMValueRef Fn, LLVMValueRef Sub)
+{
+  auto FN = dyn_cast<Function>(unwrap(Fn));
+  auto SUB = unwrapMDAs<DISubprogram>(Sub);
+  FN->setSubprogram(SUB);
+}
+
 
 /*
  *
  * LLVMDIBuilder functions.
  *
  */
-
 
 LLVMDIBuilderRef LLVMCreateDIBuilder(LLVMModuleRef module) {
   return wrap(new DIBuilder(*unwrap(module)));
@@ -420,7 +431,7 @@ LLVMValueRef LLVMDIBuilderCreateFunction(LLVMDIBuilderRef builder,
                                          LLVMValueRef Ty, bool isLocalToUnit,
                                          bool isDefinition, unsigned ScopeLine,
                                          unsigned Flags, bool isOptimized,
-                                         LLVMValueRef Fn, LLVMValueRef TParam,
+                                         LLVMValueRef TParam,
                                          LLVMValueRef Decl) {
   StringRef N(Name, NameLen);
   StringRef LN(LinkageName, LinkageNameLen);
@@ -428,14 +439,12 @@ LLVMValueRef LLVMDIBuilderCreateFunction(LLVMDIBuilderRef builder,
   auto S = unwrapMDAs<DIScope>(Scope);
   auto F = unwrapMDAs<DIFile>(File);
   auto T = unwrapMDAs<DISubroutineType>(Ty);
-  auto FN = dyn_cast<Function>(unwrap(Fn));
+
   // TODO auto TP = unwrapMDAs<MDNode>(TParam);
   auto D = unwrapMDAs<DISubprogram>(Decl);
 
-  auto SUB = B->createFunction(S, N, LN, F, LineNo, T, isLocalToUnit,
-      isDefinition, ScopeLine, Flags, isOptimized, nullptr, D);
-  FN->setSubprogram(SUB);
-  return wrap(SUB);
+  return wrap(B->createFunction(S, N, LN, F, LineNo, T, isLocalToUnit,
+      isDefinition, ScopeLine, Flags, isOptimized, nullptr, D));
 }
 
 LLVMValueRef LLVMDIBuilderCreateLexicalBlockFile(LLVMDIBuilderRef builder,
