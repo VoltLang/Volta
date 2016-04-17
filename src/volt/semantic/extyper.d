@@ -2978,8 +2978,11 @@ void extypeBlockStatement(Context ctx, ir.BlockStatement bs)
 		case Function:
 			accept(stat, ctx.extyper);
 			break;
+		// Shows up but doesn't need to be visited.
+		// Nested structs for functions.
 		case Struct:
-			accept(stat, ctx.extyper);
+			auto s = cast(ir.Struct) stat;
+			panicAssert(s, s.isActualized);
 			break;
 		default:
 			throw panicUnhandled(stat, ir.nodeToString(stat));
