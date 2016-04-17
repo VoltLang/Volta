@@ -18,12 +18,10 @@
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/DIBuilder.h"
 
+#if LLVM_VERSION_MINOR < 8
+#error "This version of LLVM is not supported"
+#endif
 
-using namespace llvm;
-
-DEFINE_SIMPLE_CONVERSION_FUNCTIONS(DIBuilder, LLVMDIBuilderRef)
-
-#if LLVM_VERSION_MINOR >= 7
 #define DEFINE_MAV_WRAP(Type) \
 inline LLVMValueRef wrap(Type *T) \
 { \
@@ -31,17 +29,11 @@ inline LLVMValueRef wrap(Type *T) \
       return wrap(MetadataAsValue::get(T->getContext(), T)); \
     return nullptr; \
 }
-#elif LLVM_VERSION_MINOR <= 6
-#define DEFINE_MAV_WRAP(Type) \
-inline LLVMValueRef wrap(Type T) \
-{ \
-    if (T) \
-      return wrap(MetadataAsValue::get(T->getContext(), T)); \
-    return nullptr; \
-}
-#else
-#error "This version of LLVM is not supported"
-#endif
+
+
+using namespace llvm;
+
+DEFINE_SIMPLE_CONVERSION_FUNCTIONS(DIBuilder, LLVMDIBuilderRef)
 
 DEFINE_MAV_WRAP(DIFile)
 DEFINE_MAV_WRAP(DILocation)
@@ -61,6 +53,7 @@ DEFINE_MAV_WRAP(DILocalVariable)
 DEFINE_MAV_WRAP(DILexicalBlockFile)
 DEFINE_MAV_WRAP(DILexicalBlock)
 
+
 inline Metadata *unwrapMD(LLVMValueRef Val)
 {
   if (auto *V = unwrap(Val))
@@ -69,19 +62,10 @@ inline Metadata *unwrapMD(LLVMValueRef Val)
   return nullptr;
 }
 
-#if LLVM_VERSION_MINOR >= 7
 template<class T> inline T* unwrapMDAs(LLVMValueRef V)
 {
   return dyn_cast_or_null<T>(unwrapMD(V));
 }
-#elif LLVM_VERSION_MINOR == 6
-template<class T> inline T unwrapMDAs(LLVMValueRef V)
-{
-  return T((MDNode*)unwrapMD(V));
-}
-#else
-#error "This version of LLVM is not supported"
-#endif
 
 
 /*
@@ -115,8 +99,7 @@ void LLVMBuilderDeassociatePosition(LLVMBuilderRef builder) {
 
 
 LLVMDIBuilderRef LLVMCreateDIBuilder(LLVMModuleRef module) {
-  Module *mod = unwrap(module);
-  return wrap(new DIBuilder(*mod));
+  return wrap(new DIBuilder(*unwrap(module)));
 }
 
 void LLVMDisposeDIBuilder(LLVMDIBuilderRef builder) {
@@ -153,13 +136,10 @@ LLVMValueRef LLVMDIBuilderCreateCompileUnit(LLVMDIBuilderRef builder,
   StringRef producer(Producer, ProducerLen);
   StringRef flags(Flags, FlagsLen);
   StringRef split(SplitName, SplitNameLen);
+
   return wrap(unwrap(builder)
       ->createCompileUnit(Lang, file, dir, producer, isOptimized, flags, RV,
-                          split, Kind,
-#if LLVM_VERSION_MINOR >= 7
-                          DWOiD,
-#endif
-                          EmitDebugInfo));
+                          split, Kind, DWOiD, EmitDebugInfo));
 }
 
 LLVMValueRef LLVMDIBuilderCreateLocation(LLVMDIBuilderRef builder,
@@ -167,8 +147,8 @@ LLVMValueRef LLVMDIBuilderCreateLocation(LLVMDIBuilderRef builder,
                                          LLVMValueRef Scope) {
 
   auto S = unwrapMDAs<DIScope>(Scope);
-  DILocation *DI = DILocation::get(S->getContext(), Line, Column, S);
-  return wrap(DI);
+
+  return wrap(DILocation::get(S->getContext(), Line, Column, S));
 }
 
 LLVMValueRef LLVMDIBuilderCreateFile(LLVMDIBuilderRef builder,
@@ -177,6 +157,7 @@ LLVMValueRef LLVMDIBuilderCreateFile(LLVMDIBuilderRef builder,
 
   StringRef F(File, FileLen);
   StringRef D(Dir, DirLen);
+
   return wrap(unwrap(builder)->createFile(F, D));
 }
 
@@ -196,6 +177,7 @@ LLVMValueRef LLVMDIBuilderCreateBasicType(LLVMDIBuilderRef builder,
                                           unsigned Encoding) {
 
   StringRef name(Name, NameLen);
+
   return wrap(unwrap(builder)
                   ->createBasicType(name, sizeInBits, alignInBits, Encoding));
 }
@@ -215,6 +197,7 @@ LLVMValueRef LLVMDIBuilderCreatePointerType(LLVMDIBuilderRef builder,
 
   StringRef N(Name, NameLen);
   auto T = unwrapMDAs<DIType>(pointeeTy);
+
   return wrap(unwrap(builder)->createPointerType(
        T, SizeInBits, AlignInBits, N));
 }
@@ -229,6 +212,7 @@ LLVMValueRef LLVMDIBuilderCreateMemberType(
   auto T = unwrapMDAs<DIType>(Ty);
   auto F = unwrapMDAs<DIFile>(File);
   auto S = unwrapMDAs<DIScope>(Scope);
+
   return wrap(unwrap(builder)->createMemberType(S, N, F, LineNo,
                                                 SizeInBits, AlignInBits,
                                                 OffsetInBits, Flags, T));
@@ -257,7 +241,7 @@ LLVMValueRef LLVMDIBuilderCreateStructType(LLVMDIBuilderRef builder,
   auto VTH = unwrapMDAs<DIType>(VTableHolder);
 
   SmallVector<Metadata *, 8> MDs;
-  for (int i = 0; i < ElementsNum; i++) {
+  for (size_t i = 0; i < ElementsNum; i++) {
     auto *MD = unwrapMD(Elements[i]);
     MDs.push_back(MD);
   }
@@ -284,11 +268,13 @@ LLVMValueRef LLVMDIBuilderCreateUnionType(LLVMDIBuilderRef builder,
   auto B = unwrap(builder);
   auto S = unwrapMDAs<DIScope>(Scope);
   auto F = unwrapMDAs<DIFile>(File);
+
   SmallVector<Metadata *, 8> MDs;
-  for(int i = 0; i < ElementsNum; i++) {
+  for(size_t i = 0; i < ElementsNum; i++) {
     auto *MD = unwrapMD(Elements[i]);
     MDs.push_back(MD);
   }
+
   return wrap(B->createUnionType(
       S, N, F, LineNumber, SizeInBits, AlignInBits, Flags,
       B->getOrCreateArray(MDs), RunTimeLang, UI));
@@ -302,11 +288,13 @@ LLVMValueRef LLVMDIBuilderCreateArrayType(LLVMDIBuilderRef builder,
 
   auto B = unwrap(builder);
   auto T = unwrapMDAs<DIType>(Ty);
+
   SmallVector<Metadata *, 8> MDs;
-  for(int i = 0; i < SubscriptsNum; i++) {
+  for(size_t i = 0; i < SubscriptsNum; i++) {
     auto *MD = unwrapMD(Subscripts[i]);
     MDs.push_back(MD);
   }
+
   return wrap(B->createArrayType(
       Size, AlignInBits, T, B->getOrCreateArray(MDs)));
 }
@@ -319,11 +307,13 @@ LLVMValueRef LLVMDIBuilderCreateVectorType(LLVMDIBuilderRef builder,
 
   auto B = unwrap(builder);
   auto T = unwrapMDAs<DIType>(Ty);
+
   SmallVector<Metadata *, 8> MDs;
-  for(int i = 0; i < SubscriptsNum; i++) {
+  for(size_t i = 0; i < SubscriptsNum; i++) {
     auto *MD = unwrapMD(Subscripts[i]);
     MDs.push_back(MD);
   }
+
   return wrap(B->createVectorType(
       Size, AlignInBits, T, B->getOrCreateArray(MDs)));
 }
@@ -335,19 +325,15 @@ LLVMValueRef LLVMDIBuilderCreateSubroutineType(LLVMDIBuilderRef builder,
                                                unsigned Flags) {
 
   auto B = unwrap(builder);
-  auto F = unwrapMDAs<DIFile>(File);
+  // TODO auto F = unwrapMDAs<DIFile>(File);
 
   SmallVector<Metadata *, 8> MDs;
-  for (int i = 0; i < ParameterTypesNum; i++) {
+  for (size_t i = 0; i < ParameterTypesNum; i++) {
     auto *MD = unwrapMD(ParameterTypes[i]);
     MDs.push_back(MD);
   }
 
-#if LLVM_VERSION_MINOR >= 8
   return wrap(B->createSubroutineType(B->getOrCreateTypeArray(MDs), Flags));
-#else
-  return wrap(B->createSubroutineType(F, B->getOrCreateTypeArray(MDs), Flags));
-#endif
 }
 
 void LLVMDIBuilderRetainType(LLVMDIBuilderRef builder, LLVMValueRef Ty) {
@@ -379,11 +365,8 @@ LLVMValueRef LLVMDIBuilderCreateGlobalVariable(LLVMDIBuilderRef builder,
   auto F = unwrapMDAs<DIFile>(File);
   auto T = unwrapMDAs<DIType>(Ty);
   auto C = dyn_cast<Constant>(unwrap(Val));
-#if LLVM_VERSION_MINOR >= 7
   auto D = unwrapMDAs<MDNode>(Decl);
-#else
-  auto D = dyn_cast_or_null<MDNode>(unwrapMD(Decl));
-#endif
+
   return wrap(unwrap(builder)->createGlobalVariable(
       S, StringRef(Name, NameLen), StringRef(LinkageName, LinkageNameLen),
       F, LineNo, T, IsLocalToUnit, C, D));
@@ -404,7 +387,7 @@ LLVMValueRef LLVMDIBuilderCreateAutoVariable(LLVMDIBuilderRef builder,
   auto T = unwrapMDAs<DIType>(Ty);
 
   return wrap(B->createAutoVariable(
-    S, N, F, LineNo, T, AlwaysPreserve, Flags));
+      S, N, F, LineNo, T, AlwaysPreserve, Flags));
 }
 
 LLVMValueRef LLVMDIBuilderCreateParameterVariable(LLVMDIBuilderRef builder,
@@ -425,7 +408,7 @@ LLVMValueRef LLVMDIBuilderCreateParameterVariable(LLVMDIBuilderRef builder,
   auto T = unwrapMDAs<DIType>(Ty);
 
   return wrap(B->createParameterVariable(
-    S, N, ArgNo, F, LineNo, T, AlwaysPreserve, Flags));
+      S, N, ArgNo, F, LineNo, T, AlwaysPreserve, Flags));
 }
 
 LLVMValueRef LLVMDIBuilderCreateFunction(LLVMDIBuilderRef builder,
@@ -446,25 +429,13 @@ LLVMValueRef LLVMDIBuilderCreateFunction(LLVMDIBuilderRef builder,
   auto F = unwrapMDAs<DIFile>(File);
   auto T = unwrapMDAs<DISubroutineType>(Ty);
   auto FN = dyn_cast<Function>(unwrap(Fn));
+  // TODO auto TP = unwrapMDAs<MDNode>(TParam);
+  auto D = unwrapMDAs<DISubprogram>(Decl);
 
-#if LLVM_VERSION_MINOR >= 8
-#elif LLVM_VERSION_MINOR == 7
-  auto TP = unwrapMDAs<MDNode>(TParam);
-  auto D = unwrapMDAs<MDNode>(Decl);
-#else
-  auto TP = dyn_cast_or_null<MDNode>(unwrapMD(TParam));
-  auto D = dyn_cast_or_null<MDNode>(unwrapMD(Decl));
-#endif
-
-#if LLVM_VERSION_MINOR >= 8
   auto SUB = B->createFunction(S, N, LN, F, LineNo, T, isLocalToUnit,
-	 isDefinition, ScopeLine, Flags, isOptimized);
+      isDefinition, ScopeLine, Flags, isOptimized, nullptr, D);
   FN->setSubprogram(SUB);
   return wrap(SUB);
-#else
-  return wrap(B->createFunction(S, N, LN, F, LineNo, T, isLocalToUnit,
-	 isDefinition, ScopeLine, Flags, isOptimized, FN, TP, D));
-#endif
 }
 
 LLVMValueRef LLVMDIBuilderCreateLexicalBlockFile(LLVMDIBuilderRef builder,
@@ -529,7 +500,7 @@ LLVMValueRef LLVMDIBuilderCreateExpression(LLVMDIBuilderRef builder,
   auto B = unwrap(builder);
   SmallVector<uint64_t, 4> A;
 
-  for (int i = 0; i < AddrNum; i++) {
+  for (size_t i = 0; i < AddrNum; i++) {
     A.push_back(Addr[i]);
   }
 
@@ -543,16 +514,12 @@ void LLVMDIBuilderStructSetBody(LLVMDIBuilderRef builder, LLVMValueRef Struct,
   auto fwd = unwrapMDAs<DICompositeType>(Struct);
 
   SmallVector<Metadata *, 8> MDs;
-  for (int i = 0; i < ElementsNum; i++) {
+  for (size_t i = 0; i < ElementsNum; i++) {
     auto *MD = unwrapMD(Elements[i]);
     MDs.push_back(MD);
   }
 
-#if LLVM_VERSION_MINOR >= 7
   fwd->replaceElements(B->getOrCreateArray(MDs));
-#else
-  B->replaceArrays(fwd, B->getOrCreateArray(MDs));
-#endif
 }
 
 void LLVMDIBuilderUnionSetBody(LLVMDIBuilderRef builder, LLVMValueRef Union,
@@ -562,14 +529,10 @@ void LLVMDIBuilderUnionSetBody(LLVMDIBuilderRef builder, LLVMValueRef Union,
   auto fwd = unwrapMDAs<DICompositeType>(Union);
 
   SmallVector<Metadata *, 8> MDs;
-  for (int i = 0; i < ElementsNum; i++) {
+  for (size_t i = 0; i < ElementsNum; i++) {
     auto *MD = unwrapMD(Elements[i]);
     MDs.push_back(MD);
   }
 
-#if LLVM_VERSION_MINOR >= 7
   fwd->replaceElements(B->getOrCreateArray(MDs));
-#else
-  B->replaceArrays(fwd, B->getOrCreateArray(MDs));
-#endif
 }
