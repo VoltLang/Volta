@@ -3075,7 +3075,8 @@ void extypeSwitchStatement(Context ctx, ref ir.Node n)
 			auto type = getExpType(exp);
 			throw makeSwitchBadType(ss, type);
 		}
-		void replaceWithHashIfNeeded(ref ir.Exp exp) 
+
+		void replaceWithHashIfNeeded(ref ir.Exp exp)
 		{
 			if (exp is null) {
 				return;
@@ -4193,7 +4194,7 @@ void writeVariableAssignsIntoCtors(Context ctx, ir.Class _class)
 		auto v = cast(ir.Variable) n;
 		if (v is null || v.assign is null ||
 			isInternalVariable(_class, v) ||
-		   !(v.storage != ir.Variable.Storage.Local && 
+		   !(v.storage != ir.Variable.Storage.Local &&
 		    v.storage != ir.Variable.Storage.Global)) {
 			continue;
 		}
