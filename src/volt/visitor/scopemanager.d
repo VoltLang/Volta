@@ -6,6 +6,7 @@ import ir = volt.ir.ir;
 
 import volt.errors;
 import volt.visitor.visitor;
+import volt.token.location : Location;
 
 
 class ScopeManager : NullVisitor
@@ -41,6 +42,7 @@ public:
 
 	override Status enter(ir.Struct s)
 	{
+		checkPreScope(s.location, s.myScope);
 		current = s.myScope;
 		return Continue;
 	}
@@ -60,6 +62,7 @@ public:
 
 	override Status enter(ir.Union u)
 	{
+		checkPreScope(u.location, u.myScope);
 		current = u.myScope;
 		return Continue;
 	}
@@ -79,6 +82,7 @@ public:
 
 	override Status enter(ir.Class c)
 	{
+		checkPreScope(c.location, c.myScope);
 		current = c.myScope;
 		return Continue;
 	}
@@ -98,6 +102,7 @@ public:
 
 	override Status enter(ir._Interface i)
 	{
+		checkPreScope(i.location, i.myScope);
 		current = i.myScope;
 		return Continue;
 	}
@@ -117,6 +122,7 @@ public:
 
 	override Status enter(ir.UserAttribute ui)
 	{
+		checkPreScope(ui.location, ui.myScope);
 		current = ui.myScope;
 		return Continue;
 	}
@@ -135,6 +141,7 @@ public:
 
 	override Status enter(ir.Function func)
 	{
+		checkPreScope(func.location, func.myScope);
 		functionStack ~= func;
 		current = func.myScope;
 		return Continue;
@@ -160,6 +167,7 @@ public:
 
 	override Status enter(ir.BlockStatement bs)
 	{
+		checkPreScope(bs.location, bs.myScope);
 		current = bs.myScope;
 		return Continue;
 	}
@@ -179,6 +187,7 @@ public:
 
 	override Status enter(ir.Enum e)
 	{
+		checkPreScope(e.location, e.myScope);
 		current = e.myScope;
 		return Continue;
 	}
@@ -194,5 +203,16 @@ public:
 
 		current = current.parent;
 		return Continue;
+	}
+
+private:
+	void checkPreScope(Location loc, ir.Scope _scope)
+	{
+		if (current !is _scope.parent) {
+			auto str = "invalid scope layout (parent) should be " ~
+		           ir.getNodeAddressString(current.node) ~ " is " ~
+		           ir.getNodeAddressString(_scope.node);
+			throw panic(loc, str);
+		}
 	}
 }
