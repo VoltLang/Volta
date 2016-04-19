@@ -170,8 +170,8 @@ ir.Type handleFunctionStore(Context ctx, string ident, ref ir.Exp exp,
 			members++;
 		}
 
-		// Check for nested functions.
-		if (func.nestedHiddenParameter !is null) {
+		if (func.kind == ir.Function.Kind.Nested ||
+		    func.kind == ir.Function.Kind.GlobalNested) {
 			if (fns.length > 1) {
 				throw makeCannotOverloadNested(func, func);
 			}
@@ -335,7 +335,7 @@ ir.Type handleValueStore(Context ctx, string ident, ref ir.Exp exp,
 		replaceExpReferenceIfNeeded(ctx, exp, eref);
 
 		// Handle nested variables.
-		tagNestedVariables(ctx, var, store, exp);
+		nestExtyperTagVariable(ctx, var, store);
 
 		break;
 	case StaticPostfix:
@@ -2907,8 +2907,6 @@ ir.Type extypeUnchecked(Context ctx, ref ir.Exp exp, Parent parent)
 
 void extypeBlockStatement(Context ctx, ir.BlockStatement bs)
 {
-	emitNestedFromBlock(ctx.extyper, ctx.currentFunction, bs);
-
 	ctx.enter(bs);
 
 	foreach (ref stat; bs.statements) {
@@ -3209,8 +3207,6 @@ void extypeForeachStatement(Context ctx, ref ir.Node n)
 		extype(ctx, fes.endIntegerRange, Parent.NA);
 	}
 
-	emitNestedFromBlock(ctx.extyper, ctx.currentFunction, fes.block);
-
 	ctx.enter(fes.block);
 
 	processForeach(ctx, fes);
@@ -3471,8 +3467,6 @@ void extypeForStatement(Context ctx, ref ir.Node n)
 {
 	auto fs = cast(ir.ForStatement) n;
 
-	emitNestedFromBlock(ctx.extyper, ctx.currentFunction, fs.block);
-
 	ctx.enter(fs.block);
 
 	foreach (ivar; fs.initVars) {
@@ -3603,23 +3597,13 @@ void actualizeFunction(Context ctx, ir.Function func)
 	// Error checking
 	if (ctx.functionDepth >= 2) {
 		throw makeNestedNested(func.location);
+	} else if (ctx.functionDepth == 1) {
+		nestExtyperFunction(ctx.parentFunction, func);
 	}
 
 
 	// Visiting children.
 	ctx.enter(func);
-
-	emitNestedFromBlock(ctx.extyper, func, func._body, false);
-
-	if (func.thisHiddenParameter !is null &&
-	    !func.thisHiddenParameter.isResolved) {
-		resolveVariable(ctx, func.thisHiddenParameter);
-	}
-
-	if (func.nestedHiddenParameter !is null &&
-	    !func.nestedHiddenParameter.isResolved) {
-		resolveVariable(ctx, func.nestedHiddenParameter);
-	}
 
 	if (func.inContract !is null) {
 		extypeBlockStatement(ctx, func.inContract);
@@ -3943,26 +3927,6 @@ void resolveFunction(Context ctx, ir.Function func)
 
 	ctx.lp.resolve(func.myScope.parent, func.userAttrs);
 
-	if (ctx.current.node.nodeType == ir.NodeType.BlockStatement ||
-	    func.kind == ir.Function.Kind.Nested) {
-		auto ns = ctx.parentFunction.nestStruct;
-		panicAssert(func, ns !is null);
-		auto tr = buildTypeReference(ns.location, ns, "__Nested");
-		auto decl = buildVariable(func.location, tr, ir.Variable.Storage.Function, "__nested");
-		decl.isResolved = true;
-		decl.specialInitValue = true;
-
-		if (func.nestedHiddenParameter is null) {
-			// XXX: Note __nested is not added to any scope.
-			// XXX: Instead make sure that nestedHiddenParameter is visited (and as such visited)
-			func.nestedHiddenParameter = decl;
-			func.nestedVariable = decl;
-			func.nestStruct = ns;
-			func.type.hiddenParameter = true;
-			func._body.statements = decl ~ func._body.statements;
-		}
-	}
-
 	if (func.isAutoReturn) {
 		func.type.ret = buildVoid(func.type.ret.location);
 	}
@@ -4283,122 +4247,6 @@ void tagLiteralType(ir.Exp exp, ir.Type type)
  *
  */
 
-void emitNestedFromBlock(Visitor extyper, ir.Function currentFunction, ir.BlockStatement bs, bool skipFunction = true)
-{
-	if (bs is null || (skipFunction && bs is currentFunction._body)) {
-		return;
-	}
-	ir.Struct[] structs;
-	emitNestedStructs(currentFunction, bs, structs);
-	foreach (_s; structs) {
-		accept(_s, extyper);
-	}
-	handleNestedParams(currentFunction, currentFunction._body);
-	handleNestedThis(currentFunction, bs);
-	if (currentFunction.nestStruct !is null &&
-	    currentFunction.thisHiddenParameter !is null &&
-	    currentFunction.kind != ir.Function.Kind.Nested &&
-	    currentFunction.nestStruct.myScope.getStore("this") is null) {
-		auto cvar = copyVariableSmart(currentFunction.thisHiddenParameter.location, currentFunction.thisHiddenParameter);
-		addVarToStructSmart(currentFunction.nestStruct, cvar);
-	}
-}
-
-/**
- * Given a nested function func, add its parameters to the nested
- * struct and insert statements after the nested declaration.
- */
-void handleNestedParams(ir.Function func, ir.BlockStatement bs)
-{
-	auto np = func.nestedVariable;
-	auto ns = func.nestStruct;
-	if (np is null || ns is null) {
-		return;
-	}
-
-	// Don't add parameters for nested functions.
-	if (func.kind == ir.Function.Kind.Nested) {
-		return;
-	}
-
-	// This is needed for the parent function.
-	size_t index;
-	for (index = 0; index < bs.statements.length; ++index) {
-		if (bs.statements[index] is np) {
-			break;
-		}
-	}
-	++index;
-
-	if (index > bs.statements.length) {
-		index = 0;  // We didn't find a usage, so put it at the start.
-	}
-
-	foreach (i, param; func.params) {
-		if (!param.hasBeenNested) {
-			param.hasBeenNested = true;
-
-			auto type = param.type;
-			bool refParam = func.type.isArgRef[i] || func.type.isArgOut[i];
-			if (refParam) {
-				type = buildPtrSmart(param.location, param.type);
-			}
-			auto name = param.name != "" ? param.name : "__anonparam_" ~ toString(index);
-			auto var = buildVariableSmart(param.location, type, ir.Variable.Storage.Field, name);
-			addVarToStructSmart(ns, var);
-			// Insert an assignment of the param to the nest struct.
-
-			auto l = buildAccessExp(param.location, buildExpReference(np.location, np, np.name), var);
-			auto r = buildExpReference(param.location, param, name);
-			r.doNotRewriteAsNestedLookup = true;
-			ir.BinOp bop;
-			if (!refParam) {
-				bop = buildAssign(l.location, l, r);
-			} else {
-				bop = buildAssign(l.location, l, buildAddrOf(r.location, r));
-			}
-			bop.isInternalNestedAssign = true;
-			ir.Node n = buildExpStat(l.location, bop);
-			if (isNested(func)) {
-				// Nested function.
-				bs.statements = n ~ bs.statements;
-			} else {
-				// Parent function with nested children.
-				bs.statements.insertInPlace(index++, n);
-			}
-		}
-	}
-}
-
-/**
- * Correct this references in nested functions.
- */
-void handleNestedThis(ir.Function func, ir.BlockStatement bs)
-{
-	bs = func._body;
-	auto np = func.nestedVariable;
-	auto ns = func.nestStruct;
-	if (np is null || ns is null) {
-		return;
-	}
-	size_t index;
-	for (index = 0; index < bs.statements.length; ++index) {
-		if (bs.statements[index] is np) {
-			break;
-		}
-	}
-	if (++index >= bs.statements.length) {
-		return;
-	}
-	if (func.thisHiddenParameter !is null) {
-		auto l = buildAccessExp(func.location, buildExpReference(np.location, np, np.name), func.thisHiddenParameter);
-		auto tv = func.thisHiddenParameter;
-		auto r = buildExpReference(bs.location, tv, tv.name);
-		r.doNotRewriteAsNestedLookup = true;
-		ir.Node n = buildExpStat(l.location, buildAssign(l.location, l, r));
-		bs.statements.insertInPlace(index, n);
-	}
-}
 
 
 /*

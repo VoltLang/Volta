@@ -213,7 +213,8 @@ ir.Type getExpReferenceType(ir.ExpReference expref)
 
 	auto func = cast(ir.Function) expref.decl;
 	if (func !is null) {
-		if (func.nestedHiddenParameter !is null) {
+		if (func.kind == ir.Function.Kind.Nested ||
+		    func.kind == ir.Function.Kind.GlobalNested) {
 			auto t = new ir.DelegateType(func.type);
 			t.isScope = true;
 			return t;

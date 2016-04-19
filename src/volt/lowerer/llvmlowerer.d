@@ -358,6 +358,27 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.ForeachStatement fes)
+	{
+		return Continue;
+	}
+
+	override Status enter(ir.Function func)
+	{
+		ir.Function parent;
+		if (functionStack.length == 1) {
+			parent = functionStack[0];
+		} else {
+			assert(functionStack.length == 0);
+		}
+
+		nestLowererFunction(lp, parent, func);
+
+		super.enter(func);
+
+		return Continue;
+	}
+
 	override Status leave(ir.ThrowStatement t)
 	{
 		auto func = lp.ehThrowFunc;

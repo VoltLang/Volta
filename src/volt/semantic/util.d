@@ -301,19 +301,26 @@ ir.Variable getThisVarNotNull(ir.Node n, Context ctx)
 	if (func is null) {
 		throw panic(n, "getThisVar called for scope outside of function.");
 	}
+	return getThisVarNotNull(n, ctx, func);
+}
 
+ir.Variable getThisVarNotNull(ir.Node n, Context ctx, ir.Function func)
+{
 	// TODO Field directly on ir.Function?
 	auto thisStore = lookupInGivenScopeOnly(
 		ctx.lp, func.myScope, n.location, "this");
 	if (thisStore is null) {
-		if (func.nestStruct !is null) {
-			thisStore = lookupInGivenScopeOnly(
-				ctx.lp, func.nestStruct.myScope,
-				n.location, "this");
+		if (func.kind == ir.Function.Kind.Nested ||
+		    func.kind == ir.Function.Kind.GlobalNested) {
+		    auto var = getThisVarNotNull(n, ctx, getParentFunction(func.myScope.parent));
+		    panicAssert(n, var !is null);
+		    return var;
 		}
 		if (thisStore is null) {
 			// TODO This needs to be a better, not all lookups are calls.
 			throw makeCallingWithoutInstance(n.location);
+		} else {
+			assert(false);
 		}
 	}
 
@@ -333,15 +340,7 @@ ir.Variable getThisVarNotNull(ir.Node n, Context ctx)
 ir.Exp getThisReferenceNotNull(ir.Node n, Context ctx, out ir.Variable thisVar)
 {
 	thisVar = getThisVarNotNull(n, ctx);
-
-	ir.Exp thisRef;
-	// TODO Is there a function on the Context that is better?
-	auto ffn = getParentFunction(ctx.current);
-	if (ffn !is null && ffn.nestStruct !is null) {
-		return buildAccessExp(n.location, buildExpReference(n.location, ffn.nestedVariable), thisVar);
-	} else {
-		return buildExpReference(n.location, thisVar, "this");
-	}
+	return buildExpReference(n.location, thisVar, "this");
 }
 
 void replaceVarArgsIfNeeded(LanguagePass lp, ir.Function func)

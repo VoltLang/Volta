@@ -17,117 +17,77 @@ import volt.semantic.context;
 import volt.semantic.classify : isNested, realType;
 
 
-void emitNestedStructs(ir.Function parentFunction, ir.BlockStatement bs, ref ir.Struct[] structs)
+/*
+ *
+ * Functions to be called by extyper.
+ *
+ */
+
+void nestExtyperTagVariable(Context ctx, ir.Variable var, ir.Store store)
 {
-	for (size_t i = 0; i < bs.statements.length; ++i) {
-		auto func = cast(ir.Function) bs.statements[i];
-		if (func is null) {
-			continue;
+	if (!ctx.isFunction ||
+	    (ctx.currentFunction.kind != ir.Function.Kind.Nested &&
+	    ctx.currentFunction.kind != ir.Function.Kind.GlobalNested)) {
+		return;
+	}
+
+	if (ctx.current.nestedDepth <= store.parent.nestedDepth) {
+		return;
+	}
+
+	if (var.storage != ir.Variable.Storage.Field &&
+	    !isNested(var.storage)) {
+		// If we're tagging a global variable, just ignore it.
+		if (var.storage == ir.Variable.Storage.Local ||
+		    var.storage == ir.Variable.Storage.Global) {
+			return;
 		}
-		if (func.suffix.length == 0) {
-			foreach (existingFn; parentFunction.nestedFunctions) {
-				if (func.name == existingFn.oldname) {
-					throw makeCannotOverloadNested(func, func);
-				}
-			}
-			parentFunction.nestedFunctions ~= func;
-			func.suffix = toString(getModuleFromScope(parentFunction.location, parentFunction._body.myScope).getId());
-		}
-		if (parentFunction.nestStruct is null) {
-			parentFunction.nestStruct = createAndAddNestedStruct(parentFunction, parentFunction._body);
-			structs ~= parentFunction.nestStruct;
-		}
-		emitNestedStructs(parentFunction, func._body, structs);
+
+		var.storage = ir.Variable.Storage.Nested;
 	}
 }
 
-ir.Struct createAndAddNestedStruct(ir.Function func, ir.BlockStatement bs)
+void nestExtyperFunction(ir.Function parent, ir.Function func)
 {
-	auto s = buildStruct(func.location, "__Nested" ~ toString(cast(void*)func), []);
-	s.myScope = new ir.Scope(bs.myScope, s, s.name, bs.myScope.nestedDepth);
-	auto decl = buildVariable(func.location, buildTypeReference(s.location, s, "__Nested"), ir.Variable.Storage.Function, "__nested");
+	parent.nestedFunctions ~= func;
+}
+
+
+/*
+ *
+ * Functions to be called by the lowerer.
+ *
+ */
+
+void nestLowererFunction(LanguagePass lp, ir.Function parent, ir.Function func)
+{
+	if (parent is null) {
+		if (func.nestedFunctions.length > 0) {
+			doParent(lp, func);
+		}
+		return;
+	}
+
+	assert(parent.nestStruct !is null);
+	assert(func.nestedHiddenParameter is null);
+
+	auto ns = parent.nestStruct;
+
+	panicAssert(func, ns !is null);
+
+	auto tr = buildTypeReference(ns.location, ns, "__Nested");
+	auto decl = buildVariable(func.location, tr, ir.Variable.Storage.Function, "__nested");
 	decl.isResolved = true;
+	decl.specialInitValue = true;
+
+	// XXX: Note __nested is not added to any scope.
+	// XXX: Instead make sure that nestedHiddenParameter is visited (and as such visited)
+
+	func.nestedHiddenParameter = decl;
 	func.nestedVariable = decl;
-	bs.statements = s ~ (decl ~ bs.statements);
-	return s;
-}
-
-bool replaceNested(LanguagePass lp, ref ir.Exp exp, ir.ExpReference eref, ir.Function currentFunction)
-{
-	if (eref.doNotRewriteAsNestedLookup) {
-		return false;
-	}
-	if (currentFunction is null) {
-		return false;
-	}
-	auto nestParam = currentFunction.nestedVariable;
-	auto nestStruct = currentFunction.nestStruct;
-	if (nestParam is null || nestStruct is null) {
-		return false;
-	}
-
-	string name;
-	ir.Type type;
-	ir.FunctionParam fp;
-
-	switch (eref.decl.nodeType) with (ir.NodeType) {
-	case FunctionParam:
-		fp = cast(ir.FunctionParam) eref.decl;
-		if (!fp.hasBeenNested) {
-			return false;
-		}
-		name = fp.name;
-		type = fp.type;
-		break;
-	case Variable:
-		auto var = cast(ir.Variable) eref.decl;
-		if (var.storage == ir.Variable.Storage.Field) {
-			if (currentFunction.nestedHiddenParameter is null) {
-				return false;
-			}
-			auto nref = buildExpReference(var.location, currentFunction.nestedHiddenParameter, currentFunction.nestedHiddenParameter.name);
-			auto nstore = lookupInGivenScopeOnly(lp, currentFunction.nestStruct.myScope, var.location, "this");
-			panicAssert(var, nstore !is null);
-			auto nvar = cast(ir.Variable)nstore.node;
-			panicAssert(var, nvar !is null);
-			auto cagg = cast(ir.Aggregate)realType(nvar.type);
-			auto cstore = lookupInGivenScopeOnly(lp, cagg.myScope, var.location, var.name);
-			auto cvar = cast(ir.Variable)cstore.node;
-			auto a = buildAccessExp(var.location, nref, nvar);
-			exp = buildAccessExp(a.location, a, cvar);
-			return true;
-		}
-		if (!var.storage.isNested()) {
-			return false;
-		}
-		auto store = lookupInGivenScopeOnly(lp, nestStruct.myScope, exp.location, var.name);
-		// Skip adding this variables to nested struct.
-		if (var.name != "this" && store is null) {
-			addVarToStructSmart(nestStruct, var);
-		}
-		name = var.name;
-		type = var.type;
-		break;
-	default:
-		return false;
-	}
-
-	assert(name.length > 0);
-
-	auto agg = cast(ir.Aggregate)realType(nestParam.type);
-	panicAssert(eref, agg !is null);
-	auto store = lookupInGivenScopeOnly(lp, agg.myScope, eref.location, name);
-	panicAssert(eref, store !is null);
-	auto v = cast(ir.Variable)store.node;
-	panicAssert(eref, v !is null);
-
-	exp = buildAccessExp(exp.location, buildExpReference(nestParam.location, nestParam, nestParam.name), v);
-	if (fp !is null &&
-	    (fp.func.type.isArgRef[fp.index] ||
-	     fp.func.type.isArgOut[fp.index])) {
-		exp = buildDeref(exp.location, exp);
-	}
-	return true;
+	func.nestStruct = ns;
+	func.type.hiddenParameter = true;
+	func._body.statements = decl ~ func._body.statements;
 }
 
 void insertBinOpAssignsForNestedVariableAssigns(LanguagePass lp, ir.BlockStatement bs)
@@ -137,11 +97,6 @@ void insertBinOpAssignsForNestedVariableAssigns(LanguagePass lp, ir.BlockStateme
 		if (var is null ||
 		    !var.storage.isNested()) {
 			continue;
-		}
-
-		version (none) {
-			bs.statements = bs.statements[0 .. i] ~ bs.statements[i + 1 .. $];
-			i--;
 		}
 
 		ir.Exp value;
@@ -157,26 +112,212 @@ void insertBinOpAssignsForNestedVariableAssigns(LanguagePass lp, ir.BlockStateme
 	}
 }
 
-void tagNestedVariables(Context ctx, ir.Variable var, ir.Store store, ref ir.Exp e)
+bool replaceNested(LanguagePass lp, ref ir.Exp exp, ir.ExpReference eref, ir.Function currentFunction)
 {
-	if (!ctx.isFunction ||
-	    ctx.currentFunction.nestStruct is null) {
-		return;
+	if (eref.doNotRewriteAsNestedLookup) {
+		return false;
 	}
-
-	if (ctx.current.nestedDepth <= store.parent.nestedDepth) {
-		return;
+	if (currentFunction is null) {
+		return false;
 	}
+	auto nestVar = currentFunction.nestedVariable;
+	auto nestStruct = currentFunction.nestStruct;
+	if (nestStruct is null) {
+		return false;
+	}
+	assert(nestVar !is null);
 
-	assert(ctx.currentFunction.nestStruct !is null);
-	if (var.storage != ir.Variable.Storage.Field &&
-	    !isNested(var.storage)) {
-		// If we're tagging a global variable, just ignore it.
-		if (var.storage == ir.Variable.Storage.Local ||
-		    var.storage == ir.Variable.Storage.Global) {
-			return;
+	string name;
+	ir.Type type;
+	bool shouldDeref;
+
+	switch (eref.decl.nodeType) with (ir.NodeType) {
+	case FunctionParam:
+		auto fp = cast(ir.FunctionParam) eref.decl;
+		if (!fp.hasBeenNested) {
+			return false;
+		}
+		name = fp.name;
+		type = fp.type;
+
+		shouldDeref = fp.func.type.isArgRef[fp.index] ||
+		              fp.func.type.isArgOut[fp.index];
+
+		exp = buildDeref(exp.location, exp);
+		break;
+	case Variable:
+		auto var = cast(ir.Variable) eref.decl;
+		assert(var.storage != ir.Variable.Storage.Field);
+
+		if (var.name != "this" && !var.storage.isNested()) {
+			return false;
 		}
 
-		var.storage = ir.Variable.Storage.Nested;
+		auto store = lookupInGivenScopeOnly(
+				lp, nestStruct.myScope,
+				exp.location, var.name);
+		if (store is null) {
+			assert(var.name != "this");
+			addVarToStructSmart(nestStruct, var);
+		}
+		name = var.name;
+		type = var.type;
+		break;
+	default:
+		return false;
+	}
+
+	assert(name.length > 0);
+
+	auto store = lookupInGivenScopeOnly(lp, nestStruct.myScope, exp.location, name);
+	panicAssert(eref, store !is null);
+	auto v = cast(ir.Variable) store.node;
+	panicAssert(eref, v !is null);
+
+	auto nestEref = buildExpReference(nestVar.location, nestVar, nestVar.name);
+	exp = buildAccessExp(exp.location, nestEref, v);
+	if (shouldDeref) {
+		exp = buildDeref(exp.location, exp);
+	}
+	return true;
+}
+
+
+
+/*
+ *
+ * Private
+ *
+ */
+
+private:
+
+void doParent(LanguagePass lp, ir.Function parent)
+{
+	auto ns = parent.nestStruct;
+	if (ns !is null) {
+		return;
+	}
+
+	createAndAddNestedStruct(parent);
+	assert(parent.nestStruct !is null);
+	lp.actualize(parent.nestStruct);
+
+	handleNestedThis(parent, parent._body);
+	handleNestedParams(parent, parent._body);
+}
+
+ir.Struct createAndAddNestedStruct(ir.Function func)
+{
+	auto bs = func._body;
+	auto s = buildStruct(func.location, "__Nested" ~ toString(cast(void*)func), []);
+	s.myScope = new ir.Scope(bs.myScope, s, s.name, bs.myScope.nestedDepth);
+	auto tref = buildTypeReference(s.location, s, "__Nested");
+	auto decl = buildVariable(
+		func.location, tref, ir.Variable.Storage.Function, "__nested");
+	decl.isResolved = true;
+	func.nestedVariable = decl;
+	func.nestStruct = s;
+	bs.statements = s ~ (decl ~ bs.statements);
+	return s;
+}
+
+/**
+ * Given a nested function func, add its parameters to the nested
+ * struct and insert statements after the nested declaration.
+ */
+void handleNestedParams(ir.Function func, ir.BlockStatement bs)
+{
+	auto np = func.nestedVariable;
+	auto ns = func.nestStruct;
+	if (np is null || ns is null) {
+		return;
+	}
+
+	// Don't add parameters for nested functions.
+	if (func.kind == ir.Function.Kind.Nested) {
+		return;
+	}
+
+	// This is needed for the parent function.
+	size_t index;
+	for (index = 0; index < bs.statements.length; ++index) {
+		if (bs.statements[index] is np) {
+			break;
+		}
+	}
+	++index;
+
+	if (index > bs.statements.length) {
+		index = 0;  // We didn't find a usage, so put it at the start.
+	}
+
+	foreach (i, param; func.params) {
+		if (!param.hasBeenNested) {
+			param.hasBeenNested = true;
+
+			auto type = param.type;
+			bool refParam = func.type.isArgRef[i] || func.type.isArgOut[i];
+			if (refParam) {
+				type = buildPtrSmart(param.location, param.type);
+			}
+			auto name = param.name != "" ? param.name : "__anonparam_" ~ toString(index);
+			auto var = buildVariableSmart(param.location, type, ir.Variable.Storage.Field, name);
+			addVarToStructSmart(ns, var);
+			// Insert an assignment of the param to the nest struct.
+
+			auto l = buildAccessExp(param.location, buildExpReference(np.location, np, np.name), var);
+			auto r = buildExpReference(param.location, param, name);
+			r.doNotRewriteAsNestedLookup = true;
+			ir.BinOp bop;
+			if (!refParam) {
+				bop = buildAssign(l.location, l, r);
+			} else {
+				bop = buildAssign(l.location, l, buildAddrOf(r.location, r));
+			}
+			bop.isInternalNestedAssign = true;
+			ir.Node n = buildExpStat(l.location, bop);
+			if (func.isNested()) {
+				// Nested function.
+				bs.statements = n ~ bs.statements;
+			} else {
+				// Parent function with nested children.
+				bs.statements.insertInPlace(index++, n);
+			}
+		}
+	}
+}
+
+/**
+ * Correct this references in nested functions.
+ */
+void handleNestedThis(ir.Function func, ir.BlockStatement bs)
+{
+	bs = func._body;
+	auto np = func.nestedVariable;
+	auto ns = func.nestStruct;
+	if (np is null || ns is null) {
+		return;
+	}
+	size_t index;
+	for (index = 0; index < bs.statements.length; ++index) {
+		if (bs.statements[index] is np) {
+			break;
+		}
+	}
+	if (++index >= bs.statements.length) {
+		return;
+	}
+	if (func.thisHiddenParameter !is null) {
+		auto cvar = addVarToStructSmart(ns, func.thisHiddenParameter);
+
+		auto l = buildAccessExp(func.location,
+			buildExpReference(np.location, np, np.name), cvar);
+
+		auto tv = func.thisHiddenParameter;
+		auto r = buildExpReference(bs.location, tv, tv.name);
+		r.doNotRewriteAsNestedLookup = true;
+		ir.Node n = buildExpStat(l.location, buildAssign(l.location, l, r));
+		bs.statements.insertInPlace(index, n);
 	}
 }
