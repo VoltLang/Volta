@@ -17,6 +17,27 @@ import volt.semantic.context;
 import volt.semantic.classify : isNested, realType;
 import volt.token.location : Location;
 
+/**
+ * This module contains utility functions for dealing with nested functions;
+ * 'functions within functions'.
+ *
+ * LLVM (and most other potential backend tooling) generates in top level functions.
+ * That means, when the user writes:
+ *
+ *     int getX() {
+ *         int x = 32;
+ *         void doubleX() { x *= 2; }
+ *         return x;
+ *     }
+ *
+ * A fair amount of magic has to take place to create a shared context that contains
+ * x, give it to doubleX, and rewrite every reference appropriately so nothing explodes,
+ * and everything works as expected. That's what the functions in this module help with.
+ *
+ * Not that nested functions preceded by 'global', i.e. ir.Function.Kind.GlobalNested,
+ * are not 'truly' nested -- the above rewriting doesn't take place, and trying to access
+ * something in the parent function will generate an error.
+ */
 
 /*
  *
@@ -24,6 +45,19 @@ import volt.token.location : Location;
  *
  */
 
+/**
+ * Tag referenced Variables as nested if appropriate.
+ *
+ * If an identifier references a Variable, and that variables parent scope is higher
+ * than the current -- that is to say, the reference is in a nested function -- then
+ * that Variable's storage will be tagged as Nested. Otherwise, nothing happens.
+ *
+ * Params:
+ *   loc: If an error is generated, this location will be what it points at.
+ *   ctx: The extyper Context.
+ *   var: The Variable that the reference refers to.
+ *   store: The Store that var was found in.
+ */
 void nestExtyperTagVariable(Location loc, Context ctx, ir.Variable var, ir.Store store)
 {
 	if (!ctx.isFunction) {
@@ -49,6 +83,13 @@ void nestExtyperTagVariable(Location loc, Context ctx, ir.Variable var, ir.Store
 	}
 }
 
+/**
+ * Add a child function to the list of nested functions in a parent function.
+ *
+ * Params:
+ *   parent: The parent function.
+ *   func: The child function.
+ */
 void nestExtyperFunction(ir.Function parent, ir.Function func)
 {
 	parent.nestedFunctions ~= func;
@@ -61,6 +102,14 @@ void nestExtyperFunction(ir.Function parent, ir.Function func)
  *
  */
 
+/**
+ * Add the context struct to a nested function.
+ *
+ * Params:
+ *   lp: The LanguagePass.
+ *   parent: The parent function that the nested function resides in.
+ *   func: The nested function to add the context struct to.
+ */
 void nestLowererFunction(LanguagePass lp, ir.Function parent, ir.Function func)
 {
 	if (parent is null) {
@@ -92,6 +141,17 @@ void nestLowererFunction(LanguagePass lp, ir.Function parent, ir.Function func)
 	func._body.statements = decl ~ func._body.statements;
 }
 
+/**
+ * Replace nested Variable declarations with assign expressions.
+ *
+ * Because all nested Variables will be transformed to exist on the nested struct,
+ * every declaration needs to be turned into an assignment, to ensure the values are
+ * what they should be.
+ *
+ * Params:
+ *   lp: The LanguagePass.
+ *   bs: The BlockStatement to scan for Variables.
+ */
 void insertBinOpAssignsForNestedVariableAssigns(LanguagePass lp, ir.BlockStatement bs)
 {
 	for (size_t i = 0; i < bs.statements.length; ++i) {
@@ -114,6 +174,16 @@ void insertBinOpAssignsForNestedVariableAssigns(LanguagePass lp, ir.BlockStateme
 	}
 }
 
+/**
+ * If the current function is a nested one, replace a given ExpReference with an expression
+ * that will retrieve the correct value from the nested struct.
+ *
+ * Params:
+ *   lp: The LanguagePass.
+ *   exp: The expression where the reference took place. May be rewritten.
+ *   eref: The ExpReference to check.
+ *   currentFunction: The current function when eref was found.
+ */
 bool replaceNested(LanguagePass lp, ref ir.Exp exp, ir.ExpReference eref, ir.Function currentFunction)
 {
 	if (eref.doNotRewriteAsNestedLookup) {
@@ -194,6 +264,10 @@ bool replaceNested(LanguagePass lp, ref ir.Exp exp, ir.ExpReference eref, ir.Fun
 
 private:
 
+/**
+ * Utility function to be called on Functions with a function nested in them.
+ * Adds the struct, actualizes it, adds parameters, etc.
+ */
 void doParent(LanguagePass lp, ir.Function parent)
 {
 	auto ns = parent.nestStruct;
@@ -209,6 +283,10 @@ void doParent(LanguagePass lp, ir.Function parent)
 	handleNestedParams(parent, parent._body);
 }
 
+/**
+ * Create the nested struct and a declaration pointing to it.
+ * Populates the nestedVariable and nestStruct members of a Function.
+ */
 ir.Struct createAndAddNestedStruct(ir.Function func)
 {
 	auto bs = func._body;
@@ -292,6 +370,8 @@ void handleNestedParams(ir.Function func, ir.BlockStatement bs)
 
 /**
  * Correct this references in nested functions.
+ *
+ * Rewrites them to refer to a this hosted on the nested struct.
  */
 void handleNestedThis(ir.Function func, ir.BlockStatement bs)
 {
