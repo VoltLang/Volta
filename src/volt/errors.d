@@ -32,6 +32,11 @@ void hackTypeWarning(ir.Node n, ir.Type nt, ir.Type ot)
  *
  */
 
+CompilerException makeNonNestedAccess(Location l, ir.Variable var, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(l, format("cannot access variable '%s' from non-nested function.", var.name), file, line);
+}
+
 CompilerException makeMultipleMatches(Location l, string name, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(l, format("multiple imports contain a symbol '%s'.", name), file, line);

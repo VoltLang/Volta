@@ -334,7 +334,7 @@ ir.Type handleValueStore(Context ctx, string ident, ref ir.Exp exp,
 		replaceExpReferenceIfNeeded(ctx, exp, eref);
 
 		// Handle nested variables.
-		nestExtyperTagVariable(ctx, var, store);
+		nestExtyperTagVariable(exp.location, ctx, var, store);
 
 		break;
 	case StaticPostfix:

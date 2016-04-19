@@ -15,6 +15,7 @@ import volt.semantic.util;
 import volt.semantic.lookup : getModuleFromScope, lookupInGivenScopeOnly;
 import volt.semantic.context;
 import volt.semantic.classify : isNested, realType;
+import volt.token.location : Location;
 
 
 /*
@@ -23,10 +24,9 @@ import volt.semantic.classify : isNested, realType;
  *
  */
 
-void nestExtyperTagVariable(Context ctx, ir.Variable var, ir.Store store)
+void nestExtyperTagVariable(Location loc, Context ctx, ir.Variable var, ir.Store store)
 {
-	if (!ctx.isFunction ||
-	    ctx.currentFunction.kind != ir.Function.Kind.Nested) {
+	if (!ctx.isFunction) {
 		return;
 	}
 
@@ -36,6 +36,9 @@ void nestExtyperTagVariable(Context ctx, ir.Variable var, ir.Store store)
 
 	if (var.storage != ir.Variable.Storage.Field &&
 	    !isNested(var.storage)) {
+	    if (ctx.currentFunction.kind != ir.Function.Kind.Nested) {
+			throw makeNonNestedAccess(loc, var);
+	    }
 		// If we're tagging a global variable, just ignore it.
 		if (var.storage == ir.Variable.Storage.Local ||
 		    var.storage == ir.Variable.Storage.Global) {
