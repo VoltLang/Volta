@@ -25,9 +25,9 @@ struct Perf
 		names ~= tag;
 	}
 
-	void print(string name)
+	void print(string file, string name)
 	{
-		auto f = new OutputFileStream("perf.cvs");
+		auto f = new OutputFileStream(file);
 
 		f.writef("name,total,");
 		for (size_t i = 1; i < times.length; i++) {

@@ -588,6 +588,8 @@ public:
 	string docOutput; ///< The -do argument.
 	string jsonOutput = "voltoutput.json"; ///< The -jo argument.
 
+	string perfOutput; ///< The --perf-output argument.
+
 	struct Alignments
 	{
 		size_t int1;      // bool

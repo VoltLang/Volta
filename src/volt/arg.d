@@ -11,9 +11,6 @@ import volt.errors;
 import volt.interfaces;
 
 
-// Hack.
-static bool doPerfPrint;
-
 class Arg
 {
 public:
@@ -64,6 +61,8 @@ public:
 
 		JSONDo,
 		JSONOutput,
+
+		PerfOutput,
 
 		InternalD,
 		InternalDiff,
@@ -213,6 +212,9 @@ void filterArgs(Arg[] args, ref string[] files, VersionSet ver, Settings setting
 			settings.writeDocs = true;
 			settings.docOutput = arg.arg;
 			break;
+		case PerfOutput:
+			settings.perfOutput = arg.arg;
+			break;
 
 		case InternalD:
 			settings.internalD = true;
@@ -221,7 +223,7 @@ void filterArgs(Arg[] args, ref string[] files, VersionSet ver, Settings setting
 			settings.internalDiff = true;
 			break;
 		case InternalPerf:
-			doPerfPrint = true;
+			settings.perfOutput = "perf.cvs";
 			break;
 		case InternalDebug:
 			settings.internalDebug = true;

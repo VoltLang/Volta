@@ -23,11 +23,13 @@ int main(string[] strArgs)
 	scope (exit) {
 		perf.tag("done");
 		string name = "N/A";
+		string file;
 		if (settings !is null) {
 			name = settings.getOutput(name);
+			file = settings.perfOutput;
 		}
-		if (doPerfPrint) {
-			perf.print(name);
+		if (file !is null) {
+			perf.print(file, name);
 		}
 	}
 
@@ -279,6 +281,9 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 		case "--internal-diff":
 			makeArg(InternalDiff);
 			continue;
+		case "--perf-output":
+			makeArgNext(PerfOutput);
+			continue;
 		case "-w":
 			makeArg(Warnings);
 			continue;
@@ -436,6 +441,8 @@ bool printUsage()
 	writefln("\t                 (The if args are cumulative so that multiple");
 	writefln("\t                  arch & platforms or togther, like so:");
 	writefln("\t                  ('arch' || 'arch') && 'platform' && 'stdlib')");
+	writefln("");
+	writefln("\t--perf-output    Enables compiler profiling and sets output file");
 	writefln("");
 	writefln("\t--internal-d     Enables internal D friendlier rules.");
 	writefln("\t--internal-dbg   Enables internal debug printing.");
