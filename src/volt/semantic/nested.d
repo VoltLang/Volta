@@ -26,8 +26,7 @@ import volt.semantic.classify : isNested, realType;
 void nestExtyperTagVariable(Context ctx, ir.Variable var, ir.Store store)
 {
 	if (!ctx.isFunction ||
-	    (ctx.currentFunction.kind != ir.Function.Kind.Nested &&
-	    ctx.currentFunction.kind != ir.Function.Kind.GlobalNested)) {
+	    ctx.currentFunction.kind != ir.Function.Kind.Nested) {
 		return;
 	}
 

@@ -310,8 +310,7 @@ ir.Variable getThisVarNotNull(ir.Node n, Context ctx, ir.Function func)
 	auto thisStore = lookupInGivenScopeOnly(
 		ctx.lp, func.myScope, n.location, "this");
 	if (thisStore is null) {
-		if (func.kind == ir.Function.Kind.Nested ||
-		    func.kind == ir.Function.Kind.GlobalNested) {
+		if (func.kind == ir.Function.Kind.Nested) {
 		    auto var = getThisVarNotNull(n, ctx, getParentFunction(func.myScope.parent));
 		    panicAssert(n, var !is null);
 		    return var;

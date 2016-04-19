@@ -170,8 +170,7 @@ ir.Type handleFunctionStore(Context ctx, string ident, ref ir.Exp exp,
 			members++;
 		}
 
-		if (func.kind == ir.Function.Kind.Nested ||
-		    func.kind == ir.Function.Kind.GlobalNested) {
+		if (func.kind == ir.Function.Kind.Nested) {
 			if (fns.length > 1) {
 				throw makeCannotOverloadNested(func, func);
 			}
