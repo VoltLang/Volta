@@ -12,6 +12,7 @@ import volt.token.location;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
 
+import volt.lowerer.alloc;
 import volt.lowerer.array;
 
 import volt.semantic.typer;
@@ -21,7 +22,9 @@ import volt.semantic.classify;
 import volt.semantic.overload;
 
 
-ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scope baseScope, ir.ArrayType atype, string name)
+ir.Function createArrayAllocFunction(Location location, LanguagePass lp,
+                                     ir.Scope baseScope, ir.ArrayType atype,
+                                     string name)
 {
 	auto ftype = new ir.FunctionType();
 	ftype.location = location;
@@ -43,10 +46,9 @@ ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scop
 	auto countVar = addParam(location, func, buildSizeT(location, lp), "count");
 
 	auto arrayStruct = lp.arrayStruct;
-	auto allocDgVar = lp.allocDgVariable;
 
-	auto allocCall = createAllocDgCall(
-		allocDgVar, lp, location, atype.base,
+	auto allocCall = buildAllocTypePtr(
+		location, lp, atype.base,
 		buildExpReference(location, countVar, "count"));
 	auto slice = buildSlice(location, allocCall,
 		buildConstantSizeT(location, lp, 0),
@@ -61,7 +63,8 @@ ir.Function createArrayAllocFunction(Location location, LanguagePass lp, ir.Scop
 	return func;
 }
 
-ir.Function getArrayAllocFunction(Location location, LanguagePass lp, ir.Module thisModule, ir.ArrayType atype)
+ir.Function getArrayAllocFunction(Location location, LanguagePass lp,
+                                  ir.Module thisModule, ir.ArrayType atype)
 {
 	auto arrayMangledName = mangle(atype);
 	string name = "__arrayAlloc" ~ arrayMangledName;
@@ -74,14 +77,20 @@ ir.Function getArrayAllocFunction(Location location, LanguagePass lp, ir.Module 
 	return allocFn;
 }
 
-ir.StatementExp buildClassConstructionWrapper(Location loc, LanguagePass lp, ir.Scope current, ir.Class _class, ir.Function constructor, ir.Variable allocDgVar, ir.Exp[] exps)
+ir.StatementExp buildClassConstructionWrapper(Location loc, LanguagePass lp,
+                                              ir.Scope current, ir.Class _class,
+                                              ir.Function constructor,
+                                              ir.Exp[] exps)
 {
 	auto sexp = new ir.StatementExp();
 	sexp.location = loc;
 
+	// -1
+	auto count = buildConstantSizeT(loc, lp, size_t.max);
+
 	// auto thisVar = allocDg(_class, -1);
 	auto thisVar = buildVariableSmart(loc, _class, ir.Variable.Storage.Function, "thisVar");
-	thisVar.assign = createAllocDgCall(allocDgVar, lp, loc, _class, buildConstantInt(loc, -1));
+	thisVar.assign = buildAllocVoidPtr(loc, lp, _class,  count);
 	thisVar.assign = buildCastSmart(loc, _class, thisVar.assign);
 	sexp.statements ~= thisVar;
 	sexp.exp = buildExpReference(loc, thisVar, "thisVar");
@@ -95,42 +104,6 @@ ir.StatementExp buildClassConstructionWrapper(Location loc, LanguagePass lp, ir.
 	return sexp;
 }
 
-
-ir.Exp createAllocDgCall(ir.Variable allocDgVar, LanguagePass lp, Location location, ir.Type type, ir.Exp countArg = null)
-{
-	auto adRef = new ir.ExpReference();
-	adRef.location = location;
-	adRef.idents ~= "allocDg";
-	adRef.decl = allocDgVar;
-
-	auto _tidExp = new ir.Typeid();
-	_tidExp.location = location;
-	_tidExp.type = copyTypeSmart(location, type);
-	auto tidExp = buildCastSmart(location, lp.typeInfoClass, _tidExp);
-
-	auto countConst = new ir.Constant();
-	countConst.location = location;
-	countConst.u._ulong = 0;
-	countConst.type = buildSizeT(location, lp);
-
-	auto pfixCall = new ir.Postfix();
-	pfixCall.location = location;
-	pfixCall.op = ir.Postfix.Op.Call;
-	pfixCall.child = adRef;
-	pfixCall.arguments ~= tidExp;
-	if (countArg is null) {
-		pfixCall.arguments ~= countConst;
-	} else {
-		pfixCall.arguments ~= buildCast(location, buildSizeT(location, lp), countArg);
-	}
-
-	auto result = new ir.PointerType(copyTypeSmart(location, type));
-	result.location = location;
-	auto resultCast = new ir.Unary(result, pfixCall);
-	resultCast.location = location;
-	return resultCast;
-}
-	
 class NewReplacer : ScopeManager, Pass
 {
 public:
@@ -279,16 +252,16 @@ public:
 	protected Status handleClass(ref ir.Exp exp, ir.Unary unary, ir.Class clazz)
 	{
 		assert(unary.ctor !is null);
-		exp = buildClassConstructionWrapper(unary.location, lp, current, clazz, unary.ctor, allocDgVar, unary.argumentList);
+		exp = buildClassConstructionWrapper(
+			unary.location, lp, current, clazz, unary.ctor,
+			unary.argumentList);
 		return Continue;
 	}
 
 	protected Status handleOther(ref ir.Exp exp, ir.Unary unary)
 	{
-		exp = createAllocDgCall(allocDgVar, lp, unary.location, unary.type);
+		exp = buildAllocTypePtr(unary.location, lp, unary.type);
 
 		return Continue;
 	}
 }
-
-
