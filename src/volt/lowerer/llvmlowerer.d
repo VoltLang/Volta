@@ -261,7 +261,7 @@ ir.Exp buildStructAAKeyCast(Location l, LanguagePass lp, ir.Module thisModule,
 	return buildCastSmart(l, buildArrayType(l, buildVoid(l)), sexp);
 }
 
-void handleProperty(LanguagePass lp, ref ir.Exp exp, ir.PropertyExp prop)
+void lowerProperty(LanguagePass lp, ref ir.Exp exp, ir.PropertyExp prop)
 {
 	assert (prop.getFn !is null);
 
@@ -282,7 +282,7 @@ void handleProperty(LanguagePass lp, ref ir.Exp exp, ir.PropertyExp prop)
  * collisions aren't an issue, as the generated assign
  * statements are already tied to the correct variable.
  */
-bool hoistVariables(LanguagePass lp, ir.Function func, ir.BlockStatement bs, Visitor visitor)
+bool lowerVariables(LanguagePass lp, ir.Function func, ir.BlockStatement bs, Visitor visitor)
 {
 	auto top = func._body;
 	if (top is bs) {
@@ -393,17 +393,17 @@ void lowerStructLiteral(ir.Scope current, ref ir.Exp exp, ir.StructLiteral liter
 	exp = sexp;
 }
 
-void handleIndex(LanguagePass lp, ir.Scope current, ir.Module thisModule,
-                 ref ir.Exp exp, ir.Postfix postfix)
+void lowerIndex(LanguagePass lp, ir.Scope current, ir.Module thisModule,
+                ref ir.Exp exp, ir.Postfix postfix)
 {
 	auto type = getExpType(postfix.child);
 	if (type.nodeType == ir.NodeType.AAType) {
-		handleIndexAA(lp, current, thisModule, exp, postfix, cast(ir.AAType)type);
+		lowerIndexAA(lp, current, thisModule, exp, postfix, cast(ir.AAType)type);
 	}
 }
 
-void handleIndexAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
-                   ref ir.Exp exp, ir.Postfix postfix, ir.AAType aa)
+void lowerIndexAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
+                  ref ir.Exp exp, ir.Postfix postfix, ir.AAType aa)
 {
 	auto loc = postfix.location;
 	auto statExp = buildStatementExp(loc);
@@ -429,7 +429,7 @@ void handleIndexAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 	exp = statExp;
 }
 
-void handleAssign(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp binOp)
+void lowerAssign(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp binOp)
 {
 	auto asPostfix = cast(ir.Postfix)binOp.left;
 	if (asPostfix is null) {
@@ -441,11 +441,11 @@ void handleAssign(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinO
 		return;
 	}
 
-	handleAssignArray(lp, thisModule, exp, binOp, asPostfix, cast(ir.ArrayType)leftType);
+	lowerAssignArray(lp, thisModule, exp, binOp, asPostfix, cast(ir.ArrayType)leftType);
 }
 
-void handleAssignArray(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp,
-                       ir.BinOp binOp, ir.Postfix asPostfix, ir.ArrayType leftType)
+void lowerAssignArray(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp,
+                      ir.BinOp binOp, ir.Postfix asPostfix, ir.ArrayType leftType)
 {
 	auto loc = binOp.location;
 
@@ -457,8 +457,8 @@ void handleAssignArray(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp,
 	exp = buildCall(loc, func, [asPostfix, binOp.right], func.name);
 }
 
-void handleAssignAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
-                    ref ir.Exp exp, ir.BinOp binOp, ir.Postfix asPostfix, ir.AAType aa)
+void lowerAssignAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
+                   ref ir.Exp exp, ir.BinOp binOp, ir.Postfix asPostfix, ir.AAType aa)
 {
 	auto loc = binOp.location;
 	assert(asPostfix.op == ir.Postfix.Op.Index);
@@ -493,8 +493,8 @@ void handleAssignAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 	exp = statExp;
 }
 
-void handleOpAssignAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
-                      ref ir.Exp exp, ir.BinOp binOp, ir.Postfix asPostfix, ir.AAType aa)
+void lowerOpAssignAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
+                     ref ir.Exp exp, ir.BinOp binOp, ir.Postfix asPostfix, ir.AAType aa)
 {
 	auto loc = binOp.location;
 	assert(asPostfix.op == ir.Postfix.Op.Index);
@@ -539,7 +539,7 @@ void handleOpAssignAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 	exp = statExp;
 }
 
-void handleCat(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp binOp)
+void lowerCat(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp binOp)
 {
 	auto loc = binOp.location;
 
@@ -576,7 +576,7 @@ void handleCat(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp b
 	return;
 }
 
-void handleCatAssign(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp binOp)
+void lowerCatAssign(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp binOp)
 {
 	auto loc = binOp.location;
 
@@ -601,7 +601,7 @@ void handleCatAssign(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.B
 	}
 }
 
-void handleEqual(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp binOp)
+void lowerEqual(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp binOp)
 {
 	auto loc = binOp.location;
 
@@ -615,8 +615,8 @@ void handleEqual(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp
 	exp = buildCall(loc, func, [binOp.left, binOp.right], func.name);
 }
 
-void replaceInterfaceCastIfNeeded(Location loc, LanguagePass lp,
-                                  ir.Scope current, ir.Unary uexp, ref ir.Exp exp)
+void lowerInterfaceCast(Location loc, LanguagePass lp,
+                        ir.Scope current, ir.Unary uexp, ref ir.Exp exp)
 {
 	if (uexp.op != ir.Unary.Op.Cast) {
 		return;
@@ -637,8 +637,8 @@ void replaceInterfaceCastIfNeeded(Location loc, LanguagePass lp,
 }
 
 
-void replaceArrayCastIfNeeded(Location loc, LanguagePass lp, ir.Scope current,
-                              ir.Unary uexp, ref ir.Exp exp)
+void lowerArrayCast(Location loc, LanguagePass lp, ir.Scope current,
+                    ir.Unary uexp, ref ir.Exp exp)
 {
 	if (uexp.op != ir.Unary.Op.Cast) {
 		return;
@@ -749,7 +749,7 @@ bool isInterfacePointer(LanguagePass lp, ir.Postfix pfix, ir.Scope current, out 
  * If a postfix operates directly on a struct via a
  * function call, put it in a variable first.
  */
-void handleStructLookupViaFunctionCall(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.AccessExp ae)
+void lowerStructLookupViaFunctionCall(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.AccessExp ae)
 {
 	// This lists the cases where we need to rewrite (reversed).
 	auto child = cast(ir.Postfix) ae.child;
@@ -778,7 +778,7 @@ void handleStructLookupViaFunctionCall(LanguagePass lp, ir.Scope current, ref ir
  * The ForStatement create takes several nodes directly; that is
  * to say, the original foreach and the new for cannot coexist.
  */
-ir.ForStatement foreachToFor(ir.ForeachStatement fes, LanguagePass lp,
+ir.ForStatement lowerForeach(ir.ForeachStatement fes, LanguagePass lp,
                              ir.Scope current)
 {
 	auto l = fes.location;
@@ -1013,20 +1013,20 @@ ir.ForStatement foreachToFor(ir.ForeachStatement fes, LanguagePass lp,
 	throw panic(l, "expected foreach aggregate type");
 }
 
-void transformForeaches(LanguagePass lp, ir.Scope current,
-                        ir.Function currentFunction, ir.BlockStatement bs)
+void lowerForeaches(LanguagePass lp, ir.Scope current,
+                    ir.Function currentFunction, ir.BlockStatement bs)
 {
 	for (size_t i = 0; i < bs.statements.length; i++) {
 		auto fes = cast(ir.ForeachStatement) bs.statements[i];
 		if (fes is null) {
 			continue;
 		}
-		bs.statements[i] = foreachToFor(fes, lp, current);
+		bs.statements[i] = lowerForeach(fes, lp, current);
 	}
 }
 
-void transformArrayLiteralIfNeeded(LanguagePass lp, ir.Scope current, bool inFunction,
-                                   ref ir.Exp exp, ir.ArrayLiteral al)
+void lowerArrayLiteral(LanguagePass lp, ir.Scope current, bool inFunction,
+                       ref ir.Exp exp, ir.ArrayLiteral al)
 {
 	if (al.exps.length == 0 || !inFunction) {
 		return;
@@ -1226,17 +1226,17 @@ void lowerBinOp(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp 
 {
 	switch(binOp.op) {
 	case ir.BinOp.Op.Assign:
-		handleAssign(lp, thisModule, exp, binOp);
+		lowerAssign(lp, thisModule, exp, binOp);
 		break;
 	case ir.BinOp.Op.Cat:
-		handleCat(lp, thisModule, exp, binOp);
+		lowerCat(lp, thisModule, exp, binOp);
 		break;
 	case ir.BinOp.Op.CatAssign:
-		handleCatAssign(lp, thisModule, exp, binOp);
+		lowerCatAssign(lp, thisModule, exp, binOp);
 		break;
 	case ir.BinOp.Op.NotEqual:
 	case ir.BinOp.Op.Equal:
-		handleEqual(lp, thisModule, exp, binOp);
+		lowerEqual(lp, thisModule, exp, binOp);
 		break;
 	default:
 		break;
@@ -1275,7 +1275,7 @@ void lowerPostfix(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 {
 	switch(postfix.op) {
 	case ir.Postfix.Op.Index:
-		handleIndex(lp, current, thisModule, exp, postfix);
+		lowerIndex(lp, current, thisModule, exp, postfix);
 		break;
 	default:
 		break;
@@ -1343,10 +1343,10 @@ bool lowerBinOpAssign(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 			acceptExp(binOp.right, visitor);
 
 			if (binOp.op == ir.BinOp.Op.Assign) {
-				handleAssignAA(lp, current, thisModule, exp, binOp, asPostfix,
+				lowerAssignAA(lp, current, thisModule, exp, binOp, asPostfix,
 				               cast(ir.AAType)leftType);
 			} else {
-				handleOpAssignAA(lp, current, thisModule, exp, binOp, asPostfix,
+				lowerOpAssignAA(lp, current, thisModule, exp, binOp, asPostfix,
 				                 cast(ir.AAType)leftType);
 			}
 			return false;
@@ -1436,9 +1436,9 @@ public:
 	{
 		super.enter(bs);
 		panicAssert(bs, functionStack.length > 0);
-		transformForeaches(lp, current, functionStack[$-1], bs);
+		lowerForeaches(lp, current, functionStack[$-1], bs);
 		insertBinOpAssignsForNestedVariableAssigns(lp, bs);
-		if (!hoistVariables(lp, functionStack[$-1], bs, this)) {
+		if (!lowerVariables(lp, functionStack[$-1], bs, this)) {
 			return Continue;
 		}
 
@@ -1511,7 +1511,7 @@ public:
 
 	override Status leave(ref ir.Exp exp, ir.ArrayLiteral al)
 	{
-		transformArrayLiteralIfNeeded(lp, current, functionStack.length > 0, exp, al);
+		lowerArrayLiteral(lp, current, functionStack.length > 0, exp, al);
 		return Continue;
 	}
 
@@ -1523,9 +1523,9 @@ public:
 
 	override Status leave(ref ir.Exp exp, ir.Unary uexp)
 	{
-		replaceInterfaceCastIfNeeded(exp.location, lp, current, uexp, exp);
+		lowerInterfaceCast(exp.location, lp, current, uexp, exp);
 		if (functionStack.length > 0) {
-			replaceArrayCastIfNeeded(exp.location, lp, current, uexp, exp);
+			lowerArrayCast(exp.location, lp, current, uexp, exp);
 		}
 
 		return Continue;
@@ -1539,7 +1539,7 @@ public:
 
 	override Status leave(ref ir.Exp exp, ir.PropertyExp prop)
 	{
-		handleProperty(lp, exp, prop);
+		lowerProperty(lp, exp, prop);
 		return Continue;
 	}
 
@@ -1555,7 +1555,7 @@ public:
 
 	override Status leave(ref ir.Exp exp, ir.AccessExp ae)
 	{
-		handleStructLookupViaFunctionCall(lp, current, exp, ae);
+		lowerStructLookupViaFunctionCall(lp, current, exp, ae);
 		return Continue;
 	}
 
