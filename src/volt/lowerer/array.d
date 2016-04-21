@@ -17,6 +17,8 @@ import volt.semantic.mangle;
 import volt.semantic.lookup;
 import volt.semantic.classify;
 
+import volt.lowerer.alloc : buildAllocVoidPtr;
+
 
 /*
  *
@@ -79,9 +81,6 @@ ir.Function getArrayAppendFunction(Location loc, LanguagePass lp, ir.Module this
 	}
 	right = addParamSmart(loc, func, rtype, "right");
 
-	auto funcAlloc = lp.allocDgVariable;
-	auto allocExpRef = buildExpReference(loc, funcAlloc, funcAlloc.name);
-
 	auto funcCopy = getLlvmMemCopy(loc, lp);
 
 	ir.Exp[] args;
@@ -107,16 +106,10 @@ ir.Function getArrayAppendFunction(Location loc, LanguagePass lp, ir.Module this
 		)
 	);
 
-	args = [
-		cast(ir.Exp)
-		buildTypeidSmart(loc, lp, ltype.base),
-		buildExpReference(loc, count, count.name)
-	];
-
 	buildExpStat(loc, func._body,
 		buildAssign(loc,
 			buildExpReference(loc, allocated, allocated.name),
-			buildCall(loc, allocExpRef, args)
+			buildAllocVoidPtr(loc, lp, ltype.base, buildExpReference(loc, count, count.name))
 		)
 	);
 
@@ -200,9 +193,6 @@ ir.Function getArrayPrependFunction(Location loc, LanguagePass lp, ir.Module thi
 	right = addParamSmart(loc, func, rtype, "left");
 	left = addParamSmart(loc, func, ltype, "right");
 
-	auto funcAlloc = lp.allocDgVariable;
-	auto allocExpRef = buildExpReference(loc, funcAlloc, funcAlloc.name);
-
 	auto funcCopy = getLlvmMemCopy(loc, lp);
 
 	ir.Exp[] args;
@@ -220,16 +210,10 @@ ir.Function getArrayPrependFunction(Location loc, LanguagePass lp, ir.Module thi
 		)
 	);
 
-	args = [
-		cast(ir.Exp)
-		buildTypeidSmart(loc, lp, ltype.base),
-		buildExpReference(loc, count, count.name)
-	];
-
 	buildExpStat(loc, func._body,
 		buildAssign(loc,
 			buildExpReference(loc, allocated, allocated.name),
-			buildCall(loc, allocExpRef, args)
+			buildAllocVoidPtr(loc, lp, ltype.base, buildExpReference(loc, count, count.name))
 		)
 	);
 
@@ -338,9 +322,6 @@ ir.Function getArrayConcatFunction(Location loc, LanguagePass lp, ir.Module this
 	}
 	auto right = addParamSmart(loc, func, type, "right");
 
-	auto funcAlloc = lp.allocDgVariable;
-	auto allocExpRef = buildExpReference(loc, funcAlloc, funcAlloc.name);
-
 	auto funcCopy = getLlvmMemCopy(loc, lp);
 
 	ir.Exp[] args;
@@ -366,16 +347,10 @@ ir.Function getArrayConcatFunction(Location loc, LanguagePass lp, ir.Module this
 		)
 	);
 
-	args = [
-		cast(ir.Exp)
-		buildTypeidSmart(loc, lp, type.base),
-		buildExpReference(loc, count, count.name)
-	];
-
 	buildExpStat(loc, func._body,
 		buildAssign(loc,
 			buildExpReference(loc, allocated, allocated.name),
-			buildCall(loc, allocExpRef, args)
+			buildAllocVoidPtr(loc, lp, type.base, buildExpReference(loc, count, count.name))
 		)
 	);
 
