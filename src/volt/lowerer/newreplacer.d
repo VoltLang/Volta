@@ -107,7 +107,6 @@ ir.StatementExp buildClassConstructionWrapper(Location loc, LanguagePass lp,
 class NewReplacer : ScopeManager, Pass
 {
 public:
-	ir.Variable allocDgVar;
 	LanguagePass lp;
 	ir.Module thisModule;
 
@@ -120,7 +119,6 @@ public:
 	override void transform(ir.Module m)
 	{
 		thisModule = m;
-		allocDgVar = lp.allocDgVariable;
 		accept(m, this);
 	}
 
