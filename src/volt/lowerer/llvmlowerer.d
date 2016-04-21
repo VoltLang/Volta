@@ -29,7 +29,32 @@ import volt.semantic.classresolver;
 import volt.semantic.ctfe;
 import volt.semantic.overload;
 
+/**
+ * Next stop, backend! The LlvmLowerer visitor (and supporting functions) have a fairly
+ * simple job to describe -- change any structure that the backend doesn't handle into
+ * something composed of things the backend DOES know how to deal with. This can involve
+ * turning keywords into function calls into the runtime, changing foreach statements
+ * to for statements, and so on.
+ */
 
+
+/**
+ * Build a function call that inserts a value with a given key into a given AA, and
+ * add it to a StatementExp.
+ *
+ * Params:
+ *   loc: Nodes created in this function will be given this location.
+ *   lp: The LanguagePass.
+ *   thisModule: The module that the call will be living in.
+ *   current: The scope at the point of call.
+ *   statExp: The StatementExp to add the call to.
+ *   aa: The type of the that we're inserting into.
+ *   var: The Variable containing the instance of the AA being inserted in to.
+ *   key: The key to associate the value with.
+ *   value: The value we are inserting.
+ *   buildif: Generate code to initialise the AA if it's needed.
+ *   aaIsPointer: Is the AA being held as a pointer?
+ */
 void buildAAInsert(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope current,
 		ir.StatementExp statExp, ir.AAType aa, ir.Variable var, ir.Exp key, ir.Exp value,
 		bool buildif=true, bool aaIsPointer=true) {
@@ -79,6 +104,20 @@ void buildAAInsert(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 	);
 }
 
+/**
+ * Build code to lookup a key in an AA and add it to a StatementExp.
+ *
+ * Params:
+ *   loc: Any Nodes created will be given this Location.
+ *   lp: The LanguagePass.
+ *   thisModule: The Module that the lookup will take place in.
+ *   current: The Scope at the time of the lookup.
+ *   statExp: The StatementExp to add the lookup to.
+ *   aa: The type of the AA that we're performing a lookup on.
+ *   var: The Variable that holds the AA.
+ *   key: The key to lookup in the AA.
+ *   store: A reference to a Variable of AA.value type, to hold the result of the lookup.
+ */
 void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope current,
 		ir.StatementExp statExp, ir.AAType aa, ir.Variable var, ir.Exp key, ir.Exp store) {
 	string name;
@@ -121,6 +160,19 @@ void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 	);
 }
 
+/**
+ * Given an AA key, cast in such a way that it could be given to a runtime AA function.
+ *
+ * Params:
+ *   loc: Any Nodes created will be given this location.
+ *   lp: The LanguagePass.
+ *   thisModule: The Module that this code is taking place in.
+ *   current: The Scope where this code takes place.
+ *   key: An expression holding the key in its normal form.
+ *   aa: The AA type that the key belongs to.
+ *
+ * Returns: An expression casting the key.
+ */
 ir.Exp buildAAKeyCast(Location loc, LanguagePass lp, ir.Module thisModule,
                       ir.Scope current, ir.Exp key, ir.AAType aa)
 {
@@ -150,6 +202,18 @@ ir.Exp buildAAKeyCast(Location loc, LanguagePass lp, ir.Module thisModule,
 	return key;
 }
 
+/**
+ * Given an AA key that is a struct,
+ * cast it in such a way that it could be given to a runtime AA function.
+ *
+ * Params:
+ *   loc: Any Nodes created will be given this location.
+ *   lp: The LanguagePass.
+ *   thisModule: The Module that this code is taking place in.
+ *   current: The Scope where this code takes place.
+ *   key: An expression holding the key in its normal form.
+ *   aa: The AA type that the key belongs to.
+ */
 ir.Exp buildStructAAKeyCast(Location l, LanguagePass lp, ir.Module thisModule,
                             ir.Scope current, ir.Exp key, ir.AAType aa)
 {
@@ -261,6 +325,14 @@ ir.Exp buildStructAAKeyCast(Location l, LanguagePass lp, ir.Module thisModule,
 	return buildCastSmart(l, buildArrayType(l, buildVoid(l)), sexp);
 }
 
+/**
+ * Turn a PropertyExp into a call or member call as appropriate.
+ *
+ * Params:
+ *   lp: The LanguagePass.
+ *   exp: The expression to write the new call to.
+ *   prop: The PropertyExp to lower.
+ */
 void lowerProperty(LanguagePass lp, ref ir.Exp exp, ir.PropertyExp prop)
 {
 	assert (prop.getFn !is null);
@@ -277,10 +349,19 @@ void lowerProperty(LanguagePass lp, ref ir.Exp exp, ir.PropertyExp prop)
 	}
 }
 
-/* Hoist declarations out of blocks and place them at the top
- * of the function, to avoid alloc()ing in a loop. Name
- * collisions aren't an issue, as the generated assign
- * statements are already tied to the correct variable.
+/**
+ * Hoist declarations out of blocks and place them at the top of the function.
+ *
+ * This avoids alloc()ing in a loop. Name collisions aren't an issue, as the
+ * generated assign statements are already tied to the correct variable.
+ *
+ * Params:
+ *   lp: The LanguagePass.
+ *   func: The function that the block statement is hosted in.
+ *   bs: The BlockStatement to look for Variables in.
+ *   visitor: An instance of LlvmLowerer.
+ *
+ * Returns: false if nothing was changed, true otherwise.
  */
 bool lowerVariables(LanguagePass lp, ir.Function func, ir.BlockStatement bs, Visitor visitor)
 {
@@ -326,6 +407,13 @@ bool lowerVariables(LanguagePass lp, ir.Function func, ir.BlockStatement bs, Vis
 	return true;
 }
 
+/**
+ * Given a throw statement, turn its expression into a call into the RT.
+ *
+ * Params:
+ *   lp: The LanguagePass.
+ *   t: The ThrowStatement to lower.
+ */
 void lowerThrow(LanguagePass lp, ir.ThrowStatement t)
 {
 	auto func = lp.ehThrowFunc;
@@ -335,6 +423,15 @@ void lowerThrow(LanguagePass lp, ir.ThrowStatement t)
 	                  buildConstantSizeT(t.location, lp, t.location.line)]);
 }
 
+/**
+ * Replace a StringImport with the string in the file it points at, or error.
+ *
+ * Params:
+ *   lp: The LanguagePass.
+ *   current: The scope at where the StringImport is.
+ *   exp: The expression to write the new string into.
+ *   simport: The StringImport to lower.
+ */
 void lowerStringImport(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.StringImport simport)
 {
 	if (lp.settings.stringImportPaths.length == 0) {
@@ -360,12 +457,18 @@ void lowerStringImport(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.Str
 	throw makeImportFileOpenFailure(exp.location, fname);
 }
 
-
+/**
+ * Turn `Struct a = {1, "banana"};`
+ * into `Struct a; a.firstField = 1; b.secondField = "banana";`.
+ *
+ * Params:
+ *   current: The scope where the StructLiteral occurs.
+ *   exp: The expression of the StructLiteral.
+ *   literal: The StructLiteral to lower.
+ */
 void lowerStructLiteral(ir.Scope current, ref ir.Exp exp, ir.StructLiteral literal)
 {
-	/* Turn `Struct a = {1, "banana"};`
-	 * into `Struct a; a.firstField = 1; b.secondField = "banana";`.
-	 */
+
 
 	// Pull out the struct and its fields.
 	panicAssert(exp, literal.type !is null);
@@ -393,6 +496,16 @@ void lowerStructLiteral(ir.Scope current, ref ir.Exp exp, ir.StructLiteral liter
 	exp = sexp;
 }
 
+/**
+ * Lower a postfix index expression.
+ *
+ * Params:
+ *   lp: The LanguagePass.
+ *   current: The Scope where this code takes place.
+ *   thisModule: The Module that this code is taking place in.
+ *   exp: A reference to the relevant expression.
+ *   postfix: The postfix expression to potentially lower.
+ */
 void lowerIndex(LanguagePass lp, ir.Scope current, ir.Module thisModule,
                 ref ir.Exp exp, ir.Postfix postfix)
 {
@@ -402,6 +515,17 @@ void lowerIndex(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 	}
 }
 
+/**
+ * Lower a postfix index expression that operates on an AA.
+ *
+ * Params:
+ *   lp: The LanguagePass.
+ *   current: The Scope where this code takes place.
+ *   thisModule: The Module that this code is taking place in.
+ *   exp: A reference to the relevant expression.
+ *   postfix: The postfix expression to potentially lower.
+ *   aa: The type of the AA being operated on.
+ */
 void lowerIndexAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
                   ref ir.Exp exp, ir.Postfix postfix, ir.AAType aa)
 {
@@ -429,6 +553,15 @@ void lowerIndexAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 	exp = statExp;
 }
 
+/**
+ * Lower an assign if it needs it.
+ *
+ * Params:
+ *   lp: The LanguagePass.
+ *   thisModule: The Module that this code is taking place in.
+ *   exp: A reference to the relevant expression.
+ *   binOp: The BinOp with the assign to potentially lower.
+ */
 void lowerAssign(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp binOp)
 {
 	auto asPostfix = cast(ir.Postfix)binOp.left;
@@ -444,6 +577,17 @@ void lowerAssign(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp
 	lowerAssignArray(lp, thisModule, exp, binOp, asPostfix, cast(ir.ArrayType)leftType);
 }
 
+/**
+ * Lower an assign to an array if it's being modified by a postfix.
+ *
+ * Params:
+ *   lp: The LanguagePass.
+ *   thisModule: The Module that this code is taking place in.
+ *   exp: A reference to the relevant expression.
+ *   binOp: The BinOp with the assign to potentially lower.
+ *   asPostfix: The postfix operation modifying the array.
+ *   leftType: The array type of the left hand side of the assign.
+ */
 void lowerAssignArray(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp,
                       ir.BinOp binOp, ir.Postfix asPostfix, ir.ArrayType leftType)
 {
@@ -457,6 +601,18 @@ void lowerAssignArray(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp,
 	exp = buildCall(loc, func, [asPostfix, binOp.right], func.name);
 }
 
+/**
+ * Lower an assign to an AA.
+ *
+ * Params:
+ *   lp: The LanguagePass.
+ *   current: The Scope where this code takes place.
+ *   thisModule: The Module that this code is taking place in.
+ *   exp: A reference to the relevant expression.
+ *   binOp: The BinOp with the assign to potentially lower.
+ *   asPostfix: The left hand side of the assign as a postfix.
+ *   aa: The AA type that the expression is assigning to.
+ */
 void lowerAssignAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
                    ref ir.Exp exp, ir.BinOp binOp, ir.Postfix asPostfix, ir.AAType aa)
 {
@@ -493,6 +649,18 @@ void lowerAssignAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 	exp = statExp;
 }
 
+/**
+ * Lower a +=, *=, etc assign to an AA.
+ *
+ * Params:
+ *   lp: The LanguagePass.
+ *   current: The Scope where this code takes place.
+ *   thisModule: The Module that this code is taking place in.
+ *   exp: A reference to the relevant expression.
+ *   binOp: The BinOp with the assign to potentially lower.
+ *   asPostfix: The left hand side of the assign as a postfix.
+ *   aa: The AA type that the expression is assigning to.
+ */
 void lowerOpAssignAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
                      ref ir.Exp exp, ir.BinOp binOp, ir.Postfix asPostfix, ir.AAType aa)
 {
@@ -539,6 +707,15 @@ void lowerOpAssignAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 	exp = statExp;
 }
 
+/**
+ * Lower a concatenation operation. (A ~ B)
+ *
+ * Params:
+ *   lp: The LanguagePass.
+ *   thisModule: The Module that this code is taking place in.
+ *   exp: A reference to the relevant expression.
+ *   binOp: The BinOp with the concatenation to lower.
+ */
 void lowerCat(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp binOp)
 {
 	auto loc = binOp.location;
@@ -576,6 +753,15 @@ void lowerCat(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp bi
 	return;
 }
 
+/**
+ * Lower a concatenation assign operation. (A ~= B)
+ *
+ * Params:
+ *   lp: The LanguagePass.
+ *   thisModule: The Module that this code is taking place in.
+ *   exp: A reference to the relevant expression.
+ *   binOp: The BinOp with the concatenation assign to lower.
+ */
 void lowerCatAssign(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp binOp)
 {
 	auto loc = binOp.location;
@@ -601,6 +787,15 @@ void lowerCatAssign(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.Bi
 	}
 }
 
+/**
+ * Lower an equality operation, if it needs it.
+ *
+ * Params:
+ *   lp: The LanguagePass.
+ *   thisModule: The Module that this code is taking place in.
+ *   exp: A reference to the relevant expression.
+ *   binOp: The BinOp with the equality operation to potentially lower.
+ */
 void lowerEqual(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp binOp)
 {
 	auto loc = binOp.location;
@@ -615,6 +810,16 @@ void lowerEqual(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp 
 	exp = buildCall(loc, func, [binOp.left, binOp.right], func.name);
 }
 
+/**
+ * Lower an expression that casts to an interface.
+ *
+ * Params:
+ *   loc: Nodes created in this function will be given this location.
+ *   lp: The LanguagePass.
+ *   current: The Scope where this code takes place.
+ *   uexp: The interface cast to lower.
+ *   exp: A reference to the relevant expression.
+ */
 void lowerInterfaceCast(Location loc, LanguagePass lp,
                         ir.Scope current, ir.Unary uexp, ref ir.Exp exp)
 {
@@ -636,7 +841,16 @@ void lowerInterfaceCast(Location loc, LanguagePass lp,
 	exp = buildAddrOf(loc, buildAccessExp(loc, uexp.value, var));
 }
 
-
+/**
+ * Lower an expression that casts to an array.
+ *
+ * Params:
+ *   loc: Nodes created in this function will be given this location.
+ *   lp: The LanguagePass.
+ *   current: The Scope where this code takes place.
+ *   uexp: The array cast to lower.
+ *   exp: A reference to the relevant expression.
+ */
 void lowerArrayCast(Location loc, LanguagePass lp, ir.Scope current,
                     ir.Unary uexp, ref ir.Exp exp)
 {
@@ -718,6 +932,17 @@ void lowerArrayCast(Location loc, LanguagePass lp, ir.Scope current,
 	exp = sexp;
 }
 
+/**
+ * Is a given postfix an interface pointer? If so, which one?
+ *
+ * Params:
+ *   lp: The LanguagePass.
+ *   pfix: The Postfix to check.
+ *   current: The scope where the postfix resides.
+ *   iface: Will be filled in with the Interface if the postfix is a pointer to one.
+ *
+ * Returns: true if pfix's type is an interface pointer, false otherwise.
+ */
 bool isInterfacePointer(LanguagePass lp, ir.Postfix pfix, ir.Scope current, out ir._Interface iface)
 {
 	pfix = cast(ir.Postfix) pfix.child;
@@ -748,6 +973,12 @@ bool isInterfacePointer(LanguagePass lp, ir.Postfix pfix, ir.Scope current, out 
 /**
  * If a postfix operates directly on a struct via a
  * function call, put it in a variable first.
+ *
+ * Params:
+ *   lp: The LanguagePass.
+ *   current: The Scope where this code takes place.
+ *   exp: A reference to the relevant expression.
+ *   ae: The AccessExp to check.
  */
 void lowerStructLookupViaFunctionCall(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.AccessExp ae)
 {
@@ -775,8 +1006,16 @@ void lowerStructLookupViaFunctionCall(LanguagePass lp, ir.Scope current, ref ir.
 
 /**
  * Rewrites a given foreach statement (fes) into a for statement.
- * The ForStatement create takes several nodes directly; that is
+ *
+ * The ForStatement created uses several of the fes's nodes directly; that is
  * to say, the original foreach and the new for cannot coexist.
+ *
+ * Params:
+ *   fes: The ForeachStatement to lower.
+ *   lp: The LanguagePass.
+ *   current: The Scope where this code takes place.
+ *
+ * Returns: The lowered ForStatement.
  */
 ir.ForStatement lowerForeach(ir.ForeachStatement fes, LanguagePass lp,
                              ir.Scope current)
@@ -1013,6 +1252,15 @@ ir.ForStatement lowerForeach(ir.ForeachStatement fes, LanguagePass lp,
 	throw panic(l, "expected foreach aggregate type");
 }
 
+/**
+ * For every ForeachStatement in a block, run lowerForeach on it.
+ *
+ * Params:
+ *   lp: The LanguagePass.
+ *   current: The BlockStatement's scope.
+ *   currentFunction: The function that these statements ultimately reside in.
+ *   bs: The BlockStatement to check.
+ */
 void lowerForeaches(LanguagePass lp, ir.Scope current,
                     ir.Function currentFunction, ir.BlockStatement bs)
 {
@@ -1025,6 +1273,19 @@ void lowerForeaches(LanguagePass lp, ir.Scope current,
 	}
 }
 
+/**
+ * Lower an array literal to an internal array literal.
+ *
+ * The backend will treat any ArrayLiteral as full of constants, so we can't
+ * pass most of them through.
+ *
+ * Params:
+ *   lp: The LanguagePass.
+ *   current: The Scope where this code takes place.
+ *   inFunction: Is this ArrayLiteral in a function or not?
+ *   exp: A reference to the relevant expression.
+ *   al: The ArrayLiteral to lower.
+ */
 void lowerArrayLiteral(LanguagePass lp, ir.Scope current, bool inFunction,
                        ref ir.Exp exp, ir.ArrayLiteral al)
 {
@@ -1040,6 +1301,17 @@ void lowerArrayLiteral(LanguagePass lp, ir.Scope current, bool inFunction,
 	exp = sexp;
 }
 
+/**
+ * Lower a builtin expression.
+ *
+ * These are comprised mostly of things that need calls to the RT to deal with them.
+ *
+ * Params:
+ *   lp: The LanguagePass.
+ *   current: The Scope where this code takes place.
+ *   exp: A reference to the relevant expression.
+ *   builtin: The BuiltinExp to lower.
+ */
 void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinExp builtin)
 {
 	auto l = exp.location;
@@ -1222,6 +1494,16 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 	}
 }
 
+/**
+ * Lower a BinOp.
+ *
+ * This calls the appropriate lower function, depending on what operation it is.
+ *
+ * Params:
+ *   lp: The LanguagePass.
+ *   exp: A reference to the relevant expression.
+ *   binOp: The BinOp to potentially lower.
+ */
 void lowerBinOp(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp binOp)
 {
 	switch(binOp.op) {
@@ -1243,6 +1525,16 @@ void lowerBinOp(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp 
 	}
 }
 
+/**
+ * Lower an ExpReference, if needed.
+ *
+ * This rewrites them to lookup through the nested struct, if needed.
+ *
+ * Params:
+ *   functionStack: A list of functions. Most recent at $-1, its parent at $-2, and so on.
+ *   exp: A reference to the relevant expression.
+ *   eref: The ExpReference to potentially lower.
+ */
 void lowerExpReference(ir.Function[] functionStack, ref ir.Exp exp, ir.ExpReference eref)
 {
 	auto func = cast(ir.Function) eref.decl;
@@ -1270,6 +1562,18 @@ void lowerExpReference(ir.Function[] functionStack, ref ir.Exp exp, ir.ExpRefere
 	exp = buildCreateDelegate(exp.location, buildExpReference(np.location, np, np.name), eref);
 }
 
+/**
+ * Lower a Postfix, if needed.
+ *
+ * This handles index operations, and interface pointers.
+ *
+ * Params:
+ *   lp: The LanguagePass.
+ *   current: The Scope where this code takes place.
+ *   thisModule: The Module that this code is taking place in.
+ *   exp: A reference to the relevant expression.
+ *   postfix: The Postfix to potentially lower.
+ */
 void lowerPostfix(LanguagePass lp, ir.Scope current, ir.Module thisModule,
                   ref ir.Exp exp, ir.Postfix postfix)
 {
@@ -1312,6 +1616,19 @@ void lowerPostfix(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 	}
 }
 
+/**
+ * Lower a BinOp assign. (+=, *=, etc)
+ *
+ * Params:
+ *   lp: The LanguagePass.
+ *   current: The Scope where this code takes place.
+ *   thisModule: The Module that this code is taking place in.
+ *   exp: A reference to the relevant expression.
+ *   binOp: The BinOp to potentially lower.
+ *   visitor: An LlvmVisitor instance.
+ *
+ * Returns: True if something was changed, false otherwise.
+ */
 bool lowerBinOpAssign(LanguagePass lp, ir.Scope current, ir.Module thisModule,
                       ref ir.Exp exp, ir.BinOp binOp, Visitor visitor)
 {
@@ -1332,7 +1649,7 @@ bool lowerBinOpAssign(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 	case Assign:
 		auto asPostfix = cast(ir.Postfix)binOp.left;
 		if (asPostfix is null)
-			return true;
+			return false;
 
 		auto leftType = getExpType(asPostfix.child);
 		if (leftType !is null &&
@@ -1349,14 +1666,24 @@ bool lowerBinOpAssign(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 				lowerOpAssignAA(lp, current, thisModule, exp, binOp, asPostfix,
 				                 cast(ir.AAType)leftType);
 			}
-			return false;
+			return true;
 		}
-		return true;
+		return false;
 	default:
-		return true;
+		return false;
 	}
 }
 
+/**
+ * Lower an AA literal.
+ *
+ * Params:
+ *   lp: The LanguagePass.
+ *   current: The Scope where this code takes place.
+ *   thisModule: The Module that this code is taking place in.
+ *   exp: A reference to the relevant expression.
+ *   assocArray: The AA literal to lower.
+ */
 void lowerAA(LanguagePass lp, ir.Scope current, ir.Module thisModule, ref ir.Exp exp,
              ir.AssocArray assocArray)
 {
@@ -1404,7 +1731,7 @@ void lowerAA(LanguagePass lp, ir.Scope current, ir.Module thisModule, ref ir.Exp
 }
 
 /**
- * Lowers misc things needed by the LLVM backend.
+ * Calls the correct functions where they need to be called to lower a module.
  */
 class LlvmLowerer : ScopeManager, Pass
 {
@@ -1422,6 +1749,12 @@ public:
 		this.V_P64 = lp.ver.isP64;
 	}
 
+	/**
+	 * Perform all lower operations on a given module.
+	 *
+	 * Params:
+	 *   m: The module to lower.
+	 */
 	override void transform(ir.Module m)
 	{
 		thisModule = m;
@@ -1438,12 +1771,11 @@ public:
 		panicAssert(bs, functionStack.length > 0);
 		lowerForeaches(lp, current, functionStack[$-1], bs);
 		insertBinOpAssignsForNestedVariableAssigns(lp, bs);
-		if (!lowerVariables(lp, functionStack[$-1], bs, this)) {
-			return Continue;
+		if (lowerVariables(lp, functionStack[$-1], bs, this)) {
+			super.leave(bs);
+			return ContinueParent;
 		}
-
-		super.leave(bs);
-		return ContinueParent;
+		return Continue;
 	}
 
 	override Status leave(ir.BlockStatement bs)
@@ -1481,7 +1813,7 @@ public:
 
 	override Status enter(ref ir.Exp exp, ir.BinOp binOp)
 	{
-		if (!lowerBinOpAssign(lp, current, thisModule, exp, binOp, this)) {
+		if (lowerBinOpAssign(lp, current, thisModule, exp, binOp, this)) {
 			return ContinueParent;
 		}
 		return Continue;
