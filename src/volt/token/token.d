@@ -303,6 +303,18 @@ TokenType identifierType(string ident)
 	case "__PRETTY_FUNCTION__": return __Pretty_Function__;
 	case "__thread":            return __Thread;
 	case "__traits":            return __Traits;
+	case "i8":                  return Byte;
+	case "i16":                 return Short;
+	case "i32":                 return Int;
+	case "i64":                 return Long;
+	case "isize":               assert(false, "reserved");
+	case "u8":                  return Ubyte;
+	case "u16":                 return Ushort;
+	case "u32":                 return Uint;
+	case "u64":                 return Ulong;
+	case "usize":               assert(false, "reserved");
+	case "f32":                 return Float;
+	case "f64":                 return Double;
 	default:                    return Identifier;
 	}
 }
