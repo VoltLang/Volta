@@ -13,7 +13,7 @@ import watt.text.format : format;
 import watt.text.string : endsWith;
 
 import volt.util.path;
-import volt.util.perf : perf;
+import volt.util.perf : Perf, perf;
 import volt.exceptions;
 import volt.interfaces;
 import volt.errors;
@@ -234,7 +234,7 @@ public:
 				}
 			}
 
-			perf.tag("exit");
+			perf.mark(Perf.Mark.EXIT);
 		}
 
 		if (settings.noCatch) {
@@ -278,7 +278,7 @@ protected:
 
 	int intCompile()
 	{
-		perf.tag("parsing");
+		perf.mark(Perf.Mark.PARSING);
 
 		// Load all modules to be compiled.
 		// Don't run phase 1 on them yet.
@@ -317,7 +317,7 @@ protected:
 		auto dpstrs = new string[](mCommandLineModules.length);
 
 		preDiff(mCommandLineModules, "Phase 1", ppstrs, dpstrs);
-		perf.tag("phase1");
+		perf.mark(Perf.Mark.PHASE1);
 
 		// Force phase 1 to be executed on the modules.
 		// This might load new modules.
@@ -329,14 +329,14 @@ protected:
 		auto allMods = languagePass.getModules();
 
 		preDiff(mCommandLineModules, "Phase 2", ppstrs, dpstrs);
-		perf.tag("phase2");
+		perf.mark(Perf.Mark.PHASE2);
 
 		// All modules need to be run through phase2.
 		languagePass.phase2(allMods);
 		postDiff(mCommandLineModules, ppstrs, dpstrs);
 
 		preDiff(mCommandLineModules, "Phase 3", ppstrs, dpstrs);
-		perf.tag("phase3");
+		perf.mark(Perf.Mark.PHASE3);
 
 		// All modules need to be run through phase3.
 		languagePass.phase3(allMods);
@@ -347,7 +347,7 @@ protected:
 		if (settings.noBackend) {
 			return 0;
 		}
-		perf.tag("backend");
+		perf.mark(Perf.Mark.BACKEND);
 
 		// We will be modifing this later on,
 		// but we don't want to change mBitcodeFiles.
@@ -381,7 +381,7 @@ protected:
 
 		// Link bitcode files.
 		if (bitcodeFiles.length > 0) {
-			perf.tag("bitcode-link");
+			perf.mark(Perf.Mark.BITCODE);
 			linkModules(bc, bitcodeFiles);
 		}
 
@@ -401,12 +401,12 @@ protected:
 
 		// If we are compiling on the emscripten platform ignore .o files.
 		if (settings.platform == Platform.EMSCRIPTEN) {
-			perf.tag("emscripten-link");
+			perf.mark(Perf.Mark.LINK);
 			return emscriptenLink(mLinker, bc, of);
 		}
 
 		// Native compilation, turn the bitcode into native code.
-		perf.tag("object");
+		perf.mark(Perf.Mark.ASSEMBLE);
 		writeObjectFile(settings, obj, bc);
 
 		// When not linking we are now done.
@@ -415,7 +415,7 @@ protected:
 		}
 
 		// And finally call the linker.
-		perf.tag("native-link");
+		perf.mark(Perf.Mark.LINK);
 		return nativeLink(obj, of);
 	}
 

@@ -16,13 +16,51 @@ import mt = watt.io.monotonic;
  */
 struct Perf
 {
+	int pos;
 	long[] times;
 	string[] names;
 
-	void tag(string tag)
+	enum Mark {
+		SETUP,
+		PARSING,
+		PHASE1,
+		PHASE2,
+		PHASE3,
+		BACKEND,
+		BITCODE,
+		ASSEMBLE,
+		LINK,
+		EXIT,
+		DONE,
+	}
+
+	enum string[] markNames = [
+		"setup",
+		"parsing",
+		"phase1",
+		"phase2",
+		"phase3",
+		"backend",
+		"bitcode-link",
+		"assemble",
+		"native-link",
+		"exit",
+		"done",
+	];
+
+	/**
+	 * Place a mark in time, allows to skip phases.
+	 */
+	void mark(Mark mark)
 	{
-		times ~= mt.ticks();
-		names ~= tag;
+		assert(mark <= Mark.DONE);
+
+		auto t = mt.ticks();
+		while (mark >= pos) {
+			times ~= t;
+			names ~= markNames[pos];
+			pos++;
+		}
 	}
 
 	void print(string file, string name)

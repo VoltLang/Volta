@@ -13,15 +13,15 @@ import volt.license;
 import volt.interfaces;
 import volt.driver;
 import volt.util.path;
-import volt.util.perf : perf;
+import volt.util.perf : Perf, perf;
 
 
 int main(string[] strArgs)
 {
 	Settings settings;
-	perf.tag("setup");
+	perf.mark(Perf.Mark.SETUP);
 	scope (exit) {
-		perf.tag("done");
+		perf.mark(Perf.Mark.DONE);
 		string name = "N/A";
 		string file;
 		if (settings !is null) {
