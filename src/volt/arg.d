@@ -44,6 +44,12 @@ public:
 		CCompiler,
 		CCompilerArg,
 
+		LD,
+		LDArg,
+
+		Link,
+		LinkArg,
+
 		Linker,
 		LinkerArg,
 
@@ -173,8 +179,20 @@ void filterArgs(Arg[] args, ref string[] files, VersionSet ver, Settings setting
 		case CCompilerArg:
 			settings.xcc ~= arg.arg;
 			break;
+		case LD:
+			settings.ld = arg.arg;
+			break;
+		case LDArg:
+			settings.xld ~= arg.arg;
+			break;
+		case Link:
+			settings.link = arg.arg;
+			break;
+		case LinkArg:
+			settings.xlink ~= arg.arg;
+			break;
 		case Linker:
-			settings.linker ~= arg.arg;
+			settings.linker = arg.arg;
 			break;
 		case LinkerArg:
 			settings.xlinker ~= arg.arg;

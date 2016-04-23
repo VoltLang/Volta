@@ -48,11 +48,12 @@ public:
 	Pass[] debugVisitors;
 
 protected:
-	bool mLinkWithLinker;
-	bool mLinkWithCC;
-	bool mLinkWithMSVC;
-	string mCC;
-	string mLinker;
+	bool mLinkWithLD;   // Posix/GNU
+	bool mLinkWithCC;   // Posix/GNU
+	bool mLinkWithLink; // MSVC
+	string mCC;         // cc compatible command line (gcc/clang).
+	string mLD;         // ld compatible command line (ld/lld)
+	string mLink;       // MSVC Link
 
 	string[] mIncludes;
 	string[] mSourceFiles;
@@ -117,25 +118,41 @@ public:
 		}
 
 
-		if (settings.linker !is null &&
-		    settings.platform == Platform.MSVC) {
-			mLinker = settings.linker;
-			mLinkWithMSVC = true;
-		} else if (settings.linker !is null) {
-			mLinker = settings.linker;
-			mLinkWithLinker = true;
+		if (settings.linker !is null) {
+			switch (settings.platform) with (Platform) {
+			case MSVC:
+				mLink = settings.linker;
+				mLinkWithLink = true;
+				break;
+			default:
+				mLD = settings.linker;
+				mLinkWithLD = true;
+				break;
+			}
+		} else if (settings.ld !is null) {
+			mLD = settings.ld;
+			mLinkWithLD = true;
 		} else if (settings.cc !is null) {
 			mCC = settings.cc;
 			mLinkWithCC = true;
-		} else if (settings.platform == Platform.EMSCRIPTEN) {
-			mLinker = "emcc";
-			mLinkWithCC = true;
-		} else if (settings.platform == Platform.MSVC) {
-			mLinker = "link.exe";
-			mLinkWithMSVC = true;
+		} else if (settings.link !is null) {
+			mLink = settings.link;
+			mLinkWithLink = true;
 		} else {
-			mLinkWithCC = true;
-			mCC = "gcc";
+			switch (settings.platform) with (Platform) {
+			case MSVC:
+				mLink = "link.exe";
+				mLinkWithLink = true;
+				break;
+			case EMSCRIPTEN:
+				mCC = "emcc";
+				mLinkWithCC = true;
+				break;
+			default:
+				mLinkWithCC = true;
+				mCC = "gcc";
+				break;
+			}
 		}
 
 		debugVisitors ~= new DebugMarker("Running DebugPrinter:");
@@ -418,7 +435,7 @@ protected:
 		// If we are compiling on the emscripten platform ignore .o files.
 		if (settings.platform == Platform.EMSCRIPTEN) {
 			perf.mark(Perf.Mark.LINK);
-			return emscriptenLink(mLinker, bc, of);
+			return emscriptenLink(mCC, bc, of);
 		}
 
 		// Native compilation, turn the bitcode into native code.
@@ -437,10 +454,10 @@ protected:
 
 	int nativeLink(string obj, string of)
 	{
-		if (mLinkWithMSVC) {
-			return msvcLink(mLinker, obj, of);
-		} else if (mLinkWithLinker) {
-			return ccLink(mLinker, false, obj, of);
+		if (mLinkWithLink) {
+			return msvcLink(mLink, obj, of);
+		} else if (mLinkWithLD) {
+			return ccLink(mLD, false, obj, of);
 		} else if (mLinkWithCC) {
 			return ccLink(mCC, true, obj, of);
 		} else {
@@ -481,11 +498,18 @@ protected:
 			foreach (xcc; settings.xcc) {
 				args ~= xcc;
 			}
-			foreach (xLink; settings.xlinker) {
+			foreach (xLD; settings.xld) {
 				args ~= "-Xlinker";
-				args ~= xLink;
+				args ~= xLD;
+			}
+			foreach (xLinker; settings.xlinker) {
+				args ~= "-Xlinker";
+				args ~= xLinker;
 			}
 		} else {
+			foreach (xLD; settings.xld) {
+				args ~= xLD;
+			}
 			foreach (xLink; settings.xlinker) {
 				args ~= xLink;
 			}
@@ -512,10 +536,14 @@ protected:
 		foreach (libraryFile; mLibraryFiles) {
 			args ~= libraryFile;
 		}
+		foreach (xLink; settings.xlink) {
+			args ~= xLink;
+		}
+
 		// We are using msvc link directly so this is
 		// linker arguments.
-		foreach (xLink; settings.xlinker) {
-			args ~= xLink;
+		foreach (xLinker; settings.xlinker) {
+			args ~= xLinker;
 		}
 
 		return spawnProcess(linker, args).wait();

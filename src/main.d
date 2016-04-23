@@ -263,6 +263,18 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 		case "-Xcc", "--Xcc":
 			makeArgNext(CCompilerArg);
 			continue;
+		case "-ld", "--ld":
+			makeArgNext(LD);
+			continue;
+		case "-Xld", "--Xld":
+			makeArgNext(LDArg);
+			continue;
+		case "-link", "--link":
+			makeArgNext(Link);
+			continue;
+		case "-Xlink", "--Xlink":
+			makeArgNext(LinkArg);
+			continue;
 		case "-linker", "--linker":
 			makeArgNext(Linker);
 			continue;
