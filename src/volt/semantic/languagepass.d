@@ -12,6 +12,7 @@ import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 
+import volt.util.perf;
 import volt.util.worktracker;
 
 import volt.visitor.docprinter;
@@ -65,6 +66,30 @@ private:
 	WorkTracker mTracker;
 	ir.Module[string] mModules;
 
+	static class TimerPass : Pass
+	{
+		Pass mPass;
+		Accumulator mAccum;
+
+		this(string name, Pass pass)
+		{
+			this.mPass = pass;
+			this.mAccum = new Accumulator(name);
+		}
+
+		override void transform(ir.Module m)
+		{
+			mAccum.start();
+			scope (exit) mAccum.stop();
+			mPass.transform(m);
+		}
+
+		override void close()
+		{
+			mPass.close();
+		}
+	}
+
 public:
 	this(Driver driver, VersionSet ver, Settings settings, Frontend frontend)
 	{
@@ -72,24 +97,24 @@ public:
 
 		mTracker = new WorkTracker();
 
-		postParse ~= new ConditionalRemoval(ver);
+		postParse ~= new TimerPass("p1-cond-rem", new ConditionalRemoval(ver));
 		if (settings.removeConditionalsOnly) {
 			return;
 		}
-		postParse ~= new ScopeReplacer();
-		postParse ~= new AttribRemoval(settings);
-		postParse ~= new Gatherer();
+		postParse ~= new TimerPass("p1-scope-rep", new ScopeReplacer());
+		postParse ~= new TimerPass("p1-attrib-rem", new AttribRemoval(settings));
+		postParse ~= new TimerPass("p1-gatherer", new Gatherer());
 
-		passes2 ~= new SimpleTrace(this);
-		passes2 ~= new ExTyper(this);
-		passes2 ~= new CFGBuilder(this);
-		passes2 ~= new IrVerifier();
+		passes2 ~= new TimerPass("p2-simpletrace", new SimpleTrace(this));
+		passes2 ~= new TimerPass("p2-extyper", new ExTyper(this));
+		passes2 ~= new TimerPass("p2-cfgbuilder", new CFGBuilder(this));
+		passes2 ~= new TimerPass("p2-irverifier", new IrVerifier());
 
-		passes3 ~= new LlvmLowerer(this);
-		passes3 ~= new NewReplacer(this);
-		passes3 ~= new TypeidReplacer(this);
-		passes3 ~= new MangleWriter(this);
-		passes3 ~= new IrVerifier();
+		passes3 ~= new TimerPass("p3-llvm", new LlvmLowerer(this));
+		passes3 ~= new TimerPass("p3-new-rep", new NewReplacer(this));
+		passes3 ~= new TimerPass("p3-typeid-rep", new TypeidReplacer(this));
+		passes3 ~= new TimerPass("p3-mangle-writer", new MangleWriter(this));
+		passes3 ~= new TimerPass("p3-irverifier", new IrVerifier());
 	}
 
 	override void close()

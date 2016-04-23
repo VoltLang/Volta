@@ -18,7 +18,10 @@ struct Perf
 {
 	int pos;
 	long[] times;
-	string[] names;
+
+	Accumulator gcAccum;
+	Accumulator stack;
+	Accumulator accum;
 
 	enum Mark {
 		SETUP,
@@ -32,8 +35,88 @@ struct Perf
 		LINK,
 		EXIT,
 		DONE,
+		NUM_MARKS, // Ensure that this is last.
 	}
 
+	void init()
+	{
+		auto t = mt.ticks();
+		times = new long[](cast(size_t)Mark.NUM_MARKS);
+		times[pos++] = t;
+
+		stack = new Accumulator("other");
+		stack.then = t;
+
+		version (none) {
+			new GCAccumulator();
+		} else {
+			new Accumulator("GC");
+		}
+	}
+
+	void close()
+	{
+		assert(stack.below is null);
+
+		auto t = mt.ticks();
+
+		stack.accum += t - stack.then;
+		while (Mark.DONE >= pos) {
+			times[pos++] = t;
+		}
+	}
+
+	/**
+	 * Place a mark in time, allows to skip phases.
+	 */
+	void mark(Mark mark)
+	{
+		assert(mark > Mark.SETUP);
+		assert(mark < Mark.DONE);
+
+		auto t = mt.ticks();
+		while (mark >= pos) {
+			times[pos++] = t;
+		}
+	}
+
+	void print(string file, string name)
+	{
+		auto f = new OutputFileStream(file);
+		auto total = times[$-1] - times[0];
+
+		void doWrite(long t) {
+			t = mt.convClockFreq(t, mt.ticksPerSecond, 1_000_000);
+			f.writef("%s,", t);
+		}
+
+		// First line, names of marks.
+		f.writef("--- Phases\n");
+		f.writef("name,");
+		for (size_t i = 1; i < times.length; i++) {
+			f.writef("%s,", markNames[i-1]);
+		}
+		f.writef("total,\n%s,", name);
+		for (size_t i = 1; i < times.length; i++) {
+			doWrite(times[i] - times[i-1]);
+		}
+		doWrite(total); f.writef("\n\n");
+
+
+		f.writef("--- Accumulators\n");
+		f.writef("name,");
+		for (auto a = accum; a !is null; a = a.next) {
+			f.writef("%s,", a.name);
+		}
+		f.writef("\n%s,", name);
+		for (auto a = accum; a !is null; a = a.next) {
+			doWrite(a.accum);
+		}
+		f.flush();
+		f.close();
+	}
+
+private:
 	enum string[] markNames = [
 		"setup",
 		"parsing",
@@ -47,44 +130,66 @@ struct Perf
 		"exit",
 		"done",
 	];
+}
 
-	/**
-	 * Place a mark in time, allows to skip phases.
-	 */
-	void mark(Mark mark)
+class Accumulator
+{
+public:
+	long accum;
+	long then;
+
+	Accumulator below; // Accumulator below this.
+	Accumulator next;
+	string name;
+
+
+public:
+	this(string name)
 	{
-		assert(mark <= Mark.DONE);
-
-		auto t = mt.ticks();
-		while (mark >= pos) {
-			times ~= t;
-			names ~= markNames[pos];
-			pos++;
-		}
+		this.name = name;
+		this.next = perf.accum;
+		perf.accum = this;
 	}
 
-	void print(string file, string name)
+	void start()
 	{
-		auto f = new OutputFileStream(file);
+		auto now = mt.ticks();
 
-		f.writef("name,total,");
-		for (size_t i = 1; i < times.length; i++) {
-			f.writef("%s,", names[i-1]);
-		}
-		f.writef("\n");
+		below = perf.stack;
+		perf.stack = this;
 
-		f.writef("%s,", name);
-		void doWrite(long t) {
-			t = mt.convClockFreq(t, mt.ticksPerSecond, 1_000_000);
-			f.writef("%s,", t);
-		}
-		doWrite(times[$-1] - times[0]);
-		for (size_t i = 1; i < times.length; i++) {
-			doWrite(times[i] - times[i-1]);
-		}
-		f.writef("\n");
-		f.flush();
-		f.close();
+		below.accum += now - below.then;
+		this.then = now;
+	}
+
+	void stop()
+	{
+		auto now = mt.ticks();
+		accum += now - this.then;
+
+		below.then = now;
+		perf.stack = below;
+		below = null;
+	}
+}
+
+version (Volt) class GCAccumulator : Accumulator
+{
+	object.AllocDg allocDg;
+
+	this()
+	{
+		super("GC");
+		allocDg = object.allocDg;
+		object.allocDg = alloc;
+	}
+
+	void* alloc(object.TypeInfo ti, size_t c)
+	{
+		start();
+		auto ret = allocDg(ti, c);
+		stop();
+		return ret;
 	}
 }
 

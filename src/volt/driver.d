@@ -13,7 +13,7 @@ import watt.text.format : format;
 import watt.text.string : endsWith;
 
 import volt.util.path;
-import volt.util.perf : Perf, perf;
+import volt.util.perf : Accumulator, Perf, perf;
 import volt.exceptions;
 import volt.interfaces;
 import volt.errors;
@@ -73,6 +73,9 @@ protected:
 	/// Used to track if we should debug print on error.
 	bool mDebugPassesRun;
 
+	Accumulator mAccumReading;
+	Accumulator mAccumParsing;
+
 public:
 	this(VersionSet ver, Settings s)
 	in {
@@ -83,6 +86,11 @@ public:
 		this.ver = ver;
 		this.settings = s;
 		this.frontend = new Parser();
+
+		// Timers
+		mAccumReading = new Accumulator("p1-reading");
+		mAccumParsing = new Accumulator("p1-parsing");
+
 
 		Driver drv = this;
 		languagePass = new VoltLanguagePass(drv, ver, s, frontend);
@@ -272,7 +280,15 @@ protected:
 	 */
 	ir.Module loadAndParse(string file)
 	{
-		auto src = cast(string) read(file);
+		string src;
+		{
+			mAccumReading.start();
+			scope (exit) mAccumReading.stop();
+			src = cast(string) read(file);
+		}
+
+		mAccumParsing.start();
+		scope (exit) mAccumParsing.stop();
 		return frontend.parseNewFile(src, file);
 	}
 

@@ -19,9 +19,9 @@ import volt.util.perf : Perf, perf;
 int main(string[] strArgs)
 {
 	Settings settings;
-	perf.mark(Perf.Mark.SETUP);
+	perf.init();
 	scope (exit) {
-		perf.mark(Perf.Mark.DONE);
+		perf.close();
 		string name = "N/A";
 		string file;
 		if (settings !is null) {
