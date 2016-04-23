@@ -4,6 +4,7 @@ module volt.semantic.mangle;
 
 import watt.conv : toString;
 import watt.text.format : format;
+import watt.text.sink : Sink, StringSink;
 
 import ir = volt.ir.ir;
 
@@ -25,9 +26,26 @@ void ensureMangled(ir.Type t)
  */
 string mangle(ir.Type t)
 {
-	string mangledStr;
-	mangleType(t, mangledStr);
-	return mangledStr;
+	// Special case PrimitiveType, this saves a lot of allocations.
+	if (t.nodeType == ir.NodeType.PrimitiveType && !t.isScope) {
+		auto asPrim = cast(ir.PrimitiveType) t;
+		if (t.isImmutable) {
+			return getPrimitiveTypeImmutable(asPrim);
+		} else if (t.isConst) {
+			assert(!t.isImmutable);
+			return getPrimitiveTypeConst(asPrim);
+		} else {
+			return getPrimitiveType(asPrim);
+		}
+	}
+
+	StringSink sink;
+	version (Volt) {
+		mangleType(t, sink.sink);
+	} else {
+		mangleType(t, &sink.sink);
+	}
+	return sink.toString();
 }
 
 /**
@@ -37,11 +55,19 @@ string mangle(ir.Type t)
  */
 string mangle(string[] names, ir.Variable v)
 {
-	string s = "Vv";
-	mangleName(names, s);
-	mangleString(v.name, s);
-	mangleType(v.type, s);
-	return s;
+	StringSink sink;
+	sink.sink("Vv");
+
+	version (Volt) {
+		mangleName(names, sink.sink);
+		mangleString(v.name, sink.sink);
+		mangleType(v.type, sink.sink);
+	} else {
+		mangleName(names, &sink.sink);
+		mangleString(v.name, &sink.sink);
+		mangleType(v.type, &sink.sink);
+	}
+	return sink.toString();
 }
 
 /**
@@ -51,212 +77,165 @@ string mangle(string[] names, ir.Variable v)
  */
 string mangle(string[] names, ir.Function func)
 {
-	string s = "Vf";
-	mangleName(names, s);
-	mangleString(func.name ~ func.suffix, s);
-	mangleType(func.type, s);
-	return s;
+	StringSink sink;
+	sink.sink("Vf");
+
+	version (Volt) {
+		mangleName(names, sink.sink);
+		mangleString(func.name ~ func.suffix, sink.sink);
+		mangleType(func.type, sink.sink);
+	} else {
+		mangleName(names, &sink.sink);
+		mangleString(func.name, &sink.sink);
+		mangleType(func.type, &sink.sink);
+	}
+	return sink.toString();
 }
 
 
 private:
 
 
-void mangleType(ir.Type t, ref string mangledString)
+void mangleType(ir.Type t, Sink sink)
 {
 	if (t.isScope) {
-		 mangledString ~= "e";
+		sink("e");
 	}
 	if (t.isConst) {
-		 mangledString ~= "o";
+		sink("o");
 	}
 	if (t.isImmutable) {
-		 mangledString ~= "m";
+		sink("m");
 	}
 	switch (t.nodeType) with (ir.NodeType) {
 	case PrimitiveType:
 		auto asPrim = cast(ir.PrimitiveType) t;
 		assert(asPrim !is null);
-		manglePrimitiveType(asPrim, mangledString);
+		sink(getPrimitiveType(asPrim));
 		break;
 	case ArrayType:
 		auto asArray = cast(ir.ArrayType) t;
 		assert(asArray !is null);
-		mangledString ~= "a";
-		mangleType(asArray.base, mangledString);
+		sink("a");
+		mangleType(asArray.base, sink);
 		break;
 	case PointerType:
 		auto asPointer = cast(ir.PointerType) t;
 		assert(asPointer !is null);
-		mangledString ~= "p";
-		mangleType(asPointer.base, mangledString);
+		sink("p");
+		mangleType(asPointer.base, sink);
 		break;
 	case Struct:
 		auto asStruct = cast(ir.Struct) t;
 		assert(asStruct !is null);
-		mangledString ~= "S";
-		mangleScope(asStruct.myScope, mangledString);
+		sink("S");
+		mangleScope(asStruct.myScope, sink);
 		break;
 	case Union:
 		auto asUnion = cast(ir.Union) t;
 		assert(asUnion !is null);
-		mangledString ~= "U";
-		mangleScope(asUnion.myScope, mangledString);
+		sink("U");
+		mangleScope(asUnion.myScope, sink);
 		break;
 	case Class:
 		auto asClass = cast(ir.Class) t;
 		assert(asClass !is null);
-		mangledString ~= "C";
-		mangleScope(asClass.myScope, mangledString);
+		sink("C");
+		mangleScope(asClass.myScope, sink);
 		break;
 	case UserAttribute:
 		auto asAttr = cast(ir.UserAttribute) t;
 		assert(asAttr !is null);
-		mangledString ~= "A";
-		mangleScope(asAttr.myScope, mangledString);
+		sink("A");
+		mangleScope(asAttr.myScope, sink);
 		break;
 	case Enum:
 		auto asEnum = cast(ir.Enum) t;
 		assert(asEnum !is null);
-		mangledString ~= "E";
-		mangleScope(asEnum.myScope, mangledString);
-		mangleString(asEnum.name, mangledString);
+		sink("E");
+		mangleScope(asEnum.myScope, sink);
+		mangleString(asEnum.name, sink);
 		break;
 	case Interface:
 		auto asInterface = cast(ir._Interface) t;
 		assert(asInterface !is null);
-		mangledString ~= "I";
-		mangleScope(asInterface.myScope, mangledString);
-		mangleString(asInterface.name, mangledString);
+		sink("I");
+		mangleScope(asInterface.myScope, sink);
+		mangleString(asInterface.name, sink);
 		break;
 	case TypeReference:
 		auto asTypeRef = cast(ir.TypeReference) t;
 		assert(asTypeRef !is null);
 		assert(asTypeRef.type !is null);
-		mangleType(asTypeRef.type, mangledString);
+		mangleType(asTypeRef.type, sink);
 		break;
 	case DelegateType:
 		auto asDelegateType = cast(ir.DelegateType) t;
 		assert(asDelegateType !is null);
-		mangleDelegateType(asDelegateType, mangledString);
+		mangleDelegateType(asDelegateType, sink);
 		break;
 	case FunctionType:
 		auto asFunctionType = cast(ir.FunctionType) t;
 		assert(asFunctionType !is null);
-		mangleFunctionType(asFunctionType, mangledString);
+		mangleFunctionType(asFunctionType, sink);
 		break;
 	case AAType:
 		auto asAA = cast(ir.AAType) t;
 		assert(asAA !is null);
-		mangledString ~= "Aa";
-		mangleType(asAA.key, mangledString);
-		mangleType(asAA.value, mangledString);
+		sink("Aa");
+		mangleType(asAA.key, sink);
+		mangleType(asAA.value, sink);
 		break;
 	case StaticArrayType:
 		auto asSA = cast(ir.StaticArrayType) t;
 		assert(asSA !is null);
-		mangledString ~= "at";
-		mangledString ~= toString(asSA.length);
-		mangleType(asSA.base, mangledString);
+		sink("at");
+		sink(toString(asSA.length));
+		mangleType(asSA.base, sink);
 		break;
 	default:
 		throw panicUnhandled(t, format("%s in mangler", t.nodeType));
 	}
 }
 
-void mangleFunctionType(ir.FunctionType func, ref string mangledString)
+void mangleFunctionType(ir.FunctionType func, Sink sink)
 {
 	if (func.hiddenParameter) {
-		mangledString ~= "M";
+		sink("M");
 	}
-	mangledString ~= "F";
-	mangleCallableType(func, mangledString);
+	sink("F");
+	mangleCallableType(func, sink);
 }
 
-void mangleDelegateType(ir.DelegateType func, ref string mangledString)
+void mangleDelegateType(ir.DelegateType func, Sink sink)
 {
-	mangledString ~= "D";
-	mangleCallableType(func, mangledString);
+	sink("D");
+	mangleCallableType(func, sink);
 }
 
-void mangleCallableType(ir.CallableType ct, ref string mangledString)
+void mangleCallableType(ir.CallableType ct, Sink sink)
 {
-	mangleLinkage(ct.linkage, mangledString);
+	mangleLinkage(ct.linkage, sink);
 	foreach (i, param; ct.params) {
 		if (ct.isArgRef[i]) {
-			 mangledString ~= "r";
+			sink("r");
 		}
 		if (ct.isArgOut[i]) {
-			 mangledString ~= "O";
+			sink("O");
 		}
-		mangleType(param, mangledString);
+		mangleType(param, sink);
 	}
-	mangledString ~= "Z";  // This would be difference with variadics.
-	mangleType(ct.ret, mangledString);
-}
-void manglePrimitiveType(ir.PrimitiveType t, ref string mangledString)
-{
-	final switch (t.type) with (ir.PrimitiveType.Kind) {
-	case Bool:
-		mangledString ~= "t";
-		break;
-	case Byte:
-		mangledString ~= "b";
-		break;
-	case Char:
-		mangledString ~= "c";
-		break;
-	case Wchar:
-		mangledString ~= "w";
-		break;
-	case Dchar:
-		mangledString ~= "d";
-		break;
-	case Double:
-		mangledString ~= "fd";
-		break;
-	case Float:
-		mangledString ~= "ff";
-		break;
-	case Int:
-		mangledString ~= "i";
-		break;
-	case Long:
-		mangledString ~= "l";
-		break;
-	case Real:
-		mangledString ~= "fr";
-		break;
-	case Short:
-		mangledString ~= "s";
-		break;
-	case Ubyte:
-		mangledString ~= "ub";
-		break;
-	case Uint:
-		mangledString ~= "ui";
-		break;
-	case Ulong:
-		mangledString ~= "ul";
-		break;
-	case Ushort:
-		mangledString ~= "us";
-		break;
-	case Void:
-		mangledString ~= "v";
-		break;
-	case Invalid:
-		throw panic(t, "invalid primitive kind");
-	}
+	sink("Z");  // This would be difference with variadics.
+	mangleType(ct.ret, sink);
 }
 
-void mangleScope(ir.Scope _scope, ref string mangledString)
+void mangleScope(ir.Scope _scope, Sink sink)
 {
 	assert(_scope !is null);
 
 	if (_scope.parent !is null) {
-		mangleScope(_scope.parent, mangledString);
-		mangleString(_scope.name, mangledString);
+		mangleScope(_scope.parent, sink);
+		mangleString(_scope.name, sink);
 		return;
 	}
 
@@ -265,32 +244,104 @@ void mangleScope(ir.Scope _scope, ref string mangledString)
 		throw panic(_scope.node.location, "top scope is not a module");
 
 	foreach (id; asModule.name.identifiers) {
-		mangleString(id.value, mangledString);
+		mangleString(id.value, sink);
 	}
 }
 
-void mangleLinkage(ir.Linkage l, ref string mangledString)
+void mangleLinkage(ir.Linkage l, Sink sink)
 {
 	final switch (l) with (ir.Linkage) {
-	case Volt: mangledString ~= "v"; break;
-	case C: mangledString ~= "c"; break;
-	case CPlusPlus: mangledString ~= "C"; break;
-	case D: mangledString ~= "d"; break;
-	case Windows: mangledString ~= "W"; break;
-	case Pascal: mangledString ~= "P"; break;
+	case Volt: sink("v"); break;
+	case C: sink("c"); break;
+	case CPlusPlus: sink("C"); break;
+	case D: sink("d"); break;
+	case Windows: sink("W"); break;
+	case Pascal: sink("P"); break;
 	case System:
 		assert(false);  // I assume we'll have had a pass removing System by now.
 	}
 }
 
-void mangleString(string s, ref string mangledString)
+void mangleString(string s, Sink sink)
 {
-	mangledString ~= format("%s%s", s.length, s);
+	sink(format("%s%s", s.length, s));
 }
 
-void mangleName(string[] names, ref string mangledString)
+void mangleName(string[] names, Sink sink)
 {
 	foreach (name; names) {
-		mangleString(name, mangledString);
+		mangleString(name, sink);
+	}
+}
+
+string getPrimitiveType(ir.PrimitiveType t)
+{
+	final switch (t.type) with (ir.PrimitiveType.Kind) {
+	case Bool:   return "t";
+	case Byte:   return "b";
+	case Char:   return "c";
+	case Wchar:  return "w";
+	case Dchar:  return "d";
+	case Double: return "fd";
+	case Float:  return "ff";
+	case Int:    return "i";
+	case Long:   return "l";
+	case Real:   return "fr";
+	case Short:  return "s";
+	case Ubyte:  return "ub";
+	case Uint:   return "ui";
+	case Ulong:  return "ul";
+	case Ushort: return "us";
+	case Void:   return "v";
+	case Invalid:
+		throw panic(t, "invalid primitive kind");
+	}
+}
+
+string getPrimitiveTypeConst(ir.PrimitiveType t)
+{
+	final switch (t.type) with (ir.PrimitiveType.Kind) {
+	case Bool:   return "ot";
+	case Byte:   return "ob";
+	case Char:   return "oc";
+	case Wchar:  return "ow";
+	case Dchar:  return "od";
+	case Double: return "ofd";
+	case Float:  return "off";
+	case Int:    return "oi";
+	case Long:   return "ol";
+	case Real:   return "ofr";
+	case Short:  return "os";
+	case Ubyte:  return "oub";
+	case Uint:   return "oui";
+	case Ulong:  return "oul";
+	case Ushort: return "ous";
+	case Void:   return "ov";
+	case Invalid:
+		throw panic(t, "invalid primitive kind");
+	}
+}
+
+string getPrimitiveTypeImmutable(ir.PrimitiveType t)
+{
+	final switch (t.type) with (ir.PrimitiveType.Kind) {
+	case Bool:   return "mt";
+	case Byte:   return "mb";
+	case Char:   return "mc";
+	case Wchar:  return "mw";
+	case Dchar:  return "md";
+	case Double: return "mfd";
+	case Float:  return "mff";
+	case Int:    return "mi";
+	case Long:   return "ml";
+	case Real:   return "mfr";
+	case Short:  return "ms";
+	case Ubyte:  return "mub";
+	case Uint:   return "mui";
+	case Ulong:  return "mul";
+	case Ushort: return "mus";
+	case Void:   return "mv";
+	case Invalid:
+		throw panic(t, "invalid primitive kind");
 	}
 }
