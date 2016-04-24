@@ -439,8 +439,12 @@ bool printUsage()
 	writefln("\t--arch           Select processer architecture: 'x86', 'x86_64', 'le32'");
 	writefln("\t--platform       Select platform: 'mingw', 'linux', 'osx', 'msvc', 'metal'");
 	writefln("");
-	writefln("\t--linker linker  Linking program to use for linking.");
-	writefln("\t-Xlinker arg     Add an argument when invoking the linker.");
+	writefln("\t--cc compiler    C compiler to use for linking.");
+	writefln("\t--Xcc arg        Add an argument when invoking the cc linker.");
+	writefln("\t--ld linker      LD compatible program to use for linking.");
+	writefln("\t--Xld arg        Add an argument when invoking the linker.");
+	writefln("\t--link msvc      MSVC link program to use for linking.");
+	writefln("\t--Xlink arg      Add an argument when invoking MSVC link.");
 	writefln("\t--emit-bitcode   Emit LLVM bitcode (implies -c).");
 	writefln("\t-S,--no-backend  Stop compilation before the backend.");
 	writefln("\t--no-catch       For compiler debugging purposes.");
