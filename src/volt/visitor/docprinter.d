@@ -2,7 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.visitor.docprinter;
 
-import watt.path : mkdir, dirSeparator;
+import watt.path : mkdir, dirName, dirSeparator;
 import watt.io.streams : OutputFileStream;
 import watt.text.format : format;
 
@@ -10,6 +10,7 @@ import ir = volt.ir.ir;
 
 import volt.errors;
 import volt.interfaces;
+import volt.util.path : mkdirP;
 import volt.visitor.visitor;
 
 
@@ -56,12 +57,16 @@ public:
 			if (mTransformCount >= 2) {
 				throw makeExpected(m, "only one file with -do switch");
 			}
-		} else foreach (i, ident; m.name.identifiers) {
-			filename ~= ident.value;
-			if (i < m.name.identifiers.length - 1) {
-				filename ~= dirSeparator;
+		} else {
+			foreach (i, ident; m.name.identifiers) {
+				filename ~= ident.value;
+				if (i < m.name.identifiers.length - 1) {
+					filename ~= dirSeparator;
+				}
 			}
 			filename ~= ".html";
+
+			mkdirP(dirName(filename));
 		}
 		mHtmlFile = new OutputFileStream(filename);
 		accept(m, this);
@@ -97,7 +102,7 @@ public:
 	{
 		openTag(`div class="function"`);
 		openTag("h3");
-		mHtmlFile.write(format("function %s", func.name));
+		mHtmlFile.writef("function %s", func.name);
 		closeTag("h3");
 		outputComment(func);
 		return Continue;
@@ -113,7 +118,7 @@ public:
 	{
 		openTag(`div class="variable"`);
 		openTag("h3");
-		mHtmlFile.write(format("variable %s", var.name));
+		mHtmlFile.writef("variable %s", var.name);
 		closeTag("h3");
 		outputComment(var);
 		closeTag("div");
@@ -124,7 +129,7 @@ public:
 	{
 		openTag(`div class="variable"`);
 		openTag("h3");
-		mHtmlFile.write(format("alias %s", _alias.name));
+		mHtmlFile.writef("alias %s", _alias.name);
 		closeTag("h3");
 		outputComment(_alias);
 		closeTag("div");
@@ -135,7 +140,7 @@ public:
 	{
 		openTag(`div class="struct"`);
 		openTag("h3");
-		mHtmlFile.write(format("struct %s", _struct.name));
+		mHtmlFile.writef("struct %s", _struct.name);
 		closeTag("h3");
 		outputComment(_struct);
 		return Continue;
@@ -151,7 +156,7 @@ public:
 	{
 		openTag(`div class="class"`);
 		openTag("h3");
-		mHtmlFile.write(format("class %s", _class.name));
+		mHtmlFile.writef("class %s", _class.name);
 		closeTag("h3");
 		outputComment(_class);
 		return Continue;
@@ -167,7 +172,7 @@ public:
 	{
 		openTag(`div class="union"`);
 		openTag("h3");
-		mHtmlFile.write(format("union %s", _union.name));
+		mHtmlFile.writef("union %s", _union.name);
 		closeTag("h3");
 		outputComment(_union);
 		return Continue;
@@ -183,7 +188,7 @@ public:
 	{
 		openTag(`div class="interface"`);
 		openTag("h3");
-		mHtmlFile.write(format("interface %s", _interface.name));
+		mHtmlFile.writef("interface %s", _interface.name);
 		closeTag("h3");
 		outputComment(_interface);
 		return Continue;
@@ -199,7 +204,7 @@ public:
 	{
 		openTag(`div class="uattr"`);
 		openTag("h3");
-		mHtmlFile.write(format("user attribute %s", uattr.name));
+		mHtmlFile.writef("user attribute %s", uattr.name);
 		closeTag("h3");
 		outputComment(uattr);
 		return Continue;
@@ -215,7 +220,7 @@ public:
 	{
 		openTag(`div class="enum"`);
 		openTag("h3");
-		mHtmlFile.write(format("enum %s", _enum.name));
+		mHtmlFile.writef("enum %s", _enum.name);
 		closeTag("h3");
 		outputComment(_enum);
 		return Continue;
@@ -231,7 +236,7 @@ public:
 	{
 		openTag(`div class="enumdeclaration"`);
 		openTag("h3");
-		mHtmlFile.write(format("%s", edecl.name));
+		mHtmlFile.writef("%s", edecl.name);
 		closeTag("h3");
 		outputComment(edecl);
 		closeTag("div");
