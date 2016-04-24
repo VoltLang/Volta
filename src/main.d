@@ -16,6 +16,11 @@ import volt.util.path;
 import volt.util.perf : Perf, perf;
 
 
+/**
+ * The entry point for the compiler.
+ *
+ * Parses args and hands them of to the driver.
+ */
 int main(string[] strArgs)
 {
 	Settings settings;
