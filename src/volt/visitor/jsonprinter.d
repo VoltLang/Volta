@@ -47,6 +47,8 @@ public:
 		writeArray("structs", structs, ",\n");
 		writeArray("classes", classes, "\n");
 		w("}\n");
+		mFile.flush();
+		mFile.close();
 	}
 
 	override Status enter(ir.Function func)
