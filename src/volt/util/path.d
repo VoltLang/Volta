@@ -4,13 +4,32 @@
 module volt.util.path;
 
 import watt.conv : toString;
-import watt.path : dirName, dirSeparator;
+import watt.path : mkdir, exists, dirName, dirSeparator;
 
 version (Posix) {
 	version (Volt) import core.posix.unistd : getuid;
 	else import core.sys.posix.unistd : getuid;
 }
 
+
+/**
+ * Does the same as unix's "mkdir -p" command.
+ */
+void mkdirP(string name)
+{
+	if (name == "" || name is null) {
+		return;
+	}
+
+	auto str = dirName(name);
+	if (str != ".") {
+		mkdirP(str);
+	}
+
+	if (!exists(name)) {
+		mkdir(name);
+	}
+}
 
 /**
  * Turns a qualified module name into a list of possible file paths.
