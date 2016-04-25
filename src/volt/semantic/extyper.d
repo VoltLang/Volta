@@ -2984,9 +2984,200 @@ void extypeThrowStatement(Context ctx, ref ir.Node n)
 // Moved here for now.
 struct ArrayCase
 {
-	ir.Exp originalExp;
+	ir.Exp[] originalExps;
 	ir.SwitchCase _case;
 	ir.IfStatement lastIf;
+	size_t lastI;
+}
+
+/// Some extypeSwitchStatment utility functions.
+/// @{
+
+void addExp(Context ctx, ir.SwitchStatement ss, ir.Exp element, ref ir.Exp exp, ref size_t sz,
+            ref uint[] intArrayData, ref ulong[] longArrayData)
+{
+	auto constant = cast(ir.Constant) element;
+	if (constant !is null) {
+		if (sz == 0) {
+			sz = size(ctx.lp, constant.type);
+			assert(sz > 0);
+		}
+		switch (sz) {
+		case 8:
+			longArrayData ~= constant.u._ulong;
+			break;
+		default:
+			intArrayData ~= constant.u._uint;
+			break;
+		}
+		return;
+	}
+	auto cexp = cast(ir.Unary) element;
+	if (cexp !is null) {
+		assert(cexp.op == ir.Unary.Op.Cast);
+		auto tmpsz = size(ctx.lp, cexp.type);
+		// If there were previous casts, they should be to the same type.
+		assert(sz == 0 || tmpsz == sz);
+		sz = tmpsz;
+		assert(sz == 8);
+		addExp(ctx, ss, cexp.value, exp, sz, intArrayData, longArrayData);
+		return;
+	}
+	auto type = getExpType(exp);
+	throw makeSwitchBadType(ss, type);
+}
+
+uint getExpHash(Context ctx, ir.SwitchStatement ss, ir.Exp exp)
+{
+	auto etype = getExpType(exp);
+	panicAssert(ss, isArray(etype));
+	uint h;
+	auto constant = cast(ir.Constant) exp;
+	if (constant !is null) {
+		assert(isString(etype));
+		assert(constant._string[0] == '\"');
+		assert(constant._string[$-1] == '\"');
+		auto str = constant._string[1..$-1];
+		h = hash(cast(ubyte[]) str);
+	} else {
+		auto alit = cast(ir.ArrayLiteral) exp;
+		assert(alit !is null);
+		auto atype = cast(ir.ArrayType) etype;
+		assert(atype !is null);
+		uint[] intArrayData;
+		ulong[] longArrayData;
+		size_t sz;
+
+		foreach (e; alit.exps) {
+			addExp(ctx, ss, e, exp, sz, intArrayData, longArrayData);
+		}
+		if (sz == 8) {
+			h = hash(cast(ubyte[]) longArrayData);
+		} else {
+			h = hash(cast(ubyte[]) intArrayData);
+		}
+	}
+	return h;
+}
+
+void replaceWithHashIfNeeded(Context ctx, ir.SwitchStatement ss, ir.SwitchCase _case,
+                             ref ArrayCase[uint] arrayCases, size_t i,
+                             ir.Variable condVar, ref size_t[] toRemove, ref ir.Exp exp)
+{
+	if (exp is null) {
+		return;
+	}
+
+	uint h = getExpHash(ctx, ss, exp);
+
+	if (auto p = h in arrayCases) {
+		assert(_case.statements.statements.length > 0);
+		auto loc = exp.location;
+		ir.BlockStatement elseBlock;
+		auto newSwitchBlock = buildBlockStat(loc, null, _case.statements.myScope.parent);
+		if (p.lastIf !is null) {
+			elseBlock = buildBlockStat(loc, null, newSwitchBlock.myScope);
+			elseBlock.statements ~= p.lastIf;
+		}
+		auto cref = buildExpReference(condVar.location, condVar, condVar.name);
+		auto cmp = buildBinOp(loc, ir.BinOp.Op.Equal, copyExp(exp), cref);
+		auto ifs = buildIfStat(loc, cmp, _case.statements, elseBlock);
+		_case.statements.myScope.parent = newSwitchBlock.myScope;
+		newSwitchBlock.statements ~= ifs;
+		newSwitchBlock.statements ~= buildGotoDefault(exp.location);
+		_case.statements = newSwitchBlock;
+		if (p.lastIf !is null) {
+			p.lastIf.thenState.myScope.parent = ifs.elseState.myScope;
+			if (p.lastIf.elseState !is null) {
+				p.lastIf.elseState.myScope.parent = ifs.elseState.myScope;
+			}
+		}
+		p.lastIf = ifs;
+		toRemove ~= p.lastI;
+		p.lastI = i;
+		if (p.originalExps.length > 1) {
+			bool[uint] hashes;
+			foreach (e; p.originalExps) {
+				auto hash = getExpHash(ctx, ss, e);
+				auto pp = hash in hashes;
+				if (pp is null) {
+					hashes[hash] = true;
+				}
+			}
+			exp = null;
+			_case.exps = new ir.Exp[](hashes.length);
+			foreach (ii, hash; hashes.keys) {
+				_case.exps[ii] = buildConstantUint(loc, hash);
+				auto conditionType = realType(extype(ctx, ss.condition, Parent.NA));
+				checkAndDoConvert(ctx, conditionType, _case.exps[ii]);
+			}
+			return;
+		}
+	} else {
+		auto loc = exp.location;
+		auto newSwitchBlock = buildBlockStat(loc, null, _case.statements.myScope.parent);
+		auto cref = buildExpReference(condVar.location, condVar, condVar.name);
+		auto cmp = buildBinOp(loc, ir.BinOp.Op.Equal, copyExp(exp), cref);
+		auto ifs = buildIfStat(loc, cmp, _case.statements, null);
+		_case.statements.myScope.parent = newSwitchBlock.myScope;
+		newSwitchBlock.statements ~= ifs;
+		newSwitchBlock.statements ~= buildGotoDefault(exp.location);
+		_case.statements = newSwitchBlock;
+		ArrayCase ac = {[exp], _case, ifs, i};
+		arrayCases[h] = ac;
+	}
+	exp = buildConstantUint(exp.location, h);
+}
+
+/// @}
+
+/// Same as the above function, but handle the multi-case case.
+void replaceExpsWithHashIfNeeded(Context ctx, ir.SwitchStatement ss, ir.SwitchCase _case,
+                                 ref ArrayCase[uint] arrayCases,
+                                 size_t i, ir.Variable condVar, ref ir.Exp[] exps)
+{
+	auto loc = exps[0].location;
+	panicAssert(ss, exps.length > 1);
+
+	if (!isArray(getExpType(exps[0]))) {
+		return;
+	}
+
+	ir.Exp[] cmps;
+	foreach (e; exps) {
+		panicAssert(ss, isArray(getExpType(e)));
+		auto cref = buildExpReference(condVar.location, condVar, condVar.name);
+		cmps ~= buildBinOp(loc, ir.BinOp.Op.Equal, copyExp(e), cref);
+	}
+	auto cmp = buildBinOp(loc, ir.BinOp.Op.OrOr, cmps[0], null);
+	auto baseCmp = cmp;
+	cmps = cmps[1 .. $];
+	while (cmps.length > 0) {
+		if (cmps.length > 1) {
+			cmp.right = buildBinOp(loc, ir.BinOp.Op.Or, cmps[0], null);
+		} else {
+			cmp.right = cmps[0];
+		}
+		cmp = cast(ir.BinOp)cmp.right;
+		cmps = cmps[1 .. $];
+	}
+
+	auto newSwitchBlock = buildBlockStat(loc, null, _case.statements.myScope.parent);
+	auto ifs = buildIfStat(loc, baseCmp, _case.statements, null);
+	_case.statements.myScope.parent = newSwitchBlock.myScope;
+	newSwitchBlock.statements ~= ifs;
+	newSwitchBlock.statements ~= buildGotoDefault(loc);
+	_case.statements = newSwitchBlock;
+	auto originalExps = new ir.Exp[](exps.length);
+	foreach (ii, ref e; exps) {
+		originalExps[ii] = copyExp(e);
+	}
+	foreach (ref e; exps) {
+		auto h = getExpHash(ctx, ss, e);
+		e = buildConstantUint(loc, h);
+		ArrayCase ac = {originalExps, _case, ifs, i};
+		arrayCases[h] = ac;
+	}
 }
 
 /**
@@ -3025,11 +3216,43 @@ void extypeSwitchStatement(Context ctx, ref ir.Node n)
 		extypeBlockStatement(ctx, _case.statements);
 	}
 
+	ir.Variable condVar;
 	if (isArray(conditionType)) {
-		auto l = ss.location;
 		auto asArray = cast(ir.ArrayType) conditionType;
-		assert(asArray !is null);
-		ir.Exp ptr = buildCastSmart(buildVoidPtr(l), buildArrayPtr(l, asArray.base, ss.condition));
+		panicAssert(ss, asArray !is null);
+
+		/* If we're switching on array, turn
+		 *    switch("hello") {
+		 * into
+		 *    auto __anon0 = "hello";
+		 *    switch(vrt_hash(__anon0)) {
+		 * The hash is so we can use the normal switch backend for performance,
+		 * and the anonymous variable is so we can refer to the condition if we
+		 * have multiple cases matching the same hash.
+		 */
+		auto l = ss.location;
+		condVar = buildVariable(l, copyTypeSmart(l, conditionType),
+		                             ir.Variable.Storage.Function,
+		                             ctx.current.genAnonIdent(), ss.condition);
+		condVar.type.mangledName = mangle(conditionType);
+
+		/* The only place we can put this variable safely is right before this
+		 * SwitchStatement, so scan the parent BlockStatement for it.
+		 */
+		auto bs = cast(ir.BlockStatement)ctx.current.node;
+		panicAssert(ss, bs !is null);
+		size_t i;
+		for (i = 0; i < bs.statements.length; ++i) {
+			if (bs.statements[i] is ss) {
+				break;
+			}
+		}
+		panicAssert(ss, i < bs.statements.length);
+		bs.statements = bs.statements[0 .. i] ~ condVar ~ bs.statements[i .. $];
+
+		// Turn the condition into vrt_hash(__anon).
+		auto condRef = buildExpReference(l, condVar, condVar.name);
+		ir.Exp ptr = buildCastSmart(buildVoidPtr(l), buildArrayPtr(l, asArray.base, condRef));
 		ir.Exp length = buildBinOp(l, ir.BinOp.Op.Mul, buildArrayLength(l, ctx.lp, copyExp(ss.condition)),
 				getSizeOf(l, ctx.lp, asArray.base));
 		ss.condition = buildCall(ss.condition.location, ctx.lp.hashFunc, [ptr, length]);
@@ -3037,116 +3260,46 @@ void extypeSwitchStatement(Context ctx, ref ir.Node n)
 	}
 	ArrayCase[uint] arrayCases;
 	size_t[] toRemove;  // Indices of cases that have been folded into a collision case.
+	ir.SwitchCase[] emptyCases;
 
 	int defaultCount;
 	foreach (i, _case; ss.cases) {
-		void addExp(ir.Exp e, ref ir.Exp exp, ref size_t sz, ref uint[] intArrayData, ref ulong[] longArrayData)
-		{
-			auto constant = cast(ir.Constant) e;
-			if (constant !is null) {
-				if (sz == 0) {
-					sz = size(ctx.lp, constant.type);
-					assert(sz > 0);
-				}
-				switch (sz) {
-				case 8:
-					longArrayData ~= constant.u._ulong;
-					break;
-				default:
-					intArrayData ~= constant.u._uint;
-					break;
-				}
-				return;
-			}
-			auto cexp = cast(ir.Unary) e;
-			if (cexp !is null) {
-				assert(cexp.op == ir.Unary.Op.Cast);
-				auto tmpsz = size(ctx.lp, cexp.type);
-				// If there were previous casts, they should be to the same type.
-				assert(sz == 0 || tmpsz == sz);
-				sz = tmpsz;
-				assert(sz == 8);
-				addExp(cexp.value, exp, sz, intArrayData, longArrayData);
-				return;
-			}
-			auto type = getExpType(exp);
-			throw makeSwitchBadType(ss, type);
-		}
-
-		void replaceWithHashIfNeeded(ref ir.Exp exp)
-		{
-			if (exp is null) {
-				return;
-			}
-
-			auto etype = getExpType(exp);
-			if (!isArray(etype)) {
-				return;
-			}
-
-			uint h;
-			auto constant = cast(ir.Constant) exp;
-			if (constant !is null) {
-				assert(isString(etype));
-				assert(constant._string[0] == '\"');
-				assert(constant._string[$-1] == '\"');
-				auto str = constant._string[1..$-1];
-				h = hash(cast(ubyte[]) str);
-			} else {
-				auto alit = cast(ir.ArrayLiteral) exp;
-				assert(alit !is null);
-				auto atype = cast(ir.ArrayType) etype;
-				assert(atype !is null);
-				uint[] intArrayData;
-				ulong[] longArrayData;
-				size_t sz;
-
-				foreach (e; alit.exps) {
-					addExp(e, exp, sz, intArrayData, longArrayData);
-				}
-				if (sz == 8) {
-					h = hash(cast(ubyte[]) longArrayData);
-				} else {
-					h = hash(cast(ubyte[]) intArrayData);
-				}
-			}
-			if (auto p = h in arrayCases) {
-				auto aStatements = _case.statements.statements;
-				auto bStatements = p._case.statements.statements;
-				auto c = p._case.statements.myScope;
-				auto aBlock = buildBlockStat(exp.location, p._case.statements, c, aStatements);
-				auto bBlock = buildBlockStat(exp.location, p._case.statements, c, bStatements);
-				p._case.statements.statements = null;
-				auto cmp = buildBinOp(exp.location, ir.BinOp.Op.Equal, copyExp(exp), copyExp(originalCondition));
-				auto ifs = buildIfStat(exp.location, p._case.statements, cmp, aBlock, bBlock);
-				p._case.statements.statements[0] = ifs;
-				if (p.lastIf !is null) {
-					p.lastIf.thenState.myScope.parent = ifs.elseState.myScope;
-					p.lastIf.elseState.myScope.parent = ifs.elseState.myScope;
-				}
-				p.lastIf = ifs;
-				toRemove ~= i;
-			} else {
-				ArrayCase ac = {exp, _case, null};
-				arrayCases[h] = ac;
-			}
-			exp = buildConstantUint(exp.location, h);
-		}
-
 		if (_case.isDefault) {
 			defaultCount++;
 		}
-		if (_case.firstExp !is null) {
-			replaceWithHashIfNeeded(_case.firstExp);
-			checkAndDoConvert(ctx, conditionType, _case.firstExp);
+		if (condVar is null) {
+			continue;
 		}
 		if (_case.secondExp !is null) {
-			replaceWithHashIfNeeded(_case.secondExp);
-			checkAndDoConvert(ctx, conditionType, _case.secondExp);
+			throw makeError(_case.location, "non-primitive type for range case.");
 		}
-		foreach (ref exp; _case.exps) {
-			replaceWithHashIfNeeded(exp);
-			checkAndDoConvert(ctx, conditionType, exp);
+		if (_case.statements.statements.length == 0 && !_case.isDefault) {
+			emptyCases ~= _case;
+			toRemove ~= i;
+			continue;
+		} else if (emptyCases.length > 0) {
+			if (_case.firstExp !is null) {
+				_case.exps ~= _case.firstExp;
+				_case.firstExp = null;
+			}
+			foreach (emptyCase; emptyCases) {
+				if (emptyCase.firstExp !is null) {
+					_case.exps ~= emptyCase.firstExp;
+				} else {
+					_case.exps ~= emptyCase.exps;
+				}
+			}
+			emptyCases = [];
+		}
+
+		if (_case.firstExp !is null) {
+			replaceWithHashIfNeeded(ctx, ss, _case, arrayCases, i, condVar, toRemove, _case.firstExp);
+		}
+		if (_case.secondExp !is null) {
+			replaceWithHashIfNeeded(ctx, ss, _case, arrayCases, i, condVar, toRemove, _case.secondExp);
+		}
+		if (_case.exps.length > 0) {
+			replaceExpsWithHashIfNeeded(ctx, ss, _case, arrayCases, i, condVar, _case.exps);
 		}
 	}
 
@@ -3161,7 +3314,8 @@ void extypeSwitchStatement(Context ctx, ref ir.Node n)
 	}
 
 	for (int i = cast(int) toRemove.length - 1; i >= 0; i--) {
-		ss.cases = ss.cases[0 .. i] ~ ss.cases[i .. $];
+		size_t rmi = toRemove[i];
+		ss.cases = ss.cases[0 .. rmi] ~ ss.cases[rmi+1 .. $];
 	}
 
 	auto asEnum = cast(ir.Enum) conditionType;
@@ -3175,9 +3329,14 @@ void extypeSwitchStatement(Context ctx, ref ir.Node n)
 	foreach (_case; ss.cases) {
 		if (_case.firstExp !is null) {
 			caseCount++;
+			checkAndDoConvert(ctx, conditionType, _case.firstExp);
 		}
 		if (_case.secondExp !is null) {
 			caseCount++;
+			checkAndDoConvert(ctx, conditionType, _case.secondExp);
+		}
+		foreach (ref exp; _case.exps) {
+			checkAndDoConvert(ctx, conditionType, exp);
 		}
 		caseCount += _case.exps.length;
 	}

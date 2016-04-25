@@ -1856,3 +1856,19 @@ ir.Exp buildTypeInfoCast(LanguagePass lp, ir.Exp e)
 {
 	return buildCastSmart(e.location, lp.typeInfoClass, e);
 }
+
+ir.GotoStatement buildGotoDefault(Location loc)
+{
+	auto gs = new ir.GotoStatement();
+	gs.location = loc;
+	gs.isDefault = true;
+	return gs;
+}
+
+ir.GotoStatement buildGotoCase(Location loc)
+{
+	auto gs = new ir.GotoStatement();
+	gs.location = loc;
+	gs.isCase = true;
+	return gs;
+}
