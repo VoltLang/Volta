@@ -601,44 +601,6 @@ public:
 		return Continue;
 	}
 
-	void replaceNestedNames(ref string s)
-	{
-		if (mFunctionStack.length == 0) {
-			return;
-		}
-		/* Names in nested functions are modified to allow for shadowing,
-		 * correct strings that point to these renamed declarations
-		 * here.
-		 */
-		foreach (func; mFunctionStack[0].nestedFunctions) {
-			if (s == func.oldname) {
-				s = func.name;
-				return;
-			}
-		}
-		foreach_reverse(func; mFunctionStack) {
-			foreach (var; func.params) {
-				if (s == var.oldname) {
-					s = var.name;
-					return;
-				}
-			}
-			foreach (var; func.renamedVariables) {
-				if (s == var.oldname) {
-					s = var.name;
-				}
-			}
-		}
-	}
-
-	override Status visit(ref ir.Exp exp, ir.IdentifierExp iexp)
-	{
-		if (!iexp.globalLookup) {
-			replaceNestedNames(iexp.value);
-		}
-		return Continue;
-	}
-
 	override Status leave(ir.Module m) { pop(); return Continue; }
 	override Status leave(ir.Class c) { pop(c); return Continue; }
 	override Status leave(ir.Struct s) { pop(s); return Continue; }

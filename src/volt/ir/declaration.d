@@ -46,7 +46,6 @@ abstract class Declaration : Node
 		FunctionParam = NodeType.FunctionParam,
 	}
 	Attribute[] userAttrs;
-	string oldname;  // Optional. Used for righting lookups of renamed identifiers in nested functions.
 
 	@property Kind declKind() { return cast(Kind)nodeType; }
 	this(NodeType nt) { super(nt); }
@@ -283,8 +282,6 @@ public:
 	Variable nestedHiddenParameter;
 	/// As above, but includes the initial declaration in the non nested parent.
 	Variable nestedVariable;
-	/// Variables renamed for nested shadowing.
-	Variable[] renamedVariables;
 
 	Struct nestStruct;
 
