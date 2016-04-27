@@ -37,8 +37,7 @@ ir.Store findShadowed(ir.Scope _scope, Location loc, string name)
 	}
 
 	if (_scope.parent !is null) {
-		if (_scope.node.nodeType == ir.NodeType.Function &&
-		    _scope.parent.node.nodeType == ir.NodeType.Function) {
+		if (_scope.node.nodeType == ir.NodeType.Function) {
 			return null;
 		}
 		return findShadowed(_scope.parent, loc, name);
@@ -83,12 +82,6 @@ void gather(ir.Scope current, ir.Alias a, Where where)
 void gather(ir.Scope current, ir.Variable v, Where where, ir.Function[] functionStack)
 {
 	assert(v.access.isValidAccess());
-
-	if (functionStack.length > 1) {
-		v.oldname = v.name;
-		v.name = functionStack[$-1].name ~ v.name;
-		functionStack[$-1].renamedVariables ~= v;
-	}
 
 	// TODO Move to semantic.
 	auto shadowStore = findShadowed(current, v.location, v.name);
@@ -219,10 +212,6 @@ void addScope(ir.Scope current, ir.Function func, ir.Type thisType, ir.Function[
 
 	if (func._body !is null) {
 		foreach (var; func.params) {
-			if (current.node.nodeType == ir.NodeType.BlockStatement) {
-				var.oldname = var.name;
-				var.name = func.name ~ var.name;
-			}
 			if (var.name !is null) {
 				func.myScope.addValue(var, var.name);
 			}
