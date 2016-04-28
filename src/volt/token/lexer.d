@@ -1189,13 +1189,26 @@ LexStatus lexReal(TokenWriter tw)
 
 LexStatus lexHashLine(TokenWriter tw)
 {
+	auto token = currentLocationToken(tw);
 	if (!match(tw, '#')) {
 		return Failed;
 	}
-	tw.source.skipWhitespace();
+
+	if (match(tw, "run")) {
+		if (!isWhite(tw.source.current)) {
+			return lexExpected(tw, token.location, "#run");
+		}
+
+		token.type = TokenType.HashRun;
+		token.value = "#run";
+		tw.addToken(token);
+		return Succeeded;
+	}
+
 	if (!match(tw, "line")) {
 		return Failed;
 	}
+
 	tw.source.skipWhitespace();
 
 	if (!lexNumber(tw)) {

@@ -34,7 +34,7 @@ enum immutable(string)[] _tokenToString = [
 "try", "typedef", "typeid", "typeof", "ubyte", "ucent", "uint",
 "ulong", "union", "unittest", "ushort", "va_arg", "version", "void",
 "volatile", "wchar", "while", "with", "__FILE__", "__FUNCTION__", "__LINE__",
-"__PRETTY_FUNCTION__", "__thread", "__traits",
+"__PRETTY_FUNCTION__", "__thread", "__traits", "#run",
 "/", "/=", ".", "..", "...", "&", "&=", "&&", "|", "|=", "||",
 "-", "-=", "--", "+", "+=", "++", "<", "<=", "<<", "<<=", "<>", "<>=",
 ">", ">=", ">>=", ">>>=", ">>", ">>>", "!", "!=", "!<>", "!<>=", "!<",
@@ -98,6 +98,7 @@ enum TokenType
 	VaArg, Version, Void, Volatile,
 	Wchar, While, With,
 	__File__, __Function__, __Line__, __Pretty_Function__, __Thread, __Traits,
+	HashRun,
 
 	/// Symbols.
 	Slash,                  // /
