@@ -22,6 +22,16 @@ import volt.util.string;
 
 ParseStatus parseExp(ParserStream ps, out ir.Exp exp)
 {
+	if (ps == TokenType.HashRun) {
+		ir.RunExp runexp;
+		auto succeeded = parseRunExp(ps, runexp);
+		if (!succeeded) {
+			return parseFailed(ps, ir.NodeType.RunExp);
+		}
+		exp = runexp;
+		return Succeeded;
+	}
+
 	intir.AssignExp aexp;
 	auto succeeded = parseAssignExp(ps, aexp);
 	if (!succeeded) {
@@ -1869,6 +1879,21 @@ ParseStatus parseVaArgExp(ParserStream ps, out ir.VaArgExp vaexp)
 	succeeded = match(ps, ir.NodeType.VaArgExp, TokenType.CloseParen);
 	if (!succeeded) {
 		return succeeded;
+	}
+	return Succeeded;
+}
+
+ParseStatus parseRunExp(ParserStream ps, out ir.RunExp runexp)
+{
+	runexp = new ir.RunExp();
+	runexp.location = ps.peek.location;
+	auto succeeded = match(ps, ir.NodeType.RunExp, TokenType.HashRun);
+	if (!succeeded) {
+		return succeeded;
+	}
+	succeeded = parseExp(ps, runexp.child);
+	if (!succeeded) {
+		return parseFailed(ps, runexp);
 	}
 	return Succeeded;
 }

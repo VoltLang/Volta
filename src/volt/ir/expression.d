@@ -759,3 +759,21 @@ public:
 		super(NodeType.AccessExp);
 	}
 }
+
+/**
+ * An expression that forces the compiler to evaluate another expression
+ * at compile time.
+ *
+ * @ingroup irNode irExp
+ */
+class RunExp : Exp
+{
+public:
+	Exp child;  ///< The expression to run.
+
+public:
+	this()
+	{
+		super(NodeType.RunExp);
+	}
+}

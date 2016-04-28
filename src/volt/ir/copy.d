@@ -351,6 +351,14 @@ ir.BuiltinExp copy(ir.BuiltinExp old)
 	return builtin;
 }
 
+ir.RunExp copy(ir.RunExp old)
+{
+	auto re = new ir.RunExp();
+	re.location = old.location;
+	re.child = copyExp(old.child);
+	return re;
+}
+
 /*
  *
  * Helpers.
@@ -501,6 +509,9 @@ ir.Node copyNode(ir.Node n)
 	case BuiltinExp:
 		auto bi = cast(ir.BuiltinExp)n;
 		return copy(bi);
+	case RunExp:
+		auto re = cast(ir.RunExp)n;
+		return copy(re);
 	case Enum:
 	case StatementExp:
 	case PrimitiveType:

@@ -1891,6 +1891,18 @@ public:
 		assert(false);
 	}
 
+	override Status enter(ref ir.Exp exp, ir.RunExp runexp)
+	{
+		wf("#run");
+		acceptExp(runexp.child, this);
+		return ContinueParent;
+	}
+
+	override Status leave(ref ir.Exp exp, ir.RunExp runexp)
+	{
+		assert(false);
+	}
+
 	override Status enter(ref ir.Exp, ir.Typeid ti)
 	{
 		wf("typeid(");

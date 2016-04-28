@@ -131,6 +131,7 @@ enum NodeType
 	PropertyExp,
 	BuiltinExp,
 	AccessExp,
+	RunExp,
 }
 
 /**
@@ -401,6 +402,7 @@ string nodeToString(NodeType nodeType)
 	case BuiltinExp: return "BuiltinExp";
 	case NoType: return "NoType";
 	case AccessExp: return "AccessExp";
+	case RunExp: return "RunExp";
 	}
 }
 

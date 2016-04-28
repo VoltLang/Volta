@@ -2775,6 +2775,19 @@ ir.Type extypeAccessExp(Context ctx, ref ir.Exp exp, Parent parent)
  *
  */
 
+ir.Type extypeRunExp(Context ctx, ref ir.Exp exp, Parent parent)
+{
+	auto runexp = cast(ir.RunExp)exp;
+	panicAssert(exp, runexp !is null);
+	panicAssert(exp, runexp.child !is null);
+	auto type = extype(ctx, runexp.child, Parent.NA);
+	auto pfix = cast(ir.Postfix)runexp.child;
+	if (pfix is null || pfix.op != ir.Postfix.Op.Call) {
+		throw makeExpectedCall(runexp);
+	}
+	throw panicUnhandled(exp, "RunExp");
+}
+
 ir.Type extypeAssert(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	throw panicUnhandled(exp, "Assert (exp)");
@@ -2891,6 +2904,8 @@ ir.Type extypeUnchecked(Context ctx, ref ir.Exp exp, Parent parent)
 		return extypeBuiltinExp(ctx, exp, parent);
 	case AccessExp:
 		return extypeAccessExp(ctx, exp, parent);
+	case RunExp:
+		return extypeRunExp(ctx, exp, parent);
 	default:
 		assert(false, "unknown exp");
 	}
