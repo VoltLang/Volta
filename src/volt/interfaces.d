@@ -579,6 +579,7 @@ public:
 
 	string outputFile;
 	string[] includePaths; ///< The -I arguments.
+	string[] srcIncludePaths; ///< The -src-I arguments.
 
 	string[] libraryPaths; ///< The -L arguments.
 	string[] libraryFiles; ///< The -l arguments.

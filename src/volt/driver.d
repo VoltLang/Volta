@@ -56,6 +56,7 @@ protected:
 	string mLink;       // MSVC Link
 
 	string[] mIncludes;
+	string[] mSrcIncludes;
 	string[] mSourceFiles;
 	string[] mBitcodeFiles;
 	string[] mObjectFiles;
@@ -101,6 +102,7 @@ public:
 		}
 
 		mIncludes = settings.includePaths;
+		mSrcIncludes = settings.srcIncludePaths;
 
 		mLibraryPaths = settings.libraryPaths;
 		mLibraryFiles = settings.libraryFiles;
@@ -173,25 +175,20 @@ public:
 	 */
 	override ir.Module loadModule(ir.QualifiedName name)
 	{
-		string[] validPaths;
-		foreach (path; mIncludes) {
-			auto paths = genPossibleFilenames(path, name.strings);
-
-			foreach (possiblePath; paths) {
-				if (exists(possiblePath)) {
-					validPaths ~= possiblePath;
-				}
-			}
-		}
-
-		if (validPaths.length == 0) {
+		auto srcPath = pathFromQualifiedName(name, mSrcIncludes);
+		auto incPath = pathFromQualifiedName(name, mIncludes);
+		if (srcPath.length == 0 && incPath.length == 0) {
 			return null;
 		}
-		if (validPaths.length > 1) {
-			throw makeMultipleValidModules(name, validPaths);
+		if (srcPath.length > 0) {
+			mSourceFiles ~= srcPath;
+			auto m = loadAndParse(srcPath);
+			languagePass.addModule(m);
+			mCommandLineModules ~= m;
+			return m;
 		}
-
-		return loadAndParse(validPaths[0]);
+		assert(incPath.length > 0);
+		return loadAndParse(incPath);
 	}
 
 	override ir.Module[] getCommandLineModules()
@@ -292,6 +289,28 @@ public:
 	}
 
 protected:
+	string pathFromQualifiedName(ir.QualifiedName name, string[] includes)
+	{
+		string[] validPaths;
+		foreach (path; includes) {
+			auto paths = genPossibleFilenames(path, name.strings);
+
+			foreach (possiblePath; paths) {
+				if (exists(possiblePath)) {
+					validPaths ~= possiblePath;
+				}
+			}
+		}
+
+		if (validPaths.length == 0) {
+			return "";
+		}
+		if (validPaths.length > 1) {
+			throw makeMultipleValidModules(name, validPaths);
+		}
+		return validPaths[0];
+	}
+
 	/**
 	 * Loads a file and parses it.
 	 */

@@ -28,6 +28,7 @@ public:
 
 		Identifier,
 		IncludePath,
+		SrcPath,
 		Warnings,
 		PreprocessOnly,  ///< -E
 		CompileOnly,     ///< -S
@@ -142,6 +143,9 @@ void filterArgs(Arg[] args, ref string[] files, VersionSet ver, Settings setting
 			break;
 		case IncludePath:
 			settings.includePaths ~= arg.arg;
+			break;
+		case SrcPath:
+			settings.srcIncludePaths ~= arg.arg;
 			break;
 		case Warnings:
 			settings.warningsEnabled = true;

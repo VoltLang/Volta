@@ -233,7 +233,11 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 			makeArgNext(Output);
 			continue;
 		case "-I":
+		case "-lib-I", "--lib-I":
 			makeArgNext(IncludePath);
+			continue;
+		case "-src-I", "--src-I":
+			makeArgNext(SrcPath);
 			continue;
 		case "-L":
 			libraryPath(looper.next());
