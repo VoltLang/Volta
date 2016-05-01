@@ -524,6 +524,7 @@ protected:
 			"/MACHINE:x64",
 			"/defaultlib:libcmt",
 			"/defaultlib:oldnames",
+			"legacy_stdio_definitions.lib",
 			"/nologo",
 			"/out:" ~ of];
 
