@@ -2,11 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.token.lexer;
 
-version (Volt) {
-	import core.stdc.time : time, localtime;
-} else {
-	import std.c.time : time, localtime;
-}
+import core.stdc.time : time, localtime;
 
 import watt.text.ascii : isDigit, isAlpha, isWhite;
 import watt.text.format : format;
