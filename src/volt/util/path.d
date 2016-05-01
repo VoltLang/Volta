@@ -34,7 +34,7 @@ void mkdirP(string name)
 /**
  * Turns a qualified module name into a list of possible file paths.
  */
-string[] genPossibleFilenames(string dir, string[] names)
+string[] genPossibleFilenames(string dir, string[] names, string suffix)
 {
 	string[] paths;
 	auto ret = dir;
@@ -42,8 +42,8 @@ string[] genPossibleFilenames(string dir, string[] names)
 	foreach (name; names) {
 		ret ~= dirSeparator ~ name;
 	}
-	paths ~= ret ~ ".volt";
-	paths ~= ret ~ dirSeparator ~ "package.volt";
+	paths ~= ret ~ suffix;
+	paths ~= ret ~ dirSeparator ~ "package" ~  suffix;
 
 	return paths;
 }

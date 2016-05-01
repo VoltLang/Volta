@@ -175,19 +175,25 @@ public:
 	 */
 	override ir.Module loadModule(ir.QualifiedName name)
 	{
-		auto srcPath = pathFromQualifiedName(name, mSrcIncludes);
-		auto incPath = pathFromQualifiedName(name, mIncludes);
-		if (srcPath.length == 0 && incPath.length == 0) {
-			return null;
+		auto srcPath = pathFromQualifiedName(name, mSrcIncludes, ".volt");
+		auto incPath = pathFromQualifiedName(name, mIncludes, ".volt");
+		if (srcPath is null && incPath is null) {
+			if (!settings.internalD) {
+				return null;
+			}
+
+			srcPath = pathFromQualifiedName(name, mSrcIncludes, ".d");
+			incPath = pathFromQualifiedName(name, mIncludes, ".d");
 		}
-		if (srcPath.length > 0) {
+
+		if (srcPath !is null) {
 			mSourceFiles ~= srcPath;
 			auto m = loadAndParse(srcPath);
 			languagePass.addModule(m);
 			mCommandLineModules ~= m;
 			return m;
 		}
-		assert(incPath.length > 0);
+		assert(incPath !is null);
 		return loadAndParse(incPath);
 	}
 
@@ -289,11 +295,13 @@ public:
 	}
 
 protected:
-	string pathFromQualifiedName(ir.QualifiedName name, string[] includes)
+	string pathFromQualifiedName(ir.QualifiedName name, string[] includes,
+	                             string suffix)
 	{
 		string[] validPaths;
 		foreach (path; includes) {
-			auto paths = genPossibleFilenames(path, name.strings);
+			auto paths = genPossibleFilenames(
+				path, name.strings, suffix);
 
 			foreach (possiblePath; paths) {
 				if (exists(possiblePath)) {
@@ -302,8 +310,8 @@ protected:
 			}
 		}
 
-		if (validPaths.length == 0) {
-			return "";
+		if (validPaths is null) {
+			return null;
 		}
 		if (validPaths.length > 1) {
 			throw makeMultipleValidModules(name, validPaths);
