@@ -633,6 +633,9 @@ public:
 		foreach (ref f; includePaths) {
 			f = replaceEscapes(f);
 		}
+		foreach (ref f; srcIncludePaths) {
+			f = replaceEscapes(f);
+		}
 		foreach (ref f; libraryPaths) {
 			f = replaceEscapes(f);
 		}
