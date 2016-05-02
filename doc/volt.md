@@ -47,9 +47,9 @@ Omitting the closing comment brace is an error.
     cdouble cent cfloat char class const continue creal
     dchar debug default delegate delete deprecated do double
     else enum export extern
-    false final finally float for foreach foreach_reverse function
+    f32 f64 false final finally float for foreach foreach_reverse function
     global goto
-    idouble if ifloat immutable import in inout int interface
+    i8 i16 i32 i64 isize idouble if ifloat immutable import in inout int interface
     invariant ireal is
     lazy local long
     macro mixin module
@@ -59,7 +59,7 @@ Omitting the closing comment brace is an error.
     real ref return
     scope shared short static struct super switch synchronized
     template this throw true try typedef typeid typeof
-    ubyte ucent uint ulong union unittest ushort
+    u8 u16 u32 u64 usize ubyte ucent uint ulong union unittest ushort
     va_arg version void volatile wchar while with
     __thread __traits __FILE__ __FUNCTION__ __LINE__ __PRETTY_FUNCTION__
 
@@ -77,19 +77,19 @@ Furthermore, the following are handled specially by the lexer.
 
 *Integer Literals* start with a number from `1` to `9`, `0x`, or `0b` and can contain _, and can end with U, L, or UL.
 
-    100    // int, 100
-    10_0   // int, 100
-    32U    // uint, 32
-    64L    // long, 64
-    128UL  // ulong, 128
-    0b0010 // int, 2
-    0xFF   // int, 255
+    100    // i32, 100
+    10_0   // i32, 100
+    32U    // u32, 32
+    64L    // i64, 64
+    128UL  // u64, 128
+    0b0010 // i32, 2
+    0xFF   // i32, 255
     0123   // Error, as some languages would treat this as an octal. 
 
 *Floating Point Literals* start with a digit, contain a `.` and can end in `f`.
 
-    1.23   // double, 1.23
-    1.23f  // float, 1.23
+    1.23   // f64, 1.23
+    1.23f  // f32, 1.23
 
 There are a few *String Literals*.
 
@@ -139,7 +139,7 @@ And specific symbols can be imported from modules (without importing the rest of
 
     module a;
 
-    global int integer;
+    global i32 integer;
 
 <!-- -->
 
@@ -159,32 +159,34 @@ Finally, if a directory contains a file named `package.volt`, an `import` of tha
 
 ## Simple Types ##
 
-*Primitive Types* are the simplest form of abstraction available.
+*Primitive Types* are the simplest form of abstraction available. Most of these have legacy keywords (indicated in the comments). These currently function for compatibility purposes, but should not be relied on remaining.
 
-    bool     // Is either 'true' or 'false'.
-    byte     // Signed 8 bit value.
-    ubyte    // Unsigned 8 bit value.
-    short    // Signed 16 bit value.
-    ushort   // Unsigned 16 bit value.
-    int      // Signed 32 bit value.
-    uint     // Unsigned 32 bit value.
-    long     // Signed 64 bit value.
-    ulong    // Unsigned 64 bit value.
+    bool    // Is either 'true' or 'false'.
+    i8      // Signed 8 bit value. (legacy keyword: 'byte')
+    u8      // Unsigned 8 bit value. (legacy keyword: 'ubyte')
+    i16     // Signed 16 bit value. (legacy keyword: 'short')
+    u16     // Unsigned 16 bit value. (legacy keyword: 'ushort')
+    i32     // Signed 32 bit value. (legacy keyword: 'int')
+    u32     // Unsigned 32 bit value. (legacy keyword: 'uint')
+    i64     // Signed 64 bit value. (legacy keyword: 'long')
+    u64     // Unsigned 64 bit value. (legacy keyword: 'ulong')
+    f32     // 32 bit floating point value. (legacy keyword: 'float')
+    f64     // 64 bit floating point value. (legacy keyword: 'double')
 
 Various suffixes can be attached to these types to make new types.
 
-    int[]    // A dynamic (resizable at run-time) array of ints.
-    int[32]  // A static (size fixed at compile-time) array of 32 ints.
-    int*     // A pointer to an int. Can be 'null'.
-    int[int] // An associative array of ints, indexed by an int key.
+    i32[]    // A dynamic (resizable at run-time) array of ints.
+    i32[32]  // A static (size fixed at compile-time) array of 32 ints.
+    i32*     // A pointer to an int. Can be 'null'.
+    i32[i32] // An associative array of ints, indexed by an int key.
 
 And various prefixes change how the types behave.
 
-    const(int)   // An integer that cannot be modified.
-    const(int)[] // An array of integers that cannot be modified, but the array itself can.
-    const(int[]) // An array of integers that cannot be modified, and neither can the array itself.
+    const(i32)   // An integer that cannot be modified.
+    const(i32)[] // An array of integers that cannot be modified, but the array itself can.
+    const(i32[]) // An array of integers that cannot be modified, and neither can the array itself.
 
-Note that there is no way to write `int const([])`. That is to say, an array that cannot be modified with contents that can be modified. `const` (and other qualifiers) are *transitive*; they apply to themselves and their children.
+Note that there is no way to write `i32 const([])`. That is to say, an array that cannot be modified with contents that can be modified. `const` (and other qualifiers) are *transitive*; they apply to themselves and their children.
 
 `immutable` is similar to `const`, except `immutable` values guarantee (save the programmer deliberately going around the type system with `cast`) that there are no mutable references to the data at all.
 
@@ -194,11 +196,11 @@ To put it another way, mutable and `immutable` values can become `const`, but on
 
 If you're familiar with other C like languages, functions shouldn't appear too foreign.
 
-    bool areEqual(int a, int b) {
+    bool areEqual(i32 a, i32 b) {
         return a == b;
     }
 
-The above declares a function `areEqual`, that takes two `int`s and returns a `bool`. `void` can be used to mark that a function returns no value. Unlike C, `()` means that a function takes no arguments.
+The above declares a function `areEqual`, that takes two `i32`s and returns a `bool`. `void` can be used to mark that a function returns no value. Unlike C, `()` means that a function takes no arguments.
 
      void doNothing() {
          return;
@@ -212,23 +214,23 @@ Calling them works as you'd expect.
 
 Usually, parameters are pass-by-value.
 
-    void makeThree(int var) {
+    void makeThree(i32 var) {
          var = 3;
     }
 
     ...
-        int x = 2;
+        i32 x = 2;
         makeThree(x);
         // x remains 2.
 
 However, if you mark a parameter as `ref`, the value will be updated.
 
-    void makeThree(ref int var) {
+    void makeThree(ref i32 var) {
          var = 3;
     }
 
     ...
-        int x = 2;
+        i32 x = 2;
         makeThree(ref x);  // The 'ref' here is required, too.
         // x is 3.
 
@@ -236,8 +238,8 @@ However, if you mark a parameter as `ref`, the value will be updated.
 
 The simplest form of variadics (functions that can take multiple arguments) are *homogeneous variadics*. These are simply functions that have a parameter that can be several (or none) of the same type.
 
-    int sum(int[] numbers...) {
-        int result;
+    i32 sum(i32[] numbers...) {
+        i32 result;
         foreach (number; numbers) {
             result += number;
         }
@@ -258,16 +260,16 @@ If you need more power, Volt also has true runtime *variadic function*s. The syn
 
     import watt.varargs;
 
-    int sum(...) {
+    i32 sum(...) {
         va_list vl;
 
         va_start(vl);
-        int result;
+        i32 result;
         foreach (tid; _typeids) {
             if (tid.type != object.TYPE_INT) {
-                throw new Exception("sum: expected int");
+                throw new Exception("sum: expected i32");
             }
-            result += va_arg!int(vl);
+            result += va_arg!i32(vl);
         }
         va_end(vl);
         return result;
@@ -278,7 +280,7 @@ If you need more power, Volt also has true runtime *variadic function*s. The syn
 *Structs* are the simplest aggregate type. In their simplest form, they bundle several declarations together.
 
     struct S {
-        int x;
+        i32 x;
         string s;
     }
 
@@ -295,8 +297,8 @@ The above struct is allocated on the stack, but we can ask the GC to allocate a 
 Structs can contain functions. A reference to the struct is implicit in each function, and accessible implicitly or through the `this` keyword.
 
     struct S {
-        int x;
-        int xSquaredTimesN(int n) {
+        i32 x;
+        i32 xSquaredTimesN(i32 n) {
             return (x * this.x) * n;
         }
     }
@@ -311,8 +313,8 @@ Structs can contain functions. A reference to the struct is implicit in each fun
 Unions are like structs, except all the variables occupy the same piece of memory.
 
     union U {
-        int x;  // Setting x...
-        int y;  // ...will set y, too.
+        i32 x;  // Setting x...
+        i32 y;  // ...will set y, too.
     }
 
 
@@ -325,7 +327,7 @@ Classes in volt are single inheritance and always reference types, so if you've 
 As mentioned, at first glance they look like structs.
 
     class C {
-        int x;
+        i32 x;
     }
 
 But there are several differences already. Firstly when using them.
@@ -338,14 +340,14 @@ But there are several differences already. Firstly when using them.
 Furthermore, classes can have constructors.
 
     class C {
-        int x;
+        i32 x;
         this() {
             x = 3;
         }
-        this(int x) {
+        this(i32 x) {
             this.x = x;
         }
-        this(int x, int y) {
+        this(i32 x, i32 y) {
             this.x = x * y;
         }
     }
@@ -358,7 +360,7 @@ Furthermore, classes can have constructors.
  Classes can also have functions, which we call *methods*.
 
     class C {
-        int getInt() {
+        i32 getInt() {
             return 42;
         }
     }
@@ -366,7 +368,7 @@ Furthermore, classes can have constructors.
 They've a different name because of *inheritance* they behave differently. A class can be a child of a class (but only one!) like so.
 
     class D : C {
-         int getAnotherInt() {
+         i32 getAnotherInt() {
              return 24;
          }
     }
@@ -382,13 +384,13 @@ But you can also use a D as a C.
     C c = d;
     c.getInt();         // 42
     //c.getAnotherInt();  // Error!
-    auto asD = cast(D) c;
+    auto asD = cast(D)c;
     asD.getAnotherInt();  // 24
 
 In addition to this, methods can be overridden, changing their behaviour.
 
     class D {
-        override int getInt() {
+        override i32 getInt() {
             return 7;
         }
     }
@@ -434,20 +436,20 @@ Finally, you can mark a function with `@property` if it takes one argument, or n
 Class can implement multiple *interface*s, which are a set of methods with no implementation.
 
     interface IPerson {
-        int age();
+        i32 age();
         string name();
     }
 
 Then a class can give the list of interfaces it implements after its parent class (if one is specified).
 
     class C : object.Object, IPerson {
-        int age() { return 11; }
+        i32 age() { return 11; }
         string name() { return "Billy"; }
     }
 
-If one of the specified methods is not implement, an error is generated. As for *why* one would want to do this, variables with a type of interface can be declared, and implementing classes can be treated as an instance of that interface.
+If one of the specified methods is not implemented, an error is generated. As for *why* one would want to do this, variables with a type of interface can be declared, and implementing classes can be treated as an instance of that interface.
 
-    int ageTimesTwo(IPerson person) {
+    i32 ageTimesTwo(IPerson person) {
         return person.age() * 2;
     }
 
@@ -464,10 +466,10 @@ Without it, if we have a class or struct that lacks a method, we would have to s
 
     class Book {
         string title;
-        int price;
+        i32 price;
     }
 
-    void reducePrice(Book book, int amount) {
+    void reducePrice(Book book, i32 amount) {
         book.price -= amount;
     }
 
@@ -481,14 +483,14 @@ But with UFCS, we can call the function as if it were a method.
 
 If the struct or class had already defined `reducePrice`, the real method would take precedence over any free functions.
 
-It's not limited to structs and classes either. If a method style lookup would fail on any type (primitive types like int, etc), then Volt will look for a function that takes the type as the first parameter, then the rest of the arguments.
+It's not limited to structs and classes either. If a method style lookup would fail on any type (primitive types like i32, etc), then Volt will look for a function that takes the type as the first parameter, then the rest of the arguments.
 
-    int add(int i, int a, int b) {
+    i32 add(i32 i, i32 a, i32 b) {
         return i + a + b;
     }
 
     ...
-        int i = 2;
+        i32 i = 2;
         i.add(3, 5);  // == 10
 
 ## Expressions
@@ -500,16 +502,16 @@ Volt is a 'garbage collected' language, which means that the programmer doesn't 
 To request memory from the garbage collector (GC), use the `new` expression. In its simplest form, `new` simply takes a type. In this case, the returned value is a pointer to that type.
 
     ...
-        auto ip = new int;  // ip has the type `int*`.
+        auto ip = new i32;  // ip has the type `i32*`.
 
 You can use this with your own `alias`es and `struct`s, but `class`es are a different story. As discussed earlier, classes are reference types, so `new Object()` doesn't give you a pointer to `Object`, but just a plain `Object`. The parens (`()`) are required, and arguments to constructors can be passed.
 
     class Pair {
-        int a, b;
-        this(int a) {
+        i32 a, b;
+        this(i32 a) {
             this.a = a;
         }
-        this(int a, int b) {
+        this(i32 a, i32 b) {
             this.a = a;
             this.b = b;
         }
@@ -520,9 +522,9 @@ You can use this with your own `alias`es and `struct`s, but `class`es are a diff
         auto b = new Pair(32);    // Calls the first constructor.
         auto c = new Pair(10, 5); // Calls the second constructor.
 
-That's not the only place arguments are passed to `new`. Consider `new int[]`. What's the type that this results in? If you guessed `int[]*`, you'd be right. If we want to allocate an array with `new`, give it the array type, but append parens with the requested length after it.
+That's not the only place arguments are passed to `new`. Consider `new i32[]`. What's the type that this results in? If you guessed `i32[]*`, you'd be right. If we want to allocate an array with `new`, give it the array type, but append parens with the requested length after it.
 
-    auto a = new int[](0);     // An empty array of ints.
+    auto a = new i32[](0);     // An empty array of i32s.
     auto b = new string[](3);  // An array of three strings.
 
 Speaking of arrays, sometimes you want to make a copy of one. You might think that
@@ -576,7 +578,7 @@ In general, the foreach statement can be described as follows.
 
 That is to say, if there are two identifiers before the ';' the first is the index (the current count of iterations of this loop), and the second is the element (the value of this iteration). If there is only one, it just contains the element. These declare variables in the foreach block, but there is a large difference to regular variables: you cannot declare their type.
 
-If the aggregate is not an associative array, the index is always of type `size_t` and the element is the type of one element of the aggregate (e.g. if the aggregate is `int[]`, then the element is of type `int`).
+If the aggregate is not an associative array, the index is always of type `size_t` and the element is the type of one element of the aggregate (e.g. if the aggregate is `i32[]`, then the element is of type `i32`).
 
 If the aggregate *is* an associative array, then the index is the key, and the element is the value.
 

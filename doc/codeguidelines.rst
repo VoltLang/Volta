@@ -18,7 +18,7 @@ Braces
 ======
 For functions, structs, classes, and the like, the opening brace goes on a line of it's own, as does the closing brace.::
 
-    void add(int a, int b)
+    void add(i32 a, i32 b)
     {
         return a + b;
     }
@@ -26,7 +26,7 @@ For functions, structs, classes, and the like, the opening brace goes on a line 
     struct Person
     {
         string name;
-        int age;
+        i32 age;
     }
 
 For statements with an opening brace, the brace is on the same line as the statement itself. Unlike functions, there is a space between the keyword and the opening paren.::
@@ -37,13 +37,13 @@ For statements with an opening brace, the brace is on the same line as the state
 
 There is no space for asserts, typeids, etc.::
 
-    assert(typeid(int).size == 4);
+    assert(typeid(i32).size == 4);
 
 Expressions
 ===========
 When casting, there should be no space between the cast and the cast expression.::
 
-    auto asInt = cast(int)someVal;
+    auto asInt = cast(i32)someVal;
 
 There are spaces between operators and operands.::
 
@@ -88,7 +88,7 @@ Modules and packages are all lower case. Types start with an upper case, and eac
 
     struct Thing
     {
-        int doThing(int aParameter)
+        i32 doThing(i32 aParameter)
         {
             return aParameter;
         }

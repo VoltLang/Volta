@@ -25,7 +25,7 @@ This is all for the most part free standing functions, and should be easy enough
 IR
 --
 
-The IR is an abstract representation of the source file. That is to say, where the tokens are a concrete representation -- the tokens match up to the characters in the source file, for the most part -- the IR is abstract; it encodes abstract concept. For example, "int a;" might be a list of tokens <int> <identifier:a> <semicolon>, but the IR would be closer to Variable(Type(Int), "a").
+The IR is an abstract representation of the source file. That is to say, where the tokens are a concrete representation -- the tokens match up to the characters in the source file, for the most part -- the IR is abstract; it encodes abstract concept. For example, "i32 a;" might be a list of tokens <i32> <identifier:a> <semicolon>, but the IR would be closer to Variable(Type(I32), "a").
 
 The parser is a recursive descent parser, and is handwritten. That is, it starts at ``parseModule``, the top-most IR node, and works its way down and gives you back an ir.Module with all your functions and variables and whatever attached to it.
 
@@ -41,9 +41,9 @@ Semantic
 
 So now we have one or more ir.Modules from the parser corresponding to the source files we were given. The backend works on these modules too, but they're not ready for that yet. The backend only works on a subset of the IR tree (see the IRVerifier for details), so the semantic phase massages the IR into an appropriate shape.
 
-Essentially, the semantic phase makes the IR a lot more verbose. ``auto i = 3;``` will become ``int i; i = 3;``. Your fancy ``foreach`` statements will be lowered into simple ``for`` statements. The backend only knows how to generate top level functions, so methods and inline functions need to be hoisted to top level functions, with their context becoming structs.
+Essentially, the semantic phase makes the IR a lot more verbose. ``auto i = 3;``` will become ``i32 i; i = 3;``. Your fancy ``foreach`` statements will be lowered into simple ``for`` statements. The backend only knows how to generate top level functions, so methods and inline functions need to be hoisted to top level functions, with their context becoming structs.
 
-Also, in theory, the IR should be verified sound by the time the semantic phase is done with it. No errors (in the user's code) should be detected in the backend. For example, the backend shouldn't need to check that ``cast(int) var;`` is safe or sound -- it will assume it is.
+Also, in theory, the IR should be verified sound by the time the semantic phase is done with it. No errors (in the user's code) should be detected in the backend. For example, the backend shouldn't need to check that ``cast(i32) var;`` is safe or sound -- it will assume it is.
 
 So as you can imagine, all of the above is a fair amount of work, and doing it in one giant nest of functions is out of the question. All the transformations are broken into passes. A ``Pass`` is a simple interface. It has a method ``transform`` that takes a module, and a method ``close`` that takes no arguments, for cleaning up.
 
@@ -80,7 +80,7 @@ The gatherer creates scopes on things and then adds variables to the correct sco
 ExTyper
 -------
 
-The most complex pass of the semantic phase. Short for 'explicit typer', the ExTyper does what it needs to do to ensure everything is explicitly typed. auto variables will be inferred afterwards, implicit casts (say ``int`` to ``long``) will have explicit casts inserted. Foreach statements will become for statements, and so on.
+The most complex pass of the semantic phase. Short for 'explicit typer', the ExTyper does what it needs to do to ensure everything is explicitly typed. auto variables will be inferred afterwards, implicit casts (say ``i32`` to ``i64``) will have explicit casts inserted. Foreach statements will become for statements, and so on.
 
 CFGBuilder
 ----------
