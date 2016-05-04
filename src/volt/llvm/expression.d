@@ -701,13 +701,17 @@ void handleCastPrimitive(State state, Location loc, PrimitiveType newType,
 	LLVMOpcode op;
 	if (newType.boolean) {
 		if (oldType.floating) {
-			error();
+			result.value = LLVMBuildFCmp(state.builder,
+				LLVMRealPredicate.ONE,
+				result.value,
+				LLVMConstNull(oldType.llvmType), "");
+		} else {
+			// Need to insert a test here.
+			result.value = LLVMBuildICmp(state.builder,
+				LLVMIntPredicate.NE,
+				result.value,
+				LLVMConstNull(oldType.llvmType), "");
 		}
-		// Need to insert a test here.
-		result.value = LLVMBuildICmp(state.builder,
-			LLVMIntPredicate.NE,
-			result.value,
-			LLVMConstNull(oldType.llvmType), "");
 		return; // No fallthrough.
 	} else if (newType.floating) {
 		if (oldType.signed) {
