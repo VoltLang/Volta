@@ -469,7 +469,7 @@ LexStatus lexSymbol(TokenWriter tw)
 	case ';':
 		return lexSingleSymbol(tw, ';', TokenType.Semicolon);
 	case ':':
-		return lexSingleSymbol(tw, ':', TokenType.Colon);
+		return lexSymbolOrSymbolAssign(tw, ':', TokenType.Colon, TokenType.ColonAssign);
 	case '$':
 		return lexSingleSymbol(tw, '$', TokenType.Dollar);
 	case '@':
