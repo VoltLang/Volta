@@ -186,13 +186,13 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		dg(prs);
 		return eatComments(ps);
 	case TokenType.Identifier:
-		if (ps.lookahead(1).type == TokenType.Colon) {
-			ir.LabelStatement ls;
-			succeeded = parseLabelStatement(ps, ls);
+		if (ps.lookahead(1).type == TokenType.Colon ||
+		    ps.lookahead(1).type == TokenType.ColonAssign ||
+			ps.lookahead(1).type == TokenType.Comma) {
+			succeeded = parseColonAssign(ps, dg);
 			if (!succeeded) {
 				return succeeded;
 			}
-			dg(ls);
 			return eatComments(ps);
 		} else {
 			goto default;
@@ -1372,5 +1372,69 @@ ParseStatus parseStaticIs(ParserStream ps, out ir.AssertStatement as)
 		}
 	}
 	as.message = buildConstantString(isExp.location, msg);
+	return Succeeded;
+}
+
+// a := 1
+ParseStatus parseColonAssign(ParserStream ps, NodeSinkDg dg)
+{
+	ir.Variable var;
+	auto loc = ps.peek.location;
+
+	Token[] idents;
+	while (ps != TokenType.Colon && ps != TokenType.ColonAssign) {
+		if (ps != TokenType.Identifier) {
+			return unexpectedToken(ps, var);
+		}
+		idents ~= ps.get();
+		matchIf(ps, TokenType.Comma);
+	}
+	if (idents.length > 1 || ps == TokenType.Colon) {
+		return parseColonDeclaration(ps, idents, dg);
+	}
+	if (ps != TokenType.ColonAssign) {
+		return unexpectedToken(ps, ir.NodeType.Variable);
+	}
+	ps.get();
+
+	ir.Exp exp;
+	auto succeeded = parseExp(ps, exp);
+	if (!succeeded) {
+		return parseFailed(ps, ir.NodeType.Variable);
+	}
+	var = buildVariable(loc, buildAutoType(loc), ir.Variable.Storage.Function,
+                        idents[0].value, exp);
+	dg(var);
+	return Succeeded;
+}
+
+// a, b : int
+ParseStatus parseColonDeclaration(ParserStream ps, Token[] idents, NodeSinkDg dg)
+{
+	if (ps != TokenType.Colon) {
+		return unexpectedToken(ps, ir.NodeType.Variable);
+	}
+	ps.get();
+	ir.Type type;
+	auto succeeded = parseType(ps, type);
+	if (!succeeded) {
+		return parseFailed(ps, ir.NodeType.Variable);
+	}
+	ir.Exp assign;
+	if (matchIf(ps, TokenType.Assign)) {
+		if (idents.length > 1) {
+			return unexpectedToken(ps, ir.NodeType.Variable);
+		}
+		succeeded = parseExp(ps, assign);
+		if (!succeeded) {
+			return parseFailed(ps, ir.NodeType.Variable);
+		}
+	}
+	foreach (ident; idents) {
+		auto var = buildVariableSmart(ident.location, type, ir.Variable.Storage.Function,
+		                              ident.value);
+		var.assign = assign;
+		dg(var);
+	}
 	return Succeeded;
 }
