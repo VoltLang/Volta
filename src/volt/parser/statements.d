@@ -1384,10 +1384,14 @@ ParseStatus parseColonAssign(ParserStream ps, NodeSinkDg dg)
 	Token[] idents;
 	while (ps != TokenType.Colon && ps != TokenType.ColonAssign) {
 		if (ps != TokenType.Identifier) {
-			return unexpectedToken(ps, var);
+			return unexpectedToken(ps, ir.NodeType.Variable);
 		}
 		idents ~= ps.get();
-		matchIf(ps, TokenType.Comma);
+		if (matchIf(ps, TokenType.Comma)) {
+			if (ps != TokenType.Identifier) {
+				return unexpectedToken(ps, ir.NodeType.Variable);
+			}
+		}
 	}
 	if (idents.length > 1 || ps == TokenType.Colon) {
 		return parseColonDeclaration(ps, idents, dg);
