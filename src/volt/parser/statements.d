@@ -6,6 +6,7 @@ import watt.text.ascii;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
+import volt.ir.copy : copyType;
 
 import volt.errors;
 import volt.exceptions;
@@ -1434,9 +1435,9 @@ ParseStatus parseColonDeclaration(ParserStream ps, Token[] idents, NodeSinkDg dg
 			return parseFailed(ps, ir.NodeType.Variable);
 		}
 	}
-	foreach (ident; idents) {
-		auto var = buildVariableSmart(ident.location, type, ir.Variable.Storage.Function,
-		                              ident.value);
+	foreach (i, ident; idents) {
+		auto var = buildVariable(ident.location, i > 0 ? copyType(type) : type,
+		                         ir.Variable.Storage.Function, ident.value);
 		var.assign = assign;
 		dg(var);
 	}
