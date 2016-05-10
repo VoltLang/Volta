@@ -185,6 +185,11 @@ enum ScopeKind
 }
 
 /**
+ * Type used for node unique ids.
+ */
+alias NodeID = size_t;
+
+/**
  * Base class for all IR nodes.
  * 
  * A Node has a Location and a type. The Location points
@@ -218,8 +223,8 @@ protected:
 
 private:
 	NodeType mNodeType;
-	size_t mUniqueId;
-	static size_t mUniqueIdCounter; // We are single threaded.
+	NodeID mUniqueId;
+	static NodeID mUniqueIdCounter; // We are single threaded.
 }
 
 /**
