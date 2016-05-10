@@ -26,10 +26,11 @@ import volt.lowerer.typeidreplacer;
 
 import volt.semantic.cfg;
 import volt.semantic.util;
-import volt.semantic.evaluate;
+import volt.semantic.lifter;
 import volt.semantic.strace;
 import volt.semantic.lookup;
 import volt.semantic.extyper;
+import volt.semantic.evaluate;
 import volt.semantic.classify;
 import volt.semantic.typeinfo;
 import volt.semantic.irverifier;
