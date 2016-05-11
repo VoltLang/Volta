@@ -735,7 +735,7 @@ void lowerCat(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp bi
 		}
 	}
 
-	if (typesEqual(elementType, arrayType.base)) {
+	if (typesEqual(realType(elementType, true), realType(arrayType.base, true))) {
 		// T[] ~ T
 		ir.Function func;
 		if (reversed) {
@@ -777,7 +777,7 @@ void lowerCatAssign(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.Bi
 	// since realType will remove enum's as well.
 	auto rightType = getExpType(binOp.right);
 
-	if (typesEqual(rightType, leftArrayType.base)) {
+	if (typesEqual(realType(rightType, true), realType(leftArrayType.base, true))) {
 		// T[] ~ T
 		auto func = getArrayAppendFunction(loc, lp, thisModule, leftArrayType, rightType, true);
 		exp = buildCall(loc, func, [buildAddrOf(binOp.left), binOp.right], func.name);
