@@ -35,13 +35,23 @@ ir.Constant fold(ref ir.Exp exp, out bool needCopy)
 {
 	switch (exp.nodeType) with (ir.NodeType) {
 	case Constant:
-		return cast(ir.Constant)exp;
+		auto c = cast(ir.Constant)exp;
+		exp = c;
+		return c;
 	case Unary:
 		auto unary = cast(ir.Unary)exp;
-		return foldUnary(exp, unary);
+		auto c = foldUnary(exp, unary);
+		if (c !is null) {
+			exp = c;
+		}
+		return c;
 	case BinOp:
 		auto binop = cast(ir.BinOp)exp;
-		return foldBinOp(exp, binop);
+		auto c = foldBinOp(exp, binop);
+		if (c !is null) {
+			exp = c;
+		}
+		return c;
 	case ExpReference:
 		auto eref = cast(ir.ExpReference)exp;
 		panicAssert(exp, eref !is null);
@@ -50,7 +60,11 @@ ir.Constant fold(ref ir.Exp exp, out bool needCopy)
 		}
 		needCopy = true;
 		auto ed = cast(ir.EnumDeclaration)eref.decl;
-		return cast(ir.Constant)ed.assign;
+		auto c = cast(ir.Constant)ed.assign;
+		if (c !is null) {
+			exp = copyExp(c);
+		}
+		return c;
 	default:
 		return null;
 	}
@@ -58,24 +72,39 @@ ir.Constant fold(ref ir.Exp exp, out bool needCopy)
 
 ir.Constant foldBinOp(ref ir.Exp exp, ir.BinOp binop)
 {
+	assert(binop !is null);
+	assert(binop.left !is null);
+	assert(binop.right !is null);
 	bool copyLeft, copyRight;
 	auto cl = fold(binop.left, copyLeft);
 	auto cr = fold(binop.right, copyRight);
 	if (cl is null || cr is null || !typesEqual(cl.type, cr.type)) {
 		return null;
 	}
-	return foldBinOp(exp, binop.op,
-	                 copyLeft ? cast(ir.Constant)copyExp(cl) : cl,
-					 copyRight ? cast(ir.Constant)copyExp(cr) : cr);
+	auto c = foldBinOp(exp, binop.op,
+	                   copyLeft ? cast(ir.Constant)copyExp(cl) : cl,
+			           copyRight ? cast(ir.Constant)copyExp(cr) : cr);
+	if (c !is null) {
+		exp = c;
+	}
+	return c;
 }
 
 ir.Constant foldUnary(ref ir.Exp exp, ir.Unary unary)
 {
+	assert(unary !is null);
+	if (unary.value is null) {
+		return null;
+	}
 	auto c = fold(unary.value);
 	if (c is null) {
 		return null;
 	}
-	return foldUnary(exp, unary, c);
+	auto uc = foldUnary(exp, unary, c);
+	if (uc !is null) {
+		exp = uc;
+	}
+	return uc;
 }
 
 ir.Constant foldBinOp(ref ir.Exp exp, ir.BinOp.Op op, ir.Constant cl, ir.Constant cr)
@@ -533,6 +562,12 @@ ir.Constant foldUnaryMinus(ir.Constant c)
 		// Yes, this is 2's complement.
 		c.u._ulong = -c.u._ulong;
 		break;
+	case Double:
+		c.u._double = -c.u._double;
+		break;
+	case Float:
+		c.u._float = -c.u._float;
+		break;
 	default:
 		panicAssert(c, false);
 		break;
@@ -555,6 +590,12 @@ ir.Constant foldUnaryPlus(ir.Constant c)
 		break;
 	case Ulong:
 		c.u._ulong = +c.u._ulong;
+		break;
+	case Double:
+		c.u._double = -c.u._double;
+		break;
+	case Float:
+		c.u._float = -c.u._float;
 		break;
 	default:
 		panicAssert(c, false);
