@@ -7,6 +7,7 @@ import io = watt.io.std : output, error;
 import watt.path : temporaryFilename, dirSeparator;
 import watt.process : spawnProcess, wait;
 import watt.io.file : remove, exists, read;
+import watt.io.streams : OutputFileStream;
 import watt.conv : toLower;
 import watt.text.diff : diff;
 import watt.text.format : format;
@@ -55,6 +56,11 @@ protected:
 	string mLD;         // ld compatible command line (ld/lld)
 	string mLink;       // MSVC Link
 
+	string mOutput;
+
+	string mDepFile;
+	string[] mDepFiles; ///< All files used as input to this compiled.
+
 	string[] mIncludes;
 	string[] mSrcIncludes;
 	string[] mSourceFiles;
@@ -100,6 +106,8 @@ public:
 		if (!s.noBackend) {
 			backend = new LlvmBackend(languagePass);
 		}
+
+		mDepFile = settings.depFile;
 
 		mIncludes = settings.includePaths;
 		mSrcIncludes = settings.srcIncludePaths;
@@ -262,6 +270,8 @@ public:
 				}
 			}
 
+			writeDepFile();
+
 			perf.mark(Perf.Mark.EXIT);
 		}
 
@@ -295,6 +305,25 @@ public:
 	}
 
 protected:
+	void writeDepFile()
+	{
+		if (mDepFile is null ||
+		    mDepFiles is null) {
+			return;
+		}
+
+		assert(mOutput !is null);
+
+		auto d = new OutputFileStream(mDepFile);
+		d.writefln("%s: \\", mOutput);
+		foreach (dep; mDepFiles[0 .. $-1]) {
+			d.writefln("\t%s \\", dep);
+		}
+		d.writefln("\t%s", mDepFiles[$-1]);
+		d.flush();
+		d.close();
+	}
+
 	string pathFromQualifiedName(ir.QualifiedName name, string[] includes,
 	                             string suffix)
 	{
@@ -324,6 +353,9 @@ protected:
 	 */
 	ir.Module loadAndParse(string file)
 	{
+		// Add file to dependencies for this compile.
+		mDepFiles ~= file;
+
 		string src;
 		{
 			mAccumReading.start();
@@ -409,12 +441,18 @@ protected:
 		}
 		perf.mark(Perf.Mark.BACKEND);
 
+		// We do this here if we know that object files are
+		// being used. Add files to dependencies for this compile.
+		foreach (file; mBitcodeFiles) {
+			mDepFiles ~= file;
+		}
+
 		// We will be modifing this later on,
 		// but we don't want to change mBitcodeFiles.
 		string[] bitcodeFiles = mBitcodeFiles;
 		string subdir = getTemporarySubdirectoryName();
 
-
+		// Generate bc files for the compiled modules.
 		foreach (m; mCommandLineModules) {
 			string o = temporaryFilename(".bc", subdir);
 			backend.setTarget(o, TargetType.LlvmBitcode);
@@ -424,7 +462,7 @@ protected:
 			mTemporaryFiles ~= o;
 		}
 
-		string bc, obj, of;
+		string bc, obj;
 
 		// Setup files bc.
 		if (settings.emitBitcode) {
@@ -447,14 +485,22 @@ protected:
 
 		// When outputting bitcode we are now done.
 		if (settings.emitBitcode) {
+			mOutput = bc;
 			return 0;
+		}
+
+		// We do this here if we know that object files are
+		// being used. Add files to dependencies for this compile.
+		foreach (file; mObjectFiles) {
+			mDepFiles ~= file;
 		}
 
 		// Setup object files and output for linking.
 		if (settings.noLink) {
 			obj = settings.getOutput(DEFAULT_OBJ);
+			mOutput = obj;
 		} else {
-			of = settings.getOutput(DEFAULT_EXE);
+			mOutput = settings.getOutput(DEFAULT_EXE);
 			obj = temporaryFilename(".o", subdir);
 			mTemporaryFiles ~= obj;
 		}
@@ -462,7 +508,7 @@ protected:
 		// If we are compiling on the emscripten platform ignore .o files.
 		if (settings.platform == Platform.EMSCRIPTEN) {
 			perf.mark(Perf.Mark.LINK);
-			return emscriptenLink(mCC, bc, of);
+			return emscriptenLink(mCC, bc, mOutput);
 		}
 
 		// Native compilation, turn the bitcode into native code.
@@ -476,7 +522,7 @@ protected:
 
 		// And finally call the linker.
 		perf.mark(Perf.Mark.LINK);
-		return nativeLink(obj, of);
+		return nativeLink(obj, mOutput);
 	}
 
 	int nativeLink(string obj, string of)

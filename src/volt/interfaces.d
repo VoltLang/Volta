@@ -577,7 +577,9 @@ public:
 	string linker; ///< The --linker argument
 	string[] xlinker; ///< Arguments to the linker, the -Xlinker argument.
 
+	string depFile;
 	string outputFile;
+
 	string[] includePaths; ///< The -I arguments.
 	string[] srcIncludePaths; ///< The -src-I arguments.
 

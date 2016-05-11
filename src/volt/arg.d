@@ -36,6 +36,7 @@ public:
 		Debug,
 		DebugSimpleTrace,
 
+		Dep,             ///< --dep
 		Output,
 
 		EmitBitcode,     ///< --emit-bitcode
@@ -165,6 +166,9 @@ void filterArgs(Arg[] args, ref string[] files, VersionSet ver, Settings setting
 			settings.simpleTrace = true;
 			break;
 
+		case Dep:
+			settings.depFile = arg.arg;
+			break;
 		case Output:
 			settings.outputFile = arg.arg;
 			break;

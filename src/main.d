@@ -251,6 +251,9 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 		case "-framework", "--framework":
 			makeArgNext(FrameworkName);
 			continue;
+		case "--dep":
+			makeArgNext(Dep);
+			continue;
 		case "--doc":
 			makeArg(DocDo);
 			continue;
@@ -428,16 +431,17 @@ bool printUsage()
 	writefln("\t-I path          Add a include path.");
 	writefln("\t-L path          Add a library path.");
 	writefln("\t-l path          Add a library.");
-	version (OSX) {
-	writefln("\t-F path          Add a framework path.");
-	writefln("\t--framework name Add a framework.");
-	}
 	writefln("\t-J path          Define a path for string import to look for files.");
 	writefln("\t-D ident         Define a new version flag");
 	writefln("\t-w               Enable warnings.");
 	writefln("\t-d               Compile in debug mode.");
 	writefln("\t-c               Compile only, do not link.");
 	writefln("\t-E               Only perform conditional removal (implies -S).");
+	version (OSX) {
+	writefln("\t-F path          Add a framework path.");
+	writefln("\t--framework name Add a framework.");
+	}
+	writefln("\t--dep depfile    Dependency file (in make format).");
 	writefln("\t--simple-trace   Print the name of functions to stdout as they're run.");
 	writefln("\t--doc            Write out documentation in HTML format.");
 	writefln("\t--json           Write documentation in JSON format.");
