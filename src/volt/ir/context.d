@@ -202,6 +202,14 @@ public:
 		this.kind = Kind.EnumDeclaration;
 	}
 
+	/**
+	 * Construct an invalid Store.
+	 * Used for copying Stores for CTFE, do not use for anything else.
+	 */
+	this()
+	{
+	}
+
 	void markAliasResolved(Store s)
 	{
 		assert(kind == Kind.Alias);
@@ -285,6 +293,13 @@ public:
 		this.parent = parent;
 		this.nestedDepth = nestedDepth;
 		assert(this.node !is null);
+	}
+
+	/**
+	 * Create an invalid Scope. Internal use only.
+	 */
+	this()
+	{
 	}
 
 	void remove(string name)
