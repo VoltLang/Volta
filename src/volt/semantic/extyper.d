@@ -33,6 +33,7 @@ import volt.semantic.implicit;
 import volt.semantic.typeinfo;
 import volt.semantic.classresolver;
 import volt.semantic.userattrresolver;
+import volt.semantic.lifter;
 
 
 /**
@@ -2784,7 +2785,31 @@ ir.Type extypeRunExp(Context ctx, ref ir.Exp exp, Parent parent)
 	if (pfix is null || pfix.op != ir.Postfix.Op.Call) {
 		throw makeExpectedCall(runexp);
 	}
-	throw panicUnhandled(exp, "RunExp");
+	auto eref = cast(ir.ExpReference)pfix.child;
+	if (eref is null) {
+		throw makeExpectedCall(runexp);
+	}
+	auto func = cast(ir.Function)eref.decl;
+	if (func is null) {
+		throw makeExpectedCall(runexp);
+	}
+	auto lifter = new CTFELifter(ctx.lp);
+	auto liftfn = lifter.lift(func);
+	auto liftmod = lifter.completeModule();
+	ir.Constant[] args;
+	foreach (arg; pfix.arguments) {
+		ir.Exp dummy = arg;
+		args ~= fold(dummy);
+		if (args[$-1] is null) {
+			throw makeNotAvailableInCTFE(arg, arg);
+		}
+	}
+	auto result = ctx.lp.driver.hostCompile(liftmod);
+	assert(result !is null);
+	auto dg = result.getFunction(liftfn);
+	assert(dg !is null);
+	exp = dg(args);
+	return liftfn.type.ret;
 }
 
 ir.Type extypeAssert(Context ctx, ref ir.Exp exp, Parent parent)
