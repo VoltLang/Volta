@@ -207,6 +207,7 @@ public:
 	PrimitiveType sizeType;
 
 	FunctionType voidFunctionType;
+	FunctionType springType;
 	/**
 	 * @}
 	 */

@@ -108,8 +108,7 @@ public:
 				val = cnst.u._bool;
 			} else if (signed) {
 				val = cast(ulong)cnst.u._long;
-			} else if (bits == 8) {
-				assert(cnst.arrayData.length == 1);
+			} else if (bits == 8 && cnst.arrayData.length == 1) {
 				val = (cast(ubyte[])cnst.arrayData)[0];
 			} else {
 				val = cnst.u._ulong;
@@ -939,6 +938,8 @@ void buildCommonTypes(State state, bool V_P64)
 	auto voidFunctionTypeIr = new ir.FunctionType();
 	voidFunctionTypeIr.ret = voidTypeIr;
 
+	auto spingTypeIr = buildFunctionTypeSmart(
+		voidTypeIr.location, voidTypeIr, voidPtrTypeIr);
 
 	addMangledName(voidTypeIr);
 
@@ -951,6 +952,7 @@ void buildCommonTypes(State state, bool V_P64)
 
 	addMangledName(voidPtrTypeIr);
 	addMangledName(voidFunctionTypeIr);
+	addMangledName(spingTypeIr);
 
 	state.voidType = cast(VoidType)state.fromIr(voidTypeIr);
 
@@ -963,6 +965,7 @@ void buildCommonTypes(State state, bool V_P64)
 
 	state.voidPtrType = cast(PointerType)state.fromIr(voidPtrTypeIr);
 	state.voidFunctionType = cast(FunctionType)state.fromIr(voidFunctionTypeIr);
+	state.springType = cast(FunctionType)state.fromIr(spingTypeIr);
 
 	if (V_P64) {
 		state.sizeType = state.ulongType;
@@ -981,6 +984,7 @@ void buildCommonTypes(State state, bool V_P64)
 
 	assert(state.voidPtrType !is null);
 	assert(state.voidFunctionType !is null);
+	assert(state.springType !is null);
 }
 
 /**

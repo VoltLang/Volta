@@ -21,6 +21,20 @@ interface Driver
 	/// Get the modules given on the command line.
 	ir.Module[] getCommandLineModules();
 
+	/**
+	 * Returns a delegate that runs the given function from
+	 * the given module.
+	 *
+	 * May be called multiple times with the same arguments,
+	 * or the same Module but with a different function from
+	 * the given Module.
+	 *
+	 * The driver should do caching of the module and function.
+	 * Once a module has been given to it or any children of it
+	 * may not be changed, doing so will cause undefined behaviour.
+	 */
+	BackendResult hostCompile(ir.Module);
+
 	void close();
 }
 
@@ -470,6 +484,7 @@ enum TargetType
 	ElfObject,
 	VoltCode,
 	CCode,
+	Host,
 }
 
 /**
@@ -486,18 +501,55 @@ interface Backend
 	TargetType[] supported();
 
 	/**
-	 * Set the target file and output type. Backends usually only
+	 * Set the target output type. Backends usually only
 	 * suppports one or two output types @see supported.
 	 */
-	void setTarget(string filename, TargetType type);
+	void setTarget(TargetType type);
 
 	/**
 	 * Compile the given module. You need to have called setTarget before
-	 * calling this function. setTarget needs to be called for each
-	 * invocation of this function.
+	 * calling this function.
 	 */
-	void compile(ir.Module m);
+	BackendResult compile(ir.Module m);
 
+	/**
+	 * Free any resources that the backend has.
+	 */
+	void close();
+}
+
+/**
+ * A result from a backend compilation.
+ *
+ * It can be a file that you can save onto disk.
+ *
+ * Or a JIT compiled a module that you can fetch functions from.
+ */
+interface BackendResult
+{
+	/**
+	 * Save the result to disk.
+	 */
+	void saveToFile(string filename);
+
+	alias CompiledDg = ir.Constant delegate(ir.Constant[]);
+
+	/**
+	 * Returns a delegate that runs the given function from
+	 * the module that this object was compiled from.
+	 *
+	 * The function must have been inside of the module. May be called
+	 * multiple times with the same function, or different function.
+	 *
+	 * This object should do caching of the function. Once a module has
+	 * been given to the driver any children of it may not be changed,
+	 * doing so will cause undefined behaviour.
+	 */
+	CompiledDg getFunction(ir.Function);
+
+	/**
+	 * Free any resources that this result has.
+	 */
 	void close();
 }
 

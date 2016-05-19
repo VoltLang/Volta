@@ -7,16 +7,20 @@ import io = watt.io.std;
 import volt.errors;
 import volt.interfaces;
 import ir = volt.ir.ir;
+import volt.ir.util;
+import volt.token.location;
 
 import lib.llvm.core;
 import lib.llvm.analysis;
 import lib.llvm.bitreader;
 import lib.llvm.bitwriter;
 import lib.llvm.targetmachine;
+import lib.llvm.executionengine;
 import lib.llvm.c.Target;
 import lib.llvm.c.Linker;
 import lib.llvm.c.Initialization;
 
+import volt.llvm.host;
 import volt.llvm.state;
 import volt.llvm.toplevel;
 
@@ -31,7 +35,6 @@ protected:
 	LanguagePass lp;
 
 	TargetType mTargetType;
-	string mFilename;
 	bool mDump;
 
 public:
@@ -53,58 +56,38 @@ public:
 			LLVMInitializeX86TargetMC();
 			LLVMInitializeX86AsmPrinter();
 		}
+
+		LLVMLinkInMCJIT();
 	}
 
 	override void close()
 	{
-		mFilename = null;
 		// XXX: Shutdown LLVM.
 	}
 
 	override TargetType[] supported()
 	{
-		return [TargetType.LlvmBitcode];
+		return [TargetType.LlvmBitcode, TargetType.Host];
 	}
 
-	override void setTarget(string filename, TargetType type)
+	override void setTarget(TargetType type)
 	{
-		mFilename = filename;
 		mTargetType = type;
 	}
 
-	override void compile(ir.Module m)
-	in {
-		assert(mFilename !is null);
-	}
-	body {
-		scope (exit) {
-			mFilename = null;
-		}
-
+	override BackendResult compile(ir.Module m)
+	{
 		auto state = new VoltState(lp, m);
 		auto mod = state.mod;
-		scope (exit) {
+		scope (failure) {
 			state.close();
-			mFilename = null;
 		}
 
 		if (mDump) {
 			io.output.writefln("Compiling module");
 		}
 
-		try {
-			state.compile(m);
-		} catch (object.Throwable t) {
-			if (mDump) {
-				version (Volt) {
-					io.output.writefln("Caught \"???\" dumping module:");
-				} else {
-					io.output.writefln("Caught \"%s\" dumping module:", t.classinfo.name);
-				}
-				LLVMDumpModule(mod);
-			}
-			throw t;
-		}
+		llvmModuleCompile(state, m);
 
 		if (mDump) {
 			io.output.writefln("Dumping module");
@@ -119,7 +102,59 @@ public:
 			throw panic("Module verification failed.");
 		}
 
-		LLVMWriteBitcodeToFile(mod, mFilename);
+		if (mTargetType == TargetType.LlvmBitcode) {
+			return new BitcodeResult(state);
+		} else if (mTargetType == TargetType.Host) {
+			return new HostResult(state);
+		} else {
+			assert(false);
+		}
+	}
+
+protected:
+	void llvmModuleCompile(VoltState state, ir.Module m)
+	{
+		try {
+			state.compile(m);
+		} catch (object.Throwable t) {
+			if (mDump) {
+				version (Volt) {
+					io.output.writefln("Caught \"???\" dumping module:");
+				} else {
+					io.output.writefln("Caught \"%s\" dumping module:", t.classinfo.name);
+				}
+				LLVMDumpModule(state.mod);
+			}
+			throw t;
+		}
+	}
+}
+
+class BitcodeResult : BackendResult
+{
+protected:
+	VoltState mState;
+
+
+public:
+	this(VoltState state)
+	{
+		this.mState = state;
+	}
+
+	override void saveToFile(string filename)
+	{
+		LLVMWriteBitcodeToFile(mState.mod, filename);
+	}
+
+	override BackendResult.CompiledDg getFunction(ir.Function)
+	{
+		assert(false);
+	}
+
+	override void close()
+	{
+		mState.close();
 	}
 }
 
