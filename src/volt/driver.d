@@ -201,7 +201,9 @@ public:
 			mCommandLineModules ~= m;
 			return m;
 		}
-		assert(incPath !is null);
+		if (incPath is null) {
+			return null;
+		}
 		return loadAndParse(incPath);
 	}
 
