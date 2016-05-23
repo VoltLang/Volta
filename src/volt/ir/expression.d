@@ -280,6 +280,10 @@ class Constant : Exp
 public:
 	union U
 	{
+		byte _byte;
+		ubyte _ubyte;
+		short _short;
+		ushort _ushort;
 		int _int;
 		uint _uint;
 		long _long;

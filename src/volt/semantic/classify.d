@@ -961,20 +961,28 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 
 		bool inSignedRange(long min, long max)
 		{
-			if (primitive.type == Int) {
+			if (primitive.type == Byte) {
+				return constant.u._byte >= min && constant.u._byte <= max;
+			} else if (primitive.type == Ubyte) {
+				return constant.u._ubyte <= cast(ubyte)max;
+			} else if (primitive.type == Short) {
+				return constant.u._short >= min && constant.u._short <= max;
+			} else if (primitive.type == Ushort) {
+				return constant.u._ushort <= cast(ushort)max;
+			} else if (primitive.type == Int) {
 				return constant.u._int >= min && constant.u._int <= max;
 			} else if (primitive.type == Uint) {
-				return constant.u._uint <= cast(uint) max;
+				return constant.u._uint <= cast(uint)max;
 			} else if (primitive.type == Long) {
 				return constant.u._long >= min && constant.u._long <= max;
 			} else if (primitive.type == Ulong) {
-				return constant.u._ulong <= cast(ulong) max;
+				return constant.u._ulong <= cast(ulong)max;
 			} else if (primitive.type == Float || primitive.type == Double) {
 				return false;
 			} else if (primitive.type == Char) {
 				return true;
 			} else if (primitive.type == Dchar) {
-				return constant.u._uint < cast(uint) max;
+				return constant.u._uint < cast(uint)max;
 			} else if (primitive.type == Bool) {
 				return true;
 			} else {
