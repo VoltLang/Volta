@@ -102,6 +102,7 @@ public:
 	NewExp newExp;       // Optional.
 	CastExp castExp;     // Optional.
 	DupExp dupExp;       // Optional.
+	RunExp runExp;       // Optional. If this is non-null, everything else is ignored.
 }
 
 class NewExp : IntExp

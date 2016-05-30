@@ -22,16 +22,6 @@ import volt.util.string;
 
 ParseStatus parseExp(ParserStream ps, out ir.Exp exp)
 {
-	if (ps == TokenType.HashRun) {
-		ir.RunExp runexp;
-		auto succeeded = parseRunExp(ps, runexp);
-		if (!succeeded) {
-			return parseFailed(ps, ir.NodeType.RunExp);
-		}
-		exp = runexp;
-		return Succeeded;
-	}
-
 	intir.AssignExp aexp;
 	auto succeeded = parseAssignExp(ps, aexp);
 	if (!succeeded) {
@@ -203,6 +193,10 @@ ParseStatus binexpToExp(ParserStream ps, intir.BinExp bin, out ir.Exp exp)
 
 ParseStatus unaryToExp(ParserStream ps, intir.UnaryExp unary, out ir.Exp exp)
 {
+	if (unary.runExp !is null) {
+		exp = unary.runExp;
+		return Succeeded;
+	}
 	if (unary.op == ir.Unary.Op.None) {
 		auto succeeded = postfixToExp(ps, unary.location, exp, unary.postExp);
 		if (!succeeded) {
@@ -1156,6 +1150,12 @@ ParseStatus parseUnaryExp(ParserStream ps, out intir.UnaryExp exp)
 		break;
 	case TokenType.New:
 		auto succeeded = parseNewOrDup(ps, exp);
+		if (!succeeded) {
+			return parseFailed(ps, ir.NodeType.Unary);
+		}
+		break;
+	case TokenType.HashRun:
+		auto succeeded = parseRunExp(ps, exp.runExp);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Unary);
 		}
