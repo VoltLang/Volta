@@ -126,9 +126,6 @@ public:
 			case Union:
 			case Class:
 			case Interface:
-			case MixinFunction:
-			case MixinTemplate:
-			case MixinStatement:
 			case UserAttribute:
 			case EnumDeclaration:
 				auto s = accept(n, this);
@@ -162,7 +159,6 @@ public:
 			case ContinueStatement:
 			case ExpStatement:
 			case Variable:
-			case MixinStatement:
 			case ThrowStatement:
 			case SwitchStatement:
 			case GotoStatement:

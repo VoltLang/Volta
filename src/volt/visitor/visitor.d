@@ -56,10 +56,6 @@ public abstract:
 	Status leave(ir.Condition c);
 	Status enter(ir.ConditionTopLevel ctl);
 	Status leave(ir.ConditionTopLevel ctl);
-	Status enter(ir.MixinFunction mf);
-	Status leave(ir.MixinFunction mf);
-	Status enter(ir.MixinTemplate mt);
-	Status leave(ir.MixinTemplate mt);
 	Status enter(ir.UserAttribute ui);
 	Status leave(ir.UserAttribute ui);
 
@@ -109,8 +105,6 @@ public abstract:
 	Status leave(ir.PragmaStatement ps);
 	Status enter(ir.ConditionStatement cs);
 	Status leave(ir.ConditionStatement cs);
-	Status enter(ir.MixinStatement ms);
-	Status leave(ir.MixinStatement ms);
 	Status enter(ir.AssertStatement as);
 	Status leave(ir.AssertStatement as);
 	
@@ -250,10 +244,6 @@ override:
 	Status leave(ir.ConditionTopLevel ctl){ return Continue; }
 	Status enter(ir.UserAttribute ui){ return Continue; }
 	Status leave(ir.UserAttribute ui){ return Continue; }
-	Status enter(ir.MixinFunction mf){ return Continue; }
-	Status leave(ir.MixinFunction mf){ return Continue; }
-	Status enter(ir.MixinTemplate mt){ return Continue; }
-	Status leave(ir.MixinTemplate mt){ return Continue; }
 	Status visit(ir.QualifiedName qname){ return Continue; }
 	Status visit(ir.Identifier name){ return Continue; }
 
@@ -300,8 +290,6 @@ override:
 	Status leave(ir.PragmaStatement ps){ return Continue; }
 	Status enter(ir.ConditionStatement cs){ return Continue; }
 	Status leave(ir.ConditionStatement cs){ return Continue; }
-	Status enter(ir.MixinStatement ms){ return Continue; }
-	Status leave(ir.MixinStatement ms){ return Continue; }
 	Status enter(ir.AssertStatement as){ return Continue; }
 	Status leave(ir.AssertStatement as){ return Continue; }
 	
@@ -471,14 +459,6 @@ body {
 		auto asStaticAssert = cast(ir.StaticAssert) n;
 		assert(asStaticAssert !is null);
 		return acceptStaticAssert(asStaticAssert, av);
-	case MixinFunction:
-		auto asMf = cast(ir.MixinFunction) n;
-		assert(asMf !is null);
-		return acceptMixinFunction(asMf, av);
-	case MixinTemplate:
-		auto asMt = cast(ir.MixinTemplate) n;
-		assert(asMt !is null);
-		return acceptMixinTemplate(asMt, av);
 	case ConditionTopLevel:
 		auto asCtl = cast(ir.ConditionTopLevel) n;
 		assert(asCtl !is null);
@@ -596,10 +576,6 @@ body {
 		auto asCs = cast(ir.ConditionStatement) n;
 		assert(asCs !is null);
 		return acceptConditionStatement(asCs, av);
-	case MixinStatement:
-		auto asMs = cast(ir.MixinStatement) n;
-		assert(asMs !is null);
-		return acceptMixinStatement(asMs, av);
 	case AssertStatement:
 		auto as = cast(ir.AssertStatement) n;
 		assert(as !is null);
@@ -989,30 +965,6 @@ Visitor.Status acceptConditionTopLevel(ir.ConditionTopLevel ctl, Visitor av)
 	}
 
 	return av.leave(ctl);
-}
-
-Visitor.Status acceptMixinFunction(ir.MixinFunction mf, Visitor av)
-{
-	auto status = av.enter(mf);
-	if (status == VisitorStop) {
-		return status;
-	}
-
-	// Raw members not visited.
-
-	return av.leave(mf);
-}
-
-Visitor.Status acceptMixinTemplate(ir.MixinTemplate mt, Visitor av)
-{
-	auto status = av.enter(mt);
-	if (status == VisitorStop) {
-		return status;
-	}
-
-	// Raw members not visited.
-
-	return av.leave(mt);
 }
 
 Visitor.Status acceptUserAttribute(ir.UserAttribute ui, Visitor av)
@@ -1742,34 +1694,6 @@ Visitor.Status acceptAssertStatement(ir.AssertStatement as, Visitor av)
 	}
 
 	return av.leave(as);
-}
-
-Visitor.Status acceptMixinStatement(ir.MixinStatement ms, Visitor av)
-{
-	auto status = av.enter(ms);
-	if (status != VisitorContinue) {
-		return parentContinue(status);
-	}
-
-	if (ms.id !is null) {
-		status = accept(ms.id, av);
-		if (status == VisitorStop)
-			return VisitorStop;
-	}
-
-	if (ms.stringExp !is null) {
-		status = acceptExp(ms.stringExp, av);
-		if (status == VisitorStop)
-			return VisitorStop;
-	}
-
-	if (ms.resolved !is null) {
-		status = accept(ms.resolved, av);
-		if (status == VisitorStop)
-			return VisitorStop;
-	}
-
-	return av.leave(ms);
 }
 
 

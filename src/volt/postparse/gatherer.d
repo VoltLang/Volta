@@ -164,20 +164,6 @@ void gather(ir.Scope current, ir._Interface i, Where where)
 	current.addType(i, i.name);
 }
 
-void gather(ir.Scope current, ir.MixinFunction mf, Where where)
-{
-	// @TODO assert(mf.access.isValidAccess());
-
-	current.addTemplate(mf, mf.name);
-}
-
-void gather(ir.Scope current, ir.MixinTemplate mt, Where where)
-{
-	// @TODO assert(mt.access.isValidAccess());
-
-	current.addTemplate(mt, mt.name);
-}
-
 void gather(ir.Scope current, ir.UserAttribute ua, Where where)
 {
 	assert(ua.access.isValidAccess());
@@ -580,18 +566,6 @@ public:
 		if (mFunctionStack.length == 0) {
 			throw panic(bs.location, "block statement outside of function");
 		}
-		return Continue;
-	}
-
-	override Status enter(ir.MixinFunction mf)
-	{
-		gather(current, mf, where);
-		return Continue;
-	}
-
-	override Status enter(ir.MixinTemplate mt)
-	{
-		gather(current, mt, where);
 		return Continue;
 	}
 

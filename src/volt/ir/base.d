@@ -50,8 +50,6 @@ enum NodeType
 	StaticAssert,
 	Condition,
 	ConditionTopLevel,
-	MixinFunction,
-	MixinTemplate,
 	UserAttribute,
 
 	/* declaration.d */
@@ -100,7 +98,6 @@ enum NodeType
 	ScopeStatement,
 	PragmaStatement,
 	ConditionStatement,
-	MixinStatement,
 	AssertStatement,
 
 	/* expression.d */
@@ -332,8 +329,6 @@ string nodeToString(NodeType nodeType)
 	case EnumDeclaration: return "EnumDeclaration";
 	case Attribute: return "Attribute";
 	case StaticAssert: return "StaticAssert";
-	case MixinFunction: return "MixinFunction";
-	case MixinTemplate: return "MixinTemplate";
 	case Condition: return "Condition";
 	case ConditionTopLevel: return "ConditionTopLevel";
 	case FunctionSetType: return "FunctionSetType";
@@ -376,7 +371,6 @@ string nodeToString(NodeType nodeType)
 	case ScopeStatement: return "ScopeStatement";
 	case PragmaStatement: return "PragmaStatement";
 	case ConditionStatement: return "ConditionStatement";
-	case MixinStatement: return "MixinStatement";
 	case AssertStatement: return "AssertStatement";
 	case Constant: return "Constant";
 	case BinOp: return "BinOp";

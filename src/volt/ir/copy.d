@@ -540,8 +540,6 @@ ir.Node copyNode(ir.Node n)
 	case Union:
 	case Attribute:
 	case StaticAssert:
-	case MixinTemplate:
-	case MixinFunction:
 	case UserAttribute:
 	case Condition:
 	case ConditionTopLevel:
@@ -569,7 +567,6 @@ ir.Node copyNode(ir.Node n)
 	case ScopeStatement:
 	case PragmaStatement:
 	case ConditionStatement:
-	case MixinStatement:
 	case AssertStatement:
 	case Ternary:
 	case AssocArray:

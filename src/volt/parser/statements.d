@@ -240,14 +240,6 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		}
 		dg(cs);
 		return eatComments(ps);
-	case TokenType.Mixin:
-		ir.MixinStatement ms;
-		succeeded = parseMixinStatement(ps, ms);
-		if (!succeeded) {
-			return succeeded;
-		}
-		dg(ms);
-		return eatComments(ps);
 	default:
 		// It is safe to just set succeeded like this since
 		// only variable returns more then one node.
@@ -1291,57 +1283,6 @@ ParseStatus parseConditionStatement(ParserStream ps, out ir.ConditionStatement c
 			return parseFailed(ps, cs);
 		}
 	}
-
-	return Succeeded;
-}
-
-ParseStatus parseMixinStatement(ParserStream ps, out ir.MixinStatement ms)
-{
-	ms = new ir.MixinStatement();
-	ms.location = ps.peek.location;
-	if (ps != TokenType.Mixin) {
-		return unexpectedToken(ps, ms);
-	}
-	ps.get();
-	
-	if (matchIf(ps, TokenType.OpenParen)) {
-		auto succeeded = parseExp(ps, ms.stringExp);
-		if (!succeeded) {
-			return parseFailed(ps, ms);
-		}
-		if (ps != TokenType.CloseParen) {
-			return unexpectedToken(ps, ms);
-		}
-		ps.get();
-	} else {
-		if (ps != TokenType.Identifier) {
-			return unexpectedToken(ps, ms);
-		}
-		auto ident = ps.get();
-
-		auto qualifiedName = new ir.QualifiedName();
-		qualifiedName.identifiers ~= new ir.Identifier(ident.value);
-
-		ms.id = qualifiedName;
-
-		if (ps != TokenType.Bang) {
-			return unexpectedToken(ps, ms);
-		}
-		ps.get();
-		// TODO allow arguments
-		if (ps != TokenType.OpenParen) {
-			return unexpectedToken(ps, ms);
-		}
-		ps.get();
-		if (ps != TokenType.CloseParen) {
-			return unexpectedToken(ps, ms);
-		}
-		ps.get();
-	}
-	if (ps != TokenType.Semicolon) {
-		return unexpectedToken(ps, ms);
-	}
-	ps.get();
 
 	return Succeeded;
 }

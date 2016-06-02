@@ -16,7 +16,6 @@ import volt.token.token : TokenType;
 
 import volt.parser.base;
 import volt.parser.declaration;
-public import volt.parser.statements : parseMixinStatement;
 import volt.parser.expression;
 
 
@@ -178,26 +177,6 @@ body
 				return parseFailed(ps, ir.NodeType.TopLevelBlock);
 			}
 			sink.pushNodes(nodes);
-			break;
-		case TokenType.Mixin:
-			auto next = ps.lookahead(1).type;
-			if (next == TokenType.Function) {
-				ir.MixinFunction m;
-				succeeded = parseMixinFunction(ps, m);
-				if (!succeeded) {
-					return parseFailed(ps, ir.NodeType.TopLevelBlock);
-				}
-				sink.push(m);
-			} else if (next == TokenType.Template) {
-				ir.MixinTemplate m;
-				succeeded = parseMixinTemplate(ps, m);
-				if (!succeeded) {
-					return parseFailed(ps, ir.NodeType.TopLevelBlock);
-				}
-				sink.push(m);
-			} else {
-				return unexpectedToken(ps, ir.NodeType.TopLevelBlock);
-			}
 			break;
 		case TokenType.Const:
 			if (ps.lookahead(1).type == TokenType.OpenParen) {
@@ -889,66 +868,6 @@ ParseStatus parseEnum(ParserStream ps, out ir.Node[] output)
 	}
 
 	return Succeeded;
-}
-
-ParseStatus parseMixinFunction(ParserStream ps, out ir.MixinFunction m)
-{
-	m = new ir.MixinFunction();
-	m.location = ps.peek.location;
-	m.docComment = ps.comment();
-
-	auto succeeded = match(ps, ir.NodeType.MixinFunction,
-		[TokenType.Mixin, TokenType.Function, TokenType.Identifier]);
-	if (!succeeded) {
-		return succeeded;
-	}
-
-	auto nameTok = ps.previous;
-	m.name = nameTok.value;
-	
-	// TODO allow arguments
-	succeeded = match(ps, ir.NodeType.MixinTemplate,
-		[TokenType.CloseParen, TokenType.OpenBrace]);
-	if (!succeeded) {
-		return succeeded;
-	}
-	
-	succeeded = parseBlock(ps, m.raw);
-	if (!succeeded) {
-		return parseFailed(ps, m);
-	}
-
-	return Succeeded;
-}
-
-ParseStatus parseMixinTemplate(ParserStream ps, out ir.MixinTemplate m)
-{
-	m = new ir.MixinTemplate();
-	m.location = ps.peek.location;
-	m.docComment = ps.comment();
-
-	auto succeeded = match(ps, ir.NodeType.MixinTemplate,
-		[TokenType.Mixin, TokenType.Template, TokenType.Identifier]);
-	if (!succeeded) {
-		return succeeded;
-	}
-
-	auto nameTok = ps.previous;
-	m.name = nameTok.value;
-
-	// TODO allow arguments
-	succeeded = match(ps, ir.NodeType.MixinTemplate,
-		[TokenType.OpenParen, TokenType.CloseParen, TokenType.OpenBrace]);
-	if (!succeeded) {
-		return succeeded;
-	}
-
-	succeeded = parseTopLevelBlock(ps, m.raw, TokenType.CloseBrace);
-	if (!succeeded) {
-		return parseFailed(ps, ir.NodeType.MixinTemplate);
-	}
-
-	return match(ps, ir.NodeType.MixinTemplate, TokenType.CloseBrace);
 }
 
 ParseStatus parseAttribute(ParserStream ps, out ir.Attribute attr, bool noTopLevel=false)

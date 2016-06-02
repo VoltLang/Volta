@@ -458,57 +458,6 @@ public:
 		assert(false);
 	}
 
-	override Status enter(ir.MixinFunction mf)
-	{
-		ln();
-		twf("mixin function ");
-		twf(mf.name);
-		twfln("()\n{");
-		mIndent++;
-
-		// Ok, to do this.	
-		foreach (member; mf.raw.statements) {
-			accept(member, this);
-		}
-
-		return Continue;
-	}
-	
-	override Status leave(ir.MixinFunction mf)
-	{
-		mIndent--;
-		twfln("}");
-		
-		return ContinueParent;
-	}
-	
-	override Status enter(ir.MixinTemplate mt)
-	{
-		ln();
-		twf("mixin template ");
-		twf(mt.name);
-		twf("()");
-		ln();
-		twf("{");
-		ln();
-		mIndent++;
-
-		// Ok, to do this.	
-		foreach (member; mt.raw.nodes) {
-			accept(member, this);
-		}
-		
-		return Continue;
-	}
-
-	override Status leave(ir.MixinTemplate mt)
-	{
-		mIndent--;
-		twf("}\n");
-
-		return ContinueParent;
-	}
-
 	override Status enter(ir.Condition c)
 	{
 		final switch (c.kind) with (ir.Condition.Kind) {
@@ -1131,34 +1080,6 @@ public:
 	{
 		assert(false);
 	}
-	
-	override Status enter(ir.MixinStatement ms)
-	{
-		if (ms.id !is null) {
-			wf("mixin ", ms.id.identifiers[0].value, "!();");
-		}
-		if (ms.stringExp !is null) {
-			wf("mixin (");
-			
-			auto oldIndentText = mIndentText;
-			mIndentText = "";
-			
-			acceptExp(ms.stringExp, this);
-			
-			mIndentText = oldIndentText;
-			
-			wfln(");");
-		}
-
-		if (ms.resolved !is null) {
-			foreach (s; ms.resolved.statements)
-				accept(s, this);
-		}
-
-		return ContinueParent;
-	}
-	
-	override Status leave(ir.MixinStatement ms) { return Continue; }
 	
 	override Status enter(ir.UserAttribute ui)
 	{

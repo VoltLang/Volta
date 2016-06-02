@@ -212,8 +212,6 @@ public:
 	override Status leave(ir.Condition n) { leaveNode(n); return Continue; }
 	override Status enter(ir.ConditionTopLevel n) { enterNode(n); return Continue; }
 	override Status leave(ir.ConditionTopLevel n) { leaveNode(n); return Continue; }
-	override Status leave(ir.MixinFunction n) { leaveNode(n); return Continue; }
-	override Status leave(ir.MixinTemplate n) { leaveNode(n); return Continue; }
 	override Status enter(ir.UserAttribute n) { enterNode(n); return Continue; }
 	override Status leave(ir.UserAttribute n) { leaveNode(n); return Continue; }
 
@@ -228,26 +226,6 @@ public:
 			ln();
 		twf(["(", ir.nodeToString(n), " \"", n.name.toString(), "\" ", ir.getNodeAddressString(n)]);
 		mLastIndent = mIndent++;
-		return Continue;
-	}
-
-	override Status enter(ir.MixinFunction n)
-	{
-		enterNode(n);
-		// Ok, to do this.	
-		foreach (statement; n.raw.statements) {
-			accept(statement, this);
-		}
-		return Continue;
-	}
-
-	override Status enter(ir.MixinTemplate n)
-	{
-		enterNode(n);
-		// Ok, to do this.	
-		foreach (node; n.raw.nodes) {
-			accept(node, this);
-		}
 		return Continue;
 	}
 
@@ -302,8 +280,6 @@ public:
 	override Status leave(ir.PragmaStatement n) { leaveNode(n); return Continue; }
 	override Status enter(ir.ConditionStatement n) { enterNode(n); return Continue; }
 	override Status leave(ir.ConditionStatement n) { leaveNode(n); return Continue; }
-	override Status enter(ir.MixinStatement n) { enterNode(n); return Continue; }
-	override Status leave(ir.MixinStatement n) { leaveNode(n); return Continue; }
 	override Status enter(ir.AssertStatement n) { enterNode(n); return Continue; }
 	override Status leave(ir.AssertStatement n) { leaveNode(n); return Continue; }
 	
