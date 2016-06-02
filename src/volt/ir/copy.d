@@ -537,6 +537,7 @@ ir.Node copyNode(ir.Node n)
 	case TopLevelBlock:
 	case Import:
 	case Unittest:
+	case Mixin:
 	case Union:
 	case Attribute:
 	case StaticAssert:

@@ -240,6 +240,27 @@ public:
 }
 
 /**
+ * A mixin declaration, used to insert text as code or instanciated templates.
+ *
+ * @ingroup irNode irTopLevel
+ */
+class Mixin : Node
+{
+public:
+	/// public, private, package or protected.
+	Access access = Access.Public;
+
+	/// mixin @<name> ...
+	string name;
+
+	/// mixin @<name> = @<exp>;
+	Exp exp;
+
+public:
+	this() { super(NodeType.Mixin); }
+}
+
+/**
  * Named is a base class for named types, like Enum, Struct, Class and so on.
  * This is slightly different from Aggregate since Enum is not a Aggregate,
  * but is a named type.

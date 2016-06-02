@@ -59,6 +59,7 @@ public:
 	enum Kind
 	{
 		Type,
+		Mixin,
 		Value,
 		Scope,
 		Alias,
@@ -359,6 +360,29 @@ public:
 		symbols[name] = store;
 		store.myScope = s;
 		store.access = Access.Private;
+		return store;
+	}
+
+	/**
+	 * Add a mixin declaration.
+	 *
+	 * Throws:
+	 *   CompilerPanic if another symbol of same name is found.
+	 *
+	 * Side-effects:
+	 *   None.
+	 */
+	Store addMixin(Node n, string name)
+	{
+		if (n is null) {
+			throw panic("null Node provided to addMixin");
+		}
+		if (name is null) {
+			throw panic(n.location, "null name provided to addMixin");
+		}
+		errorOn(n, name);
+		auto store = new Store(this, n, name, Store.Kind.Mixin);
+		symbols[name] = store;
 		return store;
 	}
 

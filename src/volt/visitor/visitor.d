@@ -36,6 +36,8 @@ public abstract:
 	Status leave(ir.Import i);
 	Status enter(ir.Unittest u);
 	Status leave(ir.Unittest u);
+	Status enter(ir.Mixin mix);
+	Status leave(ir.Mixin mix);
 	Status enter(ir.Class c);
 	Status leave(ir.Class c);
 	Status enter(ir._Interface i);
@@ -222,6 +224,8 @@ override:
 	Status leave(ir.Import i){ return Continue; }
 	Status enter(ir.Unittest u){ return Continue; }
 	Status leave(ir.Unittest u){ return Continue; }
+	Status enter(ir.Mixin mix){ return Continue; }
+	Status leave(ir.Mixin mix){ return Continue; }
 	Status enter(ir.Class c){ return Continue; }
 	Status leave(ir.Class c){ return Continue; }
 	Status enter(ir._Interface i){ return Continue; }
@@ -435,6 +439,8 @@ body {
 		return acceptFunctionParam(fp, av);
 	case Unittest:
 		return acceptUnittest(cast(ir.Unittest) n, av);
+	case Mixin:
+		return acceptMixin(cast(ir.Mixin)n, av);
 	case Class:
 		auto asClass = cast(ir.Class) n;
 		assert(asClass !is null);
@@ -823,6 +829,20 @@ Visitor.Status acceptUnittest(ir.Unittest u, Visitor av)
 	}
 
 	return av.leave(u);
+}
+
+Visitor.Status acceptMixin(ir.Mixin mix, Visitor av)
+{
+	auto status = av.enter(mix);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	if (mix.exp !is null) {
+		acceptExp(mix.exp, av);
+	}
+
+	return av.leave(mix);
 }
 
 Visitor.Status acceptClass(ir.Class c, Visitor av)

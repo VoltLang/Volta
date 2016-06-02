@@ -192,6 +192,8 @@ public:
 	override Status leave(ir.Import n) { leaveNode(n); return Continue; }
 	override Status enter(ir.Unittest n) { enterNode(n); return Continue; }
 	override Status leave(ir.Unittest n) { leaveNode(n); return Continue; }
+	override Status enter(ir.Mixin n) { enterNode(n); visitNamed(n); return Continue; }
+	override Status leave(ir.Mixin n) { leaveNode(n); return Continue; }
 	override Status enter(ir.Class n) { enterNode(n); visitNamed(n); return Continue; }
 	override Status leave(ir.Class n) { leaveNode(n); return Continue; }
 	override Status enter(ir._Interface n) { enterNode(n); return Continue; }
@@ -452,6 +454,9 @@ protected:
 	void visitNamed(ir.Node n)
 	{
 		switch (n.nodeType) with (ir.NodeType) {
+		case Mixin:
+			auto asMixin = cast(ir.Mixin)n;
+			return visitName(asMixin.name);
 		case Function:
 			auto asFn = cast(ir.Function)n;
 			return visitNames(asFn.name, asFn.mangledName);

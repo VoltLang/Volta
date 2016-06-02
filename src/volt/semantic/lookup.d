@@ -487,6 +487,10 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
 ir.Store ensureResolved(LanguagePass lp, ir.Store s)
 {
 	final switch (s.kind) with (ir.Store.Kind) {
+	case Mixin:
+		lp.resolve(s);
+		assert(s.kind != Mixin);
+		return s;
 	case Merge:
 		lp.resolve(s);
 		assert(s.kind == Function);

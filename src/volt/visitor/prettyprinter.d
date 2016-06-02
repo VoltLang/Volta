@@ -186,6 +186,22 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.Mixin mix)
+	{
+		ln();
+		twf("mixin ", mix.name, " = ");
+		acceptExp(mix.exp, this);
+		wf(";");
+		ln();
+
+		return ContinueParent;
+	}
+
+	override Status leave(ir.Mixin u)
+	{
+		assert(false);
+	}
+
 	override Status enter(ir.Class c)
 	{
 		ln();

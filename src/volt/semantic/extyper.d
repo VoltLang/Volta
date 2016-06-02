@@ -146,6 +146,7 @@ ir.Type handleStore(Context ctx, string ident, ref ir.Exp exp, ir.Store store,
 		                                  parent, via);
 	case Template:
 		throw panic(exp, "template used as a value.");
+	case Mixin:
 	case Merge:
 	case Alias:
 		assert(false);
@@ -4665,6 +4666,12 @@ public:
 		return ContinueParent;
 	}
 
+	override Status enter(ir.Mixin mix)
+	{
+		//ctx.lp.resolve(mix);
+		return ContinueParent;
+	}
+
 	override Status enter(ir.Struct s)
 	{
 		ctx.lp.actualize(s);
@@ -4768,6 +4775,7 @@ public:
 	 *
 	 */
 
+	override Status leave(ir.Mixin n) { throw panic(n, "visitor"); }
 	override Status leave(ir.Function n) { throw panic(n, "visitor"); }
 	override Status enter(ir.FunctionParam n) { throw panic(n, "visitor"); }
 	override Status leave(ir.FunctionParam n) { throw panic(n, "visitor"); }

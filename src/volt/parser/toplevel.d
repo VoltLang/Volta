@@ -114,6 +114,14 @@ body
 			}
 			sink.push(_import);
 			break;
+		case TokenType.Mixin:
+			ir.Mixin m;
+			succeeded = parseMixin(ps, m);
+			if (!succeeded) {
+				return parseFailed(ps, ir.NodeType.TopLevelBlock);
+			}
+			sink.push(m);
+			break;
 		case TokenType.Unittest:
 			ir.Unittest u;
 			succeeded = parseUnittest(ps, u);
@@ -575,6 +583,42 @@ ParseStatus parseDestructor(ParserStream ps, out ir.Function d)
 	}
 
 	return Succeeded;
+}
+
+ParseStatus parseMixin(ParserStream ps, out ir.Mixin mix)
+{
+	mix = new ir.Mixin();
+	mix.location = ps.peek.location;
+	//mix.docComment = ps.comment();
+
+	if (ps.peek.type != TokenType.Mixin) {
+		return unexpectedToken(ps, ir.NodeType.Mixin);
+	}
+	ps.get();
+	if (ps.peek.type == TokenType.Identifier) {
+		auto nameTok = ps.get();
+		mix.name = nameTok.value;
+	} else {
+		return unsupportedFeature(ps, mix, "anonymous mixin declarations");
+	}
+
+	if (ps.peek.type == TokenType.Semicolon) {
+		return unsupportedFeature(ps, mix, "empty mixin declarations");
+	} else {
+		auto succeeded = match(ps, ir.NodeType.TopLevelBlock, TokenType.Assign);
+		if (!succeeded) {
+			return succeeded;
+		}
+
+		succeeded = parseExp(ps, mix.exp);
+		if (!succeeded) {
+			return parseFailed(ps, mix);
+		}
+
+		return match(ps, ir.NodeType.Mixin, TokenType.Semicolon);
+	}
+
+	version (Volt) assert(false); // If
 }
 
 ParseStatus parseClass(ParserStream ps, out ir.Class c)

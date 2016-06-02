@@ -156,6 +156,12 @@ void gather(ir.Scope current, ir.Enum e, Where where)
 	current.addType(e, e.name);
 }
 
+void gather(ir.Scope current, ir.Mixin mix, Where where)
+{
+	assert(mix.access.isValidAccess());
+	current.addMixin(mix, mix.name);
+}
+
 void gather(ir.Scope current, ir._Interface i, Where where)
 {
 	assert(i.access.isValidAccess());
@@ -441,6 +447,12 @@ public:
 	override Status enter(ir.Alias a)
 	{
 		gather(current, a, where);
+		return Continue;
+	}
+
+	override Status enter(ir.Mixin mix)
+	{
+		gather(current, mix, where);
 		return Continue;
 	}
 

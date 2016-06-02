@@ -41,6 +41,7 @@ enum NodeType
 	TopLevelBlock,
 	Import,
 	Unittest,
+	Mixin,
 	Struct,
 	Class,
 	Interface,
@@ -320,6 +321,7 @@ string nodeToString(NodeType nodeType)
 	case TopLevelBlock: return "TopLevelBlock";
 	case Import: return "Import";
 	case Unittest: return "Unittest";
+	case Mixin: return "Mixin";
 	case Struct: return "Struct";
 	case Class: return "Class";
 	case Interface: return "Interface";
