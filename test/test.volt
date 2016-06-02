@@ -4,7 +4,15 @@
 module test;
 
 
+mixin Foo = `
+struct {
+	i32 x, y, z;
+}
+`;
+
 int main()
 {
-	return 42;
+	Foo foo;
+	foo.x = 42;
+	return foo.x;
 }
