@@ -668,12 +668,15 @@ void handleCast(State state, Location loc, Type newType, Value result)
 	auto newTypeFn = cast(FunctionType)newType;
 	auto oldTypeFn = cast(FunctionType)oldType;
 	if ((newTypePtr !is null || newTypeFn !is null) &&
-	    (oldTypePtr !is null || oldTypeFn !is null))
+	    (oldTypePtr !is null || oldTypeFn !is null)) {
 		return handleCastPointer(state, loc, newType, result);
+	}
 
-	if ((newTypePtr !is null || newTypePrim !is null) &&
-	    (oldTypePtr !is null || oldTypePrim !is null))
-		return handleCastPointerPrim(state, loc, newTypePtr, newTypePrim, result);
+	if ((newTypePrim !is null && (oldTypeFn !is null || oldTypePtr !is null)) ||
+	    (oldTypePrim !is null && (newTypeFn !is null || newTypePtr !is null))) {
+		auto t = newTypePtr is null ? newTypeFn : newTypePtr;
+		return handleCastPointerPrim(state, loc, t, newTypePrim, result);
+	}
 
 	throw panicUnhandled(loc,
 		ir.nodeToString(oldType.irType) ~ " -> " ~
