@@ -249,8 +249,8 @@ public:
 
 	Type[2] types;
 
-	enum size_t ptrIndex = 0;
-	enum size_t lengthIndex = 1;
+	enum size_t lengthIndex = 0;
+	enum size_t ptrIndex = 1;
 
 public:
 	static ArrayType fromIr(State state, ir.ArrayType at)
@@ -365,10 +365,11 @@ private:
 			return;
 		}
 
-		version (D_Version2) static assert(ptrIndex < lengthIndex);
+
+		version (D_Version2) static assert(ptrIndex > lengthIndex);
 		diStructSetBody(state, cast(Type)this,
-			[ptrType, lengthType],
-			["ptr", "length"]);
+			[lengthType, ptrType],
+			["length", "ptr"]);
 	}
 }
 

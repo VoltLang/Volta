@@ -8,10 +8,16 @@ module vrt.vacuum.aa;
 // http://en.wikipedia.org/wiki/Red%E2%80%93black_tree
 
 
-private union TreeStore {
-	void* ptr;
-	ulong unsigned;
-	void[] array;
+private struct TreeStore {
+	@property ulong unsigned() { return value; }
+	@property void unsigned(ulong v) { value = v; }
+	@property void* ptr() { return cast(void*)value; }
+	@property void ptr(void* ptr) { value = cast(ulong)ptr; }
+	@property void[] array() { return ptr[0 .. length]; }
+	@property void array(void[] arr) { ptr = arr.ptr; length = arr.length; }
+
+	ulong value;
+	size_t length;
 }
 
 // Represents a Node in the Red-Black-Tree

@@ -109,9 +109,10 @@ void makeArrayTemp(State state, Location loc, ArrayType at,
                    LLVMValueRef ptr, LLVMValueRef len,
                    Value result)
 {
-	version (D_Version2) static assert(ArrayType.ptrIndex == 0);
+	version (D_Version2) static assert(ArrayType.lengthIndex <
+		ArrayType.ptrIndex);
 	makeStructTemp(state, loc, at, "arrayTemp",
-	               [ptr, len], result);
+	               [len, ptr], result);
 }
 
 /**

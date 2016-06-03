@@ -68,8 +68,8 @@ local AllocDg allocDg;
 
 struct ArrayStruct
 {
-	void* ptr;
 	size_t length;
+	void* ptr;
 }
 
 enum
