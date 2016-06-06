@@ -40,6 +40,11 @@ public:
 
 protected:
 	this(NodeType nt) { super(nt); }
+
+	this(NodeType nt, Exp old)
+	{
+		super(nt, old);
+	}
 }
 
 /**
@@ -62,6 +67,17 @@ public:
 
 protected:
 	this(NodeType nt) { super(nt); }
+
+	this(NodeType nt, LiteralExp old)
+	{
+		super(nt, old);
+		version (Volt) {
+			this.exps = new old.exps[0 .. $];
+		} else {
+			this.exps = old.exps.dup;
+		}
+		this.type = old.type;
+	}
 }
 
 /**
@@ -85,6 +101,14 @@ public:
 
 public:
 	this() { super(NodeType.Ternary); }
+
+	this(Ternary old)
+	{
+		super(NodeType.Ternary, old);
+		this.condition = old.condition;
+		this.ifTrue = old.ifTrue;
+		this.ifFalse = old.ifFalse;
+	}
 }
 
 /**
@@ -153,6 +177,15 @@ public:
 
 public:
 	this() { super(NodeType.BinOp); }
+
+	this(BinOp old)
+	{
+		super(NodeType.BinOp, old);
+		this.op = old.op;
+		this.left = old.left;
+		this.right = old.right;
+		this.isInternalNestedAssign = old.isInternalNestedAssign;
+	}
 }
 
 /**
@@ -198,6 +231,27 @@ public:
 public:
 	this() { super(NodeType.Unary); }
 	this(Type n, Exp e) { super(NodeType.Unary); location = e.location; op = Op.Cast; value = e; type = n; }
+
+	this(Unary old)
+	{
+		super(NodeType.Unary, old);
+		this.op = old.op;
+		this.value = old.value;
+
+		this.hasArgumentList = old.hasArgumentList;
+		this.type = old.type;
+		version (Volt) {
+			this.argumentList = new old.argumentList[0 .. $];
+		} else {
+			this.argumentList = old.argumentList.dup;
+		}
+		this.ctor = old.ctor;
+
+		this.dupName = old.dupName;
+		this.dupBeginning = old.dupBeginning;
+		this.dupEnd = old.dupEnd;
+		this.fullShorthand = old.fullShorthand;
+	}
 }
 
 /**
@@ -249,6 +303,28 @@ public:
 
 public:
 	this() { super(NodeType.Postfix); }
+
+	this(Postfix old)
+	{
+		super(NodeType.Postfix, old);
+		this.op = old.op;
+		this.child = old.child;
+		version (Volt) {
+			this.arguments = new old.arguments[0 .. $];
+			this.argumentTags = new old.argumentTags[0 .. $];
+			this.argumentLabels = new old.argumentLabels[0 .. $];
+		} else {
+			this.arguments = old.arguments.dup;
+			this.argumentTags = old.argumentTags.dup;
+			this.argumentLabels = old.argumentLabels.dup;
+		}
+		this.identifier = old.identifier;
+		this.memberFunction = old.memberFunction;
+		this.templateInstance = old.templateInstance;
+		this.isImplicitPropertyCall = old.isImplicitPropertyCall;
+
+		this.supressVtableLookup = old.supressVtableLookup;
+	}
 }
 
 /**
@@ -268,6 +344,21 @@ public:
 
 public:
 	this() { super(NodeType.PropertyExp); }
+
+	this(PropertyExp old)
+	{
+		super(NodeType.PropertyExp, old);
+		this.child = old.child;
+
+		this.getFn = old.getFn;
+		version (Volt) {
+			this.setFns = new old.setFns[0 .. $];
+		} else {
+			this.setFns = old.setFns;
+		}
+
+		this.identifier = old.identifier;
+	}
 }
 
 /**
@@ -301,6 +392,16 @@ public:
 
 public:
 	this() { super(NodeType.Constant); }
+
+	this(Constant old)
+	{
+		super(NodeType.Constant, old);
+		this.u = old.u;
+		this._string = old._string;
+		this.isNull = old.isNull;
+		this.arrayData = old.arrayData;
+		this.type = old.type;
+	}
 }
 
 /**
@@ -316,6 +417,11 @@ public:
 
 public:
 	this() { super(NodeType.ArrayLiteral); }
+
+	this(ArrayLiteral old)
+	{
+		super(NodeType.ArrayLiteral, old);
+	}
 }
 
 class AAPair : Node
@@ -329,6 +435,13 @@ public:
 	this(Exp key, Exp value)
 	{
 		this();
+		this.key = key;
+		this.value = value;
+	}
+
+	this(AAPair old)
+	{
+		super(NodeType.AAPair, old);
 		this.key = key;
 		this.value = value;
 	}
@@ -348,6 +461,13 @@ public:
 
 public:
 	this() { super(NodeType.AssocArray); }
+
+	this(AssocArray old)
+	{
+		super(NodeType.AssocArray, old);
+		this.pairs = old.pairs;
+		this.type = old.type;
+	}
 }
 
 /**
@@ -368,6 +488,13 @@ public:
 		this();
 		value = s;
 	}
+
+	this(IdentifierExp old)
+	{
+		super(NodeType.IdentifierExp, old);
+		this.globalLookup = old.globalLookup;
+		this.value = old.value;
+	}
 }
 
 /**
@@ -383,6 +510,13 @@ public:
 
 public:
 	this() { super(NodeType.Assert); }
+
+	this(Assert old)
+	{
+		super(NodeType.Assert, old);
+		this.condition = old.condition;
+		this.message = old.message;
+	}
 }
 
 /**
@@ -397,6 +531,12 @@ public:
 
 public:
 	this() { super(NodeType.StringImport); }
+
+	this(StringImport old)
+	{
+		super(NodeType.StringImport);
+		this.filename = old.filename;
+	}
 }
 
 /**
@@ -414,6 +554,14 @@ public:
 
 public:
 	this() { super(NodeType.Typeid); }
+
+	this(Typeid old)
+	{
+		super(NodeType.Typeid, old);
+		this.exp = old.exp;
+		this.type = old.type;
+		this.tinfoType = old.tinfoType;
+	}
 }
 
 /**
@@ -464,6 +612,15 @@ public:
 
 public:
 	this() { super(NodeType.IsExp); }
+
+	this(IsExp old)
+	{
+		super(NodeType.IsExp, old);
+		this.type = old.type;
+		this.specialisation = old.specialisation;
+		this.specType = old.specType;
+		this.compType = old.compType;
+	}
 }
 
 class FunctionParameter : Node
@@ -474,6 +631,13 @@ public:
 
 public:
 	this() { super(NodeType.FunctionParam); }
+
+	this(FunctionParameter old)
+	{
+		super(NodeType.FunctionParam, old);
+		this.type = old.type;
+		this.name = old.name;
+	}
 }
 
 /**
@@ -499,6 +663,22 @@ public:
 
 public:
 	this() { super(NodeType.FunctionLiteral); }
+
+	this(FunctionLiteral old)
+	{
+		super(NodeType.FunctionLiteral, old);
+		this.isDelegate = old.isDelegate;
+		this.returnType = old.returnType;
+		version (Volt) {
+			this.params = new old.params[0 .. $];
+		} else {
+			this.params = old.params.dup;
+		}
+		this.block = old.block;
+
+		this.singleLambdaParam = old.singleLambdaParam;
+		this.lambdaExp = old.lambdaExp;
+	}
 }
 
 /**
@@ -525,6 +705,20 @@ public:
 
 public:
 	this() { super(NodeType.ExpReference); }
+
+	this(ExpReference old)
+	{
+		super(NodeType.ExpReference, old);
+		version (Volt) {
+			this.idents = new old.idents[0 .. $];
+		} else {
+			this.idents = old.idents.dup;
+		}
+		this.decl = old.decl;
+		this.rawReference = old.rawReference;
+		this.doNotRewriteAsNestedLookup = old.doNotRewriteAsNestedLookup;
+		this.isSuperOrThisCall = old.isSuperOrThisCall;
+	}
 }
 
 /// A StructLiteral is an expression form of a struct.
@@ -534,6 +728,11 @@ public:
 
 public:
 	this() { super(NodeType.StructLiteral); }
+
+	this(StructLiteral old)
+	{
+		super(NodeType.StructLiteral, old);
+	}
 }
 
 /// A UnionLiteral is a compiler internal expression form of a struct
@@ -543,6 +742,11 @@ public:
 
 public:
 	this() { super(NodeType.UnionLiteral); }
+
+	this(UnionLiteral old)
+	{
+		super(NodeType.UnionLiteral);
+	}
 }
 
 /// A ClassLiteral is a compiler internal expression form of a class.
@@ -557,6 +761,12 @@ public:
 
 public:
 	this() { super(NodeType.ClassLiteral); }
+
+	this(ClassLiteral old)
+	{
+		super(NodeType.ClassLiteral, old);
+		this.useBaseStorage = old.useBaseStorage;
+	}
 }
 
 class TraitsExp : Exp
@@ -577,6 +787,17 @@ public:
 
 public:
 	this() { super(NodeType.TraitsExp); }
+
+	this(TraitsExp old)
+	{
+		super(NodeType.TraitsExp, old);
+		this.op = old.op;
+
+		this.target = old.target;
+		this.qname = old.qname;
+
+		this.type = old.type;
+	}
 }
 
 /**
@@ -592,6 +813,12 @@ public:
 
 public:
 	this() { super(NodeType.TypeExp); }
+
+	this(TypeExp old)
+	{
+		super(NodeType.TypeExp, old);
+		this.type = old.type;
+	}
 }
 
 /**
@@ -611,6 +838,17 @@ public:
 
 public:
 	this() { super(NodeType.StoreExp); }
+
+	this(StoreExp old)
+	{
+		super(NodeType.StoreExp, old);
+		version (Volt) {
+			this.idents = new old.idents[0 .. $];
+		} else {
+			this.idents = old.idents.dup;
+		}
+		this.store = old.store;
+	}
 }
 
 /**
@@ -634,6 +872,17 @@ public:
 
 public:
 	this() { super(NodeType.TemplateInstanceExp); }
+
+	this(TemplateInstanceExp old)
+	{
+		super(NodeType.TemplateInstanceExp, old);
+		this.name = name;
+		version (Volt) {
+			this.types = new old.types[0 .. $];
+		} else {
+			this.types = old.types.dup;
+		}
+	}
 }
 
 /**
@@ -654,6 +903,18 @@ public:
 
 public:
 	this() { super(NodeType.StatementExp); }
+
+	this(StatementExp old)
+	{
+		super(NodeType.StatementExp, old);
+		version (Volt) {
+			this.statements = new old.statements[0 .. $];
+		} else {
+			this.statements = old.statements.dup;
+		}
+		this.exp = old.exp;
+		this.originalExp = old.originalExp;
+	}
 }
 
 /**
@@ -681,6 +942,12 @@ public:
 		super(NodeType.TokenExp);
 		this.type = type;
 	}
+
+	this(TokenExp old)
+	{
+		super(NodeType.TokenExp, old);
+		this.type = old.type;
+	}
 }
 
 /**
@@ -696,6 +963,13 @@ public:
 
 public:
 	this() { super(NodeType.VaArgExp); }
+
+	this(VaArgExp old)
+	{
+		super(NodeType.VaArgExp, old);
+		this.arg = old.arg;
+		this.type = old.type;
+	}
 }
 
 /**
@@ -743,6 +1017,21 @@ public:
 		this.type = type;
 		this.children = children;
 	}
+
+	this(BuiltinExp old)
+	{
+		super(NodeType.BuiltinExp, old);
+		this.kind = old.kind;
+		this.type = old.type;
+
+		version (Volt) {
+			this.children = new old.children[0 .. $];
+			this.functions = new old.functions[0 .. $];
+		} else {
+			this.children = old.children.dup;
+			this.functions = old.functions.dup;
+		}
+	}
 }
 
 /**
@@ -762,6 +1051,14 @@ public:
 	{
 		super(NodeType.AccessExp);
 	}
+
+	this(AccessExp old)
+	{
+		super(NodeType.AccessExp, old);
+		this.child = old.child;
+		this.field = old.field;
+		this.aggregate = old.aggregate;
+	}
 }
 
 /**
@@ -779,5 +1076,11 @@ public:
 	this()
 	{
 		super(NodeType.RunExp);
+	}
+
+	this(RunExp old)
+	{
+		super(NodeType.RunExp, old);
+		this.child = old.child;
 	}
 }

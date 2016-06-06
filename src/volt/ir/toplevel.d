@@ -87,6 +87,17 @@ private:
 public:
 	this() { super(NodeType.Module); }
 
+	this(Module old)
+	{
+		super(NodeType.Module, old);
+		this.name = old.name;
+		this.children = old.children;
+		this.myScope = old.myScope;
+		this.hasPhase1 = old.hasPhase1;
+		this.gathered = old.gathered;
+		this.mId = old.mId;
+	}
+
 	/// Get a unique number for this module.
 	size_t getId()
 	{
@@ -110,6 +121,16 @@ public:
 
 public:
 	this() { super(NodeType.TopLevelBlock); }
+
+	this(TopLevelBlock old)
+	{
+		super(NodeType.TopLevelBlock, old);
+		version (Volt) {
+			this.nodes = new old.nodes[0 .. $];
+		} else {
+			this.nodes = old.nodes.dup;
+		}
+	}
 }
 
 /**
@@ -160,6 +181,28 @@ public:
 
 public:
 	this() { super(NodeType.Import); }
+
+	this(Import old)
+	{
+		super(NodeType.Import, old);
+		this.access = old.access;
+		this.isStatic = old.isStatic;
+		this.name = old.name;
+		this.bind = old.bind;
+		version (Volt) {
+			this.aliases = new old.aliases[0 .. $];
+			foreach (i; 0 .. this.aliases.length) {
+				auto oa = old.aliases[i];
+				this.aliases[i] = new oa[0 .. $];
+			}
+		} else {
+			this.aliases = old.aliases.dup;
+			foreach (i; 0 .. this.aliases.length) {
+				this.aliases[i] = old.aliases[i].dup;
+			}
+		}
+		this.targetModule = old.targetModule;
+	}
 }
 
 /**
@@ -237,6 +280,26 @@ public:
 
 public:
 	this() { super(NodeType.Attribute); }
+
+	this(Attribute old)
+	{
+		super(NodeType.Attribute, old);
+		this.kind = old.kind;
+
+		this.members = old.members;
+
+		this.chain = old.chain;
+
+		this.userAttributeName = old.userAttributeName;
+		version (Volt) {
+			this.arguments = new old.arguments[0 .. $];
+		} else {
+			this.arguments = old.arguments.dup;
+		}
+		this.userAttributeName = old.userAttributeName;
+
+		this.alignAmount = old.alignAmount;
+	}
 }
 
 /**
@@ -262,6 +325,16 @@ public:
 
 public:
 	this(NodeType nt) { super(nt); }
+
+	this(NodeType nt, Named old)
+	{
+		super(nt, old);
+		this.isResolved = old.isResolved;
+		this.access = old.access;
+		this.name = old.name;
+		this.myScope = old.myScope;
+		this.typeInfo = old.typeInfo;
+	}
 }
 
 /**
@@ -282,6 +355,18 @@ public:
 
 public:
 	this(NodeType nt) { super(nt); }
+
+	this(NodeType nt, Aggregate old)
+	{
+		super(nt, old);
+		this.userAttrs = old.userAttrs;
+		this.anonymousAggregates = old.anonymousAggregates;
+		this.anonymousVars = old.anonymousVars;
+
+		this.members = old.members;
+
+		this.isActualized = old.isActualized;
+	}
 }
 
 /**
@@ -318,6 +403,41 @@ public:
 
 public:
 	this() { super(NodeType.Class); }
+
+	this(Class old)
+	{
+		super(NodeType.Class, old);
+		this.parent = old.parent;
+		version (Volt) {
+			this.interfaces = new old.interfaces[0 .. $];
+			this.userConstructors = new old.userConstructors[0 .. $];
+		} else {
+			this.interfaces = old.interfaces.dup;
+			this.userConstructors = old.userConstructors.dup;
+		}
+
+		this.vtableStruct = old.vtableStruct;
+		this.vtableVariable = old.vtableVariable;
+		version (Volt) {
+			this.ifaceVariables = new old.ifaceVariables[0 .. $];
+		} else {
+			this.ifaceVariables = old.ifaceVariables.dup;
+		}
+		this.initVariable = old.initVariable;
+		this.parentClass = old.parentClass;
+		version (Volt) {
+			this.parentInterfaces = new old.parentInterfaces[0 .. $];
+			this.interfaceOffsets = new old.interfaceOffsets[0 .. $];
+		} else  {
+			this.parentInterfaces = old.parentInterfaces.dup;
+			this.interfaceOffsets = old.interfaceOffsets.dup;
+		}
+
+		this.layoutStruct = old.layoutStruct;
+
+		this.isObject = old.isObject;
+		this.isAbstract = old.isAbstract;
+	}
 }
 
 /**
@@ -339,6 +459,20 @@ public:
 
 public:
 	this() { super(NodeType.Interface); }
+
+	this(_Interface old)
+	{
+		super(NodeType.Interface, old);
+		version (Volt) {
+			this.interfaces = new old.interfaces[0 .. $];
+			this.parentInterfaces = new old.parentInterfaces[0 .. $];
+		} else {
+			this.interfaces = old.interfaces.dup;
+			this.parentInterfaces = old.parentInterfaces.dup;
+		}
+
+		this.layoutStruct = old.layoutStruct;
+	}
 }
 
 /**
@@ -358,6 +492,12 @@ public:
 
 public:
 	this() { super(NodeType.Union); }
+
+	this(Union old)
+	{
+		super(NodeType.Union, old);
+		this.totalSize = old.totalSize;
+	}
 }
 
 /**
@@ -377,6 +517,12 @@ public:
 
 public:
 	this() { super(NodeType.Struct); }
+
+	this(Struct old)
+	{
+		super(NodeType.Struct, old);
+		this.loweredNode = old.loweredNode;
+	}
 }
 
 
@@ -404,6 +550,13 @@ public:
 
 public:
 	this() { super(NodeType.Enum); }
+
+	this(Enum old)
+	{
+		super(NodeType.Enum, old);
+		this.members = old.members;
+		this.base = old.base;
+	}
 }
 
 /**
@@ -422,6 +575,13 @@ public:
 
 public:
 	this() { super(NodeType.StaticAssert); }
+
+	this(StaticAssert old)
+	{
+		super(NodeType.StaticAssert, old);
+		this.exp = old.exp;
+		this.message = old.message;
+	}
 }
 
 /**
@@ -437,6 +597,12 @@ public:
 
 public:
 	this() { super(NodeType.Unittest); }
+
+	this(Unittest old)
+	{
+		super(NodeType.Unittest, old);
+		this._body = old._body;
+	}
 }
 
 /**
@@ -474,6 +640,13 @@ public:
 
 public:
 	this() { super(NodeType.Condition); }
+
+	this(Condition old)
+	{
+		super(NodeType.Condition, old);
+		this.kind = old.kind;
+		this.exp = old.exp;
+	}
 }
 
 /**
@@ -499,6 +672,17 @@ public:
 
 public:
 	this() { super(NodeType.ConditionTopLevel); }
+
+	this(ConditionTopLevel old)
+	{
+		super(NodeType.ConditionTopLevel, old);
+		this.condition = old.condition;
+
+		this.elsePresent = old.elsePresent;
+
+		this.members = old.members;
+		this._else = old._else;
+	}
 }
 
 /**
@@ -520,6 +704,13 @@ public:
 
 public:
 	this() { super(NodeType.MixinFunction); }
+
+	this(MixinFunction old)
+	{
+		super(NodeType.MixinFunction, old);
+		this.name = old.name;
+		this.raw = old.raw;
+	}
 }
 
 /**
@@ -541,6 +732,13 @@ public:
 
 public:
 	this() { super(NodeType.MixinTemplate); }
+
+	this(MixinTemplate old)
+	{
+		super(NodeType.MixinTemplate, old);
+		this.name = old.name;
+		this.raw = old.raw;
+	}
 }
 
 /**
@@ -572,4 +770,17 @@ public:
 
 public:
 	this() { super(NodeType.UserAttribute); }
+
+	this(UserAttribute old)
+	{
+		super(NodeType.UserAttribute, old);
+		version (Volt) {
+			this.fields = new old.fields[0 .. $];
+		} else {
+			this.fields = old.fields.dup;
+		}
+		this.layoutClass = old.layoutClass;
+
+		this.isActualized = old.isActualized;
+	}
 }

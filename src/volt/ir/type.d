@@ -65,6 +65,18 @@ public:
 
 protected:
 	this(NodeType nt) { super(nt); }
+
+	this(NodeType nt, Type old)
+	{
+		super(nt, old);
+		this.mangledName = old.mangledName;
+
+		this.isConst = old.isConst;
+		this.isImmutable = old.isImmutable;
+		this.isScope = old.isScope;
+
+		this.glossedName = old.glossedName;
+	}
 }
 
 /**
@@ -126,6 +138,12 @@ public:
 public:
 	this() { super(NodeType.PrimitiveType); }
 	this(Kind kind) { super(NodeType.PrimitiveType); type = kind; }
+
+	this(PrimitiveType old)
+	{
+		super(NodeType.PrimitiveType, old);
+		this.type = old.type;
+	}
 }
 
 /**
@@ -145,6 +163,13 @@ public:
 
 public:
 	this() { super(NodeType.TypeReference); }
+
+	this(TypeReference old)
+	{
+		super(NodeType.TypeReference, old);
+		this.type = old.type;
+		this.id = old.id;
+	}
 }
 
 /**
@@ -159,6 +184,12 @@ public:
 
 public:
 	this() { super(NodeType.TypeOf); }
+
+	this(TypeOf old)
+	{
+		super(NodeType.TypeOf, old);
+		this.exp = old.exp;
+	}
 }
 
 /**
@@ -191,6 +222,13 @@ public:
 public:
 	this() { super(NodeType.PointerType); }
 	this(Type base) { super(NodeType.PointerType); this.base = base; }
+
+	this(PointerType old)
+	{
+		super(NodeType.PointerType, old);
+		this.base = old.base;
+		this.isReference = old.isReference;
+	}
 }
 
 /**
@@ -205,6 +243,11 @@ class NullType : Type
 {
 public:
 	this() { super(NodeType.NullType); }
+
+	this(NullType old)
+	{
+		super(NodeType.NullType, old);
+	}
 }
 
 /**
@@ -229,6 +272,12 @@ public:
 public:
 	this() { super(NodeType.ArrayType); }
 	this(Type base) { super(NodeType.ArrayType); this.base = base; }
+
+	this(ArrayType old)
+	{
+		super(NodeType.ArrayType, old);
+		this.base = old.base;
+	}
 }
 
 /**
@@ -249,6 +298,13 @@ public:
 
 public:
 	this() { super(NodeType.StaticArrayType); }
+
+	this(StaticArrayType old)
+	{
+		super(NodeType.StaticArrayType, old);
+		this.base = old.base;
+		this.length = old.length;
+	}
 }
 
 /**
@@ -268,6 +324,13 @@ public:
 
 public:
 	this() { super(NodeType.AAType); }
+
+	this(AAType old)
+	{
+		super(NodeType.AAType, old);
+		this.value = old.value;
+		this.key = old.key;
+	}
 }
 
 /**
@@ -294,28 +357,27 @@ public:
 
 public:
 	this(NodeType nt) { super(nt); }
-	this(NodeType nt, CallableType ctype)
+	this(NodeType nt, CallableType old)
 	{
-		this(nt);
-		location = ctype.location;
-		linkage = ctype.linkage;
-		ret = ctype.ret;
+		super(nt, old);
+		linkage = old.linkage;
+		ret = old.ret;
 		version (Volt) {
-			params = new ctype.params[0 .. $];
-			isArgRef = new ctype.isArgRef[0 .. $];
-			isArgOut = new ctype.isArgOut[0 .. $];
+			params = new old.params[0 .. $];
+			isArgRef = new old.isArgRef[0 .. $];
+			isArgOut = new old.isArgOut[0 .. $];
 		} else {
-			params = ctype.params.dup;
-			isArgRef = ctype.isArgRef.dup;
-			isArgOut = ctype.isArgOut.dup;
+			params = old.params.dup;
+			isArgRef = old.isArgRef.dup;
+			isArgOut = old.isArgOut.dup;
 		}
-		hiddenParameter = ctype.hiddenParameter;
-		isScope = ctype.isScope;
-		hasVarArgs = ctype.hasVarArgs;
-		varArgsProcessed = ctype.varArgsProcessed;
-		isProperty = ctype.isProperty;
-		homogenousVariadic = ctype.homogenousVariadic;
-		forceLabel = ctype.forceLabel;
+		hiddenParameter = old.hiddenParameter;
+		isScope = old.isScope;
+		hasVarArgs = old.hasVarArgs;
+		varArgsProcessed = old.varArgsProcessed;
+		isProperty = old.isProperty;
+		homogenousVariadic = old.homogenousVariadic;
+		forceLabel = old.forceLabel;
 	}
 }
 
@@ -348,6 +410,13 @@ public:
 		location = set.location;
 		this.set = set;
 	}
+
+	this(FunctionSetType old)
+	{
+		super(NodeType.FunctionSetType, old);
+		this.set = old.set;
+		this.isFromCreateDelegate = old.isFromCreateDelegate;
+	}
 }
 
 /**
@@ -364,9 +433,10 @@ class FunctionType : CallableType
 {
 public:
 	this() { super(NodeType.FunctionType); }
-	this(CallableType ctype)
+
+	this(CallableType old)
 	{
-		super(NodeType.FunctionType, ctype);
+		super(NodeType.FunctionType, old);
 	}
 }
 
@@ -390,12 +460,12 @@ public:
 		this.hiddenParameter = true;
 	}
 
-	this(CallableType ctype)
+	this(CallableType old)
 	out {
 		assert(this.hiddenParameter);
 	}
 	body {
-		super(NodeType.DelegateType, ctype);
+		super(NodeType.DelegateType, old);
 		this.hiddenParameter = true;
 	}
 }
@@ -469,6 +539,13 @@ public:
 
 public:
 	this() { super(NodeType.StorageType); }
+
+	this(StorageType old)
+	{
+		super(NodeType.StorageType, old);
+		this.type = old.type;
+		this.base =old.base;
+	}
 }
 
 /**
@@ -486,13 +563,25 @@ public:
 
 public:
 	this() { super(NodeType.AutoType); }
+
+	this(AutoType old)
+	{
+		super(NodeType.AutoType, old);
+		this.explicitType = old.explicitType;
+		this.isForeachRef = old.isForeachRef;
+	}
 }
 
 /**
- * For constructs that has no type, used to avoid nulls in the IR.
+ * For constructs that have no type, used to avoid nulls in the IR.
  */
 class NoType : Type
 {
 public:
 	this() { super(NodeType.NoType); }
+
+	this(NoType old)
+	{
+		super(NodeType.NoType, old);
+	}
 }

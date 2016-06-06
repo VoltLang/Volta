@@ -49,6 +49,16 @@ abstract class Declaration : Node
 
 	@property Kind declKind() { return cast(Kind)nodeType; }
 	this(NodeType nt) { super(nt); }
+
+	this(NodeType nt, Declaration old)
+	{
+		super(nt, old);
+		version (Volt) {
+			this.userAttrs = new old.userAttrs[0 .. $];
+		} else {
+			this.userAttrs = old.userAttrs.dup;
+		}
+	}
 }
 
 /**
@@ -150,6 +160,25 @@ public:
 		this.type = t;
 		this.name = name;
 	}
+
+	this(Variable old)
+	{
+		super(NodeType.Variable, old);
+		this.isResolved = old.isResolved;
+		this.access = old.access;
+		this.type = old.type;
+		this.name = old.name;
+		this.mangledName = old.mangledName;
+		this.assign = old.assign;
+		this.storage = old.storage;
+		this.linkage = old.linkage;
+		this.isWeakLink = old.isWeakLink;
+		this.isExtern = old.isExtern;
+		this.isOut = old.isOut;
+		this.hasBeenDeclared = old.hasBeenDeclared;
+		this.useBaseStorage = old.useBaseStorage;
+		this.specialInitValue = old.specialInitValue;
+	}
 }
 
 /**
@@ -199,6 +228,19 @@ public:
 
 public:
 	this() { super(NodeType.Alias); }
+
+	this(Alias old)
+	{
+		super(NodeType.Alias, old);
+		this.isResolved = old.isResolved;
+		this.access = old.access;
+		this.name = old.name;
+		this.externAttr = old.externAttr;
+		this.type = old.type;
+		this.id = old.id;
+		this.store = old.store;
+		this.templateInstance = old.templateInstance;
+	}
 }
 
 /**
@@ -323,6 +365,51 @@ public:
 
 public:
 	this() { super(NodeType.Function); }
+
+	this(Function old)
+	{
+		super(NodeType.Function, old);
+		this.isResolved = old.isResolved;
+		this.isActualized = old.isActualized;
+		this.access = old.access;
+		this.myScope = old.myScope;
+		this.kind = old.kind;
+		this.type = old.type;
+		version (Volt) {
+			this.params = new old.params[0 .. $];
+			this.nestedFunctions = new old.nestedFunctions[0 .. $];
+			this.scopeSuccesses = new old.scopeSuccesses[0 .. $];
+			this.scopeExits = new old.scopeExits[0 .. $];
+			this.scopeFailures = new old.scopeFailures[0 .. $];
+		} else {
+			this.params = old.params;
+			this.nestedFunctions = old.nestedFunctions;
+			this.scopeSuccesses = old.scopeSuccesses;
+			this.scopeExits = old.scopeExits;
+			this.scopeFailures = old.scopeFailures;
+		}
+		this.name = old.name;
+		this.mangledName = old.mangledName;
+		this.suffix = old.suffix;
+		this.outParameter = old.outParameter;
+		this.inContract = old.inContract;
+		this.outContract = old.outContract;
+		this._body = old._body;
+		this.thisHiddenParameter = old.thisHiddenParameter;
+		this.nestedHiddenParameter = old.nestedHiddenParameter;
+		this.nestedVariable = old.nestedVariable;
+		this.nestStruct = old.nestStruct;
+		this.isWeakLink = old.isWeakLink;
+		this.vtableIndex = old.vtableIndex;
+		this.loadDynamic = old.loadDynamic;
+		this.isMarkedOverride = old.isMarkedOverride;
+		this.isOverridingInterface = old.isOverridingInterface;
+		this.isAbstract = old.isAbstract;
+		this.isAutoReturn = old.isAutoReturn;
+		this.isLoweredScopeExit = old.isLoweredScopeExit;
+		this.isLoweredScopeFailure = old.isLoweredScopeFailure;
+		this.isLoweredScopeSuccess = old.isLoweredScopeSuccess;
+	}
 }
 
 class EnumDeclaration : Declaration
@@ -336,6 +423,17 @@ class EnumDeclaration : Declaration
 
 public:
 	this() { super(NodeType.EnumDeclaration); }
+
+	this(EnumDeclaration old)
+	{
+		super(NodeType.EnumDeclaration, old);
+		this.type = old.type;
+
+		this.assign = old.assign;
+		this.name = old.name;
+		this.prevEnum = old.prevEnum;
+		this.resolved = old.resolved;
+	}
 }
 
 /**
@@ -355,6 +453,17 @@ public:
 
 public:
 	this() { super(NodeType.FunctionSet); }
+
+	this(FunctionSet old)
+	{
+		super(NodeType.FunctionSet, old);
+		version (Volt) {
+			this.functions = new old.functions[0 .. $];
+		} else {
+			this.functions = old.functions.dup;
+		}
+		this.reference = old.reference;
+	}
 
 	@property FunctionSetType type()
 	{
@@ -400,6 +509,16 @@ public:
 	this()
 	{
 		super(NodeType.FunctionParam);
+	}
+
+	this(FunctionParam old)
+	{
+		super(NodeType.FunctionParam, old);
+		this.func = old.func;
+		this.index = old.index;
+		this.assign = old.assign;
+		this.name = old.name;
+		this.hasBeenNested = old.hasBeenNested;
 	}
 
 	@property Type type()

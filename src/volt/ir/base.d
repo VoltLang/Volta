@@ -221,6 +221,12 @@ protected:
 		this.mUniqueId = mUniqueIdCounter++;
 	}
 
+	this(NodeType nt, Node old)
+	{
+		this(nt);  // Setup uniqueId.
+		this.location = old.location;
+	}
+
 private:
 	NodeType mNodeType;
 	NodeID mUniqueId;
@@ -266,6 +272,17 @@ public:
 
 public:
 	this() { super(NodeType.QualifiedName); }
+
+	this(QualifiedName old)
+	{
+		super(NodeType.QualifiedName, old);
+		version (Volt) {
+			this.identifiers = new old.identifiers[0 .. $];
+		} else {
+			this.identifiers = old.identifiers.dup;
+		}
+		this.leadingDot = old.leadingDot;
+	}
 }
 
 /**
@@ -286,11 +303,10 @@ public:
 		value = s;
 	}
 
-	this(Identifier i)
+	this(Identifier old)
 	{
-		this();
-		value = i.value;
-		location = i.location;
+		super(NodeType.Identifier, old);
+		this.value = old.value;
 	}
 }
 

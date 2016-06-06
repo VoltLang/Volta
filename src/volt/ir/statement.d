@@ -32,6 +32,11 @@ abstract class Statement : Node
 {
 public:
 	this(NodeType nt) { super(nt); }
+
+	this(NodeType nt, Statement old)
+	{
+		super(nt, old);
+	}
 }
 
 /**
@@ -52,6 +57,17 @@ public:
 
 public:
 	this() { super(NodeType.BlockStatement); }
+
+	this(BlockStatement old)
+	{
+		super(NodeType.BlockStatement, old);
+		version (Volt) {
+			this.statements = new old.statements[0 .. $];
+		} else {
+			this.statements = old.statements.dup;
+		}
+		this.myScope = old.myScope;
+	}
 }
 
 /**
@@ -67,6 +83,12 @@ public:
 
 public:
 	this() { super(NodeType.ReturnStatement); }
+
+	this(ReturnStatement old)
+	{
+		super(NodeType.ReturnStatement, old);
+		this.exp = old.exp;
+	}
 }
 
 /**
@@ -84,6 +106,16 @@ public:
 
 public:
 	this() { super(NodeType.AsmStatement); }
+
+	this(AsmStatement old)
+	{
+		super(NodeType.AsmStatement, old);
+		version (Volt) {
+			this.tokens = new old.tokens[0 .. $];
+		} else {
+			this.tokens = old.tokens;
+		}
+	}
 }
 
 /**
@@ -102,6 +134,14 @@ public:
 
 public:
 	this() { super(NodeType.AssertStatement); }
+
+	this(AssertStatement old)
+	{
+		super(NodeType.AssertStatement, old);
+		this.condition = old.condition;
+		this.message = old.message;
+		this.isStatic = old.isStatic;
+	}
 }
 
 /**
@@ -122,6 +162,15 @@ public:
 
 public:
 	this() { super(NodeType.IfStatement); }
+
+	this(IfStatement old)
+	{
+		super(NodeType.IfStatement, old);
+		this.exp = old.exp;
+		this.thenState = old.thenState;
+		this.elseState = old.elseState;
+		this.autoName = old.autoName;
+	}
 }
 
 /**
@@ -138,6 +187,13 @@ public:
 
 public:
 	this() { super(NodeType.WhileStatement); }
+
+	this(WhileStatement old)
+	{
+		super(NodeType.WhileStatement, old);
+		this.condition = old.condition;
+		this.block = old.block;
+	}
 }
 
 /**
@@ -155,6 +211,13 @@ public:
 
 public:
 	this() { super(NodeType.DoStatement); }
+
+	this(DoStatement old)
+	{
+		super(NodeType.DoStatement, old);
+		this.block = old.block;
+		this.condition = old.condition;
+	}
 }
 
 /**
@@ -179,6 +242,16 @@ public:
 
 public:
 	this() { super(NodeType.ForStatement); }
+
+	this(ForStatement old)
+	{
+		super(NodeType.ForStatement, old);
+		this.initVars = old.initVars;
+		this.initExps = old.initExps;
+		this.test = old.test;
+		this.increments = old.increments;
+		this.block = old.block;
+	}
 }
 
 /**
@@ -204,6 +277,26 @@ public:
 
 public:
 	this() { super(NodeType.ForeachStatement); }
+
+	this(ForeachStatement old)
+	{
+		super(NodeType.ForeachStatement, old);
+		this.reverse = old.reverse;
+		version (Volt) {
+			this.itervars = new old.itervars[0 .. $];
+			this.refvars = new old.refvars[0 .. $];
+		} else {
+			this.itervars = old.itervars.dup;
+			this.refvars = old.refvars.dup;
+		}
+		this.aggregate = old.aggregate;
+		this.beginIntegerRange = old.beginIntegerRange;
+		this.endIntegerRange = old.endIntegerRange;
+		this.block = old.block;
+		this.opApplyType = old.opApplyType;
+
+		this.decodeFunction = old.decodeFunction;
+	}
 }
 
 /**
@@ -221,6 +314,17 @@ public:
 
 public:
 	this() { super(NodeType.LabelStatement); }
+
+	this(LabelStatement old)
+	{
+		super(NodeType.LabelStatement, old);
+		this.label = old.label;
+		version (Volt) {
+			this.childStatement = new old.childStatement[0 .. $];
+		} else {
+			this.childStatement = old.childStatement.dup;
+		}
+	}
 }
 
 /**
@@ -235,6 +339,12 @@ public:
 
 public:
 	this() { super(NodeType.ExpStatement); }
+
+	this(ExpStatement old)
+	{
+		super(NodeType.ExpStatement, old);
+		this.exp = old.exp;
+	}
 }
 
 /**
@@ -263,6 +373,21 @@ public:
 
 public:
 	this() { super(NodeType.SwitchCase); }
+
+	this(SwitchCase old)
+	{
+		super(NodeType.SwitchCase, old);
+		this.firstExp = old.firstExp;
+		this.secondExp = old.secondExp;
+		version (Volt) {
+			this.exps = new old.exps[0 .. $];
+		} else {
+			this.exps = old.exps.dup;
+		}
+		this.isDefault = old.isDefault;
+
+		this.statements = old.statements;
+	}
 }
 
 /**
@@ -284,6 +409,20 @@ public:
 
 public:
 	this() { super(NodeType.SwitchStatement); }
+
+	this(SwitchStatement old)
+	{
+		super(NodeType.SwitchStatement, old);
+		this.isFinal = old.isFinal;
+		this.condition = old.condition;
+		version (Volt) {
+			this.cases = new old.cases[0 .. $];
+			this.withs = new old.withs[0 .. $];
+		} else {
+			this.cases = old.cases.dup;
+			this.withs = old.withs.dup;
+		}
+	}
 }
 
 /**
@@ -298,6 +437,12 @@ public:
 
 public:
 	this() { super(NodeType.ContinueStatement); }
+
+	this(ContinueStatement old)
+	{
+		super(NodeType.ContinueStatement, old);
+		this.label = old.label;
+	}
 }
 
 /**
@@ -312,6 +457,12 @@ public:
 
 public:
 	this() { super(NodeType.BreakStatement); }
+
+	this(BreakStatement old)
+	{
+		super(NodeType.BreakStatement, old);
+		this.label = old.label;
+	}
 }
 
 /**
@@ -330,6 +481,15 @@ public:
 
 public:
 	this() { super(NodeType.GotoStatement); }
+
+	this(GotoStatement old)
+	{
+		super(NodeType.GotoStatement, old);
+		this.label = old.label;
+		this.isDefault = old.isDefault;
+		this.isCase = old.isCase;
+		this.exp = old.exp;
+	}
 }
 
 /**
@@ -347,6 +507,13 @@ public:
 
 public:
 	this() { super(NodeType.WithStatement); }
+
+	this(WithStatement old)
+	{
+		super(NodeType.WithStatement, old);
+		this.exp = old.exp;
+		this.block = old.block;
+	}
 }
 
 /**
@@ -363,6 +530,13 @@ public:
 
 public:
 	this() { super(NodeType.SynchronizedStatement); }
+
+	this(SynchronizedStatement old)
+	{
+		super(NodeType.SynchronizedStatement, old);
+		this.exp = old.exp;
+		this.block = old.block;
+	}
 }
 
 /**
@@ -382,6 +556,21 @@ public:
 
 public:
 	this() { super(NodeType.TryStatement); }
+
+	this(TryStatement old)
+	{
+		super(NodeType.TryStatement, old);
+		this.tryBlock = old.tryBlock;
+		version (Volt) {
+			this.catchVars = new old.catchVars[0 .. $];
+			this.catchBlocks = new old.catchBlocks[0 .. $];
+		} else {
+			this.catchVars = old.catchVars.dup;
+			this.catchBlocks = old.catchBlocks.dup;
+		}
+		this.catchAll = old.catchAll;
+		this.finallyBlock = old.finallyBlock;
+	}
 }
 
 /**
@@ -399,6 +588,12 @@ public:
 
 public:
 	this() { super(NodeType.ThrowStatement); }
+
+	this(ThrowStatement old)
+	{
+		super(NodeType.ThrowStatement, old);
+		this.exp = old.exp;
+	}
 }
 
 /**
@@ -417,6 +612,13 @@ public:
 
 public:
 	this() { super(NodeType.ScopeStatement); }
+
+	this(ScopeStatement old)
+	{
+		super(NodeType.ScopeStatement, old);
+		this.kind = old.kind;
+		this.block = old.block;
+	}
 }
 
 /**
@@ -439,6 +641,18 @@ public:
 
 public:
 	this() { super(NodeType.PragmaStatement); }
+
+	this(PragmaStatement old)
+	{
+		super(NodeType.PragmaStatement, old);
+		this.type = old.type;
+		version (Volt) {
+			this.arguments = new old.arguments[0 .. $];
+		} else {
+			this.arguments = old.arguments.dup;
+		}
+		this.block = old.block;
+	}
 }
 
 /**
@@ -458,6 +672,14 @@ public:
 
 public:
 	this() { super(NodeType.ConditionStatement); }
+
+	this(ConditionStatement old)
+	{
+		super(NodeType.ConditionStatement, old);
+		this.condition = old.condition;
+		this.block = old.block;
+		this._else = old._else;
+	}
 }
 
 /**
@@ -476,4 +698,13 @@ public:
 
 public:
 	this() { super(NodeType.MixinStatement); }
+
+	this(MixinStatement old)
+	{
+		super(NodeType.MixinStatement, old);
+		this.stringExp = old.stringExp;
+		this.id = old.id;
+
+		this.resolved = old.resolved;
+	}
 }
