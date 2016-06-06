@@ -1022,7 +1022,7 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 			case Ulong:
 				return constant.u._ulong >= double.min_normal && constant.u._ulong <= double.max;
 			case Float:
-				return constant.u._double >= double.min_normal && constant.u._double <= double.max;
+				return constant.u._float >= double.min_normal && constant.u._float <= double.max;
 			case Double:
 				return constant.u._double >= double.min_normal && constant.u._double <= double.max;
 			default:

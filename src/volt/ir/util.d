@@ -556,7 +556,7 @@ ir.Constant buildConstantFloat(Location loc, float value)
 {
 	auto c = new ir.Constant();
 	c.location = loc;
-	c.u._double = value;
+	c.u._float = value;
 	c.type = buildFloat(loc);
 
 	return c;
