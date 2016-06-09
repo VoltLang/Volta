@@ -432,29 +432,19 @@ void lowerThrow(LanguagePass lp, ir.ThrowStatement t)
  *   exp: The expression to write the new string into.
  *   simport: The StringImport to lower.
  */
-void lowerStringImport(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.StringImport simport)
+void lowerStringImport(Driver driver, ref ir.Exp exp, ir.StringImport simport)
 {
-	if (lp.settings.stringImportPaths.length == 0) {
-		throw makeNoStringImportPaths(exp.location);
-	}
+	auto constant = cast(ir.Constant)simport.filename;
+	panicAssert(simport, constant !is null);
 
-	auto constant = evaluateOrNull(lp, current, simport.filename);
-	if (constant is null || !isString(constant.type) ||
-	    constant._string.length < 3) {
-		throw makeStringImportWrongConstant(exp.location);
-	}
+	// Remove string literal terminators.
+	auto fname = constant._string[1 .. $-1];
 
-	auto fname = constant._string[1 .. $-1];  // Remove string literal terminators.
-	foreach (path; lp.settings.stringImportPaths) {
-		string str;
-		try {
-			str = cast(string)read(path ~ "/" ~ fname);
-			exp = buildConstantString(exp.location, str, false);
-			return;
-		} catch (Exception) {
-		}
-	}
-	throw makeImportFileOpenFailure(exp.location, fname);
+	// Ask the driver for the file contents.
+	auto str = driver.stringImport(exp.location, fname);
+
+	// Build and replace.
+	exp = buildConstantString(exp.location, str, false);
 }
 
 /**
@@ -1904,7 +1894,7 @@ public:
 
 	override Status enter(ref ir.Exp exp, ir.StringImport simport)
 	{
-		lowerStringImport(lp, current, exp, simport);
+		lowerStringImport(lp.driver, exp, simport);
 		return Continue;
 	}
 }

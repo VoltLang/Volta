@@ -18,6 +18,9 @@ interface Driver
 	/// Load a module source from file system.
 	ir.Module loadModule(ir.QualifiedName name);
 
+	/// Load a filename from the string import paths.
+	string stringImport(Location loc, string filename);
+
 	/// Get the modules given on the command line.
 	ir.Module[] getCommandLineModules();
 

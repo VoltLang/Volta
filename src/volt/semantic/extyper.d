@@ -2720,7 +2720,14 @@ ir.Type extypeStringImport(Context ctx, ref ir.Exp exp, Parent parent)
 
 	extype(ctx, str.filename, Parent.NA);
 
-	return buildString(exp.location);
+	auto constant = evaluateOrNull(ctx.lp, ctx.current, str.filename);
+	if (constant is null || !isString(constant.type) ||
+	    constant._string.length < 3) {
+		throw makeStringImportWrongConstant(exp.location);
+	}
+	str.filename = constant;
+
+	return constant.type;
 }
 
 ir.Type extypeStoreExp(Context ctx, ref ir.Exp exp, Parent parent)

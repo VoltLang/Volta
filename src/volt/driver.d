@@ -19,6 +19,7 @@ import volt.exceptions;
 import volt.interfaces;
 import volt.errors;
 import volt.arg;
+import volt.token.location;
 import ir = volt.ir.ir;
 
 import volt.parser.parser;
@@ -209,6 +210,23 @@ public:
 			return null;
 		}
 		return loadAndParse(incPath);
+	}
+
+	override string stringImport(Location loc, string fname)
+	{
+		if (settings.stringImportPaths.length == 0) {
+			throw makeNoStringImportPaths(loc);
+		}
+
+		foreach (path; settings.stringImportPaths) {
+			string str;
+			try {
+				return cast(string)read(path ~ "/" ~ fname);
+			} catch (Exception) {
+			}
+		}
+
+		throw makeImportFileOpenFailure(loc, fname);
 	}
 
 	override ir.Module[] getCommandLineModules()
