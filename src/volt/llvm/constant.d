@@ -121,15 +121,33 @@ void handleConstCast(State state, ir.Unary asUnary, Value result)
 	auto newType = state.fromIr(asUnary.type);
 	auto oldType = result.type;
 
-	{
-		auto newPrim = cast(PrimitiveType)newType;
-		auto oldPrim = cast(PrimitiveType)oldType;
-
-		if (newPrim !is null && oldPrim !is null) {
-			result.type = newType;
+	auto newPrim = cast(PrimitiveType)newType;
+	auto oldPrim = cast(PrimitiveType)oldType;
+	if (newPrim !is null && oldPrim !is null) {
+		result.type = newType;
+		if (newPrim.boolean && oldPrim.floating) {
+			result.value = LLVMConstFCmp(
+				LLVMRealPredicate.ONE,
+				result.value,
+				LLVMConstNull(oldType.llvmType));
+		} else if (newPrim.floating) {
+			if (oldPrim.floating) {
+				result.value = LLVMConstFPCast(result.value, newPrim.llvmType);
+			} else if (oldPrim.signed) {
+				result.value = LLVMConstSIToFP(result.value, newType.llvmType);
+			} else {
+				result.value = LLVMConstUIToFP(result.value, newType.llvmType);
+			}
+		} else if (oldPrim.floating) {
+			if (newPrim.signed) {
+				result.value = LLVMConstFPToSI(result.value, newType.llvmType);
+			} else {
+				result.value = LLVMConstFPToUI(result.value, newType.llvmType);
+			}
+		} else {
 			result.value = LLVMConstIntCast(result.value, newPrim.llvmType, oldPrim.signed);
-			return;
 		}
+		return;
 	}
 
 	{
