@@ -101,8 +101,8 @@ protected:
 		alias Call = typeof(&dmdIsHorribleCall);
 	} else {
 		alias FvZi = int function();
-		alias FviZi = int function();
-		alias Call = int function();
+		alias FviZi = int function(int);
+		alias Call = void function(void*);
 	}
 
 	// Generated SpringBoard fields.
