@@ -28,7 +28,6 @@ import volt.semantic.cfg;
 import volt.semantic.util;
 import volt.semantic.folder;
 import volt.semantic.lifter;
-import volt.semantic.strace;
 import volt.semantic.lookup;
 import volt.semantic.extyper;
 import volt.semantic.evaluate;
@@ -107,7 +106,6 @@ public:
 		postParse ~= new TimerPass("p1-attrib-rem", new AttribRemoval(settings));
 		postParse ~= new TimerPass("p1-gatherer", new Gatherer());
 
-		passes2 ~= new TimerPass("p2-simpletrace", new SimpleTrace(this));
 		passes2 ~= new TimerPass("p2-extyper", new ExTyper(this));
 		passes3 ~= new TimerPass("p2-expfolder", new ExpFolder());
 		passes2 ~= new TimerPass("p2-cfgbuilder", new CFGBuilder(this));
