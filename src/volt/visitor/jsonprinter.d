@@ -22,15 +22,19 @@ private struct Entry
 class JsonPrinter : NullVisitor
 {
 public:
-	LanguagePass lp;
 	Entry[] functions, variables, enums, structs, classes;
 	ir.Module currentModule;
+
+
+private:
+	string mFilename;
 	OutputFileStream mFile;
 
+
 public:
-	this(LanguagePass lp)
+	this(string filename)
 	{
-		this.lp = lp;
+		this.mFilename = filename;
 	}
 
 	void transform(ir.Module[] modules...)
@@ -39,7 +43,7 @@ public:
 			currentModule = mod;
 			accept(mod, this);
 		}
-		mFile = new OutputFileStream(lp.settings.jsonOutput);
+		mFile = new OutputFileStream(mFilename);
 		w("{\n");
 		writeArray("functions", functions, ",\n");
 		writeArray("variables", variables, ",\n");

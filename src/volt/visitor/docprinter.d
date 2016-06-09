@@ -35,25 +35,28 @@ public:
 protected:
 	OutputFileStream mHtmlFile;
 	size_t mTransformCount;
+	string mDocDir;
+	string mDocOutput;
 
 public:
-	this(LanguagePass lp)
+	this(string docDir, string docOutput)
 	{
-		this.lp = lp;
+		this.mDocDir = docDir;
+		this.mDocOutput = docOutput;
 	}
 
 	override void transform(ir.Module m)
 	{
 		mTransformCount++;
-		if (lp.settings.docDir.length > 0) {
+		if (mDocDir.length > 0) {
 			try {
-				mkdir(lp.settings.docDir);
+				mkdir(mDocDir);
 			} catch (Exception) {
 			}
 		}
-		string filename = lp.settings.docDir.length == 0 ? "" : (lp.settings.docDir ~ dirSeparator);
-		if (lp.settings.docOutput.length > 0) {
-			filename ~= lp.settings.docOutput;
+		string filename = mDocDir.length == 0 ? "" : (mDocDir ~ dirSeparator);
+		if (mDocOutput.length > 0) {
+			filename ~= mDocOutput;
 			if (mTransformCount >= 2) {
 				throw makeExpected(m, "only one file with -do switch");
 			}

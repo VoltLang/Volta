@@ -410,8 +410,8 @@ protected:
 
 		// Load all modules to be compiled.
 		// Don't run phase 1 on them yet.
-		auto dp = new DocPrinter(languagePass);
-		auto jp = new JsonPrinter(languagePass);
+		auto dp = new DocPrinter(settings.docDir, settings.docOutput);
+		auto jp = new JsonPrinter(settings.jsonOutput);
 		foreach (file; mSourceFiles) {
 			debugPrint("Parsing %s.", file);
 
