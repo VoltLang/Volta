@@ -91,8 +91,22 @@ protected:
 	/// Direct pointer to the host compiled function.
 	void* mPtr;
 
+	version (D_Version2) {
+		static extern(C) int dmdIsHorribleFvZi();
+		static extern(C) int dmdIsHorribleFviZi(int);
+		static extern(C) void dmdIsHorribleCall(void*);
+
+		alias FvZi = typeof(&dmdIsHorribleFvZi);
+		alias FviZi = typeof(&dmdIsHorribleFviZi);
+		alias Call = typeof(&dmdIsHorribleCall);
+	} else {
+		alias FvZi = int function();
+		alias FviZi = int function();
+		alias Call = int function();
+	}
+
 	// Generated SpringBoard fields.
-	void function(void*) mSpring;
+	Call mSpring;
 	void* mArgs;
 	size_t[] mPos;
 	ir.Type mRetType;
@@ -202,19 +216,19 @@ public:
 		LLVMDisposeBuilder(builder);
 
 		// Update the function pointer.
-		mSpring = cast(void function(void*))
+		mSpring = cast(Call)
 			LLVMGetFunctionAddress(host.ee, toStringz(springName));
 	}
 
 	ir.Constant callFvZi(ir.Constant[])
 	{
-		auto call = cast(int function()) mPtr;
+		auto call = cast(FvZi) mPtr;
 		return buildConstantInt(loc, call());
 	}
 
 	ir.Constant callFviZi(ir.Constant[] a)
 	{
-		auto call = cast(int function(int)) mPtr;
+		auto call = cast(FviZi) mPtr;
 		return buildConstantInt(loc, call(a[0].u._int));
 	}
 
