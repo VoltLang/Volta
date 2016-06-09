@@ -590,7 +590,7 @@ bool typesEqual(ir.Type a, ir.Type b, bool ignoreStorage = false)
 		auto ap = cast(ir.StaticArrayType) a;
 		auto bp = cast(ir.StaticArrayType) b;
 		assert(ap !is null && bp !is null);
-		return ap.length && bp.length && typesEqual(ap.base, bp.base, ignoreStorage);
+		return ap.length == bp.length && typesEqual(ap.base, bp.base, ignoreStorage);
 	} else if (a.nodeType == ir.NodeType.PointerType &&
 	           b.nodeType == ir.NodeType.PointerType) {
 		auto ap = cast(ir.PointerType) a;
