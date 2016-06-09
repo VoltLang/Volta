@@ -72,12 +72,12 @@ private TreeNode* vrt_aa_dup_treenode(TreeNode* tn, TreeNode* parent=null)
 	if (tn.key.array.length > 0) {
 		dup.key.array = new tn.key.array[..];
 	} else {
-		dup.key.ptr = tn.key.ptr;
+		dup.key.value = tn.key.value;
 	}
 	if (tn.value.array.length > 0) {
 		dup.value.array = new tn.value.array[..];
 	} else {
-		dup.value.ptr = tn.value.ptr;
+		dup.value.value = tn.value.value;
 	}
 	dup.red = tn.red;
 	dup.parent = parent;
