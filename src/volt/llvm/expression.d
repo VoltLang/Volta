@@ -717,11 +717,7 @@ void handleCastPrimitive(State state, Location loc, PrimitiveType newType,
 		}
 		return; // No fallthrough.
 	} else if (newType.floating) {
-		if (oldType.signed) {
-			op = LLVMOpcode.SIToFP;
-		} else if (!oldType.floating) {
-			op = LLVMOpcode.UIToFP;
-		} else {
+		if (oldType.floating) {
 			if (newType.bits < oldType.bits) {
 				op = LLVMOpcode.FPTrunc;
 			} else if (newType.bits > oldType.bits) {
@@ -729,6 +725,10 @@ void handleCastPrimitive(State state, Location loc, PrimitiveType newType,
 			} else {
 				error(); // Type are the same?
 			}
+		} else if (oldType.signed) {
+			op = LLVMOpcode.SIToFP;
+		} else {
+			op = LLVMOpcode.UIToFP;
 		}
 	} else if (oldType.floating) {
 		if (newType.signed) {
