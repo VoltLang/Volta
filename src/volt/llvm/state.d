@@ -79,7 +79,6 @@ public:
 		this.diBuilder = LLVMCreateDIBuilder(mod);
 		this.lp = lp;
 
-		setTargetAndLayout();
 		buildCommonTypes(this, lp.ver.isP64);
 
 		visitor = new LlvmVisitor(this);
