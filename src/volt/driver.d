@@ -66,6 +66,7 @@ protected:
 	string[] mSourceFiles;
 	string[] mBitcodeFiles;
 	string[] mObjectFiles;
+	string[] mLibFiles;
 
 	string[] mLibraryFiles;
 	string[] mLibraryPaths;
@@ -254,6 +255,8 @@ public:
 			mBitcodeFiles ~= file;
 		} else if (endsWith(file, ".o", ".obj")) {
 			mObjectFiles ~= file;
+		} else if (endsWith(file, ".lib")) {
+			mLibFiles ~= file;
 		} else {
 			auto str = format("unknown file type '%s'", file);
 			throw new CompilerError(str);
@@ -397,6 +400,12 @@ protected:
 
 	int intCompile()
 	{
+		// Error checking
+		if (mLibFiles.length > 0 && !mLinkWithLink) {
+			throw new Exception("can not link '" ~ mLibFiles[0] ~ "'");
+		}
+
+		// Start parsing.
 		perf.mark(Perf.Mark.PARSING);
 
 		// Load all modules to be compiled.
@@ -632,6 +641,10 @@ protected:
 
 		foreach (objectFile; mObjectFiles ~ obj) {
 			args ~= objectFile;
+		}
+		foreach (libFile; mLibFiles) {
+			args ~= libFile;
+			mDepFiles ~= libFile;
 		}
 		foreach (libraryPath; mLibraryPaths) {
 			args ~= "/LIBPATH:" ~ libraryPath;
