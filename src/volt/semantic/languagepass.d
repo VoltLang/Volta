@@ -585,10 +585,11 @@ public:
 		}
 		m.hasPhase1 = true;
 
+		debugPrint("Phase 1 %s.", m.name);
 		foreach (pass; postParse) {
-			debugPrint("Phase 1 %s.", m.name);
 			pass.transform(m);
 		}
+		debugPrint("Phase 1 %s done.", m.name);
 	}
 
 	final void phase2(ir.Module m)
@@ -598,18 +599,20 @@ public:
 		}
 		m.hasPhase2 = true;
 
+		debugPrint("Phase 2 %s.", m.name);
 		foreach (pass; passes2) {
-			debugPrint("Phase 2 %s.", m.name);
 			pass.transform(m);
 		}
+		debugPrint("Phase 2 %s done.", m.name);
 	}
 
 	final void phase3(ir.Module m)
 	{
+		debugPrint("Phase 3 %s.", m.name);
 		foreach (pass; passes3) {
-			debugPrint("Phase 3 %s.", m.name);
 			pass.transform(m);
 		}
+		debugPrint("Phase 3 %s done.", m.name);
 	}
 
 	override void phase1(ir.Module[] ms) { foreach (m; ms) { phase1(m); } }
