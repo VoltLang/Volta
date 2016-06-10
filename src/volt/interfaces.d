@@ -76,6 +76,7 @@ interface Driver
 {
 	@property string execDir();
 	@property string identStr();
+	@property bool internalDebug();
 
 	/// Load a module source from file system.
 	ir.Module loadModule(ir.QualifiedName name);
@@ -192,11 +193,15 @@ interface Pass
 abstract class LanguagePass
 {
 public:
-	Settings settings;
 	Driver driver;
 	VersionSet ver;
 	TargetInfo target;
 	Frontend frontend;
+
+	/**
+	 * For controlling if we should accept some D constructs.
+	 */
+	bool beMoreLikeD;
 
 	/**
 	 * Cached lookup items.
@@ -284,20 +289,17 @@ public:
 	/* @} */
 
 public:
-	this(Driver driver, VersionSet ver, TargetInfo target,
-	     Settings settings, Frontend frontend)
+	this(Driver drv, VersionSet ver, TargetInfo target, Frontend frontend)
 	out {
 		assert(this.ver !is null);
 		assert(this.target !is null);
 		assert(this.driver !is null);
-		assert(this.settings !is null);
 		assert(this.frontend !is null);
 	}
 	body {
 		this.ver = ver;
 		this.target = target;
-		this.driver = driver;
-		this.settings = settings;
+		this.driver = drv;
 		this.frontend = frontend;
 	}
 

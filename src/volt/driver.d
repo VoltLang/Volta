@@ -199,6 +199,11 @@ public:
 		return settings.identStr;
 	}
 
+	override @property bool internalDebug()
+	{
+		return settings.internalDebug;
+	}
+
 	/**
 	 * Retrieve a Module by its name. Returns null if none is found.
 	 */

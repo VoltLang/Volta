@@ -64,6 +64,7 @@ public:
 	 */
 
 private:
+	Settings settings;
 	WorkTracker mTracker;
 	ir.Module[string] mModules;
 
@@ -94,7 +95,8 @@ private:
 public:
 	this(Driver driver, VersionSet ver, TargetInfo target, Settings settings, Frontend frontend)
 	{
-		super(driver, ver, target, settings, frontend);
+		this.settings = settings;
+		super(driver, ver, target, frontend);
 
 		mTracker = new WorkTracker();
 

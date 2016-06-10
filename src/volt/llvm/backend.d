@@ -41,7 +41,7 @@ public:
 	this(LanguagePass lp)
 	{
 		this.lp = lp;
-		this.mDump = lp.settings.internalDebug;
+		this.mDump = lp.driver.internalDebug;
 
 		auto passRegistry = LLVMGetGlobalPassRegistry();
 

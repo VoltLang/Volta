@@ -793,7 +793,7 @@ private void rewriteVarargs(Context ctx,ir.CallableType asFunctionType,
 	ir.Type[] types;
 	foreach (i, _exp; varArgsSlice) {
 		auto etype = getExpType(_exp);
-		if (ctx.lp.settings.internalD &&
+		if (ctx.lp.beMoreLikeD &&
 		    realType(etype).nodeType == ir.NodeType.Struct) {
 			warning(_exp.location, "passing struct to var-arg function.");
 		}
@@ -1018,12 +1018,12 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			}
 			if (asFunctionType.isArgRef[i] &&
 			    postfix.argumentTags[i] != ir.Postfix.TagKind.Ref &&
-			    !ctx.lp.settings.internalD) {
+			    !ctx.lp.beMoreLikeD) {
 				throw makeNotTaggedRef(postfix.arguments[i], i);
 			}
 			if (asFunctionType.isArgOut[i] &&
 			    postfix.argumentTags[i] != ir.Postfix.TagKind.Out &&
-			    !ctx.lp.settings.internalD) {
+			    !ctx.lp.beMoreLikeD) {
 				throw makeNotTaggedOut(postfix.arguments[i], i);
 			}
 		}
