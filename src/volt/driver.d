@@ -1,4 +1,4 @@
-// Copyright © 2012-2015, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2012-2016, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.driver;
 
@@ -95,15 +95,20 @@ public:
 	in {
 		assert(s !is null);
 		assert(ver !is null);
+		assert(target !is null);
 	}
 	body {
-		this.settings = s;
-		this.frontend = new Parser();
 		this.ver = ver;
 		this.target = target;
+		this.settings = s;
+		this.execDir = s.execDir;
+		this.identStr = s.identStr;
+		this.internalDebug = s.internalDebug;
 
 		setVersionSet(ver, s.arch, s.platform);
 		setTargetInfo(target, s.arch, s.platform);
+
+		this.frontend = new Parser();
 
 
 		// Timers
@@ -188,21 +193,6 @@ public:
 	 * Driver functions.
 	 *
 	 */
-
-	override @property string execDir()
-	{
-		return settings.execDir;
-	}
-
-	override @property string identStr()
-	{
-		return settings.identStr;
-	}
-
-	override @property bool internalDebug()
-	{
-		return settings.internalDebug;
-	}
 
 	/**
 	 * Retrieve a Module by its name. Returns null if none is found.

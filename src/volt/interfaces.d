@@ -72,20 +72,23 @@ class TargetInfo
  * abstracts away several IO related functions. Such as looking up
  * module files and printing error messages.
  */
-interface Driver
+abstract class Driver
 {
-	@property string execDir();
-	@property string identStr();
-	@property bool internalDebug();
+public:
+	string execDir;
+	string identStr;
+	bool internalDebug;
 
+
+public:
 	/// Load a module source from file system.
-	ir.Module loadModule(ir.QualifiedName name);
+	abstract ir.Module loadModule(ir.QualifiedName name);
 
 	/// Load a filename from the string import paths.
-	string stringImport(Location loc, string filename);
+	abstract string stringImport(Location loc, string filename);
 
 	/// Get the modules given on the command line.
-	ir.Module[] getCommandLineModules();
+	abstract ir.Module[] getCommandLineModules();
 
 	/**
 	 * Returns a delegate that runs the given function from
@@ -99,9 +102,9 @@ interface Driver
 	 * Once a module has been given to it or any children of it
 	 * may not be changed, doing so will cause undefined behaviour.
 	 */
-	BackendResult hostCompile(ir.Module);
+	abstract BackendResult hostCompile(ir.Module);
 
-	void close();
+	abstract void close();
 }
 
 /**
