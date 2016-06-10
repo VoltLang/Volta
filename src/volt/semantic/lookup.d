@@ -87,7 +87,7 @@ ir.Store lookupAsImportScope(LanguagePass lp, ir.Scope _scope, Location loc, str
 
 private struct PublicImportContext
 {
-	bool[ir.Scope] checked;
+	bool[ir.NodeID] checked;
 }
 
 private ir.Store lookupPublicImportScope(LanguagePass lp, ir.Scope _scope,
@@ -100,10 +100,10 @@ private ir.Store lookupPublicImportScope(LanguagePass lp, ir.Scope _scope,
 			if (store !is null) {
 				return ensureResolved(lp, store);
 			}
-			if (submod.myScope in ctx.checked) {
+			if (submod.myScope.node.uniqueId in ctx.checked) {
 				continue;
 			}
-			ctx.checked[submod.myScope] = true;
+			ctx.checked[submod.myScope.node.uniqueId] = true;
 			store = lookupPublicImportScope(lp, submod.myScope, loc, name, ctx);
 			if (store !is null) {
 				return ensureResolved(lp, store);
