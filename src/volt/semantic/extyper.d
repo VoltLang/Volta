@@ -3971,8 +3971,11 @@ void doResolveAA(Context ctx, ref ir.Type type)
 		base = tr.type;
 	}
 
-	if (base.nodeType == ir.NodeType.Struct ||
-	    base.nodeType == ir.NodeType.Class) {
+	if (base.nodeType == ir.NodeType.Class) {
+		throw makeClassAsAAKey(at.location);
+	}
+
+	if (base.nodeType == ir.NodeType.Struct) {
 		return;
 	}
 
@@ -4792,7 +4795,6 @@ public:
 		actualizeFunction(ctx, func);
 		return ContinueParent;
 	}
-
 
 	/*
 	 *

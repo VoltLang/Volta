@@ -32,9 +32,14 @@ void hackTypeWarning(ir.Node n, ir.Type nt, ir.Type ot)
  *
  */
 
+CompilerException makeClassAsAAKey(Location l, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(l, "classes cannot be associative array key types.", file, line);
+}
+
 CompilerException makeExpectedCall(ir.RunExp runexp, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(runexp.location, "expression following #run must be a function call.");
+	return new CompilerError(runexp.location, "expression following #run must be a function call.", file, line);
 }
 
 CompilerException makeNonNestedAccess(Location l, ir.Variable var, string file = __FILE__, const int line = __LINE__)
