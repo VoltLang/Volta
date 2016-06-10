@@ -2,8 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.ext.dwarf;
 
-
 import vrt.ext.stdc : uintptr_t;
+
 
 struct DW_Context
 {
