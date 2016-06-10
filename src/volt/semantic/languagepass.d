@@ -92,9 +92,9 @@ private:
 	}
 
 public:
-	this(Driver driver, VersionSet ver, Settings settings, Frontend frontend)
+	this(Driver driver, VersionSet ver, TargetInfo target, Settings settings, Frontend frontend)
 	{
-		super(driver, ver, settings, frontend);
+		super(driver, ver, target, settings, frontend);
 
 		mTracker = new WorkTracker();
 

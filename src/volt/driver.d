@@ -42,6 +42,7 @@ class VoltDriver : Driver
 {
 public:
 	VersionSet ver;
+	TargetInfo target;
 	Settings settings;
 	Frontend frontend;
 	LanguagePass languagePass;
@@ -90,15 +91,20 @@ protected:
 	BackendResult[ir.NodeID] mCompiledModules;
 
 public:
-	this(VersionSet ver, Settings s)
+	this(Settings s, VersionSet ver, TargetInfo target)
 	in {
 		assert(s !is null);
 		assert(ver !is null);
 	}
 	body {
-		this.ver = ver;
 		this.settings = s;
 		this.frontend = new Parser();
+		this.ver = ver;
+		this.target = target;
+
+		setVersionSet(ver, s.arch, s.platform);
+		setTargetInfo(target, s.arch, s.platform);
+
 
 		// Timers
 		mAccumReading = new Accumulator("p1-reading");
@@ -106,7 +112,7 @@ public:
 
 
 		Driver drv = this;
-		languagePass = new VoltLanguagePass(drv, ver, s, frontend);
+		languagePass = new VoltLanguagePass(drv, ver, target, s, frontend);
 
 		if (!s.noBackend) {
 			backend = new LlvmBackend(languagePass);
@@ -569,7 +575,7 @@ protected:
 
 		// Native compilation, turn the bitcode into native code.
 		perf.mark(Perf.Mark.ASSEMBLE);
-		writeObjectFile(settings, obj, bc);
+		writeObjectFile(target, obj, bc);
 
 		// When not linking we are now done.
 		if (settings.noLink) {
@@ -599,7 +605,7 @@ protected:
 		string[] args = ["-o", of];
 
 		if (cc) {
-			final switch (settings.arch) with (Arch) {
+			final switch (target.arch) with (Arch) {
 			case X86: args ~= "-m32"; break;
 			case X86_64: args ~= "-m64"; break;
 			case LE32: throw panic("unsupported arch with cc");
@@ -766,6 +772,101 @@ private:
 		dp.close();
 	}
 }
+
+TargetInfo setTargetInfo(TargetInfo target, Arch arch, Platform platform)
+{
+	target.arch = arch;
+	target.platform = platform;
+
+	final switch (arch) with (Arch) {
+	case X86:
+		target.isP64 = false;
+		target.ptrSize = 4;
+		target.alignment.int1 = 1;
+		target.alignment.int8 = 1;
+		target.alignment.int16 = 2;
+		target.alignment.int32 = 4;
+		target.alignment.int64 = 4; // abi 4, prefered 8
+		target.alignment.float32 = 4;
+		target.alignment.float64 = 4; // abi 4, prefered 8
+		target.alignment.ptr = 4;
+		target.alignment.aggregate = 8; // abi X, prefered 8
+		break;
+	case X86_64:
+		target.isP64 = true;
+		target.ptrSize = 8;
+		target.alignment.int1 = 1;
+		target.alignment.int8 = 1;
+		target.alignment.int16 = 2;
+		target.alignment.int32 = 4;
+		target.alignment.int64 = 8;
+		target.alignment.float32 = 4;
+		target.alignment.float64 = 8;
+		target.alignment.ptr = 8;
+		target.alignment.aggregate = 8; // abi X, prefered 8
+		break;
+	case LE32:
+		target.isP64 = false;
+		target.ptrSize = 4;
+		target.alignment.int1 = 1;
+		target.alignment.int8 = 1;
+		target.alignment.int16 = 2;
+		target.alignment.int32 = 4;
+		target.alignment.int64 = 8;
+		target.alignment.float32 = 4;
+		target.alignment.float64 = 8;
+		target.alignment.ptr = 4;
+		target.alignment.aggregate = 8; // abi X, prefered 8
+		break;
+	}
+
+	return target;
+}
+
+void setVersionSet(VersionSet ver, Arch arch, Platform platform)
+{
+	final switch (platform) with (Platform) {
+	case MinGW:
+		ver.overwriteVersionIdentifier("Windows");
+		ver.overwriteVersionIdentifier("MinGW");
+		break;
+	case MSVC:
+		ver.overwriteVersionIdentifier("Windows");
+		ver.overwriteVersionIdentifier("MSVC");
+		break;
+	case Linux:
+		ver.overwriteVersionIdentifier("Linux");
+		ver.overwriteVersionIdentifier("Posix");
+		break;
+	case OSX:
+		ver.overwriteVersionIdentifier("OSX");
+		ver.overwriteVersionIdentifier("Posix");
+		break;
+	case EMSCRIPTEN:
+		ver.overwriteVersionIdentifier("Emscripten");
+		break;
+	case Metal:
+		ver.overwriteVersionIdentifier("Metal");
+		break;
+	}
+	final switch (arch) with (Arch) {
+	case X86:
+		ver.overwriteVersionIdentifier("X86");
+		ver.overwriteVersionIdentifier("LittleEndian");
+		ver.overwriteVersionIdentifier("V_P32");
+		break;
+	case X86_64:
+		ver.overwriteVersionIdentifier("X86_64");
+		ver.overwriteVersionIdentifier("LittleEndian");
+		ver.overwriteVersionIdentifier("V_P64");
+		break;
+	case LE32:
+		ver.overwriteVersionIdentifier("LE32");
+		ver.overwriteVersionIdentifier("LittleEndian");
+		ver.overwriteVersionIdentifier("V_P32");
+	}
+}
+
 
 string getOutput(Settings settings, string def)
 {

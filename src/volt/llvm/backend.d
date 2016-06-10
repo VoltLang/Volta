@@ -49,8 +49,8 @@ public:
 		LLVMInitializeAnalysis(passRegistry);
 		LLVMInitializeTarget(passRegistry);
 
-		if (lp.settings.arch == Arch.X86 ||
-		    lp.settings.arch == Arch.X86_64) {
+		if (lp.target.arch == Arch.X86 ||
+		    lp.target.arch == Arch.X86_64) {
 			LLVMInitializeX86TargetInfo();
 			LLVMInitializeX86Target();
 			LLVMInitializeX86TargetMC();
@@ -214,11 +214,11 @@ void linkModules(string output, string[] inputs...)
 	}
 }
 
-void writeObjectFile(Settings settings, string output, string input)
+void writeObjectFile(TargetInfo target, string output, string input)
 {
-	auto arch = archList[settings.arch];
-	auto triple = tripleList[settings.platform][settings.arch];
-	auto layout = layoutList[settings.platform][settings.arch];
+	auto arch = archList[target.arch];
+	auto triple = tripleList[target.platform][target.arch];
+	auto layout = layoutList[target.platform][target.arch];
 	if (arch is null || triple is null || layout is null) {
 		throw makeArchNotSupported();
 	}
@@ -239,12 +239,12 @@ void writeObjectFile(Settings settings, string output, string input)
 
 	// Load the target mc/assmbler.
 	// Doesn't need to disposed.
-	LLVMTargetRef target = LLVMGetTargetFromName(arch);
+	LLVMTargetRef llvmTarget = LLVMGetTargetFromName(arch);
 
 
 	// Create target machine used to hold all of the settings.
 	auto machine = LLVMCreateTargetMachine(
-		target, triple, "", "",
+		llvmTarget, triple, "", "",
 		LLVMCodeGenOptLevel.Default,
 		LLVMRelocMode.Default,
 		LLVMCodeModel.Default);

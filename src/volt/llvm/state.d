@@ -337,8 +337,8 @@ public:
 			if (argFunc.isWeakLink) {
 				LLVMSetUnnamedAddr(v, true);
 				// For lack of COMDAT support.
-				if (lp.settings.platform == Platform.MSVC ||
-				    lp.settings.platform == Platform.MinGW) {
+				if (lp.target.platform == Platform.MSVC ||
+				    lp.target.platform == Platform.MinGW) {
 					LLVMSetLinkage(v, LLVMLinkage.Internal);
 				} else {
 					LLVMSetLinkage(v, LLVMLinkage.LinkOnceODR);
@@ -347,7 +347,7 @@ public:
 
 			// Needs to be done here, because this can not be set on a type.
 			if (argFunc.type.linkage == ir.Linkage.Windows) {
-				if (lp.settings.arch == Arch.X86_64) {
+				if (lp.target.arch == Arch.X86_64) {
 					LLVMSetFunctionCallConv(v, LLVMCallConv.X86_64_Win64);
 				} else {
 					LLVMSetFunctionCallConv(v, LLVMCallConv.X86Stdcall);
@@ -431,7 +431,7 @@ public:
 			 * So for now, make all Variables marked as local global,
 			 * else nothing will work at all.
 			 */
-			if (lp.settings.platform != Platform.MinGW) {
+			if (lp.target.platform != Platform.MinGW) {
 				LLVMSetThreadLocal(v, true);
 			}
 			break;
@@ -440,8 +440,8 @@ public:
 			if (var.isWeakLink) {
 				LLVMSetUnnamedAddr(v, true);
 				// For lack of COMDAT support.
-				if (lp.settings.platform == Platform.MSVC ||
-				    lp.settings.platform == Platform.MinGW) {
+				if (lp.target.platform == Platform.MSVC ||
+				    lp.target.platform == Platform.MinGW) {
 					LLVMSetLinkage(v, LLVMLinkage.Internal);
 				} else {
 					LLVMSetLinkage(v, LLVMLinkage.LinkOnceODR);
@@ -560,19 +560,6 @@ public:
 		if (ret !is null)
 			return *ret;
 		return null;
-	}
-
-protected:
-	void setTargetAndLayout()
-	{
-		auto settings = lp.settings;
-		auto triple = tripleList[settings.platform][settings.arch];
-		auto layout = layoutList[settings.platform][settings.arch];
-		if (triple is null || layout is null)
-			throw makeArchNotSupported();
-
-		LLVMSetTarget(mod, triple);
-		LLVMSetDataLayout(mod, layout);
 	}
 }
 

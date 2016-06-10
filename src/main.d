@@ -41,9 +41,10 @@ int main(string[] strArgs)
 	auto cmd = strArgs[0];
 	strArgs = strArgs[1 .. $];
 
-	auto ver = new VersionSet();
 	settings = new Settings(cmd, getExecDir());
 	setDefault(settings);
+	auto ver = new VersionSet();
+	auto target = new TargetInfo();
 
 
 	// Get a list of arguments.
@@ -70,10 +71,9 @@ int main(string[] strArgs)
 		return 0;
 	}
 
-	settings.processConfigs(ver);
+	settings.processConfigs();
 	settings.replaceMacros();
-
-	auto vc = new VoltDriver(ver, settings);
+	auto vc = new VoltDriver(settings, ver, target);
 	vc.addFiles(files);
 	int ret = vc.compile();
 	vc.close();

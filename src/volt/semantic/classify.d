@@ -163,22 +163,22 @@ size_t calcAlignment(LanguagePass lp, ir.Type t, size_t offset)
 size_t alignment(LanguagePass lp, ir.PrimitiveType.Kind kind)
 {
 	final switch (kind) with (ir.PrimitiveType.Kind) {
-	case Void: return lp.settings.alignment.int8;
-	case Bool: return lp.settings.alignment.int1;
-	case Char: return lp.settings.alignment.int8;
-	case Byte: return lp.settings.alignment.int8;
-	case Ubyte: return lp.settings.alignment.int8;
-	case Short: return lp.settings.alignment.int16;
-	case Ushort: return lp.settings.alignment.int16;
-	case Wchar: return lp.settings.alignment.int16;
-	case Int: return lp.settings.alignment.int32;
-	case Uint: return lp.settings.alignment.int32;
-	case Dchar: return lp.settings.alignment.int32;
-	case Long: return lp.settings.alignment.int64;
-	case Ulong: return lp.settings.alignment.int64;
-	case Float: return lp.settings.alignment.float32;
-	case Double: return lp.settings.alignment.float64;
-	case Real: return lp.settings.alignment.float64;
+	case Void: return lp.target.alignment.int8;
+	case Bool: return lp.target.alignment.int1;
+	case Char: return lp.target.alignment.int8;
+	case Byte: return lp.target.alignment.int8;
+	case Ubyte: return lp.target.alignment.int8;
+	case Short: return lp.target.alignment.int16;
+	case Ushort: return lp.target.alignment.int16;
+	case Wchar: return lp.target.alignment.int16;
+	case Int: return lp.target.alignment.int32;
+	case Uint: return lp.target.alignment.int32;
+	case Dchar: return lp.target.alignment.int32;
+	case Long: return lp.target.alignment.int64;
+	case Ulong: return lp.target.alignment.int64;
+	case Float: return lp.target.alignment.float32;
+	case Double: return lp.target.alignment.float64;
+	case Real: return lp.target.alignment.float64;
 	case Invalid: throw panic(Location.init, "invalid primitive kind");
 	}
 }
@@ -196,9 +196,9 @@ size_t alignment(LanguagePass lp, ir.Type node)
 	case FunctionType:
 	case Class:
 	case Interface:
-		return lp.settings.alignment.ptr;
+		return lp.target.alignment.ptr;
 	case Union:
-		return lp.settings.alignment.int8; // Matches implementation
+		return lp.target.alignment.int8; // Matches implementation
 	case PrimitiveType:
 		auto asPrim = cast(ir.PrimitiveType) node;
 		assert(asPrim !is null);
