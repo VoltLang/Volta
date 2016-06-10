@@ -70,8 +70,8 @@ version (UseDIBuilder) {
 	LLVMValueRef diCompileUnit(State state)
 	{
 		string file = state.irMod.location.filename;
-		string dir = state.lp.settings.execDir;
-		string ident = state.lp.settings.identStr;
+		string dir = state.lp.driver.execDir;
+		string ident = state.lp.driver.identStr;
 
 		return LLVMDIBuilderCreateCompileUnit(state.diBuilder,
 			DwLanguage.C,
@@ -119,7 +119,7 @@ version (UseDIBuilder) {
 		LLVMAddNamedMetadataOperand(
 			state.mod, "llvm.ident",
 			state.diNode(state.diString(
-				state.lp.settings.identStr)));
+				state.lp.driver.identStr)));
 
 		LLVMDIBuilderFinalize(state.diBuilder);
 	}
@@ -256,7 +256,7 @@ version (UseDIBuilder) {
 
 		auto file = diFile(state,
 			state.irMod.location.filename,
-			state.lp.settings.execDir);
+			state.lp.driver.execDir);
 
 		LLVMValueRef scope_;
 		if (LLVMGetDebugMetadataVersion() == 2) {
@@ -441,7 +441,7 @@ version (UseDIBuilder) {
 	{
 		auto file = diFile(state,
 			irFn.location.filename,
-			state.lp.settings.execDir);
+			state.lp.driver.execDir);
 		LLVMValueRef _scope = file;
 		string name = irFn.mangledName;
 		string link = null;
@@ -546,7 +546,7 @@ private:
 	{
 		return diFile(state,
 			n.location.filename,
-			state.lp.settings.execDir);
+			state.lp.driver.execDir);
 	}
 
 } else {

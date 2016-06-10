@@ -74,6 +74,9 @@ class TargetInfo
  */
 interface Driver
 {
+	@property string execDir();
+	@property string identStr();
+
 	/// Load a module source from file system.
 	ir.Module loadModule(ir.QualifiedName name);
 

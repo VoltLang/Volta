@@ -189,6 +189,16 @@ public:
 	 *
 	 */
 
+	override @property string execDir()
+	{
+		return settings.execDir;
+	}
+
+	override @property string identStr()
+	{
+		return settings.identStr;
+	}
+
 	/**
 	 * Retrieve a Module by its name. Returns null if none is found.
 	 */
