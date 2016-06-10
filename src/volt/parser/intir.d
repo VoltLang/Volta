@@ -119,7 +119,7 @@ public:
 class DupExp : IntExp
 {
 public:
-	QualifiedName name;    // new FOO[beginning .. end]
+	PostfixExp name;    // new FOO[beginning .. end]
 	TernaryExp beginning;  // new foo[BEGINNING .. end]
 	TernaryExp end;        // new foo[beginning .. END]
 	bool shorthand;

@@ -223,7 +223,6 @@ public:
 	Function ctor; ///< The constructor to call.
 
 	// These are only for Dup.
-	QualifiedName dupName;
 	Exp dupBeginning;
 	Exp dupEnd;
 	bool fullShorthand;  // This came from new foo[..], not [0 .. $].
@@ -247,7 +246,6 @@ public:
 		}
 		this.ctor = old.ctor;
 
-		this.dupName = old.dupName;
 		this.dupBeginning = old.dupBeginning;
 		this.dupEnd = old.dupEnd;
 		this.fullShorthand = old.fullShorthand;

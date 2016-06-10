@@ -182,8 +182,7 @@ ir.Unary copy(ir.Unary unary)
 	foreach (i, arg; unary.argumentList) {
 		newunary.argumentList[i] = copyExp(arg);
 	}
-	if (unary.dupName !is null) {
-		newunary.dupName = copy(unary.dupName);
+	if (unary.dupBeginning !is null) {
 		newunary.dupBeginning = copyExp(unary.dupBeginning);
 		newunary.dupEnd = copyExp(unary.dupEnd);
 	}

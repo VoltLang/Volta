@@ -254,9 +254,6 @@ public:
 			n.argumentList[i] = copyExp(old.argumentList[i]);
 		}
 		// TODO ctor
-		if (old.dupName !is null) {
-			n.dupName = copy(old.dupName);
-		}
 		if (old.dupBeginning !is null) {
 			n.dupBeginning = copyExp(old.dupBeginning);
 		}

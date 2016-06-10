@@ -235,20 +235,16 @@ ParseStatus unaryToExp(ParserStream ps, intir.UnaryExp unary, out ir.Exp exp)
 			if (constant is null || constant._string != "$") {
 				return;
 			}
-			rexp = buildPostfixIdentifier(rexp.location, u.dupName, "length");
+			rexp = buildPostfixIdentifier(rexp.location, u.value, "length");
 		}
 		u.location = unary.dupExp.location;
 		u.op = unary.op;
-		u.dupName = unary.dupExp.name;
-		u.fullShorthand = unary.dupExp.shorthand;
-		if (u.dupName.identifiers.length == 1) {
-			u.value = buildIdentifierExp(u.location, u.dupName.identifiers[0].value);
-		} else {
-			auto qname = copy(u.dupName);
-			qname.identifiers = qname.identifiers[0 .. $-1];
-			u.value = buildPostfixIdentifier(u.location, qname, u.dupName.identifiers[$-1].value);
+		auto succeeded = postfixToExp(ps, unary.location, u.value, unary.dupExp.name);
+		if (!succeeded) {
+			return parseFailed(ps, u);
 		}
-		auto succeeded = ternaryToExp(ps, unary.dupExp.beginning, u.dupBeginning);
+		u.fullShorthand = unary.dupExp.shorthand;
+		succeeded = ternaryToExp(ps, unary.dupExp.beginning, u.dupBeginning);
 		if (!succeeded) {
 			return parseFailed(ps, u);
 		}
@@ -1180,11 +1176,12 @@ ParseStatus parseNewOrDup(ParserStream ps, ref intir.UnaryExp exp)
 	if (!succeeded) {
 		return succeeded;
 	}
-	int bracketDepth;
+	int bracketDepth, doubleDotDepth;
 	while (ps.peek.type != TokenType.Semicolon && ps.peek.type != TokenType.End) {
 		auto t = ps.get();
 		if (t.type == TokenType.OpenBracket) {
 			bracketDepth++;
+			doubleDotDepth++;
 			continue;
 		} else if (t.type == TokenType.CloseBracket) {
 			bracketDepth--;
@@ -1212,7 +1209,7 @@ ParseStatus parseNewOrDup(ParserStream ps, ref intir.UnaryExp exp)
 		}
 	} else {
 		exp.op = ir.Unary.Op.Dup;
-		succeeded = parseDupExp(ps, exp.dupExp);
+		succeeded = parseDupExp(ps, doubleDotDepth, exp.dupExp);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Unary);
 		}
@@ -1236,7 +1233,7 @@ private intir.TernaryExp toTernary(intir.PrimaryExp exp)
 	return t;
 }
 
-ParseStatus parseDupExp(ParserStream ps, out intir.DupExp dupExp)
+ParseStatus parseDupExp(ParserStream ps, int doubleDotDepth, out intir.DupExp dupExp)
 {
 	auto succeeded = checkToken(ps, ir.NodeType.Unary, TokenType.New);
 	if (!succeeded) {
@@ -1245,7 +1242,7 @@ ParseStatus parseDupExp(ParserStream ps, out intir.DupExp dupExp)
 	auto start = ps.get();
 
 	dupExp = new intir.DupExp();
-	succeeded = parseQualifiedName(ps, dupExp.name);
+	succeeded = parsePostfixExp(ps, dupExp.name, 0, doubleDotDepth - 1);
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.Postfix);
 	}
@@ -1350,7 +1347,7 @@ ParseStatus parseCastExp(ParserStream ps, out intir.CastExp exp)
 	return Succeeded;
 }
 
-ParseStatus parsePostfixExp(ParserStream ps, out intir.PostfixExp exp, int depth=0)
+ParseStatus parsePostfixExp(ParserStream ps, out intir.PostfixExp exp, int depth=0, int bracketRecurse=-1)
 {
 	depth++;
 	exp = new intir.PostfixExp();
@@ -1379,7 +1376,7 @@ ParseStatus parsePostfixExp(ParserStream ps, out intir.PostfixExp exp, int depth
 			return parseFailed(ps, ir.NodeType.Postfix);
 		}
 		exp.op = ir.Postfix.Op.Identifier;
-		succeeded = parsePostfixExp(ps, exp.postfix, depth);
+		succeeded = parsePostfixExp(ps, exp.postfix, depth, bracketRecurse);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Postfix);
 		}
@@ -1387,7 +1384,7 @@ ParseStatus parsePostfixExp(ParserStream ps, out intir.PostfixExp exp, int depth
 	case TokenType.DoublePlus:
 		ps.get();
 		exp.op = ir.Postfix.Op.Increment;
-		auto succeeded = parsePostfixExp(ps, exp.postfix, depth);
+		auto succeeded = parsePostfixExp(ps, exp.postfix, depth, bracketRecurse);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Postfix);
 		}
@@ -1395,7 +1392,7 @@ ParseStatus parsePostfixExp(ParserStream ps, out intir.PostfixExp exp, int depth
 	case TokenType.DoubleDash:
 		ps.get();
 		exp.op = ir.Postfix.Op.Decrement;
-		auto succeeded = parsePostfixExp(ps, exp.postfix, depth);
+		auto succeeded = parsePostfixExp(ps, exp.postfix, depth, bracketRecurse);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Postfix);
 		}
@@ -1411,12 +1408,19 @@ ParseStatus parsePostfixExp(ParserStream ps, out intir.PostfixExp exp, int depth
 			return succeeded;
 		}
 		exp.op = ir.Postfix.Op.Call;
-		succeeded = parsePostfixExp(ps, exp.postfix, depth);
+		succeeded = parsePostfixExp(ps, exp.postfix, depth, bracketRecurse);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Postfix);
 		}
 		break;
 	case TokenType.OpenBracket:
+		if (bracketRecurse == 0) {
+			/* This is a bodge for dup expressions that know how nested the duplicate
+			 * expression is, and want to only parse that many brackets.
+			 *    b := new (a[0])[..];  // We only want to parse the bit in parens.
+			 */
+			return Succeeded;
+		}
 		ps.get();
 		if (ps.peek.type == TokenType.CloseBracket) {
 			exp.op = ir.Postfix.Op.Slice;
@@ -1452,7 +1456,7 @@ ParseStatus parsePostfixExp(ParserStream ps, out intir.PostfixExp exp, int depth
 		if (!succeeded) {
 			return succeeded;
 		}
-		succeeded = parsePostfixExp(ps, exp.postfix, depth);
+		succeeded = parsePostfixExp(ps, exp.postfix, depth, bracketRecurse-1);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Postfix);
 		}

@@ -1678,7 +1678,6 @@ void extypeUnaryNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
  */
 void extypeUnaryDup(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 {
-	panicAssert(_unary, _unary.dupName !is null);
 	panicAssert(_unary, _unary.dupBeginning !is null);
 	panicAssert(_unary, _unary.dupEnd !is null);
 
@@ -1702,7 +1701,7 @@ void extypeUnaryDup(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 	if (rtype.nodeType == ir.NodeType.AAType) {
 		if (!_unary.fullShorthand) {
 			// Actual indices were used, which makes no sense for AAs.
-			throw makeExpected(l, format("new %s[..]", _unary.dupName));
+			throw makeExpected(l, format("`new <exp>[..]` shorthand syntax"));
 		}
 		auto aa = cast(ir.AAType)rtype;
 		panicAssert(rtype, aa !is null);
