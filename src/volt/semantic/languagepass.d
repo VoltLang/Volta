@@ -103,7 +103,7 @@ public:
 			return;
 		}
 		postParse ~= new TimerPass("p1-scope-rep", new ScopeReplacer());
-		postParse ~= new TimerPass("p1-attrib-rem", new AttribRemoval(settings));
+		postParse ~= new TimerPass("p1-attrib-rem", new AttribRemoval(target));
 		postParse ~= new TimerPass("p1-gatherer", new Gatherer());
 
 		passes2 ~= new TimerPass("p2-extyper", new ExTyper(this));

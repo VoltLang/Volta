@@ -20,7 +20,7 @@ import volt.visitor.visitor;
 class AttribRemoval : NullVisitor, Pass
 {
 public:
-	Settings settings;
+	TargetInfo target;
 
 protected:
 	ir.Attribute[] mStack;
@@ -42,9 +42,9 @@ protected:
 	}
 
 public:
-	this(Settings settings)
+	this(TargetInfo target)
 	{
-		this.settings = settings;
+		this.target = target;
 	}
 
 	/*
@@ -200,7 +200,7 @@ protected:
 				func.type.linkage = ir.Linkage.Pascal;
 				break;
 			case LinkageSystem:
-				if (settings.platform == Platform.MinGW) {
+				if (target.platform == Platform.MinGW) {
 					func.type.linkage = ir.Linkage.Windows;
 				} else {
 					func.type.linkage = ir.Linkage.C;
@@ -308,7 +308,7 @@ protected:
 				d.linkage = ir.Linkage.Pascal;
 				break;
 			case LinkageSystem:
-				if (settings.platform == Platform.MinGW) {
+				if (target.platform == Platform.MinGW) {
 					d.linkage = ir.Linkage.Windows;
 				} else {
 					d.linkage = ir.Linkage.C;
