@@ -116,8 +116,8 @@ public:
 		mAccumParsing = new Accumulator("p1-parsing");
 
 
-		languagePass = new VoltLanguagePass(
-			this, ver, target, frontend, s.removeConditionalsOnly);
+		languagePass = new VoltLanguagePass(this, ver, target,
+			frontend, s.removeConditionalsOnly, s.internalD);
 
 		if (!s.noBackend) {
 			backend = new LlvmBackend(languagePass);

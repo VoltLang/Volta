@@ -94,9 +94,10 @@ private:
 
 public:
 	this(Driver drv, VersionSet ver, TargetInfo target, Frontend frontend,
-	     bool removeConditionalsOnly)
+	     bool removeConditionalsOnly, bool beMoreLikeD)
 	{
 		this.mRemoveConditionalsOnly = removeConditionalsOnly;
+		this.beMoreLikeD = beMoreLikeD;
 		super(drv, ver, target, frontend);
 
 		mTracker = new WorkTracker();
