@@ -116,8 +116,8 @@ public:
 		mAccumParsing = new Accumulator("p1-parsing");
 
 
-		Driver drv = this;
-		languagePass = new VoltLanguagePass(drv, ver, target, s, frontend);
+		languagePass = new VoltLanguagePass(
+			this, ver, target, frontend, s.removeConditionalsOnly);
 
 		if (!s.noBackend) {
 			backend = new LlvmBackend(languagePass);

@@ -64,7 +64,7 @@ public:
 	 */
 
 private:
-	Settings settings;
+	bool mRemoveConditionalsOnly;
 	WorkTracker mTracker;
 	ir.Module[string] mModules;
 
@@ -93,15 +93,16 @@ private:
 	}
 
 public:
-	this(Driver driver, VersionSet ver, TargetInfo target, Settings settings, Frontend frontend)
+	this(Driver drv, VersionSet ver, TargetInfo target, Frontend frontend,
+	     bool removeConditionalsOnly)
 	{
-		this.settings = settings;
-		super(driver, ver, target, frontend);
+		this.mRemoveConditionalsOnly = removeConditionalsOnly;
+		super(drv, ver, target, frontend);
 
 		mTracker = new WorkTracker();
 
 		postParse ~= new TimerPass("p1-cond-rem", new ConditionalRemoval(ver));
-		if (settings.removeConditionalsOnly) {
+		if (mRemoveConditionalsOnly) {
 			return;
 		}
 		postParse ~= new TimerPass("p1-scope-rep", new ScopeReplacer());
@@ -150,7 +151,7 @@ public:
 		// Run postParse passes so we can lookup things.
 		phase1(objectModule);
 
-		if (settings.removeConditionalsOnly) {
+		if (mRemoveConditionalsOnly) {
 			return;
 		}
 
@@ -593,7 +594,7 @@ public:
 			pass.transform(m);
 		}
 
-		if (settings.removeConditionalsOnly) {
+		if (mRemoveConditionalsOnly) {
 			return;
 		}
 
@@ -649,7 +650,7 @@ public:
 
 	private void debugPrint(string msg, ir.QualifiedName name)
 	{
-		if (settings.internalDebug) {
+		if (driver.internalDebug) {
 			output.writefln(msg, name);
 		}
 	}
