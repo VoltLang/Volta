@@ -2,6 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.arg;
 
+import watt.text.string : indexOf, replace;
 import watt.text.format : format;
 import watt.path : dirSeparator, baseName, dirName;
 import watt.conv : toLower;
@@ -10,6 +11,148 @@ import watt.io.file : searchDir;
 import volt.errors;
 import volt.interfaces;
 
+
+/**
+ * Holds a set of compiler settings.
+ *
+ * Things like import paths, and so on.
+ */
+final class Settings
+{
+public:
+	bool warningsEnabled; ///< The -w argument.
+	bool noBackend; ///< The -S argument.
+	bool noLink; ///< The -c argument
+	bool emitBitcode; ///< The --emit-bitcode argument.
+	bool noCatch; ///< The --no-catch argument.
+	bool noStdLib; ///< The --no-stdlib argument.
+	bool removeConditionalsOnly; ///< The -E argument.
+	bool simpleTrace; ///< The --simple-trace argument.
+	bool writeDocs; ///< The --doc argument.
+	bool writeJson; ///< The --json argument.
+	bool internalD; ///< The --internal-d argument;
+	bool internalDiff; ///< The --internal-diff argument.
+	bool internalDebug; ///< The --internal-dbg argument.
+
+	Platform platform;
+	Arch arch;
+
+	string identStr; ///< Compiler identifier string.
+
+	string execCmd; ///< How where we launched.
+	string execDir; ///< Set on create.
+	string platformStr; ///< Derived from platform.
+	string archStr; ///< Derived from arch.
+
+	string cc; ///< The --cc argument.
+	string[] xcc; ///< Arguments to cc, the --Xcc argument.
+
+	string ld; ///< The --ld argument.
+	string[] xld; ///< The --Xld argument.
+
+	string link; ///< The --link argument.
+	string[] xlink; ///< The --Xlink argument.
+
+	string linker; ///< The --linker argument
+	string[] xlinker; ///< Arguments to the linker, the -Xlinker argument.
+
+	string depFile;
+	string outputFile;
+
+	string[] includePaths; ///< The -I arguments.
+	string[] srcIncludePaths; ///< The -src-I arguments.
+
+	string[] libraryPaths; ///< The -L arguments.
+	string[] libraryFiles; ///< The -l arguments.
+
+	string[] frameworkPaths; ///< The -F arguments.
+	string[] frameworkNames; ///< The --framework arguments.
+
+	string[] stringImportPaths; ///< The -J arguments.
+
+	string[] stdFiles; ///< The --stdlib-file arguements.
+
+	string docDir; ///< The --doc-dir argument.
+	string docOutput; ///< The -do argument.
+	string jsonOutput = "voltoutput.json"; ///< The -jo argument.
+
+	string perfOutput; ///< The --perf-output argument.
+
+
+public:
+	this(string cmd, string execDir)
+	{
+		this.execCmd = cmd;
+		this.execDir = execDir;
+	}
+
+	final void processConfigs()
+	{
+		identStr = "Volta 0.0.1";
+		setStrs();
+		replaceMacros();
+	}
+
+	void setStrs()
+	{
+		final switch (platform) with (Platform) {
+		case MinGW: platformStr = "mingw"; break;
+		case MSVC: platformStr = "msvc"; break;
+		case Linux: platformStr = "linux"; break;
+		case OSX: platformStr = "osx"; break;
+		case EMSCRIPTEN: platformStr = "emscripten"; break;
+		case Metal: platformStr = "metal"; break;
+		}
+		final switch (arch) with (Arch) {
+		case X86: archStr = "x86"; break;
+		case X86_64: archStr = "x86_64"; break;
+		case LE32: archStr = "le32"; break;
+		}
+	}
+
+	final void replaceMacros()
+	{
+		foreach (ref f; includePaths) {
+			f = replaceEscapes(f);
+		}
+		foreach (ref f; srcIncludePaths) {
+			f = replaceEscapes(f);
+		}
+		foreach (ref f; libraryPaths) {
+			f = replaceEscapes(f);
+		}
+		foreach (ref f; libraryFiles) {
+			f = replaceEscapes(f);
+		}
+		foreach (ref f; stdFiles) {
+			f = replaceEscapes(f);
+		}
+	}
+
+	final string replaceEscapes(string file)
+	{
+		// @todo enum *
+		string e = "%@execdir%";
+		string a = "%@arch%";
+		string p = "%@platform%";
+		ptrdiff_t ret;
+
+		ret = indexOf(file, e);
+		if (ret != -1) {
+			file = replace(file, e, execDir);
+		}
+		ret = indexOf(file, a);
+		if (ret != -1) {
+			file = replace(file, a, archStr);
+		}
+		ret = indexOf(file, p);
+		if (ret != -1) {
+			file = replace(file, p, platformStr);
+		}
+
+		return file;
+	}
+}
 
 class Arg
 {

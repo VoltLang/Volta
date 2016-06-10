@@ -2,11 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.interfaces;
 
-import watt.text.string : indexOf, replace;
-
 import volt.token.location;
 import ir = volt.ir.ir;
-
 
 
 /**
@@ -65,6 +62,130 @@ class TargetInfo
 	}
 
 	Alignments alignment;
+}
+
+/**
+ * A set of version/debug identifiers.
+ */
+final class VersionSet
+{
+public:
+	bool debugEnabled;
+
+	/// These are always set
+	enum string[] defaultVersions = [
+		"all",
+		"Volt",
+	];
+
+	enum string[] reservedVersions = [
+		// Generic
+		"all",
+		"none",
+		"Volt",
+		// Arch
+		"X86",
+		"X86_64",
+		"LE32",
+		// Platforms
+		"Posix",
+		"Windows",
+		// Targets
+		"OSX",
+		"MSVC",
+		"Linux",
+		"MinGW",
+		"Solaris",
+		"FreeBSD",
+		"Emscripten",
+		// Misc
+		"V_P32",
+		"V_P64",
+	];
+
+private:
+	/// If the ident exists and is true, it's set, if false it's reserved.
+	bool[string] mVersionIdentifiers;
+	/// If the ident exists, it's set.
+	bool[string] mDebugIdentifiers;
+
+
+public:
+	this()
+	{
+		foreach (r; reservedVersions) {
+			reserveVersionIdentifier(r);
+		}
+
+		foreach (d; defaultVersions) {
+			overwriteVersionIdentifier(d);
+		}
+	}
+
+	/// Throws: Exception if ident is reserved.
+	final void setVersionIdentifier(string ident)
+	{
+		if (auto p = ident in mVersionIdentifiers) {
+			if (!(*p)) {
+				throw new Exception("cannot set reserved identifier.");
+			}
+		}
+		mVersionIdentifiers[ident] = true;
+	}
+
+	/// Doesn't throw on ident reserve.
+	final void overwriteVersionIdentifier(string ident)
+	{
+		mVersionIdentifiers[ident] = true;
+	}
+
+	/// Doesn't throw, debug identifiers can't be reserved.
+	final void setDebugIdentifier(string ident)
+	{
+		mDebugIdentifiers[ident] = true;
+	}
+
+	/**
+	 * Check if a given version identifier is set.
+	 * Params:
+	 *   ident = the identifier to check.
+	 * Returns: true if set, false otherwise.
+	 */
+	final bool isVersionSet(string ident)
+	{
+		if (auto p = ident in mVersionIdentifiers) {
+			return *p;
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Check if a given debug identifier is set.
+	 * Params:
+	 *   ident = the identifier to check.
+	 * Returns: true if set, false otherwise.
+	 */
+	final bool isDebugSet(string ident)
+	{
+		return (ident in mDebugIdentifiers) !is null;
+	}
+
+	/**
+	 * Quick helpers to get version flags.
+	 * @{
+	 */
+	@property bool isP64() { return isVersionSet("V_P64"); }
+	/**
+	 * @}
+	 */
+
+private:
+	/// Marks an identifier as unable to be set. Doesn't set the identifier.
+	final void reserveVersionIdentifier(string ident)
+	{
+		mVersionIdentifiers[ident] = false;
+	}
 }
 
 /**
@@ -625,289 +746,4 @@ interface BackendResult
 	 * Free any resources that this result has.
 	 */
 	void close();
-}
-
-/**
- * Holds a set of compiler settings.
- *
- * Things like version/debug identifiers, warning mode,
- * debug/release, import paths, and so on.
- */
-final class Settings
-{
-public:
-	bool warningsEnabled; ///< The -w argument.
-	bool noBackend; ///< The -S argument.
-	bool noLink; ///< The -c argument
-	bool emitBitcode; ///< The --emit-bitcode argument.
-	bool noCatch; ///< The --no-catch argument.
-	bool noStdLib; ///< The --no-stdlib argument.
-	bool removeConditionalsOnly; ///< The -E argument.
-	bool simpleTrace; ///< The --simple-trace argument.
-	bool writeDocs; ///< The --doc argument.
-	bool writeJson; ///< The --json argument.
-	bool internalD; ///< The --internal-d argument;
-	bool internalDiff; ///< The --internal-diff argument.
-	bool internalDebug; ///< The --internal-dbg argument.
-
-	Platform platform;
-	Arch arch;
-
-	string identStr; ///< Compiler identifier string.
-
-	string execCmd; ///< How where we launched.
-	string execDir; ///< Set on create.
-	string platformStr; ///< Derived from platform.
-	string archStr; ///< Derived from arch.
-
-	string cc; ///< The --cc argument.
-	string[] xcc; ///< Arguments to cc, the --Xcc argument.
-
-	string ld; ///< The --ld argument.
-	string[] xld; ///< The --Xld argument.
-
-	string link; ///< The --link argument.
-	string[] xlink; ///< The --Xlink argument.
-
-	string linker; ///< The --linker argument
-	string[] xlinker; ///< Arguments to the linker, the -Xlinker argument.
-
-	string depFile;
-	string outputFile;
-
-	string[] includePaths; ///< The -I arguments.
-	string[] srcIncludePaths; ///< The -src-I arguments.
-
-	string[] libraryPaths; ///< The -L arguments.
-	string[] libraryFiles; ///< The -l arguments.
-
-	string[] frameworkPaths; ///< The -F arguments.
-	string[] frameworkNames; ///< The --framework arguments.
-
-	string[] stringImportPaths; ///< The -J arguments.
-
-	string[] stdFiles; ///< The --stdlib-file arguements.
-
-	string docDir; ///< The --doc-dir argument.
-	string docOutput; ///< The -do argument.
-	string jsonOutput = "voltoutput.json"; ///< The -jo argument.
-
-	string perfOutput; ///< The --perf-output argument.
-
-
-public:
-	this(string cmd, string execDir)
-	{
-		this.execCmd = cmd;
-		this.execDir = execDir;
-	}
-
-	final void processConfigs()
-	{
-		identStr = "Volta 0.0.1";
-		setStrs();
-		replaceMacros();
-	}
-
-	void setStrs()
-	{
-		final switch (platform) with (Platform) {
-		case MinGW: platformStr = "mingw"; break;
-		case MSVC: platformStr = "msvc"; break;
-		case Linux: platformStr = "linux"; break;
-		case OSX: platformStr = "osx"; break;
-		case EMSCRIPTEN: platformStr = "emscripten"; break;
-		case Metal: platformStr = "metal"; break;
-		}
-		final switch (arch) with (Arch) {
-		case X86: archStr = "x86"; break;
-		case X86_64: archStr = "x86_64"; break;
-		case LE32: archStr = "le32"; break;
-		}
-	}
-
-	final void replaceMacros()
-	{
-		foreach (ref f; includePaths) {
-			f = replaceEscapes(f);
-		}
-		foreach (ref f; srcIncludePaths) {
-			f = replaceEscapes(f);
-		}
-		foreach (ref f; libraryPaths) {
-			f = replaceEscapes(f);
-		}
-		foreach (ref f; libraryFiles) {
-			f = replaceEscapes(f);
-		}
-		foreach (ref f; stdFiles) {
-			f = replaceEscapes(f);
-		}
-	}
-
-	final string replaceEscapes(string file)
-	{
-		// @todo enum *
-		string e = "%@execdir%";
-		string a = "%@arch%";
-		string p = "%@platform%";
-		ptrdiff_t ret;
-
-		ret = indexOf(file, e);
-		if (ret != -1) {
-			file = replace(file, e, execDir);
-		}
-		ret = indexOf(file, a);
-		if (ret != -1) {
-			file = replace(file, a, archStr);
-		}
-		ret = indexOf(file, p);
-		if (ret != -1) {
-			file = replace(file, p, platformStr);
-		}
-
-		return file;
-	}
-}
-
-/**
- * A set of version/debug identifiers.
- */
-final class VersionSet
-{
-public:
-	bool debugEnabled;
-
-	/// These are always set
-	enum string[] defaultVersions = [
-		"all",
-		"Volt",
-	];
-
-	enum string[] reservedVersions = [
-		// Generic
-		"all",
-		"none",
-		"Volt",
-		// Arch
-		"X86",
-		"X86_64",
-		"LE32",
-		// Platforms
-		"Posix",
-		"Windows",
-		// Targets
-		"OSX",
-		"MSVC",
-		"Linux",
-		"MinGW",
-		"Solaris",
-		"FreeBSD",
-		"Emscripten",
-		// Misc
-		"V_P32",
-		"V_P64",
-	];
-
-private:
-	/// If the ident exists and is true, it's set, if false it's reserved.
-	bool[string] mVersionIdentifiers;
-	/// If the ident exists, it's set.
-	bool[string] mDebugIdentifiers;
-
-
-public:
-	this()
-	{
-		foreach (r; reservedVersions) {
-			reserveVersionIdentifier(r);
-		}
-
-		foreach (d; defaultVersions) {
-			overwriteVersionIdentifier(d);
-		}
-	}
-
-	/// Throws: Exception if ident is reserved.
-	final void setVersionIdentifier(string ident)
-	{
-		if (auto p = ident in mVersionIdentifiers) {
-			if (!(*p)) {
-				throw new Exception("cannot set reserved identifier.");
-			}
-		}
-		mVersionIdentifiers[ident] = true;
-	}
-
-	/// Doesn't throw on ident reserve.
-	final void overwriteVersionIdentifier(string ident)
-	{
-		mVersionIdentifiers[ident] = true;
-	}
-
-	/// Doesn't throw, debug identifiers can't be reserved.
-	final void setDebugIdentifier(string ident)
-	{
-		mDebugIdentifiers[ident] = true;
-	}
-
-	/**
-	 * Check if a given version identifier is set.
-	 * Params:
-	 *   ident = the identifier to check.
-	 * Returns: true if set, false otherwise.
-	 */
-	final bool isVersionSet(string ident)
-	{
-		if (auto p = ident in mVersionIdentifiers) {
-			return *p;
-		} else {
-			return false;
-		}
-	}
-
-	/**
-	 * Check if a given debug identifier is set.
-	 * Params:
-	 *   ident = the identifier to check.
-	 * Returns: true if set, false otherwise.
-	 */
-	final bool isDebugSet(string ident)
-	{
-		return (ident in mDebugIdentifiers) !is null;
-	}
-
-	/**
-	 * Quick helpers to get version flags.
-	 * @{
-	 */
-	@property bool isP64() { return isVersionSet("V_P64"); }
-	/**
-	 * @}
-	 */
-
-private:
-	/// Marks an identifier as unable to be set. Doesn't set the identifier.
-	final void reserveVersionIdentifier(string ident)
-	{
-		mVersionIdentifiers[ident] = false;
-	}
-}
-
-unittest
-{
-	auto ver = new VersionSet();
-	assert(!ver.isVersionSet("none"));
-	assert(ver.isVersionSet("all"));
-	ver.setVersionIdentifier("foo");
-	assert(ver.isVersionSet("foo"));
-	assert(!ver.isDebugSet("foo"));
-	ver.setDebugIdentifier("foo");
-	assert(ver.isDebugSet("foo"));
-
-	try {
-		ver.setVersionIdentifier("none");
-		assert(false);
-	} catch (Exception e) {
-	}
 }
