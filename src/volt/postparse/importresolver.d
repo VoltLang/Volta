@@ -1,5 +1,5 @@
-// Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
-// Copyright © 2012, Bernard Helyer.  All rights reserved.
+// Copyright © 2012-2016, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2012-2016, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.postparse.importresolver;
 
@@ -21,9 +21,10 @@ import volt.visitor.scopemanager;
  */
 class ImportResolver : ScopeManager, Pass
 {
-public:
+private:
 	LanguagePass lp;
-	ir.Module thisModule;
+	ir.Module mModule;
+
 
 public:
 	this(LanguagePass lp)
@@ -31,98 +32,154 @@ public:
 		this.lp = lp;
 	}
 
+
+	/*
+	 *
+	 * Pass functions.
+	 *
+	 */
+
 	override void transform(ir.Module m)
 	{
-		thisModule = m;
+		assert(mModule is null);
 
-		super.enter(m);
-
-		assert(m.children !is null);
-
-		// Only accept imports directly in the module.
-		foreach (n; m.children.nodes) {
-			if (n.nodeType == ir.NodeType.Import) {
-				handleImport(cast(ir.Import)n);
-			} else {
-				accept(n, this);
-			}
-		}
-
-		super.leave(m);
+		mModule = m;
+		accept(m, this);
+		mModule = null;
 	}
 
 	override void close()
 	{
 	}
 
+
+	/*
+	 *
+	 * Visitor and our functions.
+	 *
+	 */
+
 	override Status enter(ir.Import i)
 	{
-		throw makeNonTopLevelImport(i.location);
-	}
-
-	void handleImport(ir.Import i)
-	{
-		if (i.isStatic && i.access != ir.Access.Private) {
-			throw makeExpected(i.location, format("static import '%s' to be private", i.name));
-
+		if (current !is mModule.myScope) {
+			throw makeNonTopLevelImport(i.location);
 		}
+
+		if (i.isStatic && i.access != ir.Access.Private) {
+			throw makeExpected(i.location, 
+				format("static import '%s' to be private", i.name));
+		}
+
 		auto mod = lp.getModule(i.name);
 		if (mod is null) {
 			throw makeCannotImport(i, i);
 		}
 		i.targetModule = mod;
 
-		if (i.bind !is null && i.aliases.length == 0) { // import a = b;
-			current.addScope(i, mod.myScope, i.bind.value);
-		} else if (i.aliases.length == 0 && i.bind is null) { // static import a; OR import a;
-			ir.Scope parent = thisModule.myScope;
-			foreach (ident; i.name.identifiers[0 .. $-1]) {
-				auto name = ident.value;
-				auto store = parent.getStore(name);
-				if (store !is null) {
-					if (store.myScope is null) {
-						throw makeExpected(store.node.location, "scope");
-					}
-					parent = store.myScope;
-				} else {
-					auto s = new ir.Scope(parent, ident, name, parent.nestedDepth);
-					parent.addScope(ident, s, name);
-					parent = s;
-				}
-			}
-			auto store = parent.getStore(i.name.identifiers[$-1].value);
-			if (store !is null) {
-				if (i.isStatic && store.myScope !is mod.myScope) {
-					throw makeExpected(i.location, "unique module");
-				}
-			} else {
-				parent.addScope(i, mod.myScope, i.name.identifiers[$-1].value);
-			}
-			if (!i.isStatic) {
-				thisModule.myScope.importedModules ~= mod;
-				thisModule.myScope.importedAccess ~= i.access;
-			}
-
-		} else if (i.aliases.length > 0) {  // import a : b, c OR import a = b : c, d;
-			ir.Scope bindScope;
-
-			if (i.bind !is null) {
-				bindScope = new ir.Scope(null, i, i.bind.value, 0);
-				current.addScope(i, bindScope, i.bind.value);
-			} else {
-				bindScope = thisModule.myScope;
-			}
-
-			foreach (ii, _alias; i.aliases) {
-				ir.Alias a;
-				if (_alias[1] is null) {
-					a = buildAlias(_alias[0].location, _alias[0].value, _alias[0].value);
-				} else {
-					a = buildAliasSmart(_alias[0].location, _alias[0].value, _alias[1]);
-				}
-				a.store = bindScope.addAlias(a, a.name, mod.myScope);
-				a.store.access = i.access;
-			}
+		if (i.aliases.length > 0) {
+			// import a : b, c OR import a = b : c, d;
+			handleAliases(mod, i);
+		} else if (i.bind !is null) {
+			// import a = b;
+			handleRebind(mod, i);
+		} else {
+			// static import a; OR import a;
+			handleRegularAndStatic(mod, i);
 		}
+
+		return ContinueParent;
+	}
+
+	/**
+	 * Takes a import that maps the module to a symbol in the current scope.
+	 *
+	 * import a = b;
+	 */
+	void handleRebind(ir.Module mod, ir.Import i)
+	{
+		current.addScope(i, mod.myScope, i.bind.value);
+	}
+
+	/**
+	 * Handles a import with symbol aliases.
+	 *
+	 * import a : b, c;
+	 * import a = b : c, d;
+	 */
+	void handleAliases(ir.Module mod, ir.Import i)
+	{
+		auto bindScope = current;
+		if (i.bind !is null) {
+			bindScope = buildOrReturnScope(bindScope, i.bind, i.bind.value);
+		} else {
+			assert(current is mModule.myScope);
+		}
+
+		foreach (ii, _alias; i.aliases) {
+			ir.Alias a;
+			if (_alias[1] is null) {
+				a = buildAlias(_alias[0].location, _alias[0].value, _alias[0].value);
+			} else {
+				a = buildAliasSmart(_alias[0].location, _alias[0].value, _alias[1]);
+			}
+			a.store = bindScope.addAlias(a, a.name, mod.myScope);
+			a.store.access = i.access;
+		}
+	}
+
+	/**
+	 * Most common imports.
+	 *
+	 * import a;
+	 * static import a;
+	 */
+	void handleRegularAndStatic(ir.Module mod, ir.Import i)
+	{
+		// Where we add the module binding.
+		ir.Scope parent = mModule.myScope;
+
+		// Build the chain of scopes for the import.
+		// import 'foo.bar.pkg'.mod;
+		foreach (ident; i.name.identifiers[0 .. $-1]) {
+			parent = buildOrReturnScope(parent, ident, ident.value);
+		}
+
+		// Build the final level.
+		// import foo.bar.pkg.'mod';
+		auto store = parent.getStore(i.name.identifiers[$-1].value);
+		if (store !is null) {
+			if (i.isStatic && store.myScope !is mod.myScope) {
+				throw makeExpected(i.location, "unique module");
+			}
+		} else {
+			parent.addScope(i, mod.myScope, i.name.identifiers[$-1].value);
+		}
+
+		// Add the module to the list of imported modules.
+		if (!i.isStatic) {
+			mModule.myScope.importedModules ~= mod;
+			mModule.myScope.importedAccess ~= i.access;
+		}
+	}
+
+	/**
+	 * Used for adding in scopes from static imports
+	 */
+	ir.Scope buildOrReturnScope(ir.Scope parent, ir.Node node, string name)
+	{
+		auto store = parent.getStore(name);
+		if (store !is null) {
+			// TODO Better error checking here,
+			// we could be adding to aggregates here.
+			if (store.myScope is null) {
+				throw makeExpected(node.location, "scope");
+			}
+			return store.myScope;
+		} else {
+			auto s = new ir.Scope(parent, node, name, parent.nestedDepth);
+			parent.addScope(node, s, name);
+			parent = s;
+		}
+		return parent;
 	}
 }
