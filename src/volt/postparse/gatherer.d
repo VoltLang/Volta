@@ -74,9 +74,11 @@ void gather(ir.Scope current, ir.EnumDeclaration e, Where where)
 void gather(ir.Scope current, ir.Alias a, Where where)
 {
 	assert(a.access.isValidAccess());
-	assert(a.store is null);
+	assert(a.lookScope is null);
+	assert(a.lookModule is null);
 
-	a.store = current.addAlias(a, a.name, current);
+	a.lookScope = current;
+	a.store = current.addAlias(a, a.name);
 }
 
 void gather(ir.Scope current, ir.Variable v, Where where, ir.Function[] functionStack)

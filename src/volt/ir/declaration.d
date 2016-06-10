@@ -220,9 +220,20 @@ public:
 	QualifiedName id;
 
 	/**
+	 * Where are we looking for the symbol.
+	 * @{
+	 */
+	Scope lookScope;
+	Module lookModule;
+	/**
+	 * @}
+	 */
+
+	/**
 	 * Needed for resolving.
 	 */
 	Store store;
+
 
 	Exp templateInstance;  ///< Not with id. Optional.
 
@@ -238,7 +249,8 @@ public:
 		this.externAttr = old.externAttr;
 		this.type = old.type;
 		this.id = old.id;
-		this.store = old.store;
+		this.lookScope = old.lookScope;
+		this.lookModule = old.lookModule;
 		this.templateInstance = old.templateInstance;
 	}
 }

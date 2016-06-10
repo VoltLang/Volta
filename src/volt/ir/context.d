@@ -79,8 +79,6 @@ public:
 	/// Type contained within store.
 	Kind kind;
 
-
-
 	/**
 	 * Owning node, for all types.
 	 * For function the first encountered one.
@@ -92,11 +90,6 @@ public:
 	 * the exception being Scope, which does not have a owning node.
 	 */
 	Scope myScope;
-
-	/**
-	 * The scope from which the alias should be resolved.
-	 */
-	Scope lookScope;
 
 	/**
 	 * Overloaded functions.
@@ -119,9 +112,9 @@ public:
 
 public:
 	/**
-	 * Used for Value, Type and Scope stores. Not really intended
-	 * for general consumption but are instead called from the
-	 * add members in Scope.
+	 * Used for Alias, Value, Type and Scope stores.
+	 * Not really intended for general consumption but
+	 * are instead called from the add members in Scope.
 	 */
 	this(Scope s, Node n, string name, Kind kind)
 	in {
@@ -133,27 +126,6 @@ public:
 		this.node = n;
 		this.kind = kind;
 		this.parent = s;
-	}
-
-	/**
-	 * Used for Aliases Not really intended for general consumption
-	 * but are instead called from the addAlias function on Scope.
-	 */
-	this(Scope parent, Node n, string name, Scope look, Kind kind)
-	in {
-		assert(kind == Kind.Alias);
-		assert(n !is null);
-	}
-	body {
-		this.name = name;
-		this.node = n;
-		this.kind = kind;
-		this.parent = parent;
-		if (look is null) {
-			this.lookScope = parent;
-		} else {
-			this.lookScope = look;
-		}
 	}
 
 	/**
@@ -323,14 +295,14 @@ public:
 	 * Side-effects:
 	 *   None.
 	 */
-	Store addAlias(Alias n, string name, Scope look = null)
+	Store addAlias(Alias n, string name)
 	in {
 		assert(n !is null);
 		assert(name !is null);
 	}
 	body {
 
-		auto store = new Store(this, n, name, look, Store.Kind.Alias);
+		auto store = new Store(this, n, name, Store.Kind.Alias);
 
 		auto ret = name in symbols;
 		if (ret is null) {

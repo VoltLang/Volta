@@ -4008,19 +4008,23 @@ void resolveAlias(LanguagePass lp, ir.Alias a)
 	}
 
 	if (a.type !is null) {
-		assert(s.lookScope is s.parent);
-		resolveType(lp, s.parent, a.type);
+		assert(a.lookModule is null);
+		resolveType(lp, a.lookScope, a.type);
 		return s.markAliasResolved(a.type);
 	}
 
 	ir.Store ret;
-	if (s.lookScope is s.parent) {
+	if (a.lookModule is null) {
 		// Normal alias.
-		ret = lookup(lp, s.lookScope, a.id);
+		ret = lookup(lp, a.lookScope, a.id);
 	} else {
 		// Import alias.
+		assert(a.lookScope is null);
+		assert(a.lookModule.myScope !is null);
 		assert(a.id.identifiers.length == 1);
-		ret = lookupAsImportScope(lp, s.lookScope, a.location, a.id.identifiers[0].value);
+		auto look = a.lookModule.myScope;
+		auto ident =  a.id.identifiers[0].value;
+		ret = lookupAsImportScope(lp, look, a.location, ident);
 	}
 
 	if (ret is null) {

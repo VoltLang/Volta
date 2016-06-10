@@ -556,7 +556,6 @@ public:
 		n.node = liftedOrPanic(old.node, "non-lifted node in scope");
 
 		panicAssert(old.node, old.myScope is null);
-		panicAssert(old.node, old.lookScope is null);
 		panicAssert(old.node, old.functions is null);
 		panicAssert(old.node, old.aliases is null);
 		panicAssert(old.node, old.myAlias is null);

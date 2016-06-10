@@ -97,6 +97,10 @@ public:
 	 */
 	void handleRebind(ir.Module mod, ir.Import i)
 	{
+		// TODO We should not use mod.myScope here,
+		// but intead link directly to the module.
+		assert(mod.myScope !is null);
+
 		current.addScope(i, mod.myScope, i.bind.value);
 	}
 
@@ -117,12 +121,17 @@ public:
 
 		foreach (ii, _alias; i.aliases) {
 			ir.Alias a;
+
 			if (_alias[1] is null) {
 				a = buildAlias(_alias[0].location, _alias[0].value, _alias[0].value);
 			} else {
 				a = buildAliasSmart(_alias[0].location, _alias[0].value, _alias[1]);
 			}
-			a.store = bindScope.addAlias(a, a.name, mod.myScope);
+
+			// Setup where we should look.
+			a.lookScope = null;
+			a.lookModule = mod;
+			a.store = bindScope.addAlias(a, a.name);
 			a.store.access = i.access;
 		}
 	}
@@ -135,6 +144,10 @@ public:
 	 */
 	void handleRegularAndStatic(ir.Module mod, ir.Import i)
 	{
+		// TODO We should not use mod.myScope here,
+		// but intead link directly to the module.
+		assert(mod.myScope !is null);
+
 		// Where we add the module binding.
 		ir.Scope parent = mModule.myScope;
 
