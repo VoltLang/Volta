@@ -109,6 +109,7 @@ public:
 		postParse ~= new TimerPass("p1-scope-rep", new ScopeReplacer());
 		postParse ~= new TimerPass("p1-attrib-rem", new AttribRemoval(target));
 		postParse ~= new TimerPass("p1-gatherer", new Gatherer());
+		postParse ~= new TimerPass("p1-import", new ImportResolver(this));
 
 		passes2 ~= new TimerPass("p2-extyper", new ExTyper(this));
 		passes3 ~= new TimerPass("p2-expfolder", new ExpFolder());
@@ -299,23 +300,17 @@ public:
 	override ir.Module getModule(ir.QualifiedName name)
 	{
 		auto str = name.toString();
-		ir.Module m;
 
 		auto p = str in mModules;
-		if (p is null) {
-			m = driver.loadModule(name);
-			if (m is null) {
-				return null;
-			}
-			mModules[str] = m;
-		} else {
-			m = *p;
+		if (p !is null) {
+			return *p;
 		}
 
-		// Need to make sure that this module can
-		// be used by other modules.
-		phase1(m);
-
+		auto m = driver.loadModule(name);
+		if (m is null) {
+			return null;
+		}
+		mModules[str] = m;
 		return m;
 	}
 
@@ -594,15 +589,6 @@ public:
 			debugPrint("Phase 1 %s.", m.name);
 			pass.transform(m);
 		}
-
-		if (mRemoveConditionalsOnly) {
-			return;
-		}
-
-		// Need to create one for each import since,
-		// the import resolver will cause phase1 to be called.
-		auto impRes = new ImportResolver(this);
-		impRes.transform(m);
 	}
 
 	final void phase2(ir.Module m)

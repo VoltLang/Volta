@@ -479,6 +479,15 @@ protected:
 		// Force phase 1 to be executed on the modules.
 		// This might load new modules.
 		languagePass.phase1(mCommandLineModules);
+		bool hasPhase1 = true;
+		while (hasPhase1) {
+			hasPhase1 = false;
+			auto mods = lp.getModules();
+			foreach (m; mods) {
+				hasPhase1 = !m.hasPhase1 || hasPhase1;
+				lp.phase1(m);
+			}
+		}
 		postDiff(mCommandLineModules, ppstrs, dpstrs);
 
 		// New modules have been loaded,

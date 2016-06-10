@@ -197,7 +197,9 @@ void gather(ir.Scope current, ir.UserAttribute ua, Where where)
 
 void addScope(ir.Module m)
 {
-	assert(m.myScope is null);
+	if (m.myScope !is null) {
+		return;
+	}
 
 	string name = m.name.identifiers[$-1].value;
 	m.myScope = new ir.Scope(m, name);

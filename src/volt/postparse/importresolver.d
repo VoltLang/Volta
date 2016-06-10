@@ -12,6 +12,7 @@ import volt.errors;
 import volt.interfaces;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
+import gatherer = volt.postparse.gatherer;
 
 
 /**
@@ -99,6 +100,7 @@ public:
 	{
 		// TODO We should not use mod.myScope here,
 		// but intead link directly to the module.
+		gatherer.addScope(mod);
 		assert(mod.myScope !is null);
 
 		current.addScope(i, mod.myScope, i.bind.value);
@@ -146,6 +148,7 @@ public:
 	{
 		// TODO We should not use mod.myScope here,
 		// but intead link directly to the module.
+		gatherer.addScope(mod);
 		assert(mod.myScope !is null);
 
 		// Where we add the module binding.
