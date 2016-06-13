@@ -182,6 +182,15 @@ public:
 		}
 	}
 
+	final void enter(ir.BuiltinExp bin)
+	{
+		mIndexChildren ~= bin.children;
+	}
+
+	final void leave(ir.BuiltinExp bin)
+	{
+		mIndexChildren = mIndexChildren[0 .. $-bin.children.length];
+	}
 private:
 	/**
 	 * This function is called from setupFromScope.

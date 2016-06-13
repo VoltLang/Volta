@@ -120,8 +120,8 @@ class DupExp : IntExp
 {
 public:
 	PostfixExp name;    // new FOO[beginning .. end]
-	TernaryExp beginning;  // new foo[BEGINNING .. end]
-	TernaryExp end;        // new foo[beginning .. END]
+	AssignExp beginning;  // new foo[BEGINNING .. end]
+	AssignExp end;        // new foo[beginning .. END]
 	bool shorthand;
 }
 

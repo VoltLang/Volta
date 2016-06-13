@@ -231,6 +231,12 @@ ParseStatus unaryToExp(ParserStream ps, intir.UnaryExp unary, out ir.Exp exp)
 		auto u = new ir.Unary();
 		void transformDollar(ref ir.Exp rexp)
 		{
+			auto bop = cast(ir.BinOp)rexp;
+			if (bop !is null) {
+				transformDollar(bop.left);
+				transformDollar(bop.right);
+				return;
+			}
 			auto constant = cast(ir.Constant) rexp;
 			if (constant is null || constant._string != "$") {
 				return;
@@ -240,15 +246,18 @@ ParseStatus unaryToExp(ParserStream ps, intir.UnaryExp unary, out ir.Exp exp)
 		u.location = unary.dupExp.location;
 		u.op = unary.op;
 		auto succeeded = postfixToExp(ps, unary.location, u.value, unary.dupExp.name);
-		if (!succeeded) {
+		auto pfix = cast(ir.Postfix)u.value;
+		if (!succeeded || pfix is null) {
 			return parseFailed(ps, u);
 		}
+		u.value = pfix.child;
+
 		u.fullShorthand = unary.dupExp.shorthand;
-		succeeded = ternaryToExp(ps, unary.dupExp.beginning, u.dupBeginning);
+		succeeded = assignToExp(ps, unary.dupExp.beginning, u.dupBeginning);
 		if (!succeeded) {
 			return parseFailed(ps, u);
 		}
-		succeeded = ternaryToExp(ps, unary.dupExp.end, u.dupEnd);
+		succeeded = assignToExp(ps, unary.dupExp.end, u.dupEnd);
 		if (!succeeded) {
 			return parseFailed(ps, u);
 		}
@@ -1167,6 +1176,19 @@ ParseStatus parseUnaryExp(ParserStream ps, out intir.UnaryExp exp)
 	return Succeeded;
 }
 
+intir.PostfixExp getLastSlice(intir.PostfixExp pe)
+{
+	intir.PostfixExp current = pe, old;
+	do {
+		old = current;
+		current = current.postfix;
+	} while (current !is null && current.op != ir.Postfix.Op.None);
+	if (old is null || old.op != ir.Postfix.Op.Slice) {
+		return null;
+	}
+	return old;
+}
+
 ParseStatus parseNewOrDup(ParserStream ps, ref intir.UnaryExp exp)
 {
 	auto mark = ps.save();
@@ -1176,28 +1198,11 @@ ParseStatus parseNewOrDup(ParserStream ps, ref intir.UnaryExp exp)
 	if (!succeeded) {
 		return succeeded;
 	}
-	int bracketDepth, doubleDotDepth;
-	while (ps.peek.type != TokenType.Semicolon && ps.peek.type != TokenType.End) {
-		auto t = ps.get();
-		if (t.type == TokenType.OpenBracket) {
-			bracketDepth++;
-			doubleDotDepth++;
-			continue;
-		} else if (t.type == TokenType.CloseBracket) {
-			bracketDepth--;
-			continue;
-		}
-		if (bracketDepth == 0) {
-			if (t.type != TokenType.Dot && t.type != TokenType.Identifier) {
-				parseNew = true;
-				break;
-			}
-		} else if (bracketDepth == 1) {
-			if (t.type == TokenType.DoubleDot) {
-				parseNew = false;
-				break;
-			}
-		}
+	intir.PostfixExp dummy;
+	succeeded = parsePostfixExp(ps, dummy, true);
+	auto lastSlice = getLastSlice(dummy);
+	if (succeeded && lastSlice !is null) {
+		parseNew = false;
 	}
 	ps.restore(mark);
 
@@ -1209,7 +1214,7 @@ ParseStatus parseNewOrDup(ParserStream ps, ref intir.UnaryExp exp)
 		}
 	} else {
 		exp.op = ir.Unary.Op.Dup;
-		succeeded = parseDupExp(ps, doubleDotDepth, exp.dupExp);
+		succeeded = parseDupExp(ps, 0, exp.dupExp);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Unary);
 		}
@@ -1219,17 +1224,19 @@ ParseStatus parseNewOrDup(ParserStream ps, ref intir.UnaryExp exp)
 }
 
 // Wrap a PrimaryExp in a TernaryExp.
-private intir.TernaryExp toTernary(intir.PrimaryExp exp)
+private intir.AssignExp toAssign(intir.PrimaryExp exp)
 {
-	auto t = new intir.TernaryExp();
+	auto t = new intir.AssignExp();
 	t.location = exp.location;
-	t.condition = new intir.BinExp();
-	t.condition.location = exp.location;
-	t.condition.left = new intir.UnaryExp();
-	t.condition.left.location = exp.location;
-	t.condition.left.postExp = new intir.PostfixExp();
-	t.condition.left.postExp.location = exp.location;
-	t.condition.left.postExp.primary = exp;
+	t.left = new intir.TernaryExp();
+	t.left.location = exp.location;
+	t.left.condition = new intir.BinExp();
+	t.left.condition.location = exp.location;
+	t.left.condition.left = new intir.UnaryExp();
+	t.left.condition.left.location = exp.location;
+	t.left.condition.left.postExp = new intir.PostfixExp();
+	t.left.condition.left.postExp.location = exp.location;
+	t.left.condition.left.postExp.primary = exp;
 	return t;
 }
 
@@ -1242,17 +1249,15 @@ ParseStatus parseDupExp(ParserStream ps, int doubleDotDepth, out intir.DupExp du
 	auto start = ps.get();
 
 	dupExp = new intir.DupExp();
-	succeeded = parsePostfixExp(ps, dupExp.name, 0, doubleDotDepth - 1);
+	succeeded = parsePostfixExp(ps, dupExp.name, true);
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.Postfix);
 	}
-	succeeded = match(ps, ir.NodeType.Postfix, TokenType.OpenBracket);
-	if (!succeeded) {
-		return succeeded;
+	auto slice = getLastSlice(dupExp.name);
+	if (slice is null) {
+		return parseFailed(ps, ir.NodeType.Postfix);
 	}
-	if (ps.peek.type == TokenType.DoubleDot) {
-		// new foo[..];
-		ps.get();  // Eat ..
+	if (dupExp.name.arguments.length == 0) {
 		auto beginning = new intir.PrimaryExp();
 		beginning.location = ps.peek.location;
 		beginning._string = "0";
@@ -1260,25 +1265,17 @@ ParseStatus parseDupExp(ParserStream ps, int doubleDotDepth, out intir.DupExp du
 		auto end = new intir.PrimaryExp();
 		end.location = ps.peek.location;
 		end.op = intir.PrimaryExp.Type.Dollar;
-		dupExp.beginning = toTernary(beginning);
-		dupExp.end = toTernary(end);
+		dupExp.beginning = toAssign(beginning);
+		dupExp.end = toAssign(end);
 		dupExp.shorthand = true;
-	} else {
+	} else if (slice.arguments.length == 2) {
 		// new foo[a..b];
-		succeeded = parseTernaryExp(ps, dupExp.beginning);
-		if (!succeeded) {
-			return parseFailed(ps, ir.NodeType.Unary);
-		}
-		succeeded = match(ps, ir.NodeType.Unary, TokenType.DoubleDot);
-		if (!succeeded) {
-			return succeeded;
-		}
-		succeeded = parseTernaryExp(ps, dupExp.end);
-		if (!succeeded) {
-			return parseFailed(ps, ir.NodeType.Unary);
-		}
+		dupExp.beginning = slice.arguments[0];
+		dupExp.end = slice.arguments[1];
+	} else {
+		return parseFailed(ps, ir.NodeType.Postfix);
 	}
-	return match(ps, ir.NodeType.Unary, TokenType.CloseBracket);
+	return Succeeded;
 }
 
 ParseStatus parseNewExp(ParserStream ps, out intir.NewExp newExp)
@@ -1347,7 +1344,7 @@ ParseStatus parseCastExp(ParserStream ps, out intir.CastExp exp)
 	return Succeeded;
 }
 
-ParseStatus parsePostfixExp(ParserStream ps, out intir.PostfixExp exp, int depth=0, int bracketRecurse=-1)
+ParseStatus parsePostfixExp(ParserStream ps, out intir.PostfixExp exp, bool disableNoDoubleDotSlice=false, int depth=0)
 {
 	depth++;
 	exp = new intir.PostfixExp();
@@ -1376,7 +1373,7 @@ ParseStatus parsePostfixExp(ParserStream ps, out intir.PostfixExp exp, int depth
 			return parseFailed(ps, ir.NodeType.Postfix);
 		}
 		exp.op = ir.Postfix.Op.Identifier;
-		succeeded = parsePostfixExp(ps, exp.postfix, depth, bracketRecurse);
+		succeeded = parsePostfixExp(ps, exp.postfix, disableNoDoubleDotSlice, depth);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Postfix);
 		}
@@ -1384,7 +1381,7 @@ ParseStatus parsePostfixExp(ParserStream ps, out intir.PostfixExp exp, int depth
 	case TokenType.DoublePlus:
 		ps.get();
 		exp.op = ir.Postfix.Op.Increment;
-		auto succeeded = parsePostfixExp(ps, exp.postfix, depth, bracketRecurse);
+		auto succeeded = parsePostfixExp(ps, exp.postfix, disableNoDoubleDotSlice, depth);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Postfix);
 		}
@@ -1392,7 +1389,7 @@ ParseStatus parsePostfixExp(ParserStream ps, out intir.PostfixExp exp, int depth
 	case TokenType.DoubleDash:
 		ps.get();
 		exp.op = ir.Postfix.Op.Decrement;
-		auto succeeded = parsePostfixExp(ps, exp.postfix, depth, bracketRecurse);
+		auto succeeded = parsePostfixExp(ps, exp.postfix, disableNoDoubleDotSlice, depth);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Postfix);
 		}
@@ -1408,23 +1405,18 @@ ParseStatus parsePostfixExp(ParserStream ps, out intir.PostfixExp exp, int depth
 			return succeeded;
 		}
 		exp.op = ir.Postfix.Op.Call;
-		succeeded = parsePostfixExp(ps, exp.postfix, depth, bracketRecurse);
+		succeeded = parsePostfixExp(ps, exp.postfix, disableNoDoubleDotSlice, depth);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Postfix);
 		}
 		break;
 	case TokenType.OpenBracket:
-		if (bracketRecurse == 0) {
-			/* This is a bodge for dup expressions that know how nested the duplicate
-			 * expression is, and want to only parse that many brackets.
-			 *    b := new (a[0])[..];  // We only want to parse the bit in parens.
-			 */
-			return Succeeded;
-		}
 		ps.get();
-		if (ps == TokenType.CloseBracket ||
+		if ((!disableNoDoubleDotSlice && ps == TokenType.CloseBracket) ||
 		    ps == [TokenType.DoubleDot, TokenType.CloseBracket]) {
-			matchIf(ps, TokenType.DoubleDot);
+		    	if (ps == TokenType.DoubleDot) {
+				ps.get();
+			}
 			exp.op = ir.Postfix.Op.Slice;
 		} else {
 			intir.AssignExp e;
@@ -1458,7 +1450,7 @@ ParseStatus parsePostfixExp(ParserStream ps, out intir.PostfixExp exp, int depth
 		if (!succeeded) {
 			return succeeded;
 		}
-		succeeded = parsePostfixExp(ps, exp.postfix, depth, bracketRecurse-1);
+		succeeded = parsePostfixExp(ps, exp.postfix, disableNoDoubleDotSlice, depth);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Postfix);
 		}
