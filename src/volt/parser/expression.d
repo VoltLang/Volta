@@ -1422,7 +1422,9 @@ ParseStatus parsePostfixExp(ParserStream ps, out intir.PostfixExp exp, int depth
 			return Succeeded;
 		}
 		ps.get();
-		if (ps.peek.type == TokenType.CloseBracket) {
+		if (ps == TokenType.CloseBracket ||
+		    ps == [TokenType.DoubleDot, TokenType.CloseBracket]) {
+			matchIf(ps, TokenType.DoubleDot);
 			exp.op = ir.Postfix.Op.Slice;
 		} else {
 			intir.AssignExp e;
