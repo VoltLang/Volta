@@ -953,7 +953,13 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		asFunctionType = func.type;
 
 	} else {
-
+		if (postfix.arguments.length == 0 &&
+		    b !is null &&
+		    (b.kind == ir.BuiltinExp.Kind.AAKeys ||
+		    b.kind == ir.BuiltinExp.Kind.AAValues)) {
+		    exp = postfix.child;
+		    return;
+		}
 		auto childType = getExpType(postfix.child);
 
 		auto eref = cast(ir.ExpReference) postfix.child;
