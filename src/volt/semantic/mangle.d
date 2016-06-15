@@ -7,6 +7,7 @@ import watt.text.format : format;
 import watt.text.sink : Sink, StringSink;
 
 import ir = volt.ir.ir;
+import volt.ir.util;
 
 import volt.errors;
 
@@ -118,6 +119,10 @@ void mangleType(ir.Type t, Sink sink)
 		assert(asArray !is null);
 		sink("a");
 		mangleType(asArray.base, sink);
+		break;
+	case NullType:
+		auto vptr = buildVoidPtr(t.location);
+		mangleType(vptr, sink);
 		break;
 	case PointerType:
 		auto asPointer = cast(ir.PointerType) t;
