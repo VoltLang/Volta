@@ -431,8 +431,12 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 		} else {
 			c.u._double = toDouble(c._string);
 		}
-		c.type = new ir.PrimitiveType(base);
-		c.type.location = primary.location;
+		if (primary.type !is null) {
+			c.type = primary.type;
+		} else {
+			c.type = new ir.PrimitiveType(base);
+			c.type.location = primary.location;
+		}
 		exp = c;
 		break;
 	case intir.PrimaryExp.Type.IntegerLiteral:
@@ -514,8 +518,12 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 			}
 		}
 		c._string = "";
-		c.type = new ir.PrimitiveType(base);
-		c.type.location = primary.location;
+		if (primary.type !is null) {
+			c.type = primary.type;
+		} else {
+			c.type = new ir.PrimitiveType(base);
+			c.type.location = primary.location;
+		}
 		exp = c;
 		break;
 	case intir.PrimaryExp.Type.ParenExp:
@@ -1732,8 +1740,25 @@ ParseStatus parsePrimaryExp(ParserStream ps, out intir.PrimaryExp exp)
 		 TokenType.Ulong, TokenType.Void, TokenType.Float,
 		 TokenType.Double, TokenType.Real, TokenType.Char,
 		 TokenType.Wchar, TokenType.Dchar:
+		auto type = parsePrimitiveType(ps);
+		if (matchIf(ps, TokenType.OpenParen)) {
+			// Primitive type construction. e.g. `i32(32)`
+			auto succeeded = parsePrimaryExp(ps, exp);
+			if (!succeeded) {
+				return succeeded;
+			}
+			if (exp.type !is null) {
+				return parseFailed(ps, ir.NodeType.TypeExp);
+			}
+			exp.type = type;
+			succeeded = match(ps, ir.NodeType.Constant, TokenType.CloseParen);
+			if (!succeeded) {
+				return succeeded;
+			}
+			break;
+		}
 		exp.op = intir.PrimaryExp.Type.Type;
-		exp.type = parsePrimitiveType(ps);
+		exp.type = type;
 		auto succeeded = match(ps, ir.NodeType.Constant, TokenType.Dot);
 		if (!succeeded) {
 			return succeeded;
