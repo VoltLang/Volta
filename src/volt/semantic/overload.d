@@ -282,8 +282,18 @@ ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ir.Exp[
 	}
 
 	version (Volt) {
-		bool cmp(object.Object a, object.Object b) { return specialisationComparison(a, b); }
-		sort(cast(object.Object[])matchedFunctions, cmp);
+		bool cmp(size_t ia, size_t ib)
+		{
+			return specialisationComparison(matchedFunctions[ia],
+			                                matchedFunctions[ib]);
+		}
+		void swap(size_t ia, size_t ib)
+		{
+			ir.Function tmp = matchedFunctions[ia];
+			matchedFunctions[ia] = matchedFunctions[ib];
+			matchedFunctions[ib] = tmp;
+		}
+		runSort(matchedFunctions.length, cmp, swap);
 	} else {
 		sort(cast(object.Object[])matchedFunctions, &specialisationComparison);
 	}
