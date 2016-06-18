@@ -672,6 +672,15 @@ void handleArgumentLabelsIfNeeded(Context ctx, ir.Postfix postfix,
 		throw makeWrongNumberOfArguments(postfix, postfix.arguments.length, func.params.length);
 	}
 
+	// Check all the labels exist.
+	for (size_t i = 0; i < postfix.argumentLabels.length; i++) {
+		auto argumentLabel = postfix.argumentLabels[i];
+		auto p = argumentLabel in positions;
+		if (p is null) {
+			throw makeUnmatchedLabel(postfix.location, argumentLabel);
+		}
+	}
+
 	// Reorder arguments to match parameter order.
 	for (size_t i = 0; i < postfix.argumentLabels.length; i++) {
 		auto argumentLabel = postfix.argumentLabels[i];
