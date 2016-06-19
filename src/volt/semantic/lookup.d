@@ -187,19 +187,7 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 	}
 
 	auto asMod = getModuleFromScope(loc, _scope);
-	assert(asMod !is null);
-	bool failed, succeeded;
-	foreach (mod; asMod.myScope.importedModules) {
-		auto store = mod.myScope.getStore(name);
-		if (store !is null && store.access == ir.Access.Private) {
-			failed = asMod.myScope !is mod.myScope;
-		} else if (store !is null) {
-			succeeded = true;
-		}
-	}
-	if (!succeeded && failed) {
-		throw makeUsedBindFromPrivateImport(loc, name);
-	}
+	bool privateLookup;
 
 	ir.Store[] stores;
 	foreach (i, mod; asMod.myScope.importedModules) {
@@ -213,8 +201,13 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 				}
 			}
 		}
-		if (store !is null && store.access == ir.Access.Public) {
-			stores ~= store;
+
+		if (store !is null) {
+			if (store.access == ir.Access.Public) {
+				stores ~= store;
+			} else {
+				privateLookup = true;
+			}
 			continue;
 		}
 
@@ -225,6 +218,10 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 			stores ~= store;
 			continue;
 		}
+	}
+
+	if (stores.length == 0 && privateLookup) {
+		throw makeUsedBindFromPrivateImport(loc, name);
 	}
 
 	if (stores.length == 0) {
