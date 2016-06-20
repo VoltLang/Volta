@@ -53,10 +53,8 @@ public:
 protected:
 	bool mLinkWithLD;   // Posix/GNU
 	bool mLinkWithCC;   // Posix/GNU
-	bool mLinkWithLink; // MSVC
-	string mCC;         // cc compatible command line (gcc/clang).
-	string mLD;         // ld compatible command line (ld/lld)
-	string mLink;       // MSVC Link
+	bool mLinkWithLink; // MSVC Link
+	string mLinker;
 
 	string mOutput;
 
@@ -147,36 +145,36 @@ public:
 		if (settings.linker !is null) {
 			switch (settings.platform) with (Platform) {
 			case MSVC:
-				mLink = settings.linker;
+				mLinker = settings.linker;
 				mLinkWithLink = true;
 				break;
 			default:
-				mLD = settings.linker;
+				mLinker = settings.linker;
 				mLinkWithLD = true;
 				break;
 			}
 		} else if (settings.ld !is null) {
-			mLD = settings.ld;
+			mLinker = settings.ld;
 			mLinkWithLD = true;
 		} else if (settings.cc !is null) {
-			mCC = settings.cc;
+			mLinker = settings.cc;
 			mLinkWithCC = true;
 		} else if (settings.link !is null) {
-			mLink = settings.link;
+			mLinker = settings.link;
 			mLinkWithLink = true;
 		} else {
 			switch (settings.platform) with (Platform) {
 			case MSVC:
-				mLink = "link.exe";
+				mLinker = "link.exe";
 				mLinkWithLink = true;
 				break;
 			case EMSCRIPTEN:
-				mCC = "emcc";
+				mLinker = "emcc";
 				mLinkWithCC = true;
 				break;
 			default:
 				mLinkWithCC = true;
-				mCC = "gcc";
+				mLinker = "gcc";
 				break;
 			}
 		}
@@ -584,7 +582,7 @@ protected:
 		// If we are compiling on the emscripten platform ignore .o files.
 		if (settings.platform == Platform.EMSCRIPTEN) {
 			perf.mark(Perf.Mark.LINK);
-			return emscriptenLink(mCC, bc, mOutput);
+			return emscriptenLink(mLinker, bc, mOutput);
 		}
 
 		// Native compilation, turn the bitcode into native code.
@@ -604,11 +602,11 @@ protected:
 	int nativeLink(string obj, string of)
 	{
 		if (mLinkWithLink) {
-			return msvcLink(mLink, obj, of);
+			return msvcLink(mLinker, obj, of);
 		} else if (mLinkWithLD) {
-			return ccLink(mLD, false, obj, of);
+			return ccLink(mLinker, false, obj, of);
 		} else if (mLinkWithCC) {
-			return ccLink(mCC, true, obj, of);
+			return ccLink(mLinker, true, obj, of);
 		} else {
 			assert(false);
 		}
