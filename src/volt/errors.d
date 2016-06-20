@@ -32,6 +32,11 @@ void hackTypeWarning(ir.Node n, ir.Type nt, ir.Type ot)
  *
  */
 
+CompilerException makeExpectedOneArgument(Location l, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(l, "expected only one argument.", file, line);
+}
+
 CompilerException makeClassAsAAKey(Location l, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(l, "classes cannot be associative array key types.", file, line);

@@ -1610,6 +1610,27 @@ void extypeUnaryNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 		}
 		_unary.type = copyTypeSmart(_unary.location, getExpType(_unary.argumentList[0]));
 	}
+	auto pt = cast(ir.PrimitiveType)_unary.type;
+	if (pt !is null) {
+		// new i32(4);
+		auto loc = _unary.location;
+		if (_unary.argumentList.length != 1) {
+			throw makeExpectedOneArgument(loc);
+		}
+		auto sexp = buildStatementExp(loc);
+		auto ptr = buildPtrSmart(loc, _unary.type);
+
+		auto argument = _unary.argumentList[0];
+		_unary.argumentList = [];
+		auto ptrVar = buildVariableAnonSmart(loc, ctx.current, sexp, ptr, _unary);
+
+		auto deref = buildDeref(loc, buildExpReference(loc, ptrVar, ptrVar.name));
+		auto assign = buildAssign(loc, deref, argument);
+		buildExpStat(loc, sexp, assign);
+		sexp.exp = buildExpReference(loc, ptrVar, ptrVar.name);
+		exp = sexp;
+		return;
+	}
 	auto array = cast(ir.ArrayType) _unary.type;
 	if (array !is null) {
 		if (_unary.argumentList.length == 0) {
