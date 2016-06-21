@@ -329,6 +329,9 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 		case "--no-backend", "-S":
 			makeArg(CompileOnly);
 			continue;
+		case "--missing":
+			makeArg(MissingDeps);
+			continue;
 		case "--no-catch":
 			makeArg(InternalNoCatch);
 			continue;

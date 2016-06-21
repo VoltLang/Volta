@@ -37,12 +37,20 @@ import volt.semantic.irverifier;
 import volt.semantic.classresolver;
 import volt.semantic.userattrresolver;
 
+import volt.postparse.missing;
 import volt.postparse.gatherer;
 import volt.postparse.condremoval;
 import volt.postparse.attribremoval;
 import volt.postparse.scopereplacer;
 import volt.postparse.importresolver;
 
+
+enum Mode
+{
+	Normal,
+	RemoveConditionalsOnly,
+	MissingDeps,
+}
 
 /**
  * Default implementation of
@@ -63,7 +71,10 @@ public:
 	 * @}
 	 */
 
+	MissingDeps missing;
+
 private:
+	Mode mMode;
 	bool mRemoveConditionalsOnly;
 	WorkTracker mTracker;
 	ir.Module[string] mModules;
@@ -94,22 +105,27 @@ private:
 
 public:
 	this(Driver drv, VersionSet ver, TargetInfo target, Frontend frontend,
-	     bool removeConditionalsOnly, bool beMoreLikeD)
+	     Mode mode, bool beMoreLikeD)
 	{
-		this.mRemoveConditionalsOnly = removeConditionalsOnly;
 		this.beMoreLikeD = beMoreLikeD;
+		this.mMode = mode;
 		super(drv, ver, target, frontend);
 
 		mTracker = new WorkTracker();
 
 		postParse ~= new TimerPass("p1-cond-rem", new ConditionalRemoval(ver));
-		if (mRemoveConditionalsOnly) {
+		if (mMode == Mode.RemoveConditionalsOnly) {
 			return;
 		}
 		postParse ~= new TimerPass("p1-scope-rep", new ScopeReplacer());
 		postParse ~= new TimerPass("p1-attrib-rem", new AttribRemoval(target));
 		postParse ~= new TimerPass("p1-gatherer", new Gatherer());
-		postParse ~= new TimerPass("p1-import", new ImportResolver(this));
+		if (mMode == Mode.MissingDeps) {
+			missing = new MissingDeps(this);
+			postParse ~= new TimerPass("p1-missing", missing);
+		} else {
+			postParse ~= new TimerPass("p1-import", new ImportResolver(this));
+		}
 
 		passes2 ~= new TimerPass("p2-extyper", new ExTyper(this));
 		passes3 ~= new TimerPass("p2-expfolder", new ExpFolder());

@@ -33,6 +33,7 @@ public:
 	bool internalD; ///< The --internal-d argument;
 	bool internalDiff; ///< The --internal-diff argument.
 	bool internalDebug; ///< The --internal-dbg argument.
+	bool missingDeps; ///< The --missing argument;
 
 	Platform platform;
 	Arch arch;
@@ -175,6 +176,7 @@ public:
 		Warnings,
 		PreprocessOnly,  ///< -E
 		CompileOnly,     ///< -S
+		MissingDeps,     ///< --missing
 
 		Debug,
 		DebugSimpleTrace,
@@ -300,6 +302,9 @@ void filterArgs(Arg[] args, ref string[] files, VersionSet ver, Settings setting
 			break;
 		case CompileOnly:
 			settings.noBackend = true;
+			break;
+		case MissingDeps:
+			settings.missingDeps = true;
 			break;
 
 		case Debug:

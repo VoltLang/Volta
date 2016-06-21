@@ -33,6 +33,8 @@ import volt.visitor.debugprinter;
 import volt.visitor.docprinter;
 import volt.visitor.jsonprinter;
 
+import volt.postparse.missing;
+
 
 /**
  * Default implementation of @link volt.interfaces.Driver Driver@endlink, replace
@@ -114,8 +116,15 @@ public:
 		mAccumParsing = new Accumulator("p1-parsing");
 
 
+		auto mode = Mode.Normal;
+		if (s.removeConditionalsOnly) {
+			mode = Mode.RemoveConditionalsOnly;
+		} else if (s.missingDeps) {
+			mode = Mode.MissingDeps;
+		}
+
 		languagePass = new VoltLanguagePass(this, ver, target,
-			frontend, s.removeConditionalsOnly, s.internalD);
+			frontend, mode, s.internalD);
 
 		if (!s.noBackend) {
 			backend = new LlvmBackend(languagePass);
@@ -462,11 +471,7 @@ protected:
 			return 0;
 		}
 
-		// After we have loaded all of the modules
-		// setup the pointers, this allows for suppling
-		// a user defined object module.
-		auto lp = cast(VoltLanguagePass)languagePass;
-		lp.setupOneTruePointers();
+
 
 		// Setup diff buffers.
 		auto ppstrs = new string[](mCommandLineModules.length);
@@ -477,7 +482,8 @@ protected:
 
 		// Force phase 1 to be executed on the modules.
 		// This might load new modules.
-		languagePass.phase1(mCommandLineModules);
+		auto lp = cast(VoltLanguagePass)languagePass;
+		lp.phase1(mCommandLineModules);
 		bool hasPhase1 = true;
 		while (hasPhase1) {
 			hasPhase1 = false;
@@ -488,6 +494,20 @@ protected:
 			}
 		}
 		postDiff(mCommandLineModules, ppstrs, dpstrs);
+
+		// Are we only looking for missing deps?
+		if (settings.missingDeps) {
+			foreach (m; lp.missing.getMissing()) {
+				io.output.writefln("%s", m);
+			}
+			io.output.flush();
+			return 0;
+		}
+
+		// After we have loaded all of the modules
+		// setup the pointers, this allows for suppling
+		// a user defined object module.
+		lp.setupOneTruePointers();
 
 		// New modules have been loaded,
 		// make sure to run everthing on them.
