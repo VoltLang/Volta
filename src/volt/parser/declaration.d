@@ -177,6 +177,10 @@ ParseStatus reallyParseVariable(ParserStream ps, ir.Type base, NodeSinkDg dg)
 		Token nameTok;
 		auto succeeded = match(ps, d, TokenType.Identifier, nameTok);
 		if (!succeeded) {
+			/* TODO: Figure out precisely what needs continuing,
+			 * and only ignore that.
+			 */
+			ps.neverIgnoreError = ps == TokenType.Fn;
 			return succeeded;
 		}
 		d.name = nameTok.value;
