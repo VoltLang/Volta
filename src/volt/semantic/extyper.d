@@ -4337,6 +4337,27 @@ void resolveUnion(LanguagePass lp, ir.Union u)
  * Misc helper functions.
  *
  */
+/**
+ * Check a if a given aggregate contains an erroneous
+ * default constructor or destructor.
+ */
+void checkDefaultFootors(Context ctx, ir.Aggregate agg)
+{
+	foreach (node; agg.members.nodes) {
+		auto func = cast(ir.Function)node;
+		if (func is null) {
+			continue;
+		}
+		auto ctor = ir.Function.Kind.Constructor;
+		auto dtor = ir.Function.Kind.Destructor;
+		if (func.kind == ctor && func.params.length == 0) {
+			throw makeStructDefaultCtor(func.location);
+		}
+		if (func.kind == dtor) {
+			throw makeStructDestructor(func.location);
+		}
+	}
+}
 
 /**
  * Check a given Aggregate's anonymous structs/unions
@@ -4749,6 +4770,7 @@ public:
 	override Status leave(ir.Struct s)
 	{
 		checkAnonymousVariables(ctx, s);
+		checkDefaultFootors(ctx, s);
 		ctx.leave(s);
 		return Continue;
 	}
@@ -4776,6 +4798,7 @@ public:
 	override Status leave(ir.Union u)
 	{
 		checkAnonymousVariables(ctx, u);
+		checkDefaultFootors(ctx, u);
 		ctx.leave(u);
 		return Continue;
 	}

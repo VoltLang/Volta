@@ -31,6 +31,15 @@ void hackTypeWarning(ir.Node n, ir.Type nt, ir.Type ot)
  * Specific Errors
  *
  */
+CompilerException makeStructDefaultCtor(Location l, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(l, "structs or unions may not define default constructors.", file, line);
+}
+
+CompilerException makeStructDestructor(Location l, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(l, "structs or unions may not define a destructor.", file, line);
+}
 
 CompilerException makeExpectedOneArgument(Location l, string file = __FILE__, const int line = __LINE__)
 {
