@@ -253,6 +253,8 @@ ParseStatus parseType(ParserStream ps, out ir.Type base)
 		}
 		base = t;
 		break;
+	case TokenType.Fn:
+		return match(ps, ir.NodeType.TypeOf, TokenType.Identifier);
 	default:
 		return parseExpected(ps, ps.peek.location, ir.NodeType.Invalid, "primitive type");
 	}
