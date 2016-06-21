@@ -350,6 +350,7 @@ public:
 
 	ir.Function hashFunc;
 	ir.Function castFunc;
+	ir.Function memsetFunc;
 	ir.Function memcpyFunc;
 	ir.Function memcmpFunc;
 

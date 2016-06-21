@@ -8,6 +8,7 @@ import lib.llvm.core;
 
 import volt.errors;
 import volt.visitor.visitor;
+import volt.semantic.classify;
 import volt.llvm.di : diVariable;
 import volt.llvm.interfaces;
 import ir = volt.ir.ir;
@@ -167,13 +168,29 @@ public:
 
 			if (var.specialInitValue) {
 				assert(var.assign is null);
+				break;
 			} else if (var.assign !is null) {
 				auto ret = state.getValue(var.assign);
 				LLVMBuildStore(state.builder, ret, v);
-			} else {
+				break;
+			}
+
+			auto s = size(state.lp, type.irType);
+			if (s < 64) {
 				auto ret = LLVMConstNull(type.llvmType);
 				LLVMBuildStore(state.builder, ret, v);
+				break;
 			}
+
+			v = LLVMBuildBitCast(state.builder, v, state.voidPtrType.llvmType, "");
+
+			auto func = state.getFunctionValue(state.lp.memsetFunc, type);
+			LLVMBuildCall(state.builder, func, [v,
+					LLVMConstInt(state.ubyteType.llvmType, 0, false),
+					LLVMConstInt(state.uintType.llvmType, s, false),
+					LLVMConstInt(state.intType.llvmType, 0, true),
+					LLVMConstInt(state.boolType.llvmType, 0, false)]);
+
 			break;
 		case Local:
 		case Global:
