@@ -11,7 +11,7 @@ import watt.io.streams : OutputFileStream;
 import watt.conv : toLower;
 import watt.text.diff : diff;
 import watt.text.format : format;
-import watt.text.string : endsWith;
+import watt.text.string : endsWith, replace;
 
 import volt.util.path;
 import volt.util.perf : Accumulator, Perf, perf;
@@ -371,12 +371,13 @@ protected:
 
 		assert(mOutput !is null);
 
+		// We have to be careful that this is a UNIX file.
 		auto d = new OutputFileStream(mDepFile);
-		d.writefln("%s: \\", mOutput);
+		d.writef("%s: \\\n", replace(mOutput, `\`, `/`));
 		foreach (dep; mDepFiles[0 .. $-1]) {
-			d.writefln("\t%s \\", dep);
+			d.writef("\t%s \\\n", replace(dep, `\`, `/`));
 		}
-		d.writefln("\t%s", mDepFiles[$-1]);
+		d.writefln("\t%s\n", replace(mDepFiles[$-1], `\`, `/`));
 		d.flush();
 		d.close();
 	}
