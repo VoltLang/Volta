@@ -938,7 +938,15 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 	with (ir.PrimitiveType.Kind) {
 		bool inUnsignedRange(ulong max)
 		{
-			if (primitive.type == Int) {
+			if (primitive.type == Byte) {
+				return constant.u._byte >= 0 && cast(ulong)constant.u._byte <= max;
+			} else if (primitive.type == Ubyte) {
+				return constant.u._ubyte <= cast(ubyte)max;
+			} else if (primitive.type == Short) {
+				return constant.u._short >= 0 && cast(ulong)constant.u._short <= max;
+			} else if (primitive.type == Ushort) {
+				return constant.u._ushort <= cast(ushort)max;
+			} else if (primitive.type == Int) {
 				return constant.u._int >= 0 && cast(ulong) constant.u._int <= max;
 			} else if (primitive.type == Uint || primitive.type == Dchar) {
 				return constant.u._uint <= max;
