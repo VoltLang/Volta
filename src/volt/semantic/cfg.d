@@ -166,7 +166,8 @@ public:
 			}
 		}
 
-		if (func.kind == ir.Function.Kind.Constructor && block.canReachWithoutSuper()) {
+		if (func.kind == ir.Function.Kind.Constructor && block.canReachWithoutSuper() &&
+		    classStack.length > 0) {
 			panicAssert(func, classStack.length > 0);
 			auto pclass = classStack[$-1].parentClass;
 			if (pclass !is null) {
