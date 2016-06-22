@@ -446,7 +446,8 @@ ir.Type getPostfixCreateDelegateType(ir.Postfix postfix)
 	if (func is null) {
 		throw err;
 	}
-	if (func.kind != ir.Function.Kind.Nested && !isFunctionMemberOrConstructor(func)) {
+	if (func.kind != ir.Function.Kind.Nested && func.kind != ir.Function.Kind.GlobalNested &&
+	    !isFunctionMemberOrConstructor(func)) {
 		throw panic(postfix.location, "static function called through instance");
 	}
 
@@ -580,6 +581,18 @@ ir.Type getPostfixCallType(ir.Postfix postfix)
 {
 	auto type = getExpType(postfix.child);
 	auto ftype = cast(ir.CallableType) type;
+
+	// If they're calling a struct or union (i.e. constructor), return it.
+	auto tref = cast(ir.TypeReference)type;
+	auto podAgg = cast(ir.PODAggregate)type;
+	if (ftype is null && (tref !is null || podAgg !is null)) {
+		if (podAgg is null) {
+			podAgg = cast(ir.PODAggregate)tref.type;
+		}
+		if (podAgg !is null && podAgg.constructors.length > 0) {
+			return podAgg;
+		}
+	}
 
 	if (ftype is null) {
 		throw panicUnhandled(postfix.location, ir.nodeToString(type));

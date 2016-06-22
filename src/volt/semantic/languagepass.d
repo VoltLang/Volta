@@ -555,12 +555,24 @@ public:
 	{
 		assert(!s.isResolved);
 		resolveStruct(this, s);
+
+		auto w = mTracker.add(s, Work.Action.Actualize);
+		scope (exit) {
+			w.done();
+		}
+		addPODConstructors(s);
 	}
 
 	override void doActualize(ir.Union u)
 	{
 		assert(!u.isResolved);
 		resolveUnion(this, u);
+
+		auto w = mTracker.add(u, Work.Action.Actualize);
+		scope (exit) {
+			w.done();
+		}
+		addPODConstructors(u);
 	}
 
 	override void doActualize(ir.Class c)
@@ -593,7 +605,6 @@ public:
 	 * Phase functions.
 	 *
 	 */
-
 
 	final void phase1(ir.Module m)
 	{
@@ -643,6 +654,17 @@ public:
 	 *
 	 */
 
+	private void addPODConstructors(ir.PODAggregate agg)
+	{
+		foreach (node; agg.members.nodes) {
+			auto func = cast(ir.Function)node;
+			if (func is null ||
+			    func.kind != ir.Function.Kind.Constructor) {
+				continue;
+			}
+			agg.constructors ~= func;
+		}
+	}
 
 	private void resolve(ir.Scope current, ir.TopLevelBlock members)
 	{

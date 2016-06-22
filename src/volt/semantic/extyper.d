@@ -998,6 +998,16 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			asFunctionType = cast(ir.CallableType) realType(childType);
 		}
 
+		auto podAgg = cast(ir.PODAggregate)realType(childType);
+		if (podAgg !is null && podAgg.constructors.length > 0) {
+			if (isValueExp(postfix.child)) {
+				throw makeStructValueCall(postfix.location, podAgg.name);
+			}
+			auto ctor = selectFunction(podAgg.constructors, postfix.arguments, postfix.location);
+			exp = buildPODCtor(postfix.location, podAgg, postfix, ctor);
+			return;
+		}
+
 		if (asFunctionType is null) {
 			throw makeBadCall(postfix, childType);
 		}
@@ -1046,6 +1056,7 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		checkAndConvertStringLiterals(ctx, asFunctionType.params[i], postfix.arguments[i]);
 	}
 }
+
 
 /**
  * This function acts as a extyperExpReference function would do,
@@ -4305,6 +4316,11 @@ void resolveUnion(LanguagePass lp, ir.Union u)
 	size_t accum;
 	foreach (n; u.members.nodes) {
 		if (n.nodeType == ir.NodeType.Function) {
+			auto func = cast(ir.Function)n;
+			if (func.kind == ir.Function.Kind.Constructor ||
+			    func.kind == ir.Function.Kind.Destructor) {
+				continue;
+			}
 			throw makeExpected(n, "field");
 		}
 

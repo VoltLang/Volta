@@ -1018,6 +1018,17 @@ ir.BuiltinExp buildAADup(Location loc, ir.AAType aa, ir.Exp[] child)
 }
 
 /**
+ * Builds a BuiltinExp of PODCtor type.
+ */
+ir.BuiltinExp buildPODCtor(Location loc, ir.PODAggregate pod, ir.Postfix postfix, ir.Function ctor)
+{
+	auto bi = new ir.BuiltinExp(ir.BuiltinExp.Kind.PODCtor, copyTypeSmart(loc, pod), [cast(ir.Exp)postfix]);
+	bi.functions ~= ctor;
+	bi.location = loc;
+	return bi;
+}
+
+/**
  * Build a postfix Identifier expression.
  */
 ir.Postfix buildPostfixIdentifier(Location loc, ir.Exp exp, string name)

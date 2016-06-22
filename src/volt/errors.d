@@ -32,6 +32,11 @@ void hackTypeWarning(ir.Node n, ir.Type nt, ir.Type ot)
  * Specific Errors
  *
  */
+CompilerException makeStructValueCall(Location l, string aggName, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(l, format("expected aggregate type '%s' directly, not an instance.", aggName), file, line);
+}
+
 CompilerException makeStructDefaultCtor(Location l, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(l, "structs or unions may not define default constructors.", file, line);

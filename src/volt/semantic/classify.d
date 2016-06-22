@@ -292,6 +292,21 @@ ir.Type realType(ir.Type t, bool stripEnum = true)
 	return t;
 }
 
+/**
+ * struct Struct { ... }
+ * a := Struct(12);  // isValueExp() == false
+ * b := a(12);  // isValueExp() == true, despite the same type.
+ */
+bool isValueExp(ir.Exp exp)
+{
+	switch (exp.nodeType) {
+	case ir.NodeType.StoreExp:
+		return false;
+	default:
+		return true;
+	}
+	assert(false);
+}
 
 /**
  * A type without mutable indirection is a pure value type --

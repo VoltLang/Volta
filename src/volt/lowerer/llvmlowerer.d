@@ -1478,6 +1478,11 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 		sexp.exp = buildIndex(l, buildExpReference(l, tvar, tvar.name), tlen);
 		exp = buildCastSmart(l, lp.classInfoClass, sexp);
 		break;
+	case PODCtor:
+		panicAssert(exp, builtin.children.length == 1);
+		panicAssert(exp, builtin.functions.length == 1);
+		lowerStructUnionConstructor(lp, current, exp, builtin);
+		break;
 	case UFCS:
 	case Invalid:
 		panicAssert(exp, false);
@@ -1718,6 +1723,30 @@ void lowerAA(LanguagePass lp, ir.Scope current, ir.Module thisModule, ref ir.Exp
 
 	statExp.exp = buildExpReference(loc, var);
 	exp = statExp;
+}
+
+/**
+ * Rewrite Struct(args) to call their constructors.
+ */
+void lowerStructUnionConstructor(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinExp builtin)
+{
+	auto agg = cast(ir.PODAggregate)realType(builtin.type);
+	if (agg is null || agg.constructors.length == 0) {
+		return;
+	}
+	auto postfix = cast(ir.Postfix)builtin.children[0];
+	auto loc = exp.location;
+	auto ctor = builtin.functions[0];
+	auto sexp = buildStatementExp(loc);
+	auto svar = buildVariableAnonSmart(loc, current, sexp, agg, null);
+	auto ctorRef = buildExpReference(ctor.location, ctor, ctor.name);
+	auto args = buildCast(loc, buildVoidPtr(loc), buildAddrOf(loc,
+		buildExpReference(loc, svar, svar.name))) ~ postfix.arguments;
+	auto ctorCall = buildCall(loc, ctorRef, args);
+
+	buildExpStat(loc, sexp, ctorCall);
+	sexp.exp = buildExpReference(loc, svar, svar.name);
+	exp = sexp;
 }
 
 /**

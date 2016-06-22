@@ -370,6 +370,24 @@ public:
 }
 
 /**
+ * Plain Old Data aggregates.
+ * Struct and Union, basically.
+ */
+class PODAggregate : Aggregate
+{
+public:
+	Function[] constructors;
+
+public:
+	this(NodeType nt) { super(nt); }
+
+	this(NodeType nt, PODAggregate old)
+	{
+		super(nt, old);
+	}
+}
+
+/**
  * Java style class declaration. Classes enable polymorphism,
  * and are always accessed through opaque references (to prevent
  * slicing -- look it up!)
@@ -485,7 +503,7 @@ public:
  *
  * @ingroup irNode irTopLevel irType irDecl
  */
-class Union : Aggregate
+class Union : PODAggregate
 {
 public:
 	size_t totalSize; // Total size in memory.
@@ -510,7 +528,7 @@ public:
  *
  * @ingroup irNode irTopLevel irType irDecl
  */
-class Struct : Aggregate
+class Struct : PODAggregate
 {
 public:
 	Node loweredNode;  ///< If not null, this struct was lowered from this.

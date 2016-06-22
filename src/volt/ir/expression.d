@@ -995,13 +995,14 @@ public:
 		AADup,       ///< new aa[..]
 		UFCS,        ///< '(exp).func'()
 		Classinfo,   ///< obj.classinfo
+		PODCtor,     ///< s := StructName(structArg)
 	}
 
 	Kind kind; ///< What kind of inbluilt is this.
 	Type type; ///< The type of this exp, helps keeping the typer simple.
 
 	Exp[] children; ///< Common child exp.
-	Function[] functions; ///< For UFCS.
+	Function[] functions; ///< For UFCS and PODCtor.
 
 public:
 	this(Kind kind, Type type, Exp[] children)

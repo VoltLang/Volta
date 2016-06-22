@@ -1335,6 +1335,7 @@ void handleBuiltinExp(State state, ir.BuiltinExp inbuilt, Value result)
 	case AADup:
 	case UFCS:
 	case Classinfo:
+	case PODCtor:
 		throw panic(inbuilt, "unhandled");
 	}
 }
