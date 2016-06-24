@@ -23,15 +23,18 @@ enum immutable(string)[] _tokenToString = [
 "cast", "catch", "cdouble", "cent", "cfloat", "char", "class",
 "const", "continue", "creal", "dchar", "debug", "default",
 "delegate", "delete", "deprecated", "do", "double", "else", "enum",
-"export", "extern", "false", "final", "finally", "float", "for",
-"foreach", "foreach_reverse", "fn", "function", "global", "goto", "idouble",
+"export", "extern", "f32", "f64",
+"false", "final", "finally", "float", "for",
+"foreach", "foreach_reverse", "fn", "function", "global", "goto",
+"i8", "i16", "i32", "i64", "idouble",
 "if", "ifloat", "immutable", "import", "in", "inout", "int", "interface",
 "invariant", "ireal", "is", "lazy", "local", "long", "macro", "mixin",
 "module", "new", "nothrow", "null", "out", "override", "package", "pragma",
 "private", "protected", "public", "pure", "real", "ref", "return",
 "scope", "shared", "short", "static", "struct", "super",
 "switch", "synchronized", "template", "this", "throw", "true",
-"try", "typedef", "typeid", "typeof", "ubyte", "ucent", "uint",
+"try", "typedef", "typeid", "typeof",
+"u8", "u16", "u32", "u64", "ubyte", "ucent", "uint",
 "ulong", "union", "unittest", "ushort", "va_arg", "version", "void",
 "volatile", "wchar", "while", "with", "__FILE__", "__FUNCTION__", "__LINE__",
 "__PRETTY_FUNCTION__", "__thread", "__traits", "#run",
@@ -79,9 +82,11 @@ enum TokenType
 	Dchar, Debug, Default, Delegate, Delete,
 	Deprecated, Do, Double,
 	Else, Enum, Export, Extern,
+	F32, F64,
 	False, Final, Finally, Float, For, Foreach,
 	ForeachReverse, Fn, Function,
 	Global, Goto,
+	I8, I16, I32, I64,
 	Idouble, If, Ifloat, Immutable, Import, In,
 	Inout, Int, Interface, Invariant, Ireal, Is,
 	Lazy, Local, Long,
@@ -94,6 +99,7 @@ enum TokenType
 	Switch, Synchronized,
 	Template, This, Throw, True, Try, Typedef,
 	Typeid, Typeof,
+	U8, U16, U32, U64,
 	Ubyte, Ucent, Uint, Ulong, Union, Unittest, Ushort,
 	VaArg, Version, Void, Volatile,
 	Wchar, While, With,
@@ -226,6 +232,8 @@ TokenType identifierType(string ident)
 	case "enum":                return Enum;
 	case "export":              return Export;
 	case "extern":              return Extern;
+	case "f32":                 return F32;
+	case "f64":                 return F64;
 	case "false":               return False;
 	case "final":               return Final;
 	case "finally":             return Finally;
@@ -237,6 +245,10 @@ TokenType identifierType(string ident)
 	case "function":            return Function;
 	case "global":              return Global;
 	case "goto":                return Goto;
+	case "i8":                  return I8;
+	case "i16":                 return I16;
+	case "i32":                 return I32;
+	case "i64":                 return I64;
 	case "idouble":             return Idouble;
 	case "if":                  return If;
 	case "ifloat":              return Ifloat;
@@ -285,6 +297,10 @@ TokenType identifierType(string ident)
 	case "typedef":             return Typedef;
 	case "typeid":              return Typeid;
 	case "typeof":              return Typeof;
+	case "u8":                  return U8;
+	case "u16":                 return U16;
+	case "u32":                 return U32;
+	case "u64":                 return U64;
 	case "ubyte":               return Ubyte;
 	case "ucent":               return Ucent;
 	case "uint":                return Uint;
@@ -305,18 +321,8 @@ TokenType identifierType(string ident)
 	case "__PRETTY_FUNCTION__": return __Pretty_Function__;
 	case "__thread":            return __Thread;
 	case "__traits":            return __Traits;
-	case "i8":                  return Byte;
-	case "i16":                 return Short;
-	case "i32":                 return Int;
-	case "i64":                 return Long;
 	case "isize":               assert(false, "reserved");
-	case "u8":                  return Ubyte;
-	case "u16":                 return Ushort;
-	case "u32":                 return Uint;
-	case "u64":                 return Ulong;
 	case "usize":               assert(false, "reserved");
-	case "f32":                 return Float;
-	case "f64":                 return Double;
 	default:                    return Identifier;
 	}
 }

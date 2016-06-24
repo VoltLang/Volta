@@ -1739,7 +1739,10 @@ ParseStatus parsePrimaryExp(ParserStream ps, out intir.PrimaryExp exp)
 		 TokenType.Int, TokenType.Uint, TokenType.Long,
 		 TokenType.Ulong, TokenType.Void, TokenType.Float,
 		 TokenType.Double, TokenType.Real, TokenType.Char,
-		 TokenType.Wchar, TokenType.Dchar:
+		 TokenType.Wchar, TokenType.Dchar, TokenType.I8,
+		 TokenType.I16, TokenType.I32, TokenType.I64,
+		 TokenType.U8, TokenType.U16, TokenType.U32, TokenType.U64,
+		 TokenType.F32, TokenType.F64:
 		auto type = parsePrimitiveType(ps);
 		if (matchIf(ps, TokenType.OpenParen)) {
 			// Primitive type construction. e.g. `i32(32)`

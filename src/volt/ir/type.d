@@ -133,6 +133,7 @@ public:
 
 public:
 	Kind type;
+	Token originalToken;  ///< Used for printing both 'int' and 'i32', etc.
 
 
 public:
@@ -143,6 +144,7 @@ public:
 	{
 		super(NodeType.PrimitiveType, old);
 		this.type = old.type;
+		this.originalToken = old.originalToken;
 	}
 }
 

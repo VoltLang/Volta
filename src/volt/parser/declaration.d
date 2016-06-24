@@ -225,7 +225,10 @@ ParseStatus parseType(ParserStream ps, out ir.Type base)
 	case TokenType.Void, TokenType.Char, TokenType.Byte, TokenType.Ubyte,
 		 TokenType.Short, TokenType.Ushort, TokenType.Int, TokenType.Uint,
 		 TokenType.Long, TokenType.Ulong, TokenType.Float, TokenType.Double,
-		 TokenType.Real, TokenType.Bool, TokenType.Wchar, TokenType.Dchar:
+		 TokenType.Real, TokenType.Bool, TokenType.Wchar, TokenType.Dchar,
+		 TokenType.I8, TokenType.I16, TokenType.I32, TokenType.I64,
+		 TokenType.U8, TokenType.U16, TokenType.U32, TokenType.U64,
+		 TokenType.F32, TokenType.F64:
 		base = parsePrimitiveType(ps);
 		break;
 	case TokenType.Auto, TokenType.Const, TokenType.Immutable,
@@ -589,7 +592,40 @@ ir.Type parsePrimitiveType(ParserStream ps)
 {
 	auto ptype = new ir.PrimitiveType();
 	ptype.location = ps.peek.location;
-	ptype.type = cast(ir.PrimitiveType.Kind) ps.peek.type;
+	ptype.originalToken = ps.peek;
+	switch (ps.peek.type) {
+	case TokenType.Byte, TokenType.I8:
+		ptype.type = ir.PrimitiveType.Kind.Byte;
+		break;
+	case TokenType.Short, TokenType.I16:
+		ptype.type = ir.PrimitiveType.Kind.Short;
+		break;
+	case TokenType.Int, TokenType.I32:
+		ptype.type = ir.PrimitiveType.Kind.Int;
+		break;
+	case TokenType.Long, TokenType.I64:
+		ptype.type = ir.PrimitiveType.Kind.Long;
+		break;
+	case TokenType.Ubyte, TokenType.U8:
+		ptype.type = ir.PrimitiveType.Kind.Ubyte;
+		break;
+	case TokenType.Ushort, TokenType.U16:
+		ptype.type = ir.PrimitiveType.Kind.Ushort;
+		break;
+	case TokenType.Uint, TokenType.U32:
+		ptype.type = ir.PrimitiveType.Kind.Uint;
+		break;
+	case TokenType.Ulong, TokenType.U64:
+		ptype.type = ir.PrimitiveType.Kind.Ulong;
+		break;
+	case TokenType.Float, TokenType.F32:
+		ptype.type = ir.PrimitiveType.Kind.Float;
+		break;
+	case TokenType.Double, TokenType.F64:
+		ptype.type = ir.PrimitiveType.Kind.Double;
+		break;
+	default: ptype.type = cast(ir.PrimitiveType.Kind)ps.peek.type;
+	}
 
 	ps.get();
 	return ptype;
