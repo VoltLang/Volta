@@ -2213,7 +2213,11 @@ public:
 	override Status visit(ir.PrimitiveType type)
 	{
 		wStorageTypes(type);
-		wf(tokenToString(cast(TokenType)type.type));
+		if (type.originalToken is null) {
+			wf(tokenToString(cast(TokenType)type.type));
+		} else {
+			wf(tokenToString(type.originalToken.type));
+		}
 		wAfterStorageTypes(type);
 		return Continue;
 	}

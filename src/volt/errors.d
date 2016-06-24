@@ -9,6 +9,7 @@ import watt.io.std : writefln;
 import ir = volt.ir.ir;
 
 import volt.exceptions;
+import volt.token.token : tokenToString, TokenType;
 import volt.token.location;
 
 
@@ -939,7 +940,11 @@ string errorString(ir.Type type, bool alwaysGlossed = false)
 	switch(type.nodeType) with(ir.NodeType) {
 	case PrimitiveType:
 		ir.PrimitiveType prim = cast(ir.PrimitiveType)type;
-		outString ~= toLower(format("%s", prim.type));
+		if (prim.originalToken !is null) {
+			outString ~= toLower(tokenToString(prim.originalToken.type));
+		} else {
+			outString ~= toLower(tokenToString(cast(TokenType)prim.type));
+		}
 		break;
 	case TypeReference:
 		ir.TypeReference tr = cast(ir.TypeReference)type;
