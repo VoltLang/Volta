@@ -2,6 +2,10 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.util.perf;
 
+version (Volt) {
+	import core.rt.gc;
+}
+
 import watt.io.std : writefln;
 import watt.io.streams : OutputFileStream;
 
@@ -117,11 +121,18 @@ struct Perf
 
 
 		f.writef("--- Counters\n");
-		f.writef("name,");
+		f.writef("name,GC-num-allocs,");
 		for (auto c = counter; c !is null; c = c.next) {
 			f.writef("%s,", c.name);
 		}
 		f.writef("\n%s,", name);
+		version (Volt) {
+			Stats stats;
+			vrt_gc_get_stats(stats);
+			f.writef("%s,", stats.count);
+		} else {
+			f.writef("0,");
+		}
 		for (auto c = counter; c !is null; c = c.next) {
 			f.writef("%s,", c.count);
 		}
