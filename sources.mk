@@ -1,5 +1,6 @@
 
 RT_SRC = \
+	rt/src/core/rt/gc.volt \
 	rt/src/vrt/vacuum/clazz.volt \
 	rt/src/vrt/vacuum/vmain.volt \
 	rt/src/vrt/vacuum/hash.volt \

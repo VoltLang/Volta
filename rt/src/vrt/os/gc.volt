@@ -3,6 +3,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.os.gc;
 
+import core.rt.gc : Stats;
+
 
 version (Emscripten) {
 
@@ -56,11 +58,19 @@ version (Emscripten) {
 
 }
 
+
+global Stats stats;
+
 extern(C) void vrt_gc_init()
 {
 	GC_init();
 	//GC_set_java_finalization(1);
 	GC_java_finalization = 1;
+}
+
+extern(C) void vrt_gc_get_stats(out Stats res)
+{
+	res = stats;
 }
 
 extern(C) object.AllocDg vrt_gc_get_alloc_dg()
@@ -107,6 +117,9 @@ void* gcMalloc(void *ptr, object.TypeInfo typeinfo, size_t count)
 		size = typeinfo.size;
 		size = count * typeinfo.size;
 	}
+
+	// Statistics
+	stats.count++;
 
 	if (typeinfo.mutableIndirection) {
 		memory = GC_malloc(size);
