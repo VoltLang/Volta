@@ -19,7 +19,8 @@ struct Perf
 	int pos;
 	long[] times;
 
-	Accumulator gcAccum;
+	Counter counter;
+
 	Accumulator stack;
 	Accumulator accum;
 
@@ -112,6 +113,20 @@ struct Perf
 		for (auto a = accum; a !is null; a = a.next) {
 			doWrite(a.accum);
 		}
+		f.writef("\n\n");
+
+
+		f.writef("--- Counters\n");
+		f.writef("name,");
+		for (auto c = counter; c !is null; c = c.next) {
+			f.writef("%s,", c.name);
+		}
+		f.writef("\n%s,", name);
+		for (auto c = counter; c !is null; c = c.next) {
+			f.writef("%s,", c.count);
+		}
+		f.writef("\n\n");
+
 		f.flush();
 		f.close();
 	}
@@ -170,6 +185,24 @@ public:
 		below.then = now;
 		perf.stack = below;
 		below = null;
+	}
+}
+
+class Counter
+{
+public:
+	string name;
+	ulong count;
+	Counter next;
+
+
+public:
+	this(string name)
+	{
+		this.name = name;
+		assert(perf.counter is null);
+		this.next = perf.counter;
+		perf.counter = this;
 	}
 }
 
