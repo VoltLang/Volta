@@ -611,7 +611,7 @@ extern (C) void[] vrt_aa_get_keys(void* rbtv)
 	auto rbt = cast(RedBlackTree*) rbtv;
 	auto arr = object.allocDg(rbt.key, rbt.length)[0 .. rbt.length * rbt.key.size];
 	size_t currentIndex;
-	vrt_aa_walk(rbt.root, true, rbt.key.size, ref arr, ref currentIndex);
+	vrt_aa_walk(rbt, rbt.root, true, rbt.key.size, ref arr, ref currentIndex);
 	return arr;
 }
 
@@ -624,7 +624,7 @@ extern (C) void[] vrt_aa_get_values(void* rbtv)
 	auto rbt = cast(RedBlackTree*) rbtv;
 	auto arr = object.allocDg(rbt.value, rbt.length)[0 .. rbt.length * rbt.value.size];
 	size_t currentIndex;
-	vrt_aa_walk(rbt.root, false, rbt.value.size, ref arr, ref currentIndex);
+	vrt_aa_walk(rbt, rbt.root, false, rbt.value.size, ref arr, ref currentIndex);
 	return arr;
 }
 
@@ -633,18 +633,24 @@ extern (C) void vrt_aa_rehash(void* rbtv)
 {
 }
 
-private void vrt_aa_walk(TreeNode* node, bool getKey, size_t argSize, ref void[] arr, ref size_t currentIndex)
+private void vrt_aa_walk(RedBlackTree* rbt, TreeNode* node, bool getKey, size_t argSize, ref void[] arr, ref size_t currentIndex)
 {
 	if (node !is null) {
-		vrt_aa_walk(node.left, getKey, argSize, ref arr, ref currentIndex);
+		vrt_aa_walk(rbt, node.left, getKey, argSize, ref arr, ref currentIndex);
+		if (!getKey) {
+		}
 		auto tn = getKey ? node.key : node.value;
 		if (tn.array.length > 0) {
 			(*cast(void[]*)&arr.ptr[currentIndex]) = tn.array;
 		} else {
-			(*cast(void**)&arr.ptr[currentIndex]) = tn.ptr;
+			if (!getKey && rbt.value.type == object.TYPE_ARRAY) {
+				(*cast(void[]*)&arr.ptr[currentIndex]) = *cast(void[]*)tn.ptr;
+			} else {
+				(*cast(void**)&arr.ptr[currentIndex]) = tn.ptr;
+			}
 		}
 		currentIndex += argSize;
-		vrt_aa_walk(node.right, getKey, argSize, ref arr, ref currentIndex);
+		vrt_aa_walk(rbt, node.right, getKey, argSize, ref arr, ref currentIndex);
 	}
 }
 
