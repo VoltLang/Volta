@@ -8,16 +8,10 @@ module vrt.vacuum.aa;
 // http://en.wikipedia.org/wiki/Red%E2%80%93black_tree
 
 
-private struct TreeStore {
-	@property ulong unsigned() { return value; }
-	@property void unsigned(ulong v) { value = v; }
-	@property void* ptr() { return cast(void*)value; }
-	@property void ptr(void* ptr) { value = cast(ulong)ptr; }
-	@property void[] array() { return ptr[0 .. length]; }
-	@property void array(void[] arr) { ptr = arr.ptr; length = arr.length; }
-
-	ulong value;
-	size_t length;
+private union TreeStore {
+	void* ptr;
+	ulong unsigned;
+	void[] array;
 }
 
 // Represents a Node in the Red-Black-Tree
@@ -40,6 +34,7 @@ private struct RedBlackTree
 
 	object.TypeInfo value;
 	object.TypeInfo key;
+	bool isValuePtr;
 }
 
 
@@ -50,7 +45,7 @@ extern(C) void* vrt_aa_new(object.TypeInfo value, object.TypeInfo key)
 	rbt.value = value;
 	rbt.key = key;
 	rbt.length = 0;
-
+	rbt.isValuePtr = value.size > typeid(ulong).size;
 	return cast(void*)rbt;
 }
 
@@ -69,16 +64,8 @@ private TreeNode* vrt_aa_dup_treenode(TreeNode* tn, TreeNode* parent=null)
 		return null;
 	}
 	auto dup = new TreeNode;
-	if (tn.key.array.length > 0) {
-		dup.key.array = new tn.key.array[..];
-	} else {
-		dup.key.value = tn.key.value;
-	}
-	if (tn.value.array.length > 0) {
-		dup.value.array = new tn.value.array[..];
-	} else {
-		dup.value.value = tn.value.value;
-	}
+	dup.key = tn.key;
+	dup.value = tn.value;
 	dup.red = tn.red;
 	dup.parent = parent;
 	dup.left = vrt_aa_dup_treenode(tn.left, dup);
@@ -204,10 +191,10 @@ extern(C) bool vrt_aa_in_primitive(void* rbtv, ulong key, void* ret)
 		return false;
 	}
 
-	if (rbt.value.size < typeid(TreeStore).size) {
-		object.__llvm_memcpy(ret, cast(void*)&(node.value), rbt.value.size, 0, false);
-	} else {
+	if (rbt.isValuePtr) {
 		object.__llvm_memcpy(ret, node.value.ptr, rbt.value.size, 0, false);
+	} else {
+		object.__llvm_memcpy(ret, cast(void*)&(node.value), rbt.value.size, 0, false);
 	}
 	return true;
 }
@@ -224,10 +211,10 @@ extern(C) bool vrt_aa_in_array(void* rbtv, void[] key, void* ret)
 		return false;
 	}
 
-	if (rbt.value.size < typeid(TreeStore).size) {
-		object.__llvm_memcpy(ret, cast(void*)&(node.value), rbt.value.size, 0, false);
-	} else {
+	if (rbt.isValuePtr) {
 		object.__llvm_memcpy(ret, node.value.ptr, rbt.value.size, 0, false);
+	} else {
+		object.__llvm_memcpy(ret, cast(void*)&(node.value), rbt.value.size, 0, false);
 	}
 	return true;
 }
@@ -243,10 +230,10 @@ extern(C) void* vrt_aa_in_binop_array(void* rbtv, void[] key)
 	if (tn is null) {
 		return null;
 	}
-	if (rbt.value.size < typeid(TreeStore).size) {
-		return cast(void*)&tn.value;
-	} else {
+	if (rbt.isValuePtr) {
 		return tn.value.ptr;
+	} else {
+		return cast(void*)&tn.value;
 	}
 }
 
@@ -261,10 +248,10 @@ extern(C) void* vrt_aa_in_binop_primitive(void* rbtv, ulong key)
 	if (tn is null) {
 		return null;
 	}
-	if (rbt.value.size < typeid(TreeStore).size) {
-		return cast(void*)&tn.value;
-	} else {
+	if (rbt.isValuePtr) {
 		return tn.value.ptr;
+	} else {
+		return cast(void*)&tn.value;
 	}
 }
 
@@ -317,13 +304,13 @@ extern(C) void vrt_aa_insert_primitive(void* rbtv, ulong key, void* value)
 	inserted_node.key.unsigned = key;
 	inserted_node.red = true; // we have to check the rules afterwards and fix the tree!
 
-	if (rbt.value.size < typeid(TreeStore).size) {
-		object.__llvm_memcpy(cast(void*)&(inserted_node.value), value, rbt.value.size, 0, false);
-	} else {
+	if (rbt.isValuePtr) {
 		// allocate more memory for value
 		void* mem = object.allocDg(rbt.value, 1);
 		object.__llvm_memcpy(mem, value, rbt.value.size, 0, false);
 		inserted_node.value.ptr = mem;
+	} else {
+		object.__llvm_memcpy(cast(void*)&(inserted_node.value), value, rbt.value.size, 0, false);
 	}
 
 	if (rbt.root is null) {
@@ -377,12 +364,13 @@ extern(C) void vrt_aa_insert_array(void* rbtv, void[] key, void* value)
 	inserted_node.key.array = key;
 	inserted_node.red = true; // we have to check the rules afterwards and fix the tree!
 
-	if (rbt.value.size < typeid(TreeStore).size) {
-		object.__llvm_memcpy(cast(void*)&(inserted_node.value), value, rbt.value.size, 0, false);
-	} else {
+	if (rbt.isValuePtr) {
+		// allocate more memory for value
 		void* mem = object.allocDg(rbt.value, 1);
 		object.__llvm_memcpy(mem, value, rbt.value.size, 0, false);
 		inserted_node.value.ptr = mem;
+	} else {
+		object.__llvm_memcpy(cast(void*)&(inserted_node.value), value, rbt.value.size, 0, false);
 	}
 
 	if (rbt.root is null) {
@@ -637,8 +625,6 @@ private void vrt_aa_walk(RedBlackTree* rbt, TreeNode* node, bool getKey, size_t 
 {
 	if (node !is null) {
 		vrt_aa_walk(rbt, node.left, getKey, argSize, ref arr, ref currentIndex);
-		if (!getKey) {
-		}
 		auto tn = getKey ? node.key : node.value;
 		if (tn.array.length > 0) {
 			(*cast(void[]*)&arr.ptr[currentIndex]) = tn.array;
