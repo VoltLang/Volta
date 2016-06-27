@@ -45,7 +45,7 @@ extern(C) void* vrt_aa_new(object.TypeInfo value, object.TypeInfo key)
 	rbt.value = value;
 	rbt.key = key;
 	rbt.length = 0;
-	rbt.isValuePtr = value.size > typeid(ulong).size;
+	rbt.isValuePtr = value.size > typeid(TreeStore).size;
 	return cast(void*)rbt;
 }
 
@@ -626,14 +626,11 @@ private void vrt_aa_walk(RedBlackTree* rbt, TreeNode* node, bool getKey, size_t 
 	if (node !is null) {
 		vrt_aa_walk(rbt, node.left, getKey, argSize, ref arr, ref currentIndex);
 		auto tn = getKey ? node.key : node.value;
-		if (tn.array.length > 0) {
-			(*cast(void[]*)&arr.ptr[currentIndex]) = tn.array;
+
+		if (argSize > typeid(TreeStore).size) {
+			object.__llvm_memcpy(&arr[currentIndex], tn.ptr, argSize, 0, false);
 		} else {
-			if (!getKey && rbt.value.type == object.TYPE_ARRAY) {
-				(*cast(void[]*)&arr.ptr[currentIndex]) = *cast(void[]*)tn.ptr;
-			} else {
-				(*cast(void**)&arr.ptr[currentIndex]) = tn.ptr;
-			}
+			object.__llvm_memcpy(&arr[currentIndex], cast(void*)&tn, argSize, 0, false);
 		}
 		currentIndex += argSize;
 		vrt_aa_walk(rbt, node.right, getKey, argSize, ref arr, ref currentIndex);
