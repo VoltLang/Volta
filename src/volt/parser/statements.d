@@ -555,9 +555,24 @@ ParseStatus parseDoStatement(ParserStream ps, out ir.DoStatement d)
 		return unexpectedToken(ps, d);
 	}
 	ps.get();
+	bool hasBrace = (ps == TokenType.OpenBrace);
 	auto succeeded = parseBlockStatement(ps, d.block);
 	if (!succeeded) {
 		return parseFailed(ps, d);
+	}
+	if (hasBrace && ps == TokenType.Semicolon)
+	{
+		// For now, require loop body to explicitly end.
+		// Really we should just insert a break statement.
+		import volt.ir.base;
+		auto nt = d.block.statements[$-1].nodeType;
+		if (nt != NodeType.BreakStatement && nt != NodeType.ContinueStatement)
+			return parseExpected(ps, ps.peek.location, d,
+				"'break' or 'continue' as final statement in do statement block");
+		// do {...}; defaults to while(true) so continue works
+		import volt.ir.util;
+		d.condition = buildConstantBool(ps.peek.location, true);
+		return Succeeded;
 	}
 	if (ps != TokenType.While) {
 		return unexpectedToken(ps, d);
