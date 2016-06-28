@@ -132,9 +132,7 @@ bool specialisationComparison(object.Object ao, object.Object bo)
 	auto b = cast(ir.Function) bo;
 	assert(a !is null && b !is null);
 	if (a.type.params.length != b.type.params.length) {
-		auto longer = a.params.length > b.params.length ? a : b;
-		assert(longer.params[$-1].assign !is null);
-		return a.params.length < b.params.length;
+		return false;
 	}
 	bool atob = true, btoa = true;
 	for (size_t i = 0; i < a.type.params.length; ++i) {
