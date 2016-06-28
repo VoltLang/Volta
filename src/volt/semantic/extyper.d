@@ -2686,17 +2686,28 @@ ir.Type extypeTokenExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	auto fexp = cast(ir.TokenExp) exp;
 
-	if (fexp.type == ir.TokenExp.Type.File) {
+	string getFname() {
 		string fname = fexp.location.filename;
 		version (Windows) {
 			fname = fname.replace("\\", "/");
 		}
+		return fname;
+	}
+
+	if (fexp.type == ir.TokenExp.Type.File) {
+		string fname = getFname();
 		ir.Constant c;
 		exp = c = buildConstantString(fexp.location, fname);
 		return c.type;
 	} else if (fexp.type == ir.TokenExp.Type.Line) {
 		ir.Constant c;
 		exp = c = buildConstantInt(fexp.location, cast(int) fexp.location.line);
+		return c.type;
+	} else if (fexp.type == ir.TokenExp.Type.Location) {
+		string fname = getFname();
+		ir.Constant c;
+		auto str = fname ~ ":" ~ toString(cast(int)fexp.location.line);
+		exp = c = buildConstantString(fexp.location, str);
 		return c.type;
 	}
 

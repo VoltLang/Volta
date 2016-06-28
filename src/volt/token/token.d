@@ -37,7 +37,7 @@ enum immutable(string)[] _tokenToString = [
 "u8", "u16", "u32", "u64", "ubyte", "ucent", "uint",
 "ulong", "union", "unittest", "ushort", "va_arg", "version", "void",
 "volatile", "wchar", "while", "with", "__FILE__", "__FUNCTION__", "__LINE__",
-"__PRETTY_FUNCTION__", "__thread", "__traits", "#run",
+"__LOCATION__", "__PRETTY_FUNCTION__", "__thread", "__traits", "#run",
 "/", "/=", ".", "..", "...", "&", "&=", "&&", "|", "|=", "||",
 "-", "-=", "--", "+", "+=", "++", "<", "<=", "<<", "<<=", "<>", "<>=",
 ">", ">=", ">>=", ">>>=", ">>", ">>>", "!", "!=", "!<>", "!<>=", "!<",
@@ -103,7 +103,8 @@ enum TokenType
 	Ubyte, Ucent, Uint, Ulong, Union, Unittest, Ushort,
 	VaArg, Version, Void, Volatile,
 	Wchar, While, With,
-	__File__, __Function__, __Line__, __Pretty_Function__, __Thread, __Traits,
+	__File__, __Function__, __Line__, __Location__,
+	__Pretty_Function__, __Thread, __Traits,
 	HashRun,
 
 	/// Symbols.
@@ -318,6 +319,7 @@ TokenType identifierType(string ident)
 	case "__FILE__":            return __File__;
 	case "__FUNCTION__":        return __Function__;
 	case "__LINE__":            return __Line__;
+	case "__LOCATION__":        return __Location__;
 	case "__PRETTY_FUNCTION__": return __Pretty_Function__;
 	case "__thread":            return __Thread;
 	case "__traits":            return __Traits;

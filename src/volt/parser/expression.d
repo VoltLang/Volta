@@ -632,6 +632,9 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 	case intir.PrimaryExp.Type.Line:
 		exp = new ir.TokenExp(ir.TokenExp.Type.Line);
 		break;
+	case intir.PrimaryExp.Type.Location:
+		exp = new ir.TokenExp(ir.TokenExp.Type.Location);
+		break;
 	case intir.PrimaryExp.Type.VaArg:
 		exp = primary.vaexp;
 		break;
@@ -1591,6 +1594,10 @@ ParseStatus parsePrimaryExp(ParserStream ps, out intir.PrimaryExp exp)
 	case TokenType.__Pretty_Function__:
 		auto token = ps.get();
 		exp.op = intir.PrimaryExp.Type.PrettyFunctionName;
+		break;
+	case TokenType.__Location__:
+		auto token = ps.get();
+		exp.op = intir.PrimaryExp.Type.Location;
 		break;
 	case TokenType.CharacterLiteral:
 		auto token = ps.get();

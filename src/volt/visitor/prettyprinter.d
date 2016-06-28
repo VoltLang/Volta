@@ -2182,6 +2182,9 @@ public:
 		case Function:
 			wf("__FUNCTION__");
 			break;
+		case Location:
+			wf("__LOCATION__");
+			break;
 		}
 		return Continue;
 	}

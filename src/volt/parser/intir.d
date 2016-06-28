@@ -178,6 +178,7 @@ public:
 		PrettyFunctionName,
 		File,
 		Line,
+		Location,
 		VaArg,
 	}
 
