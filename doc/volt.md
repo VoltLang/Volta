@@ -155,7 +155,9 @@ And specific symbols can be imported from modules (without importing the rest of
 
     // Can access 'integer'.
 
-Finally, if a directory contains a file named `package.volt`, an `import` of that directory will be rewritten to `directoryname.package`. You can use this along with `public` imports to implement a package in multiple source files, but accessible with just one `import`.
+If a directory contains a file named `package.volt`, an `import` of that directory will be rewritten to `directoryname.package`. You can use this along with `public` imports to implement a package in multiple source files, but accessible with just one `import`.
+
+The `module` declaration is recommended for every module, but for quick programs it can just be extra unneeded typing. The declaration can be omitted, but a module that uses this 'anonymous module' method, cannot be imported by another module.
 
 ## Simple Types ##
 
