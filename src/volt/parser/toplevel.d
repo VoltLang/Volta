@@ -28,26 +28,31 @@ ParseStatus parseModule(ParserStream ps, out ir.Module mod)
 	if (!succeeded) {
 		return succeeded;
 	}
-	if (ps.peek.type != TokenType.Module) {
-		return unexpectedToken(ps, ir.NodeType.Module);
-	}
-	auto t = ps.get();
+	if (ps.peek.type == TokenType.Module) {
+		auto t = ps.get();
 
-	ir.QualifiedName qn;
-	succeeded = parseQualifiedName(ps, qn);
-	if (!succeeded) {
-		return parseFailed(ps, ir.NodeType.Module);
-	}
+		ir.QualifiedName qn;
+		succeeded = parseQualifiedName(ps, qn);
+		if (!succeeded) {
+			return parseFailed(ps, ir.NodeType.Module);
+		}
 
-	if (ps.peek.type != TokenType.Semicolon) {
-		return unexpectedToken(ps, ir.NodeType.Module);
-	}
-	ps.get();
+		if (ps.peek.type != TokenType.Semicolon) {
+			return unexpectedToken(ps, ir.NodeType.Module);
+		}
+		ps.get();
 
-	mod = new ir.Module();
-	mod.location = initLocation;
-	mod.name = qn;
-	mod.docComment = ps.comment();
+		mod = new ir.Module();
+		mod.location = initLocation;
+		mod.name = qn;
+		mod.docComment = ps.comment();
+	} else {
+		mod = new ir.Module();
+		mod.location = initLocation;
+		mod.name = buildQualifiedName(mod.location, mod.location.filename);
+		mod.docComment = ps.comment();
+		mod.isAnonymous = true;
+	}
 	ps.popCommentLevel();
 
 	succeeded = parseTopLevelBlock(ps, mod.children, TokenType.End);

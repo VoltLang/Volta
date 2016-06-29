@@ -75,6 +75,9 @@ public:
 		if (mod is null) {
 			throw makeCannotImport(i, i);
 		}
+		if (mod.isAnonymous) {
+			throw makeCannotImportAnonymous(i, i);
+		}
 		i.targetModule = mod;
 
 		if (i.aliases.length > 0) {

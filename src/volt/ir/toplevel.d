@@ -62,6 +62,7 @@ class Module : Node
 public:
 	QualifiedName name; ///< Name used for mangling.
 	TopLevelBlock children; ///< Toplevel nodes.
+	bool isAnonymous;  ///< Auto generated module name, unimportable.
 
 	/**
 	 * Scope for this module.
@@ -96,6 +97,7 @@ public:
 		this.hasPhase1 = old.hasPhase1;
 		this.gathered = old.gathered;
 		this.mId = old.mId;
+		this.isAnonymous = old.isAnonymous;
 	}
 
 	/// Get a unique number for this module.

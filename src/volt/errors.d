@@ -577,6 +577,11 @@ CompilerException makeCannotImport(ir.Node node, ir.Import _import, string file 
 	return new CompilerError(node.location, format("can't find module '%s'.", _import.name), file, line);
 }
 
+CompilerException makeCannotImportAnonymous(ir.Node node, ir.Import _import, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(node.location, format("can't import anonymous module '%s'.", _import.name), file, line);
+}
+
 CompilerException makeNotAvailableInCTFE(ir.Node node, string s, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(node.location, format("currently unevaluatable at compile time: '%s'.", s), file, line);
