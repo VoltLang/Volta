@@ -11,7 +11,6 @@ void main()
 		i++;
 		if (i == 1)
 			continue;
-		break; // FIXME: should be implicit
 	};
 	do
 	{
