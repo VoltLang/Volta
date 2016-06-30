@@ -487,8 +487,8 @@ public:
 
 	override void doResolve(ir.Alias a)
 	{
-		assert(a.store !is null);
-		assert(a.store.node is a);
+		panicAssert(a, a.store !is null);
+		panicAssert(a, a.store.node is a);
 
 		auto w = mTracker.add(a, Work.Action.Resolve);
 		scope (exit) {

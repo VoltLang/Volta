@@ -2,6 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.vacuum.vmain;
 
+static import object;
+
 
 extern(C) int vrt_run_main(int argc, char** argv, int function(string[]) vmain)
 {

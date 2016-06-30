@@ -2,6 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.llvm.backend;
 
+version (Volt) static import object;
+
 import io = watt.io.std;
 
 import volt.errors;

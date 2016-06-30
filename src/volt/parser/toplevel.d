@@ -73,8 +73,7 @@ ParseStatus parseModule(ParserStream ps, out ir.Module mod)
 	}
 
 	mod.children.nodes = [
-			createImport(mod.location, "defaultsymbols", false),
-			createImport(mod.location, "object", true)
+			createImport(mod.location, "defaultsymbols", false)
 		] ~ mod.children.nodes;
 
 	return Succeeded;

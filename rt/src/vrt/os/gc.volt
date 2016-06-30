@@ -3,6 +3,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.os.gc;
 
+static import object;
+
 import core.rt.gc : Stats;
 
 

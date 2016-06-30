@@ -2,6 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.ext.dwarf;
 
+static import object;
+
 import vrt.ext.stdc : uintptr_t;
 
 

@@ -2,6 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.driver;
 
+version (Volt) static import object;
+
 import io = watt.io.std : output, error;
 
 import watt.path : temporaryFilename, dirSeparator;

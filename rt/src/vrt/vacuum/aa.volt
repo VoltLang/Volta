@@ -2,6 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.vacuum.aa;
 
+static import object;
+
 
 // Volts AA (Associative Array) Implementation
 // based on a Red-Black-Tree

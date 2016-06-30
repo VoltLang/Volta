@@ -2,6 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.os.eh_stub;
 
+static import object;
+
 
 version (Emscripten || MSVC || Metal):
 

@@ -1,5 +1,7 @@
 module vrt.vacuum.clazz;
 
+static import object;
+
 
 extern(C) void* vrt_handle_cast(void* obj, object.TypeInfo tinfo)
 {

@@ -2,6 +2,8 @@
 // See copyright notice in src/volt/licence.d (BOOST ver 1.0)
 module vrt.vacuum.utf;
 
+static import object;
+
 
 private enum ONE_BYTE_MASK                   = 0x80;
 private enum TWO_BYTE_MASK                   = 0xE0;

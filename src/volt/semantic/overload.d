@@ -2,6 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.overload;
 
+version (Volt) static import object;
+
 import watt.algorithm;
 
 import ir = volt.ir.ir;

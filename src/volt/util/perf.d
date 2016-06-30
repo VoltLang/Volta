@@ -3,6 +3,7 @@
 module volt.util.perf;
 
 version (Volt) {
+	static import object;
 	import core.rt.gc;
 }
 
