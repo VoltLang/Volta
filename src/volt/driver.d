@@ -2,7 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.driver;
 
-version (Volt) static import object;
+import core.exception;
 
 import io = watt.io.std : output, error;
 
@@ -242,7 +242,7 @@ public:
 			string str;
 			try {
 				return cast(string)read(path ~ "/" ~ fname);
-			} catch (Exception) {
+			} catch (Throwable) {
 			}
 		}
 
@@ -343,7 +343,7 @@ public:
 				io.error.writefln("%s:%s", e.file, e.line);
 			}
 			return 1;
-		} catch (object.Throwable t) {
+		} catch (Throwable t) {
 			io.error.writefln("panic: %s", t.msg);
 			if (t.file !is null) {
 				io.error.writefln("%s:%s", t.file, t.line);
@@ -441,7 +441,7 @@ protected:
 	{
 		// Error checking
 		if (mLibFiles.length > 0 && !mLinkWithLink) {
-			throw new Exception("can not link '" ~ mLibFiles[0] ~ "'");
+			throw new CompilerError("can not link '" ~ mLibFiles[0] ~ "'");
 		}
 
 		// Start parsing.

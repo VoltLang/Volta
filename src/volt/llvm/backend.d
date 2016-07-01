@@ -2,8 +2,6 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.llvm.backend;
 
-version (Volt) static import object;
-
 import io = watt.io.std;
 
 import volt.errors;
@@ -116,19 +114,17 @@ public:
 protected:
 	void llvmModuleCompile(VoltState state, ir.Module m)
 	{
-		try {
-			state.compile(m);
-		} catch (object.Throwable t) {
+		scope (failure) {
 			if (mDump) {
 				version (Volt) {
-					io.output.writefln("Caught \"???\" dumping module:");
+					io.output.writefln("Failure, dumping module:");
 				} else {
-					io.output.writefln("Caught \"%s\" dumping module:", t.classinfo.name);
+					io.output.writefln("Failure, dumping module:");
 				}
 				LLVMDumpModule(state.mod);
 			}
-			throw t;
 		}
+		state.compile(m);
 	}
 }
 

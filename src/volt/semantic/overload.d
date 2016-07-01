@@ -2,7 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.overload;
 
-version (Volt) static import object;
+version (Volt) import core.object;
 
 import watt.algorithm;
 
@@ -128,7 +128,7 @@ int matchLevel(bool homogenous, ir.Type argument, ir.Type parameter, ir.Exp exp=
 	version (Volt) assert(false); // If
 }
 
-bool specialisationComparison(object.Object ao, object.Object bo)
+bool specialisationComparison(Object ao, Object bo)
 {
 	auto a = cast(ir.Function) ao;
 	auto b = cast(ir.Function) bo;
@@ -295,7 +295,7 @@ ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ir.Exp[
 		}
 		runSort(matchedFunctions.length, cmp, swap);
 	} else {
-		sort(cast(object.Object[])matchedFunctions, &specialisationComparison);
+		sort(cast(Object[])matchedFunctions, &specialisationComparison);
 	}
 	if (matchedFunctions.length == 1 || specialisationComparison(matchedFunctions[0], matchedFunctions[1]) > 0) {
 		if (highestMatchLevel > 1) {

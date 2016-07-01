@@ -3,7 +3,7 @@
 module volt.util.perf;
 
 version (Volt) {
-	static import object;
+	import core.typeinfo;
 	import core.rt.gc;
 }
 
@@ -220,16 +220,16 @@ public:
 
 version (Volt) class GCAccumulator : Accumulator
 {
-	object.AllocDg allocDg;
+	AllocDg mAllocDg;
 
 	this()
 	{
 		super("GC");
-		allocDg = object.allocDg;
-		object.allocDg = alloc;
+		mAllocDg = allocDg;
+		allocDg = alloc;
 	}
 
-	void* alloc(object.TypeInfo ti, size_t c)
+	void* alloc(TypeInfo ti, size_t c)
 	{
 		start();
 		auto ret = allocDg(ti, c);
