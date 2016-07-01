@@ -2,6 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.interfaces;
 
+import core.exception;
 import volt.token.location;
 import ir = volt.ir.ir;
 

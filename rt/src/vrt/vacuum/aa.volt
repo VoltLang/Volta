@@ -3,6 +3,7 @@
 module vrt.vacuum.aa;
 
 static import object;
+import core.exception;
 
 
 // Volts AA (Associative Array) Implementation

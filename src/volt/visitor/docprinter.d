@@ -2,6 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.visitor.docprinter;
 
+import core.exception;
+
 import watt.path : mkdir, dirName, dirSeparator;
 import watt.io.streams : OutputFileStream;
 import watt.text.format : format;

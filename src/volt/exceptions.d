@@ -3,6 +3,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.exceptions;
 
+import core.exception;
 import watt.io.std : writefln;
 import watt.text.format : format;
 

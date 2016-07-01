@@ -9,4 +9,3 @@ alias size_t    = object.size_t;
 alias ptrdiff_t = object.ptrdiff_t;
 
 alias string    = object.string;
-alias Exception = object.Exception;

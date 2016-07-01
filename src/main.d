@@ -2,6 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module main;
 
+import core.exception;
+
 import watt.path : getExecDir, dirSeparator, baseName, dirName;
 import watt.conv : toLower;
 import watt.io.std : writefln;
