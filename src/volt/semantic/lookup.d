@@ -11,6 +11,7 @@ import volt.ir.util : getScopeFromStore, getScopeFromType;
 import volt.errors;
 import volt.interfaces;
 import volt.token.location;
+import volt.semantic.classify : realType;
 
 
 /**
@@ -250,18 +251,59 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 	}
 
 	ir.Function[] fns;
+	ir.Node currentParent;
 	foreach (store; stores) {
 		ensureResolved(lp, store);
 		// @todo Error if we found multiple matches in importedScopes.
 		if (store.functions.length == 0) {
+			if (currentParent is null) {
+				currentParent = getStoreNodeRealParent(lp, store);
+				continue;
+			}
+			if (currentParent is getStoreNodeRealParent(lp, store)) {
+				continue;
+			}
+			throw makeMultipleMatches(loc, name);
+		}
+		if (currentParent !is null) {
 			throw makeMultipleMatches(loc, name);
 		}
 		fns ~= store.functions;
 	}
 
+	if (currentParent !is null) {
+		return ensureResolved(lp, stores[0]);
+	}
+
 	auto store = new ir.Store(_scope, fns, fns[0].name);
 	ensureResolved(lp, store);
 	return store;
+}
+
+ir.Node getStoreNodeRealParent(LanguagePass lp, ir.Store store)
+{
+	auto n = store.node;
+	auto _alias = cast(ir.Alias)n;
+	if (_alias !is null) {
+		if (_alias.id !is null) {
+			return getStoreNodeRealParent(lp, lookup(lp, _alias.lookScope, _alias.id));
+		} else {
+			return realType(_alias.type, false);
+		}
+	}
+	auto ed = cast(ir.EnumDeclaration)n;
+	if (ed !is null) {
+		return realType(ed.type, false);
+	}
+	auto tr = cast(ir.TypeReference)n;
+	if (tr !is null) {
+		return realType(tr, false);
+	}
+	auto t = cast(ir.Type)n;
+	if (t !is null) {
+		return realType(t, false);
+	}
+	return n;
 }
 
 /**
