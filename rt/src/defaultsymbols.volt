@@ -3,9 +3,12 @@
  */
 module defaultsymbols;
 
-static import object;
+version (V_P64) {
+	alias size_t = ulong;
+	alias ptrdiff_t = long;
+} else {
+	alias size_t = uint;
+	alias ptrdiff_t = int;
+}
 
-alias size_t    = object.size_t;
-alias ptrdiff_t = object.ptrdiff_t;
-
-alias string    = object.string;
+alias string = immutable(char)[];

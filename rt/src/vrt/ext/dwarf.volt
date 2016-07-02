@@ -2,8 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.ext.dwarf;
 
-static import object;
-
+import core.object : vrt_panic;
 import vrt.ext.stdc : uintptr_t;
 
 
@@ -108,7 +107,7 @@ size_t dw_encoded_size(ubyte encoding)
 	default:
 		char[][1] msgs;
 		msgs[0] = cast(char[])"unhandled case";
-		object.vrt_panic(cast(char[][])msgs);
+		vrt_panic(cast(char[][])msgs);
 		break;
 	}
 	assert(false); // To please cfg detection
@@ -158,7 +157,7 @@ uintptr_t dw_read_encoded(const(ubyte)** data, ubyte encoding)
 	default:
 		char[][1] msgs;
 		msgs[0] = cast(char[])"unhandled case type";
-		object.vrt_panic(cast(char[][])msgs);
+		vrt_panic(cast(char[][])msgs);
 		break;
 	}
 
@@ -172,7 +171,7 @@ uintptr_t dw_read_encoded(const(ubyte)** data, ubyte encoding)
 		default:
 			char[][1] msgs;
 			msgs[0] = cast(char[])"unhandled case type";
-			object.vrt_panic(cast(char[][])msgs);
+			vrt_panic(cast(char[][])msgs);
 			break;
 		}
 

@@ -2,7 +2,9 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.eh;
 
-static import object;
+import core.object : vrt_panic, vrt_handle_cast;
+import core.typeinfo : TypeInfo;
+import core.exception : Throwable, Error;
 
 
 version (!Emscripten && !MSVC && !Metal):
@@ -32,7 +34,7 @@ version (X86) {
 struct vrt_eh_exception
 {
 	_Unwind_Exception e;
-	object.Throwable t;
+	Throwable t;
 }
 
 /**
@@ -52,7 +54,7 @@ extern(C) void vrt_eh_delete(
 /**
  * Throws a exception.
  */
-extern(C) void vrt_eh_throw(object.Throwable t, string file, size_t line)
+extern(C) void vrt_eh_throw(Throwable t, string file, size_t line)
 {
 	auto e = new vrt_eh_exception;
 
@@ -66,12 +68,12 @@ extern(C) void vrt_eh_throw(object.Throwable t, string file, size_t line)
 	auto f = _Unwind_RaiseException(&e.e);
 	char[][1] msgs;
 	msgs[0] = cast(char[])"FAILED TO RAISE EXCEPTION";
-	object.vrt_panic(cast(char[][])msgs);
+	vrt_panic(cast(char[][])msgs);
 }
 
 extern(C) void vrt_eh_throw_slice_error(string file, size_t line)
 {
-	vrt_eh_throw(new object.Error("invalid array cast"), file, line);
+	vrt_eh_throw(new Error("invalid array cast"), file, line);
 }
 
 /**
@@ -92,7 +94,7 @@ extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
 	if (data is null) {
 		char[][1] msgs;
 		msgs[0] = cast(char[])"non region data";
-		object.vrt_panic(cast(char[][])msgs);
+		vrt_panic(cast(char[][])msgs);
 		return _Unwind_Reason_Code.FATAL_PHASE1_ERROR;
 	}
 
@@ -119,7 +121,7 @@ extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
 	} else {
 		char[][1] msgs;
 		msgs[0] = cast(char[])"unhandled lpStartEncoding";
-		object.vrt_panic(cast(char[][])msgs);
+		vrt_panic(cast(char[][])msgs);
 		return _Unwind_Reason_Code.FATAL_PHASE1_ERROR;
 	}
 
@@ -139,7 +141,7 @@ extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
 	}
 
 	// Extract the Throwable object.
-	object.Throwable throwable;
+	Throwable throwable;
 	if (exceptionObject.exception_class == *cast(ulong*)VRT_EH_NAME.ptr) {
 		auto eh = cast(vrt_eh_exception*)exceptionObject;
 		throwable = eh.t;
@@ -157,7 +159,7 @@ extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
 	} else {
 		char[][1] msgs;
 		msgs[0] = cast(char[])"unhandled callingSiteEncoding";
-		object.vrt_panic(cast(char[][])msgs);
+		vrt_panic(cast(char[][])msgs);
 		return _Unwind_Reason_Code.FATAL_PHASE1_ERROR;
 	}
 
@@ -209,8 +211,8 @@ extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
 					// If this is a forign exception or no type table found.
 					if (typeInfo !is null) {
 						auto ptr = typeInfo - (typeOffset * typeInfoEncodingSize);
-						auto ti = cast(object.TypeInfo)dw_read_encoded(&ptr, typeInfoEncoding);
-						auto casted = object.vrt_handle_cast(cast(void*)throwable, ti);
+						auto ti = cast(TypeInfo)dw_read_encoded(&ptr, typeInfoEncoding);
+						auto casted = vrt_handle_cast(cast(void*)throwable, ti);
 						if (casted !is null) {
 							return vrt_eh_install_action(ip, actions, typeOffset, throwable, ctx);
 						}
@@ -225,7 +227,7 @@ extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
 
 				char[][1] msgs;
 				msgs[0] = cast(char[])"unhandled case";
-				object.vrt_panic(cast(char[][])msgs);
+				vrt_panic(cast(char[][])msgs);
 				return _Unwind_Reason_Code.FATAL_PHASE1_ERROR;
 			}
 		}
@@ -238,7 +240,7 @@ _Unwind_Reason_Code vrt_eh_install_action(
 	uintptr_t ip,
 	_Unwind_Action actions,
 	uintptr_t switchVal,
-	object.Throwable t,
+	Throwable t,
 	_Unwind_Context* ctx)
 {
 	// A finally doesn't count as a handler, so we should continue.

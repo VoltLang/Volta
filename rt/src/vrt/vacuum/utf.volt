@@ -2,7 +2,7 @@
 // See copyright notice in src/volt/licence.d (BOOST ver 1.0)
 module vrt.vacuum.utf;
 
-static import object;
+import core.utf : MalformedUTF8Exception;
 
 
 private enum ONE_BYTE_MASK                   = 0x80;
@@ -17,7 +17,7 @@ private enum CONTINUING_MASK                 = 0xC0;
 private ubyte _read_byte(string str, ref size_t index)
 {
 	if (index >= str.length) {
-		throw new object.MalformedUTF8Exception("unexpected end of stream");
+		throw new MalformedUTF8Exception("unexpected end of stream");
 	}
 	ubyte b = str[index];
 	index = index + 1;
@@ -34,7 +34,7 @@ extern (C) dchar vrt_reverse_decode_u8_d(string str, ref size_t index)
 {
 	while ((str[index] & TWO_BYTE_RESULT) == ONE_BYTE_MASK) {
 		if (index == 0) {
-			throw new object.MalformedUTF8Exception("reverse_decode: malformed utf-8 string");
+			throw new MalformedUTF8Exception("reverse_decode: malformed utf-8 string");
 		}
 		index--;
 	}
@@ -95,7 +95,7 @@ extern (C) dchar vrt_decode_u8_d(string str, ref size_t index)
 		return c1 | c2 | c3 | c4 | c5 | c6;
 	}
 
-	throw new object.MalformedUTF8Exception("utf-8 decode failure");
+	throw new MalformedUTF8Exception("utf-8 decode failure");
 }
 
 /// Return how many codepoints are in a given UTF-8 string.
@@ -165,7 +165,7 @@ extern (C) string vrt_encode_d_u8(dchar c)
 		buf[0] = _read_byte(0x00FC, 0x0001);
 		return cast(string)new buf[0 .. 6];
 	} else {
-		throw new object.MalformedUTF8Exception("encode: unsupported codepoint range");
+		throw new MalformedUTF8Exception("encode: unsupported codepoint range");
 	}
 }
 

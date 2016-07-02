@@ -2,8 +2,11 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.vacuum.aa;
 
-static import object;
-import core.exception;
+import core.object : vrt_memcmp;
+import core.exception : Exception;
+import core.typeinfo : TypeInfo;
+import core.llvm : __llvm_memcpy;
+import core.rt.gc : allocDg;
 
 
 // Volts AA (Associative Array) Implementation
@@ -35,13 +38,13 @@ private struct RedBlackTree
 	TreeNode* root;
 	size_t length;
 
-	object.TypeInfo value;
-	object.TypeInfo key;
+	TypeInfo value;
+	TypeInfo key;
 	bool isValuePtr;
 }
 
 
-extern(C) void* vrt_aa_new(object.TypeInfo value, object.TypeInfo key)
+extern(C) void* vrt_aa_new(TypeInfo value, TypeInfo key)
 {
 	RedBlackTree* rbt = new RedBlackTree;
 	rbt.root = null;
@@ -167,7 +170,7 @@ private TreeNode* vrt_aa_lookup_node_array(void* rbtv, void[] key)
 		} else if (node.key.array.length > key.length) {
 			comparison = -1; // key.length is shorter
 		} else {
-			comparison = object.vrt_memcmp(node.key.array.ptr, key.ptr, key.length);
+			comparison = vrt_memcmp(node.key.array.ptr, key.ptr, key.length);
 		}
 
 		if (comparison < 0) {
@@ -195,9 +198,9 @@ extern(C) bool vrt_aa_in_primitive(void* rbtv, ulong key, void* ret)
 	}
 
 	if (rbt.isValuePtr) {
-		object.__llvm_memcpy(ret, node.value.ptr, rbt.value.size, 0, false);
+		__llvm_memcpy(ret, node.value.ptr, rbt.value.size, 0, false);
 	} else {
-		object.__llvm_memcpy(ret, cast(void*)&(node.value), rbt.value.size, 0, false);
+		__llvm_memcpy(ret, cast(void*)&(node.value), rbt.value.size, 0, false);
 	}
 	return true;
 }
@@ -215,9 +218,9 @@ extern(C) bool vrt_aa_in_array(void* rbtv, void[] key, void* ret)
 	}
 
 	if (rbt.isValuePtr) {
-		object.__llvm_memcpy(ret, node.value.ptr, rbt.value.size, 0, false);
+		__llvm_memcpy(ret, node.value.ptr, rbt.value.size, 0, false);
 	} else {
-		object.__llvm_memcpy(ret, cast(void*)&(node.value), rbt.value.size, 0, false);
+		__llvm_memcpy(ret, cast(void*)&(node.value), rbt.value.size, 0, false);
 	}
 	return true;
 }
@@ -309,11 +312,11 @@ extern(C) void vrt_aa_insert_primitive(void* rbtv, ulong key, void* value)
 
 	if (rbt.isValuePtr) {
 		// allocate more memory for value
-		void* mem = object.allocDg(rbt.value, 1);
-		object.__llvm_memcpy(mem, value, rbt.value.size, 0, false);
+		void* mem = allocDg(rbt.value, 1);
+		__llvm_memcpy(mem, value, rbt.value.size, 0, false);
 		inserted_node.value.ptr = mem;
 	} else {
-		object.__llvm_memcpy(cast(void*)&(inserted_node.value), value, rbt.value.size, 0, false);
+		__llvm_memcpy(cast(void*)&(inserted_node.value), value, rbt.value.size, 0, false);
 	}
 
 	if (rbt.root is null) {
@@ -369,11 +372,11 @@ extern(C) void vrt_aa_insert_array(void* rbtv, void[] key, void* value)
 
 	if (rbt.isValuePtr) {
 		// allocate more memory for value
-		void* mem = object.allocDg(rbt.value, 1);
-		object.__llvm_memcpy(mem, value, rbt.value.size, 0, false);
+		void* mem = allocDg(rbt.value, 1);
+		__llvm_memcpy(mem, value, rbt.value.size, 0, false);
 		inserted_node.value.ptr = mem;
 	} else {
-		object.__llvm_memcpy(cast(void*)&(inserted_node.value), value, rbt.value.size, 0, false);
+		__llvm_memcpy(cast(void*)&(inserted_node.value), value, rbt.value.size, 0, false);
 	}
 
 	if (rbt.root is null) {
@@ -389,7 +392,7 @@ extern(C) void vrt_aa_insert_array(void* rbtv, void[] key, void* value)
 			} else if (node.key.array.length > key.length) {
 				comparison = -1; // key.length is shorter
 			} else {
-				comparison = object.vrt_memcmp(node.key.array.ptr, key.ptr, key.length);
+				comparison = vrt_memcmp(node.key.array.ptr, key.ptr, key.length);
 			}
 
 			if (comparison < 0) {
@@ -600,7 +603,7 @@ extern (C) void[] vrt_aa_get_keys(void* rbtv)
 		return [];
 	}
 	auto rbt = cast(RedBlackTree*) rbtv;
-	auto arr = object.allocDg(rbt.key, rbt.length)[0 .. rbt.length * rbt.key.size];
+	auto arr = allocDg(rbt.key, rbt.length)[0 .. rbt.length * rbt.key.size];
 	size_t currentIndex;
 	vrt_aa_walk(rbt, rbt.root, true, rbt.key.size, ref arr, ref currentIndex);
 	return arr;
@@ -613,7 +616,7 @@ extern (C) void[] vrt_aa_get_values(void* rbtv)
 		return [];
 	}
 	auto rbt = cast(RedBlackTree*) rbtv;
-	auto arr = object.allocDg(rbt.value, rbt.length)[0 .. rbt.length * rbt.value.size];
+	auto arr = allocDg(rbt.value, rbt.length)[0 .. rbt.length * rbt.value.size];
 	size_t currentIndex;
 	vrt_aa_walk(rbt, rbt.root, false, rbt.value.size, ref arr, ref currentIndex);
 	return arr;
@@ -631,9 +634,9 @@ private void vrt_aa_walk(RedBlackTree* rbt, TreeNode* node, bool getKey, size_t 
 		auto tn = getKey ? node.key : node.value;
 
 		if (argSize > typeid(TreeStore).size) {
-			object.__llvm_memcpy(&arr[currentIndex], tn.ptr, argSize, 0, false);
+			__llvm_memcpy(&arr[currentIndex], tn.ptr, argSize, 0, false);
 		} else {
-			object.__llvm_memcpy(&arr[currentIndex], cast(void*)&tn, argSize, 0, false);
+			__llvm_memcpy(&arr[currentIndex], cast(void*)&tn, argSize, 0, false);
 		}
 		currentIndex += argSize;
 		vrt_aa_walk(rbt, node.right, getKey, argSize, ref arr, ref currentIndex);

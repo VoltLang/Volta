@@ -3,9 +3,10 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.os.gc;
 
-static import object;
-
-import core.rt.gc : Stats;
+import core.object : Object;
+import core.llvm : __llvm_memset, __llvm_memcpy;
+import core.typeinfo : TypeInfo;
+import core.rt.gc : Stats, AllocDg;
 
 
 version (Emscripten) {
@@ -75,18 +76,18 @@ extern(C) void vrt_gc_get_stats(out Stats res)
 	res = stats;
 }
 
-extern(C) object.AllocDg vrt_gc_get_alloc_dg()
+extern(C) AllocDg vrt_gc_get_alloc_dg()
 {
 	StructToDg structToDg;
 
 	structToDg.func = cast(void*)gcMalloc;
 
-	return *cast(object.AllocDg*)&structToDg;
+	return *cast(AllocDg*)&structToDg;
 }
 
 extern(C) void vrt_gc_finalize_class(void* objPtr, void* client_data)
 {
-	auto obj = cast(object.Object)objPtr;
+	auto obj = cast(Object)objPtr;
 	obj.__dtor();
 }
 
@@ -102,7 +103,7 @@ extern(C) void vrt_gc_shutdown()
 	}
 }
 
-void* gcMalloc(void *ptr, object.TypeInfo typeinfo, size_t count)
+void* gcMalloc(void *ptr, TypeInfo typeinfo, size_t count)
 {
 	void* memory;
 	size_t size;
@@ -127,11 +128,11 @@ void* gcMalloc(void *ptr, object.TypeInfo typeinfo, size_t count)
 		memory = GC_malloc(size);
 	} else {
 		memory = GC_malloc_atomic(size);
-		object.__llvm_memset(memory, 0, size, 0, false);
+		__llvm_memset(memory, 0, size, 0, false);
 	}
 
 	if (count == cast(size_t) -1) {
-		object.__llvm_memcpy(memory, typeinfo.classInit, typeinfo.classSize, 0, false);
+		__llvm_memcpy(memory, typeinfo.classInit, typeinfo.classSize, 0, false);
 	}
 
 	if (registerFinalizer) {

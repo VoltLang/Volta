@@ -2,12 +2,12 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.os.gtors;
 
-static import object;
+import core.object : moduleInfoRoot;
 
 
 extern(C) void vrt_run_global_ctors()
 {
-	auto mod = object.moduleInfoRoot;
+	auto mod = moduleInfoRoot;
 	while (mod !is null) {
 		foreach (func; mod.ctors) {
 			func();
@@ -18,7 +18,7 @@ extern(C) void vrt_run_global_ctors()
 
 extern(C) void vrt_run_global_dtors()
 {
-	auto mod = object.moduleInfoRoot;
+	auto mod = moduleInfoRoot;
 	while (mod !is null) {
 		foreach (func; mod.dtors) {
 			func();
