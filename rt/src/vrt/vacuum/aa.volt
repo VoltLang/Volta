@@ -5,8 +5,8 @@ module vrt.vacuum.aa;
 import core.object : vrt_memcmp;
 import core.exception : Exception;
 import core.typeinfo : TypeInfo;
-import core.llvm : __llvm_memcpy;
 import core.rt.gc : allocDg;
+import core.compiler.llvm : __llvm_memcpy;
 
 
 // Volts AA (Associative Array) Implementation

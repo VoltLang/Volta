@@ -4,9 +4,9 @@
 module vrt.os.gc;
 
 import core.object : Object;
-import core.llvm : __llvm_memset, __llvm_memcpy;
 import core.typeinfo : TypeInfo;
 import core.rt.gc : Stats, AllocDg;
+import core.compiler.llvm : __llvm_memset, __llvm_memcpy;
 
 
 version (Emscripten) {

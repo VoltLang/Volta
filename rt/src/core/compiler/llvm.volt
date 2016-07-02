@@ -1,6 +1,7 @@
 // Copyright © 2012-2016, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module core.llvm;
+module core.compiler.llvm;
+
 
 extern (C):
 
@@ -14,6 +15,7 @@ extern (C):
 @mangledName("llvm.va_start") void __llvm_volt_va_start(void*);
 @mangledName("llvm.va_end") void __llvm_volt_va_end(void*);
 @mangledName("llvm.eh.typeid.for") int __llvm_typeid_for(void*);
+
 version (V_P32) {
 	alias __llvm_memset = __llvm_memset_p0i8_i32;
 	alias __llvm_memcpy = __llvm_memcpy_p0i8_p0i8_i32;
