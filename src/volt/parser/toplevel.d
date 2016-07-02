@@ -67,8 +67,7 @@ ParseStatus parseModule(ParserStream ps, out ir.Module mod)
 	// Don't include the default modules in themselves.
 	// Maybe move to gather or import resolver?
 	if (mod.name.identifiers.length == 1 &&
-	    (mod.name.identifiers[0].value == "object" ||
-	     mod.name.identifiers[0].value == "defaultsymbols")) {
+	    mod.name.identifiers[0].value == "defaultsymbols") {
 		return Succeeded;
 	}
 

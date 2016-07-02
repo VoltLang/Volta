@@ -2,11 +2,11 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module core.rt.gc;
 
-static import object;
+static import __volta;
 
 
-alias AllocDg = object.AllocDg;
-alias allocDg = object.allocDg;
+alias AllocDg = __volta.AllocDg;
+alias allocDg = __volta.allocDg;
 
 struct Stats
 {

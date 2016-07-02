@@ -300,11 +300,11 @@ void addScope(ir.Scope current, ir.Class c, Where where)
 
 	// Identify if this class is the one true Object.
 	if (where == Where.Module &&
-	    current.name == "object" &&
+	    current.name == "__volta" &&
 	    c.name == "Object") {
 		auto mod = cast(ir.Module) current.node;
 		assert(mod !is null);
-		assert(mod.name.identifiers[$-1].value == "object");
+		assert(mod.name.identifiers[$-1].value == "__volta");
 
 		c.isObject = mod.name.identifiers.length == 1;
 	}

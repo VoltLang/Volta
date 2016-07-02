@@ -2,29 +2,15 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module core.object;
 
-static import object;
+static import __volta;
 
 import core.typeinfo;
 
 
-/+
-alias string = immutable(char)[];
-alias wstring = immutable(wchar)[];
-alias dstring = immutable(dchar)[];
-
-version (V_P64) {
-	alias size_t = ulong;
-	alias ptrdiff_t = long;
-} else {
-	alias size_t = uint;
-	alias ptrdiff_t = int;
-}
-+/
-
-alias ModuleInfo = object.ModuleInfo;
-alias moduleInfoRoot = object.moduleInfoRoot;
-alias Object = object.Object;
-alias Attribute = object.Attribute;
+alias ModuleInfo = __volta.ModuleInfo;
+alias moduleInfoRoot = __volta.moduleInfoRoot;
+alias Object = __volta.Object;
+alias Attribute = __volta.Attribute;
 
 extern(C):
 

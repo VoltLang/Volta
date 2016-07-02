@@ -160,14 +160,24 @@ public:
 	void setupOneTruePointers()
 	{
 		Location loc;
-		objectModule = getModule(buildQualifiedName(loc, "object"));
+		auto defModule = getModule(buildQualifiedName(loc, "defaultsymbols"));
+		objectModule = getModule(buildQualifiedName(loc, "__volta"));
+
+		ir.Module[] mods = [
+			defModule,
+			objectModule
+		];
+
+		if (defModule is null) {
+			throw panic("could not find defaultsymbols module");
+		}
 		if (objectModule is null) {
-			throw panic("could not find object module");
+			throw panic("could not find __volta module");
 		}
 
 
 		// Run postParse passes so we can lookup things.
-		phase1(objectModule);
+		phase1(mods);
 
 		if (mRemoveConditionalsOnly) {
 			return;
@@ -313,7 +323,7 @@ public:
 		TYPE_FUNCTION = getTypeEnum("Function");
 		TYPE_DELEGATE = getTypeEnum("Delegate");
 
-		phase2([objectModule]);
+		phase2(mods);
 	}
 
 	override void addModule(ir.Module m)

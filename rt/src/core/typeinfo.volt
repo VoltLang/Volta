@@ -2,10 +2,10 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module core.typeinfo;
 
-static import object;
+static import __volta;
 
 
-alias Type = object.Type;
-alias TypeInfo = object.TypeInfo;
-alias ClassInfo = object.ClassInfo;
-alias InterfaceInfo = object.InterfaceInfo;
+alias Type = __volta.Type;
+alias TypeInfo = __volta.TypeInfo;
+alias ClassInfo = __volta.ClassInfo;
+alias InterfaceInfo = __volta.InterfaceInfo;
