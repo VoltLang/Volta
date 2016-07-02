@@ -13,7 +13,7 @@ extern(C) void* vrt_handle_cast(void* obj, object.TypeInfo tinfo)
 		if (list[i] is tinfo) {
 			return obj;
 		}
-		if (tinfo.type == object.TYPE_INTERFACE) {
+		if (tinfo.type == object.Type.Interface) {
 			auto cinfo = list[i];
 			foreach (iface; cinfo.interfaces) {
 				if (iface.info is tinfo) {

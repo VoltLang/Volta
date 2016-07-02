@@ -5,6 +5,7 @@ module core.typeinfo;
 static import object;
 
 
+alias Type = object.Type;
 alias TypeInfo = object.TypeInfo;
 alias ClassInfo = object.ClassInfo;
 alias InterfaceInfo = object.InterfaceInfo;

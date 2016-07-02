@@ -184,14 +184,27 @@ public:
 			}
 		}
 
-		int getEnum(string name)
+		int getEnumDeclarationValue(ir.EnumDeclaration ed)
 		{
-			auto ed = cast(ir.EnumDeclaration)s.getStore(name).node;
-			check(ed, name);
 			assert(ed.assign !is null);
 			auto constant = evaluate(this, s, ed.assign);
 			assert(constant !is null);
 			return constant.u._int;
+		}
+
+		/**
+		 * Get a member from the Type enum.
+		 */
+		int getTypeEnum(string name)
+		{
+			auto e = cast(ir.Enum)s.getStore("Type").node;
+			check(e, "Type");
+			foreach (ed; e.members) {
+				if (ed.assign !is null && ed.name == name) {
+					return getEnumDeclarationValue(ed);
+				}
+			}
+			throw panicRuntimeObjectNotFound(name);
 		}
 
 		ir.Class getClass(string name)
@@ -270,35 +283,35 @@ public:
 		utfDecode_u8_d = getFunction("vrt_decode_u8_d");
 		utfReverseDecode_u8_d = getFunction("vrt_reverse_decode_u8_d");
 
-		TYPE_STRUCT = getEnum("TYPE_STRUCT");
-		TYPE_CLASS = getEnum("TYPE_CLASS");
-		TYPE_INTERFACE = getEnum("TYPE_INTERFACE");
-		TYPE_UNION = getEnum("TYPE_UNION");
-		TYPE_ENUM = getEnum("TYPE_ENUM");
-		TYPE_ATTRIBUTE = getEnum("TYPE_ATTRIBUTE");
-		TYPE_USER_ATTRIBUTE = getEnum("TYPE_USER_ATTRIBUTE");
-		TYPE_VOID = getEnum("TYPE_VOID");
-		TYPE_UBYTE = getEnum("TYPE_UBYTE");
-		TYPE_BYTE = getEnum("TYPE_BYTE");
-		TYPE_CHAR = getEnum("TYPE_CHAR");
-		TYPE_BOOL = getEnum("TYPE_BOOL");
-		TYPE_USHORT = getEnum("TYPE_USHORT");
-		TYPE_SHORT = getEnum("TYPE_SHORT");
-		TYPE_WCHAR = getEnum("TYPE_WCHAR");
-		TYPE_UINT = getEnum("TYPE_UINT");
-		TYPE_INT = getEnum("TYPE_INT");
-		TYPE_DCHAR = getEnum("TYPE_DCHAR");
-		TYPE_FLOAT = getEnum("TYPE_FLOAT");
-		TYPE_ULONG = getEnum("TYPE_ULONG");
-		TYPE_LONG = getEnum("TYPE_LONG");
-		TYPE_DOUBLE = getEnum("TYPE_DOUBLE");
-		TYPE_REAL = getEnum("TYPE_REAL");
-		TYPE_POINTER = getEnum("TYPE_POINTER");
-		TYPE_ARRAY = getEnum("TYPE_ARRAY");
-		TYPE_STATIC_ARRAY = getEnum("TYPE_STATIC_ARRAY");
-		TYPE_AA = getEnum("TYPE_AA");
-		TYPE_FUNCTION = getEnum("TYPE_FUNCTION");
-		TYPE_DELEGATE = getEnum("TYPE_DELEGATE");
+		TYPE_STRUCT = getTypeEnum("Struct");
+		TYPE_CLASS = getTypeEnum("Class");
+		TYPE_INTERFACE = getTypeEnum("Interface");
+		TYPE_UNION = getTypeEnum("Union");
+		TYPE_ENUM = getTypeEnum("Enum");
+		TYPE_ATTRIBUTE = getTypeEnum("Attribute");
+		TYPE_USER_ATTRIBUTE = getTypeEnum("UserAttribute");
+		TYPE_VOID = getTypeEnum("Void");
+		TYPE_UBYTE = getTypeEnum("U8");
+		TYPE_BYTE = getTypeEnum("I8");
+		TYPE_CHAR = getTypeEnum("Char");
+		TYPE_BOOL = getTypeEnum("Bool");
+		TYPE_USHORT = getTypeEnum("U16");
+		TYPE_SHORT = getTypeEnum("I16");
+		TYPE_WCHAR = getTypeEnum("Wchar");
+		TYPE_UINT = getTypeEnum("U32");
+		TYPE_INT = getTypeEnum("I32");
+		TYPE_DCHAR = getTypeEnum("Dchar");
+		TYPE_FLOAT = getTypeEnum("F32");
+		TYPE_ULONG = getTypeEnum("U64");
+		TYPE_LONG = getTypeEnum("I32");
+		TYPE_DOUBLE = getTypeEnum("F64");
+		TYPE_REAL = getTypeEnum("Real");
+		TYPE_POINTER = getTypeEnum("Pointer");
+		TYPE_ARRAY = getTypeEnum("Array");
+		TYPE_STATIC_ARRAY = getTypeEnum("StaticArray");
+		TYPE_AA = getTypeEnum("AA");
+		TYPE_FUNCTION = getTypeEnum("Function");
+		TYPE_DELEGATE = getTypeEnum("Delegate");
 
 		phase2([objectModule]);
 	}
