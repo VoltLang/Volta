@@ -196,7 +196,7 @@ void fillInParentIfNeeded(LanguagePass lp, ir.Class c)
 	ir.Class parent;
 
 	void fillNullParent() {
-		c.parent = buildQualifiedName(c.location, ["object", "Object"]);
+		c.parent = buildQualifiedName(c.location, ["core", "object", "Object"]);
 		parent = lp.objectClass;
 	}
 
