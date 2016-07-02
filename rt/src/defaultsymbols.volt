@@ -3,6 +3,12 @@
  */
 module defaultsymbols;
 
+
+/**
+ * These are two types are aliases to integer types that are large enough to
+ * offset the entire available address space.
+ * @{
+ */
 version (V_P64) {
 	alias size_t = ulong;
 	alias ptrdiff_t = long;
@@ -10,5 +16,9 @@ version (V_P64) {
 	alias size_t = uint;
 	alias ptrdiff_t = int;
 }
+/**
+ * @}
+ */
 
+/// The string type.
 alias string = immutable(char)[];
