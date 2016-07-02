@@ -7,3 +7,5 @@ static import object;
 
 alias __volt_va_start = object.__volt_va_start;
 alias __volt_va_end = object.__volt_va_end;
+alias __llvm_volt_va_start = object.__llvm_volt_va_start;
+alias __llvm_volt_va_end = object.__llvm_volt_va_end;
