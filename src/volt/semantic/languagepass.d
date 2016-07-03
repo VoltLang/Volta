@@ -261,6 +261,7 @@ public:
 		attributeClass = getClassFrom(objectModule, "Attribute");
 		moduleInfoStruct = getStructFrom(objectModule, "ModuleInfo");
 		moduleInfoRoot = getVarFrom(objectModule, "moduleInfoRoot");
+		arrayStruct = getStructFrom(objectModule, "ArrayStruct");
 
 		// core.typeinfo
 		typeInfoClass = getClassFrom(typeInfoModule, "TypeInfo");
@@ -348,9 +349,6 @@ public:
 		vaCEndFunc = getFunctionFrom(llvmModule, "__llvm_volt_va_end");
 		memsetFunc = getFunctionFrom(llvmModule, "__llvm_memset_p0i8_i32");
 		memcpyFunc = getFunctionFrom(llvmModule, "__llvm_memcpy_p0i8_p0i8_i32");
-
-		// Misc
-		arrayStruct = getStruct("ArrayStruct");
 
 		phase2(mods);
 	}

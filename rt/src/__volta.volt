@@ -3,8 +3,3 @@
 module __volta;
 
 
-struct ArrayStruct
-{
-	size_t length;
-	void* ptr;
-}
