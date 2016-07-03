@@ -164,11 +164,13 @@ public:
 		auto voltaModule = getModule(buildQualifiedName(loc, "__volta"));
 		auto objectModule = getModule(buildQualifiedName(loc, "core", "object"));
 		auto typeInfoModule = getModule(buildQualifiedName(loc, "core", "typeinfo"));
+		auto exceptionModule = getModule(buildQualifiedName(loc, "core", "exception"));
 
 		ir.Module[] mods = [
 			defModule,
 			objectModule,
 			typeInfoModule,
+			exceptionModule,
 			voltaModule
 		];
 
@@ -284,15 +286,14 @@ public:
 		TYPE_FUNCTION = getTypeEnum("Function");
 		TYPE_DELEGATE = getTypeEnum("Delegate");
 
+		// core.exception
+		assertErrorClass = getClassFrom(exceptionModule, "AssertError");
+		throwableClass = getClassFrom(exceptionModule, "Throwable");
+		keyNotFoundException = getClassFrom(exceptionModule, "KeyNotFoundException");
 
-		// Get the classes.
-		assertErrorClass = getClass("AssertError");
-		throwableClass = getClass("Throwable");
+		// Misc
 		arrayStruct = getStruct("ArrayStruct");
 		allocDgVariable = getVar("allocDg");
-
-		// Exception
-		keyNotFoundException = getClass("KeyNotFoundException");
 
 		// VA
 		vaStartFunc = getFunction("__volt_va_start");
@@ -331,7 +332,6 @@ public:
 		aaGetAA = getFunction("vrt_aa_get_aa");
 		aaGetAP = getFunction("vrt_aa_get_ap");
 		aaGetPA = getFunction("vrt_aa_get_pa");
-
 
 		// UTF
 		utfDecode_u8_d = getFunction("vrt_decode_u8_d");
