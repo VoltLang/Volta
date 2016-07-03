@@ -166,6 +166,7 @@ public:
 		auto typeInfoModule = getModule(buildQualifiedName(loc, "core", "typeinfo"));
 		auto exceptionModule = getModule(buildQualifiedName(loc, "core", "exception"));
 		auto rtGCModule = getModule(buildQualifiedName(loc, "core", "rt", "gc"));
+		auto rtMiscModule = getModule(buildQualifiedName(loc, "core", "rt", "misc"));
 
 		ir.Module[] mods = [
 			defModule,
@@ -173,6 +174,7 @@ public:
 			typeInfoModule,
 			exceptionModule,
 			rtGCModule,
+			rtMiscModule,
 			voltaModule
 		];
 
@@ -296,6 +298,16 @@ public:
 		// core.rt.gc
 		allocDgVariable = getVarFrom(rtGCModule, "allocDg");
 
+		// core.rt.misc
+		ehThrowFunc = getFunctionFrom(rtMiscModule, "vrt_eh_throw");
+		ehThrowSliceErrorFunc = getFunctionFrom(rtMiscModule, "vrt_eh_throw_slice_error");
+		ehPersonalityFunc = getFunctionFrom(rtMiscModule, "vrt_eh_personality_v0");
+		utfDecode_u8_d = getFunctionFrom(rtMiscModule, "vrt_decode_u8_d");
+		utfReverseDecode_u8_d = getFunctionFrom(rtMiscModule, "vrt_reverse_decode_u8_d");
+		hashFunc = getFunctionFrom(rtMiscModule, "vrt_hash");
+		castFunc = getFunctionFrom(rtMiscModule, "vrt_handle_cast");
+		memcmpFunc = getFunctionFrom(rtMiscModule, "vrt_memcmp");
+
 		// Misc
 		arrayStruct = getStruct("ArrayStruct");
 
@@ -306,16 +318,8 @@ public:
 		vaCEndFunc = getFunction("__llvm_volt_va_end");
 
 		// Util
-		hashFunc = getFunction("vrt_hash");
-		castFunc = getFunction("vrt_handle_cast");
 		memsetFunc = getFunction("__llvm_memset_p0i8_i32");
 		memcpyFunc = getFunction("__llvm_memcpy_p0i8_p0i8_i32");
-		memcmpFunc = getFunction("vrt_memcmp");
-
-		// EH
-		ehThrowFunc = getFunction("vrt_eh_throw");
-		ehThrowSliceErrorFunc = getFunction("vrt_eh_throw_slice_error");
-		ehPersonalityFunc = getFunction("vrt_eh_personality_v0");
 
 		// AA
 		aaNew = getFunction("vrt_aa_new");
@@ -336,10 +340,6 @@ public:
 		aaGetAA = getFunction("vrt_aa_get_aa");
 		aaGetAP = getFunction("vrt_aa_get_ap");
 		aaGetPA = getFunction("vrt_aa_get_pa");
-
-		// UTF
-		utfDecode_u8_d = getFunction("vrt_decode_u8_d");
-		utfReverseDecode_u8_d = getFunction("vrt_reverse_decode_u8_d");
 
 		// LLVM
 		llvmTypeidFor = getFunction("__llvm_typeid_for");
