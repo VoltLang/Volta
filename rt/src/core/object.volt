@@ -2,15 +2,57 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module core.object;
 
-static import __volta;
-
 import core.typeinfo;
 
 
-alias ModuleInfo = __volta.ModuleInfo;
-alias moduleInfoRoot = __volta.moduleInfoRoot;
-alias Object = __volta.Object;
-alias Attribute = __volta.Attribute;
+/*
+ *
+ * Root objects for classes and attributes.
+ *
+ */
+
+/**
+ * Root for all classes.
+ */
+class Object
+{
+	~this() {}
+
+	string toString()
+	{
+		return "core.object.Object";
+	}
+}
+
+/**
+ * Base class for all user defined attributes.
+ */
+class Attribute
+{
+}
+
+
+/*
+ *
+ * Module support.
+ *
+ */
+
+struct ModuleInfo
+{
+	ModuleInfo* next;
+	void function()[] ctors;
+	void function()[] dtors;
+}
+
+@mangledName("_V__ModuleInfo_root") global ModuleInfo* moduleInfoRoot;
+
+
+/*
+ *
+ * Misc rt functions.
+ *
+ */
 
 extern(C):
 

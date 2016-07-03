@@ -161,17 +161,21 @@ public:
 	{
 		Location loc;
 		auto defModule = getModule(buildQualifiedName(loc, "defaultsymbols"));
-		auto objectModule = getModule(buildQualifiedName(loc, "__volta"));
+		auto voltaModule = getModule(buildQualifiedName(loc, "__volta"));
+		auto objectModule = getModule(buildQualifiedName(loc, "core", "object"));
+		auto typeInfoModule = getModule(buildQualifiedName(loc, "core", "typeinfo"));
 
 		ir.Module[] mods = [
 			defModule,
-			objectModule
+			objectModule,
+			typeInfoModule,
+			voltaModule
 		];
 
 		if (defModule is null) {
 			throw panic("could not find defaultsymbols module");
 		}
-		if (objectModule is null) {
+		if (voltaModule is null) {
 			throw panic("could not find __volta module");
 		}
 
@@ -185,7 +189,7 @@ public:
 
 		// The object module scope from which we should get everthing
 		// from, setup this here for convinience.
-		auto s = objectModule.myScope;
+		auto s = voltaModule.myScope;
 
 
 		int getEnumDeclarationValue(ir.EnumDeclaration ed)
@@ -239,19 +243,21 @@ public:
 			return _struct;
 		}
 
-		// Get the classes.
-		objectClass = getClass("Object");
+		// core.object
+		objectClass = getClassFrom(objectModule, "Object");
 		objectClass.isObject = true;
+		attributeClass = getClassFrom(objectModule, "Attribute");
+		moduleInfoStruct = getStructFrom(objectModule, "ModuleInfo");
+		moduleInfoRoot = getVarFrom(objectModule, "moduleInfoRoot");
+
+		// Get the classes.
 		typeInfoClass = getClass("TypeInfo");
-		attributeClass = getClass("Attribute");
 		assertErrorClass = getClass("AssertError");
 		classInfoClass = getClass("ClassInfo");
 		interfaceInfoClass = getClass("InterfaceInfo");
 		throwableClass = getClass("Throwable");
 		arrayStruct = getStruct("ArrayStruct");
-		moduleInfoStruct = getStruct("ModuleInfo");
 		allocDgVariable = getVar("allocDg");
-		moduleInfoRoot = getVar("moduleInfoRoot");
 
 		// Exception
 		keyNotFoundException = getClass("KeyNotFoundException");

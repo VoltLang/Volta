@@ -110,20 +110,6 @@ class InterfaceInfo
 	size_t offset;
 }
 
-class Object
-{
-	~this() {}
-
-	string toString()
-	{
-		return "object.Object";
-	}
-}
-
-class Attribute
-{
-}
-
 
 /*
  *
@@ -194,22 +180,6 @@ class KeyNotFoundException : Exception
 		super(msg);
 	}
 }
-
-
-/*
- *
- * Module support.
- *
- */
-
-struct ModuleInfo
-{
-	ModuleInfo* next;
-	void function()[] ctors;
-	void function()[] dtors;
-}
-
-@mangledName("_V__ModuleInfo_root") global ModuleInfo* moduleInfoRoot;
 
 
 /*
