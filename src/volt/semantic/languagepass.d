@@ -168,6 +168,8 @@ public:
 		auto rtGCModule = getModule(buildQualifiedName(loc, "core", "rt", "gc"));
 		auto rtAAModule = getModule(buildQualifiedName(loc, "core", "rt", "aa"));
 		auto rtMiscModule = getModule(buildQualifiedName(loc, "core", "rt", "misc"));
+		auto llvmModule = getModule(buildQualifiedName(loc, "core", "compiler", "llvm"));
+		auto varargsModule = getModule(buildQualifiedName(loc, "core", "compiler", "varargs"));
 
 		ir.Module[] mods = [
 			defModule,
@@ -177,6 +179,8 @@ public:
 			rtGCModule,
 			rtAAModule,
 			rtMiscModule,
+			llvmModule,
+			varargsModule,
 			voltaModule
 		];
 
@@ -330,26 +334,23 @@ public:
 		castFunc = getFunctionFrom(rtMiscModule, "vrt_handle_cast");
 		memcmpFunc = getFunctionFrom(rtMiscModule, "vrt_memcmp");
 
+		// core.compiler.varargs
+		vaStartFunc = getFunctionFrom(varargsModule, "__volt_va_start");
+		vaEndFunc = getFunctionFrom(varargsModule, "__volt_va_end");
+
+		// core.compiler.llvm
+		llvmTypeidFor = getFunctionFrom(llvmModule, "__llvm_typeid_for");
+		llvmMemmove32 = getFunctionFrom(llvmModule, "__llvm_memmove_p0i8_p0i8_i32");
+		llvmMemmove64 = getFunctionFrom(llvmModule, "__llvm_memmove_p0i8_p0i8_i64");
+		llvmMemcpy32 = getFunctionFrom(llvmModule, "__llvm_memcpy_p0i8_p0i8_i32");
+		llvmMemcpy64 = getFunctionFrom(llvmModule, "__llvm_memcpy_p0i8_p0i8_i64");
+		vaCStartFunc = getFunctionFrom(llvmModule, "__llvm_volt_va_start");
+		vaCEndFunc = getFunctionFrom(llvmModule, "__llvm_volt_va_end");
+		memsetFunc = getFunctionFrom(llvmModule, "__llvm_memset_p0i8_i32");
+		memcpyFunc = getFunctionFrom(llvmModule, "__llvm_memcpy_p0i8_p0i8_i32");
+
 		// Misc
 		arrayStruct = getStruct("ArrayStruct");
-
-		// VA
-		vaStartFunc = getFunction("__volt_va_start");
-		vaEndFunc = getFunction("__volt_va_end");
-		vaCStartFunc = getFunction("__llvm_volt_va_start");
-		vaCEndFunc = getFunction("__llvm_volt_va_end");
-
-		// Util
-		memsetFunc = getFunction("__llvm_memset_p0i8_i32");
-		memcpyFunc = getFunction("__llvm_memcpy_p0i8_p0i8_i32");
-
-		// LLVM
-		llvmTypeidFor = getFunction("__llvm_typeid_for");
-		llvmMemmove32 = getFunction("__llvm_memmove_p0i8_p0i8_i32");
-		llvmMemmove64 = getFunction("__llvm_memmove_p0i8_p0i8_i64");
-		llvmMemcpy32 = getFunction("__llvm_memcpy_p0i8_p0i8_i32");
-		llvmMemcpy64 = getFunction("__llvm_memcpy_p0i8_p0i8_i64");
-
 
 		phase2(mods);
 	}
