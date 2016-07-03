@@ -159,16 +159,15 @@ public:
 	 */
 	void setupOneTruePointers()
 	{
-		Location loc;
-		auto defModule = getModule(buildQualifiedName(loc, "defaultsymbols"));
-		auto objectModule = getModule(buildQualifiedName(loc, "core", "object"));
-		auto typeInfoModule = getModule(buildQualifiedName(loc, "core", "typeinfo"));
-		auto exceptionModule = getModule(buildQualifiedName(loc, "core", "exception"));
-		auto rtGCModule = getModule(buildQualifiedName(loc, "core", "rt", "gc"));
-		auto rtAAModule = getModule(buildQualifiedName(loc, "core", "rt", "aa"));
-		auto rtMiscModule = getModule(buildQualifiedName(loc, "core", "rt", "misc"));
-		auto llvmModule = getModule(buildQualifiedName(loc, "core", "compiler", "llvm"));
-		auto varargsModule = getModule(buildQualifiedName(loc, "core", "compiler", "varargs"));
+		auto defModule = getAndCheck("defaultsymbols");
+		auto objectModule = getAndCheck("core", "object");
+		auto typeInfoModule = getAndCheck("core", "typeinfo");
+		auto exceptionModule = getAndCheck("core", "exception");
+		auto rtGCModule = getAndCheck("core", "rt", "gc");
+		auto rtAAModule = getAndCheck("core", "rt", "aa");
+		auto rtMiscModule = getAndCheck("core", "rt", "misc");
+		auto llvmModule = getAndCheck("core", "compiler", "llvm");
+		auto varargsModule = getAndCheck("core", "compiler", "varargs");
 
 		ir.Module[] mods = [
 			defModule,
@@ -181,11 +180,6 @@ public:
 			llvmModule,
 			varargsModule,
 		];
-
-		if (defModule is null) {
-			throw panic("could not find defaultsymbols module");
-		}
-
 
 		// Run postParse passes so we can lookup things.
 		phase1(mods);
@@ -665,6 +659,17 @@ public:
 	 * Random stuff.
 	 *
 	 */
+
+	private ir.Module getAndCheck(string[] names...)
+	{
+		Location loc;
+		auto id = buildQualifiedName(loc, names);
+		auto m = getModule(id);
+		if (m is null) {
+			throw panic("Could not find module " ~ id.toString());
+		}
+		return m;
+	}
 
 	private static void check(ir.Node n, string name)
 	{
