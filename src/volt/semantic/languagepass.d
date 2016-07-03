@@ -161,7 +161,7 @@ public:
 	{
 		Location loc;
 		auto defModule = getModule(buildQualifiedName(loc, "defaultsymbols"));
-		objectModule = getModule(buildQualifiedName(loc, "__volta"));
+		auto objectModule = getModule(buildQualifiedName(loc, "__volta"));
 
 		ir.Module[] mods = [
 			defModule,

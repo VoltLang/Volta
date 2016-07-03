@@ -332,7 +332,6 @@ public:
 	 * Cached lookup items.
 	 * @{
 	 */
-	ir.Module objectModule;
 	ir.Class objectClass;
 	ir.Class typeInfoClass;
 	ir.Class attributeClass;
