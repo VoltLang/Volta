@@ -187,12 +187,6 @@ public:
 		// from, setup this here for convinience.
 		auto s = objectModule.myScope;
 
-		void check(ir.Node n, string name)
-		{
-			if (n is null) {
-				throw panicRuntimeObjectNotFound(name);
-			}
-		}
 
 		int getEnumDeclarationValue(ir.EnumDeclaration ed)
 		{
@@ -695,6 +689,47 @@ public:
 	 * Random stuff.
 	 *
 	 */
+
+	private static void check(ir.Node n, string name)
+	{
+		if (n is null) {
+			throw panicRuntimeObjectNotFound(name);
+		}
+	}
+
+	private static ir.Node getNodeFrom(ir.Module mod, string name)
+	{
+		auto s = mod.myScope.getStore(name);
+		return s !is null ? s.node : null;
+	}
+
+	private static ir.Class getClassFrom(ir.Module mod, string name)
+	{
+		auto clazz = cast(ir.Class)getNodeFrom(mod, name);
+		check(clazz, name);
+		return clazz;
+	}
+
+	private static ir.Variable getVarFrom(ir.Module mod, string name)
+	{
+		auto var = cast(ir.Variable)getNodeFrom(mod, name);
+		check(var, name);
+		return var;
+	}
+
+	private static ir.Struct getStructFrom(ir.Module mod, string name)
+	{
+		auto _struct = cast(ir.Struct)getNodeFrom(mod, name);
+		check(_struct, name);
+		return _struct;
+	}
+
+	private static ir.Function getFunctionFrom(ir.Module mod, string name)
+	{
+		auto func = cast(ir.Function)getNodeFrom(mod, name);
+		check(func, name);
+		return func;
+	}
 
 	private void addPODConstructors(ir.PODAggregate agg)
 	{
