@@ -247,6 +247,7 @@ public:
 
 		// Get the classes.
 		objectClass = getClass("Object");
+		objectClass.isObject = true;
 		typeInfoClass = getClass("TypeInfo");
 		attributeClass = getClass("Attribute");
 		assertErrorClass = getClass("AssertError");

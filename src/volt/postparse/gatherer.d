@@ -298,17 +298,6 @@ void addScope(ir.Scope current, ir.Class c, Where where)
 		throw panic(c, "anonymous classes not supported");
 	}
 
-	// Identify if this class is the one true Object.
-	if (where == Where.Module &&
-	    current.name == "__volta" &&
-	    c.name == "Object") {
-		auto mod = cast(ir.Module) current.node;
-		assert(mod !is null);
-		assert(mod.name.identifiers[$-1].value == "__volta");
-
-		c.isObject = mod.name.identifiers.length == 1;
-	}
-
 	assert(c.myScope is null);
 	c.myScope = new ir.Scope(current, c, c.name, current.nestedDepth);
 }
