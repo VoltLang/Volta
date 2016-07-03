@@ -3065,7 +3065,7 @@ void extypeBlockStatement(Context ctx, ir.BlockStatement bs)
 void extypeThrowStatement(Context ctx, ref ir.Node n)
 {
 	auto t = cast(ir.ThrowStatement) n;
-	auto throwable = cast(ir.Class) retrieveTypeFromObject(ctx.lp, t.location, "Throwable");
+	auto throwable = ctx.lp.throwableClass;
 	assert(throwable !is null);
 
 	auto rawType = extype(ctx, t.exp, Parent.NA);

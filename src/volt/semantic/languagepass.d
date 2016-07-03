@@ -252,10 +252,14 @@ public:
 		assertErrorClass = getClass("AssertError");
 		classInfoClass = getClass("ClassInfo");
 		interfaceInfoClass = getClass("InterfaceInfo");
+		throwableClass = getClass("Throwable");
 		arrayStruct = getStruct("ArrayStruct");
 		moduleInfoStruct = getStruct("ModuleInfo");
 		allocDgVariable = getVar("allocDg");
 		moduleInfoRoot = getVar("moduleInfoRoot");
+
+		// Exception
+		keyNotFoundException = getClass("KeyNotFoundException");
 
 		// VA
 		vaStartFunc = getFunction("__volt_va_start");
@@ -276,22 +280,36 @@ public:
 		ehPersonalityFunc = getFunction("vrt_eh_personality_v0");
 
 		// AA
+		aaNew = getFunction("vrt_aa_new");
+		aaDup = getFunction("vrt_aa_dup");
+		aaRehash = getFunction("vrt_aa_rehash");
 		aaGetKeys = getFunction("vrt_aa_get_keys");
 		aaGetValues = getFunction("vrt_aa_get_values");
 		aaGetLength = getFunction("vrt_aa_get_length");
-		aaInArray = getFunction("vrt_aa_in_binop_array");
-		aaInPrimitive = getFunction("vrt_aa_in_binop_primitive");
-		aaRehash = getFunction("vrt_aa_rehash");
+		aaInsertPrimitive = getFunction("vrt_aa_insert_primitive");
+		aaInsertArray = getFunction("vrt_aa_insert_array");
+		aaDeletePrimitive = getFunction("vrt_aa_delete_primitive");
+		aaDeleteArray = getFunction("vrt_aa_delete_array");
+		aaInPrimitive = getFunction("vrt_aa_in_primitive");
+		aaInArray = getFunction("vrt_aa_in_array");
+		aaInBinopPrimitive = getFunction("vrt_aa_in_binop_primitive");
+		aaInBinopArray = getFunction("vrt_aa_in_binop_array");
 		aaGetPP = getFunction("vrt_aa_get_pp");
 		aaGetAA = getFunction("vrt_aa_get_aa");
 		aaGetAP = getFunction("vrt_aa_get_ap");
 		aaGetPA = getFunction("vrt_aa_get_pa");
-		aaDeletePrimitive = getFunction("vrt_aa_delete_primitive");
-		aaDeleteArray = getFunction("vrt_aa_delete_array");
-		aaDup = getFunction("vrt_aa_dup");
 
+
+		// UTF
 		utfDecode_u8_d = getFunction("vrt_decode_u8_d");
 		utfReverseDecode_u8_d = getFunction("vrt_reverse_decode_u8_d");
+
+		// LLVM
+		llvmTypeidFor = getFunction("__llvm_typeid_for");
+		llvmMemmove32 = getFunction("__llvm_memmove_p0i8_p0i8_i32");
+		llvmMemmove64 = getFunction("__llvm_memmove_p0i8_p0i8_i64");
+		llvmMemcpy32 = getFunction("__llvm_memcpy_p0i8_p0i8_i32");
+		llvmMemcpy64 = getFunction("__llvm_memcpy_p0i8_p0i8_i64");
 
 		TYPE_STRUCT = getTypeEnum("Struct");
 		TYPE_CLASS = getTypeEnum("Class");

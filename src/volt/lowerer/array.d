@@ -28,18 +28,12 @@ import volt.lowerer.alloc : buildAllocVoidPtr;
 
 ir.Function getLlvmMemMove(Location loc, LanguagePass lp)
 {
-	auto name32 = "__llvm_memmove_p0i8_p0i8_i32";
-	auto name64 = "__llvm_memmove_p0i8_p0i8_i64";
-	auto name = lp.ver.isP64 ? name64 : name32;
-	return retrieveFunctionFromObject(lp, loc, name);
+	return lp.ver.isP64 ? lp.llvmMemmove64 : lp.llvmMemmove32;
 }
 
 ir.Function getLlvmMemCopy(Location loc, LanguagePass lp)
 {
-	auto name32 = "__llvm_memcpy_p0i8_p0i8_i32";
-	auto name64 = "__llvm_memcpy_p0i8_p0i8_i64";
-	auto name = lp.ver.isP64 ? name64 : name32;
-	return retrieveFunctionFromObject(lp, loc, name);
+	return lp.ver.isP64 ? lp.llvmMemcpy64 : lp.llvmMemcpy32;
 }
 
 

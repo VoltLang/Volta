@@ -58,16 +58,14 @@ import volt.semantic.overload;
 void buildAAInsert(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope current,
 		ir.StatementExp statExp, ir.AAType aa, ir.Variable var, ir.Exp key, ir.Exp value,
 		bool buildif=true, bool aaIsPointer=true) {
-	auto aaNewFn = retrieveFunctionFromObject(lp, loc, "vrt_aa_new");
+	auto aaNewFn = lp.aaNew;
 
-	string name;
+	ir.Function aaInsertFn;
 	if (aa.key.nodeType == ir.NodeType.PrimitiveType) {
-		name = "vrt_aa_insert_primitive";
+		aaInsertFn = lp.aaInsertPrimitive;
 	} else {
-		name = "vrt_aa_insert_array";
+		aaInsertFn = lp.aaInsertArray;
 	}
-
-	auto aaInsertFn = retrieveFunctionFromObject(lp, loc, name);
 
 	ir.Exp varExp;
 	if (buildif) {
@@ -120,18 +118,18 @@ void buildAAInsert(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
  */
 void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope current,
 		ir.StatementExp statExp, ir.AAType aa, ir.Variable var, ir.Exp key, ir.Exp store) {
-	string name;
-	if (aa.key.nodeType == ir.NodeType.PrimitiveType)
-		name = "vrt_aa_in_primitive";
-	else
-		name = "vrt_aa_in_array";
-	auto inAAFn = retrieveFunctionFromObject(lp, loc, name);
+	ir.Function inAAFn;
+	if (aa.key.nodeType == ir.NodeType.PrimitiveType) {
+		inAAFn = lp.aaInPrimitive;
+	} else {
+		inAAFn = lp.aaInArray;
+	}
 	auto throwFn = lp.ehThrowFunc;
 
 	auto thenState = buildBlockStat(loc, statExp, current);
 
-	auto knfClass = retrieveClassFromObject(lp, loc, "KeyNotFoundException");
-	auto throwableClass = retrieveClassFromObject(lp, loc, "Throwable");
+	auto knfClass = lp.keyNotFoundException;
+	auto throwableClass = lp.throwableClass;
 
 	auto _new = buildNew(loc, knfClass, "KeyNotFoundException", [
 			cast(ir.Exp)buildConstantString(loc, `Key does not exist`)
@@ -220,8 +218,8 @@ ir.Exp buildStructAAKeyCast(Location l, LanguagePass lp, ir.Module thisModule,
 	auto concatfn = getArrayAppendFunction(l, lp, thisModule,
 	                                       buildArrayType(l, buildUlong(l)),
 	                                       buildUlong(l), false);
-	auto keysfn = retrieveFunctionFromObject(lp, l, "vrt_aa_get_keys");
-	auto valuesfn = retrieveFunctionFromObject(lp, l, "vrt_aa_get_values");
+	auto keysfn = lp.aaGetKeys;
+	auto valuesfn = lp.aaGetValues;
 
 	// ulong[] array;
 	auto atype = buildArrayType(l, buildUlong(l));
@@ -1435,11 +1433,11 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 		bool keyIsArray = isArray(realType(aa.key));
 		ir.Exp rtfn;
 		if (keyIsArray) {
-			rtfn = buildExpReference(exp.location, lp.aaInArray, lp.aaInArray.name);
+			rtfn = buildExpReference(exp.location, lp.aaInBinopArray, lp.aaInBinopArray.name);
 			builtin.children[1] = buildCast(l, buildArrayType(l, buildVoid(l)),
 			                                copyExp(builtin.children[1]));
 		} else {
-			rtfn = buildExpReference(exp.location, lp.aaInPrimitive, lp.aaInPrimitive.name);
+			rtfn = buildExpReference(exp.location, lp.aaInBinopPrimitive, lp.aaInBinopPrimitive.name);
 			builtin.children[1] = buildCast(l, buildUlong(l), copyExp(builtin.children[1]));
 		}
 		exp = buildCall(exp.location, rtfn, builtin.children);
@@ -1687,8 +1685,7 @@ void lowerAA(LanguagePass lp, ir.Scope current, ir.Module thisModule, ref ir.Exp
 	assert(aa !is null);
 
 	auto statExp = buildStatementExp(loc);
-
-	auto aaNewFn = retrieveFunctionFromObject(lp, loc, "vrt_aa_new");
+	auto aaNewFn = lp.aaNew;
 
 	auto bs = cast(ir.BlockStatement)current.node;
 	if (bs is null) {

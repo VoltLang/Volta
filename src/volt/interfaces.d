@@ -339,10 +339,13 @@ public:
 	ir.Class assertErrorClass;
 	ir.Class classInfoClass;
 	ir.Class interfaceInfoClass;
+	ir.Class throwableClass;
 	ir.Struct arrayStruct;
 	ir.Struct moduleInfoStruct;
 	ir.Variable allocDgVariable;
 	ir.Variable moduleInfoRoot;
+
+	ir.Class keyNotFoundException;
 
 	ir.Function vaStartFunc;
 	ir.Function vaEndFunc;
@@ -359,22 +362,34 @@ public:
 	ir.Function ehThrowSliceErrorFunc;
 	ir.Function ehPersonalityFunc;
 
-	ir.Function aaGetKeys;
-	ir.Function aaGetValues;
-	ir.Function aaGetLength;
-	ir.Function aaInArray;
-	ir.Function aaInPrimitive;
-	ir.Function aaRehash;
-	ir.Function aaGetPP;
-	ir.Function aaGetAA;
-	ir.Function aaGetPA;
-	ir.Function aaGetAP;
-	ir.Function aaDeletePrimitive;
-	ir.Function aaDeleteArray;
-	ir.Function aaDup;
+	ir.Function aaNew;               // vrt_aa_new
+	ir.Function aaDup;               // vrt_aa_dup
+	ir.Function aaRehash;            // vrt_aa_rehash
+	ir.Function aaGetKeys;           // vrt_aa_get_keys
+	ir.Function aaGetValues;         // vrt_aa_get_values
+	ir.Function aaGetLength;         // vrt_aa_get_length
+	ir.Function aaInsertPrimitive;   // vrt_aa_insert_primitive
+	ir.Function aaInsertArray;       // vrt_aa_insert_array
+	ir.Function aaDeletePrimitive;   // vrt_aa_delete_primitive
+	ir.Function aaDeleteArray;       // vrt_aa_delete_array
+	ir.Function aaInPrimitive;       // vrt_aa_in_primitive
+	ir.Function aaInArray;           // vrt_aa_in_array
+	ir.Function aaInBinopPrimitive;  // vrt_aa_in_binop_primitive
+	ir.Function aaInBinopArray;      // vrt_aa_in_binop_array
+	ir.Function aaGetPP;             // vrt_aa_get_pp
+	ir.Function aaGetAA;             // vrt_aa_get_aa
+	ir.Function aaGetPA;             // vrt_aa_get_pa
+	ir.Function aaGetAP;             // vrt_aa_get_ap
 
 	ir.Function utfDecode_u8_d;
 	ir.Function utfReverseDecode_u8_d;
+
+	ir.Function llvmTypeidFor;
+	ir.Function llvmMemmove32;
+	ir.Function llvmMemmove64;
+	ir.Function llvmMemcpy32;
+	ir.Function llvmMemcpy64;
+
 	/* @} */
 
 	/**

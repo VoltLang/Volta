@@ -162,7 +162,7 @@ public:
 			return mTypeIdFunc;
 		}
 
-		auto argFunc = retrieveFunctionFromObject(lp, irMod.location, "__llvm_typeid_for");
+		auto argFunc = lp.llvmTypeidFor;
 
 		Type type;
 		return mTypeIdFunc = getFunctionValue(argFunc, type);

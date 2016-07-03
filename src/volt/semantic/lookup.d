@@ -349,49 +349,6 @@ ir.Function lookupFunction(LanguagePass lp, ir.Scope _scope, Location loc, strin
 }
 
 /**
- * Retrive from the object module a store with the given name.
- * Throws: CompilerPanic on failure.
- * Returns: Always a valid value.
- */
-ir.Store retrieveStoreFromObject(LanguagePass lp, Location loc, string name)
-{
-	auto s = lp.objectModule.myScope;
-	auto store = lookup(lp, s, loc, name);
-	if (store is null || store.node is null) {
-		throw panic(loc, "couldn't locate object." ~ name);
-	}
-	return store;
-}
-
-ir.Function retrieveFunctionFromObject(LanguagePass lp, Location loc, string name)
-{
-	auto s = lp.objectModule.myScope;
-	auto store = lookup(lp, s, loc, name);
-	return ensureFunction(s, loc, name, store);
-}
-
-ir.Type retrieveTypeFromObject(LanguagePass lp, Location loc, string name)
-{
-	auto s = lp.objectModule.myScope;
-	auto store = lookup(lp, s, loc, name);
-	return ensureType(s, loc, name, store);
-}
-
-/**
- * Looks up a class in object.
- * Throws: CompilerPanic on failure
- */
-ir.Class retrieveClassFromObject(LanguagePass lp, Location loc, string name)
-{
-	auto clazzStore = retrieveStoreFromObject(lp, loc, name);
-	auto clazz = cast(ir.Class) clazzStore.node;
-	if (clazz is null) {
-		throw panic(loc, format("object.%s is not a class.", name));
-	}
-	return clazz;
-}
-
-/**
  * Get the module in the bottom of the given _scope chain.
  * @throws CompilerPanic if no module at bottom of chain.
  */
