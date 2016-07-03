@@ -2,7 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.ext.dwarf;
 
-import core.object : vrt_panic;
+import core.rt.misc : vrt_panic;
 import vrt.ext.stdc : uintptr_t;
 
 

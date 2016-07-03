@@ -2,10 +2,10 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.vacuum.aa;
 
-import core.object : vrt_memcmp;
 import core.exception : Exception;
 import core.typeinfo : TypeInfo;
 import core.rt.gc : allocDg;
+import core.rt.misc : vrt_memcmp;
 import core.compiler.llvm : __llvm_memcpy;
 
 

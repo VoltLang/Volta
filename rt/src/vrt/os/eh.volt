@@ -2,7 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.eh;
 
-import core.object : vrt_panic, vrt_handle_cast;
+import core.rt.misc : vrt_panic, vrt_handle_cast;
 import core.typeinfo : TypeInfo;
 import core.exception : Throwable, Error;
 

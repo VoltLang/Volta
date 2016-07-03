@@ -2,10 +2,10 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.vacuum.vmain;
 
-import core.object : vrt_run_global_ctors, vrt_run_global_dtors, vrt_panic;
 import core.exception : Throwable;
 import core.typeinfo : TypeInfo;
 import core.rt.gc : vrt_gc_init, allocDg, vrt_gc_get_alloc_dg, vrt_gc_shutdown;
+import core.rt.misc : vrt_run_global_ctors, vrt_run_global_dtors, vrt_panic;
 
 
 

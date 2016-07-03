@@ -2,8 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.os.eh_stub;
 
-import core.object : vrt_panic;
 import core.exception : Throwable, Error;
+import core.rt.misc : vrt_panic;
 
 
 version (Emscripten || MSVC || Metal):
