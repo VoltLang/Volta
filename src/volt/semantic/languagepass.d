@@ -165,12 +165,14 @@ public:
 		auto objectModule = getModule(buildQualifiedName(loc, "core", "object"));
 		auto typeInfoModule = getModule(buildQualifiedName(loc, "core", "typeinfo"));
 		auto exceptionModule = getModule(buildQualifiedName(loc, "core", "exception"));
+		auto rtGCModule = getModule(buildQualifiedName(loc, "core", "rt", "gc"));
 
 		ir.Module[] mods = [
 			defModule,
 			objectModule,
 			typeInfoModule,
 			exceptionModule,
+			rtGCModule,
 			voltaModule
 		];
 
@@ -291,9 +293,11 @@ public:
 		throwableClass = getClassFrom(exceptionModule, "Throwable");
 		keyNotFoundException = getClassFrom(exceptionModule, "KeyNotFoundException");
 
+		// core.rt.gc
+		allocDgVariable = getVarFrom(rtGCModule, "allocDg");
+
 		// Misc
 		arrayStruct = getStruct("ArrayStruct");
-		allocDgVariable = getVar("allocDg");
 
 		// VA
 		vaStartFunc = getFunction("__volt_va_start");
