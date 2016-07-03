@@ -161,7 +161,6 @@ public:
 	{
 		Location loc;
 		auto defModule = getModule(buildQualifiedName(loc, "defaultsymbols"));
-		auto voltaModule = getModule(buildQualifiedName(loc, "__volta"));
 		auto objectModule = getModule(buildQualifiedName(loc, "core", "object"));
 		auto typeInfoModule = getModule(buildQualifiedName(loc, "core", "typeinfo"));
 		auto exceptionModule = getModule(buildQualifiedName(loc, "core", "exception"));
@@ -181,14 +180,10 @@ public:
 			rtMiscModule,
 			llvmModule,
 			varargsModule,
-			voltaModule
 		];
 
 		if (defModule is null) {
 			throw panic("could not find defaultsymbols module");
-		}
-		if (voltaModule is null) {
-			throw panic("could not find __volta module");
 		}
 
 
@@ -199,15 +194,10 @@ public:
 			return;
 		}
 
-		// The object module scope from which we should get everthing
-		// from, setup this here for convinience.
-		auto s = voltaModule.myScope;
-
-
-		int getEnumDeclarationValue(ir.EnumDeclaration ed)
+		int getEnumDeclarationValue(ir.Module mod, ir.EnumDeclaration ed)
 		{
 			assert(ed.assign !is null);
-			auto constant = evaluate(this, s, ed.assign);
+			auto constant = evaluate(this, mod.myScope, ed.assign);
 			assert(constant !is null);
 			return constant.u._int;
 		}
@@ -221,38 +211,10 @@ public:
 			check(e, "Type");
 			foreach (ed; e.members) {
 				if (ed.assign !is null && ed.name == name) {
-					return getEnumDeclarationValue(ed);
+					return getEnumDeclarationValue(typeInfoModule, ed);
 				}
 			}
 			throw panicRuntimeObjectNotFound(name);
-		}
-
-		ir.Class getClass(string name)
-		{
-			auto clazz = cast(ir.Class)s.getStore(name).node;
-			check(clazz, name);
-			return clazz;
-		}
-
-		ir.Function getFunction(string name)
-		{
-			auto func = cast(ir.Function)s.getStore(name).node;
-			check(func, name);
-			return func;
-		}
-
-		ir.Variable getVar(string name)
-		{
-			auto var = cast(ir.Variable)s.getStore(name).node;
-			check(var, name);
-			return var;
-		}
-
-		ir.Struct getStruct(string name)
-		{
-			auto _struct = cast(ir.Struct)s.getStore(name).node;
-			check(_struct, name);
-			return _struct;
 		}
 
 		// core.object
