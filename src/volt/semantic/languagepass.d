@@ -205,7 +205,7 @@ public:
 		 */
 		int getTypeEnum(string name)
 		{
-			auto e = cast(ir.Enum)s.getStore("Type").node;
+			auto e = cast(ir.Enum)getNodeFrom(typeInfoModule, "Type");
 			check(e, "Type");
 			foreach (ed; e.members) {
 				if (ed.assign !is null && ed.name == name) {
@@ -250,11 +250,43 @@ public:
 		moduleInfoStruct = getStructFrom(objectModule, "ModuleInfo");
 		moduleInfoRoot = getVarFrom(objectModule, "moduleInfoRoot");
 
+		// core.typeinfo
+		typeInfoClass = getClassFrom(typeInfoModule, "TypeInfo");
+		classInfoClass = getClassFrom(typeInfoModule, "ClassInfo");
+		interfaceInfoClass = getClassFrom(typeInfoModule, "InterfaceInfo");
+		TYPE_STRUCT = getTypeEnum("Struct");
+		TYPE_CLASS = getTypeEnum("Class");
+		TYPE_INTERFACE = getTypeEnum("Interface");
+		TYPE_UNION = getTypeEnum("Union");
+		TYPE_ENUM = getTypeEnum("Enum");
+		TYPE_ATTRIBUTE = getTypeEnum("Attribute");
+		TYPE_USER_ATTRIBUTE = getTypeEnum("UserAttribute");
+		TYPE_VOID = getTypeEnum("Void");
+		TYPE_UBYTE = getTypeEnum("U8");
+		TYPE_BYTE = getTypeEnum("I8");
+		TYPE_CHAR = getTypeEnum("Char");
+		TYPE_BOOL = getTypeEnum("Bool");
+		TYPE_USHORT = getTypeEnum("U16");
+		TYPE_SHORT = getTypeEnum("I16");
+		TYPE_WCHAR = getTypeEnum("Wchar");
+		TYPE_UINT = getTypeEnum("U32");
+		TYPE_INT = getTypeEnum("I32");
+		TYPE_DCHAR = getTypeEnum("Dchar");
+		TYPE_FLOAT = getTypeEnum("F32");
+		TYPE_ULONG = getTypeEnum("U64");
+		TYPE_LONG = getTypeEnum("I32");
+		TYPE_DOUBLE = getTypeEnum("F64");
+		TYPE_REAL = getTypeEnum("Real");
+		TYPE_POINTER = getTypeEnum("Pointer");
+		TYPE_ARRAY = getTypeEnum("Array");
+		TYPE_STATIC_ARRAY = getTypeEnum("StaticArray");
+		TYPE_AA = getTypeEnum("AA");
+		TYPE_FUNCTION = getTypeEnum("Function");
+		TYPE_DELEGATE = getTypeEnum("Delegate");
+
+
 		// Get the classes.
-		typeInfoClass = getClass("TypeInfo");
 		assertErrorClass = getClass("AssertError");
-		classInfoClass = getClass("ClassInfo");
-		interfaceInfoClass = getClass("InterfaceInfo");
 		throwableClass = getClass("Throwable");
 		arrayStruct = getStruct("ArrayStruct");
 		allocDgVariable = getVar("allocDg");
@@ -312,35 +344,6 @@ public:
 		llvmMemcpy32 = getFunction("__llvm_memcpy_p0i8_p0i8_i32");
 		llvmMemcpy64 = getFunction("__llvm_memcpy_p0i8_p0i8_i64");
 
-		TYPE_STRUCT = getTypeEnum("Struct");
-		TYPE_CLASS = getTypeEnum("Class");
-		TYPE_INTERFACE = getTypeEnum("Interface");
-		TYPE_UNION = getTypeEnum("Union");
-		TYPE_ENUM = getTypeEnum("Enum");
-		TYPE_ATTRIBUTE = getTypeEnum("Attribute");
-		TYPE_USER_ATTRIBUTE = getTypeEnum("UserAttribute");
-		TYPE_VOID = getTypeEnum("Void");
-		TYPE_UBYTE = getTypeEnum("U8");
-		TYPE_BYTE = getTypeEnum("I8");
-		TYPE_CHAR = getTypeEnum("Char");
-		TYPE_BOOL = getTypeEnum("Bool");
-		TYPE_USHORT = getTypeEnum("U16");
-		TYPE_SHORT = getTypeEnum("I16");
-		TYPE_WCHAR = getTypeEnum("Wchar");
-		TYPE_UINT = getTypeEnum("U32");
-		TYPE_INT = getTypeEnum("I32");
-		TYPE_DCHAR = getTypeEnum("Dchar");
-		TYPE_FLOAT = getTypeEnum("F32");
-		TYPE_ULONG = getTypeEnum("U64");
-		TYPE_LONG = getTypeEnum("I32");
-		TYPE_DOUBLE = getTypeEnum("F64");
-		TYPE_REAL = getTypeEnum("Real");
-		TYPE_POINTER = getTypeEnum("Pointer");
-		TYPE_ARRAY = getTypeEnum("Array");
-		TYPE_STATIC_ARRAY = getTypeEnum("StaticArray");
-		TYPE_AA = getTypeEnum("AA");
-		TYPE_FUNCTION = getTypeEnum("Function");
-		TYPE_DELEGATE = getTypeEnum("Delegate");
 
 		phase2(mods);
 	}
