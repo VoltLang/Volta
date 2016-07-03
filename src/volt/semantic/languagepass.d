@@ -166,6 +166,7 @@ public:
 		auto typeInfoModule = getModule(buildQualifiedName(loc, "core", "typeinfo"));
 		auto exceptionModule = getModule(buildQualifiedName(loc, "core", "exception"));
 		auto rtGCModule = getModule(buildQualifiedName(loc, "core", "rt", "gc"));
+		auto rtAAModule = getModule(buildQualifiedName(loc, "core", "rt", "aa"));
 		auto rtMiscModule = getModule(buildQualifiedName(loc, "core", "rt", "misc"));
 
 		ir.Module[] mods = [
@@ -174,6 +175,7 @@ public:
 			typeInfoModule,
 			exceptionModule,
 			rtGCModule,
+			rtAAModule,
 			rtMiscModule,
 			voltaModule
 		];
@@ -298,6 +300,26 @@ public:
 		// core.rt.gc
 		allocDgVariable = getVarFrom(rtGCModule, "allocDg");
 
+		// core.rt.aa
+		aaNew = getFunctionFrom(rtAAModule, "vrt_aa_new");
+		aaDup = getFunctionFrom(rtAAModule, "vrt_aa_dup");
+		aaRehash = getFunctionFrom(rtAAModule, "vrt_aa_rehash");
+		aaGetKeys = getFunctionFrom(rtAAModule, "vrt_aa_get_keys");
+		aaGetValues = getFunctionFrom(rtAAModule, "vrt_aa_get_values");
+		aaGetLength = getFunctionFrom(rtAAModule, "vrt_aa_get_length");
+		aaInsertPrimitive = getFunctionFrom(rtAAModule, "vrt_aa_insert_primitive");
+		aaInsertArray = getFunctionFrom(rtAAModule, "vrt_aa_insert_array");
+		aaDeletePrimitive = getFunctionFrom(rtAAModule, "vrt_aa_delete_primitive");
+		aaDeleteArray = getFunctionFrom(rtAAModule, "vrt_aa_delete_array");
+		aaInPrimitive = getFunctionFrom(rtAAModule, "vrt_aa_in_primitive");
+		aaInArray = getFunctionFrom(rtAAModule, "vrt_aa_in_array");
+		aaInBinopPrimitive = getFunctionFrom(rtAAModule, "vrt_aa_in_binop_primitive");
+		aaInBinopArray = getFunctionFrom(rtAAModule, "vrt_aa_in_binop_array");
+		aaGetPP = getFunctionFrom(rtAAModule, "vrt_aa_get_pp");
+		aaGetAA = getFunctionFrom(rtAAModule, "vrt_aa_get_aa");
+		aaGetAP = getFunctionFrom(rtAAModule, "vrt_aa_get_ap");
+		aaGetPA = getFunctionFrom(rtAAModule, "vrt_aa_get_pa");
+
 		// core.rt.misc
 		ehThrowFunc = getFunctionFrom(rtMiscModule, "vrt_eh_throw");
 		ehThrowSliceErrorFunc = getFunctionFrom(rtMiscModule, "vrt_eh_throw_slice_error");
@@ -320,26 +342,6 @@ public:
 		// Util
 		memsetFunc = getFunction("__llvm_memset_p0i8_i32");
 		memcpyFunc = getFunction("__llvm_memcpy_p0i8_p0i8_i32");
-
-		// AA
-		aaNew = getFunction("vrt_aa_new");
-		aaDup = getFunction("vrt_aa_dup");
-		aaRehash = getFunction("vrt_aa_rehash");
-		aaGetKeys = getFunction("vrt_aa_get_keys");
-		aaGetValues = getFunction("vrt_aa_get_values");
-		aaGetLength = getFunction("vrt_aa_get_length");
-		aaInsertPrimitive = getFunction("vrt_aa_insert_primitive");
-		aaInsertArray = getFunction("vrt_aa_insert_array");
-		aaDeletePrimitive = getFunction("vrt_aa_delete_primitive");
-		aaDeleteArray = getFunction("vrt_aa_delete_array");
-		aaInPrimitive = getFunction("vrt_aa_in_primitive");
-		aaInArray = getFunction("vrt_aa_in_array");
-		aaInBinopPrimitive = getFunction("vrt_aa_in_binop_primitive");
-		aaInBinopArray = getFunction("vrt_aa_in_binop_array");
-		aaGetPP = getFunction("vrt_aa_get_pp");
-		aaGetAA = getFunction("vrt_aa_get_aa");
-		aaGetAP = getFunction("vrt_aa_get_ap");
-		aaGetPA = getFunction("vrt_aa_get_pa");
 
 		// LLVM
 		llvmTypeidFor = getFunction("__llvm_typeid_for");
