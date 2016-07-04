@@ -1407,7 +1407,11 @@ ParseStatus parseColonAssign(ParserStream ps, NodeSinkDg dg)
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.Variable);
 	}
-	var = buildVariable(loc, buildAutoType(loc), ir.Variable.Storage.Function,
+	succeeded = match(ps, ir.NodeType.Variable, TokenType.Semicolon);
+	if (!succeeded) {
+		return succeeded;
+	}
+	var = buildVariable(loc, buildAutoType(loc), ir.Variable.Storage.Invalid,
                         idents[0].value, exp);
 	dg(var);
 	return Succeeded;
@@ -1437,9 +1441,9 @@ ParseStatus parseColonDeclaration(ParserStream ps, Token[] idents, NodeSinkDg dg
 	}
 	foreach (i, ident; idents) {
 		auto var = buildVariable(ident.location, i > 0 ? copyType(type) : type,
-		                         ir.Variable.Storage.Function, ident.value);
+		                         ir.Variable.Storage.Invalid, ident.value);
 		var.assign = assign;
 		dg(var);
 	}
-	return Succeeded;
+	return match(ps, ir.NodeType.Variable, ir.TokenType.Semicolon);
 }

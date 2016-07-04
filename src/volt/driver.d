@@ -110,7 +110,7 @@ public:
 		setVersionSet(ver, s.arch, s.platform);
 		setTargetInfo(target, s.arch, s.platform);
 
-		this.frontend = new Parser();
+		this.frontend = new Parser(this.settings);
 
 
 		// Timers

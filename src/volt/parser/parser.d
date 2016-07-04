@@ -12,6 +12,7 @@ import volt.token.source : Source;
 
 import ir = volt.ir.ir;
 
+import volt.arg : Settings;
 import volt.errors : makeError, panic;
 import volt.interfaces : Frontend;
 import volt.parser.base : ParseStatus, ParserStream, ParserPanic, NodeSink;
@@ -52,14 +53,20 @@ class Parser : Frontend
 {
 public:
 	bool dumpLex;
+	Settings settings;
 
 public:
+	this(Settings settings)
+	{
+		this.settings = settings;
+	}
+
 	override ir.Module parseNewFile(string source, string filename)
 	{
 		auto src = new Source(source, filename);
 		src.skipScriptLine();
 
-		auto ps = new ParserStream(lex(src));
+		auto ps = new ParserStream(lex(src), settings);
 		if (dumpLex) {
 			doDumpLex(ps);
 		}
@@ -76,7 +83,7 @@ public:
 		auto src = new Source(source, loc.filename);
 		src.changeCurrentLocation(loc.filename, loc.line);
 
-		auto ps = new ParserStream(lex(src));
+		auto ps = new ParserStream(lex(src), settings);
 		if (dumpLex) {
 			doDumpLex(ps);
 		}

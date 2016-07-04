@@ -11,6 +11,7 @@ import ir = volt.ir.ir;
 
 import volt.errors;
 import volt.exceptions;
+import volt.arg : Settings;
 public import volt.token.token : Token, TokenType, tokenToString;
 import volt.token.stream : TokenStream;
 import volt.token.location : Location;
@@ -472,6 +473,22 @@ ParseStatus parseIdentifier(ParserStream ps, out ir.Identifier i)
 	return Succeeded;
 }
 
+/**
+ * Returns true if the ParserStream is in a state where there is a colon
+ * (along with optional identifiers and commas) before a semicolon.
+ * Basically, returns true if we're at a new-style (a : i32) variable declaration.
+ */
+bool isColonDeclaration(ParserStream ps)
+{
+	bool colonDeclaration = ps.lookahead(1).type == TokenType.Colon;
+	size_t i = 1;
+	while (!colonDeclaration && (ps.lookahead(i).type == TokenType.Identifier ||
+	       ps.lookahead(i).type == TokenType.Comma)) {
+		i++;
+		colonDeclaration = ps.lookahead(i).type == TokenType.Colon;
+	}
+	return colonDeclaration;
+}
 
 /*
  *
@@ -493,14 +510,17 @@ public:
 	ir.Node retroComment;  ///< For backwards doc comments (like this one).
 	int multiDepth;
 
+	Settings settings;
+
 private:
 	string[] mComment;
 	Token[] mSavedTokens;
 	bool mSavingTokens;
 
 public:
-	this(Token[] tokens)
+	this(Token[] tokens, Settings settings)
 	{
+		this.settings = settings;
 		pushCommentLevel();
 		super(tokens);
 	}

@@ -9,6 +9,7 @@ import watt.io.std : writefln;
 import ir = volt.ir.ir;
 
 import volt.exceptions;
+import volt.arg : Settings;
 import volt.token.token : tokenToString, TokenType;
 import volt.token.location;
 
@@ -24,6 +25,20 @@ void hackTypeWarning(ir.Node n, ir.Type nt, ir.Type ot)
 	auto str = format("%s: warning: types differ (new) %s vs (old) %s",
 	       n.location.toString(), typeString(nt), typeString(ot));
 	writefln(str);
+}
+
+void warningOldStyleVariable(Location loc, Settings settings)
+{
+	if (!settings.internalD && settings.warningsEnabled) {
+		warning(loc, "old style variable declaration.");
+	}
+}
+
+void warningOldStyleFunction(Location loc, Settings settings)
+{
+	if (!settings.internalD && settings.warningsEnabled) {
+		warning(loc, "old style function declaration.");
+	}
 }
 
 
