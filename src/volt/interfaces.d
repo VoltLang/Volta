@@ -353,8 +353,6 @@ public:
 
 	ir.Function hashFunc;
 	ir.Function castFunc;
-	ir.Function memsetFunc;
-	ir.Function memcpyFunc;
 	ir.Function memcmpFunc;
 
 	ir.Function ehThrowFunc;
@@ -388,6 +386,8 @@ public:
 	ir.Function llvmMemmove64;
 	ir.Function llvmMemcpy32;
 	ir.Function llvmMemcpy64;
+	ir.Function llvmMemset32;
+	ir.Function llvmMemset64;
 
 	/* @} */
 

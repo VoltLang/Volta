@@ -1393,10 +1393,14 @@ ir.StatementExp buildInternalStaticArrayLiteralSmart(Location loc, ir.Type atype
 	return sexp;
 }
 
-ir.StatementExp buildInternalArrayLiteralSliceSmart(Location loc, ir.Type atype, ir.Type[] types, int[] sizes, int totalSize, ir.Function memcpyFn, ir.Exp[] exps)
+ir.StatementExp buildInternalArrayLiteralSliceSmart(Location loc,
+	LanguagePass lp, ir.Type atype, ir.Type[] types,
+	int[] sizes, int totalSize, ir.Exp[] exps)
 {
 	if (atype.nodeType != ir.NodeType.ArrayType)
 		throw panic(atype, "must be array type");
+
+	auto memcpyFn = lp.target.isP64 ? lp.llvmMemcpy64 : lp.llvmMemcpy32;
 
 	auto sexp = new ir.StatementExp();
 	sexp.location = loc;
@@ -1416,7 +1420,7 @@ ir.StatementExp buildInternalArrayLiteralSliceSmart(Location loc, ir.Type atype,
 
 		ir.Exp dst = buildAdd(loc, buildArrayPtr(loc, var.type, buildExpReference(loc, var)), buildConstantUint(loc, cast(uint)offset));
 		ir.Exp src = buildCastToVoidPtr(loc, buildAddrOf(loc, buildExpReference(loc, evar)));
-		ir.Exp len = buildConstantUint(loc, cast(uint) sizes[i]);
+		ir.Exp len = buildConstantSizeT(loc, lp, cast(size_t)sizes[i]);
 		ir.Exp aln = buildConstantInt(loc, 0);
 		ir.Exp vol = buildConstantBool(loc, false);
 		auto call = buildCall(loc, buildExpReference(loc, memcpyFn), [dst, src, len, aln, vol]);

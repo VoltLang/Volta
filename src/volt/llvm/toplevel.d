@@ -183,11 +183,13 @@ public:
 			}
 
 			v = LLVMBuildBitCast(state.builder, v, state.voidPtrType.llvmType, "");
-
-			auto func = state.getFunctionValue(state.lp.memsetFunc, type);
+			auto memset = state.lp.target.isP64 ?
+				state.lp.llvmMemset64 :
+				state.lp.llvmMemset32;
+			auto func = state.getFunctionValue(memset, type);
 			LLVMBuildCall(state.builder, func, [v,
 					LLVMConstInt(state.ubyteType.llvmType, 0, false),
-					LLVMConstInt(state.uintType.llvmType, s, false),
+					LLVMConstInt(state.sizeType.llvmType, s, false),
 					LLVMConstInt(state.intType.llvmType, 0, true),
 					LLVMConstInt(state.boolType.llvmType, 0, false)]);
 

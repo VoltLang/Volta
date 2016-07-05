@@ -814,7 +814,10 @@ private void rewriteVarargs(Context ctx,ir.CallableType asFunctionType,
 		totalSize += sizes[$-1];
 	}
 
-	postfix.arguments = argsSlice ~ typeidsLiteral ~ buildInternalArrayLiteralSliceSmart(postfix.location, buildArrayType(postfix.location, buildVoid(postfix.location)), types, sizes, totalSize, ctx.lp.memcpyFunc, varArgsSlice);
+	postfix.arguments = argsSlice ~ typeidsLiteral ~
+		buildInternalArrayLiteralSliceSmart(postfix.location, ctx.lp,
+			buildArrayType(postfix.location, buildVoid(postfix.location)),
+			types, sizes, totalSize, varArgsSlice);
 }
 
 private void resolvePostfixOverload(Context ctx, ir.Postfix postfix,

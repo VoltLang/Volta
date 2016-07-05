@@ -301,10 +301,10 @@ public:
 		llvmMemmove64 = getFunctionFrom(llvmModule, "__llvm_memmove_p0i8_p0i8_i64");
 		llvmMemcpy32 = getFunctionFrom(llvmModule, "__llvm_memcpy_p0i8_p0i8_i32");
 		llvmMemcpy64 = getFunctionFrom(llvmModule, "__llvm_memcpy_p0i8_p0i8_i64");
+		llvmMemset32 = getFunctionFrom(llvmModule, "__llvm_memset_p0i8_i32");
+		llvmMemset64 = getFunctionFrom(llvmModule, "__llvm_memset_p0i8_i64");
 		vaCStartFunc = getFunctionFrom(llvmModule, "__llvm_volt_va_start");
 		vaCEndFunc = getFunctionFrom(llvmModule, "__llvm_volt_va_end");
-		memsetFunc = getFunctionFrom(llvmModule, "__llvm_memset_p0i8_i32");
-		memcpyFunc = getFunctionFrom(llvmModule, "__llvm_memcpy_p0i8_p0i8_i32");
 
 		phase2(mods);
 	}
