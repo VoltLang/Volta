@@ -42,16 +42,16 @@ import core.typeinfo;
  * // Alloc size == (void*).sizeof * 3
  */
 alias AllocDg = void* delegate(TypeInfo typeinfo, size_t count);
-local AllocDg allocDg;
+local allocDg : AllocDg;
 
 struct Stats
 {
-	ulong count;
+	count : u64;
 }
 
 extern(C):
 
-void vrt_gc_init();
-AllocDg vrt_gc_get_alloc_dg();
-void vrt_gc_shutdown();
-Stats* vrt_gc_get_stats(out Stats stats);
+fn vrt_gc_init() void;
+fn vrt_gc_get_alloc_dg() AllocDg;
+fn vrt_gc_shutdown() void;
+fn vrt_gc_get_stats(out stats : Stats) Stats*;

@@ -5,5 +5,5 @@ module core.compiler.varargs;
 public import core.compiler.llvm : __llvm_volt_va_start, __llvm_volt_va_end;
 
 
-void __volt_va_start(void** vl, void* _args);
-void __volt_va_end(void** vl);
+fn __volt_va_start(vl : void**, _args : void*) void;
+fn __volt_va_end(vl : void**) void;

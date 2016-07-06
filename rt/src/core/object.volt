@@ -16,7 +16,7 @@ class Object
 {
 	~this() {}
 
-	string toString()
+	fn toString() string
 	{
 		return "core.object.Object";
 	}
@@ -38,12 +38,12 @@ class Attribute
 
 struct ModuleInfo
 {
-	ModuleInfo* next;
-	void function()[] ctors;
-	void function()[] dtors;
+	next : ModuleInfo*;
+	ctors : void function()[];
+	dtors : void function()[];
 }
 
-@mangledName("_V__ModuleInfo_root") global ModuleInfo* moduleInfoRoot;
+@mangledName("_V__ModuleInfo_root") global moduleInfoRoot : ModuleInfo*;
 
 
 /*
@@ -54,6 +54,6 @@ struct ModuleInfo
 
 struct ArrayStruct
 {
-	size_t length;
-	void* ptr;
+	length : size_t;
+	ptr : void*;
 }

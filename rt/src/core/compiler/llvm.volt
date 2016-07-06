@@ -5,16 +5,16 @@ module core.compiler.llvm;
 
 extern (C):
 
-@mangledName("llvm.trap") void __llvm_trap();
-@mangledName("llvm.memset.p0i8.i32") void __llvm_memset_p0i8_i32(void* dest, ubyte val, uint len, int _align, bool _volatile);
-@mangledName("llvm.memset.p0i8.i64") void __llvm_memset_p0i8_i64(void* dest, ubyte val, ulong len, int _align, bool _volatile);
-@mangledName("llvm.memcpy.p0i8.p0i8.i32") void __llvm_memcpy_p0i8_p0i8_i32(void* dest, void* src, uint len, int _align, bool _volatile);
-@mangledName("llvm.memcpy.p0i8.p0i8.i64") void __llvm_memcpy_p0i8_p0i8_i64(void* dest, void* src, ulong len, int _align, bool _volatile);
-@mangledName("llvm.memmove.p0i8.p0i8.i32") void __llvm_memmove_p0i8_p0i8_i32(void* dest, void* src, uint len, int _align, bool _volatile);
-@mangledName("llvm.memmove.p0i8.p0i8.i64") void __llvm_memmove_p0i8_p0i8_i64(void* dest, void* src, ulong len, int _align, bool _volatile);
-@mangledName("llvm.va_start") void __llvm_volt_va_start(void*);
-@mangledName("llvm.va_end") void __llvm_volt_va_end(void*);
-@mangledName("llvm.eh.typeid.for") int __llvm_typeid_for(void*);
+@mangledName("llvm.trap") fn __llvm_trap() void;
+@mangledName("llvm.memset.p0i8.i32") fn __llvm_memset_p0i8_i32(dest : void*, val : u8, len : u32, _align : i32, _volatile : bool) void;
+@mangledName("llvm.memset.p0i8.i64") fn __llvm_memset_p0i8_i64(dest : void*, val : u8, len : u64, _align : i32, _volatile : bool) void;
+@mangledName("llvm.memcpy.p0i8.p0i8.i32") fn __llvm_memcpy_p0i8_p0i8_i32(dest : void*, src : void*, len : u32, _align : i32 , _volatile : bool) void;
+@mangledName("llvm.memcpy.p0i8.p0i8.i64") fn __llvm_memcpy_p0i8_p0i8_i64(dest : void*, src : void*, len : u64, _align : i32 , _volatile : bool) void;
+@mangledName("llvm.memmove.p0i8.p0i8.i32") fn __llvm_memmove_p0i8_p0i8_i32(dest : void*, src : void*, len : u32, _align : i32 , _volatile : bool) void;
+@mangledName("llvm.memmove.p0i8.p0i8.i64") fn __llvm_memmove_p0i8_p0i8_i64(dest : void*, src : void*, len : u64, _align : i32 , _volatile : bool) void;
+@mangledName("llvm.va_start") fn __llvm_volt_va_start(_ : void*) void;
+@mangledName("llvm.va_end") fn __llvm_volt_va_end(_ : void*) void;
+@mangledName("llvm.eh.typeid.for") fn __llvm_typeid_for(_ : void*) i32;
 
 version (V_P32) {
 	alias __llvm_memset = __llvm_memset_p0i8_i32;
