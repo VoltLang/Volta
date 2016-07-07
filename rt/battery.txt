@@ -1,0 +1,9 @@
+--if-linux
+-ldl
+--if-linux
+-lrt
+--if-linux
+--if-osx
+-lgc
+--if-msvc
+-ladvapi32.lib
