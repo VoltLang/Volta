@@ -12,17 +12,17 @@ import core.compiler.llvm : __llvm_memset, __llvm_memcpy;
 version (Emscripten) {
 
 	private extern(C) {
-		void GC_INIT();
-		void* GC_MALLOC(size_t);
-		void* GC_MALLOC_ATOMIC(size_t);
-		void GC_REGISTER_FINALIZER_NO_ORDER(void* obj,
-		                                    GC_finalization_proc func,
-		                                    void* cd,
-		                                    GC_finalization_proc* ofn,
-		                                    void** ocd);
-		void GC_FORCE_COLLECT();
+		fn GC_INIT() void;
+		fn GC_MALLOC(size_t) void*;
+		fn GC_MALLOC_ATOMIC(size_t) void*;
+		fn GC_REGISTER_FINALIZER_NO_ORDER(obj : void*,
+		                                  func : GC_finalization_proc,
+		                                  cd : void*,
+		                                  ofn : GC_finalization_proc*,
+		                                  ocd : void**) void;
+		fn GC_FORCE_COLLECT() void;
 
-		extern global int GC_java_finalization;
+		extern global GC_java_finalization : i32;
 		alias GC_finalization_proc = void function(void* obj, void* client_data);
 	}
 
@@ -35,63 +35,63 @@ version (Emscripten) {
 } else {
 
 	private extern(C) {
-		void GC_init();
-		void* GC_malloc(size_t size_in_bytes);
-		void* GC_malloc_atomic(size_t size_in_bytes);
+		fn GC_init() void;
+		fn GC_malloc(size_in_bytes : size_t) void*;
+		fn GC_malloc_atomic(size_in_bytes : size_t) void*;
 
 		// Debian stable (sqeezy and wheezy libgc versions don't export that function)
 		//void GC_set_java_finalization(int on_off);
-		void GC_register_finalizer_no_order(void* obj,
-		                                    GC_finalization_proc func,
-		                                    void* cd,
-		                                    GC_finalization_proc* ofn,
-		                                    void** ocd);
+		fn GC_register_finalizer_no_order(obj : void*,
+		                                  func : GC_finalization_proc,
+		                                  cd : void*,
+		                                  ofn : GC_finalization_proc*,
+		                                  ocd : void**) void;
 
 		// Also not available in older libgc versions
 		//void GC_gcollect_and_unmap();
-		void GC_gcollect();
+		fn GC_gcollect() void;
 
 		version(Windows) {
-			extern(C) void GC_win32_free_heap();
+			extern(C) fn GC_win32_free_heap() void;
 		}
 
-		extern global int GC_java_finalization;
+		extern global GC_java_finalization : i32;
 		alias GC_finalization_proc = void function(void* obj, void* client_data);
 	}
 
 }
 
 
-global Stats stats;
+global stats : Stats;
 
-extern(C) void vrt_gc_init()
+extern(C) fn vrt_gc_init() void
 {
 	GC_init();
 	//GC_set_java_finalization(1);
 	GC_java_finalization = 1;
 }
 
-extern(C) void vrt_gc_get_stats(out Stats res)
+extern(C) fn vrt_gc_get_stats(out res : Stats) void
 {
 	res = stats;
 }
 
-extern(C) AllocDg vrt_gc_get_alloc_dg()
+extern(C) fn vrt_gc_get_alloc_dg() AllocDg
 {
-	StructToDg structToDg;
+	structToDg : StructToDg;
 
 	structToDg.func = cast(void*)gcMalloc;
 
 	return *cast(AllocDg*)&structToDg;
 }
 
-extern(C) void vrt_gc_finalize_class(void* objPtr, void* client_data)
+extern(C) fn vrt_gc_finalize_class(objPtr : void*, client_data : void*) void
 {
-	auto obj = cast(Object)objPtr;
+	obj := cast(Object)objPtr;
 	obj.__dtor();
 }
 
-extern(C) void vrt_gc_shutdown()
+extern(C) fn vrt_gc_shutdown() void
 {
 	GC_gcollect();
 	// somehow the GC needs two collections to cleanup everything
@@ -103,11 +103,11 @@ extern(C) void vrt_gc_shutdown()
 	}
 }
 
-void* gcMalloc(void *ptr, TypeInfo typeinfo, size_t count)
+fn gcMalloc(ptr : void*, typeinfo : TypeInfo, count : size_t) void*
 {
-	void* memory;
-	size_t size;
-	bool registerFinalizer = false;
+	memory : void*;
+	size : size_t;
+	registerFinalizer : bool = false;
 
 	if (count == cast(size_t) 0) {
 		size = typeinfo.size;
@@ -147,6 +147,6 @@ void* gcMalloc(void *ptr, TypeInfo typeinfo, size_t count)
  */
 struct StructToDg
 {
-	void *instance;
-	void *func;
+	instance : void*;
+	func : void*;
 }

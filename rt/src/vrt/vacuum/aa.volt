@@ -15,38 +15,38 @@ import core.compiler.llvm : __llvm_memcpy;
 
 
 private union TreeStore {
-	void* ptr;
-	ulong unsigned;
-	void[] array;
+	ptr : void*;
+	unsigned : u64;
+	array : void[];
 }
 
 // Represents a Node in the Red-Black-Tree
 private struct TreeNode
 {
-	TreeStore key; // long for now, simplest case, no comparison function needed
-	TreeStore value;
+	key : TreeStore; // long for now, simplest case, no comparison function needed
+	value : TreeStore;
 
-	bool red; // true if red
-	TreeNode* parent;
-	TreeNode* left;
-	TreeNode* right;
+	red : bool; // true if red
+	parent : TreeNode*;
+	left : TreeNode*;
+	right : TreeNode*;
 }
 
 // Basically only holds the root-node
 private struct RedBlackTree
 {
-	TreeNode* root;
-	size_t length;
+	root : TreeNode*;
+	length : size_t;
 
-	TypeInfo value;
-	TypeInfo key;
-	bool isValuePtr;
+	value : TypeInfo;
+	key : TypeInfo;
+	isValuePtr : bool;
 }
 
 
-extern(C) void* vrt_aa_new(TypeInfo value, TypeInfo key)
+extern(C) fn vrt_aa_new(value : TypeInfo, key : TypeInfo) void*
 {
-	RedBlackTree* rbt = new RedBlackTree;
+	rbt : RedBlackTree* = new RedBlackTree;
 	rbt.root = null;
 	rbt.value = value;
 	rbt.key = key;
@@ -55,21 +55,21 @@ extern(C) void* vrt_aa_new(TypeInfo value, TypeInfo key)
 	return cast(void*)rbt;
 }
 
-extern(C) size_t vrt_aa_get_length(void* rbtv)
+extern(C) fn vrt_aa_get_length(rbtv : void*) size_t
 {
 	if (rbtv is null) {
 		return 0;
 	}
-	RedBlackTree* rbt = cast(RedBlackTree*)rbtv;
+	rbt : RedBlackTree* = cast(RedBlackTree*)rbtv;
 	return rbt.length;
 }
 
-private TreeNode* vrt_aa_dup_treenode(TreeNode* tn, TreeNode* parent=null)
+extern(C) fn vrt_aa_dup_treenode(tn : TreeNode*, parent : TreeNode* = null) TreeNode*
 {
 	if (tn is null) {
 		return null;
 	}
-	auto dup = new TreeNode;
+	dup := new TreeNode;
 	dup.key = tn.key;
 	dup.value = tn.value;
 	dup.red = tn.red;
@@ -79,10 +79,10 @@ private TreeNode* vrt_aa_dup_treenode(TreeNode* tn, TreeNode* parent=null)
 	return dup;
 }
 
-extern(C) void* vrt_aa_dup(void* rbtv)
+extern(C) fn vrt_aa_dup(rbtv : void*) void*
 {
-	auto rbt = cast(RedBlackTree*)rbtv;
-	auto newRbt = cast(RedBlackTree*)vrt_aa_new(rbt.value, rbt.key);
+	rbt := cast(RedBlackTree*)rbtv;
+	newRbt := cast(RedBlackTree*)vrt_aa_new(rbt.value, rbt.key);
 	newRbt.root = vrt_aa_dup_treenode(rbt.root);
 	newRbt.length = rbt.length;
 	return cast(void*)newRbt;
@@ -91,9 +91,9 @@ extern(C) void* vrt_aa_dup(void* rbtv)
 // vrt_aa_get_keyvalue (e.g. vrt_aa_get_pa key == primitive, value == array)
 // aa.get("key", null) => vrt_aa_get_primitive(aa, "key", null)
 
-extern(C) ulong vrt_aa_get_pp(void* rbtv, ulong key, ulong _default)
+extern(C) fn vrt_aa_get_pp(rbtv : void*, key : u64, _default : u64) u64
 {
-	TreeNode* tn = vrt_aa_lookup_node_primitive(rbtv, key);
+	tn : TreeNode* = vrt_aa_lookup_node_primitive(rbtv, key);
 	if (tn is null) {
 		return _default;
 	} else {
@@ -101,9 +101,9 @@ extern(C) ulong vrt_aa_get_pp(void* rbtv, ulong key, ulong _default)
 	}
 }
 
-extern(C) void[] vrt_aa_get_aa(void* rbtv, void[] key, void[] _default)
+extern(C) fn vrt_aa_get_aa(rbtv : void*, key : void[], _default : void[]) void[]
 {
-	void[] ret;
+	ret : void[];
 	if (vrt_aa_in_array(rbtv, key, cast(void*)&ret)) {
 		return ret;
 	} else {
@@ -111,9 +111,9 @@ extern(C) void[] vrt_aa_get_aa(void* rbtv, void[] key, void[] _default)
 	}
 }
 
-extern(C) ulong vrt_aa_get_ap(void* rbtv, void[] key, ulong _default)
+extern(C) fn vrt_aa_get_ap(rbtv : void*, key : void[], _default : u64) u64
 {
-	TreeNode* tn = vrt_aa_lookup_node_array(rbtv, key);
+	tn : TreeNode* = vrt_aa_lookup_node_array(rbtv, key);
 	if (tn is null) {
 		return _default;
 	} else {
@@ -121,9 +121,9 @@ extern(C) ulong vrt_aa_get_ap(void* rbtv, void[] key, ulong _default)
 	}
 }
 
-extern(C) void[] vrt_aa_get_pa(void* rbtv, ulong key, void[] _default)
+extern(C) fn vrt_aa_get_pa(rbtv : void*, key : u64, _default : void[]) void[]
 {
-	void[] ret;
+	ret : void[];
 	if (vrt_aa_in_primitive(rbtv, key, cast(void*) &ret)) {
 		return ret;
 	} else {
@@ -132,14 +132,14 @@ extern(C) void[] vrt_aa_get_pa(void* rbtv, ulong key, void[] _default)
 }
 
 
-private TreeNode* vrt_aa_lookup_node_primitive(void* rbtv, ulong key)
+private fn vrt_aa_lookup_node_primitive(rbtv : void*, key : u64) TreeNode*
 {
 	if (rbtv is null) {
 		return null;
 	}
 
-	RedBlackTree* rbt = cast(RedBlackTree*)rbtv;
-	TreeNode* node = rbt.root;
+	rbt : RedBlackTree* = cast(RedBlackTree*)rbtv;
+	node : TreeNode* = rbt.root;
 
 	while (node !is null) {
 		if (node.key.unsigned < key) {
@@ -154,17 +154,17 @@ private TreeNode* vrt_aa_lookup_node_primitive(void* rbtv, ulong key)
 	return null;
 }
 
-private TreeNode* vrt_aa_lookup_node_array(void* rbtv, void[] key)
+private fn vrt_aa_lookup_node_array(rbtv : void*, key : void[]) TreeNode*
 {
 	if (rbtv is null) {
 		return null;
 	}
 
-	RedBlackTree* rbt = cast(RedBlackTree*)rbtv;
-	TreeNode* node = rbt.root;
+	rbt : RedBlackTree* = cast(RedBlackTree*)rbtv;
+	node : TreeNode* = rbt.root;
 
 	while (node !is null) {
-		int comparison;
+		comparison : i32;
 		if (node.key.array.length < key.length) {
 			comparison = 1; // key.length is longer
 		} else if (node.key.array.length > key.length) {
@@ -185,14 +185,14 @@ private TreeNode* vrt_aa_lookup_node_array(void* rbtv, void[] key)
 	return null;
 }
 
-extern(C) bool vrt_aa_in_primitive(void* rbtv, ulong key, void* ret)
+extern(C) fn vrt_aa_in_primitive(rbtv : void*, key : u64, ret : void*) bool
 {
 	if (rbtv is null) {
 		return false;
 	}
 
-	RedBlackTree* rbt = cast(RedBlackTree*)rbtv;
-	TreeNode* node = vrt_aa_lookup_node_primitive(rbtv, key);
+	rbt : RedBlackTree* = cast(RedBlackTree*)rbtv;
+	node : TreeNode* = vrt_aa_lookup_node_primitive(rbtv, key);
 	if (node is null) {
 		return false;
 	}
@@ -205,14 +205,14 @@ extern(C) bool vrt_aa_in_primitive(void* rbtv, ulong key, void* ret)
 	return true;
 }
 
-extern(C) bool vrt_aa_in_array(void* rbtv, void[] key, void* ret)
+extern(C) fn vrt_aa_in_array(rbtv : void*, key : void[], ret : void*) bool
 {
 	if (rbtv is null) {
 		return false;
 	}
 
-	RedBlackTree* rbt = cast(RedBlackTree*)rbtv;
-	TreeNode* node = vrt_aa_lookup_node_array(rbtv, key);
+	rbt : RedBlackTree* = cast(RedBlackTree*)rbtv;
+	node : TreeNode* = vrt_aa_lookup_node_array(rbtv, key);
 	if (node is null) {
 		return false;
 	}
@@ -225,14 +225,14 @@ extern(C) bool vrt_aa_in_array(void* rbtv, void[] key, void* ret)
 	return true;
 }
 
-extern(C) void* vrt_aa_in_binop_array(void* rbtv, void[] key)
+extern(C) fn vrt_aa_in_binop_array(rbtv : void*, key : void[]) void*
 {
 	if (rbtv is null) {
 		return null;
 	}
 
-	RedBlackTree* rbt = cast(RedBlackTree*)rbtv;
-	TreeNode* tn = vrt_aa_lookup_node_array(rbtv, key);
+	rbt : RedBlackTree* = cast(RedBlackTree*)rbtv;
+	tn : TreeNode* = vrt_aa_lookup_node_array(rbtv, key);
 	if (tn is null) {
 		return null;
 	}
@@ -243,14 +243,14 @@ extern(C) void* vrt_aa_in_binop_array(void* rbtv, void[] key)
 	}
 }
 
-extern(C) void* vrt_aa_in_binop_primitive(void* rbtv, ulong key)
+extern(C) fn vrt_aa_in_binop_primitive(rbtv : void*, key : u64) void*
 {
 	if (rbtv is null) {
 		return null;
 	}
 
-	RedBlackTree* rbt = cast(RedBlackTree*)rbtv;
-	TreeNode* tn = vrt_aa_lookup_node_primitive(rbtv, key);
+	rbt : RedBlackTree* = cast(RedBlackTree*)rbtv;
+	tn : TreeNode* = vrt_aa_lookup_node_primitive(rbtv, key);
 	if (tn is null) {
 		return null;
 	}
@@ -261,9 +261,9 @@ extern(C) void* vrt_aa_in_binop_primitive(void* rbtv, ulong key)
 	}
 }
 
-private void vrt_aa_rotate_left(RedBlackTree* rbt, TreeNode* node)
+private fn vrt_aa_rotate_left(rbt : RedBlackTree*, node : TreeNode*) void
 {
-	TreeNode* right = node.right;
+	right := node.right;
 	vrt_aa_replace_node(rbt, node, right);
 	node.right = right.left;
 	if (right.left !is null) {
@@ -273,9 +273,9 @@ private void vrt_aa_rotate_left(RedBlackTree* rbt, TreeNode* node)
 	node.parent = right;
 }
 
-private void vrt_aa_rotate_right(RedBlackTree* rbt, TreeNode* node)
+private fn vrt_aa_rotate_right(rbt : RedBlackTree*, node : TreeNode*) void
 {
-	TreeNode* left = node.left;
+	left := node.left;
 	vrt_aa_replace_node(rbt, node, left);
 	node.left = left.right;
 	if (left.right !is null) {
@@ -285,7 +285,7 @@ private void vrt_aa_rotate_right(RedBlackTree* rbt, TreeNode* node)
 	node.parent = left;
 }
 
-private void vrt_aa_replace_node(RedBlackTree* rbt, TreeNode* old, TreeNode* new_)
+private fn vrt_aa_replace_node(rbt : RedBlackTree*, old : TreeNode*, new_ : TreeNode*) void
 {
 	if (old is null || old.parent is null) {
 		rbt.root = new_;
@@ -302,17 +302,17 @@ private void vrt_aa_replace_node(RedBlackTree* rbt, TreeNode* old, TreeNode* new
 	}
 }
 
-extern(C) void vrt_aa_insert_primitive(void* rbtv, ulong key, void* value)
+extern(C) fn vrt_aa_insert_primitive(rbtv : void*, key : u64, value : void*) void
 {
-	RedBlackTree* rbt = cast(RedBlackTree*)rbtv;
+	rbt := cast(RedBlackTree*)rbtv;
 	// Maybe put allocation of a new node into an external function
-	TreeNode* inserted_node = new TreeNode;
+	inserted_node : TreeNode* = new TreeNode;
 	inserted_node.key.unsigned = key;
 	inserted_node.red = true; // we have to check the rules afterwards and fix the tree!
 
 	if (rbt.isValuePtr) {
 		// allocate more memory for value
-		void* mem = allocDg(rbt.value, 1);
+		mem : void* = allocDg(rbt.value, 1);
 		__llvm_memcpy(mem, value, rbt.value.size, 0, false);
 		inserted_node.value.ptr = mem;
 	} else {
@@ -322,9 +322,9 @@ extern(C) void vrt_aa_insert_primitive(void* rbtv, ulong key, void* value)
 	if (rbt.root is null) {
 		rbt.root = inserted_node;
 	} else {
-		TreeNode* node = rbt.root;
+		node : TreeNode* = rbt.root;
 
-		bool continue_ = true;
+		continue_ := true;
 		while (continue_) {
 			if (node.key.unsigned < key) {
 				if (node.left is null) {
@@ -363,16 +363,16 @@ extern(C) void vrt_aa_insert_primitive(void* rbtv, ulong key, void* value)
 
 
 // same as vrt_aa_insert_primitive, only different comparison
-extern(C) void vrt_aa_insert_array(void* rbtv, void[] key, void* value)
+extern(C) fn vrt_aa_insert_array(rbtv : void*, key : void[], value : void*) void
 {
-	RedBlackTree* rbt = cast(RedBlackTree*)rbtv;
-	TreeNode* inserted_node = new TreeNode;
+	rbt := cast(RedBlackTree*)rbtv;
+	inserted_node := new TreeNode;
 	inserted_node.key.array = key;
 	inserted_node.red = true; // we have to check the rules afterwards and fix the tree!
 
 	if (rbt.isValuePtr) {
 		// allocate more memory for value
-		void* mem = allocDg(rbt.value, 1);
+		mem : void* = allocDg(rbt.value, 1);
 		__llvm_memcpy(mem, value, rbt.value.size, 0, false);
 		inserted_node.value.ptr = mem;
 	} else {
@@ -382,11 +382,11 @@ extern(C) void vrt_aa_insert_array(void* rbtv, void[] key, void* value)
 	if (rbt.root is null) {
 		rbt.root = inserted_node;
 	} else {
-		TreeNode* node = rbt.root;
+		node : TreeNode* = rbt.root;
 
-		bool continue_ = true;
+		continue_ := true;
 		while (continue_) {
-			int comparison;
+			comparison : i32;
 			if (node.key.array.length < key.length) {
 				comparison = 1; // key.length is longer
 			} else if (node.key.array.length > key.length) {
@@ -426,7 +426,7 @@ extern(C) void vrt_aa_insert_array(void* rbtv, void[] key, void* value)
 
 
 
-private void vrt_aa_insert_case1(RedBlackTree* rbt, TreeNode* node)
+private fn vrt_aa_insert_case1(rbt : RedBlackTree*, node : TreeNode*) void
 {
 	// Case 1: the new node is now the root node.
 	// Simply color it black. The number of black nodes in each tree
@@ -439,7 +439,7 @@ private void vrt_aa_insert_case1(RedBlackTree* rbt, TreeNode* node)
 	}
 }
 
-private void vrt_aa_insert_case2(RedBlackTree* rbt, TreeNode* node)
+private fn vrt_aa_insert_case2(rbt : RedBlackTree*, node : TreeNode*) void
 {
 	// Case 2: the new node has a black parent, if so everything is still fine
 	if (node.parent.red) {
@@ -448,14 +448,14 @@ private void vrt_aa_insert_case2(RedBlackTree* rbt, TreeNode* node)
 	}
 }
 
-private void vrt_aa_insert_case3(RedBlackTree* rbt, TreeNode* node)
+private fn vrt_aa_insert_case3(rbt : RedBlackTree*, node : TreeNode*) void
 {
 	// Case 3: it's getting complicated,
 	// Uncle node is red. So recolor parent and uncle black
 	// (we have a red child), but now the grandparent
 	// might violate the rules -> recursivly invoke the procedure from the start:
 	// vrt_aa_insert_case1
-	TreeNode* uncle = vrt_aa_get_sibling(node.parent);
+	uncle : TreeNode* = vrt_aa_get_sibling(node.parent);
 	if (uncle !is null && uncle.red) { // uncle color
 		node.parent.red = false;
 		uncle.red = false;
@@ -470,7 +470,7 @@ private void vrt_aa_insert_case3(RedBlackTree* rbt, TreeNode* node)
 	}
 }
 
-private void vrt_aa_insert_case4(RedBlackTree* rbt, TreeNode* node)
+private fn vrt_aa_insert_case4(rbt : RedBlackTree*, node : TreeNode*) void
 {
 	// Case 4: Fun!
 	// * The new node is the right child of the parent, and the parent is the
@@ -491,7 +491,7 @@ private void vrt_aa_insert_case4(RedBlackTree* rbt, TreeNode* node)
 	vrt_aa_insert_case5(rbt, node);
 }
 
-private void vrt_aa_insert_case5(RedBlackTree* rbt, TreeNode* node)
+private fn vrt_aa_insert_case5(rbt : RedBlackTree*, node : TreeNode*) void
 {
 	// Case 5: Case 4 fixed!
 	// * The new node is the left child of the parent, and the parent is the
@@ -515,11 +515,11 @@ private void vrt_aa_insert_case5(RedBlackTree* rbt, TreeNode* node)
 	}
 }
 
-extern(C) bool vrt_aa_delete_primitive(void* rbtv, ulong key)
+extern(C) fn vrt_aa_delete_primitive(rbtv : void*, key : u64) bool
 {
-	RedBlackTree* rbt = cast(RedBlackTree*) rbtv;
-	TreeNode* child;
-	TreeNode* node = vrt_aa_lookup_node_primitive(cast(void*)rbt, key);
+	rbt : RedBlackTree* = cast(RedBlackTree*) rbtv;
+	child : TreeNode*;
+	node : TreeNode* = vrt_aa_lookup_node_primitive(cast(void*)rbt, key);
 
 	if (node is null) {
 		// Key did not exist
@@ -536,7 +536,7 @@ extern(C) bool vrt_aa_delete_primitive(void* rbtv, ulong key)
     
 	// the node has two children!
 	if (node.left !is null && node.right !is null) {
-		TreeNode* pred = vrt_aa_iterate_right(node.left);
+		pred : TreeNode* = vrt_aa_iterate_right(node.left);
 		node.key = pred.key;
 		node.value = pred.value;
 		node = pred;
@@ -565,17 +565,17 @@ extern(C) bool vrt_aa_delete_primitive(void* rbtv, ulong key)
 }
 
 // same as above for arrays
-extern(C) bool vrt_aa_delete_array(void* rbtv, void[] key)
+extern(C) fn vrt_aa_delete_array(rbtv : void*, key : void[]) bool
 {
-	RedBlackTree* rbt = cast(RedBlackTree*)rbtv;
-	TreeNode* child;
-	TreeNode* node = vrt_aa_lookup_node_array(rbtv, key);
+	rbt : RedBlackTree* = cast(RedBlackTree*)rbtv;
+	child : TreeNode*;
+	node : TreeNode* = vrt_aa_lookup_node_array(rbtv, key);
 
 	if (node is null) {
 		return false;
 	}
 	if (node.left !is null && node.right !is null) {
-		TreeNode* pred = vrt_aa_iterate_right(node.left);
+		pred := vrt_aa_iterate_right(node.left);
 		node.key = pred.key;
 		node.value = pred.value;
 		node = pred;
@@ -597,41 +597,41 @@ extern(C) bool vrt_aa_delete_array(void* rbtv, void[] key)
 }
 
 // aa.keys
-extern (C) void[] vrt_aa_get_keys(void* rbtv)
+extern (C) fn vrt_aa_get_keys(rbtv : void*) void[]
 {
 	if (rbtv is null) {
 		return [];
 	}
-	auto rbt = cast(RedBlackTree*) rbtv;
-	auto arr = allocDg(rbt.key, rbt.length)[0 .. rbt.length * rbt.key.size];
-	size_t currentIndex;
+	rbt := cast(RedBlackTree*) rbtv;
+	arr := allocDg(rbt.key, rbt.length)[0 .. rbt.length * rbt.key.size];
+	currentIndex : size_t;
 	vrt_aa_walk(rbt, rbt.root, true, rbt.key.size, ref arr, ref currentIndex);
 	return arr;
 }
 
 // aa.values
-extern (C) void[] vrt_aa_get_values(void* rbtv)
+extern (C) fn vrt_aa_get_values(rbtv : void*) void[]
 {
 	if (rbtv is null) {
 		return [];
 	}
-	auto rbt = cast(RedBlackTree*) rbtv;
-	auto arr = allocDg(rbt.value, rbt.length)[0 .. rbt.length * rbt.value.size];
-	size_t currentIndex;
+	rbt := cast(RedBlackTree*) rbtv;
+	arr := allocDg(rbt.value, rbt.length)[0 .. rbt.length * rbt.value.size];
+	currentIndex : size_t;
 	vrt_aa_walk(rbt, rbt.root, false, rbt.value.size, ref arr, ref currentIndex);
 	return arr;
 }
 
 // aa.rehash
-extern (C) void vrt_aa_rehash(void* rbtv)
+extern (C) fn vrt_aa_rehash(rbtv : void*) void
 {
 }
 
-private void vrt_aa_walk(RedBlackTree* rbt, TreeNode* node, bool getKey, size_t argSize, ref void[] arr, ref size_t currentIndex)
+private fn vrt_aa_walk(rbt : RedBlackTree*, node : TreeNode*, getKey : bool, argSize : size_t, ref arr : void[], ref currentIndex : size_t) void
 {
 	if (node !is null) {
 		vrt_aa_walk(rbt, node.left, getKey, argSize, ref arr, ref currentIndex);
-		auto tn = getKey ? node.key : node.value;
+		tn := getKey ? node.key : node.value;
 
 		if (argSize > typeid(TreeStore).size) {
 			__llvm_memcpy(&arr[currentIndex], tn.ptr, argSize, 0, false);
@@ -643,21 +643,21 @@ private void vrt_aa_walk(RedBlackTree* rbt, TreeNode* node, bool getKey, size_t 
 	}
 }
 
-private void vrt_aa_delete_case1(RedBlackTree* rbt, TreeNode* node)
+private fn vrt_aa_delete_case1(rbt : RedBlackTree*, node : TreeNode*) void
 {
 	// If the root node was replaced (parent is null) no 
-	// propierties were violated
+	// properties were violated
 	if (node.parent !is null) {
 		vrt_aa_delete_case2(rbt, node);
 	}
 }
 
-private void vrt_aa_delete_case2(RedBlackTree* rbt, TreeNode* node)
+private fn vrt_aa_delete_case2(rbt : RedBlackTree*, node : TreeNode*) void
 {
 	// The node has a red sibling, so we switch the colors of the parent
 	// and the sibling. Afterwards we rotate so that the sibling
 	// becomes the parent. This does not fix the tree.
-	TreeNode* sibling = vrt_aa_get_sibling(node);
+	sibling : TreeNode* = vrt_aa_get_sibling(node);
 	if (sibling !is null && sibling.red) {
 		node.parent.red = true;
 		sibling.red = false;
@@ -673,12 +673,12 @@ private void vrt_aa_delete_case2(RedBlackTree* rbt, TreeNode* node)
 	vrt_aa_delete_case3(rbt, node);
 }
 
-private void vrt_aa_delete_case3(RedBlackTree* rbt, TreeNode* node)
+private fn vrt_aa_delete_case3(rbt : RedBlackTree*, node : TreeNode*) void
 {
 	// If the parent, sibling and sibling children are black,
 	// we paint the sibling red, we have to run this recursivly up
 	// until we reach the tree node
-	TreeNode* sibling = vrt_aa_get_sibling(node);
+	sibling : TreeNode* = vrt_aa_get_sibling(node);
 	if (!node.parent.red &&
 	    !vrt_aa_node_is_red(sibling) &&
 	    !vrt_aa_node_is_red(sibling.left) &&
@@ -690,11 +690,11 @@ private void vrt_aa_delete_case3(RedBlackTree* rbt, TreeNode* node)
 	}
 }
 
-private void vrt_aa_delete_case4(RedBlackTree* rbt, TreeNode* node)
+private fn vrt_aa_delete_case4(rbt : RedBlackTree*, node : TreeNode*) void
 {
 	// If the parent is red, but sibling and sibling children are black,
 	// we paint the sibling red and the parent black
-	TreeNode* sibling = vrt_aa_get_sibling(node);
+	sibling : TreeNode* = vrt_aa_get_sibling(node);
 	if (node.parent.red &&
 	    !vrt_aa_node_is_red(sibling) &&
 	    !vrt_aa_node_is_red(sibling.left) &&
@@ -706,9 +706,9 @@ private void vrt_aa_delete_case4(RedBlackTree* rbt, TreeNode* node)
 	}
 }
 
-private void vrt_aa_delete_case5(RedBlackTree* rbt, TreeNode* node)
+private fn vrt_aa_delete_case5(rbt : RedBlackTree*, node : TreeNode*) void
 {
-	TreeNode* sibling = vrt_aa_get_sibling(node);
+	sibling : TreeNode* = vrt_aa_get_sibling(node);
 	if (node is node.parent.left &&
 	    !vrt_aa_node_is_red(sibling) &&
 	    vrt_aa_node_is_red(sibling.left) &&
@@ -728,9 +728,9 @@ private void vrt_aa_delete_case5(RedBlackTree* rbt, TreeNode* node)
 	vrt_aa_delete_case6(rbt, node);
 }
 
-private void vrt_aa_delete_case6(RedBlackTree* rbt, TreeNode* node)
+private fn vrt_aa_delete_case6(rbt : RedBlackTree*, node : TreeNode*) void
 {
-	TreeNode* sibling = vrt_aa_get_sibling(node);
+	sibling : TreeNode* = vrt_aa_get_sibling(node);
 	sibling.red = node.parent.red;
 	node.parent.red = false;
 	if (node is node.parent.left) {
@@ -742,12 +742,12 @@ private void vrt_aa_delete_case6(RedBlackTree* rbt, TreeNode* node)
 	}
 }
 
-private bool vrt_aa_node_is_red(TreeNode* node)
+private fn vrt_aa_node_is_red(node : TreeNode*) bool
 {
 	return node is null ? false : node.red;
 }
 
-private TreeNode* vrt_aa_get_sibling(TreeNode* node)
+private fn vrt_aa_get_sibling(node : TreeNode*) TreeNode*
 {
 	if (node is node.parent.left) {
 		return node.parent.right;
@@ -756,7 +756,7 @@ private TreeNode* vrt_aa_get_sibling(TreeNode* node)
 	}
 }
 
-private TreeNode* vrt_aa_iterate_right(TreeNode* node)
+private fn vrt_aa_iterate_right(node : TreeNode*) TreeNode*
 {
     while (node.right !is null) {
         node = node.right;
@@ -765,9 +765,9 @@ private TreeNode* vrt_aa_iterate_right(TreeNode* node)
     return node;
 }
 
-bool vrt_aa_validate(void* rbtv)
+fn vrt_aa_validate(rbtv : void*) bool
 {
-	RedBlackTree* rbt = cast(RedBlackTree*)rbtv;
+	rbt : RedBlackTree* = cast(RedBlackTree*)rbtv;
 	if (rbt.root is null) {
 		return true;
 	}
@@ -797,7 +797,7 @@ bool vrt_aa_validate(void* rbtv)
 	return true;
 }
 
-private bool vrt_aa_validate_rule4(TreeNode* node)
+private fn vrt_aa_validate_rule4(node : TreeNode*) bool
 {
 	// we reached a leaf: nil
 	if (node is null) {
@@ -816,7 +816,7 @@ private bool vrt_aa_validate_rule4(TreeNode* node)
 	return vrt_aa_validate_rule4(node.left) && vrt_aa_validate_rule4(node.right);
 }
 
-private bool vrt_aa_validate_rule5(TreeNode* node)
+private fn vrt_aa_validate_rule5(node : TreeNode*) bool
 {
 	// How does this work?
 	// We traverse the RBT, when we reach a leaf and "black_nodes" is -1, then
@@ -825,27 +825,27 @@ private bool vrt_aa_validate_rule5(TreeNode* node)
 	// of previously visited black nodes with "black_nodes", if they equal, everything
 	// is fine, if not, our RBT is not valid and we return false, which will stop the
 	// traversal and return false.
-	int black_nodes = -1;
+	black_nodes : i32 = -1;
 
 	return vrt_aa_validate_rule5_impl(node, 0, &black_nodes);
 }
 
-private bool vrt_aa_validate_rule5_impl(TreeNode* node, int previouse_black_nodes, int* black_nodes)
+private fn vrt_aa_validate_rule5_impl(node : TreeNode*, previous_black_nodes : i32, black_nodes : i32*) bool
 {
 	if (node !is null && !node.red) { // node is black
-		previouse_black_nodes += 1;
+		previous_black_nodes += 1;
 	}
 
 	if (node is null) { // nil = leaf reched
 		if(*black_nodes == -1) { // first time we reached a leaf
-			*black_nodes = previouse_black_nodes;
-		} else if(previouse_black_nodes != *black_nodes) {
+			*black_nodes = previous_black_nodes;
+		} else if(previous_black_nodes != *black_nodes) {
 			return false;
 		}
 
 		return true;
 	}
 
-	return vrt_aa_validate_rule5_impl(node.left, previouse_black_nodes, black_nodes) &&
-		   vrt_aa_validate_rule5_impl(node.right, previouse_black_nodes, black_nodes);
+	return vrt_aa_validate_rule5_impl(node.left, previous_black_nodes, black_nodes) &&
+		   vrt_aa_validate_rule5_impl(node.right, previous_black_nodes, black_nodes);
 }

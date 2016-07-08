@@ -5,7 +5,7 @@ module vrt.os.panic;
 import vrt.ext.stdc : exit, printf;
 
 
-extern(C) void vrt_panic(const(char)[][] msgs, const(char)[] file, int line)
+extern(C) fn vrt_panic(msgs : const(char)[][], file : const(char)[], line : i32) void
 {
 	printf("%.*s:%i: ###PANIC###\n",
 		cast(int)file.length, file.ptr,

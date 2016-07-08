@@ -36,23 +36,23 @@ enum _Unwind_Action
 version (Windows) {
 	struct _Unwind_Exception
 	{
-		ulong exception_class;
-		_Unwind_Exception_Cleanup_Fn exception_cleanup;
-		void* pad1;
+		exception_class : u64;
+		exception_cleanup : _Unwind_Exception_Cleanup_Fn;
+		pad1 : void*;
 
-		uintptr_t private_1;
-		void* pad2;
-		uintptr_t private_2;
-		void* pad3;
+		private_1 : uintptr_t;
+		pad2 : void*;
+		private_2 : uintptr_t;
+		pad3 : void*;
 	}
 } else {
 	struct _Unwind_Exception
 	{
-		ulong exception_class;
-		_Unwind_Exception_Cleanup_Fn exception_cleanup;
+		exception_class : u64;
+		exception_cleanup : _Unwind_Exception_Cleanup_Fn;
 
-		uintptr_t private_1;
-		uintptr_t private_2;
+		private_1 : uintptr_t;
+		private_2 : uintptr_t;
 	}
 }
 
@@ -60,17 +60,17 @@ alias _Unwind_Exception_Cleanup_Fn = void function(_Unwind_Reason_Code, _Unwind_
 
 struct _Unwind_Context {}
 
-int _Unwind_Resume(_Unwind_Exception*);
-int _Unwind_RaiseException(_Unwind_Exception*);
+fn _Unwind_Resume(_Unwind_Exception*) int;
+fn _Unwind_RaiseException(_Unwind_Exception*) int;
 
-const ubyte* _Unwind_GetLanguageSpecificData(_Unwind_Context* ctx);
+const fn _Unwind_GetLanguageSpecificData(ctx : _Unwind_Context*) ubyte*;
 
-size_t _Unwind_GetRegionStart(_Unwind_Context* ctx);
-size_t _Unwind_GetTextRelBase(_Unwind_Context* ctx);
-size_t _Unwind_GetDataRelBase(_Unwind_Context* ctx);
+fn _Unwind_GetRegionStart(ctx : _Unwind_Context*) size_t;
+fn _Unwind_GetTextRelBase(ctx : _Unwind_Context*) size_t;
+fn _Unwind_GetDataRelBase(ctx : _Unwind_Context*) size_t;
 
-size_t _Unwind_GetGR(_Unwind_Context* ctx, int i);
-uintptr_t _Unwind_GetIP(_Unwind_Context  *ctx);
+fn _Unwind_GetGR(ctx : _Unwind_Context*, i : i32) size_t;
+fn _Unwind_GetIP(ctx : _Unwind_Context*) uintptr_t;
 
-void _Unwind_SetGR(_Unwind_Context* ctx, int i, size_t n);
-void _Unwind_SetIP(_Unwind_Context* ctx, uintptr_t new_value);
+fn _Unwind_SetGR(ctx : _Unwind_Context*, i : i32, n : size_t) void;
+fn _Unwind_SetIP(ctx : _Unwind_Context*, new_value : uintptr_t) void;

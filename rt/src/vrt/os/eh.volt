@@ -33,45 +33,45 @@ version (X86) {
  */
 struct vrt_eh_exception
 {
-	_Unwind_Exception e;
-	Throwable t;
+	e : _Unwind_Exception;
+	t : Throwable;
 }
 
 /**
  * Exception class, used to identify for other handlers.
  */
-global auto VRT_EH_NAME = "VOLT___\0";
+global VRT_EH_NAME : string = "VOLT___\0";
 
 /**
  * Mandated by the ABI, not needed for Volt.
  */
-extern(C) void vrt_eh_delete(
-	_Unwind_Reason_Code reason,
-	_Unwind_Exception* exceptionObject)
+extern(C) fn vrt_eh_delete(
+	reason : _Unwind_Reason_Code,
+	exceptionObject : _Unwind_Exception*) void
 {
 }
 
 /**
  * Throws a exception.
  */
-extern(C) void vrt_eh_throw(Throwable t, string file, size_t line)
+extern(C) fn vrt_eh_throw(t : Throwable, file : string, line : size_t) void
 {
-	auto e = new vrt_eh_exception;
+	e := new vrt_eh_exception;
 
 	t.throwFile = file;
 	t.throwLine = line;
 
-	e.e.exception_class = *cast(ulong*)VRT_EH_NAME.ptr;
+	e.e.exception_class = *cast(u64*)VRT_EH_NAME.ptr;
 	e.e.exception_cleanup = vrt_eh_delete;
 	e.t = t;
 
-	auto f = _Unwind_RaiseException(&e.e);
-	char[][1] msgs;
+	f := _Unwind_RaiseException(&e.e);
+	msgs : char[][1];
 	msgs[0] = cast(char[])"FAILED TO RAISE EXCEPTION";
 	vrt_panic(cast(char[][])msgs);
 }
 
-extern(C) void vrt_eh_throw_slice_error(string file, size_t line)
+extern(C) fn vrt_eh_throw_slice_error(file : string, line : size_t) void
 {
 	vrt_eh_throw(new Error("invalid array cast"), file, line);
 }
@@ -79,20 +79,20 @@ extern(C) void vrt_eh_throw_slice_error(string file, size_t line)
 /**
  * Big do everything function.
  */
-extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
-	int ver,
-	_Unwind_Action actions,
-	ulong exceptionClass,
-	_Unwind_Exception* exceptionObject,
-	_Unwind_Context* ctx)
+extern(C) fn vrt_eh_personality_v0(
+	ver : i32,
+	actions : _Unwind_Action,
+	exceptionClass : u64,
+	exceptionObject : _Unwind_Exception*,
+	ctx : _Unwind_Context*) _Unwind_Reason_Code
 {
 	// Get the current instruction pointer and offset it before next
 	// instruction in the current frame which threw the exception.
-	uintptr_t pc = _Unwind_GetIP(ctx) - 1;
+	pc : uintptr_t = _Unwind_GetIP(ctx) - 1;
 
-	ubyte* data = _Unwind_GetLanguageSpecificData(ctx);
+	data : u8* = _Unwind_GetLanguageSpecificData(ctx);
 	if (data is null) {
-		char[][1] msgs;
+		msgs : char[][1];
 		msgs[0] = cast(char[])"non region data";
 		vrt_panic(cast(char[][])msgs);
 		return _Unwind_Reason_Code.FATAL_PHASE1_ERROR;
@@ -100,26 +100,26 @@ extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
 
 	// The region start is the same as the function start.
 	// And all of the values in the callsite table are relative to it.
-	uintptr_t funcStart = _Unwind_GetRegionStart(ctx);
-	uintptr_t pcOffset = pc - funcStart;
+	funcStart : uintptr_t = _Unwind_GetRegionStart(ctx);
+	pcOffset : uintptr_t = pc - funcStart;
 
 	// Setup the dwarf context so we can read values.
-	DW_Context dwCtx;
-	version(!OSX) {
+	dwCtx : DW_Context;
+	version (!OSX) {
 		dwCtx.textrel = cast(void*)_Unwind_GetTextRelBase(ctx);
 		dwCtx.datarel = cast(void*)_Unwind_GetDataRelBase(ctx);
 		dwCtx.funcrel = cast(void*)funcStart;
 	}
 
 	// Get lpStartBase, landing pad offsets are relative to it.
-	uintptr_t lpStartBase;
-	ubyte lpStartEncoding;
+	lpStartBase : uintptr_t;
+	lpStartEncoding : u8;
 
 	lpStartEncoding = dw_read_ubyte(&data);
 	if (lpStartEncoding == DW_EH_PE_omit) {
 		lpStartBase = funcStart;
 	} else {
-		char[][1] msgs;
+		msgs : char[][1];
 		msgs[0] = cast(char[])"unhandled lpStartEncoding";
 		vrt_panic(cast(char[][])msgs);
 		return _Unwind_Reason_Code.FATAL_PHASE1_ERROR;
@@ -127,23 +127,23 @@ extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
 
 	// Get the ttype offsets aka TypeInfo lists.
 	// This can be null for empty lists.
-	ubyte* typeInfo;
-	ubyte typeInfoEncoding = dw_read_ubyte(&data);
-	size_t typeInfoEncodingSize;
+	typeInfo : u8*;
+	typeInfoEncoding : u8 = dw_read_ubyte(&data);
+	typeInfoEncodingSize : size_t;
 
 	if (typeInfoEncoding != DW_EH_PE_omit) {
 		typeInfoEncodingSize = dw_encoded_size(typeInfoEncoding);
 		// Calculate type info locations in emitted dwarf code which
 		// were flagged by type info arguments to llvm.eh.selector
 		// intrinsic.
-		auto offset = dw_read_uleb128(&data);
+		offset := dw_read_uleb128(&data);
 		typeInfo = data + offset;
 	}
 
 	// Extract the Throwable object.
-	Throwable throwable;
+	throwable : Throwable;
 	if (exceptionObject.exception_class == *cast(ulong*)VRT_EH_NAME.ptr) {
-		auto eh = cast(vrt_eh_exception*)exceptionObject;
+		eh := cast(vrt_eh_exception*)exceptionObject;
 		throwable = eh.t;
 	} else {
 		// Do no type checking if this is an foreign exception.
@@ -151,38 +151,38 @@ extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
 	}
 
 	// Setup the call site table.
-	ubyte callSiteEncoding = dw_read_ubyte(&data);
-	uintptr_t callSiteTableLength;
+	callSiteEncoding : u8 = dw_read_ubyte(&data);
+	callSiteTableLength : uintptr_t;
 
 	if (callSiteEncoding != DW_EH_PE_omit) {
 		callSiteTableLength = dw_read_uleb128(&data);
 	} else {
-		char[][1] msgs;
+		msgs : char[][1];
 		msgs[0] = cast(char[])"unhandled callingSiteEncoding";
 		vrt_panic(cast(char[][])msgs);
 		return _Unwind_Reason_Code.FATAL_PHASE1_ERROR;
 	}
 
-	ubyte* callSiteTableStart = data;
-	ubyte* callSiteTableEnd = data + callSiteTableLength;
-	ubyte* actionTableStart = callSiteTableEnd;
-	ubyte* callSitePtr = callSiteTableStart;
+	callSiteTableStart : u8* = data;
+	callSiteTableEnd : u8* = data + callSiteTableLength;
+	actionTableStart : u8* = callSiteTableEnd;
+	callSitePtr : u8* = callSiteTableStart;
 
 	// Walk the callsite table and find the callsite which the
 	// pc is in currently, then look at which actions should be
 	// performed by looking in the action table.
 	while (cast(size_t)callSitePtr < cast(size_t)callSiteTableEnd) {
 
-		auto rangeStart = dw_read_encoded(&callSitePtr, callSiteEncoding);
-		auto rangeEnd = dw_read_encoded(&callSitePtr, callSiteEncoding) + rangeStart;
-		auto landingPad = dw_read_encoded(&callSitePtr, callSiteEncoding);
+		rangeStart := dw_read_encoded(&callSitePtr, callSiteEncoding);
+		rangeEnd := dw_read_encoded(&callSitePtr, callSiteEncoding) + rangeStart;
+		landingPad := dw_read_encoded(&callSitePtr, callSiteEncoding);
 
-		auto actionEntry = dw_read_uleb128(&callSitePtr);
+		actionEntry := dw_read_uleb128(&callSitePtr);
 
 		if (rangeStart <= pcOffset && pcOffset < rangeEnd) {
 
 			// Calculate where we should set the pc if we want to use the landing pad.
-			uintptr_t ip = lpStartBase + landingPad;
+			ip : uintptr_t = lpStartBase + landingPad;
 
 			if (landingPad == 0) {
 				// They want us to escape the function,
@@ -196,13 +196,13 @@ extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
 				// Get the pointer into the ActionTable,
 				// This needs to be subtracted by 1 because 0 (the beginning
 				// of the table) is used to signal cleanup.
-				auto actionPointer = actionTableStart + actionEntry - 1;
+				actionPointer := actionTableStart + actionEntry - 1;
 
 				// We start at 1 because 0 is cleanup.
 				while (true) {
-					auto typeOffset = dw_read_sleb128(&actionPointer);
-					auto tmpPointer = actionPointer;
-					auto actionOffset = dw_read_sleb128(&tmpPointer);
+					typeOffset := dw_read_sleb128(&actionPointer);
+					tmpPointer := actionPointer;
+					actionOffset := dw_read_sleb128(&tmpPointer);
 
 					if (typeOffset == 0) {
 						return vrt_eh_install_finally(ip, actions, exceptionObject, ctx);
@@ -210,9 +210,9 @@ extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
 
 					// If this is a forign exception or no type table found.
 					if (typeInfo !is null) {
-						auto ptr = typeInfo - (typeOffset * typeInfoEncodingSize);
-						auto ti = cast(TypeInfo)dw_read_encoded(&ptr, typeInfoEncoding);
-						auto casted = vrt_handle_cast(cast(void*)throwable, ti);
+						ptr := typeInfo - (typeOffset * typeInfoEncodingSize);
+						ti := cast(TypeInfo)dw_read_encoded(&ptr, typeInfoEncoding);
+						casted := vrt_handle_cast(cast(void*)throwable, ti);
 						if (casted !is null) {
 							return vrt_eh_install_action(ip, actions, typeOffset, throwable, ctx);
 						}
@@ -225,7 +225,7 @@ extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
 					actionPointer += cast(size_t)actionOffset;
 				}
 
-				char[][1] msgs;
+				msgs : char[][1];
 				msgs[0] = cast(char[])"unhandled case";
 				vrt_panic(cast(char[][])msgs);
 				return _Unwind_Reason_Code.FATAL_PHASE1_ERROR;
@@ -236,12 +236,12 @@ extern(C) _Unwind_Reason_Code vrt_eh_personality_v0(
 	return _Unwind_Reason_Code.CONTINUE_UNWIND;
 }
 
-_Unwind_Reason_Code vrt_eh_install_action(
-	uintptr_t ip,
-	_Unwind_Action actions,
-	uintptr_t switchVal,
-	Throwable t,
-	_Unwind_Context* ctx)
+fn vrt_eh_install_action(
+	ip : uintptr_t,
+	actions : _Unwind_Action,
+	switchVal : uintptr_t,
+	t : Throwable,
+	ctx : _Unwind_Context*) _Unwind_Reason_Code
 {
 	// A finally doesn't count as a handler, so we should continue.
 	if (actions & _Unwind_Action.SEARCH_PHASE) {
@@ -255,11 +255,11 @@ _Unwind_Reason_Code vrt_eh_install_action(
 	return _Unwind_Reason_Code.INSTALL_CONTEXT;
 }
 
-_Unwind_Reason_Code vrt_eh_install_finally(
-	uintptr_t ip,
-	_Unwind_Action actions,
-	_Unwind_Exception* exceptionObject,
-	_Unwind_Context* ctx)
+fn vrt_eh_install_finally(
+	ip : uintptr_t,
+	actions : _Unwind_Action,
+	exceptionObject : _Unwind_Exception*,
+	ctx : _Unwind_Context*) _Unwind_Reason_Code
 {
 	// A finally doesn't count as a handler, so we should continue.
 	if (actions & _Unwind_Action.SEARCH_PHASE) {

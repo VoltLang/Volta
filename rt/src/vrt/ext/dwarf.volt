@@ -8,9 +8,9 @@ import vrt.ext.stdc : uintptr_t;
 
 struct DW_Context
 {
-	void* textrel;
-	void* datarel;
-	void* funcrel;
+	textrel : void*;
+	datarel : void*;
+	funcrel : void*;
 }
 
 enum {
@@ -39,12 +39,12 @@ enum {
 	DW_EH_PE_indirect = 0x80
 }
 
-uintptr_t dw_read_uleb128(const(ubyte)** data)
+fn dw_read_uleb128(data : const(u8)**) uintptr_t
 {
-	uintptr_t result;
-	uintptr_t shift;
-	ubyte b;
-	auto p = *data;
+	result : uintptr_t;
+	shift : uintptr_t;
+	b : u8;
+	p := *data;
 
 	do {
 		b = *p++;
@@ -57,12 +57,12 @@ uintptr_t dw_read_uleb128(const(ubyte)** data)
 	return result;
 }
 
-static uintptr_t dw_read_sleb128(const(ubyte)** data)
+static fn dw_read_sleb128(data : const(u8)**) uintptr_t
 {
-	uintptr_t result;
-	uintptr_t shift;
-	ubyte b;
-	auto p = *data;
+	result : uintptr_t;
+	shift : uintptr_t;
+	b : u8;
+	p := *data;
 
 	do {
 		b = *p++;
@@ -79,33 +79,33 @@ static uintptr_t dw_read_sleb128(const(ubyte)** data)
 	return result;
 }
 
-ubyte dw_read_ubyte(const(ubyte)** data)
+fn dw_read_ubyte(data : const(u8)**) u8
 {
-	auto p = *data;
-	auto result = cast(ubyte)*p++;
+	p := *data;
+	result := cast(u8)*p++;
 	*data = p;
 	return result;
 }
 
-size_t dw_encoded_size(ubyte encoding)
+fn dw_encoded_size(encoding : u8) size_t
 {
 	switch (encoding & 0x0F) {
 	case DW_EH_PE_absptr:
 		return typeid(void*).size;
 	case DW_EH_PE_udata2:
-		return typeid(ushort).size;
+		return typeid(u16).size;
 	case DW_EH_PE_udata4:
-		return typeid(uint).size;
+		return typeid(u32).size;
 	case DW_EH_PE_udata8:
-		return typeid(ulong).size;
+		return typeid(u64).size;
 	case DW_EH_PE_sdata2:
-		return typeid(short).size;
+		return typeid(i16).size;
 	case DW_EH_PE_sdata4:
-		return typeid(int).size;
+		return typeid(i32).size;
 	case DW_EH_PE_sdata8:
-		return typeid(long).size;
+		return typeid(i64).size;
 	default:
-		char[][1] msgs;
+		msgs : char[][1];
 		msgs[0] = cast(char[])"unhandled case";
 		vrt_panic(cast(char[][])msgs);
 		break;
@@ -113,11 +113,11 @@ size_t dw_encoded_size(ubyte encoding)
 	assert(false); // To please cfg detection
 }
 
-uintptr_t dw_read_encoded(const(ubyte)** data, ubyte encoding)
+fn dw_read_encoded(data : const(u8)**, encoding : u8) uintptr_t
 {
-	uintptr_t result;
-	auto pc = *data;
-	auto p = *data;
+	result : uintptr_t;
+	pc := *data;
+	p := *data;
 
 	switch (encoding & 0x0F) {
 	case DW_EH_PE_uleb128:
@@ -155,7 +155,7 @@ uintptr_t dw_read_encoded(const(ubyte)** data, ubyte encoding)
 		p += typeid(long).size;
 		break;
 	default:
-		char[][1] msgs;
+		msgs : char[][1];
 		msgs[0] = cast(char[])"unhandled case type";
 		vrt_panic(cast(char[][])msgs);
 		break;
@@ -169,7 +169,7 @@ uintptr_t dw_read_encoded(const(ubyte)** data, ubyte encoding)
 			result += cast(uintptr_t)pc;
 			break;
 		default:
-			char[][1] msgs;
+			msgs : char[][1];
 			msgs[0] = cast(char[])"unhandled case type";
 			vrt_panic(cast(char[][])msgs);
 			break;

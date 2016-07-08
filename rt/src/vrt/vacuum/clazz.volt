@@ -3,21 +3,21 @@ module vrt.vacuum.clazz;
 import core.typeinfo : TypeInfo, ClassInfo, Type;
 
 
-extern(C) void* vrt_handle_cast(void* obj, TypeInfo tinfo)
+extern(C) fn vrt_handle_cast(obj : void*, tinfo : TypeInfo) void*
 {
 	if (obj is null)
 		return null;
 
-	auto list = **cast(ClassInfo[]**)obj;
-	for (size_t i = 0u; i < list.length; i++) {
+	list := **cast(ClassInfo[]**)obj;
+	foreach (i, ti; list) {
 		if (list[i] is tinfo) {
 			return obj;
 		}
 		if (tinfo.type == Type.Interface) {
-			auto cinfo = list[i];
+			cinfo := list[i];
 			foreach (iface; cinfo.interfaces) {
 				if (iface.info is tinfo) {
-					ubyte* ptr = cast(ubyte*)obj;
+					ptr := cast(ubyte*)obj;
 					return cast(void*)(ptr + iface.offset);
 				}
 			}

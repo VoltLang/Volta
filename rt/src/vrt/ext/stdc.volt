@@ -6,11 +6,11 @@
 module vrt.ext.stdc;
 
 
-extern(C) int printf(const(char)*, ...);
+extern(C) fn printf(const(char)*, ...) int;
 
-extern(C) void* calloc(size_t num, size_t size);
+extern(C) fn calloc(num : size_t, size : size_t) void*;
 
-extern(C) void exit(int);
+extern(C) fn exit(i32) void;
 
 // True for now.
 alias uintptr_t = size_t;

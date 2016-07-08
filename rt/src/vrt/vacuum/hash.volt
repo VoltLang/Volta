@@ -10,13 +10,13 @@ module vrt.vacuum.hash;
  * This needs to correspond with the implementation
  * in volt.util.string in the compiler.
  */
-extern(C) uint vrt_hash(void* ptr, size_t length)
+extern(C) fn vrt_hash(ptr : void*, length : size_t) u32
 {
-	uint h = 5381;
+	h : u32 = 5381;
 
-	ubyte* uptr = cast(ubyte*) ptr;
+	uptr : u8* = cast(u8*) ptr;
 
-	for (size_t i = 0; i < length; i++) {
+	foreach (i; 0 .. length) {
 		h = ((h << 5) + h) + uptr[i];
 	}
 
