@@ -10,11 +10,11 @@ module defaultsymbols;
  * @{
  */
 version (V_P64) {
-	alias size_t = ulong;
-	alias ptrdiff_t = long;
+	alias size_t = u64;
+	alias ptrdiff_t = i64;
 } else {
-	alias size_t = uint;
-	alias ptrdiff_t = int;
+	alias size_t = u32;
+	alias ptrdiff_t = i32;
 }
 /**
  * @}
