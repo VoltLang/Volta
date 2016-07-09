@@ -736,9 +736,10 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func)
 			}
 		}
 		func.params ~= p;
-		matchIf(ps, TokenType.Comma);
+		auto hadComma = matchIf(ps, TokenType.Comma);
 		if (matchIf(ps, TokenType.TripleDot)) {
-			func.type.hasVarArgs = true;
+			func.type.hasVarArgs = hadComma;
+			func.type.homogenousVariadic = !hadComma;
 			if (ps != TokenType.CloseParen) {
 				return parseFailed(ps, func);
 			}
