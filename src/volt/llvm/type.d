@@ -26,6 +26,7 @@ public:
 	ir.Type irType;
 	LLVMTypeRef llvmType;
 	LLVMValueRef diType;
+	bool structType;
 
 public:
 	void from(State, ir.Constant, Value) { assert(false); }
@@ -505,7 +506,7 @@ private:
 
 		size_t offset = ft.hiddenParameter;
 		foreach (i, type; params) {
-			if (ft.isArgRef[i] || ft.isArgOut[i]) {
+			if (ft.isArgRef[i] || ft.isArgOut[i] || type.structType) {
 				auto irPtr = new ir.PointerType(type.irType);
 				addMangledName(irPtr);
 				auto ptrType = cast(PointerType) .fromIr(state, irPtr);
@@ -700,6 +701,7 @@ private:
 		diType = state.diStruct(irType);
 		llvmType = LLVMStructCreateNamed(state.context, mangled);
 		super(state, irType, llvmType, diType);
+		this.structType = true;
 
 		createAlias(state, irType, mangled);
 

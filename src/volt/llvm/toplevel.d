@@ -91,22 +91,28 @@ public:
 
 		size_t offset = func.type.hiddenParameter;
 		foreach (irIndex, p; func.params) {
-			if (p.name is null)
-				continue;
-
 			auto v = LLVMGetParam(llvmFunc, cast(uint)(irIndex + offset));
+			auto t = state.fromIr(p.type);
 
-			if (func.type.isArgRef[irIndex]) {
+			bool isRef = func.type.isArgRef[irIndex];
+			bool isOut = func.type.isArgOut[irIndex];
+			bool isStruct = t.structType;
+
+			// These two condition has to happen
+			// even if the parameter isn't nameed.
+			if (isOut) {
+				auto initC = LLVMConstNull(t.llvmType);
+				LLVMBuildStore(state.builder, initC, v);
+			} else if (isStruct && !isRef) {
+				LLVMAddAttribute(v, LLVMAttribute.ByVal);
+			}
+
+			// Early out on unmaned parameters.
+			if (p.name is null) {
+				continue;
+			} else if (isRef || isOut || isStruct) {
 				state.makeByValVariable(p, v);
-			} else if (func.type.isArgOut[irIndex]) {
-				state.makeByValVariable(p, v);
-				// Default init the variable.
-				Type initType;
-				auto initV = state.getVariableValue(p, initType);
-				auto initC = LLVMConstNull(initType.llvmType);
-				LLVMBuildStore(state.builder, initC, initV);
 			} else {
-				auto t = state.fromIr(p.type);
 				auto a = state.getVariableValue(p, t);
 				LLVMBuildStore(state.builder, v, a);
 			}

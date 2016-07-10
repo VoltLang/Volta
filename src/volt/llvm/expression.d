@@ -1106,7 +1106,7 @@ void handleCreateDelegate(State state, ir.Postfix postfix, Value result)
 
 void handleCall(State state, ir.Postfix postfix, Value result)
 {
-	auto llvmArgs = new LLVMValueRef[](postfix.arguments.length);
+	LLVMValueRef llvmExtraArg;
 
 	size_t offset;
 
@@ -1119,7 +1119,7 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 		auto instance = new Value();
 		getCreateDelegateValues(state, childAsPostfix, instance, result);
 
-		llvmArgs = LLVMBuildBitCast(state.builder, instance.value, state.voidPtrType.llvmType, "") ~ llvmArgs;
+		llvmExtraArg = LLVMBuildBitCast(state.builder, instance.value, state.voidPtrType.llvmType, "");
 		offset = 1;
 
 	} else {
@@ -1144,9 +1144,8 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 		auto voidPtr = LLVMBuildStructGEP(state.builder, result.value, DelegateType.voidPtrIndex, "");
 
 		func = LLVMBuildLoad(state.builder, func, "");
-		voidPtr = LLVMBuildLoad(state.builder, voidPtr, "");
+		llvmExtraArg = LLVMBuildLoad(state.builder, voidPtr, "");
 
-		llvmArgs = voidPtr ~ llvmArgs;
 		offset = 1;
 		result.value = func;
 	} else {
@@ -1154,12 +1153,22 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 	}
 	assert(ct !is null);
 
+	// Argument arrays
+	auto numArgs = postfix.arguments.length+offset;
+	auto args = new Value[](numArgs);
+	auto llvmArgs = new LLVMValueRef[](numArgs);
+	if (offset) {
+		llvmArgs[0] = llvmExtraArg;
+	}
+
 	foreach (i, arg; postfix.arguments) {
-		auto v = new Value();
+		auto v = args[i+offset] = new Value();
 		state.getValueAnyForm(arg, v);
 
-
-		if (i < ct.ct.params.length && (ct.ct.isArgRef[i] || ct.ct.isArgOut[i])) {
+		bool isInBounds = i < ct.ct.params.length;
+		bool isRefOut = isInBounds && (ct.ct.isArgRef[i] || ct.ct.isArgOut[i]);
+		bool isStruct = v.type.structType;
+		if (isRefOut || isStruct) {
 			makePointer(state, v);
 			llvmArgs[i+offset] = LLVMBuildBitCast(state.builder, v.value,
 				LLVMPointerType(ct.params[i].llvmType, 0), "");
@@ -1170,6 +1179,17 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 	}
 
 	result.value = state.buildCallOrInvoke(postfix.location, result.value, llvmArgs);
+
+	// Yes its the same loop again.
+	foreach (i, arg; postfix.arguments) {
+		bool isInBounds = i < ct.ct.params.length;
+		bool isRefOut = isInBounds && (ct.ct.isArgRef[i] || ct.ct.isArgOut[i]);
+		bool isStruct = args[i+offset].type.structType;
+		if (!isRefOut && isStruct) {
+			LLVMAddInstrAttribute(result.value, cast(uint)(i+offset+1), LLVMAttribute.ByVal);
+		}
+	}
+
 	auto irc = cast(ir.CallableType) result.type.irType;
 	if (irc !is null) switch (irc.linkage) {
 	case ir.Linkage.Windows:
