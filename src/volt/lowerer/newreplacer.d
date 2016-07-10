@@ -95,11 +95,11 @@ ir.StatementExp buildClassConstructionWrapper(Location loc, LanguagePass lp,
 	sexp.statements ~= thisVar;
 	sexp.exp = buildExpReference(loc, thisVar, "thisVar");
 
-	// thisVar.this(cast(void*) thisVar)
-	auto eref = buildExpReference(loc, constructor, "this");
-	auto exp = buildCall(loc, eref, null);
-	exp.arguments = buildCast(loc, buildVoidPtr(loc), buildExpReference(loc, thisVar, "thisVar")) ~ exps;
-	buildExpStat(loc, sexp, exp);
+	// thisVar.__ctor(<exps>);
+	auto ctor = buildExpReference(loc, constructor, "this");
+	auto child = buildExpReference(loc, thisVar, "thisVar");
+	auto cdg = buildCreateDelegate(loc, child, ctor);
+	buildExpStat(loc, sexp, buildCall(loc, cdg, exps));
 
 	return sexp;
 }
