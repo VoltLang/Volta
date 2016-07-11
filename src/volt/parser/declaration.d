@@ -721,6 +721,7 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func)
 	while (ps != TokenType.CloseParen) {
 		bool argRef = matchIf(ps, TokenType.Ref);
 		bool argOut = matchIf(ps, TokenType.Out);
+		bool argIn = matchIf(ps, TokenType.In);
 		if (argRef && argOut) {
 			return parseFailed(ps, func);
 		}
@@ -748,6 +749,11 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func)
 		succeeded = parseType(ps, t);
 		if (!succeeded) {
 			return succeeded;
+		}
+		if (argIn) {
+			auto constStorage = buildStorageType(p.location, ir.StorageType.Kind.Const, t);
+			auto scopeStorage = buildStorageType(p.location, ir.StorageType.Kind.Scope, constStorage);
+			t = constStorage;
 		}
 		func.type.params ~= t;
 		func.type.isArgRef ~= argRef;
