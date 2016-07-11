@@ -480,12 +480,14 @@ ParseStatus parseIdentifier(ParserStream ps, out ir.Identifier i)
  */
 bool isColonDeclaration(ParserStream ps)
 {
-	bool colonDeclaration = ps.lookahead(1).type == TokenType.Colon;
+	bool colonDeclaration = (ps.lookahead(1).type == TokenType.Colon ||
+		ps.lookahead(1).type == TokenType.ColonAssign);
 	size_t i = 1;
 	while (!colonDeclaration && (ps.lookahead(i).type == TokenType.Identifier ||
 	       ps.lookahead(i).type == TokenType.Comma)) {
 		i++;
-		colonDeclaration = ps.lookahead(i).type == TokenType.Colon;
+		colonDeclaration = (ps.lookahead(i).type == TokenType.Colon ||
+			ps.lookahead(i).type == TokenType.ColonAssign);
 	}
 	return colonDeclaration;
 }
