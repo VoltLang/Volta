@@ -611,6 +611,16 @@ ParseStatus parseForeachStatement(ParserStream ps, out ir.ForeachStatement f)
 				}
 				name = ps.get();
 				type = buildAutoType(name.location);
+			} else if (ps == [TokenType.Identifier, TokenType.Colon]) {
+				name = ps.get();
+				auto succeeded = match(ps, f, TokenType.Colon);
+				if (!succeeded) {
+					return parseFailed(ps, f);
+				}
+				succeeded = parseType(ps, type);
+				if (!succeeded) {
+					return parseFailed(ps, f);
+				}
 			} else {
 				auto succeeded = parseType(ps, type);
 				if (!succeeded) {
