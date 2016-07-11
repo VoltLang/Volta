@@ -542,9 +542,13 @@ ParseStatus parseParameter(ParserStream ps, out ir.Variable p)
 		isIn = matchIf(ps, TokenType.In);
 	}
 
-	auto succeeded = parseType(ps, p.type);
-	if (!succeeded) {
-		return parseFailed(ps, p);
+	auto colon = isColonDeclaration(ps);
+	ParseStatus succeeded;
+	if (!colon) {
+		succeeded = parseType(ps, p.type);
+		if (!succeeded) {
+			return parseFailed(ps, p);
+		}
 	}
 	if (isRef || isOut) {
 		auto s = new ir.StorageType();
@@ -558,7 +562,21 @@ ParseStatus parseParameter(ParserStream ps, out ir.Variable p)
 		auto scopeStorage = buildStorageType(ps.peek.location, ir.StorageType.Kind.Scope, constStorage);
 		p.type = scopeStorage;
 	}
-	if (ps.peek.type == TokenType.Identifier) {
+	if (colon) {
+		p.name = ps.peek.value;
+		succeeded = match(ps, p, TokenType.Identifier);
+		if (!succeeded) {
+			return succeeded;
+		}
+		succeeded = match(ps, p, TokenType.Colon);
+		if (!succeeded) {
+			return succeeded;
+		}
+		succeeded = parseType(ps, p.type);
+		if (!succeeded) {
+			return parseFailed(ps, p);
+		}
+	} else if (ps.peek.type == TokenType.Identifier) {
 		Token name = ps.get();
 		p.name = name.value;
 		if (matchIf(ps, TokenType.Assign)) {
