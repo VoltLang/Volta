@@ -757,7 +757,7 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func)
 
 	bool paren = matchIf(ps, TokenType.OpenParen);
 
-	if (ps == TokenType.OpenBrace) {
+	if (ps == TokenType.OpenBrace || ps == TokenType.Semicolon) {
 		func.type.ret = buildVoid(func.location);
 	} else {
 		succeeded = parseType(ps, func.type.ret);
