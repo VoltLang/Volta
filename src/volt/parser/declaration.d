@@ -697,6 +697,7 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func)
 {
 	func = new ir.Function();
 	func.type = new ir.FunctionType();
+	func.docComment = ps.comment();
 	func.location = ps.peek.location;
 	func.type.location = ps.peek.location;
 
