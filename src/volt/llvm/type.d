@@ -26,7 +26,7 @@ public:
 	ir.Type irType;
 	LLVMTypeRef llvmType;
 	LLVMValueRef diType;
-	bool structType;
+	bool passByVal;
 
 public:
 	void from(State, ir.Constant, Value) { assert(false); }
@@ -506,7 +506,7 @@ private:
 
 		size_t offset = ft.hiddenParameter;
 		foreach (i, type; params) {
-			if (ft.isArgRef[i] || ft.isArgOut[i] || type.structType) {
+			if (ft.isArgRef[i] || ft.isArgOut[i] || type.passByVal) {
 				auto irPtr = new ir.PointerType(type.irType);
 				addMangledName(irPtr);
 				auto ptrType = cast(PointerType) .fromIr(state, irPtr);
@@ -701,7 +701,7 @@ private:
 		diType = state.diStruct(irType);
 		llvmType = LLVMStructCreateNamed(state.context, mangled);
 		super(state, irType, llvmType, diType);
-		this.structType = true;
+		this.passByVal = volt.semantic.classify.size(state.lp, irType) > 16;
 
 		createAlias(state, irType, mangled);
 

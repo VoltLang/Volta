@@ -96,7 +96,7 @@ public:
 
 			bool isRef = func.type.isArgRef[irIndex];
 			bool isOut = func.type.isArgOut[irIndex];
-			bool isStruct = t.structType;
+			bool isStruct = t.passByVal;
 
 			// These two condition has to happen
 			// even if the parameter isn't nameed.

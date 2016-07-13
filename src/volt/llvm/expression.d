@@ -1167,7 +1167,7 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 
 		bool isInBounds = i < ct.ct.params.length;
 		bool isRefOut = isInBounds && (ct.ct.isArgRef[i] || ct.ct.isArgOut[i]);
-		bool isStruct = v.type.structType;
+		bool isStruct = v.type.passByVal;
 		if (isRefOut || isStruct) {
 			makePointer(state, v);
 			llvmArgs[i+offset] = LLVMBuildBitCast(state.builder, v.value,
@@ -1184,7 +1184,7 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 	foreach (i, arg; postfix.arguments) {
 		bool isInBounds = i < ct.ct.params.length;
 		bool isRefOut = isInBounds && (ct.ct.isArgRef[i] || ct.ct.isArgOut[i]);
-		bool isStruct = args[i+offset].type.structType;
+		bool isStruct = args[i+offset].type.passByVal;
 		if (!isRefOut && isStruct) {
 			LLVMAddInstrAttribute(result.value, cast(uint)(i+offset+1), LLVMAttribute.ByVal);
 		}
