@@ -579,14 +579,14 @@ ParseStatus parseParameter(ParserStream ps, out ir.Variable p)
 	} else if (ps.peek.type == TokenType.Identifier) {
 		Token name = ps.get();
 		p.name = name.value;
-		if (matchIf(ps, TokenType.Assign)) {
-			succeeded = parseExp(ps, p.assign);
-			if (!succeeded) {
-				return parseFailed(ps, p);
-			}
-		}
 	} else if (ps.peek.type != TokenType.Comma && ps.peek.type != TokenType.CloseParen) {
 		return parseExpected(ps, ps.peek.location, p, "',', ')', or an identifier");
+	}
+	if (matchIf(ps, TokenType.Assign)) {
+		succeeded = parseExp(ps, p.assign);
+		if (!succeeded) {
+			return parseFailed(ps, p);
+		}
 	}
 	p.location = ps.peek.location - origin;
 
