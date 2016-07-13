@@ -261,7 +261,7 @@ extern(C) fn vrt_aa_in_binop_primitive(rbtv : void*, key : u64) void*
 	}
 }
 
-private fn vrt_aa_rotate_left(rbt : RedBlackTree*, node : TreeNode*) void
+private fn vrt_aa_rotate_left(rbt : RedBlackTree*, node : TreeNode*)
 {
 	right := node.right;
 	vrt_aa_replace_node(rbt, node, right);
@@ -273,7 +273,7 @@ private fn vrt_aa_rotate_left(rbt : RedBlackTree*, node : TreeNode*) void
 	node.parent = right;
 }
 
-private fn vrt_aa_rotate_right(rbt : RedBlackTree*, node : TreeNode*) void
+private fn vrt_aa_rotate_right(rbt : RedBlackTree*, node : TreeNode*)
 {
 	left := node.left;
 	vrt_aa_replace_node(rbt, node, left);
@@ -285,7 +285,7 @@ private fn vrt_aa_rotate_right(rbt : RedBlackTree*, node : TreeNode*) void
 	node.parent = left;
 }
 
-private fn vrt_aa_replace_node(rbt : RedBlackTree*, old : TreeNode*, new_ : TreeNode*) void
+private fn vrt_aa_replace_node(rbt : RedBlackTree*, old : TreeNode*, new_ : TreeNode*)
 {
 	if (old is null || old.parent is null) {
 		rbt.root = new_;
@@ -302,7 +302,7 @@ private fn vrt_aa_replace_node(rbt : RedBlackTree*, old : TreeNode*, new_ : Tree
 	}
 }
 
-extern(C) fn vrt_aa_insert_primitive(rbtv : void*, key : u64, value : void*) void
+extern(C) fn vrt_aa_insert_primitive(rbtv : void*, key : u64, value : void*)
 {
 	rbt := cast(RedBlackTree*)rbtv;
 	// Maybe put allocation of a new node into an external function
@@ -363,7 +363,7 @@ extern(C) fn vrt_aa_insert_primitive(rbtv : void*, key : u64, value : void*) voi
 
 
 // same as vrt_aa_insert_primitive, only different comparison
-extern(C) fn vrt_aa_insert_array(rbtv : void*, key : void[], value : void*) void
+extern(C) fn vrt_aa_insert_array(rbtv : void*, key : void[], value : void*)
 {
 	rbt := cast(RedBlackTree*)rbtv;
 	inserted_node := new TreeNode;
@@ -426,7 +426,7 @@ extern(C) fn vrt_aa_insert_array(rbtv : void*, key : void[], value : void*) void
 
 
 
-private fn vrt_aa_insert_case1(rbt : RedBlackTree*, node : TreeNode*) void
+private fn vrt_aa_insert_case1(rbt : RedBlackTree*, node : TreeNode*)
 {
 	// Case 1: the new node is now the root node.
 	// Simply color it black. The number of black nodes in each tree
@@ -439,7 +439,7 @@ private fn vrt_aa_insert_case1(rbt : RedBlackTree*, node : TreeNode*) void
 	}
 }
 
-private fn vrt_aa_insert_case2(rbt : RedBlackTree*, node : TreeNode*) void
+private fn vrt_aa_insert_case2(rbt : RedBlackTree*, node : TreeNode*)
 {
 	// Case 2: the new node has a black parent, if so everything is still fine
 	if (node.parent.red) {
@@ -448,7 +448,7 @@ private fn vrt_aa_insert_case2(rbt : RedBlackTree*, node : TreeNode*) void
 	}
 }
 
-private fn vrt_aa_insert_case3(rbt : RedBlackTree*, node : TreeNode*) void
+private fn vrt_aa_insert_case3(rbt : RedBlackTree*, node : TreeNode*)
 {
 	// Case 3: it's getting complicated,
 	// Uncle node is red. So recolor parent and uncle black
@@ -470,7 +470,7 @@ private fn vrt_aa_insert_case3(rbt : RedBlackTree*, node : TreeNode*) void
 	}
 }
 
-private fn vrt_aa_insert_case4(rbt : RedBlackTree*, node : TreeNode*) void
+private fn vrt_aa_insert_case4(rbt : RedBlackTree*, node : TreeNode*)
 {
 	// Case 4: Fun!
 	// * The new node is the right child of the parent, and the parent is the
@@ -491,7 +491,7 @@ private fn vrt_aa_insert_case4(rbt : RedBlackTree*, node : TreeNode*) void
 	vrt_aa_insert_case5(rbt, node);
 }
 
-private fn vrt_aa_insert_case5(rbt : RedBlackTree*, node : TreeNode*) void
+private fn vrt_aa_insert_case5(rbt : RedBlackTree*, node : TreeNode*)
 {
 	// Case 5: Case 4 fixed!
 	// * The new node is the left child of the parent, and the parent is the
@@ -623,11 +623,11 @@ extern (C) fn vrt_aa_get_values(rbtv : void*) void[]
 }
 
 // aa.rehash
-extern (C) fn vrt_aa_rehash(rbtv : void*) void
+extern (C) fn vrt_aa_rehash(rbtv : void*)
 {
 }
 
-private fn vrt_aa_walk(rbt : RedBlackTree*, node : TreeNode*, getKey : bool, argSize : size_t, ref arr : void[], ref currentIndex : size_t) void
+private fn vrt_aa_walk(rbt : RedBlackTree*, node : TreeNode*, getKey : bool, argSize : size_t, ref arr : void[], ref currentIndex : size_t)
 {
 	if (node !is null) {
 		vrt_aa_walk(rbt, node.left, getKey, argSize, ref arr, ref currentIndex);
@@ -643,7 +643,7 @@ private fn vrt_aa_walk(rbt : RedBlackTree*, node : TreeNode*, getKey : bool, arg
 	}
 }
 
-private fn vrt_aa_delete_case1(rbt : RedBlackTree*, node : TreeNode*) void
+private fn vrt_aa_delete_case1(rbt : RedBlackTree*, node : TreeNode*)
 {
 	// If the root node was replaced (parent is null) no 
 	// properties were violated
@@ -652,7 +652,7 @@ private fn vrt_aa_delete_case1(rbt : RedBlackTree*, node : TreeNode*) void
 	}
 }
 
-private fn vrt_aa_delete_case2(rbt : RedBlackTree*, node : TreeNode*) void
+private fn vrt_aa_delete_case2(rbt : RedBlackTree*, node : TreeNode*)
 {
 	// The node has a red sibling, so we switch the colors of the parent
 	// and the sibling. Afterwards we rotate so that the sibling
@@ -673,7 +673,7 @@ private fn vrt_aa_delete_case2(rbt : RedBlackTree*, node : TreeNode*) void
 	vrt_aa_delete_case3(rbt, node);
 }
 
-private fn vrt_aa_delete_case3(rbt : RedBlackTree*, node : TreeNode*) void
+private fn vrt_aa_delete_case3(rbt : RedBlackTree*, node : TreeNode*)
 {
 	// If the parent, sibling and sibling children are black,
 	// we paint the sibling red, we have to run this recursivly up
@@ -690,7 +690,7 @@ private fn vrt_aa_delete_case3(rbt : RedBlackTree*, node : TreeNode*) void
 	}
 }
 
-private fn vrt_aa_delete_case4(rbt : RedBlackTree*, node : TreeNode*) void
+private fn vrt_aa_delete_case4(rbt : RedBlackTree*, node : TreeNode*)
 {
 	// If the parent is red, but sibling and sibling children are black,
 	// we paint the sibling red and the parent black
@@ -706,7 +706,7 @@ private fn vrt_aa_delete_case4(rbt : RedBlackTree*, node : TreeNode*) void
 	}
 }
 
-private fn vrt_aa_delete_case5(rbt : RedBlackTree*, node : TreeNode*) void
+private fn vrt_aa_delete_case5(rbt : RedBlackTree*, node : TreeNode*)
 {
 	sibling : TreeNode* = vrt_aa_get_sibling(node);
 	if (node is node.parent.left &&
@@ -728,7 +728,7 @@ private fn vrt_aa_delete_case5(rbt : RedBlackTree*, node : TreeNode*) void
 	vrt_aa_delete_case6(rbt, node);
 }
 
-private fn vrt_aa_delete_case6(rbt : RedBlackTree*, node : TreeNode*) void
+private fn vrt_aa_delete_case6(rbt : RedBlackTree*, node : TreeNode*)
 {
 	sibling : TreeNode* = vrt_aa_get_sibling(node);
 	sibling.red = node.parent.red;

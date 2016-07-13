@@ -10,7 +10,7 @@ extern(C) fn printf(const(char)*, ...) int;
 
 extern(C) fn calloc(num : size_t, size : size_t) void*;
 
-extern(C) fn exit(i32) void;
+extern(C) fn exit(i32);
 
 // True for now.
 alias uintptr_t = size_t;

@@ -5,7 +5,7 @@ module vrt.os.gtors;
 import core.object : moduleInfoRoot;
 
 
-extern(C) fn vrt_run_global_ctors() void
+extern(C) fn vrt_run_global_ctors()
 {
 	mod := moduleInfoRoot;
 	while (mod !is null) {
@@ -16,7 +16,7 @@ extern(C) fn vrt_run_global_ctors() void
 	}
 }
 
-extern(C) fn vrt_run_global_dtors() void
+extern(C) fn vrt_run_global_dtors()
 {
 	mod := moduleInfoRoot;
 	while (mod !is null) {

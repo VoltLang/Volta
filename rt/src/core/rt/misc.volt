@@ -11,14 +11,14 @@ extern(C):
 /*
  * Exception handling
  */
-fn vrt_eh_throw(t : Throwable, filename : string, line : size_t) void;
-fn vrt_eh_throw_slice_error(filename : string, line : size_t) void;
-fn vrt_eh_personality_v0() void;
+fn vrt_eh_throw(t : Throwable, filename : string, line : size_t);
+fn vrt_eh_throw_slice_error(filename : string, line : size_t);
+fn vrt_eh_personality_v0();
 
 /*
  * For those very bad times.
  */
-fn vrt_panic(msg : scope const(char)[][], file : scope const(char)[] = __FILE__, line : const size_t = __LINE__) void;
+fn vrt_panic(msg : scope const(char)[][], file : scope const(char)[] = __FILE__, line : const size_t = __LINE__);
 
 /*
  * Language util functions

@@ -109,7 +109,7 @@ extern (C) fn vrt_count_codepoints_u8(s : string) size_t
 	return length;
 }
 
-extern (C) fn vrt_validate_u8(s : string) void
+extern (C) fn vrt_validate_u8(s : string)
 {
 	i : size_t;
 	while (i < s.length) {

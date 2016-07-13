@@ -47,14 +47,14 @@ global VRT_EH_NAME : string = "VOLT___\0";
  */
 extern(C) fn vrt_eh_delete(
 	reason : _Unwind_Reason_Code,
-	exceptionObject : _Unwind_Exception*) void
+	exceptionObject : _Unwind_Exception*)
 {
 }
 
 /**
  * Throws a exception.
  */
-extern(C) fn vrt_eh_throw(t : Throwable, file : string, line : size_t) void
+extern(C) fn vrt_eh_throw(t : Throwable, file : string, line : size_t)
 {
 	e := new vrt_eh_exception;
 
@@ -71,7 +71,7 @@ extern(C) fn vrt_eh_throw(t : Throwable, file : string, line : size_t) void
 	vrt_panic(cast(char[][])msgs);
 }
 
-extern(C) fn vrt_eh_throw_slice_error(file : string, line : size_t) void
+extern(C) fn vrt_eh_throw_slice_error(file : string, line : size_t)
 {
 	vrt_eh_throw(new Error("invalid array cast"), file, line);
 }

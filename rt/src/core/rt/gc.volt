@@ -51,7 +51,7 @@ struct Stats
 
 extern(C):
 
-fn vrt_gc_init() void;
+fn vrt_gc_init();
 fn vrt_gc_get_alloc_dg() AllocDg;
-fn vrt_gc_shutdown() void;
+fn vrt_gc_shutdown();
 fn vrt_gc_get_stats(out stats : Stats) Stats*;

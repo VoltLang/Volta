@@ -72,5 +72,5 @@ fn _Unwind_GetDataRelBase(ctx : _Unwind_Context*) size_t;
 fn _Unwind_GetGR(ctx : _Unwind_Context*, i : i32) size_t;
 fn _Unwind_GetIP(ctx : _Unwind_Context*) uintptr_t;
 
-fn _Unwind_SetGR(ctx : _Unwind_Context*, i : i32, n : size_t) void;
-fn _Unwind_SetIP(ctx : _Unwind_Context*, new_value : uintptr_t) void;
+fn _Unwind_SetGR(ctx : _Unwind_Context*, i : i32, n : size_t);
+fn _Unwind_SetIP(ctx : _Unwind_Context*, new_value : uintptr_t);

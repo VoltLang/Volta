@@ -12,15 +12,15 @@ import core.compiler.llvm : __llvm_memset, __llvm_memcpy;
 version (Emscripten) {
 
 	private extern(C) {
-		fn GC_INIT() void;
+		fn GC_INIT();
 		fn GC_MALLOC(size_t) void*;
 		fn GC_MALLOC_ATOMIC(size_t) void*;
 		fn GC_REGISTER_FINALIZER_NO_ORDER(obj : void*,
 		                                  func : GC_finalization_proc,
 		                                  cd : void*,
 		                                  ofn : GC_finalization_proc*,
-		                                  ocd : void**) void;
-		fn GC_FORCE_COLLECT() void;
+		                                  ocd : void**);
+		fn GC_FORCE_COLLECT();
 
 		extern global GC_java_finalization : i32;
 		alias GC_finalization_proc = void function(void* obj, void* client_data);
@@ -35,7 +35,7 @@ version (Emscripten) {
 } else {
 
 	private extern(C) {
-		fn GC_init() void;
+		fn GC_init();
 		fn GC_malloc(size_in_bytes : size_t) void*;
 		fn GC_malloc_atomic(size_in_bytes : size_t) void*;
 
@@ -45,14 +45,14 @@ version (Emscripten) {
 		                                  func : GC_finalization_proc,
 		                                  cd : void*,
 		                                  ofn : GC_finalization_proc*,
-		                                  ocd : void**) void;
+		                                  ocd : void**);
 
 		// Also not available in older libgc versions
 		//void GC_gcollect_and_unmap();
-		fn GC_gcollect() void;
+		fn GC_gcollect();
 
 		version(Windows) {
-			extern(C) fn GC_win32_free_heap() void;
+			extern(C) fn GC_win32_free_heap();
 		}
 
 		extern global GC_java_finalization : i32;
@@ -64,14 +64,14 @@ version (Emscripten) {
 
 global stats : Stats;
 
-extern(C) fn vrt_gc_init() void
+extern(C) fn vrt_gc_init()
 {
 	GC_init();
 	//GC_set_java_finalization(1);
 	GC_java_finalization = 1;
 }
 
-extern(C) fn vrt_gc_get_stats(out res : Stats) void
+extern(C) fn vrt_gc_get_stats(out res : Stats)
 {
 	res = stats;
 }
@@ -85,13 +85,13 @@ extern(C) fn vrt_gc_get_alloc_dg() AllocDg
 	return *cast(AllocDg*)&structToDg;
 }
 
-extern(C) fn vrt_gc_finalize_class(objPtr : void*, client_data : void*) void
+extern(C) fn vrt_gc_finalize_class(objPtr : void*, client_data : void*)
 {
 	obj := cast(Object)objPtr;
 	obj.__dtor();
 }
 
-extern(C) fn vrt_gc_shutdown() void
+extern(C) fn vrt_gc_shutdown()
 {
 	GC_gcollect();
 	// somehow the GC needs two collections to cleanup everything
