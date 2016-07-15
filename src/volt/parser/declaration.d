@@ -488,6 +488,28 @@ ParseStatus parseNewFunctionType(ParserStream ps, out ir.FunctionType func)
 		return succeeded;
 	}
 
+	func.linkage = ir.Linkage.Volt;
+	if (matchIf(ps, TokenType.Bang)) {
+		auto linkageName = ps.peek.value;
+		succeeded = match(ps, func, TokenType.Identifier);
+		if (!succeeded) {
+			return succeeded;
+		}
+		if (linkageName == "C" && matchIf(ps, TokenType.DoublePlus)) {
+			func.linkage = ir.Linkage.CPlusPlus;
+		} else switch (linkageName) {
+		case "C": func.linkage = ir.Linkage.C; break;
+		case "Volt": func.linkage = ir.Linkage.Volt; break;
+		case "D": func.linkage = ir.Linkage.D; break;
+		case "Windows": func.linkage = ir.Linkage.Windows; break;
+		case "Pascal": func.linkage = ir.Linkage.Pascal; break;
+		case "System": func.linkage = ir.Linkage.System; break;
+		default:
+			return parseExpected(ps, ps.peek.location, func,
+			                     "Volt, C, C++, D, Windows, Pascal, or System linkage");
+		}
+	}
+
 	succeeded = parseNewFunctionParams(ps, func);
 	if (!succeeded) {
 		return parseFailed(ps, func);
