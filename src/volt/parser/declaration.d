@@ -280,7 +280,13 @@ ParseStatus parseType(ParserStream ps, out ir.Type base)
 		base = t;
 		break;
 	case TokenType.Fn:
-		return match(ps, ir.NodeType.TypeOf, TokenType.Identifier);
+		ir.FunctionType func;
+		auto succeeded = parseNewFunctionType(ps, func);
+		if (!succeeded) {
+			return parseFailed(ps, ir.NodeType.TypeOf);
+		}
+		base = func;
+		break;
 	default:
 		return parseExpected(ps, ps.peek.location, ir.NodeType.Invalid, "primitive type");
 	}
@@ -416,6 +422,82 @@ ParseStatus parseStorageType(ParserStream ps, out ir.StorageType storageType)
 	}
 
 	storageType.docComment = ps.comment();
+	return Succeeded;
+}
+
+ParseStatus parseNewFunctionParams(ParserStream ps, ir.FunctionType func)
+{
+	auto succeeded = match(ps, func, TokenType.OpenParen);
+	if (!succeeded) {
+		return succeeded;
+	}
+
+	while (ps != TokenType.CloseParen) {
+		auto isRef = matchIf(ps, TokenType.Ref);
+		auto isOut = matchIf(ps, TokenType.Out);
+		auto isIn  = matchIf(ps, TokenType.In);
+		int roi = (isRef ? 1 : 0) + (isOut ? 1 : 0) + (isIn ? 1 : 0);
+		if (roi > 1) {
+			return parseFailed(ps, func);
+		}
+		if (ps == [TokenType.Identifier, TokenType.Colon]) {
+			match(ps, func, TokenType.Identifier);
+			match(ps, func, TokenType.Colon);
+		}
+		ir.Type t;
+		succeeded = parseType(ps, t);
+		if (!succeeded) {
+			return parseFailed(ps, func);
+		}
+		func.params ~= t;
+		matchIf(ps, TokenType.Comma);
+	}
+
+	succeeded = match(ps, func, TokenType.CloseParen);
+	if (!succeeded) {
+		return succeeded;
+	}
+
+	return Succeeded;
+}
+
+ParseStatus parseNewFunctionType(ParserStream ps, out ir.FunctionType func)
+{
+	func = new ir.FunctionType();
+	func.location = ps.peek.location;
+	func.docComment = ps.comment();
+
+	auto succeeded = match(ps, func, TokenType.Fn);
+	if (!succeeded) {
+		return succeeded;
+	}
+
+	succeeded = parseNewFunctionParams(ps, func);
+	if (!succeeded) {
+		return parseFailed(ps, func);
+	}
+	func.isArgRef = new bool[](func.params.length);
+	func.isArgOut = new bool[](func.params.length);
+
+	bool parenRet = matchIf(ps, TokenType.OpenParen);
+
+	succeeded = parseType(ps, func.ret);
+	if (!succeeded) {
+		return parseFailed(ps, func);
+	}
+
+	if (ps == TokenType.Comma) {
+		// TODO: Parse multiple return types here.
+		return parseFailed(ps, func);
+	}
+
+	if (parenRet) {
+		succeeded = match(ps, func, TokenType.CloseParen);
+		if (!succeeded) {
+			return succeeded;
+		}
+	}
+
 	return Succeeded;
 }
 
