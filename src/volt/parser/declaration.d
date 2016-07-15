@@ -287,6 +287,14 @@ ParseStatus parseType(ParserStream ps, out ir.Type base)
 		}
 		base = func;
 		break;
+	case TokenType.OpenParen:
+		ps.get();
+		auto succeeded = parseType(ps, base);
+		if (!succeeded) {
+			return parseFailed(ps, ir.NodeType.TypeOf);
+		}
+		match(ps, base, TokenType.CloseParen);
+		break;
 	default:
 		return parseExpected(ps, ps.peek.location, ir.NodeType.Invalid, "primitive type");
 	}
