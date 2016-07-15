@@ -519,12 +519,19 @@ ParseStatus parseNewFunctionType(ParserStream ps, out ir.FunctionType func)
 
 	bool parenRet = matchIf(ps, TokenType.OpenParen);
 
-	succeeded = parseType(ps, func.ret);
-	if (!succeeded) {
-		return parseFailed(ps, func);
-	}
+	auto mark = ps.save();
 
-	if (ps == TokenType.Comma) {
+	if (!parenRet || ps != TokenType.CloseParen) {
+		succeeded = parseType(ps, func.ret);
+		if (!succeeded) {
+			func.ret = buildVoid(func.location);
+			ps.restore(mark);
+			ps.resetErrors();
+		}
+	}
+	panicAssert(func, func.ret !is null);
+
+	if (parenRet && ps == TokenType.Comma) {
 		// TODO: Parse multiple return types here.
 		return parseFailed(ps, func);
 	}
