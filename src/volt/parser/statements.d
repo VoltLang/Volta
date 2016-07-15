@@ -495,6 +495,11 @@ ParseStatus parseIfStatement(ParserStream ps, out ir.IfStatement i)
 		}
 		ps.get();
 	}
+	if (ps == [TokenType.Identifier, TokenType.ColonAssign]) {
+		i.autoName = ps.peek.value;
+		match(ps, i, TokenType.Identifier);
+		match(ps, i, TokenType.ColonAssign);
+	}
 	auto succeeded = parseExp(ps, i.exp);
 	if (!succeeded) {
 		return parseFailed(ps, i);
