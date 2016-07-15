@@ -461,6 +461,19 @@ If one of the specified methods is not implemented, an error is generated. As fo
 
 This allows classes of entirely different family trees to be adapted to work with the same interface.
 
+## Function Pointers ##
+
+Function pointers can be defined simply.
+
+    fptr : fn (i32, string) bool;  // fptr is variable to a bool returning function that takes an i32 and a string.
+
+Linkages (how the compiler is to call the function pointer) can be set by giving the name after a ! following the `fn` keyword.
+
+    fptra : fn!C () i32;  // A C function pointer.
+    fptrb : fn!Volt () i32;  // A Volt function pointer.
+
+The accepted linkages are `Volt` (the default), `C`, `C++`, `D`, `Windows`, `Pascal`, and `System`.
+
 ## Unified Function Call Syntax
 
 Unified Function Call Syntax, UFCS for short, is a way of extending types without modifying the type itself.
