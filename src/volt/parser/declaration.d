@@ -433,6 +433,10 @@ ParseStatus parseNewFunctionParams(ParserStream ps, ir.FunctionType func)
 	}
 
 	while (ps != TokenType.CloseParen) {
+		if (matchIf(ps, TokenType.TripleDot)) {
+			func.hasVarArgs = true;
+			break;
+		}
 		auto isRef = matchIf(ps, TokenType.Ref);
 		auto isOut = matchIf(ps, TokenType.Out);
 		auto isIn  = matchIf(ps, TokenType.In);
@@ -448,6 +452,18 @@ ParseStatus parseNewFunctionParams(ParserStream ps, ir.FunctionType func)
 		succeeded = parseType(ps, t);
 		if (!succeeded) {
 			return parseFailed(ps, func);
+		}
+		if (isRef || isOut) {
+			auto s = new ir.StorageType();
+			s.location = t.location;
+			s.type = isRef ? ir.StorageType.Kind.Ref : ir.StorageType.Kind.Out;
+			s.base = t;
+			t = s;
+		}
+		if (isIn) {
+			auto constStorage = buildStorageType(t.location, ir.StorageType.Kind.Const, t);
+			auto scopeStorage = buildStorageType(t.location, ir.StorageType.Kind.Scope, constStorage);
+			t = scopeStorage;
 		}
 		func.params ~= t;
 		matchIf(ps, TokenType.Comma);
