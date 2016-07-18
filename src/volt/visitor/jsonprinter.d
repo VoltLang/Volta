@@ -1,5 +1,5 @@
-// Copyright © 2014, Bernard Helyer.  All rights reserved.
-// Copyright © 2015, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2014-2016, Bernard Helyer.  All rights reserved.
+// Copyright © 2015-2016, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.visitor.jsonprinter;
 
@@ -7,6 +7,7 @@ import watt.io.streams : OutputFileStream;
 import watt.text.utf : encode;
 
 import ir = volt.ir.ir;
+import volt.ir.printer;
 
 import volt.errors;
 import volt.interfaces;
@@ -98,17 +99,51 @@ public:
 
 	override Status enter(ir.Function f)
 	{
-		auto name = f.name;
-		switch (name) {
-		case "__ctor": name = "this"; break;
-		case "__dtor": name = "~this"; break;
-		default: break;
+		bool suppressReturn;
+		startObject();
+
+		final switch(f.kind) with (ir.Function.Kind) {
+		case Invalid: assert(false);
+		case Function, LocalMember, GlobalMember, Nested, GlobalNested,
+		     LocalConstructor, GlobalConstructor,
+		     LocalDestructor, GlobalDestructor:
+			tag("kind", "fn");
+			tag("name", f.name);
+			break;
+		case Member:
+			tag("kind", "member");
+			tag("name", f.name);
+			break;
+		case Constructor:
+			tag("kind", "ctor");
+			suppressReturn = true;
+			break;
+		case Destructor:
+			tag("kind", "dtor");
+			suppressReturn = true;
+			break;
 		}
 
-		startObject();
-		tag("kind", "fn");
-		tag("name", name);
 		tag("doc", f.docComment);
+
+		if (f.params.length > 0) {
+			startList("args");
+			foreach (p; f.params) {
+				startObject();
+				writeNamedTyped(null, p.name, null, p.type);
+				endObject();
+			}
+			endList();
+		}
+
+		if (!suppressReturn) {
+			startList("rets");
+			startObject();
+			writeNamedTyped(null, null, null, f.type.ret);
+			endObject();
+			endList();
+		}
+
 		endObject();
 
 		return ContinueParent;
@@ -123,9 +158,7 @@ public:
 		}
 
 		startObject();
-		tag("kind", "var");
-		tag("name", name);
-		tag("doc", v.docComment);
+		writeNamedTyped("var", name, v.docComment, v.type);
 		endObject();
 
 		return ContinueParent;
@@ -151,6 +184,23 @@ public:
 
 
 protected:
+	void writeNamedTyped(string kind, string name, string doc, ir.Type type)
+	{
+		string typeFull, typeWritten;
+		typeFull = printType(type);
+		typeWritten = printType(type, true);
+
+		if (typeWritten == typeFull) {
+			typeFull = null;
+		}
+
+		tag("kind", kind);
+		tag("name", name);
+		tag("type", typeWritten);
+		tag("typeFull", typeFull);
+		tag("doc", doc);
+	}
+
 	void startObject()
 	{
 		wMaybeComma();
@@ -169,6 +219,12 @@ protected:
 	void endObject()
 	{
 		w("}");
+		mWriteComma = true;
+	}
+
+	void endList()
+	{
+		w("]");
 		mWriteComma = true;
 	}
 
