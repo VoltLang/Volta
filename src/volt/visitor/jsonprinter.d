@@ -13,20 +13,10 @@ import volt.interfaces;
 import volt.visitor.visitor;
 
 
-private struct Entry
-{
-	string name;
-	string comment;
-}
-
 class JsonPrinter : NullVisitor
 {
-public:
-	Entry[] functions, variables, enums, structs, classes;
-	ir.Module currentModule;
-
-
 private:
+	bool mWriteComma;
 	string mFilename;
 	OutputFileStream mFile;
 
@@ -37,93 +27,168 @@ public:
 		this.mFilename = filename;
 	}
 
-	void transform(ir.Module[] modules...)
+	void transform(ir.Module[] mods...)
 	{
-		foreach (mod; modules) {
-			currentModule = mod;
+		mFile = new OutputFileStream(mFilename);
+
+		w("[");
+		foreach (mod; mods) {
 			accept(mod, this);
 		}
-		mFile = new OutputFileStream(mFilename);
-		w("{\n");
-		writeArray("functions", functions, ",\n");
-		writeArray("variables", variables, ",\n");
-		writeArray("enums", enums, ",\n");
-		writeArray("structs", structs, ",\n");
-		writeArray("classes", classes, "\n");
-		w("}\n");
+		w("]");
+
 		mFile.flush();
 		mFile.close();
 	}
 
-	override Status enter(ir.Function func)
+	override Status enter(ir.Module m)
 	{
-		if (func.docComment.length > 0) {
-			Entry e;
-			e.name = currentModule.name.toString() ~ "." ~ func.name;
-			e.comment = func.docComment;
-			functions ~= e;
-		}
-		return Continue;
-	}
-
-	override Status enter(ir.Variable v)
-	{
-		if (v.docComment.length > 0) {
-			Entry e;
-			e.name = currentModule.name.toString() ~ "." ~ v.name;
-			e.comment = v.docComment;
-			variables ~= e;
-		}
-		return Continue;
-	}
-
-	override Status enter(ir.Enum en)
-	{
-		if (en.docComment.length > 0) {
-			Entry e;
-			e.name = currentModule.name.toString() ~ "." ~ en.name;
-			e.comment = en.docComment;
-			enums ~= e;
-		}
+		startObject();
+		tag("kind", "module");
+		tag("name", m.name.toString());
+		tag("doc", m.docComment);
+		startList("children");
 		return Continue;
 	}
 
 	override Status enter(ir.Struct s)
 	{
-		if (s.docComment.length > 0) {
-			Entry e;
-			e.name = currentModule.name.toString() ~ "." ~ s.name;
-			e.comment = s.docComment;
-			structs ~= e;
+		if (s.loweredNode !is null) {
+			return ContinueParent;
 		}
+
+		auto name = s.name;
+		switch (name) {
+		case "__Vtable": return ContinueParent;
+		default: break;
+		}
+
+		startObject();
+		tag("kind", "struct");
+		tag("name", name);
+		tag("doc", s.docComment);
+		startList("children");
+		return Continue;
+	}
+
+	override Status enter(ir.Union u)
+	{
+		auto name = u.name;
+
+		startObject();
+		tag("kind", "union");
+		tag("name", name);
+		tag("doc", u.docComment);
+		startList("children");
 		return Continue;
 	}
 
 	override Status enter(ir.Class c)
 	{
-		if (c.docComment.length > 0) {
-			Entry e;
-			e.name = currentModule.name.toString() ~ "." ~ c.name;
-			e.comment = c.docComment;
-			classes ~= e;
-		}
+		auto name = c.name;
+
+		startObject();
+		tag("kind", "class");
+		tag("name", name);
+		tag("doc", c.docComment);
+		startList("children");
+
 		return Continue;
 	}
 
-private:
-	void writeArray(string entryName, Entry[] entries, string end)
+	override Status enter(ir.Function f)
 	{
-		wq(entryName);
-		w(": [");
-		foreach (i, n; entries) {
-			w("[");
-			wq(n.name);
-			w(", ");
-			wq(n.comment);
-			w("]");
-			w((i == entries.length - 1) ? "" : ",");
+		auto name = f.name;
+		switch (name) {
+		case "__ctor": name = "this"; break;
+		case "__dtor": name = "~this"; break;
+		default: break;
 		}
-		w("]" ~ end);
+
+		startObject();
+		tag("kind", "fn");
+		tag("name", name);
+		tag("doc", f.docComment);
+		endObject();
+
+		return ContinueParent;
+	}
+
+	override Status enter(ir.Variable v)
+	{
+		auto name = v.name;
+		switch (name) {
+		case "__cinit", "__vtable_instance": return ContinueParent;
+		default: break;
+		}
+
+		startObject();
+		tag("kind", "var");
+		tag("name", name);
+		tag("doc", v.docComment);
+		endObject();
+
+		return ContinueParent;
+	}
+
+	override Status enter(ir.Enum e)
+	{
+		auto name = e.name;
+
+		startObject();
+		tag("kind", "enum");
+		tag("name", name);
+		tag("doc", e.docComment);
+		endObject();
+
+		return ContinueParent;
+	}
+
+	override Status leave(ir.Module) { endListAndObject(); return Continue; }
+	override Status leave(ir.Struct) { endListAndObject(); return Continue; }
+	override Status leave(ir.Union) { endListAndObject(); return Continue; }
+	override Status leave(ir.Class) { endListAndObject(); return Continue; }
+
+
+protected:
+	void startObject()
+	{
+		wMaybeComma();
+		w("{");
+		mWriteComma = false;
+	}
+
+	void startList(string name)
+	{
+		wMaybeComma();
+		wq(name);
+		w(":[");
+		mWriteComma = false;
+	}
+
+	void endObject()
+	{
+		w("}");
+		mWriteComma = true;
+	}
+
+	void endListAndObject()
+	{
+		w("]}");
+		mWriteComma = true;
+	}
+
+	void tag(string tag, string value)
+	{
+		if (value.length == 0) {
+			return;
+		}
+
+		wMaybeComma();
+		wq(tag);
+		w(":");
+		wq(value);
+		mWriteComma = true;
 	}
 
 	void w(string s)
@@ -148,5 +213,12 @@ private:
 			}
 		}
 		mFile.writef(`"%s"`, outString);
+	}
+
+	void wMaybeComma()
+	{
+		if (mWriteComma) {
+			w(",\n");
+		}
 	}
 }
