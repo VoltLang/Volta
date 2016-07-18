@@ -1,4 +1,5 @@
-// Copyright © 2013, Bernard Helyer.  All rights reserved.
+// Copyright © 2013-2016, Bernard Helyer.  All rights reserved.
+// Copyright © 2013-2016, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.errors;
 
@@ -7,6 +8,7 @@ import watt.text.format : format;
 import watt.io.std : writefln;
 
 import ir = volt.ir.ir;
+import volt.ir.printer;
 
 import volt.exceptions;
 import volt.arg : Settings;
@@ -268,12 +270,12 @@ CompilerException makeScopeOutsideFunction(Location l, string file = __FILE__, c
 
 CompilerException makeCannotDup(Location l, ir.Type type, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(l, format("cannot duplicate type '%s'.", type.errorString()), file, line);
+	return new CompilerError(l, format("cannot duplicate type '%s'.", type.typeString()), file, line);
 }
 
 CompilerException makeCannotSlice(Location l, ir.Type type, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(l, format("cannot slice type '%s'.", type.errorString()), file, line);
+	return new CompilerError(l, format("cannot slice type '%s'.", type.typeString()), file, line);
 }
 
 CompilerException makeCallClass(Location loc, ir.Class _class, string file = __FILE__, const int line = __LINE__)
@@ -342,7 +344,7 @@ CompilerException makeNoReturnScope(Location loc, string file = __FILE__, const 
 
 CompilerException makeReturnValueExpected(Location loc, ir.Type type, string file = __FILE__, const int line = __LINE__)
 {
-	string emsg = format("return value of type '%s' expected.", type.errorString());
+	string emsg = format("return value of type '%s' expected.", type.typeString());
 	return new CompilerError(loc, emsg, file, line);
 }
 
@@ -494,7 +496,7 @@ CompilerException makeAssignToNonStaticField(ir.Variable v, string file = __FILE
 
 CompilerException makeSwitchBadType(ir.Node node, ir.Type type, string file = __FILE__, const int line = __LINE__)
 {
-	string emsg = format("bad switch type '%s'.", type.errorString());
+	string emsg = format("bad switch type '%s'.", type.typeString());
 	auto e = new CompilerError(node.location, emsg, file, line);
 	return e;
 }
@@ -645,19 +647,19 @@ CompilerException makeNeedOverride(ir.Function overrider, ir.Function overridee,
 
 CompilerException makeThrowOnlyThrowable(ir.Exp exp, ir.Type type, string file = __FILE__, const int line = __LINE__)
 {
-	string emsg = format("only types that inherit from object.Throwable may be thrown, not '%s'.", type.errorString());
+	string emsg = format("only types that inherit from object.Throwable may be thrown, not '%s'.", type.typeString());
 	return new CompilerError(exp.location, emsg, file, line);
 }
 
 CompilerException makeThrowNoInherits(ir.Exp exp, ir.Class clazz, string file = __FILE__, const int line = __LINE__)
 {
-	string emsg = format("only types that inherit from object.Throwable may be thrown, not class '%s'.", clazz.errorString());
+	string emsg = format("only types that inherit from object.Throwable may be thrown, not class '%s'.", clazz.typeString());
 	return new CompilerError(exp.location, emsg, file, line);
 }
 
 CompilerException makeInvalidAAKey(ir.AAType aa, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(aa.location, format("'%s' is an invalid AA key.", aa.key.errorString()), file, line);
+	return new CompilerError(aa.location, format("'%s' is an invalid AA key.", aa.key.typeString()), file, line);
 }
 
 CompilerException makeBadAAAssign(Location location, string file = __FILE__, const int line = __LINE__)
@@ -737,7 +739,7 @@ CompilerException makeBadImplicitCast(ir.Node node, ir.Type from, ir.Type to, st
 
 CompilerException makeCannotModify(ir.Node node, ir.Type type, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(node.location, format("cannot modify '%s'.", type.errorString()), file, line);
+	return new CompilerError(node.location, format("cannot modify '%s'.", type.typeString()), file, line);
 }
 
 CompilerException makeNotLValue(ir.Node node, string file = __FILE__, const int line = __LINE__)
@@ -747,12 +749,12 @@ CompilerException makeNotLValue(ir.Node node, string file = __FILE__, const int 
 
 CompilerException makeTypeIsNot(ir.Node node, ir.Type from, ir.Type to, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(node.location, format("type '%s' is not '%s' as expected.", from.errorString(), to.errorString()), file, line);
+	return new CompilerError(node.location, format("type '%s' is not '%s' as expected.", from.typeString(), to.typeString()), file, line);
 }
 
 CompilerException makeInvalidType(ir.Node node, ir.Type type, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(node.location, format("bad type '%s'.", type.errorString()), file, line);
+	return new CompilerError(node.location, format("bad type '%s'.", type.typeString()), file, line);
 }
 
 CompilerException makeInvalidUseOfStore(ir.Node node, ir.Store store, string file = __FILE__, const int line = __LINE__)
@@ -775,14 +777,14 @@ CompilerException makeWithCreatesAmbiguity(Location loc, string file = __FILE__,
 
 CompilerException makeInvalidThis(ir.Node node, ir.Type was, ir.Type expected, string member, string file = __FILE__, const int line = __LINE__)
 {
-	string emsg = format("'this' is of type '%s' expected '%s' to access member '%s'.", was.errorString(), expected.errorString(), member);
+	string emsg = format("'this' is of type '%s' expected '%s' to access member '%s'.", was.typeString(), expected.typeString(), member);
 	return new CompilerError(node.location, emsg, file, line);
 }
 
 CompilerException makeNotMember(ir.Node node, ir.Type aggregate, string member, string file = __FILE__, const int line = __LINE__)
 {
 	auto pfix = cast(ir.Postfix) node;
-	string emsg = format("'%s' has no member '%s'.", aggregate.errorString(), member);
+	string emsg = format("'%s' has no member '%s'.", aggregate.typeString(), member);
 	if (pfix !is null && pfix.child.nodeType == ir.NodeType.ExpReference) {
 		auto eref = cast(ir.ExpReference) pfix.child;
 		auto var = cast(ir.Variable)eref.decl;
@@ -793,7 +795,7 @@ CompilerException makeNotMember(ir.Node node, ir.Type aggregate, string member, 
 				name ~= ".";
 			}
 		}
-		emsg = format("instance '%s' (of type '%s') has no member '%s'.", name, aggregate.errorString(), member);
+		emsg = format("instance '%s' (of type '%s') has no member '%s'.", name, aggregate.typeString(), member);
 	}
 	return new CompilerError(node.location, emsg, file, line);
 }
@@ -832,7 +834,7 @@ CompilerException makeWrongNumberOfArguments(ir.Node node, size_t got, size_t ex
 
 CompilerException makeBadCall(ir.Node node, ir.Type type, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(node.location, format("cannot call '%s'.", type.errorString()), file, line);
+	return new CompilerError(node.location, format("cannot call '%s'.", type.typeString()), file, line);
 }
 
 CompilerException makeCannotDisambiguate(ir.Node node, ir.Function[] functions, ir.Type[] args, string file = __FILE__, const int line = __LINE__)
@@ -921,14 +923,28 @@ void panicAssert(ir.Node node, bool condition, string file = __FILE__, const int
 	}
 }
 
+
 private:
+
+string typeString(ir.Type t)
+{
+	string full, glossed;
+	full = t.printType();
+	glossed = t.printType(true);
+
+	if (full == glossed) {
+		return format("'%s'", full);
+	} else {
+		return format("'%s' (aka '%s')", glossed, full);
+	}
+}
 
 string typesString(ir.Type[] types)
 {
 	char[] buf;
 	buf ~= "(";
 	foreach (i, type; types) {
-		buf ~= errorString(type, true);
+		buf ~= type.printType(true);
 		if (i < types.length - 1) {
 			buf ~= ", ";
 		}
@@ -939,104 +955,4 @@ string typesString(ir.Type[] types)
 	} else {
 		return buf.idup;
 	}
-}
-
-string errorString(ir.Type type, bool alwaysGlossed = false)
-{
-	if (type.glossedName.length > 0 && alwaysGlossed) {
-		return type.glossedName;
-	}
-	string outString;
-	string suffix;
-	if (type.isConst) {
-		outString ~= "const(";
-		suffix ~= ")";
-	}
-	if (type.isImmutable) {
-		outString ~= "immutable(";
-		suffix ~= ")";
-	}
-	if (type.isScope) {
-		outString ~= "scope (";
-		suffix ~= ")";
-	}
-
-	assert(type !is null);
-	switch(type.nodeType) with(ir.NodeType) {
-	case PrimitiveType:
-		ir.PrimitiveType prim = cast(ir.PrimitiveType)type;
-		if (prim.originalToken !is null) {
-			outString ~= toLower(tokenToString(prim.originalToken.type));
-		} else {
-			outString ~= toLower(tokenToString(cast(TokenType)prim.type));
-		}
-		break;
-	case TypeReference:
-		ir.TypeReference tr = cast(ir.TypeReference)type;
-		outString ~= tr.type.errorString(alwaysGlossed);
-		break;
-	case PointerType:
-		ir.PointerType pt = cast(ir.PointerType)type;
-		outString ~= format("%s*", pt.base.errorString(alwaysGlossed));
-		break;
-	case NullType:
-		outString = "null";
-		break;
-	case ArrayType:
-		ir.ArrayType at = cast(ir.ArrayType)type;
-		outString ~= format("%s[]", at.base.errorString(alwaysGlossed));
-		break;
-	case StaticArrayType:
-		ir.StaticArrayType sat = cast(ir.StaticArrayType)type;
-		outString ~= format("%s[%d]", sat.base.errorString(alwaysGlossed), sat.length);
-		break;
-	case AAType:
-		ir.AAType aat = cast(ir.AAType)type;
-		outString ~= format("%s[%s]", aat.value.errorString(alwaysGlossed), aat.key.errorString(alwaysGlossed));
-		break;
-	case FunctionType:
-	case DelegateType:
-		ir.CallableType c = cast(ir.CallableType)type;
-
-		string ctype = type.nodeType == FunctionType ? "function" : "delegate";
-
-		string params;
-		if (c.params.length > 0) {
-			params = c.params[0].errorString(alwaysGlossed);
-			foreach (param; c.params[1 .. $]) {
-				params ~= ", " ~ param.errorString(alwaysGlossed);
-			}
-		}
-
-		outString ~= format("%s %s(%s)", c.ret.errorString(alwaysGlossed), ctype, params);
-		break;
-	case StorageType:
-		ir.StorageType st = cast(ir.StorageType)type;
-		outString ~= format("%s(%s)", toLower(format("%s", st.type)), st.base.errorString(alwaysGlossed));
-		break;
-	case Class:
-	case Struct:
-		auto agg = cast(ir.Aggregate)type;
-		assert(agg !is null);
-		outString ~= agg.name;
-		break;
-	default:
-		outString ~= type.toString();
-		break;
-	}
-
-	return outString ~ suffix;
-}
-
-string typeString(ir.Type t)
-{
-	string s = t.glossedName;
-	if (s.length == 0) {
-		s = t.errorString();
-	}
-	s = format("'%s'", s);
-	if (t.glossedName.length != 0) {
-		s = format("%s (aka '%s')", s, t.errorString());
-	}
-	return s;
 }
