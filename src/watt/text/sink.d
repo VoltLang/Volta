@@ -47,6 +47,11 @@ public:
 		mArr = n;
 	}
 
+	version (D_Version2) Sink sink()
+	{
+		return &sink;
+	}
+
 	string toString()
 	{
 		version (Volt) {
