@@ -3989,13 +3989,16 @@ void doResolveType(Context ctx, ref ir.Type type,
 		}
 		assert(tr.type !is null);
 
+		if (type.glossedName is null) {
+			type.glossedName = tr.id.toString();
+		}
+
 		if (auto n = cast(ir.Named) tr.type) {
 			return;
 		}
 
 		// Assume tr.type is resolved.
 		type = copyTypeSmart(tr.location, tr.type);
-		type.glossedName = tr.id.toString();
 		addStorage(type, tr);
 		return;
 	case TypeOf:
