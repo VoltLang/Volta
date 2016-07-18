@@ -462,9 +462,6 @@ protected:
 				dp.transform(m);
 			}
 		}
-		if (settings.writeJson) {
-			jp.transform(mCommandLineModules);
-		}
 
 		// Skip setting up the pointers incase object
 		// was not loaded, after that we are done.
@@ -497,6 +494,7 @@ protected:
 		}
 		postDiff(mCommandLineModules, ppstrs, dpstrs);
 
+
 		// Are we only looking for missing deps?
 		if (settings.missingDeps) {
 			foreach (m; lp.missing.getMissing()) {
@@ -506,31 +504,42 @@ protected:
 			return 0;
 		}
 
+
 		// After we have loaded all of the modules
 		// setup the pointers, this allows for suppling
 		// a user defined object module.
 		lp.setupOneTruePointers();
 
+
 		// New modules have been loaded,
 		// make sure to run everthing on them.
 		auto allMods = languagePass.getModules();
 
-		preDiff(mCommandLineModules, "Phase 2", ppstrs, dpstrs);
-		perf.mark(Perf.Mark.PHASE2);
 
 		// All modules need to be run through phase2.
+		preDiff(mCommandLineModules, "Phase 2", ppstrs, dpstrs);
+		perf.mark(Perf.Mark.PHASE2);
 		languagePass.phase2(allMods);
 		postDiff(mCommandLineModules, ppstrs, dpstrs);
 
-		preDiff(mCommandLineModules, "Phase 3", ppstrs, dpstrs);
-		perf.mark(Perf.Mark.PHASE3);
+
+		// Printout json file.
+		if (settings.writeJson) {
+			jp.transform(mCommandLineModules);
+		}
+
 
 		// All modules need to be run through phase3.
+		preDiff(mCommandLineModules, "Phase 3", ppstrs, dpstrs);
+		perf.mark(Perf.Mark.PHASE3);
 		languagePass.phase3(allMods);
 		postDiff(mCommandLineModules, ppstrs, dpstrs);
 
+
+		// For the debug printing here if no exception has been thrown.
 		debugPasses();
 
+		// Bailout if we don't want the backend.
 		if (settings.noBackend) {
 			return 0;
 		}
