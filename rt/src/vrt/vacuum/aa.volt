@@ -518,9 +518,20 @@ private fn vrt_aa_insert_case5(rbt : RedBlackTree*, node : TreeNode*)
 extern(C) fn vrt_aa_delete_primitive(rbtv : void*, key : u64) bool
 {
 	rbt : RedBlackTree* = cast(RedBlackTree*) rbtv;
-	child : TreeNode*;
-	node : TreeNode* = vrt_aa_lookup_node_primitive(cast(void*)rbt, key);
+	node : TreeNode* = vrt_aa_lookup_node_primitive(rbtv, key);
+	return vrt_aa_delete_node(rbt, node);
+}
 
+// same as above for arrays
+extern(C) fn vrt_aa_delete_array(rbtv : void*, key : void[]) bool
+{
+	rbt : RedBlackTree* = cast(RedBlackTree*)rbtv;
+	node : TreeNode* = vrt_aa_lookup_node_array(rbtv, key);
+	return vrt_aa_delete_node(rbt, node);
+}
+
+fn vrt_aa_delete_node(rbt : RedBlackTree*, node : TreeNode*) bool
+{
 	if (node is null) {
 		// Key did not exist
 		return false;
@@ -530,26 +541,20 @@ extern(C) fn vrt_aa_delete_primitive(rbtv : void*, key : u64) bool
 		throw new Exception("AA size tracking failure");
 	}
 	rbt.length--;
-    
+
 	// deleting the node is basically the same as you would delete 
 	// a node from a binary search tree
-    
+
 	// the node has two children!
 	if (node.left !is null && node.right !is null) {
-		pred : TreeNode* = vrt_aa_iterate_right(node.left);
+		pred := vrt_aa_iterate_right(node.left);
 		node.key = pred.key;
 		node.value = pred.value;
 		node = pred;
 	}
-    
-	// now the node only has one child left the other is null
-	//child = node.right is null ? node.left : node.right;
-	if (node.right is null) {
-		child = node.left;
-	} else {
-		child = node.right;
-	}
 
+	// now the node only has one child left the other is null
+	child := node.right is null ? node.left : node.right;
 	if (!node.red) {
 		// the node is black
 		node.red = vrt_aa_node_is_red(child);
@@ -560,39 +565,7 @@ extern(C) fn vrt_aa_delete_primitive(rbtv : void*, key : u64) bool
 	if (node.parent is null && child !is null) {
 		child.red = false;
 	}
-    
-	return true;
-}
 
-// same as above for arrays
-extern(C) fn vrt_aa_delete_array(rbtv : void*, key : void[]) bool
-{
-	rbt : RedBlackTree* = cast(RedBlackTree*)rbtv;
-	child : TreeNode*;
-	node : TreeNode* = vrt_aa_lookup_node_array(rbtv, key);
-
-	if (node is null) {
-		return false;
-	}
-	if (node.left !is null && node.right !is null) {
-		pred := vrt_aa_iterate_right(node.left);
-		node.key = pred.key;
-		node.value = pred.value;
-		node = pred;
-	}
-	if (node.right is null) {
-		child = node.left;
-	} else {
-		child = node.right;
-	}
-	if (!node.red) {
-		node.red = vrt_aa_node_is_red(child);
-		vrt_aa_delete_case1(rbt, node);
-	}
-	vrt_aa_replace_node(rbt, node, child);
-	if (node.parent is null && child !is null) {
-		child.red = false;
-	}
 	return true;
 }
 
