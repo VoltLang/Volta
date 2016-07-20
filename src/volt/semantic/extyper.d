@@ -3999,6 +3999,7 @@ void doResolveType(Context ctx, ref ir.Type type,
 
 		// Assume tr.type is resolved.
 		type = copyTypeSmart(tr.location, tr.type);
+		type.glossedName = tr.glossedName;
 		addStorage(type, tr);
 		return;
 	case TypeOf:
