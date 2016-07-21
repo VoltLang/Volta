@@ -877,7 +877,8 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func)
 		           ps.lookahead(1).type != TokenType.Comma &&
 			   ps.lookahead(1).type != TokenType.CloseParen &&
 			   ps.lookahead(1).type != TokenType.Asterix &&
-			   ps.lookahead(1).type != TokenType.OpenBracket) {
+			   ps.lookahead(1).type != TokenType.OpenBracket &&
+			   ps.lookahead(1).type != TokenType.Dot) {
 			// Old style declaration in new-style function.
 			ps.get();
 			return parseExpected(ps, ps.peek.location, p, "new-style declaration (using a colon)");
