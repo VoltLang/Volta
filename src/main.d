@@ -29,11 +29,13 @@ int main(string[] strArgs)
 	perf.init();
 	scope (exit) {
 		perf.close();
-		string name = "N/A";
-		string file;
+		string name, file;
 		if (settings !is null) {
-			name = settings.getOutput(name);
+			name = settings.outputFile;
 			file = settings.perfOutput;
+		}
+		if (name is null) {
+			name = "N/A";
 		}
 		if (file !is null) {
 			perf.print(file, name);
@@ -75,6 +77,9 @@ int main(string[] strArgs)
 
 	settings.processConfigs();
 	settings.replaceMacros();
+	foreach (ref f; files) {
+		f = settings.replaceEscapes(f);
+	}
 	auto vc = new VoltDriver(settings, ver, target);
 	vc.addFiles(files);
 	int ret = vc.compile();
