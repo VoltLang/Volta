@@ -143,15 +143,6 @@ public:
 		mFrameworkNames = settings.frameworkNames;
 		mFrameworkPaths = settings.frameworkPaths;
 
-		// Should we add the standard library.
-		if (!settings.emitBitcode &&
-		    !settings.noLink &&
-		    !settings.noStdLib) {
-			foreach (file; settings.stdFiles) {
-				addFile(file);
-			}
-		}
-
 
 		if (settings.linker !is null) {
 			switch (settings.platform) with (Platform) {

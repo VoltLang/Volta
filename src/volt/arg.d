@@ -71,8 +71,6 @@ public:
 
 	string[] stringImportPaths; ///< The -J arguments.
 
-	string[] stdFiles; ///< The --stdlib-file arguements.
-
 	string docDir; ///< The --doc-dir argument.
 	string docOutput; ///< The -do argument.
 	string jsonOutput = "voltoutput.json"; ///< The -jo argument.
@@ -123,9 +121,6 @@ public:
 			f = replaceEscapes(f);
 		}
 		foreach (ref f; libraryFiles) {
-			f = replaceEscapes(f);
-		}
-		foreach (ref f; stdFiles) {
 			f = replaceEscapes(f);
 		}
 	}
@@ -276,12 +271,7 @@ void filterArgs(Arg[] args, ref string[] files, VersionSet ver, Settings setting
 				continue;
 			}
 
-			// Needed because we want to filter out .bc files.
-			if (arg.cond & Arg.Conditional.Std) {
-				settings.stdFiles ~= arg.arg;
-			} else {
-				files ~= arg.arg;
-			}
+			files ~= arg.arg;
 			break;
 
 		case Identifier:
