@@ -272,7 +272,6 @@ public:
 
 	void addFile(string file)
 	{
-		file = settings.replaceEscapes(file);
 		version (Windows) {
 			// VOLT TEST.VOLT  REM Reppin' MS-DOS
 			file = toLower(file);
