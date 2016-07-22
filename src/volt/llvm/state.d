@@ -43,10 +43,8 @@ protected:
 	/**
 	 * Store for all the defined llvm values, like functions,
 	 * that might be referenced by other code.
-	 *
-	 * XXX: Depends on the GC not being a moving one.
 	 */
-	Store[size_t] valueStore;
+	Store[ir.NodeID] valueStore;
 
 	/**
 	 * Store for all the defined types, types are only defined once.
@@ -306,7 +304,7 @@ public:
 	 */
 	override LLVMValueRef getFunctionValue(ir.Function argFunc, out Type type)
 	{
-		auto k = *cast(size_t*)&argFunc;
+		auto k = argFunc.uniqueId;
 		auto ret = k in valueStore;
 
 		if (ret !is null) {
@@ -367,7 +365,7 @@ public:
 	 */
 	override LLVMValueRef getVariableValue(ir.Variable var, out Type type)
 	{
-		auto k = *cast(size_t*)&var;
+		auto k = var.uniqueId;
 		auto ret = k in valueStore;
 
 		if (ret !is null) {
@@ -457,7 +455,7 @@ public:
 
 	override LLVMValueRef getVariableValue(ir.FunctionParam var, out Type type)
 	{
-		auto k = *cast(size_t*)&var;
+		auto k = var.uniqueId;
 		auto ret = k in valueStore;
 
 		if (ret !is null) {
@@ -491,7 +489,7 @@ public:
 
 	override void makeByValVariable(ir.FunctionParam var, LLVMValueRef v)
 	{
-		auto k = *cast(size_t*)&var;
+		auto k = var.uniqueId;
 		assert((k in valueStore) is null);
 
 		auto type = this.fromIr(var.type);
@@ -501,7 +499,7 @@ public:
 
 	override void makeThisVariable(ir.Variable var, LLVMValueRef v)
 	{
-		auto k = *cast(size_t*)&var;
+		auto k = var.uniqueId;
 		assert((k in valueStore) is null);
 
 		auto type = this.fromIr(var.type);
@@ -526,7 +524,7 @@ public:
 
 	override void makeNestVariable(ir.Variable var, LLVMValueRef v)
 	{
-		auto k = *cast(size_t*)&var;
+		auto k = var.uniqueId;
 		assert((k in valueStore) is null);
 
 		auto type = this.fromIr(var.type);
