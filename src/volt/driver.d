@@ -440,7 +440,6 @@ protected:
 
 		// Load all modules to be compiled.
 		// Don't run phase 1 on them yet.
-		auto dp = new DocPrinter(settings.docDir, settings.docOutput);
 		auto jp = new JsonPrinter(settings.jsonOutput);
 		foreach (file; mSourceFiles) {
 			debugPrint("Parsing %s.", file);
@@ -448,10 +447,6 @@ protected:
 			auto m = loadAndParse(file);
 			languagePass.addModule(m);
 			mCommandLineModules ~= m;
-
-			if (settings.writeDocs) {
-				dp.transform(m);
-			}
 		}
 
 		// Skip setting up the pointers incase object
