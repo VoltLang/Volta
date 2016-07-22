@@ -50,7 +50,7 @@ public:
 public:
 	override Status debugVisitNode(ir.Node n)
 	{
-		auto t = *cast(size_t*)&n;
+		auto t = n.uniqueId;
 		if (t in mNodes) {
 			auto str = format(
 				"%s \"%s\" node found more then once in IR",
