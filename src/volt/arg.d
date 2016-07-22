@@ -29,7 +29,6 @@ public:
 	bool removeConditionalsOnly; ///< The -E argument.
 	bool simpleTrace; ///< The --simple-trace argument.
 	bool writeDocs; ///< The --doc argument.
-	bool writeJson; ///< The --json argument.
 	bool internalD; ///< The --internal-d argument;
 	bool internalDiff; ///< The --internal-diff argument.
 	bool internalDebug; ///< The --internal-dbg argument.
@@ -73,7 +72,7 @@ public:
 
 	string docDir; ///< The --doc-dir argument.
 	string docOutput; ///< The -do argument.
-	string jsonOutput = "voltoutput.json"; ///< The -jo argument.
+	string jsonOutput; ///< The -jo argument.
 
 	string perfOutput; ///< The --perf-output argument.
 
@@ -359,10 +358,9 @@ void filterArgs(Arg[] args, ref string[] files, VersionSet ver, Settings setting
 			settings.stringImportPaths ~= arg.arg;
 			break;
 		case JSONDo:
-			settings.writeJson = true;
+			settings.jsonOutput = "voltoutput.json";
 			break;
 		case JSONOutput:
-			settings.writeJson = true;
 			settings.jsonOutput = arg.arg;
 			break;
 		case DocDo:
