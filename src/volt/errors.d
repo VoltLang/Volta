@@ -724,6 +724,11 @@ CompilerException makeExpectedContext(ir.Node node, ir.Node node2, string file =
 	return new CompilerError(node.location, "expected context pointer.", file, line);
 }
 
+CompilerException makeNotReached(ir.Node node, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(node.location, "statement not reached.", file, line);
+}
+
 
 /*
  *

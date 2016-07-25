@@ -503,6 +503,9 @@ public:
 		if (breakBlocks.length == 0) {
 			throw makeBreakOutOfLoop(bs.location);
 		}
+		if (block.terminates) {
+			throw makeNotReached(bs);
+		}
 		block._break = true;
 		return Continue;
 	}
