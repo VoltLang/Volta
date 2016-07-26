@@ -2,6 +2,7 @@ module volt.util.string;
 
 import watt.conv : toInt, ConvException;
 import watt.text.utf : encode;
+import watt.text.format : format;
 
 import volt.errors;
 import volt.token.location;
@@ -123,7 +124,8 @@ immutable(void)[] unescapeString(Location location, const(char)[] s)
 					continue;
 				// @todo Named character entities. http://www.w3.org/TR/html5/named-character-references.html
 				default:
-					throw makeExpected(location, "valid escape");
+					string str = format("valid escape, found '\\%s'", c);
+					throw makeExpected(location, str);
 			}
 			escaping = false;
 			continue;
