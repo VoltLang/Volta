@@ -139,7 +139,7 @@ void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 	buildExpStat(loc, thenState,
 		buildCall(loc, throwFn, [
 			buildCastSmart(throwableClass, _new),
-			buildConstantString(loc, loc.filename),
+			buildConstantString(loc, loc.filename, false),
 			buildConstantSizeT(loc, lp, loc.line)],
 		throwFn.name));
 
