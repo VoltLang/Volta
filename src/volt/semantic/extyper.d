@@ -1799,13 +1799,21 @@ ir.Type extypeUnary(Context ctx, ref ir.Exp exp, Parent parent)
 	case Plus:
 	case Minus:
 	case Complement:
-		// TODO check if integer value
+		// TODO Validate
+		return getExpType(exp);
 	case AddrOf:
 	case Increment:
 	case Decrement:
-		// TODO Check if LValue
+		if (!isLValue(unary.value)) {
+			throw makeExpected(exp, "lvalue");
+		}
+		return getExpType(exp);
 	case Dereference:
-		// TODO Check if pointer
+		auto t = getExpType(unary.value);
+		if (!isPointer(realType(t))) {
+			throw makeExpected(exp, "pointer");
+		}
+		return getExpType(exp);
 	case TypeIdent:
 		// TODO XXX replace
 		return getExpType(exp);
