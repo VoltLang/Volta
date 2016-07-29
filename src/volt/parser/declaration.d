@@ -68,7 +68,7 @@ ParseStatus parseVariable(ParserStream ps, NodeSinkDg dg)
 		if (_global) {
 			return unexpectedToken(ps, ir.NodeType.Variable);
 		}
-		// No need to report variable here since its allready reported.
+		// No need to report variable here since it's already reported.
 		return reallyParseVariable(ps, base, dg);
 	} else if (colonDeclaration) {
 		// New variable declaration.
@@ -302,7 +302,7 @@ ParseStatus parseType(ParserStream ps, out ir.Type base)
 	ir.Type tmp;
 	auto succeeded = parseTypeSigils(ps, tmp, origin, base);
 	if (!succeeded) {
-		parseFailed(ps, ir.NodeType.Function);
+		return parseFailed(ps, ir.NodeType.Function);
 	}
 	base = tmp;
 
