@@ -1796,9 +1796,14 @@ ir.Type extypeUnary(Context ctx, ref ir.Exp exp, Parent parent)
 		// TODO XXX replace
 		return getExpType(exp);
 	case Not:
+	case Complement:
+		auto t = getExpType(unary.value);
+		if (!isIntegralOrBool(realType(t))) {
+			throw makeExpected(exp, "integral or bool value");
+		}
+		return getExpType(exp);
 	case Plus:
 	case Minus:
-	case Complement:
 		// TODO Validate
 		return getExpType(exp);
 	case AddrOf:
