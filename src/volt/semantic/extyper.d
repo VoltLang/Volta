@@ -1804,7 +1804,10 @@ ir.Type extypeUnary(Context ctx, ref ir.Exp exp, Parent parent)
 		return getExpType(exp);
 	case Plus:
 	case Minus:
-		// TODO Validate
+		auto t = realType(getExpType(unary.value));
+		if (!isIntegral(t) && !isFloatingPoint(t)) {
+			throw makeExpected(exp, "integral value");
+		}
 		return getExpType(exp);
 	case AddrOf:
 	case Increment:
