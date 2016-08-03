@@ -160,6 +160,9 @@ public:
 		case "__cinit", "__vtable_instance": return ContinueParent;
 		default: break;
 		}
+		if (name.length > 4 && name[0 .. 4] == "_V__") {
+			return ContinueParent;
+		}
 
 		startObject();
 		writeNamedTyped("var", name, v.docComment, v.type);
