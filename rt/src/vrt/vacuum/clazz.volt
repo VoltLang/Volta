@@ -1,9 +1,9 @@
 module vrt.vacuum.clazz;
 
-import core.typeinfo : TypeInfo, ClassInfo, Type;
+import core.typeinfo: TypeInfo, ClassInfo, Type;
 
 
-extern(C) fn vrt_handle_cast(obj : void*, tinfo : TypeInfo) void*
+extern(C) fn vrt_handle_cast(obj: void*, tinfo: TypeInfo) void*
 {
 	if (obj is null)
 		return null;

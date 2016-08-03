@@ -3,7 +3,7 @@
 module vrt.ext.unwind;
 
 
-import vrt.ext.stdc : uintptr_t;
+import vrt.ext.stdc: uintptr_t;
 
 version (!Emscripten && !MSVC && !Metal):
 
@@ -36,23 +36,23 @@ enum _Unwind_Action
 version (Windows) {
 	struct _Unwind_Exception
 	{
-		exception_class : u64;
-		exception_cleanup : _Unwind_Exception_Cleanup_Fn;
-		pad1 : void*;
+		exception_class: u64;
+		exception_cleanup: _Unwind_Exception_Cleanup_Fn;
+		pad1: void*;
 
-		private_1 : uintptr_t;
-		pad2 : void*;
-		private_2 : uintptr_t;
-		pad3 : void*;
+		private_1: uintptr_t;
+		pad2: void*;
+		private_2: uintptr_t;
+		pad3: void*;
 	}
 } else {
 	struct _Unwind_Exception
 	{
-		exception_class : u64;
-		exception_cleanup : _Unwind_Exception_Cleanup_Fn;
+		exception_class: u64;
+		exception_cleanup: _Unwind_Exception_Cleanup_Fn;
 
-		private_1 : uintptr_t;
-		private_2 : uintptr_t;
+		private_1: uintptr_t;
+		private_2: uintptr_t;
 	}
 }
 
@@ -63,14 +63,14 @@ struct _Unwind_Context {}
 fn _Unwind_Resume(_Unwind_Exception*) int;
 fn _Unwind_RaiseException(_Unwind_Exception*) int;
 
-const fn _Unwind_GetLanguageSpecificData(ctx : _Unwind_Context*) ubyte*;
+const fn _Unwind_GetLanguageSpecificData(ctx: _Unwind_Context*) ubyte*;
 
-fn _Unwind_GetRegionStart(ctx : _Unwind_Context*) size_t;
-fn _Unwind_GetTextRelBase(ctx : _Unwind_Context*) size_t;
-fn _Unwind_GetDataRelBase(ctx : _Unwind_Context*) size_t;
+fn _Unwind_GetRegionStart(ctx: _Unwind_Context*) size_t;
+fn _Unwind_GetTextRelBase(ctx: _Unwind_Context*) size_t;
+fn _Unwind_GetDataRelBase(ctx: _Unwind_Context*) size_t;
 
-fn _Unwind_GetGR(ctx : _Unwind_Context*, i : i32) size_t;
-fn _Unwind_GetIP(ctx : _Unwind_Context*) uintptr_t;
+fn _Unwind_GetGR(ctx: _Unwind_Context*, i: i32) size_t;
+fn _Unwind_GetIP(ctx: _Unwind_Context*) uintptr_t;
 
-fn _Unwind_SetGR(ctx : _Unwind_Context*, i : i32, n : size_t);
-fn _Unwind_SetIP(ctx : _Unwind_Context*, new_value : uintptr_t);
+fn _Unwind_SetGR(ctx: _Unwind_Context*, i: i32, n: size_t);
+fn _Unwind_SetIP(ctx: _Unwind_Context*, new_value: uintptr_t);

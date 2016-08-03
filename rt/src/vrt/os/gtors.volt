@@ -2,7 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.os.gtors;
 
-import core.object : moduleInfoRoot;
+import core.object: moduleInfoRoot;
 
 
 extern(C) fn vrt_run_global_ctors()

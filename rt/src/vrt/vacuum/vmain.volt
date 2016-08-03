@@ -2,14 +2,14 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.vacuum.vmain;
 
-import core.exception : Throwable;
-import core.typeinfo : TypeInfo;
-import core.rt.gc : vrt_gc_init, allocDg, vrt_gc_get_alloc_dg, vrt_gc_shutdown;
-import core.rt.misc : vrt_run_global_ctors, vrt_run_global_dtors, vrt_panic;
+import core.exception: Throwable;
+import core.typeinfo: TypeInfo;
+import core.rt.gc: vrt_gc_init, allocDg, vrt_gc_get_alloc_dg, vrt_gc_shutdown;
+import core.rt.misc: vrt_run_global_ctors, vrt_run_global_dtors, vrt_panic;
 
 
 
-extern(C) fn vrt_run_main(argc : i32, argv : char**, vmain : int function(string[])) i32
+extern(C) fn vrt_run_main(argc: i32, argv: char**, vmain: int function(string[])) i32
 {
 
 	// Currently all the init that is needed for the GC.
@@ -21,7 +21,7 @@ extern(C) fn vrt_run_main(argc : i32, argv : char**, vmain : int function(string
 		arg = unsafeToString(argv[i]);
 	}
 
-	ret : i32;
+	ret: i32;
 	try {
 		vrt_run_global_ctors();
 		ret = vmain(args);
@@ -29,7 +29,7 @@ extern(C) fn vrt_run_main(argc : i32, argv : char**, vmain : int function(string
 	} catch (Throwable t) {
 		// For lack of T.classinfo
 		ti := **cast(TypeInfo[]**)t;
-		msgs : char[][3];
+		msgs: char[][3];
 		msgs[0] = cast(char[])"Uncaught exception";
 		msgs[1] = cast(char[])ti[ti.length - 1].mangledName;
 		msgs[2] = cast(char[])t.msg;
@@ -42,7 +42,7 @@ extern(C) fn vrt_run_main(argc : i32, argv : char**, vmain : int function(string
 	return ret;
 }
 
-fn unsafeToString(str : const(char)*) string
+fn unsafeToString(str: const(char)*) string
 {
 	start := str;
 	while (*str) {

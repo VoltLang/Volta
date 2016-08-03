@@ -2,15 +2,15 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.ext.dwarf;
 
-import core.rt.misc : vrt_panic;
-import vrt.ext.stdc : uintptr_t;
+import core.rt.misc: vrt_panic;
+import vrt.ext.stdc: uintptr_t;
 
 
 struct DW_Context
 {
-	textrel : void*;
-	datarel : void*;
-	funcrel : void*;
+	textrel: void*;
+	datarel: void*;
+	funcrel: void*;
 }
 
 enum {
@@ -39,11 +39,11 @@ enum {
 	DW_EH_PE_indirect = 0x80
 }
 
-fn dw_read_uleb128(data : const(u8)**) uintptr_t
+fn dw_read_uleb128(data: const(u8)**) uintptr_t
 {
-	result : uintptr_t;
-	shift : uintptr_t;
-	b : u8;
+	result: uintptr_t;
+	shift: uintptr_t;
+	b: u8;
 	p := *data;
 
 	do {
@@ -57,11 +57,11 @@ fn dw_read_uleb128(data : const(u8)**) uintptr_t
 	return result;
 }
 
-static fn dw_read_sleb128(data : const(u8)**) uintptr_t
+static fn dw_read_sleb128(data: const(u8)**) uintptr_t
 {
-	result : uintptr_t;
-	shift : uintptr_t;
-	b : u8;
+	result: uintptr_t;
+	shift: uintptr_t;
+	b: u8;
 	p := *data;
 
 	do {
@@ -79,7 +79,7 @@ static fn dw_read_sleb128(data : const(u8)**) uintptr_t
 	return result;
 }
 
-fn dw_read_ubyte(data : const(u8)**) u8
+fn dw_read_ubyte(data: const(u8)**) u8
 {
 	p := *data;
 	result := cast(u8)*p++;
@@ -87,7 +87,7 @@ fn dw_read_ubyte(data : const(u8)**) u8
 	return result;
 }
 
-fn dw_encoded_size(encoding : u8) size_t
+fn dw_encoded_size(encoding: u8) size_t
 {
 	switch (encoding & 0x0F) {
 	case DW_EH_PE_absptr:
@@ -105,7 +105,7 @@ fn dw_encoded_size(encoding : u8) size_t
 	case DW_EH_PE_sdata8:
 		return typeid(i64).size;
 	default:
-		msgs : char[][1];
+		msgs: char[][1];
 		msgs[0] = cast(char[])"unhandled case";
 		vrt_panic(cast(char[][])msgs);
 		break;
@@ -113,9 +113,9 @@ fn dw_encoded_size(encoding : u8) size_t
 	assert(false); // To please cfg detection
 }
 
-fn dw_read_encoded(data : const(u8)**, encoding : u8) uintptr_t
+fn dw_read_encoded(data: const(u8)**, encoding: u8) uintptr_t
 {
-	result : uintptr_t;
+	result: uintptr_t;
 	pc := *data;
 	p := *data;
 
@@ -155,7 +155,7 @@ fn dw_read_encoded(data : const(u8)**, encoding : u8) uintptr_t
 		p += typeid(long).size;
 		break;
 	default:
-		msgs : char[][1];
+		msgs: char[][1];
 		msgs[0] = cast(char[])"unhandled case type";
 		vrt_panic(cast(char[][])msgs);
 		break;
@@ -169,7 +169,7 @@ fn dw_read_encoded(data : const(u8)**, encoding : u8) uintptr_t
 			result += cast(uintptr_t)pc;
 			break;
 		default:
-			msgs : char[][1];
+			msgs: char[][1];
 			msgs[0] = cast(char[])"unhandled case type";
 			vrt_panic(cast(char[][])msgs);
 			break;

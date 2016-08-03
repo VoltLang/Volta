@@ -5,15 +5,15 @@ module core.exception;
 
 class Throwable
 {
-	msg : string;
+	msg: string;
 
 	// These two are updated each time the exception is thrown.
-	throwFile : string;
-	throwLine : size_t;
+	throwFile: string;
+	throwLine: size_t;
 
 	// These are manually supplied
-	file : string;
-	line : size_t;
+	file: string;
+	line: size_t;
 
 	this(string msg, string file = __FILE__, size_t line = __LINE__)
 	{

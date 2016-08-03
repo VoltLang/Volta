@@ -2,7 +2,7 @@
 // See copyright notice in src/volt/licence.d (BOOST ver 1.0)
 module vrt.vacuum.utf;
 
-import core.exception : MalformedUTF8Exception;
+import core.exception: MalformedUTF8Exception;
 
 
 private enum ONE_BYTE_MASK                   = 0x80;
@@ -14,23 +14,23 @@ private enum FIVE_BYTE_MASK                  = 0xFC;
 private enum SIX_BYTE_MASK                   = 0xFE;
 private enum CONTINUING_MASK                 = 0xC0;
 
-private fn _read_byte(str : string, ref index : size_t) u8
+private fn _read_byte(str: string, ref index: size_t) u8
 {
 	if (index >= str.length) {
 		throw new MalformedUTF8Exception("unexpected end of stream");
 	}
-	b : u8 = str[index];
+	b: u8 = str[index];
 	index = index + 1;
 	return b;
 }
 
-private fn _read_char(str : string, ref index : size_t) dchar
+private fn _read_char(str: string, ref index: size_t) dchar
 {
-	b : u8 = _read_byte(str, ref index);
+	b: u8 = _read_byte(str, ref index);
 	return cast(dchar)(b & cast(ubyte)~ONE_BYTE_MASK);
 }
 
-extern (C) fn vrt_reverse_decode_u8_d(str : string, ref index : size_t) dchar
+extern (C) fn vrt_reverse_decode_u8_d(str: string, ref index: size_t) dchar
 {
 	while ((str[index] & TWO_BYTE_RESULT) == ONE_BYTE_MASK) {
 		if (index == 0) {
@@ -38,45 +38,45 @@ extern (C) fn vrt_reverse_decode_u8_d(str : string, ref index : size_t) dchar
 		}
 		index--;
 	}
-	dummy : size_t = index;
+	dummy: size_t = index;
 	c := vrt_decode_u8_d(str, ref dummy);
 	return c;
 }
 
-extern (C) fn vrt_decode_u8_d(str : string, ref index : size_t) dchar
+extern (C) fn vrt_decode_u8_d(str: string, ref index: size_t) dchar
 {
-	b1 : u8 = _read_byte(str, ref index);
+	b1: u8 = _read_byte(str, ref index);
 	if ((b1 & ONE_BYTE_MASK) == 0) {
 		return b1;
 	}
 
-	c2 : dchar = _read_char(str, ref index);
+	c2: dchar = _read_char(str, ref index);
 	if ((b1 & TWO_BYTE_MASK) == TWO_BYTE_RESULT) {
-		c1 : dchar = cast(dchar)((b1 & cast(ubyte)~TWO_BYTE_MASK));
+		c1: dchar = cast(dchar)((b1 & cast(ubyte)~TWO_BYTE_MASK));
 		c1 = c1 << 6;
 		return c1 | c2;
 	}
 
-	c3 : dchar = _read_char(str, ref index);
+	c3: dchar = _read_char(str, ref index);
 	if ((b1 & THREE_BYTE_MASK) == TWO_BYTE_MASK) {
-		c1 : dchar = cast(dchar)((b1 & cast(ubyte)~THREE_BYTE_MASK));
+		c1: dchar = cast(dchar)((b1 & cast(ubyte)~THREE_BYTE_MASK));
 		c1 = c1 << 12;
 		c2 = c2 << 6;
 		return c1 | c2 | c3;
 	}
 
-	c4 : dchar = _read_char(str, ref index);
+	c4: dchar = _read_char(str, ref index);
 	if ((b1 & FOUR_BYTE_MASK) == THREE_BYTE_MASK) {
-		c1 : dchar = cast(dchar)((b1 & cast(ubyte)~FOUR_BYTE_MASK));
+		c1: dchar = cast(dchar)((b1 & cast(ubyte)~FOUR_BYTE_MASK));
 		c1 = c1 << 18;
 		c2 = c2 << 12;
 		c3 = c3 << 6;
 		return c1 | c2 | c3 | c4;
 	}
 
-	c5 : dchar = _read_char(str, ref index);
+	c5: dchar = _read_char(str, ref index);
 	if ((b1 & FIVE_BYTE_MASK) == FOUR_BYTE_MASK) {
-		c1 : dchar = cast(dchar)((b1 & cast(ubyte)~FIVE_BYTE_MASK));
+		c1: dchar = cast(dchar)((b1 & cast(ubyte)~FIVE_BYTE_MASK));
 		c1 = c1 << 24;
 		c2 = c2 << 18;
 		c3 = c3 << 12;
@@ -84,9 +84,9 @@ extern (C) fn vrt_decode_u8_d(str : string, ref index : size_t) dchar
 		return c1 | c2 | c3 | c4 | c5;
 	}
 
-	c6 : dchar = _read_char(str, ref index);
+	c6: dchar = _read_char(str, ref index);
 	if ((b1 & SIX_BYTE_MASK) == FIVE_BYTE_MASK) {
-		c1 : dchar = cast(dchar)((b1 & cast(ubyte)~SIX_BYTE_MASK));
+		c1: dchar = cast(dchar)((b1 & cast(ubyte)~SIX_BYTE_MASK));
 		c1 = c1 << 30;
 		c2 = c2 << 24;
 		c3 = c3 << 18;
@@ -99,9 +99,9 @@ extern (C) fn vrt_decode_u8_d(str : string, ref index : size_t) dchar
 }
 
 /// Return how many codepoints are in a given UTF-8 string.
-extern (C) fn vrt_count_codepoints_u8(s : string) size_t
+extern (C) fn vrt_count_codepoints_u8(s: string) size_t
 {
-	i, length : size_t;
+	i, length: size_t;
 	while (i < s.length) {
 		vrt_decode_u8_d(s, ref i);
 		length++;
@@ -109,9 +109,9 @@ extern (C) fn vrt_count_codepoints_u8(s : string) size_t
 	return length;
 }
 
-extern (C) fn vrt_validate_u8(s : string)
+extern (C) fn vrt_validate_u8(s: string)
 {
-	i : size_t;
+	i: size_t;
 	while (i < s.length) {
 		vrt_decode_u8_d(s, ref i);
 	}
@@ -119,12 +119,12 @@ extern (C) fn vrt_validate_u8(s : string)
 }
 
 /// Encode c as UTF-8.
-extern (C) fn vrt_encode_d_u8(c : dchar) string
+extern (C) fn vrt_encode_d_u8(c: dchar) string
 {
-	buf : char[] = new char[](6);
+	buf: char[] = new char[](6);
 	cval := cast(u32) c;
 
-	fn _read_byte(a : u32, b : u32) u8
+	fn _read_byte(a: u32, b: u32) u8
 	{
 		_byte := cast(u8) (a | (cval & b));
 		cval = cval >> 6;

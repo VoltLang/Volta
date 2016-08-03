@@ -8,7 +8,7 @@ module vrt.ext.stdc;
 
 extern(C) fn printf(const(char)*, ...) int;
 
-extern(C) fn calloc(num : size_t, size : size_t) void*;
+extern(C) fn calloc(num: size_t, size: size_t) void*;
 
 extern(C) fn exit(i32);
 

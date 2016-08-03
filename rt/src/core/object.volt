@@ -38,12 +38,12 @@ class Attribute
 
 struct ModuleInfo
 {
-	next : ModuleInfo*;
-	ctors : void function()[];
-	dtors : void function()[];
+	next: ModuleInfo*;
+	ctors: void function()[];
+	dtors: void function()[];
 }
 
-@mangledName("_V__ModuleInfo_root") global moduleInfoRoot : ModuleInfo*;
+@mangledName("_V__ModuleInfo_root") global moduleInfoRoot: ModuleInfo*;
 
 
 /*
@@ -54,6 +54,6 @@ struct ModuleInfo
 
 struct ArrayStruct
 {
-	length : size_t;
-	ptr : void*;
+	length: size_t;
+	ptr: void*;
 }

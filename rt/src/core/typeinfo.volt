@@ -40,26 +40,26 @@ enum Type
 
 class TypeInfo
 {
-	size : size_t;
-	type : int;
-	mangledName : char[];
-	mutableIndirection : bool;
-	classInit : void*;
-	classSize : size_t;
-	base : TypeInfo;  // For arrays (dynamic and static), and pointers.
-	staticArrayLength : size_t;
-	key, value : TypeInfo;  // For AAs.
-	ret : TypeInfo;  // For functions and delegates.
-	args : TypeInfo[];  // For functions and delegates.
+	size: size_t;
+	type: int;
+	mangledName: char[];
+	mutableIndirection: bool;
+	classInit: void*;
+	classSize: size_t;
+	base: TypeInfo;  // For arrays (dynamic and static), and pointers.
+	staticArrayLength: size_t;
+	key, value: TypeInfo;  // For AAs.
+	ret: TypeInfo;  // For functions and delegates.
+	args: TypeInfo[];  // For functions and delegates.
 }
 
 class ClassInfo : TypeInfo
 {
-	interfaces : InterfaceInfo[];
+	interfaces: InterfaceInfo[];
 }
 
 class InterfaceInfo
 {
-	info : TypeInfo;
-	offset : size_t;
+	info: TypeInfo;
+	offset: size_t;
 }

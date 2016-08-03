@@ -2,10 +2,10 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.os.panic;
 
-import vrt.ext.stdc : exit, printf;
+import vrt.ext.stdc: exit, printf;
 
 
-extern(C) fn vrt_panic(msgs : const(char)[][], file : const(char)[], line : i32)
+extern(C) fn vrt_panic(msgs: const(char)[][], file: const(char)[], line: i32)
 {
 	printf("%.*s:%i: ###PANIC###\n",
 		cast(int)file.length, file.ptr,
