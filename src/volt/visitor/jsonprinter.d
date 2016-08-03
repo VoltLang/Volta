@@ -5,6 +5,7 @@ module volt.visitor.jsonprinter;
 
 import watt.io.streams : OutputFileStream;
 import watt.text.utf : encode;
+import watt.text.sink;
 
 import ir = volt.ir.ir;
 import volt.ir.printer;
@@ -247,28 +248,40 @@ protected:
 		mWriteComma = true;
 	}
 
-	void w(string s)
+	void w(SinkArg s)
 	{
-		mFile.writef(`%s`, s);
+		version (Volt) {
+			mFile.write(s);
+		} else {
+			mFile.writef(`%s`, s);
+		}
 	}
 
 	/// Add quotes to s and make it a JSON string (w/ escaping etc).
 	void wq(string s)
 	{
-		char[] outString;
+		w(`"`);
 		foreach (dchar c; s) {
 			switch (c) {
-			case '"': outString ~= `\"`; break;
-			case '\n': outString ~= `\n`; break;
-			case '\r': outString ~= `\r`; break;
-			case '\t': outString ~= `\t`; break;
-			case '\f': outString ~= `\f`; break;
-			case '\b': outString ~= `\b`; break;
-			case '\\': outString ~= `\\` ; break;
-			default: encode(outString, c); break;
+			case '"': w(`\"`); break;
+			case '\n': w(`\n`); break;
+			case '\r': w(`\r`); break;
+			case '\t': w(`\t`); break;
+			case '\f': w(`\f`); break;
+			case '\b': w(`\b`); break;
+			case '\\': w(`\\`); break;
+			default:
+				version (Volt) {
+					encode(w, c);
+				} else {
+					char[] outString;
+					encode(outString, c);
+					w(outString);
+				}
+				break;
 			}
 		}
-		mFile.writef(`"%s"`, outString);
+		w(`"`);
 	}
 
 	void wMaybeComma()
