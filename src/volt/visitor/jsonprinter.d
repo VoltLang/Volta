@@ -126,7 +126,9 @@ public:
 		}
 
 		tag("doc", f.docComment);
-		tag("linkage", linkageString(f.type.linkage));
+		if (f.type.linkage != ir.Linkage.Volt) {
+			tag("linkage", linkageString(f.type.linkage));
+		}
 
 		if (f.params.length > 0) {
 			startList("args");
