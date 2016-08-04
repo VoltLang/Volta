@@ -425,11 +425,15 @@ public:
 		case Local:
 			v = LLVMAddGlobal(mod, llvmType, var.mangledName);
 
-			/* LLVM on Windows (as of 3.2) does not support TLS.
+			/*
+			 * LLVM on Windows (as of 3.2) does not support TLS.
 			 * So for now, make all Variables marked as local global,
 			 * else nothing will work at all.
+			 *
+			 * Also disabled on Metal.
 			 */
-			if (lp.target.platform != Platform.MinGW) {
+			if (lp.target.platform != Platform.MinGW &&
+			    lp.target.platform != Platform.Metal) {
 				LLVMSetThreadLocal(v, true);
 			}
 			break;
