@@ -126,6 +126,7 @@ public:
 		}
 
 		tag("doc", f.docComment);
+		tag("linkage", linkageString(f.type.linkage));
 
 		if (f.params.length > 0) {
 			startList("args");
@@ -246,6 +247,19 @@ protected:
 		w(":");
 		wq(value);
 		mWriteComma = true;
+	}
+
+	string linkageString(ir.Linkage linkage)
+	{
+		final switch (linkage) {
+		case ir.Linkage.Volt: return "volt";
+		case ir.Linkage.C: return "c";
+		case ir.Linkage.CPlusPlus: return "c++";
+		case ir.Linkage.D: return "d";
+		case ir.Linkage.Windows: return "windows";
+		case ir.Linkage.Pascal: return "pascal";
+		case ir.Linkage.System: return "system";
+		}
 	}
 
 	void w(SinkArg s)
