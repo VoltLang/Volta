@@ -98,6 +98,15 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.Alias a)
+	{
+		auto name = a.name;
+		startObject();
+		writeNamedTyped("alias", name, a.docComment, a.type);
+		endObject();
+		return ContinueParent;
+	}
+
 	override Status enter(ir.Function f)
 	{
 		bool suppressReturn;
@@ -188,6 +197,7 @@ public:
 	override Status leave(ir.Struct) { endListAndObject(); return Continue; }
 	override Status leave(ir.Union) { endListAndObject(); return Continue; }
 	override Status leave(ir.Class) { endListAndObject(); return Continue; }
+	override Status leave(ir.Alias) { endListAndObject(); return Continue; }
 
 
 protected:
