@@ -100,6 +100,9 @@ public:
 
 	override Status enter(ir.Alias a)
 	{
+		if (a.type is null) {
+			return ContinueParent;
+		}
 		auto name = a.name;
 		startObject();
 		writeNamedTyped("alias", name, a.docComment, a.type);
