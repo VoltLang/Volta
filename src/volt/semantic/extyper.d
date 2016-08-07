@@ -762,27 +762,12 @@ private void rewriteVarargs(Context ctx,ir.CallableType asFunctionType,
 		asFunctionType.linkage != ir.Linkage.Volt) {
 		return;
 	}
-	ir.ExpReference asExp;
-	if (postfix.child.nodeType == ir.NodeType.Postfix) {
-		assert(postfix.op == ir.Postfix.Op.Call);
-		auto pfix = cast(ir.Postfix) postfix.child;
-		assert(pfix !is null);
-		assert(pfix.op == ir.Postfix.Op.CreateDelegate);
-		assert(pfix.memberFunction !is null);
-		asExp = pfix.memberFunction;
-	}
-	if (asExp is null) {
-		asExp = cast(ir.ExpReference) postfix.child;
-	}
-	auto asFunction = cast(ir.Function) asExp.decl;
-	assert(asFunction !is null);
 
 	auto callNumArgs = postfix.arguments.length;
 	auto funcNumArgs = asFunctionType.params.length - 2; // 2 == the two hidden arguments
 	if (callNumArgs < funcNumArgs) {
 		throw makeWrongNumberOfArguments(postfix, callNumArgs, funcNumArgs);
 	}
-	auto amountOfVarArgs = callNumArgs - funcNumArgs;
 	auto argsSlice = postfix.arguments[0 .. funcNumArgs];
 	auto varArgsSlice = postfix.arguments[funcNumArgs .. $];
 
