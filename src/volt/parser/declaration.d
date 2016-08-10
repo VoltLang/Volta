@@ -855,6 +855,10 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func)
 
 	size_t i;
 	while (ps != TokenType.CloseParen) {
+		if (matchIf(ps, TokenType.TripleDot)) {
+			func.type.hasVarArgs = true;
+			break;
+		}
 		bool argRef = matchIf(ps, TokenType.Ref);
 		bool argOut = matchIf(ps, TokenType.Out);
 		bool argIn = matchIf(ps, TokenType.In);
