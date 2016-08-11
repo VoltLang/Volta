@@ -9,3 +9,7 @@ extern (C):
 
 @mangledName("llvm.va_start") fn __llvm_volt_va_start(void*);
 @mangledName("llvm.va_end") fn __llvm_volt_va_end(void*);
+
+alias va_list = void*;
+alias va_start = __volt_va_start;
+alias va_end = __volt_va_end;
