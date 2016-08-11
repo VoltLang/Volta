@@ -167,7 +167,7 @@ public:
 		auto rtAAModule = getAndCheck("core", "rt", "aa");
 		auto rtMiscModule = getAndCheck("core", "rt", "misc");
 		auto llvmModule = getAndCheck("core", "compiler", "llvm");
-		auto varargsModule = getAndCheck("core", "compiler", "varargs");
+		auto varargsModule = getAndCheck("core", "varargs");
 
 		ir.Module[] mods = [
 			defModule,
@@ -294,6 +294,8 @@ public:
 		// core.compiler.varargs
 		vaStartFunc = getFunctionFrom(varargsModule, "__volt_va_start");
 		vaEndFunc = getFunctionFrom(varargsModule, "__volt_va_end");
+		vaCStartFunc = getFunctionFrom(varargsModule, "__llvm_volt_va_start");
+		vaCEndFunc = getFunctionFrom(varargsModule, "__llvm_volt_va_end");
 
 		// core.compiler.llvm
 		llvmTypeidFor = getFunctionFrom(llvmModule, "__llvm_typeid_for");
@@ -303,8 +305,6 @@ public:
 		llvmMemcpy64 = getFunctionFrom(llvmModule, "__llvm_memcpy_p0i8_p0i8_i64");
 		llvmMemset32 = getFunctionFrom(llvmModule, "__llvm_memset_p0i8_i32");
 		llvmMemset64 = getFunctionFrom(llvmModule, "__llvm_memset_p0i8_i64");
-		vaCStartFunc = getFunctionFrom(llvmModule, "__llvm_volt_va_start");
-		vaCEndFunc = getFunctionFrom(llvmModule, "__llvm_volt_va_end");
 
 		phase2(mods);
 	}
