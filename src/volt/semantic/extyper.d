@@ -4227,6 +4227,9 @@ void resolveFunction(Context ctx, ir.Function func)
 	           func.type.params.length > 1) {
 		throw makeWrongNumberOfArguments(func, func.type.params.length, isVoid(func.type.ret) ? 0U : 1U);
 	}
+	if (func.type.hasVarArgs && func.type.linkage == ir.Linkage.C && func._body !is null) {
+		throw makeUnsupported(func.location, "extern (C) variadic function with body defined");
+	}
 
 	// Ctx points the context surrounding the Function
 	ir.Type refType = func.type;
