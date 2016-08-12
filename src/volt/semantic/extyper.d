@@ -46,7 +46,8 @@ void appendDefaultArguments(Context ctx, ir.Location loc,
 {
 	// Nothing to do.
 	// Variadic functions may have more arguments then parameters.
-	if (func is null || arguments.length >= func.params.length) {
+	if (func is null || arguments.length >= func.params.length ||
+		func.type.hasVarArgs) {
 		return;
 	}
 
@@ -755,66 +756,6 @@ private void rewriteVaStartAndEnd(Context ctx, ir.Function func,
 	}
 }
 
-private bool rewriteVarargs(Context ctx, ir.CallableType asFunctionType,
-                            ir.Postfix postfix, ref ir.Exp exp)
-{
-	if (!asFunctionType.hasVarArgs ||
-		asFunctionType.linkage != ir.Linkage.Volt) {
-		return false;
-	}
-
-	auto l = postfix.location;
-
-	auto callNumArgs = postfix.arguments.length;
-	auto funcNumArgs = asFunctionType.params.length - 2; // 2 == the two hidden arguments
-	if (callNumArgs < funcNumArgs) {
-		throw makeWrongNumberOfArguments(postfix, callNumArgs, funcNumArgs);
-	}
-	auto argsSlice = postfix.arguments[0 .. funcNumArgs];
-	auto varArgsSlice = postfix.arguments[funcNumArgs .. $];
-
-	auto tinfoClass = ctx.lp.typeInfoClass;
-	auto tr = buildTypeReference(postfix.location, tinfoClass, tinfoClass.name);
-	tr.location = postfix.location;
-
-	auto sexp = buildStatementExp(l);
-	auto idsType = buildStaticArrayTypeSmart(l, varArgsSlice.length, tr);
-	auto argsType = buildStaticArrayTypeSmart(l, 0, buildVoid(l));
-	auto ids = buildVariableAnonSmart(l, ctx.current, sexp, idsType, null);
-	auto args = buildVariableAnonSmart(l, ctx.current, sexp, argsType, null);
-
-	int[] sizes;
-	size_t totalSize;
-	ir.Type[] types;
-	foreach (i, _exp; varArgsSlice) {
-		auto etype = getExpType(_exp);
-		if (ctx.lp.beMoreLikeD &&
-		    realType(etype).nodeType == ir.NodeType.Struct) {
-			warning(_exp.location, "passing struct to var-arg function.");
-		}
-
-		auto ididx = buildIndex(l, buildExpReference(l, ids, ids.name), buildConstantSizeT(l, ctx.lp, i));
-		buildExpStat(l, sexp, buildAssign(l, ididx, buildTypeidSmart(l, ctx.lp, etype)));
-
-		// *(cast(T*)arr.ptr + totalSize) = exp;
-		auto argl = buildDeref(l, buildCastSmart(l, buildPtrSmart(l, etype),
-			buildAdd(l, buildArrayPtr(l, buildVoid(l),
-			buildExpReference(l, args, args.name)), buildConstantSizeT(l, ctx.lp, totalSize))));
-
-		buildExpStat(l, sexp, buildAssign(l, argl, _exp));
-
-		totalSize += size(ctx.lp, etype);
-	}
-
-	(cast(ir.StaticArrayType)args.type).length = totalSize;
-
-	postfix.arguments = argsSlice ~ buildSlice(l, buildExpReference(l, ids, ids.name)) ~ buildSlice(l, buildExpReference(l, args, args.name));
-	sexp.exp = postfix;
-	exp = sexp;
-
-	return true;
-}
-
 private void resolvePostfixOverload(Context ctx, ir.Postfix postfix,
                                     ir.ExpReference eref, ref ir.Function func,
                                     ref ir.CallableType asFunctionType,
@@ -1025,7 +966,7 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	}
 
 	rewriteVaStartAndEnd(ctx, func, postfix, exp);
-	if (rewriteVarargs(ctx, asFunctionType, postfix, exp)) {
+	if (asFunctionType.hasVarArgs && asFunctionType.linkage == ir.Linkage.Volt) {
 		return;
 	}
 
