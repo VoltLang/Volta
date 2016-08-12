@@ -3535,7 +3535,7 @@ void processForeach(Context ctx, ir.ForeachStatement fes)
 		size_t charIndex = fes.itervars.length == 2 ? 1 : 0;
 		foreach (i, ivar; fes.itervars) {// isString(aggType)
 			if (i == charIndex && !isChar(fes.itervars[i].type)) {
-				throw makeExpected(fes.itervars[i].location, "'char', 'wchar', or 'dchar'");
+				throw makeExpected(fes.itervars[i].location, "index variable of type 'char', 'wchar', or 'dchar' for string foreach");
 			} else if (i != charIndex && !isBlankVariable(i)) {
 				throw makeDoNotSpecifyForeachType(fes.itervars[i].location, fes.itervars[i].name);
 			}
