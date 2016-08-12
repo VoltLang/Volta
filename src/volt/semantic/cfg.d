@@ -514,12 +514,13 @@ public:
 private:
 
 	/// Returns true if the given expression evaluates as a constant true.
-	bool constantTrue(ir.Exp e)
+	bool constantTrue(ref ir.Exp e)
 	{
 		auto constant = evaluateOrNull(lp, current, e);
 		if (constant is null) {
 			return false;
 		}
+		e = constant;
 		return constant.u._pointer !is null;
 	}
 
