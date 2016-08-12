@@ -647,33 +647,6 @@ ir.AccessExp getSizeOf(Location loc, LanguagePass lp, ir.Type type)
 	return buildAccessExp(loc, unary, var);
 }
 
-ir.StatementExp getVaArgCast(Location loc, LanguagePass lp, ir.VaArgExp vaexp)
-{
-	auto sexp = new ir.StatementExp();
-	sexp.location = loc;
-
-	auto ptrToPtr = buildVariableSmart(loc, buildPtrSmart(loc, buildVoidPtr(loc)), ir.Variable.Storage.Function, "ptrToPtr");
-	ptrToPtr.assign = buildAddrOf(loc, vaexp.arg);
-	sexp.statements ~= ptrToPtr;
-
-	auto cpy = buildVariableSmart(loc, buildVoidPtr(loc), ir.Variable.Storage.Function, "cpy");
-	cpy.assign = buildDeref(loc, buildExpReference(loc, ptrToPtr));
-	sexp.statements ~= cpy;
-
-	auto vlderef = buildDeref(loc, buildExpReference(loc, ptrToPtr));
-	auto tid = buildTypeidSmart(loc, vaexp.type);
-	auto sz = getSizeOf(loc, lp, vaexp.type);
-	auto assign = buildAddAssign(loc, vlderef, sz);
-	buildExpStat(loc, sexp, assign);
-
-	auto ptr = buildPtrSmart(loc, vaexp.type);
-	auto _cast = buildCastSmart(loc, ptr, buildExpReference(loc, cpy));
-	auto deref = buildDeref(loc, _cast);
-	sexp.exp = deref;
-
-	return sexp;
-}
-
 ir.Type getCommonSubtype(Location l, ir.Type[] types)
 {
 	bool arrayElementSubtype(ir.Type element, ir.Type proposed)

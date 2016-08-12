@@ -1356,6 +1356,7 @@ void handleBuiltinExp(State state, ir.BuiltinExp inbuilt, Value result)
 	case UFCS:
 	case Classinfo:
 	case PODCtor:
+	case VaStart, VaEnd, VaArg:
 		throw panic(inbuilt, "unhandled");
 	}
 }

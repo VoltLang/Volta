@@ -47,7 +47,7 @@ void appendDefaultArguments(Context ctx, ir.Location loc,
 	// Nothing to do.
 	// Variadic functions may have more arguments then parameters.
 	if (func is null || arguments.length >= func.params.length ||
-		func.type.hasVarArgs) {
+		func.type.hasVarArgs || func is ctx.lp.vaStartFunc) {
 		return;
 	}
 
@@ -717,7 +717,7 @@ private void dereferenceInitialClass(ir.Postfix postfix, ir.Type type)
 	postfix.child = buildDeref(postfix.child.location, postfix.child);
 }
 
-// Hand check va_start(vl) and va_end(vl), then modify their calls.
+// Verify va_start and va_end, then emit BuiltinExps for them.
 private void rewriteVaStartAndEnd(Context ctx, ir.Function func,
                                   ir.Postfix postfix, ref ir.Exp exp)
 {
@@ -736,15 +736,10 @@ private void rewriteVaStartAndEnd(Context ctx, ir.Function func,
 		if (!isLValue(postfix.arguments[0])) {
 			throw makeVaFooMustBeLValue(postfix.arguments[0].location, (func is ctx.lp.vaStartFunc || func is ctx.lp.vaCStartFunc) ? "va_start" : "va_end");
 		}
-		postfix.arguments[0] = buildAddrOf(postfix.arguments[0]);
-		if (func is ctx.lp.vaStartFunc) {
-			assert(ctx.currentFunction.params[$-1].name == "_args");
-			auto eref = buildExpReference(postfix.location, ctx.currentFunction.params[$-1], "_args");
-			postfix.arguments ~= buildArrayPtr(postfix.location, buildVoid(postfix.location), eref);
-		}
 		if (ctx.currentFunction.type.linkage == ir.Linkage.Volt) {
 			if (func is ctx.lp.vaStartFunc) {
-				exp = buildVaArgStart(postfix.location, postfix.arguments[0], postfix.arguments[1]);
+				auto eref = buildExpReference(postfix.location, ctx.currentFunction.params[$-1], "_args");
+				exp = buildVaArgStart(postfix.location, postfix.arguments[0], eref);
 				return;
 			} else if (func is ctx.lp.vaEndFunc) {
 				exp = buildVaArgEnd(postfix.location, postfix.arguments[0]);
@@ -966,7 +961,8 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	}
 
 	rewriteVaStartAndEnd(ctx, func, postfix, exp);
-	if (asFunctionType.hasVarArgs && asFunctionType.linkage == ir.Linkage.Volt) {
+	if ((asFunctionType.hasVarArgs && asFunctionType.linkage == ir.Linkage.Volt) ||
+		func is ctx.lp.vaStartFunc || func is ctx.lp.vaEndFunc) {
 		return;
 	}
 
@@ -2478,6 +2474,7 @@ ir.Type extypeAssocArray(Context ctx, ref ir.Exp exp, Parent parent)
 	return aaType;
 }
 
+// Verify va_arg expressions and emit a BuiltinExp for them.
 ir.Type extypeVaArgExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	auto vaexp = cast(ir.VaArgExp) exp;
@@ -2489,6 +2486,7 @@ ir.Type extypeVaArgExp(Context ctx, ref ir.Exp exp, Parent parent)
 	if (!isLValue(vaexp.arg)) {
 		throw makeVaFooMustBeLValue(vaexp.arg.location, "va_exp");
 	}
+	exp = buildVaArg(vaexp.location, vaexp);
 	if (ctx.currentFunction.type.linkage == ir.Linkage.C) {
 		if (vaexp.type.nodeType != ir.NodeType.PrimitiveType &&
 				vaexp.type.nodeType != ir.NodeType.PointerType) {
@@ -2496,7 +2494,7 @@ ir.Type extypeVaArgExp(Context ctx, ref ir.Exp exp, Parent parent)
 		}
 		vaexp.arg = buildAddrOf(vaexp.location, copyExp(vaexp.arg));
 	} else {
-		exp = getVaArgCast(vaexp.location, ctx.lp, vaexp);
+		exp = buildVaArg(vaexp.location, vaexp);
 	}
 
 	return vaexp.type;

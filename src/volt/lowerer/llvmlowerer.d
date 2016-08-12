@@ -1481,12 +1481,53 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 		panicAssert(exp, builtin.functions.length == 1);
 		lowerStructUnionConstructor(lp, current, exp, builtin);
 		break;
+	case VaStart:
+		panicAssert(exp, builtin.children.length == 2);
+		builtin.children[1] = buildArrayPtr(l, buildVoid(l), builtin.children[1]);
+		exp = buildAssign(l, buildDeref(l, buildAddrOf(builtin.children[0])), builtin.children[1]);
+		break;
+	case VaEnd:
+		panicAssert(exp, builtin.children.length == 1);
+		exp = buildAssign(l, buildDeref(l, buildAddrOf(builtin.children[0])), buildConstantNull(l, buildVoidPtr(l)));
+		break;
+	case VaArg:
+		panicAssert(exp, builtin.children.length == 1);
+		auto vaexp = cast(ir.VaArgExp)builtin.children[0];
+		panicAssert(exp, vaexp !is null);
+		exp = lowerVaArg(vaexp.location, lp, vaexp);
+		break;
 	case UFCS:
 	case Invalid:
 		panicAssert(exp, false);
 	}
 }
 
+ir.StatementExp lowerVaArg(Location loc, LanguagePass lp, ir.VaArgExp vaexp)
+{
+	auto sexp = new ir.StatementExp();
+	sexp.location = loc;
+
+	auto ptrToPtr = buildVariableSmart(loc, buildPtrSmart(loc, buildVoidPtr(loc)), ir.Variable.Storage.Function, "ptrToPtr");
+	ptrToPtr.assign = buildAddrOf(loc, vaexp.arg);
+	sexp.statements ~= ptrToPtr;
+
+	auto cpy = buildVariableSmart(loc, buildVoidPtr(loc), ir.Variable.Storage.Function, "cpy");
+	cpy.assign = buildDeref(loc, buildExpReference(loc, ptrToPtr));
+	sexp.statements ~= cpy;
+
+	auto vlderef = buildDeref(loc, buildExpReference(loc, ptrToPtr));
+	auto tid = buildTypeidSmart(loc, vaexp.type);
+	auto sz = getSizeOf(loc, lp, vaexp.type);
+	auto assign = buildAddAssign(loc, vlderef, sz);
+	buildExpStat(loc, sexp, assign);
+
+	auto ptr = buildPtrSmart(loc, vaexp.type);
+	auto _cast = buildCastSmart(loc, ptr, buildExpReference(loc, cpy));
+	auto deref = buildDeref(loc, _cast);
+	sexp.exp = deref;
+
+	return sexp;
+}
 /**
  * Lower a BinOp.
  *

@@ -1338,14 +1338,25 @@ ir.ThrowStatement buildThrowStatement(Location loc, ir.Exp exp)
 	return ts;
 }
 
-ir.Exp buildVaArgStart(Location loc, ir.Exp vlexp, ir.Exp argexp)
+ir.BuiltinExp buildVaArgStart(Location loc, ir.Exp vlexp, ir.Exp argexp)
 {
-	return buildAssign(loc, buildDeref(loc, vlexp), argexp);
+	auto bi = new ir.BuiltinExp(ir.BuiltinExp.Kind.VaStart, buildVoid(loc), [vlexp, argexp]);
+	bi.location = loc;
+	return bi;
 }
 
-ir.Exp buildVaArgEnd(Location loc, ir.Exp vlexp)
+ir.BuiltinExp buildVaArgEnd(Location loc, ir.Exp vlexp)
 {
-	return buildAssign(loc, buildDeref(loc, vlexp), buildConstantNull(loc, buildVoidPtr(loc)));
+	auto bi = new ir.BuiltinExp(ir.BuiltinExp.Kind.VaEnd, buildVoid(loc), [vlexp]);
+	bi.location = loc;
+	return bi;
+}
+
+ir.BuiltinExp buildVaArg(Location loc, ir.VaArgExp vaexp)
+{
+	auto bi = new ir.BuiltinExp(ir.BuiltinExp.Kind.VaArg, copyType(vaexp.type), [cast(ir.Exp)vaexp]);
+	bi.location = loc;
+	return bi;
 }
 
 ir.StatementExp buildInternalArrayLiteralSmart(Location loc, ir.Type atype, ir.Exp[] exps)

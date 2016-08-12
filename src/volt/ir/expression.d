@@ -997,13 +997,16 @@ public:
 		UFCS,        ///< '(exp).func'()
 		Classinfo,   ///< obj.classinfo
 		PODCtor,     ///< s := StructName(structArg)
+		VaStart,     ///< va_start(vl)
+		VaArg,       ///< va_arg!i32(vl)
+		VaEnd,       ///< va_end(vl)
 	}
 
 	Kind kind; ///< What kind of inbluilt is this.
 	Type type; ///< The type of this exp, helps keeping the typer simple.
 
 	Exp[] children; ///< Common child exp.
-	Function[] functions; ///< For UFCS and PODCtor.
+	Function[] functions; ///< For UFCS, PODCtor, and VaArg.
 
 public:
 	this(Kind kind, Type type, Exp[] children)
