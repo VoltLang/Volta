@@ -7,9 +7,8 @@ class Throwable
 {
 	msg: string;
 
-	// These two are updated each time the exception is thrown.
-	throwFile: string;
-	throwLine: size_t;
+	// This is updated each time the exception is thrown.
+	throwLocation: string;
 
 	// These are manually supplied
 	file: string;

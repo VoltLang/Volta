@@ -5,11 +5,10 @@ module vrt.os.panic;
 import vrt.ext.stdc: exit, printf;
 
 
-extern(C) fn vrt_panic(msgs: const(char)[][], file: const(char)[], line: i32)
+extern(C) fn vrt_panic(msgs: const(char)[][], location: const(char)[])
 {
-	printf("%.*s:%i: ###PANIC###\n",
-		cast(int)file.length, file.ptr,
-		cast(int)line);
+	printf("%.*s: ###PANIC###\n",
+		cast(int)location.length, location.ptr);
 
 	foreach (msg; msgs) {
 		printf("%.*s\n", cast(int)msg.length, msg.ptr);

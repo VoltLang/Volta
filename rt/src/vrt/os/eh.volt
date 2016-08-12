@@ -54,12 +54,11 @@ extern(C) fn vrt_eh_delete(
 /**
  * Throws a exception.
  */
-extern(C) fn vrt_eh_throw(t: Throwable, file: string, line: size_t)
+extern(C) fn vrt_eh_throw(t: Throwable, location: string)
 {
 	e := new vrt_eh_exception;
 
-	t.throwFile = file;
-	t.throwLine = line;
+	t.throwLocation = location;
 
 	e.e.exception_class = *cast(u64*)VRT_EH_NAME.ptr;
 	e.e.exception_cleanup = vrt_eh_delete;
@@ -71,9 +70,9 @@ extern(C) fn vrt_eh_throw(t: Throwable, file: string, line: size_t)
 	vrt_panic(cast(char[][])msgs);
 }
 
-extern(C) fn vrt_eh_throw_slice_error(file: string, line: size_t)
+extern(C) fn vrt_eh_throw_slice_error(location: string)
 {
-	vrt_eh_throw(new Error("invalid array cast"), file, line);
+	vrt_eh_throw(new Error("invalid array cast"), location);
 }
 
 /**

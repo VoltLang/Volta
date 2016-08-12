@@ -34,7 +34,7 @@ extern(C) fn vrt_run_main(argc: i32, argv: char**, vmain: int function(string[])
 		msgs[1] = cast(char[])ti[ti.length - 1].mangledName;
 		msgs[2] = cast(char[])t.msg;
 
-		vrt_panic(cast(char[][])msgs, t.throwFile, t.throwLine);
+		vrt_panic(cast(char[][])msgs, t.throwLocation);
 	}
 
 	vrt_gc_shutdown();

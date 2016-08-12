@@ -8,18 +8,18 @@ import core.rt.misc: vrt_panic;
 
 version (Emscripten || MSVC || Metal):
 
-extern(C) fn vrt_eh_throw(t: Throwable, file: string, line: size_t)
+extern(C) fn vrt_eh_throw(t: Throwable, location: string)
 {
 	msgs: const(char)[][2];
 	msgs[0] = "###EXCEPTION###\n";
 	msgs[1] = cast(char[])t.msg;
-	vrt_panic(cast(char[][])msgs, file, line);
+	vrt_panic(cast(char[][])msgs, location);
 }
 
-extern(C) fn vrt_eh_throw_slice_error(length: size_t, targetSize: size_t, file: string, line: size_t)
+extern(C) fn vrt_eh_throw_slice_error(length: size_t, targetSize: size_t, location: string)
 {
 	if ((length % targetSize) != 0) {
-		vrt_eh_throw(new Error("invalid array cast"), file, line);
+		vrt_eh_throw(new Error("invalid array cast"), location);
 	}
 }
 

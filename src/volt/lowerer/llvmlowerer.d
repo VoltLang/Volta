@@ -139,8 +139,7 @@ void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 	buildExpStat(loc, thenState,
 		buildCall(loc, throwFn, [
 			buildCastSmart(throwableClass, _new),
-			buildConstantString(loc, loc.filename, false),
-			buildConstantSizeT(loc, lp, loc.line)],
+			buildConstantString(loc, format("%s:%s", loc.filename, loc.line), false)],
 		throwFn.name));
 
 	buildIfStat(loc, statExp,
@@ -417,8 +416,7 @@ void lowerThrow(LanguagePass lp, ir.ThrowStatement t)
 	auto func = lp.ehThrowFunc;
 	auto eRef = buildExpReference(t.location, func, "vrt_eh_throw");
 	t.exp = buildCall(t.location, eRef, [t.exp,
-	                  buildConstantString(t.location, t.location.filename, false),
-	                  buildConstantSizeT(t.location, lp, t.location.line)]);
+	                  buildConstantString(t.location, format("%s:%s", t.location.filename, t.location.line), false)]);
 }
 
 /**
@@ -890,9 +888,8 @@ void lowerArrayCast(Location loc, LanguagePass lp, ir.Scope current,
 		//     vrt_throw_slice_error(arr.length, typeid(T).size);
 		auto ln = buildArrayLength(loc, lp, buildExpReference(loc, var, varName));
 		auto sz = getSizeOf(loc, lp, toArray.base);
-		ir.Exp fname = buildConstantString(loc, exp.location.filename, false);
-		ir.Exp lineNum = buildConstantSizeT(loc, lp, exp.location.line);
-		auto rtCall = buildCall(loc, buildExpReference(loc, lp.ehThrowSliceErrorFunc, lp.ehThrowSliceErrorFunc.name), [fname, lineNum]);
+		ir.Exp locstr = buildConstantString(loc, format("%s:%s", exp.location.filename, exp.location.line), false);
+		auto rtCall = buildCall(loc, buildExpReference(loc, lp.ehThrowSliceErrorFunc, lp.ehThrowSliceErrorFunc.name), [locstr]);
 		auto bs = buildBlockStat(loc, rtCall, current, buildExpStat(loc, rtCall));
 		auto check = buildBinOp(loc, ir.BinOp.Op.NotEqual,
 		                        buildBinOp(loc, ir.BinOp.Op.Mod, ln, sz),
