@@ -28,14 +28,14 @@ enum immutable(string)[] _tokenToString = [
 "foreach", "foreach_reverse", "fn", "function", "global", "goto",
 "i8", "i16", "i32", "i64", "idouble",
 "if", "ifloat", "immutable", "import", "in", "inout", "int", "interface",
-"invariant", "ireal", "is", "lazy", "local", "long", "macro", "mixin",
+"invariant", "ireal", "is", "isize", "lazy", "local", "long", "macro", "mixin",
 "module", "new", "nothrow", "null", "out", "override", "package", "pragma",
 "private", "protected", "public", "pure", "real", "ref", "return",
 "scope", "shared", "short", "static", "struct", "super",
 "switch", "synchronized", "template", "this", "throw", "true",
 "try", "typedef", "typeid", "typeof",
 "u8", "u16", "u32", "u64", "ubyte", "ucent", "uint",
-"ulong", "union", "unittest", "ushort", "va_arg", "version", "void",
+"ulong", "union", "unittest", "ushort", "usize", "va_arg", "version", "void",
 "volatile", "wchar", "while", "with", "__FILE__", "__FUNCTION__", "__LINE__",
 "__LOCATION__", "__PRETTY_FUNCTION__", "__thread", "__traits", "#run",
 "/", "/=", ".", "..", "...", "&", "&=", "&&", "|", "|=", "||",
@@ -88,7 +88,7 @@ enum TokenType
 	Global, Goto,
 	I8, I16, I32, I64,
 	Idouble, If, Ifloat, Immutable, Import, In,
-	Inout, Int, Interface, Invariant, Ireal, Is,
+	Inout, Int, Interface, Invariant, Ireal, Is, Isize,
 	Lazy, Local, Long,
 	Macro, Mixin, Module,
 	New, Nothrow, Null,
@@ -100,7 +100,7 @@ enum TokenType
 	Template, This, Throw, True, Try, Typedef,
 	Typeid, Typeof,
 	U8, U16, U32, U64,
-	Ubyte, Ucent, Uint, Ulong, Union, Unittest, Ushort,
+	Ubyte, Ucent, Uint, Ulong, Union, Unittest, Ushort, Usize,
 	VaArg, Version, Void, Volatile,
 	Wchar, While, With,
 	__File__, __Function__, __Line__, __Location__,
@@ -262,6 +262,7 @@ TokenType identifierType(string ident)
 	case "invariant":           return Invariant;
 	case "ireal":               return Ireal;
 	case "is":                  return Is;
+	case "isize":               return Isize;
 	case "lazy":                return Lazy;
 	case "local":               return Local;
 	case "long":                return Long;
@@ -309,6 +310,7 @@ TokenType identifierType(string ident)
 	case "union":               return Union;
 	case "unittest":            return Unittest;
 	case "ushort":              return Ushort;
+	case "usize":               return Usize;
 	case "va_arg":              return VaArg;
 	case "version":             return Version;
 	case "void":                return Void;
@@ -323,8 +325,6 @@ TokenType identifierType(string ident)
 	case "__PRETTY_FUNCTION__": return __Pretty_Function__;
 	case "__thread":            return __Thread;
 	case "__traits":            return __Traits;
-	case "isize":               assert(false, "reserved");
-	case "usize":               assert(false, "reserved");
 	default:                    return Identifier;
 	}
 }
