@@ -348,8 +348,6 @@ public:
 
 	ir.Function vaStartFunc;
 	ir.Function vaEndFunc;
-	ir.Function vaCStartFunc;
-	ir.Function vaCEndFunc;
 
 	ir.Function hashFunc;
 	ir.Function castFunc;

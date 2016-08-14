@@ -722,9 +722,7 @@ private void rewriteVaStartAndEnd(Context ctx, ir.Function func,
                                   ir.Postfix postfix, ref ir.Exp exp)
 {
 	if (func is ctx.lp.vaStartFunc ||
-	    func is ctx.lp.vaEndFunc ||
-	    func is ctx.lp.vaCStartFunc ||
-	    func is ctx.lp.vaCEndFunc) {
+	    func is ctx.lp.vaEndFunc) {
 		if (postfix.arguments.length != 1) {
 			throw makeWrongNumberOfArguments(postfix, postfix.arguments.length, 1);
 		}
@@ -734,7 +732,7 @@ private void rewriteVaStartAndEnd(Context ctx, ir.Function func,
 			throw makeExpected(postfix, "va_list argument");
 		}
 		if (!isLValue(postfix.arguments[0])) {
-			throw makeVaFooMustBeLValue(postfix.arguments[0].location, (func is ctx.lp.vaStartFunc || func is ctx.lp.vaCStartFunc) ? "va_start" : "va_end");
+			throw makeVaFooMustBeLValue(postfix.arguments[0].location, func.name);
 		}
 		if (ctx.currentFunction.type.linkage == ir.Linkage.Volt) {
 			if (func is ctx.lp.vaStartFunc) {

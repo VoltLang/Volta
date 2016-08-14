@@ -219,6 +219,10 @@ public:
 		moduleInfoRoot = getVarFrom(objectModule, "moduleInfoRoot");
 		arrayStruct = getStructFrom(objectModule, "ArrayStruct");
 
+		// core.varargs
+		vaStartFunc = getFunctionFrom(varargsModule, "va_start");
+		vaEndFunc = getFunctionFrom(varargsModule, "va_end");
+
 		// core.typeinfo
 		typeInfoClass = getClassFrom(typeInfoModule, "TypeInfo");
 		classInfoClass = getClassFrom(typeInfoModule, "ClassInfo");
@@ -290,12 +294,6 @@ public:
 		hashFunc = getFunctionFrom(rtMiscModule, "vrt_hash");
 		castFunc = getFunctionFrom(rtMiscModule, "vrt_handle_cast");
 		memcmpFunc = getFunctionFrom(rtMiscModule, "vrt_memcmp");
-
-		// core.compiler.varargs
-		vaStartFunc = getFunctionFrom(varargsModule, "__volt_va_start");
-		vaEndFunc = getFunctionFrom(varargsModule, "__volt_va_end");
-		vaCStartFunc = getFunctionFrom(varargsModule, "__llvm_volt_va_start");
-		vaCEndFunc = getFunctionFrom(varargsModule, "__llvm_volt_va_end");
 
 		// core.compiler.llvm
 		llvmTypeidFor = getFunctionFrom(llvmModule, "__llvm_typeid_for");
