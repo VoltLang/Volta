@@ -45,8 +45,6 @@ ir.Function createArrayAllocFunction(Location location, LanguagePass lp,
 
 	auto countVar = addParam(location, func, buildSizeT(location, lp), "count");
 
-	auto arrayStruct = lp.arrayStruct;
-
 	auto allocCall = buildAllocTypePtr(
 		location, lp, atype.base,
 		buildExpReference(location, countVar, "count"));

@@ -44,16 +44,3 @@ struct ModuleInfo
 }
 
 @mangledName("_V__ModuleInfo_root") global moduleInfoRoot: ModuleInfo*;
-
-
-/*
- *
- * ABI
- *
- */
-
-struct ArrayStruct
-{
-	length: size_t;
-	ptr: void*;
-}

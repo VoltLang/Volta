@@ -339,7 +339,6 @@ public:
 	ir.Class classInfoClass;
 	ir.Class interfaceInfoClass;
 	ir.Class throwableClass;
-	ir.Struct arrayStruct;
 	ir.Struct moduleInfoStruct;
 	ir.Variable allocDgVariable;
 	ir.Variable moduleInfoRoot;

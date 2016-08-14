@@ -217,7 +217,6 @@ public:
 		attributeClass = getClassFrom(objectModule, "Attribute");
 		moduleInfoStruct = getStructFrom(objectModule, "ModuleInfo");
 		moduleInfoRoot = getVarFrom(objectModule, "moduleInfoRoot");
-		arrayStruct = getStructFrom(objectModule, "ArrayStruct");
 
 		// core.varargs
 		vaStartFunc = getFunctionFrom(varargsModule, "va_start");
