@@ -332,30 +332,28 @@ public:
 	 * Cached lookup items.
 	 * @{
 	 */
-	ir.Class objectClass;
-	ir.Class typeInfoClass;
-	ir.Class attributeClass;
-	ir.Class assertErrorClass;
-	ir.Class classInfoClass;
-	ir.Class interfaceInfoClass;
-	ir.Class throwableClass;
-	ir.Struct moduleInfoStruct;
-	ir.Variable allocDgVariable;
-	ir.Variable moduleInfoRoot;
+	// core.object
+	ir.Class objObject;
+	ir.Class objAttribute;
 
-	ir.Class keyNotFoundException;
-
+	// core.varargs
 	ir.Function vaStartFunc;
 	ir.Function vaEndFunc;
 
-	ir.Function hashFunc;
-	ir.Function castFunc;
-	ir.Function memcmpFunc;
+	// core.typeinfo
+	ir.Class tiTypeInfo;
+	ir.Class tiClassInfo;
+	ir.Class tiInterfaceInfo;
 
-	ir.Function ehThrowFunc;
-	ir.Function ehThrowSliceErrorFunc;
-	ir.Function ehPersonalityFunc;
+	// core.exception
+	ir.Class exceptThrowable;
+	ir.Class exceptAssertError;
+	ir.Class exceptKeyNotFoundException;
 
+	// core.rt.gc
+	ir.Variable gcAllocDgVariable;
+
+	// core.rt.aa
 	ir.Function aaNew;               // vrt_aa_new
 	ir.Function aaDup;               // vrt_aa_dup
 	ir.Function aaRehash;            // vrt_aa_rehash
@@ -375,9 +373,19 @@ public:
 	ir.Function aaGetPA;             // vrt_aa_get_pa
 	ir.Function aaGetAP;             // vrt_aa_get_ap
 
+	// core.rt.misc
+	ir.Struct moduleInfo;
+	ir.Variable moduleInfoRoot;
+	ir.Function hashFunc;
+	ir.Function castFunc;
+	ir.Function memcmpFunc;
 	ir.Function utfDecode_u8_d;
 	ir.Function utfReverseDecode_u8_d;
+	ir.Function ehThrowFunc;
+	ir.Function ehThrowSliceErrorFunc;
+	ir.Function ehPersonalityFunc;
 
+	// core.compiler.llvm
 	ir.Function llvmTypeidFor;
 	ir.Function llvmMemmove32;
 	ir.Function llvmMemmove64;

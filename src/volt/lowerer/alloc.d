@@ -35,12 +35,12 @@ ir.Exp buildAllocVoidPtr(in Location loc, LanguagePass lp, ir.Type type,
 	auto adRef = new ir.ExpReference();
 	adRef.location = loc;
 	adRef.idents ~= "allocDg";
-	adRef.decl = lp.allocDgVariable;
+	adRef.decl = lp.gcAllocDgVariable;
 
 	auto _tidExp = new ir.Typeid();
 	_tidExp.location = loc;
 	_tidExp.type = copyTypeSmart(loc, type);
-	auto tidExp = buildCastSmart(loc, lp.typeInfoClass, _tidExp);
+	auto tidExp = buildCastSmart(loc, lp.tiTypeInfo, _tidExp);
 
 	auto pfixCall = new ir.Postfix();
 	pfixCall.location = loc;

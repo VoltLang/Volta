@@ -212,10 +212,10 @@ public:
 		}
 
 		// core.object
-		objectClass = getClassFrom(objectModule, "Object");
-		objectClass.isObject = true;
-		attributeClass = getClassFrom(objectModule, "Attribute");
-		moduleInfoStruct = getStructFrom(objectModule, "ModuleInfo");
+		objObject = getClassFrom(objectModule, "Object");
+		objObject.isObject = true;
+		objAttribute = getClassFrom(objectModule, "Attribute");
+		moduleInfo = getStructFrom(objectModule, "ModuleInfo");
 		moduleInfoRoot = getVarFrom(objectModule, "moduleInfoRoot");
 
 		// core.varargs
@@ -223,9 +223,9 @@ public:
 		vaEndFunc = getFunctionFrom(varargsModule, "va_end");
 
 		// core.typeinfo
-		typeInfoClass = getClassFrom(typeInfoModule, "TypeInfo");
-		classInfoClass = getClassFrom(typeInfoModule, "ClassInfo");
-		interfaceInfoClass = getClassFrom(typeInfoModule, "InterfaceInfo");
+		tiTypeInfo = getClassFrom(typeInfoModule, "TypeInfo");
+		tiClassInfo = getClassFrom(typeInfoModule, "ClassInfo");
+		tiInterfaceInfo = getClassFrom(typeInfoModule, "InterfaceInfo");
 		TYPE_STRUCT = getTypeEnum("Struct");
 		TYPE_CLASS = getTypeEnum("Class");
 		TYPE_INTERFACE = getTypeEnum("Interface");
@@ -257,12 +257,12 @@ public:
 		TYPE_DELEGATE = getTypeEnum("Delegate");
 
 		// core.exception
-		assertErrorClass = getClassFrom(exceptionModule, "AssertError");
-		throwableClass = getClassFrom(exceptionModule, "Throwable");
-		keyNotFoundException = getClassFrom(exceptionModule, "KeyNotFoundException");
+		exceptAssertError = getClassFrom(exceptionModule, "AssertError");
+		exceptThrowable = getClassFrom(exceptionModule, "Throwable");
+		exceptKeyNotFoundException = getClassFrom(exceptionModule, "KeyNotFoundException");
 
 		// core.rt.gc
-		allocDgVariable = getVarFrom(rtGCModule, "allocDg");
+		gcAllocDgVariable = getVarFrom(rtGCModule, "allocDg");
 
 		// core.rt.aa
 		aaNew = getFunctionFrom(rtAAModule, "vrt_aa_new");

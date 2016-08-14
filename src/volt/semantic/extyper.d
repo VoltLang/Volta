@@ -1264,7 +1264,7 @@ ir.Type builtInField(Context ctx, ref ir.Exp exp, ir.Exp child, ir.Type type, st
 	auto iface = cast(ir._Interface)type;
 	if (clazz !is null || iface !is null) switch (field) {
 	case "classinfo":
-		auto t = copyTypeSmart(exp.location, ctx.lp.classInfoClass);
+		auto t = copyTypeSmart(exp.location, ctx.lp.tiClassInfo);
 		ir.BuiltinExp b;
 		exp = b = buildClassinfo(exp.location, t, child);
 		return b.type;
@@ -2627,9 +2627,9 @@ ir.Type extypeTypeid(Context ctx, ref ir.Exp exp, Parent parent)
 
 	auto clazz = cast(ir.Class) realType(_typeid.type);
 	if (clazz is null) {
-		_typeid.tinfoType = ctx.lp.typeInfoClass;
+		_typeid.tinfoType = ctx.lp.tiTypeInfo;
 	} else {
-		_typeid.tinfoType = ctx.lp.classInfoClass;
+		_typeid.tinfoType = ctx.lp.tiClassInfo;
 	}
 
 	return _typeid.tinfoType;
@@ -3018,7 +3018,7 @@ void extypeBlockStatement(Context ctx, ir.BlockStatement bs)
 void extypeThrowStatement(Context ctx, ref ir.Node n)
 {
 	auto t = cast(ir.ThrowStatement) n;
-	auto throwable = ctx.lp.throwableClass;
+	auto throwable = ctx.lp.exceptThrowable;
 	assert(throwable !is null);
 
 	auto rawType = extype(ctx, t.exp, Parent.NA);
@@ -4389,7 +4389,7 @@ ir.IfStatement transformRuntimeAssert(Context ctx, ir.AssertStatement as)
 		message = buildConstantString(l, "assertion failure");
 	}
 	assert(message !is null);
-	auto exception = buildNew(l, ctx.lp.assertErrorClass, "AssertError", message);
+	auto exception = buildNew(l, ctx.lp.exceptAssertError, "AssertError", message);
 	auto theThrow  = buildThrowStatement(l, exception);
 	auto thenBlock = buildBlockStat(l, null, ctx.current, theThrow);
 	auto ifS = buildIfStat(l, buildNot(l, as.condition), thenBlock);

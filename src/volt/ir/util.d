@@ -848,7 +848,7 @@ ir.Typeid buildTypeidSmart(Location loc, ir.Type type)
  */
 ir.Exp buildTypeidSmart(Location loc, LanguagePass lp, ir.Type type)
 {
-	return buildCastSmart(loc, lp.typeInfoClass, buildTypeidSmart(loc, type));
+	return buildCastSmart(loc, lp.tiTypeInfo, buildTypeidSmart(loc, type));
 }
 
 /**
@@ -1911,7 +1911,7 @@ ir.NoType buildNoType(Location loc)
 /// Build a cast to a TypeInfo.
 ir.Exp buildTypeInfoCast(LanguagePass lp, ir.Exp e)
 {
-	return buildCastSmart(e.location, lp.typeInfoClass, e);
+	return buildCastSmart(e.location, lp.tiTypeInfo, e);
 }
 
 ir.GotoStatement buildGotoDefault(Location loc)

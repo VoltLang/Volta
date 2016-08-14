@@ -128,8 +128,8 @@ void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 
 	auto thenState = buildBlockStat(loc, statExp, current);
 
-	auto knfClass = lp.keyNotFoundException;
-	auto throwableClass = lp.throwableClass;
+	auto knfClass = lp.exceptKeyNotFoundException;
+	auto throwableClass = lp.exceptThrowable;
 
 	auto _new = buildNew(loc, knfClass, "KeyNotFoundException", [
 			cast(ir.Exp)buildConstantString(loc, `Key does not exist`)
@@ -1451,7 +1451,7 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 	case Classinfo:
 		panicAssert(exp, builtin.children.length == 1);
 		auto iface = cast(ir._Interface)realType(getExpType(builtin.children[0]));
-		auto ti = buildPtrSmart(l, buildPtrSmart(l, buildArrayType(l, copyTypeSmart(l, lp.classInfoClass))));
+		auto ti = buildPtrSmart(l, buildPtrSmart(l, buildArrayType(l, copyTypeSmart(l, lp.tiClassInfo))));
 		auto sexp = buildStatementExp(l);
 		ir.Exp ptr = buildCastToVoidPtr(l, builtin.children[0]);
 		if (iface !is null) {
@@ -1467,11 +1467,11 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 		auto tinfos = buildDeref(l, buildDeref(l, buildCastSmart(l, ti, ptr)));
 		auto tvar = buildVariableAnonSmart(l, current, sexp,
 		                                   buildArrayType(l,
-		                                   copyTypeSmart(l, lp.classInfoClass)), tinfos);
+		                                   copyTypeSmart(l, lp.tiClassInfo)), tinfos);
 		ir.Exp tlen = buildArrayLength(l, lp, buildExpReference(l, tvar, tvar.name));
 		tlen = buildSub(l, tlen, buildConstantSizeT(l, lp, 1));
 		sexp.exp = buildIndex(l, buildExpReference(l, tvar, tvar.name), tlen);
-		exp = buildCastSmart(l, lp.classInfoClass, sexp);
+		exp = buildCastSmart(l, lp.tiClassInfo, sexp);
 		break;
 	case PODCtor:
 		panicAssert(exp, builtin.children.length == 1);
@@ -1672,7 +1672,7 @@ void lowerVarargCall(LanguagePass lp, ir.Scope current, ir.Postfix postfix, ref 
 	auto argsSlice = postfix.arguments[0 .. funcNumArgs];
 	auto varArgsSlice = postfix.arguments[funcNumArgs .. $];
 
-	auto tinfoClass = lp.typeInfoClass;
+	auto tinfoClass = lp.tiTypeInfo;
 	auto tr = buildTypeReference(postfix.location, tinfoClass, tinfoClass.name);
 	tr.location = postfix.location;
 

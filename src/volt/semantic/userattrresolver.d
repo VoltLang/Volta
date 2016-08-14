@@ -59,7 +59,7 @@ void fillInUserAttributeLayoutClass(LanguagePass lp, ir.UserAttribute ua)
 	_class.members.location = ua.location;
 	ua.mangledName = mangle(ua);
 	_class.mangledName = ua.mangledName;
-	_class.parentClass = lp.attributeClass;
+	_class.parentClass = lp.objAttribute;
 	_class.parent = buildQualifiedName(ua.location, ["object", "Attribute"]);
 
 	foreach (field; ua.fields) {

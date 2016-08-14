@@ -347,7 +347,7 @@ void replaceVarArgsIfNeeded(LanguagePass lp, ir.Function func)
 	if (func.type.hasVarArgs &&
 	    !func.type.varArgsProcessed &&
 	    func.type.linkage == ir.Linkage.Volt) {
-		auto tinfoClass = lp.typeInfoClass;
+		auto tinfoClass = lp.tiTypeInfo;
 		auto tr = buildTypeReference(func.location, tinfoClass, tinfoClass.name);
 		auto array = buildArrayType(func.location, tr);
 		auto argArray = buildArrayType(func.location, buildVoid(func.location));
@@ -640,7 +640,7 @@ ir.AccessExp getSizeOf(Location loc, LanguagePass lp, ir.Type type)
 {
 	auto unary = cast(ir.Unary)buildTypeidSmart(loc, lp, type);
 	panicAssert(type, unary !is null);
-	auto store = lookupInGivenScopeOnly(lp, lp.typeInfoClass.myScope, loc, "size");
+	auto store = lookupInGivenScopeOnly(lp, lp.tiTypeInfo.myScope, loc, "size");
 	panicAssert(type, store !is null);
 	auto var = cast(ir.Variable)store.node;
 	panicAssert(type, var !is null);
