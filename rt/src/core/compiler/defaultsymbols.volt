@@ -1,5 +1,5 @@
 /**
- * This file is included all modules (except object and this module).
+ * This file is included all modules (this module).
  */
 module core.compiler.defaultsymbols;
 
