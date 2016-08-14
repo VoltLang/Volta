@@ -1,7 +1,7 @@
 /**
  * This file is included all modules (except object and this module).
  */
-module defaultsymbols;
+module core.compiler.defaultsymbols;
 
 
 /**

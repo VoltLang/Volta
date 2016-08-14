@@ -5,8 +5,7 @@ RT_SRC = \
 	rt/src/core/*.volt \
 	rt/src/vrt/vacuum/*.volt \
 	rt/src/vrt/ext/*.volt \
-	rt/src/vrt/os/*.volt \
-	rt/src/*.volt
+	rt/src/vrt/os/*.volt
 
 
 VIV_SRC= \

@@ -159,7 +159,6 @@ public:
 	 */
 	void setupOneTruePointers()
 	{
-		auto defModule = getAndCheck("defaultsymbols");
 		auto objectModule = getAndCheck("core", "object");
 		auto typeInfoModule = getAndCheck("core", "typeinfo");
 		auto exceptionModule = getAndCheck("core", "exception");
@@ -167,6 +166,7 @@ public:
 		auto rtAAModule = getAndCheck("core", "rt", "aa");
 		auto rtMiscModule = getAndCheck("core", "rt", "misc");
 		auto llvmModule = getAndCheck("core", "compiler", "llvm");
+		auto defModule = getAndCheck("core", "compiler", "defaultsymbols");
 		auto varargsModule = getAndCheck("core", "varargs");
 
 		ir.Module[] mods = [

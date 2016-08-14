@@ -66,28 +66,31 @@ ParseStatus parseModule(ParserStream ps, out ir.Module mod)
 
 	// Don't include the default modules in themselves.
 	// Maybe move to gather or import resolver?
-	if (mod.name.identifiers.length == 1 &&
+	if (mod.name.identifiers.length == 3 &&
+	    mod.name.identifiers[0].value == "core" &&
+	    mod.name.identifiers[0].value == "compiler" &&
 	    mod.name.identifiers[0].value == "defaultsymbols") {
 		return Succeeded;
 	}
 
 	mod.children.nodes = [
-			createImport(mod.location, "defaultsymbols", false)
+			createImport(mod.location, "core", "compiler", "defaultsymbols")
 		] ~ mod.children.nodes;
 
 	return Succeeded;
 }
 
-ir.Node createImport(Location location, string name, bool _static)
+ir.Node createImport(Location location, string[] names...)
 {
 	auto _import = new ir.Import();
 	_import.location = location;
 	_import.name = new ir.QualifiedName();
 	_import.name.location = location;
-	_import.name.identifiers ~= new ir.Identifier();
-	_import.name.identifiers[0].location = location;
-	_import.name.identifiers[0].value = name;
-	_import.isStatic = _static;
+	foreach (i, name; names) {
+		_import.name.identifiers ~= new ir.Identifier();
+		_import.name.identifiers[i].location = location;
+		_import.name.identifiers[i].value = name;
+	}
 	return _import;
 }
 
