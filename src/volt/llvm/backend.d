@@ -142,6 +142,11 @@ public:
 
 	override void saveToFile(string filename)
 	{
+		auto t = mState.lp.target;
+		auto triple = tripleList[t.platform][t.arch];
+		auto layout = layoutList[t.platform][t.arch];
+		LLVMSetTarget(mState.mod, triple);
+		LLVMSetDataLayout(mState.mod, layout);
 		LLVMWriteBitcodeToFile(mState.mod, filename);
 	}
 
