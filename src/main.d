@@ -246,6 +246,9 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 		case "-src-I", "--src-I":
 			makeArgNext(SrcPath);
 			continue;
+		case "--import-as-src":
+			makeArgNext(ImportAsSrc);
+			continue;
 		case "-L":
 			libraryPath(looper.next());
 			continue;

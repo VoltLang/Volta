@@ -13,7 +13,7 @@ import watt.io.streams : OutputFileStream;
 import watt.conv : toLower;
 import watt.text.diff : diff;
 import watt.text.format : format;
-import watt.text.string : endsWith, replace;
+import watt.text.string : split, endsWith, replace;
 
 import volt.util.path;
 import volt.util.perf : Accumulator, Perf, perf;
@@ -77,6 +77,7 @@ protected:
 	string[] mIncludes;
 	string[] mSrcIncludes;
 	string[] mSourceFiles;
+	string[] mImportAsSrc;
 	string[] mBitcodeFiles;
 	string[] mObjectFiles;
 	string[] mLibFiles;
@@ -174,6 +175,7 @@ public:
 
 		mIncludes = settings.includePaths;
 		mSrcIncludes = settings.srcIncludePaths;
+		mImportAsSrc = settings.importAsSrc;
 
 		mLibraryPaths = settings.libraryPaths;
 		mLibraryFiles = settings.libraryFiles;
@@ -507,6 +509,25 @@ protected:
 			auto m = loadAndParse(file);
 			languagePass.addModule(m);
 			mCommandLineModules ~= m;
+		}
+
+		foreach (imp; mImportAsSrc) {
+			auto q = new ir.QualifiedName();
+			foreach (id; split(imp, '.')) {
+				q.identifiers ~= new ir.Identifier(id);
+			}
+			auto m = loadModule(q);
+			bool hasAdded;
+			foreach_reverse (other; mCommandLineModules) {
+				if (other is m) {
+					hasAdded = true;
+					break;
+				}
+			}
+			if (!hasAdded) {
+				languagePass.addModule(m);
+				mCommandLineModules ~= m;
+			}
 		}
 
 		// Skip setting up the pointers incase object

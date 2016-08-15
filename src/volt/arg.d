@@ -59,6 +59,8 @@ public:
 	string depFile;
 	string outputFile;
 
+	string[] importAsSrc; ///< The --import-as-src command.
+
 	string[] includePaths; ///< The -I arguments.
 	string[] srcIncludePaths; ///< The -src-I arguments.
 
@@ -171,6 +173,7 @@ public:
 		PreprocessOnly,  ///< -E
 		CompileOnly,     ///< -S
 		MissingDeps,     ///< --missing
+		ImportAsSrc,     ///< --import-as-src
 
 		Debug,
 		DebugSimpleTrace,
@@ -294,6 +297,9 @@ void filterArgs(Arg[] args, ref string[] files, VersionSet ver, Settings setting
 			break;
 		case MissingDeps:
 			settings.missingDeps = true;
+			break;
+		case ImportAsSrc:
+			settings.importAsSrc ~= arg.arg;
 			break;
 
 		case Debug:
