@@ -474,6 +474,8 @@ bool printUsage()
 	writefln("\t--emit-bitcode   Emit LLVM bitcode (implies -c).");
 	writefln("\t-S,--no-backend  Stop compilation before the backend.");
 	writefln("\t--no-catch       For compiler debugging purposes.");
+	writefln("\t--import-as-src  Search usual paths for a given import (eg 'std.stdio')");
+	writefln("\t                 and behave as if that module was being compiled.");
 	writefln("");
 	writefln("\t--no-stdlib      Don't include any stdlib (from config or arguments)");
 	writefln("");
