@@ -163,6 +163,8 @@ public:
 			endList();
 		}
 
+		tag("hasBody", f._body !is null);
+
 		endObject();
 
 		return ContinueParent;
@@ -267,6 +269,15 @@ protected:
 		wq(tag);
 		w(":");
 		wq(value);
+		mWriteComma = true;
+	}
+
+	void tag(string tag, bool value)
+	{
+		wMaybeComma();
+		wq(tag);
+		w(":");
+		w(value ? "true" : "false");
 		mWriteComma = true;
 	}
 
