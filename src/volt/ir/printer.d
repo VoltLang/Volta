@@ -83,8 +83,12 @@ void write(Sink sink, ir.Type type, bool alwaysGlossed)
 	case DelegateType:
 		ir.CallableType c = cast(ir.CallableType)type;
 
-		sink.write(c.ret, alwaysGlossed);
-		sink(type.nodeType == FunctionType ? " function(" : " delegate(");
+		if (type.nodeType == FunctionType) {
+			sink("fn (");
+		} else {
+			sink.write(c.ret, alwaysGlossed);
+			sink(type.nodeType == FunctionType ? " function(" : " delegate(");
+		}
 
 		if (c.params.length > 0) {
 			sink.write(c.params[0], alwaysGlossed);
@@ -93,6 +97,12 @@ void write(Sink sink, ir.Type type, bool alwaysGlossed)
 				sink.write(param, alwaysGlossed);
 			}
 		}
+
+		if (type.nodeType == FunctionType) {
+			sink(") (");
+			sink.write(c.ret, alwaysGlossed);
+		}
+
 		sink(")");
 
 		break;
