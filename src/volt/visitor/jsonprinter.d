@@ -201,6 +201,15 @@ public:
 		return ContinueParent;
 	}
 
+	override Status enter(ir.EnumDeclaration ed)
+	{
+		auto name = ed.name;
+		startObject();
+		writeNamedTyped("enumdecl", name, ed.docComment, ed.type);
+		endObject();
+		return ContinueParent;
+	}
+
 	override Status leave(ir.Module) { endListAndObject(); return Continue; }
 	override Status leave(ir.Struct) { endListAndObject(); return Continue; }
 	override Status leave(ir.Union) { endListAndObject(); return Continue; }
