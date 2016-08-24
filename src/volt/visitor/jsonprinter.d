@@ -196,9 +196,9 @@ public:
 		tag("kind", "enum");
 		tag("name", name);
 		tag("doc", e.docComment);
-		endObject();
+		startList("children");
 
-		return ContinueParent;
+		return Continue;
 	}
 
 	override Status enter(ir.EnumDeclaration ed)
@@ -215,6 +215,7 @@ public:
 	override Status leave(ir.Union) { endListAndObject(); return Continue; }
 	override Status leave(ir.Class) { endListAndObject(); return Continue; }
 	override Status leave(ir.Alias) { endListAndObject(); return Continue; }
+	override Status leave(ir.Enum) { endListAndObject(); return Continue; }
 
 
 protected:
