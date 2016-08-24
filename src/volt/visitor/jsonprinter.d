@@ -3,6 +3,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.visitor.jsonprinter;
 
+import watt.conv : toString;
 import watt.io.streams : OutputFileStream;
 import watt.text.utf : encode;
 import watt.text.sink;
@@ -13,6 +14,7 @@ import volt.ir.printer;
 import volt.errors;
 import volt.interfaces;
 import volt.visitor.visitor;
+import volt.semantic.classify;
 
 
 class JsonPrinter : NullVisitor
@@ -206,6 +208,10 @@ public:
 		auto name = ed.name;
 		startObject();
 		writeNamedTyped("enumdecl", name, ed.docComment, ed.type);
+		auto constant = cast(ir.Constant)ed.assign;
+		if (isIntegral(ed.type) && constant !is null) {
+			tag("value", .toString(constant.u._int));
+		}
 		endObject();
 		return ContinueParent;
 	}
