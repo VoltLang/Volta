@@ -1984,6 +1984,10 @@ ir.Type extypeBinOpPropertyAssign(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 void extypeCat(Context ctx, ref ir.Exp lexp, ref ir.Exp rexp,
                ir.ArrayType left, ir.Type right)
 {
+	if (isString(left)) {
+		warningStringCat(lexp.location, ctx.lp.warningsEnabled);
+	}
+
 	if (typesEqual(left, right) ||
 	    typesEqual(right, left.base)) {
 		return;

@@ -105,8 +105,9 @@ private:
 
 public:
 	this(Driver drv, VersionSet ver, TargetInfo target, Frontend frontend,
-	     Mode mode, bool beMoreLikeD)
+	     Mode mode, bool beMoreLikeD, bool warnings)
 	{
+		this.warningsEnabled = warnings;
 		this.beMoreLikeD = beMoreLikeD;
 		this.mMode = mode;
 		super(drv, ver, target, frontend);

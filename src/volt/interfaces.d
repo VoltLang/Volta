@@ -328,6 +328,8 @@ public:
 	 */
 	bool beMoreLikeD;
 
+	bool warningsEnabled;
+
 	/**
 	 * Cached lookup items.
 	 * @{

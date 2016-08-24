@@ -151,7 +151,7 @@ public:
 		}
 
 		languagePass = new VoltLanguagePass(this, ver, target,
-			frontend, mode, s.internalD);
+			frontend, mode, s.internalD, s.warningsEnabled);
 
 		if (!s.noBackend) {
 			backend = new LlvmBackend(languagePass);

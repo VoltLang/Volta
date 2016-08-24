@@ -29,6 +29,13 @@ void hackTypeWarning(ir.Node n, ir.Type nt, ir.Type ot)
 	writefln(str);
 }
 
+void warningStringCat(Location loc, bool warningsEnabled)
+{
+	if (warningsEnabled) {
+		warning(loc, "concatenation involving string.");
+	}
+}
+
 void warningOldStyleVariable(Location loc, Settings settings)
 {
 	if (!settings.internalD && settings.warningsEnabled) {
