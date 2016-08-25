@@ -2670,7 +2670,7 @@ ir.Type extypeTokenExp(Context ctx, ref ir.Exp exp, Parent parent)
 	}
 
 	StringSink buf;
-	void sink(string s)
+	void sink(scope const(char)[] s)
 	{
 		buf.sink(s);
 	}

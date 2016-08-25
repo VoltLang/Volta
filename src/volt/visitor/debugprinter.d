@@ -51,14 +51,14 @@ class DebugPrinter : Visitor, Pass
 protected:
 	string mFilename;
 	OutputStream mStream;
-	void delegate(string) mSink;
+	void delegate(scope const(char)[]) mSink;
 
 	int mIndent;
 	int mLastIndent;
 	string mIndentText;
 
 public:
-	this(string indentText = " ", void delegate(string) sink = null)
+	this(string indentText = " ", void delegate(scope const(char)[]) sink = null)
 	{
 		mIndentText = indentText;
 		mSink = sink;
@@ -88,7 +88,7 @@ public:
 		assert(mFilename is null);
 
 		mStream = output;
-		void sink(string s)
+		void sink(scope const(char)[] s)
 		{
 			mStream.writef("%s", s);
 		}
@@ -120,7 +120,7 @@ public:
 		assert(mFilename is null);
 
 		mStream = output;
-		void sink(string s)
+		void sink(scope const(char)[] s)
 		{
 			mStream.writef("%s", s);
 		}
@@ -152,7 +152,7 @@ public:
 		assert(mFilename is null);
 
 		mStream = output;
-		void sink(string s)
+		void sink(scope const(char)[] s)
 		{
 			mStream.writef("%s", s);
 		}

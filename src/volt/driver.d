@@ -12,6 +12,7 @@ import watt.io.file : remove, exists, read;
 import watt.io.streams : OutputFileStream;
 import watt.conv : toLower;
 import watt.text.diff : diff;
+import watt.text.sink : StringSink;
 import watt.text.format : format;
 import watt.text.string : split, endsWith, replace;
 
@@ -833,22 +834,22 @@ private:
 		}
 
 		assert(mods.length == ppstrs.length && mods.length == dpstrs.length);
-		StringBuffer ppBuf, dpBuf;
+		StringSink ppBuf, dpBuf;
 		version (Volt) {
 			auto diffPP = new PrettyPrinter(" ", ppBuf.sink);
 			auto diffDP = new DebugPrinter(" ", dpBuf.sink);
 		} else {
-			auto diffPP = new PrettyPrinter(" ", &ppBuf.sink);
-			auto diffDP = new DebugPrinter(" ", &dpBuf.sink);
+			auto diffPP = new PrettyPrinter(" ", ppBuf.sink);
+			auto diffDP = new DebugPrinter(" ", dpBuf.sink);
 		}
 		foreach (i, m; mods) {
-			ppBuf.clear();
-			dpBuf.clear();
+			ppBuf.reset();
+			dpBuf.reset();
 			io.output.writefln("Transformations performed by %s:", title);
 			diffPP.transform(m);
 			diffDP.transform(m);
-			ppstrs[i] = ppBuf.str;
-			dpstrs[i] = dpBuf.str;
+			ppstrs[i] = ppBuf.toString();
+			dpstrs[i] = dpBuf.toString();
 		}
 		diffPP.close();
 		diffDP.close();
@@ -860,7 +861,7 @@ private:
 			return;
 		}
 		assert(mods.length == ppstrs.length && mods.length == dpstrs.length);
-		StringBuffer sb;
+		StringSink sb;
 		version (Volt) {
 			auto pp = new PrettyPrinter(" ", sb.sink);
 			auto dp = new DebugPrinter(" ", sb.sink);
@@ -869,12 +870,12 @@ private:
 			auto dp = new DebugPrinter(" ", &sb.sink);
 		}
 		foreach (i, m; mods) {
-			sb.clear();
+			sb.reset();
 			dp.transform(m);
-			diff(dpstrs[i], sb.str);
-			sb.clear();
+			diff(dpstrs[i], sb.toString());
+			sb.reset();
 			pp.transform(m);
-			diff(ppstrs[i], sb.str);
+			diff(ppstrs[i], sb.toString());
 		}
 		pp.close();
 		dp.close();
