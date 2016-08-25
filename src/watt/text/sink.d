@@ -4,7 +4,7 @@ module watt.text.sink;
 
 
 /// The one true sink definition.
-alias Sink = scope void delegate(SinkArg);
+alias Sink = scope void delegate(scope SinkArg);
 
 /// The argument to the one true sink.
 alias SinkArg = scope const(char)[];
@@ -20,7 +20,7 @@ private:
 	enum size_t maxSize = 2048;
 
 public:
-	void sink(SinkArg str)
+	void sink(scope SinkArg str)
 	{
 		auto newSize = str.length + mLength;
 		if (newSize <= mArr.length) {
