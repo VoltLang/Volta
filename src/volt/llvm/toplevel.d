@@ -785,7 +785,7 @@ public:
 	{
 		string name = "_V__ModuleInfo_";
 		foreach (i; m.name.identifiers) {
-			name ~= format("%s%s", i.value.length, i.value);
+			name = format("%s%s%s", name, i.value.length, i.value);
 		}
 
 		auto t = cast(StructType)state.fromIr(state.lp.moduleInfo);

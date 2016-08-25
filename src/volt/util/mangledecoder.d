@@ -2,6 +2,7 @@ module volt.util.mangledecoder;
 
 import watt.conv : toInt;
 import watt.text.ascii : isDigit;
+import watt.text.sink : StringSink;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
@@ -19,12 +20,12 @@ string take(ref string s, size_t n)
 
 int takeDigit(ref string mangledString)
 {
-	char[] numbuf;
+	StringSink numbuf;
 	while (mangledString[0].isDigit()) {
-		numbuf ~= mangledString[0];
+		numbuf.sink([mangledString[0]]);
 		mangledString = mangledString[1 .. $];
 	}
-	return toInt(numbuf);
+	return toInt(numbuf.toString());
 }
 
 ir.Identifier takeNameSegment(ref string mangledString)

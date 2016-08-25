@@ -4,6 +4,7 @@
 module volt.semantic.languagepass;
 
 import watt.io.std : output;
+import watt.text.format : format;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
@@ -664,7 +665,7 @@ public:
 		auto id = buildQualifiedName(loc, names);
 		auto m = getModule(id);
 		if (m is null) {
-			throw panic("Could not find module " ~ id.toString());
+			throw panic(format("Could not find module %s", id.toString()));
 		}
 		return m;
 	}

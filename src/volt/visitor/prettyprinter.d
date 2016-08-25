@@ -878,7 +878,7 @@ public:
 
 	override Status enter(ir.LabelStatement ls)
 	{
-		wf(ls.label ~ ":");
+		wf(format("%s:", ls.label, ":"));
 		ln();
 		return Continue;
 	}
@@ -1413,7 +1413,7 @@ public:
 
 		if (func.outContract !is null) {
 			if (func.outParameter.length > 0) {
-				twfln("out (" ~ func.outParameter ~ ") {");
+				twfln(format("out (%s) {", func.outParameter));
 			} else {
 				twfln("out {");
 			}

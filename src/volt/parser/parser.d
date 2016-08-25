@@ -31,10 +31,10 @@ private void checkError(ParserStream ps, ParseStatus status)
 	auto p = cast(ParserPanic)e;
 
 	void addExtraInfo() {
-		msg ~= format(" (peek:%s)", ps.peek.value);
+		msg = format("%s (peek:%s)", msg, ps.peek.value);
 		foreach (err; ps.parserErrors) {
-			msg ~= format("\n%s: %s (from %s:%s)",
-			              err.location.toString(),
+			msg = format("%s\n%s: %s (from %s:%s)",
+			              msg, err.location.toString(),
 			              err.errorMessage(),
 			              err.raiseFile, err.raiseLine);
 		}

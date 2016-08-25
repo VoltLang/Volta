@@ -647,7 +647,7 @@ void buildInstanceVariable(LanguagePass lp, ir.Class _class)
 	auto l = _class.location;
 	_class.initVariable = buildVariableSmart(
 		l, _class.layoutStruct, ir.Variable.Storage.Global, "__cinit");
-	_class.initVariable.mangledName = "_V__cinit_" ~ _class.mangledName;
+	_class.initVariable.mangledName = format("_V__cinit_%s", _class.mangledName);
 	_class.initVariable.isResolved = true;
 
 	ir.Exp[] exps;
@@ -691,7 +691,7 @@ void emitVtableVariable(LanguagePass lp, ir.Class _class)
 	void addInterfaceInstance(ir._Interface iface, ir.Class fromParent, size_t i)
 	{
 		auto var = buildVariableSmart(l, iface.layoutStruct, ir.Variable.Storage.Global, format("%s", mangle(iface)));
-		var.mangledName =  "_V__Interface_" ~ _class.mangledName ~ "_" ~ mangle(iface);
+		var.mangledName =  format("_V__Interface_%s_%s", _class.mangledName, mangle(iface));
 		var.assign = getInterfaceStructAssign(lp, fromParent, _class.myScope, iface, i);
 		_class.members.nodes ~= var;
 		_class.myScope.addValue(var, var.name);
@@ -715,7 +715,7 @@ void emitVtableVariable(LanguagePass lp, ir.Class _class)
 
 	_class.vtableVariable = buildVariableSmart(l, _class.vtableStruct, ir.Variable.Storage.Global, "__vtable_instance");
 	_class.vtableVariable.isResolved = true;
-	_class.vtableVariable.mangledName = "_V__Vtable_" ~ mangle(_class);
+	_class.vtableVariable.mangledName = format("_V__Vtable_%s", mangle(_class));
 	_class.vtableVariable.assign = assign;
 	_class.members.nodes ~= _class.vtableVariable;
 	_class.myScope.addValue(_class.vtableVariable, _class.vtableVariable.name);

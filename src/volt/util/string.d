@@ -82,7 +82,7 @@ immutable(void)[] unescapeString(Location location, const(char)[] s)
 			encode(hexchars, c);
 			if (hexchars.length == 2) {
 				try {
-					output ~= cast(char)toInt(hexchars, 16);
+					encode(output, cast(char)toInt(hexchars, 16));
 				} catch (ConvException) {
 					throw makeExpected(location, "hex digit");
 				}
@@ -210,7 +210,7 @@ string cleanComment(string comment, out bool isBackwardsComment)
 			break;
 		case '\n':
 			ignoreWhitespace = true;
-			outbuf ~= '\n';
+			encode(outbuf, '\n');
 			break;
 		default:
 			ignoreWhitespace = false;

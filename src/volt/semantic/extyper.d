@@ -6,6 +6,7 @@ module volt.semantic.extyper;
 import watt.conv : toString;
 import watt.text.format : format;
 import watt.text.string : replace;
+import watt.text.sink : StringSink;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
@@ -342,7 +343,7 @@ ir.Type handleValueStore(Context ctx, string ident, ref ir.Exp exp,
 	case StaticPostfix:
 		final switch (var.storage) with (ir.Variable.Storage) {
 		case Invalid:
-			throw panic(exp, "invalid storage " ~ var.location.toString());
+			throw panic(exp, format("invalid storage %s", var.location.toString()));
 		case Field:
 		case Function:
 		case Nested:
@@ -2663,15 +2664,15 @@ ir.Type extypeTokenExp(Context ctx, ref ir.Exp exp, Parent parent)
 	} else if (fexp.type == ir.TokenExp.Type.Location) {
 		string fname = getFname();
 		ir.Constant c;
-		auto str = fname ~ ":" ~ toString(cast(int)fexp.location.line);
+		auto str = format("%s:%s", fname, toString(cast(int)fexp.location.line));
 		exp = c = buildConstantString(fexp.location, str);
 		return c.type;
 	}
 
-	char[] buf;
+	StringSink buf;
 	void sink(string s)
 	{
-		buf ~= s;
+		buf.sink(s);
 	}
 	version (Volt) {
 		// @TODO fix this.
@@ -2700,31 +2701,29 @@ ir.Type extypeTokenExp(Context ctx, ref ir.Exp exp, Parent parent)
 
 	if (fexp.type == ir.TokenExp.Type.PrettyFunction) {
 		pp.transformType(foundFunction.type.ret);
-		buf ~= " ";
+		buf.sink(" ");
 	}
 
 	foreach_reverse (i, name; names) {
-		buf ~= name ~ (i > 0 ? "." : "");
+		buf.sink(name);
+		if (i > 0) {
+			buf.sink(".");
+		}
 	}
 
 	if (fexp.type == ir.TokenExp.Type.PrettyFunction) {
-		buf ~= "(";
+		buf.sink("(");
 		foreach (i, ptype; ctx.currentFunction.type.params) {
 			pp.transformType(ptype);
 			if (i < ctx.currentFunction.type.params.length - 1) {
-				buf ~= ", ";
+				buf.sink(", ");
 			}
 		}
-		buf ~= ")";
+		buf.sink(")");
 	}
 
-	version (Volt) {
-		auto str = new string(buf);
-	} else {
-		auto str = buf.idup;
-	}
 	ir.Constant c;
-	exp = c = buildConstantString(fexp.location, str);
+	exp = c = buildConstantString(fexp.location, buf.toString());
 	return c.type;
 }
 

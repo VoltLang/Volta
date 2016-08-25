@@ -4,6 +4,7 @@
 module volt.ir.base;
 
 import watt.conv : toString;
+import watt.text.sink : StringSink;
 
 public import volt.token.location : Location;
 public import volt.token.token : Token, TokenType;
@@ -249,14 +250,14 @@ public:
 public:
 	override string toString()
 	{
-		string str;
+		StringSink str;
 		foreach (i, identifier; identifiers) {
-			str ~= identifier.value;
+			str.sink(identifier.value);
 			if (i < identifiers.length - 1) {
-				str ~= ".";
+				str.sink(".");
 			}
 		}
-		return str;
+		return str.toString();
 	}
 
 	@property string[] strings()

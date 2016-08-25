@@ -9,6 +9,7 @@ import watt.conv : toLower;
 import watt.io.std : writefln;
 import watt.io.file : exists, read, searchDir;
 import watt.text.string : splitLines;
+import watt.text.format : format;
 
 import volt.arg;
 import volt.license;
@@ -379,7 +380,7 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 
 		if (arg.length > 1 &&
 		    arg[0] == '-') {
-			throw new Exception("Unknown argument: '" ~ arg ~ "'");
+			throw new Exception(format("Unknown argument: '%s'", arg[0]));
 		}
 		makeArgFile(arg);
 	}
@@ -390,7 +391,7 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 string[] getConfigLines()
 {
 	string[] lines;
-	string file = getExecDir() ~ dirSeparator ~ "volt.conf";
+	string file = format("%s%svolt.conf", getExecDir(), dirSeparator);
 	getLinesFromFile(file, lines);
 	return lines;
 }

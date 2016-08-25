@@ -5,6 +5,7 @@ module volt.llvm.host;
 
 import io = watt.io.std;
 import watt.conv : toStringz;
+import watt.text.format : format;
 
 import volt.errors;
 import volt.interfaces;
@@ -40,7 +41,7 @@ public:
 		ee = null;
 		string error;
 		if (LLVMCreateMCJITCompilerForModule(&ee, state.mod, null, 0, error)) {
-			assert(false, "JIT CREATION FAILED: " ~ error); // TODO: Real error.
+			assert(false, format("JIT CREATION FAILED: %s", error)); // TODO: Real error.
 		}
 	}
 
@@ -160,7 +161,7 @@ public:
 		// Setup another module and builder.
 		// XXX TODO The module should be added to the state so it
 		// will be closed when the state is closed.
-		auto modName = "__mod_" ~ name;
+		auto modName = format("__mod_%s", name);
 		auto mod = host.createAndTrackModule(modName);
 		auto builder = LLVMCreateBuilderInContext(state.context);
 
@@ -169,7 +170,7 @@ public:
 		auto realFunc = LLVMAddFunction(mod, name, realType);
 
 		// Create the function here.
-		auto springName = "__springboard_" ~ name;
+		auto springName = format("__springboard_%s", name);
 		auto springType = state.springType.llvmCallType;
 		auto spring = LLVMAddFunction(mod, springName, springType);
 

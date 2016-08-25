@@ -5,6 +5,7 @@ module volt.errors;
 
 import watt.conv : toLower;
 import watt.text.format : format;
+import watt.text.sink : StringSink;
 import watt.io.std : writefln;
 
 import ir = volt.ir.ir;
@@ -800,14 +801,14 @@ CompilerException makeNotMember(ir.Node node, ir.Type aggregate, string member, 
 	if (pfix !is null && pfix.child.nodeType == ir.NodeType.ExpReference) {
 		auto eref = cast(ir.ExpReference) pfix.child;
 		auto var = cast(ir.Variable)eref.decl;
-		string name;
+		StringSink name;
 		foreach (i, id; eref.idents) {
-			name ~= id;
+			name.sink(id);
 			if (i < eref.idents.length - 1) {
-				name ~= ".";
+				name.sink(".");
 			}
 		}
-		emsg = format("instance '%s' (of type '%s') has no member '%s'.", name, aggregate.typeString(), member);
+		emsg = format("instance '%s' (of type '%s') has no member '%s'.", name.toString(), aggregate.typeString(), member);
 	}
 	return new CompilerError(node.location, emsg, file, line);
 }
@@ -953,18 +954,14 @@ string typeString(ir.Type t)
 
 string typesString(ir.Type[] types)
 {
-	char[] buf;
-	buf ~= "(";
+	StringSink buf;
+	buf.sink("(");
 	foreach (i, type; types) {
-		buf ~= type.printType(true);
+		buf.sink(type.printType(true));
 		if (i < types.length - 1) {
-			buf ~= ", ";
+			buf.sink(", ");
 		}
 	}
-	buf ~= ")";
-	version (Volt) {
-		return cast(string)new buf[0 .. $];
-	} else {
-		return buf.idup;
-	}
+	buf.sink(")");
+	return buf.toString();
 }

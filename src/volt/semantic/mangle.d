@@ -83,7 +83,7 @@ string mangle(string[] names, ir.Function func)
 
 	version (Volt) {
 		mangleName(names, sink.sink);
-		mangleString(func.name ~ func.suffix, sink.sink);
+		mangleString(format("%s%s", func.name, func.suffix), sink.sink);
 		mangleType(func.type, sink.sink);
 	} else {
 		mangleName(names, &sink.sink);

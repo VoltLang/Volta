@@ -852,10 +852,10 @@ LexStatus lexQString(TokenWriter tw)
 		nesting = false;
 		if (isdalpha(tw.source.current, Position.Start)) {
 			char[] buf;
-			buf ~= encode(tw.source.current);
+			encode(buf, tw.source.current);
 			tw.source.next();
 			while (isdalpha(tw.source.current, Position.MiddleOrEnd)) {
-				buf ~= encode(tw.source.current);
+				encode(buf, tw.source.current);
 				tw.source.next();
 			}
 			if (!match(tw, '\n')) {
@@ -1227,14 +1227,14 @@ LexStatus lexHashLine(TokenWriter tw)
 	if (!match(tw, '"')) {
 		return Failed;
 	}
-	dchar[] buf;
+	char[] buf;
 	while (tw.source.current != '"') {
-		buf ~= tw.source.next();
+		encode(buf, tw.source.next());
 	}
 	if (!match(tw, '"')) {
 		return Failed;
 	}
-	string filename = encode(buf);
+	string filename = cast(string)buf;
 
 	assert(lineNumber >= 0);
 	if (lineNumber == 0) {

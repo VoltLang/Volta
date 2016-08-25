@@ -2,6 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.lowerer.newreplacer;
 
+import watt.text.format : format;
+
 import ir = volt.ir.ir;
 import volt.ir.util;
 import volt.ir.copy;
@@ -65,7 +67,7 @@ ir.Function getArrayAllocFunction(Location location, LanguagePass lp,
                                   ir.Module thisModule, ir.ArrayType atype)
 {
 	auto arrayMangledName = mangle(atype);
-	string name = "__arrayAlloc" ~ arrayMangledName;
+	string name = format("__arrayAlloc%s", arrayMangledName);
 	auto allocFn = lookupFunction(lp, thisModule.myScope, location, name);
 	if (allocFn is null) {
 		allocFn = createArrayAllocFunction(location, lp, thisModule.myScope, atype, name);

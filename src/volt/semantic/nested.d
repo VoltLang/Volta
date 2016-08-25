@@ -3,6 +3,7 @@
 module volt.semantic.nested;
 
 import watt.conv : toString;
+import watt.text.format : format;
 
 import ir = volt.ir.ir;
 import volt.ir.copy;
@@ -290,7 +291,7 @@ void doParent(LanguagePass lp, ir.Function parent)
 ir.Struct createAndAddNestedStruct(ir.Function func)
 {
 	auto bs = func._body;
-	auto s = buildStruct(func.location, "__Nested" ~ toString(cast(void*)func), []);
+	auto s = buildStruct(func.location, format("__Nested%s", toString(cast(void*)func)), []);
 	s.myScope = new ir.Scope(bs.myScope, s, s.name, bs.myScope.nestedDepth);
 	auto tref = buildTypeReference(s.location, s, "__Nested");
 	auto decl = buildVariable(
@@ -341,7 +342,7 @@ void handleNestedParams(ir.Function func, ir.BlockStatement bs)
 			if (refParam) {
 				type = buildPtrSmart(param.location, param.type);
 			}
-			auto name = param.name != "" ? param.name : "__anonparam_" ~ toString(index);
+			auto name = param.name != "" ? param.name : format("__anonparam_%s", toString(index));
 			auto var = buildVariableSmart(param.location, type, ir.Variable.Storage.Field, name);
 			addVarToStructSmart(ns, var);
 			// Insert an assignment of the param to the nest struct.

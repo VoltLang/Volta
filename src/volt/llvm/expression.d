@@ -679,8 +679,9 @@ void handleCast(State state, Location loc, Type newType, Value result)
 	}
 
 	throw panicUnhandled(loc,
-		ir.nodeToString(oldType.irType) ~ " -> " ~
-		ir.nodeToString(newType.irType));
+		format("%s -> %s",
+		ir.nodeToString(oldType.irType),
+		ir.nodeToString(newType.irType)));
 }
 
 /**

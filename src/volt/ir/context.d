@@ -281,7 +281,7 @@ public:
 
 	string genAnonIdent()
 	{
-		return "__anon" ~ .toString(anon++);
+		return format("__anon%s", .toString(anon++));
 	}
 
 	/**

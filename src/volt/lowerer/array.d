@@ -54,9 +54,9 @@ ir.Function getArrayAppendFunction(Location loc, LanguagePass lp, ir.Module this
 
 	string name;
 	if (isAssignment) {
-		name = "__appendArrayAssign" ~ ltype.mangledName ~ rtype.mangledName;
+		name = format("__appendArrayAssign%s%s", ltype.mangledName, rtype.mangledName);
 	} else {
-		name = "__appendArray" ~ ltype.mangledName ~ rtype.mangledName;
+		name = format("__appendArray%s%s", ltype.mangledName, rtype.mangledName);
 	}
 
 	auto func = lookupFunction(lp, thisModule.myScope, loc, name);
@@ -171,7 +171,7 @@ ir.Function getArrayPrependFunction(Location loc, LanguagePass lp, ir.Module thi
 		rtype.mangledName = mangle(rtype);
 	}
 
-	string name = "__prependArray" ~ ltype.mangledName ~ rtype.mangledName;
+	string name = format("__prependArray%s%s", ltype.mangledName, rtype.mangledName);
 
 	auto func = lookupFunction(lp, thisModule.myScope, loc, name);
 	if (func !is null) {
@@ -249,7 +249,7 @@ ir.Function getArrayCopyFunction(Location loc, LanguagePass lp, ir.Module thisMo
 		type.mangledName = mangle(type);
 	}
 
-	auto name = "__copyArray" ~ type.mangledName;
+	auto name = format("__copyArray%s", type.mangledName);
 	auto func = lookupFunction(lp, thisModule.myScope, loc, name);
 	if (func !is null) {
 		return func;
@@ -293,9 +293,9 @@ ir.Function getArrayConcatFunction(Location loc, LanguagePass lp, ir.Module this
 
 	string name;
 	if (isAssignment) {
-		name = "__concatAssignArray" ~ type.mangledName;
+		name = format("__concatAssignArray%s", type.mangledName);
 	} else {
-		name = "__concatArray" ~ type.mangledName;
+		name = format("__concatArray%s", type.mangledName);
 	}
 	auto func = lookupFunction(lp, thisModule.myScope, loc, name);
 
@@ -420,9 +420,9 @@ ir.Function getArrayCmpFunction(Location loc, LanguagePass lp, ir.Module thisMod
 
 	string name;
 	if (notEqual) {
-		name = "__cmpNotArray" ~ type.mangledName;
+		name = format("__cmpNotArray%s", type.mangledName);
 	} else {
-		name = "__cmpArray" ~ type.mangledName;
+		name = format("__cmpArray%s", type.mangledName);
 	}
 	auto func = lookupFunction(lp, thisModule.myScope, loc, name);
 	if (func !is null) {

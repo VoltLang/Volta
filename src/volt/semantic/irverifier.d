@@ -215,7 +215,7 @@ public:
 	{
 		if (t.isConst || t.isImmutable || t.isScope) {
 			if (auto n = cast(ir.Named) t) {
-				throw panic(t, "type '" ~ n.name ~ "' storage modifiers has been modified");
+				throw panic(t, format("type '%s' storage modifiers has been modified", n.name));
 			} else {
 				throw panic(t, "type storage modifiers has been modified");
 			}

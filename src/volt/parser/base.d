@@ -6,6 +6,7 @@ module volt.parser.base;
 
 import watt.text.format : format;
 import watt.text.string : strip, indexOf;
+import watt.text.sink : StringSink;
 
 import ir = volt.ir.ir;
 
@@ -600,7 +601,10 @@ public:
 		if (raw == "@{" || raw == "@}") {
 			return;
 		}
-		mComment[$-1] ~= comment.value;
+		StringSink sink;
+		sink.sink(mComment[$-1]);
+		sink.sink(comment.value);
+		mComment[$-1] = sink.toString();
 		lastDocComment = comment;
 	}
 
@@ -634,7 +638,10 @@ private:
 		if (openIndex >= 0) {
 			auto precomment = strip(mTokens[mIndex].value[0 .. openIndex]);
 			if (precomment.length > 0) {
-				mComment[$-1] ~= precomment;
+				StringSink sink;
+				sink.sink(mComment[$-1]);
+				sink.sink(precomment);
+				mComment[$-1] = sink.toString();
 			}
 			multiDepth++;
 			return;

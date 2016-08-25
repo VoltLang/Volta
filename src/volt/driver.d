@@ -293,7 +293,7 @@ public:
 		foreach (path; mStringImportPaths) {
 			string str;
 			try {
-				return cast(string)read(path ~ "/" ~ fname);
+				return cast(string)read(format("%s/%s", path, fname));
 			} catch (Throwable) {
 			}
 		}
@@ -495,7 +495,7 @@ protected:
 	{
 		// Error checking
 		if (mLibFiles.length > 0 && !mLinkWithLink) {
-			throw new CompilerError("can not link '" ~ mLibFiles[0] ~ "'");
+			throw new CompilerError(format("can not link '%s'", mLibFiles[0]));
 		}
 
 		// Start parsing.
@@ -724,10 +724,10 @@ protected:
 			args ~= objectFile;
 		}
 		foreach (libraryPath; mLibraryPaths) {
-			args ~= "-L" ~ libraryPath;
+			args ~= format("-L%s", libraryPath);
 		}
 		foreach (libraryFile; mLibraryFiles) {
-			args ~= "-l" ~ libraryFile;
+			args ~= format("-l%s", libraryFile);
 		}
 		foreach (frameworkPath; mFrameworkPaths) {
 			args ~= "-F";
@@ -769,7 +769,7 @@ protected:
 			"/defaultlib:oldnames",
 			"legacy_stdio_definitions.lib",
 			"/nologo",
-			"/out:" ~ of];
+			format("/out:%s", of)];
 
 		foreach (objectFile; mObjectFiles ~ obj) {
 			args ~= objectFile;
@@ -779,7 +779,7 @@ protected:
 			mDepFiles ~= libFile;
 		}
 		foreach (libraryPath; mLibraryPaths) {
-			args ~= "/LIBPATH:" ~ libraryPath;
+			args ~= format("/LIBPATH:%s", libraryPath);
 		}
 		foreach (libraryFile; mLibraryFiles) {
 			args ~= libraryFile;

@@ -7,6 +7,7 @@ import core.exception;
 import watt.path : mkdir, dirName, dirSeparator;
 import watt.io.streams : OutputFileStream;
 import watt.text.format : format;
+import watt.text.sink : StringSink;
 
 import ir = volt.ir.ir;
 
@@ -56,24 +57,28 @@ public:
 			} catch (Exception) {
 			}
 		}
-		string filename = mDocDir.length == 0 ? "" : (mDocDir ~ dirSeparator);
+		StringSink filenameSink;
+		if (mDocDir.length != 0) {
+			filenameSink.sink(mDocDir);
+			filenameSink.sink(dirSeparator);
+		}
 		if (mDocOutput.length > 0) {
-			filename ~= mDocOutput;
+			filenameSink.sink(mDocOutput);
 			if (mTransformCount >= 2) {
 				throw makeExpected(m, "only one file with -do switch");
 			}
 		} else {
 			foreach (i, ident; m.name.identifiers) {
-				filename ~= ident.value;
+				filenameSink.sink(ident.value);
 				if (i < m.name.identifiers.length - 1) {
-					filename ~= dirSeparator;
+					filenameSink.sink(dirSeparator);
 				}
 			}
-			filename ~= ".html";
+			filenameSink.sink(".html");
 
-			mkdirP(dirName(filename));
+			mkdirP(dirName(filenameSink.toString()));
 		}
-		mHtmlFile = new OutputFileStream(filename);
+		mHtmlFile = new OutputFileStream(filenameSink.toString());
 		accept(m, this);
 	}
 

@@ -4,6 +4,7 @@
 module volt.visitor.visitor;
 
 import watt.text.format : format;
+import watt.text.sink : StringSink;
 
 import ir = volt.ir.ir;
 
@@ -739,16 +740,20 @@ Visitor.Status acceptExp(ref ir.Exp exp, Visitor av)
  */
 struct StringBuffer
 {
-	string str;
+	StringSink snk;
+
+	@property string str() {
+		return snk.toString();
+	}
 
 	void clear()
 	{
-		str = "";
+		snk.reset();
 	}
 
 	void sink(string s)
 	{
-		str ~= s;
+		snk.sink(s);
 	}
 }
 

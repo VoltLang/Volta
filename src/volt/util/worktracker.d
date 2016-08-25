@@ -2,6 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.util.worktracker;
 
+import watt.text.sink : StringSink;
+
 import ir = volt.ir.ir;
 
 import volt.errors;
@@ -39,11 +41,19 @@ public:
 
 	@property string description()
 	{
-		return node.location.toString() ~ " " ~
-			(action == Action.Resolve ? "resolving" : "actualing")
-			~ " " ~ ir.nodeToString(node) ~ " " ~
-			ir.getNodeAddressString(node);
-
+		StringSink sink;
+		sink.sink(node.location.toString());
+		sink.sink(" ");
+		if (action == Action.Resolve) {
+			sink.sink("resolving");
+		} else {
+			sink.sink("actualising");
+		}
+		sink.sink(" ");
+		sink.sink(ir.nodeToString(node));
+		sink.sink(" ");
+		sink.sink(ir.getNodeAddressString(node));
+		return sink.toString();
 	}
 
 protected:
@@ -73,11 +83,13 @@ public:
 			return w;
 		}
 
-		auto str = "circular dependancy detected";
+		StringSink str;
+		str.sink("circular dependancy detected");
 		foreach (s; mStack) {
-			str ~= "\n" ~ s.description;
+			str.sink("\n");
+			str.sink(s.description);
 		}
-		throw makeError(w.node.location, str);
+		throw makeError(w.node.location, str.toString());
 	}
 
 	void remove(Work w)

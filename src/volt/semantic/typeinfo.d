@@ -26,7 +26,7 @@ import volt.semantic.classify;
 string getTypeInfoVarName(ir.Type type)
 {
 	ensureMangled(type);
-	return "_V__TypeInfo_" ~ type.mangledName;
+	return format("_V__TypeInfo_%s", type.mangledName);
 }
 
 /**

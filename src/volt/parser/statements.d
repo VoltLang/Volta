@@ -3,6 +3,7 @@
 module volt.parser.statements;
 
 import watt.text.ascii;
+import watt.text.sink;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
@@ -1375,19 +1376,19 @@ ParseStatus parseStaticIs(ParserStream ps, out ir.AssertStatement as)
 	as.location = isExp.location;
 	as.isStatic = true;
 	as.condition = isExp;
-	string msg = "";
+	StringSink msg;
 	foreach (token; tokens) {
-		msg ~= token.value;
+		msg.sink(token.value);
 		auto c = token.value.length == 0 ? ' ' : token.value[0];
 		switch (c) {
 		case '[', ']', '(', ')', '{', '}':
 			break;
 		default:
-			msg ~= " ";
+			msg.sink(" ");
 			break;
 		}
 	}
-	as.message = buildConstantString(isExp.location, msg);
+	as.message = buildConstantString(isExp.location, msg.toString());
 	return Succeeded;
 }
 

@@ -5,6 +5,8 @@ module volt.util.path;
 
 import watt.conv : toString;
 import watt.path : mkdir, exists, dirName, dirSeparator;
+import watt.text.sink : StringSink;
+import watt.text.format : format;
 
 version (Posix) {
 	version (Volt) import core.posix.unistd : getuid;
@@ -36,14 +38,16 @@ void mkdirP(string name)
  */
 string[] genPossibleFilenames(string dir, string[] names, string suffix)
 {
-	string[] paths;
-	auto ret = dir;
+	auto paths = new string[](2);
+	StringSink ret;
+	ret.sink(dir);
 
 	foreach (name; names) {
-		ret ~= dirSeparator ~ name;
+		ret.sink(dirSeparator);
+		ret.sink(name);
 	}
-	paths ~= ret ~ suffix;
-	paths ~= ret ~ dirSeparator ~ "package" ~  suffix;
+	paths[0] = format("%s%s", ret.toString(), suffix);
+	paths[1] = format("%s%spackage%s", ret.toString(), dirSeparator, suffix);
 
 	return paths;
 }
@@ -53,9 +57,10 @@ string[] genPossibleFilenames(string dir, string[] names, string suffix)
  */
 string getTemporarySubdirectoryName()
 {
-	string name = "volta-";
+	StringSink name;
+	name.sink("volta-");
 	version (Posix) {
-		name ~= toString(getuid());
+		name.sink(toString(getuid()));
 	}
-	return name;
+	return name.toString();
 }
