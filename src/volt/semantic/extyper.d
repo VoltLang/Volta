@@ -2678,7 +2678,7 @@ ir.Type extypeTokenExp(Context ctx, ref ir.Exp exp, Parent parent)
 		// @TODO fix this.
 		// auto buf = new StringSink();
 		// auto pp = new PrettyPrinter("\t", buf.sink);
-		auto pp = new PrettyPrinter("\t", cast(void delegate(string))sink);
+		auto pp = new PrettyPrinter("\t", cast(void delegate(scope string))sink);
 	} else {
 		auto pp = new PrettyPrinter("\t", &sink);
 	}
