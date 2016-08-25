@@ -102,11 +102,38 @@ bool willConvert(ir.Type arg, ir.Type param)
 		return willConvertFunctionSetType(parameter, argument);
 	case FunctionType:
 	case DelegateType:
-		return typesEqual(argument, parameter, IgnoreStorage);
+		return willConvertCallable(parameter, argument);
 	case Struct:
 		return typesEqual(argument, parameter);
 	default: return false;
 	}
+}
+
+bool willConvertCallable(ir.Type l, ir.Type r)
+{
+	auto lct = cast(ir.CallableType)l;
+	auto rct = cast(ir.CallableType)r;
+	if (lct is null || rct is null) {
+		return false;
+	}
+	if (lct.params.length != rct.params.length) {
+		return false;
+	}
+	if (!typesEqual(lct.ret, rct.ret, IgnoreStorage)) {
+		return false;
+	}
+	foreach (i, param; lct.params) {
+		if (!typesEqual(lct.params[i], rct.params[i], IgnoreStorage)) {
+			return false;
+		}
+		if (!mutableIndirection(lct.params[i])) {
+			continue;
+		}
+		if (!rct.params[i].isScope && lct.params[i].isScope) {
+			return false;
+		}
+	}
+	return true;
 }
 
 bool willConvertInterface(ir.Type l, ir.Type r)
