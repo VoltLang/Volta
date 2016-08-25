@@ -132,6 +132,9 @@ bool willConvertCallable(ir.Type l, ir.Type r)
 		if (!rct.params[i].isScope && lct.params[i].isScope) {
 			return false;
 		}
+		if (!willConvert(rct.params[i], lct.params[i])) {
+			return false;
+		}
 	}
 	return true;
 }
