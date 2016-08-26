@@ -22,7 +22,7 @@ enum immutable(string)[] _tokenToString = [
 "asm", "assert", "auto", "body", "bool", "break", "byte", "case",
 "cast", "catch", "cdouble", "cent", "cfloat", "char", "class",
 "const", "continue", "creal", "dchar", "debug", "default",
-"delegate", "delete", "deprecated", "do", "double", "else", "enum",
+"delegate", "delete", "deprecated", "dg", "do", "double", "else", "enum",
 "export", "extern", "f32", "f64",
 "false", "final", "finally", "float", "for",
 "foreach", "foreach_reverse", "fn", "function", "global", "goto",
@@ -80,7 +80,7 @@ enum TokenType
 	Case, Cast, Catch, Cdouble, Cent, Cfloat, Char,
 	Class, Const, Continue, Creal,
 	Dchar, Debug, Default, Delegate, Delete,
-	Deprecated, Do, Double,
+	Deprecated, Dg, Do, Double,
 	Else, Enum, Export, Extern,
 	F32, F64,
 	False, Final, Finally, Float, For, Foreach,
@@ -227,6 +227,7 @@ TokenType identifierType(string ident)
 	case "delegate":            return Delegate;
 	case "delete":              return Delete;
 	case "deprecated":          return Deprecated;
+	case "dg":                  return Dg;
 	case "do":                  return Do;
 	case "double":              return Double;
 	case "else":                return Else;
