@@ -58,8 +58,8 @@ public:
 		}
 
 		auto cfs = new SpringBoard(this, func);
-		mCompiledFunctions[func.uniqueId] = cfs.dg;
-		return cfs.dg;
+		mCompiledFunctions[func.uniqueId] = cfs.dgt;
+		return cfs.dgt;
 	}
 
 	override void close()
@@ -85,7 +85,7 @@ class SpringBoard
 {
 public:
 	Location loc;
-	BackendResult.CompiledDg dg;
+	BackendResult.CompiledDg dgt;
 
 
 protected:
@@ -125,11 +125,11 @@ public:
 		}
 
 		switch (func.type.mangledName) {
-		case "FvZi": dg = callFvZi; break;
-		case "FviZi": dg = callFviZi; break;
+		case "FvZi": dgt = callFvZi; break;
+		case "FviZi": dgt = callFviZi; break;
 		default:
 			buildSpringBoard(host, func.mangledName, func.type);
-			dg = callSpring;
+			dgt = callSpring;
 		}
 	}
 

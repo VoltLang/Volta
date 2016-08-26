@@ -20,7 +20,7 @@ import volt.parser.expression;
 import volt.parser.toplevel;
 
 
-ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
+ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 {
 	auto succeeded = eatComments(ps);
 
@@ -34,7 +34,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		if (!succeeded) {
 			return succeeded;
 		}
-		dg(_import);
+		dgt(_import);
 		return eatComments(ps);
 	case TokenType.Return:
 		ir.ReturnStatement r;
@@ -42,7 +42,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		if (!succeeded) {
 			return succeeded;
 		}
-		dg(r);
+		dgt(r);
 		return eatComments(ps);
 	case TokenType.OpenBrace:
 		ir.BlockStatement b;
@@ -50,7 +50,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		if (!succeeded) {
 			return succeeded;
 		}
-		dg(b);
+		dgt(b);
 		return eatComments(ps);
 	case TokenType.Asm:
 		ir.AsmStatement a;
@@ -58,7 +58,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		if (!succeeded) {
 			return succeeded;
 		}
-		dg(a);
+		dgt(a);
 		return eatComments(ps);
 	case TokenType.If:
 		ir.IfStatement i;
@@ -66,7 +66,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		if (!succeeded) {
 			return succeeded;
 		}
-		dg(i);
+		dgt(i);
 		return eatComments(ps);
 	case TokenType.While:
 		ir.WhileStatement w;
@@ -74,7 +74,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		if (!succeeded) {
 			return succeeded;
 		}
-		dg(w);
+		dgt(w);
 		return eatComments(ps);
 	case TokenType.Do:
 		ir.DoStatement d;
@@ -82,7 +82,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		if (!succeeded) {
 			return succeeded;
 		}
-		dg(d);
+		dgt(d);
 		return eatComments(ps);
 	case TokenType.For:
 		ir.ForStatement f;
@@ -90,7 +90,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		if (!succeeded) {
 			return succeeded;
 		}
-		dg(f);
+		dgt(f);
 		return eatComments(ps);
 	case TokenType.Foreach, TokenType.ForeachReverse:
 		ir.ForeachStatement f;
@@ -98,7 +98,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		if (!succeeded) {
 			return succeeded;
 		}
-		dg(f);
+		dgt(f);
 		return eatComments(ps);
 	case TokenType.Switch:
 		ir.SwitchStatement ss;
@@ -106,7 +106,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		if (!succeeded) {
 			return succeeded;
 		}
-		dg(ss);
+		dgt(ss);
 		return eatComments(ps);
 	case TokenType.Break:
 		ir.BreakStatement bs;
@@ -114,7 +114,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		if (!succeeded) {
 			return succeeded;
 		}
-		dg(bs);
+		dgt(bs);
 		return eatComments(ps);
 	case TokenType.Continue:
 		ir.ContinueStatement cs;
@@ -122,7 +122,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		if (!succeeded) {
 			return succeeded;
 		}
-		dg(cs);
+		dgt(cs);
 		return eatComments(ps);
 	case TokenType.Goto:
 		ir.GotoStatement gs;
@@ -130,7 +130,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		if (!succeeded) {
 			return succeeded;
 		}
-		dg(gs);
+		dgt(gs);
 		return eatComments(ps);
 	case TokenType.With:
 		ir.WithStatement ws;
@@ -138,7 +138,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		if (!succeeded) {
 			return succeeded;
 		}
-		dg(ws);
+		dgt(ws);
 		return eatComments(ps);
 	case TokenType.Synchronized:
 		ir.SynchronizedStatement ss;
@@ -146,7 +146,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		if (!succeeded) {
 			return succeeded;
 		}
-		dg(ss);
+		dgt(ss);
 		return eatComments(ps);
 	case TokenType.Try:
 		ir.TryStatement t;
@@ -154,7 +154,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		if (!succeeded) {
 			return succeeded;
 		}
-		dg(t);
+		dgt(t);
 		return eatComments(ps);
 	case TokenType.Throw:
 		ir.ThrowStatement t;
@@ -162,7 +162,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		if (!succeeded) {
 			return succeeded;
 		}
-		dg(t);
+		dgt(t);
 		return eatComments(ps);
 	case TokenType.Scope:
 		if (ps.lookahead(1).type == TokenType.OpenParen && ps.lookahead(2).type == TokenType.Identifier &&
@@ -174,7 +174,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 				if (!succeeded) {
 					return succeeded;
 				}
-				dg(ss);
+				dgt(ss);
 				return eatComments(ps);
 			}
 		}
@@ -185,13 +185,13 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		if (!succeeded) {
 			return succeeded;
 		}
-		dg(prs);
+		dgt(prs);
 		return eatComments(ps);
 	case TokenType.Identifier:
 		if (ps.lookahead(1).type == TokenType.Colon ||
 		    ps.lookahead(1).type == TokenType.ColonAssign ||
 			ps.lookahead(1).type == TokenType.Comma) {
-			succeeded = parseColonAssign(ps, dg);
+			succeeded = parseColonAssign(ps, dgt);
 			if (!succeeded) {
 				return succeeded;
 			}
@@ -218,7 +218,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 			if (!succeeded) {
 				return succeeded;
 			}
-			dg(as);
+			dgt(as);
 			return eatComments(ps);
 		} else {
 			goto default;
@@ -230,7 +230,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		if (!succeeded) {
 			return succeeded;
 		}
-		dg(a);
+		dgt(a);
 		return eatComments(ps);
 	case TokenType.Version:
 	case TokenType.Debug:
@@ -239,7 +239,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		if (!succeeded) {
 			return succeeded;
 		}
-		dg(cs);
+		dgt(cs);
 		return eatComments(ps);
 	case TokenType.Mixin:
 		ir.MixinStatement ms;
@@ -247,7 +247,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		if (!succeeded) {
 			return succeeded;
 		}
-		dg(ms);
+		dgt(ms);
 		return eatComments(ps);
 	default:
 		// It is safe to just set succeeded like this since
@@ -255,7 +255,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 		void func(ir.Node n) {
 			auto exp = cast(ir.Exp)n;
 			if (exp is null) {
-				dg(n);
+				dgt(n);
 				return;
 			}
 
@@ -267,7 +267,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
 			auto es = new ir.ExpStatement();
 			es.location = exp.location;
 			es.exp = exp;
-			dg(es);
+			dgt(es);
 		}
 
 		version (Volt) {
@@ -292,10 +292,10 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dg)
  *   a * b;
  * An error like "a used as type" should be emitted.
  */
-ParseStatus parseVariableOrExpression(ParserStream ps, NodeSinkDg dg)
+ParseStatus parseVariableOrExpression(ParserStream ps, NodeSinkDg dgt)
 {
 	size_t pos = ps.save();
-	auto succeeded = parseVariable(ps, dg);
+	auto succeeded = parseVariable(ps, dgt);
 	if (succeeded) {
 		return Succeeded;
 	}
@@ -312,7 +312,7 @@ ParseStatus parseVariableOrExpression(ParserStream ps, NodeSinkDg dg)
 	if (succeeded) {
 		succeeded = parseFunction(ps, func, base);
 		if (succeeded) {
-			dg(func);
+			dgt(func);
 			return Succeeded;
 		}
 	}
@@ -329,7 +329,7 @@ ParseStatus parseVariableOrExpression(ParserStream ps, NodeSinkDg dg)
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.Variable);
 	}
-	dg(e);
+	dgt(e);
 	return Succeeded;
 }
 
@@ -1393,7 +1393,7 @@ ParseStatus parseStaticIs(ParserStream ps, out ir.AssertStatement as)
 }
 
 // a := 1
-ParseStatus parseColonAssign(ParserStream ps, NodeSinkDg dg)
+ParseStatus parseColonAssign(ParserStream ps, NodeSinkDg dgt)
 {
 	ir.Variable var;
 	auto loc = ps.peek.location;
@@ -1411,7 +1411,7 @@ ParseStatus parseColonAssign(ParserStream ps, NodeSinkDg dg)
 		}
 	}
 	if (idents.length > 1 || ps == TokenType.Colon) {
-		return parseColonDeclaration(ps, idents, dg);
+		return parseColonDeclaration(ps, idents, dgt);
 	}
 	if (ps != TokenType.ColonAssign) {
 		return unexpectedToken(ps, ir.NodeType.Variable);
@@ -1429,12 +1429,12 @@ ParseStatus parseColonAssign(ParserStream ps, NodeSinkDg dg)
 	}
 	var = buildVariable(loc, buildAutoType(loc), ir.Variable.Storage.Invalid,
                         idents[0].value, exp);
-	dg(var);
+	dgt(var);
 	return Succeeded;
 }
 
 // a, b : int
-ParseStatus parseColonDeclaration(ParserStream ps, Token[] idents, NodeSinkDg dg)
+ParseStatus parseColonDeclaration(ParserStream ps, Token[] idents, NodeSinkDg dgt)
 {
 	if (ps != TokenType.Colon) {
 		return unexpectedToken(ps, ir.NodeType.Variable);
@@ -1459,7 +1459,7 @@ ParseStatus parseColonDeclaration(ParserStream ps, Token[] idents, NodeSinkDg dg
 		auto var = buildVariable(ident.location, i > 0 ? copyType(type) : type,
 		                         ir.Variable.Storage.Invalid, ident.value);
 		var.assign = assign;
-		dg(var);
+		dgt(var);
 	}
 	return match(ps, ir.NodeType.Variable, ir.TokenType.Semicolon);
 }

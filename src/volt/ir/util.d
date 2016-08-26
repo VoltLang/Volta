@@ -207,13 +207,13 @@ ir.Type copyTypeSmart(Location loc, ir.Type type)
 		break;
 	case DelegateType:
 		auto asDg = cast(ir.DelegateType)type;
-		auto dg = new ir.DelegateType(asDg);
-		dg.location = loc;
-		dg.ret = copyTypeSmart(loc, dg.ret);
-		foreach (i, ref t; dg.params) {
+		auto dgt = new ir.DelegateType(asDg);
+		dgt.location = loc;
+		dgt.ret = copyTypeSmart(loc, dgt.ret);
+		foreach (i, ref t; dgt.params) {
 			t = copyTypeSmart(loc, t);
 		}
-		outType = dg;
+		outType = dgt;
 		break;
 	case StorageType:
 		auto asSt = cast(ir.StorageType)type;

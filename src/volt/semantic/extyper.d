@@ -183,10 +183,10 @@ ir.Type handleFunctionStore(Context ctx, string ident, ref ir.Exp exp,
 
 			exp = buildExpReference(exp.location, func, ident);
 
-			auto dg = new ir.DelegateType(func.type);
-			dg.location = exp.location;
-			dg.isScope = true;
-			return dg;
+			auto dgt = new ir.DelegateType(func.type);
+			dgt.location = exp.location;
+			dgt.isScope = true;
+			return dgt;
 		}
 	}
 
@@ -259,18 +259,18 @@ ir.Type handleFunctionStore(Context ctx, string ident, ref ir.Exp exp,
 
 	if (child !is null) {
 		assert(members > 0);
-		auto cdg = buildCreateDelegate(exp.location, child, eref);
-		cdg.supressVtableLookup = via == StoreSource.StaticPostfix;
-		exp = cdg;
+		auto cdgt = buildCreateDelegate(exp.location, child, eref);
+		cdgt.supressVtableLookup = via == StoreSource.StaticPostfix;
+		exp = cdgt;
 
 		if (set !is null) {
 			set.type.isFromCreateDelegate = true;
 			ret = set.type;
 		} else {
 			auto func = fns[0];
-			auto dg = new ir.DelegateType(func.type);
-			dg.location = exp.location;
-			ret = dg;
+			auto dgt = new ir.DelegateType(func.type);
+			dgt.location = exp.location;
+			ret = dgt;
 		}
 	} else {
 		assert(members == 0);
@@ -2826,9 +2826,9 @@ ir.Type extypeRunExp(Context ctx, ref ir.Exp exp, Parent parent)
 	}
 	auto result = ctx.lp.driver.hostCompile(liftmod);
 	assert(result !is null);
-	auto dg = result.getFunction(liftfn);
-	assert(dg !is null);
-	exp = dg(args);
+	auto dgt = result.getFunction(liftfn);
+	assert(dgt !is null);
+	exp = dgt(args);
 	return liftfn.type.ret;
 }
 

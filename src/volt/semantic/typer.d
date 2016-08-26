@@ -451,9 +451,9 @@ ir.Type getPostfixCreateDelegateType(ir.Postfix postfix)
 		throw panic(postfix.location, "static function called through instance");
 	}
 
-	auto dg = new ir.DelegateType(func.type);
-	dg.location = postfix.location;
-	return dg;
+	auto dgt = new ir.DelegateType(func.type);
+	dgt.location = postfix.location;
+	return dgt;
 }
 
 void retrieveScope(ir.Node tt, ir.Postfix postfix, ref ir.Scope _scope, ref ir.Class _class, ref string emsg)

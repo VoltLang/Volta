@@ -271,8 +271,8 @@ void handleIs(State state, ir.BinOp bin, Value result)
 	// This debug info location is set on all following instructions.
 	diSetPosition(state, bin.location);
 
-	auto dg = cast(DelegateType)result.type;
-	if (dg !is null) {
+	auto dgt = cast(DelegateType)result.type;
+	if (dgt !is null) {
 		auto lInstance = getValueFromAggregate(state, loc, left, DelegateType.voidPtrIndex);
 		auto lFunc = getValueFromAggregate(state, loc, left, DelegateType.funcIndex);
 		auto rInstance = getValueFromAggregate(state, loc, right, DelegateType.voidPtrIndex);
@@ -1081,16 +1081,16 @@ void handleCreateDelegate(State state, ir.Postfix postfix, Value result)
 	auto irDg = new ir.DelegateType(irFn);
 	irDg.mangledName = volt.semantic.mangle.mangle(irDg);
 
-	auto dg = cast(DelegateType)state.fromIr(irDg);
-	if (dg is null)
+	auto dgt = cast(DelegateType)state.fromIr(irDg);
+	if (dgt is null)
 		throw panicOhGod(postfix);
 
 	instance.value = LLVMBuildBitCast(
 		state.builder, instance.value, state.voidPtrType.llvmType, "");
 	func.value = LLVMBuildBitCast(
-		state.builder, func.value, dg.llvmCallPtrType, "");
+		state.builder, func.value, dgt.llvmCallPtrType, "");
 
-	auto v = LLVMBuildAlloca(state.builder, dg.llvmType, "");
+	auto v = LLVMBuildAlloca(state.builder, dgt.llvmType, "");
 
 	auto funcPtr = LLVMBuildStructGEP(
 		state.builder, v, DelegateType.funcIndex, "");
@@ -1100,7 +1100,7 @@ void handleCreateDelegate(State state, ir.Postfix postfix, Value result)
 	LLVMBuildStore(state.builder, func.value, funcPtr);
 	LLVMBuildStore(state.builder, instance.value, voidPtrPtr);
 
-	result.type = dg;
+	result.type = dgt;
 	result.isPointer = true;
 	result.value = v;
 }

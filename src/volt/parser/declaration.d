@@ -20,7 +20,7 @@ import volt.parser.declaration;
 import volt.parser.statements;
 
 
-ParseStatus parseVariable(ParserStream ps, NodeSinkDg dg)
+ParseStatus parseVariable(ParserStream ps, NodeSinkDg dgt)
 {
 	if (ps == TokenType.Alias) {
 		ir.Alias a;
@@ -28,7 +28,7 @@ ParseStatus parseVariable(ParserStream ps, NodeSinkDg dg)
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Variable);
 		}
-		dg(a);
+		dgt(a);
 		return Succeeded;
 	}
 
@@ -47,7 +47,7 @@ ParseStatus parseVariable(ParserStream ps, NodeSinkDg dg)
 		if (_global && func.kind == ir.Function.Kind.Invalid) {
 			func.kind = ir.Function.Kind.GlobalNested;
 		}
-		dg(func);
+		dgt(func);
 		return Succeeded;
 	}
 
@@ -69,10 +69,10 @@ ParseStatus parseVariable(ParserStream ps, NodeSinkDg dg)
 			return unexpectedToken(ps, ir.NodeType.Variable);
 		}
 		// No need to report variable here since it's already reported.
-		return reallyParseVariable(ps, base, dg);
+		return reallyParseVariable(ps, base, dgt);
 	} else if (colonDeclaration) {
 		// New variable declaration.
-		return parseColonAssign(ps, dg);
+		return parseColonAssign(ps, dgt);
 	} else if (ps.lookahead(1).type == TokenType.OpenParen) {
 		// Function!
 		ir.Function func;
@@ -84,7 +84,7 @@ ParseStatus parseVariable(ParserStream ps, NodeSinkDg dg)
 			func.kind = ir.Function.Kind.GlobalNested;
 		}
 		warningOldStyleFunction(func.location, ps.settings);
-		dg(func);
+		dgt(func);
 		return Succeeded;
 	} else {
 		return parseExpected(ps, ps.peek.location, ir.NodeType.Variable, "declaration");
@@ -92,7 +92,7 @@ ParseStatus parseVariable(ParserStream ps, NodeSinkDg dg)
 	version (Volt) assert(false); // If
 }
 
-ParseStatus parseJustVariable(ParserStream ps, NodeSinkDg dg)
+ParseStatus parseJustVariable(ParserStream ps, NodeSinkDg dgt)
 {
 	ir.Type base;
 	auto succeeded = parseType(ps, base);
@@ -101,12 +101,12 @@ ParseStatus parseJustVariable(ParserStream ps, NodeSinkDg dg)
 	}
 	ir.Node[] nodes;
 	// No need to report variable here since its allready reported.
-	succeeded = reallyParseVariable(ps, base, dg);
+	succeeded = reallyParseVariable(ps, base, dgt);
 	if (!succeeded) {
 		return succeeded;
 	}
 	foreach (i, node; nodes) {
-		dg(node);
+		dgt(node);
 		assert(cast(ir.Variable) node !is null, "reallyParseVariable parsed non variable");
 	}
 	return Succeeded;
@@ -188,7 +188,7 @@ ParseStatus parseAlias(ParserStream ps, out ir.Alias a)
 	return Succeeded;
 }
 
-ParseStatus reallyParseVariable(ParserStream ps, ir.Type base, NodeSinkDg dg)
+ParseStatus reallyParseVariable(ParserStream ps, ir.Type base, NodeSinkDg dgt)
 {
 	ir.Variable first;
 	while (true) {
@@ -216,7 +216,7 @@ ParseStatus reallyParseVariable(ParserStream ps, ir.Type base, NodeSinkDg dg)
 			}
 		}
 		warningOldStyleVariable(d.location, ps.settings);
-		dg(d);
+		dgt(d);
 
 		if (first is null) {
 			first = d;

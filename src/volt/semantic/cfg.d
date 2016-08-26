@@ -83,17 +83,17 @@ public:
 	}
 }
 
-/// Returns true if the given block can reach the entry without dg returning true.
-bool canReachWithout(Block block, bool delegate(Block) dg)
+/// Returns true if the given block can reach the entry without dgt returning true.
+bool canReachWithout(Block block, bool delegate(Block) dgt)
 {
-	if (dg(block)) {
+	if (dgt(block)) {
 		return false;
 	}
 	if (block.parents.length == 0) {
 		return true;
 	}
 	foreach (parent; block.parents) {
-		if (canReachWithout(parent, dg)) {
+		if (canReachWithout(parent, dgt)) {
 			return true;
 		}
 	}

@@ -543,22 +543,22 @@ public:
 	enum uint funcIndex = 1;
 
 public:
-	static DelegateType fromIr(State state, ir.DelegateType dg)
+	static DelegateType fromIr(State state, ir.DelegateType dgt)
 	{
 		Type[] params;
 		Type ret;
 
-		ret = .fromIr(state, dg.ret);
-		foreach (param; dg.params) {
+		ret = .fromIr(state, dgt.ret);
+		foreach (param; dgt.params) {
 			.fromIr(state, param);
 		}
 
 		// FunctionPointers can via structs reference themself.
-		auto test = state.getTypeNoCreate(dg.mangledName);
+		auto test = state.getTypeNoCreate(dgt.mangledName);
 		if (test !is null) {
 			return cast(DelegateType)test;
 		}
-		return new DelegateType(state, dg);
+		return new DelegateType(state, dgt);
 	}
 
 	override void from(State state, ir.Constant cnst, Value result)
@@ -1052,17 +1052,17 @@ ir.Type scrubStorage(ir.Type type)
 		break;
 	case DelegateType:
 		auto asDg = cast(ir.DelegateType)type;
-		auto dg = new ir.DelegateType(asDg);
-		dg.location = asDg.location;
-		dg.ret = scrubStorage(dg.ret);
-		foreach (i, ref t; dg.params) {
+		auto dgt = new ir.DelegateType(asDg);
+		dgt.location = asDg.location;
+		dgt.ret = scrubStorage(dgt.ret);
+		foreach (i, ref t; dgt.params) {
 			t = scrubStorage(t);
 		}
 		// TODO a better fix for this.
-		dg.isConst = false;
-		dg.isScope = false;
-		dg.isImmutable = false;
-		outType = dg;
+		dgt.isConst = false;
+		dgt.isScope = false;
+		dgt.isImmutable = false;
+		outType = dgt;
 		break;
 	case TypeReference:
 		auto asTr = cast(ir.TypeReference)type;

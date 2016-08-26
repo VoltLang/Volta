@@ -269,19 +269,19 @@ ir.FunctionType copy(ir.FunctionType old)
 
 ir.DelegateType copy(ir.DelegateType old)
 {
-	auto dg = new ir.DelegateType(old);
-	dg.location = old.location;
-	dg.ret = copyType(old.ret);
+	auto dgt = new ir.DelegateType(old);
+	dgt.location = old.location;
+	dgt.ret = copyType(old.ret);
 	panicAssert(old, old.params.length == old.isArgRef.length && old.params.length == old.isArgOut.length);
-	dg.params = new ir.Type[](old.params.length);
-	dg.isArgOut = new bool[](old.isArgOut.length);
-	dg.isArgRef = new bool[](old.isArgRef.length);
+	dgt.params = new ir.Type[](old.params.length);
+	dgt.isArgOut = new bool[](old.isArgOut.length);
+	dgt.isArgRef = new bool[](old.isArgRef.length);
 	foreach (i, ptype; old.params) {
-		dg.params[i] = copyType(ptype);
-		dg.isArgOut[i] = old.isArgOut[i];
-		dg.isArgRef[i] = old.isArgRef[i];
+		dgt.params[i] = copyType(ptype);
+		dgt.isArgOut[i] = old.isArgOut[i];
+		dgt.isArgRef[i] = old.isArgRef[i];
 	}
-	return dg;
+	return dgt;
 }
 
 ir.StorageType copy(ir.StorageType old)
