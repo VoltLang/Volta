@@ -10,48 +10,46 @@ class Throwable
 	// This is updated each time the exception is thrown.
 	throwLocation: string;
 
-	// These are manually supplied
-	file: string;
-	line: size_t;
+	// This is manually supplied.
+	loc: string;
 
-	this(string msg, string file = __FILE__, size_t line = __LINE__)
+	this(string msg, string location = __LOCATION__)
 	{
 		this.msg = msg;
-		this.file = file;
-		this.line = line;
+		this.loc = location;
 	}
 }
 
 class Exception : Throwable
 {
-	this(string msg, string file = __FILE__, size_t line = __LINE__)
+	this(string msg, string location = __LOCATION__)
 	{
-		super(msg, file, line);
+		super(msg, location);
 	}
 }
 
 class Error : Throwable
 {
-	this(string msg, string file = __FILE__, size_t line = __LINE__)
+	this(string msg, string location = __LOCATION__)
 	{
-		super(msg, file, line);
+		super(msg, location);
 	}
 }
 
 class AssertError : Error
 {
-	this(string msg, string file = __FILE__, size_t line = __LINE__)
+	this(string msg, string location = __LOCATION__)
 	{
-		super(msg, file, line);
+		super(msg, location);
 	}
 }
 
 class MalformedUTF8Exception : Exception
 {
 	this(string msg = "malformed UTF-8 stream",
-	     string file = __FILE__, size_t line = __LINE__)
+	     string location = __LOCATION__)
 	{
-		super(msg, file, line);
+		super(msg, location);
 	}
 }
 

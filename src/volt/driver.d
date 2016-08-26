@@ -390,20 +390,26 @@ public:
 			return ret;
 		} catch (CompilerPanic e) {
 			io.error.writefln(e.msg);
-			if (e.file !is null) {
-				io.error.writefln("%s:%s", e.file, e.line);
+			version (Volt) auto loc = e.loc;
+			else auto loc = e.file is null ? "" : format("%s:%s", e.file, e.line);
+			if (loc != "") {
+				io.error.writefln("%s", loc);
 			}
 			return 2;
 		} catch (CompilerError e) {
 			io.error.writefln(e.msg);
-			debug if (e.file !is null) {
-				io.error.writefln("%s:%s", e.file, e.line);
+			version (Volt) auto loc = e.loc;
+			else auto loc = e.file is null ? "" : format("%s:%s", e.file, e.line);
+			debug if (loc != "") {
+				io.error.writefln("%s", loc);
 			}
 			return 1;
 		} catch (Throwable t) {
 			io.error.writefln("panic: %s", t.msg);
-			if (t.file !is null) {
-				io.error.writefln("%s:%s", t.file, t.line);
+			version (Volt) auto loc = t.loc;
+			else auto loc = t.file is null ? "" : format("%s:%s", t.file, t.line);
+			if (loc != "") {
+				io.error.writefln("%s", loc);
 			}
 			return 2;
 		}

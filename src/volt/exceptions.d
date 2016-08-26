@@ -41,7 +41,7 @@ public:
 	{
 		this.more = more;
 		this.neverIgnore = neverIgnore;
-		super(format(errorFormat(), message), file, cast(size_t)line);
+		super(format(errorFormat(), message), format("%s:%s", file, line));
 	}
 
 	this(Location loc, string message, CompilerError more, bool neverIgnore, string file = __FILE__, const int line = __LINE__)
@@ -50,7 +50,7 @@ public:
 		this.location = loc;
 		this.hasLocation = true;
 		this.neverIgnore = neverIgnore;
-		super(format(locationFormat(), loc.toString(), message), file, cast(size_t)line);
+		super(format(locationFormat(), loc.toString(), message), format("%s:%s", file, line));
 	}
 
 protected:
