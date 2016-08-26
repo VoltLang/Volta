@@ -280,7 +280,8 @@ ParseStatus parseType(ParserStream ps, out ir.Type base)
 		base = t;
 		break;
 	case TokenType.Fn:
-		ir.FunctionType func;
+	case TokenType.Dg:
+		ir.CallableType func;
 		auto succeeded = parseNewFunctionType(ps, func);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TypeOf);
@@ -433,7 +434,7 @@ ParseStatus parseStorageType(ParserStream ps, out ir.StorageType storageType)
 	return Succeeded;
 }
 
-ParseStatus parseNewFunctionParams(ParserStream ps, ir.FunctionType func)
+ParseStatus parseNewFunctionParams(ParserStream ps, ir.CallableType func)
 {
 	auto succeeded = match(ps, func, TokenType.OpenParen);
 	if (!succeeded) {
@@ -485,21 +486,22 @@ ParseStatus parseNewFunctionParams(ParserStream ps, ir.FunctionType func)
 	return Succeeded;
 }
 
-ParseStatus parseNewFunctionType(ParserStream ps, out ir.FunctionType func)
+ParseStatus parseNewFunctionType(ParserStream ps, out ir.CallableType func)
 {
-	func = new ir.FunctionType();
+	if (matchIf(ps, TokenType.Fn)) {
+		func = new ir.FunctionType();
+	} else if (matchIf(ps, TokenType.Dg)) {
+		func = new ir.DelegateType();
+	} else {
+		return parseFailed(ps, ir.NodeType.FunctionType);
+	}
 	func.location = ps.peek.location;
 	func.docComment = ps.comment();
-
-	auto succeeded = match(ps, func, TokenType.Fn);
-	if (!succeeded) {
-		return succeeded;
-	}
 
 	func.linkage = ir.Linkage.Volt;
 	if (matchIf(ps, TokenType.Bang)) {
 		auto linkageName = ps.peek.value;
-		succeeded = match(ps, func, TokenType.Identifier);
+		auto succeeded = match(ps, func, TokenType.Identifier);
 		if (!succeeded) {
 			return succeeded;
 		}
@@ -518,7 +520,7 @@ ParseStatus parseNewFunctionType(ParserStream ps, out ir.FunctionType func)
 		}
 	}
 
-	succeeded = parseNewFunctionParams(ps, func);
+	auto succeeded = parseNewFunctionParams(ps, func);
 	if (!succeeded) {
 		return parseFailed(ps, func);
 	}
