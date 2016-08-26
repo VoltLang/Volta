@@ -51,6 +51,19 @@ void warningOldStyleFunction(Location loc, Settings settings)
 	}
 }
 
+void warningOldStyleFunctionPtr(Location loc, Settings settings)
+{
+	if (settings.warningsEnabled) {
+		warning(loc, "old style function pointer.");
+	}
+}
+
+void warningOldStyleDelegateType(Location loc, Settings settings)
+{
+	if (settings.warningsEnabled) {
+		warning(loc, "old style delegate type.");
+	}
+}
 
 /*
  *

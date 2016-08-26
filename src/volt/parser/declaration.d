@@ -558,6 +558,7 @@ ParseStatus parseNewFunctionType(ParserStream ps, out ir.CallableType func)
 
 ParseStatus parseFunctionType(ParserStream ps, out ir.FunctionType func, ir.Type base)
 {
+	warningOldStyleFunctionPtr(ps.peek.location, ps.settings);
 	func = new ir.FunctionType();
 	func.location = ps.peek.location;
 	func.docComment = ps.comment();
@@ -579,6 +580,7 @@ ParseStatus parseFunctionType(ParserStream ps, out ir.FunctionType func, ir.Type
 
 ParseStatus parseDelegateType(ParserStream ps, out ir.DelegateType func, ir.Type base)
 {
+	warningOldStyleDelegateType(ps.peek.location, ps.settings);
 	func = new ir.DelegateType();
 	func.location = ps.peek.location;
 
