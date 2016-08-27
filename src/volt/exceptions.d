@@ -36,12 +36,19 @@ public:
 	CompilerError more; // Optional
 	string fixHint; // Optional
 
+	/**
+	 * Where was this error location, usefull for finding the source
+	 * of the error in the Volta source.
+	 */
+	string allocationLocation;
+
 public:
 	this(string message, CompilerError more, bool neverIgnore, string file = __FILE__, const int line = __LINE__)
 	{
 		this.more = more;
 		this.neverIgnore = neverIgnore;
-		super(format(errorFormat(), message), format("%s:%s", file, line));
+		this.allocationLocation = format("%s:%s", file, line);
+		super(format(errorFormat(), message));
 	}
 
 	this(Location loc, string message, CompilerError more, bool neverIgnore, string file = __FILE__, const int line = __LINE__)
@@ -50,7 +57,8 @@ public:
 		this.location = loc;
 		this.hasLocation = true;
 		this.neverIgnore = neverIgnore;
-		super(format(locationFormat(), loc.toString(), message), format("%s:%s", file, line));
+		this.allocationLocation = format("%s:%s", file, line);
+		super(format(locationFormat(), loc.toString(), message));
 	}
 
 protected:

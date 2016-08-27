@@ -390,16 +390,14 @@ public:
 			return ret;
 		} catch (CompilerPanic e) {
 			io.error.writefln(e.msg);
-			version (Volt) auto loc = e.loc;
-			else auto loc = e.file is null ? "" : format("%s:%s", e.file, e.line);
+			auto loc = e.allocationLocation;
 			if (loc != "") {
 				io.error.writefln("%s", loc);
 			}
 			return 2;
 		} catch (CompilerError e) {
 			io.error.writefln(e.msg);
-			version (Volt) auto loc = e.loc;
-			else auto loc = e.file is null ? "" : format("%s:%s", e.file, e.line);
+			auto loc = e.allocationLocation;
 			debug if (loc != "") {
 				io.error.writefln("%s", loc);
 			}
