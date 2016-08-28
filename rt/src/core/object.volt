@@ -39,8 +39,8 @@ class Attribute
 struct ModuleInfo
 {
 	next: ModuleInfo*;
-	ctors: void function()[];
-	dtors: void function()[];
+	ctors: fn ()[];
+	dtors: fn ()[];
 }
 
 @mangledName("_V__ModuleInfo_root") global moduleInfoRoot: ModuleInfo*;

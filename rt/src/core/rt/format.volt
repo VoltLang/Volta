@@ -7,7 +7,7 @@ module core.rt.format;
 alias SinkArg = scope const(char)[];
 
 /// The argument to the one true sink.
-alias Sink = scope void delegate(SinkArg);
+alias Sink = scope dg (SinkArg);
 
 extern(C) fn vrt_format_u64(sink: Sink, i: u64);
 extern(C) fn vrt_format_i64(sink: Sink, i: i64);

@@ -23,7 +23,7 @@ version (Emscripten) {
 		fn GC_FORCE_COLLECT();
 
 		extern global GC_java_finalization: i32;
-		alias GC_finalization_proc = void function(void* obj, void* client_data);
+		alias GC_finalization_proc = fn (obj: void*, client_data: void*);
 	}
 
 	alias GC_init = GC_INIT;
@@ -56,7 +56,7 @@ version (Emscripten) {
 		}
 
 		extern global GC_java_finalization: i32;
-		alias GC_finalization_proc = void function(void* obj, void* client_data);
+		alias GC_finalization_proc = fn (obj: void*, client_data: void*);
 	}
 
 }

@@ -9,7 +9,7 @@ import core.rt.misc: vrt_run_global_ctors, vrt_run_global_dtors, vrt_panic;
 
 
 
-extern(C) fn vrt_run_main(argc: i32, argv: char**, vmain: int function(string[])) i32
+extern(C) fn vrt_run_main(argc: i32, argv: char**, vmain: fn (string[]) int) i32
 {
 
 	// Currently all the init that is needed for the GC.

@@ -41,7 +41,7 @@ import core.typeinfo;
  * Clazz[] arr; { arr.ptr = allocDg(typeid(Clazz), 3); arr.length = 3 }
  * // Alloc size == (void*).sizeof * 3
  */
-alias AllocDg = void* delegate(TypeInfo typeinfo, size_t count);
+alias AllocDg = dg (typeinfo: TypeInfo, count: size_t) void*;
 local allocDg: AllocDg;
 
 struct Stats

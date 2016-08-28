@@ -56,7 +56,7 @@ version (Windows) {
 	}
 }
 
-alias _Unwind_Exception_Cleanup_Fn = void function(_Unwind_Reason_Code, _Unwind_Exception*);
+alias _Unwind_Exception_Cleanup_Fn = fn (_Unwind_Reason_Code, _Unwind_Exception*);
 
 struct _Unwind_Context {}
 
