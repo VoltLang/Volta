@@ -36,7 +36,6 @@ import volt.semantic.classify;
 import volt.semantic.typeinfo;
 import volt.semantic.irverifier;
 import volt.semantic.classresolver;
-import volt.semantic.annotationresolver;
 
 import volt.postparse.missing;
 import volt.postparse.gatherer;
@@ -234,7 +233,6 @@ public:
 		TYPE_UNION = getTypeEnum("Union");
 		TYPE_ENUM = getTypeEnum("Enum");
 		TYPE_ATTRIBUTE = getTypeEnum("Attribute");
-		TYPE_ANNOTATION = getTypeEnum("Annotation");
 		TYPE_VOID = getTypeEnum("Void");
 		TYPE_UBYTE = getTypeEnum("U8");
 		TYPE_BYTE = getTypeEnum("I8");
@@ -425,9 +423,9 @@ public:
 
 	override void resolve(ir.Scope current, ir.Attribute a)
 	{
-		if (!needsResolving(a)) {
-			return;
-		}
+		//if (!needsResolving(a)) {
+		//	return;
+		//}
 
 		auto e = new ExTyper(this);
 		e.transform(current, a);
@@ -520,7 +518,6 @@ public:
 
 	override void doResolve(ir.Class c)
 	{
-		resolve(c.myScope.parent, c.annotations);
 		fillInParentIfNeeded(this, c);
 		c.isResolved = true;
 		resolve(c.myScope, c.members);
@@ -530,13 +527,6 @@ public:
 	{
 		i.isResolved = true;
 	}
-
-	override void doResolve(ir.Annotation ua)
-	{
-		// Nothing to do here.
-		ua.isResolved = true;
-	}
-
 
 	/*
 	 *
@@ -591,19 +581,6 @@ public:
 
 		actualizeClass(this, c);
 	}
-
-	override void doActualize(ir.Annotation ua)
-	{
-		resolveNamed(ua);
-
-		auto w = mTracker.add(ua, Work.Action.Actualize);
-		scope (exit) {
-			w.done();
-		}
-
-		actualizeAnnotation(this, ua);
-	}
-
 
 	/*
 	 *

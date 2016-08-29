@@ -61,8 +61,6 @@ public abstract:
 	Status leave(ir.MixinFunction mf);
 	Status enter(ir.MixinTemplate mt);
 	Status leave(ir.MixinTemplate mt);
-	Status enter(ir.Annotation ui);
-	Status leave(ir.Annotation ui);
 
 	Status visit(ir.QualifiedName qname);
 	Status visit(ir.Identifier name);
@@ -205,7 +203,6 @@ public abstract:
 
 	Visitor.Status visit(ref ir.Exp, ir.IdentifierExp);
 	Visitor.Status visit(ref ir.Exp, ir.ExpReference);
-	Visitor.Status visit(ref ir.Exp, ir.TraitsExp);
 	Visitor.Status visit(ref ir.Exp, ir.TokenExp);
 	Visitor.Status visit(ref ir.Exp, ir.StoreExp);
 
@@ -249,8 +246,6 @@ override:
 	Status leave(ir.Condition c){ return Continue; }
 	Status enter(ir.ConditionTopLevel ctl){ return Continue; }
 	Status leave(ir.ConditionTopLevel ctl){ return Continue; }
-	Status enter(ir.Annotation ui){ return Continue; }
-	Status leave(ir.Annotation ui){ return Continue; }
 	Status enter(ir.MixinFunction mf){ return Continue; }
 	Status leave(ir.MixinFunction mf){ return Continue; }
 	Status enter(ir.MixinTemplate mt){ return Continue; }
@@ -395,7 +390,6 @@ override:
 
 	Status visit(ref ir.Exp, ir.ExpReference){ return Continue; }
 	Status visit(ref ir.Exp, ir.IdentifierExp){ return Continue; }
-	Status visit(ref ir.Exp, ir.TraitsExp){ return Continue; }
 	Status visit(ref ir.Exp, ir.TokenExp){ return Continue; }
 	Status visit(ref ir.Exp, ir.StoreExp){ return Continue; }
 
@@ -484,10 +478,6 @@ body {
 		auto asCtl = cast(ir.ConditionTopLevel) n;
 		assert(asCtl !is null);
 		return acceptConditionTopLevel(asCtl, av);
-	case Annotation:
-		auto asUi = cast(ir.Annotation) n;
-		assert(asUi !is null);
-		return acceptAnnotation(asUi, av);
 	case Condition:
 		auto asCondition = cast(ir.Condition) n;
 		assert(asCondition !is null);
@@ -521,7 +511,6 @@ body {
 	case StructLiteral:
 	case UnionLiteral:
 	case ClassLiteral:
-	case TraitsExp:
 	case TypeExp:
 	case StoreExp:
 	case TemplateInstanceExp:
@@ -708,8 +697,6 @@ Visitor.Status acceptExp(ref ir.Exp exp, Visitor av)
 		return acceptUnionLiteral(exp, cast(ir.UnionLiteral)exp, av);
 	case ClassLiteral:
 		return acceptClassLiteral(exp, cast(ir.ClassLiteral)exp, av);
-	case TraitsExp:
-		return acceptTraitsExp(exp, cast(ir.TraitsExp)exp, av);
 	case TokenExp:
 		return acceptTokenExp(exp, cast(ir.TokenExp)exp, av);
 	case TypeExp:
@@ -996,32 +983,6 @@ Visitor.Status acceptMixinTemplate(ir.MixinTemplate mt, Visitor av)
 	// Raw members not visited.
 
 	return av.leave(mt);
-}
-
-Visitor.Status acceptAnnotation(ir.Annotation ui, Visitor av)
-{
-	auto status = av.enter(ui);
-	if (status != VisitorContinue) {
-		return parentContinue(status);
-	}
-
-	foreach (field; ui.fields) {
-		status = accept(field, av);
-		if (status == VisitorStop) {
-			return VisitorStop;
-		} else if (status == VisitorContinue) {
-			continue;
-		}
-	}
-
-	if (ui.layoutClass !is null) {
-		status = accept(ui.layoutClass, av);
-		if (status != VisitorContinue) {
-			return parentContinue(status);
-		}
-	}
-
-	return av.leave(ui);
 }
 
 /*
@@ -2233,11 +2194,6 @@ Visitor.Status acceptStatementExp(ref ir.Exp exp, ir.StatementExp state, Visitor
 	}
 
 	return av.leave(exp, state);
-}
-
-Visitor.Status acceptTraitsExp(ref ir.Exp exp, ir.TraitsExp texp, Visitor av)
-{
-	return av.visit(exp, texp);
 }
 
 Visitor.Status acceptTokenExp(ref ir.Exp exp, ir.TokenExp fexp, Visitor av)

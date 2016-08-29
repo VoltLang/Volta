@@ -900,11 +900,6 @@ Type fromIrImpl(State state, ir.Type irType)
 		auto _iface = cast(ir._Interface)irType;
 		StructType.fromIr(state, _iface.layoutStruct);
 		return state.getTypeNoCreate(_iface.mangledName);
-	case Annotation:
-		auto attr = cast(ir.Annotation)irType;
-		assert(attr !is null);
-		irType = attr.layoutClass;
-		goto case Class;
 	case TypeReference:
 		auto tr = cast(ir.TypeReference)irType;
 
@@ -1076,7 +1071,6 @@ ir.Type scrubStorage(ir.Type type)
 		tr.type = asTr.type;
 		outType = tr;
 		break;
-	case Annotation:
 	case Interface:
 	case Struct:
 	case Union:

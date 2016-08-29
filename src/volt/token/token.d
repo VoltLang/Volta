@@ -37,7 +37,7 @@ enum immutable(string)[] _tokenToString = [
 "u8", "u16", "u32", "u64", "ubyte", "ucent", "uint",
 "ulong", "union", "unittest", "ushort", "usize", "va_arg", "version", "void",
 "volatile", "wchar", "while", "with", "__FILE__", "__FUNCTION__", "__LINE__",
-"__LOCATION__", "__PRETTY_FUNCTION__", "__thread", "__traits", "#run",
+"__LOCATION__", "__PRETTY_FUNCTION__", "__thread", "#run",
 "/", "/=", ".", "..", "...", "&", "&=", "&&", "|", "|=", "||",
 "-", "-=", "--", "+", "+=", "++", "<", "<=", "<<", "<<=", "<>", "<>=",
 ">", ">=", ">>=", ">>>=", ">>", ">>>", "!", "!=", "!<>", "!<>=", "!<",
@@ -104,7 +104,7 @@ enum TokenType
 	VaArg, Version, Void, Volatile,
 	Wchar, While, With,
 	__File__, __Function__, __Line__, __Location__,
-	__Pretty_Function__, __Thread, __Traits,
+	__Pretty_Function__, __Thread,
 	HashRun,
 
 	/// Symbols.
@@ -325,7 +325,6 @@ TokenType identifierType(string ident)
 	case "__LOCATION__":        return __Location__;
 	case "__PRETTY_FUNCTION__": return __Pretty_Function__;
 	case "__thread":            return __Thread;
-	case "__traits":            return __Traits;
 	default:                    return Identifier;
 	}
 }

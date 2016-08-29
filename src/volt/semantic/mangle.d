@@ -148,12 +148,6 @@ void mangleType(ir.Type t, Sink sink)
 		sink("C");
 		mangleScope(asClass.myScope, sink);
 		break;
-	case Annotation:
-		auto asAttr = cast(ir.Annotation) t;
-		assert(asAttr !is null);
-		sink("A");
-		mangleScope(asAttr.myScope, sink);
-		break;
 	case Enum:
 		auto asEnum = cast(ir.Enum) t;
 		assert(asEnum !is null);

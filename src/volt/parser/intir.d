@@ -171,7 +171,6 @@ public:
 		Typeid,          // If exp !is null, exp. Otherwise type.
 		Is,
 		ParenExp,        // tlargs
-		Traits,
 		StructLiteral,
 		TemplateInstance,
 		FunctionName,
@@ -192,7 +191,6 @@ public:
 	AssignExp[] tlargs;   // Optional.
 	IsExp isExp;  // Optional.
 	FunctionLiteral functionLiteral;  // Optional.
-	TraitsExp trait;  // If op == Traits.
 	TemplateInstanceExp _template;  // If op == TemplateInstance.
 	VaArgExp vaexp;  // If op == VaArg.
 }

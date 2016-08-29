@@ -146,10 +146,7 @@ ir.Type mangledToType(ref string mangledString)
 			ir.Type value = mangledString.mangledToType();
 			return buildAATypeSmart(location, key, value);
 		} else {
-			auto qname = mangledString.takeName();
-			auto attr = new ir.Annotation();
-			attr.name = qname.identifiers[$-1].value;
-			return attr;
+			assert(false, "annotation");
 		}
 	case "e":
 		return buildStorageType(location, ir.StorageType.Kind.Scope, mangledString.mangledToType());

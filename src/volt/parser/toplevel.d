@@ -212,21 +212,6 @@ body
 				goto case;
 			}
 		case TokenType.At:
-			if (ps.lookahead(1).type == TokenType.Interface) {
-				ir.Annotation ui;
-				succeeded = parseAnnotation(ps, ui);
-				if (!succeeded) {
-					return parseFailed(ps, ir.NodeType.TopLevelBlock);
-				}
-				sink.push(ui);
-				break;
-			} else {
-				goto case;
-			}
-			// TODO work around 'goto case' || 'cfg' bug.
-			// Need to have something here because of 'cfg' bug.
-			// Can't be assert(false) because of 'goto case' bug.
-			version (Volt) goto case;
 		case TokenType.Extern:
 		case TokenType.Align:
 		case TokenType.Deprecated:
@@ -1058,31 +1043,14 @@ ParseStatus parseAttribute(ParserStream ps, out ir.Attribute attr, bool noTopLev
 			attr.kind = ir.Attribute.Kind.Label;
 			break;
 		default:
-			attr.kind = ir.Attribute.Kind.Annotation;
-			auto succeeded = parseQualifiedName(ps, attr.annotationName);
-			if (!succeeded) {
-				return parseFailed(ps, attr);
-			}
-			if (matchIf(ps, TokenType.OpenParen)) {
-				while (ps.peek.type != TokenType.CloseParen) {
-					ir.Exp e;
-					succeeded = parseExp(ps, e);
-					if (!succeeded) {
-						return parseFailed(ps, attr);
-					}
-					attr.arguments ~= e;
-					if (ps == TokenType.Comma) {
-						ps.get();
-					}
-				}
-				if (ps != TokenType.CloseParen) {
-					return unexpectedToken(ps, attr);
-				}
-				ps.get();
-			}
+			return parseFailed(ps, attr);
+		}
+		version (Volt) { if (true) {
+			// TODO: Fix Volt's CFG bug.
+			break;
+		} } else {
 			break;
 		}
-		break;
 	case TokenType.Deprecated: attr.kind = ir.Attribute.Kind.Deprecated; break;
 	case TokenType.Private: attr.kind = ir.Attribute.Kind.Private; break;
 	case TokenType.Protected: attr.kind = ir.Attribute.Kind.Protected; break;
@@ -1270,45 +1238,4 @@ ParseStatus parseConditionTopLevel(ParserStream ps, out ir.ConditionTopLevel ctl
 	}
 
 	return Succeeded;
-}
-
-ParseStatus parseAnnotation(ParserStream ps, out ir.Annotation ui)
-{
-	ui = new ir.Annotation();
-	ui.location = ps.peek.location;
-	ui.docComment = ps.comment();
-
-	auto succeeded = match(ps, ir.NodeType.Annotation,
-		[TokenType.At, TokenType.Interface, TokenType.Identifier]);
-	if (!succeeded) {
-		return succeeded;
-	}
-
-	auto nameTok = ps.previous;
-	ui.name = nameTok.value;
-
-	if (ui.name[0] >= 'a' && ui.name[0] <= 'z') {
-		return parseExpected(ps, ps.peek.location, ui, "upper case letter or '_'");
-	}
-
-	if (ps != TokenType.OpenBrace) {
-		return unexpectedToken(ps, ui);
-	}
-	ps.get();
-	auto sink = new NodeSink();
-	while (ps.peek.type != TokenType.CloseBrace) {
-		succeeded = parseJustVariable(ps, sink.push);
-		if (!succeeded) {
-			return parseFailed(ps, ui);
-		}
-	}
-
-	auto arr = sink.array;
-	ui.fields = new ir.Variable[](arr.length);
-	foreach (i, ref var; ui.fields) {
-		var = cast(ir.Variable) arr[i];
-		assert(var !is null);
-	}
-
-	return match(ps, ir.NodeType.Annotation, TokenType.CloseBrace);
 }

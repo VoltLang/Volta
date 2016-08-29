@@ -767,37 +767,6 @@ public:
 	}
 }
 
-class TraitsExp : Exp
-{
-public:
-	enum Op
-	{
-		GetAttribute,
-	}
-
-public:
-	Op op;
-
-	QualifiedName target;
-	QualifiedName qname;
-
-	Type type;  ///< Optional cache for typer.
-
-public:
-	this() { super(NodeType.TraitsExp); }
-
-	this(TraitsExp old)
-	{
-		super(NodeType.TraitsExp, old);
-		this.op = old.op;
-
-		this.target = old.target;
-		this.qname = old.qname;
-
-		this.type = old.type;
-	}
-}
-
 /**
  * A TypeExp is used when a primitive type is used in an expression.
  * This is currently limited to <primitive>.max/min and (void*).max/min.

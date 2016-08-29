@@ -11,7 +11,6 @@ enum Type
 	Union = 4,
 	Enum = 5,
 	Attribute = 6,
-	Annotation = 7,
 
 	Void = 8,
 	U8 = 9,

@@ -33,7 +33,6 @@ import volt.semantic.overload;
 import volt.semantic.implicit;
 import volt.semantic.typeinfo;
 import volt.semantic.classresolver;
-import volt.semantic.annotationresolver;
 import volt.semantic.lifter;
 
 
@@ -2531,26 +2530,6 @@ ir.Type extypeExpReference(Context ctx, ref ir.Exp exp, Parent parent)
 	}
 }
 
-ir.Type extypeTraitsExp(Context ctx, ref ir.Exp exp, Parent parent)
-{
-	auto te = cast(ir.TraitsExp) exp;
-
-	if (te.op != ir.TraitsExp.Op.GetAttribute) {
-		throw panicUnhandled(exp.location, "non get-attribute traits expression");
-	}
-
-	auto store = lookup(ctx.lp, ctx.current, te.qname);
-	auto attr = cast(ir.Annotation) store.node;
-	if (attr is null) {
-		throw panic(te.location, "expected @interface.");
-	}
-
-	ctx.lp.actualize(attr);
-	te.type = attr.layoutClass;
-
-	return te.type;
-}
-
 ir.Type extypeArrayLiteral(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	auto al = cast(ir.ArrayLiteral) exp;
@@ -2928,8 +2907,6 @@ ir.Type extypeUnchecked(Context ctx, ref ir.Exp exp, Parent parent)
 		return extypeUnionLiteral(ctx, exp, parent);
 	case ClassLiteral:
 		return extypeClassLiteral(ctx, exp, parent);
-	case TraitsExp:
-		return extypeTraitsExp(ctx, exp, parent);
 	case TypeExp:
 		return extypeTypeExp(ctx, exp, parent);
 	case StoreExp:
@@ -4103,8 +4080,6 @@ void resolveVariable(Context ctx, ir.Variable v)
 
 	v.hasBeenDeclared = true;
 
-	ctx.lp.resolve(ctx.current, v.annotations);
-
 	// Fix up type as best as possible.
 	resolveType(ctx, v.type);
 
@@ -4152,8 +4127,6 @@ void resolveFunction(Context ctx, ir.Function func)
 
 	auto done = ctx.lp.startResolving(func);
 	scope (success) done();
-
-	ctx.lp.resolve(func.myScope.parent, func.annotations);
 
 	if (func.isAutoReturn) {
 		func.type.ret = buildVoid(func.type.ret.location);
@@ -4245,8 +4218,6 @@ void resolveStruct(LanguagePass lp, ir.Struct s)
 	auto done = lp.startResolving(s);
 	scope (success) done();
 
-	lp.resolve(s.myScope.parent, s.annotations);
-
 	s.isResolved = true;
 
 	// Resolve fields.
@@ -4281,8 +4252,6 @@ void resolveUnion(LanguagePass lp, ir.Union u)
 
 	auto done = lp.startResolving(u);
 	scope (success) done();
-
-	lp.resolve(u.myScope.parent, u.annotations);
 
 	u.isResolved = true;
 
@@ -4616,22 +4585,13 @@ public:
 		resolveFunction(ctx, func);
 	}
 
-	/**
-	 * For out of band checking of UserAttributes.
-	 */
 	void transform(ir.Scope current, ir.Attribute a)
 	{
 		ctx.setupFromScope(current);
 		scope (success) ctx.reset();
 
-		basicValidateAnnotation(ctx.lp, ctx.current, a);
-
-		auto ua = a.annotation;
-		assert(ua !is null);
-
 		foreach (i, ref arg; a.arguments) {
 			extype(ctx, a.arguments[i], Parent.NA);
-			checkAndDoConvert(ctx, ua.fields[i].type, a.arguments[i]);
 		}
 	}
 
@@ -4821,13 +4781,6 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ir.Annotation ua)
-	{
-		ctx.lp.actualize(ua);
-		// Everything is done by actualize.
-		return ContinueParent;
-	}
-
 	override Status enter(ir.EnumDeclaration ed)
 	{
 		ctx.lp.resolve(ctx.current, ed);
@@ -4919,7 +4872,6 @@ public:
 	override Status leave(ref ir.Exp exp, ir.StructLiteral) { throw panic(exp, "visitor"); }
 
 	override Status visit(ref ir.Exp exp, ir.TokenExp) { throw panic(exp, "visitor"); }
-	override Status visit(ref ir.Exp exp, ir.TraitsExp) { throw panic(exp, "visitor"); }
 	override Status visit(ref ir.Exp exp, ir.ExpReference) { throw panic(exp, "visitor"); }
 	override Status visit(ref ir.Exp exp, ir.IdentifierExp) { throw panic(exp, "visitor"); }
 }

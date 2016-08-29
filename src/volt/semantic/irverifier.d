@@ -86,8 +86,7 @@ public:
 		    tr.type.nodeType != ir.NodeType.Class &&
 		    tr.type.nodeType != ir.NodeType.Union &&
 		    tr.type.nodeType != ir.NodeType.Struct &&
-		    tr.type.nodeType != ir.NodeType.Interface &&
-		    tr.type.nodeType != ir.NodeType.Annotation) {
+		    tr.type.nodeType != ir.NodeType.Interface) {
 			throw panic(tr, "TypeReference.type is points to invalid class");
 		}
 		return Continue;
@@ -129,7 +128,6 @@ public:
 			case MixinFunction:
 			case MixinTemplate:
 			case MixinStatement:
-			case Annotation:
 			case EnumDeclaration:
 				auto s = accept(n, this);
 				if (s == Stop)
@@ -202,7 +200,6 @@ public:
 	override Status enter(ir.Struct n) { check(n); return super.enter(n); }
 	override Status enter(ir.Union n) { check(n); return super.enter(n); }
 	override Status enter(ir.Enum n) { checkStorage(n); return super.enter(n); }
-	override Status enter(ir.Annotation n) { checkStorage(n); return super.enter(n); }
 	override Status enter(ir._Interface n) { check(n); return super.enter(n); }
 
 	void check(ir.Aggregate a)

@@ -602,9 +602,6 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 		}
 		exp = lit;
 		break;
-	case intir.PrimaryExp.Type.Traits:
-		exp = primary.trait;
-		break;
 	case intir.PrimaryExp.Type.Type:
 		auto te = new ir.TypeExp();
 		te.type = primary.type;
@@ -877,47 +874,6 @@ ParseStatus parseFunctionLiteral(ParserStream ps, out ir.FunctionLiteral fl)
 		return Succeeded;
 	}
 	version (Volt) assert(false); // If
-}
-
-ParseStatus parseTraitsExp(ParserStream ps, out ir.TraitsExp texp)
-{
-	texp = new ir.TraitsExp();
-	texp.location = ps.peek.location;
-
-	auto succeeded = checkTokens(ps, ir.NodeType.TraitsExp,
-		[TokenType.__Traits, TokenType.OpenParen, TokenType.Identifier]);
-	if (!succeeded) {
-		return succeeded;
-	}
-	ps.get();
-	ps.get();
-
-	auto nameTok = ps.get();
-	switch (nameTok.value) {
-	case "getAttribute":
-		texp.op = ir.TraitsExp.Op.GetAttribute;
-		succeeded = match(ps, texp, TokenType.Comma);
-		if (!succeeded) {
-			return succeeded;
-		}
-		succeeded = parseQualifiedName(ps, texp.target);
-		if (!succeeded) {
-			return parseFailed(ps, ir.NodeType.TraitsExp);
-		}
-		succeeded = match(ps, texp, TokenType.Comma);
-		if (!succeeded) {
-			return succeeded;
-		}
-		succeeded = parseQualifiedName(ps, texp.qname);
-		if (!succeeded) {
-			return parseFailed(ps, ir.NodeType.TraitsExp);
-		}
-		break;
-	default:
-		return parseExpected(ps, nameTok.location, texp, "__traits identifier");
-	}
-
-	return match(ps, texp, TokenType.CloseParen);
 }
 
 /*** ugly intir stuff ***/
@@ -1838,13 +1794,6 @@ ParseStatus parsePrimaryExp(ParserStream ps, out intir.PrimaryExp exp)
 		auto succeeded = parseFunctionLiteral(ps, exp.functionLiteral);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.FunctionLiteral);
-		}
-		break;
-	case TokenType.__Traits:
-		exp.op = intir.PrimaryExp.Type.Traits;
-		auto succeeded = parseTraitsExp(ps, exp.trait);
-		if (!succeeded) {
-			return parseFailed(ps, ir.NodeType.Invalid);
 		}
 		break;
 	case TokenType.VaArg:

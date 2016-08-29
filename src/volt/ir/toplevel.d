@@ -259,7 +259,6 @@ public:
 		Safe,
 		NoThrow,
 		Pure,
-		Annotation,
 		MangledName,
 		Label,
 	}
@@ -273,9 +272,7 @@ public:
 
 	Attribute chain; ///< for "public abstract:"
 
-	QualifiedName annotationName;  ///< Optional.
 	Exp[] arguments;  ///< If kind == Annotation or MangledName.
-	Annotation annotation;  ///< Filled in by the exptyper.
 
 	/// Only if type == Align.
 	int alignAmount;
@@ -292,13 +289,11 @@ public:
 
 		this.chain = old.chain;
 
-		this.annotationName = old.annotationName;
 		version (Volt) {
 			this.arguments = new old.arguments[0 .. $];
 		} else {
 			this.arguments = old.arguments.dup;
 		}
-		this.annotation = old.annotation;
 
 		this.alignAmount = old.alignAmount;
 	}
@@ -347,7 +342,6 @@ public:
 abstract class Aggregate : Named
 {
 public:
-	Attribute[] annotations;
 	Aggregate[] anonymousAggregates;
 	Variable[] anonymousVars;
 
@@ -361,7 +355,6 @@ public:
 	this(NodeType nt, Aggregate old)
 	{
 		super(nt, old);
-		this.annotations = old.annotations;
 		this.anonymousAggregates = old.anonymousAggregates;
 		this.anonymousVars = old.anonymousVars;
 
@@ -758,49 +751,5 @@ public:
 		super(NodeType.MixinTemplate, old);
 		this.name = old.name;
 		this.raw = old.raw;
-	}
-}
-
-/**
- * The building block of annotations (user defined attributes).
- *
- * Defined simply:
- * ---
- * @interface Name {
- *     int someVar;
- *     string someOtherVar;
- *     bool somethingWithADefault = true;
- * }
- * ---
- *
- * Only variables can be present. Any assign (or when initializing them
- * normally, in fact) must be known at compile time.
- *
- * @p Annotations are mangled as 'T' + name.
- *
- * @ingroup irNode irTopLevel
- */
-class Annotation : Named
-{
-public:
-	Variable[] fields;
-	Class layoutClass;
-
-	bool isActualized;
-
-public:
-	this() { super(NodeType.Annotation); }
-
-	this(Annotation old)
-	{
-		super(NodeType.Annotation, old);
-		version (Volt) {
-			this.fields = new old.fields[0 .. $];
-		} else {
-			this.fields = old.fields.dup;
-		}
-		this.layoutClass = old.layoutClass;
-
-		this.isActualized = old.isActualized;
 	}
 }

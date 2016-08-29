@@ -95,10 +95,6 @@ ir.Type getExpTypeImpl(ir.Exp exp)
 		auto asExpRef = cast(ir.ExpReference) exp;
 		assert(asExpRef !is null);
 		return getExpReferenceType(asExpRef);
-	case TraitsExp:
-		auto asTraits = cast(ir.TraitsExp) exp;
-		assert(asTraits !is null);
-		return getTraitsExpType(asTraits);
 	case StructLiteral:
 		auto asStructLiteral = cast(ir.StructLiteral) exp;
 		assert(asStructLiteral !is null);
@@ -189,12 +185,6 @@ ir.Type getStructLiteralType(ir.StructLiteral slit)
 ir.Type getClassLiteralType(ir.ClassLiteral clit)
 {
 	return clit.type;
-}
-
-ir.Type getTraitsExpType(ir.TraitsExp te)
-{
-	panicAssert(te, te.type !is null);
-	return te.type;
 }
 
 ir.Type getExpReferenceType(ir.ExpReference expref)
@@ -464,7 +454,7 @@ void retrieveScope(ir.Node tt, ir.Postfix postfix, ref ir.Scope _scope, ref ir.C
 		_scope = asModule.myScope;
 		emsg = format("module '%s' has no member '%s'.", asModule.name, postfix.identifier.value);
 	} else if (tt.nodeType == ir.NodeType.Struct || tt.nodeType == ir.NodeType.Union ||
-	           tt.nodeType == ir.NodeType.Class || tt.nodeType == ir.NodeType.Annotation || tt.nodeType == ir.NodeType.Interface) {
+	           tt.nodeType == ir.NodeType.Class || tt.nodeType == ir.NodeType.Interface) {
 		if (tt.nodeType == ir.NodeType.Struct) {
 			auto asStruct = cast(ir.Struct) tt;
 			_scope = asStruct.myScope;
@@ -477,10 +467,6 @@ void retrieveScope(ir.Node tt, ir.Postfix postfix, ref ir.Scope _scope, ref ir.C
 			_class = cast(ir.Class) tt;
 			_scope = _class.myScope;
 			emsg = format("type '%s' has no member '%s'.", _class.name, postfix.identifier.value);
-		} else if (tt.nodeType == ir.NodeType.Annotation) {
-			auto asAttr = cast(ir.Annotation) tt;
-			_scope = asAttr.myScope;
-			emsg = format("type '%s' has no member '%s'.", asAttr.name, postfix.identifier.value);
 		} else if (tt.nodeType == ir.NodeType.Interface) {
 			auto asIface = cast(ir._Interface) tt;
 			_scope = asIface.myScope;

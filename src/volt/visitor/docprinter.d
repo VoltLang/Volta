@@ -210,22 +210,6 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ir.Annotation uattr)
-	{
-		openTag(`div class="uattr"`);
-		openTag("h3");
-		mHtmlFile.writef("user attribute %s", uattr.name);
-		closeTag("h3");
-		outputComment(uattr);
-		return Continue;
-	}
-
-	override Status leave(ir.Annotation uattr)
-	{
-		closeTag("div");
-		return Continue;
-	}
-
 	override Status enter(ir.Enum _enum)
 	{
 		openTag(`div class="enum"`);

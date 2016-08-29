@@ -406,18 +406,6 @@ public:
 			acceptExp(attr.arguments[0], this);
 			wf(")");
 			break;
-		case Annotation:
-			twf("@");
-			wf(attr.annotationName);
-			wf("(");
-			foreach (i, arg; attr.arguments) {
-				accept(arg, this);
-				if (i < attr.arguments.length - 1) {
-					wf(", ");
-				}
-			}
-			wf(")");
-			break;
 		case Invalid:
 			throw panicUnhandled(attr, "attribute kind");
 		}
@@ -1160,22 +1148,6 @@ public:
 	
 	override Status leave(ir.MixinStatement ms) { return Continue; }
 	
-	override Status enter(ir.Annotation ui)
-	{
-		twf("@interface ");
-		wf(ui.name);
-		wfln(" {");
-		mIndent++;
-		return Continue;
-	}
-
-	override Status leave(ir.Annotation ui)
-	{
-		mIndent--;
-		twfln("}");
-		return Continue;
-	}
-
 	/*
 	 *
 	 * Declarations.
@@ -2154,17 +2126,6 @@ public:
 			wf(e.idents[0]);
 		}
 		return Continue; 
-	}
-
-	override Status visit(ref ir.Exp, ir.TraitsExp texp)
-	{
-		assert(texp.op == ir.TraitsExp.Op.GetAttribute);
-		wf("__traits(getAttribute, ");
-		accept(texp.target, this);
-		wf(", ");
-		accept(texp.qname, this);
-		wf(")");
-		return Continue;
 	}
 
 	override Status visit(ref ir.Exp, ir.TokenExp fexp)

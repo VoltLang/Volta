@@ -60,9 +60,6 @@ public:
 	override Status enter(ir.Union u) { push(u.name); return Continue; }
 	override Status leave(ir.Union u) { pop(u.name); return Continue; }
 
-	override Status enter(ir.Annotation ui) { push(ui.name); return Continue; }
-	override Status leave(ir.Annotation ui) { pop(ui.name); return Continue; }
-
 	override Status enter(ir.Class c) { push(c.name); return Continue; }
 	override Status leave(ir.Class c) { pop(c.name); return Continue; }
 

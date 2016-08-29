@@ -66,7 +66,6 @@ void buildAAInsert(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 	} else {
 		aaInsertFn = lp.aaInsertArray;
 	}
-
 	ir.Exp varExp;
 	if (buildif) {
 		auto thenState = buildBlockStat(loc, statExp, current);
@@ -1951,12 +1950,6 @@ public:
 	override Status enter(ref ir.Exp exp, ir.BuiltinExp builtin)
 	{
 		lowerBuiltin(lp, current, exp, builtin);
-		return Continue;
-	}
-
-	override Status visit(ref ir.Exp exp, ir.TraitsExp traits)
-	{
-		replaceTraits(exp, traits, lp, thisModule, current);
 		return Continue;
 	}
 

@@ -180,14 +180,6 @@ void gather(ir.Scope current, ir.MixinTemplate mt, Where where)
 	current.addTemplate(mt, mt.name);
 }
 
-void gather(ir.Scope current, ir.Annotation ua, Where where)
-{
-	assert(ua.access.isValidAccess());
-	assert(ua.myScope !is null);
-
-	current.addType(ua, ua.name);
-}
-
 
 /*
  *
@@ -310,12 +302,6 @@ void addScope(ir.Scope current, ir._Interface i)
 
 	assert(i.myScope is null);
 	i.myScope = new ir.Scope(current, i, i.name, current.nestedDepth);
-}
-
-void addScope(ir.Scope current, ir.Annotation ua)
-{
-	assert(ua.myScope is null);
-	ua.myScope = new ir.Scope(current, ua, ua.name, current.nestedDepth);
 }
 
 
@@ -491,14 +477,6 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ir.Annotation ua)
-	{
-		addScope(current, ua);
-		gather(current, ua, where);
-		push(ua.myScope, ua);
-		return Continue;
-	}
-
 	override Status enter(ir.Enum e)
 	{
 		addScope(current, e);
@@ -602,5 +580,4 @@ public:
 	override Status leave(ir.Function func) { pop(func); return Continue; }
 	override Status leave(ir.BlockStatement bs) { pop(); return Continue; }
 	override Status leave(ir._Interface i) { pop(i); return Continue; }
-	override Status leave(ir.Annotation ua) { pop(ua); return Continue; }
 }

@@ -214,8 +214,6 @@ public:
 	override Status leave(ir.ConditionTopLevel n) { leaveNode(n); return Continue; }
 	override Status leave(ir.MixinFunction n) { leaveNode(n); return Continue; }
 	override Status leave(ir.MixinTemplate n) { leaveNode(n); return Continue; }
-	override Status enter(ir.Annotation n) { enterNode(n); return Continue; }
-	override Status leave(ir.Annotation n) { leaveNode(n); return Continue; }
 
 	override Status visit(ir.QualifiedName n) { visitNode(n); return Continue; }
 
@@ -396,7 +394,6 @@ public:
 	override Status leave(ref ir.Exp, ir.RunExp n) { leaveNode(n); return Continue; }
 
 	override Status visit(ref ir.Exp, ir.ExpReference n) { visitRef(n, n.decl); return Continue; }
-	override Status visit(ref ir.Exp, ir.TraitsExp n) { visitNode(n); return Continue; }
 	override Status visit(ref ir.Exp, ir.TokenExp n) { visitNode(n); return Continue; }
 	override Status visit(ref ir.Exp, ir.StoreExp n) { visitRef(n, n.store is null ? null : n.store.node ); return Continue; }
 

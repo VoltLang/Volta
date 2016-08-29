@@ -122,25 +122,6 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ir.Annotation ui)
-	{
-		checkPreScope(ui.location, ui.myScope);
-		current = ui.myScope;
-		return Continue;
-	}
-
-	override Status leave(ir.Annotation ui)
-	{
-		if (current !is ui.myScope) {
-			auto str = format("invalid scope layout should be %s is %s",
-			           ir.getNodeAddressString(ui),
-			           ir.getNodeAddressString(current.node));
-			throw panic(ui.location, str);
-		}
-		current = current.parent;
-		return Continue;
-	}
-
 	override Status enter(ir.Function func)
 	{
 		checkPreScope(func.location, func.myScope);

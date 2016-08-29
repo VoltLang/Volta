@@ -53,7 +53,6 @@ enum NodeType
 	ConditionTopLevel,
 	MixinFunction,
 	MixinTemplate,
-	Annotation,
 
 	/* declaration.d */
 	PrimitiveType,
@@ -122,7 +121,6 @@ enum NodeType
 	StructLiteral,
 	UnionLiteral,
 	ClassLiteral,
-	TraitsExp,
 	TypeExp,
 	StoreExp,
 	TemplateInstanceExp,
@@ -343,7 +341,6 @@ string nodeToString(NodeType nodeType)
 	case Struct: return "Struct";
 	case Class: return "Class";
 	case Interface: return "Interface";
-	case Annotation: return "Annotation";
 	case Union: return "Union";
 	case Enum: return "Enum";
 	case EnumDeclaration: return "EnumDeclaration";
@@ -412,7 +409,6 @@ string nodeToString(NodeType nodeType)
 	case StructLiteral: return "StructLiteral";
 	case UnionLiteral: return "UnionLiteral";
 	case ClassLiteral: return "ClassLiteral";
-	case TraitsExp: return "TraitsExp";
 	case TypeExp: return "TypeExp";
 	case StoreExp: return "StoreExp";
 	case TemplateInstanceExp: return "TemplateInstanceExp";
