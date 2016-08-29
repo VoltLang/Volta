@@ -148,8 +148,8 @@ void mangleType(ir.Type t, Sink sink)
 		sink("C");
 		mangleScope(asClass.myScope, sink);
 		break;
-	case UserAttribute:
-		auto asAttr = cast(ir.UserAttribute) t;
+	case Annotation:
+		auto asAttr = cast(ir.Annotation) t;
 		assert(asAttr !is null);
 		sink("A");
 		mangleScope(asAttr.myScope, sink);

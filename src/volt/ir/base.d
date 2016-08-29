@@ -53,7 +53,7 @@ enum NodeType
 	ConditionTopLevel,
 	MixinFunction,
 	MixinTemplate,
-	UserAttribute,
+	Annotation,
 
 	/* declaration.d */
 	PrimitiveType,
@@ -343,7 +343,7 @@ string nodeToString(NodeType nodeType)
 	case Struct: return "Struct";
 	case Class: return "Class";
 	case Interface: return "Interface";
-	case UserAttribute: return "UserAttribute";
+	case Annotation: return "Annotation";
 	case Union: return "Union";
 	case Enum: return "Enum";
 	case EnumDeclaration: return "EnumDeclaration";

@@ -122,14 +122,14 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ir.UserAttribute ui)
+	override Status enter(ir.Annotation ui)
 	{
 		checkPreScope(ui.location, ui.myScope);
 		current = ui.myScope;
 		return Continue;
 	}
 
-	override Status leave(ir.UserAttribute ui)
+	override Status leave(ir.Annotation ui)
 	{
 		if (current !is ui.myScope) {
 			auto str = format("invalid scope layout should be %s is %s",

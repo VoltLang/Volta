@@ -33,7 +33,7 @@ import volt.semantic.overload;
 import volt.semantic.implicit;
 import volt.semantic.typeinfo;
 import volt.semantic.classresolver;
-import volt.semantic.userattrresolver;
+import volt.semantic.annotationresolver;
 import volt.semantic.lifter;
 
 
@@ -2540,7 +2540,7 @@ ir.Type extypeTraitsExp(Context ctx, ref ir.Exp exp, Parent parent)
 	}
 
 	auto store = lookup(ctx.lp, ctx.current, te.qname);
-	auto attr = cast(ir.UserAttribute) store.node;
+	auto attr = cast(ir.Annotation) store.node;
 	if (attr is null) {
 		throw panic(te.location, "expected @interface.");
 	}
@@ -4103,7 +4103,7 @@ void resolveVariable(Context ctx, ir.Variable v)
 
 	v.hasBeenDeclared = true;
 
-	ctx.lp.resolve(ctx.current, v.userAttrs);
+	ctx.lp.resolve(ctx.current, v.annotations);
 
 	// Fix up type as best as possible.
 	resolveType(ctx, v.type);
@@ -4153,7 +4153,7 @@ void resolveFunction(Context ctx, ir.Function func)
 	auto done = ctx.lp.startResolving(func);
 	scope (success) done();
 
-	ctx.lp.resolve(func.myScope.parent, func.userAttrs);
+	ctx.lp.resolve(func.myScope.parent, func.annotations);
 
 	if (func.isAutoReturn) {
 		func.type.ret = buildVoid(func.type.ret.location);
@@ -4245,7 +4245,7 @@ void resolveStruct(LanguagePass lp, ir.Struct s)
 	auto done = lp.startResolving(s);
 	scope (success) done();
 
-	lp.resolve(s.myScope.parent, s.userAttrs);
+	lp.resolve(s.myScope.parent, s.annotations);
 
 	s.isResolved = true;
 
@@ -4282,7 +4282,7 @@ void resolveUnion(LanguagePass lp, ir.Union u)
 	auto done = lp.startResolving(u);
 	scope (success) done();
 
-	lp.resolve(u.myScope.parent, u.userAttrs);
+	lp.resolve(u.myScope.parent, u.annotations);
 
 	u.isResolved = true;
 
@@ -4624,9 +4624,9 @@ public:
 		ctx.setupFromScope(current);
 		scope (success) ctx.reset();
 
-		basicValidateUserAttribute(ctx.lp, ctx.current, a);
+		basicValidateAnnotation(ctx.lp, ctx.current, a);
 
-		auto ua = a.userAttribute;
+		auto ua = a.annotation;
 		assert(ua !is null);
 
 		foreach (i, ref arg; a.arguments) {
@@ -4821,7 +4821,7 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ir.UserAttribute ua)
+	override Status enter(ir.Annotation ua)
 	{
 		ctx.lp.actualize(ua);
 		// Everything is done by actualize.

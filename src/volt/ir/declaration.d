@@ -45,7 +45,7 @@ abstract class Declaration : Node
 		FunctionSet = NodeType.FunctionSet,
 		FunctionParam = NodeType.FunctionParam,
 	}
-	Attribute[] userAttrs;
+	Attribute[] annotations;
 
 	@property Kind declKind() { return cast(Kind)nodeType; }
 	this(NodeType nt) { super(nt); }
@@ -54,9 +54,9 @@ abstract class Declaration : Node
 	{
 		super(nt, old);
 		version (Volt) {
-			this.userAttrs = new old.userAttrs[0 .. $];
+			this.annotations = new old.annotations[0 .. $];
 		} else {
-			this.userAttrs = old.userAttrs.dup;
+			this.annotations = old.annotations.dup;
 		}
 	}
 }

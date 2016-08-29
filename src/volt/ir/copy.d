@@ -417,7 +417,7 @@ ir.Type copyType(ir.Type t)
 	case Interface:
 	case Struct:
 	case Class:
-	case UserAttribute:
+	case Annotation:
 	case Enum:
 		throw panic(t.location, "can't copy aggregate types");
 	default:
@@ -541,7 +541,7 @@ ir.Node copyNode(ir.Node n)
 	case StaticAssert:
 	case MixinTemplate:
 	case MixinFunction:
-	case UserAttribute:
+	case Annotation:
 	case Condition:
 	case ConditionTopLevel:
 	case Variable:

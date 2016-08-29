@@ -452,7 +452,7 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
 	case Struct:
 	case Interface:
 	case Union:
-	case UserAttribute:
+	case Annotation:
 	case BlockStatement:
 	case Enum:
 	case Identifier:

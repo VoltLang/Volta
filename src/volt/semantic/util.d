@@ -358,7 +358,7 @@ void replaceVarArgsIfNeeded(LanguagePass lp, ir.Function func)
 }
 
 /// Get a UserAttribute struct literal from a user Attribute.
-ir.ClassLiteral getAttributeLiteral(ir.UserAttribute ua, ir.Attribute attr)
+ir.ClassLiteral getAttributeLiteral(ir.Annotation ua, ir.Attribute attr)
 {
 	auto cliteral = new ir.ClassLiteral();
 	cliteral.location = attr.location;
@@ -394,12 +394,12 @@ void replaceTraits(ref ir.Exp exp, ir.TraitsExp traits, LanguagePass lp, ir.Modu
 {
 	assert(traits.op == ir.TraitsExp.Op.GetAttribute);
 	auto store = lookup(lp, _scope, traits.qname);
-	auto uattr = cast(ir.UserAttribute) store.node;
+	auto uattr = cast(ir.Annotation) store.node;
 	if (uattr is null) {
 		throw makeFailedLookup(traits, traits.qname.toString());
 	}
 
-	ir.Attribute[] userAttrs;
+	ir.Attribute[] annotations;
 	string name;
 
 	store = lookup(lp, _scope, traits.target);
@@ -407,39 +407,39 @@ void replaceTraits(ref ir.Exp exp, ir.TraitsExp traits, LanguagePass lp, ir.Modu
 	switch (store.node.nodeType) with (ir.NodeType) {
 	case Variable:
 		auto var = cast(ir.Variable) store.node;
-		userAttrs = var.userAttrs;
+		annotations = var.annotations;
 		name = var.name;
 		break;
 	case Function:
 		auto func = cast(ir.Function) store.node;
-		userAttrs = func.userAttrs;
+		annotations = func.annotations;
 		name = func.name;
 		break;
 	case Class:
 		auto _class = cast(ir.Class) store.node;
-		userAttrs = _class.userAttrs;
+		annotations = _class.annotations;
 		name = _class.name;
 		break;
 	case Struct:
 		auto _struct = cast(ir.Struct) store.node;
-		userAttrs = _struct.userAttrs;
+		annotations = _struct.annotations;
 		name = _struct.name;
 		break;
 	default:
 		assert(false, ir.nodeToString(store.node));
 	}
 
-	ir.Attribute userAttribute;
-	for (int i = cast(int)userAttrs.length - 1; i >= 0; i--) {
-		if (uattr is userAttrs[i].userAttribute) {
-			userAttribute = userAttrs[i];
+	ir.Attribute annotation;
+	for (int i = cast(int)annotations.length - 1; i >= 0; i--) {
+		if (uattr is annotations[i].annotation) {
+			annotation = annotations[i];
 		}
 	}
-	if (userAttribute is null) {
+	if (annotation is null) {
 		throw makeNotMember(exp.location, traits.target.toString(), traits.qname.toString());
 	}
 
-	exp = getAttributeLiteral(userAttribute.userAttribute, userAttribute);
+	exp = getAttributeLiteral(annotation.annotation, annotation);
 }
 
 ir.Type[] expsToTypes(ir.Exp[] exps)

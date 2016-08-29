@@ -214,8 +214,8 @@ public:
 	override Status leave(ir.ConditionTopLevel n) { leaveNode(n); return Continue; }
 	override Status leave(ir.MixinFunction n) { leaveNode(n); return Continue; }
 	override Status leave(ir.MixinTemplate n) { leaveNode(n); return Continue; }
-	override Status enter(ir.UserAttribute n) { enterNode(n); return Continue; }
-	override Status leave(ir.UserAttribute n) { leaveNode(n); return Continue; }
+	override Status enter(ir.Annotation n) { enterNode(n); return Continue; }
+	override Status leave(ir.Annotation n) { leaveNode(n); return Continue; }
 
 	override Status visit(ir.QualifiedName n) { visitNode(n); return Continue; }
 

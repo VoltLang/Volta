@@ -116,7 +116,7 @@ public:
 	final void enter(ir.Union u) { push(u, u.myScope, null); }
 	final void enter(ir.Class c) { push(c, c.myScope, null); }
 	final void enter(ir._Interface i) { push(i, i.myScope, null); }
-	final void enter(ir.UserAttribute ui) { push(ui, ui.myScope, null); }
+	final void enter(ir.Annotation ui) { push(ui, ui.myScope, null); }
 	final void enter(ir.Enum e) { push(e, e.myScope, null); }
 	final void enter(ir.Function func) { push(func, func.myScope, func); }
 	final void enter(ir.BlockStatement bs) { mCurrent = bs.myScope; }
@@ -126,7 +126,7 @@ public:
 	final void leave(ir.Union u) { pop(u, u.myScope, null); }
 	final void leave(ir.Class c) { pop(c, c.myScope, null); }
 	final void leave(ir._Interface i) { pop(i, i.myScope, null); }
-	final void leave(ir.UserAttribute ui) { pop(ui, ui.myScope, null); }
+	final void leave(ir.Annotation ui) { pop(ui, ui.myScope, null); }
 	final void leave(ir.Enum e) { pop(e, e.myScope, null); }
 	final void leave(ir.Function func) { pop(func, func.myScope, func); }
 	final void leave(ir.BlockStatement bs) { mCurrent = mCurrent.parent; }

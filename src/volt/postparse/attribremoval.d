@@ -227,8 +227,8 @@ protected:
 			case Property:
 				func.type.isProperty = true;
 				break;
-			case UserAttribute:
-				func.userAttrs ~= attr;
+			case Annotation:
+				func.annotations ~= attr;
 				break;
 			case Override:
 				func.isMarkedOverride = true;
@@ -317,8 +317,8 @@ protected:
 			case Extern:
 				d.isExtern = true;
 				break;
-			case UserAttribute:
-				d.userAttrs ~= attr;
+			case Annotation:
+				d.annotations ~= attr;
 				break;
 			default:
 				// Warn?
@@ -345,8 +345,8 @@ protected:
 			case Protected:
 				s.access = ir.Access.Protected;
 				break;
-			case UserAttribute:
-				s.userAttrs ~= attr;
+			case Annotation:
+				s.annotations ~= attr;
 				break;
 			case Abstract:
 				auto c = cast(ir.Class) s;
@@ -380,8 +380,8 @@ protected:
 			case Protected:
 				i.access = ir.Access.Protected;
 				break;
-			case UserAttribute:
-				i.userAttrs ~= attr;
+			case Annotation:
+				i.annotations ~= attr;
 				break;
 			default:
 				// Warn?

@@ -210,7 +210,7 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ir.UserAttribute uattr)
+	override Status enter(ir.Annotation uattr)
 	{
 		openTag(`div class="uattr"`);
 		openTag("h3");
@@ -220,7 +220,7 @@ public:
 		return Continue;
 	}
 
-	override Status leave(ir.UserAttribute uattr)
+	override Status leave(ir.Annotation uattr)
 	{
 		closeTag("div");
 		return Continue;

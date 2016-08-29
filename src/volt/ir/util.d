@@ -103,8 +103,8 @@ ir.Scope getScopeFromType(ir.Type type)
 		auto asInterface = cast(ir._Interface) type;
 		assert(asInterface !is null);
 		return asInterface.myScope;
-	case UserAttribute:
-		auto asAttr = cast(ir.UserAttribute) type;
+	case Annotation:
+		auto asAttr = cast(ir.Annotation) type;
 		assert(asAttr !is null);
 		return asAttr.myScope;
 	case Enum:
@@ -242,7 +242,7 @@ ir.Type copyTypeSmart(Location loc, ir.Type type)
 		nt.location = type.location;
 		outType = nt;
 		break;
-	case UserAttribute:
+	case Annotation:
 	case Interface:
 	case Struct:
 	case Class:

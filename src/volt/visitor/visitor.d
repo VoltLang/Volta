@@ -61,8 +61,8 @@ public abstract:
 	Status leave(ir.MixinFunction mf);
 	Status enter(ir.MixinTemplate mt);
 	Status leave(ir.MixinTemplate mt);
-	Status enter(ir.UserAttribute ui);
-	Status leave(ir.UserAttribute ui);
+	Status enter(ir.Annotation ui);
+	Status leave(ir.Annotation ui);
 
 	Status visit(ir.QualifiedName qname);
 	Status visit(ir.Identifier name);
@@ -249,8 +249,8 @@ override:
 	Status leave(ir.Condition c){ return Continue; }
 	Status enter(ir.ConditionTopLevel ctl){ return Continue; }
 	Status leave(ir.ConditionTopLevel ctl){ return Continue; }
-	Status enter(ir.UserAttribute ui){ return Continue; }
-	Status leave(ir.UserAttribute ui){ return Continue; }
+	Status enter(ir.Annotation ui){ return Continue; }
+	Status leave(ir.Annotation ui){ return Continue; }
 	Status enter(ir.MixinFunction mf){ return Continue; }
 	Status leave(ir.MixinFunction mf){ return Continue; }
 	Status enter(ir.MixinTemplate mt){ return Continue; }
@@ -484,10 +484,10 @@ body {
 		auto asCtl = cast(ir.ConditionTopLevel) n;
 		assert(asCtl !is null);
 		return acceptConditionTopLevel(asCtl, av);
-	case UserAttribute:
-		auto asUi = cast(ir.UserAttribute) n;
+	case Annotation:
+		auto asUi = cast(ir.Annotation) n;
 		assert(asUi !is null);
-		return acceptUserAttribute(asUi, av);
+		return acceptAnnotation(asUi, av);
 	case Condition:
 		auto asCondition = cast(ir.Condition) n;
 		assert(asCondition !is null);
@@ -998,7 +998,7 @@ Visitor.Status acceptMixinTemplate(ir.MixinTemplate mt, Visitor av)
 	return av.leave(mt);
 }
 
-Visitor.Status acceptUserAttribute(ir.UserAttribute ui, Visitor av)
+Visitor.Status acceptAnnotation(ir.Annotation ui, Visitor av)
 {
 	auto status = av.enter(ui);
 	if (status != VisitorContinue) {

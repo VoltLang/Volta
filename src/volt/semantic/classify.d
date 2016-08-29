@@ -418,7 +418,7 @@ bool isArray(ir.Type t)
 	return (cast(ir.ArrayType) t) !is null;
 }
 
-bool acceptableForUserAttribute(LanguagePass lp, ir.Scope current, ir.Type type)
+bool acceptableForAnnotation(LanguagePass lp, ir.Scope current, ir.Type type)
 {
 	auto asPrim = cast(ir.PrimitiveType) type;
 	if (asPrim !is null) {
@@ -427,13 +427,13 @@ bool acceptableForUserAttribute(LanguagePass lp, ir.Scope current, ir.Type type)
 
 	auto asArray = cast(ir.ArrayType) type;
 	if (asArray !is null) {
-		return acceptableForUserAttribute(lp, current, asArray.base);
+		return acceptableForAnnotation(lp, current, asArray.base);
 	}
 
 	auto asTR = cast(ir.TypeReference) type;
 	if (asTR !is null) {
 		assert(asTR.type !is null);
-		return acceptableForUserAttribute(lp, current, asTR.type);
+		return acceptableForAnnotation(lp, current, asTR.type);
 	}
 
 	return false;
@@ -681,7 +681,7 @@ int typeToRuntimeConstant(LanguagePass lp, ir.Scope current, ir.Type type)
 	case Union: return lp.TYPE_UNION;
 	case Enum: return lp.TYPE_ENUM;
 	case Attribute: return lp.TYPE_ATTRIBUTE;
-	case UserAttribute: return lp.TYPE_USER_ATTRIBUTE;
+	case Annotation: return lp.TYPE_ANNOTATION;
 	case PrimitiveType:
 		auto prim = cast(ir.PrimitiveType) type;
 		final switch (prim.type) with (ir.PrimitiveType.Kind) {
@@ -1354,7 +1354,7 @@ ir.Class commonParent(ir.Class a, ir.Class b)
 ir.Aggregate opOverloadableOrNull(ir.Type t)
 {
 	auto _agg = cast(ir.Aggregate) realType(t);
-	if (_agg is null || _agg.nodeType == ir.NodeType.UserAttribute) {
+	if (_agg is null || _agg.nodeType == ir.NodeType.Annotation) {
 		return null;
 	}
 	return _agg;

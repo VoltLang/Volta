@@ -180,7 +180,7 @@ void gather(ir.Scope current, ir.MixinTemplate mt, Where where)
 	current.addTemplate(mt, mt.name);
 }
 
-void gather(ir.Scope current, ir.UserAttribute ua, Where where)
+void gather(ir.Scope current, ir.Annotation ua, Where where)
 {
 	assert(ua.access.isValidAccess());
 	assert(ua.myScope !is null);
@@ -312,7 +312,7 @@ void addScope(ir.Scope current, ir._Interface i)
 	i.myScope = new ir.Scope(current, i, i.name, current.nestedDepth);
 }
 
-void addScope(ir.Scope current, ir.UserAttribute ua)
+void addScope(ir.Scope current, ir.Annotation ua)
 {
 	assert(ua.myScope is null);
 	ua.myScope = new ir.Scope(current, ua, ua.name, current.nestedDepth);
@@ -491,7 +491,7 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ir.UserAttribute ua)
+	override Status enter(ir.Annotation ua)
 	{
 		addScope(current, ua);
 		gather(current, ua, where);
@@ -602,5 +602,5 @@ public:
 	override Status leave(ir.Function func) { pop(func); return Continue; }
 	override Status leave(ir.BlockStatement bs) { pop(); return Continue; }
 	override Status leave(ir._Interface i) { pop(i); return Continue; }
-	override Status leave(ir.UserAttribute ua) { pop(ua); return Continue; }
+	override Status leave(ir.Annotation ua) { pop(ua); return Continue; }
 }

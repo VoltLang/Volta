@@ -213,8 +213,8 @@ body
 			}
 		case TokenType.At:
 			if (ps.lookahead(1).type == TokenType.Interface) {
-				ir.UserAttribute ui;
-				succeeded = parseUserAttribute(ps, ui);
+				ir.Annotation ui;
+				succeeded = parseAnnotation(ps, ui);
 				if (!succeeded) {
 					return parseFailed(ps, ir.NodeType.TopLevelBlock);
 				}
@@ -1058,8 +1058,8 @@ ParseStatus parseAttribute(ParserStream ps, out ir.Attribute attr, bool noTopLev
 			attr.kind = ir.Attribute.Kind.Label;
 			break;
 		default:
-			attr.kind = ir.Attribute.Kind.UserAttribute;
-			auto succeeded = parseQualifiedName(ps, attr.userAttributeName);
+			attr.kind = ir.Attribute.Kind.Annotation;
+			auto succeeded = parseQualifiedName(ps, attr.annotationName);
 			if (!succeeded) {
 				return parseFailed(ps, attr);
 			}
@@ -1272,13 +1272,13 @@ ParseStatus parseConditionTopLevel(ParserStream ps, out ir.ConditionTopLevel ctl
 	return Succeeded;
 }
 
-ParseStatus parseUserAttribute(ParserStream ps, out ir.UserAttribute ui)
+ParseStatus parseAnnotation(ParserStream ps, out ir.Annotation ui)
 {
-	ui = new ir.UserAttribute();
+	ui = new ir.Annotation();
 	ui.location = ps.peek.location;
 	ui.docComment = ps.comment();
 
-	auto succeeded = match(ps, ir.NodeType.UserAttribute,
+	auto succeeded = match(ps, ir.NodeType.Annotation,
 		[TokenType.At, TokenType.Interface, TokenType.Identifier]);
 	if (!succeeded) {
 		return succeeded;
@@ -1310,5 +1310,5 @@ ParseStatus parseUserAttribute(ParserStream ps, out ir.UserAttribute ui)
 		assert(var !is null);
 	}
 
-	return match(ps, ir.NodeType.UserAttribute, TokenType.CloseBrace);
+	return match(ps, ir.NodeType.Annotation, TokenType.CloseBrace);
 }

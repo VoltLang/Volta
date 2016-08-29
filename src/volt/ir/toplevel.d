@@ -259,7 +259,7 @@ public:
 		Safe,
 		NoThrow,
 		Pure,
-		UserAttribute,
+		Annotation,
 		MangledName,
 		Label,
 	}
@@ -273,9 +273,9 @@ public:
 
 	Attribute chain; ///< for "public abstract:"
 
-	QualifiedName userAttributeName;  ///< Optional.
-	Exp[] arguments;  ///< If kind == UserAttribute or MangledName.
-	UserAttribute userAttribute;  ///< Filled in by the exptyper.
+	QualifiedName annotationName;  ///< Optional.
+	Exp[] arguments;  ///< If kind == Annotation or MangledName.
+	Annotation annotation;  ///< Filled in by the exptyper.
 
 	/// Only if type == Align.
 	int alignAmount;
@@ -292,13 +292,13 @@ public:
 
 		this.chain = old.chain;
 
-		this.userAttributeName = old.userAttributeName;
+		this.annotationName = old.annotationName;
 		version (Volt) {
 			this.arguments = new old.arguments[0 .. $];
 		} else {
 			this.arguments = old.arguments.dup;
 		}
-		this.userAttributeName = old.userAttributeName;
+		this.annotation = old.annotation;
 
 		this.alignAmount = old.alignAmount;
 	}
@@ -347,7 +347,7 @@ public:
 abstract class Aggregate : Named
 {
 public:
-	Attribute[] userAttrs;
+	Attribute[] annotations;
 	Aggregate[] anonymousAggregates;
 	Variable[] anonymousVars;
 
@@ -361,7 +361,7 @@ public:
 	this(NodeType nt, Aggregate old)
 	{
 		super(nt, old);
-		this.userAttrs = old.userAttrs;
+		this.annotations = old.annotations;
 		this.anonymousAggregates = old.anonymousAggregates;
 		this.anonymousVars = old.anonymousVars;
 
@@ -762,9 +762,9 @@ public:
 }
 
 /**
- * The building block of user defined attributes.
+ * The building block of annotations (user defined attributes).
  *
- * Defined fairly simply:
+ * Defined simply:
  * ---
  * @interface Name {
  *     int someVar;
@@ -776,11 +776,11 @@ public:
  * Only variables can be present. Any assign (or when initializing them
  * normally, in fact) must be known at compile time.
  *
- * @p UserAttributes are mangled as 'T' + name.
+ * @p Annotations are mangled as 'T' + name.
  *
  * @ingroup irNode irTopLevel
  */
-class UserAttribute : Named
+class Annotation : Named
 {
 public:
 	Variable[] fields;
@@ -789,11 +789,11 @@ public:
 	bool isActualized;
 
 public:
-	this() { super(NodeType.UserAttribute); }
+	this() { super(NodeType.Annotation); }
 
-	this(UserAttribute old)
+	this(Annotation old)
 	{
-		super(NodeType.UserAttribute, old);
+		super(NodeType.Annotation, old);
 		version (Volt) {
 			this.fields = new old.fields[0 .. $];
 		} else {

@@ -464,7 +464,7 @@ void retrieveScope(ir.Node tt, ir.Postfix postfix, ref ir.Scope _scope, ref ir.C
 		_scope = asModule.myScope;
 		emsg = format("module '%s' has no member '%s'.", asModule.name, postfix.identifier.value);
 	} else if (tt.nodeType == ir.NodeType.Struct || tt.nodeType == ir.NodeType.Union ||
-	           tt.nodeType == ir.NodeType.Class || tt.nodeType == ir.NodeType.UserAttribute || tt.nodeType == ir.NodeType.Interface) {
+	           tt.nodeType == ir.NodeType.Class || tt.nodeType == ir.NodeType.Annotation || tt.nodeType == ir.NodeType.Interface) {
 		if (tt.nodeType == ir.NodeType.Struct) {
 			auto asStruct = cast(ir.Struct) tt;
 			_scope = asStruct.myScope;
@@ -477,8 +477,8 @@ void retrieveScope(ir.Node tt, ir.Postfix postfix, ref ir.Scope _scope, ref ir.C
 			_class = cast(ir.Class) tt;
 			_scope = _class.myScope;
 			emsg = format("type '%s' has no member '%s'.", _class.name, postfix.identifier.value);
-		} else if (tt.nodeType == ir.NodeType.UserAttribute) {
-			auto asAttr = cast(ir.UserAttribute) tt;
+		} else if (tt.nodeType == ir.NodeType.Annotation) {
+			auto asAttr = cast(ir.Annotation) tt;
 			_scope = asAttr.myScope;
 			emsg = format("type '%s' has no member '%s'.", asAttr.name, postfix.identifier.value);
 		} else if (tt.nodeType == ir.NodeType.Interface) {

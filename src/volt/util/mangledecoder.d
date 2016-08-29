@@ -147,7 +147,7 @@ ir.Type mangledToType(ref string mangledString)
 			return buildAATypeSmart(location, key, value);
 		} else {
 			auto qname = mangledString.takeName();
-			auto attr = new ir.UserAttribute();
+			auto attr = new ir.Annotation();
 			attr.name = qname.identifiers[$-1].value;
 			return attr;
 		}

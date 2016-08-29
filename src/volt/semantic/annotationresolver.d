@@ -1,7 +1,7 @@
-// Copyright © 2013, Bernard Helyer.  All rights reserved.
-// Copyright © 2013, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2013-2016, Bernard Helyer.  All rights reserved.
+// Copyright © 2013-2016, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.semantic.userattrresolver;
+module volt.semantic.annotationresolver;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
@@ -18,38 +18,38 @@ import volt.semantic.classify;
 
 bool needsResolving(ir.Attribute a)
 {
-	if (a.kind != ir.Attribute.Kind.UserAttribute) {
+	if (a.kind != ir.Attribute.Kind.Annotation) {
 		return false;
 	}
-	if (a.userAttribute !is null) {
+	if (a.annotation !is null) {
 		return false;
 	}
 	return true;
 }
 
-void actualizeUserAttribute(LanguagePass lp, ir.UserAttribute ua)
+void actualizeAnnotation(LanguagePass lp, ir.Annotation ua)
 {
-	checkUserAttribute(lp, ua);
-	fillInUserAttributeLayoutClass(lp, ua);
+	checkAnnotation(lp, ua);
+	fillInAnnotationLayoutClass(lp, ua);
 	ua.isActualized = true;
 }
 
-void checkUserAttribute(LanguagePass lp, ir.UserAttribute ua)
+void checkAnnotation(LanguagePass lp, ir.Annotation ua)
 {
 	foreach (field; ua.fields) {
 		lp.resolve(ua.myScope, field);
 
-		if (!acceptableForUserAttribute(lp, ua.myScope, field.type)) {
+		if (!acceptableForAnnotation(lp, ua.myScope, field.type)) {
 			throw makeExpected(field, "@interface suitable type");
 		}
 	}
 }
 
 /**
- * Generate the layout class for a given UserAttribute,
+ * Generate the layout class for a given Annotation,
  * if one has not been previously generated.
  */
-void fillInUserAttributeLayoutClass(LanguagePass lp, ir.UserAttribute ua)
+void fillInAnnotationLayoutClass(LanguagePass lp, ir.Annotation ua)
 {
 	auto _class = new ir.Class();
 	_class.location = ua.location;
@@ -75,22 +75,22 @@ void fillInUserAttributeLayoutClass(LanguagePass lp, ir.UserAttribute ua)
 }
 
 /**
- * This does basic validation for on UserAttribute usage,
+ * This does basic validation for on Annotation usage,
  * it does not check the argument types, this is left up
  * up to the extyper which calls this function.
  */
-void basicValidateUserAttribute(LanguagePass lp, ir.Scope current, ir.Attribute a)
+void basicValidateAnnotation(LanguagePass lp, ir.Scope current, ir.Attribute a)
 {
-	assert(a.kind == ir.Attribute.Kind.UserAttribute);
+	assert(a.kind == ir.Attribute.Kind.Annotation);
 
-	auto store = lookup(lp, current, a.userAttributeName);
+	auto store = lookup(lp, current, a.annotationName);
 	if (store is null) {
-		throw makeFailedLookup(a, a.userAttributeName.toString());
+		throw makeFailedLookup(a, a.annotationName.toString());
 	}
 
-	auto ua = cast(ir.UserAttribute) store.node;
+	auto ua = cast(ir.Annotation) store.node;
 	if (ua is null) {
-		throw makeFailedLookup(a, a.userAttributeName.toString());
+		throw makeFailedLookup(a, a.annotationName.toString());
 	}
 
 	lp.actualize(ua);
@@ -102,5 +102,5 @@ void basicValidateUserAttribute(LanguagePass lp, ir.Scope current, ir.Attribute 
 	// Note this function does not check if the arguments are correct,
 	// thats up to the extyper to do, which calls this function.
 
-	a.userAttribute = ua;
+	a.annotation = ua;
 }

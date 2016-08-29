@@ -406,9 +406,9 @@ public:
 			acceptExp(attr.arguments[0], this);
 			wf(")");
 			break;
-		case UserAttribute:
+		case Annotation:
 			twf("@");
-			wf(attr.userAttributeName);
+			wf(attr.annotationName);
 			wf("(");
 			foreach (i, arg; attr.arguments) {
 				accept(arg, this);
@@ -1160,7 +1160,7 @@ public:
 	
 	override Status leave(ir.MixinStatement ms) { return Continue; }
 	
-	override Status enter(ir.UserAttribute ui)
+	override Status enter(ir.Annotation ui)
 	{
 		twf("@interface ");
 		wf(ui.name);
@@ -1169,7 +1169,7 @@ public:
 		return Continue;
 	}
 
-	override Status leave(ir.UserAttribute ui)
+	override Status leave(ir.Annotation ui)
 	{
 		mIndent--;
 		twfln("}");
