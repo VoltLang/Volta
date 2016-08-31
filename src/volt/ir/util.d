@@ -1909,6 +1909,13 @@ ir.Exp buildTypeInfoCast(LanguagePass lp, ir.Exp e)
 	return buildCastSmart(e.location, lp.tiTypeInfo, e);
 }
 
+ir.BreakStatement buildBreakStatement(Location loc)
+{
+	auto bs = new ir.BreakStatement();
+	bs.location = loc;
+	return bs;
+}
+
 ir.GotoStatement buildGotoDefault(Location loc)
 {
 	auto gs = new ir.GotoStatement();

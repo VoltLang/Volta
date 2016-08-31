@@ -367,11 +367,20 @@ public:
 		block = new Block();
 		size_t parents;
 		foreach (i, _block; currentSwitchBlocks) {
+			if ((i == currentSwitchBlocks.length - 1) &&
+			    _block.canReachWithoutBreakGoto() &&
+			    _block.canReachEntry()) {
+				// The last case in a switch can omit a break. Insert it.
+				ss.cases[i].statements.statements ~= buildBreakStatement(ss.cases[i].location);
+				_block._break = true;
+
+			}
 			if (currentBlock.hitsBreakBeforeTarget(_block) ||
 			    ss.cases[i].statements.statements.length == 0) {
 				block.addParent(_block);
 				parents++;
 			}
+
 		}
 		block.terminates = parents == 0;
 
