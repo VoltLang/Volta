@@ -81,6 +81,14 @@ public:
 		version (Volt) return canReachWithout(this, term);
 		else return canReachWithout(this, &term);
 	}
+
+	bool hitsBreakBeforeTarget(Block target)
+	{
+		assert(this !is target);
+		bool term(Block b) { return b._break; }
+		version (Volt) return canReachChildBefore(this, term, target);
+		else return canReachChildBefore(this, &term, target);
+	}
 }
 
 /// Returns true if the given block can reach the entry without dgt returning true.
@@ -94,6 +102,22 @@ bool canReachWithout(Block block, bool delegate(Block) dgt)
 	}
 	foreach (parent; block.parents) {
 		if (canReachWithout(parent, dgt)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+bool canReachChildBefore(Block block, bool delegate(Block) dgt, Block target)
+{
+	if (dgt(block)) {
+		return true;
+	}
+	if (block is target) {
+		return false;
+	}
+	foreach (child; block.children) {
+		if (canReachChildBefore(child, dgt, target)) {
 			return true;
 		}
 	}
@@ -342,8 +366,9 @@ public:
 
 		block = new Block();
 		size_t parents;
-		foreach (_block; currentSwitchBlocks) {
-			if (!_block._goto && !_block.terminates) {
+		foreach (i, _block; currentSwitchBlocks) {
+			if (currentBlock.hitsBreakBeforeTarget(_block) ||
+			    ss.cases[i].statements.statements.length == 0) {
 				block.addParent(_block);
 				parents++;
 			}
@@ -494,7 +519,7 @@ public:
 		if (as.isStatic) {
 			return Continue;
 		}
-		block.terminates = constantTrue(as.condition);
+		block.terminates = constantFalse(as.condition);
 		return Continue;
 	}
 
