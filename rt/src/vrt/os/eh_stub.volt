@@ -2,7 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.os.eh_stub;
 
-import core.exception: Throwable, Error;
+import core.exception: Throwable, Error, AssertError;
 import core.rt.misc: vrt_panic;
 
 
@@ -21,6 +21,11 @@ extern(C) fn vrt_eh_throw_slice_error(length: size_t, targetSize: size_t, locati
 	if ((length % targetSize) != 0) {
 		vrt_eh_throw(new Error("invalid array cast"), location);
 	}
+}
+
+extern(C) fn vrt_eh_throw_assert_error(location: string, msg: string)
+{
+	vrt_eh_throw(new AssertError(msg), location);
 }
 
 extern(C) fn vrt_eh_personality_v0()
