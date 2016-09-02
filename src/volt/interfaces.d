@@ -349,7 +349,6 @@ public:
 
 	// core.exception
 	ir.Class exceptThrowable;
-	ir.Class exceptKeyNotFoundException;
 
 	// core.rt.gc
 	ir.Variable gcAllocDgVariable;
