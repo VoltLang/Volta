@@ -258,7 +258,6 @@ public:
 
 		// core.exception
 		exceptThrowable = getClassFrom(exceptionModule, "Throwable");
-		exceptKeyNotFoundException = getClassFrom(exceptionModule, "KeyNotFoundException");
 
 		// core.rt.gc
 		gcAllocDgVariable = getVarFrom(rtGCModule, "allocDg");
@@ -287,6 +286,8 @@ public:
 		ehThrowFunc = getFunctionFrom(rtMiscModule, "vrt_eh_throw");
 		ehThrowSliceErrorFunc = getFunctionFrom(rtMiscModule, "vrt_eh_throw_slice_error");
 		ehThrowAssertErrorFunc = getFunctionFrom(rtMiscModule, "vrt_eh_throw_assert_error");
+		ehThrowKeyNotFoundErrorFunc = getFunctionFrom(rtMiscModule,
+			"vrt_eh_throw_key_not_found_error");
 		ehPersonalityFunc = getFunctionFrom(rtMiscModule, "vrt_eh_personality_v0");
 		utfDecode_u8_d = getFunctionFrom(rtMiscModule, "vrt_decode_u8_d");
 		utfReverseDecode_u8_d = getFunctionFrom(rtMiscModule, "vrt_reverse_decode_u8_d");

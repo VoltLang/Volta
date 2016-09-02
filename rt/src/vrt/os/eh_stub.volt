@@ -2,7 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.os.eh_stub;
 
-import core.exception: Throwable, Error, AssertError;
+import core.exception: Throwable, Error, AssertError, KeyNotFoundException;
 import core.rt.misc: vrt_panic;
 
 
@@ -26,6 +26,11 @@ extern(C) fn vrt_eh_throw_slice_error(length: size_t, targetSize: size_t, locati
 extern(C) fn vrt_eh_throw_assert_error(location: string, msg: string)
 {
 	vrt_eh_throw(new AssertError(msg), location);
+}
+
+extern(C) fn vrt_eh_throw_key_not_found_error(location: string)
+{
+	vrt_eh_throw(new KeyNotFoundException("key does not exist"), location);
 }
 
 extern(C) fn vrt_eh_personality_v0()

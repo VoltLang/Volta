@@ -4,7 +4,7 @@ module vrt.eh;
 
 import core.rt.misc: vrt_panic, vrt_handle_cast;
 import core.typeinfo: TypeInfo;
-import core.exception: Throwable, Error, AssertError;
+import core.exception: Throwable, Error, AssertError, KeyNotFoundException;
 
 
 version (!Emscripten && !MSVC && !Metal):
@@ -78,6 +78,11 @@ extern(C) fn vrt_eh_throw_assert_error(location: string, msg: string)
 extern(C) fn vrt_eh_throw_slice_error(location: string)
 {
 	vrt_eh_throw(new Error("invalid array cast"), location);
+}
+
+extern(C) fn vrt_eh_throw_key_not_found_error(location: string)
+{
+	vrt_eh_throw(new KeyNotFoundException("key does not exist"), location);
 }
 
 /**

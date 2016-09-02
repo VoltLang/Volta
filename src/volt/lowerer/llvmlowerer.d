@@ -123,23 +123,14 @@ void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 	} else {
 		inAAFn = lp.aaInArray;
 	}
-	auto throwFn = lp.ehThrowFunc;
 
 	auto thenState = buildBlockStat(loc, statExp, current);
 
-	auto knfClass = lp.exceptKeyNotFoundException;
+	auto knfFunc = buildExpReference(loc, lp.ehThrowKeyNotFoundErrorFunc);
 	auto throwableClass = lp.exceptThrowable;
+	ir.Exp locstr = buildConstantString(loc, format("%s:%s", loc.filename, loc.line));
 
-	auto _new = buildNew(loc, knfClass, "KeyNotFoundException", [
-			cast(ir.Exp)buildConstantString(loc, `Key does not exist`)
-				]);
-	_new.ctor = knfClass.userConstructors[0];
-
-	buildExpStat(loc, thenState,
-		buildCall(loc, throwFn, [
-			buildCastSmart(throwableClass, _new),
-			buildConstantString(loc, format("%s:%s", loc.filename, loc.line), false)],
-		throwFn.name));
+	buildExpStat(loc, thenState, buildCall(loc, knfFunc, [locstr]));
 
 	buildIfStat(loc, statExp,
 		buildBinOp(loc, ir.BinOp.Op.Equal,

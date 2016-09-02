@@ -531,6 +531,11 @@ ir.ExpReference buildExpReference(Location loc, ir.Declaration decl, string[] na
 	return varRef;
 }
 
+ir.ExpReference buildExpReference(Location loc, ir.Function func)
+{
+	return buildExpReference(loc, func, func.name);
+}
+
 /**
  * Builds a constant double.
  */
