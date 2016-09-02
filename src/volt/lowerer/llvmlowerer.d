@@ -404,6 +404,38 @@ bool lowerVariables(LanguagePass lp, ir.Function func, ir.BlockStatement bs, Vis
 }
 
 /**
+ * For each runtime assert in bs, transform it into an if statement.
+ */
+void lowerAssertStatements(LanguagePass lp, ir.Scope current, ir.BlockStatement bs)
+{
+	for (size_t i = 0; i < bs.statements.length; ++i) {
+		auto as = cast(ir.AssertStatement)bs.statements[i];
+		if (as is null || as.isStatic) {
+			continue;
+		}
+		bs.statements[i] = buildAssertIf(lp, current, as);
+	}
+}
+
+/// Build an if statement based on a runtime assert.
+ir.IfStatement buildAssertIf(LanguagePass lp, ir.Scope current, ir.AssertStatement as)
+{
+	panicAssert(as, !as.isStatic);
+	auto l = as.location;
+	ir.Exp message = as.message;
+	if (message is null) {
+		message = buildConstantString(l, "assertion failure");
+	}
+	assert(message !is null);
+	auto eref = buildExpReference(l, lp.ehThrowAssertErrorFunc, lp.ehThrowAssertErrorFunc.name);
+	ir.Exp locstr = buildConstantString(l, format("%s:%s", as.location.filename, as.location.line), false);
+	auto theThrow = buildExpStat(l, buildCall(l, eref, [locstr, message]));
+	auto thenBlock = buildBlockStat(l, null, current, theThrow);
+	auto ifS = buildIfStat(l, buildNot(l, as.condition), thenBlock);
+	return ifS;
+}
+
+/**
  * Given a throw statement, turn its expression into a call into the RT.
  *
  * Params:
@@ -1887,6 +1919,7 @@ public:
 	{
 		super.enter(bs);
 		panicAssert(bs, functionStack.length > 0);
+		lowerAssertStatements(lp, current, bs);
 		lowerForeaches(lp, current, functionStack[$-1], bs);
 		insertBinOpAssignsForNestedVariableAssigns(lp, bs);
 		if (lowerVariables(lp, functionStack[$-1], bs, this)) {

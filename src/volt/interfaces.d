@@ -349,7 +349,6 @@ public:
 
 	// core.exception
 	ir.Class exceptThrowable;
-	ir.Class exceptAssertError;
 	ir.Class exceptKeyNotFoundException;
 
 	// core.rt.gc
@@ -386,6 +385,7 @@ public:
 	ir.Function ehThrowFunc;
 	ir.Function ehThrowSliceErrorFunc;
 	ir.Function ehPersonalityFunc;
+	ir.Function ehThrowAssertErrorFunc;
 
 	// core.compiler.llvm
 	ir.Function llvmTypeidFor;

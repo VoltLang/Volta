@@ -3711,17 +3711,21 @@ void extypeAssertStatement(Context ctx, ref ir.Node n)
 {
 	auto as = cast(ir.AssertStatement) n;
 
-	if (!as.isStatic) {
-		n = transformRuntimeAssert(ctx, as);
-		return extypeIfStatement(ctx, n);
-	}
-
 	extype(ctx, as.condition, Parent.NA);
 
-	as.condition = evaluate(ctx.lp, ctx.current, as.condition);
+	if (as.message !is null) {
+		extype(ctx, as.message, Parent.NA);
+	}
+
+	if (!as.isStatic) {
+		return;
+	}
+
 	if (as.message !is null) {
 		as.message = evaluate(ctx.lp, ctx.current, as.message);
 	}
+
+	as.condition = evaluate(ctx.lp, ctx.current, as.condition);
 	auto cond = cast(ir.Constant) as.condition;
 	ir.Constant msg;
 	if (as.message !is null) {
@@ -4348,26 +4352,6 @@ void checkAnonymousVariables(Context ctx, ir.Aggregate agg)
 		}
 	}
 }
-
-/// Turn a runtime assert into an if and a throw.
-ir.IfStatement transformRuntimeAssert(Context ctx, ir.AssertStatement as)
-{
-	if (as.isStatic) {
-		throw panic(as.location, "expected runtime assert");
-	}
-	auto l = as.location;
-	ir.Exp message = as.message;
-	if (message is null) {
-		message = buildConstantString(l, "assertion failure");
-	}
-	assert(message !is null);
-	auto exception = buildNew(l, ctx.lp.exceptAssertError, "AssertError", message);
-	auto theThrow  = buildThrowStatement(l, exception);
-	auto thenBlock = buildBlockStat(l, null, ctx.current, theThrow);
-	auto ifS = buildIfStat(l, buildNot(l, as.condition), thenBlock);
-	return ifS;
-}
-
 bool isInternalVariable(ir.Class c, ir.Variable v)
 {
 	foreach (ivar; c.ifaceVariables) {

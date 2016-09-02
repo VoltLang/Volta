@@ -4,7 +4,7 @@ module vrt.eh;
 
 import core.rt.misc: vrt_panic, vrt_handle_cast;
 import core.typeinfo: TypeInfo;
-import core.exception: Throwable, Error;
+import core.exception: Throwable, Error, AssertError;
 
 
 version (!Emscripten && !MSVC && !Metal):
@@ -52,7 +52,7 @@ extern(C) fn vrt_eh_delete(
 }
 
 /**
- * Throws a exception.
+ * Throws an exception.
  */
 extern(C) fn vrt_eh_throw(t: Throwable, location: string)
 {
@@ -68,6 +68,11 @@ extern(C) fn vrt_eh_throw(t: Throwable, location: string)
 	msgs: char[][1];
 	msgs[0] = cast(char[])"FAILED TO RAISE EXCEPTION";
 	vrt_panic(cast(char[][])msgs);
+}
+
+extern(C) fn vrt_eh_throw_assert_error(location: string, msg: string)
+{
+	vrt_eh_throw(new AssertError(msg), location);
 }
 
 extern(C) fn vrt_eh_throw_slice_error(location: string)

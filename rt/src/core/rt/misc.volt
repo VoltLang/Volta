@@ -13,6 +13,7 @@ extern(C):
  */
 fn vrt_eh_throw(t: Throwable, location: string);
 fn vrt_eh_throw_slice_error(location: string);
+fn vrt_eh_throw_assert_error(location: string, msg: string);
 fn vrt_eh_personality_v0();
 
 /*
