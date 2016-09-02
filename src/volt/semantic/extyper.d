@@ -1155,7 +1155,12 @@ ir.Type consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes,
 		string name = postfix.identifier.value;
 		auto store = lookupAsImportScope(ctx.lp, lookScope, postfix.location, name);
 		if (store is null) {
-			throw makeFailedLookup(postfix.location, name);
+			auto asEnum = cast(ir.Enum)lookType;
+			if (asEnum !is null && asEnum.name != "") {
+				throw makeFailedEnumLookup(postfix.location, asEnum.name, name);
+			} else {
+				throw makeFailedLookup(postfix.location, name);
+			}
 		}
 
 		// Not the last ident, and this store has a scope.

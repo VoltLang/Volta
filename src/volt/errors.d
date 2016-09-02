@@ -836,6 +836,11 @@ CompilerException makeFailedLookup(ir.Node node, string lookup, string file = __
 	return makeFailedLookup(node.location, lookup, file, line);
 }
 
+CompilerException makeFailedEnumLookup(Location location, string enumName, string name, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(location, format("enum '%s' does not define '%s'.", enumName, name), file, line);
+}
+
 CompilerException makeFailedLookup(Location location, string lookup, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(location, format("unidentified identifier '%s'.", lookup), file, line);
