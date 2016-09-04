@@ -895,6 +895,11 @@ void lowerArrayCast(Location loc, LanguagePass lp, ir.Scope current,
 	auto biggestSz = fromSz > toSz ? fromSz : toSz;
 	bool decreasing = fromSz > toSz;
 
+	// Skip lowering if the same size, the backend can handle it.
+	if (fromSz == toSz) {
+		return;
+	}
+
 	// ({
 	auto sexp = new ir.StatementExp();
 	sexp.location = loc;
