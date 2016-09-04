@@ -1111,15 +1111,12 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 		makeNonPointer(state, result);
 	} else if (dt !is null) {
 
-		makePointer(state, result);
-
 		ret = dt.ret;
 
-		auto func = LLVMBuildStructGEP(state.builder, result.value, DelegateType.funcIndex, "");
-		auto voidPtr = LLVMBuildStructGEP(state.builder, result.value, DelegateType.voidPtrIndex, "");
-
-		func = LLVMBuildLoad(state.builder, func, "");
-		llvmExtraArg = LLVMBuildLoad(state.builder, voidPtr, "");
+		auto func = getValueFromAggregate(state, postfix.location,
+			result, DelegateType.funcIndex);
+		llvmExtraArg = getValueFromAggregate(state, postfix.location,
+			result, DelegateType.voidPtrIndex);
 
 		offset = 1;
 		result.value = func;
