@@ -639,13 +639,7 @@ void handleCast(State state, Location loc, Type newType, Value result)
 	auto newTypeArray = cast(ArrayType)newType;
 	auto oldTypeArray = cast(ArrayType)oldType;
 	if (newTypeArray !is null && oldTypeArray !is null) {
-		// At one point we didn't call makePointer because arrays
-		// should always be references. But for function returns they
-		// aren't. Now we haven't run into cases before this change
-		// where they weren't pointers so this is probably safe. But
-		// at one point I clearly thought this was wrong todo.
-		makePointer(state, result);
-		return handleCastArray(state, loc, newType, result);
+		return handleCastArray(state, loc, newTypeArray, result);
 	}
 
 	makeNonPointer(state, result);
@@ -794,12 +788,15 @@ void handleCastPointerPrim(State state, Location loc, Type newTypePtr, Type newT
 /**
  * Handle all Array casts as bit casts
  */
-void handleCastArray(State state, Location loc, Type newType, Value result)
+void handleCastArray(State state, Location loc, ArrayType newType, Value result)
 {
-	assert(result.isPointer);
+	auto ptr = getValueFromAggregate(state, loc, result, ArrayType.ptrIndex);
+	auto len = getValueFromAggregate(state, loc, result, ArrayType.lengthIndex);
+	auto casted = LLVMBuildBitCast(state.builder, ptr,
+		newType.ptrType.llvmType, "");
 
-	result.type = newType;
-	result.value = LLVMBuildBitCast(state.builder, result.value, LLVMPointerType(newType.llvmType, 0), "");
+	// Value returned from casts are not LValues.
+	makeArrayValue(state, loc, newType, casted, len, result);
 }
 
 
