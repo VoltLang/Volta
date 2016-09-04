@@ -1251,7 +1251,10 @@ void handleAccessExp(State state, ir.AccessExp ae, Value result)
 		}
 
 
+		// TODO rework this to not use makePointer, maybe we can get
+		// a pointer with GEP to the internal static array?
 		makePointer(state, result);
+
 		result.type = ut.types[index];
 		auto t = LLVMPointerType(result.type.llvmType, 0);
 		result.value = LLVMBuildBitCast(state.builder, result.value, t, "");
