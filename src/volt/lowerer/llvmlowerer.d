@@ -127,7 +127,7 @@ void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 	auto thenState = buildBlockStat(loc, statExp, current);
 
 	auto knfFunc = buildExpReference(loc, lp.ehThrowKeyNotFoundErrorFunc);
-	ir.Exp locstr = buildConstantString(loc, format("%s:%s", loc.filename, loc.line));
+	ir.Exp locstr = buildConstantString(loc, format("%s:%s", loc.filename, loc.line), false);
 
 	buildExpStat(loc, thenState, buildCall(loc, knfFunc, [locstr]));
 
