@@ -51,7 +51,7 @@ void getArrayFromStaticArray(State state, Location loc, Value result)
 	auto srcPtr = result.value;
 	auto srcLen = LLVMConstInt(state.sizeType.llvmType, sat.length, false);
 
-	makeArrayTemp(state, loc, at, srcPtr, srcLen, result);
+	makeArrayValue(state, loc, at, srcPtr, srcLen, result);
 }
 
 /**
@@ -102,53 +102,34 @@ LLVMValueRef getValueFromAggregate(State state, Location loc,
 	}
 }
 
-/**
- * Creates a temporary delegate with alloca.
- */
-void makeArrayTemp(State state, Location loc, ArrayType at,
-                   LLVMValueRef ptr, LLVMValueRef len,
-                   Value result)
-{
-	version (D_Version2) static assert(ArrayType.lengthIndex <
-		ArrayType.ptrIndex);
-	makeStructTemp(state, loc, at, "arrayTemp",
-	               [len, ptr], result);
-}
-
-/**
- * Creates a temporary delegate with alloca.
- */
-void makeDelegateTemp(State state, Location loc, DelegateType dt,
-                      LLVMValueRef voidPtr, LLVMValueRef funcPtr,
-                      Value result)
-{
-	version (D_Version2) static assert(DelegateType.voidPtrIndex == 0);
-	makeStructTemp(state, loc, dt, "delegateTemp",
-	               [voidPtr, funcPtr], result);
-}
-
-/**
- * Creates a temporary allocation from a struct based type.
- * StructType, DelegateType and ArrayType can use this function.
- */
-void makeStructTemp(State state, Location loc,
-                    Type type, string name,
-                    LLVMValueRef[] members,
+void makeArrayValue(State state, Location loc, ArrayType at,
+                    LLVMValueRef ptr, LLVMValueRef len,
                     Value result)
 {
-	assert(cast(ArrayType)type !is null ||
-	       cast(StructType)type !is null ||
-	       cast(DelegateType)type !is null);
+	auto v = LLVMGetUndef(at.llvmType);
+	v = LLVMBuildInsertValue(state.builder, v, ptr,
+		ArrayType.ptrIndex, "");
+	v = LLVMBuildInsertValue(state.builder, v, len,
+		ArrayType.lengthIndex, "");
 
-	auto v = LLVMBuildAlloca(state.builder, type.llvmType, name);
 	result.value = v;
-	result.isPointer = true;
-	result.type = type;
+	result.isPointer = false;
+	result.type = at;
+}
 
-	foreach (i, member; members) {
-		auto dst = LLVMBuildStructGEP(state.builder, v, cast(uint)i, "");
-		LLVMBuildStore(state.builder, member, dst);
-	}
+void makeDelegateValue(State state, Location loc, DelegateType dt,
+                       LLVMValueRef voidPtr, LLVMValueRef funcPtr,
+                       Value result)
+{
+	auto v = LLVMGetUndef(dt.llvmType);
+	v = LLVMBuildInsertValue(state.builder, v, funcPtr,
+		DelegateType.funcIndex, "");
+	v = LLVMBuildInsertValue(state.builder, v, voidPtr,
+		DelegateType.voidPtrIndex, "");
+
+	result.value = v;
+	result.isPointer = false;
+	result.type = dt;
 }
 
 /**

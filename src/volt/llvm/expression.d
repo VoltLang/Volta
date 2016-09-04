@@ -1002,11 +1002,6 @@ void handleSliceTwo(State state, ir.Postfix postfix, Value result)
 	Value start = new Value();
 	Value end = new Value();
 
-	// Make sure that this is in a known state.
-	result.value = null;
-	result.isPointer = false;
-	result.type = null;
-
 	state.getValueAnyForm(postfix.child, left);
 
 	auto pt = cast(PointerType)left.type;
@@ -1039,13 +1034,6 @@ void handleSliceTwo(State state, ir.Postfix postfix, Value result)
 		throw panicUnhandled(postfix, ir.nodeToString(left.type.irType));
 	}
 
-	// Do we need temporary storage for the result?
-	if (result.value is null) {
-		result.value = LLVMBuildAlloca(state.builder, at.llvmType, "sliceTemp");
-		result.isPointer = true;
-		result.type = at;
-	}
-
 	state.getValueAnyForm(postfix.arguments[0], start);
 	state.getValueAnyForm(postfix.arguments[1], end);
 
@@ -1063,7 +1051,7 @@ void handleSliceTwo(State state, ir.Postfix postfix, Value result)
 	                           end, start, end);
 	len = end.value;
 
-	makeArrayTemp(state, postfix.location, at, ptr, len, result);
+	makeArrayValue(state, postfix.location, at, ptr, len, result);
 }
 
 void handleCreateDelegate(State state, ir.Postfix postfix, Value result)
@@ -1074,35 +1062,24 @@ void handleCreateDelegate(State state, ir.Postfix postfix, Value result)
 	getCreateDelegateValues(state, postfix, instance, func);
 
 	auto funcType = cast(FunctionType)func.type;
-	if (funcType is null)
+	if (funcType is null) {
 		throw panic(postfix, "func isn't FunctionType");
+	}
 
 	auto irFn = cast(ir.FunctionType)funcType.irType;
 	auto irDg = new ir.DelegateType(irFn);
 	irDg.mangledName = volt.semantic.mangle.mangle(irDg);
 
 	auto dgt = cast(DelegateType)state.fromIr(irDg);
-	if (dgt is null)
-		throw panicOhGod(postfix);
+	assert(dgt !is null);
 
-	instance.value = LLVMBuildBitCast(
+	auto voidPtr = LLVMBuildBitCast(
 		state.builder, instance.value, state.voidPtrType.llvmType, "");
-	func.value = LLVMBuildBitCast(
+	auto funcPtr = LLVMBuildBitCast(
 		state.builder, func.value, dgt.llvmCallPtrType, "");
 
-	auto v = LLVMBuildAlloca(state.builder, dgt.llvmType, "");
-
-	auto funcPtr = LLVMBuildStructGEP(
-		state.builder, v, DelegateType.funcIndex, "");
-	auto voidPtrPtr = LLVMBuildStructGEP(
-		state.builder, v, DelegateType.voidPtrIndex, "");
-
-	LLVMBuildStore(state.builder, func.value, funcPtr);
-	LLVMBuildStore(state.builder, instance.value, voidPtrPtr);
-
-	result.type = dgt;
-	result.isPointer = true;
-	result.value = v;
+	makeDelegateValue(state, postfix.location, dgt,
+	                  voidPtr, funcPtr, result);
 }
 
 void handleCall(State state, ir.Postfix postfix, Value result)
