@@ -648,14 +648,16 @@ void handleCast(State state, Location loc, Type newType, Value result)
 	assert(oldType !is null);
 
 	/// @todo types are not cached yet.
-	if (oldType is newType)
+	if (oldType is newType) {
 		return;
+	}
 
 	auto newTypePrim = cast(PrimitiveType)newType;
 	auto oldTypePrim = cast(PrimitiveType)oldType;
 	if (newTypePrim !is null &&
-	    oldTypePrim !is null)
+	    oldTypePrim !is null) {
 		return handleCastPrimitive(state, loc, newTypePrim, oldTypePrim, result);
+	}
 
 	auto newTypePtr = cast(PointerType)newType;
 	auto oldTypePtr = cast(PointerType)oldType;
