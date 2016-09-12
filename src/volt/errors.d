@@ -254,6 +254,11 @@ CompilerException makeAccessThroughWrongType(Location loc, string field, string 
 	return new CompilerError(loc, format("accessing field '%s' through incorrect type.", field), file, line);
 }
 
+CompilerException makeVoidReturnMarkedProperty(Location loc, string name, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, format("@property functions with no arguments like '%s' cannot have a void return type.", name), file, line);
+}
+
 CompilerException makeNoFieldOrPropertyOrIsUFCSWithoutCall(Location loc, string value, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(loc, format("postfix lookups like '%s' that are not fields, properties, or UFCS functions must be a call.", value), file, line);

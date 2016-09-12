@@ -4144,7 +4144,7 @@ void resolveFunction(Context ctx, ir.Function func)
 	if (func.type.isProperty &&
 	    func.type.params.length == 0 &&
 	    isVoid(func.type.ret)) {
-		throw makeInvalidType(func, buildVoid(func.location));
+		throw makeVoidReturnMarkedProperty(func.location, func.name);
 	} else if (func.type.isProperty &&
 	           func.type.params.length > 1) {
 		throw makeWrongNumberOfArguments(func, func.type.params.length, isVoid(func.type.ret) ? 0U : 1U);
