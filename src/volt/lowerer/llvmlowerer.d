@@ -520,6 +520,16 @@ void lowerIndex(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 	if (type.nodeType == ir.NodeType.AAType) {
 		lowerIndexAA(lp, current, thisModule, exp, postfix, cast(ir.AAType)type);
 	}
+	// LLVM appears to have some issues with small indices.
+	// If this is being indexed by a small type, cast it up.
+	if (postfix.arguments.length > 0) {
+		panicAssert(exp, postfix.arguments.length == 1);
+		auto prim = cast(ir.PrimitiveType)realType(getExpType(postfix.arguments[0]));
+		if (prim !is null && size(lp, prim) < 4/*Smaller than a 32 bit integer.*/) {
+			auto l = postfix.arguments[0].location;
+			postfix.arguments[0] = buildCastSmart(buildInt(l), postfix.arguments[0]);
+		}
+	}
 }
 
 /**
