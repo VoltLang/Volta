@@ -770,7 +770,7 @@ ParseStatus parseTypeSigils(ParserStream ps, out ir.Type outType, Location origi
 		} else {
 			// Associative array.
 			auto a = new ir.AAType();
-			a.value = base;
+			a.value = outType;
 			auto succeeded = parseType(ps, a.key);
 			if (!succeeded) {
 				return parseFailed(ps, outType);
