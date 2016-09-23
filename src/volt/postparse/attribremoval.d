@@ -314,6 +314,16 @@ protected:
 			case Extern:
 				d.isExtern = true;
 				break;
+			case MangledName:
+				assert(attr.arguments.length == 1);
+				auto constant = cast(ir.Constant) attr.arguments[0];
+				if (constant is null || constant._string.length <= 2 || constant._string[0] != '\"') {
+					throw makeExpected(attr, "non empty string literal argument to MangledName.");
+				}
+				assert(constant._string[0] == '\"');
+				assert(constant._string[$-1] == '\"');
+				d.mangledName = constant._string[1..$-1];
+				break;
 			default:
 				// Warn?
 			}
