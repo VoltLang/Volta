@@ -6,11 +6,13 @@ import core.exception: Throwable;
 import core.typeinfo: TypeInfo;
 import core.rt.gc: vrt_gc_init, allocDg, vrt_gc_get_alloc_dg, vrt_gc_shutdown;
 import core.rt.misc: vrt_run_global_ctors, vrt_run_global_dtors, vrt_panic;
-
+import vrt.os.thread : __stack_bottom;
 
 
 extern(C) fn vrt_run_main(argc: i32, argv: char**, vmain: fn (string[]) int) i32
 {
+	// Find the bottom of the stack. Close enough for the GC.
+	__stack_bottom = cast(void*)&argv;
 
 	// Currently all the init that is needed for the GC.
 	vrt_gc_init();
