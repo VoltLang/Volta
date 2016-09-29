@@ -648,7 +648,7 @@ protected:
 			if (bitcodeFiles.length == 1) {
 				bc = bitcodeFiles[0];
 				bitcodeFiles = null;
-			} else {
+			} else if (bitcodeFiles.length > 1) {
 				bc = temporaryFilename(".bc", subdir);
 				mTemporaryFiles ~= bc;
 			}
@@ -674,8 +674,9 @@ protected:
 		// Setup object files and output for linking
 		string obj;
 		if (mNoLink) {
+			assert(bc !is null);
 			obj = mOutput;
-		} else {
+		} else if (bc !is null) {
 			obj = temporaryFilename(".o", subdir);
 			mTemporaryFiles ~= obj;
 		}
@@ -683,12 +684,20 @@ protected:
 		// If we are compiling on the emscripten platform ignore .o files.
 		if (mPlatform == Platform.EMSCRIPTEN) {
 			perf.mark(Perf.Mark.LINK);
-			return emscriptenLink(mLinker, bc, mOutput);
+			if (bc !is null) {
+				return emscriptenLink(mLinker, bc, mOutput);
+			} else {
+				return 0;
+			}
 		}
 
-		// Native compilation, turn the bitcode into native code.
-		perf.mark(Perf.Mark.ASSEMBLE);
-		writeObjectFile(target, obj, bc);
+		if (obj !is null) {
+			assert(bc !is null);
+
+			// Native compilation, turn the bitcode into native code.
+			perf.mark(Perf.Mark.ASSEMBLE);
+			writeObjectFile(target, obj, bc);
+		}
 
 		// When not linking we are now done.
 		if (mNoLink) {
@@ -702,18 +711,23 @@ protected:
 
 	int nativeLink(string obj, string of)
 	{
+		auto objs = mObjectFiles;
+		if (obj !is null) {
+			objs ~= obj;
+		}
+
 		if (mLinkWithLink) {
-			return msvcLink(mLinker, obj, of);
+			return msvcLink(mLinker, objs, of);
 		} else if (mLinkWithLD) {
-			return ccLink(mLinker, false, obj, of);
+			return ccLink(mLinker, false, objs, of);
 		} else if (mLinkWithCC) {
-			return ccLink(mLinker, true, obj, of);
+			return ccLink(mLinker, true, objs, of);
 		} else {
 			assert(false);
 		}
 	}
 
-	int ccLink(string linker, bool cc, string obj, string of)
+	int ccLink(string linker, bool cc, string[] objs, string of)
 	{
 		string[] args = ["-o", of];
 
@@ -725,7 +739,7 @@ protected:
 			}
 		}
 
-		foreach (objectFile; mObjectFiles ~ obj) {
+		foreach (objectFile; objs) {
 			args ~= objectFile;
 		}
 		foreach (libraryPath; mLibraryPaths) {
@@ -766,7 +780,7 @@ protected:
 		return spawnProcess(linker, args).wait();
 	}
 
-	int msvcLink(string linker, string obj, string of)
+	int msvcLink(string linker, string[] objs, string of)
 	{
 		string[] args = [
 			"/MACHINE:x64",
@@ -776,7 +790,7 @@ protected:
 			"/nologo",
 			format("/out:%s", of)];
 
-		foreach (objectFile; mObjectFiles ~ obj) {
+		foreach (objectFile; objs) {
 			args ~= objectFile;
 		}
 		foreach (libFile; mLibFiles) {
