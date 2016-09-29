@@ -48,7 +48,6 @@ class VoltDriver : Driver
 public:
 	VersionSet ver;
 	TargetInfo target;
-	Settings settings;
 	Frontend frontend;
 	LanguagePass languagePass;
 	Backend backend;
@@ -128,120 +127,28 @@ public:
 	body {
 		this.ver = ver;
 		this.target = target;
-		this.settings = s;
 		this.execDir = s.execDir;
 		this.identStr = s.identStr;
 		this.internalDebug = s.internalDebug;
-
-		setVersionSet(ver, s.arch, s.platform);
-		setTargetInfo(target, s.arch, s.platform);
-
-		this.frontend = new Parser(this.settings);
-
 
 		// Timers
 		mAccumReading = new Accumulator("p1-reading");
 		mAccumParsing = new Accumulator("p1-parsing");
 
+		setTargetInfo(target, s.arch, s.platform);
+		setVersionSet(ver, s.arch, s.platform);
 
-		auto mode = Mode.Normal;
-		if (s.removeConditionalsOnly) {
-			mode = Mode.RemoveConditionalsOnly;
-		} else if (s.missingDeps) {
-			mode = Mode.MissingDeps;
-		}
+		auto mode = decideMode(s);
 
-		languagePass = new VoltLanguagePass(this, ver, target,
+		this.frontend = new Parser(s);
+		this.languagePass = new VoltLanguagePass(this, ver, target,
 			frontend, mode, s.internalD, s.warningsEnabled);
 
-		if (!s.noBackend) {
-			backend = new LlvmBackend(languagePass);
-		}
-
-		mArch = settings.arch;
-		mPlatform = settings.platform;
-
-		mNoLink = settings.noLink;
-		mNoBackend = settings.noBackend;
-		mMissingDeps = settings.missingDeps;
-		mEmitBitcode = settings.emitBitcode;
-		mRemoveConditionalsOnly = settings.removeConditionalsOnly;
-
-		mInternalD = settings.internalD;
-		mInternalDiff = settings.internalDiff;
-		mInternalDebug = settings.internalDebug;
-		mInternalNoCatch = settings.noCatch;
-
-		mDepFile = settings.depFile;
-
-		mIncludes = settings.includePaths;
-		mSrcIncludes = settings.srcIncludePaths;
-		mImportAsSrc = settings.importAsSrc;
-
-		mLibraryPaths = settings.libraryPaths;
-		mLibraryFiles = settings.libraryFiles;
-
-		mFrameworkNames = settings.frameworkNames;
-		mFrameworkPaths = settings.frameworkPaths;
-
-		mStringImportPaths = settings.stringImportPaths;
-
-		mXld = settings. xld;
-		mXcc = settings. xcc;
-		mXlink = settings. xlink;
-		mXlinker = settings. xlinker;
-
-		if (settings.jsonOutput !is null) {
-			mJsonPrinter = new JsonPrinter(settings.jsonOutput);
-		}
-
-		if (settings.linker !is null) {
-			switch (mPlatform) with (Platform) {
-			case MSVC:
-				mLinker = settings.linker;
-				mLinkWithLink = true;
-				break;
-			default:
-				mLinker = settings.linker;
-				mLinkWithLD = true;
-				break;
-			}
-		} else if (settings.ld !is null) {
-			mLinker = settings.ld;
-			mLinkWithLD = true;
-		} else if (settings.cc !is null) {
-			mLinker = settings.cc;
-			mLinkWithCC = true;
-		} else if (settings.link !is null) {
-			mLinker = settings.link;
-			mLinkWithLink = true;
-		} else {
-			switch (mPlatform) with (Platform) {
-			case MSVC:
-				mLinker = "link.exe";
-				mLinkWithLink = true;
-				break;
-			case EMSCRIPTEN:
-				mLinker = "emcc";
-				mLinkWithCC = true;
-				break;
-			default:
-				mLinkWithCC = true;
-				mLinker = "gcc";
-				break;
-			}
-		}
-
-		// Setup the output file
-		if (settings.outputFile !is null) {
-			mOutput = settings.outputFile;
-		} else if (mEmitBitcode) {
-			mOutput = DEFAULT_BC;
-		} else if (mNoLink) {
-			mOutput = DEFAULT_OBJ;
-		} else {
-			mOutput = DEFAULT_EXE;
-		}
+		decideStuff(s);
+		decideBackend(s);
+		decideJson(s);
+		decideLinker(s);
+		decideOutputFile(s);
 
 		debugVisitors ~= new DebugMarker("Running DebugPrinter:");
 		debugVisitors ~= new DebugPrinter();
@@ -319,7 +226,6 @@ public:
 			backend.close();
 		}
 
-		settings = null;
 		frontend = null;
 		languagePass = null;
 		backend = null;
@@ -430,6 +336,7 @@ public:
 		mCompiledModules[mod.uniqueId] = compMod;
 		return compMod;
 	}
+
 
 protected:
 	void writeDepFile()
@@ -824,6 +731,129 @@ protected:
 	{
 		string[] args = ["-o", of];
 		return spawnProcess(linker, ["-o", of, bc]).wait();
+	}
+
+
+	/*
+	 *
+	 * Decision methods.
+	 *
+	 */
+
+	static Mode decideMode(Settings settings)
+	{
+		if (settings.removeConditionalsOnly) {
+			return Mode.RemoveConditionalsOnly;
+		} else if (settings.missingDeps) {
+			return Mode.MissingDeps;
+		} else {
+			return Mode.Normal;
+		}
+	}
+
+	void decideStuff(Settings settings)
+	{
+		mArch = settings.arch;
+		mPlatform = settings.platform;
+
+		mNoLink = settings.noLink;
+		mNoBackend = settings.noBackend;
+		mMissingDeps = settings.missingDeps;
+		mEmitBitcode = settings.emitBitcode;
+		mRemoveConditionalsOnly = settings.removeConditionalsOnly;
+
+		mInternalD = settings.internalD;
+		mInternalDiff = settings.internalDiff;
+		mInternalDebug = settings.internalDebug;
+		mInternalNoCatch = settings.noCatch;
+
+		mDepFile = settings.depFile;
+
+		mIncludes = settings.includePaths;
+		mSrcIncludes = settings.srcIncludePaths;
+		mImportAsSrc = settings.importAsSrc;
+
+		mLibraryPaths = settings.libraryPaths;
+		mLibraryFiles = settings.libraryFiles;
+
+		mFrameworkNames = settings.frameworkNames;
+		mFrameworkPaths = settings.frameworkPaths;
+
+		mStringImportPaths = settings.stringImportPaths;
+	}
+
+	void decideBackend(Settings settings)
+	{
+		if (!settings.noBackend) {
+			assert(languagePass !is null);
+			backend = new LlvmBackend(languagePass);
+		}
+	}
+
+	void decideJson(Settings settings)
+	{
+		if (settings.jsonOutput !is null) {
+			mJsonPrinter = new JsonPrinter(settings.jsonOutput);
+		}
+	}
+
+	void decideLinker(Settings settings)
+	{
+		mXld = settings.xld;
+		mXcc = settings.xcc;
+		mXlink = settings.xlink;
+		mXlinker = settings.xlinker;
+
+		if (settings.linker !is null) {
+			switch (mPlatform) with (Platform) {
+			case MSVC:
+				mLinker = settings.linker;
+				mLinkWithLink = true;
+				break;
+			default:
+				mLinker = settings.linker;
+				mLinkWithLD = true;
+				break;
+			}
+		} else if (settings.ld !is null) {
+			mLinker = settings.ld;
+			mLinkWithLD = true;
+		} else if (settings.cc !is null) {
+			mLinker = settings.cc;
+			mLinkWithCC = true;
+		} else if (settings.link !is null) {
+			mLinker = settings.link;
+			mLinkWithLink = true;
+		} else {
+			switch (mPlatform) with (Platform) {
+			case MSVC:
+				mLinker = "link.exe";
+				mLinkWithLink = true;
+				break;
+			case EMSCRIPTEN:
+				mLinker = "emcc";
+				mLinkWithCC = true;
+				break;
+			default:
+				mLinkWithCC = true;
+				mLinker = "gcc";
+				break;
+			}
+		}
+	}
+
+	void decideOutputFile(Settings settings)
+	{
+		// Setup the output file
+		if (settings.outputFile !is null) {
+			mOutput = settings.outputFile;
+		} else if (mEmitBitcode) {
+			mOutput = DEFAULT_BC;
+		} else if (mNoLink) {
+			mOutput = DEFAULT_OBJ;
+		} else {
+			mOutput = DEFAULT_EXE;
+		}
 	}
 
 private:
