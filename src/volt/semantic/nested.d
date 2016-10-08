@@ -237,7 +237,7 @@ bool replaceNested(LanguagePass lp, ref ir.Exp exp, ir.ExpReference eref, ir.Fun
 		type = var.type;
 		if (var.name == "this") {
 			auto nt = realType(type).nodeType;
-			shouldDeref = (nt == ir.NodeType.Struct || nt == ir.NodeType.Struct.Union);
+			shouldDeref = (nt == ir.NodeType.Struct || nt == ir.NodeType.Union);
 		}
 		break;
 	default:
