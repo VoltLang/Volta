@@ -235,6 +235,10 @@ bool replaceNested(LanguagePass lp, ref ir.Exp exp, ir.ExpReference eref, ir.Fun
 		}
 		name = var.name;
 		type = var.type;
+		if (var.name == "this") {
+			auto nt = realType(type).nodeType;
+			shouldDeref = (nt == ir.NodeType.Struct || nt == ir.NodeType.Struct.Union);
+		}
 		break;
 	default:
 		return false;
@@ -392,14 +396,29 @@ void handleNestedThis(ir.Function func, ir.BlockStatement bs)
 		return;
 	}
 	if (func.thisHiddenParameter !is null) {
-		auto cvar = addVarToStructSmart(ns, func.thisHiddenParameter);
+		auto nt = realType(func.thisHiddenParameter.type).nodeType;
+		bool structOrUnion = nt == ir.NodeType.Struct || nt == ir.NodeType.Union;
+		auto lc = bs.location;
+
+		ir.Variable cvar;
+		if (structOrUnion) {
+			auto tptr = buildPtrSmart(lc, func.thisHiddenParameter.type);
+			auto nvar = buildVariableSmart(lc, tptr, ir.Variable.Storage.Field, "this");
+			cvar = addVarToStructSmart(ns, nvar);
+		} else {
+			cvar = addVarToStructSmart(ns, func.thisHiddenParameter);
+		}
 
 		auto l = buildAccessExp(func.location,
 			buildExpReference(np.location, np, np.name), cvar);
 
 		auto tv = func.thisHiddenParameter;
-		auto r = buildExpReference(bs.location, tv, tv.name);
-		r.doNotRewriteAsNestedLookup = true;
+		auto eref = buildExpReference(bs.location, tv, tv.name);
+		eref.doNotRewriteAsNestedLookup = true;
+		ir.Exp r = eref;
+		if (structOrUnion) {
+			r = buildAddrOf(lc, eref);
+		}
 		ir.Node n = buildExpStat(l.location, buildAssign(l.location, l, r));
 		bs.statements.insertInPlace(index, n);
 	}
