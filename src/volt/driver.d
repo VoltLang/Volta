@@ -782,13 +782,17 @@ protected:
 
 	int msvcLink(string linker, string[] objs, string of)
 	{
+		bool addExe;
+		if (!of.endsWith("exe")) {
+			addExe = true;
+		}
 		string[] args = [
 			"/MACHINE:x64",
 			"/defaultlib:libcmt",
 			"/defaultlib:oldnames",
 			"legacy_stdio_definitions.lib",
 			"/nologo",
-			format("/out:%s", of)];
+			format("/out:%s%s", of, addExe ? ".exe" : "")];
 
 		foreach (objectFile; objs) {
 			args ~= objectFile;
