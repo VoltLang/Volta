@@ -689,17 +689,13 @@ protected:
 
 	int msvcLink(string linker, string[] objs, string of)
 	{
-		bool addExe;
-		if (!of.endsWith("exe")) {
-			addExe = true;
-		}
 		string[] args = [
 			"/MACHINE:x64",
 			"/defaultlib:libcmt",
 			"/defaultlib:oldnames",
 			"legacy_stdio_definitions.lib",
 			"/nologo",
-			format("/out:%s%s", of, addExe ? ".exe" : "")];
+			format("/out:%s", of)];
 
 		foreach (objectFile; objs) {
 			args ~= objectFile;
@@ -847,6 +843,10 @@ protected:
 		// Setup the output file
 		if (settings.outputFile !is null) {
 			mOutput = settings.outputFile;
+			if (mLinkWithLink && !mNoLink && !mEmitBitcode
+				&& !mOutput.endsWith("exe")) {
+				mOutput = format("%s.exe", mOutput);
+			}
 		} else if (mEmitBitcode) {
 			mOutput = DEFAULT_BC;
 		} else if (mNoLink) {
