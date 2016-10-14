@@ -94,7 +94,6 @@ OBJ = $(DOBJ) $(EXTRA_OBJ)
 
 RT_HOST = rt/libvrt-host.bc
 RT_TARGETS = \
-	rt/libvrt-le32-emscripten.bc \
 	rt/libvrt-x86_64-msvc.bc \
 	rt/libvrt-x86-metal.bc \
 	rt/libvrt-x86_64-metal.bc \
