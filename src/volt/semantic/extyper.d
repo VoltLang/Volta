@@ -2258,11 +2258,11 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 		case AddAssign, SubAssign, Add, Sub:
 			break;
 		default:
-			throw makeError(binop, "illegal pointer arithemetic.");
+			throw makeError(binop, "illegal pointer arithmetic.");
 		}
 		auto rprim = cast(ir.PrimitiveType) rtype;
 		if (rprim is null || !isOkayForPointerArithmetic(rprim.type)) {
-			throw makeError(binop, "illegal pointer arithemetic invalid type.");
+			throw makeError(binop, "illegal pointer arithmetic invalid type.");
 		}
 		// Returns a pointer type.
 		return ltype;
@@ -2271,7 +2271,7 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 	final switch (binop.op) with (ir.BinOp.Op) {
 	case Equal, NotEqual, Less, LessEqual, Greater, GreaterEqual:
 		if (!typesEqual(ltype, rtype)) {
-			throw makeError(binop, "missmatch types.");
+			throw makeError(binop, "mismatched types.");
 		}
 		return buildBool(binop.location);
 	case Is, NotIs, In, NotIn:
