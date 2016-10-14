@@ -325,10 +325,6 @@ body
 	ps.pushCommentLevel();
 
 	while (ps.peek.type != end && ps.peek.type != TokenType.End) {
-		if (ifDocCommentsUntilEndThenSkip(ps)) {
-			continue;
-		}
-
 		ir.TopLevelBlock tmp;
 		auto succeeded = parseOneTopLevelBlock(ps, tmp);
 		if (!succeeded) {
@@ -339,6 +335,10 @@ body
 			ps.pushCommentLevel();
 		}
 		tlb.nodes ~= tmp.nodes;
+
+		if (ifDocCommentsUntilEndThenSkip(ps)) {
+			continue;
+		}
 		eatComments(ps);
 	}
 
