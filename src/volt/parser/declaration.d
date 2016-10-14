@@ -691,7 +691,7 @@ ParseStatus parseParameter(ParserStream ps, out ir.Variable p)
 	}
 	if (isRef || isOut) {
 		auto s = new ir.StorageType();
-		s.location = p.type.location;
+		s.location = origin;
 		s.type = isRef ? ir.StorageType.Kind.Ref : ir.StorageType.Kind.Out;
 		s.base = p.type;
 		p.type = s;
