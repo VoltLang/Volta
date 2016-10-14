@@ -2270,7 +2270,7 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 
 	final switch (binop.op) with (ir.BinOp.Op) {
 	case Equal, NotEqual, Less, LessEqual, Greater, GreaterEqual:
-		if (!typesEqual(ltype, rtype)) {
+		if (!willConvert(ltype, rtype)) {
 			throw makeError(binop, "mismatched types.");
 		}
 		return buildBool(binop.location);
