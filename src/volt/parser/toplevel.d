@@ -339,6 +339,7 @@ body
 			ps.pushCommentLevel();
 		}
 		tlb.nodes ~= tmp.nodes;
+		eatComments(ps);
 	}
 
 	ps.popCommentLevel();
