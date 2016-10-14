@@ -23,7 +23,6 @@ enum Platform
 	MSVC,
 	Linux,
 	OSX,
-	EMSCRIPTEN,
 	Metal,
 }
 
@@ -35,7 +34,6 @@ enum Arch
 {
 	X86,
 	X86_64,
-	LE32, // Generic little endian
 }
 
 /**

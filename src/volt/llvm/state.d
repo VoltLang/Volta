@@ -571,7 +571,6 @@ public:
 static string[] archList = [
 	"x86",
 	"x86-64",
-	null,
 ];
 
 static string[][] tripleList = [
@@ -594,16 +593,14 @@ static string[][] tripleList = [
 	[
 		"i686-w64-windows-gnu",
 		"x86_64-w64-windows-gnu",
-		null,
 	],
 
 	/*
 	 * MSVC platform, see above comment.
 	 */
 	[
-		cast(string)null,
-		"x86_64-pc-windows-msvc",
 		null,
+		"x86_64-pc-windows-msvc",
 	],
 
 	/*
@@ -612,7 +609,6 @@ static string[][] tripleList = [
 	[
 		"i386-pc-linux-gnu",
 		"x86_64-pc-linux-gnu",
-		null,
 	],
 
 	/*
@@ -621,16 +617,6 @@ static string[][] tripleList = [
 	[
 		"i386-apple-macosx10.7.0",
 		"x86_64-apple-macosx10.7.0",
-		cast(string)null,
-	],
-
-	/*
-	 * This is what emscripten uses.
-	 */
-	[
-		cast(string)null,
-		null,
-		"le32-unknown-nacl",
 	],
 
 	/*
@@ -639,7 +625,6 @@ static string[][] tripleList = [
 	[
 		"i686-pc-none-elf",
 		"x86_64-pc-none-elf",
-		null,
 	],
 ];
 
@@ -663,11 +648,6 @@ static string[][] layoutList = [
 		layoutOSX32,
 		layoutOSX64,
 		null,
-	],
-	[ // Emscripten
-		cast(string)null,
-		null,
-		layoutEmscripten,
 	],
 	[ // Metal
 		layoutMetal32,

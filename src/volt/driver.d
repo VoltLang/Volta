@@ -588,16 +588,6 @@ protected:
 			mTemporaryFiles ~= obj;
 		}
 
-		// If we are compiling on the emscripten platform ignore .o files.
-		if (mPlatform == Platform.EMSCRIPTEN) {
-			perf.mark(Perf.Mark.LINK);
-			if (bc !is null) {
-				return emscriptenLink(mLinker, bc, mOutput);
-			} else {
-				return 0;
-			}
-		}
-
 		if (obj !is null) {
 			assert(bc !is null);
 
@@ -642,7 +632,6 @@ protected:
 			final switch (target.arch) with (Arch) {
 			case X86: args ~= "-m32"; break;
 			case X86_64: args ~= "-m64"; break;
-			case LE32: throw panic("unsupported arch with cc");
 			}
 		}
 
@@ -826,10 +815,6 @@ protected:
 				mLinker = "link.exe";
 				mLinkWithLink = true;
 				break;
-			case EMSCRIPTEN:
-				mLinker = "emcc";
-				mLinkWithCC = true;
-				break;
 			default:
 				mLinkWithCC = true;
 				mLinker = "gcc";
@@ -966,19 +951,6 @@ TargetInfo setTargetInfo(TargetInfo target, Arch arch, Platform platform)
 		target.alignment.ptr = 8;
 		target.alignment.aggregate = 8; // abi X, prefered 8
 		break;
-	case LE32:
-		target.isP64 = false;
-		target.ptrSize = 4;
-		target.alignment.int1 = 1;
-		target.alignment.int8 = 1;
-		target.alignment.int16 = 2;
-		target.alignment.int32 = 4;
-		target.alignment.int64 = 8;
-		target.alignment.float32 = 4;
-		target.alignment.float64 = 8;
-		target.alignment.ptr = 4;
-		target.alignment.aggregate = 8; // abi X, prefered 8
-		break;
 	}
 
 	return target;
@@ -1003,9 +975,6 @@ void setVersionSet(VersionSet ver, Arch arch, Platform platform)
 		ver.overwriteVersionIdentifier("OSX");
 		ver.overwriteVersionIdentifier("Posix");
 		break;
-	case EMSCRIPTEN:
-		ver.overwriteVersionIdentifier("Emscripten");
-		break;
 	case Metal:
 		ver.overwriteVersionIdentifier("Metal");
 		break;
@@ -1021,10 +990,6 @@ void setVersionSet(VersionSet ver, Arch arch, Platform platform)
 		ver.overwriteVersionIdentifier("LittleEndian");
 		ver.overwriteVersionIdentifier("V_P64");
 		break;
-	case LE32:
-		ver.overwriteVersionIdentifier("LE32");
-		ver.overwriteVersionIdentifier("LittleEndian");
-		ver.overwriteVersionIdentifier("V_P32");
 	}
 }
 

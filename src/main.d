@@ -359,7 +359,6 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 		case "--if-metal": setCondP(Platform.Metal); continue;
 		case "--if-x86": setCondA(Arch.X86); continue;
 		case "--if-x86_64": setCondA(Arch.X86_64); continue;
-		case "--if-le32": setCondA(Arch.LE32); continue;
 
 		// Handle combined arguments.
 		default:
