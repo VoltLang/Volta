@@ -7,7 +7,7 @@ import core.typeinfo: TypeInfo;
 import core.exception: Throwable, Error, AssertError, KeyNotFoundException;
 
 
-version (!Emscripten && !MSVC && !Metal):
+version (!MSVC && !Metal):
 
 import vrt.ext.unwind;
 import vrt.ext.dwarf;

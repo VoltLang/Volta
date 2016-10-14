@@ -5,7 +5,7 @@ module vrt.ext.unwind;
 
 import vrt.ext.stdc: uintptr_t;
 
-version (!Emscripten && !MSVC && !Metal):
+version (!MSVC && !Metal):
 
 extern(C):
 

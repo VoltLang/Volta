@@ -9,56 +9,29 @@ import core.rt.gc: Stats, AllocDg;
 import core.compiler.llvm: __llvm_memset, __llvm_memcpy;
 
 
-version (Emscripten) {
+private extern(C) {
+	fn GC_init();
+	fn GC_malloc(size_in_bytes: size_t) void*;
+	fn GC_malloc_atomic(size_in_bytes: size_t) void*;
 
-	private extern(C) {
-		fn GC_INIT();
-		fn GC_MALLOC(size_t) void*;
-		fn GC_MALLOC_ATOMIC(size_t) void*;
-		fn GC_REGISTER_FINALIZER_NO_ORDER(obj: void*,
-		                                  func: GC_finalization_proc,
-		                                  cd: void*,
-		                                  ofn: GC_finalization_proc*,
-		                                  ocd: void**);
-		fn GC_FORCE_COLLECT();
+	// Debian stable (sqeezy and wheezy libgc versions don't export that function)
+	//void GC_set_java_finalization(int on_off);
+	fn GC_register_finalizer_no_order(obj: void*,
+					  func: GC_finalization_proc,
+					  cd: void*,
+					  ofn: GC_finalization_proc*,
+					  ocd: void**);
 
-		extern global GC_java_finalization: i32;
-		alias GC_finalization_proc = fn (obj: void*, client_data: void*);
+	// Also not available in older libgc versions
+	//void GC_gcollect_and_unmap();
+	fn GC_gcollect();
+
+	version(Windows) {
+		extern(C) fn GC_win32_free_heap();
 	}
 
-	alias GC_init = GC_INIT;
-	alias GC_malloc = GC_MALLOC;
-	alias GC_malloc_atomic = GC_MALLOC_ATOMIC;
-	alias GC_register_finalizer_no_order = GC_REGISTER_FINALIZER_NO_ORDER;
-	alias GC_gcollect = GC_FORCE_COLLECT;
-
-} else {
-
-	private extern(C) {
-		fn GC_init();
-		fn GC_malloc(size_in_bytes: size_t) void*;
-		fn GC_malloc_atomic(size_in_bytes: size_t) void*;
-
-		// Debian stable (sqeezy and wheezy libgc versions don't export that function)
-		//void GC_set_java_finalization(int on_off);
-		fn GC_register_finalizer_no_order(obj: void*,
-		                                  func: GC_finalization_proc,
-		                                  cd: void*,
-		                                  ofn: GC_finalization_proc*,
-		                                  ocd: void**);
-
-		// Also not available in older libgc versions
-		//void GC_gcollect_and_unmap();
-		fn GC_gcollect();
-
-		version(Windows) {
-			extern(C) fn GC_win32_free_heap();
-		}
-
-		extern global GC_java_finalization: i32;
-		alias GC_finalization_proc = fn (obj: void*, client_data: void*);
-	}
-
+	extern global GC_java_finalization: i32;
+	alias GC_finalization_proc = fn (obj: void*, client_data: void*);
 }
 
 

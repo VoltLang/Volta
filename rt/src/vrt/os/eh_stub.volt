@@ -6,7 +6,7 @@ import core.exception: Throwable, Error, AssertError, KeyNotFoundException;
 import core.rt.misc: vrt_panic;
 
 
-version (Emscripten || MSVC || Metal):
+version (MSVC || Metal):
 
 extern(C) fn vrt_eh_throw(t: Throwable, location: string)
 {
