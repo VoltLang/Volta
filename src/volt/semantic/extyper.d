@@ -1968,6 +1968,13 @@ ir.Type extypeBinOpPropertyAssign(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 	auto func = selectFunction(
 		p.setFns, args,
 		binop.location, DoNotThrow);
+	if (func is null) {
+		if (p.setFns.length == 0) {
+			return null;
+		}
+		throw makeNoValidFunction(exp.location, p.setFns[0].name,
+			expsToTypes(args));
+	}
 
 	auto name = p.identifier.value;
 	auto expRef = buildExpReference(binop.location, func, name);
