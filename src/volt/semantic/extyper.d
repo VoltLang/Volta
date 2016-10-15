@@ -1757,6 +1757,11 @@ ir.Type extypeUnary(Context ctx, ref ir.Exp exp, Parent parent)
 		auto t = getExpType(unary.value);
 		if (!isPointer(realType(t))) {
 			throw makeExpected(exp, "pointer");
+		} else {
+			auto ptr = cast(ir.PointerType)realType(t);
+			if (isVoid(ptr.base)) {
+				throw makeExpected(exp, "non-void pointer");
+			}
 		}
 		return getExpType(exp);
 	case TypeIdent:
