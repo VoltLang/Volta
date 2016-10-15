@@ -1803,6 +1803,10 @@ ParseStatus parsePrimaryExp(ParserStream ps, out intir.PrimaryExp exp)
 			return parseFailed(ps, ir.NodeType.Function);
 		}
 		break;
+	case TokenType.In:
+		parseExpected(ps, ps.peek.location, ir.NodeType.Identifier, "primary expression");
+		ps.neverIgnoreError = true;
+		return Failed;
 	default:
 		auto mark = ps.save();
 		auto succeeded = parseFunctionLiteral(ps, exp.functionLiteral);
