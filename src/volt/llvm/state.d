@@ -3,6 +3,7 @@
 module volt.llvm.state;
 
 import lib.llvm.core;
+import watt.text.string : startsWith;
 
 import volt.errors;
 import volt.interfaces;
@@ -351,6 +352,18 @@ public:
 					LLVMSetFunctionCallConv(v, LLVMCallConv.X86Stdcall);
 				}
 			}
+
+			if (!argFunc.isBuiltinFunction()) {
+				// Always add a unwind table.
+				// TODO: Check for nothrow
+				LLVMAddFunctionAttr(v, LLVMAttribute.UWTable);
+
+				// Always emit the frame pointer.
+				// TODO: Add support for -O*optimization
+				// TODO: Add support for -f[no-]omit-frame-pointer
+				LLVMAddTargetDependentFunctionAttr(v, "no-frame-pointer-elim", "false");
+				LLVMAddTargetDependentFunctionAttr(v, "no-frame-pointer-elim-non-leaf", "");
+			}
 		}
 
 		Store add = { v, type };
@@ -563,6 +576,15 @@ public:
 			return *ret;
 		return null;
 	}
+}
+
+bool isBuiltinFunction(ir.Function func)
+{
+	if (startsWith(func.mangledName, "llvm.")) {
+		return true;
+	}
+
+	return false;
 }
 
 /**

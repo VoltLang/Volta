@@ -65,8 +65,6 @@ public:
 
 		auto di = diFunction(state, func, llvmFunc, ft);
 
-		LLVMAddFunctionAttr(llvmFunc, LLVMAttribute.UWTable);
-
 		State.FunctionState old = state.fnState;
 		state.fnState = State.FunctionState.init;
 
