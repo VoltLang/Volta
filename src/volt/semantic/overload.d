@@ -185,7 +185,15 @@ ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ir.Exp[
 		}
 		return func.type.params.length == arguments.length;
 	}
-
+	int _matchLevel = int.max;
+	void matchSink(scope int[] levels)
+	{
+		foreach (l; levels) {
+			if (l <= _matchLevel) {
+				_matchLevel = l;
+			}
+		}
+	}
 	int matchLevel(ir.Function func)
 	{
 		if (arguments.length > func.type.params.length) {
@@ -233,16 +241,7 @@ ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ir.Exp[
 				}
 			}
 		}
-		int _matchLevel = int.max;
-		
-		void matchSink(scope int[] levels)
-		{
-			foreach (l; levels) {
-				if (l <= _matchLevel) {
-					_matchLevel = l;
-				}
-			}
-		}
+		_matchLevel = int.max;
 		version (Volt) matchLevels.toSink(matchSink);
 		else matchLevels.toSink(&matchSink);
 		panicAssert(func, _matchLevel < int.max);
