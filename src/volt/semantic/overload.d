@@ -185,6 +185,8 @@ ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ir.Exp[
 		}
 		return func.type.params.length == arguments.length;
 	}
+
+	// These are for the sinks in matchLevel.
 	int _matchLevel = int.max;
 	void matchSink(scope int[] levels)
 	{
@@ -194,6 +196,54 @@ ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ir.Exp[
 			}
 		}
 	}
+	IntSink matchLevels;
+	int delegate(ir.Function) matchDgt;
+	void getFunctionMatchLevels(scope ir.Function[] functions)
+	{
+		foreach (func; functions) {
+			matchLevels.sink(matchDgt(func));
+		}
+	}
+	FunctionSink matchedFunctions;
+	int highestMatchLevel = -1;
+	void getMatchedFunctions(scope ir.Function[] functions)
+	{
+		foreach (func; functions) {
+			if (matchDgt(func) >= highestMatchLevel) {
+				matchedFunctions.sink(func);
+			}
+		}
+	}
+	version (Volt) {
+		bool cmp(size_t ia, size_t ib)
+		{
+			return specialisationComparison(matchedFunctions.get(ia),
+											matchedFunctions.get(ib));
+		}
+		void swap(size_t ia, size_t ib)
+		{
+			ir.Function tmp = matchedFunctions.get(ia);
+			matchedFunctions.set(ia, matchedFunctions.get(ib));
+			matchedFunctions.set(ib, tmp);
+		}
+	}
+	void sortFunctions(scope ir.Function[] functions)
+	{
+		version (Volt) {
+			runSort(functions.length, cmp, swap);
+		} else {
+			sort(cast(Object[])functions, &specialisationComparison);
+		}
+	}
+	void throwError(scope ir.Function[] functions)
+	{
+		if (functions.length > 1 && highestMatchLevel > 1) {
+			throw makeMultipleFunctionsMatch(location, functions);
+		} else {
+			throw makeCannotDisambiguate(location, functions, arguments);
+		}
+	}
+
 	int matchLevel(ir.Function func)
 	{
 		if (arguments.length > func.type.params.length) {
@@ -248,16 +298,16 @@ ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ir.Exp[
 		return _matchLevel;
 	}
 
-	ir.Function[] outFunctions;
+	FunctionSink outFunctions;
 	foreach (func; functions) {
 		int defaultArguments;
 		if (correctNumberOfArguments(func, defaultArguments)) {
-			outFunctions ~= func;
+			outFunctions.sink(func);
 		} else if (func.params.length == arguments.length + cast(size_t)defaultArguments) {
-			outFunctions ~= func;
+			outFunctions.sink(func);
 		} else if (func.type.homogenousVariadic && arguments.length >= (func.params.length - 1)) {
 			panicAssert(func, func.params.length > 0);
-			outFunctions ~= func;
+			outFunctions.sink(func);
 		}
 	}
 	if (outFunctions.length == 0) {
@@ -268,56 +318,38 @@ ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ir.Exp[
 		}
 	}
 
-	int[] matchLevels;
-	foreach (func; outFunctions) {
-		matchLevels ~= matchLevel(func);
-	}
-	int highestMatchLevel = -1;
+	matchLevels.reset();
+	version (Volt) matchDgt = cast(int delegate(ir.Function))matchLevel;
+	else matchDgt = &matchLevel;
+	version (Volt) outFunctions.toSink(getFunctionMatchLevels);
+	else outFunctions.toSink(&getFunctionMatchLevels);
+
+	highestMatchLevel = -1;
 	while (matchLevels.length > 0) {
-		if (matchLevels[0] >= highestMatchLevel) {
-			highestMatchLevel = matchLevels[0];
+		if (matchLevels.getLast() >= highestMatchLevel) {
+			highestMatchLevel = matchLevels.getLast();
 		}
-		matchLevels = matchLevels[1 .. $];
+		matchLevels.popLast();
 	}
 	assert(highestMatchLevel >= 0);
 
-	ir.Function[] matchedFunctions;
-	foreach (func; outFunctions) {
-		if (matchLevel(func) >= highestMatchLevel) {
-			matchedFunctions ~= func;
-		}
-	}
+	matchedFunctions.reset();
+	version (Volt) outFunctions.toSink(getMatchedFunctions);
+	else outFunctions.toSink(&getMatchedFunctions);
 
-	version (Volt) {
-		bool cmp(size_t ia, size_t ib)
-		{
-			return specialisationComparison(matchedFunctions[ia],
-			                                matchedFunctions[ib]);
-		}
-		void swap(size_t ia, size_t ib)
-		{
-			ir.Function tmp = matchedFunctions[ia];
-			matchedFunctions[ia] = matchedFunctions[ib];
-			matchedFunctions[ib] = tmp;
-		}
-		runSort(matchedFunctions.length, cmp, swap);
-	} else {
-		sort(cast(Object[])matchedFunctions, &specialisationComparison);
-	}
-	if (matchedFunctions.length == 1 || specialisationComparison(matchedFunctions[0], matchedFunctions[1]) > 0) {
+	version (Volt) matchedFunctions.toSink(sortFunctions);
+	else matchedFunctions.toSink(&sortFunctions);
+	if (matchedFunctions.length == 1 || specialisationComparison(matchedFunctions.get(0), matchedFunctions.get(1)) > 0) {
 		if (highestMatchLevel > 1) {
-			return matchedFunctions[0];
+			return matchedFunctions.get(0);
 		}
 	}
 
 	if (throwOnError) {
-		if (matchedFunctions.length > 1 && highestMatchLevel > 1) {
-			throw makeMultipleFunctionsMatch(location, matchedFunctions);
-		} else {
-			throw makeCannotDisambiguate(location, matchedFunctions, arguments);
-		}
+		version (Volt) matchedFunctions.toSink(throwError);
+		else matchedFunctions.toSink(&throwError);
 	} else {
 		return null;
 	}
-	version (Volt) assert(false); // If
+	assert(false); // If
 }
