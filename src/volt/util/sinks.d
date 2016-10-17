@@ -58,8 +58,9 @@ public:
 
 	void popLast()
 	{
-		mArr = mArr[0 .. mLength - 1];
-		mLength--;
+		if (mLength > 0) {
+			mLength--;
+		}
 	}
 
 	int getLast()
