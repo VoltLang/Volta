@@ -19,12 +19,14 @@ import volt.semantic.context;
 import volt.semantic.classify;
 import volt.semantic.implicit;
 
+import volt.util.sinks;
+
 
 /**
  * Okay, so here's a rough description of how function overload resolution
  * is supposed to work. No doubt there will be discrepancies between this
  * description and the implementation proper. We in the business call those
- * 'bugs'. 
+ * 'bugs'.
  *
  * For all functions of a given name, first those without the correct number
  * of parameters are culled.
@@ -41,7 +43,7 @@ import volt.semantic.implicit;
  * If the list has only one element, it is chosen, otherwise the functions
  * are sorted by their specialisation: a function is more specialised than
  * another function if its parameters can be given to the other but the other's
- * cannot be given to it. 
+ * cannot be given to it.
  *
  * For example, foo(ChildClass) is more specialised than foo(Object), as ChildClass
  * can be passed as an Object, but not the other way around.
@@ -194,49 +196,55 @@ ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ir.Exp[
 		if (func.type.params.length == 0) {
 			return 4;
 		}
-		int[] matchLevels;
+		IntSink matchLevels;
 		foreach (i, param; func.type.params) {
 			if (i >= arguments.length && !func.type.homogenousVariadic) {
 				assert(func.params[i].assign !is null);
-				matchLevels ~= 4;
+				matchLevels.sink(4);
 			} else {
 				bool homogenous = func.type.homogenousVariadic && i == func.type.params.length - 1;
 				auto exp = i < exps.length ? exps[i] : null;
 				if (homogenous && i >= arguments.length) {
 					panicAssert(func, i == func.params.length - 1);
-					matchLevels ~= 3;
+					matchLevels.sink(3);
 					break;
-				} else {
-					matchLevels ~= .matchLevel(homogenous, arguments[i], param, exp);
+				} else { 
+					matchLevels.sink(.matchLevel(homogenous, arguments[i], param, exp));
 				}
 			}
 		}
 		if (func.type.homogenousVariadic && arguments.length >= func.params.length) {
-			matchLevels = matchLevels[0 .. $ - 1];
+			matchLevels.popLast();
 			auto toCheck = arguments[func.type.params.length - 1 .. $];
 			auto arr = cast(ir.ArrayType) realType(func.type.params[$-1]);
 			assert(arr !is null);
 			foreach (arg; toCheck) {
 				auto atype = cast(ir.ArrayType) arg;
 				if (atype !is null && isVoid(atype.base)) {
-					matchLevels ~= 2;
+					matchLevels.sink(2);
 				} else {
 					auto ml1 = .matchLevel(true, arg, arr.base);
 					auto ml2 = .matchLevel(true, arg, arr);
-					matchLevels ~= ml1 > ml2 ? ml1 : ml2;
+					matchLevels.sink(ml1 > ml2 ? ml1 : ml2);
 					// Given foo(T[]...) and foo(T) passing a T, the latter should be preferred.
-					if (matchLevels[$-1] == 4) {
-						matchLevels[$-1] = 3;
+					if (matchLevels.getLast() == 4) {
+						matchLevels.setLast(3);
 					}
 				}
 			}
 		}
 		int _matchLevel = int.max;
-		foreach (l; matchLevels) {
-			if (l <= _matchLevel) {
-				_matchLevel = l;
+		
+		void matchSink(scope int[] levels)
+		{
+			foreach (l; levels) {
+				if (l <= _matchLevel) {
+					_matchLevel = l;
+				}
 			}
 		}
+		version (Volt) matchLevels.toSink(matchSink);
+		else matchLevels.toSink(&matchSink);
 		panicAssert(func, _matchLevel < int.max);
 		return _matchLevel;
 	}
