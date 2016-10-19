@@ -153,14 +153,12 @@ void mangleType(ir.Type t, Sink sink)
 		assert(asEnum !is null);
 		sink("E");
 		mangleScope(asEnum.myScope, sink);
-		mangleString(asEnum.name, sink);
 		break;
 	case Interface:
 		auto asInterface = cast(ir._Interface) t;
 		assert(asInterface !is null);
 		sink("I");
 		mangleScope(asInterface.myScope, sink);
-		mangleString(asInterface.name, sink);
 		break;
 	case TypeReference:
 		auto asTypeRef = cast(ir.TypeReference) t;
