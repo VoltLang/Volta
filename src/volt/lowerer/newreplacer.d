@@ -23,58 +23,19 @@ import volt.semantic.mangle;
 import volt.semantic.classify;
 import volt.semantic.overload;
 
-
-ir.Function createArrayAllocFunction(Location location, LanguagePass lp,
-                                     ir.Scope baseScope, ir.ArrayType atype,
-                                     string name)
+ir.Exp createArrayAlloc(Location loc, LanguagePass lp,
+                        ir.Scope baseScope, ir.ArrayType atype, ir.Exp sizeArg)
 {
-	auto ftype = new ir.FunctionType();
-	ftype.location = location;
-	ftype.ret = copyTypeSmart(location, atype);
-
-	/// @todo Change this sucker to buildFunction
-	auto func = new ir.Function();
-	func.location = location;
-	func.type = ftype;
-	func.name = name;
-	func.mangledName = func.name;
-	func.kind = ir.Function.Kind.Function;
-	func.isWeakLink = true;
-	func.myScope = new ir.Scope(baseScope, func, func.name, baseScope.nestedDepth);
-	func._body = new ir.BlockStatement();
-	func._body.myScope = new ir.Scope(func.myScope, func._body, null, func.myScope.nestedDepth);
-	func._body.location = location;
-
-	auto countVar = addParam(location, func, buildSizeT(location, lp), "count");
-
-	auto allocCall = buildAllocTypePtr(
-		location, lp, atype.base,
-		buildExpReference(location, countVar, "count"));
-	auto slice = buildSlice(location, allocCall,
-		buildConstantSizeT(location, lp, 0),
-		buildExpReference(location, countVar, "count"));
-
-	auto returnStatement = new ir.ReturnStatement();
-	returnStatement.exp = slice;
-	returnStatement.location = location;
-
-	func._body.statements ~= returnStatement;
-
-	return func;
-}
-
-ir.Function getArrayAllocFunction(Location location, LanguagePass lp,
-                                  ir.Module thisModule, ir.ArrayType atype)
-{
-	auto arrayMangledName = mangle(atype);
-	string name = format("__arrayAlloc%s", arrayMangledName);
-	auto allocFn = lookupFunction(lp, thisModule.myScope, location, name);
-	if (allocFn is null) {
-		allocFn = createArrayAllocFunction(location, lp, thisModule.myScope, atype, name);
-		thisModule.children.nodes = allocFn ~ thisModule.children.nodes;
-		thisModule.myScope.addFunction(allocFn, allocFn.name);
-	}
-	return allocFn;
+	auto sexp = buildStatementExp(loc);
+	auto sizeVar = buildVariableAnonSmart(loc, baseScope, sexp,
+		buildSizeT(loc, lp), sizeArg);
+	auto allocCall = buildAllocTypePtr(loc, lp, atype.base,
+		buildExpReference(loc, sizeVar, sizeVar.name));
+	auto slice = buildSlice(loc, allocCall,
+		buildConstantSizeT(loc, lp, 0),
+		buildExpReference(loc, sizeVar, sizeVar.name));
+	sexp.exp = slice;
+	return sexp;
 }
 
 ir.StatementExp buildClassConstructionWrapper(Location loc, LanguagePass lp,
@@ -153,29 +114,14 @@ public:
 		if (unary.argumentList.length != 1) {
 			throw panic(unary.location, "multidimensional arrays unsupported at the moment.");
 		}
-
-		auto allocFn = getArrayAllocFunction(unary.location, lp, thisModule, array);
-
-		auto _ref = new ir.ExpReference();
-		_ref.location = unary.location;
-		_ref.idents ~= allocFn.name;
-		_ref.decl = allocFn;
-
-		auto call = new ir.Postfix();
-		call.location = unary.location;
-		call.op = ir.Postfix.Op.Call;
-		call.arguments ~= buildCast(unary.location, buildSizeT(unary.location, lp), unary.argumentList[0]);
-		call.child = _ref;
-
-		exp = call;
-
+		auto arg = buildCastSmart(exp.location, buildSizeT(exp.location, lp), unary.argumentList[0]);
+		exp = createArrayAlloc(unary.location, lp, thisModule.myScope, array, arg);
 		return Continue;
 	}
 
 	protected Status handleArrayCopy(ref ir.Exp exp, ir.Unary unary, ir.ArrayType array)
 	{
 		auto loc = unary.location;
-		auto allocFn = getArrayAllocFunction(loc, lp, thisModule, array);
 		auto copyFn = getLlvmMemCopy(loc, lp);
 
 		auto statExp = buildStatementExp(loc);
@@ -196,7 +142,7 @@ public:
 		}
 		auto newArray = buildVariable(
 			loc, copyTypeSmart(loc, array), ir.Variable.Storage.Function,
-			"newArray", buildCall(loc, allocFn, [sizeExp], allocFn.name)
+			"newArray", createArrayAlloc(loc, lp, thisModule.myScope, array, sizeExp)
 		);
 		statExp.statements ~= newArray;
 

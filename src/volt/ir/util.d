@@ -1317,7 +1317,7 @@ ir.Variable buildVarStatSmart(Location loc, ir.BlockStatement block, ir.Scope _s
 }
 
 /**
- * Build an exp statement and add it to a StatementExp.
+ * Add an Exp to a StatementExp.
  */
 ir.ExpStatement buildExpStat(Location loc, ir.StatementExp stat, ir.Exp exp)
 {
