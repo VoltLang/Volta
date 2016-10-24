@@ -1081,7 +1081,7 @@ ir.ForStatement lowerForeach(ir.ForeachStatement fes, LanguagePass lp,
 	}
 
 
-	// foreach (e; a) => foreach (e; auto _anon = a) 
+	// foreach (e; a) => foreach (e; auto _anon = a)
 	auto sexp = buildStatementExp(l);
 
 	// foreach (i, e; array) => for (size_t i = 0; i < array.length; i++) auto e = array[i]; ...
@@ -1886,6 +1886,35 @@ void lowerStructUnionConstructor(LanguagePass lp, ir.Scope current, ref ir.Exp e
 }
 
 /**
+ * If func is the main function, add a C main next to it.
+ */
+void addCMain(LanguagePass lp, ir.Scope current, ir.Function func)
+{
+	if (func.name != "main" || func.type.linkage != ir.Linkage.Volt) {
+		return;
+	}
+	func.name = "vmain";
+	auto loc = func.location;
+	auto mod = getModuleFromScope(loc, current);
+
+	// Add a function `extern(C) fn main(argc: i32, argv: char**) i32` to this module.
+	auto ftype = buildFunctionTypeSmart(loc, buildInt(loc));
+	ftype.linkage = ir.Linkage.C;
+	auto cmain = buildFunction(loc, mod.myScope, "main", ftype);
+	auto argc = addParam(loc, cmain, buildInt(loc), "argc");
+	auto argv = addParam(loc, cmain, buildPtr(loc, buildPtr(loc, buildChar(loc))), "argv");
+	mod.myScope.addFunction(cmain, cmain.name);
+	mod.children.nodes ~= cmain;
+
+	ir.Exp argcRef = buildExpReference(loc, argc, argc.name);
+	ir.Exp argvRef = buildExpReference(loc, argv, argv.name);
+	ir.Exp vref = buildExpReference(loc, func, func.name);
+	auto runMain = buildExpReference(loc, lp.runMainFunc, lp.runMainFunc.name);
+	auto call = buildCall(loc, runMain, [argcRef, argvRef, vref]);
+	buildReturnStat(loc, cmain._body, call);
+}
+
+/**
  * Calls the correct functions where they need to be called to lower a module.
  */
 class LlvmLowerer : ScopeManager, Pass
@@ -1954,6 +1983,7 @@ public:
 			assert(functionStack.length == 0);
 		}
 
+		addCMain(lp, current, func);
 		nestLowererFunction(lp, parent, func);
 
 		super.enter(func);

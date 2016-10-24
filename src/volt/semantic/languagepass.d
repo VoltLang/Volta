@@ -294,6 +294,7 @@ public:
 		hashFunc = getFunctionFrom(rtMiscModule, "vrt_hash");
 		castFunc = getFunctionFrom(rtMiscModule, "vrt_handle_cast");
 		memcmpFunc = getFunctionFrom(rtMiscModule, "vrt_memcmp");
+		runMainFunc = getFunctionFrom(rtMiscModule, "vrt_run_main");
 
 		// core.compiler.llvm
 		llvmTypeidFor = getFunctionFrom(llvmModule, "__llvm_typeid_for");

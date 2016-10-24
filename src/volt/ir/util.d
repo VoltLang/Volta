@@ -1424,7 +1424,7 @@ ir.StatementExp buildInternalArrayLiteralSliceSmart(Location loc,
 
 	int offset;
 	foreach (i, exp; exps) {
-		auto evar = buildVariableSmart(loc, types[i], ir.Variable.Storage.Function, "exp"); 
+		auto evar = buildVariableSmart(loc, types[i], ir.Variable.Storage.Function, "exp");
 		sexp.statements ~= evar;
 		auto evassign = buildAssign(loc, buildExpReference(loc, evar), exp);
 		buildExpStat(loc, sexp, evassign);
@@ -1585,6 +1585,24 @@ ir.Function buildFunction(Location loc, ir.Scope _scope, string name, bool build
 		func._body.location = loc;
 		func._body.myScope = new ir.Scope(func.myScope, func._body, name, func.myScope.nestedDepth);
 	}
+
+	return func;
+}
+
+/// Builds a function with a given type.
+ir.Function buildFunction(Location loc, ir.Scope _scope, string name, ir.FunctionType ftype)
+{
+	auto func = new ir.Function();
+	func.name = name;
+	func.location = loc;
+	func.kind = ir.Function.Kind.Function;
+	func.myScope = new ir.Scope(_scope, func, func.name, _scope.nestedDepth);
+
+	func.type = ftype;
+
+	func._body = new ir.BlockStatement();
+	func._body.location = loc;
+	func._body.myScope = new ir.Scope(func.myScope, func._body, name, func.myScope.nestedDepth);
 
 	return func;
 }

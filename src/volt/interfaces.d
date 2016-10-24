@@ -384,6 +384,7 @@ public:
 	ir.Function ehPersonalityFunc;
 	ir.Function ehThrowAssertErrorFunc;
 	ir.Function ehThrowKeyNotFoundErrorFunc;
+	ir.Function runMainFunc;
 
 	// core.compiler.llvm
 	ir.Function llvmTypeidFor;

@@ -71,9 +71,6 @@ public:
 		/// @TODO this should live in the mangle code.
 		if (func.mangledName !is null) {
 			// Do nothing.
-		} else if (func.name == "main" &&
-		           func.type.linkage != ir.Linkage.C) {
-			func.mangledName = "vmain";
 		} else if (func.loadDynamic) {
 			// @TODO mangle this so that it becomes a variable.
 			assert(func.name !is null);
