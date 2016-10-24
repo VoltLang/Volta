@@ -2153,6 +2153,10 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 			throw makeExpected(binop.left.location, "lvalue");
 		}
 
+		if (isVoid(getExpType(binop.right))) {
+			throw makeAssigningVoid(binop.right.location);
+		}
+
 		auto asPostfix = cast(ir.Postfix)binop.left;
 		if (asPostfix !is null) {
 			auto postfixLeft = getExpType(asPostfix.child);
@@ -4122,6 +4126,9 @@ void resolveVariable(Context ctx, ir.Variable v)
 		}
 
 		auto rtype = extype(ctx, v.assign, Parent.NA);
+		if (isVoid(rtype)) {
+			throw makeAssigningVoid(v.assign.location);
+		}
 		if (isAuto(v.type)) {
 			auto atype = cast(ir.AutoType) v.type;
 			if (rtype.nodeType == ir.NodeType.FunctionSetType || atype is null) {

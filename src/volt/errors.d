@@ -70,6 +70,11 @@ void warningOldStyleDelegateType(Location loc, Settings settings)
  * Specific Errors
  *
  */
+CompilerException makeAssigningVoid(Location l, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(l, "tried to assign a void value.", file, line);
+}
+
 CompilerException makeStructValueCall(Location l, string aggName, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(l, format("expected aggregate type '%s' directly, not an instance.", aggName), file, line);
