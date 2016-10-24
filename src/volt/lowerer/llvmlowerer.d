@@ -2022,6 +2022,10 @@ public:
 	override Status leave(ref ir.Exp exp, ir.PropertyExp prop)
 	{
 		lowerProperty(lp, exp, prop);
+		auto pfix = cast(ir.Postfix)exp;
+		if (pfix !is null) {
+			lowerPostfix(lp, current, thisModule, exp, pfix);
+		}
 		return Continue;
 	}
 
