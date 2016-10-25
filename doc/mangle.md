@@ -68,7 +68,7 @@ For user types like structs and classes, they're mangled by first inserting the 
 
 Associative arrays are mangled `Aa$KEY$VALUE` so the type `bool*[i32]` would be mangled `AaipB`.
 
-Functions are mangled by starting with F, MF, or D, (for function, method, and delegate, respectively), a linkage letter (see the linkages in the above table), then the parameter types one by one (if there are any ref or out parameters, they are preceded by `r` or `O`). The letter `Z` marks the end of the parameters, then the return value is given.
+Functions are mangled by starting with `F`, `MF`, or `D`, (for function, method, and delegate, respectively), a linkage letter (see the linkages in the above table), then the parameter types one by one (if there are any ref or out parameters, they are preceded by `r` or `O`). The letter `Z` marks the end of the parameters, then the return value is given.
 
 That might be a lot to take in, so here's an example. Say the following function is in a module called 'test'.
 
@@ -78,4 +78,4 @@ Then the matching mangle would be
 
 	Vf4test4funcFvriZv
 
-The `Vf` tells us it's a function, then the full name is given, the `F` tells us it's a function. `v` tells us it's using Volt linkage (instead of, say, C). `ri` says the first parameter is an `i32` that's declared with `ref`. `Z` says the parameter section is ending, and `v` says the return type is `void`.
+The `Vf` tells us it's a function, then the full name is given, the `F` tells us it's a free standing function, and not a method or delegate. `v` tells us it's using Volt linkage (instead of, say, C). `ri` says the first parameter is an `i32` that's declared with `ref`. `Z` says the parameter section is ending, and `v` says the return type is `void`.
