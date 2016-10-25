@@ -274,7 +274,7 @@ void mangleName(string[] names, Sink sink)
 string getPrimitiveType(ir.PrimitiveType t)
 {
 	final switch (t.type) with (ir.PrimitiveType.Kind) {
-	case Bool:   return "t";
+	case Bool:   return "B";
 	case Byte:   return "b";
 	case Char:   return "c";
 	case Wchar:  return "w";
@@ -298,7 +298,7 @@ string getPrimitiveType(ir.PrimitiveType t)
 string getPrimitiveTypeConst(ir.PrimitiveType t)
 {
 	final switch (t.type) with (ir.PrimitiveType.Kind) {
-	case Bool:   return "ot";
+	case Bool:   return "oB";
 	case Byte:   return "ob";
 	case Char:   return "oc";
 	case Wchar:  return "ow";
@@ -322,7 +322,7 @@ string getPrimitiveTypeConst(ir.PrimitiveType t)
 string getPrimitiveTypeImmutable(ir.PrimitiveType t)
 {
 	final switch (t.type) with (ir.PrimitiveType.Kind) {
-	case Bool:   return "mt";
+	case Bool:   return "mB";
 	case Byte:   return "mb";
 	case Char:   return "mc";
 	case Wchar:  return "mw";
