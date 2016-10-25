@@ -88,19 +88,19 @@ protected:
  *
  * PrimitiveTypes are mangled as follows:
  * @li @p Void is mangled as 'v'.
- * @li @p Bool is mangled as 'b'.
- * @li @p Char is mangled as 'a'.
- * @li @p Byte is mangled as 'g'.
- * @li @p Ubyte is mangled as 'h'.
+ * @li @p Bool is mangled as 'B'.
+ * @li @p Char is mangled as 'c'.
+ * @li @p Byte is mangled as 'b'.
+ * @li @p Ubyte is mangled as 'ub'.
  * @li @p Short is mangled as 's'.
- * @li @p Ushort is mangled as 't'.
+ * @li @p Ushort is mangled as 'us'.
  * @li @p Int is mangled as 'i'.
- * @li @p Uint is mangled as 'k'.
+ * @li @p Uint is mangled as 'ui'.
  * @li @p Long is mangled as 'l'.
- * @li @p Ulong is mangled as 'm'.
- * @li @p Float is mangled as 'f'.
- * @li @p Double is mangled as 'd'.
- * @li @p Real is mangled as 'e'.
+ * @li @p Ulong is mangled as 'ul'.
+ * @li @p Float is mangled as 'ff'.
+ * @li @p Double is mangled as 'fd'.
+ * @li @p Real is mangled as 'fr'.
  * PrimitiveTypes aren't mangled on their own, usually forming
  * a part of a larger composite type (e.g. a function).
  *
@@ -204,7 +204,7 @@ public:
  * Volt pointers are compatible with C pointers (and by association, D
  * pointers).
  *
- * @p PointerTypes are mangled as "P" + @p base.
+ * @p PointerTypes are mangled as "p" + @p base.
  *
  * @ingroup irNode irType
  */
@@ -261,7 +261,7 @@ public:
  * While arrays are often allocated by the GC, the memory can be from
  * anywhere.
  *
- * @p ArrayType is mangled as "A" + the mangle of @p base.
+ * @p ArrayType is mangled as "a" + the mangle of @p base.
  *
  * @ingroup irNode irType
  */
@@ -287,7 +287,7 @@ public:
  * statically (known at compile time) number of elements.
  * Unlike C, these are passed by value to functions.
  *
- * @p StaticArrayTypes are mangled as "G" + @p length + @p base.
+ * @p StaticArrayTypes are mangled as "at" + @p length + @p base.
  *
  * @ingroup irNode irType
  */
@@ -313,7 +313,7 @@ public:
  * An AAType is an associative array -- it associates
  * keys with values.
  *
- * @p AAType is mangled as "H" + @p key + @p value.
+ * @p AAType is mangled as "Aa" + @p key + @p value.
  *
  * @ingroup irNode irType
  */
