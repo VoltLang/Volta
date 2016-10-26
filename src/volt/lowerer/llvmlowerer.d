@@ -390,22 +390,8 @@ bool lowerVariables(LanguagePass lp, ir.Function func, ir.BlockStatement bs, Vis
 	return true;
 }
 
-/**
- * For each runtime assert in bs, transform it into an if statement.
- */
-void lowerAssertStatements(LanguagePass lp, ir.Scope current, ir.BlockStatement bs)
-{
-	for (size_t i = 0; i < bs.statements.length; ++i) {
-		auto as = cast(ir.AssertStatement)bs.statements[i];
-		if (as is null || as.isStatic) {
-			continue;
-		}
-		bs.statements[i] = buildAssertIf(lp, current, as);
-	}
-}
-
 /// Build an if statement based on a runtime assert.
-ir.IfStatement buildAssertIf(LanguagePass lp, ir.Scope current, ir.AssertStatement as)
+ir.IfStatement lowerAssertIf(LanguagePass lp, ir.Scope current, ir.AssertStatement as)
 {
 	panicAssert(as, !as.isStatic);
 	auto l = as.location;
@@ -469,8 +455,6 @@ void lowerStringImport(Driver driver, ref ir.Exp exp, ir.StringImport simport)
  */
 void lowerStructLiteral(ir.Scope current, ref ir.Exp exp, ir.StructLiteral literal)
 {
-
-
 	// Pull out the struct and its fields.
 	panicAssert(exp, literal.type !is null);
 	auto theStruct = cast(ir.Struct) realType(literal.type);
@@ -995,20 +979,8 @@ bool isInterfacePointer(LanguagePass lp, ir.Postfix pfix, ir.Scope current, out 
  *   exp: A reference to the relevant expression.
  *   ae: The AccessExp to check.
  */
-void lowerStructLookupViaFunctionCall(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.AccessExp ae)
+void lowerStructLookupViaFunctionCall(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.AccessExp ae, ir.Type type)
 {
-	// This lists the cases where we need to rewrite (reversed).
-	auto child = cast(ir.Postfix) ae.child;
-	if (child is null || child.op != ir.Postfix.Op.Call) {
-		return;
-	}
-
-	auto type = realType(getExpType(ae.child));
-	if (type.nodeType != ir.NodeType.Union &&
-	    type.nodeType != ir.NodeType.Struct) {
-		return;
-	}
-
 	auto loc = ae.location;
 	auto statExp = buildStatementExp(loc);
 	auto host = getParentFunction(current);
@@ -1263,27 +1235,6 @@ ir.ForStatement lowerForeach(ir.ForeachStatement fes, LanguagePass lp,
 }
 
 /**
- * For every ForeachStatement in a block, run lowerForeach on it.
- *
- * Params:
- *   lp: The LanguagePass.
- *   current: The BlockStatement's scope.
- *   currentFunction: The function that these statements ultimately reside in.
- *   bs: The BlockStatement to check.
- */
-void lowerForeaches(LanguagePass lp, ir.Scope current,
-                    ir.Function currentFunction, ir.BlockStatement bs)
-{
-	for (size_t i = 0; i < bs.statements.length; i++) {
-		auto fes = cast(ir.ForeachStatement) bs.statements[i];
-		if (fes is null) {
-			continue;
-		}
-		bs.statements[i] = lowerForeach(fes, lp, current);
-	}
-}
-
-/**
  * Lower an array literal to an internal array literal.
  *
  * The backend will treat any ArrayLiteral as full of constants, so we can't
@@ -1296,12 +1247,9 @@ void lowerForeaches(LanguagePass lp, ir.Scope current,
  *   exp: A reference to the relevant expression.
  *   al: The ArrayLiteral to lower.
  */
-void lowerArrayLiteral(LanguagePass lp, ir.Scope current, bool inFunction,
+void lowerArrayLiteral(LanguagePass lp, ir.Scope current,
                        ref ir.Exp exp, ir.ArrayLiteral al)
 {
-	if (al.exps.length == 0 || !inFunction) {
-		return;
-	}
 	auto at = getExpType(al);
 	if (at.nodeType == ir.NodeType.StaticArrayType) {
 		return;
@@ -1545,36 +1493,6 @@ ir.StatementExp lowerVaArg(Location loc, LanguagePass lp, ir.VaArgExp vaexp)
 
 	return sexp;
 }
-/**
- * Lower a BinOp.
- *
- * This calls the appropriate lower function, depending on what operation it is.
- *
- * Params:
- *   lp: The LanguagePass.
- *   exp: A reference to the relevant expression.
- *   binOp: The BinOp to potentially lower.
- */
-void lowerBinOp(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp binOp)
-{
-	switch(binOp.op) {
-	case ir.BinOp.Op.Assign:
-		lowerAssign(lp, thisModule, exp, binOp);
-		break;
-	case ir.BinOp.Op.Cat:
-		lowerCat(lp, thisModule, exp, binOp);
-		break;
-	case ir.BinOp.Op.CatAssign:
-		lowerCatAssign(lp, thisModule, exp, binOp);
-		break;
-	case ir.BinOp.Op.NotEqual:
-	case ir.BinOp.Op.Equal:
-		lowerEqual(lp, thisModule, exp, binOp);
-		break;
-	default:
-		break;
-	}
-}
 
 /**
  * Lower an ExpReference, if needed.
@@ -1586,15 +1504,9 @@ void lowerBinOp(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp 
  *   exp: A reference to the relevant expression.
  *   eref: The ExpReference to potentially lower.
  */
-void lowerExpReference(ir.Function[] functionStack, ref ir.Exp exp, ir.ExpReference eref)
+void lowerExpReference(ir.Function[] functionStack, ref ir.Exp exp, ir.ExpReference eref,
+					   ir.Function func)
 {
-	auto func = cast(ir.Function) eref.decl;
-	if (func is null) {
-		return;
-	}
-	if (functionStack.length == 0 || functionStack[$-1].nestedVariable is null) {
-		return;
-	}
 	bool isnested;
 	foreach (pf; functionStack) {
 		foreach (nf; pf.nestedFunctions) {
@@ -1733,64 +1645,6 @@ void lowerVarargCall(LanguagePass lp, ir.Scope current, ir.Postfix postfix, ref 
 }
 
 /**
- * Lower a BinOp assign. (+=, *=, etc)
- *
- * Params:
- *   lp: The LanguagePass.
- *   current: The Scope where this code takes place.
- *   thisModule: The Module that this code is taking place in.
- *   exp: A reference to the relevant expression.
- *   binOp: The BinOp to potentially lower.
- *   visitor: An LlvmVisitor instance.
- *
- * Returns: True if something was changed, false otherwise.
- */
-bool lowerBinOpAssign(LanguagePass lp, ir.Scope current, ir.Module thisModule,
-                      ref ir.Exp exp, ir.BinOp binOp, Visitor visitor)
-{
-	switch(binOp.op) with(ir.BinOp.Op) {
-	case AddAssign:
-	case SubAssign:
-	case MulAssign:
-	case DivAssign:
-	case ModAssign:
-	case AndAssign:
-	case OrAssign:
-	case XorAssign:
-	case CatAssign:
-	case LSAssign:  // <<=
-	case SRSAssign:  // >>=
-	case RSAssign: // >>>=
-	case PowAssign:
-	case Assign:
-		auto asPostfix = cast(ir.Postfix)binOp.left;
-		if (asPostfix is null)
-			return false;
-
-		auto leftType = getExpType(asPostfix.child);
-		if (leftType !is null &&
-		    leftType.nodeType == ir.NodeType.AAType &&
-		    asPostfix.op == ir.Postfix.Op.Index) {
-			acceptExp(asPostfix.child, visitor);
-			acceptExp(asPostfix.arguments[0], visitor);
-			acceptExp(binOp.right, visitor);
-
-			if (binOp.op == ir.BinOp.Op.Assign) {
-				lowerAssignAA(lp, current, thisModule, exp, binOp, asPostfix,
-				               cast(ir.AAType)leftType);
-			} else {
-				lowerOpAssignAA(lp, current, thisModule, exp, binOp, asPostfix,
-				                 cast(ir.AAType)leftType);
-			}
-			return true;
-		}
-		return false;
-	default:
-		return false;
-	}
-}
-
-/**
  * Lower an AA literal.
  *
  * Params:
@@ -1873,9 +1727,6 @@ void lowerStructUnionConstructor(LanguagePass lp, ir.Scope current, ref ir.Exp e
  */
 void lowerCMain(LanguagePass lp, ir.Scope current, ir.Function func)
 {
-	if (func.name != "main" || func.type.linkage != ir.Linkage.Volt) {
-		return;
-	}
 	func.name = "vmain";
 	auto loc = func.location;
 	auto mod = getModuleFromScope(loc, current);
@@ -1935,8 +1786,17 @@ public:
 	{
 		super.enter(bs);
 		panicAssert(bs, functionStack.length > 0);
-		lowerAssertStatements(lp, current, bs);
-		lowerForeaches(lp, current, functionStack[$-1], bs);
+		for (size_t i = 0; i < bs.statements.length; ++i) {
+			auto as = cast(ir.AssertStatement)bs.statements[i];
+			if (as !is null && !as.isStatic) {
+				bs.statements[i] = lowerAssertIf(lp, current, as);
+			}
+			auto fes = cast(ir.ForeachStatement)bs.statements[i];
+			if (fes !is null) {
+				bs.statements[i] = lowerForeach(fes, lp, current);
+			}
+		}
+
 		insertBinOpAssignsForNestedVariableAssigns(lp, bs);
 		if (lowerVariables(lp, functionStack[$-1], bs, this)) {
 			super.leave(bs);
@@ -1965,7 +1825,9 @@ public:
 			assert(functionStack.length == 0);
 		}
 
-		lowerCMain(lp, current, func);
+		if (func.name == "main" && func.type.linkage == ir.Linkage.Volt) {
+			lowerCMain(lp, current, func);
+		}
 		nestLowererFunction(lp, parent, func);
 
 		super.enter(func);
@@ -1981,8 +1843,46 @@ public:
 
 	override Status enter(ref ir.Exp exp, ir.BinOp binOp)
 	{
-		if (lowerBinOpAssign(lp, current, thisModule, exp, binOp, this)) {
-			return ContinueParent;
+		switch(binOp.op) with(ir.BinOp.Op) {
+		case AddAssign:
+		case SubAssign:
+		case MulAssign:
+		case DivAssign:
+		case ModAssign:
+		case AndAssign:
+		case OrAssign:
+		case XorAssign:
+		case CatAssign:
+		case LSAssign:  // <<=
+		case SRSAssign:  // >>=
+		case RSAssign: // >>>=
+		case PowAssign:
+		case Assign:
+			auto asPostfix = cast(ir.Postfix)binOp.left;
+			if (asPostfix is null) {
+				return Continue;
+			}
+
+			auto leftType = getExpType(asPostfix.child);
+			if (leftType !is null &&
+				leftType.nodeType == ir.NodeType.AAType &&
+				asPostfix.op == ir.Postfix.Op.Index) {
+				acceptExp(asPostfix.child, this);
+				acceptExp(asPostfix.arguments[0], this);
+				acceptExp(binOp.right, this);
+
+				if (binOp.op == ir.BinOp.Op.Assign) {
+					lowerAssignAA(lp, current, thisModule, exp, binOp, asPostfix,
+								  cast(ir.AAType)leftType);
+				} else {
+					lowerOpAssignAA(lp, current, thisModule, exp, binOp, asPostfix,
+									cast(ir.AAType)leftType);
+				}
+				return ContinueParent;
+			}
+			break;
+		default:
+			break;
 		}
 		return Continue;
 	}
@@ -1993,7 +1893,23 @@ public:
 		 * We do this on the leave function so we know that
 		 * any children have been lowered as well.
 		 */
-		lowerBinOp(lp, thisModule, exp, binOp);
+		switch(binOp.op) {
+		case ir.BinOp.Op.Assign:
+			lowerAssign(lp, thisModule, exp, binOp);
+			break;
+		case ir.BinOp.Op.Cat:
+			lowerCat(lp, thisModule, exp, binOp);
+			break;
+		case ir.BinOp.Op.CatAssign:
+			lowerCatAssign(lp, thisModule, exp, binOp);
+			break;
+		case ir.BinOp.Op.NotEqual:
+		case ir.BinOp.Op.Equal:
+			lowerEqual(lp, thisModule, exp, binOp);
+			break;
+		default:
+			break;
+		}
 		return Continue;
 	}
 
@@ -2005,7 +1921,9 @@ public:
 
 	override Status leave(ref ir.Exp exp, ir.ArrayLiteral al)
 	{
-		lowerArrayLiteral(lp, current, functionStack.length > 0, exp, al);
+		if (al.exps.length > 0 && functionStack.length > 0) {
+			lowerArrayLiteral(lp, current, exp, al);
+		}
 		return Continue;
 	}
 
@@ -2053,7 +1971,18 @@ public:
 
 	override Status leave(ref ir.Exp exp, ir.AccessExp ae)
 	{
-		lowerStructLookupViaFunctionCall(lp, current, exp, ae);
+		// This lists the cases where we need to rewrite (reversed).
+		auto child = cast(ir.Postfix) ae.child;
+		if (child is null || child.op != ir.Postfix.Op.Call) {
+			return Continue;
+		}
+
+		auto type = realType(getExpType(ae.child));
+		if (type.nodeType != ir.NodeType.Union &&
+			type.nodeType != ir.NodeType.Struct) {
+			return Continue;
+		}
+		lowerStructLookupViaFunctionCall(lp, current, exp, ae, type);
 		return Continue;
 	}
 
@@ -2064,7 +1993,14 @@ public:
 		if (replaced) {
 			return Continue;
 		}
-		lowerExpReference(functionStack, exp, eref);
+		auto func = cast(ir.Function) eref.decl;
+		if (func is null) {
+			return Continue;
+		}
+		if (functionStack.length == 0 || functionStack[$-1].nestedVariable is null) {
+			return Continue;
+		}
+		lowerExpReference(functionStack, exp, eref, func);
 		return Continue;
 	}
 
