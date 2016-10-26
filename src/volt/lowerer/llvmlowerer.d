@@ -55,7 +55,7 @@ import volt.semantic.overload;
  *   buildif: Generate code to initialise the AA if it's needed.
  *   aaIsPointer: Is the AA being held as a pointer?
  */
-void buildAAInsert(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope current,
+void lowerAAInsert(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope current,
 		ir.StatementExp statExp, ir.AAType aa, ir.Variable var, ir.Exp key, ir.Exp value,
 		bool buildif=true, bool aaIsPointer=true) {
 	auto aaNewFn = lp.aaNew;
@@ -94,7 +94,7 @@ void buildAAInsert(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 	auto call = buildExpStat(loc, statExp,
 		buildCall(loc, aaInsertFn, [
 			aaIsPointer ? buildDeref(loc, varExp) : varExp,
-			buildAAKeyCast(loc, lp, thisModule, current, key, aa),
+			lowerAAKeyCast(loc, lp, thisModule, current, key, aa),
 			buildCastToVoidPtr(loc, buildAddrOf(value))
 		], aaInsertFn.name)
 	);
@@ -114,7 +114,7 @@ void buildAAInsert(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
  *   key: The key to lookup in the AA.
  *   store: A reference to a Variable of AA.value type, to hold the result of the lookup.
  */
-void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope current,
+void lowerAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope current,
 		ir.StatementExp statExp, ir.AAType aa, ir.Variable var, ir.Exp key, ir.Exp store) {
 	ir.Function inAAFn;
 	if (aa.key.nodeType == ir.NodeType.PrimitiveType) {
@@ -133,7 +133,7 @@ void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 		buildBinOp(loc, ir.BinOp.Op.Equal,
 			buildCall(loc, inAAFn, [
 				buildDeref(loc, var),
-				buildAAKeyCast(loc, lp, thisModule, current, key, aa),
+				lowerAAKeyCast(loc, lp, thisModule, current, key, aa),
 				buildCastToVoidPtr(loc,
 					buildAddrOf(loc, store)
 				)
@@ -157,7 +157,7 @@ void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
  *
  * Returns: An expression casting the key.
  */
-ir.Exp buildAAKeyCast(Location loc, LanguagePass lp, ir.Module thisModule,
+ir.Exp lowerAAKeyCast(Location loc, LanguagePass lp, ir.Module thisModule,
                       ir.Scope current, ir.Exp key, ir.AAType aa)
 {
 	if (aa.key.nodeType == ir.NodeType.PrimitiveType) {
@@ -178,7 +178,7 @@ ir.Exp buildAAKeyCast(Location loc, LanguagePass lp, ir.Module thisModule,
 		key = buildCastSmart(loc, buildUlong(loc), key);
 	} else if (realType(aa.key).nodeType == ir.NodeType.Struct ||
 	           realType(aa.key).nodeType == ir.NodeType.Class) {
-		key = buildStructAAKeyCast(loc, lp, thisModule, current, key, aa);
+		key = lowerStructAAKeyCast(loc, lp, thisModule, current, key, aa);
 	} else {
 		key = buildCastSmart(loc, buildArrayTypeSmart(loc, buildVoid(loc)), key);
 	}
@@ -198,7 +198,7 @@ ir.Exp buildAAKeyCast(Location loc, LanguagePass lp, ir.Module thisModule,
  *   key: An expression holding the key in its normal form.
  *   aa: The AA type that the key belongs to.
  */
-ir.Exp buildStructAAKeyCast(Location l, LanguagePass lp, ir.Module thisModule,
+ir.Exp lowerStructAAKeyCast(Location l, LanguagePass lp, ir.Module thisModule,
                             ir.Scope current, ir.Exp key, ir.AAType aa)
 {
 	auto concatfn = getArrayAppendFunction(l, lp, thisModule,
@@ -554,7 +554,7 @@ void lowerIndexAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 		copyTypeSmart(loc, aa.value), null
 	);
 
-	buildAALookup(loc, lp, thisModule, current, statExp, aa, var,
+	lowerAALookup(loc, lp, thisModule, current, statExp, aa, var,
 		buildExpReference(loc, key, key.name),
 		buildExpReference(loc, store, store.name)
 	);
@@ -651,7 +651,7 @@ void lowerAssignAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 		copyTypeSmart(loc, aa.value), binOp.right
 	);
 
-	buildAAInsert(loc, lp, thisModule, current, statExp, aa, var,
+	lowerAAInsert(loc, lp, thisModule, current, statExp, aa, var,
 			buildExpReference(loc, key, key.name),
 			buildExpReference(loc, value, value.name)
 	);
@@ -696,7 +696,7 @@ void lowerOpAssignAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 		copyTypeSmart(loc, aa.value), null
 	);
 
-	buildAALookup(loc, lp, thisModule, current, statExp, aa, var,
+	lowerAALookup(loc, lp, thisModule, current, statExp, aa, var,
 		buildExpReference(loc, key, key.name),
 		buildExpReference(loc, store, store.name)
 	);
@@ -708,7 +708,7 @@ void lowerOpAssignAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 		)
 	);
 
-	buildAAInsert(loc, lp, thisModule, current, statExp, aa, var,
+	lowerAAInsert(loc, lp, thisModule, current, statExp, aa, var,
 		buildExpReference(loc, key, key.name),
 		buildExpReference(loc, store, store.name),
 		false
@@ -1835,7 +1835,7 @@ void lowerAA(LanguagePass lp, ir.Scope current, ir.Module thisModule, ref ir.Exp
 			copyTypeSmart(loc, aa.value), pair.value
 		);
 
-		buildAAInsert(loc, lp, thisModule, current, statExp,
+		lowerAAInsert(loc, lp, thisModule, current, statExp,
 			 aa, var, buildExpReference(loc, key), buildExpReference(loc, value),
 			 false, false
 		);
@@ -1871,7 +1871,7 @@ void lowerStructUnionConstructor(LanguagePass lp, ir.Scope current, ref ir.Exp e
 /**
  * If func is the main function, add a C main next to it.
  */
-void addCMain(LanguagePass lp, ir.Scope current, ir.Function func)
+void lowerCMain(LanguagePass lp, ir.Scope current, ir.Function func)
 {
 	if (func.name != "main" || func.type.linkage != ir.Linkage.Volt) {
 		return;
@@ -1965,7 +1965,7 @@ public:
 			assert(functionStack.length == 0);
 		}
 
-		addCMain(lp, current, func);
+		lowerCMain(lp, current, func);
 		nestLowererFunction(lp, parent, func);
 
 		super.enter(func);
