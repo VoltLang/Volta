@@ -1535,10 +1535,11 @@ void lowerExpReference(ir.Function[] functionStack, ref ir.Exp exp, ir.ExpRefere
  *   current: The Scope where this code takes place.
  *   thisModule: The Module that this code is taking place in.
  *   exp: A reference to the relevant expression.
+ *   parentFunc: The parent function where this postfix is held, or null.
  *   postfix: The Postfix to potentially lower.
  */
 void lowerPostfix(LanguagePass lp, ir.Scope current, ir.Module thisModule,
-                  ref ir.Exp exp, ir.Postfix postfix)
+                  ref ir.Exp exp, ir.Function parentFunc, ir.Postfix postfix)
 {
 	switch(postfix.op) {
 	case ir.Postfix.Op.Index:
@@ -1577,17 +1578,18 @@ void lowerPostfix(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 		exp = buildCall(l, buildAccessExp(l, buildDeref(l, copyExp(cpostfix.child)),
 		                                  fvar), handle ~ postfix.arguments);
 	}
-	lowerVarargCall(lp, current, postfix, exp);
+	lowerVarargCall(lp, current, postfix, parentFunc, exp);
 }
 
 /**
  * Lower a call to a varargs function.
  */
-void lowerVarargCall(LanguagePass lp, ir.Scope current, ir.Postfix postfix, ref ir.Exp exp)
+void lowerVarargCall(LanguagePass lp, ir.Scope current, ir.Postfix postfix, ir.Function func, ref ir.Exp exp)
 {
 	if (postfix.op != ir.Postfix.Op.Call) {
 		return;
 	}
+	assert(func !is null);
 	auto asFunctionType = cast(ir.CallableType)realType(getExpType(postfix.child));
 	if (asFunctionType is null || !asFunctionType.hasVarArgs ||
 		asFunctionType.linkage != ir.Linkage.Volt) {
@@ -1611,8 +1613,8 @@ void lowerVarargCall(LanguagePass lp, ir.Scope current, ir.Postfix postfix, ref 
 	auto sexp = buildStatementExp(l);
 	auto idsType = buildStaticArrayTypeSmart(l, varArgsSlice.length, tr);
 	auto argsType = buildStaticArrayTypeSmart(l, 0, buildVoid(l));
-	auto ids = buildVariableAnonSmart(l, current, sexp, idsType, null);
-	auto args = buildVariableAnonSmart(l, current, sexp, argsType, null);
+	auto ids = buildVariableAnonSmartAtTop(l, func._body, idsType, null);
+	auto args = buildVariableAnonSmartAtTop(l, func._body, argsType, null);
 
 	int[] sizes;
 	size_t totalSize;
@@ -1934,7 +1936,8 @@ public:
 
 	override Status leave(ref ir.Exp exp, ir.Postfix postfix)
 	{
-		lowerPostfix(lp, current, thisModule, exp, postfix);
+		lowerPostfix(lp, current, thisModule, exp,
+			functionStack.length == 0 ? null : functionStack[$-1], postfix);
 		return Continue;
 	}
 
@@ -1943,7 +1946,8 @@ public:
 		lowerProperty(lp, exp, prop);
 		auto pfix = cast(ir.Postfix)exp;
 		if (pfix !is null) {
-			lowerPostfix(lp, current, thisModule, exp, pfix);
+			lowerPostfix(lp, current, thisModule, exp,
+				functionStack.length == 0 ? null : functionStack[$-1], pfix);
 		}
 		return Continue;
 	}

@@ -458,6 +458,20 @@ ir.Variable buildVariableAnonSmart(Location loc, ir.BlockStatement b,
 	return var;
 }
 
+/// Build a variable and add it to the top of a block statement.
+ir.Variable buildVariableAnonSmartAtTop(Location loc, ir.BlockStatement b,
+                                   ir.Type type, ir.Exp assign)
+{
+	assert(b !is null);
+	assert(b.myScope !is null);
+	auto name = b.myScope.genAnonIdent();
+	auto var = buildVariable(loc, copyTypeSmart(loc, type), ir.Variable.Storage.Function, name, assign);
+	b.statements = var ~ b.statements;
+	b.myScope.addValue(var, var.name);
+	return var;
+}
+
+
 /**
  * Create an anonymous variable for a statementexp without a block statement.
  */
