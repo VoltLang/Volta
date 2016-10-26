@@ -1805,17 +1805,6 @@ public:
 		return Continue;
 	}
 
-	override Status leave(ir.BlockStatement bs)
-	{
-		super.leave(bs);
-		return Continue;
-	}
-
-	override Status enter(ir.ForeachStatement fes)
-	{
-		return Continue;
-	}
-
 	override Status enter(ir.Function func)
 	{
 		ir.Function parent;
