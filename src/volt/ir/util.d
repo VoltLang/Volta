@@ -788,7 +788,7 @@ ir.Unary buildAddrOf(Location loc, ir.Variable var, string[] names...)
 }
 
 /**
- * Builds a Dereference expression.
+ * Builds a dereference expression.
  */
 ir.Unary buildDeref(Location loc, ir.Exp exp)
 {
@@ -797,6 +797,15 @@ ir.Unary buildDeref(Location loc, ir.Exp exp)
 	deref.op = ir.Unary.Op.Dereference;
 	deref.value = exp;
 	return deref;
+}
+
+/**
+ * Builds an expression that dereferences a variable.
+ */
+ir.Unary buildDeref(Location loc, ir.Variable var)
+{
+	auto eref = buildExpReference(loc, var, var.name);
+	return buildDeref(loc, eref);
 }
 
 /**
@@ -1150,6 +1159,15 @@ ir.Postfix buildCall(Location loc, ir.Exp child, ir.Exp[] args)
 	return call;
 }
 
+/**
+ * Builds a call to a function.
+ */
+ir.Postfix buildCall(Location loc, ir.Function func, ir.Exp[] args)
+{
+	auto eref = buildExpReference(loc, func, func.name);
+	return buildCall(loc, eref, args);
+}
+
 ir.Postfix buildMemberCall(Location loc, ir.Exp child, ir.ExpReference func, string name, ir.Exp[] args)
 {
 	auto lookup = new ir.Postfix();
@@ -1223,6 +1241,25 @@ ir.BinOp buildSub(Location loc, ir.Exp left, ir.Exp right)
 ir.BinOp buildAssign(Location loc, ir.Exp left, ir.Exp right)
 {
 	return buildBinOp(loc, ir.BinOp.Op.Assign, left, right);
+}
+
+/**
+ * Builds an assign BinOp to a given variable.
+ */
+ir.BinOp buildAssign(Location loc, ir.Variable left, ir.Exp right)
+{
+	auto eref = buildExpReference(loc, left, left.name);
+	return buildAssign(loc, eref, right);
+}
+
+/**
+ * Builds an assign BinOp to a given variable from a given variable.
+ */
+ir.BinOp buildAssign(Location loc, ir.Variable left, ir.Variable right)
+{
+	auto lref = buildExpReference(loc, left, left.name);
+	auto rref = buildExpReference(loc, right, right.name);
+	return buildAssign(loc, lref, rref);
 }
 
 /**

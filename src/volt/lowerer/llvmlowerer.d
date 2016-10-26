@@ -1,4 +1,4 @@
-// Copyright © 2013, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2013-2016, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.lowerer.llvmlowerer;
 
@@ -80,7 +80,6 @@ void buildAAInsert(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 				)
 			)
 		);
-
 		varExp = buildExpReference(loc, var, var.name);
 		buildIfStat(loc, statExp,
 			buildBinOp(loc, ir.BinOp.Op.Is,
@@ -126,15 +125,14 @@ void buildAALookup(Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope
 
 	auto thenState = buildBlockStat(loc, statExp, current);
 
-	auto knfFunc = buildExpReference(loc, lp.ehThrowKeyNotFoundErrorFunc);
 	ir.Exp locstr = buildConstantString(loc, format("%s:%s", loc.filename, loc.line), false);
 
-	buildExpStat(loc, thenState, buildCall(loc, knfFunc, [locstr]));
+	buildExpStat(loc, thenState, buildCall(loc, lp.ehThrowKeyNotFoundErrorFunc, [locstr]));
 
 	buildIfStat(loc, statExp,
 		buildBinOp(loc, ir.BinOp.Op.Equal,
 			buildCall(loc, inAAFn, [
-				buildDeref(loc, buildExpReference(loc, var, var.name)),
+				buildDeref(loc, var),
 				buildAAKeyCast(loc, lp, thisModule, current, key, aa),
 				buildCastToVoidPtr(loc,
 					buildAddrOf(loc, store)
@@ -377,8 +375,7 @@ bool lowerVariables(LanguagePass lp, ir.Function func, ir.BlockStatement bs, Vis
 				assign = getDefaultInit(l, lp, var.type);
 			}
 
-			auto eref = buildExpReference(l, var, var.name);
-			auto a = buildAssign(l, eref, assign);
+			auto a = buildAssign(l, var, assign);
 
 			bs.statements[i] = buildExpStat(l, a);
 		} else {
@@ -417,9 +414,8 @@ ir.IfStatement buildAssertIf(LanguagePass lp, ir.Scope current, ir.AssertStateme
 		message = buildConstantString(l, "assertion failure");
 	}
 	assert(message !is null);
-	auto eref = buildExpReference(l, lp.ehThrowAssertErrorFunc, lp.ehThrowAssertErrorFunc.name);
 	ir.Exp locstr = buildConstantString(l, format("%s:%s", as.location.filename, as.location.line), false);
-	auto theThrow = buildExpStat(l, buildCall(l, eref, [locstr, message]));
+	auto theThrow = buildExpStat(l, buildCall(l, lp.ehThrowAssertErrorFunc, [locstr, message]));
 	auto thenBlock = buildBlockStat(l, null, current, theThrow);
 	auto ifS = buildIfStat(l, buildNot(l, as.condition), thenBlock);
 	return ifS;
@@ -434,9 +430,7 @@ ir.IfStatement buildAssertIf(LanguagePass lp, ir.Scope current, ir.AssertStateme
  */
 void lowerThrow(LanguagePass lp, ir.ThrowStatement t)
 {
-	auto func = lp.ehThrowFunc;
-	auto eRef = buildExpReference(t.location, func, "vrt_eh_throw");
-	t.exp = buildCall(t.location, eRef, [t.exp,
+	t.exp = buildCall(t.location, lp.ehThrowFunc, [t.exp,
 	                  buildConstantString(t.location, format("%s:%s", t.location.filename, t.location.line), false)]);
 }
 
@@ -689,14 +683,14 @@ void lowerOpAssignAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 		buildPtrSmart(loc, aa), null
 	);
 	buildExpStat(loc, statExp,
-		buildAssign(loc, buildExpReference(loc, var, var.name), buildAddrOf(loc, asPostfix.child))
+		buildAssign(loc, var, buildAddrOf(loc, asPostfix.child))
 	);
 
 	auto key = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp,
 		copyTypeSmart(loc, aa.key), null
 	);
 	buildExpStat(loc, statExp,
-		buildAssign(loc, buildExpReference(loc, key, key.name), asPostfix.arguments[0])
+		buildAssign(loc, key, asPostfix.arguments[0])
 	);
 	auto store = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp,
 		copyTypeSmart(loc, aa.value), null
@@ -925,7 +919,7 @@ void lowerArrayCast(Location loc, LanguagePass lp, ir.Scope current,
 		auto ln = buildArrayLength(loc, lp, buildExpReference(loc, var, varName));
 		auto sz = getSizeOf(loc, lp, toArray.base);
 		ir.Exp locstr = buildConstantString(loc, format("%s:%s", exp.location.filename, exp.location.line), false);
-		auto rtCall = buildCall(loc, buildExpReference(loc, lp.ehThrowSliceErrorFunc, lp.ehThrowSliceErrorFunc.name), [locstr]);
+		auto rtCall = buildCall(loc, lp.ehThrowSliceErrorFunc, [locstr]);
 		auto bs = buildBlockStat(loc, rtCall, current, buildExpStat(loc, rtCall));
 		auto check = buildBinOp(loc, ir.BinOp.Op.NotEqual,
 		                        buildBinOp(loc, ir.BinOp.Op.Mod, ln, sz),
@@ -1154,10 +1148,7 @@ ir.ForStatement lowerForeach(ir.ForeachStatement fes, LanguagePass lp,
 				elementVar.assign = buildCall(l, dfn,
 				    [cast(ir.Exp)aggref(), cast(ir.Exp)buildExpReference(l, nextIndexVar,
 				    nextIndexVar.name)]);
-				auto lvar = buildExpReference(indexVar.location, indexVar, indexVar.name);
-				auto rvar = buildExpReference(nextIndexVar.location,
-				                              nextIndexVar, nextIndexVar.name);
-				fs.increments ~= buildAssign(l, lvar, rvar);
+				fs.increments ~= buildAssign(l, indexVar, nextIndexVar);
 			} else {
 				elementVar.assign = buildCall(l, dfn, [cast(ir.Exp)aggref(),
 				    cast(ir.Exp)buildExpReference(indexVar.location, indexVar, indexVar.name)]);
@@ -1253,16 +1244,14 @@ ir.ForStatement lowerForeach(ir.ForeachStatement fes, LanguagePass lp,
 		fs.test = buildBinOp(l, ir.BinOp.Op.Less, index, len);
 
 		// k = aa.keys[i]
-		auto kref = buildExpReference(l, keyVar, keyVar.name);
 		auto keys = buildAACall(lp.aaGetKeys, buildArrayTypeSmart(l, keyVar.type));
 		auto rh   = buildIndex(l, keys, buildExpReference(l, indexVar, indexVar.name));
-		fs.block.statements = buildExpStat(l, buildAssign(l, kref, rh)) ~ fs.block.statements;
+		fs.block.statements = buildExpStat(l, buildAssign(l, keyVar, rh)) ~ fs.block.statements;
 
 		// v = aa.exps[i]
-		auto vref = buildExpReference(l, valVar, valVar.name);
 		auto vals = buildAACall(lp.aaGetValues, buildArrayTypeSmart(l, valVar.type));
 		auto rh2  = buildIndex(l, vals, buildExpReference(l, indexVar, indexVar.name));
-		fs.block.statements = buildExpStat(l, buildAssign(l, vref, rh2)) ~ fs.block.statements;
+		fs.block.statements = buildExpStat(l, buildAssign(l, valVar, rh2)) ~ fs.block.statements;
 
 		// i++
 		fs.increments ~= buildIncrement(l, buildExpReference(l, indexVar, indexVar.name));
@@ -1374,31 +1363,27 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 		if (builtin.children.length != 1) {
 			throw panic(exp.location, "malformed BuiltinExp.");
 		}
-		auto rtfn = buildExpReference(exp.location, lp.aaGetLength, lp.aaGetLength.name);
-		exp = buildCall(exp.location, rtfn, builtin.children);
+		exp = buildCall(exp.location, lp.aaGetLength, builtin.children);
 		break;
 	case AAKeys:
 		if (builtin.children.length != 1) {
 			throw panic(exp.location, "malformed BuiltinExp.");
 		}
-		auto rtfn = buildExpReference(exp.location, lp.aaGetKeys, lp.aaGetKeys.name);
 		exp = buildCastSmart(exp.location, builtin.type,
-		                     buildCall(exp.location, rtfn, builtin.children));
+		                     buildCall(exp.location, lp.aaGetKeys, builtin.children));
 		break;
 	case AAValues:
 		if (builtin.children.length != 1) {
 			throw panic(exp.location, "malformed BuiltinExp.");
 		}
-		auto rtfn = buildExpReference(exp.location, lp.aaGetValues, lp.aaGetValues.name);
 		exp = buildCastSmart(exp.location, builtin.type,
-		                     buildCall(exp.location, rtfn, builtin.children));
+		                     buildCall(exp.location, lp.aaGetValues, builtin.children));
 		break;
 	case AARehash:
 		if (builtin.children.length != 1) {
 			throw panic(exp.location, "malformed BuiltinExp.");
 		}
-		auto rtfn = buildExpReference(exp.location, lp.aaRehash, lp.aaRehash.name);
-		exp = buildCall(exp.location, rtfn, builtin.children);
+		exp = buildCall(exp.location, lp.aaRehash, builtin.children);
 		break;
 	case AAGet:
 		if (builtin.children.length != 3) {
@@ -1422,15 +1407,15 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 		} else {
 			builtin.children[2] = buildCastSmart(l, buildUlong(l), builtin.children[2]);
 		}
-		ir.Exp rtfn;
+		ir.Function rtfn;
 		if (keyIsArray && valIsArray) {
-			rtfn = buildExpReference(exp.location, lp.aaGetAA, lp.aaGetAA.name);
+			rtfn = lp.aaGetAA;
 		} else if (!keyIsArray && valIsArray) {
-			rtfn = buildExpReference(exp.location, lp.aaGetPA, lp.aaGetPA.name);
+			rtfn = lp.aaGetPA;
 		} else if (keyIsArray && !valIsArray) {
-			rtfn = buildExpReference(exp.location, lp.aaGetAP, lp.aaGetAP.name);
+			rtfn = lp.aaGetAP;
 		} else {
-			rtfn = buildExpReference(exp.location, lp.aaGetPP, lp.aaGetPP.name);
+			rtfn = lp.aaGetPP;
 		}
 		exp = buildCastSmart(exp.location, aa.value,
 		                     buildCall(exp.location, rtfn, builtin.children));
@@ -1444,13 +1429,13 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 			throw panic(exp.location, "malformed BuiltinExp.");
 		}
 		bool keyIsArray = isArray(realType(aa.key));
-		ir.Exp rtfn;
+		ir.Function rtfn;
 		if (keyIsArray) {
-			rtfn = buildExpReference(exp.location, lp.aaDeleteArray, lp.aaDeleteArray.name);
+			rtfn = lp.aaDeleteArray;
 			builtin.children[1] = buildCastSmart(l, buildArrayType(l, buildVoid(l)),
 			                                     builtin.children[1]);
 		} else {
-			rtfn = buildExpReference(exp.location, lp.aaDeletePrimitive, lp.aaDeletePrimitive.name);
+			rtfn = lp.aaDeletePrimitive;
 			builtin.children[1] = buildCastSmart(l, buildUlong(l), builtin.children[1]);
 		}
 		exp = buildCall(exp.location, rtfn, builtin.children);
@@ -1464,13 +1449,13 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 			throw panic(exp.location, "malformed BuiltinExp.");
 		}
 		bool keyIsArray = isArray(realType(aa.key));
-		ir.Exp rtfn;
+		ir.Function rtfn;
 		if (keyIsArray) {
-			rtfn = buildExpReference(exp.location, lp.aaInBinopArray, lp.aaInBinopArray.name);
+			rtfn = lp.aaInBinopArray;
 			builtin.children[1] = buildCast(l, buildArrayType(l, buildVoid(l)),
 			                                copyExp(builtin.children[1]));
 		} else {
-			rtfn = buildExpReference(exp.location, lp.aaInBinopPrimitive, lp.aaInBinopPrimitive.name);
+			rtfn = lp.aaInBinopPrimitive;
 			builtin.children[1] = buildCast(l, buildUlong(l), copyExp(builtin.children[1]));
 		}
 		exp = buildCall(exp.location, rtfn, builtin.children);
@@ -1480,8 +1465,7 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 		if (builtin.children.length != 1) {
 			throw panic(exp.location, "malformed BuiltinExp.");
 		}
-		auto rtFn = buildExpReference(l, lp.aaDup, lp.aaDup.name);
-		exp = buildCall(l, rtFn, builtin.children);
+		exp = buildCall(l, lp.aaDup, builtin.children);
 		exp = buildCastSmart(l, builtin.type, exp);
 		break;
 	case Classinfo:
@@ -1545,10 +1529,10 @@ ir.StatementExp lowerVaArg(Location loc, LanguagePass lp, ir.VaArgExp vaexp)
 	sexp.statements ~= ptrToPtr;
 
 	auto cpy = buildVariableSmart(loc, buildVoidPtr(loc), ir.Variable.Storage.Function, "cpy");
-	cpy.assign = buildDeref(loc, buildExpReference(loc, ptrToPtr));
+	cpy.assign = buildDeref(loc, ptrToPtr);
 	sexp.statements ~= cpy;
 
-	auto vlderef = buildDeref(loc, buildExpReference(loc, ptrToPtr));
+	auto vlderef = buildDeref(loc, ptrToPtr);
 	auto tid = buildTypeidSmart(loc, vaexp.type);
 	auto sz = getSizeOf(loc, lp, vaexp.type);
 	auto assign = buildAddAssign(loc, vlderef, sz);
@@ -1875,10 +1859,9 @@ void lowerStructUnionConstructor(LanguagePass lp, ir.Scope current, ref ir.Exp e
 	auto ctor = builtin.functions[0];
 	auto sexp = buildStatementExp(loc);
 	auto svar = buildVariableAnonSmart(loc, current, sexp, agg, null);
-	auto ctorRef = buildExpReference(ctor.location, ctor, ctor.name);
 	auto args = buildCast(loc, buildVoidPtr(loc), buildAddrOf(loc,
 		buildExpReference(loc, svar, svar.name))) ~ postfix.arguments;
-	auto ctorCall = buildCall(loc, ctorRef, args);
+	auto ctorCall = buildCall(loc, ctor, args);
 
 	buildExpStat(loc, sexp, ctorCall);
 	sexp.exp = buildExpReference(loc, svar, svar.name);
@@ -1909,8 +1892,7 @@ void addCMain(LanguagePass lp, ir.Scope current, ir.Function func)
 	ir.Exp argcRef = buildExpReference(loc, argc, argc.name);
 	ir.Exp argvRef = buildExpReference(loc, argv, argv.name);
 	ir.Exp vref = buildExpReference(loc, func, func.name);
-	auto runMain = buildExpReference(loc, lp.runMainFunc, lp.runMainFunc.name);
-	auto call = buildCall(loc, runMain, [argcRef, argvRef, vref]);
+	auto call = buildCall(loc, lp.runMainFunc, [argcRef, argvRef, vref]);
 	buildReturnStat(loc, cmain._body, call);
 }
 
