@@ -1591,8 +1591,24 @@ void lowerVarargCall(LanguagePass lp, ir.Scope current, ir.Postfix postfix, ir.F
 	}
 	assert(func !is null);
 	auto asFunctionType = cast(ir.CallableType)realType(getExpType(postfix.child));
-	if (asFunctionType is null || !asFunctionType.hasVarArgs ||
-		asFunctionType.linkage != ir.Linkage.Volt) {
+	if (asFunctionType is null || !asFunctionType.hasVarArgs) {
+		return;
+	}
+
+	if (asFunctionType.linkage == ir.Linkage.C) {
+		/* Clang casts floats to doubles when passing them to variadic functions.
+		 * I'm not sure *why*, but sure enough if we don't we lose data, so...
+		 */
+		foreach (ref argexp; postfix.arguments[asFunctionType.params.length .. $]) {
+			auto ptype = getExpType(argexp);
+			if (isF32(ptype)) {
+				auto l = argexp.location;
+				argexp = buildCastSmart(l, buildDouble(l), argexp);
+			}
+		}
+	}
+
+	if (asFunctionType.linkage != ir.Linkage.Volt) {
 		return;
 	}
 

@@ -485,6 +485,15 @@ bool isFloatingPoint(ir.Type t)
 	return isFloatingPoint(prim.type);
 }
 
+bool isF32(ir.Type t)
+{
+	auto prim = cast(ir.PrimitiveType)t;
+	if (prim is null) {
+		return false;
+	}
+	return prim.type == ir.PrimitiveType.Kind.Float;
+}
+
 bool isFloatingPoint(ir.PrimitiveType.Kind kind)
 {
 	switch (kind) with (ir.PrimitiveType.Kind) {
