@@ -70,6 +70,11 @@ void warningOldStyleDelegateType(Location loc, Settings settings)
  * Specific Errors
  *
  */
+CompilerException makeNeverReached(Location l, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(l, "statement never reached.", file, line);
+}
+
 CompilerException makeAssigningVoid(Location l, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(l, "tried to assign a void value.", file, line);

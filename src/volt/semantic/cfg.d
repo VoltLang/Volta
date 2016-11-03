@@ -224,7 +224,7 @@ public:
 	override Status enter(ir.ReturnStatement rs)
 	{
 		if (block.terminates) {
-			// error!
+			throw makeNeverReached(rs.location);
 		}
 		block.terminates = true;
 		return Continue;
