@@ -70,6 +70,12 @@ void warningOldStyleDelegateType(Location loc, Settings settings)
  * Specific Errors
  *
  */
+CompilerException makeArgumentCountMismatch(Location l, ir.Function func, string file = __FILE__, const int line = __LINE__)
+{
+	auto n = func.params.length;
+	return makeExpected(l, format("%s argument%s to function '%s'", n, n == 1 ? "" : "s", func.name));
+}
+
 CompilerException makeNeverReached(Location l, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(l, "statement never reached.", file, line);

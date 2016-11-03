@@ -54,7 +54,7 @@ void appendDefaultArguments(Context ctx, ir.Location loc,
 	ir.Exp[] overflow;
 	foreach (p; func.params[arguments.length .. $]) {
 		if (p.assign is null) {
-			throw makeExpected(loc, "default argument");
+			throw makeArgumentCountMismatch(loc, func);
 		}
 		overflow ~= p.assign;
 	}
