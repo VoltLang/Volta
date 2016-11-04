@@ -135,3 +135,26 @@ Well, nothing is stopping you from making a Volt 'header' file:
 	fn add(a: i32, b: i32) i32;
 
 There's more complicated things that can be done with import statements, but other documentation is a better source for that information. For the moment, just be aware that `import` is similar, but different, to `#include` directives.
+
+Syntax
+---
+
+Perhaps the most obvious difference, but once you understand it, it's not a massive departure.
+
+In C, you declare a variable like so:
+
+	T var;
+
+In Volt, the syntax is a little different:
+
+	var: T;
+
+Multiple declarations use commas, like C:
+
+	var1, var2: T*;
+
+Note that the types of `var1` and `var2` in the above example is a pointer to `T`. Unlike in the C example:
+
+	T* var1, var2;
+
+Where `var1` is a pointer, but `var2` is not.
