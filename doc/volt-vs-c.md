@@ -8,7 +8,7 @@ What's The Same
 
 As mentioned in the intro, Volt is conceptually similar to C, but beyond that, let's get into some details.
 
-Volt has inherited a lot of *statements* from C, so most of these will look familiar.
+Volt has inherited a lot of **statements** from C, so most of these will look familiar.
 
 	if (thisIsTrue()) {
 		// then this happens
@@ -36,7 +36,7 @@ Volt has inherited a lot of *statements* from C, so most of these will look fami
 	
 	assert(condition(), "message if fails!");  // In Volt, assert is a builtin statement.
 
-Likewise, a lot of the *expressions* are the same.
+Likewise, a lot of the **expressions** are the same.
 
 	a = 12;  // Assign a value to a variable.
 	
@@ -69,7 +69,7 @@ What's Different
 
 Of course, if Volt were just C with a coat of paint, you could emulate it with a header file full of horrific macros, so what's different about Volt? What might catch the aforementioned experienced C programmers by surprise?
 
-Perhaps the most subtle but important distinction is the *module* system. If you have a function that adds two numbers together in C, you might have this in `add.c`:
+Perhaps the most subtle but important distinction is the **module** system. If you have a function that adds two numbers together in C, you might have this in `add.c`:
 
 	int add(int a, int b)
 	{
