@@ -180,6 +180,17 @@ The types of Volt are of specific sizes. For example, instead of an `int` (which
 
 	bool, void
 
+Function Pointers
+---
+
+Pointers to functions are defined fairly simply:
+
+	fptr: fn(i32, bool) string;  // A pointer to a function that takes an integer and a bool, and returns a string.
+
+These are function pointers, but note that `&` is not used when assigning to a function pointer:
+
+	fptr = someFunction;  // Not &someFunction!
+
 Functions
 ---
 
@@ -264,4 +275,4 @@ Note that this is equivalent to:
 	...
 	add(&s, 2);
 
-But is a little neater. You also may have notice in the above example that even though `sp` is a pointer, we looked up the field like it wasn't, instead of doing something like `sp->x` or `(*sp).x`. This is because if a type is pointer to a type that has fields, the Volt compiler will dereference it automatically, meaning such constructions are unneeded.
+But is a little neater. You also may have noticed in the above example that even though `sp` is a pointer, we looked up the field like it wasn't, instead of doing something like `sp->x` or `(*sp).x`. This is because if a type is pointer to a type that has fields, the Volt compiler will dereference it automatically, meaning such constructions are unneeded.
