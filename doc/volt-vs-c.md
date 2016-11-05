@@ -159,11 +159,11 @@ Note that the types of `var1` and `var2` in the above example is a pointer to `T
 
 Where `var1` is a pointer, but `var2` is not.
 
-*typedef*. Instead of doing:
+**typedef**. Instead of doing:
 
 	typedef int MyInt;
 
-Use *alias*:
+Use `alias`:
 
 	alias MyInt = i32;
 
@@ -284,3 +284,8 @@ Note that this is equivalent to:
 	add(&s, 2);
 
 But is a little neater. You also may have noticed in the above example that even though `sp` is a pointer, we looked up the field like it wasn't, instead of doing something like `sp->x` or `(*sp).x`. This is because if a type is pointer to a type that has fields, the Volt compiler will dereference it automatically, meaning such constructions are unneeded.
+
+A Whole Lot More
+---
+
+There's a lot else that's different between C and Volt, of course, but this document has hopefully touched on differences in features they share. If you're coming from C and feel something important has been missed out from this document, please do open an issue or pull request on our GitHub and we'll see if we can improve it.
