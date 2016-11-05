@@ -159,6 +159,14 @@ Note that the types of `var1` and `var2` in the above example is a pointer to `T
 
 Where `var1` is a pointer, but `var2` is not.
 
+*typedef*. Instead of doing:
+
+	typedef int MyInt;
+
+Use *alias*:
+
+	alias MyInt = i32;
+
 Primitive Types
 ---
 
