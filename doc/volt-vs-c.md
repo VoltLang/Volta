@@ -179,3 +179,53 @@ The types of Volt are of specific sizes. For example, instead of an `int` (which
 **Other**
 
 	bool, void
+
+Functions
+---
+
+We saw a function in Volt before, let's take another look.
+
+	fn add(a: i32, b: i32) i32
+	{
+		return a + b;
+	}
+
+So the keyword `fn` denotes a function, the `i32` before the opening brace is the return type. This can be `void` for no return type, or more commonly omitted altogether:
+
+	fn foo()
+	{
+	}
+
+Calling is mostly the same, save a few quirks. If it makes code clearer, the parameters can be specified by name at the call point. They can even be reordered at that point!
+
+	fn sayHello(name: string, casual: bool)
+	{
+		writefln("%s %s", casual ? "Hi" : "Greetings", name);
+	}
+
+	...
+	sayHello(casual:true, "Sam");
+
+Parameters can be marked as `ref` or `out`. If a parameter is marked as such, a value passed to it must be an l-value (e.g. a variable), and then changes to that parameter will be reflected at the call site. The difference between the two is that `out` is set to a default value, even if the function doesn't touch it -- the function is assumed to be initialising the parameter.
+
+If one of these is specified, the keyword has to be reported at the call site, so someone reading the code can see at a glance that the call might modify the parameter.
+
+	fn setToTwo(ref i: i32)
+	{
+		i = 2;
+	}
+
+	...
+	x: i32 = 1;
+	setToTwo(ref x);
+	writeln(x);  // Prints "2".
+
+Volt has support for something called Universal Function Call Syntax (UFCS for short), you can create a function that can be called like a method of that type if the type is the first parameter. An example will make things clearer.
+
+	fn concat(s1: string, s2: string) string
+	{
+		return s1 ~ s2;
+	}
+
+	...
+	writeln("hello".concat(" world"));  // Prints "hello world".
