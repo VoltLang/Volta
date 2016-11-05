@@ -164,18 +164,18 @@ Primitive Types
 
 The types of Volt are of specific sizes. For example, instead of an `int` (which in C is only guaranteed to be 16 bits or more in size, but can be larger), in Volt you'd use `i32`, which is a 32 bit signed integer. The unsigned integer, instead of using a keyword like C, is just another type: `u16` is an unsigned 16 bit integers.
 
-*Integers*
+**Integers**
 
 	i8, i16, i32, i64, u8, u16, u32, u64
 
-*Floating Point Values*
+**Floating Point Values**
 
 	f32, f64  // equivalent to float and double in most modern C environments.
 
-*Characters*
+**Characters**
 
 	char, wchar, dchar  // utf-8, utf-16, utf-32, respectively
 
-*Other*
+**Other**
 
 	bool, void
