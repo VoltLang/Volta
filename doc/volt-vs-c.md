@@ -229,3 +229,39 @@ Volt has support for something called Universal Function Call Syntax (UFCS for s
 
 	...
 	writeln("hello".concat(" world"));  // Prints "hello world".
+
+Structs
+---
+
+Like C, Volt supports `struct`s. Unlike `class`es (which you may be familiar with from other languages), `struct`s are POD -- plain old data, just like in C. The only substantial difference is they can have member functions.
+
+	struct S
+	{
+		x: i32;
+
+		fn add(n: i32)
+		{
+			x += n;
+		}
+	}  // No semicolon!
+
+	...
+	s: S;  // Default initialisation for all values, so x is 0.
+	s.add(2);  // X is now 2.
+
+Note that this is equivalent to:
+
+	struct S
+	{
+		x: i32;
+	}
+
+	fn add(sp: S*, n: i32)
+	{
+		sp.x += n;
+	}
+
+	...
+	add(&s, 2);
+
+But is a little neater. You also may have notice in the above example that even though `sp` is a pointer, we looked up the field like it wasn't, instead of doing something like `sp->x` or `(*sp).x`. This is because if a type is pointer to a type that has fields, the Volt compiler will dereference it automatically, meaning such constructions are unneeded.
