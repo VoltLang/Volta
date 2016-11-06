@@ -285,6 +285,13 @@ Note that this is equivalent to:
 
 But is a little neater. You also may have noticed in the above example that even though `sp` is a pointer, we looked up the field like it wasn't, instead of doing something like `sp->x` or `(*sp).x`. This is because if a type is pointer to a type that has fields, the Volt compiler will dereference it automatically, meaning such constructions are unneeded.
 
+Semantics
+---
+
+`void*` is not implicitly convertible to any other pointer type, and requires a cast:
+
+	ip: i32* = cast(i32*)malloc(typeid(i32).size * 1);
+
 A Whole Lot More
 ---
 
