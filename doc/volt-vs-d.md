@@ -21,7 +21,7 @@ In Volt, **version** statement condition can be or'd and'd, and not'd together:
 Types
 ---
 
-In addition to the type syntax being different as documented in the [C comparison](volt-vs-c.html], a subtle point is that the calling convention (CC) of a function pointer can be an explicit part of the type, not just inferred from what `extern` block it's in, if any (this means that you can explicitly mark something as a native CC, instead of just a "not C" CC):
+In addition to the type syntax being different as documented in the [C comparison](volt-vs-c.html), a subtle point is that the calling convention (CC) of a function pointer can be an explicit part of the type, not just inferred from what `extern` block it's in, if any (this means that you can explicitly mark something as a native CC, instead of just a "not C" CC):
 
 	alias func1 = fn!C(i32) i32;  // Pointer to a function that returns an integer and takes an integer with a C CC.
 	alias func2 = fn!Volt(i32) i32;  // Same as above, but with a Volt CC.
