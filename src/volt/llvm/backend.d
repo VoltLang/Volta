@@ -244,13 +244,19 @@ void writeObjectFile(TargetInfo target, string output, string input)
 	// Doesn't need to disposed.
 	LLVMTargetRef llvmTarget = LLVMGetTargetFromName(arch);
 
+	auto opt = LLVMCodeGenOptLevel.Default;
+	auto codeModel = LLVMCodeModel.Default;
+	auto reloc = LLVMRelocMode.Default;
+
+	// Force -fPIC on linux.
+	if (target.arch == Arch.X86_64 &&
+	    target.platform == Platform.Linux) {
+		reloc = LLVMRelocMode.PIC;
+	}
 
 	// Create target machine used to hold all of the settings.
 	auto machine = LLVMCreateTargetMachine(
-		llvmTarget, triple, "", "",
-		LLVMCodeGenOptLevel.Default,
-		LLVMRelocMode.Default,
-		LLVMCodeModel.Default);
+		llvmTarget, triple, "", "", opt, reloc, codeModel);
 	scope (exit) {
 		LLVMDisposeTargetMachine(machine);
 	}
