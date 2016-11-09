@@ -82,7 +82,7 @@ immutable(void)[] unescapeString(Location location, const(char)[] s)
 			encode(hexchars, c);
 			if (hexchars.length == 2) {
 				try {
-					encode(output, cast(char)toInt(hexchars, 16));
+					output ~= cast(char)toInt(hexchars, 16);
 				} catch (ConvException) {
 					throw makeExpected(location, "hex digit");
 				}
