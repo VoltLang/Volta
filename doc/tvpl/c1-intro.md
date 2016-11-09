@@ -20,4 +20,4 @@ This guide is intended for close reading by beginning programmers, and perhaps a
 
 [Chapter 6 - Functions](c6-functions.html) - Learn about a fundamental building block of Volt program design.
 
-[Chapter 7 - User Defined Types](c7-user-typeas.html) - Define your own types, and their behaviour.
+[Chapter 7 - User Defined Types](c7-user-types.html) - Define your own types, and their behaviour.
