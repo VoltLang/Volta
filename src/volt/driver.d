@@ -117,8 +117,13 @@ protected:
 	/// If not null, use this to print json files.
 	JsonPrinter mJsonPrinter;
 
+	/// Decide on the different parts of the driver to use.
+	bool mRunVoltend;
+	bool mRunBackend;
+
+
 public:
-	this(Settings s, VersionSet ver, TargetInfo target)
+	this(Settings s, VersionSet ver, TargetInfo target, string[] files)
 	in {
 		assert(s !is null);
 		assert(ver !is null);
@@ -138,17 +143,20 @@ public:
 		setTargetInfo(target, s.arch, s.platform);
 		setVersionSet(ver, s.arch, s.platform);
 
-		auto mode = decideMode(s);
+		decideStuff(s);
+		decideJson(s);
+		decideLinker(s);
+		decideOutputFile(s);
+		decideCheckErrors();
 
+		addFiles(files);
+		auto mode = decideMode(s);
 		this.frontend = new Parser(s);
 		this.languagePass = new VoltLanguagePass(this, ver, target,
 			frontend, mode, s.internalD, s.warningsEnabled);
 
-		decideStuff(s);
-		decideBackend(s);
-		decideJson(s);
-		decideLinker(s);
-		decideOutputFile(s);
+		decideParts();
+		decideBackend();
 
 		debugVisitors ~= new DebugMarker("Running DebugPrinter:");
 		debugVisitors ~= new DebugPrinter();
@@ -405,11 +413,20 @@ protected:
 
 	int intCompile()
 	{
-		// Error checking
-		if (mLibFiles.length > 0 && !mLinkWithLink) {
-			throw new CompilerError(format("can not link '%s'", mLibFiles[0]));
+		if (mRunVoltend) {
+			int ret = intCompileVoltend();
+			if (ret != 0) {
+				return ret;
+			}
 		}
+		if (mRunBackend) {
+			return intCompileBackend();
+		}
+		return 0;
+	}
 
+	int intCompileVoltend()
+	{
 		// Start parsing.
 		perf.mark(Perf.Mark.PARSING);
 
@@ -517,11 +534,11 @@ protected:
 
 		// For the debug printing here if no exception has been thrown.
 		debugPasses();
+		return 0;
+	}
 
-		// Bailout if we don't want the backend.
-		if (mNoBackend) {
-			return 0;
-		}
+	int intCompileBackend()
+	{
 		perf.mark(Perf.Mark.BACKEND);
 
 		// We do this here if we know that object files are
@@ -767,14 +784,6 @@ protected:
 		mStringImportPaths = settings.stringImportPaths;
 	}
 
-	void decideBackend(Settings settings)
-	{
-		if (!settings.noBackend) {
-			assert(languagePass !is null);
-			backend = new LlvmBackend(languagePass);
-		}
-	}
-
 	void decideJson(Settings settings)
 	{
 		if (settings.jsonOutput !is null) {
@@ -840,6 +849,32 @@ protected:
 			mOutput = DEFAULT_EXE;
 		}
 	}
+
+	void decideCheckErrors()
+	{
+		if (mLibFiles.length > 0 && !mLinkWithLink) {
+			throw new CompilerError(format("can not link '%s'", mLibFiles[0]));
+		}
+	}
+
+	void decideParts()
+	{
+		mRunVoltend = mSourceFiles.length > 0;
+
+		mRunBackend =
+			!mNoBackend &&
+			!mMissingDeps &&
+			!mRemoveConditionalsOnly;
+	}
+
+	void decideBackend()
+	{
+		if (mRunBackend) {
+			assert(languagePass !is null);
+			backend = new LlvmBackend(languagePass);
+		}
+	}
+
 
 private:
 	/**

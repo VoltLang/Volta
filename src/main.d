@@ -81,8 +81,7 @@ int main(string[] strArgs)
 	foreach (ref f; files) {
 		f = settings.replaceEscapes(f);
 	}
-	auto vc = new VoltDriver(settings, ver, target);
-	vc.addFiles(files);
+	auto vc = new VoltDriver(settings, ver, target, files);
 	int ret = vc.compile();
 	vc.close();
 
