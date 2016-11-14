@@ -66,7 +66,7 @@ size_t size(LanguagePass lp, ir.Node node)
 	case Enum:
 		auto asEnum = cast(ir.Enum) node;
 		assert(asEnum !is null);
-		lp.resolveNamed(asEnum);
+		assert(asEnum.base !is null);
 		return size(lp, asEnum.base);
 	case Variable:
 		auto asVariable = cast(ir.Variable) node;
