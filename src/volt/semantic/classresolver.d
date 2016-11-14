@@ -247,7 +247,7 @@ ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class, ref size_t offset
 	if (_class.parentClass !is null) {
 		fields ~= getClassFields(lp, _class.parentClass, offset);
 	} else {
-		offset = size(lp, buildSizeT(_class.location, lp));  // Account for vtable.
+		offset = size(lp, buildSizeT(_class.location, lp.target));  // Account for vtable.
 	}
 
 	foreach (node; _class.members.nodes) {
@@ -265,7 +265,7 @@ ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class, ref size_t offset
 	assert(_class.interfaces.length == _class.parentInterfaces.length);
 	void addOffset(ir._Interface iface)
 	{
-		auto t = buildSizeT(_class.location, lp);
+		auto t = buildSizeT(_class.location, lp.target);
 		offset = calcAlignment(lp, t, offset);
 		_class.interfaceOffsets ~= offset;
 		addSize(t);
@@ -526,7 +526,7 @@ ir.Struct getInterfaceLayoutStruct(ir._Interface iface, LanguagePass lp)
 {
 	auto l = iface.location;
 	ir.Variable[] fields;
-	fields ~= buildVariableSmart(l, buildSizeT(l, lp), ir.Variable.Storage.Field, "__offset");
+	fields ~= buildVariableSmart(l, buildSizeT(l, lp.target), ir.Variable.Storage.Field, "__offset");
 	auto methods = getInterfaceMethods(lp, iface);
 	foreach (method; methods) {
 		fields ~= buildVariableSmart(l, copyTypeSmart(l, method.type), ir.Variable.Storage.Field, mangle(null, method));
@@ -607,7 +607,7 @@ ir.Exp getInterfaceStructAssign(LanguagePass lp, ir.Class _class, ir.Scope _scop
 	assert(iface.layoutStruct !is null);
 	auto l = _class.location;
 	ir.Exp[] exps;
-	exps ~= buildConstantSizeT(l, lp, _class.interfaceOffsets[ifaceIndex]);
+	exps ~= buildConstantSizeT(l, lp.target, _class.interfaceOffsets[ifaceIndex]);
 	auto fns = getInterfaceFunctions(lp, iface);
 
 	foreach (func; fns) {

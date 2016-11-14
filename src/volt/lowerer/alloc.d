@@ -28,7 +28,7 @@ ir.Exp buildAllocVoidPtr(in Location loc, LanguagePass lp, ir.Type type,
 		auto countConst = new ir.Constant();
 		countConst.location = loc;
 		countConst.u._ulong = 0;
-		countConst.type = buildSizeT(loc, lp);
+		countConst.type = buildSizeT(loc, lp.target);
 		countArg = countConst;
 	}
 

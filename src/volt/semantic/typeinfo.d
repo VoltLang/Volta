@@ -121,7 +121,7 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 	type = realType(type, false);  // Strip storage type.
 
 	auto typeSize = size(lp, type);
-	auto typeConstant = buildConstantSizeT(type.location, lp, typeSize);
+	auto typeConstant = buildConstantSizeT(type.location, lp.target, typeSize);
 
 	int typeTag = typeToRuntimeConstant(lp, mod.myScope, type);
 	auto typeTagConstant = new ir.Constant();
@@ -160,10 +160,10 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 		literal.exps ~= buildCast(type.location, buildVoidPtr(type.location),
 				buildAddrOf(type.location, buildExpReference(type.location, asClass.initVariable, "__cinit")));
 		auto s = size(lp, asClass.layoutStruct);
-		literal.exps ~= buildConstantSizeT(type.location, lp, size(lp, asClass.layoutStruct));
+		literal.exps ~= buildConstantSizeT(type.location, lp.target, size(lp, asClass.layoutStruct));
 	} else {
 		literal.exps ~= buildConstantNull(type.location, buildVoidPtr(type.location));
-		literal.exps ~= buildConstantSizeT(type.location, lp, 0);
+		literal.exps ~= buildConstantSizeT(type.location, lp.target, 0);
 	}
 
 	// TypeInfo.base.
@@ -191,9 +191,9 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 
 	// TypeInfo.staticArrayLength.
 	if (asStaticArray !is null) {
-		literal.exps ~= buildConstantSizeT(type.location, lp, asStaticArray.length);
+		literal.exps ~= buildConstantSizeT(type.location, lp.target, asStaticArray.length);
 	} else {
-		literal.exps ~= buildConstantSizeT(type.location, lp, 0);
+		literal.exps ~= buildConstantSizeT(type.location, lp.target, 0);
 	}
 
 	// TypeInfo.key and TypeInfo.value.
@@ -251,7 +251,7 @@ ir.Exp[] getClassInfo(Location l, ir.Module mod, LanguagePass lp, ir.Class asCla
 		auto ifaceVar = getTypeInfo(lp, mod, iface);
 		lit.exps ~= buildTypeInfoCast(lp, buildExpReference(l, ifaceVar));
 
-		lit.exps ~= buildConstantSizeT(l, lp, asClass.interfaceOffsets[i]);
+		lit.exps ~= buildConstantSizeT(l, lp.target, asClass.interfaceOffsets[i]);
 		interfaceLits ~= lit;
 	}
 	exps ~= buildArrayLiteralSmart(l, buildArrayType(l, lp.tiInterfaceInfo), interfaceLits);

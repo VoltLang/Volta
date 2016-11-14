@@ -28,11 +28,11 @@ ir.Exp createArrayAlloc(Location loc, LanguagePass lp,
 {
 	auto sexp = buildStatementExp(loc);
 	auto sizeVar = buildVariableAnonSmart(loc, baseScope, sexp,
-		buildSizeT(loc, lp), sizeArg);
+		buildSizeT(loc, lp.target), sizeArg);
 	auto allocCall = buildAllocTypePtr(loc, lp, atype.base,
 		buildExpReference(loc, sizeVar, sizeVar.name));
 	auto slice = buildSlice(loc, allocCall,
-		buildConstantSizeT(loc, lp, 0),
+		buildConstantSizeT(loc, lp.target, 0),
 		buildExpReference(loc, sizeVar, sizeVar.name));
 	sexp.exp = slice;
 	return sexp;
@@ -47,7 +47,7 @@ ir.StatementExp buildClassConstructionWrapper(Location loc, LanguagePass lp,
 	sexp.location = loc;
 
 	// -1
-	auto count = buildConstantSizeT(loc, lp, size_t.max);
+	auto count = buildConstantSizeT(loc, lp.target, size_t.max);
 
 	// auto thisVar = allocDg(_class, -1);
 	auto thisVar = buildVariableSmart(loc, _class, ir.Variable.Storage.Function, "thisVar");
@@ -114,7 +114,7 @@ public:
 		if (unary.argumentList.length != 1) {
 			throw panic(unary.location, "multidimensional arrays unsupported at the moment.");
 		}
-		auto arg = buildCastSmart(exp.location, buildSizeT(exp.location, lp), unary.argumentList[0]);
+		auto arg = buildCastSmart(exp.location, buildSizeT(exp.location, lp.target), unary.argumentList[0]);
 		exp = createArrayAlloc(unary.location, lp, thisModule.myScope, array, arg);
 		return Continue;
 	}
@@ -127,17 +127,18 @@ public:
 		auto statExp = buildStatementExp(loc);
 
 		auto offset = buildVariable(
-			loc, buildSizeT(loc, lp), ir.Variable.Storage.Function,
-			"offset", buildConstantSizeT(loc, lp, 0)
+			loc, buildSizeT(loc, lp.target), ir.Variable.Storage.Function,
+			"offset", buildConstantSizeT(loc, lp.target, 0)
 		);
 		statExp.statements ~= offset;
 
 		ir.Variable[] variables = new ir.Variable[](unary.argumentList.length);
-		ir.Exp sizeExp = buildConstantSizeT(loc, lp, 0);
+		ir.Exp sizeExp = buildConstantSizeT(loc, lp.target, 0);
 		foreach (i, arg; unary.argumentList) {
 			auto var = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp, getExpType(arg), arg);
 			panicAssert(exp, (cast(ir.ArrayType)realType(var.type)) !is null);
-			sizeExp = buildAdd(loc, sizeExp, buildArrayLength(loc, lp, buildExpReference(loc, var, var.name)));
+			sizeExp = buildAdd(loc, sizeExp,
+				buildArrayLength(loc, lp.target, buildExpReference(loc, var, var.name)));
 			variables[i] = var;
 		}
 		auto newArray = buildVariable(
@@ -160,8 +161,8 @@ public:
 				),
 				buildCastToVoidPtr(loc, buildArrayPtr(loc, source.type, buildExpReference(loc, source, source.name))),
 				buildBinOp(loc, ir.BinOp.Op.Mul,
-					buildArrayLength(loc, lp, buildExpReference(loc, source, source.name)),
-					buildConstantSizeT(loc, lp, size(lp, array.base))
+					buildArrayLength(loc, lp.target, buildExpReference(loc, source, source.name)),
+					buildConstantSizeT(loc, lp.target, size(lp, array.base))
 				),
 				buildConstantInt(loc, 0),
 				buildConstantFalse(loc)
@@ -179,8 +180,8 @@ public:
 					buildAdd(loc,
 						buildExpReference(loc, offset, offset.name),
 						buildBinOp(loc, ir.BinOp.Op.Mul,
-							buildArrayLength(loc, lp, buildExpReference(loc, source, source.name)),
-							buildConstantSizeT(loc, lp, size(lp, array.base))
+							buildArrayLength(loc, lp.target, buildExpReference(loc, source, source.name)),
+							buildConstantSizeT(loc, lp.target, size(lp, array.base))
 						),
 					)
 				)

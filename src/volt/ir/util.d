@@ -315,10 +315,10 @@ ir.PrimitiveType buildFloat(Location loc) { return buildPrimitiveType(loc, ir.Pr
 ir.PrimitiveType buildDouble(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Double); }
 ir.PrimitiveType buildReal(Location loc) { return buildPrimitiveType(loc, ir.PrimitiveType.Kind.Real); }
 
-ir.PrimitiveType buildSizeT(Location loc, LanguagePass lp)
+ir.PrimitiveType buildSizeT(Location loc, TargetInfo target)
 {
 	ir.PrimitiveType pt;
-	if (lp.ver.isP64) {
+	if (target.isP64) {
 		pt = new ir.PrimitiveType(ir.PrimitiveType.Kind.Ulong);
 	} else {
 		pt = new ir.PrimitiveType(ir.PrimitiveType.Kind.Uint);
@@ -685,11 +685,11 @@ ir.Constant buildConstantNull(Location loc, ir.Type base)
 /**
  * Gets a size_t Constant and fills it with a value.
  */
-ir.Constant buildConstantSizeT(Location loc, LanguagePass lp, size_t val)
+ir.Constant buildConstantSizeT(Location loc, TargetInfo target, size_t val)
 {
 	auto c = new ir.Constant();
 	c.location = loc;
-	auto prim = buildSizeT(loc, lp);
+	auto prim = buildSizeT(loc, target);
 	// Uh, I assume just c._uint = val would work, but I can't test it here, so just be safe.
 	if (prim.type == ir.PrimitiveType.Kind.Ulong) {
 		c.u._ulong = cast(ulong)val;
@@ -893,9 +893,9 @@ ir.BuiltinExp buildArrayPtr(Location loc, ir.Type base, ir.Exp child)
  * Builds a BuiltinExp of ArrayLength type. Make sure the child exp is
  * not a pointer to an array.
  */
-ir.BuiltinExp buildArrayLength(Location loc, LanguagePass lp, ir.Exp child)
+ir.BuiltinExp buildArrayLength(Location loc, TargetInfo target, ir.Exp child)
 {
-	auto st = buildSizeT(loc, lp);
+	auto st = buildSizeT(loc, target);
 	auto builtin = new ir.BuiltinExp(
 		ir.BuiltinExp.Kind.ArrayLength, st, [child]);
 	builtin.location = loc;
@@ -917,9 +917,9 @@ ir.BuiltinExp buildArrayDup(Location loc, ir.Type t, ir.Exp[] children)
 /**
  * Builds a BuiltinExp of AALength type.
  */
-ir.BuiltinExp buildAALength(Location loc, LanguagePass lp, ir.Exp[] child)
+ir.BuiltinExp buildAALength(Location loc, TargetInfo target, ir.Exp[] child)
 {
-	auto st = buildSizeT(loc, lp);
+	auto st = buildSizeT(loc, target);
 	auto builtin = new ir.BuiltinExp(
 		ir.BuiltinExp.Kind.AALength, st, child);
 	builtin.location = loc;
@@ -1482,7 +1482,7 @@ ir.StatementExp buildInternalArrayLiteralSliceSmart(Location loc,
 
 		ir.Exp dst = buildAdd(loc, buildArrayPtr(loc, var.type, buildExpReference(loc, var)), buildConstantUint(loc, cast(uint)offset));
 		ir.Exp src = buildCastToVoidPtr(loc, buildAddrOf(loc, buildExpReference(loc, evar)));
-		ir.Exp len = buildConstantSizeT(loc, lp, cast(size_t)sizes[i]);
+		ir.Exp len = buildConstantSizeT(loc, lp.target, cast(size_t)sizes[i]);
 		ir.Exp aln = buildConstantInt(loc, 0);
 		ir.Exp vol = buildConstantBool(loc, false);
 		auto call = buildCall(loc, buildExpReference(loc, memcpyFn), [dst, src, len, aln, vol]);
@@ -1912,12 +1912,12 @@ ir.TokenExp buildTokenExp(Location loc, ir.TokenExp.Type type)
 }
 
 /// Build a simple index for loop. for (i = 0; i < length; ++i)
-void buildForStatement(Location loc, LanguagePass lp, ir.Scope parent, ir.Exp length, out ir.ForStatement forStatement, out ir.Variable ivar)
+void buildForStatement(Location loc, TargetInfo target, ir.Scope parent, ir.Exp length, out ir.ForStatement forStatement, out ir.Variable ivar)
 {
 	forStatement = new ir.ForStatement();
 	forStatement.location = loc;
 
-	ivar = buildVariable(loc, buildSizeT(loc, lp), ir.Variable.Storage.Function, "i", buildConstantSizeT(loc, lp, 0));
+	ivar = buildVariable(loc, buildSizeT(loc, target), ir.Variable.Storage.Function, "i", buildConstantSizeT(loc, target, 0));
 	forStatement.initVars ~= ivar;
 	forStatement.test = buildBinOp(loc, ir.BinOp.Op.Less, buildExpReference(loc, ivar, ivar.name), copyExp(length));
 	forStatement.increments ~= buildIncrement(loc, buildExpReference(loc, ivar, ivar.name));

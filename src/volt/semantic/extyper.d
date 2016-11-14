@@ -601,7 +601,7 @@ ir.Type replaceAAPostfixesIfNeeded(Context ctx, ref ir.Exp exp, ir.Postfix postf
 			return be.type;
 		case "length":
 			ir.BuiltinExp be;
-			exp = be = buildAALength(l, ctx.lp, [postfix.child]);
+			exp = be = buildAALength(l, ctx.lp.target, [postfix.child]);
 			return be.type;
 		case "rehash":
 			ir.BuiltinExp be;
@@ -1299,7 +1299,7 @@ ir.Type builtInField(Context ctx, ref ir.Exp exp, ir.Exp child, ir.Type type, st
 			child = buildDeref(exp.location, child);
 		}
 		ir.BuiltinExp b;
-		exp = b = buildArrayLength(exp.location, ctx.lp, child);
+		exp = b = buildArrayLength(exp.location, ctx.lp.target, child);
 		return b.type;
 	default:
 		// Error?
@@ -2448,10 +2448,10 @@ ir.Type extypeConstant(Context ctx, ref ir.Exp exp, Parent parent)
 		}
 		auto l = constant.location;
 		// Rewrite $ to (arrayName.length).
-		exp = buildArrayLength(l, ctx.lp, copyExp(ctx.lastIndexChild));
+		exp = buildArrayLength(l, ctx.lp.target, copyExp(ctx.lastIndexChild));
 
 		// The parser sets the wrong type, correct it.
-		constant.type = buildSizeT(constant.location, ctx.lp);
+		constant.type = buildSizeT(constant.location, ctx.lp.target);
 	}
 
 	return constant.type;
@@ -3310,7 +3310,8 @@ void extypeSwitchStatement(Context ctx, ref ir.Node n)
 		// Turn the condition into vrt_hash(__anon).
 		auto condRef = buildExpReference(l, condVar, condVar.name);
 		ir.Exp ptr = buildCastSmart(buildVoidPtr(l), buildArrayPtr(l, asArray.base, condRef));
-		ir.Exp length = buildBinOp(l, ir.BinOp.Op.Mul, buildArrayLength(l, ctx.lp, copyExp(ss.condition)),
+		ir.Exp length = buildBinOp(l, ir.BinOp.Op.Mul,
+			buildArrayLength(l, ctx.lp.target, copyExp(ss.condition)),
 				getSizeOf(l, ctx.lp, asArray.base));
 		ss.condition = buildCall(ss.condition.location, ctx.lp.hashFunc, [ptr, length]);
 		conditionType = buildUint(ss.condition.location);
@@ -3436,7 +3437,7 @@ void extypeForeachStatement(Context ctx, ref ir.Node n)
 			(aggType.nodeType == ir.NodeType.StaticArrayType ||
 			aggType.nodeType == ir.NodeType.ArrayType)) {
 			auto keysz = size(ctx.lp, fes.itervars[0].type);
-			auto sizetsz = size(ctx.lp, buildSizeT(fes.location, ctx.lp));
+			auto sizetsz = size(ctx.lp, buildSizeT(fes.location, ctx.lp.target));
 			if (keysz < sizetsz) {
 				throw makeIndexVarTooSmall(fes.location, fes.itervars[0].name);
 			}
@@ -3562,12 +3563,12 @@ void processForeach(Context ctx, ir.ForeachStatement fes)
 	case ir.NodeType.ArrayType:
 		auto asArray = cast(ir.ArrayType) aggType;
 		value = copyTypeSmart(fes.aggregate.location, asArray.base);
-		key = buildSizeT(fes.location, ctx.lp);
+		key = buildSizeT(fes.location, ctx.lp.target);
 		break;
 	case ir.NodeType.StaticArrayType:
 		auto asArray = cast(ir.StaticArrayType) aggType;
 		value = copyTypeSmart(fes.aggregate.location, asArray.base);
-		key = buildSizeT(fes.location, ctx.lp);
+		key = buildSizeT(fes.location, ctx.lp.target);
 		break;
 	case ir.NodeType.AAType:
 		auto asArray = cast(ir.AAType) aggType;

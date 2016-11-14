@@ -235,7 +235,7 @@ ir.Exp lowerStructAAKeyCast(Location l, LanguagePass lp, ir.Module thisModule,
 			auto atype = cast(ir.ArrayType)t;
 			ir.ForStatement forStatement;
 			ir.Variable index;
-			buildForStatement(l, lp, current, buildArrayLength(l, lp, e), forStatement, index);
+			buildForStatement(l, lp.target, current, buildArrayLength(l, lp.target, e), forStatement, index);
 			gatherType(realType(atype.base), buildIndex(l, e, eref(index)),
 			           forStatement.block.statements);
 			sexp.statements ~= forStatement;
@@ -299,9 +299,9 @@ ir.Exp lowerStructAAKeyCast(Location l, LanguagePass lp, ir.Module thisModule,
 	buildExpStat(l, sexp, ptrass);
 
 	// barray.length = exps.length * typeid(ulong).size;
-	auto lenaccess = buildArrayLength(l, lp, eref(outvar));
-	auto mul = buildBinOp(l, ir.BinOp.Op.Mul, buildArrayLength(l, lp, eref(var)),
-	                      buildConstantSizeT(l, lp, 8));
+	auto lenaccess = buildArrayLength(l, lp.target, eref(outvar));
+	auto mul = buildBinOp(l, ir.BinOp.Op.Mul, buildArrayLength(l, lp.target, eref(var)),
+	                      buildConstantSizeT(l, lp.target, 8));
 	auto lenass = buildAssign(l, lenaccess, mul);
 	buildExpStat(l, sexp, lenass);
 
@@ -900,34 +900,34 @@ void lowerArrayCast(Location loc, LanguagePass lp, ir.Scope current,
 
 	if (fromSz % toSz) {
 		//     vrt_throw_slice_error(arr.length, typeid(T).size);
-		auto ln = buildArrayLength(loc, lp, buildExpReference(loc, var, varName));
+		auto ln = buildArrayLength(loc, lp.target, buildExpReference(loc, var, varName));
 		auto sz = getSizeOf(loc, lp, toArray.base);
 		ir.Exp locstr = buildConstantString(loc, format("%s:%s", exp.location.filename, exp.location.line), false);
 		auto rtCall = buildCall(loc, lp.ehThrowSliceErrorFunc, [locstr]);
 		auto bs = buildBlockStat(loc, rtCall, current, buildExpStat(loc, rtCall));
 		auto check = buildBinOp(loc, ir.BinOp.Op.NotEqual,
 		                        buildBinOp(loc, ir.BinOp.Op.Mod, ln, sz),
-		                        buildConstantSizeT(loc, lp, 0));
+		                        buildConstantSizeT(loc, lp.target, 0));
 		auto _if = buildIfStat(loc, check, bs);
 		sexp.statements ~= _if;
 	}
 
-	auto inLength = buildArrayLength(loc, lp, buildExpReference(loc, var, varName));
+	auto inLength = buildArrayLength(loc, lp.target, buildExpReference(loc, var, varName));
 	ir.Exp lengthTweak;
 	if (fromSz == toSz) {
 		lengthTweak = inLength;
 	} else if (!decreasing) {
 		lengthTweak = buildBinOp(loc, ir.BinOp.Op.Div, inLength,
-		                         buildConstantSizeT(loc, lp, biggestSz));
+		                         buildConstantSizeT(loc, lp.target, biggestSz));
 	} else {
 		lengthTweak = buildBinOp(loc, ir.BinOp.Op.Mul, inLength,
-		                         buildConstantSizeT(loc, lp, biggestSz));
+		                         buildConstantSizeT(loc, lp.target, biggestSz));
 	}
 
 	auto ptrType = buildPtrSmart(loc, toArray.base);
 	auto ptrIn = buildArrayPtr(loc, fromArray.base, buildExpReference(loc, var, varName));
 	auto ptrOut = buildCast(loc, ptrType, ptrIn);
-	sexp.exp = buildSlice(loc, ptrOut, buildConstantSizeT(loc, lp, 0), lengthTweak);
+	sexp.exp = buildSlice(loc, ptrOut, buildConstantSizeT(loc, lp.target, 0), lengthTweak);
 	exp = sexp;
 }
 
@@ -1069,20 +1069,20 @@ ir.ForStatement lowerForeach(ir.ForeachStatement fes, LanguagePass lp,
 		ir.Variable indexVar, elementVar;
 		ir.Exp indexAssign;
 		if (!fes.reverse) {
-			indexAssign = buildConstantSizeT(l, lp, 0);
+			indexAssign = buildConstantSizeT(l, lp.target, 0);
 		} else {
-			indexAssign = buildArrayLength(l, lp, aggref());
+			indexAssign = buildArrayLength(l, lp.target, aggref());
 		}
 		if (fs.initVars.length == 2) {
 			indexVar = fs.initVars[0];
 			if (indexVar.type is null) {
-				indexVar.type = buildSizeT(l, lp);
+				indexVar.type = buildSizeT(l, lp.target);
 			}
 			indexVar.assign = copyExp(indexAssign);
 			elementVar = fs.initVars[1];
 		} else {
 			panicAssert(fes, fs.initVars.length == 1);
-			indexVar = buildVariable(l, buildSizeT(l, lp),
+			indexVar = buildVariable(l, buildSizeT(l, lp.target),
 			                         ir.Variable.Storage.Function, "i", indexAssign);
 			elementVar = fs.initVars[0];
 		}
@@ -1094,7 +1094,7 @@ ir.ForStatement lowerForeach(ir.ForeachStatement fes, LanguagePass lp,
 		ir.Variable nextIndexVar;  // This is what we pass when decoding strings.
 		if (fes.decodeFunction !is null && !fes.reverse) {
 			auto ivar = buildExpReference(indexVar.location, indexVar, indexVar.name);
-			nextIndexVar = buildVariable(l, buildSizeT(l, lp),
+			nextIndexVar = buildVariable(l, buildSizeT(l, lp.target),
 			                             ir.Variable.Storage.Function, "__nexti", ivar);
 			fs.initVars ~= nextIndexVar;
 		}
@@ -1104,8 +1104,8 @@ ir.ForStatement lowerForeach(ir.ForeachStatement fes, LanguagePass lp,
 		// i < array.length / i + 1 >= 0
 		auto tref = buildExpReference(indexVar.location, indexVar, indexVar.name);
 		auto rtref = buildDecrement(l, tref);
-		auto length = buildArrayLength(l, lp, fes.aggregate);
-		auto zero = buildConstantSizeT(l, lp, 0);
+		auto length = buildArrayLength(l, lp.target, fes.aggregate);
+		auto zero = buildConstantSizeT(l, lp.target, 0);
 		fs.test = buildBinOp(l, fes.reverse ? ir.BinOp.Op.Greater : ir.BinOp.Op.Less,
 							 fes.reverse ? rtref : tref,
 							 fes.reverse ? zero : length);
@@ -1200,10 +1200,10 @@ ir.ForStatement lowerForeach(ir.ForeachStatement fes, LanguagePass lp,
 		}
 		auto indexVar = buildVariable(
 			l,
-			buildSizeT(l, lp),
+			buildSizeT(l, lp.target),
 			ir.Variable.Storage.Function,
 			format("%si", fs.block.myScope.nestedDepth),
-			buildConstantSizeT(l, lp, 0)
+			buildConstantSizeT(l, lp.target, 0)
 		);
 		assert(keyVar.type !is null);
 		assert(valVar.type !is null);
@@ -1289,11 +1289,11 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 		auto valueVar = buildVariableAnonSmart(l, current, sexp, type, value);
 		value = buildExpReference(l, valueVar, valueVar.name);
 
-		auto startCast = buildCastSmart(l, buildSizeT(l, lp), builtin.children[1]);
-		auto startVar = buildVariableAnonSmart(l, current, sexp, buildSizeT(l, lp), startCast);
+		auto startCast = buildCastSmart(l, buildSizeT(l, lp.target), builtin.children[1]);
+		auto startVar = buildVariableAnonSmart(l, current, sexp, buildSizeT(l, lp.target), startCast);
 		auto start = buildExpReference(l, startVar, startVar.name);
-		auto endCast = buildCastSmart(l, buildSizeT(l, lp), builtin.children[2]);
-		auto endVar = buildVariableAnonSmart(l, current, sexp, buildSizeT(l, lp), endCast);
+		auto endCast = buildCastSmart(l, buildSizeT(l, lp.target), builtin.children[2]);
+		auto endVar = buildVariableAnonSmart(l, current, sexp, buildSizeT(l, lp.target), endCast);
 		auto end = buildExpReference(l, endVar, endVar.name);
 
 
@@ -1429,15 +1429,15 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 			 * so we just do `**cast(size_t**)cast(void*)iface` to get at it.
 			 * Then we subtract that value from the pointer.
 			 */
-			auto offset = buildDeref(l, buildDeref(l, buildCastSmart(l, buildPtrSmart(l, buildPtrSmart(l, buildSizeT(l, lp))), copyExp(l, ptr))));
+			auto offset = buildDeref(l, buildDeref(l, buildCastSmart(l, buildPtrSmart(l, buildPtrSmart(l, buildSizeT(l, lp.target))), copyExp(l, ptr))));
 			ptr = buildSub(l, ptr, offset);
 		}
 		auto tinfos = buildDeref(l, buildDeref(l, buildCastSmart(l, ti, ptr)));
 		auto tvar = buildVariableAnonSmart(l, current, sexp,
 		                                   buildArrayType(l,
 		                                   copyTypeSmart(l, lp.tiClassInfo)), tinfos);
-		ir.Exp tlen = buildArrayLength(l, lp, buildExpReference(l, tvar, tvar.name));
-		tlen = buildSub(l, tlen, buildConstantSizeT(l, lp, 1));
+		ir.Exp tlen = buildArrayLength(l, lp.target, buildExpReference(l, tvar, tvar.name));
+		tlen = buildSub(l, tlen, buildConstantSizeT(l, lp.target, 1));
 		sexp.exp = buildIndex(l, buildExpReference(l, tvar, tvar.name), tlen);
 		exp = buildCastSmart(l, lp.tiClassInfo, sexp);
 		break;
@@ -1642,13 +1642,13 @@ void lowerVarargCall(LanguagePass lp, ir.Scope current, ir.Postfix postfix, ir.F
 			warning(_exp.location, "passing struct to var-arg function.");
 		}
 
-		auto ididx = buildIndex(l, buildExpReference(l, ids, ids.name), buildConstantSizeT(l, lp, i));
+		auto ididx = buildIndex(l, buildExpReference(l, ids, ids.name), buildConstantSizeT(l, lp.target, i));
 		buildExpStat(l, sexp, buildAssign(l, ididx, buildTypeidSmart(l, lp, etype)));
 
 		// *(cast(T*)arr.ptr + totalSize) = exp;
 		auto argl = buildDeref(l, buildCastSmart(l, buildPtrSmart(l, etype),
 			buildAdd(l, buildArrayPtr(l, buildVoid(l),
-			buildExpReference(l, args, args.name)), buildConstantSizeT(l, lp, totalSize))));
+			buildExpReference(l, args, args.name)), buildConstantSizeT(l, lp.target, totalSize))));
 
 		buildExpStat(l, sexp, buildAssign(l, argl, _exp));
 
