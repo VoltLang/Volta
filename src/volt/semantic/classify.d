@@ -100,8 +100,7 @@ size_t size(LanguagePass lp, ir.Node node)
  */
 size_t structSize(LanguagePass lp, ir.Struct s)
 {
-	lp.actualize(s);
-
+	assert(s.isActualized);
 	size_t sizeAccumulator;
 	foreach (node; s.members.nodes) {
 		// If it's not a Variable, or not a field, it shouldn't take up space.
@@ -122,8 +121,7 @@ size_t structSize(LanguagePass lp, ir.Struct s)
  */
 size_t unionSize(LanguagePass lp, ir.Union u)
 {
-	lp.actualize(u);
-
+	assert(u.isActualized);
 	size_t sizeAccumulator;
 	foreach (node; u.members.nodes) {
 		// If it's not a Variable, it shouldn't take up space.

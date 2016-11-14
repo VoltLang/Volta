@@ -119,6 +119,16 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 	assert(type.mangledName !is null);
 
 	type = realType(type, false);  // Strip storage type.
+	assert(type.nodeType != ir.NodeType.TypeReference);
+	auto _s = cast(ir.Struct)type;
+	if (_s !is null) {
+		lp.actualize(_s);
+	}
+	auto _u = cast(ir.Union)type;
+	if (_u !is null) {
+		lp.actualize(_u);
+		assert(_u.isActualized);
+	}
 
 	auto typeSize = size(lp, type);
 	auto typeConstant = buildConstantSizeT(type.location, lp.target, typeSize);
@@ -159,6 +169,7 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 	if (asClass !is null) {
 		literal.exps ~= buildCast(type.location, buildVoidPtr(type.location),
 				buildAddrOf(type.location, buildExpReference(type.location, asClass.initVariable, "__cinit")));
+		lp.actualize(asClass.layoutStruct);
 		auto s = size(lp, asClass.layoutStruct);
 		literal.exps ~= buildConstantSizeT(type.location, lp.target, size(lp, asClass.layoutStruct));
 	} else {
