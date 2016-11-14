@@ -136,7 +136,7 @@ public:
 		passes3 ~= new TimerPass("p3-llvm", new LlvmLowerer(this));
 		passes3 ~= new TimerPass("p3-new-rep", new NewReplacer(this));
 		passes3 ~= new TimerPass("p3-typeid-rep", new TypeidReplacer(this));
-		passes3 ~= new TimerPass("p3-mangle-writer", new MangleWriter(this));
+		passes3 ~= new TimerPass("p3-mangle-writer", new MangleWriter());
 		passes3 ~= new TimerPass("p3-irverifier", new IrVerifier());
 	}
 

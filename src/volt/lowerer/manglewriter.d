@@ -20,17 +20,11 @@ import volt.semantic.classify;
 class MangleWriter : NullVisitor, Pass
 {
 public:
-	LanguagePass lp;
 	string[] parentNames;
 	int functionDepth;
 	int aggregateDepth;
 
 public:
-	this(LanguagePass lp)
-	{
-		this.lp = lp;
-	}
-
 	override void transform(ir.Module m)
 	{
 		parentNames = m.name.strings;
