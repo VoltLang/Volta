@@ -4251,6 +4251,7 @@ void resolveStruct(LanguagePass lp, ir.Struct s)
 
 	// Resolve fields.
 	foreach (n; s.members.nodes) {
+		resolveChildStructsAndUnions(lp, n);
 		if (n.nodeType != ir.NodeType.Variable) {
 			continue;
 		}
@@ -4260,8 +4261,8 @@ void resolveStruct(LanguagePass lp, ir.Struct s)
 		if (field.storage != ir.Variable.Storage.Field) {
 			continue;
 		}
-
 		lp.resolve(s.myScope, field);
+		resolveChildStructsAndUnions(lp, field.type);
 	}
 
 	s.isActualized = true;
@@ -4287,6 +4288,7 @@ void resolveUnion(LanguagePass lp, ir.Union u)
 	// Resolve fields.
 	size_t accum;
 	foreach (n; u.members.nodes) {
+		resolveChildStructsAndUnions(lp, n);
 		if (n.nodeType == ir.NodeType.Function) {
 			auto func = cast(ir.Function)n;
 			if (func.kind == ir.Function.Kind.Constructor ||

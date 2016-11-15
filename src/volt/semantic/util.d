@@ -17,6 +17,7 @@ import volt.semantic.lookup : lookup, lookupInGivenScopeOnly;
 import volt.semantic.context : Context;
 import volt.semantic.classify : getParentFunction, realType, isFloatingPoint,
 	typesEqual, inheritsFrom;
+import volt.semantic.extyper : resolveStruct, resolveUnion;
 
 
 /**
@@ -607,4 +608,25 @@ ir.Type getCommonSubtype(Location l, ir.Type[] types)
 	}
 
 	return candidate;
+}
+
+/**
+ * Given a Node, if it's a Struct or a Union, resolve it.
+ */
+void resolveChildStructsAndUnions(LanguagePass lp, ir.Node n)
+{
+	auto _t = cast(ir.Type)n;
+	if (_t !is null) {
+		auto rt = realType(_t, false);
+		auto _u = cast(ir.Union)rt;
+		if (_u !is null) {
+			resolveUnion(lp, _u);
+			return;
+		}
+		auto _s = cast(ir.Struct)rt;
+		if (_s !is null) {
+			resolveStruct(lp, _s);
+			return;
+		}
+	}
 }

@@ -84,7 +84,7 @@ size_t size(LanguagePass lp, ir.Node node)
 	case TypeReference:
 		auto asTR = cast(ir.TypeReference) node;
 		assert(asTR !is null);
-		assert(asTR.type !is null);
+		panicAssert(asTR, asTR.type !is null);
 		return size(lp, asTR.type);
 	case StaticArrayType:
 		auto _static = cast(ir.StaticArrayType) node;
@@ -121,7 +121,7 @@ size_t structSize(LanguagePass lp, ir.Struct s)
  */
 size_t unionSize(LanguagePass lp, ir.Union u)
 {
-	assert(u.isActualized);
+	panicAssert(u, u.isActualized);
 	size_t sizeAccumulator;
 	foreach (node; u.members.nodes) {
 		// If it's not a Variable, it shouldn't take up space.
