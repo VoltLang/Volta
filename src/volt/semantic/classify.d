@@ -227,7 +227,7 @@ size_t alignment(LanguagePass lp, ir.Type node)
  */
 size_t structAlignment(LanguagePass lp, ir.Struct s)
 {
-	lp.actualize(s);
+	panicAssert(s, s.isActualized);
 
 	size_t accumulator = 1;
 	foreach (node; s.members.nodes) {
