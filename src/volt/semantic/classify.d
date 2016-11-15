@@ -204,7 +204,6 @@ size_t alignment(LanguagePass lp, ir.Type node)
 	case Enum:
 		auto asEnum = cast(ir.Enum) node;
 		assert(asEnum !is null);
-		lp.resolveNamed(asEnum);
 		return alignment(lp, asEnum.base);
 	case Variable:
 		auto asVariable = cast(ir.Variable) node;
