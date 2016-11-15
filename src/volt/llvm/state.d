@@ -637,8 +637,8 @@ static string[][] tripleList = [
 	 * This is what clang uses for OSX.
 	 */
 	[
-		"i386-apple-macosx10.7.0",
-		"x86_64-apple-macosx10.7.0",
+		"i386-apple-macosx10.9.0",
+		"x86_64-apple-macosx10.9.0",
 	],
 
 	/*
