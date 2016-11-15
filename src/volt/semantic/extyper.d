@@ -4117,7 +4117,9 @@ void resolveVariable(Context ctx, ir.Variable v)
 		throw makeAssignToNonStaticField(v);
 	}
 
-	if (inAggregate && (v.type.isConst || v.type.isImmutable)) {
+	if (inAggregate && (v.type.isConst || v.type.isImmutable) &&
+		(v.storage != ir.Variable.Storage.Global &&
+		 v.storage != ir.Variable.Storage.Local)) {
 		throw makeConstField(v);
 	}
 
