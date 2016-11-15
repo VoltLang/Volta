@@ -319,7 +319,10 @@ ir.Function[][] getClassMethods(LanguagePass lp, ir.Scope current, ir.Class _cla
 	}
 
 	foreach (node; _class.members.nodes) {
-		resolveChildStructsAndUnions(lp, node);
+		auto _t = cast(ir.Type)node;
+		if (_t !is null) {
+			resolveChildStructsAndUnions(lp, realType(_t, false));
+		}
 		auto asFunction = cast(ir.Function) node;
 		if (asFunction is null) {
 			continue;

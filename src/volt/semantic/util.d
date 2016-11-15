@@ -613,20 +613,21 @@ ir.Type getCommonSubtype(Location l, ir.Type[] types)
 /**
  * Given a Node, if it's a Struct or a Union, resolve it.
  */
-void resolveChildStructsAndUnions(LanguagePass lp, ir.Node n)
+void resolveChildStructsAndUnions(LanguagePass lp, ir.Type rt)
 {
-	auto _t = cast(ir.Type)n;
-	if (_t !is null) {
-		auto rt = realType(_t, false);
+	switch (rt.nodeType) {
+	case ir.NodeType.Union:
 		auto _u = cast(ir.Union)rt;
-		if (_u !is null) {
-			resolveUnion(lp, _u);
-			return;
-		}
+		resolveUnion(lp, _u);
+		break;
+	case ir.NodeType.Struct:
 		auto _s = cast(ir.Struct)rt;
-		if (_s !is null) {
-			resolveStruct(lp, _s);
-			return;
-		}
+		resolveStruct(lp, _s);
+		break;
+	case ir.NodeType.TypeReference:
+		panicAssert(rt, false);
+		break;
+	default:
+		break;
 	}
 }
