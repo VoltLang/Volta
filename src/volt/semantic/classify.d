@@ -48,7 +48,7 @@ size_t size(ir.PrimitiveType.Kind kind)
 /**
  * Returns the size of a given ir.Type in bytes.
  */
-size_t size(LanguagePass lp, ir.Node node)
+size_t size(TargetInfo target, ir.Node node)
 {
 	switch (node.nodeType) with (ir.NodeType) {
 	case PrimitiveType:
@@ -58,38 +58,38 @@ size_t size(LanguagePass lp, ir.Node node)
 	case Struct:
 		auto asStruct = cast(ir.Struct) node;
 		assert(asStruct !is null);
-		return structSize(lp, asStruct);
+		return structSize(target, asStruct);
 	case Union:
 		auto asUnion = cast(ir.Union) node;
 		assert(asUnion !is null);
-		return unionSize(lp, asUnion);
+		return unionSize(target, asUnion);
 	case Enum:
 		auto asEnum = cast(ir.Enum) node;
 		assert(asEnum !is null);
 		assert(asEnum.base !is null);
-		return size(lp, asEnum.base);
+		return size(target, asEnum.base);
 	case Variable:
 		auto asVariable = cast(ir.Variable) node;
 		assert(asVariable !is null);
-		return size(lp, asVariable.type);
+		return size(target, asVariable.type);
 	case Class:
 	case AAType:
 	case Interface:
 	case PointerType:
 	case FunctionType:
-		return lp.ver.isP64 ? 8U : 4U;
+		return target.isP64 ? 8U : 4U;
 	case ArrayType:
 	case DelegateType:
-		return lp.ver.isP64 ? 16U : 8U;
+		return target.isP64 ? 16U : 8U;
 	case TypeReference:
 		auto asTR = cast(ir.TypeReference) node;
 		assert(asTR !is null);
 		panicAssert(asTR, asTR.type !is null);
-		return size(lp, asTR.type);
+		return size(target, asTR.type);
 	case StaticArrayType:
 		auto _static = cast(ir.StaticArrayType) node;
 		assert(_static !is null);
-		return size(lp, _static.base) * _static.length;
+		return size(target, _static.base) * _static.length;
 	default:
 		throw panicUnhandled(node, ir.nodeToString(node));
 	}
@@ -98,7 +98,7 @@ size_t size(LanguagePass lp, ir.Node node)
 /**
  * Returns the size of a given ir.Struct in bytes.
  */
-size_t structSize(LanguagePass lp, ir.Struct s)
+size_t structSize(TargetInfo target, ir.Struct s)
 {
 	assert(s.isActualized);
 	size_t sizeAccumulator;
@@ -109,8 +109,8 @@ size_t structSize(LanguagePass lp, ir.Struct s)
 			continue;
 		}
 
-		auto sz = size(lp, asVar.type);
-		auto a = alignment(lp, asVar.type);
+		auto sz = size(target, asVar.type);
+		auto a = alignment(target, asVar.type);
 		sizeAccumulator = calcAlignment(a, sizeAccumulator) + sz;
 	}
 	return sizeAccumulator;
@@ -119,7 +119,7 @@ size_t structSize(LanguagePass lp, ir.Struct s)
 /**
  * Returns the size of a given ir.Union in bytes.
  */
-size_t unionSize(LanguagePass lp, ir.Union u)
+size_t unionSize(TargetInfo target, ir.Union u)
 {
 	panicAssert(u, u.isActualized);
 	size_t sizeAccumulator;
@@ -129,7 +129,7 @@ size_t unionSize(LanguagePass lp, ir.Union u)
 			continue;
 		}
 
-		auto s = size(lp, node);
+		auto s = size(target, node);
 		if (s > sizeAccumulator) {
 			sizeAccumulator = s;
 		}
@@ -152,41 +152,41 @@ size_t calcAlignment(size_t a, size_t offset)
 /**
  * Returns the offset adjusted to alignment of type.
  */
-size_t calcAlignment(LanguagePass lp, ir.Type t, size_t offset)
+size_t calcAlignment(TargetInfo target, ir.Type t, size_t offset)
 {
-	auto a = alignment(lp, t);
+	auto a = alignment(target, t);
 	return calcAlignment(a, offset);
 }
 
-size_t alignment(LanguagePass lp, ir.PrimitiveType.Kind kind)
+size_t alignment(TargetInfo target, ir.PrimitiveType.Kind kind)
 {
 	final switch (kind) with (ir.PrimitiveType.Kind) {
-	case Void: return lp.target.alignment.int8;
-	case Bool: return lp.target.alignment.int1;
-	case Char: return lp.target.alignment.int8;
-	case Byte: return lp.target.alignment.int8;
-	case Ubyte: return lp.target.alignment.int8;
-	case Short: return lp.target.alignment.int16;
-	case Ushort: return lp.target.alignment.int16;
-	case Wchar: return lp.target.alignment.int16;
-	case Int: return lp.target.alignment.int32;
-	case Uint: return lp.target.alignment.int32;
-	case Dchar: return lp.target.alignment.int32;
-	case Long: return lp.target.alignment.int64;
-	case Ulong: return lp.target.alignment.int64;
-	case Float: return lp.target.alignment.float32;
-	case Double: return lp.target.alignment.float64;
-	case Real: return lp.target.alignment.float64;
+	case Void: return target.alignment.int8;
+	case Bool: return target.alignment.int1;
+	case Char: return target.alignment.int8;
+	case Byte: return target.alignment.int8;
+	case Ubyte: return target.alignment.int8;
+	case Short: return target.alignment.int16;
+	case Ushort: return target.alignment.int16;
+	case Wchar: return target.alignment.int16;
+	case Int: return target.alignment.int32;
+	case Uint: return target.alignment.int32;
+	case Dchar: return target.alignment.int32;
+	case Long: return target.alignment.int64;
+	case Ulong: return target.alignment.int64;
+	case Float: return target.alignment.float32;
+	case Double: return target.alignment.float64;
+	case Real: return target.alignment.float64;
 	case Invalid: throw panic(Location.init, "invalid primitive kind");
 	}
 }
 
-size_t alignment(LanguagePass lp, ir.Type node)
+size_t alignment(TargetInfo target, ir.Type node)
 {
 	switch (node.nodeType) with (ir.NodeType) {
 	case Struct:
 		auto s = cast(ir.Struct) node;
-		return structAlignment(lp, s);
+		return structAlignment(target, s);
 	case ArrayType:
 	case DelegateType:
 	case AAType:
@@ -194,29 +194,29 @@ size_t alignment(LanguagePass lp, ir.Type node)
 	case FunctionType:
 	case Class:
 	case Interface:
-		return lp.target.alignment.ptr;
+		return target.alignment.ptr;
 	case Union:
-		return lp.target.alignment.int8; // Matches implementation
+		return target.alignment.int8; // Matches implementation
 	case PrimitiveType:
 		auto asPrim = cast(ir.PrimitiveType) node;
 		assert(asPrim !is null);
-		return alignment(lp, asPrim.type);
+		return alignment(target, asPrim.type);
 	case Enum:
 		auto asEnum = cast(ir.Enum) node;
 		assert(asEnum !is null);
-		return alignment(lp, asEnum.base);
+		return alignment(target, asEnum.base);
 	case Variable:
 		auto asVariable = cast(ir.Variable) node;
 		assert(asVariable !is null);
-		return alignment(lp, asVariable.type);
+		return alignment(target, asVariable.type);
 	case TypeReference:
 		auto asTR = cast(ir.TypeReference) node;
 		assert(asTR !is null);
-		return alignment(lp, asTR.type);
+		return alignment(target, asTR.type);
 	case StaticArrayType:
 		auto _static = cast(ir.StaticArrayType) node;
 		assert(_static !is null);
-		return alignment(lp, _static.base);
+		return alignment(target, _static.base);
 	default:
 		throw panicUnhandled(node, ir.nodeToString(node));
 	}
@@ -225,7 +225,7 @@ size_t alignment(LanguagePass lp, ir.Type node)
 /**
  * Returns the size of a given ir.Struct in bytes.
  */
-size_t structAlignment(LanguagePass lp, ir.Struct s)
+size_t structAlignment(TargetInfo target, ir.Struct s)
 {
 	panicAssert(s, s.isActualized);
 
@@ -237,7 +237,7 @@ size_t structAlignment(LanguagePass lp, ir.Struct s)
 			continue;
 		}
 
-		auto a = alignment(lp, asVar.type);
+		auto a = alignment(target, asVar.type);
 		if (a > accumulator) {
 			accumulator = a;
 		}

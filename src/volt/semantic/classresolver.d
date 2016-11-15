@@ -237,8 +237,8 @@ ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class, ref size_t offset
 {
 	void addSize(ir.Type n)
 	{
-		auto a = alignment(lp, n);
-		auto sz = size(lp, n);
+		auto a = alignment(lp.target, n);
+		auto sz = size(lp.target, n);
 
 		offset = calcAlignment(a, offset) + sz;
 	}
@@ -247,7 +247,7 @@ ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class, ref size_t offset
 	if (_class.parentClass !is null) {
 		fields ~= getClassFields(lp, _class.parentClass, offset);
 	} else {
-		offset = size(lp, buildSizeT(_class.location, lp.target));  // Account for vtable.
+		offset = size(lp.target, buildSizeT(_class.location, lp.target));  // Account for vtable.
 	}
 
 	foreach (node; _class.members.nodes) {
@@ -266,7 +266,7 @@ ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class, ref size_t offset
 	void addOffset(ir._Interface iface)
 	{
 		auto t = buildSizeT(_class.location, lp.target);
-		offset = calcAlignment(lp, t, offset);
+		offset = calcAlignment(lp.target, t, offset);
 		_class.interfaceOffsets ~= offset;
 		addSize(t);
 		auto var = buildVariableSmart(_class.location, buildPtrSmart(_class.location, iface.layoutStruct), ir.Variable.Storage.Field, mangle(iface));

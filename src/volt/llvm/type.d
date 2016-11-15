@@ -701,7 +701,7 @@ private:
 		diType = state.diStruct(irType);
 		llvmType = LLVMStructCreateNamed(state.context, mangled);
 		super(state, irType, llvmType, diType);
-		this.passByVal = volt.semantic.classify.size(state.lp, irType) > 16;
+		this.passByVal = volt.semantic.classify.size(state.lp.target, irType) > 16;
 
 		createAlias(state, irType, mangled);
 
@@ -767,7 +767,7 @@ public:
 		ir.Exp lastExp;
 
 		foreach (i, t; types) {
-			auto sz = volt.semantic.classify.size(state.lp, t.irType);
+			auto sz = volt.semantic.classify.size(state.lp.target, t.irType);
 			if (sz > lastSize) {
 				lastExp = ul.exps[i];
 				lastSize = sz;

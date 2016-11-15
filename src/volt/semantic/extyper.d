@@ -3056,7 +3056,7 @@ void addExp(Context ctx, ir.SwitchStatement ss, ir.Exp element, ref ir.Exp exp, 
 	auto constant = cast(ir.Constant) element;
 	if (constant !is null) {
 		if (sz == 0) {
-			sz = size(ctx.lp, constant.type);
+			sz = size(ctx.lp.target, constant.type);
 			assert(sz > 0);
 		}
 		switch (sz) {
@@ -3072,7 +3072,7 @@ void addExp(Context ctx, ir.SwitchStatement ss, ir.Exp element, ref ir.Exp exp, 
 	auto cexp = cast(ir.Unary) element;
 	if (cexp !is null) {
 		assert(cexp.op == ir.Unary.Op.Cast);
-		auto tmpsz = size(ctx.lp, cexp.type);
+		auto tmpsz = size(ctx.lp.target, cexp.type);
 		// If there were previous casts, they should be to the same type.
 		assert(sz == 0 || tmpsz == sz);
 		sz = tmpsz;
@@ -3436,8 +3436,8 @@ void extypeForeachStatement(Context ctx, ref ir.Node n)
 		if (fes.itervars.length == 2 &&
 			(aggType.nodeType == ir.NodeType.StaticArrayType ||
 			aggType.nodeType == ir.NodeType.ArrayType)) {
-			auto keysz = size(ctx.lp, fes.itervars[0].type);
-			auto sizetsz = size(ctx.lp, buildSizeT(fes.location, ctx.lp.target));
+			auto keysz = size(ctx.lp.target, fes.itervars[0].type);
+			auto sizetsz = size(ctx.lp.target, buildSizeT(fes.location, ctx.lp.target));
 			if (keysz < sizetsz) {
 				throw makeIndexVarTooSmall(fes.location, fes.itervars[0].name);
 			}
@@ -3496,8 +3496,8 @@ void processForeach(Context ctx, ir.ForeachStatement fes)
 			throw makeExpected(fes.beginIntegerRange.location, "primitive types");
 		}
 		if (!typesEqual(a, b)) {
-			auto asz = size(ctx.lp, a);
-			auto bsz = size(ctx.lp, b);
+			auto asz = size(ctx.lp.target, a);
+			auto bsz = size(ctx.lp.target, b);
 			if (bsz > asz) {
 				checkAndDoConvert(ctx, b, fes.beginIntegerRange);
 				fillBlankVariable(0, b);
@@ -4314,7 +4314,7 @@ void resolveUnion(LanguagePass lp, ir.Union u)
 			continue;
 		}
 		lp.resolve(u.myScope, field);
-		auto s = size(lp, field.type);
+		auto s = size(lp.target, field.type);
 		if (s > accum) {
 			accum = s;
 		}

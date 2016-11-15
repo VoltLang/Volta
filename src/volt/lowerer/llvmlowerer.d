@@ -503,7 +503,7 @@ void lowerIndex(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 	if (postfix.arguments.length > 0) {
 		panicAssert(exp, postfix.arguments.length == 1);
 		auto prim = cast(ir.PrimitiveType)realType(getExpType(postfix.arguments[0]));
-		if (prim !is null && size(lp, prim) < 4/*Smaller than a 32 bit integer.*/) {
+		if (prim !is null && size(lp.target, prim) < 4/*Smaller than a 32 bit integer.*/) {
 			auto l = postfix.arguments[0].location;
 			postfix.arguments[0] = buildCastSmart(buildInt(l), postfix.arguments[0]);
 		}
@@ -878,8 +878,8 @@ void lowerArrayCast(Location loc, LanguagePass lp, ir.Scope current,
 		return;
 	}
 
-	auto fromSz = size(lp, fromArray.base);
-	auto toSz = size(lp, toArray.base);
+	auto fromSz = size(lp.target, fromArray.base);
+	auto toSz = size(lp.target, toArray.base);
 	auto biggestSz = fromSz > toSz ? fromSz : toSz;
 	bool decreasing = fromSz > toSz;
 
@@ -1652,7 +1652,7 @@ void lowerVarargCall(LanguagePass lp, ir.Scope current, ir.Postfix postfix, ir.F
 
 		buildExpStat(l, sexp, buildAssign(l, argl, _exp));
 
-		totalSize += size(lp, etype);
+		totalSize += size(lp.target, etype);
 	}
 
 	(cast(ir.StaticArrayType)args.type).length = totalSize;

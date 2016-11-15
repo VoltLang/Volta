@@ -162,7 +162,7 @@ public:
 				buildCastToVoidPtr(loc, buildArrayPtr(loc, source.type, buildExpReference(loc, source, source.name))),
 				buildBinOp(loc, ir.BinOp.Op.Mul,
 					buildArrayLength(loc, lp.target, buildExpReference(loc, source, source.name)),
-					buildConstantSizeT(loc, lp.target, size(lp, array.base))
+					buildConstantSizeT(loc, lp.target, size(lp.target, array.base))
 				),
 				buildConstantInt(loc, 0),
 				buildConstantFalse(loc)
@@ -181,7 +181,7 @@ public:
 						buildExpReference(loc, offset, offset.name),
 						buildBinOp(loc, ir.BinOp.Op.Mul,
 							buildArrayLength(loc, lp.target, buildExpReference(loc, source, source.name)),
-							buildConstantSizeT(loc, lp.target, size(lp, array.base))
+							buildConstantSizeT(loc, lp.target, size(lp.target, array.base))
 						),
 					)
 				)

@@ -142,12 +142,12 @@ public:
 		// First position is the return field.
 		size_t counter;
 		if (!type.ret.isVoid()) {
-			counter += size(state.lp, type.ret);
+			counter += size(state.lp.target, type.ret);
 		}
 
 		foreach (t; type.params) {
 			mPos ~= counter;
-			counter += size(state.lp, type.ret);
+			counter += size(state.lp.target, type.ret);
 		}
 
 		mArgs = (new void[](counter)).ptr;

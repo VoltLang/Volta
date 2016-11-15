@@ -120,7 +120,7 @@ ir.Function getArrayAppendFunction(Location loc, LanguagePass lp, ir.Module this
 		buildCastToVoidPtr(loc, leftPtr),
 		buildBinOp(loc, ir.BinOp.Op.Mul,
 			leftlength(),
-			buildConstantSizeT(loc, lp.target, size(lp, ltype.base))
+			buildConstantSizeT(loc, lp.target, size(lp.target, ltype.base))
 		),
 		buildConstantInt(loc, 0),
 		buildConstantFalse(loc)
@@ -216,11 +216,11 @@ ir.Function getArrayPrependFunction(Location loc, LanguagePass lp, ir.Module thi
 	args = [
 		cast(ir.Exp)
 		buildAdd(loc, buildExpReference(loc, allocated, allocated.name),
-			buildConstantSizeT(loc, lp.target, size(lp, ltype.base))),
+			buildConstantSizeT(loc, lp.target, size(lp.target, ltype.base))),
 		buildCastToVoidPtr(loc, buildArrayPtr(loc, left.type, buildExpReference(loc, left, left.name))),
 		buildBinOp(loc, ir.BinOp.Op.Mul,
 			buildArrayLength(loc, lp.target, buildExpReference(loc, left, left.name)),
-			buildConstantSizeT(loc, lp.target, size(lp, ltype.base))
+			buildConstantSizeT(loc, lp.target, size(lp.target, ltype.base))
 		),
 		buildConstantInt(loc, 0),
 		buildConstantFalse(loc)
@@ -268,7 +268,7 @@ ir.Function getArrayCopyFunction(Location loc, LanguagePass lp, ir.Module thisMo
 	auto funcMove = getLlvmMemMove(loc, lp);
 	auto expRef = buildExpReference(loc, funcMove, funcMove.name);
 
-	auto typeSize = size(lp, type.base);
+	auto typeSize = size(lp.target, type.base);
 
 	ir.Exp[] args = [
 		cast(ir.Exp)
@@ -276,7 +276,7 @@ ir.Function getArrayCopyFunction(Location loc, LanguagePass lp, ir.Module thisMo
 		buildCastToVoidPtr(loc, buildArrayPtr(loc, right.type, buildExpReference(loc, right, "right"))),
 		buildBinOp(loc, ir.BinOp.Op.Mul,
 			buildArrayLength(loc, lp.target, buildExpReference(loc, left, "left")),
-			buildConstantSizeT(loc, lp.target, size(lp, type.base))
+			buildConstantSizeT(loc, lp.target, size(lp.target, type.base))
 			),
 		buildConstantInt(loc, 0),
 		buildConstantFalse(loc)
@@ -365,7 +365,7 @@ ir.Function getArrayConcatFunction(Location loc, LanguagePass lp, ir.Module this
 		buildCastToVoidPtr(loc, leftPtr),
 		buildBinOp(loc, ir.BinOp.Op.Mul,
 			leftlength(),
-			buildConstantSizeT(loc, lp.target, size(lp, type.base))
+			buildConstantSizeT(loc, lp.target, size(lp.target, type.base))
 		),
 		buildConstantInt(loc, 0),
 		buildConstantFalse(loc)
@@ -379,13 +379,13 @@ ir.Function getArrayConcatFunction(Location loc, LanguagePass lp, ir.Module this
 			buildExpReference(loc, allocated, allocated.name),
 			buildBinOp(loc, ir.BinOp.Op.Mul,
 				leftlength(),
-				buildConstantSizeT(loc, lp.target, size(lp, type.base))
+				buildConstantSizeT(loc, lp.target, size(lp.target, type.base))
 			)
 		),
 		buildCastToVoidPtr(loc, buildArrayPtr(loc, right.type, buildExpReference(loc, right, right.name))),
 		buildBinOp(loc, ir.BinOp.Op.Mul,
 			buildArrayLength(loc, lp.target, buildExpReference(loc, right, right.name)),
-			buildConstantSizeT(loc, lp.target, size(lp, type.base))
+			buildConstantSizeT(loc, lp.target, size(lp.target, type.base))
 		),
 		buildConstantInt(loc, 0),
 		buildConstantFalse(loc)
@@ -487,7 +487,7 @@ ir.Function getArrayCmpFunction(Location loc, LanguagePass lp, ir.Module thisMod
 					buildCastSmart(loc, buildVoidPtr(loc), buildArrayPtr(loc, right.type, buildExpReference(loc, right, right.name))),
 					cast(ir.Exp)buildBinOp(loc, ir.BinOp.Op.Mul,
 						buildArrayLength(loc, lp.target, buildExpReference(loc, left, left.name)),
-						buildConstantSizeT(loc, lp.target, size(lp, type.base))
+						buildConstantSizeT(loc, lp.target, size(lp.target, type.base))
 					)
 
 				]),

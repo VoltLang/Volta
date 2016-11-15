@@ -179,7 +179,7 @@ public:
 				break;
 			}
 
-			auto s = size(state.lp, type.irType);
+			auto s = size(state.lp.target, type.irType);
 			if (s < 64) {
 				auto ret = LLVMConstNull(type.llvmType);
 				LLVMBuildStore(state.builder, ret, v);

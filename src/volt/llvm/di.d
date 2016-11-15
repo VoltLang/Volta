@@ -586,9 +586,9 @@ private:
  * Retrive size and alignment for type in bits (not in bytes as the
  * rest of the compiler keep track of it).
  */
-void getSizeAndAlignment(ir.Type t, LanguagePass lp,
+void getSizeAndAlignment(ir.Type t, TargetInfo target,
                          out size_t s, out size_t a)
 {
-	s = cast(size_t).size(lp, t) * 8;
-	a = .alignment(lp, t) * 8;
+	s = cast(size_t).size(target, t) * 8;
+	a = .alignment(target, t) * 8;
 }
