@@ -461,7 +461,11 @@ ParseStatus parseConstructor(ParserStream ps, out ir.Function c)
 	c.type.ret = pt;
 
 	ir.Variable[] params;
+	bool colonDeclaration = isColonDeclaration(ps);
 	auto succeeded = parseParameterList(ps, params, c.type);
+	if (params.length > 0 && !colonDeclaration) {
+		warningOldStyleFunction(c.location, ps.settings);
+	}
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.Function, ir.NodeType.FunctionParam);
 	}
