@@ -294,7 +294,10 @@ ParseStatus parseType(ParserStream ps, out ir.Type base)
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TypeOf);
 		}
-		match(ps, base, TokenType.CloseParen);
+		auto retval = match(ps, base, TokenType.CloseParen);
+		if (retval != Succeeded) {
+			return retval;
+		}
 		break;
 	default:
 		return parseExpected(ps, ps.peek.location, ir.NodeType.Invalid, "primitive type");
