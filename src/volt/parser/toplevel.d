@@ -2,7 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.parser.toplevel;
 
-import watt.conv : toInt;
+import watt.conv : toInt, toLower;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
@@ -1044,7 +1044,20 @@ ParseStatus parseAttribute(ParserStream ps, out ir.Attribute attr, bool noTopLev
 			attr.kind = ir.Attribute.Kind.Label;
 			break;
 		default:
-			return parseFailed(ps, attr);
+			auto lower = toLower(ps.peek.value);
+			string msg = "valid @ attribute";
+			switch (lower) {
+			case "label": msg = "@label"; break;
+			case "mangledname": msg = "@mangledName"; break;
+			case "loaddynamic": msg = "@loadDynamic"; break;
+			case "disable": msg = "@disable"; break;
+			case "property": msg = "@property"; break;
+			case "trusted": msg = "@trusted"; break;
+			case "system": msg = "@system"; break;
+			case "safe": msg = "@safe"; break;
+			default: break;
+			}
+			return parseExpected(ps, attr.location, ir.NodeType.Attribute, msg);
 		}
 		version (Volt) { if (true) {
 			// TODO: Fix Volt's CFG bug.
