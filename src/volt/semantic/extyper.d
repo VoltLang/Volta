@@ -2137,12 +2137,12 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 		auto l = binop.location;
 		ir.Exp rtFn, key;
 		if (isArray(ltype)) {
-			key = buildCast(l, buildArrayType(l, buildVoid(l)), copyExp(binop.left));
+			key = buildCast(l, buildArrayType(l, buildVoid(l)), binop.left);
 		} else {
-			key = buildCast(l, buildUlong(l), copyExp(binop.left));
+			key = buildCast(l, buildUlong(l), binop.left);
 		}
 		assert(key !is null);
-		exp = buildAAIn(l, asAA, [copyExp(binop.right), binop.left]);
+		exp = buildAAIn(l, asAA, [binop.right, binop.left]);
 		auto retptr = buildPtrSmart(l, asAA.value);
 		return retptr;
 	}
