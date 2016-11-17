@@ -3089,7 +3089,7 @@ uint getExpHash(Context ctx, ir.SwitchStatement ss, ir.Exp exp)
 	auto etype = getExpType(exp);
 	panicAssert(ss, isArray(etype));
 	uint h;
-	auto constant = cast(ir.Constant) exp;
+	auto constant = cast(ir.Constant) evaluateOrNull(ctx.lp, ctx.current, exp);
 	if (constant !is null) {
 		assert(isString(etype));
 		assert(constant._string[0] == '\"');
@@ -3098,7 +3098,9 @@ uint getExpHash(Context ctx, ir.SwitchStatement ss, ir.Exp exp)
 		h = hash(cast(ubyte[]) str);
 	} else {
 		auto alit = cast(ir.ArrayLiteral) exp;
-		assert(alit !is null);
+		if (alit is null) {
+			throw makeExpected(exp.location, "constant or array literal");
+		}
 		auto atype = cast(ir.ArrayType) etype;
 		assert(atype !is null);
 		uint[] intArrayData;
