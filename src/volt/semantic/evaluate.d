@@ -53,18 +53,7 @@ ir.Constant fold(ref ir.Exp exp, out bool needCopy)
 		}
 		return c;
 	case ExpReference:
-		auto eref = cast(ir.ExpReference)exp;
-		panicAssert(exp, eref !is null);
-		if (eref.decl.nodeType != ir.NodeType.EnumDeclaration) {
-			return null;
-		}
-		needCopy = true;
-		auto ed = cast(ir.EnumDeclaration)eref.decl;
-		auto c = cast(ir.Constant)ed.assign;
-		if (c !is null) {
-			exp = copyExp(c);
-		}
-		return c;
+		return cast(ir.Constant)stripEnumIfEnum(exp, needCopy);
 	default:
 		return null;
 	}

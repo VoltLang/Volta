@@ -3089,7 +3089,8 @@ uint getExpHash(Context ctx, ir.SwitchStatement ss, ir.Exp exp)
 	auto etype = getExpType(exp);
 	panicAssert(ss, isArray(etype));
 	uint h;
-	auto constant = cast(ir.Constant) evaluateOrNull(ctx.lp, ctx.current, exp);
+	bool dummy;
+	auto constant = cast(ir.Constant) stripEnumIfEnum(exp, dummy);
 	if (constant !is null) {
 		assert(isString(etype));
 		assert(constant._string[0] == '\"');

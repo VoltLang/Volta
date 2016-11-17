@@ -631,3 +631,17 @@ void resolveChildStructsAndUnions(LanguagePass lp, ir.Type rt)
 		break;
 	}
 }
+
+ir.Exp stripEnumIfEnum(ref ir.Exp e, out bool wasEnum)
+{
+	auto eref = cast(ir.ExpReference)e;
+	if (eref is null) {
+		return e;
+	}
+	if (eref.decl.nodeType != ir.NodeType.EnumDeclaration) {
+		return e;
+	}
+	wasEnum = true;
+	auto ed = cast(ir.EnumDeclaration)eref.decl;
+	return ed.assign;
+}
