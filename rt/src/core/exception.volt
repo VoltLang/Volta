@@ -13,7 +13,7 @@ class Throwable
 	// This is manually supplied.
 	loc: string;
 
-	this(string msg, string location = __LOCATION__)
+	this(msg: string, location: string = __LOCATION__)
 	{
 		this.msg = msg;
 		this.loc = location;
@@ -22,7 +22,7 @@ class Throwable
 
 class Exception : Throwable
 {
-	this(string msg, string location = __LOCATION__)
+	this(msg: string, location: string = __LOCATION__)
 	{
 		super(msg, location);
 	}
@@ -30,7 +30,7 @@ class Exception : Throwable
 
 class Error : Throwable
 {
-	this(string msg, string location = __LOCATION__)
+	this(msg: string, location: string = __LOCATION__)
 	{
 		super(msg, location);
 	}
@@ -38,7 +38,7 @@ class Error : Throwable
 
 class AssertError : Error
 {
-	this(string msg, string location = __LOCATION__)
+	this(msg: string, location: string = __LOCATION__)
 	{
 		super(msg, location);
 	}
@@ -46,8 +46,8 @@ class AssertError : Error
 
 class MalformedUTF8Exception : Exception
 {
-	this(string msg = "malformed UTF-8 stream",
-	     string location = __LOCATION__)
+	this(msg: string = "malformed UTF-8 stream",
+	     location: string = __LOCATION__)
 	{
 		super(msg, location);
 	}
@@ -56,7 +56,7 @@ class MalformedUTF8Exception : Exception
 // Thrown if Key does not exist in AA
 class KeyNotFoundException : Exception
 {
-	this(string msg)
+	this(msg: string)
 	{
 		super(msg);
 	}
