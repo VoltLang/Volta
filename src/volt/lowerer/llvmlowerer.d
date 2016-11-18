@@ -1078,7 +1078,7 @@ ir.ForStatement lowerForeach(ir.ForeachStatement fes, LanguagePass lp,
 			if (indexVar.type is null) {
 				indexVar.type = buildSizeT(l, lp.target);
 			}
-			indexVar.assign = copyExp(indexAssign);
+			indexVar.assign = indexAssign;
 			elementVar = fs.initVars[1];
 		} else {
 			panicAssert(fes, fs.initVars.length == 1);
@@ -1401,10 +1401,10 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 		if (keyIsArray) {
 			rtfn = lp.aaInBinopArray;
 			builtin.children[1] = buildCast(l, buildArrayType(l, buildVoid(l)),
-			                                copyExp(builtin.children[1]));
+			                                builtin.children[1]);
 		} else {
 			rtfn = lp.aaInBinopPrimitive;
-			builtin.children[1] = buildCast(l, buildUlong(l), copyExp(builtin.children[1]));
+			builtin.children[1] = buildCast(l, buildUlong(l), builtin.children[1]);
 		}
 		exp = buildCall(exp.location, rtfn, builtin.children);
 		exp = buildCast(l, builtin.type, exp);
@@ -1429,7 +1429,8 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 			 * so we just do `**cast(size_t**)cast(void*)iface` to get at it.
 			 * Then we subtract that value from the pointer.
 			 */
-			auto offset = buildDeref(l, buildDeref(l, buildCastSmart(l, buildPtrSmart(l, buildPtrSmart(l, buildSizeT(l, lp.target))), copyExp(l, ptr))));
+			auto offset = buildDeref(l, buildDeref(l,
+				buildCastSmart(l, buildPtrSmart(l, buildPtrSmart(l, buildSizeT(l, lp.target))), copyExp(l, ptr))));
 			ptr = buildSub(l, ptr, offset);
 		}
 		auto tinfos = buildDeref(l, buildDeref(l, buildCastSmart(l, ti, ptr)));
@@ -1575,7 +1576,7 @@ void lowerPostfix(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 		                                 copyExp(cpostfix.child)),
 		                                 buildAccessExp(l, buildDeref(l,
 		                                 copyExp(cpostfix.child)), var)));
-		exp = buildCall(l, buildAccessExp(l, buildDeref(l, copyExp(cpostfix.child)),
+		exp = buildCall(l, buildAccessExp(l, buildDeref(l, cpostfix.child),
 		                                  fvar), handle ~ postfix.arguments);
 	}
 	lowerVarargCall(lp, current, postfix, parentFunc, exp);

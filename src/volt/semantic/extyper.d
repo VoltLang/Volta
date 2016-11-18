@@ -2515,7 +2515,7 @@ ir.Type extypeVaArgExp(Context ctx, ref ir.Exp exp, Parent parent)
 				vaexp.type.nodeType != ir.NodeType.PointerType) {
 			throw makeCVaArgsOnlyOperateOnSimpleTypes(vaexp.location);
 		}
-		vaexp.arg = buildAddrOf(vaexp.location, copyExp(vaexp.arg));
+		vaexp.arg = buildAddrOf(vaexp.location, vaexp.arg);
 	} else {
 		exp = buildVaArg(vaexp.location, vaexp);
 	}
@@ -3140,7 +3140,7 @@ void replaceWithHashIfNeeded(Context ctx, ir.SwitchStatement ss, ir.SwitchCase _
 			elseBlock.statements ~= p.lastIf;
 		}
 		auto cref = buildExpReference(condVar.location, condVar, condVar.name);
-		auto cmp = buildBinOp(loc, ir.BinOp.Op.Equal, copyExp(exp), cref);
+		auto cmp = buildBinOp(loc, ir.BinOp.Op.Equal, exp, cref);
 		auto ifs = buildIfStat(loc, cmp, _case.statements, elseBlock);
 		_case.statements.myScope.parent = newSwitchBlock.myScope;
 		newSwitchBlock.statements ~= ifs;
