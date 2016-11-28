@@ -108,7 +108,7 @@ ir.Variable buildTypeInfoVariable(LanguagePass lp, ir.Type type, ir.Exp assign, 
 	literalVar.type = buildTypeReference(type.location, lp.tiTypeInfo, lp.tiTypeInfo.name);
 	literalVar.mangledName = varName;
 	literalVar.name = varName;
-	literalVar.isWeakLink = !aggr;
+	literalVar.isMergable = !aggr;
 	literalVar.useBaseStorage = true;
 	literalVar.storage = ir.Variable.Storage.Global;
 

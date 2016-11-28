@@ -328,12 +328,12 @@ public:
 			auto llvmType = ft.llvmType;
 
 			v = LLVMAddGlobal(mod, llvmType, argFunc.mangledName);
-			assert(!argFunc.isWeakLink);
+			assert(!argFunc.isMergable);
 		} else {
 			// The simple stuff, declare that mofo.
 			auto llvmType = ft.llvmCallType;
 			v = LLVMAddFunction(mod, argFunc.mangledName, llvmType);
-			if (argFunc.isWeakLink) {
+			if (argFunc.isMergable) {
 				LLVMSetUnnamedAddr(v, true);
 				// For lack of COMDAT support.
 				if (lp.target.platform == Platform.MSVC ||
@@ -452,7 +452,7 @@ public:
 			break;
 		case Global:
 			v = LLVMAddGlobal(mod, llvmType, var.mangledName);
-			if (var.isWeakLink) {
+			if (var.isMergable) {
 				LLVMSetUnnamedAddr(v, true);
 				// For lack of COMDAT support.
 				if (lp.target.platform == Platform.MSVC ||

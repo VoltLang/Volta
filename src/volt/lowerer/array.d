@@ -182,7 +182,7 @@ ir.Function getArrayPrependFunction(Location loc, LanguagePass lp, ir.Module thi
 
 	func = buildFunction(loc, thisModule.children, thisModule.myScope, name);
 	func.mangledName = func.name;
-	func.isWeakLink = true;
+	func.isMergable = true;
 	func.type.ret = copyTypeSmart(loc, ltype);
 
 	ir.FunctionParam left, right;
@@ -260,7 +260,7 @@ ir.Function getArrayCopyFunction(Location loc, LanguagePass lp, ir.Module thisMo
 
 	func = buildFunction(loc, thisModule.children, thisModule.myScope, name);
 	func.mangledName = func.name;
-	func.isWeakLink = true;
+	func.isMergable = true;
 	func.type.ret = copyTypeSmart(loc, type);
 	auto left = addParamSmart(loc, func, type, "left");
 	auto right = addParamSmart(loc, func, type, "right");
@@ -308,7 +308,7 @@ ir.Function getArrayConcatFunction(Location loc, LanguagePass lp, ir.Module this
 
 	func = buildFunction(loc, thisModule.children, thisModule.myScope, name);
 	func.mangledName = func.name;
-	func.isWeakLink = true;
+	func.isMergable = true;
 	func.type.ret = copyTypeSmart(loc, type);
 
 	ir.FunctionParam left;
@@ -437,7 +437,7 @@ ir.Function getArrayCmpFunction(Location loc, LanguagePass lp, ir.Module thisMod
 
 	func = buildFunction(loc, thisModule.children, thisModule.myScope, name);
 	func.mangledName = func.name;
-	func.isWeakLink = true;
+	func.isMergable = true;
 	func.type.ret = buildBool(loc);
 
 	auto left = addParamSmart(loc, func, type, "left");
