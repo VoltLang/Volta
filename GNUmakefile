@@ -40,8 +40,6 @@ LDFLAGS ?= $(DEBUG_DFLAGS)
 DDEFINES_ = $(DDEFINES)
 LDFLAGS_ = $(DFLAGS) $(LDFLAGS)
 TARGET = volt
-VIV_TARGET = viv
-VIVIV_TARGET = viviv
 DCOMP_FLAGS = -w -Isrc $(DDEFINES_) $(DFLAGS)
 CXXCOMP_FLAGS = $(CARCH) $(LLVM_CXXFLAGS) $(CXXFLAGS)
 LINK_FLAGS = $(LDFLAGS_) $(patsubst -%, -L-%, $(LLVM_LDFLAGS)) -L-ldl
@@ -68,15 +66,11 @@ else
       # Not tested
       PLATFORM = windows
       TARGET = volt.exe
-      VIV_TARGET = viv.exe
-      VIVIV_TARGET = viv.exe
       RUN_TARGET = a.out.exe
     else
       # Not tested
-      PLATFORM=windows
+      PLATFORM = windows
       TARGET = volt.exe
-      VIV_TARGET = viv.exe
-      VIVIV_TARGET = viv.exe
       RUN_TARGET = a.out.exe
     endif
   endif
@@ -85,7 +79,6 @@ endif
 include sources.mk
 DSRC = $(shell find src -name "*.d")
 CXXSRC = $(shell find src -name "*.cpp")
-VIV_ALL_SRC = $(DSRC)
 
 OBJ_DIR = .obj/$(PLATFORM)-$(MACHINE)
 DOBJ = $(patsubst src/%.d, $(OBJ_DIR)/%.$(OBJ_TYPE), $(DSRC))
@@ -154,8 +147,6 @@ $(TARGET): $(DSRC) $(EXTRA_OBJ)
 clean:
 	@rm -rf $(TARGET) $(RUN_TARGET) .obj
 	@rm -f $(RT_TARGETS) $(RT_HOST)
-	@rm -f $(VIV_TARGET)
-	@rm -f $(VIVIV_TARGET)
 	@rm -rf .pkg
 	@rm -rf volt.tar.gz
 
@@ -185,35 +176,5 @@ package: all
 	@cp -r ./rt/src/* .pkg/rt/
 	@tar -czf volt.tar.gz .pkg/*
 
-$(VIV_TARGET): $(TARGET) $(VIV_SRC)
-	@echo "  VOLTA  $(VIV_TARGET)"
-	@$(VOLT) --internal-perf --internal-d -o $(VIV_TARGET) $(VIV_SRC) $(LLVM_LDFLAGS)
 
-$(VIVIV_TARGET): $(VIV_TARGET) $(VIV_SRC)
-	@echo "  VOLTA  $(VIVIV_TARGET)"
-	@$(VIV_TARGET) --internal-perf --internal-d -o $(VIVIV_TARGET) $(VIV_SRC) $(LLVM_LDFLAGS)
-
-
-# Note these should not depend on target
-voltaic-syntax:
-	@echo "  VOLTA  <source>"
-	@$(VOLT) --internal-perf -E $(VIV_SRC)
-
-voltaic-viv:
-	@echo "  VOLTA  $(VIV_TARGET)"
-	@$(VOLT) --internal-perf --internal-d -o $(VIV_TARGET) $(VIV_SRC) $(LLVM_LDFLAGS)
-
-voltaic-viviv:
-	@echo "  VIV    $(VIVIV_TARGET)"
-	@./viv --internal-perf --internal-d -o $(VIVIV_TARGET) $(VIV_SRC) $(LLVM_LDFLAGS)
-
-voltaic-viv-sanity:
-	@echo "  VIV    $(RUN_TARGET)"
-	@./viv -o $(RUN_TARGET) $(RUN_SRC)
-
-voltaic-viv-syntax:
-	@echo "  VIV    <source>"
-	@./viv -E $(VIV_SRC)
-
-
-.PHONY: all clean rdmd run debug license voltaic-syntax voltaic-viv voltaic-viv-syntax
+.PHONY: all clean rdmd run debug license
