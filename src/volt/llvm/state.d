@@ -452,7 +452,13 @@ public:
 			break;
 		case Global:
 			v = LLVMAddGlobal(mod, llvmType, var.mangledName);
-			if (var.isMergable) {
+			// @TODO Horrible hack for weird linking bugs,
+			// proper fix is adding a weak attribute in the language.
+			if ((var.mangledName == "__bss_start" ||
+			     var.mangledName == "end") &&
+			    lp.target.platform == Platform.Linux ) {
+				LLVMSetLinkage(v, LLVMLinkage.ExternalWeak);
+			} else if (var.isMergable) {
 				LLVMSetUnnamedAddr(v, true);
 				// For lack of COMDAT support.
 				if (lp.target.platform == Platform.MSVC ||
