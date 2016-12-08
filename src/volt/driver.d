@@ -564,6 +564,7 @@ protected:
 			mTemporaryFiles ~= o;
 		}
 
+
 		// Setup files bc.
 		string bc;
 		if (mEmitBitcode) {
@@ -859,7 +860,7 @@ protected:
 
 	void decideParts()
 	{
-		mRunVoltend = mSourceFiles.length > 0;
+		mRunVoltend = mSourceFiles.length > 0 || mImportAsSrc.length > 0;
 
 		mRunBackend =
 			!mNoBackend &&
