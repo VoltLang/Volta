@@ -20,10 +20,6 @@ string printType(ir.Type type, bool alwaysGlossed = false)
 
 void write(Sink sink, ir.Type type, bool alwaysGlossed)
 {
-	if (type.glossedName.length > 0 && alwaysGlossed) {
-		return sink(type.glossedName);
-	}
-
 	string suffix;
 	if (type.isConst) {
 		sink("const(");
@@ -36,6 +32,12 @@ void write(Sink sink, ir.Type type, bool alwaysGlossed)
 	if (type.isScope) {
 		sink("scope (");
 		suffix = ")";
+	}
+
+	if (type.glossedName.length > 0 && alwaysGlossed) {
+		sink(type.glossedName);
+		sink(suffix);
+		return;
 	}
 
 	assert(type !is null);
