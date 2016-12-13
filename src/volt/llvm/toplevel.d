@@ -95,7 +95,11 @@ public:
 			state.localDestructors ~= llvmFunc;
 		}
 
-		size_t offset = func.type.hiddenParameter;
+		if (ft.hasStructRet) {
+			throw panic(func, "return struct with body not supported");
+		}
+
+		size_t offset = func.type.hiddenParameter || ft.hasStructRet;
 		foreach (irIndex, p; func.params) {
 			auto v = LLVMGetParam(llvmFunc, cast(uint)(irIndex + offset));
 			auto t = state.fromIr(p.type);

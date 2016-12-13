@@ -366,6 +366,16 @@ public:
 			}
 		}
 
+		// Handle return structs via arguments.
+		if (ft.hasStructRet) {
+			if (argFunc.loadDynamic) {
+				throw panic("return struct and @loadDynamic not supported");
+			}
+
+			auto param = LLVMGetParam(v, 0);
+			LLVMAddAttribute(param, LLVMAttribute.StructRet);
+		}
+
 		Store add = { v, type };
 		valueStore[k] = add;
 		return v;

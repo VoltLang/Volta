@@ -10,6 +10,7 @@ import ir = volt.ir.ir;
 import volt.ir.util;
 
 import volt.errors;
+import volt.llvm.common;
 import volt.llvm.interfaces;
 
 static import volt.semantic.mangle;
@@ -460,6 +461,7 @@ public:
 class FunctionType : CallableType
 {
 public:
+	bool hasStructRet;
 	LLVMTypeRef llvmCallType;
 	LLVMValueRef diCallType;
 
@@ -494,17 +496,29 @@ public:
 	}
 
 private:
-	this(State state, ir.FunctionType ft, Type ret, Type[] params)
+	this(State state, ir.FunctionType ft, Type argRet, Type[] params)
 	{
 		this.params = params;
-		this.ret = ret;
+		this.ret = argRet;
 		LLVMTypeRef[] args;
 		Type[] di;
 
-		args = new typeof(args)(ft.params.length + ft.hiddenParameter);
-		di = new typeof(di)(ft.params.length + ft.hiddenParameter);
+		// For C style returns of structs.
+		auto strct = cast(StructType)argRet;
+		if (strct !is null && ft.linkage == ir.Linkage.C) {
+			auto irStruct = cast(ir.Struct)strct.irType;
+			hasStructRet = shouldCUseStructRet(state.lp.target, irStruct);
+		}
 
-		size_t offset = ft.hiddenParameter;
+		if (hasStructRet && ft.hiddenParameter) {
+			throw panic("does not support hidden parameter and large struct returns.");
+		}
+
+		// Make the arrays that are used as inputs to various calls.
+		size_t offset = ft.hiddenParameter || hasStructRet;
+		args = new typeof(args)(ft.params.length + offset);
+		di = new typeof(di)(ft.params.length + offset);
+
 		foreach (i, type; params) {
 			if (ft.isArgRef[i] || ft.isArgOut[i] || type.passByVal) {
 				auto irPtr = new ir.PointerType(type.irType);
@@ -520,13 +534,24 @@ private:
 		}
 
 		if (ft.hiddenParameter) {
-			args[0] = state.voidPtrType.llvmType;
-			di[0] = state.voidPtrType;
+			args[offset - 1] = state.voidPtrType.llvmType;
+			di[offset - 1] = state.voidPtrType;
 		}
 
-		llvmCallType = LLVMFunctionType(ret.llvmType, args, ft.hasVarArgs && ft.linkage == ir.Linkage.C);
+		// Handle return structs via arguments.
+		if (hasStructRet) {
+			auto irPtr = new ir.PointerType(argRet.irType);
+			addMangledName(irPtr);
+			auto ptrType = cast(PointerType) .fromIr(state, irPtr);
+
+			args[0] = ptrType.llvmType;
+			di[0] = ptrType;
+			argRet = state.voidType;
+		}
+
+		llvmCallType = LLVMFunctionType(argRet.llvmType, args, ft.hasVarArgs && ft.linkage == ir.Linkage.C);
 		llvmType = LLVMPointerType(llvmCallType, 0);
-		diType = diFunctionType(state, ret, di, ft.mangledName, diCallType);
+		diType = diFunctionType(state, argRet, di, ft.mangledName, diCallType);
 		super(state, ft, llvmType, diType);
 	}
 }

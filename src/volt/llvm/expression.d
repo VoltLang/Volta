@@ -1111,6 +1111,10 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 	if (ft !is null) {
 		ret = ft.ret;
 		makeNonPointer(state, result);
+		if (ft.hasStructRet) {
+			llvmExtraArg = state.buildAlloca(ft.ret.llvmType, "sretArg");
+			offset = 1;
+		}
 	} else if (dt !is null) {
 
 		ret = dt.ret;
@@ -1175,8 +1179,15 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 		throw panicUnhandled(postfix.location, "call site linkage");
 	}
 
-	result.isPointer = false;
-	result.type = ret;
+	// If we return a struct via a argument, return that alloca instead.
+	if (ft !is null && ft.hasStructRet) {
+		result.value = llvmExtraArg;
+		result.isPointer = true;
+		result.type = ret;
+	} else {
+		result.isPointer = false;
+		result.type = ret;
+	}
 }
 
 void handleIncDec(State state, ir.Postfix postfix, Value result)

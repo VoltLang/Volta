@@ -6,8 +6,44 @@ import volt.token.location;
 
 import volt.ir.util;
 import ir = volt.ir.ir;
+import volt.interfaces;
 import volt.llvm.interfaces;
+import volt.semantic.classify;
 
+
+/**
+ * Returns true if the C calling convention returns structs via arguments.
+ */
+bool shouldCUseStructRet(TargetInfo target, ir.Struct irStruct)
+{
+	size_t structSize = size(target, irStruct);
+
+	final switch (target.platform) with (Platform) {
+	case Metal:
+	case Linux:
+		final switch (target.arch) with (Arch) {
+		case X86:
+			return true;
+		case X86_64:
+			return structSize > 16;
+		}
+	case OSX:
+		final switch (target.arch) with (Arch) {
+		case X86:
+			return structSize != 4 && structSize != 8;
+		case X86_64:
+			return structSize > 16;
+		}
+	case MSVC:
+	case MinGW:
+		final switch (target.arch) with (Arch) {
+		case X86:
+		case X86_64:
+			return structSize != 4 && structSize != 8;
+		}
+	}
+
+}
 
 /**
  * Turns a ArrayType Value into a Pointer Value. Value must be
