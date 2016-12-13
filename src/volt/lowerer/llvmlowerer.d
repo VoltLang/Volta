@@ -333,63 +333,6 @@ void lowerProperty(LanguagePass lp, ref ir.Exp exp, ir.PropertyExp prop)
 	}
 }
 
-/**
- * Hoist declarations out of blocks and place them at the top of the function.
- *
- * This avoids alloc()ing in a loop. Name collisions aren't an issue, as the
- * generated assign statements are already tied to the correct variable.
- *
- * Params:
- *   lp: The LanguagePass.
- *   func: The function that the block statement is hosted in.
- *   bs: The BlockStatement to look for Variables in.
- *   visitor: An instance of LlvmLowerer.
- *
- * Returns: false if nothing was changed, true otherwise.
- */
-bool lowerVariables(LanguagePass lp, ir.Function func, ir.BlockStatement bs, Visitor visitor)
-{
-	auto top = func._body;
-	if (top is bs) {
-		return false;
-	}
-
-	ir.Node[] newTopVars;
-	for (size_t i = 0; i < bs.statements.length; ++i) {
-		auto var = cast(ir.Variable) bs.statements[i];
-		if (var is null) {
-			accept(bs.statements[i], visitor);
-			continue;
-		}
-
-		auto l = bs.statements[i].location;
-
-		if (!var.specialInitValue) {
-			ir.Exp assign;
-			if (var.assign !is null) {
-				assign = var.assign;
-				var.assign = null;
-
-				acceptExp(assign, visitor);
-			} else {
-				assign = getDefaultInit(l, lp, var.type);
-			}
-
-			auto a = buildAssign(l, var, assign);
-
-			bs.statements[i] = buildExpStat(l, a);
-		} else {
-			bs.statements[i] = buildBlockStat(l, null, bs.myScope);
-		}
-
-		accept(var, visitor);
-		newTopVars ~= var;
-	}
-
-	top.statements = newTopVars ~ top.statements;
-	return true;
-}
-
 /// Build an if statement based on a runtime assert.
 ir.IfStatement lowerAssertIf(LanguagePass lp, ir.Scope current, ir.AssertStatement as)
 {
@@ -1817,10 +1760,6 @@ public:
 		}
 
 		insertBinOpAssignsForNestedVariableAssigns(lp, bs);
-		if (lowerVariables(lp, functionStack[$-1], bs, this)) {
-			super.leave(bs);
-			return ContinueParent;
-		}
 		return Continue;
 	}
 
