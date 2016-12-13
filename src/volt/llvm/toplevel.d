@@ -71,7 +71,15 @@ public:
 		state.fnState.fall = true;
 		state.fnState.func = llvmFunc;
 		state.fnState.di = di;
-		state.fnState.block = LLVMAppendBasicBlock(llvmFunc, "entry");
+		state.fnState.block = LLVMAppendBasicBlock(llvmFunc, "block");
+
+		// Create a entry block that all variables are declared on.
+		auto entry = LLVMAppendBasicBlock(llvmFunc, "entry");
+		LLVMMoveBasicBlockAfter(state.block, entry);
+		LLVMPositionBuilderAtEnd(b, entry);
+		state.fnState.entryBr = LLVMBuildBr(state.builder, state.block);
+
+		// Move the builder to the block following the entry block.
 		LLVMPositionBuilderAtEnd(b, state.block);
 
 		// Set position for various setup instructions.

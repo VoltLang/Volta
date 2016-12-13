@@ -95,6 +95,7 @@ public:
 		LLVMValueRef nested; ///< Nested value
 
 		PathState path;
+		LLVMValueRef entryBr;
 		LLVMBasicBlockRef block;
 
 		SwitchState swi;
@@ -264,6 +265,18 @@ public:
 	 * Expression value functions.
 	 *
 	 */
+
+	/**
+	 * Builds a 'alloca' instructions and inserts it at the end of the
+	 * entry basic block that is at the top of the function.
+	 */
+	final LLVMValueRef buildAlloca(LLVMTypeRef llvmType, string name)
+	{
+		LLVMPositionBuilderBefore(builder, fnState.entryBr);
+		auto v = LLVMBuildAlloca(builder, llvmType, name);
+		LLVMPositionBuilderAtEnd(builder, fnState.block);
+		return v;
+	}
 
 	/**
 	 * Returns the LLVMValueRef for the given expression,

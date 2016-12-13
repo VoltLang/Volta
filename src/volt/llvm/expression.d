@@ -1461,7 +1461,7 @@ void makePointer(State state, Value result)
 	if (result.isPointer)
 		return;
 
-	auto v = LLVMBuildAlloca(state.builder, result.type.llvmType, "tempStorage");
+	auto v = state.buildAlloca(result.type.llvmType, "tempStorage");
 	LLVMBuildStore(state.builder, result.value, v);
 
 	result.value = v;

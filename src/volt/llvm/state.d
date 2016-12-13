@@ -187,8 +187,8 @@ public:
 		auto val = LLVMGetFirstInstruction(bb);
 		LLVMPositionBuilderBefore(builder, val);
 
-		fnState.indexVar = LLVMBuildAlloca(
-			builder, intType.llvmType, "__index");
+		fnState.indexVar = buildAlloca(
+			intType.llvmType, "__index");
 
 		LLVMPositionBuilderAtEnd(builder, block);
 		return fnState.indexVar;
@@ -204,8 +204,8 @@ public:
 		auto val = LLVMGetFirstInstruction(bb);
 		LLVMPositionBuilderBefore(builder, val);
 
-		fnState.exceptionVar = LLVMBuildAlloca(
-			builder, voidPtrType.llvmType, "__exception");
+		fnState.exceptionVar = buildAlloca(
+			voidPtrType.llvmType, "__exception");
 
 		LLVMPositionBuilderAtEnd(builder, block);
 		return fnState.exceptionVar;
@@ -424,7 +424,7 @@ public:
 			}
 
 			diSetPosition(this, var.location);
-			v = LLVMBuildAlloca(builder, llvmType, var.name);
+			v = buildAlloca(llvmType, var.name);
 
 			diAutoVariable(this, var, v, type);
 			diUnsetPosition(this);
@@ -500,7 +500,7 @@ public:
 		}
 
 		diSetPosition(this, var.location);
-		v = LLVMBuildAlloca(builder, llvmType, var.name);
+		v = buildAlloca(llvmType, var.name);
 
 		diParameterVariable(this, var, v, type);
 		diUnsetPosition(this);
