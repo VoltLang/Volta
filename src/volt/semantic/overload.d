@@ -246,8 +246,9 @@ ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ir.Exp[
 
 	int matchLevel(ir.Function func)
 	{
+		auto variadic = func.type.homogenousVariadic || func.type.hasVarArgs;
 		if (arguments.length > func.type.params.length) {
-			assert(func.type.homogenousVariadic);
+			assert(variadic);
 		} else {
 			assert(func.type.params.length >= arguments.length);
 		}
@@ -256,7 +257,7 @@ ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ir.Exp[
 		}
 		IntSink matchLevels;
 		foreach (i, param; func.type.params) {
-			if (i >= arguments.length && !func.type.homogenousVariadic) {
+			if (i >= arguments.length && !variadic) {
 				assert(func.params[i].assign !is null);
 				matchLevels.sink(4);
 			} else {
@@ -266,6 +267,16 @@ ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ir.Exp[
 					panicAssert(func, i == func.params.length - 1);
 					matchLevels.sink(3);
 					break;
+				} else if (func.type.hasVarArgs) {
+					/* Because the extyper has added the two extra variadic
+					 * parameters, consider them here.
+					 * TODO: Remove this once the lowerer lowers variadics.
+					 */
+					if (i >= func.params.length - 2) {
+						matchLevels.sink(3);
+					} else {
+						matchLevels.sink(.matchLevel(true, arguments[i], param, exp));
+					}
 				} else { 
 					matchLevels.sink(.matchLevel(homogenous, arguments[i], param, exp));
 				}
@@ -300,12 +311,13 @@ ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ir.Exp[
 
 	FunctionSink outFunctions;
 	foreach (func; functions) {
+		auto variadic = func.type.homogenousVariadic || func.type.hasVarArgs;
 		int defaultArguments;
 		if (correctNumberOfArguments(func, defaultArguments)) {
 			outFunctions.sink(func);
 		} else if (func.params.length == arguments.length + cast(size_t)defaultArguments) {
 			outFunctions.sink(func);
-		} else if (func.type.homogenousVariadic && arguments.length >= (func.params.length - 1)) {
+		} else if (variadic && arguments.length >= (func.params.length - 1)) {
 			panicAssert(func, func.params.length > 0);
 			outFunctions.sink(func);
 		}
