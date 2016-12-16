@@ -327,7 +327,7 @@ CompilerException makeCallClass(Location loc, ir.Class _class, string file = __F
 
 CompilerException makeMixedSignedness(Location loc, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(loc, format("expressions cannot mix signed and unsigned values."), file, line);
+	return new CompilerError(loc, "expressions cannot mix signed and unsigned values.", file, line);
 }
 
 CompilerException makeStaticArrayLengthMismatch(Location loc, size_t expectedLength, size_t gotLength, string file = __FILE__, const int line = __LINE__)

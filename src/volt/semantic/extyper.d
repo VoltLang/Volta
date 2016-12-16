@@ -1688,7 +1688,7 @@ void extypeUnaryDup(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 	if (rtype.nodeType == ir.NodeType.AAType) {
 		if (!_unary.fullShorthand) {
 			// Actual indices were used, which makes no sense for AAs.
-			throw makeExpected(l, format("`new <exp>[..]` shorthand syntax"));
+			throw makeExpected(l, "`new <exp>[..]` shorthand syntax");
 		}
 		auto aa = cast(ir.AAType)rtype;
 		panicAssert(rtype, aa !is null);
