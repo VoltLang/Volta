@@ -736,7 +736,7 @@ private void rewriteVaStartAndEnd(Context ctx, ir.Function func,
 		}
 		if (ctx.currentFunction.type.linkage == ir.Linkage.Volt) {
 			if (func is ctx.lp.vaStartFunc) {
-				auto eref = buildExpReference(postfix.location, ctx.currentFunction.params[$-1], "_args");
+				auto eref = buildExpReference(postfix.location, ctx.currentFunction.type.varArgsArgs, "_args");
 				exp = buildVaArgStart(postfix.location, postfix.arguments[0], eref);
 				return;
 			} else if (func is ctx.lp.vaEndFunc) {
@@ -4206,7 +4206,7 @@ void resolveFunction(Context ctx, ir.Function func)
 		throw makeMarkedOverrideDoesNotOverride(func, func);
 	}
 
-	replaceVarArgsIfNeeded(ctx.lp, func);
+	addVarArgsVarsIfNeeded(ctx.lp, func);
 
 	if (func.type.homogenousVariadic && !isArray(realType(func.type.params[$-1]))) {
 		throw makeExpected(func.params[$-1].location, "array type");

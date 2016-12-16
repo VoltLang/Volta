@@ -184,6 +184,13 @@ public:
 
 			if (var.specialInitValue) {
 				assert(var.assign is null);
+				if (var.name == "_typeids") {
+					uint i = LLVMCountParams(state.func) - 2;
+					LLVMBuildStore(state.builder, LLVMGetParam(state.func, i), v);
+				} else if (var.name == "_args") {
+					uint i = LLVMCountParams(state.func) - 1;
+					LLVMBuildStore(state.builder, LLVMGetParam(state.func, i), v);
+				}
 				break;
 			} else if (var.assign !is null) {
 				auto ret = state.getValue(var.assign);

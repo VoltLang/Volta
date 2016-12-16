@@ -267,17 +267,7 @@ ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ir.Exp[
 					panicAssert(func, i == func.params.length - 1);
 					matchLevels.sink(3);
 					break;
-				} else if (func.type.hasVarArgs) {
-					/* Because the extyper has added the two extra variadic
-					 * parameters, consider them here.
-					 * TODO: Remove this once the lowerer lowers variadics.
-					 */
-					if (i >= func.params.length - 2) {
-						matchLevels.sink(3);
-					} else {
-						matchLevels.sink(.matchLevel(true, arguments[i], param, exp));
-					}
-				} else { 
+				} else {
 					matchLevels.sink(.matchLevel(homogenous, arguments[i], param, exp));
 				}
 			}

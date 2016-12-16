@@ -1559,7 +1559,7 @@ void lowerVarargCall(LanguagePass lp, ir.Scope current, ir.Postfix postfix, ir.F
 	auto l = postfix.location;
 
 	auto callNumArgs = postfix.arguments.length;
-	auto funcNumArgs = asFunctionType.params.length - 2; // 2 == the two hidden arguments
+	auto funcNumArgs = asFunctionType.params.length;
 	if (callNumArgs < funcNumArgs) {
 		throw makeWrongNumberOfArguments(postfix, callNumArgs, funcNumArgs);
 	}

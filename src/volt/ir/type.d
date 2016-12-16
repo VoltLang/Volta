@@ -351,6 +351,8 @@ public:
 	bool hiddenParameter;
 	bool hasVarArgs;
 	bool varArgsProcessed;
+	Variable varArgsTypeids;
+	Variable varArgsArgs;
 	bool isProperty;
 	bool homogenousVariadic;
 	bool forceLabel;
@@ -377,6 +379,8 @@ public:
 		isScope = old.isScope;
 		hasVarArgs = old.hasVarArgs;
 		varArgsProcessed = old.varArgsProcessed;
+		varArgsTypeids = old.varArgsTypeids;
+		varArgsArgs = old.varArgsArgs;
 		isProperty = old.isProperty;
 		homogenousVariadic = old.homogenousVariadic;
 		forceLabel = old.forceLabel;

@@ -343,17 +343,24 @@ ir.Exp getThisReferenceNotNull(ir.Node n, Context ctx, out ir.Variable thisVar)
 	return buildExpReference(n.location, thisVar, "this");
 }
 
-void replaceVarArgsIfNeeded(LanguagePass lp, ir.Function func)
+void addVarArgsVarsIfNeeded(LanguagePass lp, ir.Function func)
 {
 	if (func.type.hasVarArgs &&
 	    !func.type.varArgsProcessed &&
+		func._body !is null &&
 	    func.type.linkage == ir.Linkage.Volt) {
 		auto tinfoClass = lp.tiTypeInfo;
 		auto tr = buildTypeReference(func.location, tinfoClass, tinfoClass.name);
 		auto array = buildArrayType(func.location, tr);
 		auto argArray = buildArrayType(func.location, buildVoid(func.location));
-		addParam(func.location, func, array, "_typeids");
-		addParam(func.location, func, argArray, "_args");
+		func.type.varArgsTypeids = buildVariable(func.location, array, ir.Variable.Storage.Function, "_typeids");
+		func.type.varArgsTypeids.specialInitValue = true;
+		func._body.myScope.addValue(func.type.varArgsTypeids, "_typeids");
+		func._body.statements = func.type.varArgsTypeids ~ func._body.statements;
+		func.type.varArgsArgs = buildVariable(func.location, argArray, ir.Variable.Storage.Function, "_args");
+		func.type.varArgsArgs.specialInitValue = true;
+		func._body.myScope.addValue(func.type.varArgsArgs, "_args");
+		func._body.statements = func.type.varArgsArgs ~ func._body.statements;
 		func.type.varArgsProcessed = true;
 	}
 }

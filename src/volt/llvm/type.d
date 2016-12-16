@@ -516,8 +516,10 @@ private:
 
 		// Make the arrays that are used as inputs to various calls.
 		size_t offset = ft.hiddenParameter || hasStructRet;
-		args = new typeof(args)(ft.params.length + offset);
-		di = new typeof(di)(ft.params.length + offset);
+		bool voltVariadic = ft.hasVarArgs && ft.linkage == ir.Linkage.Volt;
+		size_t argsLength = ft.params.length + offset + (voltVariadic ? 2 : 0);
+		args = new typeof(args)(argsLength);
+		di = new typeof(di)(argsLength);
 
 		foreach (i, type; params) {
 			if (ft.isArgRef[i] || ft.isArgOut[i] || type.passByVal) {
@@ -531,6 +533,27 @@ private:
 				args[i+offset] = type.llvmType;
 				di[i+offset] = type;
 			}
+		}
+
+		if (voltVariadic) {
+			auto tinfoClass = state.lp.tiTypeInfo;
+			auto tr = buildTypeReference(ft.location, tinfoClass, tinfoClass.name);
+			addMangledName(tr);
+
+			auto arrayir = buildArrayType(ft.location, tr);
+			addMangledName(arrayir);
+			auto array = ArrayType.fromIr(state, arrayir);
+
+			auto v = buildVoid(ft.location);
+			addMangledName(v);
+			auto argArrayir = buildArrayType(ft.location, v);
+			addMangledName(argArrayir);
+			auto argArray = ArrayType.fromIr(state, argArrayir);
+
+			args[$ - 2] = array.llvmType;
+			di  [$ - 2] = array;
+			args[$ - 1] = argArray.llvmType;
+			di  [$ - 1] = argArray;
 		}
 
 		if (ft.hiddenParameter) {
