@@ -61,7 +61,7 @@ After the object's name, its type is mangled. The type is turned into a series o
 	V
 	W Windows linkage
 	X
-	Y
+	Y variadic
 	Z non-variadic
 
 For user types like structs and classes, they're mangled by first inserting the appropriate letter (see the above table) and then their name is mangled afterwards.

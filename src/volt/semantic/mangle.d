@@ -222,7 +222,7 @@ void mangleCallableType(ir.CallableType ct, Sink sink)
 		}
 		mangleType(param, sink);
 	}
-	sink("Z");  // This would be difference with variadics.
+	sink(ct.hasVarArgs ? "Y" : "Z");
 	mangleType(ct.ret, sink);
 }
 
