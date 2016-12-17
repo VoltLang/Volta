@@ -251,6 +251,7 @@ public:
 	alias TestDg = scope dg (Node*) int;
 	alias CompDg = scope dg (Node*, Node*) int;
 	alias VisitDg = scope dg (Node*);
+	alias FindDg = scope dg (Node*) bool;
 
 
 private:
@@ -273,6 +274,35 @@ public:
 		}
 
 		return null;
+	}
+
+
+	/**
+	 * Calls find on the root node, with the given FindDg.
+	 */
+	fn find(test: FindDg) Node*
+	{
+		return find(root, test);
+	}
+
+	/**
+	 * Return the first node from a root that a given FindDg returns true for.
+	 * Returns: the first matching Node, or null.
+	 */
+	fn find(n: Node*, test: FindDg) Node*
+	{
+		if (n is null) {
+			return null;
+		}
+		if (test(n)) {
+			return n;
+		}
+		l := find(n.children[0].node, test);
+		if (l !is null) {
+			return l;
+		}
+		r := find(n.children[1].node, test);
+		return r;
 	}
 
 	/**

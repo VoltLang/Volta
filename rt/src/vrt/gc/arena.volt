@@ -614,12 +614,7 @@ private:
 		// free slot and use it.
 		if (mSlabStruct is holder ||
 		    mSlabStruct is null) {
-			// @TODO find the first extent with free slots in it
-			// in the internalExtents tree and set mSlabStruct
-			// to it. REMEMBER it must have a free slot in it.
-			// This needs to be done after we removed it from the
-			// internalExtents, which might now be empty.
-			mSlabStruct = null;
+			mSlabStruct = cast(Slab*)internalExtents.find(emptySlab);
 		}
 
 		// Free the holder and the memory it manages.
@@ -771,5 +766,12 @@ private:
 			hl := removes.add();
 			hl.extent = e;
 		}
+	}
+
+	/// Does n contain an empty Slab?
+	fn emptySlab(n: Node*) bool
+	{
+		s := cast(Slab*)n;
+		return s.freeSlots > 0;
 	}
 }
