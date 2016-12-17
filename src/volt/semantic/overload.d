@@ -261,7 +261,7 @@ ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ir.Exp[
 				assert(func.params[i].assign !is null);
 				matchLevels.sink(4);
 			} else {
-				bool homogenous = func.type.homogenousVariadic && i == func.type.params.length - 1;
+				bool homogenous = variadic && i == func.type.params.length - 1;
 				auto exp = i < exps.length ? exps[i] : null;
 				if (homogenous && i >= arguments.length) {
 					panicAssert(func, i == func.params.length - 1);
