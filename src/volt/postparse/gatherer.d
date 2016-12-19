@@ -22,8 +22,18 @@ enum Where
 	Function,
 }
 
-ir.Store findShadowed(ir.Scope _scope, Location loc, string name)
+ir.Store findShadowed(ir.Scope _scope, Location loc, string name, bool warningsEnabled)
 {
+	auto store = _scope.getStore(name);
+
+	if (store !is null &&
+		(_scope.node.nodeType == ir.NodeType.Class ||
+		_scope.node.nodeType == ir.NodeType.Struct ||
+		_scope.node.nodeType == ir.NodeType.Union)) {
+		warningShadowsField(loc, store.node.location, name, warningsEnabled);
+		return null;
+	}
+
 	// BlockStatements attached directly to a function have their .node set to that function.
 	if (_scope.node.nodeType != ir.NodeType.Function &&
 	    _scope.node.nodeType != ir.NodeType.BlockStatement) {
@@ -31,16 +41,12 @@ ir.Store findShadowed(ir.Scope _scope, Location loc, string name)
 	}
 
 	// We don't use lookupOnlyThisScope because it will try and resolve it prematurely.
-	auto store = _scope.getStore(name);
 	if (store !is null) {
 		return store;
 	}
 
 	if (_scope.parent !is null) {
-		if (_scope.node.nodeType == ir.NodeType.Function) {
-			return null;
-		}
-		return findShadowed(_scope.parent, loc, name);
+		return findShadowed(_scope.parent, loc, name, warningsEnabled);
 	} else {
 		return null;
 	}
@@ -81,12 +87,12 @@ void gather(ir.Scope current, ir.Alias a, Where where)
 	a.store = current.addAlias(a, a.name);
 }
 
-void gather(ir.Scope current, ir.Variable v, Where where, ir.Function[] functionStack)
+void gather(ir.Scope current, ir.Variable v, Where where, ir.Function[] functionStack, bool warningsEnabled)
 {
 	assert(v.access.isValidAccess());
 
 	// TODO Move to semantic.
-	auto shadowStore = findShadowed(current, v.location, v.name);
+	auto shadowStore = findShadowed(current, v.location, v.name, warningsEnabled);
 	if (shadowStore !is null) {
 		throw makeShadowsDeclaration(v, shadowStore.node);
 	}
@@ -319,8 +325,14 @@ protected:
 	ir.Type[] mThis;
 	ir.Function[] mFunctionStack;
 	ir.Module mModule;
+	bool mWarningsEnabled;
 
 public:
+	this(bool warningsEnabled)
+	{
+		mWarningsEnabled = warningsEnabled;
+	}
+
 	/*
 	 *
 	 * Pass functions.
@@ -439,7 +451,7 @@ public:
 
 	override Status enter(ir.Variable v)
 	{
-		gather(current, v, where, mFunctionStack);
+		gather(current, v, where, mFunctionStack, mWarningsEnabled);
 		return Continue;
 	}
 
@@ -509,7 +521,7 @@ public:
 	{
 		enter(fes.block);
 		foreach (var; fes.itervars) {
-			gather(current, var, where, mFunctionStack);
+			gather(current, var, where, mFunctionStack, mWarningsEnabled);
 		}
 		if (fes.aggregate !is null) acceptExp(fes.aggregate, this);
 		if (fes.beginIntegerRange !is null) {
@@ -528,7 +540,7 @@ public:
 	{
 		enter(fs.block);
 		foreach (var; fs.initVars) {
-			gather(current, var, where, mFunctionStack);
+			gather(current, var, where, mFunctionStack, mWarningsEnabled);
 		}
 		if (fs.test !is null) {
 			acceptExp(fs.test, this);

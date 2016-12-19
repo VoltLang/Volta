@@ -65,6 +65,13 @@ void warningOldStyleDelegateType(Location loc, Settings settings)
 	}
 }
 
+void warningShadowsField(Location newDecl, Location oldDecl, string name, bool warningsEnabled)
+{
+	if (warningsEnabled) {
+		warning(newDecl, format("declaration '%s' shadows field at %s.", name, oldDecl.toString()));
+	}
+}
+
 /*
  *
  * Specific Errors

@@ -120,7 +120,7 @@ public:
 		}
 		postParse ~= new TimerPass("p1-scope-rep", new ScopeReplacer());
 		postParse ~= new TimerPass("p1-attrib-rem", new AttribRemoval(target));
-		postParse ~= new TimerPass("p1-gatherer", new Gatherer());
+		postParse ~= new TimerPass("p1-gatherer", new Gatherer(warningsEnabled));
 		if (mMode == Mode.MissingDeps) {
 			missing = new MissingDeps(this);
 			postParse ~= new TimerPass("p1-missing", missing);
@@ -379,7 +379,7 @@ public:
 
 	override void gather(ir.Scope current, ir.BlockStatement bs)
 	{
-		auto g = new Gatherer();
+		auto g = new Gatherer(warningsEnabled);
 		g.transform(current, bs);
 		g.close();
 	}
