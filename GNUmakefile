@@ -4,6 +4,7 @@
 DMD ?= $(shell which dmd)
 RDMD ?= $(shell which rdmd)
 CXX ?= $(shell which g++)
+NASM ?= $(shell which nasm)
 VOLT ?= ./$(TARGET)
 HOST_UNAME := $(strip $(shell uname))
 HOST_MACHINE := $(strip $(shell uname -m))
@@ -56,10 +57,16 @@ endif
 ifeq ($(UNAME),Linux)
   PLATFORM = linux
   OBJ_TYPE := o
+  ifeq ($(MACHINE),x86_64)
+    NASM_FORMAT = elf64
+  else
+    NASM_FORMAT = elf32
+  endif
 else
   ifeq ($(UNAME),Darwin)
     OBJ_TYPE := o
     PLATFORM = mac
+    NASM_FORMAT = macho64
   else
     OBJ_TYPE := obj
     ifeq ($(UNAME),WindowsCross)
@@ -67,11 +74,13 @@ else
       PLATFORM = windows
       TARGET = volt.exe
       RUN_TARGET = a.out.exe
+      NASM_FORMAT = win
     else
       # Not tested
       PLATFORM = windows
       TARGET = volt.exe
       RUN_TARGET = a.out.exe
+      NASM_FORMAT = win
     endif
   endif
 endif
@@ -85,6 +94,8 @@ DOBJ = $(patsubst src/%.d, $(OBJ_DIR)/%.$(OBJ_TYPE), $(DSRC))
 CXXOBJ = $(patsubst src/%.cpp, $(OBJ_DIR)/%.$(OBJ_TYPE), $(CXXSRC))
 OBJ = $(DOBJ) $(EXTRA_OBJ)
 
+SAVE_REGS_SRC = rt/src/vrt/gc/save_regs.asm
+SAVE_REGS_TARGET = rt/save-regs-host.o
 RT_HOST = rt/libvrt-host.bc
 RT_TARGETS = \
 	rt/libvrt-x86_64-msvc.bc \
@@ -108,7 +119,7 @@ RT_BIN_TARGETS = \
 	rt/libvrt-x86_64-osx.o
 
 
-all: $(RT_HOST) $(RT_TARGETS) $(RT_BIN_TARGETS)
+all: $(RT_HOST) $(RT_TARGETS) $(RT_BIN_TARGETS) $(SAVE_REGS_TARGET)
 
 $(OBJ_DIR)/%.$(OBJ_TYPE) : src/%.cpp Makefile
 	@echo "  CXX    src/$*.cpp"
@@ -144,9 +155,14 @@ $(TARGET): $(DSRC) $(EXTRA_OBJ)
 	@echo "  RDMD   $(TARGET)"
 	@$(RDMD) --build-only --compiler=$(DMD) $(DCOMP_FLAGS) $(LINK_FLAGS) $(EXTRA_OBJ) -of$(TARGET) src/main.d
 
+$(SAVE_REGS_TARGET): $(SAVE_REGS_SRC) Makefile
+	@echo "  NASM   $(SAVE_REGS_TARGET)"
+	@$(NASM) -f $(NASM_FORMAT) -o $(SAVE_REGS_TARGET) $(SAVE_REGS_SRC)
+
 clean:
 	@rm -rf $(TARGET) $(RUN_TARGET) .obj
 	@rm -f $(RT_TARGETS) $(RT_HOST)
+	@rm -f $(SAVE_REGS_TARGET)
 	@rm -rf .pkg
 	@rm -rf volt.tar.gz
 
