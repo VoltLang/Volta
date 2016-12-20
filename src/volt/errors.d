@@ -615,7 +615,7 @@ CompilerException makeCallingStaticThroughInstance(ir.Node node, ir.Function fun
 
 CompilerException makeMarkedOverrideDoesNotOverride(ir.Node node, ir.Function func, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(node.location, format("override functions like '%s' must override a function.", func.name), file, line);
+	return new CompilerError(node.location, format("function '%s' is marked override, but no matching function to override could be found.", func.name), file, line);
 }
 
 CompilerException makeAbstractHasToBeMember(ir.Node node, ir.Function func, string file = __FILE__, const int line = __LINE__)
