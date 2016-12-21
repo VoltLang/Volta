@@ -1709,6 +1709,41 @@ void lowerCMain(LanguagePass lp, ir.Scope current, ir.Function func)
 	buildReturnStat(loc, cmain._body, call);
 }
 
+ir.Exp zeroVariableIfNeeded(LanguagePass lp, ir.Variable var)
+{
+	auto s = .size(lp.target, var.type);
+	if (s < 64) {
+		return null;
+	}
+
+	auto l = var.location;
+	auto llvmMemset = lp.target.isP64 ? lp.llvmMemset64 : lp.llvmMemset32;
+	auto memset = buildExpReference(l, llvmMemset, llvmMemset.name);
+	auto ptr = buildCastToVoidPtr(l, buildAddrOf(l, buildExpReference(l, var, var.name)));
+	auto zero = buildConstantUbyte(l, 0);
+	auto size = buildConstantSizeT(l, lp.target, s);
+	auto alignment = buildConstantInt(l, 0);
+	auto isVolatile = buildConstantBool(l, false);
+	return buildCall(l, memset, [ptr, zero, size, alignment, isVolatile]);
+}
+
+void zeroVariablesIfNeeded(LanguagePass lp, ir.BlockStatement bs)
+{
+	for (size_t i = 0; i < bs.statements.length; ++i) {
+		auto var = cast(ir.Variable)bs.statements[i];
+		if (var is null || var.assign !is null || var.specialInitValue) {
+			continue;
+		}
+		auto exp = zeroVariableIfNeeded(lp, var);
+		if (exp is null) {
+			continue;
+		}
+		var.noInitialise = true;
+		bs.statements = bs.statements[0 .. i+1] ~ buildExpStat(exp.location, exp) ~ bs.statements[i+1 .. $];
+		i++;
+	}
+}
+
 /**
  * Calls the correct functions where they need to be called to lower a module.
  */
@@ -1760,6 +1795,7 @@ public:
 		}
 
 		insertBinOpAssignsForNestedVariableAssigns(lp, bs);
+		zeroVariablesIfNeeded(lp, bs);
 		return Continue;
 	}
 

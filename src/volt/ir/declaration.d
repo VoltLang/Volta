@@ -155,6 +155,10 @@ public:
 	 */
 	bool specialInitValue;
 
+	/**
+	 * Tells the backend to not zero out this variable.
+	 */
+	bool noInitialise;
 
 public:
 	this() { super(NodeType.Variable); }

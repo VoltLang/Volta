@@ -198,23 +198,16 @@ public:
 				break;
 			}
 
+			if (var.noInitialise) {
+				break;
+			}
+
 			auto s = size(state.lp.target, type.irType);
 			if (s < 64) {
 				auto ret = LLVMConstNull(type.llvmType);
 				LLVMBuildStore(state.builder, ret, v);
 				break;
 			}
-
-			v = LLVMBuildBitCast(state.builder, v, state.voidPtrType.llvmType, "");
-			auto memset = state.lp.target.isP64 ?
-				state.lp.llvmMemset64 :
-				state.lp.llvmMemset32;
-			auto func = state.getFunctionValue(memset, type);
-			LLVMBuildCall(state.builder, func, [v,
-					LLVMConstInt(state.ubyteType.llvmType, 0, false),
-					LLVMConstInt(state.sizeType.llvmType, s, false),
-					LLVMConstInt(state.intType.llvmType, 0, true),
-					LLVMConstInt(state.boolType.llvmType, 0, false)]);
 
 			break;
 		case Local:
