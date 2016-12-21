@@ -6,6 +6,7 @@ module volt.ir.type;
 import volt.ir.base;
 import volt.ir.declaration;
 import volt.ir.expression;
+import volt.ir.toplevel;
 
 
 /**
@@ -356,6 +357,7 @@ public:
 	bool isProperty;
 	bool homogenousVariadic;
 	bool forceLabel;
+	Class typeInfo;  //< When the backend needs a TypeInfo for varargs and such.
 	// Hi there. Thinking of adding a new field? Add it to the copy constructor, below.
 
 
@@ -384,6 +386,7 @@ public:
 		isProperty = old.isProperty;
 		homogenousVariadic = old.homogenousVariadic;
 		forceLabel = old.forceLabel;
+		typeInfo = old.typeInfo;
 	}
 }
 

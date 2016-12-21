@@ -536,7 +536,8 @@ private:
 		}
 
 		if (voltVariadic) {
-			auto tinfoClass = state.lp.tiTypeInfo;
+			panicAssert(ft, ft.typeInfo !is null);
+			auto tinfoClass = ft.typeInfo;
 			auto tr = buildTypeReference(ft.location, tinfoClass, tinfoClass.name);
 			addMangledName(tr);
 

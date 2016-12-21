@@ -4182,7 +4182,7 @@ void resolveFunction(Context ctx, ir.Function func)
 	ir.Type refType = func.type;
 	resolveType(ctx, refType);
 	func.type = cast(ir.FunctionType) refType;
-
+	func.type.typeInfo = ctx.lp.tiTypeInfo;
 
 	if (func.name == "main" && func.type.linkage == ir.Linkage.Volt) {
 
