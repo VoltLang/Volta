@@ -66,7 +66,7 @@ protected:
 	LLVMTypeRef mLandingType;
 
 public:
-	this(LanguagePass lp, ir.Module irMod)
+	this(LanguagePass lp, ir.Module irMod, string execDir, string identStr)
 	{
 		assert(irMod.name.identifiers.length > 0);
 		string name = irMod.name.toString();
@@ -77,6 +77,10 @@ public:
 		this.builder = LLVMCreateBuilderInContext(context);
 		this.diBuilder = LLVMCreateDIBuilder(mod);
 		this.lp = lp;
+		this.execDir = execDir;
+		assert(this.execDir.length > 0);
+		this.identStr = identStr;
+		assert(this.identStr.length > 0);
 
 		buildCommonTypes(this, lp.ver.isP64);
 

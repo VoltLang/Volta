@@ -75,9 +75,9 @@ public:
 		mTargetType = type;
 	}
 
-	override BackendResult compile(ir.Module m)
+	override BackendResult compile(ir.Module m, string execDir, string identStr)
 	{
-		auto state = new VoltState(lp, m);
+		auto state = new VoltState(lp, m, execDir, identStr);
 		auto mod = state.mod;
 		scope (failure) {
 			state.close();

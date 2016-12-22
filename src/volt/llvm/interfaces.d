@@ -56,6 +56,8 @@ abstract class State
 public:
 	LanguagePass lp;
 	ir.Module irMod;
+	string execDir;
+	string identStr;
 
 	LLVMContextRef context;
 	LLVMBuilderRef builder;

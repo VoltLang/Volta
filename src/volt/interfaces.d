@@ -707,7 +707,7 @@ interface Backend
 	 * Compile the given module. You need to have called setTarget before
 	 * calling this function.
 	 */
-	BackendResult compile(ir.Module m);
+	BackendResult compile(ir.Module m, string execDir, string identStr);
 
 	/**
 	 * Free any resources that the backend has.
