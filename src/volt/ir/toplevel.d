@@ -82,6 +82,8 @@ public:
 
 	bool gathered;
 
+	Struct moduleInfo;
+
 private:
 	size_t mId;
 
@@ -98,6 +100,7 @@ public:
 		this.gathered = old.gathered;
 		this.mId = old.mId;
 		this.isAnonymous = old.isAnonymous;
+		this.moduleInfo = old.moduleInfo;
 	}
 
 	/// Get a unique number for this module.

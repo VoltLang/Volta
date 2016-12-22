@@ -798,7 +798,7 @@ public:
 			name = format("%s%s%s", name, i.value.length, i.value);
 		}
 
-		auto t = cast(StructType)state.fromIr(state.lp.moduleInfo);
+		auto t = cast(StructType)state.fromIr(m.moduleInfo);
 		assert(t !is null);
 		auto at = cast(ArrayType)t.types[1];
 		assert(at !is null);

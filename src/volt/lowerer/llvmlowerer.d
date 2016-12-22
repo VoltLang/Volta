@@ -1771,6 +1771,7 @@ public:
 	 */
 	override void transform(ir.Module m)
 	{
+		m.moduleInfo = lp.moduleInfo;
 		thisModule = m;
 		accept(m, this);
 	}
