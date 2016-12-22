@@ -295,7 +295,8 @@ void doParent(LanguagePass lp, ir.Function parent)
 ir.Struct createAndAddNestedStruct(ir.Function func)
 {
 	auto bs = func._body;
-	auto s = buildStruct(func.location, format("__Nested%s", toString(cast(void*)func)), []);
+	auto id = getModuleFromScope(func.location, func.myScope).getId();
+	auto s = buildStruct(func.location, format("__Nested%s", id), []);
 	s.myScope = new ir.Scope(bs.myScope, s, s.name, bs.myScope.nestedDepth);
 	auto tref = buildTypeReference(s.location, s, "__Nested");
 	auto decl = buildVariable(
