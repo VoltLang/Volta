@@ -706,8 +706,11 @@ interface Backend
 	/**
 	 * Compile the given module. You need to have called setTarget before
 	 * calling this function.
+	 * See the corresponding fields on LanguagePass and Driver for what the non-Module
+	 * arguments mean.
 	 */
-	BackendResult compile(ir.Module m, string execDir, string identStr);
+	BackendResult compile(ir.Module m, ir.Function ehPersonality, ir.Function llvmTypeidFor,
+		string execDir, string identStr);
 
 	/**
 	 * Free any resources that the backend has.

@@ -341,7 +341,8 @@ public:
 		// Then jit compile it so we can run it in our process.
 		backend.setTarget(TargetType.Host);
 		auto d = languagePass.driver;
-		auto compMod = backend.compile(mod, d.execDir, d.identStr);
+		auto compMod = backend.compile(mod, languagePass.ehPersonalityFunc,
+		languagePass.llvmTypeidFor, d.execDir, d.identStr);
 		mCompiledModules[mod.uniqueId] = compMod;
 		return compMod;
 	}
@@ -559,7 +560,8 @@ protected:
 			backend.setTarget(TargetType.LlvmBitcode);
 			debugPrint("Backend %s.", m.name.toString());
 			auto d = languagePass.driver;
-			auto res = backend.compile(m, d.execDir, d.identStr);
+			auto res = backend.compile(m, languagePass.ehPersonalityFunc,
+				languagePass.llvmTypeidFor, d.execDir, d.identStr);
 			res.saveToFile(o);
 			res.close();
 			bitcodeFiles ~= o;

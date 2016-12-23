@@ -202,7 +202,7 @@ public:
 				break;
 			}
 
-			auto s = size(state.lp.target, type.irType);
+			auto s = size(state.target, type.irType);
 			if (s < 64) {
 				auto ret = LLVMConstNull(type.llvmType);
 				LLVMBuildStore(state.builder, ret, v);
@@ -829,7 +829,7 @@ public:
 		auto b = LLVMAppendBasicBlock(func, "entry");
 		LLVMPositionBuilderAtEnd(state.builder, b);
 
-		auto root = state.getVariableValue(state.lp.moduleInfoRoot, t);
+		auto root = state.getVariableValue(m.moduleInfoRoot, t);
 		auto first = LLVMBuildStructGEP(state.builder, gval, 0, "");
 		auto old = LLVMBuildLoad(state.builder, root, "");
 		LLVMBuildStore(state.builder, old, first);

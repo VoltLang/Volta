@@ -66,7 +66,8 @@ protected:
 	LLVMTypeRef mLandingType;
 
 public:
-	this(LanguagePass lp, ir.Module irMod, string execDir, string identStr)
+	this(TargetInfo target, ir.Module irMod, ir.Function ehPersonality, ir.Function llvmTypeidFor,
+		string execDir, string identStr)
 	{
 		assert(irMod.name.identifiers.length > 0);
 		string name = irMod.name.toString();
@@ -76,13 +77,15 @@ public:
 		this.mod = LLVMModuleCreateWithNameInContext(name, context);
 		this.builder = LLVMCreateBuilderInContext(context);
 		this.diBuilder = LLVMCreateDIBuilder(mod);
-		this.lp = lp;
+		this.target = target;
 		this.execDir = execDir;
 		assert(this.execDir.length > 0);
 		this.identStr = identStr;
 		assert(this.identStr.length > 0);
+		this.ehPersonality = ehPersonality;
+		this.llvmTypeidFor = llvmTypeidFor;
 
-		buildCommonTypes(this, lp.ver.isP64);
+		buildCommonTypes(this, target.isP64);
 
 		visitor = new LlvmVisitor(this);
 
@@ -156,7 +159,7 @@ public:
 			return mPersonalityFunc;
 		}
 		Type type;
-		return mPersonalityFunc = getFunctionValue(lp.ehPersonalityFunc, type);
+		return mPersonalityFunc = getFunctionValue(ehPersonality, type);
 	}
 
 	@property override LLVMValueRef ehTypeIdFunc()
@@ -165,10 +168,8 @@ public:
 			return mTypeIdFunc;
 		}
 
-		auto argFunc = lp.llvmTypeidFor;
-
 		Type type;
-		return mTypeIdFunc = getFunctionValue(argFunc, type);
+		return mTypeIdFunc = getFunctionValue(llvmTypeidFor, type);
 	}
 
 	@property override LLVMTypeRef ehLandingType()
@@ -340,8 +341,8 @@ public:
 			if (argFunc.isMergable) {
 				LLVMSetUnnamedAddr(v, true);
 				// For lack of COMDAT support.
-				if (lp.target.platform == Platform.MSVC ||
-				    lp.target.platform == Platform.MinGW) {
+				if (target.platform == Platform.MSVC ||
+				    target.platform == Platform.MinGW) {
 					LLVMSetLinkage(v, LLVMLinkage.Internal);
 				} else {
 					LLVMSetLinkage(v, LLVMLinkage.LinkOnceODR);
@@ -350,7 +351,7 @@ public:
 
 			// Needs to be done here, because this can not be set on a type.
 			if (argFunc.type.linkage == ir.Linkage.Windows) {
-				if (lp.target.arch == Arch.X86_64) {
+				if (target.arch == Arch.X86_64) {
 					LLVMSetFunctionCallConv(v, LLVMCallConv.X86_64_Win64);
 				} else {
 					LLVMSetFunctionCallConv(v, LLVMCallConv.X86Stdcall);
@@ -459,8 +460,8 @@ public:
 			 *
 			 * Also disabled on Metal.
 			 */
-			if (lp.target.platform != Platform.MinGW &&
-			    lp.target.platform != Platform.Metal) {
+			if (target.platform != Platform.MinGW &&
+			    target.platform != Platform.Metal) {
 				LLVMSetThreadLocal(v, true);
 			}
 			break;
@@ -470,13 +471,13 @@ public:
 			// proper fix is adding a weak attribute in the language.
 			if ((var.mangledName == "__bss_start" ||
 			     var.mangledName == "end") &&
-			    lp.target.platform == Platform.Linux ) {
+			    target.platform == Platform.Linux ) {
 				LLVMSetLinkage(v, LLVMLinkage.ExternalWeak);
 			} else if (var.isMergable) {
 				LLVMSetUnnamedAddr(v, true);
 				// For lack of COMDAT support.
-				if (lp.target.platform == Platform.MSVC ||
-				    lp.target.platform == Platform.MinGW) {
+				if (target.platform == Platform.MSVC ||
+				    target.platform == Platform.MinGW) {
 					LLVMSetLinkage(v, LLVMLinkage.Internal);
 				} else {
 					LLVMSetLinkage(v, LLVMLinkage.LinkOnceODR);

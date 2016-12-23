@@ -507,7 +507,7 @@ private:
 		auto strct = cast(StructType)argRet;
 		if (strct !is null && ft.linkage == ir.Linkage.C) {
 			auto irStruct = cast(ir.Struct)strct.irType;
-			hasStructRet = shouldCUseStructRet(state.lp.target, irStruct);
+			hasStructRet = shouldCUseStructRet(state.target, irStruct);
 		}
 
 		if (hasStructRet && ft.hiddenParameter) {
@@ -750,7 +750,7 @@ private:
 		diType = state.diStruct(irType);
 		llvmType = LLVMStructCreateNamed(state.context, mangled);
 		super(state, irType, llvmType, diType);
-		this.passByVal = volt.semantic.classify.size(state.lp.target, irType) > 16;
+		this.passByVal = volt.semantic.classify.size(state.target, irType) > 16;
 
 		createAlias(state, irType, mangled);
 
@@ -816,7 +816,7 @@ public:
 		ir.Exp lastExp;
 
 		foreach (i, t; types) {
-			auto sz = volt.semantic.classify.size(state.lp.target, t.irType);
+			auto sz = volt.semantic.classify.size(state.target, t.irType);
 			if (sz > lastSize) {
 				lastExp = ul.exps[i];
 				lastSize = sz;

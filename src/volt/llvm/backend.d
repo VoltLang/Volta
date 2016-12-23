@@ -75,9 +75,10 @@ public:
 		mTargetType = type;
 	}
 
-	override BackendResult compile(ir.Module m, string execDir, string identStr)
+	override BackendResult compile(ir.Module m, ir.Function ehPersonality, ir.Function llvmTypeidFor,
+		string execDir, string identStr)
 	{
-		auto state = new VoltState(lp, m, execDir, identStr);
+		auto state = new VoltState(lp.target, m, ehPersonality, llvmTypeidFor, execDir, identStr);
 		auto mod = state.mod;
 		scope (failure) {
 			state.close();
@@ -142,7 +143,7 @@ public:
 
 	override void saveToFile(string filename)
 	{
-		auto t = mState.lp.target;
+		auto t = mState.target;
 		auto triple = tripleList[t.platform][t.arch];
 		auto layout = layoutList[t.platform][t.arch];
 		LLVMSetTarget(mState.mod, triple);

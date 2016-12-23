@@ -54,10 +54,12 @@ public:
 abstract class State
 {
 public:
-	LanguagePass lp;
+	TargetInfo target;
 	ir.Module irMod;
 	string execDir;
 	string identStr;
+	ir.Function ehPersonality;
+	ir.Function llvmTypeidFor;
 
 	LLVMContextRef context;
 	LLVMBuilderRef builder;
