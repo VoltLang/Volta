@@ -32,16 +32,16 @@ import volt.llvm.toplevel;
 class LlvmBackend : Backend
 {
 protected:
-	LanguagePass lp;
+	TargetInfo target;
 
 	TargetType mTargetType;
 	bool mDump;
 
 public:
-	this(LanguagePass lp)
+	this(TargetInfo target, bool internalDebug)
 	{
-		this.lp = lp;
-		this.mDump = lp.driver.internalDebug;
+		this.target = target;
+		this.mDump = internalDebug;
 
 		auto passRegistry = LLVMGetGlobalPassRegistry();
 
@@ -49,8 +49,8 @@ public:
 		LLVMInitializeAnalysis(passRegistry);
 		LLVMInitializeTarget(passRegistry);
 
-		if (lp.target.arch == Arch.X86 ||
-		    lp.target.arch == Arch.X86_64) {
+		if (target.arch == Arch.X86 ||
+		    target.arch == Arch.X86_64) {
 			LLVMInitializeX86TargetInfo();
 			LLVMInitializeX86Target();
 			LLVMInitializeX86TargetMC();
@@ -78,7 +78,7 @@ public:
 	override BackendResult compile(ir.Module m, ir.Function ehPersonality, ir.Function llvmTypeidFor,
 		string execDir, string identStr)
 	{
-		auto state = new VoltState(lp.target, m, ehPersonality, llvmTypeidFor, execDir, identStr);
+		auto state = new VoltState(target, m, ehPersonality, llvmTypeidFor, execDir, identStr);
 		auto mod = state.mod;
 		scope (failure) {
 			state.close();

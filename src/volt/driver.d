@@ -876,7 +876,7 @@ protected:
 	{
 		if (mRunBackend) {
 			assert(languagePass !is null);
-			backend = new LlvmBackend(languagePass);
+			backend = new LlvmBackend(languagePass.target, languagePass.driver.internalDebug);
 		}
 	}
 
