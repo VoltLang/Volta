@@ -133,7 +133,7 @@ version (UseDIBuilder) {
 	LLVMValueRef diBaseType(State state, ir.PrimitiveType pt)
 	{
 		size_t size, alignment;
-		pt.getSizeAndAlignment(state.lp, size, alignment);
+		pt.getSizeAndAlignment(state.target, size, alignment);
 		DwAte encoding;
 		string name;
 
@@ -218,7 +218,7 @@ version (UseDIBuilder) {
 		}
 
 		size_t size, alignment;
-		pt.getSizeAndAlignment(state.lp, size, alignment);
+		pt.getSizeAndAlignment(state.target, size, alignment);
 
 		return LLVMDIBuilderCreatePointerType(
 			state.diBuilder, diType, size, alignment,
@@ -231,7 +231,7 @@ version (UseDIBuilder) {
 		assert(type !is null && type.diType !is null);
 
 		size_t size, alignment;
-		sat.getSizeAndAlignment(state.lp, size, alignment);
+		sat.getSizeAndAlignment(state.target, size, alignment);
 
 		LLVMValueRef[1] sub;
 		sub[0] = LLVMDIBuilderGetOrCreateRange(
@@ -283,7 +283,7 @@ version (UseDIBuilder) {
 	LLVMValueRef diUnion(State state, ir.Type t)
 	{
 		size_t size, alignment;
-		t.getSizeAndAlignment(state.lp, size, alignment);
+		t.getSizeAndAlignment(state.target, size, alignment);
 
 		string name = t.mangledName;
 		string uni = null;
@@ -309,7 +309,7 @@ version (UseDIBuilder) {
 	LLVMValueRef diStruct(State state, ir.Type t)
 	{
 		size_t size, alignment;
-		t.getSizeAndAlignment(state.lp, size, alignment);
+		t.getSizeAndAlignment(state.target, size, alignment);
 
 		string name = t.mangledName;
 		string uni = null;
@@ -345,7 +345,7 @@ version (UseDIBuilder) {
 			assert(d !is null);
 
 			size_t size, alignment;
-			elm.type.getSizeAndAlignment(state.lp, size, alignment);
+			elm.type.getSizeAndAlignment(state.target, size, alignment);
 
 			// Adjust offset to alignment
 			if (offset % alignment) {
@@ -378,8 +378,8 @@ version (UseDIBuilder) {
 
 		auto di = new LLVMValueRef[](2);
 		size_t s0, s1, a0, a1, offset;
-		t[0].irType.getSizeAndAlignment(state.lp, s0, a0);
-		t[1].irType.getSizeAndAlignment(state.lp, s1, a1);
+		t[0].irType.getSizeAndAlignment(state.target, s0, a0);
+		t[1].irType.getSizeAndAlignment(state.target, s1, a1);
 
 
 		// Adjust offset to alignment
@@ -429,7 +429,7 @@ version (UseDIBuilder) {
 
 		size_t size, alignment;
 		state.voidPtrType.irType.getSizeAndAlignment(
-			state.lp, size, alignment);
+			state.target, size, alignment);
 
 		return LLVMDIBuilderCreatePointerType(
 			state.diBuilder, diCallType, size, alignment,
