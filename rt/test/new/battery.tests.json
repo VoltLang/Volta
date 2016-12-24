@@ -2,9 +2,7 @@
 	"pattern": "*.volt",
 	"testCommandPrefix": "//T ",
 	"defaultCommands": [
-		"//T retval:0",
-		"//T run:volt -o %t %s",
-		"//T retval:0",
+		"//T run:volta -o %t %s",
 		"//T run:%t"
 	]
 
