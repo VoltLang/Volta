@@ -4,7 +4,10 @@
 	"defaultCommands": [
 		"//T run:volta -o %t %s",
 		"//T run:%t"
-	]
-
+	],
+	"requiresAliases": {
+		"windows": "msvc",
+		"mac": "osx",
+		"exceptions": "!windows"
+	}
 }
-
