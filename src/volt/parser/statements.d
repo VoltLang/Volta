@@ -1140,19 +1140,36 @@ ParseStatus parseTryStatement(ParserStream ps, out ir.TryStatement t)
 		if (matchIf(ps, TokenType.OpenParen)) {
 			auto var = new ir.Variable();
 			var.location = ps.peek.location;
-			succeeded = parseType(ps, var.type);
-			if (!succeeded) {
-				return parseFailed(ps, t);
-			}
 			var.specialInitValue = true;
-			if (ps != TokenType.CloseParen) {
+			if (isColonDeclaration(ps)) {
+				// catch (e: Exception)
 				if (ps != TokenType.Identifier) {
 					return unexpectedToken(ps, t);
 				}
-				auto nameTok = ps.get();
-				var.name = nameTok.value;
+				var.name = ps.get().value;
+				succeeded = match(ps, t, TokenType.Colon);
+				if (!succeeded) {
+					return succeeded;
+				}
+				succeeded = parseType(ps, var.type);
+				if (!succeeded) {
+					return parseFailed(ps, t);
+				}
 			} else {
-				var.name = "1__dummy";
+				// catch (Exception e) or catch (Exception)
+				succeeded = parseType(ps, var.type);
+				if (!succeeded) {
+					return parseFailed(ps, t);
+				}
+				if (ps != TokenType.CloseParen) {
+					if (ps != TokenType.Identifier) {
+						return unexpectedToken(ps, t);
+					}
+					auto nameTok = ps.get();
+					var.name = nameTok.value;
+				} else {
+					var.name = "1__dummy";
+				}
 			}
 			if (ps != TokenType.CloseParen) {
 				return unexpectedToken(ps, t);
