@@ -1,6 +1,6 @@
 //T default:no
 //T retval:1
-//T run:volt -o %t %s
+//T run:volta -o %t %s
 // Test that assigning null to AAs is an error.
 module test;
 
