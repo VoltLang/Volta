@@ -1,6 +1,5 @@
 //T default:no
-//T retval:1
-//T run:volta -o %t %s
+//T macro:expect-failure
 // Invalid key type accessing aa.
 module test;
 

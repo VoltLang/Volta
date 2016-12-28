@@ -5,6 +5,12 @@
 		"//T run:volta -o %t %s",
 		"//T run:%t"
 	],
+	"macros": {
+		"expect-failure": [
+			"//T retval:1",
+			"//T run:volta -o %t %s"
+		]
+	},
 	"requiresAliases": {
 		"windows": "msvc",
 		"mac": "osx",
