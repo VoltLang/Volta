@@ -1,31 +1,30 @@
-//T compiles:yes
-//T retval:32
+// More AA sanity.
 module test;
 
 import core.object : Object;
+import core.exception : Exception;
 
 struct Foo {
-	int y;
+	y: i32;
 }
 
 struct S {
-	int x;
-	int y;
-	void* p;
-	int[] a;
-	Foo foo;
-	Object obj;
-	int[int] aa;
-	string s;
+	x: i32;
+	y: i32;
+	p: void*;
+	a: i32[];
+	foo: Foo;
+	obj: Object;
+	aa: i32[i32];
+	s: string;
 }
 
-int main()
+fn main() i32
 {
-	int[S] aa;
+	aa: i32[S];
 	S a, b;
 	a.x = 1; a.y = 2; a.p = cast(void*)&a;
 	a.a = [1, 1, 3];
-	a.a[1] += 1;
 	a.foo.y = 7;
 	a.obj = new Object();
 	a.s = "hello";
@@ -36,6 +35,10 @@ int main()
 	b.s = "hell";
 	b.s ~= "o";
 	aa[a] = 32;
-	return aa[b];
+	try {
+		return aa[b];
+	} catch (Exception) {
+		return 0;
+	}
+	return 1;
 }
-

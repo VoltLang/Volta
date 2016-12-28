@@ -1,12 +1,9 @@
-//T compiles:yes
-//T retval:12
 // AA foreach test with strings as values.
 module test;
 
-
-int main(string[] args)
+fn main() i32
 {
-	string[string] aa;
+	aa: string[string];
 
 	aa["Bernard"] = "foo";
 	aa["Jakob"] = "foo";
@@ -21,5 +18,5 @@ int main(string[] args)
 		acc += v.length;
 	}
 
-	return cast(int)acc;
+	return acc == 12 ? 0 : 1;
 }
