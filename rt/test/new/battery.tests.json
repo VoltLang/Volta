@@ -9,6 +9,10 @@
 		"expect-failure": [
 			"//T retval:1",
 			"//T run:volta -o %t %s"
+		],
+		"debug": [
+			"//T run:volta -d -o %t %s",
+			"//T run:%t"
 		]
 	},
 	"requiresAliases": {

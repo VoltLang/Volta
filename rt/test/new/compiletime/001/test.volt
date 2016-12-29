@@ -1,20 +1,18 @@
-//T compiles:yes
-//T retval:42
 // Most basic conditional test.
 module test;
 
 
 version (Volt) {
-	local int val;
+	local val: i32;
 }
 version (none) {
-	int val;
+	val: i32;
 }
 
-int main()
+fn main() i32
 {
 	version (Volt) {
-		val = 42;
+		val = 0;
 	}
 	version (none) {
 		val = 32;

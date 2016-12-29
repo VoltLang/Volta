@@ -1,12 +1,10 @@
-//T compiles:yes
-//T retval:13
 module test;
 
-int x()
+fn x() i32
 {
-	int a;
+	a: i32;
 	version (!none) {
-		a = 6;
+		a = 0;
 	}
 	version ((all && !none) || none) {
 		a = a * 2;
@@ -17,12 +15,10 @@ int x()
 	version (none || all) {
 		a = a + 1;
 	}
-	return a;
+	return a - 1;
 }
 
-
-int main()
+fn main() i32
 {
 	return x();
 }
-
