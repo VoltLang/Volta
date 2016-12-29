@@ -1,8 +1,9 @@
-//T compiles:yes
-//T do-not-link
+//T default:no
+//T macro:do-not-link
 module test;
 
-void foo() {
+fn foo()
+{
 	version (none) {
 		uniform!("[]", char, char)('0', '9');
 	}

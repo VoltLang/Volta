@@ -1,5 +1,3 @@
-//T compiles:yes
-//T retval:17
 module test;
 
 fn fna() i32[]
@@ -16,5 +14,5 @@ fn main() i32
 {
 	a: (fn () i32[])[] = [fna, fnb];
 	b: (int)[] = [1, 2];
-	return (a[1]()[1] * a[0]()[2]) + b[1];
+	return (a[1]()[1] * a[0]()[2]) + b[1] == 17 ? 0 : 1;
 }

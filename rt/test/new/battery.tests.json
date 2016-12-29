@@ -13,6 +13,9 @@
 		"debug": [
 			"//T run:volta -d -o %t %s",
 			"//T run:%t"
+		],
+		"do-not-link": [
+			"//T run:volta -c %s"
 		]
 	},
 	"requiresAliases": {
