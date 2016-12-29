@@ -1,27 +1,24 @@
-//T compiles:yes
-//T retval:42
 module test;
 
 
 struct Test
 {
-	int val;
+	val: i32;
 
-	void check(int should, int next)
+	fn check(should: i32, next: i32)
 	{
 		if (val != should) {
-			val = int.max;
+			val = i32.max;
 		} else {
 			val = next;
 		}
 	}
 }
 
-global Test test;
-
+global test: Test;
 
 // Basic test.
-void func1to2()
+fn func1to2()
 {
 	scope (success) {
 		test.check(1, 2);
@@ -29,7 +26,7 @@ void func1to2()
 }
 
 // Do test.
-void func1to3()
+fn func1to3()
 {
 	do {
 		scope (success) {
@@ -44,14 +41,14 @@ void func1to3()
 }
 
 // Check continue and skipping of scopes.
-void func1to4()
+fn func1to4()
 {
-	int shouldBeOne;
+	shouldBeOne: i32;
 
 	// Setup test for the second scope in for loop.
 	test.check(1, 6);
 
-	for (int i; i < 2; i++) {
+	for (i: i32; i < 2; i++) {
 		scope (success) {
 			shouldBeOne = i;
 		}
@@ -78,7 +75,7 @@ void func1to4()
 }
 
 // Check trigger order.
-void func1to5()
+fn func1to5()
 {
 	// This should trigger last.
 	scope (success) {
@@ -93,14 +90,14 @@ void func1to5()
 }
 
 // Switch
-void func1to6()
+fn func1to6()
 {
 	scope (success) {
 		test.check(7, 6);
 	}
 
 	// Run order is. 0, 1, 3, 2, 3.
-	for (int i; i < 4; i++) {
+	for (i: i32; i < 4; i++) {
 		switch (i) {
 		case 0:
 			test.check(1, 2);
@@ -126,7 +123,7 @@ void func1to6()
 }
 
 // Multiple levels with return.
-void func1to7()
+fn func1to7()
 {
 	scope (success) {
 		test.check(4, 7);
@@ -135,7 +132,7 @@ void func1to7()
 		test.check(3, 4);
 	}
 
-	for (int i; i < 4; i++) {
+	for (i: i32; i < 4; i++) {
 		scope (success) {
 			test.check(2, 3);
 		}
@@ -147,7 +144,7 @@ void func1to7()
 	}
 }
 
-void func1to8()
+fn func1to8()
 {
 	scope (success) {
 		test.check(4, 8);
@@ -156,7 +153,7 @@ void func1to8()
 	return test.check(1, 4);
 }
 
-int main()
+fn main() i32
 {
 	// Init
 	test.check(0, 1);
@@ -183,7 +180,7 @@ int main()
 	test.check(8, 1);
 
 	if (test.val == 1) {
-		return 42;
+		return 0;
 	} else {
 		return 1;
 	}
