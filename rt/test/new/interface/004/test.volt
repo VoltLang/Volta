@@ -1,20 +1,22 @@
-//T compiles:no
+//T default:no
+//T macro:expect-failure
 module test;
 
 interface Wow
 {
-	void doge();
+	fn doge();
 }
 
 class Such : Wow
 {
-	int doge()
+	fn doge() i32
 	{
 		return 42;
 	}
 }
 
-int main()
+fn main() i32
 {
 	return (new Such()).doge();
 }
+
