@@ -1,11 +1,12 @@
-//T compiles:no
+//T default:no
+//T macro:expect-failure
 module test;
 
-
-int main()
+fn main() i32
 {
-	bool foo;
+	foo: bool;
 	// Should not implicitly convert to a bool.
 	foo = 0;
 	return 0;
 }
+
