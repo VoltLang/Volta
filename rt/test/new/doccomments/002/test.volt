@@ -1,9 +1,10 @@
-//T compiles:no
+//T default:no
+//T macro:expect-failure
 module test;
 
 // Should be fine, not sure if this will do anything
-void ichi();
-void ni();
+fn ichi();
+fn ni();
 /**
  * @}
  */
@@ -17,13 +18,14 @@ void ni();
 /**
  * @{
  */
-void san();
-void yon();
+fn san();
+fn yon();
 /**
  * @}
  */ 
   
-int main()  // Go!
+fn main() i32  // Go!
 {
 	return 0;
 }
+

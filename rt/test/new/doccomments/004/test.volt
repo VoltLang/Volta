@@ -1,5 +1,3 @@
-//T compiles:yes
-//T retval:2
 module test;
 
 /**
@@ -9,5 +7,6 @@ fn close();
 
 fn main() i32
 {
-	return 2;
+	return 0;
 }
+
