@@ -3,7 +3,7 @@ module test;
 import vrt.gc.slab;
 
 
-fn main() int
+fn main() i32
 {
 	block: Slab;
 	block.setup(0, null, false);
@@ -35,3 +35,4 @@ fn main() int
 
 	return 0;
 }
+

@@ -3,7 +3,7 @@ module test;
 
 import vrt.gc.util;
 
-fn main() int
+fn main() i32
 {
 	aa: u32[u32] = [
 		// 1 -> 2
@@ -37,3 +37,4 @@ fn main() int
 
 	return 0;
 }
+

@@ -129,3 +129,4 @@ fn main() i32
 	correctstr := "root(2 l(1) R(5 l(4 L(3) r) r(7 L(6) R(9))))";
 	return str == correctstr ? 0 : 1;
 }
+

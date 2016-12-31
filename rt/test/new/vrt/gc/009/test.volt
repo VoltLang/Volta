@@ -23,3 +23,4 @@ fn main() i32
 	p := "hello" in it.theAAThatItIsHolding;
 	return *p == "world" ? 0 : 1;
 }
+
