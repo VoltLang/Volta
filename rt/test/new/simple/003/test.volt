@@ -1,13 +1,12 @@
-//T compiles:yes
-//T retval:32
 // Local var test.
 module test;
 
 
-local int var;
+local var: i32;
 
 int main()
 {
 	var = 32;
-	return var;
+	return var == 32 ? 0 : 1;
 }
+
