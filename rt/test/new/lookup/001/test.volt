@@ -1,16 +1,15 @@
-//T compiles:yes
-//T retval:3
 // Ensures that test 2 isn't a fluke.
 module test;
 
 
-int main()
+fn main() i32
 {
 	if (true) {
-		int x = 3;
+		x: i32 = 0;
 		return x;
 	} else {
-		int x = 4;
+		x: i32 = 4;
 		return x;
 	}
 }
+
