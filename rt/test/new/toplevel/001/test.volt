@@ -1,12 +1,10 @@
-//T compiles:yes
-//T retval:13
 module test;
 
-global int x;
+global x: i32;
 
 global this()
 {
-	x = 13;
+	x = 0;
 	return;
 }
 
@@ -16,7 +14,7 @@ global ~this()
 	return;
 }
 
-int main()
+fn main() i32
 {
 	return x;
 }

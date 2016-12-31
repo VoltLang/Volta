@@ -1,10 +1,8 @@
-//T compiles:yes
-//T retval:42
 module test;
 
 class IntegerHoldingInstanceVersionThree
 {
-	int integerThatIsBeingHeldByIntegerHoldingInstance = 42;
+	integerThatIsBeingHeldByIntegerHoldingInstance: i32 = 0;
 
 	this()
 	{
@@ -13,7 +11,7 @@ class IntegerHoldingInstanceVersionThree
 
 int main()
 {
-	auto integer = new IntegerHoldingInstanceVersionThree();
+	integer := new IntegerHoldingInstanceVersionThree();
 	return integer.integerThatIsBeingHeldByIntegerHoldingInstance;
 }
 
