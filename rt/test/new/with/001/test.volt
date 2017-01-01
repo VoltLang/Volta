@@ -1,21 +1,19 @@
-//T compiles:yes
-//T retval:7
 module test;
 
 struct S {
-	Y y;
+	y: Y;
 }
 
 struct Y {
-	int x;
+	x: i32;
 }
 
-int main()
+fn main() i32
 {
-	S s;
+	s: S;
 	s.y.x = 7;
 	with (s.y) {
-		return x;
+		return x - 7;
 	}
 }
 

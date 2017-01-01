@@ -1,21 +1,22 @@
-//T compiles:no
+//T default:no
+//T macro:expect-failure
 module test;
 
 struct S {
-	Y y;
-	int b;
+	y: Y;
+	b: i32;
 }
 
 struct Y {
-	int x;
+	x: i32;
 }
 
-int main()
+fn main() i32
 {
-	S s;
+	s: S;
 	s.b = 7;
 	s.y.x = 3;
-	int x;
+	x: i32;
 	with (s.y) with (s) {
 		return b + x;
 	}
