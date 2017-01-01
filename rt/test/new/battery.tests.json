@@ -16,6 +16,9 @@
 		],
 		"do-not-link": [
 			"//T run:volta -c %s"
+		],
+		"syntax-only": [
+			"//T run:volta -c -E %s"
 		]
 	},
 	"requiresAliases": {
