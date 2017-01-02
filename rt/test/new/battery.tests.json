@@ -1,5 +1,5 @@
 {
-	"pattern": "*.volt",
+	"pattern": "test.volt",
 	"testCommandPrefix": "//T ",
 	"defaultCommands": [
 		"//T run:volta -o %t %s",
@@ -19,6 +19,14 @@
 		],
 		"syntax-only": [
 			"//T run:volta -c -E %s"
+		]
+		"import": [
+			"//T run:volta -o %t %s --src-I %S/../deps",
+			"//T run:%t"
+		],
+		"importfail": [
+			"//T retval:1",
+			"//T run:volta -o %t %s --src-I %S/../deps"
 		]
 	},
 	"requiresAliases": {
