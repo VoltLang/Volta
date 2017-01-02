@@ -1,16 +1,15 @@
-//T compiles:yes
-//T retval:1
+//T requires:exceptions
 module test;
 
 import core.exception;
 
 
-int main()
+fn main() i32
 {
 	try {
 		throw new Exception("hello");
 	} catch (Exception e) {
-		return 1;
+		return 0;
 	}
-	return 0;
+	return 1;
 }

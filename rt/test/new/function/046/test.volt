@@ -1,11 +1,9 @@
-//T compiles:yes
-//T retval:7
 module test;
 
-int main()
+fn main() i32
 {
 	if (true) {
-		return 7;
+		return 0;
 	}
 	// Never reached.
 }
