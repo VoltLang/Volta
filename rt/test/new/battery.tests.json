@@ -19,7 +19,7 @@
 		],
 		"syntax-only": [
 			"//T run:volta -c -E %s"
-		]
+		],
 		"import": [
 			"//T run:volta -o %t %s --src-I %S/../deps",
 			"//T run:%t"

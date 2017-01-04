@@ -84,7 +84,7 @@ public:
 		}
 
 		StringSink str;
-		str.sink("circular dependancy detected");
+		str.sink("circular dependency detected");
 		foreach (s; mStack) {
 			str.sink("\n");
 			str.sink(s.description);
