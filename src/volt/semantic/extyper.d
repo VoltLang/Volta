@@ -4146,6 +4146,10 @@ void resolveVariable(Context ctx, ir.Variable v)
 				throw makeBadImplicitCast(v, rtype, v.type);
 			}
 		}
+		bool assigningOutsideFunction = v.storage != ir.Variable.Storage.Function;
+		if (assigningOutsideFunction && v.type.isScope && mutableIndirection(v.type)) {
+			throw makeNoEscapeScope(v.location);
+		}
 		doConvert(ctx, v.type, v.assign);
 	}
 
