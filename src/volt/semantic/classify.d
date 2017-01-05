@@ -780,7 +780,9 @@ bool isLValueOrAssignable(ir.Exp exp, bool assign)
 		return true;
 	case ir.NodeType.IdentifierExp:
 		throw panic(exp, "IdentifierExp left in ir (run ExTyper)");
-	case ir.NodeType.ExpReference: return true;
+	case ir.NodeType.ExpReference:
+		auto eref = cast(ir.ExpReference)exp;
+		return eref.decl.nodeType != ir.NodeType.EnumDeclaration;
 	case ir.NodeType.Postfix:
 		// TODO Remove Postfix.Identifier case
 		auto asPostfix = cast(ir.Postfix) exp;
