@@ -1,11 +1,11 @@
 {
 	"pattern": "test.volt",
 	"testCommandPrefix": "//T ",
-	"defaultCommands": [
-		"//T run:volta -o %t %s",
-		"//T run:%t"
-	],
 	"macros": {
+		"default": [
+			"//T run:volta -o %t %s",
+			"//T run:%t"
+		],
 		"expect-failure": [
 			"//T retval:1",
 			"//T run:volta -o %t %s"
