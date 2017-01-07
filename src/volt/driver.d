@@ -207,9 +207,12 @@ public:
 		}
 
 		foreach (path; mStringImportPaths) {
+			string filename = format("%s/%s", path, fname);
 			string str;
 			try {
-				return cast(string)read(format("%s/%s", path, fname));
+				str = cast(string)read(filename);
+				mDepFiles ~= filename;
+				return str;
 			} catch (Throwable) {
 			}
 		}
