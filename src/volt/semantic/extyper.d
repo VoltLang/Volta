@@ -2189,8 +2189,9 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 		throw makeNoEscapeScope(exp.location);
 	}
 
-
-	if (binop.op == ir.BinOp.Op.Assign) {
+	auto lprim = cast(ir.PrimitiveType)ltype;
+	auto rprim = cast(ir.PrimitiveType)rtype;
+	if ((lprim !is null && rprim !is null && .isAssign(binop.op)) || binop.op == ir.BinOp.Op.Assign) {
 		if (effectivelyConst(ltype)) {
 			throw makeCannotModify(binop, ltype);
 		}
@@ -2250,8 +2251,8 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 
 	if (ltype.nodeType == ir.NodeType.PrimitiveType &&
 	    rtype.nodeType == ir.NodeType.PrimitiveType) {
-		auto lprim = cast(ir.PrimitiveType) ltype;
-		auto rprim = cast(ir.PrimitiveType) rtype;
+		lprim = cast(ir.PrimitiveType) ltype;
+		rprim = cast(ir.PrimitiveType) rtype;
 		assert(lprim !is null && rprim !is null);
 		return extypeBinOp(ctx, binop, lprim, rprim);
 	}
@@ -2276,7 +2277,7 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 		default:
 			throw makeError(binop, "illegal pointer arithmetic.");
 		}
-		auto rprim = cast(ir.PrimitiveType) rtype;
+		rprim = cast(ir.PrimitiveType) rtype;
 		if (rprim is null || !isOkayForPointerArithmetic(rprim.type)) {
 			throw makeError(binop, "illegal pointer arithmetic invalid type.");
 		}
