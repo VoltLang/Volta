@@ -29,7 +29,7 @@ enum immutable(string)[] _tokenToString = [
 "i8", "i16", "i32", "i64", "idouble",
 "if", "ifloat", "immutable", "import", "in", "inout", "int", "interface",
 "invariant", "ireal", "is", "isize", "lazy", "local", "long", "macro", "mixin",
-"module", "new", "nothrow", "null", "out", "override", "package", "pragma",
+"module", "new", "nothrow", "null", "out", "override", "pragma",
 "private", "protected", "public", "pure", "real", "ref", "return",
 "scope", "shared", "short", "static", "struct", "super",
 "switch", "synchronized", "template", "this", "throw", "true",
@@ -93,7 +93,7 @@ enum TokenType
 	Macro, Mixin, Module,
 	New, Nothrow, Null,
 	Out, Override,
-	Package, Pragma, Private, Protected, Public, Pure,
+	Pragma, Private, Protected, Public, Pure,
 	Real, Ref, Return,
 	Scope, Shared, Short, Static, Struct, Super,
 	Switch, Synchronized,
@@ -275,7 +275,6 @@ TokenType identifierType(string ident)
 	case "null":                return Null;
 	case "out":                 return Out;
 	case "override":            return Override;
-	case "package":             return Package;
 	case "pragma":              return Pragma;
 	case "private":             return Private;
 	case "protected":           return Protected;

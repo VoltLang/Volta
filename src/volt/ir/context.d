@@ -86,6 +86,11 @@ public:
 	Node node;
 
 	/**
+	 * If node was modified (e.g. alias) this is what it was first.
+	 */
+	Node originalNode;
+
+	/**
 	 * The scope for this context, node might point to owning node,
 	 * the exception being Scope, which does not have a owning node.
 	 */
@@ -107,7 +112,10 @@ public:
 	Store myAlias;
 
 	/// Public except for binds from private imports.
-	Access access = Access.Public;
+	Access importBindAccess = Access.Public;
+
+	/// Was this symbol introduced by import <> : thisSymbol? Used for protection.
+	bool importAlias;
 
 
 public:
@@ -194,6 +202,7 @@ public:
 		assert(kind == Kind.Alias);
 		assert(myAlias is null);
 		kind = Kind.Type;
+		originalNode = node;
 		node = t;
 	}
 }
@@ -345,7 +354,7 @@ public:
 		auto store = new Store(this, n, name, Store.Kind.Scope);
 		symbols[name] = store;
 		store.myScope = s;
-		store.access = Access.Private;
+		store.importBindAccess = Access.Private;
 		return store;
 	}
 

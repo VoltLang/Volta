@@ -217,7 +217,6 @@ body
 		case TokenType.Deprecated:
 		case TokenType.Private:
 		case TokenType.Protected:
-		case TokenType.Package:
 		case TokenType.Public:
 		case TokenType.Export:
 		case TokenType.Final:
@@ -1072,7 +1071,6 @@ ParseStatus parseAttribute(ParserStream ps, out ir.Attribute attr, bool noTopLev
 	case TokenType.Deprecated: attr.kind = ir.Attribute.Kind.Deprecated; break;
 	case TokenType.Private: attr.kind = ir.Attribute.Kind.Private; break;
 	case TokenType.Protected: attr.kind = ir.Attribute.Kind.Protected; break;
-	case TokenType.Package: attr.kind = ir.Attribute.Kind.Package; break;
 	case TokenType.Public: attr.kind = ir.Attribute.Kind.Public; break;
 	case TokenType.Export: attr.kind = ir.Attribute.Kind.Export; break;
 	case TokenType.Static: attr.kind = ir.Attribute.Kind.Static; break;

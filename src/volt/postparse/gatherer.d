@@ -59,7 +59,6 @@ bool isValidAccess(ir.Access access)
 {
 	switch (access) with (ir.Access) {
 	case Private, Public, Protected:
-	case Package: // Yes
 		return true;
 	default:
 		return false;

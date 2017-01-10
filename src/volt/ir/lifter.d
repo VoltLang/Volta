@@ -552,7 +552,7 @@ public:
 		n.name = old.name;
 		n.parent = parent;
 		n.kind = old.kind;
-		n.access = old.access;
+		n.importBindAccess = old.importBindAccess;
 		n.node = liftedOrPanic(old.node, "non-lifted node in scope");
 
 		panicAssert(old.node, old.myScope is null);

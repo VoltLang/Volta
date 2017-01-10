@@ -478,6 +478,7 @@ public:
 	 *
 	 */
 
+protected:
 	override void doResolve(ir.Scope current, ir.Variable v)
 	{
 		auto e = new ExTyper(this);
@@ -584,12 +585,12 @@ public:
 		actualizeClass(this, c);
 	}
 
+public:
 	/*
 	 *
 	 * Phase functions.
 	 *
 	 */
-
 	final void phase1(ir.Module m)
 	{
 		if (m.hasPhase1) {
@@ -702,7 +703,7 @@ public:
 		}
 	}
 
-	private void resolve(ir.Scope current, ir.TopLevelBlock members)
+	void resolve(ir.Scope current, ir.TopLevelBlock members)
 	{
 		foreach (node; members.nodes) {
 			auto var = cast(ir.Variable) node;

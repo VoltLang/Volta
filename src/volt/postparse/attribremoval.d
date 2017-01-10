@@ -89,6 +89,13 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.EnumDeclaration ed)
+	{
+		applyAttributes(ed, ctxTop.stack);
+		applyAttributes(ed, mStack);
+		return Continue;
+	}
+
 	override Status enter(ir.Struct s)
 	{
 		applyAttributes(s, ctxTop.stack);
@@ -162,9 +169,6 @@ protected:
 			case Private:
 				i.access = ir.Access.Private;
 				break;
-			case Package:
-				i.access = ir.Access.Package;
-				break;
 			case Protected:
 				i.access = ir.Access.Protected;
 				break;
@@ -215,9 +219,6 @@ protected:
 			case Private:
 				func.access = ir.Access.Private;
 				break;
-			case Package:
-				func.access = ir.Access.Package;
-				break;
 			case Protected:
 				func.access = ir.Access.Protected;
 				break;
@@ -266,6 +267,28 @@ protected:
 	/**
 	 * Loops over all attributes and applies them.
 	 */
+	void applyAttributes(ir.EnumDeclaration ed, ir.Attribute[] attrs)
+	{
+		foreach (attr; attrs) {
+			switch(attr.kind) with (ir.Attribute.Kind) {
+			case Public:
+				ed.access = ir.Access.Public;
+				break;
+			case Private:
+				ed.access = ir.Access.Private;
+				break;
+			case Protected:
+				ed.access = ir.Access.Protected;
+				break;
+			default:
+				// Warn?
+			}
+		}
+	}
+
+	/**
+	 * Loops over all attributes and applies them.
+	 */
 	void applyAttributes(ir.Variable d, ir.Attribute[] attrs)
 	{
 		foreach (attr; attrs) {
@@ -275,9 +298,6 @@ protected:
 				break;
 			case Private:
 				d.access = ir.Access.Private;
-				break;
-			case Package:
-				d.access = ir.Access.Package;
 				break;
 			case Protected:
 				d.access = ir.Access.Protected;
@@ -343,9 +363,6 @@ protected:
 			case Private:
 				s.access = ir.Access.Private;
 				break;
-			case Package:
-				s.access = ir.Access.Package;
-				break;
 			case Protected:
 				s.access = ir.Access.Protected;
 				break;
@@ -375,9 +392,6 @@ protected:
 			case Private:
 				i.access = ir.Access.Private;
 				break;
-			case Package:
-				i.access = ir.Access.Package;
-				break;
 			case Protected:
 				i.access = ir.Access.Protected;
 				break;
@@ -400,9 +414,6 @@ protected:
 			case Private:
 				e.access = ir.Access.Private;
 				break;
-			case Package:
-				e.access = ir.Access.Package;
-				break;
 			case Protected:
 				e.access = ir.Access.Protected;
 				break;
@@ -424,9 +435,6 @@ protected:
 				break;
 			case Private:
 				a.access = ir.Access.Private;
-				break;
-			case Package:
-				a.access = ir.Access.Package;
 				break;
 			case Protected:
 				a.access = ir.Access.Protected;

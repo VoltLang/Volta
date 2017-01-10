@@ -178,6 +178,7 @@ public:
 	}
 
 override:
+protected:
 	string errorFormat()
 	{
 		return "panic: %s";

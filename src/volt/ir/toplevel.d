@@ -240,7 +240,6 @@ public:
 		Deprecated,
 		Private,
 		Protected,
-		Package,
 		Public,
 		Export,
 		Static,

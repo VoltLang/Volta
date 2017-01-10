@@ -451,6 +451,9 @@ ir.Function[] getPotentialOverrideFunctions(ir.Function[] functions, ir.Function
 			continue;
 		}
 		if (func.name == considerFunction.name) {
+			if (func.access != considerFunction.access) {
+				throw makeOverriddenFunctionsAccessMismatch(func, considerFunction);
+			}
 			_out ~= func;
 		}
 	}
@@ -615,7 +618,7 @@ ir.Exp getInterfaceStructAssign(LanguagePass lp, ir.Class _class, ir.Scope _scop
 	auto fns = getInterfaceFunctions(lp, iface);
 
 	foreach (func; fns) {
-		auto store = lookupAsThisScope(lp, _scope, l, func.name);
+		auto store = lookupAsThisScope(lp, _scope, l, func.name, _class.myScope);
 		if (store is null || !containsMatchingFunction(store.functions, func)) {
 			throw makeDoesNotImplement(l, _class, iface, func);
 		}

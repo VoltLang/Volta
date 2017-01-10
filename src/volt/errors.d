@@ -77,6 +77,34 @@ void warningShadowsField(Location newDecl, Location oldDecl, string name, bool w
  * Specific Errors
  *
  */
+
+CompilerException makeOverloadedFunctionsAccessMismatch(ir.Function a, ir.Function b)
+{
+	auto l = b.location;
+	return new CompilerError(l, format("function '%s' access level differs from overloaded function @ %s.",
+		a.name, a.location.toString()));
+}
+
+CompilerException makeOverriddenFunctionsAccessMismatch(ir.Function a, ir.Function b)
+{
+	auto l = b.location;
+	return new CompilerError(l, format("function '%s' access level differs from overridden function @ %s.",
+		a.name, a.location.toString()));
+}
+
+CompilerException makeBadAccess(Location l, string name, ir.Access access,
+	string file = __FILE__, const int line = __LINE__)
+{
+	string accessName;
+	switch (access) {
+	case ir.Access.Private: accessName = "private"; break;
+	case ir.Access.Protected: accessName = "protected"; break;
+	default: assert(false);
+	}
+	return new CompilerError(l, format("tried to access %s symbol '%s'.",
+		accessName, name));
+}
+
 CompilerException makeArgumentCountMismatch(Location l, ir.Function func, string file = __FILE__, const int line = __LINE__)
 {
 	auto n = func.params.length;

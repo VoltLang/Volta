@@ -176,6 +176,14 @@ ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ir.Exp[
 {
 	assert(functions.length > 0);
 
+	ir.Access lastAccess = functions[0].access;
+	for (size_t i = 1; i < functions.length; ++i) {
+		auto outFunction = functions[i];
+		if (outFunction.access != lastAccess) {
+			throw makeOverloadedFunctionsAccessMismatch(outFunction, functions[0]);
+		}
+	}
+
 	bool correctNumberOfArguments(ir.Function func, out int defaultArguments)
 	{
 		foreach (i, param; func.params) {

@@ -371,7 +371,6 @@ public:
 		case System: twf("@system"); break;
 		case Safe: twf("@safe"); break;
 		case NoThrow: twf("nothrow"); break;
-		case Package: twf("package"); break;
 		case Override: twf("override"); break;
 		case Label: twf("@label"); break;
 		case Local: twf("local"); break;

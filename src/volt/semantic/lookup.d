@@ -11,7 +11,7 @@ import volt.ir.util : getScopeFromStore, getScopeFromType;
 import volt.errors;
 import volt.interfaces;
 import volt.token.location;
-import volt.semantic.classify : realType;
+import volt.semantic.classify : realType, getMethodParent, isOrInheritsFrom;
 
 
 /**
@@ -21,10 +21,10 @@ import volt.semantic.classify : realType;
 ir.Store lookupInGivenScopeOnly(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 {
 	auto store = _scope.getStore(name);
-	if (store !is null) {
-		return ensureResolved(lp, store);
+	if (store is null) {
+		return null;
 	}
-	return null;
+	return ensureResolved(lp, store);
 }
 
 /**
@@ -34,17 +34,39 @@ ir.Store lookupInGivenScopeOnly(LanguagePass lp, ir.Scope _scope, Location loc, 
  * A usable scope for this function is retrieved from the
  * getFirstThisable function.
  *
+ * Params:
+ *   lp: LanguagePass.
+ *   _scope: The scope to look in.
+ *   loc: Location, for error messages.
+ *   name: The string to lookup.
+ *   current: The scope where the lookup took place.
+ *
  * @todo actually lookup imports.
  */
-ir.Store lookupAsThisScope(LanguagePass lp, ir.Scope _scope, Location loc, string name)
+ir.Store lookupAsThisScope(LanguagePass lp, ir.Scope _scope, Location loc, string name, ir.Scope current)
 {
+	ir.Class callingMethodsParentClass = cast(ir.Class)current.node;
+	bool originalScopeIsClass;
+	if (callingMethodsParentClass !is null) {
+		originalScopeIsClass = true;
+	} else {
+		originalScopeIsClass = getMethodParent(current, callingMethodsParentClass);
+	}
+	auto lookupModule = getModuleFromScope(loc, current);
 	ir.Class _class;
 	do {
 		auto ret = lookupAsImportScope(lp, _scope, loc, name);
-		if (ret !is null)
+		if (ret !is null) {
+			if (lookupModule !is getModuleFromScope(loc, ret.parent)) {
+				bool classLookup;
+				if (originalScopeIsClass) {
+					classLookup = isOrInheritsFrom(callingMethodsParentClass, _class);
+				}
+				checkAccess(loc, name, ret, classLookup);
+			}
 			return ensureResolved(lp, ret);
+		}
 	} while (getClassParentsScope(lp, _scope, _scope, _class));
-
 	return null;
 }
 
@@ -99,6 +121,7 @@ private ir.Store lookupPublicImportScope(LanguagePass lp, ir.Scope _scope,
 		if (_scope.importedAccess[i] == ir.Access.Public) {
 			auto store = submod.myScope.getStore(name);
 			if (store !is null) {
+				checkAccess(loc, name, store);
 				return ensureResolved(lp, store);
 			}
 			if (submod.myScope.node.uniqueId in ctx.checked) {
@@ -123,6 +146,7 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
 {
 	auto last = qn.identifiers.length - 1;
 	auto current = qn.leadingDot ? getTopScope(qn.location, _scope) : _scope;
+	auto parentModule = getModuleFromScope(qn.location, _scope);
 
 	foreach (i, id; qn.identifiers) {
 		ir.Store store;
@@ -178,7 +202,7 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 {
 	ir.Scope current = _scope, previous = _scope;
 	while (current !is null) {
-		auto store = lookupAsThisScope(lp, current, loc, name);
+		auto store = lookupAsThisScope(lp, current, loc, name, current);
 		if (store !is null) {
 			return store;
 		}
@@ -204,7 +228,7 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 		}
 
 		if (store !is null) {
-			if (store.access == ir.Access.Public) {
+			if (store.importBindAccess == ir.Access.Public) {
 				stores ~= store;
 			} else {
 				privateLookup = true;
@@ -247,6 +271,7 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 	assert(stores.length >= 1);
 
 	if (stores.length == 1) {
+		checkAccess(loc, name, stores[0]);
 		return ensureResolved(lp, stores[0]);
 	}
 
@@ -272,6 +297,7 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 	}
 
 	if (currentParent !is null) {
+		checkAccess(loc, name, stores[0]);
 		return ensureResolved(lp, stores[0]);
 	}
 
@@ -580,6 +606,61 @@ ir.Type ensureType(ir.Scope _scope, Location loc, string name, ir.Store store)
 	}
 
 	return asType;
+}
+
+/**
+ * Check that the contents of store can be accessed (e.g. not private)
+ */
+void checkAccess(Location loc, string name, ir.Store store, bool classParentLookup = false)
+{
+	if (store.importAlias) {
+		return;
+	}
+
+	void check(ir.Access access)
+	{
+		if (access == ir.Access.Protected && classParentLookup) {
+			return;
+		}
+		if (access == ir.Access.Private || access == ir.Access.Protected) {
+			throw makeBadAccess(loc, name, access);
+		}
+	}
+
+	if (store.kind == ir.Store.Kind.Alias) {
+		assert(store.node.nodeType == ir.NodeType.Alias);
+	}
+	auto alia = cast(ir.Alias)store.originalNode;
+	if (alia is null) {
+		alia = cast(ir.Alias)store.node;
+	}
+	if (alia !is null) {
+		return check(alia.access);
+	}
+	auto decl = cast(ir.Variable)store.node;
+	if (decl !is null) {
+		return check(decl.access);
+	}
+	auto func = cast(ir.Function)store.node;
+	if (func !is null) {
+		return check(func.access);
+	}
+	auto en = cast(ir.Enum)store.node;
+	if (en !is null) {
+		return check(en.access);
+	}
+	auto ed = cast(ir.EnumDeclaration)store.node;
+	if (ed !is null) {
+		return check(ed.access);
+	}
+	auto iface = cast(ir._Interface)store.node;
+	if (iface !is null) {
+		return check(iface.access);
+	}
+	auto agg = cast(ir.Aggregate)store.node;
+	if (agg !is null && agg.access != ir.Access.Public) {
+		return check(agg.access);
+	}
 }
 
 /**

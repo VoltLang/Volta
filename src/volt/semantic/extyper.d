@@ -1394,7 +1394,7 @@ ir.Type extypePostfixIdentifier(Context ctx, ref ir.Exp exp,
 	ir.Store store;
 	auto _scope = getScopeFromType(type);
 	if (_scope !is null) {
-		store = lookupAsThisScope(ctx.lp, _scope, postfix.location, field);
+		store = lookupAsThisScope(ctx.lp, _scope, postfix.location, field, ctx.current);
 	}
 
 	if (store is null) {
@@ -1913,7 +1913,7 @@ ir.Type opOverloadRewrite(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 	if (overfn.length == 0) {
 		return null;
 	}
-	auto store = lookupAsThisScope(ctx.lp, _agg.myScope, l, overfn);
+	auto store = lookupAsThisScope(ctx.lp, _agg.myScope, l, overfn, ctx.current);
 	if (store is null || store.functions.length == 0) {
 		throw makeAggregateDoesNotDefineOverload(exp.location, _agg, overfn);
 	}
@@ -1943,7 +1943,7 @@ ir.Type opOverloadRewriteIndex(Context ctx, ir.Postfix pfix, ref ir.Exp exp)
 		return null;
 	}
 	auto name = overloadIndexName();
-	auto store = lookupAsThisScope(ctx.lp, _agg.myScope, exp.location, name);
+	auto store = lookupAsThisScope(ctx.lp, _agg.myScope, exp.location, name, ctx.current);
 	if (store is null || store.functions.length == 0) {
 		throw makeAggregateDoesNotDefineOverload(exp.location, _agg, name);
 	}
@@ -4060,6 +4060,9 @@ void resolveAlias(LanguagePass lp, ir.Alias a)
 		auto look = a.lookModule.myScope;
 		auto ident =  a.id.identifiers[0].value;
 		ret = lookupAsImportScope(lp, look, a.location, ident);
+		if (ret !is null) {
+			ret.importAlias = true;
+		}
 	}
 
 	if (ret is null) {
@@ -4399,7 +4402,7 @@ void checkAnonymousVariables(Context ctx, ir.Aggregate agg)
 		if ((name in names) !is null) {
 			throw makeAnonymousAggregateRedefines(anonAgg, name);
 		}
-		auto store = lookupAsThisScope(ctx.lp, agg.myScope, agg.location, name);
+		auto store = lookupAsThisScope(ctx.lp, agg.myScope, agg.location, name, ctx.current);
 		if (store !is null) {
 			throw makeAnonymousAggregateRedefines(anonAgg, name);
 		}
@@ -4663,7 +4666,7 @@ public:
 		}
 	}
 
-	private void resolve(ir.EnumDeclaration ed, ir.Exp prevExp)
+	void resolve(ir.EnumDeclaration ed, ir.Exp prevExp)
 	{
 		resolveType(ctx, ed.type);
 

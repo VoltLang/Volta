@@ -137,7 +137,7 @@ public:
 			a.lookScope = null;
 			a.lookModule = mod;
 			a.store = bindScope.addAlias(a, a.name);
-			a.store.access = i.access;
+			a.store.importBindAccess = i.access;
 		}
 	}
 

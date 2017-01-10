@@ -143,7 +143,6 @@ enum Access {
 	Invalid,
 	Public = TokenType.Public,
 	Private = TokenType.Private,
-	Package = TokenType.Package,
 	Protected = TokenType.Protected,
 }
 

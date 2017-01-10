@@ -441,6 +441,7 @@ class EnumDeclaration : Declaration
 	string name;
 	EnumDeclaration prevEnum;
 	bool resolved;
+	Access access;
 
 public:
 	this() { super(NodeType.EnumDeclaration); }
