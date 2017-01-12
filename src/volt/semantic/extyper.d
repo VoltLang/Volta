@@ -2042,6 +2042,9 @@ void extypeCat(Context ctx, ref ir.Exp lexp, ref ir.Exp rexp,
 	getClass(right, rdepth, rclass);
 	if (lclass !is null && rclass !is null) {
 		auto _class = commonParent(lclass, rclass);
+		if (_class !is lclass && _class !is rclass) {
+			throw makeBadImplicitCast(lexp, lclass, rclass);
+		}
 		if (ldepth >= 1 && ldepth == rdepth) {
 			auto l = lexp.location;
 			if (lclass !is _class) {
