@@ -153,7 +153,6 @@ public:
 			// We have a class and we want its dtor to be called.
 			registerFinalizer = true;
 		} else {
-			size = typeinfo.size;
 			size = count * typeinfo.size;
 		}
 
