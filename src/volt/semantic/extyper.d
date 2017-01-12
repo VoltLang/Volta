@@ -2052,7 +2052,7 @@ void extypeCat(Context ctx, ref ir.Exp lexp, ref ir.Exp rexp,
 			}
 			return;
 		} else if (ldepth == 0 || rdepth == 0) {
-			if (ldepth == 0 && lclass !is _class) { 
+			if (ldepth == 0 && lclass !is _class) {
 				if (!isOrInheritsFrom(lclass, rclass)) {
 					throw makeBadImplicitCast(lexp, lclass, rclass);
 				}

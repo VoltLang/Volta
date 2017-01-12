@@ -1,6 +1,6 @@
 //T default:no
 //T macro:expect-failure
-//T has-passed:no
+//T check:convert
 module test;
 
 class Foo {}
