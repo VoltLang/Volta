@@ -8,22 +8,32 @@ version (Windows):
 import vrt.gc.util;
 
 
-version (!V_P64) {
-	global sections: const(void*)[][2];
-} else {
-	global sections: const(void*)[][1];
-}
+global sections: const(void*)[][];
 
 fn initSections()
 {
-	sections[0] = makeRange(findImageSection(".data"));
-	version (!V_P64) {
-		sections[1] = makeRange(findImageSection(".bss"));
-	}
+	addSection(findImageSection(".bss"));
+	addSection(findImageSection(".data"));
 }
 
 
 private:
+
+/// Global store for sections.
+global privStore: const(void*)[][512];
+/// Global count of sections.
+global privCount: size_t;
+
+// Adds a section to the private store and updates the sections global.
+fn addSection(section: void[])
+{
+	if (section.length == 0) {
+		return;
+	}
+
+	privStore[privCount++] = makeRange(section);
+	sections = privStore[0 .. privCount];
+}
 
 alias BYTE = u8;
 alias WORD = u16;
