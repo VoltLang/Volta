@@ -49,12 +49,6 @@ extern(C) fn vrt_gc_shutdown()
 	heap.arena.shutdown();
 }
 
-// Temporary function for testing. XXX
-extern(C) fn vrt_gc_free(ptr: void*)
-{
-	heap.arena.free(ptr);
-}
-
 extern(C) fn vrt_gc_collect()
 {
 	heap.arena.collect();

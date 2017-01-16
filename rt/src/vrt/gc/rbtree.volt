@@ -18,7 +18,7 @@ enum Red = true;
  */
 struct Node
 {
-private:
+public:
 	children: Link[2];
 
 
@@ -252,11 +252,7 @@ public:
 	alias CompDg = scope dg (Node*, Node*) int;
 	alias VisitDg = scope dg (Node*);
 	alias FindDg = scope dg (Node*) bool;
-
-
-private:
 	root: Node*;
-
 
 public:
 	fn get(test: TestDg) Node*

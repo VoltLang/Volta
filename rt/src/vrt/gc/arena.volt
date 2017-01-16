@@ -221,15 +221,15 @@ public:
 		}
 
 		foreach (i, freeSlab; freeSlabs) {
-			collect(freeSlab);
+			collectSlab(freeSlab);
 			freeSlab.makeAllMoreSorted(&freeSlabs[i]);
 		}
 		foreach (i, freeSlab; freePointerSlabs) {
-			collect(freeSlab);
+			collectSlab(freeSlab);
 			freeSlab.makeAllMoreSorted(&freePointerSlabs[i]);
 		}
 		foreach (i, usedSlab; usedSlabs) {
-			collect(usedSlab);
+			collectSlab(usedSlab);
 			// Free empty used slabs.
 			current := usedSlab;
 			destination: Slab** = &usedSlabs[i];
@@ -263,8 +263,21 @@ public:
 		return mTotalSize;
 	}
 
-
 protected:
+	fn collectSlab(s: Slab*)
+	{
+		current := s;
+		while (current !is null) {
+			foreach (i; 0 .. Slab.MaxSlots) {
+				slot := cast(u32)i;
+				if (!current.isMarked(slot) && !current.isFree(slot)) {
+					current.free(slot);
+				}
+			}
+			current = current.next;
+		}
+	}
+
 	fn free(ptr: void*)
 	{
 		e := getExtentFromPtr(ptr);
@@ -276,20 +289,6 @@ protected:
 		} else {
 			// Assume large extent.
 			free(cast(Large*)e);
-		}
-	}
-
-	fn collect(s: Slab*)
-	{
-		current := s;
-		while (current !is null) {
-			foreach (i; 0 .. Slab.MaxSlots) {
-				slot := cast(u32)i;
-				if (!current.isMarked(slot) && !current.isFree(slot)) {
-					current.free(slot);
-				}
-			}
-			current = current.next;
 		}
 	}
 

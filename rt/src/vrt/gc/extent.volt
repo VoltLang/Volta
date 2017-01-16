@@ -16,9 +16,10 @@ struct Extent
 {
 public:
 	node: rb.Node;
+	size_t mData;
+	size_t mN;
 
-
-protected:
+public:
 	enum size_t SlabShift = cast(size_t)0;
 	enum size_t SlabMask = cast(size_t)1 << SlabShift;
 	enum size_t PointersShift = cast(size_t)1;
@@ -28,10 +29,6 @@ protected:
 	enum size_t MarkedShift = cast(size_t)3;
 	enum size_t MarkedMask = cast(size_t)1 << MarkedShift;
 	enum size_t DataMask = SlabMask | PointersMask | FinalizerMask | MarkedMask;
-
-	size_t mData;
-	size_t mN;
-
 
 public:
 	fn setupSlab(ptr: void*, n: size_t, finalizer: bool, pointers: bool)
