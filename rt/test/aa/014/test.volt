@@ -1,3 +1,4 @@
+//T requires:exceptions
 // More AA sanity.
 module test;
 

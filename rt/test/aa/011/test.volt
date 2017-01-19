@@ -1,3 +1,4 @@
+//T requires:exceptions
 // Reset AAs.
 module test;
 
