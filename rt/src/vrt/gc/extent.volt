@@ -16,6 +16,8 @@ struct Extent
 {
 public:
 	node: rb.Node;
+
+private:
 	size_t mData;
 	size_t mN;
 
@@ -52,6 +54,16 @@ public:
 	@property fn ptr() void*
 	{
 		return cast(void*)(mData & ~DataMask);
+	}
+
+	@property fn data() size_t
+	{
+		return mData;
+	}
+
+	@property fn data(d: size_t)
+	{
+		mData = d;
 	}
 
 	@property fn size() size_t
