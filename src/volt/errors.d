@@ -946,7 +946,11 @@ CompilerException makeCannotLoadDynamic(ir.Node node, ir.Function func, string f
 
 CompilerException makeMultipleFunctionsMatch(ir.Location location, ir.Function[] functions, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(location, format("%s overloaded functions match call.", functions.length), file, line);
+	string err = format("%s overloaded functions match call. Matching locations:\n", functions.length);
+	foreach (i, func; functions) {
+		err ~= format("\t%s%s", func.location.toString(), i == functions.length - 1 ? "" : "\n");
+	}
+	return new CompilerError(location, err, file, line);
 }
 
 
