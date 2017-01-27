@@ -477,6 +477,9 @@ bool overrideFunctionsIfNeeded(LanguagePass lp, ir.Function childFunction, ref i
 
 	ir.Function selectedFunction = selectFunction(toConsider, childFunction.type.params, childFunction.location, DoNotThrow);
 	if (selectedFunction is null) {
+		if (childFunction.isMarkedOverride) {
+			throw makeMarkedOverrideDoesNotOverride(childFunction, childFunction);
+		}
 		return false;
 	}
 
