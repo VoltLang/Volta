@@ -1,4 +1,4 @@
-// Copyright © 2010-2011, Bernard Helyer.  All rights reserved.
+// Copyright © 2010-2017, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.token.lexer;
 
@@ -755,6 +755,9 @@ LexStatus lexCharacter(TokenWriter tw)
 
 	token.type = TokenType.CharacterLiteral;
 	token.value = tw.source.sliceFrom(mark);
+	if (token.value.length > 4 && token.value[0 .. 3] == "'\\0") {
+		return lexUnsupported(tw, token.location, "octal char literals");
+	}
 	tw.addToken(token);
 	return Succeeded;
 }
