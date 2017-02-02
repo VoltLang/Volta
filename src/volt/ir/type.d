@@ -284,6 +284,31 @@ public:
 }
 
 /**
+ * A type that is either an @p AAType or a @p StaticArrayType,
+ * but we cannot tell which yet.
+ *
+ * At parse time, i32[A] could be either, depending on whether
+ * A is a constant or a type.
+ *
+ * @ingroup irNode irType
+ */
+class AmbiguousArrayType : Type
+{
+public:
+	Type base;
+	Exp child;
+
+public:
+	this() { super(NodeType.AmbiguousArrayType); }
+	this(AmbiguousArrayType old)
+	{
+		super(NodeType.AmbiguousArrayType, old);
+		this.base = old.base;
+		this.child = old.child;
+	}
+}
+
+/**
  * A StaticArray is a list of elements of type base with a
  * statically (known at compile time) number of elements.
  * Unlike C, these are passed by value to functions.

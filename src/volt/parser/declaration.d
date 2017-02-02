@@ -12,6 +12,7 @@ import volt.ir.copy;
 import volt.exceptions;
 import volt.errors;
 
+import volt.token.token : isPrimitiveTypeToken;
 import volt.token.location;
 import volt.parser.base;
 import volt.parser.expression;
@@ -757,24 +758,26 @@ ParseStatus parseTypeSigils(ParserStream ps, out ir.Type outType, Location origi
 			a.location = end.location - origin;
 			a.base = outType;
 			outType = a;
-		} else if (ps.peek.type == TokenType.IntegerLiteral) {
-			// Static array.
-			auto integer = ps.get();
-			Token end;
-			auto succeeded = match(ps, outType, TokenType.CloseBracket, end);
-			if (!succeeded) {
-				return succeeded;
-			}
-			auto a = new ir.StaticArrayType();
-			a.location = end.location - origin;
-			a.base = outType;
-			a.length = cast(size_t)toInt(integer.value);
-			outType = a;
-		} else {
-			// Associative array.
+		} else if (isPrimitiveTypeToken(ps.peek.type)) {
+			// Unambiguous associative array.
+			/* The expression parser can handle an identifier being maybe a type,
+			 * but not u32 (say) on its own, so handle that case here.
+			 */
 			auto a = new ir.AAType();
 			a.value = outType;
 			auto succeeded = parseType(ps, a.key);
+			if (!succeeded) {
+				return parseFailed(ps, outType);
+			}
+			succeeded = match(ps, outType, TokenType.CloseBracket);
+			if (!succeeded) {
+				return succeeded;
+			}
+			outType = a;
+		} else {
+			// Static or associative array.
+			auto a = new ir.AmbiguousArrayType();
+			auto succeeded = parseExp(ps, a.child);
 			if (!succeeded) {
 				return parseFailed(ps, outType);
 			}
@@ -783,6 +786,7 @@ ParseStatus parseTypeSigils(ParserStream ps, out ir.Type outType, Location origi
 			if (!succeeded) {
 				return succeeded;
 			}
+			a.base = outType;
 			outType = a;
 		}
 		break;

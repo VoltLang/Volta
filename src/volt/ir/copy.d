@@ -518,6 +518,7 @@ ir.Node copyNode(ir.Node n)
 	case NullType:
 	case ArrayType:
 	case StaticArrayType:
+	case AmbiguousArrayType:
 	case AAType:
 	case AAPair:
 	case FunctionType:

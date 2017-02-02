@@ -3923,6 +3923,8 @@ void doResolveType(Context ctx, ref ir.Type type,
 	case ArrayType:
 		auto at = cast(ir.ArrayType)type;
 		return doResolveType(ctx, at.base, null, 0);
+	case AmbiguousArrayType:
+		return doResolveAmbiguousArrayType(ctx, type);
 	case StaticArrayType:
 		auto sat = cast(ir.StaticArrayType)type;
 		return doResolveType(ctx, sat.base, null, 0);
@@ -3994,6 +3996,25 @@ void doResolveType(Context ctx, ref ir.Type type,
 	default:
 		throw panicUnhandled(type, ir.nodeToString(type));
 	}
+}
+
+void doResolveAmbiguousArrayType(Context ctx, ref ir.Type type)
+{
+	auto aat = cast(ir.AmbiguousArrayType)type;
+	doResolveType(ctx, aat.base, null, 0);
+	auto childType = extype(ctx, aat.child, Parent.NA);
+	auto constant = fold(aat.child);
+	if (constant !is null && isIntegral(constant.type)) {
+		auto sat = cast(ir.StaticArrayType)buildStaticArrayTypeSmart(type.location, cast(size_t)constant.u._ulong, aat.base);
+		type = sat;
+		return doResolveType(ctx, sat.base, null, 0);
+	}
+	if (aat.child.nodeType == ir.NodeType.TypeExp || aat.child.nodeType == ir.NodeType.StoreExp) {
+		auto aa = cast(ir.AAType)buildAATypeSmart(type.location, childType, aat.base);
+		type = aa;
+		return doResolveAA(ctx, type);
+	}
+	throw makeExpected(type.location, "type or expression after array base");
 }
 
 void doResolveAA(Context ctx, ref ir.Type type)

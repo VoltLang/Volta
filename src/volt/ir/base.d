@@ -59,6 +59,7 @@ enum NodeType
 	TypeReference,
 	PointerType,
 	ArrayType,
+	AmbiguousArrayType,
 	StaticArrayType,
 	AAType,
 	AAPair,
@@ -358,6 +359,7 @@ string nodeToString(NodeType nodeType)
 	case ArrayType: return "ArrayType";
 	case StaticArrayType: return "StaticArrayType";
 	case AAType: return "AAType";
+	case AmbiguousArrayType: return "AmbiguousArrayType";
 	case AAPair: return "AAPair";
 	case FunctionType: return "FunctionType";
 	case DelegateType: return "DelegateType";

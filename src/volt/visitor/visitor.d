@@ -127,6 +127,8 @@ public abstract:
 	Status leave(ir.StaticArrayType array);
 	Status enter(ir.AAType array);
 	Status leave(ir.AAType array);
+	Status enter(ir.AmbiguousArrayType array);
+	Status leave(ir.AmbiguousArrayType array);
 	Status enter(ir.FunctionType func);
 	Status leave(ir.FunctionType func);
 	Status enter(ir.DelegateType func);
@@ -315,6 +317,8 @@ override:
 	Status leave(ir.StaticArrayType array){ return Continue; }
 	Status enter(ir.AAType array){ return Continue; }
 	Status leave(ir.AAType array){ return Continue; }
+	Status enter(ir.AmbiguousArrayType array){ return Continue; }
+	Status leave(ir.AmbiguousArrayType array){ return Continue; }
 	Status enter(ir.FunctionType func){ return Continue; }
 	Status leave(ir.FunctionType func){ return Continue; }
 	Status enter(ir.DelegateType func){ return Continue; }
@@ -610,6 +614,8 @@ body {
 		return acceptPointerType(cast(ir.PointerType) n, av);
 	case ArrayType:
 		return acceptArrayType(cast(ir.ArrayType) n, av);
+	case AmbiguousArrayType:
+		return acceptAmbiguousArrayType(cast(ir.AmbiguousArrayType) n, av);
 	case StaticArrayType:
 		return acceptStaticArrayType(cast(ir.StaticArrayType) n, av);
 	case AAType:
@@ -1093,6 +1099,26 @@ Visitor.Status acceptArrayType(ir.ArrayType array, Visitor av)
 	}
 
 	status = accept(array.base, av);
+	if (status == VisitorStop) {
+		return VisitorStop;
+	}
+
+	return av.leave(array);
+}
+
+Visitor.Status acceptAmbiguousArrayType(ir.AmbiguousArrayType array, Visitor av)
+{
+	auto status = av.enter(array);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	status = accept(array.base, av);
+	if (status == VisitorStop) {
+		return VisitorStop;
+	}
+
+	status = acceptExp(array.child, av);
 	if (status == VisitorStop) {
 		return VisitorStop;
 	}

@@ -177,6 +177,24 @@ string tokenToString(TokenType token)
 	return _tokenToString[token];
 }
 
+bool isPrimitiveTypeToken(TokenType token)
+{
+	switch (token) {
+	case TokenType.Bool, TokenType.Ubyte, TokenType.Byte,
+		 TokenType.Short, TokenType.Ushort,
+		 TokenType.Int, TokenType.Uint, TokenType.Long,
+		 TokenType.Ulong, TokenType.Void, TokenType.Float,
+		 TokenType.Double, TokenType.Real, TokenType.Char,
+		 TokenType.Wchar, TokenType.Dchar, TokenType.I8,
+		 TokenType.I16, TokenType.I32, TokenType.I64,
+		 TokenType.U8, TokenType.U16, TokenType.U32, TokenType.U64,
+		 TokenType.F32, TokenType.F64:
+		return true;
+	default:
+		return false;
+	}
+}
+
 /**
  * Holds the type, the actual string and location within the source file.
  */

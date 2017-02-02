@@ -317,6 +317,8 @@ public:
 	override Status leave(ir.ArrayType n) { leaveNode(n); return Continue; }
 	override Status enter(ir.StaticArrayType n) { enterNode(n); return Continue; }
 	override Status leave(ir.StaticArrayType n) { leaveNode(n); return Continue; }
+	override Status enter(ir.AmbiguousArrayType n) { enterNode(n); return Continue; }
+	override Status leave(ir.AmbiguousArrayType n) { leaveNode(n); return Continue; }
 	override Status enter(ir.AAType n) { enterNode(n); return Continue; }
 	override Status leave(ir.AAType n) { leaveNode(n); return Continue; }
 	override Status enter(ir.FunctionType n) { enterNode(n); return Continue; }

@@ -1223,6 +1223,22 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.AmbiguousArrayType array)
+	{
+		wStorageTypes(array);
+		accept(array.base, this);
+		wf("[");
+		acceptExp(array.child, this);
+		wf("]");
+		wAfterStorageTypes(array);
+		return ContinueParent;
+	}
+
+	override Status leave(ir.AmbiguousArrayType array)
+	{
+		return Continue;
+	}
+
 	override Status enter(ir.AAType array)
 	{
 		wStorageTypes(array);
