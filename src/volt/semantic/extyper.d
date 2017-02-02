@@ -2656,7 +2656,12 @@ ir.Type extypeTokenExp(Context ctx, ref ir.Exp exp, Parent parent)
 
 	string getFname() {
 		string fname = fexp.location.filename;
-		if (ctx.lp.target.platform == Platform.MSVC ||
+		bool windowsCompiler = false;
+		version (Windows) {
+			windowsCompiler = true;
+		}
+		if (windowsCompiler ||
+			ctx.lp.target.platform == Platform.MSVC ||
 		    ctx.lp.target.platform == Platform.MinGW) {
 			fname = fname.replace("\\", "/");
 		}
