@@ -4002,8 +4002,17 @@ void doResolveAmbiguousArrayType(Context ctx, ref ir.Type type)
 {
 	auto aat = cast(ir.AmbiguousArrayType)type;
 	doResolveType(ctx, aat.base, null, 0);
+
 	auto childType = extype(ctx, aat.child, Parent.NA);
 	auto constant = fold(aat.child);
+	if (constant is null && aat.child.nodeType == ir.NodeType.ExpReference) {
+		auto eref = cast(ir.ExpReference)aat.child;
+		if (eref.decl.nodeType == ir.NodeType.EnumDeclaration) {
+			auto ed = cast(ir.EnumDeclaration)eref.decl;
+			constant = fold(ed.assign);
+		}
+	}
+
 	if (constant !is null && isIntegral(constant.type)) {
 		auto sat = cast(ir.StaticArrayType)buildStaticArrayTypeSmart(type.location, cast(size_t)constant.u._ulong, aat.base);
 		type = sat;
