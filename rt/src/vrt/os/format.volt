@@ -273,7 +273,7 @@ private fn fmt_fp(sink: Sink, f: f64, w: i32, p: i32, fl: i32)
 				round += 2;
 			}
 			if (x < cast(u32)i / 2) {
-				small = 0.5 - DBL_EPSILON;  // !! 0x0.8p0 => 0.5
+				small = 0.0;  // !! 0x0.8p0 => 0.5
 			} else if (x == cast(u32)i / 2 && cast(size_t)d + 1 == cast(size_t)z) {
 				small = 1.0;  // !! 0x1.0p0 => 1.0
 			} else {
