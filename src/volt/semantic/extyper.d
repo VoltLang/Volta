@@ -1965,7 +1965,7 @@ ir.Type extypeBinOpPropertyAssign(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 		return null;
 	}
 	auto p = cast(ir.PropertyExp) binop.left;
-	if (p is null) {
+	if (p is null || p.setFns.length == 0) {
 		return null;
 	}
 

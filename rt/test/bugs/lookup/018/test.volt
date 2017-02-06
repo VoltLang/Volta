@@ -1,6 +1,5 @@
 //T default:no
 //T macro:expect-failure
-//T has-passed:no
 module test;
 
 struct S
