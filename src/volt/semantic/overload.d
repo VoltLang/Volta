@@ -174,7 +174,7 @@ ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, Locatio
 
 ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ir.Exp[] exps, Location location, bool throwOnError = ThrowOnError)
 {
-	assert(functions.length > 0);
+	panicAssert(location, functions.length > 0);
 
 	ir.Access lastAccess = functions[0].access;
 	for (size_t i = 1; i < functions.length; ++i) {

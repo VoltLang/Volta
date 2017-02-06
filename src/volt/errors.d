@@ -1014,6 +1014,13 @@ void panicAssert(ir.Node node, bool condition, string file = __FILE__, const int
 	}
 }
 
+void panicAssert(ir.Location location, bool condition, string file = __FILE__, const int line = __LINE__)
+{
+	if (!condition) {
+		throw panic(location, "assertion failure.", file, line);
+	}
+}
+
 
 private:
 
