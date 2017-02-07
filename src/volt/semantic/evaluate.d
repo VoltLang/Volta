@@ -53,7 +53,13 @@ ir.Constant fold(ref ir.Exp exp, out bool needCopy)
 		}
 		return c;
 	case ExpReference:
-		return cast(ir.Constant)stripEnumIfEnum(exp, needCopy);
+		bool wasEnum;
+		auto e = stripEnumIfEnum(exp, wasEnum);
+		if (wasEnum) {
+			needCopy = true;
+			return fold(e);
+		}
+		return null;
 	default:
 		return null;
 	}
