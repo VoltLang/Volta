@@ -125,10 +125,12 @@ size_t unionSize(TargetInfo target, ir.Union u)
 	size_t sizeAccumulator;
 	foreach (node; u.members.nodes) {
 		// If it's not a Variable, it shouldn't take up space.
-		if (node.nodeType != ir.NodeType.Variable) {
+		auto asVar = cast(ir.Variable)node;
+		if (asVar is null || asVar.storage != ir.Variable.Storage.Field) {
 			continue;
 		}
 
+		auto var = cast(ir.Variable)node;
 		auto s = size(target, node);
 		if (s > sizeAccumulator) {
 			sizeAccumulator = s;
