@@ -102,6 +102,7 @@ size_t structSize(TargetInfo target, ir.Struct s)
 {
 	assert(s.isActualized);
 	size_t sizeAccumulator;
+	size_t largestAlignment;
 	foreach (node; s.members.nodes) {
 		// If it's not a Variable, or not a field, it shouldn't take up space.
 		auto asVar = cast(ir.Variable)node;
@@ -111,9 +112,17 @@ size_t structSize(TargetInfo target, ir.Struct s)
 
 		auto sz = size(target, asVar.type);
 		auto a = alignment(target, asVar.type);
+		if (a > largestAlignment) {
+			largestAlignment = a;
+		}
 		sizeAccumulator = calcAlignment(a, sizeAccumulator) + sz;
 	}
-	return sizeAccumulator;
+	// Round size up to a multiple of the largest size of an aligned member.
+	if (largestAlignment == 0) {
+		return sizeAccumulator;
+	} else {
+		return calcAlignment(largestAlignment, sizeAccumulator);
+	}
 }
 
 /**
