@@ -119,11 +119,11 @@ public:
 		destination := root;
 		current := &this;
 		while (current !is null && current.next !is null) {
-			next := current.next;
-			if (next.freeSlots > current.freeSlots) {
-				*destination = next;
-				tmp := next.next;
-				next.next = current;
+			check := current.next;
+			if (check.freeSlots > current.freeSlots) {
+				*destination = check;
+				tmp := check.next;
+				check.next = current;
 				current.next = tmp;
 				destination = &current.next;
 				current = tmp;
