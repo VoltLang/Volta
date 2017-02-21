@@ -1,4 +1,4 @@
-// Copyright © 2013, David Herberth.  All rights reserved.
+// Copyright © 2013-2017, David Herberth.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.vacuum.aa;
 

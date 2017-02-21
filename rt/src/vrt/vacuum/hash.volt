@@ -1,4 +1,4 @@
-// Copyright © 2014, Bernard Helyer.  All rights reserved.
+// Copyright © 2014-2017, Bernard Helyer.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.vacuum.hash;
 

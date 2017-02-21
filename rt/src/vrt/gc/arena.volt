@@ -1,4 +1,5 @@
-// Copyright © 2016, Bernard Helyer.  All rights reserved.
+// Copyright © 2016-2017, Bernard Helyer.
+// Copyright © 2016-2017, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.gc.arena;
 
@@ -20,6 +21,7 @@ import vrt.gc.entry;
 import vrt.gc.rbtree;
 import vrt.gc.extent;
 import vrt.gc.sections;
+
 
 extern (C) {
 	version (Windows && V_P32 || OSX) {

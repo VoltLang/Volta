@@ -1,5 +1,6 @@
-// Copyright © 2016, Amaury Séchet.  All rights reserved.
-// Copyright © 2016, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2016-2017, Amaury Séchet.
+// Copyright © 2016-2017, Bernard Helyer.
+// Copyright © 2016-2017, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 /**
  * Stuct and code for sub-allocating data from a memory extent.
