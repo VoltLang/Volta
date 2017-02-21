@@ -97,6 +97,7 @@ size_t size(TargetInfo target, ir.Node node)
 
 /**
  * Returns the size of a given ir.Struct in bytes.
+ * https://en.wikipedia.org/wiki/Data_structure_alignment#Typical_alignment_of_C_structs_on_x86
  */
 size_t structSize(TargetInfo target, ir.Struct s)
 {
