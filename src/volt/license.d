@@ -1,4 +1,3 @@
-// Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright just below.
 module volt.license;
 
@@ -6,9 +5,11 @@ module volt.license;
  * This is the license for the volt compiler.
  */
 enum string license = `
-Copyright © 2010-2012, Bernard Helyer.  All rights reserved.
-Copyright © 2010-2011, Jakob Ovrum.  All rights reserved.
-Copyright © 2012, Jakob Bornecrantz. All rights reserved.
+Copyright © 2010-2011, Jakob Ovrum.
+Copyright © 2013-2014, David Herberth.
+Copyright © 2016-2017, Amaury Séchet.
+Copyright © 2010-2017, Bernard Helyer.
+Copyright © 2012-2017, Jakob Bornecrantz.
 
 Boost Software License - Version 1.0 - August 17th, 2003
 
