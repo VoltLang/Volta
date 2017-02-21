@@ -1,3 +1,5 @@
+// Copyright © 2012-2017, Jakob Bornecrantz.
+// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 /**
  * This file is included all modules (excluding this module).
  */

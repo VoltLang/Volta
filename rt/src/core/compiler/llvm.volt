@@ -1,4 +1,4 @@
-// Copyright © 2012-2016, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2012-2016, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module core.compiler.llvm;
 
