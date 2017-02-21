@@ -1,9 +1,10 @@
 // Copyright © 2005-2009, Sean Kelly.
-// See copyright notice in src/watt/license.d (BOOST ver. 1.0).
+// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 // File taken from druntime, and modified for Volt.
 module core.c.stdint;
 
 version (!Metal):
+
 
 private import core.c.config; // for c_long, c_ulong
 private import core.c.stddef; // for ptrdiff_t, size_t, wchar_t

@@ -1,9 +1,10 @@
-// Copyright © 2016, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2016-2017, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+// Written by hand from documentation.
 module core.c.stddef;
 
-
 version(!Metal):
+
 
 /**
  * Windows wchar is different from *NIXs.

@@ -1,8 +1,10 @@
-// Copyright © 2013, Jakob Bornecrantz.
-// See copyright notice in src/watt/license.d (BOOST ver. 1.0).
+// Copyright © 2013-2017, Jakob Bornecrantz.
+// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+// Written by hand from documentation.
 module core.c.stdarg;
 
 version (!Metal):
+
 
 import core.varargs;
 
