@@ -60,8 +60,8 @@ public:
 
 	stackBottom: void*;
 
-	HitStack hits;
-	HitStack removes;
+	hits: HitStack;
+	removes: HitStack;
 
 
 protected:
@@ -144,7 +144,7 @@ public:
 	{
 		size: size_t;
 		memory: void*;
-		registerFinalizer: bool = false;
+		registerFinalizer := false;
 
 		if (count == cast(size_t) 0) {
 			size = typeinfo.size;
@@ -326,7 +326,7 @@ protected:
 
 	fn scan(range: const(void*)[]) bool
 	{
-		bool newPtr;
+		newPtr := false;
 		foreach (ptr; range) {
 			if (scan(cast(void*)ptr)) {
 				newPtr = true;
@@ -347,7 +347,7 @@ protected:
 	fn scan(ptr: void*, n: size_t) bool
 	{
 		ptrsz := typeid(void*).size;
-		newPtr: bool;
+		newPtr := false;
 		/* Scan every byte of the range that could fit a pointer, as a pointer.
 		 * Example: if n is 7, scan ranges 0..4, 1..5, 2..6, and 3..7 as pointers.
 		 */

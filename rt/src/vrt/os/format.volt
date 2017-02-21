@@ -230,7 +230,7 @@ private fn fmt_fp(sink: Sink, f: f64, w: i32, p: i32, fl: i32)
 		sh: i32 = min(9, -e2);
 		need: i32 = 1 + (p + DBL_MANT_DIG / 3 + 8) / 9;
 		for (d = a; cast(size_t)d < cast(size_t)z; ++d) {
-			u32 rm = *d & (1 << cast(u32)sh) - 1;
+			rm: u32 = *d & (1 << cast(u32)sh) - 1;
 			*d = (*d >> cast(u32)sh) + carry;
 			carry = (1000000000 >> cast(u32)sh) * rm;
 		}
@@ -320,7 +320,7 @@ private fn fmt_fp(sink: Sink, f: f64, w: i32, p: i32, fl: i32)
 		a = r;
 	}
 	for (d=a; cast(size_t)d <= cast(size_t)r; d++) {
-		char *ss = fmt_u(*d, buf.ptr+9);
+		ss: char* = fmt_u(*d, buf.ptr+9);
 		if (d !is a) while (cast(size_t)ss > cast(size_t)buf.ptr) *--ss='0';
 		else if (ss is buf.ptr+9) *--ss='0';
 		sink(ss[0 .. cast(size_t)buf.ptr + 9 - cast(size_t)ss]);
@@ -329,7 +329,7 @@ private fn fmt_fp(sink: Sink, f: f64, w: i32, p: i32, fl: i32)
 		sink(".");
 	}
 	for (; cast(size_t)d < cast(size_t)z && p>0; d++, p-=9) {
-		char *ss = fmt_u(*d, buf.ptr+9);
+		ss: char* = fmt_u(*d, buf.ptr+9);
 		while (cast(size_t)ss > cast(size_t)buf.ptr) *--ss='0';
 		sink(ss[0 .. min(9, p)]);
 	}

@@ -33,16 +33,21 @@ struct Slab
 public:
 	enum MaxSlots = 512;
 
+
 public:
 	/// Base 'class' for Slab.
 	extent: Extent;
+
 	bitmap: u32[16];
 	marked: u32[16];
 	finalizer: u32[16];
 	header: u16;
 	freeSlots: u16;
 	order: u8;
-	next: Slab*;  // To help the arena have lists of slabs.
+
+	/// To help the arena have lists of slabs.
+	next: Slab*;
+
 
 public:
 	fn setup(order: u8, memory: void*, pointer:bool)

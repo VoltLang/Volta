@@ -9,7 +9,7 @@ import vrt.gc.util;
 
 global sections: const(void*)[][];
 
-void initSections()
+fn initSections()
 {
 	_dyld_register_func_for_add_image(__osx_on_add_image);
 }
