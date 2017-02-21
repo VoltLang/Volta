@@ -1,4 +1,3 @@
-//T has-passed:no
 module test;
 
 struct ShouldBeEightBytes
