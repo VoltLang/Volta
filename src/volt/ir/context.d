@@ -195,6 +195,7 @@ public:
 		assert(kind == Kind.Alias);
 		assert(myAlias is null);
 		myAlias = s;
+		s.originalNode = node;
 	}
 
 	void markAliasResolved(Type t)

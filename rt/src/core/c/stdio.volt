@@ -244,7 +244,6 @@ version (Windows) {
 		_IONBF = 2,
 	}
 
-	// TODO: Assigning these to the aliases makes them private, if the pointers are marked as such.
 	private extern global /*shared*/ __stdinp: FILE*;
 	private extern global /*shared*/ __stdoutp: FILE*;
 	private extern global /*shared*/ __stderrp: FILE*;
