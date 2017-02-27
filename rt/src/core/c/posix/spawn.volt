@@ -7,7 +7,7 @@ version (!Metal):
 version (Linux || OSX):
 
 
-import core.posix.sys.types;
+import core.c.posix.sys.types;
 
 
 enum u16 POSIX_SPAWN_RESETIDS           = 0x0001;
