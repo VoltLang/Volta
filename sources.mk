@@ -3,6 +3,12 @@ RT_SRC = \
 	rt/src/core/compiler/*.volt \
 	rt/src/core/rt/*.volt \
 	rt/src/core/*.volt \
+	rt/src/core/c/*.volt \
+	rt/src/core/c/posix/*.volt \
+	rt/src/core/c/posix/arpa/*.volt \
+	rt/src/core/c/posix/netinet/*.volt \
+	rt/src/core/c/posix/sys/*.volt \
+	rt/src/core/c/windows/*.volt \
 	rt/src/vrt/vacuum/*.volt \
 	rt/src/vrt/ext/*.volt \
 	rt/src/vrt/gc/sections/*.volt \
