@@ -16,7 +16,7 @@ version (Windows) {
 
 } else {
 
-	alias wchar_t  = u32;
+	alias wchar_t  = i32;
 
 }
 /**
