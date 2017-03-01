@@ -9,7 +9,7 @@ import watt.text.sink : StringSink;
 import watt.text.format : format;
 
 version (Posix) {
-	version (Volt) import core.posix.unistd : getuid;
+	version (Volt) import core.c.posix.unistd : getuid;
 	else import core.sys.posix.unistd : getuid;
 }
 
