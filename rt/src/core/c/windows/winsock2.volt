@@ -45,7 +45,7 @@ fn socket(i32, i32, i32) SOCKET;
 fn ioctlsocket(SOCKET, i32, u32*) i32;
 fn bind(SOCKET, const(sockaddr)*, socklen_t) i32;
 fn connect(SOCKET, const(sockaddr)*, socklen_t) i32;
-fn listen(SOCKET, i32);
+fn listen(SOCKET, i32) i32;
 fn accept(SOCKET, sockaddr*, socklen_t*) SOCKET;
 fn closesocket(SOCKET) i32;
 fn shutdown(SOCKET, i32) i32;
@@ -458,7 +458,7 @@ struct servent
     s_name: char*;
     s_aliases: char**;
 
-    version (V_LP64)
+    version (X86_64)
     {
         s_proto: char*;
         s_port: i16;
@@ -650,6 +650,7 @@ union in6_addr
 }
 
 
+global IN6ADDR_ANY: in6_addr;
 //enum in6_addr IN6ADDR_ANY = { s6_addr8: [0] };
 //enum in6_addr IN6ADDR_LOOPBACK = { s6_addr8: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1] };
 //alias IN6ADDR_ANY_INIT = IN6ADDR_ANY;

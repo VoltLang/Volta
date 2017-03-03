@@ -70,14 +70,14 @@ version( Linux )
 {
     // Some networking constants are subtly different for glibc, linux kernel
     // constants are also provided below.
-
+/+
     alias in_port_t = u16;
     alias in_addr_t = u32;
 
     struct in_addr
     {
 		s_addr: in_addr_t;
-    }
+    }+/
 
     private enum __SOCK_SIZE__ = 16;
 
@@ -118,14 +118,14 @@ version( Linux )
     //enum INET_ADDRSTRLEN       = 16;
 }
 else version( OSX )
-{
+{/+
     alias in_port_t = u16;
     alias in_addr_t = u32;
 
     struct in_addr
     {
 		s_addr: in_addr_t;
-    }
+    }+/
 
     private enum __SOCK_SIZE__ = 16;
 
@@ -231,6 +231,16 @@ version ( Linux )
             s6_addr32: u32[4];
         }
         u: _u;
+
+        @property fn s6_addr() u8[16]
+        {
+            return u.s6_addr;
+        }
+
+        @property fn s6_addr(val: u8[16])
+        {
+            u.s6_addr = val;
+        }
     }
 
     struct sockaddr_in6
@@ -354,6 +364,16 @@ else version( OSX )
             s6_addr32: u32[4];
         }
         u: _u;
+
+        @property fn s6_addr() u8[16]
+        {
+            return u.s6_addr;
+        }
+
+        @property fn s6_addr(val: u8[16])
+        {
+            u.s6_addr = val;
+        }
     }
 
     struct sockaddr_in6
