@@ -773,13 +773,34 @@ ParseStatus parseEnum(ParserStream ps, out ir.Node[] output)
 
 	ir.Enum namedEnum;
 
+	/* We need to treat `enum A : TYPE =` and `enum A : TYPE {` differently,
+	 * but TYPE can be arbitrarly large (think `i32*******[32]`).
+	 * Look ahead for a opening brace.
+	 */
+	bool braceAhead;
+	if (ps == TokenType.Identifier) {
+		auto pos = ps.save();
+		while (ps != TokenType.End) {
+			if (ps == TokenType.OpenBrace) {
+				braceAhead = true;
+				break;
+			}
+			if (ps == TokenType.Semicolon) {
+				break;
+			}
+			ps.get();
+		}
+		ps.restore(pos);
+	}
+
 	ir.Type base;
 	if (matchIf(ps, TokenType.Colon)) {
+		// Anonymous enum.
 		auto succeeded = parseType(ps, base);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Enum);
 		}
-	} else if (ps == [TokenType.Identifier, TokenType.Colon] || ps == [TokenType.Identifier, TokenType.OpenBrace]) {
+	} else if (braceAhead) {
 		// Named enum.
 		namedEnum = new ir.Enum();
 		namedEnum.location = origin;
@@ -799,12 +820,12 @@ ParseStatus parseEnum(ParserStream ps, out ir.Node[] output)
 		}
 		base = namedEnum;
 		output ~= namedEnum;
-	} else {
-		base = buildPrimitiveType(ps.peek.location, ir.PrimitiveType.Kind.Int);
 	}
-	assert(base !is null);
 
 	if (matchIf(ps, TokenType.OpenBrace)) {
+		if (base is null) {
+			base = buildPrimitiveType(ps.peek.location, ir.PrimitiveType.Kind.Int);
+		}
 		ir.EnumDeclaration prevEnum;
 
 		// Better error printing.
@@ -860,7 +881,7 @@ ParseStatus parseEnum(ParserStream ps, out ir.Node[] output)
 		if (namedEnum !is null) {
 			return unexpectedToken(ps, ir.NodeType.Enum);
 		}
-		if (ps != [TokenType.Identifier, TokenType.Assign]) {
+		if (ps != [TokenType.Identifier, TokenType.Assign] && ps != [TokenType.Identifier, TokenType.Colon]) {
 			auto succeeded = parseType(ps, base);
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.Enum);
@@ -879,7 +900,9 @@ ParseStatus parseEnum(ParserStream ps, out ir.Node[] output)
 		}
 		ps.get();
 
-		ed.type = base;
+		if (ed.type is null) {
+			ed.type = base;
+		}
 		output ~= ed;
 	}
 
