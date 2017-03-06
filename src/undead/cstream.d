@@ -149,7 +149,7 @@ class CFile : Stream {
 
   // run a few tests
   unittest {
-    import undead.internal.file : deleteme;
+    import undead.internal.file;
     import std.internal.cstring : tempCString;
 
     auto stream_file = (undead.internal.file.deleteme ~ "-stream.txt").tempCString();
