@@ -57,6 +57,26 @@ class ScopeReplacer : NullVisitor, Pass
 		return Continue;
 	}
 
+	override Status visit(ir.TemplateDefinition td)
+	{
+		if (td._struct !is null) {
+			return accept(td._struct, this);
+		}
+		if (td._union !is null) {
+			return accept(td._union, this);
+		}
+		if (td._interface !is null) {
+			return accept(td._interface, this);
+		}
+		if (td._class !is null) {
+			return accept(td._class, this);
+		}
+		if (td._function !is null) {
+			return accept(td._function, this);
+		}
+		throw panic("Invalid TemplateDefinition");
+	}
+
 
 private:
 	ir.Node handleTry(ir.TryStatement t)

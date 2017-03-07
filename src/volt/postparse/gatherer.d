@@ -88,6 +88,17 @@ void gather(ir.Scope current, ir.Alias a, Where where)
 	a.store = current.addAlias(a, a.name);
 }
 
+/**
+ * If name is reserved in current, throw an error pointing at n's location.
+ */
+void checkInvalid(ir.Scope current, ir.Node n, string name)
+{
+	auto store = current.getStore(name);
+	if (store !is null && store.kind == ir.Store.Kind.Reserved) {
+		throw makeError(store.node, format("'%s' is a reserved name in this scope.", name));
+	}
+}
+
 void gather(ir.Scope current, ir.Variable v, Where where, ir.Function[] functionStack, bool warningsEnabled)
 {
 	assert(v.access.isValidAccess());
@@ -98,6 +109,7 @@ void gather(ir.Scope current, ir.Variable v, Where where, ir.Function[] function
 		throw makeShadowsDeclaration(v, shadowStore.node);
 	}
 
+	checkInvalid(current, v, v.name);
 	current.addValue(v, v.name);
 
 	if (v.storage != ir.Variable.Storage.Invalid) {
@@ -118,6 +130,7 @@ void gather(ir.Scope current, ir.Function func, Where where)
 	assert(func.access.isValidAccess());
 
 	if (func.name !is null) {
+		checkInvalid(current, func, func.name);
 		current.addFunction(func, func.name);
 	}
 
@@ -138,6 +151,7 @@ void gather(ir.Scope current, ir.Struct s, Where where)
 	assert(s.access.isValidAccess());
 	assert(s.myScope !is null);
 
+	checkInvalid(current, s, s.name);
 	current.addType(s, s.name);
 }
 
@@ -146,6 +160,7 @@ void gather(ir.Scope current, ir.Union u, Where where)
 	assert(u.access.isValidAccess());
 	assert(u.myScope !is null);
 
+	checkInvalid(current, u, u.name);
 	current.addType(u, u.name);
 }
 
@@ -154,6 +169,7 @@ void gather(ir.Scope current, ir.Class c, Where where)
 	assert(c.access.isValidAccess());
 	assert(c.myScope !is null);
 
+	checkInvalid(current, c, c.name);
 	current.addType(c, c.name);
 }
 
@@ -162,6 +178,7 @@ void gather(ir.Scope current, ir.Enum e, Where where)
 	assert(e.access.isValidAccess());
 	assert(e.myScope !is null);
 
+	checkInvalid(current, e, e.name);
 	current.addType(e, e.name);
 }
 
@@ -170,6 +187,7 @@ void gather(ir.Scope current, ir._Interface i, Where where)
 	assert(i.access.isValidAccess());
 	assert(i.myScope !is null);
 
+	checkInvalid(current, i, i.name);
 	current.addType(i, i.name);
 }
 
@@ -177,6 +195,7 @@ void gather(ir.Scope current, ir.MixinFunction mf, Where where)
 {
 	// @TODO assert(mf.access.isValidAccess());
 
+	checkInvalid(current, mf, mf.name);
 	current.addTemplate(mf, mf.name);
 }
 
@@ -184,7 +203,14 @@ void gather(ir.Scope current, ir.MixinTemplate mt, Where where)
 {
 	// @TODO assert(mt.access.isValidAccess());
 
+	checkInvalid(current, mt, mt.name);
 	current.addTemplate(mt, mt.name);
+}
+
+void gather(ir.Scope current, ir.TemplateDefinition td, Where where)
+{
+	checkInvalid(current, td, td.name);
+	current.addTemplate(td, td.name);
 }
 
 
@@ -311,10 +337,9 @@ void addScope(ir.Scope current, ir._Interface i)
 	i.myScope = new ir.Scope(current, i, i.name, current.nestedDepth);
 }
 
-
 /**
- * Poplate the scops with Variables, Alias, Functions and Types.
- * Adds scopes where needed as well.
+ * Populate the scopes with Variables, Aliases, Functions, and Types.
+ * Adds Scopes where needed as well.
  *
  * @ingroup passes passLang
  */
@@ -582,6 +607,12 @@ public:
 	override Status enter(ir.EnumDeclaration e)
 	{
 		gather(current, e, where);
+		return Continue;
+	}
+
+	override Status visit(ir.TemplateDefinition td)
+	{
+		gather(current, td, where);
 		return Continue;
 	}
 

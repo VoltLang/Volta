@@ -28,7 +28,10 @@ public:
 	abstract ir.Union lift(ir.Union old);
 	abstract ir.Struct lift(ir.Struct old);
 	abstract ir._Interface lift(ir._Interface old);
+	abstract ir.Alias lift(ir.Alias old);
 	abstract ir.FunctionParam lift(ir.FunctionParam old);
+	abstract ir.TopLevelBlock lift(ir.TopLevelBlock old);
+	abstract ir.Enum lift(ir.Enum old);
 	abstract ir.Node liftedOrPanic(ir.Node n, string msg);
 
 
@@ -55,6 +58,12 @@ public:
 		case BuiltinExp: return copy(cast(ir.BuiltinExp)n);
 		case RunExp: return copy(cast(ir.RunExp)n);
 		case ExpReference: return copy(cast(ir.ExpReference)n);
+		case Ternary: return copy(cast(ir.Ternary)n);
+		case AssocArray: return copy(cast(ir.AssocArray)n);
+		case StringImport: return copy(cast(ir.StringImport)n);
+		case IsExp: return copy(cast(ir.IsExp)n);
+		case StructLiteral: return copy(cast(ir.StructLiteral)n);
+		case VaArgExp: return copy(cast(ir.VaArgExp)n);
 		default: throw makeUnsupported(n.loc, ir.nodeToString(n.nodeType));
 		}
 	}
@@ -64,6 +73,14 @@ public:
 		switch (n.nodeType) with (ir.NodeType) {
 		case PrimitiveType: return copy(cast(ir.PrimitiveType)n);
 		case TypeReference: return copy(cast(ir.TypeReference)n);
+		case AutoType: return copy(cast(ir.AutoType)n);
+		case ArrayType: return copy(cast(ir.ArrayType)n);
+		case AmbiguousArrayType: return copy(cast(ir.AmbiguousArrayType)n);
+		case StorageType: return copy(cast(ir.StorageType)n);
+		case DelegateType: return copy(cast(ir.DelegateType)n);
+		case FunctionType: return copy(cast(ir.FunctionType)n);
+		case PointerType: return copy(cast(ir.PointerType)n);
+		case TypeOf: return copy(cast(ir.TypeOf)n);
 		default: throw makeUnsupported(n.loc, ir.nodeToString(n.nodeType));
 		}
 	}
@@ -79,10 +96,16 @@ public:
 		case DoStatement: return copy(parent, cast(ir.DoStatement)n);
 		case SwitchStatement: return copy(parent, cast(ir.SwitchStatement)n);
 		case Variable: return lift(cast(ir.Variable)n);
+		case Function: return lift(cast(ir.Function)n);
 		case ExpStatement: return copy(cast(ir.ExpStatement)n);
 		case BreakStatement: return copy(cast(ir.BreakStatement)n);
 		case ContinueStatement: return copy(cast(ir.ContinueStatement)n);
 		case ReturnStatement: return copy(parent, cast(ir.ReturnStatement)n);
+		case AssertStatement: return copy(cast(ir.AssertStatement)n);
+		case GotoStatement: return copy(cast(ir.GotoStatement)n);
+		case WithStatement: return copy(parent, cast(ir.WithStatement)n);
+		case ThrowStatement: return copy(cast(ir.ThrowStatement)n);
+		case TryStatement: return copy(parent, cast(ir.TryStatement)n);
 		default:
 			throw panic(n, ir.nodeToString(n));
 		}
@@ -103,6 +126,11 @@ public:
 			n.identifiers[i] = copy(old.identifiers[i]);
 		}
 		return n;
+	}
+
+	ir.QualifiedName copyQualifiedName(ir.QualifiedName old)
+	{
+		return copy(old);
 	}
 
 	ir.Identifier copy(ir.Identifier old)
@@ -133,6 +161,63 @@ public:
 	 * Expressions
 	 *
 	 */
+
+	ir.IsExp copy(ir.IsExp old)
+	{
+		auto n = new ir.IsExp(old);
+		n.type = copyType(old.type);
+		if (old.specType !is null) {
+			n.specType = copyType(old.specType);
+		}
+		return n;
+	}
+
+	ir.VaArgExp copy(ir.VaArgExp old)
+	{
+		auto n = new ir.VaArgExp(old);
+		n.arg = copyExp(old.arg);
+		n.type = copyType(old.type);
+		return n;
+	}
+
+	ir.StructLiteral copy(ir.StructLiteral old)
+	{
+		auto n = new ir.StructLiteral(old);
+		foreach (i; 0 .. old.exps.length) {
+			n.exps[i] = copyExp(old.exps[i]);
+		}
+		if (old.type !is null) {
+			n.type = copyType(old.type);
+		}
+		return n;
+	}
+
+	ir.StringImport copy(ir.StringImport old)
+	{
+		auto n = new ir.StringImport(old);
+		n.filename = copyExp(old.filename);
+		return n;
+	}
+
+	ir.AssocArray copy(ir.AssocArray old)
+	{
+		auto n = new ir.AssocArray(old);
+		foreach (i; 0 .. old.pairs.length) {
+			n.pairs[i] = copy(old.pairs[i]);
+		}
+		if (old.type !is null) {
+			n.type = copyType(old.type);
+		}
+		return n;
+	}
+
+	ir.AAPair copy(ir.AAPair old)
+	{
+		auto n = new ir.AAPair(old);
+		n.key = copyExp(old.key);
+		n.value = copyExp(old.value);
+		return n;
+	}
 
 	ir.Ternary copy(ir.Ternary old)
 	{
@@ -186,7 +271,9 @@ public:
 		foreach (i; 0 .. old.exps.length) {
 			n.exps[i] = copyExp(old.exps[i]);
 		}
-		n.type = copyType(old.type);
+		if (old.type !is null) {
+			n.type = copyType(old.type);
+		}
 		return n;
 	}
 
@@ -246,7 +333,9 @@ public:
 	ir.Unary copy(ir.Unary old)
 	{
 		auto n = new ir.Unary(old);
-		n.value = copyExp(old.value);
+		if (old.value !is null) {
+			n.value = copyExp(old.value);
+		}
 		if (old.type !is null) {
 			n.type = copyType(old.type);
 		}
@@ -353,23 +442,89 @@ public:
 		return es;
 	}
 
+	ir.AssertStatement copy(ir.AssertStatement old)
+	{
+		auto as = new ir.AssertStatement(old);
+		as.condition = copyExp(old.condition);
+		if (old.message !is null) {
+			as.message = copyExp(old.message);
+		}
+		return as;
+	}
+
+	ir.GotoStatement copy(ir.GotoStatement old)
+	{
+		auto gs = new ir.GotoStatement(old);
+		if (old.exp !is null) {
+			gs.exp = copyExp(old.exp);
+		}
+		return gs;
+	}
+
+	ir.ThrowStatement copy(ir.ThrowStatement old)
+	{
+		auto ts = new ir.ThrowStatement(old);
+		ts.exp = copyExp(old.exp);
+		return ts;
+	}
+
+	ir.StorageType copy(ir.StorageType old)
+	{
+		auto st = new ir.StorageType(old);
+		if (old.base !is null) {
+			st.base = copyType(old.base);
+		}
+		return st;
+	}
+
+	ir.TryStatement copy(ir.Scope parent, ir.TryStatement old)
+	{
+		assert(old.catchVars.length == old.catchBlocks.length);
+
+		auto ts = new ir.TryStatement(old);
+		ts.tryBlock = copy(parent, old.tryBlock);
+
+		for (size_t i = 0; i < old.catchVars.length; ++i) {
+			assert(old.catchBlocks[i].statements.length > 0);
+			assert(old.catchBlocks[i].statements[0] is old.catchVars[i]);
+
+			ts.catchBlocks[i] = copy(parent, old.catchBlocks[i]);
+
+			auto var = cast(ir.Variable)ts.catchBlocks[i].statements[0];
+			ts.catchVars[i] = var;
+		}
+
+		if (old.catchAll !is null) {
+			ts.catchAll = copy(parent, old.catchAll);
+		}
+		if (old.finallyBlock !is null) {
+			ts.finallyBlock = copy(parent, old.finallyBlock);
+		}
+		return ts;
+	}
+
+	ir.WithStatement copy(ir.Scope parent, ir.WithStatement old)
+	{
+		auto ws = new ir.WithStatement(old);
+		ws.exp = copyExp(old.exp);
+		ws.block = copy(parent, old.block);
+		return ws;
+	}
+
 	ir.IfStatement copy(ir.Scope parent, ir.IfStatement old)
 	{
-		auto ifs = new ir.IfStatement();
-		ifs.loc = old.loc;
+		auto ifs = new ir.IfStatement(old);
 		ifs.exp = copyExp(old.exp);
 		ifs.thenState = copy(parent, old.thenState);
 		if (old.elseState !is null) {
-			old.elseState = copy(parent, old.elseState);
+			ifs.elseState = copy(parent, old.elseState);
 		}
-		ifs.autoName = old.autoName;
 		return ifs;
 	}
 
 	ir.WhileStatement copy(ir.Scope parent, ir.WhileStatement old)
 	{
-		auto ws = new ir.WhileStatement();
-		ws.loc = old.loc;
+		auto ws = new ir.WhileStatement(old);
 		ws.condition = copyExp(old.condition);
 		ws.block = copy(parent, old.block);
 		return ws;
@@ -377,8 +532,7 @@ public:
 
 	ir.DoStatement copy(ir.Scope parent, ir.DoStatement old)
 	{
-		auto ws = new ir.DoStatement();
-		ws.loc = old.loc;
+		auto ws = new ir.DoStatement(old);
 		ws.condition = copyExp(old.condition);
 		ws.block = copy(parent, old.block);
 		return ws;
@@ -386,10 +540,8 @@ public:
 
 	ir.SwitchStatement copy(ir.Scope parent, ir.SwitchStatement old)
 	{
-		auto ss = new ir.SwitchStatement();
+		auto ss = new ir.SwitchStatement(old);
 		ss.condition = copyExp(old.condition);
-		ss.loc = old.loc;
-		ss.isFinal = old.isFinal;
 		assert(old.cases.length > 0);
 		ss.cases = new ir.SwitchCase[](old.cases.length);
 		foreach (i, cc; ss.cases) {
@@ -416,19 +568,12 @@ public:
 
 	ir.ForeachStatement copy(ir.Scope parent, ir.ForeachStatement old)
 	{
-		auto fes = new ir.ForeachStatement();
-		fes.loc = old.loc;
-		fes.reverse = old.reverse;
+		auto fes = new ir.ForeachStatement(old);
 		if (old.itervars.length > 0) {
 			fes.itervars = new ir.Variable[](old.itervars.length);
 			foreach (i; 0 .. old.itervars.length) {
 				fes.itervars[i] = lift(old.itervars[i]);
 			}
-		}
-		version (Volt) {
-			fes.refvars = new old.refvars[0 .. $];
-		} else {
-			fes.refvars = old.refvars.dup;
 		}
 		if (old.aggregate !is null) {
 			fes.aggregate = copyExp(old.aggregate);
@@ -447,28 +592,18 @@ public:
 
 	ir.ForStatement copy(ir.Scope parent, ir.ForStatement old)
 	{
-		auto fs = new ir.ForStatement();
-		fs.loc = old.loc;
-		if (old.initVars.length > 0) {
-			fs.initVars = new ir.Variable[](old.initVars.length);
-			foreach (i; 0 .. old.initVars.length) {
-				fs.initVars[i] = lift(old.initVars[i]);
-			}
+		auto fs = new ir.ForStatement(old);
+		foreach (i; 0 .. old.initVars.length) {
+			fs.initVars[i] = lift(old.initVars[i]);
 		}
-		if (old.initExps.length > 0) {
-			fs.initExps = new ir.Exp[](old.initExps.length);
-			foreach (i; 0 .. old.initExps.length) {
-				fs.initExps[i] = copyExp(old.initExps[i]);
-			}
+		foreach (i; 0 .. old.initExps.length) {
+			fs.initExps[i] = copyExp(old.initExps[i]);
 		}
 		if (old.test !is null) {
 			fs.test = copyExp(old.test);
 		}
-		if (old.increments.length > 0) {
-			fs.increments = new ir.Exp[](old.increments.length);
-			foreach (i; 0 .. fs.increments.length) {
-				fs.increments[i] = copyExp(old.increments[i]);
-			}
+		foreach (i; 0 .. fs.increments.length) {
+			fs.increments[i] = copyExp(old.increments[i]);
 		}
 		fs.block = copy(parent, old.block);
 		return fs;
@@ -504,16 +639,87 @@ public:
 			n.id = copy(old.id);
 		}
 
-		assert(old.type !is null);
-		switch (old.type.nodeType) with (ir.NodeType) {
-		case Class: n.type = lift(cast(ir.Class)old.type); break;
-		case Struct: n.type = lift(cast(ir.Struct)old.type); break;
-		case Union: n.type = lift(cast(ir.Union)old.type); break;
-		case Interface: n.type = lift(cast(ir._Interface)old.type); break;
-		default: throw makeUnsupported(old.loc, ir.nodeToString(old.type));
+		if (old.type !is null) {
+			switch (old.type.nodeType) with (ir.NodeType) {
+			case Class: n.type = lift(cast(ir.Class)old.type); break;
+			case Struct: n.type = lift(cast(ir.Struct)old.type); break;
+			case Union: n.type = lift(cast(ir.Union)old.type); break;
+			case Interface: n.type = lift(cast(ir._Interface)old.type); break;
+			case Enum: n.type = lift(cast(ir.Enum)old.type); break;
+			default: throw makeUnsupported(old.loc, ir.nodeToString(old.type));
+			}
 		}
 
 		return n;
+	}
+
+	ir.AutoType copy(ir.AutoType old)
+	{
+		auto at = new ir.AutoType(old);
+		if (old.explicitType !is null) {
+			at.explicitType = copyType(old.explicitType);
+		}
+		return at;
+	}
+
+	ir.AmbiguousArrayType copy(ir.AmbiguousArrayType old)
+	{
+		auto aat = new ir.AmbiguousArrayType(old);
+		if (old.base !is null) {
+			aat.base = copyType(old.base);
+		}
+		if (old.child !is null) {
+			aat.child = copyExp(old.child);
+		}
+		return aat;
+	}
+
+	ir.ArrayType copy(ir.ArrayType old)
+	{
+		auto at = new ir.ArrayType(old);
+		if (old.base !is null) {
+			at.base = copyType(old.base);
+		}
+		return at;
+	}
+
+	ir.DelegateType copy(ir.DelegateType old)
+	{
+		auto dt = new ir.DelegateType(old);
+		return cast(ir.DelegateType)copy(dt, old);
+	}
+
+	ir.CallableType copy(ir.CallableType ct, ir.CallableType old)
+	{
+		ct.ret = copyType(old.ret);
+		for (size_t i = 0; i < old.params.length; ++i) {
+			ct.params[i] = copyType(old.params[i]);
+			assert(ct.params[i] !is null);
+		}
+		if (old.varArgsTypeids !is null) {
+			ct.varArgsTypeids = lift(old.varArgsTypeids);
+		}
+		if (old.varArgsArgs !is null) {
+			ct.varArgsArgs = lift(old.varArgsArgs);
+		}
+		if (old.typeInfo !is null) {
+			ct.typeInfo = lift(old.typeInfo);
+		}
+		return ct;
+	}
+
+	ir.PointerType copy(ir.PointerType old)
+	{
+		auto pt = new ir.PointerType(old);
+		pt.base = copyType(old.base);
+		return pt;
+	}
+
+	ir.TypeOf copy(ir.TypeOf old)
+	{
+		auto to = new ir.TypeOf(old);
+		to.exp = copyExp(old.exp);
+		return to;
 	}
 
 

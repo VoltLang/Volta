@@ -135,6 +135,8 @@ ir.Scope getScopeFromStore(ir.Store store)
 	case Merge:
 	case Alias:
 		throw panic(store.node.loc, "unresolved alias");
+	case Reserved:
+		throw panic(store.node, "reserved ident '%s' found.", store.name);
 	}
 }
 

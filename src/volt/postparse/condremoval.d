@@ -78,13 +78,17 @@ public:
 
 	override Status enter(ir.Struct s)
 	{
-		s.members.nodes = manipNodes(s.members.nodes);
+		if (s.members !is null) {
+			s.members.nodes = manipNodes(s.members.nodes);
+		}
 		return Continue;
 	}
 
 	override Status enter(ir.Class c)
 	{
-		c.members.nodes = manipNodes(c.members.nodes);
+		if (c.members !is null) {
+			c.members.nodes = manipNodes(c.members.nodes);
+		}
 		return Continue;
 	}
 
@@ -98,7 +102,9 @@ public:
 
 	override Status enter(ir._Interface i)
 	{
-		i.members.nodes = manipNodes(i.members.nodes);
+		if (i.members !is null) {
+			i.members.nodes = manipNodes(i.members.nodes);
+		}
 		return Continue;
 	}
 
@@ -109,6 +115,27 @@ public:
 		}
 		throw panic(c, "should not find condition here.");
 	}
+
+	override Status visit(ir.TemplateDefinition td)
+	{
+		if (td._struct !is null) {
+			return accept(td._struct, this);
+		}
+		if (td._union !is null) {
+			return accept(td._union, this);
+		}
+		if (td._interface !is null) {
+			return accept(td._interface, this);
+		}
+		if (td._class !is null) {
+			return accept(td._class, this);
+		}
+		if (td._function !is null) {
+			return accept(td._function, this);
+		}
+		throw panic("Invalid TemplateDefinition");
+	}
+
 
 protected:
 	bool evaluateCondition(ir.Condition c)

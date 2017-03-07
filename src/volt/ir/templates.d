@@ -35,6 +35,7 @@ public:
 	string name;
 	Type[] typeArguments;
 	bool explicitMixin;
+	string[] typeNames;  // Set by the lifter.
 
 public:
 	this()
@@ -49,8 +50,10 @@ public:
 		this.name = old.name;
 		version (Volt) {
 			this.typeArguments = new old.typeArguments[0 .. $];
+			this.typeNames = new old.typeNames[0 .. $];
 		} else {
 			this.typeArguments = old.typeArguments.dup;
+			this.typeNames = old.typeNames.dup;
 		}
 	}
 }

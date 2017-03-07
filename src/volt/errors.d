@@ -78,6 +78,11 @@ void warningShadowsField(ref in Location newDecl, ref in Location oldDecl, strin
  *
  */
 
+CompilerException makeTemplateAsTemplateArg(ref in Location loc, string name, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, format("template argument '%s' is another template instance.", name), file, line);
+}
+
 CompilerException makeOverloadedFunctionsAccessMismatch(ir.Function a, ir.Function b)
 {
 	auto loc = b.loc;

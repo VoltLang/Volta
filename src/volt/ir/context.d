@@ -65,6 +65,7 @@ public:
 		Merge,
 		Function,
 		Template,
+		Reserved,
 		FunctionParam,
 		EnumDeclaration,
 	}
@@ -292,6 +293,20 @@ public:
 	string genAnonIdent()
 	{
 		return format("__anon%s", .toString(anon++));
+	}
+
+	/**
+	 * Reserve a identifier in this scope.
+	 */
+	Store reserveId(Node n, string name)
+	{
+		auto store = new Store(this, n, name, Store.Kind.Reserved);
+		auto ret = name in symbols;
+		if (ret is null) {
+			symbols[name] = store;
+			return store;
+		}
+		throw panic(n, "failed to reserve ident '%s'", name);
 	}
 
 	/**

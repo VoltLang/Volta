@@ -34,6 +34,7 @@ import volt.semantic.implicit;
 import volt.semantic.typeinfo;
 import volt.semantic.classresolver;
 import volt.semantic.lifter;
+import volt.semantic.templatelifter;
 
 
 /**
@@ -151,6 +152,8 @@ ir.Type handleStore(Context ctx, string ident, ref ir.Exp exp, ir.Store store,
 	case Merge:
 	case Alias:
 		assert(false);
+	case Reserved:
+		throw panic(exp, "reserved ident '%s' found.", store.name);
 	}
 }
 
@@ -3054,6 +3057,16 @@ void extypeThrowStatement(Context ctx, ref ir.Node n)
 	}
 }
 
+/**
+ * Just check that it's a struct template for now.
+ */
+void extypeTemplateDefinition(Context ctx, ir.TemplateDefinition td)
+{
+	if (td._struct is null) {
+		throw makeUnsupported(td.loc, "non struct template definitions");
+	}
+}
+
 // Moved here for now.
 struct ArrayCase
 {
@@ -4309,11 +4322,12 @@ void resolveStruct(LanguagePass lp, ir.Struct s)
 		return;
 	}
 
-
 	auto done = lp.startResolving(s);
 	scope (success) done();
 
 	s.isResolved = true;
+
+	resolveStructTemplate(lp, s);
 
 	// Resolve fields.
 	foreach (n; s.members.nodes) {
@@ -4340,6 +4354,16 @@ void resolveStruct(LanguagePass lp, ir.Struct s)
 		createAggregateVar(lp, s);
 		fileInAggregateVar(lp, s);
 	}
+}
+
+void resolveStructTemplate(LanguagePass lp, ir.Struct s)
+{
+	if (s.templateInstance is null) {
+		return;
+	}
+
+	auto tlifter = new TemplateLifter();
+	tlifter.templateLift(s, lp, s.templateInstance);
 }
 
 void resolveUnion(LanguagePass lp, ir.Union u)
@@ -4547,6 +4571,29 @@ void tagLiteralType(ir.Exp exp, ir.Type type)
 	default:
 		throw panicUnhandled(exp.loc, "literal type");
 	}
+}
+
+/**
+ * Remove type parameters from the current scope.
+ */
+void cleanTemplateParameters(ir.Scope current, ir.TemplateInstance ti)
+{
+	if (ti is null) {
+		return;
+	}
+
+	foreach (tparam; ti.typeNames) {
+		current.remove(tparam);
+	}
+}
+
+/**
+ * Perform tasks that need to happen after a template instance
+ * has been processed.
+ */
+void postStructTemplateInstantiation(ir.Scope current, ir.TemplateInstance ti)
+{
+	cleanTemplateParameters(current, ti);
 }
 
 
@@ -4804,6 +4851,7 @@ public:
 	{
 		checkAnonymousVariables(ctx, s);
 		checkDefaultFootors(ctx, s);
+		postStructTemplateInstantiation(s.myScope, s.templateInstance);
 		ctx.leave(s);
 		return Continue;
 	}
@@ -4890,6 +4938,12 @@ public:
 		ir.Node nd = n;
 		extypeAssertStatement(ctx, nd);
 		return ContinueParent;
+	}
+
+	override Status visit(ir.TemplateDefinition td)
+	{
+		extypeTemplateDefinition(ctx, td);
+		return Continue;
 	}
 
 	/*

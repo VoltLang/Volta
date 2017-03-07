@@ -130,6 +130,7 @@ public:
 			case MixinStatement:
 			case EnumDeclaration:
 			case AssertStatement:
+			case TemplateDefinition:
 				auto s = accept(n, this);
 				if (s == Stop)
 					return Stop;

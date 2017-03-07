@@ -146,8 +146,11 @@ public:
 
 	override ir.Class lift(ir.Class old) { throw panic(ir.nodeToString(old)); }
 	override ir.Union lift(ir.Union old) { throw panic(ir.nodeToString(old)); }
+	override ir.Enum lift(ir.Enum old) { throw panic(ir.nodeToString(old)); }
 	override ir.Struct lift(ir.Struct old) { throw panic(ir.nodeToString(old)); }
 	override ir._Interface lift(ir._Interface old) { throw panic(ir.nodeToString(old)); }
+	override ir.TopLevelBlock lift(ir.TopLevelBlock old) { throw panic(ir.nodeToString(old)); }
+	override ir.Alias lift(ir.Alias old) { throw panic(ir.nodeToString(old)); }
 
 
 protected:

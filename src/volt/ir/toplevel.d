@@ -584,7 +584,11 @@ public:
 	this(Enum old)
 	{
 		super(NodeType.Enum, old);
-		this.members = old.members;
+		version (Volt) {
+			this.members = new old.members[0 .. $];
+		} else {
+			this.members = old.members.dup;
+		}
 		this.base = old.base;
 	}
 }

@@ -556,6 +556,8 @@ ir.Store ensureResolved(LanguagePass lp, ir.Store s)
 	case Template:
 	case FunctionParam:
 		return s;
+	case Reserved:
+		throw panic(s.node, "reserved store ident '%s' found.", s.name);
 	}
 }
 
