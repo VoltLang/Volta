@@ -336,6 +336,13 @@ public:
 	override Status enter(ir.EnumDeclaration n) { enterNode(n); return Continue; }
 	override Status leave(ir.EnumDeclaration n) { leaveNode(n); return Continue; }
 
+	/*
+	 * Template Nodes.
+	 */
+	override Status enter(ir.TemplateInstance n) { enterNode(n); return Continue; }
+	override Status leave(ir.TemplateInstance n) { leaveNode(n); return Continue; }
+	override Status visit(ir.TemplateDefinition n) { visitNode(n); return Continue; }
+
 	override Status visit(ir.NullType n) { visitNode(n); return Continue; }
 	override Status visit(ir.PrimitiveType n) { visitNode(n); return Continue; }
 	override Status visit(ir.TypeReference n) { visitRef(n, n.type); return Continue; }

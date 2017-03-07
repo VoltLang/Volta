@@ -32,6 +32,7 @@ protected:
 
 	int mIndent;
 	string mIndentText;
+	int mPrintingTemplateDefinition;
 
 public:
 	this(string indentText = "\t", void delegate(scope const(char)[]) sink = null)
@@ -188,8 +189,13 @@ public:
 
 	override Status enter(ir.Class c)
 	{
-		ln();
-		twf("class ", c.name);
+		if (!mPrintingTemplateDefinition) {
+			ln();
+			twf("class ", c.name);
+		}
+		if (c.templateInstance !is null) {
+			return accept(c.templateInstance, this);
+		}
 		if (c.parent !is null || c.interfaces.length > 0) {
 			wf(" : ");
 			wf(c.parent);
@@ -218,8 +224,13 @@ public:
 
 	override Status enter(ir._Interface i)
 	{
-		ln();
-		twf("interface ", i.name);
+		if (!mPrintingTemplateDefinition) {
+			ln();
+			twf("interface ", i.name);
+		}
+		if (i.templateInstance !is null) {
+			return accept(i.templateInstance, this);
+		}
 		if (i.interfaces.length > 0) {
 			wf(" : ");
 			foreach (j, _interface; i.interfaces) {
@@ -249,9 +260,14 @@ public:
 
 	override Status enter(ir.Struct s)
 	{
-		ln();
-		twf("struct ");
-		wf(s.name);
+		if (!mPrintingTemplateDefinition) {
+			ln();
+			twf("struct ");
+			wf(s.name);
+		}
+		if (s.templateInstance !is null) {
+			return accept(s.templateInstance, this);
+		}
 		ln();
 		twf("{");
 		ln();
@@ -274,9 +290,14 @@ public:
 
 	override Status enter(ir.Union u)
 	{
-		ln();
-		twf("union ");
-		wf(u.name);
+		if (!mPrintingTemplateDefinition) {
+			ln();
+			twf("union ");
+			wf(u.name);
+		}
+		if (u.templateInstance !is null) {
+			return accept(u.templateInstance, this);
+		}
 		ln();
 		twf("{");
 		ln();
@@ -1295,51 +1316,60 @@ public:
 	
 	override Status enter(ir.Function func)
 	{
-		ln();
-		twf("");
-
-		if (func.mangledName !is null) {
-			wf("@mangledName(\"");
-			wf(func.mangledName);
-			wfln("\")");
+		if (!mPrintingTemplateDefinition) {
+			ln();
 			twf("");
-		}
 
-		final switch(func.kind) with (ir.Function.Kind) {
-		case LocalMember:
-			wf("local ");
-			goto case Member;
-		case GlobalMember:
-		case GlobalNested:
-			wf("global ");
-			goto case Member;
-		case Invalid:
-		case Function:
-		case Nested:
-		case Member:
-			accept(func.type.ret, this);
-			wf(" ");
-			wf(func.name);
-			wf("(");
-			break;
-		case Constructor:
-			wf("this(");
-			break;
-		case Destructor:
-			wf("~this(");
-			break;
-		case LocalConstructor:
-			wf("local this(");
-			break;
-		case LocalDestructor:
-			wf("local ~this(");
-			break;
-		case GlobalConstructor:
-			wf("global this(");
-			break;
-		case GlobalDestructor:
-			wf("global ~this(");
-			break;
+			if (func.templateInstance !is null) {
+				wf("fn");
+				wf(func.name);
+				wf(" ");
+				return accept(func.templateInstance, this);
+			}
+
+			if (func.mangledName !is null) {
+				wf("@mangledName(\"");
+				wf(func.mangledName);
+				wfln("\")");
+				twf("");
+			}
+
+			final switch(func.kind) with (ir.Function.Kind) {
+			case LocalMember:
+				wf("local ");
+				goto case Member;
+			case GlobalMember:
+			case GlobalNested:
+				wf("global ");
+				goto case Member;
+			case Invalid:
+			case Function:
+			case Nested:
+			case Member:
+				accept(func.type.ret, this);
+				wf(" ");
+				wf(func.name);
+				wf("(");
+				break;
+			case Constructor:
+				wf("this(");
+				break;
+			case Destructor:
+				wf("~this(");
+				break;
+			case LocalConstructor:
+				wf("local this(");
+				break;
+			case LocalDestructor:
+				wf("local ~this(");
+				break;
+			case GlobalConstructor:
+				wf("global this(");
+				break;
+			case GlobalDestructor:
+				wf("global ~this(");
+				break;
+			}
 		}
 
 		foreach (i, param; func.params) {
@@ -1494,6 +1524,63 @@ public:
 	override Status leave(ir.TypeOf typeOf)
 	{
 		assert(false);
+	}
+
+	/*
+	 *
+	 * Template Nodes.
+	 *
+	 */
+	
+	override Status enter(ir.TemplateInstance ti)
+	{
+		wf(" = ");
+		wf(ti.name);
+		wf("!(");
+		foreach (i, type; ti.typeArguments) {
+			accept(type, this);
+			if (i < ti.typeArguments.length - 1) {
+				wf(", ");
+			}
+		}
+		wf(");");
+		return ContinueParent;
+	}
+
+	override Status leave(ir.TemplateInstance ti)
+	{
+		assert(false);
+	}	
+
+	override Status visit(ir.TemplateDefinition td)
+	{
+		ln();
+		final switch (td.kind) with (ir.TemplateKind) {
+		case Struct: wf("struct "); break;
+		case Union: wf("union "); break;
+		case Interface: wf("interface "); break;
+		case Class: wf("class "); break;
+		case Function: wf("fn "); break;
+		}
+		wf(td.name);
+		wf("!(");
+		foreach (i, type; td.typeParameters) {
+			wf(type);
+			if (i < td.typeParameters.length - 1) {
+				wf(", ");
+			}
+		}
+		wf(")");
+		mPrintingTemplateDefinition++;
+		final switch (td.kind) with (ir.TemplateKind) {
+		case Struct: accept(td._struct, this); break;
+		case Union: accept(td._union, this); break;
+		case Interface: accept(td._interface, this); break;
+		case Class: accept(td._class, this); break;
+		case Function: accept(td._function, this); break;
+		}
+		mPrintingTemplateDefinition--;
+		return Continue;
 	}
 
 	/*

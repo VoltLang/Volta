@@ -9,6 +9,7 @@ import volt.ir.context;
 import volt.ir.expression;
 import volt.ir.declaration;
 import volt.ir.statement;
+import volt.ir.templates;
 
 /**
  * @defgroup irTopLevel IR TopLevel Nodes
@@ -418,6 +419,8 @@ public:
 
 	bool isAbstract;
 
+	TemplateInstance templateInstance;  //< Optional. Non-null if this is a template instantiation.
+
 public:
 	this() { super(NodeType.Class); }
 
@@ -454,6 +457,7 @@ public:
 
 		this.isObject = old.isObject;
 		this.isAbstract = old.isAbstract;
+		this.templateInstance = old.templateInstance;
 	}
 }
 
@@ -474,6 +478,8 @@ public:
 	/// How a lowered interface will look internally.
 	Struct layoutStruct;
 
+	TemplateInstance templateInstance;  //< Optional. Non-null if this is a template instantiation.
+
 public:
 	this() { super(NodeType.Interface); }
 
@@ -489,6 +495,7 @@ public:
 		}
 
 		this.layoutStruct = old.layoutStruct;
+		this.templateInstance = old.templateInstance;
 	}
 }
 
@@ -507,6 +514,8 @@ class Union : PODAggregate
 public:
 	size_t totalSize; // Total size in memory.
 
+	TemplateInstance templateInstance;  //< Optional. Non-null if this is a template instantiation.
+
 public:
 	this() { super(NodeType.Union); }
 
@@ -514,6 +523,7 @@ public:
 	{
 		super(NodeType.Union, old);
 		this.totalSize = old.totalSize;
+		this.templateInstance = old.templateInstance;
 	}
 }
 
@@ -532,6 +542,8 @@ class Struct : PODAggregate
 public:
 	Node loweredNode;  ///< If not null, this struct was lowered from this.
 
+	TemplateInstance templateInstance;  //< Optional. Non-null if this is a template instantiation.
+
 public:
 	this() { super(NodeType.Struct); }
 
@@ -539,6 +551,7 @@ public:
 	{
 		super(NodeType.Struct, old);
 		this.loweredNode = old.loweredNode;
+		this.templateInstance = old.templateInstance;
 	}
 }
 

@@ -10,6 +10,7 @@ public import volt.ir.toplevel;
 public import volt.ir.statement;
 public import volt.ir.expression;
 public import volt.ir.declaration;
+public import volt.ir.templates;
 
 
 /**

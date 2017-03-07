@@ -150,6 +150,13 @@ public abstract:
 	Status visit(ir.AutoType at);
 	Status visit(ir.NoType at);
 
+	/*
+	 * Template Nodes.
+	 */
+	Status enter(ir.TemplateInstance ti);
+	Status leave(ir.TemplateInstance ti);
+	Status visit(ir.TemplateDefinition td);
+
 
 	/*
 	 * Expression Nodes.
@@ -331,6 +338,13 @@ override:
 	Status leave(ir.TypeOf to) { return Continue; }
 	Status enter(ir.EnumDeclaration ed){ return Continue; }
 	Status leave(ir.EnumDeclaration ed){ return Continue; }
+
+	/*
+	 * Template Nodes.
+	 */
+	Status enter(ir.TemplateInstance ti) { return Continue; }
+	Status leave(ir.TemplateInstance ti) { return Continue; }
+	Status visit(ir.TemplateDefinition td) { return Continue; }
 
 	Status visit(ir.PrimitiveType it){ return Continue; }
 	Status visit(ir.TypeReference tr){ return Continue; }
@@ -640,6 +654,14 @@ body {
 		auto nt = cast(ir.NoType) n;
 		assert(nt !is null);
 		return av.visit(nt);
+	
+	/*
+	 * Templates
+	 */
+	case TemplateInstance:
+		return acceptTemplateInstance(cast(ir.TemplateInstance)n, av);
+	case TemplateDefinition:
+		return acceptTemplateDefinition(cast(ir.TemplateDefinition)n, av);
 
 	/*
 	 * Failure fall through.
@@ -824,9 +846,11 @@ Visitor.Status acceptClass(ir.Class c, Visitor av)
 		return parentContinue(status);
 	}
 
-	status = accept(c.members, av);
-	if (status == VisitorStop) {
-		return VisitorStop;
+	if (c.members !is null) {
+		status = accept(c.members, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
 	}
 
 	return av.leave(c);
@@ -839,9 +863,11 @@ Visitor.Status acceptInterface(ir._Interface i, Visitor av)
 		return parentContinue(status);
 	}
 
-	status = accept(i.members, av);
-	if (status == VisitorStop) {
-		return VisitorStop;
+	if (i.members !is null) {
+		status = accept(i.members, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
 	}
 
 	return av.leave(i);
@@ -854,9 +880,19 @@ Visitor.Status acceptStruct(ir.Struct s, Visitor av)
 		return parentContinue(status);
 	}
 
-	status = accept(s.members, av);
-	if (status == VisitorStop) {
-		return VisitorStop;
+	if (s.templateInstance !is null) {
+		// TODO: Do this for every template type
+		status = accept(s.templateInstance, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	if (s.members !is null) {
+		status = accept(s.members, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
 	}
 
 	return av.leave(s);
@@ -869,9 +905,11 @@ Visitor.Status acceptUnion(ir.Union u, Visitor av)
 		return parentContinue(status);
 	}
 
-	status = accept(u.members, av);
-	if (status == VisitorStop) {
-		return VisitorStop;
+	if (u.members !is null) {
+		status = accept(u.members, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
 	}
 
 	return av.leave(u);
@@ -2319,4 +2357,32 @@ Visitor.Status acceptConstant(ref ir.Exp exp, ir.Constant constant, Visitor av)
 Visitor.Status acceptIdentifierExp(ref ir.Exp exp, ir.IdentifierExp identifier, Visitor av)
 {
 	return av.visit(exp, identifier);
+}
+
+/*
+ * Templates
+ */
+
+Visitor.Status acceptTemplateInstance(ir.TemplateInstance ti, Visitor av)
+{
+	auto status = av.enter(ti);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	foreach (type; ti.typeArguments) {
+		status = accept(type, av);
+		if (status == VisitorContinueParent) {
+			continue;
+		} else if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	return av.leave(ti);
+}
+
+Visitor.Status acceptTemplateDefinition(ir.TemplateDefinition td, Visitor av)
+{
+	return av.visit(td);
 }

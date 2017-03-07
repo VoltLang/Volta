@@ -583,6 +583,8 @@ ir.Node copyNode(ir.Node n)
 	case FunctionSetType:
 	case VaArgExp:
 	case NoType:
+	case TemplateInstance:
+	case TemplateDefinition:
 		goto case Invalid;
 	}
 	version (Volt) assert(false); // ???

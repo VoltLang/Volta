@@ -131,6 +131,10 @@ enum NodeType
 	BuiltinExp,
 	AccessExp,
 	RunExp,
+
+	/* templates.d */
+	TemplateInstance,
+	TemplateDefinition,
 }
 
 /**
@@ -420,6 +424,8 @@ string nodeToString(NodeType nodeType)
 	case NoType: return "NoType";
 	case AccessExp: return "AccessExp";
 	case RunExp: return "RunExp";
+	case TemplateInstance: return "TemplateInstance";
+	case TemplateDefinition: return "TemplateDefinition";
 	}
 }
 
