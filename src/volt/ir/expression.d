@@ -440,8 +440,8 @@ public:
 	this(AAPair old)
 	{
 		super(NodeType.AAPair, old);
-		this.key = key;
-		this.value = value;
+		this.key = old.key;
+		this.value = old.value;
 	}
 }
 
@@ -463,7 +463,11 @@ public:
 	this(AssocArray old)
 	{
 		super(NodeType.AssocArray, old);
-		this.pairs = old.pairs;
+		version (Volt) {
+			this.pairs = new old.pairs[0 .. $];
+		} else {
+			this.pairs = old.pairs.dup;
+		}
 		this.type = old.type;
 	}
 }
