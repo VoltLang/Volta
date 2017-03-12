@@ -1319,15 +1319,13 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 		if (aa is null) {
 			throw panic(exp.location, "malformed BuiltinExp.");
 		}
-		bool keyIsArray = isArray(realType(aa.key));
 		ir.Function rtfn;
-		if (keyIsArray) {
-			rtfn = lp.aaDeleteArray;
-			builtin.children[1] = buildCastSmart(l, buildArrayType(l, buildVoid(l)),
-			                                     builtin.children[1]);
-		} else {
+		builtin.children[1] = lowerAAKeyCast(l, lp, getModuleFromScope(l, current),
+			current, builtin.children[1], aa);
+		if (aa.key.nodeType == ir.NodeType.PrimitiveType) {
 			rtfn = lp.aaDeletePrimitive;
-			builtin.children[1] = buildCastSmart(l, buildUlong(l), builtin.children[1]);
+		} else {
+			rtfn = lp.aaDeleteArray;
 		}
 		exp = buildCall(exp.location, rtfn, builtin.children);
 		break;
