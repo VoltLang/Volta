@@ -22,6 +22,6 @@ fn vrt_aa_in_binop_array(rbtv: void*, key: void[]) void*;
 fn vrt_aa_in_binop_primitive(rbtv: void*, key: ulong) void*;
 fn vrt_aa_rehash(rbtv: void*);
 fn vrt_aa_get_pp(rbtv: void*, key: ulong, _default: ulong) ulong;
-fn vrt_aa_get_aa(rbtv: void*, key: void[], _default: void[] ) void[];
+fn vrt_aa_get_aa(rbtv: void*, key: void[], _default: void[] ) void*;
 fn vrt_aa_get_ap(rbtv: void*, key: void[], _default: ulong) ulong;
-fn vrt_aa_get_pa(rbtv: void*, key: ulong, _default: void[] ) void[];
+fn vrt_aa_get_pa(rbtv: void*, key: ulong, _default: void[] ) void*;

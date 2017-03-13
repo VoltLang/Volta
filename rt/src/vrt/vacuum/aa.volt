@@ -101,13 +101,13 @@ extern(C) fn vrt_aa_get_pp(rbtv: void*, key: u64, _default: u64) u64
 	}
 }
 
-extern(C) fn vrt_aa_get_aa(rbtv: void*, key: void[], _default: void[]) void[]
+extern(C) fn vrt_aa_get_aa(rbtv: void*, key: void[], _default: void[]) void*
 {
 	ret: void[];
 	if (vrt_aa_in_array(rbtv, key, cast(void*)&ret)) {
-		return ret;
+		return cast(void*)&ret;
 	} else {
-		return _default;
+		return _default.ptr;
 	}
 }
 
@@ -121,13 +121,13 @@ extern(C) fn vrt_aa_get_ap(rbtv: void*, key: void[], _default: u64) u64
 	}
 }
 
-extern(C) fn vrt_aa_get_pa(rbtv: void*, key: u64, _default: void[]) void[]
+extern(C) fn vrt_aa_get_pa(rbtv: void*, key: u64, _default: void[]) void*
 {
 	ret: void[];
 	if (vrt_aa_in_primitive(rbtv, key, cast(void*) &ret)) {
-		return ret;
+		return cast(void*)&ret;
 	} else {
-		return _default;
+		return _default.ptr;
 	}
 }
 
