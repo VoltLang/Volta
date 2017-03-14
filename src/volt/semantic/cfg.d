@@ -223,10 +223,20 @@ public:
 
 	override Status enter(ir.ReturnStatement rs)
 	{
-		if (block.terminates) {
-			throw makeNeverReached(rs.location);
-		}
+		checkReachability(rs);
 		block.terminates = true;
+		return Continue;
+	}
+
+	override Status enter(ref ir.Exp exp, ir.StatementExp se)
+	{
+		// Trust that the StatementExp is sane.
+		return ContinueParent;
+	}
+
+	override Status enter(ir.ExpStatement es)
+	{
+		checkReachability(es);
 		return Continue;
 	}
 
@@ -244,6 +254,7 @@ public:
 	{
 		// TODO: This chokes on nested ifs -- break it up, and don't do it all at once.
 		ensureNonNullBlock(ifs.location);
+		checkReachability(ifs);
 		auto currentBlock = block;
 		auto thenBlock = block = new Block(currentBlock);
 		Block elseBlock;
@@ -283,17 +294,20 @@ public:
 
 	override Status enter(ir.WhileStatement ws)
 	{
+		checkReachability(ws);
 		return buildLoop(ws, ws.block, ws.condition);
 	}
 
 	override Status enter(ir.ForStatement fs)
 	{
+		checkReachability(fs);
 		return buildLoop(fs, fs.block, fs.test);
 	}
 
 	override Status enter(ir.ForeachStatement fes)
 	{
 		ensureNonNullBlock(fes.location);
+		checkReachability(fes);
 		auto currentBlock = block;
 		auto fesBlock = block = new Block(currentBlock);
 		breakBlocks ~= fesBlock;
@@ -306,6 +320,7 @@ public:
 	override Status enter(ir.DoStatement ds)
 	{
 		ensureNonNullBlock(ds.location);
+		checkReachability(ds);
 		auto currentBlock = block;
 		auto doBlock = block = new Block(currentBlock);
 		breakBlocks ~= doBlock;
@@ -329,6 +344,7 @@ public:
 	override Status enter(ir.SwitchStatement ss)
 	{
 		ensureNonNullBlock(ss.location);
+		checkReachability(ss);
 		auto oldSwitchBlocks = currentSwitchBlocks;
 		auto oldSwitchStatement = currentSwitchStatement;
 		auto oldCaseIndex = currentCaseIndex;
@@ -393,6 +409,7 @@ public:
 	override Status visit(ir.ContinueStatement cs)
 	{
 		ensureNonNullBlock(cs.location);
+		checkReachability(cs);
 		if (cs.label.length > 0) {
 			throw panic(cs.location, "labelled continue unimplemented");
 		}
@@ -428,6 +445,7 @@ public:
 		if (currentSwitchStatement is null || currentCaseIndex < 0) {
 			throw makeGotoOutsideOfSwitch(gs.location);
 		}
+		checkReachability(gs);
 		block._goto = true;
 		if (gs.isDefault) {
 			// goto default;
@@ -486,6 +504,7 @@ public:
 	override Status enter(ir.TryStatement ts)
 	{
 		ensureNonNullBlock(ts.location);
+		checkReachability(ts);
 		auto currentBlock = block;
 		auto tryBlock = new Block(currentBlock);
 		accept(ts.tryBlock, this);
@@ -519,6 +538,7 @@ public:
 	override Status enter(ir.ThrowStatement ts)
 	{
 		ensureNonNullBlock(ts.location);
+		checkReachability(ts);
 		block.terminates = true;
 		return Continue;
 	}
@@ -537,9 +557,7 @@ public:
 		if (breakBlocks.length == 0) {
 			throw makeBreakOutOfLoop(bs.location);
 		}
-		if (block.terminates) {
-			throw makeNotReached(bs);
-		}
+		checkReachability(bs);
 		block._break = true;
 		return Continue;
 	}
@@ -585,6 +603,13 @@ private:
 			block = new Block(currentBlock, loopBlock);
 		}
 		return ContinueParent;
+	}
+
+	void checkReachability(ir.Node n)
+	{
+		if (block.terminates) {
+			throw makeNotReached(n);
+		}
 	}
 
 	/// Sanity check function.
