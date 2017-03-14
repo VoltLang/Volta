@@ -4,13 +4,13 @@ module test;
 
 struct StringHolder
 {
-	a: string;
+	a: i32;
 }
 
 fn main() i32
 {
 	sh: StringHolder;
-	sh.a = "hello";
+	sh.a = 15;
 	a: i32[StringHolder];
 	a[sh] = 12;
 	a.remove(sh);

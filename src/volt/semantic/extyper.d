@@ -4045,6 +4045,9 @@ void doResolveAA(Context ctx, ref ir.Type type)
 	}
 
 	if (base.nodeType == ir.NodeType.Struct) {
+		if (mutableIndirection(base)) {
+			throw makeMutableStructAAKey(at.location);
+		}
 		return;
 	}
 
