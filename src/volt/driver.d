@@ -546,7 +546,7 @@ protected:
 	{
 		perf.mark(Perf.Mark.BACKEND);
 
-		// We do this here if we know that object files are
+		// We do this here because we know that bitcode files are
 		// being used. Add files to dependencies for this compile.
 		foreach (file; mBitcodeFiles) {
 			mDepFiles ~= file;
@@ -555,11 +555,24 @@ protected:
 		// We will be modifing this later on,
 		// but we don't want to change mBitcodeFiles.
 		string[] bitcodeFiles = mBitcodeFiles;
+		bitcodeFiles ~= turnModulesIntoBitcode(mCommandLineModules);
+
+		if (mEmitBitcode || mNoLink) {
+			return intCompileBackendBitcodeOrObject(bitcodeFiles);
+		} else {
+			return intCompileBackendLink(bitcodeFiles);
+		}
+	}
+
+	string[] turnModulesIntoBitcode(ir.Module[] mods)
+	{
 		string subdir = getTemporarySubdirectoryName();
+		string[] ret;
 
 		// Generate bc files for the compiled modules.
 		foreach (m; mCommandLineModules) {
 			string o = temporaryFilename(".bc", subdir);
+
 			backend.setTarget(TargetType.LlvmBitcode);
 			debugPrint("Backend %s.", m.name.toString());
 			auto d = languagePass.driver;
@@ -567,10 +580,16 @@ protected:
 				languagePass.llvmTypeidFor, d.execDir, d.identStr);
 			res.saveToFile(o);
 			res.close();
-			bitcodeFiles ~= o;
+			ret ~= o;
 			mTemporaryFiles ~= o;
 		}
 
+		return ret;
+	}
+
+	int intCompileBackendBitcodeOrObject(string[] bitcodeFiles)
+	{
+		string subdir = getTemporarySubdirectoryName();
 
 		// Setup files bc.
 		string bc;
@@ -597,12 +616,6 @@ protected:
 			return 0;
 		}
 
-		// We do this here if we know that object files are
-		// being used. Add files to dependencies for this compile.
-		foreach (file; mObjectFiles) {
-			mDepFiles ~= file;
-		}
-
 		// Setup object files and output for linking
 		string obj;
 		if (mNoLink) {
@@ -621,23 +634,49 @@ protected:
 			writeObjectFile(target, obj, bc);
 		}
 
-		// When not linking we are now done.
-		if (mNoLink) {
-			return 0;
+		return 0;
+	}
+
+	int intCompileBackendLink(string[] bitcodeFiles)
+	{
+		string subdir = getTemporarySubdirectoryName();
+
+		// We do this here because we know that object files are
+		// being used. Add files to dependencies for this compile.
+		foreach (file; mObjectFiles) {
+			mDepFiles ~= file;
+		}
+
+		// We will be modifing this later on,
+		// but we don't want to change mObjectFiles.
+		string[] objectFiles = mObjectFiles;
+
+		// Native compilation, turn the bitcode into native code.
+		perf.mark(Perf.Mark.ASSEMBLE);
+		foreach (bc; bitcodeFiles) {
+			string obj = temporaryFilename(".o", subdir);
+
+			/*
+			auto args = ["-Wno-override-module", "-fPIC",
+			             "-x", "ir", "-c", "-O3", "-o", obj, bc];
+			int ret = spawnProcess("clang", args).wait();
+			if (ret != 0) {
+				return ret;
+			}
+			*/
+
+			writeObjectFile(target, obj, bc);
+			mTemporaryFiles ~= obj;
+			objectFiles ~= obj;
 		}
 
 		// And finally call the linker.
 		perf.mark(Perf.Mark.LINK);
-		return nativeLink(obj, mOutput);
+		return nativeLink(objectFiles, mOutput);
 	}
 
-	int nativeLink(string obj, string of)
+	int nativeLink(string[] objs, string of)
 	{
-		auto objs = mObjectFiles;
-		if (obj !is null) {
-			objs ~= obj;
-		}
-
 		if (mLinkWithLink) {
 			return msvcLink(mLinker, objs, of);
 		} else if (mLinkWithLD) {
