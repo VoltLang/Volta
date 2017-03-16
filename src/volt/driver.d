@@ -18,6 +18,7 @@ import watt.text.string : split, endsWith, replace;
 
 import volt.util.path;
 import volt.util.perf : Accumulator, Perf, perf;
+import volt.util.cmdgroup;
 import volt.exceptions;
 import volt.interfaces;
 import volt.errors;
@@ -71,6 +72,9 @@ protected:
 
 	string mOutput;
 
+	string mOptimizeFlag;
+	string mClangCmd;
+
 	string mDepFile;
 	string[] mDepFiles; ///< All files used as input to this compiled.
 
@@ -120,6 +124,11 @@ protected:
 	/// Decide on the different parts of the driver to use.
 	bool mRunVoltend;
 	bool mRunBackend;
+
+
+private:
+	/// Keeps track of the return status of clang calls.
+	int mClangReturn;
 
 
 public:
@@ -637,10 +646,59 @@ protected:
 		return 0;
 	}
 
-	int intCompileBackendLink(string[] bitcodeFiles)
+	int turnBitcodeIntoObjectClang(ref string[] objectFiles, string[] bitcodeFiles)
+	{
+		string subdir = getTemporarySubdirectoryName();
+		auto cmd = new CmdGroup(8);
+		auto clangArgs = ["-x", "ir", "-c", "-target",
+			tripleList[Platform.Linux][Arch.X86_64]];
+
+		// Force -fPIC on linux.
+		if (target.arch == Arch.X86_64 &&
+		    target.platform == Platform.Linux) {
+			clangArgs ~= "-fPIC";
+		}
+
+		if (mOptimizeFlag !is null) {
+			clangArgs ~= mOptimizeFlag;
+		}
+
+		// Native compilation, turn the bitcode into native code.
+		foreach (bc; bitcodeFiles) {
+			// Abort the loop if a command has failed.
+			if (mClangReturn != 0) {
+				break;
+			}
+
+			string obj = temporaryFilename(".o", subdir);
+			auto args = clangArgs ~ ["-o", obj, bc];
+			cmd.run(mClangCmd, args, checkClangReturn);
+
+			mTemporaryFiles ~= obj;
+			objectFiles ~= obj;
+		}
+
+		// Wait for all commands to finish.
+		cmd.waitAll();
+
+		return mClangReturn;
+	}
+
+	void turnBitcodeIntoObject(ref string[] objectFiles, string[] bitcodeFiles)
 	{
 		string subdir = getTemporarySubdirectoryName();
 
+		// Native compilation, turn the bitcode into native code.
+		foreach (bc; bitcodeFiles) {
+			string obj = temporaryFilename(".o", subdir);
+			writeObjectFile(target, obj, bc);
+			mTemporaryFiles ~= obj;
+			objectFiles ~= obj;
+		}
+	}
+
+	int intCompileBackendLink(string[] bitcodeFiles)
+	{
 		// We do this here because we know that object files are
 		// being used. Add files to dependencies for this compile.
 		foreach (file; mObjectFiles) {
@@ -649,25 +707,16 @@ protected:
 
 		// We will be modifing this later on,
 		// but we don't want to change mObjectFiles.
-		string[] objectFiles = mObjectFiles;
-
-		// Native compilation, turn the bitcode into native code.
 		perf.mark(Perf.Mark.ASSEMBLE);
-		foreach (bc; bitcodeFiles) {
-			string obj = temporaryFilename(".o", subdir);
-
-			/*
-			auto args = ["-Wno-override-module", "-fPIC",
-			             "-x", "ir", "-c", "-O3", "-o", obj, bc];
-			int ret = spawnProcess("clang", args).wait();
+		string[] objectFiles = mObjectFiles;
+		if (mClangCmd !is null) {
+			auto ret = turnBitcodeIntoObjectClang(
+				objectFiles, bitcodeFiles);
 			if (ret != 0) {
 				return ret;
 			}
-			*/
-
-			writeObjectFile(target, obj, bc);
-			mTemporaryFiles ~= obj;
-			objectFiles ~= obj;
+		} else {
+			turnBitcodeIntoObject(objectFiles, bitcodeFiles);
 		}
 
 		// And finally call the linker.
@@ -924,6 +973,18 @@ protected:
 
 
 private:
+	void checkClangReturn(int result)
+	{
+		if (result != 0) {
+			mClangReturn = result;
+		}
+	}
+
+	version (D_Version2) CmdGroup.DoneDg checkClangReturn()
+	{
+		return &checkClangReturn;
+	}
+
 	/**
 	 * If we are debugging print messages.
 	 */
