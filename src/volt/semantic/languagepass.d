@@ -129,10 +129,10 @@ public:
 		}
 
 		passes2 ~= new TimerPass("p2-extyper", new ExTyper(this));
-		passes3 ~= new TimerPass("p2-expfolder", new ExpFolder());
 		passes2 ~= new TimerPass("p2-cfgbuilder", new CFGBuilder(this));
 		passes2 ~= new TimerPass("p2-irverifier", new IrVerifier());
 
+		passes3 ~= new TimerPass("p3-expfolder", new ExpFolder());
 		passes3 ~= new TimerPass("p3-llvm", new LlvmLowerer(this));
 		passes3 ~= new TimerPass("p3-new-rep", new NewReplacer(this));
 		passes3 ~= new TimerPass("p3-typeid-rep", new TypeidReplacer(this));
