@@ -651,7 +651,7 @@ protected:
 		string subdir = getTemporarySubdirectoryName();
 		auto cmd = new CmdGroup(8);
 		auto clangArgs = ["-x", "ir", "-c", "-target",
-			tripleList[Platform.Linux][Arch.X86_64]];
+			tripleList[target.platform][target.arch]];
 
 		// Force -fPIC on linux.
 		if (target.arch == Arch.X86_64 &&
