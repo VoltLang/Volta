@@ -659,6 +659,14 @@ protected:
 			clangArgs ~= "-fPIC";
 		}
 
+		// Clang likes to change the module target triple.
+		// @TODO make battery pipe in the real triple.
+		if (target.arch == Arch.X86_64 &&
+		    target.platform == Platform.MSVC) {
+			clangArgs ~= "-Wno-override-module";
+		}
+
+		// Add any optimze flag.
 		if (mOptimizeFlag !is null) {
 			clangArgs ~= mOptimizeFlag;
 		}
