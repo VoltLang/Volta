@@ -55,7 +55,7 @@ import volt.util.sinks;
 enum ThrowOnError = true;
 enum DoNotThrow = false;
 
-ir.Function selectFunction(ir.Function[] functions, ir.Exp[] arguments, Location location, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(ir.Function[] functions, ir.Exp[] arguments, ref Location location, bool throwOnError = ThrowOnError)
 {
 	ir.Type[] types;
 	foreach (arg; arguments) {
@@ -64,7 +64,7 @@ ir.Function selectFunction(ir.Function[] functions, ir.Exp[] arguments, Location
 	return selectFunction(functions, types, arguments, location, throwOnError);
 }
 
-ir.Function selectFunction(ir.FunctionSet fset, ir.Exp[] arguments, Location location, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(ir.FunctionSet fset, ir.Exp[] arguments, ref Location location, bool throwOnError = ThrowOnError)
 {
 	ir.Type[] types;
 	foreach (arg; arguments) {
@@ -73,7 +73,7 @@ ir.Function selectFunction(ir.FunctionSet fset, ir.Exp[] arguments, Location loc
 	return selectFunction(fset, types, arguments, location, throwOnError);
 }
 
-ir.Function selectFunction(ir.FunctionSet fset, ir.Variable[] arguments, Location location, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(ir.FunctionSet fset, ir.Variable[] arguments, ref Location location, bool throwOnError = ThrowOnError)
 {
 	ir.Type[] types;
 	foreach (arg; arguments) {
@@ -82,7 +82,7 @@ ir.Function selectFunction(ir.FunctionSet fset, ir.Variable[] arguments, Locatio
 	return selectFunction(fset, types, [], location, throwOnError);
 }
 
-ir.Function selectFunction(ir.Function[] functions, ir.Variable[] arguments, Location location, bool throwOnError)
+ir.Function selectFunction(ir.Function[] functions, ir.Variable[] arguments, ref Location location, bool throwOnError)
 {
 	ir.Type[] types;
 	foreach (arg; arguments) {
@@ -153,12 +153,12 @@ bool specialisationComparison(Object ao, Object bo)
 	return atob && !btoa;
 }
 
-ir.Function selectFunction(ir.FunctionSet fset, ir.Type[] arguments, Location location, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(ir.FunctionSet fset, ir.Type[] arguments, ref Location location, bool throwOnError = ThrowOnError)
 {
 	return selectFunction(fset, arguments, [], location, throwOnError);
 }
 
-ir.Function selectFunction(ir.FunctionSet fset, ir.Type[] arguments, ir.Exp[] exps, Location location, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(ir.FunctionSet fset, ir.Type[] arguments, ir.Exp[] exps, ref Location location, bool throwOnError = ThrowOnError)
 {
 	auto func = selectFunction(fset.functions, arguments, exps, location, throwOnError);
 	if (func is null) {
@@ -167,12 +167,12 @@ ir.Function selectFunction(ir.FunctionSet fset, ir.Type[] arguments, ir.Exp[] ex
 	return fset.resolved(func);
 }
 
-ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, Location location, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ref Location location, bool throwOnError = ThrowOnError)
 {
 	return selectFunction(functions, arguments, [], location, throwOnError);
 }
 
-ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ir.Exp[] exps, Location location, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ir.Exp[] exps, ref Location location, bool throwOnError = ThrowOnError)
 {
 	panicAssert(location, functions.length > 0);
 
