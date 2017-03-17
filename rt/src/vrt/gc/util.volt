@@ -4,17 +4,19 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.gc.util;
 
-import vrt.ext.stdc : printf, exit;
+import core.rt.misc : vrt_panic;
+
 
 /**
  * assert(foo) -> if (!foo) { throw new ... } -> code explosion
  * Avoid real asserts, and use this function instead, in GC code.
  */
-fn gcAssert(b: bool, loc: const(char)* = __LOCATION__)
+fn gcAssert(b: bool, loc: const(char)[] = __LOCATION__)
 {
 	if (!b) {
-		printf("GC panic at '%s'. This is a bug in the runtime.\n", loc);
-		exit(1);
+		tmp : const(char)[][1];
+		tmp[1] = "GC panic. This is a bug in the runtime.\n"; 
+		vrt_panic(tmp, loc);
 	}
 }
 
