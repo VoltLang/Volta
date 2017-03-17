@@ -2,17 +2,20 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.os.panic;
 
-import vrt.ext.stdc: exit, printf;
+import vrt.ext.stdc: exit, fprintf, fflush, stderr;
 
 
 extern(C) fn vrt_panic(msgs: const(char)[][], location: const(char)[])
 {
-	printf("%.*s: ###PANIC###\n",
+	fprintf(stderr, "###PANIC###");
+	fflush(stderr);
+	fprintf(stderr, "%.*s\n",
 		cast(int)location.length, location.ptr);
 
 	foreach (msg; msgs) {
-		printf("%.*s\n", cast(int)msg.length, msg.ptr);
+		fprintf(stderr, "%.*s\n", cast(int)msg.length, msg.ptr);
 	}
 
+	fflush(stderr);
 	exit(-1);
 }
