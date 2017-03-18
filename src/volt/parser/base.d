@@ -119,7 +119,7 @@ ParseStatus unexpectedToken(ParserStream ps, ir.NodeType ntype,
                             string file = __FILE__, const int line = __LINE__)
 {
 	string found = tokenToString(ps.peek.type);
-	auto e = new ParserUnexpectedToken(ps.peek.loc, ntype, found,
+	auto e = new ParserUnexpectedToken(ps.peek.location, ntype, found,
 	                                   file, line);
 	ps.parserErrors ~= e;
 	return Failed;
@@ -135,7 +135,7 @@ ParseStatus wrongToken(ParserStream ps, ir.NodeType ntype,
                        Token found, TokenType expected,
                        string file = __FILE__, const int line = __LINE__)
 {
-	auto e = new ParserWrongToken(found.loc, ntype, found.type,
+	auto e = new ParserWrongToken(found.location, ntype, found.type,
 	                              expected, file, line);
 	ps.parserErrors ~= e;
 	return Failed;
@@ -146,7 +146,7 @@ ParseStatus parseFailed(ParserStream ps, ir.NodeType ntype,
 {
 	assert(ps.parserErrors.length >= 1);
 	auto ntype2 = ps.parserErrors[$-1].nodeType;
-	auto e = new ParserParseFailed(ps.peek.loc, ntype, ntype2,
+	auto e = new ParserParseFailed(ps.peek.location, ntype, ntype2,
 	                               file, line);
 	ps.parserErrors ~= e;
 	return Failed;
@@ -161,7 +161,7 @@ ParseStatus parseFailed(ParserStream ps, ir.Node n,
 ParseStatus parseFailed(ParserStream ps, ir.NodeType ntype, ir.NodeType ntype2,
                         string file = __FILE__, const int line = __LINE__)
 {
-	auto e = new ParserParseFailed(ps.peek.loc, ntype, ntype2,
+	auto e = new ParserParseFailed(ps.peek.location, ntype, ntype2,
 	                               file, line);
 	ps.parserErrors ~= e;
 	return Failed;
@@ -170,7 +170,7 @@ ParseStatus parseFailed(ParserStream ps, ir.NodeType ntype, ir.NodeType ntype2,
 ParseStatus unsupportedFeature(ParserStream ps, ir.Node n, string s,
                                string file = __FILE__, const int l = __LINE__)
 {
-	auto e = new ParserUnsupportedFeature(n.loc, n.nodeType, s, file, l);
+	auto e = new ParserUnsupportedFeature(n.location, n.nodeType, s, file, l);
 	ps.parserErrors ~= e;
 	return Failed;
 }
@@ -398,7 +398,7 @@ ParseStatus eatComments(ParserStream ps)
 		auto commentTok = ps.get();
 		if (commentTok.isBackwardsComment) {
 			if (ps.retroComment is null) {
-				return strayDocComment(ps, commentTok.loc);
+				return strayDocComment(ps, commentTok.location);
 			} else {
 				ps.retroComment.docComment = commentTok.value;
 			}
@@ -425,7 +425,7 @@ ParseStatus parseQualifiedName(ParserStream ps, out ir.QualifiedName name,
 {
 	name = new ir.QualifiedName();
 	auto t = ps.peek;
-	auto startLocation = t.loc;
+	auto startLocation = t.location;
 
 	// Consume any leading dots if allowed, if not allowed error.
 	if (allowLeadingDot && t.type == TokenType.Dot) {
@@ -451,7 +451,7 @@ ParseStatus parseQualifiedName(ParserStream ps, out ir.QualifiedName name,
 		}
 	} while(true);
 
-	name.loc = t.loc - startLocation;
+	name.location = t.location - startLocation;
 
 	return Succeeded;
 }
@@ -469,7 +469,7 @@ ParseStatus parseIdentifier(ParserStream ps, out ir.Identifier i)
 	i = new ir.Identifier();
 
 	i.value = t.value;
-	i.loc = t.loc;
+	i.location = t.location;
 
 	return Succeeded;
 }
@@ -584,7 +584,7 @@ public:
 		}
 		if (mComment[$-1].length && !inMultiCommentBlock) {
 			assert(lastDocComment !is null);
-			auto e = makeStrayDocComment(lastDocComment.loc);
+			auto e = makeStrayDocComment(lastDocComment.location);
 			e.neverIgnore = true;
 			throw e;
 		}
@@ -648,7 +648,7 @@ private:
 		}
 		if (mTokens[mIndex].value.indexOf("@}") >= 0) {
 			if (!inMultiCommentBlock) {
-				auto e = makeExpected(mTokens[mIndex].loc, "@{");
+				auto e = makeExpected(mTokens[mIndex].location, "@{");
 				e.neverIgnore = true;
 				throw e;
 			}

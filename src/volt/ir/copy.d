@@ -13,7 +13,7 @@ import volt.token.location;
 ir.AccessExp copy(ir.AccessExp old)
 {
 	auto ae = new ir.AccessExp();
-	ae.loc = old.loc;
+	ae.location = old.location;
 	ae.child = copyExp(old.child);
 	ae.field = old.field;
 	ae.aggregate = old.aggregate;
@@ -23,7 +23,7 @@ ir.AccessExp copy(ir.AccessExp old)
 ir.Constant copy(ir.Constant cnst)
 {
 	auto c = new ir.Constant();
-	c.loc = cnst.loc;
+	c.location = cnst.location;
 	c.type = cnst.type !is null ? copyType(cnst.type) : null;
 	c.u._ulong = cnst.u._ulong;
 	c._string = cnst._string;
@@ -39,7 +39,7 @@ ir.Constant copy(ir.Constant cnst)
 ir.BlockStatement copy(ir.BlockStatement bs)
 {
 	auto b = new ir.BlockStatement();
-	b.loc = bs.loc;
+	b.location = bs.location;
 	b.statements = new ir.Node[](bs.statements.length);
 	foreach (i, stmt; bs.statements) {
 		b.statements[i] = copyNode(stmt);
@@ -51,7 +51,7 @@ ir.BlockStatement copy(ir.BlockStatement bs)
 ir.ReturnStatement copy(ir.ReturnStatement rs)
 {
 	auto r = new ir.ReturnStatement();
-	r.loc = rs.loc;
+	r.location = rs.location;
 	if (rs.exp !is null) {
 		r.exp = copyExp(rs.exp);
 	}
@@ -61,7 +61,7 @@ ir.ReturnStatement copy(ir.ReturnStatement rs)
 ir.BinOp copy(ir.BinOp bo)
 {
 	auto b = new ir.BinOp();
-	b.loc = bo.loc;
+	b.location = bo.location;
 	b.op = bo.op;
 	b.left = copyExp(bo.left);
 	b.right = copyExp(bo.right);
@@ -71,7 +71,7 @@ ir.BinOp copy(ir.BinOp bo)
 ir.IdentifierExp copy(ir.IdentifierExp ie)
 {
 	auto i = new ir.IdentifierExp();
-	i.loc = ie.loc;
+	i.location = ie.location;
 	i.globalLookup = ie.globalLookup;
 	i.value = ie.value;
 	return i;
@@ -80,14 +80,14 @@ ir.IdentifierExp copy(ir.IdentifierExp ie)
 ir.TokenExp copy(ir.TokenExp te)
 {
 	auto newte = new ir.TokenExp(te.type);
-	newte.loc = te.loc;
+	newte.location = te.location;
 	return newte;
 }
 
 ir.TypeExp copy(ir.TypeExp te)
 {
 	auto newte = new ir.TypeExp();
-	newte.loc = te.loc;
+	newte.location = te.location;
 	newte.type = copyType(te.type);
 	return newte;
 }
@@ -95,7 +95,7 @@ ir.TypeExp copy(ir.TypeExp te)
 ir.StoreExp copy(ir.StoreExp se)
 {
 	auto newse = new ir.StoreExp();
-	newse.loc = se.loc;
+	newse.location = se.location;
 	newse.store = se.store;
 	version (Volt) {
 		newse.idents = new se.idents[0 .. $];
@@ -108,7 +108,7 @@ ir.StoreExp copy(ir.StoreExp se)
 ir.ArrayLiteral copy(ir.ArrayLiteral ar)
 {
 	auto newar = new ir.ArrayLiteral();
-	newar.loc = ar.loc;
+	newar.location = ar.location;
 	if (ar.type !is null)
 		newar.type = copyType(ar.type);
 	newar.exps = new ir.Exp[](ar.exps.length);
@@ -121,7 +121,7 @@ ir.ArrayLiteral copy(ir.ArrayLiteral ar)
 ir.ExpReference copy(ir.ExpReference er)
 {
 	auto newer = new ir.ExpReference();
-	newer.loc = er.loc;
+	newer.location = er.location;
 	version (Volt) {
 		newer.idents = new er.idents[0 .. $];
 	} else {
@@ -137,7 +137,7 @@ ir.ExpReference copy(ir.ExpReference er)
 ir.Identifier copy(ir.Identifier ident)
 {
 	auto n = new ir.Identifier();
-	n.loc = ident.loc;
+	n.location = ident.location;
 	n.value = ident.value;
 	return n;
 }
@@ -145,7 +145,7 @@ ir.Identifier copy(ir.Identifier ident)
 ir.Postfix copy(ir.Postfix pfix)
 {
 	auto newpfix = new ir.Postfix();
-	newpfix.loc = pfix.loc;
+	newpfix.location = pfix.location;
 	newpfix.op = pfix.op;
 	newpfix.child = copyExp(pfix.child);
 	newpfix.arguments = new ir.Exp[](pfix.arguments.length);
@@ -170,7 +170,7 @@ ir.Postfix copy(ir.Postfix pfix)
 ir.Unary copy(ir.Unary unary)
 {
 	auto newunary = new ir.Unary();
-	newunary.loc = unary.loc;
+	newunary.location = unary.location;
 	newunary.op = unary.op;
 	newunary.value = unary.value is null ? null : copyExp(unary.value);
 	newunary.hasArgumentList = unary.hasArgumentList;
@@ -192,7 +192,7 @@ ir.Unary copy(ir.Unary unary)
 ir.PropertyExp copy(ir.PropertyExp old)
 {
 	auto prop = new ir.PropertyExp();
-	prop.loc = old.loc;
+	prop.location = old.location;
 	prop.getFn  = old.getFn;
 	prop.setFns = old.setFns;
 	if (old.child !is null) {
@@ -214,28 +214,28 @@ ir.PropertyExp copy(ir.PropertyExp old)
 ir.PrimitiveType copy(ir.PrimitiveType old)
 {
 	auto pt = new ir.PrimitiveType(old.type);
-	pt.loc = old.loc;
+	pt.location = old.location;
 	return pt;
 }
 
 ir.PointerType copy(ir.PointerType old)
 {
 	auto pt = new ir.PointerType(copyType(old.base));
-	pt.loc = old.loc;
+	pt.location = old.location;
 	return pt;
 }
 
 ir.ArrayType copy(ir.ArrayType old)
 {
 	auto at = new ir.ArrayType(copyType(old.base));
-	at.loc = old.loc;
+	at.location = old.location;
 	return at;
 }
 
 ir.StaticArrayType copy(ir.StaticArrayType old)
 {
 	auto sat = new ir.StaticArrayType();
-	sat.loc = old.loc;
+	sat.location = old.location;
 	sat.base = copyType(old.base);
 	sat.length = old.length;
 	return sat;
@@ -244,7 +244,7 @@ ir.StaticArrayType copy(ir.StaticArrayType old)
 ir.AAType copy(ir.AAType old)
 {
 	auto aa = new ir.AAType();
-	aa.loc = old.loc;
+	aa.location = old.location;
 	aa.value = copyType(old.value);
 	aa.key = copyType(old.key);
 	return aa;
@@ -253,7 +253,7 @@ ir.AAType copy(ir.AAType old)
 ir.FunctionType copy(ir.FunctionType old)
 {
 	auto ft = new ir.FunctionType(old);
-	ft.loc = old.loc;
+	ft.location = old.location;
 	ft.ret = copyType(old.ret);
 	panicAssert(old, old.params.length == old.isArgRef.length && old.params.length == old.isArgOut.length);
 	ft.params = new ir.Type[](old.params.length);
@@ -270,7 +270,7 @@ ir.FunctionType copy(ir.FunctionType old)
 ir.DelegateType copy(ir.DelegateType old)
 {
 	auto dgt = new ir.DelegateType(old);
-	dgt.loc = old.loc;
+	dgt.location = old.location;
 	dgt.ret = copyType(old.ret);
 	panicAssert(old, old.params.length == old.isArgRef.length && old.params.length == old.isArgOut.length);
 	dgt.params = new ir.Type[](old.params.length);
@@ -287,7 +287,7 @@ ir.DelegateType copy(ir.DelegateType old)
 ir.StorageType copy(ir.StorageType old)
 {
 	auto st = new ir.StorageType();
-	st.loc = old.loc;
+	st.location = old.location;
 	if (old.base !is null) {
 		st.base = copyType(old.base);
 	}
@@ -298,7 +298,7 @@ ir.StorageType copy(ir.StorageType old)
 ir.TypeReference copy(ir.TypeReference old)
 {
 	auto tr = new ir.TypeReference();
-	tr.loc = old.loc;
+	tr.location = old.location;
 	tr.id = copy(old.id);
 	if (old.type !is null) {
 		tr.type = old.type;  // This is okay, as TR are meant to wrap the same type instance.
@@ -309,14 +309,14 @@ ir.TypeReference copy(ir.TypeReference old)
 ir.NullType copy(ir.NullType old)
 {
 	auto nt = new ir.NullType();
-	nt.loc = old.loc;
+	nt.location = old.location;
 	return nt;
 }
 
 ir.Typeid copy(ir.Typeid old)
 {
 	auto tid = new ir.Typeid();
-	tid.loc = old.loc;
+	tid.location = old.location;
 	if (old.exp !is null) {
 		tid.exp = copyExp(old.exp);
 	}
@@ -329,7 +329,7 @@ ir.Typeid copy(ir.Typeid old)
 ir.AutoType copy(ir.AutoType old)
 {
 	auto at = new ir.AutoType();
-	at.loc = old.loc;
+	at.location = old.location;
 	at.isForeachRef = old.isForeachRef;
 	if (old.explicitType !is null) {
 		at.explicitType = copyType(old.explicitType);
@@ -346,14 +346,14 @@ ir.BuiltinExp copy(ir.BuiltinExp old)
 		exps[i] = copyExp(oldExp);
 	}
 	auto builtin = new ir.BuiltinExp(old.kind, type, exps);
-	builtin.loc = old.loc;
+	builtin.location = old.location;
 	return builtin;
 }
 
 ir.RunExp copy(ir.RunExp old)
 {
 	auto re = new ir.RunExp();
-	re.loc = old.loc;
+	re.location = old.location;
 	re.child = copyExp(old.child);
 	return re;
 }
@@ -368,7 +368,7 @@ ir.RunExp copy(ir.RunExp old)
 ir.QualifiedName copy(ir.QualifiedName old)
 {
 	auto q = new ir.QualifiedName();
-	q.loc = old.loc;
+	q.location = old.location;
 	q.identifiers = new ir.Identifier[](old.identifiers.length);
 	foreach (i, oldId; old.identifiers) {
 		q.identifiers[i] = copy(oldId);
@@ -418,7 +418,7 @@ ir.Type copyType(ir.Type t)
 	case Struct:
 	case Class:
 	case Enum:
-		throw panic(t.loc, "can't copy aggregate types");
+		throw panic(t.location, "can't copy aggregate types");
 	default:
 		throw panicUnhandled(t, ir.nodeToString(t));
 	}
@@ -438,10 +438,10 @@ ir.Exp copyExp(ir.Exp exp)
 	return exp;
 }
 
-ir.Exp copyExp(ref in Location loc, ir.Exp exp)
+ir.Exp copyExp(Location location, ir.Exp exp)
 {
 	auto e = copyExp(exp);
-	e.loc = loc;
+	e.location = location;
 	return e;
 }
 
@@ -453,7 +453,7 @@ ir.Node copyNode(ir.Node n)
 	final switch (n.nodeType) with (ir.NodeType) {
 	case Invalid:
 		auto msg = format("cannot copy '%s'", ir.nodeToString(n));
-		throw panic(n.loc, msg);
+		throw panic(n.location, msg);
 	case NonVisiting:
 		assert(false, "non-visiting node");
 	case AccessExp:
@@ -529,7 +529,7 @@ ir.Node copyNode(ir.Node n)
 	case Class:
 	case Interface:
 		auto t = cast(ir.Type)n;
-		return copyTypeSmart(t.loc, t);  // @todo do correctly.
+		return copyTypeSmart(t.location, t);  // @todo do correctly.
 	case QualifiedName:
 	case Identifier:
 	case Module:

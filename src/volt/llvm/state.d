@@ -319,10 +319,10 @@ public:
 		}
 
 		if (argFunc.type is null) {
-			throw panic(argFunc.loc, "function without type");
+			throw panic(argFunc.location, "function without type");
 		}
 		if (argFunc.kind == ir.Function.Kind.Invalid) {
-			throw panic(argFunc.loc, "invalid function kind");
+			throw panic(argFunc.location, "invalid function kind");
 		}
 
 		LLVMValueRef v;
@@ -402,7 +402,7 @@ public:
 		}
 
 		if (var.type is null) {
-			throw panic(var.loc, "variable without type");
+			throw panic(var.location, "variable without type");
 		}
 
 		type = this.fromIr(var.type);
@@ -425,20 +425,20 @@ public:
 
 		final switch(var.storage) with (ir.Variable.Storage) {
 		case Invalid:
-			throw panic(var.loc, "unclassified variable");
+			throw panic(var.location, "unclassified variable");
 		case Field:
-			throw panic(var.loc, "field variable refered directly");
+			throw panic(var.location, "field variable refered directly");
 		case Function, Nested:
 			if (func is null) {
-				throw panic(var.loc,
+				throw panic(var.location,
 					"non-local/global variable in non-function scope");
 			}
 			if (var.useBaseStorage) {
-				throw panic(var.loc,
+				throw panic(var.location,
 					"useBaseStorage can not be used on function variables");
 			}
 
-			diSetPosition(this, var.loc);
+			diSetPosition(this, var.location);
 			v = buildAlloca(llvmType, var.name);
 
 			diAutoVariable(this, var, v, type);
@@ -502,7 +502,7 @@ public:
 		}
 
 		if (var.type is null)
-			throw panic(var.loc, "variable without type");
+			throw panic(var.location, "variable without type");
 
 		type = this.fromIr(var.type);
 		LLVMValueRef v;
@@ -511,10 +511,10 @@ public:
 		llvmType = type.llvmType;
 
 		if (func is null) {
-			throw panic(var.loc, "non-local/global variable in non-function scope");
+			throw panic(var.location, "non-local/global variable in non-function scope");
 		}
 
-		diSetPosition(this, var.loc);
+		diSetPosition(this, var.location);
 		v = buildAlloca(llvmType, var.name);
 
 		diParameterVariable(this, var, v, type);

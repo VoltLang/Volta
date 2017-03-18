@@ -59,7 +59,7 @@ import volt.token.location : Location;
  *   var: The Variable that the reference refers to.
  *   store: The Store that var was found in.
  */
-void nestExtyperTagVariable(ref in Location loc, Context ctx, ir.Variable var, ir.Store store)
+void nestExtyperTagVariable(Location loc, Context ctx, ir.Variable var, ir.Store store)
 {
 	if (!ctx.isFunction) {
 		return;
@@ -127,8 +127,8 @@ void nestLowererFunction(LanguagePass lp, ir.Function parent, ir.Function func)
 
 	panicAssert(func, ns !is null);
 
-	auto tr = buildTypeReference(ns.loc, ns, "__Nested");
-	auto decl = buildVariable(func.loc, tr, ir.Variable.Storage.Function, "__nested");
+	auto tr = buildTypeReference(ns.location, ns, "__Nested");
+	auto decl = buildVariable(func.location, tr, ir.Variable.Storage.Function, "__nested");
 	decl.isResolved = true;
 	decl.specialInitValue = true;
 
@@ -164,14 +164,14 @@ void insertBinOpAssignsForNestedVariableAssigns(LanguagePass lp, ir.BlockStateme
 
 		ir.Exp value;
 		if (var.assign is null) {
-			value = getDefaultInit(var.loc, lp, var.type);
+			value = getDefaultInit(var.location, lp, var.type);
 		} else {
 			value = var.assign;
 		}
 
-		auto eref = buildExpReference(var.loc, var, var.name);
-		auto assign = buildAssign(var.loc, eref, value);
-		bs.statements[i] = buildExpStat(assign.loc, assign);
+		auto eref = buildExpReference(var.location, var, var.name);
+		auto assign = buildAssign(var.location, eref, value);
+		bs.statements[i] = buildExpStat(assign.location, assign);
 	}
 }
 
@@ -216,7 +216,7 @@ bool replaceNested(LanguagePass lp, ref ir.Exp exp, ir.ExpReference eref, ir.Fun
 		shouldDeref = fp.func.type.isArgRef[fp.index] ||
 		              fp.func.type.isArgOut[fp.index];
 
-		exp = buildDeref(exp.loc, exp);
+		exp = buildDeref(exp.location, exp);
 		break;
 	case Variable:
 		auto var = cast(ir.Variable) eref.decl;
@@ -228,7 +228,7 @@ bool replaceNested(LanguagePass lp, ref ir.Exp exp, ir.ExpReference eref, ir.Fun
 
 		auto store = lookupInGivenScopeOnly(
 				lp, nestStruct.myScope,
-				exp.loc, var.name);
+				exp.location, var.name);
 		if (store is null) {
 			assert(var.name != "this");
 			addVarToStructSmart(nestStruct, var);
@@ -246,15 +246,15 @@ bool replaceNested(LanguagePass lp, ref ir.Exp exp, ir.ExpReference eref, ir.Fun
 
 	assert(name.length > 0);
 
-	auto store = lookupInGivenScopeOnly(lp, nestStruct.myScope, exp.loc, name);
+	auto store = lookupInGivenScopeOnly(lp, nestStruct.myScope, exp.location, name);
 	panicAssert(eref, store !is null);
 	auto v = cast(ir.Variable) store.node;
 	panicAssert(eref, v !is null);
 
-	auto nestEref = buildExpReference(nestVar.loc, nestVar, nestVar.name);
-	exp = buildAccessExp(exp.loc, nestEref, v);
+	auto nestEref = buildExpReference(nestVar.location, nestVar, nestVar.name);
+	exp = buildAccessExp(exp.location, nestEref, v);
 	if (shouldDeref) {
-		exp = buildDeref(exp.loc, exp);
+		exp = buildDeref(exp.location, exp);
 	}
 	return true;
 }
@@ -295,12 +295,12 @@ void doParent(LanguagePass lp, ir.Function parent)
 ir.Struct createAndAddNestedStruct(ir.Function func)
 {
 	auto bs = func._body;
-	auto id = getModuleFromScope(func.loc, func.myScope).getId();
-	auto s = buildStruct(func.loc, format("__Nested%s", id), []);
+	auto id = getModuleFromScope(func.location, func.myScope).getId();
+	auto s = buildStruct(func.location, format("__Nested%s", id), []);
 	s.myScope = new ir.Scope(bs.myScope, s, s.name, bs.myScope.nestedDepth);
-	auto tref = buildTypeReference(s.loc, s, "__Nested");
+	auto tref = buildTypeReference(s.location, s, "__Nested");
 	auto decl = buildVariable(
-		func.loc, tref, ir.Variable.Storage.Function, "__nested");
+		func.location, tref, ir.Variable.Storage.Function, "__nested");
 	decl.isResolved = true;
 	func.nestedVariable = decl;
 	func.nestStruct = s;
@@ -345,24 +345,24 @@ void handleNestedParams(ir.Function func, ir.BlockStatement bs)
 			auto type = param.type;
 			bool refParam = func.type.isArgRef[i] || func.type.isArgOut[i];
 			if (refParam) {
-				type = buildPtrSmart(param.loc, param.type);
+				type = buildPtrSmart(param.location, param.type);
 			}
 			auto name = param.name != "" ? param.name : format("__anonparam_%s", toString(index));
-			auto var = buildVariableSmart(param.loc, type, ir.Variable.Storage.Field, name);
+			auto var = buildVariableSmart(param.location, type, ir.Variable.Storage.Field, name);
 			addVarToStructSmart(ns, var);
 			// Insert an assignment of the param to the nest struct.
 
-			auto l = buildAccessExp(param.loc, buildExpReference(np.loc, np, np.name), var);
-			auto r = buildExpReference(param.loc, param, name);
+			auto l = buildAccessExp(param.location, buildExpReference(np.location, np, np.name), var);
+			auto r = buildExpReference(param.location, param, name);
 			r.doNotRewriteAsNestedLookup = true;
 			ir.BinOp bop;
 			if (!refParam) {
-				bop = buildAssign(l.loc, l, r);
+				bop = buildAssign(l.location, l, r);
 			} else {
-				bop = buildAssign(l.loc, l, buildAddrOf(r.loc, r));
+				bop = buildAssign(l.location, l, buildAddrOf(r.location, r));
 			}
 			bop.isInternalNestedAssign = true;
-			ir.Node n = buildExpStat(l.loc, bop);
+			ir.Node n = buildExpStat(l.location, bop);
 			if (func.isNested()) {
 				// Nested function.
 				bs.statements = n ~ bs.statements;
@@ -399,7 +399,7 @@ void handleNestedThis(ir.Function func, ir.BlockStatement bs)
 	if (func.thisHiddenParameter !is null) {
 		auto nt = realType(func.thisHiddenParameter.type).nodeType;
 		bool structOrUnion = nt == ir.NodeType.Struct || nt == ir.NodeType.Union;
-		auto lc = bs.loc;
+		auto lc = bs.location;
 
 		ir.Variable cvar;
 		if (structOrUnion) {
@@ -410,17 +410,17 @@ void handleNestedThis(ir.Function func, ir.BlockStatement bs)
 			cvar = addVarToStructSmart(ns, func.thisHiddenParameter);
 		}
 
-		auto l = buildAccessExp(func.loc,
-			buildExpReference(np.loc, np, np.name), cvar);
+		auto l = buildAccessExp(func.location,
+			buildExpReference(np.location, np, np.name), cvar);
 
 		auto tv = func.thisHiddenParameter;
-		auto eref = buildExpReference(bs.loc, tv, tv.name);
+		auto eref = buildExpReference(bs.location, tv, tv.name);
 		eref.doNotRewriteAsNestedLookup = true;
 		ir.Exp r = eref;
 		if (structOrUnion) {
 			r = buildAddrOf(lc, eref);
 		}
-		ir.Node n = buildExpStat(l.loc, buildAssign(l.loc, l, r));
+		ir.Node n = buildExpStat(l.location, buildAssign(l.location, l, r));
 		bs.statements.insertInPlace(index, n);
 	}
 }

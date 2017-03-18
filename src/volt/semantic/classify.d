@@ -41,7 +41,7 @@ size_t size(ir.PrimitiveType.Kind kind)
 	case Float: return 4;
 	case Double: return 8;
 	case Real: return 8;
-	case Invalid: throw panic("invalid primitive kind");
+	case Invalid: throw panic(Location.init, "invalid primitive kind");
 	}
 }
 
@@ -189,7 +189,7 @@ size_t alignment(TargetInfo target, ir.PrimitiveType.Kind kind)
 	case Float: return target.alignment.float32;
 	case Double: return target.alignment.float64;
 	case Real: return target.alignment.float64;
-	case Invalid: throw panic("invalid primitive kind");
+	case Invalid: throw panic(Location.init, "invalid primitive kind");
 	}
 }
 

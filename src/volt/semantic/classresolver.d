@@ -81,17 +81,17 @@ ir.Type rewriteThisCall(Context ctx, ref ir.Exp e, ir.IdentifierExp ident,
 	auto type = realType(thisVar.type);
 	auto _class = cast(ir.Class) type;
 	if (_class is null) {
-		throw makeExpected(ident.loc, "class");
+		throw makeExpected(ident.location, "class");
 	}
 
-	auto set = buildSet(ident.loc, _class.userConstructors);
-	auto setRef = buildExpReference(ident.loc, set, "this");
+	auto set = buildSet(ident.location, _class.userConstructors);
+	auto setRef = buildExpReference(ident.location, set, "this");
 	auto asRef = cast(ir.ExpReference)thisRef;
 	panicAssert(thisRef, asRef !is null);
 	asRef.isSuperOrThisCall = true;
-	e = buildCreateDelegate(ident.loc, thisRef, setRef);
+	e = buildCreateDelegate(ident.location, thisRef, setRef);
 
-	return buildVoid(e.loc);
+	return buildVoid(e.location);
 }
 
 ir.Type rewriteSuper(Context ctx, ref ir.Exp e, ir.IdentifierExp ident,
@@ -101,7 +101,7 @@ ir.Type rewriteSuper(Context ctx, ref ir.Exp e, ir.IdentifierExp ident,
 	assert(ident.value == "super");
 
 	if (!isCall && !isIdentifier) {
-		throw makeExpected(ident.loc, "call or identifier postfix");
+		throw makeExpected(ident.location, "call or identifier postfix");
 	}
 
 	ir.Scope dummyScope;
@@ -135,7 +135,7 @@ ir.Type rewriteSuperIdentifier(ref ir.Exp e, ir.Class _class)
 	assert(store !is null);
 	assert(store.node is _class);
 
-	e = buildStoreExp(e.loc, store);
+	e = buildStoreExp(e.location, store);
 
 	return _class;
 }
@@ -143,14 +143,14 @@ ir.Type rewriteSuperIdentifier(ref ir.Exp e, ir.Class _class)
 ir.Type rewriteSuperCall(Context ctx, ref ir.Exp e, ir.Class _class)
 {
 	auto thisVar = getThisVarNotNull(e, ctx);
-	auto thisRef = buildExpReference(e.loc, thisVar, "this");
+	auto thisRef = buildExpReference(e.location, thisVar, "this");
 	thisRef.isSuperOrThisCall = true;
 
-	auto set = buildSet(e.loc, _class.userConstructors);
-	auto setRef = buildExpReference(e.loc, set, "super");
-	e = buildCreateDelegate(e.loc, thisRef, setRef);
+	auto set = buildSet(e.location, _class.userConstructors);
+	auto setRef = buildExpReference(e.location, set, "super");
+	e = buildCreateDelegate(e.location, thisRef, setRef);
 
-	return buildVoid(e.loc);
+	return buildVoid(e.location);
 }
 
 
@@ -196,7 +196,7 @@ void fillInParentIfNeeded(LanguagePass lp, ir.Class c)
 	ir.Class parent;
 
 	void fillNullParent() {
-		c.parent = buildQualifiedName(c.loc, ["core", "object", "Object"]);
+		c.parent = buildQualifiedName(c.location, ["core", "object", "Object"]);
 		parent = lp.objObject;
 	}
 
@@ -247,7 +247,7 @@ ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class, ref size_t offset
 	if (_class.parentClass !is null) {
 		fields ~= getClassFields(lp, _class.parentClass, offset);
 	} else {
-		offset = size(lp.target, buildSizeT(_class.loc, lp.target));  // Account for vtable.
+		offset = size(lp.target, buildSizeT(_class.location, lp.target));  // Account for vtable.
 	}
 
 	foreach (node; _class.members.nodes) {
@@ -260,16 +260,16 @@ ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class, ref size_t offset
 		}
 		lp.resolve(_class.myScope, asVar);
 		addSize(asVar.type);
-		fields ~= copyVariableSmart(asVar.loc, asVar);
+		fields ~= copyVariableSmart(asVar.location, asVar);
 	}
 	assert(_class.interfaces.length == _class.parentInterfaces.length);
 	void addOffset(ir._Interface iface)
 	{
-		auto t = buildSizeT(_class.loc, lp.target);
+		auto t = buildSizeT(_class.location, lp.target);
 		offset = calcAlignment(lp.target, t, offset);
 		_class.interfaceOffsets ~= offset;
 		addSize(t);
-		auto var = buildVariableSmart(_class.loc, buildPtrSmart(_class.loc, iface.layoutStruct), ir.Variable.Storage.Field, mangle(iface));
+		auto var = buildVariableSmart(_class.location, buildPtrSmart(_class.location, iface.layoutStruct), ir.Variable.Storage.Field, mangle(iface));
 
 		fields ~= var;
 		assert(iface.interfaces.length == iface.parentInterfaces.length);
@@ -286,13 +286,13 @@ ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class, ref size_t offset
 
 ir.Function generateDefaultConstructor(LanguagePass lp, ir.Scope current, ir.Class _class)
 {
-	auto func = buildFunction(_class.loc, _class.members, current, "__ctor");
+	auto func = buildFunction(_class.location, _class.members, current, "__ctor");
 	func.kind = ir.Function.Kind.Constructor;
-	buildReturnStat(func.loc, func._body);
+	buildReturnStat(func.location, func._body);
 
-	auto tr = buildTypeReference(_class.loc, _class,  "__this");
+	auto tr = buildTypeReference(_class.location, _class,  "__this");
 	auto thisVar = new ir.Variable();
-	thisVar.loc = func.loc;
+	thisVar.location = func.location;
 	thisVar.type = tr;
 	thisVar.name = "this";
 	thisVar.storage = ir.Variable.Storage.Function;
@@ -385,7 +385,7 @@ ir.Function[] getClassMethodFunctions(LanguagePass lp, ir.Class _class)
 		if (fns.length == 0) {
 			continue;
 		}
-		auto func = selectFunction(fns, params, method.loc, DoNotThrow);
+		auto func = selectFunction(fns, params, method.location, DoNotThrow);
 		if (func is null) {
 			continue;
 		}
@@ -422,7 +422,7 @@ ir.Function[] getClassMethodFunctions(LanguagePass lp, ir.Class _class)
 					panicAssert(method, atype !is null);
 					params[$ - 1] = atype.base;
 				}
-				auto tmp = selectFunction(fns, params, method.loc);
+				auto tmp = selectFunction(fns, params, method.location);
 			}
 
 			if (noPriorMethods && method.isMarkedOverride) {
@@ -475,7 +475,7 @@ bool overrideFunctionsIfNeeded(LanguagePass lp, ir.Function childFunction, ref i
 		return false;
 	}
 
-	ir.Function selectedFunction = selectFunction(toConsider, childFunction.type.params, childFunction.loc, DoNotThrow);
+	ir.Function selectedFunction = selectFunction(toConsider, childFunction.type.params, childFunction.location, DoNotThrow);
 	if (selectedFunction is null) {
 		if (childFunction.isMarkedOverride) {
 			throw makeMarkedOverrideDoesNotOverride(childFunction, childFunction);
@@ -507,7 +507,7 @@ ir.Variable[] getClassMethodTypeVariables(LanguagePass lp, ir.Class _class)
 
 	ir.Variable[] typeVars;
 	foreach (outIndex, method; methods) {
-		typeVars ~= buildVariableSmart(method.loc, method.type, ir.Variable.Storage.Field, format("_%s", outIndex));
+		typeVars ~= buildVariableSmart(method.location, method.type, ir.Variable.Storage.Field, format("_%s", outIndex));
 	}
 	return typeVars;
 }
@@ -522,10 +522,10 @@ ir.Exp[] getClassMethodAddrOfs(LanguagePass lp, ir.Class _class)
 			if (!_class.isAbstract) {
 				throw makeAbstractHasToBeMember(_class, method);
 			}
-			addrs ~= buildConstantNull(_class.loc, method.type);
+			addrs ~= buildConstantNull(_class.location, method.type);
 			continue;
 		}
-		auto eref = buildExpReference(_class.loc, method, method.name);
+		auto eref = buildExpReference(_class.location, method, method.name);
 		eref.rawReference = true;
 		addrs ~= eref;
 	}
@@ -534,14 +534,14 @@ ir.Exp[] getClassMethodAddrOfs(LanguagePass lp, ir.Class _class)
 
 ir.Struct getInterfaceLayoutStruct(ir._Interface iface, LanguagePass lp)
 {
-	auto loc = iface.loc;
+	auto l = iface.location;
 	ir.Variable[] fields;
-	fields ~= buildVariableSmart(loc, buildSizeT(loc, lp.target), ir.Variable.Storage.Field, "__offset");
+	fields ~= buildVariableSmart(l, buildSizeT(l, lp.target), ir.Variable.Storage.Field, "__offset");
 	auto methods = getInterfaceMethods(lp, iface);
 	foreach (method; methods) {
-		fields ~= buildVariableSmart(loc, copyTypeSmart(loc, method.type), ir.Variable.Storage.Field, mangle(null, method));
+		fields ~= buildVariableSmart(l, copyTypeSmart(l, method.type), ir.Variable.Storage.Field, mangle(null, method));
 	}
-	auto layoutStruct = buildStruct(loc, iface.members, iface.myScope, "__ifaceVtable", fields);
+	auto layoutStruct = buildStruct(l, iface.members, iface.myScope, "__ifaceVtable", fields);
 	layoutStruct.loweredNode = iface;
 	// This should be resolved now.
 	lp.resolveNamed(layoutStruct);
@@ -552,16 +552,16 @@ ir.Struct getClassLayoutStruct(ir.Class _class, LanguagePass lp, ref ir.Struct v
 {
 	auto methodTypes = getClassMethodTypeVariables(lp, _class);
 	auto tinfo = lp.tiClassInfo;
-	auto tinfos = buildVariableSmart(_class.loc, buildArrayTypeSmart(_class.loc, tinfo), ir.Variable.Storage.Field, "tinfos");
+	auto tinfos = buildVariableSmart(_class.location, buildArrayTypeSmart(_class.location, tinfo), ir.Variable.Storage.Field, "tinfos");
 
-	vtableStruct = buildStruct(_class.loc, _class.members, _class.myScope, "__Vtable", tinfos ~ methodTypes);
-	auto vtableVar = buildVariableSmart(_class.loc, buildPtrSmart(_class.loc, vtableStruct), ir.Variable.Storage.Field, "__vtable");
+	vtableStruct = buildStruct(_class.location, _class.members, _class.myScope, "__Vtable", tinfos ~ methodTypes);
+	auto vtableVar = buildVariableSmart(_class.location, buildPtrSmart(_class.location, vtableStruct), ir.Variable.Storage.Field, "__vtable");
 
 	size_t dummy;
 	auto fields = getClassFields(lp, _class, dummy);
 	fields = vtableVar ~ fields;
 
-	auto layoutStruct = buildStruct(_class.loc, _class.members, _class.myScope, "__layoutStruct", fields);
+	auto layoutStruct = buildStruct(_class.location, _class.members, _class.myScope, "__layoutStruct", fields);
 	layoutStruct.loweredNode = _class;
 	return layoutStruct;
 }
@@ -588,7 +588,7 @@ ir.Exp[] getTypeInfos(ir.Class[] classes)
 {
 	auto tinfos = new ir.Exp[](classes.length);
 	foreach (i, _class; classes) {
-		tinfos[i] = buildTypeidSmart(_class.loc, _class);
+		tinfos[i] = buildTypeidSmart(_class.location, _class);
 	}
 	return tinfos;
 }
@@ -615,27 +615,27 @@ ir.Function[] getInterfaceFunctions(LanguagePass lp, ir._Interface iface)
 ir.Exp getInterfaceStructAssign(LanguagePass lp, ir.Class _class, ir.Scope _scope, ir._Interface iface, size_t ifaceIndex)
 {
 	assert(iface.layoutStruct !is null);
-	auto loc = _class.loc;
+	auto l = _class.location;
 	ir.Exp[] exps;
-	exps ~= buildConstantSizeT(loc, lp.target, _class.interfaceOffsets[ifaceIndex]);
+	exps ~= buildConstantSizeT(l, lp.target, _class.interfaceOffsets[ifaceIndex]);
 	auto fns = getInterfaceFunctions(lp, iface);
 
 	foreach (func; fns) {
-		auto store = lookupAsThisScope(lp, _scope, loc, func.name, _class.myScope);
+		auto store = lookupAsThisScope(lp, _scope, l, func.name, _class.myScope);
 		if (store is null || !containsMatchingFunction(store.functions, func)) {
-			throw makeDoesNotImplement(loc, _class, iface, func);
+			throw makeDoesNotImplement(l, _class, iface, func);
 		}
 		foreach (sfn; store.functions) {
 			lp.resolve(_scope, sfn);
 			if (mangle(null, sfn) != mangle(null, func)) {
 				continue;
 			}
-			auto eref = buildExpReference(loc, sfn, mangle(null, sfn));
+			auto eref = buildExpReference(l, sfn, mangle(null, sfn));
 			eref.rawReference = true;
 			exps ~= eref;
 		}
 	}
-	return buildStructLiteralSmart(loc, iface.layoutStruct, exps);
+	return buildStructLiteralSmart(l, iface.layoutStruct, exps);
 }
 
 void buildInstanceVariable(LanguagePass lp, ir.Class _class)
@@ -654,14 +654,14 @@ void buildInstanceVariable(LanguagePass lp, ir.Class _class)
 		return false;
 	}
 
-	auto loc = _class.loc;
+	auto l = _class.location;
 	_class.initVariable = buildVariableSmart(
-		loc, _class.layoutStruct, ir.Variable.Storage.Global, "__cinit");
+		l, _class.layoutStruct, ir.Variable.Storage.Global, "__cinit");
 	_class.initVariable.mangledName = format("_V__cinit_%s", _class.mangledName);
 	_class.initVariable.isResolved = true;
 
 	ir.Exp[] exps;
-	exps ~= buildAddrOf(loc, _class.vtableVariable, _class.vtableVariable.name);
+	exps ~= buildAddrOf(l, _class.vtableVariable, _class.vtableVariable.name);
 
 	ir.Variable[] ifaceVars;
 	auto classes = getInheritanceChain(_class);
@@ -673,34 +673,34 @@ void buildInstanceVariable(LanguagePass lp, ir.Class _class)
 	foreach (i, node; _class.layoutStruct.members.nodes[1 .. $]) {
 		auto var = cast(ir.Variable) node;
 		if (var is null) {
-			throw panic(loc, "expected variable in layout struct");
+			throw panic(l, "expected variable in layout struct");
 		}
 		if (fromInterface(var.type)) {
 			auto iv = _class.ifaceVariables[ifaceIndex++];
-			exps ~= buildAddrOf(loc, iv, iv.name);
+			exps ~= buildAddrOf(l, iv, iv.name);
 			continue;
 		}
-		exps ~= getDefaultInit(loc, lp, var.type);
+		exps ~= getDefaultInit(l, lp, var.type);
 	}
 
-	_class.initVariable.assign = buildStructLiteralSmart(loc, _class.layoutStruct, exps);
+	_class.initVariable.assign = buildStructLiteralSmart(l, _class.layoutStruct, exps);
 	_class.members.nodes ~= _class.initVariable;
 	_class.myScope.addValue(_class.initVariable, _class.initVariable.name);
 }
 
 void emitVtableVariable(LanguagePass lp, ir.Class _class)
 {
-	auto loc = _class.loc;
+	auto l = _class.location;
 	auto addrs = getClassMethodAddrOfs(lp, _class);
 	auto tinfo = lp.tiClassInfo;
 	auto classes = getInheritanceChain(_class);
 	auto tinfos = getTypeInfos(classes);
-	auto tinfosArr = buildArrayLiteralSmart(loc, buildArrayTypeSmart(loc, tinfo), tinfos);
+	auto tinfosArr = buildArrayLiteralSmart(l, buildArrayTypeSmart(l, tinfo), tinfos);
 
 	assert(_class.interfaces.length == _class.parentInterfaces.length);
 	void addInterfaceInstance(ir._Interface iface, ir.Class fromParent, size_t i)
 	{
-		auto var = buildVariableSmart(loc, iface.layoutStruct, ir.Variable.Storage.Global, format("%s", mangle(iface)));
+		auto var = buildVariableSmart(l, iface.layoutStruct, ir.Variable.Storage.Global, format("%s", mangle(iface)));
 		var.mangledName =  format("_V__Interface_%s_%s", _class.mangledName, mangle(iface));
 		var.assign = getInterfaceStructAssign(lp, fromParent, _class.myScope, iface, i);
 		_class.members.nodes ~= var;
@@ -719,11 +719,11 @@ void emitVtableVariable(LanguagePass lp, ir.Class _class)
 	}
 
 	auto assign = new ir.StructLiteral();
-	assign.loc = loc;
+	assign.location = l;
 	assign.exps = tinfosArr ~ addrs;
-	assign.type = copyTypeSmart(loc, _class.vtableStruct);
+	assign.type = copyTypeSmart(l, _class.vtableStruct);
 
-	_class.vtableVariable = buildVariableSmart(loc, _class.vtableStruct, ir.Variable.Storage.Global, "__vtable_instance");
+	_class.vtableVariable = buildVariableSmart(l, _class.vtableStruct, ir.Variable.Storage.Global, "__vtable_instance");
 	_class.vtableVariable.isResolved = true;
 	_class.vtableVariable.mangledName = format("_V__Vtable_%s", mangle(_class));
 	_class.vtableVariable.assign = assign;

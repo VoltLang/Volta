@@ -441,7 +441,7 @@ public:
 	this(FunctionSet set)
 	{
 		this();
-		loc = set.loc;
+		location = set.location;
 		this.set = set;
 	}
 

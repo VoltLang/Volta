@@ -34,7 +34,7 @@ private void checkError(ParserStream ps, ParseStatus status)
 		msg = format("%s (peek:%s)", msg, ps.peek.value);
 		foreach (err; ps.parserErrors) {
 			msg = format("%s\n%s: %s (from %s:%s)",
-			              msg, err.loc.toString(),
+			              msg, err.location.toString(),
 			              err.errorMessage(),
 			              err.raiseFile, err.raiseLine);
 		}
@@ -42,10 +42,10 @@ private void checkError(ParserStream ps, ParseStatus status)
 
 	if (p !is null) {
 		addExtraInfo();
-		throw panic(e.loc, msg, e.raiseFile, e.raiseLine);
+		throw panic(e.location, msg, e.raiseFile, e.raiseLine);
 	} else {
 		debug addExtraInfo();
-		throw makeError(e.loc, msg, e.raiseFile, e.raiseLine);
+		throw makeError(e.location, msg, e.raiseFile, e.raiseLine);
 	}
 }
 
@@ -112,7 +112,7 @@ protected:
 
 		ir.Token t;
 		while((t = ps.get()).type != TokenType.End) {
-			string l = t.loc.toString();
+			string l = t.location.toString();
 			string tStr = t.type.tokenToString();
 			string v = t.value;
 			writefln("%s %s \"%s\"", l, tStr, v);

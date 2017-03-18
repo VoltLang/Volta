@@ -63,11 +63,11 @@ public:
 	override Status enter(ir.Import i)
 	{
 		if (current !is mModule.myScope) {
-			throw makeNonTopLevelImport(i.loc);
+			throw makeNonTopLevelImport(i.location);
 		}
 
 		if (i.isStatic && i.access != ir.Access.Private) {
-			throw makeExpected(i.loc, 
+			throw makeExpected(i.location, 
 				format("static import '%s' to be private", i.name));
 		}
 
@@ -128,9 +128,9 @@ public:
 			ir.Alias a;
 
 			if (_alias[1] is null) {
-				a = buildAlias(_alias[0].loc, _alias[0].value, _alias[0].value);
+				a = buildAlias(_alias[0].location, _alias[0].value, _alias[0].value);
 			} else {
-				a = buildAliasSmart(_alias[0].loc, _alias[0].value, _alias[1]);
+				a = buildAliasSmart(_alias[0].location, _alias[0].value, _alias[1]);
 			}
 
 			// Setup where we should look.
@@ -168,7 +168,7 @@ public:
 		auto store = parent.getStore(i.name.identifiers[$-1].value);
 		if (store !is null) {
 			if (i.isStatic && store.myScope !is mod.myScope) {
-				throw makeExpected(i.loc, "unique module");
+				throw makeExpected(i.location, "unique module");
 			}
 		} else {
 			parent.addScope(i, mod.myScope, i.name.identifiers[$-1].value);
@@ -191,7 +191,7 @@ public:
 			// TODO Better error checking here,
 			// we could be adding to aggregates here.
 			if (store.myScope is null) {
-				throw makeExpected(node.loc, "scope");
+				throw makeExpected(node.location, "scope");
 			}
 			return store.myScope;
 		} else {

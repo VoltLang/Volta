@@ -73,7 +73,7 @@ private:
 			ir.ScopeKind.Exit, f, functionStack[$-1]);
 
 		auto b = new ir.BlockStatement();
-		b.loc = t.loc;
+		b.location = t.location;
 		b.statements = [func, t];
 
 		return b;
@@ -82,7 +82,7 @@ private:
 	ir.Function handleScope(ir.ScopeStatement ss)
 	{
 		if (functionStack.length == 0) {
-			throw makeScopeOutsideFunction(ss.loc);
+			throw makeScopeOutsideFunction(ss.location);
 		}
 
 		return convertToFunction(ss.kind, ss.block, functionStack[$-1]);
@@ -91,12 +91,12 @@ private:
 	ir.Function convertToFunction(ir.ScopeKind kind, ir.BlockStatement block, ir.Function parent)
 	{
 		auto func = new ir.Function();
-		func.loc = block.loc;
+		func.location = block.location;
 		func.kind = ir.Function.Kind.Nested;
 
 		func.type = new ir.FunctionType();
-		func.type.loc = block.loc;
-		func.type.ret = buildVoid(block.loc);
+		func.type.location = block.location;
+		func.type.ret = buildVoid(block.location);
 
 		func._body = block;
 

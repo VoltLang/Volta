@@ -55,7 +55,7 @@ public:
 		case BuiltinExp: return copy(cast(ir.BuiltinExp)n);
 		case RunExp: return copy(cast(ir.RunExp)n);
 		case ExpReference: return copy(cast(ir.ExpReference)n);
-		default: throw makeUnsupported(n.loc, ir.nodeToString(n.nodeType));
+		default: throw makeUnsupported(n.location, ir.nodeToString(n.nodeType));
 		}
 	}
 
@@ -64,7 +64,7 @@ public:
 		switch (n.nodeType) with (ir.NodeType) {
 		case PrimitiveType: return copy(cast(ir.PrimitiveType)n);
 		case TypeReference: return copy(cast(ir.TypeReference)n);
-		default: throw makeUnsupported(n.loc, ir.nodeToString(n.nodeType));
+		default: throw makeUnsupported(n.location, ir.nodeToString(n.nodeType));
 		}
 	}
 
@@ -332,7 +332,7 @@ public:
 	ir.BreakStatement copy(ir.BreakStatement old)
 	{
 		auto b = new ir.BreakStatement();
-		b.loc = old.loc;
+		b.location = old.location;
 		b.label = old.label;
 		return b;
 	}
@@ -340,7 +340,7 @@ public:
 	ir.ContinueStatement copy(ir.ContinueStatement old)
 	{
 		auto c = new ir.ContinueStatement();
-		c.loc = old.loc;
+		c.location = old.location;
 		c.label = old.label;
 		return c;
 	}
@@ -348,7 +348,7 @@ public:
 	ir.ExpStatement copy(ir.ExpStatement old)
 	{
 		auto es = new ir.ExpStatement();
-		es.loc = old.loc;
+		es.location = old.location;
 		es.exp = copyExp(old.exp);
 		return es;
 	}
@@ -356,7 +356,7 @@ public:
 	ir.IfStatement copy(ir.Scope parent, ir.IfStatement old)
 	{
 		auto ifs = new ir.IfStatement();
-		ifs.loc = old.loc;
+		ifs.location = old.location;
 		ifs.exp = copyExp(old.exp);
 		ifs.thenState = copy(parent, old.thenState);
 		if (old.elseState !is null) {
@@ -369,7 +369,7 @@ public:
 	ir.WhileStatement copy(ir.Scope parent, ir.WhileStatement old)
 	{
 		auto ws = new ir.WhileStatement();
-		ws.loc = old.loc;
+		ws.location = old.location;
 		ws.condition = copyExp(old.condition);
 		ws.block = copy(parent, old.block);
 		return ws;
@@ -378,7 +378,7 @@ public:
 	ir.DoStatement copy(ir.Scope parent, ir.DoStatement old)
 	{
 		auto ws = new ir.DoStatement();
-		ws.loc = old.loc;
+		ws.location = old.location;
 		ws.condition = copyExp(old.condition);
 		ws.block = copy(parent, old.block);
 		return ws;
@@ -388,14 +388,14 @@ public:
 	{
 		auto ss = new ir.SwitchStatement();
 		ss.condition = copyExp(old.condition);
-		ss.loc = old.loc;
+		ss.location = old.location;
 		ss.isFinal = old.isFinal;
 		assert(old.cases.length > 0);
 		ss.cases = new ir.SwitchCase[](old.cases.length);
 		foreach (i, cc; ss.cases) {
 			auto oc = old.cases[i];
 			auto c = ss.cases[i] = new ir.SwitchCase();
-			c.loc = oc.loc;
+			c.location = oc.location;
 			if (oc.firstExp !is null) {
 				c.firstExp = copyExp(oc.firstExp);
 			}
@@ -417,7 +417,7 @@ public:
 	ir.ForeachStatement copy(ir.Scope parent, ir.ForeachStatement old)
 	{
 		auto fes = new ir.ForeachStatement();
-		fes.loc = old.loc;
+		fes.location = old.location;
 		fes.reverse = old.reverse;
 		if (old.itervars.length > 0) {
 			fes.itervars = new ir.Variable[](old.itervars.length);
@@ -448,7 +448,7 @@ public:
 	ir.ForStatement copy(ir.Scope parent, ir.ForStatement old)
 	{
 		auto fs = new ir.ForStatement();
-		fs.loc = old.loc;
+		fs.location = old.location;
 		if (old.initVars.length > 0) {
 			fs.initVars = new ir.Variable[](old.initVars.length);
 			foreach (i; 0 .. old.initVars.length) {
@@ -510,7 +510,7 @@ public:
 		case Struct: n.type = lift(cast(ir.Struct)old.type); break;
 		case Union: n.type = lift(cast(ir.Union)old.type); break;
 		case Interface: n.type = lift(cast(ir._Interface)old.type); break;
-		default: throw makeUnsupported(old.loc, ir.nodeToString(old.type));
+		default: throw makeUnsupported(old.location, ir.nodeToString(old.type));
 		}
 
 		return n;

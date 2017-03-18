@@ -35,7 +35,7 @@ public:
 			auto str = format("invalid scope layout should be %s is %s",
 			           ir.getNodeAddressString(m),
 			           ir.getNodeAddressString(current.node));
-			throw panic(m.loc, str);
+			throw panic(m.location, str);
 		}
 
 		current = null;
@@ -44,7 +44,7 @@ public:
 
 	override Status enter(ir.Struct s)
 	{
-		checkPreScope(s.loc, s.myScope);
+		checkPreScope(s.location, s.myScope);
 		current = s.myScope;
 		return Continue;
 	}
@@ -55,7 +55,7 @@ public:
 			auto str = format("invalid scope layout should be %s is %s",
 			           ir.getNodeAddressString(s),
 			           ir.getNodeAddressString(current.node));
-			throw panic(s.loc, str);
+			throw panic(s.location, str);
 		}
 
 		current = current.parent;
@@ -64,7 +64,7 @@ public:
 
 	override Status enter(ir.Union u)
 	{
-		checkPreScope(u.loc, u.myScope);
+		checkPreScope(u.location, u.myScope);
 		current = u.myScope;
 		return Continue;
 	}
@@ -75,7 +75,7 @@ public:
 			auto str = format("invalid scope layout should be %s is %s",
 			           ir.getNodeAddressString(u),
 			           ir.getNodeAddressString(current.node));
-			throw panic(u.loc, str);
+			throw panic(u.location, str);
 		}
 
 		current = current.parent;
@@ -84,7 +84,7 @@ public:
 
 	override Status enter(ir.Class c)
 	{
-		checkPreScope(c.loc, c.myScope);
+		checkPreScope(c.location, c.myScope);
 		current = c.myScope;
 		return Continue;
 	}
@@ -95,7 +95,7 @@ public:
 			auto str = format("invalid scope layout should be %s is %s",
 			           ir.getNodeAddressString(c),
 			           ir.getNodeAddressString(current.node));
-			throw panic(c.loc, str);
+			throw panic(c.location, str);
 		}
 
 		current = current.parent;
@@ -104,7 +104,7 @@ public:
 
 	override Status enter(ir._Interface i)
 	{
-		checkPreScope(i.loc, i.myScope);
+		checkPreScope(i.location, i.myScope);
 		current = i.myScope;
 		return Continue;
 	}
@@ -115,7 +115,7 @@ public:
 			auto str = format("invalid scope layout should be %s is %s",
 			           ir.getNodeAddressString(i),
 			           ir.getNodeAddressString(current.node));
-			throw panic(i.loc, str);
+			throw panic(i.location, str);
 		}
 
 		current = current.parent;
@@ -124,7 +124,7 @@ public:
 
 	override Status enter(ir.Function func)
 	{
-		checkPreScope(func.loc, func.myScope);
+		checkPreScope(func.location, func.myScope);
 		functionStack ~= func;
 		current = func.myScope;
 		return Continue;
@@ -140,7 +140,7 @@ public:
 			auto str = format("invalid scope layout should be %s is %s",
 			           ir.getNodeAddressString(func),
 			           ir.getNodeAddressString(current.node));
-			throw panic(func.loc, str);
+			throw panic(func.location, str);
 		}
 
 		current = current.parent;
@@ -150,7 +150,7 @@ public:
 
 	override Status enter(ir.BlockStatement bs)
 	{
-		checkPreScope(bs.loc, bs.myScope);
+		checkPreScope(bs.location, bs.myScope);
 		current = bs.myScope;
 		return Continue;
 	}
@@ -161,7 +161,7 @@ public:
 			auto str = format("invalid scope layout should be %s is %s",
 			           ir.getNodeAddressString(bs),
 			           ir.getNodeAddressString(current.node));
-			throw panic(bs.loc, str);
+			throw panic(bs.location, str);
 		}
 
 		current = current.parent;
@@ -170,7 +170,7 @@ public:
 
 	override Status enter(ir.Enum e)
 	{
-		checkPreScope(e.loc, e.myScope);
+		checkPreScope(e.location, e.myScope);
 		current = e.myScope;
 		return Continue;
 	}
@@ -181,7 +181,7 @@ public:
 			auto str = format("invalid scope layout should be %s is %s",
 			           ir.getNodeAddressString(e),
 			           ir.getNodeAddressString(current.node));
-			throw panic(e.loc, str);
+			throw panic(e.location, str);
 		}
 
 		current = current.parent;
@@ -189,7 +189,7 @@ public:
 	}
 
 private:
-	void checkPreScope(ref in Location loc, ir.Scope _scope)
+	void checkPreScope(Location loc, ir.Scope _scope)
 	{
 		if (current !is _scope.parent) {
 			auto str = format("invalid scope layout (parent) should be %s is %s",

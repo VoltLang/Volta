@@ -32,14 +32,14 @@ void checkAndConvertStringLiterals(Context ctx, ir.Type type, ref ir.Exp exp)
 	auto constant = cast(ir.Constant) exp;
 	if (ptr !is null && constant !is null && constant._string.length != 0) {
 		auto a = cast(ir.ArrayType) constant.type;
-		exp = buildArrayPtr(exp.loc, a.base, exp);
+		exp = buildArrayPtr(exp.location, a.base, exp);
 	}
 	checkAndDoConvert(ctx, type, exp);
 }
 
 /**
  * If exp will convert into type, call doConvert to do it, otherwise
- * throw an error, with the loc set to exp.loc.
+ * throw an error, with the location set to exp.location.
  */
 void checkAndDoConvert(Context ctx, ir.Type type, ref ir.Exp exp)
 {
@@ -151,7 +151,7 @@ bool willConvertInterface(ir.Type l, ir.Type r)
 		if (typesEqual(lInterface, rInterface)) {
 			return true;
 		} else {
-			throw panic(r.loc, "TODO: interface to different interface.");
+			throw panic(r.location, "TODO: interface to different interface.");
 		}
 
 	}
@@ -205,8 +205,8 @@ void doConvert(Context ctx, ir.Type type, ref ir.Exp exp)
 		auto alit = cast(ir.ArrayLiteral)exp;
 		if (alit !is null && alit.exps.length == 0) {
 			auto aa = new ir.AssocArray();
-			aa.loc = exp.loc;
-			aa.type = copyTypeSmart(exp.loc, type);
+			aa.location = exp.location;
+			aa.type = copyTypeSmart(exp.location, type);
 			exp = aa;
 			return;
 		}
@@ -219,16 +219,16 @@ void doConvert(Context ctx, ir.Type type, ref ir.Exp exp)
 		auto atype = cast(ir.ArrayType)type;
 		auto sarray = cast(ir.StaticArrayType)realType(getExpType(exp));
 		if (sarray !is null && typesEqual(sarray.base, atype.base)) {
-			exp = buildSlice(exp.loc, exp, []);
+			exp = buildSlice(exp.location, exp, []);
 			return;
 		}
 		goto default;
 	default:
 		if (rtype.nodeType == ir.NodeType.FunctionSetType) {
-			throw makeUnexpected(exp.loc, "overloaded function set");
+			throw makeUnexpected(exp.location, "overloaded function set");
 		}
 		if (!typesEqual(realType(type), realType(rtype), IgnoreStorage)) {
-			exp = buildCastSmart(exp.loc, type, exp);
+			exp = buildCastSmart(exp.location, type, exp);
 		}
 	}
 }
@@ -416,10 +416,10 @@ void doConvertStaticArrayType(Context ctx, ir.StaticArrayType atype, ref ir.Exp 
 	void checkAlit()
 	{
 		if (alit is null) {
-			throw makeExpected(exp.loc, "array literal");
+			throw makeExpected(exp.location, "array literal");
 		}
 		if (alit.exps.length != atype.length) {
-			throw makeStaticArrayLengthMismatch(exp.loc, atype.length,
+			throw makeStaticArrayLengthMismatch(exp.location, atype.length,
 			                                    alit.exps.length);
 		}
 		auto ltype = realType(atype.base);
@@ -436,6 +436,6 @@ void doConvertStaticArrayType(Context ctx, ir.StaticArrayType atype, ref ir.Exp 
 	}
 	checkAlit();
 	if (ctx.functionDepth > 0) {
-		exp = buildInternalStaticArrayLiteralSmart(exp.loc, atype, alit.exps);
+		exp = buildInternalStaticArrayLiteralSmart(exp.location, atype, alit.exps);
 	}
 }

@@ -205,7 +205,7 @@ public:
 	abstract ir.Module loadModule(ir.QualifiedName name);
 
 	/// Load a filename from the string import paths.
-	abstract string stringImport(ref in Location loc, string filename);
+	abstract string stringImport(Location loc, string filename);
 
 	/// Get the modules given on the command line.
 	abstract ir.Module[] getCommandLineModules();

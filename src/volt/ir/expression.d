@@ -229,7 +229,7 @@ public:
 
 public:
 	this() { super(NodeType.Unary); }
-	this(Type n, Exp e) { super(NodeType.Unary); loc = e.loc; op = Op.Cast; value = e; type = n; }
+	this(Type n, Exp e) { super(NodeType.Unary); location = e.location; op = Op.Cast; value = e; type = n; }
 
 	this(Unary old)
 	{
@@ -899,7 +899,7 @@ public:
 		PrettyFunction,  ///< Full signature. (e.g. int math.add(int a, int b))
 		File,  ///< Current file. (e.g. foo.volt)
 		Line,  ///< Current line number. (e.g. 32)
-		Location,  ///< Current file loc. (e.g. expression.d:933
+		Location,  ///< Current file location. (e.g. expression.d:933
 	}
 
 	Type type;

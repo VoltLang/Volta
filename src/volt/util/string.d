@@ -22,7 +22,7 @@ bool isHex(dchar d)
 }
 
 
-immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
+immutable(void)[] unescapeString(Location location, const(char)[] s)
 {
 	char[] output;
 
@@ -38,7 +38,7 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 					try {
 						i = cast(uint)toInt(hexchars, 16);
 					} catch (ConvException) {
-						throw makeExpected(loc, "unicode codepoint specification");
+						throw makeExpected(location, "unicode codepoint specification");
 					}
 					if (hexchars.length == 4) {
 						encode(output, i);
@@ -50,7 +50,7 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 					unicoding = 0;
 					continue;
 				} else { 
-					throw makeExpected(loc, "unicode codepoint specification");
+					throw makeExpected(location, "unicode codepoint specification");
 				}
 			}
 			encode(hexchars, c);
@@ -59,7 +59,7 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 				try {
 					i = cast(uint)toInt(hexchars, 16);
 				} catch (ConvException) {
-					throw makeExpected(loc, "unicode codepoint specification");
+					throw makeExpected(location, "unicode codepoint specification");
 				}
 				if (hexchars.length == 4) {
 					encode(output, i);
@@ -77,14 +77,14 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 		// \xXX
 		if (hexing) {
 			if (!isHex(c)) {
-				throw makeExpected(loc, "hex digit");
+				throw makeExpected(location, "hex digit");
 			}
 			encode(hexchars, c);
 			if (hexchars.length == 2) {
 				try {
 					output ~= cast(char)toInt(hexchars, 16);
 				} catch (ConvException) {
-					throw makeExpected(loc, "hex digit");
+					throw makeExpected(location, "hex digit");
 				}
 				hexing = false;
 				hexchars = null;
@@ -125,7 +125,7 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 				// @todo Named character entities. http://www.w3.org/TR/html5/named-character-references.html
 				default:
 					string str = format("valid escape, found '\\%s'", c);
-					throw makeExpected(loc, str);
+					throw makeExpected(location, str);
 			}
 			escaping = false;
 			continue;
@@ -140,13 +140,13 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 	}
 
 	if (escaping) {
-		throw makeExpected(loc, "valid escape");
+		throw makeExpected(location, "valid escape");
 	}
 
 	if (unicoding == 4) {
-		throw makeExpected(loc, "valid unicode escape, \\uXXXX");
+		throw makeExpected(location, "valid unicode escape, \\uXXXX");
 	} else if (unicoding == 8) {
-		throw makeExpected(loc, "valid unicode escape, \\UXXXXXXXX");
+		throw makeExpected(location, "valid unicode escape, \\UXXXXXXXX");
 	}
 
 	return cast(immutable(void)[]) output;

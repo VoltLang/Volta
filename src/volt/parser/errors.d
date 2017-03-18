@@ -48,7 +48,7 @@ public:
 	 * @{
 	 */
 	Kind kind;
-	Location loc;
+	Location location;
 	NodeType nodeType;
 	/// @}
 
@@ -65,7 +65,7 @@ public:
 	     string file, const int line)
 	{
 		this.kind = kind;
-		this.loc = loc;
+		this.location = loc;
 		this.nodeType = nodeType;
 		this.raiseFile = file;
 		this.raiseLine = line;
@@ -81,7 +81,7 @@ public:
 	string message;  ///< The panic error message.
 
 public:
-	this(ref in Location loc, NodeType nodeType, string message,
+	this(Location loc, NodeType nodeType, string message,
 	     string file, const int line)
 	{
 		super(Kind.Panic, loc, nodeType, file, line);
@@ -102,7 +102,7 @@ public:
 	string found;
 
 public:
-	this(ref in Location loc, NodeType nodeType, string found,
+	this(Location loc, NodeType nodeType, string found,
 	     string file, const int line)
 	{
 		super(Kind.UnexpectedToken, loc, nodeType, file, line);
@@ -127,7 +127,7 @@ public:
 	TokenType expected;
 
 public:
-	this(ref in Location loc, NodeType nodeType, TokenType found,
+	this(Location loc, NodeType nodeType, TokenType found,
 	     TokenType expected, string file, const int line)
 	{
 		super(Kind.WrongToken, loc, nodeType, file, line);
@@ -150,7 +150,7 @@ public:
 	NodeType otherNodeType;
 
 public:
-	this(ref in Location loc, NodeType nodeType, NodeType otherNodeType,
+	this(Location loc, NodeType nodeType, NodeType otherNodeType,
 	     string file, const int line)
 	{
 		super(Kind.ParseFailed, loc, nodeType, file, line);
@@ -172,7 +172,7 @@ public:
 	string description;
 
 public:
-	this(ref in Location loc, NodeType nodeType, string description,
+	this(Location loc, NodeType nodeType, string description,
 	     string file, const int line)
 	{
 		super(Kind.UnsupportedFeature, loc, nodeType, file, line);
@@ -189,7 +189,7 @@ public:
 class ParserInvalidIntegerLiteral : ParserError
 {
 public:
-	this(ref in Location loc, NodeType nodeType, string file, const int line)
+	this(Location loc, NodeType nodeType, string file, const int line)
 	{
 		super(Kind.InvalidIntegerLiteral, loc, nodeType, file, line);
 	}
@@ -202,7 +202,7 @@ public:
 
 class ParserAllArgumentsMustBeLabelled : ParserError
 {
-	this(ref in Location loc, string file, const int line)
+	this(Location loc, string file, const int line)
 	{
 		super(Kind.AllArgumentsMustBeLabelled, loc, NodeType.Postfix, file, line);
 	}
@@ -220,7 +220,7 @@ public:
 	string message;  ///< What was expected.
 
 public:
-	this(ref in Location loc, NodeType nodeType, string message,
+	this(Location loc, NodeType nodeType, string message,
 	     string file, const int line)
 	{
 		super(Kind.Expected, loc, nodeType, file, line);
@@ -236,7 +236,7 @@ public:
 class ParserDocMultiple : ParserError
 {
 public:
-	this(ref in Location loc, string file, const int line)
+	this(Location loc, string file, const int line)
 	{
 		super(Kind.DocCommentMultiple, loc, NodeType.Invalid, file, line);
 	}
@@ -250,7 +250,7 @@ public:
 class ParserStrayDocComment : ParserError
 {
 public:
-	this(ref in Location loc, string file, const int line)
+	this(Location loc, string file, const int line)
 	{
 		super(Kind.StrayDocComment, loc, NodeType.Invalid, file, line);
 	}

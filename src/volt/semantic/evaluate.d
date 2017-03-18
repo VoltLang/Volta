@@ -144,14 +144,14 @@ ir.Constant foldUnary(ref ir.Exp exp, ir.Unary u, ir.Constant c)
 private ir.Constant buildEmptyConstant(ir.Node n, ir.Type t)
 {
 	auto c = new ir.Constant();
-	c.loc = n.loc;
+	c.location = n.location;
 	c.type = t;
 	return c;
 }
 
 ir.Constant foldBinOpOrOr(ir.Constant cl, ir.Constant cr)
 {
-	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
+	auto c = buildEmptyConstant(cl, buildBool(cl.location));
 	auto pt = cast(ir.PrimitiveType)c.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Bool: c.u._bool = cl.u._bool || cr.u._bool; break;
@@ -227,7 +227,7 @@ ir.Constant foldBinOpAnd(ir.Constant cl, ir.Constant cr)
 
 ir.Constant foldBinOpEqual(ir.Constant cl, ir.Constant cr)
 {
-	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
+	auto c = buildEmptyConstant(cl, buildBool(cl.location));
 	auto pt = cast(ir.PrimitiveType)c.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Bool: c.u._bool = cl.u._bool == cr.u._bool; break;
@@ -244,7 +244,7 @@ ir.Constant foldBinOpEqual(ir.Constant cl, ir.Constant cr)
 
 ir.Constant foldBinOpNotEqual(ir.Constant cl, ir.Constant cr)
 {
-	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
+	auto c = buildEmptyConstant(cl, buildBool(cl.location));
 	auto pt = cast(ir.PrimitiveType)c.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Bool: c.u._bool = cl.u._bool != cr.u._bool; break;
@@ -261,7 +261,7 @@ ir.Constant foldBinOpNotEqual(ir.Constant cl, ir.Constant cr)
 
 ir.Constant foldBinOpLess(ir.Constant cl, ir.Constant cr)
 {
-	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
+	auto c = buildEmptyConstant(cl, buildBool(cl.location));
 	auto pt = cast(ir.PrimitiveType)c.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Bool: c.u._bool = cl.u._bool < cr.u._bool; break;
@@ -278,7 +278,7 @@ ir.Constant foldBinOpLess(ir.Constant cl, ir.Constant cr)
 
 ir.Constant foldBinOpLessEqual(ir.Constant cl, ir.Constant cr)
 {
-	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
+	auto c = buildEmptyConstant(cl, buildBool(cl.location));
 	auto pt = cast(ir.PrimitiveType)c.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Bool: c.u._bool = cl.u._bool <= cr.u._bool; break;
@@ -295,7 +295,7 @@ ir.Constant foldBinOpLessEqual(ir.Constant cl, ir.Constant cr)
 
 ir.Constant foldBinOpGreaterEqual(ir.Constant cl, ir.Constant cr)
 {
-	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
+	auto c = buildEmptyConstant(cl, buildBool(cl.location));
 	auto pt = cast(ir.PrimitiveType)c.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Bool: c.u._bool = cl.u._bool >= cr.u._bool; break;
@@ -312,7 +312,7 @@ ir.Constant foldBinOpGreaterEqual(ir.Constant cl, ir.Constant cr)
 
 ir.Constant foldBinOpGreater(ir.Constant cl, ir.Constant cr)
 {
-	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
+	auto c = buildEmptyConstant(cl, buildBool(cl.location));
 	auto pt = cast(ir.PrimitiveType)c.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Bool: c.u._bool = cl.u._bool > cr.u._bool; break;
@@ -424,7 +424,7 @@ ir.Constant foldBinOpDiv(ir.Constant cl, ir.Constant cr)
 	void dieIfZero(bool isZero)
 	{
 		if (isZero) {
-			throw makeError(cl.loc, "divide by zero.");
+			throw makeError(cl.location, "divide by zero.");
 		}
 	}
 
@@ -453,7 +453,7 @@ ir.Constant foldBinOpMod(ir.Constant cl, ir.Constant cr)
 	void dieIfZero(bool isZero)
 	{
 		if (isZero) {
-			throw makeError(cl.loc, "divide by zero.");
+			throw makeError(cl.location, "divide by zero.");
 		}
 	}
 
@@ -523,7 +523,7 @@ ir.Constant foldUnaryCast(ir.Constant c, ir.Type t)
 		break;
 	default: return null;
 	}
-	auto loc = c.loc;
+	auto loc = c.location;
 	switch (toPrim.type) with (ir.PrimitiveType.Kind) {
 	case Int:
 		return buildConstantInt(loc, signed ? cast(int)signedFrom : cast(int)unsignedFrom);

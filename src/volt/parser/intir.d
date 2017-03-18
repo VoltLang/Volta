@@ -17,7 +17,7 @@ import volt.ir.expression;
 class IntExp
 {
 public:
-	Location loc;
+	Location location;
 }
 
 class AssignExp : IntExp

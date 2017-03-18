@@ -164,9 +164,9 @@ protected:
 		auto name = "CTFETESTMODULE";
 
 		mMod = new ir.Module();
-		mMod.name = buildQualifiedName(mMod.loc, name);
+		mMod.name = buildQualifiedName(mMod.location, name);
 		mMod.children = new ir.TopLevelBlock();
-		mMod.children.loc = mMod.loc;
+		mMod.children.location = mMod.location;
 		mMods ~= mMod;
 		mMod.myScope = new ir.Scope(mMod, name);
 	}

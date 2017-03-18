@@ -23,7 +23,7 @@ import volt.semantic.mangle;
 import volt.semantic.classify;
 import volt.semantic.overload;
 
-ir.Exp createArrayAlloc(ref in Location loc, LanguagePass lp,
+ir.Exp createArrayAlloc(Location loc, LanguagePass lp,
                         ir.Scope baseScope, ir.ArrayType atype, ir.Exp sizeArg)
 {
 	auto sexp = buildStatementExp(loc);
@@ -38,13 +38,13 @@ ir.Exp createArrayAlloc(ref in Location loc, LanguagePass lp,
 	return sexp;
 }
 
-ir.StatementExp buildClassConstructionWrapper(ref in Location loc, LanguagePass lp,
+ir.StatementExp buildClassConstructionWrapper(Location loc, LanguagePass lp,
                                               ir.Scope current, ir.Class _class,
                                               ir.Function constructor,
                                               ir.Exp[] exps)
 {
 	auto sexp = new ir.StatementExp();
-	sexp.loc = loc;
+	sexp.location = loc;
 
 	// -1
 	auto count = buildConstantSizeT(loc, lp.target, size_t.max);
@@ -112,16 +112,16 @@ public:
 	protected Status handleArrayNew(ref ir.Exp exp, ir.Unary unary, ir.ArrayType array)
 	{
 		if (unary.argumentList.length != 1) {
-			throw panic(unary.loc, "multidimensional arrays unsupported at the moment.");
+			throw panic(unary.location, "multidimensional arrays unsupported at the moment.");
 		}
-		auto arg = buildCastSmart(exp.loc, buildSizeT(exp.loc, lp.target), unary.argumentList[0]);
-		exp = createArrayAlloc(unary.loc, lp, thisModule.myScope, array, arg);
+		auto arg = buildCastSmart(exp.location, buildSizeT(exp.location, lp.target), unary.argumentList[0]);
+		exp = createArrayAlloc(unary.location, lp, thisModule.myScope, array, arg);
 		return Continue;
 	}
 
 	protected Status handleArrayCopy(ref ir.Exp exp, ir.Unary unary, ir.ArrayType array)
 	{
-		auto loc = unary.loc;
+		auto loc = unary.location;
 		auto copyFn = getLlvmMemCopy(loc, lp);
 
 		auto statExp = buildStatementExp(loc);
@@ -198,14 +198,14 @@ public:
 	{
 		assert(unary.ctor !is null);
 		exp = buildClassConstructionWrapper(
-			unary.loc, lp, current, clazz, unary.ctor,
+			unary.location, lp, current, clazz, unary.ctor,
 			unary.argumentList);
 		return Continue;
 	}
 
 	protected Status handleOther(ref ir.Exp exp, ir.Unary unary)
 	{
-		exp = buildAllocTypePtr(unary.loc, lp, unary.type);
+		exp = buildAllocTypePtr(unary.location, lp, unary.type);
 
 		return Continue;
 	}

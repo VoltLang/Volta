@@ -525,7 +525,7 @@ body {
 	case BuiltinExp:
 	case AccessExp:
 	case RunExp:
-		throw panic(n.loc, "can not visit expressions");
+		throw panic(n.location, "can not visit expressions");
 
 	/*
 	 * Statements.

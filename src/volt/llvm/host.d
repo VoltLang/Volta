@@ -116,7 +116,7 @@ protected:
 public:
 	this(HostResult host, ir.Function func)
 	{
-		this.loc = func.loc;
+		this.loc = func.location;
 
 		mPtr = cast(void*) LLVMGetFunctionAddress(
 			host.ee, toStringz(func.mangledName));

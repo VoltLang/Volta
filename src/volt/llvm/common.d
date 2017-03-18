@@ -214,10 +214,10 @@ void handleClassLiteral(State state, ir.ClassLiteral cl, Value result)
 	assert(st !is null);
 
 	auto sl = new ir.StructLiteral();
-	sl.loc = cl.loc;
-	sl.type = copyTypeSmart(_class.loc, _class.layoutStruct);
-	auto eref = buildExpReference(cl.loc, _class.vtableVariable, _class.vtableVariable.name);
-	sl.exps ~= buildAddrOf(cl.loc, eref);
+	sl.location = cl.location;
+	sl.type = copyTypeSmart(_class.location, _class.layoutStruct);
+	auto eref = buildExpReference(cl.location, _class.vtableVariable, _class.vtableVariable.name);
+	sl.exps ~= buildAddrOf(cl.location, eref);
 	sl.exps ~= cl.exps;
 
 	st.from(state, sl, result);

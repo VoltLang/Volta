@@ -22,7 +22,7 @@ import volt.parser.expression;
 
 ParseStatus parseModule(ParserStream ps, out ir.Module mod)
 {
-	auto initLocation = ps.peek.loc;
+	auto initLocation = ps.peek.location;
 	ps.pushCommentLevel();
 	auto succeeded = eatComments(ps);
 	if (!succeeded) {
@@ -43,13 +43,13 @@ ParseStatus parseModule(ParserStream ps, out ir.Module mod)
 		ps.get();
 
 		mod = new ir.Module();
-		mod.loc = initLocation;
+		mod.location = initLocation;
 		mod.name = qn;
 		mod.docComment = ps.comment();
 	} else {
 		mod = new ir.Module();
-		mod.loc = initLocation;
-		mod.name = buildQualifiedName(mod.loc, mod.loc.filename);
+		mod.location = initLocation;
+		mod.name = buildQualifiedName(mod.location, mod.location.filename);
 		mod.docComment = ps.comment();
 		mod.isAnonymous = true;
 	}
@@ -61,7 +61,7 @@ ParseStatus parseModule(ParserStream ps, out ir.Module mod)
 	}
 
 	if (ps.multiDepth > 0) {
-		return parseExpected(ps, ps.peek.loc, ir.NodeType.Module, "@}");
+		return parseExpected(ps, ps.peek.location, ir.NodeType.Module, "@}");
 	}
 
 	// Don't include the default modules in themselves.
@@ -74,21 +74,21 @@ ParseStatus parseModule(ParserStream ps, out ir.Module mod)
 	}
 
 	mod.children.nodes = [
-			createImport(mod.loc, "core", "compiler", "defaultsymbols")
+			createImport(mod.location, "core", "compiler", "defaultsymbols")
 		] ~ mod.children.nodes;
 
 	return Succeeded;
 }
 
-ir.Node createImport(ref in Location loc, string[] names...)
+ir.Node createImport(Location location, string[] names...)
 {
 	auto _import = new ir.Import();
-	_import.loc = loc;
+	_import.location = location;
 	_import.name = new ir.QualifiedName();
-	_import.name.loc = loc;
+	_import.name.location = location;
 	foreach (i, name; names) {
 		_import.name.identifiers ~= new ir.Identifier();
-		_import.name.identifiers[i].loc = loc;
+		_import.name.identifiers[i].location = location;
 		_import.name.identifiers[i].value = name;
 	}
 	return _import;
@@ -108,7 +108,7 @@ body
 		return succeeded;
 	}
 	tlb = new ir.TopLevelBlock();
-	tlb.loc = ps.peek.loc;
+	tlb.location = ps.peek.location;
 
 	auto sink = new NodeSink();
 
@@ -319,7 +319,7 @@ out(result)
 body
 {
 	tlb = new ir.TopLevelBlock();
-	tlb.loc = ps.peek.loc;
+	tlb.location = ps.peek.location;
 
 	ps.pushCommentLevel();
 
@@ -349,7 +349,7 @@ body
 ParseStatus parseImport(ParserStream ps, out ir.Import _import)
 {
 	_import = new ir.Import();
-	_import.loc = ps.peek.loc;
+	_import.location = ps.peek.location;
 	_import.access = ir.Access.Private;
 	auto succeeded = match(ps, _import, TokenType.Import);
 	if (!succeeded) {
@@ -385,7 +385,7 @@ ParseStatus parseImport(ParserStream ps, out ir.Import _import)
 		do {
 			if (matchIf(ps, TokenType.Comma)) {
 				if (first) {
-					return parseExpected(ps, ps.peek.loc, ir.NodeType.Import, "identifier");
+					return parseExpected(ps, ps.peek.location, ir.NodeType.Import, "identifier");
 				}
 			}
 			first = false;
@@ -411,7 +411,7 @@ ParseStatus parseImport(ParserStream ps, out ir.Import _import)
 ParseStatus parseUnittest(ParserStream ps, out ir.Unittest u)
 {
 	u = new ir.Unittest();
-	u.loc = ps.peek.loc;
+	u.location = ps.peek.location;
 
 	if (ps.peek.type != TokenType.Unittest) {
 		return unexpectedToken(ps, ir.NodeType.Unittest);
@@ -444,8 +444,8 @@ ParseStatus parseConstructor(ParserStream ps, out ir.Function c)
 		c.kind = ir.Function.Kind.GlobalConstructor;
 	}
 
-	// Get the loc of this.
-	c.loc = ps.peek.loc;
+	// Get the location of this.
+	c.location = ps.peek.location;
 
 	if (ps.peek.type != TokenType.This) {
 		return unexpectedToken(ps, ir.NodeType.Function);
@@ -454,7 +454,7 @@ ParseStatus parseConstructor(ParserStream ps, out ir.Function c)
 
 	auto pt = new ir.PrimitiveType();
 	pt.type = ir.PrimitiveType.Kind.Void;
-	pt.loc = c.loc;
+	pt.location = c.location;
 
 	c.type = new ir.FunctionType();
 	c.type.ret = pt;
@@ -463,7 +463,7 @@ ParseStatus parseConstructor(ParserStream ps, out ir.Function c)
 	bool colonDeclaration = isColonDeclaration(ps);
 	auto succeeded = parseParameterList(ps, params, c.type);
 	if (params.length > 0 && !colonDeclaration) {
-		warningOldStyleFunction(c.loc, ps.settings);
+		warningOldStyleFunction(c.location, ps.settings);
 	}
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.Function, ir.NodeType.FunctionParam);
@@ -474,7 +474,7 @@ ParseStatus parseConstructor(ParserStream ps, out ir.Function c)
 		c.type.isArgRef ~= false;
 		c.type.isArgOut ~= false;
 		auto p = new ir.FunctionParam();
-		p.loc = param.loc;
+		p.location = param.location;
 		p.name = param.name;
 		p.index = i;
 		p.assign = param.assign;
@@ -488,7 +488,7 @@ ParseStatus parseConstructor(ParserStream ps, out ir.Function c)
 		case TokenType.In:
 			// <in> { }
 			if (_in) {
-				return parseExpected(ps, ps.peek.loc, c, "one in block");
+				return parseExpected(ps, ps.peek.location, c, "one in block");
 			}
 			_in = true;
 			if (ps != TokenType.In) {
@@ -503,7 +503,7 @@ ParseStatus parseConstructor(ParserStream ps, out ir.Function c)
 		case TokenType.Out:
 			// <out>
 			if (_out) {
-				return parseExpected(ps, ps.peek.loc, c, "one out block");
+				return parseExpected(ps, ps.peek.location, c, "one out block");
 			}
 			_out = true;
 			if (ps != TokenType.Out) {
@@ -570,8 +570,8 @@ ParseStatus parseDestructor(ParserStream ps, out ir.Function d)
 	}
 	ps.get();
 
-	// Get the loc of ~this.
-	d.loc = ps.peek.loc - ps.previous.loc;
+	// Get the location of ~this.
+	d.location = ps.peek.location - ps.previous.location;
 
 	auto succeeded = match(ps, ir.NodeType.Function,
 		[TokenType.This, TokenType.OpenParen, TokenType.CloseParen]);
@@ -581,7 +581,7 @@ ParseStatus parseDestructor(ParserStream ps, out ir.Function d)
 
 	auto pt = new ir.PrimitiveType();
 	pt.type = ir.PrimitiveType.Kind.Void;
-	pt.loc = d.loc;
+	pt.location = d.location;
 
 	d.type = new ir.FunctionType();
 	d.type.ret = pt;
@@ -596,7 +596,7 @@ ParseStatus parseDestructor(ParserStream ps, out ir.Function d)
 ParseStatus parseClass(ParserStream ps, out ir.Class c)
 {
 	c = new ir.Class();
-	c.loc = ps.peek.loc;
+	c.location = ps.peek.location;
 	c.docComment = ps.comment();
 
 	auto succeeded = match(ps, ir.NodeType.Class,
@@ -641,7 +641,7 @@ ParseStatus parseClass(ParserStream ps, out ir.Class c)
 ParseStatus parseInterface(ParserStream ps, out ir._Interface i)
 {
 	i = new ir._Interface();
-	i.loc = ps.peek.loc;
+	i.location = ps.peek.location;
 	i.docComment = ps.comment();
 
 	auto succeeded = match(ps, ir.NodeType.Interface,
@@ -684,7 +684,7 @@ ParseStatus parseInterface(ParserStream ps, out ir._Interface i)
 ParseStatus parseUnion(ParserStream ps, out ir.Union u)
 {
 	u = new ir.Union();
-	u.loc = ps.peek.loc;
+	u.location = ps.peek.location;
 	u.docComment = ps.comment();
 
 	if (ps.peek.type != TokenType.Union) {
@@ -730,7 +730,7 @@ ParseStatus parseUnion(ParserStream ps, out ir.Union u)
 ParseStatus parseStruct(ParserStream ps, out ir.Struct s)
 {
 	s = new ir.Struct();
-	s.loc = ps.peek.loc;
+	s.location = ps.peek.location;
 	s.docComment = ps.comment();
 
 	if (ps.peek.type != TokenType.Struct) {
@@ -764,7 +764,7 @@ ParseStatus parseStruct(ParserStream ps, out ir.Struct s)
 
 ParseStatus parseEnum(ParserStream ps, out ir.Node[] output)
 {
-	auto origin = ps.peek.loc;
+	auto origin = ps.peek.location;
 
 	if (ps != TokenType.Enum) {
 		return unexpectedToken(ps, ir.NodeType.Enum);
@@ -803,7 +803,7 @@ ParseStatus parseEnum(ParserStream ps, out ir.Node[] output)
 	} else if (braceAhead) {
 		// Named enum.
 		namedEnum = new ir.Enum();
-		namedEnum.loc = origin;
+		namedEnum.location = origin;
 		namedEnum.docComment = ps.comment();
 		if (ps != TokenType.Identifier) {
 			return unexpectedToken(ps, ir.NodeType.Enum);
@@ -816,7 +816,7 @@ ParseStatus parseEnum(ParserStream ps, out ir.Node[] output)
 				return parseFailed(ps, ir.NodeType.Enum);
 			}
 		} else {
-			namedEnum.base = buildStorageType(ps.peek.loc, ir.StorageType.Kind.Auto, null);
+			namedEnum.base = buildStorageType(ps.peek.location, ir.StorageType.Kind.Auto, null);
 		}
 		base = namedEnum;
 		output ~= namedEnum;
@@ -824,7 +824,7 @@ ParseStatus parseEnum(ParserStream ps, out ir.Node[] output)
 
 	if (matchIf(ps, TokenType.OpenBrace)) {
 		if (base is null) {
-			base = buildPrimitiveType(ps.peek.loc, ir.PrimitiveType.Kind.Int);
+			base = buildPrimitiveType(ps.peek.location, ir.PrimitiveType.Kind.Int);
 		}
 		ir.EnumDeclaration prevEnum;
 
@@ -850,7 +850,7 @@ ParseStatus parseEnum(ParserStream ps, out ir.Node[] output)
 				if (ed.type !is null) {
 					return unexpectedToken(ps, ir.NodeType.Enum);
 				}
-				ed.type = buildTypeReference(namedEnum.loc, namedEnum);
+				ed.type = buildTypeReference(namedEnum.location, namedEnum);
 				namedEnum.members ~= ed;
 			} else {
 				if (ed.type is null) {
@@ -887,7 +887,7 @@ ParseStatus parseEnum(ParserStream ps, out ir.Node[] output)
 				return parseFailed(ps, ir.NodeType.Enum);
 			}
 		} else {
-			base = buildStorageType(ps.peek.loc, ir.StorageType.Kind.Auto, null);
+			base = buildStorageType(ps.peek.location, ir.StorageType.Kind.Auto, null);
 		}
 
 		ir.EnumDeclaration ed;
@@ -912,7 +912,7 @@ ParseStatus parseEnum(ParserStream ps, out ir.Node[] output)
 ParseStatus parseMixinFunction(ParserStream ps, out ir.MixinFunction m)
 {
 	m = new ir.MixinFunction();
-	m.loc = ps.peek.loc;
+	m.location = ps.peek.location;
 	m.docComment = ps.comment();
 
 	auto succeeded = match(ps, ir.NodeType.MixinFunction,
@@ -942,7 +942,7 @@ ParseStatus parseMixinFunction(ParserStream ps, out ir.MixinFunction m)
 ParseStatus parseMixinTemplate(ParserStream ps, out ir.MixinTemplate m)
 {
 	m = new ir.MixinTemplate();
-	m.loc = ps.peek.loc;
+	m.location = ps.peek.location;
 	m.docComment = ps.comment();
 
 	auto succeeded = match(ps, ir.NodeType.MixinTemplate,
@@ -972,7 +972,7 @@ ParseStatus parseMixinTemplate(ParserStream ps, out ir.MixinTemplate m)
 ParseStatus parseAttribute(ParserStream ps, out ir.Attribute attr, bool noTopLevel=false)
 {
 	attr = new ir.Attribute();
-	attr.loc = ps.peek.loc;
+	attr.location = ps.peek.location;
 
 	auto token = ps.get();
 	switch (token.type) {
@@ -1083,7 +1083,7 @@ ParseStatus parseAttribute(ParserStream ps, out ir.Attribute attr, bool noTopLev
 			case "safe": msg = "@safe"; break;
 			default: break;
 			}
-			return parseExpected(ps, attr.loc, ir.NodeType.Attribute, msg);
+			return parseExpected(ps, attr.location, ir.NodeType.Attribute, msg);
 		}
 		version (Volt) { if (true) {
 			// TODO: Fix Volt's CFG bug.
@@ -1121,7 +1121,7 @@ ParseStatus parseAttribute(ParserStream ps, out ir.Attribute attr, bool noTopLev
 
 	if (matchIf(ps, TokenType.OpenBrace)) {
 		if (ps.comment().length > 0) {
-			return docCommentMultiple(ps, ps.lastDocComment.loc);
+			return docCommentMultiple(ps, ps.lastDocComment.location);
 		}
 		auto succeeded = parseTopLevelBlock(ps, attr.members, TokenType.CloseBrace);
 		if (!succeeded) {
@@ -1133,7 +1133,7 @@ ParseStatus parseAttribute(ParserStream ps, out ir.Attribute attr, bool noTopLev
 		 * doing it in the parser would require context.
 		 */
 		if (ps.comment().length > 0 && !ps.inMultiCommentBlock) {
-			return docCommentMultiple(ps, ps.lastDocComment.loc);
+			return docCommentMultiple(ps, ps.lastDocComment.location);
 		}
 	} else {
 		auto succeeded = parseOneTopLevelBlock(ps, attr.members);
@@ -1155,7 +1155,7 @@ ParseStatus parseAttribute(ParserStream ps, out ir.Attribute attr, bool noTopLev
 ParseStatus parseStaticAssert(ParserStream ps, out ir.StaticAssert sa)
 {
 	sa = new ir.StaticAssert();
-	sa.loc = ps.peek.loc;
+	sa.location = ps.peek.location;
 	sa.docComment = ps.comment();
 
 	auto succeeded = match(ps, ir.NodeType.StaticAssert,
@@ -1182,7 +1182,7 @@ ParseStatus parseStaticAssert(ParserStream ps, out ir.StaticAssert sa)
 ParseStatus parseCondition(ParserStream ps, out ir.Condition condition)
 {
 	condition = new ir.Condition();
-	condition.loc = ps.peek.loc;
+	condition.location = ps.peek.location;
 
 	switch (ps.peek.type) {
 	case TokenType.Version:
@@ -1207,7 +1207,7 @@ ParseStatus parseCondition(ParserStream ps, out ir.Condition condition)
 		ps.get();
 		break;
 	default:
-		return parseExpected(ps, ps.peek.loc, condition, "'version', 'debug', or 'static'");
+		return parseExpected(ps, ps.peek.location, condition, "'version', 'debug', or 'static'");
 	}
 
 	auto succeeded = parseExp(ps, condition.exp);
@@ -1221,7 +1221,7 @@ ParseStatus parseCondition(ParserStream ps, out ir.Condition condition)
 ParseStatus parseConditionTopLevel(ParserStream ps, out ir.ConditionTopLevel ctl)
 {
 	ctl = new ir.ConditionTopLevel();
-	ctl.loc = ps.peek.loc;
+	ctl.location = ps.peek.location;
 	ctl.docComment = ps.comment();
 
 	auto succeeded = parseCondition(ps, ctl.condition);

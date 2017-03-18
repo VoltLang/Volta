@@ -83,7 +83,7 @@ public:
 		LLVMPositionBuilderAtEnd(b, state.block);
 
 		// Set position for various setup instructions.
-		diSetPosition(state, func.loc);
+		diSetPosition(state, func.location);
 
 		if (func.kind == ir.Function.Kind.GlobalConstructor) {
 			state.globalConstructors ~= llvmFunc;
@@ -255,9 +255,9 @@ public:
 			}
 		}
 
-		handleScopeSuccessTo(ret.loc, null);
+		handleScopeSuccessTo(ret.location, null);
 
-		diSetPosition(state, ret.loc);
+		diSetPosition(state, ret.location);
 
 		if (val is null) {
 			LLVMBuildRet(b, null);
@@ -342,7 +342,7 @@ public:
 					auto ai = LLVMConstIntGetSExtValue(aval);
 					auto bi = LLVMConstIntGetSExtValue(bval);
 					if (ai >= bi) {
-						throw panic(ss.loc, "invalid case range");
+						throw panic(ss.location, "invalid case range");
 					}
 					while (ai <= bi) {
 						auto val = LLVMConstInt(typ, cast(ulong)ai++, false);
@@ -685,7 +685,7 @@ public:
 
 		if (state.fall) {
 			// TODO Add a endBraceLocation field to BlockStatement.
-			handleScopeSuccessTo(bs.loc, old);
+			handleScopeSuccessTo(bs.location, old);
 		}
 
 		state.popPath();
@@ -697,10 +697,10 @@ public:
 		auto p = state.findContinue();
 
 		if (cs.label !is null) {
-			throw panic(cs.loc, "labled continue statements not supported");
+			throw panic(cs.location, "labled continue statements not supported");
 		}
 
-		handleScopeSuccessTo(cs.loc, p);
+		handleScopeSuccessTo(cs.location, p);
 
 		LLVMBuildBr(state.builder, p.continueBlock);
 		state.fnState.fall = false;
@@ -713,10 +713,10 @@ public:
 		auto p = state.findBreak();
 
 		if (bs.label !is null) {
-			throw panic(bs.loc, "labled break statements not supported");
+			throw panic(bs.location, "labled break statements not supported");
 		}
 
-		handleScopeSuccessTo(bs.loc, p);
+		handleScopeSuccessTo(bs.location, p);
 
 		LLVMBuildBr(state.builder, p.breakBlock);
 		state.fnState.fall = false;
@@ -728,7 +728,7 @@ public:
 	{
 		// Goto will exit the scope just as if it was a break.
 		auto p = state.findBreak();
-		handleScopeSuccessTo(gs.loc, p);
+		handleScopeSuccessTo(gs.location, p);
 
 		if (gs.isDefault) {
 			LLVMBuildBr(state.builder, state.switchDefault);
@@ -743,13 +743,13 @@ public:
 				LLVMBasicBlockRef b;
 
 				if (!state.switchGetCase(i, b)) {
-					throw makeExpected(gs.loc, "valid case");
+					throw makeExpected(gs.location, "valid case");
 				}
 				LLVMBuildBr(state.builder, b);
 				state.fnState.fall = false;
 			}
 		} else {
-			throw panic(gs.loc, "non switch goto");
+			throw panic(gs.location, "non switch goto");
 		}
 		return Continue;
 	}
@@ -759,7 +759,7 @@ public:
 		// Should not call success here.
 
 		if (t.exp is null) {
-			throw panic(t.loc, "empty throw statement");
+			throw panic(t.location, "empty throw statement");
 		}
 	
 		state.getValue(t.exp);
@@ -842,7 +842,7 @@ public:
 	override Status leave(ir.Module m)
 	{
 		if (state.localConstructors.length > 0 || state.localDestructors.length > 0) {
-			throw panic(m.loc, "local constructor or destructor made it into llvm backend.");
+			throw panic(m.location, "local constructor or destructor made it into llvm backend.");
 		}
 
 		if (state.globalConstructors.length > 0 ||

@@ -209,7 +209,7 @@ public:
 		return loadAndParse(incPath);
 	}
 
-	override string stringImport(ref in Location loc, string fname)
+	override string stringImport(Location loc, string fname)
 	{
 		if (mStringImportPaths.length == 0) {
 			throw makeNoStringImportPaths(loc);
@@ -330,7 +330,7 @@ public:
 			return 1;
 		} catch (Throwable t) {
 			io.error.writefln("panic: %s", t.msg);
-			version (Volt) auto loc = t.location;
+			version (Volt) auto loc = t.loc;
 			else auto loc = t.file is null ? "" : format("%s:%s", t.file, t.line);
 			if (loc != "") {
 				io.error.writefln("%s", loc);

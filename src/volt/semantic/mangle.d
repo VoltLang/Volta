@@ -121,7 +121,7 @@ void mangleType(ir.Type t, Sink sink)
 		mangleType(asArray.base, sink);
 		break;
 	case NullType:
-		auto vptr = buildVoidPtr(t.loc);
+		auto vptr = buildVoidPtr(t.location);
 		mangleType(vptr, sink);
 		break;
 	case PointerType:
@@ -238,7 +238,7 @@ void mangleScope(ir.Scope _scope, Sink sink)
 
 	auto asModule = cast(ir.Module)_scope.node;
 	if (asModule is null)
-		throw panic(_scope.node.loc, "top scope is not a module");
+		throw panic(_scope.node.location, "top scope is not a module");
 
 	foreach (id; asModule.name.identifiers) {
 		mangleString(id.value, sink);

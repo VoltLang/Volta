@@ -69,7 +69,7 @@ version (UseDIBuilder) {
 
 	LLVMValueRef diCompileUnit(State state)
 	{
-		string file = state.irMod.loc.filename;
+		string file = state.irMod.location.filename;
 		string dir = state.execDir;
 		string ident = state.identStr;
 
@@ -255,7 +255,7 @@ version (UseDIBuilder) {
 		assert(type.diType !is null);
 
 		auto file = diFile(state,
-			state.irMod.loc.filename,
+			state.irMod.location.filename,
 			state.execDir);
 
 		LLVMValueRef scope_;
@@ -292,7 +292,7 @@ version (UseDIBuilder) {
 			state.diBuilder,
 			state.diCU,
 			name.ptr, name.length,
-			state.diFile(t), cast(uint)t.loc.line,
+			state.diFile(t), cast(uint)t.location.line,
 			size, alignment,
 			0,        // Flags
 			null, 0,  // Elements
@@ -318,7 +318,7 @@ version (UseDIBuilder) {
 			state.diBuilder,
 			state.diCU,
 			t.mangledName.ptr, t.mangledName.length,
-			state.diFile(t), cast(uint)t.loc.line,
+			state.diFile(t), cast(uint)t.location.line,
 			size, alignment,
 			0,        // Flags
 			null,     // DerivedFrom
@@ -355,7 +355,7 @@ version (UseDIBuilder) {
 			di[i] = LLVMDIBuilderCreateMemberType(
 				state.diBuilder, state.diCU,
 				elm.name.ptr, elm.name.length,
-				state.diFile(elm), cast(uint)elm.loc.line,
+				state.diFile(elm), cast(uint)elm.location.line,
 				size, alignment, offset, 0, d);
 
 			if (kind != ir.NodeType.Union) {
@@ -392,12 +392,12 @@ version (UseDIBuilder) {
 		di[0] = LLVMDIBuilderCreateMemberType(
 			state.diBuilder, state.diCU,
 			names[0].ptr, names[0].length,
-			state.diFile(p.irType), cast(uint)p.irType.loc.line,
+			state.diFile(p.irType), cast(uint)p.irType.location.line,
 			s0, a0, 0, 0, t[0].diType);
 		di[1] = LLVMDIBuilderCreateMemberType(
 			state.diBuilder, state.diCU,
 			names[1].ptr, names[1].length,
-			state.diFile(p.irType), cast(uint)p.irType.loc.line,
+			state.diFile(p.irType), cast(uint)p.irType.location.line,
 			s1, a1, offset, 0, t[1].diType);
 
 		LLVMDIBuilderStructSetBody(state.diBuilder, p.diType,
@@ -440,7 +440,7 @@ version (UseDIBuilder) {
 	                        LLVMValueRef func, FunctionType ft)
 	{
 		auto file = diFile(state,
-			irFn.loc.filename,
+			irFn.location.filename,
 			state.execDir);
 		LLVMValueRef _scope = file;
 		string name = irFn.mangledName;
@@ -450,8 +450,8 @@ version (UseDIBuilder) {
 
 		auto ret = LLVMDIBuilderCreateFunction(state.diBuilder, _scope,
 			name.ptr, name.length, null, 0,
-			file, cast(uint) irFn.loc.line, ft.diCallType,
-			false, true, cast(uint) irFn.loc.line, 0,
+			file, cast(uint) irFn.location.line, ft.diCallType,
+			false, true, cast(uint) irFn.location.line, 0,
 			false, null, null);
 		LLVMSetSubprogram(func, ret);
 		return ret;
@@ -462,14 +462,14 @@ version (UseDIBuilder) {
 	{
 		string name = var.name;
 		auto file = diFile(state, var);
-		auto loc = diLocation(state, state.fnState.di, var.loc);
+		auto loc = diLocation(state, state.fnState.di, var.location);
 		auto expr = LLVMDIBuilderCreateExpression(
 			state.diBuilder, null, 0);
 
 		auto valinfo = LLVMDIBuilderCreateAutoVariable(
 			state.diBuilder, state.fnState.di,
 			name.ptr, name.length,
-			file, cast(uint) var.loc.line,
+			file, cast(uint) var.location.line,
 			type.diType,
 			false, // AlwaysPreserve
 			0);
@@ -487,7 +487,7 @@ version (UseDIBuilder) {
 	{
 		string name = var.name;
 		auto file = diFile(state, var);
-		auto loc = diLocation(state, state.fnState.di, var.loc);
+		auto loc = diLocation(state, state.fnState.di, var.location);
 		auto expr = LLVMDIBuilderCreateExpression(
 			state.diBuilder, null, 0);
 
@@ -495,7 +495,7 @@ version (UseDIBuilder) {
 			state.diBuilder, state.fnState.di,
 			name.ptr, name.length,
 			cast(int) var.index + 1,
-			file, cast(uint) var.loc.line,
+			file, cast(uint) var.location.line,
 			type.diType,
 			false, // AlwaysPreserve
 			0);
@@ -545,7 +545,7 @@ private:
 	LLVMValueRef diFile(State state, ir.Node n)
 	{
 		return diFile(state,
-			n.loc.filename,
+			n.location.filename,
 			state.execDir);
 	}
 

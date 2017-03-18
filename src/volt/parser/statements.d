@@ -265,7 +265,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 			}
 
 			auto es = new ir.ExpStatement();
-			es.loc = exp.loc;
+			es.location = exp.location;
 			es.exp = exp;
 			dgt(es);
 		}
@@ -336,7 +336,7 @@ ParseStatus parseVariableOrExpression(ParserStream ps, NodeSinkDg dgt)
 ParseStatus parseAssertStatement(ParserStream ps, out ir.AssertStatement as)
 {
 	as = new ir.AssertStatement();
-	as.loc = ps.peek.loc;
+	as.location = ps.peek.location;
 	as.isStatic = matchIf(ps, TokenType.Static);
 	if (ps != TokenType.Assert) {
 		return unexpectedToken(ps, as);
@@ -370,7 +370,7 @@ ParseStatus parseAssertStatement(ParserStream ps, out ir.AssertStatement as)
 ParseStatus parseExpStatement(ParserStream ps, out ir.ExpStatement e)
 {
 	e = new ir.ExpStatement();
-	e.loc = ps.peek.loc;
+	e.location = ps.peek.location;
 
 	auto succeeded = parseExp(ps, e.exp);
 	if (!succeeded) {
@@ -391,7 +391,7 @@ ParseStatus parseExpStatement(ParserStream ps, out ir.ExpStatement e)
 ParseStatus parseReturnStatement(ParserStream ps, out ir.ReturnStatement r)
 {
 	r = new ir.ReturnStatement();
-	r.loc = ps.peek.loc;
+	r.location = ps.peek.location;
 
 	if (ps != TokenType.Return) {
 		return unexpectedToken(ps, r);
@@ -418,7 +418,7 @@ ParseStatus parseReturnStatement(ParserStream ps, out ir.ReturnStatement r)
 ParseStatus parseBlockStatement(ParserStream ps, out ir.BlockStatement bs)
 {
 	bs = new ir.BlockStatement();
-	bs.loc = ps.peek.loc;
+	bs.location = ps.peek.location;
 
 	ps.pushCommentLevel();
 
@@ -451,7 +451,7 @@ ParseStatus parseBlockStatement(ParserStream ps, out ir.BlockStatement bs)
 ParseStatus parseAsmStatement(ParserStream ps, out ir.AsmStatement as)
 {
 	as = new ir.AsmStatement();
-	as.loc = ps.peek.loc;
+	as.location = ps.peek.location;
 
 	if (ps != TokenType.Asm) {
 		return unexpectedToken(ps, as);
@@ -475,7 +475,7 @@ ParseStatus parseAsmStatement(ParserStream ps, out ir.AsmStatement as)
 ParseStatus parseIfStatement(ParserStream ps, out ir.IfStatement i)
 {
 	i = new ir.IfStatement();
-	i.loc = ps.peek.loc;
+	i.location = ps.peek.location;
 
 	if (ps != TokenType.If) {
 		return unexpectedToken(ps, i);
@@ -526,7 +526,7 @@ ParseStatus parseIfStatement(ParserStream ps, out ir.IfStatement i)
 ParseStatus parseWhileStatement(ParserStream ps, out ir.WhileStatement w)
 {
 	w = new ir.WhileStatement();
-	w.loc = ps.peek.loc;
+	w.location = ps.peek.location;
 
 	if (ps != TokenType.While) {
 		return unexpectedToken(ps, w);
@@ -555,7 +555,7 @@ ParseStatus parseWhileStatement(ParserStream ps, out ir.WhileStatement w)
 ParseStatus parseDoStatement(ParserStream ps, out ir.DoStatement d)
 {
 	d = new ir.DoStatement();
-	d.loc = ps.peek.loc;
+	d.location = ps.peek.location;
 
 	if (ps != TokenType.Do) {
 		return unexpectedToken(ps, d);
@@ -592,7 +592,7 @@ ParseStatus parseDoStatement(ParserStream ps, out ir.DoStatement d)
 ParseStatus parseForeachStatement(ParserStream ps, out ir.ForeachStatement f)
 {
 	f = new ir.ForeachStatement();
-	f.loc = ps.peek.loc;
+	f.location = ps.peek.location;
 
 	f.reverse = matchIf(ps, TokenType.ForeachReverse);
 	if (!f.reverse) {
@@ -616,7 +616,7 @@ ParseStatus parseForeachStatement(ParserStream ps, out ir.ForeachStatement f)
 					return unexpectedToken(ps, f);
 				}
 				name = ps.get();
-				type = buildAutoType(name.loc);
+				type = buildAutoType(name.location);
 			} else if (ps == [TokenType.Identifier, TokenType.Colon]) {
 				name = ps.get();
 				auto succeeded = match(ps, f, TokenType.Colon);
@@ -639,13 +639,13 @@ ParseStatus parseForeachStatement(ParserStream ps, out ir.ForeachStatement f)
 			}
 			if (isRef) {
 				auto at = new ir.AutoType();
-				at.loc = type.loc;
+				at.location = type.location;
 				at.explicitType = type;
 				at.isForeachRef = true;
 				type = at;
 			}
 			f.itervars ~= new ir.Variable();
-			f.itervars[$-1].loc = type.loc;
+			f.itervars[$-1].location = type.location;
 			f.itervars[$-1].type = type;
 			f.itervars[$-1].name = name.value;
 			matchIf(ps, TokenType.Comma);
@@ -685,7 +685,7 @@ ParseStatus parseForeachStatement(ParserStream ps, out ir.ForeachStatement f)
 ParseStatus parseForStatement(ParserStream ps, out ir.ForStatement f)
 {
 	f = new ir.ForStatement();
-	f.loc = ps.peek.loc;
+	f.location = ps.peek.location;
 
 	if (ps != TokenType.For) {
 		return unexpectedToken(ps, f);
@@ -771,7 +771,7 @@ ParseStatus parseForStatement(ParserStream ps, out ir.ForStatement f)
 ParseStatus parseLabelStatement(ParserStream ps, out ir.LabelStatement ls)
 {
 	ls = new ir.LabelStatement();
-	ls.loc = ps.peek.loc;
+	ls.location = ps.peek.location;
 
 	if (ps != TokenType.Identifier) {
 		return unexpectedToken(ps, ls);
@@ -796,7 +796,7 @@ ParseStatus parseLabelStatement(ParserStream ps, out ir.LabelStatement ls)
 ParseStatus parseSwitchStatement(ParserStream ps, out ir.SwitchStatement ss)
 {
 	ss = new ir.SwitchStatement();
-	ss.loc = ps.peek.loc;
+	ss.location = ps.peek.location;
 
 	if (matchIf(ps, TokenType.Final)) {
 		ss.isFinal = true;
@@ -865,7 +865,7 @@ ParseStatus parseSwitchStatement(ParserStream ps, out ir.SwitchStatement ss)
 	static ParseStatus parseCaseStatements(ParserStream ps, out ir.BlockStatement bs)
 	{
 		bs = new ir.BlockStatement();
-		bs.loc = ps.peek.loc;
+		bs.location = ps.peek.location;
 		auto sink = new NodeSink();
 		while (true) {
 			auto type = ps.peek.type;
@@ -886,7 +886,7 @@ ParseStatus parseSwitchStatement(ParserStream ps, out ir.SwitchStatement ss)
 	bool hadDefault;
 	while (ps != TokenType.CloseBrace) {
 		auto newCase = new ir.SwitchCase();
-		newCase.loc = ps.peek.loc;
+		newCase.location = ps.peek.location;
 		switch (ps.peek.type) {
 		case TokenType.Default:
 			if (ps != TokenType.Default) {
@@ -967,7 +967,7 @@ ParseStatus parseSwitchStatement(ParserStream ps, out ir.SwitchStatement ss)
 		case TokenType.CloseBrace:
 			break;
 		default:
-			return parseExpected(ps, ps.peek.loc, ss, "'case', 'default', or '}'");
+			return parseExpected(ps, ps.peek.location, ss, "'case', 'default', or '}'");
 		}
 	}
 	while (braces--) {
@@ -983,7 +983,7 @@ ParseStatus parseSwitchStatement(ParserStream ps, out ir.SwitchStatement ss)
 ParseStatus parseContinueStatement(ParserStream ps, out ir.ContinueStatement cs)
 {
 	cs = new ir.ContinueStatement();
-	cs.loc = ps.peek.loc;
+	cs.location = ps.peek.location;
 
 	if (ps != TokenType.Continue) {
 		return unexpectedToken(ps, cs);
@@ -1004,7 +1004,7 @@ ParseStatus parseContinueStatement(ParserStream ps, out ir.ContinueStatement cs)
 ParseStatus parseBreakStatement(ParserStream ps, out ir.BreakStatement bs)
 {
 	bs = new ir.BreakStatement();
-	bs.loc = ps.peek.loc;
+	bs.location = ps.peek.location;
 
 	if (ps != TokenType.Break) {
 		return unexpectedToken(ps, bs);
@@ -1025,7 +1025,7 @@ ParseStatus parseBreakStatement(ParserStream ps, out ir.BreakStatement bs)
 ParseStatus parseGotoStatement(ParserStream ps, out ir.GotoStatement gs)
 {
 	gs = new ir.GotoStatement();
-	gs.loc = ps.peek.loc;
+	gs.location = ps.peek.location;
 
 	if (ps != TokenType.Goto) {
 		return unexpectedToken(ps, gs);
@@ -1055,7 +1055,7 @@ ParseStatus parseGotoStatement(ParserStream ps, out ir.GotoStatement gs)
 		}
 		break;
 	default:
-		return parseExpected(ps, ps.peek.loc, gs, "identifier, 'case', or 'default'");
+		return parseExpected(ps, ps.peek.location, gs, "identifier, 'case', or 'default'");
 	}
 	if (ps != TokenType.Semicolon) {
 		return unexpectedToken(ps, gs);
@@ -1068,7 +1068,7 @@ ParseStatus parseGotoStatement(ParserStream ps, out ir.GotoStatement gs)
 ParseStatus parseWithStatement(ParserStream ps, out ir.WithStatement ws)
 {
 	ws = new ir.WithStatement();
-	ws.loc = ps.peek.loc;
+	ws.location = ps.peek.location;
 
 	if (ps != TokenType.With) {
 		return unexpectedToken(ps, ws);
@@ -1097,7 +1097,7 @@ ParseStatus parseWithStatement(ParserStream ps, out ir.WithStatement ws)
 ParseStatus parseSynchronizedStatement(ParserStream ps, out ir.SynchronizedStatement ss)
 {
 	ss = new ir.SynchronizedStatement();
-	ss.loc = ps.peek.loc;
+	ss.location = ps.peek.location;
 
 	if (ps != TokenType.Synchronized) {
 		return unexpectedToken(ps, ss);
@@ -1125,7 +1125,7 @@ ParseStatus parseSynchronizedStatement(ParserStream ps, out ir.SynchronizedState
 ParseStatus parseTryStatement(ParserStream ps, out ir.TryStatement t)
 {
 	t = new ir.TryStatement();
-	t.loc = ps.peek.loc;
+	t.location = ps.peek.location;
 
 	if (ps != TokenType.Try) {
 		return unexpectedToken(ps, t);
@@ -1139,7 +1139,7 @@ ParseStatus parseTryStatement(ParserStream ps, out ir.TryStatement t)
 	while (matchIf(ps, TokenType.Catch)) {
 		if (matchIf(ps, TokenType.OpenParen)) {
 			auto var = new ir.Variable();
-			var.loc = ps.peek.loc;
+			var.location = ps.peek.location;
 			var.specialInitValue = true;
 			if (isColonDeclaration(ps)) {
 				// catch (e: Exception)
@@ -1189,7 +1189,7 @@ ParseStatus parseTryStatement(ParserStream ps, out ir.TryStatement t)
 				return parseFailed(ps, t);
 			}
 			if (ps == TokenType.Catch) {
-				return parseExpected(ps, ps.peek.loc, t, "catch all block as final catch in try statement");
+				return parseExpected(ps, ps.peek.location, t, "catch all block as final catch in try statement");
 			}
 		}
 	}
@@ -1202,7 +1202,7 @@ ParseStatus parseTryStatement(ParserStream ps, out ir.TryStatement t)
 	}
 
 	if (t.catchBlocks.length == 0 && t.catchAll is null && t.finallyBlock is null) {
-		return parseExpected(ps, t.loc, t, "catch block");
+		return parseExpected(ps, t.location, t, "catch block");
 	}
 
 	return Succeeded;
@@ -1211,7 +1211,7 @@ ParseStatus parseTryStatement(ParserStream ps, out ir.TryStatement t)
 ParseStatus parseThrowStatement(ParserStream ps, out ir.ThrowStatement t)
 {
 	t = new ir.ThrowStatement();
-	t.loc = ps.peek.loc;
+	t.location = ps.peek.location;
 	if (ps != TokenType.Throw) {
 		return unexpectedToken(ps, t);
 	}
@@ -1230,7 +1230,7 @@ ParseStatus parseThrowStatement(ParserStream ps, out ir.ThrowStatement t)
 ParseStatus parseScopeStatement(ParserStream ps, out ir.ScopeStatement ss)
 {
 	ss = new ir.ScopeStatement();
-	ss.loc = ps.peek.loc;
+	ss.location = ps.peek.location;
 
 	if (ps != TokenType.Scope) {
 		return unexpectedToken(ps, ss);
@@ -1255,7 +1255,7 @@ ParseStatus parseScopeStatement(ParserStream ps, out ir.ScopeStatement ss)
 		ss.kind = Failure;
 		break;
 	default:
-		return parseExpected(ps, ps.peek.loc, ss, "'exit', 'success', or 'failure'");
+		return parseExpected(ps, ps.peek.location, ss, "'exit', 'success', or 'failure'");
 	}
 	if (ps != TokenType.CloseParen) {
 		return unexpectedToken(ps, ss);
@@ -1272,7 +1272,7 @@ ParseStatus parseScopeStatement(ParserStream ps, out ir.ScopeStatement ss)
 ParseStatus parsePragmaStatement(ParserStream ps, out ir.PragmaStatement prs)
 {
 	prs = new ir.PragmaStatement();
-	prs.loc = ps.peek.loc;
+	prs.location = ps.peek.location;
 
 	if (ps != TokenType.Pragma) {
 		return unexpectedToken(ps, prs);
@@ -1308,7 +1308,7 @@ ParseStatus parsePragmaStatement(ParserStream ps, out ir.PragmaStatement prs)
 ParseStatus parseConditionStatement(ParserStream ps, out ir.ConditionStatement cs)
 {
 	cs = new ir.ConditionStatement();
-	cs.loc = ps.peek.loc;
+	cs.location = ps.peek.location;
 
 	auto succeeded = parseCondition(ps, cs.condition);
 	if (!succeeded) {
@@ -1331,7 +1331,7 @@ ParseStatus parseConditionStatement(ParserStream ps, out ir.ConditionStatement c
 ParseStatus parseMixinStatement(ParserStream ps, out ir.MixinStatement ms)
 {
 	ms = new ir.MixinStatement();
-	ms.loc = ps.peek.loc;
+	ms.location = ps.peek.location;
 	if (ps != TokenType.Mixin) {
 		return unexpectedToken(ps, ms);
 	}
@@ -1390,7 +1390,7 @@ ParseStatus parseStaticIs(ParserStream ps, out ir.AssertStatement as)
 	}
 	Token[] tokens = ps.doneSavingTokens();
 	as = new ir.AssertStatement();
-	as.loc = isExp.loc;
+	as.location = isExp.location;
 	as.isStatic = true;
 	as.condition = isExp;
 	StringSink msg;
@@ -1405,7 +1405,7 @@ ParseStatus parseStaticIs(ParserStream ps, out ir.AssertStatement as)
 			break;
 		}
 	}
-	as.message = buildConstantString(isExp.loc, msg.toString());
+	as.message = buildConstantString(isExp.location, msg.toString());
 	return Succeeded;
 }
 
@@ -1413,7 +1413,7 @@ ParseStatus parseStaticIs(ParserStream ps, out ir.AssertStatement as)
 ParseStatus parseColonAssign(ParserStream ps, NodeSinkDg dgt)
 {
 	ir.Variable var;
-	auto loc = ps.peek.loc;
+	auto loc = ps.peek.location;
 
 	Token[] idents;
 	while (ps != TokenType.Colon && ps != TokenType.ColonAssign) {
@@ -1473,7 +1473,7 @@ ParseStatus parseColonDeclaration(ParserStream ps, Token[] idents, NodeSinkDg dg
 		}
 	}
 	foreach (i, ident; idents) {
-		auto var = buildVariable(ident.loc, i > 0 ? copyType(type) : type,
+		auto var = buildVariable(ident.location, i > 0 ? copyType(type) : type,
 		                         ir.Variable.Storage.Invalid, ident.value);
 		var.assign = assign;
 		dgt(var);

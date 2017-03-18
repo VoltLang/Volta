@@ -37,14 +37,14 @@ public:
 
 public:
 	Kind kind;
-	Location loc;
+	Location location;
 	dchar currentChar;
 
 public:
 	this(Kind kind, Location loc, dchar currentChar)
 	{
 		this.kind = kind;
-		this.loc = loc;
+		this.location = loc;
 		this.currentChar = currentChar;
 	}
 
@@ -92,7 +92,7 @@ public:
 	CompilerException panicException;
 
 public:
-	this(ref in Location loc, dchar currentChar, CompilerException panicException)
+	this(Location loc, dchar currentChar, CompilerException panicException)
 	{
 		super(LexerError.Kind.Panic, loc, currentChar);
 		panicException = panicException;
