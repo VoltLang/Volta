@@ -313,7 +313,7 @@ public:
 		auto str = m.name.toString();
 
 		if (str in mModules) {
-			throw makeAlreadyLoaded(m, m.location.filename);
+			throw makeAlreadyLoaded(m, m.loc.filename);
 		}
 
 		mModules[str] = m;

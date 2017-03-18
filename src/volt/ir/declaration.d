@@ -490,7 +490,7 @@ public:
 	@property FunctionSetType type()
 	{
 		auto t = new FunctionSetType();
-		t.location = location;
+		t.loc = loc;
 		t.set = this;
 		return t;
 	}

@@ -42,7 +42,7 @@ public:
 	@property string description()
 	{
 		StringSink sink;
-		sink.sink(node.location.toString());
+		sink.sink(node.loc.toString());
 		sink.sink(" ");
 		if (action == Action.Resolve) {
 			sink.sink("resolving");
@@ -89,7 +89,7 @@ public:
 			str.sink("\n");
 			str.sink(s.description);
 		}
-		throw makeError(w.node.location, str.toString());
+		throw makeError(w.node.loc, str.toString());
 	}
 
 	void remove(Work w)

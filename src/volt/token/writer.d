@@ -63,7 +63,7 @@ public:
 		}
 
 		mTokens[mLength++] = token;
-		token.location.length = token.value.length;
+		token.loc.length = token.value.length;
 	}
 
 	/**

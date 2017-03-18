@@ -374,7 +374,7 @@ public:
 			throw panic("null Node provided to addType");
 		}
 		if (name is null) {
-			throw panic(n.location, "null name provided to addType");
+			throw panic(n.loc, "null name provided to addType");
 		}
 		errorOn(n, name);
 		auto store = new Store(this, n, name, Store.Kind.Type);
@@ -404,7 +404,7 @@ public:
 			throw panic("null node passed to addValue");
 		}
 		if (name is null) {
-			throw panic(n.location, "null name passed to addValue");
+			throw panic(n.loc, "null name passed to addValue");
 		}
 		errorOn(n, name);
 		Store store;
@@ -575,6 +575,6 @@ private:
 	void errorDefined(Node n, string name)
 	{
 		auto str = format("\"%s\" already defined", name);
-		throw panic(n.location, str);
+		throw panic(n.loc, str);
 	}
 }

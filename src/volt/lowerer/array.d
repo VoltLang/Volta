@@ -26,12 +26,12 @@ import volt.lowerer.alloc : buildAllocVoidPtr;
  *
  */
 
-ir.Function getLlvmMemMove(Location loc, LanguagePass lp)
+ir.Function getLlvmMemMove(ref in Location loc, LanguagePass lp)
 {
 	return lp.ver.isP64 ? lp.llvmMemmove64 : lp.llvmMemmove32;
 }
 
-ir.Function getLlvmMemCopy(Location loc, LanguagePass lp)
+ir.Function getLlvmMemCopy(ref in Location loc, LanguagePass lp)
 {
 	return lp.ver.isP64 ? lp.llvmMemcpy64 : lp.llvmMemcpy32;
 }
@@ -43,7 +43,7 @@ ir.Function getLlvmMemCopy(Location loc, LanguagePass lp)
  *
  */
 
-ir.Function getArrayAppendFunction(Location loc, LanguagePass lp, ir.Module thisModule, ir.ArrayType ltype, ir.Type rtype, bool isAssignment)
+ir.Function getArrayAppendFunction(ref in Location loc, LanguagePass lp, ir.Module thisModule, ir.ArrayType ltype, ir.Type rtype, bool isAssignment)
 {
 	if (ltype.mangledName is null) {
 		ltype.mangledName = mangle(ltype);
@@ -164,7 +164,7 @@ ir.Function getArrayAppendFunction(Location loc, LanguagePass lp, ir.Module this
 	return func;
 }
 
-ir.Function getArrayPrependFunction(Location loc, LanguagePass lp, ir.Module thisModule, ir.ArrayType ltype, ir.Type rtype)
+ir.Function getArrayPrependFunction(ref in Location loc, LanguagePass lp, ir.Module thisModule, ir.ArrayType ltype, ir.Type rtype)
 {
 	if (ltype.mangledName is null) {
 		ltype.mangledName = mangle(ltype);
@@ -246,7 +246,7 @@ ir.Function getArrayPrependFunction(Location loc, LanguagePass lp, ir.Module thi
 	return func;
 }
 
-ir.Function getArrayCopyFunction(Location loc, LanguagePass lp, ir.Module thisModule, ir.ArrayType type)
+ir.Function getArrayCopyFunction(ref in Location loc, LanguagePass lp, ir.Module thisModule, ir.ArrayType type)
 {
 	if (type.mangledName is null) {
 		type.mangledName = mangle(type);
@@ -288,7 +288,7 @@ ir.Function getArrayCopyFunction(Location loc, LanguagePass lp, ir.Module thisMo
 	return func;
 }
 
-ir.Function getArrayConcatFunction(Location loc, LanguagePass lp, ir.Module thisModule, ir.ArrayType type, bool isAssignment)
+ir.Function getArrayConcatFunction(ref in Location loc, LanguagePass lp, ir.Module thisModule, ir.ArrayType type, bool isAssignment)
 {
 	if (type.mangledName is null) {
 		type.mangledName = mangle(type);
@@ -418,7 +418,7 @@ ir.Function getArrayConcatFunction(Location loc, LanguagePass lp, ir.Module this
 	return func;
 }
 
-ir.Function getArrayCmpFunction(Location loc, LanguagePass lp, ir.Module thisModule, ir.ArrayType type, bool notEqual)
+ir.Function getArrayCmpFunction(ref in Location loc, LanguagePass lp, ir.Module thisModule, ir.ArrayType type, bool notEqual)
 {
 	if (type.mangledName is null) {
 		type.mangledName = mangle(type);

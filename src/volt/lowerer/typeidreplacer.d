@@ -49,7 +49,7 @@ public:
 		assert(_typeid.type !is null);
 
 		auto literalVar = getTypeInfo(lp, thisModule, _typeid.type);
-		exp = buildExpReference(exp.location, literalVar, literalVar.name);
+		exp = buildExpReference(exp.loc, literalVar, literalVar.name);
 
 		return Continue;
 	}

@@ -16,7 +16,7 @@ import volt.token.location;
 abstract class CompilerException : Exception
 {
 public:
-	Location location;
+	Location loc;
 	bool hasLocation = false;
 
 	/**
@@ -51,10 +51,10 @@ public:
 		super(format(errorFormat(), message));
 	}
 
-	this(Location loc, string message, CompilerError more, bool neverIgnore, string file = __FILE__, const int line = __LINE__)
+	this(ref in Location loc, string message, CompilerError more, bool neverIgnore, string file = __FILE__, const int line = __LINE__)
 	{
 		this.more = more;
-		this.location = loc;
+		this.loc = loc;
 		this.hasLocation = true;
 		this.neverIgnore = neverIgnore;
 		this.allocationLocation = format("%s:%s", file, line);
@@ -90,22 +90,22 @@ class CompilerError : CompilerException
 		super(message, more, false, file, line);
 	}
 
-	this(Location loc, string message, bool neverIgnore, string file = __FILE__, const int line = __LINE__)
+	this(ref in Location loc, string message, bool neverIgnore, string file = __FILE__, const int line = __LINE__)
 	{
 		super(loc, message, null, neverIgnore, file, line);
 	}
 
-	this(Location loc, string message, string file = __FILE__, const int line = __LINE__)
+	this(ref in Location loc, string message, string file = __FILE__, const int line = __LINE__)
 	{
 		super(loc, message, null, false, file, line);
 	}
 
-	this(Location loc, string message, CompilerError more, string file = __FILE__, const int line = __LINE__)
+	this(ref in Location loc, string message, CompilerError more, string file = __FILE__, const int line = __LINE__)
 	{
 		super(loc, message, more, false, file, line);
 	}
 
-	this(Location loc, string message, CompilerError more, bool neverIgnore, string file = __FILE__, const int line = __LINE__)
+	this(ref in Location loc, string message, CompilerError more, bool neverIgnore, string file = __FILE__, const int line = __LINE__)
 	{
 		super(loc, message, more, neverIgnore, file, line);
 	}
@@ -114,7 +114,7 @@ class CompilerError : CompilerException
 class MissingSemicolonError : CompilerError
 {
 public:
-	this(Location loc, string type, string file = __FILE__, const int line = __LINE__)
+	this(ref Location loc, string type, string file = __FILE__, const int line = __LINE__)
 	{
 		loc.column += loc.length;
 		loc.length = 1;
@@ -149,12 +149,12 @@ public:
 	ptrdiff_t argNumber = unspecified;
 
 public:
-	this(Location loc, string message, string file = __FILE__, const int line = __LINE__)
+	this(ref in Location loc, string message, string file = __FILE__, const int line = __LINE__)
 	{
 		super(loc, message, file, line);
 	}
 
-	this(Location loc, string message, ptrdiff_t argNumber, string file = __FILE__, const int line = __LINE__)
+	this(ref in Location loc, string message, ptrdiff_t argNumber, string file = __FILE__, const int line = __LINE__)
 	{
 		this.argNumber = argNumber;
 		super(loc, message, file, line);
@@ -172,7 +172,7 @@ public:
 		super(message, null, true, file, line);
 	}
 
-	this(Location loc, string message, string file = __FILE__, const int line = __LINE__)
+	this(ref in Location loc, string message, string file = __FILE__, const int line = __LINE__)
 	{
 		super(loc, message, null, true, file, line);
 	}
@@ -190,7 +190,7 @@ protected:
 	}
 }
 
-void errorMessageOnly(Location loc, string message, string file = __FILE__, const int line = __LINE__)
+void errorMessageOnly(ref in Location loc, string message, string file = __FILE__, const int line = __LINE__)
 {
 	writefln(format("%s: error: %s", loc.toString(), message));
 }

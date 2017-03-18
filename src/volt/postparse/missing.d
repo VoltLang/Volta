@@ -71,11 +71,11 @@ public:
 	override Status enter(ir.Import i)
 	{
 		if (current !is mModule.myScope) {
-			throw makeNonTopLevelImport(i.location);
+			throw makeNonTopLevelImport(i.loc);
 		}
 
 		if (i.isStatic && i.access != ir.Access.Private) {
-			throw makeExpected(i.location, 
+			throw makeExpected(i.loc, 
 				format("static import '%s' to be private", i.name));
 		}
 

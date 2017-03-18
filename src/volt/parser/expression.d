@@ -42,7 +42,7 @@ ParseStatus assignToExp(ParserStream ps, intir.AssignExp assign, out ir.Exp exp)
 	}
 	assert(assign.right !is null);
 	auto bop = new ir.BinOp();
-	bop.location = assign.location;
+	bop.loc = assign.loc;
 	bop.op = assign.op;
 	auto succeeded = ternaryToExp(ps, assign.left, bop.left);
 	if (!succeeded) {
@@ -60,7 +60,7 @@ ParseStatus ternaryToExp(ParserStream ps, intir.TernaryExp tern, out ir.Exp exp)
 {
 	if (tern.ifTrue !is null) {
 		auto newTern = new ir.Ternary();
-		newTern.location = tern.location;
+		newTern.loc = tern.loc;
 		auto succeeded = binexpToExp(ps, tern.condition, newTern.condition);
 		if (!succeeded) {
 			return parseFailed(ps, newTern);
@@ -177,7 +177,7 @@ ParseStatus binexpToExp(ParserStream ps, intir.BinExp bin, out ir.Exp exp)
 		} else {
 			assert(expstack.length >= 2);
 			auto binout = new ir.BinOp();
-			binout.location = expstack[0].location;
+			binout.loc = expstack[0].loc;
 			binout.left = expstack[1];
 			binout.right = expstack[0];
 			binout.op = output[0].op;
@@ -198,13 +198,13 @@ ParseStatus unaryToExp(ParserStream ps, intir.UnaryExp unary, out ir.Exp exp)
 		return Succeeded;
 	}
 	if (unary.op == ir.Unary.Op.None) {
-		auto succeeded = postfixToExp(ps, unary.location, exp, unary.postExp);
+		auto succeeded = postfixToExp(ps, unary.loc, exp, unary.postExp);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Unary);
 		}
 	} else if (unary.op == ir.Unary.Op.Cast) {
 		auto u = new ir.Unary();
-		u.location = unary.castExp.location;
+		u.loc = unary.castExp.loc;
 		u.op = unary.op;
 		auto succeeded = unaryToExp(ps, unary.castExp.unaryExp, u.value);
 		if (!succeeded) {
@@ -214,7 +214,7 @@ ParseStatus unaryToExp(ParserStream ps, intir.UnaryExp unary, out ir.Exp exp)
 		exp = u;
 	} else if (unary.op == ir.Unary.Op.New) {
 		auto u = new ir.Unary();
-		u.location = unary.newExp.location;
+		u.loc = unary.newExp.loc;
 		u.op = unary.op;
 		u.type = unary.newExp.type;
 		u.hasArgumentList = unary.newExp.hasArgumentList;
@@ -241,11 +241,11 @@ ParseStatus unaryToExp(ParserStream ps, intir.UnaryExp unary, out ir.Exp exp)
 			if (constant is null || constant._string != "$") {
 				return;
 			}
-			rexp = buildPostfixIdentifier(rexp.location, u.value, "length");
+			rexp = buildPostfixIdentifier(rexp.loc, u.value, "length");
 		}
-		u.location = unary.dupExp.location;
+		u.loc = unary.dupExp.loc;
 		u.op = unary.op;
-		auto succeeded = postfixToExp(ps, unary.location, u.value, unary.dupExp.name);
+		auto succeeded = postfixToExp(ps, unary.loc, u.value, unary.dupExp.name);
 		auto pfix = cast(ir.Postfix)u.value;
 		if (!succeeded || pfix is null) {
 			return parseFailed(ps, u);
@@ -266,7 +266,7 @@ ParseStatus unaryToExp(ParserStream ps, intir.UnaryExp unary, out ir.Exp exp)
 		exp = u;
 	} else {
 		auto u = new ir.Unary();
-		u.location = unary.location;
+		u.loc = unary.loc;
 		u.op = unary.op;
 		auto succeeded = unaryToExp(ps, unary.unaryExp, u.value);
 		if (!succeeded) {
@@ -277,7 +277,7 @@ ParseStatus unaryToExp(ParserStream ps, intir.UnaryExp unary, out ir.Exp exp)
 	return Succeeded;
 }
 
-ParseStatus postfixToExp(ParserStream ps, Location location, out ir.Exp exp, intir.PostfixExp postfix, ir.Exp seed = null)
+ParseStatus postfixToExp(ParserStream ps, ref in Location loc, out ir.Exp exp, intir.PostfixExp postfix, ir.Exp seed = null)
 {
 	if (seed is null) {
 		auto succeeded = primaryToExp(ps, postfix.primary, seed);
@@ -289,7 +289,7 @@ ParseStatus postfixToExp(ParserStream ps, Location location, out ir.Exp exp, int
 		exp = seed;
 	} else {
 		auto p = new ir.Postfix();
-		p.location = location;
+		p.loc = loc;
 		p.op = postfix.op;
 		p.child = seed;
 		p.argumentLabels = postfix.labels;
@@ -314,7 +314,7 @@ ParseStatus postfixToExp(ParserStream ps, Location location, out ir.Exp exp, int
 			p.argumentTags ~= r;
 		}
 		ir.Exp theExp;
-		auto succeeded = postfixToExp(ps, location, theExp, postfix.postfix, p);
+		auto succeeded = postfixToExp(ps, loc, theExp, postfix.postfix, p);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Postfix);
 		}
@@ -348,28 +348,28 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 		c.u._pointer = null;
 		c.type = new ir.NullType();
 		c.isNull = true;
-		c.type.location = primary.location;
+		c.type.loc = primary.loc;
 		exp = c;
 		break;
 	case intir.PrimaryExp.Type.Dollar:
 		auto c = new ir.Constant();
 		c._string = "$";
 		c.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Uint);
-		c.type.location = primary.location;
+		c.type.loc = primary.loc;
 		exp = c;
 		break;
 	case intir.PrimaryExp.Type.True:
 		auto c = new ir.Constant();
 		c.u._bool = true;
 		c.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
-		c.type.location = primary.location;
+		c.type.loc = primary.loc;
 		exp = c;
 		break;
 	case intir.PrimaryExp.Type.False:
 		auto c = new ir.Constant();
 		c.u._bool = false;
 		c.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
-		c.type.location = primary.location;
+		c.type.loc = primary.loc;
 		exp = c;
 		break;
 	case intir.PrimaryExp.Type.Typeid:
@@ -385,7 +385,7 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 		auto c = new ir.Constant();
 		c._string = primary._string;
 		// c.type = immutable(char)[]
-		auto atype = buildArrayType(primary.location, buildPrimitiveType(primary.location, ir.PrimitiveType.Kind.Char));
+		auto atype = buildArrayType(primary.loc, buildPrimitiveType(primary.loc, ir.PrimitiveType.Kind.Char));
 		atype.base.isImmutable = true;
 		c.type = atype;
 		assert((c._string[$-1] == '"' || c._string[$-1] == '`') && c._string.length >= 2);
@@ -393,7 +393,7 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 			int start = c._string[0] == '`' ? 1 : 2;
 			c.arrayData = cast(immutable(void)[]) c._string[cast(size_t)start .. $-1];
 		} else {
-			c.arrayData = unescapeString(primary.location, c._string[1 .. $-1]);
+			c.arrayData = unescapeString(primary.loc, c._string[1 .. $-1]);
 		}
 		exp = c;
 		break;
@@ -401,12 +401,12 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 		auto c = new ir.Constant();
 		c._string = primary._string;
 		c.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Char);
-		c.type.location = primary.location;
+		c.type.loc = primary.loc;
 		assert(c._string[$-1] == '\'' && c._string.length >= 3);
-		c.arrayData = unescapeString(primary.location, c._string[1 .. $-1]);
+		c.arrayData = unescapeString(primary.loc, c._string[1 .. $-1]);
 		if (c.arrayData.length > 1) {
 			c.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Dchar);
-			c.type.location = primary.location;
+			c.type.loc = primary.loc;
 			auto str = cast(string) c.arrayData;
 			size_t index;
 			c.u._ulong = decode(str, index);
@@ -435,7 +435,7 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 			c.type = primary.type;
 		} else {
 			c.type = new ir.PrimitiveType(base);
-			c.type.location = primary.location;
+			c.type.loc = primary.loc;
 		}
 		exp = c;
 		break;
@@ -491,7 +491,7 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 				} else if (!explicitBase) {
 					c.u._long = cast(long)v;
 				} else {
-					return invalidIntegerLiteral(ps, c.location);
+					return invalidIntegerLiteral(ps, c.loc);
 				}
 				break;
 			case Uint:
@@ -500,14 +500,14 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 				} else if (!explicitBase) {
 					c.u._ulong = v;
 				} else {
-					return invalidIntegerLiteral(ps, c.location);
+					return invalidIntegerLiteral(ps, c.loc);
 				}
 				break;
 			case Long:
 				if (v <= long.max) {
 					c.u._long = cast(long)v;
 				} else {
-					return invalidIntegerLiteral(ps, c.location);
+					return invalidIntegerLiteral(ps, c.loc);
 				}
 				break;
 			case Ulong:
@@ -522,7 +522,7 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 			c.type = primary.type;
 		} else {
 			c.type = new ir.PrimitiveType(base);
-			c.type.location = primary.location;
+			c.type.loc = primary.loc;
 		}
 		exp = c;
 		break;
@@ -558,7 +558,7 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 				return parseFailed(ps, c);
 			}
 			c.pairs ~= new ir.AAPair(k, v);
-			c.pairs[$-1].location = primary.keys[i].location;
+			c.pairs[$-1].loc = primary.keys[i].loc;
 		}
 		exp = c;
 		break;
@@ -605,12 +605,12 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 	case intir.PrimaryExp.Type.Type:
 		auto te = new ir.TypeExp();
 		te.type = primary.type;
-		te.location = primary.location;
+		te.loc = primary.loc;
 		auto pfix = new ir.Postfix();
 		pfix.op = ir.Postfix.Op.Identifier;
 		pfix.child = te;
 		pfix.identifier = new ir.Identifier();
-		pfix.identifier.location = primary.location;
+		pfix.identifier.loc = primary.loc;
 		pfix.identifier.value = primary._string;
 		exp = pfix;
 		break;
@@ -636,10 +636,10 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 		exp = primary.vaexp;
 		break;
 	default:
-		return parsePanic(ps, primary.location, ir.NodeType.Invalid, "unhandled primary expression.");
+		return parsePanic(ps, primary.loc, ir.NodeType.Invalid, "unhandled primary expression.");
 	}
 
-	exp.location = primary.location;
+	exp.loc = primary.loc;
 	return Succeeded;
 }
 
@@ -647,7 +647,7 @@ private ParseStatus _parseArgumentList(ParserStream ps, out intir.AssignExp[] pe
 {
 	while (ps.peek.type != endChar) {
 		if (ps.peek.type == TokenType.End) {
-			return parseExpected(ps, ps.peek.location, ir.NodeType.Postfix, "end of argument list");
+			return parseExpected(ps, ps.peek.loc, ir.NodeType.Postfix, "end of argument list");
 		}
 		intir.AssignExp e;
 		auto succeeded = parseAssignExp(ps, e);
@@ -695,8 +695,8 @@ private ParseStatus _parseArgumentList(ParserStream ps, out intir.AssignExp[] pe
 	}
 
 	if (labels.length != 0 && labels.length != pexps.length) {
-		// TODO the location should be better
-		return allArgumentsMustBeLabelled(ps, ps.peek.location);
+		// TODO the loc should be better
+		return allArgumentsMustBeLabelled(ps, ps.peek.loc);
 	}
 
 	return Succeeded;
@@ -727,7 +727,7 @@ ParseStatus parseArgumentList(ParserStream ps, out ir.Exp[] outexps, TokenType e
 ParseStatus parseIsExp(ParserStream ps, out ir.IsExp ie)
 {
 	ie = new ir.IsExp();
-	ie.location = ps.peek.location;
+	ie.loc = ps.peek.loc;
 
 	auto succeeded = match(ps, ir.NodeType.IsExp, [TokenType.Is, TokenType.OpenParen]);
 	if (!succeeded) {
@@ -750,21 +750,21 @@ ParseStatus parseIsExp(ParserStream ps, out ir.IsExp ie)
 			return match(ps, ie, TokenType.CloseParen);
 		case Colon:
 			if (ie.compType != ir.IsExp.Comparison.None) {
-				return parseExpected(ps, ps.peek.location, ir.NodeType.Identifier, "is expression");
+				return parseExpected(ps, ps.peek.loc, ir.NodeType.Identifier, "is expression");
 			}
 			ps.get();
 			ie.compType = ir.IsExp.Comparison.Implicit;
 			break;
 		case DoubleAssign:
 			if (ie.compType != ir.IsExp.Comparison.None) {
-				return parseExpected(ps, ps.peek.location, ir.NodeType.Identifier, "is expression");
+				return parseExpected(ps, ps.peek.loc, ir.NodeType.Identifier, "is expression");
 			}
 			ps.get();
 			ie.compType = ir.IsExp.Comparison.Exact;
 			break;
 		default:
 			if (ie.compType == ir.IsExp.Comparison.None) {
-				return parseExpected(ps, ps.peek.location, ir.NodeType.Identifier, "'==' or ':'");
+				return parseExpected(ps, ps.peek.loc, ir.NodeType.Identifier, "'==' or ':'");
 			}
 			switch (ps.peek.type) {
 			case Struct, Union, Class, Enum, Interface, Function,
@@ -792,7 +792,7 @@ ParseStatus parseIsExp(ParserStream ps, out ir.IsExp ie)
 ParseStatus parseFunctionLiteral(ParserStream ps, out ir.FunctionLiteral fl)
 {
 	fl = new ir.FunctionLiteral();
-	fl.location = ps.peek.location;
+	fl.loc = ps.peek.loc;
 
 	switch (ps.peek.type) {
 	case TokenType.Function:
@@ -834,7 +834,7 @@ ParseStatus parseFunctionLiteral(ParserStream ps, out ir.FunctionLiteral fl)
 	ps.get();
 	while (ps.peek.type != TokenType.CloseParen) {
 		auto param = new ir.FunctionParameter();
-		param.location = ps.peek.location;
+		param.loc = ps.peek.loc;
 		auto succeeded = parseType(ps, param.type);
 		if (!succeeded) {
 			return parseFailed(ps, fl);
@@ -853,7 +853,7 @@ ParseStatus parseFunctionLiteral(ParserStream ps, out ir.FunctionLiteral fl)
 
 	if (ps.peek.type == TokenType.Assign) {
 		if (!fl.isDelegate || fl.returnType !is null) {
-			parseExpected(ps, ps.peek.location, fl, "lambda expression");
+			parseExpected(ps, ps.peek.loc, fl, "lambda expression");
 			ps.neverIgnoreError = true;
 			return Failed;
 		}
@@ -885,7 +885,7 @@ ParseStatus parseAssignExp(ParserStream ps, out intir.AssignExp exp)
 	if (!exp.taggedRef) {
 		exp.taggedOut = matchIf(ps, TokenType.Out);
 	}
-	auto origin = ps.peek.location;
+	auto origin = ps.peek.loc;
 	auto succeeded = parseTernaryExp(ps, exp.left);
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.BinOp);
@@ -929,14 +929,14 @@ ParseStatus parseAssignExp(ParserStream ps, out intir.AssignExp exp)
 			return parseFailed(ps, ir.NodeType.BinOp);
 		}
 	}
-	exp.location = ps.peek.location - origin;
+	exp.loc = ps.peek.loc - origin;
 	return Succeeded;
 }
 
 ParseStatus parseTernaryExp(ParserStream ps, out intir.TernaryExp exp)
 {
 	exp = new intir.TernaryExp();
-	auto origin = ps.peek.location;
+	auto origin = ps.peek.loc;
 	auto succeeded = parseBinExp(ps, exp.condition);
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.Ternary);
@@ -957,7 +957,7 @@ ParseStatus parseTernaryExp(ParserStream ps, out intir.TernaryExp exp)
 			return parseFailed(ps, ir.NodeType.Ternary);
 		}
 	}
-	exp.location = ps.peek.location - origin;
+	exp.loc = ps.peek.loc - origin;
 
 	return Succeeded;
 }
@@ -965,7 +965,7 @@ ParseStatus parseTernaryExp(ParserStream ps, out intir.TernaryExp exp)
 ParseStatus parseBinExp(ParserStream ps, out intir.BinExp exp)
 {
 	exp = new intir.BinExp();
-	exp.location = ps.peek.location;
+	exp.loc = ps.peek.loc;
 	auto succeeded = parseUnaryExp(ps, exp.left);
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.BinOp);
@@ -1040,14 +1040,14 @@ ParseStatus parseBinExp(ParserStream ps, out intir.BinExp exp)
 		}
 	}
 
-	exp.location.spanTo(ps.previous.location);
+	exp.loc.spanTo(ps.previous.loc);
 	return Succeeded;
 }
 
 ParseStatus parseUnaryExp(ParserStream ps, out intir.UnaryExp exp)
 {
 	exp = new intir.UnaryExp();
-	auto origin = ps.peek.location;
+	auto origin = ps.peek.loc;
 	switch (ps.peek.type) {
 	case TokenType.Ampersand:
 		ps.get();
@@ -1138,7 +1138,7 @@ ParseStatus parseUnaryExp(ParserStream ps, out intir.UnaryExp exp)
 			return parseFailed(ps, ir.NodeType.Unary);
 		}
 	}
-	exp.location = ps.peek.location - origin;
+	exp.loc = ps.peek.loc - origin;
 
 	return Succeeded;
 }
@@ -1194,15 +1194,15 @@ ParseStatus parseNewOrDup(ParserStream ps, ref intir.UnaryExp exp)
 private intir.AssignExp toAssign(intir.PrimaryExp exp)
 {
 	auto t = new intir.AssignExp();
-	t.location = exp.location;
+	t.loc = exp.loc;
 	t.left = new intir.TernaryExp();
-	t.left.location = exp.location;
+	t.left.loc = exp.loc;
 	t.left.condition = new intir.BinExp();
-	t.left.condition.location = exp.location;
+	t.left.condition.loc = exp.loc;
 	t.left.condition.left = new intir.UnaryExp();
-	t.left.condition.left.location = exp.location;
+	t.left.condition.left.loc = exp.loc;
 	t.left.condition.left.postExp = new intir.PostfixExp();
-	t.left.condition.left.postExp.location = exp.location;
+	t.left.condition.left.postExp.loc = exp.loc;
 	t.left.condition.left.postExp.primary = exp;
 	return t;
 }
@@ -1226,11 +1226,11 @@ ParseStatus parseDupExp(ParserStream ps, int doubleDotDepth, out intir.DupExp du
 	}
 	if (dupExp.name.arguments.length == 0) {
 		auto beginning = new intir.PrimaryExp();
-		beginning.location = ps.peek.location;
+		beginning.loc = ps.peek.loc;
 		beginning._string = "0";
 		beginning.op = intir.PrimaryExp.Type.IntegerLiteral;
 		auto end = new intir.PrimaryExp();
-		end.location = ps.peek.location;
+		end.loc = ps.peek.loc;
 		end.op = intir.PrimaryExp.Type.Dollar;
 		dupExp.beginning = toAssign(beginning);
 		dupExp.end = toAssign(end);
@@ -1256,7 +1256,7 @@ ParseStatus parseNewExp(ParserStream ps, out intir.NewExp newExp)
 	newExp = new intir.NewExp();
 	if (ps.peek.type == TokenType.Auto) {
 		auto at = new ir.AutoType();
-		at.location = ps.peek.location;
+		at.loc = ps.peek.loc;
 		ps.get();
 		newExp.type = at;
 	} else {
@@ -1278,7 +1278,7 @@ ParseStatus parseNewExp(ParserStream ps, out intir.NewExp newExp)
 		}
 	}
 
-	newExp.location = ps.peek.location - start.location;
+	newExp.loc = ps.peek.loc - start.loc;
 	return Succeeded;
 }
 
@@ -1301,7 +1301,7 @@ ParseStatus parseCastExp(ParserStream ps, out intir.CastExp exp)
 	if (!succeeded) {
 		return succeeded;
 	}
-	exp.location = stop.location - start.location;
+	exp.loc = stop.loc - start.loc;
 
 	succeeded = parseUnaryExp(ps, exp.unaryExp);
 	if (!succeeded) {
@@ -1315,7 +1315,7 @@ ParseStatus parsePostfixExp(ParserStream ps, out intir.PostfixExp exp, bool disa
 {
 	depth++;
 	exp = new intir.PostfixExp();
-	auto origin = ps.peek.location;
+	auto origin = ps.peek.loc;
 	if (depth == 1) {
 		auto succeeded = parsePrimaryExp(ps, exp.primary);
 		if (!succeeded) {
@@ -1432,7 +1432,7 @@ ParseStatus parsePostfixExp(ParserStream ps, out intir.PostfixExp exp, bool disa
 ParseStatus parsePrimaryExp(ParserStream ps, out intir.PrimaryExp exp)
 {
 	exp = new intir.PrimaryExp();
-	auto origin = ps.peek.location;
+	auto origin = ps.peek.loc;
 	switch (ps.peek.type) {
 	case TokenType.Identifier:
 		if (ps == [TokenType.Identifier, TokenType.Assign, TokenType.Greater]) {
@@ -1443,7 +1443,7 @@ ParseStatus parsePrimaryExp(ParserStream ps, out intir.PrimaryExp exp)
 			ps.get();
 			exp.op = intir.PrimaryExp.Type.TemplateInstance;
 			exp._template = new ir.TemplateInstanceExp();
-			exp._template.location = origin;
+			exp._template.loc = origin;
 			exp._template.name = token.value;
 			if (matchIf(ps, TokenType.OpenParen)) {
 				while (ps.peek.type != ir.TokenType.CloseParen) {
@@ -1804,7 +1804,7 @@ ParseStatus parsePrimaryExp(ParserStream ps, out intir.PrimaryExp exp)
 		}
 		break;
 	case TokenType.In:
-		parseExpected(ps, ps.peek.location, ir.NodeType.Identifier, "primary expression");
+		parseExpected(ps, ps.peek.loc, ir.NodeType.Identifier, "primary expression");
 		ps.neverIgnoreError = true;
 		return Failed;
 	default:
@@ -1819,7 +1819,7 @@ ParseStatus parsePrimaryExp(ParserStream ps, out intir.PrimaryExp exp)
 		break;
 	}
 
-	exp.location = ps.peek.location - origin;
+	exp.loc = ps.peek.loc - origin;
 
 	if (ps == [TokenType.Dot, TokenType.Typeid] && exp.op != intir.PrimaryExp.Type.Typeid) {
 		ps.get();
@@ -1838,7 +1838,7 @@ ParseStatus parsePrimaryExp(ParserStream ps, out intir.PrimaryExp exp)
 ParseStatus parseVaArgExp(ParserStream ps, out ir.VaArgExp vaexp)
 {
 	vaexp = new ir.VaArgExp();
-	vaexp.location = ps.peek.location;
+	vaexp.loc = ps.peek.loc;
 	auto succeeded = match(ps, ir.NodeType.VaArgExp, [TokenType.VaArg, TokenType.Bang]);
 	if (!succeeded) {
 		return succeeded;
@@ -1872,7 +1872,7 @@ ParseStatus parseVaArgExp(ParserStream ps, out ir.VaArgExp vaexp)
 ParseStatus parseRunExp(ParserStream ps, out ir.RunExp runexp)
 {
 	runexp = new ir.RunExp();
-	runexp.location = ps.peek.location;
+	runexp.loc = ps.peek.loc;
 	auto succeeded = match(ps, ir.NodeType.RunExp, TokenType.HashRun);
 	if (!succeeded) {
 		return succeeded;

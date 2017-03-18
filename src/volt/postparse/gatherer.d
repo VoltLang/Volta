@@ -30,7 +30,7 @@ ir.Store findShadowed(ir.Scope _scope, Location loc, string name, bool warningsE
 		(_scope.node.nodeType == ir.NodeType.Class ||
 		_scope.node.nodeType == ir.NodeType.Struct ||
 		_scope.node.nodeType == ir.NodeType.Union)) {
-		warningShadowsField(loc, store.node.location, name, warningsEnabled);
+		warningShadowsField(loc, store.node.loc, name, warningsEnabled);
 		return null;
 	}
 
@@ -93,7 +93,7 @@ void gather(ir.Scope current, ir.Variable v, Where where, ir.Function[] function
 	assert(v.access.isValidAccess());
 
 	// TODO Move to semantic.
-	auto shadowStore = findShadowed(current, v.location, v.name, warningsEnabled);
+	auto shadowStore = findShadowed(current, v.loc, v.name, warningsEnabled);
 	if (shadowStore !is null) {
 		throw makeShadowsDeclaration(v, shadowStore.node);
 	}
@@ -228,10 +228,10 @@ void addScope(ir.Scope current, ir.Function func, ir.Type thisType, ir.Function[
 		return;
 	}
 
-	auto tr = buildTypeReference(thisType.location, thisType,  "__this");
+	auto tr = buildTypeReference(thisType.loc, thisType,  "__this");
 
 	auto thisVar = new ir.Variable();
-	thisVar.location = func.location;
+	thisVar.loc = func.loc;
 	thisVar.type = tr;
 	thisVar.name = "this";
 	thisVar.storage = ir.Variable.Storage.Function;
@@ -261,7 +261,7 @@ void addScope(ir.Scope current, ir.Struct s)
 		agg.anonymousAggregates ~= s;
 		auto name = format("%s_anonymous", agg.anonymousAggregates.length);
 		s.name = format("%s_anonymous_t", agg.anonymousAggregates.length);
-		agg.anonymousVars ~= buildVariableSmart(s.location, s, ir.Variable.Storage.Field, name);
+		agg.anonymousVars ~= buildVariableSmart(s.loc, s, ir.Variable.Storage.Field, name);
 		agg.members.nodes ~= agg.anonymousVars[$-1];
 	}
 	assert(s.myScope is null);
@@ -278,7 +278,7 @@ void addScope(ir.Scope current, ir.Union u)
 		agg.anonymousAggregates ~= u;
 		auto name = format("%s_anonymous", agg.anonymousAggregates.length);
 		u.name = format("%s_anonymous_t", agg.anonymousAggregates.length);
-		agg.anonymousVars ~= buildVariableSmart(u.location, u, ir.Variable.Storage.Field, name);
+		agg.anonymousVars ~= buildVariableSmart(u.loc, u, ir.Variable.Storage.Field, name);
 		agg.members.nodes ~= agg.anonymousVars[$-1];
 	}	
 	assert(u.myScope is null);
@@ -562,7 +562,7 @@ public:
 		push(bs.myScope);
 		// TODO: unittest stuff triggers this
 		if (mFunctionStack.length == 0) {
-			throw panic(bs.location, "block statement outside of function");
+			throw panic(bs.loc, "block statement outside of function");
 		}
 		return Continue;
 	}

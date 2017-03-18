@@ -315,7 +315,7 @@ public:
 		getValueAnyForm(exp, result);
 		if (result.isPointer)
 			return;
-		throw panic(exp.location, "Value is not a backend reference");
+		throw panic(exp.loc, "Value is not a backend reference");
 	}
 
 	/**

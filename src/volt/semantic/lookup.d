@@ -145,13 +145,13 @@ private ir.Store lookupPublicImportScope(LanguagePass lp, ir.Scope _scope,
 ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
 {
 	auto last = qn.identifiers.length - 1;
-	auto current = qn.leadingDot ? getTopScope(qn.location, _scope) : _scope;
-	auto parentModule = getModuleFromScope(qn.location, _scope);
+	auto current = qn.leadingDot ? getTopScope(qn.loc, _scope) : _scope;
+	auto parentModule = getModuleFromScope(qn.loc, _scope);
 
 	foreach (i, id; qn.identifiers) {
 		ir.Store store;
 		string name = id.value;
-		Location loc = id.location;
+		Location loc = id.loc;
 
 		/**
 		 * The first lookup should be done globally the following
@@ -344,17 +344,17 @@ ir.Type lookupType(LanguagePass lp, ir.Scope _scope, ir.QualifiedName id)
 	if (store is null) {
 		string lastName;
 		foreach (ident; id.identifiers) {
-			store = lookup(lp, _scope, ident.location, ident.value);
+			store = lookup(lp, _scope, ident.loc, ident.value);
 			if (store is null && lastName == "") {
 				throw makeFailedLookup(ident, ident.value);
 			} else if (store is null) {
-				throw makeNotMember(ident.location, lastName, ident.value);
+				throw makeNotMember(ident.loc, lastName, ident.value);
 			}
 			lastName = ident.value;
 		}
 	}
 
-	auto loc = id.identifiers[$-1].location;
+	auto loc = id.identifiers[$-1].loc;
 	auto name = id.identifiers[$-1].value;
 	return ensureType(_scope, loc, name, store);
 }
@@ -378,7 +378,7 @@ ir.Function lookupFunction(LanguagePass lp, ir.Scope _scope, Location loc, strin
  * Get the module in the bottom of the given _scope chain.
  * @throws CompilerPanic if no module at bottom of chain.
  */
-ir.Module getModuleFromScope(Location loc, ir.Scope _scope)
+ir.Module getModuleFromScope(ref in Location loc, ir.Scope _scope)
 {
 	while (_scope !is null) {
 		auto m = cast(ir.Module)_scope.node;
@@ -389,7 +389,7 @@ ir.Module getModuleFromScope(Location loc, ir.Scope _scope)
 		}
 
 		if (_scope !is null)
-			throw panic(m.location, "module scope has parent");
+			throw panic(m.loc, "module scope has parent");
 		return m;
 	}
 	throw panic(loc, "scope chain without module base");
@@ -399,7 +399,7 @@ ir.Module getModuleFromScope(Location loc, ir.Scope _scope)
  * Given a scope, get the oldest parent -- this is the module of that scope.
  * @throws CompilerPanic if no module at bottom of chain.
  */
-ir.Scope getTopScope(Location loc, ir.Scope _scope)
+ir.Scope getTopScope(ref in Location loc, ir.Scope _scope)
 {
 	auto m = getModuleFromScope(loc, _scope);
 	return m.myScope;
@@ -496,7 +496,7 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
 		outScope = asClass.parentClass.myScope;
 		return true;
 	default:
-		throw panic(node.location, format("unexpected nodetype %s", node.nodeType));
+		throw panic(node.loc, format("unexpected nodetype %s", node.nodeType));
 	}
 }
 
@@ -611,7 +611,7 @@ ir.Type ensureType(ir.Scope _scope, Location loc, string name, ir.Store store)
 /**
  * Check that the contents of store can be accessed (e.g. not private)
  */
-void checkAccess(Location loc, string name, ir.Store store, bool classParentLookup = false)
+void checkAccess(ref in Location loc, string name, ir.Store store, bool classParentLookup = false)
 {
 	if (store.importAlias) {
 		return;
