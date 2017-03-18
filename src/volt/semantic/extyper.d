@@ -4171,8 +4171,14 @@ void resolveVariable(Context ctx, ir.Variable v)
              v.storage != ir.Variable.Storage.Local)) {
 		throw makeAssignToNonStaticField(v);
 	}
+	bool inNestedStruct;
+	auto func = ctx.currentFunction;
+	if (func !is null) {
+		inNestedStruct = func.nestStruct is ctx.current.node;
+	}
 
-	if (inAggregate && (v.type.isConst || v.type.isImmutable) &&
+	if (inAggregate && !inNestedStruct &&
+		(v.type.isConst || v.type.isImmutable) &&
 		(v.storage != ir.Variable.Storage.Global &&
 		 v.storage != ir.Variable.Storage.Local)) {
 		throw makeConstField(v);
