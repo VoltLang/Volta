@@ -122,7 +122,7 @@ struct Perf
 
 
 		f.writef("--- Counters\n");
-		f.writef("name,GC-num-allocs,");
+		f.writef("name,GC-numAllocs,GC-numAllocBytes,GC-numArrayAllocs,GC-numArrayBytes,GC-numClassAllocs,GC-numClassBytes,");
 		for (auto c = counter; c !is null; c = c.next) {
 			f.writef("%s,", c.name);
 		}
@@ -130,9 +130,12 @@ struct Perf
 		version (Volt) {
 			Stats stats;
 			vrt_gc_get_stats(stats);
-			f.writef("%s,", stats.count);
+			f.writef("%s,%s,%s,%s,%s,%s,",
+			         stats.numAllocs,      stats.numAllocBytes,
+			         stats.numArrayAllocs, stats.numArrayBytes,
+			         stats.numClassAllocs, stats.numClassBytes);
 		} else {
-			f.writef("0,");
+			f.writef("0,0,0,0,0,0,");
 		}
 		for (auto c = counter; c !is null; c = c.next) {
 			f.writef("%s,", c.count);

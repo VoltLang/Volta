@@ -46,7 +46,12 @@ local allocDg: AllocDg;
 
 struct Stats
 {
-	count: u64;
+	numAllocs: u64;
+	numAllocBytes: u64;
+	numArrayAllocs: u64;
+	numArrayBytes: u64;
+	numClassAllocs: u64;
+	numClassBytes: u64;
 }
 
 extern(C):

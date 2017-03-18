@@ -165,7 +165,15 @@ public:
 		}
 
 		// Statistics
-		stats.count++;
+		stats.numAllocs++;
+		stats.numAllocBytes += size;
+		if (count == cast(size_t) -1) {
+			stats.numClassAllocs++;
+			stats.numClassBytes += size;
+		} else if (count > 0) {
+			stats.numArrayAllocs++;
+			stats.numArrayBytes += size;
+		}
 
 		memory = alloc(size, registerFinalizer, typeinfo.mutableIndirection);
 		gcAssert(memory !is null);
