@@ -11,12 +11,12 @@ class Throwable
 	throwLocation: string;
 
 	// This is manually supplied.
-	loc: string;
+	location: string;
 
 	this(msg: string, location: string = __LOCATION__)
 	{
 		this.msg = msg;
-		this.loc = location;
+		this.location = location;
 	}
 }
 
