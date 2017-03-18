@@ -690,14 +690,20 @@ ParseStatus parseParameter(ParserStream ps, out ir.Variable p)
 	p.storage = ir.Variable.Storage.Function;
 	Location origin = ps.peek.location;
 
-	/// @todo intermixed ref
 	bool isOut, isIn, isRef;
-	isRef = matchIf(ps, TokenType.Ref);
-	if (!isRef) {
-		isOut = matchIf(ps, TokenType.Out);
-	}
-	if (!isOut && !isRef) {
-		isIn = matchIf(ps, TokenType.In);
+	while (ps == TokenType.Ref || ps == TokenType.Out || ps == TokenType.In) {
+		auto tisRef = matchIf(ps, TokenType.Ref);
+		if (!isRef) {
+			isRef = tisRef;
+		}
+		auto tisOut = matchIf(ps, TokenType.Out);
+		if (!isOut) {
+			isOut = tisOut;
+		}
+		auto tisIn = matchIf(ps, TokenType.In);
+		if (!isIn) {
+			isIn = tisIn;
+		}
 	}
 
 	auto colon = isColonDeclaration(ps);
