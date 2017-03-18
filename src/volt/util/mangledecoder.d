@@ -77,7 +77,7 @@ ir.Variable mangledToVariable(string mangledString)
 	var.type = mangledString.mangledToType();
 	if (isRef) {
 		auto storage = new ir.StorageType();
-		storage.location = var.type.location;
+		storage.loc = var.type.loc;
 		storage.type = ir.StorageType.Kind.Ref;
 		storage.base = var.type;
 		var.type = storage;
@@ -87,75 +87,75 @@ ir.Variable mangledToVariable(string mangledString)
 
 ir.Type mangledToType(ref string mangledString)
 {
-	Location location;
+	Location loc;
 	switch (mangledString.take(1)) {
 	case "b":
-		return buildByte(location);
+		return buildByte(loc);
 	case "s":
-		return buildShort(location);
+		return buildShort(loc);
 	case "i":
-		return buildInt(location);
+		return buildInt(loc);
 	case "l":
-		return buildLong(location);
+		return buildLong(loc);
 	case "v":
-		return buildVoid(location);
+		return buildVoid(loc);
 	case "c":
-		return buildChar(location);
+		return buildChar(loc);
 	case "d":
-		return buildDchar(location);
+		return buildDchar(loc);
 	case "w":
-		return buildWchar(location);
+		return buildWchar(loc);
 	case "f":
 		switch (mangledString.take(1)) {
 		case "f":
-			return buildFloat(location);
+			return buildFloat(loc);
 		case "d":
-			return buildDouble(location);
+			return buildDouble(loc);
 		case "r":
-			return buildReal(location);
+			return buildReal(loc);
 		default:
 			assert(false);
 		}
 	case "u":
 		switch (mangledString.take(1)) {
 		case "b":
-			return buildUbyte(location);
+			return buildUbyte(loc);
 		case "s":
-			return buildUshort(location);
+			return buildUshort(loc);
 		case "i":
-			return buildUint(location);
+			return buildUint(loc);
 		case "l":
-			return buildUlong(location);
+			return buildUlong(loc);
 		default:
 			assert(false);
 		}
 		assert(false);
 	case "p":
-		return buildPtrSmart(location, mangledString.mangledToType());
+		return buildPtrSmart(loc, mangledString.mangledToType());
 	case "a":
 		if (mangledString[0] == 't') {
 			mangledString.take(1);
 			auto length = cast(size_t)mangledString.takeDigit();
-			return buildStaticArrayTypeSmart(location, length, mangledString.mangledToType());
+			return buildStaticArrayTypeSmart(loc, length, mangledString.mangledToType());
 		}
-		return buildArrayTypeSmart(location, mangledString.mangledToType());
+		return buildArrayTypeSmart(loc, mangledString.mangledToType());
 	case "A":
 		if (mangledString[0] == 'a') {
 			mangledString.take(1);
 			ir.Type key = mangledString.mangledToType();
 			ir.Type value = mangledString.mangledToType();
-			return buildAATypeSmart(location, key, value);
+			return buildAATypeSmart(loc, key, value);
 		} else {
 			assert(false, "annotation");
 		}
 	case "e":
-		return buildStorageType(location, ir.StorageType.Kind.Scope, mangledString.mangledToType());
+		return buildStorageType(loc, ir.StorageType.Kind.Scope, mangledString.mangledToType());
 	case "o":
-		return buildStorageType(location, ir.StorageType.Kind.Const, mangledString.mangledToType());
+		return buildStorageType(loc, ir.StorageType.Kind.Const, mangledString.mangledToType());
 	case "m":
-		return buildStorageType(location, ir.StorageType.Kind.Immutable, mangledString.mangledToType());
+		return buildStorageType(loc, ir.StorageType.Kind.Immutable, mangledString.mangledToType());
 	case "n":
-		return buildStorageType(location, ir.StorageType.Kind.Immutable, mangledString.mangledToType());
+		return buildStorageType(loc, ir.StorageType.Kind.Immutable, mangledString.mangledToType());
 	case "r":
 		assert(false, "ref");
 	case "E":

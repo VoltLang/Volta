@@ -50,7 +50,7 @@ void getConstantValue(State state, ir.Exp exp, Value result)
 		auto str = format(
 			"could not get constant from expression '%s'",
 			ir.nodeToString(exp));
-		throw panic(exp.location, str);
+		throw panic(exp.loc, str);
 	}
 }
 
@@ -113,7 +113,7 @@ void handleConstCast(State state, ir.Unary asUnary, Value result)
 {
 	void error(string t) {
 		auto str = format("error unary constant expression '%s'", t);
-		throw panic(asUnary.location, str);
+		throw panic(asUnary.loc, str);
 	}
 
 	getConstantValue(state, asUnary.value, result);
@@ -164,7 +164,7 @@ void handleConstCast(State state, ir.Unary asUnary, Value result)
 		}
 	}
 
-	throw makeError(asUnary.location, "not a handle cast type.");
+	throw makeError(asUnary.loc, "not a handle cast type.");
 }
 
 void handleConstExpReference(State state, ir.ExpReference expRef, Value result)
@@ -203,7 +203,7 @@ void handleConstExpReference(State state, ir.ExpReference expRef, Value result)
 		 * This might seem backwards but it works out.
 		 */
 		if (!var.useBaseStorage) {
-			throw panic(expRef.location, "variables needs '&' for constants");
+			throw panic(expRef.loc, "variables needs '&' for constants");
 		}
 
 		Type type;
@@ -220,6 +220,6 @@ void handleConstExpReference(State state, ir.ExpReference expRef, Value result)
 		result.type = state.fromIr(edecl.type);
 		break;
 	default:
-		throw panic(expRef.location, "invalid decl type");
+		throw panic(expRef.loc, "invalid decl type");
 	}
 }

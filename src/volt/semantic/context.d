@@ -241,7 +241,7 @@ private:
 			auto str = "invalid scope layout should be " ~
 			           ir.getNodeAddressString(n) ~ " is " ~
 			           ir.getNodeAddressString(mCurrent.node);
-			throw panic(n.location, str);
+			throw panic(n.loc, str);
 		}
 
 		assert(mLength > 0);

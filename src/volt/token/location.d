@@ -21,10 +21,11 @@ public:
 	size_t length;
 
 public:
-	string toString()
+	const string toString()
 	{
 		return format("%s:%s:%s", filename, line, column);
 	}
+
 
 	/**
 	 * Difference between two locations.

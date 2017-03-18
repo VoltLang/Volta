@@ -26,24 +26,24 @@ ir.Exp buildAllocVoidPtr(in Location loc, LanguagePass lp, ir.Type type,
 {
 	if (countArg is null) {
 		auto countConst = new ir.Constant();
-		countConst.location = loc;
+		countConst.loc = loc;
 		countConst.u._ulong = 0;
 		countConst.type = buildSizeT(loc, lp.target);
 		countArg = countConst;
 	}
 
 	auto adRef = new ir.ExpReference();
-	adRef.location = loc;
+	adRef.loc = loc;
 	adRef.idents ~= "allocDg";
 	adRef.decl = lp.gcAllocDgVariable;
 
 	auto _tidExp = new ir.Typeid();
-	_tidExp.location = loc;
+	_tidExp.loc = loc;
 	_tidExp.type = copyTypeSmart(loc, type);
 	auto tidExp = buildCastSmart(loc, lp.tiTypeInfo, _tidExp);
 
 	auto pfixCall = new ir.Postfix();
-	pfixCall.location = loc;
+	pfixCall.loc = loc;
 	pfixCall.op = ir.Postfix.Op.Call;
 	pfixCall.child = adRef;
 	pfixCall.arguments = [tidExp, countArg];
@@ -68,8 +68,8 @@ ir.Exp buildAllocTypePtr(in Location loc, LanguagePass lp, ir.Type type,
 	auto pfixCall = buildAllocVoidPtr(loc, lp, type, countArg);
 
 	auto result = new ir.PointerType(copyTypeSmart(loc, type));
-	result.location = loc;
+	result.loc = loc;
 	auto resultCast = new ir.Unary(result, pfixCall);
-	resultCast.location = loc;
+	resultCast.loc = loc;
 	return resultCast;
 }

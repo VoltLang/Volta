@@ -226,7 +226,7 @@ public:
 		if (expectedDepth != _scope.nestedDepth) {
 			auto str = format("nested depth incorrectly set to %s, expected %s.",
 			                  _scope.nestedDepth, expectedDepth);
-			throw panic(_scope.node.location, str);
+			throw panic(_scope.node.loc, str);
 		}
 	}
 }

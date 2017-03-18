@@ -202,7 +202,7 @@ final class Token
 {
 	TokenType type;
 	string value;
-	Location location;
+	Location loc;
 	bool isBackwardsComment;
 }
 

@@ -62,13 +62,13 @@ void appendDefaultArguments(Context ctx, ir.Location loc,
 	foreach (i, ee; overflow) {
 		auto texp = cast(ir.TokenExp) ee;
 		if (texp !is null) {
-			texp.location = loc;
+			texp.loc = loc;
 			arguments ~= texp;
 
 			extype(ctx, arguments[$-1], Parent.NA);
 		} else {
 			assert(ee.nodeType == ir.NodeType.Constant);
-			arguments ~= copyExp(ee.location, ee);
+			arguments ~= copyExp(ee.loc, ee);
 		}
 	}
 }
@@ -180,10 +180,10 @@ ir.Type handleFunctionStore(Context ctx, string ident, ref ir.Exp exp,
 				throw panic("property nested functions not supported");
 			}
 
-			exp = buildExpReference(exp.location, func, ident);
+			exp = buildExpReference(exp.loc, func, ident);
 
 			auto dgt = new ir.DelegateType(func.type);
-			dgt.location = exp.location;
+			dgt.loc = exp.loc;
 			dgt.isScope = true;
 			return dgt;
 		}
@@ -193,7 +193,7 @@ ir.Type handleFunctionStore(Context ctx, string ident, ref ir.Exp exp,
 	// @TODO Should this really be an error?
 	if (members != fns.length) {
 		if (members > 0) {
-			throw makeMixingStaticMember(exp.location);
+			throw makeMixingStaticMember(exp.loc);
 		}
 	}
 
@@ -218,14 +218,14 @@ ir.Type handleFunctionStore(Context ctx, string ident, ref ir.Exp exp,
 
 		// Return type.
 		if (parent == Parent.AssignTarget) {
-			return buildNoType(prop.location);
+			return buildNoType(prop.loc);
 		} else {
 			return prop.getFn.type.ret;
 		}
 	}
 
 	if (members == 0 && via == StoreSource.Instance) {
-		throw makeStaticViaInstance(exp.location, ident);
+		throw makeStaticViaInstance(exp.loc, ident);
 	}
 
 	// Check if we can do overloading.
@@ -234,11 +234,11 @@ ir.Type handleFunctionStore(Context ctx, string ident, ref ir.Exp exp,
 	    parent != Parent.AssignSource) {
 		// Even if they are mixed, this a good enough guess.
 		if (fns[0].kind == ir.Function.Kind.Member) {
-			throw makeCannotPickMemberFunction(exp.location, ident);
+			throw makeCannotPickMemberFunction(exp.loc, ident);
 		} else if (via == StoreSource.Instance) {
-			throw makeCannotPickStaticFunctionVia(exp.location, ident);
+			throw makeCannotPickStaticFunctionVia(exp.loc, ident);
 		} else {
-			throw makeCannotPickStaticFunction(exp.location, ident);
+			throw makeCannotPickStaticFunction(exp.loc, ident);
 		}
 	}
 
@@ -250,15 +250,15 @@ ir.Type handleFunctionStore(Context ctx, string ident, ref ir.Exp exp,
 	}
 
 	// Will return the first function directly if there is only one.
-	ir.Declaration decl = buildSet(exp.location, fns);
-	ir.ExpReference eref = buildExpReference(exp.location, decl, ident);
+	ir.Declaration decl = buildSet(exp.loc, fns);
+	ir.ExpReference eref = buildExpReference(exp.loc, decl, ident);
 	ir.FunctionSet set = cast(ir.FunctionSet) decl;
 	ir.Type ret;
 
 
 	if (child !is null) {
 		assert(members > 0);
-		auto cdgt = buildCreateDelegate(exp.location, child, eref);
+		auto cdgt = buildCreateDelegate(exp.loc, child, eref);
 		cdgt.supressVtableLookup = via == StoreSource.StaticPostfix;
 		exp = cdgt;
 
@@ -268,7 +268,7 @@ ir.Type handleFunctionStore(Context ctx, string ident, ref ir.Exp exp,
 		} else {
 			auto func = fns[0];
 			auto dgt = new ir.DelegateType(func.type);
-			dgt.location = exp.location;
+			dgt.loc = exp.loc;
 			ret = dgt;
 		}
 	} else {
@@ -302,7 +302,7 @@ ir.Type handleValueStore(Context ctx, string ident, ref ir.Exp exp,
 	ir.ExpReference makeEref() {
 		auto eref = new ir.ExpReference();
 		eref.idents = [ident];
-		eref.location = exp.location;
+		eref.loc = exp.loc;
 		eref.decl = var;
 		return eref;
 	}
@@ -310,13 +310,13 @@ ir.Type handleValueStore(Context ctx, string ident, ref ir.Exp exp,
 	final switch (via) with (StoreSource) {
 	case Instance:
 		if (var.storage != ir.Variable.Storage.Field) {
-			throw makeAccessThroughWrongType(exp.location, ident);
+			throw makeAccessThroughWrongType(exp.loc, ident);
 		}
 
 		// TODO check that field is from the this type.
 		// TODO Hook up aggregate
 		auto ae = new ir.AccessExp();
-		ae.location = exp.location;
+		ae.loc = exp.loc;
 		ae.child = child;
 		ae.field = var;
 
@@ -336,13 +336,13 @@ ir.Type handleValueStore(Context ctx, string ident, ref ir.Exp exp,
 		replaceExpReferenceIfNeeded(ctx, exp, eref);
 
 		// Handle nested variables.
-		nestExtyperTagVariable(exp.location, ctx, var, store);
+		nestExtyperTagVariable(exp.loc, ctx, var, store);
 
 		break;
 	case StaticPostfix:
 		final switch (var.storage) with (ir.Variable.Storage) {
 		case Invalid:
-			throw panic(exp, format("invalid storage %s", var.location.toString()));
+			throw panic(exp, format("invalid storage %s", var.loc.toString()));
 		case Field:
 		case Function:
 		case Nested:
@@ -372,7 +372,7 @@ ir.Type handleFunctionParamStore(Context ctx, string ident, ref ir.Exp exp,
 
 	auto eref = new ir.ExpReference();
 	eref.idents = [ident];
-	eref.location = exp.location;
+	eref.loc = exp.loc;
 	eref.decl = fp;
 	exp = eref;
 
@@ -401,7 +401,7 @@ ir.Type handleEnumDeclarationStore(Context ctx, string ident, ref ir.Exp exp,
 
 	auto eref = new ir.ExpReference();
 	eref.idents = [ident];
-	eref.location = exp.location;
+	eref.loc = exp.loc;
 	eref.decl = ed;
 	exp = eref;
 
@@ -423,9 +423,9 @@ ir.Type handleTypeStore(Context ctx, string ident, ref ir.Exp exp, ir.Store stor
 	assert(t !is null);
 
 	auto te = new ir.TypeExp();
-	te.location = exp.location;
+	te.loc = exp.loc;
 	//te.idents = [ident];
-	te.type = copyTypeSmart(exp.location, t);
+	te.type = copyTypeSmart(exp.loc, t);
 	exp = te;
 
 	return te.type;
@@ -439,14 +439,14 @@ ir.Type handleScopeStore(Context ctx, string ident, ref ir.Exp exp, ir.Store sto
 	}
 
 	auto se = new ir.StoreExp();
-	se.location = exp.location;
+	se.loc = exp.loc;
 	se.idents = [ident];
 	se.store = store;
 	exp = se;
 
 	auto ret = cast(ir.Type) store.node;
 	if (ret is null) {
-		return buildNoType(exp.location);
+		return buildNoType(exp.loc);
 	}
 	return ret;
 }
@@ -464,15 +464,15 @@ ir.Type handleScopeStore(Context ctx, string ident, ref ir.Exp exp, ir.Store sto
  */
 ir.Exp withLookup(Context ctx, ir.Exp withExp, string leaf)
 {
-	ir.Postfix access = buildPostfixIdentifier(withExp.location, copyExp(withExp), leaf);
+	ir.Postfix access = buildPostfixIdentifier(withExp.loc, copyExp(withExp), leaf);
 	ir.Class _class; string emsg; ir.Scope eScope;
 
 	auto type = realType(getExpType(withExp), false);
 	retrieveScope(type, access, eScope, _class, emsg);
 	if (eScope is null) {
-		throw makeBadWithType(withExp.location);
+		throw makeBadWithType(withExp.loc);
 	}
-	auto store = lookupInGivenScopeOnly(ctx.lp, eScope, withExp.location, leaf);
+	auto store = lookupInGivenScopeOnly(ctx.lp, eScope, withExp.loc, leaf);
 	if (store is null) {
 		return null;
 	}
@@ -497,7 +497,7 @@ ir.Type extypeIdentifierExp(Context ctx, ref ir.Exp e, Parent parent)
 	default:
 	}
 
-	auto current = i.globalLookup ? getModuleFromScope(i.location, ctx.current).myScope : ctx.current;
+	auto current = i.globalLookup ? getModuleFromScope(i.loc, ctx.current).myScope : ctx.current;
 
 	// Rewrite expressions that rely on a with block lookup.
 	ir.Exp rewriteExp;
@@ -507,23 +507,23 @@ ir.Type extypeIdentifierExp(Context ctx, ref ir.Exp e, Parent parent)
 			continue;
 		}
 		if (rewriteExp !is null) {
-			throw makeWithCreatesAmbiguity(i.location);
+			throw makeWithCreatesAmbiguity(i.loc);
 		}
 		rewriteExp = _rewriteExp;
-		rewriteExp.location = e.location;
+		rewriteExp.loc = e.loc;
 		// Continue to ensure no ambiguity.
 	}
 	if (rewriteExp !is null) {
-		auto store = lookup(ctx.lp, current, i.location, i.value);
+		auto store = lookup(ctx.lp, current, i.loc, i.value);
 		if (store !is null && isStoreLocal(ctx.lp, ctx.current, store)) {
-			throw makeWithCreatesAmbiguity(i.location);
+			throw makeWithCreatesAmbiguity(i.loc);
 		}
 		e = rewriteExp;
 		return extype(ctx, e, parent);
 	}
 
 	// With rewriting is completed after this point, and regular lookup logic resumes.
-	auto store = lookup(ctx.lp, current, i.location, i.value);
+	auto store = lookup(ctx.lp, current, i.loc, i.value);
 	if (store is null) {
 		throw makeFailedLookup(i, i.value);
 	}
@@ -541,7 +541,7 @@ ir.Type extypeIdentifierExp(Context ctx, ref ir.Exp e, Parent parent)
 
 ir.Type replaceAAPostfixesIfNeeded(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 {
-	auto l = exp.location;
+	auto loc = exp.loc;
 
 	switch (postfix.op) with (ir.Postfix.Op) {
 	case Call:
@@ -567,7 +567,7 @@ ir.Type replaceAAPostfixesIfNeeded(Context ctx, ref ir.Exp exp, ir.Postfix postf
 			args[2] = postfix.arguments[1];
 
 			ir.BuiltinExp be;
-			exp = be = buildAAGet(l, aa, args);
+			exp = be = buildAAGet(loc, aa, args);
 			return be.type;
 		case "remove":
 			if (postfix.arguments.length != 1) {
@@ -578,7 +578,7 @@ ir.Type replaceAAPostfixesIfNeeded(Context ctx, ref ir.Exp exp, ir.Postfix postf
 			args[1] = postfix.arguments[0];
 
 			ir.BuiltinExp be;
-			exp = be = buildAARemove(l, args);
+			exp = be = buildAARemove(loc, args);
 			return be.type;
 		default:
 			return null;
@@ -593,26 +593,26 @@ ir.Type replaceAAPostfixesIfNeeded(Context ctx, ref ir.Exp exp, ir.Postfix postf
 		switch (postfix.identifier.value) {
 		case "keys":
 			ir.BuiltinExp be;
-			exp = be = buildAAKeys(l, aa, [postfix.child]);
+			exp = be = buildAAKeys(loc, aa, [postfix.child]);
 			return be.type;
 		case "values":
 			ir.BuiltinExp be;
-			exp = be = buildAAValues(l, aa, [postfix.child]);
+			exp = be = buildAAValues(loc, aa, [postfix.child]);
 			return be.type;
 		case "length":
 			ir.BuiltinExp be;
-			exp = be = buildAALength(l, ctx.lp.target, [postfix.child]);
+			exp = be = buildAALength(loc, ctx.lp.target, [postfix.child]);
 			return be.type;
 		case "rehash":
 			ir.BuiltinExp be;
-			exp = be = buildAARehash(l, [postfix.child]);
+			exp = be = buildAARehash(loc, [postfix.child]);
 			return be.type;
 		case "get", "remove":
-			return buildNoType(l);
+			return buildNoType(loc);
 		default:
-			auto store = lookup(ctx.lp, ctx.current, postfix.location, postfix.identifier.value);
+			auto store = lookup(ctx.lp, ctx.current, postfix.loc, postfix.identifier.value);
 			if (store is null || store.functions.length == 0) {
-				throw makeBadBuiltin(postfix.location, aa, postfix.identifier.value);
+				throw makeBadBuiltin(postfix.loc, aa, postfix.identifier.value);
 			}
 			return null;
 		}
@@ -640,13 +640,13 @@ void handleArgumentLabelsIfNeeded(Context ctx, ir.Postfix postfix,
 
 	if (postfix.argumentLabels.length == 0) {
 		if (func.type.forceLabel && func.type.params.length > defaultArgCount) {
-			throw makeForceLabel(exp.location, func);
+			throw makeForceLabel(exp.loc, func);
 		}
 		return;
 	}
 
 	if (postfix.argumentLabels.length != postfix.arguments.length) {
-		throw panic(exp.location, "argument count and label count unmatched");
+		throw panic(exp.loc, "argument count and label count unmatched");
 	}
 
 	// If they didn't provide all the arguments, try filling in any default arguments.
@@ -663,7 +663,7 @@ void handleArgumentLabelsIfNeeded(Context ctx, ir.Postfix postfix,
 				continue;
 			}
 			postfix.arguments ~= def;
-			postfix.arguments[$-1].location = def.location;
+			postfix.arguments[$-1].loc = def.loc;
 			postfix.argumentLabels ~= arg;
 			postfix.argumentTags ~= ir.Postfix.TagKind.None;
 		}
@@ -678,7 +678,7 @@ void handleArgumentLabelsIfNeeded(Context ctx, ir.Postfix postfix,
 		auto argumentLabel = postfix.argumentLabels[i];
 		auto p = argumentLabel in positions;
 		if (p is null) {
-			throw makeUnmatchedLabel(postfix.location, argumentLabel);
+			throw makeUnmatchedLabel(postfix.loc, argumentLabel);
 		}
 	}
 
@@ -687,7 +687,7 @@ void handleArgumentLabelsIfNeeded(Context ctx, ir.Postfix postfix,
 		auto argumentLabel = postfix.argumentLabels[i];
 		auto p = argumentLabel in positions;
 		if (p is null) {
-			throw makeUnmatchedLabel(postfix.location, argumentLabel);
+			throw makeUnmatchedLabel(postfix.loc, argumentLabel);
 		}
 		auto labelIndex = *p;
 		if (labelIndex == i) {
@@ -714,7 +714,7 @@ private void dereferenceInitialClass(ir.Postfix postfix, ir.Type type)
 		return;
 	}
 
-	postfix.child = buildDeref(postfix.child.location, postfix.child);
+	postfix.child = buildDeref(postfix.child.loc, postfix.child);
 }
 
 // Verify va_start and va_end, then emit BuiltinExps for them.
@@ -732,18 +732,18 @@ private void rewriteVaStartAndEnd(Context ctx, ir.Function func,
 			throw makeExpected(postfix, "va_list argument");
 		}
 		if (!isLValue(postfix.arguments[0])) {
-			throw makeVaFooMustBeLValue(postfix.arguments[0].location, func.name);
+			throw makeVaFooMustBeLValue(postfix.arguments[0].loc, func.name);
 		}
 		if (ctx.currentFunction.type.linkage == ir.Linkage.Volt) {
 			if (func is ctx.lp.vaStartFunc) {
-				auto eref = buildExpReference(postfix.location, ctx.currentFunction.type.varArgsArgs, "_args");
-				exp = buildVaArgStart(postfix.location, postfix.arguments[0], eref);
+				auto eref = buildExpReference(postfix.loc, ctx.currentFunction.type.varArgsArgs, "_args");
+				exp = buildVaArgStart(postfix.loc, postfix.arguments[0], eref);
 				return;
 			} else if (func is ctx.lp.vaEndFunc) {
-				exp = buildVaArgEnd(postfix.location, postfix.arguments[0]);
+				exp = buildVaArgEnd(postfix.loc, postfix.arguments[0]);
 				return;
 			} else {
-				throw makeExpected(postfix.location, "volt va_args function.");
+				throw makeExpected(postfix.loc, "volt va_args function.");
 			}
 		}
 	}
@@ -756,10 +756,10 @@ private void resolvePostfixOverload(Context ctx, ir.Postfix postfix,
                                     bool reeval)
 {
 	if (eref is null) {
-		throw panic(postfix.location, "expected expref");
+		throw panic(postfix.loc, "expected expref");
 	}
 	asFunctionSet.set.reference = eref;
-	func = selectFunction(asFunctionSet.set, postfix.arguments, postfix.location);
+	func = selectFunction(asFunctionSet.set, postfix.arguments, postfix.loc);
 	eref.decl = func;
 	asFunctionType = func.type;
 
@@ -783,7 +783,7 @@ private void rewriteHomogenousVariadic(Context ctx,
 	auto etype = getExpType(arguments[i]);
 	auto arr = cast(ir.ArrayType) asFunctionType.params[i];
 	if (arr is null) {
-		throw panic(arguments[0].location, "homogenous variadic not array type");
+		throw panic(arguments[0].loc, "homogenous variadic not array type");
 	}
 	if (willConvert(etype, arr)) {
 		return;
@@ -799,7 +799,7 @@ private void rewriteHomogenousVariadic(Context ctx,
 		foreach (ref aexp; exps) {
 			checkAndConvertStringLiterals(ctx, arr.base, aexp);
 		}
-		arguments[i] = buildInternalArrayLiteralSmart(arguments[0].location, asFunctionType.params[i], exps);
+		arguments[i] = buildInternalArrayLiteralSmart(arguments[0].loc, asFunctionType.params[i], exps);
 		arguments = arguments[0 .. i + 1];
 		return;
 	}
@@ -835,7 +835,7 @@ ir.Type extypePostfixLeave(Context ctx, ref ir.Exp exp, ir.Postfix postfix,
 		auto nt = t.nodeType;
 		if (nt != ir.NodeType.PointerType && nt != ir.NodeType.StaticArrayType &&
 		    nt != ir.NodeType.ArrayType) {
-			throw makeCannotSlice(postfix.location, t);
+			throw makeCannotSlice(postfix.loc, t);
 		}
 		break;
 	case CreateDelegate:
@@ -872,14 +872,14 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	if (b !is null && b.kind == ir.BuiltinExp.Kind.UFCS) {
 		// Should we really call selectFunction here?
 		auto arguments = b.children[0] ~ postfix.arguments;
-		func = selectFunction(b.functions, arguments, postfix.location);
+		func = selectFunction(b.functions, arguments, postfix.loc);
 
 		if (func is null) {
-			throw makeNoFieldOrPropertyOrUFCS(postfix.location, postfix.identifier.value);
+			throw makeNoFieldOrPropertyOrUFCS(postfix.loc, postfix.identifier.value);
 		}
 
 		postfix.arguments = arguments;
-		postfix.child = buildExpReference(postfix.location, func, func.name);
+		postfix.child = buildExpReference(postfix.loc, func, func.name);
 		// We are done, make sure that the rebuilt call isn't messed with when
 		// it get visited again by the extypePostfix function.
 
@@ -933,10 +933,10 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		auto podAgg = cast(ir.PODAggregate)realType(childType);
 		if (podAgg !is null && podAgg.constructors.length > 0) {
 			if (isValueExp(postfix.child)) {
-				throw makeStructValueCall(postfix.location, podAgg.name);
+				throw makeStructValueCall(postfix.loc, podAgg.name);
 			}
-			auto ctor = selectFunction(podAgg.constructors, postfix.arguments, postfix.location);
-			exp = buildPODCtor(postfix.location, podAgg, postfix, ctor);
+			auto ctor = selectFunction(podAgg.constructors, postfix.arguments, postfix.loc);
+			exp = buildPODCtor(postfix.loc, podAgg, postfix, ctor);
 			return;
 		}
 
@@ -955,7 +955,7 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 
 	// Not providing an argument to a homogenous variadic function.
 	if (asFunctionType.homogenousVariadic && postfix.arguments.length + 1 == asFunctionType.params.length) {
-		postfix.arguments ~= buildArrayLiteralSmart(postfix.location, asFunctionType.params[$-1], []);
+		postfix.arguments ~= buildArrayLiteralSmart(postfix.loc, asFunctionType.params[$-1], []);
 	}
 
 	rewriteVaStartAndEnd(ctx, func, postfix, exp);
@@ -964,7 +964,7 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		return;
 	}
 
-	appendDefaultArguments(ctx, postfix.location, postfix.arguments, func);
+	appendDefaultArguments(ctx, postfix.loc, postfix.arguments, func);
 	if (!(asFunctionType.hasVarArgs || asFunctionType.params.length > 0 && asFunctionType.homogenousVariadic) &&
 	    postfix.arguments.length != asFunctionType.params.length) {
 		throw makeWrongNumberOfArguments(postfix, postfix.arguments.length, asFunctionType.params.length);
@@ -1050,7 +1050,7 @@ void replaceExpReferenceIfNeeded(Context ctx, ref ir.Exp exp, ir.ExpReference eR
 	assert(thisAgg !is null);
 
 	string ident = eRef.idents[$-1];
-	auto store = lookupInGivenScopeOnly(ctx.lp, expressionAgg.myScope, exp.location, ident);
+	auto store = lookupInGivenScopeOnly(ctx.lp, expressionAgg.myScope, exp.loc, ident);
 	if (store !is null && store.node !is eRef.decl) {
 		if (eRef.decl.nodeType !is ir.NodeType.FunctionParam) {
 			bool found = false;
@@ -1076,15 +1076,15 @@ void replaceExpReferenceIfNeeded(Context ctx, ref ir.Exp exp, ir.ExpReference eR
 	}
 
 	if (thisClass !is expressionClass) {
-		thisRef = buildCastSmart(eRef.location, expressionClass, thisRef);
+		thisRef = buildCastSmart(eRef.loc, expressionClass, thisRef);
 	}
 
 	if (eRef.decl.declKind == ir.Declaration.Kind.Function) {
-		exp = buildCreateDelegate(eRef.location, thisRef, eRef);
+		exp = buildCreateDelegate(eRef.loc, thisRef, eRef);
 	} else {
 		auto var = cast(ir.Variable)eRef.decl;
 		panicAssert(eRef, var !is null);
-		exp = buildAccessExp(eRef.location, thisRef, var);
+		exp = buildAccessExp(eRef.loc, thisRef, var);
 	}
 
 	return;
@@ -1153,13 +1153,13 @@ ir.Type consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes,
 		// Do the actual lookup.
 		assert(postfix.identifier !is null);
 		string name = postfix.identifier.value;
-		auto store = lookupAsImportScope(ctx.lp, lookScope, postfix.location, name);
+		auto store = lookupAsImportScope(ctx.lp, lookScope, postfix.loc, name);
 		if (store is null) {
 			auto asEnum = cast(ir.Enum)lookType;
 			if (asEnum !is null && asEnum.name != "") {
-				throw makeFailedEnumLookup(postfix.location, asEnum.name, name);
+				throw makeFailedEnumLookup(postfix.loc, asEnum.name, name);
 			} else {
-				throw makeFailedLookup(postfix.location, name);
+				throw makeFailedLookup(postfix.loc, name);
 			}
 		}
 
@@ -1208,7 +1208,7 @@ void extypePostfixIndex(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	case PointerType:
 	case ArrayType:
 		// TODO
-		//auto sizeT = buildSizeT(exp.location, ctx.lp);
+		//auto sizeT = buildSizeT(exp.loc, ctx.lp);
 		//checkAndDoConvert(ctx, sizeT, postfix.arguments[0]);
 		break;
 	default:
@@ -1227,33 +1227,33 @@ void postfixIdentifierUFCS(Context ctx, ref ir.Exp exp,
 {
 	assert(postfix.identifier !is null);
 
-	auto store = lookup(ctx.lp, ctx.current, postfix.location, postfix.identifier.value);
+	auto store = lookup(ctx.lp, ctx.current, postfix.loc, postfix.identifier.value);
 	if (store is null || store.functions.length == 0) {
-		throw makeNoFieldOrPropertyOrUFCS(postfix.location, postfix.identifier.value);
+		throw makeNoFieldOrPropertyOrUFCS(postfix.loc, postfix.identifier.value);
 	}
 
 	bool isProp;
 	foreach (func; store.functions) {
 		if (isProp && !func.type.isProperty) {
-			throw makeUFCSAndProperty(postfix.location, postfix.identifier.value);
+			throw makeUFCSAndProperty(postfix.loc, postfix.identifier.value);
 		}
 
 		isProp = func.type.isProperty;
 	}
 
 	if (isProp) {
-		throw makeUFCSAsProperty(postfix.location);
+		throw makeUFCSAsProperty(postfix.loc);
 	}
 
 	// This is here to so that it errors
 	if (parent != Parent.Call) {
-		throw makeNoFieldOrPropertyOrIsUFCSWithoutCall(postfix.location, postfix.identifier.value);
+		throw makeNoFieldOrPropertyOrIsUFCSWithoutCall(postfix.loc, postfix.identifier.value);
 	}
 
 	auto type = getExpType(postfix.child);
-	auto set = buildSet(postfix.location, store.functions);
+	auto set = buildSet(postfix.loc, store.functions);
 
-	exp = buildUFCS(postfix.location, type, postfix.child, store.functions);
+	exp = buildUFCS(postfix.loc, type, postfix.child, store.functions);
 }
 
 ir.Type builtInField(Context ctx, ref ir.Exp exp, ir.Exp child, ir.Type type, string field)
@@ -1269,9 +1269,9 @@ ir.Type builtInField(Context ctx, ref ir.Exp exp, ir.Exp child, ir.Type type, st
 	auto iface = cast(ir._Interface)type;
 	if (clazz !is null || iface !is null) switch (field) {
 	case "classinfo":
-		auto t = copyTypeSmart(exp.location, ctx.lp.tiClassInfo);
+		auto t = copyTypeSmart(exp.loc, ctx.lp.tiClassInfo);
 		ir.BuiltinExp b;
-		exp = b = buildClassinfo(exp.location, t, child);
+		exp = b = buildClassinfo(exp.loc, t, child);
 		return b.type;
 	default:
 		return null;
@@ -1289,17 +1289,17 @@ ir.Type builtInField(Context ctx, ref ir.Exp exp, ir.Exp child, ir.Type type, st
 		assert(base !is null);
 
 		if (isPointer) {
-			child = buildDeref(exp.location, child);
+			child = buildDeref(exp.loc, child);
 		}
 		ir.BuiltinExp b;
-		exp = b = buildArrayPtr(exp.location, base, child);
+		exp = b = buildArrayPtr(exp.loc, base, child);
 		return b.type;
 	case "length":
 		if (isPointer) {
-			child = buildDeref(exp.location, child);
+			child = buildDeref(exp.loc, child);
 		}
 		ir.BuiltinExp b;
-		exp = b = buildArrayLength(exp.location, ctx.lp.target, child);
+		exp = b = buildArrayLength(exp.loc, ctx.lp.target, child);
 		return b.type;
 	default:
 		// Error?
@@ -1338,7 +1338,7 @@ bool rewriteIfPropertyStore(ref ir.Exp exp, ir.Exp child, string name,
 		// func.params.length is 0
 
 		if (getFn !is null) {
-			throw makeMultipleZeroProperties(exp.location);
+			throw makeMultipleZeroProperties(exp.loc);
 		}
 		getFn = func;
 	}
@@ -1348,10 +1348,10 @@ bool rewriteIfPropertyStore(ref ir.Exp exp, ir.Exp child, string name,
 	}
 
 	if (parent != Parent.AssignTarget && getFn is null) {
-		throw makeNoZeroProperties(exp.location);
+		throw makeNoZeroProperties(exp.loc);
 	}
 
-	exp = buildProperty(exp.location, name, child, getFn, setFns);
+	exp = buildProperty(exp.loc, name, child, getFn, setFns);
 
 	return true;
 }
@@ -1394,7 +1394,7 @@ ir.Type extypePostfixIdentifier(Context ctx, ref ir.Exp exp,
 	ir.Store store;
 	auto _scope = getScopeFromType(type);
 	if (_scope !is null) {
-		store = lookupAsThisScope(ctx.lp, _scope, postfix.location, field, ctx.current);
+		store = lookupAsThisScope(ctx.lp, _scope, postfix.loc, field, ctx.current);
 	}
 
 	if (store is null) {
@@ -1429,7 +1429,7 @@ ir.Type extypePostfixIdentifier(Context ctx, ref ir.Exp exp,
 
 	// Is the store a field on the object.
 	auto store2 = lookupOnlyThisScopeAndClassParents(
-		ctx.lp, _scope, postfix.location, field);
+		ctx.lp, _scope, postfix.loc, field);
 	assert(store2 !is null);
 
 	// What if store and store2 fields does not match?
@@ -1439,7 +1439,7 @@ ir.Type extypePostfixIdentifier(Context ctx, ref ir.Exp exp,
 	auto var2 = cast(ir.Variable) store.node;
 	if (var !is null && var !is var2 &&
 	    var.storage == ir.Variable.Storage.Field) {
-		throw makeAccessThroughWrongType(postfix.location, field);
+		throw makeAccessThroughWrongType(postfix.loc, field);
 	}
 
 	return handleStore(ctx, field, exp, store, postfix.child, parent,
@@ -1537,10 +1537,10 @@ void extypeUnaryCastTo(Context ctx, ref ir.Exp exp, ir.Unary unary)
 		return;
 	}
 
-	auto fnref = buildExpReference(unary.location, ctx.lp.castFunc, "vrt_handle_cast");
-	auto tid = buildTypeidSmart(unary.location, ctx.lp, to);
-	auto val = buildCastToVoidPtr(unary.location, unary.value);
-	unary.value = buildCall(unary.location, fnref, [val, cast(ir.Exp)tid]);
+	auto fnref = buildExpReference(unary.loc, ctx.lp.castFunc, "vrt_handle_cast");
+	auto tid = buildTypeidSmart(unary.loc, ctx.lp, to);
+	auto val = buildCastToVoidPtr(unary.loc, unary.value);
+	unary.value = buildCall(unary.loc, fnref, [val, cast(ir.Exp)tid]);
 }
 
 /**
@@ -1559,12 +1559,12 @@ void extypeUnaryNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 		if (_unary.argumentList.length == 0) {
 			throw makeExpected(_unary, "argument(s)");
 		}
-		_unary.type = copyTypeSmart(_unary.location, getExpType(_unary.argumentList[0]));
+		_unary.type = copyTypeSmart(_unary.loc, getExpType(_unary.argumentList[0]));
 	}
 	auto pt = cast(ir.PrimitiveType)_unary.type;
 	if (pt !is null) {
 		// new i32(4);
-		auto loc = _unary.location;
+		auto loc = _unary.loc;
 		if (_unary.argumentList.length != 1) {
 			throw makeExpectedOneArgument(loc);
 		}
@@ -1645,12 +1645,12 @@ void extypeUnaryNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 	// Needed because of userConstructors.
 	ctx.lp.actualize(_class);
 
-	auto func = selectFunction(_class.userConstructors, _unary.argumentList, _unary.location);
+	auto func = selectFunction(_class.userConstructors, _unary.argumentList, _unary.loc);
 	_unary.ctor = func;
 
 	ctx.lp.resolve(ctx.current, func);
 
-	appendDefaultArguments(ctx, _unary.location, _unary.argumentList, func);
+	appendDefaultArguments(ctx, _unary.loc, _unary.argumentList, func);
 	if (_unary.argumentList.length > 0) {
 		rewriteHomogenousVariadic(ctx, func.type, _unary.argumentList);
 	}
@@ -1668,33 +1668,33 @@ void extypeUnaryDup(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 	panicAssert(_unary, _unary.dupBeginning !is null);
 	panicAssert(_unary, _unary.dupEnd !is null);
 
-	auto l = exp.location;
+	auto loc = exp.loc;
 	if (!ctx.isFunction) {
-		throw makeExpected(l, "function context");
+		throw makeExpected(loc, "function context");
 	}
 
 	auto type = getExpType(_unary.value);
 	auto asStatic = cast(ir.StaticArrayType)realType(type);
 	if (asStatic !is null) {
-		type = buildArrayTypeSmart(asStatic.location, asStatic.base);
+		type = buildArrayTypeSmart(asStatic.loc, asStatic.base);
 	}
 
 	auto rtype = realType(type);
 	if (rtype.nodeType != ir.NodeType.AAType &&
 	    rtype.nodeType != ir.NodeType.ArrayType) {
-		throw makeCannotDup(l, rtype);
+		throw makeCannotDup(loc, rtype);
 	}
 
 	if (rtype.nodeType == ir.NodeType.AAType) {
 		if (!_unary.fullShorthand) {
 			// Actual indices were used, which makes no sense for AAs.
-			throw makeExpected(l, "`new <exp>[..]` shorthand syntax");
+			throw makeExpected(loc, "`new <exp>[..]` shorthand syntax");
 		}
 		auto aa = cast(ir.AAType)rtype;
 		panicAssert(rtype, aa !is null);
-		exp = buildAADup(l, aa, [_unary.value]);
+		exp = buildAADup(loc, aa, [_unary.value]);
 	} else {
-		exp = buildArrayDup(l, rtype, [copyExp(_unary.value), copyExp(_unary.dupBeginning), copyExp(_unary.dupEnd)]);
+		exp = buildArrayDup(loc, rtype, [copyExp(_unary.value), copyExp(_unary.dupBeginning), copyExp(_unary.dupEnd)]);
 	}
 }
 
@@ -1817,7 +1817,7 @@ ir.Type extypeBinOp(Context ctx, ir.BinOp bin, ir.PrimitiveType lprim, ir.Primit
 			if ((leftsz <= shortsz && rightsz <= shortsz) || (smallerUnsigned && smallersz < biggersz)) {
 				// Safe.
 			} else if (leftUnsigned != rightUnsigned) {
-				throw makeMixedSignedness(bin.location);
+				throw makeMixedSignedness(bin.loc);
 			}
 		}
 	}
@@ -1881,7 +1881,7 @@ ir.Type extypeBinOp(Context ctx, ir.BinOp bin, ir.PrimitiveType lprim, ir.Primit
 	case Equal, NotEqual, Less, LessEqual, Greater, GreaterEqual:
 	case Is, NotIs, In, NotIn:
 	case OrOr, AndAnd:
-		return buildBool(bin.location);
+		return buildBool(bin.loc);
 	case AddAssign, SubAssign, MulAssign, DivAssign, ModAssign, PowAssign:
 	case LSAssign, SRSAssign, RSAssign:
 	case OrAssign, XorAssign, AndAssign:
@@ -1903,7 +1903,7 @@ ir.Type extypeBinOp(Context ctx, ir.BinOp bin, ir.PrimitiveType lprim, ir.Primit
  */
 ir.Type opOverloadRewrite(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 {
-	auto l = exp.location;
+	auto loc = exp.loc;
 	auto _agg = opOverloadableOrNull(getExpType(binop.left));
 	if (_agg is null) {
 		return null;
@@ -1913,16 +1913,16 @@ ir.Type opOverloadRewrite(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 	if (overfn.length == 0) {
 		return null;
 	}
-	auto store = lookupAsThisScope(ctx.lp, _agg.myScope, l, overfn, ctx.current);
+	auto store = lookupAsThisScope(ctx.lp, _agg.myScope, loc, overfn, ctx.current);
 	if (store is null || store.functions.length == 0) {
-		throw makeAggregateDoesNotDefineOverload(exp.location, _agg, overfn);
+		throw makeAggregateDoesNotDefineOverload(exp.loc, _agg, overfn);
 	}
-	auto func = selectFunction(store.functions, [binop.right], l);
+	auto func = selectFunction(store.functions, [binop.right], loc);
 	assert(func !is null);
-	exp = buildCall(l, buildCreateDelegate(l, binop.left, buildExpReference(l, func, overfn)), [binop.right]);
+	exp = buildCall(loc, buildCreateDelegate(loc, binop.left, buildExpReference(loc, func, overfn)), [binop.right]);
 	if (neg) {
-		exp = buildNot(l, exp);
-		return buildBool(binop.location);
+		exp = buildNot(loc, exp);
+		return buildBool(binop.loc);
 	} else {
 		return func.type.ret;
 	}
@@ -1943,14 +1943,14 @@ ir.Type opOverloadRewriteIndex(Context ctx, ir.Postfix pfix, ref ir.Exp exp)
 		return null;
 	}
 	auto name = overloadIndexName();
-	auto store = lookupAsThisScope(ctx.lp, _agg.myScope, exp.location, name, ctx.current);
+	auto store = lookupAsThisScope(ctx.lp, _agg.myScope, exp.loc, name, ctx.current);
 	if (store is null || store.functions.length == 0) {
-		throw makeAggregateDoesNotDefineOverload(exp.location, _agg, name);
+		throw makeAggregateDoesNotDefineOverload(exp.loc, _agg, name);
 	}
 	assert(pfix.arguments.length > 0 && pfix.arguments[0] !is null);
-	auto func = selectFunction(store.functions, [pfix.arguments[0]], exp.location);
+	auto func = selectFunction(store.functions, [pfix.arguments[0]], exp.loc);
 	assert(func !is null);
-	pfix = buildCall(exp.location, buildCreateDelegate(exp.location, pfix.child, buildExpReference(exp.location, func, name)), [pfix.arguments[0]]);
+	pfix = buildCall(exp.loc, buildCreateDelegate(exp.loc, pfix.child, buildExpReference(exp.loc, func, name)), [pfix.arguments[0]]);
 	exp = pfix;
 
 	extypePostfixCall(ctx, exp, pfix);
@@ -1972,22 +1972,22 @@ ir.Type extypeBinOpPropertyAssign(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 	auto args = [binop.right];
 	auto func = selectFunction(
 		p.setFns, args,
-		binop.location, DoNotThrow);
+		binop.loc, DoNotThrow);
 	if (func is null) {
 		if (p.setFns.length == 0) {
 			return null;
 		}
-		throw makeNoValidFunction(exp.location, p.setFns[0].name,
+		throw makeNoValidFunction(exp.loc, p.setFns[0].name,
 			expsToTypes(args));
 	}
 
 	auto name = p.identifier.value;
-	auto expRef = buildExpReference(binop.location, func, name);
+	auto expRef = buildExpReference(binop.loc, func, name);
 
 	if (p.child is null) {
-		exp = buildCall(binop.location, expRef, args);
+		exp = buildCall(binop.loc, expRef, args);
 	} else {
-		exp = buildMemberCall(binop.location,
+		exp = buildMemberCall(binop.loc,
 		                      p.child,
 		                      expRef, name, args);
 	}
@@ -2002,7 +2002,7 @@ void extypeCat(Context ctx, ref ir.Exp lexp, ref ir.Exp rexp,
                ir.ArrayType left, ir.Type right)
 {
 	if (isString(left)) {
-		warningStringCat(lexp.location, ctx.lp.warningsEnabled);
+		warningStringCat(lexp.loc, ctx.lp.warningsEnabled);
 	}
 
 	if (typesEqual(left, right) ||
@@ -2022,17 +2022,17 @@ void extypeCat(Context ctx, ref ir.Exp lexp, ref ir.Exp rexp,
 		}
 	}
 
-	ir.Type buildDeepArraySmart(Location location, int depth, ir.Type base)
+	ir.Type buildDeepArraySmart(ref in Location loc, int depth, ir.Type base)
 	{
 		ir.ArrayType array = new ir.ArrayType();
-		array.location = location;
+		array.loc = loc;
 		auto firstArray = array;
 		for (size_t i = 1; i < cast(size_t) depth; ++i) {
 			array.base = new ir.ArrayType();
-			array.base.location = location;
+			array.base.loc = loc;
 			array = cast(ir.ArrayType)array.base;
 		}
-		array.base = copyTypeSmart(location, base);
+		array.base = copyTypeSmart(loc, base);
 		return firstArray;
 	}
 
@@ -2046,12 +2046,12 @@ void extypeCat(Context ctx, ref ir.Exp lexp, ref ir.Exp rexp,
 			throw makeBadImplicitCast(lexp, lclass, rclass);
 		}
 		if (ldepth >= 1 && ldepth == rdepth) {
-			auto l = lexp.location;
+			auto loc = lexp.loc;
 			if (lclass !is _class) {
-				lexp = buildCastSmart(buildDeepArraySmart(l, ldepth, _class), lexp);
+				lexp = buildCastSmart(buildDeepArraySmart(loc, ldepth, _class), lexp);
 			}
 			if (rclass !is _class) {
-				rexp = buildCastSmart(buildDeepArraySmart(l, rdepth, _class), rexp);
+				rexp = buildCastSmart(buildDeepArraySmart(loc, rdepth, _class), rexp);
 			}
 			return;
 		} else if (ldepth == 0 || rdepth == 0) {
@@ -2127,11 +2127,11 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 	if (lclass !is null && rclass !is null && !typesEqual(lclass, rclass)) {
 		auto common = commonParent(lclass, rclass);
 		if (lclass !is common) {
-			binop.left = buildCastSmart(exp.location, common, binop.left);
+			binop.left = buildCastSmart(exp.loc, common, binop.left);
 			rtype = ltype;
 		}
 		if (rclass !is common) {
-			binop.right = buildCastSmart(exp.location, common, binop.right);
+			binop.right = buildCastSmart(exp.loc, common, binop.right);
 			rtype = ltype;
 		}
 	}
@@ -2140,30 +2140,30 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 	if (binop.op == ir.BinOp.Op.In) {
 		auto asAA = cast(ir.AAType) rtype;
 		if (asAA is null) {
-			throw makeExpected(binop.right.location, "associative array");
+			throw makeExpected(binop.right.loc, "associative array");
 		}
 		checkAndDoConvert(ctx, asAA.key, binop.left);
-		auto l = binop.location;
+		auto loc = binop.loc;
 		ir.Exp rtFn, key;
 		if (isArray(ltype)) {
-			key = buildCast(l, buildArrayType(l, buildVoid(l)), binop.left);
+			key = buildCast(loc, buildArrayType(loc, buildVoid(loc)), binop.left);
 		} else {
-			key = buildCast(l, buildUlong(l), binop.left);
+			key = buildCast(loc, buildUlong(loc), binop.left);
 		}
 		assert(key !is null);
-		exp = buildAAIn(l, asAA, [binop.right, binop.left]);
-		auto retptr = buildPtrSmart(l, asAA.value);
+		exp = buildAAIn(loc, asAA, [binop.right, binop.left]);
+		auto retptr = buildPtrSmart(loc, asAA.value);
 		return retptr;
 	}
 
 	// Check for lvalue and touch up aa[key] = 'left'.
 	if (isAssign) {
 		if (!isAssignable(binop.left)) {
-			throw makeExpected(binop.left.location, "lvalue");
+			throw makeExpected(binop.left.loc, "lvalue");
 		}
 
 		if (isVoid(getExpType(binop.right))) {
-			throw makeAssigningVoid(binop.right.location);
+			throw makeAssigningVoid(binop.right.loc);
 		}
 
 		auto asPostfix = cast(ir.Postfix)binop.left;
@@ -2195,7 +2195,7 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 		assigningOutsideFunction = var !is null && var.storage != ir.Variable.Storage.Function;
 	}
 	if (assigningOutsideFunction && rtype.isScope && mutableIndirection(ltype) && isAssign && !binop.isInternalNestedAssign) {
-		throw makeNoEscapeScope(exp.location);
+		throw makeNoEscapeScope(exp.loc);
 	}
 
 	auto lprim = cast(ir.PrimitiveType)ltype;
@@ -2211,7 +2211,7 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 		tagLiteralType(binop.right, ltype);
 		if (copying) {
 			if (!typesEqual(ltype, rtype, IgnoreStorage)) {
-				throw makeExpectedTypeMatch(binop.location, ltype);
+				throw makeExpectedTypeMatch(binop.loc, ltype);
 			}
 		} else {
 			checkAndDoConvert(ctx, ltype, binop.right);
@@ -2255,7 +2255,7 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 	// We only get here if op != Cat && op != CatAssign.
 	if ((larray is null && rarray !is null) ||
 	    (larray !is null && rarray is null)) {
-	    throw makeArrayNonArrayNotCat(binop.location);
+	    throw makeArrayNonArrayNotCat(binop.loc);
 	}
 
 	if (ltype.nodeType == ir.NodeType.PrimitiveType &&
@@ -2275,7 +2275,7 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 			throw makeError(binop, "types must match for 'is'.");
 		}
 		// Always returns bool.
-		return buildBool(binop.location);
+		return buildBool(binop.loc);
 	}
 
 	// Handle pointer arithmetics.
@@ -2299,7 +2299,7 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 		if (!willConvert(ltype, rtype)) {
 			throw makeError(binop, "mismatched types.");
 		}
-		return buildBool(binop.location);
+		return buildBool(binop.loc);
 	case Is, NotIs, In, NotIn:
 	case Add, Sub, Mul, Div, Mod, Pow:
 	case AddAssign, SubAssign, MulAssign, DivAssign, ModAssign, PowAssign:
@@ -2330,7 +2330,7 @@ ir.Constant evaluateIsExp(Context ctx, ir.IsExp isExp)
 	    isExp.specType is null) {
 		throw makeNotAvailableInCTFE(isExp, isExp);
 	}
-	return buildConstantBool(isExp.location, typesEqual(isExp.type, isExp.specType));
+	return buildConstantBool(isExp.loc, typesEqual(isExp.type, isExp.specType));
 }
 
 ir.Type extypeIsExp(Context ctx, ref ir.Exp exp, Parent parent)
@@ -2372,7 +2372,7 @@ ir.Type extypeTernary(Context ctx, ref ir.Exp exp, Parent parent)
 	auto falseType = realType(falseRaw);
 
 	if (!isBool(condType)) {
-		ternary.condition = buildCastToBool(ternary.condition.location, ternary.condition);
+		ternary.condition = buildCastToBool(ternary.condition.loc, ternary.condition);
 	}
 
 	ir.Type ret;
@@ -2413,7 +2413,7 @@ ir.Type extypeStructLiteral(Context ctx, ref ir.Exp exp, Parent parent)
 	}
 
 	if (sl.type is null) {
-		throw makeCannotDeduceStructLiteralType(sl.location);
+		throw makeCannotDeduceStructLiteralType(sl.loc);
 	}
 
 	auto asStruct = cast(ir.Struct) realType(sl.type);
@@ -2422,7 +2422,7 @@ ir.Type extypeStructLiteral(Context ctx, ref ir.Exp exp, Parent parent)
 
 	// @TODO fill out with T.init
 	if (types.length != sl.exps.length) {
-		throw makeWrongNumberOfArgumentsToStructLiteral(sl.location);
+		throw makeWrongNumberOfArgumentsToStructLiteral(sl.loc);
 	}
 
 	foreach (i, ref sexp; sl.exps) {
@@ -2434,7 +2434,7 @@ ir.Type extypeStructLiteral(Context ctx, ref ir.Exp exp, Parent parent)
 
 		auto n = evaluateOrNull(ctx.lp, ctx.current, sexp);
 		if (n is null) {
-			throw makeNonConstantStructLiteral(sexp.location);
+			throw makeNonConstantStructLiteral(sexp.loc);
 		}
 
 		sexp = n;
@@ -2456,12 +2456,12 @@ ir.Type extypeConstant(Context ctx, ref ir.Exp exp, Parent parent)
 		if (ctx.lastIndexChild is null) {
 			throw makeDollarOutsideOfIndex(constant);
 		}
-		auto l = constant.location;
+		auto loc = constant.loc;
 		// Rewrite $ to (arrayName.length).
-		exp = buildArrayLength(l, ctx.lp.target, copyExp(ctx.lastIndexChild));
+		exp = buildArrayLength(loc, ctx.lp.target, copyExp(ctx.lastIndexChild));
 
 		// The parser sets the wrong type, correct it.
-		constant.type = buildSizeT(constant.location, ctx.lp.target);
+		constant.type = buildSizeT(constant.loc, ctx.lp.target);
 	}
 
 	return constant.type;
@@ -2488,7 +2488,7 @@ ir.Type extypeAssocArray(Context ctx, ref ir.Exp exp, Parent parent)
 		auto firstKey = extype(ctx, first.key, Parent.NA);
 		auto firstValue = extype(ctx, first.value, Parent.NA);
 
-		base = buildAATypeSmart(aa.location, firstKey, firstValue);
+		base = buildAATypeSmart(aa.loc, firstKey, firstValue);
 
 		foreach (ref pair; aa.pairs[1 .. $]) {
 			extype(ctx, pair.key, Parent.NA);
@@ -2499,7 +2499,7 @@ ir.Type extypeAssocArray(Context ctx, ref ir.Exp exp, Parent parent)
 	}
 
 	panicAssert(exp, base !is null);
-	auto aaType = buildAATypeSmart(exp.location,
+	auto aaType = buildAATypeSmart(exp.loc,
 		(cast(ir.AAType)base).key,
 		(cast(ir.AAType)base).value);
 	aa.type = aaType;
@@ -2517,17 +2517,17 @@ ir.Type extypeVaArgExp(Context ctx, ref ir.Exp exp, Parent parent)
 	auto t = extype(ctx, vaexp.arg, Parent.NA);
 
 	if (!isLValue(vaexp.arg)) {
-		throw makeVaFooMustBeLValue(vaexp.arg.location, "va_exp");
+		throw makeVaFooMustBeLValue(vaexp.arg.loc, "va_exp");
 	}
-	exp = buildVaArg(vaexp.location, vaexp);
+	exp = buildVaArg(vaexp.loc, vaexp);
 	if (ctx.currentFunction.type.linkage == ir.Linkage.C) {
 		if (vaexp.type.nodeType != ir.NodeType.PrimitiveType &&
 				vaexp.type.nodeType != ir.NodeType.PointerType) {
-			throw makeCVaArgsOnlyOperateOnSimpleTypes(vaexp.location);
+			throw makeCVaArgsOnlyOperateOnSimpleTypes(vaexp.loc);
 		}
-		vaexp.arg = buildAddrOf(vaexp.location, vaexp.arg);
+		vaexp.arg = buildAddrOf(vaexp.loc, vaexp.arg);
 	} else {
-		exp = buildVaArg(vaexp.location, vaexp);
+		exp = buildVaArg(vaexp.loc, vaexp);
 	}
 
 	return vaexp.type;
@@ -2573,9 +2573,9 @@ ir.Type extypeArrayLiteral(Context ctx, ref ir.Exp exp, Parent parent)
 			types[i] = extype(ctx, e, Parent.NA);
 		}
 
-		base = getCommonSubtype(al.location, types);
+		base = getCommonSubtype(al.loc, types);
 	} else {
-		base = buildVoid(al.location);
+		base = buildVoid(al.loc);
 	}
 
 	if (al.type !is null) {
@@ -2584,7 +2584,7 @@ ir.Type extypeArrayLiteral(Context ctx, ref ir.Exp exp, Parent parent)
 
 	auto asClass = cast(ir.Class) realType(base);
 	if (al.type is null || asClass !is null) {
-		al.type = buildArrayTypeSmart(al.location, base);
+		al.type = buildArrayTypeSmart(al.loc, base);
 	}
 
 	panicAssert(al, al.type !is null);
@@ -2605,7 +2605,7 @@ ir.Type extypeArrayLiteral(Context ctx, ref ir.Exp exp, Parent parent)
 			continue;
 		}
 		if (!typesEqual(et, at.base) && willConvert(ctx, at.base, e)) {
-			e = buildCastSmart(exp.location, at.base, e);
+			e = buildCastSmart(exp.loc, at.base, e);
 		}
 	}
 
@@ -2630,7 +2630,7 @@ ir.Type extypeTypeid(Context ctx, ref ir.Exp exp, Parent parent)
 		_typeid.type = extype(ctx, _typeid.exp, Parent.NA);
 
 		if ((cast(ir.Aggregate) _typeid.type) !is null) {
-			_typeid.type = buildTypeReference(_typeid.type.location, _typeid.type);
+			_typeid.type = buildTypeReference(_typeid.type.loc, _typeid.type);
 		} else {
 			_typeid.type = copyType(_typeid.type);
 		}
@@ -2655,7 +2655,7 @@ ir.Type extypeTokenExp(Context ctx, ref ir.Exp exp, Parent parent)
 	auto fexp = cast(ir.TokenExp) exp;
 
 	string getFname() {
-		string fname = fexp.location.filename;
+		string fname = fexp.loc.filename;
 		bool windowsCompiler = false;
 		version (Windows) {
 			windowsCompiler = true;
@@ -2671,17 +2671,17 @@ ir.Type extypeTokenExp(Context ctx, ref ir.Exp exp, Parent parent)
 	if (fexp.type == ir.TokenExp.Type.File) {
 		string fname = getFname();
 		ir.Constant c;
-		exp = c = buildConstantString(fexp.location, fname);
+		exp = c = buildConstantString(fexp.loc, fname);
 		return c.type;
 	} else if (fexp.type == ir.TokenExp.Type.Line) {
 		ir.Constant c;
-		exp = c = buildConstantInt(fexp.location, cast(int) fexp.location.line);
+		exp = c = buildConstantInt(fexp.loc, cast(int) fexp.loc.line);
 		return c.type;
 	} else if (fexp.type == ir.TokenExp.Type.Location) {
 		string fname = getFname();
 		ir.Constant c;
-		auto str = format("%s:%s", fname, toString(cast(int)fexp.location.line));
-		exp = c = buildConstantString(fexp.location, str);
+		auto str = format("%s:%s", fname, toString(cast(int)fexp.loc.line));
+		exp = c = buildConstantString(fexp.loc, str);
 		return c.type;
 	}
 
@@ -2739,7 +2739,7 @@ ir.Type extypeTokenExp(Context ctx, ref ir.Exp exp, Parent parent)
 	}
 
 	ir.Constant c;
-	exp = c = buildConstantString(fexp.location, buf.toString());
+	exp = c = buildConstantString(fexp.loc, buf.toString());
 	return c.type;
 }
 
@@ -2752,7 +2752,7 @@ ir.Type extypeStringImport(Context ctx, ref ir.Exp exp, Parent parent)
 	auto constant = evaluateOrNull(ctx.lp, ctx.current, str.filename);
 	if (constant is null || !isString(constant.type) ||
 	    constant._string.length < 3) {
-		throw makeStringImportWrongConstant(exp.location);
+		throw makeStringImportWrongConstant(exp.loc);
 	}
 	str.filename = constant;
 
@@ -2767,7 +2767,7 @@ ir.Type extypeStoreExp(Context ctx, ref ir.Exp exp, Parent parent)
 		return t;
 	}
 
-	return buildNoType(exp.location);
+	return buildNoType(exp.loc);
 }
 
 
@@ -2784,7 +2784,7 @@ ir.Type extypePropertyExp(Context ctx, ref ir.Exp exp, Parent parent)
 	auto prop = cast(ir.PropertyExp) exp;
 
 	if (prop.getFn is null) {
-		return buildNoType(prop.location);
+		return buildNoType(prop.loc);
 	} else {
 		return prop.getFn.type.ret;
 	}
@@ -3050,7 +3050,7 @@ void extypeThrowStatement(Context ctx, ref ir.Node n)
 	}
 
 	if (asClass !is throwable) {
-		t.exp = buildCastSmart(t.exp.location, throwable, t.exp);
+		t.exp = buildCastSmart(t.exp.loc, throwable, t.exp);
 	}
 }
 
@@ -3116,7 +3116,7 @@ uint getExpHash(Context ctx, ir.SwitchStatement ss, ir.Exp exp)
 	} else {
 		auto alit = cast(ir.ArrayLiteral) exp;
 		if (alit is null) {
-			throw makeExpected(exp.location, "constant or array literal");
+			throw makeExpected(exp.loc, "constant or array literal");
 		}
 		auto atype = cast(ir.ArrayType) etype;
 		assert(atype !is null);
@@ -3148,19 +3148,19 @@ void replaceWithHashIfNeeded(Context ctx, ir.SwitchStatement ss, ir.SwitchCase _
 
 	if (auto p = h in arrayCases) {
 		assert(_case.statements.statements.length > 0);
-		auto loc = exp.location;
+		auto loc = exp.loc;
 		ir.BlockStatement elseBlock;
 		auto newSwitchBlock = buildBlockStat(loc, null, _case.statements.myScope.parent);
 		if (p.lastIf !is null) {
 			elseBlock = buildBlockStat(loc, null, newSwitchBlock.myScope);
 			elseBlock.statements ~= p.lastIf;
 		}
-		auto cref = buildExpReference(condVar.location, condVar, condVar.name);
+		auto cref = buildExpReference(condVar.loc, condVar, condVar.name);
 		auto cmp = buildBinOp(loc, ir.BinOp.Op.Equal, exp, cref);
 		auto ifs = buildIfStat(loc, cmp, _case.statements, elseBlock);
 		_case.statements.myScope.parent = newSwitchBlock.myScope;
 		newSwitchBlock.statements ~= ifs;
-		newSwitchBlock.statements ~= buildGotoDefault(exp.location);
+		newSwitchBlock.statements ~= buildGotoDefault(exp.loc);
 		_case.statements = newSwitchBlock;
 		if (p.lastIf !is null) {
 			p.lastIf.thenState.myScope.parent = ifs.elseState.myScope;
@@ -3190,19 +3190,19 @@ void replaceWithHashIfNeeded(Context ctx, ir.SwitchStatement ss, ir.SwitchCase _
 			return;
 		}
 	} else {
-		auto loc = exp.location;
+		auto loc = exp.loc;
 		auto newSwitchBlock = buildBlockStat(loc, null, _case.statements.myScope.parent);
-		auto cref = buildExpReference(condVar.location, condVar, condVar.name);
+		auto cref = buildExpReference(condVar.loc, condVar, condVar.name);
 		auto cmp = buildBinOp(loc, ir.BinOp.Op.Equal, copyExp(exp), cref);
 		auto ifs = buildIfStat(loc, cmp, _case.statements, null);
 		_case.statements.myScope.parent = newSwitchBlock.myScope;
 		newSwitchBlock.statements ~= ifs;
-		newSwitchBlock.statements ~= buildGotoDefault(exp.location);
+		newSwitchBlock.statements ~= buildGotoDefault(exp.loc);
 		_case.statements = newSwitchBlock;
 		ArrayCase ac = {[exp], _case, ifs, i};
 		arrayCases[h] = ac;
 	}
-	exp = buildConstantUint(exp.location, h);
+	exp = buildConstantUint(exp.loc, h);
 }
 
 /// @}
@@ -3212,7 +3212,7 @@ void replaceExpsWithHashIfNeeded(Context ctx, ir.SwitchStatement ss, ir.SwitchCa
                                  ref ArrayCase[uint] arrayCases,
                                  size_t i, ir.Variable condVar, ref ir.Exp[] exps)
 {
-	auto loc = exps[0].location;
+	auto loc = exps[0].loc;
 	panicAssert(ss, exps.length > 1);
 
 	if (!isArray(getExpType(exps[0]))) {
@@ -3222,7 +3222,7 @@ void replaceExpsWithHashIfNeeded(Context ctx, ir.SwitchStatement ss, ir.SwitchCa
 	ir.Exp[] cmps;
 	foreach (e; exps) {
 		panicAssert(ss, isArray(getExpType(e)));
-		auto cref = buildExpReference(condVar.location, condVar, condVar.name);
+		auto cref = buildExpReference(condVar.loc, condVar, condVar.name);
 		cmps ~= buildBinOp(loc, ir.BinOp.Op.Equal, copyExp(e), cref);
 	}
 	auto cmp = buildBinOp(loc, ir.BinOp.Op.OrOr, cmps[0], null);
@@ -3306,8 +3306,8 @@ void extypeSwitchStatement(Context ctx, ref ir.Node n)
 		 * and the anonymous variable is so we can refer to the condition if we
 		 * have multiple cases matching the same hash.
 		 */
-		auto l = ss.location;
-		condVar = buildVariable(l, copyTypeSmart(l, conditionType),
+		auto loc = ss.loc;
+		condVar = buildVariable(loc, copyTypeSmart(loc, conditionType),
 		                             ir.Variable.Storage.Function,
 		                             ctx.current.genAnonIdent(), ss.condition);
 		condVar.type.mangledName = mangle(conditionType);
@@ -3327,13 +3327,13 @@ void extypeSwitchStatement(Context ctx, ref ir.Node n)
 		bs.statements = bs.statements[0 .. i] ~ condVar ~ bs.statements[i .. $];
 
 		// Turn the condition into vrt_hash(__anon).
-		auto condRef = buildExpReference(l, condVar, condVar.name);
-		ir.Exp ptr = buildCastSmart(buildVoidPtr(l), buildArrayPtr(l, asArray.base, condRef));
-		ir.Exp length = buildBinOp(l, ir.BinOp.Op.Mul,
-			buildArrayLength(l, ctx.lp.target, copyExp(ss.condition)),
-				getSizeOf(l, ctx.lp, asArray.base));
-		ss.condition = buildCall(ss.condition.location, ctx.lp.hashFunc, [ptr, length]);
-		conditionType = buildUint(ss.condition.location);
+		auto condRef = buildExpReference(loc, condVar, condVar.name);
+		ir.Exp ptr = buildCastSmart(buildVoidPtr(loc), buildArrayPtr(loc, asArray.base, condRef));
+		ir.Exp length = buildBinOp(loc, ir.BinOp.Op.Mul,
+			buildArrayLength(loc, ctx.lp.target, copyExp(ss.condition)),
+				getSizeOf(loc, ctx.lp, asArray.base));
+		ss.condition = buildCall(ss.condition.loc, ctx.lp.hashFunc, [ptr, length]);
+		conditionType = buildUint(ss.condition.loc);
 	}
 	ArrayCase[uint] arrayCases;
 	size_t[] toRemove;  // Indices of cases that have been folded into a collision case.
@@ -3348,7 +3348,7 @@ void extypeSwitchStatement(Context ctx, ref ir.Node n)
 			continue;
 		}
 		if (_case.secondExp !is null) {
-			throw makeError(_case.location, "non-primitive type for range case.");
+			throw makeError(_case.loc, "non-primitive type for range case.");
 		}
 		if (_case.statements.statements.length == 0 && !_case.isDefault) {
 			emptyCases ~= _case;
@@ -3381,13 +3381,13 @@ void extypeSwitchStatement(Context ctx, ref ir.Node n)
 	}
 
 	if (!ss.isFinal && defaultCount == 0) {
-		throw makeNoDefaultCase(ss.location);
+		throw makeNoDefaultCase(ss.loc);
 	}
 	if (ss.isFinal && defaultCount > 0) {
-		throw makeFinalSwitchWithDefault(ss.location);
+		throw makeFinalSwitchWithDefault(ss.loc);
 	}
 	if (defaultCount > 1) {
-		throw makeMultipleDefaults(ss.location);
+		throw makeMultipleDefaults(ss.loc);
 	}
 
 	for (int i = cast(int) toRemove.length - 1; i >= 0; i--) {
@@ -3456,9 +3456,9 @@ void extypeForeachStatement(Context ctx, ref ir.Node n)
 			(aggType.nodeType == ir.NodeType.StaticArrayType ||
 			aggType.nodeType == ir.NodeType.ArrayType)) {
 			auto keysz = size(ctx.lp.target, fes.itervars[0].type);
-			auto sizetsz = size(ctx.lp.target, buildSizeT(fes.location, ctx.lp.target));
+			auto sizetsz = size(ctx.lp.target, buildSizeT(fes.loc, ctx.lp.target));
 			if (keysz < sizetsz) {
-				throw makeIndexVarTooSmall(fes.location, fes.itervars[0].name);
+				throw makeIndexVarTooSmall(fes.loc, fes.itervars[0].name);
 			}
 		}
 	}
@@ -3478,9 +3478,9 @@ void processForeach(Context ctx, ir.ForeachStatement fes)
 {
 	if (fes.itervars.length == 0) {
 		if (fes.beginIntegerRange is null || fes.endIntegerRange is null) {
-			throw makeExpected(fes.location, "variable");
+			throw makeExpected(fes.loc, "variable");
 		}
-		fes.itervars ~= buildVariable(fes.location, buildAutoType(fes.location),
+		fes.itervars ~= buildVariable(fes.loc, buildAutoType(fes.loc),
 			ir.Variable.Storage.Function, ctx.current.genAnonIdent());
 	}
 
@@ -3495,7 +3495,7 @@ void processForeach(Context ctx, ir.ForeachStatement fes)
 		if (!isBlankVariable(i)) {
 			return;
 		}
-		fes.itervars[i].type = copyTypeSmart(fes.itervars[i].location, t);
+		fes.itervars[i].type = copyTypeSmart(fes.itervars[i].loc, t);
 	}
 
 	foreach (var; fes.itervars) {
@@ -3512,7 +3512,7 @@ void processForeach(Context ctx, ir.ForeachStatement fes)
 		auto a = cast(ir.PrimitiveType) getExpType(fes.beginIntegerRange);
 		auto b = cast(ir.PrimitiveType) getExpType(fes.endIntegerRange);
 		if (a is null || b is null) {
-			throw makeExpected(fes.beginIntegerRange.location, "primitive types");
+			throw makeExpected(fes.beginIntegerRange.loc, "primitive types");
 		}
 		if (!typesEqual(a, b)) {
 			auto asz = size(ctx.lp.target, a);
@@ -3545,18 +3545,18 @@ void processForeach(Context ctx, ir.ForeachStatement fes)
 
 	if (!isString(aggType)) foreach (i, ivar; fes.itervars) {
 		if (!isBlankVariable(i)) {
-			throw makeDoNotSpecifyForeachType(fes.itervars[i].location, fes.itervars[i].name);
+			throw makeDoNotSpecifyForeachType(fes.itervars[i].loc, fes.itervars[i].name);
 		}
 	} else  {
 		if (fes.itervars.length != 1 && fes.itervars.length != 2) {
-			throw makeExpected(fes.location, "one or two iteration variables");
+			throw makeExpected(fes.loc, "one or two iteration variables");
 		}
 		size_t charIndex = fes.itervars.length == 2 ? 1 : 0;
 		foreach (i, ivar; fes.itervars) {// isString(aggType)
 			if (i == charIndex && !isChar(fes.itervars[i].type)) {
-				throw makeExpected(fes.itervars[i].location, "index variable of type 'char', 'wchar', or 'dchar' for string foreach");
+				throw makeExpected(fes.itervars[i].loc, "index variable of type 'char', 'wchar', or 'dchar' for string foreach");
 			} else if (i != charIndex && !isBlankVariable(i)) {
-				throw makeDoNotSpecifyForeachType(fes.itervars[i].location, fes.itervars[i].name);
+				throw makeDoNotSpecifyForeachType(fes.itervars[i].loc, fes.itervars[i].name);
 			}
 		}
 		auto asArray = cast(ir.ArrayType)realType(aggType);
@@ -3567,7 +3567,7 @@ void processForeach(Context ctx, ir.ForeachStatement fes)
 		if (!typesEqual(fromPtype, toPtype, IgnoreStorage)) {
 			if (toPtype.type != ir.PrimitiveType.Kind.Dchar ||
 			    fromPtype.type != ir.PrimitiveType.Kind.Char) {
-				throw panic(fes.location, "only char to dchar foreach decoding is currently supported.");
+				throw panic(fes.loc, "only char to dchar foreach decoding is currently supported.");
 			}
 			if (!fes.reverse) {
 				fes.decodeFunction = ctx.lp.utfDecode_u8_d;
@@ -3581,21 +3581,21 @@ void processForeach(Context ctx, ir.ForeachStatement fes)
 	switch (aggType.nodeType) {
 	case ir.NodeType.ArrayType:
 		auto asArray = cast(ir.ArrayType) aggType;
-		value = copyTypeSmart(fes.aggregate.location, asArray.base);
-		key = buildSizeT(fes.location, ctx.lp.target);
+		value = copyTypeSmart(fes.aggregate.loc, asArray.base);
+		key = buildSizeT(fes.loc, ctx.lp.target);
 		break;
 	case ir.NodeType.StaticArrayType:
 		auto asArray = cast(ir.StaticArrayType) aggType;
-		value = copyTypeSmart(fes.aggregate.location, asArray.base);
-		key = buildSizeT(fes.location, ctx.lp.target);
+		value = copyTypeSmart(fes.aggregate.loc, asArray.base);
+		key = buildSizeT(fes.loc, ctx.lp.target);
 		break;
 	case ir.NodeType.AAType:
 		auto asArray = cast(ir.AAType) aggType;
-		value = copyTypeSmart(fes.aggregate.location, asArray.value);
-		key = copyTypeSmart(fes.aggregate.location, asArray.key);
+		value = copyTypeSmart(fes.aggregate.loc, asArray.value);
+		key = copyTypeSmart(fes.aggregate.loc, asArray.key);
 		break;
 	default:
-		throw makeExpected(fes.aggregate.location, "array, static array, or associative array.");
+		throw makeExpected(fes.aggregate.loc, "array, static array, or associative array.");
 	}
 
 
@@ -3605,7 +3605,7 @@ void processForeach(Context ctx, ir.ForeachStatement fes)
 	} else if (fes.itervars.length == 1) {
 		fillBlankVariable(0, value);
 	} else {
-		throw makeExpected(fes.location, "one or two variables after foreach");
+		throw makeExpected(fes.loc, "one or two variables after foreach");
 	}
 }
 
@@ -3637,25 +3637,25 @@ void extypeReturnStatement(Context ctx, ref ir.Node n)
 		extype(ctx, ret.exp, Parent.NA);
 		auto retType = getExpType(ret.exp);
 		if (func.isAutoReturn) {
-			func.type.ret = copyTypeSmart(retType.location, getExpType(ret.exp));
+			func.type.ret = copyTypeSmart(retType.loc, getExpType(ret.exp));
 			if (cast(ir.NullType)func.type.ret !is null) {
-				func.type.ret = buildVoidPtr(ret.location);
+				func.type.ret = buildVoidPtr(ret.loc);
 			}
 		}
 		if (retType.isScope && mutableIndirection(retType)) {
-			throw makeNoReturnScope(ret.location);
+			throw makeNoReturnScope(ret.loc);
 		}
 		checkAndDoConvert(ctx, func.type.ret, ret.exp);
 	} else if (!isVoid(realType(func.type.ret))) {
 		// No return expression on function returning a value.
-		throw makeReturnValueExpected(ret.location, func.type.ret);
+		throw makeReturnValueExpected(ret.loc, func.type.ret);
 	}
 }
 
 void extypeIfStatement(Context ctx, ref ir.Node n)
 {
 	auto ifs = cast(ir.IfStatement) n;
-	auto l = ifs.location;
+	auto loc = ifs.loc;
 	if (ifs.exp !is null) {
 		extype(ctx, ifs.exp, Parent.NA);
 	}
@@ -3665,8 +3665,8 @@ void extypeIfStatement(Context ctx, ref ir.Node n)
 		assert(ifs.thenState !is null);
 
 		auto t = getExpType(ifs.exp);
-		auto var = buildVariable(l,
-				copyTypeSmart(l, t),
+		auto var = buildVariable(loc,
+				copyTypeSmart(loc, t),
 				ir.Variable.Storage.Function,
 				ifs.autoName);
 
@@ -3676,9 +3676,9 @@ void extypeIfStatement(Context ctx, ref ir.Node n)
 		// A hack to work around exp getting resolved twice.
 		var.assign = ifs.exp;
 
-		auto eref = buildExpReference(l, var);
+		auto eref = buildExpReference(loc, var);
 		ir.Node[] vars = [cast(ir.Node)var];
-		ifs.exp = buildStatementExp(l, vars, eref);
+		ifs.exp = buildStatementExp(loc, vars, eref);
 
 		// Add it to its proper scope.
 		ifs.thenState.myScope.addValue(var, var.name);
@@ -3772,7 +3772,7 @@ void extypeAssertStatement(Context ctx, ref ir.Node n)
 	if (as.message !is null) {
 		msg = cast(ir.Constant) as.message;
 	} else {
-		msg = buildConstantString(as.location, "");
+		msg = buildConstantString(as.loc, "");
 	}
 	if ((cond is null || msg is null) || (!isBool(cond.type) || !isString(msg.type))) {
 		throw panicUnhandled(as, "non simple static asserts (bool and string literal only).");
@@ -3835,7 +3835,7 @@ void actualizeFunction(Context ctx, ir.Function func)
 
 	// Error checking
 	if (ctx.functionDepth >= 2) {
-		throw makeNestedNested(func.location);
+		throw makeNestedNested(func.loc);
 	} else if (ctx.functionDepth == 1) {
 		nestExtyperFunction(ctx.parentFunction, func);
 	}
@@ -3934,7 +3934,7 @@ void doResolveType(Context ctx, ref ir.Type type,
 		auto st = cast(ir.StorageType)type;
 		// For auto and friends.
 		if (st.base is null) {
-			st.base = buildAutoType(type.location);
+			st.base = buildAutoType(type.loc);
 		}
 		flattenOneStorage(st, st.base, ct, ctIndex);
 		type = st.base;
@@ -3975,7 +3975,7 @@ void doResolveType(Context ctx, ref ir.Type type,
 		}
 
 		// Assume tr.type is resolved.
-		type = copyTypeSmart(tr.location, tr.type);
+		type = copyTypeSmart(tr.loc, tr.type);
 		type.glossedName = tr.glossedName;
 		addStorage(type, tr);
 		return;
@@ -3985,7 +3985,7 @@ void doResolveType(Context ctx, ref ir.Type type,
 		if (type.nodeType == ir.NodeType.NoType) {
 			throw makeError(to.exp, "expression has no type.");
 		}
-		type = copyTypeSmart(to.location, type);
+		type = copyTypeSmart(to.loc, type);
 		return;
 	case Enum:
 	case Class:
@@ -4014,16 +4014,16 @@ void doResolveAmbiguousArrayType(Context ctx, ref ir.Type type)
 	}
 
 	if (constant !is null && isIntegral(constant.type)) {
-		auto sat = cast(ir.StaticArrayType)buildStaticArrayTypeSmart(type.location, cast(size_t)constant.u._ulong, aat.base);
+		auto sat = cast(ir.StaticArrayType)buildStaticArrayTypeSmart(type.loc, cast(size_t)constant.u._ulong, aat.base);
 		type = sat;
 		return doResolveType(ctx, sat.base, null, 0);
 	}
 	if (aat.child.nodeType == ir.NodeType.TypeExp || aat.child.nodeType == ir.NodeType.StoreExp) {
-		auto aa = cast(ir.AAType)buildAATypeSmart(type.location, childType, aat.base);
+		auto aa = cast(ir.AAType)buildAATypeSmart(type.loc, childType, aat.base);
 		type = aa;
 		return doResolveAA(ctx, type);
 	}
-	throw makeExpected(type.location, "type or expression after array base");
+	throw makeExpected(type.loc, "type or expression after array base");
 }
 
 void doResolveAA(Context ctx, ref ir.Type type)
@@ -4041,12 +4041,12 @@ void doResolveAA(Context ctx, ref ir.Type type)
 	}
 
 	if (base.nodeType == ir.NodeType.Class) {
-		throw makeClassAsAAKey(at.location);
+		throw makeClassAsAAKey(at.loc);
 	}
 
 	if (base.nodeType == ir.NodeType.Struct) {
 		if (mutableIndirection(base)) {
-			throw makeMutableStructAAKey(at.location);
+			throw makeMutableStructAAKey(at.loc);
 		}
 		return;
 	}
@@ -4097,7 +4097,7 @@ void resolveAlias(LanguagePass lp, ir.Alias a)
 		assert(a.id.identifiers.length == 1);
 		auto look = a.lookModule.myScope;
 		auto ident =  a.id.identifiers[0].value;
-		ret = lookupAsImportScope(lp, look, a.location, ident);
+		ret = lookupAsImportScope(lp, look, a.loc, ident);
 		if (ret !is null) {
 			ret.importAlias = true;
 		}
@@ -4139,7 +4139,7 @@ void resolveEnum(LanguagePass lp, ir.Enum e)
 
 	assert(first !is null && first.assign !is null);
 	auto type = getExpType(first.assign);
-	e.base = realType(copyTypeSmart(e.location, type));
+	e.base = realType(copyTypeSmart(e.loc, type));
 }
 
 /**
@@ -4191,12 +4191,12 @@ void resolveVariable(Context ctx, ir.Variable v)
 
 		auto rtype = extype(ctx, v.assign, Parent.NA);
 		if (isVoid(rtype)) {
-			throw makeAssigningVoid(v.assign.location);
+			throw makeAssigningVoid(v.assign.loc);
 		}
 		if (isAuto(v.type)) {
 			auto atype = cast(ir.AutoType) v.type;
 			if (rtype.nodeType == ir.NodeType.FunctionSetType || atype is null) {
-				throw makeCannotInfer(v.assign.location);
+				throw makeCannotInfer(v.assign.loc);
 			}
 			v.type = flattenAuto(atype, rtype);
 		} else {
@@ -4206,7 +4206,7 @@ void resolveVariable(Context ctx, ir.Variable v)
 		}
 		bool assigningOutsideFunction = v.storage != ir.Variable.Storage.Function;
 		if (assigningOutsideFunction && v.type.isScope && mutableIndirection(v.type)) {
-			throw makeNoEscapeScope(v.location);
+			throw makeNoEscapeScope(v.loc);
 		}
 		doConvert(ctx, v.type, v.assign);
 	}
@@ -4225,19 +4225,19 @@ void resolveFunction(Context ctx, ir.Function func)
 	scope (success) done();
 
 	if (func.isAutoReturn) {
-		func.type.ret = buildVoid(func.type.ret.location);
+		func.type.ret = buildVoid(func.type.ret.loc);
 	}
 
 	if (func.type.isProperty &&
 	    func.type.params.length == 0 &&
 	    isVoid(func.type.ret)) {
-		throw makeVoidReturnMarkedProperty(func.location, func.name);
+		throw makeVoidReturnMarkedProperty(func.loc, func.name);
 	} else if (func.type.isProperty &&
 	           func.type.params.length > 1) {
 		throw makeWrongNumberOfArguments(func, func.type.params.length, isVoid(func.type.ret) ? 0U : 1U);
 	}
 	if (func.type.hasVarArgs && func.type.linkage == ir.Linkage.C && func._body !is null) {
-		throw makeUnsupported(func.location, "extern (C) variadic function with body defined");
+		throw makeUnsupported(func.loc, "extern (C) variadic function with body defined");
 	}
 
 	// Ctx points the context surrounding the Function
@@ -4249,7 +4249,7 @@ void resolveFunction(Context ctx, ir.Function func)
 	if (func.name == "main" && func.type.linkage == ir.Linkage.Volt) {
 
 		if (func.params.length == 0) {
-			addParam(func.location, func, buildStringArray(func.location), "");
+			addParam(func.loc, func, buildStringArray(func.loc), "");
 		} else if (func.params.length > 1) {
 			throw makeInvalidMainSignature(func);
 		}
@@ -4271,13 +4271,13 @@ void resolveFunction(Context ctx, ir.Function func)
 	addVarArgsVarsIfNeeded(ctx.lp, func);
 
 	if (func.type.homogenousVariadic && !isArray(realType(func.type.params[$-1]))) {
-		throw makeExpected(func.params[$-1].location, "array type");
+		throw makeExpected(func.params[$-1].loc, "array type");
 	}
 
 	if (func.outParameter.length > 0) {
 		assert(func.outContract !is null);
-		auto l = func.outContract.location;
-		auto var = buildVariableSmart(l, copyTypeSmart(l, func.type.ret), ir.Variable.Storage.Function, func.outParameter);
+		auto loc = func.outContract.loc;
+		auto var = buildVariableSmart(loc, copyTypeSmart(loc, func.type.ret), ir.Variable.Storage.Function, func.outParameter);
 		func.outContract.statements = var ~ func.outContract.statements;
 		func.outContract.myScope.addValue(var, var.name);
 	}
@@ -4414,10 +4414,10 @@ void checkDefaultFootors(Context ctx, ir.Aggregate agg)
 		auto ctor = ir.Function.Kind.Constructor;
 		auto dtor = ir.Function.Kind.Destructor;
 		if (func.kind == ctor && func.params.length == 0) {
-			throw makeStructDefaultCtor(func.location);
+			throw makeStructDefaultCtor(func.loc);
 		}
 		if (func.kind == dtor) {
-			throw makeStructDestructor(func.location);
+			throw makeStructDestructor(func.loc);
 		}
 	}
 }
@@ -4446,7 +4446,7 @@ void checkAnonymousVariables(Context ctx, ir.Aggregate agg)
 		if ((name in names) !is null) {
 			throw makeAnonymousAggregateRedefines(anonAgg, name);
 		}
-		auto store = lookupAsThisScope(ctx.lp, agg.myScope, agg.location, name, ctx.current);
+		auto store = lookupAsThisScope(ctx.lp, agg.myScope, agg.loc, name, ctx.current);
 		if (store !is null) {
 			throw makeAnonymousAggregateRedefines(anonAgg, name);
 		}
@@ -4474,10 +4474,10 @@ void writeVariableAssignsIntoCtors(Context ctx, ir.Class _class)
 		}
 		foreach (ctor; _class.userConstructors) {
 			assert(ctor.thisHiddenParameter !is null);
-			auto eref = buildExpReference(ctor.thisHiddenParameter.location, ctor.thisHiddenParameter, ctor.thisHiddenParameter.name);
-			auto assign = buildAssign(ctor.location, buildAccessExp(ctor.location, eref, v), v.assign);
+			auto eref = buildExpReference(ctor.thisHiddenParameter.loc, ctor.thisHiddenParameter, ctor.thisHiddenParameter.name);
+			auto assign = buildAssign(ctor.loc, buildAccessExp(ctor.loc, eref, v), v.assign);
 			auto stat = new ir.ExpStatement();
-			stat.location = ctor.location;
+			stat.loc = ctor.loc;
 			stat.exp = copyExp(assign);
 			ctor._body.statements = stat ~ ctor._body.statements;
 		}
@@ -4498,7 +4498,7 @@ void tagLiteralType(ir.Exp exp, ir.Type type)
 	if (literal is null) {
 		return;
 	}
-	literal.type = copyTypeSmart(exp.location, type);
+	literal.type = copyTypeSmart(exp.loc, type);
 
 	switch (literal.nodeType) with (ir.NodeType) {
 	case ArrayLiteral:
@@ -4513,7 +4513,7 @@ void tagLiteralType(ir.Exp exp, ir.Type type)
 		}
 		auto aatype = cast(ir.AAType)realType(type);
 		if (aatype is null && base is null) {
-			throw makeUnexpected(exp.location, "array literal");
+			throw makeUnexpected(exp.loc, "array literal");
 		}
 
 		auto alit = cast(ir.ArrayLiteral)exp;
@@ -4522,7 +4522,7 @@ void tagLiteralType(ir.Exp exp, ir.Type type)
 			if (aatype !is null) {
 				auto aapair = cast(ir.AAPair)val;
 				if (aapair is null) {
-					throw makeExpected(exp.location, "associative array pair");
+					throw makeExpected(exp.loc, "associative array pair");
 				}
 				tagLiteralType(aapair.key, aatype.key);
 				tagLiteralType(aapair.value, aatype.value);
@@ -4535,18 +4535,18 @@ void tagLiteralType(ir.Exp exp, ir.Type type)
 		auto stype = cast(ir.Struct)realType(type);
 		auto slit = cast(ir.StructLiteral)exp;
 		if (stype is null || slit is null) {
-			throw panic(exp.location, "tagging struct literal as not an struct.");
+			throw panic(exp.loc, "tagging struct literal as not an struct.");
 		}
 		auto vars = getStructFieldVars(stype);
 		if (slit.exps.length > vars.length) {
-			throw makeWrongNumberOfArgumentsToStructLiteral(exp.location);
+			throw makeWrongNumberOfArgumentsToStructLiteral(exp.loc);
 		}
 		foreach (i, val; slit.exps) {
 			tagLiteralType(val, vars[i].type);
 		}
 		break;
 	default:
-		throw panicUnhandled(exp.location, "literal type");
+		throw panicUnhandled(exp.loc, "literal type");
 	}
 }
 
@@ -4718,14 +4718,14 @@ public:
 		if (ed.assign is null) {
 			if (prevExp is null) {
 				ir.Constant c;
-				ed.assign = c = buildConstantInt(ed.location, 0);
+				ed.assign = c = buildConstantInt(ed.loc, 0);
 				rtype = c.type;
 			} else {
-				auto loc = ed.location;
+				auto loc = ed.loc;
 				rtype = getExpType(prevExp);
 				auto prevType = realType(rtype);
 				if (!isIntegral(prevType)) {
-					throw makeTypeIsNot(ed, prevType, buildInt(ed.location));
+					throw makeTypeIsNot(ed, prevType, buildInt(ed.loc));
 				}
 
 				ir.Exp add = buildAdd(loc, copyExp(prevExp), buildConstantInt(loc, 1));
@@ -4743,13 +4743,13 @@ public:
 		if (e !is null && isAuto(realType(e.base))) {
 			e.base = realType(e.base);
 			auto atype = cast(ir.AutoType) e.base;
-			auto t = realType(copyTypeSmart(ed.assign.location, rtype));
+			auto t = realType(copyTypeSmart(ed.assign.loc, rtype));
 			e.base = flattenAuto(atype, t);
 		}
 		if (isAuto(realType(ed.type))) {
 			ed.type = realType(ed.type);
 			auto atype = cast(ir.AutoType) ed.type;
-			auto t = realType(copyTypeSmart(ed.assign.location, rtype));
+			auto t = realType(copyTypeSmart(ed.assign.loc, rtype));
 			ed.type = flattenAuto(atype, t);
 		}
 		checkAndDoConvert(ctx, ed.type, ed.assign);

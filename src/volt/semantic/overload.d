@@ -55,40 +55,40 @@ import volt.util.sinks;
 enum ThrowOnError = true;
 enum DoNotThrow = false;
 
-ir.Function selectFunction(ir.Function[] functions, ir.Exp[] arguments, ref Location location, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(ir.Function[] functions, ir.Exp[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
 {
 	ir.Type[] types;
 	foreach (arg; arguments) {
 		types ~= getExpType(arg);
 	}
-	return selectFunction(functions, types, arguments, location, throwOnError);
+	return selectFunction(functions, types, arguments, loc, throwOnError);
 }
 
-ir.Function selectFunction(ir.FunctionSet fset, ir.Exp[] arguments, ref Location location, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(ir.FunctionSet fset, ir.Exp[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
 {
 	ir.Type[] types;
 	foreach (arg; arguments) {
 		types ~= getExpType(arg);
 	}
-	return selectFunction(fset, types, arguments, location, throwOnError);
+	return selectFunction(fset, types, arguments, loc, throwOnError);
 }
 
-ir.Function selectFunction(ir.FunctionSet fset, ir.Variable[] arguments, ref Location location, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(ir.FunctionSet fset, ir.Variable[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
 {
 	ir.Type[] types;
 	foreach (arg; arguments) {
 		types ~= arg.type;
 	}
-	return selectFunction(fset, types, [], location, throwOnError);
+	return selectFunction(fset, types, [], loc, throwOnError);
 }
 
-ir.Function selectFunction(ir.Function[] functions, ir.Variable[] arguments, ref Location location, bool throwOnError)
+ir.Function selectFunction(ir.Function[] functions, ir.Variable[] arguments, ref in Location loc, bool throwOnError)
 {
 	ir.Type[] types;
 	foreach (arg; arguments) {
 		types ~= arg.type;
 	}
-	return selectFunction(functions, types, [], location, throwOnError);
+	return selectFunction(functions, types, [], loc, throwOnError);
 }
 
 int matchLevel(bool homogenous, ir.Type argument, ir.Type parameter, ir.Exp exp=null)
@@ -153,28 +153,28 @@ bool specialisationComparison(Object ao, Object bo)
 	return atob && !btoa;
 }
 
-ir.Function selectFunction(ir.FunctionSet fset, ir.Type[] arguments, ref Location location, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(ir.FunctionSet fset, ir.Type[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
 {
-	return selectFunction(fset, arguments, [], location, throwOnError);
+	return selectFunction(fset, arguments, [], loc, throwOnError);
 }
 
-ir.Function selectFunction(ir.FunctionSet fset, ir.Type[] arguments, ir.Exp[] exps, ref Location location, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(ir.FunctionSet fset, ir.Type[] arguments, ir.Exp[] exps, ref in Location loc, bool throwOnError = ThrowOnError)
 {
-	auto func = selectFunction(fset.functions, arguments, exps, location, throwOnError);
+	auto func = selectFunction(fset.functions, arguments, exps, loc, throwOnError);
 	if (func is null) {
 		return null;
 	}
 	return fset.resolved(func);
 }
 
-ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ref Location location, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
 {
-	return selectFunction(functions, arguments, [], location, throwOnError);
+	return selectFunction(functions, arguments, [], loc, throwOnError);
 }
 
-ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ir.Exp[] exps, ref Location location, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ir.Exp[] exps, ref in Location loc, bool throwOnError = ThrowOnError)
 {
-	panicAssert(location, functions.length > 0);
+	panicAssert(loc, functions.length > 0);
 
 	ir.Access lastAccess = functions[0].access;
 	for (size_t i = 1; i < functions.length; ++i) {
@@ -246,9 +246,9 @@ ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ir.Exp[
 	void throwError(scope ir.Function[] functions)
 	{
 		if (functions.length > 1 && highestMatchLevel > 1) {
-			throw makeMultipleFunctionsMatch(location, functions);
+			throw makeMultipleFunctionsMatch(loc, functions);
 		} else {
-			throw makeCannotDisambiguate(location, functions, arguments);
+			throw makeCannotDisambiguate(loc, functions, arguments);
 		}
 	}
 
@@ -322,7 +322,7 @@ ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ir.Exp[
 	}
 	if (outFunctions.length == 0) {
 		if (throwOnError) {
-			throw makeNoValidFunction(location, functions[0].name, arguments);
+			throw makeNoValidFunction(loc, functions[0].name, arguments);
 		} else {
 			return null;
 		}

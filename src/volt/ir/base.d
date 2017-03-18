@@ -202,7 +202,7 @@ abstract class Node
 {
 public:
 	/// Where in the source this Node was defined, for diagnostic purposes.
-	Location location;
+	Location loc;
 
 	/// Retrieve the NodeType for this Node.
 	@property NodeType nodeType() { return mNodeType; }
@@ -223,7 +223,7 @@ protected:
 	this(NodeType nt, Node old)
 	{
 		this(nt);  // Setup uniqueId.
-		this.location = old.location;
+		this.loc = old.loc;
 	}
 
 private:
