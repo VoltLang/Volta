@@ -1,4 +1,3 @@
-//T has-passed:no
 module test;
 
 
@@ -12,6 +11,8 @@ fn func(in ref f: Foo) i32
 	// ^ .../003/test.volt:10:12: error: expected primitive type.
 	return f.a;
 }
+
+global fptr: fn(in ref Foo) i32;
 
 fn main(args: string[]) i32
 {
