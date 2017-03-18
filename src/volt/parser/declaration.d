@@ -450,10 +450,25 @@ ParseStatus parseNewFunctionParams(ParserStream ps, ir.CallableType func)
 			func.hasVarArgs = true;
 			break;
 		}
-		auto isRef = matchIf(ps, TokenType.Ref);
-		auto isOut = matchIf(ps, TokenType.Out);
-		auto isIn  = matchIf(ps, TokenType.In);
-		int roi = (isRef ? 1 : 0) + (isOut ? 1 : 0) + (isIn ? 1 : 0);
+		bool argRef, argOut, argIn;
+		while (ps == TokenType.Out || ps == TokenType.In || ps == TokenType.Ref) {
+			auto targRef = matchIf(ps, TokenType.Ref);
+			if (targRef && argRef) {
+				return parseFailed(ps, func);
+			}
+			argRef = targRef;
+			auto targOut = matchIf(ps, TokenType.Out);
+			if (targOut && argOut) {
+				return parseFailed(ps, func);
+			}
+			argOut = targOut;
+			auto targIn = matchIf(ps, TokenType.In);
+			if (targIn && argIn) {
+				return parseFailed(ps, func);
+			}
+			argIn = targIn;
+		}
+		int roi = (argRef ? 1 : 0) + (argOut ? 1 : 0) + (argIn ? 1 : 0);
 		if (roi > 1) {
 			return parseFailed(ps, func);
 		}
@@ -466,14 +481,14 @@ ParseStatus parseNewFunctionParams(ParserStream ps, ir.CallableType func)
 		if (!succeeded) {
 			return parseFailed(ps, func);
 		}
-		if (isRef || isOut) {
+		if (argRef || argOut) {
 			auto s = new ir.StorageType();
 			s.location = t.location;
-			s.type = isRef ? ir.StorageType.Kind.Ref : ir.StorageType.Kind.Out;
+			s.type = argRef ? ir.StorageType.Kind.Ref : ir.StorageType.Kind.Out;
 			s.base = t;
 			t = s;
 		}
-		if (isIn) {
+		if (argIn) {
 			auto constStorage = buildStorageType(t.location, ir.StorageType.Kind.Const, t);
 			auto scopeStorage = buildStorageType(t.location, ir.StorageType.Kind.Scope, constStorage);
 			t = scopeStorage;
@@ -870,9 +885,24 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func)
 			func.type.hasVarArgs = true;
 			break;
 		}
-		bool argRef = matchIf(ps, TokenType.Ref);
-		bool argOut = matchIf(ps, TokenType.Out);
-		bool argIn = matchIf(ps, TokenType.In);
+		bool argRef, argOut, argIn;
+		while (ps == TokenType.Out || ps == TokenType.In || ps == TokenType.Ref) {
+			auto targRef = matchIf(ps, TokenType.Ref);
+			if (targRef && argRef) {
+				return parseFailed(ps, func);
+			}
+			argRef = targRef;
+			auto targOut = matchIf(ps, TokenType.Out);
+			if (targOut && argOut) {
+				return parseFailed(ps, func);
+			}
+			argOut = targOut;
+			auto targIn = matchIf(ps, TokenType.In);
+			if (targIn && argIn) {
+				return parseFailed(ps, func);
+			}
+			argIn = targIn;
+		}
 		if (argRef && argOut) {
 			return parseFailed(ps, func);
 		}
