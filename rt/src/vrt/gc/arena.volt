@@ -164,6 +164,17 @@ public:
 			size = 16;
 		}
 
+/*
+		str := typeinfo.mangledName;
+		if (count == 0) {
+			printf("      '%.*s'\n", cast(int)str.length, str.ptr);
+		} else if (count == cast(size_t) -1) {
+			printf("C     '%.*s'\n", cast(int)str.length, str.ptr);
+		} else {
+			printf("array '%.*s'\n", cast(int)str.length, str.ptr);
+		}
+*/
+
 		// Statistics
 		stats.numAllocs++;
 		stats.numAllocBytes += size;
