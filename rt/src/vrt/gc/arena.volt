@@ -177,6 +177,9 @@ public:
 			printf("array '%.*s'\n", cast(int)str.length, str.ptr);
 		}
 */
+/*
+		printf("pow %i\n", nextHighestPowerOfTwo(size));
+*/
 
 		// Statistics
 		stats.numAllocs++;
