@@ -47,7 +47,7 @@ public:
 
 	fn totalSize() size_t
 	{
-		return stats.numAllocBytes;
+		return cast(size_t)stats.numAllocBytes;
 	}
 
 	fn allocEntry(typeinfo: TypeInfo, count: size_t) void*
