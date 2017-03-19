@@ -162,9 +162,9 @@ public:
 			size = count * typeinfo.size;
 		}
 
-		// viviv ctfe/020 fails if we don't do this.
-		if (size < 16) {
-			size = 16;
+		// Align to pointer sizes.
+		if (size < 8) {
+			size = 8;
 		}
 
 /*
