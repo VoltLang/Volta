@@ -148,7 +148,10 @@ public:
 		memory: void*;
 		registerFinalizer := false;
 
-		if (count == cast(size_t) 0) {
+		if (count == 0) {
+			stats.numZeroAllocs++;
+			return null;
+		} else if (count == cast(size_t) -2) {
 			size = typeinfo.size;
 		} else if (count == cast(size_t) -1) {
 			// Hack for now.
@@ -166,7 +169,7 @@ public:
 
 /*
 		str := typeinfo.mangledName;
-		if (count == 0) {
+		if (count == cast(size_t) -2) {
 			printf("      '%.*s'\n", cast(int)str.length, str.ptr);
 		} else if (count == cast(size_t) -1) {
 			printf("C     '%.*s'\n", cast(int)str.length, str.ptr);

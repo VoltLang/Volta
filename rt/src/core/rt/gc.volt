@@ -9,16 +9,17 @@ import core.typeinfo;
  * This is all up in the air. But here is how its intended to work.
  *
  * @param typeinfo The type to which we should allocate storage for.
- * @param count the number of elements in a array, zero if just the type.
+ * @param count the number of elements in a array, minus two if just the type.
  *
- * The count logic is a bit odd. If count is zero we are allocating the
+ * The count logic is a bit odd. If count is minus two we are allocating the
  * storage for just the type alone, if count is greater then one we are
- * allocating the storage an array of that type. Here how it is done,
+ * allocating the storage an array of that type. If it is zero the allocDg
+ * call MUST return null. Here how it is done,
  * Thow following shows what happends for some cases.
  *
  * For primitive types:
  * int* ptr = new int;
- * int* ptr = allocDg(typeid(int), 0);
+ * int* ptr = allocDg(typeid(int), cast(size_t)-2);
  * // Alloc size == int.sizeof == 4
  *
  * While for arrays:
@@ -33,13 +34,18 @@ import core.typeinfo;
  *
  * Here its where it gets weird: this is because classes are references.
  * Clazz foo = new Clazz;
- * Clazz foo = allocDg(typeid(Clazz), 0);
+ * Clazz foo = allocDg(typeid(Clazz), cast(size_t)-2);
  * // Alloc size == (void*).sizeof
  *
  * And going from that this makes sense.
  * Clazz[] arr; arr.length = 3;
  * Clazz[] arr; { arr.ptr = allocDg(typeid(Clazz), 3); arr.length = 3 }
  * // Alloc size == (void*).sizeof * 3
+ *
+ * And for zero.
+ * Clazz[] arr; arr.length = 0;
+ * Clazz[] arr; { arr.ptr = allocDg(typeid(Clazz), 0); arr.length = 0 }
+ * // Alloc size == (void*).sizeof * 0
  */
 alias AllocDg = dg (typeinfo: TypeInfo, count: size_t) void*;
 local allocDg: AllocDg;
@@ -52,6 +58,7 @@ struct Stats
 	numArrayBytes: u64;
 	numClassAllocs: u64;
 	numClassBytes: u64;
+	numZeroAllocs: u64;
 }
 
 extern(C):
