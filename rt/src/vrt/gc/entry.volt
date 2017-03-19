@@ -6,6 +6,7 @@ module vrt.gc.entry;
 
 import core.rt.gc : Stats, AllocDg;
 import vrt.ext.stdc : calloc, free, getenv;
+import vrt.gc.sbrk;
 import vrt.gc.arena;
 import vrt.gc.sections;
 
@@ -22,7 +23,11 @@ import vrt.gc.sections;
 
 struct GcHeap
 {
-	arena: Arena;
+	version (all) {
+		arena: Arena;
+	} else {
+		arena: SBrk2;
+	}
 }
 
 local heap: GcHeap;
