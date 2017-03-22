@@ -403,11 +403,11 @@ public:
 			this.scopeExits = new old.scopeExits[0 .. $];
 			this.scopeFailures = new old.scopeFailures[0 .. $];
 		} else {
-			this.params = old.params;
-			this.nestedFunctions = old.nestedFunctions;
-			this.scopeSuccesses = old.scopeSuccesses;
-			this.scopeExits = old.scopeExits;
-			this.scopeFailures = old.scopeFailures;
+			this.params = old.params.dup;
+			this.nestedFunctions = old.nestedFunctions.dup;
+			this.scopeSuccesses = old.scopeSuccesses.dup;
+			this.scopeExits = old.scopeExits.dup;
+			this.scopeFailures = old.scopeFailures.dup;
 		}
 		this.name = old.name;
 		this.mangledName = old.mangledName;
