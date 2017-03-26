@@ -182,9 +182,7 @@ ir.Exp lowerAACast(ref in Location loc, LanguagePass lp, ir.Module thisModule,
 			auto type = prim.type == ir.PrimitiveType.Kind.Double ?
 				buildUlong(loc) : buildInt(loc);
 
-			key = buildDeref(loc,
-					buildCastSmart(loc, buildPtrSmart(loc, type), buildAddrOf(key))
-			);
+			key = buildCastSmart(loc, type, key);
 		}
 
 		key = buildCastSmart(loc, buildUlong(loc), key);
