@@ -114,7 +114,8 @@ public:
 				auto initC = LLVMConstNull(t.llvmType);
 				LLVMBuildStore(state.builder, initC, v);
 			} else if (isStruct && !isRef) {
-				LLVMAddAttribute(v, LLVMAttribute.ByVal);
+				auto index = cast(LLVMAttributeIndex)(irIndex+offset+1);
+				LLVMAddAttributeAtIndex(llvmFunc, index, state.attrByVal);
 			}
 
 			// Early out on unmaned parameters.

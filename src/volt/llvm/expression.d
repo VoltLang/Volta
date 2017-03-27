@@ -1164,7 +1164,8 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 		bool isRefOut = isInBounds && (ct.ct.isArgRef[i] || ct.ct.isArgOut[i]);
 		bool isStruct = args[i+offset].type.passByVal;
 		if (!isRefOut && isStruct) {
-			LLVMAddInstrAttribute(result.value, cast(uint)(i+offset+1), LLVMAttribute.ByVal);
+			auto index = cast(LLVMAttributeIndex)(i+offset+1);
+			LLVMAddCallSiteAttribute(result.value, index, state.attrByVal);
 		}
 	}
 

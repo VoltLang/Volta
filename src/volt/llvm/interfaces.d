@@ -66,6 +66,15 @@ public:
 	LLVMDIBuilderRef diBuilder;
 	LLVMModuleRef mod;
 
+	/**
+	 * Cached llvm attributes.
+	 * @{
+	 */
+	LLVMAttributeRef attrSRet;
+	LLVMAttributeRef attrByVal;
+	LLVMAttributeRef attrUWTable;
+	/** @} */
+
 	static final class PathState
 	{
 	public:

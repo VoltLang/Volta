@@ -85,6 +85,14 @@ public:
 		this.ehPersonality = ehPersonality;
 		this.llvmTypeidFor = llvmTypeidFor;
 
+		uint enumKind;
+		enumKind = LLVMGetEnumAttributeKindForName("sret", 4);
+		this.attrSRet = LLVMCreateEnumAttribute(this.context, enumKind, 0);
+		enumKind = LLVMGetEnumAttributeKindForName("byval", 5);
+		this.attrByVal = LLVMCreateEnumAttribute(this.context, enumKind, 0);
+		enumKind = LLVMGetEnumAttributeKindForName("uwtable", 7);
+		this.attrUWTable = LLVMCreateEnumAttribute(this.context, enumKind, 0);
+
 		buildCommonTypes(this, target.isP64);
 
 		visitor = new LlvmVisitor(this);
@@ -361,7 +369,7 @@ public:
 			if (!argFunc.isBuiltinFunction()) {
 				// Always add a unwind table.
 				// TODO: Check for nothrow
-				LLVMAddFunctionAttr(v, LLVMAttribute.UWTable);
+				LLVMAddAttributeAtIndex(v, LLVMAttributeIndex.Function, attrUWTable);
 
 				// Always emit the frame pointer.
 				// TODO: Add support for -O*optimization
@@ -377,8 +385,8 @@ public:
 				throw panic("return struct and @loadDynamic not supported");
 			}
 
-			auto param = LLVMGetParam(v, 0);
-			LLVMAddAttribute(param, LLVMAttribute.StructRet);
+			auto index = cast(LLVMAttributeIndex)1;
+			LLVMAddAttributeAtIndex(v, index, attrSRet);
 		}
 
 		Store add = { v, type };
