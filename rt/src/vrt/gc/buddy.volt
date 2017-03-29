@@ -7,37 +7,49 @@ module vrt.gc.buddy;
 
 
 /**
- * A buddy allocator with 9 orders and 512 blocks in the last order.
+ * A buddy allocator with 512 blocks in the last order.
  */
 struct Buddy512
 {
 public:
-	enum NumLevels = 9u;
+	enum MinOrder = 3u;
+	enum MaxOrder = 9u;
+	enum NumLevels = MaxOrder - MinOrder + 1;
+
 
 private:
-	enum OffsetBits = 0xFF_FC00;
-	enum OffsetMask = 0x00_03FF;
-	enum NumBits = (1u << (NumLevels+1)) - 1u;
-	enum NumBytes = NumBits / 8u + 1u;
+	alias ElmType = u8;
+	enum NumBitsPerElm = 8u;
+	enum NumBits = (1u << (MaxOrder+1)) - (1 << MinOrder);
+	enum NumElems = NumBits / NumBitsPerElm;
 
-	mBitmap: u8[NumBytes];
+	mBitmap: ElmType[NumElems];
 	mNumFree: u32[NumLevels];
 
 
 public:
 	fn setup()
 	{
+		// For "buddy := index ^ 1;"
+		assert(MinOrder > 0);
+		// Just to be safe.
+		assert(NumBitsPerElm == (1 << MinOrder));
+
 		// Mark the first order and first index as free.
-		free(0, 0);
+		mBitmap[0] = cast(ElmType)-1;
+		mNumFree[0] = numBitsInOrder(MinOrder);
 	}
 
 	// Returns true if the buddy allocator can allocate from this order.
 	fn canAlloc(order: u32) bool
 	{
-		if (mNumFree[order] > 0) {
+		if (order < MinOrder) {
+			return false;
+		}
+		if (mNumFree[order - MinOrder] > 0) {
 			return true;
 		}
-		return order == 0 ? false : canAlloc(order-1);
+		return canAlloc(order-1);
 	}
 
 	// One block from the given order, may split orders above to make room.
@@ -45,13 +57,13 @@ public:
 	// order with canAlloc before calling this function.
 	fn alloc(order: u32) u32
 	{
-		if (mNumFree[order] > 0) {
+		if (mNumFree[order - MinOrder] > 0) {
 			return takeFree(order);
 		}
 
 		base := alloc(order-1) * 2;
 		setBit(indexOf(order, base+1));
-		mNumFree[order]++;
+		addFree(order);
 		return base;
 	}
 
@@ -61,11 +73,11 @@ public:
 	fn free(order: u32, n: u32)
 	{
 		index := indexOf(order, n);
-		buddy := index + 1 - (2 * (n % 2));
+		buddy := index ^ 1;
 
 		// Either the top order or the buddy is not set.
-		if (order == 0 || !getBit(buddy)) {
-			mNumFree[order]++;
+		if (order == MinOrder || !getBit(buddy)) {
+			addFree(order);
 			setBit(index);
 			return;
 		}
@@ -73,27 +85,46 @@ public:
 		// Buddy is also set: allocate it, merge it and
 		// propegate up to the next order.
 		clearBit(buddy);
-		mNumFree[order]--;
+		subFree(order);
 		free(order-1, n >> 1);
 	}
 
 
 private:
+	fn addFree(order: u32)
+	{
+		mNumFree[order - MinOrder]++;
+	}
+
+	fn subFree(order: u32)
+	{
+		mNumFree[order - MinOrder]--;
+	}
+
 	fn getBit(index: u32) bool
 	{
-		return cast(bool)(mBitmap[index / 8] >> (index % 8) & 1);
+		elmIndex := index / NumBitsPerElm;
+		bitIndex := index % NumBitsPerElm;
+
+		return cast(bool)(mBitmap[elmIndex] >> bitIndex & 1);
 	}
 
 	fn setBit(index: u32)
 	{
-		mBitmap[index / 8] |= cast(u8)(1 << (index % 8));
+		elmIndex := index / NumBitsPerElm;
+		bitIndex := index % NumBitsPerElm;
+
+		mBitmap[elmIndex] |= cast(ElmType)(1 << bitIndex);
 	}
 
 	fn clearBit(index: u32)
 	{
+		elmIndex := index / NumBitsPerElm;
+		bitIndex := index % NumBitsPerElm;
+
 		// Use xor so we don't need to invert bits.
 		// If the bit is not set this will cause a error.
-		mBitmap[index / 8] ^= cast(u8)(1 << (index % 8));
+		mBitmap[elmIndex] ^= cast(ElmType)(1 << (bitIndex));
 	}
 
 	fn takeFree(order: u32) u32
@@ -104,7 +135,7 @@ private:
 		foreach (i; start .. end) {
 			if (getBit(i)) {
 				clearBit(i);
-				mNumFree[order]--;
+				subFree(order);
 				return i - start;
 			}
 		}
@@ -118,7 +149,7 @@ private:
 
 	static fn offsetOfOrder(order: u32) u32
 	{
-		return (OffsetBits >> (NumLevels - 1 - order)) & OffsetMask;
+		return (1 << order) - (1 << MinOrder);
 	}
 
 	static fn numBitsInOrder(order: u32) u32
@@ -130,8 +161,8 @@ private:
 /*
 fn dump(ref b: Buddy512)
 {
-	foreach (i; 0u .. NumLevels) {
-		printf("% 5i: ", b.mNumFree[i]);
+	foreach (i; MinOrder .. MaxOrder+1) {
+		printf("%i: (% 5i) ", i, b.mNumFree[i-MinOrder]);
 		start := Buddy512.offsetOfOrder(i);
 		end := start + Buddy512.numBitsInOrder(i);
 		foreach (j; start .. end) {
