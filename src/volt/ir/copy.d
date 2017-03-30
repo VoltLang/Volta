@@ -538,7 +538,6 @@ ir.Node copyNode(ir.Node n)
 	case Unittest:
 	case Union:
 	case Attribute:
-	case StaticAssert:
 	case MixinTemplate:
 	case MixinFunction:
 	case Condition:

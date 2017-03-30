@@ -18,6 +18,7 @@ import volt.parser.base;
 import volt.parser.declaration;
 public import volt.parser.statements : parseMixinStatement;
 import volt.parser.expression;
+import volt.parser.statements;
 
 
 ParseStatus parseModule(ParserStream ps, out ir.Module mod)
@@ -258,8 +259,8 @@ body
 			} else if (next == TokenType.This) {
 				goto case TokenType.This;
 			} else if (next == TokenType.Assert) {
-				ir.StaticAssert s;
-				succeeded = parseStaticAssert(ps, s);
+				ir.AssertStatement s;
+				succeeded = parseAssertStatement(ps, s);
 				if (!succeeded) {
 					return parseFailed(ps, ir.NodeType.TopLevelBlock);
 				}
@@ -1150,33 +1151,6 @@ ParseStatus parseAttribute(ParserStream ps, out ir.Attribute attr, bool noTopLev
 	}
 
 	return Succeeded;
-}
-
-ParseStatus parseStaticAssert(ParserStream ps, out ir.StaticAssert sa)
-{
-	sa = new ir.StaticAssert();
-	sa.loc = ps.peek.loc;
-	sa.docComment = ps.comment();
-
-	auto succeeded = match(ps, ir.NodeType.StaticAssert,
-		[TokenType.Static, TokenType.Assert, TokenType.OpenParen]);
-	if (!succeeded) {
-		return succeeded;
-	}
-
-	succeeded = parseExp(ps, sa.exp);
-	if (!succeeded) {
-		return parseFailed(ps, sa);
-	}
-	if (matchIf(ps, TokenType.Comma)) {
-		succeeded = parseExp(ps, sa.message);
-		if (!succeeded) {
-			return parseFailed(ps, sa);
-		}
-	}
-
-	return match(ps, ir.NodeType.StaticAssert,
-		[TokenType.CloseParen, TokenType.Semicolon]);
 }
 
 ParseStatus parseCondition(ParserStream ps, out ir.Condition condition)

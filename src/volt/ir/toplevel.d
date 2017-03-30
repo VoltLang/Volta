@@ -577,31 +577,6 @@ public:
 }
 
 /**
- * Compile time assert.
- * If the expression is false, then compilation is halted with
- * an optional message.
- *
- * @ingroup irNode irTopLevel
- */
-class StaticAssert : Node
-{
-public:
-	Exp exp;  ///< Often just false.
-	Exp message;  ///< Optional.
-
-
-public:
-	this() { super(NodeType.StaticAssert); }
-
-	this(StaticAssert old)
-	{
-		super(NodeType.StaticAssert, old);
-		this.exp = old.exp;
-		this.message = old.message;
-	}
-}
-
-/**
  * Unittest code to be run on if selected by user.
  *
  * @ingroup irNode irTopLevel

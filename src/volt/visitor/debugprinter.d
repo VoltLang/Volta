@@ -206,8 +206,6 @@ public:
 	override Status leave(ir.FunctionParam n) { leaveNode(n); return Continue; }
 	override Status enter(ir.Enum n) { enterNode(n); return Continue; }
 	override Status leave(ir.Enum n) { leaveNode(n); return Continue; }
-	override Status enter(ir.StaticAssert n) { enterNode(n); return Continue; }
-	override Status leave(ir.StaticAssert n) { leaveNode(n); return Continue; }
 	override Status enter(ir.Condition n) { enterNode(n); return Continue; }
 	override Status leave(ir.Condition n) { leaveNode(n); return Continue; }
 	override Status enter(ir.ConditionTopLevel n) { enterNode(n); return Continue; }

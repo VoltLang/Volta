@@ -51,8 +51,6 @@ public abstract:
 	Status leave(ir.FunctionParam fp);
 	Status enter(ir.Enum e);
 	Status leave(ir.Enum e);
-	Status enter(ir.StaticAssert sa);
-	Status leave(ir.StaticAssert sa);
 	Status enter(ir.Condition c);
 	Status leave(ir.Condition c);
 	Status enter(ir.ConditionTopLevel ctl);
@@ -242,8 +240,6 @@ override:
 	Status leave(ir.FunctionParam fp){ return Continue; }
 	Status enter(ir.Enum e){ return Continue; }
 	Status leave(ir.Enum e){ return Continue; }
-	Status enter(ir.StaticAssert sa){ return Continue; }
-	Status leave(ir.StaticAssert sa){ return Continue; }
 	Status enter(ir.Condition c){ return Continue; }
 	Status leave(ir.Condition c){ return Continue; }
 	Status enter(ir.ConditionTopLevel ctl){ return Continue; }
@@ -466,10 +462,6 @@ body {
 		auto asAttribute = cast(ir.Attribute) n;
 		assert(asAttribute !is null);
 		return acceptAttribute(asAttribute, av);
-	case StaticAssert:
-		auto asStaticAssert = cast(ir.StaticAssert) n;
-		assert(asStaticAssert !is null);
-		return acceptStaticAssert(asStaticAssert, av);
 	case MixinFunction:
 		auto asMf = cast(ir.MixinFunction) n;
 		assert(asMf !is null);
@@ -905,28 +897,6 @@ Visitor.Status acceptEnum(ir.Enum e, Visitor av)
 	}
 
 	return av.leave(e);
-}
-
-Visitor.Status acceptStaticAssert(ir.StaticAssert sa, Visitor av)
-{
-	auto status = av.enter(sa);
-	if (status != VisitorContinue) {
-		return parentContinue(status);
-	}
-
-	status = acceptExp(sa.exp, av);
-	if (status != VisitorContinue) {
-		return parentContinue(status);
-	}
-
-	if (sa.message !is null) {
-		status = acceptExp(sa.message, av);
-		if (status != VisitorContinue) {
-			return parentContinue(status);
-		}
-	}
-
-	return av.leave(sa);
 }
 
 Visitor.Status acceptCondition(ir.Condition c, Visitor av)

@@ -427,24 +427,6 @@ public:
 		assert(false);
 	}
 
-	override Status enter(ir.StaticAssert sa)
-	{
-		ln();
-		twf("static assert(");
-		acceptExp(sa.exp, this);
-		if (sa.message !is null) {
-			wf(", ");
-			accept(sa.message, this);
-		}
-		wfln(");");
-		return ContinueParent;
-	}
-
-	override Status leave(ir.StaticAssert sa)
-	{
-		assert(false);
-	}
-
 	override Status enter(ir.MixinFunction mf)
 	{
 		ln();

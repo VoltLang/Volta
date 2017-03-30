@@ -3811,7 +3811,6 @@ void extypeGotoStatement(Context ctx, ref ir.Node n)
 	}
 }
 
-
 /*
  *
  * Actualize functions.
@@ -4885,6 +4884,14 @@ public:
 		return ContinueParent;
 	}
 
+	override Status enter(ir.AssertStatement n)
+	{
+		panicAssert(n, n.isStatic);
+		ir.Node nd = n;
+		extypeAssertStatement(ctx, nd);
+		return ContinueParent;
+	}
+
 	/*
 	 *
 	 * Error checking.
@@ -4920,7 +4927,6 @@ public:
 	override Status leave(ir.WhileStatement n) { throw panic(n, "visitor"); }
 	override Status enter(ir.SwitchStatement n) { throw panic(n, "visitor"); }
 	override Status leave(ir.SwitchStatement n) { throw panic(n, "visitor"); }
-	override Status enter(ir.AssertStatement n) { throw panic(n, "visitor"); }
 	override Status leave(ir.AssertStatement n) { throw panic(n, "visitor"); }
 	override Status enter(ir.ReturnStatement n) { throw panic(n, "visitor"); }
 	override Status leave(ir.ReturnStatement n) { throw panic(n, "visitor"); }

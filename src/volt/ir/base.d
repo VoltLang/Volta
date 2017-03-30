@@ -48,7 +48,6 @@ enum NodeType
 	Union,
 	Enum,
 	Attribute,
-	StaticAssert,
 	Condition,
 	ConditionTopLevel,
 	MixinFunction,
@@ -345,7 +344,6 @@ string nodeToString(NodeType nodeType)
 	case Enum: return "Enum";
 	case EnumDeclaration: return "EnumDeclaration";
 	case Attribute: return "Attribute";
-	case StaticAssert: return "StaticAssert";
 	case MixinFunction: return "MixinFunction";
 	case MixinTemplate: return "MixinTemplate";
 	case Condition: return "Condition";
