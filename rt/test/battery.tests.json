@@ -15,7 +15,7 @@
 			"//T run:%t"
 		],
 		"do-not-link": [
-			"//T run:volta -c %s"
+			"//T run:volta -c -o %t %s"
 		],
 		"syntax-only": [
 			"//T run:volta -c -E %s"
