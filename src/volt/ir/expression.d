@@ -823,40 +823,6 @@ public:
 }
 
 /**
- * A TemplateInstanceExp represents an instantiation of a template
- * with explicit type parameters.
- *
- * @ingroup irNode irExp
- */
-class TemplateInstanceExp : Exp
-{
-public:
-	struct TypeOrExp
-	{
-		Exp exp;
-		Type type;
-	}
-
-public:
-	string name;
-	TypeOrExp[] types;
-
-public:
-	this() { super(NodeType.TemplateInstanceExp); }
-
-	this(TemplateInstanceExp old)
-	{
-		super(NodeType.TemplateInstanceExp, old);
-		this.name = name;
-		version (Volt) {
-			this.types = new old.types[0 .. $];
-		} else {
-			this.types = old.types.dup;
-		}
-	}
-}
-
-/**
  * A StatementExp is a internal expression for inserting statements
  * into a expression. Note that this is not a function and executes
  * the statements just as if they where inserted in the BlockStatement

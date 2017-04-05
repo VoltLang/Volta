@@ -193,8 +193,6 @@ public abstract:
 	Visitor.Status leave(ref ir.Exp, ir.Constant);
 	Visitor.Status enter(ref ir.Exp, ir.TypeExp);
 	Visitor.Status leave(ref ir.Exp, ir.TypeExp);
-	Visitor.Status enter(ref ir.Exp, ir.TemplateInstanceExp);
-	Visitor.Status leave(ref ir.Exp, ir.TemplateInstanceExp);
 	Visitor.Status enter(ref ir.Exp, ir.StatementExp);
 	Visitor.Status leave(ref ir.Exp, ir.StatementExp);
 	Visitor.Status enter(ref ir.Exp, ir.VaArgExp);
@@ -387,8 +385,6 @@ override:
 	Status leave(ref ir.Exp, ir.Constant){ return Continue; }
 	Status enter(ref ir.Exp, ir.TypeExp){ return Continue; }
 	Status leave(ref ir.Exp, ir.TypeExp){ return Continue; }
-	Status enter(ref ir.Exp, ir.TemplateInstanceExp){ return Continue; }
-	Status leave(ref ir.Exp, ir.TemplateInstanceExp){ return Continue; }
 	Status enter(ref ir.Exp, ir.StatementExp){ return Continue; }
 	Status leave(ref ir.Exp, ir.StatementExp){ return Continue; }
 	Status enter(ref ir.Exp, ir.VaArgExp){ return Continue; }
@@ -523,7 +519,6 @@ body {
 	case ClassLiteral:
 	case TypeExp:
 	case StoreExp:
-	case TemplateInstanceExp:
 	case StatementExp:
 	case TokenExp:
 	case VaArgExp:
@@ -723,8 +718,6 @@ Visitor.Status acceptExp(ref ir.Exp exp, Visitor av)
 		return acceptTypeExp(exp, cast(ir.TypeExp)exp, av);
 	case StoreExp:
 		return acceptStoreExp(exp, cast(ir.StoreExp)exp, av);
-	case TemplateInstanceExp:
-		return acceptTemplateInstanceExp(exp, cast(ir.TemplateInstanceExp)exp, av);
 	case StatementExp:
 		return acceptStatementExp(exp, cast(ir.StatementExp)exp, av);
 	case VaArgExp:
@@ -2181,29 +2174,6 @@ Visitor.Status acceptTypeExp(ref ir.Exp exp, ir.TypeExp texp, Visitor av)
 Visitor.Status acceptStoreExp(ref ir.Exp exp, ir.StoreExp sexp, Visitor av)
 {
 	return av.visit(exp, sexp);
-}
-
-Visitor.Status acceptTemplateInstanceExp(ref ir.Exp exp, ir.TemplateInstanceExp texp, Visitor av)
-{
-	auto status = av.enter(exp, texp);
-	if (status != VisitorContinue) {
-		return parentContinue(status);
-	}
-
-	foreach (type; texp.types) {
-		if (type.type !is null) {
-			status = accept(type.type, av);
-		} else {
-			status = acceptExp(type.exp, av);
-		}
-		if (status == VisitorContinueParent) {
-			continue;
-		} else if (status == VisitorStop) {
-			return VisitorStop;
-		}
-	}
-
-	return av.leave(exp, texp);
 }
 
 Visitor.Status acceptStatementExp(ref ir.Exp exp, ir.StatementExp state, Visitor av)

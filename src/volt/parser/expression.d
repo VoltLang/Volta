@@ -614,9 +614,6 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 		pfix.identifier.value = primary._string;
 		exp = pfix;
 		break;
-	case intir.PrimaryExp.Type.TemplateInstance:
-		exp = primary._template;
-		break;
 	case intir.PrimaryExp.Type.FunctionName:
 		exp = new ir.TokenExp(ir.TokenExp.Type.Function);
 		break;
@@ -1439,50 +1436,6 @@ ParseStatus parsePrimaryExp(ParserStream ps, out intir.PrimaryExp exp)
 			goto case TokenType.Delegate;
 		}
 		auto token = ps.get();
-		if (ps.peek.type == TokenType.Bang && ps.lookahead(1).type != TokenType.Is) {
-			ps.get();
-			exp.op = intir.PrimaryExp.Type.TemplateInstance;
-			exp._template = new ir.TemplateInstanceExp();
-			exp._template.loc = origin;
-			exp._template.name = token.value;
-			if (matchIf(ps, TokenType.OpenParen)) {
-				while (ps.peek.type != ir.TokenType.CloseParen) {
-					ir.TemplateInstanceExp.TypeOrExp tOrE;
-					auto succeeded = parseType(ps, tOrE.type);
-					if (!succeeded) {
-						if (ps.neverIgnoreError) {
-							return Failed;
-						}
-						ps.resetErrors();
-						succeeded = parseExp(ps, tOrE.exp);
-						if (!succeeded) {
-							return parseFailed(ps, ir.NodeType.TemplateInstanceExp);
-						}
-					}
-					exp._template.types ~= tOrE;
-					matchIf(ps, TokenType.Comma);
-				}
-				auto succeeded = match(ps, ir.NodeType.TemplateInstanceExp, TokenType.CloseParen);
-				if (!succeeded) {
-					return succeeded;
-				}
-			} else {
-				ir.TemplateInstanceExp.TypeOrExp tOrE;
-				try {
-					auto succeeded = parseType(ps, tOrE.type);
-					if (!succeeded) {
-						return parseFailed(ps, ir.NodeType.TemplateInstanceExp);
-					}
-				} catch (CompilerError) {
-					auto succeeded = parseExp(ps, tOrE.exp);
-					if (!succeeded) {
-						return parseFailed(ps, ir.NodeType.TemplateInstanceExp);
-					}
-				}
-				exp._template.types ~= tOrE;
-			}
-			break;
-		}
 		exp._string = token.value;
 		exp.op = intir.PrimaryExp.Type.Identifier;
 		break;

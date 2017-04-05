@@ -2856,11 +2856,6 @@ ir.Type extypeAssert(Context ctx, ref ir.Exp exp, Parent parent)
 	throw panicUnhandled(exp, "Assert (exp)");
 }
 
-ir.Type extypeTemplateInstanceExp(Context ctx, ref ir.Exp exp, Parent parent)
-{
-	throw panicUnhandled(exp, "TemplateInstanceExp");
-}
-
 ir.Type extypeStatementExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	throw panicUnhandled(exp, "StatementExp");
@@ -2951,8 +2946,6 @@ ir.Type extypeUnchecked(Context ctx, ref ir.Exp exp, Parent parent)
 		return extypeTypeExp(ctx, exp, parent);
 	case StoreExp:
 		return extypeStoreExp(ctx, exp, parent);
-	case TemplateInstanceExp:
-		return extypeTemplateInstanceExp(ctx, exp, parent);
 	case StatementExp:
 		return extypeStatementExp(ctx, exp, parent);
 	case TokenExp:

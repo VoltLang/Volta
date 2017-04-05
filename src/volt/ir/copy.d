@@ -573,7 +573,6 @@ ir.Node copyNode(ir.Node n)
 	case Assert:
 	case StringImport:
 	case IsExp:
-	case TemplateInstanceExp:
 	case FunctionLiteral:
 	case StructLiteral:
 	case UnionLiteral:

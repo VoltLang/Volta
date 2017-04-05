@@ -191,6 +191,5 @@ public:
 	AssignExp[] tlargs;   // Optional.
 	IsExp isExp;  // Optional.
 	FunctionLiteral functionLiteral;  // Optional.
-	TemplateInstanceExp _template;  // If op == TemplateInstance.
 	VaArgExp vaexp;  // If op == VaArg.
 }

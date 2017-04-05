@@ -2140,29 +2140,6 @@ public:
 		assert(false);
 	}
 
-	override Status enter(ref ir.Exp, ir.TemplateInstanceExp texp)
-	{
-		wf(texp.name, "!(");
-		foreach (i, type; texp.types) {
-			if (type.type !is null) {
-				accept(type.type, this);
-			} else {
-				accept(type.exp, this);
-			}
-			if (i < texp.types.length - 1) {
-				wf(", ");
-			} else {
-				wf(")");
-			}
-		}
-		return ContinueParent;
-	}
-
-	override Status leave(ref ir.Exp, ir.TemplateInstanceExp texp)
-	{
-		assert(false);
-	}
-
 	override Status enter(ref ir.Exp, ir.StatementExp statExp)
 	{
 		wfln("({");

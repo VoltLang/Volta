@@ -123,7 +123,6 @@ enum NodeType
 	ClassLiteral,
 	TypeExp,
 	StoreExp,
-	TemplateInstanceExp,
 	StatementExp,
 	TokenExp,
 	VaArgExp,
@@ -414,7 +413,6 @@ string nodeToString(NodeType nodeType)
 	case ClassLiteral: return "ClassLiteral";
 	case TypeExp: return "TypeExp";
 	case StoreExp: return "StoreExp";
-	case TemplateInstanceExp: return "TemplateInstanceExp";
 	case StatementExp: return "StatementExp";
 	case TokenExp: return "TokenExp";
 	case VaArgExp: return "VaArgExp";
