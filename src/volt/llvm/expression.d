@@ -1112,7 +1112,7 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 		ret = ft.ret;
 		makeNonPointer(state, result);
 		if (ft.hasStructRet) {
-			llvmExtraArg = state.buildAlloca(ft.ret.llvmType, "sretArg");
+			llvmExtraArg = state.buildAlloca(ft.ret, "sretArg");
 			offset = 1;
 		}
 	} else if (dt !is null) {
@@ -1473,7 +1473,7 @@ void makePointer(State state, Value result)
 	if (result.isPointer)
 		return;
 
-	auto v = state.buildAlloca(result.type.llvmType, "tempStorage");
+	auto v = state.buildAlloca(result.type, "tempStorage");
 	LLVMBuildStore(state.builder, result.value, v);
 
 	result.value = v;

@@ -28,6 +28,7 @@ public:
 	LLVMTypeRef llvmType;
 	LLVMValueRef diType;
 	bool passByVal;
+	uint alignOf;
 
 public:
 	void from(State, ir.Constant, Value) { assert(false); }
@@ -52,6 +53,8 @@ protected:
 	body {
 		state.addType(this, irType.mangledName);
 
+		this.alignOf = cast(uint)volt.semantic.classify.alignment(
+			state.target, irType);
 		this.irType = irType;
 		this.llvmType = llvmType;
 		this.diType = diType;
@@ -268,8 +271,7 @@ public:
 	override void from(State state, ir.Constant cnst, Value result)
 	{
 		auto strConst = LLVMConstStringInContext(state.context, cast(char[])cnst.arrayData, false);
-		auto strGlobal = state.makeAnonGlobalConstant(
-			LLVMTypeOf(strConst), strConst);
+		auto strGlobal = state.addGlobalAnonArray(state.ubyteType, strConst);
 
 		LLVMValueRef[2] ind;
 		ind[0] = LLVMConstNull(lengthType.llvmType);
@@ -317,8 +319,7 @@ public:
 		}
 
 		auto litConst = LLVMConstArray(base.llvmType, arr);
-		auto litGlobal = state.makeAnonGlobalConstant(
-			LLVMTypeOf(litConst), litConst);
+		auto litGlobal = state.addGlobalAnonArray(base, litConst);
 
 		LLVMValueRef[2] ind;
 		ind[0] = LLVMConstNull(lengthType.llvmType);

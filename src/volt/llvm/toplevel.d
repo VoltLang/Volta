@@ -786,7 +786,7 @@ public:
 			structs[i] = LLVMConstStructInContext(state.context, vals.ptr, 2, false);
 		}
 		auto array = LLVMArrayType(_struct, cast(uint) arr.length);
-		auto gval = LLVMAddGlobal(state.mod, array, name);
+		auto gval = LLVMAddGlobal(state.mod, array, name); // Ok
 		auto lit = LLVMConstArray(_struct, structs);
 		LLVMSetInitializer(gval, lit);
 		LLVMSetLinkage(gval, LLVMLinkage.Appending);
@@ -810,7 +810,7 @@ public:
 		vals[2] = at.from(state, state.globalDestructors);
 		auto lit = LLVMConstNamedStruct(t.llvmType, vals);
 
-		auto gval = LLVMAddGlobal(state.mod, t.llvmType, name);
+		auto gval = state.addGlobal(t, name);
 		LLVMSetInitializer(gval, lit);
 		return gval;
 	}

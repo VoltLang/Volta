@@ -200,8 +200,8 @@ public:
 		auto val = LLVMGetFirstInstruction(bb);
 		LLVMPositionBuilderBefore(builder, val);
 
-		fnState.indexVar = buildAlloca(
-			intType.llvmType, "__index");
+		auto ty = intType;
+		fnState.indexVar = buildAlloca(intType, "__exception");
 
 		LLVMPositionBuilderAtEnd(builder, block);
 		return fnState.indexVar;
@@ -217,8 +217,7 @@ public:
 		auto val = LLVMGetFirstInstruction(bb);
 		LLVMPositionBuilderBefore(builder, val);
 
-		fnState.exceptionVar = buildAlloca(
-			voidPtrType.llvmType, "__exception");
+		fnState.exceptionVar = buildAlloca(voidPtrType, "__exception");
 
 		LLVMPositionBuilderAtEnd(builder, block);
 		return fnState.exceptionVar;
@@ -338,9 +337,7 @@ public:
 		auto ft = cast(FunctionType)type;
 
 		if (argFunc.loadDynamic) {
-			auto llvmType = ft.llvmType;
-
-			v = LLVMAddGlobal(mod, llvmType, argFunc.mangledName);
+			v = addGlobal(ft, argFunc.mangledName);
 			assert(!argFunc.isMergable);
 		} else {
 			// The simple stuff, declare that mofo.
@@ -416,6 +413,7 @@ public:
 		type = this.fromIr(var.type);
 		LLVMValueRef v;
 		LLVMTypeRef llvmType;
+		Type allocType;
 
 		/**
 		 * Deal with which storage should be used.
@@ -425,10 +423,12 @@ public:
 		 */
 		if (!var.useBaseStorage) {
 			llvmType = type.llvmType;
+			allocType = type;
 		} else {
 			auto pt = cast(PointerType)type;
 			assert(pt !is null);
 			llvmType = pt.base.llvmType;
+			allocType = pt.base;
 		}
 
 		final switch(var.storage) with (ir.Variable.Storage) {
@@ -447,7 +447,7 @@ public:
 			}
 
 			diSetPosition(this, var.loc);
-			v = buildAlloca(llvmType, var.name);
+			v = buildAlloca(allocType, var.name);
 
 			diAutoVariable(this, var, v, type);
 			diUnsetPosition(this);
@@ -459,7 +459,7 @@ public:
 
 			break;
 		case Local:
-			v = LLVMAddGlobal(mod, llvmType, var.mangledName);
+			v = addGlobal(allocType, var.mangledName);
 
 			/*
 			 * LLVM on Windows (as of 3.2) does not support TLS.
@@ -474,7 +474,7 @@ public:
 			}
 			break;
 		case Global:
-			v = LLVMAddGlobal(mod, llvmType, var.mangledName);
+			v = addGlobal(allocType, var.mangledName);
 			// @TODO Horrible hack for weird linking bugs,
 			// proper fix is adding a weak attribute in the language.
 			if ((var.mangledName == "__bss_start" ||
@@ -514,16 +514,13 @@ public:
 
 		type = this.fromIr(var.type);
 		LLVMValueRef v;
-		LLVMTypeRef llvmType;
-
-		llvmType = type.llvmType;
 
 		if (func is null) {
 			throw panic(var.loc, "non-local/global variable in non-function scope");
 		}
 
 		diSetPosition(this, var.loc);
-		v = buildAlloca(llvmType, var.name);
+		v = buildAlloca(type, var.name);
 
 		diParameterVariable(this, var, v, type);
 		diUnsetPosition(this);

@@ -283,12 +283,43 @@ public:
 	 * Builds a 'alloca' instructions and inserts it at the end of the
 	 * entry basic block that is at the top of the function.
 	 */
-	final LLVMValueRef buildAlloca(LLVMTypeRef llvmType, string name)
+	final LLVMValueRef buildAlloca(Type ty, string name)
 	{
 		LLVMPositionBuilderBefore(builder, fnState.entryBr);
-		auto v = LLVMBuildAlloca(builder, llvmType, name);
+		auto v = LLVMBuildAlloca(builder, ty.llvmType, name);
+		LLVMSetAlignment(v, ty.alignOf);
 		LLVMPositionBuilderAtEnd(builder, fnState.block);
 		return v;
+	}
+
+	final LLVMValueRef addGlobal(Type ty, string name)
+	{
+		auto g = LLVMAddGlobal(mod, ty.llvmType, name);
+		LLVMSetAlignment(g, 16);
+		return g;
+
+	}
+
+	final LLVMValueRef addGlobalAnonArray(Type base, LLVMValueRef v)
+	{
+		auto g = LLVMAddGlobal(mod, LLVMTypeOf(v), "");
+		LLVMSetAlignment(g, 16);
+		LLVMSetGlobalConstant(g, true);
+		LLVMSetUnnamedAddr(g, true);
+		LLVMSetLinkage(g, LLVMLinkage.Private);
+		LLVMSetInitializer(g, v);
+		return g;
+	}
+
+	final LLVMValueRef addGlobalAnonConstant(Type ty, LLVMValueRef v)
+	{
+		auto g = LLVMAddGlobal(mod, LLVMTypeOf(v), "");
+		LLVMSetAlignment(g, 16);
+		LLVMSetGlobalConstant(g, true);
+		LLVMSetUnnamedAddr(g, true);
+		LLVMSetLinkage(g, LLVMLinkage.Private);
+		LLVMSetInitializer(g, v);
+		return g;
 	}
 
 	/**
@@ -344,20 +375,6 @@ public:
 	 * in reference form or not.
 	 */
 	abstract void getConstantValueAnyForm(ir.Exp exp, Value result);
-
-	/**
-	 * Makes a private mergable global constant. Used for strings,
-	 * array literal and storage for struct literals.
-	 */
-	final LLVMValueRef makeAnonGlobalConstant(LLVMTypeRef t, LLVMValueRef val)
-	{
-		auto g = LLVMAddGlobal(mod, t, "");
-		LLVMSetGlobalConstant(g, true);
-		LLVMSetUnnamedAddr(g, true);
-		LLVMSetLinkage(g, LLVMLinkage.Private);
-		LLVMSetInitializer(g, val);
-		return g;
-	}
 
 
 	/*

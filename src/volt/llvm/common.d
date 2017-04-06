@@ -225,8 +225,7 @@ void handleClassLiteral(State state, ir.ClassLiteral cl, Value result)
 	if (!cl.useBaseStorage) {
 		result.isPointer = false;
 		result.type = pt;
-		result.value = state.makeAnonGlobalConstant(
-			st.llvmType, result.value);
+		result.value = state.addGlobalAnonConstant(st, result.value);
 	}
 }
 /**
