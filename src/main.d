@@ -321,7 +321,7 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 		case "-w":
 			makeArg(Warnings);
 			continue;
-		case "-d":
+		case "-d", "-debug", "--debug":
 			makeArg(Debug);
 			continue;
 		case "-c":
