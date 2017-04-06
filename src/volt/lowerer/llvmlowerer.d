@@ -1566,7 +1566,7 @@ void lowerVarargCall(LanguagePass lp, ir.Scope current, ir.Postfix postfix, ir.F
 	if (callNumArgs < funcNumArgs) {
 		throw makeWrongNumberOfArguments(postfix, callNumArgs, funcNumArgs);
 	}
-	auto argsSlice = postfix.arguments[0 .. funcNumArgs];
+	auto passSlice = postfix.arguments[0 .. funcNumArgs];
 	auto varArgsSlice = postfix.arguments[funcNumArgs .. $];
 
 	auto tinfoClass = lp.tiTypeInfo;
@@ -1574,37 +1574,49 @@ void lowerVarargCall(LanguagePass lp, ir.Scope current, ir.Postfix postfix, ir.F
 	tr.loc = postfix.loc;
 
 	auto sexp = buildStatementExp(loc);
-	auto idsType = buildStaticArrayTypeSmart(loc, varArgsSlice.length, tr);
-	auto argsType = buildStaticArrayTypeSmart(loc, 0, buildVoid(loc));
-	auto ids = buildVariableAnonSmartAtTop(loc, func._body, idsType, null);
-	auto args = buildVariableAnonSmartAtTop(loc, func._body, argsType, null);
+	auto numVarArgs = varArgsSlice.length;
+	ir.Exp idsSlice, argsSlice;
 
-	int[] sizes;
-	size_t totalSize;
-	ir.Type[] types;
-	foreach (i, _exp; varArgsSlice) {
-		auto etype = getExpType(_exp);
-		if (lp.beMoreLikeD &&
-		    realType(etype).nodeType == ir.NodeType.Struct) {
-			warning(_exp.loc, "passing struct to var-arg function.");
+	if (numVarArgs > 0) {
+		auto idsType = buildStaticArrayTypeSmart(loc, varArgsSlice.length, tr);
+		auto argsType = buildStaticArrayTypeSmart(loc, 0, buildVoid(loc));
+		auto ids = buildVariableAnonSmartAtTop(loc, func._body, idsType, null);
+		auto args = buildVariableAnonSmartAtTop(loc, func._body, argsType, null);
+
+		int[] sizes;
+		size_t totalSize;
+		ir.Type[] types;
+		foreach (i, _exp; varArgsSlice) {
+			auto etype = getExpType(_exp);
+			if (lp.beMoreLikeD &&
+					realType(etype).nodeType == ir.NodeType.Struct) {
+				warning(_exp.loc, "passing struct to var-arg function.");
+			}
+
+			auto ididx = buildIndex(loc, buildExpReference(loc, ids, ids.name), buildConstantSizeT(loc, lp.target, i));
+			buildExpStat(loc, sexp, buildAssign(loc, ididx, buildTypeidSmart(loc, lp, etype)));
+
+			// *(cast(T*)arr.ptr + totalSize) = exp;
+			auto argl = buildDeref(loc, buildCastSmart(loc, buildPtrSmart(loc, etype),
+						buildAdd(loc, buildArrayPtr(loc, buildVoid(loc),
+								buildExpReference(loc, args, args.name)), buildConstantSizeT(loc, lp.target, totalSize))));
+
+			buildExpStat(loc, sexp, buildAssign(loc, argl, _exp));
+
+			totalSize += size(lp.target, etype);
 		}
 
-		auto ididx = buildIndex(loc, buildExpReference(loc, ids, ids.name), buildConstantSizeT(loc, lp.target, i));
-		buildExpStat(loc, sexp, buildAssign(loc, ididx, buildTypeidSmart(loc, lp, etype)));
-
-		// *(cast(T*)arr.ptr + totalSize) = exp;
-		auto argl = buildDeref(loc, buildCastSmart(loc, buildPtrSmart(loc, etype),
-			buildAdd(loc, buildArrayPtr(loc, buildVoid(loc),
-			buildExpReference(loc, args, args.name)), buildConstantSizeT(loc, lp.target, totalSize))));
-
-		buildExpStat(loc, sexp, buildAssign(loc, argl, _exp));
-
-		totalSize += size(lp.target, etype);
+		(cast(ir.StaticArrayType)args.type).length = totalSize;
+		idsSlice = buildSlice(loc, buildExpReference(loc, ids, ids.name));
+		argsSlice = buildSlice(loc, buildExpReference(loc, args, args.name));
+	} else {
+		auto idsType = buildArrayType(loc, tr);
+		auto argsType = buildArrayType(loc, buildVoid(loc));
+		idsSlice = buildArrayLiteralSmart(loc, idsType, []);
+		argsSlice = buildArrayLiteralSmart(loc, argsType, []);
 	}
 
-	(cast(ir.StaticArrayType)args.type).length = totalSize;
-
-	postfix.arguments = argsSlice ~ buildSlice(loc, buildExpReference(loc, ids, ids.name)) ~ buildSlice(loc, buildExpReference(loc, args, args.name));
+	postfix.arguments = passSlice ~ idsSlice ~ argsSlice;
 	sexp.exp = postfix;
 	exp = sexp;
 }
