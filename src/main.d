@@ -324,6 +324,9 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 		case "-d", "-debug", "--debug":
 			makeArg(Debug);
 			continue;
+		case "-release", "--release":
+			makeArg(Release);
+			continue;
 		case "-c":
 			makeArg(NoLink);
 			continue;
@@ -446,7 +449,8 @@ bool printUsage()
 	writefln("\t-J path          Define a path for string import to look for files.");
 	writefln("\t-D ident         Define a new version flag");
 	writefln("\t-w               Enable warnings.");
-	writefln("\t-d               Compile in debug mode.");
+	writefln("\t--debug          Compile in debug mode.");
+	writefln("\t--release        Compile in release mode.");
 	writefln("\t-c               Compile only, do not link.");
 	writefln("\t-E               Only perform conditional removal (implies -S).");
 	version (OSX) {

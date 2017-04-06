@@ -173,7 +173,8 @@ public:
 		MissingDeps,     ///< --missing
 		ImportAsSrc,     ///< --import-as-src
 
-		Debug,
+		Debug,           ///< --debug
+		Release,         ///< --release
 		DebugSimpleTrace,
 
 		Dep,             ///< --dep
@@ -302,6 +303,9 @@ void filterArgs(Arg[] args, ref string[] files, VersionSet ver, Settings setting
 
 		case Debug:
 			ver.debugEnabled = true;
+			break;
+		case Release:
+			ver.debugEnabled = false;
 			break;
 		case DebugSimpleTrace:
 			settings.simpleTrace = true;
