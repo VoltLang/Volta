@@ -1,3 +1,5 @@
+//T default:no
+//T macro:release
 module test;
 
 fn main() i32

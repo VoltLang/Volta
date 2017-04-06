@@ -11,7 +11,11 @@
 			"//T run:volta -o %t %s"
 		],
 		"debug": [
-			"//T run:volta -d -o %t %s",
+			"//T run:volta --debug -o %t %s",
+			"//T run:%t"
+		],
+		"release": [
+			"//T run:volta --release -o %t %s",
 			"//T run:%t"
 		],
 		"do-not-link": [
