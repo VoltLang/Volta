@@ -71,7 +71,7 @@ mode_t umask(mode_t);
  */
 
 alias ulong_t = u64;
-alias slong_t = u32;
+alias slong_t = u64;
 
 version (Linux) {
 	version (X86) {
