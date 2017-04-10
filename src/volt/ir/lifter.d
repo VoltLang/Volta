@@ -81,6 +81,7 @@ public:
 		case FunctionType: return copy(cast(ir.FunctionType)n);
 		case PointerType: return copy(cast(ir.PointerType)n);
 		case TypeOf: return copy(cast(ir.TypeOf)n);
+		case NullType: return copy(cast(ir.NullType)n);
 		default: throw makeUnsupported(n.loc, ir.nodeToString(n.nodeType));
 		}
 	}
@@ -720,6 +721,12 @@ public:
 		auto to = new ir.TypeOf(old);
 		to.exp = copyExp(old.exp);
 		return to;
+	}
+
+	ir.NullType copy(ir.NullType old)
+	{
+		auto nt = new ir.NullType(old);
+		return nt;
 	}
 
 
