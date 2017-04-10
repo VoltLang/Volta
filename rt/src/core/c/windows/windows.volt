@@ -50,6 +50,7 @@ alias ATOM = WORD;
 alias HMENU = HANDLE;
 alias PROC = void*;  // This is a guess.
 alias SHORT = i16;
+alias LARGE_INTEGER = i64;
 
 
 enum TRUE = 1;
@@ -716,3 +717,6 @@ fn GET_XBUTTON_WPARAM(w: WPARAM) i32
 }
 
 fn GetSystemMetrics(i32) i32;
+
+fn QueryPerformanceFrequency(LARGE_INTEGER*) BOOL;
+fn QueryPerformanceCounter(LARGE_INTEGER*) BOOL;

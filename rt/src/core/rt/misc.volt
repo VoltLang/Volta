@@ -18,6 +18,13 @@ fn vrt_eh_throw_key_not_found_error(location: string);
 fn vrt_eh_personality_v0();
 
 /*
+ * Monotonic time.
+ */
+fn vrt_monotonic_init();
+fn vrt_monotonic_ticks() i64;
+fn vrt_monotonic_ticks_per_second() i64;
+
+/*
  * For those very bad times.
  */
 fn vrt_panic(msg: scope const(char)[][], location: scope const(char)[] = __LOCATION__);
