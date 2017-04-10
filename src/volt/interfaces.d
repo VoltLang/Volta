@@ -102,8 +102,10 @@ public:
 		"V_P64",
 		// C runtime flags
 		"CRuntime_All",
+		"CRuntime_Any",
 		"CRuntime_None",
 		"CRuntime_Glibc",
+		"CRuntime_Bionic",
 		"CRuntime_Microsoft",
 	];
 
