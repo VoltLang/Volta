@@ -2,11 +2,11 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.os.eh_stub;
 
+version (MSVC || Metal):
+
 import core.exception: Throwable, Error, AssertError, KeyNotFoundException;
 import core.rt.misc: vrt_panic;
 
-
-version (MSVC || Metal):
 
 extern(C) fn vrt_eh_throw(t: Throwable, location: string)
 {

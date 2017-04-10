@@ -17,4 +17,3 @@ fn vrt_get_stack_bottom() void*
 	gcAssert(__stack_bottom !is null);
 	return __stack_bottom;
 }
-

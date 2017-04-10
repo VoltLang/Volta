@@ -2,6 +2,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.os.panic;
 
+version (CRuntime_All):
+
 import vrt.ext.stdc: exit, fprintf, fflush, stderr;
 
 

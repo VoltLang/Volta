@@ -2,12 +2,11 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.eh;
 
+version (!MSVC && !Metal):
+
 import core.rt.misc: vrt_panic, vrt_handle_cast;
 import core.typeinfo: TypeInfo;
 import core.exception: Throwable, Error, AssertError, KeyNotFoundException;
-
-
-version (!MSVC && !Metal):
 
 import vrt.ext.unwind;
 import vrt.ext.dwarf;

@@ -4,6 +4,8 @@
 // See copyright notice in src/watt/license.volt (BOOST ver. 1.0).
 module vrt.os.monotonic;
 
+version (Windows || OSX || Posix):
+
 
 extern(C) fn vrt_monotonic_ticks_per_second() i64
 {
@@ -18,8 +20,6 @@ extern(C) fn vrt_monotonic_init()
 		ticksPerSecond = machTicksPerSecond();
 	} else version (Posix) {
 		ticksPerSecond = posixTicksPerSecond(CLOCK_MONOTONIC);
-	} else {
-		static assert(false);
 	}
 }
 
@@ -31,8 +31,6 @@ extern(C) fn vrt_monotonic_ticks() i64
 		return machTicks();
 	} else version (Posix) {
 		return posixTicks(CLOCK_MONOTONIC);
-	} else {
-		static assert(false);
 	}
 }
 

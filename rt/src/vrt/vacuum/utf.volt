@@ -168,4 +168,3 @@ extern (C) fn vrt_encode_d_u8(c: dchar) string
 		throw new MalformedUTF8Exception("encode: unsupported codepoint range");
 	}
 }
-

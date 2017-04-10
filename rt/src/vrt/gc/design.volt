@@ -25,4 +25,3 @@ Large: Are directly allocated from the OS and has its own extent.
 enum PageSizeLog = 12;
 enum PageSize    = 1U << PageSizeLog;
 enum PageMask    = PageSize - 1;
-
