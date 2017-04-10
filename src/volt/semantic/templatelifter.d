@@ -208,7 +208,9 @@ public:
 	override ir.Alias lift(ir.Alias old)
 	{
 		auto a = new ir.Alias(old);
-		a.id = copyQualifiedName(old.id);
+		if (old.id !is null) {
+			a.id = copyQualifiedName(old.id);
+		}
 		if (old.type !is null) {
 			a.type = copyType(old.type);
 		}
