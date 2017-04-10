@@ -14,11 +14,11 @@
  */
 module core.c.posix.fcntl;
 
-version (!Metal):
+version (Posix):
 
 import core.c.posix.sys.types;
 
-version (Posix):
+
 extern (C):
 
 //

@@ -17,4 +17,3 @@ fn pages_unmap(addr: void*, size: size_t)
 	// "If the dwFreeType parameter is MEM_RELEASE, (size) must be 0." -msdn
 	VirtualFree(addr, 0, MEM_RELEASE);
 }
-

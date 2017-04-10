@@ -1,12 +1,16 @@
 // Copyright © 2013-2017, Bernard Helyer.
 // See copyright notice in src/watt/licence.volt (BOOST ver 1.0).
+/**
+ * Windows bindings.
+ *
+ * As it stands, this module only has the bits of WIN32 that have been used.
+ * Pull requests to add more welcome.
+ */
 module core.c.windows.windows;
 
-version (!Metal):
 version (Windows):
 
-// As it stands, this module only has the bits of WIN32 that have been used.
-// Pull requests to add more welcome.
+
 
 import core.c.stdarg;
 

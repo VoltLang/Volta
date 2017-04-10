@@ -6,6 +6,8 @@
  */
 module vrt.ext.stdc;
 
+version (CRuntime_Any):
+
 public import core.c.stdint : uintptr_t;
 public import core.c.stdlib : exit, getenv, calloc, realloc, free;
 public import core.c.stdio : fprintf, fflush, stderr, printf, snprintf;

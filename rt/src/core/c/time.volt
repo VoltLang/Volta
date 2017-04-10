@@ -3,7 +3,7 @@
 // File taken from druntime, and modified for Volt.
 module core.c.time;
 
-version (!Metal):
+version (CRuntime_All):
 
 
 private import core.c.config; // c_long

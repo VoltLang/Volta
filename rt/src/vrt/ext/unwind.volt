@@ -3,10 +3,9 @@
 // Written by hand from documentation.
 module vrt.ext.unwind;
 
+version (!MSVC && !Metal):
 
 import vrt.ext.stdc: uintptr_t;
-
-version (!MSVC && !Metal):
 
 extern(C):
 

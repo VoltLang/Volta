@@ -2,6 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 // Written by hand from documentation.
 module vrt.ext.windows;
+
 version (Windows):
 
 alias BYTE = u8;

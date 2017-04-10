@@ -2,9 +2,9 @@
 // Copyright © 2005-2009, Sean Kelly.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 // File taken from druntime, and modified for Volt.
-module core.c.posix.config;
+module core6.c.posix.config;
 
-version (!Metal):
+version (Posix):
 
 public import core.c.config;
 
@@ -13,11 +13,8 @@ extern(C):
 @trusted:
 nothrow:
 
-version (Posix)
-{
-	enum _XOPEN_SOURCE     = 600;
-	enum _POSIX_C_SOURCE   = 200112L;
-}
+enum _XOPEN_SOURCE     = 600;
+enum _POSIX_C_SOURCE   = 200112L;
 
 version (Linux) {
 

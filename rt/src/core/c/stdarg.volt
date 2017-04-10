@@ -3,7 +3,7 @@
 // Written by hand from documentation.
 module core.c.stdarg;
 
-version (!Metal):
+version (CRuntime_All):
 
 
 import core.varargs;

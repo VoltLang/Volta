@@ -3,7 +3,8 @@
 // File taken from druntime, and modified for Volt.
 module core.c.posix.sys.stat;
 
-version (!Metal):
+version (Posix):
+
 
 private import core.c.posix.config;
 private import core.c.stdint;
@@ -11,7 +12,7 @@ private import core.c.posix.time;     // for timespec
 public import core.c.stddef;          // for size_t
 public import core.c.posix.sys.types; // for off_t, mode_t
 
-version (Posix):
+
 extern (C):
 
 //

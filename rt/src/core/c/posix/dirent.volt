@@ -3,12 +3,11 @@
 // File taken from druntime, and modified for Volt.
 module core.c.posix.dirent;
 
-version (!Metal):
+version (Posix):
 
 private import core.c.posix.config;
 public import core.c.posix.sys.types; // for ino_t
 
-version (Posix):
 
 extern(C):
 @system: // Not checked properly.

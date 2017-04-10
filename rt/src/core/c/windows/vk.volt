@@ -3,7 +3,6 @@
 module core.c.windows.vk;
 // As always, add what you need.
 
-version (!Metal):
 version (Windows):
 
 enum VK_ESCAPE = 0x1B;

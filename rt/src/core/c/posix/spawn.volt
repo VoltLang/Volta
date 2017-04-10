@@ -2,7 +2,7 @@
 // See copyright notice in src/volt/licence.volt (BOOST ver 1.0).
 module core.c.posix.spawn;
 
-version (!Metal):
+version (Posix):
 
 version (Linux || OSX):
 

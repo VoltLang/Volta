@@ -14,14 +14,14 @@
  */
 module core.c.posix.unistd;
 
-version (!Metal):
+version (Posix):
 
 private import core.c.posix.config;
 private import core.c.stddef;
 //public import core.posix.inttypes;  // for intptr_t
 public import core.c.posix.sys.types; // for ssize_t, uid_t, gid_t, off_t, pid_t, useconds_t
 
-version (Posix):
+
 extern (C):
 nothrow:
 //@nogc:

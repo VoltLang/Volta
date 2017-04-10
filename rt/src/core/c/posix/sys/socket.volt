@@ -14,13 +14,12 @@
  */
 module core.c.posix.sys.socket;
 
-version (!Metal):
+version (Posix):
 
 
 import core.c.config;
 import core.c.posix.sys.uio;
 
-version (Posix):
 extern (C) /*nothrow @nogc*/:
 
 //

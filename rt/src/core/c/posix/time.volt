@@ -3,14 +3,13 @@
 // File taken from druntime, and modified for Volt.
 module core.c.posix.time;
 
-version (!Metal):
+version (Posix):
 
 private import core.c.posix.config;
 public import core.c.time;
 public import core.c.posix.sys.types;
 //public import core.posix.signal; // for sigevent
 
-version (Posix):
 extern (C):
 
 //

@@ -4,7 +4,7 @@
 // File taken from druntime, and modified for Volt.
 module core.c.posix.sys.types;
 
-version (!Metal):
+version (Posix):
 
 private import core.c.posix.config;
 private import core.c.stdint;

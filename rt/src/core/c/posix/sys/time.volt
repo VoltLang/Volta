@@ -14,11 +14,11 @@
  */
 module core.c.posix.sys.time;
 
-version (!Metal):
+version (Posix):
 
 public import core.c.posix.sys.types;  // for time_t, suseconds_t
 
-version (Posix):
+
 extern (C):
 
 //

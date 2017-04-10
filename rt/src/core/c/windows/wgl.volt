@@ -2,7 +2,6 @@
 // See copyright notice in src/watt/licence.volt (BOOST ver 1.0).
 module core.c.windows.wgl;
 
-version (!Metal):
 version (Windows):
 
 import core.c.windows.windows;

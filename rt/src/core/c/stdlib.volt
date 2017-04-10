@@ -3,7 +3,7 @@
 // File taken from druntime, and modified for Volt.
 module core.c.stdlib;
 
-version (!Metal):
+version (CRuntime_All):
 
 
 private import core.c.config;
