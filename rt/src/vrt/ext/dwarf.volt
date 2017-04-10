@@ -3,7 +3,7 @@
 // Written by hand from documentation.
 module vrt.ext.dwarf;
 
-version (CRuntime_Any):
+version (CRuntime_All):
 
 import core.rt.misc: vrt_panic;
 import vrt.ext.stdc: uintptr_t;
