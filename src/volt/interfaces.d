@@ -100,6 +100,11 @@ public:
 		// Misc
 		"V_P32",
 		"V_P64",
+		// C runtime flags
+		"CRuntime_All",
+		"CRuntime_None",
+		"CRuntime_Glibc",
+		"CRuntime_Microsoft",
 	];
 
 private:

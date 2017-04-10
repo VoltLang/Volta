@@ -1113,21 +1113,28 @@ void setVersionSet(VersionSet ver, Arch arch, Platform platform)
 	case MinGW:
 		ver.overwriteVersionIdentifier("Windows");
 		ver.overwriteVersionIdentifier("MinGW");
+		ver.overwriteVersionIdentifier("CRuntime_All");
 		break;
 	case MSVC:
 		ver.overwriteVersionIdentifier("Windows");
 		ver.overwriteVersionIdentifier("MSVC");
+		ver.overwriteVersionIdentifier("CRuntime_All");
+		ver.overwriteVersionIdentifier("CRuntime_Microsoft");
 		break;
 	case Linux:
 		ver.overwriteVersionIdentifier("Linux");
 		ver.overwriteVersionIdentifier("Posix");
+		ver.overwriteVersionIdentifier("CRuntime_All");
+		ver.overwriteVersionIdentifier("CRuntime_Glibc");
 		break;
 	case OSX:
 		ver.overwriteVersionIdentifier("OSX");
 		ver.overwriteVersionIdentifier("Posix");
+		ver.overwriteVersionIdentifier("CRuntime_All");
 		break;
 	case Metal:
 		ver.overwriteVersionIdentifier("Metal");
+		ver.overwriteVersionIdentifier("CRuntime_None");
 		break;
 	}
 	final switch (arch) with (Arch) {
