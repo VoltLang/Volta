@@ -8,7 +8,7 @@ version (Posix):
 private import core.c.posix.config;
 public import core.c.time;
 public import core.c.posix.sys.types;
-//public import core.posix.signal; // for sigevent
+
 
 extern (C):
 
@@ -28,11 +28,13 @@ time_t time(time_t*);
 */
 
 version (Linux) {
+
 	fn timegm(tm*) time_t;
+
 } else version (OSX) {
+
 	fn timegm(tm*) time_t;
-} else {
-	static assert(false, "Unsupported platform");
+
 }
 
 //
@@ -66,13 +68,15 @@ CLOCK_MONOTONIC
 */
 
 version (Linux) {
+
 	enum CLOCK_MONOTONIC        = 1;
 	enum CLOCK_MONOTONIC_RAW    = 4; // non-standard
 	enum CLOCK_MONOTONIC_COARSE = 6; // non-standard
+
 } else version (OSX) {
+
 	// No CLOCK_MONOTONIC defined
-} else {
-	static assert(0);
+
 }
 
 //
@@ -115,6 +119,7 @@ int timer_settime(timer_t, int, in itimerspec*, itimerspec*);
 */
 
 version (Linux) {
+
 	enum CLOCK_PROCESS_CPUTIME_ID = 2;
 	enum CLOCK_THREAD_CPUTIME_ID  = 3;
 
@@ -146,10 +151,11 @@ version (Linux) {
 	fn timer_gettime(timer_t, itimerspec*) i32;
 	fn timer_getoverrun(timer_t) i32;
 	fn timer_settime(timer_t, i32, in itimerspec*, itimerspec*) i32;
+
 } else version (OSX) {
+
 	fn nanosleep(in void*, void*) i32;
-} else {
-	static assert(false, "Unsupported platform");
+
 }
 
 //
@@ -163,17 +169,19 @@ tm*   localtime_r(in time_t*, tm*);
 */
 
 version (Linux) {
+
 	fn asctime_r(in tm*, char*) char*;
 	fn ctime_r(in time_t*, char*) char*;
 	fn gmtime_r(in time_t*, tm*) tm*;
 	fn localtime_r(in time_t*, tm*) tm*;
+
 } else version (OSX) {
+
 	fn asctime_r(in tm*, char*) char*;
 	fn ctime_r(in time_t*, char*) char*;
 	fn gmtime_r(in time_t*, tm*) tm*;
 	fn localtime_r(in time_t*, tm*) tm*;
-} else {
-	static assert(false, "Unsupported platform");
+
 }
 
 //
@@ -190,17 +198,19 @@ char* strptime(in char*, in char*, tm*);
 */
 
 version (Linux) {
+
 	extern global daylight: i32;
 	extern global timezone: c_long;
 
 	fn getdate(in char*) tm*;
 	fn strptime(in char*, in char*, tm*) char*;
+
 } else version (OSX) {
+
 	extern global timezone: c_long;
 	extern global daylight: i32;
 
 	fn getdate(in char*) tm*;
 	fn strptime(in char*, in char*, tm*) char*;
-} else {
-	static assert(false, "Unsupported platform");
+
 }

@@ -51,8 +51,7 @@ int utimes(in char*, ref const(timeval)[2]); // LEGACY
 alias tv_sec_t = time_t;
 alias tv_usec_t = suseconds_t;
 
-version( Linux )
-{
+version (Linux) {
 	
     struct timeval
     {
@@ -74,9 +73,9 @@ version( Linux )
     fn gettimeofday(timeval*, void*) i32;
     fn setitimer(i32, in itimerval*, itimerval*) i32;
     fn utimes(in char*, ref const(timeval)[2]) i32; // LEGACY
-}
-else version( OSX )
-{
+
+} else version (OSX) {
+
     struct timeval
     {
         tv_sec: time_t;
@@ -100,8 +99,5 @@ else version( OSX )
     fn gettimeofday(timeval*, timezone_t*) i32; // timezone_t* is normally void*
     fn setitimer(i32, in itimerval*, itimerval*) i32;
     fn utimes(in char*, ref const(timeval)[2]) i32;
-}
-else
-{
-    static assert(false, "Unsupported platform");
+
 }

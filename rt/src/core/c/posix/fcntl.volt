@@ -71,33 +71,35 @@ int creat(in char*, mode_t);
 int fcntl(int, int, ...);
 int open(in char*, int, ...);
 */
-version( Linux )
-{
+version (Linux) {
+
     enum F_DUPFD        = 0;
     enum F_GETFD        = 1;
     enum F_SETFD        = 2;
     enum F_GETFL        = 3;
     enum F_SETFL        = 4;
-  version(X86_64)
-  {
-//    static assert(typeid(off_t).size == 8);
-    enum F_GETLK        = 5;
-    enum F_SETLK        = 6;
-    enum F_SETLKW       = 7;
-  }
-  else
-/+  static if( __USE_FILE_OFFSET64 )
-  {
-    enum F_GETLK        = 12;
-    enum F_SETLK        = 13;
-    enum F_SETLKW       = 14;
-  }
-  else+/
-  {
-    enum F_GETLK        = 5;
-    enum F_SETLK        = 6;
-    enum F_SETLKW       = 7;
-  }
+
+    version (X86_64) {
+
+        /+ static assert(typeid(off_t).size == 8); +/
+        enum F_GETLK        = 5;
+        enum F_SETLK        = 6;
+        enum F_SETLKW       = 7;
+
+    } else /+ static if( __USE_FILE_OFFSET64 ) {
+
+        enum F_GETLK        = 12;
+        enum F_SETLK        = 13;
+        enum F_SETLKW       = 14;
+
+    } else +/ {
+
+        enum F_GETLK        = 5;
+        enum F_SETLK        = 6;
+        enum F_SETLKW       = 7;
+
+    }
+
     enum F_GETOWN       = 9;
     enum F_SETOWN       = 8;
 
@@ -107,8 +109,8 @@ version( Linux )
     enum F_UNLCK        = 2;
     enum F_WRLCK        = 1;
 
-    version (X86)
-    {
+    version (X86) {
+
         enum O_CREAT        = 0x40;     // octal     0100
         enum O_EXCL         = 0x80;     // octal     0200
         enum O_NOCTTY       = 0x100;    // octal     0400
@@ -119,9 +121,9 @@ version( Linux )
         enum O_SYNC         = 0x101000; // octal 04010000
         enum O_DSYNC        = 0x1000;   // octal   010000
         enum O_RSYNC        = O_SYNC;
-    }
-    else version (X86_64)
-    {
+
+    } else version (X86_64) {
+
         enum O_CREAT        = 0x40;     // octal     0100
         enum O_EXCL         = 0x80;     // octal     0200
         enum O_NOCTTY       = 0x100;    // octal     0400
@@ -132,9 +134,9 @@ version( Linux )
         enum O_SYNC         = 0x101000; // octal 04010000
         enum O_DSYNC        = 0x1000;   // octal   010000
         enum O_RSYNC        = O_SYNC;
-    }
-    else version (MIPS32)
-    {
+
+    } else version (MIPS32) {
+
         enum O_CREAT        = 0x0100;
         enum O_EXCL         = 0x0400;
         enum O_NOCTTY       = 0x0800;
@@ -145,9 +147,9 @@ version( Linux )
         enum O_NONBLOCK     = 0x0080;
         enum O_RSYNC        = O_SYNC;
         enum O_SYNC         = 0x0010;
-    }
-    else version (MIPS64)
-    {
+
+    } else version (MIPS64) {
+
         enum O_CREAT        = 0x0100;
         enum O_EXCL         = 0x0400;
         enum O_NOCTTY       = 0x0800;
@@ -158,9 +160,9 @@ version( Linux )
         enum O_NONBLOCK     = 0x0080;
         enum O_RSYNC        = O_SYNC;
         enum O_SYNC         = 0x4010;
-    }
-    else version (PPC)
-    {
+
+    } else version (PPC) {
+
         enum O_CREAT        = 0x40;     // octal     0100
         enum O_EXCL         = 0x80;     // octal     0200
         enum O_NOCTTY       = 0x100;    // octal     0400
@@ -171,9 +173,9 @@ version( Linux )
         enum O_SYNC         = 0x101000; // octal 04010000
         enum O_DSYNC        = 0x1000;   // octal   010000
         enum O_RSYNC        = O_SYNC;
-    }
-    else version (PPC64)
-    {
+
+    } else version (PPC64) {
+
         enum O_CREAT        = 0x40;     // octal     0100
         enum O_EXCL         = 0x80;     // octal     0200
         enum O_NOCTTY       = 0x100;    // octal     0400
@@ -184,9 +186,9 @@ version( Linux )
         enum O_SYNC         = 0x101000; // octal 04010000
         enum O_DSYNC        = 0x1000;   // octal   010000
         enum O_RSYNC        = O_SYNC;
-    }
-    else version (ARM)
-    {
+
+    } else version (ARM) {
+
         enum O_CREAT        = 0x40;     // octal     0100
         enum O_EXCL         = 0x80;     // octal     0200
         enum O_NOCTTY       = 0x100;    // octal     0400
@@ -197,9 +199,9 @@ version( Linux )
         enum O_SYNC         = 0x101000; // octal 04010000
         enum O_DSYNC        = 0x1000;   // octal   010000
         enum O_RSYNC        = O_SYNC;
-    }
-    else version (AArch64)
-    {
+
+    } else version (AArch64) {
+
         enum O_CREAT        = 0x40;     // octal     0100
         enum O_EXCL         = 0x80;     // octal     0200
         enum O_NOCTTY       = 0x100;    // octal     0400
@@ -210,9 +212,9 @@ version( Linux )
         enum O_SYNC         = 0x101000; // octal 04010000
         enum O_DSYNC        = 0x1000;   // octal   010000
         enum O_RSYNC        = O_SYNC;
-    }
-    else version (SystemZ)
-    {
+
+    } else version (SystemZ) {
+
         enum O_CREAT        = 0x40;     // octal     0100
         enum O_EXCL         = 0x80;     // octal     0200
         enum O_NOCTTY       = 0x100;    // octal     0400
@@ -223,9 +225,12 @@ version( Linux )
         enum O_SYNC         = 0x101000; // octal 04010000
         enum O_DSYNC        = 0x1000;   // octal   010000
         enum O_RSYNC        = O_SYNC;
+
+    } else {
+
+        static assert(false, "unsupported arch");
+
     }
-    else
-        static assert(0, "unimplemented");
 
     enum O_ACCMODE      = 0x3;
     enum O_RDONLY       = 0x0;
@@ -241,8 +246,8 @@ version( Linux )
         l_pid: pid_t;
     }
 
-/+    static if( __USE_FILE_OFFSET64 )
-    {
+/+    static if( __USE_FILE_OFFSET64 ) {
+
         int   creat64(in char*, mode_t);
 		alias creat = creat64;
 
@@ -257,9 +262,9 @@ version( Linux )
 
     enum AT_SYMLINK_NOFOLLOW = 0x100;
     enum AT_FDCWD = -100;
-}
-else version( OSX )
-{
+
+} else version (OSX) {
+
     enum F_DUPFD        = 0;
     enum F_GETFD        = 1;
     enum F_SETFD        = 2;
@@ -304,10 +309,7 @@ else version( OSX )
 
     fn creat(in char*, mode_t) i32;
     fn open(in char*, i32, ...) i32;
-}
-else
-{
-    static assert(false, "Unsupported platform");
+
 }
 
 fn fcntl(i32, i32, ...) i32;

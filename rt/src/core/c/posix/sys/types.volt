@@ -35,7 +35,7 @@ time_t
 uid_t
 */
 
-version (Linux || Windows) {
+version (Linux) {
 
 	// static if (__USE_FILE_OFFSET64)
 	version (none) {
@@ -51,6 +51,7 @@ version (Linux || Windows) {
 		alias off_t = c_long;
 
 	}
+
 	alias blksize_t = c_long;
 	alias dev_t = u64;
 	alias gid_t = u32;

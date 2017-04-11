@@ -5,7 +5,6 @@ module core.c.posix.sys.stat;
 
 version (Posix):
 
-
 private import core.c.posix.config;
 private import core.c.stdint;
 private import core.c.posix.time;     // for timespec
@@ -75,7 +74,9 @@ alias ulong_t = u64;
 alias slong_t = u64;
 
 version (Linux) {
+
 	version (X86) {
+
 		struct stat_t
 		{
 			st_dev: dev_t;
@@ -128,7 +129,9 @@ version (Linux) {
 				__unused5: ulong_t;
 //			}
 		}
+
 	} else version (X86_64) {
+
 		struct stat_t
 		{
 			st_dev: dev_t;
@@ -152,8 +155,7 @@ version (Linux) {
 			//}
 			__unused: slong_t[3];
 		}
-	} else {
-		static assert(0, "unimplemented architecture for core.c.posix.stat");
+
 	}
 
 	enum S_IRUSR    = 0x100; // octal 0400
@@ -178,12 +180,13 @@ version (Linux) {
 	enum S_ISGID    = 0x400; // octal 02000
 	enum S_ISVTX    = 0x200; // octal 01000
 
-	private
-	{
+	private {
+
 		extern (Volt) fn S_ISTYPE( mode: mode_t, mask: u32 ) bool
 		{
 			return ( mode & S_IFMT ) == mask;
 		}
+
 	}
 
 	extern (Volt) fn S_ISBLK( mode: mode_t )  bool { return S_ISTYPE( mode, S_IFBLK );  }
@@ -200,7 +203,9 @@ version (Linux) {
 		fn S_TYPEISSEM( buf: stat_t* ) bool { return false; }
 		fn S_TYPEISSHM( buf: stat_t* ) bool { return false; }
 	//}
+
 } else version (OSX) {
+
 	struct stat_t
 	{
 		st_dev: dev_t;
@@ -256,8 +261,7 @@ version (Linux) {
 	enum S_ISGID    = 0x400; // octal 02000
 	enum S_ISVTX    = 0x200; // octal 01000
 
-	private
-	{
+	private {
 //		extern (Volt) bool S_ISTYPE( mode_t mode, uint mask )
 	//	{
 		//	return ( mode & S_IFMT ) == mask;
@@ -271,11 +275,11 @@ version (Linux) {
 	//extern (Volt) bool S_ISREG( mode_t mode )  { return S_ISTYPE( mode, S_IFREG );  }
 	//extern (Volt) bool S_ISLNK( mode_t mode )  { return S_ISTYPE( mode, S_IFLNK );  }
 	//extern (Volt) bool S_ISSOCK( mode_t mode ) { return S_ISTYPE( mode, S_IFSOCK ); }
-} else {
-	static assert(false, "Unsupported platform");
+
 }
 
 version (Posix) {
+
 	fn chmod(in char*, mode_t) i32;
 	fn fchmod(i32, mode_t) i32;
 	//int    fstat(int, stat_t*);
@@ -287,6 +291,7 @@ version (Posix) {
 	fn fstat(i32, stat_t*) i32;
 	fn lstat(in char*, stat_t*) i32;
 	fn stat(in char*, stat_t*) i32;
+
 }
 
 //
@@ -313,6 +318,7 @@ int mknod(in 3char*, mode_t, dev_t);
 */
 
 version (Linux) {
+
 	enum S_IFMT     = 0xF000; // octal 0170000
 	enum S_IFBLK    = 0x6000; // octal 0060000
 	enum S_IFCHR    = 0x2000; // octal 0020000
@@ -323,7 +329,9 @@ version (Linux) {
 	enum S_IFSOCK   = 0xC000; // octal 0140000
 
 	fn mknod(in char*, mode_t, dev_t) i32;
+
 } else version (OSX) {
+
 	enum S_IFMT     = 0xF000; // octal 0170000
 	enum S_IFBLK    = 0x6000; // octal 0060000
 	enum S_IFCHR    = 0x2000; // octal 0020000
@@ -334,6 +342,5 @@ version (Linux) {
 	enum S_IFSOCK   = 0xC000; // octal 0140000
 
 	fn mknod(in char*, mode_t, dev_t) i32;
-} else {
-	static assert(false, "Unsupported platform");
+
 }

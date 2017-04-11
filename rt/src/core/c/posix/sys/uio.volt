@@ -14,11 +14,11 @@
  */
 module core.c.posix.sys.uio;
 
-version (!Metal):
+version (Posix):
 
 public import core.c.posix.sys.types; // for ssize_t
 
-version (Posix):
+
 extern (C):
 
 //
@@ -38,8 +38,8 @@ ssize_t readv(int, in iovec*, int);
 ssize_t writev(int, in iovec*, int);
 */
 
-version( Linux )
-{
+version (Linux) {
+
     struct iovec
     {
 		iov_base: void*;
@@ -48,9 +48,9 @@ version( Linux )
 
 	fn readv(i32, in iovec*, i32) ssize_t;
 	fn writev(i32, in iovec*, i32) ssize_t;
-}
-else version( OSX )
-{
+
+} else version (OSX) {
+
     struct iovec
     {
 		iov_base: void*;
@@ -59,8 +59,5 @@ else version( OSX )
 
 	fn readv(i32, in iovec*, i32) ssize_t;
 	fn writev(i32, in iovec*, i32) ssize_t;
-}
-else
-{
-    static assert(false, "Unsupported platform");
+
 }

@@ -92,8 +92,8 @@ fn ttyname_r(i32, char*, size_t) i32;
 fn unlink(in char*) i32;
 fn write(i32, in void*, size_t) ssize_t;
 
-version( Linux )
-{
+version (Linux) {
+
 //  static if( __USE_FILE_OFFSET64 )
 //  {
 //    off_t lseek64(int, off_t, int) /*@trusted*/;
@@ -112,9 +112,9 @@ version( Linux )
 //  {
 	fn ftruncate(i32, off_t) i32;
 //  }
-}
-/+else version( Solaris )
-{
+
+} /+ else version (Solaris) {
+
     version ( D_LP64 )
     {
         off_t   lseek(int, off_t, int) /*@trusted*/;
@@ -139,15 +139,16 @@ version( Linux )
             int     ftruncate(int, off_t) /*@trusted*/;
         }
     }
-}+/
-else version( OSX )
-{
+
+} +/ else version (OSX) {
+
 	fn lseek(i32, off_t, i32) off_t;
 	fn ftruncate(i32, off_t) i32;
+
 }
 
-version( Linux )
-{
+version (Linux) {
+
     enum F_OK       = 0;
     enum R_OK       = 4;
     enum W_OK       = 2;
@@ -460,9 +461,9 @@ version( Linux )
         _SC_IPV6 = _SC_LEVEL1_ICACHE_SIZE + 50,
         _SC_RAW_SOCKETS
     }
-}
-else version( OSX )
-{
+
+} else version (OSX) {
+
     enum F_OK       = 0;
     enum R_OK       = 4;
     enum W_OK       = 2;
@@ -644,9 +645,9 @@ else version( OSX )
         _CS_DARWIN_USER_TEMP_DIR                = 65537,
         _CS_DARWIN_USER_CACHE_DIR               = 65538,
     }
-}
-else version( FreeBSD )
-{
+
+} else version (FreeBSD) {
+
     enum F_OK       = 0;
     enum R_OK       = 0x04;
     enum W_OK       = 0x02;
@@ -799,9 +800,9 @@ else version( FreeBSD )
         _CS_POSIX_V6_LPBIG_OFFBIG_LIBS     =  13,
         _CS_POSIX_V6_WIDTH_RESTRICTED_ENVS =  14,
     }
-}
-else version( CRuntime_Bionic )
-{
+
+} else version (CRuntime_Bionic) {
+
     enum F_OK       = 0;
     enum R_OK       = 4;
     enum W_OK       = 2;
@@ -810,9 +811,9 @@ else version( CRuntime_Bionic )
     enum _SC_PAGESIZE         = 0x0027;
     enum _SC_NPROCESSORS_ONLN = 0x0061;
     enum _SC_THREAD_STACK_MIN = 0x004c;
-}
-else version( Solaris )
-{
+
+} else version (Solaris) {
+
     enum F_OK       = 0;
     enum R_OK       = 4;
     enum W_OK       = 2;
@@ -1086,13 +1087,14 @@ else version( Solaris )
 int fsync(int);
 */
 
-version( Linux )
-{
+version (Linux) {
+
 	fn fsync(i32) i32;
-}
-else version( OSX )
-{
+
+} else version (OSX) {
+
 	fn fsync(i32) i32;
+
 }
 
 //
@@ -1102,9 +1104,10 @@ else version( OSX )
 int fdatasync(int);
 */
 
-version( Linux )
-{
+version (Linux) {
+
 	fn fdatasync(i32) i32;
+
 }
 
 //
@@ -1135,8 +1138,8 @@ int        usleep(useconds_t);
 pid_t      vfork();
 */
 
-version( Linux )
-{
+version (Linux) {
+
 	fn crypt(in char*, in char*) char*;
 	fn ctermid(char*) char*;
 	fn encrypt(ref char[64], i32);
@@ -1181,9 +1184,9 @@ version( Linux )
 	fn pwrite(i32, in void*, size_t, off_t) ssize_t;
 	fn truncate(in char*, off_t) i32;
 //  }
-}
-else version( OSX )
-{
+
+} else version (OSX) {
+
 	fn crypt(in char*, in char*) char*;
 	fn ctermid(char*) char*;
 	fn encrypt(ref char[64], i32);
@@ -1206,4 +1209,5 @@ else version( OSX )
 	fn ualarm(useconds_t, useconds_t) useconds_t;
 	fn usleep(useconds_t) i32;
 	fn vfork() pid_t;
+
 }

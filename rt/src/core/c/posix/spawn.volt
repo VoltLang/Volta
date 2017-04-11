@@ -4,9 +4,6 @@ module core.c.posix.spawn;
 
 version (Posix):
 
-version (Linux || OSX):
-
-
 import core.c.posix.sys.types;
 
 
@@ -34,7 +31,7 @@ version (Linux) {
 
 	} else {
 
-		static assert(false, "arch not supported");
+		static assert(false, "unsupported arch");
 	}
 
 	alias posix_spawn_file_actions_t = posix_spawn_file_actions;
@@ -51,10 +48,6 @@ version (Linux) {
 
 	alias posix_spawn_file_actions_t = posix_spawn_file_actions*;
 	alias posix_spawnattr_t = posix_spawnattr*;
-
-} else {
-
-	static assert(false, "unsupported platform");
 
 }
 

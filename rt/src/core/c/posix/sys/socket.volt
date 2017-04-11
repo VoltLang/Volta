@@ -16,9 +16,9 @@ module core.c.posix.sys.socket;
 
 version (Posix):
 
-
 import core.c.config;
 import core.c.posix.sys.uio;
+
 
 extern (C) /*nothrow @nogc*/:
 
@@ -133,8 +133,8 @@ i32     sockatmark(i32);
 i32     socketpair(i32, i32, i32, ref i32[2]);
 */
 
-version( Linux )
-{
+version (Linux) {
+
     // Some of the constants below and from the Bionic section are really from
     // the linux kernel headers.
     alias socklen_t = u32;
@@ -188,8 +188,8 @@ version( Linux )
         l_linger: i32;
     }
 
-    version (X86)
-    {
+    version (X86) {
+
         enum
         {
             SOCK_DGRAM      = 2,
@@ -221,9 +221,9 @@ version( Linux )
             SO_SNDTIMEO     = 21,
             SO_TYPE         = 3
         }
-    }
-    else version (X86_64)
-    {
+
+    } else version (X86_64) {
+
         enum
         {
             SOCK_DGRAM      = 2,
@@ -255,9 +255,9 @@ version( Linux )
             SO_SNDTIMEO     = 21,
             SO_TYPE         = 3
         }
-    }
-    else version (MIPS32)
-    {
+
+    } else version (MIPS32) {
+
         enum
         {
             SOCK_DGRAM      = 1,
@@ -289,9 +289,9 @@ version( Linux )
             SO_SNDTIMEO     = 0x1005,
             SO_TYPE         = 0x1008,
         }
-    }
-    else version (MIPS64)
-    {
+
+    } else version (MIPS64) {
+
         enum
         {
             SOCK_DGRAM      = 1,
@@ -323,9 +323,9 @@ version( Linux )
             SO_SNDTIMEO     = 0x1005,
             SO_TYPE         = 0x1008,
         }
-    }
-    else version (PPC)
-    {
+
+    } else version (PPC) {
+
         enum
         {
             SOCK_DGRAM      = 2,
@@ -357,9 +357,9 @@ version( Linux )
             SO_SNDTIMEO     = 19,
             SO_TYPE         = 3
         }
-    }
-    else version (PPC64)
-    {
+
+    } else version (PPC64) {
+
         enum
         {
             SOCK_DGRAM      = 2,
@@ -391,9 +391,9 @@ version( Linux )
             SO_SNDTIMEO     = 19,
             SO_TYPE         = 3
         }
-    }
-    else version (AArch64)
-    {
+
+    } else version (AArch64) {
+
         enum
         {
             SOCK_DGRAM      = 2,
@@ -425,9 +425,9 @@ version( Linux )
             SO_SNDTIMEO     = 21,
             SO_TYPE         = 3
         }
-    }
-    else version (ARM)
-    {
+
+    } else version (ARM) {
+
         enum
         {
             SOCK_DGRAM      = 2,
@@ -459,9 +459,9 @@ version( Linux )
             SO_SNDTIMEO     = 21,
             SO_TYPE         = 3
         }
-    }
-    else version (SystemZ)
-    {
+
+    } else version (SystemZ) {
+
         enum
         {
             SOCK_DGRAM      = 2,
@@ -493,9 +493,12 @@ version( Linux )
             SO_SNDTIMEO     = 21,
             SO_TYPE         = 3
         }
+
+    } else {
+
+        static assert(false, "unsupported arch");
+
     }
-    else
-        static assert(false, "unimplemented");
 
     enum
     {
@@ -552,9 +555,9 @@ version( Linux )
     fn socket(i32, i32, i32) i32;
     fn sockatmark(i32) i32;
     fn socketpair(i32, i32, i32, ref i32[2]) i32;
-}
-else version( OSX )
-{
+
+} else version (OSX) {
+
     alias socklen_t = u32;
     alias sa_family_t = u8;
 
@@ -707,10 +710,7 @@ else version( OSX )
     fn socket(i32, i32, i32) i32;
     fn sockatmark(i32) i32;
     fn socketpair(i32, i32, i32, ref i32[2]) i32;
-}
-else
-{
-    static assert(false, "Unsupported platform");
+
 }
 
 //
@@ -720,23 +720,20 @@ else
 AF_INET6
 */
 
-version( Linux )
-{
+version (Linux) {
+
     enum
     {
         AF_INET6    = 10
     }
-}
-else version( OSX )
-{
+
+} else version (OSX) {
+
     enum
     {
         AF_INET6    = 30
     }
-}
-else
-{
-    static assert(false, "Unsupported platform");
+
 }
 
 //
@@ -746,21 +743,18 @@ else
 SOCK_RAW
 */
 
-version( Linux )
-{
+version (Linux) {
+
     enum
     {
         SOCK_RAW    = 3
     }
-}
-else version( OSX )
-{
+
+} else version (OSX) {
+
     enum
     {
         SOCK_RAW    = 3
     }
-}
-else
-{
-    static assert(false, "Unsupported platform");
+
 }

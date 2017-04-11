@@ -135,7 +135,7 @@ version (Linux) {
 
 	fn readdir_r(DIR*, dirent*, dirent**) i32;
 
-} else /+version (FreeBSD) {
+} /+ else version (FreeBSD) {
 
 	int readdir_r(DIR*, dirent*, dirent**);
 

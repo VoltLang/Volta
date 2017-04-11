@@ -14,14 +14,13 @@
  */
 module core.c.posix.netinet.in_;
 
-version (!Metal):
+version (Posix):
 
 //private import core.sys.posix.config;
 //public import core.stdc.inttypes; // for uint32_t, uint16_t, uint8_t
 public import core.c.posix.arpa.inet;
 public import core.c.posix.sys.socket; // for sa_family_t
 
-version (Posix):
 extern (C):
 
 //
@@ -66,8 +65,8 @@ ntohl() // from core.sys.posix.arpa.inet
 ntohs() // from core.sys.posix.arpa.inet
 */
 
-version( Linux )
-{
+version (Linux) {
+
     // Some networking constants are subtly different for glibc, linux kernel
     // constants are also provided below.
 /+
@@ -116,16 +115,18 @@ version( Linux )
     }
 
     //enum INET_ADDRSTRLEN       = 16;
-}
-else version( OSX )
-{/+
+
+} else version (OSX) {
+
+/+
     alias in_port_t = u16;
     alias in_addr_t = u32;
 
     struct in_addr
     {
 		s_addr: in_addr_t;
-    }+/
+    }
++/
 
     private enum __SOCK_SIZE__ = 16;
 
@@ -220,8 +221,8 @@ int IN6_IS_ADDR_MC_ORGLOCAL(in6_addr*)
 int IN6_IS_ADDR_MC_GLOBAL(in6_addr*)
 */
 
-version ( Linux )
-{
+version (Linux) {
+
     struct in6_addr
     {
         union _u
@@ -352,9 +353,9 @@ version ( Linux )
         return IN6_IS_ADDR_MULTICAST( addr ) &&
                ((cast(u8*) addr)[1] & 0xf) == 0xe;
     }
-}
-else version( OSX )
-{
+
+} else version (OSX) {
+
     struct in6_addr
     {
         union _u
@@ -497,11 +498,12 @@ else version( OSX )
 IPPROTO_RAW
 */
 
-version( Linux )
-{
+version (Linux) {
+
     enum IPPROTO_RAW = 255;
-}
-else version( OSX )
-{
+
+} else version (OSX) {
+
     enum IPPROTO_RAW = 255;
+
 }

@@ -134,8 +134,8 @@ void         setprotoent(int);
 void         setservent(int);
 */
 
-version( Linux )
-{
+version (Linux) {
+
     struct hostent
     {
 		h_name: char*;
@@ -217,9 +217,9 @@ version( Linux )
     enum EAI_SOCKTYPE       = -7;
     enum EAI_SYSTEM         = -11;
     enum EAI_OVERFLOW       = -12;
-}
-else version( OSX )
-{
+
+} else version (OSX) {
+
     struct hostent
     {
 		h_name: char*;
@@ -301,10 +301,7 @@ else version( OSX )
     enum EAI_SOCKTYPE       = 10;
     enum EAI_SYSTEM         = 11;
     enum EAI_OVERFLOW       = 14;
-}
-else
-{
-    static assert(false, "Unsupported platform");
+
 }
 
 fn endhostent();

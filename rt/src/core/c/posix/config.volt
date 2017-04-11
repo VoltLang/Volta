@@ -42,9 +42,13 @@ version (Linux) {
 	enum __USE_MISC          = _BSD_SOURCE || _SVID_SOURCE;
 
 	version (V_P64) {
+
 		enum __WORDSIZE = 64;
+
 	} else {
+
 		enum __WORDSIZE = 32;
+
 	}
 
 }

@@ -14,11 +14,10 @@
  */
 module core.c.posix.arpa.inet;
 
-version (!Metal):
+version (Posix):
 
 public import core.c.posix.sys.socket; // for socklen_t
 
-version (Posix):
 extern (C):
 
 //
@@ -49,8 +48,8 @@ char*     inet_ntop(int, in void*, char*, socklen_t);
 int       inet_pton(int, in char*, void*);
 */
 
-version( Linux )
-{
+version (Linux) {
+
     alias in_port_t = u16;
     alias in_addr_t = u32;
 
@@ -72,9 +71,9 @@ version( Linux )
 	fn inet_pton(i32, in char*, void*) i32;
 
 	enum INET6_ADDRSTRLEN = 46;
-}
-else version( OSX )
-{
+
+} else version (OSX) {
+
     alias in_port_t = u16;
     alias in_addr_t = u32;
 
@@ -96,4 +95,5 @@ else version( OSX )
 	fn inet_pton(i32, in char*, void*) i32;
 
 	enum INET6_ADDRSTRLEN = 46;
+
 }

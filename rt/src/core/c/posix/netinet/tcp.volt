@@ -14,9 +14,8 @@
  */
 module core.c.posix.netinet.tcp;
 
-version (!Metal):
-
 version (Posix):
+
 extern (C):
 
 //
@@ -26,11 +25,12 @@ extern (C):
 TCP_NODELAY
 */
 
-version( Linux )
-{
+version (Linux) {
+
     enum TCP_NODELAY = 1;
-}
-else version( OSX )
-{
+
+} else version (OSX) {
+
     enum TCP_NODELAY = 1;
+
 }
