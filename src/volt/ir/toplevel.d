@@ -419,6 +419,8 @@ public:
 
 	bool isAbstract;
 
+	bool isFinal;
+
 	TemplateInstance templateInstance;  //< Optional. Non-null if this is a template instantiation.
 
 public:
@@ -457,6 +459,7 @@ public:
 
 		this.isObject = old.isObject;
 		this.isAbstract = old.isAbstract;
+		this.isFinal = old.isFinal;
 		this.templateInstance = old.templateInstance;
 	}
 }

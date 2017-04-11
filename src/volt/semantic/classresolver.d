@@ -215,6 +215,9 @@ void fillInParentIfNeeded(LanguagePass lp, ir.Class c)
 			if (parent is null) {
 				throw makeExpected(c.parent, "class");
 			}
+			if (parent.isFinal) {
+				throw makeSubclassFinal(c, parent);
+			}
 		}
 	}
 
@@ -329,6 +332,10 @@ ir.Function[][] getClassMethods(LanguagePass lp, ir.Scope current, ir.Class _cla
 		}
 
 		lp.resolve(current, asFunction);
+
+		if (_class.isFinal) {
+			asFunction.isFinal = true;
+		}
 
 		if (asFunction.kind == ir.Function.Kind.Constructor) {
 			if (gatherConstructors) {
@@ -488,6 +495,9 @@ bool overrideFunctionsIfNeeded(LanguagePass lp, ir.Function childFunction, ref i
 			if (!childFunction.isMarkedOverride) {
 				assert(childFunction !is parentFunction);
 				throw makeNeedOverride(childFunction, parentFunction);
+			}
+			if (parentFunction.isFinal) {
+				throw makeOverridingFinal(childFunction);
 			}
 			if (parentFunction.type.isProperty && !childFunction.type.isProperty) {
 				throw makeOverriddenNeedsProperty(childFunction);

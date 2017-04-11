@@ -397,6 +397,13 @@ protected:
 				}
 				c.isAbstract = true;
 				break;
+			case Final:
+				auto c = cast(ir.Class) s;
+				if (c is null) {
+					throw makeBadFinal(s, attr);
+				}
+				c.isFinal = true;
+				break;
 			default:
 				// Warn?
 			}

@@ -335,6 +335,11 @@ CompilerException makeOverriddenNeedsProperty(ir.Function f, string file = __FIL
 	return new CompilerError(f.loc, format("functions like '%s' that override @property functions must be marked @property themselves.", f.name), file, line);
 }
 
+CompilerException makeOverridingFinal(ir.Function f, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(f.loc, format("function '%s' overrides function marked as final.", f.name), file, line);
+}
+
 CompilerException makeBadBuiltin(ref in Location loc, ir.Type t, string field, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(loc, format("type '%s' doesn't have built-in field '%s'.", typeString(t), field), file, line);
@@ -669,6 +674,16 @@ CompilerException makeNewAbstract(ir.Node node, ir.Class _class, string file = _
 CompilerException makeBadAbstract(ir.Node node, ir.Attribute attr, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(node.loc, "only classes and functions may be marked as abstract.", file, line);
+}
+
+CompilerException makeBadFinal(ir.Node node, ir.Attribute attr, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(node.loc, "only classes, functions, and switch statmenets may be marked as final.", file, line);
+}
+
+CompilerException makeSubclassFinal(ir.Class child, ir.Class parent, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(child.loc, format("class '%s' attempts to subclass final class '%s'.", child.name, parent.name), file, line);
 }
 
 CompilerException makeCannotImport(ir.Node node, ir.Import _import, string file = __FILE__, const int line = __LINE__)

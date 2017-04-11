@@ -4245,6 +4245,10 @@ void resolveFunction(Context ctx, ir.Function func)
 		func.type.ret = buildVoid(func.type.ret.loc);
 	}
 
+	if (func.access == ir.Access.Private) {
+		func.isFinal = true;
+	}
+
 	if (func.type.isProperty &&
 	    func.type.params.length == 0 &&
 	    isVoid(func.type.ret)) {
