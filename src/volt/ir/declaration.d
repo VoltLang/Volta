@@ -368,6 +368,7 @@ public:
 	bool isOverridingInterface;
 
 	bool isAbstract;
+	bool isFinal;
 
 	/**
 	 * Makes the ExTyper automatically set the correct return type
@@ -429,6 +430,7 @@ public:
 		this.isMarkedOverride = old.isMarkedOverride;
 		this.isOverridingInterface = old.isOverridingInterface;
 		this.isAbstract = old.isAbstract;
+		this.isFinal = old.isFinal;
 		this.isAutoReturn = old.isAutoReturn;
 		this.isLoweredScopeExit = old.isLoweredScopeExit;
 		this.isLoweredScopeFailure = old.isLoweredScopeFailure;
