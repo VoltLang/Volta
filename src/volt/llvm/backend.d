@@ -74,6 +74,13 @@ public:
 			LLVMInitializeX86AsmPrinter();
 		}
 
+		if (target.arch == Arch.Wasm32) {
+			LLVMInitializeWebAssemblyTargetInfo();
+			LLVMInitializeWebAssemblyTarget();
+			LLVMInitializeWebAssemblyTargetMC();
+			LLVMInitializeWebAssemblyAsmPrinter();
+		}
+
 		LLVMLinkInMCJIT();
 	}
 
@@ -300,6 +307,7 @@ void writeObjectFile(TargetInfo target, string output, string input)
 static string[] archList = [
 	"x86",
 	"x86-64",
+	"wasm32",
 ];
 
 static string[][] tripleList = [
@@ -322,6 +330,7 @@ static string[][] tripleList = [
 	[
 		"i686-w64-windows-gnu",
 		"x86_64-w64-windows-gnu",
+		null,
 	],
 
 	/*
@@ -330,6 +339,7 @@ static string[][] tripleList = [
 	[
 		null,
 		"x86_64-pc-windows-msvc",
+		null,
 	],
 
 	/*
@@ -338,6 +348,7 @@ static string[][] tripleList = [
 	[
 		"i386-pc-linux-gnu",
 		"x86_64-pc-linux-gnu",
+		null,
 	],
 
 	/*
@@ -346,6 +357,7 @@ static string[][] tripleList = [
 	[
 		"i386-apple-macosx10.9.0",
 		"x86_64-apple-macosx10.9.0",
+		null,
 	],
 
 	/*
@@ -354,6 +366,16 @@ static string[][] tripleList = [
 	[
 		"i686-pc-none-elf",
 		"x86_64-pc-none-elf",
+		null,
+	],
+
+	/*
+	 * Tesla Version 1.
+	 */
+	[
+		null,
+		null,
+		"wasm32-unknown-unknown-wasm",
 	],
 ];
 
@@ -382,6 +404,11 @@ static string[][] layoutList = [
 		layoutMetal32,
 		layoutMetal64,
 		null,
+	],
+	[ // Tesla Version 1.
+		null,
+		null,
+		layoutWinLinux32,
 	],
 ];
 

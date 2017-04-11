@@ -104,10 +104,12 @@ public:
 		case Linux: platformStr = "linux"; break;
 		case OSX: platformStr = "osx"; break;
 		case Metal: platformStr = "metal"; break;
+		case Tesla: platformStr = "tesla"; break;
 		}
 		final switch (arch) with (Arch) {
 		case X86: archStr = "x86"; break;
 		case X86_64: archStr = "x86_64"; break;
+		case Wasm32: archStr = "wasm32"; break;
 		}
 	}
 
@@ -419,6 +421,8 @@ Arch parseArch(string a)
 		return Arch.X86;
 	case "x86_64":
 		return Arch.X86_64;
+	case "wasm32":
+		return Arch.Wasm32;
 	default:
 		throw makeUnknownArch(a);
 	}
@@ -437,6 +441,8 @@ Platform parsePlatform(string p)
 		return Platform.Linux;
 	case "osx":
 		return Platform.OSX;
+	case "tesla":
+		return Platform.Tesla;
 	default:
 		throw makeUnknownPlatform(p);
 	}

@@ -24,6 +24,7 @@ enum Platform
 	Linux,
 	OSX,
 	Metal,
+	Tesla,
 }
 
 string platformToString(Platform platform)
@@ -45,6 +46,7 @@ enum Arch
 {
 	X86,
 	X86_64,
+	Wasm32,
 }
 
 string archToString(Arch arch)
@@ -105,12 +107,14 @@ public:
 		"X86",
 		"X86_64",
 		"LE32",
+		"Wasm32",
 		// Platforms
 		"Posix",
 		"Windows",
 		// Targets
 		"OSX",
 		"MSVC",
+		"Tesla",
 		"Linux",
 		"MinGW",
 		"Solaris",

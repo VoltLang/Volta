@@ -490,7 +490,8 @@ public:
 			 * Also disabled on Metal.
 			 */
 			if (target.platform != Platform.MinGW &&
-			    target.platform != Platform.Metal) {
+			    target.platform != Platform.Metal &&
+			    target.arch != Arch.Wasm32) {
 				LLVMSetThreadLocal(v, true);
 			}
 			break;
@@ -506,7 +507,8 @@ public:
 				LLVMSetUnnamedAddr(v, true);
 				// For lack of COMDAT support.
 				if (target.platform == Platform.MSVC ||
-				    target.platform == Platform.MinGW) {
+				    target.platform == Platform.MinGW ||
+				    target.arch == Arch.Wasm32) {
 					LLVMSetLinkage(v, LLVMLinkage.Internal);
 				} else {
 					LLVMSetLinkage(v, LLVMLinkage.LinkOnceODR);

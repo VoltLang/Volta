@@ -24,6 +24,7 @@ bool shouldCUseStructRet(TargetInfo target, ir.Struct irStruct)
 	size_t structSize = size(target, irStruct);
 
 	final switch (target.platform) with (Platform) {
+	case Tesla:
 	case Metal:
 	case Linux:
 		final switch (target.arch) with (Arch) {
@@ -31,6 +32,8 @@ bool shouldCUseStructRet(TargetInfo target, ir.Struct irStruct)
 			return true;
 		case X86_64:
 			return structSize > 16;
+		case Wasm32:
+			return true;
 		}
 	case OSX:
 		final switch (target.arch) with (Arch) {
@@ -38,6 +41,8 @@ bool shouldCUseStructRet(TargetInfo target, ir.Struct irStruct)
 			return structSize != 4 && structSize != 8;
 		case X86_64:
 			return structSize > 16;
+		case Wasm32:
+			return true;
 		}
 	case MSVC:
 	case MinGW:
@@ -45,6 +50,8 @@ bool shouldCUseStructRet(TargetInfo target, ir.Struct irStruct)
 		case X86:
 		case X86_64:
 			return structSize != 4 && structSize != 8;
+		case Wasm32:
+			return true;
 		}
 	}
 
