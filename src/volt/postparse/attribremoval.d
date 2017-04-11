@@ -255,6 +255,9 @@ protected:
 			case Abstract:
 				func.isAbstract = true;
 				break;
+			case Final:
+				func.isFinal = true;
+				break;
 			case Static: // TODO (selfhost) remove.
 			case Local, Global:
 				with (ir.Function.Kind) {
