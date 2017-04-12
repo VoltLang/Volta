@@ -309,6 +309,10 @@ ir.Function generateDefaultConstructor(LanguagePass lp, ir.Scope current, ir.Cla
 /// Get all the functions in an inheritance chain -- ignore overloading.
 ir.Function[][] getClassMethods(LanguagePass lp, ir.Scope current, ir.Class _class)
 {
+	if (_class.methodsCache.length != 0) {
+		return _class.methodsCache;
+	}
+
 	bool gatherConstructors = _class.userConstructors.length == 0;
 	ir.Function[][] methods;
 	if (_class.parentClass !is null) {
@@ -353,6 +357,7 @@ ir.Function[][] getClassMethods(LanguagePass lp, ir.Scope current, ir.Class _cla
 		_class.userConstructors ~= generateDefaultConstructor(lp, current, _class);
 	}
 
+	_class.methodsCache = methods;
 	return methods;
 }
 

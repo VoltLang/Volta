@@ -410,6 +410,7 @@ public:
 	Class parentClass;  ///< Filled in by the typeverifier.
 	_Interface[] parentInterfaces;  ///< Filled in by the typeverifier.
 	size_t[] interfaceOffsets;  ///< Filled in by the typeverifier.
+	Function[][] methodsCache;  ///< Filled in by the classresolver.
 
 	/// How a lowered class will look internally.
 	Struct layoutStruct;
@@ -433,9 +434,11 @@ public:
 		version (Volt) {
 			this.interfaces = new old.interfaces[0 .. $];
 			this.userConstructors = new old.userConstructors[0 .. $];
+			this.methodsCache = new old.methodsCache[0 .. $];
 		} else {
 			this.interfaces = old.interfaces.dup;
 			this.userConstructors = old.userConstructors.dup;
+			this.methodsCache = old.methodsCache.dup;
 		}
 
 		this.vtableStruct = old.vtableStruct;
