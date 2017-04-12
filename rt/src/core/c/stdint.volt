@@ -75,16 +75,26 @@ version (V_P64) {
 }
 
 version (V_P64) {
-    alias intptr_t  = c_long;
-    alias uintptr_t = c_ulong;
+	version (MSVC || MinGW) {
+		alias intptr_t  = i64;
+		alias uintptr_t = u64;
+	} else {
+		alias intptr_t  = c_long;
+		alias uintptr_t = c_ulong;
+	}
 } else {
-    alias intptr_t  = i32;
-    alias uintptr_t = u32;
+	alias intptr_t  = i32;
+	alias uintptr_t = u32;
 }
 
 version (V_P64) {
-	alias intmax_t  = c_long;
-	alias uintmax_t = c_ulong;
+	version (MSVC || MinGW) {
+		alias intmax_t  = i64;
+		alias uintmax_t = u64;
+	} else {
+		alias intmax_t  = c_long;
+		alias uintmax_t = c_ulong;
+	}
 } else {
 	alias intmax_t  = i64;
 	alias uintmax_t = u64;
