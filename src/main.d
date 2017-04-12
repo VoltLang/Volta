@@ -6,7 +6,7 @@ import core.exception;
 
 import watt.path : getExecDir, dirSeparator, baseName, dirName;
 import watt.conv : toLower;
-import watt.io.std : writefln;
+import watt.io.std : error, output, writefln;
 import watt.io.file : exists, read, searchDir;
 import watt.text.string : splitLines;
 import watt.text.format : format;
@@ -73,6 +73,8 @@ int main(string[] strArgs)
 
 	} catch (Exception e) {
 		writefln(e.msg);
+		output.flush();
+		error.flush();
 		return 0;
 	}
 
@@ -85,6 +87,8 @@ int main(string[] strArgs)
 	int ret = vc.compile();
 	vc.close();
 
+	output.flush();
+	error.flush();
 	return ret;
 }
 
