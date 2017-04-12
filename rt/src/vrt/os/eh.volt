@@ -2,7 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.eh;
 
-version (!MSVC && !Metal):
+version (Linux || OSX || MinGW):
 
 import core.rt.misc: vrt_panic, vrt_handle_cast;
 import core.typeinfo: TypeInfo;
@@ -17,13 +17,19 @@ import vrt.ext.stdc: exit, uintptr_t;
  * Register mappings for exception and exception type selector.
  */
 version (X86) {
+
 	enum vrt_eh_return_0 = 0;
 	enum vrt_eh_return_1 = 2;
+
 } else version (X86_64) {
+
 	enum vrt_eh_return_0 = 0;
 	enum vrt_eh_return_1 = 1;
+
 } else {
-	static assert("arch not supported");
+
+	static assert(false, "arch not supported");
+
 }
 
 /**

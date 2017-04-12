@@ -3,7 +3,7 @@
 // Written by hand from documentation.
 module vrt.ext.unwind;
 
-version (!MSVC && !Metal):
+version (Linux || OSX || MinGW):
 
 import vrt.ext.stdc: uintptr_t;
 

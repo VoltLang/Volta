@@ -3,7 +3,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.gc.sbrk;
 
-version (!Windows):
+version (Linux || OSX):
 
 import core.c.stdint : intptr_t;
 

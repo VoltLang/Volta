@@ -65,8 +65,6 @@ extern(C) fn vrt_format_hex(sink: Sink, i: u64, padding: size_t)
 	sink(buf[index .. $]);
 }
 
-version (!Metal):
-
 extern(C) fn vrt_format_f32(sink: Sink, f: f32, width: i32)
 {
 	vrt_format_f64(sink, cast(f64)f, width);
