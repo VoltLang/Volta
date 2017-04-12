@@ -315,26 +315,32 @@ public:
 			ret = intCompile();
 			return ret;
 		} catch (CompilerPanic e) {
+			io.output.flush();
 			io.error.writefln(e.msg);
 			auto loc = e.allocationLocation;
 			if (loc != "") {
 				io.error.writefln("%s", loc);
 			}
+			io.error.flush();
 			return 2;
 		} catch (CompilerError e) {
+			io.output.flush();
 			io.error.writefln(e.msg);
 			auto loc = e.allocationLocation;
 			debug if (loc != "") {
 				io.error.writefln("%s", loc);
 			}
+			io.error.flush();
 			return 1;
 		} catch (Throwable t) {
+			io.output.flush();
 			io.error.writefln("panic: %s", t.msg);
 			version (Volt) auto loc = t.location;
 			else auto loc = t.file is null ? "" : format("%s:%s", t.file, t.line);
 			if (loc != "") {
 				io.error.writefln("%s", loc);
 			}
+			io.error.flush();
 			return 2;
 		}
 	}
