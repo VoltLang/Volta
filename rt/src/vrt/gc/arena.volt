@@ -5,11 +5,8 @@ module vrt.gc.arena;
 
 import core.typeinfo : TypeInfo;
 import core.rt.gc : Stats;
-import core.rt.misc : vrt_panic;
 import core.compiler.llvm;
 import core.object : Object;
-
-import vrt.ext.stdc : printf, snprintf;
 
 import vrt.os.thread;
 import vrt.gc.hit;
@@ -18,6 +15,7 @@ import vrt.gc.slab;
 import vrt.gc.util;
 import vrt.gc.large;
 import vrt.gc.entry;
+import vrt.gc.errors;
 import vrt.gc.rbtree;
 import vrt.gc.extent;
 import vrt.gc.sections;
@@ -685,9 +683,7 @@ private:
 
 		memory := pages_map(null, n);
 		if (memory is null) {
-			msg: char[64];
-			len := snprintf(msg.ptr, msg.length, "Alloc of %llu bytes failed.", cast(u64)n);
-			vrt_panic([msg[0 .. len]], __LOCATION__);
+			panicFailedToAlloc(n);
 		}
 		return memory;
 	}
