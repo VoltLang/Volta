@@ -12,6 +12,8 @@ import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 
+import volt.util.sinks;
+
 import volt.semantic.util;
 import volt.semantic.mangle;
 import volt.semantic.lookup;
@@ -313,18 +315,25 @@ ir.Function[][] getClassMethods(LanguagePass lp, ir.Scope current, ir.Class _cla
 		return _class.methodsCache;
 	}
 
+	FunctionArraySink methods;
+	appendClassMethods(lp, current, _class, /*ref*/ methods);
+	_class.methodsCache = methods.toArray();
+	return _class.methodsCache;
+}
+
+void appendClassMethods(LanguagePass lp, ir.Scope current, ir.Class _class, ref FunctionArraySink methods)
+{
+	if (_class.methodsCache.length != 0) {
+		methods.append(_class.methodsCache);
+		return;
+	}
+
 	bool gatherConstructors = _class.userConstructors.length == 0;
-	ir.Function[][] methods;
 	if (_class.parentClass !is null) {
-		methods ~= getClassMethods(lp, _class.parentClass.myScope, _class.parentClass);
+		appendClassMethods(lp, _class.parentClass.myScope, _class.parentClass, /*ref*/ methods);
 	}
 
-	/* Really no better way... */ {
-		auto n = new ir.Function[][](methods.length + 1);
-		n[0 .. methods.length] = methods[];
-		methods = n;
-	}
-
+	FunctionSink fns;
 	foreach (node; _class.members.nodes) {
 		auto _t = cast(ir.Type)node;
 		if (_t !is null) {
@@ -350,54 +359,52 @@ ir.Function[][] getClassMethods(LanguagePass lp, ir.Scope current, ir.Class _cla
 			asFunction.isMarkedOverride = !_class.isObject;
 		}
 
-		methods[$-1] ~= asFunction;
+		fns.sink(asFunction);
 	}
 
 	if (_class.userConstructors.length == 0) {
 		_class.userConstructors ~= generateDefaultConstructor(lp, current, _class);
 	}
 
-	_class.methodsCache = methods;
-	return methods;
+	methods.sink(fns.toArray());
 }
 
-ir.Function[] getInterfaceMethods(LanguagePass lp, ir._Interface iface)
+void appendInterfaceMethods(LanguagePass lp, ir._Interface iface, ref FunctionSink functions)
 {
-	ir.Function[] functions;
 	foreach (node; iface.members.nodes) {
 		auto asFunction =  cast(ir.Function) node;
 		if (asFunction is null) {
 			continue;
 		}
 		lp.resolve(iface.myScope, asFunction);
-		functions ~= asFunction;
+		functions.sink(asFunction);
 	}
 	assert(iface.interfaces.length == iface.parentInterfaces.length);
 	foreach (piface; iface.parentInterfaces) {
-		functions ~= getInterfaceMethods(lp, piface);
+		appendInterfaceMethods(lp, piface, /*ref*/ functions);
 	}
-	return functions;
 }
 
-ir.Function[] getClassMethodFunctions(LanguagePass lp, ir.Class _class)
+void appendClassMethodFunctions(LanguagePass lp, ir.Class _class, ref FunctionSink outMethods)
 {
 	ir.Function[][] methodss = getClassMethods(lp, _class.myScope, _class);
 
-	ir.Function[] ifaceMethods;
+	FunctionSink ifaceMethods;
 	foreach (iface; _class.parentInterfaces) {
-		ifaceMethods ~= getInterfaceFunctions(lp, iface);
+		appendInterfaceFunctions(lp, iface, /*ref*/ ifaceMethods);
 	}
 	foreach (method; methodss[$-1]) {
-		auto fns = getPotentialOverrideFunctions(ifaceMethods, method);
+		FunctionSink fnsink;
+		appendPotentialOverrideFunctions(ifaceMethods, method, /*ref*/ fnsink);
 		version (Volt) {
 			ir.Type[] params = new ir.Type[](method.type.params);
 		} else {
 			ir.Type[] params = method.type.params.dup;
 		}
-		if (fns.length == 0) {
+		if (fnsink.length == 0) {
 			continue;
 		}
-		auto func = selectFunction(fns, params, method.loc, DoNotThrow);
+		auto func = selectFunction(/*ref*/ fnsink, params, method.loc, DoNotThrow);
 		if (func is null) {
 			continue;
 		}
@@ -409,8 +416,7 @@ ir.Function[] getClassMethodFunctions(LanguagePass lp, ir.Class _class)
 	}
 
 	size_t outIndex;
-	ir.Function[] outMethods;
-	foreach (ref methods; methodss) {
+	foreach (methods; methodss) {
 		bool noPriorMethods = false;
 		if (outMethods.length > 0) {
 			foreach (method; methods) {
@@ -420,9 +426,10 @@ ir.Function[] getClassMethodFunctions(LanguagePass lp, ir.Class _class)
 			noPriorMethods = true;
 		}
 		foreach (method; methods) {
-			auto fns = getPotentialOverrideFunctions(methods, method);
-			fns ~= method;
-			if (fns.length > 0) {
+			FunctionSink fnsink;
+			appendPotentialOverrideFunctions(methods, method, /*ref*/ fnsink);
+			fnsink.sink(method);
+			if (fnsink.length > 0) {
 				// Ensure that this function is the only overload possibility for itself in its own class.
 				version (Volt) {
 					ir.Type[] params = new ir.Type[](method.type.params);
@@ -434,7 +441,7 @@ ir.Function[] getClassMethodFunctions(LanguagePass lp, ir.Class _class)
 					panicAssert(method, atype !is null);
 					params[$ - 1] = atype.base;
 				}
-				auto tmp = selectFunction(fns, params, method.loc);
+				auto tmp = selectFunction(/*ref*/ fnsink, params, method.loc);
 			}
 
 			if (noPriorMethods && method.isMarkedOverride) {
@@ -443,51 +450,61 @@ ir.Function[] getClassMethodFunctions(LanguagePass lp, ir.Class _class)
 			if (method.isMarkedOverride && !method.isOverridingInterface) {
 				continue;
 			}
-			outMethods ~= method;
+			outMethods.sink(method);
 			method.vtableIndex = cast(int)outIndex++;
 		}
 	}
-
-
-	return outMethods;
 }
 
 /**
  * Returns all functions in functions that have the same name as considerFunction.
  */
-ir.Function[] getPotentialOverrideFunctions(ir.Function[] functions, ir.Function considerFunction)
+void appendPotentialOverrideFunctions(ir.Function[] functions, ir.Function considerFunction, ref FunctionSink _out)
 {
-	ir.Function[] _out;
 	foreach (func; functions) {
-		if (func is considerFunction) {
-			continue;
-		}
-		if (func.name == considerFunction.name) {
-			if (func.access != considerFunction.access) {
-				throw makeOverriddenFunctionsAccessMismatch(func, considerFunction);
-			}
-			_out ~= func;
-		}
+		appendPotentialOverrideFunctions(func, considerFunction, /*ref*/ _out);
 	}
-	return _out;
+}
+
+void appendPotentialOverrideFunctions(ref FunctionSink functions, ir.Function considerFunction, ref FunctionSink _out)
+{
+	for (size_t i; i < functions.length; i++) {
+		auto func = functions.get(i);
+		appendPotentialOverrideFunctions(func, considerFunction, /*ref*/ _out);
+	}
+}
+
+void appendPotentialOverrideFunctions(ir.Function func, ir.Function considerFunction, ref FunctionSink _out)
+{
+	if (func is considerFunction) {
+		return;
+	}
+
+	if (func.name == considerFunction.name) {
+		if (func.access != considerFunction.access) {
+			throw makeOverriddenFunctionsAccessMismatch(func, considerFunction);
+		}
+		_out.sink(func);
+	}
 }
 
 /**
  * Replace an overriden function in parentSet with childFunction if appropriate.
  * Returns true if a function is replaced, false otherwise.
  */
-bool overrideFunctionsIfNeeded(LanguagePass lp, ir.Function childFunction, ref ir.Function[] parentSet)
+bool overrideFunctionsIfNeeded(LanguagePass lp, ir.Function childFunction, ref FunctionSink parentSet)
 {
-	auto toConsider = getPotentialOverrideFunctions(parentSet, childFunction);
+	FunctionSink toConsiderSink;
+	appendPotentialOverrideFunctions(parentSet, childFunction, /*ref*/ toConsiderSink);
 
-	if (toConsider.length == 0) {
+	if (toConsiderSink.length == 0) {
 		if (childFunction.isMarkedOverride && !childFunction.isOverridingInterface) {
 			throw makeMarkedOverrideDoesNotOverride(childFunction, childFunction);
 		}
 		return false;
 	}
 
-	ir.Function selectedFunction = selectFunction(toConsider, childFunction.type.params, childFunction.loc, DoNotThrow);
+	ir.Function selectedFunction = selectFunction(/*ref*/ toConsiderSink, childFunction.type.params, childFunction.loc, DoNotThrow);
 	if (selectedFunction is null) {
 		if (childFunction.isMarkedOverride) {
 			throw makeMarkedOverrideDoesNotOverride(childFunction, childFunction);
@@ -495,7 +512,8 @@ bool overrideFunctionsIfNeeded(LanguagePass lp, ir.Function childFunction, ref i
 		return false;
 	}
 
-	foreach (ref parentFunction; parentSet) {
+	for (size_t i = 0; i < parentSet.length; ++i) {
+		auto parentFunction = parentSet.get(i);
 		if (parentFunction is selectedFunction) {
 			if (!childFunction.isMarkedOverride) {
 				assert(childFunction !is parentFunction);
@@ -508,7 +526,7 @@ bool overrideFunctionsIfNeeded(LanguagePass lp, ir.Function childFunction, ref i
 				throw makeOverriddenNeedsProperty(childFunction);
 			}
 			childFunction.vtableIndex = parentFunction.vtableIndex;
-			parentFunction = childFunction;
+			parentSet.set(i, childFunction);
 			return true;
 		}
 	}
@@ -518,21 +536,25 @@ bool overrideFunctionsIfNeeded(LanguagePass lp, ir.Function childFunction, ref i
 
 ir.Variable[] getClassMethodTypeVariables(LanguagePass lp, ir.Class _class)
 {
-	ir.Function[] methods = getClassMethodFunctions(lp, _class);
+	FunctionSink methods;
+	appendClassMethodFunctions(lp, _class, /*ref*/ methods);
 
 	ir.Variable[] typeVars;
-	foreach (outIndex, method; methods) {
-		typeVars ~= buildVariableSmart(method.loc, method.type, ir.Variable.Storage.Field, format("_%s", outIndex));
+	for (size_t i = 0; i < methods.length; ++i) {
+		auto method = methods.get(i);
+		typeVars ~= buildVariableSmart(method.loc, method.type, ir.Variable.Storage.Field, format("_%s", i));
 	}
 	return typeVars;
 }
 
 ir.Exp[] getClassMethodAddrOfs(LanguagePass lp, ir.Class _class)
 {
-	ir.Function[] methods = getClassMethodFunctions(lp, _class);
+	FunctionSink methods;
+	appendClassMethodFunctions(lp, _class, /*ref*/ methods);
 
 	ir.Exp[] addrs;
-	foreach (method; methods) {
+	for (size_t i = 0; i < methods.length; ++i) {
+		auto method = methods.get(i);
 		if (method.isAbstract) {
 			if (!_class.isAbstract) {
 				throw makeAbstractHasToBeMember(_class, method);
@@ -550,11 +572,13 @@ ir.Exp[] getClassMethodAddrOfs(LanguagePass lp, ir.Class _class)
 ir.Struct getInterfaceLayoutStruct(ir._Interface iface, LanguagePass lp)
 {
 	auto loc = iface.loc;
-	ir.Variable[] fields;
-	fields ~= buildVariableSmart(loc, buildSizeT(loc, lp.target), ir.Variable.Storage.Field, "__offset");
-	auto methods = getInterfaceMethods(lp, iface);
-	foreach (method; methods) {
-		fields ~= buildVariableSmart(loc, copyTypeSmart(loc, method.type), ir.Variable.Storage.Field, mangle(null, method));
+	FunctionSink methods;
+	appendInterfaceMethods(lp, iface, /*ref*/ methods);
+	auto fields = new ir.Variable[](methods.length + 1);
+	fields[0] = buildVariableSmart(loc, buildSizeT(loc, lp.target), ir.Variable.Storage.Field, "__offset");
+	for (size_t i = 0; i < methods.length; ++i) {
+		auto method = methods.get(i);
+		fields[i+1] = buildVariableSmart(loc, copyTypeSmart(loc, method.type), ir.Variable.Storage.Field, mangle(null, method));
 	}
 	auto layoutStruct = buildStruct(loc, iface.members, iface.myScope, "__ifaceVtable", fields);
 	layoutStruct.loweredNode = iface;
@@ -609,21 +633,19 @@ ir.Exp[] getTypeInfos(ir.Class[] classes)
 }
 
 /// For a given interface, return every function that needs to be implemented by an implementor.
-ir.Function[] getInterfaceFunctions(LanguagePass lp, ir._Interface iface)
+void appendInterfaceFunctions(LanguagePass lp, ir._Interface iface, ref FunctionSink _out)
 {
 	assert(iface.parentInterfaces.length == iface.interfaces.length);
-	ir.Function[] fns;
 	foreach (node; iface.members.nodes) {
 		auto func = cast(ir.Function) node;
 		if (func is null) {
 			continue;
 		}
-		fns ~= func;
+		_out.sink(func);
 	}
 	foreach (piface; iface.parentInterfaces) {
-		fns ~= getInterfaceFunctions(lp, piface);
+		appendInterfaceFunctions(lp, piface, /*ref*/ _out);
 	}
-	return fns;
 }
 
 /// Get a struct literal with an implementation of an interface from a given class.
@@ -633,9 +655,11 @@ ir.Exp getInterfaceStructAssign(LanguagePass lp, ir.Class _class, ir.Scope _scop
 	auto loc = _class.loc;
 	ir.Exp[] exps;
 	exps ~= buildConstantSizeT(loc, lp.target, _class.interfaceOffsets[ifaceIndex]);
-	auto fns = getInterfaceFunctions(lp, iface);
+	FunctionSink fns;
+	appendInterfaceFunctions(lp, iface, /*ref*/ fns);
 
-	foreach (func; fns) {
+	for (size_t i = 0; i < fns.length; ++i) {
+		auto func = fns.get(i);
 		auto store = lookupAsThisScope(lp, _scope, loc, func.name, _class.myScope);
 		if (store is null || !containsMatchingFunction(store.functions, func)) {
 			throw makeDoesNotImplement(loc, _class, iface, func);

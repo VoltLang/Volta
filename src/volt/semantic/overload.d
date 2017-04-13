@@ -172,7 +172,12 @@ ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ref in 
 	return selectFunction(functions, arguments, [], loc, throwOnError);
 }
 
-ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ir.Exp[] exps, ref in Location loc, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(ref FunctionSink functions, ir.Type[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
+{
+	return selectFunction(functions.borrowUnsafe(), arguments, [], loc, throwOnError);
+}
+
+ir.Function selectFunction(scope ir.Function[] functions, ir.Type[] arguments, ir.Exp[] exps, ref in Location loc, bool throwOnError = ThrowOnError)
 {
 	panicAssert(loc, functions.length > 0);
 
