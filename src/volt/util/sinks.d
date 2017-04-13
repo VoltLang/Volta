@@ -61,6 +61,29 @@ public:
 		mArr = n;
 	}
 
+	void append(T[] arr)
+	{
+		foreach (e; arr) {
+			sink(e);
+		}
+	}
+
+	void append(SinkStruct s)
+	{
+		void func(SinkArg sa)
+		{
+			foreach (e; sa) {
+				sink(e);
+			}
+		}
+
+		version (Volt) {
+			s.toSink(func);
+		} else {
+			s.toSink(&func);
+		}
+	}
+
 	void popLast()
 	{
 		if (mLength > 0) {
@@ -96,6 +119,24 @@ public:
 		return sink(mArr[0 .. mLength]);
 	}
 
+	/**
+	 * Use this as sparingly as possible. Use toSink where possible.
+	 */
+	T[] toArray()
+	{
+		auto _out = new T[](mLength);
+		_out[] = mArr[0 .. mLength];
+		return _out;
+	}
+
+	/**
+	 * Unsafely get a reference to the array.
+	 */
+	T[] borrowUnsafe()
+	{
+		return mArr[0 .. mLength];
+	}
+
 	void reset()
 	{
 		mLength = 0;
@@ -104,3 +145,4 @@ public:
 
 alias IntSink = SinkStruct!int;
 alias FunctionSink = SinkStruct!(ir.Function);
+alias FunctionArraySink = SinkStruct!(ir.Function[]);
