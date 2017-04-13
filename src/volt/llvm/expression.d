@@ -1427,7 +1427,9 @@ void getCreateDelegateValues(State state, ir.Postfix postfix, Value instance, Va
 	    !postfix.supressVtableLookup) {
 		auto asFunction = cast(ir.Function) postfix.memberFunction.decl;
 		assert(asFunction !is null);
-		index = asFunction.vtableIndex;
+		if (!(asFunction.isFinal && !asFunction.isMarkedOverride)) {
+			index = asFunction.vtableIndex;
+		}
 	}
 
 	if (index >= 0) {
