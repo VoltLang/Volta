@@ -27,6 +27,10 @@ import volt.semantic.classify;
 class TemplateLifter : Lifter
 {
 public:
+	string currentTemplateDefinitionName;
+	ir.Type currentInstanceType;
+
+public:
 	override ir.TopLevelBlock lift(ir.TopLevelBlock old)
 	{
 		auto tlb = new ir.TopLevelBlock(old);
@@ -325,6 +329,16 @@ public:
 	// Volt can't do the "alias copy = super.copy" trick as D.
 	override ir.FunctionType copy(ir.FunctionType old) { return super.copy(old); }
 
+	override ir.TypeReference copy(ir.TypeReference old)
+	{
+		auto tr = super.copy(old);
+		if (tr.id.identifiers.length == 1 &&
+			tr.id.identifiers[0].value == currentTemplateDefinitionName) {
+			tr.type = currentInstanceType;
+		}
+		return tr;
+	}
+
 
 public:
 	void templateLift(ref ir.Struct s, LanguagePass lp, ir.TemplateInstance ti)
@@ -339,6 +353,9 @@ public:
 		assert(td !is null);
 		auto defstruct = td._struct;
 		panicAssert(s, defstruct !is null);
+
+		currentTemplateDefinitionName = td.name;
+		currentInstanceType = s;
 
 		foreach (i, ref type; ti.typeArguments) {
 			assert(type !is null);

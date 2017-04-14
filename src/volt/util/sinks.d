@@ -10,7 +10,7 @@ import ir = volt.ir.ir;
  * with minimal allocations. Declare on the stack.
  */
 
-struct Sink(T)
+struct SinkStruct(T)
 {
 public:
 	/// The one true sink definition.
@@ -102,5 +102,5 @@ public:
 	}
 }
 
-alias IntSink = Sink!int;
-alias FunctionSink = Sink!(ir.Function);
+alias IntSink = SinkStruct!int;
+alias FunctionSink = SinkStruct!(ir.Function);
