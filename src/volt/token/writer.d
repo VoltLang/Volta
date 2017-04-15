@@ -52,10 +52,7 @@ public:
 	 *   None.
 	 */
 	void addToken(Token token)
-	in {
-		assert(token !is null);
-	}
-	body {
+	{
 		if (mTokens.length <= mLength) {
 			auto tokens = new Token[](mLength * 2 + 3);
 			tokens[0 .. mLength] = mTokens[];
@@ -78,7 +75,7 @@ public:
 		assert(mLength > 0);
 	}
 	body {
-		mTokens[--mLength] = null;
+		mLength--;
 	}
 
 	/**
@@ -122,7 +119,7 @@ private:
 	 */
 	void initTokenArray()
 	{
-		auto start = new Token();
+		Token start;
 		start.type = TokenType.Begin;
 		start.value = "START";
 

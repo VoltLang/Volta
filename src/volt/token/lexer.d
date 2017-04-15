@@ -148,7 +148,7 @@ LexStatus lexPanic(TokenWriter tw, Location loc, string msg)
 
 Token currentLocationToken(TokenWriter tw)
 {
-	auto t = new Token();
+	Token t;
 	t.loc = tw.source.loc;
 	return t;
 }

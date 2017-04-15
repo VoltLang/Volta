@@ -2264,7 +2264,7 @@ public:
 	override Status visit(ir.PrimitiveType type)
 	{
 		wStorageTypes(type);
-		if (type.originalToken is null) {
+		if (type.originalToken.type == TokenType.None) {
 			wf(tokenToString(cast(TokenType)type.type));
 		} else {
 			wf(tokenToString(type.originalToken.type));

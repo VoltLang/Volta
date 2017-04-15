@@ -44,7 +44,7 @@ void write(Sink sink, ir.Type type, bool alwaysGlossed)
 	switch(type.nodeType) with(ir.NodeType) {
 	case PrimitiveType:
 		ir.PrimitiveType prim = cast(ir.PrimitiveType)type;
-		if (prim.originalToken !is null) {
+		if (prim.originalToken.type != TokenType.None) {
 			sink(toLower(tokenToString(prim.originalToken.type)));
 		} else {
 			sink(toLower(tokenToString(cast(TokenType)prim.type)));

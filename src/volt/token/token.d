@@ -198,7 +198,7 @@ bool isPrimitiveTypeToken(TokenType token)
 /**
  * Holds the type, the actual string and location within the source file.
  */
-final class Token
+struct Token
 {
 	TokenType type;
 	string value;

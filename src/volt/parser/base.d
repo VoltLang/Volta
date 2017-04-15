@@ -583,7 +583,7 @@ public:
 			oldComment = mComment[$-1];
 		}
 		if (mComment[$-1].length && !inMultiCommentBlock) {
-			assert(lastDocComment !is null);
+			assert(lastDocComment.type != TokenType.None);
 			auto e = makeStrayDocComment(lastDocComment.loc);
 			e.neverIgnore = true;
 			throw e;

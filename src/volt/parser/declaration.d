@@ -904,7 +904,6 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func, string templ
 		func.name = nameTok.value;
 	} else {
 		func.name = templateName;
-		nameTok = new Token();
 		nameTok.value = func.name;
 	}
 
