@@ -216,10 +216,10 @@ public:
 	Location loc;
 
 	/// Retrieve the NodeType for this Node.
-	@property NodeType nodeType() { return mNodeType; }
+	final @property NodeType nodeType() { return mNodeType; }
 
 	/// Retrieve the unique id of this node.
-	@property size_t uniqueId() { return mUniqueId; }
+	final @property size_t uniqueId() { return mUniqueId; }
 
 	/// Documentation comment attached to this node, if any.
 	string docComment;
