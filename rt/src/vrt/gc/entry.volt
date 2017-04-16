@@ -26,7 +26,7 @@ struct GcHeap
 	version (all) {
 		arena: Arena;
 	} else {
-		arena: SBrk2;
+		arena: SBrk;
 	}
 }
 
