@@ -1917,7 +1917,28 @@ public:
 
 	override Status enter(ref ir.Exp exp, ir.BuiltinExp inbuilt)
 	{
-		wf("<inbuilt>(");
+		wf("<builtin:");
+		final switch (inbuilt.kind) with (ir.BuiltinExp.Kind) {
+		case Invalid: wf("INVALID"); break;
+		case ArrayPtr: wf("array.ptr"); break;
+		case ArrayLength: wf("array.length"); break;
+		case ArrayDup: wf("array.dup"); break;
+		case AALength: wf("aa.length"); break;
+		case AAKeys: wf("aa.keys"); break;
+		case AAValues: wf("aa.values"); break;
+		case AARehash: wf("aa.rehash"); break;
+		case AAGet: wf("aa.get"); break;
+		case AARemove: wf("aa.remove"); break;
+		case AAIn: wf("aa.in"); break;
+		case AADup: wf("aa.dup"); break;
+		case UFCS: wf("ufcs"); break;
+		case Classinfo: wf("classinfo"); break;
+		case PODCtor: wf("podctor"); break;
+		case VaStart: wf("va_start"); break;
+		case VaArg: wf("va_arg"); break;
+		case VaEnd: wf("va_end"); break;
+		}
+		wf(">(");
 		auto arr = inbuilt.children;
 		foreach (i, ref c; arr) {
 			acceptExp(c, this);
