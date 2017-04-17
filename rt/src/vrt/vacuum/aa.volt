@@ -3,7 +3,7 @@
 module vrt.vacuum.aa;
 
 import core.exception: Exception;
-import core.typeinfo: TypeInfo;
+import core.typeinfo: TypeInfo, Type;
 import core.rt.gc: allocDg;
 import core.rt.misc: vrt_memcmp;
 import core.compiler.llvm: __llvm_memcpy;
@@ -600,6 +600,11 @@ extern (C) fn vrt_aa_rehash(rbtv: void*)
 {
 }
 
+private fn isAggregate(id: TypeInfo) bool
+{
+	return id.type == Type.Struct || id.type == Type.Union;
+}
+
 private fn vrt_aa_walk(rbt: RedBlackTree*, node: TreeNode*, getKey: bool, argSize: size_t, ref arr: void[], ref currentIndex: size_t)
 {
 	if (node !is null) {
@@ -609,7 +614,11 @@ private fn vrt_aa_walk(rbt: RedBlackTree*, node: TreeNode*, getKey: bool, argSiz
 		if (argSize > typeid(TreeStore).size) {
 			__llvm_memcpy(&arr[currentIndex], tn.ptr, argSize, 0, false);
 		} else {
-			__llvm_memcpy(&arr[currentIndex], cast(void*)&tn, argSize, 0, false);
+			if (getKey && isAggregate(rbt.key)) {
+				__llvm_memcpy(&arr[currentIndex], cast(void*)&tn.array[0], argSize, 0, false);
+			} else {
+				__llvm_memcpy(&arr[currentIndex], cast(void*)&tn, argSize, 0, false);
+			}
 		}
 		currentIndex += argSize;
 		vrt_aa_walk(rbt, node.right, getKey, argSize, ref arr, ref currentIndex);
