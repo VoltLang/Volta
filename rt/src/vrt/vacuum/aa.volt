@@ -611,7 +611,7 @@ private fn vrt_aa_walk(rbt: RedBlackTree*, node: TreeNode*, getKey: bool, argSiz
 		vrt_aa_walk(rbt, node.left, getKey, argSize, ref arr, ref currentIndex);
 		tn := getKey ? node.key: node.value;
 
-		if (argSize > typeid(TreeStore).size) {
+		if (argSize > typeid(TreeStore).size && !getKey) {
 			__llvm_memcpy(&arr[currentIndex], tn.ptr, argSize, 0, false);
 		} else {
 			if (getKey && isAggregate(rbt.key)) {
