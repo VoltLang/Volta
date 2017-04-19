@@ -661,7 +661,7 @@ bool typesEqual(ir.Type a, ir.Type b, bool ignoreStorage = false)
 				return false;
 		return true;
 	} else if (a.nodeType == ir.NodeType.NoType &&
-	           a.nodeType == ir.NodeType.NoType) {
+	           b.nodeType == ir.NodeType.NoType) {
 		return true;
 	}
 
