@@ -61,8 +61,8 @@ void appendDefaultArguments(Context ctx, ir.Location loc,
 	}
 
 	foreach (i, ee; overflow) {
-		auto texp = cast(ir.TokenExp) ee;
-		if (texp !is null) {
+		if (ee.nodeType == ir.NodeType.TokenExp) {
+			auto texp = ee.toTokenExpFast();
 			texp.loc = loc;
 			arguments ~= texp;
 
@@ -87,7 +87,8 @@ Parent classifyRelationship(ir.Exp child, ir.Exp parent)
 {
 	if (parent is null) {
 		return Parent.NA;
-	} else if (auto b = cast(ir.BinOp) parent) {
+	} else if (parent.nodeType == ir.NodeType.BinOp) {
+		auto b = parent.toBinOpFast();
 		if (b.op != ir.BinOp.Op.Assign) {
 			return Parent.NA;
 		} else if (b.left is child) {
@@ -97,7 +98,8 @@ Parent classifyRelationship(ir.Exp child, ir.Exp parent)
 		} else {
 			assert(false);
 		}
-	} else if (auto p = cast(ir.Postfix) parent) {
+	} else if (parent.nodeType == ir.NodeType.Postfix) {
+		auto p = parent.toPostfixFast();
 		assert(p.child is child);
 		if (p.op == ir.Postfix.Op.Call) {
 			return Parent.Call;
@@ -203,7 +205,7 @@ ir.Type handleFunctionStore(Context ctx, string ident, ref ir.Exp exp,
 	// Handle property functions.
 	if (rewriteIfPropertyStore(exp, child, ident, parent, fns)) {
 
-		auto prop = cast(ir.PropertyExp) exp;
+		auto prop = exp.toPropertyExpFast();
 
 		// Do we need to add a this reference?
 		if (child is null && prop.isMember()) {
@@ -487,7 +489,7 @@ ir.Exp withLookup(Context ctx, ir.Exp withExp, string leaf)
  */
 ir.Type extypeIdentifierExp(Context ctx, ref ir.Exp e, Parent parent)
 {
-	auto i = cast(ir.IdentifierExp) e;
+	auto i = e.toIdentifierExpFast();
 	assert(i !is null);
 
 	switch (i.value) {
@@ -550,14 +552,19 @@ ir.Type replaceAAPostfixesIfNeeded(Context ctx, ref ir.Exp exp, ir.Postfix postf
 	case Call:
 		assert(postfix.identifier is null);
 
-		auto child = cast(ir.Postfix) postfix.child;
-		if (child is null || child.identifier is null) {
+		if (postfix.child is null ||
+			postfix.child.nodeType != ir.NodeType.Postfix) {
 			return null;
 		}
-		auto aa = cast(ir.AAType) realType(getExpType(child.child));
-		if (aa is null) {
+		auto child = postfix.child.toPostfixFast();
+		if (child.identifier is null) {
 			return null;
 		}
+		auto rt = realType(getExpType(child.child));
+		if (rt.nodeType != ir.NodeType.AAType) {
+			return null;
+		}
+		auto aa = rt.toAATypeFast();
 
 		switch (child.identifier.value) {
 		case "get":

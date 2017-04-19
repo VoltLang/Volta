@@ -99,19 +99,10 @@ int matchLevel(bool homogenous, ir.Type argument, ir.Type parameter, ir.Exp exp=
 	if (typesEqual(argument, parameter, IgnoreStorage)) {
 		return 3;
 	}
-	auto prim = cast(ir.PrimitiveType) parameter;
-	if (prim !is null && exp !is null && fitsInPrimitive(prim, exp)) {
+	if (parameter.nodeType == ir.NodeType.PrimitiveType && exp !is null &&
+	    fitsInPrimitive(parameter.toPrimitiveTypeFast(), exp)) {
 		return 3;
 	}
-
-	auto oldConst = argument.isConst;
-	argument.isConst = true;
-	auto equalAsConst = typesEqual(argument, parameter);
-	argument.isConst = oldConst;
-	if (equalAsConst) {
-		return 3;
-	}
-
 	if (willConvert(argument, parameter)) {
 		return 2;
 	} else {
@@ -288,20 +279,23 @@ ir.Function selectFunction(scope ir.Function[] functions, ir.Type[] arguments, i
 		if (func.type.homogenousVariadic && arguments.length >= func.params.length) {
 			matchLevels.popLast();
 			auto toCheck = arguments[func.type.params.length - 1 .. $];
-			auto arr = cast(ir.ArrayType) realType(func.type.params[$-1]);
-			assert(arr !is null);
+			auto rtype = realType(func.type.params[$-1]);
+			assert(rtype.nodeType == ir.NodeType.ArrayType);
+			auto arr = realType(func.type.params[$-1]).toArrayTypeFast();
 			foreach (arg; toCheck) {
-				auto atype = cast(ir.ArrayType) arg;
-				if (atype !is null && isVoid(atype.base)) {
-					matchLevels.sink(2);
-				} else {
-					auto ml1 = .matchLevel(true, arg, arr.base);
-					auto ml2 = .matchLevel(true, arg, arr);
-					matchLevels.sink(ml1 > ml2 ? ml1 : ml2);
-					// Given foo(T[]...) and foo(T) passing a T, the latter should be preferred.
-					if (matchLevels.getLast() == 4) {
-						matchLevels.setLast(3);
+				if (arg.nodeType == ir.NodeType.ArrayType) {
+					auto atype = arg.toArrayTypeFast();
+					if (isVoid(atype.base)) {
+						matchLevels.sink(2);
+						continue;
 					}
+				}
+				auto ml1 = .matchLevel(true, arg, arr.base);
+				auto ml2 = .matchLevel(true, arg, arr);
+				matchLevels.sink(ml1 > ml2 ? ml1 : ml2);
+				// Given foo(T[]...) and foo(T) passing a T, the latter should be preferred.
+				if (matchLevels.getLast() == 4) {
+					matchLevels.setLast(3);
 				}
 			}
 		}

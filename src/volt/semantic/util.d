@@ -546,11 +546,10 @@ bool typeLookup(Context ctx, ref ir.Exp exp, ir.Type type)
 
 ir.Type ifTypeRefDeRef(ir.Type t)
 {
-	auto tref = cast(ir.TypeReference) t;
-	if (tref is null) {
-		return t;
+	if (t.nodeType == ir.NodeType.TypeReference) {
+		return t.toTypeReferenceFast().type;
 	} else {
-		return tref.type;
+		return t;
 	}
 }
 

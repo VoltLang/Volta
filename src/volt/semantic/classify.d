@@ -287,18 +287,19 @@ ir.Type realType(ir.Type t, bool stripEnum = true)
 		return null;
 	}
 
-	auto tr = cast(ir.TypeReference) t;
-	if (tr !is null) {
+	switch (t.nodeType) with (ir.NodeType) {
+	case TypeReference:
+		auto tr = t.toTypeReferenceFast();
 		return realType(tr.type, stripEnum);
-	}
-	if (stripEnum) {
-		auto e = cast(ir.Enum) t;
-		if (e !is null) {
-			return realType(e.base, stripEnum);
+	case Enum:
+		if (!stripEnum) {
+			return t;
 		}
+		auto e = t.toEnumFast();
+		return realType(e.base, stripEnum);
+	default:
+		return t;
 	}
-
-	return t;
 }
 
 /**
@@ -560,10 +561,10 @@ bool isInt(ir.Type type)
 
 bool isVoid(ir.Type type)
 {
-	auto primitive = cast(ir.PrimitiveType) type;
-	if (primitive is null) {
+	if (type.nodeType != ir.NodeType.PrimitiveType) {
 		return false;
 	}
+	auto primitive = type.toPrimitiveTypeFast();
 	return primitive.type == ir.PrimitiveType.Kind.Void;
 }
 
@@ -591,81 +592,83 @@ bool typesEqual(ir.Type a, ir.Type b, bool ignoreStorage = false)
 		return true;
 	}
 
-	if (a.nodeType == ir.NodeType.PrimitiveType &&
-	    b.nodeType == ir.NodeType.PrimitiveType) {
-		auto ap = cast(ir.PrimitiveType) a;
-		auto bp = cast(ir.PrimitiveType) b;
-		assert(ap !is null && bp !is null);
-		return ap.type == bp.type;
-	} else if (a.nodeType == ir.NodeType.StaticArrayType &&
-			   b.nodeType == ir.NodeType.StaticArrayType) {
-		auto ap = cast(ir.StaticArrayType) a;
-		auto bp = cast(ir.StaticArrayType) b;
-		assert(ap !is null && bp !is null);
-		return ap.length == bp.length && typesEqual(ap.base, bp.base, ignoreStorage);
-	} else if (a.nodeType == ir.NodeType.PointerType &&
-	           b.nodeType == ir.NodeType.PointerType) {
-		auto ap = cast(ir.PointerType) a;
-		auto bp = cast(ir.PointerType) b;
-		assert(ap !is null && bp !is null);
-		return typesEqual(ap.base, bp.base, ignoreStorage);
-	} else if (a.nodeType == ir.NodeType.ArrayType &&
-	           b.nodeType == ir.NodeType.ArrayType) {
-		auto ap = cast(ir.ArrayType) a;
-		auto bp = cast(ir.ArrayType) b;
-		assert(ap !is null && bp !is null);
-		return typesEqual(ap.base, bp.base, ignoreStorage);
-	} else if (a.nodeType == ir.NodeType.AAType &&
-	           b.nodeType == ir.NodeType.AAType) {
-		auto ap = cast(ir.AAType) a;
-		auto bp = cast(ir.AAType) b;
-		assert(ap !is null && bp !is null);
-		return typesEqual(ap.key, bp.key, ignoreStorage) && typesEqual(ap.value, bp.value, ignoreStorage);
-	} else if (a.nodeType == ir.NodeType.TypeReference &&
-	           b.nodeType == ir.NodeType.TypeReference) {
-		auto ap = cast(ir.TypeReference) a;
-		auto bp = cast(ir.TypeReference) b;
-		assert(ap !is null && bp !is null);
-		assert(ap.type !is null && bp.type !is null);
-		return typesEqual(ap.type, bp.type, ignoreStorage);
-	} else if (a.nodeType == ir.NodeType.TypeReference) {
+	auto ant = a.nodeType;
+	auto bnt = b.nodeType;
+	if (ant == bnt) {
+		// Fallthrough to switch case below.
+	} else if (ant == ir.NodeType.TypeReference) {
 		// Need to discard any TypeReference on either side.
-		auto ap = cast(ir.TypeReference) a;
-		assert(ap !is null);
+		auto ap = a.toTypeReferenceFast();
 		assert(ap.type !is null);
 		return typesEqual(ap.type, b, ignoreStorage);
-	} else if (b.nodeType == ir.NodeType.TypeReference) {
+	} else if (bnt == ir.NodeType.TypeReference) {
 		// Need to discard any TypeReference on either side.
-		auto bp = cast(ir.TypeReference) b;
+		auto bp = b.toTypeReferenceFast();
 		assert(bp !is null);
-		assert(bp.type !is null);
 		return typesEqual(a, bp.type, ignoreStorage);
-	} else if ((a.nodeType == ir.NodeType.FunctionType &&
-	            b.nodeType == ir.NodeType.FunctionType) ||
-		   (a.nodeType == ir.NodeType.DelegateType &&
-	            b.nodeType == ir.NodeType.DelegateType)) {
-		auto ap = cast(ir.CallableType) a;
-		auto bp = cast(ir.CallableType) b;
-		assert(ap !is null && bp !is null);
-
-		size_t apLength = ap.params.length, bpLength = bp.params.length;
-		if (apLength != bpLength)
-			return false;
-		if (ap.hiddenParameter != bp.hiddenParameter)
-			return false;
-		auto ret = typesEqual(ap.ret, bp.ret, ignoreStorage);
-		if (!ret)
-			return false;
-		for (size_t i; i < apLength; i++)
-			if (!typesEqual(ap.params[i], bp.params[i], ignoreStorage))
-				return false;
-		return true;
-	} else if (a.nodeType == ir.NodeType.NoType &&
-	           b.nodeType == ir.NodeType.NoType) {
-		return true;
+	} else {
+		return false;
 	}
 
-	return false;
+	assert(ant == bnt);
+
+	switch (ant) with (ir.NodeType) {
+	case PrimitiveType:
+		auto ap = a.toPrimitiveTypeFast();
+		auto bp = b.toPrimitiveTypeFast();
+		return ap.type == bp.type;
+	case StaticArrayType:
+		auto ap = a.toStaticArrayTypeFast();
+		auto bp = b.toStaticArrayTypeFast();
+		return ap.length == bp.length && typesEqual(ap.base, bp.base, ignoreStorage);
+	case PointerType:
+		auto ap = a.toPointerTypeFast();
+		auto bp = b.toPointerTypeFast();
+		return typesEqual(ap.base, bp.base, ignoreStorage);
+	case ArrayType:
+		auto ap = a.toArrayTypeFast();
+		auto bp = b.toArrayTypeFast();
+		return typesEqual(ap.base, bp.base, ignoreStorage);
+	case AAType:
+		auto ap = a.toAATypeFast();
+		auto bp = b.toAATypeFast();
+		return typesEqual(ap.key, bp.key, ignoreStorage) &&
+		       typesEqual(ap.value, bp.value, ignoreStorage);
+	case TypeReference:
+		auto ap = a.toTypeReferenceFast();
+		auto bp = b.toTypeReferenceFast();
+		assert(ap.type !is null && bp.type !is null);
+		return typesEqual(ap.type, bp.type, ignoreStorage);
+	case FunctionType:
+	case DelegateType:
+		auto ap = a.toCallableTypeFast();
+		auto bp = b.toCallableTypeFast();
+
+		size_t apLength = ap.params.length;
+		size_t bpLength = bp.params.length;
+		if (apLength != bpLength) {
+			return false;
+		}
+		if (ap.hiddenParameter != bp.hiddenParameter) {
+			return false;
+		}
+		if (!typesEqual(ap.ret, bp.ret, ignoreStorage)) {
+			return false;
+		}
+		for (size_t i; i < apLength; i++) {
+			if (!typesEqual(ap.params[i], bp.params[i], ignoreStorage)) {
+				return false;
+			}
+		}
+		return true;
+	case NoType:
+		return true;
+	default:
+		// We can somehow get here, FunctionSets probably, seems to be
+		// valid as nothing explodes if we leave it like this.
+		return false;
+	}
+
 }
 
 int typeToRuntimeConstant(LanguagePass lp, ir.Scope current, ir.Type type)
@@ -741,7 +744,7 @@ bool isBackendConstant(ir.Exp exp)
 	case Constant:
 		return true;
 	case ExpReference:
-		auto eref = cast(ir.ExpReference)exp;
+		auto eref = exp.toExpReferenceFast();
 		if (eref.decl is null) {
 			return false;
 		}
@@ -751,7 +754,7 @@ bool isBackendConstant(ir.Exp exp)
 		default: return false;
 		}
 	case Unary:
-		auto unary = cast(ir.Unary)exp;
+		auto unary = exp.toUnaryFast();
 		if (unary.op != ir.Unary.Op.Cast) {
 			return false;
 		}

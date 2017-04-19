@@ -212,7 +212,7 @@ void mangleDelegateType(ir.DelegateType func, Sink sink)
 
 void mangleCallableType(ir.CallableType ct, Sink sink)
 {
-	mangleLinkage(ct.linkage, sink);
+	sink(getLinkage(ct.linkage));
 	foreach (i, param; ct.params) {
 		if (ct.isArgRef[i]) {
 			sink("r");
@@ -245,29 +245,32 @@ void mangleScope(ir.Scope _scope, Sink sink)
 	}
 }
 
-void mangleLinkage(ir.Linkage l, Sink sink)
-{
-	final switch (l) with (ir.Linkage) {
-	case Volt: sink("v"); break;
-	case C: sink("c"); break;
-	case CPlusPlus: sink("C"); break;
-	case D: sink("d"); break;
-	case Windows: sink("W"); break;
-	case Pascal: sink("P"); break;
-	case System:
-		assert(false);  // I assume we'll have had a pass removing System by now.
-	}
-}
-
 void mangleString(string s, Sink sink)
 {
-	sink(format("%s%s", s.length, s));
+	version (Volt) {
+		format(sink, "%s%s", s.length, s);
+	} else {
+		sink(format("%s%s", s.length, s));
+	}
 }
 
 void mangleName(string[] names, Sink sink)
 {
 	foreach (name; names) {
 		mangleString(name, sink);
+	}
+}
+
+string getLinkage(ir.Linkage l)
+{
+	final switch (l) with (ir.Linkage) {
+	case Volt: return "v";
+	case C: return "c";
+	case CPlusPlus: return "C";
+	case D: return "d";
+	case Windows: return "W";
+	case Pascal: return "P";
+	case System: assert(false);  // I assume we'll have had a pass removing System by now.
 	}
 }
 

@@ -86,9 +86,11 @@ bool willConvert(ir.Type arg, ir.Type param)
 	case TypeReference:
 		assert(false);
 	case Interface:
-		return willConvertInterface(parameter, argument);
+		auto iface = argument.toInterfaceFast();
+		return willConvertInterface(parameter, iface);
 	case Class:
-		return willConvertClass(parameter, argument);
+		auto _class = argument.toClassFast();
+		return willConvertClass(parameter, _class);
 	case ArrayType:
 	case StaticArrayType:
 		return willConvertArray(parameter, argument);
@@ -139,28 +141,29 @@ bool willConvertCallable(ir.Type l, ir.Type r)
 	return true;
 }
 
-bool willConvertInterface(ir.Type l, ir.Type r)
+bool willConvertInterface(ir.Type l, ir._Interface rInterface)
 {
-	auto lInterface = cast(ir._Interface)realType(l);
-	if (lInterface is null) {
+	ir._Interface lInterface;
+
+	switch (l.nodeType) with (ir.NodeType) {
+	case Interface:
+		lInterface = l.toInterfaceFast();
+		break;
+	case TypeReference:
+		throw panic("TypeReference should not reach this point");
+	default:
 		return false;
 	}
 
-	auto rInterface = cast(ir._Interface)realType(r);
-	if (rInterface !is null) {
-		if (typesEqual(lInterface, rInterface)) {
-			return true;
-		} else {
-			throw panic(r.loc, "TODO: interface to different interface.");
-		}
-
+	if (typesEqual(lInterface, rInterface)) {
+		return true;
+	} else {
+		throw panic(rInterface.loc, "TODO: interface to different interface.");
 	}
+}
 
-	auto rClass = cast(ir.Class)realType(r);
-	if (rClass is null) {
-		return false;
-	}
-
+bool willConvertClassToInterface(ir._Interface lInterface, ir.Class rClass)
+{
 	bool checkInterface(ir._Interface i)
 	{
 		if (i is lInterface) {
@@ -334,33 +337,20 @@ bool willConvertPointer(ir.Type parameter, ir.Type argument)
 	return typesEqual(ptr, aptr, ignoreStorage);
 }
 
-bool willConvertClass(ir.Type parameter, ir.Type argument)
+bool willConvertClass(ir.Type parameter, ir.Class rclass)
 {
-	if (willConvertInterface(parameter, argument)) {
-		return true;
-	}
-	bool implements(ir._Interface _iface, ir.Class _class)
-	{
-		foreach (i; _class.parentInterfaces) {
-			if (i is _iface) {
-				return true;
-			}
-		}
+	switch (parameter.nodeType) with (ir.NodeType) {
+	case Class:
+		auto lclass = parameter.toClassFast();
+		return isOrInheritsFrom(rclass, lclass);
+	case Interface:
+		auto liface = parameter.toInterfaceFast();
+		return willConvertClassToInterface(liface, rclass);
+	case TypeReference:
+		throw panic("TypeReference should not reach this point");
+	default:
 		return false;
 	}
-	auto lclass = cast(ir.Class) ifTypeRefDeRef(parameter);
-	auto liface = cast(ir._Interface) ifTypeRefDeRef(parameter);
-	auto rclass = cast(ir.Class) ifTypeRefDeRef(argument);
-	auto riface = cast(ir._Interface) ifTypeRefDeRef(argument);
-	if ((liface !is null && rclass !is null) ||
-	    (lclass !is null && riface !is null)) {
-		return implements(liface is null ? riface : liface,
-		                  lclass is null ? rclass : lclass);
-	}
-	if (lclass is null || rclass is null) {
-		return false;
-	}
-	return isOrInheritsFrom(rclass, lclass);
 }
 
 bool willConvertArray(ir.Type l, ir.Type r)
