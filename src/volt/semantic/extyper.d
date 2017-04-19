@@ -220,7 +220,7 @@ ir.Type handleFunctionStore(Context ctx, string ident, ref ir.Exp exp,
 		// Don't do any more processing on properties.
 
 		// Return type.
-		if (parent == Parent.AssignTarget) {
+		if (prop.getFn is null) {
 			return buildNoType(prop.loc);
 		} else {
 			return prop.getFn.type.ret;
