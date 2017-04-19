@@ -435,67 +435,41 @@ body {
 	 * Top Levels.
 	 */
 	case Module:
-		return acceptModule(cast(ir.Module) n, av);
+		return acceptModule(n.toModuleFast(), av);
 	case TopLevelBlock:
-		auto asTlb = cast(ir.TopLevelBlock) n;
-		assert(asTlb !is null);
-		return acceptTopLevelBlock(asTlb, av);
+		return acceptTopLevelBlock(n.toTopLevelBlockFast(), av);
 	case Import:
-		auto asImport = cast(ir.Import) n;
-		assert(asImport !is null);
-		return acceptImport(asImport, av);
+		return acceptImport(n.toImportFast(), av);
 	case Variable:
-		return acceptVariable(cast(ir.Variable) n, av);
+		return acceptVariable(n.toVariableFast(), av);
 	case FunctionParam:
-		auto fp = cast(ir.FunctionParam) n;
-		assert(fp !is null);
-		return acceptFunctionParam(fp, av);
+		return acceptFunctionParam(n.toFunctionParamFast(), av);
 	case Unittest:
-		return acceptUnittest(cast(ir.Unittest) n, av);
+		return acceptUnittest(n.toUnittestFast(), av);
 	case Class:
-		auto asClass = cast(ir.Class) n;
-		assert(asClass !is null);
-		return acceptClass(asClass, av);
+		return acceptClass(n.toClassFast(), av);
 	case Interface:
-		auto asInterface = cast(ir._Interface) n;
-		assert(asInterface !is null);
-		return acceptInterface(asInterface, av);
+		return acceptInterface(n.toInterfaceFast(), av);
 	case Struct:
-		return acceptStruct(cast(ir.Struct) n, av);
+		return acceptStruct(n.toStructFast(), av);
 	case Union:
-		return acceptUnion(cast(ir.Union) n, av);
+		return acceptUnion(n.toUnionFast(), av);
 	case Enum:
-		auto asEnum = cast(ir.Enum) n;
-		assert(asEnum !is null);
-		return acceptEnum(asEnum, av);
+		return acceptEnum(n.toEnumFast(), av);
 	case Attribute:
-		auto asAttribute = cast(ir.Attribute) n;
-		assert(asAttribute !is null);
-		return acceptAttribute(asAttribute, av);
+		return acceptAttribute(n.toAttributeFast(), av);
 	case MixinFunction:
-		auto asMf = cast(ir.MixinFunction) n;
-		assert(asMf !is null);
-		return acceptMixinFunction(asMf, av);
+		return acceptMixinFunction(n.toMixinFunctionFast(), av);
 	case MixinTemplate:
-		auto asMt = cast(ir.MixinTemplate) n;
-		assert(asMt !is null);
-		return acceptMixinTemplate(asMt, av);
+		return acceptMixinTemplate(n.toMixinTemplateFast(), av);
 	case ConditionTopLevel:
-		auto asCtl = cast(ir.ConditionTopLevel) n;
-		assert(asCtl !is null);
-		return acceptConditionTopLevel(asCtl, av);
+		return acceptConditionTopLevel(n.toConditionTopLevelFast(), av);
 	case Condition:
-		auto asCondition = cast(ir.Condition) n;
-		assert(asCondition !is null);
-		return acceptCondition(asCondition, av);
+		return acceptCondition(n.toConditionFast(), av);
 	case QualifiedName:
-		auto asQname = cast(ir.QualifiedName) n;
-		assert(asQname !is null);
-		return av.visit(asQname);
+		return av.visit(n.toQualifiedNameFast());
 	case Identifier:
-		auto asName = cast(ir.Identifier) n;
-		assert(asName !is null);
-		return av.visit(asName);
+		return av.visit(n.toIdentifierFast());
 
 	/*
 	 * Expressions.
@@ -532,131 +506,99 @@ body {
 	 * Statements.
 	 */
 	case ExpStatement:
-		return acceptExpStatement(cast(ir.ExpStatement) n, av);
+		return acceptExpStatement(n.toExpStatementFast(), av);
 	case ReturnStatement:
-		return acceptReturnStatement(cast(ir.ReturnStatement) n, av);
+		return acceptReturnStatement(n.toReturnStatementFast(), av);
 	case BlockStatement:
-		return acceptBlockStatement(cast(ir.BlockStatement) n, av);
+		return acceptBlockStatement(n.toBlockStatementFast(), av);
 	case AsmStatement:
-		return acceptAsmStatement(cast(ir.AsmStatement) n, av);
+		return acceptAsmStatement(n.toAsmStatementFast(), av);
 	case IfStatement:
-		return acceptIfStatement(cast(ir.IfStatement) n, av);
+		return acceptIfStatement(n.toIfStatementFast(), av);
 	case WhileStatement:
-		return acceptWhileStatement(cast(ir.WhileStatement) n, av);
+		return acceptWhileStatement(n.toWhileStatementFast(), av);
 	case DoStatement:
-		return acceptDoStatement(cast(ir.DoStatement) n, av);
+		return acceptDoStatement(n.toDoStatementFast(), av);
 	case ForStatement:
-		return acceptForStatement(cast(ir.ForStatement) n, av);
+		return acceptForStatement(n.toForStatementFast(), av);
 	case ForeachStatement:
-		return acceptForeachStatement(cast(ir.ForeachStatement) n, av);
+		return acceptForeachStatement(n.toForeachStatementFast(), av);
 	case LabelStatement:
-		return acceptLabelStatement(cast(ir.LabelStatement) n, av);
+		return acceptLabelStatement(n.toLabelStatementFast(), av);
 	case SwitchStatement:
-		return acceptSwitchStatement(cast(ir.SwitchStatement) n, av);
+		return acceptSwitchStatement(n.toSwitchStatementFast(), av);
 	case SwitchCase:
-		auto sc = cast(ir.SwitchCase) n;
-		assert(sc !is null);
-		return acceptSwitchCase(sc, av);
+		return acceptSwitchCase(n.toSwitchCaseFast(), av);
 	case ContinueStatement:
-		auto asCont = cast(ir.ContinueStatement) n;
-		assert(asCont !is null);
-		return av.visit(asCont);
+		return av.visit(n.toContinueStatementFast());
 	case BreakStatement:
-		auto asBreak = cast(ir.BreakStatement) n;
-		assert(asBreak !is null);
-		return av.visit(asBreak);
+		return av.visit(n.toBreakStatementFast());
 	case GotoStatement:
-		return acceptGotoStatement(cast(ir.GotoStatement) n, av);
+		return acceptGotoStatement(n.toGotoStatementFast(), av);
 	case WithStatement:
-		return acceptWithStatement(cast(ir.WithStatement) n, av);
+		return acceptWithStatement(n.toWithStatementFast(), av);
 	case SynchronizedStatement:
-		return acceptSynchronizedStatement(cast(ir.SynchronizedStatement) n, av);
+		return acceptSynchronizedStatement(n.toSynchronizedStatementFast(), av);
 	case TryStatement:
-		auto asTry = cast(ir.TryStatement) n;
-		assert(asTry !is null);
-		return acceptTryStatement(asTry, av);
+		return acceptTryStatement(n.toTryStatementFast(), av);
 	case ThrowStatement:
-		auto asThrow = cast(ir.ThrowStatement) n;
-		assert(asThrow !is null);
-		return acceptThrowStatement(asThrow, av);
+		return acceptThrowStatement(n.toThrowStatementFast(), av);
 	case ScopeStatement:
-		auto asScope = cast(ir.ScopeStatement) n;
-		assert(asScope !is null);
-		return acceptScopeStatement(asScope, av);
+		return acceptScopeStatement(n.toScopeStatementFast(), av);
 	case PragmaStatement:
-		auto asPragma = cast(ir.PragmaStatement) n;
-		assert(asPragma !is null);
-		return acceptPragmaStatement(asPragma, av);
+		return acceptPragmaStatement(n.toPragmaStatementFast(), av);
 	case ConditionStatement:
-		auto asCs = cast(ir.ConditionStatement) n;
-		assert(asCs !is null);
-		return acceptConditionStatement(asCs, av);
+		return acceptConditionStatement(n.toConditionStatementFast(), av);
 	case MixinStatement:
-		auto asMs = cast(ir.MixinStatement) n;
-		assert(asMs !is null);
-		return acceptMixinStatement(asMs, av);
+		return acceptMixinStatement(n.toMixinStatementFast(), av);
 	case AssertStatement:
-		auto as = cast(ir.AssertStatement) n;
-		assert(as !is null);
-		return acceptAssertStatement(as, av);
+		return acceptAssertStatement(n.toAssertStatementFast(), av);
 
 	/*
 	 * Declarations.
 	 */
 	case Function:
-		return acceptFunction(cast(ir.Function) n, av);
+		return acceptFunction(n.toFunctionFast(), av);
 	case PrimitiveType:
-		return av.visit(cast(ir.PrimitiveType) n);
+		return av.visit(n.toPrimitiveTypeFast());
 	case TypeReference:
-		auto asUser = cast(ir.TypeReference) n;
-		assert(asUser !is null);
-		return av.visit(asUser);
+		return av.visit(n.toTypeReferenceFast());
 	case PointerType:
-		return acceptPointerType(cast(ir.PointerType) n, av);
+		return acceptPointerType(n.toPointerTypeFast(), av);
 	case ArrayType:
-		return acceptArrayType(cast(ir.ArrayType) n, av);
+		return acceptArrayType(n.toArrayTypeFast(), av);
 	case AmbiguousArrayType:
-		return acceptAmbiguousArrayType(cast(ir.AmbiguousArrayType) n, av);
+		return acceptAmbiguousArrayType(n.toAmbiguousArrayTypeFast(), av);
 	case StaticArrayType:
-		return acceptStaticArrayType(cast(ir.StaticArrayType) n, av);
+		return acceptStaticArrayType(n.toStaticArrayTypeFast(), av);
 	case AAType:
-		return acceptAAType(cast(ir.AAType) n, av);
+		return acceptAAType(n.toAATypeFast(), av);
 	case FunctionType:
-		return acceptFunctionType(cast(ir.FunctionType) n, av);
+		return acceptFunctionType(n.toFunctionTypeFast(), av);
 	case DelegateType:
-		return acceptDelegateType(cast(ir.DelegateType) n, av);
+		return acceptDelegateType(n.toDelegateTypeFast(), av);
 	case StorageType:
-		return acceptStorageType(cast(ir.StorageType) n, av);
+		return acceptStorageType(n.toStorageTypeFast(), av);
 	case Alias:
-		return acceptAlias(cast(ir.Alias) n, av);
+		return acceptAlias(n.toAliasFast(), av);
 	case TypeOf:
-		auto typeOf = cast(ir.TypeOf) n;
-		assert(typeOf !is null);
-		return acceptTypeOf(typeOf, av);
+		return acceptTypeOf(n.toTypeOfFast(), av);
 	case NullType:
-		auto nt = cast(ir.NullType) n;
-		assert(nt !is null);
-		return av.visit(nt);
+		return av.visit(n.toNullTypeFast());
 	case EnumDeclaration:
-		auto ed = cast(ir.EnumDeclaration) n;
-		assert(ed !is null);
-		return acceptEnumDeclaration(ed, av);
+		return acceptEnumDeclaration(n.toEnumDeclarationFast(), av);
 	case AutoType:
-		auto at = cast(ir.AutoType) n;
-		assert(at !is null);
-		return av.visit(at);
+		return av.visit(n.toAutoTypeFast());
 	case NoType:
-		auto nt = cast(ir.NoType) n;
-		assert(nt !is null);
-		return av.visit(nt);
+		return av.visit(n.toNoTypeFast());
 	
 	/*
 	 * Templates
 	 */
 	case TemplateInstance:
-		return acceptTemplateInstance(cast(ir.TemplateInstance)n, av);
+		return acceptTemplateInstance(n.toTemplateInstanceFast(), av);
 	case TemplateDefinition:
-		return acceptTemplateDefinition(cast(ir.TemplateDefinition)n, av);
+		return acceptTemplateDefinition(n.toTemplateDefinitionFast(), av);
 
 	/*
 	 * Failure fall through.
@@ -679,57 +621,57 @@ Visitor.Status acceptExp(ref ir.Exp exp, Visitor av)
 
 	switch (exp.nodeType) with (ir.NodeType) {
 	case Constant:
-		return acceptConstant(exp, cast(ir.Constant)exp, av);
+		return acceptConstant(exp, exp.toConstantFast(), av);
 	case IdentifierExp:
-		return acceptIdentifierExp(exp, cast(ir.IdentifierExp)exp, av);
+		return acceptIdentifierExp(exp, exp.toIdentifierExpFast(), av);
 	case Postfix:
-		return acceptPostfix(exp, cast(ir.Postfix)exp, av);
+		return acceptPostfix(exp, exp.toPostfixFast(), av);
 	case Unary:
-		return acceptUnary(exp, cast(ir.Unary)exp, av);
+		return acceptUnary(exp, exp.toUnaryFast(), av);
 	case BinOp:
-		return acceptBinOp(exp, cast(ir.BinOp)exp, av);
+		return acceptBinOp(exp, exp.toBinOpFast(), av);
 	case Ternary:
-		return acceptTernary(exp, cast(ir.Ternary)exp, av);
+		return acceptTernary(exp, exp.toTernaryFast(), av);
 	case ArrayLiteral:
-		return acceptArrayLiteral(exp, cast(ir.ArrayLiteral)exp, av);
+		return acceptArrayLiteral(exp, exp.toArrayLiteralFast(), av);
 	case AssocArray:
-		return acceptAssocArray(exp, cast(ir.AssocArray)exp, av);
+		return acceptAssocArray(exp, exp.toAssocArrayFast(), av);
 	case Assert:
-		return acceptAssert(exp, cast(ir.Assert)exp, av);
+		return acceptAssert(exp, exp.toAssertFast(), av);
 	case StringImport:
-		return acceptStringImport(exp, cast(ir.StringImport)exp, av);
+		return acceptStringImport(exp, exp.toStringImportFast(), av);
 	case Typeid:
-		return acceptTypeid(exp, cast(ir.Typeid)exp, av);
+		return acceptTypeid(exp, exp.toTypeidFast(), av);
 	case IsExp:
-		return acceptIsExp(exp, cast(ir.IsExp)exp, av);
+		return acceptIsExp(exp, exp.toIsExpFast(), av);
 	case FunctionLiteral:
-		return acceptFunctionLiteral(exp, cast(ir.FunctionLiteral)exp, av);
+		return acceptFunctionLiteral(exp, exp.toFunctionLiteralFast(), av);
 	case ExpReference:
-		return acceptExpReference(exp, cast(ir.ExpReference)exp, av);
+		return acceptExpReference(exp, exp.toExpReferenceFast(), av);
 	case StructLiteral:
-		return acceptStructLiteral(exp, cast(ir.StructLiteral)exp, av);
+		return acceptStructLiteral(exp, exp.toStructLiteralFast(), av);
 	case UnionLiteral:
-		return acceptUnionLiteral(exp, cast(ir.UnionLiteral)exp, av);
+		return acceptUnionLiteral(exp, exp.toUnionLiteralFast(), av);
 	case ClassLiteral:
-		return acceptClassLiteral(exp, cast(ir.ClassLiteral)exp, av);
+		return acceptClassLiteral(exp, exp.toClassLiteralFast(), av);
 	case TokenExp:
-		return acceptTokenExp(exp, cast(ir.TokenExp)exp, av);
+		return acceptTokenExp(exp, exp.toTokenExpFast(), av);
 	case TypeExp:
-		return acceptTypeExp(exp, cast(ir.TypeExp)exp, av);
+		return acceptTypeExp(exp, exp.toTypeExpFast(), av);
 	case StoreExp:
-		return acceptStoreExp(exp, cast(ir.StoreExp)exp, av);
+		return acceptStoreExp(exp, exp.toStoreExpFast(), av);
 	case StatementExp:
-		return acceptStatementExp(exp, cast(ir.StatementExp)exp, av);
+		return acceptStatementExp(exp, exp.toStatementExpFast(), av);
 	case VaArgExp:
-		return acceptVaArgExp(exp, cast(ir.VaArgExp)exp, av);
+		return acceptVaArgExp(exp, exp.toVaArgExpFast(), av);
 	case PropertyExp:
-		return acceptPropertyExp(exp, cast(ir.PropertyExp)exp, av);
+		return acceptPropertyExp(exp, exp.toPropertyExpFast(), av);
 	case BuiltinExp:
-		return acceptBuiltinExp(exp, cast(ir.BuiltinExp)exp, av);
+		return acceptBuiltinExp(exp, exp.toBuiltinExpFast(), av);
 	case AccessExp:
-		return acceptAccessExp(exp, cast(ir.AccessExp)exp, av);
+		return acceptAccessExp(exp, exp.toAccessExpFast(), av);
 	case RunExp:
-		return acceptRunExp(exp, cast(ir.RunExp)exp, av);
+		return acceptRunExp(exp, exp.toRunExpFast(), av);
 	default:
 		throw panicUnhandled(exp, ir.nodeToString(exp));
 	}
