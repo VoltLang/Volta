@@ -259,7 +259,7 @@ ParseStatus checkToken(ParserStream ps, ir.NodeType ntype, TokenType type,
  * Side-effects:
  *     If token is not type raises a unexpected token error.
  */
-ParseStatus checkTokens(ParserStream ps, ir.NodeType ntype, TokenType[] types,
+ParseStatus checkTokens(ParserStream ps, ir.NodeType ntype, scope const(TokenType)[] types,
                         string file = __FILE__, const int line = __LINE__)
 {
 	size_t i;
@@ -320,7 +320,7 @@ ParseStatus match(ParserStream ps, ir.Node node, TokenType type,
  *     Advances the tokenstream if all the tokens matches @types.
  *     If token is not type raises a unexpected token error.
  */
-ParseStatus match(ParserStream ps, ir.NodeType ntype, TokenType[] types,
+ParseStatus match(ParserStream ps, ir.NodeType ntype, scope const(TokenType)[] types,
                   string file = __FILE__, const int line = __LINE__)
 {
 	size_t i;

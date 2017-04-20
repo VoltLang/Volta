@@ -66,7 +66,7 @@ public:
 	 * Side-effects:
 	 *   None.
 	 */
-	final int opEquals(TokenType[] types)
+	final int opEquals(scope const(TokenType)[] types)
 	in {
 		assert(types.length > 0);
 	}
