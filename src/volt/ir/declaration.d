@@ -324,7 +324,6 @@ public:
 
 	string name;  ///< Pre mangling.
 	string mangledName;
-	string suffix;  ///< Disambiguating nested function's mangledNames in different scopes.
 
 	/**
 	 * For use with the out contract.
@@ -415,7 +414,6 @@ public:
 		}
 		this.name = old.name;
 		this.mangledName = old.mangledName;
-		this.suffix = old.suffix;
 		this.outParameter = old.outParameter;
 		this.inContract = old.inContract;
 		this.outContract = old.outContract;
