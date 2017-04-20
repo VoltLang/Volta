@@ -1922,7 +1922,19 @@ ir.Type opOverloadRewrite(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 	}
 	auto func = selectFunction(store.functions, [binop.right], loc);
 	assert(func !is null);
-	exp = buildCall(loc, buildCreateDelegate(loc, binop.left, buildExpReference(loc, func, overfn)), [binop.right]);
+	auto pfix = buildCall(loc, buildCreateDelegate(loc, binop.left, buildExpReference(loc, func, overfn)), [binop.right]);
+	exp = pfix;
+
+	auto theTag = ir.Postfix.TagKind.None;
+	if (func.type.isArgRef[0]) {
+		theTag = ir.Postfix.TagKind.Ref;
+	} else if (func.type.isArgOut[0]) {
+		theTag = ir.Postfix.TagKind.Out;
+	}
+
+	pfix.argumentTags = [theTag];
+	extypePostfixCall(ctx, exp, pfix);
+
 	if (neg) {
 		exp = buildNot(loc, exp);
 		return buildBool(binop.loc);
