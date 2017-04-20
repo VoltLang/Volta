@@ -737,21 +737,28 @@ bool isMember(ir.PropertyExp prop)
  */
 bool isBackendConstant(ir.Exp exp)
 {
-	if (exp.nodeType == ir.NodeType.Constant) {
+	switch (exp.nodeType) with (ir.NodeType) {
+	case Constant:
 		return true;
-	}
+	case ExpReference:
+		auto eref = cast(ir.ExpReference)exp;
+		if (eref.decl is null) {
+			return false;
+		}
 
-	auto eref = cast(ir.ExpReference) exp;
-	if (eref is null || eref.decl is null) {
+		switch (eref.decl.nodeType) {
+		case Function, EnumDeclaration: return true;
+		default: return false;
+		}
+	case Unary:
+		auto unary = cast(ir.Unary)exp;
+		if (unary.op != ir.Unary.Op.Cast) {
+			return false;
+		}
+		return isBackendConstant(unary.value);
+	default:
 		return false;
 	}
-
-	if (eref.decl.nodeType != ir.NodeType.Function) {
-		return false;
-	}
-
-	// This is a ExpReference pointing to a function.
-	return true;
 }
 
 bool isAssign(ir.Exp exp)
