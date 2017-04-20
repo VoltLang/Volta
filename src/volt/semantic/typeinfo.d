@@ -35,8 +35,12 @@ string getTypeInfoVarName(ir.Type type)
  */
 ir.Variable getTypeInfo(LanguagePass lp, ir.Module mod, ir.Type type)
 {
-	auto asTR = cast(ir.TypeReference)type;
-	auto asAggr = cast(ir.Aggregate) (asTR !is null ? asTR.type : type);
+	if (type.nodeType == ir.NodeType.TypeReference) {
+		auto asTR = cast(ir.TypeReference) type;
+		type = asTR.type;
+	}
+
+	ir.Aggregate asAggr = cast(ir.Aggregate) type;
 	if (asAggr !is null) {
 		createAggregateVar(lp, asAggr);
 		return asAggr.typeInfo;
@@ -117,9 +121,9 @@ ir.Variable buildTypeInfoVariable(LanguagePass lp, ir.Type type, ir.Exp assign, 
 
 ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type type)
 {
-	assert(type.mangledName !is null);
+	assert(type.nodeType != ir.NodeType.TypeReference);
+	assert(type.mangledName.length > 0);
 
-	type = realType(type, false);  // Strip storage type.
 	resolveChildStructsAndUnions(lp, type);
 
 	auto typeSize = size(lp.target, type);
