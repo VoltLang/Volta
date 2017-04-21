@@ -7,7 +7,7 @@ watt
 --if-osx
 --if-linux
 --cmd
-llvm-config --system-libs --ldflags --libs core bitwriter bitreader linker target x86codegen engine
+llvm-config --system-libs --ldflags --libs core bitwriter bitreader linker target x86codegen webassembly engine
 --if-osx
 --if-linux
 -lstdc++

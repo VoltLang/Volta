@@ -53,6 +53,10 @@ void LLVMInitializeX86AsmPrinter();
 void LLVMInitializeX86AsmParser();
 void LLVMInitializeX86Disassembler();
 
+void LLVMInitializeWebAssemblyTargetInfo();
+void LLVMInitializeWebAssemblyTarget();
+void LLVMInitializeWebAssemblyTargetMC();
+void LLVMInitializeWebAssemblyAsmPrinter();
 
 /*===-- Target Data -------------------------------------------------------===*/
 
