@@ -1207,9 +1207,29 @@ void lowerArrayLiteral(LanguagePass lp, ir.Scope current,
 	if (at.nodeType == ir.NodeType.StaticArrayType) {
 		return;
 	}
-	auto sexp = buildInternalArrayLiteralSmart(al.loc, at, al.exps);
-	sexp.originalExp = al;
-	exp = sexp;
+	assert(at.nodeType == ir.NodeType.ArrayType);
+	bool isScope = at.isScope;
+
+	auto arr = at.toArrayTypeFast();
+	bool isBaseConst = arr.base.isConst;
+
+	bool isExpsBackend;
+	foreach (alexp; al.exps) {
+		isExpsBackend = isBackendConstant(alexp);
+		if (!isExpsBackend) {
+			break;
+		}
+	}
+
+	if ((!isBaseConst || !isExpsBackend) && isScope) {
+		auto sa = buildStaticArrayTypeSmart(exp.loc, al.exps.length, arr.base);
+		auto sexp = buildInternalStaticArrayLiteralSmart(exp.loc, sa, al.exps);
+		exp = buildSlice(exp.loc, sexp);
+	} else if (!isScope || !isBaseConst || !isExpsBackend) {
+		auto sexp = buildInternalArrayLiteralSmart(al.loc, at, al.exps);
+		sexp.originalExp = al;
+		exp = sexp;
+	}
 }
 
 /**
