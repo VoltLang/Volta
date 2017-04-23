@@ -1,4 +1,3 @@
-//T has-passed:no
 module test;
 
 struct Point
@@ -29,4 +28,3 @@ fn main() i32
 	}
 	return sum == 22 ? 0 : sum;
 }
-
