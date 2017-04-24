@@ -1,5 +1,5 @@
-// Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
-// Copyright © 2012, Bernard Helyer.  All rights reserved.
+// Copyright © 2012-2017, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2012-2017, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.ir.base;
 
@@ -58,7 +58,7 @@ enum NodeType
 	MixinFunction,
 	MixinTemplate,
 
-	/* declaration.d */
+	/* type.d */
 	PrimitiveType,
 	TypeReference,
 	PointerType,
@@ -70,17 +70,19 @@ enum NodeType
 	FunctionType,
 	DelegateType,
 	FunctionSetType,
-	FunctionSet,
 	StorageType,
+	TypeOf,
+	NullType,
+	AutoType,
+	NoType,
+
+	/* declaration.d */
 	Variable,
 	Alias,
 	Function,
 	FunctionParam,
-	TypeOf,
-	NullType,
+	FunctionSet,
 	EnumDeclaration,
-	AutoType,
-	NoType,
 
 	/* statements.d */
 	ReturnStatement,
@@ -147,7 +149,8 @@ enum NodeType
  *
  * @ingroup irNode
  */
-enum Access {
+enum Access
+{
 	Invalid,
 	Public = TokenType.Public,
 	Private = TokenType.Private,
@@ -168,7 +171,8 @@ enum Access {
  *
  * @ingroup irNode
  */
-enum Linkage {
+enum Linkage
+{
 	Volt,
 	C,
 	CPlusPlus,
@@ -358,6 +362,7 @@ public:
 	/// If true, this name starts with a dot.
 	bool leadingDot;
 
+
 public:
 	override string toString()
 	{
@@ -381,6 +386,7 @@ public:
 
 		return ret;
 	}
+
 
 public:
 	this() { super(NodeType.QualifiedName); }
