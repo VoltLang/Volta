@@ -1,4 +1,3 @@
-//T has-passed:no
 module test;
 
 // Minimal testing of compile time evaluation of expressions.
