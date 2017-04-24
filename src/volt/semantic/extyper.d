@@ -1540,10 +1540,9 @@ void extypeUnaryCastTo(Context ctx, ref ir.Exp exp, ir.Unary unary)
 		return;
 	}
 
-	auto fnref = buildExpReference(unary.loc, ctx.lp.castFunc, "vrt_handle_cast");
 	auto tid = buildTypeidSmart(unary.loc, ctx.lp, to);
 	auto val = buildCastToVoidPtr(unary.loc, unary.value);
-	unary.value = buildCall(unary.loc, fnref, [val, cast(ir.Exp)tid]);
+	rewriteCall(ctx, unary.value, ctx.lp.castFunc, [val, cast(ir.Exp)tid]);
 }
 
 /**
@@ -1900,6 +1899,51 @@ ir.Type extypeBinOp(Context ctx, ir.BinOp bin, ir.PrimitiveType lprim, ir.Primit
 	}
 }
 
+void rewriteCall(Context ctx, ref ir.Exp exp, ir.Function func, ir.Exp[] args, ir.Exp left = null)
+{
+	auto loc = exp.loc;
+	ir.ExpReference eref = buildExpReference(loc, func, func.name);
+	ir.Exp child = eref;
+	if (left !is null) {
+		child = buildCreateDelegate(loc, left, eref);
+	}
+	auto call = buildCall(loc, child, args);
+	exp = call;
+	auto tags = new ir.Postfix.TagKind[](args.length);
+	foreach (i; 0 .. args.length) {
+		tags[i] = ir.Postfix.TagKind.None;
+		if (func.type.isArgRef[i]) {
+			tags[i] = ir.Postfix.TagKind.Ref;
+		} else if (func.type.isArgOut[i]) {
+			tags[i] = ir.Postfix.TagKind.Out;
+		}
+	}
+	call.argumentTags = tags;
+	extypePostfixCall(ctx, exp, call);
+}
+
+/**
+ * Given the name of an overloaded operator, rewrite it to a function call..
+ * extypePostfixCall is called on the rewritten expression.
+ * 'left' is an expression of which the function will be a member.
+ * Returns the function that was called, or null if nothing was rewritten.
+ */
+ir.Function rewriteOperator(Context ctx, ref ir.Exp exp, string overloadName, ir.Exp left, ir.Exp[] args)
+{
+	auto loc = exp.loc;
+	auto agg = opOverloadableOrNull(getExpType(left));
+	if (agg is null) {
+		return null;
+	}
+	auto store = lookupAsThisScope(ctx.lp, agg.myScope, loc, overloadName, ctx.current);
+	if (store is null || store.functions.length == 0) {
+		throw makeAggregateDoesNotDefineOverload(exp.loc, agg, overloadName);
+	}
+	auto func = selectFunction(store.functions, args, loc);
+	rewriteCall(ctx, exp, func, args, left);
+	return func;
+}
+
 /**
  * If the given binop is working on an aggregate
  * that overloads that operator, rewrite a call to that overload.
@@ -1907,33 +1951,15 @@ ir.Type extypeBinOp(Context ctx, ir.BinOp bin, ir.PrimitiveType lprim, ir.Primit
 ir.Type opOverloadRewrite(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 {
 	auto loc = exp.loc;
-	auto _agg = opOverloadableOrNull(getExpType(binop.left));
-	if (_agg is null) {
-		return null;
-	}
 	bool neg = binop.op == ir.BinOp.Op.NotEqual;
 	string overfn = overloadName(neg ? ir.BinOp.Op.Equal : binop.op);
 	if (overfn.length == 0) {
 		return null;
 	}
-	auto store = lookupAsThisScope(ctx.lp, _agg.myScope, loc, overfn, ctx.current);
-	if (store is null || store.functions.length == 0) {
-		throw makeAggregateDoesNotDefineOverload(exp.loc, _agg, overfn);
+	auto func = rewriteOperator(ctx, exp, overfn, binop.left, [binop.right]);
+	if (func is null) {
+		return null;
 	}
-	auto func = selectFunction(store.functions, [binop.right], loc);
-	assert(func !is null);
-	auto pfix = buildCall(loc, buildCreateDelegate(loc, binop.left, buildExpReference(loc, func, overfn)), [binop.right]);
-	exp = pfix;
-
-	auto theTag = ir.Postfix.TagKind.None;
-	if (func.type.isArgRef[0]) {
-		theTag = ir.Postfix.TagKind.Ref;
-	} else if (func.type.isArgOut[0]) {
-		theTag = ir.Postfix.TagKind.Out;
-	}
-
-	pfix.argumentTags = [theTag];
-	extypePostfixCall(ctx, exp, pfix);
 
 	if (neg) {
 		exp = buildNot(loc, exp);
@@ -1949,27 +1975,13 @@ ir.Type opOverloadRewrite(Context ctx, ir.BinOp binop, ref ir.Exp exp)
  */
 ir.Type opOverloadRewriteIndex(Context ctx, ir.Postfix pfix, ref ir.Exp exp)
 {
-	if (pfix.op != ir.Postfix.Op.Index) {
+	if (pfix.op != ir.Postfix.Op.Index || pfix.arguments.length != 1) {
 		return null;
 	}
-	auto type = getExpType(pfix.child);
-	auto _agg = opOverloadableOrNull(type);
-	if (_agg is null) {
+	auto func = rewriteOperator(ctx, exp, overloadIndexName(), pfix.child, [pfix.arguments[0]]);
+	if (func is null) {
 		return null;
 	}
-	auto name = overloadIndexName();
-	auto store = lookupAsThisScope(ctx.lp, _agg.myScope, exp.loc, name, ctx.current);
-	if (store is null || store.functions.length == 0) {
-		throw makeAggregateDoesNotDefineOverload(exp.loc, _agg, name);
-	}
-	assert(pfix.arguments.length > 0 && pfix.arguments[0] !is null);
-	auto func = selectFunction(store.functions, [pfix.arguments[0]], exp.loc);
-	assert(func !is null);
-	pfix = buildCall(exp.loc, buildCreateDelegate(exp.loc, pfix.child, buildExpReference(exp.loc, func, name)), [pfix.arguments[0]]);
-	exp = pfix;
-
-	extypePostfixCall(ctx, exp, pfix);
-
 	// TODO
 	return func.type.ret;
 }
@@ -1996,16 +2008,7 @@ ir.Type extypeBinOpPropertyAssign(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 			expsToTypes(args));
 	}
 
-	auto name = p.identifier.value;
-	auto expRef = buildExpReference(binop.loc, func, name);
-
-	if (p.child is null) {
-		exp = buildCall(binop.loc, expRef, args);
-	} else {
-		exp = buildMemberCall(binop.loc,
-		                      p.child,
-		                      expRef, name, args);
-	}
+	rewriteCall(ctx, exp, func, args, p.child);
 
 	return func.type.ret;
 }
@@ -3350,7 +3353,7 @@ void extypeSwitchStatement(Context ctx, ref ir.Node n)
 		ir.Exp length = buildBinOp(loc, ir.BinOp.Op.Mul,
 			buildArrayLength(loc, ctx.lp.target, copyExp(ss.condition)),
 				getSizeOf(loc, ctx.lp, asArray.base));
-		ss.condition = buildCall(ss.condition.loc, ctx.lp.hashFunc, [ptr, length]);
+		rewriteCall(ctx, ss.condition, ctx.lp.hashFunc, [ptr, length]);
 		conditionType = buildUint(ss.condition.loc);
 	}
 	ArrayCase[uint] arrayCases;
