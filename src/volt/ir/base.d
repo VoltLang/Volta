@@ -271,18 +271,19 @@ public:
 	final DelegateType toDelegateTypeFast() { return cast(DelegateType)cast(void*)this; }
 	final FunctionSetType toFunctionSetTypeFast() { return cast(FunctionSetType)cast(void*)this; }
 	final StorageType toStorageTypeFast() { return cast(StorageType)cast(void*)this; }
+	final TypeOf toTypeOfFast() { return cast(TypeOf)cast(void*)this; }
+	final NullType toNullTypeFast() { return cast(NullType)cast(void*)this; }
+	final AutoType toAutoTypeFast() { return cast(AutoType)cast(void*)this; }
+	final NoType toNoTypeFast() { return cast(NoType)cast(void*)this; }
+	final CallableType toCallableTypeFast() { return cast(CallableType)cast(void*)this; }
 
 	// Declaration
-	final FunctionSet toFunctionSetFast() { return cast(FunctionSet)cast(void*)this; }
 	final Variable toVariableFast() { return cast(Variable)cast(void*)this; }
 	final Alias toAliasFast() { return cast(Alias)cast(void*)this; }
 	final Function toFunctionFast() { return cast(Function)cast(void*)this; }
 	final FunctionParam toFunctionParamFast() { return cast(FunctionParam)cast(void*)this; }
-	final TypeOf toTypeOfFast() { return cast(TypeOf)cast(void*)this; }
-	final NullType toNullTypeFast() { return cast(NullType)cast(void*)this; }
+	final FunctionSet toFunctionSetFast() { return cast(FunctionSet)cast(void*)this; }
 	final EnumDeclaration toEnumDeclarationFast() { return cast(EnumDeclaration)cast(void*)this; }
-	final AutoType toAutoTypeFast() { return cast(AutoType)cast(void*)this; }
-	final NoType toNoTypeFast() { return cast(NoType)cast(void*)this; }
 
 	// Statements
 	final ReturnStatement toReturnStatementFast() { return cast(ReturnStatement)cast(void*)this; }
