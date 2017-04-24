@@ -1,5 +1,5 @@
-// Copyright © 2013-2015, Bernard Helyer.  All rights reserved.
-// Copyright © 2013-2015, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2013-2017, Bernard Helyer.  All rights reserved.
+// Copyright © 2013-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.evaluate;
 
@@ -17,6 +17,7 @@ import volt.token.location;
 import volt.semantic.lookup;
 import volt.semantic.util;
 import volt.semantic.classify;
+import volt.semantic.typer;
 
 /*
  *
@@ -24,14 +25,14 @@ import volt.semantic.classify;
  *
  */
 
-ir.Constant fold(ref ir.Exp exp)
+ir.Constant fold(ref ir.Exp exp, TargetInfo target)
 {
 	bool needCopy;
-	auto constant = fold(exp, needCopy);
+	auto constant = fold(exp, needCopy, target);
 	return (needCopy && constant !is null) ? cast(ir.Constant)copyExp(constant) : constant;
 }
 
-ir.Constant fold(ref ir.Exp exp, out bool needCopy)
+ir.Constant fold(ref ir.Exp exp, out bool needCopy, TargetInfo target)
 {
 	switch (exp.nodeType) with (ir.NodeType) {
 	case Constant:
@@ -40,14 +41,14 @@ ir.Constant fold(ref ir.Exp exp, out bool needCopy)
 		return c;
 	case Unary:
 		auto unary = cast(ir.Unary)exp;
-		auto c = foldUnary(exp, unary);
+		auto c = foldUnary(exp, unary, target);
 		if (c !is null) {
 			exp = c;
 		}
 		return c;
 	case BinOp:
 		auto binop = cast(ir.BinOp)exp;
-		auto c = foldBinOp(exp, binop);
+		auto c = foldBinOp(exp, binop, target);
 		if (c !is null) {
 			exp = c;
 		}
@@ -57,86 +58,110 @@ ir.Constant fold(ref ir.Exp exp, out bool needCopy)
 		auto e = stripEnumIfEnum(exp, wasEnum);
 		if (wasEnum) {
 			needCopy = true;
-			return fold(e);
+			return fold(e, target);
 		}
 		return null;
+	case AccessExp:
+		auto c = foldAccessExp(exp, cast(ir.AccessExp)exp, target);
+		if (c !is null) {
+			exp = c;
+		}
+		return c;
 	default:
 		return null;
 	}
 }
 
-ir.Constant foldBinOp(ref ir.Exp exp, ir.BinOp binop)
+ir.Constant foldAccessExp(ref ir.Exp exp, ir.AccessExp accessExp, TargetInfo target)
+{
+	// Currently, only `typeid(_).size` is supported.
+	if (accessExp.child.nodeType != ir.NodeType.Typeid ||
+		accessExp.field.name != "size") {
+		return null;
+	}
+	auto tid = cast(ir.Typeid)accessExp.child;
+	auto type = tid.type;
+	if (tid.type is null && tid.exp !is null) {
+		type = getExpType(tid.exp);
+	}
+	if (type is null) {
+		return null;
+	}
+	return buildConstantSizeT(exp.loc, target, size(target, type));
+}
+
+ir.Constant foldBinOp(ref ir.Exp exp, ir.BinOp binop, TargetInfo target)
 {
 	assert(binop !is null);
 	assert(binop.left !is null);
 	assert(binop.right !is null);
 	bool copyLeft, copyRight;
-	auto cl = fold(binop.left, copyLeft);
-	auto cr = fold(binop.right, copyRight);
+	auto cl = fold(binop.left, copyLeft, target);
+	auto cr = fold(binop.right, copyRight, target);
 	if (cl is null || cr is null || !typesEqual(cl.type, cr.type)) {
 		return null;
 	}
 	auto c = foldBinOp(exp, binop.op,
 	                   copyLeft ? cast(ir.Constant)copyExp(cl) : cl,
-			           copyRight ? cast(ir.Constant)copyExp(cr) : cr);
+			           copyRight ? cast(ir.Constant)copyExp(cr) : cr, target);
 	if (c !is null) {
 		exp = c;
 	}
 	return c;
 }
 
-ir.Constant foldUnary(ref ir.Exp exp, ir.Unary unary)
+ir.Constant foldUnary(ref ir.Exp exp, ir.Unary unary, TargetInfo target)
 {
 	assert(unary !is null);
 	if (unary.value is null) {
 		return null;
 	}
-	auto c = fold(unary.value);
+	auto c = fold(unary.value, target);
 	if (c is null) {
 		return null;
 	}
-	auto uc = foldUnary(exp, unary, c);
+	auto uc = foldUnary(exp, unary, c, target);
 	if (uc !is null) {
 		exp = uc;
 	}
 	return uc;
 }
 
-ir.Constant foldBinOp(ref ir.Exp exp, ir.BinOp.Op op, ir.Constant cl, ir.Constant cr)
+ir.Constant foldBinOp(ref ir.Exp exp, ir.BinOp.Op op, ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	switch (op) with (ir.BinOp.Op) {
-	case OrOr: return foldBinOpOrOr(cl, cr);
-	case AndAnd: return foldBinOpAndAnd(cl, cr);
-	case Or: return foldBinOpOr(cl, cr);
-	case Xor: return foldBinOpXor(cl, cr);
-	case And: return foldBinOpAnd(cl, cr);
-	case Equal: return foldBinOpEqual(cl, cr);
-	case NotEqual: return foldBinOpNotEqual(cl, cr);
-	case Less: return foldBinOpLess(cl, cr);
-	case LessEqual: return foldBinOpLessEqual(cl, cr);
-	case GreaterEqual: return foldBinOpGreaterEqual(cl, cr);
-	case Greater: return foldBinOpGreater(cl, cr);
-	case LS: return foldBinOpLS(cl, cr);
-	case SRS: return foldBinOpSRS(cl, cr);
-	case RS: return foldBinOpRS(cl, cr);
-	case Add: return foldBinOpAdd(cl, cr);
-	case Sub: return foldBinOpSub(cl, cr);
-	case Mul: return foldBinOpMul(cl, cr);
-	case Div: return foldBinOpDiv(cl, cr);
-	case Mod: return foldBinOpMod(cl, cr);
-	case Pow: return foldBinOpPow(cl, cr);
+	case OrOr: return foldBinOpOrOr(cl, cr, target);
+	case AndAnd: return foldBinOpAndAnd(cl, cr, target);
+	case Or: return foldBinOpOr(cl, cr, target);
+	case Xor: return foldBinOpXor(cl, cr, target);
+	case And: return foldBinOpAnd(cl, cr, target);
+	case Equal: return foldBinOpEqual(cl, cr, target);
+	case NotEqual: return foldBinOpNotEqual(cl, cr, target);
+	case Less: return foldBinOpLess(cl, cr, target);
+	case LessEqual: return foldBinOpLessEqual(cl, cr, target);
+	case GreaterEqual: return foldBinOpGreaterEqual(cl, cr, target);
+	case Greater: return foldBinOpGreater(cl, cr, target);
+	case LS: return foldBinOpLS(cl, cr, target);
+	case SRS: return foldBinOpSRS(cl, cr, target);
+	case RS: return foldBinOpRS(cl, cr, target);
+	case Add: return foldBinOpAdd(cl, cr, target);
+	case Sub: return foldBinOpSub(cl, cr, target);
+	case Mul: return foldBinOpMul(cl, cr, target);
+	case Div: return foldBinOpDiv(cl, cr, target);
+	case Mod: return foldBinOpMod(cl, cr, target);
+	case Pow: return foldBinOpPow(cl, cr, target);
 	default: return null;
 	}
 }
 
-ir.Constant foldUnary(ref ir.Exp exp, ir.Unary u, ir.Constant c)
+ir.Constant foldUnary(ref ir.Exp exp, ir.Unary u, ir.Constant c, TargetInfo target)
 {
 	switch (u.op) with (ir.Unary.Op) {
-	case Minus: return foldUnaryMinus(c);
-	case Plus: return foldUnaryPlus(c);
-	case Not: return foldUnaryNot(c);
-	case Complement: return foldUnaryComplement(c);
-	case Cast: return foldUnaryCast(c, u.type);
+	case Minus: return foldUnaryMinus(c, target);
+	case Plus: return foldUnaryPlus(c, target);
+	case Not: return foldUnaryNot(c, target);
+	case Complement: return foldUnaryComplement(c, target);
+	case Cast: return foldUnaryCast(c, u.type, target);
 	default: return null;
 	}
 }
@@ -149,7 +174,7 @@ private ir.Constant buildEmptyConstant(ir.Node n, ir.Type t)
 	return c;
 }
 
-ir.Constant foldBinOpOrOr(ir.Constant cl, ir.Constant cr)
+ir.Constant foldBinOpOrOr(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
 	auto pt = cast(ir.PrimitiveType)c.type;
@@ -166,7 +191,7 @@ ir.Constant foldBinOpOrOr(ir.Constant cl, ir.Constant cr)
 	return c;
 }
 
-ir.Constant foldBinOpAndAnd(ir.Constant cl, ir.Constant cr)
+ir.Constant foldBinOpAndAnd(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = cl;
 	auto pt = cast(ir.PrimitiveType)c.type;
@@ -183,7 +208,7 @@ ir.Constant foldBinOpAndAnd(ir.Constant cl, ir.Constant cr)
 	return c;
 }
 
-ir.Constant foldBinOpOr(ir.Constant cl, ir.Constant cr)
+ir.Constant foldBinOpOr(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = cl;
 	auto pt = cast(ir.PrimitiveType)c.type;
@@ -197,7 +222,7 @@ ir.Constant foldBinOpOr(ir.Constant cl, ir.Constant cr)
 	return c;
 }
 
-ir.Constant foldBinOpXor(ir.Constant cl, ir.Constant cr)
+ir.Constant foldBinOpXor(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = cl;
 	auto pt = cast(ir.PrimitiveType)c.type;
@@ -211,7 +236,7 @@ ir.Constant foldBinOpXor(ir.Constant cl, ir.Constant cr)
 	return c;
 }
 
-ir.Constant foldBinOpAnd(ir.Constant cl, ir.Constant cr)
+ir.Constant foldBinOpAnd(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = cl;
 	auto pt = cast(ir.PrimitiveType)c.type;
@@ -225,7 +250,7 @@ ir.Constant foldBinOpAnd(ir.Constant cl, ir.Constant cr)
 	return c;
 }
 
-ir.Constant foldBinOpEqual(ir.Constant cl, ir.Constant cr)
+ir.Constant foldBinOpEqual(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
 	auto pt = cast(ir.PrimitiveType)c.type;
@@ -242,7 +267,7 @@ ir.Constant foldBinOpEqual(ir.Constant cl, ir.Constant cr)
 	return c;
 }
 
-ir.Constant foldBinOpNotEqual(ir.Constant cl, ir.Constant cr)
+ir.Constant foldBinOpNotEqual(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
 	auto pt = cast(ir.PrimitiveType)c.type;
@@ -259,7 +284,7 @@ ir.Constant foldBinOpNotEqual(ir.Constant cl, ir.Constant cr)
 	return c;
 }
 
-ir.Constant foldBinOpLess(ir.Constant cl, ir.Constant cr)
+ir.Constant foldBinOpLess(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
 	auto pt = cast(ir.PrimitiveType)c.type;
@@ -276,7 +301,7 @@ ir.Constant foldBinOpLess(ir.Constant cl, ir.Constant cr)
 	return c;
 }
 
-ir.Constant foldBinOpLessEqual(ir.Constant cl, ir.Constant cr)
+ir.Constant foldBinOpLessEqual(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
 	auto pt = cast(ir.PrimitiveType)c.type;
@@ -293,7 +318,7 @@ ir.Constant foldBinOpLessEqual(ir.Constant cl, ir.Constant cr)
 	return c;
 }
 
-ir.Constant foldBinOpGreaterEqual(ir.Constant cl, ir.Constant cr)
+ir.Constant foldBinOpGreaterEqual(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
 	auto pt = cast(ir.PrimitiveType)c.type;
@@ -310,7 +335,7 @@ ir.Constant foldBinOpGreaterEqual(ir.Constant cl, ir.Constant cr)
 	return c;
 }
 
-ir.Constant foldBinOpGreater(ir.Constant cl, ir.Constant cr)
+ir.Constant foldBinOpGreater(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
 	auto pt = cast(ir.PrimitiveType)c.type;
@@ -327,7 +352,7 @@ ir.Constant foldBinOpGreater(ir.Constant cl, ir.Constant cr)
 	return c;
 }
 
-ir.Constant foldBinOpLS(ir.Constant cl, ir.Constant cr)
+ir.Constant foldBinOpLS(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = cl;
 	auto pt = cast(ir.PrimitiveType)c.type;
@@ -341,7 +366,7 @@ ir.Constant foldBinOpLS(ir.Constant cl, ir.Constant cr)
 	return c;
 }
 
-ir.Constant foldBinOpSRS(ir.Constant cl, ir.Constant cr)
+ir.Constant foldBinOpSRS(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = cl;
 	auto pt = cast(ir.PrimitiveType)c.type;
@@ -355,7 +380,7 @@ ir.Constant foldBinOpSRS(ir.Constant cl, ir.Constant cr)
 	return c;
 }
 
-ir.Constant foldBinOpRS(ir.Constant cl, ir.Constant cr)
+ir.Constant foldBinOpRS(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = cl;
 	auto pt = cast(ir.PrimitiveType)c.type;
@@ -369,7 +394,7 @@ ir.Constant foldBinOpRS(ir.Constant cl, ir.Constant cr)
 	return c;
 }
 
-ir.Constant foldBinOpAdd(ir.Constant cl, ir.Constant cr)
+ir.Constant foldBinOpAdd(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = cl;
 	auto pt = cast(ir.PrimitiveType)c.type;
@@ -386,7 +411,7 @@ ir.Constant foldBinOpAdd(ir.Constant cl, ir.Constant cr)
 	return c;
 }
 
-ir.Constant foldBinOpSub(ir.Constant cl, ir.Constant cr)
+ir.Constant foldBinOpSub(ir.Constant cl, ir.Constant cr, TargetInfo targert)
 {
 	auto c = cl;
 	auto pt = cast(ir.PrimitiveType)c.type;
@@ -403,7 +428,7 @@ ir.Constant foldBinOpSub(ir.Constant cl, ir.Constant cr)
 	return c;
 }
 
-ir.Constant foldBinOpMul(ir.Constant cl, ir.Constant cr)
+ir.Constant foldBinOpMul(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = cl;
 	auto pt = cast(ir.PrimitiveType)c.type;
@@ -419,7 +444,7 @@ ir.Constant foldBinOpMul(ir.Constant cl, ir.Constant cr)
 	return c;
 }
 
-ir.Constant foldBinOpDiv(ir.Constant cl, ir.Constant cr)
+ir.Constant foldBinOpDiv(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	void dieIfZero(bool isZero)
 	{
@@ -448,7 +473,7 @@ ir.Constant foldBinOpDiv(ir.Constant cl, ir.Constant cr)
 	return c;
 }
 
-ir.Constant foldBinOpMod(ir.Constant cl, ir.Constant cr)
+ir.Constant foldBinOpMod(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	void dieIfZero(bool isZero)
 	{
@@ -476,7 +501,7 @@ ir.Constant foldBinOpMod(ir.Constant cl, ir.Constant cr)
 	return c;
 }
 
-ir.Constant foldBinOpPow(ir.Constant cl, ir.Constant cr)
+ir.Constant foldBinOpPow(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	version (Volt) {
 		throw panicUnhandled(cl, "pow binop");
@@ -496,7 +521,7 @@ ir.Constant foldBinOpPow(ir.Constant cl, ir.Constant cr)
 	}
 }
 
-ir.Constant foldUnaryCast(ir.Constant c, ir.Type t)
+ir.Constant foldUnaryCast(ir.Constant c, ir.Type t, TargetInfo target)
 {
 	auto fromPrim = cast(ir.PrimitiveType)c.type;
 	auto toPrim = cast(ir.PrimitiveType)realType(t);
@@ -539,7 +564,7 @@ ir.Constant foldUnaryCast(ir.Constant c, ir.Type t)
 	assert(false);
 }
 
-ir.Constant foldUnaryMinus(ir.Constant c)
+ir.Constant foldUnaryMinus(ir.Constant c, TargetInfo target)
 {
 	auto pt = cast(ir.PrimitiveType) c.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
@@ -570,7 +595,7 @@ ir.Constant foldUnaryMinus(ir.Constant c)
 	return c;
 }
 
-ir.Constant foldUnaryPlus(ir.Constant c)
+ir.Constant foldUnaryPlus(ir.Constant c, TargetInfo target)
 {
 	auto pt = cast(ir.PrimitiveType) c.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
@@ -599,7 +624,7 @@ ir.Constant foldUnaryPlus(ir.Constant c)
 	return c;
 }
 
-ir.Constant foldUnaryNot(ir.Constant c)
+ir.Constant foldUnaryNot(ir.Constant c, TargetInfo target)
 {
 	auto pt = cast(ir.PrimitiveType)c.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
@@ -611,7 +636,7 @@ ir.Constant foldUnaryNot(ir.Constant c)
 	return c;
 }
 
-ir.Constant foldUnaryComplement(ir.Constant c)
+ir.Constant foldUnaryComplement(ir.Constant c, TargetInfo target)
 {
 	auto pt = cast(ir.PrimitiveType)c.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
@@ -631,12 +656,12 @@ ir.Constant evaluateOrNull(LanguagePass lp, ir.Scope current, ir.Exp exp)
 	if (exp is null) {
 		return null;
 	}
-	return fold(exp);
+	return fold(exp, lp.target);
 }
 
 ir.Constant evaluate(LanguagePass lp, ir.Scope current, ir.Exp exp)
 {
-	auto constant = fold(exp);
+	auto constant = fold(exp, lp.target);
 	if (constant is null) {
 		throw makeNotAvailableInCTFE(exp, exp);
 	}

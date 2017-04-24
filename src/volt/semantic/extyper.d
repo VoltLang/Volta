@@ -2850,7 +2850,7 @@ ir.Type extypeRunExp(Context ctx, ref ir.Exp exp, Parent parent)
 	ir.Constant[] args;
 	foreach (arg; pfix.arguments) {
 		ir.Exp dummy = arg;
-		args ~= fold(dummy);
+		args ~= fold(dummy, ctx.lp.target);
 		if (args[$-1] is null) {
 			throw makeNotAvailableInCTFE(arg, arg);
 		}
@@ -4021,12 +4021,12 @@ void doResolveAmbiguousArrayType(Context ctx, ref ir.Type type)
 	doResolveType(ctx, aat.base, null, 0);
 
 	auto childType = extype(ctx, aat.child, Parent.NA);
-	auto constant = fold(aat.child);
+	auto constant = fold(aat.child, ctx.lp.target);
 	if (constant is null && aat.child.nodeType == ir.NodeType.ExpReference) {
 		auto eref = cast(ir.ExpReference)aat.child;
 		if (eref.decl.nodeType == ir.NodeType.EnumDeclaration) {
 			auto ed = cast(ir.EnumDeclaration)eref.decl;
-			constant = fold(ed.assign);
+			constant = fold(ed.assign, ctx.lp.target);
 		}
 	}
 

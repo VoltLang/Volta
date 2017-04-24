@@ -132,7 +132,7 @@ public:
 		passes2 ~= new TimerPass("p2-cfgbuilder", new CFGBuilder(this));
 		debug passes2 ~= new TimerPass("p2-irverifier", new IrVerifier());
 
-		passes3 ~= new TimerPass("p3-expfolder", new ExpFolder());
+		passes3 ~= new TimerPass("p3-expfolder", new ExpFolder(target));
 		passes3 ~= new TimerPass("p3-llvm", new LlvmLowerer(this));
 		passes3 ~= new TimerPass("p3-new-rep", new NewReplacer(this));
 		passes3 ~= new TimerPass("p3-typeid-rep", new TypeidReplacer(this));
