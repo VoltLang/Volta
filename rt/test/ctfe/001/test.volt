@@ -9,6 +9,6 @@ fn f() i32
 
 fn main() i32
 {
-	return f();
+	return #run f();
 }
 
