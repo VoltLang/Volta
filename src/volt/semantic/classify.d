@@ -52,26 +52,17 @@ size_t size(TargetInfo target, ir.Node node)
 {
 	switch (node.nodeType) with (ir.NodeType) {
 	case PrimitiveType:
-		auto asPrim = cast(ir.PrimitiveType) node;
-		assert(asPrim !is null);
-		return size(asPrim.type);
+		return size(node.toPrimitiveTypeFast().type);
 	case Struct:
-		auto asStruct = cast(ir.Struct) node;
-		assert(asStruct !is null);
-		return structSize(target, asStruct);
+		return structSize(target, node.toStructFast());
 	case Union:
-		auto asUnion = cast(ir.Union) node;
-		assert(asUnion !is null);
-		return unionSize(target, asUnion);
+		return unionSize(target, node.toUnionFast());
 	case Enum:
-		auto asEnum = cast(ir.Enum) node;
-		assert(asEnum !is null);
+		auto asEnum = node.toEnumFast();
 		assert(asEnum.base !is null);
 		return size(target, asEnum.base);
 	case Variable:
-		auto asVariable = cast(ir.Variable) node;
-		assert(asVariable !is null);
-		return size(target, asVariable.type);
+		return size(target, node.toVariableFast().type);
 	case Class:
 	case AAType:
 	case Interface:
@@ -82,13 +73,11 @@ size_t size(TargetInfo target, ir.Node node)
 	case DelegateType:
 		return target.isP64 ? 16U : 8U;
 	case TypeReference:
-		auto asTR = cast(ir.TypeReference) node;
-		assert(asTR !is null);
+		auto asTR = node.toTypeReferenceFast();
 		panicAssert(asTR, asTR.type !is null);
 		return size(target, asTR.type);
 	case StaticArrayType:
-		auto _static = cast(ir.StaticArrayType) node;
-		assert(_static !is null);
+		auto _static = node.toStaticArrayTypeFast();
 		return size(target, _static.base) * _static.length;
 	default:
 		throw panicUnhandled(node, ir.nodeToString(node));
@@ -106,7 +95,7 @@ size_t structSize(TargetInfo target, ir.Struct s)
 	size_t largestAlignment;
 	foreach (node; s.members.nodes) {
 		// If it's not a Variable, or not a field, it shouldn't take up space.
-		auto asVar = cast(ir.Variable)node;
+		auto asVar = node.toVariableChecked();
 		if (asVar is null || asVar.storage != ir.Variable.Storage.Field) {
 			continue;
 		}
@@ -135,12 +124,11 @@ size_t unionSize(TargetInfo target, ir.Union u)
 	size_t sizeAccumulator;
 	foreach (node; u.members.nodes) {
 		// If it's not a Variable, it shouldn't take up space.
-		auto asVar = cast(ir.Variable)node;
+		auto asVar = node.toVariableChecked();
 		if (asVar is null || asVar.storage != ir.Variable.Storage.Field) {
 			continue;
 		}
 
-		auto var = cast(ir.Variable)node;
 		auto s = size(target, node);
 		if (s > sizeAccumulator) {
 			sizeAccumulator = s;
@@ -197,8 +185,7 @@ size_t alignment(TargetInfo target, ir.Type node)
 {
 	switch (node.nodeType) with (ir.NodeType) {
 	case Struct:
-		auto s = cast(ir.Struct) node;
-		return structAlignment(target, s);
+		return structAlignment(target, node.toStructFast());
 	case ArrayType:
 	case DelegateType:
 	case AAType:
@@ -210,25 +197,15 @@ size_t alignment(TargetInfo target, ir.Type node)
 	case Union:
 		return target.alignment.int8; // Matches implementation
 	case PrimitiveType:
-		auto asPrim = cast(ir.PrimitiveType) node;
-		assert(asPrim !is null);
-		return alignment(target, asPrim.type);
+		return alignment(target, node.toPrimitiveTypeFast().type);
 	case Enum:
-		auto asEnum = cast(ir.Enum) node;
-		assert(asEnum !is null);
-		return alignment(target, asEnum.base);
+		return alignment(target, node.toEnumFast().base);
 	case Variable:
-		auto asVariable = cast(ir.Variable) node;
-		assert(asVariable !is null);
-		return alignment(target, asVariable.type);
+		return alignment(target, node.toVariableFast().type);
 	case TypeReference:
-		auto asTR = cast(ir.TypeReference) node;
-		assert(asTR !is null);
-		return alignment(target, asTR.type);
+		return alignment(target, node.toTypeReferenceFast().type);
 	case StaticArrayType:
-		auto _static = cast(ir.StaticArrayType) node;
-		assert(_static !is null);
-		return alignment(target, _static.base);
+		return alignment(target, node.toStaticArrayTypeFast().base);
 	default:
 		throw panicUnhandled(node, ir.nodeToString(node));
 	}
@@ -244,7 +221,7 @@ size_t structAlignment(TargetInfo target, ir.Struct s)
 	size_t accumulator = 1;
 	foreach (node; s.members.nodes) {
 		// If it's not a Variable, or not a field, it shouldn't take up space.
-		auto asVar = cast(ir.Variable)node;
+		auto asVar = node.toVariableChecked();
 		if (asVar is null || asVar.storage != ir.Variable.Storage.Field) {
 			continue;
 		}
@@ -271,7 +248,7 @@ bool isValidWithExp(ir.Exp exp)
 		return true;
 	} else if (exp.nodeType == ir.NodeType.Postfix) {
 		// TODO Remove Postfix.Identifier case
-		auto p = cast(ir.Postfix) exp;
+		auto p = exp.toPostfixFast();
 		return p.op == ir.Postfix.Op.Identifier;
 	} else {
 		return false;
@@ -337,15 +314,12 @@ bool mutableIndirection(ir.Type t)
 	case PrimitiveType:
 		return false;
 	case TypeReference:
-		auto asTR = cast(ir.TypeReference) t;
-		assert(asTR !is null);
-		return mutableIndirection(asTR.type);
+		return mutableIndirection(t.toTypeReferenceFast().type);
 	case Struct:
-		auto asStruct = cast(ir.Struct) t;
-		assert(asStruct !is null);
+		auto asStruct = t.toStructFast();
 		assert(asStruct.isActualized);
 		foreach (node; asStruct.members.nodes) {
-			auto asVar = cast(ir.Variable) node;
+			auto asVar = node.toVariableChecked();
 			if (asVar is null ||
 			    asVar.storage != ir.Variable.Storage.Field) {
 				continue;
@@ -356,11 +330,10 @@ bool mutableIndirection(ir.Type t)
 		}
 		return false;
 	case Union:
-		auto asUnion = cast(ir.Union) t;
-		assert(asUnion !is null);
+		auto asUnion = t.toUnionFast();
 		assert(asUnion.isActualized);
 		foreach (node; asUnion.members.nodes) {
-			auto asVar = cast(ir.Variable) node;
+			auto asVar = node.toVariableChecked();
 			if (asVar is null ||
 			    asVar.storage != ir.Variable.Storage.Field) {
 				continue;
@@ -371,8 +344,7 @@ bool mutableIndirection(ir.Type t)
 		}
 		return false;
 	case AutoType:
-		auto asAutoType = cast(ir.AutoType) t;
-		assert(asAutoType !is null);
+		auto asAutoType = t.toAutoTypeFast();
 		assert(asAutoType.explicitType !is null);
 		if (asAutoType.isConst || asAutoType.isImmutable) {
 			return false;
@@ -388,13 +360,13 @@ bool mutableIndirection(ir.Type t)
 
 bool isAuto(ir.Type t)
 {
-	auto a = cast(ir.AutoType) t;
+	auto a = t.toAutoTypeChecked();
 	return a !is null && a.explicitType is null;
 }
 
 bool isBool(ir.Type t)
 {
-	auto p = cast(ir.PrimitiveType) t;
+	auto p = t.toPrimitiveTypeChecked();
 	if (p is null) {
 		return false;
 	}
@@ -404,7 +376,7 @@ bool isBool(ir.Type t)
 /// Is this an array of characters?
 bool isString(ir.Type t)
 {
-	auto arr = cast(ir.ArrayType) realType(t);
+	auto arr = realType(t).toArrayTypeChecked();
 	if (arr is null) {
 		return false;
 	}
@@ -414,7 +386,7 @@ bool isString(ir.Type t)
 /// Is this type a character type?
 bool isChar(ir.Type t)
 {
-	auto prim = cast(ir.PrimitiveType) realType(t);
+	auto prim = realType(t).toPrimitiveTypeChecked();
 	if (prim is null) {
 		return false;
 	}
@@ -425,7 +397,7 @@ bool isChar(ir.Type t)
 
 bool isArray(ir.Type t)
 {
-	return (cast(ir.ArrayType) t) !is null;
+	return t.nodeType == ir.NodeType.ArrayType;
 }
 
 bool effectivelyConst(ir.Type type)
@@ -435,13 +407,12 @@ bool effectivelyConst(ir.Type type)
 
 bool isPointer(ir.Type t)
 {
-	auto ptr = cast(ir.PointerType) t;
-	return ptr !is null;
+	return t.nodeType == ir.NodeType.PointerType;
 }
 
 bool isIntegral(ir.Type t)
 {
-	auto prim = cast(ir.PrimitiveType)t;
+	auto prim = t.toPrimitiveTypeChecked();
 	if (prim is null) {
 		return false;
 	}
@@ -450,7 +421,7 @@ bool isIntegral(ir.Type t)
 
 bool isIntegralOrBool(ir.Type t)
 {
-	auto prim = cast(ir.PrimitiveType)t;
+	auto prim = t.toPrimitiveTypeChecked();
 	if (prim is null) {
 		return false;
 	}
@@ -488,7 +459,7 @@ bool isIntegralOrBool(ir.PrimitiveType.Kind kind)
 
 bool isFloatingPoint(ir.Type t)
 {
-	auto prim = cast(ir.PrimitiveType)t;
+	auto prim = t.toPrimitiveTypeChecked();
 	if (prim is null) {
 		return false;
 	}
@@ -497,7 +468,7 @@ bool isFloatingPoint(ir.Type t)
 
 bool isF32(ir.Type t)
 {
-	auto prim = cast(ir.PrimitiveType)t;
+	auto prim = t.toPrimitiveTypeChecked();
 	if (prim is null) {
 		return false;
 	}
@@ -552,7 +523,7 @@ bool isOkayForPointerArithmetic(ir.PrimitiveType.Kind kind)
 
 bool isInt(ir.Type type)
 {
-	auto primitive = cast(ir.PrimitiveType) type;
+	auto primitive = type.toPrimitiveTypeChecked();
 	if (primitive is null) {
 		return false;
 	}
@@ -682,7 +653,7 @@ int typeToRuntimeConstant(LanguagePass lp, ir.Scope current, ir.Type type)
 	case Enum: return lp.TYPE_ENUM;
 	case Attribute: return lp.TYPE_ATTRIBUTE;
 	case PrimitiveType:
-		auto prim = cast(ir.PrimitiveType) type;
+		auto prim = type.toPrimitiveTypeFast();
 		final switch (prim.type) with (ir.PrimitiveType.Kind) {
 		case Void: return lp.TYPE_VOID;
 		case Ubyte: return lp.TYPE_UBYTE;
@@ -766,7 +737,7 @@ bool isBackendConstant(ir.Exp exp)
 
 bool isAssign(ir.Exp exp)
 {
-	auto bop = cast(ir.BinOp) exp;
+	auto bop = exp.toBinOpChecked();
 	if (bop is null) {
 		return false;
 	}
@@ -803,26 +774,23 @@ bool isLValueOrAssignable(ir.Exp exp, bool assign)
 	case ir.NodeType.IdentifierExp:
 		throw panic(exp, "IdentifierExp left in ir (run ExTyper)");
 	case ir.NodeType.ExpReference:
-		auto eref = cast(ir.ExpReference)exp;
+		auto eref = exp.toExpReferenceFast();
 		return eref.decl.nodeType != ir.NodeType.EnumDeclaration;
 	case ir.NodeType.Postfix:
 		// TODO Remove Postfix.Identifier case
-		auto asPostfix = cast(ir.Postfix) exp;
-		assert(asPostfix !is null);
+		auto asPostfix = exp.toPostfixFast();
 		return asPostfix.op == ir.Postfix.Op.Identifier ||
 		       asPostfix.op == ir.Postfix.Op.Index ||
 		       (asPostfix.op == ir.Postfix.Op.Slice && assign);
 	case ir.NodeType.Unary:
-		auto asUnary = cast(ir.Unary) exp;
-		assert(asUnary !is null);
+		auto asUnary = exp.toUnaryFast();
 		if (asUnary.op == ir.Unary.Op.Dereference) {
 			return true;
 		}
 		// TODO this is probably not true.
 		return isLValueOrAssignable(asUnary.value, assign);
 	case ir.NodeType.StatementExp:
-		auto sexp = cast(ir.StatementExp) exp;
-		assert(sexp !is null);
+		auto sexp = exp.toStatementExpFast();
 		return isLValueOrAssignable(sexp.exp, assign);
 	default:
 		return false;
@@ -831,11 +799,11 @@ bool isLValueOrAssignable(ir.Exp exp, bool assign)
 
 bool isRefVar(ir.Exp exp)
 {
-	auto asExpRef = cast(ir.ExpReference) exp;
+	auto asExpRef = exp.toExpReferenceChecked();
 	if (asExpRef is null) {
 		return false;
 	}
-	auto asVar = cast(ir.FunctionParam) asExpRef.decl;
+	auto asVar = asExpRef.decl.toFunctionParamChecked();
 	if (asVar is null) {
 		return false;
 	}
@@ -855,9 +823,9 @@ bool isComparison(ir.BinOp.Op t)
 
 bool isConstant(ir.Exp e)
 {
-	auto eref = cast(ir.ExpReference) e;
+	auto eref = e.toExpReferenceChecked();
 	if (eref !is null) {
-		auto var = cast(ir.Variable) eref.decl;
+		auto var = eref.decl.toVariableChecked();
 		if (var !is null && var.assign !is null) {
 			return isConstant(var.assign);
 		}
@@ -878,8 +846,8 @@ bool isValidPointerArithmeticOperation(ir.BinOp.Op t)
 
 bool isImplicitlyConvertable(ir.Type from, ir.Type to)
 {
-	auto fprim = cast(ir.PrimitiveType)from;
-	auto tprim = cast(ir.PrimitiveType)to;
+	auto fprim = from.toPrimitiveTypeChecked();
+	auto tprim = to.toPrimitiveTypeChecked();
 
 	if (fprim is null || tprim is null) {
 		return false;
@@ -927,23 +895,23 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 {
 	ir.Constant removeCast(ir.Exp exp)
 	{
-		auto constant = cast(ir.Constant) exp;
+		auto constant = exp.toConstantChecked();
 		if (constant !is null) {
 			return constant;
 		}
-		auto eref = cast(ir.ExpReference) exp;
+		auto eref = exp.toExpReferenceChecked();
 		if (eref !is null && eref.decl.nodeType == ir.NodeType.EnumDeclaration) {
-			auto edecl = cast(ir.EnumDeclaration) eref.decl;
+			auto edecl = eref.decl.toEnumDeclarationFast();
 			return removeCast(edecl.assign);
 		}
-		auto unary = cast(ir.Unary) exp;
+		auto unary = exp.toUnaryChecked();
 		while (unary !is null && unary.op == ir.Unary.Op.Cast) {
 			return removeCast(unary.value);
 		}
 		return null;
 	}
 
-	auto ternary = cast(ir.Ternary) e;
+	auto ternary = e.toTernaryChecked();
 	if (ternary !is null) {
 		return fitsInPrimitive(t, ternary.ifTrue) && fitsInPrimitive(t, ternary.ifFalse);
 	}
@@ -953,7 +921,7 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 		return false;
 	}
 
-	auto primitive = cast(ir.PrimitiveType) constant.type;
+	auto primitive = constant.type.toPrimitiveTypeChecked();
 	if (primitive is null) {
 		return false;
 	}
@@ -1093,12 +1061,12 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
  */
 ir.Function getParentFunction(ir.Scope current)
 {
-	auto func = cast(ir.Function) current.node;
+	auto func = current.node.toFunctionChecked();
 	if (func !is null) {
 		return func;
 	}
 
-	auto bs = cast(ir.BlockStatement) current.node;
+	auto bs = current.node.toBlockStatementChecked();
 	if (bs !is null) {
 		return getParentFunction(current.parent);
 	}
@@ -1203,7 +1171,7 @@ bool isNested(ir.Function func)
  */
 
 /**
- * Used to determin wether a store is local to a function and therefore
+ * Used to determine whether a store is local to a function and therefore
  * can not be shadowed by a with statement.
  */
 bool isStoreLocal(LanguagePass lp, ir.Scope current, ir.Store store)
@@ -1212,9 +1180,7 @@ bool isStoreLocal(LanguagePass lp, ir.Scope current, ir.Store store)
 		return false;
 	}
 
-	auto var = cast(ir.Variable) store.node;
-	assert(var !is null);
-
+	auto var = store.node.toVariableFast();
 	if (var.storage != ir.Variable.Storage.Function &&
 	    var.storage != ir.Variable.Storage.Nested) {
 		return false;
@@ -1237,7 +1203,7 @@ ir.Type[] getStructFieldTypes(ir.Struct _struct)
 	ir.Type[] types;
 
 	if (_struct.members !is null) foreach (node; _struct.members.nodes) {
-		auto asVar = cast(ir.Variable) node;
+		auto asVar = node.toVariableChecked();
 		if (asVar is null ||
 		    asVar.storage != ir.Variable.Storage.Field) {
 			continue;
@@ -1255,7 +1221,7 @@ ir.Variable[] getStructFieldVars(ir.Struct _struct)
 	ir.Variable[] vars;
 
 	if (_struct.members !is null) foreach (node; _struct.members.nodes) {
-		auto asVar = cast(ir.Variable) node;
+		auto asVar = node.toVariableChecked();
 		if (asVar is null) {
 			continue;
 		}
@@ -1270,7 +1236,7 @@ ir.Function[] getStructFunctions(ir.Struct _struct)
 	ir.Function[] functions;
 
 	if (_struct.members !is null) foreach (node; _struct.members.nodes) {
-		auto asFunction = cast(ir.Function) node;
+		auto asFunction = node.toFunctionChecked();
 		if (asFunction is null) {
 			continue;
 		}
@@ -1285,7 +1251,7 @@ ir.Function[] getClassFunctions(ir.Class _class)
 	ir.Function[] functions;
 
 	if (_class.members !is null) foreach (node; _class.members.nodes) {
-		auto asFunction = cast(ir.Function) node;
+		auto asFunction = node.toFunctionChecked();
 		if (asFunction is null) {
 			continue;
 		}
@@ -1307,7 +1273,7 @@ bool getMethodParent(ir.Scope _scope, out ir.Class theClass)
 		func.thisHiddenParameter is null) {
 		return false;
 	}
-	theClass = cast(ir.Class)realType(func.thisHiddenParameter.type);
+	theClass = realType(func.thisHiddenParameter.type).toClassChecked();
 	if (theClass is null) {
 		return false;
 	}
@@ -1341,11 +1307,11 @@ bool isOrInheritsFrom(ir.Class a, ir.Class b)
 
 bool isPointerToClass(ir.Type t)
 {
-	auto ptr = cast(ir.PointerType) realType(t);
+	auto ptr = realType(t).toPointerTypeChecked();
 	if (ptr is null) {
 		return false;
 	}
-	auto _class = cast(ir.Class) realType(ptr.base);
+	auto _class = realType(ptr.base).toClassChecked();
 	return _class !is null;
 }
 
@@ -1380,7 +1346,7 @@ ir.Class commonParent(ir.Class a, ir.Class b)
 
 ir.Aggregate opOverloadableOrNull(ir.Type t)
 {
-	auto _agg = cast(ir.Aggregate) realType(t);
+	auto _agg = cast(ir.Aggregate)realType(t);
 	if (_agg is null) {
 		return null;
 	}
