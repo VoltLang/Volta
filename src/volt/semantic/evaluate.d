@@ -74,9 +74,11 @@ ir.Constant fold(ref ir.Exp exp, out bool needCopy, TargetInfo target)
 
 ir.Constant foldAccessExp(ref ir.Exp exp, ir.AccessExp accessExp, TargetInfo target)
 {
+	assert(accessExp.child !is null);
+
 	// Currently, only `typeid(_).size` is supported.
 	if (accessExp.child.nodeType != ir.NodeType.Typeid ||
-		accessExp.field.name != "size") {
+	    accessExp.field.name != "size") {
 		return null;
 	}
 	auto tid = cast(ir.Typeid)accessExp.child;
@@ -84,10 +86,11 @@ ir.Constant foldAccessExp(ref ir.Exp exp, ir.AccessExp accessExp, TargetInfo tar
 	if (tid.type is null && tid.exp !is null) {
 		type = getExpType(tid.exp);
 	}
-	if (type is null) {
-		return null;
-	}
-	return buildConstantSizeT(exp.loc, target, size(target, type));
+	assert(type !is null);
+
+	auto tsize = size(target, type);
+	assert(tsize > 0);
+	return buildConstantSizeT(exp.loc, target, tsize);
 }
 
 ir.Constant foldBinOp(ref ir.Exp exp, ir.BinOp binop, TargetInfo target)
