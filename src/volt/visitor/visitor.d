@@ -1698,7 +1698,7 @@ Visitor.Status acceptPostfix(ref ir.Exp exp, ir.Postfix postfix, Visitor av)
 	}
 
 	// If exp has been replaced
-	if (exp !is cast(ir.Exp)postfix) {
+	if (exp !is postfix) {
 		return acceptExp(exp, av);
 	}
 
@@ -1734,7 +1734,7 @@ Visitor.Status acceptUnary(ref ir.Exp exp, ir.Unary unary, Visitor av)
 	}
 
 	// If exp has been replaced
-	if (exp !is cast(ir.Exp)unary) {
+	if (exp !is unary) {
 		return acceptExp(exp, av);
 	}
 
@@ -1784,7 +1784,7 @@ Visitor.Status acceptBinOp(ref ir.Exp exp, ir.BinOp binop, Visitor av)
 	}
 
 	// If exp has been replaced
-	if (exp !is cast(ir.Exp)binop) {
+	if (exp !is binop) {
 		return acceptExp(exp, av);
 	}
 
@@ -1809,7 +1809,7 @@ Visitor.Status acceptTernary(ref ir.Exp exp, ir.Ternary ternary, Visitor av)
 	}
 
 	// If exp has been replaced
-	if (exp !is cast(ir.Exp)ternary) {
+	if (exp !is ternary) {
 		return acceptExp(exp, av);
 	}
 
@@ -1839,7 +1839,7 @@ Visitor.Status acceptArrayLiteral(ref ir.Exp exp, ir.ArrayLiteral array, Visitor
 	}
 
 	// If exp has been replaced
-	if (exp !is cast(ir.Exp)array) {
+	if (exp !is array) {
 		return acceptExp(exp, av);
 	}
 
@@ -1868,7 +1868,7 @@ Visitor.Status acceptAssocArray(ref ir.Exp exp, ir.AssocArray array, Visitor av)
 	}
 
 	// If exp has been replaced
-	if (exp !is cast(ir.Exp)array) {
+	if (exp !is array) {
 		return acceptExp(exp, av);
 	}
 
@@ -1894,7 +1894,7 @@ Visitor.Status acceptAssert(ref ir.Exp exp, ir.Assert _assert, Visitor av)
 	}
 
 	// If exp has been replaced
-	if (exp !is cast(ir.Exp)_assert) {
+	if (exp !is _assert) {
 		return acceptExp(exp, av);
 	}
 
@@ -1921,7 +1921,7 @@ Visitor.Status acceptStringImport(ref ir.Exp exp, ir.StringImport strimport, Vis
 	}
 
 	// If exp has been replaced
-	if (exp !is cast(ir.Exp)strimport) {
+	if (exp !is strimport) {
 		return acceptExp(exp, av);
 	}
 
@@ -1941,7 +1941,7 @@ Visitor.Status acceptTypeid(ref ir.Exp exp, ir.Typeid ti, Visitor av)
 	}
 
 	// If exp has been replaced
-	if (exp !is cast(ir.Exp)ti) {
+	if (exp !is ti) {
 		return acceptExp(exp, av);
 	}
 
@@ -1966,7 +1966,7 @@ Visitor.Status acceptIsExp(ref ir.Exp exp, ir.IsExp isExp, Visitor av)
 	}
 
 	// If exp has been replaced
-	if (exp !is cast(ir.Exp)isExp) {
+	if (exp !is isExp) {
 		return acceptExp(exp, av);
 	}
 
@@ -1994,7 +1994,7 @@ Visitor.Status acceptFunctionLiteral(ref ir.Exp exp, ir.FunctionLiteral function
 	}
 
 	// If exp has been replaced
-	if (exp !is cast(ir.Exp)functionLiteral) {
+	if (exp !is functionLiteral) {
 		return acceptExp(exp, av);
 	}
 
@@ -2013,7 +2013,7 @@ Visitor.Status acceptStructLiteral(ref ir.Exp exp, ir.StructLiteral sliteral, Vi
 	}
 
 	// If exp has been replaced
-	if (exp !is cast(ir.Exp)sliteral) {
+	if (exp !is sliteral) {
 		return acceptExp(exp, av);
 	}
 
@@ -2044,7 +2044,7 @@ Visitor.Status acceptUnionLiteral(ref ir.Exp exp, ir.UnionLiteral uliteral, Visi
 	}
 
 	// If exp has been replaced
-	if (exp !is cast(ir.Exp)uliteral) {
+	if (exp !is uliteral) {
 		return acceptExp(exp, av);
 	}
 
@@ -2075,7 +2075,7 @@ Visitor.Status acceptClassLiteral(ref ir.Exp exp, ir.ClassLiteral cliteral, Visi
 	}
 
 	// If exp has been replaced
-	if (exp !is cast(ir.Exp)cliteral) {
+	if (exp !is cliteral) {
 		return acceptExp(exp, av);
 	}
 
@@ -2200,7 +2200,7 @@ Visitor.Status acceptBuiltinExp(ref ir.Exp exp, ir.BuiltinExp inbuilt, Visitor a
 		}
 	}
 
-	if (exp !is cast(ir.Exp)inbuilt) {
+	if (exp !is inbuilt) {
 		return acceptExp(exp, av);
 	}
 
@@ -2254,7 +2254,7 @@ Visitor.Status acceptConstant(ref ir.Exp exp, ir.Constant constant, Visitor av)
 	}
 
 	// If exp has been replaced
-	if (exp !is cast(ir.Exp)constant) {
+	if (exp !is constant) {
 		return acceptExp(exp, av);
 	}
 
