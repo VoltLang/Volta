@@ -9,10 +9,14 @@ import vrt.ext.stdc: exit, fprintf, fflush, stderr;
 
 extern(C) fn vrt_panic(msgs: const(char)[][], location: const(char)[])
 {
-	fprintf(stderr, "###PANIC###");
+	fprintf(stderr, "###PANIC###\n");
 	fflush(stderr);
-	fprintf(stderr, "%.*s\n",
+	fprintf(stderr, "%.*s: panic: ",
 		cast(int)location.length, location.ptr);
+
+	if (msgs.length == 0) {
+		fprintf(stderr, "\n");
+	}
 
 	foreach (msg; msgs) {
 		fprintf(stderr, "%.*s\n", cast(int)msg.length, msg.ptr);
