@@ -85,12 +85,20 @@ fn makeRange(range: const(void[])) const(void*)[]
 	iptr := cast(size_t)range.ptr;
 	aiptr := (((iptr - 1) / typeid(size_t).size) + 1) * typeid(size_t).size;
 
-	// Align the pointer, remove the difference from the length.
-	aptr := cast(const(void*)*)aiptr;
 	if (range.length < 8) {
-		return aptr[0 .. 0];
+		return null;
 	}
 
+	// Align the pointer, remove the difference from the length.
+	aptr := cast(const(void*)*)aiptr;
 	length := (range.length - aiptr + iptr) / typeid(size_t).size;
 	return aptr[0 .. length];
+}
+
+/* Takes a void[] range and makes it into a const(void*)[] one,
+ * does only align the end of the array.
+ */
+fn makeRangeNoAlign(range: const(void[])) const(void*)[]
+{
+	return (cast(void**)range.ptr)[0 .. range.length / typeid(size_t).size];
 }

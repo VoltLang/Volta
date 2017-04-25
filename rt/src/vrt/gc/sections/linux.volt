@@ -5,7 +5,7 @@ module vrt.gc.sections.linux;
 
 version (Linux):
 
-import vrt.gc.util;
+import vrt.gc.util : makeRangeNoAlign;
 
 
 global sections: const(void*)[][2];
@@ -30,11 +30,11 @@ extern (C) {
 fn dataRange() const(void*)[]
 {
 	length := cast(size_t)&edata - cast(size_t)&__data_start;
-	return makeRange((cast(void*)&__data_start)[0 .. length]);
+	return makeRangeNoAlign((cast(void*)&__data_start)[0 .. length]);
 }
 
 fn bssRange() const(void*)[]
 {
 	length := cast(size_t)&end - cast(size_t)&__bss_start;
-	return makeRange((cast(void*)&__bss_start)[0 .. length]);
+	return makeRangeNoAlign((cast(void*)&__bss_start)[0 .. length]);
 }
