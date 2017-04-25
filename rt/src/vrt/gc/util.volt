@@ -15,7 +15,7 @@ fn gcAssert(b: bool, loc: const(char)[] = __LOCATION__)
 {
 	if (!b) {
 		tmp : const(char)[][1];
-		tmp[1] = "GC panic. This is a bug in the runtime.\n"; 
+		tmp[0] = "GC panic. This is a bug in the runtime.\n";
 		vrt_panic(tmp, loc);
 	}
 }
