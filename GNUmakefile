@@ -36,10 +36,10 @@ endif
 CFLAGS ?= -g
 CXXFLAGS ?= -g
 DFLAGS ?= $(DEBUG_DFLAGS)
-LDFLAGS ?= $(DEBUG_DFLAGS)
+LDFLAGS ?=
 
 DDEFINES_ = $(DDEFINES)
-LDFLAGS_ = $(DFLAGS) $(LDFLAGS)
+LDFLAGS_ = $(LDFLAGS)
 TARGET = volt
 DCOMP_FLAGS = -w -Isrc $(DDEFINES_) $(DFLAGS)
 CXXCOMP_FLAGS = $(CARCH) $(LLVM_CXXFLAGS) $(CXXFLAGS)
@@ -149,7 +149,7 @@ rt/%.o : rt/%.bc
 
 old.$(TARGET): $(OBJ)
 	@echo "  DMD    $@"
-	@$(DMD) $(LINK_FLAGS) -of$@ $(OBJ)
+	@$(DMD) $(DCOMP_FLAGS) $(LINK_FLAGS) -of$@ $(OBJ)
 
 $(TARGET): $(DSRC) $(EXTRA_OBJ)
 	@echo "  RDMD   $(TARGET)"
