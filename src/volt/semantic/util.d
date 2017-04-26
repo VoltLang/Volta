@@ -507,33 +507,28 @@ bool typeLookup(Context ctx, ref ir.Exp exp, ir.Type type)
 		exp = buildConstantInt(prim.loc, max ? 1 : 0);
 		break;
 	case Ubyte, Char:
-		exp = buildConstantInt(prim.loc, max ? 255 : 0);
+		exp = buildConstantInt(prim.loc, cast(ubyte)(max ? 0xFF : 0));
 		break;
 	case Byte:
-		exp = buildConstantInt(prim.loc, max ? 127 : -128);
+		exp = buildConstantInt(prim.loc, cast(byte)(max ? 0x7F : 0x80));
 		break;
 	case Ushort, Wchar:
-		exp = buildConstantInt(prim.loc, max ? 65535 : 0);
+		exp = buildConstantInt(prim.loc, cast(ushort)(max ? 0xFFFF : 0));
 		break;
 	case Short:
-		exp = buildConstantInt(prim.loc, max? 32767 : -32768);
+		exp = buildConstantInt(prim.loc, cast(short)(max ? 0x7FFF : 0x8000));
 		break;
 	case Uint, Dchar:
-		exp = buildConstantUint(prim.loc, max ? 4294967295U : 0U);
+		exp = buildConstantUint(prim.loc, cast(uint)(max ? 0xFFFF_FFFFU : 0U));
 		break;
 	case Int:
-		exp = buildConstantInt(prim.loc, max ? 2147483647 : -2147483648);
+		exp = buildConstantInt(prim.loc, cast(int)(max ? 0x7FFF_FFFF : 0x8000_0000));
 		break;
 	case Ulong:
-		exp = buildConstantUlong(prim.loc, max ? 18446744073709551615UL : 0UL);
+		exp = buildConstantUlong(prim.loc, max ? 0xFFFF_FFFF_FFFF_FFFFUL : 0UL);
 		break;
 	case Long:
-		/* We use a ulong here because -9223372036854775808 is not converted as a string
-		 * with a - on the front, but just the number 9223372036854775808 that is in a
-		 * Unary minus expression. And because it's one more than will fit in a long, we
-		 * have to use the next size up.
-		 */
-		exp = buildConstantUlong(prim.loc, max ? 9223372036854775807UL : -9223372036854775808UL);
+		exp = buildConstantLong(prim.loc, max ? 0x7FFF_FFFF_FFFF_FFFFL : 0x8000_0000_0000_0000L);
 		break;
 	case Float:
 		exp = buildConstantFloat(prim.loc, max ? float.max : float.min_normal);
