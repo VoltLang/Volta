@@ -65,6 +65,13 @@ void warningOldStyleDelegateType(ref in Location loc, Settings settings)
 	}
 }
 
+void warningOldStyleHexTypeSuffix(ref in Location loc, Settings settings)
+{
+	if (!settings.internalD && settings.warningsEnabled) {
+		warning(loc, "old style hex literal type suffix (U/L).");
+	}
+}
+
 void warningShadowsField(ref in Location newDecl, ref in Location oldDecl, string name, bool warningsEnabled)
 {
 	if (warningsEnabled) {

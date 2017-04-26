@@ -455,6 +455,7 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 		break;
 	case intir.PrimaryExp.Type.IntegerLiteral:
 		auto c = new ir.Constant();
+		c.loc = primary.loc;
 		c._string = primary._string;
 		auto base = ir.PrimitiveType.Kind.Int;
 		bool explicitBase;
@@ -484,6 +485,10 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 		if (c._string.length > 2 && (c._string[0 .. 2] == "0x" || c._string[0 .. 2] == "0b")) {
 			auto prefix = c._string[0 .. 2];
 			c._string = c._string[2 .. $];
+			bool hex = prefix == "0x";
+			if (hex) {
+				warningOldStyleHexTypeSuffix(c.loc, ps.settings);
+			}
 			auto typeSuffix = getHexTypeSuffix(c._string);
 			if (typeSuffix.length > 0) {
 				c._string = c._string[0 .. $ - typeSuffix.length];
@@ -519,7 +524,7 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 			default:
 				return invalidIntegerLiteral(ps, c.loc);
 			}
-			auto v = toUlong(c._string, prefix == "0x" ? 16 : 2);
+			auto v = toUlong(c._string, hex ? 16 : 2);
 			if (!explicitBase) {
 				if (v <= int.max) {
 					base = ir.PrimitiveType.Kind.Int;
