@@ -471,15 +471,18 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 			auto prefix = c._string[0 .. 2];
 			c._string = c._string[2 .. $];
 			auto v = toUlong(c._string, prefix == "0x" ? 16 : 2);
-			if (v > uint.max) {
-				if (!explicitBase)
-					base = ir.PrimitiveType.Kind.Long;
-				c.u._long = cast(long)v;
-			} else {
-				if (!explicitBase)
+			if (!explicitBase) {
+				if (v <= int.max) {
 					base = ir.PrimitiveType.Kind.Int;
-				c.u._int = cast(int)v;
+				} else if (v <= uint.max) {
+					base = ir.PrimitiveType.Kind.Uint;
+				} else if (v <= long.max) {
+					base = ir.PrimitiveType.Kind.Long;
+				} else {
+					base = ir.PrimitiveType.Kind.Ulong;
+				}
 			}
+			c.u._ulong = v;
 		} else {
 			// Checking should have been done in the lexer.
 			auto v = toUlong(c._string);
