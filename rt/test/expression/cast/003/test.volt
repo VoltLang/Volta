@@ -1,4 +1,3 @@
-//T has-passed:no
 module test;
 
 // This function forces the cast to be a implicit cast by the argument.
