@@ -8,6 +8,5 @@ fn main() i32
 	return
 		(cast(i32)uB == 0xff) +
 		(cast(u32)uB == cast(u32)0xff) +
-		(cast(i32)sB == 0xffff_ffff) +
-		(cast(u32)sB == cast(u32)0xffff_ffff) - 4;
+		(cast(u32)sB == cast(u32)0xffff_ffff) - 3;
 }

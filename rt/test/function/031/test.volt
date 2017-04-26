@@ -27,7 +27,7 @@ fn sum(...) i32
 
 fn main() i32
 {
-	a: i32 = 0xFFFFFFFE;
+	a: i32 = -2;
 	b: i16 = 1;
 	c: i32 = 10;
 	d: i8 = 1;

@@ -8,7 +8,7 @@ fn main() i32
 {
 	val: i32;
 
-	if (typeid(typeof(v1)) is typeid(i32))
+	if (typeid(typeof(v1)) is typeid(u32))
 		val++;
 	if (typeid(typeof(v2)) is typeid(i64))
 		val++;
