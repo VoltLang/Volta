@@ -246,7 +246,7 @@ public:
 		TYPE_DCHAR = getTypeEnum("Dchar");
 		TYPE_FLOAT = getTypeEnum("F32");
 		TYPE_ULONG = getTypeEnum("U64");
-		TYPE_LONG = getTypeEnum("I32");
+		TYPE_LONG = getTypeEnum("I64");
 		TYPE_DOUBLE = getTypeEnum("F64");
 		TYPE_REAL = getTypeEnum("Real");
 		TYPE_POINTER = getTypeEnum("Pointer");
