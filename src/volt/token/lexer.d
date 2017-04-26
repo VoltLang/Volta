@@ -1025,6 +1025,7 @@ LexStatus lexNumber(TokenWriter tw)
 	auto mark = src.save();
 	bool tmp;
 
+	bool hex;
 	if (src.current == '0') {
 		src.next();
 		if (src.current == 'b' || src.current == 'B') {
@@ -1037,6 +1038,7 @@ LexStatus lexNumber(TokenWriter tw)
 		} else if (src.current == 'x' || src.current == 'X') {
 			// Hexadecimal literal.
 			src.next();
+			hex = true;
 			if (src.current == '.' || src.current == 'p' || src.current == 'P') return lexReal(tw);
 			auto consumed = consume(src, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
 			                             'a', 'b', 'c', 'd', 'e', 'f',
@@ -1069,7 +1071,12 @@ LexStatus lexNumber(TokenWriter tw)
 	}
 
 	tw.source.sync(src);
-	if (tw.source.current == 'U' || tw.source.current == 'u') {
+	bool dummy;
+	if (hex && (tw.source.current == 'i' || tw.source.current == 'u') && isDigit(tw.source.lookahead(1, dummy))) {
+		tw.source.next();
+		if (isDigit(tw.source.current)) tw.source.next();
+		if (isDigit(tw.source.current)) tw.source.next();
+	} else if (tw.source.current == 'U' || tw.source.current == 'u') {
 		tw.source.next();
 		if (tw.source.current == 'L') tw.source.next();
 	} else if (tw.source.current == 'L') {

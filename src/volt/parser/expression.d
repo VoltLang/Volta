@@ -323,6 +323,20 @@ ParseStatus postfixToExp(ParserStream ps, ref in Location loc, out ir.Exp exp, i
 	return Succeeded;
 }
 
+// Given 'FFFFFFFFi32', return the suffix, or an empty string.
+private string getHexTypeSuffix(string s)
+{
+	if (s.length < 2) {
+		return "";
+	}
+	for (size_t i = 0; i < s.length; ++i) {
+		if ((s[i] == 'u' || s[i] == 'i') && i < s.length - 1) {
+			return s[i .. $];
+		}
+	}
+	return "";
+}
+
 ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp exp)
 {
 	switch (primary.op) {
@@ -470,6 +484,41 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 		if (c._string.length > 2 && (c._string[0 .. 2] == "0x" || c._string[0 .. 2] == "0b")) {
 			auto prefix = c._string[0 .. 2];
 			c._string = c._string[2 .. $];
+			auto typeSuffix = getHexTypeSuffix(c._string);
+			if (typeSuffix.length > 0) {
+				c._string = c._string[0 .. $ - typeSuffix.length];
+				explicitBase = true;
+			}
+			switch (typeSuffix) {
+			case "i8":
+				base = ir.PrimitiveType.Kind.Byte;
+				break;
+			case "i16":
+				base = ir.PrimitiveType.Kind.Short;
+				break;
+			case "i32":
+				base = ir.PrimitiveType.Kind.Int;
+				break;
+			case "i64":
+				base = ir.PrimitiveType.Kind.Long;
+				break;
+			case "u8":
+				base = ir.PrimitiveType.Kind.Ubyte;
+				break;
+			case "u16":
+				base = ir.PrimitiveType.Kind.Ushort;
+				break;
+			case "u32":
+				base = ir.PrimitiveType.Kind.Uint;
+				break;
+			case "u64":
+				base = ir.PrimitiveType.Kind.Ulong;
+				break;
+			case "":
+				break;
+			default:
+				return invalidIntegerLiteral(ps, c.loc);
+			}
 			auto v = toUlong(c._string, prefix == "0x" ? 16 : 2);
 			if (!explicitBase) {
 				if (v <= int.max) {
