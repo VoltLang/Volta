@@ -1,0 +1,3 @@
+library('volt-build')
+
+voltaBuild()
