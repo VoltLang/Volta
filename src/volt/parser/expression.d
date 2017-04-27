@@ -445,9 +445,9 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 			c._string = c._string[0 .. $-1];
 		}
 		if (base == ir.PrimitiveType.Kind.Float) {
-			c.u._float = toFloat(c._string);
+			c.u._float = toFloat(removeUnderscores(c._string));
 		} else {
-			c.u._double = toDouble(c._string);
+			c.u._double = toDouble(removeUnderscores(c._string));
 		}
 		if (primary.type !is null) {
 			c.type = primary.type;

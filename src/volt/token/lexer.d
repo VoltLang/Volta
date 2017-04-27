@@ -11,7 +11,7 @@ import watt.conv : toInt;
 import watt.text.utf : encode;
 
 import volt.errors;
-import volt.util.string : cleanComment, removeUnderscores;
+import volt.util.string : cleanComment;
 import volt.token.location : Location;
 import volt.token.source : Source, Mark;
 import volt.token.token : Token, TokenType, identifierType;
@@ -1084,7 +1084,6 @@ LexStatus lexReal(TokenWriter tw)
 	{
 		token.type = TokenType.FloatLiteral;
 		token.value = tw.source.sliceFrom(mark);
-		token.value = removeUnderscores(token.value);
 		tw.addToken(token);
 		return Succeeded;
 	}
