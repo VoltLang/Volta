@@ -225,3 +225,25 @@ string cleanComment(string comment, out bool isBackwardsComment)
 		return outbuf.idup;
 	}
 }
+
+/**
+ * Returns a string that is s, with all '_' removed.
+ *    "134_hello" => "134hello"
+ *    "_" => ""
+ */
+string removeUnderscores(string s)
+{
+	auto output = new char[](s.length);
+	size_t i;
+	foreach (char c; s) {
+		if (c == '_') {
+			continue;
+		}
+		output[i++] = c;
+	}
+	version (Volt) {
+		return i == s.length ? s : cast(string)new output[0 .. i];
+	} else {
+		return i == s.length ? s : output[0 .. i].idup;
+	}
+}

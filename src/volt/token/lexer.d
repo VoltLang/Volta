@@ -11,7 +11,7 @@ import watt.conv : toInt;
 import watt.text.utf : encode;
 
 import volt.errors;
-import volt.util.string : cleanComment;
+import volt.util.string : cleanComment, removeUnderscores;
 import volt.token.location : Location;
 import volt.token.source : Source, Mark;
 import volt.token.token : Token, TokenType, identifierType;
@@ -993,28 +993,6 @@ size_t consume(Source src, const(dchar)[] characters...)
 }
 
 /**
- * Returns a string that is s, with all '_' removed.
- *    "134_hello" => "134hello"
- *    "_" => ""
- */
-string removeUnderscores(string s)
-{
-	auto output = new char[](s.length);
-	size_t i;
-	foreach (char c; s) {
-		if (c == '_') {
-			continue;
-		}
-		output[i++] = c;
-	}
-	version (Volt) {
-		return i == s.length ? s : cast(string)new output[0 .. i];
-	} else {
-		return i == s.length ? s : output[0 .. i].idup;
-	}
-}
-
-/**
  * Lex an integer literal and add the resulting token to tw.
  * If it detects the number is floating point, it will call lexReal directly.
  */
@@ -1072,8 +1050,10 @@ LexStatus lexNumber(TokenWriter tw)
 
 	tw.source.sync(src);
 	bool dummy;
-	if (hex && (tw.source.current == 'i' || tw.source.current == 'u') && isDigit(tw.source.lookahead(1, dummy))) {
-		tw.source.next();
+	auto _1 = tw.source.current;
+	auto _2 = tw.source.lookahead(1, dummy);
+	if ((_1 == 'i' || _1 == 'u') && isDigit(_2)) {
+		tw.source.next();  // i/u
 		if (isDigit(tw.source.current)) tw.source.next();
 		if (isDigit(tw.source.current)) tw.source.next();
 	} else if (tw.source.current == 'U' || tw.source.current == 'u') {
@@ -1088,7 +1068,6 @@ LexStatus lexNumber(TokenWriter tw)
 
 	token.type = TokenType.IntegerLiteral;
 	token.value = tw.source.sliceFrom(mark);
-	token.value = removeUnderscores(token.value);
 	tw.addToken(token);
 
 	return Succeeded;

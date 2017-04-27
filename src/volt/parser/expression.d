@@ -324,13 +324,17 @@ ParseStatus postfixToExp(ParserStream ps, ref in Location loc, out ir.Exp exp, i
 }
 
 // Given 'FFFFFFFFi32', return the suffix, or an empty string.
-private string getHexTypeSuffix(string s)
+private string getHexTypeSuffix(string s, out bool error)
 {
 	if (s.length < 2) {
 		return "";
 	}
 	for (size_t i = 0; i < s.length; ++i) {
 		if ((s[i] == 'u' || s[i] == 'i') && i < s.length - 1) {
+			if (s[i-1] != '_') {
+				error = true;
+				return "";
+			}
 			return s[i .. $];
 		}
 	}
@@ -489,7 +493,11 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 			if (hex) {
 				warningOldStyleHexTypeSuffix(c.loc, ps.settings);
 			}
-			auto typeSuffix = getHexTypeSuffix(c._string);
+			bool error;
+			auto typeSuffix = getHexTypeSuffix(c._string, error);
+			if (error) {
+				return invalidIntegerLiteral(ps, c.loc);
+			}
 			if (typeSuffix.length > 0) {
 				c._string = c._string[0 .. $ - typeSuffix.length];
 				explicitBase = true;
@@ -524,7 +532,7 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 			default:
 				return invalidIntegerLiteral(ps, c.loc);
 			}
-			auto v = toUlong(c._string, hex ? 16 : 2);
+			auto v = toUlong(removeUnderscores(c._string), hex ? 16 : 2);
 			if (!explicitBase) {
 				if (v <= int.max) {
 					base = ir.PrimitiveType.Kind.Int;
@@ -539,7 +547,7 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 			c.u._ulong = v;
 		} else {
 			// Checking should have been done in the lexer.
-			auto v = toUlong(c._string);
+			auto v = toUlong(removeUnderscores(c._string));
 
 			switch (base) with (ir.PrimitiveType.Kind) {
 			case Int:
