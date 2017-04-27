@@ -14,4 +14,5 @@ llvm-config --system-libs --ldflags --libs core bitwriter bitreader linker targe
 #
 # On Windows the user will need to provide LLVM.lib
 --if-msvc
+-l
 LLVM.lib
