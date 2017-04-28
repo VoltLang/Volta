@@ -75,6 +75,11 @@ protected:
 
 
 public:
+	local fn allocArena() Arena*
+	{
+		return cast(Arena*)pages_map(null, typeid(Arena).size);
+	}
+
 	fn setup()
 	{
 		stackBottom = vrt_get_stack_bottom();
@@ -138,6 +143,8 @@ public:
 			pages_unmap(mAllocCache.ptr, mAllocCache.length);
 			mAllocCache = null;
 		}
+
+		pages_unmap(cast(void*)&this, typeid(Arena).size);
 	}
 
 	fn allocEntry(typeinfo: TypeInfo, count: size_t) void*

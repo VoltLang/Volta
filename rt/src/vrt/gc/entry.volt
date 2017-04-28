@@ -24,7 +24,7 @@ import vrt.gc.sections;
 struct GcHeap
 {
 	version (all) {
-		arena: Arena;
+		arena: Arena*;
 	} else {
 		arena: SBrk;
 	}
@@ -36,6 +36,7 @@ global stats: Stats;
 extern(C) fn vrt_gc_init()
 {
 	initSections();
+	heap.arena = Arena.allocArena();
 	heap.arena.setup();
 }
 
