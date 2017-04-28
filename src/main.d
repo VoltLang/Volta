@@ -12,6 +12,7 @@ import watt.text.string : splitLines;
 import watt.text.format : format;
 
 import volt.arg;
+import volt.errors;
 import volt.license;
 import volt.interfaces;
 import volt.driver;
@@ -340,7 +341,11 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 		case "-J":
 			makeArgNext(StringImportPath);
 			continue;
+		case "-emit-llvm", "--emit-llvm":
+			makeArg(EmitLLVM);
+			continue;
 		case "--emit-bitcode":
+			//warningEmitBitcode();
 			makeArg(EmitBitcode);
 			continue;
 		case "--no-backend", "-S":

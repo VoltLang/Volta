@@ -63,7 +63,7 @@ protected:
 	bool mNoBackend;
 	bool mRemoveConditionalsOnly;
 	bool mMissingDeps;
-	bool mEmitBitcode;
+	bool mEmitLLVM;
 
 	bool mLinkWithLD;   // Posix/GNU
 	bool mLinkWithCC;   // Posix/GNU
@@ -433,6 +433,9 @@ protected:
 
 	int intCompile()
 	{
+		// Do this here so any config error can be cought.
+		verifyConfig();
+
 		if (mRunVoltend) {
 			int ret = intCompileVoltend();
 			if (ret != 0) {
@@ -572,7 +575,7 @@ protected:
 		string[] bitcodeFiles = mBitcodeFiles;
 		bitcodeFiles ~= turnModulesIntoBitcode(mCommandLineModules);
 
-		if (mEmitBitcode || mNoLink) {
+		if (mEmitLLVM || mNoLink) {
 			return intCompileBackendBitcodeOrObject(bitcodeFiles);
 		} else {
 			return intCompileBackendLink(bitcodeFiles);
@@ -608,7 +611,7 @@ protected:
 
 		// Setup files bc.
 		string bc;
-		if (mEmitBitcode) {
+		if (mEmitLLVM) {
 			bc = mOutput;
 		} else {
 			if (bitcodeFiles.length == 1) {
@@ -627,7 +630,8 @@ protected:
 		}
 
 		// When outputting bitcode we are now done.
-		if (mEmitBitcode) {
+		if (mEmitLLVM) {
+			assert(mNoLink);
 			return 0;
 		}
 
@@ -852,6 +856,13 @@ protected:
 	 *
 	 */
 
+	void verifyConfig()
+	{
+		if (mEmitLLVM && !mNoLink) {
+			throw makeEmitLLVMNoLink();
+		}
+	}
+
 	static Mode decideMode(Settings settings)
 	{
 		if (settings.removeConditionalsOnly) {
@@ -871,7 +882,7 @@ protected:
 		mNoLink = settings.noLink;
 		mNoBackend = settings.noBackend;
 		mMissingDeps = settings.missingDeps;
-		mEmitBitcode = settings.emitBitcode;
+		mEmitLLVM = settings.emitLLVM;
 		mRemoveConditionalsOnly = settings.removeConditionalsOnly;
 
 		mInternalD = settings.internalD;
@@ -947,11 +958,11 @@ protected:
 		// Setup the output file
 		if (settings.outputFile !is null) {
 			mOutput = settings.outputFile;
-			if (mLinkWithLink && !mNoLink && !mEmitBitcode
-				&& !mOutput.endsWith("exe")) {
+			if (mLinkWithLink && !mNoLink && !mOutput.endsWith("exe")) {
 				mOutput = format("%s.exe", mOutput);
 			}
-		} else if (mEmitBitcode) {
+		} else if (mEmitLLVM) {
+			assert(mNoLink);
 			mOutput = DEFAULT_BC;
 		} else if (mNoLink) {
 			mOutput = DEFAULT_OBJ;

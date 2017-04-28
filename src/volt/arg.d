@@ -23,7 +23,7 @@ public:
 	bool warningsEnabled; ///< The -w argument.
 	bool noBackend; ///< The -S argument.
 	bool noLink; ///< The -c argument
-	bool emitBitcode; ///< The --emit-bitcode argument.
+	bool emitLLVM; ///< The --emit-llvm argument.
 	bool noCatch; ///< The --no-catch argument.
 	bool noStdLib; ///< The --no-stdlib argument.
 	bool removeConditionalsOnly; ///< The -E argument.
@@ -180,7 +180,8 @@ public:
 		Dep,             ///< --dep
 		Output,
 
-		EmitBitcode,     ///< --emit-bitcode
+		EmitLLVM,        ///< --emit-llvm
+		EmitBitcode,     ///< --emit-bitcode (depricated)
 
 		NoLink,
 
@@ -318,8 +319,12 @@ void filterArgs(Arg[] args, ref string[] files, VersionSet ver, Settings setting
 			settings.outputFile = arg.arg;
 			break;
 
+		case EmitLLVM:
+			settings.emitLLVM = true;
+			break;
 		case EmitBitcode:
-			settings.emitBitcode = true;
+			settings.noLink = true;
+			settings.emitLLVM = true;
 			break;
 
 		case NoLink:

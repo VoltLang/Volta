@@ -79,6 +79,22 @@ void warningShadowsField(ref in Location newDecl, ref in Location oldDecl, strin
 	}
 }
 
+void warningEmitBitcode()
+{
+	writefln("--emit-bitcode is deprecated use --emit-llvm and -c flags instead");
+}
+
+/*
+ *
+ * Driver errors.
+ *
+ */
+
+CompilerException makeEmitLLVMNoLink(string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError("must specify -c when using --emit-llvm", file, line);
+}
+
 /*
  *
  * Specific Errors
