@@ -38,7 +38,7 @@ ir.QualifiedName buildQualifiedName(ref in Location loc, string value)
 /**
  * Builds a QualifiedName from an array.
  */
-ir.QualifiedName buildQualifiedName(ref in Location loc, string[] value...)
+ir.QualifiedName buildQualifiedName(ref in Location loc, scope string[] value...)
 {
 	version (Volt) {
 		auto idents = new ir.Identifier[](value.length);
@@ -256,7 +256,7 @@ ir.Type copyTypeSmart(ref in Location loc, ir.Type type)
 	return outType;
 }
 
-ir.TypeReference buildTypeReference(ref in Location loc, ir.Type type, string[] names...)
+ir.TypeReference buildTypeReference(ref in Location loc, ir.Type type, scope string[] names...)
 {
 	auto tr = new ir.TypeReference();
 	tr.loc = loc;
@@ -382,7 +382,7 @@ ir.PointerType buildPtr(ref in Location loc, ir.Type base)
 	return pt;
 }
 
-ir.ArrayLiteral buildArrayLiteralSmart(ref in Location loc, ir.Type type, ir.Exp[] exps...)
+ir.ArrayLiteral buildArrayLiteralSmart(ref in Location loc, ir.Type type, scope ir.Exp[] exps...)
 {
 	auto literal = new ir.ArrayLiteral();
 	literal.loc = loc;
@@ -395,7 +395,7 @@ ir.ArrayLiteral buildArrayLiteralSmart(ref in Location loc, ir.Type type, ir.Exp
 	return literal;
 }
 
-ir.StructLiteral buildStructLiteralSmart(ref in Location loc, ir.Type type, ir.Exp[] exps)
+ir.StructLiteral buildStructLiteralSmart(ref in Location loc, ir.Type type, scope ir.Exp[] exps...)
 {
 	auto literal = new ir.StructLiteral();
 	literal.loc = loc;
@@ -408,7 +408,7 @@ ir.StructLiteral buildStructLiteralSmart(ref in Location loc, ir.Type type, ir.E
 	return literal;
 }
 
-ir.UnionLiteral buildUnionLiteralSmart(ref in Location loc, ir.Type type, ir.Exp[] exps)
+ir.UnionLiteral buildUnionLiteralSmart(ref in Location loc, ir.Type type, scope ir.Exp[] exps...)
 {
 	auto literal = new ir.UnionLiteral();
 	literal.loc = loc;
@@ -546,7 +546,7 @@ ir.Variable buildVariableSmart(ref in Location loc, ir.Type type, ir.Variable.St
 /**
  * Builds a usable ExpReference.
  */
-ir.ExpReference buildExpReference(ref in Location loc, ir.Declaration decl, string[] names...)
+ir.ExpReference buildExpReference(ref in Location loc, ir.Declaration decl, scope string[] names...)
 {
 	auto varRef = new ir.ExpReference();
 	varRef.loc = loc;
@@ -817,7 +817,7 @@ ir.Unary buildAddrOf(ref in Location loc, ir.Exp exp)
 /**
  * Builds a ExpReference and a AddrOf from a Variable.
  */
-ir.Unary buildAddrOf(ref in Location loc, ir.Variable var, string[] names...)
+ir.Unary buildAddrOf(ref in Location loc, ir.Variable var, scope string[] names...)
 {
 	return buildAddrOf(loc, buildExpReference(loc, var, names));
 }
@@ -846,7 +846,7 @@ ir.Unary buildDeref(ref in Location loc, ir.Variable var)
 /**
  * Builds a New expression.
  */
-ir.Unary buildNew(ref in Location loc, ir.Type type, string name, ir.Exp[] arguments...)
+ir.Unary buildNew(ref in Location loc, ir.Type type, string name, scope ir.Exp[] arguments...)
 {
 	auto new_ = new ir.Unary();
 	new_.loc = loc;
@@ -861,7 +861,7 @@ ir.Unary buildNew(ref in Location loc, ir.Type type, string name, ir.Exp[] argum
 	return new_;
 }
 
-ir.Unary buildNewSmart(ref in Location loc, ir.Type type, ir.Exp[] arguments...)
+ir.Unary buildNewSmart(ref in Location loc, ir.Type type, scope ir.Exp[] arguments...)
 {
 	auto new_ = new ir.Unary();
 	new_.loc = loc;
@@ -1121,7 +1121,7 @@ ir.Postfix buildPostfixIdentifier(ref in Location loc, ir.QualifiedName qname, s
 /**
  * Builds a postfix slice.
  */
-ir.Postfix buildSlice(ref in Location loc, ir.Exp child, ir.Exp[] args...)
+ir.Postfix buildSlice(ref in Location loc, ir.Exp child, scope ir.Exp[] args...)
 {
 	auto slice = new ir.Postfix();
 	slice.loc = loc;
@@ -1249,7 +1249,7 @@ ir.PropertyExp buildProperty(ref in Location loc, string name, ir.Exp child,
 /**
  * Builds a postfix call.
  */
-ir.Postfix buildCall(ref in Location loc, ir.Declaration decl, ir.Exp[] args, string[] names...)
+ir.Postfix buildCall(ref in Location loc, ir.Declaration decl, ir.Exp[] args, scope string[] names...)
 {
 	return buildCall(loc, buildExpReference(loc, decl, names), args);
 }
@@ -1594,7 +1594,7 @@ ir.IfStatement buildIfStat(ref in Location loc, ir.StatementExp statExp, ir.Exp 
 /**
  * Build a block statement.
  */
-ir.BlockStatement buildBlockStat(ref in Location loc, ir.Node introducingNode, ir.Scope _scope, ir.Node[] statements...)
+ir.BlockStatement buildBlockStat(ref in Location loc, ir.Node introducingNode, ir.Scope _scope, scope ir.Node[] statements...)
 {
 	auto ret = new ir.BlockStatement();
 	ret.loc = loc;
@@ -1625,15 +1625,16 @@ ir.ReturnStatement buildReturnStat(ref in Location loc, ir.BlockStatement block,
 	return ret;
 }
 
-ir.FunctionType buildFunctionTypeSmart(ref in Location loc, ir.Type ret, ir.Type[] args...)
+ir.FunctionType buildFunctionTypeSmart(ref in Location loc, ir.Type ret, scope ir.Type[] args...)
 {
 	auto type = new ir.FunctionType();
 	type.loc = loc;
 	type.ret = copyType(ret);
-	foreach (arg; args) {
-		type.params ~= copyType(arg);
-		type.isArgRef ~= false;
-		type.isArgOut ~= false;
+	type.params = new ir.Type[](args.length);
+	type.isArgRef = new bool[](args.length);
+	type.isArgOut = new bool[](args.length);
+	foreach (i, arg; args) {
+		type.params[i] = copyType(arg);
 	}
 	return type;
 }
@@ -1730,7 +1731,7 @@ ir.Alias buildAlias(ref in Location loc, string name, string from)
  *
  * The members list is used directly in the new struct; be wary not to duplicate IR nodes.
  */
-ir.Struct buildStruct(ref in Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, string name, ir.Variable[] members...)
+ir.Struct buildStruct(ref in Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, string name, scope ir.Variable[] members...)
 {
 	auto s = new ir.Struct();
 	s.name = name;
@@ -1739,9 +1740,10 @@ ir.Struct buildStruct(ref in Location loc, ir.TopLevelBlock tlb, ir.Scope _scope
 
 	s.members = new ir.TopLevelBlock();
 	s.members.loc = loc;
+	s.members.nodes = new ir.Node[](members.length);
 
-	foreach (member; members) {
-		s.members.nodes ~= member;
+	foreach (i, member; members) {
+		s.members.nodes[i] = member;
 		s.myScope.addValue(member, member.name);
 	}
 
@@ -1755,7 +1757,7 @@ ir.Struct buildStruct(ref in Location loc, ir.TopLevelBlock tlb, ir.Scope _scope
  * Builds an IR complete, but semantically unfinished struct. i.e. it has no scope and isn't inserted anywhere.
  * The members list is used directly in the new struct; be wary not to duplicate IR nodes.
  */
-ir.Struct buildStruct(ref in Location loc, string name, ir.Variable[] members...)
+ir.Struct buildStruct(ref in Location loc, string name, scope ir.Variable[] members...)
 {
 	auto s = new ir.Struct();
 	s.name = name;
@@ -1763,9 +1765,10 @@ ir.Struct buildStruct(ref in Location loc, string name, ir.Variable[] members...
 
 	s.members = new ir.TopLevelBlock();
 	s.members.loc = loc;
+	s.members.nodes = new ir.Node[](members.length);
 
-	foreach (member; members) {
-		s.members.nodes ~= member;
+	foreach (i, member; members) {
+		s.members.nodes[i] = member;
 	}
 
 	return s;
@@ -1971,7 +1974,7 @@ void insertInPlace(ref ir.Node[] list, size_t index, ir.Node node)
 	list = list[0 .. index] ~ node ~ list[index .. $];
 }
 
-ir.StoreExp buildStoreExp(ref in Location loc, ir.Store store, string[] idents...)
+ir.StoreExp buildStoreExp(ref in Location loc, ir.Store store, scope string[] idents...)
 {
 	auto sexp = new ir.StoreExp();
 	sexp.loc = loc;

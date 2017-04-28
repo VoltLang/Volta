@@ -82,7 +82,7 @@ ParseStatus parseModule(ParserStream ps, out ir.Module mod)
 	return Succeeded;
 }
 
-ir.Node createImport(ref in Location loc, string[] names...)
+ir.Node createImport(ref in Location loc, scope string[] names...)
 {
 	auto _import = new ir.Import();
 	_import.loc = loc;
