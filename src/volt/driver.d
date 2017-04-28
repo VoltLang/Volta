@@ -975,7 +975,6 @@ protected:
 				mOutput = format("%s.exe", mOutput);
 			}
 		} else if (mEmitLLVM) {
-			assert(mNoLink);
 			mOutput = DEFAULT_BC;
 		} else if (mNoLink) {
 			mOutput = DEFAULT_OBJ;
