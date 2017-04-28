@@ -97,6 +97,7 @@ protected:
 	string[] mXld;
 	string[] mXcc;
 	string[] mXlink;
+	string[] mXclang;
 	string[] mXlinker;
 
 	bool mInternalD;
@@ -663,6 +664,9 @@ protected:
 		auto clangArgs = ["-x", "ir", "-c", "-target",
 			tripleList[target.platform][target.arch]];
 
+		// Add command line args.
+		clangArgs ~= mXclang;
+
 		// Force -fPIC on linux.
 		if (target.arch == Arch.X86_64 &&
 		    target.platform == Platform.Linux) {
@@ -917,7 +921,11 @@ protected:
 		mXld = settings.xld;
 		mXcc = settings.xcc;
 		mXlink = settings.xlink;
+		mXclang = settings.xclang;
 		mXlinker = settings.xlinker;
+
+		// Clang has a special place.
+		mClangCmd = settings.clang;
 
 		if (settings.linker !is null) {
 			switch (mPlatform) with (Platform) {
@@ -930,6 +938,11 @@ protected:
 				mLinkWithLD = true;
 				break;
 			}
+		} else if (settings.clang !is null) {
+			mLinker = settings.clang;
+			mLinkWithCC = true;
+			// We pretend clang is cc.
+			mXcc ~= settings.xclang;
 		} else if (settings.ld !is null) {
 			mLinker = settings.ld;
 			mLinkWithLD = true;
