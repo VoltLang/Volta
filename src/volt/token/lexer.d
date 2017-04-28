@@ -975,10 +975,10 @@ LexStatus lexTokenString(TokenWriter tw)
  * Consume characters from the source from the characters array until you can't.
  * Returns: the number of characters consumed, not counting underscores.
  */
-size_t consume(Source src, const(dchar)[] characters...)
+size_t consume(Source src, scope const(dchar)[] characters...)
 {
 	size_t consumed;
-	static bool isIn(const(dchar)[] chars, dchar arg) {
+	static bool isIn(scope const(dchar)[] chars, dchar arg) {
 		foreach (dchar c; chars) {
 			if (c == arg)
 				return true;
