@@ -45,16 +45,22 @@ public:
 	string archStr; ///< Derived from arch.
 
 	string cc; ///< The --cc argument.
-	string[] xcc; ///< Arguments to cc, the --Xcc argument.
+	string[] xcc; ///< Arguments to cc, the --Xcc argument(s).
 
 	string ld; ///< The --ld argument.
-	string[] xld; ///< The --Xld argument.
+	string[] xld; ///< The --Xld argument(s).
 
 	string link; ///< The --link argument.
-	string[] xlink; ///< The --Xlink argument.
+	string[] xlink; ///< The --Xlink argument(s).
+
+	string clang; ///< The --clang argument.
+	string[] xclang; ///< The --Xclang argument(s).
+
+	string llvmAr; ///< The --llvm-ar argument.
+	string[] xllvmAr; ///< The --Xllvm-ar argument(s).
 
 	string linker; ///< The --linker argument
-	string[] xlinker; ///< Arguments to the linker, the -Xlinker argument.
+	string[] xlinker; ///< Arguments to the linker, the -Xlinker argument(s).
 
 	string depFile;
 	string outputFile;
@@ -193,6 +199,12 @@ public:
 
 		Link,
 		LinkArg,
+
+		Clang,
+		ClangArg,
+
+		LLVMAr,
+		LLVMArArg,
 
 		Linker,
 		LinkerArg,
@@ -348,6 +360,18 @@ void filterArgs(Arg[] args, ref string[] files, VersionSet ver, Settings setting
 			break;
 		case LinkArg:
 			settings.xlink ~= arg.arg;
+			break;
+		case Clang:
+			settings.clang = arg.arg;
+			break;
+		case ClangArg:
+			settings.xclang ~= arg.arg;
+			break;
+		case LLVMAr:
+			settings.llvmAr = arg.arg;
+			break;
+		case LLVMArArg:
+			settings.xllvmAr ~= arg.arg;
 			break;
 		case Linker:
 			settings.linker = arg.arg;

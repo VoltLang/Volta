@@ -302,11 +302,23 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 		case "-Xlink", "--Xlink":
 			makeArgNext(LinkArg);
 			continue;
+		case "-clang", "--clang":
+			makeArgNext(Clang);
+			continue;
+		case "-Xclang", "--Xclang":
+			makeArgNext(ClangArg);
+			continue;
 		case "-linker", "--linker":
 			makeArgNext(Linker);
 			continue;
 		case "-Xlinker", "--Xlinker":
 			makeArgNext(LinkerArg);
+			continue;
+		case "-llvm-ar", "--llvm-ar":
+			makeArgNext(LLVMAr);
+			continue;
+		case "-Xllvm-ar", "--Xllvm-ar":
+			makeArgNext(LLVMArArg);
 			continue;
 		case "--internal-d":
 			makeArg(InternalD);
