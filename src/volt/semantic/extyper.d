@@ -809,7 +809,7 @@ private void rewriteHomogenousVariadic(Context ctx,
 		foreach (ref aexp; exps) {
 			checkAndConvertStringLiterals(ctx, arr.base, aexp);
 		}
-		arguments[i] = buildInternalArrayLiteralSmart(arguments[0].loc, asFunctionType.params[i], exps);
+		arguments[i] = buildArrayLiteralSmart(arguments[0].loc, asFunctionType.params[i], exps);
 		arguments = arguments[0 .. i + 1];
 		return;
 	}
