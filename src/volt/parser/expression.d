@@ -490,7 +490,7 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 			auto prefix = c._string[0 .. 2];
 			c._string = c._string[2 .. $];
 			bool hex = prefix == "0x";
-			if (hex) {
+			if (hex && explicitBase) {
 				warningOldStyleHexTypeSuffix(c.loc, ps.settings);
 			}
 			bool error;
