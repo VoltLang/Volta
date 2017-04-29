@@ -119,12 +119,11 @@ extern (C) fn vrt_validate_u8(s: string)
 }
 
 /// Encode c as UTF-8.
-extern (C) fn vrt_encode_d_u8(c: dchar) string
+extern (C) fn vrt_encode_static_u8(ref buf: char[6], c: dchar) size_t
 {
-	buf: char[] = new char[](6);
 	cval := cast(u32) c;
 
-	fn _read_byte(a: u32, b: u32) u8
+	fn readU8(a: u32, b: u32) u8
 	{
 		_byte := cast(u8) (a | (cval & b));
 		cval = cval >> 6;
@@ -133,37 +132,37 @@ extern (C) fn vrt_encode_d_u8(c: dchar) string
 
 	if (cval <= 0x7F) {
 		buf[0] = cast(char) c;
-		return cast(string)new buf[0 .. 1];
+		return 1;
 	} else if (cval >= 0x80 && cval <= 0x7FF) {
-		buf[1] = _read_byte(0x0080, 0x003F);
-		buf[0] = _read_byte(0x00C0, 0x001F);
-		return cast(string)new buf[0 .. 2];
+		buf[1] = readU8(0x0080, 0x003F);
+		buf[0] = readU8(0x00C0, 0x001F);
+		return 2;
 	} else if (cval >= 0x800 && cval <= 0xFFFF) {
-		buf[2] = _read_byte(0x0080, 0x003F);
-		buf[1] = _read_byte(0x0080, 0x003F);
-		buf[0] = _read_byte(0x00E0, 0x000F);
-		return cast(string)new buf[0 .. 3];
+		buf[2] = readU8(0x0080, 0x003F);
+		buf[1] = readU8(0x0080, 0x003F);
+		buf[0] = readU8(0x00E0, 0x000F);
+		return 3;
 	} else if (cval >= 0x10000 && cval <= 0x1FFFFF) {
-		buf[3] = _read_byte(0x0080, 0x003F);
-		buf[2] = _read_byte(0x0080, 0x003F);
-		buf[1] = _read_byte(0x0080, 0x003F);
-		buf[0] = _read_byte(0x00F0, 0x000E);
-		return cast(string)new buf[0 .. 4];
+		buf[3] = readU8(0x0080, 0x003F);
+		buf[2] = readU8(0x0080, 0x003F);
+		buf[1] = readU8(0x0080, 0x003F);
+		buf[0] = readU8(0x00F0, 0x000E);
+		return 4;
 	} else if (cval >= 0x200000 && cval <= 0x3FFFFFF) {
-		buf[4] = _read_byte(0x0080, 0x003F);
-		buf[3] = _read_byte(0x0080, 0x003F);
-		buf[2] = _read_byte(0x0080, 0x003F);
-		buf[1] = _read_byte(0x0080, 0x003F);
-		buf[0] = _read_byte(0x00F8, 0x0007);
-		return cast(string)new buf[0 .. 5];
+		buf[4] = readU8(0x0080, 0x003F);
+		buf[3] = readU8(0x0080, 0x003F);
+		buf[2] = readU8(0x0080, 0x003F);
+		buf[1] = readU8(0x0080, 0x003F);
+		buf[0] = readU8(0x00F8, 0x0007);
+		return 5;
 	} else if (cval >= 0x4000000 && cval <= 0x7FFFFFFF) {
-		buf[5] = _read_byte(0x0080, 0x003F);
-		buf[4] = _read_byte(0x0080, 0x003F);
-		buf[3] = _read_byte(0x0080, 0x003F);
-		buf[2] = _read_byte(0x0080, 0x003F);
-		buf[1] = _read_byte(0x0080, 0x003F);
-		buf[0] = _read_byte(0x00FC, 0x0001);
-		return cast(string)new buf[0 .. 6];
+		buf[5] = readU8(0x0080, 0x003F);
+		buf[4] = readU8(0x0080, 0x003F);
+		buf[3] = readU8(0x0080, 0x003F);
+		buf[2] = readU8(0x0080, 0x003F);
+		buf[1] = readU8(0x0080, 0x003F);
+		buf[0] = readU8(0x00FC, 0x0001);
+		return 6;
 	} else {
 		throw new MalformedUTF8Exception("encode: unsupported codepoint range");
 	}

@@ -46,5 +46,6 @@ fn vrt_run_global_dtors() i32;
 /*
  * Unicode functions.
  */
+fn vrt_encode_static_u8(ref buf: char[6], c: dchar) size_t;
 fn vrt_decode_u8_d(str: string, ref index: size_t) dchar;
 fn vrt_reverse_decode_u8_d(str: string, ref index: size_t) dchar;
