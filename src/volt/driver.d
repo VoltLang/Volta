@@ -65,6 +65,12 @@ protected:
 	bool mMissingDeps;
 	bool mEmitLLVM;
 
+	// For multi output
+	string mBuildDir;
+
+	bool mArWithLLLVM;  // llvm-ar
+	string mArCmd;
+
 	bool mLinkWithLD;   // Posix/GNU
 	bool mLinkWithCC;   // Posix/GNU
 	bool mLinkWithLink; // MSVC Link
@@ -434,9 +440,6 @@ protected:
 
 	int intCompile()
 	{
-		// Do this here so any config error can be cought.
-		verifyConfig();
-
 		if (mRunVoltend) {
 			int ret = intCompileVoltend();
 			if (ret != 0) {
@@ -571,15 +574,10 @@ protected:
 			mDepFiles ~= file;
 		}
 
-		// We will be modifing this later on,
-		// but we don't want to change mBitcodeFiles.
-		string[] bitcodeFiles = mBitcodeFiles;
-		bitcodeFiles ~= turnModulesIntoBitcode(mCommandLineModules);
-
 		if (mEmitLLVM || mNoLink) {
-			return intCompileBackendBitcodeOrObject(bitcodeFiles);
+			return intCompileBackendBitcodeOrObject();
 		} else {
-			return intCompileBackendLink(bitcodeFiles);
+			return intCompileBackendLink();
 		}
 	}
 
@@ -606,8 +604,13 @@ protected:
 		return ret;
 	}
 
-	int intCompileBackendBitcodeOrObject(string[] bitcodeFiles)
+	int intCompileBackendBitcodeOrObject()
 	{
+		// We will be modifing this later on,
+		// but we don't want to change mBitcodeFiles.
+		string[] bitcodeFiles = mBitcodeFiles;
+		bitcodeFiles ~= turnModulesIntoBitcode(mCommandLineModules);
+
 		string subdir = getTemporarySubdirectoryName();
 
 		// Setup files bc.
@@ -660,30 +663,9 @@ protected:
 	int turnBitcodeIntoObjectClang(ref string[] objectFiles, string[] bitcodeFiles)
 	{
 		string subdir = getTemporarySubdirectoryName();
+
 		auto cmd = new CmdGroup(8);
-		auto clangArgs = ["-x", "ir", "-c", "-target",
-			tripleList[target.platform][target.arch]];
-
-		// Add command line args.
-		clangArgs ~= mXclang;
-
-		// Force -fPIC on linux.
-		if (target.arch == Arch.X86_64 &&
-		    target.platform == Platform.Linux) {
-			clangArgs ~= "-fPIC";
-		}
-
-		// Clang likes to change the module target triple.
-		// @TODO make battery pipe in the real triple.
-		if (target.arch == Arch.X86_64 &&
-		    target.platform == Platform.MSVC) {
-			clangArgs ~= "-Wno-override-module";
-		}
-
-		// Add any optimze flag.
-		if (mOptimizeFlag !is null) {
-			clangArgs ~= mOptimizeFlag;
-		}
+		auto clangArgs = getClangArgs();
 
 		// Native compilation, turn the bitcode into native code.
 		foreach (bc; bitcodeFiles) {
@@ -719,7 +701,7 @@ protected:
 		}
 	}
 
-	int intCompileBackendLink(string[] bitcodeFiles)
+	int intCompileBackendLink()
 	{
 		// We do this here because we know that object files are
 		// being used. Add files to dependencies for this compile.
@@ -727,23 +709,72 @@ protected:
 			mDepFiles ~= file;
 		}
 
-		// We will be modifing this later on,
-		// but we don't want to change mObjectFiles.
+		// We will be modifing this later on, but we don't
+		// want to change mBitcodeFiles and mObjectFiles.
+		auto modules = mCommandLineModules;
+		auto objectFiles = mObjectFiles;
+		auto bitcodeFiles = mBitcodeFiles;
+
+		// If we are using llvm-ar don't assemble and send the
+		// bitcode modules directly to llvm-ar.
+		if (mArWithLLLVM) {
+			return makeArchiveLLVM(objectFiles, bitcodeFiles, modules);
+		}
+
+		// Turn modules into bitcode.
+		bitcodeFiles ~= turnModulesIntoBitcode(modules);
+
+		// Turn bitcodes into objects.
 		perf.mark(Perf.Mark.ASSEMBLE);
-		string[] objectFiles = mObjectFiles;
+
 		if (mClangCmd !is null) {
 			auto ret = turnBitcodeIntoObjectClang(
-				objectFiles, bitcodeFiles);
+				/*ref*/ objectFiles, bitcodeFiles);
 			if (ret != 0) {
 				return ret;
 			}
 		} else {
-			turnBitcodeIntoObject(objectFiles, bitcodeFiles);
+			turnBitcodeIntoObject(/*ref*/ objectFiles, bitcodeFiles);
 		}
 
 		// And finally call the linker.
 		perf.mark(Perf.Mark.LINK);
 		return nativeLink(objectFiles, mOutput);
+	}
+
+	int makeArchiveLLVM(string[] objectFiles, string[] bitcodeFiles, ir.Module[] modules)
+	{
+		assert(mArCmd !is null);
+		assert(mBuildDir !is null);
+
+		auto ar = mArCmd;
+		auto outputDir = mBuildDir;
+
+		// Native compilation, turn the bitcode into native code.
+		foreach (mod; mCommandLineModules) {
+			string bc = format("%s%s%s.bc", outputDir, dirSeparator, mod.name.toString());
+
+			backend.setTarget(TargetType.LlvmBitcode);
+			auto d = languagePass.driver;
+			auto res = backend.compile(mod, languagePass.ehPersonalityFunc,
+				languagePass.llvmTypeidFor, d.execDir, d.identStr);
+			res.saveToFile(bc);
+			res.close();
+		}
+
+		auto arArgs = ["rcv", mOutput];
+		foreach (o; objectFiles) {
+			arArgs ~= o;
+		}
+
+		foreach (bc; bitcodeFiles) {
+			arArgs ~= bc;
+		}
+
+		// And finally call the linker.
+		perf.mark(Perf.Mark.LINK);
+
+		return spawnProcess(ar, arArgs).wait();
 	}
 
 	int nativeLink(string[] objs, string of)
@@ -860,13 +891,6 @@ protected:
 	 *
 	 */
 
-	void verifyConfig()
-	{
-		if (mEmitLLVM && !mNoLink) {
-			throw makeEmitLLVMNoLink();
-		}
-	}
-
 	static Mode decideMode(Settings settings)
 	{
 		if (settings.removeConditionalsOnly) {
@@ -925,9 +949,13 @@ protected:
 		mXlinker = settings.xlinker;
 
 		// Clang has a special place.
+		mArCmd = settings.llvmAr;
 		mClangCmd = settings.clang;
+		mBuildDir = null;
 
-		if (settings.linker !is null) {
+		if (mArCmd !is null) {
+			mArWithLLLVM = true;
+		} else if (settings.linker !is null) {
 			switch (mPlatform) with (Platform) {
 			case MSVC:
 				mLinker = settings.linker;
@@ -968,17 +996,23 @@ protected:
 
 	void decideOutputFile(Settings settings)
 	{
+		bool outputBinary = !mNoLink && !mArWithLLLVM && !mEmitLLVM;
+		bool outputExe = mLinkWithLink && outputBinary;
+
 		// Setup the output file
 		if (settings.outputFile !is null) {
 			mOutput = settings.outputFile;
-			if (mLinkWithLink && !mNoLink && !mOutput.endsWith("exe")) {
+			if (outputExe && !mOutput.endsWith("exe")) {
 				mOutput = format("%s.exe", mOutput);
 			}
+		} else if (mArWithLLLVM) {
+			mOutput = DEFAULT_A;
 		} else if (mEmitLLVM) {
 			mOutput = DEFAULT_BC;
 		} else if (mNoLink) {
 			mOutput = DEFAULT_OBJ;
 		} else {
+			assert(outputBinary);
 			mOutput = DEFAULT_EXE;
 		}
 	}
@@ -987,6 +1021,14 @@ protected:
 	{
 		if (mLibFiles.length > 0 && !mLinkWithLink) {
 			throw new CompilerError(format("can not link '%s'", mLibFiles[0]));
+		}
+
+		if (mEmitLLVM && !mNoLink) {
+			throw makeEmitLLVMNoLink();
+		}
+
+		if (mArWithLLLVM && mBuildDir !is null) {
+			throw new CompilerError("can not ar with out --build-dir (not implemented yet).");
 		}
 	}
 
@@ -1010,6 +1052,41 @@ protected:
 
 
 private:
+	/*
+	 *
+	 * Clang functions.
+	 *
+	 */
+
+	string[] getClangArgs()
+	{
+		auto clangArgs = ["-x", "ir", "-c", "-target",
+			tripleList[target.platform][target.arch]];
+
+		// Add command line args.
+		clangArgs ~= mXclang;
+
+		// Force -fPIC on linux.
+		if (target.arch == Arch.X86_64 &&
+		    target.platform == Platform.Linux) {
+			clangArgs ~= "-fPIC";
+		}
+
+		// Clang likes to change the module target triple.
+		// @TODO make battery pipe in the real triple.
+		if (target.arch == Arch.X86_64 &&
+		    target.platform == Platform.MSVC) {
+			clangArgs ~= "-Wno-override-module";
+		}
+
+		// Add any optimze flag.
+		if (mOptimizeFlag !is null) {
+			clangArgs ~= mOptimizeFlag;
+		}
+
+		return clangArgs;
+	}
+
 	void checkClangReturn(int result)
 	{
 		if (result != 0) {
@@ -1021,6 +1098,13 @@ private:
 	{
 		return &checkClangReturn;
 	}
+
+
+	/*
+	 *
+	 * Debug printing helpers.
+	 *
+	 */
 
 	/**
 	 * If we are debugging print messages.
@@ -1181,10 +1265,12 @@ void setVersionSet(VersionSet ver, Arch arch, Platform platform)
 }
 
 version (Windows) {
+	enum DEFAULT_A = "a.a";
 	enum DEFAULT_BC = "a.bc";
 	enum DEFAULT_OBJ = "a.obj";
 	enum DEFAULT_EXE = "a.exe";
 } else {
+	enum DEFAULT_A = "a.a";
 	enum DEFAULT_BC = "a.bc";
 	enum DEFAULT_OBJ = "a.obj";
 	enum DEFAULT_EXE = "a.out";
