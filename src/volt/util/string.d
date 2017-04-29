@@ -3,6 +3,7 @@ module volt.util.string;
 import watt.conv : toInt, ConvException;
 import watt.text.utf : encode;
 import watt.text.format : format;
+import watt.text.sink : StringSink;
 
 import volt.errors;
 import volt.token.location;
@@ -24,7 +25,12 @@ bool isHex(dchar d)
 
 immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 {
-	char[] output;
+	version (Volt) {
+		StringSink sink;
+		auto output = sink.sink;
+	} else {
+		char[] output;
+	}
 
 	bool escaping, hexing;
 	size_t unicoding;
@@ -82,7 +88,11 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 			encode(hexchars, c);
 			if (hexchars.length == 2) {
 				try {
-					output ~= cast(char)toInt(hexchars, 16);
+					version (Volt) {
+						output([cast(char)toInt(hexchars, 16)]);
+					} else {
+						output ~= cast(char)toInt(hexchars, 16);
+					}
 				} catch (ConvException) {
 					throw makeExpected(loc, "hex digit");
 				}
@@ -149,7 +159,11 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 		throw makeExpected(loc, "valid unicode escape, \\UXXXXXXXX");
 	}
 
-	return cast(immutable(void)[]) output;
+	version (Volt) {
+		return cast(immutable(void)[]) sink.toString();
+	} else {
+		return cast(immutable(void)[]) output;
+	}
 }
 
 /**
@@ -175,7 +189,13 @@ uint hash(ubyte[] array)
  */
 string cleanComment(string comment, out bool isBackwardsComment)
 {
-	assert(comment.length > 2);
+	version (Volt) {
+		StringSink sink;
+		auto output = sink.sink;
+	} else {
+		char[] output;
+	}
+
 	char commentChar;
 	if (comment[0..2] == "**") {
 		commentChar = '*';
@@ -187,7 +207,6 @@ string cleanComment(string comment, out bool isBackwardsComment)
 		assert(false, comment);
 	}
 
-	char[] outbuf;
 	bool ignoreWhitespace = true;
 	foreach (i, dchar c; comment) {
 		if (i == comment.length - 1 && commentChar != '/' && c == '/') {
@@ -210,19 +229,19 @@ string cleanComment(string comment, out bool isBackwardsComment)
 			break;
 		case '\n':
 			ignoreWhitespace = true;
-			encode(outbuf, '\n');
+			encode(output, '\n');
 			break;
 		default:
 			ignoreWhitespace = false;
-			encode(outbuf, c);
+			encode(output, c);
 			break;
 		}
 	}
 
 	version (Volt) {
-		return cast(immutable(char)[])new outbuf[0 .. $];
+		return sink.toString();
 	} else {
-		return outbuf.idup;
+		return cast(string) output;
 	}
 }
 
