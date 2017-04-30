@@ -4,7 +4,16 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.gc.util;
 
+import core.rt.format : Sink, vrt_format_u64;
 import core.rt.misc : vrt_panic;
+
+enum size_t  _2GB = 2u * 1024 * 1024 * 1024;
+enum size_t  _1GB = 1u * 1024 * 1024 * 1024;
+enum size_t  _2MB =        2u * 1024 * 1024;
+enum size_t  _1MB =        1u * 1024 * 1024;
+enum size_t _64KB =              64u * 1024;
+enum size_t  _4KB =               4u * 1024;
+enum size_t  _1KB =               1u * 1024;
 
 
 /**
@@ -101,4 +110,66 @@ fn makeRange(range: const(void[])) const(void*)[]
 fn makeRangeNoAlign(range: const(void[])) const(void*)[]
 {
 	return (cast(void**)range.ptr)[0 .. range.length / typeid(size_t).size];
+}
+
+/**
+ * Turns a size into a human readable output.
+ */
+fn toReadable(sink: Sink, size: size_t)
+{
+	if (size == 0) {
+		return sink("0B");
+	}
+
+	if (size % _1GB == 0) {
+		vrt_format_u64(sink, size / _1GB);
+		return sink("GB");
+	}
+
+	if (size % _1MB == 0) {
+		vrt_format_u64(sink, size / _1MB);
+		return sink("MB");
+	}
+
+	if (size % _1KB == 0) {
+		vrt_format_u64(sink, size / _1KB);
+		return sink("KB");
+	}
+
+	orig := size;
+	ret: string;
+	if (size > _1GB) {
+		v := size / _1GB;
+		size -= v * _1GB;
+		vrt_format_u64(sink, v);
+		sink("GB ");
+	}
+
+	if (size > _1MB) {
+		v := size / _1MB;
+		size -= v * _1MB;
+		vrt_format_u64(sink, v);
+		sink("MB ");
+	}
+
+	if (size > _1KB) {
+		v := size / _1KB;
+		size -= v * _1KB;
+		vrt_format_u64(sink, v);
+		sink("KB ");
+	}
+
+	if (size != orig) {
+		if (size) {
+			vrt_format_u64(sink, size);
+			sink("B (");
+		} else {
+			sink("(");
+		}
+		vrt_format_u64(sink, orig);
+		return sink(")");
+	} else {
+		vrt_format_u64(sink, size);
+		return sink("B");
+	}
 }
