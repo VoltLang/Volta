@@ -1537,9 +1537,14 @@ public:
 		wf(" = ");
 		wf(ti.name);
 		wf("!(");
-		foreach (i, type; ti.typeArguments) {
-			accept(type, this);
-			if (i < ti.typeArguments.length - 1) {
+		foreach (i, arg; ti.arguments) {
+			auto exp = cast(ir.Exp)arg;
+			if (exp is null) {
+				accept(arg, this);
+			} else {
+				acceptExp(exp, this);
+			}
+			if (i < ti.arguments.length - 1) {
 				wf(", ");
 			}
 		}
@@ -1564,9 +1569,9 @@ public:
 		}
 		wf(td.name);
 		wf("!(");
-		foreach (i, type; td.typeParameters) {
-			wf(type);
-			if (i < td.typeParameters.length - 1) {
+		foreach (i, param; td.parameters) {
+			wf(param.name);
+			if (i < td.parameters.length - 1) {
 				wf(", ");
 			}
 		}

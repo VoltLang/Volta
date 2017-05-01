@@ -143,7 +143,7 @@ ParseStatus parseTemplateInstance(ParserStream ps, out ir.TemplateInstance ti, o
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.TemplateInstance);
 			}
-			ti.typeArguments ~= t;
+			ti.arguments ~= t;
 			if (ps == TokenType.Comma) {
 				ps.get();
 			}
@@ -158,7 +158,7 @@ ParseStatus parseTemplateInstance(ParserStream ps, out ir.TemplateInstance ti, o
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TemplateInstance);
 		}
-		ti.typeArguments ~= t;
+		ti.arguments ~= t;
 	}
 
 	succeeded = match(ps, ti, TokenType.Semicolon);
@@ -221,7 +221,15 @@ ParseStatus parseTemplateDefinition(ParserStream ps, out ir.TemplateDefinition t
 			if (nameTok.type != TokenType.Identifier) {
 				return unexpectedToken(ps, ir.NodeType.Identifier);
 			}
-			td.typeParameters ~= nameTok.value;
+			ir.TemplateDefinition.Parameter param;
+			param.name = nameTok.value;
+			if (matchIf(ps, TokenType.Colon)) {
+				succeeded = parseType(ps, param.type);
+				if (!succeeded) {
+					return parseFailed(ps, ir.NodeType.TemplateDefinition);
+				}
+			}
+			td.parameters ~= param;
 			if (ps == TokenType.Comma) {
 				ps.get();
 			}
@@ -233,7 +241,9 @@ ParseStatus parseTemplateDefinition(ParserStream ps, out ir.TemplateDefinition t
 		if (nameTok.type != TokenType.Identifier) {
 			return unexpectedToken(ps, ir.NodeType.Identifier);
 		}
-		td.typeParameters ~= nameTok.value;
+		ir.TemplateDefinition.Parameter param;
+		param.name = nameTok.value;
+		td.parameters ~= param;
 	}
 
 	final switch (td.kind) {

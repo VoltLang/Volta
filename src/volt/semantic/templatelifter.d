@@ -357,7 +357,8 @@ public:
 		currentTemplateDefinitionName = td.name;
 		currentInstanceType = s;
 
-		foreach (i, ref type; ti.typeArguments) {
+		foreach (i, ref arg; ti.arguments) {
+			auto type = cast(ir.Type)arg;
 			assert(type !is null);
 			auto tr = cast(ir.TypeReference)type;
 			resolveType(lp, current, type);
@@ -365,7 +366,7 @@ public:
 				panicAssert(s, tr !is null);
 				throw makeTemplateAsTemplateArg(ti.loc, tr.id.toString());
 			}
-			auto name = td.typeParameters[i];
+			auto name = td.parameters[i].name;
 			s.myScope.reserveId(td, name);
 		}
 		s.members = lift(defstruct.members);
@@ -377,9 +378,11 @@ public:
 		// Run the gatherer.
 		gatherer.push(s.myScope);
 		accept(s, gatherer);
-		s.templateInstance.typeNames = td.typeParameters;
-		foreach (i, ref type; ti.typeArguments) {
-			auto name = td.typeParameters[i];
+		foreach (param; td.parameters) {
+			s.templateInstance.names ~= param.name;
+		}
+		foreach (i, ref type; ti.arguments) {
+			auto name = td.parameters[i].name;
 			s.myScope.remove(name);
 			s.myScope.addType(type, name);
 		}

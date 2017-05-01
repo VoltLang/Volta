@@ -4594,7 +4594,7 @@ void cleanTemplateParameters(ir.Scope current, ir.TemplateInstance ti)
 		return;
 	}
 
-	foreach (tparam; ti.typeNames) {
+	foreach (tparam; ti.names) {
 		current.remove(tparam);
 	}
 }

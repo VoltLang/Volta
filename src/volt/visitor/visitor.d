@@ -2340,8 +2340,14 @@ Visitor.Status acceptTemplateInstance(ir.TemplateInstance ti, Visitor av)
 		return parentContinue(status);
 	}
 
-	foreach (type; ti.typeArguments) {
-		status = accept(type, av);
+	foreach (i, arg; ti.arguments) {
+		auto exp = cast(ir.Exp)arg;
+		if (exp !is null) {
+			acceptExp(exp, av);
+			ti.arguments[i] = exp;
+		} else {
+			status = accept(arg, av);
+		}
 		if (status == VisitorContinueParent) {
 			continue;
 		} else if (status == VisitorStop) {

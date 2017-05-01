@@ -8,6 +8,7 @@ import volt.ir.context;
 import volt.ir.type;
 import volt.ir.toplevel;
 import volt.ir.declaration;
+import volt.ir.expression;
 
 
 enum TemplateKind
@@ -33,9 +34,9 @@ class TemplateInstance : Node
 public:
 	TemplateKind kind;
 	string name;
-	Type[] typeArguments;
+	Node[] arguments;  // Either a Type or an Exp.
 	bool explicitMixin;
-	string[] typeNames;  // Set by the lifter.
+	string[] names;  // Set by the lifter.
 
 public:
 	this()
@@ -49,11 +50,11 @@ public:
 		this.kind = old.kind;
 		this.name = old.name;
 		version (Volt) {
-			this.typeArguments = new old.typeArguments[0 .. $];
-			this.typeNames = new old.typeNames[0 .. $];
+			this.arguments = new old.arguments[0 .. $];
+			this.names = new old.names[0 .. $];
 		} else {
-			this.typeArguments = old.typeArguments.dup;
-			this.typeNames = old.typeNames.dup;
+			this.arguments = old.arguments.dup;
+			this.names = old.names.dup;
 		}
 	}
 }
@@ -61,9 +62,16 @@ public:
 class TemplateDefinition : Node
 {
 public:
+	struct Parameter
+	{
+		Type type;  // Optional, only for value parameters.
+		string name;
+	}
+
+public:
 	TemplateKind kind;
 	string name;
-	string[] typeParameters;
+	Parameter[] parameters;
 	TypeReference[] typeReferences;  //< Filled in by the gatherer.
 	/**
 	 * Only one of these fields will be non-null, depending on kind.
@@ -88,9 +96,9 @@ public:
 		this.kind = old.kind;
 		this.name = old.name;
 		version (Volt) {
-			this.typeParameters = new old.typeParameters[0 .. $];
+			this.parameters = new old.parameters[0 .. $];
 		} else {
-			this.typeParameters = old.typeParameters.dup;
+			this.parameters = old.parameters.dup;
 		}
 		this._struct = old._struct;
 		this._union = old._union;
