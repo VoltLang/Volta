@@ -755,6 +755,16 @@ ir.Constant buildConstantEnum(ref in Location loc, ir.EnumDeclaration ed)
 	return c;
 }
 
+ir.EnumDeclaration buildEnumDeclaration(ref in Location loc, ir.Type type, ir.Exp assign, string name)
+{
+	auto ed = new ir.EnumDeclaration();
+	ed.loc = loc;
+	ed.type = type;
+	ed.assign = copyExp(assign);
+	ed.name = name;
+	return ed;
+}
+
 ir.Constant buildConstantTrue(ref in Location loc) { return buildConstantBool(loc, true); }
 ir.Constant buildConstantFalse(ref in Location loc) { return buildConstantBool(loc, false); }
 

@@ -366,7 +366,7 @@ public:
 				if (type is null) {
 					auto exp = cast(ir.Exp)arg;
 					if (exp is null) {
-						throw makeExpected(arg, "type3");
+						throw makeExpected(arg, "type");
 					}
 					auto qname = exptoQualifiedName(exp);
 					type = lookupType(lp, current, qname);
@@ -386,7 +386,8 @@ public:
 				auto name = td.parameters[i].name;
 				s.myScope.reserveId(td, name);
 			} else {
-				assert(false);
+				auto name = td.parameters[i].name;
+				s.myScope.reserveId(arg, name);
 			}
 		}
 		s.members = lift(defstruct.members);
@@ -401,13 +402,18 @@ public:
 		foreach (param; td.parameters) {
 			s.templateInstance.names ~= param.name;
 		}
-		foreach (i, ref type; ti.arguments) {
+		foreach (i, ref arg; ti.arguments) {
+			auto name = td.parameters[i].name;
+			s.myScope.remove(name);
 			if (td.parameters[i].type is null) {
-				auto name = td.parameters[i].name;
-				s.myScope.remove(name);
 				s.myScope.addType(types[i], name);
 			} else {
-				assert(false);
+				auto exp = cast(ir.Exp)arg;
+				if (exp is null) {
+					throw makeExpected(arg.loc, "expression");
+				}
+				auto ed = buildEnumDeclaration(s.loc, td.parameters[i].type, exp, name);
+				s.myScope.addEnumDeclaration(ed);
 			}
 		}
 	}
@@ -444,12 +450,12 @@ ir.QualifiedName exptoQualifiedName(ir.Exp exp, ir.QualifiedName qname = null)
 	} else if (exp.nodeType == ir.NodeType.Postfix) {
 		auto postfix = exp.toPostfixFast();
 		if (postfix.identifier is null) {
-			throw makeExpected(exp, "type2");
+			throw makeExpected(exp, "type");
 		}
 		exptoQualifiedName(postfix.child, qname);
 		qname.identifiers ~= postfix.identifier;
 	} else {
-		throw makeExpected(exp, "type1");
+		throw makeExpected(exp, "type");
 	}
 	return qname;
 }
