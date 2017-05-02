@@ -265,6 +265,15 @@ ir.TypeReference buildTypeReference(ref in Location loc, ir.Type type, string[] 
 	return tr;
 }
 
+ir.TypeReference buildTypeReference(ref in Location loc, ir.Type type, ir.QualifiedName id)
+{
+	auto tr = new ir.TypeReference();
+	tr.loc = loc;
+	tr.type = type;
+	tr.id = id;
+	return tr;
+}
+
 ir.StorageType buildStorageType(ref in Location loc, ir.StorageType.Kind kind, ir.Type base)
 {
 	auto storage = new ir.StorageType();

@@ -2341,13 +2341,13 @@ Visitor.Status acceptTemplateInstance(ir.TemplateInstance ti, Visitor av)
 	}
 
 	foreach (i, arg; ti.arguments) {
-		auto exp = cast(ir.Exp)arg;
+		/+auto exp = cast(ir.Exp)arg; !!! TODO
 		if (exp !is null) {
 			acceptExp(exp, av);
 			ti.arguments[i] = exp;
 		} else {
 			status = accept(arg, av);
-		}
+		}+/
 		if (status == VisitorContinueParent) {
 			continue;
 		} else if (status == VisitorStop) {

@@ -6,6 +6,7 @@ module volt.semantic.templatelifter;
 import watt.text.format;
 
 import ir = volt.ir.ir;
+import ircopy = volt.ir.copy;
 import volt.ir.util;
 
 import volt.errors;
@@ -22,6 +23,7 @@ import volt.postparse.scopereplacer : ScopeReplacer;
 import volt.semantic.lookup;
 import volt.semantic.extyper;
 import volt.semantic.classify;
+import volt.semantic.typer;
 
 
 class TemplateLifter : Lifter
@@ -357,21 +359,39 @@ public:
 		currentTemplateDefinitionName = td.name;
 		currentInstanceType = s;
 
+		auto types = new ir.Type[](ti.arguments.length);
 		foreach (i, ref arg; ti.arguments) {
-			auto type = cast(ir.Type)arg;
-			assert(type !is null);
-			auto tr = cast(ir.TypeReference)type;
-			resolveType(lp, current, type);
-			if (isTemplateInstance(type)) {
-				panicAssert(s, tr !is null);
-				throw makeTemplateAsTemplateArg(ti.loc, tr.id.toString());
+			if (td.parameters[i].type is null) {
+				ir.Type type = cast(ir.Type)arg;
+				if (type is null) {
+					auto exp = cast(ir.Exp)arg;
+					if (exp is null) {
+						throw makeExpected(arg, "type3");
+					}
+					auto qname = exptoQualifiedName(exp);
+					type = lookupType(lp, current, qname);
+					auto named = cast(ir.Named)type;
+					if (named !is null) {
+						type = buildTypeReference(ti.loc, type, qname);
+					}
+				}
+				panicAssert(ti, type !is null);
+				types[i] = type;
+				auto tr = cast(ir.TypeReference)type;
+				resolveType(lp, current, type);
+				if (isTemplateInstance(type)) {
+					panicAssert(s, tr !is null);
+					throw makeTemplateAsTemplateArg(ti.loc, tr.id.toString());
+				}
+				auto name = td.parameters[i].name;
+				s.myScope.reserveId(td, name);
+			} else {
+				assert(false);
 			}
-			auto name = td.parameters[i].name;
-			s.myScope.reserveId(td, name);
 		}
 		s.members = lift(defstruct.members);
 
-		// Setup any passes that needs to procces the copied nodes.
+		// Setup any passes that needs to process the copied nodes.
 		auto mod = getModuleFromScope(s.loc, current);
 		auto gatherer = new Gatherer(/*warnings*/false);
 
@@ -382,9 +402,13 @@ public:
 			s.templateInstance.names ~= param.name;
 		}
 		foreach (i, ref type; ti.arguments) {
-			auto name = td.parameters[i].name;
-			s.myScope.remove(name);
-			s.myScope.addType(type, name);
+			if (td.parameters[i].type is null) {
+				auto name = td.parameters[i].name;
+				s.myScope.remove(name);
+				s.myScope.addType(types[i], name);
+			} else {
+				assert(false);
+			}
 		}
 	}
 
@@ -394,4 +418,38 @@ private:
 		auto _struct = cast(ir.Struct)realType(t);
 		return _struct !is null && _struct.templateInstance !is null;
 	}
+}
+
+/**
+ * Given a Type that's been smuggled in as an expression (it'll either be an
+ * IdentifierExp or a QualifiedName as a Postfix chain), return a QualifiedName,
+ * or throw an error.
+ *
+ * The template parser can't tell if it needs to parse an expression or a type,
+ * so for user defined types it has to parse them as an expression. By the time
+ * we see them, we know they're types, so the postfix will be unprocessed, and
+ * we can do things like this.
+ */
+ir.QualifiedName exptoQualifiedName(ir.Exp exp, ir.QualifiedName qname = null)
+{
+	if (qname is null) {
+		qname = new ir.QualifiedName();
+		qname.loc = exp.loc;
+	}
+	if (exp.nodeType == ir.NodeType.IdentifierExp) {
+		auto iexp = exp.toIdentifierExpFast();
+		auto ident = new ir.Identifier(iexp.value);
+		ident.loc = iexp.loc;
+		qname.identifiers ~= ident;
+	} else if (exp.nodeType == ir.NodeType.Postfix) {
+		auto postfix = exp.toPostfixFast();
+		if (postfix.identifier is null) {
+			throw makeExpected(exp, "type2");
+		}
+		exptoQualifiedName(postfix.child, qname);
+		qname.identifiers ~= postfix.identifier;
+	} else {
+		throw makeExpected(exp, "type1");
+	}
+	return qname;
 }

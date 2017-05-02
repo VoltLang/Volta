@@ -9,6 +9,8 @@ import volt.ir.util;
 import volt.parser.base;
 import volt.parser.declaration;
 import volt.parser.toplevel;
+import volt.parser.expression;
+import volt.token.token : isPrimitiveTypeToken;
 
 /**
  * Returns: true if ps is at a template instantiation, false otherwise.
@@ -67,6 +69,36 @@ bool isTemplateDefinition(ParserStream ps)
 	}
 	ps.restore(mark);
 	return result;
+}
+
+/**
+ * Returns: true if the stream is at a point where we know it's a type, false otherwise.
+ */
+bool isUnambigouslyType(ParserStream ps)
+{
+	if (isPrimitiveTypeToken(ps.peek.type)) {
+		return true;
+	}
+	auto mark = ps.save();
+	ps.get();
+	bool retval;
+	while (ps != TokenType.Semicolon && ps != TokenType.End && ps != TokenType.CloseParen && ps != TokenType.Comma) {
+		if (ps == TokenType.Identifier || ps == TokenType.Dot) {
+			ps.get();
+			continue;
+		}
+		if (ps == TokenType.OpenBracket) {
+			ps.get();
+			// T[] <- this won't be valid at compile time, so treat it like a type.
+			retval = ps == TokenType.CloseBracket;
+			break;
+		} else {
+			break;
+		}
+		assert(false);
+	}
+	ps.restore(mark);
+	return retval;
 }
 
 ParseStatus parseLegacyTemplateInstance(ParserStream ps, out ir.Struct s)
@@ -135,15 +167,32 @@ ParseStatus parseTemplateInstance(ParserStream ps, out ir.TemplateInstance ti, o
 		return succeeded;
 	}
 
-	if (ps == TokenType.OpenParen) {
-		ps.get();
-		while (ps != TokenType.CloseParen) {
+	ParseStatus parseArgument()
+	{
+		if (isUnambigouslyType(ps)) {
 			ir.Type t;
 			succeeded = parseType(ps, t);
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.TemplateInstance);
 			}
 			ti.arguments ~= t;
+		} else {
+			ir.Exp e;
+			succeeded = parseExp(ps, e);
+			if (!succeeded) {
+				return parseFailed(ps, ir.NodeType.TemplateInstance);
+			}
+			ti.arguments ~= e;
+		}
+		return Succeeded;
+	}
+
+	if (ps == TokenType.OpenParen) {
+		ps.get();
+		while (ps != TokenType.CloseParen) {
+			if (!parseArgument()) {
+				return Failed;
+			}
 			if (ps == TokenType.Comma) {
 				ps.get();
 			}
@@ -153,12 +202,9 @@ ParseStatus parseTemplateInstance(ParserStream ps, out ir.TemplateInstance ti, o
 			return succeeded;
 		}
 	} else {
-		ir.Type t;
-		succeeded = parseType(ps, t);
-		if (!succeeded) {
-			return parseFailed(ps, ir.NodeType.TemplateInstance);
+		if (!parseArgument()) {
+			return Failed;
 		}
-		ti.arguments ~= t;
 	}
 
 	succeeded = match(ps, ti, TokenType.Semicolon);
