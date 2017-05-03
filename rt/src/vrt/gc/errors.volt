@@ -7,7 +7,7 @@ import core.rt.format : SinkArg, vrt_format_u64;
 import core.rt.misc : vrt_panic;
 
 
-fn panicFailedToAlloc(n: size_t)
+fn panicFailedToAlloc(n: size_t, loc: string = __LOCATION__)
 {
 	args: char[][1];
 	msg: char[128];
@@ -24,5 +24,5 @@ fn panicFailedToAlloc(n: size_t)
 	sink(" bytes failed.");
 
 	args[0] = msg[0 .. pos];
-	vrt_panic(args[]);
+	vrt_panic(args[], loc);
 }
