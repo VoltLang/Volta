@@ -65,5 +65,6 @@ extern(C):
 
 fn vrt_gc_init();
 fn vrt_gc_get_alloc_dg() AllocDg;
+fn vrt_gc_collect();
 fn vrt_gc_shutdown();
 fn vrt_gc_get_stats(out stats: Stats) Stats*;
