@@ -6,6 +6,21 @@
 module vrt.gc.design;
 
 
+/**
+ * Common sizes for helpers.
+ * @{
+ */
+enum size_t  _2GB = 2u * 1024 * 1024 * 1024;
+enum size_t  _1GB = 1u * 1024 * 1024 * 1024;
+enum size_t  _2MB =        2u * 1024 * 1024;
+enum size_t  _1MB =        1u * 1024 * 1024;
+enum size_t _64KB =              64u * 1024;
+enum size_t  _4KB =               4u * 1024;
+enum size_t  _1KB =               1u * 1024;
+/**
+ * @}
+ */
+
 /+
 
 In Volt there can be multiple instances of the garbage collector (from here on
@@ -25,3 +40,9 @@ Large: Are directly allocated from the OS and has its own extent.
 enum PageSizeLog = 12;
 enum PageSize    = 1U << PageSizeLog;
 enum PageMask    = PageSize - 1;
+
+/// Hardcoded to 2MB for now as we are always on x86.
+enum HugePageSize = _2MB;
+
+/// Used to decide the GigaMan allocation size.
+enum GigaSize = _1GB;

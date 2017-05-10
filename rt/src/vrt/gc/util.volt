@@ -7,13 +7,7 @@ module vrt.gc.util;
 import core.rt.format : Sink, vrt_format_u64;
 import core.rt.misc : vrt_panic;
 
-enum size_t  _2GB = 2u * 1024 * 1024 * 1024;
-enum size_t  _1GB = 1u * 1024 * 1024 * 1024;
-enum size_t  _2MB =        2u * 1024 * 1024;
-enum size_t  _1MB =        1u * 1024 * 1024;
-enum size_t _64KB =              64u * 1024;
-enum size_t  _4KB =               4u * 1024;
-enum size_t  _1KB =               1u * 1024;
+import vrt.gc.design;
 
 
 /**
