@@ -219,7 +219,7 @@ public:
 
 		__vrt_push_registers(scanStack);
 		foreach (section; sections) {
-			scan(section);
+			scanRange(section);
 		}
 
 		{
@@ -228,11 +228,10 @@ public:
 				hits.pop();
 
 				if (!current.extent.isSlab) {
-					scan(current.extent);
+					scanLarge(cast(Large*) current.extent);
 				} else {
 					slab := cast(Slab*)current.extent;
-					size := orderToSize(slab.order);
-					scan(current.ptr, size);
+					scanSlab(slab, current.ptr);
 				}
 
 				current = hits.top();
@@ -353,39 +352,30 @@ protected:
 		length := (iend - iptr) / typeid(size_t).size;
 
 		range := (&p)[1 .. length];
-		return scan(range);
+		return scanRange(range);
 	}
 
-	fn scan(range: const(void*)[]) bool
+	fn scanSlab(s: Slab*, ptr: const(void*)) bool
+	{
+		size := orderToSize(s.order);
+		size /= typeid(void*).size;
+		vpp := cast(void**) ptr;
+		return scanRange(vpp[0 .. size]);
+	}
+
+	fn scanLarge(l: Large*) bool
+	{
+		size := l.extent.size;
+		size /= typeid(void*).size;
+		vpp := cast(void**) l.extent.ptr;
+		return scanRange(vpp[0 .. size]);
+	}
+
+	fn scanRange(range: const(void*)[]) bool
 	{
 		newPtr := false;
 		foreach (ptr; range) {
 			if (scan(cast(void*)ptr)) {
-				newPtr = true;
-			}
-		}
-		return newPtr;
-	}
-
-	fn scan(e: Extent*) bool
-	{
-		return scan(e.ptr, e.size);
-	}
-
-	/**
-	 * Given a pointer ptr to a block of memory n bytes long,
-	 * scan that area of memory as if it were a block of pointers.
-	 */
-	fn scan(ptr: void*, n: size_t) bool
-	{
-		ptrsz := typeid(void*).size;
-		newPtr := false;
-		/* Scan every byte of the range that could fit a pointer, as a pointer.
-		 * Example: if n is 7, scan ranges 0..4, 1..5, 2..6, and 3..7 as pointers.
-		 */
-		for (i: size_t = 0; i <= n - ptrsz; i += 1) {
-			ptrptr: void* = *cast(void**)(cast(size_t)ptr + i);
-			if (scan(ptrptr)) {
 				newPtr = true;
 			}
 		}
@@ -403,13 +393,13 @@ protected:
 			return false;
 		}
 		if (e.isSlab) {
-			return scan(ptr, cast(Slab*)e);
+			return scanHit(ptr, cast(Slab*)e);
 		} else {
-			return scan(ptr, cast(Large*)e);
+			return scanHit(ptr, cast(Large*)e);
 		}
 	}
 
-	fn scan(ptr: void*, slab: Slab*) bool
+	fn scanHit(ptr: void*, slab: Slab*) bool
 	{
 		/* Ensure we scan the whole slot, regardless of where the user's
 		 * pointer points to in the range.
@@ -429,7 +419,7 @@ protected:
 		return true;
 	}
 
-	fn scan(ptr: void*, large: Large*) bool
+	fn scanHit(ptr: void*, large: Large*) bool
 	{
 		if (large.isMarked) {
 			return false;
