@@ -9,6 +9,40 @@ fn pages_map(addr: void*, size: size_t) void*
 {
 	prot := Prot.Read | Prot.Write;
 	flags := Map.Private | Map.Anon;
+	return 	_map(addr, size, prot, flags);
+}
+
+fn pages_reserve(addr: void*, size: size_t) void*
+{
+	prot := Prot.None;
+	flags := Map.Private | Map.Anon;
+	return 	_map(addr, size, prot, flags);
+}
+
+/// Returns: true if successful
+fn pages_commit(addr: void*, size: size_t) bool
+{
+	return mprotect(addr, size, Prot.Read | Prot.Write) == 0;
+}
+
+/// Returns: true if successful
+fn pages_uncommit(addr: void*, size: size_t) bool
+{
+	return mprotect(addr, size, Prot.None) == 0;
+}
+
+fn pages_unmap(addr: void*, size: size_t)
+{
+	ret := munmap(addr, size);
+	assert(ret != -1);
+}
+
+
+
+private:
+
+fn _map(addr: void*, size: size_t, prot: int, flags: int) void*
+{
 	ret := mmap(addr, size, prot, flags, -1, 0);
 	assert(ret !is null);
 
@@ -27,15 +61,6 @@ fn pages_map(addr: void*, size: size_t) void*
 		(addr !is null && ret is addr));
 	return ret;
 }
-
-fn pages_unmap(addr: void*, size: size_t)
-{
-	ret := munmap(addr, size);
-	assert(ret != -1);
-}
-
-
-private:
 
 // XXX: this is a bad port of mman header.
 // We should be able to use actual prot of C header soon.
@@ -66,3 +91,4 @@ version(OSX) {
 
 extern(C) fn mmap(void*, size_t, int, int, int, off_t) void*;
 extern(C) fn munmap(void*, size_t) int;
+extern(C) fn mprotect(void*, size_t, int) int;

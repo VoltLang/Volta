@@ -10,4 +10,7 @@ version (Windows) {
 } else {
 	fn pages_map(addr: void*, size: size_t) void* { return null; }
 	fn pages_unmap(addr: void*, size: size_t) {}
+	fn pages_reserve(addr: void*, size: size_t) void* { return null; }
+	fn pages_commit(addr: void*, size: size_t) bool { return false; }
+	fn pages_uncommit(addr: void*, size: size_t) bool { return false; }
 }

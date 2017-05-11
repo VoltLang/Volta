@@ -42,6 +42,7 @@ extern (Windows) fn GetSystemInfo(SYSTEM_INFO*);
 extern (Windows) fn VirtualAlloc(LPVOID, SIZE_T, DWORD, DWORD) LPVOID;
 enum DWORD MEM_COMMIT = 0x00001000;
 enum DWORD MEM_RESERVE = 0x00002000;
+enum DWORD MEM_DECOMMIT = 0x00004000;
 enum DWORD PAGE_EXECUTE_READWRITE = 0x40;
 extern (Windows) fn VirtualFree(LPVOID, SIZE_T, DWORD) BOOL;
 enum DWORD MEM_RELEASE = 0x8000;
