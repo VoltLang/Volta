@@ -12,6 +12,7 @@ RT_SRC = \
 	rt/src/vrt/vacuum/*.volt \
 	rt/src/vrt/ext/*.volt \
 	rt/src/vrt/gc/sections/*.volt \
+	rt/src/vrt/gc/util/*.volt \
 	rt/src/vrt/gc/mman/*.volt \
 	rt/src/vrt/gc/*.volt \
 	rt/src/vrt/os/*.volt
