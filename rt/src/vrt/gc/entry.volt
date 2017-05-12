@@ -9,6 +9,7 @@ import vrt.ext.stdc : calloc, free, getenv;
 import vrt.gc.sbrk;
 import vrt.gc.arena;
 import vrt.gc.sections;
+import vrt.gc.manager;
 
 
 /*
@@ -53,6 +54,7 @@ extern(C) fn vrt_gc_get_alloc_dg() AllocDg
 extern(C) fn vrt_gc_shutdown()
 {
 	heap.arena.shutdown();
+	heap.arena = null;
 }
 
 extern(C) fn vrt_gc_collect()

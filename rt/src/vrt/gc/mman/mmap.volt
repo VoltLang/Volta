@@ -63,8 +63,8 @@ fn _map(addr: void*, size: size_t, prot: int, flags: int) void*
 }
 
 // XXX: this is a bad port of mman header.
-// We should be able to use actual prot of C header soon.
-alias off_t = long; // Good for now.
+// We should be able to use an actual port of the C header soon.
+alias off_t = long;  // Good enough for now.
 
 enum Prot {
 	None	= 0x0,

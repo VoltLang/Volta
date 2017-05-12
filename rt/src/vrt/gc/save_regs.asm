@@ -31,7 +31,7 @@ __vrt_push_registers:
 	push	rbp
 	mov	rbp, rsp
 ; Not using push to make sure I not messup with stack alignement.
-; Also sub + mov is usually faster than push (not that it matter much here).
+; Also sub + mov is usually faster than push (not that it matters much here).
 %ifidn __OUTPUT_FORMAT__, win64
 	sub	rsp, 72
 %else

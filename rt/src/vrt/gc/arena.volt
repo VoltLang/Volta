@@ -9,6 +9,7 @@ import core.compiler.llvm;
 import core.object : Object;
 
 import vrt.os.thread;
+
 import vrt.gc.hit;
 import vrt.gc.mman;
 import vrt.gc.slab;
@@ -18,6 +19,7 @@ import vrt.gc.entry;
 import vrt.gc.errors;
 import vrt.gc.rbtree;
 import vrt.gc.extent;
+import vrt.gc.manager;
 import vrt.gc.sections;
 
 
@@ -46,17 +48,17 @@ enum float MULTIPLICATION_FACTOR_INCREMENT = 0.1f;
  */
 struct Arena
 {
+private:
+	// The manager needs to be placed at the start of the Arena.
+	mManager: Manager;
+
+
 public:
 	// 0 would be 1 bytes, 1 would be 2, 2 4, 3 8, etc.
 	freeSlabs: Slab*[13];
 	freePointerSlabs: Slab*[13];
 	usedSlabs: Slab*[13];
 
-	// All of the extents in a tree, ordered by memory address of the
-	// allocation. This gives use O(log n) lookup from user address to
-	// to extent info.
-	extents: RBTree;
-	internalExtents: RBTree;
 
 	stackBottom: void*;
 
@@ -65,24 +67,21 @@ public:
 
 
 protected:
-	mTotalSize: size_t;
 	mNextCollection: size_t;  // If totalSize is greater than this, a collection will trigger.
 	mMultiplicationFactor: double; // mTotalSize * this == mNextCollection.
-	mLowestPointer: void*;
-	mHighestPointer: void*;
-	mSlabStruct: Slab*;
-	mAllocCache: void[];
 
 
 public:
 	local fn allocArena() Arena*
 	{
-		return cast(Arena*)pages_map(null, typeid(Arena).size);
+		return cast(Arena*)Manager.allocGC(typeid(Arena).size);
 	}
 
 	fn setup()
 	{
 		stackBottom = vrt_get_stack_bottom();
+		mManager.setup(typeid(Arena).size);
+
 		mMultiplicationFactor = MULTIPLICATION_FACTOR_ORIGIN;
 		hits.init();
 		removes.init();
@@ -113,38 +112,11 @@ public:
 				usedSlab.freeAll();
 			}
 		}
-		// We don't just use visit/free(Extent*) because the tree might rotate.
-		node := extents.extractAny(compareExtent);
-		while (node !is null) {
-			e := cast(Extent*)node;
-			if (e.isLarge) {
-				l := cast(Large*)e;
-				if (l.hasFinalizer) {
-					obj := cast(Object)e.ptr;
-					gcAssert(obj !is null);
-					obj.__dtor();
-				}
-			}
-
-			freeMemoryToOS(e.ptr, e.size);
-			if (e.isSlab) {
-				freeSlabStruct(cast(Slab*)e);
-			} else {
-				freeLargeStruct(cast(Large*)e);
-			}
-
-			node = extents.extractAny(compareExtent);
-		}
 
 		hits.free();
 		removes.free();
-		// Clean up anything left in the alloc cache.
-		if (mAllocCache.ptr !is null) {
-			pages_unmap(mAllocCache.ptr, mAllocCache.length);
-			mAllocCache = null;
-		}
 
-		pages_unmap(cast(void*)&this, typeid(Arena).size);
+		mManager.shutdown();
 	}
 
 	fn allocEntry(typeinfo: TypeInfo, count: size_t) void*
@@ -213,9 +185,8 @@ public:
 	{
 		hits.reset();
 		removes.reset();
-		extents.visit(unmark);
-		setLowestPointer();
-		setHighestPointer();
+		mManager.treeVisit(unmark);
+		mManager.prepareForCollect();
 
 		__vrt_push_registers(scanStack);
 		foreach (section; sections) {
@@ -238,7 +209,7 @@ public:
 			}
 		}
 
-		extents.visit(freeIfUnmarked);
+		mManager.treeVisit(freeIfUnmarked);
 
 		{
 			current := removes.top();
@@ -262,7 +233,7 @@ public:
 		}
 		foreach (i, usedSlab; usedSlabs) {
 			collectSlab(usedSlab);
-			// Free empty used slabs.
+			// Free empty slabs on the used list.
 			current := usedSlab;
 			destination: Slab** = &usedSlabs[i];
 			while (current !is null) {
@@ -271,10 +242,7 @@ public:
 					if (current.usedSlots > 0) {
 						pushFreeSlab(current.order, current);
 					} else if (current.usedSlots == 0) {
-						extents.remove(&current.extent.node, compareExtent);
-						mTotalSize -= current.extent.size;
-						freeMemoryToOS(current.extent.ptr, current.extent.size);
-						freeSlabStruct(current);
+						mManager.freeSlabStructAndMem(current);
 					}
 					*destination = next;
 				} else {
@@ -292,7 +260,7 @@ public:
 	 */
 	fn totalSize() size_t
 	{
-		return mTotalSize;
+		return mManager.totalSize();
 	}
 
 protected:
@@ -312,7 +280,7 @@ protected:
 
 	fn free(ptr: void*)
 	{
-		e := getExtentFromPtr(ptr);
+		e := checkPtr(ptr);
 		if (e is null) {
 			return;
 		}
@@ -326,16 +294,12 @@ protected:
 
 	fn free(large: Large*)
 	{
-		mTotalSize -= large.extent.size;
 		if (large.hasFinalizer) {
 			obj := cast(Object)large.extent.ptr;
 			gcAssert(obj !is null);
 			obj.__dtor();
 		}
-		extents.remove(&large.extent.node, compareExtent);
-
-		freeMemoryToOS(large.extent.ptr, large.extent.size);
-		freeLargeStruct(large);
+		mManager.freeLargeStructAndMem(large);
 	}
 
 	fn free(ptr: void*, s: Slab*)
@@ -383,7 +347,7 @@ protected:
 	}
 
 	/**
-	 * Given a pointer sized number ptr, treat it like a live pointer,
+	 * Given a pointer sized number ptr, treat it as a live pointer,
 	 * and mark any Extents that it points at as live.
 	 */
 	fn scan(ptr: void*) bool
@@ -447,16 +411,18 @@ protected:
 
 	fn maybeTriggerCollection()
 	{
-		if (mTotalSize == 0) {
+		totSize := mManager.totalSize();
+
+		if (totSize == 0) {
 			return;
 		}
 		if (mNextCollection == 0) {
-			mNextCollection = cast(size_t)(mTotalSize * mMultiplicationFactor);
+			mNextCollection = cast(size_t)(totSize * mMultiplicationFactor);
 			return;
 		}
-		if (mNextCollection < mTotalSize) {
+		if (mNextCollection < totSize) {
 			collect();
-			mNextCollection = cast(size_t)(mTotalSize * mMultiplicationFactor);
+			mNextCollection = cast(size_t)(totSize * mMultiplicationFactor);
 			if (mMultiplicationFactor < MULTIPLICATION_FACTOR_MAX) {
 				mMultiplicationFactor += MULTIPLICATION_FACTOR_INCREMENT;
 			}
@@ -469,7 +435,7 @@ protected:
 		size := orderToSize(order);
 
 		// See if there is a slab in the
-		// cache, create if not.
+		// cache, create one if there isn't.
 		slab := pointer ? freePointerSlabs[order] : freeSlabs[order];
 		if (slab is null) {
 			maybeTriggerCollection();
@@ -479,11 +445,6 @@ protected:
 				// Otherwise, allocate a new slab.
 				slab = allocSlab(order, pointer);
 				pushFreeSlab(order, slab);
-				if (pointer) {
-					freePointerSlabs[order] = slab;
-				} else {
-					freeSlabs[order] = slab;
-				}
 			}
 		}
 
@@ -525,21 +486,28 @@ protected:
 
 	fn allocLarge(n: size_t, _finalizer: bool, pointer: bool) void*
 	{
-		// Do this first so we don't accedentily free the memory
+		// Do this first so we don't accidentally free the memory
 		// we just allocated. Also allocMemoryFromOS might grab
 		// a just recently freed memory region.
 		maybeTriggerCollection();
 
 		// Grab memory from the OS.
 		memorysz := roundUpToPageSize(n);
-		memory := allocMemoryFromOS(memorysz);
+		memory := mManager.allocMemoryFromOS(memorysz);
+		if (memory is null) {
+			collect();
+			memory = mManager.allocMemoryFromOS(memorysz);
+			if (memory is null) {
+				panicFailedToAlloc(memorysz);
+			}
+		}
 
 		// Grab a Large struct to hold metadata about the extent.
-		large := allocLargeStruct();
+		large := mManager.allocLargeStruct(memory, memorysz);
 
 		large.setup(ptr:memory, n:memorysz, finalizer:_finalizer,
 		            pointers:pointer);
-		extents.insert(&large.extent.node, compareExtent);
+		mManager.treeInsert(&large.extent.node, compareExtent);
 
 		return large.extent.ptr;
 	}
@@ -548,15 +516,22 @@ protected:
 	{
 		// Grab memory from the OS.
 		memorysz := orderToSize(order) * 512;
-		memory := allocMemoryFromOS(memorysz);
+		memory := mManager.allocMemoryFromOS(memorysz);
+		if (memory is null) {
+			collect();
+			memory = mManager.allocMemoryFromOS(memorysz);
+			if (memory is null) {
+				panicFailedToAlloc(memorysz);
+			}
+		}
 
 		// Grab a Slab struct to hold metadata about the slab.
-		slab := allocSlabStruct();
+		slab := mManager.allocSlabStruct(memory, memorysz);
 
 		// Finally setup the slab and return.
-		slab.setup(cast(u8)order, memory, pointer);
+		slab.setup(order:cast(u8)order, memory:memory, pointer:pointer, internal:false);
 
-		extents.insert(&slab.extent.node, compareExtent);
+		mManager.treeInsert(&slab.extent.node, compareExtent);
 
 		return slab;
 	}
@@ -565,169 +540,13 @@ protected:
 private:
 	/*
 	 *
-	 * Struct alloc functions.
-	 *
-	 */
-
-	/// Allocates a struct for a Slab extent.
-	fn allocSlabStruct() Slab*
-	{
-		/// Returns memory for a Slab, sets mSlabStrut to null if empty.
-		fn internalAlloc() Slab*
-		{
-			i := mSlabStruct.allocate(finalizer:false);
-			ptr := mSlabStruct.slotToPointer(i);
-			if (mSlabStruct.freeSlots == 0) {
-				mSlabStruct = null;
-			}
-			return cast(Slab*)ptr;
-		}
-
-		// Easy peasy.
-		if (mSlabStruct !is null) {
-			return internalAlloc();
-		}
-
-		// Here we solve the chicken and egg problem.
-		// So the slab manages itself.
-		order := sizeToOrder(typeid(Slab).size);
-		sizeOfOSAlloc := orderToSize(order) * 512;
-		memory := allocMemoryFromOS(sizeOfOSAlloc);
-		slab := cast(Slab*)memory;
-		slab.setup(order, memory, false);
-
-		// Mark that the first slot is used, as it resides
-		// there, because Slab manages itself.
-		i := slab.allocate(finalizer:false);
-
-		// So we can free from this slab.
-		internalExtents.insert(&slab.extent.node, compareExtent);
-
-		// Now we know mSlabStruct is not null, alloc from it.
-		mSlabStruct = slab;
-		return internalAlloc();
-	}
-
-	/// Free a struct for a Slab extent.
-	fn freeSlabStruct(slab: Slab*)
-	{
-		ptr := cast(void*)slab;
-		e := getExtentFromPtr(ptr, internalExtents);
-		gcAssert(internalExtents.root !is null);
-		gcAssert(e !is null);
-		gcAssert(e.isSlab);
-
-		holder := cast(Slab*)e;
-		index := holder.pointerToSlot(ptr);
-
-		holder.free(cast(u32)index);
-
-		// Does this holder hold more then itself?
-		if (holder.usedSlots > 1) {
-			return;
-		}
-
-		// Remove the holder from the tree.
-		internalExtents.remove(&holder.extent.node, compareExtent);
-
-		// Incase we are freeing the current cached mSlabStruct
-		// or if it is null, find the first mSlabStruct with a
-		// free slot and use it.
-		if (mSlabStruct is holder ||
-		    mSlabStruct is null) {
-			mSlabStruct = cast(Slab*)internalExtents.find(emptySlab);
-		}
-
-		// Free the holder and the memory it manages.
-		// But since the holder lives in the memory it manages
-		// we only need to free the managed memory, easy.
-		freeMemoryToOS(holder.extent.ptr, holder.extent.size);
-	}
-
-	/// Allocates a struct for a Large extent.
-	fn allocLargeStruct() Large*
-	{
-		return cast(Large*)allocSlabStruct();
-	}
-
-	/// Free a struct for a Large extent.
-	fn freeLargeStruct(large: Large*)
-	{
-		freeSlabStruct(cast(Slab*)large);
-	}
-
-
-	/*
-	 *
-	 * OS memory allocation functions.
-	 *
-	 */
-
-	/**
-	 * Allocates a chunk of memory from the OS.
-	 */
-	fn allocMemoryFromOS(n: size_t) void*
-	{
-		/* We're not concerned if this came from a cache or not,
-		 * mark it against mTotalSize regardless.
-		 */
-		mTotalSize += n;
-		if (n == mAllocCache.length) {
-			ptr := mAllocCache.ptr;
-			mAllocCache = null;
-			return ptr;
-		}
-
-		memory := pages_map(null, n);
-		if (memory is null) {
-			panicFailedToAlloc(n);
-		}
-		return memory;
-	}
-
-	fn freeMemoryToOS(ptr: void*, n: size_t)
-	{
-		if (mAllocCache.ptr !is null) {
-			pages_unmap(mAllocCache.ptr, mAllocCache.length);
-		}
-		mAllocCache = ptr[0 .. n];
-	}
-
-
-	/*
-	 *
 	 * Pointer checking code.
 	 *
 	 */
 
 	fn checkPtr(ptr: void*) Extent*
 	{
-		if (cast(size_t)ptr < cast(size_t)mLowestPointer || cast(size_t)ptr > cast(size_t)mHighestPointer) {
-			return null;
-		}
-		return getExtentFromPtr(ptr);
-	}
-
-	fn getExtentFromPtr(ptr: void*) Extent*
-	{
-		return getExtentFromPtr(ptr, extents);
-	}
-
-	fn getExtentFromPtr(ptr: void*, _extents: RBTree) Extent*
-	{
-		v := cast(size_t)ptr;
-		e := cast(Extent*)_extents.root;
-		while (e !is null) {
-			if (v < e.min) {
-				e = cast(Extent*)e.node.left.node;
-			} else if (v >= e.max) {
-				e = cast(Extent*)e.node.right.node;
-			} else {
-				return e;
-			}
-		}
-
-		return null;
+		return mManager.getExtentFromPtr(ptr);
 	}
 
 
@@ -736,24 +555,6 @@ private:
 	 * Extent tree helpers.
 	 *
 	 */
-
-	fn setLowestPointer()
-	{
-		e := cast(Extent*)extents.root;
-		while (e.node.left.node !is null) {
-			e = cast(Extent*)e.node.left.node;
-		}
-		mLowestPointer = cast(void*)e.min;
-	}
-
-	fn setHighestPointer()
-	{
-		e := cast(Extent*)extents.root;
-		while (e.node.right.node !is null) {
-			e = cast(Extent*)e.node.right.node;
-		}
-		mHighestPointer = cast(void*)e.max;
-	}
 
 	fn compareExtent(n1: Node*, n2: Node*) i32
 	{

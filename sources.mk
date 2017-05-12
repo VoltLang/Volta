@@ -14,6 +14,7 @@ RT_SRC = \
 	rt/src/vrt/gc/sections/*.volt \
 	rt/src/vrt/gc/util/*.volt \
 	rt/src/vrt/gc/mman/*.volt \
+	rt/src/vrt/gc/manager/*.volt \
 	rt/src/vrt/gc/*.volt \
 	rt/src/vrt/os/*.volt
 

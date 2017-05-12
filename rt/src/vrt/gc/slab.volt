@@ -51,7 +51,7 @@ public:
 
 
 public:
-	fn setup(order: u8, memory: void*, pointer:bool)
+	fn setup(order: u8, memory: void*, pointer:bool, internal:bool)
 	{
 		size := orderToSize(order);
 		extent.setupSlab(ptr:memory, n:size * MaxSlots,

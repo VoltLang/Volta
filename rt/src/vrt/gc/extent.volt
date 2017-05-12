@@ -6,6 +6,7 @@
 module vrt.gc.extent;
 
 import vrt.gc.util;
+import vrt.gc.linkednode;
 import rb = vrt.gc.rbtree;
 
 
@@ -15,7 +16,7 @@ import rb = vrt.gc.rbtree;
 struct Extent
 {
 public:
-	node: rb.Node;
+	node: UnionNode;
 
 
 private:
@@ -32,7 +33,9 @@ public:
 	enum size_t FinalizerMask = cast(size_t)1 << FinalizerShift;
 	enum size_t MarkedShift = cast(size_t)3;
 	enum size_t MarkedMask = cast(size_t)1 << MarkedShift;
-	enum size_t DataMask = SlabMask | PointersMask | FinalizerMask | MarkedMask;
+	enum size_t InternalShift = cast(size_t)4;
+	enum size_t InternalMask = cast(size_t)1 << InternalShift;
+	enum size_t DataMask = SlabMask | PointersMask | FinalizerMask | MarkedMask | InternalMask;
 
 
 public:
@@ -82,6 +85,11 @@ public:
 	@property fn max() size_t
 	{
 		return (mData & ~DataMask) + mN;
+	}
+
+	@property fn isInternal() bool
+	{
+		return cast(bool)((mData & InternalMask) >> InternalShift);
 	}
 
 	@property fn isSlab() bool

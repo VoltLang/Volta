@@ -6,7 +6,7 @@ import vrt.gc.slab;
 fn main() i32
 {
 	block: Slab;
-	block.setup(0, null, false);
+	block.setup(0, null, false, false);
 
 	// Allocate 511 blocks, check that one is left.
 	foreach (0 .. 511) {
