@@ -20,6 +20,10 @@ string printType(ir.Type type, bool alwaysGlossed = false)
 
 void write(Sink sink, ir.Type type, bool alwaysGlossed)
 {
+	if (type is null) {
+		sink("(null)");
+		return;
+	}
 	string suffix;
 	if (type.isConst) {
 		sink("const(");
