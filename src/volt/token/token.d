@@ -177,6 +177,17 @@ string tokenToString(TokenType token)
 	return _tokenToString[token];
 }
 
+
+bool isStorageTypeToken(TokenType token)
+{
+	switch (token) {
+	case TokenType.Immutable, TokenType.Const:
+		return true;
+	default:
+		return false;
+	}
+}
+
 bool isPrimitiveTypeToken(TokenType token)
 {
 	switch (token) {

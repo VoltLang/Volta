@@ -12,7 +12,7 @@ import volt.ir.copy;
 import volt.exceptions;
 import volt.errors;
 
-import volt.token.token : isPrimitiveTypeToken;
+import volt.token.token : isPrimitiveTypeToken, isStorageTypeToken;
 import volt.token.location;
 import volt.parser.base;
 import volt.parser.expression;
@@ -795,7 +795,8 @@ ParseStatus parseTypeSigils(ParserStream ps, out ir.Type outType, Location origi
 			a.loc = end.loc - origin;
 			a.base = outType;
 			outType = a;
-		} else if (isPrimitiveTypeToken(ps.peek.type)) {
+		} else if (isPrimitiveTypeToken(ps.peek.type) ||
+			isStorageTypeToken(ps.peek.type)) {
 			// Unambiguous associative array.
 			/* The expression parser can handle an identifier being maybe a type,
 			 * but not u32 (say) on its own, so handle that case here.
