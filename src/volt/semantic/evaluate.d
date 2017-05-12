@@ -67,8 +67,33 @@ ir.Constant fold(ref ir.Exp exp, out bool needCopy, TargetInfo target)
 			exp = c;
 		}
 		return c;
+	case Ternary:
+		auto c = foldTernary(exp, cast(ir.Ternary)exp, target);
+		if (c !is null) {
+			exp = c;
+		}
+		return c;
 	default:
 		return null;
+	}
+}
+
+ir.Constant foldTernary(ref ir.Exp exp, ir.Ternary ternary, TargetInfo target)
+{
+	bool conditionCopy, trueCopy, falseCopy;
+	auto condition = fold(ternary.condition, conditionCopy, target);
+	auto ifTrue = fold(ternary.ifTrue, trueCopy, target);
+	auto ifFalse = fold(ternary.ifFalse, trueCopy, target);
+	if (condition is null || ifTrue is null || ifFalse is null) {
+		return null;
+	}
+	if (!isBool(condition.type)) {
+		return null;
+	}
+	if (condition.u._bool) {
+		return ifTrue;
+	} else {
+		return ifFalse;
 	}
 }
 
