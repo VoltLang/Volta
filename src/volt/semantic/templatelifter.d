@@ -359,6 +359,11 @@ public:
 		currentTemplateDefinitionName = td.name;
 		currentInstanceType = s;
 
+		if (ti.arguments.length != td.parameters.length) {
+			throw makeExpected(ti, format("%s argument%s", td.parameters.length,
+				td.parameters.length == 1 ? "" : "s"));
+		}
+
 		auto types = new ir.Type[](ti.arguments.length);
 		foreach (i, ref arg; ti.arguments) {
 			if (td.parameters[i].type is null) {
