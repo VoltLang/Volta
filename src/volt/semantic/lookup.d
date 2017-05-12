@@ -177,7 +177,12 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
 			} else if (i == 0) {
 				throw makeFailedLookup(loc, name);
 			} else {
-				throw makeNotMember(id, cast(ir.Type) current.node, name);
+				auto t = cast(ir.Type)current.node;
+				if (t is null) {
+					throw makeFailedLookup(loc, name);
+				} else {
+					throw makeNotMember(id, t, name);
+				}
 			}
 		}
 
