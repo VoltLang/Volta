@@ -1,3 +1,3 @@
 module watt.text.format;
 
-import std.string : format;
+public import std.string : format;
