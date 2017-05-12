@@ -84,7 +84,7 @@ void createAggregateVar(LanguagePass lp, ir.Aggregate aggr)
 /**
  * Fills in the TypeInfo Variable assign, completing it.
  */
-void fileInAggregateVar(LanguagePass lp, ir.Aggregate aggr)
+void fillInAggregateVar(LanguagePass lp, ir.Aggregate aggr)
 {
 	assert(aggr.typeInfo !is null);
 	if (aggr.typeInfo.assign !is null) {

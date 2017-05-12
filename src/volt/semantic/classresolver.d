@@ -38,7 +38,7 @@ void actualizeInterface(LanguagePass lp, ir._Interface i)
 	fillInInterfaceLayoutIfNeeded(lp, i);
 	i.isActualized = true;
 
-	fileInAggregateVar(lp, i);
+	fillInAggregateVar(lp, i);
 }
 
 void actualizeClass(LanguagePass lp, ir.Class c)
@@ -56,7 +56,7 @@ void actualizeClass(LanguagePass lp, ir.Class c)
 
 	c.isActualized = true;
 
-	fileInAggregateVar(lp, c);
+	fillInAggregateVar(lp, c);
 }
 
 ir.Type rewriteThis(Context ctx, ref ir.Exp e, ir.IdentifierExp ident, bool isCall)

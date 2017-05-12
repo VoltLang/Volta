@@ -4371,7 +4371,7 @@ void resolveStruct(LanguagePass lp, ir.Struct s)
 
 	if (s.loweredNode is null) {
 		createAggregateVar(lp, s);
-		fileInAggregateVar(lp, s);
+		fillInAggregateVar(lp, s);
 	}
 }
 
@@ -4433,7 +4433,7 @@ void resolveUnion(LanguagePass lp, ir.Union u)
 	u.isActualized = true;
 
 	createAggregateVar(lp, u);
-	fileInAggregateVar(lp, u);
+	fillInAggregateVar(lp, u);
 }
 
 
