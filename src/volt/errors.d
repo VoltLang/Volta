@@ -779,7 +779,7 @@ CompilerException makeThrowNoInherits(ir.Exp exp, ir.Class clazz, string file = 
 
 CompilerException makeInvalidAAKey(ir.AAType aa, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(aa.loc, format("'%s' is an invalid AA key.", aa.key.typeString()), file, line);
+	return new CompilerError(aa.loc, format("%s is an invalid AA key. AA keys must not be mutably indirect.", aa.key.typeString()), file, line);
 }
 
 CompilerException makeBadAAAssign(ref in Location loc, string file = __FILE__, const int line = __LINE__)
