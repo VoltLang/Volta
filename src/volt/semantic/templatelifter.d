@@ -350,7 +350,9 @@ public:
 			throw makeExpected(ti.loc, "explicit mixin");
 		}
 		auto store = lookup(lp, current, ti.loc, ti.name);
-		assert(store !is null);
+		if (store is null) {
+			throw makeFailedLookup(ti.loc, ti.name);
+		}
 		auto td = cast(ir.TemplateDefinition)store.node;
 		assert(td !is null);
 		auto defstruct = td._struct;
