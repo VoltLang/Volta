@@ -190,7 +190,9 @@ ir.Exp lowerAACast(ref in Location loc, LanguagePass lp, ir.Module thisModule,
 	           realType(t).nodeType == ir.NodeType.Class) {
 		key = lowerStructAACast(loc, lp, thisModule, current, key, t);
 	} else {
-		key = buildCastSmart(loc, buildArrayTypeSmart(loc, buildVoid(loc)), key);
+		ir.Unary u = buildCastSmart(loc, buildArrayTypeSmart(loc, buildVoid(loc)), key);
+		u.internalCast = true;
+		key = u;
 	}
 
 	return key;
@@ -802,7 +804,7 @@ void lowerInterfaceCast(ref in Location loc, LanguagePass lp,
 void lowerArrayCast(ref in Location loc, LanguagePass lp, ir.Scope current,
                     ir.Unary uexp, ref ir.Exp exp)
 {
-	if (uexp.op != ir.Unary.Op.Cast) {
+	if (uexp.op != ir.Unary.Op.Cast || uexp.internalCast) {
 		return;
 	}
 
