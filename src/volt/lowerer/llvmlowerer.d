@@ -186,20 +186,15 @@ ir.Exp lowerAACast(ref in Location loc, LanguagePass lp, ir.Module thisModule,
 		}
 
 		key = buildCastSmart(loc, buildUlong(loc), key);
-	} else if (realType(t).nodeType == ir.NodeType.Struct ||
-	           realType(t).nodeType == ir.NodeType.Class) {
-		key = lowerStructAACast(loc, lp, thisModule, current, key, t);
 	} else {
-		ir.Unary u = buildCastSmart(loc, buildArrayTypeSmart(loc, buildVoid(loc)), key);
-		u.internalCast = true;
-		key = u;
+		key = lowerStructOrArrayAACast(loc, lp, thisModule, current, key, t);
 	}
 
 	return key;
 }
 
 /**
- * Given an AA key that is a struct,
+ * Given an AA key that is a struct or an array,
  * cast it in such a way that it could be given to a runtime AA function.
  *
  * Params:
@@ -210,17 +205,22 @@ ir.Exp lowerAACast(ref in Location loc, LanguagePass lp, ir.Module thisModule,
  *   key: An expression holding the key/value in its normal form.
  *   t: The type of the key or value
  */
-ir.Exp lowerStructAACast(ref in Location loc, LanguagePass lp, ir.Module thisModule,
+ir.Exp lowerStructOrArrayAACast(ref in Location loc, LanguagePass lp, ir.Module thisModule,
                             ir.Scope current, ir.Exp key, ir.Type t)
 {
+	ir.Type base = buildUlong(loc);
+	auto at = t.toArrayTypeChecked();
+	if (at !is null) {
+		base = at.base;
+	}
 	auto concatfn = getArrayAppendFunction(loc, lp, thisModule,
-	                                       buildArrayType(loc, buildUlong(loc)),
-	                                       buildUlong(loc), false);
+	                                       buildArrayTypeSmart(loc, base),
+	                                       base, false);
 	auto keysfn = lp.aaGetKeys;
 	auto valuesfn = lp.aaGetValues;
 
 	// ulong[] array;
-	auto atype = buildArrayType(loc, buildUlong(loc));
+	auto atype = buildArrayTypeSmart(loc, base);
 	auto sexp = buildStatementExp(loc);
 	auto var = buildVariableSmart(loc, copyTypeSmart(loc, atype),
 	                              ir.Variable.Storage.Function, "array");
@@ -265,7 +265,7 @@ ir.Exp lowerStructAACast(ref in Location loc, LanguagePass lp, ir.Module thisMod
 		case ir.NodeType.PrimitiveType:
 		case ir.NodeType.Class:
 		case ir.NodeType.AAType:
-			addElement(buildCastSmart(loc, buildUlong(loc), e), statements);
+			addElement(buildCastSmart(loc, base, e), statements);
 			break;
 		default:
 			throw panicUnhandled(t, format("aa aggregate key type '%s'", t.nodeType));
@@ -313,7 +313,7 @@ ir.Exp lowerStructAACast(ref in Location loc, LanguagePass lp, ir.Module thisMod
 	// barray.length = exps.length * typeid(ulong).size;
 	auto lenaccess = buildArrayLength(loc, lp.target, eref(outvar));
 	auto mul = buildBinOp(loc, ir.BinOp.Op.Mul, buildArrayLength(loc, lp.target, eref(var)),
-	                      buildConstantSizeT(loc, lp.target, 8));
+	                      buildConstantSizeT(loc, lp.target, size(lp.target, base)));
 	auto lenass = buildAssign(loc, lenaccess, mul);
 	buildExpStat(loc, sexp, lenass);
 
@@ -804,7 +804,7 @@ void lowerInterfaceCast(ref in Location loc, LanguagePass lp,
 void lowerArrayCast(ref in Location loc, LanguagePass lp, ir.Scope current,
                     ir.Unary uexp, ref ir.Exp exp)
 {
-	if (uexp.op != ir.Unary.Op.Cast || uexp.internalCast) {
+	if (uexp.op != ir.Unary.Op.Cast) {
 		return;
 	}
 

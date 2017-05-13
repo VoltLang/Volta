@@ -226,7 +226,6 @@ public:
 	Exp dupBeginning;
 	Exp dupEnd;
 	bool fullShorthand;  // This came from new foo[..], not [0 .. $].
-	bool internalCast;   // Do not lower.
 
 public:
 	this() { super(NodeType.Unary); }
@@ -250,7 +249,6 @@ public:
 		this.dupBeginning = old.dupBeginning;
 		this.dupEnd = old.dupEnd;
 		this.fullShorthand = old.fullShorthand;
-		this.internalCast = old.internalCast;
 	}
 }
 
