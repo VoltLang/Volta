@@ -106,7 +106,8 @@ public:
 		gatherer.addScope(mod);
 		assert(mod.myScope !is null);
 
-		current.addScope(i, mod.myScope, i.bind.value);
+		auto store = current.addScope(i, mod.myScope, i.bind.value);
+		store.importBindAccess = i.access;
 	}
 
 	/**
