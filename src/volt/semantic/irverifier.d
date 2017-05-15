@@ -241,7 +241,7 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ir.Module m) { return checkNode(m); }
+	override Status enter(ir.Module m) { super.enter(m); return checkNode(m); }
 	override Status enter(ir.Import i) { return checkNode(i); }
 	override Status enter(ir.Unittest u) { return checkNode(u); }
 	override Status enter(ir.FunctionParam fp) { return checkNode(fp); }
@@ -288,7 +288,7 @@ public:
 	override Status enter(ir.ArrayType array) { return checkNode(array); }
 	override Status enter(ir.StaticArrayType array) { return checkNode(array); }
 	override Status enter(ir.AmbiguousArrayType array) { return checkNode(array); }
-	override Status enter(ir.Function func) { return checkNode(func); }
+	override Status enter(ir.Function func) { super.enter(func); return checkNode(func); }
 	override Status enter(ir.Attribute attr) { return checkNode(attr); }
 	override Status enter(ir.Alias a) { return checkNode(a); }
 	override Status enter(ir.TypeOf typeOf) { return checkNode(typeOf); }
