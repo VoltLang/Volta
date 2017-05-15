@@ -81,6 +81,13 @@ public:
 	override Status enter(ir.DelegateType dt) { mangleType(dt); return Continue; }
 	override Status visit(ir.TypeReference tr) { mangleType(tr); return Continue; }
 	override Status enter(ir.AAType aat) { mangleType(aat); return Continue; }
+	override Status visit(ir.NullType nt) { mangleType(nt); return Continue; }
+	override Status enter(ir.AmbiguousArrayType array) { mangleType(array); return Continue; }
+	override Status enter(ir.Attribute attr) { mangleType(attr); return Continue; }
+	override Status enter(ir.TypeOf typeOf) { mangleType(typeOf); return Continue; }
+	override Status enter(ir.EnumDeclaration ed) { mangleType(ed); return Continue; }
+	override Status visit(ir.AutoType at) { mangleType(at); return Continue; }
+	override Status visit(ir.NoType at) { mangleType(at); return Continue; }
 
 	override Status enter(ir.Function func)
 	{
