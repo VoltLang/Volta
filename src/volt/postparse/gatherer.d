@@ -119,6 +119,10 @@ void gather(ir.Scope current, ir.Variable v, Where where, ir.Function[] function
 	}
 
 	checkInvalid(current, v, v.name);
+	auto store = current.getStore(v.name);
+	if (store !is null) {
+		throw makeError(v.loc, format("'%s' is in use @ %s.", v.name, store.node.loc.toString()));
+	}
 	current.addValue(v, v.name);
 
 	if (v.storage != ir.Variable.Storage.Invalid) {
