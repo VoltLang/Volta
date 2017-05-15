@@ -2256,11 +2256,6 @@ public:
 	 *
 	 */
 
-	override Status debugVisitNode(ir.Node n)
-	{
-		return Continue;
-	}
-
 	override Status visit(ir.PrimitiveType type)
 	{
 		wStorageTypes(type);

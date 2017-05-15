@@ -210,8 +210,6 @@ public abstract:
 	Visitor.Status visit(ref ir.Exp, ir.ExpReference);
 	Visitor.Status visit(ref ir.Exp, ir.TokenExp);
 	Visitor.Status visit(ref ir.Exp, ir.StoreExp);
-
-	Status debugVisitNode(ir.Node n);
 }
 
 alias VisitorStop = Visitor.Status.Stop;
@@ -402,8 +400,6 @@ override:
 	Status visit(ref ir.Exp, ir.IdentifierExp){ return Continue; }
 	Status visit(ref ir.Exp, ir.TokenExp){ return Continue; }
 	Status visit(ref ir.Exp, ir.StoreExp){ return Continue; }
-
-	Status debugVisitNode(ir.Node) { return Continue; }
 }
 
 
@@ -425,11 +421,6 @@ out (result) {
 	assert(result != VisitorContinueParent);
 }
 body {
-	auto status = av.debugVisitNode(n);
-	if (status != VisitorContinue) {
-		return parentContinue(status);
-	}
-
 	final switch (n.nodeType) with (ir.NodeType) {
 	/*
 	 * Top Levels.
@@ -614,11 +605,6 @@ body {
 
 Visitor.Status acceptExp(ref ir.Exp exp, Visitor av)
 {
-	auto status = av.debugVisitNode(exp);
-	if (status != VisitorContinue) {
-		return parentContinue(status);
-	}
-
 	switch (exp.nodeType) with (ir.NodeType) {
 	case Constant:
 		return acceptConstant(exp, exp.toConstantFast(), av);

@@ -48,14 +48,39 @@ public:
 		aggregateDepth--;
 	}
 
-	override Status enter(ir.Struct s) { push(s.name); return Continue; }
+	override Status enter(ir.Struct s)
+	{
+		mangleType(s);
+		mangleType(s.loweredNode);
+		push(s.name);
+		return Continue;
+	}
 	override Status leave(ir.Struct s) { pop(s.name); return Continue; }
 
-	override Status enter(ir.Union u) { push(u.name); return Continue; }
+	override Status enter(ir.Union u) { mangleType(u); push(u.name); return Continue; }
 	override Status leave(ir.Union u) { pop(u.name); return Continue; }
 
-	override Status enter(ir.Class c) { push(c.name); return Continue; }
+	override Status enter(ir.Class c)
+	{
+		mangleType(c);
+		mangleType(c.layoutStruct);
+		mangleType(c.vtableVariable.type);
+		mangleType(c.initVariable.type);
+		push(c.name);
+		return Continue;
+	}
 	override Status leave(ir.Class c) { pop(c.name); return Continue; }
+
+	override Status visit(ir.PrimitiveType pt) { mangleType(pt); return Continue; }
+	override Status enter(ir.ArrayType at) { mangleType(at); return Continue; }
+	override Status enter(ir.StaticArrayType sat) { mangleType(sat); return Continue; }
+	override Status enter(ir.PointerType pt) { mangleType(pt); return Continue; }
+	override Status enter(ir.Enum e) { mangleType(e); return Continue; }
+	override Status enter(ir._Interface i) { mangleType(i); return Continue; }
+	override Status enter(ir.FunctionType ft) { mangleType(ft); return Continue; }
+	override Status enter(ir.DelegateType dt) { mangleType(dt); return Continue; }
+	override Status visit(ir.TypeReference tr) { mangleType(tr); return Continue; }
+	override Status enter(ir.AAType aat) { mangleType(aat); return Continue; }
 
 	override Status enter(ir.Function func)
 	{
@@ -82,6 +107,12 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.FunctionParam fp)
+	{
+		mangleType(fp.type);
+		return Continue;
+	}
+
 	override Status leave(ir.Function func)
 	{
 		pop(func.name);
@@ -91,6 +122,7 @@ public:
 
 	override Status enter(ir.Alias a)
 	{
+		mangleType(a.type);
 		if (a.type is null ||
 		    a.type.mangledName != "") {
 			return Continue;
@@ -101,6 +133,8 @@ public:
 
 	override Status enter(ir.Variable v)
 	{
+		mangleType(v.type);
+
 		if (v.mangledName !is null) {
 			return Continue;
 		}
@@ -125,17 +159,16 @@ public:
 		return Continue;
 	}
 
-	override Status debugVisitNode(ir.Node n)
+	void mangleType(ir.Node n)
 	{
 		auto t = cast(ir.Type) n;
 		if (t is null) {
-			return Continue;
+			return;
 		}
 
 		if (t.mangledName != "") {
-			return Continue;
+			return;
 		}
 		t.mangledName = mangle(t);
-		return Continue;
 	}
 }
