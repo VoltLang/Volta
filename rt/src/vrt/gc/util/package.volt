@@ -56,7 +56,7 @@ version (Linux || OSX) {
 		return cast(size_t)sysconf(_SC_PAGESIZE);
 	}
 } else version (Windows) {
-	import vrt.ext.windows;
+	import core.c.windows;
 
 	fn getPageSize() size_t
 	{

@@ -4,7 +4,7 @@ module vrt.gc.mman.windows;
 
 version (Windows):
 
-import vrt.ext.windows;
+import core.c.windows;
 
 
 fn pages_map(addr: void*, size: size_t) void*

@@ -55,6 +55,7 @@ alias HMENU = HANDLE;
 alias PROC = void*;  // This is a guess.
 alias SHORT = i16;
 alias LARGE_INTEGER = i64;
+alias SIZE_T = size_t;
 
 
 enum TRUE = 1;
@@ -192,7 +193,15 @@ fn ReadFile(HANDLE, LPVOID, DWORD, LPDWORD, LPOVERLAPPED) BOOL;
 
 struct SYSTEM_INFO
 {
-	wReserved: DWORD;
+	union _u {
+		dwOemId: DWORD;
+		struct _s {
+			wProcessorArchitecture: WORD;
+			wReserved: WORD;
+		}
+		s: _s;
+	}
+	u: _u;
 	dwPageSize: DWORD;
 	lpMinimumApplicationAddress: LPVOID;
 	lpMaximumApplicationAddress: LPVOID;
@@ -724,3 +733,12 @@ fn GetSystemMetrics(i32) i32;
 
 fn QueryPerformanceFrequency(LARGE_INTEGER*) BOOL;
 fn QueryPerformanceCounter(LARGE_INTEGER*) BOOL;
+
+fn VirtualAlloc(LPVOID, SIZE_T, DWORD, DWORD) LPVOID;
+fn VirtualFree(LPVOID, SIZE_T, DWORD) BOOL;
+
+enum DWORD MEM_COMMIT = 0x00001000;
+enum DWORD MEM_RESERVE = 0x00002000;
+enum DWORD MEM_DECOMMIT = 0x00004000;
+enum DWORD PAGE_EXECUTE_READWRITE = 0x40;
+enum DWORD MEM_RELEASE = 0x8000;
