@@ -672,7 +672,7 @@ void handleArgumentLabelsIfNeeded(Context ctx, ir.Postfix postfix,
 			if (auto p = arg in labels) {
 				continue;
 			}
-			postfix.arguments ~= def;
+			postfix.arguments ~= copyExp(def.loc, def);
 			postfix.arguments[$-1].loc = def.loc;
 			postfix.argumentLabels ~= arg;
 			postfix.argumentTags ~= ir.Postfix.TagKind.None;
