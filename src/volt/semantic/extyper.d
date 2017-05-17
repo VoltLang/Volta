@@ -1217,9 +1217,11 @@ void extypePostfixIndex(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	case StaticArrayType:
 	case PointerType:
 	case ArrayType:
-		// TODO
-		//auto sizeT = buildSizeT(exp.loc, ctx.lp);
-		//checkAndDoConvert(ctx, sizeT, postfix.arguments[0]);
+		auto sizeT = buildSizeT(exp.loc, ctx.lp.target);
+		auto argType = getExpType(postfix.arguments[0]);
+		if (!isIntegralOrBool(realType(argType))) {
+			throw makeBadImplicitCast(postfix, argType, sizeT);
+		}
 		break;
 	default:
 		throw makeInvalidIndexValue(exp, errorType);
