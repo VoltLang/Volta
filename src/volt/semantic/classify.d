@@ -1356,16 +1356,20 @@ ir.Aggregate opOverloadableOrNull(ir.Type t)
 string overloadName(ir.BinOp.Op op)
 {
 	switch (op) with (ir.BinOp.Op) {
-	case Equal:     return "opEquals";
-	case Sub:       return "opSub";
-	case Add:       return "opAdd";
-	case Mul:       return "opMul";
-	case Div:       return "opDiv";
-	case SubAssign: return "opSubAssign";
-	case AddAssign: return "opAddAssign";
-	case MulAssign: return "opMulAssign";
-	case DivAssign: return "opDivAssign";
-	default:        return "";
+	case Equal:        return "opEquals";
+	case Sub:          return "opSub";
+	case Add:          return "opAdd";
+	case Mul:          return "opMul";
+	case Div:          return "opDiv";
+	case SubAssign:    return "opSubAssign";
+	case AddAssign:    return "opAddAssign";
+	case MulAssign:    return "opMulAssign";
+	case DivAssign:    return "opDivAssign";
+	case Greater:      return "opCmp";
+	case GreaterEqual: return "opCmp";
+	case Less:         return "opCmp";
+	case LessEqual:    return "opCmp";
+	default:           return "";
 	}
 }
 

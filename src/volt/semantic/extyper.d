@@ -1968,6 +1968,12 @@ ir.Type opOverloadRewrite(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 		return null;
 	}
 
+	if (binop.op == ir.BinOp.Op.Greater || binop.op == ir.BinOp.Op.GreaterEqual ||
+		binop.op == ir.BinOp.Op.Less || binop.op == ir.BinOp.Op.LessEqual) {
+		exp = buildBinOp(binop.loc, binop.op, exp, buildConstantInt(binop.loc, 0));
+		return buildBool(binop.loc);
+	}
+
 	if (neg) {
 		exp = buildNot(loc, exp);
 		return buildBool(binop.loc);
