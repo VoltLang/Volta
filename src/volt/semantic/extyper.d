@@ -1995,8 +1995,8 @@ ir.Type opOverloadRewrite(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 		return buildBool(binop.loc);
 	}
 
-	if (flipped && (binop.op != ir.BinOp.Op.Equal ||
-		binop.op != ir.BinOp.Op.Add || binop.op != ir.BinOp.Op.Mul)) {
+	if (flipped && (binop.op != ir.BinOp.Op.Equal &&
+		binop.op != ir.BinOp.Op.Add && binop.op != ir.BinOp.Op.Mul)) {
 		return null;
 	}
 
