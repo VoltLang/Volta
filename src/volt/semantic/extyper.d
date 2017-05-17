@@ -1951,6 +1951,21 @@ ir.Function rewriteOperator(Context ctx, ref ir.Exp exp, string overloadName, ir
 	return func;
 }
 
+ir.BinOp.Op maybeInvertCmp(ir.BinOp.Op op, bool invert)
+{
+	if (!invert) {
+		return op;
+	}
+	switch (op) with (ir.BinOp.Op) {
+	case Greater: return Less;
+	case GreaterEqual: return LessEqual;
+	case Less: return Greater;
+	case LessEqual: return GreaterEqual;
+	default:
+		return op;
+	}
+}
+
 /**
  * If the given binop is working on an aggregate
  * that overloads that operator, rewrite a call to that overload.
@@ -1964,14 +1979,25 @@ ir.Type opOverloadRewrite(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 		return null;
 	}
 	auto func = rewriteOperator(ctx, exp, overfn, binop.left, [binop.right]);
+	auto flipped = false;
 	if (func is null) {
-		return null;
+		func = rewriteOperator(ctx, exp, overfn, binop.right, [binop.left]);
+		flipped = true;
+		if (func is null) {
+			return null;
+		}
 	}
 
 	if (binop.op == ir.BinOp.Op.Greater || binop.op == ir.BinOp.Op.GreaterEqual ||
 		binop.op == ir.BinOp.Op.Less || binop.op == ir.BinOp.Op.LessEqual) {
-		exp = buildBinOp(binop.loc, binop.op, exp, buildConstantInt(binop.loc, 0));
+		exp = buildBinOp(binop.loc, maybeInvertCmp(binop.op, flipped),
+			exp, buildConstantInt(binop.loc, 0));
 		return buildBool(binop.loc);
+	}
+
+	if (flipped && (binop.op != ir.BinOp.Op.Equal ||
+		binop.op != ir.BinOp.Op.Add || binop.op != ir.BinOp.Op.Mul)) {
+		return null;
 	}
 
 	if (neg) {
