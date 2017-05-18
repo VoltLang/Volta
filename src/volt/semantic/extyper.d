@@ -1657,6 +1657,10 @@ void extypeUnaryNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 	ctx.lp.actualize(_class);
 
 	auto func = selectFunction(_class.userConstructors, _unary.argumentList, _unary.loc);
+	if (func.access != ir.Access.Public &&
+		getModuleFromScope(_unary.loc, _class.myScope) !is getModuleFromScope(_unary.loc, ctx.current)) {
+		throw makeBadAccess(_class.loc, "this", func.access);
+	}
 	_unary.ctor = func;
 
 	ctx.lp.resolve(ctx.current, func);

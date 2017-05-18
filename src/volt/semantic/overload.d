@@ -175,7 +175,8 @@ ir.Function selectFunction(scope ir.Function[] functions, ir.Type[] arguments, i
 	ir.Access lastAccess = functions[0].access;
 	for (size_t i = 1; i < functions.length; ++i) {
 		auto outFunction = functions[i];
-		if (outFunction.access != lastAccess) {
+		if (outFunction.access != lastAccess &&
+			outFunction.kind != ir.Function.Kind.Constructor) {
 			throw makeOverloadedFunctionsAccessMismatch(outFunction, functions[0]);
 		}
 	}
