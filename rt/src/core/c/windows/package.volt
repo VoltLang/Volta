@@ -10,3 +10,4 @@ version (Windows):
 public import core.c.windows.windows;
 public import core.c.windows.wgl;
 public import core.c.windows.vk;
+public import core.c.windows.winhttp;
