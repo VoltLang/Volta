@@ -1361,7 +1361,7 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 		auto val = buildVariableSmart(loc, aa.value, ir.Variable.Storage.Function, "val");
 		ptr.assign = buildCall(loc, rtFn, [builtin.children[0], builtin.children[1]]);
 		ptr.assign = buildCastSmart(loc, buildPtrSmart(loc, aa.value), ptr.assign);
-		val.assign = builtin.children[2];
+		val.assign = buildCastSmart(loc, aa.value, builtin.children[2]);
 		sexp.statements ~= ptr;
 		sexp.statements ~= val;
 		// if (ptr !is null) { val = *ptr; }
