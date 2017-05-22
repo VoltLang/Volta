@@ -2,7 +2,7 @@
 // Copyright © 2005-2009, Sean Kelly.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 // File taken from druntime, and modified for Volt.
-module core6.c.posix.config;
+module core.c.posix.config;
 
 version (Posix):
 
