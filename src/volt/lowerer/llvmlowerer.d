@@ -229,8 +229,9 @@ ir.Exp lowerAggregateAACast(ref in Location loc, LanguagePass lp, ir.Module this
 ir.Exp lowerStructOrArrayAACast(ref in Location loc, LanguagePass lp, ir.Module thisModule,
                             ir.Scope current, ir.Exp key, ir.Type t)
 {
-	auto st = cast(ir.Aggregate)realType(t);
-	if (st !is null) {
+	if (t.nodeType != ir.NodeType.ArrayType) {
+		auto st = cast(ir.Aggregate)realType(t);
+		panicAssert(key, st !is null);
 		return lowerAggregateAACast(loc, lp, thisModule, current, key, st);
 	}
 
@@ -1373,33 +1374,6 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 		sexp.statements ~= ifStat;
 		sexp.exp = buildExpReference(loc, val, val.name);
 		exp = sexp;
-		/+
-		bool keyIsArray = aa.key.nodeType != ir.NodeType.PrimitiveType;
-		bool valIsArray = aa.value.nodeType != ir.NodeType.PrimitiveType;
-		builtin.children[1] = lowerAAKeyCast(loc, lp, getModuleFromScope(loc, current),
-			current, builtin.children[1], aa);
-		builtin.children[2] = lowerAAValueCast(loc, lp, getModuleFromScope(loc, current),
-			current, builtin.children[2], aa);
-		ir.Function rtfn;
-		auto st = cast(ir.Aggregate)realType(aa.key);
-		if (st !is null) {
-			rtfn = lp.aaGetPtr;
-			builtin.children[2] = buildCastToVoidPtr(loc, builtin.children[2]);
-		} else if (keyIsArray && valIsArray) {
-			rtfn = lp.aaGetAA;
-		} else if (!keyIsArray && valIsArray) {
-			rtfn = lp.aaGetPA;
-		} else if (keyIsArray && !valIsArray) {
-			rtfn = lp.aaGetAP;
-		} else {
-			rtfn = lp.aaGetPP;
-		}
-		exp = buildCall(exp.loc, rtfn, builtin.children);
-		if (valIsArray) {
-			exp = buildDeref(loc, buildCastSmart(exp.loc, buildPtrSmart(loc, aa.value), exp));
-		} else {
-			exp = buildCastSmart(exp.loc, aa.value, exp);
-		}+/
 		break;
 	case AARemove:
 		if (builtin.children.length != 2) {

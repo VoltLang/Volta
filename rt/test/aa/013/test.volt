@@ -11,7 +11,7 @@ struct Foo
 struct S {
 	x: i32;
 	y: i32;
-	foo: Foo;;
+	foo: Foo;
 }
 
 int main()
@@ -21,7 +21,7 @@ int main()
 	a.x = 1; a.y = 2;
 	a.foo.y = 7;
 	b.x = 1; b.y = 2;
-	b.foo.y = 8;
+	b.foo.y = 7;
 	aa[a] = 32;
 	return aa[b] == 32 ? 0 : 1;
 }
