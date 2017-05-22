@@ -271,16 +271,16 @@ public:
 		aaGetLength = getFunctionFrom(rtAAModule, "vrt_aa_get_length");
 		aaInsertPrimitive = getFunctionFrom(rtAAModule, "vrt_aa_insert_primitive");
 		aaInsertArray = getFunctionFrom(rtAAModule, "vrt_aa_insert_array");
+		aaInsertPtr = getFunctionFrom(rtAAModule, "vrt_aa_insert_ptr");
 		aaDeletePrimitive = getFunctionFrom(rtAAModule, "vrt_aa_delete_primitive");
 		aaDeleteArray = getFunctionFrom(rtAAModule, "vrt_aa_delete_array");
+		aaDeletePtr = getFunctionFrom(rtAAModule, "vrt_aa_delete_ptr");
 		aaInPrimitive = getFunctionFrom(rtAAModule, "vrt_aa_in_primitive");
 		aaInArray = getFunctionFrom(rtAAModule, "vrt_aa_in_array");
+		aaInPtr = getFunctionFrom(rtAAModule, "vrt_aa_in_ptr");
 		aaInBinopPrimitive = getFunctionFrom(rtAAModule, "vrt_aa_in_binop_primitive");
 		aaInBinopArray = getFunctionFrom(rtAAModule, "vrt_aa_in_binop_array");
-		aaGetPP = getFunctionFrom(rtAAModule, "vrt_aa_get_pp");
-		aaGetAA = getFunctionFrom(rtAAModule, "vrt_aa_get_aa");
-		aaGetAP = getFunctionFrom(rtAAModule, "vrt_aa_get_ap");
-		aaGetPA = getFunctionFrom(rtAAModule, "vrt_aa_get_pa");
+		aaInBinopPtr = getFunctionFrom(rtAAModule, "vrt_aa_in_binop_ptr");
 
 		// core.rt.misc
 		ehThrowFunc = getFunctionFrom(rtMiscModule, "vrt_eh_throw");

@@ -367,16 +367,16 @@ public:
 	ir.Function aaGetLength;         // vrt_aa_get_length
 	ir.Function aaInsertPrimitive;   // vrt_aa_insert_primitive
 	ir.Function aaInsertArray;       // vrt_aa_insert_array
+	ir.Function aaInsertPtr;         // vrt_aa_insert_ptr
 	ir.Function aaDeletePrimitive;   // vrt_aa_delete_primitive
 	ir.Function aaDeleteArray;       // vrt_aa_delete_array
+	ir.Function aaDeletePtr;         // vrt_aa_delete_ptr
 	ir.Function aaInPrimitive;       // vrt_aa_in_primitive
 	ir.Function aaInArray;           // vrt_aa_in_array
+	ir.Function aaInPtr;             // vrt_aa_in_ptr
 	ir.Function aaInBinopPrimitive;  // vrt_aa_in_binop_primitive
 	ir.Function aaInBinopArray;      // vrt_aa_in_binop_array
-	ir.Function aaGetPP;             // vrt_aa_get_pp
-	ir.Function aaGetAA;             // vrt_aa_get_aa
-	ir.Function aaGetPA;             // vrt_aa_get_pa
-	ir.Function aaGetAP;             // vrt_aa_get_ap
+	ir.Function aaInBinopPtr;        // vrt_aa_in_binop_ptr
 
 	// core.rt.misc
 	ir.Struct moduleInfo;

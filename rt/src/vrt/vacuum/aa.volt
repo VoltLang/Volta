@@ -88,50 +88,6 @@ extern(C) fn vrt_aa_dup(rbtv: void*) void*
 	return cast(void*)newRbt;
 }
 
-// vrt_aa_get_keyvalue (e.g. vrt_aa_get_pa key == primitive, value == array)
-// aa.get("key", null) => vrt_aa_get_primitive(aa, "key", null)
-
-extern(C) fn vrt_aa_get_pp(rbtv: void*, key: u64, _default: u64) u64
-{
-	tn: TreeNode* = vrt_aa_lookup_node_primitive(rbtv, key);
-	if (tn is null) {
-		return _default;
-	} else {
-		return tn.value.unsigned;
-	}
-}
-
-extern(C) fn vrt_aa_get_aa(rbtv: void*, key: void[], _default: void[]) void*
-{
-	ret: void[];
-	if (vrt_aa_in_array(rbtv, key, cast(void*)&ret)) {
-		return cast(void*)&ret;
-	} else {
-		return _default.ptr;
-	}
-}
-
-extern(C) fn vrt_aa_get_ap(rbtv: void*, key: void[], _default: u64) u64
-{
-	tn: TreeNode* = vrt_aa_lookup_node_array(rbtv, key);
-	if (tn is null) {
-		return _default;
-	} else {
-		return tn.value.unsigned;
-	}
-}
-
-extern(C) fn vrt_aa_get_pa(rbtv: void*, key: u64, _default: void[]) void*
-{
-	ret: void[];
-	if (vrt_aa_in_primitive(rbtv, key, cast(void*) &ret)) {
-		return cast(void*)&ret;
-	} else {
-		return _default.ptr;
-	}
-}
-
-
 private fn vrt_aa_lookup_node_primitive(rbtv: void*, key: u64) TreeNode*
 {
 	if (rbtv is null) {
@@ -147,6 +103,30 @@ private fn vrt_aa_lookup_node_primitive(rbtv: void*, key: u64) TreeNode*
 		} else if (node.key.unsigned > key) {
 			node = node.right;
 		} else { // we found it!
+			return node;
+		}
+	}
+
+	return null;
+}
+
+private fn vrt_aa_lookup_node_ptr(rbtv: void*, key: void*) TreeNode*
+{
+	if (rbtv is null) {
+		return null;
+	}
+
+	rbt := cast(RedBlackTree*)rbtv;
+	node: TreeNode* = rbt.root;
+
+	while (node !is null) {
+		comparison: i32 = vrt_memcmp(node.key.ptr, key, rbt.key.size);
+		if (comparison < 0) {
+			node = node.left;
+		} else if (comparison > 0) {
+			node = node.right;
+		} else {
+			// Found it.
 			return node;
 		}
 	}
@@ -225,6 +205,26 @@ extern(C) fn vrt_aa_in_array(rbtv: void*, key: void[], ret: void*) bool
 	return true;
 }
 
+extern(C) fn vrt_aa_in_ptr(rbtv: void*, key: void*, ret: void*) bool
+{
+	if (rbtv is null) {
+		return false;
+	}
+
+	rbt: RedBlackTree* = cast(RedBlackTree*)rbtv;
+	node: TreeNode* = vrt_aa_lookup_node_ptr(rbtv, key);
+	if (node is null) {
+		return false;
+	}
+
+	if (rbt.isValuePtr) {
+		__llvm_memcpy(ret, node.value.ptr, rbt.value.size, 0, false);
+	} else {
+		__llvm_memcpy(ret, cast(void*)&(node.value), rbt.value.size, 0, false);
+	}
+	return true;
+}
+
 extern(C) fn vrt_aa_in_binop_array(rbtv: void*, key: void[]) void*
 {
 	if (rbtv is null) {
@@ -251,6 +251,24 @@ extern(C) fn vrt_aa_in_binop_primitive(rbtv: void*, key: u64) void*
 
 	rbt: RedBlackTree* = cast(RedBlackTree*)rbtv;
 	tn: TreeNode* = vrt_aa_lookup_node_primitive(rbtv, key);
+	if (tn is null) {
+		return null;
+	}
+	if (rbt.isValuePtr) {
+		return tn.value.ptr;
+	} else {
+		return cast(void*)&tn.value;
+	}
+}
+
+extern(C) fn vrt_aa_in_binop_ptr(rbtv: void*, key: void*) void*
+{
+	if (rbtv is null) {
+		return null;
+	}
+
+	rbt: RedBlackTree* = cast(RedBlackTree*)rbtv;
+	tn: TreeNode* = vrt_aa_lookup_node_ptr(rbtv, key);
 	if (tn is null) {
 		return null;
 	}
@@ -302,13 +320,10 @@ private fn vrt_aa_replace_node(rbt: RedBlackTree*, old: TreeNode*, new_: TreeNod
 	}
 }
 
-extern(C) fn vrt_aa_insert_primitive(rbtv: void*, key: u64, value: void*)
+private fn vrt_aa_new_node(rbt: RedBlackTree*, value: void*) TreeNode*
 {
-	rbt := cast(RedBlackTree*)rbtv;
-	// Maybe put allocation of a new node into an external function
-	inserted_node: TreeNode* = new TreeNode;
-	inserted_node.key.unsigned = key;
-	inserted_node.red = true; // we have to check the rules afterwards and fix the tree!
+	inserted_node := new TreeNode;
+	inserted_node.red = true;  // We have to check the rules afterwards and fix the tree.
 
 	if (rbt.isValuePtr) {
 		// allocate more memory for value
@@ -318,6 +333,56 @@ extern(C) fn vrt_aa_insert_primitive(rbtv: void*, key: u64, value: void*)
 	} else {
 		__llvm_memcpy(cast(void*)&(inserted_node.value), value, rbt.value.size, 0, false);
 	}
+
+	return inserted_node;
+}
+
+extern(C) fn vrt_aa_insert_ptr(rbtv: void*, key: void*, value: void*)
+{
+	rbt := cast(RedBlackTree*)rbtv;
+	inserted_node := vrt_aa_new_node(rbt, value);
+	inserted_node.key.ptr = key;
+
+	if (rbt.root is null) {
+		rbt.root = inserted_node;
+	} else {
+		node: TreeNode* = rbt.root;
+
+		continue_ := true;
+		while (continue_) {
+			comparison: i32 = vrt_memcmp(node.key.ptr, key, rbt.key.size);
+			if (comparison < 0) {
+				if (node.left is null) {
+					node.left = inserted_node;
+					continue_ = false;
+				} else {
+					node = node.left;
+				}
+			} else if(comparison > 0) {
+				if (node.right is null) {
+					node.right = inserted_node;
+					continue_ = false;
+				} else {
+					node = node.right;
+				}
+			} else {
+				node.value = inserted_node.value;
+				return;
+			}
+		}
+
+		inserted_node.parent = node;
+	}
+
+	rbt.length++;
+	vrt_aa_insert_case1(rbt, inserted_node);
+}
+
+extern(C) fn vrt_aa_insert_primitive(rbtv: void*, key: u64, value: void*)
+{
+	rbt := cast(RedBlackTree*)rbtv;
+	inserted_node := vrt_aa_new_node(rbt, value);
+	inserted_node.key.unsigned = key;
 
 	if (rbt.root is null) {
 		rbt.root = inserted_node;
@@ -366,18 +431,8 @@ extern(C) fn vrt_aa_insert_primitive(rbtv: void*, key: u64, value: void*)
 extern(C) fn vrt_aa_insert_array(rbtv: void*, key: void[], value: void*)
 {
 	rbt := cast(RedBlackTree*)rbtv;
-	inserted_node := new TreeNode;
+	inserted_node := vrt_aa_new_node(rbt, value);
 	inserted_node.key.array = key;
-	inserted_node.red = true; // we have to check the rules afterwards and fix the tree!
-
-	if (rbt.isValuePtr) {
-		// allocate more memory for value
-		mem: void* = allocDg(rbt.value, 1);
-		__llvm_memcpy(mem, value, rbt.value.size, 0, false);
-		inserted_node.value.ptr = mem;
-	} else {
-		__llvm_memcpy(cast(void*)&(inserted_node.value), value, rbt.value.size, 0, false);
-	}
 
 	if (rbt.root is null) {
 		rbt.root = inserted_node;
@@ -530,6 +585,13 @@ extern(C) fn vrt_aa_delete_array(rbtv: void*, key: void[]) bool
 	return vrt_aa_delete_node(rbt, node);
 }
 
+extern(C) fn vrt_aa_delete_ptr(rbtv: void*, key: void*) bool
+{
+	rbt: RedBlackTree* = cast(RedBlackTree*)rbtv;
+	node: TreeNode* = vrt_aa_lookup_node_ptr(rbtv, key);
+	return vrt_aa_delete_node(rbt, node);
+}
+
 fn vrt_aa_delete_node(rbt: RedBlackTree*, node: TreeNode*) bool
 {
 	if (node is null) {
@@ -615,7 +677,7 @@ private fn vrt_aa_walk(rbt: RedBlackTree*, node: TreeNode*, getKey: bool, argSiz
 			__llvm_memcpy(&arr[currentIndex], tn.ptr, argSize, 0, false);
 		} else {
 			if (getKey && isAggregate(rbt.key)) {
-				__llvm_memcpy(&arr[currentIndex], cast(void*)&tn.array[0], argSize, 0, false);
+				__llvm_memcpy(&arr[currentIndex], tn.ptr, argSize, 0, false);
 			} else {
 				__llvm_memcpy(&arr[currentIndex], cast(void*)&tn, argSize, 0, false);
 			}

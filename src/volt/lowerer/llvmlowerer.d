@@ -63,8 +63,10 @@ void lowerAAInsert(ref in Location loc, LanguagePass lp, ir.Module thisModule, i
 	ir.Function aaInsertFn;
 	if (aa.key.nodeType == ir.NodeType.PrimitiveType) {
 		aaInsertFn = lp.aaInsertPrimitive;
-	} else {
+	} else if (aa.key.nodeType == ir.NodeType.ArrayType) {
 		aaInsertFn = lp.aaInsertArray;
+	} else {
+		aaInsertFn = lp.aaInsertPtr;
 	}
 	ir.Exp varExp;
 	if (buildif) {
@@ -119,8 +121,10 @@ void lowerAALookup(ref in Location loc, LanguagePass lp, ir.Module thisModule, i
 	ir.Function inAAFn;
 	if (aa.key.nodeType == ir.NodeType.PrimitiveType) {
 		inAAFn = lp.aaInPrimitive;
-	} else {
+	} else if (aa.key.nodeType == ir.NodeType.ArrayType) {
 		inAAFn = lp.aaInArray;
+	} else {
+		inAAFn = lp.aaInPtr;
 	}
 
 	auto thenState = buildBlockStat(loc, statExp, current);
@@ -193,6 +197,23 @@ ir.Exp lowerAACast(ref in Location loc, LanguagePass lp, ir.Module thisModule,
 	return key;
 }
 
+ir.Exp lowerAggregateAACast(ref in Location loc, LanguagePass lp, ir.Module thisModule,
+						ir.Scope current, ir.Exp key, ir.Aggregate st)
+{
+	auto sexp = buildStatementExp(loc);
+	// aggptr := new Aggregate;
+	auto aggptr = buildVariableSmart(loc, buildPtrSmart(loc, st), ir.Variable.Storage.Function, "aggptr");
+	aggptr.assign = buildNewSmart(loc, st);
+	sexp.statements ~= aggptr;
+	// *aggptr = st;
+	auto deref = buildDeref(loc, buildExpReference(loc, aggptr, aggptr.name));
+	auto assign = buildAssign(loc, deref, key);
+	buildExpStat(loc, sexp, assign);
+	// return aggptr;
+	sexp.exp = buildExpReference(loc, aggptr, aggptr.name);
+	return buildCastToVoidPtr(loc, sexp);
+}
+
 /**
  * Given an AA key that is a struct or an array,
  * cast it in such a way that it could be given to a runtime AA function.
@@ -208,6 +229,11 @@ ir.Exp lowerAACast(ref in Location loc, LanguagePass lp, ir.Module thisModule,
 ir.Exp lowerStructOrArrayAACast(ref in Location loc, LanguagePass lp, ir.Module thisModule,
                             ir.Scope current, ir.Exp key, ir.Type t)
 {
+	auto st = cast(ir.Aggregate)realType(t);
+	if (st !is null) {
+		return lowerAggregateAACast(loc, lp, thisModule, current, key, st);
+	}
+
 	ir.Type base = buildUlong(loc);
 	auto at = t.toArrayTypeChecked();
 	if (at !is null) {
@@ -1316,6 +1342,38 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 		if (aa is null) {
 			throw panic(exp.loc, "malformed BuiltinExp.");
 		}
+		// Value* ptr = cast(Value*)vrt_aa_in_binop_*(aa, key);
+		// Value val = <default>;
+		auto sexp = buildStatementExp(loc);
+		ir.Function rtFn;
+		if (aa.key.nodeType == ir.NodeType.PrimitiveType) {
+			rtFn = lp.aaInBinopPrimitive;
+		} else if (aa.key.nodeType == ir.NodeType.ArrayType) {
+			rtFn = lp.aaInBinopArray;
+		} else {
+			rtFn = lp.aaInBinopPtr;
+		}
+		builtin.children[1] = lowerAAKeyCast(loc, lp, getModuleFromScope(loc, current),
+			current, builtin.children[1], aa);
+		auto ptr = buildVariableSmart(loc, buildPtrSmart(loc, aa.value), ir.Variable.Storage.Function,
+			"ptr");
+		auto val = buildVariableSmart(loc, aa.value, ir.Variable.Storage.Function, "val");
+		ptr.assign = buildCall(loc, rtFn, [builtin.children[0], builtin.children[1]]);
+		ptr.assign = buildCastSmart(loc, buildPtrSmart(loc, aa.value), ptr.assign);
+		val.assign = builtin.children[2];
+		sexp.statements ~= ptr;
+		sexp.statements ~= val;
+		// if (ptr !is null) { val = *ptr; }
+		auto assign = buildExpStat(loc, buildAssign(loc, buildExpReference(loc, val, val.name),
+			buildDeref(loc, buildExpReference(loc, ptr, ptr.name))));
+		auto thenStat = buildBlockStat(loc, null, current, assign);
+		auto cond = buildBinOp(loc, ir.BinOp.Op.NotIs, buildExpReference(loc, ptr, ptr.name),
+			buildConstantNull(loc, buildPtrSmart(loc, aa.value)));
+		auto ifStat = buildIfStat(loc, cond, thenStat);
+		sexp.statements ~= ifStat;
+		sexp.exp = buildExpReference(loc, val, val.name);
+		exp = sexp;
+		/+
 		bool keyIsArray = aa.key.nodeType != ir.NodeType.PrimitiveType;
 		bool valIsArray = aa.value.nodeType != ir.NodeType.PrimitiveType;
 		builtin.children[1] = lowerAAKeyCast(loc, lp, getModuleFromScope(loc, current),
@@ -1323,7 +1381,11 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 		builtin.children[2] = lowerAAValueCast(loc, lp, getModuleFromScope(loc, current),
 			current, builtin.children[2], aa);
 		ir.Function rtfn;
-		if (keyIsArray && valIsArray) {
+		auto st = cast(ir.Aggregate)realType(aa.key);
+		if (st !is null) {
+			rtfn = lp.aaGetPtr;
+			builtin.children[2] = buildCastToVoidPtr(loc, builtin.children[2]);
+		} else if (keyIsArray && valIsArray) {
 			rtfn = lp.aaGetAA;
 		} else if (!keyIsArray && valIsArray) {
 			rtfn = lp.aaGetPA;
@@ -1337,7 +1399,7 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 			exp = buildDeref(loc, buildCastSmart(exp.loc, buildPtrSmart(loc, aa.value), exp));
 		} else {
 			exp = buildCastSmart(exp.loc, aa.value, exp);
-		}
+		}+/
 		break;
 	case AARemove:
 		if (builtin.children.length != 2) {
@@ -1352,8 +1414,10 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 			current, builtin.children[1], aa);
 		if (aa.key.nodeType == ir.NodeType.PrimitiveType) {
 			rtfn = lp.aaDeletePrimitive;
-		} else {
+		} else if (aa.key.nodeType == ir.NodeType.ArrayType) {
 			rtfn = lp.aaDeleteArray;
+		} else {
+			rtfn = lp.aaDeletePtr;
 		}
 		exp = buildCall(exp.loc, rtfn, builtin.children);
 		break;
@@ -1371,8 +1435,10 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 			current, builtin.children[1], aa);
 		if (aa.key.nodeType == ir.NodeType.PrimitiveType) {
 			rtfn = lp.aaInBinopPrimitive;
-		} else {
+		} else if (aa.key.nodeType == ir.NodeType.ArrayType) {
 			rtfn = lp.aaInBinopArray;
+		} else {
+			rtfn = lp.aaInBinopPtr;
 		}
 		exp = buildCall(exp.loc, rtfn, builtin.children);
 		exp = buildCast(loc, builtin.type, exp);
