@@ -7,11 +7,11 @@ import core.c.time : time, localtime;
 import watt.text.ascii : isDigit, isAlpha, isWhite;
 import watt.text.format : format;
 import watt.text.string : indexOf;
+import watt.text.vdoc : cleanComment;
 import watt.conv : toInt;
 import watt.text.utf : encode;
 
 import volt.errors;
-import volt.util.string : cleanComment;
 import volt.token.location : Location;
 import volt.token.source : Source, Mark;
 import volt.token.token : Token, TokenType, identifierType;

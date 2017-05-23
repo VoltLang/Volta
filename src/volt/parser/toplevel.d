@@ -3,6 +3,7 @@
 module volt.parser.toplevel;
 
 import watt.conv : toInt, toLower;
+import watt.text.vdoc : cleanComment;
 
 import ir = volt.ir.ir;
 import volt.ir.util;
@@ -20,7 +21,6 @@ public import volt.parser.statements : parseMixinStatement;
 import volt.parser.expression;
 import volt.parser.statements;
 import volt.parser.templates;
-import volt.util.string : cleanComment;
 
 
 ParseStatus parseModule(ParserStream ps, out ir.Module mod)

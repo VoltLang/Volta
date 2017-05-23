@@ -7,13 +7,13 @@ module volt.parser.base;
 import watt.text.format : format;
 import watt.text.string : strip, indexOf;
 import watt.text.sink : StringSink;
+import watt.text.vdoc : cleanComment;
 
 import ir = volt.ir.ir;
 
 import volt.errors;
 import volt.exceptions;
 import volt.arg : Settings;
-import volt.util.string : cleanComment;
 public import volt.token.token : Token, TokenType, tokenToString;
 import volt.token.stream : TokenStream;
 import volt.token.location : Location;
