@@ -214,7 +214,6 @@ public:
 
 		StringImportPath,
 
-		JSONDo,
 		JSONOutput,
 
 		PerfOutput,
@@ -386,9 +385,6 @@ void filterArgs(Arg[] args, ref string[] files, VersionSet ver, Settings setting
 			break;
 		case StringImportPath:
 			settings.stringImportPaths ~= arg.arg;
-			break;
-		case JSONDo:
-			settings.jsonOutput = "voltoutput.json";
 			break;
 		case JSONOutput:
 			settings.jsonOutput = arg.arg;

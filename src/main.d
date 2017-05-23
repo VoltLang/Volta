@@ -264,9 +264,6 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 		case "--dep":
 			makeArgNext(Dep);
 			continue;
-		case "--json":
-			makeArg(JSONDo);
-			continue;
 		case "-jo":
 			makeArgNext(JSONOutput);
 			continue;
@@ -466,11 +463,7 @@ bool printUsage()
 	}
 	writefln("\t--dep depfile    Dependency file (in make format).");
 	writefln("\t--simple-trace   Print the name of functions to stdout as they're run.");
-	writefln("\t--doc            Write out documentation in HTML format.");
-	writefln("\t--json           Write documentation in JSON format.");
-	writefln("\t--doc-dir        Specify a base documentation directory (implies --doc).");
-	writefln("\t-do              Specify documentation output name (implies --doc).");
-	writefln("\t-jo              Specify json output name (implies --json).");
+	writefln("\t-jo              Write documentation to specified JSON file.");
 	writefln("");
 	writefln("\t--arch           Select processer architecture: 'x86', 'x86_64', 'le32'");
 	writefln("\t--platform       Select platform: 'mingw','linux','osx','msvc','metal'");
