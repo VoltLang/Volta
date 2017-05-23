@@ -95,11 +95,6 @@ int main(string[] strArgs)
 
 bool checkArgs(string[] files, Settings settings)
 {
-	if (files.length > 1 && settings.docOutput.length > 0) {
-		writefln("-do flag incompatible with multiple modules");
-		return false;
-	}
-
 	if (files.length == 0) {
 		writefln("%s: no input files", settings.execCmd);
 		return false;
@@ -268,15 +263,6 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 			continue;
 		case "--dep":
 			makeArgNext(Dep);
-			continue;
-		case "--doc":
-			makeArg(DocDo);
-			continue;
-		case "--doc-dir":
-			makeArgNext(DocDir);
-			continue;
-		case "-do":
-			makeArgNext(DocOutput);
 			continue;
 		case "--json":
 			makeArg(JSONDo);

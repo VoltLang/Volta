@@ -34,7 +34,6 @@ import volt.util.mangledecoder;
 import volt.visitor.visitor;
 import volt.visitor.prettyprinter;
 import volt.visitor.debugprinter;
-import volt.visitor.docprinter;
 import volt.visitor.jsonprinter;
 
 import volt.postparse.missing;

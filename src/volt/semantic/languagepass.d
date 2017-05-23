@@ -16,7 +16,6 @@ import volt.token.location;
 import volt.util.perf;
 import volt.util.worktracker;
 
-import volt.visitor.docprinter;
 import volt.visitor.debugprinter;
 import volt.visitor.prettyprinter;
 

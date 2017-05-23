@@ -28,7 +28,6 @@ public:
 	bool noStdLib; ///< The --no-stdlib argument.
 	bool removeConditionalsOnly; ///< The -E argument.
 	bool simpleTrace; ///< The --simple-trace argument.
-	bool writeDocs; ///< The --doc argument.
 	bool internalD; ///< The --internal-d argument;
 	bool internalDiff; ///< The --internal-diff argument.
 	bool internalDebug; ///< The --internal-dbg argument.
@@ -78,8 +77,6 @@ public:
 
 	string[] stringImportPaths; ///< The -J arguments.
 
-	string docDir; ///< The --doc-dir argument.
-	string docOutput; ///< The -do argument.
 	string jsonOutput; ///< The -jo argument.
 
 	string perfOutput; ///< The --perf-output argument.
@@ -216,10 +213,6 @@ public:
 		FrameworkName,
 
 		StringImportPath,
-
-		DocDo,
-		DocDir,
-		DocOutput,
 
 		JSONDo,
 		JSONOutput,
@@ -399,17 +392,6 @@ void filterArgs(Arg[] args, ref string[] files, VersionSet ver, Settings setting
 			break;
 		case JSONOutput:
 			settings.jsonOutput = arg.arg;
-			break;
-		case DocDo:
-			settings.writeDocs = true;
-			break;
-		case DocDir:
-			settings.writeDocs = true;
-			settings.docDir = arg.arg;
-			break;
-		case DocOutput:
-			settings.writeDocs = true;
-			settings.docOutput = arg.arg;
 			break;
 		case PerfOutput:
 			settings.perfOutput = arg.arg;
