@@ -20,6 +20,7 @@ public import volt.parser.statements : parseMixinStatement;
 import volt.parser.expression;
 import volt.parser.statements;
 import volt.parser.templates;
+import volt.util.string : cleanComment;
 
 
 ParseStatus parseModule(ParserStream ps, out ir.Module mod)
@@ -1208,7 +1209,8 @@ ParseStatus parseAttribute(ParserStream ps, out ir.Attribute attr, bool noTopLev
 		/* Have the semantic passes apply this attribute as
 		 * doing it in the parser would require context.
 		 */
-		if (ps.comment().length > 0 && !ps.inMultiCommentBlock) {
+		bool dummy;
+		if (cleanComment(ps.comment(), dummy).length > 0 && !ps.inMultiCommentBlock) {
 			return docCommentMultiple(ps, ps.lastDocComment.loc);
 		}
 	} else {

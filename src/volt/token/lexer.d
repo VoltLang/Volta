@@ -248,7 +248,8 @@ void addIfDocComment(TokenWriter tw, Token commentToken, string s, string docsig
 		return;
 	}
 	commentToken.type = TokenType.DocComment;
-	commentToken.value = closeIndex < 0 ? cleanComment(s, commentToken.isBackwardsComment) : "@}";
+	cleanComment(s, commentToken.isBackwardsComment);
+	commentToken.value = closeIndex < 0 ? s : "@}";
 	tw.addToken(commentToken);
 }
 

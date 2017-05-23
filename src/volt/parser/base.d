@@ -13,6 +13,7 @@ import ir = volt.ir.ir;
 import volt.errors;
 import volt.exceptions;
 import volt.arg : Settings;
+import volt.util.string : cleanComment;
 public import volt.token.token : Token, TokenType, tokenToString;
 import volt.token.stream : TokenStream;
 import volt.token.location : Location;
@@ -582,7 +583,8 @@ public:
 		if (inMultiCommentBlock) {
 			oldComment = mComment[$-1];
 		}
-		if (mComment[$-1].length && !inMultiCommentBlock) {
+		bool dummy;
+		if (cleanComment(mComment[$-1], dummy).length && !inMultiCommentBlock) {
 			assert(lastDocComment.type != TokenType.None);
 			auto e = makeStrayDocComment(lastDocComment.loc);
 			e.neverIgnore = true;

@@ -196,6 +196,10 @@ string cleanComment(string comment, out bool isBackwardsComment)
 		char[] output;
 	}
 
+	if (comment.length < 2) {
+		return comment;
+	}
+
 	char commentChar;
 	if (comment[0..2] == "**") {
 		commentChar = '*';
@@ -204,7 +208,7 @@ string cleanComment(string comment, out bool isBackwardsComment)
 	} else if (comment[0..2] == "//") {
 		commentChar = '/';
 	} else {
-		assert(false, comment);
+		return comment;
 	}
 
 	bool ignoreWhitespace = true;
