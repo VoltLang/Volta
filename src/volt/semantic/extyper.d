@@ -4068,6 +4068,11 @@ void doResolveAmbiguousArrayType(Context ctx, ref ir.Type type)
 	auto aat = cast(ir.AmbiguousArrayType)type;
 	doResolveType(ctx, aat.base, null, 0);
 
+	auto iexp = aat.child.toIdentifierExpChecked();
+	string childName;
+	if (iexp !is null) {
+		childName = iexp.value;
+	}
 	auto childType = extype(ctx, aat.child, Parent.NA);
 	auto constant = fold(aat.child, ctx.lp.target);
 	if (constant is null && aat.child.nodeType == ir.NodeType.ExpReference) {
@@ -4080,11 +4085,14 @@ void doResolveAmbiguousArrayType(Context ctx, ref ir.Type type)
 
 	if (constant !is null && isIntegral(constant.type)) {
 		auto sat = cast(ir.StaticArrayType)buildStaticArrayTypeSmart(type.loc, cast(size_t)constant.u._ulong, aat.base);
+		sat.base.glossedName = aat.base.glossedName;
 		type = sat;
 		return doResolveType(ctx, sat.base, null, 0);
 	}
 	if (aat.child.nodeType == ir.NodeType.TypeExp || aat.child.nodeType == ir.NodeType.StoreExp) {
 		auto aa = cast(ir.AAType)buildAATypeSmart(type.loc, childType, aat.base);
+		aa.value.glossedName = aat.base.glossedName;
+		aa.key.glossedName = childName;
 		type = aa;
 		return doResolveAA(ctx, type);
 	}
