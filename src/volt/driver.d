@@ -547,7 +547,7 @@ protected:
 
 		// Printout json file.
 		if (mJsonPrinter !is null) {
-			mJsonPrinter.transform(mCommandLineModules);
+			mJsonPrinter.transform(target, mCommandLineModules);
 		}
 
 

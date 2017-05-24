@@ -31,15 +31,18 @@ public:
 		this.mFilename = filename;
 	}
 
-	void transform(ir.Module[] mods...)
+	void transform(TargetInfo target, ir.Module[] mods...)
 	{
 		mFile = new OutputFileStream(mFilename);
 
-		w("[");
+		w("{");
+		writeTargetInfo(target);
+		startList("modules");
 		foreach (mod; mods) {
 			accept(mod, this);
 		}
-		w("]");
+		endList();
+		w("}");
 
 		mFile.flush();
 		mFile.close();
@@ -225,6 +228,32 @@ public:
 
 
 protected:
+	void writeTargetInfo(TargetInfo target)
+	{
+		startObject("target");
+		tag("arch", archToString(target.arch));
+		tag("platform", platformToString(target.platform));
+		tag("isP64", target.isP64);
+		tag("ptrSize", target.ptrSize);
+		writeAlignments(target.alignment);
+		endObject();
+	}
+
+	void writeAlignments(TargetInfo.Alignments alignment)
+	{
+		startObject("alignment");
+		tag("int1", alignment.int1);
+		tag("int8", alignment.int8);
+		tag("int16", alignment.int16);
+		tag("int32", alignment.int32);
+		tag("int64", alignment.int64);
+		tag("float32", alignment.float32);
+		tag("float64", alignment.float64);
+		tag("ptr", alignment.ptr);
+		tag("aggregate", alignment.aggregate);
+		endObject();
+	}
+
 	void writeNamedTyped(string kind, string name, string doc, ir.Type type)
 	{
 		string typeFull, typeWritten;
@@ -246,6 +275,14 @@ protected:
 	{
 		wMaybeComma();
 		w("{");
+		mWriteComma = false;
+	}
+
+	void startObject(string name)
+	{
+		wMaybeComma();
+		wq(name);
+		w(":{");
 		mWriteComma = false;
 	}
 
@@ -294,6 +331,15 @@ protected:
 		wq(tag);
 		w(":");
 		w(value ? "true" : "false");
+		mWriteComma = true;
+	}
+
+	void tag(string tag, size_t n)
+	{
+		wMaybeComma();
+		wq(tag);
+		w(":");
+		w(.toString(n));
 		mWriteComma = true;
 	}
 

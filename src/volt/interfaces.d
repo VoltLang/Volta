@@ -26,6 +26,17 @@ enum Platform
 	Metal,
 }
 
+string platformToString(Platform platform)
+{
+	final switch (platform) with (Platform) {
+	case MinGW: return "mingw";
+	case MSVC:  return "msvc";
+	case Linux: return "linux";
+	case OSX:   return "osx";
+	case Metal: return "metal";
+	}
+}
+
 /**
  * Each of these listed architectures corresponds
  * to a Version identifier.
@@ -34,6 +45,14 @@ enum Arch
 {
 	X86,
 	X86_64,
+}
+
+string archToString(Arch arch)
+{
+	final switch (arch) with (Arch) {
+	case X86: return "x86";
+	case X86_64: return "x86_64";
+	}
 }
 
 /**
