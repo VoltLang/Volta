@@ -86,6 +86,18 @@ public:
 		Global,  ///< Stored in the global data segment.
 	}
 
+	static string storageToString(Storage s)
+	{
+		final switch (s) with (Storage) {
+		case Invalid:  return "invalid";
+		case Field:    return "field";
+		case Function: return "function";
+		case Nested:   return "nested";
+		case Local:    return "local";
+		case Global:   return "global";
+		}
+	}
+
 public:
 	/// Has the extyper checked this variable.
 	bool isResolved;

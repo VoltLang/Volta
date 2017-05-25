@@ -220,6 +220,7 @@ public:
 		writeNamedTyped("var", name, v.docComment, v.type);
 		tag("access", ir.accessToString(v.access));
 		tag("linkage", ir.linkageToString(v.linkage));
+		tag("storage", ir.Variable.storageToString(v.storage));
 		endObject();
 
 		return ContinueParent;
