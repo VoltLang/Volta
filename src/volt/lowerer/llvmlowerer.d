@@ -1683,6 +1683,16 @@ void lowerVarargCall(LanguagePass lp, ir.Scope current, ir.Postfix postfix, ir.F
 	exp = sexp;
 }
 
+void lowerGlobalAALiteral(LanguagePass lp, ir.Scope current, ir.Module mod, ir.Variable var)
+{
+	auto loc = var.loc;
+	auto gctor = buildGlobalConstructor(loc, mod.children, current, "__ctor");
+	ir.BinOp assign = buildAssign(loc, var, var.assign);
+	buildExpStat(loc, gctor._body, assign);
+	var.assign = null;
+	buildReturnStat(loc, gctor._body);
+}
+
 /**
  * Lower an AA literal.
  *
@@ -1945,6 +1955,15 @@ public:
 			break;
 		default:
 			break;
+		}
+		return Continue;
+	}
+
+	override Status enter(ir.Variable var)
+	{
+		if (functionStack.length == 0 && var.assign !is null &&
+			var.assign.nodeType == ir.NodeType.AssocArray) {
+			lowerGlobalAALiteral(lp, current, thisModule, var);
 		}
 		return Continue;
 	}
