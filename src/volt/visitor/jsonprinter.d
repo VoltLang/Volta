@@ -101,6 +101,8 @@ public:
 		tag("name", name);
 		tag("doc", c.docComment);
 		tag("access", ir.accessToString(c.access));
+		tag("isAbstract", c.isAbstract);
+		tag("isFinal", c.isFinal);
 		startList("children");
 
 		return Continue;
@@ -199,6 +201,12 @@ public:
 
 		tag("hasBody", f._body !is null);
 		tag("access", ir.accessToString(f.access));
+		tag("isScope", f.type.isScope);
+		tag("isProperty", f.type.isProperty);
+		tag("isMarkedOverride", f.isMarkedOverride);
+		tag("isAbstract", f.isAbstract);
+		tag("isFinal", f.isFinal);
+		tag("forceLabel", f.type.forceLabel);
 
 		endObject();
 
@@ -221,6 +229,7 @@ public:
 		tag("access", ir.accessToString(v.access));
 		tag("linkage", ir.linkageToString(v.linkage));
 		tag("storage", ir.Variable.storageToString(v.storage));
+		tag("isExtern", v.isExtern);
 		endObject();
 
 		return ContinueParent;
