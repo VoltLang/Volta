@@ -192,6 +192,19 @@ enum Linkage
 	System,
 }
 
+string linkageToString(Linkage linkage)
+{
+	final switch (linkage) with (Linkage) {
+	case Volt: return "volt";
+	case C: return "c";
+	case CPlusPlus: return "c++";
+	case D: return "d";
+	case Windows: return "windows";
+	case Pascal: return "pascal";
+	case System: return "system";
+	}
+}
+
 /**
  * Used by ScopeStatement and other nodes.
  *

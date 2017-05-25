@@ -177,9 +177,7 @@ public:
 		}
 
 		tag("doc", f.docComment);
-		if (f.type.linkage != ir.Linkage.Volt) {
-			tag("linkage", linkageString(f.type.linkage));
-		}
+		tag("linkage", ir.linkageToString(f.type.linkage));
 
 		if (f.params.length > 0) {
 			startList("args");
@@ -221,6 +219,7 @@ public:
 		startObject();
 		writeNamedTyped("var", name, v.docComment, v.type);
 		tag("access", ir.accessToString(v.access));
+		tag("linkage", ir.linkageToString(v.linkage));
 		endObject();
 
 		return ContinueParent;
@@ -375,19 +374,6 @@ protected:
 		w(":");
 		w(.toString(n));
 		mWriteComma = true;
-	}
-
-	string linkageString(ir.Linkage linkage)
-	{
-		final switch (linkage) {
-		case ir.Linkage.Volt: return "volt";
-		case ir.Linkage.C: return "c";
-		case ir.Linkage.CPlusPlus: return "c++";
-		case ir.Linkage.D: return "d";
-		case ir.Linkage.Windows: return "windows";
-		case ir.Linkage.Pascal: return "pascal";
-		case ir.Linkage.System: return "system";
-		}
 	}
 
 	void w(SinkArg s)
