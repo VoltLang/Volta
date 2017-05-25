@@ -74,6 +74,7 @@ public:
 		tag("kind", "struct");
 		tag("name", name);
 		tag("doc", s.docComment);
+		tag("access", ir.accessToString(s.access));
 		startList("children");
 		return Continue;
 	}
@@ -86,6 +87,7 @@ public:
 		tag("kind", "union");
 		tag("name", name);
 		tag("doc", u.docComment);
+		tag("access", ir.accessToString(u.access));
 		startList("children");
 		return Continue;
 	}
@@ -98,6 +100,7 @@ public:
 		tag("kind", "class");
 		tag("name", name);
 		tag("doc", c.docComment);
+		tag("access", ir.accessToString(c.access));
 		startList("children");
 
 		return Continue;
@@ -113,6 +116,34 @@ public:
 			tag("type", a.id.toString());
 		} else {
 			writeNamedTyped("alias", name, a.docComment, a.type);
+		}
+		tag("access", ir.accessToString(a.access));
+		endObject();
+		return ContinueParent;
+	}
+
+	override Status enter(ir.Import i)
+	{
+		startObject();
+		tag("kind", "import");
+		tag("access", ir.accessToString(i.access));
+		tag("isStatic", i.isStatic);
+		tag("name", i.name.toString());
+		if (i.aliases.length > 0) {
+			startList("aliases");
+			foreach (j, _alias; i.aliases) {
+				w("[");
+				wq(_alias[0].value);
+				if (_alias[1] !is null) {
+					w(",\n");
+					wq(_alias[1].value);
+				}
+				w("]");
+				if (j < i.aliases.length - 1) {
+					w(",\n");
+				}
+			}
+			endList();
 		}
 		endObject();
 		return ContinueParent;
@@ -169,6 +200,7 @@ public:
 		}
 
 		tag("hasBody", f._body !is null);
+		tag("access", ir.accessToString(f.access));
 
 		endObject();
 
@@ -188,6 +220,7 @@ public:
 
 		startObject();
 		writeNamedTyped("var", name, v.docComment, v.type);
+		tag("access", ir.accessToString(v.access));
 		endObject();
 
 		return ContinueParent;
@@ -201,6 +234,7 @@ public:
 		tag("kind", "enum");
 		tag("name", name);
 		tag("doc", e.docComment);
+		tag("access", ir.accessToString(e.access));
 		startList("children");
 
 		return Continue;
@@ -215,6 +249,7 @@ public:
 		if (isIntegral(ed.type) && constant !is null) {
 			tag("value", .toString(constant.u._int));
 		}
+		tag("access", ir.accessToString(ed.access));
 		endObject();
 		return ContinueParent;
 	}
@@ -223,7 +258,6 @@ public:
 	override Status leave(ir.Struct) { endListAndObject(); return Continue; }
 	override Status leave(ir.Union) { endListAndObject(); return Continue; }
 	override Status leave(ir.Class) { endListAndObject(); return Continue; }
-	override Status leave(ir.Alias) { endListAndObject(); return Continue; }
 	override Status leave(ir.Enum) { endListAndObject(); return Continue; }
 
 

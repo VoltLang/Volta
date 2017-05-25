@@ -157,6 +157,16 @@ enum Access
 	Protected = TokenType.Protected,
 }
 
+string accessToString(Access access)
+{
+	final switch (access) with (Access) {
+	case Invalid:   return "(invalid)";
+	case Public:    return "public";
+	case Protected: return "protected";
+	case Private:   return "private";
+	}
+}
+
 /**
  * Controls the calling convention and how symbols are mangled.
  *
