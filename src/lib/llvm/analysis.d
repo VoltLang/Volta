@@ -1,4 +1,4 @@
-// Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2012-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice and license in src/lib/llvm/core.d.
 module lib.llvm.analysis;
 
