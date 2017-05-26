@@ -100,12 +100,21 @@ public:
 		tag("kind", "class");
 		if (c.parent !is null) {
 			tag("parent", c.parent.toString());
+			tag("parentFull", printType(c.parentClass));
 		}
 		if (c.interfaces.length > 0) {
 			startList("interfaces");
 			foreach (i, _if; c.interfaces) {
 				wq(_if.toString());
 				if (i < c.interfaces.length - 1) {
+					w(",\n");
+				}
+			}
+			endList();
+			startList("interfacesFull");
+			foreach (i, _if; c.parentInterfaces) {
+				wq(printType(_if));
+				if (i < c.parentInterfaces.length - 1) {
 					w(",\n");
 				}
 			}
@@ -133,6 +142,14 @@ public:
 			foreach (i, _if; ifc.interfaces) {
 				wq(_if.toString());
 				if (i < ifc.interfaces.length - 1) {
+					w(",\n");
+				}
+			}
+			endList();
+			startList("parentsFull");
+			foreach (i, _if; ifc.parentInterfaces) {
+				wq(printType(_if));
+				if (i < ifc.parentInterfaces.length - 1) {
 					w(",\n");
 				}
 			}
