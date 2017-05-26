@@ -414,6 +414,9 @@ protected:
 
 	void tag(string tag, bool value)
 	{
+		if (!value) {
+			return;
+		}
 		wMaybeComma();
 		wq(tag);
 		w(":");
