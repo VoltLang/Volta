@@ -131,6 +131,9 @@ public:
 		tag("access", ir.accessToString(i.access));
 		tag("isStatic", i.isStatic);
 		tag("name", i.name.toString());
+		if (i.bind !is null) {
+			tag("bind", i.bind.value);
+		}
 		if (i.aliases.length > 0) {
 			startList("aliases");
 			foreach (j, _alias; i.aliases) {
