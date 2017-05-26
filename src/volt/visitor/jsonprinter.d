@@ -73,6 +73,7 @@ public:
 		startObject();
 		tag("kind", "struct");
 		tag("name", name);
+		tag("mangledName", s.mangledName);
 		tag("doc", s.docComment);
 		tag("access", ir.accessToString(s.access));
 		startList("children");
@@ -86,6 +87,7 @@ public:
 		startObject();
 		tag("kind", "union");
 		tag("name", name);
+		tag("mangledName", u.mangledName);
 		tag("doc", u.docComment);
 		tag("access", ir.accessToString(u.access));
 		startList("children");
@@ -121,6 +123,7 @@ public:
 			endList();
 		}
 		tag("name", name);
+		tag("mangledName", c.mangledName);
 		tag("doc", c.docComment);
 		tag("access", ir.accessToString(c.access));
 		tag("isAbstract", c.isAbstract);
@@ -137,6 +140,7 @@ public:
 		startObject();
 		tag("kind", "interface");
 		tag("name", name);
+		tag("mangledName", ifc.mangledName);
 		if (ifc.interfaces.length > 0) {
 			startList("parents");
 			foreach (i, _if; ifc.interfaces) {
@@ -234,6 +238,7 @@ public:
 			suppressReturn = true;
 			break;
 		}
+		tag("mangledName", f.mangledName);
 
 		tag("doc", f.docComment);
 		tag("linkage", ir.linkageToString(f.type.linkage));
@@ -283,6 +288,7 @@ public:
 
 		startObject();
 		writeNamedTyped("var", name, v.docComment, v.type);
+		tag("mangledName", v.mangledName);
 		tag("access", ir.accessToString(v.access));
 		tag("linkage", ir.linkageToString(v.linkage));
 		tag("storage", ir.Variable.storageToString(v.storage));
@@ -299,6 +305,7 @@ public:
 		startObject();
 		tag("kind", "enum");
 		tag("name", name);
+		tag("mangledName", e.mangledName);
 		tag("doc", e.docComment);
 		tag("access", ir.accessToString(e.access));
 		startList("children");
