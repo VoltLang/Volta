@@ -124,6 +124,7 @@ void write(Sink sink, ir.Type type, bool alwaysGlossed)
 		break;
 	case Class:
 	case Struct:
+	case Interface:
 		auto agg = cast(ir.Aggregate)type;
 		assert(agg !is null);
 		sink.write(agg.myScope.parent);
