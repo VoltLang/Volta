@@ -917,7 +917,7 @@ ParseStatus parseEnum(ParserStream ps, out ir.Node[] output)
 			}
 
 			ir.EnumDeclaration ed;
-			succeeded = parseEnumDeclaration(ps, ed);
+			succeeded = parseEnumDeclaration(ps, ed, false /* standalone */);
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.Enum);
 			}
@@ -968,7 +968,7 @@ ParseStatus parseEnum(ParserStream ps, out ir.Node[] output)
 		}
 
 		ir.EnumDeclaration ed;
-		auto succeeded = parseEnumDeclaration(ps, ed);
+		auto succeeded = parseEnumDeclaration(ps, ed, true /* standalone */);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Enum);
 		}

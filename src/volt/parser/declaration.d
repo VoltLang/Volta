@@ -1213,7 +1213,7 @@ ParseStatus parseBlock(ParserStream ps, out ir.BlockStatement bs)
 	return match(ps, bs, TokenType.CloseBrace);
 }
 
-ParseStatus parseEnumDeclaration(ParserStream ps, out ir.EnumDeclaration edecl)
+ParseStatus parseEnumDeclaration(ParserStream ps, out ir.EnumDeclaration edecl, bool standalone)
 {
 	edecl = new ir.EnumDeclaration();
 	edecl.loc = ps.peek.loc;
@@ -1242,6 +1242,11 @@ ParseStatus parseEnumDeclaration(ParserStream ps, out ir.EnumDeclaration edecl)
 	edecl.docComment = ps.comment();
 	if (edecl.docComment.length == 0) {
 		ps.retroComment = edecl;
+	}
+
+	edecl.isStandalone = standalone;
+	if (standalone) {
+		edecl.access = ir.Access.Public;
 	}
 	return eatComments(ps);
 }

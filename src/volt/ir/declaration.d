@@ -458,6 +458,7 @@ class EnumDeclaration : Declaration
 	EnumDeclaration prevEnum;
 	bool resolved;
 	Access access;
+	bool isStandalone;  // enum A = <blah> style declaration.
 
 public:
 	this() { super(NodeType.EnumDeclaration); }
@@ -471,6 +472,7 @@ public:
 		this.name = old.name;
 		this.prevEnum = old.prevEnum;
 		this.resolved = old.resolved;
+		this.isStandalone = old.isStandalone;
 	}
 }
 
