@@ -368,6 +368,10 @@ protected:
 			typeFull = null;
 		}
 
+		if (typeWritten == "__ifaceVtable") {
+			return;
+		}
+
 		tag("kind", kind);
 		tag("name", name);
 		tag("type", typeWritten);
