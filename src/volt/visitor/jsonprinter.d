@@ -282,7 +282,8 @@ public:
 		case "__cinit", "__vtable_instance": return ContinueParent;
 		default: break;
 		}
-		if (name.length > 4 && name[0 .. 4] == "_V__") {
+		if (name.length > 4 && name[0 .. 4] == "_V__" ||
+		    printType(v.type, true) == "__ifaceVtable") {
 			return ContinueParent;
 		}
 
@@ -373,10 +374,6 @@ protected:
 
 		if (typeWritten == typeFull) {
 			typeFull = null;
-		}
-
-		if (typeWritten == "__ifaceVtable") {
-			return;
 		}
 
 		tag("kind", kind);
