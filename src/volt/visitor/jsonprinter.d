@@ -258,7 +258,10 @@ public:
 		if (isIntegral(ed.type) && constant !is null) {
 			tag("value", .toString(constant.u._int));
 		}
-		tag("access", ir.accessToString(ed.access));
+		if (ed.isStandalone) {
+			tag("access", ir.accessToString(ed.access));
+		}
+		tag("isStandalone", ed.isStandalone);
 		endObject();
 		return ContinueParent;
 	}
