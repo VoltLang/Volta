@@ -98,11 +98,48 @@ public:
 
 		startObject();
 		tag("kind", "class");
+		if (c.parent !is null) {
+			tag("parent", c.parent.toString());
+		}
+		if (c.interfaces.length > 0) {
+			startList("interfaces");
+			foreach (i, _if; c.interfaces) {
+				wq(_if.toString());
+				if (i < c.interfaces.length - 1) {
+					w(",\n");
+				}
+			}
+			endList();
+		}
 		tag("name", name);
 		tag("doc", c.docComment);
 		tag("access", ir.accessToString(c.access));
 		tag("isAbstract", c.isAbstract);
 		tag("isFinal", c.isFinal);
+		startList("children");
+
+		return Continue;
+	}
+
+	override Status enter(ir._Interface ifc)
+	{
+		auto name = ifc.name;
+
+		startObject();
+		tag("kind", "interface");
+		tag("name", name);
+		if (ifc.interfaces.length > 0) {
+			startList("parents");
+			foreach (i, _if; ifc.interfaces) {
+				wq(_if.toString());
+				if (i < ifc.interfaces.length - 1) {
+					w(",\n");
+				}
+			}
+			endList();
+		}
+		tag("doc", ifc.docComment);
+		tag("access", ir.accessToString(ifc.access));
 		startList("children");
 
 		return Continue;
@@ -274,6 +311,7 @@ public:
 	override Status leave(ir.Union) { endListAndObject(); return Continue; }
 	override Status leave(ir.Class) { endListAndObject(); return Continue; }
 	override Status leave(ir.Enum) { endListAndObject(); return Continue; }
+	override Status leave(ir._Interface) { endListAndObject(); return Continue; }
 
 
 protected:
