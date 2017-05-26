@@ -203,7 +203,7 @@ public:
 		tag("access", ir.accessToString(f.access));
 		tag("isScope", f.type.isScope);
 		tag("isProperty", f.type.isProperty);
-		tag("isMarkedOverride", f.isMarkedOverride);
+		tag("isOverride", f.isMarkedOverride);
 		tag("isAbstract", f.isAbstract);
 		tag("isFinal", f.isFinal);
 		tag("forceLabel", f.type.forceLabel);
