@@ -358,8 +358,7 @@ public:
 			}
 
 			// This hack is needed for LTO.
-			if (target.platform != Platform.MSVC &&
-			    target.platform != Platform.MinGW &&
+			if (target.platform == Platform.Linux &&
 			    argFunc.mangledName == "vrt_eh_personality_v0") {
 				if (argFunc._body !is null) {
 					LLVMSetLinkage(v, LLVMLinkage.LinkOnceODR);
