@@ -357,6 +357,7 @@ public:
 				}
 			}
 
+/*
 			// This hack is needed for LTO.
 			if (target.platform == Platform.Linux &&
 			    argFunc.mangledName == "vrt_eh_personality_v0") {
@@ -366,6 +367,7 @@ public:
 					LLVMSetLinkage(v, LLVMLinkage.ExternalWeak);
 				}
 			}
+*/
 
 			// Needs to be done here, because this can not be set on a type.
 			if (argFunc.type.linkage == ir.Linkage.Windows) {
