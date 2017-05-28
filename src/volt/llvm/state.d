@@ -357,6 +357,17 @@ public:
 				}
 			}
 
+			// This hack is needed for LTO.
+			if (target.platform != Platform.MSVC &&
+			    target.platform != Platform.MinGW &&
+			    argFunc.mangledName == "vrt_eh_personality_v0") {
+				if (argFunc._body !is null) {
+					LLVMSetLinkage(v, LLVMLinkage.LinkOnceODR);
+				} else {
+					LLVMSetLinkage(v, LLVMLinkage.ExternalWeak);
+				}
+			}
+
 			// Needs to be done here, because this can not be set on a type.
 			if (argFunc.type.linkage == ir.Linkage.Windows) {
 				if (target.arch == Arch.X86_64) {
