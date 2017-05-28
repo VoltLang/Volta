@@ -1209,8 +1209,7 @@ ParseStatus parseAttribute(ParserStream ps, out ir.Attribute attr, bool noTopLev
 		/* Have the semantic passes apply this attribute as
 		 * doing it in the parser would require context.
 		 */
-		bool dummy;
-		if (cleanComment(ps.comment(), dummy).length > 0 && !ps.inMultiCommentBlock) {
+		if (ps.comment().length > 0 && !ps.inMultiCommentBlock) {
 			return docCommentMultiple(ps, ps.lastDocComment.loc);
 		}
 	} else {
