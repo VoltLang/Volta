@@ -674,7 +674,7 @@ protected:
 			}
 
 			string obj = temporaryFilename(".o", subdir);
-			auto args = clangArgs ~ ["-o", obj, bc];
+			auto args = clangArgs ~ ["-c", "-o", obj, bc];
 			cmd.run(mClangCmd, args, checkClangReturn);
 
 			mTemporaryFiles ~= obj;
@@ -1059,7 +1059,7 @@ private:
 
 	string[] getClangArgs()
 	{
-		auto clangArgs = ["-x", "ir", "-c", "-target",
+		auto clangArgs = ["-target",
 			tripleList[target.platform][target.arch]];
 
 		// Add command line args.
