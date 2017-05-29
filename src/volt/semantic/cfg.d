@@ -295,12 +295,14 @@ public:
 	override Status enter(ir.WhileStatement ws)
 	{
 		checkReachability(ws);
+		enterLoop();
 		return buildLoop(ws, ws.block, ws.condition);
 	}
 
 	override Status enter(ir.ForStatement fs)
 	{
 		checkReachability(fs);
+		enterLoop();
 		return buildLoop(fs, fs.block, fs.test);
 	}
 
@@ -308,6 +310,7 @@ public:
 	{
 		ensureNonNullBlock(fes.loc);
 		checkReachability(fes);
+		enterLoop();
 		auto currentBlock = block;
 		auto fesBlock = block = new Block(currentBlock);
 		breakBlocks ~= fesBlock;
@@ -321,6 +324,7 @@ public:
 	{
 		ensureNonNullBlock(ds.loc);
 		checkReachability(ds);
+		enterLoop();
 		auto currentBlock = block;
 		auto doBlock = block = new Block(currentBlock);
 		breakBlocks ~= doBlock;
@@ -408,6 +412,9 @@ public:
 
 	override Status visit(ir.ContinueStatement cs)
 	{
+		if (mLoopDepth == 0) {
+			throw makeMisplacedContinue(cs.loc);
+		}
 		ensureNonNullBlock(cs.loc);
 		checkReachability(cs);
 		if (cs.label.length > 0) {
@@ -562,8 +569,45 @@ public:
 		return Continue;
 	}
 
+	override Status leave(ir.WhileStatement ws)
+	{
+		leaveLoop();
+		return Continue;
+	}
+
+	override Status leave(ir.DoStatement ds)
+	{
+		leaveLoop();
+		return Continue;
+	}
+
+	override Status leave(ir.ForStatement fs)
+	{
+		leaveLoop();
+		return Continue;
+	}
+
+	override Status leave(ir.ForeachStatement fs)
+	{
+		leaveLoop();
+		return Continue;
+	}
+
 
 private:
+	int mLoopDepth;
+
+private:
+	void enterLoop()
+	{
+		mLoopDepth++;
+	}
+
+	void leaveLoop()
+	{
+		mLoopDepth--;
+		assert(mLoopDepth >= 0);
+	}
 
 	/// Returns true if the given expression evaluates as a constant true.
 	bool constantTrue(ref ir.Exp e)

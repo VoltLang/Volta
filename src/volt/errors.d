@@ -101,6 +101,11 @@ CompilerException makeEmitLLVMNoLink(string file = __FILE__, const int line = __
  *
  */
 
+CompilerException makeMisplacedContinue(ref in Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, "continue statement outside of loop.", file, line);
+}
+
 CompilerException makeTemplateAsTemplateArg(ref in Location loc, string name, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(loc, format("template argument '%s' is another template instance.", name), file, line);
