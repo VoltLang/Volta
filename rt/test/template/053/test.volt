@@ -1,6 +1,3 @@
-//T default:no
-//T macro:expect-failure
-//T check:another template instance
 module test;
 
 struct Foo!(T)
