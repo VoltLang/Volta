@@ -386,10 +386,6 @@ public:
 				types[i] = type;
 				auto tr = cast(ir.TypeReference)type;
 				resolveType(lp, current, type);
-				if (isTemplateInstance(type)) {
-					panicAssert(s, tr !is null);
-					throw makeTemplateAsTemplateArg(ti.loc, tr.id.toString());
-				}
 				auto name = td.parameters[i].name;
 				s.myScope.reserveId(td, name);
 			} else {
