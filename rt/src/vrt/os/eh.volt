@@ -93,7 +93,7 @@ extern(C) fn vrt_eh_throw_key_not_found_error(location: string)
 /**
  * Big do everything function.
  */
-extern(C) fn vrt_eh_personality_v0(
+extern(C) fn vrt_eh_personality_v0_real(
 	ver: i32,
 	actions: _Unwind_Action,
 	exceptionClass: u64,

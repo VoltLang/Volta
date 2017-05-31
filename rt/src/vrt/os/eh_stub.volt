@@ -33,8 +33,9 @@ extern(C) fn vrt_eh_throw_key_not_found_error(location: string)
 	vrt_eh_throw(new KeyNotFoundException("key does not exist"), location);
 }
 
-extern(C) fn vrt_eh_personality_v0()
+extern(C) fn vrt_eh_personality_v0_real() i32
 {
+	return 0;
 }
 
 extern(C) fn _Unwind_Resume()
