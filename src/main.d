@@ -383,9 +383,9 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 			break;
 		}
 
-		if (arg.length > 1 &&
-		    arg[0] == '-') {
-			throw new Exception(format("Unknown argument: '%s'", arg[0]));
+		if (arg.length > 1 && arg[0] == '-') {
+			error.writefln("Unknown argument: '%s'", arg);
+			return false;
 		}
 		makeArgFile(arg);
 	}
