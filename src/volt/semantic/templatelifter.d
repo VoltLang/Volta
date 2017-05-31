@@ -417,6 +417,7 @@ public:
 				}
 				auto ed = buildEnumDeclaration(s.loc, td.parameters[i].type, exp, name);
 				s.myScope.addEnumDeclaration(ed);
+				s.members.nodes ~= ed;
 			}
 		}
 	}
