@@ -37,7 +37,3 @@ extern(C) fn vrt_eh_personality_v0_real() i32
 {
 	return 0;
 }
-
-extern(C) fn _Unwind_Resume()
-{
-}

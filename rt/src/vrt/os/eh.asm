@@ -13,3 +13,10 @@ extern PERS_REAL
 section .text
 PERS:
 	jmp PERS_REAL
+
+
+%ifidn __OUTPUT_FORMAT__, win64
+global _Unwind_Resume
+_Unwind_Resume:
+	ret
+%endif
