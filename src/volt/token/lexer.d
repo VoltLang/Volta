@@ -244,7 +244,7 @@ NextLex nextLex(TokenWriter tw)
 void addIfDocComment(TokenWriter tw, Token commentToken, string s, string docsignifier)
 {
 	auto closeIndex = s.indexOf("@}");
-	if ((s.length <= 2 || s[0 .. 2] != docsignifier) && closeIndex < 0) {
+	if ((tw.noDoc || s.length <= 2 || s[0 .. 2] != docsignifier) && closeIndex < 0) {
 		return;
 	}
 	commentToken.type = TokenType.DocComment;
@@ -1190,6 +1190,11 @@ LexStatus lexHashLine(TokenWriter tw)
 		token.type = TokenType.HashRun;
 		token.value = "#run";
 		tw.addToken(token);
+		return Succeeded;
+	}
+
+	if (match(tw, "nodoc")) {
+		tw.noDoc = true;
 		return Succeeded;
 	}
 

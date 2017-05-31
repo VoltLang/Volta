@@ -16,6 +16,7 @@ final class TokenWriter
 {
 public:
 	LexerError[] errors;
+	bool noDoc;
 
 private:
 	Source mSource;
