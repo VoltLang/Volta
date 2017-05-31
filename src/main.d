@@ -42,6 +42,10 @@ int main(string[] strArgs)
 		if (file !is null) {
 			perf.print(file, name);
 		}
+
+		// Flush all output on close.
+		error.flush();
+		output.flush();
 	}
 
 	auto cmd = strArgs[0];
@@ -74,8 +78,6 @@ int main(string[] strArgs)
 
 	} catch (Exception e) {
 		writefln(e.msg);
-		output.flush();
-		error.flush();
 		return 0;
 	}
 
@@ -88,8 +90,6 @@ int main(string[] strArgs)
 	int ret = vc.compile();
 	vc.close();
 
-	output.flush();
-	error.flush();
 	return ret;
 }
 
