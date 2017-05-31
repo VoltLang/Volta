@@ -415,7 +415,7 @@ public:
 				if (exp is null) {
 					throw makeExpected(arg.loc, "expression");
 				}
-				auto ed = buildEnumDeclaration(s.loc, td.parameters[i].type, exp, name);
+				auto ed = buildEnumDeclaration(s.loc, copyType(td.parameters[i].type), exp, name);
 				s.myScope.addEnumDeclaration(ed);
 				s.members.nodes ~= ed;
 			}
