@@ -342,6 +342,20 @@ public:
 
 			v = LLVMAddGlobal(mod, llvmType, argFunc.mangledName);
 			assert(!argFunc.isMergable);
+		} else if (argFunc.mangledName == "vrt_eh_personality_v0") {
+
+			// This is a horribly hack to make ThinLTO work.
+			// The _body !is null path is not currently in use as
+			// a different workaround is in place. But we keep
+			// the code here just in case we need it in the future.
+		        if (argFunc._body !is null) {
+				v = ehPersonalityFunc;
+			} else {
+				v = LLVMAddFunction(mod, argFunc.mangledName, ft.llvmCallType);
+			}
+
+			// Don't emit any other attributes for this function.
+			LLVMSetVisibility(v, LLVMVisibility.Protected);
 		} else {
 			// The simple stuff, declare that mofo.
 			auto llvmType = ft.llvmCallType;
@@ -356,18 +370,6 @@ public:
 					LLVMSetLinkage(v, LLVMLinkage.LinkOnceODR);
 				}
 			}
-
-/*
-			// This hack is needed for LTO.
-			if (target.platform == Platform.Linux &&
-			    argFunc.mangledName == "vrt_eh_personality_v0") {
-				if (argFunc._body !is null) {
-					LLVMSetLinkage(v, LLVMLinkage.LinkOnceODR);
-				} else {
-					LLVMSetLinkage(v, LLVMLinkage.ExternalWeak);
-				}
-			}
-*/
 
 			// Needs to be done here, because this can not be set on a type.
 			if (argFunc.type.linkage == ir.Linkage.Windows) {
