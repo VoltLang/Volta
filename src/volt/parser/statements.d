@@ -561,9 +561,18 @@ ParseStatus parseDoStatement(ParserStream ps, out ir.DoStatement d)
 		return unexpectedToken(ps, d);
 	}
 	ps.get();
+	bool hasBrace = (ps == TokenType.OpenBrace);
 	auto succeeded = parseBlockStatement(ps, d.block);
 	if (!succeeded) {
 		return parseFailed(ps, d);
+	}
+	if (hasBrace && ps == TokenType.Semicolon)
+	{
+		// do {...}; defaults to while(true) so continue works
+		d.condition = buildConstantBool(ps.peek.location, true);
+		d.block.statements ~= buildBreak(ps.peek.location);
+		ps.get();
+		return Succeeded;
 	}
 	if (ps != TokenType.While) {
 		return unexpectedToken(ps, d);

@@ -2029,3 +2029,10 @@ ir.GotoStatement buildGotoCase(ref in Location loc)
 	gs.isCase = true;
 	return gs;
 }
+
+ir.BreakStatement buildBreak(Location loc)
+{
+	auto bs = new ir.BreakStatement();
+	bs.location = loc;
+	return bs;
+}
