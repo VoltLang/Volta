@@ -366,33 +366,53 @@ public:
 				td.parameters.length == 1 ? "" : "s"));
 		}
 
-		auto types = new ir.Type[](ti.arguments.length);
+		// Make sure we look in the scope where the template inst. is.
+		auto lookScope = s.myScope.parent;
+		auto processed = new ir.Node[](ti.arguments.length);
+
+		// Loop over all arguments.
 		foreach (i, ref arg; ti.arguments) {
-			if (td.parameters[i].type is null) {
-				ir.Type type = cast(ir.Type)arg;
-				if (type is null) {
-					auto exp = cast(ir.Exp)arg;
-					if (exp is null) {
-						throw makeExpected(arg, "type");
-					}
-					auto qname = exptoQualifiedName(exp);
-					type = lookupType(lp, current, qname);
-					auto named = cast(ir.Named)type;
-					if (named !is null) {
-						type = buildTypeReference(ti.loc, type, qname);
-					}
-				}
-				panicAssert(ti, type !is null);
-				types[i] = type;
-				auto tr = cast(ir.TypeReference)type;
-				resolveType(lp, current, type);
-				auto name = td.parameters[i].name;
-				s.myScope.reserveId(td, name);
+
+			if (td.parameters[i].type !is null) {
+
+				// This is a expression.
+				processed[i] = arg;
+
+			} else if (auto type = cast(ir.Type)arg) {
+
+				// A simple type like 'u32' or 'typeof(Foo)'
+				resolveType(lp, lookScope, type);
+				processed[i] = type;
+
 			} else {
-				auto name = td.parameters[i].name;
-				s.myScope.reserveId(arg, name);
+
+				// A qname like 'pkg.mod.Struct'
+				auto exp = cast(ir.Exp)arg;
+				if (exp is null) {
+					throw makeExpected(arg, "type");
+				}
+
+				// In order to properly set the store up as a
+				// alias to types we need to resolve the alias
+				// like normal aliases via the lp.
+				auto a = new ir.Alias();
+				a.isResolved = true;
+				a.name = td.parameters[i].name;
+				a.lookScope = lookScope;
+				a.access = ir.Access.Public;
+				a.id = exptoQualifiedName(exp);
+
+				// We don't do any lookup/resolving here
+				// because we need a.store to be a proper store
+				// that will still around.
+				processed[i] = a;
 			}
+
+			// All arguments reserve a name.
+			s.myScope.reserveId(td, td.parameters[i].name);
 		}
+
+		// Do the lifting of the children.
 		s.members = lift(defstruct.members);
 
 		// Setup any passes that needs to process the copied nodes.
@@ -408,16 +428,27 @@ public:
 		foreach (i, ref arg; ti.arguments) {
 			auto name = td.parameters[i].name;
 			s.myScope.remove(name);
-			if (td.parameters[i].type is null) {
-				s.myScope.addType(types[i], name);
-			} else {
-				auto exp = cast(ir.Exp)arg;
-				if (exp is null) {
-					throw makeExpected(arg.loc, "expression");
+			if (auto a = cast(ir.Alias)processed[i]) {
+				// Add the alias to the scope and set its store.
+				a.store = s.myScope.addAlias(a, a.name);
+				s.members.nodes ~= a;
+
+				// Do the lookup here.
+				lp.resolveAlias(a);
+
+				// Make sure that the alias we got is a type.
+				assert(a.store.myAlias !is null);
+				if (cast(ir.Type)a.store.myAlias.node is null) {
+					throw makeExpected(arg, "type");
 				}
+			} else if (auto type = cast(ir.Type)processed[i]) {
+				s.myScope.addType(type, name);
+			} else if (auto exp = cast(ir.Exp)processed[i]) {
 				auto ed = buildEnumDeclaration(s.loc, copyType(td.parameters[i].type), exp, name);
 				s.myScope.addEnumDeclaration(ed);
 				s.members.nodes ~= ed;
+			} else {
+				throw makeExpected(arg.loc, "expression or type");
 			}
 		}
 	}
