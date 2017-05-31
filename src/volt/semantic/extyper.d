@@ -4220,10 +4220,14 @@ void resolveEnum(LanguagePass lp, ir.Enum e)
  */
 void resolveVariable(Context ctx, ir.Variable v)
 {
+	/* We may have been called out-of-band, which clears this flag.
+	 * Always set it so we can detect out-of-order declarations.
+	 */
+	v.hasBeenDeclared = true;
+
 	if (v.isResolved) {
 		return;
 	}
-
 
 	auto done = ctx.lp.startResolving(v);
 	ctx.isVarAssign = true;
@@ -4231,8 +4235,6 @@ void resolveVariable(Context ctx, ir.Variable v)
 		ctx.isVarAssign = false;
 		done();
 	}
-
-	v.hasBeenDeclared = true;
 
 	// Fix up type as best as possible.
 	resolveType(ctx, v.type);
@@ -4764,7 +4766,9 @@ public:
 		ctx.setupFromScope(current);
 		scope (success) ctx.reset();
 
+		auto oldHasBeenDeclared = v.hasBeenDeclared;
 		resolveVariable(ctx, v);
+		v.hasBeenDeclared = oldHasBeenDeclared;
 	}
 
 	/**
