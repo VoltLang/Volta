@@ -29,6 +29,9 @@ string cleanComment(string comment, out bool isBackwardsComment)
 		if (i == comment.length - 1 && commentChar != '/' && c == '/') {
 			continue;
 		}
+		if (i == 1 && c == '!') {
+			continue;
+		}
 		if (i == 2 && c == '<') {
 			isBackwardsComment = true;
 			continue;  // Skip the '<'.
