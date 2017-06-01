@@ -14,11 +14,11 @@ string cleanComment(string comment, out bool isBackwardsComment)
 	}
 
 	char commentChar;
-	if (comment[0..2] == "**") {
+	if (comment[0..2] == "*!") {
 		commentChar = '*';
-	} else if (comment[0..2] == "++") {
+	} else if (comment[0..2] == "+!") {
 		commentChar = '+';
-	} else if (comment[0..2] == "//") {
+	} else if (comment[0..2] == "/!") {
 		commentChar = '/';
 	} else {
 		return comment;
