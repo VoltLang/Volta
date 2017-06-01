@@ -262,7 +262,7 @@ LexStatus skipLineComment(TokenWriter tw)
 	}
 	tw.source.skipEndOfLine();
 
-	addIfDocComment(tw, commentToken, tw.source.sliceFrom(mark), "//");
+	addIfDocComment(tw, commentToken, tw.source.sliceFrom(mark), "/!");
 	return Succeeded;
 }
 
@@ -289,7 +289,7 @@ LexStatus skipBlockComment(TokenWriter tw)
 		}
 	}
 
-	addIfDocComment(tw, commentToken, tw.source.sliceFrom(mark), "**");
+	addIfDocComment(tw, commentToken, tw.source.sliceFrom(mark), "*!");
 	return Succeeded;
 }
 
@@ -316,7 +316,7 @@ LexStatus skipNestingComment(TokenWriter tw)
 		}
 	}
 
-	addIfDocComment(tw, commentToken, tw.source.sliceFrom(mark), "++");
+	addIfDocComment(tw, commentToken, tw.source.sliceFrom(mark), "+!");
 	return Succeeded;
 }
 
