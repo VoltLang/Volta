@@ -6,7 +6,7 @@ module core.c.stddef;
 version (CRuntime_All):
 
 
-/**
+/*!
  * Windows wchar is different from *NIXs.
  * @{
  */
@@ -19,6 +19,6 @@ version (Windows) {
 	alias wchar_t  = i32;
 
 }
-/**
+/*!
  * @}
  */

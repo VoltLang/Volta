@@ -1,12 +1,12 @@
 // Copyright © 2016-2017, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-/**
+/*!
  * Holds documentation and defines for the Volt garbage collector.
  */
 module vrt.gc.design;
 
 
-/**
+/*!
  * Common sizes for helpers.
  * @{
  */
@@ -17,7 +17,7 @@ enum size_t  _1MB =        1u * 1024 * 1024;
 enum size_t _64KB =              64u * 1024;
 enum size_t  _4KB =               4u * 1024;
 enum size_t  _1KB =               1u * 1024;
-/**
+/*!
  * @}
  */
 
@@ -41,8 +41,8 @@ enum PageSizeLog = 12;
 enum PageSize    = 1U << PageSizeLog;
 enum PageMask    = PageSize - 1;
 
-/// Hardcoded to 2MB for now as we are always on x86.
+//! Hardcoded to 2MB for now as we are always on x86.
 enum HugePageSize = _2MB;
 
-/// Used to decide the GigaMan allocation size.
+//! Used to decide the GigaMan allocation size.
 enum GigaSize = _1GB;

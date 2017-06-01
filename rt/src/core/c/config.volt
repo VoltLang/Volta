@@ -6,7 +6,7 @@ module core.c.config;
 version (CRuntime_All):
 
 
-/**
+/*!
  * Volt doesn't have long and unsigned long in the same way
  * that C does, whos typesdefs changes size depending on
  * bitness of the target and of the target os.
@@ -23,6 +23,6 @@ version (V_P64 && !Windows) {
 	alias c_ulong = u32;
 
 }
-/**
+/*!
  * @}
  */
