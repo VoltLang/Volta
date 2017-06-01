@@ -5,7 +5,7 @@ module test;
 // Should be fine, not sure if this will do anything
 fn ichi();
 fn ni();
-/**
+/*!
  * @}
  */
 
@@ -15,12 +15,12 @@ fn ni();
 ///
 /// My cool comment on both functions.
 ///
-/**
+/*!
  * @{
  */
 fn san();
 fn yon();
-/**
+/*!
  * @}
  */ 
   
