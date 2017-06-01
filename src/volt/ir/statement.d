@@ -10,7 +10,7 @@ import volt.ir.toplevel;
 import volt.ir.context;
 
 
-/**
+/*!
  * @defgroup irStatement IR Statement Nodes
  *
  * Statements make things happen.
@@ -23,7 +23,7 @@ import volt.ir.context;
  * @ingroup irNode
  */
 
-/**
+/*!
  * Base class for all statements.
  *
  * @ingroup irNode irStatement
@@ -39,7 +39,7 @@ public:
 	}
 }
 
-/**
+/*!
  * A block statement is a group of zero or more statements.
  * Why these exist depends on where they live. 
  *
@@ -49,7 +49,7 @@ class BlockStatement : Statement
 {
 public:
 	Node[] statements;
-	/** The scope directly attached to a function has its parent
+	/*! The scope directly attached to a function has its parent
 	 *  node set to that Function, otherwise it points to this
 	 *  BlockStatement.
 	 */
@@ -70,7 +70,7 @@ public:
 	}
 }
 
-/**
+/*!
  * The return statement returns execution to the caller
  * of the current function, and optionally returns a value.
  *
@@ -91,7 +91,7 @@ public:
 	}
 }
 
-/**
+/*!
  * The asm statement contains inline assembly.
  * It's a list of tokens so different backends
  * can parse it however they want. It all still
@@ -118,7 +118,7 @@ public:
 	}
 }
 
-/**
+/*!
  * The assert statement aborts if condition is flase, optionally
  * displaying message. isStatic determines whether condition is
  * checked at compile time or not.
@@ -144,7 +144,7 @@ public:
 	}
 }
 
-/**
+/*!
  * If exp is true, execution flows to thenState.
  * If exp is false, execution flows to elseState,
  * if it exists, otherwise it skips to the end of
@@ -173,7 +173,7 @@ public:
 	}
 }
 
-/**
+/*!
  * The while statement keeps executing the statements
  * in block, as long as condition evaluates in true.
  *
@@ -196,7 +196,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Like a while statement, executes block while condition
  * is true. Unlike the while statement, at least one execution
  * of block is guaranteed.
@@ -220,7 +220,7 @@ public:
 	}
 }
 
-/**
+/*!
  * The for statement is a while statement that evaluates
  * init first (optionally introducing Variables into the
  * for's scope), and running increment at the end of each
@@ -254,7 +254,7 @@ public:
 	}
 }
 
-/**
+/*!
  * The foreach statement loops over elements in an aggregate.
  * Arrays and AAs have builtin support, but users can define
  * iteration solutions for their own types too.
@@ -272,7 +272,7 @@ public:
 	BlockStatement block;
 	Named opApplyType;
 
-	/// If this is non null, the lowerer will decode strings with this.
+	//! If this is non null, the lowerer will decode strings with this.
 	Function decodeFunction;
 
 public:
@@ -299,7 +299,7 @@ public:
 	}
 }
 
-/**
+/*!
  * A label statement associates a string with a position
  * in the statement stream. Goto can then be used to jump
  * to that position and anger Dijkstra. 
@@ -327,7 +327,7 @@ public:
 	}
 }
 
-/**
+/*!
  * An ExpStatement wraps an Expression in a Statement.
  *
  * @ingroup irNode irStatement
@@ -347,7 +347,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Represents a case in a switch statement.
  *
  * If firstExp !is null and secondExp is null:
@@ -390,7 +390,7 @@ public:
 	}
 }
 
-/**
+/*!
  * A switch statement jumps to various case labels depending
  * on the value of its condition.
  * 
@@ -425,7 +425,7 @@ public:
 	}
 }
 
-/**
+/*!
  * The continue statement restarts a loop (while, dowhile, for, foreach).
  *
  * @ingroup irNode irStatement
@@ -445,7 +445,7 @@ public:
 	}
 }
 
-/**
+/*!
  * The break statement halts execution of a loop or a switch statement.
  *
  * @ingroup irNode irStatement
@@ -465,7 +465,7 @@ public:
 	}
 }
 
-/**
+/*!
  * The goto statement jumps to a label, or controls flow
  * inside a switch statement.
  *
@@ -492,7 +492,7 @@ public:
 	}
 }
 
-/**
+/*!
  * All lookups inside of a WithStatement first check
  * exp before performing a regular lookup. Ambiguities
  * are still errors.
@@ -516,7 +516,7 @@ public:
 	}
 }
 
-/**
+/*!
  * A synchronized statement ensures that only one thread of
  * execution can enter its block. An explicit mutex may be provided.
  *
@@ -539,7 +539,7 @@ public:
 	}
 }
 
-/**
+/*!
  * The try statement allows the resolution of throw statements,
  * by rerouting thrown exceptions into various catch blocks.
  *
@@ -573,7 +573,7 @@ public:
 	}
 }
 
-/**
+/*!
  * A throw statements halts the current functions execution and
  * unwinds the stack until it hits a try statement with an appropriate
  * catch statement or, failing that, it halts execution of the entire
@@ -596,7 +596,7 @@ public:
 	}
 }
 
-/**
+/*!
  * ScopeStatements are executed on various conditions. 
  * Exits are always executed when the given scope is left.
  * Successes are executed when the scope is left normally.
@@ -621,7 +621,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Pragma statements do magical things.
  * pragma(lib, "SDL"), for instance, tells the compiler
  * to link with SDL without the user having to specify
@@ -655,7 +655,7 @@ public:
 	}
 }
 
-/**
+/*!
  * A ConditionStatement provides for conditional compilation
  * of statements. If condition is true, then it is as if block
  * was where the ConditionStatement was. Otherwise, the _else
@@ -682,7 +682,7 @@ public:
 	}
 }
 
-/**
+/*!
  * The mixin statement mixes in a mixin function, mixin template
  * or a string.
  *
@@ -691,8 +691,8 @@ public:
 class MixinStatement : Statement
 {
 public:
-	Exp stringExp; ///< Not optional for mixin("string").
-	QualifiedName id; ///< Not optional for mixin .my.Ident!(...)
+	Exp stringExp; //!< Not optional for mixin("string").
+	QualifiedName id; //!< Not optional for mixin .my.Ident!(...)
 
 	BlockStatement resolved;
 

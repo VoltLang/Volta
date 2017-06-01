@@ -25,7 +25,7 @@ import volt.llvm.state;
 import volt.llvm.toplevel;
 
 
-/**
+/*!
  * Main interface for the @link volt.interfaces.Driver
  * Driver@endlink to the llvm backend.
  */
@@ -177,7 +177,7 @@ LLVMModuleRef loadModule(LLVMContextRef ctx, string filename)
 	return mod;
 }
 
-/**
+/*!
  * Helper function to link several LLVM modules together.
  */
 void linkModules(string output, string[] inputs...)
@@ -277,7 +277,7 @@ void writeObjectFile(TargetInfo target, string output, string input)
 	}
 }
 
-/**
+/*!
  * Used to select LLVMTarget.
  */
 static string[] archList = [
@@ -368,7 +368,7 @@ static string[][] layoutList = [
 	],
 ];
 
-/**
+/*!
  * Layout strings grabbed from clang.
  */
 enum string layoutWinLinux32 = "e-m:e-p:32:32-f64:32:64-f80:32-n8:16:32-S128";
@@ -376,7 +376,7 @@ enum string layoutWinLinux64 = "e-m:e-i64:64-f80:128-n8:16:32:64-S128";
 enum string layoutOSX32 = "e-m:o-p:32:32-f64:32:64-f80:128-n8:16:32-S128";
 enum string layoutOSX64 = "e-m:o-i64:64-f80:128-n8:16:32:64-S128";
 
-/**
+/*!
  * Bare metal layout, grabbed from clang with target "X-pc-none-elf".
  */
 enum string layoutMetal32 = "e-m:e-p:32:32-f64:32:64-f80:32-n8:16:32-S128";

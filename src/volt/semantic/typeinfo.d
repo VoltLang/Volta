@@ -21,7 +21,7 @@ import volt.semantic.classify;
 import volt.semantic.util;
 
 
-/**
+/*!
  * Makes the mangledName for the Variable holding the TypeInfo instance.
  */
 string getTypeInfoVarName(ir.Type type)
@@ -30,7 +30,7 @@ string getTypeInfoVarName(ir.Type type)
 	return format("_V__TypeInfo_%s", type.mangledName);
 }
 
-/**
+/*!
  * Returns the type info for type, builds a complete TypeInfo if needed.
  */
 ir.Variable getTypeInfo(LanguagePass lp, ir.Module mod, ir.Type type)
@@ -69,7 +69,7 @@ ir.Variable getTypeInfo(LanguagePass lp, ir.Module mod, ir.Type type)
 	return literalVar;
 }
 
-/**
+/*!
  * Fills in the TypeInfo Variable on a Aggregate.
  */
 void createAggregateVar(LanguagePass lp, ir.Aggregate aggr)
@@ -81,7 +81,7 @@ void createAggregateVar(LanguagePass lp, ir.Aggregate aggr)
 	aggr.members.nodes ~= aggr.typeInfo;
 }
 
-/**
+/*!
  * Fills in the TypeInfo Variable assign, completing it.
  */
 void fillInAggregateVar(LanguagePass lp, ir.Aggregate aggr)

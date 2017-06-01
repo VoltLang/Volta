@@ -367,7 +367,7 @@ version (UseDIBuilder) {
 		                           di.ptr, cast(uint)di.length);
 	}
 
-	/**
+	/*!
 	 * Used by Array and Delegates.
 	 */
 	void diStructSetBody(State state, Type p, Type[2] t, string[2] names)
@@ -582,7 +582,7 @@ private:
 
 private:
 
-/**
+/*!
  * Retrive size and alignment for type in bits (not in bytes as the
  * rest of the compiler keep track of it).
  */

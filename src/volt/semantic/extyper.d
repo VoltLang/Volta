@@ -37,7 +37,7 @@ import volt.semantic.lifter;
 import volt.semantic.templatelifter;
 
 
-/**
+/*!
  * Does what the name implies.
  *
  * Checks if func is null and is okay with more arguments the parameters.
@@ -463,7 +463,7 @@ ir.Type handleScopeStore(Context ctx, string ident, ref ir.Exp exp, ir.Store sto
  *
  */
 
-/**
+/*!
  * If qname has a child of name leaf, returns an expression looking it up.
  * Otherwise, null is returned.
  */
@@ -484,7 +484,7 @@ ir.Exp withLookup(Context ctx, ir.Exp withExp, string leaf)
 	return access;
 }
 
-/**
+/*!
  * Replace IdentifierExps with another exp, often ExpReference.
  */
 ir.Type extypeIdentifierExp(Context ctx, ref ir.Exp e, Parent parent)
@@ -717,7 +717,7 @@ void handleArgumentLabelsIfNeeded(Context ctx, ir.Postfix postfix,
 	exp = postfix;
 }
 
-/// Given a.foo, if a is a pointer to a class, turn it into (*a).foo.
+//! Given a.foo, if a is a pointer to a class, turn it into (*a).foo.
 private void dereferenceInitialClass(ir.Postfix postfix, ir.Type type)
 {
 	if (!isPointerToClass(type)) {
@@ -778,7 +778,7 @@ private void resolvePostfixOverload(Context ctx, ir.Postfix postfix,
 	}
 }
 
-/**
+/*!
  * Rewrite a call to a homogenous variadic if needed.
  * Makes individual parameters at the end into an array.
  */
@@ -815,7 +815,7 @@ private void rewriteHomogenousVariadic(Context ctx,
 	}
 }
 
-/**
+/*!
  * Turns identifier postfixes into CreateDelegates,
  * and resolves property function calls in postfixes,
  * type safe varargs, and explicit constructor calls.
@@ -1003,7 +1003,7 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 }
 
 
-/**
+/*!
  * This function acts as a extyperExpReference function would do,
  * but it also takes a extra type context which is used for the
  * cases when looking up Member variables via Types.
@@ -1100,7 +1100,7 @@ void replaceExpReferenceIfNeeded(Context ctx, ref ir.Exp exp, ir.ExpReference eR
 	return;
 }
 
-/**
+/*!
  * Turn identifier postfixes into <ExpReference>.ident.
  */
 ir.Type consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes,
@@ -1228,7 +1228,7 @@ void extypePostfixIndex(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	}
 }
 
-/**
+/*!
  * This function will check for ufcs functions on a Identifier postfix,
  * it assumes we have already looked for a field and not found anything.
  *
@@ -1319,7 +1319,7 @@ ir.Type builtInField(Context ctx, ref ir.Exp exp, ir.Exp child, ir.Type type, st
 	}
 }
 
-/**
+/*!
  * Rewrite exp if the store contains any property functions, works
  * for both PostfixExp and IdentifierExp.
  *
@@ -1368,7 +1368,7 @@ bool rewriteIfPropertyStore(ref ir.Exp exp, ir.Exp child, string name,
 	return true;
 }
 
-/**
+/*!
  * Handling cases:
  *
  * inst.field               ( Any parent )
@@ -1518,7 +1518,7 @@ ir.Type extypePostfix(Context ctx, ref ir.Exp exp, Parent parent)
  *
  */
 
-/**
+/*!
  * Stops casting to an overloaded function name, casting from null, and wires
  * up some runtime magic needed for classes.
  */
@@ -1554,7 +1554,7 @@ void extypeUnaryCastTo(Context ctx, ref ir.Exp exp, ir.Unary unary)
 	rewriteCall(ctx, unary.value, ctx.lp.castFunc, [val, cast(ir.Exp)tid]);
 }
 
-/**
+/*!
  * Type new expressions.
  */
 void extypeUnaryNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
@@ -1675,7 +1675,7 @@ void extypeUnaryNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 	}
 }
 
-/**
+/*!
  * Lower 'new foo[0 .. $]' expressions to BuiltinExps.
  */
 void extypeUnaryDup(Context ctx, ref ir.Exp exp, ir.Unary _unary)
@@ -1794,7 +1794,7 @@ ir.Type extypeUnary(Context ctx, ref ir.Exp exp, Parent parent)
  *
  */
 
-/**
+/*!
  * Everyone's favourite: integer promotion! :D!
  * In general, converts to the largest type needed in a binary expression.
  */
@@ -1935,7 +1935,7 @@ void rewriteCall(Context ctx, ref ir.Exp exp, ir.Function func, ir.Exp[] args, i
 	extypePostfixCall(ctx, exp, call);
 }
 
-/**
+/*!
  * Given the name of an overloaded operator, rewrite it to a function call..
  * extypePostfixCall is called on the rewritten expression.
  * 'left' is an expression of which the function will be a member.
@@ -1972,7 +1972,7 @@ ir.BinOp.Op maybeInvertCmp(ir.BinOp.Op op, bool invert)
 	}
 }
 
-/**
+/*!
  * If the given binop is working on an aggregate
  * that overloads that operator, rewrite a call to that overload.
  */
@@ -2014,7 +2014,7 @@ ir.Type opOverloadRewrite(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 	}
 }
 
-/**
+/*!
  * If this postfix operates on an aggregate with an index
  * operator overload, rewrite it.
  */
@@ -2058,7 +2058,7 @@ ir.Type extypeBinOpPropertyAssign(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 	return func.type.ret;
 }
 
-/**
+/*!
  * Ensure concatentation is sound.
  */
 void extypeCat(Context ctx, ref ir.Exp lexp, ref ir.Exp rexp,
@@ -2143,7 +2143,7 @@ void extypeCat(Context ctx, ref ir.Exp lexp, ref ir.Exp rexp,
 	rexp = buildCastSmart(left.base, rexp);
 }
 
-/**
+/*!
  * Handles logical operators (making a && b result in a bool),
  * binary of storage types, otherwise forwards to assign or primitive
  * specific functions.
@@ -3085,7 +3085,7 @@ void extypeBlockStatement(Context ctx, ir.BlockStatement bs)
 	ctx.leave(bs);
 }
 
-/**
+/*!
  * Ensure that a thrown type inherits from Throwable.
  */
 void extypeThrowStatement(Context ctx, ref ir.Node n)
@@ -3110,7 +3110,7 @@ void extypeThrowStatement(Context ctx, ref ir.Node n)
 	}
 }
 
-/**
+/*!
  * Just check that it's a struct template for now.
  */
 void extypeTemplateDefinition(Context ctx, ir.TemplateDefinition td)
@@ -3129,8 +3129,8 @@ struct ArrayCase
 	size_t lastI;
 }
 
-/// Some extypeSwitchStatment utility functions.
-/// @{
+//! Some extypeSwitchStatment utility functions.
+//! @{
 
 void addExp(Context ctx, ir.SwitchStatement ss, ir.Exp element, ref ir.Exp exp, ref size_t sz,
             ref uint[] intArrayData, ref ulong[] longArrayData)
@@ -3271,9 +3271,9 @@ void replaceWithHashIfNeeded(Context ctx, ir.SwitchStatement ss, ir.SwitchCase _
 	exp = buildConstantUint(exp.loc, h);
 }
 
-/// @}
+//! @}
 
-/// Same as the above function, but handle the multi-case case.
+//! Same as the above function, but handle the multi-case case.
 void replaceExpsWithHashIfNeeded(Context ctx, ir.SwitchStatement ss, ir.SwitchCase _case,
                                  ref ArrayCase[uint] arrayCases,
                                  size_t i, ir.Variable condVar, ref ir.Exp[] exps)
@@ -3322,7 +3322,7 @@ void replaceExpsWithHashIfNeeded(Context ctx, ir.SwitchStatement ss, ir.SwitchCa
 	}
 }
 
-/**
+/*!
  * Ensure that a given switch statement is semantically sound.
  * Errors on bad final switches (doesn't cover all enum members, not on an enum at all),
  * and checks for doubled up cases.
@@ -3495,7 +3495,7 @@ void extypeSwitchStatement(Context ctx, ref ir.Node n)
 	}
 }
 
-/**
+/*!
  * Merge with below function.
  */
 void extypeForeachStatement(Context ctx, ref ir.Node n)
@@ -3535,7 +3535,7 @@ void extypeForeachStatement(Context ctx, ref ir.Node n)
 	extypeBlockStatement(ctx, fes.block);
 }
 
-/**
+/*!
  * Process the types and expressions on a foreach.
  * Foreaches become for loops before the backend sees them,
  * but they still need to be made valid by the extyper.
@@ -3941,7 +3941,7 @@ void actualizeFunction(Context ctx, ir.Function func)
  * functions on the language pass instead.
  */
 
-/**
+/*!
  * Helper function to call into the ExTyper version.
  */
 ir.Type resolveType(LanguagePass lp, ir.Scope current, ref ir.Type type)
@@ -3953,7 +3953,7 @@ ir.Type resolveType(LanguagePass lp, ir.Scope current, ref ir.Type type)
 	return resolveType(ctx, type);
 }
 
-/**
+/*!
  * Flattens storage types, ensure that there are no unresolved TypeRefences in
  * the given type and in general ensures that the type is ready to be consumed.
  *
@@ -4142,7 +4142,7 @@ void doResolveAA(Context ctx, ref ir.Type type)
 	throw makeInvalidAAKey(at);
 }
 
-/**
+/*!
  * Resolves an alias, either setting the myalias field
  * or turning it into a type.
  */
@@ -4183,7 +4183,7 @@ void resolveAlias(LanguagePass lp, ir.Alias a)
 	s.markAliasResolved(ret);
 }
 
-/**
+/*!
  * Will make sure that the Enum's type is set, and
  * as such will resolve the first member since it
  * decides the type of the rest of the enum.
@@ -4215,7 +4215,7 @@ void resolveEnum(LanguagePass lp, ir.Enum e)
 	e.base = realType(copyTypeSmart(e.loc, type));
 }
 
-/**
+/*!
  * Resolves a Variable.
  */
 void resolveVariable(Context ctx, ir.Variable v)
@@ -4490,7 +4490,7 @@ void resolveUnion(LanguagePass lp, ir.Union u)
  * Misc helper functions.
  *
  */
-/**
+/*!
  * Check a if a given aggregate contains an erroneous
  * default constructor or destructor.
  */
@@ -4512,7 +4512,7 @@ void checkDefaultFootors(Context ctx, ir.Aggregate agg)
 	}
 }
 
-/**
+/*!
  * Check a given Aggregate's anonymous structs/unions
  * (if any) for name collisions.
  */
@@ -4578,7 +4578,7 @@ void writeVariableAssignsIntoCtors(Context ctx, ir.Class _class)
 	}
 }
 
-/**
+/*!
  * Given a expression and a type, if the expression is a literal,
  * tag it (and its subexpressions) with the type.
  */
@@ -4640,7 +4640,7 @@ void tagLiteralType(ir.Exp exp, ir.Type type)
 	}
 }
 
-/**
+/*!
  * Remove type parameters from the current scope.
  */
 void cleanTemplateParameters(ir.Scope current, ir.TemplateInstance ti)
@@ -4654,7 +4654,7 @@ void cleanTemplateParameters(ir.Scope current, ir.TemplateInstance ti)
 	}
 }
 
-/**
+/*!
  * Perform tasks that need to happen after a template instance
  * has been processed.
  */
@@ -4694,7 +4694,7 @@ public:
 	ir.Exp exp;
 }
 
-/**
+/*!
  * Given a switch statement, replace 'goto case' with an explicit
  * jump to the next case.
  */
@@ -4709,7 +4709,7 @@ void replaceGotoCase(Context ctx, ir.SwitchStatement ss)
 	}
 }
 
-/**
+/*!
  * If type casting were to be strict, type T could only
  * go to type T without an explicit cast. Implicit casts
  * are places where the language deems automatic conversion
@@ -4756,7 +4756,7 @@ public:
 	 *
 	 */
 
-	/**
+	/*!
 	 * For out of band checking of Variables.
 	 */
 	void resolve(ir.Scope current, ir.Variable v)
@@ -4771,7 +4771,7 @@ public:
 		v.hasBeenDeclared = oldHasBeenDeclared;
 	}
 
-	/**
+	/*!
 	 * For out of band checking of Functions.
 	 */
 	void resolve(ir.Scope current, ir.Function func)

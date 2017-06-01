@@ -376,7 +376,7 @@ ir.QualifiedName copy(ir.QualifiedName old)
 	return q;
 }
 
-/**
+/*!
  * Helper function that takes care of up
  * casting the return from copyDeep.
  */
@@ -426,7 +426,7 @@ ir.Type copyType(ir.Type t)
 	return newt;
 }
 
-/**
+/*!
  * Helper function that takes care of up
  * casting the return from copyDeep.
  */
@@ -445,7 +445,7 @@ ir.Exp copyExp(ref in Location loc, ir.Exp exp)
 	return e;
 }
 
-/**
+/*!
  * Copies a node and all its children nodes.
  */
 ir.Node copyNode(ir.Node n)

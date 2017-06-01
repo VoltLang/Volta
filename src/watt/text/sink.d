@@ -3,13 +3,13 @@
 module watt.text.sink;
 
 
-/// The one true sink definition.
+//! The one true sink definition.
 alias Sink = scope void delegate(scope SinkArg);
 
-/// The argument to the one true sink.
+//! The argument to the one true sink.
 alias SinkArg = scope const(char)[];
 
-/// A sink to create long strings.
+//! A sink to create long strings.
 struct StringSink
 {
 private:

@@ -38,12 +38,12 @@ enum ParseStatus {
 alias Succeeded = ParseStatus.Succeeded;
 alias Failed = ParseStatus.Failed;
 
-/**
+/*!
  * Just for convenience.
  */
 alias NodeSinkDg = void delegate(ir.Node n);
 
-/**
+/*!
  * Used as a sink for functions that return multiple nodes.
  */
 class NodeSink
@@ -236,7 +236,7 @@ ParseStatus strayDocComment(ParserStream ps, Location loc,
  */
 
 
-/**
+/*!
  * Match the current token on the parserstream @ps against @type.
  * Does not advance the parserstream.
  *
@@ -253,7 +253,7 @@ ParseStatus checkToken(ParserStream ps, ir.NodeType ntype, TokenType type,
 	return wrongToken(ps, ntype, ps.peek, type, file, line);
 }
 
-/**
+/*!
  * Match the current token on the parserstream @ps against @type.
  * Does not advance the parserstream.
  *
@@ -278,7 +278,7 @@ ParseStatus checkTokens(ParserStream ps, ir.NodeType ntype, scope const(TokenTyp
 	return wrongToken(ps, ntype, ps.lookahead(i), types[i], file, line);
 }
 
-/**
+/*!
  * Match the current Token on the ParserStream @ps against @type.
  *
  * Side-effects:
@@ -296,7 +296,7 @@ ParseStatus match(ParserStream ps, ir.NodeType ntype, TokenType type,
 	return wrongToken(ps, ntype, ps.peek, type, file, line);
 }
 
-/**
+/*!
  * Match the current token on the parserstream @ps against @type.
  *
  * Side-effects:
@@ -314,7 +314,7 @@ ParseStatus match(ParserStream ps, ir.Node node, TokenType type,
 	return wrongToken(ps, node.nodeType, ps.peek, type, file, line);
 }
 
-/**
+/*!
  * Match the current tokens on the parserstream @ps against @types.
  *
  * Side-effects:
@@ -342,7 +342,7 @@ ParseStatus match(ParserStream ps, ir.NodeType ntype, scope const(TokenType)[] t
 	return wrongToken(ps, ntype, ps.lookahead(i), types[i], file, line);
 }
 
-/**
+/*!
  * Match the current token on the parserstream @ps against @type.
  *
  * Side-effects:
@@ -355,7 +355,7 @@ ParseStatus match(ParserStream ps, ir.Node n, TokenType type, out Token tok,
 	return match(ps, n.nodeType, type, tok, file, line);
 }
 
-/**
+/*!
  * Match the current token on the parserstream @ps against @type.
  *
  * Side-effects:
@@ -373,7 +373,7 @@ ParseStatus match(ParserStream ps, ir.NodeType nodeType, TokenType type, out Tok
 	return wrongToken(ps, nodeType, ps.peek, type, file, line);
 }
 
-/**
+/*!
  * Matches the current token on the parserstream @ps against @type
  * and if they matches gets it from the stream.
  *
@@ -390,7 +390,7 @@ bool matchIf(ParserStream ps, TokenType type)
 	}
 }
 
-/**
+/*!
  * Add all doccomment tokens to the current comment level.
  */
 ParseStatus eatComments(ParserStream ps)
@@ -418,7 +418,7 @@ ParseStatus eatComments(ParserStream ps)
  */
 
 
-/**
+/*!
  * Parse a QualifiedName, leadingDot optinal.
  */
 ParseStatus parseQualifiedName(ParserStream ps, out ir.QualifiedName name,
@@ -457,7 +457,7 @@ ParseStatus parseQualifiedName(ParserStream ps, out ir.QualifiedName name,
 	return Succeeded;
 }
 
-/**
+/*!
  * Parse a single Identifier.
  */
 ParseStatus parseIdentifier(ParserStream ps, out ir.Identifier i)
@@ -475,7 +475,7 @@ ParseStatus parseIdentifier(ParserStream ps, out ir.Identifier i)
 	return Succeeded;
 }
 
-/**
+/*!
  * Returns true if the ParserStream is in a state where there is a colon
  * (along with optional identifiers and commas) before a semicolon.
  * Basically, returns true if we're at a new-style (a : i32) variable declaration.
@@ -507,11 +507,11 @@ public:
 	ParserError[] parserErrors;
 	CompilerException ce;
 
-	/// Error raised shouldn't be ignored.
+	//! Error raised shouldn't be ignored.
 	bool neverIgnoreError;
 
 	Token lastDocComment;
-	ir.Node retroComment;  ///< For backwards doc comments (like this one).
+	ir.Node retroComment;  //!< For backwards doc comments (like this one).
 	int multiDepth;
 
 	Settings settings;
@@ -529,7 +529,7 @@ public:
 		super(tokens);
 	}
 
-	/**
+	/*!
 	 * Get the current token and advances the stream to the next token.
 	 *
 	 * Side-effects:
@@ -594,7 +594,7 @@ public:
 		}
 	}
 
-	/// Add a comment to the current comment level.
+	//! Add a comment to the current comment level.
 	final void addComment(Token comment)
 	{
 		assert(comment.type == TokenType.DocComment);
@@ -609,7 +609,7 @@ public:
 		lastDocComment = comment;
 	}
 
-	/// Retrieve and clear the current comment.
+	//! Retrieve and clear the current comment.
 	final string comment()
 	{
 		assert(mComment.length >= 1);
@@ -620,7 +620,7 @@ public:
 		return str;
 	}
 
-	/**
+	/*!
 	 * True if we found @ { on its own, so apply the last doccomment
 	 * multiple times, until we see a matching number of @ }s.
 	 */

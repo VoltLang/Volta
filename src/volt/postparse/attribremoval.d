@@ -11,7 +11,7 @@ import volt.visitor.manip;
 import volt.visitor.visitor;
 
 
-/**
+/*!
  * A pass that turns Attributes nodes into fields on to
  * Functions, Classes and the like.
  *
@@ -26,7 +26,7 @@ protected:
 	ir.Attribute[] mStack;
 	Context[] mCtx;
 
-	/**
+	/*!
 	 * Helper class.
 	 */
 	static class Context
@@ -177,7 +177,7 @@ protected:
 	 * Apply functions.
 	 */
 
-	/**
+	/*!
 	 * Loops over all attributes and applies them.
 	 */
 	void applyAttributes(ir.Import i, ir.Attribute[] attrs)
@@ -202,7 +202,7 @@ protected:
 		}
 	}
 
-	/**
+	/*!
 	 * Loops over all attributes and applies them.
 	 */
 	void applyAttributes(ir.Function func, ir.Attribute[] attrs)
@@ -288,7 +288,7 @@ protected:
 		}
 	}
 
-	/**
+	/*!
 	 * Loops over all attributes and applies them.
 	 */
 	void applyAttributes(ir.EnumDeclaration ed, ir.Attribute[] attrs)
@@ -310,7 +310,7 @@ protected:
 		}
 	}
 
-	/**
+	/*!
 	 * Loops over all attributes and applies them.
 	 */
 	void applyAttributes(ir.Variable d, ir.Attribute[] attrs)
@@ -374,7 +374,7 @@ protected:
 		}
 	}
 
-	/**
+	/*!
 	 * Loops over all attributes and applies them.
 	 */
 	void applyAttributes(ir.Aggregate s, ir.Attribute[] attrs)
@@ -410,7 +410,7 @@ protected:
 		}
 	}
 
-	/**
+	/*!
 	 * Loops over all attributes and applies them.
 	 */
 	void applyAttributes(ir._Interface i, ir.Attribute[] attrs)
@@ -432,7 +432,7 @@ protected:
 		}
 	}
 
-	/**
+	/*!
 	 * Loops over all attributes and applies them.
 	 */
 	void applyAttributes(ir.Enum e, ir.Attribute[] attrs)
@@ -454,7 +454,7 @@ protected:
 		}
 	}
 
-	/**
+	/*!
 	 * Loops over all attributes and applies them.
 	 */
 	void applyAttributes(ir.Alias a, ir.Attribute[] attrs)

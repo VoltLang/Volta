@@ -1176,7 +1176,7 @@ ParseStatus parseFunction(ParserStream ps, out ir.Function func, ir.Type base)
 	return Succeeded;
 }
 
-/**
+/*!
  * This parses a function block, different from BlockStatement.
  *
  * void func()

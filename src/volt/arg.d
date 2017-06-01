@@ -12,7 +12,7 @@ import volt.errors;
 import volt.interfaces;
 
 
-/**
+/*!
  * Holds a set of compiler settings.
  *
  * Things like import paths, and so on.
@@ -20,66 +20,66 @@ import volt.interfaces;
 final class Settings
 {
 public:
-	bool warningsEnabled; ///< The -w argument.
-	bool noBackend; ///< The -S argument.
-	bool noLink; ///< The -c argument
-	bool emitLLVM; ///< The --emit-llvm argument.
-	bool noCatch; ///< The --no-catch argument.
-	bool noStdLib; ///< The --no-stdlib argument.
-	bool removeConditionalsOnly; ///< The -E argument.
-	bool simpleTrace; ///< The --simple-trace argument.
-	bool internalD; ///< The --internal-d argument;
-	bool internalDiff; ///< The --internal-diff argument.
-	bool internalDebug; ///< The --internal-dbg argument.
-	bool missingDeps; ///< The --missing argument;
+	bool warningsEnabled; //!< The -w argument.
+	bool noBackend; //!< The -S argument.
+	bool noLink; //!< The -c argument
+	bool emitLLVM; //!< The --emit-llvm argument.
+	bool noCatch; //!< The --no-catch argument.
+	bool noStdLib; //!< The --no-stdlib argument.
+	bool removeConditionalsOnly; //!< The -E argument.
+	bool simpleTrace; //!< The --simple-trace argument.
+	bool internalD; //!< The --internal-d argument;
+	bool internalDiff; //!< The --internal-diff argument.
+	bool internalDebug; //!< The --internal-dbg argument.
+	bool missingDeps; //!< The --missing argument;
 
 	Platform platform;
 	Arch arch;
 
-	string identStr; ///< Compiler identifier string.
+	string identStr; //!< Compiler identifier string.
 
-	string execCmd; ///< How where we launched.
-	string execDir; ///< Set on create.
-	string platformStr; ///< Derived from platform.
-	string archStr; ///< Derived from arch.
+	string execCmd; //!< How where we launched.
+	string execDir; //!< Set on create.
+	string platformStr; //!< Derived from platform.
+	string archStr; //!< Derived from arch.
 
-	string cc; ///< The --cc argument.
-	string[] xcc; ///< Arguments to cc, the --Xcc argument(s).
+	string cc; //!< The --cc argument.
+	string[] xcc; //!< Arguments to cc, the --Xcc argument(s).
 
-	string ld; ///< The --ld argument.
-	string[] xld; ///< The --Xld argument(s).
+	string ld; //!< The --ld argument.
+	string[] xld; //!< The --Xld argument(s).
 
-	string link; ///< The --link argument.
-	string[] xlink; ///< The --Xlink argument(s).
+	string link; //!< The --link argument.
+	string[] xlink; //!< The --Xlink argument(s).
 
-	string clang; ///< The --clang argument.
-	string[] xclang; ///< The --Xclang argument(s).
+	string clang; //!< The --clang argument.
+	string[] xclang; //!< The --Xclang argument(s).
 
-	string llvmAr; ///< The --llvm-ar argument.
-	string[] xllvmAr; ///< The --Xllvm-ar argument(s).
+	string llvmAr; //!< The --llvm-ar argument.
+	string[] xllvmAr; //!< The --Xllvm-ar argument(s).
 
-	string linker; ///< The --linker argument
-	string[] xlinker; ///< Arguments to the linker, the -Xlinker argument(s).
+	string linker; //!< The --linker argument
+	string[] xlinker; //!< Arguments to the linker, the -Xlinker argument(s).
 
 	string depFile;
 	string outputFile;
 
-	string[] importAsSrc; ///< The --import-as-src command.
+	string[] importAsSrc; //!< The --import-as-src command.
 
-	string[] includePaths; ///< The -I arguments.
-	string[] srcIncludePaths; ///< The -src-I arguments.
+	string[] includePaths; //!< The -I arguments.
+	string[] srcIncludePaths; //!< The -src-I arguments.
 
-	string[] libraryPaths; ///< The -L arguments.
-	string[] libraryFiles; ///< The -l arguments.
+	string[] libraryPaths; //!< The -L arguments.
+	string[] libraryFiles; //!< The -l arguments.
 
-	string[] frameworkPaths; ///< The -F arguments.
-	string[] frameworkNames; ///< The --framework arguments.
+	string[] frameworkPaths; //!< The -F arguments.
+	string[] frameworkNames; //!< The --framework arguments.
 
-	string[] stringImportPaths; ///< The -J arguments.
+	string[] stringImportPaths; //!< The -J arguments.
 
-	string jsonOutput; ///< The -jo argument.
+	string jsonOutput; //!< The -jo argument.
 
-	string perfOutput; ///< The --perf-output argument.
+	string perfOutput; //!< The --perf-output argument.
 
 
 public:
@@ -171,20 +171,20 @@ public:
 		IncludePath,
 		SrcPath,
 		Warnings,
-		PreprocessOnly,  ///< -E
-		CompileOnly,     ///< -S
-		MissingDeps,     ///< --missing
-		ImportAsSrc,     ///< --import-as-src
+		PreprocessOnly,  //!< -E
+		CompileOnly,     //!< -S
+		MissingDeps,     //!< --missing
+		ImportAsSrc,     //!< --import-as-src
 
-		Debug,           ///< --debug
-		Release,         ///< --release
+		Debug,           //!< --debug
+		Release,         //!< --release
 		DebugSimpleTrace,
 
-		Dep,             ///< --dep
+		Dep,             //!< --dep
 		Output,
 
-		EmitLLVM,        ///< --emit-llvm
-		EmitBitcode,     ///< --emit-bitcode (depricated)
+		EmitLLVM,        //!< --emit-llvm
+		EmitBitcode,     //!< --emit-bitcode (depricated)
 
 		NoLink,
 
@@ -222,7 +222,7 @@ public:
 		InternalDiff,
 		InternalPerf,
 		InternalDebug,
-		InternalNoCatch, ///< --no-catch
+		InternalNoCatch, //!< --no-catch
 	}
 
 	string arg;

@@ -11,7 +11,7 @@ import volt.ir.declaration;
 import volt.ir.statement;
 import volt.ir.templates;
 
-/**
+/*!
  * @defgroup irTopLevel IR TopLevel Nodes
  *
  * Top level nodes are Nodes relating to the the module system.
@@ -38,7 +38,7 @@ import volt.ir.templates;
  * @ingroup irNode
  */
 
-/**
+/*!
  * The toplevelest node.
  *
  * In Volt, there is no truly global scope, as in C or C++
@@ -61,22 +61,22 @@ import volt.ir.templates;
 class Module : Node
 {
 public:
-	QualifiedName name; ///< Name used for mangling.
-	TopLevelBlock children; ///< Toplevel nodes.
-	bool isAnonymous;  ///< Auto generated module name, unimportable.
+	QualifiedName name; //!< Name used for mangling.
+	TopLevelBlock children; //!< Toplevel nodes.
+	bool isAnonymous;  //!< Auto generated module name, unimportable.
 
-	/**
+	/*!
 	 * Scope for this module.
 	 *
 	 * Does not contain any imports public or otherwise.
 	 */
 	Scope myScope;
 
-	/**
+	/*!
 	 * Has phase 1 be started on this module.
 	 */
 	bool hasPhase1;
-	/**
+	/*!
 	 * Has phase 2 be started on this module.
 	 */
 	bool hasPhase2;
@@ -106,7 +106,7 @@ public:
 		this.moduleInfoRoot = old.moduleInfoRoot;
 	}
 
-	/// Get a unique number for this module.
+	//! Get a unique number for this module.
 	size_t getId()
 	{
 		auto id = mId;
@@ -115,7 +115,7 @@ public:
 	}
 }
 
-/**
+/*!
  * A TopLevelBlock contains a series of nodes, appropriate
  * for things like modules, classes, structs, and so on.
  *
@@ -141,7 +141,7 @@ public:
 	}
 }
 
-/**
+/*!
  * An Import adds a module to the search path of identifiers
  * inside the module it's in.
  *
@@ -168,22 +168,22 @@ public:
 class Import : Node
 {
 public:
-	/// public, private, package or protected.
+	//! public, private, package or protected.
 	Access access = Access.Private;
 
-	/// Optional
+	//! Optional
 	bool isStatic;
 
-	/// import <a>
+	//! import <a>
 	QualifiedName name;
 
-	/// Optional, import @<foo> = a
+	//! Optional, import @<foo> = a
 	Identifier bind;
 
-	/// Optional, import a : <b = c, d>
+	//! Optional, import a : <b = c, d>
 	Identifier[][] aliases;
 
-	/// This points at the imported module -- filled in by ImportResolver.
+	//! This points at the imported module -- filled in by ImportResolver.
 	Module targetModule;
 
 
@@ -213,7 +213,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Attributes apply different behaviours and access levels
  * to one or more top level nodes. These are lowered onto the
  * object by the attribremoval pass.
@@ -223,7 +223,7 @@ public:
 class Attribute : Node
 {
 public:
-	/**
+	/*!
 	 * Used to specify the exact sort of attribute.
 	 */
 	enum Kind
@@ -270,16 +270,16 @@ public:
 
 
 public:
-	/// What kind of attribute.
+	//! What kind of attribute.
 	Kind kind;
 
 	TopLevelBlock members;
 
-	Attribute chain; ///< for "public abstract:"
+	Attribute chain; //!< for "public abstract:"
 
-	Exp[] arguments;  ///< If kind == Annotation or MangledName.
+	Exp[] arguments;  //!< If kind == Annotation or MangledName.
 
-	/// Only if type == Align.
+	//! Only if type == Align.
 	int alignAmount;
 
 public:
@@ -304,7 +304,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Named is a base class for named types, like Enum, Struct, Class and so on.
  * This is slightly different from Aggregate since Enum is not a Aggregate,
  * but is a named type.
@@ -316,14 +316,14 @@ abstract class Named : Type
 public:
 	bool isResolved;
 
-	/// Usability from other modules.
+	//! Usability from other modules.
 	Access access = Access.Public;
 
-	string name; ///< Unmangled name of the NamedType.
+	string name; //!< Unmangled name of the NamedType.
 
-	Scope myScope; ///< Context for this NamedType.
+	Scope myScope; //!< Context for this NamedType.
 
-	Variable typeInfo;  ///< Filled in by the semantic pass.
+	Variable typeInfo;  //!< Filled in by the semantic pass.
 
 public:
 	this(NodeType nt) { super(nt); }
@@ -339,7 +339,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Aggregate is a base class for Struct, Union & Class.
  *
  * @ingroup irNode irTopLevel irType irDecl
@@ -350,7 +350,7 @@ public:
 	Aggregate[] anonymousAggregates;
 	Variable[] anonymousVars;
 
-	TopLevelBlock members; ///< Toplevel nodes.
+	TopLevelBlock members; //!< Toplevel nodes.
 
 	bool isActualized;
 
@@ -369,7 +369,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Plain Old Data aggregates.
  * Struct and Union, basically.
  */
@@ -387,7 +387,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Java style class declaration. Classes enable polymorphism,
  * and are always accessed through opaque references (to prevent
  * slicing -- look it up!)
@@ -399,30 +399,30 @@ public:
 class Class : Aggregate
 {
 public:
-	QualifiedName parent;  //< Optional.
-	QualifiedName[] interfaces;  //< Optional.
+	QualifiedName parent;  //!< Optional.
+	QualifiedName[] interfaces;  //!< Optional.
 
 	Function[] userConstructors;
 	Struct vtableStruct;
 	Variable vtableVariable;
 	Variable[] ifaceVariables;
 	Variable initVariable;
-	Class parentClass;  ///< Filled in by the typeverifier.
-	_Interface[] parentInterfaces;  ///< Filled in by the typeverifier.
-	size_t[] interfaceOffsets;  ///< Filled in by the typeverifier.
-	Function[][] methodsCache;  ///< Filled in by the classresolver.
+	Class parentClass;  //!< Filled in by the typeverifier.
+	_Interface[] parentInterfaces;  //!< Filled in by the typeverifier.
+	size_t[] interfaceOffsets;  //!< Filled in by the typeverifier.
+	Function[][] methodsCache;  //!< Filled in by the classresolver.
 
-	/// How a lowered class will look internally.
+	//! How a lowered class will look internally.
 	Struct layoutStruct;
 
-	/// Is this the one true 'Object' to rule them all?
+	//! Is this the one true 'Object' to rule them all?
 	bool isObject;
 
 	bool isAbstract;
 
 	bool isFinal;
 
-	TemplateInstance templateInstance;  //< Optional. Non-null if this is a template instantiation.
+	TemplateInstance templateInstance;  //!< Optional. Non-null if this is a template instantiation.
 
 public:
 	this() { super(NodeType.Class); }
@@ -467,7 +467,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Java style interface declaration. 
  * An interface defines multiple functions that an implementing
  * class must define. A class can inherit from multiple interfaces,
@@ -478,13 +478,13 @@ public:
 class _Interface : Aggregate
 {
 public:
-	QualifiedName[] interfaces; ///< Super interfaces to this.
-	_Interface[] parentInterfaces;  ///< Filled in by the typeverifier.
+	QualifiedName[] interfaces; //!< Super interfaces to this.
+	_Interface[] parentInterfaces;  //!< Filled in by the typeverifier.
 
-	/// How a lowered interface will look internally.
+	//! How a lowered interface will look internally.
 	Struct layoutStruct;
 
-	TemplateInstance templateInstance;  //< Optional. Non-null if this is a template instantiation.
+	TemplateInstance templateInstance;  //!< Optional. Non-null if this is a template instantiation.
 
 public:
 	this() { super(NodeType.Interface); }
@@ -505,7 +505,7 @@ public:
 	}
 }
 
-/**
+/*!
  * C style union.
  * Structs are a POD data type, and should be binary compatible
  * with the same union as defined by your friendly neighbourhood
@@ -520,7 +520,7 @@ class Union : PODAggregate
 public:
 	size_t totalSize; // Total size in memory.
 
-	TemplateInstance templateInstance;  //< Optional. Non-null if this is a template instantiation.
+	TemplateInstance templateInstance;  //!< Optional. Non-null if this is a template instantiation.
 
 public:
 	this() { super(NodeType.Union); }
@@ -533,7 +533,7 @@ public:
 	}
 }
 
-/**
+/*!
  * C style struct.
  * Structs are a POD data type, and should be binary compatible
  * with the same struct as defined by your friendly neighbourhood
@@ -546,9 +546,9 @@ public:
 class Struct : PODAggregate
 {
 public:
-	Node loweredNode;  ///< If not null, this struct was lowered from this.
+	Node loweredNode;  //!< If not null, this struct was lowered from this.
 
-	TemplateInstance templateInstance;  //< Optional. Non-null if this is a template instantiation.
+	TemplateInstance templateInstance;  //!< Optional. Non-null if this is a template instantiation.
 
 public:
 	this() { super(NodeType.Struct); }
@@ -562,7 +562,7 @@ public:
 }
 
 
-/**
+/*!
  * C style Enum.
  * Enums create symbols that are associated with compile
  * time constants. By default, they are enumerated with
@@ -575,8 +575,8 @@ public:
 class Enum : Named
 {
 public:
-	EnumDeclaration[] members; ///< At least one.
-	/**
+	EnumDeclaration[] members; //!< At least one.
+	/*!
 	 * With an anonymous enum, the base type (specified with a colon)
 	 * is the type of using that enum declaration. With a named enum the
 	 * type of the enum declaration is Enum, and the base type determines
@@ -599,7 +599,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Unittest code to be run on if selected by user.
  *
  * @ingroup irNode irTopLevel
@@ -607,7 +607,7 @@ public:
 class Unittest : Node
 {
 public:
-	BlockStatement _body; ///< Contains statements.
+	BlockStatement _body; //!< Contains statements.
 
 
 public:
@@ -620,7 +620,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Node represention a compile time conditional compilation.
  *
  * Several types Condition is collapsed into this class, including
@@ -632,23 +632,23 @@ public:
 class Condition : Node
 {
 public:
-	/**
+	/*!
 	 * Used to specify the exact sort of condition.
 	 */
 	enum Kind
 	{
 		Invalid,
-		/// version (identifier) {}
+		//! version (identifier) {}
 		Version,
-		/// debug {}, debug (identifier) {}
+		//! debug {}, debug (identifier) {}
 		Debug,
-		/// static if (exp) {}
+		//! static if (exp) {}
 		StaticIf,
 	}
 
 
 public:
-	/// What kind of Condition is this?
+	//! What kind of Condition is this?
 	Kind kind;
 	Exp exp;
 
@@ -664,7 +664,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Node represention a compile time conditional compilation, at the
  * toplevel. Uses Condition to specify the if it should be compiled.
  *
@@ -673,15 +673,15 @@ public:
 class ConditionTopLevel : Node
 {
 public:
-	/// Specifier.
+	//! Specifier.
 	Condition condition;
 
-	/// If a else is following.
+	//! If a else is following.
 	bool elsePresent;
 
-	/// version (foo) { @<members> }
+	//! version (foo) { @<members> }
 	TopLevelBlock members;
-	/// version (foo) { @<members> } else { @<_else> }
+	//! version (foo) { @<members> } else { @<_else> }
 	TopLevelBlock _else;
 
 
@@ -700,7 +700,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Node represention of a function mixin.
  *
  * @ingroup irNode irTopLevel
@@ -708,9 +708,9 @@ public:
 class MixinFunction : Node
 {
 public:
-	string name; //< Not optional.
+	string name; //!< Not optional.
 
-	/**
+	/*!
 	 * Contains statements. These nodes are raw nodes and are
 	 * processed in any form and as such should not be visited.
 	 * They are copied and processed when the mixin is instanciated.
@@ -728,7 +728,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Node represention of a template mixin.
  *
  * @ingroup irNode irTopLevel
@@ -738,7 +738,7 @@ class MixinTemplate : Node
 public:
 	string name; //< Not optional.
 
-	/**
+	/*!
 	 * Toplevel nodes. These nodes are raw nodes and are not
 	 * processed in any form and as such should not be visited.
 	 * They are copied and processed when the mixin is instanciated.

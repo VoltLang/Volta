@@ -191,7 +191,7 @@ void handleConstExpReference(State state, ir.ExpReference expRef, Value result)
 		auto var = cast(ir.Variable)expRef.decl;
 		assert(var !is null);
 
-		/**
+		/*!
 		 * Whats going on here? Since constants ultimatly is handled
 		 * by the linker, by either being just binary data in some
 		 * segment or references to symbols, but not a copy of a

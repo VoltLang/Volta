@@ -14,7 +14,7 @@ import volt.ir.expression;
 import volt.token.location;
 
 
-/**
+/*!
  * @defgroup irContext IR Context Classes
  *
  * These non-nodes handles the symbol space of nodes.
@@ -35,7 +35,7 @@ import volt.token.location;
  * @ingroup irNode
  */
 
-/**
+/*!
  * A container class for a various things that can be stored
  * in a Scope.
  * 
@@ -53,7 +53,7 @@ import volt.token.location;
 final class Store
 {
 public:
-	/**
+	/*!
 	 * Class specifier.
 	 */
 	enum Kind
@@ -72,55 +72,55 @@ public:
 
 
 public:
-	/// Exported name.
+	//! Exported name.
 	string name;
-	/// Parent node, never null.
+	//! Parent node, never null.
 	Scope parent;
 
-	/// Type contained within store.
+	//! Type contained within store.
 	Kind kind;
 
-	/**
+	/*!
 	 * Owning node, for all types.
 	 * For function the first encountered one.
 	 */
 	Node node;
 
-	/**
+	/*!
 	 * If node was modified (e.g. alias) this is what it was first.
 	 */
 	Node originalNode;
 
-	/**
+	/*!
 	 * The scope for this context, node might point to owning node,
 	 * the exception being Scope, which does not have a owning node.
 	 */
 	Scope myScope;
 
-	/**
+	/*!
 	 * Overloaded functions.
 	 */
 	Function[] functions;
 
-	/**
+	/*!
 	 * Merging of aliases and functions, used if Kind is Merge.
 	 */
 	Alias[] aliases;
 
-	/**
+	/*!
 	 * Store pointed to by alias.
 	 */
 	Store myAlias;
 
-	/// Public except for binds from private imports.
+	//! Public except for binds from private imports.
 	Access importBindAccess = Access.Public;
 
-	/// Was this symbol introduced by import <> : thisSymbol? Used for protection.
+	//! Was this symbol introduced by import <> : thisSymbol? Used for protection.
 	bool importAlias;
 
 
 public:
-	/**
+	/*!
 	 * Used for Alias, Value, Type and Scope stores.
 	 * Not really intended for general consumption but
 	 * are instead called from the add members in Scope.
@@ -137,7 +137,7 @@ public:
 		this.parent = s;
 	}
 
-	/**
+	/*!
 	 * Used for functions. Not really intended for general
 	 * consumption but are instead called from the addFunction
 	 * member in Scope.
@@ -154,7 +154,7 @@ public:
 		this.kind = Kind.Function;
 	}
 
-	/**
+	/*!
 	 * As above but for multiple functions at once.
 	 * Internal use only.
 	 */
@@ -167,7 +167,7 @@ public:
 		this.kind = Kind.Function;
 	}
 
-	/**
+	/*!
 	 * Used for enums.
 	 * The name will usually be the name of the enum declaration.
 	 * Not really intended for general consumption, but called from the
@@ -183,7 +183,7 @@ public:
 		this.kind = Kind.EnumDeclaration;
 	}
 
-	/**
+	/*!
 	 * Construct an invalid Store.
 	 * Used for copying Stores for CTFE, do not use for anything else.
 	 */
@@ -209,7 +209,7 @@ public:
 	}
 }
 
-/**
+/*!
  * A single scope containing declared items and their identifiers.
  * 
  * See store for what can be held in a scope. These things are
@@ -226,20 +226,20 @@ public:
 final class Scope
 {
 public:
-	/// "Anonymous" identifier uniquifier value.
+	//! "Anonymous" identifier uniquifier value.
 	uint anon;
 
-	/// Name of this scope, needed for toplevel modules.
+	//! Name of this scope, needed for toplevel modules.
 	string name;
 
-	/// Owning node.
+	//! Owning node.
 	Node node;
-	/// Parent scope, if null toplevel module.
+	//! Parent scope, if null toplevel module.
 	Scope parent;
-	/// Declared symbols in this scope.
+	//! Declared symbols in this scope.
 	Store[string] symbols;
 
-	/**
+	/*!
 	 * Modules to implicitly look up symbols in.
 	 *
 	 * Currently only populated on module scopes.
@@ -250,7 +250,7 @@ public:
 	int nestedDepth;
 
 public:
-	/**
+	/*!
 	 * For toplevel modules.
 	 *
 	 * Side-effects:
@@ -263,7 +263,7 @@ public:
 		assert(this.node !is null);
 	}
 
-	/**
+	/*!
 	 * For named imports, classes, structs and unions.
 	 *
 	 * Side-effects:
@@ -278,7 +278,7 @@ public:
 		assert(this.node !is null);
 	}
 
-	/**
+	/*!
 	 * Create an invalid Scope. Internal use only.
 	 */
 	this()
@@ -295,7 +295,7 @@ public:
 		return format("__anon%s", .toString(anon++));
 	}
 
-	/**
+	/*!
 	 * Reserve a identifier in this scope.
 	 */
 	Store reserveId(Node n, string name)
@@ -309,7 +309,7 @@ public:
 		throw panic(n, "failed to reserve ident '%s'", name);
 	}
 
-	/**
+	/*!
 	 * Add a unresolved Alias to this scope. The scope in which the
 	 * alias is resolved to is default this scope, can be changed
 	 * with the look argument, used by import rebinds.
@@ -349,7 +349,7 @@ public:
 		return store;
 	}
 
-	/**
+	/*!
 	 * Add a named scope, @n is the node which introduced
 	 * this scope, must not be null.
 	 *
@@ -374,7 +374,7 @@ public:
 		return store;
 	}
 
-	/**
+	/*!
 	 * Add a user defined type.
 	 *
 	 * Throws:
@@ -404,7 +404,7 @@ public:
 		return store;
 	}
 
-	/**
+	/*!
 	 * Add a value like a constant or a function variable.
 	 *
 	 * Throws:
@@ -432,7 +432,7 @@ public:
 		return store;
 	}
 
-	/**
+	/*!
 	 * Add a function to this scope, will append function if one of
 	 * declared function of the same name is found.
 	 *
@@ -478,7 +478,7 @@ public:
 		assert(false);
 	}
 
-	/**
+	/*!
 	 * Add a user defined template.
 	 *
 	 * Throws:
@@ -499,7 +499,7 @@ public:
 		return store;
 	}
 
-	/**
+	/*!
 	 * Add a named expression to the scope.
 	 *
 	 * Throws:
@@ -520,7 +520,7 @@ public:
 		return store;
 	}
 
-	/**
+	/*!
 	 * Add a pre-existing store to the scope.
 	 *
 	 * Throws:
@@ -540,7 +540,7 @@ public:
 		symbols[name] = s;
 	}
 
-	/**
+	/*!
 	 * Doesn't look in parent scopes, just this Store.
 	 *
 	 * Returns: the Store found, store pointed to by alias,
@@ -558,7 +558,7 @@ public:
 		return *ret;
 	}
 
-	/**
+	/*!
 	 * Get all Variables in the Scope the have Nested storage.
 	 */
 	Declaration[] getNestedDeclarations()

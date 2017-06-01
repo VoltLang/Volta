@@ -4,7 +4,7 @@ module watt.math.random;
 
 import std.random : uniform;
 
-/**
+/*!
  * Generate a random string `length` characters long.
  */
 string randomString(size_t length)

@@ -2366,7 +2366,7 @@ protected:
 		mSink("\n");
 	}
 
-	/// Print storage types.
+	//! Print storage types.
 	void wStorageTypes(ir.Type t)
 	{
 		if (t.isConst) {

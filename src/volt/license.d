@@ -1,7 +1,7 @@
 // See copyright just below.
 module volt.license;
 
-/**
+/*!
  * This is the license for the volt compiler.
  */
 enum string license = `

@@ -19,7 +19,7 @@ import volt.semantic.context;
  *
  */
 
-/**
+/*!
  * Returns the size of a given ir.PrimitiveType in bytes.
  */
 size_t size(ir.PrimitiveType.Kind kind)
@@ -45,7 +45,7 @@ size_t size(ir.PrimitiveType.Kind kind)
 	}
 }
 
-/**
+/*!
  * Returns the size of a given ir.Type in bytes.
  */
 size_t size(TargetInfo target, ir.Node node)
@@ -84,7 +84,7 @@ size_t size(TargetInfo target, ir.Node node)
 	}
 }
 
-/**
+/*!
  * Returns the size of a given ir.Struct in bytes.
  * https://en.wikipedia.org/wiki/Data_structure_alignment#Typical_alignment_of_C_structs_on_x86
  */
@@ -115,7 +115,7 @@ size_t structSize(TargetInfo target, ir.Struct s)
 	}
 }
 
-/**
+/*!
  * Returns the size of a given ir.Union in bytes.
  */
 size_t unionSize(TargetInfo target, ir.Union u)
@@ -137,7 +137,7 @@ size_t unionSize(TargetInfo target, ir.Union u)
 	return sizeAccumulator;
 }
 
-/**
+/*!
  * Returns the offset adjusted to alignment.
  */
 size_t calcAlignment(size_t a, size_t offset)
@@ -149,7 +149,7 @@ size_t calcAlignment(size_t a, size_t offset)
 	}
 }
 
-/**
+/*!
  * Returns the offset adjusted to alignment of type.
  */
 size_t calcAlignment(TargetInfo target, ir.Type t, size_t offset)
@@ -211,7 +211,7 @@ size_t alignment(TargetInfo target, ir.Type node)
 	}
 }
 
-/**
+/*!
  * Returns the size of a given ir.Struct in bytes.
  */
 size_t structAlignment(TargetInfo target, ir.Struct s)
@@ -255,7 +255,7 @@ bool isValidWithExp(ir.Exp exp)
 	}
 }
 
-/**
+/*!
  * Remove types masking a type (e.g. enum).
  */
 ir.Type realType(ir.Type t, bool stripEnum = true)
@@ -279,7 +279,7 @@ ir.Type realType(ir.Type t, bool stripEnum = true)
 	}
 }
 
-/**
+/*!
  * struct Struct { ... }
  * a := Struct(12);  // isValueExp() == false
  * b := a(12);  // isValueExp() == true, despite the same type.
@@ -295,7 +295,7 @@ bool isValueExp(ir.Exp exp)
 	assert(false);
 }
 
-/**
+/*!
  * A type without mutable indirection is a pure value type --
  * it cannot mutate any other memory than its own, or is composed
  * of the above. This is useful for making const and friends more
@@ -373,7 +373,7 @@ bool isBool(ir.Type t)
 	return p.type == ir.PrimitiveType.Kind.Bool;
 }
 
-/// Is this an array of characters?
+//! Is this an array of characters?
 bool isString(ir.Type t)
 {
 	auto arr = realType(t).toArrayTypeChecked();
@@ -383,7 +383,7 @@ bool isString(ir.Type t)
 	return isChar(arr.base);
 }
 
-/// Is this type a character type?
+//! Is this type a character type?
 bool isChar(ir.Type t)
 {
 	auto prim = realType(t).toPrimitiveTypeChecked();
@@ -539,12 +539,12 @@ bool isVoid(ir.Type type)
 	return primitive.type == ir.PrimitiveType.Kind.Void;
 }
 
-/**
+/*!
  * Making the code more readable.
  */
 enum IgnoreStorage = true;
 
-/**
+/*!
  * Determines whether the two given types are the same.
  *
  * Not similar. Not implicitly convertable. The _same_ type.
@@ -692,7 +692,7 @@ int typeToRuntimeConstant(LanguagePass lp, ir.Scope current, ir.Type type)
  *
  */
 
-/**
+/*!
  * Does the given property need to have child set?
  */
 bool isMember(ir.PropertyExp prop)
@@ -703,7 +703,7 @@ bool isMember(ir.PropertyExp prop)
 	        prop.setFns[0].kind == ir.Function.Kind.Member);
 }
 
-/**
+/*!
  * Is the given exp a backend constant, this is the minimum that
  * a backend needs to implement in order to fully support Volt.
  *
@@ -1056,7 +1056,7 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
  *
  */
 
-/**
+/*!
  * If the given scope is in a function, return it. Otherwise, return null.
  */
 ir.Function getParentFunction(ir.Scope current)
@@ -1145,8 +1145,8 @@ bool isNested(ir.Variable.Storage s)
 	return s == ir.Variable.Storage.Nested;
 }
 
-/// Returns true if one of fns's types match fnToMatch. False otherwise.
-/// (If fns is empty, this function returns false).
+//! Returns true if one of fns's types match fnToMatch. False otherwise.
+//! (If fns is empty, this function returns false).
 bool containsMatchingFunction(ir.Function[] fns, ir.Function fnToMatch)
 {
 	foreach (func; fns) {
@@ -1170,7 +1170,7 @@ bool isNested(ir.Function func)
  *
  */
 
-/**
+/*!
  * Used to determine whether a store is local to a function and therefore
  * can not be shadowed by a with statement.
  */
@@ -1197,7 +1197,7 @@ bool isStoreLocal(LanguagePass lp, ir.Scope current, ir.Store store)
  *
  */
 
-/// Retrieves the types of Variables in _struct, in the order they appear.
+//! Retrieves the types of Variables in _struct, in the order they appear.
 ir.Type[] getStructFieldTypes(ir.Struct _struct)
 {
 	ir.Type[] types;
@@ -1215,7 +1215,7 @@ ir.Type[] getStructFieldTypes(ir.Struct _struct)
 	return types;
 }
 
-/// Retrieves the Variables in _struct, in the order they appear.
+//! Retrieves the Variables in _struct, in the order they appear.
 ir.Variable[] getStructFieldVars(ir.Struct _struct)
 {
 	ir.Variable[] vars;
@@ -1261,7 +1261,7 @@ ir.Function[] getClassFunctions(ir.Class _class)
 	return functions;
 }
 
-/**
+/*!
  * If the given scope is a function, and that function has a this reference
  * that is a class, return true and set theClass to that class.
  * Otherwise, return false.
@@ -1280,7 +1280,7 @@ bool getMethodParent(ir.Scope _scope, out ir.Class theClass)
 	return true;
 }
 
-/// Returns: true if child is a child of parent.
+//! Returns: true if child is a child of parent.
 bool inheritsFrom(ir.Class child, ir.Class parent)
 {
 	if (child is parent)
@@ -1315,7 +1315,7 @@ bool isPointerToClass(ir.Type t)
 	return _class !is null;
 }
 
-/**
+/*!
  * How far removed from Object is this class?
  */
 size_t distanceFromObject(ir.Class _class)
@@ -1328,7 +1328,7 @@ size_t distanceFromObject(ir.Class _class)
 	return distance;
 }
 
-/**
+/*!
  * Given two classes, return their closest relative.
  */
 ir.Class commonParent(ir.Class a, ir.Class b)

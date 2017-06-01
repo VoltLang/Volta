@@ -17,7 +17,7 @@ static import volt.semantic.mangle;
 static import volt.semantic.classify;
 
 
-/**
+/*!
  * Base class for a LLVM backend types. Contains a refernce to the irType
  * for this type, the llvmType and the debugging info for this type.
  */
@@ -58,7 +58,7 @@ protected:
 	}
 }
 
-/**
+/*!
  * Void @link volt.ir.type.PrimitiveType PrimtiveType@endlink.
  */
 class VoidType : Type
@@ -77,7 +77,7 @@ private:
 	}
 }
 
-/**
+/*!
  * Integer @link volt.ir.type.PrimitiveType PrimtiveType@endlink but not void.
  */
 class PrimitiveType : Type
@@ -191,7 +191,7 @@ private:
 	}
 }
 
-/**
+/*!
  * PointerType represents a standard C pointer.
  */
 class PointerType : Type
@@ -238,7 +238,7 @@ private:
 	}
 }
 
-/**
+/*!
  * Array type.
  */
 class ArrayType : Type
@@ -374,7 +374,7 @@ private:
 	}
 }
 
-/**
+/*!
  * Static array type.
  */
 class StaticArrayType : Type
@@ -436,7 +436,7 @@ private:
 	}
 }
 
-/**
+/*!
  * Base class for callable types FunctionType and DelegateType.
  */
 abstract class CallableType : Type
@@ -455,7 +455,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Function type.
  */
 class FunctionType : CallableType
@@ -580,7 +580,7 @@ private:
 	}
 }
 
-/**
+/*!
  * Delegates are lowered here into a struct with two members.
  */
 class DelegateType : CallableType
@@ -659,7 +659,7 @@ private:
 	}
 }
 
-/**
+/*!
  * Backend instance of a @link volt.ir.toplevel.Struct ir.Struct@endlink.
  */
 class StructType : Type
@@ -785,7 +785,7 @@ private:
 	}
 }
 
-/**
+/*!
  * Backend instance of a @link volt.ir.toplevel.Union ir.Union@endlink.
  */
 class UnionType : Type
@@ -869,7 +869,7 @@ private:
 	}
 }
 
-/**
+/*!
  * Looks up or creates the corresponding LLVMTypeRef
  * and Type for the given irType.
  */
@@ -966,7 +966,7 @@ Type fromIrImpl(State state, ir.Type irType)
 	}
 }
 
-/**
+/*!
  * Populate the common types that hang off the state.
  */
 void buildCommonTypes(State state, bool V_P64)
@@ -1033,7 +1033,7 @@ void buildCommonTypes(State state, bool V_P64)
 	assert(state.springType !is null);
 }
 
-/**
+/*!
  * Does a smart copy of a type.
  *
  * Meaning that well copy all types, but skipping
@@ -1135,7 +1135,7 @@ ir.Type scrubStorage(ir.Type type)
 	return outType;
 }
 
-/**
+/*!
  * Helper function for adding mangled name to ir types.
  */
 string addMangledName(ir.Type irType)
@@ -1145,7 +1145,7 @@ string addMangledName(ir.Type irType)
 	return m;
 }
 
-/**
+/*!
  * Helper function to tell if a type is Void.
  */
 bool isVoid(Type type)

@@ -88,7 +88,7 @@ void gather(ir.Scope current, ir.Alias a, Where where)
 	a.store = current.addAlias(a, a.name);
 }
 
-/**
+/*!
  * If name is reserved in current, throw an error pointing at n's location.
  */
 void checkInvalid(ir.Scope current, ir.Node n, string name)
@@ -356,7 +356,7 @@ void addScope(ir.Scope current, ir._Interface i)
 	i.myScope = new ir.Scope(current, i, i.name, current.nestedDepth);
 }
 
-/**
+/*!
  * Populate the scopes with Variables, Aliases, Functions, and Types.
  * Adds Scopes where needed as well.
  *

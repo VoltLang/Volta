@@ -18,9 +18,9 @@ public:
 		Actualize = 1,
 	}
 
-	/// The node to check for rentry.
+	//! The node to check for rentry.
 	ir.Node node;
-	/// Action being taken.
+	//! Action being taken.
 	Action action;
 
 private:

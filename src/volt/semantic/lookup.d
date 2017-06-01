@@ -14,7 +14,7 @@ import volt.token.location;
 import volt.semantic.classify : realType, getMethodParent, isOrInheritsFrom;
 
 
-/**
+/*!
  * Look up an identifier in the given scope only. Doesn't check parent scopes,
  * parent classes, imports, or anywhere else but the given scope.
  */
@@ -27,7 +27,7 @@ ir.Store lookupInGivenScopeOnly(LanguagePass lp, ir.Scope _scope, Location loc, 
 	return ensureResolved(lp, store);
 }
 
-/**
+/*!
  * Look up an identifier in this scope, in parent scopes (in
  * the case of classes), and in any imports for this scope.
  *
@@ -70,7 +70,7 @@ ir.Store lookupAsThisScope(LanguagePass lp, ir.Scope _scope, Location loc, strin
 	return null;
 }
 
-/**
+/*!
  * Lookup in this scope and parent class scopes, if any.
  * Does not consult imports of any kind.
  */
@@ -87,7 +87,7 @@ ir.Store lookupOnlyThisScopeAndClassParents(LanguagePass lp, ir.Scope _scope, Lo
 }
 
 
-/**
+/*!
  * Lookup up as identifier in this scope, and any public imports.
  * Used for rebinding imports.
  * Returns the store or null if no match was found.
@@ -137,7 +137,7 @@ private ir.Store lookupPublicImportScope(LanguagePass lp, ir.Scope _scope,
 	return null;
 }
 
-/**
+/*!
  * Look up a QualifiedName chain, the first identifier is looked up globaly,
  * and the result is treated as a scope to lookup the next one should there be
  * more identifiers.
@@ -153,7 +153,7 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
 		string name = id.value;
 		Location loc = id.loc;
 
-		/**
+		/*!
 		 * The first lookup should be done globally the following
 		 * in only that context. Leading dot taken care of above.
 		 */
@@ -199,7 +199,7 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
 	assert(false);
 }
 
-/**
+/*!
  * Look up an identifier in a scope and its parent scopes.
  * Returns the store or null if no match was found.
  */
@@ -241,7 +241,7 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 			continue;
 		}
 
-		/// Check publically imported modules.
+		//! Check publically imported modules.
 		PublicImportContext ctx;
 		store = lookupPublicImportScope(lp, mod.myScope, loc, name, ctx);
 		if (store !is null) {
@@ -337,7 +337,7 @@ ir.Node getStoreNodeRealParent(LanguagePass lp, ir.Store store)
 	return n;
 }
 
-/**
+/*!
  * Helper functions that looksup a type and throws compiler errors
  * if it is not found or the found identifier is not a type.
  */
@@ -364,7 +364,7 @@ ir.Type lookupType(LanguagePass lp, ir.Scope _scope, ir.QualifiedName id)
 	return ensureType(_scope, loc, name, store);
 }
 
-/**
+/*!
 * This function is used to retrive cached
 * versions of helper functions.
 */
@@ -379,7 +379,7 @@ ir.Function lookupFunction(LanguagePass lp, ir.Scope _scope, Location loc, strin
 	return null;
 }
 
-/**
+/*!
  * Get the module in the bottom of the given _scope chain.
  * @throws CompilerPanic if no module at bottom of chain.
  */
@@ -400,7 +400,7 @@ ir.Module getModuleFromScope(ref in Location loc, ir.Scope _scope)
 	throw panic(loc, "scope chain without module base");
 }
 
-/**
+/*!
  * Given a scope, get the oldest parent -- this is the module of that scope.
  * @throws CompilerPanic if no module at bottom of chain.
  */
@@ -410,7 +410,7 @@ ir.Scope getTopScope(ref in Location loc, ir.Scope _scope)
 	return m.myScope;
 }
 
-/**
+/*!
  * Return the first scope and type that is thisable going down the
  * chain of containing scopes (_scope.parent field).
  *
@@ -438,7 +438,7 @@ bool getFirstThisable(ir.Scope _scope, out ir.Scope outScope, out ir.Type outTyp
 	return false;
 }
 
-/**
+/*!
  * Return the first class scope and the class going down the chain
  * of containing scopes (_scope.parent field).
  *
@@ -464,7 +464,7 @@ bool getFirstClass(ir.Scope _scope, out ir.Scope outScope, out ir.Class outClass
 	return false;
 }
 
-/**
+/*!
  * Get the parents scope of the given scope if its a class scope.
  *
  * Returns:
@@ -505,7 +505,7 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
 	}
 }
 
-/**
+/*!
  * Resolves a store making sure the node it points to is
  * resolved, the function returns the store that a alias
  * is pointing to. Not the alias itself.
@@ -566,7 +566,7 @@ ir.Store ensureResolved(LanguagePass lp, ir.Store s)
 	}
 }
 
-/**
+/*!
  * Ensure that the given store is not null
  * and that it is non-overloaded Function.
  *
@@ -590,7 +590,7 @@ ir.Function ensureFunction(ir.Scope _scope, Location loc, string name, ir.Store 
 	return store.functions[0];
 }
 
-/**
+/*!
  * Ensures that the given store is not null,
  * and that the store node is a type.
  *
@@ -615,7 +615,7 @@ ir.Type ensureType(ir.Scope _scope, Location loc, string name, ir.Store store)
 	return asType;
 }
 
-/**
+/*!
  * Check that the contents of store can be accessed (e.g. not private)
  */
 void checkAccess(ref in Location loc, string name, ir.Store store, bool classParentLookup = false)
@@ -670,7 +670,7 @@ void checkAccess(ref in Location loc, string name, ir.Store store, bool classPar
 	}
 }
 
-/**
+/*!
  * Ensures that the given store is not null,
  * and that the store node has or is a scope.
  *

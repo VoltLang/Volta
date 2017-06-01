@@ -18,7 +18,7 @@ import volt.semantic.context;
 import volt.semantic.classify : isNested, realType;
 import volt.token.location : Location;
 
-/**
+/*!
  * This module contains utility functions for dealing with nested functions;
  * 'functions within functions'.
  *
@@ -46,7 +46,7 @@ import volt.token.location : Location;
  *
  */
 
-/**
+/*!
  * Tag referenced Variables as nested if appropriate.
  *
  * If an identifier references a Variable, and that variables parent scope is higher
@@ -84,7 +84,7 @@ void nestExtyperTagVariable(ref in Location loc, Context ctx, ir.Variable var, i
 	}
 }
 
-/**
+/*!
  * Add a child function to the list of nested functions in a parent function.
  *
  * Params:
@@ -103,7 +103,7 @@ void nestExtyperFunction(ir.Function parent, ir.Function func)
  *
  */
 
-/**
+/*!
  * Add the context struct to a nested function.
  *
  * Params:
@@ -142,7 +142,7 @@ void nestLowererFunction(LanguagePass lp, ir.Function parent, ir.Function func)
 	func._body.statements = decl ~ func._body.statements;
 }
 
-/**
+/*!
  * Replace nested Variable declarations with assign expressions.
  *
  * Because all nested Variables will be transformed to exist on the nested struct,
@@ -175,7 +175,7 @@ void insertBinOpAssignsForNestedVariableAssigns(LanguagePass lp, ir.BlockStateme
 	}
 }
 
-/**
+/*!
  * If the current function is a nested one, replace a given ExpReference with an expression
  * that will retrieve the correct value from the nested struct.
  *
@@ -269,7 +269,7 @@ bool replaceNested(LanguagePass lp, ref ir.Exp exp, ir.ExpReference eref, ir.Fun
 
 private:
 
-/**
+/*!
  * Utility function to be called on Functions with a function nested in them.
  * Adds the struct, actualizes it, adds parameters, etc.
  */
@@ -288,7 +288,7 @@ void doParent(LanguagePass lp, ir.Function parent)
 	handleNestedParams(parent, parent._body);
 }
 
-/**
+/*!
  * Create the nested struct and a declaration pointing to it.
  * Populates the nestedVariable and nestStruct members of a Function.
  */
@@ -308,7 +308,7 @@ ir.Struct createAndAddNestedStruct(ir.Function func)
 	return s;
 }
 
-/**
+/*!
  * Given a nested function func, add its parameters to the nested
  * struct and insert statements after the nested declaration.
  */
@@ -374,7 +374,7 @@ void handleNestedParams(ir.Function func, ir.BlockStatement bs)
 	}
 }
 
-/**
+/*!
  * Correct this references in nested functions.
  *
  * Rewrites them to refer to a this hosted on the nested struct.

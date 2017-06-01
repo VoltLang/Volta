@@ -12,7 +12,7 @@ import volt.semantic.mangle;
 import volt.semantic.classify;
 
 
-/**
+/*!
  * Apply mangle symbols to Types and Functions.
  *
  * @ingroup passes passLang
@@ -93,8 +93,8 @@ public:
 	{
 		assert(func.name !is null);
 
-		/// @todo check other linkage as well.
-		/// @TODO this should live in the mangle code.
+		//! @todo check other linkage as well.
+		//! @TODO this should live in the mangle code.
 		if (func.mangledName !is null) {
 			// Do nothing.
 		} else if (func.loadDynamic) {

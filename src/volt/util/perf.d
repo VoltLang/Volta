@@ -13,7 +13,7 @@ import watt.io.streams : OutputFileStream;
 import mt = watt.io.monotonic;
 
 
-/**
+/*!
  * Very simple perfing code, just gets timing info.
  *
  * Yes these times are not super accurate and will drift a lot
@@ -72,7 +72,7 @@ struct Perf
 		}
 	}
 
-	/**
+	/*!
 	 * Place a mark in time, allows to skip phases.
 	 */
 	void mark(Mark mark)

@@ -9,7 +9,7 @@ import volt.ir.util;
 import volt.token.location;
 
 
-/// Take the first n characters from s, advance s by n characters, and return the result.
+//! Take the first n characters from s, advance s by n characters, and return the result.
 string take(ref string s, size_t n)
 {
 	assert(s.length >= n);

@@ -29,7 +29,7 @@ import volt.semantic.classresolver;
 import volt.semantic.evaluate;
 import volt.semantic.overload;
 
-/**
+/*!
  * Next stop, backend! The LlvmLowerer visitor (and supporting functions) have a fairly
  * simple job to describe -- change any structure that the backend doesn't handle into
  * something composed of things the backend DOES know how to deal with. This can involve
@@ -38,7 +38,7 @@ import volt.semantic.overload;
  */
 
 
-/**
+/*!
  * Build a function call that inserts a value with a given key into a given AA, and
  * add it to a StatementExp.
  *
@@ -102,7 +102,7 @@ void lowerAAInsert(ref in Location loc, LanguagePass lp, ir.Module thisModule, i
 	);
 }
 
-/**
+/*!
  * Build code to lookup a key in an AA and add it to a StatementExp.
  *
  * Params:
@@ -148,7 +148,7 @@ void lowerAALookup(ref in Location loc, LanguagePass lp, ir.Module thisModule, i
 	);
 }
 
-/**
+/*!
  * Given an AA key, cast in such a way that it could be given to a runtime AA function.
  *
  * Params:
@@ -214,7 +214,7 @@ ir.Exp lowerAggregateAACast(ref in Location loc, LanguagePass lp, ir.Module this
 	return buildCastToVoidPtr(loc, sexp);
 }
 
-/**
+/*!
  * Given an AA key that is a struct or an array,
  * cast it in such a way that it could be given to a runtime AA function.
  *
@@ -348,7 +348,7 @@ ir.Exp lowerStructOrArrayAACast(ref in Location loc, LanguagePass lp, ir.Module 
 	return buildCastSmart(loc, buildArrayType(loc, buildVoid(loc)), sexp);
 }
 
-/**
+/*!
  * Turn a PropertyExp into a call or member call as appropriate.
  *
  * Params:
@@ -372,7 +372,7 @@ void lowerProperty(LanguagePass lp, ref ir.Exp exp, ir.PropertyExp prop)
 	}
 }
 
-/// Build an if statement based on a runtime assert.
+//! Build an if statement based on a runtime assert.
 ir.IfStatement lowerAssertIf(LanguagePass lp, ir.Scope current, ir.AssertStatement as)
 {
 	panicAssert(as, !as.isStatic);
@@ -389,7 +389,7 @@ ir.IfStatement lowerAssertIf(LanguagePass lp, ir.Scope current, ir.AssertStateme
 	return ifS;
 }
 
-/**
+/*!
  * Given a throw statement, turn its expression into a call into the RT.
  *
  * Params:
@@ -402,7 +402,7 @@ void lowerThrow(LanguagePass lp, ir.ThrowStatement t)
 	                  buildConstantString(t.loc, format("%s:%s", t.loc.filename, t.loc.line), false)]);
 }
 
-/**
+/*!
  * Replace a StringImport with the string in the file it points at, or error.
  *
  * Params:
@@ -426,7 +426,7 @@ void lowerStringImport(Driver driver, ref ir.Exp exp, ir.StringImport simport)
 	exp = buildConstantString(exp.loc, str, false);
 }
 
-/**
+/*!
  * Turn `Struct a = {1, "banana"};`
  * into `Struct a; a.firstField = 1; b.secondField = "banana";`.
  *
@@ -463,7 +463,7 @@ void lowerStructLiteral(ir.Scope current, ref ir.Exp exp, ir.StructLiteral liter
 	exp = sexp;
 }
 
-/**
+/*!
  * Lower a postfix index expression.
  *
  * Params:
@@ -492,7 +492,7 @@ void lowerIndex(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 	}
 }
 
-/**
+/*!
  * Lower a postfix index expression that operates on an AA.
  *
  * Params:
@@ -530,7 +530,7 @@ void lowerIndexAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 	exp = statExp;
 }
 
-/**
+/*!
  * Lower an assign if it needs it.
  *
  * Params:
@@ -554,7 +554,7 @@ void lowerAssign(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp
 	lowerAssignArray(lp, thisModule, exp, binOp, asPostfix, cast(ir.ArrayType)leftType);
 }
 
-/**
+/*!
  * Lower an assign to an array if it's being modified by a postfix.
  *
  * Params:
@@ -578,7 +578,7 @@ void lowerAssignArray(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp,
 	exp = buildCall(loc, func, [asPostfix, binOp.right], func.name);
 }
 
-/**
+/*!
  * Lower an assign to an AA.
  *
  * Params:
@@ -626,7 +626,7 @@ void lowerAssignAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 	exp = statExp;
 }
 
-/**
+/*!
  * Lower a +=, *=, etc assign to an AA.
  *
  * Params:
@@ -684,7 +684,7 @@ void lowerOpAssignAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 	exp = statExp;
 }
 
-/**
+/*!
  * Lower a concatenation operation. (A ~ B)
  *
  * Params:
@@ -730,7 +730,7 @@ void lowerCat(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp bi
 	return;
 }
 
-/**
+/*!
  * Lower a concatenation assign operation. (A ~= B)
  *
  * Params:
@@ -764,7 +764,7 @@ void lowerCatAssign(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.Bi
 	}
 }
 
-/**
+/*!
  * Lower an equality operation, if it needs it.
  *
  * Params:
@@ -787,7 +787,7 @@ void lowerEqual(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp 
 	exp = buildCall(loc, func, [binOp.left, binOp.right], func.name);
 }
 
-/**
+/*!
  * Lower an expression that casts to an interface.
  *
  * Params:
@@ -818,7 +818,7 @@ void lowerInterfaceCast(ref in Location loc, LanguagePass lp,
 	exp = buildAddrOf(loc, buildAccessExp(loc, uexp.value, var));
 }
 
-/**
+/*!
  * Lower an expression that casts to an array.
  *
  * Params:
@@ -913,7 +913,7 @@ void lowerArrayCast(ref in Location loc, LanguagePass lp, ir.Scope current,
 	exp = sexp;
 }
 
-/**
+/*!
  * Is a given postfix an interface pointer? If so, which one?
  *
  * Params:
@@ -951,7 +951,7 @@ bool isInterfacePointer(LanguagePass lp, ir.Postfix pfix, ir.Scope current, out 
 	return iface !is null;
 }
 
-/**
+/*!
  * If a postfix operates directly on a struct via a
  * function call, put it in a variable first.
  *
@@ -973,7 +973,7 @@ void lowerStructLookupViaFunctionCall(LanguagePass lp, ir.Scope current, ref ir.
 	exp = statExp;
 }
 
-/**
+/*!
  * Rewrites a given foreach statement (fes) into a for statement.
  *
  * The ForStatement created uses several of the fes's nodes directly; that is
@@ -1216,7 +1216,7 @@ ir.ForStatement lowerForeach(ir.ForeachStatement fes, LanguagePass lp,
 	throw panic(loc, "expected foreach aggregate type");
 }
 
-/**
+/*!
  * Lower an array literal to an internal array literal.
  *
  * The backend will treat any ArrayLiteral as full of constants, so we can't
@@ -1261,7 +1261,7 @@ void lowerArrayLiteral(LanguagePass lp, ir.Scope current,
 	}
 }
 
-/**
+/*!
  * Lower a builtin expression.
  *
  * These are comprised mostly of things that need calls to the RT to deal with them.
@@ -1503,7 +1503,7 @@ ir.StatementExp lowerVaArg(ref in Location loc, LanguagePass lp, ir.VaArgExp vae
 	return sexp;
 }
 
-/**
+/*!
  * Lower an ExpReference, if needed.
  *
  * This rewrites them to lookup through the nested struct, if needed.
@@ -1534,7 +1534,7 @@ void lowerExpReference(ir.Function[] functionStack, ref ir.Exp exp, ir.ExpRefere
 	exp = buildCreateDelegate(exp.loc, buildExpReference(np.loc, np, np.name), eref);
 }
 
-/**
+/*!
  * Lower a Postfix, if needed.
  *
  * This handles index operations, and interface pointers.
@@ -1590,7 +1590,7 @@ void lowerPostfix(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 	lowerVarargCall(lp, current, postfix, parentFunc, exp);
 }
 
-/**
+/*!
  * Lower a call to a varargs function.
  */
 void lowerVarargCall(LanguagePass lp, ir.Scope current, ir.Postfix postfix, ir.Function func, ref ir.Exp exp)
@@ -1693,7 +1693,7 @@ void lowerGlobalAALiteral(LanguagePass lp, ir.Scope current, ir.Module mod, ir.V
 	buildReturnStat(loc, gctor._body);
 }
 
-/**
+/*!
  * Lower an AA literal.
  *
  * Params:
@@ -1748,7 +1748,7 @@ void lowerAA(LanguagePass lp, ir.Scope current, ir.Module thisModule, ref ir.Exp
 	exp = statExp;
 }
 
-/**
+/*!
  * Rewrite Struct(args) to call their constructors.
  */
 void lowerStructUnionConstructor(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinExp builtin)
@@ -1771,7 +1771,7 @@ void lowerStructUnionConstructor(LanguagePass lp, ir.Scope current, ref ir.Exp e
 	exp = sexp;
 }
 
-/**
+/*!
  * If func is the main function, add a C main next to it.
  */
 void lowerCMain(LanguagePass lp, ir.Scope current, ir.Function func)
@@ -1831,7 +1831,7 @@ void zeroVariablesIfNeeded(LanguagePass lp, ir.BlockStatement bs)
 	}
 }
 
-/**
+/*!
  * Calls the correct functions where they need to be called to lower a module.
  */
 class LlvmLowerer : ScopeManager, Pass
@@ -1850,7 +1850,7 @@ public:
 		this.V_P64 = lp.ver.isP64;
 	}
 
-	/**
+	/*!
 	 * Perform all lower operations on a given module.
 	 *
 	 * Params:

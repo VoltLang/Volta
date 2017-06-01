@@ -216,7 +216,7 @@ alias VisitorStop = Visitor.Status.Stop;
 alias VisitorContinue = Visitor.Status.Continue;
 alias VisitorContinueParent = Visitor.Status.ContinueParent;
 
-/// A visitor that does nothing.
+//! A visitor that does nothing.
 abstract class NullVisitor : Visitor
 {
 public:
@@ -403,7 +403,7 @@ override:
 }
 
 
-/**
+/*!
  * Helper function that returns VistorContinue if @s is
  * VisitorContinueParent, used to abort a leaf node, but
  * not the whole tree.

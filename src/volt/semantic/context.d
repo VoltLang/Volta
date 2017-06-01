@@ -38,7 +38,7 @@ public:
 		this.extyper = extyper;
 	}
 
-	/**
+	/*!
 	 * Setup the context from a empty state.
 	 */
 	final void setupFromScope(ir.Scope _scope)
@@ -47,7 +47,7 @@ public:
 		mCurrent = _scope;
 	}
 
-	/**
+	/*!
 	 * Reset the context allowing it to be resued.
 	 */
 	final void reset()
@@ -78,7 +78,7 @@ public:
 		return mLength == 0 ? null : mFunctionStack[mLength-1];
 	}
 
-	/**
+	/*!
 	 * Returns how many functions deep this context currently is.
 	 */
 	final @property uint functionDepth()
@@ -129,7 +129,7 @@ public:
 	final void leave(ir.Function func) { pop(func, func.myScope, func); }
 	final void leave(ir.BlockStatement bs) { mCurrent = mCurrent.parent; }
 
-	/**
+	/*!
 	 * Keep track of with statements and switch withs.
 	 */
 	final void pushWith(ir.Exp exp)
@@ -137,7 +137,7 @@ public:
 		mWithExps ~= exp;
 	}
 
-	/**
+	/*!
 	 * Keep track of with statements and switch withs.
 	 */
 	final void popWith(ir.Exp exp)
@@ -190,7 +190,7 @@ public:
 		mIndexChildren = mIndexChildren[0 .. $-bin.children.length];
 	}
 private:
-	/**
+	/*!
 	 * This function is called from setupFromScope.
 	 *
 	 * Since we are called from a inner scope we need to get the outer most

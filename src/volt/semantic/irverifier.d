@@ -15,7 +15,7 @@ import volt.visitor.scopemanager;
 import volt.semantic.classify;
 
 
-/**
+/*!
  * This verifier is design to catch faulty IR (from the view
  * of the backends) that the LanguagePass generate.
  *

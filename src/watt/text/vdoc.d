@@ -2,7 +2,7 @@ module watt.text.vdoc;
 
 import watt.text.utf;
 
-/**
+/*!
  * Take a doc comment and remove comment cruft from it.
  */
 string cleanComment(string comment, out bool isBackwardsComment)

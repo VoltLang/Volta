@@ -12,7 +12,7 @@ import volt.parser.toplevel;
 import volt.parser.expression;
 import volt.token.token : isPrimitiveTypeToken;
 
-/**
+/*!
  * Returns: true if ps is at a template instantiation, false otherwise.
  */
 bool isTemplateInstance(ParserStream ps)
@@ -40,7 +40,7 @@ bool isTemplateInstance(ParserStream ps)
 }
 
 
-/**
+/*!
  * Returns: true if ps is at a template definition, false otherwise.
  */
 bool isTemplateDefinition(ParserStream ps)
@@ -71,7 +71,7 @@ bool isTemplateDefinition(ParserStream ps)
 	return result;
 }
 
-/**
+/*!
  * Returns: true if the stream is at a point where we know it's a type, false otherwise.
  */
 bool isUnambigouslyType(ParserStream ps)

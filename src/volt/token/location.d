@@ -7,7 +7,7 @@ module volt.token.location;
 import watt.text.format : format;
 
 
-/**
+/*!
  * Struct representing a location in a source file.
  *
  * This was pretty much stolen wholesale from Daniel Keep.
@@ -27,7 +27,7 @@ public:
 	}
 
 
-	/**
+	/*!
 	 * Difference between two locations.
 	 * end - begin == begin ... end
 	 * @see difference
@@ -37,7 +37,7 @@ public:
 		return difference(/*ref*/ this,/*ref*/ begin,/*ref*/ begin);
 	}
 
-	/**
+	/*!
 	 * Difference between two locations.
 	 * end - begin == begin ... end
 	 * On mismatch of filename or if begin is after

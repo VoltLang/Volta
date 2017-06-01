@@ -12,7 +12,7 @@ import volt.ir.util;
 import volt.errors;
 
 
-/**
+/*!
  * Mangle the name of type if not set mangled.
  */
 void ensureMangled(ir.Type t)
@@ -22,7 +22,7 @@ void ensureMangled(ir.Type t)
 	}
 }
 
-/**
+/*!
  * Mangle a type found in a given module.
  */
 string mangle(ir.Type t)
@@ -49,7 +49,7 @@ string mangle(ir.Type t)
 	return sink.toString();
 }
 
-/**
+/*!
  * Mangle a Variable found ina given module.
  *
  * @todo figure out what to do about names argument.
@@ -71,7 +71,7 @@ string mangle(string[] names, ir.Variable v)
 	return sink.toString();
 }
 
-/**
+/*!
  * Mangle a function.
  *
  * @todo figure out what to do about names argument.

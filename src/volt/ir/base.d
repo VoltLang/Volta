@@ -17,7 +17,7 @@ import volt.ir.expression;
 import volt.ir.declaration;
 
 
-/**
+/*!
  * Each concrete class derived from ir.Node has a value in this
  * enumerant. The value for the type is stored in ir.Node.nodeType
  * by the constructor. While using type tags is not very OOP, it is
@@ -143,7 +143,7 @@ enum NodeType
 	TemplateDefinition,
 }
 
-/**
+/*!
  * Common access levels used on declared functions, methods, classes,
  * interfaces, structs, enums and variables.
  *
@@ -167,7 +167,7 @@ string accessToString(Access access)
 	}
 }
 
-/**
+/*!
  * Controls the calling convention and how symbols are mangled.
  *
  * Linkages are mangled in functions like so:
@@ -205,7 +205,7 @@ string linkageToString(Linkage linkage)
 	}
 }
 
-/**
+/*!
  * Used by ScopeStatement and other nodes.
  *
  * @ingroup irNode irStatement
@@ -217,12 +217,12 @@ enum ScopeKind
 	Success,
 }
 
-/**
+/*!
  * Type used for node unique ids.
  */
 alias NodeID = size_t;
 
-/**
+/*!
  * Base class for all IR nodes.
  * 
  * A Node has a Location and a type. The Location points
@@ -235,16 +235,16 @@ alias NodeID = size_t;
 abstract class Node
 {
 public:
-	/// Where in the source this Node was defined, for diagnostic purposes.
+	//! Where in the source this Node was defined, for diagnostic purposes.
 	Location loc;
 
-	/// Retrieve the NodeType for this Node.
+	//! Retrieve the NodeType for this Node.
 	final @property NodeType nodeType() { return mNodeType; }
 
-	/// Retrieve the unique id of this node.
+	//! Retrieve the unique id of this node.
 	final @property size_t uniqueId() { return mUniqueId; }
 
-	/// Documentation comment attached to this node, if any.
+	//! Documentation comment attached to this node, if any.
 	string docComment;
 
 protected:
@@ -464,7 +464,7 @@ private:
 	static NodeID mUniqueIdCounter; // We are single threaded.
 }
 
-/**
+/*!
  * A series of identifiers and dots referring to a declared item.
  *
  * @ingroup irNode
@@ -472,9 +472,9 @@ private:
 class QualifiedName : Node
 {
 public:
-	/// The last identifier is the module, any preceding identifiers are packages.
+	//! The last identifier is the module, any preceding identifiers are packages.
 	Identifier[] identifiers;
-	/// If true, this name starts with a dot.
+	//! If true, this name starts with a dot.
 	bool leadingDot;
 
 
@@ -518,7 +518,7 @@ public:
 	}
 }
 
-/**
+/*!
  * A single string that could be apart of ir.QualifiedName or
  * stand-alone node inside of the ir, referencing a declared item.
  *
@@ -543,7 +543,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Returns a string representing the node's nodeType.
  *
  * @ingroup irNode
@@ -553,7 +553,7 @@ string nodeToString(Node node)
 	return nodeToString(node.nodeType);
 }
 
-/**
+/*!
  * Returns a string representing the nodeType.
  * 
  * This is just a string representing the Node's name, it doesn't
@@ -659,7 +659,7 @@ string nodeToString(NodeType nodeType)
 	}
 }
 
-/**
+/*!
  * For debugging helpers.
  */
 string getNodeAddressString(Node node)
@@ -671,7 +671,7 @@ string getNodeAddressString(Node node)
 	}
 }
 
-/**
+/*!
  * For debugging helpers.
  */
 string getNodeUniqueString(Node node)

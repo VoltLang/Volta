@@ -16,14 +16,14 @@ import volt.semantic.typer;
 import volt.semantic.util;
 
 
-/**
+/*!
  * @defgroup semanticImplicit Implicit Type Conversion
  *
  * Contains functions that identify if a type or expression can be converted
  * implicitly to a given type, and functions to do the actual conversion.
  */
 
-/**
+/*!
  * Call checkAndDoConvert, but convert string literals into pointers, if needed.
  */
 void checkAndConvertStringLiterals(Context ctx, ir.Type type, ref ir.Exp exp)
@@ -37,7 +37,7 @@ void checkAndConvertStringLiterals(Context ctx, ir.Type type, ref ir.Exp exp)
 	checkAndDoConvert(ctx, type, exp);
 }
 
-/**
+/*!
  * If exp will convert into type, call doConvert to do it, otherwise
  * throw an error, with the loc set to exp.loc.
  */
@@ -50,7 +50,7 @@ void checkAndDoConvert(Context ctx, ir.Type type, ref ir.Exp exp)
 	doConvert(ctx, type, exp);
 }
 
-/**
+/*!
  * Returns true if the given expression's type converts into type.
  */
 bool willConvert(Context ctx, ir.Type type, ir.Exp exp)
@@ -65,7 +65,7 @@ bool willConvert(Context ctx, ir.Type type, ir.Exp exp)
 	return willConvert(rtype, type);
 }
 
-/**
+/*!
  * Returns true if arg converts into param.
  */
 bool willConvert(ir.Type arg, ir.Type param)
@@ -195,7 +195,7 @@ bool willConvertClassToInterface(ir._Interface lInterface, ir.Class rClass)
 	return checkClass(rClass);
 }
 
-/**
+/*!
  * Change exp so its type is type. This function assumes that
  * willConvert returns true on the given expression.
  */

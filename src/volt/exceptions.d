@@ -10,7 +10,7 @@ import watt.text.format : format;
 import volt.token.location;
 
 
-/**
+/*!
  * Base class for compiler exceptions.
  */
 abstract class CompilerException : Exception
@@ -19,7 +19,7 @@ public:
 	Location loc;
 	bool hasLocation = false;
 
-	/**
+	/*!
 	 * This error is not to be swallowed when retrying
 	 * a parse as a different construct.
 	 *
@@ -36,7 +36,7 @@ public:
 	CompilerError more; // Optional
 	string fixHint; // Optional
 
-	/**
+	/*!
 	 * Where was this error location, usefull for finding the source
 	 * of the error in the Volta source.
 	 */
@@ -73,7 +73,7 @@ protected:
 	}
 }
 
-/**
+/*!
  * Exception for compiler error messages arising from source code.
  *
  * Is subclassed by more specialized error messages.
@@ -161,7 +161,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Aka Internal Compiler Error, aka ICE, aka CompilerPanic.
  */
 class CompilerPanic : CompilerException

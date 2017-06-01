@@ -7,7 +7,7 @@ import ir = volt.ir.ir;
 import volt.errors;
 
 
-/**
+/*!
  * Base lifting class, only implements copying not lifting.
  *
  * The Lifter facilitates moving pieces of the IR to another module.
@@ -736,7 +736,7 @@ public:
 	 *
 	 */
 
-	/**
+	/*!
 	 * Copies a Scope but not its stores.
 	 */
 	ir.Scope copyScope(ir.Scope parent, ir.Node owner, ir.Scope old)

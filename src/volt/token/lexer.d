@@ -19,7 +19,7 @@ import volt.token.writer : TokenWriter;
 import volt.token.error;
 
 
-/**
+/*!
  * Tokenizes a source file.
  *
  * Side-effects:
@@ -54,7 +54,7 @@ Token[] lex(Source source)
 
 private:
 
-/**
+/*!
  * Advance and return true if matched. Adds an error and returns false otherwise.
  *
  * Side-effects:
@@ -73,7 +73,7 @@ bool match(TokenWriter tw, dchar c)
 	return true;
 }
 
-/**
+/*!
  * Call match for every character in a given string.
  * Returns false if any match fails, true otherwise.
  *
@@ -90,7 +90,7 @@ bool match(TokenWriter tw, string s)
 	return true;
 }
 
-/// Returns true if something has been matched, false otherwise. No errors generated.
+//! Returns true if something has been matched, false otherwise. No errors generated.
 bool matchIf(TokenWriter tw, dchar c)
 {
 	if (tw.source.current == c) {
@@ -101,7 +101,7 @@ bool matchIf(TokenWriter tw, dchar c)
 	}
 }
 
-/**
+/*!
  * Add a LexFailed error with the given string.
  */
 LexStatus lexFailed(TokenWriter tw, string s)
@@ -111,7 +111,7 @@ LexStatus lexFailed(TokenWriter tw, string s)
 	return Failed;
 }
 
-/**
+/*!
  * Add an Expected error with the given string.
  */
 LexStatus lexExpected(TokenWriter tw, Location loc, string s)
@@ -121,7 +121,7 @@ LexStatus lexExpected(TokenWriter tw, Location loc, string s)
 	return Failed;
 }
 
-/**
+/*!
  * Calls lexExpected with tw.source.loc.
  */
 LexStatus lexExpected(TokenWriter tw, string s)
@@ -204,7 +204,7 @@ enum NextLex
 	End,
 }
 
-/// Return which TokenType to try and lex next.
+//! Return which TokenType to try and lex next.
 NextLex nextLex(TokenWriter tw)
 {
 	tw.source.skipWhitespace();
@@ -971,7 +971,7 @@ LexStatus lexTokenString(TokenWriter tw)
 	return Succeeded;
 }
 
-/**
+/*!
  * Consume characters from the source from the characters array until you can't.
  * Returns: the number of characters consumed, not counting underscores.
  */
@@ -992,7 +992,7 @@ size_t consume(Source src, scope const(dchar)[] characters...)
 	return consumed;
 }
 
-/**
+/*!
  * Lex an integer literal and add the resulting token to tw.
  * If it detects the number is floating point, it will call lexReal directly.
  */
@@ -1073,7 +1073,7 @@ LexStatus lexNumber(TokenWriter tw)
 	return Succeeded;
 }
 
-/// Lex a floating literal and add the resulting token to tw.
+//! Lex a floating literal and add the resulting token to tw.
 LexStatus lexReal(TokenWriter tw)
 {
 	auto token = currentLocationToken(tw);

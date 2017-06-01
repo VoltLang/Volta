@@ -13,7 +13,7 @@ import volt.ir.toplevel;
 import volt.ir.templates;
 
 
-/**
+/*!
  * @defgroup irDecl IR Declaration Nodes
  *
  * Declarations associate names with types.
@@ -31,7 +31,7 @@ import volt.ir.templates;
  * @ingroup irNode
  */
 
-/**
+/*!
  * Base class for all declarations.
  *
  * @ingroup irNode irDecl
@@ -62,7 +62,7 @@ abstract class Declaration : Node
 	}
 }
 
-/**
+/*!
  * Represents an instance of a type.
  *
  * A Variable has a type and a single name that is an
@@ -79,11 +79,11 @@ public:
 	enum Storage
 	{
 		Invalid,
-		Field, ///< Member of a struct/class.
-		Function, ///< Variable in a function.
-		Nested,  ///< Accessed in a nested function.
-		Local,  ///< Stored in TLS.
-		Global,  ///< Stored in the global data segment.
+		Field, //!< Member of a struct/class.
+		Function, //!< Variable in a function.
+		Nested,  //!< Accessed in a nested function.
+		Local,  //!< Stored in TLS.
+		Global,  //!< Stored in the global data segment.
 	}
 
 	static string storageToString(Storage s)
@@ -99,43 +99,43 @@ public:
 	}
 
 public:
-	/// Has the extyper checked this variable.
+	//! Has the extyper checked this variable.
 	bool isResolved;
 
-	/// The access level of this @p Variable, which determines how
-	/// it interacts with other modules.
+	//! The access level of this @p Variable, which determines how
+	//! it interacts with other modules.
 	Access access = Access.Public;
 
-	/// The underlying @p Type this @p Variable is an instance of.
+	//! The underlying @p Type this @p Variable is an instance of.
 	Type type;
-	/// The name of the instance of the type. This is not be mangled.
+	//! The name of the instance of the type. This is not be mangled.
 	string name;
-	/// An optional mangled name for this Variable.
+	//! An optional mangled name for this Variable.
 	string mangledName;
 	
-	/// An expression that is assigned to the instance if present.
+	//! An expression that is assigned to the instance if present.
 	Exp assign;  // Optional.
 
-	/// What storage this variable will be stored in. 
+	//! What storage this variable will be stored in. 
 	Storage storage;
 
 	// For exported symbols.
 	Linkage linkage;
 
-	/**
+	/*!
 	 * Only for global variables.
 	 *
 	 * Can the linker merge any symbol of the same name into one.
 	 */
 	bool isMergable;
 
-	bool isExtern;  ///< Only for global variables.
+	bool isExtern;  //!< Only for global variables.
 
-	bool isOut;  ///< The type will be a ref storage type if this is set.
+	bool isOut;  //!< The type will be a ref storage type if this is set.
 
-	bool hasBeenDeclared;  ///< Has this variable been declared yet? (only useful in extyper)
+	bool hasBeenDeclared;  //!< Has this variable been declared yet? (only useful in extyper)
 
-	/**
+	/*!
 	 * Tells the backend to turn the storage Variable to the
 	 * base of the reference or pointer type.
 	 *
@@ -162,20 +162,20 @@ public:
 	 */
 	bool useBaseStorage;
 
-	/**
+	/*!
 	 * This variable is initialized not by the assign but
 	 * by the backend. Mostly used for catch statements.
 	 */
 	bool specialInitValue;
 
-	/**
+	/*!
 	 * Tells the backend to not zero out this variable.
 	 */
 	bool noInitialise;
 
 public:
 	this() { super(NodeType.Variable); }
-	/// Construct a @p Variable with a given type and name.
+	//! Construct a @p Variable with a given type and name.
 	this(Type t, string name)
 	{
 		this();
@@ -203,7 +203,7 @@ public:
 	}
 }
 
-/**
+/*!
  * An @p Alias associates names with a @p Type. Once declared, using that name is 
  * as using that @p Type directly.
  *
@@ -214,26 +214,26 @@ class Alias : Node
 public:
 	bool isResolved;
 
-	/// Usability from other modules.
+	//! Usability from other modules.
 	Access access = Access.Public;
 
-	/**
+	/*!
 	 * The names to associate with the alias.
 	 *
 	 * alias >name< = ...;
 	 */
 	string name;
 
-	Attribute externAttr;  ///< Non null type.
+	Attribute externAttr;  //!< Non null type.
 
-	/**
+	/*!
 	 * The @p Type names are associated with.
 	 *
 	 * alias name = const(char)[];
 	 */
 	Type type;
 
-	/**
+	/*!
 	 * This alias is a pure rebind of a name,
 	 * for when the parser doesn't know what it is.
 	 *
@@ -241,23 +241,23 @@ public:
 	 */
 	QualifiedName id;
 
-	/**
+	/*!
 	 * Where are we looking for the symbol.
 	 * @{
 	 */
 	Scope lookScope;
 	Module lookModule;
-	/**
+	/*!
 	 * @}
 	 */
 
-	/**
+	/*!
 	 * Needed for resolving.
 	 */
 	Store store;
 
 
-	Exp templateInstance;  ///< Not with id. Optional.
+	Exp templateInstance;  //!< Not with id. Optional.
 
 public:
 	this() { super(NodeType.Alias); }
@@ -277,7 +277,7 @@ public:
 	}
 }
 
-/**
+/*!
  * A function is a block of code that takes parameters, and may return a value.
  * There may be additional implied context, depending on where it's defined.
  *
@@ -288,7 +288,7 @@ public:
 class Function : Declaration
 {
 public:
-	/**
+	/*!
 	 * Used to specify function type.
 	 *
 	 * Some types have hidden arguments, like the this argument
@@ -296,48 +296,48 @@ public:
 	 */
 	enum Kind {
 		Invalid,
-		Function,  ///< foo()
-		Member,  ///< this.foo()
-		LocalMember,  ///< Clazz.foo()
-		GlobalMember,  ///< Clazz.foo()
-		Constructor,  ///< auto foo = new Clazz()
-		Destructor,  ///< delete foo
-		LocalConstructor,  ///< local this() {}
-		LocalDestructor,  ///< local ~this() {}
-		GlobalConstructor,  ///< global this() {}
-		GlobalDestructor,  ///< global ~this() {}
-		Nested,  ///< void aFunction() { void foo() {} }
-		GlobalNested,  ///< void aFunction() { global void foo() {} }
+		Function,  //!< foo()
+		Member,  //!< this.foo()
+		LocalMember,  //!< Clazz.foo()
+		GlobalMember,  //!< Clazz.foo()
+		Constructor,  //!< auto foo = new Clazz()
+		Destructor,  //!< delete foo
+		LocalConstructor,  //!< local this() {}
+		LocalDestructor,  //!< local ~this() {}
+		GlobalConstructor,  //!< global this() {}
+		GlobalDestructor,  //!< global ~this() {}
+		Nested,  //!< void aFunction() { void foo() {} }
+		GlobalNested,  //!< void aFunction() { global void foo() {} }
 	}
 
 
 public:
-	/// Has the extyper checked this function.
+	//! Has the extyper checked this function.
 	bool isResolved;
-	/// Has the extyper checked the body of this function.
+	//! Has the extyper checked the body of this function.
 	bool isActualized;
 
-	/// Usability from other modules.
+	//! Usability from other modules.
 	Access access = Access.Public;
 
-	Scope myScope; ///< Needed for params
+	Scope myScope; //!< Needed for params
 
-	Kind kind;  ///< What kind of function.
-	FunctionType type;  ///< Prototype.
+	Kind kind;  //!< What kind of function.
+	FunctionType type;  //!< Prototype.
 	FunctionParam[] params;
 	Function[] nestedFunctions;
 
-	/// The various scope (exit/success/failures) turned into inline functions.
-	/// @{
+	//! The various scope (exit/success/failures) turned into inline functions.
+	//! @{
 	Function[] scopeSuccesses;
 	Function[] scopeExits;
 	Function[] scopeFailures;
-	/// @}
+	//! @}
 
-	string name;  ///< Pre mangling.
+	string name;  //!< Pre mangling.
 	string mangledName;
 
-	/**
+	/*!
 	 * For use with the out contract.
 	 *
 	 * out (result)
@@ -346,33 +346,33 @@ public:
 	string outParameter;
 
 
-	/// @todo Make these @p BlockStatements?
-	BlockStatement inContract;  ///< Optional.
-	BlockStatement outContract;  ///< Optional.
-	BlockStatement _body;  ///< Optional.
+	//! @todo Make these @p BlockStatements?
+	BlockStatement inContract;  //!< Optional.
+	BlockStatement outContract;  //!< Optional.
+	BlockStatement _body;  //!< Optional.
 
-	/// Optional this argument for member functions.
+	//! Optional this argument for member functions.
 	Variable thisHiddenParameter;
-	/// Contains the context for nested functions.
+	//! Contains the context for nested functions.
 	Variable nestedHiddenParameter;
-	/// As above, but includes the initial declaration in the non nested parent.
+	//! As above, but includes the initial declaration in the non nested parent.
 	Variable nestedVariable;
 
 	Struct nestStruct;
 
-	/**
+	/*!
 	 * For functions generated by lowering passes.
 	 * Causes multiple functions to be merged.
 	 */
 	bool isMergable;
 
-	int vtableIndex = -1;  ///< If this is a member function, where in the vtable does it live?
-	/// Will be turned into a function pointer.
+	int vtableIndex = -1;  //!< If this is a member function, where in the vtable does it live?
+	//! Will be turned into a function pointer.
 	bool loadDynamic;
 
 	bool isMarkedOverride;
 
-	/**
+	/*!
 	 * Marks this method as marked as overriding an interface method.
 	 * (So don't do the things you'd normally do to an overriding method.)
 	 */
@@ -381,22 +381,22 @@ public:
 	bool isAbstract;
 	bool isFinal;
 
-	/**
+	/*!
 	 * Makes the ExTyper automatically set the correct return type
 	 * based on the returned expression.
 	 */
 	bool isAutoReturn;
 
-	/**
+	/*!
 	 * Is this a function a lowered construct, like scope.
 	 * @{
 	 */
 	bool isLoweredScopeExit;
 	bool isLoweredScopeFailure;
 	bool isLoweredScopeSuccess;
-	/// @}
+	//! @}
 
-	TemplateInstance templateInstance;  //< Optional. Non-null if this is a template instantiation.
+	TemplateInstance templateInstance;  //!< Optional. Non-null if this is a template instantiation.
 
 
 public:
@@ -476,7 +476,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Represents multiple functions associated with a single name.
  *
  * Contains the ExpReference that this set is associated with
@@ -489,7 +489,7 @@ class FunctionSet : Declaration
 {
 public:
 	Function[] functions;
-	ExpReference reference;  ///< For assigning an overloaded function to a delegate.
+	ExpReference reference;  //!< For assigning an overloaded function to a delegate.
 
 public:
 	this() { super(NodeType.FunctionSet); }
@@ -513,7 +513,7 @@ public:
 		return t;
 	}
 
-	/**
+	/*!
 	 * Update reference to indicate function set has been resolved.
 	 * Returns the function passed to it.
 	 */
@@ -528,7 +528,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Represents a parameter to a function.
  *
  * Indirectly references the type which is on the Callable,
@@ -543,7 +543,7 @@ public:
 	size_t index;
 	Exp assign;
 	string name;  // Optional.
-	bool hasBeenNested;  ///< Has this parameter been nested into a nested context struct?
+	bool hasBeenNested;  //!< Has this parameter been nested into a nested context struct?
 
 public:
 	this()

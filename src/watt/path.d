@@ -11,7 +11,7 @@ import std.path : baseName, dirName, dirSeparator;
 
 import watt.math.random;
 
-/**
+/*!
  * Generate a filename in a temporary directory that doesn't exist.
  *
  * Params:
@@ -50,7 +50,7 @@ version (Windows) {
 	extern(C) int _NSGetExecutablePath(char*, uint*);
 }
 
-/**
+/*!
  * Return the path to the dir that the executable is in.
  */
 string getExecDir()

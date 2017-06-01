@@ -15,23 +15,23 @@ alias Succeeded = LexStatus.Succeeded;
 alias Failed = LexStatus.Failed;
 
 
-/// Describes a lexer failure.
+//! Describes a lexer failure.
 abstract class LexerError
 {
 public:
 	enum Kind
 	{
-		/// No error.
+		//! No error.
 		Ok = 0,
-		/// Tried to lex something, but it failed.
+		//! Tried to lex something, but it failed.
 		LexFailed,
-		/// Expected something that wasn't there.
+		//! Expected something that wasn't there.
 		Expected,
-		/// Didn't expect something that we got.
+		//! Didn't expect something that we got.
 		Unexpected,
-		/// Tried to use an unsupported feature.
+		//! Tried to use an unsupported feature.
 		Unsupported,
-		/// Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaah! (Compiler Error)
+		//! Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaah! (Compiler Error)
 		Panic
 	}
 
@@ -53,7 +53,7 @@ public:
 }
 
 
-/// An error with a string.
+//! An error with a string.
 class LexerStringError : LexerError
 {
 public:

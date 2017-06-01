@@ -13,10 +13,10 @@ import ir = volt.ir.ir;
 struct SinkStruct(T)
 {
 public:
-	/// The one true sink definition.
+	//! The one true sink definition.
 	alias Sink = void delegate(SinkArg);
 
-	/// The argument to the one true sink.
+	//! The argument to the one true sink.
 	alias SinkArg = scope T[];
 
 	enum size_t MinSize = 16;
@@ -111,7 +111,7 @@ public:
 		mArr[mLength - 1] = i;
 	}
 
-	/**
+	/*!
 	 * Safely get the backing storage from the sink without copying.
 	 */
 	void toSink(Sink sink)
@@ -119,7 +119,7 @@ public:
 		return sink(mArr[0 .. mLength]);
 	}
 
-	/**
+	/*!
 	 * Use this as sparingly as possible. Use toSink where possible.
 	 */
 	T[] toArray()
@@ -129,7 +129,7 @@ public:
 		return _out;
 	}
 
-	/**
+	/*!
 	 * Unsafely get a reference to the array.
 	 */
 	T[] borrowUnsafe()

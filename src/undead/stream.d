@@ -1,6 +1,6 @@
 // Written in the D programming language
 
-/**
+/*!
  * $(RED Deprecated: This module is considered out-dated and not up to Phobos'
  *       current standards.)
  *
@@ -43,27 +43,27 @@ import std.internal.cstring;
  *    TArrayStream    a stream wrapping an array-like buffer
  */
 
-/// A base class for stream exceptions.
+//! A base class for stream exceptions.
 class StreamException: Exception {
-  /// Construct a StreamException with given error message.
+  //! Construct a StreamException with given error message.
   this(string msg) { super(msg); }
 }
 
-/// Thrown when unable to read data from Stream.
+//! Thrown when unable to read data from Stream.
 class ReadException: StreamException {
-  /// Construct a ReadException with given error message.
+  //! Construct a ReadException with given error message.
   this(string msg) { super(msg); }
 }
 
-/// Thrown when unable to write data to Stream.
+//! Thrown when unable to write data to Stream.
 class WriteException: StreamException {
-  /// Construct a WriteException with given error message.
+  //! Construct a WriteException with given error message.
   this(string msg) { super(msg); }
 }
 
-/// Thrown when unable to move Stream pointer.
+//! Thrown when unable to move Stream pointer.
 class SeekException: StreamException {
-  /// Construct a SeekException with given error message.
+  //! Construct a SeekException with given error message.
   this(string msg) { super(msg); }
 }
 
@@ -88,25 +88,25 @@ private {
   import undead.doformat;
 }
 
-/// InputStream is the interface for readable streams.
+//! InputStream is the interface for readable streams.
 
 interface InputStream {
 
-  /***
+  /*!
    * Read exactly size bytes into the buffer.
    *
    * Throws a ReadException if it is not correct.
    */
   void readExact(void* buffer, size_t size);
 
-  /***
+  /*!
    * Read a block of data big enough to fill the given array buffer.
    *
    * Returns: the actual number of bytes read. Unfilled bytes are not modified.
    */
   size_t read(ubyte[] buffer);
 
-  /***
+  /*!
    * Read a basic type or counted string.
    *
    * Throw a ReadException if it could not be read.
@@ -115,33 +115,33 @@ interface InputStream {
    * to write.
    */
   void read(out byte x);
-  void read(out ubyte x);       /// ditto
-  void read(out short x);       /// ditto
-  void read(out ushort x);      /// ditto
-  void read(out int x);         /// ditto
-  void read(out uint x);        /// ditto
-  void read(out long x);        /// ditto
-  void read(out ulong x);       /// ditto
-  void read(out float x);       /// ditto
-  void read(out double x);      /// ditto
-  void read(out real x);        /// ditto
-  void read(out ifloat x);      /// ditto
-  void read(out idouble x);     /// ditto
-  void read(out ireal x);       /// ditto
-  void read(out cfloat x);      /// ditto
-  void read(out cdouble x);     /// ditto
-  void read(out creal x);       /// ditto
-  void read(out char x);        /// ditto
-  void read(out wchar x);       /// ditto
-  void read(out dchar x);       /// ditto
+  void read(out ubyte x);       //! ditto
+  void read(out short x);       //! ditto
+  void read(out ushort x);      //! ditto
+  void read(out int x);         //! ditto
+  void read(out uint x);        //! ditto
+  void read(out long x);        //! ditto
+  void read(out ulong x);       //! ditto
+  void read(out float x);       //! ditto
+  void read(out double x);      //! ditto
+  void read(out real x);        //! ditto
+  void read(out ifloat x);      //! ditto
+  void read(out idouble x);     //! ditto
+  void read(out ireal x);       //! ditto
+  void read(out cfloat x);      //! ditto
+  void read(out cdouble x);     //! ditto
+  void read(out creal x);       //! ditto
+  void read(out char x);        //! ditto
+  void read(out wchar x);       //! ditto
+  void read(out dchar x);       //! ditto
 
   // reads a string, written earlier by write()
-  void read(out char[] s);      /// ditto
+  void read(out char[] s);      //! ditto
 
   // reads a Unicode string, written earlier by write()
-  void read(out wchar[] s);     /// ditto
+  void read(out wchar[] s);     //! ditto
 
-  /***
+  /*!
    * Read a line that is terminated with some combination of carriage return and
    * line feed or end-of-file.
    *
@@ -150,11 +150,11 @@ interface InputStream {
    * it if necessary) and a slice of the result is returned.
    */
   char[] readLine();
-  char[] readLine(char[] result);       /// ditto
-  wchar[] readLineW();                  /// ditto
-  wchar[] readLineW(wchar[] result);    /// ditto
+  char[] readLine(char[] result);       //! ditto
+  wchar[] readLineW();                  //! ditto
+  wchar[] readLineW(wchar[] result);    //! ditto
 
-  /***
+  /*!
    * Overload foreach statements to read the stream line by line and call the
    * supplied delegate with each line or with each line with line number.
    *
@@ -175,15 +175,15 @@ interface InputStream {
 
   // iterate through the stream line-by-line
   int opApply(scope int delegate(ref char[] line) dg);
-  int opApply(scope int delegate(ref ulong n, ref char[] line) dg);  /// ditto
-  int opApply(scope int delegate(ref wchar[] line) dg);            /// ditto
-  int opApply(scope int delegate(ref ulong n, ref wchar[] line) dg); /// ditto
+  int opApply(scope int delegate(ref ulong n, ref char[] line) dg);  //! ditto
+  int opApply(scope int delegate(ref wchar[] line) dg);            //! ditto
+  int opApply(scope int delegate(ref ulong n, ref wchar[] line) dg); //! ditto
 
-  /// Read a string of the given length,
-  /// throwing ReadException if there was a problem.
+  //! Read a string of the given length,
+  //! throwing ReadException if there was a problem.
   char[] readString(size_t length);
 
-  /***
+  /*!
    * Read a string of the given length, throwing ReadException if there was a
    * problem.
    *
@@ -194,7 +194,7 @@ interface InputStream {
   wchar[] readStringW(size_t length);
 
 
-  /***
+  /*!
    * Read and return the next character in the stream.
    *
    * This is the only method that will handle ungetc properly.
@@ -203,18 +203,18 @@ interface InputStream {
    */
 
   char getc();
-  wchar getcw(); /// ditto
+  wchar getcw(); //! ditto
 
-  /***
+  /*!
    * Push a character back onto the stream.
    *
    * They will be returned in first-in last-out order from getc/getcw.
    * Only has effect on further calls to getc() and getcw().
    */
   char ungetc(char c);
-  wchar ungetcw(wchar c); /// ditto
+  wchar ungetcw(wchar c); //! ditto
 
-  /***
+  /*!
    * Scan a string from the input using a similar form to C's scanf
    * and <a href="std_format.html">std.format</a>.
    *
@@ -235,12 +235,12 @@ interface InputStream {
    * --------------------------
    */
   int vreadf(TypeInfo[] arguments, va_list args);
-  int readf(...); /// ditto
+  int readf(...); //! ditto
 
-  /// Retrieve the number of bytes available for immediate reading.
+  //! Retrieve the number of bytes available for immediate reading.
   @property size_t available();
 
-  /***
+  /*!
    * Return whether the current file position is the same as the end of the
    * file.
    *
@@ -251,25 +251,25 @@ interface InputStream {
 
   @property bool eof();
 
-  @property bool isOpen();        /// Return true if the stream is currently open.
+  @property bool isOpen();        //! Return true if the stream is currently open.
 }
 
-/// Interface for writable streams.
+//! Interface for writable streams.
 interface OutputStream {
 
-  /***
+  /*!
    * Write exactly size bytes from buffer, or throw a WriteException if that
    * could not be done.
    */
   void writeExact(const void* buffer, size_t size);
 
-  /***
+  /*!
    * Write as much of the buffer as possible,
    * returning the number of bytes written.
    */
   size_t write(const(ubyte)[] buffer);
 
-  /***
+  /*!
    * Write a basic type.
    *
    * Outside of byte, ubyte, and char, the format is implementation-specific
@@ -277,27 +277,27 @@ interface OutputStream {
    * Throw WriteException on error.
    */
   void write(byte x);
-  void write(ubyte x);          /// ditto
-  void write(short x);          /// ditto
-  void write(ushort x);         /// ditto
-  void write(int x);            /// ditto
-  void write(uint x);           /// ditto
-  void write(long x);           /// ditto
-  void write(ulong x);          /// ditto
-  void write(float x);          /// ditto
-  void write(double x);         /// ditto
-  void write(real x);           /// ditto
-  void write(ifloat x);         /// ditto
-  void write(idouble x);        /// ditto
-  void write(ireal x);          /// ditto
-  void write(cfloat x);         /// ditto
-  void write(cdouble x);        /// ditto
-  void write(creal x);          /// ditto
-  void write(char x);           /// ditto
-  void write(wchar x);          /// ditto
-  void write(dchar x);          /// ditto
+  void write(ubyte x);          //! ditto
+  void write(short x);          //! ditto
+  void write(ushort x);         //! ditto
+  void write(int x);            //! ditto
+  void write(uint x);           //! ditto
+  void write(long x);           //! ditto
+  void write(ulong x);          //! ditto
+  void write(float x);          //! ditto
+  void write(double x);         //! ditto
+  void write(real x);           //! ditto
+  void write(ifloat x);         //! ditto
+  void write(idouble x);        //! ditto
+  void write(ireal x);          //! ditto
+  void write(cfloat x);         //! ditto
+  void write(cdouble x);        //! ditto
+  void write(creal x);          //! ditto
+  void write(char x);           //! ditto
+  void write(wchar x);          //! ditto
+  void write(dchar x);          //! ditto
 
-  /***
+  /*!
    * Writes a string, together with its length.
    *
    * The format is implementation-specific
@@ -305,9 +305,9 @@ interface OutputStream {
    * Throw WriteException on error.
    */
     void write(const(char)[] s);
-    void write(const(wchar)[] s); /// ditto
+    void write(const(wchar)[] s); //! ditto
 
-  /***
+  /*!
    * Write a line of text,
    * appending the line with an operating-system-specific line ending.
    *
@@ -315,7 +315,7 @@ interface OutputStream {
    */
   void writeLine(const(char)[] s);
 
-  /***
+  /*!
    * Write a line of text,
    * appending the line with an operating-system-specific line ending.
    *
@@ -324,14 +324,14 @@ interface OutputStream {
    */
     void writeLineW(const(wchar)[] s);
 
-  /***
+  /*!
    * Write a string of text.
    *
    * Throws WriteException if it could not be fully written.
    */
     void writeString(const(char)[] s);
 
-  /***
+  /*!
    * Write a string of text.
    *
    * The format is implementation-specific.
@@ -339,29 +339,29 @@ interface OutputStream {
    */
   void writeStringW(const(wchar)[] s);
 
-  /***
+  /*!
    * Print a formatted string into the stream using printf-style syntax,
    * returning the number of bytes written.
    */
   size_t vprintf(const(char)[] format, va_list args);
-  size_t printf(const(char)[] format, ...);    /// ditto
+  size_t printf(const(char)[] format, ...);    //! ditto
 
-  /***
+  /*!
    * Print a formatted string into the stream using writef-style syntax.
    * References: <a href="std_format.html">std.format</a>.
    * Returns: self to chain with other stream commands like flush.
    */
   OutputStream writef(...);
-  OutputStream writefln(...); /// ditto
-  OutputStream writefx(TypeInfo[] arguments, va_list argptr, int newline = false);  /// ditto
+  OutputStream writefln(...); //! ditto
+  OutputStream writefx(TypeInfo[] arguments, va_list argptr, int newline = false);  //! ditto
 
-  void flush(); /// Flush pending output if appropriate.
-  void close(); /// Close the stream, flushing output if appropriate.
-  @property bool isOpen(); /// Return true if the stream is currently open.
+  void flush(); //! Flush pending output if appropriate.
+  void close(); //! Close the stream, flushing output if appropriate.
+  @property bool isOpen(); //! Return true if the stream is currently open.
 }
 
 
-/***
+/*!
  * Stream is the base abstract class from which the other stream classes derive.
  *
  * Stream's byte order is the format native to the computer.
@@ -391,23 +391,23 @@ class Stream : InputStream, OutputStream {
   private import std.string, std.digest.crc, core.stdc.stdlib, core.stdc.stdio;
 
   // stream abilities
-  bool readable = false;        /// Indicates whether this stream can be read from.
-  bool writeable = false;       /// Indicates whether this stream can be written to.
-  bool seekable = false;        /// Indicates whether this stream can be seeked within.
-  protected bool isopen = true; /// Indicates whether this stream is open.
+  bool readable = false;        //! Indicates whether this stream can be read from.
+  bool writeable = false;       //! Indicates whether this stream can be written to.
+  bool seekable = false;        //! Indicates whether this stream can be seeked within.
+  protected bool isopen = true; //! Indicates whether this stream is open.
 
-  protected bool readEOF = false; /** Indicates whether this stream is at eof
+  protected bool readEOF = false; /*! Indicates whether this stream is at eof
                                    * after the last read attempt.
                                    */
 
-  protected bool prevCr = false; /** For a non-seekable stream indicates that
+  protected bool prevCr = false; /*! For a non-seekable stream indicates that
                                   * the last readLine or readLineW ended on a
                                   * '\r' character.
                                   */
 
   this() {}
 
-  /***
+  /*!
    * Read up to size bytes into the buffer and return the number of bytes
    * actually read. A return value of 0 indicates end-of-file.
    */
@@ -1072,7 +1072,7 @@ class Stream : InputStream, OutputStream {
   // returns estimated number of bytes available for immediate reading
   @property size_t available() { return 0; }
 
-  /***
+  /*!
    * Write up to size bytes from buffer in the stream, returning the actual
    * number of bytes that were written.
    */
@@ -1235,7 +1235,7 @@ class Stream : InputStream, OutputStream {
     return this;
   }
 
-  /***
+  /*!
    * Copies all data from s into this stream.
    * This may throw ReadException or WriteException on failure.
    * This restores the file position of s so that it is unchanged.
@@ -1255,7 +1255,7 @@ class Stream : InputStream, OutputStream {
     }
   }
 
-  /***
+  /*!
    * Copy a specified number of bytes from the given stream into this one.
    * This may throw ReadException or WriteException on failure.
    * Unlike the previous form, this doesn't restore the file position of s.
@@ -1270,7 +1270,7 @@ class Stream : InputStream, OutputStream {
     }
   }
 
-  /***
+  /*!
    * Change the current position of the stream. whence is either SeekPos.Set, in
    which case the offset is an absolute index from the beginning of the stream,
    SeekPos.Current, in which case the offset is a delta from the current
@@ -1280,24 +1280,24 @@ class Stream : InputStream, OutputStream {
    */
   abstract ulong seek(long offset, SeekPos whence);
 
-  /***
+  /*!
    * Aliases for their normal seek counterparts.
    */
   ulong seekSet(long offset) { return seek (offset, SeekPos.Set); }
-  ulong seekCur(long offset) { return seek (offset, SeekPos.Current); } /// ditto
-  ulong seekEnd(long offset) { return seek (offset, SeekPos.End); }     /// ditto
+  ulong seekCur(long offset) { return seek (offset, SeekPos.Current); } //! ditto
+  ulong seekEnd(long offset) { return seek (offset, SeekPos.End); }     //! ditto
 
-  /***
+  /*!
    * Sets file position. Equivalent to calling seek(pos, SeekPos.Set).
    */
   @property void position(ulong pos) { seek(cast(long)pos, SeekPos.Set); }
 
-  /***
+  /*!
    * Returns current file position. Equivalent to seek(0, SeekPos.Current).
    */
   @property ulong position() { return seek(0, SeekPos.Current); }
 
-  /***
+  /*!
    * Retrieve the size of the stream in bytes.
    * The stream must be seekable or a SeekException is thrown.
    */
@@ -1335,7 +1335,7 @@ class Stream : InputStream, OutputStream {
     readEOF = prevCr = isopen = readable = writeable = seekable = false;
   }
 
-  /***
+  /*!
    * Read the entire stream and return it as a string.
    * If the stream is not seekable the contents from the current position to eof
    * is read and returned.
@@ -1377,7 +1377,7 @@ class Stream : InputStream, OutputStream {
     }
   }
 
-  /***
+  /*!
    * Get a hash of the stream by reading each byte and using it in a CRC-32
    * checksum.
    */
@@ -1487,7 +1487,7 @@ class Stream : InputStream, OutputStream {
   }
 }
 
-/***
+/*!
  * A base class for streams that wrap a source stream with additional
  * functionality.
  *
@@ -1503,12 +1503,12 @@ class Stream : InputStream, OutputStream {
 class FilterStream : Stream {
   private Stream s;              // source stream
 
-  /// Property indicating when this stream closes to close the source stream as
-  /// well.
-  /// Defaults to true.
+  //! Property indicating when this stream closes to close the source stream as
+  //! well.
+  //! Defaults to true.
   bool nestClose = true;
 
-  /// Construct a FilterStream for the given source.
+  //! Construct a FilterStream for the given source.
   this(Stream source) {
     s = source;
     resetSource();
@@ -1516,12 +1516,12 @@ class FilterStream : Stream {
 
   // source getter/setter
 
-  /***
+  /*!
    * Get the current source stream.
    */
   final Stream source(){return s;}
 
-  /***
+  /*!
    * Set the current source stream.
    *
    * Setting the source stream closes this stream before attaching the new
@@ -1534,7 +1534,7 @@ class FilterStream : Stream {
     resetSource();
   }
 
-  /***
+  /*!
    * Indicates the source stream changed state and that this stream should reset
    * any readable, writeable, seekable, isopen and buffering flags.
    */
@@ -1582,7 +1582,7 @@ class FilterStream : Stream {
   override void flush() { super.flush(); s.flush(); }
 }
 
-/***
+/*!
  * This subclass is for buffering a source stream.
  *
  * A buffered stream must be
@@ -1617,7 +1617,7 @@ class BufferedStream : FilterStream {
 
   enum size_t DefaultBufferSize = 8192;
 
-  /***
+  /*!
    * Create a buffered stream for the stream source with the buffer size
    * bufferSize.
    */
@@ -1879,24 +1879,24 @@ class BufferedStream : FilterStream {
   }
 }
 
-/// An exception for File errors.
+//! An exception for File errors.
 class StreamFileException: StreamException {
-  /// Construct a StreamFileException with given error message.
+  //! Construct a StreamFileException with given error message.
   this(string msg) { super(msg); }
 }
 
-/// An exception for errors during File.open.
+//! An exception for errors during File.open.
 class OpenException: StreamFileException {
-  /// Construct an OpenFileException with given error message.
+  //! Construct an OpenFileException with given error message.
   this(string msg) { super(msg); }
 }
 
-/// Specifies the $(LREF File) access mode used when opening the file.
+//! Specifies the $(LREF File) access mode used when opening the file.
 enum FileMode {
-  In = 1,     /// Opens the file for reading.
-  Out = 2,    /// Opens the file for writing.
-  OutNew = 6, /// Opens the file for writing, creates a new file if it doesn't exist.
-  Append = 10 /// Opens the file for writing, appending new data to the end of the file.
+  In = 1,     //! Opens the file for reading.
+  Out = 2,    //! Opens the file for writing.
+  OutNew = 6, //! Opens the file for writing, creates a new file if it doesn't exist.
+  Append = 10 //! Opens the file for writing, appending new data to the end of the file.
 }
 
 version (Windows) {
@@ -1912,7 +1912,7 @@ version (Posix) {
   alias HANDLE = int;
 }
 
-/// This subclass is for unbuffered file system streams.
+//! This subclass is for unbuffered file system streams.
 class File: Stream {
 
   version (Windows) {
@@ -1947,7 +1947,7 @@ class File: Stream {
     }
   }
 
-  /***
+  /*!
    * Create the stream with no open file, an open file in read mode, or an open
    * file with explicit file mode.
    * mode, if given, is a combination of FileMode.In
@@ -1967,7 +1967,7 @@ class File: Stream {
   }
 
 
-  /***
+  /*!
    * Open a file for the stream, in an identical manner to the constructors.
    * If an error occurs an OpenException is thrown.
    */
@@ -2030,18 +2030,18 @@ class File: Stream {
     }
   }
 
-  /// Create a file for writing.
+  //! Create a file for writing.
   void create(string filename) {
     create(filename, FileMode.OutNew);
   }
 
-  /// ditto
+  //! ditto
   void create(string filename, FileMode mode) {
     close();
     open(filename, mode | FileMode.OutNew);
   }
 
-  /// Close the current file if it is open; otherwise it does nothing.
+  //! Close the current file if it is open; otherwise it does nothing.
   override void close() {
     if (isopen) {
       super.close();
@@ -2116,7 +2116,7 @@ class File: Stream {
     return cast(ulong)result;
   }
 
-  /***
+  /*!
    * For a seekable file returns the difference of the size and position and
    * otherwise returns 0.
    */
@@ -2210,7 +2210,7 @@ class File: Stream {
   }
 }
 
-/***
+/*!
  * This subclass is for buffered file system streams.
  *
  * It is a convenience class for wrapping a File in a BufferedStream.
@@ -2219,33 +2219,33 @@ class File: Stream {
  */
 class BufferedFile: BufferedStream {
 
-  /// opens file for reading
+  //! opens file for reading
   this() { super(new File()); }
 
-  /// opens file in requested mode and buffer size
+  //! opens file in requested mode and buffer size
   this(string filename, FileMode mode = FileMode.In,
        size_t bufferSize = DefaultBufferSize) {
     super(new File(filename,mode),bufferSize);
   }
 
-  /// opens file for reading with requested buffer size
+  //! opens file for reading with requested buffer size
   this(File file, size_t bufferSize = DefaultBufferSize) {
     super(file,bufferSize);
   }
 
-  /// opens existing handle; use with care!
+  //! opens existing handle; use with care!
   this(HANDLE hFile, FileMode mode, size_t buffersize = DefaultBufferSize) {
     super(new File(hFile,mode),buffersize);
   }
 
-  /// opens file in requested mode
+  //! opens file in requested mode
   void open(string filename, FileMode mode = FileMode.In) {
     File sf = cast(File)s;
     sf.open(filename,mode);
     resetSource();
   }
 
-  /// creates file in requested mode
+  //! creates file in requested mode
   void create(string filename, FileMode mode = FileMode.OutNew) {
     File sf = cast(File)s;
     sf.create(filename,mode);
@@ -2304,13 +2304,13 @@ class BufferedFile: BufferedStream {
 
 }
 
-/// UTF byte-order-mark signatures
+//! UTF byte-order-mark signatures
 enum BOM {
-        UTF8,           /// UTF-8
-        UTF16LE,        /// UTF-16 Little Endian
-        UTF16BE,        /// UTF-16 Big Endian
-        UTF32LE,        /// UTF-32 Little Endian
-        UTF32BE,        /// UTF-32 Big Endian
+        UTF8,           //! UTF-8
+        UTF16LE,        //! UTF-16 Little Endian
+        UTF16BE,        //! UTF-16 Big Endian
+        UTF32LE,        //! UTF-32 Little Endian
+        UTF32BE,        //! UTF-32 Big Endian
 }
 
 private enum int NBOMS = 5;
@@ -2329,7 +2329,7 @@ immutable ubyte[][NBOMS] ByteOrderMarks =
   ];
 
 
-/***
+/*!
  * This subclass wraps a stream with big-endian or little-endian byte order
  * swapping.
  *
@@ -2345,9 +2345,9 @@ immutable ubyte[][NBOMS] ByteOrderMarks =
  */
 class EndianStream : FilterStream {
 
-  Endian endian;        /// Endianness property of the source stream.
+  Endian endian;        //! Endianness property of the source stream.
 
-  /***
+  /*!
    * Create the endian stream for the source stream source with endianness end.
    * The default endianness is the native byte order.
    * The Endian type is defined
@@ -2358,7 +2358,7 @@ class EndianStream : FilterStream {
     endian = end;
   }
 
-  /***
+  /*!
    * Return -1 if no BOM and otherwise read the BOM and return it.
    *
    * If there is no BOM or if bytes beyond the BOM are read then the bytes read
@@ -2406,7 +2406,7 @@ class EndianStream : FilterStream {
     return result;
   }
 
-  /***
+  /*!
    * Correct the byte order of buffer to match native endianness.
    * size must be even.
    */
@@ -2445,7 +2445,7 @@ class EndianStream : FilterStream {
     }
   }
 
-  /***
+  /*!
    * Correct the byte order of the given buffer in blocks of the given size and
    * repeated the given number of times.
    * size must be even.
@@ -2506,7 +2506,7 @@ class EndianStream : FilterStream {
     return result;
   }
 
-  /// Write the specified BOM b to the source stream.
+  //! Write the specified BOM b to the source stream.
   void writeBOM(BOM b) {
     immutable ubyte[] bom = ByteOrderMarks[b];
     writeBlock(bom.ptr, bom.length);
@@ -2628,7 +2628,7 @@ class EndianStream : FilterStream {
   }
 }
 
-/***
+/*!
  * Parameterized subclass that wraps an array-like buffer with a stream
  * interface.
  *
@@ -2641,7 +2641,7 @@ class TArrayStream(Buffer): Stream {
   ulong len;  // current data length
   ulong cur;  // current file position
 
-  /// Create the stream for the the buffer buf. Non-copying.
+  //! Create the stream for the the buffer buf. Non-copying.
   this(Buffer buf) {
     super ();
     this.buf = buf;
@@ -2704,7 +2704,7 @@ class TArrayStream(Buffer): Stream {
 
   override @property size_t available () { return cast(size_t)(len - cur); }
 
-  /// Get the current memory data in total.
+  //! Get the current memory data in total.
   @property ubyte[] data() {
     if (len > size_t.max)
       throw new StreamException("Stream too big");
@@ -2747,22 +2747,22 @@ unittest {
   assert (buf[0..12] == "Answer is 42");
 }
 
-/// This subclass reads and constructs an array of bytes in memory.
+//! This subclass reads and constructs an array of bytes in memory.
 class MemoryStream: TArrayStream!(ubyte[]) {
 
-  /// Create the output buffer and setup for reading, writing, and seeking.
+  //! Create the output buffer and setup for reading, writing, and seeking.
   // clear to an empty buffer.
   this() { this(cast(ubyte[]) null); }
 
-  /***
+  /*!
    * Create the output buffer and setup for reading, writing, and seeking.
    * Load it with specific input data.
    */
   this(ubyte[] buf) { super (buf); }
-  this(byte[] buf) { this(cast(ubyte[]) buf); } /// ditto
-  this(char[] buf) { this(cast(ubyte[]) buf); } /// ditto
+  this(byte[] buf) { this(cast(ubyte[]) buf); } //! ditto
+  this(char[] buf) { this(cast(ubyte[]) buf); } //! ditto
 
-  /// Ensure the stream can write count extra bytes from cursor position without an allocation.
+  //! Ensure the stream can write count extra bytes from cursor position without an allocation.
   void reserve(size_t count) {
     if (cur + count > buf.length)
       buf.length = cast(uint)((cur + count) * 2);
@@ -2821,13 +2821,13 @@ class MemoryStream: TArrayStream!(ubyte[]) {
 
 import std.mmfile;
 
-/***
+/*!
  * This subclass wraps a memory-mapped file with the stream API.
  * See std.mmfile module.
  */
 class MmFileStream : TArrayStream!(MmFile) {
 
-  /// Create stream wrapper for file.
+  //! Create stream wrapper for file.
   this(MmFile file) {
     super (file);
     MmFile.Mode mode = file.mode();
@@ -2882,7 +2882,7 @@ unittest {
 }
 
 
-/***
+/*!
  * This subclass slices off a portion of another stream, making seeking relative
  * to the boundaries of the slice.
  *
@@ -2899,7 +2899,7 @@ class SliceStream : FilterStream {
     bool bounded; // upper-bounded by high.
   }
 
-  /***
+  /*!
    * Indicate both the source stream to use for reading from and the low part of
    * the slice.
    *
@@ -2917,7 +2917,7 @@ class SliceStream : FilterStream {
     this.bounded = false;
   }
 
-  /***
+  /*!
    * Indicate the high index as well.
    *
    * Attempting to read or write past the high

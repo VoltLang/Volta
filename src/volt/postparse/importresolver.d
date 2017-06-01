@@ -15,7 +15,7 @@ import volt.visitor.scopemanager;
 import gatherer = volt.postparse.gatherer;
 
 
-/**
+/*!
  * Resolves imports on a single module.
  *
  * @ingroup passes passLang
@@ -94,7 +94,7 @@ public:
 		return ContinueParent;
 	}
 
-	/**
+	/*!
 	 * Takes a import that maps the module to a symbol in the current scope.
 	 *
 	 * import a = b;
@@ -110,7 +110,7 @@ public:
 		store.importBindAccess = i.access;
 	}
 
-	/**
+	/*!
 	 * Handles a import with symbol aliases.
 	 *
 	 * import a : b, c;
@@ -142,7 +142,7 @@ public:
 		}
 	}
 
-	/**
+	/*!
 	 * Most common imports.
 	 *
 	 * import a;
@@ -182,7 +182,7 @@ public:
 		}
 	}
 
-	/**
+	/*!
 	 * Used for adding in scopes from static imports
 	 */
 	ir.Scope buildOrReturnScope(ir.Scope parent, ir.Node node, string name)

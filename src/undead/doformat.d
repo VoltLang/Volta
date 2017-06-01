@@ -1,6 +1,6 @@
 // Written in the D programming language.
 
-/**
+/*!
    Copyright: Copyright Digital Mars 2000-2013.
 
    License: $(HTTP boost.org/LICENSE_1_0.txt, Boost License 1.0).
@@ -37,7 +37,7 @@ version (DigitalMarsC)
     }
 }
 
-/**********************************************************************
+/*!
  * Signals a mismatch between a format and its corresponding argument.
  */
 class FormatException : Exception

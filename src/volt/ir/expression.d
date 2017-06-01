@@ -11,7 +11,7 @@ import volt.ir.toplevel;
 import volt.ir.statement;
 
 
-/**
+/*!
  * @defgroup irExp IR Expression Nodes
  *
  * Expressions compute a value based on an operation and one
@@ -29,7 +29,7 @@ import volt.ir.statement;
  * @ingroup irNode
  */
 
-/**
+/*!
  * Base class for all expressions.
  *
  * @ingroup irNode irExp
@@ -47,7 +47,7 @@ protected:
 	}
 }
 
-/**
+/*!
  * Base class for literal expressions.
  *
  * @ingroup irNode irExp
@@ -55,7 +55,7 @@ protected:
 abstract class LiteralExp : Exp
 {
 public:
-	/**
+	/*!
 	 * The extyper will tag literals with their types,
 	 * so that (say) something like
 	 *     Struct s = {};
@@ -80,7 +80,7 @@ protected:
 	}
 }
 
-/**
+/*!
  * A ternary expression is a short hand if statement in the form of an expression. 
  * 
  * condition ? ifTrue : ifFalse
@@ -95,9 +95,9 @@ protected:
 class Ternary : Exp
 {
 public:
-	Exp condition;  ///< The condition to test.
-	Exp ifTrue;  ///< Evaluate and return this if condition is true.
-	Exp ifFalse;  ///< Evaluate and return this if condition is false.
+	Exp condition;  //!< The condition to test.
+	Exp ifTrue;  //!< Evaluate and return this if condition is true.
+	Exp ifFalse;  //!< Evaluate and return this if condition is false.
 
 public:
 	this() { super(NodeType.Ternary); }
@@ -111,7 +111,7 @@ public:
 	}
 }
 
-/**
+/*!
  * A BinOp is an operation the operates on two expressions with a given 
  * operation.
  *
@@ -169,11 +169,11 @@ public:
 	}
 
 public:
-	Op op;  ///< The operation to perform.
-	Exp left;  ///< The left hand side of the expression.
-	Exp right;  ///< The right hand side of the expression.
+	Op op;  //!< The operation to perform.
+	Exp left;  //!< The left hand side of the expression.
+	Exp right;  //!< The right hand side of the expression.
 
-	bool isInternalNestedAssign;  ///< Is an assignment generated for passing context to a closure.
+	bool isInternalNestedAssign;  //!< Is an assignment generated for passing context to a closure.
 
 public:
 	this() { super(NodeType.BinOp); }
@@ -188,7 +188,7 @@ public:
 	}
 }
 
-/**
+/*!
  * A Unary operation is prepended to the back of an expression.
  *
  * @ingroup irNode irExp
@@ -220,7 +220,7 @@ public:
 	bool hasArgumentList;
 	Type type;  // with Cast and New.
 	Exp[] argumentList;  // With new StringObject("foo", "bar");
-	Function ctor; ///< The constructor to call.
+	Function ctor; //!< The constructor to call.
 
 	// These are only for Dup.
 	Exp dupBeginning;
@@ -252,7 +252,7 @@ public:
 	}
 }
 
-/**
+/*!
  * A postfix operation is appended to an expression.
  *
  * @ingroup irNode irExp
@@ -290,7 +290,7 @@ public:
 	Exp templateInstance;
 	bool isImplicitPropertyCall;
 
-	/**
+	/*!
 	 * Used in CreateDelegate postfixes to suppress going via the vtable
 	 * on classes when a member function is being called.
 	 *
@@ -325,7 +325,7 @@ public:
 	}
 }
 
-/**
+/*!
  * A looked up postfix operation is appended to an expression.
  *
  * @ingroup irNode irExp
@@ -335,8 +335,8 @@ class PropertyExp : Exp
 public:
 	Exp child;  // If the property lives on a Aggregate.
 
-	Function   getFn;  ///< For property get.
-	Function[] setFns; ///< For property sets.
+	Function   getFn;  //!< For property get.
+	Function[] setFns; //!< For property sets.
 
 	Identifier identifier;  // Looked up name.
 
@@ -359,7 +359,7 @@ public:
 	}
 }
 
-/**
+/*!
  * A Constant is a literal value of a given type.
  *
  * @ingroup irNode irExp
@@ -402,7 +402,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Represents an array literal. Contains a list of expressions with
  * (if semantically sound) a common type.
  *
@@ -445,7 +445,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Represents an associative array literal -- a list of
  * key/value pairs.
  *
@@ -455,7 +455,7 @@ class AssocArray : Exp
 {
 public:
 	AAPair[] pairs;
-	Type type;  ///< The type of the associative array.
+	Type type;  //!< The type of the associative array.
 
 public:
 	this() { super(NodeType.AssocArray); }
@@ -472,7 +472,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Represents a single identifier. Replaced with ExpReference in a pass.
  *
  * @ingroup irNode irExp
@@ -499,7 +499,7 @@ public:
 	}
 }
 
-/**
+/*!
  * An Assert checks that a condition is true, and dies with an optional message if not.
  *
  * @ingroup irNode irExp
@@ -521,7 +521,7 @@ public:
 	}
 }
 
-/**
+/*!
  * A StringImport creates a string literal from a file on disk at compile time.
  *
  * @ingroup irNode irExp
@@ -541,7 +541,7 @@ public:
 	}
 }
 
-/**
+/*!
  * The typeid expression returns the typeinfo of a given type or expression.
  *
  * @ingroup irNode irExp
@@ -566,7 +566,7 @@ public:
 	}
 }
 
-/**
+/*!
  * The is expression is a bit of a swiss army knife. 
  * It can be simply used to determine whether a given type is well-formed,
  * or if a given type is a certain other type, or can be converted into another
@@ -642,7 +642,7 @@ public:
 	}
 }
 
-/**
+/*!
  * A function literal can define a normal function, or a delegate (a function with context).
  * There are multiple ways to define these but the long hand way is
  *   int function(int a, int b) { return a + b; }
@@ -683,7 +683,7 @@ public:
 	}
 }
 
-/**
+/*!
  * An ExpReference replaces chained postfix look ups with the result of the lookup.
  * A cache that is inserted later, in other words.
  *
@@ -694,8 +694,8 @@ class ExpReference : Exp
 public:
 	string[] idents;
 	Declaration decl;
-	bool rawReference;  ///< A raw get to a function to bypass @property.
-	/**
+	bool rawReference;  //!< A raw get to a function to bypass @property.
+	/*!
 	 * When dealing with references to parameters in a nested function,
 	 * they need to be rewritten to lookup through a nested context,
 	 * except when assigning their value to the context struct. This flag
@@ -723,7 +723,7 @@ public:
 	}
 }
 
-/// A StructLiteral is an expression form of a struct.
+//! A StructLiteral is an expression form of a struct.
 class StructLiteral : LiteralExp
 {
 public:
@@ -737,7 +737,7 @@ public:
 	}
 }
 
-/// A UnionLiteral is a compiler internal expression form of a struct
+//! A UnionLiteral is a compiler internal expression form of a struct
 class UnionLiteral : LiteralExp
 {
 public:
@@ -751,14 +751,14 @@ public:
 	}
 }
 
-/// A ClassLiteral is a compiler internal expression form of a class.
+//! A ClassLiteral is a compiler internal expression form of a class.
 class ClassLiteral : LiteralExp
 {
 public:
 	// LiteralExp.exps is the values for the fields in the class.
 	// LiteralExp.type is the class this literal represents.
 
-	/// See Variable.useBaseStorage, should be set for literals.
+	//! See Variable.useBaseStorage, should be set for literals.
 	bool useBaseStorage;
 
 public:
@@ -771,7 +771,7 @@ public:
 	}
 }
 
-/**
+/*!
  * A TypeExp is used when a primitive type is used in an expression.
  * This is currently limited to <primitive>.max/min and (void*).max/min.
  *
@@ -792,7 +792,7 @@ public:
 	}
 }
 
-/**
+/*!
  * A StoreExp is used when a NamedType is used in an expression within a
  * WithStatement, like so: with (Class.Enum) { int val = DeclInEnum; }.
  *
@@ -822,7 +822,7 @@ public:
 	}
 }
 
-/**
+/*!
  * A StatementExp is a internal expression for inserting statements
  * into a expression. Note that this is not a function and executes
  * the statements just as if they where inserted in the BlockStatement
@@ -834,9 +834,9 @@ public:
 class StatementExp : Exp
 {
 public:
-	Node[] statements; ///< A list of statements to be executed.
-	Exp exp; ///< The value of the StatementExp
-	Exp originalExp; ///< If this was lowered from something, the original will go here.
+	Node[] statements; //!< A list of statements to be executed.
+	Exp exp; //!< The value of the StatementExp
+	Exp originalExp; //!< If this was lowered from something, the original will go here.
 
 public:
 	this() { super(NodeType.StatementExp); }
@@ -854,7 +854,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Expression that corresponds to what was once special tokens.
  * __FUNCTION__, __PRETTY_FUNCTION__, __FILE__, and __LINE.
  *
@@ -865,11 +865,11 @@ class TokenExp : Exp
 public:
 	enum Type
 	{
-		Function, ///< Just the function name. (e.g. math.add)
-		PrettyFunction,  ///< Full signature. (e.g. int math.add(int a, int b))
-		File,  ///< Current file. (e.g. foo.volt)
-		Line,  ///< Current line number. (e.g. 32)
-		Location,  ///< Current file loc. (e.g. expression.d:933
+		Function, //!< Just the function name. (e.g. math.add)
+		PrettyFunction,  //!< Full signature. (e.g. int math.add(int a, int b))
+		File,  //!< Current file. (e.g. foo.volt)
+		Line,  //!< Current line number. (e.g. 32)
+		Location,  //!< Current file loc. (e.g. expression.d:933
 	}
 
 	Type type;
@@ -888,7 +888,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Expression that assists in working with varargs.
  *
  * @ingroup irNode irExp
@@ -910,7 +910,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Representing a expression that is working on inbuilt types.
  *
  * A lot of code assumes that this class not be subclassed,
@@ -921,31 +921,31 @@ final class BuiltinExp : Exp
 public:
 	enum Kind
 	{
-		Invalid,     ///< Invalid.
-		ArrayPtr,    ///< arr.ptr
-		ArrayLength, ///< arr.length
-		ArrayDup,    ///< new arr[..]
-		AALength,    ///< aa.length
-		AAKeys,      ///< aa.keys
-		AAValues,    ///< aa.values
-		AARehash,    ///< aa.rehash
-		AAGet,       ///< aa.get
-		AARemove,    ///< aa.remove
-		AAIn,        ///< "foo" in aa
-		AADup,       ///< new aa[..]
-		UFCS,        ///< '(exp).func'()
-		Classinfo,   ///< obj.classinfo
-		PODCtor,     ///< s := StructName(structArg)
-		VaStart,     ///< va_start(vl)
-		VaArg,       ///< va_arg!i32(vl)
-		VaEnd,       ///< va_end(vl)
+		Invalid,     //!< Invalid.
+		ArrayPtr,    //!< arr.ptr
+		ArrayLength, //!< arr.length
+		ArrayDup,    //!< new arr[..]
+		AALength,    //!< aa.length
+		AAKeys,      //!< aa.keys
+		AAValues,    //!< aa.values
+		AARehash,    //!< aa.rehash
+		AAGet,       //!< aa.get
+		AARemove,    //!< aa.remove
+		AAIn,        //!< "foo" in aa
+		AADup,       //!< new aa[..]
+		UFCS,        //!< '(exp).func'()
+		Classinfo,   //!< obj.classinfo
+		PODCtor,     //!< s := StructName(structArg)
+		VaStart,     //!< va_start(vl)
+		VaArg,       //!< va_arg!i32(vl)
+		VaEnd,       //!< va_end(vl)
 	}
 
-	Kind kind; ///< What kind of inbluilt is this.
-	Type type; ///< The type of this exp, helps keeping the typer simple.
+	Kind kind; //!< What kind of inbluilt is this.
+	Type type; //!< The type of this exp, helps keeping the typer simple.
 
-	Exp[] children; ///< Common child exp.
-	Function[] functions; ///< For UFCS, PODCtor, and VaArg.
+	Exp[] children; //!< Common child exp.
+	Function[] functions; //!< For UFCS, PODCtor, and VaArg.
 
 public:
 	this(Kind kind, Type type, Exp[] children)
@@ -976,7 +976,7 @@ public:
 	}
 }
 
-/**
+/*!
  * An expression that represents a simple identifier.identifier lookup.
  *
  * @ingroup irNode irExp
@@ -984,9 +984,9 @@ public:
 class AccessExp : Exp
 {
 public:
-	Exp child;  ///< The instance we're looking up. (instance).field
-	Variable field;  ///< The field we're looking up. instance.(field)
-	Type aggregate;  ///< Cached instance type.
+	Exp child;  //!< The instance we're looking up. (instance).field
+	Variable field;  //!< The field we're looking up. instance.(field)
+	Type aggregate;  //!< Cached instance type.
 
 public:
 	this()
@@ -1003,7 +1003,7 @@ public:
 	}
 }
 
-/**
+/*!
  * An expression that forces the compiler to evaluate another expression
  * at compile time.
  *
@@ -1012,7 +1012,7 @@ public:
 class RunExp : Exp
 {
 public:
-	Exp child;  ///< The expression to run.
+	Exp child;  //!< The expression to run.
 
 public:
 	this()

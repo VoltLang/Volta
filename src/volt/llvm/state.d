@@ -21,7 +21,7 @@ import volt.llvm.expression;
 import volt.llvm.interfaces;
 
 
-/**
+/*!
  * Collection of objects used by pretty much all of the translation
  * code. It isn't called Module, Context or Builder because it will
  * collide in meaning with language concepts.
@@ -32,7 +32,7 @@ class VoltState : State
 {
 protected:
 
-	/**
+	/*!
 	 * Used to store defined Variables.
 	 */
 	static struct Store
@@ -41,18 +41,18 @@ protected:
 		Type type;
 	}
 
-	/**
+	/*!
 	 * Store for all the defined llvm values, like functions,
 	 * that might be referenced by other code.
 	 */
 	Store[ir.NodeID] valueStore;
 
-	/**
+	/*!
 	 * Store for all the defined types, types are only defined once.
 	 */
 	Type[string] typeStore;
 
-	/**
+	/*!
 	 * Visitor to build statements.
 	 */
 	LlvmVisitor visitor;
@@ -311,7 +311,7 @@ public:
 	 *
 	 */
 
-	/**
+	/*!
 	 * Return the LLVMValueRef for the given Function.
 	 *
 	 * If the value is not defined it will do so.
@@ -408,7 +408,7 @@ public:
 		return v;
 	}
 
-	/**
+	/*!
 	 * Return the LLVMValueRef for the given Variable.
 	 *
 	 * If the value is not defined it will do so.
@@ -431,7 +431,7 @@ public:
 		LLVMValueRef v;
 		LLVMTypeRef llvmType;
 
-		/**
+		/*!
 		 * Deal with which storage should be used.
 		 * Note that the LLVM function below automatically wrap
 		 * wrap the type with a pointer, because the value returns
@@ -565,7 +565,7 @@ public:
 		auto type = this.fromIr(var.type);
 		LLVMTypeRef llvmType;
 
-		/**
+		/*!
 		 * Deal with which storage should be used.
 		 * Need to manually wrap the type in a pointer.
 		 */

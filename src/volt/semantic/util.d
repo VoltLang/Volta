@@ -20,7 +20,7 @@ import volt.semantic.classify : getParentFunction, realType, isFloatingPoint,
 import volt.semantic.extyper : resolveStruct, resolveUnion;
 
 
-/**
+/*!
  * Turn a [|w|d]char into [ubyte|ushort|uint] type.
  */
 ir.PrimitiveType charToInteger(ir.PrimitiveType pt)
@@ -39,7 +39,7 @@ ir.PrimitiveType charToInteger(ir.PrimitiveType pt)
 	return pt;
 }
 
-/**
+/*!
  * Remove the given types storage modifiers. Only the given type is modified,
  * any sub types are left unchanged. If no modification is made returns the
  * given type. Will do a deep copy if modification is needed.
@@ -59,7 +59,7 @@ ir.Type removeStorageFields(ir.Type t)
 	return t;
 }
 
-/**
+/*!
  * Resolves AutoType to the given type.
  *
  * Copies the storage from the auto type and returns the result.
@@ -72,7 +72,7 @@ ir.Type flattenAuto(ir.AutoType atype, ir.Type type)
 	return type;
 }
 
-/**
+/*!
  * Turn stype into a flag, and attach it to type.
  */
 void flattenOneStorage(ir.StorageType stype, ir.Type type,
@@ -98,7 +98,7 @@ void flattenOneStorage(ir.StorageType stype, ir.Type type,
 	}
 }
 
-/**
+/*!
  * Implicitly convert PrimitiveTypes to bools for 'if' and friends.
  *
  * Currently done for ifs but not other code.
@@ -136,7 +136,7 @@ void implicitlyCastToBool(Context ctx, ref ir.Exp exp)
 	exp = buildCastToBool(exp.loc, exp);
 }
 
-/**
+/*!
  * Return a array of postfixes from a tree of postfixes,
  * starting with the innermost child.
  */
@@ -149,7 +149,7 @@ ir.Postfix[] collectPostfixes(ir.Postfix postfix)
 	}
 }
 
-/**
+/*!
  * Get a Store or Type from the child of a pre-proceassed postfix chain.
  */
 bool getIfStoreOrTypeExp(ir.Exp exp, out ir.Store store, out ir.Type type)
@@ -168,7 +168,7 @@ bool getIfStoreOrTypeExp(ir.Exp exp, out ir.Store store, out ir.Type type)
 	return true;
 }
 
-/**
+/*!
  * Given a type, return a type that will have every storage flag
  * that are nested within it, by going into array and pointer bases, etc.
  */
@@ -203,7 +203,7 @@ ir.Type accumulateStorage(ir.Type toType, ir.Type seed=null)
 	return seed;
 }
 
-/**
+/*!
  * This handles implicitly typing null.
  * Generic function used by assign and other functions.
  */
@@ -286,7 +286,7 @@ void handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
 	}
 }
 
-/**
+/*!
  * Get the this variable for this function.
  *
  * May return the this var field on the nested struct,
@@ -331,7 +331,7 @@ ir.Variable getThisVarNotNull(ir.Node n, Context ctx, ir.Function func)
 	return thisVar;
 }
 
-/**
+/*!
  * Returns a expression that is the this variable,
  * safely handles nested functions as well.
  *
@@ -374,7 +374,7 @@ ir.Type[] expsToTypes(ir.Exp[] exps)
 	return types;
 }
 
-/**
+/*!
  * Gets a default value (The .init -- 0, or null, usually) for a given type.
  */
 ir.Exp getDefaultInit(ref in Location loc, LanguagePass lp, ir.Type t)
@@ -436,7 +436,7 @@ ir.Exp getDefaultInit(ref in Location loc, LanguagePass lp, ir.Type t)
 	}
 }
 
-/**
+/*!
  * Handles <type>.<identifier>, like 'int.min' and the like.
  */
 bool typeLookup(Context ctx, ref ir.Exp exp, ir.Type type)
@@ -611,7 +611,7 @@ ir.Type getCommonSubtype(ref in Location loc, ir.Type[] types)
 	return candidate;
 }
 
-/**
+/*!
  * Given a Node, if it's a Struct or a Union, resolve it.
  */
 void resolveChildStructsAndUnions(LanguagePass lp, ir.Type rt)

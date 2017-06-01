@@ -22,7 +22,7 @@ import volt.semantic.implicit;
 import volt.util.sinks;
 
 
-/**
+/*!
  * Okay, so here's a rough description of how function overload resolution
  * is supposed to work. No doubt there will be discrepancies between this
  * description and the implementation proper. We in the business call those

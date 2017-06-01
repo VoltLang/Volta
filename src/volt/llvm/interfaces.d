@@ -15,7 +15,7 @@ public import volt.llvm.di;
 public import volt.llvm.type;
 
 
-/**
+/*!
  * Represents a single LLVMValueRef plus the associated high level type.
  *
  * A Value can be in reference form where it is actually a pointer
@@ -29,7 +29,7 @@ public:
 	Type type;
 	LLVMValueRef value;
 
-	bool isPointer; ///< Is this a reference to the real value?
+	bool isPointer; //!< Is this a reference to the real value?
 
 public:
 	this()
@@ -44,7 +44,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Collection of objects used by pretty much all of the translation
  * code. It isn't called Module, Context or Builder because it will
  * collide in meaning with LLVM and language concepts.
@@ -66,14 +66,14 @@ public:
 	LLVMDIBuilderRef diBuilder;
 	LLVMModuleRef mod;
 
-	/**
+	/*!
 	 * Cached llvm attributes.
 	 * @{
 	 */
 	LLVMAttributeRef attrSRet;
 	LLVMAttributeRef attrByVal;
 	LLVMAttributeRef attrUWTable;
-	/** @} */
+	/*! @} */
 
 	static final class PathState
 	{
@@ -103,9 +103,9 @@ public:
 		LLVMValueRef func;
 		LLVMValueRef di;
 
-		bool fall; ///< Tracking for auto branch generation.
+		bool fall; //!< Tracking for auto branch generation.
 
-		LLVMValueRef nested; ///< Nested value
+		LLVMValueRef nested; //!< Nested value
 
 		PathState path;
 		LLVMValueRef entryBr;
@@ -182,7 +182,7 @@ public:
 	}
 
 
-	/**
+	/*!
 	 * Global and local constructors and destructors.
 	 * @{
 	 */
@@ -190,20 +190,20 @@ public:
 	LLVMValueRef[] globalDestructors;
 	LLVMValueRef[] localConstructors;
 	LLVMValueRef[] localDestructors;
-	/**
+	/*!
 	 * @}
 	 */
 
-	/**
+	/*!
 	 * Debug helper variables.
 	 * @{
 	 */
 	LLVMValueRef diCU;
-	/**
+	/*!
 	 * @}
 	 */
 
-	/**
+	/*!
 	 * Cached type for convenience.
 	 * @{
 	 */
@@ -222,20 +222,20 @@ public:
 
 	FunctionType voidFunctionType;
 	FunctionType springType;
-	/**
+	/*!
 	 * @}
 	 */
 
-	/**
+	/*!
 	 * LLVM intrinsic.
 	 * @{
 	 */
 	@property abstract LLVMValueRef llvmTrap();
-	/**
+	/*!
 	 * @}
 	 */
 
-	/**
+	/*!
 	 * Exception handling.
 	 * @{
 	 */
@@ -246,7 +246,7 @@ public:
 	@property abstract LLVMBasicBlockRef ehExitBlock();
 	@property abstract LLVMValueRef ehIndexVar();
 	@property abstract LLVMValueRef ehExceptionVar();
-	/**
+	/*!
 	 * @}
 	 */
 
@@ -262,12 +262,12 @@ public:
 	 *
 	 */
 
-	/**
+	/*!
 	 * Build a complete module with this state.
 	 */
 	abstract void compile(ir.Module m);
 
-	/**
+	/*!
 	 * Builds the given statement class at the current place,
 	 * and any sub-expressions & -statements.
 	 */
@@ -279,7 +279,7 @@ public:
 	 *
 	 */
 
-	/**
+	/*!
 	 * Builds a 'alloca' instructions and inserts it at the end of the
 	 * entry basic block that is at the top of the function.
 	 */
@@ -291,7 +291,7 @@ public:
 		return v;
 	}
 
-	/**
+	/*!
 	 * Returns the LLVMValueRef for the given expression,
 	 * evaluated at the current state.builder location.
 	 */
@@ -302,7 +302,7 @@ public:
 		return v.value;
 	}
 
-	/**
+	/*!
 	 * Returns the value, making sure that the value is not in
 	 * reference form, basically inserting load instructions where needed.
 	 */
@@ -315,7 +315,7 @@ public:
 		result.isPointer = false;
 	}
 
-	/**
+	/*!
 	 * Returns the value in reference form, basically meaning that
 	 * the return value is a pointer to where it is held in memory.
 	 */
@@ -327,25 +327,25 @@ public:
 		throw panic(exp.loc, "Value is not a backend reference");
 	}
 
-	/**
+	/*!
 	 * Returns the value, without doing any checking if it is
 	 * in reference form or not.
 	 */
 	abstract void getValueAnyForm(ir.Exp exp, Value result);
 
-	/**
+	/*!
 	 * Returns the LLVMValueRef for the given constant expression,
 	 * does not require that state.builder is set.
 	 */
 	abstract LLVMValueRef getConstant(ir.Exp exp);
 
-	/**
+	/*!
 	 * Returns the value, without doing any checking if it is
 	 * in reference form or not.
 	 */
 	abstract void getConstantValueAnyForm(ir.Exp exp, Value result);
 
-	/**
+	/*!
 	 * Makes a private mergable global constant. Used for strings,
 	 * array literal and storage for struct literals.
 	 */
@@ -366,14 +366,14 @@ public:
 	 *
 	 */
 
-	/**
+	/*!
 	 * Return the LLVMValueRef for the given Function.
 	 *
 	 * If the value is not defined it will do so.
 	 */
 	abstract LLVMValueRef getFunctionValue(ir.Function func, out Type type);
 
-	/**
+	/*!
 	 * Return the LLVMValueRef for the given Variable.
 	 *
 	 * If the value is not defined it will do so.
@@ -402,7 +402,7 @@ public:
 	 *
 	 */
 
-	/**
+	/*!
 	 * Builds either a call or a invoke. If invoke automatically
 	 * sets up a catch basic block and sets the currentBlock to it.
 	 *
@@ -412,7 +412,7 @@ public:
 	                                        LLVMValueRef func,
 	                                        LLVMValueRef[] args);
 
-	/**
+	/*!
 	 * Builds either a call or a invoke. If invoke automatically
 	 * sets up a catch basic block and sets the currentBlock to it.
 	 *
@@ -423,7 +423,7 @@ public:
 	                                        LLVMValueRef[] args,
 	                                        LLVMBasicBlockRef landingPad);
 
-	/**
+	/*!
 	 * Start using a new basic block, setting currentBlock.
 	 *
 	 * Side-Effects:
@@ -437,7 +437,7 @@ public:
 		LLVMPositionBuilderAtEnd(builder, fnState.block);
 	}
 
-	/**
+	/*!
 	 * Helper function to swap out the currentContineBlock, returns the old one.
 	 */
 	LLVMBasicBlockRef replaceContinueBlock(LLVMBasicBlockRef b)
@@ -447,7 +447,7 @@ public:
 		return t;
 	}
 
-	/**
+	/*!
 	 * Helper function to swap out the currentBreakBlock, returns the old one.
 	 */
 	LLVMBasicBlockRef replaceBreakBlock(LLVMBasicBlockRef b)
@@ -457,7 +457,7 @@ public:
 		return t;
 	}
 
-	/**
+	/*!
 	 * Push a new Path, setting prev as needed.
 	 */
 	void pushPath()
@@ -467,7 +467,7 @@ public:
 		fnState.path = p;
 	}
 
-	/**
+	/*!
 	 * Pop a PathState.
 	 */
 	void popPath()

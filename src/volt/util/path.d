@@ -14,7 +14,7 @@ version (Posix) {
 }
 
 
-/**
+/*!
  * Does the same as unix's "mkdir -p" command.
  */
 void mkdirP(string name)
@@ -33,7 +33,7 @@ void mkdirP(string name)
 	}
 }
 
-/**
+/*!
  * Turns a qualified module name into a list of possible file paths.
  */
 string[] genPossibleFilenames(string dir, string[] names, string suffix)
@@ -52,7 +52,7 @@ string[] genPossibleFilenames(string dir, string[] names, string suffix)
 	return paths;
 }
 
-/**
+/*!
  * Get the temporary subdirectory name for this run of the compiler.
  */
 string getTemporarySubdirectoryName()

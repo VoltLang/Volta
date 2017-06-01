@@ -16,7 +16,7 @@ import volt.semantic.lookup;
 import volt.semantic.typeinfo;
 
 
-/**
+/*!
  * Replaces typeid(...) expressions with a call
  * to the TypeInfo's constructor.
  */

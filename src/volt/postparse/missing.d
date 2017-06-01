@@ -13,7 +13,7 @@ import volt.visitor.visitor;
 import volt.visitor.scopemanager;
 
 
-/**
+/*!
  * Looks for missing dependancies via imports.
  *
  * @ingroup passes passLang

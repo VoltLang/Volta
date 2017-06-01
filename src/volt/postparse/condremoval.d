@@ -10,7 +10,7 @@ import volt.visitor.manip;
 import volt.visitor.visitor;
 
 
-/**
+/*!
  * A pass that removes version and debug blocks, not static ifs.
  *
  * @ingroup passes passLang
@@ -199,7 +199,7 @@ protected:
 		}
 	}
 
-	/**
+	/*!
 	 * Replace conditionals with their children,
 	 * or not, depending on their Condition.
 	 */
@@ -261,7 +261,7 @@ protected:
 		version (Volt) assert(false); // If
 	}
 
-	/**
+	/*!
 	 * @todo Remove when not compiling under D.
 	 */
 	ir.Node[] manipNodes(ir.Node[] nodes)

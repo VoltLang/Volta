@@ -10,7 +10,7 @@ import volt.interfaces;
 import volt.token.location;
 
 
-/**
+/*!
  * Creates a call to the allocDg delegate.
  *
  * The type of the returned expression is 'void*'. If countArg is not given,
@@ -51,7 +51,7 @@ ir.Exp buildAllocVoidPtr(in Location loc, LanguagePass lp, ir.Type type,
 	return pfixCall;
 }
 
-/**
+/*!
  * Creates a call to the allocDg delegate.
  *
  * The type of the returned expression is 'type*'. If countArg is not given,

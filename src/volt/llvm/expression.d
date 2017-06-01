@@ -17,7 +17,7 @@ static import volt.semantic.mangle;
 static import volt.semantic.classify;
 
 
-/**
+/*!
  * Returns the value, without doing any checking if it is
  * in reference form or not.
  */
@@ -439,7 +439,7 @@ void handleBinOpAssign(State state, ir.BinOp bin, Value result)
 	LLVMBuildStore(state.builder, right.value, result.value);
 }
 
-/**
+/*!
  * Sets up values and calls helper functions to handle BinOp, will leave
  * debug info location set on builder.
  */
@@ -455,7 +455,7 @@ void handleBinOpNonAssign(State state, ir.BinOp bin, Value result)
 	                           left, right, result);
 }
 
-/**
+/*!
  * Helper function that does the bin operation, sets debug info location on
  * builder and will not unset it.
  */
@@ -484,7 +484,7 @@ void handleBinOpNonAssignHelper(State state, ref Location loc, ir.BinOp.Op binOp
 	handleBinOpPrimitive(state, loc, binOp, pt, left, right, result);
 }
 
-/**
+/*!
  * Pointer artithmetic, caller have to flip left and right. Assumes debug
  * info location already set.
  */
@@ -513,7 +513,7 @@ void handleBinOpPointer(State state, Location loc, ir.BinOp.Op binOp,
 	result.value = LLVMBuildGEP(state.builder, ptr.value, [val], "");
 }
 
-/**
+/*!
  * Primitive artithmetic, assumes debug info location already set.
  */
 void handleBinOpPrimitive(State state, Location loc, ir.BinOp.Op binOp,
@@ -647,7 +647,7 @@ void handleCast(State state, Location loc, Type newType, Value result)
 	assert(newType !is null);
 	assert(oldType !is null);
 
-	/// @todo types are not cached yet.
+	//! @todo types are not cached yet.
 	if (oldType is newType) {
 		return;
 	}
@@ -680,7 +680,7 @@ void handleCast(State state, Location loc, Type newType, Value result)
 		ir.nodeToString(newType.irType)));
 }
 
-/**
+/*!
  * Handle primitive casts, the value to cast is stored in result already.
  */
 void handleCastPrimitive(State state, Location loc, PrimitiveType newType,
@@ -757,7 +757,7 @@ void handleCastPrimitive(State state, Location loc, PrimitiveType newType,
 	result.value = LLVMBuildCast(state.builder, op, result.value, newType.llvmType, "");
 }
 
-/**
+/*!
  * Handle pointer casts. 
  * This is really easy.
  * Also casts between function pointers and pointers.
@@ -770,7 +770,7 @@ void handleCastPointer(State state, Location loc, Type newType, Value result)
 	result.value = LLVMBuildBitCast(state.builder, result.value, newType.llvmType, "");
 }
 
-/**
+/*!
  * Handle pointer <-> integer casts.
  */
 void handleCastPointerPrim(State state, Location loc, Type newTypePtr, Type newTypePrim, Value result)
@@ -787,7 +787,7 @@ void handleCastPointerPrim(State state, Location loc, Type newTypePtr, Type newT
 	}
 }
 
-/**
+/*!
  * Handle all Array casts as bit casts
  */
 void handleCastArray(State state, Location loc, ArrayType newType, Value result)
@@ -802,7 +802,7 @@ void handleCastArray(State state, Location loc, ArrayType newType, Value result)
 }
 
 
-/**
+/*!
  * Handles bitwise not, the ~ operator.
  */
 void handleComplement(State state, ir.Unary comp, Value result)
@@ -814,7 +814,7 @@ void handleComplement(State state, ir.Unary comp, Value result)
 }
 
 
-/**
+/*!
  * Handles '*' dereferences.
  */
 void handleDereference(State state, ir.Unary de, Value result)
@@ -828,7 +828,7 @@ void handleDereference(State state, ir.Unary de, Value result)
 	result.isPointer = true;
 }
 
-/**
+/*!
  * Handles '&' referencing.
  */
 void handleAddrOf(State state, ir.Unary de, Value result)
@@ -1385,7 +1385,7 @@ void handleExpReference(State state, ir.ExpReference expRef, Value result)
 	}
 }
 
-/**
+/*!
  * Gets the value for the expressions and makes sure that
  * it is a struct reference value. Will handle pointers to
  * structs correctly, setting isPointer to true and
@@ -1414,7 +1414,7 @@ void getStructRef(State state, ir.Exp exp, Value result)
 	}
 }
 
-/**
+/*!
  * Get the value pair needed to call or create a delegate.
  */
 void getCreateDelegateValues(State state, ir.Postfix postfix, Value instance, Value func)
@@ -1455,7 +1455,7 @@ void getCreateDelegateValues(State state, ir.Postfix postfix, Value instance, Va
 	}
 }
 
-/**
+/*!
  * If the given value isPointer is set build a load function.
  */
 void makeNonPointer(State state, Value result)
@@ -1467,7 +1467,7 @@ void makeNonPointer(State state, Value result)
 	result.isPointer = false;
 }
 
-/**
+/*!
  * Ensures that the given Value is a pointer by allocating temp storage for it.
  */
 void makePointer(State state, Value result)

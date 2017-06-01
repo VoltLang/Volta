@@ -15,7 +15,7 @@ import volt.visitor.nodereplace;
 import volt.semantic.irverifier;
 
 
-/**
+/*!
  * IR Lifter, aka Liftertron3000, copies and does transformations on IR.
  *
  * This is the base class providing utility functions and a common interface
@@ -51,7 +51,7 @@ public:
 		this.lp = lp;
 	}
 
-	/**
+	/*!
 	 * Resets the lifter and clears all cached functions and modules.
 	 */
 	void reset()
@@ -65,7 +65,7 @@ public:
 		mMods = null;
 	}
 
-	/**
+	/*!
 	 * Completes the module and returns it for consumption.
 	 */
 	ir.Module completeModule()
@@ -80,7 +80,7 @@ public:
 		return ret;
 	}
 
-	/**
+	/*!
 	 * Lift or returns a cached copy of the given function.
 	 */
 	override ir.Function lift(ir.Function func)
@@ -97,7 +97,7 @@ public:
 		return doLift(func);
 	}
 
-	/**
+	/*!
 	 * Lift or returns a cached copy of the given variable.
 	 */
 	override ir.Variable lift(ir.Variable var)
@@ -114,7 +114,7 @@ public:
 		return doLift(var);
 	}
 
-	/**
+	/*!
 	 * Lift or returns a cached copy of the given function.
 	 */
 	override ir.FunctionParam lift(ir.FunctionParam fp)
@@ -131,7 +131,7 @@ public:
 		return doLift(fp);
 	}
 
-	/**
+	/*!
 	 * Get a lifted node or panic.
 	 */
 	override ir.Node liftedOrPanic(ir.Node node, string msg)
@@ -154,7 +154,7 @@ public:
 
 
 protected:
-	/**
+	/*!
 	 * Create a new module to store functions in.
 	 *
 	 * Does not clear the function cache, so functions can refer
@@ -174,7 +174,7 @@ protected:
 		mMod.myScope = new ir.Scope(mMod, name);
 	}
 
-	/**
+	/*!
 	 * Implemented by child classes, copies the function or variable into
 	 * the current module mMod and applies error checking and
 	 * transformation needed for that specific lifter.

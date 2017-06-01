@@ -5,14 +5,14 @@ module volt.visitor.manip;
 import ir = volt.ir.ir;
 
 
-/**
+/*!
  * Return true to indicate that the given node @n should be kept
  * and that the node list @list be ignored, return false to indicate
  * that @n replaced with @list.
  */
 alias ReplaceDg = bool delegate(ir.Node n, out ir.Node[] list);
 
-/**
+/*!
  * Loops over all the given nodes and calls @replaceDg for each,
  * if it returns true @replaceDg will insert back the given node,
  * or replace it with the out variable list if it returns false.

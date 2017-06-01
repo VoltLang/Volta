@@ -41,7 +41,7 @@ import watt.text.format : format;
 import watt.conv : toString;
 
 
-/**
+/*!
  * Helper class to launch one or more processes
  * to run along side the main process.
  */
@@ -54,42 +54,42 @@ public:
 private:
 	Cmd[] cmdStore;
 
-	/// Environment to launch all processes in.
+	//! Environment to launch all processes in.
 	//Environment env;
 
-	/// For Windows waitOne, to avoid unneeded allocations.
+	//! For Windows waitOne, to avoid unneeded allocations.
 	version (Windows) OsHandle[] __handles;
 
-	/// Number of simultanious jobs.
+	//! Number of simultanious jobs.
 	uint maxWaiting;
 
-	/// Number of running jobs at this moment.
+	//! Number of running jobs at this moment.
 	uint waiting;
 
-	/**
+	/*!
 	 * Small container representing a executed command, is recycled.
 	 */
 	static class Cmd
 	{
 	public:
-		/// Executable.
+		//! Executable.
 		string cmd;
 
-		/// Arguments to be passed.
+		//! Arguments to be passed.
 		string[] args;
 
-		/// Called when command has completed.
+		//! Called when command has completed.
 		DoneDg done;
 
-		/// System specific process handle.
+		//! System specific process handle.
 		OsHandle handle;
 
-		/// In use.
+		//! In use.
 		bool used;
 
 
 	public:
-		/**
+		/*!
 		 * Initialize all the fields.
 		 */
 		void set(string cmd, string[] args, DoneDg dgt,
@@ -102,7 +102,7 @@ private:
 			this.handle = handle;
 		}
 
-		/**
+		/*!
 		 * Reset to a unused state.
 		 */
 		void reset()
@@ -278,7 +278,7 @@ private:
 	}
 }
 
-/**
+/*!
  * Exception form and when execquting commands.
  */
 class CmdException : Exception

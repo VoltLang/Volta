@@ -19,7 +19,7 @@ import volt.semantic.util;
 import volt.semantic.classify;
 
 
-/**
+/*!
  * Get the type of a given expression.
  *
  * If the operation of the expression isn't semantically valid
@@ -49,7 +49,7 @@ ir.Type getExpType(ir.Exp exp)
 	return result;
 }
 
-/**
+/*!
  * Retrieve the type of the given expression.
  */
 ir.Type getExpTypeImpl(ir.Exp exp)

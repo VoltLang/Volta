@@ -89,7 +89,7 @@ public:
 
 
 protected:
-	/// Direct pointer to the host compiled function.
+	//! Direct pointer to the host compiled function.
 	void* mPtr;
 
 	version (D_Version2) {

@@ -1,6 +1,6 @@
 // Written in the D programming language.
 
-/**
+/*!
  * $(RED Deprecated: This module is considered out-dated and not up to Phobos'
  *       current standards.)
  *
@@ -28,13 +28,13 @@ version(unittest) import std.stdio;
 
 import std.algorithm;
 
-/**
+/*!
  * A Stream wrapper for a C file of type FILE*.
  */
 class CFile : Stream {
   protected FILE* cfile;
 
-  /**
+  /*!
    * Create the stream wrapper for the given C file.
    * Params:
    *   cfile = a valid C $(B FILE) pointer to wrap.
@@ -50,18 +50,18 @@ class CFile : Stream {
     this.seekable = seekable;
   }
 
-  /**
+  /*!
    * Closes the stream.
    */
   ~this() { close(); }
 
-  /**
+  /*!
    * Property to get or set the underlying file for this stream.
    * Setting the file marks the stream as open.
    */
   @property FILE* file() { return cfile; }
 
-  /**
+  /*!
    * Ditto
    */
   @property void file(FILE* cfile) {
@@ -69,13 +69,13 @@ class CFile : Stream {
     isopen = true;
   }
 
-  /**
+  /*!
    * Overrides of the $(B Stream) methods to call the underlying $(B FILE*)
    * C functions.
    */
   override void flush() { fflush(cfile); }
 
-  /**
+  /*!
    * Ditto
    */
   override void close() {
@@ -84,28 +84,28 @@ class CFile : Stream {
     isopen = readable = writeable = seekable = false;
   }
 
-  /**
+  /*!
    * Ditto
    */
   override bool eof() {
     return cast(bool)(readEOF || feof(cfile));
   }
 
-  /**
+  /*!
    * Ditto
    */
   override char getc() {
     return cast(char)fgetc(cfile);
   }
 
-  /**
+  /*!
    * Ditto
    */
   override char ungetc(char c) {
     return cast(char)core.stdc.stdio.ungetc(c,cfile);
   }
 
-  /**
+  /*!
    * Ditto
    */
   override size_t readBlock(void* buffer, size_t size) {
@@ -114,14 +114,14 @@ class CFile : Stream {
     return n;
   }
 
-  /**
+  /*!
    * Ditto
    */
   override size_t writeBlock(const void* buffer, size_t size) {
     return fwrite(buffer,1,size,cfile);
   }
 
-  /**
+  /*!
    * Ditto
    */
   override ulong seek(long offset, SeekPos rel) {
@@ -131,7 +131,7 @@ class CFile : Stream {
     return ftell(cfile);
   }
 
-  /**
+  /*!
    * Ditto
    */
   override void writeLine(const(char)[] s) {
@@ -139,7 +139,7 @@ class CFile : Stream {
     writeString("\n");
   }
 
-  /**
+  /*!
    * Ditto
    */
   override void writeLineW(const(wchar)[] s) {
@@ -225,17 +225,17 @@ class CFile : Stream {
   }
 }
 
-/**
+/*!
  * CFile wrapper of core.stdc.stdio.stdin (not seekable).
  */
 __gshared CFile din;
 
-/**
+/*!
  * CFile wrapper of core.stdc.stdio.stdout (not seekable).
  */
 __gshared CFile dout;
 
-/**
+/*!
  * CFile wrapper of core.stdc.stdio.stderr (not seekable).
  */
 __gshared CFile derr;

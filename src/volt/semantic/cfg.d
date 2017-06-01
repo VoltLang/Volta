@@ -15,15 +15,15 @@ import volt.semantic.evaluate;
 import volt.semantic.classify;
 
 
-/// A single node in the execution graph.
+//! A single node in the execution graph.
 class Block
 {
 public:
-	Block[] parents;  ///< Where execution could come from.
+	Block[] parents;  //!< Where execution could come from.
 	Block[] children;
-	bool superCall;  ///< For handling super calls in ctors.
-	bool terminates;  ///< Running this block ends execution of its function (e.g. return).
-	bool _goto, _break; ///< For handling switches, did this case have a goto or break?
+	bool superCall;  //!< For handling super calls in ctors.
+	bool terminates;  //!< Running this block ends execution of its function (e.g. return).
+	bool _goto, _break; //!< For handling switches, did this case have a goto or break?
 
 public:
 	this()
@@ -91,7 +91,7 @@ public:
 	}
 }
 
-/// Returns true if the given block can reach the entry without dgt returning true.
+//! Returns true if the given block can reach the entry without dgt returning true.
 bool canReachWithout(Block block, bool delegate(Block) dgt)
 {
 	if (dgt(block)) {
@@ -124,7 +124,7 @@ bool canReachChildBefore(Block block, bool delegate(Block) dgt, Block target)
 	return false;
 }
 
-/// Builds and checks CFGs on Functions.
+//! Builds and checks CFGs on Functions.
 class CFGBuilder : ScopeManager, Pass
 {
 public:
@@ -148,7 +148,7 @@ public:
 		return blocks[$-1] = b;
 	}
 
-	/// Returns the last block added.
+	//! Returns the last block added.
 	@property Block block()
 	{
 		assert(blocks.length > 0);
@@ -249,7 +249,7 @@ public:
 		return Continue;
 	}
 
-	/// Generate blocks from an if statement.
+	//! Generate blocks from an if statement.
 	override Status enter(ir.IfStatement ifs)
 	{
 		// TODO: This chokes on nested ifs -- break it up, and don't do it all at once.
@@ -507,7 +507,7 @@ public:
 		return Continue;
 	}
 
-	/// Generate blocks from a try statement.
+	//! Generate blocks from a try statement.
 	override Status enter(ir.TryStatement ts)
 	{
 		ensureNonNullBlock(ts.loc);
@@ -609,7 +609,7 @@ private:
 		assert(mLoopDepth >= 0);
 	}
 
-	/// Returns true if the given expression evaluates as a constant true.
+	//! Returns true if the given expression evaluates as a constant true.
 	bool constantTrue(ref ir.Exp e)
 	{
 		auto constant = evaluateOrNull(lp, current, e);
@@ -620,7 +620,7 @@ private:
 		return constant.u._pointer !is null;
 	}
 
-	/// Returns true if the given expression evaluates as a constant false.
+	//! Returns true if the given expression evaluates as a constant false.
 	bool constantFalse(ir.Exp e)
 	{
 		auto constant = evaluateOrNull(lp, current, e);
@@ -630,7 +630,7 @@ private:
 		return constant.u._pointer is null;
 	}
 
-	/// Convenience function for building blocks for loops.
+	//! Convenience function for building blocks for loops.
 	Status buildLoop(ir.Node n, ir.BlockStatement b, ir.Exp exp)
 	{
 		ensureNonNullBlock(n.loc);
@@ -656,7 +656,7 @@ private:
 		}
 	}
 
-	/// Sanity check function.
+	//! Sanity check function.
 	void ensureNonNullBlock(ref in Location loc)
 	{
 		if (blocks.length == 0 || blocks[$-1] is null) {

@@ -11,7 +11,7 @@ import volt.llvm.interfaces;
 import volt.semantic.classify;
 
 
-/**
+/*!
  * Returns true if the C calling convention returns structs via arguments.
  */
 bool shouldCUseStructRet(TargetInfo target, ir.Struct irStruct)
@@ -45,7 +45,7 @@ bool shouldCUseStructRet(TargetInfo target, ir.Struct irStruct)
 
 }
 
-/**
+/*!
  * Turns a ArrayType Value into a Pointer Value. Value must be
  * of type ArrayType.
  */
@@ -58,7 +58,7 @@ void getPointerFromArray(State state, Location loc, Value result)
 		state, loc, result, ArrayType.ptrIndex, at.ptrType, result);
 }
 
-/**
+/*!
  * Turns a StaticArrayType Value into a Pointer Value. Value must be
  * of type StaticArrayType.
  */
@@ -73,7 +73,7 @@ void getPointerFromStaticArray(State state, Location loc, Value result)
 	result.type = sat.ptrType;
 }
 
-/**
+/*!
  * Turns a StaticArrayType Value into a Array Value. Value must be
  * of type StaticArrayType.
  */
@@ -90,7 +90,7 @@ void getArrayFromStaticArray(State state, Location loc, Value result)
 	makeArrayValue(state, loc, at, srcPtr, srcLen, result);
 }
 
-/**
+/*!
  * Return the field from a aggregate at the given index.
  *
  * Sets the type of result to the given type.
@@ -116,7 +116,7 @@ void getFieldFromAggregate(State state, Location loc, Value left,
 	result.isPointer = left.isPointer;
 }
 
-/**
+/*!
  * Returns a member of aggregate type in value form.
  * Note only value form.
  */
@@ -168,7 +168,7 @@ void makeDelegateValue(State state, Location loc, DelegateType dt,
 	result.type = dt;
 }
 
-/**
+/*!
  * Common handle functions for both inline and constants.
  *
  * All of the error checking should have been done in other passes and
@@ -229,6 +229,6 @@ void handleClassLiteral(State state, ir.ClassLiteral cl, Value result)
 			st.llvmType, result.value);
 	}
 }
-/**
+/*!
  * @}
  */

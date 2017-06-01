@@ -467,7 +467,7 @@ protected:
 		}
 	}
 
-	/// Add quotes to s and make it a JSON string (w/ escaping etc).
+	//! Add quotes to s and make it a JSON string (w/ escaping etc).
 	void wq(string s)
 	{
 		w(`"`);

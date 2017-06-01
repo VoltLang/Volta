@@ -461,7 +461,7 @@ private:
 	}
 }
 
-/**
+/*!
  * Given a Type that's been smuggled in as an expression (it'll either be an
  * IdentifierExp or a QualifiedName as a Postfix chain), return a QualifiedName,
  * or throw an error.

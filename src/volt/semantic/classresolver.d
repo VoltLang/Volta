@@ -162,7 +162,7 @@ ir.Type rewriteSuperCall(Context ctx, ref ir.Exp e, ir.Class _class)
  *
  */
 
-/**
+/*!
  * Fills in _Interface.layoutStruct.
  */
 void fillInInterfaceLayoutIfNeeded(LanguagePass lp, ir._Interface i)
@@ -174,7 +174,7 @@ void fillInInterfaceLayoutIfNeeded(LanguagePass lp, ir._Interface i)
 	i.layoutStruct = getInterfaceLayoutStruct(i, lp);
 }
 
-/**
+/*!
  * Fills in Class.layoutStruct and Class.vtableStruct.
  */
 void fillInClassLayoutIfNeeded(LanguagePass lp, ir.Class c)
@@ -308,7 +308,7 @@ ir.Function generateDefaultConstructor(LanguagePass lp, ir.Scope current, ir.Cla
 	return func;
 }
 
-/// Get all the functions in an inheritance chain -- ignore overloading.
+//! Get all the functions in an inheritance chain -- ignore overloading.
 ir.Function[][] getClassMethods(LanguagePass lp, ir.Scope current, ir.Class _class)
 {
 	if (_class.methodsCache.length != 0) {
@@ -456,7 +456,7 @@ void appendClassMethodFunctions(LanguagePass lp, ir.Class _class, ref FunctionSi
 	}
 }
 
-/**
+/*!
  * Returns all functions in functions that have the same name as considerFunction.
  */
 void appendPotentialOverrideFunctions(ir.Function[] functions, ir.Function considerFunction, ref FunctionSink _out)
@@ -488,7 +488,7 @@ void appendPotentialOverrideFunctions(ir.Function func, ir.Function considerFunc
 	}
 }
 
-/**
+/*!
  * Replace an overriden function in parentSet with childFunction if appropriate.
  * Returns true if a function is replaced, false otherwise.
  */
@@ -632,7 +632,7 @@ ir.Exp[] getTypeInfos(ir.Class[] classes)
 	return tinfos;
 }
 
-/// For a given interface, return every function that needs to be implemented by an implementor.
+//! For a given interface, return every function that needs to be implemented by an implementor.
 void appendInterfaceFunctions(LanguagePass lp, ir._Interface iface, ref FunctionSink _out)
 {
 	assert(iface.parentInterfaces.length == iface.interfaces.length);
@@ -648,7 +648,7 @@ void appendInterfaceFunctions(LanguagePass lp, ir._Interface iface, ref Function
 	}
 }
 
-/// Get a struct literal with an implementation of an interface from a given class.
+//! Get a struct literal with an implementation of an interface from a given class.
 ir.Exp getInterfaceStructAssign(LanguagePass lp, ir.Class _class, ir.Scope _scope, ir._Interface iface, size_t ifaceIndex)
 {
 	assert(iface.layoutStruct !is null);

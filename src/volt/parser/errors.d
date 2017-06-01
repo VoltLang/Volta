@@ -9,38 +9,38 @@ import volt.token.token : Token, TokenType, tokenToString;
 import volt.ir.base : NodeType, nodeToString;
 
 
-/// Describes a parse failure.
+//! Describes a parse failure.
 abstract class ParserError
 {
 public:
 	enum Kind
 	{
-		/// No error.
+		//! No error.
 		Ok = 0,
-		/// The parser has made an error.
+		//! The parser has made an error.
 		Panic = -1,
-		/// A token wasn't where we expected it to be.
+		//! A token wasn't where we expected it to be.
 		UnexpectedToken = 1,
-		/// Wrong token was found.
+		//! Wrong token was found.
 		WrongToken,
-		/// A parse failed. That failure will be i-1 on parseErrors.
+		//! A parse failed. That failure will be i-1 on parseErrors.
 		ParseFailed,
-		/// A feature was used that is unsupported.
+		//! A feature was used that is unsupported.
 		UnsupportedFeature,
-		/// An invalid integer literal was supplied.
+		//! An invalid integer literal was supplied.
 		InvalidIntegerLiteral,
-		/// We expected something and didn't get it.
+		//! We expected something and didn't get it.
 		Expected,
-		/// All arguments must be labelled.
+		//! All arguments must be labelled.
 		AllArgumentsMustBeLabelled,
-		/// Doc comment applies to multiple nodes.
+		//! Doc comment applies to multiple nodes.
 		DocCommentMultiple,
-		/// Start doc comment in token stream.
+		//! Start doc comment in token stream.
 		StrayDocComment,
 	}
 
 public:
-	/**
+	/*!
 	 * Every error type uses at least these three.
 	 *  type: The type of error that occurred.
 	 *  location: Where the error occurred.
@@ -50,15 +50,15 @@ public:
 	Kind kind;
 	Location loc;
 	NodeType nodeType;
-	/// @}
+	//! @}
 
-	/**
+	/*!
 	 * Keeps track of where the error was raised. For internal debug.
 	 * @{
 	 */
 	string raiseFile;
 	int raiseLine;
-	/// @}
+	//! @}
 
 public:
 	this(Kind kind, Location loc, NodeType nodeType,
@@ -78,7 +78,7 @@ public:
 class ParserPanic : ParserError
 {
 public:
-	string message;  ///< The panic error message.
+	string message;  //!< The panic error message.
 
 public:
 	this(ref in Location loc, NodeType nodeType, string message,
@@ -97,8 +97,8 @@ public:
 class ParserUnexpectedToken : ParserError
 {
 public:
-	/// Found this, which is not what we where expecting.
-	/// E.g. spanish inquisition.
+	//! Found this, which is not what we where expecting.
+	//! E.g. spanish inquisition.
 	string found;
 
 public:
@@ -120,10 +120,10 @@ public:
 class ParserWrongToken : ParserError
 {
 public:
-	/// Found this, which is not what we where expecting.
+	//! Found this, which is not what we where expecting.
 	TokenType found;
 
-	/// What we where expecting.
+	//! What we where expecting.
 	TokenType expected;
 
 public:
@@ -146,7 +146,7 @@ public:
 class ParserParseFailed : ParserError
 {
 public:
-	/// The node type that failed to parse.
+	//! The node type that failed to parse.
 	NodeType otherNodeType;
 
 public:
@@ -168,7 +168,7 @@ public:
 class ParserUnsupportedFeature : ParserError
 {
 public:
-	/// The feature used.
+	//! The feature used.
 	string description;
 
 public:
@@ -217,7 +217,7 @@ class ParserAllArgumentsMustBeLabelled : ParserError
 class ParserExpected : ParserError
 {
 public:
-	string message;  ///< What was expected.
+	string message;  //!< What was expected.
 
 public:
 	this(ref in Location loc, NodeType nodeType, string message,

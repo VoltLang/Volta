@@ -51,7 +51,7 @@ enum Mode
 	MissingDeps,
 }
 
-/**
+/*!
  * Default implementation of
  * @link volt.interfaces.LanguagePass LanguagePass@endlink, replace
  * this if you wish to any of the semantics of the language.
@@ -59,14 +59,14 @@ enum Mode
 class VoltLanguagePass : LanguagePass
 {
 public:
-	/**
+	/*!
 	 * Phases fields.
 	 * @{
 	 */
 	Pass[] postParse;
 	Pass[] passes2;
 	Pass[] passes3;
-	/**
+	/*!
 	 * @}
 	 */
 
@@ -152,7 +152,7 @@ public:
 		}
 	}
 
-	/**
+	/*!
 	 * This functions sets up the pointers to the often used
 	 * inbuilt classes, such as object.Object and object.TypeInfo.
 	 * This needs to be called after the Driver is fully setup.
@@ -196,7 +196,7 @@ public:
 			return constant.u._int;
 		}
 
-		/**
+		/*!
 		 * Get a member from the Type enum.
 		 */
 		int getTypeEnum(string name)

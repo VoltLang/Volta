@@ -8,7 +8,7 @@ import volt.errors : panic, makeStrayDocComment, makeExpected;
 public import volt.token.token;
 
 
-/**
+/*!
  * Class used by the parser to read lexed tokens.
  */
 class TokenStream
@@ -18,7 +18,7 @@ protected:
 	size_t mIndex;
 
 public:
-	/**
+	/*!
 	 * Takes the token array does some error checking and initializes
 	 * mTokens with it also sets the current token to the first token.
 	 *
@@ -37,7 +37,7 @@ public:
 		this.mTokens = tokens;
 	}
 
-	/**
+	/*!
 	 * Reset the stream.
 	 *
 	 * Side-effects:
@@ -48,7 +48,7 @@ public:
 		mIndex = 0;
 	}
 
-	/**
+	/*!
 	 * Compares the current token's type against the given type.
 	 *
 	 * Side-effects:
@@ -59,7 +59,7 @@ public:
 		return type == peek.type;
 	}
 
-	/**
+	/*!
 	 * Compares from the current token and onwards type against
 	 * the list of types.
 	 *
@@ -79,7 +79,7 @@ public:
 		return 1;
 	}
 
-	/**
+	/*!
 	 * Returns the current token.
 	 *
 	 * Side-effects:
@@ -90,7 +90,7 @@ public:
 		return mTokens[mIndex];
 	}
 
-	/**
+	/*!
 	 * Returns the current token. @see lookbehind.
 	 *
 	 * Thorws:
@@ -104,7 +104,7 @@ public:
 		return lookbehind(1);
 	}
 
-	/**
+	/*!
 	 * Returns the token @n steps ahead. Will clamp @n to stream length.
 	 *
 	 * Side-effects:
@@ -123,7 +123,7 @@ public:
 		return mTokens[index];
 	}
 
-	/**
+	/*!
 	 * Returns the token @n step behind the current token. Will cause
 	 * a compiler panic if looking to far back.
 	 *
@@ -140,7 +140,7 @@ public:
 		return mTokens[mIndex - n];
 	}
 
-	/**
+	/*!
 	 * Returns the current position in the stream.
 	 *
 	 * Side-effects:
@@ -151,7 +151,7 @@ public:
 		return mIndex;
 	}
 
-	/**
+	/*!
 	 * Restore the stream to the current index retrieved from save().
 	 *
 	 * Side-effects:

@@ -166,7 +166,7 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 	}
 }
 
-/**
+/*!
  * Generate a hash.
  * djb2 algorithm stolen from http://www.cse.yorku.ca/~oz/hash.html
  *
@@ -184,7 +184,7 @@ uint hash(ubyte[] array)
 	return h;
 }
 
-/**
+/*!
  * Returns a string that is s, with all '_' removed.
  *    "134_hello" => "134hello"
  *    "_" => ""

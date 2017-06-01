@@ -20,7 +20,7 @@ enum TemplateKind
 	Function
 }
 
-/**
+/*!
  * Creates a concrete instance of a template.
  *
  * Example:
@@ -72,8 +72,8 @@ public:
 	TemplateKind kind;
 	string name;
 	Parameter[] parameters;
-	TypeReference[] typeReferences;  //< Filled in by the gatherer.
-	/**
+	TypeReference[] typeReferences;  //!< Filled in by the gatherer.
+	/*!
 	 * Only one of these fields will be non-null, depending on kind.
 	 * @{
 	 */
@@ -82,7 +82,7 @@ public:
 	_Interface _interface;
 	Class _class;
 	Function _function;
-	/// @}
+	//! @}
 
 public:
 	this()
