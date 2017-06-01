@@ -421,7 +421,7 @@ public:
 	ir.Function llvmMemset32;
 	ir.Function llvmMemset64;
 
-	/* @} */
+	/*! @} */
 
 	/*!
 	 * Type id constants for TypeInfo.
@@ -458,7 +458,7 @@ public:
 	int TYPE_AA;
 	int TYPE_FUNCTION;
 	int TYPE_DELEGATE;
-	/* @} */
+	/*! @} */
 
 public:
 	this(Driver drv, VersionSet ver, TargetInfo target, Frontend frontend)

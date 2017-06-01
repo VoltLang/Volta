@@ -222,7 +222,7 @@ public:
 		InternalDiff,
 		InternalPerf,
 		InternalDebug,
-		InternalNoCatch, //!< --no-catch
+		InternalNoCatch, //< --no-catch
 	}
 
 	string arg;
