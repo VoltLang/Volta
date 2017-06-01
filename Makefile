@@ -16,6 +16,7 @@ all:
 	$(VOLT) --no-stdlib --emit-bitcode -I rt/src -o rt/rt.bc $(RT_SRC) $(VFLAGS)
 	$(VOLT) --no-stdlib -c -I rt/src -o rt/rt.o rt/rt.bc
 	$(NASM) -f win64 -o rt/save-regs-host.o rt/src/vrt/gc/save_regs.asm
+	$(NASM) -f win64 -o rt/eh.o rt/src/vrt/os/eh.asm
 
 
 .PHONY: all viv viviv
