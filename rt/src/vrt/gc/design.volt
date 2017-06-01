@@ -6,20 +6,7 @@
 module vrt.gc.design;
 
 
-/*!
- * Common sizes for helpers.
- * @{
- */
-enum size_t  _2GB = 2u * 1024 * 1024 * 1024;
-enum size_t  _1GB = 1u * 1024 * 1024 * 1024;
-enum size_t  _2MB =        2u * 1024 * 1024;
-enum size_t  _1MB =        1u * 1024 * 1024;
-enum size_t _64KB =              64u * 1024;
-enum size_t  _4KB =               4u * 1024;
-enum size_t  _1KB =               1u * 1024;
-/*!
- * @}
- */
+public import vrt.vacuum.defines;
 
 /+
 

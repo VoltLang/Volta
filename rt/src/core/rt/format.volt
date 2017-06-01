@@ -14,3 +14,4 @@ extern(C) fn vrt_format_i64(sink: Sink, i: i64);
 extern(C) fn vrt_format_f32(sink: Sink, i: f32, width: i32 = -1);
 extern(C) fn vrt_format_f64(sink: Sink, i: f64, width: i32 = -1);
 extern(C) fn vrt_format_hex(sink: Sink, i: u64, padding: size_t);
+extern(C) fn vrt_format_readable_size(sink: Sink, size: u64);
