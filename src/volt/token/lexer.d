@@ -243,10 +243,10 @@ NextLex nextLex(TokenWriter tw)
 
 void addIfDocComment(TokenWriter tw, Token commentToken, string s, string docsignifier)
 {
-	auto closeIndex = s.indexOf("@}");
-	if ((tw.noDoc || s.length <= 2 || s[0 .. 2] != docsignifier) && closeIndex < 0) {
+	if ((tw.noDoc || s.length <= 2 || s[0 .. 2] != docsignifier)) {
 		return;
 	}
+	auto closeIndex = s.indexOf("@}");
 	commentToken.type = TokenType.DocComment;
 	commentToken.value = closeIndex < 0 ? cleanComment(s, commentToken.isBackwardsComment) : "@}";
 	tw.addToken(commentToken);
