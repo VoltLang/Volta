@@ -1,3 +1,7 @@
+---
+layout: page
+---
+
 Foreach And Strings
 ---
 

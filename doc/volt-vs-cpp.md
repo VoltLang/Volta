@@ -1,3 +1,7 @@
+---
+layout: page
+---
+
 Comparing Volt and C++
 ---
 This page is for people that want to get up to speed on the differences between Volt and C++. We won't be retreading ground covered in [the C comparison](volt-vs-c.html), and most of that is applicable to C++ too, so make sure you read that as well.

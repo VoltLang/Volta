@@ -1,3 +1,7 @@
+---
+layout: page
+---
+
 Failing requiring superhuman programming skill to use Volt, a large percentage of programs that the compiler handles will be invalid, and end with an error. For consistency's sake, these errors should all follow a few rules.
 
 The error message will begin with the location of where the error is generated. Ideally, this should be as specific as possible, and pointing to where the mistake the programmer made (if any) is.

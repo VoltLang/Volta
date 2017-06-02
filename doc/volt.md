@@ -1,3 +1,7 @@
+---
+layout: page
+---
+
 ## The Volt Programming Language ##
 
 Volt is a systems programming language that aims to be expressive but not at the expense of clarity and control.

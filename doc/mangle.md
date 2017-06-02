@@ -1,3 +1,7 @@
+---
+layout: page
+---
+
 A brief overview of Volt's mangling. For more information on what mangling is, and why it is done, you can read more [on Wikipedia](https://en.wikipedia.org/wiki/Name_mangling).
 
 The things that are mangled are things that are exported and end up in object files. The very beginning of the mangled string will tell you what kind of object the mangle is identifying.
