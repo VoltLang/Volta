@@ -900,6 +900,10 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			theTag = ir.Postfix.TagKind.Out;
 		}
 
+		if (postfix.argumentLabels.length > 0) {
+			postfix.argumentLabels = [func.params[0].name] ~ postfix.argumentLabels;
+		}
+
 		postfix.argumentTags = theTag ~ postfix.argumentTags;
 		asFunctionType = func.type;
 
