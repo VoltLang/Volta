@@ -8,7 +8,7 @@ import io = watt.io.std : output, error;
 
 import watt.path : temporaryFilename, dirSeparator;
 import watt.process : spawnProcess, wait;
-import watt.io.file : remove, exists, read;
+import watt.io.file : remove, exists, read, isFile;
 import watt.io.streams : OutputFileStream;
 import watt.conv : toLower;
 import watt.text.diff : diff;
@@ -716,8 +716,8 @@ protected:
 
 		// If we are using llvm-ar don't assemble and send the
 		// bitcode modules directly to llvm-ar.
-		if (mArWithLLLVM) {
-			return makeArchiveLLVM(objectFiles, bitcodeFiles, modules);
+		if (mArWithLLLVM && mBuildDir !is null) {
+			return makeArchiveLLVMBuildDir(objectFiles, bitcodeFiles, modules);
 		}
 
 		// Turn modules into bitcode.
@@ -738,10 +738,27 @@ protected:
 
 		// And finally call the linker.
 		perf.mark(Perf.Mark.LINK);
-		return nativeLink(objectFiles, mOutput);
+		if (mArWithLLLVM) {
+			return makeArchiveLLVM(objectFiles, mOutput);
+		} else {
+			return nativeLink(objectFiles, mOutput);
+		}
 	}
 
-	int makeArchiveLLVM(string[] objectFiles, string[] bitcodeFiles, ir.Module[] modules)
+	int makeArchiveLLVM(string[] objectFiles, string output)
+	{
+		auto ar = mArCmd;
+		auto arArgs = ["rcv", output] ~ objectFiles;
+
+		// If the file exists remove it.
+		if (output.exists() && output.isFile()) {
+			output.remove();
+		}
+
+		return spawnProcess(ar, arArgs).wait();
+	}
+
+	int makeArchiveLLVMBuildDir(string[] objectFiles, string[] bitcodeFiles, ir.Module[] modules)
 	{
 		assert(mArCmd !is null);
 		assert(mBuildDir !is null);
@@ -772,6 +789,11 @@ protected:
 
 		// And finally call the linker.
 		perf.mark(Perf.Mark.LINK);
+
+		// If the file exists remove it.
+		if (mOutput.exists() && mOutput.isFile()) {
+			mOutput.remove();
+		}
 
 		return spawnProcess(ar, arArgs).wait();
 	}
@@ -1024,10 +1046,6 @@ protected:
 
 		if (mEmitLLVM && !mNoLink) {
 			throw makeEmitLLVMNoLink();
-		}
-
-		if (mArWithLLLVM && mBuildDir !is null) {
-			throw new CompilerError("can not ar with out --build-dir (not implemented yet).");
 		}
 	}
 
