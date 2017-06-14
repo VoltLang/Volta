@@ -146,3 +146,4 @@ public:
 alias IntSink = SinkStruct!int;
 alias FunctionSink = SinkStruct!(ir.Function);
 alias FunctionArraySink = SinkStruct!(ir.Function[]);
+alias VariableSink = SinkStruct!(ir.Variable);
