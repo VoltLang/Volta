@@ -279,6 +279,8 @@ public:
 			mObjectFiles ~= file;
 		} else if (endsWith(file, ".lib")) {
 			mLibFiles ~= file;
+		} else if (endsWith(file, ".a")) {
+			mLibFiles ~= file;
 		} else {
 			auto str = format("unknown file type '%s'", file);
 			throw new CompilerError(str);
@@ -824,6 +826,10 @@ protected:
 
 		foreach (objectFile; objs) {
 			args ~= objectFile;
+		}
+		foreach (libFile; mLibFiles) {
+			args ~= libFile;
+			mDepFiles ~= libFile;
 		}
 		foreach (libraryPath; mLibraryPaths) {
 			args ~= format("-L%s", libraryPath);
