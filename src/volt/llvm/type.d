@@ -10,6 +10,7 @@ import ir = volt.ir.ir;
 import volt.ir.util;
 
 import volt.errors;
+import volt.util.sinks;
 import volt.llvm.common;
 import volt.llvm.interfaces;
 
@@ -472,8 +473,9 @@ public:
 		Type ret;
 
 		ret = .fromIr(state, ft.ret);
-		foreach (param; ft.params) {
-			params ~= .fromIr(state, param);
+		params = new Type[](ft.params.length);
+		foreach (i, param; ft.params) {
+			params[i] = .fromIr(state, param);
 		}
 
 		// FunctionPointers can via structs reference themself.
@@ -755,29 +757,31 @@ private:
 		createAlias(state, irType, mangled);
 
 		// @todo check packing.
-		uint index;
-		LLVMTypeRef[] mt;
-		ir.Variable[] vars;
+		VariableSink sink;
 
 		foreach (m; irType.members.nodes) {
-
-			auto var = cast(ir.Variable)m;
-			if (var is null) {
+			if (m.nodeType != ir.NodeType.Variable) {
 				continue;
 			}
-
+			auto var = m.toVariableFast();
 			if (var.storage != ir.Variable.Storage.Field) {
 				continue;
 			}
+			sink.sink(var);
+		}
 
+		auto vars = sink.toArray();
+		auto mt = new LLVMTypeRef[](vars.length);
+		types = new Type[](vars.length);
+
+		foreach (i, var; vars) {
 			// @todo handle anon types.
 			assert(var.name !is null);
 
-			indices[var.name] = index++;
 			auto t = .fromIr(state, var.type);
-			mt ~= t.llvmType;
-			vars ~= var;
-			types ~= t;
+			mt[i] = t.llvmType;
+			types[i] = t;
+			indices[var.name] = cast(uint)i;
 		}
 
 		LLVMStructSetBody(llvmType, mt, false);
@@ -839,26 +843,29 @@ private:
 		this.utype = irType;
 		super(state, irType, llvmType, diType);
 
-		uint index;
-		ir.Variable[] vars;
+		VariableSink sink;
 
 		foreach (m; irType.members.nodes) {
-
-			auto var = cast(ir.Variable)m;
-			if (var is null) {
+			if (m.nodeType != ir.NodeType.Variable) {
 				continue;
 			}
-
+			auto var = m.toVariableFast();
 			if (var.storage != ir.Variable.Storage.Field) {
 				continue;
 			}
+			sink.sink(var);
+		}
 
-			// @todo handle anon members.
+		auto vars = sink.toArray();
+		types = new Type[](vars.length);
+
+		foreach (i, var; vars) {
+			// @todo handle anon types.
 			assert(var.name !is null);
 
-			indices[var.name] = index++;
-			types ~= .fromIr(state, var.type);
-			vars ~= var;
+			auto t = .fromIr(state, var.type);
+			types[i] = t;
+			indices[var.name] = cast(uint)i;
 		}
 
 		// @todo check packing.
