@@ -1,7 +1,6 @@
 module test;
 
-import vrt.os.format;
-import core.rt.format : Sink, SinkArg;
+import core.rt.format;
 
 extern(C) fn snprintf(char*, n: size_t, const(char)*, ...) size_t;
 

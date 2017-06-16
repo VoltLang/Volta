@@ -1,6 +1,5 @@
 module test;
 
-import vrt.os.format : vrt_format_f64;
 import core.rt.format;
 
 fn main() i32

@@ -1,7 +1,6 @@
 module test;
 
-import vrt.os.format;
-import core.rt.format : Sink, SinkArg;
+import core.rt.format;
 
 fn getVoltString(d: f64) string
 {
