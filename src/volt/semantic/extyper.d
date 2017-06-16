@@ -955,7 +955,11 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		}
 
 		if (asFunctionType is null) {
-			throw makeBadCall(postfix, childType);
+			if (postfix.child.nodeType == ir.NodeType.PropertyExp) {
+				throw makeBadPropertyCall(postfix, childType);
+			} else {
+				throw makeBadCall(postfix, childType);
+			}
 		}
 	}
 

@@ -964,7 +964,12 @@ CompilerException makeWrongNumberOfArguments(ir.Node node, size_t got, size_t ex
 
 CompilerException makeBadCall(ir.Node node, ir.Type type, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(node.loc, format("cannot call '%s'.", type.typeString()), file, line);
+	return new CompilerError(node.loc, format("cannot call %s.", type.typeString()), file, line);
+}
+
+CompilerException makeBadPropertyCall(ir.Node node, ir.Type type, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(node.loc, format("cannot call %s (a type returned from a property function).", type.typeString()), file, line);
 }
 
 CompilerException makeCannotDisambiguate(ir.Node node, ir.Function[] functions, ir.Type[] args, string file = __FILE__, const int line = __LINE__)
