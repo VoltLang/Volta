@@ -262,7 +262,7 @@ fn vrt_eh_install_action(
 		return _Unwind_Reason_Code.HANDLER_FOUND;
 	}
 
-	_Unwind_SetGR(ctx, vrt_eh_return_0, cast(uintptr_t)t);
+	_Unwind_SetGR(ctx, vrt_eh_return_0, cast(uintptr_t)cast(void*)t);
 	_Unwind_SetGR(ctx, vrt_eh_return_1, switchVal);
 	_Unwind_SetIP(ctx, ip);
 

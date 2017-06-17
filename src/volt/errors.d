@@ -856,6 +856,12 @@ CompilerException makeNotReached(ir.Node node, string file = __FILE__, const int
  *
  */
 
+CompilerException makeBadAggregateToPrimitive(ir.Node node, ir.Type from, ir.Type to, string file = __FILE__, const int line = __LINE__)
+{
+	string emsg = format("cannot cast aggregate %s to %s.", typeString(from), typeString(to));
+	return new CompilerError(node.loc, emsg, file, line);
+}
+
 CompilerException makeBadImplicitCast(ir.Node node, ir.Type from, ir.Type to, string file = __FILE__, const int line = __LINE__)
 {
 	string emsg = format("cannot implicitly convert %s to %s.", typeString(from), typeString(to));

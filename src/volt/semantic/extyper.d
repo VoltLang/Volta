@@ -1536,6 +1536,7 @@ void extypeUnaryCastTo(Context ctx, ref ir.Exp exp, ir.Unary unary)
 	assert(unary.value !is null);
 
 	auto type = realType(getExpType(unary.value));
+	auto toType = realType(unary.type);
 	if (type.nodeType == ir.NodeType.FunctionSetType) {
 		auto fset = cast(ir.FunctionSetType) type;
 		throw makeCannotDisambiguate(unary, fset.set.functions, null);
@@ -1547,9 +1548,13 @@ void extypeUnaryCastTo(Context ctx, ref ir.Exp exp, ir.Unary unary)
 		return;
 	}
 
+	if (isAggregate(type) && toType.nodeType == ir.NodeType.PrimitiveType) {
+		throw makeBadAggregateToPrimitive(unary, type, toType);
+	}
+
 	ir.Type to = getClass(unary.type);
 	if (to is null) {
-		to = cast(ir._Interface)realType(unary.type);
+		to = cast(ir._Interface)toType;
 	}
 	auto from = getClass(type);
 

@@ -521,6 +521,19 @@ bool isOkayForPointerArithmetic(ir.PrimitiveType.Kind kind)
 	}
 }
 
+bool isAggregate(ir.Type type)
+{
+	switch (type.nodeType) {
+	case ir.NodeType.Struct:
+	case ir.NodeType.Union:
+	case ir.NodeType.Interface:
+	case ir.NodeType.Class:
+		return true;
+	default:
+		return false;
+	}
+}
+
 bool isInt(ir.Type type)
 {
 	auto primitive = type.toPrimitiveTypeChecked();
