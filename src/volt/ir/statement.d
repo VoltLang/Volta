@@ -405,6 +405,7 @@ public:
 	Exp condition;
 	SwitchCase[] cases;
 	Exp[] withs;
+	Variable condVar;
 
 
 public:
@@ -422,6 +423,7 @@ public:
 			this.cases = old.cases.dup;
 			this.withs = old.withs.dup;
 		}
+		this.condVar = old.condVar;
 	}
 }
 

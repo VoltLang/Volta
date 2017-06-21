@@ -3223,6 +3223,10 @@ void replaceWithHashIfNeeded(Context ctx, ir.SwitchStatement ss, ir.SwitchCase _
 		return;
 	}
 
+	if (!isArray(getExpType(exp))) {
+		return;
+	}
+
 	uint h = getExpHash(ctx, ss, exp);
 
 	if (auto p = h in arrayCases) {
@@ -3390,6 +3394,7 @@ void extypeSwitchStatement(Context ctx, ref ir.Node n)
 		                             ir.Variable.Storage.Function,
 		                             ctx.current.genAnonIdent(), ss.condition);
 		condVar.type.mangledName = mangle(conditionType);
+		ss.condVar = condVar;
 
 		/* The only place we can put this variable safely is right before this
 		 * SwitchStatement, so scan the parent BlockStatement for it.
@@ -4694,30 +4699,54 @@ void postStructTemplateInstantiation(ir.Scope current, ir.TemplateInstance ti)
 class GotoReplacer : NullVisitor
 {
 public:
+	this(Context ctx, ir.SwitchStatement ss)
+	{
+		this.ctx = ctx;
+		this.ss = ss;
+	}
+
 	override Status enter(ir.GotoStatement gs)
 	{
-		assert(exp !is null);
-		if (gs.isCase && gs.exp is null) {
+		if (gs.isCase && gs.exp is null && exp !is null) {
 			gs.exp = copyExp(exp);
+		}
+		return Continue;
+	}
+
+	override Status enter(ir.BlockStatement bs)
+	{
+		foreach (ref node; bs.statements) {
+			if (node.nodeType != ir.NodeType.GotoStatement) {
+				continue;
+			}
+			auto gs = node.toGotoStatementFast();
+			if (!gs.isCase || gs.exp is null || !isArray(getExpType(gs.exp))) {
+				continue;
+			}
+			auto cv = buildExpReference(ss.condVar.loc, ss.condVar, ss.condVar.name);
+			auto assign = buildExpStat(node.loc, buildAssign(node.loc, cv, copyExp(gs.exp)));
+			gs.exp = buildConstantUint(gs.exp.loc, getExpHash(ctx, ss, gs.exp));
+			node = buildBlockStat(node.loc, gs, bs.myScope, assign, gs);
+			return ContinueParent;
 		}
 		return Continue;
 	}
 
 public:
 	ir.Exp exp;
+	Context ctx;
+	ir.SwitchStatement ss;
 }
 
 /*!
  * Given a switch statement, replace 'goto case' with an explicit
- * jump to the next case.
+ * jump to the next case, or hash the expression if needed.
  */
 void replaceGotoCase(Context ctx, ir.SwitchStatement ss)
 {
-	auto gr = new GotoReplacer();
+	auto gr = new GotoReplacer(ctx, ss);
 	foreach_reverse (sc; ss.cases) {
-		if (gr.exp !is null) {
-			accept(sc.statements, gr);
-		}
+		accept(sc.statements, gr);
 		gr.exp = sc.exps.length > 0 ? sc.exps[0] : sc.firstExp;
 	}
 }
