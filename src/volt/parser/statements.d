@@ -1415,6 +1415,8 @@ ParseStatus parseColonAssign(ParserStream ps, NodeSinkDg dgt)
 	ir.Variable var;
 	auto loc = ps.peek.loc;
 
+	auto comment = ps.comment();
+
 	Token[] idents;
 	while (ps != TokenType.Colon && ps != TokenType.ColonAssign) {
 		if (ps != TokenType.Identifier) {
@@ -1428,7 +1430,7 @@ ParseStatus parseColonAssign(ParserStream ps, NodeSinkDg dgt)
 		}
 	}
 	if (idents.length > 1 || ps == TokenType.Colon) {
-		return parseColonDeclaration(ps, idents, dgt);
+		return parseColonDeclaration(ps, comment, idents, dgt);
 	}
 	if (ps != TokenType.ColonAssign) {
 		return unexpectedToken(ps, ir.NodeType.Variable);
@@ -1446,12 +1448,14 @@ ParseStatus parseColonAssign(ParserStream ps, NodeSinkDg dgt)
 	}
 	var = buildVariable(loc, buildAutoType(loc), ir.Variable.Storage.Invalid,
                         idents[0].value, exp);
+	var.docComment = comment;
+	ps.retroComment = var;
 	dgt(var);
 	return Succeeded;
 }
 
 // a, b : int
-ParseStatus parseColonDeclaration(ParserStream ps, Token[] idents, NodeSinkDg dgt)
+ParseStatus parseColonDeclaration(ParserStream ps, string comment, Token[] idents, NodeSinkDg dgt)
 {
 	if (ps != TokenType.Colon) {
 		return unexpectedToken(ps, ir.NodeType.Variable);
@@ -1476,6 +1480,8 @@ ParseStatus parseColonDeclaration(ParserStream ps, Token[] idents, NodeSinkDg dg
 		auto var = buildVariable(ident.loc, i > 0 ? copyType(type) : type,
 		                         ir.Variable.Storage.Invalid, ident.value);
 		var.assign = assign;
+		var.docComment = comment;
+		ps.retroComment = var;
 		dgt(var);
 	}
 	return match(ps, ir.NodeType.Variable, ir.TokenType.Semicolon);
