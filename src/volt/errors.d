@@ -343,9 +343,9 @@ CompilerException makeNoFieldOrPropertyOrIsUFCSWithoutCall(ref in Location loc, 
 	return new CompilerError(loc, format("postfix lookups like '%s' that are not fields, properties, or UFCS functions must be a call.", value), file, line);
 }
 
-CompilerException makeNoFieldOrPropertyOrUFCS(ref in Location loc, string value, string file = __FILE__, const int line = __LINE__)
+CompilerException makeNoFieldOrPropertyOrUFCS(ref in Location loc, string value, ir.Type t, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(loc, format("'%s' is neither field, nor property, nor a UFCS function.", value), file, line);
+	return new CompilerError(loc, format("'%s' is neither field, nor property, nor a UFCS function of %s.", value, typeString(t)), file, line);
 }
 
 CompilerException makeUsedBindFromPrivateImport(ref in Location loc, string bind, string file = __FILE__, const int line = __LINE__)

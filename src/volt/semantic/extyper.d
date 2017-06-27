@@ -885,7 +885,7 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 		func = selectFunction(b.functions, arguments, postfix.loc);
 
 		if (func is null) {
-			throw makeNoFieldOrPropertyOrUFCS(postfix.loc, postfix.identifier.value);
+			throw makeNoFieldOrPropertyOrUFCS(postfix.loc, postfix.identifier.value, getExpType(postfix.child));
 		}
 
 		postfix.arguments = arguments;
@@ -1249,7 +1249,7 @@ void postfixIdentifierUFCS(Context ctx, ref ir.Exp exp,
 
 	auto store = lookup(ctx.lp, ctx.current, postfix.loc, postfix.identifier.value);
 	if (store is null || store.functions.length == 0) {
-		throw makeNoFieldOrPropertyOrUFCS(postfix.loc, postfix.identifier.value);
+		throw makeNoFieldOrPropertyOrUFCS(postfix.loc, postfix.identifier.value, getExpType(postfix.child));
 	}
 
 	bool isProp;
