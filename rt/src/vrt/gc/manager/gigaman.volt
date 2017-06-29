@@ -1,7 +1,7 @@
 // Copyright © 2016-2017, Bernard Helyer.
 // Copyright © 2016-2017, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-/**
+/*!
  * GigaMan reserves a gigabyte of memory and allocates slabs from that using
  * a buddy allocator.
  */

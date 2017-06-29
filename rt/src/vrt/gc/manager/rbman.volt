@@ -1,7 +1,7 @@
 // Copyright © 2016-2017, Bernard Helyer.
 // Copyright © 2016-2017, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-/**
+/*!
  * This module holds code that mangages allocating memory for extents and
  * memory for the objects in the extents. This manager uses a RBTree to search
  * to search for extents.
@@ -20,6 +20,9 @@ import vrt.gc.extent;
 import vrt.gc.linkednode;
 
 
+/*!
+ * Extent manager that uses a RBTree to enable searching of pointers.
+ */
 struct RBMan
 {
 private:

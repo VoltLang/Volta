@@ -10,7 +10,7 @@ import core.rt.misc : vrt_panic;
 import vrt.gc.design;
 
 
-/**
+/*!
  * assert(foo) -> if (!foo) { throw new ... } -> code explosion
  * Avoid real asserts, and use this function instead, in GC code.
  */

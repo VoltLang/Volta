@@ -3,7 +3,7 @@
 module vrt.vacuum.hash;
 
 
-/**
+/*!
  * Generate a hash.
  * djb2 algorithm stolen from http://www.cse.yorku.ca/~oz/hash.html
  *

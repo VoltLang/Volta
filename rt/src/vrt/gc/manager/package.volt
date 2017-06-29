@@ -1,6 +1,6 @@
 // Copyright © 2016-2017, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-/**
+/*!
  * This module selects the appropriate Manager to use.
  */
 module vrt.gc.manager;

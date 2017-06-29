@@ -1,7 +1,7 @@
 // Copyright © 2016-2017, Bernard Helyer.
 // Copyright © 2016-2017, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-/**
+/*!
  * Companion module to GigaMan, implements the pagetable.
  */
 module vrt.gc.manager.pagetable;
@@ -16,7 +16,7 @@ import vrt.gc.rbtree;
 import vrt.gc.util.buddy;
 
 
-/**
+/*!
  * This struct implements a 1GB page table. It assumes that it has been placed
  * at the beginning of the memory area that it is managing.
  */

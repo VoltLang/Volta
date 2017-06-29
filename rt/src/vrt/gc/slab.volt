@@ -2,7 +2,7 @@
 // Copyright © 2016-2017, Bernard Helyer.
 // Copyright © 2016-2017, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-/**
+/*!
  * Stuct and code for sub-allocating data from a memory extent.
  */
 module vrt.gc.slab;
@@ -24,7 +24,7 @@ fn orderToSize(order: u8) size_t
 	return 1U << order;
 }
 
-/**
+/*!
  * Multiple smaller user memory allocations.
  *
  * You can find the memory that this represents in the extent.memory field.

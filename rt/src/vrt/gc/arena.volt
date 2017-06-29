@@ -44,7 +44,7 @@ enum float MULTIPLICATION_FACTOR_MAX       = 25.0f;
 /// The amount the multiplication factor increases after every collection.
 enum float MULTIPLICATION_FACTOR_INCREMENT = 0.1f;
 
-/**
+/*!
  * An Arena is an instance of the GC.
  */
 struct Arena

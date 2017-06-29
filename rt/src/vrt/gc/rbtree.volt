@@ -2,7 +2,7 @@
 // Copyright © 2016-2017, Bernard Helyer.
 // Copyright © 2016-2017, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-/**
+/*!
  * RBTree implementation for the GC.
  */
 module vrt.gc.rbtree;
@@ -13,7 +13,7 @@ alias Colour = bool;
 enum Black = false;
 enum Red = true;
 
-/**
+/*!
  * Embeddable Node for the RBTree.
  */
 struct Node
@@ -57,7 +57,7 @@ public:
 	}
 }
 
-/**
+/*!
  * Wrapping a pointer and red black bit, link from one Node to another.
  */
 struct Link
@@ -240,7 +240,7 @@ public:
 	}
 }
 
-/**
+/*!
  * The tree's root object.
  * This doesn't allocate any nodes, that is handled by the client code.
  * Test and compare delegates are user defined.

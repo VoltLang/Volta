@@ -1,5 +1,8 @@
 // Copyright © 2016-2017, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+/*!
+ * Module for selecting section.
+ */
 module vrt.gc.sections;
 
 

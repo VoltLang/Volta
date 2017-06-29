@@ -1,6 +1,6 @@
 // Copyright © 2016-2017, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-/**
+/*!
  * Holds the code for managing extents.
  */
 module vrt.gc.extent;
@@ -10,7 +10,7 @@ import vrt.gc.linkednode;
 import rb = vrt.gc.rbtree;
 
 
-/**
+/*!
  * Metadata about a single region of user allocated memory.
  */
 struct Extent

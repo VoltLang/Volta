@@ -1,6 +1,6 @@
 // Copyright © 2016-2017, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-/**
+/*!
  * A simple buddy allocator, only does tracking of which blocks are free
  */
 module vrt.gc.util.buddy;
@@ -9,7 +9,7 @@ import vrt.gc.util;
 import vrt.ext.stdc;
 
 
-/**
+/*!
  * Buddy allocator template with adjustable size and internal element
  * representation.
  */

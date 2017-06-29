@@ -4,7 +4,7 @@ module vrt.os.thread;
 
 import vrt.gc.util;
 
-/**
+/*!
  * The bottom of the stack.
  *
  * Initialised by vrt_gc_find_stack_bottom function, called in the

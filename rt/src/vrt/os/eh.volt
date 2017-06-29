@@ -32,7 +32,7 @@ version (X86) {
 
 }
 
-/**
+/*!
  * Our exception struct, we put the exception after,
  * that seems to work, everybody else puts it before.
  */
@@ -42,12 +42,12 @@ struct vrt_eh_exception
 	t: Throwable;
 }
 
-/**
+/*!
  * Exception class, used to identify for other handlers.
  */
 global VRT_EH_NAME: string = "VOLT___\0";
 
-/**
+/*!
  * Mandated by the ABI, not needed for Volt.
  */
 extern(C) fn vrt_eh_delete(
@@ -56,7 +56,7 @@ extern(C) fn vrt_eh_delete(
 {
 }
 
-/**
+/*!
  * Throws an exception.
  */
 extern(C) fn vrt_eh_throw(t: Throwable, location: string)
@@ -90,7 +90,7 @@ extern(C) fn vrt_eh_throw_key_not_found_error(location: string)
 	vrt_eh_throw(new KeyNotFoundException("key does not exist"), location);
 }
 
-/**
+/*!
  * Big do everything function.
  */
 extern(C) fn vrt_eh_personality_v0_real(
