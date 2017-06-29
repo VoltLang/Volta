@@ -33,3 +33,6 @@ enum HugePageSize = _2MB;
 
 //! Used to decide the GigaMan allocation size.
 enum GigaSize = _1GB;
+
+//! Minimum allocation size by which all allocation around rounded up to.
+enum MinAllocSize = 8;

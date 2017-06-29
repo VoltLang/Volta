@@ -16,6 +16,7 @@ import vrt.gc.slab;
 import vrt.gc.util;
 import vrt.gc.large;
 import vrt.gc.entry;
+import vrt.gc.design;
 import vrt.gc.errors;
 import vrt.gc.rbtree;
 import vrt.gc.extent;
@@ -140,8 +141,8 @@ public:
 		}
 
 		// Align to pointer sizes.
-		if (size < 8) {
-			size = 8;
+		if (size < MinAllocSize) {
+			size = MinAllocSize;
 		}
 
 /*
