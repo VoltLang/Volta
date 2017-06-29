@@ -24,12 +24,12 @@ fn vrt_format_readable_size(sink: Sink, size: u64)
 		return sink("GB");
 	}
 
-	if (size % _1MB == 0) {
+	if (size % _1MB == 0 && size < _1GB) {
 		vrt_format_u64(sink, size / _1MB);
 		return sink("MB");
 	}
 
-	if (size % _1KB == 0) {
+	if (size % _1KB == 0 && size < _1MB) {
 		vrt_format_u64(sink, size / _1KB);
 		return sink("KB");
 	}
