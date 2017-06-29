@@ -401,12 +401,12 @@ protected:
 	/**
 	 * Allocate n bytes of memory, and return a pointer to it.
 	 */
-	fn alloc(n: size_t, finalizer: bool, pointer: bool) void*
+	fn alloc(n: size_t, hasFinalizer: bool, hasPointer: bool) void*
 	{
 		if (n <= 4096U) {
-			return allocSmall(n, finalizer, pointer);
+			return allocSmall(n, hasFinalizer, hasPointer);
 		} else {
-			return allocLarge(n, finalizer, pointer);
+			return allocLarge(n, hasFinalizer, hasPointer);
 		}
 	}
 
@@ -430,37 +430,37 @@ protected:
 		}
 	}
 
-	fn allocSmall(n: size_t, finalizer: bool, pointer: bool) void*
+	fn allocSmall(n: size_t, hasFinalizer: bool, hasPointer: bool) void*
 	{
 		order := sizeToOrder(n);
 		size := orderToSize(order);
 
 		// See if there is a slab in the
 		// cache, create one if there isn't.
-		slab := pointer ? freePointerSlabs[order] : freeSlabs[order];
+		slab := hasPointer ? freePointerSlabs[order] : freeSlabs[order];
 		if (slab is null) {
 			maybeTriggerCollection();
-			slab = pointer ? freePointerSlabs[order] : freeSlabs[order];
+			slab = hasPointer ? freePointerSlabs[order] : freeSlabs[order];
 			// Check to see if the collection made room at this order.
 			if (slab is null) {
 				// Otherwise, allocate a new slab.
-				slab = allocSlab(order, pointer);
+				slab = allocSlab(order, hasPointer);
 				pushFreeSlab(order, slab);
 			}
 		}
 
 		// Get the element.
-		elem := slab.allocate(finalizer);
+		elem := slab.allocate(hasFinalizer);
 
 		// If the cache is empty, remove it from the cache.
 		if (slab.freeSlots == 0) {
-			popFreeSlab(order, pointer);
+			popFreeSlab(order, hasPointer);
 		}
 
 		return &slab.extent.ptr[elem * size];
 	}
 
-	fn pushFreeSlab(order: size_t, slab: Slab*)
+	fn pushFreeSlab(order: u8, slab: Slab*)
 	{
 		if (slab.extent.pointerType) {
 			slab.next = freePointerSlabs[order];
@@ -471,10 +471,10 @@ protected:
 		}
 	}
 
-	fn popFreeSlab(order: size_t, pointer: bool)
+	fn popFreeSlab(order: u8, hasPointer: bool)
 	{
 		slab: Slab*;
-		if (pointer) {
+		if (hasPointer) {
 			slab = freePointerSlabs[order];
 			freePointerSlabs[order] = freePointerSlabs[order].next;
 		} else {
@@ -485,7 +485,7 @@ protected:
 		usedSlabs[order] = slab;
 	}
 
-	fn allocLarge(n: size_t, _finalizer: bool, pointer: bool) void*
+	fn allocLarge(n: size_t, hasFinalizer: bool, hasPointer: bool) void*
 	{
 		// Do this first so we don't accidentally free the memory
 		// we just allocated. Also allocMemoryFromOS might grab
@@ -506,14 +506,14 @@ protected:
 		// Grab a Large struct to hold metadata about the extent.
 		large := mManager.allocLargeStruct(memory, memorysz);
 
-		large.setup(ptr:memory, n:memorysz, finalizer:_finalizer,
-		            pointers:pointer);
+		large.setup(ptr:memory, n:memorysz, finalizer:hasFinalizer,
+		            pointers:hasPointer);
 		mManager.treeInsert(&large.extent.node, compareExtent);
 
 		return large.extent.ptr;
 	}
 
-	fn allocSlab(order: u8, pointer:bool) Slab*
+	fn allocSlab(order: u8, hasPointer: bool) Slab*
 	{
 		// Grab memory from the OS.
 		memorysz := orderToSize(order) * 512;
@@ -530,7 +530,7 @@ protected:
 		slab := mManager.allocSlabStruct(memory, memorysz);
 
 		// Finally setup the slab and return.
-		slab.setup(order:cast(u8)order, memory:memory, pointer:pointer, internal:false);
+		slab.setup(order:order, memory:memory, pointer:hasPointer, internal:false);
 
 		mManager.treeInsert(&slab.extent.node, compareExtent);
 
