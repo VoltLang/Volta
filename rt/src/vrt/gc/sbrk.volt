@@ -13,6 +13,7 @@ import core.rt.misc : vrt_panic;
 import core.compiler.llvm;
 import core.object : Object;
 
+import vrt.gc.design;
 import vrt.gc.util : gcAssert;
 
 
@@ -78,6 +79,11 @@ public:
 			registerFinalizer = true;
 		} else {
 			size = count * typeinfo.size;
+		}
+
+		// Mirror Arena logic.
+		if (size < MinAllocSize) {
+			size = MinAllocSize;
 		}
 
 		// Statistics
