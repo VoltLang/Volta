@@ -58,8 +58,10 @@ private:
 public:
 	// 0 would be 1 bytes, 1 would be 2, 2 4, 3 8, etc.
 	freeSlabs: Slab*[13];
-	freePointerSlabs: Slab*[13];
-	usedSlabs: Slab*[13];
+	freePtrSlabs: Slab*[13];
+	freeFinSlabs: Slab*[13];
+	freePtrFinSlabs: Slab*[13];
+	usedSlabs: Slab*;
 
 
 	stackBottom: void*;
@@ -99,20 +101,28 @@ public:
 		 * This isn't redundant, even if this process is closing, as
 		 * some memory may have associated destructors.
 		 */
-		foreach (freeSlab; freeSlabs) {
-			if (freeSlab !is null) {
-				freeSlab.freeAll();
+		foreach (slab; freeSlabs) {
+			if (slab !is null) {
+				slab.freeAll();
 			}
 		}
-		foreach (freeSlab; freePointerSlabs) {
-			if (freeSlab !is null) {
-				freeSlab.freeAll();
+		foreach (slab; freePtrSlabs) {
+			if (slab !is null) {
+				slab.freeAll();
 			}
 		}
-		foreach (usedSlab; usedSlabs) {
-			if (usedSlab !is null) {
-				usedSlab.freeAll();
+		foreach (slab; freeFinSlabs) {
+			if (slab !is null) {
+				slab.freeAll();
 			}
+		}
+		foreach (slab; freePtrFinSlabs) {
+			if (slab !is null) {
+				slab.freeAll();
+			}
+		}
+		if (usedSlabs !is null) {
+			usedSlabs.freeAll();
 		}
 
 		hits.free();
@@ -236,33 +246,32 @@ public:
 			}
 		}
 
-		foreach (i, freeSlab; freeSlabs) {
-			collectSlab(freeSlab);
-			freeSlab.makeAllMoreSorted(&freeSlabs[i]);
+		foreach (ref slab; freeSlabs) {
+			slab = pruneFreeSlabs(slab);
 		}
-		foreach (i, freeSlab; freePointerSlabs) {
-			collectSlab(freeSlab);
-			freeSlab.makeAllMoreSorted(&freePointerSlabs[i]);
+		foreach (ref slab; freePtrSlabs) {
+			slab = pruneFreeSlabs(slab);
 		}
-		foreach (i, usedSlab; usedSlabs) {
-			collectSlab(usedSlab);
-			// Free empty slabs on the used list.
-			current := usedSlab;
-			destination: Slab** = &usedSlabs[i];
-			while (current !is null) {
-				next := current.next;
-				if (current.freeSlots > 0) {
-					if (current.usedSlots > 0) {
-						pushFreeSlab(current.order, current);
-					} else if (current.usedSlots == 0) {
-						mManager.freeSlabStructAndMem(current);
-					}
-					*destination = next;
-				} else {
-					destination = &current.next;
-				}
-				current = next;
-			}
+		foreach (ref slab; freeFinSlabs) {
+			slab = pruneFreeSlabs(slab);
+		}
+		foreach (ref slab; freePtrFinSlabs) {
+			slab = pruneFreeSlabs(slab);
+		}
+
+		usedSlabs = pruneUsedSlabs(usedSlabs);
+
+		foreach (i, slab; freeSlabs) {
+			slab.makeAllMoreSorted(&freeSlabs[i]);
+		}
+		foreach (i, slab; freePtrSlabs) {
+			slab.makeAllMoreSorted(&freePtrSlabs[i]);
+		}
+		foreach (i, slab; freeFinSlabs) {
+			slab.makeAllMoreSorted(&freeFinSlabs[i]);
+		}
+		foreach (i, slab; freePtrFinSlabs) {
+			slab.makeAllMoreSorted(&freePtrFinSlabs[i]);
 		}
 	}
 
@@ -276,18 +285,52 @@ public:
 		return mManager.totalSize();
 	}
 
+
 protected:
-	fn collectSlab(s: Slab*)
+	//! Prune the a free slab list, checking usedSlots and following slab->next.
+	fn pruneFreeSlabs(s: Slab*) Slab*
 	{
-		current := s;
-		while (current !is null) {
-			foreach (i; 0 .. Slab.MaxSlots) {
-				slot := cast(u32)i;
-				if (!current.isMarked(slot) && !current.isFree(slot)) {
-					current.free(slot);
-				}
-			}
-			current = current.next;
+		if (s is null) {
+			return null;
+		} else if (s.usedSlots > 0) {
+			// This slab is still in use.
+			s.next = pruneFreeSlabs(s.next);
+			return s;
+		} else {
+			next := s.next;
+			s.next = null;
+
+			mManager.freeSlabStructAndMem(s);
+			// Don't return this, only next.
+			return pruneFreeSlabs(next);
+		}
+	}
+
+	/*!
+	 * Prune the used slab list, checking usedSlots and freeSlots
+	 * also following slab->next.
+	 */
+	fn pruneUsedSlabs(s: Slab*) Slab*
+	{
+		if (s is null) {
+			return null;
+		} else if (s.freeSlots == 0) {
+			// Is the next one still fully used?
+			s.next = pruneUsedSlabs(s.next);
+			// This is still fully used, return it.
+			return s;
+		} else if (s.usedSlots == 0) {
+			next := s.next;
+			s.next = null;
+			mManager.freeSlabStructAndMem(s);
+			// This was freed, return only next.
+			return pruneUsedSlabs(next);
+		} else {
+			next := s.next;
+			s.next = null;
+			pushFreeSlab(s);
+			// This slab turned into a free slab so return only next.
+			return pruneUsedSlabs(next);
 		}
 	}
 
@@ -387,10 +430,9 @@ protected:
 			return false;
 		}
 		slab.markChild(ptr);
-		extent := cast(Extent*)slab;
-		if (extent.pointerType) {
+		if (slab.hasPointers) {
 			hl := hits.add();
-			hl.extent = extent;
+			hl.extent = &slab.extent;
 			hl.ptr = ptr;
 		}
 		return true;
@@ -402,10 +444,10 @@ protected:
 			return false;
 		}
 		large.mark = true;
-		if (large.extent.pointerType) {
+		if (large.hasPointers) {
 			hl := hits.add();
 			hl.extent = &large.extent;
-			hl.ptr = cast(void*)ptr;
+			hl.ptr = ptr;
 		}
 		return true;
 	}
@@ -444,57 +486,92 @@ protected:
 
 	fn allocSmall(n: size_t, hasFinalizer: bool, hasPointer: bool) void*
 	{
+		kind := Extent.makeKind(hasFinalizer, hasPointer);
 		order := sizeToOrder(n);
 		size := orderToSize(order);
 
 		// See if there is a slab in the
 		// cache, create one if there isn't.
-		slab := hasPointer ? freePointerSlabs[order] : freeSlabs[order];
+		slab := getFreeSlab(order, kind);
 		if (slab is null) {
 			maybeTriggerCollection();
-			slab = hasPointer ? freePointerSlabs[order] : freeSlabs[order];
+			slab = getFreeSlab(order, kind);
+
 			// Check to see if the collection made room at this order.
 			if (slab is null) {
 				// Otherwise, allocate a new slab.
-				slab = allocSlab(order, hasPointer);
-				pushFreeSlab(order, slab);
+				slab = allocSlab(order, hasFinalizer, hasPointer);
+				pushFreeSlab(slab);
 			}
 		}
 
 		// Get the element.
-		elem := slab.allocate(hasFinalizer);
+		elem := slab.allocate();
 
 		// If the cache is empty, remove it from the cache.
 		if (slab.freeSlots == 0) {
-			popFreeSlab(order, hasPointer);
+			popFreeSlab(slab);
 		}
 
 		return &slab.extent.ptr[elem * size];
 	}
 
-	fn pushFreeSlab(order: u8, slab: Slab*)
+	fn getFreeSlab(order: u8, kind: Extent.Kind) Slab*
 	{
-		if (slab.extent.pointerType) {
-			slab.next = freePointerSlabs[order];
-			freePointerSlabs[order] = slab;
-		} else {
-			slab.next = freeSlabs[order];
-			freeSlabs[order] = slab;
+		final switch (kind) with (Extent.Kind) {
+		case None: return freeSlabs[order];
+		case Ptr: return freePtrSlabs[order];
+		case Fin: return freeFinSlabs[order];
+		case PtrFin: return freePtrFinSlabs[order];
 		}
 	}
 
-	fn popFreeSlab(order: u8, hasPointer: bool)
+	fn pushFreeSlab(slab: Slab*)
 	{
-		slab: Slab*;
-		if (hasPointer) {
-			slab = freePointerSlabs[order];
-			freePointerSlabs[order] = freePointerSlabs[order].next;
-		} else {
-			slab = freeSlabs[order];
-			freeSlabs[order] = freeSlabs[order].next;
+		final switch (slab.extent.kind) with (Extent.Kind) {
+		case None:
+			slab.next = freeSlabs[slab.order];
+			freeSlabs[slab.order] = slab;
+			break;
+		case Ptr:
+			slab.next = freePtrSlabs[slab.order];
+			freePtrSlabs[slab.order] = slab;
+			break;
+		case Fin:
+			slab.next = freeFinSlabs[slab.order];
+			freeFinSlabs[slab.order] = slab;
+			break;
+		case PtrFin:
+			slab.next = freePtrFinSlabs[slab.order];
+			freePtrFinSlabs[slab.order] = slab;
+			break;
 		}
-		slab.next = usedSlabs[order];
-		usedSlabs[order] = slab;
+	}
+
+	fn popFreeSlab(slab: Slab*)
+	{
+		dst: Slab**;
+		final switch (slab.extent.kind) with (Extent.Kind) {
+		case None: dst = &freeSlabs[slab.order]; break;
+		case Ptr: dst = &freePtrSlabs[slab.order]; break;
+		case Fin: dst = &freeFinSlabs[slab.order]; break;
+		case PtrFin: dst = &freePtrFinSlabs[slab.order]; break;
+		}
+
+		current := *dst;
+		while (current !is null) {
+			// Remove the slab from the list if found.
+			if (current is slab) {
+				*dst = current.next;
+				break;
+			}
+			dst = &current.next;
+			current = *dst;
+		}
+
+		// Push the slab to the used list.
+		slab.next = usedSlabs;
+		usedSlabs = slab;
 	}
 
 	fn allocLarge(n: size_t, hasFinalizer: bool, hasPointer: bool) void*
@@ -526,7 +603,7 @@ protected:
 		return large.extent.ptr;
 	}
 
-	fn allocSlab(order: u8, hasPointer: bool) Slab*
+	fn allocSlab(order: u8, hasFinalizer: bool, hasPointer: bool) Slab*
 	{
 		// Grab memory from the OS.
 		memorysz := orderToSize(order) * 512;
@@ -543,7 +620,7 @@ protected:
 		slab := mManager.allocSlabStruct(memory, memorysz);
 
 		// Finally setup the slab and return.
-		slab.setup(order:order, memory:memory, pointer:hasPointer, internal:false);
+		slab.setup(order:order, memory:memory, finalizer:hasFinalizer, pointer:hasPointer, internal:false);
 
 		mManager.treeInsert(&slab.extent.node, compareExtent);
 
@@ -631,7 +708,14 @@ private:
 	{
 		e := cast(Extent*)n;
 		if (e.isSlab) {
-			return;
+			s := cast(Slab*)e;
+
+			foreach (i; 0 .. Slab.MaxSlots) {
+				slot := cast(u32)i;
+				if (!s.isMarked(slot) && !s.isFree(slot)) {
+					s.free(slot);
+				}
+			}
 		} else {
 			l := cast(Large*)e;
 			if (l.isMarked) {

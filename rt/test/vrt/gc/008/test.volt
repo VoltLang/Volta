@@ -10,7 +10,7 @@ fn allocSlab(order: u8) Slab*
 	slotSize := orderToSize(order);
 	slab := cast(Slab*)calloc(typeid(Slab).size, 1);
 	memory := pages_map(null, slotSize * 512);
-	slab.setup(order, memory, false, false);
+	slab.setup(order, memory, false, false, false);
 	return slab;
 }
 

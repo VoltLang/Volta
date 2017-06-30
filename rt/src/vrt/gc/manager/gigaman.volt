@@ -161,7 +161,7 @@ public:
 		/// Return memory for a Slab, sets mSlabStruct to null if empty.
 		fn internalAlloc() Slab*
 		{
-			i := mSlabStruct.allocate(finalizer:false);
+			i := mSlabStruct.allocate();
 			ptr := mSlabStruct.slotToPointer(i);
 			if (mSlabStruct.freeSlots == 0) {
 				mSlabStruct = null;
@@ -186,11 +186,11 @@ public:
 			return null;
 		}
 		slab := cast(Slab*)memory;
-		slab.setup(order:order, memory:memory, pointer:false, internal:true);
+		slab.setup(order:order, memory:memory, finalizer: false, pointer:false, internal:true);
 
 		// Mark the first slot as used, this slab resides
 		// there, because it manages itself.
-		i := slab.allocate(finalizer:false);
+		i := slab.allocate();
 
 		// So we can free from this slab.
 		markPages(memory, cast(void*)slab, sizeOfOSAlloc);

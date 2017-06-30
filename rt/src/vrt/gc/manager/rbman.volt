@@ -128,7 +128,7 @@ public:
 		/// Returns memory for a Slab, sets mSlabStrut to null if empty.
 		fn internalAlloc() Slab*
 		{
-			i := mSlabStruct.allocate(finalizer:false);
+			i := mSlabStruct.allocate();
 			ptr := mSlabStruct.slotToPointer(i);
 			if (mSlabStruct.freeSlots == 0) {
 				mSlabStruct = null;
@@ -147,11 +147,11 @@ public:
 		sizeOfOSAlloc := orderToSize(order) * 512;
 		memory := allocMemoryFromOS(sizeOfOSAlloc);
 		slab := cast(Slab*)memory;
-		slab.setup(order:order, memory:memory, pointer:false, internal:true);
+		slab.setup(order:order, memory:memory, finalizer:false, pointer:false, internal:true);
 
 		// Mark that the first slot is used, as it resides
 		// there, because Slab manages itself.
-		i := slab.allocate(finalizer:false);
+		i := slab.allocate();
 
 		// So we can free from this slab.
 		mInternalExtents.insert(&slab.extent.node.tree, compareExtent);

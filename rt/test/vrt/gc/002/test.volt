@@ -6,18 +6,18 @@ import vrt.gc.slab;
 fn main() i32
 {
 	block: Slab;
-	block.setup(0, null, false, false);
+	block.setup(0, null, false, false, false);
 
 	// Allocate 511 blocks, check that one is left.
 	foreach (0 .. 511) {
-		block.allocate(false);
+		block.allocate();
 	}
 	if (block.freeSlots != 1) {
 		return 1;
 	}
 
 	// Allocate the last one
-	block.allocate(false);
+	block.allocate();
 	if (block.freeSlots != 0) {
 		return 2;
 	}

@@ -41,7 +41,6 @@ public:
 
 	bitmap: u32[16];
 	marked: u32[16];
-	finalizer: u32[16];
 	header: u16;
 	freeSlots: u16;
 	order: u8;
@@ -51,11 +50,11 @@ public:
 
 
 public:
-	fn setup(order: u8, memory: void*, pointer:bool, internal:bool)
+	fn setup(order: u8, memory: void*, finalizer: bool, pointer:bool, internal:bool)
 	{
 		size := orderToSize(order);
 		extent.setupSlab(ptr:memory, n:size * MaxSlots,
-		                 finalizer:false,
+		                 finalizer:finalizer,
 		                 pointers:pointer);
 		this.order = order;
 
@@ -70,7 +69,7 @@ public:
 	 * Allocate one of the 512 slots of this SmallBlock.
 	 * Returns the index of the slot allocated.
 	 */
-	fn allocate(finalizer: bool) u32
+	fn allocate() u32
 	{
 		gcAssert(freeSlots > 0);
 
@@ -82,7 +81,6 @@ public:
 		// Use xor so we don't need to invert bits.
 		// It is ok as we assert the bit is unset before.
 		bitmap[hindex] ^= (1 << bindex);
-		markFinalizer(hindex, bindex, finalizer);
 
 		// If we unset all bits, unset header.
 		if (bitmap[hindex] == 0) {
@@ -159,7 +157,7 @@ public:
 
 		ptr := slotToPointer(bit);
 		obj := cast(Object)ptr;
-		if (obj !is null && hasFinalizer(hindex, bindex)) {
+		if (obj !is null && hasFinalizer) {
 			obj.__dtor();
 		}
 
@@ -185,20 +183,6 @@ public:
 		hindex := bit / 32;
 		bindex := bit % 32;
 		marked[hindex] |= 1 << bindex;
-	}
-
-	fn hasFinalizer(hindex: u32, bindex: u32) bool
-	{
-		return (finalizer[hindex] & (1 << bindex)) != 0;
-	}
-
-	fn markFinalizer(hindex: u32, bindex: u32, _finalizer: bool)
-	{
-		if (_finalizer) {
-			finalizer[hindex] |= 1 << bindex;
-		} else {
-			finalizer[hindex] &= ~(1 << bindex);
-		}
 	}
 
 	fn isMarked(ptr: void*) bool
@@ -276,6 +260,16 @@ public:
 		slot := (ptrnum - minaddr) / size;
 		gcAssert(slot < MaxSlots);
 		return cast(i64)slot;
+	}
+
+	@property fn hasPointers() bool
+	{
+		return extent.hasPointers;
+	}
+
+	@property fn hasFinalizer() bool
+	{
+		return extent.hasFinalizer;
 	}
 }
 

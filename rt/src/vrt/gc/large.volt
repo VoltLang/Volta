@@ -23,12 +23,12 @@ public:
 
 	@property fn hasPointers() bool
 	{
-		return cast(bool)((extent.data & Extent.PointersMask) >> Extent.PointersShift);
+		return extent.hasPointers;
 	}
 
 	@property fn hasFinalizer() bool
 	{
-		return cast(bool)((extent.data & Extent.FinalizerMask) >> Extent.FinalizerShift);
+		return extent.hasFinalizer;
 	}
 
 	@property fn isMarked() bool

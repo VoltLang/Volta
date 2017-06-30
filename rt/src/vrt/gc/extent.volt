@@ -18,6 +18,14 @@ struct Extent
 public:
 	node: UnionNode;
 
+	enum Kind : u32
+	{
+		None   = 0x0,
+		Ptr    = 0x1,
+		Fin    = 0x2,
+		PtrFin = 0x3,
+	}
+
 
 private:
 	mData: size_t;
@@ -25,26 +33,29 @@ private:
 
 
 public:
-	enum size_t SlabShift = cast(size_t)0;
-	enum size_t SlabMask = cast(size_t)1 << SlabShift;
-	enum size_t PointersShift = cast(size_t)1;
-	enum size_t PointersMask = cast(size_t)1 << PointersShift;
-	enum size_t FinalizerShift = cast(size_t)2;
-	enum size_t FinalizerMask = cast(size_t)1 << FinalizerShift;
-	enum size_t MarkedShift = cast(size_t)3;
-	enum size_t MarkedMask = cast(size_t)1 << MarkedShift;
-	enum size_t InternalShift = cast(size_t)4;
-	enum size_t InternalMask = cast(size_t)1 << InternalShift;
-	enum size_t DataMask = SlabMask | PointersMask | FinalizerMask | MarkedMask | InternalMask;
+	enum size_t SlabShift = 0u;
+	enum size_t SlabMask = 1u << SlabShift;
+	enum size_t KindShift = 1u;
+	enum size_t KindMask = (Kind.Ptr << KindShift) | (Kind.Fin << KindShift);
+	enum size_t MarkedShift = 3u; // Kind takes to bits.
+	enum size_t MarkedMask = 1u << MarkedShift;
+	enum size_t InternalShift = 4u;
+	enum size_t InternalMask = 1u << InternalShift;
+	enum size_t DataMask = SlabMask | KindMask | MarkedMask | InternalMask;
 
 
 public:
+	global fn makeKind(finalizer: bool, pointers: bool) Kind
+	{
+		return (finalizer ? Kind.Fin : Kind.None) | (pointers ? Kind.Ptr : Kind.None);
+	}
+
 	fn setupSlab(ptr: void*, n: size_t, finalizer: bool, pointers: bool)
 	{
 		gcAssert((cast(size_t)ptr & DataMask) == 0);
 
-		mData = cast(size_t)ptr | true << SlabShift |
-			finalizer << FinalizerShift | pointers << PointersShift;
+		kind := makeKind(finalizer, pointers);
+		mData = cast(size_t)ptr | true << SlabShift | kind << KindShift;
 		mN = n;
 	}
 
@@ -52,8 +63,8 @@ public:
 	{
 		gcAssert((cast(size_t)ptr & DataMask) == 0);
 
-		mData = cast(size_t)ptr | false << SlabShift |
-			finalizer << FinalizerShift | pointers << PointersShift;
+		kind := makeKind(finalizer, pointers);
+		mData = cast(size_t)ptr | false << SlabShift | kind << KindShift;
 		mN = n;
 	}
 
@@ -102,8 +113,18 @@ public:
 		return !cast(bool)((mData & SlabMask) >> SlabShift);
 	}
 
-	@property fn pointerType() bool
+	@property fn kind() Kind
 	{
-		return cast(bool)((mData & PointersMask) >> PointersShift);
+		return cast(Kind)((mData & KindMask) >> KindShift);
+	}
+
+	@property fn hasFinalizer() bool
+	{
+		return (kind & Kind.Fin) != 0;
+	}
+
+	@property fn hasPointers() bool
+	{
+		return (kind & Kind.Ptr) != 0;
 	}
 }
