@@ -511,6 +511,7 @@ protected:
 			collect();
 			memory = mManager.allocMemoryFromOS(memorysz);
 			if (memory is null) {
+				vrt_gc_print_stats();
 				panicFailedToAlloc(memorysz);
 			}
 		}
