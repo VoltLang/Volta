@@ -50,15 +50,41 @@ import core.typeinfo;
 alias AllocDg = dg (typeinfo: TypeInfo, count: size_t) void*;
 local allocDg: AllocDg;
 
+//! Stats structs for the GC, may change often so no API/ABI stability.
 struct Stats
 {
-	numAllocs: u64;
-	numAllocBytes: u64;
-	numArrayAllocs: u64;
-	numArrayBytes: u64;
-	numClassAllocs: u64;
-	numClassBytes: u64;
-	numZeroAllocs: u64;
+	//! Counters, always available.
+	struct Num
+	{
+		allocs: u64;
+		allocBytes: u64;
+		arrayAllocs: u64;
+		arrayBytes: u64;
+		classAllocs: u64;
+		classBytes: u64;
+		zeroAllocs: u64;
+	}
+
+	//! Slots stats, may not be set for all GCs.
+	struct Slot
+	{
+		//! Memory in large extents.
+		memLarge: u64;
+		//! Memory cached in slabs.
+		memCached: u64;
+		//! Memory used in slabs.
+		memUsed: u64;
+		//! Total memory: used or cached.
+		memTotal: u64;
+
+		free: u32[16];
+		used: u32[16];
+	}
+
+	//! Counters.
+	num: Num;
+	//! Slots stats.
+	slots: Slot;
 }
 
 extern(C):
@@ -68,3 +94,4 @@ fn vrt_gc_get_alloc_dg() AllocDg;
 fn vrt_gc_collect();
 fn vrt_gc_shutdown();
 fn vrt_gc_get_stats(out stats: Stats) Stats*;
+version (CRuntime_All) fn vrt_gc_print_stats();

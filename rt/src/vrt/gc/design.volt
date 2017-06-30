@@ -5,8 +5,10 @@
  */
 module vrt.gc.design;
 
+import core.rt.gc : Stats;
 
 public import vrt.vacuum.defines;
+
 
 /+
 
@@ -36,3 +38,16 @@ enum GigaSize = _1GB;
 
 //! Minimum allocation size by which all allocation around rounded up to.
 enum MinAllocSize = 8;
+
+
+/*!
+ * Internal stat struct, has a lot more statistics then regular
+ * but changes more often.
+ */
+struct InternalStats
+{
+	base: Stats;
+
+	numFreeSlots: u32[13];
+	numUsedSlots: u32[13];
+}

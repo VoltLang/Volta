@@ -13,7 +13,6 @@ import core.rt.misc : vrt_panic;
 import core.compiler.llvm;
 import core.object : Object;
 
-import vrt.gc.entry : stats;
 import vrt.gc.util : gcAssert;
 
 
@@ -29,6 +28,10 @@ public:
 	cur: void*;
 	left: size_t;
 	used: size_t;
+
+
+private:
+	mStats: Stats.Num;
 
 
 public:
@@ -47,9 +50,14 @@ public:
 
 	}
 
+	fn getStats(out stats: Stats)
+	{
+		stats.num = mStats;
+	}
+
 	fn totalSize() size_t
 	{
-		return cast(size_t)stats.numAllocBytes;
+		return cast(size_t)mStats.allocBytes;
 	}
 
 	fn allocEntry(typeinfo: TypeInfo, count: size_t) void*
@@ -59,7 +67,7 @@ public:
 		registerFinalizer := false;
 
 		if (count == 0) {
-			stats.numZeroAllocs++;
+			mStats.zeroAllocs++;
 			return null;
 		} else if (count == cast(size_t) -2) {
 			size = typeinfo.size;
@@ -73,14 +81,14 @@ public:
 		}
 
 		// Statistics
-		stats.numAllocs++;
-		stats.numAllocBytes += size;
+		mStats.allocs++;
+		mStats.allocBytes += size;
 		if (count == cast(size_t) -1) {
-			stats.numClassAllocs++;
-			stats.numClassBytes += size;
+			mStats.classAllocs++;
+			mStats.classBytes += size;
 		} else if (count > 0) {
-			stats.numArrayAllocs++;
-			stats.numArrayBytes += size;
+			mStats.arrayAllocs++;
+			mStats.arrayBytes += size;
 		}
 
 		memory = alloc(size);

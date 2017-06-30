@@ -131,10 +131,10 @@ struct Perf
 			Stats stats;
 			vrt_gc_get_stats(stats);
 			f.writef("%s,%s,%s,%s,%s,%s,%s",
-			         stats.numAllocs,      stats.numAllocBytes,
-			         stats.numArrayAllocs, stats.numArrayBytes,
-			         stats.numClassAllocs, stats.numClassBytes,
-			         stats.numZeroAllocs);
+			         stats.num.allocs,      stats.num.allocBytes,
+			         stats.num.arrayAllocs, stats.num.arrayBytes,
+			         stats.num.classAllocs, stats.num.classBytes,
+			         stats.num.zeroAllocs);
 		} else {
 			f.writef("0,0,0,0,0,0,0,");
 		}

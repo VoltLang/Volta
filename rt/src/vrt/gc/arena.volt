@@ -52,6 +52,7 @@ struct Arena
 private:
 	// The manager needs to be placed at the start of the Arena.
 	mManager: Manager;
+	mNum: Stats.Num;
 
 
 public:
@@ -120,6 +121,15 @@ public:
 		mManager.shutdown();
 	}
 
+	fn getStats(out stats: Stats)
+	{
+		counter: NodeMemCounter;
+		mManager.treeVisit(counter.count);
+
+		stats.num = mNum;
+		stats.slots = counter.slots;
+	}
+
 	fn allocEntry(typeinfo: TypeInfo, count: size_t) void*
 	{
 		size: size_t;
@@ -127,7 +137,7 @@ public:
 		registerFinalizer := false;
 
 		if (count == 0) {
-			stats.numZeroAllocs++;
+			mNum.zeroAllocs++;
 			return null;
 		} else if (count == cast(size_t) -2) {
 			size = typeinfo.size;
@@ -160,14 +170,14 @@ public:
 */
 
 		// Statistics
-		stats.numAllocs++;
-		stats.numAllocBytes += size;
+		mNum.allocs++;
+		mNum.allocBytes += size;
 		if (count == cast(size_t) -1) {
-			stats.numClassAllocs++;
-			stats.numClassBytes += size;
+			mNum.classAllocs++;
+			mNum.classBytes += size;
 		} else if (count > 0) {
-			stats.numArrayAllocs++;
-			stats.numArrayBytes += size;
+			mNum.arrayAllocs++;
+			mNum.arrayBytes += size;
 		}
 
 		memory = alloc(size, registerFinalizer, typeinfo.mutableIndirection);
@@ -541,6 +551,42 @@ protected:
 private:
 	/*
 	 *
+	 * Stats counting.
+	 *
+	 */
+
+	//! Helper struct for stats counting.
+	static struct NodeMemCounter
+	{
+		slots: Stats.Slot;
+
+		fn count(n: Node*)
+		{
+			e := cast(Extent*)n;
+			used: u64;
+			cached: u64;
+
+			slots.memTotal += e.size;
+			if (e.isSlab) {
+				slab := cast(Slab*)e;
+
+				slots.free[slab.order] += slab.freeSlots;
+				slots.used[slab.order] += slab.usedSlots;
+
+				used += slab.usedSlots * (1u << slab.order);
+				cached += slab.freeSlots * (1u << slab.order);
+
+				slots.memCached += cached;
+				slots.memUsed += used;
+			} else {
+				slots.memLarge += e.size;
+			}
+		}
+	}
+
+
+	/*
+	 *
 	 * Pointer checking code.
 	 *
 	 */
@@ -594,7 +640,7 @@ private:
 		}
 	}
 
-	/// Does n contain an empty Slab?
+	///a Does n contain an empty Slab?
 	fn emptySlab(n: Node*) bool
 	{
 		s := cast(Slab*)n;
