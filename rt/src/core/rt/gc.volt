@@ -56,6 +56,7 @@ struct Stats
 	//! Counters, always available.
 	struct Num
 	{
+		collections: u64;
 		allocs: u64;
 		allocBytes: u64;
 		arrayAllocs: u64;

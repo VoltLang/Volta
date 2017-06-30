@@ -83,15 +83,16 @@ version (CRuntime_All) {
 			printf("%.*s", cast(u32)arg.length, arg.ptr);
 		}
 
+		printf("   collections: %llu\n", cast(u64)stats.num.collections);
 		printf("        allocs: %llu\n", cast(u64)stats.num.allocs);
+		printf("   classAllocs: %llu\n", cast(u64)stats.num.classAllocs);
+		printf("   arrayAllocs: %llu\n", cast(u64)stats.num.arrayAllocs);
 		printf("    allocBytes: ");
 		vrt_format_readable_size(sink, stats.num.allocBytes);
 		printf("\n");
-		printf("   arrayAllocs: %llu\n", cast(u64)stats.num.arrayAllocs);
 		printf("    arrayBytes: ");
 		vrt_format_readable_size(sink, stats.num.arrayBytes);
 		printf("\n");
-		printf("   classAllocs: %llu\n", cast(u64)stats.num.classAllocs);
 		printf("    classBytes: ");
 		vrt_format_readable_size(sink, stats.num.classBytes);
 		printf("\n");

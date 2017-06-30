@@ -194,6 +194,8 @@ public:
 
 	fn collect()
 	{
+		mNum.collections++; // Stats
+
 		hits.reset();
 		removes.reset();
 		mManager.treeVisit(unmark);
