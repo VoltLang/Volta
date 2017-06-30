@@ -17,10 +17,11 @@ in the [Watt](https://github.com/VoltLang/Watt) repository.
 ## Documentation
 
 You can find a getting started guide
-[here](http://www.volt-lang.org/doc/setup/volta.html), information about the
-language [here](http://www.volt-lang.org/doc/volt.html) and an overview of the
-compiler [here](http://www.volt-lang.org/doc/overview.html). An index of
-the documentation exists [here](http://www.volt-lang.org/doc/).
+[here](http://docs.volt-lang.org/doc/tvpl/c2-setup.html), information about the
+language [here](http://docs.volt-lang.org/doc/tvpl/c1-intro.html) and [here](http://docs.volt-lang.org/doc/volt.html). An overview of the
+compiler [here](http://docs.volt-lang.org/doc/overview.html). An index of
+the documentation exists [here](http://docs.volt-lang.org/). And if you are brave
+you can try out the experimental [Volt Guru](http://volt.guru) page.
 
 ## Contributing
 
