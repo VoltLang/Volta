@@ -86,15 +86,6 @@ public:
 		node := mExtents.root;
 		while (node !is null) {
 			e := cast(Extent*)node;
-			if (e.isLarge) {
-				l := cast(Large*)e;
-				if (l.hasFinalizer) {
-					obj := cast(Object)e.ptr;
-					gcAssert(obj !is null);
-					obj.__dtor();
-				}
-			}
-
 			if (e.isSlab) {
 				freeSlabStructAndMem(cast(Slab*)e);
 			} else {

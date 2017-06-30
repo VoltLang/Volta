@@ -118,32 +118,7 @@ public:
 
 	fn shutdown()
 	{
-		current := mExtents;
-		while (current !is null) {
-			e := cast(Extent*)current;
-			if (e.isLarge) {
-				l := cast(Large*)e;
-				if (l.hasFinalizer) {
-					obj := cast(Object)e.ptr;
-					gcAssert(obj !is null);
-					obj.__dtor();
-				}
-			}
-			current = current.next;
-			if (e.isSlab) {
-				freeSlabStructAndMem(cast(Slab*)e, true);
-			} else {
-				freeLargeStructAndMem(cast(Large*)e, true);
-			}
-		}
-
-		// Clean up anything left in the alloc cache.
-		if (mAllocCache.ptr !is null) {
-			pages_unmap(mAllocCache.ptr, mAllocCache.length);
-			mAllocCache = null;
-		}
-
-		// Finally we free the whole arena and memory.
+		// This is simple, just unmap the whole range.
 		pages_unmap(cast(void*)&this, PageTable.TotalSize);
 	}
 

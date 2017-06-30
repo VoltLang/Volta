@@ -97,33 +97,10 @@ public:
 	 */
 	fn shutdown()
 	{
-		/* Free everything still in use.
-		 * This isn't redundant, even if this process is closing, as
-		 * some memory may have associated destructors.
+		/* Run all finalizers in all objects, we do not free them
+		 * and assume that the manager will free all memory.
 		 */
-		foreach (slab; freeSlabs) {
-			if (slab !is null) {
-				slab.freeAll();
-			}
-		}
-		foreach (slab; freePtrSlabs) {
-			if (slab !is null) {
-				slab.freeAll();
-			}
-		}
-		foreach (slab; freeFinSlabs) {
-			if (slab !is null) {
-				slab.freeAll();
-			}
-		}
-		foreach (slab; freePtrFinSlabs) {
-			if (slab !is null) {
-				slab.freeAll();
-			}
-		}
-		if (usedSlabs !is null) {
-			usedSlabs.freeAll();
-		}
+		mManager.treeVisit(runAllFinalizers);
 
 		hits.free();
 		removes.free();
@@ -724,6 +701,35 @@ private:
 
 			hl := removes.add();
 			hl.extent = e;
+		}
+	}
+
+	fn runAllFinalizers(n: Node*)
+	{
+		e := cast(Extent*)n;
+		if (!e.hasFinalizer) {
+			return;
+		}
+
+		if (e.isSlab) {
+			s := cast(Slab*)e;
+
+			foreach (i; 0 .. Slab.MaxSlots) {
+				slot := cast(u32)i;
+				if (s.isFree(slot)) {
+					continue;
+				}
+
+				obj := cast(Object)s.slotToPointer(slot);
+				gcAssert(obj !is null);
+				obj.__dtor();
+			}
+		} else {
+			l := cast(Large*)e;
+
+			obj := cast(Object)l.extent.ptr;
+			gcAssert(obj !is null);
+			obj.__dtor();
 		}
 	}
 
