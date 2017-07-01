@@ -67,6 +67,9 @@ ParseStatus parseModule(ParserStream ps, out ir.Module mod)
 		return parseExpected(ps, ps.peek.loc, ir.NodeType.Module, "@}");
 	}
 
+	// Get the global doc comments for defgroup and other commands.
+	mod.globalDocComments = ps.globalDocComments;
+
 	// Don't include the default modules in themselves.
 	// Maybe move to gather or import resolver?
 	if (mod.name.identifiers.length == 3 &&

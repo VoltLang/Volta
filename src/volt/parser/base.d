@@ -397,7 +397,9 @@ ParseStatus eatComments(ParserStream ps)
 {
 	while (ps.peek.type == TokenType.DocComment) {
 		auto commentTok = ps.get();
-		if (commentTok.isBackwardsComment) {
+		if (commentTok.value.indexOf("@defgroup") >= 0) {
+			ps.globalDocComments ~= commentTok.value;
+		} else if (commentTok.isBackwardsComment) {
 			if (ps.retroComment is null) {
 				return strayDocComment(ps, commentTok.loc);
 			} else {
@@ -516,10 +518,15 @@ public:
 
 	Settings settings;
 
+	//! Comments for defgroup and other commands.
+	string[] globalDocComments;
+
+
 private:
 	string[] mComment;
 	Token[] mSavedTokens;
 	bool mSavingTokens;
+
 
 public:
 	this(Token[] tokens, Settings settings)

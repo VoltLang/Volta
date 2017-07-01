@@ -65,6 +65,9 @@ public:
 	TopLevelBlock children; //!< Toplevel nodes.
 	bool isAnonymous;  //!< Auto generated module name, unimportable.
 
+	//! The global doc comments that where found in this module.
+	string[] globalDocComments;
+
 	/*!
 	 * Scope for this module.
 	 *
