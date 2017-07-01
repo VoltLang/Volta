@@ -23,6 +23,7 @@ private:
 	bool mWriteComma;
 	string mFilename;
 	OutputFileStream mFile;
+	string[] mGlobalDocComments;
 
 
 public:
@@ -42,6 +43,13 @@ public:
 			accept(mod, this);
 		}
 		endList();
+		startList("globalDocComments");
+		foreach (doc; mGlobalDocComments) {
+			wMaybeComma();
+			wq(doc);
+			mWriteComma = true;
+		}
+		endList();
 		w("}");
 
 		mFile.flush();
@@ -50,6 +58,9 @@ public:
 
 	override Status enter(ir.Module m)
 	{
+		// Collect all of the global doc comments.
+		mGlobalDocComments ~= m.globalDocComments;
+
 		startObject();
 		tag("kind", "module");
 		tag("name", m.name.toString());

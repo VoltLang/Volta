@@ -246,9 +246,15 @@ void addIfDocComment(TokenWriter tw, Token commentToken, string s, string docsig
 	if ((tw.noDoc || s.length <= 2 || s[0 .. 2] != docsignifier)) {
 		return;
 	}
-	auto closeIndex = s.indexOf("@}");
+
+	if (s.indexOf("@}") < 0) {
+		commentToken.value = cleanComment(
+			s, commentToken.isBackwardsComment);
+	} else {
+		commentToken.value = "@}";
+	}
+
 	commentToken.type = TokenType.DocComment;
-	commentToken.value = closeIndex < 0 ? cleanComment(s, commentToken.isBackwardsComment) : "@}";
 	tw.addToken(commentToken);
 }
 
