@@ -16,6 +16,9 @@ import volt.ir.templates;
 import volt.ir.expression;
 import volt.ir.declaration;
 
+/*!
+ * @defgroup irNode IR Nodes
+ */
 
 /*!
  * Each concrete class derived from @p ir.Node has a value in this
