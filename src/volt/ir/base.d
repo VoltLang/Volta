@@ -18,14 +18,14 @@ import volt.ir.declaration;
 
 
 /*!
- * Each concrete class derived from ir.Node has a value in this
- * enumerant. The value for the type is stored in ir.Node.nodeType
+ * Each concrete class derived from @p ir.Node has a value in this
+ * enumerant. The value for the type is stored in @p ir.Node.nodeType
  * by the constructor. While using type tags is not very OOP, it is
  * extremely convenient. For example, during debugging you can simply
- * inspect ir.Node.nodeType to find out the actual type of the object.
+ * inspect @p ir.Node.nodeType to find out the actual type of the object.
  *
  * In addition, it is possible to use a switch-statement based on
- * ir.Node.nodeType to select different behavior for different object
+ * @p ir.Node.nodeType to select different behavior for different object
  * types. For functions that have only slight differences for several
  * object types, this allows writing very straightforward, readable
  * code.
@@ -157,6 +157,11 @@ enum Access
 	Protected = TokenType.Protected,
 }
 
+/*!
+ * Return the given @p Access as a string.
+ *
+ * @ingroup irNode.
+ */
 string accessToString(Access access)
 {
 	final switch (access) with (Access) {
@@ -171,13 +176,13 @@ string accessToString(Access access)
  * Controls the calling convention and how symbols are mangled.
  *
  * Linkages are mangled in functions like so:
- * @li @p Volt is mangled as "Q".
- * @li @p C is mangled as "U".
- * @li @p CPlusPlus is mangled as "R".
- * @li @p D is mangled as "F".
- * @li @p Windows is mangled as "W".
- * @li @p Pascal is mangled as "V".
- * @li @p System is as @p C on non Windows systems, and as @p Windows on Windows systems.
+ *   - @p Volt is mangled as "Q".
+ *   - @p C is mangled as "U".
+ *   - @p CPlusPlus is mangled as "R".
+ *   - @p D is mangled as "F".
+ *   - @p Windows is mangled as "W".
+ *   - @p Pascal is mangled as "V".
+ *   - @p System is as @p C on non Windows systems, and as @p Windows on Windows systems.
  *
  * @ingroup irNode
  */
@@ -192,6 +197,11 @@ enum Linkage
 	System,
 }
 
+/*!
+ * Return the given @p Linkage as a string.
+ *
+ * @ingroup irNode.
+ */
 string linkageToString(Linkage linkage)
 {
 	final switch (linkage) with (Linkage) {
@@ -247,6 +257,7 @@ public:
 	//! Documentation comment attached to this node, if any.
 	string docComment;
 
+
 protected:
 	this(NodeType nt)
 	{
@@ -259,6 +270,7 @@ protected:
 		this(nt);  // Setup uniqueId.
 		this.loc = old.loc;
 	}
+
 
 public:
 	// Base
@@ -527,9 +539,13 @@ public:
 class Identifier : Node
 {
 public:
+	//! The string for this Identifier.
 	string value;
 
+
+public:
 	this() { super(NodeType.Identifier); }
+
 	this(string s)
 	{
 		this();
