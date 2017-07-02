@@ -1,4 +1,4 @@
-// Copyright © 2014-2015, Bernard Helyer.  All rights reserved.
+// Copyright © 2014-2017, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.cfg;
 
@@ -124,7 +124,11 @@ bool canReachChildBefore(Block block, bool delegate(Block) dgt, Block target)
 	return false;
 }
 
-//! Builds and checks CFGs on Functions.
+/*!
+ * Builds and checks CFGs on Functions.
+ *
+ * @ingroup passes passLang passSem
+ */
 class CFGBuilder : ScopeManager, Pass
 {
 public:

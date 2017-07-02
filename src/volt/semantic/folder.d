@@ -9,6 +9,11 @@ import volt.visitor.visitor : accept, NullVisitor;
 import ir = volt.ir.ir;
 
 
+/*!
+ * Folds any expressions into Constants.
+ *
+ * @ingroup passes passLang passSem
+ */
 class ExpFolder : NullVisitor, Pass
 {
 public:

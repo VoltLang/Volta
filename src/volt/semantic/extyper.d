@@ -1,5 +1,5 @@
-// Copyright © 2012-2016, Bernard Helyer.  All rights reserved.
-// Copyright © 2012-2016, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2012-2017, Bernard Helyer.  All rights reserved.
+// Copyright © 2012-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.extyper;
 
@@ -4763,6 +4763,8 @@ void replaceGotoCase(Context ctx, ir.SwitchStatement ss)
  * The second job of extyper is to make any implicit or
  * inferred types or expressions concrete -- for example,
  * to make const i = 2 become const int = 2.
+ *
+ * @ingroup passes passLang passSem
  */
 class ExTyper : NullVisitor, Pass
 {

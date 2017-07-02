@@ -55,6 +55,8 @@ enum Mode
  * Default implementation of
  * @link volt.interfaces.LanguagePass LanguagePass@endlink, replace
  * this if you wish to any of the semantics of the language.
+ *
+ * @ingroup passes passLang passSem
  */
 class VoltLanguagePass : LanguagePass
 {
