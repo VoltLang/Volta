@@ -254,8 +254,15 @@ public:
 }
 
 /*!
+ * @defgroup parsing Parsing
+ * @brief Code that turns text into ir nodes.
+ */
+
+/*!
  * Start of the compile pipeline, it lexes source, parses tokens and do
  * some very lightweight transformation of internal AST into Volt IR.
+ *
+ * @ingroup parsing
  */
 interface Frontend
 {
@@ -263,8 +270,10 @@ interface Frontend
 	 * Parse a module and all its children from the given source.
 	 * Filename is the file from which file the source was loaded from.
 	 *
-	 * Returns:
-	 *   The parsed module.
+	 * @param[in] source The complete source of the module to be parsed.
+	 * @param[in] filaname The path to the module, ir nodes locations gets
+	 *                     gets tagged with this filename.
+	 * @return The parsed module.
 	 */
 	ir.Module parseNewFile(string source, string filename);
 
@@ -274,8 +283,9 @@ interface Frontend
 	 *
 	 * Used for string mixins in functions.
 	 *
-	 * Returns:
-	 *   Returns the parsed statements.
+	 * @param[in] source The source of the statements to be parsed.
+	 * @param[in] loc The location of the mixin that this originated from.
+	 * @return The parsed statements.
 	 */
 	ir.Node[] parseStatements(string source, Location loc);
 
@@ -315,7 +325,7 @@ interface Pass
  * 2. Exp Type Verification
  * 3. Misc
  *
- * Phase 1, PostParse, works like this:
+ * @link passPost Phase 1, PostParse @endlink, works like this:
  * 1. All of the version statements are resolved for the entire module.
  * 2. Then for each Module, Class, Struct, Enum's TopLevelBlock.
  *   1. Apply all attributes in the current block or direct children.
@@ -326,13 +336,50 @@ interface Pass
  * 4. Going from top to bottom resolving static if (applying step 2
  *    to the selected TopLevelBlock).
  *
- * Phase 2, ExpTyper, is just a single complex step that resolves and typechecks
+ * @link passSem Phase 2, Semantic @endlink, is just a single complex step that resolves and typechecks
  * any expressions, this pass is only run for modules that are called
  * directly by the LanguagePass.transform function, or functions that
  * are invoked by static ifs.
  *
- * Phase 3, Misc, are various lowering and transformation passes, some can
+ * @link passLower Phase 3, Lowering @endlink, are various lowering and transformation passes, some can
  * inoke Phase 1 and 2 on newly generated code.
+ */
+
+/*!
+ * @defgroup passPost Post Parsing Passes
+ * @brief Passes that are run after parsing.
+ *
+ * These are the passes that the LanguagePass runs after parsing is done.
+ *
+ * ## See also
+ *   - @ref passes
+ *   - @ref volt.interfaces.LanguagePass
+ *   - After post parse the @ref passSem are run.
+ * @ingroup passLang
+ */
+
+/*!
+ * @defgroup passSem Semantic Passes
+ * @brief Semantic passes that checks for errors and resolves implicit types.
+ *
+ * Semantic passes transform the code and checks for errors.
+ *
+ * ## See also
+ *   - @ref passes
+ *   - @ref volt.interfaces.LanguagePass
+ *   - After post parse the @ref passSem are run.
+ * @ingroup passLang
+ */
+
+/*!
+ * @defgroup passLower Lowering Passes
+ * @ingroup passLang
+ * @brief Lowers ir before being passed of to backends.
+ *
+ * This would be a good place for more documentation.
+ *
+ * ## See also
+ *   - Modules given must be checkd by @ref passSem.
  */
 
 /*!
@@ -656,16 +703,35 @@ public:
 	final void actualize(ir.Class c)
 	{ if (!c.isActualized) doActualize(c); }
 
+
 	/*
 	 *
 	 * General phases functions.
 	 *
 	 */
 
+	/*!
+	 * Run all post parse passes on the given modules.
+	 *
+	 * @param[in] m The modules.
+	 * @ingroup passPost
+	 */
 	abstract void phase1(ir.Module[] m);
 
+	/*!
+	 * Run all semantic passes on the given modules.
+	 *
+	 * @param[in] m The modules.
+	 * @ingroup passSem
+	 */
 	abstract void phase2(ir.Module[] m);
 
+	/*!
+	 * Run all lowering passes on the given modules.
+	 *
+	 * @param[in] m The modules.
+	 * @ingroup passLower
+	 */
 	abstract void phase3(ir.Module[] m);
 
 
@@ -692,13 +758,14 @@ protected:
 }
 
 /*!
- * @defgroup passLower Lowering Passes
- * @ingroup passes
- * @brief Lowers ir before being passed of to backends.
+ * @defgroup backend Backend
+ * @brief Code and classes that turns modules into machine code.
  */
 
 /*!
  * Used to determin the output of the backend.
+ *
+ * @ingroup backend
  */
 enum TargetType
 {
@@ -715,6 +782,11 @@ enum TargetType
  * pipe that is implemented in this compiler, optimization and linking
  * are often done outside of the compiler, either invoked directly by us
  * or a build system.
+ *
+ * ## See also
+ *   - @ref passLower makes modules suitable for the backend.
+ *
+ * @ingroup backend
  */
 interface Backend
 {
@@ -725,7 +797,7 @@ interface Backend
 
 	/*!
 	 * Set the target output type. Backends usually only
-	 * suppports one or two output types @see supported.
+	 * suppports one or two output types @ref supported.
 	 */
 	void setTarget(TargetType type);
 
@@ -750,6 +822,8 @@ interface Backend
  * It can be a file that you can save onto disk.
  *
  * Or a JIT compiled a module that you can fetch functions from.
+ *
+ * @ingroup backend
  */
 interface BackendResult
 {
