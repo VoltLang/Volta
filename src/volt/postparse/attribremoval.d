@@ -1,5 +1,11 @@
-// Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2012-2017, Bernard Helyer.
+// Copyright © 2012-2017, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+/*!
+ * Code that flattens volt attributes onto ir nodes.
+ *
+ * @ingroup passPost
+ */
 module volt.postparse.attribremoval;
 
 import ir = volt.ir.ir;
@@ -15,12 +21,13 @@ import volt.visitor.visitor;
  * A pass that turns Attributes nodes into fields on to
  * Functions, Classes and the like.
  *
- * @ingroup passes passLang
+ * @ingroup passes passLang passPost
  */
 class AttribRemoval : NullVisitor, Pass
 {
 public:
 	TargetInfo target;
+
 
 protected:
 	ir.Attribute[] mStack;
@@ -40,6 +47,7 @@ protected:
 		ir.Attribute[] stack;
 		ir.Attribute[] oldStack;
 	}
+
 
 public:
 	this(TargetInfo target)

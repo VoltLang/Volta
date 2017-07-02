@@ -1,5 +1,11 @@
-// Copyright © 2015, Bernard Helyer.  All rights reserved.
+// Copyright © 2015-2017, Bernard Helyer.
+// Copyright © 2016-2017, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+/*!
+ * Module containing the @ref ScopeReplacer class.
+ *
+ * @ingroup passPost
+ */
 module volt.postparse.scopereplacer;
 
 import watt.text.format : format;
@@ -13,10 +19,18 @@ import volt.visitor.visitor;
 import volt.visitor.scopemanager;
 
 
+/*!
+ * Module containing the @ref ScopeReplacer class.
+ *
+ * @ingroup passes passLang passPost
+ */
 class ScopeReplacer : NullVisitor, Pass
 {
+public:
 	ir.Function[] functionStack;
 
+
+public:
 	override void transform(ir.Module m)
 	{
 		accept(m, this);

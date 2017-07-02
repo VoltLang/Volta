@@ -1,5 +1,11 @@
-// Copyright © 2012, Bernard Helyer.  All rights reserved.
+// Copyright © 2012-2017, Bernard Helyer.
+// Copyright © 2012-2017, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+/*!
+ * Code that removes volt version constructs.
+ *
+ * @ingroup passPost
+ */
 module volt.postparse.condremoval;
 
 import ir = volt.ir.ir;
@@ -13,12 +19,13 @@ import volt.visitor.visitor;
 /*!
  * A pass that removes version and debug blocks, not static ifs.
  *
- * @ingroup passes passLang
+ * @ingroup passes passLang passPost
  */
 class ConditionalRemoval : NullVisitor, Pass
 {
 public:
 	VersionSet ver;
+
 
 public:
 	this(VersionSet ver)
@@ -42,7 +49,6 @@ public:
 	 * Visitor functions.
 	 *
 	 */
-
 
 	override Status enter(ir.Module m)
 	{

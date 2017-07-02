@@ -1,6 +1,11 @@
-// Copyright © 2012-2016, Jakob Bornecrantz.  All rights reserved.
-// Copyright © 2012-2016, Bernard Helyer.  All rights reserved.
+// Copyright © 2012-2017, Bernard Helyer.
+// Copyright © 2012-2017, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+/*!
+ * Module containing the @ref MissingDeps class.
+ *
+ * @ingroup passPost
+ */
 module volt.postparse.missing;
 
 import watt.text.format : format;
@@ -16,13 +21,16 @@ import volt.visitor.scopemanager;
 /*!
  * Looks for missing dependancies via imports.
  *
- * @ingroup passes passLang
+ * @ingroup passes passLang passPost
  */
 class MissingDeps : ScopeManager, Pass
 {
 private:
+	//! Link back to @ref LanguagePass.
 	LanguagePass lp;
+	//! The current module we are walking.
 	ir.Module mModule;
+	//! Set of all the module names that are missing.
 	bool[string] mStore;
 
 

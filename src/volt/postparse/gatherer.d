@@ -1,6 +1,13 @@
-// Copyright © 2012, Bernard Helyer.  All rights reserved.
-// Copyright © 2012-2013, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2012-2017, Bernard Helyer.
+// Copyright © 2012-2017, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+/*!
+ * Module that deals with gatherering symbols into scopes.
+ *
+ * Holds the @ref Gatherer class and lots of helper functions
+ *
+ * @ingroup passPost
+ */
 module volt.postparse.gatherer;
 
 import watt.text.format : format;
@@ -15,6 +22,7 @@ import volt.token.location;
 import volt.visitor.visitor;
 
 
+//! Used to keep track of which level a symbol was found.
 enum Where
 {
 	Module,
@@ -360,7 +368,7 @@ void addScope(ir.Scope current, ir._Interface i)
  * Populate the scopes with Variables, Aliases, Functions, and Types.
  * Adds Scopes where needed as well.
  *
- * @ingroup passes passLang
+ * @ingroup passes passLang passPost
  */
 class Gatherer : NullVisitor, Pass
 {
@@ -377,6 +385,7 @@ public:
 	{
 		mWarningsEnabled = warningsEnabled;
 	}
+
 
 	/*
 	 *
@@ -468,6 +477,7 @@ public:
 	{
 		return mThis[$-1];
 	}
+
 
 	/*
 	 *
