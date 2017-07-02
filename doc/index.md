@@ -10,6 +10,9 @@ It is named after [Alessandro Volta](https://en.wikipedia.org/wiki/Alessandro_Vo
 tho the compiler got its named after the language was named Volt.
 Some various documentation is listed below.
 
+{% for page in vdoc.groups -%}
+*  [{{ page.name }}]({{ page.url }})
+{% endfor -%}
 *  [The Volt Programming Language]({{ site.baseurl }}/volt.html)
 *  [Errors]({{ site.baseurl }}/errors.html)
 *  [Foreach, strings and you]({{ site.baseurl }}/foreach-and-strings.html)
