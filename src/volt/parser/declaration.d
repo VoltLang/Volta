@@ -260,6 +260,7 @@ ParseStatus reallyParseVariable(ParserStream ps, ir.Type base, NodeSinkDg dgt)
 ParseStatus parseType(ParserStream ps, out ir.Type base)
 {
 	Location origin = ps.peek.loc;
+	auto dcomment = ps.comment();
 
 	switch (ps.peek.type) {
 	case TokenType.Void, TokenType.Char, TokenType.Byte, TokenType.Ubyte,
@@ -361,7 +362,7 @@ ParseStatus parseType(ParserStream ps, out ir.Type base)
 	}
 
 	base.loc = ps.peek.loc - origin;
-	base.docComment = ps.comment();
+	base.docComment = dcomment;
 	return Succeeded;
 }
 
