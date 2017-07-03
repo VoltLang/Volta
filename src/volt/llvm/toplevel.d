@@ -1,5 +1,10 @@
-// Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2012-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+/*!
+ * Code handling control flow and toplevel contstructs.
+ *
+ * @ingroup backend llvmbackend
+ */
 module volt.llvm.toplevel;
 
 import watt.text.format : format;
@@ -14,6 +19,11 @@ import volt.llvm.interfaces;
 import ir = volt.ir.ir;
 
 
+/*!
+ * Visits a module and turn it into code.
+ *
+ * @ingroup visitors llvmbackend
+ */
 class LlvmVisitor : NullVisitor
 {
 public:

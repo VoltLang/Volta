@@ -1,5 +1,10 @@
-// Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2012-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+/*!
+ * Code for generating constant expresions.
+ *
+ * @ingroup backend llvmbackend
+ */
 module volt.llvm.constant;
 
 import watt.text.format : format;

@@ -1,6 +1,11 @@
-// Copyright © 2012-2016, Jakob Bornecrantz.  All rights reserved.
-// Copyright © 2015-2016, Bernard Helyer.  All rights reserved.
+// Copyright © 2012-2017, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2015-2017, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+/*!
+ * Host or JIT compilation code.
+ *
+ * @ingroup backend llvmbackend
+ */
 module volt.llvm.host;
 
 import io = watt.io.std;

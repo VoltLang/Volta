@@ -1,5 +1,10 @@
-// Copyright © 2013, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2013-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+/*!
+ * Interfaces that the rest of the @ref llvmbackend code uses.
+ *
+ * @ingroup backend llvmbackend
+ */
 module volt.llvm.interfaces;
 
 import volt.errors;
@@ -22,6 +27,8 @@ public import volt.llvm.type;
  * to the give value, since all variables are stored as alloca'd
  * memory in a function we will not insert loads until needed.
  * This is needed for '&' to work and struct lookups.
+ *
+ * @ingroup llvmbackend
  */
 class Value
 {
@@ -50,6 +57,8 @@ public:
  * collide in meaning with LLVM and language concepts.
  *
  * One is created for each Volt module that is compiled.
+ *
+ * @ingroup llvmbackend
  */
 abstract class State
 {

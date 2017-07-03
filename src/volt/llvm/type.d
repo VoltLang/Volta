@@ -1,5 +1,10 @@
-// Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2012-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+/*!
+ * Code and classes for turning Volt Types into LLVM types.
+ *
+ * @ingroup backend llvmbackend
+ */
 module volt.llvm.type;
 
 import lib.llvm.core;
@@ -21,6 +26,8 @@ static import volt.semantic.classify;
 /*!
  * Base class for a LLVM backend types. Contains a refernce to the irType
  * for this type, the llvmType and the debugging info for this type.
+ *
+ * @ingroup llvmbackend
  */
 class Type
 {
@@ -61,6 +68,8 @@ protected:
 
 /*!
  * Void @link volt.ir.type.PrimitiveType PrimtiveType@endlink.
+ *
+ * @ingroup llvmbackend
  */
 class VoidType : Type
 {
@@ -80,6 +89,8 @@ private:
 
 /*!
  * Integer @link volt.ir.type.PrimitiveType PrimtiveType@endlink but not void.
+ *
+ * @ingroup llvmbackend
  */
 class PrimitiveType : Type
 {
@@ -194,6 +205,8 @@ private:
 
 /*!
  * PointerType represents a standard C pointer.
+ *
+ * @ingroup llvmbackend
  */
 class PointerType : Type
 {
@@ -241,6 +254,8 @@ private:
 
 /*!
  * Array type.
+ *
+ * @ingroup llvmbackend
  */
 class ArrayType : Type
 {
@@ -377,6 +392,8 @@ private:
 
 /*!
  * Static array type.
+ *
+ * @ingroup llvmbackend
  */
 class StaticArrayType : Type
 {
@@ -439,6 +456,8 @@ private:
 
 /*!
  * Base class for callable types FunctionType and DelegateType.
+ *
+ * @ingroup llvmbackend
  */
 abstract class CallableType : Type
 {
@@ -458,6 +477,8 @@ public:
 
 /*!
  * Function type.
+ *
+ * @ingroup llvmbackend
  */
 class FunctionType : CallableType
 {
@@ -584,6 +605,8 @@ private:
 
 /*!
  * Delegates are lowered here into a struct with two members.
+ *
+ * @ingroup llvmbackend
  */
 class DelegateType : CallableType
 {
@@ -663,6 +686,8 @@ private:
 
 /*!
  * Backend instance of a @link volt.ir.toplevel.Struct ir.Struct@endlink.
+ *
+ * @ingroup llvmbackend
  */
 class StructType : Type
 {
@@ -791,6 +816,8 @@ private:
 
 /*!
  * Backend instance of a @link volt.ir.toplevel.Union ir.Union@endlink.
+ *
+ * @ingroup llvmbackend
  */
 class UnionType : Type
 {
@@ -879,6 +906,8 @@ private:
 /*!
  * Looks up or creates the corresponding LLVMTypeRef
  * and Type for the given irType.
+ *
+ * @ingroup llvmbackend
  */
 Type fromIr(State state, ir.Type irType)
 {
@@ -906,6 +935,11 @@ Type fromIr(State state, ir.Type irType)
 	return result;
 }
 
+/*!
+ * Dispatcher function to Type constructors.
+ *
+ * @ingroup llvmbackend
+ */
 Type fromIrImpl(State state, ir.Type irType)
 {
 	auto test = state.getTypeNoCreate(irType.mangledName);
@@ -975,6 +1009,8 @@ Type fromIrImpl(State state, ir.Type irType)
 
 /*!
  * Populate the common types that hang off the state.
+ *
+ * @ingroup llvmbackend
  */
 void buildCommonTypes(State state, bool V_P64)
 {

@@ -1,5 +1,10 @@
-// Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2012-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+/*!
+ * Most of the expression to llvmbitcode generation code is in this module.
+ *
+ * @ingroup backend llvmbackend
+ */
 module volt.llvm.expression;
 
 import watt.text.format : format;

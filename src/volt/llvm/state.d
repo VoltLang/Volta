@@ -1,5 +1,10 @@
-// Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2012-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+/*!
+ * Implementation of the @ref volt.llvm.interfaces.State class.
+ *
+ * @ingroup backend llvmbackend
+ */
 module volt.llvm.state;
 
 import lib.llvm.core;
@@ -27,6 +32,8 @@ import volt.llvm.interfaces;
  * collide in meaning with language concepts.
  *
  * One is created for each Volt module that is compiled.
+ *
+ * @ingroup llvmbackend
  */
 class VoltState : State
 {

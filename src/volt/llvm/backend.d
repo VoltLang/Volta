@@ -1,5 +1,10 @@
-// Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2012-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+/*!
+ * Main module for the @ref llvmbackend.
+ *
+ * @ingroup backend llvmbackend
+ */
 module volt.llvm.backend;
 
 import io = watt.io.std;
@@ -24,10 +29,22 @@ import volt.llvm.host;
 import volt.llvm.state;
 import volt.llvm.toplevel;
 
+/*!
+ * @defgroup llvmbackend LLVM Backend
+ * @brief LLVM based backend.
+ *
+ * This backend is the main backend for the Volta compiler, and is such is the
+ * most feature full and supported one.
+ *
+ * @see http://llvm.org
+ * @ingroup backend
+ */
 
 /*!
  * Main interface for the @link volt.interfaces.Driver
  * Driver@endlink to the llvm backend.
+ *
+ * @ingroup backend llvmbackend
  */
 class LlvmBackend : Backend
 {
