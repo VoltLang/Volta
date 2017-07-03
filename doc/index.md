@@ -5,11 +5,14 @@ layout: page
 
 # Volta
 
-This is the project page for the [Volt Programming Language](http://www.volt-lang.org) compiler Volta.
-It is named after [Alessandro Volta](https://en.wikipedia.org/wiki/Alessandro_Volta),
-tho the compiler got its named after the language was named Volt.
-Some various documentation is listed below.
+If you want to learn about the compiler read the [overview](overview.html)
+first. This is the project page for the
+[Volt Programming Language](http://www.volt-lang.org) compiler Volta. It is
+named after [Alessandro Volta](https://en.wikipedia.org/wiki/Alessandro_Volta),
+tho the compiler got its named after the language was named Volt. Some various
+documentation is listed below.
 
+*  [Overview of the compilation process](overview.html)
 {% for page in vdoc.groups -%}
 *  [{{ page.name }}]({{ page.url }})
 {% endfor -%}
