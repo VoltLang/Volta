@@ -273,7 +273,7 @@ interface Frontend
 	 * Filename is the file from which file the source was loaded from.
 	 *
 	 * @param[in] source The complete source of the module to be parsed.
-	 * @param[in] filaname The path to the module, ir nodes locations gets
+	 * @param[in] filename The path to the module, ir nodes locations gets
 	 *                     gets tagged with this filename.
 	 * @return The parsed module.
 	 */
