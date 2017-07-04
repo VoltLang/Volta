@@ -1771,31 +1771,6 @@ void lowerStructUnionConstructor(LanguagePass lp, ir.Scope current, ref ir.Exp e
 	exp = sexp;
 }
 
-/*!
- * If func is the main function, add a C main next to it.
- */
-void lowerCMain(LanguagePass lp, ir.Scope current, ir.Function func)
-{
-	func.name = "vmain";
-	auto loc = func.loc;
-	auto mod = getModuleFromScope(loc, current);
-
-	// Add a function `extern(C) fn main(argc: i32, argv: char**) i32` to this module.
-	auto ftype = buildFunctionTypeSmart(loc, buildInt(loc));
-	ftype.linkage = ir.Linkage.C;
-	auto cmain = buildFunction(loc, mod.myScope, "main", ftype);
-	auto argc = addParam(loc, cmain, buildInt(loc), "argc");
-	auto argv = addParam(loc, cmain, buildPtr(loc, buildPtr(loc, buildChar(loc))), "argv");
-	mod.myScope.addFunction(cmain, cmain.name);
-	mod.children.nodes ~= cmain;
-
-	ir.Exp argcRef = buildExpReference(loc, argc, argc.name);
-	ir.Exp argvRef = buildExpReference(loc, argv, argv.name);
-	ir.Exp vref = buildExpReference(loc, func, func.name);
-	auto call = buildCall(loc, lp.runMainFunc, [argcRef, argvRef, vref]);
-	buildReturnStat(loc, cmain._body, call);
-}
-
 ir.Exp zeroVariableIfNeeded(LanguagePass lp, ir.Variable var)
 {
 	auto s = .size(lp.target, var.type);
@@ -1897,9 +1872,6 @@ public:
 			assert(functionStack.length == 0);
 		}
 
-		if (func.name == "main" && func.type.linkage == ir.Linkage.Volt) {
-			lowerCMain(lp, current, func);
-		}
 		nestLowererFunction(lp, parent, func);
 
 		super.enter(func);

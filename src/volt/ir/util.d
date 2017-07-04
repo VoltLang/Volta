@@ -366,6 +366,17 @@ ir.PointerType buildVoidPtr(ref in Location loc)
 	return pt;
 }
 
+/*!
+ * Build a void[] type.
+ */
+ir.ArrayType buildVoidArray(ref in Location loc)
+{
+	auto at = new ir.ArrayType(buildVoid(loc));
+	at.loc = loc;
+
+	return at;
+}
+
 ir.PointerType buildPtrSmart(ref in Location loc, ir.Type base)
 {
 	auto pt = new ir.PointerType(copyTypeSmart(loc, base));

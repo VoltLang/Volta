@@ -29,6 +29,7 @@ import ir = volt.ir.ir;
 import volt.parser.parser;
 import volt.semantic.languagepass;
 import volt.llvm.backend;
+import volt.lowerer.image;
 import volt.util.mangledecoder;
 
 import volt.visitor.visitor;
