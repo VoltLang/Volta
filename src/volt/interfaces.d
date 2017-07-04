@@ -406,7 +406,6 @@ public:
 	 */
 	// core.object
 	ir.Class objObject;
-	ir.Class objAttribute;
 
 	// core.varargs
 	ir.Function vaStartFunc;
