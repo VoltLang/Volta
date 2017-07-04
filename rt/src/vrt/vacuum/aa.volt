@@ -13,7 +13,6 @@ import core.compiler.llvm: __llvm_memcpy;
 // based on a Red-Black-Tree
 // http://en.wikipedia.org/wiki/Red%E2%80%93black_tree
 
-
 private union TreeStore {
 	ptr: void*;
 	unsigned: u64;

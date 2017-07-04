@@ -36,6 +36,11 @@ class Attribute
  *
  */
 
+extern @mangledName("__V_global_ctors") global globalConstructors: fn()[];
+extern @mangledName("__V_global_dtors") global globalDestructors: fn()[];
+extern @mangledName("__V_local_ctors") global localConstructors: fn()[];
+extern @mangledName("__V_local_dtors") global localDestructors: fn()[];
+
 struct ModuleInfo
 {
 	next: ModuleInfo*;
