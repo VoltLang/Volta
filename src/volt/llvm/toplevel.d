@@ -780,88 +780,16 @@ public:
 		return Continue;
 	}
 
-	void globalStructorArray(ir.Module m, LLVMValueRef[] arr, string name)
-	{
-		if (arr.length == 0) {
-			return;
-		}
-		auto fnty = LLVMTypeOf(arr[0]);
-		auto stypes = [LLVMInt32TypeInContext(state.context), fnty];
-		auto _struct = LLVMStructTypeInContext(state.context, stypes, false);
-
-		auto structs = new LLVMValueRef[](arr.length);
-		foreach (i, func; arr) {
-			uint priority = 65535;
-			auto vals = [LLVMConstInt(LLVMInt32TypeInContext(state.context), priority, false), func];
-			structs[i] = LLVMConstStructInContext(state.context, vals.ptr, 2, false);
-		}
-		auto array = LLVMArrayType(_struct, cast(uint) arr.length);
-		auto gval = LLVMAddGlobal(state.mod, array, name);
-		auto lit = LLVMConstArray(_struct, structs);
-		LLVMSetInitializer(gval, lit);
-		LLVMSetLinkage(gval, LLVMLinkage.Appending);
-	}
-
-	LLVMValueRef globalModuleInfo(ir.Module m)
-	{
-		string name = "_V__ModuleInfo_";
-		foreach (i; m.name.identifiers) {
-			name = format("%s%s%s", name, i.value.length, i.value);
-		}
-
-		auto t = cast(StructType)state.fromIr(m.moduleInfo);
-		assert(t !is null);
-		auto at = cast(ArrayType)t.types[1];
-		assert(at !is null);
-
-		LLVMValueRef[3] vals;
-		vals[0] = LLVMConstNull(t.types[0].llvmType);
-		vals[1] = at.from(state, state.globalConstructors);
-		vals[2] = at.from(state, state.globalDestructors);
-		auto lit = LLVMConstNamedStruct(t.llvmType, vals);
-
-		auto gval = LLVMAddGlobal(state.mod, t.llvmType, name);
-		LLVMSetInitializer(gval, lit);
-		return gval;
-	}
-
-	void makeModuleInfoFunction(ir.Module m)
-	{
-		Type t;
-
-		// Emit and get the ModuleInfo for this module.
-		auto gval = globalModuleInfo(m);
-
-		// Create 'real' ctor to add the module info to rootModuleInfo.
-		auto func = LLVMAddFunction(state.mod, "__global_ctor",
-			state.voidFunctionType.llvmCallType);
-		LLVMSetLinkage(func, LLVMLinkage.Internal);
-
-		auto b = LLVMAppendBasicBlock(func, "entry");
-		LLVMPositionBuilderAtEnd(state.builder, b);
-
-		auto root = state.getVariableValue(m.moduleInfoRoot, t);
-		auto first = LLVMBuildStructGEP(state.builder, gval, 0, "");
-		auto old = LLVMBuildLoad(state.builder, root, "");
-		LLVMBuildStore(state.builder, old, first);
-		LLVMBuildStore(state.builder, gval, root);
-		LLVMBuildRet(state.builder, null);
-
-		globalStructorArray(m, [func], "llvm.global_ctors");
-	}
-
 	override Status leave(ir.Module m)
 	{
+		if (state.globalConstructors.length > 0 || state.globalDestructors.length > 0) {
+			throw panic(m.loc, "global constructor or destructor made it into llvm backend.");
+		}
+
 		if (state.localConstructors.length > 0 || state.localDestructors.length > 0) {
 			throw panic(m.loc, "local constructor or destructor made it into llvm backend.");
 		}
 
-		if (state.globalConstructors.length > 0 ||
-		    state.globalDestructors.length > 0 ||
-		    state.localConstructors.length > 0 ||
-		    state.localDestructors.length > 0) {
-			makeModuleInfoFunction(m);
-		}
 		return Continue;
 	}
 

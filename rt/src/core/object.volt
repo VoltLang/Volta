@@ -28,24 +28,3 @@ class Object
 class Attribute
 {
 }
-
-
-/*
- *
- * Module support.
- *
- */
-
-extern @mangledName("__V_global_ctors") global globalConstructors: fn()[];
-extern @mangledName("__V_global_dtors") global globalDestructors: fn()[];
-extern @mangledName("__V_local_ctors") global localConstructors: fn()[];
-extern @mangledName("__V_local_dtors") global localDestructors: fn()[];
-
-struct ModuleInfo
-{
-	next: ModuleInfo*;
-	ctors: fn ()[];
-	dtors: fn ()[];
-}
-
-@mangledName("_V__ModuleInfo_root") global moduleInfoRoot: ModuleInfo*;

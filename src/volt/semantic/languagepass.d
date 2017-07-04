@@ -219,8 +219,6 @@ public:
 		objObject = getClassFrom(objectModule, "Object");
 		objObject.isObject = true;
 		objAttribute = getClassFrom(objectModule, "Attribute");
-		moduleInfo = getStructFrom(objectModule, "ModuleInfo");
-		moduleInfoRoot = getVarFrom(objectModule, "moduleInfoRoot");
 
 		// core.varargs
 		vaStartFunc = getFunctionFrom(varargsModule, "va_start");

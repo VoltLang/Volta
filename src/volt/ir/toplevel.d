@@ -86,11 +86,10 @@ public:
 
 	bool gathered;
 
-	Struct moduleInfo;
-	Variable moduleInfoRoot;
 
 private:
 	size_t mId;
+
 
 public:
 	this() { super(NodeType.Module); }
@@ -105,8 +104,6 @@ public:
 		this.gathered = old.gathered;
 		this.mId = old.mId;
 		this.isAnonymous = old.isAnonymous;
-		this.moduleInfo = old.moduleInfo;
-		this.moduleInfoRoot = old.moduleInfoRoot;
 	}
 
 	//! Get a unique number for this module.

@@ -165,8 +165,6 @@ public:
 	{
 		auto n = new ir.Module(old);
 		n.children = lift(old.children);
-		n.moduleInfo = lift(old.moduleInfo);
-		n.moduleInfoRoot = lift(old.moduleInfoRoot);
 		return n;
 	}
 

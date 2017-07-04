@@ -1833,8 +1833,6 @@ public:
 	 */
 	override void transform(ir.Module m)
 	{
-		m.moduleInfo = lp.moduleInfo;
-		m.moduleInfoRoot = lp.moduleInfoRoot;
 		thisModule = m;
 		accept(m, this);
 	}
