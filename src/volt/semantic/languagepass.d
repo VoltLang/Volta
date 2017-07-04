@@ -218,7 +218,6 @@ public:
 		// core.object
 		objObject = getClassFrom(objectModule, "Object");
 		objObject.isObject = true;
-		objAttribute = getClassFrom(objectModule, "Attribute");
 
 		// core.varargs
 		vaStartFunc = getFunctionFrom(varargsModule, "va_start");

@@ -1,17 +1,10 @@
 // Copyright © 2016-2017, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+//! Root object for classes.
 module core.object;
 
 
-/*
- *
- * Root objects for classes and attributes.
- *
- */
-
-/**
- * Root for all classes.
- */
+//! Root object for all classes.
 class Object
 {
 	~this() {}
@@ -20,11 +13,4 @@ class Object
 	{
 		return "core.object.Object";
 	}
-}
-
-/**
- * Base class for all user defined attributes.
- */
-class Attribute
-{
 }
