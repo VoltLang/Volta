@@ -444,8 +444,6 @@ public:
 	ir.Function aaInBinopPtr;        // vrt_aa_in_binop_ptr
 
 	// core.rt.misc
-	ir.Struct moduleInfo;
-	ir.Variable moduleInfoRoot;
 	ir.Function hashFunc;
 	ir.Function castFunc;
 	ir.Function memcmpFunc;

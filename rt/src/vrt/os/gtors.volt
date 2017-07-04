@@ -2,7 +2,10 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.os.gtors;
 
-import core.object: globalConstructors, globalDestructors;
+extern @mangledName("__V_global_ctors") global globalConstructors: fn()[];
+extern @mangledName("__V_global_dtors") global globalDestructors: fn()[];
+extern @mangledName("__V_local_ctors") global localConstructors: fn()[];
+extern @mangledName("__V_local_dtors") global localDestructors: fn()[];
 
 
 extern(C) fn vrt_run_global_ctors()
