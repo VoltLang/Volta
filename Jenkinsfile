@@ -1,3 +1,0 @@
-library('volt-build')
-
-voltaBuild()
