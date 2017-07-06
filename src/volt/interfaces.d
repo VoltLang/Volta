@@ -35,6 +35,7 @@ string platformToString(Platform platform)
 	case Linux: return "linux";
 	case OSX:   return "osx";
 	case Metal: return "metal";
+	case Tesla: return "tesla";
 	}
 }
 
@@ -54,6 +55,7 @@ string archToString(Arch arch)
 	final switch (arch) with (Arch) {
 	case X86: return "x86";
 	case X86_64: return "x86_64";
+	case Wasm32: return "wasm32";
 	}
 }
 
