@@ -156,8 +156,8 @@ public:
 		mAccumReading = new Accumulator("p1-reading");
 		mAccumParsing = new Accumulator("p1-parsing");
 
-		setTargetInfo(target, s.arch, s.platform);
-		setVersionSet(ver, s.arch, s.platform);
+		setTargetInfo(target, s.arch, s.platform, s.cRuntime);
+		setVersionSet(ver, s.arch, s.platform, s.cRuntime);
 
 		decideStuff(s);
 		decideJson(s);
@@ -1084,8 +1084,7 @@ private:
 
 	string[] getClangArgs()
 	{
-		auto clangArgs = ["-target",
-			tripleList[target.platform][target.arch]];
+		auto clangArgs = ["-target", getTriple(target)];
 
 		// Add command line args.
 		clangArgs ~= mXclang;
@@ -1207,10 +1206,11 @@ private:
 	}
 }
 
-TargetInfo setTargetInfo(TargetInfo target, Arch arch, Platform platform)
+TargetInfo setTargetInfo(TargetInfo target, Arch arch, Platform platform, CRuntime cRuntime)
 {
 	target.arch = arch;
 	target.platform = platform;
+	target.cRuntime = cRuntime;
 
 	final switch (arch) with (Arch) {
 	case X86:
@@ -1244,34 +1244,46 @@ TargetInfo setTargetInfo(TargetInfo target, Arch arch, Platform platform)
 	return target;
 }
 
-void setVersionSet(VersionSet ver, Arch arch, Platform platform)
+void setVersionSet(VersionSet ver, Arch arch, Platform platform, CRuntime cRuntime)
 {
+	final switch (cRuntime) with (CRuntime) {
+	case None:
+		ver.overwriteVersionIdentifier("CRuntime_None");
+		break;
+	case MinGW:
+		ver.overwriteVersionIdentifier("CRuntime_All");
+		break;
+	case Glibc:
+		ver.overwriteVersionIdentifier("CRuntime_All");
+		ver.overwriteVersionIdentifier("CRuntime_Glibc");
+		break;
+	case Darwin:
+		ver.overwriteVersionIdentifier("CRuntime_All");
+		break;
+	case Microsoft:
+		ver.overwriteVersionIdentifier("CRuntime_All");
+		ver.overwriteVersionIdentifier("CRuntime_Microsoft");
+		break;
+	}
 	final switch (platform) with (Platform) {
 	case MinGW:
 		ver.overwriteVersionIdentifier("Windows");
 		ver.overwriteVersionIdentifier("MinGW");
-		ver.overwriteVersionIdentifier("CRuntime_All");
 		break;
 	case MSVC:
 		ver.overwriteVersionIdentifier("Windows");
 		ver.overwriteVersionIdentifier("MSVC");
-		ver.overwriteVersionIdentifier("CRuntime_All");
-		ver.overwriteVersionIdentifier("CRuntime_Microsoft");
 		break;
 	case Linux:
 		ver.overwriteVersionIdentifier("Linux");
 		ver.overwriteVersionIdentifier("Posix");
-		ver.overwriteVersionIdentifier("CRuntime_All");
-		ver.overwriteVersionIdentifier("CRuntime_Glibc");
 		break;
 	case OSX:
 		ver.overwriteVersionIdentifier("OSX");
 		ver.overwriteVersionIdentifier("Posix");
-		ver.overwriteVersionIdentifier("CRuntime_All");
 		break;
 	case Metal:
 		ver.overwriteVersionIdentifier("Metal");
-		ver.overwriteVersionIdentifier("CRuntime_None");
 		break;
 	}
 	final switch (arch) with (Arch) {

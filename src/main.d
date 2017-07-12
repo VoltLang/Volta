@@ -226,7 +226,8 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 			settings.arch = parseArch(looper.next());
 			continue;
 		case "--platform":
-			settings.platform = parsePlatform(looper.next());
+			settings.platform = parsePlatform(looper.next(),
+				/*out*/ settings.cRuntime);
 			continue;
 		case "--no-stdlib":
 			settings.noStdLib = true;
@@ -422,12 +423,16 @@ void setDefault(Settings settings)
 	// Only MinGW is supported.
 	version (Windows) {
 		settings.platform = Platform.MinGW;
+		settings.cRuntime = CRuntime.MinGW;
 	} else version (linux) { // D2
 		settings.platform = Platform.Linux;
+		settings.cRuntime = CRuntime.Glibc;
 	} else version (Linux) { // Volt
 		settings.platform = Platform.Linux;
+		settings.cRuntime = CRuntime.Glibc;
 	} else version (OSX) {
 		settings.platform = Platform.OSX;
+		settings.cRuntime = CRuntime.Darwin;
 	} else {
 		static assert(false);
 	}
