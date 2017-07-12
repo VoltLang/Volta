@@ -17,6 +17,36 @@ import ir = volt.ir.ir;
  * Posix on Linux and OSX.
  * Windows on MinGW and MSVC.
  */
+enum CRuntime
+{
+	None,
+	MinGW,
+	Glibc,
+	Darwin,
+	Microsoft,
+}
+
+string cRuntimeToString(CRuntime cRuntime)
+{
+	final switch (cRuntime) with (CRuntime) {
+	case None: return "none";
+	case MinGW: return "mingw";
+	case Glibc: return "glibc";
+	case Darwin: return "darwin";
+	case Microsoft:  return "microsoft";
+	}
+}
+
+/*!
+ * Each of these listed platforms corresponds
+ * to a Version identifier.
+ *
+ * Posix and Windows are not listed here as they
+ * they are available on multiple platforms.
+ *
+ * Posix on Linux and OSX.
+ * Windows on MinGW and MSVC.
+ */
 enum Platform
 {
 	MinGW,
@@ -62,6 +92,7 @@ class TargetInfo
 {
 	Arch arch;
 	Platform platform;
+	CRuntime cRuntime;
 
 	bool isP64;
 	size_t ptrSize;
@@ -115,6 +146,7 @@ public:
 		"MinGW",
 		"Solaris",
 		"FreeBSD",
+		"Standalone",
 		"Emscripten",
 		// Misc
 		"V_P32",

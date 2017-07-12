@@ -161,8 +161,8 @@ public:
 	override void saveToFile(string filename)
 	{
 		auto t = mState.target;
-		auto triple = tripleList[t.platform][t.arch];
-		auto layout = layoutList[t.platform][t.arch];
+		auto triple = getTriple(t);
+		auto layout = getLayout(t);
 		LLVMSetTarget(mState.mod, triple);
 		LLVMSetDataLayout(mState.mod, layout);
 		LLVMWriteBitcodeToFile(mState.mod, filename);
@@ -237,9 +237,9 @@ void linkModules(string output, string[] inputs...)
 
 void writeObjectFile(TargetInfo target, string output, string input)
 {
-	auto arch = archList[target.arch];
-	auto triple = tripleList[target.platform][target.arch];
-	auto layout = layoutList[target.platform][target.arch];
+	auto arch = getArchTarget(target);
+	auto triple = getTriple(target);
+	auto layout = getLayout(target);
 	if (arch is null || triple is null || layout is null) {
 		throw makeArchNotSupported();
 	}
@@ -297,93 +297,81 @@ void writeObjectFile(TargetInfo target, string output, string input)
 /*!
  * Used to select LLVMTarget.
  */
-static string[] archList = [
-	"x86",
-	"x86-64",
-];
+string getArchTarget(TargetInfo target)
+{
+	final switch (target.arch) with (Arch) {
+	case X86: return "x86";
+	case X86_64: return "x86-64";
+	}
+}
 
-static string[][] tripleList = [
-	/*
-	 * The subsystem will controll if llc emits coff or ELF object files.
-	 *
-	 * - i686-mingw32 emits ELF object files.
-	 * - i686-pc-mingw32 emits COFF object files, used with mingw32.
-	 * - i686-w64-mingw32 emits COFF object files, used with mingw64.
-	 *
-	 * These are now translated into:
-	 *
-	 * - i686-pc-windows-gnu - mingw32
-	 * - i686-w64-windows-gnu - mingw64
-	 *
-	 * For linking with MSVC
-	 *
-	 * - x86_64-pc-windows-msvc
-	 */
-	[
-		"i686-w64-windows-gnu",
-		"x86_64-w64-windows-gnu",
-	],
+/*!
+ * Returns the llvm triple string for the given target.
+ */
+string getTriple(TargetInfo target)
+{
+	final switch (target.platform) with (Platform) {
+	case MinGW:
+		final switch (target.arch) with (Arch) {
+		case X86: return "i686-w64-windows-gnu";
+		case X86_64: return "x86_64-w64-windows-gnu";
+		}
+	case Metal:
+		final switch (target.arch) with (Arch) {
+		case X86: return "i686-pc-none-elf";
+		case X86_64: return "x86_64-pc-none-elf";
+		}
+	case MSVC:
+		final switch (target.arch) with (Arch) {
+		case X86: assert(false);
+		case X86_64: return "x86_64-pc-windows-msvc";
+		}
+	case Linux:
+		final switch (target.arch) with (Arch) {
+		case X86: return "i386-pc-linux-gnu";
+		case X86_64: return "x86_64-pc-linux-gnu";
+		}
+	case OSX:
+		final switch (target.arch) with (Arch) {
+		case X86: return "i386-apple-macosx10.9.0";
+		case X86_64: return "x86_64-apple-macosx10.9.0";
+		}
+	}
+}
 
-	/*
-	 * MSVC platform, see above comment.
-	 */
-	[
-		null,
-		"x86_64-pc-windows-msvc",
-	],
-
-	/*
-	 * This is what clang uses for Linux.
-	 */
-	[
-		"i386-pc-linux-gnu",
-		"x86_64-pc-linux-gnu",
-	],
-
-	/*
-	 * This is what clang uses for OSX.
-	 */
-	[
-		"i386-apple-macosx10.9.0",
-		"x86_64-apple-macosx10.9.0",
-	],
-
-	/*
-	 * Bare metal.
-	 */
-	[
-		"i686-pc-none-elf",
-		"x86_64-pc-none-elf",
-	],
-];
-
-static string[][] layoutList = [
-	[ // MinGW
-		layoutWinLinux32,
-		layoutWinLinux64,
-		null,
-	],
-	[ // MSVC
-		null,
-		layoutWinLinux64,
-		null,
-	],
-	[ // Linux
-		layoutWinLinux32,
-		layoutWinLinux64,
-		null,
-	],
-	[ // Windows
-		layoutOSX32,
-		layoutOSX64,
-		null,
-	],
-	[ // Metal
-		layoutMetal32,
-		layoutMetal64,
-		null,
-	],
-];
+/*!
+ * Returns the llvm layout string for the given target.
+ */
+string getLayout(TargetInfo target)
+{
+	final switch (target.platform) with (Platform) {
+	case MinGW:
+		final switch (target.arch) with (Arch) {
+		case X86: return layoutWinLinux32;
+		case X86_64: return layoutWinLinux64;
+		}
+	case Metal:
+		final switch (target.arch) with (Arch) {
+		case X86: return layoutMetal32;
+		case X86_64: return layoutMetal64;
+		}
+	case MSVC:
+		final switch (target.arch) with (Arch) {
+		case X86: assert(false);
+		case X86_64: return layoutWinLinux64;
+		}
+	case Linux:
+		final switch (target.arch) with (Arch) {
+		case X86: return layoutWinLinux32;
+		case X86_64: return layoutWinLinux64;
+		}
+	case OSX:
+		final switch (target.arch) with (Arch) {
+		case X86: return layoutOSX32;
+		case X86_64: return layoutOSX64;
+		}
+	}
+}
 
 /*!
  * Layout strings grabbed from clang.

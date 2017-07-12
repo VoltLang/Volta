@@ -35,6 +35,7 @@ public:
 
 	Platform platform;
 	Arch arch;
+	CRuntime cRuntime;
 
 	string identStr; //!< Compiler identifier string.
 
@@ -101,7 +102,13 @@ public:
 		final switch (platform) with (Platform) {
 		case MinGW: platformStr = "mingw"; break;
 		case MSVC: platformStr = "msvc"; break;
-		case Linux: platformStr = "linux"; break;
+		case Linux:
+			final switch (cRuntime) with (CRuntime) {
+			case None: platformStr = "linux-none"; break;
+			case Glibc: platformStr = "linux-glibc"; break;
+			case CRuntime.MinGW, Microsoft, Darwin: assert(false);
+			}
+			break;
 		case OSX: platformStr = "osx"; break;
 		case Metal: platformStr = "metal"; break;
 		}
@@ -424,18 +431,26 @@ Arch parseArch(string a)
 	}
 }
 
-Platform parsePlatform(string p)
+Platform parsePlatform(string p, out CRuntime cRuntime)
 {
 	switch (toLower(p)) {
 	case "metal":
+		cRuntime = CRuntime.None;
 		return Platform.Metal;
 	case "mingw":
+		cRuntime = CRuntime.MinGW;
 		return Platform.MinGW;
 	case "msvc":
+		cRuntime = CRuntime.Microsoft;
 		return Platform.MSVC;
-	case "linux":
+	case "linux", "linux-glibc":
+		cRuntime = CRuntime.Glibc;
+		return Platform.Linux;
+	case "linux-none":
+		cRuntime = CRuntime.None;
 		return Platform.Linux;
 	case "osx":
+		cRuntime = CRuntime.Darwin;
 		return Platform.OSX;
 	default:
 		throw makeUnknownPlatform(p);
