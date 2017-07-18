@@ -12,6 +12,11 @@ extern(C) fn vrt_monotonic_ticks_per_second() i64
 	return ticksPerSecond;
 }
 
+extern(C) fn vrt_monotonic_ticks_at_init() i64
+{
+	return ticksAtInit;
+}
+
 extern(C) fn vrt_monotonic_init()
 {
 	version (Windows) {
@@ -21,6 +26,7 @@ extern(C) fn vrt_monotonic_init()
 	} else version (Posix) {
 		ticksPerSecond = posixTicksPerSecond(CLOCK_MONOTONIC);
 	}
+	ticksAtInit = vrt_monotonic_ticks();
 }
 
 extern(C) fn vrt_monotonic_ticks() i64
@@ -34,6 +40,7 @@ extern(C) fn vrt_monotonic_ticks() i64
 	}
 }
 
+global ticksAtInit: i64;
 global ticksPerSecond: i64;
 
 version (Windows) {
@@ -125,11 +132,6 @@ version (Windows) {
 		return convClockFreq(
 			ts.tv_sec * 1_000_000_000L + ts.tv_nsec,
 			1_000_000_000L, ticksPerSecond);
-	}
-
-	extern(C) fn vrt_monotonic_ticks() i64
-	{
-		return posixTicks(CLOCK_MONOTONIC);
 	}
 
 }

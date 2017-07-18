@@ -22,6 +22,7 @@ fn vrt_eh_personality_v0(...) i32;
  */
 fn vrt_monotonic_init();
 fn vrt_monotonic_ticks() i64;
+fn vrt_monotonic_ticks_at_init() i64;
 fn vrt_monotonic_ticks_per_second() i64;
 
 /*
