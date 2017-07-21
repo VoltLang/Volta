@@ -9,4 +9,4 @@ src/vrt/os/eh.asm
 --if-linux
 -lrt
 --if-msvc
--ladvapi32.lib
+-lAdvAPI32.Lib
