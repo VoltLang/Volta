@@ -3362,21 +3362,51 @@ void extypeSwitchStatement(Context ctx, ref ir.Node n)
 		ctx.pushWith(wexp);
 	}
 
+	auto arraySwitch = isArray(conditionType);
+	auto stringSwitch = isString(conditionType);
+	bool[string] stringCases;
+
+	/* Check that we don't double up on array cases.
+	 * The backend handles the integer case, but it
+	 * can't see if we've folded them into the same
+	 * hash.
+	 */
+	void caseDoubleUpCheck(ir.Exp exp, ir.SwitchCase _case)
+	{
+		if (!arraySwitch) {
+			return;
+		}
+		auto constant = exp.toConstantChecked();
+		if (constant is null) {
+			return;
+		}
+		if (stringSwitch) {
+			auto ptr = constant._string in stringCases;
+			if (ptr !is null) {
+				throw makeSwitchDuplicateCase(_case);
+			}
+			stringCases[constant._string] = true;
+		}
+	}
+
 	foreach (_case; ss.cases) {
 		if (_case.firstExp !is null) {
+			caseDoubleUpCheck(_case.firstExp, _case);
 			extype(ctx, _case.firstExp, Parent.NA);
 		}
 		if (_case.secondExp !is null) {
+			// Arrays and strings invalid for arrays anyway, no need to double up check.
 			extype(ctx, _case.secondExp, Parent.NA);
 		}
 		foreach (ref exp; _case.exps) {
+			caseDoubleUpCheck(exp, _case);
 			extype(ctx, exp, Parent.NA);
 		}
 		extypeBlockStatement(ctx, _case.statements);
 	}
 
 	ir.Variable condVar;
-	if (isArray(conditionType)) {
+	if (arraySwitch) {
 		auto asArray = cast(ir.ArrayType) conditionType;
 		panicAssert(ss, asArray !is null);
 
