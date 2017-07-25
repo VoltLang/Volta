@@ -239,6 +239,9 @@ ir.Exp lowerStructOrArrayAACast(ref in Location loc, LanguagePass lp, ir.Module 
 	auto at = t.toArrayTypeChecked();
 	if (at !is null) {
 		base = at.base;
+		if (isVoid(base)) {
+			base = buildVoidPtr(loc);
+		}
 	}
 	auto concatfn = getArrayAppendFunction(loc, lp, thisModule,
 	                                       buildArrayTypeSmart(loc, base),
