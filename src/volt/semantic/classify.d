@@ -1390,3 +1390,8 @@ string overloadIndexName()
 {
 	return "opIndex";
 }
+
+string overloadUnaryMinusName()
+{
+	return "opNeg";
+}

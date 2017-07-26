@@ -1748,6 +1748,10 @@ ir.Type extypeUnary(Context ctx, ref ir.Exp exp, Parent parent)
 		extype(ctx, unary.dupEnd, Parent.NA);
 	}
 
+	if (auto ret = opOverloadRewriteUnary(ctx, unary, exp)) {
+		return ret;
+	}
+
 	final switch (unary.op) with (ir.Unary.Op) {
 	case Cast:
 		extypeUnaryCastTo(ctx, exp, unary);
@@ -2042,6 +2046,21 @@ ir.Type opOverloadRewriteIndex(Context ctx, ir.Postfix pfix, ref ir.Exp exp)
 		return null;
 	}
 	// TODO
+	return func.type.ret;
+}
+
+/*! If this unary is a Minus, and it's operating on an aggregate
+ *  that has opNeg, rewrite it.
+ */
+ir.Type opOverloadRewriteUnary(Context ctx, ir.Unary unary, ref ir.Exp exp)
+{
+	if (unary.op != ir.Unary.Op.Minus) {
+		return null;
+	}
+	auto func = rewriteOperator(ctx, exp, overloadUnaryMinusName(), unary.value, null);
+	if (func is null) {
+		return null;
+	}
 	return func.type.ret;
 }
 
