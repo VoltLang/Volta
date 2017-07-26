@@ -3366,6 +3366,7 @@ void extypeSwitchStatement(Context ctx, ref ir.Node n)
 	auto arraySwitch = isArray(conditionType);
 	auto stringSwitch = isString(conditionType);
 	bool[string] stringCases;
+	ir.Exp[] caseArrayCases;
 
 	/* Check that we don't double up on array cases.
 	 * The backend handles the integer case, but it
@@ -3377,16 +3378,27 @@ void extypeSwitchStatement(Context ctx, ref ir.Node n)
 		if (!arraySwitch) {
 			return;
 		}
-		auto constant = exp.toConstantChecked();
-		if (constant is null) {
-			return;
-		}
 		if (stringSwitch) {
+			auto constant = exp.toConstantChecked();
+			if (constant is null) {
+				return;
+			}
 			auto ptr = constant._string in stringCases;
 			if (ptr !is null) {
 				throw makeSwitchDuplicateCase(_case);
 			}
 			stringCases[constant._string] = true;
+		} else {
+			if (exp.nodeType != ir.NodeType.ArrayLiteral) {
+				return;
+			}
+			extypeArrayLiteral(ctx, exp, Parent.NA);
+			foreach (arrayCase; caseArrayCases) {
+				if (areEqualConstantArrays(arrayCase, exp, ctx.lp.target)) {
+					throw makeSwitchDuplicateCase(_case);
+				}
+			}
+			caseArrayCases ~= exp;
 		}
 	}
 

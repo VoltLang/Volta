@@ -3,6 +3,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.evaluate;
 
+import watt.io.std;
 import watt.text.format : format;
 
 import ir = volt.ir.ir;
@@ -30,6 +31,49 @@ ir.Constant fold(ref ir.Exp exp, TargetInfo target)
 	bool needCopy;
 	auto constant = fold(exp, needCopy, target);
 	return (needCopy && constant !is null) ? cast(ir.Constant)copyExp(constant) : constant;
+}
+
+/*! Given two expressions, returns true if they are two constant array literals that are equal.
+ */
+bool areEqualConstantArrays(ir.Exp l, ir.Exp r, TargetInfo target)
+{
+	auto ltype = realType(getExpType(l));
+	auto rtype = realType(getExpType(r));
+	if (!typesEqual(ltype, rtype) || ltype.nodeType != ir.NodeType.ArrayType) {
+		return false;
+	}
+	auto lliteral = cast(ir.ArrayLiteral)l;
+	auto rliteral = cast(ir.ArrayLiteral)r;
+	if (lliteral is null || rliteral is null || lliteral.exps.length != rliteral.exps.length) {
+		return false;
+	}
+
+	for (size_t i = 0; i < lliteral.exps.length; ++i) {
+		auto lelement = lliteral.exps[i];
+		auto relement = rliteral.exps[i];
+		auto letype = realType(getExpType(lelement));
+		auto retype = realType(getExpType(relement));
+		if (!typesEqual(letype, retype)) {
+			return false;
+		}
+		if (letype.nodeType == ir.NodeType.ArrayType) {
+			if (!areEqualConstantArrays(lelement, relement, target)) {
+				return false;
+			}
+		} else {
+			auto lc = fold(lelement, target);
+			auto rc = fold(relement, target);
+			if (lc is null || rc is null || !typesEqual(lc.type, rc.type)) {
+				return false;
+			}
+			auto equalc = foldBinOpEqual(lc, rc, target);
+			if (equalc is null || !equalc.u._bool) {
+				return false;
+			}
+		}
+	}
+
+	return true;
 }
 
 ir.Constant fold(ref ir.Exp exp, out bool needCopy, TargetInfo target)
