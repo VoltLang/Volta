@@ -552,7 +552,7 @@ ir.Type getPostfixIndexType(ir.Postfix postfix)
 		if (named is null) {
 			throw panic(postfix.loc, "bad postfix operation in typer.");
 		}
-		auto store = named.myScope.getStore(overloadIndexName());
+		auto store = named.myScope.getStore(overloadPostfixName(postfix.op));
 		if (store is null || store.functions.length != 1) {
 			throw panic(postfix.loc, "bad postfix operation in typer.");
 		}

@@ -1386,9 +1386,13 @@ string overloadName(ir.BinOp.Op op)
 	}
 }
 
-string overloadIndexName()
+string overloadPostfixName(ir.Postfix.Op op)
 {
-	return "opIndex";
+	switch (op) with (ir.Postfix.Op) {
+	case Index: return "opIndex";
+	case Slice: return "opSlice";
+	default: return "";
+	}
 }
 
 string overloadUnaryMinusName()

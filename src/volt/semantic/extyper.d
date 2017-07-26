@@ -832,7 +832,7 @@ ir.Type extypePostfixLeave(Context ctx, ref ir.Exp exp, ir.Postfix postfix,
 		ctx.leave(postfix);
 	}
 
-	if (auto ret = opOverloadRewriteIndex(ctx, postfix, exp)) {
+	if (auto ret = opOverloadRewritePostfix(ctx, postfix, exp)) {
 		return ret;
 	}
 
@@ -2033,19 +2033,26 @@ ir.Type opOverloadRewrite(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 }
 
 /*!
- * If this postfix operates on an aggregate with an index
+ * If this postfix operates on an aggregate with a postfix
  * operator overload, rewrite it.
  */
-ir.Type opOverloadRewriteIndex(Context ctx, ir.Postfix pfix, ref ir.Exp exp)
+ir.Type opOverloadRewritePostfix(Context ctx, ir.Postfix pfix, ref ir.Exp exp)
 {
+	auto name = overloadPostfixName(pfix.op);
+	if (pfix.op == ir.Postfix.Op.Slice && pfix.arguments.length == 2) {
+		auto func = rewriteOperator(ctx, exp, name, pfix.child, pfix.arguments);
+		if (func is null) {
+			return null;
+		}
+		return func.type.ret;
+	}
 	if (pfix.op != ir.Postfix.Op.Index || pfix.arguments.length != 1) {
 		return null;
 	}
-	auto func = rewriteOperator(ctx, exp, overloadIndexName(), pfix.child, [pfix.arguments[0]]);
+	auto func = rewriteOperator(ctx, exp, name, pfix.child, [pfix.arguments[0]]);
 	if (func is null) {
 		return null;
 	}
-	// TODO
 	return func.type.ret;
 }
 
