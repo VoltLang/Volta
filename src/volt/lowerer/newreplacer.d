@@ -98,7 +98,7 @@ public:
 		auto asClass = cast(ir.Class) rtype;
 
 		if (asArray !is null && unary.argumentList.length > 0) {
-			if (isIntegral(getExpType(unary.argumentList[0]))) {
+			if (isIntegral(realType(getExpType(unary.argumentList[0])))) {
 				return handleArrayNew(exp, unary, asArray);
 			}
 			return handleArrayCopy(exp, unary, asArray);

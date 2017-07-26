@@ -3,6 +3,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.extyper;
 
+import watt.io.std;
 import watt.conv : toString;
 import watt.text.format : format;
 import watt.text.string : replace;
@@ -1611,10 +1612,10 @@ void extypeUnaryNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 		if (_unary.argumentList.length == 0) {
 			throw makeExpected(_unary, "argument(s)");
 		}
-		bool isArraySize = isIntegral(getExpType(_unary.argumentList[0]));
+		auto type = realType(getExpType(_unary.argumentList[0]));
+		bool isArraySize = isIntegral(type);
 		foreach (ref arg; _unary.argumentList) {
-			auto type = getExpType(arg);
-			if (isIntegral(type)) {
+			if (isIntegral(realType(getExpType(arg)))) {
 				if (isArraySize) {
 					// multi/one-dimensional array:
 					//   new type[](1)
@@ -1629,7 +1630,7 @@ void extypeUnaryNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 			// it's a concatenation or copy:
 			//   new type[](array1)
 			//   new type[](array1, array2, ...)
-			auto asArray = cast(ir.ArrayType) type;
+			auto asArray = cast(ir.ArrayType)type;
 			if (asArray is null) {
 				throw makeExpected(arg, "array");
 			}
