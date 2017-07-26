@@ -2556,6 +2556,11 @@ ir.Type extypeConstant(Context ctx, ref ir.Exp exp, Parent parent)
 		// Rewrite $ to (arrayName.length).
 		exp = buildArrayLength(loc, ctx.lp.target, copyExp(ctx.lastIndexChild));
 
+		auto func = rewriteOperator(ctx, exp, overloadDollarName(), copyExp(ctx.lastIndexChild), null);
+		if (func !is null) {
+			return func.type.ret;
+		}
+
 		// The parser sets the wrong type, correct it.
 		constant.type = buildSizeT(constant.loc, ctx.lp.target);
 	}

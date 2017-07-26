@@ -1395,3 +1395,8 @@ string overloadUnaryMinusName()
 {
 	return "opNeg";
 }
+
+string overloadDollarName()
+{
+	return "opDollar";
+}
