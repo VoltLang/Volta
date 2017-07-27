@@ -57,7 +57,7 @@ import volt.semantic.overload;
  */
 void lowerAAInsert(ref in Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope current,
 		ir.StatementExp statExp, ir.AAType aa, ir.Variable var, ir.Exp key, ir.Exp value,
-		bool buildif=true, bool aaIsPointer=true) {
+		LlvmLowerer lowerer, bool buildif=true, bool aaIsPointer=true) {
 	auto aaNewFn = lp.aaNew;
 
 	ir.Function aaInsertFn;
@@ -96,7 +96,7 @@ void lowerAAInsert(ref in Location loc, LanguagePass lp, ir.Module thisModule, i
 	auto call = buildExpStat(loc, statExp,
 		buildCall(loc, aaInsertFn, [
 			aaIsPointer ? buildDeref(loc, varExp) : varExp,
-			lowerAAKeyCast(loc, lp, thisModule, current, key, aa),
+			lowerAAKeyCast(loc, lp, thisModule, current, key, aa, lowerer),
 			buildCastToVoidPtr(loc, buildAddrOf(value))
 		], aaInsertFn.name)
 	);
@@ -117,7 +117,8 @@ void lowerAAInsert(ref in Location loc, LanguagePass lp, ir.Module thisModule, i
  *   store: A reference to a Variable of AA.value type, to hold the result of the lookup.
  */
 void lowerAALookup(ref in Location loc, LanguagePass lp, ir.Module thisModule, ir.Scope current,
-		ir.StatementExp statExp, ir.AAType aa, ir.Variable var, ir.Exp key, ir.Exp store) {
+		ir.StatementExp statExp, ir.AAType aa, ir.Variable var, ir.Exp key, ir.Exp store,
+		LlvmLowerer lowerer) {
 	ir.Function inAAFn;
 	if (aa.key.nodeType == ir.NodeType.PrimitiveType) {
 		inAAFn = lp.aaInPrimitive;
@@ -137,7 +138,7 @@ void lowerAALookup(ref in Location loc, LanguagePass lp, ir.Module thisModule, i
 		buildBinOp(loc, ir.BinOp.Op.Equal,
 			buildCall(loc, inAAFn, [
 				buildDeref(loc, var),
-				lowerAAKeyCast(loc, lp, thisModule, current, key, aa),
+				lowerAAKeyCast(loc, lp, thisModule, current, key, aa, lowerer),
 				buildCastToVoidPtr(loc,
 					buildAddrOf(loc, store)
 				)
@@ -162,19 +163,19 @@ void lowerAALookup(ref in Location loc, LanguagePass lp, ir.Module thisModule, i
  * Returns: An expression casting the key.
  */
 ir.Exp lowerAAKeyCast(ref in Location loc, LanguagePass lp, ir.Module thisModule,
-                      ir.Scope current, ir.Exp key, ir.AAType aa)
+                      ir.Scope current, ir.Exp key, ir.AAType aa, LlvmLowerer lowerer)
 {
-	return lowerAACast(loc, lp, thisModule, current, key, aa.key);
+	return lowerAACast(loc, lp, thisModule, current, key, aa.key, lowerer);
 }
 
 ir.Exp lowerAAValueCast(ref in Location loc, LanguagePass lp, ir.Module thisModule,
-                      ir.Scope current, ir.Exp key, ir.AAType aa)
+                      ir.Scope current, ir.Exp key, ir.AAType aa, LlvmLowerer lowerer)
 {
-	return lowerAACast(loc, lp, thisModule, current, key, aa.value);
+	return lowerAACast(loc, lp, thisModule, current, key, aa.value, lowerer);
 }
 
 ir.Exp lowerAACast(ref in Location loc, LanguagePass lp, ir.Module thisModule,
-                      ir.Scope current, ir.Exp key, ir.Type t)
+                      ir.Scope current, ir.Exp key, ir.Type t, LlvmLowerer lowerer)
 {
 	if (t.nodeType == ir.NodeType.PrimitiveType) {
 		auto prim = cast(ir.PrimitiveType)t;
@@ -191,7 +192,7 @@ ir.Exp lowerAACast(ref in Location loc, LanguagePass lp, ir.Module thisModule,
 
 		key = buildCastSmart(loc, buildUlong(loc), key);
 	} else {
-		key = lowerStructOrArrayAACast(loc, lp, thisModule, current, key, t);
+		key = lowerStructOrArrayAACast(loc, lp, thisModule, current, key, t, lowerer);
 	}
 
 	return key;
@@ -227,7 +228,7 @@ ir.Exp lowerAggregateAACast(ref in Location loc, LanguagePass lp, ir.Module this
  *   t: The type of the key or value
  */
 ir.Exp lowerStructOrArrayAACast(ref in Location loc, LanguagePass lp, ir.Module thisModule,
-                            ir.Scope current, ir.Exp key, ir.Type t)
+                            ir.Scope current, ir.Exp key, ir.Type t, LlvmLowerer lowerer)
 {
 	if (t.nodeType != ir.NodeType.ArrayType) {
 		auto st = cast(ir.Aggregate)realType(t);
@@ -235,120 +236,15 @@ ir.Exp lowerStructOrArrayAACast(ref in Location loc, LanguagePass lp, ir.Module 
 		return lowerAggregateAACast(loc, lp, thisModule, current, key, st);
 	}
 
-	ir.Type base = buildUlong(loc);
-	auto at = t.toArrayTypeChecked();
-	if (at !is null) {
-		base = at.base;
-		if (isVoid(base)) {
-			base = buildVoidPtr(loc);
-		}
-	}
-	auto concatfn = getArrayAppendFunction(loc, lp, thisModule,
-	                                       buildArrayTypeSmart(loc, base),
-	                                       base, false);
-	auto keysfn = lp.aaGetKeys;
-	auto valuesfn = lp.aaGetValues;
+	// Duplicate the array.
+	auto beginning = buildConstantSizeT(loc, lp.target, 0);
+	ir.Exp end = buildArrayLength(loc, lp.target, copyExp(key));
+	ir.Exp dup = buildArrayDup(loc, t, [copyExp(key), beginning, end]);
 
-	// ulong[] array;
-	auto atype = buildArrayTypeSmart(loc, base);
-	auto sexp = buildStatementExp(loc);
-	auto var = buildVariableSmart(loc, copyTypeSmart(loc, atype),
-	                              ir.Variable.Storage.Function, "array");
-	sexp.statements ~= var;
-
-	ir.ExpReference eref(ir.Variable v)
-	{
-		return buildExpReference(v.loc, v, v.name);
-	}
-
-	void addElement(ir.Exp e, ref ir.Node[] statements)
-	{
-		auto call = buildCall(loc, concatfn, [eref(var), e], concatfn.name);
-		statements ~= buildExpStat(loc, buildAssign(loc, eref(var), call));
-	}
-
-	// Filled in with gatherAggregate, as DMD won't look forward for inline functions.
-	void delegate(ir.Aggregate) aggdg;
-
-	void gatherType(ir.Type t, ir.Exp e, ref ir.Node[] statements)
-	{
-		switch (t.nodeType) {
-		case ir.NodeType.ArrayType:
-			auto atype = cast(ir.ArrayType)t;
-			ir.ForStatement forStatement;
-			ir.Variable index;
-			buildForStatement(loc, lp.target, current, buildArrayLength(loc, lp.target, e), forStatement, index);
-			gatherType(realType(atype.base), buildIndex(loc, e, eref(index)),
-			           forStatement.block.statements);
-			sexp.statements ~= forStatement;
-			break;
-		case ir.NodeType.Struct:
-		case ir.NodeType.Union:
-			auto agg = cast(ir.Aggregate)t;
-			aggdg(agg);
-			break;
-		case ir.NodeType.StorageType:
-			auto stype = cast(ir.StorageType)t;
-			gatherType(stype.base, e, statements);
-			break;
-		case ir.NodeType.PointerType:
-		case ir.NodeType.PrimitiveType:
-		case ir.NodeType.Class:
-		case ir.NodeType.AAType:
-			addElement(buildCastSmart(loc, base, e), statements);
-			break;
-		default:
-			throw panicUnhandled(t, format("aa aggregate key type '%s'", t.nodeType));
-		}
-	}
-
-	void gatherAggregate(ir.Aggregate agg)
-	{
-		foreach (node; agg.members.nodes) {
-			auto var = cast(ir.Variable) node;
-			if (var is null) {
-				continue;
-			}
-			if (var.name == "") {
-				continue;
-			}
-			auto store = lookupInGivenScopeOnly(lp, agg.myScope, loc, var.name);
-			if (store is null) {
-				continue;
-			}
-			auto rtype = realType(var.type);
-			gatherType(rtype, buildAccessExp(loc, copyExp(key), var), sexp.statements);
-		}
-	}
-
-	version (Volt) {
-		aggdg = cast(typeof(aggdg))gatherAggregate;
-	} else {
-		aggdg = &gatherAggregate;
-	}
-
-	gatherType(realType(t), key, sexp.statements);
-
-	// ubyte[] barray;
-	auto oarray = buildArrayType(loc, buildUbyte(loc));
-	auto outvar = buildVariableSmart(loc, oarray, ir.Variable.Storage.Function, "barray");
-	sexp.statements ~= outvar;
-
-	// barray.ptr = cast(ubyte*) array.ptr;
-	auto ptrcast = buildCastSmart(loc, buildPtrSmart(loc, buildUbyte(loc)),
-	                              buildArrayPtr(loc, atype.base, eref(var)));
-	auto ptrass = buildAssign(loc, buildArrayPtr(loc, oarray.base, eref(outvar)), ptrcast);
-	buildExpStat(loc, sexp, ptrass);
-
-	// barray.length = exps.length * typeid(ulong).size;
-	auto lenaccess = buildArrayLength(loc, lp.target, eref(outvar));
-	auto mul = buildBinOp(loc, ir.BinOp.Op.Mul, buildArrayLength(loc, lp.target, eref(var)),
-	                      buildConstantSizeT(loc, lp.target, size(lp.target, base)));
-	auto lenass = buildAssign(loc, lenaccess, mul);
-	buildExpStat(loc, sexp, lenass);
-
-	sexp.exp = eref(outvar);
-	return buildCastSmart(loc, buildArrayType(loc, buildVoid(loc)), sexp);
+	// Cast the duplicate to void[].
+	ir.Exp cexp = buildCastSmart(loc, buildArrayType(loc, buildVoid(loc)), dup);
+	acceptExp(cexp, lowerer);
+	return cexp;
 }
 
 /*!
@@ -477,11 +373,11 @@ void lowerStructLiteral(ir.Scope current, ref ir.Exp exp, ir.StructLiteral liter
  *   postfix: The postfix expression to potentially lower.
  */
 void lowerIndex(LanguagePass lp, ir.Scope current, ir.Module thisModule,
-                ref ir.Exp exp, ir.Postfix postfix)
+                ref ir.Exp exp, ir.Postfix postfix, LlvmLowerer lowerer)
 {
 	auto type = getExpType(postfix.child);
 	if (type.nodeType == ir.NodeType.AAType) {
-		lowerIndexAA(lp, current, thisModule, exp, postfix, cast(ir.AAType)type);
+		lowerIndexAA(lp, current, thisModule, exp, postfix, cast(ir.AAType)type, lowerer);
 	}
 	// LLVM appears to have some issues with small indices.
 	// If this is being indexed by a small type, cast it up.
@@ -507,7 +403,7 @@ void lowerIndex(LanguagePass lp, ir.Scope current, ir.Module thisModule,
  *   aa: The type of the AA being operated on.
  */
 void lowerIndexAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
-                  ref ir.Exp exp, ir.Postfix postfix, ir.AAType aa)
+                  ref ir.Exp exp, ir.Postfix postfix, ir.AAType aa, LlvmLowerer lowerer)
 {
 	auto loc = postfix.loc;
 	auto statExp = buildStatementExp(loc);
@@ -525,7 +421,8 @@ void lowerIndexAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 
 	lowerAALookup(loc, lp, thisModule, current, statExp, aa, var,
 		buildExpReference(loc, key, key.name),
-		buildExpReference(loc, store, store.name)
+		buildExpReference(loc, store, store.name),
+		lowerer
 	);
 
 	statExp.exp = buildExpReference(loc, store);
@@ -594,7 +491,8 @@ void lowerAssignArray(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp,
  *   aa: The AA type that the expression is assigning to.
  */
 void lowerAssignAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
-                   ref ir.Exp exp, ir.BinOp binOp, ir.Postfix asPostfix, ir.AAType aa)
+                   ref ir.Exp exp, ir.BinOp binOp, ir.Postfix asPostfix, ir.AAType aa,
+				   LlvmLowerer lowerer)
 {
 	auto loc = binOp.loc;
 	assert(asPostfix.op == ir.Postfix.Op.Index);
@@ -622,7 +520,8 @@ void lowerAssignAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 
 	lowerAAInsert(loc, lp, thisModule, current, statExp, aa, var,
 			buildExpReference(loc, key, key.name),
-			buildExpReference(loc, value, value.name)
+			buildExpReference(loc, value, value.name),
+			lowerer
 	);
 
 	statExp.exp = buildExpReference(loc, value, value.name);
@@ -642,7 +541,8 @@ void lowerAssignAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
  *   aa: The AA type that the expression is assigning to.
  */
 void lowerOpAssignAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
-                     ref ir.Exp exp, ir.BinOp binOp, ir.Postfix asPostfix, ir.AAType aa)
+                     ref ir.Exp exp, ir.BinOp binOp, ir.Postfix asPostfix, ir.AAType aa,
+					 LlvmLowerer lowerer)
 {
 	auto loc = binOp.loc;
 	assert(asPostfix.op == ir.Postfix.Op.Index);
@@ -667,7 +567,8 @@ void lowerOpAssignAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 
 	lowerAALookup(loc, lp, thisModule, current, statExp, aa, var,
 		buildExpReference(loc, key, key.name),
-		buildExpReference(loc, store, store.name)
+		buildExpReference(loc, store, store.name),
+		lowerer
 	);
 
 	buildExpStat(loc, statExp,
@@ -680,6 +581,7 @@ void lowerOpAssignAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 	lowerAAInsert(loc, lp, thisModule, current, statExp, aa, var,
 		buildExpReference(loc, key, key.name),
 		buildExpReference(loc, store, store.name),
+		lowerer,
 		false
 	);
 
@@ -1275,7 +1177,7 @@ void lowerArrayLiteral(LanguagePass lp, ir.Scope current,
  *   exp: A reference to the relevant expression.
  *   builtin: The BuiltinExp to lower.
  */
-void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinExp builtin)
+void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinExp builtin, LlvmLowerer lowerer)
 {
 	auto loc = exp.loc;
 	final switch (builtin.kind) with (ir.BuiltinExp.Kind) {
@@ -1358,7 +1260,7 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 			rtFn = lp.aaInBinopPtr;
 		}
 		builtin.children[1] = lowerAAKeyCast(loc, lp, getModuleFromScope(loc, current),
-			current, builtin.children[1], aa);
+			current, builtin.children[1], aa, lowerer);
 		auto ptr = buildVariableSmart(loc, buildPtrSmart(loc, aa.value), ir.Variable.Storage.Function,
 			"ptr");
 		auto val = buildVariableSmart(loc, aa.value, ir.Variable.Storage.Function, "val");
@@ -1388,7 +1290,7 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 		}
 		ir.Function rtfn;
 		builtin.children[1] = lowerAAKeyCast(loc, lp, getModuleFromScope(loc, current),
-			current, builtin.children[1], aa);
+			current, builtin.children[1], aa, lowerer);
 		if (aa.key.nodeType == ir.NodeType.PrimitiveType) {
 			rtfn = lp.aaDeletePrimitive;
 		} else if (aa.key.nodeType == ir.NodeType.ArrayType) {
@@ -1409,7 +1311,7 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 		bool keyIsArray = isArray(realType(aa.key));
 		ir.Function rtfn;
 		builtin.children[1] = lowerAAKeyCast(loc, lp, getModuleFromScope(loc, current),
-			current, builtin.children[1], aa);
+			current, builtin.children[1], aa, lowerer);
 		if (aa.key.nodeType == ir.NodeType.PrimitiveType) {
 			rtfn = lp.aaInBinopPrimitive;
 		} else if (aa.key.nodeType == ir.NodeType.ArrayType) {
@@ -1551,11 +1453,12 @@ void lowerExpReference(ir.Function[] functionStack, ref ir.Exp exp, ir.ExpRefere
  *   postfix: The Postfix to potentially lower.
  */
 void lowerPostfix(LanguagePass lp, ir.Scope current, ir.Module thisModule,
-                  ref ir.Exp exp, ir.Function parentFunc, ir.Postfix postfix)
+                  ref ir.Exp exp, ir.Function parentFunc, ir.Postfix postfix,
+				  LlvmLowerer lowerer)
 {
 	switch(postfix.op) {
 	case ir.Postfix.Op.Index:
-		lowerIndex(lp, current, thisModule, exp, postfix);
+		lowerIndex(lp, current, thisModule, exp, postfix, lowerer);
 		break;
 	default:
 		break;
@@ -1707,7 +1610,7 @@ void lowerGlobalAALiteral(LanguagePass lp, ir.Scope current, ir.Module mod, ir.V
  *   assocArray: The AA literal to lower.
  */
 void lowerAA(LanguagePass lp, ir.Scope current, ir.Module thisModule, ref ir.Exp exp,
-             ir.AssocArray assocArray)
+             ir.AssocArray assocArray, LlvmLowerer lowerer)
 {
 	auto loc = exp.loc;
 	auto aa = cast(ir.AAType)getExpType(exp);
@@ -1743,7 +1646,7 @@ void lowerAA(LanguagePass lp, ir.Scope current, ir.Module thisModule, ref ir.Exp
 
 		lowerAAInsert(loc, lp, thisModule, current, statExp,
 			 aa, var, buildExpReference(loc, key), buildExpReference(loc, value),
-			 false, false
+			 lowerer, false, false
 		);
 	}
 
@@ -1918,10 +1821,10 @@ public:
 
 				if (binOp.op == ir.BinOp.Op.Assign) {
 					lowerAssignAA(lp, current, thisModule, exp, binOp, asPostfix,
-								  cast(ir.AAType)leftType);
+								  cast(ir.AAType)leftType, this);
 				} else {
 					lowerOpAssignAA(lp, current, thisModule, exp, binOp, asPostfix,
-									cast(ir.AAType)leftType);
+									cast(ir.AAType)leftType, this);
 				}
 				return ContinueParent;
 			}
@@ -1969,7 +1872,7 @@ public:
 
 	override Status enter(ref ir.Exp exp, ir.BuiltinExp builtin)
 	{
-		lowerBuiltin(lp, current, exp, builtin);
+		lowerBuiltin(lp, current, exp, builtin, this);
 		return Continue;
 	}
 
@@ -1983,7 +1886,7 @@ public:
 
 	override Status leave(ref ir.Exp exp, ir.AssocArray assocArray)
 	{
-		lowerAA(lp, current, thisModule, exp, assocArray);
+		lowerAA(lp, current, thisModule, exp, assocArray, this);
 		return Continue;
 	}
 
@@ -1999,8 +1902,9 @@ public:
 
 	override Status leave(ref ir.Exp exp, ir.Postfix postfix)
 	{
+		auto oldExp = exp;
 		lowerPostfix(lp, current, thisModule, exp,
-			functionStack.length == 0 ? null : functionStack[$-1], postfix);
+			functionStack.length == 0 ? null : functionStack[$-1], postfix, this);
 		return Continue;
 	}
 
@@ -2010,7 +1914,7 @@ public:
 		auto pfix = cast(ir.Postfix)exp;
 		if (pfix !is null) {
 			lowerPostfix(lp, current, thisModule, exp,
-				functionStack.length == 0 ? null : functionStack[$-1], pfix);
+				functionStack.length == 0 ? null : functionStack[$-1], pfix, this);
 		}
 		return Continue;
 	}
