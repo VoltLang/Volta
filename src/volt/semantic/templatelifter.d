@@ -268,11 +268,11 @@ public:
 		foreach (i, ref ctor; c.userConstructors) {
 			ctor = lift(old.userConstructors[i]);
 		}
-		if (old.vtableStruct !is null) {
-			c.vtableStruct = lift(old.vtableStruct);
-		}
 		if (old.vtableVariable !is null) {
 			c.vtableVariable = lift(old.vtableVariable);
+		}
+		if (old.classinfoVariable !is null) {
+			c.classinfoVariable = lift(old.classinfoVariable);
 		}
 		foreach (i, ref var; c.ifaceVariables) {
 			var = lift(old.ifaceVariables[i]);

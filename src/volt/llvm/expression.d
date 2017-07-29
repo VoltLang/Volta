@@ -15,6 +15,7 @@ static import volt.ir.util;
 import volt.token.location : Location;
 import volt.errors;
 import ir = volt.ir.ir;
+import volt.ir.util;
 
 import volt.llvm.common;
 import volt.llvm.interfaces;
@@ -1337,6 +1338,7 @@ void handleBuiltinExp(State state, ir.BuiltinExp inbuilt, Value result)
 			throw panic(inbuilt.loc, "bad array ptr built-in.");
 		}
 		break;
+	case BuildVtable:
 	case Invalid:
 	case ArrayDup:
 	case AALength:
@@ -1428,9 +1430,10 @@ void getCreateDelegateValues(State state, ir.Postfix postfix, Value instance, Va
 
 	// See if the function should be gotten from the vtable.
 	int index = -1;
+	ir.Function asFunction;
 	if (postfix.memberFunction !is null &&
 	    !postfix.supressVtableLookup) {
-		auto asFunction = cast(ir.Function) postfix.memberFunction.decl;
+		asFunction = cast(ir.Function) postfix.memberFunction.decl;
 		assert(asFunction !is null);
 		if (!(asFunction.isFinal && !asFunction.isMarkedOverride)) {
 			index = asFunction.vtableIndex;
@@ -1447,13 +1450,15 @@ void getCreateDelegateValues(State state, ir.Postfix postfix, Value instance, Va
 
 		auto pt = cast(PointerType)func.type;
 		assert(pt !is null);
-		st = cast(StructType)pt.base;
-		assert(st !is null);
 
-		func.type = st;
+		auto indexVal = LLVMConstInt(LLVMInt32TypeInContext(state.context), cast(uint)index, true);
+		func.value = LLVMBuildGEP(state.builder, func.value, [indexVal], "");
+		auto ptrType = buildPtrSmart(postfix.loc, asFunction.type);
+		ptrType.mangledName = volt.semantic.mangle.mangle(ptrType);
+		auto ptype = state.fromIr(ptrType);
+		func.value = LLVMBuildBitCast(state.builder, func.value, ptype.llvmType, "");
 		func.isPointer = true;
-		auto i = index + 1; // Offset by one.
-		getFieldFromAggregate(state, postfix.loc, func, cast(uint)i, st.types[i], func);
+		func.type = state.fromIr(asFunction.type);
 		makeNonPointer(state, func);
 	} else {
 		state.getValue(postfix.memberFunction, func);

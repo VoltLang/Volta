@@ -222,7 +222,9 @@ void handleClassLiteral(State state, ir.ClassLiteral cl, Value result)
 	sl.loc = cl.loc;
 	sl.type = copyTypeSmart(_class.loc, _class.layoutStruct);
 	auto eref = buildExpReference(cl.loc, _class.vtableVariable, _class.vtableVariable.name);
-	sl.exps ~= buildAddrOf(cl.loc, eref);
+	auto ppv = buildPtr(cl.loc, buildVoidPtr(cl.loc));
+	ppv.mangledName = "ppv";
+	sl.exps ~= buildCast(cl.loc, ppv, buildAddrOf(cl.loc, eref));
 	sl.exps ~= cl.exps;
 
 	st.from(state, sl, result);

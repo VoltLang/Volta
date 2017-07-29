@@ -403,8 +403,8 @@ public:
 	QualifiedName[] interfaces;  //!< Optional.
 
 	Function[] userConstructors;
-	Struct vtableStruct;
 	Variable vtableVariable;
+	Variable classinfoVariable;
 	Variable[] ifaceVariables;
 	Variable initVariable;
 	Class parentClass;  //!< Filled in by the typeverifier.
@@ -441,8 +441,8 @@ public:
 			this.methodsCache = old.methodsCache.dup;
 		}
 
-		this.vtableStruct = old.vtableStruct;
 		this.vtableVariable = old.vtableVariable;
+		this.classinfoVariable = old.vtableVariable;
 		version (Volt) {
 			this.ifaceVariables = new old.ifaceVariables[0 .. $];
 		} else {

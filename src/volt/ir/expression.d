@@ -3,6 +3,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.ir.expression;
 
+import volt.util.sinks;
 import volt.ir.base;
 import volt.ir.type;
 import volt.ir.context;
@@ -939,13 +940,17 @@ public:
 		VaStart,     //!< va_start(vl)
 		VaArg,       //!< va_arg!i32(vl)
 		VaEnd,       //!< va_end(vl)
+		BuildVtable, //!< Build a class vtable.
 	}
 
-	Kind kind; //!< What kind of inbluilt is this.
+	Kind kind; //!< What kind of builtin is this.
 	Type type; //!< The type of this exp, helps keeping the typer simple.
 
 	Exp[] children; //!< Common child exp.
 	Function[] functions; //!< For UFCS, PODCtor, and VaArg.
+
+	Class _class; //!< For BuildVtable.
+	FunctionSink functionSink; //!< For BuildVtable.
 
 public:
 	this(Kind kind, Type type, Exp[] children)
@@ -960,11 +965,22 @@ public:
 		this.children = children;
 	}
 
+	this(Kind kind, Type type, Class _class, ref FunctionSink functionSink)
+	{
+		assert(kind == Kind.BuildVtable);
+		super(NodeType.BuiltinExp);
+		this.kind = kind;
+		this.type = type;
+		this.functionSink.append(functionSink);
+		this._class = _class;
+	}
+
 	this(BuiltinExp old)
 	{
 		super(NodeType.BuiltinExp, old);
 		this.kind = old.kind;
 		this.type = old.type;
+		this._class = old._class;
 
 		version (Volt) {
 			this.children = new old.children[0 .. $];

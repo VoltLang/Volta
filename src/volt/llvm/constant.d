@@ -51,6 +51,10 @@ void getConstantValue(State state, ir.Exp exp, Value result)
 		auto literal = cast(ir.ClassLiteral)exp;
 		assert(literal !is null);
 		return handleClassLiteral(state, literal, result);
+	case BuiltinExp:
+		auto bexp = cast(ir.BuiltinExp)exp;
+		assert(bexp !is null);
+		return handleBuiltinExp(state, bexp, result);
 	default:
 		auto str = format(
 			"could not get constant from expression '%s'",
@@ -65,6 +69,42 @@ private:
  * Handle functions.
  *
  */
+
+void handleBuiltinExp(State state, ir.BuiltinExp bexp, Value result)
+{
+	if (bexp.kind != ir.BuiltinExp.Kind.BuildVtable) {
+		throw panic(bexp.loc, "can only constant get from BuildVtable builtin exps");
+	}
+	auto tinfosStaticArrayType = bexp._class.classinfoVariable.type.toStaticArrayTypeFast();
+	auto vals = new LLVMValueRef[](bexp.functionSink.length + 2);
+
+	auto ptrType = LLVMPointerType(LLVMInt8TypeInContext(state.context), 0);
+	LLVMTypeRef intType;
+	if (state.target.isP64) {
+		intType = LLVMInt64TypeInContext(state.context);
+	} else {
+		intType = LLVMInt32TypeInContext(state.context);
+	}
+	Type type;
+
+	vals[0] = LLVMConstInt(intType, cast(ulong)tinfosStaticArrayType.length, false);
+	vals[0] = LLVMConstIntToPtr(vals[0], ptrType);
+	vals[1] = state.getVariableValue(bexp._class.classinfoVariable, type);
+	vals[1] = LLVMConstBitCast(vals[1], ptrType);
+	for (size_t i = 2; i < vals.length; ++i) {
+		auto method = bexp.functionSink.get(i - 2);
+		if (method.isAbstract) {
+			assert(bexp._class.isAbstract);
+			vals[i] = LLVMConstNull(ptrType);
+			continue;
+		}
+		vals[i] = state.getFunctionValue(method, type);
+		vals[i] = LLVMConstBitCast(vals[i], ptrType);
+	}
+
+	result.value = LLVMConstArray(ptrType, vals.ptr, cast(uint)vals.length);
+	result.type = state.fromIr(bexp._class.vtableVariable.type);
+}
 
 void handleConstUnary(State state, ir.Unary asUnary, Value result)
 {
@@ -160,6 +200,12 @@ void handleConstCast(State state, ir.Unary asUnary, Value result)
 		auto oldTypePtr = cast(PointerType)oldType;
 		auto newTypeFn = cast(FunctionType)newType;
 		auto oldTypeFn = cast(FunctionType)oldType;
+
+		if (oldPrim !is null && newTypePtr !is null) {
+			result.type = newType;
+			result.value = LLVMConstIntToPtr(result.value, newTypePtr.llvmType);
+			return;
+		}
 
 		if ((newTypePtr !is null || newTypeFn !is null) &&
 		    (oldTypePtr !is null || oldTypeFn !is null)) {

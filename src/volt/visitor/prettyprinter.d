@@ -1942,6 +1942,7 @@ public:
 		case VaStart: wf("va_start"); break;
 		case VaArg: wf("va_arg"); break;
 		case VaEnd: wf("va_end"); break;
+		case BuildVtable: wf("build_vtable"); break;
 		}
 		wf(">(");
 		auto arr = inbuilt.children;

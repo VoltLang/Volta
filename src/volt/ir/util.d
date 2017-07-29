@@ -8,6 +8,7 @@ import volt.errors;
 import volt.interfaces;
 import volt.token.location;
 import volt.util.string : unescapeString;
+import volt.util.sinks;
 import volt.ir.copy;
 
 
@@ -916,6 +917,17 @@ ir.BuiltinExp buildArrayPtr(ref in Location loc, ir.Type base, ir.Exp child)
 	auto ptr = buildPtrSmart(loc, base);
 	auto builtin = new ir.BuiltinExp(
 		ir.BuiltinExp.Kind.ArrayPtr, ptr, [child]);
+	builtin.loc = loc;
+
+	return builtin;
+}
+
+/*!
+ * Builds a BuiltinExp of BuildVtable type.
+ */
+ir.BuiltinExp buildBuildVtable(ref in Location loc, ir.Type type, ir.Class _class, FunctionSink functionSink)
+{
+	auto builtin = new ir.BuiltinExp(ir.BuiltinExp.Kind.BuildVtable, copyTypeSmart(loc, type), _class, functionSink);
 	builtin.loc = loc;
 
 	return builtin;

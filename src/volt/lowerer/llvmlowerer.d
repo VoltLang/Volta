@@ -1183,6 +1183,7 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 	final switch (builtin.kind) with (ir.BuiltinExp.Kind) {
 	case ArrayPtr:
 	case ArrayLength:
+	case BuildVtable:
 		break;
 	case ArrayDup:
 		if (builtin.children.length != 3) {

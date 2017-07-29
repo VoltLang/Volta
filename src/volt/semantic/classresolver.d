@@ -183,9 +183,7 @@ void fillInClassLayoutIfNeeded(LanguagePass lp, ir.Class c)
 		return;
 	}
 
-	ir.Struct vtableStruct;
-	c.layoutStruct = getClassLayoutStruct(c, lp, vtableStruct);
-	c.vtableStruct = vtableStruct;
+	c.layoutStruct = getClassLayoutStruct(c, lp);
 	emitVtableVariable(lp, c);
 }
 
@@ -293,6 +291,7 @@ ir.Function generateDefaultConstructor(LanguagePass lp, ir.Scope current, ir.Cla
 {
 	auto func = buildFunction(_class.loc, _class.members, current, "__ctor");
 	func.kind = ir.Function.Kind.Constructor;
+
 	buildReturnStat(func.loc, func._body);
 
 	auto tr = buildTypeReference(_class.loc, _class,  "__this");
@@ -415,6 +414,7 @@ void appendClassMethodFunctions(LanguagePass lp, ir.Class _class, ref FunctionSi
 		}
 	}
 
+	size_t offset = 2;  // ClassInfo array length and pointer takes up the first two slots.
 	size_t outIndex;
 	foreach (methods; methodss) {
 		bool noPriorMethods = false;
@@ -451,7 +451,7 @@ void appendClassMethodFunctions(LanguagePass lp, ir.Class _class, ref FunctionSi
 				continue;
 			}
 			outMethods.sink(method);
-			method.vtableIndex = cast(int)outIndex++;
+			method.vtableIndex = cast(int)(outIndex++ + offset);
 		}
 	}
 }
@@ -547,28 +547,6 @@ ir.Variable[] getClassMethodTypeVariables(LanguagePass lp, ir.Class _class)
 	return typeVars;
 }
 
-ir.Exp[] getClassMethodAddrOfs(LanguagePass lp, ir.Class _class)
-{
-	FunctionSink methods;
-	appendClassMethodFunctions(lp, _class, /*ref*/ methods);
-
-	ir.Exp[] addrs;
-	for (size_t i = 0; i < methods.length; ++i) {
-		auto method = methods.get(i);
-		if (method.isAbstract) {
-			if (!_class.isAbstract) {
-				throw makeAbstractHasToBeMember(_class, method);
-			}
-			addrs ~= buildConstantNull(_class.loc, method.type);
-			continue;
-		}
-		auto eref = buildExpReference(_class.loc, method, method.name);
-		eref.rawReference = true;
-		addrs ~= eref;
-	}
-	return addrs;
-}
-
 ir.Struct getInterfaceLayoutStruct(ir._Interface iface, LanguagePass lp)
 {
 	auto loc = iface.loc;
@@ -587,14 +565,13 @@ ir.Struct getInterfaceLayoutStruct(ir._Interface iface, LanguagePass lp)
 	return layoutStruct;
 }
 
-ir.Struct getClassLayoutStruct(ir.Class _class, LanguagePass lp, ref ir.Struct vtableStruct)
+ir.Struct getClassLayoutStruct(ir.Class _class, LanguagePass lp)
 {
 	auto methodTypes = getClassMethodTypeVariables(lp, _class);
 	auto tinfo = lp.tiClassInfo;
 	auto tinfos = buildVariableSmart(_class.loc, buildArrayTypeSmart(_class.loc, tinfo), ir.Variable.Storage.Field, "tinfos");
 
-	vtableStruct = buildStruct(_class.loc, _class.members, _class.myScope, "__Vtable", tinfos ~ methodTypes);
-	auto vtableVar = buildVariableSmart(_class.loc, buildPtrSmart(_class.loc, vtableStruct), ir.Variable.Storage.Field, "__vtable");
+	auto vtableVar = buildVariableSmart(_class.loc, buildPtrSmart(_class.loc, buildVoidPtr(_class.loc)), ir.Variable.Storage.Field, "__vtable");
 
 	size_t dummy;
 	auto fields = getClassFields(lp, _class, dummy);
@@ -627,7 +604,7 @@ ir.Exp[] getTypeInfos(ir.Class[] classes)
 {
 	auto tinfos = new ir.Exp[](classes.length);
 	foreach (i, _class; classes) {
-		tinfos[i] = buildTypeidSmart(_class.loc, _class);
+		tinfos[i] = buildCastToVoidPtr(_class.loc, buildTypeidSmart(_class.loc, _class));
 	}
 	return tinfos;
 }
@@ -700,7 +677,9 @@ void buildInstanceVariable(LanguagePass lp, ir.Class _class)
 	_class.initVariable.isResolved = true;
 
 	ir.Exp[] exps;
-	exps ~= buildAddrOf(loc, _class.vtableVariable, _class.vtableVariable.name);
+	exps ~= buildCastSmart(loc, buildPtr(loc, buildVoidPtr(loc)),
+		buildAddrOf(loc,
+		buildExpReference(loc, _class.vtableVariable, _class.vtableVariable.name)));
 
 	ir.Variable[] ifaceVars;
 	auto classes = getInheritanceChain(_class);
@@ -730,11 +709,8 @@ void buildInstanceVariable(LanguagePass lp, ir.Class _class)
 void emitVtableVariable(LanguagePass lp, ir.Class _class)
 {
 	auto loc = _class.loc;
-	auto addrs = getClassMethodAddrOfs(lp, _class);
 	auto tinfo = lp.tiClassInfo;
 	auto classes = getInheritanceChain(_class);
-	auto tinfos = getTypeInfos(classes);
-	auto tinfosArr = buildArrayLiteralSmart(loc, buildArrayTypeSmart(loc, tinfo), tinfos);
 
 	assert(_class.interfaces.length == _class.parentInterfaces.length);
 	void addInterfaceInstance(ir._Interface iface, ir.Class fromParent, size_t i)
@@ -757,15 +733,30 @@ void emitVtableVariable(LanguagePass lp, ir.Class _class)
 		}
 	}
 
-	auto assign = new ir.StructLiteral();
-	assign.loc = loc;
-	assign.exps = tinfosArr ~ addrs;
-	assign.type = copyTypeSmart(loc, _class.vtableStruct);
+	auto tinfos = getTypeInfos(classes);
+	_class.classinfoVariable = buildVariableSmart(loc, buildStaticArrayTypeSmart(loc, tinfos.length, buildVoidPtr(loc)), ir.Variable.Storage.Global, "__classinfo_instance");
+	_class.classinfoVariable.isResolved = true;
+	_class.classinfoVariable.mangledName = format("_V__ClassInfos_%s", mangle(_class));
+	_class.classinfoVariable.assign = buildArrayLiteralSmart(loc, _class.classinfoVariable.type, tinfos);
+	_class.members.nodes ~= _class.classinfoVariable;
+	_class.myScope.addValue(_class.classinfoVariable, _class.classinfoVariable.name);
 
-	_class.vtableVariable = buildVariableSmart(loc, _class.vtableStruct, ir.Variable.Storage.Global, "__vtable_instance");
+	FunctionSink methods;
+	appendClassMethodFunctions(lp, _class, methods);
+	for (size_t i = 0; i < methods.length; ++i) {
+		auto method = methods.get(i);
+		if (method.isAbstract) {
+			if (!_class.isAbstract) {
+				throw makeAbstractHasToBeMember(_class, method);
+			}
+		}
+	}
+
+	auto vtype = buildStaticArrayTypeSmart(loc, 2 + methods.length, buildVoidPtr(loc));
+	_class.vtableVariable = buildVariableSmart(loc, vtype, ir.Variable.Storage.Global, "__vtable_instance");
 	_class.vtableVariable.isResolved = true;
 	_class.vtableVariable.mangledName = format("_V__Vtable_%s", mangle(_class));
-	_class.vtableVariable.assign = assign;
+	_class.vtableVariable.assign = buildBuildVtable(loc, vtype, _class, methods);
 	_class.members.nodes ~= _class.vtableVariable;
 	_class.myScope.addValue(_class.vtableVariable, _class.vtableVariable.name);
 
