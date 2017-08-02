@@ -1451,15 +1451,18 @@ void getCreateDelegateValues(State state, ir.Postfix postfix, Value instance, Va
 		auto pt = cast(PointerType)func.type;
 		assert(pt !is null);
 
+		// Type of result function.
+		auto fnType = state.fromIr(asFunction.type);
+		// vtableIndex
 		auto indexVal = LLVMConstInt(LLVMInt32TypeInContext(state.context), cast(uint)index, true);
+		// void** + indexVal
 		func.value = LLVMBuildGEP(state.builder, func.value, [indexVal], "");
-		auto ptrType = buildPtrSmart(postfix.loc, asFunction.type);
-		ptrType.mangledName = volt.semantic.mangle.mangle(ptrType);
-		auto ptype = state.fromIr(ptrType);
-		func.value = LLVMBuildBitCast(state.builder, func.value, ptype.llvmType, "");
-		func.isPointer = true;
-		func.type = state.fromIr(asFunction.type);
-		makeNonPointer(state, func);
+		// void** -> void*
+		func.value = LLVMBuildLoad(state.builder, func.value, "");
+		// void* -> fn
+		func.value = LLVMBuildBitCast(state.builder, func.value, fnType.llvmType, "");
+		func.type = fnType;
+		func.isPointer = false;
 	} else {
 		state.getValue(postfix.memberFunction, func);
 	}
