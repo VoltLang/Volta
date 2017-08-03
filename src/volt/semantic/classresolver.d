@@ -582,6 +582,11 @@ ir.Struct getClassLayoutStruct(ir.Class _class, LanguagePass lp)
 	return layoutStruct;
 }
 
+/*!
+ * Given a class, return a family list of classes,
+ * with the given class as the last member, and
+ * Object as the first.
+ */
 ir.Class[] getInheritanceChain(ir.Class _class)
 {
 	ir.Class[] reverseClasses;
