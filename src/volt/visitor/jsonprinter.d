@@ -290,7 +290,8 @@ public:
 	{
 		auto name = v.name;
 		switch (name) {
-		case "__cinit", "__vtable_instance": return ContinueParent;
+		case "__cinit", "__vtable_instance", "__classinfo_instance":
+			return ContinueParent;
 		default: break;
 		}
 		if (name.length > 4 && name[0 .. 4] == "_V__" ||
