@@ -1,5 +1,9 @@
 // Copyright © 2016-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/watt/license.volt (BOOST ver. 1.0).
+/*!
+ * @ingroup cbind
+ * @ingroup winbind
+ */
 module core.c.windows.winhttp;
 
 version(Windows):

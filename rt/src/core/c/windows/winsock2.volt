@@ -2,8 +2,11 @@
     Written by Christopher E. Miller
     $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0).
 */
-/**
+/*!
  * WinSock2 bindings module.
+ *
+ * @ingroup cbind
+ * @ingroup winbind
  */
 module core.c.windows.winsock2;
 

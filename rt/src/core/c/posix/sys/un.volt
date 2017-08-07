@@ -1,5 +1,9 @@
 // Copyright © 2017, Jakob Bornecrantz.
 // See copyright notice in src/watt/license.d (BOOST ver. 1.0).
+/*!
+ * @ingroup cbind
+ * @ingroup posixbind
+ */
 module core.c.posix.sys.un;
 
 version (Posix):

@@ -1,10 +1,13 @@
 // Copyright © 2013-2017, Bernard Helyer.
 // See copyright notice in src/watt/licence.volt (BOOST ver 1.0).
-/**
+/*!
  * Windows bindings.
  *
  * As it stands, this module only has the bits of WIN32 that have been used.
  * Pull requests to add more welcome.
+ *
+ * @ingroup cbind
+ * @ingroup winbind
  */
 module core.c.windows.windows;
 

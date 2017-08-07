@@ -12,6 +12,10 @@
  *    (See accompanying file LICENSE or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
  */
+/*!
+ * @ingroup cbind
+ * @ingroup posixbind
+ */
 module core.c.posix.arpa.inet;
 
 version (Posix):

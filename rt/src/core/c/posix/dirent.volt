@@ -1,6 +1,10 @@
 // Copyright © 2005-2009, Sean Kelly.
 // See copyright notice in src/watt/license.d (BOOST ver. 1.0).
 // File taken from druntime, and modified for Volt.
+/*!
+ * @ingroup cbind
+ * @ingroup posixbind
+ */
 module core.c.posix.dirent;
 
 version (Posix):

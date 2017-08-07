@@ -1,5 +1,9 @@
 // Copyright © 2016, Jakob Bornecrantz.
 // See copyright notice in src/volt/licence.volt (BOOST ver 1.0).
+/*!
+ * @ingroup cbind
+ * @ingroup posixbind
+ */
 module core.c.posix.spawn;
 
 version (Posix):

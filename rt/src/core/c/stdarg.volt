@@ -1,6 +1,10 @@
 // Copyright © 2013-2017, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 // Written by hand from documentation.
+/*!
+ * @ingroup cbind
+ * @ingroup stdcbind
+ */
 module core.c.stdarg;
 
 version (CRuntime_All):
