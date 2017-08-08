@@ -961,6 +961,7 @@ ParseStatus parseEnum(ParserStream ps, out ir.Node[] output)
 		if (namedEnum !is null) {
 			return unexpectedToken(ps, ir.NodeType.Enum);
 		}
+		auto comment = ps.comment();
 		if (ps != [TokenType.Identifier, TokenType.Assign] && ps != [TokenType.Identifier, TokenType.Colon]) {
 			auto succeeded = parseType(ps, base);
 			if (!succeeded) {
@@ -975,6 +976,7 @@ ParseStatus parseEnum(ParserStream ps, out ir.Node[] output)
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Enum);
 		}
+		ed.docComment = comment;
 		if (ps != TokenType.Semicolon) {
 			return unexpectedToken(ps, ir.NodeType.Enum);
 		}

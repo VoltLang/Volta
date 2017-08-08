@@ -1218,6 +1218,7 @@ ParseStatus parseEnumDeclaration(ParserStream ps, out ir.EnumDeclaration edecl, 
 {
 	edecl = new ir.EnumDeclaration();
 	edecl.loc = ps.peek.loc;
+	auto comment = ps.comment();
 
 	Token nameTok;
 	auto succeeded = match(ps, edecl, TokenType.Identifier, nameTok);
@@ -1240,7 +1241,7 @@ ParseStatus parseEnumDeclaration(ParserStream ps, out ir.EnumDeclaration edecl, 
 		}
 	}
 
-	edecl.docComment = ps.comment();
+	edecl.docComment = comment;
 	if (edecl.docComment.length == 0) {
 		ps.retroComment = edecl;
 	}
