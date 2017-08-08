@@ -133,6 +133,7 @@ ParseStatus parseAlias(ParserStream ps, out ir.Alias a)
 {
 	a = new ir.Alias();
 	a.loc = ps.peek.loc;
+	a.docComment = ps.comment();
 
 	if (ps != [TokenType.Alias, TokenType.Identifier, TokenType.Assign]) {
 		return unexpectedToken(ps, a);
@@ -200,7 +201,6 @@ ParseStatus parseAlias(ParserStream ps, out ir.Alias a)
 		}
 	}
 
-	a.docComment = ps.comment();
 	ps.retroComment = a;
 	return Succeeded;
 }

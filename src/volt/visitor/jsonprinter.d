@@ -185,6 +185,7 @@ public:
 			tag("kind", "alias");
 			tag("name", a.name);
 			tag("type", a.id.toString());
+			tag("doc", a.docComment);
 		} else {
 			writeNamedTyped("alias", name, a.docComment, a.type);
 		}
