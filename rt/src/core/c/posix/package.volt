@@ -8,7 +8,7 @@ module core.c.posix;
 /*!
  * @defgroup posixbind Posix Bindings
  *
- * The posix bindings and other nix* bindings.
+ * The POSIX bindings and other *nix bindings.
  *
  * @ingroup cbind
  */

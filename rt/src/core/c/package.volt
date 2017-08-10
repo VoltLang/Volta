@@ -13,7 +13,7 @@ module core.c;
  */
 
 /*!
- * @defgroup stdcbind C Standard Library Bindings
+ *  stdcbind C Standard Library Bindings
  *
  * Bindings to the C standard library.
  *
