@@ -606,7 +606,7 @@ public:
 	{
 		assert(comment.type == TokenType.DocComment);
 		auto raw = strip(comment.value);
-		if (raw == "@{" || raw == "@}") {
+		if (raw == "@{" || raw == "@}" || inMultiCommentBlock) {
 			return;
 		}
 		StringSink sink;
