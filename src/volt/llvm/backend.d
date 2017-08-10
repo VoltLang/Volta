@@ -33,8 +33,10 @@ import volt.llvm.toplevel;
  * @defgroup llvmbackend LLVM Backend
  * @brief LLVM based backend.
  *
- * This backend is the main backend for the Volta compiler, and is such is the
- * most feature full and supported one.
+ * Generate object code using LLVM.
+ *
+ * The LLVM backend is the original and default backend for
+ * Volt, and as such is the most fully featured.
  *
  * @see http://llvm.org
  * @ingroup backend

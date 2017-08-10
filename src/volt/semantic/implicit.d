@@ -20,7 +20,7 @@ import volt.semantic.util;
  * @defgroup semanticImplicit Implicit Type Conversion
  *
  * Contains functions that identify if a type or expression can be converted
- * implicitly to a given type, and functions to do the actual conversion.
+ * implicitly to a given type, and functions that do the actual conversion.
  */
 
 /*!

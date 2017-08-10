@@ -17,7 +17,7 @@ import volt.token.location;
 /*!
  * @defgroup irContext IR Context Classes
  *
- * These non-nodes handles the symbol space of nodes.
+ * These non-nodes handle the symbol space of nodes.
  * These provide 'mechanism' over 'policy'; how look
  * ups are performed, where they're performed. Parameter
  * shadowing parent Scopes is allowed by these, that
@@ -310,9 +310,9 @@ public:
 	}
 
 	/*!
-	 * Add a unresolved Alias to this scope. The scope in which the
-	 * alias is resolved to is default this scope, can be changed
-	 * with the look argument, used by import rebinds.
+	 * Add an unresolved Alias to this scope. The scope that the
+	 * alias is resolved to is defaulted to this scope, but this can be
+	 * changed with the look argument, used by import rebinds.
 	 *
 	 * Throws:
 	 *   CompilerPanic if another symbol of same name is found.

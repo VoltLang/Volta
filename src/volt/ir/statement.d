@@ -18,7 +18,7 @@ import volt.ir.context;
  * symbols in certain scopes. This is in contrast to expressions,
  * which compute values...and sometimes control flow. But the latter
  * is mostly the domain of statements, and allows Volt to be a 
- * turing complete language. Which is sometimes useful, we're told.
+ * Turing complete language. Which is sometimes useful, we're told.
  *
  * @ingroup irNode
  */

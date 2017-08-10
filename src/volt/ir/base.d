@@ -22,13 +22,13 @@ import volt.ir.declaration;
 
 /*!
  * Each concrete class derived from @p ir.Node has a value in this
- * enumerant. The value for the type is stored in @p ir.Node.nodeType
+ * enumeration. The value for the type is stored in @p ir.Node.nodeType
  * by the constructor. While using type tags is not very OOP, it is
  * extremely convenient. For example, during debugging you can simply
  * inspect @p ir.Node.nodeType to find out the actual type of the object.
  *
  * In addition, it is possible to use a switch-statement based on
- * @p ir.Node.nodeType to select different behavior for different object
+ * @p ir.Node.nodeType to select different behaviour for different object
  * types. For functions that have only slight differences for several
  * object types, this allows writing very straightforward, readable
  * code.
@@ -534,7 +534,7 @@ public:
 }
 
 /*!
- * A single string that could be apart of ir.QualifiedName or
+ * A single string that could be a part of an ir.QualifiedName or
  * stand-alone node inside of the ir, referencing a declared item.
  *
  * @ingroup irNode

@@ -82,7 +82,7 @@ protected:
 }
 
 /*!
- * A ternary expression is a short hand if statement in the form of an expression. 
+ * A ternary expression is a shorthand if statement in the form of an expression. 
  * 
  * condition ? ifTrue : ifFalse
  *
