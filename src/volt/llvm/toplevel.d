@@ -399,6 +399,26 @@ public:
 
 	override Status enter(ir.TryStatement t)
 	{
+		if (state.target.haveEH) {
+			handleTryHaveEH(t);
+		} else {
+			handleTryNoEH(t);
+		}
+
+		return ContinueParent;
+	}
+
+	void handleTryNoEH(ir.TryStatement t)
+	{
+		accept(t.tryBlock, this);
+
+		if (t.finallyBlock !is null) {
+			accept(t.finallyBlock, this);
+		}
+	}
+
+	void handleTryHaveEH(ir.TryStatement t)
+	{
 		LLVMBasicBlockRef landingPad, catchBlock, tryDone;
 
 		landingPad = LLVMAppendBasicBlockInContext(
@@ -511,8 +531,6 @@ public:
 		 */
 		LLVMMoveBasicBlockAfter(tryDone, state.block);
 		state.startBlock(tryDone);
-
-		return ContinueParent;
 	}
 
 	override Status enter(ir.IfStatement ifs)
@@ -836,6 +854,11 @@ public:
 	{
 		auto success = func.isLoweredScopeExit | func.isLoweredScopeSuccess;
 		auto failure = func.isLoweredScopeExit | func.isLoweredScopeFailure;
+
+		// Disable scope(failure) handling when we don't have exception handling.
+		if (!state.target.haveEH) {
+			failure = false;
+		}
 
 		// Nothing needs to be done
 		if (!success && !failure) {

@@ -1212,6 +1212,15 @@ TargetInfo setTargetInfo(TargetInfo target, Arch arch, Platform platform, CRunti
 	target.platform = platform;
 	target.cRuntime = cRuntime;
 
+	final switch (platform) with (Platform) {
+	case MSVC, Metal:
+		target.haveEH = false;
+		break;
+	case MinGW, Linux, OSX:
+		target.haveEH = true;
+		break;
+	}
+
 	final switch (arch) with (Arch) {
 	case X86:
 		target.isP64 = false;

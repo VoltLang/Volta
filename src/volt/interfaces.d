@@ -94,7 +94,6 @@ class TargetInfo
 	Platform platform;
 	CRuntime cRuntime;
 
-	bool isP64;
 	size_t ptrSize;
 
 	struct Alignments
@@ -111,6 +110,11 @@ class TargetInfo
 	}
 
 	Alignments alignment;
+
+	//! Are pointers 64bit for this target.
+	bool isP64;
+	//! Does this target have exception handling.
+	bool haveEH;
 }
 
 /*!
