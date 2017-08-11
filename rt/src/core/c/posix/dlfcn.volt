@@ -4,6 +4,8 @@ module core.c.posix.dlfcn;
 
 version (Posix):
 
+extern (C):
+
 fn dlopen(file: const(char)*, mode: i32) void*;
 fn dlclose(handle: void*) i32;
 fn dlsym(handle: void*, name: const(char)*) void*;
