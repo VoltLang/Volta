@@ -40,8 +40,10 @@ fn vrt_hash(data: void*, size: size_t) u32;
 /*
  * Starting up.
  */
+alias VMain = fn(string[]) int;
+
 fn vrt_run_global_ctors() i32;
-fn vrt_run_main(argc: i32, argv: char**, args: fn (string[]) int) i32;
+fn vrt_run_main(argc: i32, argv: char**, vMain: VMain) int;
 fn vrt_run_global_dtors() i32;
 
 /*
