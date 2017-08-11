@@ -23,6 +23,7 @@ documentation is listed below.
 *  [Volt vs C]({{ site.baseurl }}/volt-vs-c.html)
 *  [Volt vs C++]({{ site.baseurl }}/volt-vs-cpp.html)
 *  [Volt vs D]({{ site.baseurl }}/volt-vs-d.html)
+*  [Syntax Snippets]({{ site.baseurl }}/syntax.html)
 
 Here is a bunch of modules from the compiler:
 
