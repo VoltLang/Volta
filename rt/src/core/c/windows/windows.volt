@@ -564,16 +564,6 @@ fn SetForegroundWindow(hWnd: HWND) BOOL;
 
 fn SetFocus(hWnd: HWND) HWND;
 
-fn LOWORD(dw: DWORD) WORD
-{
-	return cast(WORD)dw;
-}
-
-fn HIWORD(dw: DWORD) WORD
-{
-	return cast(WORD)((dw >> 16) & 0xFFFF);
-}
-
 enum UNICODE_NOCHAR = 0xFFFF;
 enum WM_ACTIVATE = 0x0006;
 enum WM_SYSCOMMAND = 0x0112;
@@ -723,19 +713,6 @@ struct MONITORINFOEX
 }
 fn GetMonitorInfoA(HMONITOR, MONITORINFOEX*) BOOL;
 
-fn GET_X_LPARAM(l: LPARAM) i32
-{
-	return cast(i32)cast(i16)LOWORD(cast(DWORD)l);
-}
-fn GET_Y_LPARAM(l: LPARAM) i32
-{
-	return cast(i32)cast(i16)HIWORD(cast(DWORD)l);
-}
-fn GET_XBUTTON_WPARAM(w: WPARAM) i32
-{
-	return cast(i32)cast(i16)HIWORD(cast(DWORD)w);
-}
-
 fn GetSystemMetrics(i32) i32;
 
 fn QueryPerformanceFrequency(LARGE_INTEGER*) BOOL;
@@ -753,3 +730,35 @@ enum DWORD MEM_RELEASE = 0x8000;
 fn CreateMutexA(LPSECURITY_ATTRIBUTES, BOOL, LPCSTR) HANDLE;
 fn CreateMutexW(LPSECURITY_ATTRIBUTES, BOOL, LPCWSTR) HANDLE;
 fn ReleaseMutex(HANDLE) BOOL;
+
+
+// Helper functions needs to be marked with extern volt so
+// they do not collide with other C function with similar names.
+extern(Volt):
+
+fn LOWORD(dw: DWORD) WORD
+{
+	return cast(WORD)dw;
+}
+
+fn HIWORD(dw: DWORD) WORD
+{
+	return cast(WORD)((dw >> 16) & 0xFFFF);
+}
+
+fn GET_X_LPARAM(l: LPARAM) i32
+{
+	return cast(i32)cast(i16)LOWORD(cast(DWORD)l);
+}
+
+fn GET_Y_LPARAM(l: LPARAM) i32
+{
+	return cast(i32)cast(i16)HIWORD(cast(DWORD)l);
+}
+
+fn GET_XBUTTON_WPARAM(w: WPARAM) i32
+{
+	return cast(i32)cast(i16)HIWORD(cast(DWORD)w);
+}
+
+// DO NOT ADD ANY WINDOWS FUNCTIONS AFTER THIS!
