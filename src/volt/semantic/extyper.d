@@ -993,7 +993,7 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	foreach (i; 0 .. asFunctionType.params.length) {
 		if (asFunctionType.isArgRef[i] || asFunctionType.isArgOut[i]) {
 			if (!isLValue(postfix.arguments[i])) {
-				throw makeNotLValue(postfix.arguments[i]);
+				throw makeNotLValueButRefOut(postfix.arguments[i], asFunctionType.isArgRef[i]);
 			}
 			if (asFunctionType.isArgRef[i] &&
 			    postfix.argumentTags[i] != ir.Postfix.TagKind.Ref &&

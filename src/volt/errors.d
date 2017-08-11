@@ -873,9 +873,9 @@ CompilerException makeCannotModify(ir.Node node, ir.Type type, string file = __F
 	return new CompilerError(node.loc, format("cannot modify '%s'.", type.typeString()), file, line);
 }
 
-CompilerException makeNotLValue(ir.Node node, string file = __FILE__, const int line = __LINE__)
+CompilerException makeNotLValueButRefOut(ir.Node node, bool isRef, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(node.loc, "expected lvalue.", file, line);
+	return new CompilerError(node.loc, format("expected lvalue to %s parameter.", isRef ? "ref" : "out"), file, line);
 }
 
 CompilerException makeTypeIsNot(ir.Node node, ir.Type from, ir.Type to, string file = __FILE__, const int line = __LINE__)
