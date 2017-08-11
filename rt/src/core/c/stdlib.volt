@@ -104,3 +104,7 @@ fn mbtowc(pwc: wchar_t*, in s: char*, n: size_t) i32;
 fn wctomb(s: char*, wc: wchar_t) i32;
 fn mbstowcs(pwcs: wchar_t*, in s: char*, n: size_t) size_t;
 fn wcstombs(s: char*, in pwcs: wchar_t*, n: size_t) size_t;
+
+version (Posix) {
+	fn realpath(const(char)*, char*) char*;
+}

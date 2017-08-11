@@ -222,6 +222,8 @@ fn GetSystemInfo(LPSYSTEM_INFO);
 
 extern (C) fn _fileno(void*) i32;
 extern (C) fn _get_osfhandle(i32) HANDLE;
+extern(C) fn _fullpath(char*, const(char)*, length: size_t) char*;
+extern(C) fn _wfullpath(wchar*, const(wchar)*, length: size_t) char*;
 
 fn Sleep(DWORD);
 
@@ -489,6 +491,7 @@ alias PRECT = RECT*;
 
 fn GetModuleHandleA(lpModuleName: LPCSTR) HMODULE;
 fn GetModuleHandleW(lpModuleName: LPWSTR) HMODULE;
+fn GetModuleFileNameA(HMODULE, const(char)*, DWORD) DWORD;
 
 // C Win32 has a macro that casts to LPCSTR/LPWSTR as appropriate. We'll leave that to the user.
 enum IDI_WINLOGO = 32517;
