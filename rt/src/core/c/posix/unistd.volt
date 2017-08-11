@@ -95,6 +95,7 @@ fn ttyname(i32) char*;
 fn ttyname_r(i32, char*, size_t) i32;
 fn unlink(in char*) i32;
 fn write(i32, in void*, size_t) ssize_t;
+fn waitpid(pid_t, i32*, i32) pid_t;
 
 version (Linux) {
 
