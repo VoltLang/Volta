@@ -237,12 +237,12 @@ version (Linux) {
         }
         u: _u;
 
-        @property fn s6_addr() u8[16]
+        extern(Volt) @property fn s6_addr() u8[16]
         {
             return u.s6_addr;
         }
 
-        @property fn s6_addr(val: u8[16])
+        extern(Volt) @property fn s6_addr(val: u8[16])
         {
             u.s6_addr = val;
         }
@@ -370,12 +370,12 @@ version (Linux) {
         }
         u: _u;
 
-        @property fn s6_addr() u8[16]
+        extern(Volt) @property fn s6_addr() u8[16]
         {
             return u.s6_addr;
         }
 
-        @property fn s6_addr(val: u8[16])
+        extern(Volt) @property fn s6_addr(val: u8[16])
         {
             u.s6_addr = val;
         }

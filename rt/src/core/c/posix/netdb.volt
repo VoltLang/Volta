@@ -147,7 +147,7 @@ version (Linux) {
 		h_addrtype: i32;
 		h_length: i32;
 		h_addr_list: char**;
-        @property fn h_addr() char* { return h_addr_list[0]; } // non-standard
+        extern(Volt) @property fn h_addr() char* { return h_addr_list[0]; } // non-standard
     }
 
     struct netent
@@ -231,7 +231,7 @@ version (Linux) {
 		h_addrtype: i32;
 		h_length: i32;
 		h_addr_list: char**;
-        @property fn   h_addr() char* { return h_addr_list[0]; } // non-standard
+        extern(Volt) @property fn   h_addr() char* { return h_addr_list[0]; } // non-standard
     }
 
     struct netent

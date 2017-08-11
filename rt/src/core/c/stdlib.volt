@@ -108,10 +108,11 @@ fn wcstombs(s: char*, in pwcs: wchar_t*, n: size_t) size_t;
 version (OSX) {
 	import core.c.osx;
 
-	@property fn environ() char**
+	extern(Volt) @property fn environ() char**
 	{
 		return *_NSGetEnviron();
 	}
+
 } else version (Posix) {
 	extern global environ: char**;
 }

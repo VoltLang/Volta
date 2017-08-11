@@ -212,18 +212,21 @@ version (Windows) {
 
 		extern(Windows) fn __acrt_iob_func(i32) FILE*;
 
-		@property fn stdin() FILE* { return __acrt_iob_func(0); }
-		@property fn stdout() FILE* { return __acrt_iob_func(1); }
-		@property fn stderr() FILE* { return __acrt_iob_func(2); }
+		extern(Volt) {
+			@property fn stdin() FILE* { return __acrt_iob_func(0); }
+			@property fn stdout() FILE* { return __acrt_iob_func(1); }
+			@property fn stderr() FILE* { return __acrt_iob_func(2); }
+		}
 
 	} else {
 
 		private extern global _iob: FILE[/*_NFILE*/60];
 
-		@property fn stdin() FILE*  { return cast(FILE*) &_iob[0]; }
-		@property fn stdout() FILE* { return cast(FILE*) &_iob[1]; }
-		@property fn stderr() FILE* { return cast(FILE*) &_iob[2]; }
-
+		extern(Volt) {
+			@property fn stdin() FILE*  { return cast(FILE*) &_iob[0]; }
+			@property fn stdout() FILE* { return cast(FILE*) &_iob[1]; }
+			@property fn stderr() FILE* { return cast(FILE*) &_iob[2]; }
+		}
 	}
 
 } else version (Linux) {
