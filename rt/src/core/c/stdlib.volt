@@ -105,6 +105,17 @@ fn wctomb(s: char*, wc: wchar_t) i32;
 fn mbstowcs(pwcs: wchar_t*, in s: char*, n: size_t) size_t;
 fn wcstombs(s: char*, in pwcs: wchar_t*, n: size_t) size_t;
 
+version (OSX) {
+	import core.c.osx;
+
+	@property fn environ() char**
+	{
+		return *_NSGetEnviron();
+	}
+} else version (Posix) {
+	extern global environ: char**;
+}
+
 version (Posix) {
 	fn realpath(const(char)*, char*) char*;
 }

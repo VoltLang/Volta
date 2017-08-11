@@ -7,3 +7,6 @@ version (OSX):
 extern(C):
 
 fn _NSGetExecutablePath(char*, u32*) i32;
+
+// TODO Remove this from iOS, or apps gets rejected.
+fn _NSGetEnviron() char*** ;
