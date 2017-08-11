@@ -691,6 +691,7 @@ fn SetConsoleTitleW(LPWSTR) BOOL;
 fn ReadConsoleA(HANDLE, LPVOID, DWORD, LPDWORD, LPVOID) BOOL;
 fn ReadConsoleW(HANDLE, LPVOID, DWORD, LPDWORD, LPVOID) BOOL;
 
+fn FreeLibrary(lib: HMODULE) void*;
 fn GetProcAddress(HMODULE, LPCSTR) void*;
 fn LoadLibraryA(LPCSTR) HMODULE;
 fn GetTickCount() DWORD;
