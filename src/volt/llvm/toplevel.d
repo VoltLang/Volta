@@ -327,7 +327,9 @@ public:
 					state.switchSetCase(i, block);
 				}
 				LLVMAddCase(_switch, val, block);
-				version (Volt) return; // If, throw?
+				// The throw in the if case above causes the cfg code
+				// not to emit a return at the end of this function.
+				version (Volt) return; // If, throw
 			}
 
 			void addExp(ir.Exp exp, LLVMBasicBlockRef block)
@@ -531,6 +533,10 @@ public:
 		 */
 		LLVMMoveBasicBlockAfter(tryDone, state.block);
 		state.startBlock(tryDone);
+
+		// The throw in the if case above causes the cfg code
+		// not to emit a return at the end of this function.
+		version (Volt) return; // If, throw
 	}
 
 	override Status enter(ir.IfStatement ifs)
