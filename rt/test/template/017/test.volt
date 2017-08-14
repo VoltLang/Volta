@@ -11,7 +11,6 @@ struct Definition!(T)
 		foreach (i; 0 .. 10) {
 			return cast(T)i;
 		}
-		assert(false);
 	}
 }
 

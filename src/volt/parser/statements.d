@@ -282,7 +282,6 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		succeeded = succeeded2;
 		return eatComments(ps);
 	}
-	version (Volt) assert(false); // If
 }
 
 /* Try to parse as a declaration first because

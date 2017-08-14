@@ -10,6 +10,5 @@ fn main() i32
 	case A, C: return 32;
 	case B: return 0;
 	}
-	assert(false);
 }
 

@@ -1949,5 +1949,4 @@ bool isFunctionLiteral(ParserStream ps)
 		ps.restore(mark);
 		return false;
 	}
-	assert(false);
 }

@@ -8,11 +8,9 @@ struct Definition!(T)
 	{
 		if (is(T == i32)) {
 			return 3;
-		}
-		if (is(T == f32)) {
+		} else if (is(T == f32)) {
 			return -3;
 		}
-		return 97;
 	}
 }
 

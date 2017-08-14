@@ -586,5 +586,4 @@ ir.Node copyNode(ir.Node n)
 	case TemplateDefinition:
 		goto case Invalid;
 	}
-	version (Volt) assert(false); // ???
 }

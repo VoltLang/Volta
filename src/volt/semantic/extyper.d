@@ -2502,8 +2502,6 @@ ir.Type extypeTernary(Context ctx, ref ir.Exp exp, Parent parent)
 			return removeStorageFields(falseRaw);
 		}
 	}
-
-	version (Volt) assert(false);
 }
 
 ir.Type extypeStructLiteral(Context ctx, ref ir.Exp exp, Parent parent)

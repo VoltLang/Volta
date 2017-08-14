@@ -60,7 +60,6 @@ ir.Store findShadowed(ir.Scope _scope, Location loc, string name, bool warningsE
 	} else {
 		return null;
 	}
-	version (Volt) assert(false); // If
 }
 
 bool isValidAccess(ir.Access access)

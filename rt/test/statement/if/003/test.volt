@@ -6,8 +6,4 @@ fn main() i32
 	if (!false) {
 		return 0;
 	}
-	if (!b) {
-		return 2;
-	}
-	return 1;
 }
