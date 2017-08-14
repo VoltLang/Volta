@@ -188,11 +188,12 @@ ir.Constant foldUnary(ref ir.Exp exp, ir.Unary unary, TargetInfo target)
 	if (unary.value is null) {
 		return null;
 	}
-	auto c = fold(unary.value, target);
+	bool _copy;
+	auto c = fold(unary.value, _copy, target);
 	if (c is null) {
 		return null;
 	}
-	auto uc = foldUnary(exp, unary, c, target);
+	auto uc = foldUnary(exp, unary, _copy ? cast(ir.Constant)copyExp(c) : c, target);
 	if (uc !is null) {
 		exp = uc;
 	}
@@ -644,89 +645,93 @@ ir.Constant foldUnaryCast(ir.Constant c, ir.Type t, TargetInfo target)
 
 ir.Constant foldUnaryMinus(ir.Constant c, TargetInfo target)
 {
+	auto nc = cast(ir.Constant)copyExp(c);
 	auto pt = cast(ir.PrimitiveType) c.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Int:
-		c.u._int = -c.u._int;
+		nc.u._int = -c.u._int;
 		break;
 	case Uint:
 		// Yes, this is 2's complement.
-		c.u._uint = -c.u._uint;
+		nc.u._uint = -c.u._uint;
 		break;
 	case Long:
-		c.u._long = -c.u._long;
+		nc.u._long = -c.u._long;
 		break;
 	case Ulong:
 		// Yes, this is 2's complement.
-		c.u._ulong = -c.u._ulong;
+		nc.u._ulong = -c.u._ulong;
 		break;
 	case Double:
-		c.u._double = -c.u._double;
+		nc.u._double = -c.u._double;
 		break;
 	case Float:
-		c.u._float = -c.u._float;
+		nc.u._float = -c.u._float;
 		break;
 	default:
 		panicAssert(c, false);
 		break;
 	}
-	return c;
+	return nc;
 }
 
 ir.Constant foldUnaryPlus(ir.Constant c, TargetInfo target)
 {
+	auto nc = cast(ir.Constant)copyExp(c);
 	auto pt = cast(ir.PrimitiveType) c.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Int:
-		c.u._int = +c.u._int;
+		nc.u._int = +c.u._int;
 		break;
 	case Uint:
-		c.u._uint = +c.u._uint;
+		nc.u._uint = +c.u._uint;
 		break;
 	case Long:
-		c.u._long = +c.u._long;
+		nc.u._long = +c.u._long;
 		break;
 	case Ulong:
-		c.u._ulong = +c.u._ulong;
+		nc.u._ulong = +c.u._ulong;
 		break;
 	case Double:
-		c.u._double = -c.u._double;
+		nc.u._double = -c.u._double;
 		break;
 	case Float:
-		c.u._float = -c.u._float;
+		nc.u._float = -c.u._float;
 		break;
 	default:
 		panicAssert(c, false);
 		break;
 	}
-	return c;
+	return nc;
 }
 
 ir.Constant foldUnaryNot(ir.Constant c, TargetInfo target)
 {
+	auto nc = cast(ir.Constant)copyExp(c);
 	auto pt = cast(ir.PrimitiveType)c.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
-	case Bool: c.u._bool = !c.u._bool; break;
+	case Bool: nc.u._bool = !c.u._bool; break;
 	default:
 		panicAssert(c, false);
 		break;
 	}
-	return c;
+	return nc;
 }
 
 ir.Constant foldUnaryComplement(ir.Constant c, TargetInfo target)
 {
+	auto nc = cast(ir.Constant)copyExp(c);
 	auto pt = cast(ir.PrimitiveType)c.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
-	case Int: c.u._int = ~c.u._int; break;
-	case Uint: c.u._uint = ~c.u._uint; break;
-	case Long: c.u._long = ~c.u._long; break;
-	case Ulong: c.u._ulong = ~c.u._ulong; break;
+	case Int: nc.u._int = ~c.u._int; break;
+	case Uint: nc.u._uint = ~c.u._uint; break;
+	case Long: nc.u._long = ~c.u._long; break;
+	case Ulong: nc.u._ulong = ~c.u._ulong; break;
 	default:
 		panicAssert(c, false);
 		break;
 	}
-	return c;
+	return nc;
 }
 
 ir.Constant evaluateOrNull(LanguagePass lp, ir.Scope current, ir.Exp exp)

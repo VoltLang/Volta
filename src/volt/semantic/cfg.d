@@ -276,21 +276,17 @@ public:
 				elseBlock.terminates = true;
 			}
 		}
+		block = new Block();
+		if (!constantFalse(ifs.exp) && !thenBlock._goto) {
+			block.addParent(thenBlock);
+		}
 		if (elseBlock !is null) {
-			if (constantTrue(ifs.exp)) {
-				block = new Block(thenBlock);
-			} else if (constantFalse(ifs.exp)) {
-				block = new Block(elseBlock);
-			} else {
-				block = new Block(thenBlock, elseBlock);
+			if (!elseBlock._goto && !constantTrue(ifs.exp)) {
+				block.addParent(elseBlock);
 			}
 		} else {
-			if (constantTrue(ifs.exp)) {
-				block = new Block(thenBlock);
-			} else if (constantFalse(ifs.exp)) {
-				block = new Block(currentBlock);
-			} else {
-				block = new Block(currentBlock, thenBlock);
+			if (!constantTrue(ifs.exp)) {
+				block.addParent(currentBlock);
 			}
 		}
 		return ContinueParent;
@@ -382,7 +378,8 @@ public:
 			block = currentSwitchBlocks[i];
 			accept(_case.statements, this);
 			currentSwitchBlocks[i] = block;
-			if (block.canReachWithoutBreakGoto() && _case.statements.statements.length > 0 && block.canReachEntry() && i < ss.cases.length - 1) {
+			if (block.canReachWithoutBreakGoto() && _case.statements.statements.length > 0
+				&& block.canReachEntry() && i < ss.cases.length - 1 && block.parents.length != 0) {
 				throw makeCaseFallsThrough(_case.loc);
 			}
 			breakBlocks = breakBlocks[0 .. $-1];
@@ -635,14 +632,13 @@ private:
 	}
 
 	//! Returns true if the given expression evaluates as a constant true.
-	bool constantTrue(ref ir.Exp e)
+	bool constantTrue(ir.Exp e)
 	{
 		auto constant = evaluateOrNull(lp, current, e);
 		if (constant is null) {
 			return false;
 		}
-		e = constant;
-		return constant.u._pointer !is null;
+		return constant.u._bool;
 	}
 
 	//! Returns true if the given expression evaluates as a constant false.
@@ -652,7 +648,7 @@ private:
 		if (constant is null) {
 			return false;
 		}
-		return constant.u._pointer is null;
+		return !constant.u._bool;
 	}
 
 	//! Convenience function for building blocks for loops.
@@ -689,4 +685,3 @@ private:
 		}
 	}
 }
-
