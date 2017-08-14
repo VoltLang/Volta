@@ -2,7 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.overload;
 
-version (Volt) import core.object;
+version (Volt) import core.object; // Needed, sort.
 
 import watt.algorithm;
 
@@ -218,7 +218,7 @@ ir.Function selectFunction(scope ir.Function[] functions, ir.Type[] arguments, i
 			}
 		}
 	}
-	version (Volt) {
+	version (Volt) { // Needed, sort.
 		bool cmp(size_t ia, size_t ib)
 		{
 			return specialisationComparison(matchedFunctions.get(ia),
@@ -233,7 +233,7 @@ ir.Function selectFunction(scope ir.Function[] functions, ir.Type[] arguments, i
 	}
 	void sortFunctions(scope ir.Function[] functions)
 	{
-		version (Volt) {
+		version (Volt) { // Needed, sort.
 			runSort(functions.length, cmp, swap);
 		} else {
 			sort(cast(Object[])functions, &specialisationComparison);
@@ -300,8 +300,8 @@ ir.Function selectFunction(scope ir.Function[] functions, ir.Type[] arguments, i
 			}
 		}
 		_matchLevel = int.max;
-		version (Volt) matchLevels.toSink(matchSink);
-		else matchLevels.toSink(&matchSink);
+		version (D_Version2) matchLevels.toSink(&matchSink);
+		else matchLevels.toSink(matchSink);
 		panicAssert(func, _matchLevel < int.max);
 		return _matchLevel;
 	}
@@ -328,10 +328,10 @@ ir.Function selectFunction(scope ir.Function[] functions, ir.Type[] arguments, i
 	}
 
 	matchLevels.reset();
-	version (Volt) matchDgt = cast(int delegate(ir.Function))matchLevel;
-	else matchDgt = &matchLevel;
-	version (Volt) outFunctions.toSink(getFunctionMatchLevels);
-	else outFunctions.toSink(&getFunctionMatchLevels);
+	version (D_Version2) matchDgt = &matchLevel;
+	else matchDgt = cast(int delegate(ir.Function))matchLevel;
+	version (D_Version2) outFunctions.toSink(&getFunctionMatchLevels);
+	else outFunctions.toSink(getFunctionMatchLevels);
 
 	highestMatchLevel = -1;
 	while (matchLevels.length > 0) {
@@ -343,11 +343,11 @@ ir.Function selectFunction(scope ir.Function[] functions, ir.Type[] arguments, i
 	assert(highestMatchLevel >= 0);
 
 	matchedFunctions.reset();
-	version (Volt) outFunctions.toSink(getMatchedFunctions);
-	else outFunctions.toSink(&getMatchedFunctions);
+	version (D_Version2) outFunctions.toSink(&getMatchedFunctions);
+	else outFunctions.toSink(getMatchedFunctions);
 
-	version (Volt) matchedFunctions.toSink(sortFunctions);
-	else matchedFunctions.toSink(&sortFunctions);
+	version (D_Version2) matchedFunctions.toSink(&sortFunctions);
+	else matchedFunctions.toSink(sortFunctions);
 	if (matchedFunctions.length == 1 || specialisationComparison(matchedFunctions.get(0), matchedFunctions.get(1)) > 0) {
 		if (highestMatchLevel > 1) {
 			return matchedFunctions.get(0);
@@ -355,8 +355,8 @@ ir.Function selectFunction(scope ir.Function[] functions, ir.Type[] arguments, i
 	}
 
 	if (throwOnError) {
-		version (Volt) matchedFunctions.toSink(throwError);
-		else matchedFunctions.toSink(&throwError);
+		version (D_Version2) matchedFunctions.toSink(&throwError);
+		else matchedFunctions.toSink(throwError);
 	} else {
 		return null;
 	}
