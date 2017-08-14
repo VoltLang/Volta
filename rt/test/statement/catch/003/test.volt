@@ -11,5 +11,4 @@ fn main() i32
 	} catch (Exception e) {
 		return 0;
 	}
-	return 1;
 }

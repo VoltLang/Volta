@@ -13,5 +13,4 @@ int main()
 	} catch (Throwable) {
 		return 0;
 	}
-	return 1;
 }
