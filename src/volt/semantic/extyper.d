@@ -3068,7 +3068,6 @@ ir.Type extypeUnchecked(Context ctx, ref ir.Exp exp, Parent parent)
 	default:
 		assert(false, "unknown exp");
 	}
-	assert(false);
 }
 
 

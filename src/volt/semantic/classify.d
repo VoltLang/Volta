@@ -292,7 +292,6 @@ bool isValueExp(ir.Exp exp)
 	default:
 		return true;
 	}
-	assert(false);
 }
 
 /*!
@@ -1058,8 +1057,6 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 			return false;
 		}
 	}
-
-	assert(false);
 }
 
 

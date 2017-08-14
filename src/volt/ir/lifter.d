@@ -110,7 +110,6 @@ public:
 		default:
 			throw panic(n, ir.nodeToString(n));
 		}
-		assert(false);
 	}
 
 

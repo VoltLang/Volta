@@ -633,7 +633,6 @@ ir.Constant foldUnaryCast(ir.Constant c, ir.Type t, TargetInfo target)
 	default:
 		return null;
 	}
-	assert(false);
 }
 
 ir.Constant foldUnaryMinus(ir.Constant c, TargetInfo target)

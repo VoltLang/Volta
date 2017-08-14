@@ -261,7 +261,6 @@ bool badConst(ir.Type a, ir.Type b, bool ignoreMutability = false)
 	default:
 		return badConst;
 	}
-	assert(false);
 }
 
 bool willConvertPrimitiveType(ir.Type parameter, ir.Type argument)

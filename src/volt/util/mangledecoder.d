@@ -129,7 +129,6 @@ ir.Type mangledToType(ref string mangledString)
 		default:
 			assert(false);
 		}
-		assert(false);
 	case "p":
 		return buildPtrSmart(loc, mangledString.mangledToType());
 	case "a":
@@ -188,7 +187,6 @@ ir.Type mangledToType(ref string mangledString)
 	default:
 		assert(false);
 	}
-	assert(false);
 }
 
 ir.CallableType mangleToCallable(ref string mangledString)
