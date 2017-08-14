@@ -249,7 +249,8 @@ private ir.Constant buildEmptyConstant(ir.Node n, ir.Type t)
 ir.Constant foldBinOpOrOr(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
-	auto pt = cast(ir.PrimitiveType)c.type;
+
+	auto pt = cast(ir.PrimitiveType)cl.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Bool: c.u._bool = cl.u._bool || cr.u._bool; break;
 	case Int: c.u._bool = cl.u._int || cr.u._int; break;
@@ -325,7 +326,8 @@ ir.Constant foldBinOpAnd(ir.Constant cl, ir.Constant cr, TargetInfo target)
 ir.Constant foldBinOpEqual(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
-	auto pt = cast(ir.PrimitiveType)c.type;
+
+	auto pt = cast(ir.PrimitiveType)cl.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Bool: c.u._bool = cl.u._bool == cr.u._bool; break;
 	case Int: c.u._bool = cl.u._int == cr.u._int; break;
@@ -342,7 +344,8 @@ ir.Constant foldBinOpEqual(ir.Constant cl, ir.Constant cr, TargetInfo target)
 ir.Constant foldBinOpNotEqual(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
-	auto pt = cast(ir.PrimitiveType)c.type;
+
+	auto pt = cast(ir.PrimitiveType)cl.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Bool: c.u._bool = cl.u._bool != cr.u._bool; break;
 	case Int: c.u._bool = cl.u._int != cr.u._int; break;
@@ -359,7 +362,8 @@ ir.Constant foldBinOpNotEqual(ir.Constant cl, ir.Constant cr, TargetInfo target)
 ir.Constant foldBinOpLess(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
-	auto pt = cast(ir.PrimitiveType)c.type;
+
+	auto pt = cast(ir.PrimitiveType)cl.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Bool: c.u._bool = cl.u._bool < cr.u._bool; break;
 	case Int: c.u._bool = cl.u._int < cr.u._int; break;
@@ -376,7 +380,8 @@ ir.Constant foldBinOpLess(ir.Constant cl, ir.Constant cr, TargetInfo target)
 ir.Constant foldBinOpLessEqual(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
-	auto pt = cast(ir.PrimitiveType)c.type;
+
+	auto pt = cast(ir.PrimitiveType)cl.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Bool: c.u._bool = cl.u._bool <= cr.u._bool; break;
 	case Int: c.u._bool = cl.u._int <= cr.u._int; break;
@@ -393,7 +398,8 @@ ir.Constant foldBinOpLessEqual(ir.Constant cl, ir.Constant cr, TargetInfo target
 ir.Constant foldBinOpGreaterEqual(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
-	auto pt = cast(ir.PrimitiveType)c.type;
+
+	auto pt = cast(ir.PrimitiveType)cl.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Bool: c.u._bool = cl.u._bool >= cr.u._bool; break;
 	case Int: c.u._bool = cl.u._int >= cr.u._int; break;
@@ -410,7 +416,8 @@ ir.Constant foldBinOpGreaterEqual(ir.Constant cl, ir.Constant cr, TargetInfo tar
 ir.Constant foldBinOpGreater(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
-	auto pt = cast(ir.PrimitiveType)c.type;
+
+	auto pt = cast(ir.PrimitiveType)cl.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Bool: c.u._bool = cl.u._bool > cr.u._bool; break;
 	case Int: c.u._bool = cl.u._int > cr.u._int; break;
