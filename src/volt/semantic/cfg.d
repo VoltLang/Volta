@@ -559,6 +559,7 @@ public:
 		if (as.isStatic) {
 			return Continue;
 		}
+		checkReachability(as);
 		block.terminates = constantFalse(as.condition);
 		return Continue;
 	}
