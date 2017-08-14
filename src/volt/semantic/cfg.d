@@ -518,7 +518,23 @@ public:
 		checkReachability(ts);
 		auto currentBlock = block;
 		auto tryBlock = new Block(currentBlock);
+		block = tryBlock;
 		accept(ts.tryBlock, this);
+
+		/* Consider the following:
+		 * try {
+		 *     return foo();  // This block marked as 'terminates'...
+		 * } catch (Exception e) {
+		 *     doAThing();    // ...but it can't be 'terminates' here...
+		 * }
+		 * doSomethingElse(); // ...but it can be 'terminates' here.
+		 *
+		 * So we delay marking it as terminates until after we've processed
+		 * the catch blocks.
+		 */
+		bool tryTerminates = tryBlock.terminates;
+		tryBlock.terminates = false;
+
 		auto catchBlocks = new Block[](ts.catchBlocks.length);
 		foreach (i, catchBlock; ts.catchBlocks) {
 			catchBlocks[i] = block = new Block(tryBlock);
@@ -535,14 +551,18 @@ public:
 			finallyBlock.addParent(catchAll);
 			accept(ts.finallyBlock, this);
 		}
+		tryBlock.terminates = tryTerminates;
 		block = new Block();
 		if (finallyBlock !is null) {
 			block.addParent(finallyBlock);
 		} else {
 			block.addParents(catchBlocks);
 			block.addParent(catchAll);
-			block.addParent(tryBlock);
+			if (!tryBlock.terminates) {
+				block.addParent(tryBlock);
+			}
 		}
+
 		return ContinueParent;
 	}
 
@@ -656,7 +676,7 @@ private:
 
 	void checkReachability(ir.Node n)
 	{
-		if (block.terminates) {
+		if (!block.canReachEntry()) {
 			throw makeNotReached(n);
 		}
 	}
