@@ -151,7 +151,7 @@ public:
 			newCmd(cmd, args, dgt, pid.osHandle);
 			waiting++;
 
-		} else version(Posix) {
+		} else version (Posix) {
 
 			newCmd(cmd, args, dgt, pid.osHandle);
 			waiting++;
@@ -163,7 +163,7 @@ public:
 
 	void waitOne()
 	{
-		version(Windows) {
+		version (Windows) {
 			uint hCount;
 			foreach (cmd; cmdStore) {
 				if (cmd.used) {
@@ -206,7 +206,7 @@ public:
 				throw new Exception("CloseHandle failed with error code " ~ .toString(cast(int)GetLastError()));
 			}
 
-		} else version(Posix) {
+		} else version (Posix) {
 
 			int result;
 			pid_t pid;
@@ -217,7 +217,7 @@ public:
 
 			Cmd c;
 			// Because stopped processes doesn't count.
-			while(true) {
+			while (true) {
 				result = waitManyPosix(pid);
 
 				bool foundPid;
@@ -257,7 +257,7 @@ public:
 
 	void waitAll()
 	{
-		while(waiting > 0) {
+		while (waiting > 0) {
 			waitOne();
 		}
 	}
