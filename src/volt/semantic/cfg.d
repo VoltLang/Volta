@@ -272,7 +272,7 @@ public:
 					terminateCount++;
 				}
 			}
-			if (terminateCount == elseBlock.children.length && !elseBlock.terminates) {
+			if (terminateCount > 0 && terminateCount == elseBlock.children.length && !elseBlock.terminates) {
 				elseBlock.terminates = true;
 			}
 		}
