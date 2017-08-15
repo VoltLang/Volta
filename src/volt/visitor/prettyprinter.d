@@ -34,6 +34,7 @@ protected:
 	string mIndentText;
 	int mPrintingTemplateDefinition;
 
+
 public:
 	this(string indentText = "\t", void delegate(scope const(char)[]) sink = null)
 	{
@@ -72,11 +73,7 @@ public:
 		}
 		bool sinkWasNull;
 		if (mSink is null) {
-			version (Volt) {
-				mSink = cast(typeof(mSink))sink;
-			} else {
-				mSink = &sink;
-			}
+			mSink = sinkToStream;
 			sinkWasNull = true;
 		}
 
@@ -2391,6 +2388,24 @@ protected:
 		}
 		if (t.isScope) {
 			wf(")");
+		}
+	}
+
+
+private:
+	void sinkToStream(scope const(char)[] s)
+	{
+		version (D_Version2) { // Volt has better write methods.
+			mStream.writef(`%s`, s);
+		} else {
+			mStream.write(s);
+		}
+	}
+
+	version (D_Version2) { // Delegate deref
+		void delegate(scope const(char)[]) sinkToStream()
+		{
+			return &sinkToStream;
 		}
 	}
 }

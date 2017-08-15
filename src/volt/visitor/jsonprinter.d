@@ -471,15 +471,6 @@ protected:
 		mWriteComma = true;
 	}
 
-	void w(SinkArg s)
-	{
-		version (Volt) {
-			mFile.write(s);
-		} else {
-			mFile.writef(`%s`, s);
-		}
-	}
-
 	//! Add quotes to s and make it a JSON string (w/ escaping etc).
 	void wq(string s)
 	{
@@ -494,13 +485,7 @@ protected:
 			case '\b': w(`\b`); break;
 			case '\\': w(`\\`); break;
 			default:
-				version (Volt) {
-					encode(w, c);
-				} else {
-					char[] outString;
-					encode(outString, c);
-					w(outString);
-				}
+				encode(w, c);
 				break;
 			}
 		}
@@ -511,6 +496,22 @@ protected:
 	{
 		if (mWriteComma) {
 			w(",\n");
+		}
+	}
+
+	void w(scope SinkArg s)
+	{
+		version (D_Version2) { // Volt has better write methods.
+			mFile.writef(`%s`, s);
+		} else {
+			mFile.write(s);
+		}
+	}
+
+	version (D_Version2) { // Delegate deref
+		void delegate(scope SinkArg) w()
+		{
+			return &w;
 		}
 	}
 }

@@ -33,6 +33,7 @@ class DebugMarker : Pass
 protected:
 	string mText;
 
+
 public:
 	this(string text) { mText = text; }
 
@@ -56,6 +57,7 @@ protected:
 	int mIndent;
 	int mLastIndent;
 	string mIndentText;
+
 
 public:
 	this(string indentText = " ", void delegate(scope const(char)[]) sink = null)
@@ -88,17 +90,10 @@ public:
 		assert(mFilename is null);
 
 		mStream = output;
-		void sink(scope const(char)[] s)
-		{
-			mStream.writef("%s", s);
-		}
+
 		bool sinkWasNull;
 		if (mSink is null) {
-			version (Volt) {
-				mSink = cast(typeof(mSink))sink;
-			} else {
-				mSink = &sink;
-			}
+			mSink = sinkToStream;
 			sinkWasNull = true;
 		}
 
@@ -120,17 +115,9 @@ public:
 		assert(mFilename is null);
 
 		mStream = output;
-		void sink(scope const(char)[] s)
-		{
-			mStream.writef("%s", s);
-		}
 		bool sinkWasNull;
 		if (mSink is null) {
-			version (Volt) {
-				mSink = cast(typeof(mSink))sink;
-			} else {
-				mSink = &sink;
-			}
+			mSink = sinkToStream;
 			sinkWasNull = true;
 		}
 
@@ -152,17 +139,9 @@ public:
 		assert(mFilename is null);
 
 		mStream = output;
-		void sink(scope const(char)[] s)
-		{
-			mStream.writef("%s", s);
-		}
 		bool sinkWasNull;
 		if (mSink is null) {
-			version (Volt) {
-				mSink = cast(typeof(mSink))sink;
-			} else {
-				mSink = &sink;
-			}
+			mSink = sinkToStream;
 			sinkWasNull = true;
 		}
 
@@ -549,4 +528,22 @@ protected:
 
 	void wfln(string str) { wf(str); ln(); }
 	void ln() { mSink("\n"); }
+
+
+private:
+	void sinkToStream(scope const(char)[] s)
+	{
+		version (D_Version2) { // Volt has better write methods.
+			mStream.writef(`%s`, s);
+		} else {
+			mStream.write(s);
+		}
+	}
+
+	version (D_Version2) { // Delegate deref
+		void delegate(scope const(char)[]) sinkToStream()
+		{
+			return &sinkToStream;
+		}
+	}
 }
