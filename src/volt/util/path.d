@@ -4,7 +4,8 @@
 module volt.util.path;
 
 import watt.conv : toString;
-import watt.path : mkdir, exists, dirName, dirSeparator;
+import watt.path : mkdir, exists, dirName, dirSeparator, temporaryFilename;
+import watt.io.file : remove, exists;
 import watt.text.sink : StringSink;
 import watt.text.format : format;
 
@@ -63,4 +64,59 @@ string getTemporarySubdirectoryName()
 		name.sink(toString(getuid()));
 	}
 	return name.toString();
+}
+
+/*!
+ * Helper class to manage temporary files.
+ */
+class TempfileManager
+{
+protected:
+	string mSubdir;
+	string[] mTemporaryFiles;
+
+
+public:
+	/*!
+	 * Uses @ref volt.util.path.getTemporarySubdirectoryName to get the
+	 * system temporary directory.
+	 *
+	 * @SideEffect Sets @ref mSubdir.
+	 */
+	this()
+	{
+		mSubdir = getTemporarySubdirectoryName();
+	}
+
+	/*!
+	 * Creates a temporary file name with the given ending.
+	 *
+	 * The file will be located in the system temporary directory
+	 * as specified by @ref volt.util.path.getTemporarySubdirectoryName.
+	 *
+	 * @param ending The file ending for the temporary file.
+	 * @SideEffect Adds return to @ref mTemporaryFiles.
+	 */
+	string getTempFile(string ending)
+	{
+		string ret = temporaryFilename(ending, mSubdir);
+		mTemporaryFiles ~= ret;
+		return ret;
+	}
+
+	/*!
+	 * Remove all tempfiles tracked by this manager.
+	 *
+	 * @SideEffect Sets @ref mTemporaryFiles to null.
+	 */
+	void removeTempfiles()
+	{
+		foreach (f; mTemporaryFiles) {
+			if (f.exists()) {
+				f.remove();
+			}
+		}
+
+		mTemporaryFiles = null;
+	}
 }
