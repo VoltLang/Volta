@@ -283,6 +283,12 @@ public:
 				block.addParent(currentBlock);
 			}
 		}
+		if (block.parents.length == 0) {
+			auto invalidBlock = new Block();
+			invalidBlock.terminates = true;
+			invalidBlock.addParent(currentBlock);
+			block.addParent(invalidBlock);
+		}
 		return ContinueParent;
 	}
 
@@ -679,3 +685,4 @@ private:
 		}
 	}
 }
+import watt.io.std;
