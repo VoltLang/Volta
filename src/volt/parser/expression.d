@@ -935,7 +935,6 @@ ParseStatus parseFunctionLiteral(ParserStream ps, out ir.FunctionLiteral fl)
 		}
 		return Succeeded;
 	}
-	version (Volt) assert(false); // If
 }
 
 /*!* ugly intir stuff ***/

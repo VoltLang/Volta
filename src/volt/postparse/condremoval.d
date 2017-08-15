@@ -264,7 +264,6 @@ protected:
 			// Not a Condition at all.
 			return false;
 		}
-		version (Volt) assert(false); // If
 	}
 
 	/*!

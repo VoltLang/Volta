@@ -118,7 +118,6 @@ int matchLevel(bool homogenous, ir.Type argument, ir.Type parameter, ir.Exp exp=
 		}
 		return 1;
 	}
-	version (Volt) assert(false); // If
 }
 
 bool specialisationComparison(Object ao, Object bo)

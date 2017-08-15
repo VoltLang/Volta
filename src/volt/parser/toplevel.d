@@ -838,8 +838,6 @@ ParseStatus parseStruct(ParserStream ps, out ir.Struct s, string templateName=""
 
 		return match(ps, ir.NodeType.Struct, TokenType.CloseBrace);
 	}
-
-	version (Volt) assert(false); // If
 }
 
 ParseStatus parseEnum(ParserStream ps, out ir.Node[] output)

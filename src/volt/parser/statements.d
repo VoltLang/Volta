@@ -199,7 +199,6 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		} else {
 			goto default;
 		}
-		version (Volt) assert(false); // If
 	case TokenType.Final:
 		if (ps.lookahead(1).type == TokenType.Switch) {
 			goto case TokenType.Switch;
@@ -223,7 +222,6 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		} else {
 			goto default;
 		}
-		version (Volt) assert(false); // If/Case
 	case TokenType.Assert:
 		ir.AssertStatement a;
 		succeeded = parseAssertStatement(ps, a);

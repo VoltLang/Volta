@@ -112,7 +112,6 @@ Parent classifyRelationship(ir.Exp child, ir.Exp parent)
 	} else {
 		return Parent.NA;
 	}
-	version (Volt) assert(false);
 }
 
 

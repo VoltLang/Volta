@@ -106,7 +106,6 @@ ParseStatus parseVariable(ParserStream ps, NodeSinkDg dgt)
 	} else {
 		return parseExpected(ps, ps.peek.loc, ir.NodeType.Variable, "declaration");
 	}
-	version (Volt) assert(false); // If
 }
 
 ParseStatus parseJustVariable(ParserStream ps, NodeSinkDg dgt)
@@ -117,7 +116,7 @@ ParseStatus parseJustVariable(ParserStream ps, NodeSinkDg dgt)
 		return parseFailed(ps, ir.NodeType.Variable);
 	}
 	ir.Node[] nodes;
-	// No need to report variable here since its allready reported.
+	// No need to report variable here since it's already reported.
 	succeeded = reallyParseVariable(ps, base, dgt);
 	if (!succeeded) {
 		return succeeded;
