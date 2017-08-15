@@ -24,6 +24,7 @@ public:
 	bool superCall;  //!< For handling super calls in ctors.
 	bool terminates;  //!< Running this block ends execution of its function (e.g. return).
 	bool _goto, _break; //!< For handling switches, did this case have a goto or break?
+	bool broken;  //!< For loop bodies; did a break block occur while this was the top of the breakBlock stack?
 
 public:
 	this()
@@ -588,6 +589,7 @@ public:
 		}
 		checkReachability(bs);
 		block._break = true;
+		breakBlocks[$-1].broken = true;
 		return Continue;
 	}
 
@@ -662,6 +664,9 @@ private:
 		breakBlocks = breakBlocks[0 .. $-1];
 		if (exp !is null && constantTrue(exp)) {
 			block = new Block(loopBlock);
+			if (!loopBlock.broken) {
+				block.terminates = true;
+			}
 		} else if (exp !is null && constantFalse(exp)) {
 			block = new Block(currentBlock);
 		} else {
