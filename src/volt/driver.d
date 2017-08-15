@@ -52,6 +52,7 @@ public:
 	Frontend frontend;
 	LanguagePass languagePass;
 	Backend backend;
+	TempfileManager tempMan;
 
 	Pass[] debugVisitors;
 
@@ -113,9 +114,6 @@ protected:
 
 	ir.Module[] mCommandLineModules;
 
-	//! Temporary files created during compile.
-	string[] mTemporaryFiles;
-
 	//! Used to track if we should debug print on error.
 	bool mDebugPassesRun;
 
@@ -151,6 +149,7 @@ public:
 		this.execDir = s.execDir;
 		this.identStr = s.identStr;
 		this.internalDebug = s.internalDebug;
+		this.tempMan = new TempfileManager();
 
 		// Timers
 		mAccumReading = new Accumulator("p1-reading");
@@ -302,11 +301,7 @@ public:
 		scope (success) {
 			debugPasses();
 
-			foreach (f; mTemporaryFiles) {
-				if (f.exists()) {
-					f.remove();
-				}
-			}
+			tempMan.removeTempfiles();
 
 			if (ret == 0) {
 				writeDepFile();
@@ -585,12 +580,11 @@ protected:
 
 	string[] turnModulesIntoBitcode(ir.Module[] mods)
 	{
-		string subdir = getTemporarySubdirectoryName();
 		string[] ret;
 
 		// Generate bc files for the compiled modules.
 		foreach (m; mCommandLineModules) {
-			string o = temporaryFilename(".bc", subdir);
+			string o = tempMan.getTempFile(".bc");
 
 			backend.setTarget(TargetType.LlvmBitcode);
 			debugPrint("Backend %s.", m.name.toString());
@@ -600,7 +594,6 @@ protected:
 			res.saveToFile(o);
 			res.close();
 			ret ~= o;
-			mTemporaryFiles ~= o;
 		}
 
 		return ret;
@@ -613,8 +606,6 @@ protected:
 		string[] bitcodeFiles = mBitcodeFiles;
 		bitcodeFiles ~= turnModulesIntoBitcode(mCommandLineModules);
 
-		string subdir = getTemporarySubdirectoryName();
-
 		// Setup files bc.
 		string bc;
 		if (mEmitLLVM) {
@@ -624,8 +615,7 @@ protected:
 				bc = bitcodeFiles[0];
 				bitcodeFiles = null;
 			} else if (bitcodeFiles.length > 1) {
-				bc = temporaryFilename(".bc", subdir);
-				mTemporaryFiles ~= bc;
+				bc = tempMan.getTempFile(".bc");
 			}
 		}
 
@@ -647,8 +637,7 @@ protected:
 			assert(bc !is null);
 			obj = mOutput;
 		} else if (bc !is null) {
-			obj = temporaryFilename(".o", subdir);
-			mTemporaryFiles ~= obj;
+			obj = tempMan.getTempFile(".o");
 		}
 
 		if (obj !is null) {
@@ -664,8 +653,6 @@ protected:
 
 	int turnBitcodeIntoObjectClang(ref string[] objectFiles, string[] bitcodeFiles)
 	{
-		string subdir = getTemporarySubdirectoryName();
-
 		auto cmd = new CmdGroup(8);
 		auto clangArgs = getClangArgs();
 
@@ -676,11 +663,10 @@ protected:
 				break;
 			}
 
-			string obj = temporaryFilename(".o", subdir);
+			string obj = tempMan.getTempFile(".o");
 			auto args = clangArgs ~ ["-c", "-o", obj, bc];
 			cmd.run(mClangCmd, args, checkClangReturn);
 
-			mTemporaryFiles ~= obj;
 			objectFiles ~= obj;
 		}
 
@@ -692,13 +678,11 @@ protected:
 
 	void turnBitcodeIntoObject(ref string[] objectFiles, string[] bitcodeFiles)
 	{
-		string subdir = getTemporarySubdirectoryName();
-
 		// Native compilation, turn the bitcode into native code.
 		foreach (bc; bitcodeFiles) {
-			string obj = temporaryFilename(".o", subdir);
+			string obj = tempMan.getTempFile(".o");
 			writeObjectFile(target, obj, bc);
-			mTemporaryFiles ~= obj;
+
 			objectFiles ~= obj;
 		}
 	}
