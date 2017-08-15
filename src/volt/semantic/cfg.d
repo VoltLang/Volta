@@ -258,27 +258,25 @@ public:
 	//! Generate blocks from an if statement.
 	override Status enter(ir.IfStatement ifs)
 	{
-		// TODO: This chokes on nested ifs -- break it up, and don't do it all at once.
 		ensureNonNullBlock(ifs.loc);
 		checkReachability(ifs);
 		auto currentBlock = block;
 		auto thenBlock = block = new Block(currentBlock);
 		Block elseBlock;
-		Block thenBlockTail, elseBlockTail;
 		accept(ifs.thenState, this);
-		thenBlockTail = block;
+		thenBlock = block;
 		if (ifs.elseState !is null) {
 			elseBlock = block = new Block(currentBlock);
 			accept(ifs.elseState, this);
-			elseBlockTail = block;
+			elseBlock = block;
 		}
 		block = new Block();
-		if (!constantFalse(ifs.exp) && !thenBlockTail._goto) {
-			block.addParent(thenBlockTail);
+		if (!constantFalse(ifs.exp) && !thenBlock._goto) {
+			block.addParent(thenBlock);
 		}
 		if (elseBlock !is null) {
-			if (!elseBlockTail._goto && !constantTrue(ifs.exp)) {
-				block.addParent(elseBlockTail);
+			if (!elseBlock._goto && !constantTrue(ifs.exp)) {
+				block.addParent(elseBlock);
 			}
 		} else {
 			if (!constantTrue(ifs.exp)) {
