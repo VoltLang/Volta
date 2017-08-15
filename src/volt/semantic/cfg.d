@@ -186,6 +186,8 @@ public:
 			return Continue;
 		}
 		ensureNonNullBlock(func.loc);
+		if (func.loc.filename == "test.volt") {
+		}
 		if (block.canReachEntry()) {
 			if (isVoid(realType(func.type.ret))) {
 				buildReturnStat(func.loc, func._body);
@@ -262,27 +264,21 @@ public:
 		auto currentBlock = block;
 		auto thenBlock = block = new Block(currentBlock);
 		Block elseBlock;
+		Block thenBlockTail, elseBlockTail;
 		accept(ifs.thenState, this);
+		thenBlockTail = block;
 		if (ifs.elseState !is null) {
 			elseBlock = block = new Block(currentBlock);
 			accept(ifs.elseState, this);
-			size_t terminateCount;
-			foreach (child; elseBlock.children) {
-				if (child.terminates) {
-					terminateCount++;
-				}
-			}
-			if (terminateCount > 0 && terminateCount == elseBlock.children.length && !elseBlock.terminates) {
-				elseBlock.terminates = true;
-			}
+			elseBlockTail = block;
 		}
 		block = new Block();
-		if (!constantFalse(ifs.exp) && !thenBlock._goto) {
-			block.addParent(thenBlock);
+		if (!constantFalse(ifs.exp) && !thenBlockTail._goto) {
+			block.addParent(thenBlockTail);
 		}
 		if (elseBlock !is null) {
-			if (!elseBlock._goto && !constantTrue(ifs.exp)) {
-				block.addParent(elseBlock);
+			if (!elseBlockTail._goto && !constantTrue(ifs.exp)) {
+				block.addParent(elseBlockTail);
 			}
 		} else {
 			if (!constantTrue(ifs.exp)) {
