@@ -205,7 +205,6 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		} else {
 			goto default;
 		}
-		version (Volt) assert(false); // If/Case
 	case TokenType.Static:
 		if (ps.lookahead(1).type == TokenType.If) {
 			goto case TokenType.Version;
