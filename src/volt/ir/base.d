@@ -16,6 +16,9 @@ import volt.ir.templates;
 import volt.ir.expression;
 import volt.ir.declaration;
 
+import volt.util.dup;
+
+
 /*!
  * @defgroup irNode IR Nodes
  */
@@ -524,11 +527,7 @@ public:
 	this(QualifiedName old)
 	{
 		super(NodeType.QualifiedName, old);
-		version (Volt) {
-			this.identifiers = new old.identifiers[0 .. $];
-		} else {
-			this.identifiers = old.identifiers.dup;
-		}
+		this.identifiers = old.identifiers.dup();
 		this.leadingDot = old.leadingDot;
 	}
 }
@@ -683,10 +682,10 @@ string nodeToString(NodeType nodeType)
  */
 string getNodeAddressString(Node node)
 {
-	version (Volt) {
-		return toString(cast(void*)node);
-	} else {
+	version (D_Version2) { // Volt appends 0x on toString.
 		return "0x" ~ toString(cast(void*)node);
+	} else {
+		return toString(cast(void*)node);
 	}
 }
 

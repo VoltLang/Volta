@@ -10,6 +10,8 @@ import volt.ir.toplevel;
 import volt.ir.declaration;
 import volt.ir.expression;
 
+import volt.util.dup;
+
 
 enum TemplateKind
 {
@@ -49,13 +51,8 @@ public:
 		super(NodeType.TemplateInstance, old);
 		this.kind = old.kind;
 		this.name = old.name;
-		version (Volt) {
-			this.arguments = new old.arguments[0 .. $];
-			this.names = new old.names[0 .. $];
-		} else {
-			this.arguments = old.arguments.dup;
-			this.names = old.names.dup;
-		}
+		this.arguments = old.arguments.dup();
+		this.names = old.names.dup();
 	}
 }
 
@@ -95,11 +92,7 @@ public:
 		super(NodeType.TemplateDefinition, old);
 		this.kind = old.kind;
 		this.name = old.name;
-		version (Volt) {
-			this.parameters = new old.parameters[0 .. $];
-		} else {
-			this.parameters = old.parameters.dup;
-		}
+		this.parameters = old.parameters.dup();
 		this._struct = old._struct;
 		this._union = old._union;
 		this._interface = old._interface;

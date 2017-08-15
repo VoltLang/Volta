@@ -11,6 +11,9 @@ import volt.ir.declaration;
 import volt.ir.statement;
 import volt.ir.templates;
 
+import volt.util.dup;
+
+
 /*!
  * @defgroup irTopLevel IR TopLevel Nodes
  *
@@ -133,11 +136,7 @@ public:
 	this(TopLevelBlock old)
 	{
 		super(NodeType.TopLevelBlock, old);
-		version (Volt) {
-			this.nodes = new old.nodes[0 .. $];
-		} else {
-			this.nodes = old.nodes.dup;
-		}
+		this.nodes = old.nodes.dup();
 	}
 }
 
@@ -197,17 +196,9 @@ public:
 		this.isStatic = old.isStatic;
 		this.name = old.name;
 		this.bind = old.bind;
-		version (Volt) {
-			this.aliases = new old.aliases[0 .. $];
-			foreach (i; 0 .. this.aliases.length) {
-				auto oa = old.aliases[i];
-				this.aliases[i] = new oa[0 .. $];
-			}
-		} else {
-			this.aliases = old.aliases.dup;
-			foreach (i; 0 .. this.aliases.length) {
-				this.aliases[i] = old.aliases[i].dup;
-			}
+		this.aliases = old.aliases.dup();
+		foreach (i; 0 .. this.aliases.length) {
+			this.aliases[i] = old.aliases[i].dup();
 		}
 		this.targetModule = old.targetModule;
 	}
@@ -294,11 +285,7 @@ public:
 
 		this.chain = old.chain;
 
-		version (Volt) {
-			this.arguments = new old.arguments[0 .. $];
-		} else {
-			this.arguments = old.arguments.dup;
-		}
+		this.arguments = old.arguments.dup();
 
 		this.alignAmount = old.alignAmount;
 	}
@@ -431,32 +418,17 @@ public:
 	{
 		super(NodeType.Class, old);
 		this.parent = old.parent;
-		version (Volt) {
-			this.interfaces = new old.interfaces[0 .. $];
-			this.userConstructors = new old.userConstructors[0 .. $];
-			this.methodsCache = new old.methodsCache[0 .. $];
-		} else {
-			this.interfaces = old.interfaces.dup;
-			this.userConstructors = old.userConstructors.dup;
-			this.methodsCache = old.methodsCache.dup;
-		}
+		this.interfaces = old.interfaces.dup();
+		this.userConstructors = old.userConstructors.dup();
+		this.methodsCache = old.methodsCache.dup();
 
 		this.vtableVariable = old.vtableVariable;
 		this.classinfoVariable = old.vtableVariable;
-		version (Volt) {
-			this.ifaceVariables = new old.ifaceVariables[0 .. $];
-		} else {
-			this.ifaceVariables = old.ifaceVariables.dup;
-		}
+		this.ifaceVariables = old.ifaceVariables.dup();
 		this.initVariable = old.initVariable;
 		this.parentClass = old.parentClass;
-		version (Volt) {
-			this.parentInterfaces = new old.parentInterfaces[0 .. $];
-			this.interfaceOffsets = new old.interfaceOffsets[0 .. $];
-		} else  {
-			this.parentInterfaces = old.parentInterfaces.dup;
-			this.interfaceOffsets = old.interfaceOffsets.dup;
-		}
+		this.parentInterfaces = old.parentInterfaces.dup();
+		this.interfaceOffsets = old.interfaceOffsets.dup();
 
 		this.layoutStruct = old.layoutStruct;
 
@@ -492,13 +464,8 @@ public:
 	this(_Interface old)
 	{
 		super(NodeType.Interface, old);
-		version (Volt) {
-			this.interfaces = new old.interfaces[0 .. $];
-			this.parentInterfaces = new old.parentInterfaces[0 .. $];
-		} else {
-			this.interfaces = old.interfaces.dup;
-			this.parentInterfaces = old.parentInterfaces.dup;
-		}
+		this.interfaces = old.interfaces.dup();
+		this.parentInterfaces = old.parentInterfaces.dup();
 
 		this.layoutStruct = old.layoutStruct;
 		this.templateInstance = old.templateInstance;
@@ -590,11 +557,7 @@ public:
 	this(Enum old)
 	{
 		super(NodeType.Enum, old);
-		version (Volt) {
-			this.members = new old.members[0 .. $];
-		} else {
-			this.members = old.members.dup;
-		}
+		this.members = old.members.dup();
 		this.base = old.base;
 	}
 }

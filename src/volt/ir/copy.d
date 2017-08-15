@@ -7,6 +7,7 @@ import watt.text.format : format;
 import ir = volt.ir.ir;
 import volt.errors;
 import volt.ir.util;
+import volt.util.dup;
 import volt.token.location;
 
 
@@ -28,11 +29,7 @@ ir.Constant copy(ir.Constant cnst)
 	c.u._ulong = cnst.u._ulong;
 	c._string = cnst._string;
 	c.isNull = cnst.isNull;
-	version (Volt) {
-		c.arrayData = new cnst.arrayData[0 .. $];
-	} else {
-		c.arrayData = cnst.arrayData.idup;
-	}
+	c.arrayData = cnst.arrayData.idup();
 	return c;
 }
 
@@ -97,11 +94,7 @@ ir.StoreExp copy(ir.StoreExp se)
 	auto newse = new ir.StoreExp();
 	newse.loc = se.loc;
 	newse.store = se.store;
-	version (Volt) {
-		newse.idents = new se.idents[0 .. $];
-	} else {
-		newse.idents = se.idents.dup;
-	}
+	newse.idents = se.idents.dup();
 	return newse;
 }
 
@@ -122,11 +115,7 @@ ir.ExpReference copy(ir.ExpReference er)
 {
 	auto newer = new ir.ExpReference();
 	newer.loc = er.loc;
-	version (Volt) {
-		newer.idents = new er.idents[0 .. $];
-	} else {
-		newer.idents = er.idents.dup;
-	}
+	newer.idents = er.idents.dup();
 	newer.decl = er.decl;
 	newer.rawReference = er.rawReference;
 	newer.doNotRewriteAsNestedLookup = er.doNotRewriteAsNestedLookup;

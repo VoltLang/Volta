@@ -8,6 +8,8 @@ import volt.ir.declaration;
 import volt.ir.expression;
 import volt.ir.toplevel;
 
+import volt.util.dup;
+
 
 /*!
  * @defgroup irType IR Type Nodes
@@ -399,15 +401,9 @@ public:
 		super(nt, old);
 		linkage = old.linkage;
 		ret = old.ret;
-		version (Volt) {
-			params = new old.params[0 .. $];
-			isArgRef = new old.isArgRef[0 .. $];
-			isArgOut = new old.isArgOut[0 .. $];
-		} else {
-			params = old.params.dup;
-			isArgRef = old.isArgRef.dup;
-			isArgOut = old.isArgOut.dup;
-		}
+		params = old.params.dup();
+		isArgRef = old.isArgRef.dup();
+		isArgOut = old.isArgOut.dup();
 		hiddenParameter = old.hiddenParameter;
 		isScope = old.isScope;
 		hasVarArgs = old.hasVarArgs;

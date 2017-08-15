@@ -12,6 +12,8 @@ import volt.ir.context;
 import volt.ir.toplevel;
 import volt.ir.templates;
 
+import volt.util.dup;
+
 
 /*!
  * @defgroup irDecl IR Declaration Nodes
@@ -54,11 +56,7 @@ abstract class Declaration : Node
 	this(NodeType nt, Declaration old)
 	{
 		super(nt, old);
-		version (Volt) {
-			this.annotations = new old.annotations[0 .. $];
-		} else {
-			this.annotations = old.annotations.dup;
-		}
+		this.annotations = old.annotations.dup();
 	}
 }
 
@@ -411,19 +409,11 @@ public:
 		this.myScope = old.myScope;
 		this.kind = old.kind;
 		this.type = old.type;
-		version (Volt) {
-			this.params = new old.params[0 .. $];
-			this.nestedFunctions = new old.nestedFunctions[0 .. $];
-			this.scopeSuccesses = new old.scopeSuccesses[0 .. $];
-			this.scopeExits = new old.scopeExits[0 .. $];
-			this.scopeFailures = new old.scopeFailures[0 .. $];
-		} else {
-			this.params = old.params.dup;
-			this.nestedFunctions = old.nestedFunctions.dup;
-			this.scopeSuccesses = old.scopeSuccesses.dup;
-			this.scopeExits = old.scopeExits.dup;
-			this.scopeFailures = old.scopeFailures.dup;
-		}
+		this.params = old.params.dup();
+		this.nestedFunctions = old.nestedFunctions.dup();
+		this.scopeSuccesses = old.scopeSuccesses.dup();
+		this.scopeExits = old.scopeExits.dup();
+		this.scopeFailures = old.scopeFailures.dup();
 		this.name = old.name;
 		this.mangledName = old.mangledName;
 		this.outParameter = old.outParameter;
@@ -497,11 +487,7 @@ public:
 	this(FunctionSet old)
 	{
 		super(NodeType.FunctionSet, old);
-		version (Volt) {
-			this.functions = new old.functions[0 .. $];
-		} else {
-			this.functions = old.functions.dup;
-		}
+		this.functions = old.functions.dup();
 		this.reference = old.reference;
 	}
 

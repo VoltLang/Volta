@@ -11,6 +11,8 @@ import volt.ir.declaration;
 import volt.ir.toplevel;
 import volt.ir.statement;
 
+import volt.util.dup;
+
 
 /*!
  * @defgroup irExp IR Expression Nodes
@@ -72,11 +74,7 @@ protected:
 	this(NodeType nt, LiteralExp old)
 	{
 		super(nt, old);
-		version (Volt) {
-			this.exps = new old.exps[0 .. $];
-		} else {
-			this.exps = old.exps.dup;
-		}
+		this.exps = old.exps.dup();
 		this.type = old.type;
 	}
 }
@@ -240,11 +238,7 @@ public:
 
 		this.hasArgumentList = old.hasArgumentList;
 		this.type = old.type;
-		version (Volt) {
-			this.argumentList = new old.argumentList[0 .. $];
-		} else {
-			this.argumentList = old.argumentList.dup;
-		}
+		this.argumentList = old.argumentList.dup();
 		this.ctor = old.ctor;
 
 		this.dupBeginning = old.dupBeginning;
@@ -308,15 +302,9 @@ public:
 		super(NodeType.Postfix, old);
 		this.op = old.op;
 		this.child = old.child;
-		version (Volt) {
-			this.arguments = new old.arguments[0 .. $];
-			this.argumentTags = new old.argumentTags[0 .. $];
-			this.argumentLabels = new old.argumentLabels[0 .. $];
-		} else {
-			this.arguments = old.arguments.dup;
-			this.argumentTags = old.argumentTags.dup;
-			this.argumentLabels = old.argumentLabels.dup;
-		}
+		this.arguments = old.arguments.dup();
+		this.argumentTags = old.argumentTags.dup();
+		this.argumentLabels = old.argumentLabels.dup();
 		this.identifier = old.identifier;
 		this.memberFunction = old.memberFunction;
 		this.templateInstance = old.templateInstance;
@@ -350,11 +338,7 @@ public:
 		this.child = old.child;
 
 		this.getFn = old.getFn;
-		version (Volt) {
-			this.setFns = new old.setFns[0 .. $];
-		} else {
-			this.setFns = old.setFns;
-		}
+		this.setFns = old.setFns.dup();
 
 		this.identifier = old.identifier;
 	}
@@ -464,11 +448,7 @@ public:
 	this(AssocArray old)
 	{
 		super(NodeType.AssocArray, old);
-		version (Volt) {
-			this.pairs = new old.pairs[0 .. $];
-		} else {
-			this.pairs = old.pairs.dup;
-		}
+		this.pairs = old.pairs.dup();
 		this.type = old.type;
 	}
 }
@@ -672,11 +652,7 @@ public:
 		super(NodeType.FunctionLiteral, old);
 		this.isDelegate = old.isDelegate;
 		this.returnType = old.returnType;
-		version (Volt) {
-			this.params = new old.params[0 .. $];
-		} else {
-			this.params = old.params.dup;
-		}
+		this.params = old.params.dup();
 		this.block = old.block;
 
 		this.singleLambdaParam = old.singleLambdaParam;
@@ -712,11 +688,7 @@ public:
 	this(ExpReference old)
 	{
 		super(NodeType.ExpReference, old);
-		version (Volt) {
-			this.idents = new old.idents[0 .. $];
-		} else {
-			this.idents = old.idents.dup;
-		}
+		this.idents = old.idents.dup();
 		this.decl = old.decl;
 		this.rawReference = old.rawReference;
 		this.doNotRewriteAsNestedLookup = old.doNotRewriteAsNestedLookup;
@@ -814,11 +786,7 @@ public:
 	this(StoreExp old)
 	{
 		super(NodeType.StoreExp, old);
-		version (Volt) {
-			this.idents = new old.idents[0 .. $];
-		} else {
-			this.idents = old.idents.dup;
-		}
+		this.idents = old.idents.dup();
 		this.store = old.store;
 	}
 }
@@ -845,11 +813,7 @@ public:
 	this(StatementExp old)
 	{
 		super(NodeType.StatementExp, old);
-		version (Volt) {
-			this.statements = new old.statements[0 .. $];
-		} else {
-			this.statements = old.statements.dup;
-		}
+		this.statements = old.statements.dup();
 		this.exp = old.exp;
 		this.originalExp = old.originalExp;
 	}
@@ -981,14 +945,8 @@ public:
 		this.kind = old.kind;
 		this.type = old.type;
 		this._class = old._class;
-
-		version (Volt) {
-			this.children = new old.children[0 .. $];
-			this.functions = new old.functions[0 .. $];
-		} else {
-			this.children = old.children.dup;
-			this.functions = old.functions.dup;
-		}
+		this.children = old.children.dup();
+		this.functions = old.functions.dup();
 	}
 }
 

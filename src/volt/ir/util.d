@@ -7,9 +7,10 @@ import ir = volt.ir.ir;
 import volt.errors;
 import volt.interfaces;
 import volt.token.location;
-import volt.util.string : unescapeString;
-import volt.util.sinks;
 import volt.ir.copy;
+import volt.util.dup;
+import volt.util.sinks;
+import volt.util.string : unescapeString;
 
 
 /*!
@@ -41,11 +42,7 @@ ir.QualifiedName buildQualifiedName(ref in Location loc, string value)
  */
 ir.QualifiedName buildQualifiedName(ref in Location loc, scope string[] value...)
 {
-	version (Volt) {
-		auto idents = new ir.Identifier[](value.length);
-	} else {
-		auto idents = new ir.Identifier[value.length];
-	}
+	auto idents = new ir.Identifier[](value.length);
 	foreach (i, val; value) {
 		idents[i] = new ir.Identifier(val);
 		idents[i].loc = loc;
@@ -399,11 +396,7 @@ ir.ArrayLiteral buildArrayLiteralSmart(ref in Location loc, ir.Type type, scope 
 	auto literal = new ir.ArrayLiteral();
 	literal.loc = loc;
 	literal.type = copyTypeSmart(loc, type);
-	version (Volt) {
-		literal.exps = new exps[0 .. $];
-	} else {
-		literal.exps = exps.dup;
-	}
+	literal.exps = exps.dup();
 	return literal;
 }
 
@@ -412,11 +405,7 @@ ir.StructLiteral buildStructLiteralSmart(ref in Location loc, ir.Type type, scop
 	auto literal = new ir.StructLiteral();
 	literal.loc = loc;
 	literal.type = copyTypeSmart(loc, type);
-	version (Volt) {
-		literal.exps = new exps[0 .. $];
-	} else {
-		literal.exps = exps.dup;
-	}
+	literal.exps = exps.dup();
 	return literal;
 }
 
@@ -425,11 +414,7 @@ ir.UnionLiteral buildUnionLiteralSmart(ref in Location loc, ir.Type type, scope 
 	auto literal = new ir.UnionLiteral();
 	literal.loc = loc;
 	literal.type = copyTypeSmart(loc, type);
-	version (Volt) {
-		literal.exps = new exps[0 .. $];
-	} else {
-		literal.exps = exps.dup;
-	}
+	literal.exps = exps.dup();
 	return literal;
 }
 
@@ -520,11 +505,7 @@ ir.Variable copyVariableSmart(ref in Location loc, ir.Variable right)
 
 ir.Variable[] copyVariablesSmart(ref in Location loc, ir.Variable[] vars)
 {
-	version (Volt) {
-		auto outVars = new ir.Variable[](vars.length);
-	} else {
-		auto outVars = new ir.Variable[vars.length];
-	}
+	auto outVars = new ir.Variable[](vars.length);
 	foreach (i, var; vars) {
 		outVars[i] = copyVariableSmart(loc, var);
 	}
@@ -536,11 +517,7 @@ ir.Variable[] copyVariablesSmart(ref in Location loc, ir.Variable[] vars)
  */
 ir.Exp[] getExpRefs(ref in Location loc, ir.FunctionParam[] vars)
 {
-	version (Volt) {
-		auto erefs = new ir.Exp[](vars.length);
-	} else {
-		auto erefs = new ir.Exp[vars.length];
-	}
+	auto erefs = new ir.Exp[](vars.length);
 	foreach (i, var; vars) {
 		erefs[i] = buildExpReference(loc, var, var.name);
 	}
@@ -865,11 +842,7 @@ ir.Unary buildNew(ref in Location loc, ir.Type type, string name, scope ir.Exp[]
 	new_.op = ir.Unary.Op.New;
 	new_.type = buildTypeReference(loc, type, name);
 	new_.hasArgumentList = arguments.length > 0;
-	version (Volt) {
-		new_.argumentList = new arguments[0 .. $];
-	} else {
-		new_.argumentList = arguments.dup;
-	}
+	new_.argumentList = arguments.dup();
 	return new_;
 }
 
@@ -880,11 +853,7 @@ ir.Unary buildNewSmart(ref in Location loc, ir.Type type, scope ir.Exp[] argumen
 	new_.op = ir.Unary.Op.New;
  	new_.type = copyTypeSmart(loc, type);
 	new_.hasArgumentList = arguments.length > 0;
-	version (Volt) {
-		new_.argumentList = new arguments[0 .. $];
-	} else {
-		new_.argumentList = arguments.dup;
-	}
+	new_.argumentList = arguments.dup();
 	return new_;
 }
 
@@ -1150,11 +1119,7 @@ ir.Postfix buildSlice(ref in Location loc, ir.Exp child, scope ir.Exp[] args...)
 	slice.loc = loc;
 	slice.op = ir.Postfix.Op.Slice;
 	slice.child = child;
-	version (Volt) {
-		slice.arguments = new args[0 .. $];
-	} else {
-		slice.arguments = args.dup;
-	}
+	slice.arguments = args.dup();
 
 	return slice;
 }
@@ -1208,11 +1173,7 @@ ir.Postfix buildCall(ref in Location loc, ir.Exp child, ir.Exp[] args)
 	call.loc = loc;
 	call.op = ir.Postfix.Op.Call;
 	call.child = child;
-	version (Volt) {
-		call.arguments = new args[0 .. $];
-	} else {
-		call.arguments = args.dup;
-	}
+	call.arguments = args.dup();
 
 	return call;
 }
@@ -1621,13 +1582,7 @@ ir.BlockStatement buildBlockStat(ref in Location loc, ir.Node introducingNode, i
 {
 	auto ret = new ir.BlockStatement();
 	ret.loc = loc;
-	if (statements.length > 0) {
-		version (Volt) {
-			ret.statements = new statements[0 .. $];
-		} else {
-			ret.statements = statements.dup;
-		}
-	}
+	ret.statements = statements.dup();
 	ret.myScope = new ir.Scope(_scope, introducingNode is null ? ret : introducingNode, "block", _scope.nestedDepth);
 
 	return ret;
@@ -2002,11 +1957,7 @@ ir.StoreExp buildStoreExp(ref in Location loc, ir.Store store, scope string[] id
 	auto sexp = new ir.StoreExp();
 	sexp.loc = loc;
 	sexp.store = store;
-	version (Volt) {
-		sexp.idents = new idents[0 .. $];
-	} else {
-		sexp.idents = idents.dup;
-	}
+	sexp.idents = idents.dup();
 	return sexp;
 }
 

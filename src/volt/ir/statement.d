@@ -9,6 +9,8 @@ import volt.ir.expression;
 import volt.ir.toplevel;
 import volt.ir.context;
 
+import volt.util.dup;
+
 
 /*!
  * @defgroup irStatement IR Statement Nodes
@@ -61,11 +63,7 @@ public:
 	this(BlockStatement old)
 	{
 		super(NodeType.BlockStatement, old);
-		version (Volt) {
-			this.statements = new old.statements[0 .. $];
-		} else {
-			this.statements = old.statements.dup;
-		}
+		this.statements = old.statements.dup();
 		this.myScope = old.myScope;
 	}
 }
@@ -110,11 +108,7 @@ public:
 	this(AsmStatement old)
 	{
 		super(NodeType.AsmStatement, old);
-		version (Volt) {
-			this.tokens = new old.tokens[0 .. $];
-		} else {
-			this.tokens = old.tokens;
-		}
+		this.tokens = old.tokens.dup();
 	}
 }
 
@@ -282,13 +276,8 @@ public:
 	{
 		super(NodeType.ForeachStatement, old);
 		this.reverse = old.reverse;
-		version (Volt) {
-			this.itervars = new old.itervars[0 .. $];
-			this.refvars = new old.refvars[0 .. $];
-		} else {
-			this.itervars = old.itervars.dup;
-			this.refvars = old.refvars.dup;
-		}
+		this.itervars = old.itervars.dup();
+		this.refvars = old.refvars.dup();
 		this.aggregate = old.aggregate;
 		this.beginIntegerRange = old.beginIntegerRange;
 		this.endIntegerRange = old.endIntegerRange;
@@ -319,11 +308,7 @@ public:
 	{
 		super(NodeType.LabelStatement, old);
 		this.label = old.label;
-		version (Volt) {
-			this.childStatement = new old.childStatement[0 .. $];
-		} else {
-			this.childStatement = old.childStatement.dup;
-		}
+		this.childStatement = old.childStatement.dup();
 	}
 }
 
@@ -379,11 +364,7 @@ public:
 		super(NodeType.SwitchCase, old);
 		this.firstExp = old.firstExp;
 		this.secondExp = old.secondExp;
-		version (Volt) {
-			this.exps = new old.exps[0 .. $];
-		} else {
-			this.exps = old.exps.dup;
-		}
+		this.exps = old.exps.dup();
 		this.isDefault = old.isDefault;
 
 		this.statements = old.statements;
@@ -416,13 +397,8 @@ public:
 		super(NodeType.SwitchStatement, old);
 		this.isFinal = old.isFinal;
 		this.condition = old.condition;
-		version (Volt) {
-			this.cases = new old.cases[0 .. $];
-			this.withs = new old.withs[0 .. $];
-		} else {
-			this.cases = old.cases.dup;
-			this.withs = old.withs.dup;
-		}
+		this.cases = old.cases.dup();
+		this.withs = old.withs.dup();
 		this.condVar = old.condVar;
 	}
 }
@@ -563,13 +539,8 @@ public:
 	{
 		super(NodeType.TryStatement, old);
 		this.tryBlock = old.tryBlock;
-		version (Volt) {
-			this.catchVars = new old.catchVars[0 .. $];
-			this.catchBlocks = new old.catchBlocks[0 .. $];
-		} else {
-			this.catchVars = old.catchVars.dup;
-			this.catchBlocks = old.catchBlocks.dup;
-		}
+		this.catchVars = old.catchVars.dup();
+		this.catchBlocks = old.catchBlocks.dup();
 		this.catchAll = old.catchAll;
 		this.finallyBlock = old.finallyBlock;
 	}
@@ -648,11 +619,7 @@ public:
 	{
 		super(NodeType.PragmaStatement, old);
 		this.type = old.type;
-		version (Volt) {
-			this.arguments = new old.arguments[0 .. $];
-		} else {
-			this.arguments = old.arguments.dup;
-		}
+		this.arguments = old.arguments.dup();
 		this.block = old.block;
 	}
 }
