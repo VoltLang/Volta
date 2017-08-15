@@ -240,11 +240,6 @@ extern(C) fn vrt_eh_personality_v0_real(
 					}
 					actionPointer += cast(size_t)actionOffset;
 				}
-
-				msgs: char[][1];
-				msgs[0] = cast(char[])"unhandled case";
-				vrt_panic(cast(char[][])msgs);
-				return _Unwind_Reason_Code.FATAL_PHASE1_ERROR;
 			}
 		}
 	}
