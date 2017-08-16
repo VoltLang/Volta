@@ -159,6 +159,8 @@ protected:
 
 /*!
  * A llvm result that saves to bitcode files.
+ *
+ * @ingroup backend llvmbackend
  */
 class BitcodeResult : BackendResult
 {
@@ -240,6 +242,14 @@ public:
  *
  */
 
+/*!
+ * Load a LLVMModuleRef into memory from file.
+ *
+ * @param ctx      The context that the module will be created in.
+ * @param filename The bitcode file to load the module from.
+ *
+ * @ingroup llvmbackend
+ */
 LLVMModuleRef loadModule(LLVMContextRef ctx, string filename)
 {
 	string msg;
@@ -257,6 +267,11 @@ LLVMModuleRef loadModule(LLVMContextRef ctx, string filename)
 
 /*!
  * Helper function to link several LLVM modules together.
+ *
+ * @param output The filename to write the result into.
+ * @param input  The filenames of the files to link together.
+ *
+ * @ingroup llvmbackend
  */
 void linkModules(string output, string[] inputs...)
 {
@@ -296,6 +311,17 @@ void linkModules(string output, string[] inputs...)
 	}
 }
 
+/*!
+ * Write the given module into a bitcode file.
+ *
+ * @param target Layout and triple decided by the target.
+ * @param output The filename that the function writes the bitcode to.
+ * @param mod    The module to assemble and write out to the output file.
+ *
+ * @SideEffect Will overwrite the modules triple and layout information.
+ *
+ * @ingroup llvmbackend
+ */
 void writeBitcodeFile(TargetInfo target, string output, LLVMModuleRef mod)
 {
 	auto triple = getTriple(target);
@@ -313,6 +339,16 @@ void writeBitcodeFile(TargetInfo target, string output, LLVMModuleRef mod)
 	LLVMSetTarget(mod, nullStr);
 }
 
+/*!
+ * Read a bitcode file from disk, assemble and write the given it to the given
+ * filename using the given target. The assemble type and file format is
+ * decided by the given target.
+ *
+ * @param target Decides assemble type and file format.
+ * @param output The filename to write the object file to.
+ * @param input  The file to read the module from.
+ * @ingroup llvmbackend
+ */
 void writeObjectFile(TargetInfo target, string output, string input)
 {
 	// Need a context to load the module into.
@@ -334,6 +370,16 @@ void writeObjectFile(TargetInfo target, string output, string input)
 	return writeObjectFile(machine, output, mod);
 }
 
+/*!
+ * Assemble and write the given module to the given filename using the given
+ * target. The assemble type and file format is decided by the given machine.
+ *
+ * @param machine Used to create the object file, @ref createMachineTarget.
+ * @param output  The filename to write the object file to.
+ * @param mod     The module to assemble and write out to the output file.
+ *
+ * @ingroup llvmbackend
+ */
 void writeObjectFile(LLVMTargetMachineRef machine, string output, LLVMModuleRef mod)
 {
 	// Write the module to the file
@@ -352,6 +398,10 @@ void writeObjectFile(LLVMTargetMachineRef machine, string output, LLVMModuleRef 
 
 /*!
  * Create a target machine.
+ *
+ * @param target The target for which to create a LLVMTargetMachineRef.
+ *
+ * @ingroup llvmbackend
  */
 LLVMTargetMachineRef createTargetMachine(TargetInfo target)
 {
@@ -383,6 +433,10 @@ LLVMTargetMachineRef createTargetMachine(TargetInfo target)
 
 /*!
  * Used to select LLVMTarget.
+ *
+ * @param target The target to get the arch string for.
+ *
+ * @ingroup llvmbackend
  */
 string getArchTarget(TargetInfo target)
 {
@@ -394,6 +448,10 @@ string getArchTarget(TargetInfo target)
 
 /*!
  * Returns the llvm triple string for the given target.
+ *
+ * @param target The target to get the triple string for.
+ *
+ * @ingroup llvmbackend
  */
 string getTriple(TargetInfo target)
 {
@@ -428,6 +486,10 @@ string getTriple(TargetInfo target)
 
 /*!
  * Returns the llvm layout string for the given target.
+ *
+ * @param target The target to get the layout string for.
+ *
+ * @ingroup llvmbackend
  */
 string getLayout(TargetInfo target)
 {
@@ -462,14 +524,22 @@ string getLayout(TargetInfo target)
 
 /*!
  * Layout strings grabbed from clang.
+ *
+ * @ingroup llvmbackend
+ * @{
  */
 enum string layoutWinLinux32 = "e-m:e-p:32:32-f64:32:64-f80:32-n8:16:32-S128";
 enum string layoutWinLinux64 = "e-m:e-i64:64-f80:128-n8:16:32:64-S128";
 enum string layoutOSX32 = "e-m:o-p:32:32-f64:32:64-f80:128-n8:16:32-S128";
 enum string layoutOSX64 = "e-m:o-i64:64-f80:128-n8:16:32:64-S128";
+//! @}
 
 /*!
  * Bare metal layout, grabbed from clang with target "X-pc-none-elf".
+ *
+ * @ingroup llvmbackend
+ * @{
  */
 enum string layoutMetal32 = "e-m:e-p:32:32-f64:32:64-f80:32-n8:16:32-S128";
 enum string layoutMetal64 = "e-m:e-i64:64-f80:128-n8:16:32:64-S128";
+//! @}
