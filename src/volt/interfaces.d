@@ -805,8 +805,8 @@ enum TargetType
 {
 	DebugPrinting,
 	LlvmBitcode,
-	ElfObject,
 	VoltCode,
+	Object,
 	CCode,
 	Host,
 }
