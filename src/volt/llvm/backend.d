@@ -52,9 +52,12 @@ class LlvmBackend : Backend
 {
 protected:
 	TargetInfo target;
+	LLVMTargetRef llvmTarget;
+	LLVMTargetMachineRef llvmMachineTarget;
 
 	TargetType mTargetType;
 	bool mDump;
+
 
 public:
 	this(TargetInfo target, bool internalDebug)
@@ -77,10 +80,16 @@ public:
 		}
 
 		LLVMLinkInMCJIT();
+
+		llvmMachineTarget = createTargetMachine(target);
 	}
 
 	override void close()
 	{
+		if (llvmMachineTarget !is null) {
+			LLVMDisposeTargetMachine(llvmMachineTarget);
+			llvmMachineTarget = null;
+		}
 		// XXX: Shutdown LLVM.
 	}
 
@@ -122,14 +131,13 @@ public:
 			throw panic("Module verification failed.");
 		}
 
-		if (mTargetType == TargetType.LlvmBitcode) {
-			return new BitcodeResult(state);
-		} else if (mTargetType == TargetType.Host) {
-			return new HostResult(state);
-		} else {
-			assert(false);
+		switch (mTargetType) with (TargetType) {
+		case LlvmBitcode: return new BitcodeResult(this, state);
+		case Host: return new HostResult(state);
+		default: assert(false);
 		}
 	}
+
 
 protected:
 	void llvmModuleCompile(VoltState state, ir.Module m)
@@ -148,38 +156,58 @@ protected:
 	}
 }
 
+/*!
+ * A llvm result that saves to bitcode files.
+ */
 class BitcodeResult : BackendResult
 {
 protected:
-	VoltState mState;
+	//! The backend that produced this result.
+	LlvmBackend mBackend;
+	LLVMContextRef mContext;
+	LLVMModuleRef mMod;
 
 
 public:
-	this(VoltState state)
+	this(LlvmBackend backend, VoltState state)
 	{
-		this.mState = state;
+		this.mBackend = backend;
+		this.mContext = state.context;
+		this.mMod = state.mod;
+		state.context = null;
+		state.mod = null;
+		state.close();
+	}
+
+	override void close()
+	{
+		if (mMod !is null) {
+			LLVMDisposeModule(mMod);
+			mMod = null;
+		}
+		if (mContext !is null) {
+			LLVMContextDispose(mContext);
+			mContext = null;
+		}
 	}
 
 	override void saveToFile(string filename)
 	{
-		auto t = mState.target;
-		auto triple = getTriple(t);
-		auto layout = getLayout(t);
-		LLVMSetTarget(mState.mod, triple);
-		LLVMSetDataLayout(mState.mod, layout);
-		LLVMWriteBitcodeToFile(mState.mod, filename);
+		writeBitcodeFile(mBackend.target, filename, mMod);
 	}
 
 	override BackendResult.CompiledDg getFunction(ir.Function)
 	{
 		assert(false);
 	}
-
-	override void close()
-	{
-		mState.close();
-	}
 }
+
+
+/*
+ *
+ * Helper functions.
+ *
+ */
 
 LLVMModuleRef loadModule(LLVMContextRef ctx, string filename)
 {
@@ -237,21 +265,30 @@ void linkModules(string output, string[] inputs...)
 	}
 }
 
-void writeObjectFile(TargetInfo target, string output, string input)
+void writeBitcodeFile(TargetInfo target, string output, LLVMModuleRef mod)
 {
-	auto arch = getArchTarget(target);
 	auto triple = getTriple(target);
 	auto layout = getLayout(target);
-	if (arch is null || triple is null || layout is null) {
+	string nullStr;
+
+	if (triple is null || layout is null) {
 		throw makeArchNotSupported();
 	}
 
+	LLVMSetTarget(mod, triple);
+	LLVMSetDataLayout(mod, layout);
+	LLVMWriteBitcodeToFile(mod, output);
+	LLVMSetDataLayout(mod, nullStr);
+	LLVMSetTarget(mod, nullStr);
+}
+
+void writeObjectFile(TargetInfo target, string output, string input)
+{
 	// Need a context to load the module into.
 	auto ctx = LLVMContextCreate();
 	scope (exit) {
 		LLVMContextDispose(ctx);
 	}
-
 
 	// Load the module from file.
 	auto mod = loadModule(ctx, input);
@@ -259,6 +296,40 @@ void writeObjectFile(TargetInfo target, string output, string input)
 		LLVMDisposeModule(mod);
 	}
 
+	auto machine = createTargetMachine(target);
+	scope (exit) {
+		LLVMDisposeTargetMachine(machine);
+	}
+	return writeObjectFile(machine, output, mod);
+}
+
+void writeObjectFile(LLVMTargetMachineRef machine, string output, LLVMModuleRef mod)
+{
+	// Write the module to the file
+	string msg;
+	auto ret = LLVMTargetMachineEmitToFile(
+		machine, mod, output,
+		LLVMCodeGenFileType.Object, msg) != 0;
+
+	if (msg !is null && !ret) {
+		io.error.writefln("%s", msg); // Warnings
+	}
+	if (ret) {
+		throw makeNoWriteObjectFile(output, msg);
+	}
+}
+
+/*!
+ * Create a target machine.
+ */
+LLVMTargetMachineRef createTargetMachine(TargetInfo target)
+{
+	auto arch = getArchTarget(target);
+	auto triple = getTriple(target);
+
+	if (arch is null || triple is null) {
+		throw makeArchNotSupported();
+	}
 
 	// Load the target mc/assmbler.
 	// Doesn't need to disposed.
@@ -275,25 +346,8 @@ void writeObjectFile(TargetInfo target, string output, string input)
 	}
 
 	// Create target machine used to hold all of the settings.
-	auto machine = LLVMCreateTargetMachine(
-		llvmTarget, triple, "", "", opt, reloc, codeModel);
-	scope (exit) {
-		LLVMDisposeTargetMachine(machine);
-	}
-
-
-	// Write the module to the file
-	string msg;
-	auto ret = LLVMTargetMachineEmitToFile(
-		machine, mod, output,
-		LLVMCodeGenFileType.Object, msg) != 0;
-
-	if (msg !is null && !ret) {
-		io.error.writefln("%s", msg); // Warnings
-	}
-	if (ret) {
-		throw makeNoWriteObjectFile(output, msg);
-	}
+	return LLVMCreateTargetMachine(llvmTarget, triple, "", "",
+	                               opt, reloc, codeModel);
 }
 
 /*!
