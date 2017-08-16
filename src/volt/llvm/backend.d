@@ -95,7 +95,7 @@ public:
 
 	override TargetType[] supported()
 	{
-		return [TargetType.LlvmBitcode, TargetType.Host];
+		return [TargetType.LlvmBitcode, TargetType.Object, TargetType.Host];
 	}
 
 	override void setTarget(TargetType type)
@@ -133,6 +133,7 @@ public:
 
 		switch (mTargetType) with (TargetType) {
 		case LlvmBitcode: return new BitcodeResult(this, state);
+		case Object: return new ObjectResult(this, state);
 		case Host: return new HostResult(state);
 		default: assert(false);
 		}
@@ -199,6 +200,36 @@ public:
 	override BackendResult.CompiledDg getFunction(ir.Function)
 	{
 		assert(false);
+	}
+}
+
+/*!
+ * Backend results that procudes a object file.
+ *
+ * @ingroup backend llvmbackend
+ */
+class ObjectResult : BitcodeResult
+{
+public:
+	this(LlvmBackend b, VoltState s) { super(b, s); }
+
+	override void saveToFile(string filename)
+	{
+		auto triple = getTriple(mBackend.target);
+		auto layout = getLayout(mBackend.target);
+
+		if (triple is null || layout is null) {
+			throw makeArchNotSupported();
+		}
+
+		LLVMSetTarget(mMod, triple);
+		LLVMSetDataLayout(mMod, layout);
+		scope (exit) {
+			string nullStr;
+			LLVMSetDataLayout(mMod, nullStr);
+			LLVMSetTarget(mMod, nullStr);
+		}
+		writeObjectFile(mBackend.llvmMachineTarget, filename, mMod);
 	}
 }
 
