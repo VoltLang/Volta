@@ -28,6 +28,7 @@ import ir = volt.ir.ir;
 
 import volt.parser.parser;
 import volt.semantic.languagepass;
+import volt.llvm.driver;
 import volt.llvm.backend;
 import volt.lowerer.image;
 import volt.util.mangledecoder;
@@ -91,21 +92,8 @@ protected:
 	string[] mImportAsSrc;
 	string[] mBitcodeFiles;
 	string[] mObjectFiles;
-	string[] mLibFiles;
-
-	string[] mLibraryFiles;
-	string[] mLibraryPaths;
-
-	string[] mFrameworkNames;
-	string[] mFrameworkPaths;
 
 	string[] mStringImportPaths;
-
-	string[] mXld;
-	string[] mXcc;
-	string[] mXlink;
-	string[] mXclang;
-	string[] mXlinker;
 
 	bool mInternalD;
 	bool mInternalDiff;
@@ -126,14 +114,14 @@ protected:
 	//! If not null, use this to print json files.
 	JsonPrinter mJsonPrinter;
 
+	//! Driver for the LLVM part of Volta.
+	LLVMDriver mLLVMDriver;
+	//! Settings for the llvm backend driver.
+	LLVMDriverSettings mLLVMSettings;
+
 	//! Decide on the different parts of the driver to use.
 	bool mRunVoltend;
 	bool mRunBackend;
-
-
-private:
-	//! Keeps track of the return status of clang calls.
-	int mClangReturn;
 
 
 public:
@@ -150,6 +138,7 @@ public:
 		this.identStr = s.identStr;
 		this.internalDebug = s.internalDebug;
 		this.tempMan = new TempfileManager();
+		this.mLLVMSettings = new LLVMDriverSettings();
 
 		// Timers
 		mAccumReading = new Accumulator("p1-reading");
@@ -278,9 +267,9 @@ public:
 		} else if (endsWith(file, ".o", ".obj")) {
 			mObjectFiles ~= file;
 		} else if (endsWith(file, ".lib")) {
-			mLibFiles ~= file;
+			mLLVMSettings.libFiles ~= file;
 		} else if (endsWith(file, ".a")) {
-			mLibFiles ~= file;
+			mLLVMSettings.libFiles ~= file;
 		} else {
 			auto str = format("unknown file type '%s'", file);
 			throw new CompilerError(str);
@@ -563,337 +552,33 @@ protected:
 
 	int intCompileBackend()
 	{
-		perf.mark(Perf.Mark.BACKEND);
-
 		// We do this here because we know that bitcode files are
 		// being used. Add files to dependencies for this compile.
 		foreach (file; mBitcodeFiles) {
 			mDepFiles ~= file;
 		}
 
-		if (mEmitLLVM || mNoLink) {
-			return intCompileBackendBitcodeOrObject();
-		} else {
-			return intCompileBackendLink();
-		}
-	}
-
-	string[] turnModulesIntoBitcode(ir.Module[] mods)
-	{
-		string[] ret;
-
-		// Generate bc files for the compiled modules.
-		foreach (m; mCommandLineModules) {
-			string o = tempMan.getTempFile(".bc");
-
-			backend.setTarget(TargetType.LlvmBitcode);
-			debugPrint("Backend %s.", m.name.toString());
-			auto d = languagePass.driver;
-			auto res = backend.compile(m, languagePass.ehPersonalityFunc,
-				languagePass.llvmTypeidFor, d.execDir, d.identStr);
-			res.saveToFile(o);
-			res.close();
-			ret ~= o;
-		}
-
-		return ret;
-	}
-
-	int intCompileBackendBitcodeOrObject()
-	{
-		// We will be modifing this later on,
-		// but we don't want to change mBitcodeFiles.
-		string[] bitcodeFiles = mBitcodeFiles;
-		bitcodeFiles ~= turnModulesIntoBitcode(mCommandLineModules);
-
-		// Setup files bc.
-		string bc;
 		if (mEmitLLVM) {
-			bc = mOutput;
-		} else {
-			if (bitcodeFiles.length == 1) {
-				bc = bitcodeFiles[0];
-				bitcodeFiles = null;
-			} else if (bitcodeFiles.length > 1) {
-				bc = tempMan.getTempFile(".bc");
-			}
+			return mLLVMDriver.makeBitcode(mOutput,
+				mCommandLineModules, mBitcodeFiles);
+		} else if (mNoLink) {
+			return mLLVMDriver.makeObject(mOutput,
+				mCommandLineModules, mBitcodeFiles);
 		}
 
-		// Link bitcode files.
-		if (bitcodeFiles.length > 0) {
-			perf.mark(Perf.Mark.BITCODE);
-			linkModules(bc, bitcodeFiles);
-		}
-
-		// When outputting bitcode we are now done.
-		if (mEmitLLVM) {
-			assert(mNoLink);
-			return 0;
-		}
-
-		// Setup object files and output for linking
-		string obj;
-		if (mNoLink) {
-			assert(bc !is null);
-			obj = mOutput;
-		} else if (bc !is null) {
-			obj = tempMan.getTempFile(".o");
-		}
-
-		if (obj !is null) {
-			assert(bc !is null);
-
-			// Native compilation, turn the bitcode into native code.
-			perf.mark(Perf.Mark.ASSEMBLE);
-			writeObjectFile(target, obj, bc);
-		}
-
-		return 0;
-	}
-
-	int turnBitcodeIntoObjectClang(ref string[] objectFiles, string[] bitcodeFiles)
-	{
-		auto cmd = new CmdGroup(8);
-		auto clangArgs = getClangArgs();
-
-		// Native compilation, turn the bitcode into native code.
-		foreach (bc; bitcodeFiles) {
-			// Abort the loop if a command has failed.
-			if (mClangReturn != 0) {
-				break;
-			}
-
-			string obj = tempMan.getTempFile(".o");
-			auto args = clangArgs ~ ["-c", "-o", obj, bc];
-			cmd.run(mClangCmd, args, checkClangReturn);
-
-			objectFiles ~= obj;
-		}
-
-		// Wait for all commands to finish.
-		cmd.waitAll();
-
-		return mClangReturn;
-	}
-
-	void turnBitcodeIntoObject(ref string[] objectFiles, string[] bitcodeFiles)
-	{
-		// Native compilation, turn the bitcode into native code.
-		foreach (bc; bitcodeFiles) {
-			string obj = tempMan.getTempFile(".o");
-			writeObjectFile(target, obj, bc);
-
-			objectFiles ~= obj;
-		}
-	}
-
-	int intCompileBackendLink()
-	{
 		// We do this here because we know that object files are
 		// being used. Add files to dependencies for this compile.
 		foreach (file; mObjectFiles) {
 			mDepFiles ~= file;
 		}
 
-		// We will be modifing this later on, but we don't
-		// want to change mBitcodeFiles and mObjectFiles.
-		auto modules = mCommandLineModules;
-		auto objectFiles = mObjectFiles;
-		auto bitcodeFiles = mBitcodeFiles;
-
-		// If we are using llvm-ar don't assemble and send the
-		// bitcode modules directly to llvm-ar.
-		if (mArWithLLLVM && mBuildDir !is null) {
-			return makeArchiveLLVMBuildDir(objectFiles, bitcodeFiles, modules);
-		}
-
-		// Turn modules into bitcode.
-		bitcodeFiles ~= turnModulesIntoBitcode(modules);
-
-		// Turn bitcodes into objects.
-		perf.mark(Perf.Mark.ASSEMBLE);
-
-		if (mClangCmd !is null) {
-			auto ret = turnBitcodeIntoObjectClang(
-				/*ref*/ objectFiles, bitcodeFiles);
-			if (ret != 0) {
-				return ret;
-			}
-		} else {
-			turnBitcodeIntoObject(/*ref*/ objectFiles, bitcodeFiles);
-		}
-
-		// And finally call the linker.
-		perf.mark(Perf.Mark.LINK);
 		if (mArWithLLLVM) {
-			return makeArchiveLLVM(objectFiles, mOutput);
+			return mLLVMDriver.makeArchive(mOutput,
+				mCommandLineModules, mBitcodeFiles, mObjectFiles);
 		} else {
-			return nativeLink(objectFiles, mOutput);
+			return mLLVMDriver.doNativeLink(mOutput,
+				mCommandLineModules, mBitcodeFiles, mObjectFiles);
 		}
-	}
-
-	int makeArchiveLLVM(string[] objectFiles, string output)
-	{
-		auto ar = mArCmd;
-		auto arArgs = ["rcv", output] ~ objectFiles;
-
-		// If the file exists remove it.
-		if (output.exists() && output.isFile()) {
-			output.remove();
-		}
-
-		return spawnProcess(ar, arArgs).wait();
-	}
-
-	int makeArchiveLLVMBuildDir(string[] objectFiles, string[] bitcodeFiles, ir.Module[] modules)
-	{
-		assert(mArCmd !is null);
-		assert(mBuildDir !is null);
-
-		auto ar = mArCmd;
-		auto outputDir = mBuildDir;
-
-		// Native compilation, turn the bitcode into native code.
-		foreach (mod; mCommandLineModules) {
-			string bc = format("%s%s%s.bc", outputDir, dirSeparator, mod.name.toString());
-
-			backend.setTarget(TargetType.LlvmBitcode);
-			auto d = languagePass.driver;
-			auto res = backend.compile(mod, languagePass.ehPersonalityFunc,
-				languagePass.llvmTypeidFor, d.execDir, d.identStr);
-			res.saveToFile(bc);
-			res.close();
-		}
-
-		auto arArgs = ["rcv", mOutput];
-		foreach (o; objectFiles) {
-			arArgs ~= o;
-		}
-
-		foreach (bc; bitcodeFiles) {
-			arArgs ~= bc;
-		}
-
-		// And finally call the linker.
-		perf.mark(Perf.Mark.LINK);
-
-		// If the file exists remove it.
-		if (mOutput.exists() && mOutput.isFile()) {
-			mOutput.remove();
-		}
-
-		return spawnProcess(ar, arArgs).wait();
-	}
-
-	int nativeLink(string[] objs, string of)
-	{
-		if (mLinkWithLink) {
-			return msvcLink(mLinker, objs, of);
-		} else if (mLinkWithLD) {
-			return ccLink(mLinker, false, objs, of);
-		} else if (mLinkWithCC) {
-			return ccLink(mLinker, true, objs, of);
-		} else {
-			assert(false);
-		}
-	}
-
-	int ccLink(string linker, bool cc, string[] objs, string of)
-	{
-		string[] args = ["-o", of];
-
-		if (cc) {
-			final switch (target.arch) with (Arch) {
-			case X86: args ~= "-m32"; break;
-			case X86_64: args ~= "-m64"; break;
-			}
-		}
-
-		foreach (objectFile; objs) {
-			args ~= objectFile;
-		}
-		foreach (libFile; mLibFiles) {
-			args ~= libFile;
-			mDepFiles ~= libFile;
-		}
-		foreach (libraryPath; mLibraryPaths) {
-			args ~= format("-L%s", libraryPath);
-		}
-		foreach (libraryFile; mLibraryFiles) {
-			args ~= format("-l%s", libraryFile);
-		}
-		foreach (frameworkPath; mFrameworkPaths) {
-			args ~= "-F";
-			args ~= frameworkPath;
-		}
-		foreach (frameworkName; mFrameworkNames) {
-			args ~= "-framework";
-			args ~= frameworkName;
-		}
-		if (cc) {
-			foreach (xcc; mXcc) {
-				args ~= xcc;
-			}
-			foreach (xLD; mXld) {
-				args ~= "-Xlinker";
-				args ~= xLD;
-			}
-			foreach (xLinker; mXlinker) {
-				args ~= "-Xlinker";
-				args ~= xLinker;
-			}
-		} else {
-			foreach (xLD; mXld) {
-				args ~= xLD;
-			}
-			foreach (xLink; mXlinker) {
-				args ~= xLink;
-			}
-		}
-
-		return spawnProcess(linker, args).wait();
-	}
-
-	int msvcLink(string linker, string[] objs, string of)
-	{
-		string[] args = [
-			"/MACHINE:x64",
-			"/defaultlib:libcmt",
-			"/defaultlib:oldnames",
-			"legacy_stdio_definitions.lib",
-			"/nologo",
-			format("/out:%s", of)];
-
-		foreach (objectFile; objs) {
-			args ~= objectFile;
-		}
-		foreach (libFile; mLibFiles) {
-			args ~= libFile;
-			mDepFiles ~= libFile;
-		}
-		foreach (libraryPath; mLibraryPaths) {
-			args ~= format("/LIBPATH:%s", libraryPath);
-		}
-		foreach (libraryFile; mLibraryFiles) {
-			args ~= libraryFile;
-		}
-		foreach (xLink; mXlink) {
-			args ~= xLink;
-		}
-
-		// We are using msvc link directly so this is
-		// linker arguments.
-		foreach (xLinker; mXlinker) {
-			args ~= xLinker;
-		}
-
-		return spawnProcess(linker, args).wait();
-	}
-
-	int emscriptenLink(string linker, string bc, string of)
-	{
-		string[] args = ["-o", of];
-		return spawnProcess(linker, ["-o", of, bc]).wait();
 	}
 
 
@@ -936,11 +621,11 @@ protected:
 		mSrcIncludes = settings.srcIncludePaths;
 		mImportAsSrc = settings.importAsSrc;
 
-		mLibraryPaths = settings.libraryPaths;
-		mLibraryFiles = settings.libraryFiles;
+		mLLVMSettings.libraryPaths = settings.libraryPaths;
+		mLLVMSettings.libraryFlags = settings.libraryFiles;
 
-		mFrameworkNames = settings.frameworkNames;
-		mFrameworkPaths = settings.frameworkPaths;
+		mLLVMSettings.frameworkNames = settings.frameworkNames;
+		mLLVMSettings.frameworkPaths = settings.frameworkPaths;
 
 		mStringImportPaths = settings.stringImportPaths;
 	}
@@ -954,53 +639,49 @@ protected:
 
 	void decideLinker(Settings settings)
 	{
-		mXld = settings.xld;
-		mXcc = settings.xcc;
-		mXlink = settings.xlink;
-		mXclang = settings.xclang;
-		mXlinker = settings.xlinker;
+		mLLVMSettings.xLD = settings.xld;
+		mLLVMSettings.xCC = settings.xcc;
+		mLLVMSettings.xLink = settings.xlink;
+		mLLVMSettings.xClang = settings.xclang;
+		mLLVMSettings.xLinker = settings.xlinker;
 
 		// Clang has a special place.
-		mArCmd = settings.llvmAr;
-		mClangCmd = settings.clang;
-		mBuildDir = null;
+		mLLVMSettings.ar = settings.llvmAr;
+		mLLVMSettings.clang = settings.clang;
 
-		if (mArCmd !is null) {
+		if (settings.llvmAr !is null) {
 			mArWithLLLVM = true;
 		} else if (settings.linker !is null) {
 			switch (mPlatform) with (Platform) {
 			case MSVC:
-				mLinker = settings.linker;
-				mLinkWithLink = true;
+				mLLVMSettings.linker = settings.linker;
+				mLLVMSettings.linkWithLink = true;
 				break;
 			default:
-				mLinker = settings.linker;
-				mLinkWithLD = true;
-				break;
+				throw new CompilerError("Use --cc or --clang instead of --linker");
 			}
 		} else if (settings.clang !is null) {
-			mLinker = settings.clang;
-			mLinkWithCC = true;
+			mLLVMSettings.linker = settings.clang;
+			mLLVMSettings.linkWithCC = true;
 			// We pretend clang is cc.
-			mXcc ~= settings.xclang;
+			mLLVMSettings.xCC ~= settings.xclang;
 		} else if (settings.ld !is null) {
-			mLinker = settings.ld;
-			mLinkWithLD = true;
+			throw new CompilerError("Use --cc or --clang instead of --ld");
 		} else if (settings.cc !is null) {
-			mLinker = settings.cc;
-			mLinkWithCC = true;
+			mLLVMSettings.linker = settings.cc;
+			mLLVMSettings.linkWithCC = true;
 		} else if (settings.link !is null) {
-			mLinker = settings.link;
-			mLinkWithLink = true;
+			mLLVMSettings.linker = settings.linker;
+			mLLVMSettings.linkWithLink = true;
 		} else {
 			switch (mPlatform) with (Platform) {
 			case MSVC:
-				mLinker = "link.exe";
-				mLinkWithLink = true;
+				mLLVMSettings.linker = "link.exe";
+				mLLVMSettings.linkWithLink = true;
 				break;
 			default:
-				mLinkWithCC = true;
-				mLinker = "gcc";
+				mLLVMSettings.linker = "clang";
+				mLLVMSettings.linkWithCC = true;
 				break;
 			}
 		}
@@ -1031,8 +712,9 @@ protected:
 
 	void decideCheckErrors()
 	{
-		if (mLibFiles.length > 0 && !mLinkWithLink) {
-			throw new CompilerError(format("can not link '%s'", mLibFiles[0]));
+		if (mLLVMSettings.libFiles.length > 0 && !mLinkWithLink) {
+			throw new CompilerError(format("can not link '%s'",
+				mLLVMSettings.libFiles[0]));
 		}
 
 		if (mEmitLLVM && !mNoLink) {
@@ -1055,58 +737,13 @@ protected:
 		if (mRunBackend) {
 			assert(languagePass !is null);
 			backend = new LlvmBackend(languagePass.target, languagePass.driver.internalDebug);
+			mLLVMDriver = new LLVMDriver(this, tempMan, target,
+				languagePass, backend, mLLVMSettings);
 		}
 	}
 
 
 private:
-	/*
-	 *
-	 * Clang functions.
-	 *
-	 */
-
-	string[] getClangArgs()
-	{
-		auto clangArgs = ["-target", getTriple(target)];
-
-		// Add command line args.
-		clangArgs ~= mXclang;
-
-		// Force -fPIC on linux.
-		if (target.arch == Arch.X86_64 &&
-		    target.platform == Platform.Linux) {
-			clangArgs ~= "-fPIC";
-		}
-
-		// Clang likes to change the module target triple.
-		// @TODO make battery pipe in the real triple.
-		if (target.arch == Arch.X86_64 &&
-		    target.platform == Platform.MSVC) {
-			clangArgs ~= "-Wno-override-module";
-		}
-
-		// Add any optimze flag.
-		if (mOptimizeFlag !is null) {
-			clangArgs ~= mOptimizeFlag;
-		}
-
-		return clangArgs;
-	}
-
-	void checkClangReturn(int result)
-	{
-		if (result != 0) {
-			mClangReturn = result;
-		}
-	}
-
-	version (D_Version2) CmdGroup.DoneDg checkClangReturn()
-	{
-		return &checkClangReturn;
-	}
-
-
 	/*
 	 *
 	 * Debug printing helpers.
