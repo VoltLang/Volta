@@ -115,14 +115,22 @@ public:
 
 	override void close()
 	{
-		LLVMDisposeDIBuilder(diBuilder);
-		LLVMDisposeBuilder(builder);
-		LLVMDisposeModule(mod);
-		LLVMContextDispose(context);
-
-		mod = null;
-		builder = null;
-		diBuilder = null;
+		if (diBuilder !is null) {
+			LLVMDisposeDIBuilder(diBuilder);
+			diBuilder = null;
+		}
+		if (builder !is null) {
+			builder = null;
+			LLVMDisposeBuilder(builder);
+		}
+		if (mod !is null) {
+			LLVMDisposeModule(mod);
+			mod = null;
+		}
+		if (context !is null) {
+			LLVMContextDispose(context);
+			context = null;
+		}
 	}
 
 	override void compile(ir.Module m)
