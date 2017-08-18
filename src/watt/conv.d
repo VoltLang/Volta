@@ -4,6 +4,7 @@ private import std.conv;
 import std.string : toLower, toStringz;
 
 alias toInt = to!int;
+alias toLong = to!long;
 alias toUlong = to!ulong;
 alias toFloat = to!float;
 alias toDouble = to!double;

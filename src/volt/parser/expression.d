@@ -569,7 +569,8 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 				}
 				break;
 			case Long:
-				if (v <= long.max) {
+				if (v <= (cast(ulong)long.max)+1) {
+					// The +1 there is so -9223372036854775808L can be expressed as a literal.
 					c.u._long = cast(long)v;
 				} else {
 					return invalidIntegerLiteral(ps, c.loc);

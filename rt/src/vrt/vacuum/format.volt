@@ -89,6 +89,15 @@ extern(C) fn vrt_format_u64(sink: Sink, i: u64)
 
 extern(C) fn vrt_format_i64(sink: Sink, i: i64)
 {
+	if (i == i64.min) {
+		/* Because we do the calculation by flipping
+		 * negative values positive, this overflows.
+		 * Hence, special case.
+		 */
+		sink("-9223372036854775808");
+		return;
+	}
+
 	buf: char[32];
 	index: size_t = buf.length;
 	negative: bool = i < 0;
