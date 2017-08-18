@@ -1016,6 +1016,8 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 				return constant.u._float >= float.min_normal && constant.u._float <= float.max;
 			case Double:
 				return constant.u._double >= float.min_normal && constant.u._double <= float.max;
+			case Bool:
+				return true;
 			default:
 				assert(false);
 			}
@@ -1036,6 +1038,8 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 				return constant.u._float >= double.min_normal && constant.u._float <= double.max;
 			case Double:
 				return constant.u._double >= double.min_normal && constant.u._double <= double.max;
+			case Bool:
+				return true;
 			default:
 				assert(false);
 			}
