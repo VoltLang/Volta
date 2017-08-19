@@ -263,6 +263,9 @@ public:
 
 
 public:
+	//! Free resources.
+	abstract void close();
+
 	//! Load a module source from file system.
 	abstract ir.Module loadModule(ir.QualifiedName name);
 
@@ -285,8 +288,6 @@ public:
 	 * may not be changed, doing so will cause undefined behaviour.
 	 */
 	abstract BackendHostResult hostCompile(ir.Module);
-
-	abstract void close();
 }
 
 /*!
@@ -435,16 +436,22 @@ interface Pass
 abstract class LanguagePass
 {
 public:
+	//! The driver that created this LanguagePass.
 	Driver driver;
+
+	//! Holds the current version symbols for this comile.
 	VersionSet ver;
+
+	//! For which target are we compiling against.
 	TargetInfo target;
+
+	//! Parsing front to be used when parsing new code.
 	Frontend frontend;
 
-	/*!
-	 * For controlling if we should accept some D constructs.
-	 */
+	//! Controlling if we should accept some D constructs.
 	bool beMoreLikeD;
 
+	//! Should the code emit warnings.
 	bool warningsEnabled;
 
 	/*!
@@ -522,8 +529,7 @@ public:
 	ir.Function formatF32;
 	ir.Function formatF64;
 	ir.Function formatDchar;
-
-	/*! @} */
+	//! @}
 
 	/*!
 	 * Type id constants for TypeInfo.
@@ -560,7 +566,8 @@ public:
 	int TYPE_AA;
 	int TYPE_FUNCTION;
 	int TYPE_DELEGATE;
-	/*! @} */
+	//! @}
+
 
 public:
 	this(Driver drv, VersionSet ver, TargetInfo target, Frontend frontend)
@@ -846,6 +853,7 @@ enum TargetType
  */
 interface Backend
 {
+public:
 	//! Free resources.
 	void close();
 
@@ -876,6 +884,7 @@ interface Backend
  */
 interface BackendFileResult
 {
+public:
 	//! Free resources.
 	void close();
 
@@ -890,6 +899,7 @@ interface BackendFileResult
  */
 interface BackendHostResult
 {
+public:
 	//! Free resources.
 	void close();
 
