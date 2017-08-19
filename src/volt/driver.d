@@ -211,14 +211,15 @@ public:
 		}
 
 		foreach (path; mStringImportPaths) {
-			string filename = format("%s/%s", path, fname);
-			string str;
-			try {
-				str = cast(string)read(filename);
-				mDepFiles ~= filename;
-				return str;
-			} catch (Throwable) {
+			auto filename = format("%s%s%s", path, dirSeparator, fname);
+			// We need both exists and isFile here because phobos
+			// will throw from isFile if the file doesn't exists.
+			if (!exists(filename) || !isFile(filename)) {
+				continue;
 			}
+
+			mDepFiles ~= filename;
+			return cast(string)read(filename);
 		}
 
 		throw makeImportFileOpenFailure(loc, fname);
