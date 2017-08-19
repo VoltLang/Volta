@@ -27,14 +27,13 @@ import volt.llvm.type;
 import volt.llvm.state;
 
 
-class HostResult : BackendResult
+class HostResult : BackendHostResult
 {
 protected:
 	VoltState state;
 	LLVMExecutionEngineRef ee;
-	BackendResult.CompiledDg[ir.NodeID] mCompiledFunctions;
+	BackendHostResult.CompiledDg[ir.NodeID] mCompiledFunctions;
 	LLVMModuleRef[] mModules;
-
 
 
 public:
@@ -50,12 +49,7 @@ public:
 		}
 	}
 
-	override void saveToFile(string filename)
-	{
-		assert(false);
-	}
-
-	override BackendResult.CompiledDg getFunction(ir.Function func)
+	override BackendHostResult.CompiledDg getFunction(ir.Function func)
 	{
 		auto p = func.uniqueId in mCompiledFunctions;
 		if (p !is null) {
@@ -90,7 +84,7 @@ class SpringBoard
 {
 public:
 	Location loc;
-	BackendResult.CompiledDg dgt;
+	BackendHostResult.CompiledDg dgt;
 
 
 protected:
@@ -250,9 +244,9 @@ public:
 	}
 
 	version (D_Version2) {
-		BackendResult.CompiledDg callFvZi() { return &callFvZi; }
-		BackendResult.CompiledDg callFviZi() { return &callFviZi; }
-		BackendResult.CompiledDg callSpring() { return &callSpring; }
+		BackendHostResult.CompiledDg callFvZi() { return &callFvZi; }
+		BackendHostResult.CompiledDg callFviZi() { return &callFviZi; }
+		BackendHostResult.CompiledDg callSpring() { return &callSpring; }
 	}
 }
 

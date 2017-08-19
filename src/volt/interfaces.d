@@ -284,7 +284,7 @@ public:
 	 * Once a module has been given to it or any children of it
 	 * may not be changed, doing so will cause undefined behaviour.
 	 */
-	abstract BackendResult hostCompile(ir.Module);
+	abstract BackendHostResult hostCompile(ir.Module);
 
 	abstract void close();
 }
@@ -824,48 +824,54 @@ enum TargetType
  */
 interface Backend
 {
-	/*!
-	 * Return the supported target types.
-	 */
+	//! Free resources.
+	void close();
+
+	//! Return the supported target types.
 	TargetType[] supported();
 
 	/*!
-	 * Set the target output type. Backends usually only
-	 * supports one or two output types @ref supported.
+	 * Compile the given module to either a file or host result.
+	 *
+	 * See the corresponding fields on LanguagePass and Driver for what
+	 * the non-Module arguments mean.
+	 * @{
 	 */
-	void setTarget(TargetType type);
-
-	/*!
-	 * Compile the given module. You need to have called setTarget before
-	 * calling this function.
-	 * See the corresponding fields on LanguagePass and Driver for what the non-Module
-	 * arguments mean.
-	 */
-	BackendResult compile(ir.Module m, ir.Function ehPersonality, ir.Function llvmTypeidFor,
+	BackendFileResult compileFile(ir.Module m, TargetType type,
+		ir.Function ehPersonality, ir.Function llvmTypeidFor,
 		string execDir, string identStr);
 
-	/*!
-	 * Free resources.
-	 */
-	void close();
+	BackendHostResult compileHost(ir.Module m,
+		ir.Function ehPersonality, ir.Function llvmTypeidFor,
+		string execDir, string identStr);
+	//! @}
 }
 
 /*!
- * A result from a backend compilation.
- *
- * It can be a file that you can save onto disk.
- *
- * Or a JIT compiled a module that you can fetch functions from.
+ * A result from a backend compilation that can be saved onto disk.
  *
  * @ingroup backend
  */
-interface BackendResult
+interface BackendFileResult
 {
-	/*!
-	 * Save the result to disk.
-	 */
-	void saveToFile(string filename);
+	//! Free resources.
+	void close();
 
+	//! Save the result to disk.
+	void saveToFile(string filename);
+}
+
+/*!
+ * A JIT compiled a module that you can fetch functions from.
+ *
+ * @ingroup backend
+ */
+interface BackendHostResult
+{
+	//! Free resources.
+	void close();
+
+	//! Return from getFunction method.
 	alias CompiledDg = ir.Constant delegate(ir.Constant[]);
 
 	/*!
@@ -880,9 +886,4 @@ interface BackendResult
 	 * doing so will cause undefined behaviour.
 	 */
 	CompiledDg getFunction(ir.Function);
-
-	/*!
-	 * Free resources.
-	 */
-	void close();
 }
