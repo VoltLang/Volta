@@ -54,8 +54,6 @@ protected:
 	TargetInfo target;
 	LLVMTargetRef llvmTarget;
 	LLVMTargetMachineRef llvmMachineTarget;
-
-	TargetType mTargetType;
 	bool mDump;
 
 
@@ -98,28 +96,57 @@ public:
 		return [TargetType.LlvmBitcode, TargetType.Object, TargetType.Host];
 	}
 
-	override void setTarget(TargetType type)
-	{
-		mTargetType = type;
-	}
-
-	override BackendResult compile(ir.Module m, ir.Function ehPersonality, ir.Function llvmTypeidFor,
+	override BackendFileResult compileFile(ir.Module m, TargetType type,
+		ir.Function ehPersonality, ir.Function llvmTypeidFor,
 		string execDir, string identStr)
 	{
-		auto state = new VoltState(target, m, ehPersonality, llvmTypeidFor, execDir, identStr);
+		auto state = compileState(m, ehPersonality, llvmTypeidFor,
+		                          execDir, identStr);
+
+		switch (type) with (TargetType) {
+		case LlvmBitcode: return new BitcodeResult(this, state);
+		case Object: return new ObjectResult(this, state);
+		default: assert(false);
+		}
+	}
+
+	override BackendHostResult compileHost(ir.Module m,
+		ir.Function ehPersonality, ir.Function llvmTypeidFor,
+		string execDir, string identStr)
+	{
+		auto state = compileState(m, ehPersonality, llvmTypeidFor,
+		                          execDir, identStr);
+		return new HostResult(state);
+	}
+
+	VoltState compileState(ir.Module m,
+		ir.Function ehPersonality, ir.Function llvmTypeidFor,
+		string execDir, string identStr)
+	{
+		auto state = new VoltState(target, m, ehPersonality,
+			llvmTypeidFor, execDir, identStr);
 		auto mod = state.mod;
 		scope (failure) {
 			state.close();
 		}
 
 		if (mDump) {
-			io.output.writefln("Compiling module");
+			io.error.writefln("Compiling module");
+			io.error.flush();
 		}
 
-		llvmModuleCompile(state, m);
+		scope (failure) {
+			if (mDump) {
+				io.error.writefln("Failure, dumping module:");
+				io.error.flush();
+				LLVMDumpModule(state.mod);
+			}
+		}
+		state.compile(m);
 
 		if (mDump) {
-			io.output.writefln("Dumping module");
+			io.error.writefln("Dumping module");
+			io.error.flush();
 			LLVMDumpModule(mod);
 		}
 
@@ -128,32 +155,11 @@ public:
 		if (failed) {
 			LLVMDumpModule(mod);
 			io.error.writefln("%s", result);
+			io.error.flush();
 			throw panic("Module verification failed.");
 		}
 
-		switch (mTargetType) with (TargetType) {
-		case LlvmBitcode: return new BitcodeResult(this, state);
-		case Object: return new ObjectResult(this, state);
-		case Host: return new HostResult(state);
-		default: assert(false);
-		}
-	}
-
-
-protected:
-	void llvmModuleCompile(VoltState state, ir.Module m)
-	{
-		scope (failure) {
-			if (mDump) {
-				version (Volt) {
-					io.output.writefln("Failure, dumping module:");
-				} else {
-					io.output.writefln("Failure, dumping module:");
-				}
-				LLVMDumpModule(state.mod);
-			}
-		}
-		state.compile(m);
+		return state;
 	}
 }
 
@@ -162,7 +168,7 @@ protected:
  *
  * @ingroup backend llvmbackend
  */
-class BitcodeResult : BackendResult
+class BitcodeResult : BackendFileResult
 {
 protected:
 	//! The backend that produced this result.
@@ -197,11 +203,6 @@ public:
 	override void saveToFile(string filename)
 	{
 		writeBitcodeFile(mBackend.target, filename, mMod);
-	}
-
-	override BackendResult.CompiledDg getFunction(ir.Function)
-	{
-		assert(false);
 	}
 }
 

@@ -173,14 +173,14 @@ public:
 	 */
 
 protected:
-	BackendResult[] turnModulesIntoResults(ir.Module[] mods, TargetType targetType)
+	BackendFileResult[] turnModulesIntoResults(ir.Module[] mods, TargetType targetType)
 	{
 		// Nothing to do.
 		if (mods.length == 0) {
 			return null;
 		}
 
-		BackendResult[] ret = new BackendResult[](mods.length);
+		BackendFileResult[] ret = new BackendFileResult[](mods.length);
 
 		auto ehPersonalityFunc = lp.ehPersonalityFunc;
 		auto llvmTypeidFor = lp.llvmTypeidFor;
@@ -189,9 +189,9 @@ protected:
 
 		// Generate bc files for the compiled modules.
 		foreach (i, m; mods) {
-			backend.setTarget(targetType);
-			ret[i] = backend.compile(m, ehPersonalityFunc,
-				llvmTypeidFor, execDir, identStr);
+			ret[i] = backend.compileFile(m, targetType,
+				ehPersonalityFunc, llvmTypeidFor,
+				execDir, identStr);
 		}
 
 		return ret;
@@ -216,7 +216,7 @@ protected:
 		return ret;
 	}
 
-	string[] turnResultsIntoFiles(BackendResult[] results, string ending)
+	string[] turnResultsIntoFiles(BackendFileResult[] results, string ending)
 	{
 		// Nothing to do.
 		if (results.length == 0) {
@@ -255,7 +255,7 @@ protected:
 		return ret;
 	}
 
-	string[] runClang(LLVMDriverSettings ls, BackendResult[] results, string[] bitcodeFiles)
+	string[] runClang(LLVMDriverSettings ls, BackendFileResult[] results, string[] bitcodeFiles)
 	{
 		// Nothing to do.
 		if (bitcodeFiles.length == 0 && results.length == 0) {
