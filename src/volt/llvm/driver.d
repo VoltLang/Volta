@@ -164,8 +164,10 @@ public:
 		perf.mark(Perf.Mark.LINK);
 		if (ls.linkWithLink) {
 			return runLink(ls, of, objectFiles);
-		} else {
+		} else if (ls.linkWithCC) {
 			return runCC(ls, of, objectFiles);
+		} else {
+			assert(false);
 		}
 	}
 
