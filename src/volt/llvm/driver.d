@@ -162,7 +162,11 @@ public:
 
 		// Finally do the link
 		perf.mark(Perf.Mark.LINK);
-		return runCC(ls, of, objectFiles);
+		if (ls.linkWithLink) {
+			return runLink(ls, of, objectFiles);
+		} else {
+			return runCC(ls, of, objectFiles);
+		}
 	}
 
 
