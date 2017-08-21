@@ -67,21 +67,9 @@ protected:
 	bool mMissingDeps;
 	bool mEmitLLVM;
 
-	// For multi output
-	string mBuildDir;
-
 	bool mArWithLLLVM;  // llvm-ar
-	string mArCmd;
-
-	bool mLinkWithLD;   // Posix/GNU
-	bool mLinkWithCC;   // Posix/GNU
-	bool mLinkWithLink; // MSVC Link
-	string mLinker;
 
 	string mOutput;
-
-	string mOptimizeFlag;
-	string mClangCmd;
 
 	string mDepFile;
 	string[] mDepFiles; //!< All files used as input to this compiled.
@@ -671,7 +659,7 @@ protected:
 			mLLVMSettings.linker = settings.cc;
 			mLLVMSettings.linkWithCC = true;
 		} else if (settings.link !is null) {
-			mLLVMSettings.linker = settings.linker;
+			mLLVMSettings.linker = settings.link;
 			mLLVMSettings.linkWithLink = true;
 		} else {
 			switch (mPlatform) with (Platform) {
@@ -690,7 +678,7 @@ protected:
 	void decideOutputFile(Settings settings)
 	{
 		bool outputBinary = !mNoLink && !mArWithLLLVM && !mEmitLLVM;
-		bool outputExe = mLinkWithLink && outputBinary;
+		bool outputExe = mLLVMSettings.linkWithLink && outputBinary;
 
 		// Setup the output file
 		if (settings.outputFile !is null) {
@@ -712,7 +700,7 @@ protected:
 
 	void decideCheckErrors()
 	{
-		if (mLLVMSettings.libFiles.length > 0 && !mLinkWithLink) {
+		if (mLLVMSettings.libFiles.length > 0 && !mLLVMSettings.linkWithLink) {
 			throw new CompilerError(format("can not link '%s'",
 				mLLVMSettings.libFiles[0]));
 		}
