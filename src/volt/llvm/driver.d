@@ -150,15 +150,14 @@ public:
 	 */
 	int doNativeLink(string of, ir.Module[] mods, string[] bitcodeFiles, string[] objectFiles)
 	{
-		// Create backend results that are later written out to files.
-		perf.mark(Perf.Mark.BACKEND);
-		auto results = turnModulesIntoResults(
-			mods, TargetType.Object);
+		// Reuse the above function, it does time tracking.
+		auto o = tempMan.getTempFile(".o");
+		if (auto ret = makeObject(o, mods, bitcodeFiles)) {
+			return ret;
+		}
 
-		// Assemble files into object files for linking.
-		perf.mark(Perf.Mark.ASSEMBLE);
-		objectFiles ~= turnResultsIntoFiles(results, ".o");
-		objectFiles ~= turnBitcodeIntoObject(bitcodeFiles);
+		// Add the final big object file to objects to link.
+		objectFiles ~= o;
 
 		// Finally do the link
 		perf.mark(Perf.Mark.LINK);
