@@ -708,7 +708,9 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 
 private ParseStatus _parseArgumentList(ParserStream ps, out intir.AssignExp[] pexps, TokenType endChar = TokenType.CloseParen)
 {
+	auto matchedComma = false;
 	while (ps.peek.type != endChar) {
+		matchedComma = false;
 		if (ps.peek.type == TokenType.End) {
 			return parseExpected(ps, ps.peek.loc, ir.NodeType.Postfix, "end of argument list");
 		}
@@ -723,7 +725,12 @@ private ParseStatus _parseArgumentList(ParserStream ps, out intir.AssignExp[] pe
 			if (!succeeded) {
 				return succeeded;
 			}
+			matchedComma = true;
 		}
+	}
+	if (matchedComma && endChar == TokenType.CloseParen) {
+		return parseExpected(ps, ps.peek.loc, ir.NodeType.Postfix,
+			"argument list's closing ')' character, not ','");
 	}
 
 	return Succeeded;
@@ -731,7 +738,9 @@ private ParseStatus _parseArgumentList(ParserStream ps, out intir.AssignExp[] pe
 
 private ParseStatus _parseArgumentList(ParserStream ps, out intir.AssignExp[] pexps, ref string[] labels, TokenType endChar = TokenType.CloseParen)
 {
+	auto matchedComma = false;
 	while (ps.peek.type != endChar) {
+		matchedComma = false;
 		if (ps.peek.type == TokenType.End) {
 			return unexpectedToken(ps, ir.NodeType.Postfix);
 		}
@@ -754,7 +763,12 @@ private ParseStatus _parseArgumentList(ParserStream ps, out intir.AssignExp[] pe
 				return unexpectedToken(ps, ir.NodeType.Postfix);
 			}
 			ps.get();
+			matchedComma = true;
 		}
+	}
+	if (matchedComma && endChar == TokenType.CloseParen) {
+		return parseExpected(ps, ps.peek.loc, ir.NodeType.Postfix,
+			"argument list's closing ')' character, not ','");
 	}
 
 	if (labels.length != 0 && labels.length != pexps.length) {

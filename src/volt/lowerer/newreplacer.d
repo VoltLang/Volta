@@ -182,7 +182,7 @@ public:
 						buildBinOp(loc, ir.BinOp.Op.Mul,
 							buildArrayLength(loc, lp.target, buildExpReference(loc, source, source.name)),
 							buildConstantSizeT(loc, lp.target, size(lp.target, array.base))
-						),
+						)
 					)
 				)
 			);

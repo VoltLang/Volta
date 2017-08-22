@@ -461,7 +461,9 @@ ParseStatus parseNewFunctionParams(ParserStream ps, ir.CallableType func)
 		return succeeded;
 	}
 
+	auto matchedComma = false;
 	while (ps != TokenType.CloseParen) {
+		matchedComma = false;
 		if (matchIf(ps, TokenType.TripleDot)) {
 			func.hasVarArgs = true;
 			break;
@@ -510,7 +512,12 @@ ParseStatus parseNewFunctionParams(ParserStream ps, ir.CallableType func)
 			t = scopeStorage;
 		}
 		func.params ~= t;
-		matchIf(ps, TokenType.Comma);
+		matchedComma = matchIf(ps, TokenType.Comma);
+	}
+
+	if (matchedComma) {
+		return parseExpected(ps, ps.peek.loc, func,
+			"parameter list's closing ')' character, not ','");
 	}
 
 	succeeded = match(ps, func, TokenType.CloseParen);
@@ -641,7 +648,9 @@ ParseStatus parseParameterListFPtr(ParserStream ps, out ir.Type[] types, ir.Call
 	if (!succeeded) {
 		return succeeded;
 	}
+	auto matchedComma = false;
 	while (ps.peek.type != TokenType.CloseParen) {
+		matchedComma = false;
 		if (matchIf(ps, TokenType.TripleDot)) {
 			parentCallable.hasVarArgs = true;
 			break;
@@ -652,7 +661,11 @@ ParseStatus parseParameterListFPtr(ParserStream ps, out ir.Type[] types, ir.Call
 			return parseFailed(ps, ir.NodeType.Variable);
 		}
 		types ~= var.type;
-		matchIf(ps, TokenType.Comma);
+		matchedComma = matchIf(ps, TokenType.Comma);
+	}
+	if (matchedComma) {
+		return parseExpected(ps, ps.peek.loc, ir.NodeType.Function,
+			"parameter list's closing ')' character, not ','");
 	}
 	return match(ps, ir.NodeType.Variable, TokenType.CloseParen);
 }
@@ -663,7 +676,9 @@ ParseStatus parseParameterList(ParserStream ps, out ir.Variable[] vars, ir.Calla
 	if (!succeeded) {
 		return succeeded;
 	}
+	auto matchedComma = false;
 	while (ps.peek.type != TokenType.CloseParen) {
+		matchedComma = false;
 		if (matchIf(ps, TokenType.TripleDot)) {
 			if (parentCallable is null) {
 				return unexpectedToken(ps, ir.NodeType.Function);
@@ -687,15 +702,21 @@ ParseStatus parseParameterList(ParserStream ps, out ir.Variable[] vars, ir.Calla
 		}
 		vars ~= var;
 		// foo(int a, int b, ...)
-		if (matchIf(ps, TokenType.Comma)) {
+		matchedComma = matchIf(ps, TokenType.Comma);
+		if (matchedComma) {
 			if (matchIf(ps, TokenType.TripleDot)) {
 				if (ps.peek.type != TokenType.CloseParen) {
 					return parseExpected(ps, ps.peek.loc, ir.NodeType.Function,
 					                     "varargs to be final argument");
 				}
 				parentCallable.hasVarArgs = true;
+				matchedComma = false;
 			}
 		}
+	}
+	if (matchedComma) {
+		return parseExpected(ps, ps.peek.loc, ir.NodeType.Function,
+			"parameter list's closing ')' character, not ','");
 	}
 	return match(ps, ir.NodeType.Function, TokenType.CloseParen);
 }
@@ -914,7 +935,9 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func, string templ
 	}
 
 	size_t i;
+	auto hadComma = false;
 	while (ps != TokenType.CloseParen) {
+		hadComma = false;
 		if (matchIf(ps, TokenType.TripleDot)) {
 			func.type.hasVarArgs = true;
 			break;
@@ -981,15 +1004,22 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func, string templ
 			}
 		}
 		func.params ~= p;
-		auto hadComma = matchIf(ps, TokenType.Comma);
+		hadComma = matchIf(ps, TokenType.Comma);
 		if (matchIf(ps, TokenType.TripleDot)) {
 			func.type.hasVarArgs = hadComma;
 			func.type.homogenousVariadic = !hadComma;
 			if (ps != TokenType.CloseParen) {
 				return parseFailed(ps, func);
 			}
+			hadComma = false;
 		}
 	}
+	
+	if (hadComma) {
+		return parseExpected(ps, ps.peek.loc, func,
+			"parameter list's closing ')' character, not ','");
+	}
+
 	succeeded = match(ps, func, TokenType.CloseParen);
 	if (!succeeded) {
 		return succeeded;

@@ -230,7 +230,7 @@ ir.Function getArrayPrependFunction(ref in Location loc, LanguagePass lp, ir.Mod
 	buildExpStat(loc, func._body,
 		buildAssign(loc,
 			buildDeref(loc,
-					buildCastSmart(loc, buildPtrSmart(loc, ltype.base), buildExpReference(loc, allocated, allocated.name)),
+					buildCastSmart(loc, buildPtrSmart(loc, ltype.base), buildExpReference(loc, allocated, allocated.name))
 			),
 			buildExpReference(loc, right, right.name)
 		)
