@@ -152,3 +152,50 @@ void write(Sink sink, ir.Scope s)
 		sink(".");
 	}
 }
+
+
+string binopToString(ir.BinOp.Op op)
+{
+	final switch (op) with (ir.BinOp.Op) {
+	case None: return "<none>";
+	case Assign: return "=";
+	case AddAssign: return "+=";
+	case SubAssign: return "-=";
+	case MulAssign: return "*=";
+	case DivAssign: return "/=";
+	case ModAssign: return "%=";
+	case OrAssign: return "|=";
+	case AndAssign: return "&=";
+	case XorAssign: return "^=";
+	case CatAssign: return "~=";
+	case LSAssign: return "<<=";
+	case SRSAssign: return ">>=";
+	case RSAssign: return ">>>=";
+	case PowAssign: return "^^=";
+	case OrOr: return "||";
+	case AndAnd: return "&&";
+	case Or: return "|";
+	case Xor: return "^";
+	case And: return "&";
+	case Equal: return "==";
+	case NotEqual: return "!=";
+	case Is: return "is";
+	case NotIs: return "!is";
+	case Less: return "<";
+	case LessEqual: return "<=";
+	case GreaterEqual: return ">=";
+	case Greater: return ">";
+	case In: return "in";
+	case NotIn: return "!in";
+	case LS: return "<<";
+	case RS: return ">>";
+	case SRS: return ">>>";
+	case Add: return "+";
+	case Sub: return "-";
+	case Cat: return "~";
+	case Mul: return "*";
+	case Div: return "/";
+	case Mod: return "%";
+	case Pow: return "^^";
+	}
+}

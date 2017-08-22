@@ -978,6 +978,14 @@ CompilerException makeBadPropertyCall(ir.Node node, ir.Type type, string file = 
 	return new CompilerError(node.loc, format("cannot call %s (a type returned from a property function).", type.typeString()), file, line);
 }
 
+CompilerException makeBadBinOp(ir.BinOp binop, ir.Type ltype, ir.Type rtype,
+	string file = __FILE__, const int line = __LINE__)
+{
+	auto msg = format("invalid '%s' expression using %s and %s.",
+		binopToString(binop.op), ltype.typeString(), rtype.typeString());
+	return new CompilerError(binop.loc, msg, file, line);
+}
+
 CompilerException makeCannotDisambiguate(ir.Node node, ir.Function[] functions, ir.Type[] args, string file = __FILE__, const int line = __LINE__)
 {
 	return makeCannotDisambiguate(node.loc, functions, args, file, line);

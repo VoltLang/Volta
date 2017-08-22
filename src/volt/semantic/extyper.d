@@ -2413,7 +2413,7 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 	case Cat:
 	case CatAssign:
 	case Assign:
-		throw panic(binop, "unhandled case");
+		throw makeBadBinOp(binop, ltype, rtype);
 	case None:
 		assert(false);
 	}

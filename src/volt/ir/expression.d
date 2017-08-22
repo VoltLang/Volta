@@ -139,7 +139,7 @@ public:
 		LSAssign,  // <<=
 		SRSAssign,  // >>=
 		RSAssign, // >>>=
-		PowAssign,
+		PowAssign, // ^^=
 		OrOr,
 		AndAnd,
 		Or,
@@ -164,7 +164,7 @@ public:
 		Mul,
 		Div,
 		Mod,
-		Pow
+		Pow  // ^^
 	}
 
 public:

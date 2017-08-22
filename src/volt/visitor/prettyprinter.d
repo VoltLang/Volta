@@ -9,6 +9,7 @@ import watt.io.std : writefln, writef, output;
 import watt.text.format : format;
 
 import ir = volt.ir.ir;
+import volt.ir.printer;
 
 import volt.errors;
 import volt.interfaces;
@@ -1712,50 +1713,9 @@ public:
 		wf("(");
 
 		acceptExp(binop.left, this);
-
-		switch (binop.op) {
-		case ir.BinOp.Op.Assign: wf(" = "); break;
-		case ir.BinOp.Op.AddAssign: wf(" += "); break;
-		case ir.BinOp.Op.SubAssign: wf(" -= "); break;
-		case ir.BinOp.Op.MulAssign: wf(" *= "); break;
-		case ir.BinOp.Op.DivAssign: wf(" /= "); break;
-		case ir.BinOp.Op.ModAssign: wf(" %= "); break;
-		case ir.BinOp.Op.AndAssign: wf(" &= "); break;
-		case ir.BinOp.Op.OrAssign: wf(" |= "); break;
-		case ir.BinOp.Op.XorAssign: wf(" ^= "); break;
-		case ir.BinOp.Op.CatAssign: wf(" ~= "); break;
-		case ir.BinOp.Op.LSAssign: wf(" <<= "); break;
-		case ir.BinOp.Op.SRSAssign: wf(" >>= "); break;
-		case ir.BinOp.Op.RSAssign: wf(" >>>= "); break;
-		case ir.BinOp.Op.PowAssign: wf(" ^^= "); break;
-		case ir.BinOp.Op.OrOr: wf(" || "); break;
-		case ir.BinOp.Op.AndAnd: wf(" && "); break;
-		case ir.BinOp.Op.Or: wf(" | "); break;
-		case ir.BinOp.Op.Xor: wf(" ^ "); break;
-		case ir.BinOp.Op.And: wf(" & "); break;
-		case ir.BinOp.Op.Equal: wf(" == "); break;
-		case ir.BinOp.Op.NotEqual: wf(" != "); break;
-		case ir.BinOp.Op.Is: wf(" is "); break;
-		case ir.BinOp.Op.NotIs: wf(" !is "); break;
-		case ir.BinOp.Op.Less: wf(" < "); break;
-		case ir.BinOp.Op.LessEqual: wf(" <= "); break;
-		case ir.BinOp.Op.GreaterEqual: wf(" >= "); break;
-		case ir.BinOp.Op.Greater: wf(" > "); break;
-		case ir.BinOp.Op.In: wf(" in "); break;
-		case ir.BinOp.Op.NotIn: wf(" !in "); break;
-		case ir.BinOp.Op.LS: wf(" << "); break;
-		case ir.BinOp.Op.SRS: wf(" >> "); break;
-		case ir.BinOp.Op.RS: wf(" >>> "); break;
-		case ir.BinOp.Op.Add: wf(" + "); break;
-		case ir.BinOp.Op.Sub: wf(" - "); break;
-		case ir.BinOp.Op.Cat: wf(" ~ "); break;
-		case ir.BinOp.Op.Mul: wf(" * "); break;
-		case ir.BinOp.Op.Div: wf(" / "); break;
-		case ir.BinOp.Op.Mod: wf(" % "); break;
-		case ir.BinOp.Op.Pow: wf(" ^^ "); break;
-		default: assert(false);
-		}
-
+		wf(" ");
+		wf(binopToString(binop.op));
+		wf(" ");
 		acceptExp(binop.right, this);
 
 		wf(")");
