@@ -12,7 +12,7 @@ extern(C):
  * Exception handling
  */
 /*!
- * Peform a throw of the given `Throwable` object.
+ * Perform a throw of the given `Throwable` object.
  */
 fn vrt_eh_throw(t: Throwable, location: string);
 /*!
