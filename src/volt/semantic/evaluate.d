@@ -4,7 +4,9 @@
 module volt.semantic.evaluate;
 
 import watt.io.std;
+import watt.conv : toString;
 import watt.text.format : format;
+import watt.text.sink;
 
 import ir = volt.ir.ir;
 import volt.ir.copy;
@@ -117,8 +119,104 @@ ir.Constant fold(ref ir.Exp exp, out bool needCopy, TargetInfo target)
 			exp = c;
 		}
 		return c;
+	case ComposableString:
+		auto cs = exp.toComposableStringFast();
+		if (!cs.compileTimeOnly) {
+			return null;
+		}
+		auto c = buildConstantString(exp.loc, getConstantComposableString(target, cs));
+		exp = c;
+		return c;
 	default:
 		return null;
+	}
+}
+
+//! Fold a composable string.
+string getConstantComposableString(TargetInfo target, ir.ComposableString cs)
+{
+	assert(cs.compileTimeOnly);
+	StringSink ss;
+	foreach (e; cs.components) {
+		addConstantComposableStringComponent(target, ss.sink, e);
+	}
+	return ss.toString();
+}
+
+//! Add a components value to a composable string being folded.
+void addConstantComposableStringComponent(TargetInfo target, Sink sink, ir.Exp e)
+{
+	auto c = fold(e, target); 
+	if (c is null) {
+		assert(false);
+	}
+	addConstantComposableStringComponent(sink, c);
+}
+
+//! Add a string component to an in progress composable string parse.
+void addConstantComposableStringComponent(Sink sink, ir.Constant c)
+{
+	if (isString(c.type)) {
+		sink(cast(string)c.arrayData);
+		return;
+	}
+	switch (c.type.nodeType) {
+	case ir.NodeType.PrimitiveType:
+		auto pt = c.type.toPrimitiveTypeFast();
+		addConstantComposableStringComponent(sink, c, pt);
+		break;
+	default:
+		assert(false);
+	}
+}
+
+//! Add a primitive type component to a composable string.
+void addConstantComposableStringComponent(Sink sink, ir.Constant c, ir.PrimitiveType pt)
+{
+	final switch (pt.type) with (ir.PrimitiveType.Kind) {
+	case Bool:
+		sink(c.u._bool ? "true" : "false");
+		break;
+	case Char:
+	case Wchar:
+	case Dchar:
+		sink(c._string);
+		break;
+	case Ubyte:
+		sink(toString(c.u._ubyte));
+		break;
+	case Byte:
+		sink(toString(c.u._byte));
+		break;
+	case Ushort:
+		sink(toString(c.u._ushort));
+		break;
+	case Short:
+		sink(toString(c.u._short));
+		break;
+	case Uint:
+		sink(toString(c.u._uint));
+		break;
+	case Int:
+		sink(toString(c.u._int));
+		break;
+	case Ulong:
+		sink(toString(c.u._ulong));
+		break;
+	case Long:
+		sink(toString(c.u._long));
+		break;
+	case Float:
+		sink(toString(c.u._float));
+		break;
+	case Double:
+		sink(toString(c.u._double));
+		break;
+	case Real:
+		assert(false);
+	case ir.PrimitiveType.Kind.Invalid:
+	case Void:
+		assert(false);
 	}
 }
 
@@ -328,6 +426,10 @@ ir.Constant foldBinOpEqual(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
 
+	if (cl.type.nodeType != ir.NodeType.PrimitiveType) {
+		return null;
+	}
+
 	auto pt = cast(ir.PrimitiveType)cl.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Bool: c.u._bool = cl.u._bool == cr.u._bool; break;
@@ -345,6 +447,10 @@ ir.Constant foldBinOpEqual(ir.Constant cl, ir.Constant cr, TargetInfo target)
 ir.Constant foldBinOpNotEqual(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
+
+	if (cl.type.nodeType != ir.NodeType.PrimitiveType) {
+		return null;
+	}
 
 	auto pt = cast(ir.PrimitiveType)cl.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
@@ -603,6 +709,7 @@ ir.Constant foldBinOpPow(ir.Constant cl, ir.Constant cr, TargetInfo target)
 
 ir.Constant foldUnaryCast(ir.Constant c, ir.Type t, TargetInfo target)
 {
+	auto _enum = cast(ir.Enum)realType(t, false);
 	auto fromPrim = cast(ir.PrimitiveType)c.type;
 	auto toPrim = cast(ir.PrimitiveType)realType(t);
 	if (fromPrim is null || toPrim is null) {
@@ -629,18 +736,27 @@ ir.Constant foldUnaryCast(ir.Constant c, ir.Type t, TargetInfo target)
 	default: return null;
 	}
 	auto loc = c.loc;
+	ir.Constant outConstant;
 	switch (toPrim.type) with (ir.PrimitiveType.Kind) {
 	case Int:
-		return buildConstantInt(loc, signed ? cast(int)signedFrom : cast(int)unsignedFrom);
+		outConstant = buildConstantInt(loc, signed ? cast(int)signedFrom : cast(int)unsignedFrom);
+		break;
 	case Uint:
-		return buildConstantUint(loc, signed ? cast(uint)signedFrom : cast(uint)unsignedFrom);
+		outConstant = buildConstantUint(loc, signed ? cast(uint)signedFrom : cast(uint)unsignedFrom);
+		break;
 	case Long:
-		return buildConstantLong(loc, signed ? cast(long)signedFrom : cast(long)unsignedFrom);
+		outConstant = buildConstantLong(loc, signed ? cast(long)signedFrom : cast(long)unsignedFrom);
+		break;
 	case Ulong:
-		return buildConstantUlong(loc, signed ? cast(ulong)signedFrom : cast(ulong)unsignedFrom);
+		outConstant = buildConstantUlong(loc, signed ? cast(ulong)signedFrom : cast(ulong)unsignedFrom);
+		break;
 	default:
-		return null;
+		break;
 	}
+	if (_enum !is null && outConstant !is null) {
+		outConstant.fromEnum = _enum;
+	}
+	return outConstant;
 }
 
 ir.Constant foldUnaryMinus(ir.Constant c, TargetInfo target)

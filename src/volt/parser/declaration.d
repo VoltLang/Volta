@@ -8,6 +8,7 @@ import watt.text.format : format;
 import ir = volt.ir.ir;
 import volt.ir.util;
 import volt.ir.copy;
+import volt.util.string;
 
 import volt.exceptions;
 import volt.errors;
@@ -833,6 +834,16 @@ ParseStatus parseTypeSigils(ParserStream ps, out ir.Type outType, Location origi
 				return succeeded;
 			}
 			outType = a;
+		} else if (ps == [TokenType.IntegerLiteral, TokenType.CloseBracket]) {
+			// Static array.
+			auto sa = new ir.StaticArrayType();
+			sa.loc = ps.peek.loc - origin;
+			sa.base = outType;
+			auto tmp = removeUnderscores(ps.peek.value);
+			sa.length = cast(size_t)toInt(tmp);
+			ps.get();
+			ps.get();
+			outType = sa;
 		} else {
 			// Static or associative array.
 			auto a = new ir.AmbiguousArrayType();

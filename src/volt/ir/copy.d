@@ -30,6 +30,7 @@ ir.Constant copy(ir.Constant cnst)
 	c._string = cnst._string;
 	c.isNull = cnst.isNull;
 	c.arrayData = cnst.arrayData.idup();
+	c.fromEnum = cnst.fromEnum;
 	return c;
 }
 
@@ -347,6 +348,13 @@ ir.RunExp copy(ir.RunExp old)
 	return re;
 }
 
+ir.ComposableString copy(ir.ComposableString old)
+{
+	auto cs = new ir.ComposableString(old);
+	cs.loc = old.loc;
+	return cs;
+}
+
 /*
  *
  * Helpers.
@@ -499,6 +507,9 @@ ir.Node copyNode(ir.Node n)
 	case RunExp:
 		auto re = cast(ir.RunExp)n;
 		return copy(re);
+	case ComposableString:
+		auto cs = cast(ir.ComposableString)n;
+		return copy(cs);
 	case Enum:
 	case StatementExp:
 	case PrimitiveType:

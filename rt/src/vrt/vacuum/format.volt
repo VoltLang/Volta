@@ -3,9 +3,10 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module vrt.vacuum.format;
 
-import core.rt.format : Sink;
+import core.rt.format : Sink, SinkArg;
 
 import vrt.vacuum.defines;
+import vrt.vacuum.utf;
 
 
 extern(C):
@@ -148,6 +149,15 @@ extern(C) fn vrt_format_f32(sink: Sink, f: f32, width: i32)
 extern(C) fn vrt_format_f64(sink: Sink, f: f64, width: i32)
 {
 	fmt_fp(sink, f, 0, width, 0);
+}
+
+extern(C) fn vrt_format_dchar(sink: Sink, c: dchar)
+{
+	sink("'");
+	buf: char[6];
+	rv := vrt_encode_static_u8(ref buf, c);
+	sink(buf[0 .. rv]);
+	sink("'");
 }
 
 enum DBL_MANT_DIG = 53;
@@ -409,4 +419,89 @@ private fn fmt_fp(sink: Sink, f: f64, w: i32, p: i32, fl: i32)
 	foreach (ii; 0 .. p) {
 		sink("0");
 	}
+}
+
+/*
+ * Sink stuff for composable strings.
+ */
+extern (Volt) struct SinkImpl
+{
+private:
+	mStore: char[1024 - typeid(char[]).size - typeid(size_t).size];
+	mArr: char[];
+	mLength: size_t;
+
+	enum size_t minSize = 16;
+	enum size_t maxSize = 2048;
+
+public:
+	//! Add @p str to this sink.
+	fn sink(str: SinkArg)
+	{
+		newSize := str.length + mLength;
+		if (mArr.length == 0) {
+			mArr = mStore[..];
+		}
+
+		if (newSize <= mArr.length) {
+			mArr[mLength .. newSize] = str[..];
+			mLength = newSize;
+			return;
+		}
+
+		allocSize := mArr.length;
+		while (allocSize < newSize) {
+			if (allocSize < minSize) {
+				allocSize = minSize;
+			} else if (allocSize >= maxSize) {
+				allocSize += maxSize;
+			} else {
+				allocSize = allocSize * 2;
+			}
+		}
+
+		n := new char[](newSize + 256);
+		n[0 .. mLength] = mArr[0 .. mLength];
+		n[mLength .. newSize] = str[..];
+		mLength = newSize;
+		mArr = n;
+	}
+
+	//! Get the contents of this sink as a string.
+	fn toString() string
+	{
+		return new string(mArr[0 .. mLength]);
+	}
+
+	//! Get the contents of this sink as a mutable array of characters.
+	fn toChar() char[]
+	{
+		return new char[](mArr[0 .. mLength]);
+	}
+
+	/*!
+	 * Safely get the backing storage from the sink without copying.
+	 */
+	fn toSink(sink: Sink) void
+	{
+		return sink(mArr[0 .. mLength]);
+	}
+
+	//! Clear this sink.
+	fn reset() void
+	{
+		mArr = null;
+		mLength = 0;
+	}
+}
+
+fn vrt_sink_init_1024(ref store: void[1024]) Sink
+{
+	(cast(SinkImpl*)&store).reset();
+	return (cast(SinkImpl*)&store).sink;
+}
+
+fn vrt_sink_getstr_1024(ref store: void[1024]) string
+{
+	return (cast(SinkImpl*)&store).toString();
 }

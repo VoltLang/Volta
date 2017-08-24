@@ -133,6 +133,8 @@ ir.Type getExpTypeImpl(ir.Exp exp)
 		return inbuilt.type;
 	case StringImport:
 		return buildString(exp.loc);
+	case ComposableString:
+		return buildString(exp.loc);
 	default:
 		throw panicUnhandled(exp, ir.nodeToString(exp));
 	}

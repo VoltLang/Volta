@@ -109,6 +109,7 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 				case '\"': encode(output, '\"'); break;
 				case '\?': encode(output, '\?'); break;
 				case '\\': encode(output, '\\'); break;
+				case '$': encode(output, '$'); break;
 				case 'a': encode(output, '\a'); break;
 				case 'b': encode(output, '\b'); break;
 				case 'f': encode(output, '\f'); break;

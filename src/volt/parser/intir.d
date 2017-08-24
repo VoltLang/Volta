@@ -179,6 +179,7 @@ public:
 		Line,
 		Location,
 		VaArg,
+		ComposableString,
 	}
 
 public:

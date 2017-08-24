@@ -355,6 +355,8 @@ public:
 	Variable nestedHiddenParameter;
 	//! As above, but includes the initial declaration in the non nested parent.
 	Variable nestedVariable;
+	//! Optional sink argument for functions that contain runtime composable strings.
+	Variable composableSinkVariable;
 
 	Struct nestStruct;
 
@@ -423,6 +425,7 @@ public:
 		this.thisHiddenParameter = old.thisHiddenParameter;
 		this.nestedHiddenParameter = old.nestedHiddenParameter;
 		this.nestedVariable = old.nestedVariable;
+		this.composableSinkVariable = old.composableSinkVariable;
 		this.nestStruct = old.nestStruct;
 		this.isMergable = old.isMergable;
 		this.vtableIndex = old.vtableIndex;

@@ -169,6 +169,7 @@ public:
 		auto rtGCModule = getAndCheck("core", "rt", "gc");
 		auto rtAAModule = getAndCheck("core", "rt", "aa");
 		auto rtMiscModule = getAndCheck("core", "rt", "misc");
+		auto rtFormatModule = getAndCheck("core", "rt", "format");
 		auto llvmModule = getAndCheck("core", "compiler", "llvm");
 		auto defModule = getAndCheck("core", "compiler", "defaultsymbols");
 		auto varargsModule = getAndCheck("core", "varargs");
@@ -181,6 +182,7 @@ public:
 			rtGCModule,
 			rtAAModule,
 			rtMiscModule,
+			rtFormatModule,
 			llvmModule,
 			varargsModule,
 		];
@@ -304,6 +306,17 @@ public:
 		llvmMemcpy64 = getFunctionFrom(llvmModule, "__llvm_memcpy_p0i8_p0i8_i64");
 		llvmMemset32 = getFunctionFrom(llvmModule, "__llvm_memset_p0i8_i32");
 		llvmMemset64 = getFunctionFrom(llvmModule, "__llvm_memset_p0i8_i64");
+
+		sinkType = getAliasFrom(rtFormatModule, "Sink");
+		sinkStore = getAliasFrom(rtFormatModule, "SinkStore1024");
+		sinkInit = getFunctionFrom(rtFormatModule, "vrt_sink_init_1024");
+		sinkGetStr = getFunctionFrom(rtFormatModule, "vrt_sink_getstr_1024");
+		formatHex = getFunctionFrom(rtFormatModule, "vrt_format_hex");
+		formatI64 = getFunctionFrom(rtFormatModule, "vrt_format_i64");
+		formatU64 = getFunctionFrom(rtFormatModule, "vrt_format_u64");
+		formatF32 = getFunctionFrom(rtFormatModule, "vrt_format_f32");
+		formatF64 = getFunctionFrom(rtFormatModule, "vrt_format_f64");
+		formatDchar = getFunctionFrom(rtFormatModule, "vrt_format_dchar");
 
 		phase2(mods);
 	}
@@ -661,6 +674,18 @@ public:
 	{
 		auto s = mod.myScope.getStore(name);
 		return s !is null ? s.node : null;
+	}
+
+	private static ir.Type getAliasFrom(ir.Module mod, string name)
+	{
+		auto tr = cast(ir.Alias)getNodeFrom(mod, name);
+		auto typ = tr.type;
+		if (typ.nodeType == ir.NodeType.StorageType) {
+			auto st = typ.toStorageTypeFast();
+			typ = st.base;
+		}
+		check(typ, name);
+		return typ;
 	}
 
 	private static ir.Class getClassFrom(ir.Module mod, string name)

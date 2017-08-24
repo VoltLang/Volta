@@ -331,6 +331,7 @@ public:
 	override Visitor.Status enter(ref ir.Exp e, ir.BuiltinExp) { return checkNode(e); }
 	override Visitor.Status enter(ref ir.Exp e, ir.AccessExp) { return checkNode(e); }
 	override Visitor.Status enter(ref ir.Exp e, ir.RunExp) { return checkNode(e); }
+	override Visitor.Status enter(ref ir.Exp e, ir.ComposableString) { return checkNode(e); }
 
 	override Visitor.Status visit(ref ir.Exp e, ir.ExpReference) { return checkNode(e); }
 	override Visitor.Status visit(ref ir.Exp e, ir.TokenExp) { return checkNode(e); }

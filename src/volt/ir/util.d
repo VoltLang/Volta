@@ -903,6 +903,18 @@ ir.BuiltinExp buildBuildVtable(ref in Location loc, ir.Type type, ir.Class _clas
 }
 
 /*!
+ * Builds a BuiltinExp of EnumMembers type.
+ */
+ir.BuiltinExp buildEnumMembers(ref in Location loc, ir.Enum _enum, ir.Exp enumRef, ir.Exp sinkRef)
+{
+	auto builtin = new ir.BuiltinExp(ir.BuiltinExp.Kind.EnumMembers, buildVoid(loc), [enumRef, sinkRef]);
+	builtin.loc = loc;
+	builtin._enum = _enum;
+
+	return builtin;
+}
+
+/*!
  * Builds a BuiltinExp of ArrayLength type. Make sure the child exp is
  * not a pointer to an array.
  */
@@ -1415,6 +1427,19 @@ ir.BuiltinExp buildVaArg(ref in Location loc, ir.VaArgExp vaexp)
 	return bi;
 }
 
+/*!
+ * Build a Ternary expression.
+ */
+ir.Ternary buildTernary(ref in Location loc, ir.Exp condition, ir.Exp l, ir.Exp r)
+{
+	auto te = new ir.Ternary();
+	te.loc = loc;
+	te.condition = condition;
+	te.ifTrue = l;
+	te.ifFalse = r;
+	return te;
+}
+
 ir.StatementExp buildInternalArrayLiteralSmart(ref in Location loc, ir.Type atype, ir.Exp[] exps)
 {
 	if (atype.nodeType != ir.NodeType.ArrayType) {
@@ -1522,6 +1547,55 @@ ir.ExpStatement buildExpStat(ref in Location loc, ir.Exp exp)
 	return ret;
 }
 
+/*!
+ * Build a switch statement.
+ */
+ir.SwitchStatement buildSwitchStat(ref in Location loc, ir.Exp condition)
+{
+	auto ss = new ir.SwitchStatement();
+	ss.loc = loc;
+	ss.condition = condition;
+	return ss;
+}
+
+/*!
+ * Build a simple switch case.
+ *
+ * Does not build a block statement, only uses `firstExp`.
+ */
+ir.SwitchCase buildSwitchCase(ref in Location loc, ir.Exp caseExp)
+{
+	auto sc = new ir.SwitchCase();
+	sc.loc = loc;
+	sc.firstExp = caseExp;
+	return sc;
+}
+
+/*!
+ * Build an `assert(false)` statement.
+ *
+ * No message.
+ */
+ir.AssertStatement buildAssertFalse(ref in Location loc)
+{
+	auto as = new ir.AssertStatement();
+	as.loc = loc;
+	as.condition = buildConstantBool(loc, false);
+	return as;
+}
+
+/*!
+ * Build a simple default switch case.
+ *
+ * Does not build a block statement.
+ */
+ir.SwitchCase buildSwitchDefault(ref in Location loc)
+{
+	auto sc = new ir.SwitchCase();
+	sc.loc = loc;
+	sc.isDefault = true;
+	return sc;
+}
 
 /*!
  * Build an if statement.

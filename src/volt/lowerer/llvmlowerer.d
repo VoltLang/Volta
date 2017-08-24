@@ -4,6 +4,7 @@ module volt.lowerer.llvmlowerer;
 
 import watt.conv : toString;
 import watt.text.format : format;
+import watt.text.sink;
 import watt.io.file : read, exists;
 
 import ir = volt.ir.ir;
@@ -269,6 +270,372 @@ void lowerProperty(LanguagePass lp, ref ir.Exp exp, ir.PropertyExp prop)
 		                      prop.child,
 		                      expRef, name, []);
 	}
+}
+
+//! Lower a composable string, either at compile time, or calling formatting functions with a sink.
+void lowerComposableString(LanguagePass lp, ir.Scope current, ir.Function func, ref ir.Exp exp,
+ir.ComposableString cs, LlvmLowerer lowerer)
+{
+	// `new "blah ${...} blah"`
+	auto loc = cs.loc;
+	auto sexp = buildStatementExp(loc);
+	if (func.composableSinkVariable is null) {
+		func.composableSinkVariable = buildVariableAnonSmartAtTop(loc,
+			func._body, lp.sinkStore, null);
+	}
+	auto sinkStoreVar = func.composableSinkVariable;
+	auto sinkVar = buildVariableAnonSmart(loc, current, sexp, lp.sinkType,
+		buildCall(loc, buildExpReference(loc, lp.sinkInit, lp.sinkInit.name), [
+			cast(ir.Exp)buildExpReference(loc, sinkStoreVar, sinkStoreVar.name)]));
+	StringSink constantSink;
+	foreach (component; cs.components) {
+		auto c = component.toConstantChecked();
+		if (c !is null && c._string.length > 0) {
+			// A constant component, like the string literal portions.
+			addConstantComposableStringComponent(lp.target, constantSink.sink, c);
+		} else {
+			// Empty the constant sink, and place that into the sink proper.
+			string str = constantSink.toString();
+			if (str.length > 0) {
+				lowerComposableStringStringComponent(buildConstantString(loc, str), sexp, sinkVar);
+			}
+			constantSink.reset();
+			// ...and then route the runtime expression to the right place.
+			void simpleAdd(ir.Node n)
+			{
+				auto exp = cast(ir.Exp)n;
+				if (exp !is null) {
+					buildExpStat(loc, sexp, exp);
+				} else {
+					sexp.statements ~= n;
+				}
+			}
+			version (D_Version2) {
+				lowerComposableStringComponent(lp, current, component, sexp, sinkVar, &simpleAdd, lowerer);
+			} else {
+				lowerComposableStringComponent(lp, current, component, sexp, sinkVar, simpleAdd, lowerer);
+			}
+		}
+	}
+	// Empty the constant sink before finishing up.
+	string str = constantSink.toString();
+	if (str.length > 0) {
+		lowerComposableStringStringComponent(buildConstantString(loc, str), sexp, sinkVar);
+	}
+
+	sexp.exp = buildCall(loc, buildExpReference(loc, lp.sinkGetStr, lp.sinkGetStr.name), [
+		cast(ir.Exp)buildExpReference(loc, sinkStoreVar, sinkStoreVar.name)]);
+	exp = sexp;
+}
+
+//! Used by the composable string lowering code.
+alias NodeConsumer = void delegate(ir.Node);
+
+//! Dispatch a composable string component to the right function.
+void lowerComposableStringComponent(LanguagePass lp, ir.Scope current,
+	ir.Exp e, ir.StatementExp sexp, ir.Variable sinkVar, NodeConsumer dgt, LlvmLowerer lowerer)
+{
+	auto type = realType(getExpType(e), /*stripEnum*/false);
+	if (e.nodeType == ir.NodeType.Constant) {
+		auto c = e.toConstantFast();
+		if (c.fromEnum !is null) {
+			type = c.fromEnum;
+		}
+	}
+	switch (type.nodeType) {
+	case ir.NodeType.Enum:
+		lowerComposableStringEnumComponent(lp, current, type.toEnumFast(), e, sexp, sinkVar, dgt);
+		return;
+	case ir.NodeType.PointerType:
+		lowerComposableStringPointerComponent(lp, e, sexp, sinkVar, dgt);
+		break;
+	case ir.NodeType.ArrayType:
+		if (isString(type)) {
+			lowerComposableStringStringComponent(buildConstantString(e.loc, "\""), sexp, sinkVar, dgt);
+			lowerComposableStringStringComponent(e, sexp, sinkVar, dgt);
+			lowerComposableStringStringComponent(buildConstantString(e.loc, "\""), sexp, sinkVar, dgt);
+			return;
+		}
+		lowerComposableStringArrayComponent(lp, current, e, sexp, sinkVar, dgt, lowerer);
+		break;
+	case ir.NodeType.AAType:
+		auto aatype = type.toAATypeFast();
+		lowerComposableStringAAComponent(lp, current, e, aatype, sexp, sinkVar, dgt, lowerer);
+		break;
+	case ir.NodeType.PrimitiveType:
+		auto pt = type.toPrimitiveTypeFast();
+		lowerComposableStringPrimitiveComponent(lp, current, e, pt, sinkVar, dgt);
+		break;
+	case ir.NodeType.Union:
+	case ir.NodeType.Struct:
+	case ir.NodeType.Class:
+		auto agg = cast(ir.Aggregate)type;
+		auto store = lookupInGivenScopeOnly(lp, agg.myScope, e.loc, "toString");
+		ir.Function[] functions;
+		if (store !is null && store.functions.length > 0) {
+			ir.Type[] args;
+			auto toStrFn = selectFunction(store.functions, args, e.loc, DoNotThrow);
+			if (toStrFn !is null && isString(toStrFn.type.ret)) {
+				ir.Postfix _call = buildMemberCall(e.loc, copyExp(e), buildExpReference(e.loc, toStrFn), "toString", null);
+				auto var = buildVariableAnonSmart(e.loc, current, sexp, buildString(e.loc), _call);
+				lowerComposableStringStringComponent(buildExpReference(e.loc, var, var.name), sexp, sinkVar, dgt);
+				break;
+			}
+		}
+		lowerComposableStringStringComponent(buildConstantString(e.loc, agg.name), sexp, sinkVar, dgt);
+		break;
+	default:
+		assert(false);  // Should be caught in extyper.
+	}
+}
+
+//! Lower a primitive type component of a composable string.
+void lowerComposableStringPrimitiveComponent(LanguagePass lp, ir.Scope current, ir.Exp e,
+	ir.PrimitiveType pt, ir.Variable sinkVar, NodeConsumer dgt)
+{
+	auto loc = e.loc;
+
+	ir.Exp outExp;
+	final switch (pt.type) with (ir.PrimitiveType.Kind) {
+	case Bool:
+		outExp = buildCall(loc, buildExpReference(loc, sinkVar, sinkVar.name),
+			[cast(ir.Exp)buildTernary(loc, copyExp(e), buildConstantString(loc, "true"),
+			buildConstantString(loc, "false"))]);
+		break;
+	case Char:
+	case Wchar:
+	case Dchar:
+		outExp = buildCall(loc, buildExpReference(loc, lp.formatDchar, lp.formatDchar.name), [
+			buildExpReference(loc, sinkVar, sinkVar.name), 
+			buildCast(loc, buildDchar(loc), copyExp(e))]);
+		break;
+	case Ubyte:
+	case Ushort:
+	case Uint:
+	case Ulong:
+		outExp = buildCall(loc, buildExpReference(loc, lp.formatU64, lp.formatU64.name), [
+			buildExpReference(loc, sinkVar, sinkVar.name), 
+			buildCast(loc, buildUlong(loc), copyExp(e))]);
+		break;
+	case Byte:
+	case Short:
+	case Int:
+	case Long:
+		outExp = buildCall(loc, buildExpReference(loc, lp.formatI64, lp.formatI64.name), [
+			buildExpReference(loc, sinkVar, sinkVar.name), 
+			buildCast(loc, buildLong(loc), copyExp(e))]);
+		break;
+	case Float:
+		outExp = buildCall(loc, buildExpReference(loc, lp.formatF32, lp.formatF32.name), [
+			buildExpReference(loc, sinkVar, sinkVar.name), 
+			copyExp(e), buildConstantInt(loc, -1)]);
+		break;
+	case Double:
+		outExp = buildCall(loc, buildExpReference(loc, lp.formatF64, lp.formatF64.name), [
+			buildExpReference(loc, sinkVar, sinkVar.name), 
+			copyExp(e), buildConstantInt(loc, -1)]);
+		break;
+	case Real:
+		assert(false);
+	case ir.PrimitiveType.Kind.Invalid:
+	case Void:
+		assert(false);
+	}
+
+	dgt(outExp);
+}
+
+//! Lower an associative array component of a composable string.
+void lowerComposableStringAAComponent(LanguagePass lp, ir.Scope current, ir.Exp e,
+	ir.AAType aatype, ir.StatementExp sexp, ir.Variable sinkVar, NodeConsumer dgt,
+	LlvmLowerer lowerer)
+{
+	ir.Exp keys()
+	{
+		auto _keys = buildAAKeys(e.loc, aatype, [copyExp(e)]);
+		ir.Exp kexp = _keys;
+		lowerBuiltin(lp, current, kexp, _keys, lowerer);
+		return kexp;
+	}
+
+	ir.Exp values()
+	{
+		auto _values = buildAAValues(e.loc, aatype, [copyExp(e)]);
+		ir.Exp vexp = _values;
+		lowerBuiltin(lp, current, vexp, _values, lowerer);
+		return vexp;
+	}
+
+	ir.Exp length()
+	{
+		auto _length = buildAALength(e.loc, lp.target, [copyExp(e)]);
+		ir.Exp lexp = _length;
+		lowerBuiltin(lp, current, lexp, _length, lowerer);
+		return lexp;
+	}
+
+	auto loc = e.loc;
+	lowerComposableStringStringComponent(buildConstantString(loc, "["), sexp, sinkVar, dgt);
+	ir.ForStatement fs;
+	ir.Variable ivar;
+	buildForStatement(e.loc, lp.target, current, length(), fs, ivar);
+	void addToForStatement(ir.Node n)
+	{
+		auto exp = cast(ir.Exp)n;
+		if (exp !is null) {
+			n = buildExpStat(e.loc, exp);
+		}
+		fs.block.statements ~= n;
+	}
+	ir.Node gottenNode;
+	void getNode(ir.Node n)
+	{
+		gottenNode = n;
+	}
+	version (D_Version2) {
+		auto forDgt = &addToForStatement;
+		auto getDgt = &getNode;
+	} else {
+		auto forDgt = addToForStatement;
+		auto getDgt = getNode;
+	}
+
+	lowerComposableStringComponent(lp, current, buildIndex(e.loc, keys(),
+		buildExpReference(ivar.loc, ivar, ivar.name)),
+		sexp, sinkVar, forDgt, lowerer);
+	lowerComposableStringStringComponent(buildConstantString(loc, ":"), sexp, sinkVar, forDgt);
+	lowerComposableStringComponent(lp, current, buildIndex(e.loc, values(),
+		buildExpReference(ivar.loc, ivar, ivar.name)),
+		sexp, sinkVar, forDgt, lowerer);
+
+	auto lengthSub1 = buildSub(loc, length(), buildConstantSizeT(loc, lp.target, 1));
+	auto cmp = buildBinOp(loc, ir.BinOp.Op.Less, buildExpReference(loc, ivar, ivar.name), lengthSub1);
+
+	lowerComposableStringStringComponent(buildConstantString(loc, ", "), sexp, sinkVar, getDgt);
+	auto bs = buildBlockStat(loc, null, fs.block.myScope, buildExpStat(e.loc, cast(ir.Exp)gottenNode));
+	auto ifs = buildIfStat(loc, cmp, bs);
+	forDgt(ifs);
+
+	dgt(fs);
+	lowerComposableStringStringComponent(buildConstantString(loc, "]"), sexp, sinkVar, dgt);
+}
+
+//! Lower an array component of a composable string.
+void lowerComposableStringArrayComponent(LanguagePass lp, ir.Scope current, ir.Exp e,
+	ir.StatementExp sexp, ir.Variable sinkVar, NodeConsumer dgt, LlvmLowerer lowerer)
+{
+	auto loc = e.loc;
+	lowerComposableStringStringComponent(buildConstantString(loc, "["), sexp, sinkVar, dgt);
+	ir.ForStatement fs;
+	ir.Variable ivar;
+	buildForStatement(e.loc, lp.target, current, buildArrayLength(loc, lp.target, copyExp(e)), fs, ivar);
+	void addToForStatement(ir.Node n)
+	{
+		auto exp = cast(ir.Exp)n;
+		if (exp !is null) {
+			n = buildExpStat(e.loc, exp);
+		}
+		fs.block.statements ~= n;
+	}
+	ir.Node gottenNode;
+	void getNode(ir.Node n)
+	{
+		gottenNode = n;
+	}
+	version (D_Version2) {
+		auto forDgt = &addToForStatement;
+		auto getDgt = &getNode;
+	} else {
+		auto forDgt = addToForStatement;
+		auto getDgt = getNode;
+	}
+	lowerComposableStringComponent(lp, current, buildIndex(e.loc, copyExp(e),
+		buildExpReference(ivar.loc, ivar, ivar.name)),
+		sexp, sinkVar, forDgt, lowerer);
+
+	auto lengthSub1 = buildSub(loc, buildArrayLength(loc, lp.target, copyExp(e)), buildConstantSizeT(loc, lp.target, 1));
+	auto cmp = buildBinOp(loc, ir.BinOp.Op.Less, buildExpReference(loc, ivar, ivar.name), lengthSub1);
+
+	lowerComposableStringStringComponent(buildConstantString(loc, ", "), sexp, sinkVar, getDgt);
+	auto bs = buildBlockStat(loc, null, fs.block.myScope, buildExpStat(e.loc, cast(ir.Exp)gottenNode));
+	auto ifs = buildIfStat(loc, cmp, bs);
+	forDgt(ifs);
+
+	dgt(fs);
+	lowerComposableStringStringComponent(buildConstantString(loc, "]"), sexp, sinkVar, dgt);
+}
+
+//! Lower a pointer component of a composable string.
+void lowerComposableStringPointerComponent(LanguagePass lp, ir.Exp e, ir.StatementExp sexp, ir.Variable sinkVar,
+	NodeConsumer dgt)
+{
+	auto loc = e.loc;
+	auto call = buildCall(loc, buildExpReference(loc, lp.formatHex, lp.formatHex.name), [
+		buildExpReference(loc, sinkVar, sinkVar.name),
+		buildCast(loc, buildUlong(loc), copyExp(e)),
+		buildConstantSizeT(loc, lp.target, lp.target.isP64 ? 16 : 8)]);
+	dgt(call);
+}
+
+//! Lower an enum component of a composable string.
+void lowerComposableStringEnumComponent(LanguagePass lp, ir.Scope current, ir.Enum _enum, ir.Exp e,
+	ir.StatementExp sexp, ir.Variable sinkVar, NodeConsumer dgt)
+{
+	if (_enum.toSink is null) {
+		_enum.toSink = generateToSink(e.loc, lp, current, _enum);
+	}
+	auto loc = e.loc;
+	auto call = buildCall(loc, buildExpReference(loc, _enum.toSink, _enum.toSink.name), [
+		copyExp(e), buildExpReference(loc, sinkVar, sinkVar.name)]);
+	dgt(call);
+}
+
+/*!
+ * Generate the function that fills in the `toSink` field on an `Enum`.
+ *
+ * Used by the composable string code to turn `"${SomeEnum.Member}"` into `"Member"`.
+ */
+ir.Function generateToSink(ref in Location loc, LanguagePass lp, ir.Scope current, ir.Enum _enum)
+{
+	/* ```volt
+	 * fn toSink(e: EnumName, sink: Sink) {
+     *     // This switch is generated by a builtin in the backend.
+	 *     switch (e) {
+	 *     case EnumName.MemberZero: sink("MemberZero"); break;
+	 *     default: assert(false);
+	 *     }
+	 * }
+	 * ```
+	 */
+	auto mod = getModuleFromScope(loc, current);
+	auto ftype = buildFunctionTypeSmart(loc, buildVoid(loc), []);
+	auto func = buildFunction(loc, mod.children, mod.myScope, "__toSink" ~ _enum.mangledName);
+	auto enumParam = addParamSmart(loc, func, _enum, "e");
+	auto sinkParam = addParamSmart(loc, func, lp.sinkType, "sink");
+
+	auto em = buildEnumMembers(loc, _enum,
+		buildExpReference(loc, enumParam, enumParam.name), buildExpReference(loc, sinkParam, sinkParam.name));
+	em.functions ~= lp.ehThrowAssertErrorFunc;
+	func._body.statements ~= buildExpStat(loc, em);
+	buildReturnStat(loc, func._body);
+	return func;
+}
+
+//! Lower a string component of a composable string.
+void lowerComposableStringStringComponent(ir.Exp e, ir.StatementExp sexp, ir.Variable sinkVar)
+{
+	auto l = e.loc;
+	auto call = buildCall(l, buildExpReference(l, sinkVar, sinkVar.name), [copyExp(e)]);
+	buildExpStat(l, sexp, call);
+}
+
+//! Lower a string component of a composable string.
+void lowerComposableStringStringComponent(ir.Exp e, ir.StatementExp sexp, ir.Variable sinkVar,
+	NodeConsumer dgt)
+{
+	auto l = e.loc;
+	auto call = buildCall(l, buildExpReference(l, sinkVar, sinkVar.name), [copyExp(e)]);
+	dgt(call);
 }
 
 //! Build an if statement based on a runtime assert.
@@ -1184,6 +1551,7 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 	case ArrayPtr:
 	case ArrayLength:
 	case BuildVtable:
+	case EnumMembers:
 		break;
 	case ArrayDup:
 		if (builtin.children.length != 3) {
@@ -1917,6 +2285,13 @@ public:
 			lowerPostfix(lp, current, thisModule, exp,
 				functionStack.length == 0 ? null : functionStack[$-1], pfix, this);
 		}
+		return Continue;
+	}
+
+	override Status leave(ref ir.Exp exp, ir.ComposableString cs)
+	{
+		ir.Function currentFunc = functionStack.length == 0 ? null : functionStack[$-1];
+		lowerComposableString(lp, current, currentFunc, exp, cs, this);
 		return Continue;
 	}
 

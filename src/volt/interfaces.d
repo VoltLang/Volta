@@ -502,6 +502,18 @@ public:
 	ir.Function llvmMemset32;
 	ir.Function llvmMemset64;
 
+	// core.rt.format;
+	ir.Type sinkType;
+	ir.Type sinkStore;
+	ir.Function sinkInit;
+	ir.Function sinkGetStr;
+	ir.Function formatHex;
+	ir.Function formatI64;
+	ir.Function formatU64;
+	ir.Function formatF32;
+	ir.Function formatF64;
+	ir.Function formatDchar;
+
 	/*! @} */
 
 	/*!

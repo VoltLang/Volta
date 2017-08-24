@@ -205,6 +205,8 @@ public abstract:
 	Visitor.Status leave(ref ir.Exp, ir.AccessExp);
 	Visitor.Status enter(ref ir.Exp, ir.RunExp);
 	Visitor.Status leave(ref ir.Exp, ir.RunExp);
+	Visitor.Status enter(ref ir.Exp, ir.ComposableString);
+	Visitor.Status leave(ref ir.Exp, ir.ComposableString);
 
 	Visitor.Status visit(ref ir.Exp, ir.IdentifierExp);
 	Visitor.Status visit(ref ir.Exp, ir.ExpReference);
@@ -395,6 +397,8 @@ override:
 	Status leave(ref ir.Exp, ir.AccessExp){ return Continue; }
 	Status enter(ref ir.Exp, ir.RunExp){ return Continue; }
 	Status leave(ref ir.Exp, ir.RunExp){ return Continue; }
+	Status enter(ref ir.Exp, ir.ComposableString){ return Continue; }
+	Status leave(ref ir.Exp, ir.ComposableString){ return Continue; }
 
 	Status visit(ref ir.Exp, ir.ExpReference){ return Continue; }
 	Status visit(ref ir.Exp, ir.IdentifierExp){ return Continue; }
@@ -491,6 +495,7 @@ body {
 	case BuiltinExp:
 	case AccessExp:
 	case RunExp:
+	case ComposableString:
 		throw panic(n.loc, "can not visit expressions");
 
 	/*
@@ -658,6 +663,8 @@ Visitor.Status acceptExp(ref ir.Exp exp, Visitor av)
 		return acceptAccessExp(exp, exp.toAccessExpFast(), av);
 	case RunExp:
 		return acceptRunExp(exp, exp.toRunExpFast(), av);
+	case ComposableString:
+		return acceptComposableString(exp, exp.toComposableStringFast(), av);
 	default:
 		throw panicUnhandled(exp, ir.nodeToString(exp));
 	}
@@ -2225,6 +2232,25 @@ Visitor.Status acceptRunExp(ref ir.Exp exp, ir.RunExp runexp, Visitor av)
 	}
 
 	return av.leave(exp, runexp);
+}
+
+Visitor.Status acceptComposableString(ref ir.Exp exp, ir.ComposableString cs, Visitor av)
+{
+	auto status = av.enter(exp, cs);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	foreach (ref component; cs.components) {
+		status = acceptExp(component, av);
+		if (status == VisitorContinueParent) {
+			continue;
+		} else if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	return av.leave(exp, cs);
 }
 
 Visitor.Status acceptExpReference(ref ir.Exp exp, ir.ExpReference expref, Visitor av)

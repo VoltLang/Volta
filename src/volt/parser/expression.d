@@ -15,6 +15,8 @@ import volt.exceptions;
 import volt.errors;
 import volt.token.location;
 import volt.token.token : TokenType;
+import volt.token.source : Source;
+import volt.token.lexer : lex;
 import volt.parser.base;
 import volt.parser.declaration;
 import volt.util.string;
@@ -698,6 +700,9 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 	case intir.PrimaryExp.Type.VaArg:
 		exp = primary.vaexp;
 		break;
+	case intir.PrimaryExp.Type.ComposableString:
+		exp = primary.exp;
+		break;
 	default:
 		return parsePanic(ps, primary.loc, ir.NodeType.Invalid, "unhandled primary expression.");
 	}
@@ -1197,6 +1202,9 @@ ParseStatus parseUnaryExp(ParserStream ps, out intir.UnaryExp exp)
 		}
 		break;
 	case TokenType.New:
+		if (isComposableString(ps)) {
+			goto default;
+		}
 		auto succeeded = parseNewOrDup(ps, exp);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Unary);
@@ -1562,7 +1570,18 @@ ParseStatus parsePrimaryExp(ParserStream ps, out intir.PrimaryExp exp)
 		exp._string = token.value;
 		exp.op = intir.PrimaryExp.Type.FloatLiteral;
 		break;
+	case TokenType.New:
+		assert(isComposableString(ps));
+		goto case;
 	case TokenType.StringLiteral:
+		if (isComposableString(ps)) {
+			exp.op = intir.PrimaryExp.Type.ComposableString;
+			auto succeeded = parseComposableString(ps, exp.exp);
+			if (!succeeded) {
+				return parseFailed(ps, ir.NodeType.Assert);
+			}
+			return Succeeded;
+		}
 		auto token = ps.get();
 		exp._string = token.value;
 		exp.op = intir.PrimaryExp.Type.StringLiteral;
@@ -1914,6 +1933,143 @@ ParseStatus parseRunExp(ParserStream ps, out ir.RunExp runexp)
 		return parseFailed(ps, runexp);
 	}
 	return Succeeded;
+}
+
+/*!
+ * Parse a volt expression in `slice` into `exp`.
+ *
+ * Used by composable strings.
+ */
+ParseStatus parseInlineExp(Location loc, ParserStream ps, string slice, out ir.Exp exp)
+{
+	auto src = new Source(slice, loc.filename);
+	auto tokens = lex(src);
+	auto newPs = new ParserStream(tokens, ps.settings);
+	newPs.get();
+	auto succeeded = parseExp(newPs, exp);
+	if (!succeeded) {
+		ps.parserErrors ~= newPs.parserErrors[$-1];
+		return succeeded;
+	}
+	exp.loc = loc;
+	return Succeeded;
+}
+
+/*!
+ * Parse a composable string expression.
+ *
+ * If a runtime composable string, expects the parse to be at the
+ * 'new' token.
+ */
+ParseStatus parseComposableString(ParserStream ps, out ir.Exp exp)
+{
+	auto cs = new ir.ComposableString();
+	cs.loc = ps.peek.loc;
+
+	cs.compileTimeOnly = !matchIf(ps, TokenType.New);
+
+	panicAssert(cs, ps.peek.type == TokenType.StringLiteral);
+	panicAssert(cs, ps.peek.value[0] == '\"');
+
+	auto literal = ps.peek;
+	ps.get();
+
+	void addLiteral(string slice)
+	{
+		if (slice.length == 0) {
+			return;
+		}
+		cs.components ~= buildConstantString(cs.loc, slice);
+	}
+
+	size_t a = 1, b = 1;  // skip "
+	bool inStringLiteral = true;  // if false, parsing expression
+	while (b < literal.value.length) {
+		char c = literal.value[b++];
+		char nextc, nextnextc;
+		if (b < literal.value.length) {
+			nextc = literal.value[b];
+		}
+		if (b + 1 < literal.value.length) {
+			nextnextc = literal.value[b + 1];
+		}
+		if (inStringLiteral) {
+			if (c == '\\' && nextc == '$' && nextnextc == '{') {
+				b += 2;
+				continue;
+			}
+			if (c == '$' && nextc == '{') {
+				addLiteral(literal.value[a .. b-1]);
+				a = b+1;
+				b += 1;
+				inStringLiteral = false;
+				continue;
+			}
+		} else {
+			if (c != '}') {
+				continue;
+			}
+			ir.Exp e;
+			auto succeeded = parseInlineExp(cs.loc, ps, literal.value[a .. b-1], e);
+			if (!succeeded) {
+				return parseFailed(ps, cs); // TODO: better error
+			}
+			cs.components ~= e;
+			a = b;
+			inStringLiteral = true;
+		}
+	}
+	if (inStringLiteral && a < literal.value.length) {
+		addLiteral(literal.value[a .. $-1]);
+	}
+
+	exp = cs;
+	return Succeeded;
+}
+
+//! @Returns `true` if `ps` is at a composable string.
+bool isComposableString(ParserStream ps)
+{
+	auto mark = ps.save();
+	if (ps.peek.type == TokenType.New) {
+		ps.get();
+	}
+	scope (exit)  {
+		ps.restore(mark);
+	}
+	if (ps.peek.type != TokenType.StringLiteral) {
+		return false;
+	}
+	if (ps.peek.value.length == 0 || ps.peek.value[0] != '"') {
+		return false;
+	}
+	bool foundEvaluationOpening = false;
+	for (size_t i; i < ps.peek.value.length; ++i) {
+		char c = ps.peek.value[i];
+		if (foundEvaluationOpening) {
+			if (c == '}') {
+				return true;
+			} else {
+				continue;
+			}
+		}
+		char nextc, nextnextc;
+		if (i+1 < ps.peek.value.length) {
+			nextc = ps.peek.value[i+1];
+		}
+		if (i+2 < ps.peek.value.length) {
+			nextnextc = ps.peek.value[i+2];
+		}
+		if (c == '\\' && nextc == '$' && nextnextc == '{') {
+			i += 3;
+			continue;
+		}
+		if (c == '$' && nextc == '{') {
+			foundEvaluationOpening = true;
+			continue;
+		}
+	}
+	return false;
 }
 
 bool isUnambiguouslyParenType(ParserStream ps)

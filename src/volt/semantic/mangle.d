@@ -191,7 +191,8 @@ void mangleType(ir.Type t, Sink sink)
 		mangleType(asSA.base, sink);
 		break;
 	default:
-		throw panicUnhandled(t, format("%s in mangler", t.nodeType));
+		auto st = cast(ir.StorageType)t;
+		throw panicUnhandled(t, format("%s in mangler", ir.nodeToString(t.nodeType)));
 	}
 }
 

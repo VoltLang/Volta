@@ -1338,6 +1338,12 @@ void handleBuiltinExp(State state, ir.BuiltinExp inbuilt, Value result)
 			throw panic(inbuilt.loc, "bad array ptr built-in.");
 		}
 		break;
+	case EnumMembers:
+		assert(inbuilt.children.length == 2);
+		assert(inbuilt._enum !is null);
+		assert(inbuilt.functions.length == 1);  // throw_assert
+		handleEnumMembers(state, inbuilt, result);
+		break;
 	case BuildVtable:
 	case Invalid:
 	case ArrayDup:
@@ -1355,6 +1361,66 @@ void handleBuiltinExp(State state, ir.BuiltinExp inbuilt, Value result)
 	case VaStart, VaEnd, VaArg:
 		throw panic(inbuilt, "unhandled");
 	}
+}
+
+//! Get an LLVMValueRef from a constant string, known at compile time.
+private LLVMValueRef fromConstantString(State state, ref in Location loc, string str)
+{
+	auto result = new Value();
+	ir.ArrayType st = buildString(loc);
+	st.mangledName = "ac";
+	st.base.mangledName = "mc";
+	auto at = ArrayType.fromIr(state, st);
+	at.from(state, buildConstantString(loc, str, false), result);
+	return result.value;
+}
+
+//! Write the EnumMembers builtin.
+void handleEnumMembers(State state, ir.BuiltinExp inbuilt, Value result)
+{
+	auto cond = state.getValue(inbuilt.children[0]);
+	auto defaultCase = LLVMAppendBasicBlockInContext(state.context, state.func, "defaultCase");
+	auto _switch = LLVMBuildSwitch(state.builder, cond, defaultCase, cast(uint)inbuilt._enum.members.length);
+
+	auto endSwitch = LLVMAppendBasicBlockInContext(state.context, state.func, "endEnumSwitch");
+
+	foreach (member; inbuilt._enum.members) {
+		auto memberBlock = LLVMAppendBasicBlockInContext(state.context, state.func, "enumSwitchCase");
+		auto val = state.getValue(member.assign);
+		LLVMAddCase(_switch, val, memberBlock);
+		LLVMPositionBuilderAtEnd(state.builder, memberBlock);
+		auto sinkVal = new Value();
+		state.getValueAnyForm(inbuilt.children[1], sinkVal);
+
+		// Load the delegate pair for the sink.
+		auto i32t = LLVMInt32TypeInContext(state.context);
+		auto indices = new LLVMValueRef[](2);
+		indices[0] = LLVMConstInt(i32t, 0, false);
+		indices[1] = LLVMConstInt(i32t, 1, false);
+		auto callp = LLVMBuildGEP(state.builder, sinkVal.value, indices.ptr, cast(uint)indices.length, "".ptr);
+		auto callval = LLVMBuildLoad(state.builder, callp, "".ptr);
+		indices[1] = indices[0];  // now do a 0, 0 gep
+		auto thisp = LLVMBuildGEP(state.builder, sinkVal.value, indices.ptr, cast(uint)indices.length, "".ptr);
+		auto thisval = LLVMBuildLoad(state.builder, thisp, "".ptr);
+
+		// Now call the sink.
+		auto args = new LLVMValueRef[](2);
+		args[0] = thisval;
+		args[1] = fromConstantString(state, inbuilt.loc, member.name);
+		LLVMBuildCall(state.builder, callval, args.ptr, cast(uint)args.length, "".ptr);
+		LLVMBuildBr(state.builder, endSwitch);
+	}
+
+	LLVMPositionBuilderAtEnd(state.builder, defaultCase);
+	Type t;
+	auto assertval = state.getFunctionValue(inbuilt.functions[0], t);
+	auto args = new LLVMValueRef[](2);
+	args[0] = fromConstantString(state, inbuilt.loc, inbuilt.loc.toString());
+	args[1] = fromConstantString(state, inbuilt.loc, "invalid enum member passed as composable string component");
+	LLVMBuildCall(state.builder, assertval, args.ptr, cast(uint)args.length, "".ptr);
+	LLVMBuildUnreachable(state.builder);
+
+	LLVMPositionBuilderAtEnd(state.builder, endSwitch);
 }
 
 void handleStatementExp(State state, ir.StatementExp statExp, Value result)

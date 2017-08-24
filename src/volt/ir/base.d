@@ -143,6 +143,7 @@ enum NodeType
 	BuiltinExp,
 	AccessExp,
 	RunExp,
+	ComposableString,
 
 	/* templates.d */
 	TemplateInstance,
@@ -468,6 +469,8 @@ public:
 	final AccessExp toAccessExpChecked() { if (nodeType == NodeType.AccessExp) return toAccessExpFast(); else return null; }
 	final RunExp toRunExpFast() { return cast(RunExp)cast(void*)this; }
 	final RunExp toRunExpChecked() { if (nodeType == NodeType.RunExp) return toRunExpFast(); else return null; }
+	final ComposableString toComposableStringFast() { return cast(ComposableString)cast(void*)this; }
+	final ComposableString toComposableStringChecked() { if (nodeType == NodeType.ComposableString) return toComposableStringFast(); else return null; }
 
 	// Templates
 	final TemplateInstance toTemplateInstanceFast() { return cast(TemplateInstance)cast(void*)this; }
@@ -672,6 +675,7 @@ string nodeToString(NodeType nodeType)
 	case NoType: return "NoType";
 	case AccessExp: return "AccessExp";
 	case RunExp: return "RunExp";
+	case ComposableString: return "ComposableString";
 	case TemplateInstance: return "TemplateInstance";
 	case TemplateDefinition: return "TemplateDefinition";
 	}

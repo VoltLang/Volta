@@ -372,6 +372,11 @@ public:
 	bool isNull;  // Turns out checking for non-truth can be hard.
 	immutable(void)[] arrayData;
 	Type type;
+	/* Set by the casting code. This allows the composable string
+	 * to pull out enum names from folded cast to enums, without
+	 * making maths with enums difficult.
+	 */
+	Enum fromEnum;
 
 public:
 	this() { super(NodeType.Constant); }
@@ -384,6 +389,7 @@ public:
 		this.isNull = old.isNull;
 		this.arrayData = old.arrayData;
 		this.type = old.type;
+		this.fromEnum = old.fromEnum;
 	}
 }
 
@@ -905,16 +911,19 @@ public:
 		VaArg,       //!< va_arg!i32(vl)
 		VaEnd,       //!< va_end(vl)
 		BuildVtable, //!< Build a class vtable.
+		EnumMembers, //!< The body of a toSink(sink, enum) function.
 	}
 
 	Kind kind; //!< What kind of builtin is this.
 	Type type; //!< The type of this exp, helps keeping the typer simple.
 
 	Exp[] children; //!< Common child exp.
-	Function[] functions; //!< For UFCS, PODCtor, and VaArg.
+	Function[] functions; //!< For UFCS, PODCtor, EnumMembers, and VaArg.
 
 	Class _class; //!< For BuildVtable.
 	FunctionSink functionSink; //!< For BuildVtable.
+
+	Enum _enum;  //!< For EnumMembers
 
 public:
 	this(Kind kind, Type type, Exp[] children)
@@ -998,5 +1007,30 @@ public:
 	{
 		super(NodeType.RunExp, old);
 		this.child = old.child;
+	}
+}
+
+/*!
+ * A string that contains expressions to be formatted inline.
+ *
+ * @ingroup irNode irExp
+ */
+class ComposableString : Exp
+{
+public:
+	bool compileTimeOnly;  //!< True if it wasn't prefixed by 'new'.
+	Exp[] components;  //!< The components for the string, those that were contained in `${}`.
+
+public:
+	this()
+	{
+		super(NodeType.ComposableString);
+	}
+
+	this(ComposableString old)
+	{
+		super(NodeType.ComposableString, old);
+		this.compileTimeOnly = old.compileTimeOnly;
+		this.components = old.components.dup();
 	}
 }

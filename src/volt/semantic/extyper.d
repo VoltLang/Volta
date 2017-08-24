@@ -2875,47 +2875,6 @@ ir.Type extypeStoreExp(Context ctx, ref ir.Exp exp, Parent parent)
 	return buildNoType(exp.loc);
 }
 
-
-
-/*
- *
- * Shallow functions.
- *
- */
-
-ir.Type extypePropertyExp(Context ctx, ref ir.Exp exp, Parent parent)
-{
-	// No need to go deeper, assume already extyped.
-	auto prop = cast(ir.PropertyExp) exp;
-
-	if (prop.getFn is null) {
-		return buildNoType(prop.loc);
-	} else {
-		return prop.getFn.type.ret;
-	}
-}
-
-ir.Type extypeBuiltinExp(Context ctx, ref ir.Exp exp, Parent parent)
-{
-	// No need to go deeper, assume already extyped.
-	auto be = cast(ir.BuiltinExp) exp;
-	return be.type;
-}
-
-ir.Type extypeAccessExp(Context ctx, ref ir.Exp exp, Parent parent)
-{
-	// No need to go deeper, assume already extyped.
-	auto access = cast(ir.AccessExp) exp;
-	return access.field.type;
-}
-
-
-/*
- *
- * Unhandled exps.
- *
- */
-
 ir.Type extypeRunExp(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	auto runexp = cast(ir.RunExp)exp;
@@ -2952,6 +2911,74 @@ ir.Type extypeRunExp(Context ctx, ref ir.Exp exp, Parent parent)
 	exp = dgt(args);
 	return liftfn.type.ret;
 }
+
+//! Check the types of a composable string, error if bad.
+ir.Type extypeComposableString(Context ctx, ref ir.Exp exp, Parent parent)
+{
+	auto cs = cast(ir.ComposableString)exp;
+	foreach (ref component; cs.components) {
+		auto type = realType(extype(ctx, component, Parent.NA), false);
+		switch (type.nodeType) with (ir.NodeType) {
+		case ArrayType:
+		case AAType:
+		case Union:
+		case Struct:
+		case Class:
+		case Enum:
+		case PrimitiveType:
+		case PointerType:
+			break;
+		default:
+			throw makeBadComposableType(component.loc, type);
+		}
+		if (cs.compileTimeOnly) {
+			auto loc = component.loc;
+			component = evaluateOrNull(ctx.lp, ctx.current, component);
+			if (component is null) {
+				throw makeNonConstantCompileTimeComposable(loc);
+			}
+		}
+	}
+	return buildString(exp.loc);
+}
+
+/*
+ *
+ * Shallow functions.
+ *
+ */
+
+ir.Type extypePropertyExp(Context ctx, ref ir.Exp exp, Parent parent)
+{
+	// No need to go deeper, assume already extyped.
+	auto prop = cast(ir.PropertyExp) exp;
+
+	if (prop.getFn is null) {
+		return buildNoType(prop.loc);
+	} else {
+		return prop.getFn.type.ret;
+	}
+}
+
+ir.Type extypeBuiltinExp(Context ctx, ref ir.Exp exp, Parent parent)
+{
+	// No need to go deeper, assume already extyped.
+	auto be = cast(ir.BuiltinExp) exp;
+	return be.type;
+}
+
+ir.Type extypeAccessExp(Context ctx, ref ir.Exp exp, Parent parent)
+{
+	// No need to go deeper, assume already extyped.
+	auto access = cast(ir.AccessExp) exp;
+	return access.field.type;
+}
+
+/*
+ *
+ * Unhandled exps.
+ *
+ */
 
 ir.Type extypeAssert(Context ctx, ref ir.Exp exp, Parent parent)
 {
@@ -3062,6 +3089,8 @@ ir.Type extypeUnchecked(Context ctx, ref ir.Exp exp, Parent parent)
 		return extypeAccessExp(ctx, exp, parent);
 	case RunExp:
 		return extypeRunExp(ctx, exp, parent);
+	case ComposableString:
+		return extypeComposableString(ctx, exp, parent);
 	default:
 		assert(false, "unknown exp");
 	}

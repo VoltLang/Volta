@@ -1900,6 +1900,7 @@ public:
 		case VaArg: wf("va_arg"); break;
 		case VaEnd: wf("va_end"); break;
 		case BuildVtable: wf("build_vtable"); break;
+		case EnumMembers: wf("enum_members"); break;
 		}
 		wf(">(");
 		auto arr = inbuilt.children;
@@ -1939,6 +1940,23 @@ public:
 	}
 
 	override Status leave(ref ir.Exp exp, ir.RunExp runexp)
+	{
+		assert(false);
+	}
+
+	override Status enter(ref ir.Exp exp, ir.ComposableString cs)
+	{
+		wf("\"");
+		foreach (ref component; cs.components) {
+			wf("${");
+			acceptExp(component, this);
+			wf("}");
+		}
+		wf("\"");
+		return ContinueParent;
+	}
+
+	override Status leave(ref ir.Exp exp, ir.ComposableString cs)
 	{
 		assert(false);
 	}

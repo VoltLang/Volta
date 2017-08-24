@@ -133,6 +133,19 @@ CompilerException makeBadAccess(ref in Location loc, string name, ir.Access acce
 		accessName, name));
 }
 
+CompilerException makeBadComposableType(ref in Location loc, ir.Type type,
+	string file = __FILE__, const int line = __LINE__)
+{
+	auto msg = format("cannot use type %s as a composable string component.", type.typeString());
+	return new CompilerError(loc, msg, file, line);
+}
+
+CompilerException makeNonConstantCompileTimeComposable(ref in Location loc,
+	string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, "non constant expression in compile time composable string (precede with 'new' to make a runtime composable string).", file, line);
+}
+
 CompilerException makeArgumentCountMismatch(ref in Location loc, ir.Function func, string file = __FILE__, const int line = __LINE__)
 {
 	auto n = func.params.length;

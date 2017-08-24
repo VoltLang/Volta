@@ -76,6 +76,7 @@ public:
 		case AutoType: return copy(cast(ir.AutoType)n);
 		case ArrayType: return copy(cast(ir.ArrayType)n);
 		case AmbiguousArrayType: return copy(cast(ir.AmbiguousArrayType)n);
+		case StaticArrayType: return copy(cast(ir.StaticArrayType)n);
 		case StorageType: return copy(cast(ir.StorageType)n);
 		case DelegateType: return copy(cast(ir.DelegateType)n);
 		case FunctionType: return copy(cast(ir.FunctionType)n);
@@ -660,6 +661,15 @@ public:
 			at.explicitType = copyType(old.explicitType);
 		}
 		return at;
+	}
+
+	ir.StaticArrayType copy(ir.StaticArrayType old)
+	{
+		auto sat = new ir.StaticArrayType(old);
+		if (old.base !is null) {
+			sat.base = copyType(old.base);
+		}
+		return sat;
 	}
 
 	ir.AmbiguousArrayType copy(ir.AmbiguousArrayType old)
