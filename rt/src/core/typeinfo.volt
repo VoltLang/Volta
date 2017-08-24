@@ -3,6 +3,9 @@
 module core.typeinfo;
 
 
+/*!
+ * The types of Volt, the `type` field of `TypeInfo`.
+ */
 enum Type
 {
 	Struct = 1,
@@ -37,28 +40,39 @@ enum Type
 	Delegate = 30,
 }
 
+/*!
+ * Information for a type that can be retrieved at runtime.
+ *
+ * This is the object that the `typeid` expression returns.
+ */
 class TypeInfo
 {
-	size: size_t;
-	type: int;
-	mangledName: char[];
-	mutableIndirection: bool;
-	classInit: void*;
-	classSize: size_t;
-	base: TypeInfo;  // For arrays (dynamic and static), and pointers.
-	staticArrayLength: size_t;
-	key, value: TypeInfo;  // For AAs.
-	ret: TypeInfo;  // For functions and delegates.
-	args: TypeInfo[];  // For functions and delegates.
+	size: size_t;  //!< The size of the type, in bytes.
+	type: int;  //!< The specific type. A member of the `Type` enum.
+	mangledName: char[];  //!< The Volt mangled name (if any)
+	mutableIndirection: bool;  //!< Can this type mutate memory?
+	classInit: void*;  //!< The class init struct, if this points at a class.
+	classSize: size_t;  //!< The size of the class, if this points at a class.
+	base: TypeInfo;  //!< The base type for arrays (dynamic and static), and pointers.
+	staticArrayLength: size_t; //!< If this points at a static array, how long is it?
+	key, value: TypeInfo;  //!< The key and value types for AAs.
+	ret: TypeInfo;  //!< For functions and delegates, what's the return type?
+	args: TypeInfo[];  //!< For functions and delegates, what are the parameter types?
 }
 
+/*!
+ * A TypeInfo used by classes.
+ */
 class ClassInfo : TypeInfo
 {
-	interfaces: InterfaceInfo[];
+	interfaces: InterfaceInfo[];  //!< The interfaces the class this refers to implements.
 }
 
+/*!
+ * Type information for interfaces.
+ */
 class InterfaceInfo
 {
-	info: TypeInfo;
-	offset: size_t;
+	info: TypeInfo;  //!< The tinfo for the pointed at interface.
+	offset: size_t;  //!< How many bytes after the vtable does the information for this interface lie?
 }

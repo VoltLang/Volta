@@ -90,9 +90,27 @@ struct Stats
 
 extern(C):
 
+/*!
+ * Initialise the GC.
+ */
 fn vrt_gc_init();
+/*!
+ * Get an instance of the `AllocDg` delegate.
+ */
 fn vrt_gc_get_alloc_dg() AllocDg;
+/*!
+ * Perform a collection.
+ */
 fn vrt_gc_collect();
+/*!
+ * Shutdown the GC, call all destructors, free all memory.
+ */
 fn vrt_gc_shutdown();
+/*!
+ * Fill out a given `Stats` struct.
+ */
 fn vrt_gc_get_stats(out stats: Stats) Stats*;
+/*!
+ * Print out GC stats.
+ */
 version (CRuntime_All) fn vrt_gc_print_stats();

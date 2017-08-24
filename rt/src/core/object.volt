@@ -4,7 +4,12 @@
 module core.object;
 
 
-//! Root object for all classes.
+/*!
+ * Root object for all classes.
+ *
+ * If a `class` does not inherit explicitly from another `class`,
+ * then the compiler makes it inherit from this.
+ */
 class Object
 {
 	~this() {}
