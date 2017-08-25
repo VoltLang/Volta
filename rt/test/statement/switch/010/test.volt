@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 // Test for failure on final switch over non enum type.
 module test;

@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 // Assigning to invalid value type.
 module test;

@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 //T check:can not access fields and function variables via static lookups
 // super postfix.

@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 //T check:scope through assignment
 // MI to global scope assignment.

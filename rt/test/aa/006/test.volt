@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 // Invalid key type accessing aa.
 module test;

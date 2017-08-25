@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 //T check:not marked with 'override'
 // Test that abstract implementations must be marked as override.

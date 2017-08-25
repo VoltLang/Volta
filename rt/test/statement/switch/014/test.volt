@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 // Switch case array in array literal failure test.
 module test;

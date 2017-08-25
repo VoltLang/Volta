@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 //T check:cannot implicitly convert
 // scope with MI to non scope.

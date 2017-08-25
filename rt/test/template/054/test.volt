@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 //T check:expected type
 module test;

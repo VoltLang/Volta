@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 // Final switches failing test.
 module test;

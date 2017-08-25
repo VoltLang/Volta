@@ -1,6 +1,5 @@
-//T default:no
 //T macro:expect-failure
-//T check:6:20: error:
+//T check:5:20: error:
 module test;
 
 fn foo(s: string = 42) i32

@@ -1,6 +1,5 @@
-//T default:no
 //T macro:expect-failure
-//T check:8:
+//T check:7:
 module test;
 
 fn main() i32

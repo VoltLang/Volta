@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 //T check:implicitly convert
 // Arrays of arrays gets accepted.

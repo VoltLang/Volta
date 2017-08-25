@@ -1,6 +1,5 @@
-//T default:no
 //T macro:importfail
-//T check:24:9: error: tried to access
+//T check:23:9: error: tried to access
 module test;
 
 import a;

@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 //T check:may not have an implementation
 module test;

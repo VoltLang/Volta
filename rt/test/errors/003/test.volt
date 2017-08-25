@@ -1,6 +1,5 @@
-//T default:no
 //T macro:expect-failure
-//T check:6:17: error: expected
+//T check:5:17: error: expected
 module test;
 
 fn isSet(string key) void {}

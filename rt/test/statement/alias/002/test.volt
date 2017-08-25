@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 //T check:circular dependency detected
 // Alias circular dependency test.

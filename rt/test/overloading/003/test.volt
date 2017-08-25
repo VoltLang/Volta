@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 //T check:cannot select
 // Insufficient function pointer assignment information.

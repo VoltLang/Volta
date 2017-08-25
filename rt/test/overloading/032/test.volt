@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 //T check:overrides function marked as final
 module test;

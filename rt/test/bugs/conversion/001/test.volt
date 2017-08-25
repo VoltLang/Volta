@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 // scope and '&' causes pointers to be accepted when it shouldn't.
 module test;

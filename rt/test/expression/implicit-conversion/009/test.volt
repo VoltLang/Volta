@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 //T check:cannot implicitly convert
 // Shouldn't be able to treat i as a pointer.

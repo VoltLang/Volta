@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 // Test that named enums can not be explicitly typed.
 module test;

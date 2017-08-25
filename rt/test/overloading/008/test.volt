@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 //T check:2 overloaded functions match call
 // Ambiguous overload set.

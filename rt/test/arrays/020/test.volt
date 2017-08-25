@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 // Test appending to an array, expected to fail.
 module test;

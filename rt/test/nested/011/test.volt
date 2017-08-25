@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 //T check:nested functions may not have nested functions
 module test;

@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 //T check:expected lvalue to ref parameter
 module test;

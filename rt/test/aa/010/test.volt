@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 // Test that assigning null to AAs is an error.
 module test;

@@ -1,4 +1,3 @@
-//T default:no
 //T macro:importfail
 module test;
 

@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 //T check:is in use
 module test;

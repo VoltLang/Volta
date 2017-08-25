@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 //T check:no matching function to override
 // Test that non class members cannot be marked override.

@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 //T check:expected static array literal of length 2
 module test;

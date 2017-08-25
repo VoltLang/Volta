@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 //T check:may not be instantiated
 // Creation of abstraction classes.

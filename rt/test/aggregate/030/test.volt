@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 //T check:static function via instance
 // Test accessing static functions through instance members.

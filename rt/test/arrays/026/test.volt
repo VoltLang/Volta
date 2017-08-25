@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 // Invalid array allocation.
 module test;

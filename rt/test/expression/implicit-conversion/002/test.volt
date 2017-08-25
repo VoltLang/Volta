@@ -1,4 +1,3 @@
-//T default:no
 //T macro:expect-failure
 //T check:cannot implicitly convert
 // Test implicit conversion from const using mutable indirection.
