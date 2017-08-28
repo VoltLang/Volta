@@ -11,6 +11,7 @@ import volt.interfaces;
 import volt.token.location;
 
 import volt.semantic.context;
+import volt.semantic.evaluate;
 
 
 /*
@@ -903,7 +904,7 @@ bool isImplicitlyConvertable(ir.Type from, ir.Type to)
 	return false;
 }
 
-bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
+bool fitsInPrimitive(TargetInfo target, ir.PrimitiveType t, ir.Exp e)
 {
 	ir.Constant removeCast(ir.Exp exp)
 	{
@@ -917,15 +918,15 @@ bool fitsInPrimitive(ir.PrimitiveType t, ir.Exp e)
 			return removeCast(edecl.assign);
 		}
 		auto unary = exp.toUnaryChecked();
-		while (unary !is null && unary.op == ir.Unary.Op.Cast) {
-			return removeCast(unary.value);
+		if (unary !is null) {
+			return foldUnary(exp, unary, target);
 		}
 		return null;
 	}
 
 	auto ternary = e.toTernaryChecked();
 	if (ternary !is null) {
-		return fitsInPrimitive(t, ternary.ifTrue) && fitsInPrimitive(t, ternary.ifFalse);
+		return fitsInPrimitive(target, t, ternary.ifTrue) && fitsInPrimitive(target, t, ternary.ifFalse);
 	}
 
 	auto constant = removeCast(e);

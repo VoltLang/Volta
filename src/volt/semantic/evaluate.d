@@ -850,12 +850,17 @@ ir.Constant foldUnaryComplement(ir.Constant c, TargetInfo target)
 	return nc;
 }
 
-ir.Constant evaluateOrNull(LanguagePass lp, ir.Scope current, ir.Exp exp)
+ir.Constant evaluateOrNull(TargetInfo target, ir.Exp exp)
 {
 	if (exp is null) {
 		return null;
 	}
-	return fold(exp, lp.target);
+	return fold(exp, target);
+}
+
+ir.Constant evaluateOrNull(LanguagePass lp, ir.Scope current, ir.Exp exp)
+{
+	return evaluateOrNull(lp.target, exp);
 }
 
 ir.Constant evaluate(LanguagePass lp, ir.Scope current, ir.Exp exp)

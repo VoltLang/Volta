@@ -56,7 +56,7 @@ void checkAndDoConvert(Context ctx, ir.Type type, ref ir.Exp exp)
 bool willConvert(Context ctx, ir.Type type, ir.Exp exp)
 {
 	auto prim = cast(ir.PrimitiveType) realType(type);
-	if (prim !is null && fitsInPrimitive(prim, exp)) {
+	if (prim !is null && fitsInPrimitive(ctx.lp.target, prim, exp)) {
 		return true;
 	}
 	auto rtype = getExpType(exp);

@@ -374,7 +374,7 @@ void lowerComposableStringComponent(LanguagePass lp, ir.Scope current,
 		ir.Function[] functions;
 		if (store !is null && store.functions.length > 0) {
 			ir.Type[] args;
-			auto toStrFn = selectFunction(store.functions, args, e.loc, DoNotThrow);
+			auto toStrFn = selectFunction(lp.target, store.functions, args, e.loc, DoNotThrow);
 			if (toStrFn !is null && isString(toStrFn.type.ret)) {
 				ir.Postfix _call = buildMemberCall(e.loc, copyExp(e), buildExpReference(e.loc, toStrFn), "toString", null);
 				auto var = buildVariableAnonSmart(e.loc, current, sexp, buildString(e.loc), _call);

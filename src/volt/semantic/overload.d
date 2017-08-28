@@ -55,43 +55,43 @@ import volt.util.sinks;
 enum ThrowOnError = true;
 enum DoNotThrow = false;
 
-ir.Function selectFunction(ir.Function[] functions, ir.Exp[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(TargetInfo target, ir.Function[] functions, ir.Exp[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
 {
 	ir.Type[] types;
 	foreach (arg; arguments) {
 		types ~= getExpType(arg);
 	}
-	return selectFunction(functions, types, arguments, loc, throwOnError);
+	return selectFunction(target, functions, types, arguments, loc, throwOnError);
 }
 
-ir.Function selectFunction(ir.FunctionSet fset, ir.Exp[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(TargetInfo target, ir.FunctionSet fset, ir.Exp[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
 {
 	ir.Type[] types;
 	foreach (arg; arguments) {
 		types ~= getExpType(arg);
 	}
-	return selectFunction(fset, types, arguments, loc, throwOnError);
+	return selectFunction(target, fset, types, arguments, loc, throwOnError);
 }
 
-ir.Function selectFunction(ir.FunctionSet fset, ir.Variable[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(TargetInfo target, ir.FunctionSet fset, ir.Variable[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
 {
 	ir.Type[] types;
 	foreach (arg; arguments) {
 		types ~= arg.type;
 	}
-	return selectFunction(fset, types, [], loc, throwOnError);
+	return selectFunction(target, fset, types, [], loc, throwOnError);
 }
 
-ir.Function selectFunction(ir.Function[] functions, ir.Variable[] arguments, ref in Location loc, bool throwOnError)
+ir.Function selectFunction(TargetInfo target, ir.Function[] functions, ir.Variable[] arguments, ref in Location loc, bool throwOnError)
 {
 	ir.Type[] types;
 	foreach (arg; arguments) {
 		types ~= arg.type;
 	}
-	return selectFunction(functions, types, [], loc, throwOnError);
+	return selectFunction(target, functions, types, [], loc, throwOnError);
 }
 
-int matchLevel(bool homogenous, ir.Type argument, ir.Type parameter, ir.Exp exp=null)
+int matchLevel(TargetInfo target, bool homogenous, ir.Type argument, ir.Type parameter, ir.Exp exp=null)
 {
 	if (typesEqual(argument, parameter)) {
 		return 4;
@@ -100,7 +100,7 @@ int matchLevel(bool homogenous, ir.Type argument, ir.Type parameter, ir.Exp exp=
 		return 3;
 	}
 	if (parameter.nodeType == ir.NodeType.PrimitiveType && exp !is null &&
-	    fitsInPrimitive(parameter.toPrimitiveTypeFast(), exp)) {
+	    fitsInPrimitive(target, parameter.toPrimitiveTypeFast(), exp)) {
 		return 3;
 	}
 	if (willConvert(argument, parameter)) {
@@ -113,7 +113,7 @@ int matchLevel(bool homogenous, ir.Type argument, ir.Type parameter, ir.Exp exp=
 		}
 		if (homogenous) {
 			if (pArray !is null && willConvert(argument, pArray.base)) {
-				return matchLevel(homogenous, argument, pArray.base);
+				return matchLevel(target, homogenous, argument, pArray.base);
 			}
 		}
 		return 1;
@@ -143,31 +143,31 @@ bool specialisationComparison(Object ao, Object bo)
 	return atob && !btoa;
 }
 
-ir.Function selectFunction(ir.FunctionSet fset, ir.Type[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(TargetInfo target, ir.FunctionSet fset, ir.Type[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
 {
-	return selectFunction(fset, arguments, [], loc, throwOnError);
+	return selectFunction(target, fset, arguments, [], loc, throwOnError);
 }
 
-ir.Function selectFunction(ir.FunctionSet fset, ir.Type[] arguments, ir.Exp[] exps, ref in Location loc, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(TargetInfo target, ir.FunctionSet fset, ir.Type[] arguments, ir.Exp[] exps, ref in Location loc, bool throwOnError = ThrowOnError)
 {
-	auto func = selectFunction(fset.functions, arguments, exps, loc, throwOnError);
+	auto func = selectFunction(target, fset.functions, arguments, exps, loc, throwOnError);
 	if (func is null) {
 		return null;
 	}
 	return fset.resolved(func);
 }
 
-ir.Function selectFunction(ir.Function[] functions, ir.Type[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(TargetInfo target, ir.Function[] functions, ir.Type[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
 {
-	return selectFunction(functions, arguments, [], loc, throwOnError);
+	return selectFunction(target, functions, arguments, [], loc, throwOnError);
 }
 
-ir.Function selectFunction(ref FunctionSink functions, ir.Type[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(TargetInfo target, ref FunctionSink functions, ir.Type[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
 {
-	return selectFunction(functions.borrowUnsafe(), arguments, [], loc, throwOnError);
+	return selectFunction(target, functions.borrowUnsafe(), arguments, [], loc, throwOnError);
 }
 
-ir.Function selectFunction(scope ir.Function[] functions, ir.Type[] arguments, ir.Exp[] exps, ref in Location loc, bool throwOnError = ThrowOnError)
+ir.Function selectFunction(TargetInfo target, scope ir.Function[] functions, ir.Type[] arguments, ir.Exp[] exps, ref in Location loc, bool throwOnError = ThrowOnError)
 {
 	panicAssert(loc, functions.length > 0);
 
@@ -272,7 +272,7 @@ ir.Function selectFunction(scope ir.Function[] functions, ir.Type[] arguments, i
 					matchLevels.sink(3);
 					break;
 				} else {
-					matchLevels.sink(.matchLevel(homogenous, arguments[i], param, exp));
+					matchLevels.sink(.matchLevel(target, homogenous, arguments[i], param, exp));
 				}
 			}
 		}
@@ -290,8 +290,8 @@ ir.Function selectFunction(scope ir.Function[] functions, ir.Type[] arguments, i
 						continue;
 					}
 				}
-				auto ml1 = .matchLevel(true, arg, arr.base);
-				auto ml2 = .matchLevel(true, arg, arr);
+				auto ml1 = .matchLevel(target, true, arg, arr.base);
+				auto ml2 = .matchLevel(target, true, arg, arr);
 				matchLevels.sink(ml1 > ml2 ? ml1 : ml2);
 				// Given foo(T[]...) and foo(T) passing a T, the latter should be preferred.
 				if (matchLevels.getLast() == 4) {

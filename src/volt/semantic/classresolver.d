@@ -403,7 +403,7 @@ void appendClassMethodFunctions(LanguagePass lp, ir.Class _class, ref FunctionSi
 		if (fnsink.length == 0) {
 			continue;
 		}
-		auto func = selectFunction(/*ref*/ fnsink, params, method.loc, DoNotThrow);
+		auto func = selectFunction(lp.target, /*ref*/ fnsink, params, method.loc, DoNotThrow);
 		if (func is null) {
 			continue;
 		}
@@ -441,7 +441,7 @@ void appendClassMethodFunctions(LanguagePass lp, ir.Class _class, ref FunctionSi
 					panicAssert(method, atype !is null);
 					params[$ - 1] = atype.base;
 				}
-				auto tmp = selectFunction(/*ref*/ fnsink, params, method.loc);
+				auto tmp = selectFunction(lp.target, /*ref*/ fnsink, params, method.loc);
 			}
 
 			if (noPriorMethods && method.isMarkedOverride) {
@@ -504,7 +504,7 @@ bool overrideFunctionsIfNeeded(LanguagePass lp, ir.Function childFunction, ref F
 		return false;
 	}
 
-	ir.Function selectedFunction = selectFunction(/*ref*/ toConsiderSink, childFunction.type.params, childFunction.loc, DoNotThrow);
+	ir.Function selectedFunction = selectFunction(lp.target, /*ref*/ toConsiderSink, childFunction.type.params, childFunction.loc, DoNotThrow);
 	if (selectedFunction is null) {
 		if (childFunction.isMarkedOverride) {
 			throw makeMarkedOverrideDoesNotOverride(childFunction, childFunction);

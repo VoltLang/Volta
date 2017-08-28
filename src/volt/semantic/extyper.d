@@ -769,7 +769,7 @@ private void resolvePostfixOverload(Context ctx, ir.Postfix postfix,
 		throw panic(postfix.loc, "expected expref");
 	}
 	asFunctionSet.set.reference = eref;
-	func = selectFunction(asFunctionSet.set, postfix.arguments, postfix.loc);
+	func = selectFunction(ctx.lp.target, asFunctionSet.set, postfix.arguments, postfix.loc);
 	eref.decl = func;
 	asFunctionType = func.type;
 
@@ -882,7 +882,7 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	if (b !is null && b.kind == ir.BuiltinExp.Kind.UFCS) {
 		// Should we really call selectFunction here?
 		auto arguments = b.children[0] ~ postfix.arguments;
-		func = selectFunction(b.functions, arguments, postfix.loc);
+		func = selectFunction(ctx.lp.target, b.functions, arguments, postfix.loc);
 
 		if (func is null) {
 			throw makeNoFieldOrPropertyOrUFCS(postfix.loc, postfix.identifier.value, getExpType(postfix.child));
@@ -949,7 +949,7 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			if (isValueExp(postfix.child)) {
 				throw makeStructValueCall(postfix.loc, podAgg.name);
 			}
-			auto ctor = selectFunction(podAgg.constructors, postfix.arguments, postfix.loc);
+			auto ctor = selectFunction(ctx.lp.target, podAgg.constructors, postfix.arguments, postfix.loc);
 			exp = buildPODCtor(postfix.loc, podAgg, postfix, ctor);
 			return;
 		}
@@ -1669,7 +1669,7 @@ void extypeUnaryNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 	// Needed because of userConstructors.
 	ctx.lp.actualize(_class);
 
-	auto func = selectFunction(_class.userConstructors, _unary.argumentList, _unary.loc);
+	auto func = selectFunction(ctx.lp.target, _class.userConstructors, _unary.argumentList, _unary.loc);
 	if (func.access != ir.Access.Public &&
 		getModuleFromScope(_unary.loc, _class.myScope) !is getModuleFromScope(_unary.loc, ctx.current)) {
 		throw makeBadAccess(_class.loc, "this", func.access);
@@ -1829,14 +1829,14 @@ ir.Type extypeBinOp(Context ctx, ir.BinOp bin, ir.PrimitiveType lprim, ir.Primit
 		if (leftUnsigned != rightUnsigned) {
 			// Cast constants.
 			if (leftUnsigned) {
-				if (fitsInPrimitive(lprim, bin.right)) {
+				if (fitsInPrimitive(ctx.lp.target, lprim, bin.right)) {
 					bin.right = buildCastSmart(lprim, bin.right);
 					rightUnsigned = true;
 					rightsz = leftsz;
 					rprim = lprim;
 				}
 			} else {
-				if (fitsInPrimitive(rprim, bin.left)) {
+				if (fitsInPrimitive(ctx.lp.target, rprim, bin.left)) {
 					bin.left = buildCastSmart(rprim, bin.left);
 					leftUnsigned = true;
 					leftsz = rightsz;
@@ -1969,7 +1969,7 @@ ir.Function rewriteOperator(Context ctx, ref ir.Exp exp, string overloadName, ir
 	if (store is null || store.functions.length == 0) {
 		throw makeAggregateDoesNotDefineOverload(exp.loc, agg, overloadName);
 	}
-	auto func = selectFunction(store.functions, args, loc);
+	auto func = selectFunction(ctx.lp.target, store.functions, args, loc);
 	rewriteCall(ctx, exp, func, args, left);
 	return func;
 }
@@ -2082,7 +2082,7 @@ ir.Type extypeBinOpPropertyAssign(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 
 	auto args = [binop.right];
 	auto func = selectFunction(
-		p.setFns, args,
+		ctx.lp.target, p.setFns, args,
 		binop.loc, DoNotThrow);
 	if (func is null) {
 		if (p.setFns.length == 0) {
@@ -2488,8 +2488,8 @@ ir.Type extypeTernary(Context ctx, ref ir.Exp exp, Parent parent)
 		return removeStorageFields(common);
 	} else {
 		// matchLevel lives in volt.semantic.overload.
-		int trueMatchLevel = trueType.nodeType == ir.NodeType.NullType ? 0 : matchLevel(false, trueType, falseType);
-		int falseMatchLevel = falseType.nodeType == ir.NodeType.NullType ? 0 : matchLevel(false, falseType, trueType);
+		int trueMatchLevel = trueType.nodeType == ir.NodeType.NullType ? 0 : matchLevel(ctx.lp.target, false, trueType, falseType);
+		int falseMatchLevel = falseType.nodeType == ir.NodeType.NullType ? 0 : matchLevel(ctx.lp.target, false, falseType, trueType);
 
 		if (trueMatchLevel > falseMatchLevel) {
 			assert(trueRaw.nodeType != ir.NodeType.NullType);
