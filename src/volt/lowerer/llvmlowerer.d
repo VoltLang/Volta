@@ -297,7 +297,7 @@ ir.ComposableString cs, LlvmLowerer lowerer)
 			// Empty the constant sink, and place that into the sink proper.
 			string str = constantSink.toString();
 			if (str.length > 0) {
-				lowerComposableStringStringComponent(buildConstantString(loc, str), sexp, sinkVar);
+				lowerComposableStringStringComponent(buildConstantString(loc, str, /*escape:*/false), sexp, sinkVar);
 			}
 			constantSink.reset();
 			// ...and then route the runtime expression to the right place.
@@ -320,7 +320,7 @@ ir.ComposableString cs, LlvmLowerer lowerer)
 	// Empty the constant sink before finishing up.
 	string str = constantSink.toString();
 	if (str.length > 0) {
-		lowerComposableStringStringComponent(buildConstantString(loc, str), sexp, sinkVar);
+		lowerComposableStringStringComponent(buildConstantString(loc, str, /*escape:*/false), sexp, sinkVar);
 	}
 
 	sexp.exp = buildCall(loc, buildExpReference(loc, lp.sinkGetStr, lp.sinkGetStr.name), [
