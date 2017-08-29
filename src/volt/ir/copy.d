@@ -150,7 +150,7 @@ ir.Postfix copy(ir.Postfix pfix)
 	if (pfix.identifier !is null) {
 		newpfix.identifier = copy(pfix.identifier);
 	}
-	if (newpfix.memberFunction !is null) {
+	if (pfix.memberFunction !is null) {
 		newpfix.memberFunction = copy(pfix.memberFunction);
 	}
 	newpfix.isImplicitPropertyCall = pfix.isImplicitPropertyCall;
