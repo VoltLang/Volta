@@ -311,9 +311,18 @@ ir.ComposableString cs, LlvmLowerer lowerer)
 				}
 			}
 			version (D_Version2) {
-				lowerComposableStringComponent(lp, current, component, sexp, sinkVar, &simpleAdd, lowerer);
+				auto dgt = &simpleAdd;
 			} else {
-				lowerComposableStringComponent(lp, current, component, sexp, sinkVar, simpleAdd, lowerer);
+				auto dgt = simpleAdd;
+			}
+			bool _string = isString(realType(getExpType(component), false));
+			if (_string) {
+				/* We treat top level strings differently to strings in arrays etc. (no " at top level)
+				 * Special casing it here seems the simplest solution.
+				 */
+				lowerComposableStringStringComponent(component, sexp, sinkVar, dgt);
+			} else {
+				lowerComposableStringComponent(lp, current, component, sexp, sinkVar, dgt, lowerer);
 			}
 		}
 	}
