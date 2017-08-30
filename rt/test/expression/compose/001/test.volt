@@ -11,9 +11,9 @@ fn main() i32
 	a := "hello world";
 	assert(a == "hello world");
 	b := new "hello ${a} world";
-	assert(b == "hello \"hello world\" world");
+	assert(b == "hello hello world world");
 	c := new "hello ${b} world";
-	assert(c == "hello \"hello \"hello world\" world\" world");
+	assert(c == "hello hello hello world world world");
 	d := "$ {1+1}";
 	assert(d == "$ {1+1}");
 	e := "\${1}";
