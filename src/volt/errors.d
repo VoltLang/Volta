@@ -976,9 +976,9 @@ CompilerException makeNonTopLevelImport(ref in Location loc, string file = __FIL
  *
  */
 
-CompilerException makeWrongNumberOfArguments(ir.Node node, size_t got, size_t expected, string file = __FILE__, const int line = __LINE__)
+CompilerException makeWrongNumberOfArguments(ir.Node node, ir.Function func, size_t got, size_t expected, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(node.loc, format("wrong number of arguments; got %s, expected %s.", got, expected), file, line);
+	return new CompilerError(node.loc, format("wrong number of arguments to function '%s'; got %s, expected %s.", func.name, got, expected), file, line);
 }
 
 CompilerException makeBadCall(ir.Node node, ir.Type type, string file = __FILE__, const int line = __LINE__)

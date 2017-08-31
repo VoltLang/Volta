@@ -27,8 +27,11 @@ public:
 	 */
 	this(Token[] tokens)
 	{
-		if (tokens.length < 3)
+		if (tokens.length == 0)
 			throw panic("Token stream too short");
+		if (tokens.length < 3) {
+			throw panic(tokens[0].loc, "Token stream too short.");
+		}
 		if (tokens[0].type != TokenType.Begin)
 			throw panic("Token stream not started correctly");
 		if (tokens[$-1].type != TokenType.End)

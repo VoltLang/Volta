@@ -1910,7 +1910,7 @@ void lowerVarargCall(LanguagePass lp, ir.Scope current, ir.Postfix postfix, ir.F
 	auto callNumArgs = postfix.arguments.length;
 	auto funcNumArgs = asFunctionType.params.length;
 	if (callNumArgs < funcNumArgs) {
-		throw makeWrongNumberOfArguments(postfix, callNumArgs, funcNumArgs);
+		throw makeWrongNumberOfArguments(postfix, func, callNumArgs, funcNumArgs);
 	}
 	auto passSlice = postfix.arguments[0 .. funcNumArgs];
 	auto varArgsSlice = postfix.arguments[funcNumArgs .. $];

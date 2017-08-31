@@ -680,7 +680,7 @@ void handleArgumentLabelsIfNeeded(Context ctx, ir.Postfix postfix,
 	}
 
 	if (postfix.arguments.length != func.params.length) {
-		throw makeWrongNumberOfArguments(postfix, postfix.arguments.length, func.params.length);
+		throw makeWrongNumberOfArguments(postfix, func, postfix.arguments.length, func.params.length);
 	}
 
 	// Check all the labels exist.
@@ -734,7 +734,7 @@ private void rewriteVaStartAndEnd(Context ctx, ir.Function func,
 	if (func is ctx.lp.vaStartFunc ||
 	    func is ctx.lp.vaEndFunc) {
 		if (postfix.arguments.length != 1) {
-			throw makeWrongNumberOfArguments(postfix, postfix.arguments.length, 1);
+			throw makeWrongNumberOfArguments(postfix, func, postfix.arguments.length, 1);
 		}
 		auto etype = getExpType(postfix.arguments[0]);
 		auto ptr = cast(ir.PointerType) etype;
@@ -985,7 +985,7 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	appendDefaultArguments(ctx, postfix.loc, postfix.arguments, func);
 	if (!(asFunctionType.hasVarArgs || asFunctionType.params.length > 0 && asFunctionType.homogenousVariadic) &&
 	    postfix.arguments.length != asFunctionType.params.length) {
-		throw makeWrongNumberOfArguments(postfix, postfix.arguments.length, asFunctionType.params.length);
+		throw makeWrongNumberOfArguments(postfix, func, postfix.arguments.length, asFunctionType.params.length);
 	}
 	assert(asFunctionType.params.length <= postfix.arguments.length);
 	rewriteHomogenousVariadic(ctx, asFunctionType, postfix.arguments);
@@ -4430,7 +4430,7 @@ void resolveFunction(Context ctx, ir.Function func)
 		throw makeVoidReturnMarkedProperty(func.loc, func.name);
 	} else if (func.type.isProperty &&
 	           func.type.params.length > 1) {
-		throw makeWrongNumberOfArguments(func, func.type.params.length, isVoid(func.type.ret) ? 0U : 1U);
+		throw makeWrongNumberOfArguments(func, func, func.type.params.length, isVoid(func.type.ret) ? 0U : 1U);
 	}
 	if (func.type.hasVarArgs && func.type.linkage == ir.Linkage.C && func._body !is null) {
 		throw makeUnsupported(func.loc, "extern (C) variadic function with body defined");
