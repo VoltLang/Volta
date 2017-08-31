@@ -765,7 +765,7 @@ private ParseStatus _parseArgumentList(ParserStream ps, out intir.AssignExp[] pe
 		pexps ~= e;
 		if (ps.peek.type != endChar) {
 			if (ps != TokenType.Comma) {
-				return unexpectedToken(ps, ir.NodeType.Postfix);
+				return wrongToken(ps, ir.NodeType.Postfix, ps.peek, endChar);
 			}
 			ps.get();
 			matchedComma = true;
