@@ -249,6 +249,11 @@ public:
 			file = toLower(file);
 		}
 
+		if (!exists(file)) {
+			auto str = format("could not open file '%s'", file);
+			throw new CompilerError(str);
+		}
+
 		if (endsWith(file, ".d", ".volt") > 0) {
 			mSourceFiles ~= file;
 		} else if (endsWith(file, ".bc")) {
