@@ -22,7 +22,7 @@ import volt.parser.errors : ParserError, ParserUnexpectedToken,
                             ParserInvalidIntegerLiteral, ParserDocMultiple,
                             ParserStrayDocComment, ParserWrongToken,
                             ParserPanic, ParserAllArgumentsMustBeLabelled,
-                            ParserExpected;
+                            ParserExpected, ParserNotAComposableString;
 
 
 /*
@@ -224,6 +224,14 @@ ParseStatus strayDocComment(ParserStream ps, Location loc,
                             string file = __FILE__, const int line = __LINE__)
 {
 	auto e = new ParserStrayDocComment(loc, file, line);
+	ps.parserErrors ~= e;
+	return Failed;
+}
+
+ParseStatus badComposable(ParserStream ps, Location loc,
+						  string file = __FILE__, const int line = __LINE__)
+{
+	auto e = new ParserNotAComposableString(loc, file, line);
 	ps.parserErrors ~= e;
 	return Failed;
 }

@@ -1249,6 +1249,9 @@ ParseStatus parseNewOrDup(ParserStream ps, ref intir.UnaryExp exp)
 	if (!succeeded) {
 		return succeeded;
 	}
+	if (ps.peek.type == TokenType.StringLiteral) {
+		return badComposable(ps, ps.peek.loc);
+	}
 	intir.PostfixExp dummy;
 	succeeded = parsePostfixExp(ps, dummy, true);
 	auto lastSlice = getLastSlice(dummy);

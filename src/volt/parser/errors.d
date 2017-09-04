@@ -37,6 +37,8 @@ public:
 		DocCommentMultiple,
 		//! Start doc comment in token stream.
 		StrayDocComment,
+		//! new "string without component"
+		BadComposableString,
 	}
 
 public:
@@ -258,5 +260,19 @@ public:
 	override string errorMessage()
 	{
 		return "stray doc comment.";
+	}
+}
+
+class ParserNotAComposableString : ParserError
+{
+public:
+	this(ref in Location loc, string file, const int line)
+	{
+		super(Kind.BadComposableString, loc, NodeType.Invalid, file, line);
+	}
+
+	override string errorMessage()
+	{
+		return `expected a composable string component (${...}) in the string.`;
 	}
 }
