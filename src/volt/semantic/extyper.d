@@ -2385,6 +2385,8 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 		switch (binop.op) with (ir.BinOp.Op) {
 		case AddAssign, SubAssign, Add, Sub:
 			break;
+		case Equal:
+			throw makeError(binop, "use 'is' for pointer equality.");
 		default:
 			throw makeError(binop, "illegal pointer arithmetic.");
 		}
