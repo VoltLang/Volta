@@ -573,8 +573,39 @@ ir.Struct getClassLayoutStruct(ir.Class _class, LanguagePass lp)
 
 	auto vtableVar = buildVariableSmart(_class.loc, buildPtrSmart(_class.loc, buildVoidPtr(_class.loc)), ir.Variable.Storage.Field, "__vtable");
 
+	bool isInterfaceField(ir.Type t)
+	{
+		if (t.nodeType != ir.NodeType.PointerType) {
+			return false;
+		}
+		auto ptrbase = realType(t.toPointerTypeFast().base);
+		if (ptrbase.nodeType != ir.NodeType.Struct) {
+			return false;
+		}
+		auto str = ptrbase.toStructFast();
+		if (str.loweredNode is null || str.loweredNode.nodeType != ir.NodeType.Interface) {
+			return false;
+		}
+		return true;
+	}
+
 	size_t dummy;
-	auto fields = getClassFields(lp, _class, dummy);
+	auto rawFields = getClassFields(lp, _class, dummy);
+	ir.Variable[] fields;
+	foreach (field; rawFields) {
+		auto exists = false;
+		if (isInterfaceField(field.type)) {
+			foreach (pfield; fields) {
+				exists = pfield.name == field.name;
+				if (exists) {
+					break;
+				}
+			}
+		}
+		if (!exists) {
+			fields ~= field;
+		}
+	}
 	fields = vtableVar ~ fields;
 
 	auto layoutStruct = buildStruct(_class.loc, _class.members, _class.myScope, "__layoutStruct", fields);
@@ -720,6 +751,10 @@ void emitVtableVariable(LanguagePass lp, ir.Class _class)
 	assert(_class.interfaces.length == _class.parentInterfaces.length);
 	void addInterfaceInstance(ir._Interface iface, ir.Class fromParent, size_t i)
 	{
+		auto existing = _class.myScope.getStore(mangle(iface));
+		if (existing !is null) {
+			return;
+		}
 		auto var = buildVariableSmart(loc, iface.layoutStruct, ir.Variable.Storage.Global, format("%s", mangle(iface)));
 		var.mangledName =  format("_V__Interface_%s_%s", _class.mangledName, mangle(iface));
 		var.assign = getInterfaceStructAssign(lp, fromParent, _class.myScope, iface, i);
