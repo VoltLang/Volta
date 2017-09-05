@@ -117,10 +117,10 @@ fn test3()
 //	assert(new "${flyingPie}" == "${3.1415926538f}");
 //	assert(new "${extraPie}" == "${3.1415926538}");
 	
-	assert("${'a'}" == "'a'");
-	assert("${'火'}" == "'火'");
+	assert("'${'a'}'" == "'a'");
+	assert("'${'火'}'" == "'火'");
 	_char := 'a';
 	_bchar := '水';
-	assert(new "${_char}" == "'a'");
-	assert(new "${_bchar}" == "'水'");
+	assert(new "'${_char}'" == "'a'");
+	assert(new "'${_bchar}'" == "'水'");
 }
