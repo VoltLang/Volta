@@ -153,11 +153,9 @@ extern(C) fn vrt_format_f64(sink: Sink, f: f64, width: i32)
 
 extern(C) fn vrt_format_dchar(sink: Sink, c: dchar)
 {
-	sink("'");
 	buf: char[6];
 	rv := vrt_encode_static_u8(ref buf, c);
 	sink(buf[0 .. rv]);
-	sink("'");
 }
 
 enum DBL_MANT_DIG = 53;

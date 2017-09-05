@@ -315,12 +315,20 @@ ir.ComposableString cs, LlvmLowerer lowerer)
 			} else {
 				auto dgt = simpleAdd;
 			}
-			bool _string = isString(realType(getExpType(component), false));
+			auto rtype = realType(getExpType(component), false);
+			bool _string = isString(rtype);
+			bool _char = isChar(rtype);
 			if (_string) {
 				/* We treat top level strings differently to strings in arrays etc. (no " at top level)
 				 * Special casing it here seems the simplest solution.
 				 */
 				lowerComposableStringStringComponent(component, sexp, sinkVar, dgt);
+			} else if (_char) {
+				/* Same deal as the strings. */
+				auto outExp = buildCall(loc, buildExpReference(loc, lp.formatDchar, lp.formatDchar.name), [
+										buildExpReference(loc, sinkVar, sinkVar.name),
+										buildCast(loc, buildDchar(loc), copyExp(component))]);
+				dgt(outExp);
 			} else {
 				lowerComposableStringComponent(lp, current, component, sexp, sinkVar, dgt, lowerer);
 			}
@@ -373,7 +381,7 @@ void lowerComposableStringComponent(LanguagePass lp, ir.Scope current,
 		break;
 	case ir.NodeType.PrimitiveType:
 		auto pt = type.toPrimitiveTypeFast();
-		lowerComposableStringPrimitiveComponent(lp, current, e, pt, sinkVar, dgt);
+		lowerComposableStringPrimitiveComponent(lp, current, e, pt, sexp, sinkVar, dgt);
 		break;
 	case ir.NodeType.Union:
 	case ir.NodeType.Struct:
@@ -400,7 +408,7 @@ void lowerComposableStringComponent(LanguagePass lp, ir.Scope current,
 
 //! Lower a primitive type component of a composable string.
 void lowerComposableStringPrimitiveComponent(LanguagePass lp, ir.Scope current, ir.Exp e,
-	ir.PrimitiveType pt, ir.Variable sinkVar, NodeConsumer dgt)
+	ir.PrimitiveType pt, ir.StatementExp sexp, ir.Variable sinkVar, NodeConsumer dgt)
 {
 	auto loc = e.loc;
 
@@ -414,9 +422,11 @@ void lowerComposableStringPrimitiveComponent(LanguagePass lp, ir.Scope current, 
 	case Char:
 	case Wchar:
 	case Dchar:
+		lowerComposableStringStringComponent(buildConstantString(e.loc, "'"), sexp, sinkVar, dgt);
 		outExp = buildCall(loc, buildExpReference(loc, lp.formatDchar, lp.formatDchar.name), [
 			buildExpReference(loc, sinkVar, sinkVar.name), 
 			buildCast(loc, buildDchar(loc), copyExp(e))]);
+		lowerComposableStringStringComponent(buildConstantString(e.loc, "'"), sexp, sinkVar, dgt);
 		break;
 	case Ubyte:
 	case Ushort:

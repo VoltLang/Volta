@@ -180,7 +180,8 @@ void addConstantComposableStringComponent(Sink sink, ir.Constant c, ir.Primitive
 	case Char:
 	case Wchar:
 	case Dchar:
-		sink(c._string);
+		assert(c._string.length > 2);
+		sink(c._string[1 .. $-1]);  // trim '
 		break;
 	case Ubyte:
 		sink(toString(c.u._ubyte));
