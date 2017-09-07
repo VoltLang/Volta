@@ -232,12 +232,12 @@ bool handleIfNull(Context ctx, ir.Type left, ref ir.Exp right)
 		return false;
 	}
 
-	handleNull(left, right, rightType);
+	handleNull(ctx, left, right, rightType);
 
 	return true;
 }
 
-void handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
+void handleNull(Context ctx, ir.Type left, ref ir.Exp right, ir.Type rightType)
 {
 	assert(rightType.nodeType == ir.NodeType.NullType);
 
@@ -280,6 +280,13 @@ void handleNull(ir.Type left, ref ir.Exp right, ir.Type rightType)
 				return;
 			}
 			goto default;
+		case AAType:
+			if (!ctx.lp.beMoreLikeD) {
+				goto default;
+			}
+			auto t = copyTypeSmart(right.loc, left);
+			constant.type = t;
+			return;
 		default:
 			throw makeBadImplicitCast(right, rightType, left);
 		}

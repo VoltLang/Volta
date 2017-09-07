@@ -1154,6 +1154,14 @@ bool isVariableStatic(ir.Variable var)
 	}
 }
 
+bool isNull(ir.Exp e)
+{
+	auto constant = e.toConstantChecked();
+	if (constant is null) {
+		return false;
+	}
+	return constant.isNull;
+}
 
 bool isNested(ir.Variable.Storage s)
 {

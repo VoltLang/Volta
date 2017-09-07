@@ -205,8 +205,9 @@ void doConvert(Context ctx, ir.Type type, ref ir.Exp exp)
 	auto rtype = getExpType(exp);
 	switch (type.nodeType) {
 	case ir.NodeType.AAType:
+		bool _null = isNull(exp);
 		auto alit = cast(ir.ArrayLiteral)exp;
-		if (alit !is null && alit.exps.length == 0) {
+		if ((_null && ctx.lp.beMoreLikeD) || (alit !is null && alit.exps.length == 0)) {
 			auto aa = new ir.AssocArray();
 			aa.loc = exp.loc;
 			aa.type = copyTypeSmart(exp.loc, type);
