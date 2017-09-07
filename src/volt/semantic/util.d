@@ -241,6 +241,10 @@ void handleNull(Context ctx, ir.Type left, ref ir.Exp right, ir.Type rightType)
 {
 	assert(rightType.nodeType == ir.NodeType.NullType);
 
+	if (left.nodeType == ir.NodeType.AAType) {
+		return;
+	}
+
 	auto constant = cast(ir.Constant) right;
 	if (constant is null) {
 		throw panic(right.loc, "non constant null");

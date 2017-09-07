@@ -1686,27 +1686,35 @@ ParseStatus parsePrimaryExp(ParserStream ps, out intir.PrimaryExp exp)
 			exp.op = intir.PrimaryExp.Type.ArrayLiteral;
 		} else {
 			ps.get();
-			while (ps.peek.type != TokenType.CloseBracket) {
-				intir.AssignExp e;
-				auto succeeded = parseAssignExp(ps, e);
-				if (!succeeded) {
-					return parseFailed(ps, ir.NodeType.ArrayLiteral);
-				}
-				exp.keys ~= e;
-				succeeded = match(ps, ir.NodeType.AssocArray, TokenType.Colon);
+			if (ps.peek.type == TokenType.Colon) {
+				ps.get();
+				auto succeeded = match(ps, ir.NodeType.AssocArray, TokenType.CloseBracket);
 				if (!succeeded) {
 					return succeeded;
 				}
-				succeeded = parseAssignExp(ps, e);
-				if (!succeeded) {
-					return parseFailed(ps, ir.NodeType.ArrayLiteral);
+			} else {
+				while (ps.peek.type != TokenType.CloseBracket) {
+					intir.AssignExp e;
+					auto succeeded = parseAssignExp(ps, e);
+					if (!succeeded) {
+						return parseFailed(ps, ir.NodeType.ArrayLiteral);
+					}
+					exp.keys ~= e;
+					succeeded = match(ps, ir.NodeType.AssocArray, TokenType.Colon);
+					if (!succeeded) {
+						return succeeded;
+					}
+					succeeded = parseAssignExp(ps, e);
+					if (!succeeded) {
+						return parseFailed(ps, ir.NodeType.ArrayLiteral);
+					}
+					exp.arguments ~= e;
+					matchIf(ps, TokenType.Comma);
 				}
-				exp.arguments ~= e;
-				matchIf(ps, TokenType.Comma);
-			}
-			auto succeeded = match(ps, ir.NodeType.AssocArray, TokenType.CloseBracket);
-			if (!succeeded) {
-				return succeeded;
+				auto succeeded = match(ps, ir.NodeType.AssocArray, TokenType.CloseBracket);
+				if (!succeeded) {
+					return succeeded;
+				}
 			}
 			assert(exp.keys.length == exp.arguments.length);
 			exp.op = intir.PrimaryExp.Type.AssocArrayLiteral;

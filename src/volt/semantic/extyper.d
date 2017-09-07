@@ -2605,6 +2605,12 @@ ir.Type extypeAssocArray(Context ctx, ref ir.Exp exp, Parent parent)
 		base = aa.type;
 	}
 
+	if (base is null) {
+		// [:]
+		aa.type = buildNullType(exp.loc);//buildArrayType(exp.loc, buildVoid(exp.loc));
+		return aa.type;
+	}
+
 	panicAssert(exp, base !is null);
 	auto aaType = buildAATypeSmart(exp.loc,
 		(cast(ir.AAType)base).key,

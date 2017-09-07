@@ -2049,6 +2049,13 @@ ir.NoType buildNoType(ref in Location loc)
 	return nt;
 }
 
+ir.NullType buildNullType(ref in Location loc)
+{
+	auto nt = new ir.NullType();
+	nt.loc = loc;
+	return nt;
+}
+
 //! Build a cast to a TypeInfo.
 ir.Exp buildTypeInfoCast(LanguagePass lp, ir.Exp e)
 {
