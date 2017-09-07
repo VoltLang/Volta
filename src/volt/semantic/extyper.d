@@ -795,6 +795,11 @@ private void rewriteHomogenousVariadic(Context ctx,
 	if (arr is null) {
 		throw panic(arguments[0].loc, "homogenous variadic not array type");
 	}
+	foreach (arg; arguments[i .. $]) {
+		if (getExpType(arg).nodeType == ir.NodeType.NullType) {
+			throw makeUnsupported(arg.loc, "null arguments to homogenous variadic functions");
+		}
+	}
 	if (willConvert(etype, arr)) {
 		return;
 	}
