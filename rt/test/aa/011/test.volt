@@ -7,7 +7,7 @@ import core.exception : Throwable;
 int main()
 {
 	aa := [3:42];
-	aa = [];
+	aa = [:];
 	try {
 		return aa[3];
 	} catch (Throwable) {
