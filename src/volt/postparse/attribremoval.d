@@ -497,7 +497,7 @@ protected:
 		ctx.oldStack = this.mStack;
 
 		if (inherit) {
-			ctx.stack = mStack ~ ctxTop.stack;
+			ctx.stack = ctxTop.stack ~ mStack;
 		} else {
 			ctx.stack = mStack;
 		}
