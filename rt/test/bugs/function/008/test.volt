@@ -17,5 +17,5 @@ fn foo(x: i32) i32
 
 fn main() i32
 {
-	return foo(null) + bar(null) - 12;
+	return foo(cast(i32[])null) + bar(cast(i32[])null) - 12;
 }
