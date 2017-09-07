@@ -109,15 +109,15 @@ CompilerException makeMisplacedContinue(ref in Location loc, string file = __FIL
 CompilerException makeOverloadedFunctionsAccessMismatch(ir.Function a, ir.Function b)
 {
 	auto loc = b.loc;
-	return new CompilerError(loc, format("function '%s' access level differs from overloaded function @ %s.",
-		a.name, a.loc.toString()));
+	return new CompilerError(loc, format("function '%s' access level ('%s') differs from overloaded function @ %s's access ('%s').",
+		a.name, ir.accessToString(b.access), a.loc.toString(), ir.accessToString(a.access)));
 }
 
 CompilerException makeOverriddenFunctionsAccessMismatch(ir.Function a, ir.Function b)
 {
 	auto loc = b.loc;
-	return new CompilerError(loc, format("function '%s' access level differs from overridden function @ %s.",
-		a.name, a.loc.toString()));
+	return new CompilerError(loc, format("function '%s' access level ('%s') differs from overridden function @ %s's access level ('%s').",
+		a.name, ir.accessToString(b.access), a.loc.toString(), ir.accessToString(a.access)));
 }
 
 CompilerException makeBadAccess(ref in Location loc, string name, ir.Access access,
