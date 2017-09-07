@@ -2682,7 +2682,7 @@ ir.Type extypeArrayLiteral(Context ctx, ref ir.Exp exp, Parent parent)
 
 		base = getCommonSubtype(al.loc, types);
 	} else {
-		base = buildVoid(al.loc);
+		throw makeUnsupported(al.loc, "empty array literals");
 	}
 
 	if (al.type !is null) {
