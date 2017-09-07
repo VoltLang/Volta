@@ -296,7 +296,7 @@ ir.Struct createAndAddNestedStruct(ir.Function func)
 {
 	auto bs = func._body;
 	auto id = getModuleFromScope(func.loc, func.myScope).getId();
-	auto s = buildStruct(func.loc, format("__Nested%s", id), []);
+	auto s = buildStruct(func.loc, format("__Nested%s", id));
 	s.myScope = new ir.Scope(bs.myScope, s, s.name, bs.myScope.nestedDepth);
 	auto tref = buildTypeReference(s.loc, s, "__Nested");
 	auto decl = buildVariable(

@@ -406,7 +406,7 @@ ir.Exp getDefaultInit(ref in Location loc, LanguagePass lp, ir.Type t)
 			return buildCastSmart(loc, t, buildConstantInt(loc, 0));
 		}
 	case ir.NodeType.ArrayType:
-		return buildArrayLiteralSmart(loc, t, []);
+		return buildArrayLiteralSmart(loc, t);
 	case ir.NodeType.StaticArrayType:
 		auto sat = cast(ir.StaticArrayType) t;
 		auto exps = new ir.Exp[](sat.length);

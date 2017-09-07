@@ -1692,6 +1692,7 @@ Visitor.Status acceptPostfix(ref ir.Exp exp, ir.Postfix postfix, Visitor av)
 
 	// If exp has been replaced
 	if (exp !is postfix) {
+		assert(exp !is null);
 		return acceptExp(exp, av);
 	}
 
@@ -1703,9 +1704,11 @@ Visitor.Status acceptPostfix(ref ir.Exp exp, ir.Postfix postfix, Visitor av)
 	}
 
 	foreach (ref arg; postfix.arguments) {
-		status = acceptExp(arg, av);
-		if (status == VisitorStop) {
-			return VisitorStop;
+		if (arg !is null) {
+			status = acceptExp(arg, av);
+			if (status == VisitorStop) {
+				return VisitorStop;
+			}
 		}
 	}
  

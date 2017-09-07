@@ -223,7 +223,7 @@ void doConvert(Context ctx, ir.Type type, ref ir.Exp exp)
 		auto atype = cast(ir.ArrayType)type;
 		auto sarray = cast(ir.StaticArrayType)realType(getExpType(exp));
 		if (sarray !is null && typesEqual(sarray.base, atype.base)) {
-			exp = buildSlice(exp.loc, exp, []);
+			exp = buildSlice(exp.loc, exp);
 			return;
 		}
 		goto default;

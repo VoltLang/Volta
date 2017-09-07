@@ -803,7 +803,7 @@ private void rewriteHomogenousVariadic(Context ctx,
 		if (exps.length == 1) {
 			auto alit = cast(ir.ArrayLiteral) exps[0];
 			if (alit !is null && alit.exps.length == 0) {
-				exps = [];
+				exps = null;
 			}
 		}
 		foreach (ref aexp; exps) {
@@ -973,7 +973,7 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 
 	// Not providing an argument to a homogenous variadic function.
 	if (asFunctionType.homogenousVariadic && postfix.arguments.length + 1 == asFunctionType.params.length) {
-		postfix.arguments ~= buildArrayLiteralSmart(postfix.loc, asFunctionType.params[$-1], []);
+		postfix.arguments ~= buildArrayLiteralSmart(postfix.loc, asFunctionType.params[$-1]);
 	}
 
 	rewriteVaStartAndEnd(ctx, func, postfix, exp);
@@ -1127,7 +1127,7 @@ ir.Type consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes,
 	{
 		if (i+1 >= postfixes.length) {
 			exp = toReplace;
-			postfixes = [];
+			postfixes = null;
 		} else {
 			postfixes[i+1].child = toReplace;
 			postfixes = postfixes[i+1 .. $];
@@ -1596,7 +1596,7 @@ void extypeUnaryNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 		auto ptr = buildPtrSmart(loc, _unary.type);
 
 		auto argument = _unary.argumentList[0];
-		_unary.argumentList = [];
+		_unary.argumentList = null;
 		auto ptrVar = buildVariableAnonSmart(loc, ctx.current, sexp, ptr, _unary);
 
 		auto deref = buildDeref(loc, buildExpReference(loc, ptrVar, ptrVar.name));
@@ -3551,7 +3551,7 @@ void extypeSwitchStatement(Context ctx, ref ir.Node n)
 					_case.exps ~= emptyCase.exps;
 				}
 			}
-			emptyCases = [];
+			emptyCases = null;
 		}
 
 		if (_case.firstExp !is null) {

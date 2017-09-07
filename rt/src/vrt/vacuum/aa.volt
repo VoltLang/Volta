@@ -634,7 +634,7 @@ fn vrt_aa_delete_node(rbt: RedBlackTree*, node: TreeNode*) bool
 extern (C) fn vrt_aa_get_keys(rbtv: void*) void[]
 {
 	if (rbtv is null) {
-		return [];
+		return null;
 	}
 	rbt := cast(RedBlackTree*) rbtv;
 	arr := allocDg(rbt.key, rbt.length)[0 .. rbt.length * rbt.key.size];
@@ -647,7 +647,7 @@ extern (C) fn vrt_aa_get_keys(rbtv: void*) void[]
 extern (C) fn vrt_aa_get_values(rbtv: void*) void[]
 {
 	if (rbtv is null) {
-		return [];
+		return null;
 	}
 	rbt := cast(RedBlackTree*) rbtv;
 	arr := allocDg(rbt.value, rbt.length)[0 .. rbt.length * rbt.value.size];

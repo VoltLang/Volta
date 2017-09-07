@@ -56,11 +56,7 @@ public:
 	 */
 	void reset()
 	{
-		version (Volt) {
-			mStore = [];
-		} else {
-			mStore = null;
-		}
+		mStore = null;
 		mMod = null;
 		mMods = null;
 	}

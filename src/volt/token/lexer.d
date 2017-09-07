@@ -368,7 +368,7 @@ LexStatus lexIdentifier(TokenWriter tw)
 	if (succeeded) {
 		return Succeeded;
 	}
-	tw.errors = [];
+	tw.errors = null;
 	identToken.type = identifierType(identToken.value);
 	tw.addToken(identToken);
 

@@ -79,7 +79,7 @@ ir.Function selectFunction(TargetInfo target, ir.FunctionSet fset, ir.Variable[]
 	foreach (arg; arguments) {
 		types ~= arg.type;
 	}
-	return selectFunction(target, fset, types, [], loc, throwOnError);
+	return selectFunction(target, fset, types, null, loc, throwOnError);
 }
 
 ir.Function selectFunction(TargetInfo target, ir.Function[] functions, ir.Variable[] arguments, ref in Location loc, bool throwOnError)
@@ -88,7 +88,7 @@ ir.Function selectFunction(TargetInfo target, ir.Function[] functions, ir.Variab
 	foreach (arg; arguments) {
 		types ~= arg.type;
 	}
-	return selectFunction(target, functions, types, [], loc, throwOnError);
+	return selectFunction(target, functions, types, null, loc, throwOnError);
 }
 
 int matchLevel(TargetInfo target, bool homogenous, ir.Type argument, ir.Type parameter, ir.Exp exp=null)
@@ -145,7 +145,7 @@ bool specialisationComparison(Object ao, Object bo)
 
 ir.Function selectFunction(TargetInfo target, ir.FunctionSet fset, ir.Type[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
 {
-	return selectFunction(target, fset, arguments, [], loc, throwOnError);
+	return selectFunction(target, fset, arguments, null, loc, throwOnError);
 }
 
 ir.Function selectFunction(TargetInfo target, ir.FunctionSet fset, ir.Type[] arguments, ir.Exp[] exps, ref in Location loc, bool throwOnError = ThrowOnError)
@@ -159,12 +159,12 @@ ir.Function selectFunction(TargetInfo target, ir.FunctionSet fset, ir.Type[] arg
 
 ir.Function selectFunction(TargetInfo target, ir.Function[] functions, ir.Type[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
 {
-	return selectFunction(target, functions, arguments, [], loc, throwOnError);
+	return selectFunction(target, functions, arguments, null, loc, throwOnError);
 }
 
 ir.Function selectFunction(TargetInfo target, ref FunctionSink functions, ir.Type[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
 {
-	return selectFunction(target, functions.borrowUnsafe(), arguments, [], loc, throwOnError);
+	return selectFunction(target, functions.borrowUnsafe(), arguments, null, loc, throwOnError);
 }
 
 ir.Function selectFunction(TargetInfo target, scope ir.Function[] functions, ir.Type[] arguments, ir.Exp[] exps, ref in Location loc, bool throwOnError = ThrowOnError)

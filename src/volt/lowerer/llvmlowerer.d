@@ -264,11 +264,11 @@ void lowerProperty(LanguagePass lp, ref ir.Exp exp, ir.PropertyExp prop)
 	auto expRef = buildExpReference(prop.loc, prop.getFn, name);
 
 	if (prop.child is null) {
-		exp = buildCall(prop.loc, expRef, []);
+		exp = buildCall(prop.loc, expRef, null);
 	} else {
 		exp = buildMemberCall(prop.loc,
 		                      prop.child,
-		                      expRef, name, []);
+		                      expRef, name, null);
 	}
 }
 
@@ -627,7 +627,7 @@ ir.Function generateToSink(ref in Location loc, LanguagePass lp, ir.Scope curren
 	 * ```
 	 */
 	auto mod = getModuleFromScope(loc, current);
-	auto ftype = buildFunctionTypeSmart(loc, buildVoid(loc), []);
+	auto ftype = buildFunctionTypeSmart(loc, buildVoid(loc));
 	auto func = buildFunction(loc, mod.children, mod.myScope, "__toSink" ~ _enum.mangledName);
 	auto enumParam = addParamSmart(loc, func, _enum, "e");
 	auto sinkParam = addParamSmart(loc, func, lp.sinkType, "sink");
@@ -1134,7 +1134,7 @@ void lowerArrayCast(ref in Location loc, LanguagePass lp, ir.Scope current,
 	if (fromArray is null) {
 		auto stype = cast(ir.StaticArrayType) getExpType(uexp.value);
 		if (stype !is null) {
-			uexp.value = buildSlice(exp.loc, uexp.value, []);
+			uexp.value = buildSlice(exp.loc, uexp.value);
 			fromArray = cast(ir.ArrayType)getExpType(uexp.value);
 			panicAssert(exp, fromArray !is null);
 		} else {
@@ -1330,9 +1330,9 @@ ir.ForStatement lowerForeach(ir.ForeachStatement fes, LanguagePass lp,
 	if (aggType.nodeType == ir.NodeType.ArrayType ||
 	    aggType.nodeType == ir.NodeType.StaticArrayType) {
 	    //
-		aggType = realType(getExpType(buildSlice(loc, fes.aggregate, [])));
+		aggType = realType(getExpType(buildSlice(loc, fes.aggregate)));
 		auto anonVar = buildVariableAnonSmart(loc, current, sexp, aggType,
-		                                      buildSlice(loc, fes.aggregate, []));
+		                                      buildSlice(loc, fes.aggregate));
 		anonVar.type.mangledName = mangle(aggType);
 		scope (exit) fs.initVars = anonVar ~ fs.initVars;
 		ir.ExpReference aggref() { return buildExpReference(loc, anonVar, anonVar.name); }
@@ -1580,7 +1580,7 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 		auto type = builtin.type;
 		auto asStatic = cast(ir.StaticArrayType)realType(type);
 		ir.Exp value = builtin.children[0];
-		value = buildSlice(loc, value, []);
+		value = buildSlice(loc, value);
 		auto valueVar = buildVariableAnonSmart(loc, current, sexp, type, value);
 		value = buildExpReference(loc, valueVar, valueVar.name);
 
@@ -1968,8 +1968,8 @@ void lowerVarargCall(LanguagePass lp, ir.Scope current, ir.Postfix postfix, ir.F
 	} else {
 		auto idsType = buildArrayType(loc, tr);
 		auto argsType = buildArrayType(loc, buildVoid(loc));
-		idsSlice = buildArrayLiteralSmart(loc, idsType, []);
-		argsSlice = buildArrayLiteralSmart(loc, argsType, []);
+		idsSlice = buildArrayLiteralSmart(loc, idsType);
+		argsSlice = buildArrayLiteralSmart(loc, argsType);
 	}
 
 	postfix.arguments = passSlice ~ idsSlice ~ argsSlice;

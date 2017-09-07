@@ -603,8 +603,8 @@ public:
 		assert(mStack.length == 0);
 		assert(mCtx.length == 0);
 		accept(m, this);
-		mStack = [];
-		mCtx = [];
+		mStack = null;
+		mCtx = null;
 	}
 
 	override void close()
