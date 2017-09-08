@@ -125,7 +125,7 @@ public:
 	{
 		auto bindScope = current;
 		if (i.bind !is null) {
-			bindScope = buildOrReturnScope(bindScope, i.bind, i.bind.value);
+			bindScope = buildOrReturnScope(bindScope, i.bind, i.bind.value, false/*low prio*/);
 		} else {
 			assert(current is mModule.myScope);
 		}
@@ -166,7 +166,7 @@ public:
 		// Build the chain of scopes for the import.
 		// import 'foo.bar.pkg'.mod;
 		foreach (ident; i.name.identifiers[0 .. $-1]) {
-			parent = buildOrReturnScope(parent, ident, ident.value);
+			parent = buildOrReturnScope(parent, ident, ident.value, true/*low prio*/);
 		}
 
 		// Build the final level.
@@ -189,11 +189,22 @@ public:
 
 	/*!
 	 * Used for adding in scopes from static imports
+	 *
+	 * If scope of `name` exists in `parent`, that will be used.
+	 * Otherwise one will be created, see the `lowPriority` parameter
+	 * for behaviour when a non-scope store of `name` already exists
+	 * in `parent`.
+	 *
+	 * @Param parent The scope to build in.
+	 * @Param node The node that introduces the new scope.
+	 * @Param name The name of the scope to add.
+	 * @Param lowPriority If `true`, the scope will not overwrite a non symbol
+	 * scope that already exists. If `false`, such a scope existing will be an error.
 	 */
-	ir.Scope buildOrReturnScope(ir.Scope parent, ir.Node node, string name)
+	ir.Scope buildOrReturnScope(ir.Scope parent, ir.Node node, string name, bool lowPriority)
 	{
 		auto store = parent.getStore(name);
-		if (store !is null) {
+		if (store !is null && (store.myScope !is null || !lowPriority)) {
 			// TODO Better error checking here,
 			// we could be adding to aggregates here.
 			if (store.myScope is null) {
@@ -202,7 +213,9 @@ public:
 			return store.myScope;
 		} else {
 			auto s = new ir.Scope(parent, node, name, parent.nestedDepth);
-			parent.addScope(node, s, name);
+			if (store is null || !lowPriority) {
+				parent.addScope(node, s, name);
+			}
 			parent = s;
 		}
 		return parent;
