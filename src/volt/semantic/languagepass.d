@@ -467,19 +467,29 @@ public:
 			w.done();
 		}
 
+		// Using aliases you can by accident include the same function
+		// multiple times in a single Merge store, so avoid that using
+		// the uniqueId of the Function node.
+		ir.Function[ir.NodeID] store;
+
 		foreach (func; s.functions) {
 			assert(s.parent is func.myScope.parent);
 			super.resolve(func.myScope.parent, func);
+			store[func.uniqueId] = func;
 		}
 
 		foreach (a; s.aliases) {
-			auto f = ensureResolved(this, a.store);
-			if (f.kind != ir.Store.Kind.Function) {
+			auto r = ensureResolved(this, a.store);
+			if (r.kind != ir.Store.Kind.Function) {
 				throw makeBadMerge(a, s);
 			}
-			s.functions ~= f.functions;
+
+			foreach (func; r.functions) {
+				store[func.uniqueId] = func;
+			}
 		}
 
+		s.functions = store.values;
 		s.aliases = null;
 		s.kind = ir.Store.Kind.Function;
 	}
