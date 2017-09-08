@@ -125,7 +125,7 @@ public:
 	{
 		auto bindScope = current;
 		if (i.bind !is null) {
-			bindScope = buildOrReturnScope(bindScope, i.bind, i.bind.value, false/*low prio*/);
+			bindScope = buildOrReturnScope(bindScope, i.bind, i.bind.value, false/*is low prio?*/);
 		} else {
 			assert(current is mModule.myScope);
 		}
@@ -166,7 +166,7 @@ public:
 		// Build the chain of scopes for the import.
 		// import 'foo.bar.pkg'.mod;
 		foreach (ident; i.name.identifiers[0 .. $-1]) {
-			parent = buildOrReturnScope(parent, ident, ident.value, true/*low prio*/);
+			parent = buildOrReturnScope(parent, ident, ident.value, !i.isStatic/*is low prio?*/);
 		}
 
 		// Build the final level.
