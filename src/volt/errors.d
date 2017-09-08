@@ -197,6 +197,11 @@ CompilerException makeNonNestedAccess(ref in Location loc, ir.Variable var, stri
 	return new CompilerError(loc, format("cannot access variable '%s' from non-nested function.", var.name), file, line);
 }
 
+CompilerException makeRedefines(ref in Location loc, ref in Location loc2, string name, string file = __FILE__, const int line = __LINE__)
+{
+	return new CompilerError(loc, format("redefines symbol '%s', defined @ %s", name, loc2.toString()));
+}
+
 CompilerException makeMultipleMatches(ref in Location loc, string name, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(loc, format("multiple imports contain a symbol '%s'.", name), file, line);

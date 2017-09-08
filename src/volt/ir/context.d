@@ -118,6 +118,9 @@ public:
 	//! Was this symbol introduced by import <> : thisSymbol? Used for protection.
 	bool importAlias;
 
+	//! Can the user overwrite this? Used for pieces of import chains, so you can rebind a module as 'core', for example.
+	bool fromImplicitContextChain;
+
 
 public:
 	/*!

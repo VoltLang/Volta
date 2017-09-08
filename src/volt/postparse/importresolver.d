@@ -111,7 +111,15 @@ public:
 		gatherer.addScope(mod);
 		assert(mod.myScope !is null);
 
-		auto store = current.addScope(i, mod.myScope, i.bind.value);
+		auto store = current.getStore(i.bind.value);
+		if (store !is null) {
+			if (store.fromImplicitContextChain) {
+				current.remove(i.bind.value);
+			} else {
+				throw makeRedefines(i.loc, store.node.loc, i.bind.value);
+			}
+		}
+		store = current.addScope(i, mod.myScope, i.bind.value);
 		store.importBindAccess = i.access;
 	}
 
@@ -214,7 +222,8 @@ public:
 		} else {
 			auto s = new ir.Scope(parent, node, name, parent.nestedDepth);
 			if (store is null || !lowPriority) {
-				parent.addScope(node, s, name);
+				store = parent.addScope(node, s, name);
+				store.fromImplicitContextChain = lowPriority;
 			}
 			parent = s;
 		}
