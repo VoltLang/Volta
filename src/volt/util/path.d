@@ -4,7 +4,7 @@
 module volt.util.path;
 
 import watt.conv : toString;
-import watt.path : mkdir, exists, dirName, dirSeparator, temporaryFilename;
+import watt.path : mkdir, dirName, dirSeparator, temporaryFilename;
 import watt.io.file : remove, exists;
 import watt.text.sink : StringSink;
 import watt.text.format : format;
