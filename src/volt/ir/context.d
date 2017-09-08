@@ -337,7 +337,14 @@ public:
 		auto merge = *ret;
 
 		if (merge.kind == Store.Kind.Alias) {
-			merge = new Store(this, n, name, Store.Kind.Merge);
+			assert(merge.originalNode is null);
+			auto old = cast(Alias)merge.node;
+			assert(old !is null);
+
+			// Pretend that the first alias has
+			// always been a merge store.
+			merge = new Store(this, old, name, Store.Kind.Merge);
+			merge.aliases ~= old;
 			symbols[name] = merge;
 		} else if (merge.kind == Store.Kind.Function) {
 			merge.kind = Store.Kind.Merge;
