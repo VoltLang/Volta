@@ -99,42 +99,9 @@ ir.Store lookupAsImportScope(LanguagePass lp, ir.Scope _scope, Location loc, str
 		return ensureResolved(lp, store);
 	}
 
-	PublicImportContext ctx;
-	store = lookupPublicImportScope(lp, _scope, loc, name, ctx);
-	if (store !is null) {
-		return ensureResolved(lp, store);
-	}
-
-	return null;
-}
-
-private struct PublicImportContext
-{
-	bool[ir.NodeID] checked;
-}
-
-private ir.Store lookupPublicImportScope(LanguagePass lp, ir.Scope _scope,
-                                         Location loc, string name,
-                                         ref PublicImportContext ctx)
-{
-	foreach (i, submod; _scope.importedModules) {
-		if (_scope.importedAccess[i] == ir.Access.Public) {
-			auto store = submod.myScope.getStore(name);
-			if (store !is null) {
-				checkAccess(loc, name, store);
-				return ensureResolved(lp, store);
-			}
-			if (submod.myScope.node.uniqueId in ctx.checked) {
-				continue;
-			}
-			ctx.checked[submod.myScope.node.uniqueId] = true;
-			store = lookupPublicImportScope(lp, submod.myScope, loc, name, ctx);
-			if (store !is null) {
-				return ensureResolved(lp, store);
-			}
-		}
-	}
-	return null;
+	ImportContext ctx;
+	lookupPublicImportScope(lp, loc, ctx, _scope, name);
+	return getSingleStore(lp, loc, ctx, _scope, name);
 }
 
 /*!
@@ -203,7 +170,7 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
  * Look up an identifier in a scope and its parent scopes.
  * Returns the store or null if no match was found.
  */
-ir.Store lookup(LanguagePass lp, ir.Scope _scope, Location loc, string name)
+ir.Store lookup(LanguagePass lp, ir.Scope _scope, ref Location loc, string name)
 {
 	ir.Scope current = _scope, previous = _scope;
 	while (current !is null) {
@@ -216,70 +183,123 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 		current = current.parent;
 	}
 
+	return lookupImports(lp, loc, _scope, name);
+}
+
+private struct ImportContext
+{
+	bool[ir.NodeID] pubChecked;
+
+	ir.Store[ir.NodeID] stores;
+
+	bool privateLookup;
+}
+
+private ir.Store lookupImports(LanguagePass lp, ref Location loc,
+                               ir.Scope _scope, string name)
+{
 	auto asMod = getModuleFromScope(loc, _scope);
 	bool privateLookup;
+	ImportContext ctx;
 
-	ir.Store[] stores;
 	foreach (i, mod; asMod.myScope.importedModules) {
 		auto store = mod.myScope.getStore(name);
-		if (store !is null && store.myScope !is null) {
-			// If this is a private module, don't use it.
-			auto asImport = cast(ir.Import) store.node;
-			if (asImport !is null) {
-				if (mod !is asImport.targetModule && asImport.access != ir.Access.Public && asImport.bind is null) {
-					continue;
-				}
-			}
-		}
 
-		if (store !is null) {
-			if (store.importBindAccess == ir.Access.Public) {
-				stores ~= store;
-			} else {
-				privateLookup = true;
-			}
+		if (checkPrivateAndAdd(ctx, mod, store)) {
 			continue;
 		}
 
 		//! Check publically imported modules.
-		PublicImportContext ctx;
-		store = lookupPublicImportScope(lp, mod.myScope, loc, name, ctx);
-		if (store !is null) {
-			stores ~= store;
-			continue;
+		lookupPublicImportScope(lp, loc, ctx, mod.myScope, name);
+	}
+
+	return getSingleStore(lp, loc, ctx, _scope, name);
+}
+
+private bool checkPrivateAndAdd(ref ImportContext ctx, ir.Module mod,
+                                ir.Store store)
+{
+	if (store is null) {
+		return false;
+	}
+
+	if (store.myScope !is null) {
+		// If this is a private module, don't use it.
+		auto asImport = cast(ir.Import) store.node;
+		if (asImport !is null && mod !is asImport.targetModule &&
+		    asImport.access != ir.Access.Public &&
+		    asImport.bind is null) {
+			return false;
 		}
 	}
 
-	if (stores.length == 0 && privateLookup) {
+	if (store.importBindAccess == ir.Access.Public) {
+		ctx.stores[store.uniqueId] = store;
+		return true;
+	} else {
+		ctx.privateLookup = true;
+		return false;
+	}
+}
+
+private void lookupPublicImportScope(LanguagePass lp, ref Location loc,
+                                     ref ImportContext ctx, ir.Scope _scope,
+                                     string name)
+{
+	foreach (i, submod; _scope.importedModules) {
+		// Skip privatly imported modules.
+		if (_scope.importedAccess[i] != ir.Access.Public) {
+			continue;
+		}
+
+		// Have we already checked this import.
+		if (submod.myScope.node.uniqueId in ctx.pubChecked) {
+			continue;
+		}
+		ctx.pubChecked[submod.myScope.node.uniqueId] = true;
+
+		// Look for a store in this module.
+		auto store = submod.myScope.getStore(name);
+
+		// If we find a store in the module we added to the context.
+		if (store !is null) {
+			store = ensureResolved(lp, store);
+			checkPrivateAndAdd(ctx, submod, store);
+			checkAccess(loc, name, store);
+		}
+
+		// If not look for other public imports.
+		if (store is null) {
+			lookupPublicImportScope(lp, loc, ctx, submod.myScope, name);
+			continue;
+		}
+	}
+}
+
+private ir.Store getSingleStore(LanguagePass lp, ref Location loc,
+                                ref ImportContext ctx, ir.Scope _scope,
+                                string name)
+{
+	// Get only unqiue stores.
+	ir.Store[] stores = ctx.stores.values;
+
+	// Helpful error message if you happen to bind to a private symbol.
+	if (stores.length == 0 && ctx.privateLookup) {
 		throw makeUsedBindFromPrivateImport(loc, name);
 	}
 
+	// We found nothing.
 	if (stores.length == 0) {
 		return null;
 	}
 
-	// We're only interested in seeing each Store once. Remove duplicates.
-	ir.Store[] uniqueStores;
-	foreach (store; stores) {
-		bool unique = true;
-		foreach (ustore; uniqueStores) {
-			if (ustore is store) {
-				unique = false;
-				break;
-			}
-		}
-		if (unique) {
-			uniqueStores ~= store;
-		}
-	}
-	stores = uniqueStores;
-	assert(stores.length >= 1);
-
+	// We only found one thing, return it.
 	if (stores.length == 1) {
 		checkAccess(loc, name, stores[0]);
 		return ensureResolved(lp, stores[0]);
 	}
 
+	// Merge functions into a single store.
 	ir.Function[] fns;
 	ir.Node currentParent;
 	foreach (store; stores) {
@@ -293,6 +313,7 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, Location loc, string name)
 			if (currentParent is getStoreNodeRealParent(lp, store)) {
 				continue;
 			}
+
 			throw makeMultipleMatches(loc, name);
 		}
 		if (currentParent !is null) {
