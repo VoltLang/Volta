@@ -121,6 +121,14 @@ public:
 	//! Can the user overwrite this? Used for pieces of import chains, so you can rebind a module as 'core', for example.
 	bool fromImplicitContextChain;
 
+	//! Retrieve the unique id of this node.
+	final @property size_t uniqueId() { return mUniqueId; }
+
+
+private:
+	NodeID mUniqueId;
+	static NodeID mUniqueIdCounter; // We are single threaded.
+
 
 public:
 	/*!
@@ -134,6 +142,7 @@ public:
 		assert(n !is null);
 	}
 	body {
+		this();
 		this.name = name;
 		this.node = n;
 		this.kind = kind;
@@ -150,6 +159,7 @@ public:
 		assert(func !is null);
 	}
 	body {
+		this();
 		this.name = name;
 		this.node = func;
 		this.parent = s;
@@ -163,6 +173,7 @@ public:
 	 */
 	this(Scope s, Function[] func, string name)
 	{
+		this();
 		this.name = name;
 		this.node = func[0];
 		this.parent = s;
@@ -181,6 +192,7 @@ public:
 		assert(ed !is null);
 	}
 	body {
+		this();
 		this.parent = parent;
 		this.node = ed;
 		this.kind = Kind.EnumDeclaration;
@@ -192,6 +204,7 @@ public:
 	 */
 	this()
 	{
+		this.mUniqueId = mUniqueIdCounter++;
 	}
 
 	void markAliasResolved(Store s)
