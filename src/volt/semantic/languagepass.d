@@ -1,5 +1,5 @@
-// Copyright © 2012, Bernard Helyer.  All rights reserved.
-// Copyright © 2013, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2012-2017, Bernard Helyer.  All rights reserved.
+// Copyright © 2013-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.languagepass;
 
@@ -57,7 +57,7 @@ enum Mode
  * @link volt.interfaces.LanguagePass LanguagePass@endlink, replace
  * this if you wish to any of the semantics of the language.
  *
- * @ingroup passes passLang passSem
+ * @ingroup semantic passes passLang passSem
  */
 class VoltLanguagePass : LanguagePass
 {

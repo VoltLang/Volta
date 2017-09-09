@@ -305,6 +305,9 @@ public:
  */
 interface Frontend
 {
+	//! Free resources.
+	void close();
+
 	/*!
 	 * Parse a module and all its children from the given source.
 	 * Filename is the file from which file the source was loaded from.
@@ -328,8 +331,12 @@ interface Frontend
 	 */
 	ir.Node[] parseStatements(string source, Location loc);
 
-	void close();
 }
+
+/*!
+ * @defgroup semantic Volt Semantics
+ * @brief The code that implements the semantic rules of Volt.
+ */
 
 /*!
  * @defgroup passes Passes
@@ -349,9 +356,11 @@ interface Frontend
  */
 interface Pass
 {
-	void transform(ir.Module m);
-
+	//! Free resources.
 	void close();
+
+	//! Run the pass on the given module.
+	void transform(ir.Module m);
 }
 
 /*!
@@ -404,7 +413,7 @@ interface Pass
  *
  * @sa Semantic passes handle ir after @ref passPost.
  * @sa IR transformed by semantic passes are often lowered by @ref passLower.
- * @ingroup passLang
+ * @ingroup semantic passLang
  */
 
 /*!
@@ -421,7 +430,7 @@ interface Pass
 
 /*!
  * Centre point for all language passes.
- * @ingroup passes passLang
+ * @ingroup sementic passes passLang
  */
 abstract class LanguagePass
 {
@@ -568,6 +577,7 @@ public:
 		this.frontend = frontend;
 	}
 
+	//! Free resources.
 	abstract void close();
 
 	/*!

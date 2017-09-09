@@ -21,6 +21,8 @@ import volt.semantic.util;
  *
  * Contains functions that identify if a type or expression can be converted
  * implicitly to a given type, and functions that do the actual conversion.
+ *
+ * @ingroup semantic
  */
 
 /*!
