@@ -1,6 +1,11 @@
-// Copyright © 2012-2013, Bernard Helyer.  All rights reserved.
-// Copyright © 2013, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2012-2017, Bernard Helyer.  All rights reserved.
+// Copyright © 2013-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+/*!
+ * Functions that encode the semantic code for looking up symbols.
+ *
+ * @ingroup semLookup
+ */
 module volt.semantic.lookup;
 
 import watt.text.format : format;
@@ -15,99 +20,46 @@ import volt.semantic.classify : realType, getMethodParent, isOrInheritsFrom;
 
 
 /*!
- * Look up an identifier in the given scope only. Doesn't check parent scopes,
- * parent classes, imports, or anywhere else but the given scope.
+ * @defgroup semLookup Lookup Semantics
+ *
+ * @ingroup semantic
  */
-ir.Store lookupInGivenScopeOnly(LanguagePass lp, ir.Scope _scope, Location loc, string name)
-{
-	auto store = _scope.getStore(name);
-	if (store is null) {
-		return null;
-	}
-	return ensureResolved(lp, store);
-}
 
 /*!
- * Look up an identifier in this scope, in parent scopes (in
- * the case of classes), and in any imports for this scope.
- *
- * A usable scope for this function is retrieved from the
- * getFirstThisable function.
- *
- * Params:
- *   lp: LanguagePass.
- *   _scope: The scope to look in.
- *   loc: Location, for error messages.
- *   name: The string to lookup.
- *   current: The scope where the lookup took place.
- *
- * @todo actually lookup imports.
- */
-ir.Store lookupAsThisScope(LanguagePass lp, ir.Scope _scope, Location loc, string name, ir.Scope current)
-{
-	ir.Class callingMethodsParentClass = cast(ir.Class)current.node;
-	bool originalScopeIsClass;
-	if (callingMethodsParentClass !is null) {
-		originalScopeIsClass = true;
-	} else {
-		originalScopeIsClass = getMethodParent(current, callingMethodsParentClass);
-	}
-	auto lookupModule = getModuleFromScope(loc, current);
-	ir.Class _class;
-	do {
-		auto ret = lookupAsImportScope(lp, _scope, loc, name);
-		if (ret !is null) {
-			if (lookupModule !is getModuleFromScope(loc, ret.parent)) {
-				bool classLookup;
-				if (originalScopeIsClass) {
-					classLookup = isOrInheritsFrom(callingMethodsParentClass, _class);
-				}
-				checkAccess(loc, name, ret, classLookup);
-			}
-			return ensureResolved(lp, ret);
-		}
-	} while (getClassParentsScope(lp, _scope, _scope, _class));
-	return null;
-}
-
-/*!
- * Lookup in this scope and parent class scopes, if any.
- * Does not consult imports of any kind.
- */
-ir.Store lookupOnlyThisScopeAndClassParents(LanguagePass lp, ir.Scope _scope, Location loc, string name)
-{
-	ir.Class _class;
-	do {
-		auto ret = lookupInGivenScopeOnly(lp, _scope, loc, name);
-		if (ret !is null)
-			return ensureResolved(lp, ret);
-	} while (getClassParentsScope(lp, _scope, _scope, _class));
-
-	return null;
-}
-
-
-/*!
- * Lookup up as identifier in this scope, and any public imports.
- * Used for rebinding imports.
+ * Look up an identifier in a scope and its parent scopes.
  * Returns the store or null if no match was found.
+ *
+ * @param     lp LanguagePass.
+ * @param _scope The scope to look in.
+ * @param    loc Location, for error messages.
+ * @param   name The string to lookup.
+ * @ingroup semLookup
  */
-ir.Store lookupAsImportScope(LanguagePass lp, ir.Scope _scope, Location loc, string name)
+ir.Store lookup(LanguagePass lp, ir.Scope _scope, ref in Location loc, string name)
 {
-	auto store = lookupInGivenScopeOnly(lp, _scope, loc, name);
-	if (store !is null) {
-		return ensureResolved(lp, store);
+	ir.Scope current = _scope, previous = _scope;
+	while (current !is null) {
+		auto store = lookupAsThisScope(lp, current, loc, name, current);
+		if (store !is null) {
+			return store;
+		}
+
+		previous = current;
+		current = current.parent;
 	}
 
-	ImportContext ctx;
-	lookupPublicImportScope(lp, loc, ctx, _scope, name);
-	return getSingleStore(lp, loc, ctx, _scope, name);
+	return walkImports(lp, loc, _scope, name);
 }
 
 /*!
  * Look up a QualifiedName chain, the first identifier is looked up globaly,
  * and the result is treated as a scope to lookup the next one should there be
  * more identifiers.
+ *
+ * @param     lp LanguagePass.
+ * @param _scope The scope to look in.
+ * @param     qn QualifiedName to get idents from.
+ * @ingroup semLookup
  */
 ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
 {
@@ -167,56 +119,407 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
 }
 
 /*!
- * Look up an identifier in a scope and its parent scopes.
- * Returns the store or null if no match was found.
+ * Look up an identifier in the given scope only. Doesn't check parent scopes,
+ * parent classes, imports, or anywhere else but the given scope.
+ *
+ * @param     lp LanguagePass.
+ * @param _scope The scope to look in.
+ * @param    loc Location, for error messages.
+ * @param   name The string to lookup.
+ * @ingroup semLookup
  */
-ir.Store lookup(LanguagePass lp, ir.Scope _scope, ref Location loc, string name)
+ir.Store lookupInGivenScopeOnly(LanguagePass lp, ir.Scope _scope, ref in Location loc, string name)
 {
-	ir.Scope current = _scope, previous = _scope;
-	while (current !is null) {
-		auto store = lookupAsThisScope(lp, current, loc, name, current);
-		if (store !is null) {
-			return store;
-		}
+	auto store = _scope.getStore(name);
+	if (store is null) {
+		return null;
+	}
+	return ensureResolved(lp, store);
+}
 
-		previous = current;
-		current = current.parent;
+/*!
+ * Look up an identifier in this scope, in parent scopes (in
+ * the case of classes), and in any imports for this scope.
+ *
+ * A usable scope for this function is retrieved from the
+ * getFirstThisable function.
+ *
+ * @param      lp LanguagePass.
+ * @param  _scope The scope to look in.
+ * @param     loc Location, for error messages.
+ * @param    name The string to lookup.
+ * @param current The scope where the lookup took place.
+ * @ingroup semLookup
+ *
+ * @todo actually lookup imports.
+ */
+ir.Store lookupAsThisScope(LanguagePass lp, ir.Scope _scope, ref in Location loc, string name, ir.Scope current)
+{
+	auto lookupModule = getModuleFromScope(loc, current);
+
+	// For `protected` tracking of the lookup.
+	ir.Class callingMethodsParentClass = cast(ir.Class)current.node;
+	bool originalScopeIsClass;
+
+	if (callingMethodsParentClass !is null) {
+		originalScopeIsClass = true;
+	} else {
+		originalScopeIsClass = getMethodParent(current, callingMethodsParentClass);
 	}
 
-	return lookupImports(lp, loc, _scope, name);
+	// Walk the class chain.
+	ir.Class _class;
+	do {
+		auto ret = lookupAsImportScope(lp, _scope, loc, name);
+		if (ret is null) {
+			continue;
+		}
+	
+		if (lookupModule !is getModuleFromScope(loc, ret.parent)) {
+			bool classLookup;
+			if (originalScopeIsClass) {
+				classLookup = isOrInheritsFrom(callingMethodsParentClass, _class);
+			}
+			checkAccess(loc, name, ret, classLookup);
+		}
+
+		return ensureResolved(lp, ret);
+
+	} while (getClassParentsScope(lp, _scope, _scope, _class));
+
+	return null;
 }
 
-private struct ImportContext
+/*!
+ * Lookup in this scope and parent class scopes, if any.
+ *
+ * Does not consult imports of any kind.
+ *
+ * @param     lp LanguagePass.
+ * @param _scope The scope to look in.
+ * @param    loc Location, for error messages.
+ * @param   name The string to lookup.
+ * @Returns The store or null if no match was found.
+ *
+ * @ingroup semLookup
+ */
+ir.Store lookupOnlyThisScopeAndClassParents(LanguagePass lp, ir.Scope _scope, ref in Location loc, string name)
 {
-	bool[ir.NodeID] pubChecked;
+	ir.Class _class;
+	do {
+		auto ret = lookupInGivenScopeOnly(lp, _scope, loc, name);
+		if (ret !is null)
+			return ensureResolved(lp, ret);
+	} while (getClassParentsScope(lp, _scope, _scope, _class));
 
-	ir.Store[ir.NodeID] stores;
-
-	bool privateLookup;
+	return null;
 }
 
-private ir.Store lookupImports(LanguagePass lp, ref Location loc,
-                               ir.Scope _scope, string name)
+/*!
+ * Lookup up as identifier in this scope, and any public imports.
+ *
+ * Used for rebinding imports.
+ *
+ * @param     lp LanguagePass.
+ * @param _scope The scope to look in.
+ * @param    loc Location, for error messages.
+ * @param   name The string to lookup.
+ * @Returns The store or null if no match was found.
+ *
+ * @ingroup semLookup
+ */
+ir.Store lookupAsImportScope(LanguagePass lp, ir.Scope _scope, ref in Location loc, string name)
 {
-	auto asMod = getModuleFromScope(loc, _scope);
-	bool privateLookup;
-	ImportContext ctx;
+	auto store = lookupInGivenScopeOnly(lp, _scope, loc, name);
+	if (store !is null) {
+		return ensureResolved(lp, store);
+	}
 
-	foreach (i, mod; asMod.myScope.importedModules) {
-		auto store = mod.myScope.getStore(name);
+	WalkContext ctx;
+	walkPuplicImports(lp, loc, ctx, _scope, name);
+	return walkGetStore(lp, loc, ctx, _scope, name);
+}
 
-		if (checkPrivateAndAdd(ctx, mod, store)) {
+
+/*
+ *
+ * Lookup helpers.
+ *
+ */
+
+/*!
+ * This function is used to retrive cached versions of helper functions.
+ *
+ * @param     lp LanguagePass.
+ * @param _scope The scope to look in.
+ * @param    loc Location, for error messages.
+ * @param   name The string to lookup.
+ * @Returns The found function or null.
+ *
+ * @ingroup semLookup
+ */
+ir.Function lookupFunction(LanguagePass lp, ir.Scope _scope, ref in Location loc, string name)
+{
+	// Lookup the copy function for this type of array.
+	auto store = lookupInGivenScopeOnly(lp, _scope, loc, name);
+	if (store !is null && store.kind == ir.Store.Kind.Function) {
+		assert(store.functions.length == 1);
+		return store.functions[0];
+	}
+	return null;
+}
+
+/*!
+ * Helper functions that looksup a type and throws compiler errors
+ * if it is not found or the found identifier is not a type.
+ *
+ * @param     lp LanguagePass.
+ * @param _scope The scope to look in.
+ * @param     qn QualifiedName to get idents from.
+ * @Returns The found type or null.
+ *
+ * @ingroup semLookup
+ */
+ir.Type lookupType(LanguagePass lp, ir.Scope _scope, ir.QualifiedName id)
+{
+	auto store = lookup(lp, _scope, id);
+
+	// If we can't find it, try and generate a sensible error.
+	if (store is null) {
+		string lastName;
+		foreach (ident; id.identifiers) {
+			store = lookup(lp, _scope, ident.loc, ident.value);
+			if (store is null && lastName == "") {
+				throw makeFailedLookup(ident, ident.value);
+			} else if (store is null) {
+				throw makeNotMember(ident.loc, lastName, ident.value);
+			}
+			lastName = ident.value;
+		}
+	}
+
+	auto loc = id.identifiers[$-1].loc;
+	auto name = id.identifiers[$-1].value;
+	return ensureType(_scope, loc, name, store);
+}
+
+
+/*
+ *
+ * Public helpers.
+ *
+ */
+
+/*!
+ * Resolves a store making sure the node it points to is
+ * resolved, the function returns the store that a alias
+ * is pointing to. Not the alias itself.
+ */
+ir.Store ensureResolved(LanguagePass lp, ir.Store s)
+{
+	final switch (s.kind) with (ir.Store.Kind) {
+	case Merge:
+		lp.resolve(s);
+		assert(s.kind == Function);
+		return s;
+	case Alias:
+		auto a = cast(ir.Alias)s.node;
+		lp.resolve(a);
+		while (s.myAlias !is null) {
+			s = s.myAlias;
+			return s;
+		}
+		return s;
+	case Value:
+		auto var = cast(ir.Variable)s.node;
+		lp.resolve(s.parent, var);
+		return s;
+	case Function:
+		foreach (func; s.functions) {
+			lp.resolve(s.parent, func);
+		}
+		return s;
+	case EnumDeclaration:
+		auto ed = cast(ir.EnumDeclaration)s.node;
+		assert(ed !is null);
+		lp.resolve(s.parent, ed);
+		return s;
+	case Type:
+		if (s.node.nodeType == ir.NodeType.Enum) {
+			auto e = cast(ir.Enum)s.node;
+			lp.resolveNamed(e);
+		} else if (s.node.nodeType == ir.NodeType.Class) {
+			auto c = cast(ir.Class)s.node;
+			lp.resolveNamed(c);
+		} else if (s.node.nodeType == ir.NodeType.Struct) {
+			auto st = cast(ir.Struct)s.node;
+			lp.resolveNamed(st);
+		} else if (s.node.nodeType == ir.NodeType.Enum) {
+			auto st = cast(ir.Enum)s.node;
+			lp.resolveNamed(st);
+		} else if (s.node.nodeType == ir.NodeType.Interface) {
+			auto i = cast(ir._Interface)s.node;
+			lp.resolveNamed(i);
+		}
+		return s;
+	case Scope:
+	case Template:
+	case FunctionParam:
+		return s;
+	case Reserved:
+		throw panic(s.node, "reserved store ident '%s' found.", s.name);
+	}
+}
+
+/*!
+ * Get the module in the bottom of the given _scope chain.
+ *
+ * @Throws CompilerPanic if no module at bottom of chain.
+ */
+ir.Module getModuleFromScope(ref in Location loc, ir.Scope _scope)
+{
+	while (_scope !is null) {
+		auto m = cast(ir.Module)_scope.node;
+		_scope = _scope.parent;
+
+		if (m is null) {
 			continue;
 		}
 
-		//! Check publically imported modules.
-		lookupPublicImportScope(lp, loc, ctx, mod.myScope, name);
+		if (_scope !is null) {
+			throw panic(m.loc, "module scope has parent");
+		}
+
+		return m;
 	}
 
-	return getSingleStore(lp, loc, ctx, _scope, name);
+	throw panic(loc, "scope chain without module base");
 }
 
-private bool checkPrivateAndAdd(ref ImportContext ctx, ir.Module mod,
+/*!
+ * Return the first class scope and the class going down the chain
+ * of containing scopes (_scope.parent field).
+ *
+ * @Returns True if we found a thisable type and its scope and type.
+ */
+bool getFirstClass(ir.Scope _scope, out ir.Scope outScope, out ir.Class outClass)
+{
+	while (_scope !is null) {
+		auto node = _scope.node;
+		if (node is null) {
+			throw panic("scope without owning node");
+		}
+
+		auto asClass = cast(ir.Class)node;
+		if (asClass !is null) {
+			outClass = asClass;
+			outScope = asClass.myScope;
+			return true;
+		}
+
+		_scope = _scope.parent;
+	}
+	return false;
+}
+
+
+private:
+
+
+/*
+ *
+ * Scope walking helpers.
+ *
+ */
+
+/*!
+ * Given a scope, get the oldest parent -- this is the module of that scope.
+ *
+ * @Throws  CompilerPanic if no module at bottom of chain.
+ * @Returns 
+ */
+ir.Scope getTopScope(ref in Location loc, ir.Scope _scope)
+{
+	auto m = getModuleFromScope(loc, _scope);
+	return m.myScope;
+}
+
+/*!
+ * Return the first scope and type that is thisable going down the
+ * chain of containing scopes (_scope.parent field).
+ *
+ * @Returns True if we found a thisable type and its scope and type.
+ */
+bool getFirstThisable(ir.Scope _scope, out ir.Scope outScope, out ir.Type outType)
+{
+	while (_scope !is null) {
+		auto node = _scope.node;
+		if (node is null)
+			throw panic("scope without owning node");
+
+		auto asType = cast(ir.Type)node;
+		auto asAggregate = cast(ir.Aggregate)node;
+
+		if (asAggregate !is null) {
+			outType = asType;
+			outScope = asAggregate.myScope;
+			return true;
+		}
+
+		_scope = _scope.parent;
+	}
+	return false;
+}
+
+/*!
+ * Get the parents scope of the given scope if its a class scope.
+ *
+ * @Returns If the is a class and had a parents scope.
+ */
+bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScope, out ir.Class outClass)
+{
+	auto node = _scope.node;
+	if (node is null) {
+		throw panic("scope without owning node");
+	}
+
+	switch (node.nodeType) with (ir.NodeType) {
+	case Function:
+	case Module:
+	case Import:
+	case Struct:
+	case Interface:
+	case Union:
+	case BlockStatement:
+	case Enum:
+	case Identifier:
+		return false;
+	case Class:
+		auto asClass = cast(ir.Class)node;
+		assert(asClass !is null);
+
+		lp.resolveNamed(asClass);
+		if (asClass.parentClass is null) {
+			assert(asClass.parent is null);
+			return false;
+		}
+
+		outClass = asClass.parentClass;
+		outScope = asClass.parentClass.myScope;
+		return true;
+	default:
+		throw panic(node.loc, format("unexpected nodetype %s", node.nodeType));
+	}
+}
+
+
+/*
+ *
+ * Check helpers.
+ *
+ */
+
+bool checkPrivateAndAdd(ref WalkContext ctx, ir.Module mod,
                                 ir.Store store)
 {
 	if (store is null) {
@@ -242,9 +545,187 @@ private bool checkPrivateAndAdd(ref ImportContext ctx, ir.Module mod,
 	}
 }
 
-private void lookupPublicImportScope(LanguagePass lp, ref Location loc,
-                                     ref ImportContext ctx, ir.Scope _scope,
-                                     string name)
+/*!
+ * Check that the contents of store can be accessed (e.g. not private)
+ */
+void checkAccess(ref in Location loc, string name, ir.Store store, bool classParentLookup = false)
+{
+	if (store.importAlias) {
+		return;
+	}
+
+	void check(ir.Access access)
+	{
+		if (access == ir.Access.Protected && classParentLookup) {
+			return;
+		}
+		if (access == ir.Access.Private || access == ir.Access.Protected) {
+			throw makeBadAccess(loc, name, access);
+		}
+	}
+
+	if (store.kind == ir.Store.Kind.Alias) {
+		assert(store.node.nodeType == ir.NodeType.Alias);
+	}
+	auto alia = cast(ir.Alias)store.originalNode;
+	if (alia is null) {
+		alia = cast(ir.Alias)store.node;
+	}
+	if (alia !is null) {
+		return check(alia.access);
+	}
+	auto decl = cast(ir.Variable)store.node;
+	if (decl !is null) {
+		return check(decl.access);
+	}
+	auto func = cast(ir.Function)store.node;
+	if (func !is null) {
+		return check(func.access);
+	}
+	auto en = cast(ir.Enum)store.node;
+	if (en !is null) {
+		return check(en.access);
+	}
+	auto ed = cast(ir.EnumDeclaration)store.node;
+	if (ed !is null) {
+		return check(ed.access);
+	}
+	auto iface = cast(ir._Interface)store.node;
+	if (iface !is null) {
+		return check(iface.access);
+	}
+	auto agg = cast(ir.Aggregate)store.node;
+	if (agg !is null && agg.access != ir.Access.Public) {
+		return check(agg.access);
+	}
+}
+
+/*
+ *
+ * Ensure function helpers.
+ *
+ */
+
+/*!
+ * Ensure that the given store is not null
+ * and that it is non-overloaded Function.
+ *
+ * @return                The function pointed to by the store.
+ * @throws CompilerError  Raises error should this not be the case.
+ */
+ir.Function ensureFunction(ir.Scope _scope, ref in Location loc, string name, ir.Store store)
+{
+	if (store is null) {
+		if (_scope is null) {
+			throw makeFailedLookup(loc, name);
+		} else {
+			throw makeNotMember(loc, _scope.name, name);
+		}
+	}
+
+	if (store.kind != ir.Store.Kind.Function || store.functions.length != 1) {
+		throw makeExpected(loc, "function");
+	}
+
+	return store.functions[0];
+}
+
+/*!
+ * Ensures that the given store is not null,
+ * and that the store node is a type.
+ *
+ * @return                The type pointed to by the store.
+ * @throws CompilerError  Raises error should this not be the case.
+ */
+ir.Type ensureType(ir.Scope _scope, ref in Location loc, string name, ir.Store store)
+{
+	if (store is null) {
+		if (_scope is null) {
+			throw makeFailedLookup(loc, name);
+		} else {
+			throw makeNotMember(loc, _scope.name, name);
+		}
+	}
+
+	auto asType = cast(ir.Type) store.node;
+	if (asType is null) {
+		throw makeError(loc, format("expected type, got '%s'.", name));
+	}
+
+	return asType;
+}
+
+/*!
+ * Ensures that the given store is not null,
+ * and that the store node has or is a scope.
+ *
+ * @return                The scope of store type or the scope itself.
+ * @throws CompilerError  Raises error should this not be the case.
+ */
+ir.Scope ensureScope(ir.Scope _scope, ref in Location loc, string name, ir.Store store)
+{
+	if (store is null) {
+		if (_scope is null) {
+			throw makeFailedLookup(loc, name);
+		} else {
+			throw makeNotMember(loc, _scope.name, name);
+		}
+	}
+
+	auto var = cast(ir.Variable) store.node;
+	if (var !is null) {
+		auto s = getScopeFromType(var.type);
+		if (s !is null) {
+			return s;
+		}
+	}
+
+	auto s = getScopeFromStore(store);
+	if (s is null) {
+		throw makeExpected(loc, "aggregate or scope");
+	}
+	return s;
+}
+
+
+/*
+ *
+ * Imported module walking code.
+ *
+ */
+
+struct WalkContext
+{
+	bool[ir.NodeID] pubChecked;
+
+	ir.Store[ir.NodeID] stores;
+
+	bool privateLookup;
+}
+
+ir.Store walkImports(LanguagePass lp, ref in Location loc,
+                     ir.Scope _scope, string name)
+{
+	auto asMod = getModuleFromScope(loc, _scope);
+	bool privateLookup;
+	WalkContext ctx;
+
+	foreach (i, mod; asMod.myScope.importedModules) {
+		auto store = mod.myScope.getStore(name);
+
+		if (checkPrivateAndAdd(ctx, mod, store)) {
+			continue;
+		}
+
+		//! Check publically imported modules.
+		walkPuplicImports(lp, loc, ctx, mod.myScope, name);
+	}
+
+	return walkGetStore(lp, loc, ctx, _scope, name);
+}
+
+void walkPuplicImports(LanguagePass lp, ref in Location loc, ref WalkContext ctx,
+                       ir.Scope _scope, string name)
 {
 	foreach (i, submod; _scope.importedModules) {
 		// Skip privatly imported modules.
@@ -270,15 +751,14 @@ private void lookupPublicImportScope(LanguagePass lp, ref Location loc,
 
 		// If not look for other public imports.
 		if (store is null) {
-			lookupPublicImportScope(lp, loc, ctx, submod.myScope, name);
+			walkPuplicImports(lp, loc, ctx, submod.myScope, name);
 			continue;
 		}
 	}
 }
 
-private ir.Store getSingleStore(LanguagePass lp, ref Location loc,
-                                ref ImportContext ctx, ir.Scope _scope,
-                                string name)
+ir.Store walkGetStore(LanguagePass lp, ref in Location loc, ref WalkContext ctx,
+                      ir.Scope _scope, string name)
 {
 	// Get only unqiue stores.
 	ir.Store[] stores = ctx.stores.values;
@@ -356,369 +836,4 @@ ir.Node getStoreNodeRealParent(LanguagePass lp, ir.Store store)
 		return realType(t, false);
 	}
 	return n;
-}
-
-/*!
- * Helper functions that looksup a type and throws compiler errors
- * if it is not found or the found identifier is not a type.
- */
-ir.Type lookupType(LanguagePass lp, ir.Scope _scope, ir.QualifiedName id)
-{
-	auto store = lookup(lp, _scope, id);
-
-	// If we can't find it, try and generate a sensible error.
-	if (store is null) {
-		string lastName;
-		foreach (ident; id.identifiers) {
-			store = lookup(lp, _scope, ident.loc, ident.value);
-			if (store is null && lastName == "") {
-				throw makeFailedLookup(ident, ident.value);
-			} else if (store is null) {
-				throw makeNotMember(ident.loc, lastName, ident.value);
-			}
-			lastName = ident.value;
-		}
-	}
-
-	auto loc = id.identifiers[$-1].loc;
-	auto name = id.identifiers[$-1].value;
-	return ensureType(_scope, loc, name, store);
-}
-
-/*!
-* This function is used to retrive cached
-* versions of helper functions.
-*/
-ir.Function lookupFunction(LanguagePass lp, ir.Scope _scope, Location loc, string name)
-{
-	// Lookup the copy function for this type of array.
-	auto store = lookupInGivenScopeOnly(lp, _scope, loc, name);
-	if (store !is null && store.kind == ir.Store.Kind.Function) {
-		assert(store.functions.length == 1);
-		return store.functions[0];
-	}
-	return null;
-}
-
-/*!
- * Get the module in the bottom of the given _scope chain.
- * @throws CompilerPanic if no module at bottom of chain.
- */
-ir.Module getModuleFromScope(ref in Location loc, ir.Scope _scope)
-{
-	while (_scope !is null) {
-		auto m = cast(ir.Module)_scope.node;
-		_scope = _scope.parent;
-
-		if (m is null) {
-			continue;
-		}
-
-		if (_scope !is null)
-			throw panic(m.loc, "module scope has parent");
-		return m;
-	}
-	throw panic(loc, "scope chain without module base");
-}
-
-/*!
- * Given a scope, get the oldest parent -- this is the module of that scope.
- * @throws CompilerPanic if no module at bottom of chain.
- */
-ir.Scope getTopScope(ref in Location loc, ir.Scope _scope)
-{
-	auto m = getModuleFromScope(loc, _scope);
-	return m.myScope;
-}
-
-/*!
- * Return the first scope and type that is thisable going down the
- * chain of containing scopes (_scope.parent field).
- *
- * Returns:
- *   True if we found a thisable type and its scope and type.
- */
-bool getFirstThisable(ir.Scope _scope, out ir.Scope outScope, out ir.Type outType)
-{
-	while (_scope !is null) {
-		auto node = _scope.node;
-		if (node is null)
-			throw panic("scope without owning node");
-
-		auto asType = cast(ir.Type)node;
-		auto asAggregate = cast(ir.Aggregate)node;
-
-		if (asAggregate !is null) {
-			outType = asType;
-			outScope = asAggregate.myScope;
-			return true;
-		}
-
-		_scope = _scope.parent;
-	}
-	return false;
-}
-
-/*!
- * Return the first class scope and the class going down the chain
- * of containing scopes (_scope.parent field).
- *
- * Returns:
- *   True if we found a thisable type and its scope and type.
- */
-bool getFirstClass(ir.Scope _scope, out ir.Scope outScope, out ir.Class outClass)
-{
-	while (_scope !is null) {
-		auto node = _scope.node;
-		if (node is null)
-			throw panic("scope without owning node");
-
-		auto asClass = cast(ir.Class)node;
-		if (asClass !is null) {
-			outClass = asClass;
-			outScope = asClass.myScope;
-			return true;
-		}
-
-		_scope = _scope.parent;
-	}
-	return false;
-}
-
-/*!
- * Get the parents scope of the given scope if its a class scope.
- *
- * Returns:
- *   If the is a class and had a parents scope.
- */
-bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScope, out ir.Class outClass)
-{
-	auto node = _scope.node;
-	if (node is null)
-		throw panic("scope without owning node");
-
-	switch (node.nodeType) with (ir.NodeType) {
-	case Function:
-	case Module:
-	case Import:
-	case Struct:
-	case Interface:
-	case Union:
-	case BlockStatement:
-	case Enum:
-	case Identifier:
-		return false;
-	case Class:
-		auto asClass = cast(ir.Class)node;
-		assert(asClass !is null);
-
-		lp.resolveNamed(asClass);
-		if (asClass.parentClass is null) {
-			assert(asClass.parent is null);
-			return false;
-		}
-
-		outClass = asClass.parentClass;
-		outScope = asClass.parentClass.myScope;
-		return true;
-	default:
-		throw panic(node.loc, format("unexpected nodetype %s", node.nodeType));
-	}
-}
-
-/*!
- * Resolves a store making sure the node it points to is
- * resolved, the function returns the store that a alias
- * is pointing to. Not the alias itself.
- */
-ir.Store ensureResolved(LanguagePass lp, ir.Store s)
-{
-	final switch (s.kind) with (ir.Store.Kind) {
-	case Merge:
-		lp.resolve(s);
-		assert(s.kind == Function);
-		return s;
-	case Alias:
-		auto a = cast(ir.Alias)s.node;
-		lp.resolve(a);
-		while (s.myAlias !is null) {
-			s = s.myAlias;
-			return s;
-		}
-		return s;
-	case Value:
-		auto var = cast(ir.Variable)s.node;
-		lp.resolve(s.parent, var);
-		return s;
-	case Function:
-		foreach (func; s.functions) {
-			lp.resolve(s.parent, func);
-		}
-		return s;
-	case EnumDeclaration:
-		auto ed = cast(ir.EnumDeclaration)s.node;
-		assert(ed !is null);
-		lp.resolve(s.parent, ed);
-		return s;
-	case Type:
-		if (s.node.nodeType == ir.NodeType.Enum) {
-			auto e = cast(ir.Enum)s.node;
-			lp.resolveNamed(e);
-		} else if (s.node.nodeType == ir.NodeType.Class) {
-			auto c = cast(ir.Class)s.node;
-			lp.resolveNamed(c);
-		} else if (s.node.nodeType == ir.NodeType.Struct) {
-			auto st = cast(ir.Struct)s.node;
-			lp.resolveNamed(st);
-		} else if (s.node.nodeType == ir.NodeType.Enum) {
-			auto st = cast(ir.Enum)s.node;
-			lp.resolveNamed(st);
-		} else if (s.node.nodeType == ir.NodeType.Interface) {
-			auto i = cast(ir._Interface)s.node;
-			lp.resolveNamed(i);
-		}
-		return s;
-	case Scope:
-	case Template:
-	case FunctionParam:
-		return s;
-	case Reserved:
-		throw panic(s.node, "reserved store ident '%s' found.", s.name);
-	}
-}
-
-/*!
- * Ensure that the given store is not null
- * and that it is non-overloaded Function.
- *
- * @return                The function pointed to by the store.
- * @throws CompilerError  Raises error should this not be the case.
- */
-ir.Function ensureFunction(ir.Scope _scope, Location loc, string name, ir.Store store)
-{
-	if (store is null) {
-		if (_scope is null) {
-			throw makeFailedLookup(loc, name);
-		} else {
-			throw makeNotMember(loc, _scope.name, name);
-		}
-	}
-
-	if (store.kind != ir.Store.Kind.Function || store.functions.length != 1) {
-		throw makeExpected(loc, "function");
-	}
-
-	return store.functions[0];
-}
-
-/*!
- * Ensures that the given store is not null,
- * and that the store node is a type.
- *
- * @return                The type pointed to by the store.
- * @throws CompilerError  Raises error should this not be the case.
- */
-ir.Type ensureType(ir.Scope _scope, Location loc, string name, ir.Store store)
-{
-	if (store is null) {
-		if (_scope is null) {
-			throw makeFailedLookup(loc, name);
-		} else {
-			throw makeNotMember(loc, _scope.name, name);
-		}
-	}
-
-	auto asType = cast(ir.Type) store.node;
-	if (asType is null) {
-		throw makeError(loc, format("expected type, got '%s'.", name));
-	}
-
-	return asType;
-}
-
-/*!
- * Check that the contents of store can be accessed (e.g. not private)
- */
-void checkAccess(ref in Location loc, string name, ir.Store store, bool classParentLookup = false)
-{
-	if (store.importAlias) {
-		return;
-	}
-
-	void check(ir.Access access)
-	{
-		if (access == ir.Access.Protected && classParentLookup) {
-			return;
-		}
-		if (access == ir.Access.Private || access == ir.Access.Protected) {
-			throw makeBadAccess(loc, name, access);
-		}
-	}
-
-	if (store.kind == ir.Store.Kind.Alias) {
-		assert(store.node.nodeType == ir.NodeType.Alias);
-	}
-	auto alia = cast(ir.Alias)store.originalNode;
-	if (alia is null) {
-		alia = cast(ir.Alias)store.node;
-	}
-	if (alia !is null) {
-		return check(alia.access);
-	}
-	auto decl = cast(ir.Variable)store.node;
-	if (decl !is null) {
-		return check(decl.access);
-	}
-	auto func = cast(ir.Function)store.node;
-	if (func !is null) {
-		return check(func.access);
-	}
-	auto en = cast(ir.Enum)store.node;
-	if (en !is null) {
-		return check(en.access);
-	}
-	auto ed = cast(ir.EnumDeclaration)store.node;
-	if (ed !is null) {
-		return check(ed.access);
-	}
-	auto iface = cast(ir._Interface)store.node;
-	if (iface !is null) {
-		return check(iface.access);
-	}
-	auto agg = cast(ir.Aggregate)store.node;
-	if (agg !is null && agg.access != ir.Access.Public) {
-		return check(agg.access);
-	}
-}
-
-/*!
- * Ensures that the given store is not null,
- * and that the store node has or is a scope.
- *
- * @return                The scope of store type or the scope itself.
- * @throws CompilerError  Raises error should this not be the case.
- */
-ir.Scope ensureScope(ir.Scope _scope, Location loc, string name, ir.Store store)
-{
-	if (store is null) {
-		if (_scope is null) {
-			throw makeFailedLookup(loc, name);
-		} else {
-			throw makeNotMember(loc, _scope.name, name);
-		}
-	}
-
-	auto var = cast(ir.Variable) store.node;
-	if (var !is null) {
-		auto s = getScopeFromType(var.type);
-		if (s !is null) {
-			return s;
-		}
-	}
-
-	auto s = getScopeFromStore(store);
-	if (s is null) {
-		throw makeExpected(loc, "aggregate or scope");
-	}
-	return s;
 }
