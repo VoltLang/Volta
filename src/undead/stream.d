@@ -1213,8 +1213,7 @@ class Stream : InputStream, OutputStream {
 
   private void doFormatCallback(dchar c) {
     char[4] buf;
-    auto b = std.utf.toUTF8(buf, c);
-    writeString(b);
+    writeString(buf[0 .. encode(buf, c)]);
   }
 
   // writes data to stream using writef() syntax,
