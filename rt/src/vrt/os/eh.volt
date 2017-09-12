@@ -48,12 +48,13 @@ struct vrt_eh_exception
 global VRT_EH_NAME: string = "VOLT___\0";
 
 /*!
- * Mandated by the ABI, not needed for Volt.
+ * Per thread callback for applications getting exceptions.
  */
-extern(C) fn vrt_eh_delete(
-	reason: _Unwind_Reason_Code,
-	exceptionObject: _Unwind_Exception*)
+local lCallback : fn(Throwable, location: string);
+
+extern(C) fn vrt_eh_set_callback(cb: fn(Throwable, location: string))
 {
+	lCallback = cb;
 }
 
 /*!
@@ -61,6 +62,10 @@ extern(C) fn vrt_eh_delete(
  */
 extern(C) fn vrt_eh_throw(t: Throwable, location: string)
 {
+	if (lCallback !is null) {
+		lCallback(t, location);
+	}
+
 	e := new vrt_eh_exception;
 
 	t.throwLocation = location;
@@ -90,6 +95,15 @@ extern(C) fn vrt_eh_throw_slice_error(location: string)
 extern(C) fn vrt_eh_throw_key_not_found_error(location: string)
 {
 	vrt_eh_throw(new KeyNotFoundException("key does not exist"), location);
+}
+
+/*!
+ * Mandated by the ABI, not needed for Volt.
+ */
+extern(C) fn vrt_eh_delete(
+	reason: _Unwind_Reason_Code,
+	exceptionObject: _Unwind_Exception*)
+{
 }
 
 /*!
