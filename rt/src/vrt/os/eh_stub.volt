@@ -8,8 +8,22 @@ import core.exception: Throwable, Error, AssertError, KeyNotFoundException;
 import core.rt.misc: vrt_panic;
 
 
+/*!
+ * Per thread callback for applications getting exceptions.
+ */
+local lCallback : fn(Throwable, location: string);
+
+extern(C) fn vrt_eh_set_callback(cb: fn(Throwable, location: string))
+{
+	lCallback = cb;
+}
+
 extern(C) fn vrt_eh_throw(t: Throwable, location: string)
 {
+	if (lCallback !is null) {
+		lCallback(t, location);
+	}
+
 	msgs: const(char)[][2];
 	msgs[0] = "###EXCEPTION###\n";
 	msgs[1] = cast(char[])t.msg;
