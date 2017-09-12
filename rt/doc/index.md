@@ -21,6 +21,7 @@ title: The Volt Runtime
 <p>Memory allocation, associative arrays, and other things running Volt programs used are contained here.</p>
 <ul>
 	<li><p><a href='{{ "core.rt.aa" | vdoc_find_url }}'>core.rt.aa</a> contains functions that the compiler uses to implement associative arrays.</p></li>
+	<li><p><a href='{{ "core.rt.eh" | vdoc_find_url }}'>core.rt.eh</a> contains functions that both the compiler and application uses for exception handling.</p></li>
 	<li><p><a href='{{ "core.rt.format" | vdoc_find_url }}'>core.rt.format</a> contains number formatting functions.</p></li>
 	<li><p><a href='{{ "core.rt.gc" | vdoc_find_url }}'>core.rt.gc</a> contains the functions that interface with the garbage collector, the code responsible for freeing unused memory.</p></li>
 	<li><p><a href='{{ "core.rt.misc" | vdoc_find_url }}'>core.rt.misc</a> contains functions that don't fit elsewhere, but that the compiler needs to be able to reference.<p></li>

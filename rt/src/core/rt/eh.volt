@@ -9,19 +9,35 @@ import core.exception;
 extern(C):
 
 /*!
- * Temporary shortcuts.
- */
-alias vrt_eh_throw = core.rt.misc.vrt_eh_throw;
-alias vrt_eh_throw_slice_error = core.rt.misc.vrt_eh_throw_slice_error;
-alias vrt_eh_throw_assert_error = core.rt.misc.vrt_eh_throw_assert_error;
-alias vrt_eh_throw_key_not_found_error = core.rt.misc.vrt_eh_throw_key_not_found_error;
-alias vrt_eh_personality_v0 = core.rt.misc.vrt_eh_personality_v0;
-
-/*!
  * Set a callback that happens just before a exception is thrown.
  *
  * The callback is per thread (for those platforms that support TLS).
  *
  * Do not throw from the callback, as it will explode.
  */
-fn vrt_eh_set_callback(cb: fn(Throwable, string));
+fn vrt_eh_set_callback(cb: fn(t: Throwable, location: string));
+
+/*!
+ * Perform a throw of the given `Throwable` object.
+ */
+fn vrt_eh_throw(t: Throwable, location: string);
+
+/*!
+ * Throw an error for an invalid slice.
+ */
+fn vrt_eh_throw_slice_error(location: string);
+
+/*!
+ * Throw an assert for an assert failure.
+ */
+fn vrt_eh_throw_assert_error(location: string, msg: string);
+
+/*!
+ * Throw an AA key lookup failure error.
+ */
+fn vrt_eh_throw_key_not_found_error(location: string);
+
+/*!
+ * The personality function makes stack unwinding work.
+ */
+fn vrt_eh_personality_v0(...) i32;

@@ -166,6 +166,7 @@ public:
 		auto objectModule = getAndCheck("core", "object");
 		auto typeInfoModule = getAndCheck("core", "typeinfo");
 		auto exceptionModule = getAndCheck("core", "exception");
+		auto rtEHModule = getAndCheck("core", "rt", "eh");
 		auto rtGCModule = getAndCheck("core", "rt", "gc");
 		auto rtAAModule = getAndCheck("core", "rt", "aa");
 		auto rtMiscModule = getAndCheck("core", "rt", "misc");
@@ -179,6 +180,7 @@ public:
 			objectModule,
 			typeInfoModule,
 			exceptionModule,
+			rtEHModule,
 			rtGCModule,
 			rtAAModule,
 			rtMiscModule,
@@ -261,6 +263,13 @@ public:
 		// core.exception
 		exceptThrowable = getClassFrom(exceptionModule, "Throwable");
 
+		// core.rt.eh
+		ehThrowFunc = getFunctionFrom(rtEHModule, "vrt_eh_throw");
+		ehThrowSliceErrorFunc = getFunctionFrom(rtEHModule, "vrt_eh_throw_slice_error");
+		ehThrowAssertErrorFunc = getFunctionFrom(rtEHModule, "vrt_eh_throw_assert_error");
+		ehThrowKeyNotFoundErrorFunc = getFunctionFrom(rtEHModule, "vrt_eh_throw_key_not_found_error");
+		ehPersonalityFunc = getFunctionFrom(rtEHModule, "vrt_eh_personality_v0");
+
 		// core.rt.gc
 		gcAllocDgVariable = getVarFrom(rtGCModule, "allocDg");
 
@@ -285,12 +294,6 @@ public:
 		aaInBinopPtr = getFunctionFrom(rtAAModule, "vrt_aa_in_binop_ptr");
 
 		// core.rt.misc
-		ehThrowFunc = getFunctionFrom(rtMiscModule, "vrt_eh_throw");
-		ehThrowSliceErrorFunc = getFunctionFrom(rtMiscModule, "vrt_eh_throw_slice_error");
-		ehThrowAssertErrorFunc = getFunctionFrom(rtMiscModule, "vrt_eh_throw_assert_error");
-		ehThrowKeyNotFoundErrorFunc = getFunctionFrom(rtMiscModule,
-			"vrt_eh_throw_key_not_found_error");
-		ehPersonalityFunc = getFunctionFrom(rtMiscModule, "vrt_eh_personality_v0");
 		utfDecode_u8_d = getFunctionFrom(rtMiscModule, "vrt_decode_u8_d");
 		utfReverseDecode_u8_d = getFunctionFrom(rtMiscModule, "vrt_reverse_decode_u8_d");
 		hashFunc = getFunctionFrom(rtMiscModule, "vrt_hash");
