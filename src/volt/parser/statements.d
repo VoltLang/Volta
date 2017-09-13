@@ -721,7 +721,9 @@ ParseStatus parseForStatement(ParserStream ps, out ir.ForStatement f)
 		} else {
 			foreach (var; first) {
 				f.initVars ~= cast(ir.Variable) var;
-				assert(f.initVars[$-1] !is null);
+				if (f.initVars[$-1] is null) {
+					return unexpectedToken(ps, f);
+				}
 			}
 		}
 	} else {
