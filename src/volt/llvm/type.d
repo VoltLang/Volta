@@ -886,18 +886,29 @@ private:
 		auto vars = sink.toArray();
 		types = new Type[](vars.length);
 
+		size_t lastSize;
+		Type lastType;
+
 		foreach (i, var; vars) {
 			// @todo handle anon types.
 			assert(var.name !is null);
 
 			auto t = .fromIr(state, var.type);
+
 			types[i] = t;
 			indices[var.name] = cast(uint)i;
+
+			auto sz = volt.semantic.classify.size(state.target, t.irType);
+			if (sz > lastSize) {
+				lastType = t;
+				lastSize = sz;
+			}
 		}
 
-		// @todo check packing.
 		LLVMTypeRef[1] mt;
-		mt[0] = LLVMArrayType(state.ubyteType.llvmType, cast(uint)irType.totalSize);
+		mt[0] = lastType.llvmType;
+		// Check over this logic if unions ever explodes.
+		// mt[0] = LLVMArrayType(state.ubyteType.llvmType, cast(uint)irType.totalSize);
 		LLVMStructSetBody(llvmType, mt[], false);
 		diUnionSetBody(state, diType, vars);
 	}
