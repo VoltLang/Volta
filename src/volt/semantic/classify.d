@@ -196,7 +196,7 @@ size_t alignment(TargetInfo target, ir.Type node)
 	case Interface:
 		return target.alignment.ptr;
 	case Union:
-		return target.alignment.int8; // Matches implementation
+		return unionAlignment(target, node.toUnionFast());
 	case PrimitiveType:
 		return alignment(target, node.toPrimitiveTypeFast().type);
 	case Enum:
@@ -221,6 +221,29 @@ size_t structAlignment(TargetInfo target, ir.Struct s)
 
 	size_t accumulator = 1;
 	foreach (node; s.members.nodes) {
+		// If it's not a Variable, or not a field, it shouldn't take up space.
+		auto asVar = node.toVariableChecked();
+		if (asVar is null || asVar.storage != ir.Variable.Storage.Field) {
+			continue;
+		}
+
+		auto a = alignment(target, asVar.type);
+		if (a > accumulator) {
+			accumulator = a;
+		}
+	}
+	return accumulator;
+}
+
+/*!
+ * Returns the size of a given ir.Union in bytes.
+ */
+size_t unionAlignment(TargetInfo target, ir.Union u)
+{
+	panicAssert(u, u.isResolved);
+
+	size_t accumulator = 1;
+	foreach (node; u.members.nodes) {
 		// If it's not a Variable, or not a field, it shouldn't take up space.
 		auto asVar = node.toVariableChecked();
 		if (asVar is null || asVar.storage != ir.Variable.Storage.Field) {
