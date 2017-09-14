@@ -122,10 +122,10 @@ public:
 class ParserWrongToken : ParserError
 {
 public:
-	//! Found this, which is not what we where expecting.
+	//! Found this, which is not what we were expecting.
 	TokenType found;
 
-	//! What we where expecting.
+	//! What we were expecting.
 	TokenType expected;
 
 public:

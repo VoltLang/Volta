@@ -801,11 +801,11 @@ ParseStatus parseSwitchStatement(ParserStream ps, out ir.SwitchStatement ss)
 	}
 
 	if (ps != TokenType.Switch) {
-		return unexpectedToken(ps, ss);
+		return wrongToken(ps, ss.nodeType, ps.peek, TokenType.Switch);
 	}
 	ps.get();
 	if (ps != TokenType.OpenParen) {
-		return unexpectedToken(ps, ss);
+		return wrongToken(ps, ss.nodeType, ps.peek, TokenType.OpenParen);
 	}
 	ps.get();
 	auto succeeded = parseExp(ps, ss.condition);
@@ -813,13 +813,13 @@ ParseStatus parseSwitchStatement(ParserStream ps, out ir.SwitchStatement ss)
 		return parseFailed(ps, ss);
 	}
 	if (ps != TokenType.CloseParen) {
-		return unexpectedToken(ps, ss);
+		return wrongToken(ps, ss.nodeType, ps.peek, TokenType.CloseParen);
 	}
 	ps.get();
 
 	while (matchIf(ps, TokenType.With)) {
 		if (ps != TokenType.OpenParen) {
-			return unexpectedToken(ps, ss);
+			return wrongToken(ps, ss.nodeType, ps.peek, TokenType.OpenParen);
 		}
 		ps.get();
 		ir.Exp e;
@@ -829,20 +829,20 @@ ParseStatus parseSwitchStatement(ParserStream ps, out ir.SwitchStatement ss)
 		}
 		ss.withs ~= e;
 		if (ps != TokenType.CloseParen) {
-			return unexpectedToken(ps, ss);
+			return wrongToken(ps, ss.nodeType, ps.peek, TokenType.CloseParen);
 		}
 		ps.get();
 	}
 
 	if (ps != TokenType.OpenBrace) {
-		return unexpectedToken(ps, ss);
+		return wrongToken(ps, ss.nodeType, ps.peek, TokenType.OpenBrace);
 	}
 	ps.get();
 
-	int braces = 1;  // Everybody gets one.
+	int braces = 1;
 	while (matchIf(ps, TokenType.With)) {
 		if (ps != TokenType.OpenParen) {
-			return unexpectedToken(ps, ss);
+			return wrongToken(ps, ss.nodeType, ps.peek, TokenType.OpenParen);
 		}
 		ps.get();
 		ir.Exp e;
@@ -852,7 +852,7 @@ ParseStatus parseSwitchStatement(ParserStream ps, out ir.SwitchStatement ss)
 		}
 		ss.withs ~= e;
 		if (ps != TokenType.CloseParen) {
-			return unexpectedToken(ps, ss);
+			return wrongToken(ps, ss.nodeType, ps.peek, TokenType.CloseParen);
 		}
 		ps.get();
 		if (matchIf(ps, TokenType.OpenBrace)) {
@@ -888,11 +888,11 @@ ParseStatus parseSwitchStatement(ParserStream ps, out ir.SwitchStatement ss)
 		switch (ps.peek.type) {
 		case TokenType.Default:
 			if (ps != TokenType.Default) {
-				return unexpectedToken(ps, ss);
+				return wrongToken(ps, ss.nodeType, ps.peek, TokenType.Default);
 			}
 			ps.get();
 			if (ps != TokenType.Colon) {
-				return unexpectedToken(ps, ss);
+				return wrongToken(ps, ss.nodeType, ps.peek, TokenType.Colon);
 			}
 			ps.get();
 			hadDefault = true;
@@ -905,7 +905,7 @@ ParseStatus parseSwitchStatement(ParserStream ps, out ir.SwitchStatement ss)
 			break;
 		case TokenType.Case:
 			if (ps != TokenType.Case) {
-				return unexpectedToken(ps, ss);
+				return wrongToken(ps, ss.nodeType, ps.peek, TokenType.Case);
 			}
 			ps.get();
 			ir.Exp[] exps;
@@ -924,26 +924,26 @@ ParseStatus parseSwitchStatement(ParserStream ps, out ir.SwitchStatement ss)
 					exps ~= e;
 					if (ps != TokenType.Colon) {
 						if (ps != TokenType.Comma) {
-							return unexpectedToken(ps, ss);
+							return wrongToken(ps, ss.nodeType, ps.peek, TokenType.Comma);
 						}
 						ps.get();
 					}
 				}
 				if (ps != TokenType.Colon) {
-					return unexpectedToken(ps, ss);
+					return wrongToken(ps, ss.nodeType, ps.peek, TokenType.Colon);
 				}
 				ps.get();
 				newCase.exps = exps;
 			} else {
 				newCase.firstExp = exps[0];
 				if (ps != TokenType.Colon) {
-					return unexpectedToken(ps, ss);
+					return wrongToken(ps, ss.nodeType, ps.peek, TokenType.Colon);
 				}
 				ps.get();
 				if (ps == TokenType.DoubleDot) {
 					ps.get();
 					if (ps != TokenType.Case) {
-						return unexpectedToken(ps, ss);
+						return wrongToken(ps, ss.nodeType, ps.peek, TokenType.Case);
 					}
 					ps.get();
 					succeeded = parseExp(ps, newCase.secondExp);
@@ -951,7 +951,7 @@ ParseStatus parseSwitchStatement(ParserStream ps, out ir.SwitchStatement ss)
 						return parseFailed(ps, ss);
 					}
 					if (ps != TokenType.Colon) {
-						return unexpectedToken(ps, ss);
+						return wrongToken(ps, ss.nodeType, ps.peek, TokenType.Colon);
 					}
 					ps.get();
 				}
@@ -970,7 +970,7 @@ ParseStatus parseSwitchStatement(ParserStream ps, out ir.SwitchStatement ss)
 	}
 	while (braces--) {
 		if (ps != TokenType.CloseBrace) {
-			return unexpectedToken(ps, ss);
+			return wrongToken(ps, ss.nodeType, ps.peek, TokenType.CloseBrace);
 		}
 		ps.get();
 	}
