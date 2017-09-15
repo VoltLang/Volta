@@ -236,7 +236,7 @@ ir.Store lookupAsImportScope(LanguagePass lp, ir.Scope _scope, ref in Location l
 	}
 
 	WalkContext ctx;
-	walkPuplicImports(lp, loc, ctx, _scope, name);
+	walkPublicImports(lp, loc, ctx, _scope, name);
 	return walkGetStore(lp, loc, ctx, _scope, name);
 }
 
@@ -718,13 +718,13 @@ ir.Store walkImports(LanguagePass lp, ref in Location loc,
 		}
 
 		//! Check publically imported modules.
-		walkPuplicImports(lp, loc, ctx, mod.myScope, name);
+		walkPublicImports(lp, loc, ctx, mod.myScope, name);
 	}
 
 	return walkGetStore(lp, loc, ctx, _scope, name);
 }
 
-void walkPuplicImports(LanguagePass lp, ref in Location loc, ref WalkContext ctx,
+void walkPublicImports(LanguagePass lp, ref in Location loc, ref WalkContext ctx,
                        ir.Scope _scope, string name)
 {
 	foreach (i, submod; _scope.importedModules) {
@@ -744,14 +744,14 @@ void walkPuplicImports(LanguagePass lp, ref in Location loc, ref WalkContext ctx
 
 		// If we find a store in the module we added to the context.
 		if (store !is null) {
-			store = ensureResolved(lp, store);
-			checkPrivateAndAdd(ctx, submod, store);
+			checkPrivateAndAdd(ctx, submod, store);  // @todo Is this needed? Can we remove it somehow?
 			checkAccess(loc, name, store);
+			store = ensureResolved(lp, store);
 		}
 
 		// If not look for other public imports.
 		if (store is null) {
-			walkPuplicImports(lp, loc, ctx, submod.myScope, name);
+			walkPublicImports(lp, loc, ctx, submod.myScope, name);
 			continue;
 		}
 	}
