@@ -17,6 +17,7 @@ import volt.errors;
 import volt.interfaces;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
+import volt.semantic.lookup : getModuleFromScope;
 import gatherer = volt.postparse.gatherer;
 
 
@@ -138,6 +139,7 @@ public:
 			assert(current is mModule.myScope);
 		}
 
+		auto parentMod = getModuleFromScope(i.loc, current);
 		foreach (ii, _alias; i.aliases) {
 			ir.Alias a;
 
@@ -145,6 +147,16 @@ public:
 				a = buildAlias(_alias[0].loc, _alias[0].value, _alias[0].value);
 			} else {
 				a = buildAliasSmart(_alias[0].loc, _alias[0].value, _alias[1]);
+			}
+
+			// `private import a : func` should conflict with a public function of name 'func' in the importing module.
+			auto ret = parentMod.myScope.getStore(a.name);//lookupInGivenScopeOnly(lp, parentMod.myScope, i.loc, a.name);
+			if (ret !is null && ret.functions.length > 0) {
+				foreach (func; ret.functions) {
+					if (func.access != i.access) {
+						throw makeOverloadedFunctionsAccessMismatch(i.access, a, func);
+					}
+				}
 			}
 
 			// Setup where we should look.

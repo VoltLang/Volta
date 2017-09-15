@@ -106,6 +106,14 @@ CompilerException makeMisplacedContinue(ref in Location loc, string file = __FIL
 	return new CompilerError(loc, "continue statement outside of loop.", file, line);
 }
 
+CompilerException makeOverloadedFunctionsAccessMismatch(ir.Access importAccess, ir.Alias a, ir.Function b,
+	string file = __FILE__, const int line = __LINE__)
+{
+	auto msg = format("alias '%s' access level ('%s') does not match '%s' ('%s') @ %s.",
+		a.name, ir.accessToString(importAccess), b.name, ir.accessToString(b.access), b.loc.toString());
+	return new CompilerError(a.loc, msg, file, line);
+}
+
 CompilerException makeOverloadedFunctionsAccessMismatch(ir.Function a, ir.Function b)
 {
 	auto loc = b.loc;
