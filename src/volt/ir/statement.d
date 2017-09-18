@@ -240,10 +240,10 @@ public:
 	this(ForStatement old)
 	{
 		super(NodeType.ForStatement, old);
-		this.initVars = old.initVars;
-		this.initExps = old.initExps;
+		this.initVars = old.initVars.dup();
+		this.initExps = old.initExps.dup();
 		this.test = old.test;
-		this.increments = old.increments;
+		this.increments = old.increments.dup();
 		this.block = old.block;
 	}
 }
