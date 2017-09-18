@@ -863,7 +863,7 @@ ParseStatus parseEnum(ParserStream ps, out ir.Node[] output)
 				braceAhead = true;
 				break;
 			}
-			if (ps == TokenType.Semicolon) {
+			if (ps == TokenType.Semicolon || ps == TokenType.Assign) {
 				break;
 			}
 			ps.get();
