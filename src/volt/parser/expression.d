@@ -2023,6 +2023,7 @@ ParseStatus parseComposableString(ParserStream ps, out ir.Exp exp)
 			ir.Exp e;
 			auto succeeded = parseInlineExp(cs.loc, ps, literal.value[a .. b-1], e);
 			if (!succeeded) {
+				ps.parserErrors[$-1].loc = cs.loc;
 				return parseFailed(ps, cs); // TODO: better error
 			}
 			cs.components ~= e;
