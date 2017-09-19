@@ -347,9 +347,9 @@ public:
 		if (!ti.explicitMixin) {
 			throw makeExpected(ti.loc, "explicit mixin");
 		}
-		auto store = lookup(lp, current, ti.loc, ti.name);
+		auto store = lookup(lp, current, ti.name);
 		if (store is null) {
-			throw makeFailedLookup(ti.loc, ti.name);
+			throw makeFailedLookup(ti.loc, ti.name.toString());
 		}
 		auto td = cast(ir.TemplateDefinition)store.node;
 		assert(td !is null);

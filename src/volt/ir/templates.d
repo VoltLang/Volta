@@ -35,7 +35,7 @@ class TemplateInstance : Node
 {
 public:
 	TemplateKind kind;
-	string name;
+	QualifiedName name;
 	Node[] arguments;  // Either a Type or an Exp.
 	bool explicitMixin;
 	string[] names;  // Set by the lifter.

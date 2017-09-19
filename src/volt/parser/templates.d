@@ -32,11 +32,23 @@ bool isTemplateInstance(ParserStream ps)
 	}
 
 	auto mark = ps.save();
+	scope (exit) ps.restore(mark);
 	ps.get();
-	bool result = (ps == [TokenType.Identifier, TokenType.Assign, TokenType.Identifier, TokenType.Bang] ||
-		ps == [TokenType.Identifier, TokenType.Assign, TokenType.Mixin, TokenType.Identifier, TokenType.Bang]) != 0;
-	ps.restore(mark);
-	return result;
+	if (ps != [TokenType.Identifier, TokenType.Assign]) {
+		return false;
+	}
+	ps.get();
+	ps.get();
+	if (ps == TokenType.Mixin) {
+		return true;
+	}
+	while (ps == TokenType.Identifier || ps == TokenType.Dot) {
+		ps.get();
+	}
+	if (ps == TokenType.Bang) {
+		return true;
+	}
+	return false;
 }
 
 
@@ -156,11 +168,10 @@ ParseStatus parseTemplateInstance(ParserStream ps, out ir.TemplateInstance ti, o
 
 	ti.explicitMixin = matchIf(ps, TokenType.Mixin);
 
-	succeeded = match(ps, ti, TokenType.Identifier, nameTok);
+	succeeded = parseQualifiedName(ps, ti.name);
 	if (!succeeded) {
-		return succeeded;
+		return parseFailed(ps, ir.NodeType.TemplateInstance);
 	}
-	ti.name = nameTok.value;
 
 	succeeded = match(ps, ti, TokenType.Bang);
 	if (!succeeded) {
