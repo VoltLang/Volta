@@ -16,7 +16,7 @@ import volt.semantic.typer : getExpType, getTypeidType;
 import volt.semantic.lookup : lookup, lookupInGivenScopeOnly;
 import volt.semantic.context : Context;
 import volt.semantic.classify : getParentFunction, realType, isFloatingPoint,
-	typesEqual, inheritsFrom;
+	typesEqual, inheritsFrom, isIntegral;
 import volt.semantic.extyper : resolveStruct, resolveUnion;
 
 
@@ -99,9 +99,11 @@ void flattenOneStorage(ir.StorageType stype, ir.Type type,
 }
 
 /*!
- * Implicitly convert PrimitiveTypes to bools for 'if' and friends.
+ * Implicitly convert types to bools in conditional statements,
+ * or error.
  *
- * Currently done for ifs but not other code.
+ * This is the conversion used for the
+ * `if`, `while`, `do`, and `for` statements.
  */
 void implicitlyCastToBool(Context ctx, ref ir.Exp exp)
 {
@@ -113,15 +115,22 @@ void implicitlyCastToBool(Context ctx, ref ir.Exp exp)
 		if (asPrimitive.type == ir.PrimitiveType.Kind.Bool) {
 			return;
 		}
+		if (asPrimitive.type == ir.PrimitiveType.Kind.Void) {
+			throw makeBadImplicitCast(exp, buildBool(exp.loc), t);
+		}
 		break;
 	case ir.NodeType.Class:
 	case ir.NodeType.PointerType:
 	case ir.NodeType.FunctionType:
 	case ir.NodeType.DelegateType:
-	case ir.NodeType.ArrayType:
 		t = getExpType(exp);
 		auto cnst = buildConstantNull(exp.loc, t);
 		exp = buildBinOp(exp.loc, ir.BinOp.Op.NotIs, exp, cnst);
+		return;
+	case ir.NodeType.ArrayType:
+		auto zero = buildConstantSizeT(exp.loc, ctx.lp.target, 0);
+		exp = buildArrayLength(exp.loc, ctx.lp.target, exp);
+		exp = buildBinOp(exp.loc, ir.BinOp.Op.Greater, exp, zero);
 		return;
 	case ir.NodeType.StaticArrayType:
 	case ir.NodeType.AAType:
