@@ -1963,14 +1963,16 @@ void rewriteCall(Context ctx, ref ir.Exp exp, ir.Function func, ir.Exp[] args, i
  * 'left' is an expression of which the function will be a member.
  * Returns the function that was called, or null if nothing was rewritten.
  */
-ir.Function rewriteOperator(Context ctx, ref ir.Exp exp, string overloadName, ir.Exp left, ir.Exp[] args)
+ir.Function rewriteOperator(Context ctx, ref ir.Exp exp, string overloadName,
+	ir.Exp left, ir.Exp[] args)
 {
 	auto loc = exp.loc;
 	auto agg = opOverloadableOrNull(getExpType(left));
 	if (agg is null) {
 		return null;
 	}
-	auto store = lookupAsThisScope(ctx.lp, agg.myScope, loc, overloadName, ctx.current);
+	auto store = lookupAsThisScope(ctx.lp, agg.myScope, loc, overloadName,
+		ctx.current);
 	if (store is null || store.functions.length == 0) {
 		throw makeAggregateDoesNotDefineOverload(exp.loc, agg, overloadName);
 	}
@@ -2187,6 +2189,92 @@ void extypeCat(Context ctx, ref ir.Exp lexp, ref ir.Exp rexp,
 	rexp = buildCastSmart(left.base, rexp);
 }
 
+bool rewriteOpIndexAssign(Context ctx, ir.BinOp binop, ref ir.Exp exp)
+{
+	if (!isAssign(binop)) {
+		return false;
+	}
+	auto postfix = binop.left.toPostfixChecked();
+	if (postfix is null || postfix.op != ir.Postfix.Op.Call ||
+		postfix.arguments.length < 1 || postfix.arguments.length > 2) {
+		return false;
+	}
+	auto child = postfix.child.toPostfixChecked();
+	if (child is null || child.memberFunction is null) {
+		return false;
+	}
+	auto func = child.memberFunction.decl.toFunctionFast();
+	auto eref = child.child.toExpReferenceChecked();
+	if (eref is null) {
+		return false;
+	}
+	auto var = eref.decl.toVariableChecked();
+	if (var is null) {
+		return false;
+	}
+
+	auto assignOverload   = overloadPostfixAssignName(func.name);
+	if (assignOverload == "") {
+		return false;
+	}
+
+	ir.Exp rhs;
+	switch (binop.op) with (ir.BinOp.Op) {
+	case Assign:
+		rhs = binop.right;
+		break;
+	case AddAssign:
+		rhs = buildAdd(binop.right.loc, copyExp(postfix), binop.right);
+		break;
+	case MulAssign:
+		rhs = buildMul(binop.right.loc, copyExp(postfix), binop.right);
+		break;
+	case DivAssign:
+		rhs = buildDiv(binop.right.loc, copyExp(postfix), binop.right);
+		break;
+	case SubAssign:
+		rhs = buildSub(binop.right.loc, copyExp(postfix), binop.right);
+		break;
+	case ModAssign:
+		rhs = buildMod(binop.right.loc, copyExp(postfix), binop.right);
+		break;
+	case AndAssign:
+		rhs = buildAnd(binop.right.loc, copyExp(postfix), binop.right);
+		break;
+	case OrAssign:
+		rhs = buildOr(binop.right.loc, copyExp(postfix), binop.right);
+		break;
+	case XorAssign:
+		rhs = buildXor(binop.right.loc, copyExp(postfix), binop.right);
+		break;
+	case CatAssign:
+		rhs = buildCat(binop.right.loc, copyExp(postfix), binop.right);
+		break;
+	case LSAssign:
+		rhs = buildLS(binop.right.loc, copyExp(postfix), binop.right);
+		break;
+	case SRSAssign:
+		rhs = buildSRS(binop.right.loc, copyExp(postfix), binop.right);
+		break;
+	case RSAssign:
+		rhs = buildRS(binop.right.loc, copyExp(postfix), binop.right);
+		break;
+	case PowAssign:
+		rhs = buildPow(binop.right.loc, copyExp(postfix), binop.right);
+		break;
+	default: return false;
+	}
+
+	auto newfunc = rewriteOperator(ctx, exp, assignOverload,
+		eref, postfix.arguments ~ rhs);
+	if (!typesEqual(func.type.ret, newfunc.type.ret)) {
+		throw makeExpected(newfunc.loc,
+			format("\"%s\" to have same return type as \"%s\"",
+			newfunc.name, func.name));
+	}
+	return true;
+}
+
 /*!
  * Handles logical operators (making a && b result in a bool),
  * binary of storage types, otherwise forwards to assign or primitive
@@ -2266,7 +2354,11 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 	// Check for lvalue and touch up aa[key] = 'left'.
 	if (isAssign) {
 		if (!isAssignable(binop.left)) {
-			throw makeExpected(binop.left.loc, "lvalue");
+			if (!rewriteOpIndexAssign(ctx, binop, exp)) {
+				throw makeExpected(binop.left.loc, "lvalue");
+			} else {
+				return getExpType(exp);
+			}
 		}
 
 		if (isVoid(getExpType(binop.right))) {

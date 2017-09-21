@@ -1428,6 +1428,15 @@ string overloadPostfixName(ir.Postfix.Op op)
 	}
 }
 
+string overloadPostfixAssignName(string oldname)
+{
+	switch (oldname) {
+	case "opIndex": return "opIndexAssign";
+	case "opSlice": return "opSliceAssign";
+	default: return "";
+	}
+}
+
 string overloadUnaryMinusName()
 {
 	return "opNeg";

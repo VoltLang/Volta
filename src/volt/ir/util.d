@@ -1267,6 +1267,94 @@ ir.BinOp buildSub(ref in Location loc, ir.Exp left, ir.Exp right)
 }
 
 /*!
+ * Builds a multiplication BinOp.
+ */ 
+ir.BinOp buildMul(ref in Location loc, ir.Exp left, ir.Exp right)
+{
+	return buildBinOp(loc, ir.BinOp.Op.Mul, left, right);
+}
+
+/*!
+ * Builds a division BinOp.
+ */ 
+ir.BinOp buildDiv(ref in Location loc, ir.Exp left, ir.Exp right)
+{
+	return buildBinOp(loc, ir.BinOp.Op.Div, left, right);
+}
+
+/*!
+ * Builds a modulo BinOp.
+ */
+ir.BinOp buildMod(ref in Location loc, ir.Exp left, ir.Exp right)
+{
+	return buildBinOp(loc, ir.BinOp.Op.Mod, left, right);
+}
+
+/*!
+ * Builds a bitwise and Binop
+ */
+ir.BinOp buildAnd(ref in Location loc, ir.Exp left, ir.Exp right)
+{
+	return buildBinOp(loc, ir.BinOp.Op.And, left, right);
+}
+
+/*!
+ * Builds a bitwise or Binop
+ */
+ir.BinOp buildOr(ref in Location loc, ir.Exp left, ir.Exp right)
+{
+	return buildBinOp(loc, ir.BinOp.Op.Or, left, right);
+}
+
+/*!
+ * Builds a bitwise xor binop.
+ */
+ir.BinOp buildXor(ref in Location loc, ir.Exp left, ir.Exp right)
+{
+	return buildBinOp(loc, ir.BinOp.Op.Xor, left, right);
+}
+
+/*!
+ * Builds a concatenate BinOp.
+ */
+ir.BinOp buildCat(ref in Location loc, ir.Exp left, ir.Exp right)
+{
+	return buildBinOp(loc, ir.BinOp.Op.Cat, left, right);
+}
+
+/*!
+ * Builds a LS BinOp.
+ */
+ir.BinOp buildLS(ref in Location loc, ir.Exp left, ir.Exp right)
+{
+	return buildBinOp(loc, ir.BinOp.Op.LS, left, right);
+}
+
+/*!
+ * Builds a SRS BinOp.
+ */
+ir.BinOp buildSRS(ref in Location loc, ir.Exp left, ir.Exp right)
+{
+	return buildBinOp(loc, ir.BinOp.Op.SRS, left, right);
+}
+
+/*!
+ * Builds an RS BinOp.
+ */
+ir.BinOp buildRS(ref in Location loc, ir.Exp left, ir.Exp right)
+{
+	return buildBinOp(loc, ir.BinOp.Op.RS, left, right);
+}
+
+/*!
+ * Builds a Pow BinOp.
+ */
+ir.BinOp buildPow(ref in Location loc, ir.Exp left, ir.Exp right)
+{
+	return buildBinOp(loc, ir.BinOp.Op.Pow, left, right);
+}
+
+/*!
  * Builds an assign BinOp.
  */
 ir.BinOp buildAssign(ref in Location loc, ir.Exp left, ir.Exp right)
