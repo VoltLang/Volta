@@ -168,6 +168,52 @@ public:
 	}
 
 public:
+	static string opToString(Op op) {
+		final switch (op) with (Op) {
+		case None: return "none";
+		case Assign: return "=";
+		case AddAssign: return "+=";
+		case SubAssign: return "-=";
+		case MulAssign: return "*=";
+		case DivAssign: return "/=";
+		case ModAssign: return "%=";
+		case AndAssign: return "&=";
+		case OrAssign: return "|=";
+		case XorAssign: return "^=";
+		case CatAssign: return "~=";
+		case LSAssign: return "<<";
+		case SRSAssign: return ">>=";
+		case RSAssign: return ">>=";
+		case PowAssign: return "^^=";
+		case OrOr: return "||";
+		case AndAnd: return "&&";
+		case Or: return "|";
+		case Xor: return "^";
+		case And: return "&";
+		case Equal: return "==";
+		case NotEqual: return "!=";
+		case Is: return "is";
+		case NotIs: return "!is";
+		case Less: return "<";
+		case LessEqual: return "<=";
+		case GreaterEqual: return ">=";
+		case Greater: return ">";
+		case In: return "in";
+		case NotIn: return "!in";
+		case LS: return "<<";
+		case SRS: return ">>";
+		case RS: return ">>>";
+		case Add: return "+";
+		case Sub: return "-";
+		case Cat: return "~";
+		case Mul: return "*";
+		case Div: return "/";
+		case Mod: return "%";
+		case Pow: return "^^";
+		}
+	}
+
+public:
 	Op op;  //!< The operation to perform.
 	Exp left;  //!< The left hand side of the expression.
 	Exp right;  //!< The right hand side of the expression.
@@ -272,6 +318,21 @@ public:
 		None,
 		Ref,
 		Out,
+	}
+
+public:
+	static string opToString(Op op)
+	{
+		final switch (op) {
+		case Op.None: return "none";
+		case Op.Identifier: return "identifier";
+		case Op.Increment: return "increment";
+		case Op.Decrement: return "decrement";
+		case Op.Call: return "call";
+		case Op.Index: return "index";
+		case Op.Slice: return "slice";
+		case Op.CreateDelegate: return "createdelegate";
+		}
 	}
 
 public:
