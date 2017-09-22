@@ -540,7 +540,7 @@ ir.ExpReference buildExpReference(ref in Location loc, ir.Declaration decl, scop
 	auto varRef = new ir.ExpReference();
 	varRef.loc = loc;
 	varRef.decl = decl;
-	varRef.idents ~= names;
+	varRef.idents = names.dup();  // @todo if this is `~= names;`, PrettyPrinter output is corrupt.
 
 	return varRef;
 }
