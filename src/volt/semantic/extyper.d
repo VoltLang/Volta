@@ -2195,7 +2195,7 @@ void extypeCat(Context ctx, ref ir.Exp lexp, ref ir.Exp rexp,
 	}
 
 	checkAndDoConvert(ctx, rarray is null ? left.base : left, rexp);
-	rexp = buildCastSmart(left.base, rexp);
+	rexp = buildCastSmart(rarray is null ? left.base : left, rexp);
 }
 
 bool rewriteOpIndexAssign(Context ctx, ir.BinOp binop, ref ir.Exp exp)
