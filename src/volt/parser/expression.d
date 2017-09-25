@@ -2089,7 +2089,8 @@ bool isUnambiguouslyParenType(ParserStream ps)
 	switch (ps.peek.type) with (TokenType) {
 	case Bool, Byte, Short, Int, Long,
 		 Char, Ubyte, Ushort, Uint, Ulong,
-		 Dchar, Wchar, Void:
+		 Dchar, Wchar, Void, I8, U8, I16, U16,
+		 I32, U32, I64, U64:
 		return true;
 	default:
 		return false;
