@@ -469,11 +469,12 @@ bool typeLookup(Context ctx, ref ir.Exp exp, ir.Type type)
 
 	bool max;
 	auto realt = realType(type);
-	auto prim = cast(ir.PrimitiveType)realt;
-	auto pointer = cast(ir.PointerType)realt;
+	auto prim = realt.toPrimitiveTypeChecked();
+	auto pointer = realt.toPointerTypeChecked();
 	auto named = cast(ir.Named)realt;
 
-	if (named !is null && postfix.identifier.value == "init") {
+	if (postfix.identifier.value == "init" &&
+		(named !is null || (prim is null && pointer is null))) {
 		exp = getDefaultInit(exp.loc, ctx.lp, type);
 		return true;
 	}
