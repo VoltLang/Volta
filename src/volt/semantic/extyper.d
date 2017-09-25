@@ -1737,7 +1737,16 @@ ir.Type extypeUnary(Context ctx, ref ir.Exp exp, Parent parent)
 	assert(unary !is null);
 
 	if (unary.type !is null) {
+		if (unary.op == ir.Unary.Op.New) {
+			auto tr = unary.type.toTypeReferenceChecked();
+			string name;
+			if (tr !is null) {
+				name = tr.id.toString();
+			}
+			ctx.current.typeResolutionError = makeExpressionForNew(exp.loc, name);
+		}
 		resolveType(ctx, unary.type);
+		ctx.current.typeResolutionError = null;
 	}
 	if (unary.value !is null) {
 		extype(ctx, unary.value, Parent.NA);

@@ -649,7 +649,11 @@ ir.Type ensureType(ir.Scope _scope, ref in Location loc, string name, ir.Store s
 
 	auto asType = cast(ir.Type) store.node;
 	if (asType is null) {
-		throw makeError(loc, format("expected type, got '%s'.", name));
+		if (_scope.typeResolutionError !is null) {
+			throw _scope.typeResolutionError;
+		} else {
+			throw makeError(loc, format("expected type, got '%s'.", name));
+		}
 	}
 
 	return asType;

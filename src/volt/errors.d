@@ -101,6 +101,15 @@ CompilerException makeEmitLLVMNoLink(string file = __FILE__, const int line = __
  *
  */
 
+CompilerException makeExpressionForNew(ref in Location loc, string name, string file = __FILE__, const int line = __LINE__)
+{
+	auto msg = `got an expression where we expected a type for a 'new'.`;
+	if (name != "") {
+		msg ~= format("\nIf '%s' is an array you want to copy,\nuse 'new %s[..]' to duplicate it.", name, name);
+	}
+	return makeError(loc, msg, file, line);
+}
+
 CompilerException makeMisplacedContinue(ref in Location loc, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(loc, "continue statement outside of loop.", file, line);

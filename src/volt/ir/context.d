@@ -5,6 +5,7 @@ module volt.ir.context;
 import watt.conv : toString;
 import watt.text.format : format;
 
+import volt.exceptions;
 import volt.errors;
 import volt.ir.base;
 import volt.ir.type;
@@ -254,6 +255,8 @@ public:
 	Scope parent;
 	//! Declared symbols in this scope.
 	Store[string] symbols;
+	//! If a type fails to resolve in this scope when this is set, throw it.
+	CompilerException typeResolutionError;
 
 	/*!
 	 * Modules to implicitly look up symbols in.
