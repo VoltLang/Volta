@@ -4392,8 +4392,33 @@ void resolveAlias(LanguagePass lp, ir.Alias a)
 
 	ir.Store ret;
 	if (a.lookModule is null) {
-		// Normal alias.
-		ret = lookup(lp, a.lookScope, a.id);
+		if (a.staticIf !is null) {
+			ir.Type foundType;
+			foreach (i, condition; a.staticIf.conditions) {
+				auto constant = evaluate(lp, a.lookScope, condition);
+				if (constant is null || !isBool(getExpType(constant))) {
+					assert(constant !is null);
+					throw makeExpected(condition.loc, "constant expression that evaluates to a bool");
+				}
+				if (constant.u._bool) {
+					foundType = a.staticIf.types[i];
+					break;
+				}
+			}
+			if (foundType is null &&
+				a.staticIf.types.length > a.staticIf.conditions.length) {
+				foundType = a.staticIf.types[$-1];
+			}
+			if (foundType !is null) {
+				a.type = foundType;
+				resolveType(lp, a.lookScope, a.type);
+				return s.markAliasResolved(a.type);
+			}
+			throw makeError(a.staticIf.loc, "no valid condition for alias static if.");
+		} else {
+			// Normal alias.
+			ret = lookup(lp, a.lookScope, a.id);
+		}
 	} else {
 		// Import alias.
 		assert(a.lookScope is null);
@@ -5162,6 +5187,11 @@ public:
 
 	override Status enter(ir.Alias a)
 	{
+		if (a.staticIf !is null) {
+			foreach (ref condition; a.staticIf.conditions) {
+				extype(ctx, condition, Parent.NA);
+			}
+		}
 		ctx.lp.resolve(a);
 		return ContinueParent;
 	}

@@ -218,6 +218,9 @@ public:
 		if (old.type !is null) {
 			a.type = copyType(old.type);
 		}
+		if (old.staticIf !is null) {
+			a.staticIf = copyAliasStaticIf(old.staticIf);
+		}
 		return a;
 	}
 
