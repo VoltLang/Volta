@@ -44,7 +44,8 @@ ParseStatus parseVariable(ParserStream ps, NodeSinkDg dgt)
 	auto loc = ps.peek.loc;
 	auto _global = matchIf(ps, TokenType.Global);
 	if (!_global) {
-		_global = matchIf(ps, TokenType.Static);  // Deprecate after self-hosting etc.
+		// Deprecate after self-hosting etc.
+		_global = matchIf(ps, TokenType.Static);  
 	}
 
 	if (ps == TokenType.Fn) {
@@ -147,7 +148,8 @@ ParseStatus parseAlias(ParserStream ps, out ir.Alias a)
 
 	size_t i = 1;
 	bool bang;
-	while (ps.lookahead(i).type != TokenType.Semicolon && ps.lookahead(i).type != TokenType.End) {
+	while (ps.lookahead(i).type != TokenType.Semicolon &&
+		   ps.lookahead(i).type != TokenType.End) {
 		bang = ps.lookahead(i).type == TokenType.Bang;
 		if (bang) {
 			break;
@@ -183,8 +185,17 @@ ParseStatus parseAlias(ParserStream ps, out ir.Alias a)
 		}
 		ps.restore(pos);
 		ps.resetErrors();
-
 		a.id = null;
+
+		if (ps == TokenType.Static) {
+			succeeded = parseAliasStaticIf(ps, a.staticIf);
+			if (!succeeded) {
+				return parseFailed(ps, a);
+			}
+			ps.retroComment = a;
+			return Succeeded;
+		}
+
 		if (ps == TokenType.Extern) {
 			succeeded = parseAttribute(ps, a.externAttr, true);
 			if (!succeeded) {
@@ -202,6 +213,71 @@ ParseStatus parseAlias(ParserStream ps, out ir.Alias a)
 	}
 
 	ps.retroComment = a;
+	return Succeeded;
+}
+
+ParseStatus parseAliasStaticIf(ParserStream ps, out ir.AliasStaticIf asi)
+{
+	asi = new ir.AliasStaticIf();
+	asi.loc = ps.peek.loc;
+
+	auto succeeded = match(ps, asi.nodeType,
+		[TokenType.Static, TokenType.If, TokenType.OpenParen]);
+	if (!succeeded) {
+		return succeeded;
+	}
+
+	do {
+		ir.Exp condition;
+		succeeded = parseExp(ps, condition);
+		if (!succeeded) {
+			return parseFailed(ps, asi.nodeType);
+		}
+		succeeded = match(ps, asi.nodeType,
+			[TokenType.CloseParen, TokenType.OpenBrace]);
+		if (!succeeded) {
+			return succeeded;
+		}
+
+		ir.Type type;
+		succeeded = parseType(ps, type);
+		if (!succeeded) {
+			return parseFailed(ps, asi.nodeType);
+		}
+		succeeded = match(ps, asi.nodeType,
+			[TokenType.Semicolon, TokenType.CloseBrace]);
+		if (!succeeded) {
+			return parseFailed(ps, asi.nodeType);
+		}
+
+		asi.conditions ~= condition;
+		asi.types ~= type;
+		if (ps != TokenType.Else || ps == [TokenType.Else, TokenType.OpenBrace]) {
+			break;
+		}
+		succeeded = match(ps, asi.nodeType,
+			[TokenType.Else, TokenType.If, TokenType.OpenParen]);
+		if (!succeeded) {
+			return succeeded;
+		}
+	} while (ps != TokenType.End);
+
+	if (ps == TokenType.Else) {
+		succeeded = match(ps, asi.nodeType,
+			[TokenType.Else, TokenType.OpenBrace]);
+		ir.Type type;
+		succeeded = parseType(ps, type);
+		if (!succeeded) {
+			return parseFailed(ps, asi.nodeType);
+		}
+		succeeded = match(ps, asi.nodeType,
+			[TokenType.Semicolon, TokenType.CloseBrace]);
+		if (!succeeded) {
+			return succeeded;
+		}
+		asi.types ~= type;
+	}
+
 	return Succeeded;
 }
 

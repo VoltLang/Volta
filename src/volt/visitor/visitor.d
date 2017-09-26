@@ -143,6 +143,8 @@ public abstract:
 	Status leave(ir.TypeOf typeOf);
 	Status enter(ir.EnumDeclaration);
 	Status leave(ir.EnumDeclaration);
+	Status enter(ir.AliasStaticIf);
+	Status leave(ir.AliasStaticIf);
 
 	Status visit(ir.PrimitiveType it);
 	Status visit(ir.TypeReference tr);
@@ -336,6 +338,8 @@ override:
 	Status leave(ir.TypeOf to) { return Continue; }
 	Status enter(ir.EnumDeclaration ed){ return Continue; }
 	Status leave(ir.EnumDeclaration ed){ return Continue; }
+	Status enter(ir.AliasStaticIf asi){ return Continue; }
+	Status leave(ir.AliasStaticIf asi){ return Continue; }
 
 	/*
 	 * Template Nodes.
@@ -587,7 +591,9 @@ body {
 		return av.visit(n.toAutoTypeFast());
 	case NoType:
 		return av.visit(n.toNoTypeFast());
-	
+	case AliasStaticIf:
+		return acceptAliasStaticIf(n.toAliasStaticIfFast(), av);
+
 	/*
 	 * Templates
 	 */
@@ -1207,6 +1213,30 @@ Visitor.Status acceptEnumDeclaration(ir.EnumDeclaration ed, Visitor av)
 	}
 
 	return av.leave(ed);
+}
+
+Visitor.Status acceptAliasStaticIf(ir.AliasStaticIf asi, Visitor av)
+{
+	auto status = av.enter(asi);
+	if (status != VisitorContinue) {
+		return parentContinue(status);
+	}
+
+	foreach (ref condition; asi.conditions) {
+		status = acceptExp(condition, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	foreach (type; asi.types) {
+		status = accept(type, av);
+		if (status == VisitorStop) {
+			return VisitorStop;
+		}
+	}
+
+	return av.leave(asi);
 }
 
 /*

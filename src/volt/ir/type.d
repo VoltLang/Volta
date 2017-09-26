@@ -625,3 +625,59 @@ public:
 		super(NodeType.NoType, old);
 	}
 }
+
+/*!
+ * A special kind of type that allows an alias to have multiple configurations.
+ *
+ * Only occurs in alias declarations and takes this form:
+ * ```volt
+ * alias foo = static if (condition) {
+ *     T1;
+ * } else if (condition2) {
+ *     T2;
+ * } else {
+ *     T3;
+ * }
+ * ```
+ *
+ * Where `condition` is a compile time expression, and in the braces
+ * are types.  
+ * The resolution is just as the `static if` form suggests. The first
+ * condition is checked, if it is true, the associated type is used,
+ * otherwise the next condition is checked, and so on. If they all fail,
+ * the last blank else condition is used (if any).  
+ * If there are no matching condition blocks, then an error is generated.
+ *
+ * @ingroup irNode irType
+ */
+class AliasStaticIf : Type
+{
+public:
+	/*!
+	 * The expression conditions.  
+	 * The length of this array will be equal or one less than the length of
+	 * the `types` array.
+	 */
+	Exp[] conditions;
+	/*!
+	 * The types that correspond to the conditions.  
+	 * The length of this array will be equal or one more than the length of
+	 * the `conditions` array.  
+	 * If this array is one longer than `conditions`, the last element is the
+	 * type of the final naked `else` block.
+	 */
+	Type[] types;
+
+public:
+	this()
+	{
+		super(NodeType.AliasStaticIf);
+	}
+
+	this(AliasStaticIf old)
+	{
+		super(NodeType.AliasStaticIf, old);
+		this.conditions = old.conditions.dup();
+		this.types = old.types.dup();
+	}
+}

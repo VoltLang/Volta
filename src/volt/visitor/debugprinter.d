@@ -314,6 +314,8 @@ public:
 	override Status leave(ir.TypeOf n) { leaveNode(n); return Continue; }
 	override Status enter(ir.EnumDeclaration n) { enterNode(n); return Continue; }
 	override Status leave(ir.EnumDeclaration n) { leaveNode(n); return Continue; }
+	override Status enter(ir.AliasStaticIf n) { enterNode(n); return Continue; }
+	override Status leave(ir.AliasStaticIf n) { leaveNode(n); return Continue; }
 
 	/*
 	 * Template Nodes.

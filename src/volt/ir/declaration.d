@@ -240,6 +240,13 @@ public:
 	QualifiedName id;
 
 	/*!
+	 * This alias uses an `AliasStaticIf` to resolve a type.
+	 *
+	 * alias name = static if (condition) { type; } else { type2; }
+	 */
+	AliasStaticIf staticIf;
+
+	/*!
 	 * Where are we looking for the symbol.
 	 * @{
 	 */
@@ -272,6 +279,7 @@ public:
 		this.lookScope = old.lookScope;
 		this.lookModule = old.lookModule;
 		this.templateInstance = old.templateInstance;
+		this.staticIf = old.staticIf;
 	}
 }
 

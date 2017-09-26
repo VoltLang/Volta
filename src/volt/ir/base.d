@@ -81,6 +81,7 @@ enum NodeType
 	NullType,
 	AutoType,
 	NoType,
+	AliasStaticIf,
 
 	/* declaration.d */
 	Variable,
@@ -348,7 +349,9 @@ public:
 	final AutoType toAutoTypeFast() { return cast(AutoType)cast(void*)this; }
 	final AutoType toAutoTypeChecked() { if (nodeType == NodeType.AutoType) return toAutoTypeFast(); else return null; }
 	final NoType toNoTypeFast() { return cast(NoType)cast(void*)this; }
-	final NoType toNoTypeChecked() { if (nodeType == NodeType.NoType) return toNoTypeChecked(); else return null; }
+	final NoType toNoTypeChecked() { if (nodeType == NodeType.NoType) return toNoTypeFast(); else return null; }
+	final AliasStaticIf toAliasStaticIfFast() { return cast(AliasStaticIf)cast(void*)this; }
+	final AliasStaticIf toAliasStaticIfChecked() { if (nodeType == NodeType.AliasStaticIf) return toAliasStaticIfFast(); else return null; }
 	final CallableType toCallableTypeFast() { return cast(CallableType)cast(void*)this; }
 	final CallableType toCallableTypeChecked() { if (nodeType == NodeType.DelegateType || nodeType == NodeType.FunctionType) return toCallableTypeFast(); else return null; }
 
@@ -673,6 +676,7 @@ string nodeToString(NodeType nodeType)
 	case AutoType: return "AutoType";
 	case BuiltinExp: return "BuiltinExp";
 	case NoType: return "NoType";
+	case AliasStaticIf: return "AliasStaticIf";
 	case AccessExp: return "AccessExp";
 	case RunExp: return "RunExp";
 	case ComposableString: return "ComposableString";

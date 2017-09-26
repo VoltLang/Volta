@@ -617,6 +617,18 @@ public:
 	 *
 	 */
 
+	ir.AliasStaticIf copyAliasStaticIf(ir.AliasStaticIf old)
+	{
+		auto asi = new ir.AliasStaticIf(old);
+		foreach (ref condition; asi.conditions) {
+			condition = copyExp(condition);
+		}
+		foreach (ref type; asi.types) {
+			type = copyType(type);
+		}
+		return asi;
+	}
+
 	ir.FunctionType copy(ir.FunctionType old)
 	{
 		auto n = new ir.FunctionType(old);

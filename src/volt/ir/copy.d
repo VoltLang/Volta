@@ -528,6 +528,7 @@ ir.Node copyNode(ir.Node n)
 	case Struct:
 	case Class:
 	case Interface:
+	case AliasStaticIf:
 		auto t = cast(ir.Type)n;
 		return copyTypeSmart(t.loc, t);  // @todo do correctly.
 	case QualifiedName:

@@ -1490,18 +1490,56 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.AliasStaticIf asi)
+	{
+		wf("static if (");
+		foreach (i, ref condition; asi.conditions) {
+			acceptExp(condition, this);
+			wfln(") {");
+			mIndent++;
+			twf();
+			accept(asi.types[i], this);
+			wfln(";");
+			mIndent--;
+			twf("} ");
+			if (i < asi.conditions.length - 1) {
+				wf("else if ");
+			}
+		}
+		if (asi.types.length > asi.conditions.length) {
+			wfln("else {");
+			mIndent++;
+			twf();
+			accept(asi.types[$-1], this);
+			wfln(";");
+			mIndent--;
+			twfln("}");
+		} else {
+			wfln("");
+		}
+		return ContinueParent;
+	}
+
+	override Status leave(ir.AliasStaticIf asi)
+	{
+		assert(false);
+	}
+
 	override Status enter(ir.Alias a)
 	{
 		ln();
 		twf("alias ");
 		wf(a.name);
 		wf(" = ");
-		if (a.type !is null)
+		if (a.type !is null) {
 			accept(a.type, this);
-		else if (a.id !is null)
+		} else if (a.id !is null) {
 			accept(a.id, this);
-		else
+		} else if (a.staticIf !is null) {
+			accept(a.staticIf, this);
+		} else {
 			wf("null");
+		}
 		wfln(";");
 		return ContinueParent;
 	}
