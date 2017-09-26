@@ -1,0 +1,26 @@
+module test;
+
+struct LinkedList!(T, val: i32)
+{
+	enum VAL = val;
+	alias Key = static if (VAL == 0) {
+		i8;
+	} else {
+		i16;
+	}
+}
+
+struct I8List  = mixin LinkedList!(i8, 0);
+struct I16List = mixin LinkedList!(i16, 1);
+
+fn main() i32
+{
+	if (typeid(I8List.Key).size != 1) {
+		return 1;
+	}
+	if (typeid(I16List.Key).size != 2) {
+		return 2;
+	}
+	return 0;
+}
+
