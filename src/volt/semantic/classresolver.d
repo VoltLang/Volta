@@ -480,7 +480,7 @@ void appendPotentialOverrideFunctions(ir.Function func, ir.Function considerFunc
 		return;
 	}
 
-	if (func.name == considerFunction.name) {
+	if (func.name == considerFunction.name && typesEqual(func.type, considerFunction.type)) {
 		if (func.access != considerFunction.access) {
 			throw makeOverriddenFunctionsAccessMismatch(func, considerFunction);
 		}
