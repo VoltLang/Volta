@@ -289,7 +289,7 @@ bool willConvertPrimitiveType(ir.Type parameter, ir.Type argument)
 	// We are now dealing with integers only.
 
 	// Bool an always be casted to any other integer type.
-	if (rprim.type == ir.PrimitiveType.Kind.Bool) {
+	if (rprim.type == ir.PrimitiveType.Kind.Bool && isIntegral(lprim)) {
 		return true;
 	}
 
