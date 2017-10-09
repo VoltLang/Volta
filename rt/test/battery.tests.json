@@ -39,6 +39,10 @@
 		"internal-d": [
 			"//T run:volta --internal-d -o %t %s",
 			"//T run:%t"
+		],
+		"warnings": [
+			"//T run:volta -o %t %s -w",
+			"//T run:%t"
 		]
 	},
 	"requiresAliases": {
