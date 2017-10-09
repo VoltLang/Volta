@@ -30,6 +30,13 @@ void hackTypeWarning(ir.Node n, ir.Type nt, ir.Type ot)
 	writefln(str);
 }
 
+void warningAssignInCondition(ref in Location loc, bool warningsEnabled)
+{
+	if (warningsEnabled) {
+		warning(loc, "assign in condition.");
+	}
+}
+
 void warningStringCat(ref in Location loc, bool warningsEnabled)
 {
 	if (warningsEnabled) {

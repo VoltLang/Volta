@@ -3955,6 +3955,9 @@ void extypeIfStatement(Context ctx, ref ir.Node n)
 	auto loc = ifs.loc;
 	if (ifs.exp !is null) {
 		extype(ctx, ifs.exp, Parent.NA);
+		if (isAssign(ifs.exp)) {
+			warningAssignInCondition(ifs.exp.loc, ctx.lp.warningsEnabled);
+		}
 	}
 
 	if (ifs.autoName.length > 0) {
@@ -4010,6 +4013,9 @@ void extypeForStatement(Context ctx, ref ir.Node n)
 
 	if (fs.test !is null) {
 		extype(ctx, fs.test, Parent.NA);
+		if (isAssign(fs.test)) {
+			warningAssignInCondition(fs.test.loc, ctx.lp.warningsEnabled);
+		}
 		implicitlyCastToBool(ctx, fs.test);
 	}
 	foreach (ref increment; fs.increments) {
@@ -4027,6 +4033,9 @@ void extypeWhileStatement(Context ctx, ref ir.Node n)
 
 	if (ws.condition !is null) {
 		extype(ctx, ws.condition, Parent.NA);
+		if (isAssign(ws.condition)) {
+			warningAssignInCondition(ws.condition.loc, ctx.lp.warningsEnabled);
+		}
 		implicitlyCastToBool(ctx, ws.condition);
 	}
 
@@ -4041,6 +4050,9 @@ void extypeDoStatement(Context ctx, ref ir.Node n)
 
 	if (ds.condition !is null) {
 		extype(ctx, ds.condition, Parent.NA);
+		if (isAssign(ds.condition)) {
+			warningAssignInCondition(ds.condition.loc, ctx.lp.warningsEnabled);
+		}
 		implicitlyCastToBool(ctx, ds.condition);
 	}
 }
