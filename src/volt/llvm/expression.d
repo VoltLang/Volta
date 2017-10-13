@@ -19,6 +19,7 @@ import volt.ir.util;
 
 import volt.llvm.common;
 import volt.llvm.interfaces;
+import volt.llvm.abi.base;	
 static import volt.semantic.mangle;
 static import volt.semantic.classify;
 
@@ -1112,6 +1113,7 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 	auto ct = cast(CallableType)result.type;
 	auto ft = cast(FunctionType)result.type;
 	auto dt = cast(DelegateType)result.type;
+	auto irc = cast(ir.CallableType) result.type.irType;
 
 	Type ret;
 	if (ft !is null) {
@@ -1147,7 +1149,7 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 
 	foreach (i, arg; postfix.arguments) {
 		auto v = args[i+offset] = new Value();
-		state.getValueAnyForm(arg, v);
+		state.getValueAnyForm(postfix.arguments[i], v);
 
 		bool isInBounds = i < ct.ct.params.length;
 		bool isRefOut = isInBounds && (ct.ct.isArgRef[i] || ct.ct.isArgOut[i]);
@@ -1162,20 +1164,25 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 		}
 	}
 
+	abiCoerceArguments(state, /*can be null*/irc, /*ref*/llvmArgs);
+
 	result.value = state.buildCallOrInvoke(postfix.loc, result.value, llvmArgs);
 
 	// Yes its the same loop again.
-	foreach (i, arg; postfix.arguments) {
+	size_t abiOffset = 0;
+	for (size_t i = 0; i < postfix.arguments.length; ++i) {
 		bool isInBounds = i < ct.ct.params.length;
 		bool isRefOut = isInBounds && (ct.ct.isArgRef[i] || ct.ct.isArgOut[i]);
 		bool isStruct = args[i+offset].type.passByVal;
 		if (!isRefOut && isStruct) {
-			auto index = cast(LLVMAttributeIndex)(i+offset+1);
+			auto index = cast(LLVMAttributeIndex)(i+offset+1+abiOffset);
 			LLVMAddCallSiteAttribute(result.value, index, state.attrByVal);
+		}
+		if (irc !is null && irc.abiModified && irc.abiData[i+abiOffset].length == 2) {
+			abiOffset++;
 		}
 	}
 
-	auto irc = cast(ir.CallableType) result.type.irType;
 	if (irc !is null) switch (irc.linkage) {
 	case ir.Linkage.Windows:
 		LLVMSetInstructionCallConv(result.value, LLVMCallConv.X86Stdcall);
@@ -1417,6 +1424,8 @@ void handleEnumMembers(State state, ir.BuiltinExp inbuilt, Value result)
 	auto args = new LLVMValueRef[](2);
 	args[0] = fromConstantString(state, inbuilt.loc, inbuilt.loc.toString());
 	args[1] = fromConstantString(state, inbuilt.loc, "invalid enum member passed as composable string component");
+	auto ct = cast(ir.CallableType)t.irType;
+	abiCoerceArguments(state, /*can be null*/ct, /*ref*/args);
 	LLVMBuildCall(state.builder, assertval, args.ptr, cast(uint)args.length, "".ptr);
 	LLVMBuildUnreachable(state.builder);
 

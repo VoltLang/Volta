@@ -63,6 +63,7 @@ public:
 abstract class State
 {
 public:
+	LanguagePass lp;
 	TargetInfo target;
 	ir.Module irMod;
 	string execDir;
@@ -294,9 +295,10 @@ public:
 	 */
 	final LLVMValueRef buildAlloca(LLVMTypeRef llvmType, string name)
 	{
+		LLVMBasicBlockRef oldPosition = LLVMGetInsertBlock(builder);
 		LLVMPositionBuilderBefore(builder, fnState.entryBr);
 		auto v = LLVMBuildAlloca(builder, llvmType, name);
-		LLVMPositionBuilderAtEnd(builder, fnState.block);
+		LLVMPositionBuilderAtEnd(builder, oldPosition);
 		return v;
 	}
 

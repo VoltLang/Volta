@@ -73,7 +73,7 @@ protected:
 	LLVMTypeRef mLandingType;
 
 public:
-	this(TargetInfo target, ir.Module irMod, ir.Function ehPersonality, ir.Function llvmTypeidFor,
+	this(LanguagePass lp, ir.Module irMod, ir.Function ehPersonality, ir.Function llvmTypeidFor,
 		string execDir, string identStr)
 	{
 		assert(irMod.name.identifiers.length > 0);
@@ -84,7 +84,8 @@ public:
 		this.mod = LLVMModuleCreateWithNameInContext(name, context);
 		this.builder = LLVMCreateBuilderInContext(context);
 		this.diBuilder = LLVMCreateDIBuilder(mod);
-		this.target = target;
+		this.lp = lp;
+		this.target = lp.target;
 		this.execDir = execDir;
 		assert(this.execDir.length > 0);
 		this.identStr = identStr;

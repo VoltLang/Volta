@@ -16,6 +16,7 @@ import volt.visitor.visitor;
 import volt.semantic.classify;
 import volt.llvm.di : diVariable;
 import volt.llvm.interfaces;
+import volt.llvm.abi.base;
 import ir = volt.ir.ir;
 
 
@@ -71,6 +72,7 @@ public:
 		}
 
 		auto ft = cast(FunctionType) type;
+		auto ct = cast(ir.CallableType)type.irType;
 		assert(ft !is null);
 
 		auto di = diFunction(state, func, llvmFunc, ft);
@@ -110,16 +112,18 @@ public:
 		}
 
 		size_t offset = func.type.hiddenParameter || ft.hasStructRet;
-		foreach (irIndex, p; func.params) {
-			auto v = LLVMGetParam(llvmFunc, cast(uint)(irIndex + offset));
+		size_t abiOffset;
+		for (size_t irIndex = 0; irIndex < func.params.length; ++irIndex) {
+			auto p = func.params[irIndex];
+			auto v = LLVMGetParam(llvmFunc, cast(uint)(irIndex + offset + abiOffset));
 			auto t = state.fromIr(p.type);
 
 			bool isRef = func.type.isArgRef[irIndex];
 			bool isOut = func.type.isArgOut[irIndex];
 			bool isStruct = t.passByVal;
 
-			// These two condition has to happen
-			// even if the parameter isn't nameed.
+			// These two conditions have to happen,
+			// even if the parameter isn't named.
 			if (isOut) {
 				auto initC = LLVMConstNull(t.llvmType);
 				LLVMBuildStore(state.builder, initC, v);
@@ -128,14 +132,16 @@ public:
 				LLVMAddAttributeAtIndex(llvmFunc, index, state.attrByVal);
 			}
 
-			// Early out on unmaned parameters.
+			// Early out on unamed parameters.
 			if (p.name is null) {
 				continue;
 			} else if (isRef || isOut || isStruct) {
 				state.makeByValVariable(p, v);
 			} else {
-				auto a = state.getVariableValue(p, t);
-				LLVMBuildStore(state.builder, v, a);
+				if (!abiCoercePrologueParameter(state, llvmFunc, func, ct, v, irIndex+offset, abiOffset)) {
+					auto a = state.getVariableValue(p, t);
+					LLVMBuildStore(state.builder, v, a);
+				}
 			}
 		}
 

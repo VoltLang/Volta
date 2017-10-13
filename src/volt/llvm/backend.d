@@ -51,6 +51,7 @@ import volt.llvm.toplevel;
 class LlvmBackend : Backend
 {
 protected:
+	LanguagePass lp;
 	TargetInfo target;
 	LLVMTargetRef llvmTarget;
 	LLVMTargetMachineRef llvmMachineTarget;
@@ -58,9 +59,10 @@ protected:
 
 
 public:
-	this(TargetInfo target, bool internalDebug)
+	this(LanguagePass lp, bool internalDebug)
 	{
-		this.target = target;
+		this.lp = lp;
+		this.target = lp.target;
 		this.mDump = internalDebug;
 
 		auto passRegistry = LLVMGetGlobalPassRegistry();
@@ -123,7 +125,7 @@ public:
 		ir.Function ehPersonality, ir.Function llvmTypeidFor,
 		string execDir, string identStr)
 	{
-		auto state = new VoltState(target, m, ehPersonality,
+		auto state = new VoltState(lp, m, ehPersonality,
 			llvmTypeidFor, execDir, identStr);
 		auto mod = state.mod;
 		scope (failure) {
