@@ -43,9 +43,25 @@
 		"warnings": [
 			"//T run:volta -o %t %s -w",
 			"//T run:%t"
+		],
+		"abi": [
+			"//T run:volta --internal-dbg -c %s"
+		],
+		"win64abi": [
+			"//T run:cl /c /Fo%t.obj %S/abitest.c",
+			"//T run:volta --internal-dbg -o %t %s %t.obj",
+			"//T run:%t"
+		],
+		"lin32abi": [
+			"//T run:cc -c -o %t.o %S/abitest.c",
+			"//T run:volta --internal-dbg -o %t %s %t.o",
+			"//T run:%t"
 		]
 	},
 	"requiresAliases": {
-		"exceptions": "!windows"
+		"exceptions": "!windows",
+		"sysvamd64": "posix && x86_64",
+		"win64": "windows && x86_64",
+		"lin32": "linux && x86"
 	}
 }
