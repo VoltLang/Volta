@@ -729,7 +729,7 @@ protected:
 	{
 		if (mRunBackend) {
 			assert(languagePass !is null);
-			backend = new LlvmBackend(languagePass.target, languagePass.driver.internalDebug);
+			backend = new LlvmBackend(languagePass, languagePass.driver.internalDebug);
 			mLLVMDriver = new LLVMDriver(this, tempMan, target,
 				languagePass, backend, mLLVMSettings);
 		}

@@ -49,12 +49,18 @@ __vrt_push_registers:
 	mov	[rbp - 56], rdi
 	mov	[rbp - 64], rsi
 %endif
-; This method is passed a delegate. rdi contains the context as a first argument
-; and rsi, the second argument is the function pointer. rdi do not need any special
-; threatement as it is also the first argument when calling the delegate.
 %ifidn __OUTPUT_FORMAT__, win64
-	call rdx
+	; On windows, the delegate struct becomes a pointer.
+	; The second member is the function, so load that into RAX,
+	; Then load the first member into RCX (the integer parameter).
+	; Both RAX and RCX are volatile, so no need to save.
+	lea rax, [rcx+8]
+	mov rcx, [rcx]
+	call [rax]
 %else
+	; This method is passed a delegate. rdi contains the context as a first argument
+	; and rsi, the second argument is the function pointer. rdi do not need any special
+	; threatement as it is also the first argument when calling the delegate.
 	call rsi
 %endif
 ; rsp and rbp are the only callee saved register we modified, no need to restore others.

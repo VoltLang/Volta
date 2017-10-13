@@ -391,6 +391,8 @@ public:
 	bool homogenousVariadic;
 	bool forceLabel;
 	Class typeInfo;  //!< When the backend needs a TypeInfo for varargs and such.
+	bool abiModified;  //<! Did volt.llvm.abi modify this signature?
+	void*[][] abiData;
 	// Hi there. Thinking of adding a new field? Add it to the copy constructor, below.
 
 
@@ -414,6 +416,8 @@ public:
 		homogenousVariadic = old.homogenousVariadic;
 		forceLabel = old.forceLabel;
 		typeInfo = old.typeInfo;
+		abiModified = old.abiModified;
+		abiData = old.abiData;
 	}
 }
 

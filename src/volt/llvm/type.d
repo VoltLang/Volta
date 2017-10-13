@@ -18,6 +18,7 @@ import volt.errors;
 import volt.util.sinks;
 import volt.llvm.common;
 import volt.llvm.interfaces;
+import volt.llvm.abi.base;
 
 static import volt.semantic.mangle;
 static import volt.semantic.classify;
@@ -595,6 +596,8 @@ private:
 			di[0] = ptrType;
 			argRet = state.voidType;
 		}
+
+		abiCoerceParameters(state, ft, /*ref*/argRet.llvmType, /*ref*/args);
 
 		llvmCallType = LLVMFunctionType(argRet.llvmType, args, ft.hasVarArgs && ft.linkage == ir.Linkage.C);
 		llvmType = LLVMPointerType(llvmCallType, 0);
