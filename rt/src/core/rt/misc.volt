@@ -86,10 +86,10 @@ fn vrt_encode_static_u8(ref buf: char[6], c: dchar) size_t;
  *
  * `index` is updated to the next codepoint's start position.
  */
-fn vrt_decode_u8_d(str: string, ref index: size_t) dchar;
+fn vrt_decode_u8_d(str: scope const(char)[], ref index: size_t) dchar;
 /*!
  * Decode a single codepoint of `str`, starting from `index`.
  *
  * `index` is updated to the previous codepoint's start position.
  */
-fn vrt_reverse_decode_u8_d(str: string, ref index: size_t) dchar;
+fn vrt_reverse_decode_u8_d(str: scope const(char)[], ref index: size_t) dchar;
