@@ -808,7 +808,7 @@ private void rewriteHomogenousVariadic(Context ctx,
 			throw makeUnsupported(arg.loc, "null arguments to homogenous variadic functions");
 		}
 	}
-	if (willConvert(etype, arr)) {
+	if (willConvert(arr, etype)) {
 		return;
 	}
 	if (!typesEqual(etype, arr)) {
@@ -2514,7 +2514,7 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 
 	final switch (binop.op) with (ir.BinOp.Op) {
 	case Equal, NotEqual, Less, LessEqual, Greater, GreaterEqual:
-		if (!willConvert(ltype, rtype)) {
+		if (!willConvert(ltype, rtype, IgnoreConst)) {
 			throw makeError(binop, "mismatched types.");
 		}
 		return buildBool(binop.loc);
@@ -2913,17 +2913,10 @@ ir.Type extypeTokenExp(Context ctx, ref ir.Exp exp, Parent parent)
 	}
 
 	StringSink buf;
-	void sink(scope const(char)[] s)
-	{
-		buf.sink(s);
-	}
 	version (Volt) {
-		// @TODO fix this.
-		// auto buf = new StringSink();
-		// auto pp = new PrettyPrinter("\t", buf.sink);
-		auto pp = new PrettyPrinter("\t", cast(void delegate(scope string))sink);
+		auto pp = new PrettyPrinter("\t", buf.sink);
 	} else {
-		auto pp = new PrettyPrinter("\t", &sink);
+		auto pp = new PrettyPrinter("\t", &buf.sink);
 	}
 
 	string[] names;

@@ -103,7 +103,7 @@ int matchLevel(TargetInfo target, bool homogenous, ir.Type argument, ir.Type par
 	    fitsInPrimitive(target, parameter.toPrimitiveTypeFast(), exp)) {
 		return 3;
 	}
-	if (willConvert(argument, parameter)) {
+	if (willConvert(parameter, argument)) {
 		return 2;
 	} else {
 		auto pArray = cast(ir.ArrayType) realType(parameter);
@@ -112,7 +112,7 @@ int matchLevel(TargetInfo target, bool homogenous, ir.Type argument, ir.Type par
 			return 2;
 		}
 		if (homogenous) {
-			if (pArray !is null && willConvert(argument, pArray.base)) {
+			if (pArray !is null && willConvert(pArray.base, argument)) {
 				return matchLevel(target, homogenous, argument, pArray.base);
 			}
 		}
@@ -132,10 +132,10 @@ bool specialisationComparison(Object ao, Object bo)
 	for (size_t i = 0; i < a.type.params.length; ++i) {
 		auto at = a.params[i].type;
 		auto bt = b.params[i].type;
-		if (!willConvert(at, bt)) {
+		if (!willConvert(bt, at)) {
 			atob = false;
 		}
-		if (!willConvert(bt, at)) {
+		if (!willConvert(at, bt)) {
 			btoa = false;
 		}
 	}

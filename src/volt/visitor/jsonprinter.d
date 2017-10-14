@@ -437,7 +437,7 @@ protected:
 		mWriteComma = true;
 	}
 
-	void tag(string tag, string value)
+	void tag(scope SinkArg tag, scope SinkArg value)
 	{
 		if (value.length == 0) {
 			return;
@@ -450,7 +450,7 @@ protected:
 		mWriteComma = true;
 	}
 
-	void tag(string tag, bool value)
+	void tag(scope SinkArg tag, bool value)
 	{
 		if (!value) {
 			return;
@@ -462,7 +462,7 @@ protected:
 		mWriteComma = true;
 	}
 
-	void tag(string tag, size_t n)
+	void tag(scope SinkArg tag, size_t n)
 	{
 		wMaybeComma();
 		wq(tag);
@@ -472,7 +472,7 @@ protected:
 	}
 
 	//! Add quotes to s and make it a JSON string (w/ escaping etc).
-	void wq(string s)
+	void wq(scope SinkArg s)
 	{
 		w(`"`);
 		foreach (dchar c; s) {

@@ -30,10 +30,10 @@ import volt.semantic.util;
  */
 void checkAndConvertStringLiterals(Context ctx, ir.Type type, ref ir.Exp exp)
 {
-	auto ptr = cast(ir.PointerType) realType(type);
-	auto constant = cast(ir.Constant) exp;
+	auto ptr = cast(ir.PointerType)realType(type);
+	auto constant = cast(ir.Constant)exp;
 	if (ptr !is null && constant !is null && constant._string.length != 0) {
-		auto a = cast(ir.ArrayType) constant.type;
+		auto a = cast(ir.ArrayType)constant.type;
 		exp = buildArrayPtr(exp.loc, a.base, exp);
 	}
 	checkAndDoConvert(ctx, type, exp);
@@ -57,63 +57,65 @@ void checkAndDoConvert(Context ctx, ir.Type type, ref ir.Exp exp)
  */
 bool willConvert(Context ctx, ir.Type type, ir.Exp exp)
 {
-	auto prim = cast(ir.PrimitiveType) realType(type);
+	auto prim = cast(ir.PrimitiveType)realType(type);
 	if (prim !is null && fitsInPrimitive(ctx.lp.target, prim, exp)) {
 		return true;
 	}
 	auto rtype = getExpType(exp);
 	assert(type !is null);
 	assert(rtype !is null);
-	return willConvert(rtype, type);
+	return willConvert(type, rtype);
 }
+
+enum IgnoreConst = true;
 
 /*!
  * Returns true if arg converts into param.
  */
-bool willConvert(ir.Type arg, ir.Type param)
+bool willConvert(ir.Type ltype, ir.Type rtype, bool ignoreConst = false)
 {
-	assert(arg !is null);
-	assert(param !is null);
-	if (typesEqual(arg, param)) {
+	assert(rtype !is null);
+	assert(ltype !is null);
+	if (typesEqual(ltype, rtype)) {
 		return true;
 	}
 
-	auto argument = realType(arg);
-	auto parameter = realType(param);
+	auto r = realType(rtype);
+	auto l = realType(ltype);
 
-	switch (argument.nodeType) with (ir.NodeType) {
+	switch (r.nodeType) with (ir.NodeType) {
 	case PrimitiveType:
-		return willConvertPrimitiveType(parameter, argument);
+		return willConvertPrimitiveType(l, r, ignoreConst);
 	case Enum:
 	case TypeReference:
 		assert(false);
 	case Interface:
-		auto iface = argument.toInterfaceFast();
-		return willConvertInterface(parameter, iface);
+		auto iface = r.toInterfaceFast();
+		return willConvertInterface(l, iface, ignoreConst);
 	case Class:
-		auto _class = argument.toClassFast();
-		return willConvertClass(parameter, _class);
+		auto _class = r.toClassFast();
+		return willConvertClass(l, _class, ignoreConst);
 	case ArrayType:
 	case StaticArrayType:
-		return willConvertArray(parameter, argument);
+		return willConvertArray(l, r, ignoreConst);
 	case PointerType:
-		return willConvertPointer(parameter, argument);
+		return willConvertPointer(l, r, ignoreConst);
 	case NullType:
-		auto nt = realType(parameter).nodeType;
+		auto nt = realType(l).nodeType;
 		return nt == PointerType || nt == Class ||
 		       nt == ArrayType || nt == AAType || nt == DelegateType;
 	case FunctionSetType:
-		return willConvertFunctionSetType(parameter, argument);
+		return willConvertFunctionSetType(l, r, ignoreConst);
 	case FunctionType:
 	case DelegateType:
-		return willConvertCallable(parameter, argument);
+		return willConvertCallable(l, r, ignoreConst);
 	case Struct:
-		return typesEqual(argument, parameter);
+		return typesEqual(l, r);
 	default: return false;
 	}
 }
 
-bool willConvertCallable(ir.Type l, ir.Type r)
+bool willConvertCallable(ir.Type l, ir.Type r, bool ignoreConst)
 {
 	auto lct = cast(ir.CallableType)l;
 	auto rct = cast(ir.CallableType)r;
@@ -136,14 +138,21 @@ bool willConvertCallable(ir.Type l, ir.Type r)
 		if (!rct.params[i].isScope && lct.params[i].isScope) {
 			return false;
 		}
-		if (!willConvert(rct.params[i], lct.params[i])) {
+		/* We reverse the parameters because the right hand
+		 * delegate will be called according to the signature
+		 * of the left.  
+		 * That is to say, if you pass a `dg(const(char)[])` to
+		 * a function that takes a `dg(string)`, we're really going
+		 * string -> const(char)[], not the otherway around.
+		 */
+		if (!willConvert(rct.params[i], lct.params[i], ignoreConst)) {
 			return false;
 		}
 	}
 	return true;
 }
 
-bool willConvertInterface(ir.Type l, ir._Interface rInterface)
+bool willConvertInterface(ir.Type l, ir._Interface rInterface, bool ignoreConst)
 {
 	ir._Interface lInterface;
 
@@ -164,7 +173,7 @@ bool willConvertInterface(ir.Type l, ir._Interface rInterface)
 	}
 }
 
-bool willConvertClassToInterface(ir._Interface lInterface, ir.Class rClass)
+bool willConvertClassToInterface(ir._Interface lInterface, ir.Class rClass, bool ignoreConst)
 {
 	bool checkInterface(ir._Interface i)
 	{
@@ -244,35 +253,38 @@ void doConvert(Context ctx, ir.Type type, ref ir.Exp exp)
 
 private:
 
-bool badConst(ir.Type a, ir.Type b, bool ignoreMutability = false)
+bool badConst(ir.Type l, ir.Type r, bool ignoreMutability = false)
 {
-	if (a is null || b is null || a.nodeType != b.nodeType ||
-	    (!mutableIndirection(a) && !ignoreMutability)) {
+	if (l is null || r is null || l.nodeType != r.nodeType ||
+	    (!mutableIndirection(l) && !ignoreMutability)) {
 		// It might be a type mismatch, but it's not a const error.
 		return false;
 	}
-	bool badConst = (a.isImmutable || a.isConst) &&
-	                !(b.isImmutable || b.isConst);
-	switch (a.nodeType) with (ir.NodeType) {
+	bool badConst;
+	if (l.isImmutable) {
+		badConst = !r.isImmutable;
+	}
+	if (!l.isConst && !l.isImmutable) {
+		badConst = r.isConst || r.isImmutable;
+	}
+	switch (l.nodeType) with (ir.NodeType) {
 	case ArrayType:
-		auto aatype = cast(ir.ArrayType)a;
-		auto batype = cast(ir.ArrayType)b;
-		return .badConst(aatype.base, batype.base, true) ||
-		       (a.isConst && !effectivelyConst(b) &&
-			   !effectivelyConst(batype.base));
+		auto latype = cast(ir.ArrayType)l;
+		auto ratype = cast(ir.ArrayType)r;
+		return .badConst(latype.base, ratype.base, true) || badConst;
 	case PointerType:
-		auto aptr = cast(ir.PointerType)a;
-		auto bptr = cast(ir.PointerType)b;
-		return .badConst(aptr.base, bptr.base, true) || badConst;
+		auto lptr = cast(ir.PointerType)l;
+		auto rptr = cast(ir.PointerType)r;
+		return .badConst(lptr.base, rptr.base, true) || badConst;
 	default:
 		return badConst;
 	}
 }
 
-bool willConvertPrimitiveType(ir.Type parameter, ir.Type argument)
+bool willConvertPrimitiveType(ir.Type l, ir.Type r, bool ignoreConst)
 {
-	auto rprim = cast(ir.PrimitiveType) argument;
-	auto lprim = cast(ir.PrimitiveType) parameter;
+	auto rprim = cast(ir.PrimitiveType)r;
+	auto lprim = cast(ir.PrimitiveType)l;
 	if (rprim is null || lprim is null) {
 		return false;
 	}
@@ -310,10 +322,10 @@ bool willConvertPrimitiveType(ir.Type parameter, ir.Type argument)
 	return size(rprim.type) < size(lprim.type);
 }
 
-bool willConvertFunctionSetType(ir.Type parameter, ir.Type argument)
+bool willConvertFunctionSetType(ir.Type l, ir.Type r, bool ignoreConst)
 {
-	auto fsettype = cast(ir.FunctionSetType)argument;
-	auto fnparam = cast(ir.FunctionType)parameter;
+	auto fsettype = cast(ir.FunctionSetType)r;
+	auto fnparam = cast(ir.FunctionType)l;
 	if (fnparam is null) {
 		return false;
 	}
@@ -325,32 +337,32 @@ bool willConvertFunctionSetType(ir.Type parameter, ir.Type argument)
 	return false;
 }
 
-bool willConvertPointer(ir.Type parameter, ir.Type argument)
+bool willConvertPointer(ir.Type l, ir.Type r, bool ignoreConst)
 {
-	if (effectivelyConst(argument) && !effectivelyConst(parameter)) {
+	if (!ignoreConst && effectivelyConst(r) && !effectivelyConst(l)) {
 		return false;
 	}
-	auto aptr = cast(ir.PointerType) argument;
-	auto ptr = cast(ir.PointerType) parameter;
-	if (ptr is null) {
+	auto rptr = cast(ir.PointerType)r;
+	auto lptr = cast(ir.PointerType)l;
+	if (lptr is null) {
 		return false;
 	}
-	if (badConst(aptr, ptr)) {
+	if (!ignoreConst && badConst(lptr, rptr)) {
 		return false;
 	}
-	bool ignoreStorage = !(argument.isScope && !parameter.isScope);
-	return typesEqual(ptr, aptr, ignoreStorage);
+	bool ignoreStorage = !(r.isScope && !l.isScope);
+	return typesEqual(lptr, rptr, ignoreStorage);
 }
 
-bool willConvertClass(ir.Type parameter, ir.Class rclass)
+bool willConvertClass(ir.Type l, ir.Class rclass, bool ignoreConst)
 {
-	switch (parameter.nodeType) with (ir.NodeType) {
+	switch (l.nodeType) with (ir.NodeType) {
 	case Class:
-		auto lclass = parameter.toClassFast();
+		auto lclass = l.toClassFast();
 		return isOrInheritsFrom(rclass, lclass);
 	case Interface:
-		auto liface = parameter.toInterfaceFast();
-		return willConvertClassToInterface(liface, rclass);
+		auto liface = l.toInterfaceFast();
+		return willConvertClassToInterface(liface, rclass, ignoreConst);
 	case TypeReference:
 		throw panic("TypeReference should not reach this point");
 	default:
@@ -358,25 +370,25 @@ bool willConvertClass(ir.Type parameter, ir.Class rclass)
 	}
 }
 
-bool willConvertArray(ir.Type l, ir.Type r)
+bool willConvertArray(ir.Type l, ir.Type r, bool ignoreConst)
 {
-	auto rarr = cast(ir.ArrayType) r;
-	auto stype = cast(ir.StaticArrayType) realType(l);
+	auto rarr = cast(ir.ArrayType)r;
+	auto stype = cast(ir.StaticArrayType)realType(l);
 	if (stype !is null && rarr !is null) {
 		// The extyper will check the length.
-		return willConvert(stype.base, rarr.base);
+		return willConvert(stype.base, rarr.base, ignoreConst);
 	}
 	stype = cast(ir.StaticArrayType)realType(r);
 	auto larr = cast(ir.ArrayType)realType(l);
 	if (stype !is null && larr !is null) {
-		return willConvert(larr.base, stype.base);
+		return willConvert(larr.base, stype.base, ignoreConst);
 	}
 
-	if (badConst(rarr, larr)) {
+	if (!ignoreConst && badConst(larr, rarr)) {
 		return false;
 	}
 
-	auto atype = cast(ir.ArrayType) realType(l);
+	auto atype = cast(ir.ArrayType)realType(l);
 	if (atype is null) {
 		return false;
 	}
@@ -386,21 +398,21 @@ bool willConvertArray(ir.Type l, ir.Type r)
 		rstore = accumulateStorage(rarr);
 	}
 	bool badImmutable = astore.isImmutable && rstore !is null &&
-	                    !rstore.isImmutable && !rstore.isConst;
+						!rstore.isImmutable && !rstore.isConst && !ignoreConst;
 	if (rarr !is null && typesEqual(deepStripStorage(atype), deepStripStorage(rarr), IgnoreStorage) &&
 	    !badImmutable) {
 		return true;
 	}
 
-	auto ctype = cast(ir.CallableType) atype;
+	auto ctype = cast(ir.CallableType)atype;
 	if (ctype !is null && ctype.homogenousVariadic && rarr is null) {
 		return true;
 	}
 
-	auto aclass = cast(ir.Class) realType(atype.base);
+	auto aclass = cast(ir.Class)realType(atype.base);
 	ir.Class rclass;
 	if (rarr !is null) {
-		rclass = cast(ir.Class) realType(rarr.base);
+		rclass = cast(ir.Class)realType(rarr.base);
 	}
 	return false;
 }
@@ -422,7 +434,7 @@ void doConvertStaticArrayType(Context ctx, ir.StaticArrayType atype, ref ir.Exp 
 			checkAndDoConvert(ctx, ltype, e);
 		}
 	}
-	alit = cast(ir.ArrayLiteral) exp;
+	alit = cast(ir.ArrayLiteral)exp;
 	if (alit is null) {
 		auto t = realType(getExpType(exp));
 		if (typesEqual(t, atype)) {

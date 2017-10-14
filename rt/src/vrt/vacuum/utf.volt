@@ -14,7 +14,7 @@ private enum FIVE_BYTE_MASK                  = 0xFC;
 private enum SIX_BYTE_MASK                   = 0xFE;
 private enum CONTINUING_MASK                 = 0xC0;
 
-private fn _read_byte(str: string, ref index: size_t) u8
+private fn _read_byte(str: const(char)[], ref index: size_t) u8
 {
 	if (index >= str.length) {
 		throw new MalformedUTF8Exception("unexpected end of stream");
@@ -24,13 +24,13 @@ private fn _read_byte(str: string, ref index: size_t) u8
 	return b;
 }
 
-private fn _read_char(str: string, ref index: size_t) dchar
+private fn _read_char(str: const(char)[], ref index: size_t) dchar
 {
 	b: u8 = _read_byte(str, ref index);
 	return cast(dchar)(b & cast(ubyte)~ONE_BYTE_MASK);
 }
 
-extern (C) fn vrt_reverse_decode_u8_d(str: string, ref index: size_t) dchar
+extern (C) fn vrt_reverse_decode_u8_d(str: scope const(char)[], ref index: size_t) dchar
 {
 	while ((str[index] & TWO_BYTE_RESULT) == ONE_BYTE_MASK) {
 		if (index == 0) {
@@ -43,7 +43,7 @@ extern (C) fn vrt_reverse_decode_u8_d(str: string, ref index: size_t) dchar
 	return c;
 }
 
-extern (C) fn vrt_decode_u8_d(str: string, ref index: size_t) dchar
+extern (C) fn vrt_decode_u8_d(str: scope const(char)[], ref index: size_t) dchar
 {
 	b1: u8 = _read_byte(str, ref index);
 	if ((b1 & ONE_BYTE_MASK) == 0) {
@@ -99,7 +99,7 @@ extern (C) fn vrt_decode_u8_d(str: string, ref index: size_t) dchar
 }
 
 /// Return how many codepoints are in a given UTF-8 string.
-extern (C) fn vrt_count_codepoints_u8(s: string) size_t
+extern (C) fn vrt_count_codepoints_u8(s: const(char)[]) size_t
 {
 	i, length: size_t;
 	while (i < s.length) {
@@ -109,7 +109,7 @@ extern (C) fn vrt_count_codepoints_u8(s: string) size_t
 	return length;
 }
 
-extern (C) fn vrt_validate_u8(s: string)
+extern (C) fn vrt_validate_u8(s: const(char)[])
 {
 	i: size_t;
 	while (i < s.length) {
