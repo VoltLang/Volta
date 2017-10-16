@@ -87,8 +87,8 @@ public:
 		mManager.setup(typeid(Arena).size);
 
 		mMultiplicationFactor = MULTIPLICATION_FACTOR_ORIGIN;
-		hits.init();
-		removes.init();
+		hits.hitInit();
+		removes.hitInit();
 	}
 
 	/**

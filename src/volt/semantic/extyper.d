@@ -4140,6 +4140,9 @@ void actualizeFunction(Context ctx, ir.Function func)
 		done();
 	}
 
+	if (func.name == "init") {
+		throw makeFunctionNamedInit(func.loc);
+	}
 
 	// Error checking
 	if (ctx.functionDepth >= 2) {
@@ -4525,6 +4528,13 @@ void resolveVariable(Context ctx, ir.Variable v)
 		(v.storage != ir.Variable.Storage.Global &&
 		 v.storage != ir.Variable.Storage.Local)) {
 		throw makeConstField(v);
+	}
+
+	if (inAggregate &&
+		(v.storage == ir.Variable.Storage.Global ||
+		 v.storage == ir.Variable.Storage.Local) &&
+		v.name == "init") {
+		throw makeAggregateStaticVariableNamedInit(v.loc);
 	}
 
 	if (v.assign !is null) {

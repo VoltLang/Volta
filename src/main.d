@@ -28,7 +28,7 @@ import volt.util.perf : Perf, perf;
 int main(string[] strArgs)
 {
 	Settings settings;
-	perf.init();
+	perf.perfInit();
 	scope (exit) {
 		perf.close();
 		string name, file;

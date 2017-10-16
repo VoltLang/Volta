@@ -108,6 +108,16 @@ CompilerException makeEmitLLVMNoLink(string file = __FILE__, const int line = __
  *
  */
 
+CompilerException makeFunctionNamedInit(ref in Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	return makeError(loc, "functions may not be named 'init', to avoid confusion with the built-in type field of the same name.", file, line);
+}
+
+CompilerException makeAggregateStaticVariableNamedInit(ref in Location loc, string file = __FILE__, const int line = __LINE__)
+{
+	return makeError(loc, "static field 'init' collides with built-in field of the same name.", file, line);
+}
+
 CompilerException makeExpressionForNew(ref in Location loc, string name, string file = __FILE__, const int line = __LINE__)
 {
 	auto msg = `got an expression where we expected a type for a 'new'.`;

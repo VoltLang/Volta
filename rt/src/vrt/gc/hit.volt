@@ -25,7 +25,7 @@ private:
 	mEntriesPerPage: size_t;
 
 public:
-	fn init()
+	fn hitInit()
 	{
 		mEntriesPerPage = getPageSize() / typeid(HitEntry).size;
 	}

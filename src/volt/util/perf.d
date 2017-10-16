@@ -44,7 +44,7 @@ struct Perf
 		NUM_MARKS, // Ensure that this is last.
 	}
 
-	void init()
+	void perfInit()
 	{
 		auto t = mt.ticks();
 		times = new long[](cast(size_t)Mark.NUM_MARKS);
