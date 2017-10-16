@@ -683,6 +683,8 @@ void handleArgumentLabelsIfNeeded(Context ctx, ir.Postfix postfix,
 		throw makeWrongNumberOfArguments(postfix, func, postfix.arguments.length, func.params.length);
 	}
 
+	auto labels = new string[](postfix.arguments.length);
+
 	// Check all the labels exist.
 	for (size_t i = 0; i < postfix.argumentLabels.length; i++) {
 		auto argumentLabel = postfix.argumentLabels[i];
@@ -690,6 +692,12 @@ void handleArgumentLabelsIfNeeded(Context ctx, ir.Postfix postfix,
 		if (p is null) {
 			throw makeUnmatchedLabel(postfix.loc, argumentLabel);
 		}
+		foreach (previouslySeenLabel; labels) {
+			if (previouslySeenLabel == argumentLabel) {
+				throw makeDuplicateLabel(postfix.loc, argumentLabel);
+			}
+		}
+		labels[i] = argumentLabel;
 	}
 
 	// Reorder arguments to match parameter order.

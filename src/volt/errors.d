@@ -554,6 +554,12 @@ CompilerException makeNoLinkModule(string filename, string msg, string file = __
 	return new CompilerError(err, file, line);
 }
 
+CompilerException makeDuplicateLabel(ref in Location loc, string label, string file = __FILE__, const int line = __LINE__)
+{
+	auto emsg = format("label '%s' specified multiple times.", label);
+	return new CompilerError(loc, emsg, file, line);
+}
+
 CompilerException makeUnmatchedLabel(ref in Location loc, string label, string file = __FILE__, const int line = __LINE__)
 {
 	auto emsg = format("no parameter matches argument label '%s'.", label);
