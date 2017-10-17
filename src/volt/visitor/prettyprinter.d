@@ -143,7 +143,18 @@ public:
 			accept(i.bind, this);
 			wf(" = ");
 		}
-		accept(i.name, this);
+		if (i.names.length == 1) {
+			accept(i.names[0], this);
+		} else {
+			wf("[");
+			foreach (idx, name; i.names) {
+				accept(name, this);
+				if (idx < i.names.length - 1) {
+					wf(", ");
+				}
+			}
+			wf("]");
+		}
 		if (i.aliases.length > 0) {
 			wf(" : ");
 			foreach (idx, _alias; i.aliases) {

@@ -62,6 +62,7 @@ public:
 		Type,
 		Value,
 		Scope,
+		MultiScope,
 		Alias,
 		Merge,
 		Function,
@@ -97,6 +98,11 @@ public:
 	 * the exception being Scope, which does not have a owning node.
 	 */
 	Scope myScope;
+
+	/*!
+	 * The scope set for a MultiScope store.
+	 */
+	Scope[] scopes;
 
 	/*!
 	 * Overloaded functions.
@@ -396,6 +402,26 @@ public:
 		auto store = new Store(this, n, name, Store.Kind.Scope);
 		symbols[name] = store;
 		store.myScope = s;
+		store.importBindAccess = Access.Private;
+		return store;
+	}
+
+	/*!
+	 * Add a named multiscope, `n` is the node which introduced
+	 * this scope and must not be null.
+	 *
+	 * @Throws CompilerPanic if another symbol of the same name is found.
+	 */
+	Store addMultiScope(Node n, Scope[] s, string name)
+	in {
+		assert(n !is null);
+		assert(name !is null);
+	} body {
+		errorOn(n, name);
+
+		auto store = new Store(this, n, name, Store.Kind.MultiScope);
+		symbols[name] = store;
+		store.scopes = s;
 		store.importBindAccess = Access.Private;
 		return store;
 	}

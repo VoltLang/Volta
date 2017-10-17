@@ -155,8 +155,9 @@ public:
 	ir.Import lift(ir.Import old)
 	{
 		auto n = new ir.Import(old);
-		if (old.targetModule !is null) {
-			n.targetModule = lift(old.targetModule);
+		n.targetModules = new ir.Module[](old.targetModules.length);
+		for (size_t i = 0; i < n.targetModules.length; ++i) {
+			n.targetModules[i] = lift(old.targetModules[i]);
 		}
 		return n;
 	}

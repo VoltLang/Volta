@@ -135,7 +135,7 @@ ir.Type handleStore(Context ctx, string ident, ref ir.Exp exp, ir.Store store,
 	case Type:
 		return handleTypeStore(ctx, ident, exp, store, child, parent,
 		                       via);
-	case Scope:
+	case Scope, MultiScope:
 		return handleScopeStore(ctx, ident, exp, store, child, parent,
 		                        via);
 	case Value:
@@ -1166,7 +1166,7 @@ ir.Type consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes,
 
 	// Get a scope from said lookStore.
 	lookScope = lookStore.myScope;
-	assert(lookScope !is null);
+	assert(lookScope !is null || lookStore.scopes.length > 0);
 
 	// Loop over the identifiers.
 	foreach (i, postfix; postfixes) {
@@ -1184,7 +1184,12 @@ ir.Type consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes,
 		// Do the actual lookup.
 		assert(postfix.identifier !is null);
 		string name = postfix.identifier.value;
-		auto store = lookupAsImportScope(ctx.lp, lookScope, postfix.loc, name);
+		ir.Store store;
+		if (lookScope is null) {
+			store = lookupAsImportScopes(ctx.lp, lookStore.scopes, postfix.loc, name);
+		} else {
+			store = lookupAsImportScope(ctx.lp, lookScope, postfix.loc, name);
+		}
 		if (store is null) {
 			auto asEnum = cast(ir.Enum)lookType;
 			if (asEnum !is null && asEnum.name != "") {

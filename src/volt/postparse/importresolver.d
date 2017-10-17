@@ -74,27 +74,29 @@ public:
 
 		if (i.isStatic && i.access != ir.Access.Private) {
 			throw makeExpected(i.loc, 
-				format("static import '%s' to be private", i.name));
+				format("static import '%s' to be private", i.names[0]));
 		}
 
-		auto mod = lp.getModule(i.name);
-		if (mod is null) {
-			throw makeCannotImport(i, i);
+		foreach (name; i.names) {
+			auto mod = lp.getModule(name);
+			if (mod is null) {
+				throw makeCannotImport(i, name.toString());
+			}
+			if (mod.isAnonymous) {
+				throw makeCannotImportAnonymous(i, name.toString());
+			}
+			i.targetModules ~= mod;
 		}
-		if (mod.isAnonymous) {
-			throw makeCannotImportAnonymous(i, i);
-		}
-		i.targetModule = mod;
 
 		if (i.aliases.length > 0) {
 			// import a : b, c OR import a = b : c, d;
-			handleAliases(mod, i);
+			handleAliases(i);
 		} else if (i.bind !is null) {
 			// import a = b;
-			handleRebind(mod, i);
+			handleRebind(i);
 		} else {
 			// static import a; OR import a;
-			handleRegularAndStatic(mod, i);
+			handleRegularAndStatic(i);
 		}
 
 		return ContinueParent;
@@ -105,12 +107,16 @@ public:
 	 *
 	 * import a = b;
 	 */
-	void handleRebind(ir.Module mod, ir.Import i)
+	void handleRebind(ir.Import i)
 	{
 		// TODO We should not use mod.myScope here,
 		// but intead link directly to the module.
-		gatherer.addScope(mod);
-		assert(mod.myScope !is null);
+		ir.Scope[] scopes;
+		foreach (mod; i.targetModules) {
+			gatherer.addScope(mod);
+			assert(mod.myScope !is null);
+			scopes ~= mod.myScope;
+		}
 
 		auto store = current.getStore(i.bind.value);
 		if (store !is null) {
@@ -120,7 +126,11 @@ public:
 				throw makeRedefines(i.loc, store.node.loc, i.bind.value);
 			}
 		}
-		store = current.addScope(i, mod.myScope, i.bind.value);
+		if (scopes.length == 1) {
+			store = current.addScope(i, scopes[0], i.bind.value);
+		} else {
+			store = current.addMultiScope(i, scopes, i.bind.value);
+		}
 		store.importBindAccess = i.access;
 	}
 
@@ -130,8 +140,12 @@ public:
 	 * import a : b, c;
 	 * import a = b : c, d;
 	 */
-	void handleAliases(ir.Module mod, ir.Import i)
+	void handleAliases(ir.Import i)
 	{
+		panicAssert(i, i.targetModules.length == 1);
+		panicAssert(i, i.names.length == i.targetModules.length);
+		auto mod = i.targetModules[0];
+
 		auto bindScope = current;
 		if (i.bind !is null) {
 			bindScope = buildOrReturnScope(bindScope, i.bind, i.bind.value, false/*is low prio?*/);
@@ -173,8 +187,11 @@ public:
 	 * import a;
 	 * static import a;
 	 */
-	void handleRegularAndStatic(ir.Module mod, ir.Import i)
+	void handleRegularAndStatic(ir.Import i)
 	{
+		panicAssert(i, i.targetModules.length == 1);
+		auto mod = i.targetModules[0];
+
 		// TODO We should not use mod.myScope here,
 		// but intead link directly to the module.
 		gatherer.addScope(mod);
@@ -185,19 +202,19 @@ public:
 
 		// Build the chain of scopes for the import.
 		// import 'foo.bar.pkg'.mod;
-		foreach (ident; i.name.identifiers[0 .. $-1]) {
+		foreach (ident; i.names[0].identifiers[0 .. $-1]) {
 			parent = buildOrReturnScope(parent, ident, ident.value, !i.isStatic/*is low prio?*/);
 		}
 
 		// Build the final level.
 		// import foo.bar.pkg.'mod';
-		auto store = parent.getStore(i.name.identifiers[$-1].value);
+		auto store = parent.getStore(i.names[0].identifiers[$-1].value);
 		if (store !is null) {
 			if (i.isStatic && store.myScope !is mod.myScope) {
 				throw makeExpected(i.loc, "unique module");
 			}
 		} else {
-			parent.addScope(i, mod.myScope, i.name.identifiers[$-1].value);
+			parent.addScope(i, mod.myScope, i.names[0].identifiers[$-1].value);
 		}
 
 		// Add the module to the list of imported modules.

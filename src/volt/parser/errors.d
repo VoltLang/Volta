@@ -39,6 +39,8 @@ public:
 		StrayDocComment,
 		//! new "string without component"
 		BadComposableString,
+		//! Only bind imports can use multibind.
+		BadMultiBind,
 	}
 
 public:
@@ -274,5 +276,20 @@ public:
 	override string errorMessage()
 	{
 		return `expected a composable string component (${...}) in the string.`;
+	}
+}
+
+
+class ParserBadMultiBind : ParserError
+{
+public:
+	this(ref in Location loc, string file, const int line)
+	{
+		super(Kind.BadMultiBind, loc, NodeType.Invalid, file, line);
+	}
+
+	override string errorMessage()
+	{
+		return "multi import lists (`[foo, bar]`) may only be used in bind imports (`import baz = [foo, bar]`)";
 	}
 }
