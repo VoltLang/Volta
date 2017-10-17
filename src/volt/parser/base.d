@@ -17,12 +17,7 @@ import volt.arg : Settings;
 public import volt.token.token : Token, TokenType, tokenToString;
 import volt.token.stream : TokenStream;
 import volt.token.location : Location;
-import volt.parser.errors : ParserError, ParserUnexpectedToken,
-                            ParserParseFailed, ParserUnsupportedFeature,
-                            ParserInvalidIntegerLiteral, ParserDocMultiple,
-                            ParserStrayDocComment, ParserWrongToken,
-                            ParserPanic, ParserAllArgumentsMustBeLabelled,
-                            ParserExpected, ParserNotAComposableString;
+import volt.parser.errors;
 
 
 /*
@@ -236,13 +231,19 @@ ParseStatus badComposable(ParserStream ps, Location loc,
 	return Failed;
 }
 
+ParseStatus badMultiBind(ParserStream ps, Location loc,
+						 string file = __FILE__, const int line = __LINE__)
+{
+	auto e = new ParserBadMultiBind(loc, file, line);
+	ps.parserErrors ~= e;
+	return Failed;
+}
 
 /*
  *
  * Stream checks helper functions.
  *
  */
-
 
 /*!
  * Match the current token on the parserstream @ps against @type.

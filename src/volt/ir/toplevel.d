@@ -173,8 +173,8 @@ public:
 	//! Optional
 	bool isStatic;
 
-	//! import <a>
-	QualifiedName name;
+	//! import foo = <[a, b]>, or import [foo]
+	QualifiedName[] names;
 
 	//! Optional, import @<foo> = a
 	Identifier bind;
@@ -182,8 +182,8 @@ public:
 	//! Optional, import a : <b = c, d>
 	Identifier[][] aliases;
 
-	//! This points at the imported module -- filled in by ImportResolver.
-	Module targetModule;
+	//! These point at the imported modules -- filled in by ImportResolver.
+	Module[] targetModules;
 
 
 public:
@@ -194,13 +194,13 @@ public:
 		super(NodeType.Import, old);
 		this.access = old.access;
 		this.isStatic = old.isStatic;
-		this.name = old.name;
+		this.names = old.names.dup();
 		this.bind = old.bind;
 		this.aliases = old.aliases.dup();
 		foreach (i; 0 .. this.aliases.length) {
 			this.aliases[i] = old.aliases[i].dup();
 		}
-		this.targetModule = old.targetModule;
+		this.targetModules = old.targetModules.dup();
 	}
 }
 

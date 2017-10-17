@@ -118,6 +118,8 @@ ir.Scope getScopeFromType(ir.Type type)
 ir.Scope getScopeFromStore(ir.Store store)
 {
 	final switch(store.kind) with (ir.Store.Kind) {
+	case MultiScope:
+		throw panic(store.node.loc, "getScopeFromStore called with MultiScope store.");
 	case Scope:
 		return store.myScope;
 	case Type:

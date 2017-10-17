@@ -84,12 +84,12 @@ public:
 
 		if (i.isStatic && i.access != ir.Access.Private) {
 			throw makeExpected(i.loc, 
-				format("static import '%s' to be private", i.name));
+				format("static import '%s' to be private", i.names[0]));
 		}
 
-		auto mod = lp.getModule(i.name);
+		auto mod = lp.getModule(i.names[0]);
 		if (mod is null) {
-			mStore[i.name.toString()] = true;
+			mStore[i.names[0].toString()] = true;
 		}
 
 		return ContinueParent;

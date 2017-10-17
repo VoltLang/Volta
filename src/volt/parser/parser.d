@@ -15,7 +15,8 @@ import ir = volt.ir.ir;
 import volt.arg : Settings;
 import volt.errors : makeError, panic;
 import volt.interfaces : Frontend;
-import volt.parser.base : ParseStatus, ParserStream, ParserPanic, NodeSink;
+import volt.parser.base : ParseStatus, ParserStream, NodeSink;
+import volt.parser.errors : ParserPanic;
 import volt.parser.toplevel : parseModule;
 import volt.parser.statements : parseStatement;
 

@@ -200,7 +200,18 @@ public:
 		tag("kind", "import");
 		tag("access", ir.accessToString(i.access));
 		tag("isStatic", i.isStatic);
-		tag("name", i.name.toString());
+		if (i.names.length == 1) {
+			tag("name", i.names[0].toString());
+		} else {
+			startList("names");
+			foreach (j, name; i.names) {
+				wq(name.toString());
+				if (j < i.names.length - 1) {
+					w(",\n");
+				}
+			}
+			endList();
+		}
 		if (i.bind !is null) {
 			tag("bind", i.bind.value);
 		}

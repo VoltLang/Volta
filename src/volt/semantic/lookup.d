@@ -83,8 +83,8 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
 			}
 			auto asImport = cast(ir.Import) store.node;
 			if (asImport !is null) {
-				assert(asImport.targetModule !is null);
-				current = asImport.targetModule.myScope;
+				assert(asImport.targetModules.length > 0 && asImport.targetModules[0] !is null);
+				current = asImport.targetModules[0].myScope;
 			}
 		} else {
 			store = lookupAsImportScope(lp, current, loc, name);
@@ -240,6 +240,35 @@ ir.Store lookupAsImportScope(LanguagePass lp, ir.Scope _scope, ref in Location l
 	return walkGetStore(lp, loc, ctx, _scope, name);
 }
 
+/*!
+ * Lookup an identifier in multiple scopes, as import scopes.
+ *
+ * @ingroup semLookup
+ */
+ir.Store lookupAsImportScopes(LanguagePass lp, ir.Scope[] scopes, ref in Location loc, string name)
+{
+	ir.Store retStore;
+	foreach (_scope; scopes) {
+		auto store = lookupInGivenScopeOnly(lp, _scope, loc, name);
+		if (store !is null) {
+			if (retStore !is null) {
+				throw makeMultipleMatches(loc, name);
+			}
+			retStore = ensureResolved(lp, store);
+			continue;
+		}
+		WalkContext ctx;
+		walkPublicImports(lp, loc, ctx, _scope, name);
+		store = walkGetStore(lp, loc, ctx, _scope, name);
+		if (store !is null) {
+			if (retStore !is null) {
+				throw makeMultipleMatches(loc, name);
+			}
+			retStore = store;
+		}
+	}
+	return retStore;
+}
 
 /*
  *
@@ -365,6 +394,7 @@ ir.Store ensureResolved(LanguagePass lp, ir.Store s)
 	case Scope:
 	case Template:
 	case FunctionParam:
+	case MultiScope:
 		return s;
 	case Reserved:
 		throw panic(s.node, "reserved store ident '%s' found.", s.name);
@@ -529,7 +559,7 @@ bool checkPrivateAndAdd(ref WalkContext ctx, ir.Module mod,
 	if (store.myScope !is null) {
 		// If this is a private module, don't use it.
 		auto asImport = cast(ir.Import) store.node;
-		if (asImport !is null && mod !is asImport.targetModule &&
+		if (asImport !is null && mod !is asImport.targetModules[0] &&
 		    asImport.access != ir.Access.Public &&
 		    asImport.bind is null) {
 			return false;

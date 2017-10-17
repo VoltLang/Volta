@@ -767,14 +767,14 @@ CompilerException makeSubclassFinal(ir.Class child, ir.Class parent, string file
 	return new CompilerError(child.loc, format("class '%s' attempts to subclass final class '%s'.", child.name, parent.name), file, line);
 }
 
-CompilerException makeCannotImport(ir.Node node, ir.Import _import, string file = __FILE__, const int line = __LINE__)
+CompilerException makeCannotImport(ir.Node node, string name, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(node.loc, format("can't find module '%s'.", _import.name), file, line);
+	return new CompilerError(node.loc, format("can't find module '%s'.", name), file, line);
 }
 
-CompilerException makeCannotImportAnonymous(ir.Node node, ir.Import _import, string file = __FILE__, const int line = __LINE__)
+CompilerException makeCannotImportAnonymous(ir.Node node, string name, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(node.loc, format("can't import anonymous module '%s'.", _import.name), file, line);
+	return new CompilerError(node.loc, format("can't import anonymous module '%s'.", name), file, line);
 }
 
 CompilerException makeNotAvailableInCTFE(ir.Node node, string s, string file = __FILE__, const int line = __LINE__)

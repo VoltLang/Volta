@@ -90,12 +90,12 @@ ir.Node createImport(ref in Location loc, scope string[] names...)
 {
 	auto _import = new ir.Import();
 	_import.loc = loc;
-	_import.name = new ir.QualifiedName();
-	_import.name.loc = loc;
+	_import.names ~= new ir.QualifiedName();
+	_import.names[0].loc = loc;
 	foreach (i, name; names) {
-		_import.name.identifiers ~= new ir.Identifier();
-		_import.name.identifiers[i].loc = loc;
-		_import.name.identifiers[i].value = name;
+		_import.names[0].identifiers ~= new ir.Identifier();
+		_import.names[0].identifiers[i].loc = loc;
+		_import.names[0].identifiers[i].value = name;
 	}
 	return _import;
 }
@@ -408,16 +408,36 @@ ParseStatus parseImport(ParserStream ps, out ir.Import _import)
 			return unexpectedToken(ps, ir.NodeType.Import);
 		}
 		ps.get();
-		succeeded = parseQualifiedName(ps, _import.name);
-		if (!succeeded) {
-			return parseFailed(ps, ir.NodeType.Import);
+		if (matchIf(ps, TokenType.OpenBracket)) {
+			do {
+				ir.QualifiedName qname;
+				succeeded = parseQualifiedName(ps, qname);
+				if (!succeeded) {
+					return parseFailed(ps, ir.NodeType.Import);
+				}
+				_import.names ~= qname;
+				matchIf(ps, TokenType.Comma);
+			} while (ps != TokenType.CloseBracket);
+			ps.get();
+		} else {
+			ir.QualifiedName qname;
+			succeeded = parseQualifiedName(ps, qname);
+			if (!succeeded) {
+				return parseFailed(ps, ir.NodeType.Import);
+			}
+			_import.names ~= qname;
 		}
 	} else {
+		if (ps == TokenType.OpenBracket) {
+			return badMultiBind(ps, _import.loc);
+		}
 		// No import bind.
-		succeeded = parseQualifiedName(ps, _import.name);
+		ir.QualifiedName qname;
+		succeeded = parseQualifiedName(ps, qname);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Import);
 		}
+		_import.names ~= qname;
 	}
 
 	// Parse out any aliases.

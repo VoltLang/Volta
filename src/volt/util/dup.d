@@ -29,6 +29,7 @@ ir.Node[] dup(ir.Node[] arr) { return new arr[0 .. $]; }
 ir.Type[] dup(ir.Type[] arr) { return new arr[0 .. $]; }
 ir.Token[] dup(ir.Token[] arr) { return new arr[0 .. $]; }
 ir.AAPair[] dup(ir.AAPair[] arr) { return new arr[0 .. $]; }
+ir.Module[] dup(ir.Module[] arr) { return new arr[0 .. $]; }
 ir.Variable[] dup(ir.Variable[] arr) { return new arr[0 .. $]; }
 ir.Function[] dup(ir.Function[] arr) { return new arr[0 .. $]; }
 ir.Attribute[] dup(ir.Attribute[] arr) { return new arr[0 .. $]; }
