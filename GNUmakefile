@@ -41,7 +41,7 @@ LDFLAGS ?=
 DDEFINES_ = $(DDEFINES)
 LDFLAGS_ = $(LDFLAGS)
 TARGET = volt
-DCOMP_FLAGS = -w -Isrc $(DDEFINES_) $(DFLAGS)
+DCOMP_FLAGS = -w -Isrc -Ilib/src -Idsupport/src $(DDEFINES_) $(DFLAGS)
 CXXCOMP_FLAGS = $(CARCH) $(LLVM_CXXFLAGS) $(CXXFLAGS)
 LINK_FLAGS = $(LDFLAGS_) $(patsubst -%, -L-%, $(LLVM_LDFLAGS)) -L-ldl
 
@@ -86,7 +86,9 @@ else
 endif
 
 include sources.mk
-DSRC = $(shell find src -name "*.d")
+DSRC = $(shell find src -name "*.d") \
+	$(shell find lib/src -name "*.d") \
+	$(shell find dsupport/src -name "*.d")
 CXXSRC = $(shell find src -name "*.cpp")
 
 OBJ_DIR = .obj/$(PLATFORM)-$(MACHINE)

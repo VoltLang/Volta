@@ -1,0 +1,6 @@
+#
+# Dummy file
+#
+# This is a slight hack for dmd building. Dmd will pickup the D files in this
+# folder. But volta will not, since we do not use the --scan-for-d flag.
+#
