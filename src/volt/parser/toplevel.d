@@ -56,6 +56,7 @@ ParseStatus parseModule(ParserStream ps, out ir.Module mod)
 		mod.docComment = ps.comment();
 		mod.isAnonymous = true;
 	}
+	mod.magicFlagD = ps.magicFlagD;
 	ps.popCommentLevel();
 
 	succeeded = parseTopLevelBlock(ps, mod.children, TokenType.End);
@@ -525,7 +526,7 @@ ParseStatus parseConstructor(ParserStream ps, out ir.Function c)
 	bool colonDeclaration = isColonDeclaration(ps);
 	auto succeeded = parseParameterList(ps, params, c.type);
 	if (params.length > 0 && !colonDeclaration) {
-		warningOldStyleFunction(c.loc, ps.settings);
+		warningOldStyleFunction(/*#ref*/c.loc, ps.magicFlagD, ps.settings);
 	}
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.Function, ir.NodeType.FunctionParam);

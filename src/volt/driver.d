@@ -83,7 +83,6 @@ protected:
 
 	string[] mStringImportPaths;
 
-	bool mInternalD;
 	bool mInternalDiff;
 	bool mInternalDebug;
 	bool mInternalNoCatch;
@@ -145,7 +144,7 @@ public:
 		auto mode = decideMode(s);
 		this.frontend = new Parser(s);
 		this.languagePass = new VoltLanguagePass(this, ver, target,
-			frontend, mode, s.internalD, s.warningsEnabled);
+			frontend, mode, s.warningsEnabled);
 
 		decideParts();
 		decideBackend();
@@ -171,10 +170,6 @@ public:
 		auto srcPath = pathFromQualifiedName(name, mSrcIncludes, ".volt");
 		auto incPath = pathFromQualifiedName(name, mIncludes, ".volt");
 		if (srcPath is null && incPath is null) {
-			if (!mInternalD) {
-				return null;
-			}
-
 			srcPath = pathFromQualifiedName(name, mSrcIncludes, ".d");
 			incPath = pathFromQualifiedName(name, mIncludes, ".d");
 		}
@@ -603,7 +598,6 @@ protected:
 		mEmitLLVM = settings.emitLLVM;
 		mRemoveConditionalsOnly = settings.removeConditionalsOnly;
 
-		mInternalD = settings.internalD;
 		mInternalDiff = settings.internalDiff;
 		mInternalDebug = settings.internalDebug;
 		mInternalNoCatch = settings.noCatch;

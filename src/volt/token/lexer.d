@@ -6,7 +6,7 @@ import core.c.time : time, localtime;
 
 import watt.text.ascii : isDigit, isAlpha, isWhite;
 import watt.text.format : format;
-import watt.text.string : indexOf;
+import watt.text.string : indexOf, endsWith;
 import watt.text.vdoc : cleanComment;
 import watt.conv : toInt;
 import watt.text.utf : encode;
@@ -29,11 +29,22 @@ import volt.token.error;
  *   CompilerError on errors.
  *
  * Returns:
- *   A ParserStream filled with tokens.
+ *   A `TokenWriter` filled with tokens.
  */
-Token[] lex(Source source)
+TokenWriter lex(Source source)
 {
 	auto tw = new TokenWriter(source);
+
+	if (lexMagicFlags(tw) == LexStatus.Failed) {
+		throw makeError(/*#ref*/tw.source.loc, "bad magic flag (/*#... at the top of the file).");
+	}
+
+	if ((tw.source.loc.filename.endsWith(".d") != 0 ||
+		tw.source.loc.filename.endsWith(".D") != 0) &&
+		!tw.magicFlagD) {
+		throw makeError(/*#ref*/tw.source.loc,
+			"volta will only compile a file with the extension '.d' if '/*#D*/' is at the top of the file.");
+	}
 
 	do {
 		if (lexNext(tw))
@@ -49,7 +60,7 @@ Token[] lex(Source source)
 		throw makeError(tw.errors[0].loc, tw.errors[0].errorMessage());
 	} while (tw.lastAdded.type != TokenType.End);
 
-	return tw.getTokens();
+	return tw;
 }
 
 private:
@@ -595,6 +606,10 @@ LexStatus lexSlash(TokenWriter tw)
 	case '/':
 		return skipLineComment(tw);
 	case '*':
+		auto status = lexMagicToken(tw);
+		if (status != NotPresent) {
+			return status;
+		}
 		return skipBlockComment(tw);
 	case '+':
 		return skipNestingComment(tw);
@@ -606,6 +621,45 @@ LexStatus lexSlash(TokenWriter tw)
 	token.value = tw.source.sliceFrom(mark);
 	tw.addToken(token);
 
+	return Succeeded;
+}
+
+LexStatus lexMagicToken(TokenWriter tw)
+{
+	bool eof;
+	auto token = currentLocationToken(tw);
+	if (tw.source.lookahead(1, /*#out*/eof) != '#') {
+		return NotPresent;
+	}
+	tw.source.next();
+	auto mark = tw.source.save();
+	while (tw.source.current != '*' && !tw.source.eof) {
+		tw.source.next();
+	}
+	auto tokenstr = tw.source.sliceFrom(mark);
+	switch (tokenstr) {
+	case "#ref":
+		token.type = TokenType.Ref;
+		token.value = "ref";
+		break;
+	case "#out":
+		token.type = TokenType.Out;
+		token.value = "out";
+		break;
+	default:
+		tw.errors ~= new LexerStringError(LexerError.Kind.String, token.loc,
+			tw.source.current,format("bad magical token (/*#...*/) '%s'.", tokenstr));
+		return Failed;
+	}
+	if (!match(tw, "*/")) {
+		return Failed;
+	}
+	if (!tw.magicFlagD) {
+		tw.errors ~= new LexerStringError(LexerError.Kind.String, token.loc,tw.source.current,
+			"expected '/*#D*/' at the top of the file to turn on magical tokens.");
+		return Failed;
+	}
+	tw.addToken(token);
 	return Succeeded;
 }
 
@@ -1179,6 +1233,49 @@ LexStatus lexReal(TokenWriter tw)
 	}
 
 	return stop();
+}
+
+// Lex magical flags (/*#TheseThings*/) until we're not at a magical flag.
+LexStatus lexMagicFlags(TokenWriter tw)
+{
+	LexStatus status;
+	do {
+		tw.source.skipWhitespace();
+		status = lexMagicalFlag(tw);
+	} while (status == Succeeded);
+	return status;
+}
+
+// Lex one magical flag, fail, or return NotPresent if we're not at a flag.
+LexStatus lexMagicalFlag(TokenWriter tw)
+{
+	bool eofa, eofb, eofc;
+	if (tw.source.lookahead(0, /*#out*/eofa) != '/' ||
+		tw.source.lookahead(1, /*#out*/eofb) != '*' ||
+		tw.source.lookahead(2, /*#out*/eofc) != '#' ||
+		eofa || eofb || eofc) {
+		return NotPresent;
+	}
+	foreach (i; 0 .. 3) {
+		tw.source.next();
+	}
+	Mark m = tw.source.save();
+	while (tw.source.current != '*' && !tw.source.eof) {
+		tw.source.next();
+	}
+
+	auto flag = tw.source.sliceFrom(m);
+	switch (flag) {
+	case "D":
+		tw.magicFlagD = true;
+		break;
+	default:
+		return Failed;
+	}
+	if (!match(tw, "*/")) {
+		return Failed;
+	}
+	return Succeeded;
 }
 
 LexStatus lexHashLine(TokenWriter tw)

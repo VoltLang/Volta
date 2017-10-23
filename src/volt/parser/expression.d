@@ -493,7 +493,7 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 			c._string = c._string[2 .. $];
 			bool hex = prefix == "0x";
 			if (hex && explicitBase) {
-				warningOldStyleHexTypeSuffix(c.loc, ps.settings);
+				warningOldStyleHexTypeSuffix(/*#ref*/c.loc, ps.magicFlagD, ps.settings);
 			}
 			bool error;
 			auto typeSuffix = getHexTypeSuffix(c._string, error);
@@ -1954,10 +1954,12 @@ ParseStatus parseRunExp(ParserStream ps, out ir.RunExp runexp)
 ParseStatus parseInlineExp(Location loc, ParserStream ps, string slice, out ir.Exp exp)
 {
 	auto src = new Source(slice, loc.filename);
-	auto tokens = lex(src);
+	auto tw = lex(src);
+	auto tokens = tw.getTokens();
 	auto newPs = new ParserStream(tokens, ps.settings);
+	newPs.magicFlagD = tw.magicFlagD;
 	newPs.get();
-	auto succeeded = parseExp(newPs, exp);
+	auto succeeded = parseExp(newPs, /*#out*/exp);
 	if (!succeeded) {
 		ps.parserErrors ~= newPs.parserErrors[$-1];
 		return succeeded;

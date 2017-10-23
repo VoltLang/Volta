@@ -14,6 +14,7 @@ import volt.semantic.context;
 import volt.semantic.classify;
 import volt.semantic.typer;
 import volt.semantic.util;
+import volt.semantic.lookup;
 
 
 /*!
@@ -217,11 +218,12 @@ void doConvert(Context ctx, ir.Type type, ref ir.Exp exp)
 	switch (type.nodeType) {
 	case ir.NodeType.AAType:
 		bool _null = isNull(exp);
-		if (_null && !ctx.lp.beMoreLikeD) {
+		auto mod = getModuleFromScope(/*#ref*/exp.loc, ctx.current);
+		if (_null && !mod.magicFlagD) {
 			throw makeBadImplicitCast(exp, rtype, type);
 		}
 		auto alit = cast(ir.AssocArray)exp;
-		if ((_null && ctx.lp.beMoreLikeD) || (alit !is null && alit.pairs.length == 0)) {
+		if ((_null && mod.magicFlagD) || (alit !is null && alit.pairs.length == 0)) {
 			auto aa = new ir.AssocArray();
 			aa.loc = exp.loc;
 			aa.type = copyTypeSmart(exp.loc, type);

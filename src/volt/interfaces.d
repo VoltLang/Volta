@@ -448,9 +448,6 @@ public:
 	//! Parsing front to be used when parsing new code.
 	Frontend frontend;
 
-	//! Controlling if we should accept some D constructs.
-	bool beMoreLikeD;
-
 	//! Should the code emit warnings.
 	bool warningsEnabled;
 

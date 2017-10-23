@@ -33,56 +33,56 @@ void hackTypeWarning(ir.Node n, ir.Type nt, ir.Type ot)
 void warningAssignInCondition(ref in Location loc, bool warningsEnabled)
 {
 	if (warningsEnabled) {
-		warning(loc, "assign in condition.");
+		warning(/*#ref*/loc, "assign in condition.");
 	}
 }
 
 void warningStringCat(ref in Location loc, bool warningsEnabled)
 {
 	if (warningsEnabled) {
-		warning(loc, "concatenation involving string.");
+		warning(/*#ref*/loc, "concatenation involving string.");
 	}
 }
 
-void warningOldStyleVariable(ref in Location loc, Settings settings)
+void warningOldStyleVariable(ref in Location loc, bool magicFlagD, Settings settings)
 {
-	if (!settings.internalD && settings.warningsEnabled) {
-		warning(loc, "old style variable declaration.");
+	if (!magicFlagD && settings.warningsEnabled) {
+		warning(/*#ref*/loc, "old style variable declaration.");
 	}
 }
 
-void warningOldStyleFunction(ref in Location loc, Settings settings)
+void warningOldStyleFunction(ref in Location loc, bool magicFlagD, Settings settings)
 {
-	if (!settings.internalD && settings.warningsEnabled) {
-		warning(loc, "old style function declaration.");
+	if (!magicFlagD && settings.warningsEnabled) {
+		warning(/*#ref*/loc, "old style function declaration.");
 	}
 }
 
-void warningOldStyleFunctionPtr(ref in Location loc, Settings settings)
+void warningOldStyleFunctionPtr(ref in Location loc, bool magicFlagD, Settings settings)
 {
-	if (!settings.internalD && settings.warningsEnabled) {
-		warning(loc, "old style function pointer.");
+	if (!magicFlagD && settings.warningsEnabled) {
+		warning(/*#ref*/loc, "old style function pointer.");
 	}
 }
 
-void warningOldStyleDelegateType(ref in Location loc, Settings settings)
+void warningOldStyleDelegateType(ref in Location loc, bool magicFlagD, Settings settings)
 {
-	if (!settings.internalD && settings.warningsEnabled) {
-		warning(loc, "old style delegate type.");
+	if (!magicFlagD && settings.warningsEnabled) {
+		warning(/*#ref*/loc, "old style delegate type.");
 	}
 }
 
-void warningOldStyleHexTypeSuffix(ref in Location loc, Settings settings)
+void warningOldStyleHexTypeSuffix(ref in Location loc, bool magicFlagD, Settings settings)
 {
-	if (!settings.internalD && settings.warningsEnabled) {
-		warning(loc, "old style hex literal type suffix (U/L).");
+	if (!magicFlagD && settings.warningsEnabled) {
+		warning(/*#ref*/loc, "old style hex literal type suffix (U/L).");
 	}
 }
 
 void warningShadowsField(ref in Location newDecl, ref in Location oldDecl, string name, bool warningsEnabled)
 {
 	if (warningsEnabled) {
-		warning(newDecl, format("declaration '%s' shadows field at %s.", name, oldDecl.toString()));
+		warning(/*#ref*/newDecl, format("declaration '%s' shadows field at %s.", name, oldDecl.toString()));
 	}
 }
 

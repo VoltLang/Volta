@@ -18,6 +18,8 @@ public:
 	LexerError[] errors;
 	bool noDoc;
 
+	bool magicFlagD;
+
 private:
 	Source mSource;
 	size_t mLength;

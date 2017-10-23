@@ -305,7 +305,7 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 			makeArgNext(LLVMArArg);
 			continue;
 		case "--internal-d":
-			makeArg(InternalD);
+			// Ignore. TODO: Remove.
 			continue;
 		case "--internal-dbg":
 			makeArg(InternalDebug);
