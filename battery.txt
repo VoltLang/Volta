@@ -1,9 +1,15 @@
 #
+# The root Volta project only has D files.
+#
+--scan-for-d
+#
 # We need watt to build
+#
 --dep
 watt
 #
 # Use llvm-config on osx and linux
+#
 --if-osx
 --if-linux
 --cmd
@@ -13,6 +19,7 @@ llvm-config --system-libs --ldflags --libs core bitwriter bitreader linker targe
 -lstdc++
 #
 # On Windows the user will need to provide LLVM.lib
+#
 --if-msvc
 -l
 LLVM.lib
