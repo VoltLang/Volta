@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012-2013, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.lowerer.newreplacer;
@@ -26,14 +27,14 @@ import volt.semantic.overload;
 ir.Exp createArrayAlloc(ref in Location loc, LanguagePass lp,
                         ir.Scope baseScope, ir.ArrayType atype, ir.Exp sizeArg)
 {
-	auto sexp = buildStatementExp(loc);
-	auto sizeVar = buildVariableAnonSmart(loc, baseScope, sexp,
-		buildSizeT(loc, lp.target), sizeArg);
-	auto allocCall = buildAllocTypePtr(loc, lp, atype.base,
-		buildExpReference(loc, sizeVar, sizeVar.name));
-	auto slice = buildSlice(loc, allocCall,
-		buildConstantSizeT(loc, lp.target, 0),
-		buildExpReference(loc, sizeVar, sizeVar.name));
+	auto sexp = buildStatementExp(/*#ref*/loc);
+	auto sizeVar = buildVariableAnonSmart(/*#ref*/loc, baseScope, sexp,
+		buildSizeT(/*#ref*/loc, lp.target), sizeArg);
+	auto allocCall = buildAllocTypePtr(/*#ref*/loc, lp, atype.base,
+		buildExpReference(/*#ref*/loc, sizeVar, sizeVar.name));
+	auto slice = buildSlice(/*#ref*/loc, allocCall,
+		buildConstantSizeT(/*#ref*/loc, lp.target, 0),
+		buildExpReference(/*#ref*/loc, sizeVar, sizeVar.name));
 	sexp.exp = slice;
 	return sexp;
 }
@@ -47,20 +48,20 @@ ir.StatementExp buildClassConstructionWrapper(ref in Location loc, LanguagePass 
 	sexp.loc = loc;
 
 	// -1
-	auto count = buildConstantSizeT(loc, lp.target, size_t.max);
+	auto count = buildConstantSizeT(/*#ref*/loc, lp.target, size_t.max);
 
 	// auto thisVar = allocDg(_class, -1);
-	auto thisVar = buildVariableSmart(loc, _class, ir.Variable.Storage.Function, "thisVar");
-	thisVar.assign = buildAllocVoidPtr(loc, lp, _class,  count);
-	thisVar.assign = buildCastSmart(loc, _class, thisVar.assign);
+	auto thisVar = buildVariableSmart(/*#ref*/loc, _class, ir.Variable.Storage.Function, "thisVar");
+	thisVar.assign = buildAllocVoidPtr(/*#ref*/loc, lp, _class,  count);
+	thisVar.assign = buildCastSmart(/*#ref*/loc, _class, thisVar.assign);
 	sexp.statements ~= thisVar;
-	sexp.exp = buildExpReference(loc, thisVar, "thisVar");
+	sexp.exp = buildExpReference(/*#ref*/loc, thisVar, "thisVar");
 
 	// thisVar.__ctor(<exps>);
-	auto ctor = buildExpReference(loc, constructor, "this");
-	auto child = buildExpReference(loc, thisVar, "thisVar");
-	auto cdg = buildCreateDelegate(loc, child, ctor);
-	buildExpStat(loc, sexp, buildCall(loc, cdg, exps));
+	auto ctor = buildExpReference(/*#ref*/loc, constructor, "this");
+	auto child = buildExpReference(/*#ref*/loc, thisVar, "thisVar");
+	auto cdg = buildCreateDelegate(/*#ref*/loc, child, ctor);
+	buildExpStat(/*#ref*/loc, sexp, buildCall(/*#ref*/loc, cdg, exps));
 
 	return sexp;
 }
@@ -99,51 +100,51 @@ public:
 
 		if (asArray !is null && unary.argumentList.length > 0) {
 			if (isIntegral(realType(getExpType(unary.argumentList[0])))) {
-				return handleArrayNew(exp, unary, asArray);
+				return handleArrayNew(/*#ref*/exp, unary, asArray);
 			}
-			return handleArrayCopy(exp, unary, asArray);
+			return handleArrayCopy(/*#ref*/exp, unary, asArray);
 		} else if (asClass !is null && unary.hasArgumentList) {
-			return handleClass(exp, unary, asClass);
+			return handleClass(/*#ref*/exp, unary, asClass);
 		}
 
-		return handleOther(exp, unary);
+		return handleOther(/*#ref*/exp, unary);
 	}
 
 	protected Status handleArrayNew(ref ir.Exp exp, ir.Unary unary, ir.ArrayType array)
 	{
 		if (unary.argumentList.length != 1) {
-			throw panic(unary.loc, "multidimensional arrays unsupported at the moment.");
+			throw panic(/*#ref*/unary.loc, "multidimensional arrays unsupported at the moment.");
 		}
-		auto arg = buildCastSmart(exp.loc, buildSizeT(exp.loc, lp.target), unary.argumentList[0]);
-		exp = createArrayAlloc(unary.loc, lp, thisModule.myScope, array, arg);
+		auto arg = buildCastSmart(/*#ref*/exp.loc, buildSizeT(/*#ref*/exp.loc, lp.target), unary.argumentList[0]);
+		exp = createArrayAlloc(/*#ref*/unary.loc, lp, thisModule.myScope, array, arg);
 		return Continue;
 	}
 
 	protected Status handleArrayCopy(ref ir.Exp exp, ir.Unary unary, ir.ArrayType array)
 	{
 		auto loc = unary.loc;
-		auto copyFn = getLlvmMemCopy(loc, lp);
+		auto copyFn = getLlvmMemCopy(/*#ref*/loc, lp);
 
-		auto statExp = buildStatementExp(loc);
+		auto statExp = buildStatementExp(/*#ref*/loc);
 
 		auto offset = buildVariable(
-			loc, buildSizeT(loc, lp.target), ir.Variable.Storage.Function,
-			"offset", buildConstantSizeT(loc, lp.target, 0)
+			/*#ref*/loc, buildSizeT(/*#ref*/loc, lp.target), ir.Variable.Storage.Function,
+			"offset", buildConstantSizeT(/*#ref*/loc, lp.target, 0)
 		);
 		statExp.statements ~= offset;
 
 		ir.Variable[] variables = new ir.Variable[](unary.argumentList.length);
-		ir.Exp sizeExp = buildConstantSizeT(loc, lp.target, 0);
+		ir.Exp sizeExp = buildConstantSizeT(/*#ref*/loc, lp.target, 0);
 		foreach (i, arg; unary.argumentList) {
-			auto var = buildVariableAnonSmart(loc, cast(ir.BlockStatement)current.node, statExp, getExpType(arg), arg);
+			auto var = buildVariableAnonSmart(/*#ref*/loc, cast(ir.BlockStatement)current.node, statExp, getExpType(arg), arg);
 			panicAssert(exp, (cast(ir.ArrayType)realType(var.type)) !is null);
-			sizeExp = buildAdd(loc, sizeExp,
-				buildArrayLength(loc, lp.target, buildExpReference(loc, var, var.name)));
+			sizeExp = buildAdd(/*#ref*/loc, sizeExp,
+				buildArrayLength(/*#ref*/loc, lp.target, buildExpReference(/*#ref*/loc, var, var.name)));
 			variables[i] = var;
 		}
 		auto newArray = buildVariable(
-			loc, copyTypeSmart(loc, array), ir.Variable.Storage.Function,
-			"newArray", createArrayAlloc(loc, lp, thisModule.myScope, array, sizeExp)
+			/*#ref*/loc, copyTypeSmart(/*#ref*/loc, array), ir.Variable.Storage.Function,
+			"newArray", createArrayAlloc(/*#ref*/loc, lp, thisModule.myScope, array, sizeExp)
 		);
 		statExp.statements ~= newArray;
 
@@ -153,42 +154,43 @@ public:
 
 			ir.Exp[] args = [
 				cast(ir.Exp)
-				buildAdd(loc,
-					buildCastToVoidPtr(loc, buildArrayPtr(loc, newArray.type,
-						buildExpReference(loc, newArray, newArray.name)
+				buildAdd(/*#ref*/loc,
+					buildCastToVoidPtr(/*#ref*/loc, buildArrayPtr(/*#ref*/loc, newArray.type,
+						buildExpReference(/*#ref*/loc, newArray, newArray.name)
 					)),
-					buildExpReference(loc, offset, offset.name)
+					buildExpReference(/*#ref*/loc, offset, offset.name)
 				),
-				buildCastToVoidPtr(loc, buildArrayPtr(loc, source.type, buildExpReference(loc, source, source.name))),
-				buildBinOp(loc, ir.BinOp.Op.Mul,
-					buildArrayLength(loc, lp.target, buildExpReference(loc, source, source.name)),
-					buildConstantSizeT(loc, lp.target, size(lp.target, array.base))
+				buildCastToVoidPtr(/*#ref*/loc, buildArrayPtr(/*#ref*/loc, source.type,
+					buildExpReference(/*#ref*/loc, source, source.name))),
+				buildBinOp(/*#ref*/loc, ir.BinOp.Op.Mul,
+					buildArrayLength(/*#ref*/loc, lp.target, buildExpReference(/*#ref*/loc, source, source.name)),
+					buildConstantSizeT(/*#ref*/loc, lp.target, size(lp.target, array.base))
 				),
-				buildConstantInt(loc, 0),
-				buildConstantFalse(loc)
+				buildConstantInt(/*#ref*/loc, 0),
+				buildConstantFalse(/*#ref*/loc)
 			];
-			buildExpStat(loc, statExp, buildCall(loc, copyFn, args, copyFn.name));
+			buildExpStat(/*#ref*/loc, statExp, buildCall(/*#ref*/loc, copyFn, args, copyFn.name));
 
 			if (i+1 == unary.argumentList.length) {
 				// last iteration, skip advancing the offset.
 				continue;
 			}
 
-			buildExpStat(loc, statExp,
-				buildAssign(loc,
-					buildExpReference(loc, offset, offset.name),
-					buildAdd(loc,
-						buildExpReference(loc, offset, offset.name),
-						buildBinOp(loc, ir.BinOp.Op.Mul,
-							buildArrayLength(loc, lp.target, buildExpReference(loc, source, source.name)),
-							buildConstantSizeT(loc, lp.target, size(lp.target, array.base))
+			buildExpStat(/*#ref*/loc, statExp,
+				buildAssign(/*#ref*/loc,
+					buildExpReference(/*#ref*/loc, offset, offset.name),
+					buildAdd(/*#ref*/loc,
+						buildExpReference(/*#ref*/loc, offset, offset.name),
+						buildBinOp(/*#ref*/loc, ir.BinOp.Op.Mul,
+							buildArrayLength(/*#ref*/loc, lp.target, buildExpReference(/*#ref*/loc, source, source.name)),
+							buildConstantSizeT(/*#ref*/loc, lp.target, size(lp.target, array.base))
 						)
 					)
 				)
 			);
 		}
 
-		statExp.exp = buildExpReference(loc, newArray, newArray.name);
+		statExp.exp = buildExpReference(/*#ref*/loc, newArray, newArray.name);
 		exp = statExp;
 
 		return Continue;
@@ -198,14 +200,14 @@ public:
 	{
 		assert(unary.ctor !is null);
 		exp = buildClassConstructionWrapper(
-			unary.loc, lp, current, clazz, unary.ctor,
+			/*#ref*/unary.loc, lp, current, clazz, unary.ctor,
 			unary.argumentList);
 		return Continue;
 	}
 
 	protected Status handleOther(ref ir.Exp exp, ir.Unary unary)
 	{
-		exp = buildAllocTypePtr(unary.loc, lp, unary.type);
+		exp = buildAllocTypePtr(/*#ref*/unary.loc, lp, unary.type);
 
 		return Continue;
 	}

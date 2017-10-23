@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module main;
@@ -62,15 +63,15 @@ int main(string[] strArgs)
 	string[] files;
 	try {
 
-		if (!handleArgs(getConfigLines(), args, ver, settings)) {
+		if (!handleArgs(getConfigLines(), /*#ref*/args, ver, settings)) {
 			return 0;
 		}
 
-		if (!handleArgs(strArgs, args, ver, settings)) {
+		if (!handleArgs(strArgs, /*#ref*/args, ver, settings)) {
 			return 0;
 		}
 
-		filterArgs(args, files, ver, settings);
+		filterArgs(args, /*#ref*/files, ver, settings);
 
 		if (!checkArgs(files, settings)) {
 			return 0;
@@ -205,12 +206,12 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 		// Handle @file.txt arguments.
 		if (arg.length > 0 && arg[0] == '@') {
 			string[] lines;
-			if (!getLinesFromFile(arg[1 .. $], lines)) {
+			if (!getLinesFromFile(arg[1 .. $], /*#ref*/lines)) {
 				writefln("can not find file \"%s\"", arg[1 .. $]);
 				return false;
 			}
 
-			if (!handleArgs(lines, args, ver, settings))
+			if (!handleArgs(lines, /*#ref*/args, ver, settings))
 				return false;
 
 			continue;
@@ -227,7 +228,7 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 			continue;
 		case "--platform":
 			settings.platform = parsePlatform(looper.next(),
-				/*out*/ settings.cRuntime);
+				/*#out*/settings.cRuntime);
 			continue;
 		case "--no-stdlib":
 			settings.noStdLib = true;
@@ -398,7 +399,7 @@ string[] getConfigLines()
 {
 	string[] lines;
 	string file = format("%s%svolt.conf", getExecDir(), dirSeparator);
-	getLinesFromFile(file, lines);
+	getLinesFromFile(file, /*#ref*/lines);
 	return lines;
 }
 

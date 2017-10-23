@@ -1,3 +1,4 @@
+/*#D*/
 module lib.llvm.executionengine;
 
 private import watt.conv : toStringz;

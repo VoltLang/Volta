@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2013-2016, Bernard Helyer.  All rights reserved.
 // Copyright © 2013-2016, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
@@ -110,12 +111,12 @@ CompilerException makeEmitLLVMNoLink(string file = __FILE__, const int line = __
 
 CompilerException makeFunctionNamedInit(ref in Location loc, string file = __FILE__, const int line = __LINE__)
 {
-	return makeError(loc, "functions may not be named 'init', to avoid confusion with the built-in type field of the same name.", file, line);
+	return makeError(/*#ref*/loc, "functions may not be named 'init', to avoid confusion with the built-in type field of the same name.", file, line);
 }
 
 CompilerException makeAggregateStaticVariableNamedInit(ref in Location loc, string file = __FILE__, const int line = __LINE__)
 {
-	return makeError(loc, "static field 'init' collides with built-in field of the same name.", file, line);
+	return makeError(/*#ref*/loc, "static field 'init' collides with built-in field of the same name.", file, line);
 }
 
 CompilerException makeExpressionForNew(ref in Location loc, string name, string file = __FILE__, const int line = __LINE__)
@@ -124,7 +125,7 @@ CompilerException makeExpressionForNew(ref in Location loc, string name, string 
 	if (name != "") {
 		msg ~= format("\nIf '%s' is an array you want to copy,\nuse 'new %s[..]' to duplicate it.", name, name);
 	}
-	return makeError(loc, msg, file, line);
+	return makeError(/*#ref*/loc, msg, file, line);
 }
 
 CompilerException makeMisplacedContinue(ref in Location loc, string file = __FILE__, const int line = __LINE__)
@@ -183,7 +184,7 @@ CompilerException makeNonConstantCompileTimeComposable(ref in Location loc,
 CompilerException makeArgumentCountMismatch(ref in Location loc, ir.Function func, string file = __FILE__, const int line = __LINE__)
 {
 	auto n = func.params.length;
-	return makeExpected(loc, format("%s argument%s to function '%s'", n, n == 1 ? "" : "s", func.name));
+	return makeExpected(/*#ref*/loc, format("%s argument%s to function '%s'", n, n == 1 ? "" : "s", func.name));
 }
 
 CompilerException makeAssigningVoid(ref in Location loc, string file = __FILE__, const int line = __LINE__)
@@ -874,7 +875,7 @@ CompilerException makeUnsupported(ref in Location loc, string feature, string fi
 
 CompilerException makeExpected(ir.Node node, string s, string file = __FILE__, const int line = __LINE__)
 {
-	return makeExpected(node.loc, s, false, file, line);
+	return makeExpected(/*#ref*/node.loc, s, false, file, line);
 }
 
 CompilerException makeExpected(ref in Location loc, string s, bool b = false, string file = __FILE__, const int line = __LINE__)
@@ -996,7 +997,7 @@ CompilerException makeNotMember(ref in Location loc, string aggregate, string me
 
 CompilerException makeFailedLookup(ir.Node node, string lookup, string file = __FILE__, const int line = __LINE__)
 {
-	return makeFailedLookup(node.loc, lookup, file, line);
+	return makeFailedLookup(/*#ref*/node.loc, lookup, file, line);
 }
 
 CompilerException makeFailedEnumLookup(ref in Location loc, string enumName, string name, string file = __FILE__, const int line = __LINE__)
@@ -1046,7 +1047,7 @@ CompilerException makeBadBinOp(ir.BinOp binop, ir.Type ltype, ir.Type rtype,
 
 CompilerException makeCannotDisambiguate(ir.Node node, ir.Function[] functions, ir.Type[] args, string file = __FILE__, const int line = __LINE__)
 {
-	return makeCannotDisambiguate(node.loc, functions, args, file, line);
+	return makeCannotDisambiguate(/*#ref*/node.loc, functions, args, file, line);
 }
 
 CompilerException makeCannotDisambiguate(ref in Location loc, ir.Function[] functions, ir.Type[] args, string file = __FILE__, const int line = __LINE__)
@@ -1082,17 +1083,17 @@ CompilerException makeMultipleFunctionsMatch(ref in Location loc, ir.Function[] 
 
 CompilerException panicOhGod(ir.Node node, string file = __FILE__, const int line = __LINE__)
 {
-	return panic(node.loc, "oh god.", file, line);
+	return panic(/*#ref*/node.loc, "oh god.", file, line);
 }
 
 CompilerException panic(ir.Node node, string msg, string file = __FILE__, const int line = __LINE__)
 {
-	return panic(node.loc, msg, file, line);
+	return panic(/*#ref*/node.loc, msg, file, line);
 }
 
 CompilerException panic(ref in Location loc, string msg, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerPanic(loc, msg, file, line);
+	return new CompilerPanic(/*#ref*/loc, msg, file, line);
 }
 
 CompilerException panic(string msg, string file = __FILE__, const int line = __LINE__)
@@ -1107,37 +1108,37 @@ CompilerException panicRuntimeObjectNotFound(string name, string file = __FILE__
 
 CompilerException panicUnhandled(ir.Node node, string unhandled, string file = __FILE__, const int line = __LINE__)
 {
-	return panicUnhandled(node.loc, unhandled, file, line);
+	return panicUnhandled(/*#ref*/node.loc, unhandled, file, line);
 }
 
 CompilerException panicUnhandled(ref in Location loc, string unhandled, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerPanic(loc, format("unhandled case '%s'.", unhandled), file, line);
+	return new CompilerPanic(/*#ref*/loc, format("unhandled case '%s'.", unhandled), file, line);
 }
 
 CompilerException panicNotMember(ir.Node node, string aggregate, string field, string file = __FILE__, const int line = __LINE__)
 {
 	auto str = format("no field name '%s' in aggregate '%s' '%s'.",
 	                  field, aggregate, ir.nodeToString(node));
-	return new CompilerPanic(node.loc, str, file, line);
+	return new CompilerPanic(/*#ref*/node.loc, str, file, line);
 }
 
 CompilerException panicExpected(ref in Location loc, string msg, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerPanic(loc, format("expected %s.", msg), file, line);
+	return new CompilerPanic(/*#ref*/loc, format("expected %s.", msg), file, line);
 }
 
 void panicAssert(ir.Node node, bool condition, string file = __FILE__, const int line = __LINE__)
 {
 	if (!condition) {
-		throw panic(node.loc, "assertion failure.", file, line);
+		throw panic(/*#ref*/node.loc, "assertion failure.", file, line);
 	}
 }
 
 void panicAssert(ref in Location loc, bool condition, string file = __FILE__, const int line = __LINE__)
 {
 	if (!condition) {
-		throw panic(loc, "assertion failure.", file, line);
+		throw panic(/*#ref*/loc, "assertion failure.", file, line);
 	}
 }
 

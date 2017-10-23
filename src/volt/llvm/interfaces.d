@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2013-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 /*!
@@ -335,7 +336,7 @@ public:
 		getValueAnyForm(exp, result);
 		if (result.isPointer)
 			return;
-		throw panic(exp.loc, "Value is not a backend reference");
+		throw panic(/*#ref*/exp.loc, "Value is not a backend reference");
 	}
 
 	/*!

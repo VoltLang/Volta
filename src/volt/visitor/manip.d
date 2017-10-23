@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.visitor.manip;
@@ -41,7 +42,7 @@ ir.Node[] manipNodes(ir.Node[] nodes, ReplaceDg replaceDg)
 
 	foreach (node; nodes) {
 		ir.Node[] list;
-		auto replace = replaceDg(node, list);
+		auto replace = replaceDg(node, /*#out*/list);
 
 		if (!replace) {
 			ensureSpaceFor(1);

@@ -1,3 +1,4 @@
+/*#D*/
 /*===-- llvm-c/BitWriter.h - BitWriter Library C Interface --------*- D -*-===*\
 |*                                                                            *|
 |*                     The LLVM Compiler Infrastructure                       *|

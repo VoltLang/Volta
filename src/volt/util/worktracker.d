@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2013, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.util.worktracker;
@@ -89,7 +90,7 @@ public:
 			str.sink("\n");
 			str.sink(s.description);
 		}
-		throw makeError(w.node.loc, str.toString());
+		throw makeError(/*#ref*/w.node.loc, str.toString());
 	}
 
 	void remove(Work w)

@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2010-2017, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.token.lexer;
@@ -57,7 +58,7 @@ TokenWriter lex(Source source)
 				throw lpe.panicException;
 			}
 		}
-		throw makeError(tw.errors[0].loc, tw.errors[0].errorMessage());
+		throw makeError(/*#ref*/tw.errors[0].loc, tw.errors[0].errorMessage());
 	} while (tw.lastAdded.type != TokenType.End);
 
 	return tw;
@@ -153,7 +154,7 @@ LexStatus lexUnsupported(TokenWriter tw, string s)
 
 LexStatus lexPanic(TokenWriter tw, Location loc, string msg)
 {
-	tw.errors ~= new LexerPanicError(loc, tw.source.current, panic(loc, msg));
+	tw.errors ~= new LexerPanicError(/*#ref*/loc, tw.source.current, panic(/*#ref*/loc, msg));
 	return Failed;
 }
 
@@ -227,7 +228,7 @@ NextLex nextLex(TokenWriter tw)
 	if (isAlpha(tw.source.current) || tw.source.current == '_') {
 		bool lookaheadEOF;
 		if (tw.source.current == 'r' || tw.source.current == 'q' || tw.source.current == 'x') {
-			dchar oneAhead = tw.source.lookahead(1, lookaheadEOF);
+			dchar oneAhead = tw.source.lookahead(1, /*#out*/lookaheadEOF);
 			if (oneAhead == '"') {
 				return NextLex.StringLiteral;
 			} else if (tw.source.current == 'q' && oneAhead == '{') {
@@ -260,7 +261,7 @@ void addIfDocComment(TokenWriter tw, Token commentToken, string s, string docsig
 
 	if (s.indexOf("@}") < 0) {
 		commentToken.value = cleanComment(
-			s, commentToken.isBackwardsComment);
+			s, /*#out*/commentToken.isBackwardsComment);
 	} else {
 		commentToken.value = "@}";
 	}
@@ -295,7 +296,7 @@ LexStatus skipBlockComment(TokenWriter tw)
 		}
 		if (matchIf(tw, '/')) {
 			if (tw.source.current == '*') {
-				warning(tw.source.loc, "'/*' inside of block comment.");
+				warning(/*#ref*/tw.source.loc, "'/*' inside of block comment.");
 			}
 		} else if (matchIf(tw, '*')) {
 			if (matchIf(tw, '/')) {
@@ -884,7 +885,7 @@ LexStatus lexQString(TokenWriter tw)
 	token.type = TokenType.StringLiteral;
 	auto mark = tw.source.save();
 	bool leof;
-	if (tw.source.lookahead(1, leof) == '{') {
+	if (tw.source.lookahead(1, /*#out*/leof) == '{') {
 		return lexTokenString(tw);
 	}
 	if (!match(tw, "q\"")) {
@@ -915,10 +916,10 @@ LexStatus lexQString(TokenWriter tw)
 		nesting = false;
 		if (isdalpha(tw.source.current, Position.Start)) {
 			char[] buf;
-			encode(buf, tw.source.current);
+			encode(/*#ref*/buf, tw.source.current);
 			tw.source.next();
 			while (isdalpha(tw.source.current, Position.MiddleOrEnd)) {
-				encode(buf, tw.source.current);
+				encode(/*#ref*/buf, tw.source.current);
 				tw.source.next();
 			}
 			if (!match(tw, '\n')) {
@@ -963,7 +964,7 @@ LexStatus lexQString(TokenWriter tw)
 			size_t look = 1;
 			bool restart;
 			while (look - 1 < identdelim.length) {
-				dchar c = tw.source.lookahead(look, leof);
+				dchar c = tw.source.lookahead(look, /*#out*/leof);
 				if (leof) {
 					return lexExpected(tw, token.loc, "string literal terminator");
 				}
@@ -1081,7 +1082,8 @@ LexStatus lexNumber(TokenWriter tw)
 			auto consumed = consume(src, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
 			                             'a', 'b', 'c', 'd', 'e', 'f',
 			                             'A', 'B', 'C', 'D', 'E', 'F', '_');
-			if ((src.current == '.' && src.lookahead(1, tmp) != '.') || src.current == 'p' || src.current == 'P') return lexReal(tw);
+			if ((src.current == '.' && src.lookahead(1, /*#out*/tmp) != '.') ||
+				src.current == 'p' || src.current == 'P') return lexReal(tw);
 			if (consumed == 0) {
 				return lexExpected(tw, src.loc, "hexadecimal digit");
 			}
@@ -1091,15 +1093,16 @@ LexStatus lexNumber(TokenWriter tw)
 			 * DMD treats this as an error, so we do too.
 			 */
 			return lexUnsupported(tw, src.loc, "octal literals");
-		} else if (src.current == 'f' || src.current == 'F' || (src.current == '.' && src.lookahead(1, tmp) != '.')) {
+		} else if (src.current == 'f' || src.current == 'F' ||
+			(src.current == '.' && src.lookahead(1, /*#out*/tmp) != '.')) {
 			return lexReal(tw);
 		}
 	} else if (src.current == '1' || src.current == '2' || src.current == '3' || src.current == '4' || src.current == '5' ||
 	           src.current == '6' || src.current == '7' || src.current == '8' || src.current == '9') {
 		src.next();
-		if (src.current == '.' && src.lookahead(1, tmp) != '.') return lexReal(tw);
+		if (src.current == '.' && src.lookahead(1, /*#out*/tmp) != '.') return lexReal(tw);
 		consume(src, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '_');
-		if (src.current == '.' && src.lookahead(1, tmp) != '.') return lexReal(tw);
+		if (src.current == '.' && src.lookahead(1, /*#out*/tmp) != '.') return lexReal(tw);
 	} else {
 		return lexExpected(tw, src.loc, "integer literal");
 	}
@@ -1111,7 +1114,7 @@ LexStatus lexNumber(TokenWriter tw)
 	tw.source.sync(src);
 	bool dummy;
 	auto _1 = tw.source.current;
-	auto _2 = tw.source.lookahead(1, dummy);
+	auto _2 = tw.source.lookahead(1, /*#out*/dummy);
 	if ((_1 == 'i' || _1 == 'u') && isDigit(_2)) {
 		tw.source.next();  // i/u
 		if (isDigit(tw.source.current)) tw.source.next();
@@ -1325,7 +1328,7 @@ LexStatus lexHashLine(TokenWriter tw)
 	}
 	char[] buf;
 	while (tw.source.current != '"') {
-		encode(buf, tw.source.next());
+		encode(/*#ref*/buf, tw.source.next());
 	}
 	if (!match(tw, '"')) {
 		return Failed;

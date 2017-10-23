@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2010-2012, Bernard Helyer.  All rights reserved.
 // Copyright © 2011, Jakob Ovrum.  All rights reserved.
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.

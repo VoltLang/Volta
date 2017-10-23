@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.visitor.debugprinter;
@@ -121,7 +122,7 @@ public:
 			sinkWasNull = true;
 		}
 
-		acceptExp(exp, this);
+		acceptExp(/*#ref*/exp, this);
 		mSink("\n");
 		mStream = null;
 		if (sinkWasNull) {
@@ -149,7 +150,7 @@ public:
 		if (exp is null) {
 			accept(n, this);
 		} else {
-			acceptExp(exp, this);
+			acceptExp(/*#ref*/exp, this);
 		}
 		mSink("\n");
 		mStream = null;

@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2010, Bernard Helyer.  All rights reserved.
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
@@ -92,22 +93,22 @@ class CompilerError : CompilerException
 
 	this(ref in Location loc, string message, bool neverIgnore, string file = __FILE__, const int line = __LINE__)
 	{
-		super(loc, message, null, neverIgnore, file, line);
+		super(/*#ref*/loc, message, null, neverIgnore, file, line);
 	}
 
 	this(ref in Location loc, string message, string file = __FILE__, const int line = __LINE__)
 	{
-		super(loc, message, null, false, file, line);
+		super(/*#ref*/loc, message, null, false, file, line);
 	}
 
 	this(ref in Location loc, string message, CompilerError more, string file = __FILE__, const int line = __LINE__)
 	{
-		super(loc, message, more, false, file, line);
+		super(/*#ref*/loc, message, more, false, file, line);
 	}
 
 	this(ref in Location loc, string message, CompilerError more, bool neverIgnore, string file = __FILE__, const int line = __LINE__)
 	{
-		super(loc, message, more, neverIgnore, file, line);
+		super(/*#ref*/loc, message, more, neverIgnore, file, line);
 	}
 }
 
@@ -119,7 +120,7 @@ public:
 		loc.column += loc.length;
 		loc.length = 1;
 
-		super(loc, format("missing ';' after %s.", type), file, line);
+		super(/*#ref*/loc, format("missing ';' after %s.", type), file, line);
 
 		fixHint = ";";
 	}
@@ -133,7 +134,7 @@ public:
 		loc.column += loc.length;
 		loc.length = token.length;
 
-		super(loc, format("expected '%s' to close %s.", token, type), file, line);
+		super(/*#ref*/loc, format("expected '%s' to close %s.", token, type), file, line);
 
 		fixHint = token;
 
@@ -151,13 +152,13 @@ public:
 public:
 	this(ref in Location loc, string message, string file = __FILE__, const int line = __LINE__)
 	{
-		super(loc, message, file, line);
+		super(/*#ref*/loc, message, file, line);
 	}
 
 	this(ref in Location loc, string message, ptrdiff_t argNumber, string file = __FILE__, const int line = __LINE__)
 	{
 		this.argNumber = argNumber;
-		super(loc, message, file, line);
+		super(/*#ref*/loc, message, file, line);
 	}
 }
 
@@ -174,7 +175,7 @@ public:
 
 	this(ref in Location loc, string message, string file = __FILE__, const int line = __LINE__)
 	{
-		super(loc, message, null, true, file, line);
+		super(/*#ref*/loc, message, null, true, file, line);
 	}
 
 override:

@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2013-2017, Bernard Helyer.  All rights reserved.
 // Copyright © 2013-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
@@ -31,7 +32,7 @@ import volt.semantic.typer;
 ir.Constant fold(ref ir.Exp exp, TargetInfo target)
 {
 	bool needCopy;
-	auto constant = fold(exp, needCopy, target);
+	auto constant = fold(/*#ref*/exp, /*#out*/needCopy, target);
 	return (needCopy && constant !is null) ? cast(ir.Constant)copyExp(constant) : constant;
 }
 
@@ -63,8 +64,8 @@ bool areEqualConstantArrays(ir.Exp l, ir.Exp r, TargetInfo target)
 				return false;
 			}
 		} else {
-			auto lc = fold(lelement, target);
-			auto rc = fold(relement, target);
+			auto lc = fold(/*#ref*/lelement, target);
+			auto rc = fold(/*#ref*/relement, target);
 			if (lc is null || rc is null || !typesEqual(lc.type, rc.type)) {
 				return false;
 			}
@@ -87,34 +88,34 @@ ir.Constant fold(ref ir.Exp exp, out bool needCopy, TargetInfo target)
 		return c;
 	case Unary:
 		auto unary = cast(ir.Unary)exp;
-		auto c = foldUnary(exp, unary, target);
+		auto c = foldUnary(/*#ref*/exp, unary, target);
 		if (c !is null) {
 			exp = c;
 		}
 		return c;
 	case BinOp:
 		auto binop = cast(ir.BinOp)exp;
-		auto c = foldBinOp(exp, binop, target);
+		auto c = foldBinOp(/*#ref*/exp, binop, target);
 		if (c !is null) {
 			exp = c;
 		}
 		return c;
 	case ExpReference:
 		bool wasEnum;
-		auto e = stripEnumIfEnum(exp, wasEnum);
+		auto e = stripEnumIfEnum(/*#ref*/exp, /*#out*/wasEnum);
 		if (wasEnum) {
 			needCopy = true;
-			return fold(e, target);
+			return fold(/*#ref*/e, target);
 		}
 		return null;
 	case AccessExp:
-		auto c = foldAccessExp(exp, cast(ir.AccessExp)exp, target);
+		auto c = foldAccessExp(/*#ref*/exp, cast(ir.AccessExp)exp, target);
 		if (c !is null) {
 			exp = c;
 		}
 		return c;
 	case Ternary:
-		auto c = foldTernary(exp, cast(ir.Ternary)exp, target);
+		auto c = foldTernary(/*#ref*/exp, cast(ir.Ternary)exp, target);
 		if (c !is null) {
 			exp = c;
 		}
@@ -124,7 +125,7 @@ ir.Constant fold(ref ir.Exp exp, out bool needCopy, TargetInfo target)
 		if (!cs.compileTimeOnly) {
 			return null;
 		}
-		auto c = buildConstantString(exp.loc, getConstantComposableString(target, cs));
+		auto c = buildConstantString(/*#ref*/exp.loc, getConstantComposableString(target, cs));
 		exp = c;
 		return c;
 	default:
@@ -146,7 +147,7 @@ string getConstantComposableString(TargetInfo target, ir.ComposableString cs)
 //! Add a components value to a composable string being folded.
 void addConstantComposableStringComponent(TargetInfo target, Sink sink, ir.Exp e)
 {
-	auto c = fold(e, target); 
+	auto c = fold(/*#ref*/e, target); 
 	if (c is null) {
 		assert(false);
 	}
@@ -224,9 +225,9 @@ void addConstantComposableStringComponent(Sink sink, ir.Constant c, ir.Primitive
 ir.Constant foldTernary(ref ir.Exp exp, ir.Ternary ternary, TargetInfo target)
 {
 	bool conditionCopy, trueCopy, falseCopy;
-	auto condition = fold(ternary.condition, conditionCopy, target);
-	auto ifTrue = fold(ternary.ifTrue, trueCopy, target);
-	auto ifFalse = fold(ternary.ifFalse, trueCopy, target);
+	auto condition = fold(/*#ref*/ternary.condition, /*#out*/conditionCopy, target);
+	auto ifTrue = fold(/*#ref*/ternary.ifTrue, /*#out*/trueCopy, target);
+	auto ifFalse = fold(/*#ref*/ternary.ifFalse, /*#out*/falseCopy, target);
 	if (condition is null || ifTrue is null || ifFalse is null) {
 		return null;
 	}
@@ -258,7 +259,7 @@ ir.Constant foldAccessExp(ref ir.Exp exp, ir.AccessExp accessExp, TargetInfo tar
 
 	auto tsize = size(target, type);
 	assert(tsize > 0);
-	return buildConstantSizeT(exp.loc, target, tsize);
+	return buildConstantSizeT(/*#ref*/exp.loc, target, tsize);
 }
 
 ir.Constant foldBinOp(ref ir.Exp exp, ir.BinOp binop, TargetInfo target)
@@ -267,12 +268,12 @@ ir.Constant foldBinOp(ref ir.Exp exp, ir.BinOp binop, TargetInfo target)
 	assert(binop.left !is null);
 	assert(binop.right !is null);
 	bool copyLeft, copyRight;
-	auto cl = fold(binop.left, copyLeft, target);
-	auto cr = fold(binop.right, copyRight, target);
+	auto cl = fold(/*#ref*/binop.left, /*#out*/copyLeft, target);
+	auto cr = fold(/*#ref*/binop.right, /*#out*/copyRight, target);
 	if (cl is null || cr is null || !typesEqual(cl.type, cr.type)) {
 		return null;
 	}
-	auto c = foldBinOp(exp, binop.op,
+	auto c = foldBinOp(/*#ref*/exp, binop.op,
 	                   copyLeft ? cast(ir.Constant)copyExp(cl) : cl,
 			           copyRight ? cast(ir.Constant)copyExp(cr) : cr, target);
 	if (c !is null) {
@@ -288,11 +289,11 @@ ir.Constant foldUnary(ref ir.Exp exp, ir.Unary unary, TargetInfo target)
 		return null;
 	}
 	bool _copy;
-	auto c = fold(unary.value, _copy, target);
+	auto c = fold(/*#ref*/unary.value, /*#out*/_copy, target);
 	if (c is null) {
 		return null;
 	}
-	auto uc = foldUnary(exp, unary, _copy ? cast(ir.Constant)copyExp(c) : c, target);
+	auto uc = foldUnary(/*#ref*/exp, unary, _copy ? cast(ir.Constant)copyExp(c) : c, target);
 	if (uc !is null) {
 		exp = uc;
 	}
@@ -348,7 +349,7 @@ private ir.Constant buildEmptyConstant(ir.Node n, ir.Type t)
 
 ir.Constant foldBinOpOrOr(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
-	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
+	auto c = buildEmptyConstant(cl, buildBool(/*#ref*/cl.loc));
 
 	auto pt = cast(ir.PrimitiveType)cl.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
@@ -425,7 +426,7 @@ ir.Constant foldBinOpAnd(ir.Constant cl, ir.Constant cr, TargetInfo target)
 
 ir.Constant foldBinOpEqual(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
-	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
+	auto c = buildEmptyConstant(cl, buildBool(/*#ref*/cl.loc));
 
 	if (cl.type.nodeType != ir.NodeType.PrimitiveType) {
 		return null;
@@ -447,7 +448,7 @@ ir.Constant foldBinOpEqual(ir.Constant cl, ir.Constant cr, TargetInfo target)
 
 ir.Constant foldBinOpNotEqual(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
-	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
+	auto c = buildEmptyConstant(cl, buildBool(/*#ref*/cl.loc));
 
 	if (cl.type.nodeType != ir.NodeType.PrimitiveType) {
 		return null;
@@ -469,7 +470,7 @@ ir.Constant foldBinOpNotEqual(ir.Constant cl, ir.Constant cr, TargetInfo target)
 
 ir.Constant foldBinOpLess(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
-	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
+	auto c = buildEmptyConstant(cl, buildBool(/*#ref*/cl.loc));
 
 	auto pt = cast(ir.PrimitiveType)cl.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
@@ -487,7 +488,7 @@ ir.Constant foldBinOpLess(ir.Constant cl, ir.Constant cr, TargetInfo target)
 
 ir.Constant foldBinOpLessEqual(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
-	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
+	auto c = buildEmptyConstant(cl, buildBool(/*#ref*/cl.loc));
 
 	auto pt = cast(ir.PrimitiveType)cl.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
@@ -505,7 +506,7 @@ ir.Constant foldBinOpLessEqual(ir.Constant cl, ir.Constant cr, TargetInfo target
 
 ir.Constant foldBinOpGreaterEqual(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
-	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
+	auto c = buildEmptyConstant(cl, buildBool(/*#ref*/cl.loc));
 
 	auto pt = cast(ir.PrimitiveType)cl.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
@@ -523,7 +524,7 @@ ir.Constant foldBinOpGreaterEqual(ir.Constant cl, ir.Constant cr, TargetInfo tar
 
 ir.Constant foldBinOpGreater(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
-	auto c = buildEmptyConstant(cl, buildBool(cl.loc));
+	auto c = buildEmptyConstant(cl, buildBool(/*#ref*/cl.loc));
 
 	auto pt = cast(ir.PrimitiveType)cl.type;
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
@@ -636,7 +637,7 @@ ir.Constant foldBinOpDiv(ir.Constant cl, ir.Constant cr, TargetInfo target)
 	void dieIfZero(bool isZero)
 	{
 		if (isZero) {
-			throw makeError(cl.loc, "divide by zero.");
+			throw makeError(/*#ref*/cl.loc, "divide by zero.");
 		}
 	}
 
@@ -665,7 +666,7 @@ ir.Constant foldBinOpMod(ir.Constant cl, ir.Constant cr, TargetInfo target)
 	void dieIfZero(bool isZero)
 	{
 		if (isZero) {
-			throw makeError(cl.loc, "divide by zero.");
+			throw makeError(/*#ref*/cl.loc, "divide by zero.");
 		}
 	}
 
@@ -740,16 +741,16 @@ ir.Constant foldUnaryCast(ir.Constant c, ir.Type t, TargetInfo target)
 	ir.Constant outConstant;
 	switch (toPrim.type) with (ir.PrimitiveType.Kind) {
 	case Int:
-		outConstant = buildConstantInt(loc, signed ? cast(int)signedFrom : cast(int)unsignedFrom);
+		outConstant = buildConstantInt(/*#ref*/loc, signed ? cast(int)signedFrom : cast(int)unsignedFrom);
 		break;
 	case Uint:
-		outConstant = buildConstantUint(loc, signed ? cast(uint)signedFrom : cast(uint)unsignedFrom);
+		outConstant = buildConstantUint(/*#ref*/loc, signed ? cast(uint)signedFrom : cast(uint)unsignedFrom);
 		break;
 	case Long:
-		outConstant = buildConstantLong(loc, signed ? cast(long)signedFrom : cast(long)unsignedFrom);
+		outConstant = buildConstantLong(/*#ref*/loc, signed ? cast(long)signedFrom : cast(long)unsignedFrom);
 		break;
 	case Ulong:
-		outConstant = buildConstantUlong(loc, signed ? cast(ulong)signedFrom : cast(ulong)unsignedFrom);
+		outConstant = buildConstantUlong(/*#ref*/loc, signed ? cast(ulong)signedFrom : cast(ulong)unsignedFrom);
 		break;
 	default:
 		break;
@@ -856,7 +857,7 @@ ir.Constant evaluateOrNull(TargetInfo target, ir.Exp exp)
 	if (exp is null) {
 		return null;
 	}
-	return fold(exp, target);
+	return fold(/*#ref*/exp, target);
 }
 
 ir.Constant evaluateOrNull(LanguagePass lp, ir.Scope current, ir.Exp exp)
@@ -866,7 +867,7 @@ ir.Constant evaluateOrNull(LanguagePass lp, ir.Scope current, ir.Exp exp)
 
 ir.Constant evaluate(LanguagePass lp, ir.Scope current, ir.Exp exp)
 {
-	auto constant = fold(exp, lp.target);
+	auto constant = fold(/*#ref*/exp, lp.target);
 	if (constant is null) {
 		throw makeNotAvailableInCTFE(exp, exp);
 	}
@@ -881,8 +882,9 @@ bool needsEvaluation(ir.Exp exp)
 	case ArrayLiteral:
 		auto ar = cast(ir.ArrayLiteral) exp;
 		foreach (value; ar.exps) {
-			if (needsEvaluation(value))
+			if (needsEvaluation(value)) {
 				return true;
+			}
 		}
 		return false;
 	default:

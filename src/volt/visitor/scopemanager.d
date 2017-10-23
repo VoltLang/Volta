@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.visitor.scopemanager;
@@ -49,7 +50,7 @@ public:
 
 	override Status enter(ir.Struct s)
 	{
-		checkPreScope(s.loc, s.myScope);
+		checkPreScope(/*#ref*/s.loc, s.myScope);
 		current = s.myScope;
 		return Continue;
 	}
@@ -66,7 +67,7 @@ public:
 
 	override Status enter(ir.Union u)
 	{
-		checkPreScope(u.loc, u.myScope);
+		checkPreScope(/*#ref*/u.loc, u.myScope);
 		current = u.myScope;
 		return Continue;
 	}
@@ -83,7 +84,7 @@ public:
 
 	override Status enter(ir.Class c)
 	{
-		checkPreScope(c.loc, c.myScope);
+		checkPreScope(/*#ref*/c.loc, c.myScope);
 		current = c.myScope;
 		return Continue;
 	}
@@ -100,7 +101,7 @@ public:
 
 	override Status enter(ir._Interface i)
 	{
-		checkPreScope(i.loc, i.myScope);
+		checkPreScope(/*#ref*/i.loc, i.myScope);
 		current = i.myScope;
 		return Continue;
 	}
@@ -117,7 +118,7 @@ public:
 
 	override Status enter(ir.Function func)
 	{
-		checkPreScope(func.loc, func.myScope);
+		checkPreScope(/*#ref*/func.loc, func.myScope);
 		functionStack ~= func;
 		current = func.myScope;
 		return Continue;
@@ -140,7 +141,7 @@ public:
 
 	override Status enter(ir.BlockStatement bs)
 	{
-		checkPreScope(bs.loc, bs.myScope);
+		checkPreScope(/*#ref*/bs.loc, bs.myScope);
 		current = bs.myScope;
 		return Continue;
 	}
@@ -157,7 +158,7 @@ public:
 
 	override Status enter(ir.Enum e)
 	{
-		checkPreScope(e.loc, e.myScope);
+		checkPreScope(/*#ref*/e.loc, e.myScope);
 		current = e.myScope;
 		return Continue;
 	}
@@ -178,7 +179,7 @@ private:
 		auto str = format("invalid scope layout should be %s (%s) is %s (%s)",
 			ir.getNodeAddressString(a), ir.nodeToString(a.nodeType),
 			ir.getNodeAddressString(b), ir.nodeToString(b.nodeType));
-		throw panic(a.loc, str);
+		throw panic(/*#ref*/a.loc, str);
 	}
 
 	void checkPreScope(ref in Location loc, ir.Scope _scope)
@@ -187,7 +188,7 @@ private:
 			auto str = format("invalid scope layout (parent) should be %s (%s) is %s (%s)",
 		           ir.getNodeAddressString(current.node), ir.nodeToString(current.node.nodeType),
 			   ir.getNodeAddressString(_scope.node), ir.nodeToString(_scope.node.nodeType));
-			throw panic(loc, str);
+			throw panic(/*#ref*/loc, str);
 		}
 	}
 }

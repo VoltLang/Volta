@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012-2017, Jakob Bornecrantz.  All rights reserved.
 // Copyright © 2015-2017, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
@@ -44,7 +45,7 @@ public:
 		// Initialise the JIT engine.
 		ee = null;
 		string error;
-		if (LLVMCreateMCJITCompilerForModule(&ee, state.mod, null, 0, error)) {
+		if (LLVMCreateMCJITCompilerForModule(&ee, state.mod, null, 0, /*#out*/error)) {
 			assert(false, format("JIT CREATION FAILED: %s", error)); // TODO: Real error.
 		}
 	}
@@ -202,7 +203,7 @@ public:
 
 		// Verify the module.
 		string result;
-		auto failed = LLVMVerifyModule(mod, result);
+		auto failed = LLVMVerifyModule(mod, /*#out*/result);
 		if (failed) {
 			LLVMDumpModule(mod);
 			io.error.writefln("%s", result);
@@ -223,13 +224,13 @@ public:
 	ir.Constant callFvZi(ir.Constant[])
 	{
 		auto call = cast(FvZi) mPtr;
-		return buildConstantInt(loc, call());
+		return buildConstantInt(/*#ref*/loc, call());
 	}
 
 	ir.Constant callFviZi(ir.Constant[] a)
 	{
 		auto call = cast(FviZi) mPtr;
-		return buildConstantInt(loc, call(a[0].u._int));
+		return buildConstantInt(/*#ref*/loc, call(a[0].u._int));
 	}
 
 	ir.Constant callSpring(ir.Constant[] a)
@@ -240,7 +241,7 @@ public:
 
 		mSpring(mArgs);
 
-		return getConstantFromPtr(loc, mRetType, mArgs);
+		return getConstantFromPtr(/*#ref*/loc, mRetType, mArgs);
 	}
 
 	version (D_Version2) {
@@ -280,16 +281,16 @@ ir.Constant getConstantFromPtr(ref Location loc, ir.Type type, void* ptr)
 	}
 
 	switch (ptype.type) with (ir.PrimitiveType.Kind) {
-	case Byte:   return buildConstantByte(loc, *cast(byte*)ptr);
-	case Ubyte:  return buildConstantUbyte(loc, *cast(ubyte*)ptr);
-	case Short:  return buildConstantShort(loc, *cast(short*)ptr);
-	case Ushort: return buildConstantUshort(loc, *cast(ushort*)ptr);
-	case Int:    return buildConstantInt(loc, *cast(int*)ptr);
-	case Uint:   return buildConstantUint(loc, *cast(uint*)ptr);
-	case Long:   return buildConstantLong(loc, *cast(long*)ptr);
-	case Ulong:  return buildConstantUlong(loc, *cast(ulong*)ptr);
-	case Float:  return buildConstantFloat(loc, *cast(float*)ptr);
-	case Double: return buildConstantDouble(loc, *cast(double*)ptr);
+	case Byte:   return buildConstantByte(/*#ref*/loc, *cast(byte*)ptr);
+	case Ubyte:  return buildConstantUbyte(/*#ref*/loc, *cast(ubyte*)ptr);
+	case Short:  return buildConstantShort(/*#ref*/loc, *cast(short*)ptr);
+	case Ushort: return buildConstantUshort(/*#ref*/loc, *cast(ushort*)ptr);
+	case Int:    return buildConstantInt(/*#ref*/loc, *cast(int*)ptr);
+	case Uint:   return buildConstantUint(/*#ref*/loc, *cast(uint*)ptr);
+	case Long:   return buildConstantLong(/*#ref*/loc, *cast(long*)ptr);
+	case Ulong:  return buildConstantUlong(/*#ref*/loc, *cast(ulong*)ptr);
+	case Float:  return buildConstantFloat(/*#ref*/loc, *cast(float*)ptr);
+	case Double: return buildConstantDouble(/*#ref*/loc, *cast(double*)ptr);
 	default:
 		assert(false, "UNHANDLED PRIMITIVE TYPE");  // TODO: Real error.
 	}

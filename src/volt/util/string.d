@@ -1,3 +1,4 @@
+/*#D*/
 module volt.util.string;
 
 import watt.conv : toInt, ConvException;
@@ -44,7 +45,7 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 					try {
 						i = cast(uint)toInt(hexchars, 16);
 					} catch (ConvException) {
-						throw makeExpected(loc, "unicode codepoint specification");
+						throw makeExpected(/*#ref*/loc, "unicode codepoint specification");
 					}
 					if (hexchars.length == 4) {
 						encode(output, i);
@@ -56,21 +57,21 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 					unicoding = 0;
 					continue;
 				} else { 
-					throw makeExpected(loc, "unicode codepoint specification");
+					throw makeExpected(/*#ref*/loc, "unicode codepoint specification");
 				}
 			}
-			encode(hexchars, c);
+			encode(/*#ref*/hexchars, c);
 			if (hexchars.length == unicoding) {
 				uint i;
 				try {
 					i = cast(uint)toInt(hexchars, 16);
 				} catch (ConvException) {
-					throw makeExpected(loc, "unicode codepoint specification");
+					throw makeExpected(/*#ref*/loc, "unicode codepoint specification");
 				}
 				if (hexchars.length == 4) {
-					encode(output, i);
+					encode(/*#ref*/output, i);
 				} else if (hexchars.length == 8) {
-					encode(output, cast(ushort)i);
+					encode(/*#ref*/output, cast(ushort)i);
 				} else {
 					assert(false);
 				}
@@ -83,9 +84,9 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 		// \xXX
 		if (hexing) {
 			if (!isHex(c)) {
-				throw makeExpected(loc, "hex digit");
+				throw makeExpected(/*#ref*/loc, "hex digit");
 			}
-			encode(hexchars, c);
+			encode(/*#ref*/hexchars, c);
 			if (hexchars.length == 2) {
 				try {
 					version (Volt) {
@@ -94,7 +95,7 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 						output ~= cast(char)toInt(hexchars, 16);
 					}
 				} catch (ConvException) {
-					throw makeExpected(loc, "hex digit");
+					throw makeExpected(/*#ref*/loc, "hex digit");
 				}
 				hexing = false;
 				hexchars = null;
@@ -105,19 +106,19 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 		// \X
 		if (escaping) {
 			switch (c) {
-				case '\'': encode(output, '\''); break;
-				case '\"': encode(output, '\"'); break;
-				case '\?': encode(output, '\?'); break;
-				case '\\': encode(output, '\\'); break;
-				case '$': encode(output, '$'); break;
-				case 'a': encode(output, '\a'); break;
-				case 'b': encode(output, '\b'); break;
-				case 'f': encode(output, '\f'); break;
-				case 'n': encode(output, '\n'); break;
-				case 'r': encode(output, '\r'); break;
-				case 't': encode(output, '\t'); break;
-				case 'v': encode(output, '\v'); break;
-				case '0': encode(output, '\0'); break;
+				case '\'': encode(/*#ref*/output, '\''); break;
+				case '\"': encode(/*#ref*/output, '\"'); break;
+				case '\?': encode(/*#ref*/output, '\?'); break;
+				case '\\': encode(/*#ref*/output, '\\'); break;
+				case '$': encode(/*#ref*/output, '$'); break;
+				case 'a': encode(/*#ref*/output, '\a'); break;
+				case 'b': encode(/*#ref*/output, '\b'); break;
+				case 'f': encode(/*#ref*/output, '\f'); break;
+				case 'n': encode(/*#ref*/output, '\n'); break;
+				case 'r': encode(/*#ref*/output, '\r'); break;
+				case 't': encode(/*#ref*/output, '\t'); break;
+				case 'v': encode(/*#ref*/output, '\v'); break;
+				case '0': encode(/*#ref*/output, '\0'); break;
 				case 'x':
 					escaping = false;
 					hexing = true;
@@ -136,7 +137,7 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 				// @todo Named character entities. http://www.w3.org/TR/html5/named-character-references.html
 				default:
 					string str = format("valid escape, found '\\%s'", c);
-					throw makeExpected(loc, str);
+					throw makeExpected(/*#ref*/loc, str);
 			}
 			escaping = false;
 			continue;
@@ -146,18 +147,18 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 			escaping = true;
 			continue;
 		} else {
-			encode(output, c);
+			encode(/*#ref*/output, c);
 		}
 	}
 
 	if (escaping) {
-		throw makeExpected(loc, "valid escape");
+		throw makeExpected(/*#ref*/loc, "valid escape");
 	}
 
 	if (unicoding == 4) {
-		throw makeExpected(loc, "valid unicode escape, \\uXXXX");
+		throw makeExpected(/*#ref*/loc, "valid unicode escape, \\uXXXX");
 	} else if (unicoding == 8) {
-		throw makeExpected(loc, "valid unicode escape, \\UXXXXXXXX");
+		throw makeExpected(/*#ref*/loc, "valid unicode escape, \\UXXXXXXXX");
 	}
 
 	version (Volt) {

@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2014, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice and license in src/lib/llvm/core.d.
 module lib.llvm.bitreader;

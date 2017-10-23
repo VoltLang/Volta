@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012-2017, Bernard Helyer.
 // Copyright © 2012-2017, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
@@ -150,7 +151,7 @@ protected:
 			return ver.debugEnabled;
 		}
 		bool[] stack;
-		evaluate(c, c.exp, stack);
+		evaluate(c, c.exp, /*#ref*/stack);
 		assert(stack.length == 1);
 		return stack[0];
 	}
@@ -175,7 +176,7 @@ protected:
 			if (u.op != ir.Unary.Op.Not) {
 				goto default;
 			}
-			evaluate(c, u.value, stack);
+			evaluate(c, u.value, /*#ref*/stack);
 			if (stack.length == 0) {
 				goto default;
 			}
@@ -184,8 +185,8 @@ protected:
 		case BinOp:
 			auto b = cast(ir.BinOp) e;
 			assert(b !is null);
-			evaluate(c, b.right, stack);
-			evaluate(c, b.left, stack);
+			evaluate(c, b.right, /*#ref*/stack);
+			evaluate(c, b.left, /*#ref*/stack);
 			if (stack.length < 2) {
 				goto default;
 			}

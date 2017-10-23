@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.parser.toplevel;
@@ -35,7 +36,7 @@ ParseStatus parseModule(ParserStream ps, out ir.Module mod)
 		auto t = ps.get();
 
 		ir.QualifiedName qn;
-		succeeded = parseQualifiedName(ps, qn);
+		succeeded = parseQualifiedName(ps, /*#out*/qn);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Module);
 		}
@@ -52,14 +53,14 @@ ParseStatus parseModule(ParserStream ps, out ir.Module mod)
 	} else {
 		mod = new ir.Module();
 		mod.loc = initLocation;
-		mod.name = buildQualifiedName(mod.loc, mod.loc.filename);
+		mod.name = buildQualifiedName(/*#ref*/mod.loc, mod.loc.filename);
 		mod.docComment = ps.comment();
 		mod.isAnonymous = true;
 	}
 	mod.magicFlagD = ps.magicFlagD;
 	ps.popCommentLevel();
 
-	succeeded = parseTopLevelBlock(ps, mod.children, TokenType.End);
+	succeeded = parseTopLevelBlock(ps, /*#out*/mod.children, TokenType.End);
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.Module);
 	}
@@ -81,7 +82,7 @@ ParseStatus parseModule(ParserStream ps, out ir.Module mod)
 	}
 
 	mod.children.nodes = [
-			createImport(mod.loc, "core", "compiler", "defaultsymbols")
+			createImport(/*#ref*/mod.loc, "core", "compiler", "defaultsymbols")
 		] ~ mod.children.nodes;
 
 	return Succeeded;
@@ -122,7 +123,7 @@ body
 	switch (ps.peek.type) {
 	case TokenType.Import:
 		ir.Import _import;
-		succeeded = parseImport(ps, _import);
+		succeeded = parseImport(ps, /*#out*/_import);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TopLevelBlock);
 		}
@@ -130,7 +131,7 @@ body
 		break;
 	case TokenType.Unittest:
 		ir.Unittest u;
-		succeeded = parseUnittest(ps, u);
+		succeeded = parseUnittest(ps, /*#out*/u);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TopLevelBlock);
 		}
@@ -138,7 +139,7 @@ body
 		break;
 	case TokenType.This:
 		ir.Function c;
-		succeeded = parseConstructor(ps, c);
+		succeeded = parseConstructor(ps, /*#out*/c);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TopLevelBlock);
 		}
@@ -146,7 +147,7 @@ body
 		break;
 	case TokenType.Tilde:  // XXX: Is this unambiguous?
 		ir.Function d;
-		succeeded = parseDestructor(ps, d);
+		succeeded = parseDestructor(ps, /*#out*/d);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TopLevelBlock);
 		}
@@ -156,14 +157,14 @@ body
 		ir.Union u;
 		if (isTemplateDefinition(ps)) {
 			ir.TemplateDefinition td;
-			succeeded = parseTemplateDefinition(ps, td);
+			succeeded = parseTemplateDefinition(ps, /*#out*/td);
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.TopLevelBlock);
 			}
 			sink.push(td);
 			break;
 		}
-		succeeded = parseUnion(ps, u);
+		succeeded = parseUnion(ps, /*#out*/u);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TopLevelBlock);
 		}
@@ -173,14 +174,14 @@ body
 		ir.Struct s;
 		if (isTemplateDefinition(ps)) {
 			ir.TemplateDefinition td;
-			succeeded = parseTemplateDefinition(ps, td);
+			succeeded = parseTemplateDefinition(ps, /*#out*/td);
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.TopLevelBlock);
 			}
 			sink.push(td);
 			break;
 		}
-		succeeded = parseStruct(ps, s);
+		succeeded = parseStruct(ps, /*#out*/s);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TopLevelBlock);
 		}
@@ -190,14 +191,14 @@ body
 		ir.Class c;
 		if (isTemplateDefinition(ps)) {
 			ir.TemplateDefinition td;
-			succeeded = parseTemplateDefinition(ps, td);
+			succeeded = parseTemplateDefinition(ps, /*#out*/td);
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.TopLevelBlock);
 			}
 			sink.push(td);
 			break;
 		}
-		succeeded = parseClass(ps, c);
+		succeeded = parseClass(ps, /*#out*/c);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TopLevelBlock);
 		}
@@ -207,14 +208,14 @@ body
 		ir._Interface i;
 		if (isTemplateDefinition(ps)) {
 			ir.TemplateDefinition td;
-			succeeded = parseTemplateDefinition(ps, td);
+			succeeded = parseTemplateDefinition(ps, /*#out*/td);
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.TopLevelBlock);
 			}
 			sink.push(td);
 			break;
 		}
-		succeeded = parseInterface(ps, i);
+		succeeded = parseInterface(ps, /*#out*/i);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TopLevelBlock);
 		}
@@ -222,7 +223,7 @@ body
 		break;
 	case TokenType.Enum:
 		ir.Node[] nodes;
-		succeeded = parseEnum(ps, nodes);
+		succeeded = parseEnum(ps, /*#out*/nodes);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TopLevelBlock);
 		}
@@ -232,14 +233,14 @@ body
 		auto next = ps.lookahead(1).type;
 		if (next == TokenType.Function) {
 			ir.MixinFunction m;
-			succeeded = parseMixinFunction(ps, m);
+			succeeded = parseMixinFunction(ps, /*#out*/m);
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.TopLevelBlock);
 			}
 			sink.push(m);
 		} else if (next == TokenType.Template) {
 			ir.MixinTemplate m;
-			succeeded = parseMixinTemplate(ps, m);
+			succeeded = parseMixinTemplate(ps, /*#out*/m);
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.TopLevelBlock);
 			}
@@ -270,7 +271,7 @@ body
 	case TokenType.Nothrow:
 	case TokenType.Pure: // WARNING Global/Local jumps here.
 		ir.Attribute a;
-		succeeded = parseAttribute(ps, a);
+		succeeded = parseAttribute(ps, /*#out*/a);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TopLevelBlock);
 		}
@@ -288,7 +289,7 @@ body
 	case TokenType.Version:
 	case TokenType.Debug:
 		ir.ConditionTopLevel c;
-		succeeded = parseConditionTopLevel(ps, c);
+		succeeded = parseConditionTopLevel(ps, /*#out*/c);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TopLevelBlock);
 		}
@@ -302,7 +303,7 @@ body
 			goto case TokenType.This;
 		} else if (next == TokenType.Assert) {
 			ir.AssertStatement s;
-			succeeded = parseAssertStatement(ps, s);
+			succeeded = parseAssertStatement(ps, /*#out*/s);
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.TopLevelBlock);
 			}
@@ -311,7 +312,7 @@ body
 			goto case TokenType.Version;
 		} else {
 			ir.Attribute a;
-			succeeded = parseAttribute(ps, a);
+			succeeded = parseAttribute(ps, /*#out*/a);
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.TopLevelBlock);
 			}
@@ -323,7 +324,7 @@ body
 		ps.get();
 		break;
 	default:
-		succeeded = parseVariable(ps, sink.push);
+		succeeded = parseVariable(ps, /*#out*/sink.push);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TopLevelBlock);
 		}
@@ -368,7 +369,7 @@ body
 
 	while (ps.peek.type != end && ps.peek.type != TokenType.End) {
 		ir.TopLevelBlock tmp;
-		auto succeeded = parseOneTopLevelBlock(ps, tmp);
+		auto succeeded = parseOneTopLevelBlock(ps, /*#out*/tmp);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TopLevelBlock);
 		}
@@ -401,7 +402,7 @@ ParseStatus parseImport(ParserStream ps, out ir.Import _import)
 
 	if (ps == [TokenType.Identifier, TokenType.Assign]) {
 		// import <a = b.c>
-		succeeded = parseIdentifier(ps, _import.bind);
+		succeeded = parseIdentifier(ps, /*#out*/_import.bind);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Import);
 		}
@@ -412,7 +413,7 @@ ParseStatus parseImport(ParserStream ps, out ir.Import _import)
 		if (matchIf(ps, TokenType.OpenBracket)) {
 			do {
 				ir.QualifiedName qname;
-				succeeded = parseQualifiedName(ps, qname);
+				succeeded = parseQualifiedName(ps, /*#out*/qname);
 				if (!succeeded) {
 					return parseFailed(ps, ir.NodeType.Import);
 				}
@@ -422,7 +423,7 @@ ParseStatus parseImport(ParserStream ps, out ir.Import _import)
 			ps.get();
 		} else {
 			ir.QualifiedName qname;
-			succeeded = parseQualifiedName(ps, qname);
+			succeeded = parseQualifiedName(ps, /*#out*/qname);
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.Import);
 			}
@@ -434,7 +435,7 @@ ParseStatus parseImport(ParserStream ps, out ir.Import _import)
 		}
 		// No import bind.
 		ir.QualifiedName qname;
-		succeeded = parseQualifiedName(ps, qname);
+		succeeded = parseQualifiedName(ps, /*#out*/qname);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Import);
 		}
@@ -453,13 +454,13 @@ ParseStatus parseImport(ParserStream ps, out ir.Import _import)
 			}
 			first = false;
 			ir.Identifier name, assign;
-			succeeded = parseIdentifier(ps, name);
+			succeeded = parseIdentifier(ps, /*#out*/name);
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.Import);
 			}
 			if (ps.peek.type == TokenType.Assign) {
 				ps.get();
-				succeeded = parseIdentifier(ps, assign);
+				succeeded = parseIdentifier(ps, /*#out*/assign);
 				if (!succeeded) {
 					return parseFailed(ps, ir.NodeType.Import);
 				}
@@ -480,7 +481,7 @@ ParseStatus parseUnittest(ParserStream ps, out ir.Unittest u)
 		return unexpectedToken(ps, ir.NodeType.Unittest);
 	}
 	ps.get();
-	auto succeeded = parseBlock(ps, u._body);
+	auto succeeded = parseBlock(ps, /*#out*/u._body);
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.Unittest);
 	}
@@ -524,7 +525,7 @@ ParseStatus parseConstructor(ParserStream ps, out ir.Function c)
 
 	ir.Variable[] params;
 	bool colonDeclaration = isColonDeclaration(ps);
-	auto succeeded = parseParameterList(ps, params, c.type);
+	auto succeeded = parseParameterList(ps, /*#out*/params, c.type);
 	if (params.length > 0 && !colonDeclaration) {
 		warningOldStyleFunction(/*#ref*/c.loc, ps.magicFlagD, ps.settings);
 	}
@@ -558,7 +559,7 @@ ParseStatus parseConstructor(ParserStream ps, out ir.Function c)
 				return unexpectedToken(ps, c);
 			}
 			ps.get();
-			succeeded = parseBlock(ps, c.inContract);
+			succeeded = parseBlock(ps, /*#out*/c.inContract);
 			if (!succeeded) {
 				return parseFailed(ps, c);
 			}
@@ -586,7 +587,7 @@ ParseStatus parseConstructor(ParserStream ps, out ir.Function c)
 				}
 				ps.get();
 			}
-			succeeded = parseBlock(ps, c.outContract);
+			succeeded = parseBlock(ps, /*#out*/c.outContract);
 			if (!succeeded) {
 				return parseFailed(ps, c);
 			}
@@ -597,7 +598,7 @@ ParseStatus parseConstructor(ParserStream ps, out ir.Function c)
 				ps.get();
 			}
 			inBlocks = false;
-			auto succeeded2 = parseBlock(ps, c._body);
+			auto succeeded2 = parseBlock(ps, /*#out*/c._body);
 			if (!succeeded2) {
 				return parseFailed(ps, ir.NodeType.Function, ir.NodeType.BlockStatement);
 			}
@@ -648,7 +649,7 @@ ParseStatus parseDestructor(ParserStream ps, out ir.Function d)
 
 	d.type = new ir.FunctionType();
 	d.type.ret = pt;
-	succeeded = parseBlock(ps, d._body);
+	succeeded = parseBlock(ps, /*#out*/d._body);
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.Function, ir.NodeType.BlockStatement);
 	}
@@ -665,7 +666,7 @@ ParseStatus parseClass(ParserStream ps, out ir.Class c, string templateName = ""
 
 	if (templateName.length == 0) {
 		if (isTemplateInstance(ps)) {
-			return parseTemplateInstance(ps, c.templateInstance, c.name);
+			return parseTemplateInstance(ps, /*#out*/c.templateInstance, /*#out*/c.name);
 		}
 		auto succeeded = match(ps, ir.NodeType.Class,
 			[TokenType.Class, TokenType.Identifier]);
@@ -680,7 +681,7 @@ ParseStatus parseClass(ParserStream ps, out ir.Class c, string templateName = ""
 	}
 
 	if (matchIf(ps, TokenType.Colon)) {
-		auto succeeded = parseQualifiedName(ps, c.parent);
+		auto succeeded = parseQualifiedName(ps, /*#out*/c.parent);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Class, ir.NodeType.QualifiedName);
 		}
@@ -690,7 +691,7 @@ ParseStatus parseClass(ParserStream ps, out ir.Class c, string templateName = ""
 			}
 			ps.get();
 			ir.QualifiedName i;
-			succeeded = parseQualifiedName(ps, i);
+			succeeded = parseQualifiedName(ps, /*#out*/i);
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.Class, ir.NodeType.QualifiedName);
 			}
@@ -702,7 +703,7 @@ ParseStatus parseClass(ParserStream ps, out ir.Class c, string templateName = ""
 		return unexpectedToken(ps, ir.NodeType.Class);
 	}
 	ps.get();
-	auto succeeded = parseTopLevelBlock(ps, c.members, TokenType.CloseBrace);
+	auto succeeded = parseTopLevelBlock(ps, /*#out*/c.members, TokenType.CloseBrace);
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.Class, ir.NodeType.TopLevelBlock);
 	}
@@ -719,7 +720,7 @@ ParseStatus parseInterface(ParserStream ps, out ir._Interface i, string template
 
 	if (templateName.length == 0) {
 		if (isTemplateInstance(ps)) {
-			return parseTemplateInstance(ps, i.templateInstance, i.name);
+			return parseTemplateInstance(ps, /*#out*/i.templateInstance, /*#out*/i.name);
 		}
 
 		auto succeeded = match(ps, ir.NodeType.Interface,
@@ -737,7 +738,7 @@ ParseStatus parseInterface(ParserStream ps, out ir._Interface i, string template
 	if (matchIf(ps, TokenType.Colon)) {
 		while (ps.peek.type != TokenType.OpenBrace) {
 			ir.QualifiedName q;
-			auto succeeded = parseQualifiedName(ps, q);
+			auto succeeded = parseQualifiedName(ps, /*#out*/q);
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.Interface, ir.NodeType.QualifiedName);
 			}
@@ -755,7 +756,7 @@ ParseStatus parseInterface(ParserStream ps, out ir._Interface i, string template
 		return unexpectedToken(ps, ir.NodeType.Interface);
 	}
 	ps.get();
-	auto succeeded = parseTopLevelBlock(ps, i.members, TokenType.CloseBrace);
+	auto succeeded = parseTopLevelBlock(ps, /*#out*/i.members, TokenType.CloseBrace);
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.Interface, ir.NodeType.TopLevelBlock);
 	}
@@ -773,7 +774,7 @@ ParseStatus parseUnion(ParserStream ps, out ir.Union u, string templateName="")
 
 	if (templateName.length == 0) {
 		if (isTemplateInstance(ps)) {
-			return parseTemplateInstance(ps, u.templateInstance, u.name);
+			return parseTemplateInstance(ps, /*#out*/u.templateInstance, /*#out*/u.name);
 		}
 
 		if (ps.peek.type != TokenType.Union) {
@@ -801,14 +802,14 @@ ParseStatus parseUnion(ParserStream ps, out ir.Union u, string templateName="")
 			}
 			ps.get();
 		} else {
-			return unsupportedFeature(ps, u, "opaque union declarations");
+			return unsupportedFeature(ps, /*#out*/u, "opaque union declarations");
 		}
 	} else {
 		if (ps.peek.type != TokenType.OpenBrace) {
 			return unexpectedToken(ps, ir.NodeType.Union);
 		}
 		ps.get();
-		auto succeeded = parseTopLevelBlock(ps, u.members, TokenType.CloseBrace);
+		auto succeeded = parseTopLevelBlock(ps, /*#out*/u.members, TokenType.CloseBrace);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Union);
 		}
@@ -828,7 +829,7 @@ ParseStatus parseStruct(ParserStream ps, out ir.Struct s, string templateName=""
 
 	if (templateName.length == 0) {
 		if (isTemplateInstance(ps)) {
-			return parseTemplateInstance(ps, s.templateInstance, s.name);
+			return parseTemplateInstance(ps, /*#out*/s.templateInstance, /*#out*/s.name);
 		}
 
 		if (ps.peek.type != TokenType.Struct) {
@@ -852,7 +853,7 @@ ParseStatus parseStruct(ParserStream ps, out ir.Struct s, string templateName=""
 			return unexpectedToken(ps, ir.NodeType.Struct);
 		}
 		ps.get();
-		auto succeeded = parseTopLevelBlock(ps, s.members, TokenType.CloseBrace);
+		auto succeeded = parseTopLevelBlock(ps, /*#out*/s.members, TokenType.CloseBrace);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Struct);
 		}
@@ -895,7 +896,7 @@ ParseStatus parseEnum(ParserStream ps, out ir.Node[] output)
 	ir.Type base;
 	if (matchIf(ps, TokenType.Colon)) {
 		// Anonymous enum.
-		auto succeeded = parseType(ps, base);
+		auto succeeded = parseType(ps, /*#out*/base);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Enum);
 		}
@@ -910,12 +911,12 @@ ParseStatus parseEnum(ParserStream ps, out ir.Node[] output)
 		auto nameTok = ps.get();
 		namedEnum.name = nameTok.value;
 		if (matchIf(ps, TokenType.Colon)) {
-			auto succeeded = parseType(ps, namedEnum.base);
+			auto succeeded = parseType(ps, /*#out*/namedEnum.base);
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.Enum);
 			}
 		} else {
-			namedEnum.base = buildStorageType(ps.peek.loc, ir.StorageType.Kind.Auto, null);
+			namedEnum.base = buildStorageType(/*#ref*/ps.peek.loc, ir.StorageType.Kind.Auto, null);
 		}
 		base = namedEnum;
 		output ~= namedEnum;
@@ -923,7 +924,7 @@ ParseStatus parseEnum(ParserStream ps, out ir.Node[] output)
 
 	if (matchIf(ps, TokenType.OpenBrace)) {
 		if (base is null) {
-			base = buildPrimitiveType(ps.peek.loc, ir.PrimitiveType.Kind.Int);
+			base = buildPrimitiveType(/*#ref*/ps.peek.loc, ir.PrimitiveType.Kind.Int);
 		}
 		ir.EnumDeclaration prevEnum;
 
@@ -939,7 +940,7 @@ ParseStatus parseEnum(ParserStream ps, out ir.Node[] output)
 			}
 
 			ir.EnumDeclaration ed;
-			succeeded = parseEnumDeclaration(ps, ed, false /* standalone */);
+			succeeded = parseEnumDeclaration(ps, /*#out*/ed, false /* standalone */);
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.Enum);
 			}
@@ -949,7 +950,7 @@ ParseStatus parseEnum(ParserStream ps, out ir.Node[] output)
 				if (ed.type !is null) {
 					return unexpectedToken(ps, ir.NodeType.Enum);
 				}
-				ed.type = buildTypeReference(namedEnum.loc, namedEnum);
+				ed.type = buildTypeReference(/*#ref*/namedEnum.loc, namedEnum);
 				namedEnum.members ~= ed;
 			} else {
 				if (ed.type is null) {
@@ -982,16 +983,16 @@ ParseStatus parseEnum(ParserStream ps, out ir.Node[] output)
 		}
 		auto comment = ps.comment();
 		if (ps != [TokenType.Identifier, TokenType.Assign] && ps != [TokenType.Identifier, TokenType.Colon]) {
-			auto succeeded = parseType(ps, base);
+			auto succeeded = parseType(ps, /*#out*/base);
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.Enum);
 			}
 		} else {
-			base = buildStorageType(ps.peek.loc, ir.StorageType.Kind.Auto, null);
+			base = buildStorageType(/*#ref*/ps.peek.loc, ir.StorageType.Kind.Auto, null);
 		}
 
 		ir.EnumDeclaration ed;
-		auto succeeded = parseEnumDeclaration(ps, ed, true /* standalone */);
+		auto succeeded = parseEnumDeclaration(ps, /*#out*/ed, true /* standalone */);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Enum);
 		}
@@ -1032,7 +1033,7 @@ ParseStatus parseMixinFunction(ParserStream ps, out ir.MixinFunction m)
 		return succeeded;
 	}
 	
-	succeeded = parseBlock(ps, m.raw);
+	succeeded = parseBlock(ps, /*#out*/m.raw);
 	if (!succeeded) {
 		return parseFailed(ps, m);
 	}
@@ -1062,7 +1063,7 @@ ParseStatus parseMixinTemplate(ParserStream ps, out ir.MixinTemplate m)
 		return succeeded;
 	}
 
-	succeeded = parseTopLevelBlock(ps, m.raw, TokenType.CloseBrace);
+	succeeded = parseTopLevelBlock(ps, /*#out*/m.raw, TokenType.CloseBrace);
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.MixinTemplate);
 	}
@@ -1156,7 +1157,7 @@ ParseStatus parseAttribute(ParserStream ps, out ir.Attribute attr, bool noTopLev
 			ps.get();
 			attr.kind = ir.Attribute.Kind.MangledName;
 			ir.Exp e;
-			auto succeeded = parseExp(ps, e);
+			auto succeeded = parseExp(ps, /*#out*/e);
 			if (!succeeded) {
 				return parseFailed(ps, attr);
 			}
@@ -1224,7 +1225,7 @@ ParseStatus parseAttribute(ParserStream ps, out ir.Attribute attr, bool noTopLev
 		if (ps.comment().length > 0) {
 			return docCommentMultiple(ps, ps.lastDocComment.loc);
 		}
-		auto succeeded = parseTopLevelBlock(ps, attr.members, TokenType.CloseBrace);
+		auto succeeded = parseTopLevelBlock(ps, /*#out*/attr.members, TokenType.CloseBrace);
 		if (!succeeded) {
 			return parseFailed(ps, attr);
 		}
@@ -1237,7 +1238,7 @@ ParseStatus parseAttribute(ParserStream ps, out ir.Attribute attr, bool noTopLev
 			return docCommentMultiple(ps, ps.lastDocComment.loc);
 		}
 	} else {
-		auto succeeded = parseOneTopLevelBlock(ps, attr.members);
+		auto succeeded = parseOneTopLevelBlock(ps, /*#out*/attr.members);
 		if (!succeeded) {
 			return parseFailed(ps, attr);
 		}
@@ -1284,7 +1285,7 @@ ParseStatus parseCondition(ParserStream ps, out ir.Condition condition)
 		return parseExpected(ps, ps.peek.loc, condition, "'version', 'debug', or 'static'");
 	}
 
-	auto succeeded = parseExp(ps, condition.exp);
+	auto succeeded = parseExp(ps, /*#out*/condition.exp);
 	if (!succeeded) {
 		return parseFailed(ps, condition);
 	}
@@ -1298,19 +1299,19 @@ ParseStatus parseConditionTopLevel(ParserStream ps, out ir.ConditionTopLevel ctl
 	ctl.loc = ps.peek.loc;
 	ctl.docComment = ps.comment();
 
-	auto succeeded = parseCondition(ps, ctl.condition);
+	auto succeeded = parseCondition(ps, /*#out*/ctl.condition);
 	if (!succeeded) {
 		return parseFailed(ps, ctl);
 	}
 	if (matchIf(ps, TokenType.Colon)) {
 		// Colons are implictly converted into braces; the IR knows nothing of colons.
-		succeeded = parseTopLevelBlock(ps, ctl.members, TokenType.CloseBrace);
+		succeeded = parseTopLevelBlock(ps, /*#out*/ctl.members, TokenType.CloseBrace);
 		if (!succeeded) {
 			return parseFailed(ps, ctl);
 		}
 		return Succeeded;  // Else blocks aren't tied to colon conditionals.
 	} else if (matchIf(ps, TokenType.OpenBrace)) {
-		succeeded = parseTopLevelBlock(ps, ctl.members, TokenType.CloseBrace);
+		succeeded = parseTopLevelBlock(ps, /*#out*/ctl.members, TokenType.CloseBrace);
 		if (!succeeded) {
 			return parseFailed(ps, ctl);
 		}
@@ -1319,7 +1320,7 @@ ParseStatus parseConditionTopLevel(ParserStream ps, out ir.ConditionTopLevel ctl
 		}
 		ps.get();
 	} else {
-		succeeded = parseOneTopLevelBlock(ps, ctl.members);
+		succeeded = parseOneTopLevelBlock(ps, /*#out*/ctl.members);
 		if (!succeeded) {
 			return parseFailed(ps, ctl);
 		}
@@ -1329,12 +1330,12 @@ ParseStatus parseConditionTopLevel(ParserStream ps, out ir.ConditionTopLevel ctl
 		ctl.elsePresent = true;
 		if (matchIf(ps, TokenType.Colon)) {
 			// Colons are implictly converted into braces; the IR knows nothing of colons.
-			succeeded = parseTopLevelBlock(ps, ctl.members, TokenType.CloseBrace);
+			succeeded = parseTopLevelBlock(ps, /*#out*/ctl.members, TokenType.CloseBrace);
 			if (!succeeded) {
 				return parseFailed(ps, ctl);
 			}
 		} else if (matchIf(ps, TokenType.OpenBrace)) {
-			succeeded = parseTopLevelBlock(ps, ctl._else, TokenType.CloseBrace);
+			succeeded = parseTopLevelBlock(ps, /*#out*/ctl._else, TokenType.CloseBrace);
 			if (!succeeded) {
 				return parseFailed(ps, ctl);
 			}
@@ -1343,7 +1344,7 @@ ParseStatus parseConditionTopLevel(ParserStream ps, out ir.ConditionTopLevel ctl
 			}
 			ps.get();
 		} else {
-			succeeded = parseOneTopLevelBlock(ps, ctl._else);
+			succeeded = parseOneTopLevelBlock(ps, /*#out*/ctl._else);
 			if (!succeeded) {
 				return parseFailed(ps, ctl);
 			}

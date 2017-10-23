@@ -1,3 +1,4 @@
+/*#D*/
 module lib.llvm.c.ExecutionEngine;
 
 import lib.llvm.c.Core;

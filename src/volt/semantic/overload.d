@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2013, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.overload;
@@ -61,7 +62,7 @@ ir.Function selectFunction(TargetInfo target, ir.Function[] functions, ir.Exp[] 
 	foreach (arg; arguments) {
 		types ~= getExpType(arg);
 	}
-	return selectFunction(target, functions, types, arguments, loc, throwOnError);
+	return selectFunction(target, functions, types, arguments, /*#ref*/loc, throwOnError);
 }
 
 ir.Function selectFunction(TargetInfo target, ir.FunctionSet fset, ir.Exp[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
@@ -70,7 +71,7 @@ ir.Function selectFunction(TargetInfo target, ir.FunctionSet fset, ir.Exp[] argu
 	foreach (arg; arguments) {
 		types ~= getExpType(arg);
 	}
-	return selectFunction(target, fset, types, arguments, loc, throwOnError);
+	return selectFunction(target, fset, types, arguments, /*#ref*/loc, throwOnError);
 }
 
 ir.Function selectFunction(TargetInfo target, ir.FunctionSet fset, ir.Variable[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
@@ -79,7 +80,7 @@ ir.Function selectFunction(TargetInfo target, ir.FunctionSet fset, ir.Variable[]
 	foreach (arg; arguments) {
 		types ~= arg.type;
 	}
-	return selectFunction(target, fset, types, null, loc, throwOnError);
+	return selectFunction(target, fset, types, null, /*#ref*/loc, throwOnError);
 }
 
 ir.Function selectFunction(TargetInfo target, ir.Function[] functions, ir.Variable[] arguments, ref in Location loc, bool throwOnError)
@@ -88,7 +89,7 @@ ir.Function selectFunction(TargetInfo target, ir.Function[] functions, ir.Variab
 	foreach (arg; arguments) {
 		types ~= arg.type;
 	}
-	return selectFunction(target, functions, types, null, loc, throwOnError);
+	return selectFunction(target, functions, types, null, /*#ref*/loc, throwOnError);
 }
 
 int matchLevel(TargetInfo target, bool homogenous, ir.Type argument, ir.Type parameter, ir.Exp exp=null)
@@ -145,12 +146,12 @@ bool specialisationComparison(Object ao, Object bo)
 
 ir.Function selectFunction(TargetInfo target, ir.FunctionSet fset, ir.Type[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
 {
-	return selectFunction(target, fset, arguments, null, loc, throwOnError);
+	return selectFunction(target, fset, arguments, null, /*#ref*/loc, throwOnError);
 }
 
 ir.Function selectFunction(TargetInfo target, ir.FunctionSet fset, ir.Type[] arguments, ir.Exp[] exps, ref in Location loc, bool throwOnError = ThrowOnError)
 {
-	auto func = selectFunction(target, fset.functions, arguments, exps, loc, throwOnError);
+	auto func = selectFunction(target, fset.functions, arguments, exps, /*#ref*/loc, throwOnError);
 	if (func is null) {
 		return null;
 	}
@@ -159,17 +160,17 @@ ir.Function selectFunction(TargetInfo target, ir.FunctionSet fset, ir.Type[] arg
 
 ir.Function selectFunction(TargetInfo target, ir.Function[] functions, ir.Type[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
 {
-	return selectFunction(target, functions, arguments, null, loc, throwOnError);
+	return selectFunction(target, functions, arguments, null, /*#ref*/loc, throwOnError);
 }
 
 ir.Function selectFunction(TargetInfo target, ref FunctionSink functions, ir.Type[] arguments, ref in Location loc, bool throwOnError = ThrowOnError)
 {
-	return selectFunction(target, functions.borrowUnsafe(), arguments, null, loc, throwOnError);
+	return selectFunction(target, functions.borrowUnsafe(), arguments, null, /*#ref*/loc, throwOnError);
 }
 
 ir.Function selectFunction(TargetInfo target, scope ir.Function[] functions, ir.Type[] arguments, ir.Exp[] exps, ref in Location loc, bool throwOnError = ThrowOnError)
 {
-	panicAssert(loc, functions.length > 0);
+	panicAssert(/*#ref*/loc, functions.length > 0);
 
 	ir.Access lastAccess = functions[0].access;
 	for (size_t i = 1; i < functions.length; ++i) {
@@ -242,9 +243,9 @@ ir.Function selectFunction(TargetInfo target, scope ir.Function[] functions, ir.
 	void throwError(scope ir.Function[] functions)
 	{
 		if (functions.length > 1 && highestMatchLevel > 1) {
-			throw makeMultipleFunctionsMatch(loc, functions);
+			throw makeMultipleFunctionsMatch(/*#ref*/loc, functions);
 		} else {
-			throw makeCannotDisambiguate(loc, functions, arguments);
+			throw makeCannotDisambiguate(/*#ref*/loc, functions, arguments);
 		}
 	}
 
@@ -310,7 +311,7 @@ ir.Function selectFunction(TargetInfo target, scope ir.Function[] functions, ir.
 	foreach (func; functions) {
 		auto variadic = func.type.homogenousVariadic || func.type.hasVarArgs;
 		int defaultArguments;
-		if (correctNumberOfArguments(func, defaultArguments)) {
+		if (correctNumberOfArguments(func, /*#out*/defaultArguments)) {
 			outFunctions.sink(func);
 		} else if (func.params.length == arguments.length + cast(size_t)defaultArguments) {
 			outFunctions.sink(func);
@@ -321,7 +322,7 @@ ir.Function selectFunction(TargetInfo target, scope ir.Function[] functions, ir.
 	}
 	if (outFunctions.length == 0) {
 		if (throwOnError) {
-			throw makeNoValidFunction(loc, functions[0].name, arguments);
+			throw makeNoValidFunction(/*#ref*/loc, functions[0].name, arguments);
 		} else {
 			return null;
 		}

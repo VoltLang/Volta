@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012-2017, Bernard Helyer.
 // Copyright © 2012-2017, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
@@ -69,11 +70,11 @@ public:
 	override Status enter(ir.Import i)
 	{
 		if (current !is mModule.myScope) {
-			throw makeNonTopLevelImport(i.loc);
+			throw makeNonTopLevelImport(/*#ref*/i.loc);
 		}
 
 		if (i.isStatic && i.access != ir.Access.Private) {
-			throw makeExpected(i.loc, 
+			throw makeExpected(/*#ref*/i.loc, 
 				format("static import '%s' to be private", i.names[0]));
 		}
 
@@ -123,7 +124,7 @@ public:
 			if (store.fromImplicitContextChain) {
 				current.remove(i.bind.value);
 			} else {
-				throw makeRedefines(i.loc, store.node.loc, i.bind.value);
+				throw makeRedefines(/*#ref*/i.loc, /*#ref*/store.node.loc, i.bind.value);
 			}
 		}
 		if (scopes.length == 1) {
@@ -153,14 +154,14 @@ public:
 			assert(current is mModule.myScope);
 		}
 
-		auto parentMod = getModuleFromScope(i.loc, current);
+		auto parentMod = getModuleFromScope(/*#ref*/i.loc, current);
 		foreach (ii, _alias; i.aliases) {
 			ir.Alias a;
 
 			if (_alias[1] is null) {
-				a = buildAlias(_alias[0].loc, _alias[0].value, _alias[0].value);
+				a = buildAlias(/*#ref*/_alias[0].loc, _alias[0].value, _alias[0].value);
 			} else {
-				a = buildAliasSmart(_alias[0].loc, _alias[0].value, _alias[1]);
+				a = buildAliasSmart(/*#ref*/_alias[0].loc, _alias[0].value, _alias[1]);
 			}
 
 			// `private import a : func` should conflict with a public function of name 'func' in the importing module.
@@ -211,7 +212,7 @@ public:
 		auto store = parent.getStore(i.names[0].identifiers[$-1].value);
 		if (store !is null) {
 			if (i.isStatic && store.myScope !is mod.myScope) {
-				throw makeExpected(i.loc, "unique module");
+				throw makeExpected(/*#ref*/i.loc, "unique module");
 			}
 		} else {
 			parent.addScope(i, mod.myScope, i.names[0].identifiers[$-1].value);
@@ -245,7 +246,7 @@ public:
 			// TODO Better error checking here,
 			// we could be adding to aggregates here.
 			if (store.myScope is null) {
-				throw makeExpected(node.loc, "scope");
+				throw makeExpected(/*#ref*/node.loc, "scope");
 			}
 			return store.myScope;
 		} else {

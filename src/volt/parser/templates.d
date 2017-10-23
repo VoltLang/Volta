@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2017, Bernard Helyer.  All rights reserved.
 // Copyright © 2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
@@ -118,7 +119,7 @@ ParseStatus parseLegacyTemplateInstance(ParserStream ps, out ir.Struct s)
 	s = new ir.Struct();
 	s.loc = ps.peek.loc;
 	string nam;
-	auto succeeded = parseTemplateInstance(ps, s.templateInstance, nam);
+	auto succeeded = parseTemplateInstance(ps, /*#out*/s.templateInstance, /*#out*/nam);
 	s.templateInstance.explicitMixin = true;
 	s.name = nam;
 	return succeeded;
@@ -155,7 +156,7 @@ ParseStatus parseTemplateInstance(ParserStream ps, out ir.TemplateInstance ti, o
 	ps.get();
 
 	Token nameTok;
-	auto succeeded = match(ps, ti, TokenType.Identifier, nameTok);
+	auto succeeded = match(ps, ti, TokenType.Identifier, /*#out*/nameTok);
 	if (!succeeded) {
 		return succeeded;
 	}
@@ -168,7 +169,7 @@ ParseStatus parseTemplateInstance(ParserStream ps, out ir.TemplateInstance ti, o
 
 	ti.explicitMixin = matchIf(ps, TokenType.Mixin);
 
-	succeeded = parseQualifiedName(ps, ti.name);
+	succeeded = parseQualifiedName(ps, /*#out*/ti.name);
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.TemplateInstance);
 	}
@@ -182,14 +183,14 @@ ParseStatus parseTemplateInstance(ParserStream ps, out ir.TemplateInstance ti, o
 	{
 		if (isUnambigouslyType(ps)) {
 			ir.Type t;
-			succeeded = parseType(ps, t);
+			succeeded = parseType(ps, /*#out*/t);
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.TemplateInstance);
 			}
 			ti.arguments ~= t;
 		} else {
 			ir.Exp e;
-			succeeded = parseExp(ps, e);
+			succeeded = parseExp(ps, /*#out*/e);
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.TemplateInstance);
 			}
@@ -281,7 +282,7 @@ ParseStatus parseTemplateDefinition(ParserStream ps, out ir.TemplateDefinition t
 			ir.TemplateDefinition.Parameter param;
 			param.name = nameTok.value;
 			if (matchIf(ps, TokenType.Colon)) {
-				succeeded = parseType(ps, param.type);
+				succeeded = parseType(ps, /*#out*/param.type);
 				if (!succeeded) {
 					return parseFailed(ps, ir.NodeType.TemplateDefinition);
 				}
@@ -305,31 +306,31 @@ ParseStatus parseTemplateDefinition(ParserStream ps, out ir.TemplateDefinition t
 
 	final switch (td.kind) {
 	case ir.TemplateKind.Struct:
-		succeeded = parseStruct(ps, td._struct, td.name);
+		succeeded = parseStruct(ps, /*#out*/td._struct, td.name);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TemplateDefinition);
 		}
 		break;
 	case ir.TemplateKind.Union:
-		succeeded = parseUnion(ps, td._union, td.name);
+		succeeded = parseUnion(ps, /*#out*/td._union, td.name);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TemplateDefinition);
 		}
 		break;
 	case ir.TemplateKind.Class:
-		succeeded = parseClass(ps, td._class, td.name);
+		succeeded = parseClass(ps, /*#out*/td._class, td.name);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TemplateDefinition);
 		}
 		break;
 	case ir.TemplateKind.Interface:
-		succeeded = parseInterface(ps, td._interface, td.name);
+		succeeded = parseInterface(ps, /*#out*/td._interface, td.name);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TemplateDefinition);
 		}
 		break;
 	case ir.TemplateKind.Function:
-		succeeded = parseNewFunction(ps, td._function, td.name);
+		succeeded = parseNewFunction(ps, /*#out*/td._function, td.name);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TemplateDefinition);
 		}

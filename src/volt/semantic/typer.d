@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2013, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 // Routines to retrieve the types of expressions.
@@ -44,7 +45,7 @@ ir.Type getExpType(ir.Exp exp)
 	}
 
 	if (result is null) {
-		throw panic(exp.loc, "null getExpType result.");
+		throw panic(/*#ref*/exp.loc, "null getExpType result.");
 	}
 	return result;
 }
@@ -124,7 +125,7 @@ ir.Type getExpTypeImpl(ir.Exp exp)
 		assert(asVaArgExp !is null);
 		return getVaArgType(asVaArgExp);
 	case IsExp:
-		return buildBool(exp.loc);
+		return buildBool(/*#ref*/exp.loc);
 	case PropertyExp:
 		auto prop = cast(ir.PropertyExp) exp;
 		return getPropertyExpType(prop);
@@ -132,9 +133,9 @@ ir.Type getExpTypeImpl(ir.Exp exp)
 		auto inbuilt = cast(ir.BuiltinExp) exp;
 		return inbuilt.type;
 	case StringImport:
-		return buildString(exp.loc);
+		return buildString(/*#ref*/exp.loc);
 	case ComposableString:
-		return buildString(exp.loc);
+		return buildString(/*#ref*/exp.loc);
 	default:
 		throw panicUnhandled(exp, ir.nodeToString(exp));
 	}
@@ -148,9 +149,9 @@ ir.Type getVaArgType(ir.VaArgExp vaexp)
 ir.Type getTokenExpType(ir.TokenExp texp)
 {
 	if (texp.type == ir.TokenExp.Type.Line) {
-		return buildInt(texp.loc);
+		return buildInt(/*#ref*/texp.loc);
 	} else {
-		return buildString(texp.loc);
+		return buildString(/*#ref*/texp.loc);
 	}
 }
 
@@ -173,13 +174,13 @@ ir.Type getStoreExpType(ir.StoreExp se)
 		return t;
 	}
 
-	return buildNoType(se.loc);
+	return buildNoType(/*#ref*/se.loc);
 }
 
 ir.Type getStructLiteralType(ir.StructLiteral slit)
 {
 	if (slit.type is null) {
-		throw panic(slit.loc, "null struct literal");
+		throw panic(/*#ref*/slit.loc, "null struct literal");
 	}
 	return slit.type;
 }
@@ -192,13 +193,13 @@ ir.Type getClassLiteralType(ir.ClassLiteral clit)
 ir.Type getExpReferenceType(ir.ExpReference expref)
 {
 	if (expref.decl is null) {
-		throw panic(expref.loc, "unable to type expression reference.");
+		throw panic(/*#ref*/expref.loc, "unable to type expression reference.");
 	}
 
 	auto var = cast(ir.Variable) expref.decl;
 	if (var !is null) {
 		if (var.type is null) {
-			throw panic(var.loc, format("variable '%s' has null type", var.name));
+			throw panic(/*#ref*/var.loc, format("variable '%s' has null type", var.name));
 		}
 		return var.type;
 	}
@@ -211,7 +212,7 @@ ir.Type getExpReferenceType(ir.ExpReference expref)
 			return t;
 		}
 		if (func.type is null) {
-			throw panic(func.loc, format("function '%s' has null type", func.name));
+			throw panic(/*#ref*/func.loc, format("function '%s' has null type", func.name));
 		}
 		return func.type;
 	}
@@ -219,7 +220,7 @@ ir.Type getExpReferenceType(ir.ExpReference expref)
 	auto ed = cast(ir.EnumDeclaration) expref.decl;
 	if (ed !is null) {
 		if (ed.type is null) {
-			throw panic(ed.loc, "enum declaration has null type");
+			throw panic(/*#ref*/ed.loc, "enum declaration has null type");
 		}
 		return ed.type;
 	}
@@ -227,7 +228,7 @@ ir.Type getExpReferenceType(ir.ExpReference expref)
 	auto fp = cast(ir.FunctionParam) expref.decl;
 	if (fp !is null) {
 		if (fp.type is null) {
-			throw panic(fp.loc, format("function parameter '%s' has null type", fp.name));
+			throw panic(/*#ref*/fp.loc, format("function parameter '%s' has null type", fp.name));
 		}
 		return fp.type;
 	}
@@ -241,7 +242,7 @@ ir.Type getExpReferenceType(ir.ExpReference expref)
 		return ftype;
 	}
 
-	throw panic(expref.loc, "unable to type expression reference.");
+	throw panic(/*#ref*/expref.loc, "unable to type expression reference.");
 }
 
 ir.Type getBinOpType(ir.BinOp bin)
@@ -257,11 +258,11 @@ ir.Type getBinOpType(ir.BinOp bin)
 	}
 
 	if (effectivelyConst(left) && assign) {
-		throw panic(bin.loc, "modifying const type expression passed to typer.");
+		throw panic(/*#ref*/bin.loc, "modifying const type expression passed to typer.");
 	}
 
 	if ((left.isConst | left.isImmutable | left.isScope) && !assign) {
-		left = copyTypeSmart(bin.loc, left);
+		left = copyTypeSmart(/*#ref*/bin.loc, left);
 		left.isConst = false;
 		left.isImmutable = false;
 		left.isScope = false;
@@ -290,7 +291,7 @@ ir.Type getBinOpType(ir.BinOp bin)
 			boolType.loc = bin.loc;
 			return boolType;
 		} else {
-			throw panic(bin.loc, "bad bin op.");
+			throw panic(/*#ref*/bin.loc, "bad bin op.");
 		}
 	} else if (left.nodeType == ir.NodeType.ArrayType ||
 			   right.nodeType == ir.NodeType.ArrayType) {
@@ -306,7 +307,7 @@ ir.Type getBinOpType(ir.BinOp bin)
 	} else if ((left.nodeType == ir.NodeType.PointerType && right.nodeType != ir.NodeType.PointerType) ||
                (left.nodeType != ir.NodeType.PointerType && right.nodeType == ir.NodeType.PointerType)) {
 		if (!isValidPointerArithmeticOperation(bin.op)) {
-			throw panic(bin.loc, "bad bin op.");
+			throw panic(/*#ref*/bin.loc, "bad bin op.");
 		}
 		ir.PrimitiveType prim;
 		ir.PointerType pointer;
@@ -325,7 +326,7 @@ ir.Type getBinOpType(ir.BinOp bin)
 		if (lt !is null && rt !is null && typesEqual(lt, rt)) {
 			return lt;
 		} else {
-			throw panic(bin.loc, "bad bin op.");
+			throw panic(/*#ref*/bin.loc, "bad bin op.");
 		}
 	}
 
@@ -346,7 +347,7 @@ ir.Type getConstantType(ir.Constant constant)
 ir.Type getArrayLiteralType(ir.ArrayLiteral al)
 {
 	if (al.type is null) {
-		throw panic(al.loc, "uninitialised array literal passed to typer.");
+		throw panic(/*#ref*/al.loc, "uninitialised array literal passed to typer.");
 	}
 	return al.type;
 }
@@ -396,7 +397,7 @@ ir.Type getPostfixSliceType(ir.Postfix postfix)
 		array = cast(ir.ArrayType) type;
 		assert(array !is null);
 	} else {
-		throw panic(postfix.loc, "unsliceable type sliced");
+		throw panic(/*#ref*/postfix.loc, "unsliceable type sliced");
 	}
 
 	if (array is null) {
@@ -411,7 +412,7 @@ ir.Type getPostfixSliceType(ir.Postfix postfix)
 ir.Type getPropertyExpType(ir.PropertyExp prop)
 {
 	if (prop.getFn is null) {
-		return buildNoType(prop.loc);
+		return buildNoType(/*#ref*/prop.loc);
 	} else {
 		return prop.getFn.type.ret;
 	}
@@ -419,7 +420,7 @@ ir.Type getPropertyExpType(ir.PropertyExp prop)
 
 ir.Type getPostfixCreateDelegateType(ir.Postfix postfix)
 {
-	auto err = panic(postfix.loc, "couldn't retrieve type from CreateDelegate postfix.");
+	auto err = panic(/*#ref*/postfix.loc, "couldn't retrieve type from CreateDelegate postfix.");
 
 	auto eref = cast(ir.ExpReference) postfix.memberFunction;
 	if (eref is null) {
@@ -440,7 +441,7 @@ ir.Type getPostfixCreateDelegateType(ir.Postfix postfix)
 	}
 	if (func.kind != ir.Function.Kind.Nested && func.kind != ir.Function.Kind.GlobalNested &&
 	    !isFunctionMemberOrConstructor(func)) {
-		throw panic(postfix.loc, "static function called through instance");
+		throw panic(/*#ref*/postfix.loc, "static function called through instance");
 	}
 
 	auto dgt = new ir.DelegateType(func.type);
@@ -479,11 +480,11 @@ void retrieveScope(ir.Node tt, ir.Postfix postfix, ref ir.Scope _scope, ref ir.C
 	} else if (tt.nodeType == ir.NodeType.PointerType) {
 		auto asPointer = cast(ir.PointerType) tt;
 		assert(asPointer !is null);
-		retrieveScope(asPointer.base, postfix, _scope, _class, emsg);
+		retrieveScope(asPointer.base, postfix, /*#ref*/_scope, /*#ref*/_class, /*#ref*/emsg);
 	} else if (tt.nodeType == ir.NodeType.TypeReference) {
 		auto asTR = cast(ir.TypeReference) tt;
 		assert(asTR !is null);
-		retrieveScope(asTR.type, postfix, _scope, _class, emsg);
+		retrieveScope(asTR.type, postfix, /*#ref*/_scope, /*#ref*/_class, /*#ref*/emsg);
 	} else if (tt.nodeType == ir.NodeType.Enum) {
 		auto asEnum = cast(ir.Enum) tt;
 		assert(asEnum !is null);
@@ -498,19 +499,19 @@ void retrieveScope(ir.Node tt, ir.Postfix postfix, ref ir.Scope _scope, ref ir.C
 			}
 		}
 		if (properties.length == 1) {
-			return retrieveScope(properties[0].type.ret, postfix, _scope, _class, emsg);
+			return retrieveScope(properties[0].type.ret, postfix, /*#ref*/_scope, /*#ref*/_class, /*#ref*/emsg);
 		} else {
-			throw panic(postfix.loc, "bad scope lookup");
+			throw panic(/*#ref*/postfix.loc, "bad scope lookup");
 		}
 	} else {
-		throw panic(postfix.loc, "bad scope lookup");
+		throw panic(/*#ref*/postfix.loc, "bad scope lookup");
 	}
 }
 
 ir.Type getPostfixIncDecType(ir.Postfix postfix)
 {
 	if (!isLValue(postfix.child)) {
-		throw panic(postfix.loc, "expected lvalue.");
+		throw panic(/*#ref*/postfix.loc, "expected lvalue.");
 	}
 	auto otype = getExpType(postfix.child);
 	auto type = realType(otype);
@@ -521,10 +522,10 @@ ir.Type getPostfixIncDecType(ir.Postfix postfix)
 			   isOkayForPointerArithmetic((cast(ir.PrimitiveType)type).type)) {
 		return type;
 	} else if (effectivelyConst(otype)) {
-		throw panic(postfix.loc, "modify const in typer.");
+		throw panic(/*#ref*/postfix.loc, "modify const in typer.");
 	}
 
-	throw panic(postfix.loc, "bad postfix operation in typer.");
+	throw panic(/*#ref*/postfix.loc, "bad postfix operation in typer.");
 }
 
 ir.Type getPostfixIndexType(ir.Postfix postfix)
@@ -552,11 +553,11 @@ ir.Type getPostfixIndexType(ir.Postfix postfix)
 	} else {
 		auto named = cast(ir.Named) type;
 		if (named is null) {
-			throw panic(postfix.loc, "bad postfix operation in typer.");
+			throw panic(/*#ref*/postfix.loc, "bad postfix operation in typer.");
 		}
 		auto store = named.myScope.getStore(overloadPostfixName(postfix.op));
 		if (store is null || store.functions.length != 1) {
-			throw panic(postfix.loc, "bad postfix operation in typer.");
+			throw panic(/*#ref*/postfix.loc, "bad postfix operation in typer.");
 		}
 		base = store.functions[0].type.ret;
 	}
@@ -583,7 +584,7 @@ ir.Type getPostfixCallType(ir.Postfix postfix)
 	}
 
 	if (ftype is null) {
-		throw panicUnhandled(postfix.loc, ir.nodeToString(type));
+		throw panicUnhandled(/*#ref*/postfix.loc, ir.nodeToString(type));
 	}
 
 	return ftype.ret;
@@ -607,7 +608,7 @@ ir.Type getUnaryType(ir.Unary unary)
 	case New:
 		return getUnaryNewType(unary);
 	case Dup:
-		throw panic(unary.loc, "tried to type dup exp.");
+		throw panic(/*#ref*/unary.loc, "tried to type dup exp.");
 	case Minus, Plus:
 		return getUnarySubAddType(unary);
 	case Not:
@@ -626,7 +627,7 @@ ir.Type getUnaryType(ir.Unary unary)
 ir.Type getUnaryIncDecType(ir.Unary unary)
 {
 	if (!isLValue(unary.value)) {
-		throw panic(unary.loc, "not lvalue for unary inc/dec in typer.");
+		throw panic(/*#ref*/unary.loc, "not lvalue for unary inc/dec in typer.");
 	}
 	auto type = getExpType(unary.value);
 
@@ -636,10 +637,10 @@ ir.Type getUnaryIncDecType(ir.Unary unary)
 			   isOkayForPointerArithmetic((cast(ir.PrimitiveType)type).type)) {
 		return type;
 	} else if (effectivelyConst(type)) {
-		throw panic(unary.loc, "modifying const type in typer.");
+		throw panic(/*#ref*/unary.loc, "modifying const type in typer.");
 	}
 
-	throw panic(unary.loc, "bad unary operation in typer.");
+	throw panic(/*#ref*/unary.loc, "bad unary operation in typer.");
 }
 
 ir.Type getUnaryComplementType(ir.Unary unary)
@@ -649,7 +650,7 @@ ir.Type getUnaryComplementType(ir.Unary unary)
 
 ir.Type getUnaryNotType(ir.Unary unary)
 {
-	return buildBool(unary.loc);
+	return buildBool(/*#ref*/unary.loc);
 }
 
 ir.Type getUnaryCastType(ir.Unary unary)
@@ -662,11 +663,11 @@ ir.Type getUnaryDerefType(ir.Unary unary)
 {
 	auto type = getExpType(unary.value);
 	if (type.nodeType != ir.NodeType.PointerType) {
-		throw panic(unary.loc, "bad unary operation in typer.");
+		throw panic(/*#ref*/unary.loc, "bad unary operation in typer.");
 	}
 	auto asPointer = cast(ir.PointerType) type;
 	assert(asPointer !is null);
-	auto t = copyTypeSmart(asPointer.base.loc, asPointer.base);
+	auto t = copyTypeSmart(/*#ref*/asPointer.base.loc, asPointer.base);
 	addStorage(t, asPointer);
 	return t;
 }
@@ -674,7 +675,7 @@ ir.Type getUnaryDerefType(ir.Unary unary)
 ir.Type getUnaryAddrOfType(ir.Unary unary)
 {
 	if (!isLValue(unary.value)) {
-		throw panic(unary.loc, "non lvalue addrof in typer.");
+		throw panic(/*#ref*/unary.loc, "non lvalue addrof in typer.");
 	}
 	auto type = getExpType(unary.value);
 	auto pointer = new ir.PointerType(type);

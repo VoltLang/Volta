@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012-2013, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.lowerer.typeidreplacer;
@@ -49,7 +50,7 @@ public:
 		assert(_typeid.type !is null);
 
 		auto literalVar = getTypeInfo(lp, thisModule, _typeid.type);
-		exp = buildExpReference(exp.loc, literalVar, literalVar.name);
+		exp = buildExpReference(/*#ref*/exp.loc, literalVar, literalVar.name);
 
 		return Continue;
 	}

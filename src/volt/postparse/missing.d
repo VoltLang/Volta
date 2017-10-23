@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012-2017, Bernard Helyer.
 // Copyright © 2012-2017, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
@@ -79,11 +80,11 @@ public:
 	override Status enter(ir.Import i)
 	{
 		if (current !is mModule.myScope) {
-			throw makeNonTopLevelImport(i.loc);
+			throw makeNonTopLevelImport(/*#ref*/i.loc);
 		}
 
 		if (i.isStatic && i.access != ir.Access.Private) {
-			throw makeExpected(i.loc, 
+			throw makeExpected(/*#ref*/i.loc, 
 				format("static import '%s' to be private", i.names[0]));
 		}
 

@@ -1,4 +1,4 @@
-//T macro:internal-d
+/*#D*/
 module test;
 
 struct Definition(T)

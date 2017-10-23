@@ -1,3 +1,4 @@
+/*#D*/
 /*===-- llvm-c/DIBuilder.h - Debug Info Builder C Interface -------*- C -*-===*\
 |*                                                                            *|
 |*                     The LLVM Compiler Infrastructure                       *|

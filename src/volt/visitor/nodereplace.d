@@ -1,3 +1,4 @@
+/*#D*/
 module volt.visitor.nodereplace;
 
 import volt.visitor.visitor;

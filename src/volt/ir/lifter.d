@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2016, Jakob Bornecrantz.  All rights reserved.
 // Copyright © 2016, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
@@ -64,7 +65,7 @@ public:
 		case IsExp: return copy(cast(ir.IsExp)n);
 		case StructLiteral: return copy(cast(ir.StructLiteral)n);
 		case VaArgExp: return copy(cast(ir.VaArgExp)n);
-		default: throw makeUnsupported(n.loc, ir.nodeToString(n.nodeType));
+		default: throw makeUnsupported(/*#ref*/n.loc, ir.nodeToString(n.nodeType));
 		}
 	}
 
@@ -83,7 +84,7 @@ public:
 		case PointerType: return copy(cast(ir.PointerType)n);
 		case TypeOf: return copy(cast(ir.TypeOf)n);
 		case NullType: return copy(cast(ir.NullType)n);
-		default: throw makeUnsupported(n.loc, ir.nodeToString(n.nodeType));
+		default: throw makeUnsupported(/*#ref*/n.loc, ir.nodeToString(n.nodeType));
 		}
 	}
 
@@ -659,7 +660,7 @@ public:
 			case Union: n.type = lift(cast(ir.Union)old.type); break;
 			case Interface: n.type = lift(cast(ir._Interface)old.type); break;
 			case Enum: n.type = lift(cast(ir.Enum)old.type); break;
-			default: throw makeUnsupported(old.loc, ir.nodeToString(old.type));
+			default: throw makeUnsupported(/*#ref*/old.loc, ir.nodeToString(old.type));
 			}
 		}
 

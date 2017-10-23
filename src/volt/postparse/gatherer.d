@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012-2017, Bernard Helyer.
 // Copyright © 2012-2017, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
@@ -38,7 +39,7 @@ ir.Store findShadowed(ir.Scope _scope, Location loc, string name, bool warningsE
 		(_scope.node.nodeType == ir.NodeType.Class ||
 		_scope.node.nodeType == ir.NodeType.Struct ||
 		_scope.node.nodeType == ir.NodeType.Union)) {
-		warningShadowsField(loc, store.node.loc, name, warningsEnabled);
+		warningShadowsField(/*#ref*/loc, /*#ref*/store.node.loc, name, warningsEnabled);
 		return null;
 	}
 
@@ -56,7 +57,7 @@ ir.Store findShadowed(ir.Scope _scope, Location loc, string name, bool warningsE
 	}
 
 	if (_scope.parent !is null) {
-		return findShadowed(_scope.parent, loc, name, warningsEnabled);
+		return findShadowed(_scope.parent, /*#ref*/loc, name, warningsEnabled);
 	} else {
 		return null;
 	}
@@ -120,7 +121,7 @@ void gather(ir.Scope current, ir.Variable v, Where where, ir.Function[] function
 	assert(v.access.isValidAccess());
 
 	// TODO Move to semantic.
-	auto shadowStore = findShadowed(current, v.loc, v.name, warningsEnabled);
+	auto shadowStore = findShadowed(current, /*#ref*/v.loc, v.name, warningsEnabled);
 	if (shadowStore !is null) {
 		throw makeShadowsDeclaration(v, shadowStore.node);
 	}
@@ -128,7 +129,7 @@ void gather(ir.Scope current, ir.Variable v, Where where, ir.Function[] function
 	checkInvalid(current, v, v.name);
 	auto store = current.getStore(v.name);
 	if (store !is null) {
-		throw makeError(v.loc, format("'%s' is in use @ %s.", v.name, store.node.loc.toString()));
+		throw makeError(/*#ref*/v.loc, format("'%s' is in use @ %s.", v.name, store.node.loc.toString()));
 	}
 	current.addValue(v, v.name);
 
@@ -280,7 +281,7 @@ void addScope(ir.Scope current, ir.Function func, ir.Type thisType, ir.Function[
 		return;
 	}
 
-	auto tr = buildTypeReference(thisType.loc, thisType,  "__this");
+	auto tr = buildTypeReference(/*#ref*/thisType.loc, thisType,  "__this");
 
 	auto thisVar = new ir.Variable();
 	thisVar.loc = func.loc;
@@ -313,7 +314,7 @@ void addScope(ir.Scope current, ir.Struct s)
 		agg.anonymousAggregates ~= s;
 		auto name = format("%s_anonymous", agg.anonymousAggregates.length);
 		s.name = format("%s_anonymous_t", agg.anonymousAggregates.length);
-		agg.anonymousVars ~= buildVariableSmart(s.loc, s, ir.Variable.Storage.Field, name);
+		agg.anonymousVars ~= buildVariableSmart(/*#ref*/s.loc, s, ir.Variable.Storage.Field, name);
 		agg.members.nodes ~= agg.anonymousVars[$-1];
 	}
 	assert(s.myScope is null);
@@ -330,7 +331,7 @@ void addScope(ir.Scope current, ir.Union u)
 		agg.anonymousAggregates ~= u;
 		auto name = format("%s_anonymous", agg.anonymousAggregates.length);
 		u.name = format("%s_anonymous_t", agg.anonymousAggregates.length);
-		agg.anonymousVars ~= buildVariableSmart(u.loc, u, ir.Variable.Storage.Field, name);
+		agg.anonymousVars ~= buildVariableSmart(/*#ref*/u.loc, u, ir.Variable.Storage.Field, name);
 		agg.members.nodes ~= agg.anonymousVars[$-1];
 	}	
 	assert(u.myScope is null);
@@ -577,11 +578,11 @@ public:
 		foreach (var; fes.itervars) {
 			gather(current, var, where, mFunctionStack, mWarningsEnabled);
 		}
-		if (fes.aggregate !is null) acceptExp(fes.aggregate, this);
+		if (fes.aggregate !is null) acceptExp(/*#ref*/fes.aggregate, this);
 		if (fes.beginIntegerRange !is null) {
 			panicAssert(fes, fes.endIntegerRange !is null);
-			acceptExp(fes.beginIntegerRange, this);
-			acceptExp(fes.endIntegerRange, this);
+			acceptExp(/*#ref*/fes.beginIntegerRange, this);
+			acceptExp(/*#ref*/fes.endIntegerRange, this);
 		}
 		foreach (node; fes.block.statements) {
 			accept(node, this);
@@ -597,10 +598,10 @@ public:
 			gather(current, var, where, mFunctionStack, mWarningsEnabled);
 		}
 		if (fs.test !is null) {
-			acceptExp(fs.test, this);
+			acceptExp(/*#ref*/fs.test, this);
 		}
 		foreach (ref inc; fs.increments) {
-			acceptExp(inc, this);
+			acceptExp(/*#ref*/inc, this);
 		}
 		foreach (node; fs.block.statements) {
 			accept(node, this);
@@ -615,7 +616,7 @@ public:
 		push(bs.myScope);
 		// TODO: unittest stuff triggers this
 		if (mFunctionStack.length == 0) {
-			throw panic(bs.loc, "block statement outside of function");
+			throw panic(/*#ref*/bs.loc, "block statement outside of function");
 		}
 		return Continue;
 	}

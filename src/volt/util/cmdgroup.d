@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/battery/license.d (BOOST ver. 1.0).
 module volt.util.cmdgroup;
@@ -218,7 +219,7 @@ public:
 			Cmd c;
 			// Because stopped processes doesn't count.
 			while (true) {
-				result = waitManyPosix(pid);
+				result = waitManyPosix(/*#out*/pid);
 
 				bool foundPid;
 				foreach (cmd; cmdStore) {

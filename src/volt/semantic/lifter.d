@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2016, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.lifter;
@@ -163,7 +164,7 @@ protected:
 		auto name = "CTFETESTMODULE";
 
 		mMod = new ir.Module();
-		mMod.name = buildQualifiedName(mMod.loc, name);
+		mMod.name = buildQualifiedName(/*#ref*/mMod.loc, name);
 		mMod.children = new ir.TopLevelBlock();
 		mMod.children.loc = mMod.loc;
 		mMods ~= mMod;
