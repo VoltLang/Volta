@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2013, Bernard Helyer.  All rights reserved.
 // Copyright © 2013, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
@@ -241,7 +242,7 @@ private:
 			auto str = "invalid scope layout should be " ~
 			           ir.getNodeAddressString(n) ~ " is " ~
 			           ir.getNodeAddressString(mCurrent.node);
-			throw panic(n.loc, str);
+			throw panic(/*#ref*/n.loc, str);
 		}
 
 		assert(mLength > 0);

@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 /*!
@@ -59,7 +60,7 @@ void getConstantValue(State state, ir.Exp exp, Value result)
 		auto str = format(
 			"could not get constant from expression '%s'",
 			ir.nodeToString(exp));
-		throw panic(exp.loc, str);
+		throw panic(/*#ref*/exp.loc, str);
 	}
 }
 
@@ -73,7 +74,7 @@ private:
 void handleBuiltinExp(State state, ir.BuiltinExp bexp, Value result)
 {
 	if (bexp.kind != ir.BuiltinExp.Kind.BuildVtable) {
-		throw panic(bexp.loc, "can only constant get from BuildVtable builtin exps");
+		throw panic(/*#ref*/bexp.loc, "can only constant get from BuildVtable builtin exps");
 	}
 	auto tinfosStaticArrayType = bexp._class.classinfoVariable.type.toStaticArrayTypeFast();
 	auto vals = new LLVMValueRef[](bexp.functionSink.length + 2);
@@ -89,7 +90,7 @@ void handleBuiltinExp(State state, ir.BuiltinExp bexp, Value result)
 
 	vals[0] = LLVMConstInt(intType, cast(ulong)tinfosStaticArrayType.length, false);
 	vals[0] = LLVMConstIntToPtr(vals[0], ptrType);
-	vals[1] = state.getVariableValue(bexp._class.classinfoVariable, type);
+	vals[1] = state.getVariableValue(bexp._class.classinfoVariable, /*#out*/type);
 	vals[1] = LLVMConstBitCast(vals[1], ptrType);
 	for (size_t i = 2; i < vals.length; ++i) {
 		auto method = bexp.functionSink.get(i - 2);
@@ -98,7 +99,7 @@ void handleBuiltinExp(State state, ir.BuiltinExp bexp, Value result)
 			vals[i] = LLVMConstNull(ptrType);
 			continue;
 		}
-		vals[i] = state.getFunctionValue(method, type);
+		vals[i] = state.getFunctionValue(method, /*#out*/type);
 		vals[i] = LLVMConstBitCast(vals[i], ptrType);
 	}
 
@@ -129,7 +130,7 @@ void handleConstAddrOf(State state, ir.Unary de, Value result)
 	auto var = cast(ir.Variable)expRef.decl;
 	Type type;
 
-	auto v = state.getVariableValue(var, type);
+	auto v = state.getVariableValue(var, /*#out*/type);
 
 	auto pt = new ir.PointerType();
 	pt.base = type.irType;
@@ -158,7 +159,7 @@ void handleConstCast(State state, ir.Unary asUnary, Value result)
 {
 	void error(string t) {
 		auto str = format("error unary constant expression '%s'", t);
-		throw panic(asUnary.loc, str);
+		throw panic(/*#ref*/asUnary.loc, str);
 	}
 
 	getConstantValue(state, asUnary.value, result);
@@ -215,7 +216,7 @@ void handleConstCast(State state, ir.Unary asUnary, Value result)
 		}
 	}
 
-	throw makeError(asUnary.loc, "not a handle cast type.");
+	throw makeError(/*#ref*/asUnary.loc, "not a handle cast type.");
 }
 
 void handleConstExpReference(State state, ir.ExpReference expRef, Value result)
@@ -225,14 +226,14 @@ void handleConstExpReference(State state, ir.ExpReference expRef, Value result)
 		auto func = cast(ir.Function)expRef.decl;
 		assert(func !is null);
 		result.isPointer = false;
-		result.value = state.getFunctionValue(func, result.type);
+		result.value = state.getFunctionValue(func, /*#out*/result.type);
 		break;
 	case FunctionParam:
 		auto fp = cast(ir.FunctionParam)expRef.decl;
 		assert(fp !is null);
 
 		Type type;
-		auto v = state.getVariableValue(fp, type);
+		auto v = state.getVariableValue(fp, /*#out*/type);
 
 		result.value = v;
 		result.isPointer = false;
@@ -254,11 +255,11 @@ void handleConstExpReference(State state, ir.ExpReference expRef, Value result)
 		 * This might seem backwards but it works out.
 		 */
 		if (!var.useBaseStorage) {
-			throw panic(expRef.loc, "variables needs '&' for constants");
+			throw panic(/*#ref*/expRef.loc, "variables needs '&' for constants");
 		}
 
 		Type type;
-		auto v = state.getVariableValue(var, type);
+		auto v = state.getVariableValue(var, /*#out*/type);
 
 		result.value = v;
 		result.isPointer = false;
@@ -271,6 +272,6 @@ void handleConstExpReference(State state, ir.ExpReference expRef, Value result)
 		result.type = state.fromIr(edecl.type);
 		break;
 	default:
-		throw panic(expRef.loc, "invalid decl type");
+		throw panic(/*#ref*/expRef.loc, "invalid decl type");
 	}
 }

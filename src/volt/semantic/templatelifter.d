@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2017, Jakob Bornecrantz.  All rights reserved.
 // Copyright © 2017, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
@@ -197,7 +198,7 @@ public:
 	{
 		auto n = new ir.EnumDeclaration(old);
 		if (en !is null) {
-			n.type = buildTypeReference(en.loc, en, en.name);
+			n.type = buildTypeReference(/*#ref*/en.loc, en, en.name);
 		} else {
 			n.type = copyType(old.type);
 		}
@@ -349,11 +350,11 @@ public:
 	{
 		auto current = s.myScope;
 		if (!ti.explicitMixin) {
-			throw makeExpected(ti.loc, "explicit mixin");
+			throw makeExpected(/*#ref*/ti.loc, "explicit mixin");
 		}
 		auto store = lookup(lp, current, ti.name);
 		if (store is null) {
-			throw makeFailedLookup(ti.loc, ti.name.toString());
+			throw makeFailedLookup(/*#ref*/ti.loc, ti.name.toString());
 		}
 		auto td = cast(ir.TemplateDefinition)store.node;
 		assert(td !is null);
@@ -383,7 +384,7 @@ public:
 			} else if (auto type = cast(ir.Type)arg) {
 
 				// A simple type like 'u32' or 'typeof(Foo)'
-				resolveType(lp, lookScope, type);
+				resolveType(lp, lookScope, /*#ref*/type);
 				processed[i] = type;
 
 			} else {
@@ -418,7 +419,7 @@ public:
 		s.members = lift(defstruct.members);
 
 		// Setup any passes that needs to process the copied nodes.
-		auto mod = getModuleFromScope(s.loc, current);
+		auto mod = getModuleFromScope(/*#ref*/s.loc, current);
 		auto gatherer = new Gatherer(/*warnings*/false);
 
 		// Run the gatherer.
@@ -446,11 +447,11 @@ public:
 			} else if (auto type = cast(ir.Type)processed[i]) {
 				s.myScope.addType(type, name);
 			} else if (auto exp = cast(ir.Exp)processed[i]) {
-				auto ed = buildEnumDeclaration(s.loc, copyType(td.parameters[i].type), exp, name);
+				auto ed = buildEnumDeclaration(/*#ref*/s.loc, copyType(td.parameters[i].type), exp, name);
 				s.myScope.addEnumDeclaration(ed);
 				s.members.nodes ~= ed;
 			} else {
-				throw makeExpected(arg.loc, "expression or type");
+				throw makeExpected(/*#ref*/arg.loc, "expression or type");
 			}
 		}
 	}

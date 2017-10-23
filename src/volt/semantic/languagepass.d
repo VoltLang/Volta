@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012-2017, Bernard Helyer.  All rights reserved.
 // Copyright © 2013-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
@@ -667,7 +668,7 @@ public:
 	private ir.Module getAndCheck(string[] names...)
 	{
 		Location loc;
-		auto id = buildQualifiedName(loc, names);
+		auto id = buildQualifiedName(/*#ref*/loc, names);
 		auto m = getModule(id);
 		if (m is null) {
 			throw panic(format("Could not find module %s", id.toString()));

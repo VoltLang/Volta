@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012-2013, Bernard Helyer.  All rights reserved.
 // Copyright © 2016, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
@@ -28,7 +29,7 @@ ir.Exp buildAllocVoidPtr(in Location loc, LanguagePass lp, ir.Type type,
 		auto countConst = new ir.Constant();
 		countConst.loc = loc;
 		countConst.u._ulong = cast(ulong)-2;
-		countConst.type = buildSizeT(loc, lp.target);
+		countConst.type = buildSizeT(/*#ref*/loc, lp.target);
 		countArg = countConst;
 	}
 
@@ -39,8 +40,8 @@ ir.Exp buildAllocVoidPtr(in Location loc, LanguagePass lp, ir.Type type,
 
 	auto _tidExp = new ir.Typeid();
 	_tidExp.loc = loc;
-	_tidExp.type = copyTypeSmart(loc, type);
-	auto tidExp = buildCastSmart(loc, lp.tiTypeInfo, _tidExp);
+	_tidExp.type = copyTypeSmart(/*#ref*/loc, type);
+	auto tidExp = buildCastSmart(/*#ref*/loc, lp.tiTypeInfo, _tidExp);
 
 	auto pfixCall = new ir.Postfix();
 	pfixCall.loc = loc;
@@ -67,7 +68,7 @@ ir.Exp buildAllocTypePtr(in Location loc, LanguagePass lp, ir.Type type,
 {
 	auto pfixCall = buildAllocVoidPtr(loc, lp, type, countArg);
 
-	auto result = new ir.PointerType(copyTypeSmart(loc, type));
+	auto result = new ir.PointerType(copyTypeSmart(/*#ref*/loc, type));
 	result.loc = loc;
 	auto resultCast = new ir.Unary(result, pfixCall);
 	resultCast.loc = loc;

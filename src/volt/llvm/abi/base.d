@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2017, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 /*!
@@ -35,9 +36,9 @@ void abiCoerceParameters(State state, ir.FunctionType ft, ref LLVMTypeRef retTyp
 		return;  // TODO: 32 bit
 	} else if (state.target.arch == Arch.X86_64) {
 		if (state.target.platform == Platform.Linux || state.target.platform == Platform.OSX) {
-			return sysvAmd64AbiCoerceParameters(state, ft, /*ref*/retType, /*ref*/params);
+			return sysvAmd64AbiCoerceParameters(state, ft, /*#ref*/retType, /*#ref*/params);
 		} else if (state.target.platform == Platform.MinGW || state.target.platform == Platform.MSVC) {
-			return winAmd64AbiCoerceParameters(state, ft, /*ref*/retType, /*ref*/params);
+			return winAmd64AbiCoerceParameters(state, ft, /*#ref*/retType, /*#ref*/params);
 		}
 	}
 }
@@ -55,9 +56,9 @@ void abiCoerceArguments(State state, ir.CallableType ct, ref LLVMValueRef[] para
 		return;  // TODO: 32 bit
 	} else if (state.target.arch == Arch.X86_64) {
 		if (state.target.platform == Platform.Linux || state.target.platform == Platform.OSX) {
-			return sysvAmd64AbiCoerceArguments(state, ct, /*ref*/params);
+			return sysvAmd64AbiCoerceArguments(state, ct, /*#ref*/params);
 		} else if (state.target.platform == Platform.MinGW || state.target.platform == Platform.MSVC) {
-			return winAmd64AbiCoerceArguments(state, ct, /*ref*/params);
+			return winAmd64AbiCoerceArguments(state, ct, /*#ref*/params);
 		}
 	}
 }
@@ -106,9 +107,9 @@ CoercedStatus abiCoercePrologueParameter(State state, LLVMValueRef llvmFunc, ir.
 		return NotCoerced;  // TODO: 32 bit windows
 	} else if (state.target.arch == Arch.X86_64) {
 		if (state.target.platform == Platform.Linux || state.target.platform == Platform.OSX) {
-			return sysvAmd64AbiCoercePrologueParameter(state, llvmFunc, func, ct, val, index, /*ref*/offset);
+			return sysvAmd64AbiCoercePrologueParameter(state, llvmFunc, func, ct, val, index, /*#ref*/offset);
 		} else if (state.target.platform == Platform.MinGW || state.target.platform == Platform.MSVC) {
-			return winAmd64AbiPrologueParameter(state, llvmFunc, func, ct, val, index, /*ref*/offset);
+			return winAmd64AbiPrologueParameter(state, llvmFunc, func, ct, val, index, /*#ref*/offset);
 		}
 	}
 	return NotCoerced;

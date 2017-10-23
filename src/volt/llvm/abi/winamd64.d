@@ -1,3 +1,4 @@
+/*#D*/
 /*!
  * Windows AMD64 ABI Implementation.
  *
@@ -70,7 +71,7 @@ CoercedStatus winAmd64AbiPrologueParameter(State state, LLVMValueRef llvmFunc, i
 	auto lts = cast(LLVMTypeRef[])ct.abiData[index+offset];
 	if (LLVMGetTypeKind(lts[0]) != LLVMTypeKind.Pointer) {
 		auto type = state.fromIr(p.type);
-		auto a = state.getVariableValue(p, type);
+		auto a = state.getVariableValue(p, /*#out*/type);
 		auto bc = LLVMBuildBitCast(state.builder, a, LLVMPointerType(lts[0], 0), "");
 		LLVMBuildStore(state.builder, val, bc);
 		return Coerced;
@@ -85,7 +86,7 @@ private:
 void buildMemcpy(State state, LLVMValueRef dst, LLVMValueRef src, LLVMTypeRef base)
 {
 	Type memcpyType;
-	auto func = state.getFunctionValue(state.lp.llvmMemcpy64, /*out*/memcpyType);
+	auto func = state.getFunctionValue(state.lp.llvmMemcpy64, /*#out*/memcpyType);
 	LLVMValueRef[] args;
 	auto voidPtr = LLVMPointerType(LLVMInt8TypeInContext(state.context), 0);
 	args ~= LLVMBuildBitCast(state.builder, dst, voidPtr, "");
@@ -115,7 +116,7 @@ LLVMTypeRef processStructParameter(State state, ir.FunctionType ft, size_t i, LL
 size_t structSizeInBits(LLVMTypeRef type)
 {
 	size_t accum;
-	structSizeInBits(type, /*ref*/accum);
+	structSizeInBits(type, /*#ref*/accum);
 	return accum;
 }
 
@@ -124,7 +125,7 @@ void structSizeInBits(LLVMTypeRef type, ref size_t accum)
 	auto elements = new LLVMTypeRef[](LLVMCountStructElementTypes(type));
 	LLVMGetStructElementTypes(type, elements.ptr);
 	foreach (element; elements) {
-		typeSizeInBits(element, /*ref*/accum);
+		typeSizeInBits(element, /*#ref*/accum);
 	}
 }
 
@@ -140,7 +141,7 @@ void typeSizeInBits(LLVMTypeRef element, ref size_t accum)
 		auto len = LLVMGetArrayLength(element);
 		auto base = LLVMGetElementType(element);
 		size_t subAccum;
-		typeSizeInBits(base, /*ref*/subAccum);
+		typeSizeInBits(base, /*#ref*/subAccum);
 		accum += (subAccum * len);
 		break;
 	case Float:
@@ -157,7 +158,7 @@ void typeSizeInBits(LLVMTypeRef element, ref size_t accum)
 		accum += 64;
 		break;
 	case Struct:
-		structSizeInBits(element, /*ref*/accum);
+		structSizeInBits(element, /*#ref*/accum);
 		break;
 	}
 }

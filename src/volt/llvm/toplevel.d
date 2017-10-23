@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 /*!
@@ -57,7 +58,7 @@ public:
 	override Status enter(ir.Function func)
 	{
 		Type type;
-		auto llvmFunc = state.getFunctionValue(func, type);
+		auto llvmFunc = state.getFunctionValue(func, /*#out*/type);
 		auto llvmType = type.llvmType;
 
 		if (func.loadDynamic) {
@@ -95,7 +96,7 @@ public:
 		LLVMPositionBuilderAtEnd(b, state.block);
 
 		// Set position for various setup instructions.
-		diSetPosition(state, func.loc);
+		diSetPosition(state, /*#ref*/func.loc);
 
 		if (func.kind == ir.Function.Kind.GlobalConstructor) {
 			state.globalConstructors ~= llvmFunc;
@@ -138,8 +139,8 @@ public:
 			} else if (isRef || isOut || isStruct) {
 				state.makeByValVariable(p, v);
 			} else {
-				if (!abiCoercePrologueParameter(state, llvmFunc, func, ct, v, irIndex+offset, abiOffset)) {
-					auto a = state.getVariableValue(p, t);
+				if (!abiCoercePrologueParameter(state, llvmFunc, func, ct, v, irIndex+offset, /*#ref*/abiOffset)) {
+					auto a = state.getVariableValue(p, /*#out*/t);
 					LLVMBuildStore(state.builder, v, a);
 				}
 			}
@@ -197,7 +198,7 @@ public:
 		case Function, Nested:
 			assert(state.func !is null);
 
-			auto v = state.getVariableValue(var, type);
+			auto v = state.getVariableValue(var, /*#out*/type);
 
 			if (var.specialInitValue) {
 				assert(var.assign is null);
@@ -234,7 +235,7 @@ public:
 			}
 
 			LLVMValueRef init;
-			auto v = state.getVariableValue(var, type);
+			auto v = state.getVariableValue(var, /*#out*/type);
 
 			if (var.assign !is null) {
 				init = state.getConstant(var.assign);
@@ -272,9 +273,9 @@ public:
 			}
 		}
 
-		handleScopeSuccessTo(ret.loc, null);
+		handleScopeSuccessTo(/*#ref*/ret.loc, null);
 
-		diSetPosition(state, ret.loc);
+		diSetPosition(state, /*#ref*/ret.loc);
 
 		if (val is null) {
 			LLVMBuildRet(b, null);
@@ -322,12 +323,12 @@ public:
 		auto _switch = LLVMBuildSwitch(state.builder, cond, state.switchDefault, cast(uint)(ss.cases.length));
 
 		foreach (_case; ss.cases) {
-			if (_case.firstExp !is null) acceptExp(_case.firstExp, this);
+			if (_case.firstExp !is null) acceptExp(/*#ref*/_case.firstExp, this);
 			void addVal(LLVMValueRef val, LLVMBasicBlockRef block)
 			{
 				LLVMBasicBlockRef tmp;
 				auto i = LLVMConstIntGetSExtValue(val);
-				if (state.switchGetCase(i, tmp)) {
+				if (state.switchGetCase(i, /*#out*/tmp)) {
 					throw makeSwitchDuplicateCase(_case);
 				} else {
 					state.switchSetCase(i, block);
@@ -358,7 +359,7 @@ public:
 					auto ai = LLVMConstIntGetSExtValue(aval);
 					auto bi = LLVMConstIntGetSExtValue(bval);
 					if (ai >= bi) {
-						throw panic(ss.loc, "invalid case range");
+						throw panic(/*#ref*/ss.loc, "invalid case range");
 					}
 					while (ai <= bi) {
 						auto val = LLVMConstInt(typ, cast(ulong)ai++, false);
@@ -447,7 +448,7 @@ public:
 			Type type;
 			auto asTR = cast(ir.TypeReference) v.type;
 			ir.Class c = cast(ir.Class) asTR.type;
-			p.catchTypeInfos[index] = state.getVariableValue(c.typeInfo, type);
+			p.catchTypeInfos[index] = state.getVariableValue(c.typeInfo, /*#out*/type);
 		}
 
 
@@ -466,7 +467,7 @@ public:
 		 */
 		State.PathState dummy;
 		LLVMMoveBasicBlockAfter(landingPad, state.block);
-		fillInLandingPad(landingPad, t.finallyBlock !is null, dummy);
+		fillInLandingPad(landingPad, t.finallyBlock !is null, /*#out*/dummy);
 		assert(dummy is p);
 
 		// Reset the path.
@@ -486,7 +487,7 @@ public:
 			Type type;
 			auto asTR = cast(ir.TypeReference)v.type;
 			ir.Class c = cast(ir.Class)asTR.type;
-			auto value = state.getVariableValue(c.typeInfo, type);
+			auto value = state.getVariableValue(c.typeInfo, /*#out*/type);
 			value = LLVMBuildBitCast(state.builder, value, state.voidPtrType.llvmType, "");
 
 			auto func = state.ehTypeIdFunc;
@@ -506,7 +507,7 @@ public:
 			LLVMMoveBasicBlockAfter(thenBlock, state.block);
 			state.startBlock(thenBlock);
 
-			auto ptr = state.getVariableValue(v, type);
+			auto ptr = state.getVariableValue(v, /*#out*/type);
 			value = LLVMBuildBitCast(state.builder, e, type.llvmType, "");
 			LLVMBuildStore(state.builder, value, ptr);
 
@@ -719,7 +720,7 @@ public:
 
 		if (state.fall) {
 			// TODO Add a endBraceLocation field to BlockStatement.
-			handleScopeSuccessTo(bs.loc, old);
+			handleScopeSuccessTo(/*#ref*/bs.loc, old);
 		}
 
 		state.popPath();
@@ -731,10 +732,10 @@ public:
 		auto p = state.findContinue();
 
 		if (cs.label !is null) {
-			throw panic(cs.loc, "labled continue statements not supported");
+			throw panic(/*#ref*/cs.loc, "labled continue statements not supported");
 		}
 
-		handleScopeSuccessTo(cs.loc, p);
+		handleScopeSuccessTo(/*#ref*/cs.loc, p);
 
 		LLVMBuildBr(state.builder, p.continueBlock);
 		state.fnState.fall = false;
@@ -747,10 +748,10 @@ public:
 		auto p = state.findBreak();
 
 		if (bs.label !is null) {
-			throw panic(bs.loc, "labled break statements not supported");
+			throw panic(/*#ref*/bs.loc, "labled break statements not supported");
 		}
 
-		handleScopeSuccessTo(bs.loc, p);
+		handleScopeSuccessTo(/*#ref*/bs.loc, p);
 
 		LLVMBuildBr(state.builder, p.breakBlock);
 		state.fnState.fall = false;
@@ -762,7 +763,7 @@ public:
 	{
 		// Goto will exit the scope just as if it was a break.
 		auto p = state.findBreak();
-		handleScopeSuccessTo(gs.loc, p);
+		handleScopeSuccessTo(/*#ref*/gs.loc, p);
 
 		if (gs.isDefault) {
 			LLVMBuildBr(state.builder, state.switchDefault);
@@ -776,14 +777,14 @@ public:
 				auto i = LLVMConstIntGetSExtValue(v);
 				LLVMBasicBlockRef b;
 
-				if (!state.switchGetCase(i, b)) {
-					throw makeExpected(gs.loc, "valid case");
+				if (!state.switchGetCase(i, /*#out*/b)) {
+					throw makeExpected(/*#ref*/gs.loc, "valid case");
 				}
 				LLVMBuildBr(state.builder, b);
 				state.fnState.fall = false;
 			}
 		} else {
-			throw panic(gs.loc, "non switch goto");
+			throw panic(/*#ref*/gs.loc, "non switch goto");
 		}
 		return Continue;
 	}
@@ -793,7 +794,7 @@ public:
 		// Should not call success here.
 
 		if (t.exp is null) {
-			throw panic(t.loc, "empty throw statement");
+			throw panic(/*#ref*/t.loc, "empty throw statement");
 		}
 	
 		state.getValue(t.exp);
@@ -806,11 +807,11 @@ public:
 	override Status leave(ir.Module m)
 	{
 		if (state.globalConstructors.length > 0 || state.globalDestructors.length > 0) {
-			throw panic(m.loc, "global constructor or destructor made it into llvm backend.");
+			throw panic(/*#ref*/m.loc, "global constructor or destructor made it into llvm backend.");
 		}
 
 		if (state.localConstructors.length > 0 || state.localDestructors.length > 0) {
-			throw panic(m.loc, "local constructor or destructor made it into llvm backend.");
+			throw panic(/*#ref*/m.loc, "local constructor or destructor made it into llvm backend.");
 		}
 
 		return Continue;
@@ -849,7 +850,7 @@ public:
 
 				buildArgIfNeeded();
 				auto pad = p.scopeLanding[index];
-				state.buildCallOrInvoke(loc, func, arg, pad);
+				state.buildCallOrInvoke(/*#ref*/loc, func, arg, pad);
 			}
 			p = p.prev;
 		}
@@ -886,7 +887,7 @@ public:
 			state.context, state.func, "landingPad");
 
 		State.PathState catchPath;
-		fillInLandingPad(landingPad, true, catchPath);
+		fillInLandingPad(landingPad, true, /*#out*/catchPath);
 
 		auto value = LLVMBuildBitCast(
 			state.builder, state.fnState.nested,

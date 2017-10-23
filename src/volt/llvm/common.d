@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 /*!
@@ -220,11 +221,11 @@ void handleClassLiteral(State state, ir.ClassLiteral cl, Value result)
 
 	auto sl = new ir.StructLiteral();
 	sl.loc = cl.loc;
-	sl.type = copyTypeSmart(_class.loc, _class.layoutStruct);
-	auto eref = buildExpReference(cl.loc, _class.vtableVariable, _class.vtableVariable.name);
-	auto ppv = buildPtr(cl.loc, buildVoidPtr(cl.loc));
+	sl.type = copyTypeSmart(/*#ref*/_class.loc, _class.layoutStruct);
+	auto eref = buildExpReference(/*#ref*/cl.loc, _class.vtableVariable, _class.vtableVariable.name);
+	auto ppv = buildPtr(/*#ref*/cl.loc, buildVoidPtr(/*#ref*/cl.loc));
 	ppv.mangledName = "ppv";
-	sl.exps ~= buildCast(cl.loc, ppv, buildAddrOf(cl.loc, eref));
+	sl.exps ~= buildCast(/*#ref*/cl.loc, ppv, buildAddrOf(/*#ref*/cl.loc, eref));
 	sl.exps ~= cl.exps;
 
 	st.from(state, sl, result);

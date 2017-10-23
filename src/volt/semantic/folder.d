@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2016-2017, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.folder;
@@ -37,13 +38,13 @@ public:
 
 	override Status enter(ref ir.Exp exp, ir.BinOp binop)
 	{
-		auto constant = foldBinOp(exp, binop, target);
+		auto constant = foldBinOp(/*#ref*/exp, binop, target);
 		return ContinueParent;
 	}
 
 	override Status enter(ref ir.Exp exp, ir.Unary unary)
 	{
-		auto constant = foldUnary(exp, unary, target);
+		auto constant = foldUnary(/*#ref*/exp, unary, target);
 		return ContinueParent;
 	}
 }

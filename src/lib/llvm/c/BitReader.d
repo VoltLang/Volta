@@ -1,3 +1,4 @@
+/*#D*/
 /*===-- llvm-c/BitReader.h - BitReader Library C Interface --------*- D -*-===*\
 |*                                                                            *|
 |*                     The LLVM Compiler Infrastructure                       *|

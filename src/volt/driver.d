@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012-2016, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.driver;
@@ -190,7 +191,7 @@ public:
 	override string stringImport(ref in Location loc, string fname)
 	{
 		if (mStringImportPaths.length == 0) {
-			throw makeNoStringImportPaths(loc);
+			throw makeNoStringImportPaths(/*#ref*/loc);
 		}
 
 		foreach (path; mStringImportPaths) {
@@ -205,7 +206,7 @@ public:
 			return cast(string)read(filename);
 		}
 
-		throw makeImportFileOpenFailure(loc, fname);
+		throw makeImportFileOpenFailure(/*#ref*/loc, fname);
 	}
 
 	override ir.Module[] getCommandLineModules()

@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.parser.declaration;
@@ -28,12 +29,12 @@ ParseStatus parseVariable(ParserStream ps, NodeSinkDg dgt)
 	if (ps == TokenType.Alias) {
 		if (ps.magicFlagD && isTemplateInstance(ps)) {
 			ir.Struct s;
-			parseLegacyTemplateInstance(ps, s);
+			parseLegacyTemplateInstance(ps, /*#out*/s);
 			dgt(s);
 			return Succeeded;
 		}
 		ir.Alias a;
-		auto succeeded = parseAlias(ps, a);
+		auto succeeded = parseAlias(ps, /*#out*/a);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Variable);
 		}
@@ -51,14 +52,14 @@ ParseStatus parseVariable(ParserStream ps, NodeSinkDg dgt)
 	if (ps == TokenType.Fn) {
 		if (isTemplateDefinition(ps)) {
 			ir.TemplateDefinition td;
-			auto succeeded = parseTemplateDefinition(ps, td);
+			auto succeeded = parseTemplateDefinition(ps, /*#out*/td);
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.Variable);
 			}
 			dgt(td);
 		} else {
 			ir.Function func;
-			auto succeeded = parseNewFunction(ps, func);
+			auto succeeded = parseNewFunction(ps, /*#out*/func);
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.Variable);
 			}
@@ -74,7 +75,7 @@ ParseStatus parseVariable(ParserStream ps, NodeSinkDg dgt)
 
 	ir.Type base;
 	if (!colonDeclaration) {
-		auto succeeded = parseType(ps, base);
+		auto succeeded = parseType(ps, /*#out*/base);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Variable);
 		}
@@ -91,11 +92,11 @@ ParseStatus parseVariable(ParserStream ps, NodeSinkDg dgt)
 		return reallyParseVariable(ps, base, dgt);
 	} else if (colonDeclaration) {
 		// New variable declaration.
-		return parseColonAssign(ps, dgt);
+		return parseColonAssign(ps, /*#out*/dgt);
 	} else if (ps.lookahead(1).type == TokenType.OpenParen) {
 		// Function!
 		ir.Function func;
-		auto succeeded = parseFunction(ps, func, base);
+		auto succeeded = parseFunction(ps, /*#out*/func, base);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Variable);
 		}
@@ -106,14 +107,14 @@ ParseStatus parseVariable(ParserStream ps, NodeSinkDg dgt)
 		dgt(func);
 		return Succeeded;
 	} else {
-		return parseExpected(ps, ps.peek.loc, ir.NodeType.Variable, "declaration");
+		return parseExpected(ps, /*#ref*/ps.peek.loc, ir.NodeType.Variable, "declaration");
 	}
 }
 
 ParseStatus parseJustVariable(ParserStream ps, NodeSinkDg dgt)
 {
 	ir.Type base;
-	auto succeeded = parseType(ps, base);
+	auto succeeded = parseType(ps, /*#out*/base);
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.Variable);
 	}
@@ -160,13 +161,13 @@ ParseStatus parseAlias(ParserStream ps, out ir.Alias a)
 	ParseStatus succeeded = Succeeded;
 	do { // Poor mans goto.
 		if (bang) {
-			succeeded = parseExp(ps, a.templateInstance);
+			succeeded = parseExp(ps, /*#out*/a.templateInstance);
 			if (!succeeded) {
 				succeeded = unexpectedToken(ps, a);
 				break;
 			}
 		} else {
-			succeeded = parseQualifiedName(ps, a.id);
+			succeeded = parseQualifiedName(ps, /*#out*/a.id);
 			if (!succeeded) {
 				succeeded = parseFailed(ps, a);
 				break;
@@ -188,7 +189,7 @@ ParseStatus parseAlias(ParserStream ps, out ir.Alias a)
 		a.id = null;
 
 		if (ps == TokenType.Static) {
-			succeeded = parseAliasStaticIf(ps, a.staticIf);
+			succeeded = parseAliasStaticIf(ps, /*#out*/a.staticIf);
 			if (!succeeded) {
 				return parseFailed(ps, a);
 			}
@@ -197,12 +198,12 @@ ParseStatus parseAlias(ParserStream ps, out ir.Alias a)
 		}
 
 		if (ps == TokenType.Extern) {
-			succeeded = parseAttribute(ps, a.externAttr, true);
+			succeeded = parseAttribute(ps, /*#out*/a.externAttr, true);
 			if (!succeeded) {
 				return parseFailed(ps, a);
 			}
 		}
-		succeeded = parseType(ps, a.type);
+		succeeded = parseType(ps, /*#out*/a.type);
 		if (!succeeded) {
 			return parseFailed(ps, a);
 		}
@@ -229,7 +230,7 @@ ParseStatus parseAliasStaticIf(ParserStream ps, out ir.AliasStaticIf asi)
 
 	do {
 		ir.Exp condition;
-		succeeded = parseExp(ps, condition);
+		succeeded = parseExp(ps, /*#out*/condition);
 		if (!succeeded) {
 			return parseFailed(ps, asi.nodeType);
 		}
@@ -240,14 +241,14 @@ ParseStatus parseAliasStaticIf(ParserStream ps, out ir.AliasStaticIf asi)
 		}
 
 		ir.Type type;
-		succeeded = parseType(ps, type);
+		succeeded = parseType(ps, /*#out*/type);
 		if (!succeeded) {
 			return parseFailed(ps, asi.nodeType);
 		}
 		succeeded = match(ps, asi.nodeType,
 			[TokenType.Semicolon, TokenType.CloseBrace]);
 		if (!succeeded) {
-			return parseFailed(ps, asi.nodeType);
+			return parseFailed(ps, /*#out*/asi.nodeType);
 		}
 
 		asi.conditions ~= condition;
@@ -266,7 +267,7 @@ ParseStatus parseAliasStaticIf(ParserStream ps, out ir.AliasStaticIf asi)
 		succeeded = match(ps, asi.nodeType,
 			[TokenType.Else, TokenType.OpenBrace]);
 		ir.Type type;
-		succeeded = parseType(ps, type);
+		succeeded = parseType(ps, /*#out*/type);
 		if (!succeeded) {
 			return parseFailed(ps, asi.nodeType);
 		}
@@ -290,7 +291,7 @@ ParseStatus reallyParseVariable(ParserStream ps, ir.Type base, NodeSinkDg dgt)
 		d.docComment = ps.comment();
 		d.type = base;
 		Token nameTok;
-		auto succeeded = match(ps, d, TokenType.Identifier, nameTok);
+		auto succeeded = match(ps, d, TokenType.Identifier, /*#out*/nameTok);
 		if (!succeeded) {
 			/* TODO: Figure out precisely what needs continuing,
 			 * and only ignore that.
@@ -301,7 +302,7 @@ ParseStatus reallyParseVariable(ParserStream ps, ir.Type base, NodeSinkDg dgt)
 		d.name = nameTok.value;
 		if (ps.peek.type == TokenType.Assign) {
 			ps.get();
-			succeeded = parseExp(ps, d.assign);
+			succeeded = parseExp(ps, /*#out*/d.assign);
 			if (!succeeded) {
 				parseFailed(ps, d);
 				ps.neverIgnoreError = true;
@@ -351,7 +352,7 @@ ParseStatus parseType(ParserStream ps, out ir.Type base)
 	case TokenType.Auto, TokenType.Const, TokenType.Immutable,
 		 TokenType.Scope:
 		ir.StorageType st;
-		auto succeeded = parseStorageType(ps, st);
+		auto succeeded = parseStorageType(ps, /*#out*/st);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.StorageType);
 		}
@@ -359,7 +360,7 @@ ParseStatus parseType(ParserStream ps, out ir.Type base)
 		break;
 	case TokenType.Identifier, TokenType.Dot:
 		ir.TypeReference tr;
-		auto succeeded = parseTypeReference(ps, tr);
+		auto succeeded = parseTypeReference(ps, /*#out*/tr);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TypeOf);
 		}
@@ -367,7 +368,7 @@ ParseStatus parseType(ParserStream ps, out ir.Type base)
 		break;
 	case TokenType.Typeof:
 		ir.TypeOf t;
-		auto succeeded = parseTypeOf(ps, t);
+		auto succeeded = parseTypeOf(ps, /*#out*/t);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TypeOf);
 		}
@@ -376,7 +377,7 @@ ParseStatus parseType(ParserStream ps, out ir.Type base)
 	case TokenType.Fn:
 	case TokenType.Dg:
 		ir.CallableType func;
-		auto succeeded = parseNewFunctionType(ps, func);
+		auto succeeded = parseNewFunctionType(ps, /*#out*/func);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TypeOf);
 		}
@@ -384,7 +385,7 @@ ParseStatus parseType(ParserStream ps, out ir.Type base)
 		break;
 	case TokenType.OpenParen:
 		ps.get();
-		auto succeeded = parseType(ps, base);
+		auto succeeded = parseType(ps, /*#out*/base);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TypeOf);
 		}
@@ -394,11 +395,11 @@ ParseStatus parseType(ParserStream ps, out ir.Type base)
 		}
 		break;
 	default:
-		return parseExpected(ps, ps.peek.loc, ir.NodeType.Invalid, "primitive type");
+		return parseExpected(ps, /*#ref*/ps.peek.loc, ir.NodeType.Invalid, "primitive type");
 	}
 
 	ir.Type tmp;
-	auto succeeded = parseTypeSigils(ps, tmp, origin, base);
+	auto succeeded = parseTypeSigils(ps, /*#out*/tmp, origin, base);
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.Function);
 	}
@@ -407,13 +408,13 @@ ParseStatus parseType(ParserStream ps, out ir.Type base)
 	switch (ps.peek.type) {
 	case TokenType.Function:
 		ir.FunctionType func;
-		succeeded = parseFunctionType(ps, func, base);
+		succeeded = parseFunctionType(ps, /*#out*/func, base);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Function);
 		}
 		base = func;
 		base.loc = ps.peek.loc - origin;
-		succeeded = parseTypeSigils(ps, tmp, origin, base);
+		succeeded = parseTypeSigils(ps, /*#out*/tmp, origin, base);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Function);
 		}
@@ -421,13 +422,13 @@ ParseStatus parseType(ParserStream ps, out ir.Type base)
 		break;
 	case TokenType.Delegate:
 		ir.DelegateType func;
-		succeeded = parseDelegateType(ps, func, base);
+		succeeded = parseDelegateType(ps, /*#out*/func, base);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Function);
 		}
 		base = func;
 		base.loc = ps.peek.loc - origin;
-		succeeded = parseTypeSigils(ps, tmp, origin, base);
+		succeeded = parseTypeSigils(ps, /*#out*/tmp, origin, base);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Function);
 		}
@@ -451,7 +452,7 @@ ParseStatus parseTypeOf(ParserStream ps, out ir.TypeOf typeOf)
 	}
 	ps.get();
 	ps.get();
-	auto succeeded = parseExp(ps, typeOf.exp);
+	auto succeeded = parseExp(ps, /*#out*/typeOf.exp);
 	if (!succeeded) {
 		return parseFailed(ps, typeOf);
 	}
@@ -467,7 +468,7 @@ ParseStatus parseTypeReference(ParserStream ps, out ir.TypeReference typeReferen
 	typeReference = new ir.TypeReference();
 	typeReference.loc = ps.peek.loc;
 
-	auto succeeded = parseQualifiedName(ps, typeReference.id, true);
+	auto succeeded = parseQualifiedName(ps, /*#out*/typeReference.id, true);
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.TypeReference);
 	}
@@ -487,11 +488,11 @@ ParseStatus parseStorageType(ParserStream ps, out ir.StorageType storageType)
 
 	if (ps == [TokenType.Identifier, TokenType.Semicolon] ||
 		ps == [TokenType.Identifier, TokenType.Assign, TokenType.Void, TokenType.Semicolon]) {
-		parseExpected(ps, ps.peek.loc, storageType, "explicit type");
+		parseExpected(ps, /*#ref*/ps.peek.loc, /*#out*/storageType, "explicit type");
 		ps.neverIgnoreError = true;
 		return Failed;
 	} else if (matchIf(ps, TokenType.OpenParen)) {
-		auto succeeded = parseType(ps, storageType.base);
+		auto succeeded = parseType(ps, /*#out*/storageType.base);
 		if (!succeeded) {
 			return parseFailed(ps, storageType);
 		}
@@ -520,7 +521,7 @@ ParseStatus parseStorageType(ParserStream ps, out ir.StorageType storageType)
 			i++;
 		}
 		if (!autoDecl) {
-			auto succeeded = parseType(ps, storageType.base);
+			auto succeeded = parseType(ps, /*#out*/storageType.base);
 			if (!succeeded) {
 				return parseFailed(ps, storageType);
 			}
@@ -572,7 +573,7 @@ ParseStatus parseNewFunctionParams(ParserStream ps, ir.CallableType func)
 			match(ps, func, TokenType.Colon);
 		}
 		ir.Type t;
-		succeeded = parseType(ps, t);
+		succeeded = parseType(ps, /*#out*/t);
 		if (!succeeded) {
 			return parseFailed(ps, func);
 		}
@@ -584,8 +585,8 @@ ParseStatus parseNewFunctionParams(ParserStream ps, ir.CallableType func)
 			t = s;
 		}
 		if (argIn) {
-			auto constStorage = buildStorageType(t.loc, ir.StorageType.Kind.Const, t);
-			auto scopeStorage = buildStorageType(t.loc, ir.StorageType.Kind.Scope, constStorage);
+			auto constStorage = buildStorageType(/*#ref*/t.loc, ir.StorageType.Kind.Const, t);
+			auto scopeStorage = buildStorageType(/*#ref*/t.loc, ir.StorageType.Kind.Scope, constStorage);
 			t = scopeStorage;
 		}
 		func.params ~= t;
@@ -593,7 +594,7 @@ ParseStatus parseNewFunctionParams(ParserStream ps, ir.CallableType func)
 	}
 
 	if (matchedComma) {
-		return parseExpected(ps, ps.peek.loc, func,
+		return parseExpected(ps, /*#ref*/ps.peek.loc, func,
 			"parameter list's closing ')' character, not ','");
 	}
 
@@ -634,7 +635,7 @@ ParseStatus parseNewFunctionType(ParserStream ps, out ir.CallableType func)
 		case "Pascal": func.linkage = ir.Linkage.Pascal; break;
 		case "System": func.linkage = ir.Linkage.System; break;
 		default:
-			return parseExpected(ps, ps.peek.loc, func,
+			return parseExpected(ps, /*#ref*/ps.peek.loc, func,
 			                     "Volt, C, C++, D, Windows, Pascal, or System linkage");
 		}
 	}
@@ -651,9 +652,9 @@ ParseStatus parseNewFunctionType(ParserStream ps, out ir.CallableType func)
 	auto mark = ps.save();
 
 	if (!parenRet || ps != TokenType.CloseParen) {
-		succeeded = parseType(ps, func.ret);
+		succeeded = parseType(ps, /*#out*/func.ret);
 		if (!succeeded) {
-			func.ret = buildVoid(func.loc);
+			func.ret = buildVoid(/*#ref*/func.loc);
 			ps.restore(mark);
 			ps.resetErrors();
 		}
@@ -687,7 +688,7 @@ ParseStatus parseFunctionType(ParserStream ps, out ir.FunctionType func, ir.Type
 	if (!succeeded) {
 		return succeeded;
 	}
-	succeeded = parseParameterListFPtr(ps, func.params, func);
+	succeeded = parseParameterListFPtr(ps, /*#out*/func.params, func);
 	if (!succeeded) {
 		return parseFailed(ps, func);
 	}
@@ -708,7 +709,7 @@ ParseStatus parseDelegateType(ParserStream ps, out ir.DelegateType func, ir.Type
 	if (!succeeded) {
 		return succeeded;
 	}
-	succeeded = parseParameterListFPtr(ps, func.params, func);
+	succeeded = parseParameterListFPtr(ps, /*#out*/func.params, func);
 	if (!succeeded) {
 		return parseFailed(ps, func);
 	}
@@ -733,7 +734,7 @@ ParseStatus parseParameterListFPtr(ParserStream ps, out ir.Type[] types, ir.Call
 			break;
 		}
 		ir.Variable var;
-		succeeded = parseParameter(ps, var);
+		succeeded = parseParameter(ps, /*#out*/var);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Variable);
 		}
@@ -741,7 +742,7 @@ ParseStatus parseParameterListFPtr(ParserStream ps, out ir.Type[] types, ir.Call
 		matchedComma = matchIf(ps, TokenType.Comma);
 	}
 	if (matchedComma) {
-		return parseExpected(ps, ps.peek.loc, ir.NodeType.Function,
+		return parseExpected(ps, /*#ref*/ps.peek.loc, ir.NodeType.Function,
 			"parameter list's closing ')' character, not ','");
 	}
 	return match(ps, ir.NodeType.Variable, TokenType.CloseParen);
@@ -764,14 +765,14 @@ ParseStatus parseParameterList(ParserStream ps, out ir.Variable[] vars, ir.Calla
 			break;
 		}
 		ir.Variable var;
-		succeeded = parseParameter(ps, var);
+		succeeded = parseParameter(ps, /*#out*/var);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Function);
 		}
 		// foo(int a, int[] b...)
 		if (matchIf(ps, TokenType.TripleDot)) {
 			if (ps.peek.type != TokenType.CloseParen) {
-				return parseExpected(ps, ps.peek.loc, ir.NodeType.Function, 
+				return parseExpected(ps, /*#ref*/ps.peek.loc, ir.NodeType.Function, 
 				                     "homogenous variadic argument to be final argument");
 			}
 			parentCallable.hasVarArgs = false;
@@ -783,7 +784,7 @@ ParseStatus parseParameterList(ParserStream ps, out ir.Variable[] vars, ir.Calla
 		if (matchedComma) {
 			if (matchIf(ps, TokenType.TripleDot)) {
 				if (ps.peek.type != TokenType.CloseParen) {
-					return parseExpected(ps, ps.peek.loc, ir.NodeType.Function,
+					return parseExpected(ps, /*#ref*/ps.peek.loc, ir.NodeType.Function,
 					                     "varargs to be final argument");
 				}
 				parentCallable.hasVarArgs = true;
@@ -792,7 +793,7 @@ ParseStatus parseParameterList(ParserStream ps, out ir.Variable[] vars, ir.Calla
 		}
 	}
 	if (matchedComma) {
-		return parseExpected(ps, ps.peek.loc, ir.NodeType.Function,
+		return parseExpected(ps, /*#ref*/ps.peek.loc, ir.NodeType.Function,
 			"parameter list's closing ')' character, not ','");
 	}
 	return match(ps, ir.NodeType.Function, TokenType.CloseParen);
@@ -823,7 +824,7 @@ ParseStatus parseParameter(ParserStream ps, out ir.Variable p)
 	auto colon = isColonDeclaration(ps);
 	ParseStatus succeeded;
 	if (!colon) {
-		succeeded = parseType(ps, p.type);
+		succeeded = parseType(ps, /*#out*/p.type);
 		if (!succeeded) {
 			return parseFailed(ps, p);
 		}
@@ -836,8 +837,8 @@ ParseStatus parseParameter(ParserStream ps, out ir.Variable p)
 		p.type = s;
 	}
 	if (isIn) {
-		auto constStorage = buildStorageType(ps.peek.loc, ir.StorageType.Kind.Const, p.type);
-		auto scopeStorage = buildStorageType(ps.peek.loc, ir.StorageType.Kind.Scope, constStorage);
+		auto constStorage = buildStorageType(/*#ref*/ps.peek.loc, ir.StorageType.Kind.Const, p.type);
+		auto scopeStorage = buildStorageType(/*#ref*/ps.peek.loc, ir.StorageType.Kind.Scope, constStorage);
 		p.type = scopeStorage;
 	}
 	if (colon) {
@@ -850,7 +851,7 @@ ParseStatus parseParameter(ParserStream ps, out ir.Variable p)
 		if (!succeeded) {
 			return succeeded;
 		}
-		succeeded = parseType(ps, p.type);
+		succeeded = parseType(ps, /*#out*/p.type);
 		if (!succeeded) {
 			return parseFailed(ps, p);
 		}
@@ -858,10 +859,10 @@ ParseStatus parseParameter(ParserStream ps, out ir.Variable p)
 		Token name = ps.get();
 		p.name = name.value;
 	} else if (ps.peek.type != TokenType.Comma && ps.peek.type != TokenType.CloseParen) {
-		return parseExpected(ps, ps.peek.loc, p, "',', ')', or an identifier");
+		return parseExpected(ps, /*#ref*/ps.peek.loc, p, "',', ')', or an identifier");
 	}
 	if (matchIf(ps, TokenType.Assign)) {
-		succeeded = parseExp(ps, p.assign);
+		succeeded = parseExp(ps, /*#out*/p.assign);
 		if (!succeeded) {
 			return parseFailed(ps, p);
 		}
@@ -901,7 +902,7 @@ ParseStatus parseTypeSigils(ParserStream ps, out ir.Type outType, Location origi
 			 */
 			auto a = new ir.AAType();
 			a.value = outType;
-			auto succeeded = parseType(ps, a.key);
+			auto succeeded = parseType(ps, /*#out*/a.key);
 			if (!succeeded) {
 				return parseFailed(ps, outType);
 			}
@@ -923,7 +924,7 @@ ParseStatus parseTypeSigils(ParserStream ps, out ir.Type outType, Location origi
 		} else {
 			// Static or associative array.
 			auto a = new ir.AmbiguousArrayType();
-			auto succeeded = parseExp(ps, a.child);
+			auto succeeded = parseExp(ps, /*#out*/a.child);
 			if (!succeeded) {
 				return parseFailed(ps, outType);
 			}
@@ -998,7 +999,7 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func, string templ
 	if (templateName.length == 0) {
 		if (isTemplateInstance(ps)) {
 			func.type = null;
-			return parseTemplateInstance(ps, func.templateInstance, func.name);
+			return parseTemplateInstance(ps, /*#out*/func.templateInstance, /*#out*/func.name);
 		}
 
 		auto succeeded = match(ps, func, TokenType.Fn);
@@ -1006,7 +1007,7 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func, string templ
 			return succeeded;
 		}
 
-		succeeded = match(ps, func, TokenType.Identifier, nameTok);
+		succeeded = match(ps, func, TokenType.Identifier, /*#out*/nameTok);
 		if (!succeeded) {
 			return succeeded;
 		}
@@ -1056,7 +1057,7 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func, string templ
 		p.loc = ps.peek.loc;
 		ir.Type t;
 		if (ps.lookahead(1).type == TokenType.Colon) {
-			succeeded = match(ps, p, TokenType.Identifier, nameTok);
+			succeeded = match(ps, p, TokenType.Identifier, /*#out*/nameTok);
 			if (!succeeded) {
 				return succeeded;
 			}
@@ -1070,22 +1071,22 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func, string templ
 			   ps.lookahead(1).type != TokenType.Dot) {
 			// Old style declaration in new-style function.
 			ps.get();
-			return parseExpected(ps, ps.peek.loc, p, "new-style declaration (using a colon)");
+			return parseExpected(ps, /*#ref*/ps.peek.loc, p, "new-style declaration (using a colon)");
 		}
-		succeeded = parseType(ps, t);
+		succeeded = parseType(ps, /*#out*/t);
 		if (!succeeded) {
 			return succeeded;
 		}
 		if (argIn) {
-			auto constStorage = buildStorageType(p.loc, ir.StorageType.Kind.Const, t);
-			auto scopeStorage = buildStorageType(p.loc, ir.StorageType.Kind.Scope, constStorage);
+			auto constStorage = buildStorageType(/*#ref*/p.loc, ir.StorageType.Kind.Const, t);
+			auto scopeStorage = buildStorageType(/*#ref*/p.loc, ir.StorageType.Kind.Scope, constStorage);
 			t = constStorage;
 		}
 		func.type.params ~= t;
 		func.type.isArgRef ~= argRef;
 		func.type.isArgOut ~= argOut;
 		if (matchIf(ps, TokenType.Assign)) {
-			succeeded = parseExp(ps, p.assign);
+			succeeded = parseExp(ps, /*#out*/p.assign);
 			if (!succeeded) {
 				return succeeded;
 			}
@@ -1103,7 +1104,7 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func, string templ
 	}
 	
 	if (hadComma) {
-		return parseExpected(ps, ps.peek.loc, func,
+		return parseExpected(ps, /*#ref*/ps.peek.loc, func,
 			"parameter list's closing ')' character, not ','");
 	}
 
@@ -1115,9 +1116,9 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func, string templ
 	bool paren = matchIf(ps, TokenType.OpenParen);
 
 	if (ps == TokenType.OpenBrace || ps == TokenType.Semicolon) {
-		func.type.ret = buildVoid(func.loc);
+		func.type.ret = buildVoid(/*#ref*/func.loc);
 	} else {
-		succeeded = parseType(ps, func.type.ret);
+		succeeded = parseType(ps, /*#out*/func.type.ret);
 		if (!succeeded) {
 			return succeeded;
 		}
@@ -1142,10 +1143,10 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func, string templ
 			ps.get();
 			// <in> { }
 			if (_in) {
-				return parseExpected(ps, ps.peek.loc, func, "only one in block");
+				return parseExpected(ps, /*#ref*/ps.peek.loc, func, "only one in block");
 			}
 			_in = true;
-			succeeded = parseBlock(ps, func.inContract);
+			succeeded = parseBlock(ps, /*#out*/func.inContract);
 			if (!succeeded) {
 				return parseFailed(ps, func);
 			}
@@ -1154,7 +1155,7 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func, string templ
 			ps.get();
 			// <out>
 			if (_out) {
-				return parseExpected(ps, ps.peek.loc, func, "only one out block");
+				return parseExpected(ps, /*#ref*/ps.peek.loc, func, "only one out block");
 			}
 			_out = true;
 			if (ps.peek.type == TokenType.OpenParen) {
@@ -1167,7 +1168,7 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func, string templ
 				func.outParameter = identTok.value;
 				ps.get();
 			}
-			succeeded = parseBlock(ps, func.outContract);
+			succeeded = parseBlock(ps, /*#out*/func.outContract);
 			if (!succeeded) {
 				return parseFailed(ps, func);
 			}
@@ -1178,13 +1179,13 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func, string templ
 				ps.get();
 			}
 			inBlocks = false;
-			succeeded = parseBlock(ps, func._body);
+			succeeded = parseBlock(ps, /*#out*/func._body);
 			if (!succeeded) {
 				return parseFailed(ps, func);
 			}
 			break;
 		default:
-			return parseExpected(ps, ps.peek.loc, func, "block declaration");
+			return parseExpected(ps, /*#ref*/ps.peek.loc, func, "block declaration");
 		}
 	}
 	matchIf(ps, TokenType.Semicolon);
@@ -1207,7 +1208,7 @@ ParseStatus parseFunction(ParserStream ps, out ir.Function func, ir.Type base)
 
 	// int <add>(int a, int b) {}
 	Token nameTok;
-	auto succeeded = match(ps, func, TokenType.Identifier, nameTok);
+	auto succeeded = match(ps, func, TokenType.Identifier, /*#out*/nameTok);
 	if (!succeeded) {
 		return succeeded;
 	}
@@ -1216,7 +1217,7 @@ ParseStatus parseFunction(ParserStream ps, out ir.Function func, ir.Type base)
 
 	// int add<(int a, int b)> {}
 	ir.Variable[] params;
-	succeeded = parseParameterList(ps, params, func.type);
+	succeeded = parseParameterList(ps, /*#out*/params, func.type);
 	if (!succeeded) {
 		return parseFailed(ps, func);
 	}
@@ -1243,10 +1244,10 @@ ParseStatus parseFunction(ParserStream ps, out ir.Function func, ir.Type base)
 			ps.get();
 			// <in> { }
 			if (_in) {
-				return parseExpected(ps, ps.peek.loc, func, "only one in block");
+				return parseExpected(ps, /*#ref*/ps.peek.loc, func, "only one in block");
 			}
 			_in = true;
-			succeeded = parseBlock(ps, func.inContract);
+			succeeded = parseBlock(ps, /*#out*/func.inContract);
 			if (!succeeded) {
 				return parseFailed(ps, func);
 			}
@@ -1255,7 +1256,7 @@ ParseStatus parseFunction(ParserStream ps, out ir.Function func, ir.Type base)
 			ps.get();
 			// <out>
 			if (_out) {
-				return parseExpected(ps, ps.peek.loc, func, "only one out block");
+				return parseExpected(ps, /*#ref*/ps.peek.loc, func, "only one out block");
 			}
 			_out = true;
 			if (ps.peek.type == TokenType.OpenParen) {
@@ -1268,7 +1269,7 @@ ParseStatus parseFunction(ParserStream ps, out ir.Function func, ir.Type base)
 				func.outParameter = identTok.value;
 				ps.get();
 			}
-			succeeded = parseBlock(ps, func.outContract);
+			succeeded = parseBlock(ps, /*#out*/func.outContract);
 			if (!succeeded) {
 				return parseFailed(ps, func);
 			}
@@ -1279,13 +1280,13 @@ ParseStatus parseFunction(ParserStream ps, out ir.Function func, ir.Type base)
 				ps.get();
 			}
 			inBlocks = false;
-			succeeded = parseBlock(ps, func._body);
+			succeeded = parseBlock(ps, /*#out*/func._body);
 			if (!succeeded) {
 				return parseFailed(ps, func);
 			}
 			break;
 		default:
-			return parseExpected(ps, ps.peek.loc, func, "block declaration");
+			return parseExpected(ps, /*#ref*/ps.peek.loc, func, "block declaration");
 		}
 	}
 	matchIf(ps, TokenType.Semicolon);
@@ -1321,7 +1322,7 @@ ParseStatus parseBlock(ParserStream ps, out ir.BlockStatement bs)
 		if (!succeeded) {
 			return succeeded;
 		}
-		succeeded = parseStatement(ps, sink.push);
+		succeeded = parseStatement(ps, /*#out*/sink.push);
 		if (!succeeded) {
 			return parseFailed(ps, bs);
 		}
@@ -1337,21 +1338,21 @@ ParseStatus parseEnumDeclaration(ParserStream ps, out ir.EnumDeclaration edecl, 
 	auto comment = ps.comment();
 
 	Token nameTok;
-	auto succeeded = match(ps, edecl, TokenType.Identifier, nameTok);
+	auto succeeded = match(ps, edecl, TokenType.Identifier, /*#out*/nameTok);
 	if (!succeeded) {
 		return succeeded;
 	}
 	edecl.name = nameTok.value;
 
 	if (matchIf(ps, TokenType.Colon)) {
-		succeeded = parseType(ps, edecl.type);
+		succeeded = parseType(ps, /*#out*/edecl.type);
 		if (!succeeded) {
 			parseFailed(ps, edecl);
 		}
 	}
 
 	if (matchIf(ps, TokenType.Assign)) {
-		succeeded = parseExp(ps, edecl.assign);
+		succeeded = parseExp(ps, /*#out*/edecl.assign);
 		if (!succeeded) {
 			return parseFailed(ps, edecl);
 		}

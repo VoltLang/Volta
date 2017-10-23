@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.parser.parser;
@@ -43,10 +44,10 @@ private void checkError(ParserStream ps, ParseStatus status)
 
 	if (p !is null) {
 		addExtraInfo();
-		throw panic(e.loc, msg, e.raiseFile, e.raiseLine);
+		throw panic(/*#ref*/e.loc, msg, e.raiseFile, e.raiseLine);
 	} else {
 		debug addExtraInfo();
-		throw makeError(e.loc, msg, e.raiseFile, e.raiseLine);
+		throw makeError(/*#ref*/e.loc, msg, e.raiseFile, e.raiseLine);
 	}
 }
 
@@ -77,7 +78,7 @@ public:
 		ps.get(); // Skip, stream already checks for Begin.
 
 		ir.Module mod;
-		checkError(ps, parseModule(ps, mod));
+		checkError(ps, parseModule(ps, /*#out*/mod));
 		return mod;
 	}
 

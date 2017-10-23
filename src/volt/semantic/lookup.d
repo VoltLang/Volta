@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012-2017, Bernard Helyer.  All rights reserved.
 // Copyright © 2013-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
@@ -39,7 +40,7 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, ref in Location loc, string na
 {
 	ir.Scope current = _scope, previous = _scope;
 	while (current !is null) {
-		auto store = lookupAsThisScope(lp, current, loc, name, current);
+		auto store = lookupAsThisScope(lp, current, /*#ref*/loc, name, current);
 		if (store !is null) {
 			return store;
 		}
@@ -48,7 +49,7 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, ref in Location loc, string na
 		current = current.parent;
 	}
 
-	return walkImports(lp, loc, _scope, name);
+	return walkImports(lp, /*#ref*/loc, _scope, name);
 }
 
 /*!
@@ -64,8 +65,8 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, ref in Location loc, string na
 ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
 {
 	auto last = qn.identifiers.length - 1;
-	auto current = qn.leadingDot ? getTopScope(qn.loc, _scope) : _scope;
-	auto parentModule = getModuleFromScope(qn.loc, _scope);
+	auto current = qn.leadingDot ? getTopScope(/*#ref*/qn.loc, _scope) : _scope;
+	auto parentModule = getModuleFromScope(/*#ref*/qn.loc, _scope);
 
 	foreach (i, id; qn.identifiers) {
 		ir.Store store;
@@ -77,7 +78,7 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
 		 * in only that context. Leading dot taken care of above.
 		 */
 		if (i == 0) {
-			store = lookup(lp, current, loc, name);
+			store = lookup(lp, current, /*#ref*/loc, name);
 			if (store is null) {
 				return null;
 			}
@@ -87,18 +88,18 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
 				current = asImport.targetModules[0].myScope;
 			}
 		} else {
-			store = lookupAsImportScope(lp, current, loc, name);
+			store = lookupAsImportScope(lp, current, /*#ref*/loc, name);
 		}
 
 		if (store is null) {
 			if (i == last) {
 				return null;
 			} else if (i == 0) {
-				throw makeFailedLookup(loc, name);
+				throw makeFailedLookup(/*#ref*/loc, name);
 			} else {
 				auto t = cast(ir.Type)current.node;
 				if (t is null) {
-					throw makeFailedLookup(loc, name);
+					throw makeFailedLookup(/*#ref*/loc, name);
 				} else {
 					throw makeNotMember(id, t, name);
 				}
@@ -112,7 +113,7 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
 			return store;
 		} else {
 			// Use improve error reporting by giving the scope.
-			current = ensureScope(i == 0 ? null : current, loc, name, store);
+			current = ensureScope(i == 0 ? null : current, /*#ref*/loc, name, store);
 		}
 	}
 	assert(false);
@@ -155,7 +156,7 @@ ir.Store lookupInGivenScopeOnly(LanguagePass lp, ir.Scope _scope, ref in Locatio
  */
 ir.Store lookupAsThisScope(LanguagePass lp, ir.Scope _scope, ref in Location loc, string name, ir.Scope current)
 {
-	auto lookupModule = getModuleFromScope(loc, current);
+	auto lookupModule = getModuleFromScope(/*#ref*/loc, current);
 
 	// For `protected` tracking of the lookup.
 	ir.Class callingMethodsParentClass = cast(ir.Class)current.node;
@@ -164,28 +165,28 @@ ir.Store lookupAsThisScope(LanguagePass lp, ir.Scope _scope, ref in Location loc
 	if (callingMethodsParentClass !is null) {
 		originalScopeIsClass = true;
 	} else {
-		originalScopeIsClass = getMethodParent(current, callingMethodsParentClass);
+		originalScopeIsClass = getMethodParent(current, /*#out*/callingMethodsParentClass);
 	}
 
 	// Walk the class chain.
 	ir.Class _class;
 	do {
-		auto ret = lookupAsImportScope(lp, _scope, loc, name);
+		auto ret = lookupAsImportScope(lp, _scope, /*#ref*/loc, name);
 		if (ret is null) {
 			continue;
 		}
 	
-		if (lookupModule !is getModuleFromScope(loc, ret.parent)) {
+		if (lookupModule !is getModuleFromScope(/*#ref*/loc, ret.parent)) {
 			bool classLookup;
 			if (originalScopeIsClass) {
 				classLookup = isOrInheritsFrom(callingMethodsParentClass, _class);
 			}
-			checkAccess(loc, name, ret, classLookup);
+			checkAccess(/*#ref*/loc, name, ret, classLookup);
 		}
 
 		return ensureResolved(lp, ret);
 
-	} while (getClassParentsScope(lp, _scope, _scope, _class));
+	} while (getClassParentsScope(lp, _scope, /*#out*/_scope, /*#out*/_class));
 
 	return null;
 }
@@ -207,10 +208,10 @@ ir.Store lookupOnlyThisScopeAndClassParents(LanguagePass lp, ir.Scope _scope, re
 {
 	ir.Class _class;
 	do {
-		auto ret = lookupInGivenScopeOnly(lp, _scope, loc, name);
+		auto ret = lookupInGivenScopeOnly(lp, _scope, /*#ref*/loc, name);
 		if (ret !is null)
 			return ensureResolved(lp, ret);
-	} while (getClassParentsScope(lp, _scope, _scope, _class));
+	} while (getClassParentsScope(lp, _scope, /*#out*/_scope, /*#out*/_class));
 
 	return null;
 }
@@ -230,14 +231,14 @@ ir.Store lookupOnlyThisScopeAndClassParents(LanguagePass lp, ir.Scope _scope, re
  */
 ir.Store lookupAsImportScope(LanguagePass lp, ir.Scope _scope, ref in Location loc, string name)
 {
-	auto store = lookupInGivenScopeOnly(lp, _scope, loc, name);
+	auto store = lookupInGivenScopeOnly(lp, _scope, /*#ref*/loc, name);
 	if (store !is null) {
 		return ensureResolved(lp, store);
 	}
 
 	WalkContext ctx;
-	walkPublicImports(lp, loc, ctx, _scope, name);
-	return walkGetStore(lp, loc, ctx, _scope, name);
+	walkPublicImports(lp, /*#ref*/loc, /*#ref*/ctx, _scope, name);
+	return walkGetStore(lp, /*#ref*/loc, /*#ref*/ctx, _scope, name);
 }
 
 /*!
@@ -249,20 +250,20 @@ ir.Store lookupAsImportScopes(LanguagePass lp, ir.Scope[] scopes, ref in Locatio
 {
 	ir.Store retStore;
 	foreach (_scope; scopes) {
-		auto store = lookupInGivenScopeOnly(lp, _scope, loc, name);
+		auto store = lookupInGivenScopeOnly(lp, _scope, /*#ref*/loc, name);
 		if (store !is null) {
 			if (retStore !is null) {
-				throw makeMultipleMatches(loc, name);
+				throw makeMultipleMatches(/*#ref*/loc, name);
 			}
 			retStore = ensureResolved(lp, store);
 			continue;
 		}
 		WalkContext ctx;
-		walkPublicImports(lp, loc, ctx, _scope, name);
-		store = walkGetStore(lp, loc, ctx, _scope, name);
+		walkPublicImports(lp, /*#ref*/loc, /*#ref*/ctx, _scope, name);
+		store = walkGetStore(lp, /*#ref*/loc, /*#ref*/ctx, _scope, name);
 		if (store !is null) {
 			if (retStore !is null) {
-				throw makeMultipleMatches(loc, name);
+				throw makeMultipleMatches(/*#ref*/loc, name);
 			}
 			retStore = store;
 		}
@@ -290,7 +291,7 @@ ir.Store lookupAsImportScopes(LanguagePass lp, ir.Scope[] scopes, ref in Locatio
 ir.Function lookupFunction(LanguagePass lp, ir.Scope _scope, ref in Location loc, string name)
 {
 	// Lookup the copy function for this type of array.
-	auto store = lookupInGivenScopeOnly(lp, _scope, loc, name);
+	auto store = lookupInGivenScopeOnly(lp, _scope, /*#ref*/loc, name);
 	if (store !is null && store.kind == ir.Store.Kind.Function) {
 		assert(store.functions.length == 1);
 		return store.functions[0];
@@ -317,11 +318,11 @@ ir.Type lookupType(LanguagePass lp, ir.Scope _scope, ir.QualifiedName id)
 	if (store is null) {
 		string lastName;
 		foreach (ident; id.identifiers) {
-			store = lookup(lp, _scope, ident.loc, ident.value);
+			store = lookup(lp, _scope, /*#ref*/ident.loc, ident.value);
 			if (store is null && lastName == "") {
 				throw makeFailedLookup(ident, ident.value);
 			} else if (store is null) {
-				throw makeNotMember(ident.loc, lastName, ident.value);
+				throw makeNotMember(/*#ref*/ident.loc, lastName, ident.value);
 			}
 			lastName = ident.value;
 		}
@@ -329,7 +330,7 @@ ir.Type lookupType(LanguagePass lp, ir.Scope _scope, ir.QualifiedName id)
 
 	auto loc = id.identifiers[$-1].loc;
 	auto name = id.identifiers[$-1].value;
-	return ensureType(_scope, loc, name, store);
+	return ensureType(_scope, /*#ref*/loc, name, store);
 }
 
 
@@ -417,13 +418,13 @@ ir.Module getModuleFromScope(ref in Location loc, ir.Scope _scope)
 		}
 
 		if (_scope !is null) {
-			throw panic(m.loc, "module scope has parent");
+			throw panic(/*#ref*/m.loc, "module scope has parent");
 		}
 
 		return m;
 	}
 
-	throw panic(loc, "scope chain without module base");
+	throw panic(/*#ref*/loc, "scope chain without module base");
 }
 
 /*!
@@ -470,7 +471,7 @@ private:
  */
 ir.Scope getTopScope(ref in Location loc, ir.Scope _scope)
 {
-	auto m = getModuleFromScope(loc, _scope);
+	auto m = getModuleFromScope(/*#ref*/loc, _scope);
 	return m.myScope;
 }
 
@@ -538,7 +539,7 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
 		outScope = asClass.parentClass.myScope;
 		return true;
 	default:
-		throw panic(node.loc, format("unexpected nodetype %s", node.nodeType));
+		throw panic(/*#ref*/node.loc, format("unexpected nodetype %s", node.nodeType));
 	}
 }
 
@@ -590,7 +591,7 @@ void checkAccess(ref in Location loc, string name, ir.Store store, bool classPar
 			return;
 		}
 		if (access == ir.Access.Private || access == ir.Access.Protected) {
-			throw makeBadAccess(loc, name, access);
+			throw makeBadAccess(/*#ref*/loc, name, access);
 		}
 	}
 
@@ -647,14 +648,14 @@ ir.Function ensureFunction(ir.Scope _scope, ref in Location loc, string name, ir
 {
 	if (store is null) {
 		if (_scope is null) {
-			throw makeFailedLookup(loc, name);
+			throw makeFailedLookup(/*#ref*/loc, name);
 		} else {
-			throw makeNotMember(loc, _scope.name, name);
+			throw makeNotMember(/*#ref*/loc, _scope.name, name);
 		}
 	}
 
 	if (store.kind != ir.Store.Kind.Function || store.functions.length != 1) {
-		throw makeExpected(loc, "function");
+		throw makeExpected(/*#ref*/loc, "function");
 	}
 
 	return store.functions[0];
@@ -671,9 +672,9 @@ ir.Type ensureType(ir.Scope _scope, ref in Location loc, string name, ir.Store s
 {
 	if (store is null) {
 		if (_scope is null) {
-			throw makeFailedLookup(loc, name);
+			throw makeFailedLookup(/*#ref*/loc, name);
 		} else {
-			throw makeNotMember(loc, _scope.name, name);
+			throw makeNotMember(/*#ref*/loc, _scope.name, name);
 		}
 	}
 
@@ -682,7 +683,7 @@ ir.Type ensureType(ir.Scope _scope, ref in Location loc, string name, ir.Store s
 		if (_scope.typeResolutionError !is null) {
 			throw _scope.typeResolutionError;
 		} else {
-			throw makeError(loc, format("expected type, got '%s'.", name));
+			throw makeError(/*#ref*/loc, format("expected type, got '%s'.", name));
 		}
 	}
 
@@ -700,9 +701,9 @@ ir.Scope ensureScope(ir.Scope _scope, ref in Location loc, string name, ir.Store
 {
 	if (store is null) {
 		if (_scope is null) {
-			throw makeFailedLookup(loc, name);
+			throw makeFailedLookup(/*#ref*/loc, name);
 		} else {
-			throw makeNotMember(loc, _scope.name, name);
+			throw makeNotMember(/*#ref*/loc, _scope.name, name);
 		}
 	}
 
@@ -716,7 +717,7 @@ ir.Scope ensureScope(ir.Scope _scope, ref in Location loc, string name, ir.Store
 
 	auto s = getScopeFromStore(store);
 	if (s is null) {
-		throw makeExpected(loc, "aggregate or scope");
+		throw makeExpected(/*#ref*/loc, "aggregate or scope");
 	}
 	return s;
 }
@@ -740,22 +741,22 @@ struct WalkContext
 ir.Store walkImports(LanguagePass lp, ref in Location loc,
                      ir.Scope _scope, string name)
 {
-	auto asMod = getModuleFromScope(loc, _scope);
+	auto asMod = getModuleFromScope(/*#ref*/loc, _scope);
 	bool privateLookup;
 	WalkContext ctx;
 
 	foreach (i, mod; asMod.myScope.importedModules) {
 		auto store = mod.myScope.getStore(name);
 
-		if (checkPrivateAndAdd(ctx, mod, store)) {
+		if (checkPrivateAndAdd(/*#ref*/ctx, mod, store)) {
 			continue;
 		}
 
 		//! Check publically imported modules.
-		walkPublicImports(lp, loc, ctx, mod.myScope, name);
+		walkPublicImports(lp, /*#ref*/loc, /*#ref*/ctx, mod.myScope, name);
 	}
 
-	return walkGetStore(lp, loc, ctx, _scope, name);
+	return walkGetStore(lp, /*#ref*/loc, /*#ref*/ctx, _scope, name);
 }
 
 void walkPublicImports(LanguagePass lp, ref in Location loc, ref WalkContext ctx,
@@ -778,14 +779,14 @@ void walkPublicImports(LanguagePass lp, ref in Location loc, ref WalkContext ctx
 
 		// If we find a store in the module we added to the context.
 		if (store !is null) {
-			checkPrivateAndAdd(ctx, submod, store);  // @todo Is this needed? Can we remove it somehow?
-			checkAccess(loc, name, store);
+			checkPrivateAndAdd(/*#ref*/ctx, submod, store);  // @todo Is this needed? Can we remove it somehow?
+			checkAccess(/*#ref*/loc, name, store);
 			store = ensureResolved(lp, store);
 		}
 
 		// If not look for other public imports.
 		if (store is null) {
-			walkPublicImports(lp, loc, ctx, submod.myScope, name);
+			walkPublicImports(lp, /*#ref*/loc, /*#ref*/ctx, submod.myScope, name);
 			continue;
 		}
 	}
@@ -799,7 +800,7 @@ ir.Store walkGetStore(LanguagePass lp, ref in Location loc, ref WalkContext ctx,
 
 	// Helpful error message if you happen to bind to a private symbol.
 	if (stores.length == 0 && ctx.privateLookup) {
-		throw makeUsedBindFromPrivateImport(loc, name);
+		throw makeUsedBindFromPrivateImport(/*#ref*/loc, name);
 	}
 
 	// We found nothing.
@@ -809,7 +810,7 @@ ir.Store walkGetStore(LanguagePass lp, ref in Location loc, ref WalkContext ctx,
 
 	// We only found one thing, return it.
 	if (stores.length == 1) {
-		checkAccess(loc, name, stores[0]);
+		checkAccess(/*#ref*/loc, name, stores[0]);
 		return ensureResolved(lp, stores[0]);
 	}
 
@@ -828,16 +829,16 @@ ir.Store walkGetStore(LanguagePass lp, ref in Location loc, ref WalkContext ctx,
 				continue;
 			}
 
-			throw makeMultipleMatches(loc, name);
+			throw makeMultipleMatches(/*#ref*/loc, name);
 		}
 		if (currentParent !is null) {
-			throw makeMultipleMatches(loc, name);
+			throw makeMultipleMatches(/*#ref*/loc, name);
 		}
 		fns ~= store.functions;
 	}
 
 	if (currentParent !is null) {
-		checkAccess(loc, name, stores[0]);
+		checkAccess(/*#ref*/loc, name, stores[0]);
 		return ensureResolved(lp, stores[0]);
 	}
 

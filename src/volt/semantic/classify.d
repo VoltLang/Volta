@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.classify;
@@ -942,7 +943,7 @@ bool fitsInPrimitive(TargetInfo target, ir.PrimitiveType t, ir.Exp e)
 		}
 		auto unary = exp.toUnaryChecked();
 		if (unary !is null) {
-			return foldUnary(exp, unary, target);
+			return foldUnary(/*#ref*/exp, unary, target);
 		}
 		return null;
 	}

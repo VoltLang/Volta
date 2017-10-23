@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2010-2011, Bernard Helyer.  All rights reserved.
 // Copyright © 2010, Jakob Ovrum.  All rights reserved.
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
@@ -30,7 +31,7 @@ public:
 		if (tokens.length == 0)
 			throw panic("Token stream too short");
 		if (tokens.length < 3) {
-			throw panic(tokens[0].loc, "Token stream too short.");
+			throw panic(/*#ref*/tokens[0].loc, "Token stream too short.");
 		}
 		if (tokens[0].type != TokenType.Begin)
 			throw panic("Token stream not started correctly");

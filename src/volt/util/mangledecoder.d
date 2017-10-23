@@ -1,3 +1,4 @@
+/*#D*/
 module volt.util.mangledecoder;
 
 import watt.conv : toInt;
@@ -90,71 +91,71 @@ ir.Type mangledToType(ref string mangledString)
 	Location loc;
 	switch (mangledString.take(1)) {
 	case "b":
-		return buildByte(loc);
+		return buildByte(/*#ref*/loc);
 	case "s":
-		return buildShort(loc);
+		return buildShort(/*#ref*/loc);
 	case "i":
-		return buildInt(loc);
+		return buildInt(/*#ref*/loc);
 	case "l":
-		return buildLong(loc);
+		return buildLong(/*#ref*/loc);
 	case "v":
-		return buildVoid(loc);
+		return buildVoid(/*#ref*/loc);
 	case "c":
-		return buildChar(loc);
+		return buildChar(/*#ref*/loc);
 	case "d":
-		return buildDchar(loc);
+		return buildDchar(/*#ref*/loc);
 	case "w":
-		return buildWchar(loc);
+		return buildWchar(/*#ref*/loc);
 	case "f":
 		switch (mangledString.take(1)) {
 		case "f":
-			return buildFloat(loc);
+			return buildFloat(/*#ref*/loc);
 		case "d":
-			return buildDouble(loc);
+			return buildDouble(/*#ref*/loc);
 		case "r":
-			return buildReal(loc);
+			return buildReal(/*#ref*/loc);
 		default:
 			assert(false);
 		}
 	case "u":
 		switch (mangledString.take(1)) {
 		case "b":
-			return buildUbyte(loc);
+			return buildUbyte(/*#ref*/loc);
 		case "s":
-			return buildUshort(loc);
+			return buildUshort(/*#ref*/loc);
 		case "i":
-			return buildUint(loc);
+			return buildUint(/*#ref*/loc);
 		case "l":
-			return buildUlong(loc);
+			return buildUlong(/*#ref*/loc);
 		default:
 			assert(false);
 		}
 	case "p":
-		return buildPtrSmart(loc, mangledString.mangledToType());
+		return buildPtrSmart(/*#ref*/loc, mangledString.mangledToType());
 	case "a":
 		if (mangledString[0] == 't') {
 			mangledString.take(1);
 			auto length = cast(size_t)mangledString.takeDigit();
-			return buildStaticArrayTypeSmart(loc, length, mangledString.mangledToType());
+			return buildStaticArrayTypeSmart(/*#ref*/loc, length, mangledString.mangledToType());
 		}
-		return buildArrayTypeSmart(loc, mangledString.mangledToType());
+		return buildArrayTypeSmart(/*#ref*/loc, mangledString.mangledToType());
 	case "A":
 		if (mangledString[0] == 'a') {
 			mangledString.take(1);
 			ir.Type key = mangledString.mangledToType();
 			ir.Type value = mangledString.mangledToType();
-			return buildAATypeSmart(loc, key, value);
+			return buildAATypeSmart(/*#ref*/loc, key, value);
 		} else {
 			assert(false, "annotation");
 		}
 	case "e":
-		return buildStorageType(loc, ir.StorageType.Kind.Scope, mangledString.mangledToType());
+		return buildStorageType(/*#ref*/loc, ir.StorageType.Kind.Scope, mangledString.mangledToType());
 	case "o":
-		return buildStorageType(loc, ir.StorageType.Kind.Const, mangledString.mangledToType());
+		return buildStorageType(/*#ref*/loc, ir.StorageType.Kind.Const, mangledString.mangledToType());
 	case "m":
-		return buildStorageType(loc, ir.StorageType.Kind.Immutable, mangledString.mangledToType());
+		return buildStorageType(/*#ref*/loc, ir.StorageType.Kind.Immutable, mangledString.mangledToType());
 	case "n":
-		return buildStorageType(loc, ir.StorageType.Kind.Immutable, mangledString.mangledToType());
+		return buildStorageType(/*#ref*/loc, ir.StorageType.Kind.Immutable, mangledString.mangledToType());
 	case "r":
 		assert(false, "ref");
 	case "E":

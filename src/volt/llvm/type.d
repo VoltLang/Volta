@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 /*!
@@ -230,7 +231,7 @@ public:
 	override void from(State state, ir.Constant cnst, Value result)
 	{
 		if (!cnst.isNull) {
-			throw panic(cnst.loc, "can only from null pointers.");
+			throw panic(/*#ref*/cnst.loc, "can only from null pointers.");
 		}
 
 		result.type = this;
@@ -511,7 +512,7 @@ public:
 	override void from(State state, ir.Constant cnst, Value result)
 	{
 		if (!cnst.isNull) {
-			throw panic(cnst.loc, "can only from null pointers.");
+			throw panic(/*#ref*/cnst.loc, "can only from null pointers.");
 		}
 
 		result.type = this;
@@ -562,16 +563,16 @@ private:
 		if (voltVariadic) {
 			panicAssert(ft, ft.typeInfo !is null);
 			auto tinfoClass = ft.typeInfo;
-			auto tr = buildTypeReference(ft.loc, tinfoClass, tinfoClass.name);
+			auto tr = buildTypeReference(/*#ref*/ft.loc, tinfoClass, tinfoClass.name);
 			addMangledName(tr);
 
-			auto arrayir = buildArrayType(ft.loc, tr);
+			auto arrayir = buildArrayType(/*#ref*/ft.loc, tr);
 			addMangledName(arrayir);
 			auto array = ArrayType.fromIr(state, arrayir);
 
-			auto v = buildVoid(ft.loc);
+			auto v = buildVoid(/*#ref*/ft.loc);
 			addMangledName(v);
-			auto argArrayir = buildArrayType(ft.loc, v);
+			auto argArrayir = buildArrayType(/*#ref*/ft.loc, v);
 			addMangledName(argArrayir);
 			auto argArray = ArrayType.fromIr(state, argArrayir);
 
@@ -597,11 +598,11 @@ private:
 			argRet = state.voidType;
 		}
 
-		abiCoerceParameters(state, ft, /*ref*/argRet.llvmType, /*ref*/args);
+		abiCoerceParameters(state, ft, /*#ref*/argRet.llvmType, /*#ref*/args);
 
 		llvmCallType = LLVMFunctionType(argRet.llvmType, args, ft.hasVarArgs && ft.linkage == ir.Linkage.C);
 		llvmType = LLVMPointerType(llvmCallType, 0);
-		diType = diFunctionType(state, argRet, di, ft.mangledName, diCallType);
+		diType = diFunctionType(state, argRet, di, ft.mangledName, /*#out*/diCallType);
 		super(state, ft, llvmType, diType);
 	}
 }
@@ -641,7 +642,7 @@ public:
 	override void from(State state, ir.Constant cnst, Value result)
 	{
 		if (!cnst.isNull) {
-			throw panic(cnst.loc, "can only from null pointers.");
+			throw panic(/*#ref*/cnst.loc, "can only from null pointers.");
 		}
 		LLVMValueRef[2] vals;
 		auto vptr = LLVMPointerType(LLVMInt8TypeInContext(state.context), 0);
@@ -741,7 +742,7 @@ private:
 	{
 		auto c = cast(ir.Class) irType.loweredNode;
 		if (c !is null) {
-			auto ptr = buildPtrSmart(c.loc, irType);
+			auto ptr = buildPtrSmart(/*#ref*/c.loc, irType);
 			addMangledName(ptr);
 			addMangledName(ptr.base);
 
@@ -756,8 +757,8 @@ private:
 
 		auto i = cast(ir._Interface) irType.loweredNode;
 		if (i !is null) {
-			auto ptr = buildPtrSmart(i.loc, irType);
-			auto ptrptr = buildPtr(i.loc, ptr);
+			auto ptr = buildPtrSmart(/*#ref*/i.loc, irType);
+			auto ptrptr = buildPtr(/*#ref*/i.loc, ptr);
 			addMangledName(ptrptr);
 			addMangledName(ptr);
 			addMangledName(ptr.base);
@@ -930,7 +931,7 @@ Type fromIr(State state, ir.Type irType)
 	if (irType.mangledName is null) {
 		auto m = addMangledName(irType);
 		auto str = format("mangledName not set (%s).", m);
-		warning(irType.loc, str);
+		warning(/*#ref*/irType.loc, str);
 	}
 
 	auto test = state.getTypeNoCreate(irType.mangledName);
@@ -1017,7 +1018,7 @@ Type fromIrImpl(State state, ir.Type irType)
 		return ret;
 	default:
 		auto emsg = format("Can't translate type %s (%s)", irType.nodeType, irType.mangledName);
-		throw panic(irType.loc, emsg);
+		throw panic(/*#ref*/irType.loc, emsg);
 	}
 }
 
@@ -1042,7 +1043,7 @@ void buildCommonTypes(State state, bool V_P64)
 	voidFunctionTypeIr.ret = voidTypeIr;
 
 	auto spingTypeIr = buildFunctionTypeSmart(
-		voidTypeIr.loc, voidTypeIr, voidPtrTypeIr);
+		/*#ref*/voidTypeIr.loc, voidTypeIr, voidPtrTypeIr);
 
 	addMangledName(voidTypeIr);
 

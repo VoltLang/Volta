@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012-2016, Bernard Helyer.  All rights reserved.
 // Copyright © 2012-2016, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
@@ -35,9 +36,9 @@ void checkAndConvertStringLiterals(Context ctx, ir.Type type, ref ir.Exp exp)
 	auto constant = cast(ir.Constant)exp;
 	if (ptr !is null && constant !is null && constant._string.length != 0) {
 		auto a = cast(ir.ArrayType)constant.type;
-		exp = buildArrayPtr(exp.loc, a.base, exp);
+		exp = buildArrayPtr(/*#ref*/exp.loc, a.base, exp);
 	}
-	checkAndDoConvert(ctx, type, exp);
+	checkAndDoConvert(ctx, type, /*#ref*/exp);
 }
 
 /*!
@@ -50,7 +51,7 @@ void checkAndDoConvert(Context ctx, ir.Type type, ref ir.Exp exp)
 		auto rtype = getExpType(exp);
 		throw makeBadImplicitCast(exp, rtype, type);
 	}
-	doConvert(ctx, type, exp);
+	doConvert(ctx, type, /*#ref*/exp);
 }
 
 /*!
@@ -170,7 +171,7 @@ bool willConvertInterface(ir.Type l, ir._Interface rInterface, bool ignoreConst)
 	if (typesEqual(lInterface, rInterface)) {
 		return true;
 	} else {
-		throw panic(rInterface.loc, "TODO: interface to different interface.");
+		throw panic(/*#ref*/rInterface.loc, "TODO: interface to different interface.");
 	}
 }
 
@@ -213,7 +214,7 @@ bool willConvertClassToInterface(ir._Interface lInterface, ir.Class rClass, bool
  */
 void doConvert(Context ctx, ir.Type type, ref ir.Exp exp)
 {
-	handleIfNull(ctx, type, exp);
+	handleIfNull(ctx, type, /*#ref*/exp);
 	auto rtype = getExpType(exp);
 	switch (type.nodeType) {
 	case ir.NodeType.AAType:
@@ -226,29 +227,29 @@ void doConvert(Context ctx, ir.Type type, ref ir.Exp exp)
 		if ((_null && mod.magicFlagD) || (alit !is null && alit.pairs.length == 0)) {
 			auto aa = new ir.AssocArray();
 			aa.loc = exp.loc;
-			aa.type = copyTypeSmart(exp.loc, type);
+			aa.type = copyTypeSmart(/*#ref*/exp.loc, type);
 			exp = aa;
 			return;
 		}
 		break;
 	case ir.NodeType.StaticArrayType:
 		auto sarray = cast(ir.StaticArrayType)type;
-		doConvertStaticArrayType(ctx, sarray, exp);
+		doConvertStaticArrayType(ctx, sarray, /*#ref*/exp);
 		return;
 	case ir.NodeType.ArrayType:
 		auto atype = cast(ir.ArrayType)type;
 		auto sarray = cast(ir.StaticArrayType)realType(getExpType(exp));
 		if (sarray !is null && typesEqual(sarray.base, atype.base)) {
-			exp = buildSlice(exp.loc, exp);
+			exp = buildSlice(/*#ref*/exp.loc, exp);
 			return;
 		}
 		goto default;
 	default:
 		if (rtype.nodeType == ir.NodeType.FunctionSetType) {
-			throw makeUnexpected(exp.loc, "overloaded function set");
+			throw makeUnexpected(/*#ref*/exp.loc, "overloaded function set");
 		}
 		if (!typesEqual(realType(type), realType(rtype), IgnoreStorage)) {
-			exp = buildCastSmart(exp.loc, type, exp);
+			exp = buildCastSmart(/*#ref*/exp.loc, type, exp);
 		}
 	}
 }
@@ -425,15 +426,15 @@ void doConvertStaticArrayType(Context ctx, ir.StaticArrayType atype, ref ir.Exp 
 	void checkAlit()
 	{
 		if (alit is null) {
-			throw makeExpected(exp.loc, "array literal");
+			throw makeExpected(/*#ref*/exp.loc, "array literal");
 		}
 		if (alit.exps.length != atype.length) {
-			throw makeStaticArrayLengthMismatch(exp.loc, atype.length,
+			throw makeStaticArrayLengthMismatch(/*#ref*/exp.loc, atype.length,
 			                                    alit.exps.length);
 		}
 		auto ltype = realType(atype.base);
 		foreach (ref e; alit.exps) {
-			checkAndDoConvert(ctx, ltype, e);
+			checkAndDoConvert(ctx, ltype, /*#ref*/e);
 		}
 	}
 	alit = cast(ir.ArrayLiteral)exp;
@@ -445,6 +446,6 @@ void doConvertStaticArrayType(Context ctx, ir.StaticArrayType atype, ref ir.Exp 
 	}
 	checkAlit();
 	if (ctx.functionDepth > 0) {
-		exp = buildInternalStaticArrayLiteralSmart(exp.loc, atype, alit.exps);
+		exp = buildInternalStaticArrayLiteralSmart(/*#ref*/exp.loc, atype, alit.exps);
 	}
 }

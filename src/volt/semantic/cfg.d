@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2014-2017, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.cfg;
@@ -186,14 +187,14 @@ public:
 		if (func._body is null) {
 			return Continue;
 		}
-		ensureNonNullBlock(func.loc);
+		ensureNonNullBlock(/*#ref*/func.loc);
 		if (func.loc.filename == "test.volt") {
 		}
 		if (block.canReachEntry()) {
 			if (isVoid(realType(func.type.ret))) {
-				buildReturnStat(func.loc, func._body);
+				buildReturnStat(/*#ref*/func.loc, func._body);
 			} else {
-				throw makeExpected(func.loc, "return statement");
+				throw makeExpected(/*#ref*/func.loc, "return statement");
 			}
 		}
 
@@ -210,16 +211,16 @@ public:
 						ir.Variable dummy;
 						auto v = func.thisHiddenParameter;
 						panicAssert(func, v !is null);
-						ir.Exp tv = buildExpReference(v.loc, v, v.name);
-						tv = buildCastSmart(tv.loc, buildVoidPtr(tv.loc), tv);
-						auto call = buildCall(func.loc, buildExpReference(func.loc, ctor, ctor.name), [tv]);
+						ir.Exp tv = buildExpReference(/*#ref*/v.loc, v, v.name);
+						tv = buildCastSmart(/*#ref*/tv.loc, buildVoidPtr(/*#ref*/tv.loc), tv);
+						auto call = buildCall(/*#ref*/func.loc, buildExpReference(/*#ref*/func.loc, ctor, ctor.name), [tv]);
 						panicAssert(ctor, ctor._body !is null);
-						func._body.statements = buildExpStat(func.loc, call) ~ func._body.statements;
+						func._body.statements = buildExpStat(/*#ref*/func.loc, call) ~ func._body.statements;
 						break;
 					}
 				}
 				if (!noArgumentCtor) {
-					throw makeNoSuperCall(func.loc);
+					throw makeNoSuperCall(/*#ref*/func.loc);
 				}
 			}
 		}
@@ -250,7 +251,7 @@ public:
 	override Status visit(ref ir.Exp exp, ir.ExpReference eref)
 	{
 		if (eref.isSuperOrThisCall) {
-			ensureNonNullBlock(eref.loc);
+			ensureNonNullBlock(/*#ref*/eref.loc);
 			block.superCall = eref.isSuperOrThisCall;
 		}
 		return Continue;
@@ -259,7 +260,7 @@ public:
 	//! Generate blocks from an if statement.
 	override Status enter(ir.IfStatement ifs)
 	{
-		ensureNonNullBlock(ifs.loc);
+		ensureNonNullBlock(/*#ref*/ifs.loc);
 		checkReachability(ifs);
 		auto currentBlock = block;
 		auto thenBlock = block = new Block(currentBlock);
@@ -309,7 +310,7 @@ public:
 
 	override Status enter(ir.ForeachStatement fes)
 	{
-		ensureNonNullBlock(fes.loc);
+		ensureNonNullBlock(/*#ref*/fes.loc);
 		checkReachability(fes);
 		enterLoop();
 		auto currentBlock = block;
@@ -323,7 +324,7 @@ public:
 
 	override Status enter(ir.DoStatement ds)
 	{
-		ensureNonNullBlock(ds.loc);
+		ensureNonNullBlock(/*#ref*/ds.loc);
 		checkReachability(ds);
 		enterLoop();
 		auto currentBlock = block;
@@ -337,7 +338,7 @@ public:
 
 	override Status enter(ir.LabelStatement ls)
 	{
-		ensureNonNullBlock(ls.loc);
+		ensureNonNullBlock(/*#ref*/ls.loc);
 		auto currentBlock = block;
 		block = new Block(currentBlock);
 		foreach (statement; ls.childStatement) {
@@ -348,7 +349,7 @@ public:
 
 	override Status enter(ir.SwitchStatement ss)
 	{
-		ensureNonNullBlock(ss.loc);
+		ensureNonNullBlock(/*#ref*/ss.loc);
 		checkReachability(ss);
 		auto oldSwitchBlocks = currentSwitchBlocks;
 		auto oldSwitchStatement = currentSwitchStatement;
@@ -370,7 +371,7 @@ public:
 			}
 		}
 		if (empty == ss.cases.length) {
-			throw makeExpected(ss.loc, "at least one case with a body");
+			throw makeExpected(/*#ref*/ss.loc, "at least one case with a body");
 		}
 
 		foreach (i, _case; ss.cases) {
@@ -381,7 +382,7 @@ public:
 			currentSwitchBlocks[i] = block;
 			if (block.canReachWithoutBreakGoto() && _case.statements.statements.length > 0
 				&& block.canReachEntry() && i < ss.cases.length - 1 && block.parents.length != 0) {
-				throw makeCaseFallsThrough(_case.loc);
+				throw makeCaseFallsThrough(/*#ref*/_case.loc);
 			}
 			breakBlocks = breakBlocks[0 .. $-1];
 		}
@@ -393,7 +394,7 @@ public:
 			    _block.canReachWithoutBreakGoto() &&
 			    _block.canReachEntry()) {
 				// The last case in a switch can omit a break. Insert it.
-				ss.cases[i].statements.statements ~= buildBreakStatement(ss.cases[i].loc);
+				ss.cases[i].statements.statements ~= buildBreakStatement(/*#ref*/ss.cases[i].loc);
 				_block._break = true;
 
 			}
@@ -415,12 +416,12 @@ public:
 	override Status visit(ir.ContinueStatement cs)
 	{
 		if (mLoopDepth == 0) {
-			throw makeMisplacedContinue(cs.loc);
+			throw makeMisplacedContinue(/*#ref*/cs.loc);
 		}
-		ensureNonNullBlock(cs.loc);
+		ensureNonNullBlock(/*#ref*/cs.loc);
 		checkReachability(cs);
 		if (cs.label.length > 0) {
-			throw panic(cs.loc, "labelled continue unimplemented");
+			throw panic(/*#ref*/cs.loc, "labelled continue unimplemented");
 		}
 		block.parents ~= block;
 		block._break = true;
@@ -452,7 +453,7 @@ public:
 		}
 
 		if (currentSwitchStatement is null || currentCaseIndex < 0) {
-			throw makeGotoOutsideOfSwitch(gs.loc);
+			throw makeGotoOutsideOfSwitch(/*#ref*/gs.loc);
 		}
 		checkReachability(gs);
 		block._goto = true;
@@ -463,7 +464,7 @@ public:
 					return addTarget(i);
 				}
 			}
-			throw makeNoDefaultCase(gs.loc);
+			throw makeNoDefaultCase(/*#ref*/gs.loc);
 		} else if (gs.isCase && gs.exp !is null) {
 			// goto case foo;
 
@@ -499,12 +500,12 @@ public:
 			// goto case;
 			auto i = cast(size_t) currentCaseIndex;
 			if (i >= currentSwitchBlocks.length - 1) {
-				throw makeNoNextCase(gs.loc);
+				throw makeNoNextCase(/*#ref*/gs.loc);
 			}
 			block.addChild(currentSwitchBlocks[i + 1]);
 			currentSwitchBlocks[i + 1].addParent(block);
 		} else {
-			throw panic(gs.loc, "invalid goto statement.");
+			throw panic(/*#ref*/gs.loc, "invalid goto statement.");
 		}
 		return Continue;
 	}
@@ -512,7 +513,7 @@ public:
 	//! Generate blocks from a try statement.
 	override Status enter(ir.TryStatement ts)
 	{
-		ensureNonNullBlock(ts.loc);
+		ensureNonNullBlock(/*#ref*/ts.loc);
 		checkReachability(ts);
 		auto currentBlock = block;
 		auto tryBlock = new Block(currentBlock);
@@ -566,7 +567,7 @@ public:
 
 	override Status enter(ir.ThrowStatement ts)
 	{
-		ensureNonNullBlock(ts.loc);
+		ensureNonNullBlock(/*#ref*/ts.loc);
 		checkReachability(ts);
 		block.terminates = true;
 		return Continue;
@@ -585,7 +586,7 @@ public:
 	override Status visit(ir.BreakStatement bs)
 	{
 		if (breakBlocks.length == 0) {
-			throw makeBreakOutOfLoop(bs.loc);
+			throw makeBreakOutOfLoop(/*#ref*/bs.loc);
 		}
 		checkReachability(bs);
 		block._break = true;
@@ -656,7 +657,7 @@ private:
 	//! Convenience function for building blocks for loops.
 	Status buildLoop(ir.Node n, ir.BlockStatement b, ir.Exp exp)
 	{
-		ensureNonNullBlock(n.loc);
+		ensureNonNullBlock(/*#ref*/n.loc);
 		auto currentBlock = block;
 		auto loopBlock = block = new Block(currentBlock);
 		breakBlocks ~= loopBlock;
@@ -686,8 +687,7 @@ private:
 	void ensureNonNullBlock(ref in Location loc)
 	{
 		if (blocks.length == 0 || blocks[$-1] is null) {
-			throw panic(loc, "invalid layout");
+			throw panic(/*#ref*/loc, "invalid layout");
 		}
 	}
 }
-import watt.io.std;

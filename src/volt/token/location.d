@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012-2015, Jakob Bornecrantz.  All rights reserved.
 // Copyright © 2010-2015, Bernard Helyer.  All rights reserved.
 // Copyright © 2011, Jakob Ovrum.  All rights reserved.
@@ -34,7 +35,7 @@ public:
 	 */
 	Location opSub(ref Location begin)
 	{
-		return difference(/*ref*/ this,/*ref*/ begin,/*ref*/ begin);
+		return difference(/*#ref*/this,/*#ref*/begin,/*#ref*/begin);
 	}
 
 	/*!

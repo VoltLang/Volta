@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2010-2011, Bernard Helyer.  All rights reserved.
 // Copyright © 2010, Jakob Ovrum.  All rights reserved.
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
@@ -105,7 +106,7 @@ ParseStatus parsePanic(ParserStream ps, Location loc,
                        ir.NodeType nodeType, string message,
                        string file = __FILE__, const int line = __LINE__)
 {
-	auto e = new ParserPanic(loc, nodeType, message, file, line);
+	auto e = new ParserPanic(/*#ref*/loc, nodeType, message, file, line);
 	ps.parserErrors ~= e;
 	ps.neverIgnoreError = true;
 	return Failed;
@@ -175,7 +176,7 @@ ParseStatus invalidIntegerLiteral(ParserStream ps, Location loc,
                                   string file = __FILE__,
                                   const int line = __LINE__)
 {
-	auto e = new ParserInvalidIntegerLiteral(loc, ir.NodeType.Constant,
+	auto e = new ParserInvalidIntegerLiteral(/*#ref*/loc, ir.NodeType.Constant,
 	                                         file, line);
 	ps.parserErrors ~= e;
 	return Failed;
@@ -185,7 +186,7 @@ ParseStatus parseExpected(ParserStream ps, Location loc,
                           ir.NodeType nodeType, string message,
                           string file = __FILE__, const int line = __LINE__)
 {
-	auto e = new ParserExpected(loc, nodeType, message, file, line);
+	auto e = new ParserExpected(/*#ref*/loc, nodeType, message, file, line);
 	ps.parserErrors ~= e;
 	return Failed;
 }
@@ -194,14 +195,14 @@ ParseStatus parseExpected(ParserStream ps, Location loc,
                           ir.Node n, string message,
                           string file = __FILE__, const int line = __LINE__)
 {
-	return parseExpected(ps, loc, n.nodeType, message, file, line);
+	return parseExpected(ps, /*#ref*/loc, n.nodeType, message, file, line);
 }
 
 ParseStatus allArgumentsMustBeLabelled(ParserStream ps, Location loc,
                                        string file = __FILE__,
                                        const int line = __LINE__)
 {
-	auto e = new ParserAllArgumentsMustBeLabelled(loc, file, line);
+	auto e = new ParserAllArgumentsMustBeLabelled(/*#ref*/loc, file, line);
 	ps.parserErrors ~= e;
 	return Failed;
 }
@@ -210,7 +211,7 @@ ParseStatus docCommentMultiple(ParserStream ps, Location loc,
                                string file = __FILE__,
                                const int line = __LINE__)
 {
-	auto e = new ParserDocMultiple(loc, file, line);
+	auto e = new ParserDocMultiple(/*#ref*/loc, file, line);
 	ps.parserErrors ~= e;
 	return Failed;
 }
@@ -218,7 +219,7 @@ ParseStatus docCommentMultiple(ParserStream ps, Location loc,
 ParseStatus strayDocComment(ParserStream ps, Location loc,
                             string file = __FILE__, const int line = __LINE__)
 {
-	auto e = new ParserStrayDocComment(loc, file, line);
+	auto e = new ParserStrayDocComment(/*#ref*/loc, file, line);
 	ps.parserErrors ~= e;
 	return Failed;
 }
@@ -226,7 +227,7 @@ ParseStatus strayDocComment(ParserStream ps, Location loc,
 ParseStatus badComposable(ParserStream ps, Location loc,
 						  string file = __FILE__, const int line = __LINE__)
 {
-	auto e = new ParserNotAComposableString(loc, file, line);
+	auto e = new ParserNotAComposableString(/*#ref*/loc, file, line);
 	ps.parserErrors ~= e;
 	return Failed;
 }
@@ -234,7 +235,7 @@ ParseStatus badComposable(ParserStream ps, Location loc,
 ParseStatus badMultiBind(ParserStream ps, Location loc,
 						 string file = __FILE__, const int line = __LINE__)
 {
-	auto e = new ParserBadMultiBind(loc, file, line);
+	auto e = new ParserBadMultiBind(/*#ref*/loc, file, line);
 	ps.parserErrors ~= e;
 	return Failed;
 }
@@ -361,7 +362,7 @@ ParseStatus match(ParserStream ps, ir.NodeType ntype, scope const(TokenType)[] t
 ParseStatus match(ParserStream ps, ir.Node n, TokenType type, out Token tok,
                   string file = __FILE__, const int line = __LINE__)
 {
-	return match(ps, n.nodeType, type, tok, file, line);
+	return match(ps, n.nodeType, type, /*#out*/tok, file, line);
 }
 
 /*!
@@ -450,7 +451,7 @@ ParseStatus parseQualifiedName(ParserStream ps, out ir.QualifiedName name,
 	// Consume all identifier dot pairs.
 	do {
 		ir.Identifier ident;
-		auto succeeded = parseIdentifier(ps, ident);
+		auto succeeded = parseIdentifier(ps, /*#out*/ident);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.QualifiedName);
 		}
@@ -604,7 +605,7 @@ public:
 		}
 		if (mComment[$-1].length && !inMultiCommentBlock) {
 			assert(lastDocComment.type != TokenType.None);
-			auto e = makeStrayDocComment(lastDocComment.loc);
+			auto e = makeStrayDocComment(/*#ref*/lastDocComment.loc);
 			e.neverIgnore = true;
 			throw e;
 		}
@@ -668,7 +669,7 @@ private:
 		}
 		if (mTokens[mIndex].value.indexOf("@}") >= 0) {
 			if (!inMultiCommentBlock) {
-				auto e = makeExpected(mTokens[mIndex].loc, "@{");
+				auto e = makeExpected(/*#ref*/mTokens[mIndex].loc, "@{");
 				e.neverIgnore = true;
 				throw e;
 			}

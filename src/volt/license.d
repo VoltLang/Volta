@@ -1,3 +1,4 @@
+/*#D*/
 // See copyright just below.
 module volt.license;
 

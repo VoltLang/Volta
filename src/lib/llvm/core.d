@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice and license below.
 

@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2014-2016, Bernard Helyer.  All rights reserved.
 // Copyright © 2015-2016, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).

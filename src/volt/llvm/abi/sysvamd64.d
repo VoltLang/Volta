@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2017, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 /*!
@@ -226,7 +227,7 @@
  
 	 foreach (param; params) {
 		 LLVMTypeRef[] structTypes;
-		 auto classification = classifyType(state, param, /*out*/structTypes);
+		 auto classification = classifyType(state, param, /*#out*/structTypes);
 		 if (classification == Classification.Memory) {
 			 types ~= param;
 			 ft.abiData ~= cast(void*[])null;
@@ -241,7 +242,7 @@
 			 types ~= param;
 			 ft.abiData ~= cast(void*[])null;
 		 } else {
-			 consumeRegisters(state, structTypes, /*ref*/integerRegisters, /*ref*/floatRegisters);
+			 consumeRegisters(state, structTypes, /*#ref*/integerRegisters, /*#ref*/floatRegisters);
 			 if (classification == Classification.CoercedStructSingle ||
 				 (integerRegisters >= 0 && floatRegisters >= 0)) {
 				 ft.abiModified = true;
@@ -268,7 +269,7 @@
  {
 	 foreach (type; types) {
 		 LLVMTypeRef[] structTypes;
-		 auto classification = classifyType(state, type, /*out*/structTypes);
+		 auto classification = classifyType(state, type, /*#out*/structTypes);
 		 if (classification == Classification.Memory) {
 			 continue;
 		 }
@@ -277,7 +278,7 @@
 		 } else if (classification == Classification.Float) {
 			 floatRegisters--;
 		 } else {
-			 consumeRegisters(state, structTypes, /*ref*/integerRegisters, /*ref*/floatRegisters);
+			 consumeRegisters(state, structTypes, /*#ref*/integerRegisters, /*#ref*/floatRegisters);
 		 }
 	 }
  }
@@ -295,7 +296,7 @@
 	 case Integer, Pointer:
 		 return Classification.Integer;
 	 case Struct:
-		 return classifyStructType(state, type, /*out*/structTypes);
+		 return classifyStructType(state, type, /*#out*/structTypes);
 	 }
  }
  
@@ -394,7 +395,7 @@
 				 break;
 			 case Struct:
 				 LLVMTypeRef[] types;
-				 classifyStructType(state, element, /*out*/types);
+				 classifyStructType(state, element, /*#out*/types);
 				 if (types.length == 0) {
 					 return false;
 				 } else {
@@ -497,7 +498,7 @@ CoercedStatus sysvAmd64AbiCoercePrologueParameter(State state, LLVMValueRef llvm
 	 auto p = func.params[index];
 	 auto lts = cast(LLVMTypeRef[])ct.abiData[index+offset];
 	 auto type = state.fromIr(p.type);
-	 auto a = state.getVariableValue(p, type);
+	 auto a = state.getVariableValue(p, /*#out*/type);
 	 if (ct.abiData[index+offset].length == 1) {
 		 auto bc = LLVMBuildBitCast(state.builder, a, LLVMPointerType(lts[0], 0), "");
 		 LLVMBuildStore(state.builder, val, bc);

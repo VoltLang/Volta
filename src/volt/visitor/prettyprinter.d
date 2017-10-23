@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012, Bernard Helyer.  All rights reserved.
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
@@ -335,7 +336,7 @@ public:
 		wf(d.name);
 		if (d.assign !is null) {
 			wf(" = ");
-			acceptExp(d.assign, this);
+			acceptExp(/*#ref*/d.assign, this);
 		}
 		wfln(";");
 		return ContinueParent;
@@ -371,7 +372,7 @@ public:
 			twf(member.name);
 			if (member.assign !is null) {
 				wf(" = ");
-				acceptExp(member.assign, this);
+				acceptExp(/*#ref*/member.assign, this);
 			}
 			wfln(";");
 		}
@@ -432,7 +433,7 @@ public:
 		case MangledName:
 			twf("@MangledName(");
 			assert(attr.arguments.length == 1);
-			acceptExp(attr.arguments[0], this);
+			acceptExp(/*#ref*/attr.arguments[0], this);
 			wf(")");
 			break;
 		case Invalid:
@@ -515,7 +516,7 @@ public:
 			twf("debug ");
 			if (c.exp !is null) {
 				wf("(");
-				acceptExp(c.exp, this);
+				acceptExp(/*#ref*/c.exp, this);
 				wf(")");
 			}
 			return ContinueParent;
@@ -528,7 +529,7 @@ public:
 		case Invalid:
 			throw panicUnhandled(c, "condition");
 		}
-		acceptExp(c.exp, this);
+		acceptExp(/*#ref*/c.exp, this);
 		wf(")");
 		return ContinueParent;
 	}
@@ -577,7 +578,7 @@ public:
 	override Status enter(ir.ExpStatement e)
 	{
 		twf("");
-		acceptExp(e.exp, this);
+		acceptExp(/*#ref*/e.exp, this);
 		wfln(";");
 		return ContinueParent;
 	}
@@ -652,7 +653,7 @@ public:
 			wf(i.autoName);
 			wf(" = ");
 		}
-		acceptExp(i.exp, this);
+		acceptExp(/*#ref*/i.exp, this);
 		wf(") {");
 		mIndent++;
 		ln();
@@ -680,7 +681,7 @@ public:
 	{
 		twf("while ");
 		wf("(");
-		acceptExp(w.condition, this);
+		acceptExp(/*#ref*/w.condition, this);
 		wf(") {");
 		mIndent++;
 		ln();
@@ -704,7 +705,7 @@ public:
 		internalPrintBlock(d.block);
 		mIndent--;
 		twf("} while (");
-		acceptExp(d.condition, this);
+		acceptExp(/*#ref*/d.condition, this);
 		wf(");");
 		ln();
 
@@ -729,11 +730,11 @@ public:
 		}
 		wf("; ");
 		if (fes.beginIntegerRange !is null) {
-			acceptExp(fes.beginIntegerRange, this);
+			acceptExp(/*#ref*/fes.beginIntegerRange, this);
 			wf(" .. ");
-			acceptExp(fes.endIntegerRange, this);
+			acceptExp(/*#ref*/fes.endIntegerRange, this);
 		} else {
-			acceptExp(fes.aggregate, this);
+			acceptExp(/*#ref*/fes.aggregate, this);
 		}
 		wfln(") {");
 		mIndent++;
@@ -757,7 +758,7 @@ public:
 
 		if (f.initExps.length > 0) {
 			foreach (index, ref i; f.initExps) {
-				acceptExp(i, this);
+				acceptExp(/*#ref*/i, this);
 				if (index < f.initExps.length - 1) {
 					wf(", ");
 				}
@@ -771,7 +772,7 @@ public:
 				wf(d.name);
 				if (d.assign !is null) {
 					wf(" = ");
-					acceptExp(d.assign, this);
+					acceptExp(/*#ref*/d.assign, this);
 				}
 				if (i < f.initVars.length - 1) {
 					wf(", ");
@@ -781,13 +782,13 @@ public:
 		wf(";");
 		if (f.test !is null) {
 			wf(" ");
-			acceptExp(f.test, this);
+			acceptExp(/*#ref*/f.test, this);
 		}
 		wf(";");
 		if (f.increments.length > 0) {
 			wf(" ");
 			foreach (i, ref increment; f.increments) {
-				acceptExp(increment, this);
+				acceptExp(/*#ref*/increment, this);
 				if (i < f.increments.length - 1) {
 					wf(", ");
 				}
@@ -817,7 +818,7 @@ public:
 		} else {
 			twf("switch (");
 		}
-		acceptExp(ss.condition, this);
+		acceptExp(/*#ref*/ss.condition, this);
 		wfln(") {");
 		foreach (_case; ss.cases) {
 			accept(_case, this);
@@ -838,23 +839,23 @@ public:
 		} else {
 			twf("case ");
 			if (sc.firstExp !is null && sc.secondExp is null) {
-				acceptExp(sc.firstExp, this);
+				acceptExp(/*#ref*/sc.firstExp, this);
 				wfln(":");
 			} else if (sc.firstExp !is null && sc.secondExp !is null) {
-				acceptExp(sc.firstExp, this);
+				acceptExp(/*#ref*/sc.firstExp, this);
 				wf(": .. case ");
-				acceptExp(sc.secondExp, this);
+				acceptExp(/*#ref*/sc.secondExp, this);
 				wfln(":");
 			} else if (sc.exps.length > 0) {
 				foreach (i, exp; sc.exps) {
-					acceptExp(exp, this);
+					acceptExp(/*#ref*/exp, this);
 					if (i < sc.exps.length - 1) {
 						wf(", ");
 					}
 				}
 				wfln(":");
 			} else {
-				throw panic(sc.loc, "unknown case type passed to PrintVisitor.");
+				throw panic(/*#ref*/sc.loc, "unknown case type passed to PrintVisitor.");
 			}
 		}
 		mIndent++;
@@ -922,10 +923,10 @@ public:
 			wf("case");
 			if (gs.exp !is null) {
 				wf(" ");
-				acceptExp(gs.exp, this);
+				acceptExp(/*#ref*/gs.exp, this);
 			}
 		} else {
-			throw panic(gs.loc, "malformed goto statement made it to PrintVisitor.");
+			throw panic(/*#ref*/gs.loc, "malformed goto statement made it to PrintVisitor.");
 		}
 		wfln(";");
 
@@ -940,7 +941,7 @@ public:
 	override Status enter(ir.WithStatement ws)
 	{
 		twf("with (");
-		acceptExp(ws.exp, this);
+		acceptExp(/*#ref*/ws.exp, this);
 		wfln(") {");
 		mIndent++;
 		internalPrintBlock(ws.block);
@@ -960,7 +961,7 @@ public:
 		twf("synchronized ");
 		if (ss.exp !is null) {
 			wf("(");
-			acceptExp(ss.exp, this);
+			acceptExp(/*#ref*/ss.exp, this);
 			wf(") ");
 		}
 		wfln("{");
@@ -1028,7 +1029,7 @@ public:
 	override Status enter(ir.ThrowStatement ts)
 	{
 		twf("throw ");
-		acceptExp(ts.exp, this);
+		acceptExp(/*#ref*/ts.exp, this);
 		wfln(";");
 		return ContinueParent;
 	}
@@ -1067,7 +1068,7 @@ public:
 				if (i < ps.arguments.length - 1) {
 					wf(", ");
 				}
-				acceptExp(arg, this);
+				acceptExp(/*#ref*/arg, this);
 			}
 		}
 		wfln(") {");
@@ -1117,10 +1118,10 @@ public:
 			wf("static ");
 		}
 		wf("assert(");
-		acceptExp(as.condition, this);
+		acceptExp(/*#ref*/as.condition, this);
 		if (as.message !is null) {
 			wf(", ");
-			acceptExp(as.message, this);
+			acceptExp(/*#ref*/as.message, this);
 		}
 		wfln(");");
 		return ContinueParent;
@@ -1142,7 +1143,7 @@ public:
 			auto oldIndentText = mIndentText;
 			mIndentText = "";
 			
-			acceptExp(ms.stringExp, this);
+			acceptExp(/*#ref*/ms.stringExp, this);
 			
 			mIndentText = oldIndentText;
 			
@@ -1175,7 +1176,7 @@ public:
 		wf(" ", ed.name);
 		if (ed.assign !is null) {
 			wf(" = ");
-			acceptExp(ed.assign, this);
+			acceptExp(/*#ref*/ed.assign, this);
 		}
 		wfln(";");
 		return ContinueParent;
@@ -1240,7 +1241,7 @@ public:
 		wStorageTypes(array);
 		accept(array.base, this);
 		wf("[");
-		acceptExp(array.child, this);
+		acceptExp(/*#ref*/array.child, this);
 		wf("]");
 		wAfterStorageTypes(array);
 		return ContinueParent;
@@ -1505,7 +1506,7 @@ public:
 	{
 		wf("static if (");
 		foreach (i, ref condition; asi.conditions) {
-			acceptExp(condition, this);
+			acceptExp(/*#ref*/condition, this);
 			wfln(") {");
 			mIndent++;
 			twf();
@@ -1563,7 +1564,7 @@ public:
 	override Status enter(ir.TypeOf typeOf)
 	{
 		wf("typeof(");
-		acceptExp(typeOf.exp, this);
+		acceptExp(/*#ref*/typeOf.exp, this);
 		wf(")");
 		return ContinueParent;
 	}
@@ -1589,7 +1590,7 @@ public:
 			if (exp is null) {
 				accept(arg, this);
 			} else {
-				acceptExp(exp, this);
+				acceptExp(/*#ref*/exp, this);
 			}
 			if (i < ti.arguments.length - 1) {
 				wf(", ");
@@ -1678,7 +1679,7 @@ public:
 	{
 		wf("[");
 		foreach (i, exp; array.exps) {
-			acceptExp(exp, this);
+			acceptExp(/*#ref*/exp, this);
 			if (i < array.exps.length - 1) {
 				wf(", ");
 			}
@@ -1696,9 +1697,9 @@ public:
 	{
 		wf("[");
 		foreach (i, ref pair; array.pairs) {
-			acceptExp(pair.key, this);
+			acceptExp(/*#ref*/pair.key, this);
 			wf(":");
-			acceptExp(pair.value, this);
+			acceptExp(/*#ref*/pair.value, this);
 			if (i < array.pairs.length - 1) {
 				wf(", ");
 			}
@@ -1715,10 +1716,10 @@ public:
 	override Status enter(ref ir.Exp, ir.Assert _assert)
 	{
 		wf("assert(");
-		acceptExp(_assert.condition, this);
+		acceptExp(/*#ref*/_assert.condition, this);
 		if (_assert.message !is null) {
 			wf(", ");
-			acceptExp(_assert.message, this);
+			acceptExp(/*#ref*/_assert.message, this);
 		}
 		wf(")");
 		return ContinueParent;
@@ -1732,7 +1733,7 @@ public:
 	override Status enter(ref ir.Exp, ir.StringImport strimport)
 	{
 		wf("import(");
-		acceptExp(strimport.filename, this);
+		acceptExp(/*#ref*/strimport.filename, this);
 		wf(")");
 		return ContinueParent;
 	}
@@ -1744,11 +1745,11 @@ public:
 
 	override Status enter(ref ir.Exp, ir.Ternary ternary)
 	{
-		acceptExp(ternary.condition, this);
+		acceptExp(/*#ref*/ternary.condition, this);
 		wf(" ? ");
-		acceptExp(ternary.ifTrue, this);
+		acceptExp(/*#ref*/ternary.ifTrue, this);
 		wf(" : ");
-		acceptExp(ternary.ifFalse, this);
+		acceptExp(/*#ref*/ternary.ifFalse, this);
 		return ContinueParent;
 	}
 
@@ -1761,11 +1762,11 @@ public:
 	{
 		wf("(");
 
-		acceptExp(binop.left, this);
+		acceptExp(/*#ref*/binop.left, this);
 		wf(" ");
 		wf(binopToString(binop.op));
 		wf(" ");
-		acceptExp(binop.right, this);
+		acceptExp(/*#ref*/binop.right, this);
 
 		wf(")");
 
@@ -1799,7 +1800,7 @@ public:
 			if (unary.hasArgumentList) {
 				wf("(");
 				foreach (i, ref arg; unary.argumentList) {
-					acceptExp(arg, this);
+					acceptExp(/*#ref*/arg, this);
 					if (i < unary.argumentList.length - 1) {
 						wf(", ");
 					}
@@ -1810,7 +1811,7 @@ public:
 		case ir.Unary.Op.TypeIdent:
 			wf("typeid(");
 			if (unary.value !is null) {
-				acceptExp(unary.value, this);
+				acceptExp(/*#ref*/unary.value, this);
 			} else if (unary.type !is null) {
 				accept(unary.type, this);
 			} else {
@@ -1820,7 +1821,7 @@ public:
 			break;
 		case ir.Unary.Op.Dup:
 			wf("(");
-			acceptExp(unary.value, this);
+			acceptExp(/*#ref*/unary.value, this);
 			wf(").dup");
 			break;
 		case ir.Unary.Op.None:
@@ -1828,7 +1829,7 @@ public:
 		}
 
 		if (unary.value !is null) {
-			acceptExp(unary.value, this);
+			acceptExp(/*#ref*/unary.value, this);
 		}
 
 		return ContinueParent;
@@ -1847,7 +1848,7 @@ public:
 	override Status enter(ref ir.Exp, ir.Postfix postfix)
 	{
 		if (postfix.child !is null) {
-			acceptExp(postfix.child, this);
+			acceptExp(/*#ref*/postfix.child, this);
 		}
 		switch (postfix.op) {
 		case ir.Postfix.Op.Identifier:
@@ -1863,7 +1864,7 @@ public:
 		case ir.Postfix.Op.Index:
 			wf("[");
 			foreach (i, ref arg; postfix.arguments) {
-				acceptExp(arg, this);
+				acceptExp(/*#ref*/arg, this);
 				if (i < postfix.arguments.length - 1) {
 					wf(", ");
 				}
@@ -1876,22 +1877,22 @@ public:
 			case 0:
 				break;
 			case 1:
-				acceptExp(postfix.arguments[0], this);
+				acceptExp(/*#ref*/postfix.arguments[0], this);
 				break;
 			case 2:
-				acceptExp(postfix.arguments[0], this);
+				acceptExp(/*#ref*/postfix.arguments[0], this);
 				wf("..");
-				acceptExp(postfix.arguments[1], this);
+				acceptExp(/*#ref*/postfix.arguments[1], this);
 				break;
 			default:
-				throw panic(postfix.loc, "bad slice.");
+				throw panic(/*#ref*/postfix.loc, "bad slice.");
 			}
 			wf("]");
 			break;
 		case ir.Postfix.Op.Call:
 			wf("(");
 			foreach (i, arg; postfix.arguments) {
-				acceptExp(arg, this);
+				acceptExp(/*#ref*/arg, this);
 				if (i < postfix.arguments.length - 1) {
 					wf(", ");
 				}
@@ -1905,7 +1906,7 @@ public:
 			wf(eref.idents);
 			break;
 		default:
-			throw panic(postfix.loc, "tried to print bad postfix expression.");
+			throw panic(/*#ref*/postfix.loc, "tried to print bad postfix expression.");
 		}
 
 		return ContinueParent;
@@ -1914,7 +1915,7 @@ public:
 	override Status enter(ref ir.Exp exp, ir.PropertyExp prop)
 	{
 		if (prop.child !is null) {
-			acceptExp(prop.child, this);
+			acceptExp(/*#ref*/prop.child, this);
 			wf(".");
 		}
 		wf(prop.identifier.value);
@@ -1954,7 +1955,7 @@ public:
 		wf(">(");
 		auto arr = inbuilt.children;
 		foreach (i, ref c; arr) {
-			acceptExp(c, this);
+			acceptExp(/*#ref*/c, this);
 			if (i < arr.length - 1) {
 				wf(", ");
 			}
@@ -1970,7 +1971,7 @@ public:
 
 	override Status enter(ref ir.Exp exp, ir.AccessExp ae)
 	{
-		acceptExp(ae.child, this);
+		acceptExp(/*#ref*/ae.child, this);
 		wf(".");
 		wf(ae.field.name);
 		return ContinueParent;
@@ -1984,7 +1985,7 @@ public:
 	override Status enter(ref ir.Exp exp, ir.RunExp runexp)
 	{
 		wf("#run");
-		acceptExp(runexp.child, this);
+		acceptExp(/*#ref*/runexp.child, this);
 		return ContinueParent;
 	}
 
@@ -1998,7 +1999,7 @@ public:
 		wf("\"");
 		foreach (ref component; cs.components) {
 			wf("${");
-			acceptExp(component, this);
+			acceptExp(/*#ref*/component, this);
 			wf("}");
 		}
 		wf("\"");
@@ -2014,7 +2015,7 @@ public:
 	{
 		wf("typeid(");
 		if (ti.exp !is null) {
-			acceptExp(ti.exp, this);
+			acceptExp(/*#ref*/ti.exp, this);
 		} else {
 			accept(ti.type, this);
 		}
@@ -2092,7 +2093,7 @@ public:
 				wf(")");
 			}
 			wf(" => ");
-			acceptExp(functionLiteral.lambdaExp, this);
+			acceptExp(/*#ref*/functionLiteral.lambdaExp, this);
 			return ContinueParent;
 		}
 
@@ -2127,7 +2128,7 @@ public:
 	{
 		wf("{ ");
 		foreach (i, exp; sliteral.exps) {
-			acceptExp(exp, this);
+			acceptExp(/*#ref*/exp, this);
 			if (i < sliteral.exps.length - 1) {
 				wf(", ");
 			}
@@ -2146,7 +2147,7 @@ public:
 	{
 		wf("{ ");
 		foreach (i, exp; sliteral.exps) {
-			acceptExp(exp, this);
+			acceptExp(/*#ref*/exp, this);
 			if (i < sliteral.exps.length - 1) {
 				wf(", ");
 			}
@@ -2165,7 +2166,7 @@ public:
 	{
 		wf("{ ");
 		foreach (i, ref exp; cliteral.exps) {
-			acceptExp(exp, this);
+			acceptExp(/*#ref*/exp, this);
 			if (i < cliteral.exps.length - 1) {
 				wf(", ");
 			}
@@ -2200,7 +2201,7 @@ public:
 		}
 		if (statExp.exp !is null) {
 			twf("");
-			acceptExp(statExp.exp, this);
+			acceptExp(/*#ref*/statExp.exp, this);
 			wf(" })");
 		}
 		mIndent--;
@@ -2217,7 +2218,7 @@ public:
 		wf("va_arg!(");
 		accept(vaexp.type, this);
 		wf(")(");
-		acceptExp(vaexp.arg, this);
+		acceptExp(/*#ref*/vaexp.arg, this);
 		wf(")");
 		return ContinueParent;
 	}

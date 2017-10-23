@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2010, Bernard Helyer.  All rights reserved.
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
@@ -118,7 +119,7 @@ public:
 	{
 		bool lookEOF = false;
 
-		if (mChar != '#' || lookahead(1, lookEOF) != '!') {
+		if (mChar != '#' || lookahead(1, /*#out*/lookEOF) != '!') {
 			return;
 		}
 
@@ -156,7 +157,7 @@ public:
 	dchar decodeChar()
 	{
 		size_t tmpIndex = mNextIndex;
-		return decodeChar(tmpIndex);
+		return decodeChar(/*#ref*/tmpIndex);
 	}
 
 	dchar decodeChar(ref size_t index)
@@ -165,7 +166,7 @@ public:
 			return dchar.init;
 		}
 
-		return decode(source, index);
+		return decode(source, /*#ref*/index);
 	}
 
 	/*!
@@ -191,7 +192,7 @@ public:
 		}
 
 		mLastIndex = mNextIndex;
-		mChar = decodeChar(mNextIndex);
+		mChar = decodeChar(/*#ref*/mNextIndex);
 		if (mChar == dchar.init) {
 			eof = true;
 			mNextIndex = source.length;
@@ -238,7 +239,7 @@ public:
 		dchar c;
 		auto index = mNextIndex;
 		for (size_t i; i < n; i++) {
-			c = decodeChar(index);
+			c = decodeChar(/*#ref*/index);
 			if (c == dchar.init) {
 				lookaheadEOF = true;
 				return dchar.init;

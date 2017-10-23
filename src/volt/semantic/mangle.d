@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.mangle;
@@ -121,7 +122,7 @@ void mangleType(ir.Type t, Sink sink)
 		mangleType(asArray.base, sink);
 		break;
 	case NullType:
-		auto vptr = buildVoidPtr(t.loc);
+		auto vptr = buildVoidPtr(/*#ref*/t.loc);
 		mangleType(vptr, sink);
 		break;
 	case PointerType:
@@ -239,7 +240,7 @@ void mangleScope(ir.Scope _scope, Sink sink)
 
 	auto asModule = cast(ir.Module)_scope.node;
 	if (asModule is null)
-		throw panic(_scope.node.loc, "top scope is not a module");
+		throw panic(/*#ref*/_scope.node.loc, "top scope is not a module");
 
 	foreach (id; asModule.name.identifiers) {
 		mangleString(id.value, sink);

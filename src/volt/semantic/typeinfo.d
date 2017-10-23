@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012-2013, Bernard Helyer.  All rights reserved.
 // Copyright © 2013, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
@@ -51,7 +52,7 @@ ir.Variable getTypeInfo(LanguagePass lp, ir.Module mod, ir.Type type)
 	}
 	string name = getTypeInfoVarName(type);
 
-	auto typeidStore = lookupInGivenScopeOnly(lp, mod.myScope, mod.loc, name);
+	auto typeidStore = lookupInGivenScopeOnly(lp, mod.myScope, /*#ref*/mod.loc, name);
 	if (typeidStore !is null) {
 		auto asVar = cast(ir.Variable) typeidStore.node;
 		return asVar;
@@ -64,7 +65,7 @@ ir.Variable getTypeInfo(LanguagePass lp, ir.Module mod, ir.Type type)
 
 	auto lit = buildTypeInfoLiteral(lp, mod, type);
 	literalVar.assign = lit;
-	literalVar.type = copyTypeSmart(type.loc, lit.type);
+	literalVar.type = copyTypeSmart(/*#ref*/type.loc, lit.type);
 
 	return literalVar;
 }
@@ -91,10 +92,10 @@ void fillInAggregateVar(LanguagePass lp, ir.Aggregate aggr)
 		return;
 	}
 
-	auto mod = getModuleFromScope(aggr.loc, aggr.myScope);
+	auto mod = getModuleFromScope(/*#ref*/aggr.loc, aggr.myScope);
 	auto lit = buildTypeInfoLiteral(lp, mod, aggr);
 	aggr.typeInfo.assign = lit;
-	aggr.typeInfo.type = copyTypeSmart(aggr.loc, lit.type);
+	aggr.typeInfo.type = copyTypeSmart(/*#ref*/aggr.loc, lit.type);
 }
 
 
@@ -109,7 +110,7 @@ ir.Variable buildTypeInfoVariable(LanguagePass lp, ir.Type type, ir.Exp assign, 
 	literalVar.loc = type.loc;
 	literalVar.isResolved = true;
 	literalVar.assign = assign;
-	literalVar.type = buildTypeReference(type.loc, lp.tiTypeInfo, lp.tiTypeInfo.name);
+	literalVar.type = buildTypeReference(/*#ref*/type.loc, lp.tiTypeInfo, lp.tiTypeInfo.name);
 	literalVar.mangledName = varName;
 	literalVar.name = varName;
 	literalVar.isMergable = !aggr;
@@ -127,7 +128,7 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 	resolveChildStructsAndUnions(lp, type);
 
 	auto typeSize = size(lp.target, type);
-	auto typeConstant = buildConstantSizeT(type.loc, lp.target, typeSize);
+	auto typeConstant = buildConstantSizeT(/*#ref*/type.loc, lp.target, typeSize);
 
 	int typeTag = typeToRuntimeConstant(lp, mod.myScope, type);
 	auto typeTagConstant = new ir.Constant();
@@ -152,7 +153,7 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 	auto literal = new ir.ClassLiteral();
 	literal.loc = type.loc;
 	literal.useBaseStorage = true;
-	literal.type = buildTypeReference(type.loc, lp.tiTypeInfo, lp.tiTypeInfo.name);
+	literal.type = buildTypeReference(/*#ref*/type.loc, lp.tiTypeInfo, lp.tiTypeInfo.name);
 
 	// TypeInfo.size, TypeInfo.type, TypeInfo.mangledName, and TypeInfo.mutableIndirection. 
 	literal.exps ~= typeConstant;
@@ -163,14 +164,14 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 	// TypeInfo.classVtable and TypeInfo.classSize.
 	auto asClass = cast(ir.Class)type;
 	if (asClass !is null) {
-		literal.exps ~= buildCast(type.loc, buildVoidPtr(type.loc),
-				buildAddrOf(type.loc, buildExpReference(type.loc, asClass.initVariable, "__cinit")));
+		literal.exps ~= buildCast(/*#ref*/type.loc, buildVoidPtr(/*#ref*/type.loc),
+				buildAddrOf(/*#ref*/type.loc, buildExpReference(/*#ref*/type.loc, asClass.initVariable, "__cinit")));
 		lp.actualize(asClass.layoutStruct);
 		auto s = size(lp.target, asClass.layoutStruct);
-		literal.exps ~= buildConstantSizeT(type.loc, lp.target, size(lp.target, asClass.layoutStruct));
+		literal.exps ~= buildConstantSizeT(/*#ref*/type.loc, lp.target, size(lp.target, asClass.layoutStruct));
 	} else {
-		literal.exps ~= buildConstantNull(type.loc, buildVoidPtr(type.loc));
-		literal.exps ~= buildConstantSizeT(type.loc, lp.target, 0);
+		literal.exps ~= buildConstantNull(/*#ref*/type.loc, buildVoidPtr(/*#ref*/type.loc));
+		literal.exps ~= buildConstantSizeT(/*#ref*/type.loc, lp.target, 0);
 	}
 
 	// TypeInfo.base.
@@ -191,16 +192,16 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 		assert(base !is null);
 
 		auto baseVar = getTypeInfo(lp, mod, base);
-		literal.exps ~= buildTypeInfoCast(lp, buildExpReference(type.loc, baseVar));
+		literal.exps ~= buildTypeInfoCast(lp, buildExpReference(/*#ref*/type.loc, baseVar));
 	} else {
-		literal.exps ~= buildConstantNull(type.loc, lp.tiTypeInfo);
+		literal.exps ~= buildConstantNull(/*#ref*/type.loc, lp.tiTypeInfo);
 	}
 
 	// TypeInfo.staticArrayLength.
 	if (asStaticArray !is null) {
-		literal.exps ~= buildConstantSizeT(type.loc, lp.target, asStaticArray.length);
+		literal.exps ~= buildConstantSizeT(/*#ref*/type.loc, lp.target, asStaticArray.length);
 	} else {
-		literal.exps ~= buildConstantSizeT(type.loc, lp.target, 0);
+		literal.exps ~= buildConstantSizeT(/*#ref*/type.loc, lp.target, 0);
 	}
 
 	// TypeInfo.key and TypeInfo.value.
@@ -208,35 +209,35 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 	if (asAA !is null) {
 		auto keyVar = getTypeInfo(lp, mod, asAA.key);
 		auto valVar = getTypeInfo(lp, mod, asAA.value);
-		literal.exps ~= buildTypeInfoCast(lp, buildExpReference(type.loc, keyVar));
-		literal.exps ~= buildTypeInfoCast(lp, buildExpReference(type.loc, valVar));
+		literal.exps ~= buildTypeInfoCast(lp, buildExpReference(/*#ref*/type.loc, keyVar));
+		literal.exps ~= buildTypeInfoCast(lp, buildExpReference(/*#ref*/type.loc, valVar));
 	} else {
-		literal.exps ~= buildConstantNull(type.loc, lp.tiTypeInfo);
-		literal.exps ~= buildConstantNull(type.loc, lp.tiTypeInfo);
+		literal.exps ~= buildConstantNull(/*#ref*/type.loc, lp.tiTypeInfo);
+		literal.exps ~= buildConstantNull(/*#ref*/type.loc, lp.tiTypeInfo);
 	}
 
 	// TypeInfo.ret and args.
 	auto asCallable = cast(ir.CallableType)type;
 	if (asCallable !is null) {
 		auto retVar = getTypeInfo(lp, mod, asCallable.ret);
-		literal.exps ~= buildTypeInfoCast(lp, buildExpReference(type.loc, retVar));
+		literal.exps ~= buildTypeInfoCast(lp, buildExpReference(/*#ref*/type.loc, retVar));
 
 		ir.Exp[] exps;
 		foreach (param; asCallable.params) {
 			auto var = getTypeInfo(lp, mod, param);
-			exps ~= buildTypeInfoCast(lp, buildExpReference(type.loc, var));
+			exps ~= buildTypeInfoCast(lp, buildExpReference(/*#ref*/type.loc, var));
 		}
 
-		literal.exps ~= buildArrayLiteralSmart(type.loc, buildArrayType(type.loc, lp.tiTypeInfo), exps);
+		literal.exps ~= buildArrayLiteralSmart(/*#ref*/type.loc, buildArrayType(/*#ref*/type.loc, lp.tiTypeInfo), exps);
 	} else {
-		literal.exps ~= buildConstantNull(type.loc, lp.tiTypeInfo);
-		literal.exps ~= buildArrayLiteralSmart(type.loc, buildArrayType(type.loc, lp.tiTypeInfo));
+		literal.exps ~= buildConstantNull(/*#ref*/type.loc, lp.tiTypeInfo);
+		literal.exps ~= buildArrayLiteralSmart(/*#ref*/type.loc, buildArrayType(/*#ref*/type.loc, lp.tiTypeInfo));
 	}
 
 	// TypeInfo.classinfo
 	if (asClass !is null) {
-		literal.type = buildTypeReference(type.loc, lp.tiClassInfo, lp.tiClassInfo.name);
-		literal.exps ~= getClassInfo(type.loc, mod, lp, asClass);
+		literal.type = buildTypeReference(/*#ref*/type.loc, lp.tiClassInfo, lp.tiClassInfo.name);
+		literal.exps ~= getClassInfo(/*#ref*/type.loc, mod, lp, asClass);
 	}
 
 	return literal;
@@ -249,18 +250,18 @@ ir.Exp[] getClassInfo(ref in Location loc, ir.Module mod, LanguagePass lp, ir.Cl
 	panicAssert(asClass, asClass.parentInterfaces.length <= asClass.interfaceOffsets.length);
 	foreach (i, iface; asClass.parentInterfaces) {
 		auto lit = new ir.ClassLiteral();
-		lit.type = buildTypeReference(loc, lp.tiInterfaceInfo, lp.tiInterfaceInfo.name);
+		lit.type = buildTypeReference(/*#ref*/loc, lp.tiInterfaceInfo, lp.tiInterfaceInfo.name);
 		lit.loc = loc;
 
 		if (iface.mangledName is null) {
 			iface.mangledName = mangle(iface);
 		}
 		auto ifaceVar = getTypeInfo(lp, mod, iface);
-		lit.exps ~= buildTypeInfoCast(lp, buildExpReference(loc, ifaceVar));
+		lit.exps ~= buildTypeInfoCast(lp, buildExpReference(/*#ref*/loc, ifaceVar));
 
-		lit.exps ~= buildConstantSizeT(loc, lp.target, asClass.interfaceOffsets[i]);
+		lit.exps ~= buildConstantSizeT(/*#ref*/loc, lp.target, asClass.interfaceOffsets[i]);
 		interfaceLits ~= lit;
 	}
-	exps ~= buildArrayLiteralSmart(loc, buildArrayType(loc, lp.tiInterfaceInfo), interfaceLits);
+	exps ~= buildArrayLiteralSmart(/*#ref*/loc, buildArrayType(/*#ref*/loc, lp.tiInterfaceInfo), interfaceLits);
 	return exps;
 }

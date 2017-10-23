@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 /*!
@@ -183,7 +184,7 @@ public:
 			return mPersonalityFunc;
 		}
 		Type type;
-		return mPersonalityFunc = getFunctionValue(ehPersonality, type);
+		return mPersonalityFunc = getFunctionValue(ehPersonality, /*#out*/type);
 	}
 
 	@property override LLVMValueRef ehTypeIdFunc()
@@ -193,7 +194,7 @@ public:
 		}
 
 		Type type;
-		return mTypeIdFunc = getFunctionValue(llvmTypeidFor, type);
+		return mTypeIdFunc = getFunctionValue(llvmTypeidFor, /*#out*/type);
 	}
 
 	@property override LLVMTypeRef ehLandingType()
@@ -278,9 +279,9 @@ public:
 	{
 		auto p = findLanding();
 		if (p is null) {
-			return buildCallOrInvoke(loc, argFunc, args, null);
+			return buildCallOrInvoke(/*#ref*/loc, argFunc, args, null);
 		} else {
-			return buildCallOrInvoke(loc, argFunc, args, p.landingBlock);
+			return buildCallOrInvoke(/*#ref*/loc, argFunc, args, p.landingBlock);
 		}
 	}
 
@@ -289,7 +290,7 @@ public:
 	                                        LLVMValueRef[] args,
 	                                        LLVMBasicBlockRef landingBlock)
 	{
-		diSetPosition(this, loc);
+		diSetPosition(this, /*#ref*/loc);
 		scope (success) {
 			diUnsetPosition(this);
 		}
@@ -343,10 +344,10 @@ public:
 		}
 
 		if (argFunc.type is null) {
-			throw panic(argFunc.loc, "function without type");
+			throw panic(/*#ref*/argFunc.loc, "function without type");
 		}
 		if (argFunc.kind == ir.Function.Kind.Invalid) {
-			throw panic(argFunc.loc, "invalid function kind");
+			throw panic(/*#ref*/argFunc.loc, "invalid function kind");
 		}
 
 		LLVMValueRef v;
@@ -440,7 +441,7 @@ public:
 		}
 
 		if (var.type is null) {
-			throw panic(var.loc, "variable without type");
+			throw panic(/*#ref*/var.loc, "variable without type");
 		}
 
 		type = this.fromIr(var.type);
@@ -463,20 +464,20 @@ public:
 
 		final switch(var.storage) with (ir.Variable.Storage) {
 		case Invalid:
-			throw panic(var.loc, "unclassified variable");
+			throw panic(/*#ref*/var.loc, "unclassified variable");
 		case Field:
-			throw panic(var.loc, "field variable refered directly");
+			throw panic(/*#ref*/var.loc, "field variable refered directly");
 		case Function, Nested:
 			if (func is null) {
-				throw panic(var.loc,
+				throw panic(/*#ref*/var.loc,
 					"non-local/global variable in non-function scope");
 			}
 			if (var.useBaseStorage) {
-				throw panic(var.loc,
+				throw panic(/*#ref*/var.loc,
 					"useBaseStorage can not be used on function variables");
 			}
 
-			diSetPosition(this, var.loc);
+			diSetPosition(this, /*#ref*/var.loc);
 			v = buildAlloca(llvmType, var.name);
 
 			diAutoVariable(this, var, v, type);
@@ -540,7 +541,7 @@ public:
 		}
 
 		if (var.type is null)
-			throw panic(var.loc, "variable without type");
+			throw panic(/*#ref*/var.loc, "variable without type");
 
 		type = this.fromIr(var.type);
 		LLVMValueRef v;
@@ -549,10 +550,10 @@ public:
 		llvmType = type.llvmType;
 
 		if (func is null) {
-			throw panic(var.loc, "non-local/global variable in non-function scope");
+			throw panic(/*#ref*/var.loc, "non-local/global variable in non-function scope");
 		}
 
-		diSetPosition(this, var.loc);
+		diSetPosition(this, /*#ref*/var.loc);
 		v = buildAlloca(llvmType, var.name);
 
 		diParameterVariable(this, var, v, type);

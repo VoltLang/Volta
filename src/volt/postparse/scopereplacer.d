@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2015-2017, Bernard Helyer.
 // Copyright © 2016-2017, Jakob Bornecrantz.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
@@ -116,7 +117,7 @@ private:
 	ir.Function handleScope(ir.ScopeStatement ss)
 	{
 		if (functionStack.length == 0) {
-			throw makeScopeOutsideFunction(ss.loc);
+			throw makeScopeOutsideFunction(/*#ref*/ss.loc);
 		}
 
 		return convertToFunction(ss.kind, ss.block, functionStack[$-1]);
@@ -130,7 +131,7 @@ private:
 
 		func.type = new ir.FunctionType();
 		func.type.loc = block.loc;
-		func.type.ret = buildVoid(block.loc);
+		func.type.ret = buildVoid(/*#ref*/block.loc);
 
 		func._body = block;
 

@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2013, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.util;
@@ -52,7 +53,7 @@ ir.Type removeStorageFields(ir.Type t)
 		return t;
 	}
 
-	t = copyTypeSmart(t.loc, t);
+	t = copyTypeSmart(/*#ref*/t.loc, t);
 	t.isScope = false;
 	t.isConst = false;
 	t.isImmutable = false;
@@ -66,7 +67,7 @@ ir.Type removeStorageFields(ir.Type t)
  */
 ir.Type flattenAuto(ir.AutoType atype, ir.Type type)
 {
-	type = copyTypeSmart(atype.loc, type);
+	type = copyTypeSmart(/*#ref*/atype.loc, type);
 	addStorage(type, atype);
 	atype.explicitType = type;
 	return type;
@@ -85,7 +86,7 @@ void flattenOneStorage(ir.StorageType stype, ir.Type type,
 	case Ref:
 	case Out:
 		if (ct is null) {
-			throw panic(stype.loc, "ref attached to non parameter");
+			throw panic(/*#ref*/stype.loc, "ref attached to non parameter");
 		}
 		if (stype.type == Ref) {
 			ct.isArgRef[ctIndex] = true;
@@ -116,7 +117,7 @@ void implicitlyCastToBool(Context ctx, ref ir.Exp exp)
 			return;
 		}
 		if (asPrimitive.type == ir.PrimitiveType.Kind.Void) {
-			throw makeBadImplicitCast(exp, buildBool(exp.loc), t);
+			throw makeBadImplicitCast(exp, buildBool(/*#ref*/exp.loc), t);
 		}
 		break;
 	case ir.NodeType.Class:
@@ -124,25 +125,25 @@ void implicitlyCastToBool(Context ctx, ref ir.Exp exp)
 	case ir.NodeType.FunctionType:
 	case ir.NodeType.DelegateType:
 		t = getExpType(exp);
-		auto cnst = buildConstantNull(exp.loc, t);
-		exp = buildBinOp(exp.loc, ir.BinOp.Op.NotIs, exp, cnst);
+		auto cnst = buildConstantNull(/*#ref*/exp.loc, t);
+		exp = buildBinOp(/*#ref*/exp.loc, ir.BinOp.Op.NotIs, exp, cnst);
 		return;
 	case ir.NodeType.ArrayType:
-		auto zero = buildConstantSizeT(exp.loc, ctx.lp.target, 0);
-		exp = buildArrayLength(exp.loc, ctx.lp.target, exp);
-		exp = buildBinOp(exp.loc, ir.BinOp.Op.Greater, exp, zero);
+		auto zero = buildConstantSizeT(/*#ref*/exp.loc, ctx.lp.target, 0);
+		exp = buildArrayLength(/*#ref*/exp.loc, ctx.lp.target, exp);
+		exp = buildBinOp(/*#ref*/exp.loc, ir.BinOp.Op.Greater, exp, zero);
 		return;
 	case ir.NodeType.StaticArrayType:
 	case ir.NodeType.AAType:
 	case ir.NodeType.Interface:
 	case ir.NodeType.Struct:
 	case ir.NodeType.Union:
-		throw makeBadImplicitCast(exp, buildBool(exp.loc), t);
+		throw makeBadImplicitCast(exp, buildBool(/*#ref*/exp.loc), t);
 	default:
 		throw panicUnhandled(exp, ir.nodeToString(exp));
 	}
 
-	exp = buildCastToBool(exp.loc, exp);
+	exp = buildCastToBool(/*#ref*/exp.loc, exp);
 }
 
 /*!
@@ -232,7 +233,7 @@ bool handleIfNull(Context ctx, ir.Type left, ref ir.Exp right)
 		}
 		bool changed;
 		foreach (ref val; aliteral.exps) {
-			if (handleIfNull(ctx, base, val)) {
+			if (handleIfNull(ctx, base, /*#ref*/val)) {
 				changed = true;
 			}
 		}
@@ -241,7 +242,7 @@ bool handleIfNull(Context ctx, ir.Type left, ref ir.Exp right)
 		return false;
 	}
 
-	handleNull(ctx, left, right, rightType);
+	handleNull(ctx, left, /*#ref*/right, rightType);
 
 	return true;
 }
@@ -256,20 +257,20 @@ void handleNull(Context ctx, ir.Type left, ref ir.Exp right, ir.Type rightType)
 
 	auto constant = cast(ir.Constant) right;
 	if (constant is null) {
-		throw panic(right.loc, "non constant null");
+		throw panic(/*#ref*/right.loc, "non constant null");
 	}
 
 	while (true) {
 		switch (left.nodeType) with (ir.NodeType) {
 		case PointerType:
-			constant.type = buildVoidPtr(right.loc);
-			right = buildCastSmart(right.loc, left, right);
+			constant.type = buildVoidPtr(/*#ref*/right.loc);
+			right = buildCastSmart(/*#ref*/right.loc, left, right);
 			return;
 		case ArrayType:
-			right = buildArrayLiteralSmart(right.loc, left);
+			right = buildArrayLiteralSmart(/*#ref*/right.loc, left);
 			return;
 		case FunctionType, DelegateType:
-			auto t = copyTypeSmart(right.loc, left);
+			auto t = copyTypeSmart(/*#ref*/right.loc, left);
 			constant.type = t;
 			return;
 		case TypeReference:
@@ -280,7 +281,7 @@ void handleNull(Context ctx, ir.Type left, ref ir.Exp right, ir.Type rightType)
 		case Class:
 			auto _class = cast(ir.Class) left;
 			if (_class !is null) {
-				auto t = copyTypeSmart(right.loc, _class);
+				auto t = copyTypeSmart(/*#ref*/right.loc, _class);
 				constant.type = t;
 				return;
 			}
@@ -288,7 +289,7 @@ void handleNull(Context ctx, ir.Type left, ref ir.Exp right, ir.Type rightType)
 		case Interface:
 			auto _interface = cast(ir._Interface) left;
 			if (_interface !is null) {
-				auto t = copyTypeSmart(right.loc, _interface);
+				auto t = copyTypeSmart(/*#ref*/right.loc, _interface);
 				constant.type = t;
 				return;
 			}
@@ -298,7 +299,7 @@ void handleNull(Context ctx, ir.Type left, ref ir.Exp right, ir.Type rightType)
 			if (!mod.magicFlagD) {
 				goto default;
 			}
-			auto t = copyTypeSmart(right.loc, left);
+			auto t = copyTypeSmart(/*#ref*/right.loc, left);
 			constant.type = t;
 			return;
 		default:
@@ -330,7 +331,7 @@ ir.Variable getThisVarNotNull(ir.Node n, Context ctx, ir.Function func)
 {
 	// TODO Field directly on ir.Function?
 	auto thisStore = lookupInGivenScopeOnly(
-		ctx.lp, func.myScope, n.loc, "this");
+		ctx.lp, func.myScope, /*#ref*/n.loc, "this");
 	if (thisStore is null) {
 		if (func.kind == ir.Function.Kind.Nested) {
 		    auto var = getThisVarNotNull(n, ctx, getParentFunction(func.myScope.parent));
@@ -339,7 +340,7 @@ ir.Variable getThisVarNotNull(ir.Node n, Context ctx, ir.Function func)
 		}
 		if (thisStore is null) {
 			// TODO This needs to be a better, not all lookups are calls.
-			throw makeCallingWithoutInstance(n.loc);
+			throw makeCallingWithoutInstance(/*#ref*/n.loc);
 		} else {
 			assert(false);
 		}
@@ -361,7 +362,7 @@ ir.Variable getThisVarNotNull(ir.Node n, Context ctx, ir.Function func)
 ir.Exp getThisReferenceNotNull(ir.Node n, Context ctx, out ir.Variable thisVar)
 {
 	thisVar = getThisVarNotNull(n, ctx);
-	return buildExpReference(n.loc, thisVar, "this");
+	return buildExpReference(/*#ref*/n.loc, thisVar, "this");
 }
 
 void addVarArgsVarsIfNeeded(LanguagePass lp, ir.Function func)
@@ -371,14 +372,14 @@ void addVarArgsVarsIfNeeded(LanguagePass lp, ir.Function func)
 		func._body !is null &&
 	    func.type.linkage == ir.Linkage.Volt) {
 		auto tinfoClass = lp.tiTypeInfo;
-		auto tr = buildTypeReference(func.loc, tinfoClass, tinfoClass.name);
-		auto array = buildArrayType(func.loc, tr);
-		auto argArray = buildArrayType(func.loc, buildVoid(func.loc));
-		func.type.varArgsTypeids = buildVariable(func.loc, array, ir.Variable.Storage.Function, "_typeids");
+		auto tr = buildTypeReference(/*#ref*/func.loc, tinfoClass, tinfoClass.name);
+		auto array = buildArrayType(/*#ref*/func.loc, tr);
+		auto argArray = buildArrayType(/*#ref*/func.loc, buildVoid(/*#ref*/func.loc));
+		func.type.varArgsTypeids = buildVariable(/*#ref*/func.loc, array, ir.Variable.Storage.Function, "_typeids");
 		func.type.varArgsTypeids.specialInitValue = true;
 		func._body.myScope.addValue(func.type.varArgsTypeids, "_typeids");
 		func._body.statements = func.type.varArgsTypeids ~ func._body.statements;
-		func.type.varArgsArgs = buildVariable(func.loc, argArray, ir.Variable.Storage.Function, "_args");
+		func.type.varArgsArgs = buildVariable(/*#ref*/func.loc, argArray, ir.Variable.Storage.Function, "_args");
 		func.type.varArgsArgs.specialInitValue = true;
 		func._body.myScope.addValue(func.type.varArgsArgs, "_args");
 		func._body.statements = func.type.varArgsArgs ~ func._body.statements;
@@ -401,40 +402,40 @@ ir.Type[] expsToTypes(ir.Exp[] exps)
 ir.Exp getDefaultInit(ref in Location loc, LanguagePass lp, ir.Type t)
 {
 	if (t is null) {
-		throw panic(loc, "null type");
+		throw panic(/*#ref*/loc, "null type");
 	}
 	switch (t.nodeType) {
 	case ir.NodeType.TypeReference:
 		auto tr = cast(ir.TypeReference) t;
-		return getDefaultInit(loc, lp, tr.type);
+		return getDefaultInit(/*#ref*/loc, lp, tr.type);
 	case ir.NodeType.Enum:
 		auto e = cast(ir.Enum) t;
-		return getDefaultInit(loc, lp, e.base);
+		return getDefaultInit(/*#ref*/loc, lp, e.base);
 	case ir.NodeType.PrimitiveType:
 		auto pt = cast(ir.PrimitiveType) t;
 		if (pt.type == ir.PrimitiveType.Kind.Float) {
-			return buildConstantFloat(loc, 0.0f);
+			return buildConstantFloat(/*#ref*/loc, 0.0f);
 		} else if (pt.type == ir.PrimitiveType.Kind.Double || pt.type == ir.PrimitiveType.Kind.Real) {
-			return buildConstantDouble(loc, 0.0);
+			return buildConstantDouble(/*#ref*/loc, 0.0);
 		} else {
-			return buildCastSmart(loc, t, buildConstantInt(loc, 0));
+			return buildCastSmart(/*#ref*/loc, t, buildConstantInt(/*#ref*/loc, 0));
 		}
 	case ir.NodeType.ArrayType:
-		return buildArrayLiteralSmart(loc, t);
+		return buildArrayLiteralSmart(/*#ref*/loc, t);
 	case ir.NodeType.StaticArrayType:
 		auto sat = cast(ir.StaticArrayType) t;
 		auto exps = new ir.Exp[](sat.length);
 		foreach (ref e; exps) {
-			e = getDefaultInit(loc, lp, sat.base);
+			e = getDefaultInit(/*#ref*/loc, lp, sat.base);
 		}
-		return buildArrayLiteralSmart(loc, t, exps);
+		return buildArrayLiteralSmart(/*#ref*/loc, t, exps);
 	case ir.NodeType.PointerType:
 	case ir.NodeType.Class:
 	case ir.NodeType.DelegateType:
 	case ir.NodeType.AAType:
 	case ir.NodeType.Interface:
 	case ir.NodeType.FunctionType:
-		return buildConstantNull(loc, t);
+		return buildConstantNull(/*#ref*/loc, t);
 	case ir.NodeType.Struct:
 	case ir.NodeType.Union:
 		auto _struct = cast(ir.Aggregate) t;
@@ -445,15 +446,15 @@ ir.Exp getDefaultInit(ref in Location loc, LanguagePass lp, ir.Type t)
 			    var.storage != ir.Variable.Storage.Field) {
 				continue;
 			}
-			exps ~= getDefaultInit(loc, lp, var.type);
+			exps ~= getDefaultInit(/*#ref*/loc, lp, var.type);
 		}
 		if (t.nodeType == ir.NodeType.Union) {
-			return buildUnionLiteralSmart(loc, _struct, exps);
+			return buildUnionLiteralSmart(/*#ref*/loc, _struct, exps);
 		} else {
-			return buildStructLiteralSmart(loc, _struct, exps);
+			return buildStructLiteralSmart(/*#ref*/loc, _struct, exps);
 		}
 	default:
-		throw panicUnhandled(loc, format("%s", t.nodeType));
+		throw panicUnhandled(/*#ref*/loc, format("%s", t.nodeType));
 	}
 }
 
@@ -476,7 +477,7 @@ bool typeLookup(Context ctx, ref ir.Exp exp, ir.Type type)
 
 	if (postfix.identifier.value == "init" &&
 		(named !is null || (prim is null && pointer is null))) {
-		exp = getDefaultInit(exp.loc, ctx.lp, type);
+		exp = getDefaultInit(/*#ref*/exp.loc, ctx.lp, type);
 		return true;
 	}
 
@@ -492,7 +493,7 @@ bool typeLookup(Context ctx, ref ir.Exp exp, ir.Type type)
 
 	switch (value) {
 	case "init":
-		exp = getDefaultInit(exp.loc, ctx.lp, type);
+		exp = getDefaultInit(/*#ref*/exp.loc, ctx.lp, type);
 		return true;
 	case "max":
 		max = true;
@@ -513,9 +514,9 @@ bool typeLookup(Context ctx, ref ir.Exp exp, ir.Type type)
 
 	if (pointer !is null) {
 		if (ctx.lp.ver.isP64) {
-			exp = buildConstantInt(type.loc, max ? 8 : 0);
+			exp = buildConstantInt(/*#ref*/type.loc, max ? 8 : 0);
 		} else {
-			exp = buildConstantInt(type.loc, max ? 4 : 0);
+			exp = buildConstantInt(/*#ref*/type.loc, max ? 4 : 0);
 		}
 		return true;
 	}
@@ -526,37 +527,37 @@ bool typeLookup(Context ctx, ref ir.Exp exp, ir.Type type)
 
 	final switch (prim.type) with (ir.PrimitiveType.Kind) {
 	case Bool:
-		exp = buildConstantInt(prim.loc, max ? 1 : 0);
+		exp = buildConstantInt(/*#ref*/prim.loc, max ? 1 : 0);
 		break;
 	case Ubyte, Char:
-		exp = buildConstantInt(prim.loc, cast(ubyte)(max ? 0xFF : 0));
+		exp = buildConstantInt(/*#ref*/prim.loc, cast(ubyte)(max ? 0xFF : 0));
 		break;
 	case Byte:
-		exp = buildConstantInt(prim.loc, cast(byte)(max ? 0x7F : 0x80));
+		exp = buildConstantInt(/*#ref*/prim.loc, cast(byte)(max ? 0x7F : 0x80));
 		break;
 	case Ushort, Wchar:
-		exp = buildConstantInt(prim.loc, cast(ushort)(max ? 0xFFFF : 0));
+		exp = buildConstantInt(/*#ref*/prim.loc, cast(ushort)(max ? 0xFFFF : 0));
 		break;
 	case Short:
-		exp = buildConstantInt(prim.loc, cast(short)(max ? 0x7FFF : 0x8000));
+		exp = buildConstantInt(/*#ref*/prim.loc, cast(short)(max ? 0x7FFF : 0x8000));
 		break;
 	case Uint, Dchar:
-		exp = buildConstantUint(prim.loc, cast(uint)(max ? 0xFFFF_FFFFU : 0U));
+		exp = buildConstantUint(/*#ref*/prim.loc, cast(uint)(max ? 0xFFFF_FFFFU : 0U));
 		break;
 	case Int:
-		exp = buildConstantInt(prim.loc, cast(int)(max ? 0x7FFF_FFFF : 0x8000_0000));
+		exp = buildConstantInt(/*#ref*/prim.loc, cast(int)(max ? 0x7FFF_FFFF : 0x8000_0000));
 		break;
 	case Ulong:
-		exp = buildConstantUlong(prim.loc, max ? 0xFFFF_FFFF_FFFF_FFFFUL : 0UL);
+		exp = buildConstantUlong(/*#ref*/prim.loc, max ? 0xFFFF_FFFF_FFFF_FFFFUL : 0UL);
 		break;
 	case Long:
-		exp = buildConstantLong(prim.loc, max ? 0x7FFF_FFFF_FFFF_FFFFL : 0x8000_0000_0000_0000L);
+		exp = buildConstantLong(/*#ref*/prim.loc, max ? 0x7FFF_FFFF_FFFF_FFFFL : 0x8000_0000_0000_0000L);
 		break;
 	case Float:
-		exp = buildConstantFloat(prim.loc, max ? float.max : float.min_normal);
+		exp = buildConstantFloat(/*#ref*/prim.loc, max ? float.max : float.min_normal);
 		break;
 	case Double:
-		exp = buildConstantDouble(prim.loc, max ? double.max : double.min_normal);
+		exp = buildConstantDouble(/*#ref*/prim.loc, max ? double.max : double.min_normal);
 		break;
 	case Real, Void:
 		throw makeExpected(prim, "integral type");
@@ -577,13 +578,13 @@ ir.Type ifTypeRefDeRef(ir.Type t)
 
 ir.AccessExp getSizeOf(ref in Location loc, LanguagePass lp, ir.Type type)
 {
-	auto unary = cast(ir.Unary)buildTypeidSmart(loc, lp, type);
+	auto unary = cast(ir.Unary)buildTypeidSmart(/*#ref*/loc, lp, type);
 	panicAssert(type, unary !is null);
-	auto store = lookupInGivenScopeOnly(lp, lp.tiTypeInfo.myScope, loc, "size");
+	auto store = lookupInGivenScopeOnly(lp, lp.tiTypeInfo.myScope, /*#ref*/loc, "size");
 	panicAssert(type, store !is null);
 	auto var = cast(ir.Variable)store.node;
 	panicAssert(type, var !is null);
-	return buildAccessExp(loc, unary, var);
+	return buildAccessExp(/*#ref*/loc, unary, var);
 }
 
 ir.Type getCommonSubtype(ref in Location loc, ir.Type[] types)
@@ -624,7 +625,7 @@ ir.Type getCommonSubtype(ref in Location loc, ir.Type[] types)
 		}
 		if (_class.parentClass is null) {
 			// No common parent; volt is SI, this shouldn't happen.
-			throw panic(loc, "no common subtype");
+			throw panic(/*#ref*/loc, "no common subtype");
 		}
 		candidate = _class.parentClass;
 		count = countMatch(candidate);

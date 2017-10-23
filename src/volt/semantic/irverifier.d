@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.irverifier;
@@ -219,7 +220,7 @@ public:
 		if (expectedDepth != _scope.nestedDepth) {
 			auto str = format("nested depth incorrectly set to %s, expected %s.",
 			                  _scope.nestedDepth, expectedDepth);
-			throw panic(_scope.node.loc, str);
+			throw panic(/*#ref*/_scope.node.loc, str);
 		}
 	}
 

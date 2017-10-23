@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 /*!
@@ -209,7 +210,7 @@ void handleAssign(State state, ir.BinOp bin, Value result)
 	state.getValueRef(bin.left, left);
 
 	// Set debug info location, getValue will have reset it.
-	diSetPosition(state, bin.loc);
+	diSetPosition(state, /*#ref*/bin.loc);
 
 	// Not returned.
 	LLVMBuildStore(state.builder, right.value, left.value);
@@ -231,7 +232,7 @@ void handleBoolCompare(State state, ir.BinOp bin, Value result)
 	state.getValue(bin.left, left);
 
 	// Set debug info location, getValue(left) will have reset it.
-	diSetPosition(state, bin.loc);
+	diSetPosition(state, /*#ref*/bin.loc);
 
 	LLVMBuildCondBr(state.builder, left.value,
 		and ? rightBlock : endBlock,
@@ -248,7 +249,7 @@ void handleBoolCompare(State state, ir.BinOp bin, Value result)
 	state.startBlock(endBlock);
 
 	// Set debug info location, getValue(right) will have reset it.
-	diSetPosition(state, bin.loc);
+	diSetPosition(state, /*#ref*/bin.loc);
 
 	auto v = LLVMConstInt(state.boolType.llvmType, !and, false);
 	auto phi = LLVMBuildPhi(state.builder, left.type.llvmType, "");
@@ -276,7 +277,7 @@ void handleIs(State state, ir.BinOp bin, Value result)
 	auto loc = bin.loc;
 
 	// This debug info location is set on all following instructions.
-	diSetPosition(state, bin.loc);
+	diSetPosition(state, /*#ref*/bin.loc);
 
 	auto dgt = cast(DelegateType)result.type;
 	if (dgt !is null) {
@@ -329,7 +330,7 @@ void handleCompare(State state, ir.BinOp bin, Value result)
 
 	auto pt = cast(PrimitiveType)result.type;
 	if (pt is null) {
-		throw panic(bin.loc, "can only compare primitive types");
+		throw panic(/*#ref*/bin.loc, "can only compare primitive types");
 	}
 
 	LLVMIntPredicate pr;
@@ -386,11 +387,11 @@ void handleCompare(State state, ir.BinOp bin, Value result)
 		}
 		break;
 	default:
-		throw panic(bin.loc, "error");
+		throw panic(/*#ref*/bin.loc, "error");
 	}
 
 	// Debug info
-	diSetPosition(state, bin.loc);
+	diSetPosition(state, /*#ref*/bin.loc);
 
 	LLVMValueRef v;
 	if (pt.floating) {
@@ -437,9 +438,9 @@ void handleBinOpAssign(State state, ir.BinOp bin, Value result)
 		throw panic(bin, "right hand value must be of primitive type");
 
 	// Set debug info location, helper needs this.
-	diSetPosition(state, bin.loc);
+	diSetPosition(state, /*#ref*/bin.loc);
 
-	handleBinOpNonAssignHelper(state, bin.loc, op,
+	handleBinOpNonAssignHelper(state, /*#ref*/bin.loc, op,
 	                           left, right, right);
 
 	// Not returned.
@@ -458,7 +459,7 @@ void handleBinOpNonAssign(State state, ir.BinOp bin, Value result)
 	state.getValueAnyForm(bin.left, left);
 	state.getValueAnyForm(bin.right, right);
 
-	handleBinOpNonAssignHelper(state, bin.loc, bin.op,
+	handleBinOpNonAssignHelper(state, /*#ref*/bin.loc, bin.op,
 	                           left, right, result);
 }
 
@@ -469,7 +470,7 @@ void handleBinOpNonAssign(State state, ir.BinOp bin, Value result)
 void handleBinOpNonAssignHelper(State state, ref Location loc, ir.BinOp.Op binOp,
                                 Value left, Value right, Value result)
 {
-	diSetPosition(state, loc);
+	diSetPosition(state, /*#ref*/loc);
 
 	makeNonPointer(state, left);
 	makeNonPointer(state, right);
@@ -477,7 +478,7 @@ void handleBinOpNonAssignHelper(State state, ref Location loc, ir.BinOp.Op binOp
 	// Check for pointer math.
 	auto ptrType = cast(PointerType)left.type;
 	if (ptrType !is null)
-		return handleBinOpPointer(state, loc, binOp, left, right, result);
+		return handleBinOpPointer(state, /*#ref*/loc, binOp, left, right, result);
 
 	// Note the flipping of args.
 	ptrType = cast(PointerType)right.type;
@@ -486,9 +487,9 @@ void handleBinOpNonAssignHelper(State state, ref Location loc, ir.BinOp.Op binOp
 
 	auto pt = cast(PrimitiveType)right.type;
 	if (pt is null)
-		throw panic(loc, "can only binop on primitive types");
+		throw panic(/*#ref*/loc, "can only binop on primitive types");
 
-	handleBinOpPrimitive(state, loc, binOp, pt, left, right, result);
+	handleBinOpPrimitive(state, /*#ref*/loc, binOp, pt, left, right, result);
 }
 
 /*!
@@ -502,13 +503,13 @@ void handleBinOpPointer(State state, Location loc, ir.BinOp.Op binOp,
 	auto primType = cast(PrimitiveType)other.type;
 
 	if (ptrType is null)
-		throw panic(loc, "left value must be of pointer type");
+		throw panic(/*#ref*/loc, "left value must be of pointer type");
 	if (primType is null)
-		throw panic(loc, "can only do pointer math with non-pointer");
+		throw panic(/*#ref*/loc, "can only do pointer math with non-pointer");
 	if (primType.floating)
-		throw panic(loc, "can't do pointer math with floating value");
+		throw panic(/*#ref*/loc, "can't do pointer math with floating value");
 	if (binOp != ir.BinOp.Op.Add && binOp != ir.BinOp.Op.Sub)
-		throw panic(loc, "can only add or subtract to pointers");
+		throw panic(/*#ref*/loc, "can only add or subtract to pointers");
 
 	LLVMValueRef val = other.value;
 	if (binOp == ir.BinOp.Op.Sub) {
@@ -583,7 +584,7 @@ void handleBinOpPrimitive(State state, Location loc, ir.BinOp.Op binOp,
 		op = LLVMOpcode.Xor;
 		break;
 	default:
-		throw panicUnhandled(loc, toString(binOp));
+		throw panicUnhandled(/*#ref*/loc, toString(binOp));
 	}
 
 	// Either right or left could be result, keep that in mind.
@@ -626,7 +627,7 @@ void handleUnary(State state, ir.Unary unary, Value result)
 		handleIncDec(state, unary, result);
 		break;
 	default:
-		throw panicUnhandled(unary.loc, toString(unary.op));
+		throw panicUnhandled(/*#ref*/unary.loc, toString(unary.op));
 	}
 }
 
@@ -681,7 +682,7 @@ void handleCast(State state, Location loc, Type newType, Value result)
 		return handleCastPointerPrim(state, loc, t, newTypePrim, result);
 	}
 
-	throw panicUnhandled(loc,
+	throw panicUnhandled(/*#ref*/loc,
 		format("%s -> %s",
 		ir.nodeToString(oldType.irType),
 		ir.nodeToString(newType.irType)));
@@ -700,7 +701,7 @@ void handleCastPrimitive(State state, Location loc, PrimitiveType newType,
 		return;
 
 	void error() {
-		throw panic(loc, "invalid cast");
+		throw panic(/*#ref*/loc, "invalid cast");
 	}
 
 	result.type = newType;
@@ -857,7 +858,7 @@ void handlePlusMinus(State state, ir.Unary unary, Value result)
 
 	auto primType = cast(PrimitiveType)result.type;
 	if (primType is null)
-		throw panic(unary.loc, "must be primitive type");
+		throw panic(/*#ref*/unary.loc, "must be primitive type");
 
 	// No-op plus
 	if (unary.op == ir.Unary.Op.Plus)
@@ -938,7 +939,7 @@ void handlePostfix(State state, ir.Postfix postfix, Value result)
 		handleIncDec(state, postfix, result);
 		break;
 	default:
-		throw panicUnhandled(postfix.loc, toString(postfix.op));
+		throw panicUnhandled(/*#ref*/postfix.loc, toString(postfix.op));
 	}
 }
 
@@ -956,15 +957,15 @@ void handleIndex(State state, ir.Postfix postfix, Value result)
 	// Turn arr[index] into arr.ptr[index]
 	auto at = cast(ArrayType)left.type;
 	if (at !is null)
-		getPointerFromArray(state, postfix.loc, left);
+		getPointerFromArray(state, /*#ref*/postfix.loc, left);
 
 	auto sat = cast(StaticArrayType)left.type;
 	if (sat !is null)
-		getPointerFromStaticArray(state, postfix.loc, left);
+		getPointerFromStaticArray(state, /*#ref*/postfix.loc, left);
 
 	auto pt = cast(PointerType)left.type;
 	if (pt is null)
-		throw panic(postfix.loc, "can not index non-array or pointer type");
+		throw panic(/*#ref*/postfix.loc, "can not index non-array or pointer type");
 
 	makeNonPointer(state, left);
 
@@ -980,7 +981,7 @@ void handleSlice(State state, ir.Postfix postfix, Value result)
 	else if (postfix.arguments.length == 2)
 		handleSliceTwo(state, postfix, result);
 	else
-		throw panic(postfix.loc, "wrong number of arguments to slice");
+		throw panic(/*#ref*/postfix.loc, "wrong number of arguments to slice");
 }
 
 void handleSliceNone(State state, ir.Postfix postfix, Value result)
@@ -996,7 +997,7 @@ void handleSliceNone(State state, ir.Postfix postfix, Value result)
 	} else if (sat !is null) {
 		getArrayFromStaticArray(state, postfix.loc, result);
 	} else {
-		throw panic(postfix.loc, "unhandled type in slice (none)");
+		throw panic(/*#ref*/postfix.loc, "unhandled type in slice (none)");
 	}
 }
 
@@ -1052,7 +1053,7 @@ void handleSliceTwo(State state, ir.Postfix postfix, Value result)
 
 	// Subtract start from end to get the length, which returned in end.
 	// Will set and leave debug info location and we want that.
-	handleBinOpNonAssignHelper(state, postfix.loc,
+	handleBinOpNonAssignHelper(state, /*#ref*/postfix.loc,
 	                           ir.BinOp.Op.Sub,
 	                           end, start, end);
 	len = end.value;
@@ -1135,7 +1136,7 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 		offset = 1;
 		result.value = func;
 	} else {
-		throw panic(postfix.loc, "can not call this thing");
+		throw panic(/*#ref*/postfix.loc, "can not call this thing");
 	}
 	assert(ct !is null);
 
@@ -1164,9 +1165,9 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 		}
 	}
 
-	abiCoerceArguments(state, /*can be null*/irc, /*ref*/llvmArgs);
+	abiCoerceArguments(state, /*can be null*/irc, /*#ref*/llvmArgs);
 
-	result.value = state.buildCallOrInvoke(postfix.loc, result.value, llvmArgs);
+	result.value = state.buildCallOrInvoke(/*#ref*/postfix.loc, result.value, llvmArgs);
 
 	// Yes its the same loop again.
 	size_t abiOffset = 0;
@@ -1190,7 +1191,7 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 	case ir.Linkage.C, ir.Linkage.Volt:
 		break;
 	default:
-		throw panicUnhandled(postfix.loc, "call site linkage");
+		throw panicUnhandled(/*#ref*/postfix.loc, "call site linkage");
 	}
 
 	// If we return a struct via a argument, return that alloca instead.
@@ -1322,7 +1323,7 @@ void handleBuiltinExp(State state, ir.BuiltinExp inbuilt, Value result)
 		} else if (sat !is null) {
 			getPointerFromStaticArray(state, inbuilt.loc, result);
 		} else {
-			throw panic(inbuilt.loc, "bad array ptr built-in.");
+			throw panic(/*#ref*/inbuilt.loc, "bad array ptr built-in.");
 		}
 		break;
 	case ArrayLength:
@@ -1342,7 +1343,7 @@ void handleBuiltinExp(State state, ir.BuiltinExp inbuilt, Value result)
 			result.isPointer = false;
 			result.type = t;
 		} else {
-			throw panic(inbuilt.loc, "bad array ptr built-in.");
+			throw panic(/*#ref*/inbuilt.loc, "bad array ptr built-in.");
 		}
 		break;
 	case EnumMembers:
@@ -1374,11 +1375,11 @@ void handleBuiltinExp(State state, ir.BuiltinExp inbuilt, Value result)
 private LLVMValueRef fromConstantString(State state, ref in Location loc, string str)
 {
 	auto result = new Value();
-	ir.ArrayType st = buildString(loc);
+	ir.ArrayType st = buildString(/*#ref*/loc);
 	st.mangledName = "ac";
 	st.base.mangledName = "mc";
 	auto at = ArrayType.fromIr(state, st);
-	at.from(state, buildConstantString(loc, str, false), result);
+	at.from(state, buildConstantString(/*#ref*/loc, str, false), result);
 	return result.value;
 }
 
@@ -1413,19 +1414,19 @@ void handleEnumMembers(State state, ir.BuiltinExp inbuilt, Value result)
 		// Now call the sink.
 		auto args = new LLVMValueRef[](2);
 		args[0] = thisval;
-		args[1] = fromConstantString(state, inbuilt.loc, member.name);
+		args[1] = fromConstantString(state, /*#ref*/inbuilt.loc, member.name);
 		LLVMBuildCall(state.builder, callval, args.ptr, cast(uint)args.length, "".ptr);
 		LLVMBuildBr(state.builder, endSwitch);
 	}
 
 	LLVMPositionBuilderAtEnd(state.builder, defaultCase);
 	Type t;
-	auto assertval = state.getFunctionValue(inbuilt.functions[0], t);
+	auto assertval = state.getFunctionValue(inbuilt.functions[0], /*#out*/t);
 	auto args = new LLVMValueRef[](2);
-	args[0] = fromConstantString(state, inbuilt.loc, inbuilt.loc.toString());
-	args[1] = fromConstantString(state, inbuilt.loc, "invalid enum member passed as composable string component");
+	args[0] = fromConstantString(state, /*#ref*/inbuilt.loc, inbuilt.loc.toString());
+	args[1] = fromConstantString(state, /*#ref*/inbuilt.loc, "invalid enum member passed as composable string component");
 	auto ct = cast(ir.CallableType)t.irType;
-	abiCoerceArguments(state, /*can be null*/ct, /*ref*/args);
+	abiCoerceArguments(state, /*can be null*/ct, /*#ref*/args);
 	LLVMBuildCall(state.builder, assertval, args.ptr, cast(uint)args.length, "".ptr);
 	LLVMBuildUnreachable(state.builder);
 
@@ -1446,24 +1447,24 @@ void handleExpReference(State state, ir.ExpReference expRef, Value result)
 	case Function:
 		auto func = cast(ir.Function)expRef.decl;
 		result.isPointer = func.loadDynamic;
-		result.value = state.getFunctionValue(func, result.type);
+		result.value = state.getFunctionValue(func, /*#out*/result.type);
 		break;
 	case Variable:
 		auto var = cast(ir.Variable)expRef.decl;
 		result.isPointer = !var.useBaseStorage;
-		result.value = state.getVariableValue(var, result.type);
+		result.value = state.getVariableValue(var, /*#out*/result.type);
 		break;
 	case FunctionParam:
 		auto fp = cast(ir.FunctionParam)expRef.decl;
 		result.isPointer = true;
-		result.value = state.getVariableValue(fp, result.type);
+		result.value = state.getVariableValue(fp, /*#out*/result.type);
 		break;
 	case EnumDeclaration:
 		auto ed = cast(ir.EnumDeclaration)expRef.decl;
 		state.getConstantValueAnyForm(ed.assign, result);
 		break;
 	default:
-		throw panicUnhandled(expRef.loc, toString(expRef.decl.declKind));
+		throw panicUnhandled(/*#ref*/expRef.loc, toString(expRef.decl.declKind));
 	}
 }
 

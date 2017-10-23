@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2015, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.util.perf;
@@ -129,7 +130,7 @@ struct Perf
 		f.writef("\n%s,", name);
 		version (Volt) {
 			Stats stats;
-			vrt_gc_get_stats(stats);
+			vrt_gc_get_stats(/*#out*/stats);
 			f.writef("%s,%s,%s,%s,%s,%s,%s",
 			         stats.num.allocs,      stats.num.allocBytes,
 			         stats.num.arrayAllocs, stats.num.arrayBytes,

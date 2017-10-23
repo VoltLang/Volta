@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 /*!
@@ -153,7 +154,7 @@ public:
 		}
 
 		string result;
-		auto failed = LLVMVerifyModule(mod, result);
+		auto failed = LLVMVerifyModule(mod, /*#out*/result);
 		if (failed) {
 			LLVMDumpModule(mod);
 			io.error.writefln("%s", result);
@@ -257,7 +258,7 @@ LLVMModuleRef loadModule(LLVMContextRef ctx, string filename)
 {
 	string msg;
 
-	auto mod = LLVMModuleFromFileInContext(ctx, filename, msg);
+	auto mod = LLVMModuleFromFileInContext(ctx, filename, /*#ref*/msg);
 	if (msg !is null && mod !is null) {
 		io.error.writefln("%s", msg); // Warnings
 	}
@@ -389,7 +390,7 @@ void writeObjectFile(LLVMTargetMachineRef machine, string output, LLVMModuleRef 
 	string msg;
 	auto ret = LLVMTargetMachineEmitToFile(
 		machine, mod, output,
-		LLVMCodeGenFileType.Object, msg) != 0;
+		LLVMCodeGenFileType.Object, /*#ref*/msg) != 0;
 
 	if (msg !is null && !ret) {
 		io.error.writefln("%s", msg); // Warnings

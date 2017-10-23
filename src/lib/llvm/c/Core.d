@@ -1,3 +1,4 @@
+/*#D*/
 /*===-- llvm-c/Core.h - Core Library C Interface ------------------*- D -*-===*\
 |*                                                                            *|
 |*                     The LLVM Compiler Infrastructure                       *|

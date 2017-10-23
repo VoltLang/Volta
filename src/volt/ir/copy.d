@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2013, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.ir.copy;
@@ -415,7 +416,7 @@ ir.Type copyType(ir.Type t)
 	case Struct:
 	case Class:
 	case Enum:
-		throw panic(t.loc, "can't copy aggregate types");
+		throw panic(/*#ref*/t.loc, "can't copy aggregate types");
 	default:
 		throw panicUnhandled(t, ir.nodeToString(t));
 	}
@@ -450,7 +451,7 @@ ir.Node copyNode(ir.Node n)
 	final switch (n.nodeType) with (ir.NodeType) {
 	case Invalid:
 		auto msg = format("cannot copy '%s'", ir.nodeToString(n));
-		throw panic(n.loc, msg);
+		throw panic(/*#ref*/n.loc, msg);
 	case NonVisiting:
 		assert(false, "non-visiting node");
 	case AccessExp:
@@ -530,7 +531,7 @@ ir.Node copyNode(ir.Node n)
 	case Interface:
 	case AliasStaticIf:
 		auto t = cast(ir.Type)n;
-		return copyTypeSmart(t.loc, t);  // @todo do correctly.
+		return copyTypeSmart(/*#ref*/t.loc, t);  // @todo do correctly.
 	case QualifiedName:
 	case Identifier:
 	case Module:

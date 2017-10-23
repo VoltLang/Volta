@@ -1,3 +1,4 @@
+/*#D*/
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.parser.statements;
@@ -30,7 +31,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		return match(ps, ir.NodeType.Invalid, TokenType.Semicolon);
 	case TokenType.Import:
 		ir.Import _import;
-		succeeded = parseImport(ps, _import);
+		succeeded = parseImport(ps, /*#out*/_import);
 		if (!succeeded) {
 			return succeeded;
 		}
@@ -38,7 +39,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		return eatComments(ps);
 	case TokenType.Return:
 		ir.ReturnStatement r;
-		succeeded = parseReturnStatement(ps, r);
+		succeeded = parseReturnStatement(ps, /*#out*/r);
 		if (!succeeded) {
 			return succeeded;
 		}
@@ -46,7 +47,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		return eatComments(ps);
 	case TokenType.OpenBrace:
 		ir.BlockStatement b;
-		succeeded = parseBlockStatement(ps, b);
+		succeeded = parseBlockStatement(ps, /*#out*/b);
 		if (!succeeded) {
 			return succeeded;
 		}
@@ -54,7 +55,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		return eatComments(ps);
 	case TokenType.Asm:
 		ir.AsmStatement a;
-		succeeded = parseAsmStatement(ps, a);
+		succeeded = parseAsmStatement(ps, /*#out*/a);
 		if (!succeeded) {
 			return succeeded;
 		}
@@ -62,7 +63,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		return eatComments(ps);
 	case TokenType.If:
 		ir.IfStatement i;
-		succeeded = parseIfStatement(ps, i);
+		succeeded = parseIfStatement(ps, /*#out*/i);
 		if (!succeeded) {
 			return succeeded;
 		}
@@ -70,7 +71,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		return eatComments(ps);
 	case TokenType.While:
 		ir.WhileStatement w;
-		succeeded = parseWhileStatement(ps, w);
+		succeeded = parseWhileStatement(ps, /*#out*/w);
 		if (!succeeded) {
 			return succeeded;
 		}
@@ -78,7 +79,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		return eatComments(ps);
 	case TokenType.Do:
 		ir.DoStatement d;
-		succeeded = parseDoStatement(ps, d);
+		succeeded = parseDoStatement(ps, /*#out*/d);
 		if (!succeeded) {
 			return succeeded;
 		}
@@ -86,7 +87,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		return eatComments(ps);
 	case TokenType.For:
 		ir.ForStatement f;
-		succeeded = parseForStatement(ps, f);
+		succeeded = parseForStatement(ps, /*#out*/f);
 		if (!succeeded) {
 			return succeeded;
 		}
@@ -94,7 +95,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		return eatComments(ps);
 	case TokenType.Foreach, TokenType.ForeachReverse:
 		ir.ForeachStatement f;
-		succeeded = parseForeachStatement(ps, f);
+		succeeded = parseForeachStatement(ps, /*#out*/f);
 		if (!succeeded) {
 			return succeeded;
 		}
@@ -102,7 +103,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		return eatComments(ps);
 	case TokenType.Switch:
 		ir.SwitchStatement ss;
-		succeeded = parseSwitchStatement(ps, ss);
+		succeeded = parseSwitchStatement(ps, /*#out*/ss);
 		if (!succeeded) {
 			return succeeded;
 		}
@@ -110,7 +111,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		return eatComments(ps);
 	case TokenType.Break:
 		ir.BreakStatement bs;
-		succeeded = parseBreakStatement(ps, bs);
+		succeeded = parseBreakStatement(ps, /*#out*/bs);
 		if (!succeeded) {
 			return succeeded;
 		}
@@ -118,7 +119,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		return eatComments(ps);
 	case TokenType.Continue:
 		ir.ContinueStatement cs;
-		succeeded = parseContinueStatement(ps, cs);
+		succeeded = parseContinueStatement(ps, /*#out*/cs);
 		if (!succeeded) {
 			return succeeded;
 		}
@@ -126,7 +127,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		return eatComments(ps);
 	case TokenType.Goto:
 		ir.GotoStatement gs;
-		succeeded = parseGotoStatement(ps, gs);
+		succeeded = parseGotoStatement(ps, /*#out*/gs);
 		if (!succeeded) {
 			return succeeded;
 		}
@@ -134,7 +135,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		return eatComments(ps);
 	case TokenType.With:
 		ir.WithStatement ws;
-		succeeded = parseWithStatement(ps, ws);
+		succeeded = parseWithStatement(ps, /*#out*/ws);
 		if (!succeeded) {
 			return succeeded;
 		}
@@ -142,7 +143,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		return eatComments(ps);
 	case TokenType.Synchronized:
 		ir.SynchronizedStatement ss;
-		succeeded = parseSynchronizedStatement(ps, ss);
+		succeeded = parseSynchronizedStatement(ps, /*#out*/ss);
 		if (!succeeded) {
 			return succeeded;
 		}
@@ -150,7 +151,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		return eatComments(ps);
 	case TokenType.Try:
 		ir.TryStatement t;
-		succeeded = parseTryStatement(ps, t);
+		succeeded = parseTryStatement(ps, /*#out*/t);
 		if (!succeeded) {
 			return succeeded;
 		}
@@ -158,7 +159,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		return eatComments(ps);
 	case TokenType.Throw:
 		ir.ThrowStatement t;
-		succeeded = parseThrowStatement(ps, t);
+		succeeded = parseThrowStatement(ps, /*#out*/t);
 		if (!succeeded) {
 			return succeeded;
 		}
@@ -170,7 +171,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 			auto identTok = ps.lookahead(2);
 			if (identTok.value == "exit" || identTok.value == "failure" || identTok.value == "success") {
 				ir.ScopeStatement ss;
-				succeeded = parseScopeStatement(ps, ss);
+				succeeded = parseScopeStatement(ps, /*#out*/ss);
 				if (!succeeded) {
 					return succeeded;
 				}
@@ -181,7 +182,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		goto default;
 	case TokenType.Pragma:
 		ir.PragmaStatement prs;
-		succeeded = parsePragmaStatement(ps, prs);
+		succeeded = parsePragmaStatement(ps, /*#out*/prs);
 		if (!succeeded) {
 			return succeeded;
 		}
@@ -191,7 +192,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		if (ps.lookahead(1).type == TokenType.Colon ||
 		    ps.lookahead(1).type == TokenType.ColonAssign ||
 			ps.lookahead(1).type == TokenType.Comma) {
-			succeeded = parseColonAssign(ps, dgt);
+			succeeded = parseColonAssign(ps, /*#out*/dgt);
 			if (!succeeded) {
 				return succeeded;
 			}
@@ -212,7 +213,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 			goto case TokenType.Assert;
 		} else if (ps.lookahead(1).type == TokenType.Is) {
 			ir.AssertStatement as;
-			succeeded = parseStaticIs(ps, as);
+			succeeded = parseStaticIs(ps, /*#out*/as);
 			if (!succeeded) {
 				return succeeded;
 			}
@@ -223,7 +224,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		}
 	case TokenType.Assert:
 		ir.AssertStatement a;
-		succeeded = parseAssertStatement(ps, a);
+		succeeded = parseAssertStatement(ps, /*#out*/a);
 		if (!succeeded) {
 			return succeeded;
 		}
@@ -232,7 +233,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 	case TokenType.Version:
 	case TokenType.Debug:
 		ir.ConditionStatement cs;
-		succeeded = parseConditionStatement(ps, cs);
+		succeeded = parseConditionStatement(ps, /*#out*/cs);
 		if (!succeeded) {
 			return succeeded;
 		}
@@ -240,7 +241,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		return eatComments(ps);
 	case TokenType.Mixin:
 		ir.MixinStatement ms;
-		succeeded = parseMixinStatement(ps, ms);
+		succeeded = parseMixinStatement(ps, /*#out*/ms);
 		if (!succeeded) {
 			return succeeded;
 		}
@@ -304,9 +305,9 @@ ParseStatus parseVariableOrExpression(ParserStream ps, NodeSinkDg dgt)
 	ps.resetErrors();
 	ir.Function func;
 	ir.Type base;
-	succeeded = parseType(ps, base);
+	succeeded = parseType(ps, /*#out*/base);
 	if (succeeded) {
-		succeeded = parseFunction(ps, func, base);
+		succeeded = parseFunction(ps, /*#out*/func, base);
 		if (succeeded) {
 			dgt(func);
 			return Succeeded;
@@ -321,7 +322,7 @@ ParseStatus parseVariableOrExpression(ParserStream ps, NodeSinkDg dgt)
 	ps.resetErrors();
 
 	ir.Exp e;
-	succeeded = parseExp(ps, e);
+	succeeded = parseExp(ps, /*#out*/e);
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.Variable);
 	}
@@ -342,12 +343,12 @@ ParseStatus parseAssertStatement(ParserStream ps, out ir.AssertStatement as)
 		return unexpectedToken(ps, as);
 	}
 	ps.get();
-	auto succeeded = parseExp(ps, as.condition);
+	auto succeeded = parseExp(ps, /*#out*/as.condition);
 	if (!succeeded) {
 		return parseFailed(ps, as);
 	}
 	if (matchIf(ps, TokenType.Comma)) {
-		succeeded = parseExp(ps, as.message);
+		succeeded = parseExp(ps, /*#out*/as.message);
 		if (!succeeded) {
 			return parseFailed(ps, as);
 		}
@@ -368,7 +369,7 @@ ParseStatus parseExpStatement(ParserStream ps, out ir.ExpStatement e)
 	e = new ir.ExpStatement();
 	e.loc = ps.peek.loc;
 
-	auto succeeded = parseExp(ps, e.exp);
+	auto succeeded = parseExp(ps, /*#out*/e.exp);
 	if (!succeeded) {
 		return parseFailed(ps, e);
 	}
@@ -399,7 +400,7 @@ ParseStatus parseReturnStatement(ParserStream ps, out ir.ReturnStatement r)
 		return Succeeded;
 	}
 
-	auto succeeded = parseExp(ps, r.exp);
+	auto succeeded = parseExp(ps, /*#out*/r.exp);
 	if (!succeeded) {
 		return parseFailed(ps, r);
 	}
@@ -497,7 +498,7 @@ ParseStatus parseIfStatement(ParserStream ps, out ir.IfStatement i)
 		match(ps, i, TokenType.Identifier);
 		match(ps, i, TokenType.ColonAssign);
 	}
-	auto succeeded = parseExp(ps, i.exp);
+	auto succeeded = parseExp(ps, /*#out*/i.exp);
 	if (!succeeded) {
 		return parseFailed(ps, i);
 	}
@@ -505,12 +506,12 @@ ParseStatus parseIfStatement(ParserStream ps, out ir.IfStatement i)
 		return unexpectedToken(ps, i);
 	}
 	ps.get();
-	succeeded = parseBlockStatement(ps, i.thenState);
+	succeeded = parseBlockStatement(ps, /*#out*/i.thenState);
 	if (!succeeded) {
 		return parseFailed(ps, i);
 	}
 	if (matchIf(ps, TokenType.Else)) {
-		succeeded = parseBlockStatement(ps, i.elseState);
+		succeeded = parseBlockStatement(ps, /*#out*/i.elseState);
 		if (!succeeded) {
 			return parseFailed(ps, i);
 		}
@@ -532,7 +533,7 @@ ParseStatus parseWhileStatement(ParserStream ps, out ir.WhileStatement w)
 		return unexpectedToken(ps, w);
 	}
 	ps.get();
-	auto succeeded = parseExp(ps, w.condition);
+	auto succeeded = parseExp(ps, /*#out*/w.condition);
 	if (!succeeded) {
 		return parseFailed(ps, w);
 	}
@@ -540,7 +541,7 @@ ParseStatus parseWhileStatement(ParserStream ps, out ir.WhileStatement w)
 		return unexpectedToken(ps, w);
 	}
 	ps.get();
-	succeeded = parseBlockStatement(ps, w.block);
+	succeeded = parseBlockStatement(ps, /*#out*/w.block);
 	if (!succeeded) {
 		return parseFailed(ps, w);
 	}
@@ -557,7 +558,7 @@ ParseStatus parseDoStatement(ParserStream ps, out ir.DoStatement d)
 		return unexpectedToken(ps, d);
 	}
 	ps.get();
-	auto succeeded = parseBlockStatement(ps, d.block);
+	auto succeeded = parseBlockStatement(ps, /*#out*/d.block);
 	if (!succeeded) {
 		return parseFailed(ps, d);
 	}
@@ -569,7 +570,7 @@ ParseStatus parseDoStatement(ParserStream ps, out ir.DoStatement d)
 		return unexpectedToken(ps, d);
 	}
 	ps.get();
-	succeeded = parseExp(ps, d.condition);
+	succeeded = parseExp(ps, /*#out*/d.condition);
 	if (!succeeded) {
 		return parseFailed(ps, d);
 	}
@@ -612,19 +613,19 @@ ParseStatus parseForeachStatement(ParserStream ps, out ir.ForeachStatement f)
 					return unexpectedToken(ps, f);
 				}
 				name = ps.get();
-				type = buildAutoType(name.loc);
+				type = buildAutoType(/*#ref*/name.loc);
 			} else if (ps == [TokenType.Identifier, TokenType.Colon]) {
 				name = ps.get();
 				auto succeeded = match(ps, f, TokenType.Colon);
 				if (!succeeded) {
 					return parseFailed(ps, f);
 				}
-				succeeded = parseType(ps, type);
+				succeeded = parseType(ps, /*#out*/type);
 				if (!succeeded) {
 					return parseFailed(ps, f);
 				}
 			} else {
-				auto succeeded = parseType(ps, type);
+				auto succeeded = parseType(ps, /*#out*/type);
 				if (!succeeded) {
 					return parseFailed(ps, f);
 				}
@@ -653,13 +654,13 @@ ParseStatus parseForeachStatement(ParserStream ps, out ir.ForeachStatement f)
 	}
 
 	ir.Exp firstExp;
-	auto succeeded = parseExp(ps, firstExp);
+	auto succeeded = parseExp(ps, /*#out*/firstExp);
 	if (!succeeded) {
 		return parseFailed(ps, f);
 	}
 	if (matchIf(ps, ir.TokenType.DoubleDot)) {
 		f.beginIntegerRange = firstExp;
-		succeeded = parseExp(ps, f.endIntegerRange);
+		succeeded = parseExp(ps, /*#out*/f.endIntegerRange);
 		if (!succeeded) {
 			return parseFailed(ps, f);
 		}
@@ -671,7 +672,7 @@ ParseStatus parseForeachStatement(ParserStream ps, out ir.ForeachStatement f)
 		return unexpectedToken(ps, f);
 	}
 	ps.get();
-	succeeded = parseBlockStatement(ps, f.block);
+	succeeded = parseBlockStatement(ps, /*#out*/f.block);
 	if (!succeeded) {
 		return parseFailed(ps, f);
 	}
@@ -708,7 +709,7 @@ ParseStatus parseForStatement(ParserStream ps, out ir.ForStatement f)
 				}
 				ps.get();
 				ir.Exp e;
-				succeeded = parseExp(ps, e);
+				succeeded = parseExp(ps, /*#out*/e);
 				if (!succeeded) {
 					return parseFailed(ps, f);
 				}
@@ -734,7 +735,7 @@ ParseStatus parseForStatement(ParserStream ps, out ir.ForStatement f)
 	}
 
 	if (ps != TokenType.Semicolon) {
-		auto succeeded = parseExp(ps, f.test);
+		auto succeeded = parseExp(ps, /*#out*/f.test);
 		if (!succeeded) {
 			return parseFailed(ps, f);
 		}
@@ -746,7 +747,7 @@ ParseStatus parseForStatement(ParserStream ps, out ir.ForStatement f)
 
 	while (ps != TokenType.CloseParen) {
 		ir.Exp e;
-		auto succeeded = parseExp(ps, e);
+		auto succeeded = parseExp(ps, /*#out*/e);
 		if (!succeeded) {
 			return parseFailed(ps, f);
 		}
@@ -758,7 +759,7 @@ ParseStatus parseForStatement(ParserStream ps, out ir.ForStatement f)
 	}
 	ps.get();
 
-	auto succeeded = parseBlockStatement(ps, f.block);
+	auto succeeded = parseBlockStatement(ps, /*#out*/f.block);
 	if (!succeeded) {
 		return parseFailed(ps, f);
 	}
@@ -808,7 +809,7 @@ ParseStatus parseSwitchStatement(ParserStream ps, out ir.SwitchStatement ss)
 		return wrongToken(ps, ss.nodeType, ps.peek, TokenType.OpenParen);
 	}
 	ps.get();
-	auto succeeded = parseExp(ps, ss.condition);
+	auto succeeded = parseExp(ps, /*#out*/ss.condition);
 	if (!succeeded) {
 		return parseFailed(ps, ss);
 	}
@@ -823,7 +824,7 @@ ParseStatus parseSwitchStatement(ParserStream ps, out ir.SwitchStatement ss)
 		}
 		ps.get();
 		ir.Exp e;
-		succeeded = parseExp(ps, e);
+		succeeded = parseExp(ps, /*#out*/e);
 		if (!succeeded) {
 			return parseFailed(ps, ss);
 		}
@@ -846,7 +847,7 @@ ParseStatus parseSwitchStatement(ParserStream ps, out ir.SwitchStatement ss)
 		}
 		ps.get();
 		ir.Exp e;
-		succeeded = parseExp(ps, e);
+		succeeded = parseExp(ps, /*#out*/e);
 		if (!succeeded) {
 			return parseFailed(ps, ss);
 		}
@@ -897,7 +898,7 @@ ParseStatus parseSwitchStatement(ParserStream ps, out ir.SwitchStatement ss)
 			ps.get();
 			hadDefault = true;
 			newCase.isDefault = true;
-			succeeded = parseCaseStatements(ps, newCase.statements);
+			succeeded = parseCaseStatements(ps, /*#out*/newCase.statements);
 			if (!succeeded) {
 				return parseFailed(ps, newCase);
 			}
@@ -910,14 +911,14 @@ ParseStatus parseSwitchStatement(ParserStream ps, out ir.SwitchStatement ss)
 			ps.get();
 			ir.Exp[] exps;
 			ir.Exp e;
-			succeeded = parseExp(ps, e);
+			succeeded = parseExp(ps, /*#out*/e);
 			if (!succeeded) {
 				return parseFailed(ps, ss);
 			}
 			exps ~= e;
 			if (matchIf(ps, TokenType.Comma)) {
 				while (ps != TokenType.Colon) {
-					succeeded = parseExp(ps, e);
+					succeeded = parseExp(ps, /*#out*/e);
 					if (!succeeded) {
 						return parseFailed(ps, ss);
 					}
@@ -946,7 +947,7 @@ ParseStatus parseSwitchStatement(ParserStream ps, out ir.SwitchStatement ss)
 						return wrongToken(ps, ss.nodeType, ps.peek, TokenType.Case);
 					}
 					ps.get();
-					succeeded = parseExp(ps, newCase.secondExp);
+					succeeded = parseExp(ps, /*#out*/newCase.secondExp);
 					if (!succeeded) {
 						return parseFailed(ps, ss);
 					}
@@ -956,7 +957,7 @@ ParseStatus parseSwitchStatement(ParserStream ps, out ir.SwitchStatement ss)
 					ps.get();
 				}
 			}
-			succeeded = parseCaseStatements(ps, newCase.statements);
+			succeeded = parseCaseStatements(ps, /*#out*/newCase.statements);
 			if (!succeeded) {
 				return parseFailed(ps, newCase);
 			}
@@ -1046,7 +1047,7 @@ ParseStatus parseGotoStatement(ParserStream ps, out ir.GotoStatement gs)
 		ps.get();
 		gs.isCase = true;
 		if (ps != TokenType.Semicolon) {
-			auto succeeded = parseExp(ps, gs.exp);
+			auto succeeded = parseExp(ps, /*#out*/gs.exp);
 			if (!succeeded) {
 				return parseFailed(ps, gs);
 			}
@@ -1076,7 +1077,7 @@ ParseStatus parseWithStatement(ParserStream ps, out ir.WithStatement ws)
 		return unexpectedToken(ps, ws);
 	}
 	ps.get();
-	auto succeeded = parseExp(ps, ws.exp);
+	auto succeeded = parseExp(ps, /*#out*/ws.exp);
 	if (!succeeded) {
 		return parseFailed(ps, ws);
 	}
@@ -1084,7 +1085,7 @@ ParseStatus parseWithStatement(ParserStream ps, out ir.WithStatement ws)
 		return unexpectedToken(ps, ws);
 	}
 	ps.get();
-	succeeded = parseBlockStatement(ps, ws.block);
+	succeeded = parseBlockStatement(ps, /*#out*/ws.block);
 	if (!succeeded) {
 		return parseFailed(ps, ws);
 	}
@@ -1102,7 +1103,7 @@ ParseStatus parseSynchronizedStatement(ParserStream ps, out ir.SynchronizedState
 	}
 	ps.get();
 	if (matchIf(ps, TokenType.OpenParen)) {
-		auto succeeded = parseExp(ps, ss.exp);
+		auto succeeded = parseExp(ps, /*#out*/ss.exp);
 		if (!succeeded) {
 			return parseFailed(ps, ss);
 		}
@@ -1111,7 +1112,7 @@ ParseStatus parseSynchronizedStatement(ParserStream ps, out ir.SynchronizedState
 		}
 		ps.get();
 	}
-	auto succeeded = parseBlockStatement(ps, ss.block);
+	auto succeeded = parseBlockStatement(ps, /*#out*/ss.block);
 	if (!succeeded) {
 		return parseFailed(ps, ss);
 	}
@@ -1129,7 +1130,7 @@ ParseStatus parseTryStatement(ParserStream ps, out ir.TryStatement t)
 		return unexpectedToken(ps, t);
 	}
 	ps.get();
-	auto succeeded = parseBlockStatement(ps, t.tryBlock);
+	auto succeeded = parseBlockStatement(ps, /*#out*/t.tryBlock);
 	if (!succeeded) {
 		return parseFailed(ps, t);
 	}
@@ -1149,13 +1150,13 @@ ParseStatus parseTryStatement(ParserStream ps, out ir.TryStatement t)
 				if (!succeeded) {
 					return succeeded;
 				}
-				succeeded = parseType(ps, var.type);
+				succeeded = parseType(ps, /*#out*/var.type);
 				if (!succeeded) {
 					return parseFailed(ps, t);
 				}
 			} else {
 				// catch (Exception e) or catch (Exception)
-				succeeded = parseType(ps, var.type);
+				succeeded = parseType(ps, /*#out*/var.type);
 				if (!succeeded) {
 					return parseFailed(ps, t);
 				}
@@ -1174,7 +1175,7 @@ ParseStatus parseTryStatement(ParserStream ps, out ir.TryStatement t)
 			}
 			ps.get();
 			ir.BlockStatement bs;
-			succeeded = parseBlockStatement(ps, bs);
+			succeeded = parseBlockStatement(ps, /*#out*/bs);
 			if (!succeeded) {
 				return parseFailed(ps, t);
 			}
@@ -1182,7 +1183,7 @@ ParseStatus parseTryStatement(ParserStream ps, out ir.TryStatement t)
 			t.catchVars ~= var;
 			t.catchBlocks ~= bs;
 		} else {
-			succeeded = parseBlockStatement(ps, t.catchAll);
+			succeeded = parseBlockStatement(ps, /*#out*/t.catchAll);
 			if (!succeeded) {
 				return parseFailed(ps, t);
 			}
@@ -1193,7 +1194,7 @@ ParseStatus parseTryStatement(ParserStream ps, out ir.TryStatement t)
 	}
 
 	if (matchIf(ps, TokenType.Finally)) {
-		succeeded = parseBlockStatement(ps, t.finallyBlock);
+		succeeded = parseBlockStatement(ps, /*#out*/t.finallyBlock);
 		if (!succeeded) {
 			return parseFailed(ps, t);
 		}
@@ -1214,7 +1215,7 @@ ParseStatus parseThrowStatement(ParserStream ps, out ir.ThrowStatement t)
 		return unexpectedToken(ps, t);
 	}
 	ps.get();
-	auto succeeded = parseExp(ps, t.exp);
+	auto succeeded = parseExp(ps, /*#out*/t.exp);
 	if (!succeeded) {
 		return parseFailed(ps, t);
 	}
@@ -1259,7 +1260,7 @@ ParseStatus parseScopeStatement(ParserStream ps, out ir.ScopeStatement ss)
 		return unexpectedToken(ps, ss);
 	}
 	ps.get();
-	auto succeeded = parseBlockStatement(ps, ss.block);
+	auto succeeded = parseBlockStatement(ps, /*#out*/ss.block);
 	if (!succeeded) {
 		return parseFailed(ps, ss);
 	}
@@ -1286,7 +1287,7 @@ ParseStatus parsePragmaStatement(ParserStream ps, out ir.PragmaStatement prs)
 	auto nameTok = ps.get();
 	prs.type = nameTok.value;
 	if (matchIf(ps, TokenType.Comma)) {
-		auto succeeded = parseArgumentList(ps, prs.arguments);
+		auto succeeded = parseArgumentList(ps, /*#out*/prs.arguments);
 		if (!succeeded) {
 			return parseFailed(ps, prs);
 		}
@@ -1295,7 +1296,7 @@ ParseStatus parsePragmaStatement(ParserStream ps, out ir.PragmaStatement prs)
 		return unexpectedToken(ps, prs);
 	}
 	ps.get();
-	auto succeeded = parseBlockStatement(ps, prs.block);
+	auto succeeded = parseBlockStatement(ps, /*#out*/prs.block);
 	if (!succeeded) {
 		return parseFailed(ps, prs);
 	}
@@ -1308,16 +1309,16 @@ ParseStatus parseConditionStatement(ParserStream ps, out ir.ConditionStatement c
 	cs = new ir.ConditionStatement();
 	cs.loc = ps.peek.loc;
 
-	auto succeeded = parseCondition(ps, cs.condition);
+	auto succeeded = parseCondition(ps, /*#out*/cs.condition);
 	if (!succeeded) {
 		return parseFailed(ps, cs);
 	}
-	succeeded = parseBlockStatement(ps, cs.block);
+	succeeded = parseBlockStatement(ps, /*#out*/cs.block);
 	if (!succeeded) {
 		return parseFailed(ps, cs);
 	}
 	if (matchIf(ps, TokenType.Else)) {
-		succeeded = parseBlockStatement(ps, cs._else);
+		succeeded = parseBlockStatement(ps, /*#out*/cs._else);
 		if (!succeeded) {
 			return parseFailed(ps, cs);
 		}
@@ -1336,7 +1337,7 @@ ParseStatus parseMixinStatement(ParserStream ps, out ir.MixinStatement ms)
 	ps.get();
 	
 	if (matchIf(ps, TokenType.OpenParen)) {
-		auto succeeded = parseExp(ps, ms.stringExp);
+		auto succeeded = parseExp(ps, /*#out*/ms.stringExp);
 		if (!succeeded) {
 			return parseFailed(ps, ms);
 		}
@@ -1382,7 +1383,7 @@ ParseStatus parseStaticIs(ParserStream ps, out ir.AssertStatement as)
 	ps.get();
 	ir.IsExp isExp;
 	ps.saveTokens();
-	auto succeeded = parseIsExp(ps, isExp);
+	auto succeeded = parseIsExp(ps, /*#out*/isExp);
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.IsExp);
 	}
@@ -1403,7 +1404,7 @@ ParseStatus parseStaticIs(ParserStream ps, out ir.AssertStatement as)
 			break;
 		}
 	}
-	as.message = buildConstantString(isExp.loc, msg.toString());
+	as.message = buildConstantString(/*#ref*/isExp.loc, msg.toString());
 	return Succeeded;
 }
 
@@ -1428,7 +1429,7 @@ ParseStatus parseColonAssign(ParserStream ps, NodeSinkDg dgt)
 		}
 	}
 	if (idents.length > 1 || ps == TokenType.Colon) {
-		return parseColonDeclaration(ps, comment, idents, dgt);
+		return parseColonDeclaration(ps, /*#out*/comment, idents, dgt);
 	}
 	if (ps != TokenType.ColonAssign) {
 		return unexpectedToken(ps, ir.NodeType.Variable);
@@ -1436,7 +1437,7 @@ ParseStatus parseColonAssign(ParserStream ps, NodeSinkDg dgt)
 	ps.get();
 
 	ir.Exp exp;
-	auto succeeded = parseExp(ps, exp);
+	auto succeeded = parseExp(ps, /*#out*/exp);
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.Variable);
 	}
@@ -1444,7 +1445,7 @@ ParseStatus parseColonAssign(ParserStream ps, NodeSinkDg dgt)
 	if (!succeeded) {
 		return succeeded;
 	}
-	var = buildVariable(loc, buildAutoType(loc), ir.Variable.Storage.Invalid,
+	var = buildVariable(/*#ref*/loc, buildAutoType(/*#ref*/loc), ir.Variable.Storage.Invalid,
                         idents[0].value, exp);
 	var.docComment = comment;
 	ps.retroComment = var;
@@ -1460,7 +1461,7 @@ ParseStatus parseColonDeclaration(ParserStream ps, string comment, Token[] ident
 	}
 	ps.get();
 	ir.Type type;
-	auto succeeded = parseType(ps, type);
+	auto succeeded = parseType(ps, /*#out*/type);
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.Variable);
 	}
@@ -1469,13 +1470,13 @@ ParseStatus parseColonDeclaration(ParserStream ps, string comment, Token[] ident
 		if (idents.length > 1) {
 			return unexpectedToken(ps, ir.NodeType.Variable);
 		}
-		succeeded = parseExp(ps, assign);
+		succeeded = parseExp(ps, /*#out*/assign);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Variable);
 		}
 	}
 	foreach (i, ident; idents) {
-		auto var = buildVariable(ident.loc, i > 0 ? copyType(type) : type,
+		auto var = buildVariable(/*#ref*/ident.loc, i > 0 ? copyType(type) : type,
 		                         ir.Variable.Storage.Invalid, ident.value);
 		var.assign = assign;
 		var.docComment = comment;
