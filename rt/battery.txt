@@ -1,7 +1,15 @@
+#
+# This is the Volt runtime.
+#
+--is-the-rt
+#
 # Extra files
+#
 src/vrt/gc/save_regs.asm
 src/vrt/os/eh.asm
+#
 # OS deps
+#
 --if-linux
 -lpthread
 --if-linux
