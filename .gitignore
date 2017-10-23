@@ -9,6 +9,8 @@
 /viviv
 /viviv.*
 /LLVM.*
+/vls/vls
+/vls/vls.exe
 build.bat
 .obj
 .pkg
