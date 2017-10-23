@@ -87,6 +87,13 @@ public:
 	 */
 	bool hasPhase2;
 
+	/*!
+	 * Change various rules to make this module more compatible with D.
+	 *
+	 * Controlled by the magical flags lexed at the top of the module.
+	 */
+	bool magicFlagD;
+
 	bool gathered;
 
 

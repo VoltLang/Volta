@@ -8,9 +8,11 @@ import volt.exceptions;
 import volt.token.location : Location;
 
 enum LexStatus {
+	NotPresent = 2,
 	Succeeded = 1,
 	Failed = 0
 }
+alias NotPresent = LexStatus.NotPresent;
 alias Succeeded = LexStatus.Succeeded;
 alias Failed = LexStatus.Failed;
 
@@ -31,6 +33,8 @@ public:
 		Unexpected,
 		//! Tried to use an unsupported feature.
 		Unsupported,
+		//! Display the given string.
+		String,
 		//! Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaah! (Compiler Error)
 		Panic
 	}
@@ -78,6 +82,8 @@ public:
 			return format("failed parsing a '%s'.", str);
 		case Unsupported:
 			return format("'%s' is an unsupported feature.", str);
+		case String:
+			return str;
 		case Ok:
 		case Panic:
 			break;

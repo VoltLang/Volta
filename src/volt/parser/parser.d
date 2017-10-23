@@ -67,7 +67,9 @@ public:
 		auto src = new Source(source, filename);
 		src.skipScriptLine();
 
-		auto ps = new ParserStream(lex(src), settings);
+		auto tw = lex(src);
+		auto ps = new ParserStream(tw.getTokens(), settings);
+		ps.magicFlagD = tw.magicFlagD;
 		if (dumpLex) {
 			doDumpLex(ps);
 		}
@@ -84,7 +86,9 @@ public:
 		auto src = new Source(source, loc.filename);
 		src.changeCurrentLocation(loc.filename, loc.line);
 
-		auto ps = new ParserStream(lex(src), settings);
+		auto tw = lex(src);
+		auto ps = new ParserStream(tw.getTokens(), settings);
+		ps.magicFlagD = tw.magicFlagD;
 		if (dumpLex) {
 			doDumpLex(ps);
 		}

@@ -13,7 +13,7 @@ import volt.interfaces;
 import volt.token.location;
 
 import volt.semantic.typer : getExpType, getTypeidType;
-import volt.semantic.lookup : lookup, lookupInGivenScopeOnly;
+import volt.semantic.lookup : lookup, lookupInGivenScopeOnly, getModuleFromScope;
 import volt.semantic.context : Context;
 import volt.semantic.classify : getParentFunction, realType, isFloatingPoint,
 	typesEqual, inheritsFrom, isIntegral;
@@ -294,7 +294,8 @@ void handleNull(Context ctx, ir.Type left, ref ir.Exp right, ir.Type rightType)
 			}
 			goto default;
 		case AAType:
-			if (!ctx.lp.beMoreLikeD) {
+			auto mod = getModuleFromScope(/*#ref*/right.loc, ctx.current);
+			if (!mod.magicFlagD) {
 				goto default;
 			}
 			auto t = copyTypeSmart(right.loc, left);

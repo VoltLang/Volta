@@ -17,7 +17,7 @@ import volt.token.token : isPrimitiveTypeToken;
  */
 bool isTemplateInstance(ParserStream ps)
 {
-	if (ps.settings.internalD) {
+	if (ps.magicFlagD) {
 		return (ps == [TokenType.Alias, TokenType.Identifier, TokenType.Assign, TokenType.Identifier, TokenType.Bang]) != 0;
 	}
 	switch (ps.peek.type) {
@@ -74,7 +74,7 @@ bool isTemplateDefinition(ParserStream ps)
 	auto mark = ps.save();
 	ps.get();
 	bool result;
-	if (!ps.settings.internalD) {
+	if (!ps.magicFlagD) {
 		result = (ps == [TokenType.Identifier, TokenType.Bang]) != 0;
 	} else {
 		result = (ps == [TokenType.Identifier, TokenType.OpenParen]) && !functionTemplate;
@@ -131,7 +131,7 @@ ParseStatus parseTemplateInstance(ParserStream ps, out ir.TemplateInstance ti, o
 
 	switch (ps.peek.type) {
 	case TokenType.Alias:
-		assert(ps.settings.internalD);
+		assert(ps.magicFlagD);
 		ti.kind = ir.TemplateKind.Struct;
 		break;
 	case TokenType.Struct:
@@ -260,7 +260,7 @@ ParseStatus parseTemplateDefinition(ParserStream ps, out ir.TemplateDefinition t
 	td.name = nameTok.value;
 
 	ParseStatus succeeded;
-	if (!ps.settings.internalD) {
+	if (!ps.magicFlagD) {
 		succeeded = match(ps, td, TokenType.Bang);
 		if (!succeeded) {
 			return succeeded;

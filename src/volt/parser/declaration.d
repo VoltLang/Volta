@@ -26,7 +26,7 @@ import volt.parser.templates;
 ParseStatus parseVariable(ParserStream ps, NodeSinkDg dgt)
 {
 	if (ps == TokenType.Alias) {
-		if (ps.settings.internalD && isTemplateInstance(ps)) {
+		if (ps.magicFlagD && isTemplateInstance(ps)) {
 			ir.Struct s;
 			parseLegacyTemplateInstance(ps, s);
 			dgt(s);
@@ -102,7 +102,7 @@ ParseStatus parseVariable(ParserStream ps, NodeSinkDg dgt)
 		if (_global && func.kind == ir.Function.Kind.Invalid) {
 			func.kind = ir.Function.Kind.GlobalNested;
 		}
-		warningOldStyleFunction(func.loc, ps.settings);
+		warningOldStyleFunction(/*#ref*/func.loc, ps.magicFlagD, ps.settings);
 		dgt(func);
 		return Succeeded;
 	} else {
@@ -308,7 +308,7 @@ ParseStatus reallyParseVariable(ParserStream ps, ir.Type base, NodeSinkDg dgt)
 				return Failed;
 			}
 		}
-		warningOldStyleVariable(d.loc, ps.settings);
+		warningOldStyleVariable(/*#ref*/d.loc, ps.magicFlagD, ps.settings);
 		dgt(d);
 
 		if (first is null) {
@@ -677,7 +677,7 @@ ParseStatus parseNewFunctionType(ParserStream ps, out ir.CallableType func)
 
 ParseStatus parseFunctionType(ParserStream ps, out ir.FunctionType func, ir.Type base)
 {
-	warningOldStyleFunctionPtr(ps.peek.loc, ps.settings);
+	warningOldStyleFunctionPtr(/*#ref*/ps.peek.loc, ps.magicFlagD, ps.settings);
 	func = new ir.FunctionType();
 	func.loc = ps.peek.loc;
 	func.docComment = ps.comment();
@@ -699,7 +699,7 @@ ParseStatus parseFunctionType(ParserStream ps, out ir.FunctionType func, ir.Type
 
 ParseStatus parseDelegateType(ParserStream ps, out ir.DelegateType func, ir.Type base)
 {
-	warningOldStyleDelegateType(ps.peek.loc, ps.settings);
+	warningOldStyleDelegateType(/*#ref*/ps.peek.loc, ps.magicFlagD, ps.settings);
 	func = new ir.DelegateType();
 	func.loc = ps.peek.loc;
 

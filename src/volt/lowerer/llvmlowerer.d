@@ -1944,7 +1944,8 @@ void lowerVarargCall(LanguagePass lp, ir.Scope current, ir.Postfix postfix, ir.F
 		ir.Type[] types;
 		foreach (i, _exp; varArgsSlice) {
 			auto etype = getExpType(_exp);
-			if (lp.beMoreLikeD &&
+			auto mod = getModuleFromScope(/*#ref*/loc, current);
+			if (mod.magicFlagD &&
 					realType(etype).nodeType == ir.NodeType.Struct) {
 				warning(_exp.loc, "passing struct to var-arg function.");
 			}

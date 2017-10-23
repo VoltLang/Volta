@@ -530,6 +530,9 @@ public:
 	//! Comments for defgroup and other commands.
 	string[] globalDocComments;
 
+	//! Did the lexer pick up a /*#D*/ magic flag?
+	bool magicFlagD;
+
 
 private:
 	string[] mComment;
