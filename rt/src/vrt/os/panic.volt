@@ -23,5 +23,9 @@ extern(C) fn vrt_panic(msgs: const(char)[][], location: const(char)[])
 	}
 
 	fflush(stderr);
-	exit(-1);
+	version (Windows) {
+		exit(1);  // Remove this once LLVM supports catching exceptions on Windows.
+	} else {
+		exit(-1);
+	}
 }
