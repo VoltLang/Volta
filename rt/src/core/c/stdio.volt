@@ -251,9 +251,9 @@ version (Windows) {
 		_IONBF = 2,
 	}
 
-	private extern global /*shared*/ __stdinp: FILE*;
-	private extern global /*shared*/ __stdoutp: FILE*;
-	private extern global /*shared*/ __stderrp: FILE*;
+	extern global /*shared*/ __stdinp: FILE*;
+	extern global /*shared*/ __stdoutp: FILE*;
+	extern global /*shared*/ __stderrp: FILE*;
 
 	alias stdin = __stdinp;
 	alias stdout = __stdoutp;
