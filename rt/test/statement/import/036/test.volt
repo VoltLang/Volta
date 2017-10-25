@@ -1,4 +1,5 @@
-//T macro:import
+//T macro:importfail
+//T check:access
 module test;
 
 import b36;
