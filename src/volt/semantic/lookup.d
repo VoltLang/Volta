@@ -598,12 +598,20 @@ void checkAccess(ref in Location loc, string name, ir.Store store, bool classPar
 	if (store.kind == ir.Store.Kind.Alias) {
 		assert(store.node.nodeType == ir.NodeType.Alias);
 	}
-	auto alia = cast(ir.Alias)store.originalNode;
+	auto alia = cast(ir.Alias)store.node;
 	if (alia is null) {
-		alia = cast(ir.Alias)store.node;
+		alia = cast(ir.Alias)store.originalNode;
+		if (alia !is null && alia.access == ir.Access.Public) {
+			// If it's a public alias, check the store it points at.
+			alia = null;
+		}
 	}
 	if (alia !is null) {
-		return check(alia.access);
+		if (alia.store.myAlias is null || alia.access != ir.Access.Public) {
+			return check(alia.access);
+		} else {
+			return checkAccess(/*#ref*/loc, name, alia.store.myAlias, classParentLookup);
+		}
 	}
 	auto decl = cast(ir.Variable)store.node;
 	if (decl !is null) {
