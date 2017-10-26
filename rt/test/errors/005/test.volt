@@ -1,5 +1,5 @@
 //T macro:expect-failure
-//T check:5:11: error: @property functions with no arguments like 'foo' cannot have a void return type.
+//T check:5:10: error: @property functions with no arguments like 'foo' cannot have a void return type.
 module test;
 
 @property fn foo()

@@ -1,5 +1,5 @@
 //T macro:importfail
-//T check:test.volt:9:10: error: tried to access private symbol
+//T check:test.volt:9:9: error: tried to access private symbol
 module test;
 
 import clazz;
