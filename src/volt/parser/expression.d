@@ -963,11 +963,12 @@ ParseStatus parseFunctionLiteral(ParserStream ps, out ir.FunctionLiteral fl)
 ParseStatus parseAssignExp(ParserStream ps, out intir.AssignExp exp)
 {
 	exp = new intir.AssignExp();
+	auto origin = ps.peek.loc;
 	exp.taggedRef = matchIf(ps, TokenType.Ref);
 	if (!exp.taggedRef) {
 		exp.taggedOut = matchIf(ps, TokenType.Out);
 	}
-	auto origin = ps.peek.loc;
+
 	auto succeeded = parseTernaryExp(ps, /*#out*/exp.left);
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.BinOp);

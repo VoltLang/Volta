@@ -687,6 +687,17 @@ CompilerException makeArchNotSupported(string file = __FILE__, const int line = 
 	return new CompilerError("architecture not supported on current platform.", file, line);
 }
 
+CompilerException makeWrongTag(ir.Exp exp, bool taggedRef, string file = __FILE__, const int line = __LINE__)
+{
+	auto msg = format("argument to %s parameter is tagged, but with the wrong tag.",
+		taggedRef ? "out" : "ref");
+	msg ~= exp.loc.locationGuide();
+	auto chunk = exp.loc.errorChunk();
+	msg ~= format("(That means use '%s %s' instead of '%s %s'.)",
+		taggedRef ? "out" : "ref", chunk, taggedRef ? "ref" : "out", chunk);
+	return new CompilerError(exp.loc, msg, file, line);
+}
+
 CompilerException makeNotTaggedOut(ir.Exp exp, string file = __FILE__, const int line = __LINE__)
 {
 	auto msg = "mark arguments to out parameters with 'out'.";

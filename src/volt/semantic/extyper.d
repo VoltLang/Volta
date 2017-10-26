@@ -1008,12 +1008,21 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			if (!isLValue(postfix.arguments[i])) {
 				throw makeNotLValueButRefOut(postfix.arguments[i], asFunctionType.isArgRef[i]);
 			}
+			if (postfix.argumentTags[i] != ir.Postfix.TagKind.None) {
+				auto _paramref = asFunctionType.isArgRef[i];
+				auto _paramout = asFunctionType.isArgOut[i];
+				auto _tagref   = postfix.argumentTags[i] == ir.Postfix.TagKind.Ref;
+				auto _tagout   = !_tagref;
+				if ((_paramref && _tagout) || (_paramout && _tagref)) {
+					throw makeWrongTag(postfix.arguments[i], _tagref);
+				}
+			}
 			if (asFunctionType.isArgRef[i] &&
-			    postfix.argumentTags[i] != ir.Postfix.TagKind.Ref) {
+				postfix.argumentTags[i] != ir.Postfix.TagKind.Ref) {
 				throw makeNotTaggedRef(postfix.arguments[i]);
 			}
 			if (asFunctionType.isArgOut[i] &&
-			    postfix.argumentTags[i] != ir.Postfix.TagKind.Out) {
+				postfix.argumentTags[i] != ir.Postfix.TagKind.Out) {
 				throw makeNotTaggedOut(postfix.arguments[i]);
 			}
 		}
