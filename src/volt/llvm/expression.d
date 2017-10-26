@@ -281,10 +281,10 @@ void handleIs(State state, ir.BinOp bin, Value result)
 
 	auto dgt = cast(DelegateType)result.type;
 	if (dgt !is null) {
-		auto lInstance = getValueFromAggregate(state, loc, left, DelegateType.voidPtrIndex);
-		auto lFunc = getValueFromAggregate(state, loc, left, DelegateType.funcIndex);
-		auto rInstance = getValueFromAggregate(state, loc, right, DelegateType.voidPtrIndex);
-		auto rFunc = getValueFromAggregate(state, loc, right, DelegateType.funcIndex);
+		auto lInstance = getValueFromAggregate(state, /*#ref*/loc, left, DelegateType.voidPtrIndex);
+		auto lFunc = getValueFromAggregate(state, /*#ref*/loc, left, DelegateType.funcIndex);
+		auto rInstance = getValueFromAggregate(state, /*#ref*/loc, right, DelegateType.voidPtrIndex);
+		auto rFunc = getValueFromAggregate(state, /*#ref*/loc, right, DelegateType.funcIndex);
 
 		auto instance = LLVMBuildICmp(state.builder, pr, lInstance, rInstance, "");
 		auto func     = LLVMBuildICmp(state.builder, pr, lFunc, rFunc, "");
@@ -307,10 +307,10 @@ void handleIs(State state, ir.BinOp bin, Value result)
 	}
 
 	// Deal with arrays.
-	auto lPtr = getValueFromAggregate(state, loc, left, ArrayType.ptrIndex);
-	auto lLen = getValueFromAggregate(state, loc, left, ArrayType.lengthIndex);
-	auto rPtr = getValueFromAggregate(state, loc, right, ArrayType.ptrIndex);
-	auto rLen = getValueFromAggregate(state, loc, right, ArrayType.lengthIndex);
+	auto lPtr = getValueFromAggregate(state, /*#ref*/loc, left, ArrayType.ptrIndex);
+	auto lLen = getValueFromAggregate(state, /*#ref*/loc, left, ArrayType.lengthIndex);
+	auto rPtr = getValueFromAggregate(state, /*#ref*/loc, right, ArrayType.ptrIndex);
+	auto rLen = getValueFromAggregate(state, /*#ref*/loc, right, ArrayType.lengthIndex);
 
 	auto ptr = LLVMBuildICmp(state.builder, pr, lPtr, rPtr, "");
 	auto len = LLVMBuildICmp(state.builder, pr, lLen, rLen, "");
@@ -483,7 +483,7 @@ void handleBinOpNonAssignHelper(State state, ref Location loc, ir.BinOp.Op binOp
 	// Note the flipping of args.
 	ptrType = cast(PointerType)right.type;
 	if (ptrType !is null)
-		return handleBinOpPointer(state, loc, binOp, right, left, result);
+		return handleBinOpPointer(state, /*#ref*/loc, binOp, right, left, result);
 
 	auto pt = cast(PrimitiveType)right.type;
 	if (pt is null)
@@ -496,7 +496,7 @@ void handleBinOpNonAssignHelper(State state, ref Location loc, ir.BinOp.Op binOp
  * Pointer artithmetic, caller have to flip left and right. Assumes debug
  * info location already set.
  */
-void handleBinOpPointer(State state, Location loc, ir.BinOp.Op binOp,
+void handleBinOpPointer(State state, ref in Location loc, ir.BinOp.Op binOp,
                         Value ptr, Value other, Value result)
 {
 	auto ptrType = cast(PointerType)ptr.type;
@@ -524,7 +524,7 @@ void handleBinOpPointer(State state, Location loc, ir.BinOp.Op binOp,
 /*!
  * Primitive artithmetic, assumes debug info location already set.
  */
-void handleBinOpPrimitive(State state, Location loc, ir.BinOp.Op binOp,
+void handleBinOpPrimitive(State state, ref in Location loc, ir.BinOp.Op binOp,
                           PrimitiveType pt,
 	                      Value left, Value right, Value result)
 {
@@ -800,8 +800,8 @@ void handleCastPointerPrim(State state, Location loc, Type newTypePtr, Type newT
  */
 void handleCastArray(State state, Location loc, ArrayType newType, Value result)
 {
-	auto ptr = getValueFromAggregate(state, loc, result, ArrayType.ptrIndex);
-	auto len = getValueFromAggregate(state, loc, result, ArrayType.lengthIndex);
+	auto ptr = getValueFromAggregate(state, /*#ref*/loc, result, ArrayType.ptrIndex);
+	auto len = getValueFromAggregate(state, /*#ref*/loc, result, ArrayType.lengthIndex);
 	auto casted = LLVMBuildBitCast(state.builder, ptr,
 		newType.ptrType.llvmType, "");
 
@@ -995,7 +995,7 @@ void handleSliceNone(State state, ir.Postfix postfix, Value result)
 	if (at !is null) {
 		// Nothing todo.
 	} else if (sat !is null) {
-		getArrayFromStaticArray(state, postfix.loc, result);
+		getArrayFromStaticArray(state, /*#ref*/postfix.loc, result);
 	} else {
 		throw panic(/*#ref*/postfix.loc, "unhandled type in slice (none)");
 	}
@@ -1029,12 +1029,12 @@ void handleSliceTwo(State state, ir.Postfix postfix, Value result)
 
 	} else if (at !is null) {
 
-		getPointerFromArray(state, postfix.loc, left);
+		getPointerFromArray(state, /*#ref*/postfix.loc, left);
 		makeNonPointer(state, left);
 
 	} else if (sat !is null) {
 
-		getPointerFromStaticArray(state, postfix.loc, left);
+		getPointerFromStaticArray(state, /*#ref*/postfix.loc, left);
 		at = sat.arrayType;
 
 	} else {
@@ -1085,7 +1085,7 @@ void handleCreateDelegate(State state, ir.Postfix postfix, Value result)
 	auto funcPtr = LLVMBuildBitCast(
 		state.builder, func.value, dgt.llvmCallPtrType, "");
 
-	makeDelegateValue(state, postfix.loc, dgt,
+	makeDelegateValue(state, /*#ref*/postfix.loc, dgt,
 	                  voidPtr, funcPtr, result);
 }
 
@@ -1128,9 +1128,9 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 
 		ret = dt.ret;
 
-		auto func = getValueFromAggregate(state, postfix.loc,
+		auto func = getValueFromAggregate(state, /*#ref*/postfix.loc,
 			result, DelegateType.funcIndex);
-		llvmExtraArg = getValueFromAggregate(state, postfix.loc,
+		llvmExtraArg = getValueFromAggregate(state, /*#ref*/postfix.loc,
 			result, DelegateType.voidPtrIndex);
 
 		offset = 1;
@@ -1293,7 +1293,7 @@ void handleAccessExp(State state, ir.AccessExp ae, Value result)
 			index = *ptr;
 		}
 
-		getFieldFromAggregate(state, ae.loc, result, index, st.types[index], result);
+		getFieldFromAggregate(state, /*#ref*/ae.loc, result, index, st.types[index], result);
 	} else {
 		throw panic(ae, format("%s is not struct, array or pointer", ir.nodeToString(result.type.irType)));
 	}
@@ -1317,11 +1317,11 @@ void handleBuiltinExp(State state, ir.BuiltinExp inbuilt, Value result)
 
 		if (at !is null) {
 			getFieldFromAggregate(
-				state, inbuilt.loc, result,
+				state, /*#ref*/inbuilt.loc, result,
 				ArrayType.ptrIndex,
 				at.types[ArrayType.ptrIndex], result);
 		} else if (sat !is null) {
-			getPointerFromStaticArray(state, inbuilt.loc, result);
+			getPointerFromStaticArray(state, /*#ref*/inbuilt.loc, result);
 		} else {
 			throw panic(/*#ref*/inbuilt.loc, "bad array ptr built-in.");
 		}
@@ -1334,7 +1334,7 @@ void handleBuiltinExp(State state, ir.BuiltinExp inbuilt, Value result)
 
 		if (at !is null) {
 			getFieldFromAggregate(
-				state, inbuilt.loc, result,
+				state, /*#ref*/inbuilt.loc, result,
 				ArrayType.lengthIndex,
 				at.types[ArrayType.lengthIndex], result);
 		} else if (sat !is null) {
@@ -1520,7 +1520,7 @@ void getCreateDelegateValues(State state, ir.Postfix postfix, Value instance, Va
 		auto st = cast(StructType)instance.type;
 		assert(st !is null);
 
-		getFieldFromAggregate(state, postfix.loc, instance, 0, st.types[0], func);
+		getFieldFromAggregate(state, /*#ref*/postfix.loc, instance, 0, st.types[0], func);
 
 		makeNonPointer(state, func);
 

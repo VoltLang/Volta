@@ -192,7 +192,7 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		if (ps.lookahead(1).type == TokenType.Colon ||
 		    ps.lookahead(1).type == TokenType.ColonAssign ||
 			ps.lookahead(1).type == TokenType.Comma) {
-			succeeded = parseColonAssign(ps, /*#out*/dgt);
+			succeeded = parseColonAssign(ps, dgt);
 			if (!succeeded) {
 				return succeeded;
 			}
@@ -966,7 +966,7 @@ ParseStatus parseSwitchStatement(ParserStream ps, out ir.SwitchStatement ss)
 		case TokenType.CloseBrace:
 			break;
 		default:
-			return parseExpected(ps, ps.peek.loc, ss, "'case', 'default', or '}'");
+			return parseExpected(ps, /*#ref*/ps.peek.loc, ss, "'case', 'default', or '}'");
 		}
 	}
 	while (braces--) {
@@ -1054,7 +1054,7 @@ ParseStatus parseGotoStatement(ParserStream ps, out ir.GotoStatement gs)
 		}
 		break;
 	default:
-		return parseExpected(ps, ps.peek.loc, gs, "identifier, 'case', or 'default'");
+		return parseExpected(ps, /*#ref*/ps.peek.loc, gs, "identifier, 'case', or 'default'");
 	}
 	if (ps != TokenType.Semicolon) {
 		return unexpectedToken(ps, gs);
@@ -1188,7 +1188,7 @@ ParseStatus parseTryStatement(ParserStream ps, out ir.TryStatement t)
 				return parseFailed(ps, t);
 			}
 			if (ps == TokenType.Catch) {
-				return parseExpected(ps, ps.peek.loc, t, "catch all block as final catch in try statement");
+				return parseExpected(ps, /*#ref*/ps.peek.loc, t, "catch all block as final catch in try statement");
 			}
 		}
 	}
@@ -1201,7 +1201,7 @@ ParseStatus parseTryStatement(ParserStream ps, out ir.TryStatement t)
 	}
 
 	if (t.catchBlocks.length == 0 && t.catchAll is null && t.finallyBlock is null) {
-		return parseExpected(ps, t.loc, t, "catch block");
+		return parseExpected(ps, /*#ref*/t.loc, t, "catch block");
 	}
 
 	return Succeeded;
@@ -1254,7 +1254,7 @@ ParseStatus parseScopeStatement(ParserStream ps, out ir.ScopeStatement ss)
 		ss.kind = Failure;
 		break;
 	default:
-		return parseExpected(ps, ps.peek.loc, ss, "'exit', 'success', or 'failure'");
+		return parseExpected(ps, /*#ref*/ps.peek.loc, ss, "'exit', 'success', or 'failure'");
 	}
 	if (ps != TokenType.CloseParen) {
 		return unexpectedToken(ps, ss);
@@ -1429,7 +1429,7 @@ ParseStatus parseColonAssign(ParserStream ps, NodeSinkDg dgt)
 		}
 	}
 	if (idents.length > 1 || ps == TokenType.Colon) {
-		return parseColonDeclaration(ps, /*#out*/comment, idents, dgt);
+		return parseColonDeclaration(ps, comment, idents, dgt);
 	}
 	if (ps != TokenType.ColonAssign) {
 		return unexpectedToken(ps, ir.NodeType.Variable);

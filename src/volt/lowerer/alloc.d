@@ -22,7 +22,7 @@ import volt.token.location;
  * @param[in] type      Type to be alloced, copied smartly.
  * @param[in] countArg  A expression returning a value of size_t, not copied.
  */
-ir.Exp buildAllocVoidPtr(in Location loc, LanguagePass lp, ir.Type type,
+ir.Exp buildAllocVoidPtr(ref in Location loc, LanguagePass lp, ir.Type type,
                          ir.Exp countArg = null)
 {
 	if (countArg is null) {
@@ -63,10 +63,10 @@ ir.Exp buildAllocVoidPtr(in Location loc, LanguagePass lp, ir.Type type,
  * @param[in] type      Type to be alloced, copied smartly.
  * @param[in] countArg  A expression returning a value of size_t, not copied.
  */
-ir.Exp buildAllocTypePtr(in Location loc, LanguagePass lp, ir.Type type,
+ir.Exp buildAllocTypePtr(ref in Location loc, LanguagePass lp, ir.Type type,
                          ir.Exp countArg = null)
 {
-	auto pfixCall = buildAllocVoidPtr(loc, lp, type, countArg);
+	auto pfixCall = buildAllocVoidPtr(/*#ref*/loc, lp, type, countArg);
 
 	auto result = new ir.PointerType(copyTypeSmart(/*#ref*/loc, type));
 	result.loc = loc;

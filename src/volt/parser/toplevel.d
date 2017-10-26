@@ -66,7 +66,7 @@ ParseStatus parseModule(ParserStream ps, out ir.Module mod)
 	}
 
 	if (ps.multiDepth > 0) {
-		return parseExpected(ps, ps.peek.loc, ir.NodeType.Module, "@}");
+		return parseExpected(ps, /*#ref*/ps.peek.loc, ir.NodeType.Module, "@}");
 	}
 
 	// Get the global doc comments for defgroup and other commands.
@@ -324,7 +324,7 @@ body
 		ps.get();
 		break;
 	default:
-		succeeded = parseVariable(ps, /*#out*/sink.push);
+		succeeded = parseVariable(ps, sink.push);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TopLevelBlock);
 		}
@@ -431,7 +431,7 @@ ParseStatus parseImport(ParserStream ps, out ir.Import _import)
 		}
 	} else {
 		if (ps == TokenType.OpenBracket) {
-			return badMultiBind(ps, _import.loc);
+			return badMultiBind(ps, /*#ref*/_import.loc);
 		}
 		// No import bind.
 		ir.QualifiedName qname;
@@ -449,7 +449,7 @@ ParseStatus parseImport(ParserStream ps, out ir.Import _import)
 		do {
 			if (matchIf(ps, TokenType.Comma)) {
 				if (first) {
-					return parseExpected(ps, ps.peek.loc, ir.NodeType.Import, "identifier");
+					return parseExpected(ps, /*#ref*/ps.peek.loc, ir.NodeType.Import, "identifier");
 				}
 			}
 			first = false;
@@ -552,7 +552,7 @@ ParseStatus parseConstructor(ParserStream ps, out ir.Function c)
 		case TokenType.In:
 			// <in> { }
 			if (_in) {
-				return parseExpected(ps, ps.peek.loc, c, "one in block");
+				return parseExpected(ps, /*#ref*/ps.peek.loc, c, "one in block");
 			}
 			_in = true;
 			if (ps != TokenType.In) {
@@ -567,7 +567,7 @@ ParseStatus parseConstructor(ParserStream ps, out ir.Function c)
 		case TokenType.Out:
 			// <out>
 			if (_out) {
-				return parseExpected(ps, ps.peek.loc, c, "one out block");
+				return parseExpected(ps, /*#ref*/ps.peek.loc, c, "one out block");
 			}
 			_out = true;
 			if (ps != TokenType.Out) {
@@ -802,7 +802,7 @@ ParseStatus parseUnion(ParserStream ps, out ir.Union u, string templateName="")
 			}
 			ps.get();
 		} else {
-			return unsupportedFeature(ps, /*#out*/u, "opaque union declarations");
+			return unsupportedFeature(ps, u, "opaque union declarations");
 		}
 	} else {
 		if (ps.peek.type != TokenType.OpenBrace) {
@@ -1185,7 +1185,7 @@ ParseStatus parseAttribute(ParserStream ps, out ir.Attribute attr, bool noTopLev
 			case "safe": msg = "@safe"; break;
 			default: break;
 			}
-			return parseExpected(ps, attr.loc, ir.NodeType.Attribute, msg);
+			return parseExpected(ps, /*#ref*/attr.loc, ir.NodeType.Attribute, msg);
 		}
 		version (Volt) { if (true) {
 			// TODO: Fix Volt's CFG bug.
@@ -1223,7 +1223,7 @@ ParseStatus parseAttribute(ParserStream ps, out ir.Attribute attr, bool noTopLev
 
 	if (matchIf(ps, TokenType.OpenBrace)) {
 		if (ps.comment().length > 0) {
-			return docCommentMultiple(ps, ps.lastDocComment.loc);
+			return docCommentMultiple(ps, /*#ref*/ps.lastDocComment.loc);
 		}
 		auto succeeded = parseTopLevelBlock(ps, /*#out*/attr.members, TokenType.CloseBrace);
 		if (!succeeded) {
@@ -1235,7 +1235,7 @@ ParseStatus parseAttribute(ParserStream ps, out ir.Attribute attr, bool noTopLev
 		 * doing it in the parser would require context.
 		 */
 		if (ps.comment().length > 0 && !ps.inMultiCommentBlock) {
-			return docCommentMultiple(ps, ps.lastDocComment.loc);
+			return docCommentMultiple(ps, /*#ref*/ps.lastDocComment.loc);
 		}
 	} else {
 		auto succeeded = parseOneTopLevelBlock(ps, /*#out*/attr.members);
@@ -1282,7 +1282,7 @@ ParseStatus parseCondition(ParserStream ps, out ir.Condition condition)
 		ps.get();
 		break;
 	default:
-		return parseExpected(ps, ps.peek.loc, condition, "'version', 'debug', or 'static'");
+		return parseExpected(ps, /*#ref*/ps.peek.loc, condition, "'version', 'debug', or 'static'");
 	}
 
 	auto succeeded = parseExp(ps, /*#out*/condition.exp);

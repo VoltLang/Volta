@@ -69,9 +69,9 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 					throw makeExpected(/*#ref*/loc, "unicode codepoint specification");
 				}
 				if (hexchars.length == 4) {
-					encode(/*#ref*/output, i);
+					encode(output, i);
 				} else if (hexchars.length == 8) {
-					encode(/*#ref*/output, cast(ushort)i);
+					encode(output, cast(ushort)i);
 				} else {
 					assert(false);
 				}
@@ -106,19 +106,19 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 		// \X
 		if (escaping) {
 			switch (c) {
-				case '\'': encode(/*#ref*/output, '\''); break;
-				case '\"': encode(/*#ref*/output, '\"'); break;
-				case '\?': encode(/*#ref*/output, '\?'); break;
-				case '\\': encode(/*#ref*/output, '\\'); break;
-				case '$': encode(/*#ref*/output, '$'); break;
-				case 'a': encode(/*#ref*/output, '\a'); break;
-				case 'b': encode(/*#ref*/output, '\b'); break;
-				case 'f': encode(/*#ref*/output, '\f'); break;
-				case 'n': encode(/*#ref*/output, '\n'); break;
-				case 'r': encode(/*#ref*/output, '\r'); break;
-				case 't': encode(/*#ref*/output, '\t'); break;
-				case 'v': encode(/*#ref*/output, '\v'); break;
-				case '0': encode(/*#ref*/output, '\0'); break;
+				case '\'': encode(output, '\''); break;
+				case '\"': encode(output, '\"'); break;
+				case '\?': encode(output, '\?'); break;
+				case '\\': encode(output, '\\'); break;
+				case '$': encode(output, '$'); break;
+				case 'a': encode(output, '\a'); break;
+				case 'b': encode(output, '\b'); break;
+				case 'f': encode(output, '\f'); break;
+				case 'n': encode(output, '\n'); break;
+				case 'r': encode(output, '\r'); break;
+				case 't': encode(output, '\t'); break;
+				case 'v': encode(output, '\v'); break;
+				case '0': encode(output, '\0'); break;
 				case 'x':
 					escaping = false;
 					hexing = true;
@@ -147,7 +147,7 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 			escaping = true;
 			continue;
 		} else {
-			encode(/*#ref*/output, c);
+			encode(output, c);
 		}
 	}
 

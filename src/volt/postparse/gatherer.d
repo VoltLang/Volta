@@ -31,7 +31,7 @@ enum Where
 	Function,
 }
 
-ir.Store findShadowed(ir.Scope _scope, Location loc, string name, bool warningsEnabled)
+ir.Store findShadowed(ir.Scope _scope, ref in Location loc, string name, bool warningsEnabled)
 {
 	auto store = _scope.getStore(name);
 

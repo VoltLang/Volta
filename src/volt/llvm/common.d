@@ -55,20 +55,20 @@ bool shouldCUseStructRet(TargetInfo target, ir.Struct irStruct)
  * Turns a ArrayType Value into a Pointer Value. Value must be
  * of type ArrayType.
  */
-void getPointerFromArray(State state, Location loc, Value result)
+void getPointerFromArray(State state, ref in Location loc, Value result)
 {
 	auto at = cast(ArrayType)result.type;
 	assert(at !is null);
 
 	getFieldFromAggregate(
-		state, loc, result, ArrayType.ptrIndex, at.ptrType, result);
+		state, /*#ref*/loc, result, ArrayType.ptrIndex, at.ptrType, result);
 }
 
 /*!
  * Turns a StaticArrayType Value into a Pointer Value. Value must be
  * of type StaticArrayType.
  */
-void getPointerFromStaticArray(State state, Location loc, Value result)
+void getPointerFromStaticArray(State state, ref in Location loc, Value result)
 {
 	auto sat = cast(StaticArrayType)result.type;
 	assert(sat !is null);
@@ -83,13 +83,13 @@ void getPointerFromStaticArray(State state, Location loc, Value result)
  * Turns a StaticArrayType Value into a Array Value. Value must be
  * of type StaticArrayType.
  */
-void getArrayFromStaticArray(State state, Location loc, Value result)
+void getArrayFromStaticArray(State state, ref in Location loc, Value result)
 {
 	auto sat = cast(StaticArrayType)result.type;
 	assert(sat !is null);
 	auto at = sat.arrayType;
 
-	getPointerFromStaticArray(state, loc, result);
+	getPointerFromStaticArray(state, /*#ref*/loc, result);
 	auto srcPtr = result.value;
 	auto srcLen = LLVMConstInt(state.sizeType.llvmType, sat.length, false);
 
@@ -101,7 +101,7 @@ void getArrayFromStaticArray(State state, Location loc, Value result)
  *
  * Sets the type of result to the given type.
  */
-void getFieldFromAggregate(State state, Location loc, Value left,
+void getFieldFromAggregate(State state, ref in Location loc, Value left,
                            uint index, Type resultType, Value result)
 {
 	auto type = left.type;
@@ -126,7 +126,7 @@ void getFieldFromAggregate(State state, Location loc, Value left,
  * Returns a member of aggregate type in value form.
  * Note only value form.
  */
-LLVMValueRef getValueFromAggregate(State state, Location loc,
+LLVMValueRef getValueFromAggregate(State state, ref in Location loc,
                                    Value left, uint index)
 {
 	auto type = left.type;
@@ -159,7 +159,7 @@ void makeArrayValue(State state, Location loc, ArrayType at,
 	result.type = at;
 }
 
-void makeDelegateValue(State state, Location loc, DelegateType dt,
+void makeDelegateValue(State state, ref in Location loc, DelegateType dt,
                        LLVMValueRef voidPtr, LLVMValueRef funcPtr,
                        Value result)
 {

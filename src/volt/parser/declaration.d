@@ -92,7 +92,7 @@ ParseStatus parseVariable(ParserStream ps, NodeSinkDg dgt)
 		return reallyParseVariable(ps, base, dgt);
 	} else if (colonDeclaration) {
 		// New variable declaration.
-		return parseColonAssign(ps, /*#out*/dgt);
+		return parseColonAssign(ps, dgt);
 	} else if (ps.lookahead(1).type == TokenType.OpenParen) {
 		// Function!
 		ir.Function func;
@@ -248,7 +248,7 @@ ParseStatus parseAliasStaticIf(ParserStream ps, out ir.AliasStaticIf asi)
 		succeeded = match(ps, asi.nodeType,
 			[TokenType.Semicolon, TokenType.CloseBrace]);
 		if (!succeeded) {
-			return parseFailed(ps, /*#out*/asi.nodeType);
+			return parseFailed(ps, asi.nodeType);
 		}
 
 		asi.conditions ~= condition;
@@ -488,7 +488,7 @@ ParseStatus parseStorageType(ParserStream ps, out ir.StorageType storageType)
 
 	if (ps == [TokenType.Identifier, TokenType.Semicolon] ||
 		ps == [TokenType.Identifier, TokenType.Assign, TokenType.Void, TokenType.Semicolon]) {
-		parseExpected(ps, /*#ref*/ps.peek.loc, /*#out*/storageType, "explicit type");
+		parseExpected(ps, /*#ref*/ps.peek.loc, storageType, "explicit type");
 		ps.neverIgnoreError = true;
 		return Failed;
 	} else if (matchIf(ps, TokenType.OpenParen)) {
@@ -1322,7 +1322,7 @@ ParseStatus parseBlock(ParserStream ps, out ir.BlockStatement bs)
 		if (!succeeded) {
 			return succeeded;
 		}
-		succeeded = parseStatement(ps, /*#out*/sink.push);
+		succeeded = parseStatement(ps, sink.push);
 		if (!succeeded) {
 			return parseFailed(ps, bs);
 		}

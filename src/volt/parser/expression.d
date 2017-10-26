@@ -317,7 +317,7 @@ ParseStatus postfixToExp(ParserStream ps, ref in Location loc, out ir.Exp exp, i
 			p.argumentTags ~= r;
 		}
 		ir.Exp theExp;
-		auto succeeded = postfixToExp(ps, /*#ref*/loc, /*#out*/theExp, /*#out*/postfix.postfix, p);
+		auto succeeded = postfixToExp(ps, /*#ref*/loc, /*#out*/theExp, postfix.postfix, p);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Postfix);
 		}
@@ -789,14 +789,14 @@ private ParseStatus _parseArgumentList(ParserStream ps, out intir.AssignExp[] pe
 ParseStatus parseArgumentList(ParserStream ps, out ir.Exp[] outexps, TokenType endChar = TokenType.CloseParen)
 {
 	intir.AssignExp[] pexps;
-	auto succeeded = _parseArgumentList(ps, /*#out*/pexps, /*#ref*/endChar);
+	auto succeeded = _parseArgumentList(ps, /*#out*/pexps, endChar);
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.Postfix);
 	}
 
 	foreach (exp; pexps) {
 		ir.Exp e;
-		succeeded = assignToExp(ps, /*#out*/exp, /*#out*/e);
+		succeeded = assignToExp(ps, exp, /*#out*/e);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Postfix);
 		}
@@ -1953,7 +1953,7 @@ ParseStatus parseRunExp(ParserStream ps, out ir.RunExp runexp)
  *
  * Used by composable strings.
  */
-ParseStatus parseInlineExp(Location loc, ParserStream ps, string slice, out ir.Exp exp)
+ParseStatus parseInlineExp(ref in Location loc, ParserStream ps, string slice, out ir.Exp exp)
 {
 	auto src = new Source(slice, loc.filename);
 	auto tw = lex(src);

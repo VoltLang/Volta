@@ -1004,26 +1004,28 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	assert(asFunctionType.params.length <= postfix.arguments.length);
 	rewriteHomogenousVariadic(ctx, asFunctionType, /*#ref*/postfix.arguments);
 	foreach (i; 0 .. asFunctionType.params.length) {
-		if (asFunctionType.isArgRef[i] || asFunctionType.isArgOut[i]) {
-			if (!isLValue(postfix.arguments[i])) {
-				throw makeNotLValueButRefOut(postfix.arguments[i], asFunctionType.isArgRef[i]);
-			}
-			if (postfix.argumentTags[i] != ir.Postfix.TagKind.None) {
-				auto _paramref = asFunctionType.isArgRef[i];
-				auto _paramout = asFunctionType.isArgOut[i];
-				auto _tagref   = postfix.argumentTags[i] == ir.Postfix.TagKind.Ref;
-				auto _tagout   = !_tagref;
+		if (i < postfix.argumentTags.length) {
+			auto _paramref = asFunctionType.isArgRef[i];
+			auto _paramout = asFunctionType.isArgOut[i];
+			auto _tagref   = postfix.argumentTags[i] == ir.Postfix.TagKind.Ref;
+			auto _tagout   = postfix.argumentTags[i] == ir.Postfix.TagKind.Out;
+			auto _tagnone  = postfix.argumentTags[i] == ir.Postfix.TagKind.None;
+			if (_paramref || _paramout) {
+				if (!isLValue(postfix.arguments[i])) {
+					throw makeNotLValueButRefOut(postfix.arguments[i], asFunctionType.isArgRef[i]);
+				}
 				if ((_paramref && _tagout) || (_paramout && _tagref)) {
 					throw makeWrongTag(postfix.arguments[i], _tagref);
 				}
+				if (_paramref && _tagnone) {
+					throw makeNotTaggedRef(postfix.arguments[i]);
+				}
+				if (_paramout && _tagnone) {
+					throw makeNotTaggedOut(postfix.arguments[i]);
+				}
 			}
-			if (asFunctionType.isArgRef[i] &&
-				postfix.argumentTags[i] != ir.Postfix.TagKind.Ref) {
-				throw makeNotTaggedRef(postfix.arguments[i]);
-			}
-			if (asFunctionType.isArgOut[i] &&
-				postfix.argumentTags[i] != ir.Postfix.TagKind.Out) {
-				throw makeNotTaggedOut(postfix.arguments[i]);
+			if (!_paramref && !_paramout && !_tagnone) {
+				throw makeSpuriousTag(postfix.arguments[i], _tagref);
 			}
 		}
 		tagLiteralType(postfix.arguments[i], asFunctionType.params[i]);
@@ -2050,7 +2052,7 @@ ir.Type opOverloadRewrite(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 
 	if (binop.op == ir.BinOp.Op.Greater || binop.op == ir.BinOp.Op.GreaterEqual ||
 		binop.op == ir.BinOp.Op.Less || binop.op == ir.BinOp.Op.LessEqual) {
-		exp = buildBinOp(/*#ref*/binop.loc, maybeInvertCmp(/*#ref*/binop.op, flipped),
+		exp = buildBinOp(/*#ref*/binop.loc, maybeInvertCmp(binop.op, flipped),
 			exp, buildConstantInt(/*#ref*/binop.loc, 0));
 		return buildBool(/*#ref*/binop.loc);
 	}
@@ -3255,7 +3257,7 @@ void extypeBlockStatement(Context ctx, ir.BlockStatement bs)
 		// False form (casting)
 		case BlockStatement:
 			auto s = cast(ir.BlockStatement) stat;
-			extypeBlockStatement(ctx, /*#ref*/s);
+			extypeBlockStatement(ctx, s);
 			break;
 		case ExpStatement:
 			auto es = cast(ir.ExpStatement) stat;
@@ -4004,11 +4006,11 @@ void extypeIfStatement(Context ctx, ref ir.Node n)
 	}
 
 	if (ifs.thenState !is null) {
-		extypeBlockStatement(ctx, /*#ref*/ifs.thenState);
+		extypeBlockStatement(ctx, ifs.thenState);
 	}
 
 	if (ifs.elseState !is null) {
-		extypeBlockStatement(ctx, /*#ref*/ifs.elseState);
+		extypeBlockStatement(ctx, ifs.elseState);
 	}
 }
 
@@ -5334,7 +5336,7 @@ public:
 
 	override Status visit(ir.TemplateDefinition td)
 	{
-		extypeTemplateDefinition(ctx, /*#ref*/td);
+		extypeTemplateDefinition(ctx, td);
 		return Continue;
 	}
 

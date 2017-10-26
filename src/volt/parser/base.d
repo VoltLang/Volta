@@ -102,7 +102,7 @@ public:
  *
  */
 
-ParseStatus parsePanic(ParserStream ps, Location loc,
+ParseStatus parsePanic(ParserStream ps, ref in Location loc,
                        ir.NodeType nodeType, string message,
                        string file = __FILE__, const int line = __LINE__)
 {
@@ -172,7 +172,7 @@ ParseStatus unsupportedFeature(ParserStream ps, ir.Node n, string s,
 	return Failed;
 }
 
-ParseStatus invalidIntegerLiteral(ParserStream ps, Location loc,
+ParseStatus invalidIntegerLiteral(ParserStream ps, ref in Location loc,
                                   string file = __FILE__,
                                   const int line = __LINE__)
 {
@@ -182,7 +182,7 @@ ParseStatus invalidIntegerLiteral(ParserStream ps, Location loc,
 	return Failed;
 }
 
-ParseStatus parseExpected(ParserStream ps, Location loc,
+ParseStatus parseExpected(ParserStream ps, ref in Location loc,
                           ir.NodeType nodeType, string message,
                           string file = __FILE__, const int line = __LINE__)
 {
@@ -191,14 +191,14 @@ ParseStatus parseExpected(ParserStream ps, Location loc,
 	return Failed;
 }
 
-ParseStatus parseExpected(ParserStream ps, Location loc,
+ParseStatus parseExpected(ParserStream ps, ref in Location loc,
                           ir.Node n, string message,
                           string file = __FILE__, const int line = __LINE__)
 {
 	return parseExpected(ps, /*#ref*/loc, n.nodeType, message, file, line);
 }
 
-ParseStatus allArgumentsMustBeLabelled(ParserStream ps, Location loc,
+ParseStatus allArgumentsMustBeLabelled(ParserStream ps, ref in Location loc,
                                        string file = __FILE__,
                                        const int line = __LINE__)
 {
@@ -207,7 +207,7 @@ ParseStatus allArgumentsMustBeLabelled(ParserStream ps, Location loc,
 	return Failed;
 }
 
-ParseStatus docCommentMultiple(ParserStream ps, Location loc,
+ParseStatus docCommentMultiple(ParserStream ps, ref in Location loc,
                                string file = __FILE__,
                                const int line = __LINE__)
 {
@@ -216,7 +216,7 @@ ParseStatus docCommentMultiple(ParserStream ps, Location loc,
 	return Failed;
 }
 
-ParseStatus strayDocComment(ParserStream ps, Location loc,
+ParseStatus strayDocComment(ParserStream ps, ref in Location loc,
                             string file = __FILE__, const int line = __LINE__)
 {
 	auto e = new ParserStrayDocComment(/*#ref*/loc, file, line);
@@ -224,7 +224,7 @@ ParseStatus strayDocComment(ParserStream ps, Location loc,
 	return Failed;
 }
 
-ParseStatus badComposable(ParserStream ps, Location loc,
+ParseStatus badComposable(ParserStream ps, ref in Location loc,
 						  string file = __FILE__, const int line = __LINE__)
 {
 	auto e = new ParserNotAComposableString(/*#ref*/loc, file, line);
@@ -232,7 +232,7 @@ ParseStatus badComposable(ParserStream ps, Location loc,
 	return Failed;
 }
 
-ParseStatus badMultiBind(ParserStream ps, Location loc,
+ParseStatus badMultiBind(ParserStream ps, ref in Location loc,
 						 string file = __FILE__, const int line = __LINE__)
 {
 	auto e = new ParserBadMultiBind(/*#ref*/loc, file, line);
@@ -411,7 +411,7 @@ ParseStatus eatComments(ParserStream ps)
 			ps.globalDocComments ~= commentTok.value;
 		} else if (commentTok.isBackwardsComment) {
 			if (ps.retroComment is null) {
-				return strayDocComment(ps, commentTok.loc);
+				return strayDocComment(ps, /*#ref*/commentTok.loc);
 			} else {
 				ps.retroComment.docComment = commentTok.value;
 			}
