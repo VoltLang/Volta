@@ -186,7 +186,8 @@ public:
 	 */
 	dchar next()
 	{
-		if (mChar == '\n') {
+		bool newLine = mChar == '\n';
+		if (newLine) {
 			loc.line++;
 			loc.column = 0;
 		}
@@ -200,7 +201,9 @@ public:
 			return mChar;
 		}
 
-		loc.column++;
+		if (!newLine) {
+			loc.column++;
+		}
 
 		return mChar;
 	}

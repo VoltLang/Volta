@@ -6,6 +6,8 @@
 module volt.token.location;
 
 import watt.text.format : format;
+import watt.text.string : splitLines, replace;
+import watt.io.file : exists, isFile, read;
 
 
 /*!
@@ -27,6 +29,57 @@ public:
 		return format("%s:%s:%s", filename, line, column);
 	}
 
+	/*!
+	 * Return the line pointed to by this location.  
+	 *
+	 * If the location is invalid for some reason, an empty string will be returned.
+	 */
+	const string errorLine()
+	{
+		if (!exists(filename) || !isFile(filename)) {
+			return "";
+		}
+		auto lines = splitLines(cast(string)read(filename));
+		if (line - 1 >= lines.length) {
+			return "";
+		}
+		return replace(lines[line - 1], "\t", " ");
+	}
+
+	/*!
+	 * Return the chunk of an `errorLine` that this points at, or an empty string.
+	 */
+	const string errorChunk()
+	{
+		auto theLine = errorLine();
+		if (column + length > theLine.length) {
+			return "";
+		}
+		return theLine[column .. column + length];
+	}
+
+	/*!
+	 * Return a few lines that show where in `filename` this Location is
+	 * pointing.
+	 */
+	const string locationGuide()
+	{
+		auto guide = "\n";
+		guide ~= errorLine();
+		guide ~= "\n";
+		foreach (i; 0 .. column) {
+			guide ~= " ";
+		}
+		foreach (i; column .. column + length) {
+			if (i == column) {
+				guide ~= "^";
+			} else {
+				guide ~= "~";
+			}
+		}
+		guide ~= "\n";
+		return guide;
+	}
 
 	/*!
 	 * Difference between two locations.
