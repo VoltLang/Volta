@@ -687,14 +687,22 @@ CompilerException makeArchNotSupported(string file = __FILE__, const int line = 
 	return new CompilerError("architecture not supported on current platform.", file, line);
 }
 
-CompilerException makeNotTaggedOut(ir.Exp exp, size_t i, string file = __FILE__, const int line = __LINE__)
+CompilerException makeNotTaggedOut(ir.Exp exp, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(exp.loc, format("arguments to out parameters (like no. %s) must be tagged as out.", i+1), file, line);
+	auto msg = "mark arguments to out parameters with 'out'.";
+	msg ~= exp.loc.locationGuide();
+	auto chunk = exp.loc.errorChunk();
+	msg ~= format("(That means use 'out %s' instead of just '%s'.)", chunk, chunk);
+	return new CompilerError(exp.loc, msg, file, line);
 }
 
-CompilerException makeNotTaggedRef(ir.Exp exp, size_t i, string file = __FILE__, const int line = __LINE__)
+CompilerException makeNotTaggedRef(ir.Exp exp, string file = __FILE__, const int line = __LINE__)
 {
-	return new CompilerError(exp.loc, format("arguments to ref parameters (like no. %s) must be tagged as ref.", i+1), file, line);
+	auto msg = "mark arguments to ref parameters with 'ref'.";
+	msg ~= exp.loc.locationGuide();
+	auto chunk = exp.loc.errorChunk();
+	msg ~= format("(That means use 'ref %s' instead of just '%s'.)", chunk, chunk);
+	return new CompilerError(exp.loc, msg, file, line);
 }
 
 CompilerException makeFunctionNameOutsideOfFunction(ir.TokenExp fexp, string file = __FILE__, const int line = __LINE__)

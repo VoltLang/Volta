@@ -1010,11 +1010,11 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 			}
 			if (asFunctionType.isArgRef[i] &&
 			    postfix.argumentTags[i] != ir.Postfix.TagKind.Ref) {
-				throw makeNotTaggedRef(postfix.arguments[i], i);
+				throw makeNotTaggedRef(postfix.arguments[i]);
 			}
 			if (asFunctionType.isArgOut[i] &&
 			    postfix.argumentTags[i] != ir.Postfix.TagKind.Out) {
-				throw makeNotTaggedOut(postfix.arguments[i], i);
+				throw makeNotTaggedOut(postfix.arguments[i]);
 			}
 		}
 		tagLiteralType(postfix.arguments[i], asFunctionType.params[i]);
