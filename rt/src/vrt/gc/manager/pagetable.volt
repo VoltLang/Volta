@@ -73,9 +73,12 @@ public:
 		return offset < TotalSize;
 	}
 
-	// Returns true if we can allocated n bytes.
+	// Returns true if we can allocate n bytes.
 	fn canAlloc(n: size_t) bool
 	{
+		if (n == 0) {
+			return false;
+		}
 		order := sizeToBuddyOrder(n);
 		return n <= TotalSize && mBuddy.canAlloc(order);
 	}
