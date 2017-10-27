@@ -252,7 +252,7 @@ ir.Store lookupAsImportScopes(LanguagePass lp, ir.Scope[] scopes, ref in Locatio
 	foreach (_scope; scopes) {
 		auto store = lookupInGivenScopeOnly(lp, _scope, /*#ref*/loc, name);
 		if (store !is null) {
-			if (retStore !is null) {
+			if (retStore !is null && retStore !is store) {
 				throw makeMultipleMatches(/*#ref*/loc, name);
 			}
 			retStore = ensureResolved(lp, store);
@@ -262,7 +262,7 @@ ir.Store lookupAsImportScopes(LanguagePass lp, ir.Scope[] scopes, ref in Locatio
 		walkPublicImports(lp, /*#ref*/loc, /*#ref*/ctx, _scope, name);
 		store = walkGetStore(lp, /*#ref*/loc, /*#ref*/ctx, _scope, name);
 		if (store !is null) {
-			if (retStore !is null) {
+			if (retStore !is null && retStore !is store) {
 				throw makeMultipleMatches(/*#ref*/loc, name);
 			}
 			retStore = store;
