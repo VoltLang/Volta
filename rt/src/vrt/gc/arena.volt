@@ -560,6 +560,13 @@ protected:
 
 		// Grab memory from the OS.
 		memorysz := roundUpToPageSize(n);
+		if (memorysz < n) {
+			/* Value has wrapped around; user has probably passed a
+			 * small negative value to an allocate function.
+			 */
+			vrt_gc_print_stats();
+			panicFailedToAlloc(n);
+		}
 		memory := mManager.allocMemoryFromOS(memorysz);
 		if (memory is null) {
 			collect();
