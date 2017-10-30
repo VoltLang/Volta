@@ -124,6 +124,7 @@ public:
 		registerFinalizer := false;
 
 		if (count == 0) {
+			// Early out on zero allocs.
 			mNum.zeroAllocs++;
 			return null;
 		} else if (count == cast(size_t) -2) {
@@ -134,6 +135,7 @@ public:
 			// We have a class and we want its dtor to be called.
 			registerFinalizer = true;
 		} else {
+			// Array allocation.
 			size = count * typeinfo.size;
 		}
 
@@ -145,7 +147,7 @@ public:
 		// Check max size.
 		if (size > MaxAllocSize) {
 			vrt_gc_print_stats();
-			panicFailedToAlloc(n);
+			panicFailedToAlloc(size);
 		}
 
 /*
@@ -161,8 +163,12 @@ public:
 /*
 		printf("pow %i\n", nextHighestPowerOfTwo(size));
 */
+		// This allocation should always work.
+		memory = alloc(size, registerFinalizer, typeinfo.mutableIndirection);
+		gcAssert(memory !is null);
 
-		// Statistics
+		// Statistics, do this after we have allocated to
+		// give better stats if we explode futher in the GC.
 		mNum.allocs++;
 		mNum.allocBytes += size;
 		if (count == cast(size_t) -1) {
@@ -173,12 +179,11 @@ public:
 			mNum.arrayBytes += size;
 		}
 
-		memory = alloc(size, registerFinalizer, typeinfo.mutableIndirection);
-		gcAssert(memory !is null);
-
+		// Zero memory or do class init.
 		if (count == cast(size_t) -1) {
 			__llvm_memcpy(memory, typeinfo.classInit, typeinfo.classSize, 0, false);
 		} else {
+			// TODO make the GC always return zeroed memory.
 			__llvm_memset(memory, 0, size, 0, false);
 		}
 
