@@ -37,8 +37,10 @@ enum HugePageSize = _2MB;
 enum GigaSize = _1GB;
 
 //! Minimum allocation size by which all allocation around rounded up to.
-enum MinAllocSize = 8;
+enum MinAllocSize = 8u;
 
+//! Safety check for maximum allocation size.
+enum MaxAllocSize = _128MB;
 
 /*!
  * Internal stat struct, has a lot more statistics then regular

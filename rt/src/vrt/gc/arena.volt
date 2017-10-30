@@ -142,6 +142,12 @@ public:
 			size = MinAllocSize;
 		}
 
+		// Check max size.
+		if (size > MaxAllocSize) {
+			vrt_gc_print_stats();
+			panicFailedToAlloc(n);
+		}
+
 /*
 		str := typeinfo.mangledName;
 		if (count == cast(size_t) -2) {
