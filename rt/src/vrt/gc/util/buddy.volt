@@ -19,6 +19,8 @@ public:
 	enum MinOrder = MIN;
 	enum MaxOrder = MAX;
 	enum NumLevels = MaxOrder - MinOrder + 1;
+	enum MinNumBits = 1 << MinOrder;
+	enum MaxNumBits = 1 << MaxOrder;
 
 
 private:

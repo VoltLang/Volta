@@ -24,8 +24,11 @@ struct PageTable
 {
 public:
 	static assert(GigaBuddy.MaxOrder == 18u);
-	static assert((1u << GigaBuddy.MaxOrder) * PageSize == TotalSize);
+	static assert(GigaBuddy.MaxNumBits * PageSize == TotalSize);
+	static assert(GigaBuddy.MinOrder == 3u);
+	static assert(TotalSize / GigaBuddy.MinNumBits == MaximumSize);
 
+	enum size_t MaximumSize = dsgn.MaxAllocSize;
 	enum size_t TotalSize = dsgn.GigaSize;
 	enum size_t FirstSize = dsgn.HugePageSize;
 	enum size_t PageSize = dsgn.PageSize;
