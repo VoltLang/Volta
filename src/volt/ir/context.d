@@ -264,6 +264,8 @@ public:
 	Store[string] symbols;
 	//! If a type fails to resolve in this scope when this is set, throw it.
 	CompilerException typeResolutionError;
+	//! This scope represents multiple scopes. Only used for multibind imports.
+	Scope[] multibindScopes;
 
 	/*!
 	 * Modules to implicitly look up symbols in.
@@ -302,6 +304,16 @@ public:
 		this.parent = parent;
 		this.nestedDepth = nestedDepth;
 		assert(this.node !is null);
+	}
+
+	/*!
+	 * Create a scope that represents multiple scopes.
+	 *
+	 * Used in multibind imports, by the lookup code.
+	 */
+	this(Scope[] scopes)
+	{
+		multibindScopes = scopes;
 	}
 
 	/*!

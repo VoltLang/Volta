@@ -538,6 +538,7 @@ ir.Type extypeIdentifierExp(Context ctx, ref ir.Exp e, Parent parent)
 	                   StoreSource.Identifier);
 }
 
+import watt.io.std;
 
 /*
  *

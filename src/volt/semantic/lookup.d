@@ -88,7 +88,11 @@ ir.Store lookup(LanguagePass lp, ir.Scope _scope, ir.QualifiedName qn)
 				current = asImport.targetModules[0].myScope;
 			}
 		} else {
-			store = lookupAsImportScope(lp, current, /*#ref*/loc, name);
+			if (current.multibindScopes.length > 0) {
+				store = lookupAsImportScopes(lp, current.multibindScopes, /*#ref*/loc, name);
+			} else {
+				store = lookupAsImportScope(lp, current, /*#ref*/loc, name);
+			}
 		}
 
 		if (store is null) {
