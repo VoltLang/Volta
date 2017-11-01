@@ -6,14 +6,14 @@ module volt.semantic.classresolver;
 
 import watt.text.format : format;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import volt.ir.util;
 
 import volt.errors;
 import volt.interfaces;
-import volt.token.location;
+import volta.ir.location;
 
-import volt.util.sinks;
+import volta.util.sinks;
 
 import volt.semantic.util;
 import volt.semantic.mangle;

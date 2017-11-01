@@ -9,12 +9,12 @@ import watt.io.streams : OutputStream;
 import watt.io.std : writefln, writef, output;
 import watt.text.format : format;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import volt.ir.printer;
 
 import volt.errors;
 import volt.interfaces;
-import volt.token.token;
+import volta.ir.token;
 import volt.visitor.visitor;
 
 

@@ -1,17 +1,17 @@
 /*#D*/
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.ir.context;
+module volta.ir.context;
 
 import watt.conv : toString;
 import watt.text.format : format;
 
-import volt.ir.base;
-import volt.ir.type;
-import volt.ir.toplevel;
-import volt.ir.declaration;
-import volt.ir.expression;
-import volt.token.location;
+import volta.ir.base;
+import volta.ir.type;
+import volta.ir.toplevel;
+import volta.ir.declaration;
+import volta.ir.expression;
+import volta.ir.location;
 
 enum Status
 {

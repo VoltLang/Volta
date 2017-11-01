@@ -7,15 +7,15 @@ module volt.parser.expression;
 import watt.conv : toInt, toUlong, toFloat, toDouble;
 import watt.text.utf : decode;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import intir = volt.parser.intir;
 import volt.ir.copy;
 import volt.ir.util;
 
 import volt.exceptions;
 import volt.errors;
-import volt.token.location;
-import volt.token.token : TokenType;
+import volta.ir.location;
+import volta.ir.token : TokenType;
 import volt.token.source : Source;
 import volt.token.lexer : lex;
 import volt.parser.base;

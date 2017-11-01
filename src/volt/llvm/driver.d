@@ -11,7 +11,7 @@ import volt.util.path : TempfileManager;
 import volt.util.perf : Perf, perf;
 import volt.util.cmdgroup : CmdGroup;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 
 import volt.exceptions;
 import volt.interfaces;

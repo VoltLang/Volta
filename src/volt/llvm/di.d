@@ -8,8 +8,8 @@
  */
 module volt.llvm.di;
 
-import volt.token.location;
-import ir = volt.ir.ir;
+import volta.ir.location;
+import ir = volta.ir;
 import lib.llvm.core;
 
 import volt.semantic.classify : size, alignment;

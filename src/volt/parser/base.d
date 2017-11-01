@@ -10,14 +10,14 @@ import watt.text.string : strip, indexOf;
 import watt.text.sink : StringSink;
 import watt.text.vdoc : cleanComment;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 
 import volt.errors;
 import volt.exceptions;
 import volt.arg : Settings;
-public import volt.token.token : Token, TokenType, tokenToString;
+public import volta.ir.token : Token, TokenType, tokenToString;
 import volt.token.stream : TokenStream;
-import volt.token.location : Location;
+import volta.ir.location : Location;
 import volt.parser.errors;
 
 

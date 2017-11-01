@@ -18,7 +18,7 @@ import volt.semantic.classify;
 import volt.llvm.di : diVariable;
 import volt.llvm.interfaces;
 import volt.llvm.abi.base;
-import ir = volt.ir.ir;
+import ir = volta.ir;
 
 
 /*!

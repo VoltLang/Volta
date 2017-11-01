@@ -9,7 +9,7 @@ import watt.io.streams : OutputFileStream;
 import watt.text.utf : encode;
 import watt.text.sink;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import volt.ir.printer;
 
 import volt.errors;

@@ -13,9 +13,9 @@ import volt.errors;
 public import lib.llvm.core;
 public import lib.llvm.c.DIBuilder : LLVMDIBuilderRef;
 
-public import volt.token.location;
+public import volta.ir.location;
 public import volt.interfaces;
-public import ir = volt.ir.ir;
+public import ir = volta.ir;
 
 public import volt.llvm.di;
 public import volt.llvm.type;

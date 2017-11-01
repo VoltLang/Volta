@@ -3,10 +3,10 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.parser.intir;
 
-import volt.ir.base;
-import volt.ir.type;
-import volt.ir.declaration;
-import volt.ir.expression;
+import volta.ir.base;
+import volta.ir.type;
+import volta.ir.declaration;
+import volta.ir.expression;
 
 
 /*

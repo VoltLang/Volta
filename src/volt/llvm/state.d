@@ -13,11 +13,11 @@ import watt.text.string : startsWith;
 
 import volt.errors;
 import volt.interfaces;
-import ir = volt.ir.ir;
+import ir = volta.ir;
 
 import volt.visitor.visitor;
 
-import volt.token.location;
+import volta.ir.location;
 import volt.semantic.lookup;
 
 import volt.llvm.di;

@@ -5,9 +5,9 @@ import watt.conv : toInt;
 import watt.text.ascii : isDigit;
 import watt.text.sink : StringSink;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import volt.ir.util;
-import volt.token.location;
+import volta.ir.location;
 
 
 //! Take the first n characters from s, advance s by n characters, and return the result.

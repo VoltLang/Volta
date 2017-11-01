@@ -7,7 +7,7 @@ module volt.visitor.visitor;
 import watt.text.format : format;
 import watt.text.sink : StringSink;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 
 import volt.errors;
 

@@ -11,7 +11,7 @@ module volt.postparse.scopereplacer;
 
 import watt.text.format : format;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import volt.ir.util;
 
 import volt.errors;

@@ -8,10 +8,10 @@
  */
 module volt.llvm.common;
 
-import volt.token.location;
+import volta.ir.location;
 
 import volt.ir.util;
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import volt.interfaces;
 import volt.llvm.interfaces;
 import volt.semantic.classify;

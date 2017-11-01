@@ -4,14 +4,14 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.parser.templates;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import volt.ir.util;
 
 import volt.parser.base;
 import volt.parser.declaration;
 import volt.parser.toplevel;
 import volt.parser.expression;
-import volt.token.token : isPrimitiveTypeToken;
+import volta.ir.token : isPrimitiveTypeToken;
 
 /*!
  * Returns: true if ps is at a template instantiation, false otherwise.

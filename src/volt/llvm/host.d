@@ -15,9 +15,9 @@ import watt.text.format : format;
 
 import volt.errors;
 import volt.interfaces;
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import volt.ir.util;
-import volt.token.location;
+import volta.ir.location;
 import volt.semantic.classify;
 
 import lib.llvm.core;

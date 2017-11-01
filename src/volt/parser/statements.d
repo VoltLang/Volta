@@ -6,14 +6,14 @@ module volt.parser.statements;
 import watt.text.ascii;
 import watt.text.sink;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import volt.ir.util;
 import volt.ir.copy : copyType;
 
 import volt.errors;
 import volt.exceptions;
 import volt.token.stream;
-import volt.token.token : TokenType, Token;
+import volta.ir.token : TokenType, Token;
 
 import volt.parser.base;
 import volt.parser.declaration;

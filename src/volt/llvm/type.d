@@ -12,11 +12,11 @@ import lib.llvm.core;
 
 import watt.text.format : format;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import volt.ir.util;
 
 import volt.errors;
-import volt.util.sinks;
+import volta.util.sinks;
 import volt.llvm.common;
 import volt.llvm.interfaces;
 import volt.llvm.abi.base;
@@ -69,7 +69,7 @@ protected:
 }
 
 /*!
- * Void @link volt.ir.type.PrimitiveType PrimtiveType@endlink.
+ * Void @link volta.ir.base.PrimitiveType PrimtiveType@endlink.
  *
  * @ingroup llvmbackend
  */
@@ -90,7 +90,7 @@ private:
 }
 
 /*!
- * Integer @link volt.ir.type.PrimitiveType PrimtiveType@endlink but not void.
+ * Integer @link volta.ir.base.PrimitiveType PrimtiveType@endlink but not void.
  *
  * @ingroup llvmbackend
  */
@@ -689,7 +689,7 @@ private:
 }
 
 /*!
- * Backend instance of a @link volt.ir.toplevel.Struct ir.Struct@endlink.
+ * Backend instance of a @link volta.ir.toplevel.Struct ir.Struct@endlink.
  *
  * @ingroup llvmbackend
  */
@@ -819,7 +819,7 @@ private:
 }
 
 /*!
- * Backend instance of a @link volt.ir.toplevel.Union ir.Union@endlink.
+ * Backend instance of a @link volta.ir.toplevel.Union ir.Union@endlink.
  *
  * @ingroup llvmbackend
  */

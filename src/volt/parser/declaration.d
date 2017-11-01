@@ -6,7 +6,7 @@ module volt.parser.declaration;
 import watt.conv : toInt;
 import watt.text.format : format;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import volt.ir.util;
 import volt.ir.copy;
 import volt.util.string;
@@ -14,8 +14,8 @@ import volt.util.string;
 import volt.exceptions;
 import volt.errors;
 
-import volt.token.token : isPrimitiveTypeToken, isStorageTypeToken;
-import volt.token.location;
+import volta.ir.token : isPrimitiveTypeToken, isStorageTypeToken;
+import volta.ir.location;
 import volt.parser.base;
 import volt.parser.expression;
 import volt.parser.toplevel;

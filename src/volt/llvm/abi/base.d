@@ -10,7 +10,7 @@ module volt.llvm.abi.base;
 
 import lib.llvm.core;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 
 import volt.errors;
 import volt.interfaces;

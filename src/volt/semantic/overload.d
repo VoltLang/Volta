@@ -7,12 +7,12 @@ version (Volt) import core.object; // Needed, sort.
 
 import watt.algorithm;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import volt.ir.util;
 
 import volt.errors;
 import volt.interfaces;
-import volt.token.location;
+import volta.ir.location;
 
 import volt.semantic.util;
 import volt.semantic.typer;
@@ -20,7 +20,7 @@ import volt.semantic.context;
 import volt.semantic.classify;
 import volt.semantic.implicit;
 
-import volt.util.sinks;
+import volta.util.sinks;
 
 
 /*!
