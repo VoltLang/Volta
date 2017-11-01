@@ -6,8 +6,6 @@ module volt.ir.context;
 import watt.conv : toString;
 import watt.text.format : format;
 
-import volt.exceptions;
-import volt.errors;
 import volt.ir.base;
 import volt.ir.type;
 import volt.ir.toplevel;
@@ -15,6 +13,11 @@ import volt.ir.declaration;
 import volt.ir.expression;
 import volt.token.location;
 
+enum Status
+{
+	Success,
+	Error
+}
 
 /*!
  * @defgroup irContext IR Context Classes
@@ -263,7 +266,7 @@ public:
 	//! Declared symbols in this scope.
 	Store[string] symbols;
 	//! If a type fails to resolve in this scope when this is set, throw it.
-	CompilerException typeResolutionError;
+	void* typeResolutionError;
 	//! This scope represents multiple scopes. Only used for multibind imports.
 	Scope[] multibindScopes;
 
@@ -335,6 +338,8 @@ public:
 
 	/*!
 	 * Reserve a identifier in this scope.
+	 *
+	 * Returns: null, if an identifier couldn't be reserved.
 	 */
 	Store reserveId(Node n, string name)
 	{
@@ -344,7 +349,7 @@ public:
 			symbols[name] = store;
 			return store;
 		}
-		throw panic(n, "failed to reserve ident '%s'", name);
+		return null;
 	}
 
 	/*!
@@ -352,19 +357,16 @@ public:
 	 * alias is resolved to is defaulted to this scope, but this can be
 	 * changed with the look argument, used by import rebinds.
 	 *
-	 * Throws:
-	 *   CompilerPanic if another symbol of same name is found.
-	 *
 	 * Side-effects:
 	 *   None.
 	 */
-	Store addAlias(Alias n, string name)
+	Store addAlias(Alias n, string name, out Status status)
 	in {
 		assert(n !is null);
 		assert(name !is null);
 	}
 	body {
-
+		status = Status.Success;
 		auto store = new Store(this, n, name, Store.Kind.Alias);
 
 		auto ret = name in symbols;
@@ -387,7 +389,7 @@ public:
 		} else if (merge.kind == Store.Kind.Function) {
 			merge.kind = Store.Kind.Merge;
 		} else if (merge.kind != Store.Kind.Merge) {
-			errorDefined(n, name);
+			status = Status.Error;
 		}
 
 		merge.aliases ~= n;
@@ -398,19 +400,16 @@ public:
 	 * Add a named scope, @n is the node which introduced
 	 * this scope, must not be null.
 	 *
-	 * Throws:
-	 *   CompilerPanic if another symbol of same name is found.
-	 *
 	 * Side-effects:
 	 *   None.
 	 */
-	Store addScope(Node n, Scope s, string name)
+	Store addScope(Node n, Scope s, string name, out Status status)
 	in {
 		assert(n !is null);
 		assert(name !is null);
 	}
 	body {
-		errorOn(n, name);
+		errorOn(n, name, /*#out*/status);
 
 		auto store = new Store(this, n, name, Store.Kind.Scope);
 		symbols[name] = store;
@@ -422,15 +421,13 @@ public:
 	/*!
 	 * Add a named multiscope, `n` is the node which introduced
 	 * this scope and must not be null.
-	 *
-	 * @Throws CompilerPanic if another symbol of the same name is found.
 	 */
-	Store addMultiScope(Node n, Scope[] s, string name)
+	Store addMultiScope(Node n, Scope[] s, string name, out Status status)
 	in {
 		assert(n !is null);
 		assert(name !is null);
 	} body {
-		errorOn(n, name);
+		errorOn(n, name, /*#out*/status);
 
 		auto store = new Store(this, n, name, Store.Kind.MultiScope);
 		symbols[name] = store;
@@ -442,21 +439,16 @@ public:
 	/*!
 	 * Add a user defined type.
 	 *
-	 * Throws:
-	 *   CompilerPanic if another symbol of same name is found.
-	 *
 	 * Side-effects:
 	 *   None.
 	 */
-	Store addType(Node n, string name)
+	Store addType(Node n, string name, out Status status)
 	{
-		if (n is null) {
-			throw panic("null Node provided to addType");
+		if (n is null || name is null) {
+			status = Status.Error;
+			return null;
 		}
-		if (name is null) {
-			throw panic(/*#ref*/n.loc, "null name provided to addType");
-		}
-		errorOn(n, name);
+		errorOn(n, name, /*#out*/status);
 		auto store = new Store(this, n, name, Store.Kind.Type);
 		symbols[name] = store;
 
@@ -472,21 +464,15 @@ public:
 	/*!
 	 * Add a value like a constant or a function variable.
 	 *
-	 * Throws:
-	 *   CompilerPanic if another symbol of same name is found.
-	 *
 	 * Side-effects:
 	 *   None.
 	 */
-	Store addValue(Node n, string name)
+	Store addValue(Node n, string name, out Status status)
 	{
-		if (n is null) {
-			throw panic("null node passed to addValue");
+		if (n is null || name is null) {
+			status = Status.Error;
 		}
-		if (name is null) {
-			throw panic(/*#ref*/n.loc, "null name passed to addValue");
-		}
-		errorOn(n, name);
+		errorOn(n, name, /*#out*/status);
 		Store store;
 		if (n.nodeType == NodeType.FunctionParam) {
 			store = new Store(this, n, name, Store.Kind.FunctionParam);
@@ -507,13 +493,14 @@ public:
 	 * Side-effects:
 	 *   None.
 	 */
-	Store addFunction(Function func, string name)
+	Store addFunction(Function func, string name, out Status status)
 	in {
 		assert(func !is null);
 		assert(name !is null);
 	}
 	body {
 		auto ret = name in symbols;
+		status = Status.Success;
 
 		if (ret is null) {
 			auto store = new Store(this, func, name);
@@ -539,26 +526,23 @@ public:
 			return store;
 		}
 
-		errorDefined(func, name);
-		assert(false);
+		status = Status.Error;
+		return null;
 	}
 
 	/*!
 	 * Add a user defined template.
 	 *
-	 * Throws:
-	 *   CompilerPanic if another symbol of same name is found.
-	 *
 	 * Side-effects:
 	 *   None.
 	 */
-	Store addTemplate(Node n, string name)
+	Store addTemplate(Node n, string name, out Status status)
 	in {
 		assert(n !is null);
 		assert(name !is null);
 	}
 	body {
-		errorOn(n, name);
+		errorOn(n, name, /*#out*/status);
 		auto store = new Store(this, n, name, Store.Kind.Template);
 		symbols[name] = store;
 		return store;
@@ -567,42 +551,19 @@ public:
 	/*!
 	 * Add a named expression to the scope.
 	 *
-	 * Throws:
-	 *   CompilerPanic if another symbol of the same name is found.
-	 *
 	 * Side-effects:
 	 *   None.
 	 */
-	Store addEnumDeclaration(EnumDeclaration e)
+	Store addEnumDeclaration(EnumDeclaration e, out Status status)
 	in {
 		assert(e !is null);
 		assert(e.name.length > 0);
 	}
 	body {
-		errorOn(e, e.name);
+		errorOn(e, e.name, /*#out*/status);
 		auto store = new Store(this, e, e.name);
 		symbols[e.name] = store;
 		return store;
-	}
-
-	/*!
-	 * Add a pre-existing store to the scope.
-	 *
-	 * Throws:
-	 *   CompilerPanic if another symbol of the same name is found.
-	 *
-	 * Side-effects:
-	 *   None.
-	 */
-	void addStore(Store s, string name)
-	in {
-		assert(s !is null);
-		assert(s.node !is null);
-		assert(name !is null);
-	}
-	body {
-		errorOn(s.node, name);
-		symbols[name] = s;
 	}
 
 	/*!
@@ -640,21 +601,16 @@ public:
 	}
 
 private:
-	void errorOn(Node n, string name)
+	void errorOn(Node n, string name, out Status status)
 	in {
 		assert(name !is null);
 	}
 	body {
 		auto ret = name in symbols;
-		if (ret is null)
-			return;
-
-		errorDefined(n, name);
-	}
-
-	void errorDefined(Node n, string name)
-	{
-		auto str = format("\"%s\" already defined", name);
-		throw panic(/*#ref*/n.loc, str);
+		if (ret is null) {
+			status = Status.Success;
+		} else {
+			status = Status.Error;
+		}
 	}
 }

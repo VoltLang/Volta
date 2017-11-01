@@ -427,7 +427,11 @@ ir.UnionLiteral buildUnionLiteralSmart(ref in Location loc, ir.Type type, scope 
  */
 void addVariable(ir.BlockStatement b, ir.StatementExp statExp, ir.Variable var)
 {
-	b.myScope.addValue(var, var.name);
+	ir.Status status;
+	b.myScope.addValue(var, var.name, /*#out*/status);
+	if (status != ir.Status.Success) {
+		throw panic(/*#ref*/b.loc, "value redefinition");
+	}
 	if (statExp !is null) {
 		statExp.statements ~= var;
 	} else {
@@ -478,7 +482,11 @@ ir.Variable buildVariableAnonSmartAtTop(ref in Location loc, ir.BlockStatement b
 	auto name = b.myScope.genAnonIdent();
 	auto var = buildVariable(/*#ref*/loc, copyTypeSmart(/*#ref*/loc, type), ir.Variable.Storage.Function, name, assign);
 	b.statements = var ~ b.statements;
-	b.myScope.addValue(var, var.name);
+	ir.Status status;
+	b.myScope.addValue(var, var.name, /*#out*/status);
+	if (status != ir.Status.Success) {
+		throw panic(/*#ref*/loc, "value redefinition");
+	}
 	return var;
 }
 
@@ -492,7 +500,11 @@ ir.Variable buildVariableAnonSmart(ref in Location loc, ir.Scope current,
 {
 	auto name = current.genAnonIdent();
 	auto var = buildVariable(/*#ref*/loc, copyTypeSmart(/*#ref*/loc, type), ir.Variable.Storage.Function, name, assign);
-	current.addValue(var, var.name);
+	ir.Status status;
+	current.addValue(var, var.name, /*#out*/status);
+	if (status != ir.Status.Success) {
+		throw panic(/*#ref*/loc, "value redefinition");
+	}
 	statExp.statements ~= var;
 	return var;
 }
@@ -1450,8 +1462,11 @@ ir.FunctionParam addParam(ref in Location loc, ir.Function func, ir.Type type, s
 	func.type.isArgRef ~= false;
 
 	func.params ~= var;
-	func.myScope.addValue(var, name);
-
+	ir.Status status;
+	func.myScope.addValue(var, name, /*#out*/status);
+	if (status != ir.Status.Success) {
+		throw panic(/*#ref*/loc, "value redefinition");
+	}
 	return var;
 }
 
@@ -1471,7 +1486,11 @@ ir.Variable buildVarStatSmart(ref in Location loc, ir.BlockStatement block, ir.S
 {
 	auto var = buildVariableSmart(/*#ref*/loc, type, ir.Variable.Storage.Function, name);
 	block.statements ~= var;
-	_scope.addValue(var, name);
+	ir.Status status;
+	_scope.addValue(var, name, /*#out*/status);
+	if (status != ir.Status.Success) {
+		throw panic(/*#ref*/loc, "value redefinition");
+	}
 	return var;
 }
 
@@ -1832,7 +1851,11 @@ ir.Function buildFunction(ref in Location loc, ir.TopLevelBlock tlb, ir.Scope _s
 	auto func = buildFunction(/*#ref*/loc, _scope, name, buildBody);
 
 	// Insert the struct into all the places.
-	_scope.addFunction(func, func.name);
+	ir.Status status;
+	_scope.addFunction(func, func.name, /*#out*/status);
+	if (status != ir.Status.Success) {
+		throw panic(/*#ref*/loc, "function redefinition");
+	}
 	tlb.nodes ~= func;
 	return func;
 }
@@ -1887,11 +1910,19 @@ ir.Struct buildStruct(ref in Location loc, ir.TopLevelBlock tlb, ir.Scope _scope
 
 	foreach (i, member; members) {
 		s.members.nodes[i] = member;
-		s.myScope.addValue(member, member.name);
+		ir.Status status;
+		s.myScope.addValue(member, member.name, /*#out*/status);
+		if (status != ir.Status.Success) {
+			throw panic(/*#ref*/loc, "value redefinition");
+		}
 	}
 
 	// Insert the struct into all the places.
-	_scope.addType(s, s.name);
+	ir.Status status;
+	_scope.addType(s, s.name, /*#out*/status);
+	if (status != ir.Status.Success) {
+		throw panic(/*#ref*/loc, "type redefinition");
+	}
 	tlb.nodes ~= s;
 	return s;
 }
@@ -1925,7 +1956,11 @@ ir.Variable addVarToStructSmart(ir.Struct _struct, ir.Variable var)
 	assert(var.name != "");
 	auto cvar = buildVariableSmart(/*#ref*/var.loc, var.type, ir.Variable.Storage.Field, var.name);
 	_struct.members.nodes ~= cvar;
-	_struct.myScope.addValue(cvar, cvar.name);
+	ir.Status status;
+	_struct.myScope.addValue(cvar, cvar.name, /*#out*/status);
+	if (status != ir.Status.Success) {
+		throw panic(/*#ref*/cvar.loc, "value redefinition");
+	}
 	return cvar;
 }
 

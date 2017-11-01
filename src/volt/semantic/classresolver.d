@@ -740,7 +740,11 @@ void buildInstanceVariable(LanguagePass lp, ir.Class _class)
 
 	_class.initVariable.assign = buildStructLiteralSmart(/*#ref*/loc, _class.layoutStruct, exps);
 	_class.members.nodes ~= _class.initVariable;
-	_class.myScope.addValue(_class.initVariable, _class.initVariable.name);
+	ir.Status status;
+	_class.myScope.addValue(_class.initVariable, _class.initVariable.name, /*#out*/status);
+	if (status != ir.Status.Success) {
+		throw panic(/*#ref*/loc, "value redefinition");
+	}
 }
 
 void emitVtableVariable(LanguagePass lp, ir.Class _class)
@@ -760,7 +764,11 @@ void emitVtableVariable(LanguagePass lp, ir.Class _class)
 		var.mangledName =  format("_V__Interface_%s_%s", _class.mangledName, mangle(iface));
 		var.assign = getInterfaceStructAssign(lp, fromParent, _class.myScope, iface, i);
 		_class.members.nodes ~= var;
-		_class.myScope.addValue(var, var.name);
+		ir.Status status;
+		_class.myScope.addValue(var, var.name, /*#out*/status);
+		if (status != ir.Status.Success) {
+			throw panic(/*#ref*/loc, "value redefinition");
+		}
 		_class.ifaceVariables ~= var;
 		assert(iface.interfaces.length == iface.parentInterfaces.length);
 		foreach (j, piface; iface.parentInterfaces) {
@@ -782,7 +790,11 @@ void emitVtableVariable(LanguagePass lp, ir.Class _class)
 	_class.classinfoVariable.mangledName = format("_V__ClassInfos_%s", mangle(_class));
 	_class.classinfoVariable.assign = buildArrayLiteralSmart(/*#ref*/loc, _class.classinfoVariable.type, tinfos);
 	_class.members.nodes ~= _class.classinfoVariable;
-	_class.myScope.addValue(_class.classinfoVariable, _class.classinfoVariable.name);
+	ir.Status status;
+	_class.myScope.addValue(_class.classinfoVariable, _class.classinfoVariable.name, /*#out*/status);
+	if (status != ir.Status.Success) {
+		throw panic(/*#ref*/loc, "value redefinition");
+	}
 
 	FunctionSink methods;
 	appendClassMethodFunctions(lp, _class, /*#ref*/methods);
@@ -801,7 +813,10 @@ void emitVtableVariable(LanguagePass lp, ir.Class _class)
 	_class.vtableVariable.mangledName = format("_V__Vtable_%s", mangle(_class));
 	_class.vtableVariable.assign = buildBuildVtable(/*#ref*/loc, vtype, _class, methods);
 	_class.members.nodes ~= _class.vtableVariable;
-	_class.myScope.addValue(_class.vtableVariable, _class.vtableVariable.name);
+	_class.myScope.addValue(_class.vtableVariable, _class.vtableVariable.name, /*#out*/status);
+	if (status != ir.Status.Success) {
+		throw panic(/*#ref*/loc, "value redefinition");
+	}
 
 	buildInstanceVariable(lp, _class);
 }

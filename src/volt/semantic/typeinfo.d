@@ -61,7 +61,11 @@ ir.Variable getTypeInfo(LanguagePass lp, ir.Module mod, ir.Type type)
 	auto literalVar = buildTypeInfoVariable(lp, type, null, false);
 
 	mod.children.nodes ~= literalVar;
-	mod.myScope.addValue(literalVar, literalVar.name);
+	ir.Status status;
+	mod.myScope.addValue(literalVar, literalVar.name, /*#out*/status);
+	if (status != ir.Status.Success) {
+		throw panic(/*#ref*/mod.loc, "value redefinition");
+	}
 
 	auto lit = buildTypeInfoLiteral(lp, mod, type);
 	literalVar.assign = lit;

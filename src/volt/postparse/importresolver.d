@@ -128,9 +128,17 @@ public:
 			}
 		}
 		if (scopes.length == 1) {
-			store = current.addScope(i, scopes[0], i.bind.value);
+			ir.Status status;
+			store = current.addScope(i, scopes[0], i.bind.value, /*#out*/status);
+			if (status != ir.Status.Success) {
+				throw panic(/*#ref*/i.loc, "scope redefinition");
+			}
 		} else {
-			store = current.addMultiScope(i, scopes, i.bind.value);
+			ir.Status status;
+			store = current.addMultiScope(i, scopes, i.bind.value, /*#out*/status);
+			if (status != ir.Status.Success) {
+				throw panic(/*#ref*/i.loc, "multi scope redefinition");
+			}
 		}
 		store.importBindAccess = i.access;
 	}
@@ -177,7 +185,11 @@ public:
 			// Setup where we should look.
 			a.lookScope = null;
 			a.lookModule = mod;
-			a.store = bindScope.addAlias(a, a.name);
+			ir.Status status;
+			a.store = bindScope.addAlias(a, a.name, /*#out*/status);
+			if (status != ir.Status.Success) {
+				throw panic(/*#ref*/a.loc, "bind scope redefines symbol");
+			}
 			a.store.importBindAccess = i.access;
 		}
 	}
@@ -215,7 +227,11 @@ public:
 				throw makeExpected(/*#ref*/i.loc, "unique module");
 			}
 		} else {
-			parent.addScope(i, mod.myScope, i.names[0].identifiers[$-1].value);
+			ir.Status status;
+			parent.addScope(i, mod.myScope, i.names[0].identifiers[$-1].value, /*#out*/status);
+			if (status != ir.Status.Success) {
+				throw panic(/*#ref*/i.loc, "regular scope import redefinition");
+			}
 		}
 
 		// Add the module to the list of imported modules.
@@ -252,7 +268,11 @@ public:
 		} else {
 			auto s = new ir.Scope(parent, node, name, parent.nestedDepth);
 			if (store is null || !lowPriority) {
-				store = parent.addScope(node, s, name);
+				ir.Status status;
+				store = parent.addScope(node, s, name, /*#out*/status);
+				if (status != ir.Status.Success) {
+					throw panic(/*#ref*/node.loc, "return scope redefinition");
+				}
 				store.fromImplicitContextChain = lowPriority;
 			}
 			parent = s;

@@ -412,7 +412,10 @@ public:
 			}
 
 			// All arguments reserve a name.
-			s.myScope.reserveId(td, td.parameters[i].name);
+			auto reservedStore = s.myScope.reserveId(td, td.parameters[i].name);
+			if (reservedStore is null) {
+				throw panic(/*#ref*/td.loc, "couldn't reserve identifier");
+			}
 		}
 
 		// Do the lifting of the children.
@@ -433,7 +436,11 @@ public:
 			s.myScope.remove(name);
 			if (auto a = cast(ir.Alias)processed[i]) {
 				// Add the alias to the scope and set its store.
-				a.store = s.myScope.addAlias(a, a.name);
+				ir.Status status;
+				a.store = s.myScope.addAlias(a, a.name, /*#out*/status);
+				if (status != ir.Status.Success) {
+					throw panic(/*#ref*/a.loc, "alias redefines symbol");
+				}
 				s.members.nodes ~= a;
 
 				// Do the lookup here.
@@ -445,10 +452,18 @@ public:
 					throw makeExpected(arg, "type");
 				}
 			} else if (auto type = cast(ir.Type)processed[i]) {
-				s.myScope.addType(type, name);
+				ir.Status status;
+				s.myScope.addType(type, name, /*#out*/status);
+				if (status != ir.Status.Success) {
+					throw panic(/*#ref*/type.loc, "template type addition redefinition");
+				}
 			} else if (auto exp = cast(ir.Exp)processed[i]) {
 				auto ed = buildEnumDeclaration(/*#ref*/s.loc, copyType(td.parameters[i].type), exp, name);
-				s.myScope.addEnumDeclaration(ed);
+				ir.Status status;
+				s.myScope.addEnumDeclaration(ed, /*#out*/status);
+				if (status != ir.Status.Success) {
+					throw panic(/*#ref*/s.loc, "enum declaration redefinition");
+				}
 				s.members.nodes ~= ed;
 			} else {
 				throw makeExpected(/*#ref*/arg.loc, "expression or type");

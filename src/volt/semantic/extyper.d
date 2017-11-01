@@ -1767,7 +1767,7 @@ ir.Type extypeUnary(Context ctx, ref ir.Exp exp, Parent parent)
 			if (tr !is null) {
 				name = tr.id.toString();
 			}
-			ctx.current.typeResolutionError = makeExpressionForNew(/*#ref*/exp.loc, name);
+			ctx.current.typeResolutionError = cast(void*)makeExpressionForNew(/*#ref*/exp.loc, name);
 		}
 		resolveType(ctx, /*#ref*/unary.type);
 		ctx.current.typeResolutionError = null;
@@ -3998,7 +3998,11 @@ void extypeIfStatement(Context ctx, ref ir.Node n)
 		ifs.exp = buildStatementExp(/*#ref*/loc, vars, eref);
 
 		// Add it to its proper scope.
-		ifs.thenState.myScope.addValue(var, var.name);
+		ir.Status status;
+		ifs.thenState.myScope.addValue(var, var.name, /*#out*/status);
+		if (status != ir.Status.Success) {
+			throw panic(/*#ref*/loc, "value redefinition");
+		}
 	}
 
 	// Need to do this after any autoName rewriting.
@@ -4653,7 +4657,11 @@ void resolveFunction(Context ctx, ir.Function func)
 		auto loc = func.outContract.loc;
 		auto var = buildVariableSmart(/*#ref*/loc, copyTypeSmart(/*#ref*/loc, func.type.ret), ir.Variable.Storage.Function, func.outParameter);
 		func.outContract.statements = var ~ func.outContract.statements;
-		func.outContract.myScope.addValue(var, var.name);
+		ir.Status status;
+		func.outContract.myScope.addValue(var, var.name, /*#out*/status);
+		if (status != ir.Status.Success) {
+			throw panic(/*#ref*/loc, "value redefinition");
+		}
 	}
 
 	foreach (i, ref param; func.params) {

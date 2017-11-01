@@ -377,11 +377,18 @@ void addVarArgsVarsIfNeeded(LanguagePass lp, ir.Function func)
 		auto argArray = buildArrayType(/*#ref*/func.loc, buildVoid(/*#ref*/func.loc));
 		func.type.varArgsTypeids = buildVariable(/*#ref*/func.loc, array, ir.Variable.Storage.Function, "_typeids");
 		func.type.varArgsTypeids.specialInitValue = true;
-		func._body.myScope.addValue(func.type.varArgsTypeids, "_typeids");
+		ir.Status status;
+		func._body.myScope.addValue(func.type.varArgsTypeids, "_typeids", /*#out*/status);
+		if (status != ir.Status.Success) {
+			throw panic(/*#ref*/func.loc, "value redefinition");
+		}
 		func._body.statements = func.type.varArgsTypeids ~ func._body.statements;
 		func.type.varArgsArgs = buildVariable(/*#ref*/func.loc, argArray, ir.Variable.Storage.Function, "_args");
 		func.type.varArgsArgs.specialInitValue = true;
-		func._body.myScope.addValue(func.type.varArgsArgs, "_args");
+		func._body.myScope.addValue(func.type.varArgsArgs, "_args", /*#out*/status);
+		if (status != ir.Status.Success) {
+			throw panic(/*#ref*/func.loc, "value redefinition");
+		}
 		func._body.statements = func.type.varArgsArgs ~ func._body.statements;
 		func.type.varArgsProcessed = true;
 	}

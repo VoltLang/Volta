@@ -83,7 +83,11 @@ bool isValidAccess(ir.Access access)
 void gather(ir.Scope current, ir.EnumDeclaration e, Where where)
 {
 	// @TODO assert(e.access.isValidAccess());
-	current.addEnumDeclaration(e);
+	ir.Status status;
+	current.addEnumDeclaration(e, /*#out*/status);
+	if (status != ir.Status.Success) {
+		throw panic(/*#ref*/e.loc, "enum declaration redefinition");
+	}
 }
 
 void gather(ir.Scope current, ir.Alias a, Where where)
@@ -93,7 +97,11 @@ void gather(ir.Scope current, ir.Alias a, Where where)
 	assert(a.lookModule is null);
 
 	a.lookScope = current;
-	a.store = current.addAlias(a, a.name);
+	ir.Status status;
+	a.store = current.addAlias(a, a.name, /*#out*/status);
+	if (status != ir.Status.Success) {
+		throw panic(/*#ref*/a.loc, "multiple definition");
+	}
 }
 
 /*!
@@ -131,7 +139,11 @@ void gather(ir.Scope current, ir.Variable v, Where where, ir.Function[] function
 	if (store !is null) {
 		throw makeError(/*#ref*/v.loc, format("'%s' is in use @ %s.", v.name, store.node.loc.toString()));
 	}
-	current.addValue(v, v.name);
+	ir.Status status;
+	current.addValue(v, v.name, /*#out*/status);
+	if (status != ir.Status.Success) {
+		throw panic(/*#ref*/v.loc, "value redefinition");
+	}
 
 	if (v.storage != ir.Variable.Storage.Invalid) {
 		return;
@@ -152,7 +164,11 @@ void gather(ir.Scope current, ir.Function func, Where where)
 
 	if (func.name !is null) {
 		checkInvalid(current, func, func.name);
-		current.addFunction(func, func.name);
+		ir.Status status;
+		current.addFunction(func, func.name, /*#out*/status);
+		if (status != ir.Status.Success) {
+			throw panic(/*#ref*/func.loc, "function redefinition");
+		}
 	}
 
 	if (func.kind == ir.Function.Kind.Invalid) {
@@ -174,7 +190,11 @@ void gather(ir.Scope current, ir.Struct s, Where where)
 
 	checkInvalid(current, s, s.name);
 	checkTemplateRedefinition(current, s.name);
-	current.addType(s, s.name);
+	ir.Status status;
+	current.addType(s, s.name, /*#out*/status);
+	if (status != ir.Status.Success) {
+		throw panic(/*#ref*/s.loc, "gather redefinition");
+	}
 }
 
 void gather(ir.Scope current, ir.Union u, Where where)
@@ -184,7 +204,11 @@ void gather(ir.Scope current, ir.Union u, Where where)
 
 	checkInvalid(current, u, u.name);
 	checkTemplateRedefinition(current, u.name);
-	current.addType(u, u.name);
+	ir.Status status;
+	current.addType(u, u.name, /*#out*/status);
+	if (status != ir.Status.Success) {
+		throw panic(/*#ref*/u.loc, "gather redefinition");
+	}
 }
 
 void gather(ir.Scope current, ir.Class c, Where where)
@@ -194,7 +218,11 @@ void gather(ir.Scope current, ir.Class c, Where where)
 
 	checkInvalid(current, c, c.name);
 	checkTemplateRedefinition(current, c.name);
-	current.addType(c, c.name);
+	ir.Status status;
+	current.addType(c, c.name, /*#out*/status);
+	if (status != ir.Status.Success) {
+		throw panic(/*#ref*/c.loc, "gather redefinition");
+	}
 }
 
 void gather(ir.Scope current, ir.Enum e, Where where)
@@ -204,7 +232,11 @@ void gather(ir.Scope current, ir.Enum e, Where where)
 
 	checkInvalid(current, e, e.name);
 	checkTemplateRedefinition(current, e.name);
-	current.addType(e, e.name);
+	ir.Status status;
+	current.addType(e, e.name, /*#out*/status);
+	if (status != ir.Status.Success) {
+		throw panic(/*#ref*/e.loc, "gather redefinition");
+	}
 }
 
 void gather(ir.Scope current, ir._Interface i, Where where)
@@ -214,7 +246,11 @@ void gather(ir.Scope current, ir._Interface i, Where where)
 
 	checkInvalid(current, i, i.name);
 	checkTemplateRedefinition(current, i.name);
-	current.addType(i, i.name);
+	ir.Status status;
+	current.addType(i, i.name, /*#out*/status);
+	if (status != ir.Status.Success) {
+		throw panic(/*#ref*/i.loc, "gather redefinition");
+	}
 }
 
 void gather(ir.Scope current, ir.MixinFunction mf, Where where)
@@ -222,7 +258,11 @@ void gather(ir.Scope current, ir.MixinFunction mf, Where where)
 	// @TODO assert(mf.access.isValidAccess());
 
 	checkInvalid(current, mf, mf.name);
-	current.addTemplate(mf, mf.name);
+	ir.Status status;
+	current.addTemplate(mf, mf.name, /*#out*/status);
+	if (status != ir.Status.Success) {
+		throw panic(/*#ref*/mf.loc, "template redefinition");
+	}
 }
 
 void gather(ir.Scope current, ir.MixinTemplate mt, Where where)
@@ -230,14 +270,22 @@ void gather(ir.Scope current, ir.MixinTemplate mt, Where where)
 	// @TODO assert(mt.access.isValidAccess());
 
 	checkInvalid(current, mt, mt.name);
-	current.addTemplate(mt, mt.name);
+	ir.Status status;
+	current.addTemplate(mt, mt.name, /*#out*/status);
+	if (status != ir.Status.Success) {
+		throw panic(/*#ref*/mt.loc, "template redefinition");
+	}
 }
 
 void gather(ir.Scope current, ir.TemplateDefinition td, Where where)
 {
 	checkInvalid(current, td, td.name);
 	checkTemplateRedefinition(current, td.name);
-	current.addTemplate(td, td.name);
+	ir.Status status;
+	current.addTemplate(td, td.name, /*#out*/status);
+	if (status != ir.Status.Success) {
+		throw panic(/*#ref*/td.loc, "template redefinition");
+	}
 }
 
 
@@ -269,7 +317,11 @@ void addScope(ir.Scope current, ir.Function func, ir.Type thisType, ir.Function[
 	if (func._body !is null) {
 		foreach (var; func.params) {
 			if (var.name !is null) {
-				func.myScope.addValue(var, var.name);
+				ir.Status status;
+				func.myScope.addValue(var, var.name, /*#out*/status);
+				if (status != ir.Status.Success) {
+					throw panic(/*#ref*/func.loc, "value redefinition");
+				}
 			}
 		}
 	}

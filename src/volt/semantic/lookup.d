@@ -14,6 +14,7 @@ import watt.text.format : format;
 import ir = volt.ir.ir;
 import volt.ir.util : getScopeFromStore, getScopeFromType;
 
+import volt.exceptions;
 import volt.errors;
 import volt.interfaces;
 import volt.token.location;
@@ -693,7 +694,7 @@ ir.Type ensureType(ir.Scope _scope, ref in Location loc, string name, ir.Store s
 	auto asType = cast(ir.Type) store.node;
 	if (asType is null) {
 		if (_scope.typeResolutionError !is null) {
-			throw _scope.typeResolutionError;
+			throw cast(CompilerException)_scope.typeResolutionError;
 		} else {
 			throw makeError(/*#ref*/loc, format("expected type, got '%s'.", name));
 		}

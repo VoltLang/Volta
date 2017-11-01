@@ -50,7 +50,11 @@ void lowerCMain(LanguagePass lp, ir.Module mod, ir.Function func)
 	auto cmain = buildFunction(/*#ref*/loc, mod.myScope, "main", ftype);
 	auto argc = addParam(/*#ref*/loc, cmain, buildInt(/*#ref*/loc), "argc");
 	auto argv = addParam(/*#ref*/loc, cmain, buildPtr(/*#ref*/loc, buildPtr(/*#ref*/loc, buildChar(/*#ref*/loc))), "argv");
-	mod.myScope.addFunction(cmain, cmain.name);
+	ir.Status status;
+	mod.myScope.addFunction(cmain, cmain.name, /*#out*/status);
+	if (status != ir.Status.Success) {
+		throw panic(/*#ref*/cmain.loc, "function redefinition");
+	}
 	mod.children.nodes ~= cmain;
 
 	ir.Exp argcRef = buildExpReference(/*#ref*/loc, argc, argc.name);
