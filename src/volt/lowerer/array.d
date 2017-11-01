@@ -6,12 +6,12 @@ module volt.lowerer.array;
 
 import watt.text.format : format;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import volt.ir.copy;
 import volt.ir.util;
 
 import volt.interfaces;
-import volt.token.location;
+import volta.ir.location;
 
 import volt.semantic.util;
 import volt.semantic.mangle;

@@ -6,7 +6,7 @@
 module volt.token.stream;
 
 import volt.errors : panic, makeStrayDocComment, makeExpected;
-public import volt.token.token;
+public import volta.ir.token;
 
 
 /*!

@@ -5,13 +5,13 @@ module volt.semantic.util;
 
 import watt.text.format : format;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import volt.ir.copy;
 import volt.ir.util;
 
 import volt.errors;
 import volt.interfaces;
-import volt.token.location;
+import volta.ir.location;
 
 import volt.semantic.typer : getExpType, getTypeidType;
 import volt.semantic.lookup : lookup, lookupInGivenScopeOnly, getModuleFromScope;

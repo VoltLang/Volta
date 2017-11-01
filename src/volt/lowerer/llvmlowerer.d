@@ -8,13 +8,13 @@ import watt.text.format : format;
 import watt.text.sink;
 import watt.io.file : read, exists;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import volt.ir.copy;
 import volt.ir.util;
 
 import volt.errors;
 import volt.interfaces;
-import volt.token.location;
+import volta.ir.location;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
 import volt.visitor.nodereplace;

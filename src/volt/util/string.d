@@ -7,7 +7,7 @@ import watt.text.format : format;
 import watt.text.sink : StringSink;
 
 import volt.errors;
-import volt.token.location;
+import volta.ir.location;
 
 
 bool isHex(dchar d)

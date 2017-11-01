@@ -6,14 +6,14 @@ module volt.semantic.typeinfo;
 
 import watt.text.format : format;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import volt.ir.util;
 
 import volt.exceptions;
 import volt.interfaces;
 import volt.errors;
 
-import volt.token.location;
+import volta.ir.location;
 
 import volt.semantic.typer;
 import volt.semantic.lookup;

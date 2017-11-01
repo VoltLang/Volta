@@ -6,15 +6,15 @@ module volt.parser.toplevel;
 import watt.conv : toInt, toLower;
 import watt.text.vdoc : cleanComment;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import volt.ir.util;
 import volt.ir.copy;
 
 import volt.exceptions;
 import volt.errors;
 import volt.token.stream;
-import volt.token.location;
-import volt.token.token : TokenType;
+import volta.ir.location;
+import volta.ir.token : TokenType;
 
 import volt.parser.base;
 import volt.parser.declaration;

@@ -9,13 +9,13 @@ import watt.text.format : format;
 import watt.text.sink : StringSink;
 import watt.io.std : writefln;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import volt.ir.printer;
 
 import volt.exceptions;
 import volt.arg : Settings;
-import volt.token.token : tokenToString, TokenType;
-import volt.token.location;
+import volta.ir.token : tokenToString, TokenType;
+import volta.ir.location;
 
 
 // Not sure of the best home for this guy.

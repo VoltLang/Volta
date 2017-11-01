@@ -24,8 +24,8 @@ import volt.exceptions;
 import volt.interfaces;
 import volt.errors;
 import volt.arg;
-import volt.token.location;
-import ir = volt.ir.ir;
+import volta.ir.location;
+import ir = volta.ir;
 
 import volt.parser.parser;
 import volt.semantic.languagepass;

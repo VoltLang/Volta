@@ -4,13 +4,13 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volta.ir;
 
-/+
-public import volt.ir.base;
-public import volt.ir.type;
-public import volt.ir.context;
-public import volt.ir.toplevel;
-public import volt.ir.statement;
-public import volt.ir.expression;
-public import volt.ir.declaration;
-public import volt.ir.templates;
-+/
+public import volta.ir.base;
+public import volta.ir.type;
+public import volta.ir.context;
+public import volta.ir.toplevel;
+public import volta.ir.statement;
+public import volta.ir.expression;
+public import volta.ir.declaration;
+public import volta.ir.templates;
+//public import volta.ir.location;
+//public import volta.ir.token;

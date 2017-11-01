@@ -11,7 +11,7 @@ module volt.llvm.abi.winamd64;
 
 import lib.llvm.core;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 
 import volt.llvm.abi.base;
 import volt.llvm.interfaces;

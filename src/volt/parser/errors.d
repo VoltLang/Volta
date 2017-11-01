@@ -5,9 +5,9 @@ module volt.parser.errors;
 
 import watt.text.format : format;
 
-import volt.token.location : Location;
-import volt.token.token : Token, TokenType, tokenToString;
-import volt.ir.base : NodeType, nodeToString;
+import volta.ir.location : Location;
+import volta.ir.token : Token, TokenType, tokenToString;
+import volta.ir.base : NodeType, nodeToString;
 
 
 //! Describes a parse failure.

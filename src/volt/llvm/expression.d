@@ -13,9 +13,9 @@ import watt.conv : toString;
 
 static import volt.ir.util;
 
-import volt.token.location : Location;
+import volta.ir.location : Location;
 import volt.errors;
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import volt.ir.util;
 
 import volt.llvm.common;

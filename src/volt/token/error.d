@@ -6,7 +6,7 @@ module volt.token.error;
 import watt.text.format : format;
 
 import volt.exceptions;
-import volt.token.location : Location;
+import volta.ir.location : Location;
 
 enum LexStatus {
 	NotPresent = 2,

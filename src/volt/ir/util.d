@@ -3,14 +3,14 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.ir.util;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 
 import volt.errors;
 import volt.interfaces;
-import volt.token.location;
+import volta.ir.location;
 import volt.ir.copy;
-import volt.util.dup;
-import volt.util.sinks;
+import volta.util.dup;
+import volta.util.sinks;
 import volt.util.string : unescapeString;
 
 

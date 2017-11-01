@@ -6,12 +6,12 @@ module volt.parser.parser;
 import watt.io.std : writefln;
 import watt.text.format : format;
 
-import volt.token.location : Location;
+import volta.ir.location : Location;
 import volt.token.lexer : lex;
-import volt.token.token : TokenType, tokenToString;
+import volta.ir.token : TokenType, tokenToString;
 import volt.token.source : Source;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 
 import volt.arg : Settings;
 import volt.errors : makeError, panic;

@@ -9,7 +9,7 @@
  */
 module volt.postparse.condremoval;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 
 import volt.errors;
 import volt.interfaces;

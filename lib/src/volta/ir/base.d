@@ -2,22 +2,22 @@
 // Copyright © 2012-2017, Jakob Bornecrantz.  All rights reserved.
 // Copyright © 2012-2017, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.ir.base;
+module volta.ir.base;
 
 import watt.conv : toString;
 import watt.text.sink : StringSink;
 
-public import volt.token.location : Location;
-public import volt.token.token : Token, TokenType;
+public import volta.ir.location : Location;
+public import volta.ir.token : Token, TokenType;
 
-import volt.ir.type;
-import volt.ir.toplevel;
-import volt.ir.statement;
-import volt.ir.templates;
-import volt.ir.expression;
-import volt.ir.declaration;
+import volta.ir.type;
+import volta.ir.toplevel;
+import volta.ir.statement;
+import volta.ir.templates;
+import volta.ir.expression;
+import volta.ir.declaration;
 
-import volt.util.dup;
+import volta.util.dup;
 
 
 /*!

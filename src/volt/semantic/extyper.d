@@ -10,14 +10,14 @@ import watt.text.format : format;
 import watt.text.string : replace;
 import watt.text.sink : StringSink;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import volt.ir.util;
 import volt.ir.copy;
 
 import volt.errors;
 import volt.interfaces;
 import volt.util.string;
-import volt.token.location;
+import volta.ir.location;
 
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;

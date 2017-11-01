@@ -5,11 +5,11 @@ module volt.visitor.scopemanager;
 
 import watt.text.format : format;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 
 import volt.errors;
 import volt.visitor.visitor;
-import volt.token.location : Location;
+import volta.ir.location : Location;
 
 
 class ScopeManager : NullVisitor

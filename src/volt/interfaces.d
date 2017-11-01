@@ -4,8 +4,8 @@
 module volt.interfaces;
 
 import core.exception;
-import volt.token.location;
-import ir = volt.ir.ir;
+import volta.ir.location;
+import ir = volta.ir;
 
 
 /*!

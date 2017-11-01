@@ -13,9 +13,9 @@ import watt.conv : toInt;
 import watt.text.utf : encode;
 
 import volt.errors;
-import volt.token.location : Location;
+import volta.ir.location : Location;
 import volt.token.source : Source, Mark;
-import volt.token.token : Token, TokenType, identifierType;
+import volta.ir.token : Token, TokenType, identifierType;
 import volt.token.writer : TokenWriter;
 import volt.token.error;
 

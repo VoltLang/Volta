@@ -7,7 +7,7 @@ import volt.semantic.evaluate : foldBinOp, foldUnary;
 
 import volt.interfaces : Pass, TargetInfo;
 import volt.visitor.visitor : accept, NullVisitor;
-import ir = volt.ir.ir;
+import ir = volta.ir;
 
 
 /*!

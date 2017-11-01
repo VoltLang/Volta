@@ -8,8 +8,8 @@ import watt.conv : toLower;
 import watt.text.format : format;
 import watt.text.sink : StringSink, Sink;
 
-import ir = volt.ir.ir;
-import volt.token.token : tokenToString, TokenType;
+import ir = volta.ir;
+import volta.ir.token : tokenToString, TokenType;
 
 
 string printType(ir.Type type, bool alwaysGlossed = false)

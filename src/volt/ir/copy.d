@@ -5,11 +5,11 @@ module volt.ir.copy;
 
 import watt.text.format : format;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import volt.errors;
 import volt.ir.util;
-import volt.util.dup;
-import volt.token.location;
+import volta.util.dup;
+import volta.ir.location;
 
 
 ir.AccessExp copy(ir.AccessExp old)

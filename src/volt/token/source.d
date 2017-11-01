@@ -10,7 +10,7 @@ import watt.text.ascii : isWhite;
 import watt.text.format : format;
 
 import volt.errors : panic;
-import volt.token.location : Location;
+import volta.ir.location : Location;
 
 
 alias Mark = size_t;

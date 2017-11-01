@@ -2,9 +2,9 @@
 // Copyright © 2010-2011, Bernard Helyer.  All rights reserved.
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.token.token;
+module volta.ir.token;
 
-import volt.token.location;
+import volta.ir.location;
 
 /* If you're adding a new token, be sure to update:
  *   - the _tokenToString array. Keep it alphabetical, and update its length.

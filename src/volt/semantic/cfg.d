@@ -3,12 +3,12 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.cfg;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import volt.ir.util;
 
 import volt.interfaces;
 import volt.errors;
-import volt.token.location;
+import volta.ir.location;
 import volt.visitor.visitor;
 import volt.visitor.scopemanager;
 

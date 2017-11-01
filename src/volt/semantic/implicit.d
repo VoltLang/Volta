@@ -6,7 +6,7 @@ module volt.semantic.implicit;
 
 import volt.errors;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import volt.ir.util;
 
 import volt.visitor.visitor;

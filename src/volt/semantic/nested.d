@@ -6,7 +6,7 @@ module volt.semantic.nested;
 import watt.conv : toString;
 import watt.text.format : format;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import volt.ir.copy;
 import volt.ir.util;
 
@@ -17,7 +17,7 @@ import volt.semantic.util;
 import volt.semantic.lookup : getModuleFromScope, lookupInGivenScopeOnly;
 import volt.semantic.context;
 import volt.semantic.classify : isNested, realType;
-import volt.token.location : Location;
+import volta.ir.location : Location;
 
 /*!
  * This module contains utility functions for dealing with nested functions;

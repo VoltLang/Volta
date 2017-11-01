@@ -4,7 +4,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.ir.lifter;
 
-import ir = volt.ir.ir;
+import ir = volta.ir;
 import volt.errors;
 
 

@@ -2,18 +2,17 @@
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // Copyright © 2012, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.ir.declaration;
+module volta.ir.declaration;
 
-import volt.errors;
-import volt.ir.base;
-import volt.ir.type;
-import volt.ir.expression;
-import volt.ir.statement;
-import volt.ir.context;
-import volt.ir.toplevel;
-import volt.ir.templates;
+import volta.ir.base;
+import volta.ir.type;
+import volta.ir.expression;
+import volta.ir.statement;
+import volta.ir.context;
+import volta.ir.toplevel;
+import volta.ir.templates;
 
-import volt.util.dup;
+import volta.util.dup;
 
 
 /*!
