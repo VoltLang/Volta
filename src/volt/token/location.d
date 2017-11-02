@@ -70,7 +70,11 @@ public:
 		foreach (i; 0 .. column) {
 			guide ~= " ";
 		}
-		foreach (i; column .. column + length) {
+		size_t len = length;
+		if (len == 0) {
+			len = 1;
+		}
+		foreach (i; column .. column + len) {
 			if (i == column) {
 				guide ~= "^";
 			} else {

@@ -1767,10 +1767,8 @@ ir.Type extypeUnary(Context ctx, ref ir.Exp exp, Parent parent)
 			if (tr !is null) {
 				name = tr.id.toString();
 			}
-			ctx.current.typeResolutionError = cast(void*)makeExpressionForNew(/*#ref*/exp.loc, name);
 		}
 		resolveType(ctx, /*#ref*/unary.type);
-		ctx.current.typeResolutionError = null;
 	}
 	if (unary.value !is null) {
 		extype(ctx, /*#ref*/unary.value, Parent.NA);

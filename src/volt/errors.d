@@ -122,8 +122,9 @@ CompilerException makeAggregateStaticVariableNamedInit(ref in Location loc, stri
 CompilerException makeExpressionForNew(ref in Location loc, string name, string file = __FILE__, const int line = __LINE__)
 {
 	auto msg = `got an expression where we expected a type for a 'new'.`;
+	msg ~= loc.locationGuide();
 	if (name != "") {
-		msg ~= format("\nIf '%s' is an array you want to copy,\nuse 'new %s[..]' to duplicate it.", name, name);
+		msg ~= format("If '%s' is an array you want to copy,\nuse 'new %s[..]' to duplicate it.", name, name);
 	}
 	return makeError(/*#ref*/loc, msg, file, line);
 }
