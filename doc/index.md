@@ -18,7 +18,6 @@ documentation is listed below.
 {% endfor -%}
 *  [The Volt Programming Language]({{ site.baseurl }}/volt.html)
 *  [Errors]({{ site.baseurl }}/errors.html)
-*  [Foreach, strings and you]({{ site.baseurl }}/foreach-and-strings.html)
 *  [Symbol Mangling]({{ site.baseurl }}/mangle.html)
 *  [Volt vs C]({{ site.baseurl }}/volt-vs-c.html)
 *  [Volt vs C++]({{ site.baseurl }}/volt-vs-cpp.html)
