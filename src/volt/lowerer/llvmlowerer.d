@@ -1484,20 +1484,30 @@ ir.ForStatement lowerForeach(ir.ForeachStatement fes, LanguagePass lp,
 		assert(indexVar.type !is null);
 		fs.initVars ~= indexVar;
 
-		// i < aa.keys.length
+		// Cached keys array
+		auto keysArrayVar = buildVariable(
+			/*#ref*/loc,
+			buildArrayTypeSmart(/*#ref*/loc, keyVar.type),
+			ir.Variable.Storage.Function,
+			format("%skeysarr", fs.block.myScope.nestedDepth),
+			buildAACall(lp.aaGetKeys, buildArrayTypeSmart(/*#ref*/loc, keyVar.type))
+		);
+		fs.initVars ~= keysArrayVar;
+
+		// i < keysarr.length
 		auto index = buildExpReference(/*#ref*/loc, indexVar, indexVar.name);
-		auto len = buildAACall(lp.aaGetLength, indexVar.type);
+		auto len = buildArrayLength(/*#ref*/loc, lp.target,
+			buildExpReference(/*#ref*/loc, keysArrayVar, keysArrayVar.name));
 		fs.test = buildBinOp(/*#ref*/loc, ir.BinOp.Op.Less, index, len);
 
-		// k = aa.keys[i]
-		auto keys = buildAACall(lp.aaGetKeys, buildArrayTypeSmart(/*#ref*/loc, keyVar.type));
+		// v = aa[k]
+		auto rh2  = buildIndex(/*#ref*/loc, aaaggref(), buildExpReference(/*#ref*/loc, keyVar, keyVar.name));
+		fs.block.statements = buildExpStat(/*#ref*/loc, buildAssign(/*#ref*/loc, valVar, rh2)) ~ fs.block.statements;
+
+		// k = keysarr[i]
+		auto keys = buildExpReference(/*#ref*/loc, keysArrayVar, keysArrayVar.name);
 		auto rh   = buildIndex(/*#ref*/loc, keys, buildExpReference(/*#ref*/loc, indexVar, indexVar.name));
 		fs.block.statements = buildExpStat(/*#ref*/loc, buildAssign(/*#ref*/loc, keyVar, rh)) ~ fs.block.statements;
-
-		// v = aa.exps[i]
-		auto vals = buildAACall(lp.aaGetValues, buildArrayTypeSmart(/*#ref*/loc, valVar.type));
-		auto rh2  = buildIndex(/*#ref*/loc, vals, buildExpReference(/*#ref*/loc, indexVar, indexVar.name));
-		fs.block.statements = buildExpStat(/*#ref*/loc, buildAssign(/*#ref*/loc, valVar, rh2)) ~ fs.block.statements;
 
 		// i++
 		fs.increments ~= buildIncrement(/*#ref*/loc, buildExpReference(/*#ref*/loc, indexVar, indexVar.name));
