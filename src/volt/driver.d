@@ -15,7 +15,7 @@ import watt.conv : toLower;
 import watt.text.diff : diff;
 import watt.text.sink : StringSink;
 import watt.text.format : format;
-import watt.text.string : split, endsWith, replace;
+import watt.text.string : split, endsWith, replace, indexOf;
 
 import volt.util.path;
 import volt.util.perf : Accumulator, Perf, perf;
@@ -192,6 +192,10 @@ public:
 	{
 		if (mStringImportPaths.length == 0) {
 			throw makeNoStringImportPaths(/*#ref*/loc);
+		}
+
+		if (fname.indexOf("..") >= 0) {
+			throw makeError(/*#ref*/loc, "string import path with '..'.");
 		}
 
 		foreach (path; mStringImportPaths) {
