@@ -24,20 +24,20 @@ Volt source files have the extension `.volt`, and are processed as UTF-8.
 By default, doccomments will attach to the next single declaration.
 
     /// ichi is marked with this comment.
-    void ichi();
+    fn ichi();
     // but ni receives no comment.
-    void ni();
+    fn ni();
 	/// This is an error, as there is no declaration to attach to.
 
 Line doccomments can be made to the previous declaration.
 
-    void san();  ///< This attaches to san.
+    fn san();  ///< This attaches to san.
 
 Usually, one doccomment goes to one declaration. However, you can apply doccomments to multiple declarations.
 
     /// This comment attaches to alpha and beta.
 	/// @{
-	void alpha();
+	fn alpha();
 	struct beta {}
 	/// @}
 
@@ -98,9 +98,6 @@ Furthermore, the following are handled specially by the lexer.
 There are a few *String Literals*.
 
     "Hello, world."    // A UTF-8 string.
-    "Hello"c           // Another UTF-8 string.
-    "Hello"w           // UTF-16.
-    "Hello"d           // UTF-32.
     "Hello,\nworld."   // Contains a newline character.
     r"Hello,\nworld."  // Contains 'Hello,\nworld.' literally.
     `Hello,\nworld.`   // As above, but can also use '"' character in the string.
@@ -143,7 +140,7 @@ And specific symbols can be imported from modules (without importing the rest of
 
     module a;
 
-    global i32 integer;
+    global integer: i32;
 
 <!-- -->
 
@@ -200,15 +197,15 @@ To put it another way, mutable and `immutable` values can become `const`, but on
 
 ## Functions ##
 
-If you're familiar with other C like languages, functions shouldn't appear too foreign.
+Functions are declared using the `fn` keyword:
 
-    bool areEqual(i32 a, i32 b) {
+    fn areEqual(a: i32, b: i32) bool
         return a == b;
     }
 
-The above declares a function `areEqual`, that takes two `i32`s and returns a `bool`. `void` can be used to mark that a function returns no value. Unlike C, `()` means that a function takes no arguments.
+The above declares a function `areEqual`, that takes two `i32`s and returns a `bool`. The following function returns nothing, and takes no arguments:
 
-     void doNothing() {
+     fn doNothing() {
          return;
      }
 
@@ -220,23 +217,23 @@ Calling them works as you'd expect.
 
 Usually, parameters are pass-by-value.
 
-    void makeThree(i32 var) {
+    fn makeThree(var: i32) {
          var = 3;
     }
 
     ...
-        i32 x = 2;
+        x := 2;
         makeThree(x);
         // x remains 2.
 
 However, if you mark a parameter as `ref`, the value will be updated.
 
-    void makeThree(ref i32 var) {
+    fn makeThree(ref var: i32) {
          var = 3;
     }
 
     ...
-        i32 x = 2;
+        x := 2;
         makeThree(ref x);  // The 'ref' here is required, too.
         // x is 3.
 
@@ -244,8 +241,8 @@ However, if you mark a parameter as `ref`, the value will be updated.
 
 The simplest form of variadics (functions that can take multiple arguments) are *homogeneous variadics*. These are simply functions that have a parameter that can be several (or none) of the same type.
 
-    i32 sum(i32[] numbers...) {
-        i32 result;
+    fn sum(numbers: i32[]...) {
+        result: i32;
         foreach (number; numbers) {
             result += number;
         }
@@ -264,13 +261,14 @@ The first two calls are equivalent. As you can see, the function always handles 
 
 If you need more power, Volt also has true runtime *variadic function*s. The syntax is similar, except the `...` gets its own parameter.
 
+    import core.exception;
     import watt.varargs;
 
-    i32 sum(...) {
-        va_list vl;
+    fn sum(...) i32 {
+        vl: va_list;
 
         va_start(vl);
-        i32 result;
+        result: i32;
         foreach (tid; _typeids) {
             if (tid.type != object.TYPE_INT) {
                 throw new Exception("sum: expected i32");
@@ -286,31 +284,32 @@ If you need more power, Volt also has true runtime *variadic function*s. The syn
 *Structs* are the simplest aggregate type. In their simplest form, they bundle several declarations together.
 
     struct S {
-        i32 x;
+        x: i32;
         string s;
+        s: string
     }
 
     ...
-        S s;
+        s: S;
         s.x = 42;
         s.s = "hello"
 
 The above struct is allocated on the stack, but we can ask the GC to allocate a struct too.
 
-    S* sp = new S;
+    sp: S* = new S;
     sp.x = 32;  // No special access syntax required.
 
 Structs can contain functions. A reference to the struct is implicit in each function, and accessible implicitly or through the `this` keyword.
 
     struct S {
-        i32 x;
-        i32 xSquaredTimesN(i32 n) {
+        x: i32;
+        fn xSquaredTimesN(n: i32) i32 {
             return (x * this.x) * n;
         }
     }
 
     ...
-        S s;
+        s: S;
         s.x = 2;
         s.xSquaredTimesN(3);  // 12.
 
@@ -319,8 +318,8 @@ Structs can contain functions. A reference to the struct is implicit in each fun
 Unions are like structs, except all the variables occupy the same piece of memory.
 
     union U {
-        i32 x;  // Setting x...
-        i32 y;  // ...will set y, too.
+        x: i32;  // Setting x...
+        y: i32;  // ...will set y, too.
     }
 
 
@@ -333,40 +332,40 @@ Classes in volt are single inheritance and always reference types, so if you've 
 As mentioned, at first glance they look like structs.
 
     class C {
-        i32 x;
+        x: i32;
     }
 
 But there are several differences already. Firstly when using them.
 
-    C c;       // Default initialised to null.
-    // c.x     // Crashes!
+    c: C;       // Default initialised to null.
+    // c.x      // Crashes!
     c = new C;
     c.x = 2;
 
 Furthermore, classes can have constructors.
 
     class C {
-        i32 x;
+        x: i32;
         this() {
             x = 3;
         }
-        this(i32 x) {
+        this(x: i32) {
             this.x = x;
         }
-        this(i32 x, i32 y) {
+        this(x: i32, y: i32) {
             this.x = x * y;
         }
     }
 
     ...
-        auto a = new C();       // x == 3
-        auto b = new C(4);    // x == 4
-        auto c = new C(2, 3); // x == 6
+        a := new C();     // x == 3
+        b := new C(4);    // x == 4
+        c := new C(2, 3); // x == 6
 
  Classes can also have functions, which we call *methods*.
 
     class C {
-        i32 getInt() {
+        fn getInt() i32 {
             return 42;
         }
     }
@@ -374,67 +373,67 @@ Furthermore, classes can have constructors.
 They've a different name because of *inheritance* they behave differently. A class can be a child of a class (but only one!) like so.
 
     class D : C {
-         i32 getAnotherInt() {
+         fn getAnotherInt() i32 {
              return 24;
          }
     }
 
 And D acts like you'd expect.
 
-    auto d = new D();
+    d := new D();
     d.getInt();        // 42
     d.getAnotherInt(); // 24
 
 But you can also use a D as a C.
 
-    C c = d;
+    c: C = d;
     c.getInt();         // 42
     //c.getAnotherInt();  // Error!
-    auto asD = cast(D)c;
+    asD := cast(D)c;
     asD.getAnotherInt();  // 24
 
 In addition to this, methods can be overridden, changing their behaviour.
 
-    class D {
-        override i32 getInt() {
+    class D : C {
+        override fn getInt() i32 {
             return 7;
         }
     }
 
     ...
-        auto d = new D();
-        C c = d;
+        d := new D();
+        c: C = d;
         c.getInt();  // 7, not 42.
 
 If a function is related to a class or struct as a type, but not a particular instance, you can create a *static function*, that needs to be called through the *type*, not the *instance*.
 
     class Fruit {
-        static bool isDelicious() {
+        local fn isDelicious() bool {
             return true;
         }
     }
 
     ...
-        auto fruit = new Fruit();
+        fruit := new Fruit();
         // fruit.isDelicious();  // Error!
         Fruit.isDelicious();     // true
 
 Finally, you can mark a function with `@property` if it takes one argument, or no arguments with a non-`void` return value.
 
     class Person {
-        string _name;
-        @property string name() {
+        _name: string;
+        @property fn name() string {
             return _name;
         }
-        @property void name(string n) {
+        @property fn name(n: string) {
             _name = n;
         }
     }
 
     ...
-        auto p = new Person();
+        p := new Person();
         p.name = "Selma";  // Calls second function as name("Selma").
-        string s = p.name; // Calls first function as name();
+        s: string = p.name; // Calls first function as name();
 
 
 ## Interfaces ##
@@ -442,25 +441,25 @@ Finally, you can mark a function with `@property` if it takes one argument, or n
 Class can implement multiple *interface*s, which are a set of methods with no implementation.
 
     interface IPerson {
-        i32 age();
-        string name();
+        fn age() i32;
+        fn name() string;
     }
 
 Then a class can give the list of interfaces it implements after its parent class (if one is specified).
 
-    class C : object.Object, IPerson {
-        i32 age() { return 11; }
-        string name() { return "Billy"; }
+    class C : /*ParentClass, */IPerson {
+        override fn age() i32 { return 11; }
+        override fn name() string { return "Billy"; }
     }
 
 If one of the specified methods is not implemented, an error is generated. As for *why* one would want to do this, variables with a type of interface can be declared, and implementing classes can be treated as an instance of that interface.
 
-    i32 ageTimesTwo(IPerson person) {
+    fn ageTimesTwo(person: IPerson) i32 {
         return person.age() * 2;
     }
 
     ...
-        auto c = new C();
+        c := new C();
         ageTimesTwo(c);  // Note: no cast needed.
 
 This allows classes of entirely different family trees to be adapted to work with the same interface.
@@ -484,11 +483,11 @@ Unified Function Call Syntax, UFCS for short, is a way of extending types withou
 Without it, if we have a class or struct that lacks a method, we would have to settle for regular function call syntax.
 
     class Book {
-        string title;
-        i32 price;
+        title: string;
+        price: i32;
     }
 
-    void reducePrice(Book book, i32 amount) {
+    fn reducePrice(book: Book, amount: i32) {
         book.price -= amount;
     }
 
@@ -504,7 +503,7 @@ If the struct or class had already defined `reducePrice`, the real method would 
 
 It's not limited to structs and classes either. If a method style lookup would fail on any type (primitive types like i32, etc), then Volt will look for a function that takes the type as the first parameter, then the rest of the arguments.
 
-    i32 add(i32 i, i32 a, i32 b) {
+    fn add(i: i32, a: i32, b: i32) i32 {
         return i + a + b;
     }
 
@@ -514,79 +513,78 @@ It's not limited to structs and classes either. If a method style lookup would f
 
 ## Expressions
 
-###New Expression
+### New Expression
 
-Volt is a 'garbage collected' language, which means that the programmer doesn't have to concern themselves with deallocating memory (unless they choose to!).
+Volt is a garbage collected language, which means that the programmer doesn't have to concern themselves with deallocating memory (unless they choose to!).
 
 To request memory from the garbage collector (GC), use the `new` expression. In its simplest form, `new` simply takes a type. In this case, the returned value is a pointer to that type.
 
     ...
-        auto ip = new i32;  // ip has the type `i32*`.
+        ip := new i32;  // ip has the type `i32*`.
 
 You can use this with your own `alias`es and `struct`s, but `class`es are a different story. As discussed earlier, classes are reference types, so `new Object()` doesn't give you a pointer to `Object`, but just a plain `Object`. The parens (`()`) are required, and arguments to constructors can be passed.
 
     class Pair {
-        i32 a, b;
-        this(i32 a) {
+        a, b: i32;
+        this(a: i32) {
             this.a = a;
         }
-        this(i32 a, i32 b) {
+        this(a: i32, b: i32) {
             this.a = a;
             this.b = b;
         }
     }
 
     ...
-        // auto a = new Pair()    // Error! No matching constructor.
-        auto b = new Pair(32);    // Calls the first constructor.
-        auto c = new Pair(10, 5); // Calls the second constructor.
+        // a := new Pair()    // Error! No matching constructor.
+        b := new Pair(32);    // Calls the first constructor.
+        c := new Pair(10, 5); // Calls the second constructor.
 
 That's not the only place arguments are passed to `new`. Consider `new i32[]`. What's the type that this results in? If you guessed `i32[]*`, you'd be right. If we want to allocate an array with `new`, give it the array type, but append parens with the requested length after it.
 
-    auto a = new i32[](0);     // An empty array of i32s.
-    auto b = new string[](3);  // An array of three strings.
+    a := new i32[](0);     // An empty array of i32s.
+    b := new string[](3);  // An array of three strings.
 
 Speaking of arrays, sometimes you want to make a copy of one. You might think that
 
-    auto newArray = oldArray;
+    newArray := oldArray;
 
 would suffice, but consider that arrays are defined as structs, internally:
 
-    // Actual code from the runtime.
     struct ArrayStruct {
-        void* ptr;
-        size_t length;
+        ptr: void*;
+        length: size_t;
     }
 
 With this in mind, it's easy to see why a simple assignment doesn't create a copy -- the pointer is the same! Well, `new` can help here, too:
 
-    auto newArray = new oldArray[0 .. $];
+    newArray := new oldArray[0 .. $];
 
-If that dollar confuses you, it's simply a shorthand for `oldArray.length`. The number before the `..` is the index of `oldArray` to start copying, and the number after is the index to stop (non inclusive). It's easy to see how you could copy a portion of an array, if you don't want the whole thing:
+If that `$` confuses you, it's simply a shorthand for `oldArray.length`. The number before the `..` is the index of `oldArray` to start copying (inclusive0, and the number after is the index to stop (exclusive). It's easy to see how you could copy a portion of an array, if you don't want the whole thing:
 
-    auto oldArray = [1, 2, 3, 4, 5, 6];
-    auto newArray = new oldArray[3 .. 5];
+    oldArray := [1, 2, 3, 4, 5, 6];
+    newArray := new oldArray[3 .. 5];
     // newArray == [4, 5]
 
 And as copying the entire array is a common operation, there's a shorthand for the `0 .. $` syntax too:
 
-    auto newArray = new oldArray[..];
+    newArray := new oldArray[..];
 
 The above syntax can be used to copy associate arrays, too.
 
-###String Import Expression
+### String Import Expression
 
-    string str = import("filename.txt");
+    str: string = import("filename.txt");
 
-Will look in the paths supplied to the compiler with the -J switch for 'filename.txt'. If it finds it, the import expression will be replaced with a string literal with the contents of that file.
+Will look in the paths supplied to the compiler with the `-J` switch for 'filename.txt'. If it finds it, the import expression will be replaced with a string literal with the contents of that file. If you're using `battery`, it will supply a `res` directory to Volta as the argument for `-J`.
 
-There are no default lookup paths provided, all string imports will fail if -J is not used at least once.
+There are no default lookup paths provided, all string imports will fail if `-J` is not used at least once.
 
-##Statements
+## Statements
 
 In addition to statements that will be familiar to any C programmer, `if`, `while`, `for`, and so on, Volt includes a `foreach` statement for quickly looping over arrays and the like. The syntax is familiar to the loops in D, but there are several differences.
 
-    auto array = [4, 5, 6];
+    array := [4, 5, 6];
     foreach (e; array) {
         writefln("%s", e);  // Prints "1", then "2", then "3".
     }
@@ -601,7 +599,7 @@ If the aggregate is not an associative array, the index is always of type `size_
 
 If the aggregate *is* an associative array, then the index is the key, and the element is the value.
 
-    auto aa = ["hello":2];
+    aa := ["hello":2];
     foreach (v; aa) {
         writefln("%s", v);  // Prints the value, "2".
     }
