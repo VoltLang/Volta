@@ -36,6 +36,10 @@
 			"//T run:volta -o %t %s -J %S/../res",
 			"//T run:%t"
 		],
+		"res-failure": [
+			"//T retval:1",
+			"//T run:volta -o %t %s -J %S../res"
+		],
 		"warnings": [
 			"//T run:volta -o %t %s -w",
 			"//T run:%t"
