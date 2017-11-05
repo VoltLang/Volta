@@ -23,6 +23,3 @@ llvm-config --system-libs --ldflags --libs core bitwriter bitreader linker targe
 --if-msvc
 -l
 LLVM.lib
---if-msvc
--l
-winhttp.lib
