@@ -7,19 +7,3 @@
 #
 --dep
 watt
-#
-# Use llvm-config on osx and linux
-#
---if-osx
---if-linux
---cmd
-llvm-config --system-libs --ldflags --libs core bitwriter bitreader linker target x86codegen engine
---if-osx
---if-linux
--lstdc++
-#
-# On Windows the user will need to provide LLVM.lib
-#
---if-msvc
--l
-LLVM.lib
