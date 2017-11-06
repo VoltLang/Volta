@@ -356,6 +356,17 @@ ir.ComposableString copy(ir.ComposableString old)
 	return cs;
 }
 
+ir.StatementExp copy(ir.StatementExp old)
+{
+	auto se = new ir.StatementExp(old);
+	se.loc = old.loc;
+	se.exp = copyExp(old.exp);
+	if (old.originalExp !is null) {
+		se.originalExp = copyExp(old.originalExp);
+	}
+	return se;
+}
+
 /*
  *
  * Helpers.
@@ -443,6 +454,8 @@ ir.Exp copyExp(ref in Location loc, ir.Exp exp)
 	return e;
 }
 
+import watt.io.std;
+
 /*!
  * Copies a node and all its children nodes.
  */
@@ -511,8 +524,10 @@ ir.Node copyNode(ir.Node n)
 	case ComposableString:
 		auto cs = cast(ir.ComposableString)n;
 		return copy(cs);
-	case Enum:
 	case StatementExp:
+		auto se = cast(ir.StatementExp)n;
+		return copy(se);
+	case Enum:
 	case PrimitiveType:
 	case TypeReference:
 	case PointerType:

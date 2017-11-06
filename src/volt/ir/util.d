@@ -150,6 +150,7 @@ ir.Scope getScopeFromStore(ir.Store store)
  */
 ir.Type copyTypeSmart(ref in Location loc, ir.Type type)
 {
+	assert(type !is null);
 	ir.Type outType;
 	switch (type.nodeType) with (ir.NodeType) {
 	case PrimitiveType:
