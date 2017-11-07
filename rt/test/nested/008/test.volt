@@ -1,5 +1,5 @@
 //T macro:expect-failure
-//T check:scope may not be returned
+//T check:scope values may not escape through return statements
 module test;
 
 fn foo() scope dg() i32

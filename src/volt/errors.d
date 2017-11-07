@@ -496,13 +496,17 @@ CompilerException makeForceLabel(ref in Location loc, ir.Function fun, string fi
 
 CompilerException makeNoEscapeScope(ref in Location loc, string file = __FILE__, const int line = __LINE__)
 {
-	auto es = new CompilerError(loc, "types marked scope may not remove their scope through assignment.", file, line);
+	auto msg = "scope values may not escape through assignment.";
+	msg ~= loc.locationGuide();
+	auto es = new CompilerError(loc, msg, file, line);
 	return es;
 }
 
 CompilerException makeNoReturnScope(ref in Location loc, string file = __FILE__, const int line = __LINE__)
 {
-	auto nrs = new CompilerError(loc, "types marked scope may not be returned.", file, line);
+	auto msg = "scope values may not escape through return statements.";
+	msg ~= loc.locationGuide();
+	auto nrs = new CompilerError(loc, msg, file, line);
 	return nrs;
 }
 

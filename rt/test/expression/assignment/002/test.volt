@@ -1,5 +1,5 @@
 //T macro:expect-failure
-//T check:scope through assignment
+//T check:escape through assignment
 // MI to global scope assignment.
 module test;
 

@@ -1,5 +1,5 @@
 //T macro:expect-failure
-//T check:may not remove their scope
+//T check:escape through assignment
 module test;
 
 global x: scope i32*;
