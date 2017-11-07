@@ -3046,6 +3046,7 @@ ir.Type extypeComposableString(Context ctx, ref ir.Exp exp, Parent parent)
 {
 	auto cs = cast(ir.ComposableString)exp;
 	foreach (ref component; cs.components) {
+		ir.Enum _enum;
 		auto type = realType(extype(ctx, /*#ref*/component, Parent.NA), false);
 		switch (type.nodeType) with (ir.NodeType) {
 		case ArrayType:
@@ -3053,8 +3054,12 @@ ir.Type extypeComposableString(Context ctx, ref ir.Exp exp, Parent parent)
 		case Union:
 		case Struct:
 		case Class:
+			break;
 		case Enum:
+			_enum = type.toEnumFast();
+			break;
 		case PrimitiveType:
+			break;
 		case PointerType:
 			break;
 		default:
@@ -3062,7 +3067,9 @@ ir.Type extypeComposableString(Context ctx, ref ir.Exp exp, Parent parent)
 		}
 		if (cs.compileTimeOnly) {
 			auto loc = component.loc;
-			component = evaluateOrNull(ctx.lp, ctx.current, component);
+			ir.Constant constant;
+			component = constant = evaluateOrNull(ctx.lp, ctx.current, component);
+			constant.fromEnum = _enum;
 			if (component is null) {
 				throw makeNonConstantCompileTimeComposable(/*#ref*/loc);
 			}
