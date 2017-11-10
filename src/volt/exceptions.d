@@ -129,7 +129,7 @@ public:
 class PairMismatchError : CompilerError
 {
 public:
-	this(Location pairStart, Location loc, string type, string token, string file = __FILE__, const int line = __LINE__)
+	this(ref Location pairStart, Location loc, string type, string token, string file = __FILE__, const int line = __LINE__)
 	{
 		loc.column += loc.length;
 		loc.length = token.length;
@@ -138,7 +138,7 @@ public:
 
 		fixHint = token;
 
-		more = new CompilerError(pairStart, format("%s started here.", type));
+		more = new CompilerError(/*#ref*/pairStart, format("%s started here.", type));
 	}
 }
 

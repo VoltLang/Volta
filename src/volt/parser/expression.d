@@ -229,7 +229,17 @@ ParseStatus unaryToExp(ParserStream ps, intir.UnaryExp unary, out ir.Exp exp)
 				return parseFailed(ps, u);
 			}
 			u.argumentList ~= e;
+			ir.Postfix.TagKind r;
+			if (arg.taggedRef) {
+				r = ir.Postfix.TagKind.Ref;
+			} else if (arg.taggedOut) {
+				r = ir.Postfix.TagKind.Out;
+			} else {
+				r = ir.Postfix.TagKind.None;
+			}
+			u.argumentTags ~= r;
 		}
+		assert(u.argumentTags.length == u.argumentList.length);
 		exp = u;
 	} else if (unary.op == ir.Unary.Op.Dup) {
 		auto u = new ir.Unary();

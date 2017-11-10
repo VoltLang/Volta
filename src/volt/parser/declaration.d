@@ -829,13 +829,6 @@ ParseStatus parseParameter(ParserStream ps, out ir.Variable p)
 			return parseFailed(ps, p);
 		}
 	}
-	if (isRef || isOut) {
-		auto s = new ir.StorageType();
-		s.loc = origin;
-		s.type = isRef ? ir.StorageType.Kind.Ref : ir.StorageType.Kind.Out;
-		s.base = p.type;
-		p.type = s;
-	}
 	if (isIn) {
 		auto constStorage = buildStorageType(/*#ref*/ps.peek.loc, ir.StorageType.Kind.Const, p.type);
 		auto scopeStorage = buildStorageType(/*#ref*/ps.peek.loc, ir.StorageType.Kind.Scope, constStorage);
@@ -868,6 +861,13 @@ ParseStatus parseParameter(ParserStream ps, out ir.Variable p)
 		}
 	}
 	p.loc = ps.peek.loc - origin;
+	if (isRef || isOut) {
+		auto s = new ir.StorageType();
+		s.loc = origin;
+		s.type = isRef ? ir.StorageType.Kind.Ref : ir.StorageType.Kind.Out;
+		s.base = p.type;
+		p.type = s;
+	}
 
 	return Succeeded;
 }

@@ -116,7 +116,7 @@ ParseStatus unexpectedToken(ParserStream ps, ir.NodeType ntype,
                             string file = __FILE__, const int line = __LINE__)
 {
 	string found = tokenToString(ps.peek.type);
-	auto e = new ParserUnexpectedToken(ps.peek.loc, ntype, found,
+	auto e = new ParserUnexpectedToken(/*#ref*/ps.peek.loc, ntype, found,
 	                                   file, line);
 	ps.parserErrors ~= e;
 	return Failed;
@@ -132,7 +132,7 @@ ParseStatus wrongToken(ParserStream ps, ir.NodeType ntype,
                        Token found, TokenType expected,
                        string file = __FILE__, const int line = __LINE__)
 {
-	auto e = new ParserWrongToken(found.loc, ntype, found.type,
+	auto e = new ParserWrongToken(/*#ref*/found.loc, ntype, found.type,
 	                              expected, file, line);
 	ps.parserErrors ~= e;
 	return Failed;
@@ -143,7 +143,7 @@ ParseStatus parseFailed(ParserStream ps, ir.NodeType ntype,
 {
 	assert(ps.parserErrors.length >= 1);
 	auto ntype2 = ps.parserErrors[$-1].nodeType;
-	auto e = new ParserParseFailed(ps.peek.loc, ntype, ntype2,
+	auto e = new ParserParseFailed(/*#ref*/ps.peek.loc, ntype, ntype2,
 	                               file, line);
 	ps.parserErrors ~= e;
 	return Failed;
@@ -158,7 +158,7 @@ ParseStatus parseFailed(ParserStream ps, ir.Node n,
 ParseStatus parseFailed(ParserStream ps, ir.NodeType ntype, ir.NodeType ntype2,
                         string file = __FILE__, const int line = __LINE__)
 {
-	auto e = new ParserParseFailed(ps.peek.loc, ntype, ntype2,
+	auto e = new ParserParseFailed(/*#ref*/ps.peek.loc, ntype, ntype2,
 	                               file, line);
 	ps.parserErrors ~= e;
 	return Failed;
@@ -167,7 +167,7 @@ ParseStatus parseFailed(ParserStream ps, ir.NodeType ntype, ir.NodeType ntype2,
 ParseStatus unsupportedFeature(ParserStream ps, ir.Node n, string s,
                                string file = __FILE__, const int l = __LINE__)
 {
-	auto e = new ParserUnsupportedFeature(n.loc, n.nodeType, s, file, l);
+	auto e = new ParserUnsupportedFeature(/*#ref*/n.loc, n.nodeType, s, file, l);
 	ps.parserErrors ~= e;
 	return Failed;
 }

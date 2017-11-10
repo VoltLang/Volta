@@ -26,19 +26,6 @@ ir.IdentifierExp buildIdentifierExp(ref in Location loc, string value, bool isGl
 }
 
 /*!
- * Builds a QualifiedName from a string.
- */
-ir.QualifiedName buildQualifiedName(ref in Location loc, string value)
-{
-	auto i = new ir.Identifier(value);
-	i.loc = loc;
-	auto q = new ir.QualifiedName();
-	q.identifiers = [i];
-	q.loc = loc;
-	return q;
-}
-
-/*!
  * Builds a QualifiedName from an array.
  */
 ir.QualifiedName buildQualifiedName(ref in Location loc, scope string[] value...)
@@ -912,7 +899,7 @@ ir.BuiltinExp buildArrayPtr(ref in Location loc, ir.Type base, ir.Exp child)
  */
 ir.BuiltinExp buildBuildVtable(ref in Location loc, ir.Type type, ir.Class _class, FunctionSink functionSink)
 {
-	auto builtin = new ir.BuiltinExp(ir.BuiltinExp.Kind.BuildVtable, copyTypeSmart(/*#ref*/loc, type), _class, functionSink);
+	auto builtin = new ir.BuiltinExp(ir.BuiltinExp.Kind.BuildVtable, copyTypeSmart(/*#ref*/loc, type), _class, /*#ref*/functionSink);
 	builtin.loc = loc;
 
 	return builtin;

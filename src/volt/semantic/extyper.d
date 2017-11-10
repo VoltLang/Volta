@@ -1005,36 +1005,42 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 	}
 	assert(asFunctionType.params.length <= postfix.arguments.length);
 	rewriteHomogenousVariadic(ctx, asFunctionType, /*#ref*/postfix.arguments);
-	foreach (i; 0 .. asFunctionType.params.length) {
-		if (i < postfix.argumentTags.length) {
-			auto _paramref = asFunctionType.isArgRef[i];
-			auto _paramout = asFunctionType.isArgOut[i];
-			auto _tagref   = postfix.argumentTags[i] == ir.Postfix.TagKind.Ref;
-			auto _tagout   = postfix.argumentTags[i] == ir.Postfix.TagKind.Out;
-			auto _tagnone  = postfix.argumentTags[i] == ir.Postfix.TagKind.None;
+	checkCallRefOutTags(ctx, asFunctionType, /*#ref*/postfix.arguments,
+		/*#ref*/postfix.argumentTags);
+}
+
+void checkCallRefOutTags(Context ctx, ir.CallableType ftype, ref ir.Exp[] arguments,
+	ref ir.Postfix.TagKind[] argumentTags)
+{
+	foreach (i; 0 .. ftype.params.length) {
+		if (i < argumentTags.length) {
+			auto _paramref = ftype.isArgRef[i];
+			auto _paramout = ftype.isArgOut[i];
+			auto _tagref   = argumentTags[i] == ir.Postfix.TagKind.Ref;
+			auto _tagout   = argumentTags[i] == ir.Postfix.TagKind.Out;
+			auto _tagnone  = argumentTags[i] == ir.Postfix.TagKind.None;
 			if (_paramref || _paramout) {
-				if (!isLValue(postfix.arguments[i])) {
-					throw makeNotLValueButRefOut(postfix.arguments[i], asFunctionType.isArgRef[i]);
+				if (!isLValue(arguments[i])) {
+					throw makeNotLValueButRefOut(arguments[i], ftype.isArgRef[i]);
 				}
 				if ((_paramref && _tagout) || (_paramout && _tagref)) {
-					throw makeWrongTag(postfix.arguments[i], _tagref);
+					throw makeWrongTag(arguments[i], _tagref);
 				}
 				if (_paramref && _tagnone) {
-					throw makeNotTaggedRef(postfix.arguments[i]);
+					throw makeNotTaggedRef(arguments[i]);
 				}
 				if (_paramout && _tagnone) {
-					throw makeNotTaggedOut(postfix.arguments[i]);
+					throw makeNotTaggedOut(arguments[i]);
 				}
 			}
 			if (!_paramref && !_paramout && !_tagnone) {
-				throw makeSpuriousTag(postfix.arguments[i], _tagref);
+				throw makeSpuriousTag(arguments[i], _tagref);
 			}
 		}
-		tagLiteralType(postfix.arguments[i], asFunctionType.params[i]);
-		checkAndConvertStringLiterals(ctx, asFunctionType.params[i], /*#ref*/postfix.arguments[i]);
+		tagLiteralType(arguments[i], ftype.params[i]);
+		checkAndConvertStringLiterals(ctx, ftype.params[i], /*#ref*/arguments[i]);
 	}
 }
-
 
 /*!
  * This function acts as a extyperExpReference function would do,
@@ -1720,6 +1726,7 @@ void extypeUnaryNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 	for (size_t i = 0; i < _unary.argumentList.length; ++i) {
 		checkAndDoConvert(ctx, func.type.params[i], /*#ref*/_unary.argumentList[i]);
 	}
+	checkCallRefOutTags(ctx, func.type, /*#ref*/_unary.argumentList, /*#ref*/_unary.argumentTags);
 }
 
 /*!

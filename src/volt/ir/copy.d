@@ -160,7 +160,7 @@ ir.Postfix copy(ir.Postfix pfix)
 
 ir.Unary copy(ir.Unary unary)
 {
-	auto newunary = new ir.Unary();
+	auto newunary = new ir.Unary(unary);
 	newunary.loc = unary.loc;
 	newunary.op = unary.op;
 	newunary.value = unary.value is null ? null : copyExp(unary.value);
