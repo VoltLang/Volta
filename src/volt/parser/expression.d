@@ -16,12 +16,12 @@ import volt.exceptions;
 import volt.errors;
 import volta.ir.location;
 import volta.ir.token : TokenType;
+import volta.util.dup;
 import volt.token.source : Source;
 import volt.token.lexer : lex;
 import volt.parser.base;
 import volt.parser.declaration;
 import volt.util.string;
-
 
 ParseStatus parseExp(ParserStream ps, out ir.Exp exp)
 {
@@ -221,6 +221,7 @@ ParseStatus unaryToExp(ParserStream ps, intir.UnaryExp unary, out ir.Exp exp)
 		u.op = unary.op;
 		u.type = unary.newExp.type;
 		u.hasArgumentList = unary.newExp.hasArgumentList;
+		u.argumentLabels = unary.newExp.argumentLabels.dup();
 		foreach (arg; unary.newExp.argumentList) {
 			ir.Exp e;
 			auto succeeded = assignToExp(ps, arg, /*#out*/e);
@@ -1357,7 +1358,7 @@ ParseStatus parseNewExp(ParserStream ps, out intir.NewExp newExp)
 
 	if (matchIf(ps, TokenType.OpenParen)) {
 		newExp.hasArgumentList = true;
-		succeeded = _parseArgumentList(ps, /*#out*/newExp.argumentList);
+		succeeded = _parseArgumentList(ps, /*#out*/newExp.argumentList, /*#ref*/newExp.argumentLabels);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Unary);
 		}

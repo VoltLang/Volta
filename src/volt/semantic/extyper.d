@@ -633,7 +633,8 @@ ir.Type replaceAAPostfixesIfNeeded(Context ctx, ref ir.Exp exp, ir.Postfix postf
 	}
 }
 
-void handleArgumentLabelsIfNeeded(Context ctx, ir.Postfix postfix,
+void handleArgumentLabelsIfNeeded(Context ctx, ref ir.Exp[] arguments, ref string[] argumentLabels,
+								  ref ir.Postfix.TagKind[] argumentTags,
                                   ir.Function func, ref ir.Exp exp)
 {
 	if (func is null) {
@@ -650,21 +651,21 @@ void handleArgumentLabelsIfNeeded(Context ctx, ir.Postfix postfix,
 		}
 	}
 
-	if (postfix.argumentLabels.length == 0) {
+	if (argumentLabels.length == 0) {
 		if (func.type.forceLabel && func.type.params.length > defaultArgCount) {
 			throw makeForceLabel(/*#ref*/exp.loc, func);
 		}
 		return;
 	}
 
-	if (postfix.argumentLabels.length != postfix.arguments.length) {
+	if (argumentLabels.length != arguments.length) {
 		throw panic(/*#ref*/exp.loc, "argument count and label count unmatched");
 	}
 
 	// If they didn't provide all the arguments, try filling in any default arguments.
-	if (postfix.arguments.length < func.params.length) {
+	if (arguments.length < func.params.length) {
 		bool[string] labels;
-		foreach (label; postfix.argumentLabels) {
+		foreach (label; argumentLabels) {
 			labels[label] = true;
 		}
 		foreach (arg, def; defaults) {
@@ -674,57 +675,56 @@ void handleArgumentLabelsIfNeeded(Context ctx, ir.Postfix postfix,
 			if (auto p = arg in labels) {
 				continue;
 			}
-			postfix.arguments ~= copyExp(/*#ref*/def.loc, def);
-			postfix.arguments[$-1].loc = def.loc;
-			postfix.argumentLabels ~= arg;
-			postfix.argumentTags ~= ir.Postfix.TagKind.None;
+			arguments ~= copyExp(/*#ref*/def.loc, def);
+			arguments[$-1].loc = def.loc;
+			argumentLabels ~= arg;
+			argumentTags ~= ir.Postfix.TagKind.None;
 		}
 	}
 
-	if (postfix.arguments.length != func.params.length) {
-		throw makeWrongNumberOfArguments(postfix, func, postfix.arguments.length, func.params.length);
+	if (arguments.length != func.params.length) {
+		throw makeWrongNumberOfArguments(exp, func, arguments.length, func.params.length);
 	}
 
-	auto labels = new string[](postfix.arguments.length);
+	auto labels = new string[](arguments.length);
 
 	// Check all the labels exist.
-	for (size_t i = 0; i < postfix.argumentLabels.length; i++) {
-		auto argumentLabel = postfix.argumentLabels[i];
+	for (size_t i = 0; i < argumentLabels.length; i++) {
+		auto argumentLabel = argumentLabels[i];
 		auto p = argumentLabel in positions;
 		if (p is null) {
-			throw makeUnmatchedLabel(/*#ref*/postfix.loc, argumentLabel);
+			throw makeUnmatchedLabel(/*#ref*/exp.loc, argumentLabel);
 		}
 		foreach (previouslySeenLabel; labels) {
 			if (previouslySeenLabel == argumentLabel) {
-				throw makeDuplicateLabel(/*#ref*/postfix.loc, argumentLabel);
+				throw makeDuplicateLabel(/*#ref*/exp.loc, argumentLabel);
 			}
 		}
 		labels[i] = argumentLabel;
 	}
 
 	// Reorder arguments to match parameter order.
-	for (size_t i = 0; i < postfix.argumentLabels.length; i++) {
-		auto argumentLabel = postfix.argumentLabels[i];
+	for (size_t i = 0; i < argumentLabels.length; i++) {
+		auto argumentLabel = argumentLabels[i];
 		auto p = argumentLabel in positions;
 		if (p is null) {
-			throw makeUnmatchedLabel(/*#ref*/postfix.loc, argumentLabel);
+			throw makeUnmatchedLabel(/*#ref*/exp.loc, argumentLabel);
 		}
 		auto labelIndex = *p;
 		if (labelIndex == i) {
 			continue;
 		}
-		auto tmp = postfix.arguments[i];
-		auto tmp2 = postfix.argumentLabels[i];
-		auto tmp3 = postfix.argumentTags[i];
-		postfix.arguments[i] = postfix.arguments[labelIndex];
-		postfix.argumentLabels[i] = postfix.argumentLabels[labelIndex];
-		postfix.argumentTags[i] = postfix.argumentTags[labelIndex];
-		postfix.arguments[labelIndex] = tmp;
-		postfix.argumentLabels[labelIndex] = tmp2;
-		postfix.argumentTags[labelIndex] = tmp3;
+		auto tmp = arguments[i];
+		auto tmp2 = argumentLabels[i];
+		auto tmp3 = argumentTags[i];
+		arguments[i] = arguments[labelIndex];
+		argumentLabels[i] = argumentLabels[labelIndex];
+		argumentTags[i] = 	argumentTags[labelIndex];
+		arguments[labelIndex] = tmp;
+		argumentLabels[labelIndex] = tmp2;
+		argumentTags[labelIndex] = tmp3;
 		i = 0;
 	}
-	exp = postfix;
 }
 
 //! Given a.foo, if a is a pointer to a class, turn it into (*a).foo.
@@ -982,9 +982,10 @@ void extypePostfixCall(Context ctx, ref ir.Exp exp, ir.Postfix postfix)
 
 	// All of the selecting function work has been done,
 	// and we have a single function or function type to call.
-	// Tho func might be null.
+	// Though func might be null.
 
-	handleArgumentLabelsIfNeeded(ctx, postfix, func, /*#ref*/exp);
+	handleArgumentLabelsIfNeeded(ctx, /*#ref*/postfix.arguments,
+		/*#ref*/postfix.argumentLabels, /*#ref*/postfix.argumentTags, func, /*#ref*/exp);
 
 	// Not providing an argument to a homogenous variadic function.
 	if (asFunctionType.homogenousVariadic && postfix.arguments.length + 1 == asFunctionType.params.length) {
@@ -1706,6 +1707,10 @@ void extypeUnaryNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 	_unary.ctor = func;
 
 	ctx.lp.resolve(ctx.current, func);
+
+	handleArgumentLabelsIfNeeded(ctx, /*#ref*/_unary.argumentList,
+		/*#ref*/_unary.argumentLabels, /*#ref*/_unary.argumentTags,
+		func, /*#ref*/exp);
 
 	appendDefaultArguments(ctx, _unary.loc, /*#ref*/_unary.argumentList, func);
 	if (_unary.argumentList.length > 0) {

@@ -114,6 +114,7 @@ public:
 	TernaryExp exp;  // new int[binExp]
 	bool hasArgumentList;
 	AssignExp[] argumentList;  // new int(argumentList)
+	string[] argumentLabels;
 }
 
 // new foo[3 .. 6];  // duplicate array foo.

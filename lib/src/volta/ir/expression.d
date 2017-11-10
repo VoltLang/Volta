@@ -266,6 +266,8 @@ public:
 	bool hasArgumentList;
 	Type type;  // with Cast and New.
 	Exp[] argumentList;  // With new StringObject("foo", "bar");
+	Postfix.TagKind[] argumentTags;   // new Foo(ref a);
+	string[] argumentLabels;  // new Foo(age:7);
 	Function ctor; //!< The constructor to call.
 
 	// These are only for Dup.
@@ -286,6 +288,8 @@ public:
 		this.hasArgumentList = old.hasArgumentList;
 		this.type = old.type;
 		this.argumentList = old.argumentList.dup();
+		this.argumentTags = old.argumentTags.dup();
+		this.argumentLabels = old.argumentLabels.dup();
 		this.ctor = old.ctor;
 
 		this.dupBeginning = old.dupBeginning;
