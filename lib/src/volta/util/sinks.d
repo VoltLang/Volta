@@ -85,11 +85,12 @@ public:
 		}
 	}
 
-	void popLast()
+	T popLast()
 	{
 		if (mLength > 0) {
-			mLength--;
+			return mArr[--mLength];
 		}
+		return T.init;
 	}
 
 	T getLast()
@@ -145,6 +146,7 @@ public:
 }
 
 alias IntSink = SinkStruct!int;
+alias BoolSink = SinkStruct!bool;
 alias FunctionSink = SinkStruct!(ir.Function);
 alias FunctionArraySink = SinkStruct!(ir.Function[]);
 alias VariableSink = SinkStruct!(ir.Variable);
