@@ -3,6 +3,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.arg;
 
+import core.exception;
+
 import watt.text.string : indexOf, replace;
 import watt.text.format : format;
 import watt.path : dirSeparator, baseName, dirName;
@@ -287,7 +289,9 @@ void filterArgs(Arg[] args, ref string[] files, VersionSet ver, Settings setting
 			break;
 
 		case Identifier:
-			ver.setVersionIdentifier(arg.arg);
+			if (!ver.setVersionIdentifierIfNotReserved(arg.arg)) {
+				throw new Exception("cannot set reserved identifier.");
+			}
 			break;
 		case IncludePath:
 			settings.includePaths ~= arg.arg;
