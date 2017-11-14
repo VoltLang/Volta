@@ -1,0 +1,16 @@
+#
+# This is the Volt runtime.
+#
+name = "volta.rt"
+isTheRT = true
+#
+# Extra files
+#
+asmFiles = ["src/vrt/gc/save_regs.asm", "src/vrt/os/eh.asm"]
+#
+# OS deps
+#
+[platform.linux]
+libraries = ["pthread", "dl", "rt"]
+[platform.msvc]
+libraries = ["AdvAPI32.Lib"]

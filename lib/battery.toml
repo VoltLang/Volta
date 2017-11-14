@@ -1,0 +1,9 @@
+#
+# We have D files tell it to scan for them
+#
+name = "volta.lib"
+scanForD = true
+#
+# We need watt to build
+#
+dependencies = ["watt"]

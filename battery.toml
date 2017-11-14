@@ -1,0 +1,20 @@
+#
+# The root Volta project only has D files.
+#
+name = "volta"
+scanForD = true
+#
+# We need the lib and dsupport to build
+#
+dependencies = ["volta.lib", "volta.dsupport"]
+#
+# Use llvm-config on osx and linux
+#
+[platform.'osx || linux']
+commands = ["llvm-config --system-libs --ldflags --libs core bitwriter bitreader linker target x86codegen engine"]
+libraries = ["stdc++"]
+#
+# On Windows the user will need to provide LLVM.lib
+#
+[platform.msvc]
+libraries = ["LLVM.lib"]
