@@ -13,16 +13,10 @@ import ir = volta.ir;
 import volt.ir.printer;
 
 import volt.exceptions;
+public import volta.errors;
 import volta.settings;
 import volta.ir.token : tokenToString, TokenType;
 import volta.ir.location;
-
-
-// Not sure of the best home for this guy.
-void warning(ref in Location loc, string message)
-{
-	writefln(format("%s: warning: %s", loc.toString(), message));
-}
 
 void hackTypeWarning(ir.Node n, ir.Type nt, ir.Type ot)
 {

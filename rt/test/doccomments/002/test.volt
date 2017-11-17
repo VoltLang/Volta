@@ -1,4 +1,4 @@
-//T macro:expect-failure
+//T check:outside of multicomment
 module test;
 
 // Should be fine, not sure if this will do anything

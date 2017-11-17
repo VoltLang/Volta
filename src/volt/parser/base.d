@@ -12,12 +12,11 @@ import watt.text.vdoc : cleanComment;
 
 import ir = volta.ir;
 
-import volt.errors;
-import volt.exceptions;
 import volta.settings : Settings;
 public import volta.ir.token : Token, TokenType, tokenToString;
 import volta.ir.tokenstream : TokenStream;
 import volta.ir.location : Location;
+import volta.errors;
 import volt.parser.errors;
 
 
@@ -517,7 +516,6 @@ class ParserStream : TokenStream
 {
 public:
 	ParserError[] parserErrors;
-	CompilerException ce;
 
 	//! Error raised shouldn't be ignored.
 	bool neverIgnoreError;
@@ -605,9 +603,8 @@ public:
 		}
 		if (mComment[$-1].length && !inMultiCommentBlock) {
 			assert(lastDocComment.type != TokenType.None);
-			auto e = makeStrayDocComment(/*#ref*/lastDocComment.loc);
-			e.neverIgnore = true;
-			throw e;
+			warning(/*#ref*/lastDocComment.loc, "stray doccomment");
+			return;
 		}
 		if (mComment.length >= 0) {
 			mComment[$-1] = oldComment;
@@ -669,9 +666,8 @@ private:
 		}
 		if (mTokens[mIndex].value.indexOf("@}") >= 0) {
 			if (!inMultiCommentBlock) {
-				auto e = makeExpected(/*#ref*/mTokens[mIndex].loc, "@{");
-				e.neverIgnore = true;
-				throw e;
+				warning(/*#ref*/mTokens[mIndex].loc, "@} outside of multicomment block.");
+				return;
 			}
 			multiDepth--;
 			if (multiDepth == 0 && mComment.length > 0) {
