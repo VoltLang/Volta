@@ -12,7 +12,7 @@ import volt.ir.copy : copyType;
 
 import volt.errors;
 import volt.exceptions;
-import volt.token.stream;
+import volta.ir.tokenstream;
 import volta.ir.token : TokenType, Token;
 
 import volt.parser.base;

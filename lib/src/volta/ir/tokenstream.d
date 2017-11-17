@@ -3,9 +3,8 @@
 // Copyright © 2010, Jakob Ovrum.  All rights reserved.
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.token.stream;
+module volta.ir.tokenstream;
 
-import volt.errors : panic, makeStrayDocComment, makeExpected;
 public import volta.ir.token;
 
 
@@ -28,16 +27,9 @@ public:
 	 */
 	this(Token[] tokens)
 	{
-		if (tokens.length == 0)
-			throw panic("Token stream too short");
-		if (tokens.length < 3) {
-			throw panic(/*#ref*/tokens[0].loc, "Token stream too short.");
-		}
-		if (tokens[0].type != TokenType.Begin)
-			throw panic("Token stream not started correctly");
-		if (tokens[$-1].type != TokenType.End)
-			throw panic("Token stream not terminated correctly");
-
+		assert(tokens.length >= 3, "Token stream too short.");
+		assert(tokens[0].type == TokenType.Begin, "Token stream not started correctly.");
+		assert(tokens[$-1].type == TokenType.End, "Token stream not terminated correctly.");
 		this.mTokens = tokens;
 	}
 
@@ -139,8 +131,7 @@ public:
 	 */
 	final Token lookbehind(size_t n)
 	{
-		if (n > mIndex)
-			throw panic("Token array access out of bounds");
+		assert(n <= mIndex, "Token array access out of bounds.");
 		return mTokens[mIndex - n];
 	}
 

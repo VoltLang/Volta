@@ -7,7 +7,7 @@ module volt.token.writer;
 
 import volt.token.error;
 import volt.token.source;
-import volt.token.stream;
+import volta.ir.tokenstream;
 
 
 /*!

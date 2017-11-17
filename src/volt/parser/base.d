@@ -16,7 +16,7 @@ import volt.errors;
 import volt.exceptions;
 import volta.settings : Settings;
 public import volta.ir.token : Token, TokenType, tokenToString;
-import volt.token.stream : TokenStream;
+import volta.ir.tokenstream : TokenStream;
 import volta.ir.location : Location;
 import volt.parser.errors;
 
