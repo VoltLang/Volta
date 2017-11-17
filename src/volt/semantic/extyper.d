@@ -3081,10 +3081,10 @@ ir.Type extypeComposableString(Context ctx, ref ir.Exp exp, Parent parent)
 			auto loc = component.loc;
 			ir.Constant constant;
 			component = constant = evaluateOrNull(ctx.lp, ctx.current, component);
-			constant.fromEnum = _enum;
 			if (component is null) {
 				throw makeNonConstantCompileTimeComposable(/*#ref*/loc);
 			}
+			constant.fromEnum = _enum;
 		}
 	}
 	return buildString(/*#ref*/exp.loc);
