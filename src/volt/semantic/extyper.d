@@ -1206,7 +1206,7 @@ ir.Type consumeIdentsIfScopesOrTypes(Context ctx, ref ir.Postfix[] postfixes,
 		if (lookScope is null) {
 			store = lookupAsImportScopes(ctx.lp, lookStore.scopes, /*#ref*/postfix.loc, name);
 		} else {
-			store = lookupAsImportScope(ctx.lp, lookScope, /*#ref*/postfix.loc, name);
+			store = lookupAsThisScope(ctx.lp, lookScope, /*#ref*/postfix.loc, name, ctx.current);
 		}
 		if (store is null) {
 			auto asEnum = cast(ir.Enum)lookType;
