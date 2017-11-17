@@ -324,12 +324,12 @@ public:
 
 		foreach (_case; ss.cases) {
 			if (_case.firstExp !is null) acceptExp(/*#ref*/_case.firstExp, this);
-			void addVal(LLVMValueRef val, LLVMBasicBlockRef block)
+			void addVal(ir.Node node, LLVMValueRef val, LLVMBasicBlockRef block)
 			{
 				LLVMBasicBlockRef tmp;
 				auto i = LLVMConstIntGetSExtValue(val);
 				if (state.switchGetCase(i, /*#out*/tmp)) {
-					throw makeSwitchDuplicateCase(_case);
+					throw makeSwitchDuplicateCase(node);
 				} else {
 					state.switchSetCase(i, block);
 				}
@@ -342,7 +342,7 @@ public:
 					return;
 				}
 				auto val = state.getValue(exp);
-				addVal(val, block);
+				addVal(exp, val, block);
 			}
 
 			if (_case.isDefault) {
@@ -363,7 +363,7 @@ public:
 					}
 					while (ai <= bi) {
 						auto val = LLVMConstInt(typ, cast(ulong)ai++, false);
-						addVal(val, block);
+						addVal(_case.firstExp, val, block);
 					}
 				} else {
 					addExp(_case.firstExp, block);

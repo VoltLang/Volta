@@ -3589,7 +3589,7 @@ void extypeSwitchStatement(Context ctx, ref ir.Node n)
 			}
 			auto ptr = constant._string in stringCases;
 			if (ptr !is null) {
-				throw makeSwitchDuplicateCase(_case);
+				throw makeSwitchDuplicateCase(constant);
 			}
 			stringCases[constant._string] = true;
 		} else {
@@ -3599,7 +3599,7 @@ void extypeSwitchStatement(Context ctx, ref ir.Node n)
 			extypeArrayLiteral(ctx, /*#ref*/exp, Parent.NA);
 			foreach (arrayCase; caseArrayCases) {
 				if (areEqualConstantArrays(arrayCase, exp, ctx.lp.target)) {
-					throw makeSwitchDuplicateCase(_case);
+					throw makeSwitchDuplicateCase(arrayCase);
 				}
 			}
 			caseArrayCases ~= exp;

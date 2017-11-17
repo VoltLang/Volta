@@ -677,7 +677,9 @@ CompilerException makeSwitchBadType(ir.Node node, ir.Type type, string file = __
 
 CompilerException makeSwitchDuplicateCase(ir.Node node, string file = __FILE__, const int line = __LINE__)
 {
-	auto e = new CompilerError(/*#ref*/node.loc, "duplicate case in switch statement.", file, line);
+	auto msg = "duplicate case in switch statement.";
+	msg ~= node.loc.locationGuide();
+	auto e = new CompilerError(/*#ref*/node.loc, msg, file, line);
 	return e;
 }
 
