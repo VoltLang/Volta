@@ -13,7 +13,7 @@ import ir = volta.ir;
 import volt.ir.printer;
 
 import volt.exceptions;
-import volt.arg : Settings;
+import volta.settings;
 import volta.ir.token : tokenToString, TokenType;
 import volta.ir.location;
 

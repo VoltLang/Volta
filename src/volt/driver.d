@@ -24,6 +24,7 @@ import volt.exceptions;
 import volt.interfaces;
 import volt.errors;
 import volt.arg;
+import volta.settings;
 import volta.ir.location;
 import ir = volta.ir;
 

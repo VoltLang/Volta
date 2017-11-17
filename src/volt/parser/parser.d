@@ -13,7 +13,7 @@ import volt.token.source : Source;
 
 import ir = volta.ir;
 
-import volt.arg : Settings;
+import volta.settings : Settings;
 import volt.errors : makeError, panic;
 import volt.interfaces : Frontend;
 import volt.parser.base : ParseStatus, ParserStream, NodeSink;

@@ -13,6 +13,7 @@ import watt.text.string : splitLines;
 import watt.text.format : format;
 
 import volt.arg;
+import volta.settings;
 import volt.errors;
 import volt.license;
 import volt.interfaces;
