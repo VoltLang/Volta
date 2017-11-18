@@ -559,8 +559,8 @@ private:
 
 	import lib.llvm.c.DIBuilder : LLVMDIBuilderRef;
 
-	extern(C) LLVMDIBuilderRef LLVMCreateDIBuilder(LLVMModuleRef) { return null; }
-	extern(C) void LLVMDisposeDIBuilder(LLVMDIBuilderRef builder) {}
+	LLVMDIBuilderRef LLVMCreateDIBuilder(LLVMModuleRef) { return null; }
+	void LLVMDisposeDIBuilder(LLVMDIBuilderRef builder) {}
 
 	void diSetPosition(State, ref Location) {}
 	void diUnsetPosition(State) {}
