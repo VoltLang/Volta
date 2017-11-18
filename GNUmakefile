@@ -25,17 +25,9 @@ ifeq ($(strip $(DMD)),)
   endif
 endif
 
-# gdmd's -g exports native D debugging info use
-# that instead of emulated c ones that -gc gives us.
-ifeq ($(notdir $(DMD)),gdmd)
-  DEBUG_DFLAGS = -g -debug
-else
-  DEBUG_DFLAGS = -gc -debug
-endif
-
 CFLAGS ?= -g
 CXXFLAGS ?= -g
-DFLAGS ?= $(DEBUG_DFLAGS)
+DFLAGS = -g -debug
 LDFLAGS ?=
 
 DDEFINES_ = $(DDEFINES)
