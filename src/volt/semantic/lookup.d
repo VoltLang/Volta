@@ -174,7 +174,7 @@ ir.Store lookupAsThisScope(LanguagePass lp, ir.Scope _scope, ref in Location loc
 	}
 
 	// Walk the class chain.
-	ir.Class _class;
+	ir.Class _class = cast(ir.Class)_scope.node;
 	do {
 		auto ret = lookupAsImportScope(lp, _scope, /*#ref*/loc, name);
 		if (ret is null) {
