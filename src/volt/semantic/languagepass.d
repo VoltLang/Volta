@@ -107,12 +107,12 @@ private:
 	}
 
 public:
-	this(Driver drv, VersionSet ver, TargetInfo target, Frontend frontend,
-	     Mode mode, bool warnings)
+	this(ErrorSink err, Driver drv, VersionSet ver, TargetInfo target,
+	     Frontend frontend, Mode mode, bool warnings)
 	{
 		this.warningsEnabled = warnings;
 		this.mMode = mode;
-		super(drv, ver, target, frontend);
+		super(err, drv, ver, target, frontend);
 
 		mTracker = new WorkTracker();
 

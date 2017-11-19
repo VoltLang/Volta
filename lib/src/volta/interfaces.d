@@ -13,6 +13,22 @@ import ir = volta.ir;
  */
 
 /*!
+ * Interface for communicating back error condidtions to the user
+ * of this library.
+ *
+ * Functions may not return at all or throw exceptions.
+ */
+interface ErrorSink
+{
+	void onWarning(string msg, string file, int line);
+	void onWarning(ref in ir.Location loc, string msg, string file, int line);
+	void onError(string msg, string file, int line);
+	void onError(ref in ir.Location loc, string msg, string file, int line);
+	void onPanic(string msg, string file, int line);
+	void onPanic(ref in ir.Location loc, string msg, string file, int line);
+}
+
+/*!
  * Each of these listed platforms corresponds
  * to a Version identifier.
  *

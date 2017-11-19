@@ -47,7 +47,7 @@ import volt.postparse.missing;
  * Default implementation of @link volt.interfaces.Driver Driver@endlink, replace
  * this if you wish to change the basic operation of the compiler.
  */
-class VoltDriver : Driver
+class VoltDriver : Driver, ErrorSink
 {
 public:
 	VersionSet ver;
@@ -145,7 +145,7 @@ public:
 		addFiles(files);
 		auto mode = decideMode(s);
 		this.frontend = new Parser(s);
-		this.languagePass = new VoltLanguagePass(this, ver, target,
+		this.languagePass = new VoltLanguagePass(this, this, ver, target,
 			frontend, mode, s.warningsEnabled);
 
 		decideParts();
@@ -155,6 +155,43 @@ public:
 		debugVisitors ~= new DebugPrinter();
 		debugVisitors ~= new DebugMarker("Running PrettyPrinter:");
 		debugVisitors ~= new PrettyPrinter();
+	}
+
+
+	/*
+	 *
+	 * ErrorSink functions
+	 *
+	 */
+
+	override void onWarning(string msg, string file, int line)
+	{
+		io.error.writefln("warning: %s", msg);
+	}
+
+	override void onWarning(ref in ir.Location loc, string msg, string file = __FILE__, int line = __LINE__)
+	{
+		io.error.writefln("%s: warning: %s", loc.toString(), msg);
+	}
+
+	override void onError(string msg, string file, int line)
+	{
+		throw new CompilerError(msg, file, line);
+	}
+
+	override void onError(ref in ir.Location loc, string msg, string file = __FILE__, int line = __LINE__)
+	{
+		throw new CompilerError(/*#ref*/ loc, msg, file, line);
+	}
+
+	override void onPanic(string msg, string file, int line)
+	{
+		throw new CompilerPanic(msg, file, line);
+	}
+
+	override void onPanic(ref in ir.Location loc, string msg, string file = __FILE__, int line = __LINE__)
+	{
+		throw new CompilerPanic(/*#ref*/ loc, msg, file, line);
 	}
 
 

@@ -203,6 +203,9 @@ interface Frontend
 abstract class LanguagePass
 {
 public:
+	//! Where we should send all error messages.
+	ErrorSink errSink;
+
 	//! The driver that created this LanguagePass.
 	Driver driver;
 
@@ -334,17 +337,19 @@ public:
 
 
 public:
-	this(Driver drv, VersionSet ver, TargetInfo target, Frontend frontend)
+	this(ErrorSink errSink, Driver drv, VersionSet ver, TargetInfo target, Frontend frontend)
 	out {
 		assert(this.ver !is null);
 		assert(this.target !is null);
 		assert(this.driver !is null);
+		assert(this.errSink !is null);
 		assert(this.frontend !is null);
 	}
 	body {
 		this.ver = ver;
 		this.target = target;
 		this.driver = drv;
+		this.errSink = errSink;
 		this.frontend = frontend;
 	}
 
