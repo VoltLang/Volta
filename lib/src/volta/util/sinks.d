@@ -62,7 +62,7 @@ public:
 		mArr = n;
 	}
 
-	void append(T[] arr)
+	void append(scope T[] arr)
 	{
 		foreach (e; arr) {
 			sink(e);
@@ -142,6 +142,11 @@ public:
 	void reset()
 	{
 		mLength = 0;
+	}
+
+	version (D_Version2) void delegate(T) sink()
+	{
+		return &sink;
 	}
 }
 
