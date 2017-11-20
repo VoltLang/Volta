@@ -19,8 +19,7 @@ import volta.ir.location;
 
 void panic(ErrorSink es, ref in Location loc, string message, string file = __FILE__, int line = __LINE__)
 {
-	// TODO fix error
-	version (D_Version2) es.onPanic(/*#ref*/ loc, message, file, line);
+	es.onPanic(/*#ref*/ loc, message, file, line);
 }
 
 
@@ -32,8 +31,7 @@ void panic(ErrorSink es, ref in Location loc, string message, string file = __FI
 
 void error(ErrorSink es, ref in Location loc, string message, string file = __FILE__, int line = __LINE__)
 {
-	// TODO fix error
-	version (D_Version2) es.onError(/*#ref*/ loc, message, file, line);
+	es.onError(/*#ref*/ loc, message, file, line);
 }
 
 
@@ -50,6 +48,5 @@ void warning(ref in Location loc, string message)
 
 void warning(ErrorSink es, ref in Location loc, string message, string file = __FILE__, int line = __LINE__)
 {
-	// TODO fix error
-	version (D_Version2) es.onWarning(/*#ref*/ loc, message, file, line);
+	es.onWarning(/*#ref*/ loc, message, file, line);
 }
