@@ -1310,21 +1310,17 @@ ir.Function[] getClassFunctions(ir.Class _class)
 
 /*!
  * If the given scope is a function, and that function has a this reference
- * that is a class, return true and set theClass to that class.
- * Otherwise, return false.
+ * that is a class, or is a static function in a class,
+ * return true and set theClass to that class. Otherwise, return false.
  */
 bool getMethodParent(ir.Scope _scope, out ir.Class theClass)
 {
 	auto func = getParentFunction(_scope);
-	if (func is null || !isFunctionMemberOrConstructor(func) ||
-		func.thisHiddenParameter is null) {
+	if (func is null) {
 		return false;
 	}
-	theClass = realType(func.thisHiddenParameter.type).toClassChecked();
-	if (theClass is null) {
-		return false;
-	}
-	return true;
+	theClass = func.myScope.parent.node.toClassChecked();
+	return theClass !is null;
 }
 
 //! Returns: true if child is a child of parent.
