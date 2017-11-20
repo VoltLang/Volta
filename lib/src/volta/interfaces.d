@@ -13,10 +13,9 @@ import ir = volta.ir;
  */
 
 /*!
- * Interface for communicating back error condidtions to the user
- * of this library.
+ * Interface for communicating error conditions to the user.
  *
- * Functions may not return at all or throw exceptions.
+ * Methods may terminate.
  */
 interface ErrorSink
 {
