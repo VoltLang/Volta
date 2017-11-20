@@ -1882,6 +1882,19 @@ void lowerPostfix(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 		panicAssert(postfix, fstore !is null);
 		auto var = cast(ir.Variable)store.node;
 		auto fvar = cast(ir.Variable)fstore.node;
+
+		/* Manually lower the function type.
+		 * We do this here because interfaces don't get called like a method,
+		 * so we need to make sure everybody agrees on what it is that they're
+		 * calling. (See test interface.13 and 14).
+		 */
+		fvar.type = copyType(func.type);
+		auto ftype = cast(ir.FunctionType)fvar.type;
+		ftype.params = buildVoidPtr(/*#ref*/loc) ~ ftype.params;
+		ftype.isArgRef = false ~ ftype.isArgRef;
+		ftype.isArgOut = false ~ ftype.isArgOut;
+		ftype.hiddenParameter = false;
+
 		panicAssert(postfix, var !is null);
 		panicAssert(postfix, fvar !is null);
 		auto handle = buildCastToVoidPtr(/*#ref*/loc, buildSub(/*#ref*/loc, buildCastSmart(/*#ref*/loc,
@@ -1890,7 +1903,7 @@ void lowerPostfix(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 		                                 buildAccessExp(/*#ref*/loc, buildDeref(/*#ref*/loc,
 		                                 copyExp(cpostfix.child)), var)));
 		exp = buildCall(/*#ref*/loc, buildAccessExp(/*#ref*/loc, buildDeref(/*#ref*/loc, cpostfix.child),
-		                                  fvar), handle ~ postfix.arguments);
+						fvar), handle ~ postfix.arguments);
 	}
 	lowerVarargCall(lp, current, postfix, parentFunc, /*#ref*/exp);
 }
