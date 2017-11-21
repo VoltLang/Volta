@@ -28,7 +28,7 @@ import volta.settings;
 import volta.ir.location;
 import ir = volta.ir;
 
-import volt.parser.parser;
+import volta.parser.parser;
 import volt.semantic.languagepass;
 import volt.llvm.driver;
 import volt.llvm.backend;
@@ -144,7 +144,7 @@ public:
 
 		addFiles(files);
 		auto mode = decideMode(s);
-		this.frontend = new Parser(s);
+		this.frontend = new Parser(s, this);
 		this.languagePass = new VoltLanguagePass(this, this, ver, target,
 			frontend, mode, s.warningsEnabled);
 

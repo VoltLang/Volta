@@ -4,6 +4,7 @@
 module volta.interfaces;
 
 import ir = volta.ir;
+import volta.ir.location;
 
 
 /*!
@@ -25,6 +26,38 @@ interface ErrorSink
 	void onError(ref in ir.Location loc, string msg, string file, int line);
 	void onPanic(string msg, string file, int line);
 	void onPanic(ref in ir.Location loc, string msg, string file, int line);
+}
+
+/*!
+ * Holds information about the target that we are compiling to.
+ */
+class TargetInfo
+{
+	Arch arch;
+	Platform platform;
+	CRuntime cRuntime;
+
+	size_t ptrSize;
+
+	struct Alignments
+	{
+		size_t int1;      // bool
+		size_t int8;      // byte, ubyte, char
+		size_t int16;     // short, ushort, wchar
+		size_t int32;     // int, uint, dchar
+		size_t int64;     // long, ulong
+		size_t float32;   // float
+		size_t float64;   // double
+		size_t ptr;       // pointer, class ref
+		size_t aggregate; // struct, class, delegate
+	}
+
+	Alignments alignment;
+
+	//! Are pointers 64bit for this target.
+	bool isP64;
+	//! Does this target have exception handling.
+	bool haveEH;
 }
 
 /*!
@@ -103,6 +136,40 @@ string archToString(Arch arch)
 	case X86: return "x86";
 	case X86_64: return "x86_64";
 	}
+}
+
+/*!
+ * The part of the compiler that takes user supplied code and turns it into IR.
+ *
+ * @ingroup parsing
+ */
+interface Frontend
+{
+	//! Free resources.
+	void close();
+
+	/*!
+	 * Parse a module and all its children from the given source.
+	 * Filename is the file from which file the source was loaded from.
+	 *
+	 * @param[in] source The complete source of the module to be parsed.
+	 * @param[in] filename The path to the module, ir nodes locations gets
+	 *                     gets tagged with this filename.
+	 * @return The parsed module.
+	 */
+	ir.Module parseNewFile(string source, string filename);
+
+	/*!
+	 * Parse a zero or more statements from a string, does not
+	 * need to start with '{' or end with a '}'.
+	 *
+	 * Used for string mixins in functions.
+	 *
+	 * @param[in] source The source of the statements to be parsed.
+	 * @param[in] loc The location of the mixin that this originated from.
+	 * @return The parsed statements.
+	 */
+	ir.Node[] parseStatements(string source, Location loc);
 }
 
 /*!

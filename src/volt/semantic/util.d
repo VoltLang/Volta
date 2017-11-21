@@ -6,8 +6,8 @@ module volt.semantic.util;
 import watt.text.format : format;
 
 import ir = volta.ir;
-import volt.ir.copy;
-import volt.ir.util;
+import volta.util.copy;
+import volta.util.util;
 
 import volt.errors;
 import volt.interfaces;
@@ -585,7 +585,7 @@ ir.Type ifTypeRefDeRef(ir.Type t)
 
 ir.AccessExp getSizeOf(ref in Location loc, LanguagePass lp, ir.Type type)
 {
-	auto unary = cast(ir.Unary)buildTypeidSmart(/*#ref*/loc, lp, type);
+	auto unary = cast(ir.Unary)buildTypeidSmart(/*#ref*/loc, lp.tiTypeInfo, type);
 	panicAssert(type, unary !is null);
 	auto store = lookupInGivenScopeOnly(lp, lp.tiTypeInfo.myScope, /*#ref*/loc, "size");
 	panicAssert(type, store !is null);

@@ -7,7 +7,7 @@ module volt.semantic.classresolver;
 import watt.text.format : format;
 
 import ir = volta.ir;
-import volt.ir.util;
+import volta.util.util;
 
 import volt.errors;
 import volt.interfaces;
@@ -290,7 +290,7 @@ ir.Variable[] getClassFields(LanguagePass lp, ir.Class _class, ref size_t offset
 
 ir.Function generateDefaultConstructor(LanguagePass lp, ir.Scope current, ir.Class _class)
 {
-	auto func = buildFunction(/*#ref*/_class.loc, _class.members, current, "__ctor");
+	auto func = buildFunction(lp.errSink, /*#ref*/_class.loc, _class.members, current, "__ctor");
 	func.kind = ir.Function.Kind.Constructor;
 
 	buildReturnStat(/*#ref*/func.loc, func._body);
@@ -559,7 +559,7 @@ ir.Struct getInterfaceLayoutStruct(ir._Interface iface, LanguagePass lp)
 		auto method = methods.get(i);
 		fields[i+1] = buildVariableSmart(/*#ref*/loc, copyTypeSmart(/*#ref*/loc, method.type), ir.Variable.Storage.Field, mangle(null, method));
 	}
-	auto layoutStruct = buildStruct(/*#ref*/loc, iface.members, iface.myScope, "__ifaceVtable", fields);
+	auto layoutStruct = buildStruct(lp.errSink, /*#ref*/loc, iface.members, iface.myScope, "__ifaceVtable", fields);
 	layoutStruct.loweredNode = iface;
 	// This should be resolved now.
 	lp.resolveNamed(layoutStruct);
@@ -609,7 +609,7 @@ ir.Struct getClassLayoutStruct(ir.Class _class, LanguagePass lp)
 	}
 	fields = vtableVar ~ fields;
 
-	auto layoutStruct = buildStruct(/*#ref*/_class.loc, _class.members, _class.myScope, "__layoutStruct", fields);
+	auto layoutStruct = buildStruct(lp.errSink, /*#ref*/_class.loc, _class.members, _class.myScope, "__layoutStruct", fields);
 	layoutStruct.loweredNode = _class;
 	return layoutStruct;
 }

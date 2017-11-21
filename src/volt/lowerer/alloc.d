@@ -5,7 +5,7 @@
 module volt.lowerer.alloc;
 
 import ir = volta.ir;
-import volt.ir.util;
+import volta.util.util;
 
 import volt.interfaces;
 import volta.ir.location;

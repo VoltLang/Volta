@@ -1,27 +1,25 @@
 /*#D*/
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.parser.declaration;
+module volta.parser.declaration;
 
 import watt.conv : toInt;
 import watt.text.format : format;
 
 import ir = volta.ir;
-import volt.ir.util;
-import volt.ir.copy;
-import volt.util.string;
+import volta.util.util;
+import volta.util.copy;
+import volta.util.string;
 
-import volt.exceptions;
-import volt.errors;
-
+import volta.errors;
 import volta.ir.token : isPrimitiveTypeToken, isStorageTypeToken;
 import volta.ir.location;
-import volt.parser.base;
-import volt.parser.expression;
-import volt.parser.toplevel;
-import volt.parser.declaration;
-import volt.parser.statements;
-import volt.parser.templates;
+import volta.parser.base;
+import volta.parser.expression;
+import volta.parser.toplevel;
+import volta.parser.declaration;
+import volta.parser.statements;
+import volta.parser.templates;
 
 
 ParseStatus parseVariable(ParserStream ps, NodeSinkDg dgt)
@@ -659,7 +657,10 @@ ParseStatus parseNewFunctionType(ParserStream ps, out ir.CallableType func)
 			ps.resetErrors();
 		}
 	}
-	panicAssert(func, func.ret !is null);
+	if (func.ret is null) {
+		panic(ps.errSink, func, "null func ret");
+		assert(false);
+	}
 
 	if (parenRet && ps == TokenType.Comma) {
 		// TODO: Parse multiple return types here.

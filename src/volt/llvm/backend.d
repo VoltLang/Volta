@@ -13,7 +13,7 @@ import io = watt.io.std;
 import volt.errors;
 import volt.interfaces;
 import ir = volta.ir;
-import volt.ir.util;
+import volta.util.util;
 import volta.ir.location;
 
 import lib.llvm.core;

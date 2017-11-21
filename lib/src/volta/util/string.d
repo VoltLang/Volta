@@ -1,12 +1,16 @@
 /*#D*/
-module volt.util.string;
+// Copyright © 2015-2017, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2015-2017, Bernard Helyer.  All rights reserved.
+// See copyright notice in src/volt/licence.d (BOOST ver 1.0).
+module volta.util.string;
 
 import watt.conv : toInt, ConvException;
 import watt.text.utf : encode;
 import watt.text.format : format;
 import watt.text.sink : StringSink;
 
-import volt.errors;
+import volta.interfaces;
+import volta.errors;
 import volta.ir.location;
 
 
@@ -24,7 +28,7 @@ bool isHex(dchar d)
 }
 
 
-immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
+immutable(void)[] unescapeString(ErrorSink errSink, ref in Location loc, const(char)[] s)
 {
 	version (Volt) {
 		StringSink sink;
@@ -45,7 +49,8 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 					try {
 						i = cast(uint)toInt(hexchars, 16);
 					} catch (ConvException) {
-						throw makeExpected(/*#ref*/loc, "unicode codepoint specification");
+						errorExpected(errSink, /*#ref*/loc, "unicode codepoint specification");
+						assert(false);  // @todo non aborting error handling
 					}
 					if (hexchars.length == 4) {
 						encode(output, i);
@@ -56,8 +61,9 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 					}
 					unicoding = 0;
 					continue;
-				} else { 
-					throw makeExpected(/*#ref*/loc, "unicode codepoint specification");
+				} else {
+					errorExpected(errSink, /*#ref*/loc, "unicode codepoint specification");
+					assert(false);  // @todo non aborting error handling
 				}
 			}
 			encode(/*#ref*/hexchars, c);
@@ -66,7 +72,8 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 				try {
 					i = cast(uint)toInt(hexchars, 16);
 				} catch (ConvException) {
-					throw makeExpected(/*#ref*/loc, "unicode codepoint specification");
+					errorExpected(errSink, /*#ref*/loc, "unicode codepoint specification");
+					assert(false); // @todo non aborting error handling
 				}
 				if (hexchars.length == 4) {
 					encode(output, i);
@@ -84,7 +91,8 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 		// \xXX
 		if (hexing) {
 			if (!isHex(c)) {
-				throw makeExpected(/*#ref*/loc, "hex digit");
+				errorExpected(errSink, /*#ref*/loc, "hex digit");
+				assert(false); // @todo non aborting error handling
 			}
 			encode(/*#ref*/hexchars, c);
 			if (hexchars.length == 2) {
@@ -95,7 +103,8 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 						output ~= cast(char)toInt(hexchars, 16);
 					}
 				} catch (ConvException) {
-					throw makeExpected(/*#ref*/loc, "hex digit");
+					errorExpected(errSink, /*#ref*/loc, "hex digit");
+					assert(false); // @todo non aborting error handling
 				}
 				hexing = false;
 				hexchars = null;
@@ -137,7 +146,8 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 				// @todo Named character entities. http://www.w3.org/TR/html5/named-character-references.html
 				default:
 					string str = format("valid escape, found '\\%s'", c);
-					throw makeExpected(/*#ref*/loc, str);
+					errorExpected(errSink, /*#ref*/loc, str);
+					assert(false); // @todo non aborting error handling
 			}
 			escaping = false;
 			continue;
@@ -152,13 +162,16 @@ immutable(void)[] unescapeString(ref in Location loc, const(char)[] s)
 	}
 
 	if (escaping) {
-		throw makeExpected(/*#ref*/loc, "valid escape");
+		errorExpected(errSink, /*#ref*/loc, "valid escape");
+		assert(false); // @todo non aborting error handling
 	}
 
 	if (unicoding == 4) {
-		throw makeExpected(/*#ref*/loc, "valid unicode escape, \\uXXXX");
+		errorExpected(errSink, /*#ref*/loc, "valid unicode escape, \\uXXXX");
+		assert(false); // @todo non aborting error handling
 	} else if (unicoding == 8) {
-		throw makeExpected(/*#ref*/loc, "valid unicode escape, \\UXXXXXXXX");
+		errorExpected(errSink, /*#ref*/loc, "valid unicode escape, \\UXXXXXXXX");
+		assert(false); // @todo non aborting error handling
 	}
 
 	version (Volt) {

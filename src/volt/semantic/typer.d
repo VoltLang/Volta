@@ -8,8 +8,8 @@ import watt.conv : toString;
 import watt.text.format : format;
 
 import ir = volta.ir;
-import volt.ir.copy;
-import volt.ir.util;
+import volta.util.copy;
+import volta.util.util;
 
 import volt.exceptions;
 import volt.errors;

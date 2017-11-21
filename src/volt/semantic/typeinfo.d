@@ -7,7 +7,7 @@ module volt.semantic.typeinfo;
 import watt.text.format : format;
 
 import ir = volta.ir;
-import volt.ir.util;
+import volta.util.util;
 
 import volt.exceptions;
 import volt.interfaces;
@@ -196,7 +196,7 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 		assert(base !is null);
 
 		auto baseVar = getTypeInfo(lp, mod, base);
-		literal.exps ~= buildTypeInfoCast(lp, buildExpReference(/*#ref*/type.loc, baseVar));
+		literal.exps ~= buildTypeInfoCast(lp.tiTypeInfo, buildExpReference(/*#ref*/type.loc, baseVar));
 	} else {
 		literal.exps ~= buildConstantNull(/*#ref*/type.loc, lp.tiTypeInfo);
 	}
@@ -213,8 +213,8 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 	if (asAA !is null) {
 		auto keyVar = getTypeInfo(lp, mod, asAA.key);
 		auto valVar = getTypeInfo(lp, mod, asAA.value);
-		literal.exps ~= buildTypeInfoCast(lp, buildExpReference(/*#ref*/type.loc, keyVar));
-		literal.exps ~= buildTypeInfoCast(lp, buildExpReference(/*#ref*/type.loc, valVar));
+		literal.exps ~= buildTypeInfoCast(lp.tiTypeInfo, buildExpReference(/*#ref*/type.loc, keyVar));
+		literal.exps ~= buildTypeInfoCast(lp.tiTypeInfo, buildExpReference(/*#ref*/type.loc, valVar));
 	} else {
 		literal.exps ~= buildConstantNull(/*#ref*/type.loc, lp.tiTypeInfo);
 		literal.exps ~= buildConstantNull(/*#ref*/type.loc, lp.tiTypeInfo);
@@ -224,12 +224,12 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 	auto asCallable = cast(ir.CallableType)type;
 	if (asCallable !is null) {
 		auto retVar = getTypeInfo(lp, mod, asCallable.ret);
-		literal.exps ~= buildTypeInfoCast(lp, buildExpReference(/*#ref*/type.loc, retVar));
+		literal.exps ~= buildTypeInfoCast(lp.tiTypeInfo, buildExpReference(/*#ref*/type.loc, retVar));
 
 		ir.Exp[] exps;
 		foreach (param; asCallable.params) {
 			auto var = getTypeInfo(lp, mod, param);
-			exps ~= buildTypeInfoCast(lp, buildExpReference(/*#ref*/type.loc, var));
+			exps ~= buildTypeInfoCast(lp.tiTypeInfo, buildExpReference(/*#ref*/type.loc, var));
 		}
 
 		literal.exps ~= buildArrayLiteralSmart(/*#ref*/type.loc, buildArrayType(/*#ref*/type.loc, lp.tiTypeInfo), exps);
@@ -261,7 +261,7 @@ ir.Exp[] getClassInfo(ref in Location loc, ir.Module mod, LanguagePass lp, ir.Cl
 			iface.mangledName = mangle(iface);
 		}
 		auto ifaceVar = getTypeInfo(lp, mod, iface);
-		lit.exps ~= buildTypeInfoCast(lp, buildExpReference(/*#ref*/loc, ifaceVar));
+		lit.exps ~= buildTypeInfoCast(lp.tiTypeInfo, buildExpReference(/*#ref*/loc, ifaceVar));
 
 		lit.exps ~= buildConstantSizeT(/*#ref*/loc, lp.target, asClass.interfaceOffsets[i]);
 		interfaceLits ~= lit;

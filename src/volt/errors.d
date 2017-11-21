@@ -39,41 +39,6 @@ void warningStringCat(ref in Location loc, bool warningsEnabled)
 	}
 }
 
-void warningOldStyleVariable(ref in Location loc, bool magicFlagD, Settings settings)
-{
-	if (!magicFlagD && settings.warningsEnabled) {
-		warning(/*#ref*/loc, "old style variable declaration.");
-	}
-}
-
-void warningOldStyleFunction(ref in Location loc, bool magicFlagD, Settings settings)
-{
-	if (!magicFlagD && settings.warningsEnabled) {
-		warning(/*#ref*/loc, "old style function declaration.");
-	}
-}
-
-void warningOldStyleFunctionPtr(ref in Location loc, bool magicFlagD, Settings settings)
-{
-	if (!magicFlagD && settings.warningsEnabled) {
-		warning(/*#ref*/loc, "old style function pointer.");
-	}
-}
-
-void warningOldStyleDelegateType(ref in Location loc, bool magicFlagD, Settings settings)
-{
-	if (!magicFlagD && settings.warningsEnabled) {
-		warning(/*#ref*/loc, "old style delegate type.");
-	}
-}
-
-void warningOldStyleHexTypeSuffix(ref in Location loc, bool magicFlagD, Settings settings)
-{
-	if (!magicFlagD && settings.warningsEnabled) {
-		warning(/*#ref*/loc, "old style hex literal type suffix (U/L).");
-	}
-}
-
 void warningShadowsField(ref in Location newDecl, ref in Location oldDecl, string name, bool warningsEnabled)
 {
 	if (warningsEnabled) {

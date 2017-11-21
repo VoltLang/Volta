@@ -3,7 +3,7 @@
 // Copyright © 2010, Jakob Ovrum.  All rights reserved.
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.parser.base;
+module volta.parser.base;
 
 import watt.text.format : format;
 import watt.text.string : strip, indexOf;
@@ -12,12 +12,13 @@ import watt.text.vdoc : cleanComment;
 
 import ir = volta.ir;
 
+import volta.interfaces : ErrorSink;
 import volta.settings : Settings;
 public import volta.ir.token : Token, TokenType, tokenToString;
 import volta.ir.tokenstream : TokenStream;
 import volta.ir.location : Location;
 import volta.errors;
-import volt.parser.errors;
+import volta.parser.errors;
 
 
 /*
@@ -516,6 +517,7 @@ class ParserStream : TokenStream
 {
 public:
 	ParserError[] parserErrors;
+	ErrorSink errSink;
 
 	//! Error raised shouldn't be ignored.
 	bool neverIgnoreError;
@@ -540,9 +542,10 @@ private:
 
 
 public:
-	this(Token[] tokens, Settings settings)
+	this(Token[] tokens, Settings settings, ErrorSink errSink)
 	{
 		this.settings = settings;
+		this.errSink = errSink;
 		pushCommentLevel();
 		super(tokens);
 	}

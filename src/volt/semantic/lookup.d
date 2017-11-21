@@ -12,7 +12,7 @@ module volt.semantic.lookup;
 import watt.text.format : format;
 
 import ir = volta.ir;
-import volt.ir.util : getScopeFromStore, getScopeFromType;
+import volta.util.util : getScopeFromStore, getScopeFromType;
 
 import volt.exceptions;
 import volt.errors;

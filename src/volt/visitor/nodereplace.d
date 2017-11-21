@@ -3,7 +3,7 @@ module volt.visitor.nodereplace;
 
 import volt.visitor.visitor;
 
-import volt.ir.copy;
+import volta.util.copy;
 import ir = volta.ir;
 
 class ExpReferenceReplacer : NullVisitor

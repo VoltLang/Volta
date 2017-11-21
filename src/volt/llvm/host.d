@@ -16,7 +16,7 @@ import watt.text.format : format;
 import volt.errors;
 import volt.interfaces;
 import ir = volta.ir;
-import volt.ir.util;
+import volta.util.util;
 import volta.ir.location;
 import volt.semantic.classify;
 

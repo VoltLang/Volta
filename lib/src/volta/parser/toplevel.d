@@ -1,27 +1,26 @@
 /*#D*/
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.parser.toplevel;
+module volta.parser.toplevel;
 
 import watt.conv : toInt, toLower;
 import watt.text.vdoc : cleanComment;
 
 import ir = volta.ir;
-import volt.ir.util;
-import volt.ir.copy;
+import volta.util.util;
+import volta.util.copy;
 
-import volt.exceptions;
-import volt.errors;
+import volta.errors;
 import volta.ir.tokenstream;
 import volta.ir.location;
 import volta.ir.token : TokenType;
 
-import volt.parser.base;
-import volt.parser.declaration;
-public import volt.parser.statements : parseMixinStatement;
-import volt.parser.expression;
-import volt.parser.statements;
-import volt.parser.templates;
+import volta.parser.base;
+import volta.parser.declaration;
+public import volta.parser.statements : parseMixinStatement;
+import volta.parser.expression;
+import volta.parser.statements;
+import volta.parser.templates;
 
 
 ParseStatus parseModule(ParserStream ps, out ir.Module mod)

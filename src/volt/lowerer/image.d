@@ -14,8 +14,8 @@ import watt.text.format : format;
 import watt.io.file : read, exists;
 
 import ir = volta.ir;
-import volt.ir.copy;
-import volt.ir.util;
+import volta.util.copy;
+import volta.util.util;
 
 import volt.errors;
 import volt.interfaces;
@@ -48,8 +48,8 @@ void lowerCMain(LanguagePass lp, ir.Module mod, ir.Function func)
 	auto ftype = buildFunctionTypeSmart(/*#ref*/loc, buildInt(/*#ref*/loc));
 	ftype.linkage = ir.Linkage.C;
 	auto cmain = buildFunction(/*#ref*/loc, mod.myScope, "main", ftype);
-	auto argc = addParam(/*#ref*/loc, cmain, buildInt(/*#ref*/loc), "argc");
-	auto argv = addParam(/*#ref*/loc, cmain, buildPtr(/*#ref*/loc, buildPtr(/*#ref*/loc, buildChar(/*#ref*/loc))), "argv");
+	auto argc = addParam(lp.errSink, /*#ref*/loc, cmain, buildInt(/*#ref*/loc), "argc");
+	auto argv = addParam(lp.errSink, /*#ref*/loc, cmain, buildPtr(/*#ref*/loc, buildPtr(/*#ref*/loc, buildChar(/*#ref*/loc))), "argv");
 	ir.Status status;
 	mod.myScope.addFunction(cmain, cmain.name, /*#out*/status);
 	if (status != ir.Status.Success) {

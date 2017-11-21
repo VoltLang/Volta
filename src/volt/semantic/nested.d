@@ -7,8 +7,8 @@ import watt.conv : toString;
 import watt.text.format : format;
 
 import ir = volta.ir;
-import volt.ir.copy;
-import volt.ir.util;
+import volta.util.copy;
+import volta.util.util;
 
 import volt.errors;
 
@@ -232,7 +232,7 @@ bool replaceNested(LanguagePass lp, ref ir.Exp exp, ir.ExpReference eref, ir.Fun
 				/*#ref*/exp.loc, var.name);
 		if (store is null) {
 			assert(var.name != "this");
-			addVarToStructSmart(nestStruct, var);
+			addVarToStructSmart(lp.errSink, nestStruct, var);
 		}
 		name = var.name;
 		type = var.type;
@@ -285,8 +285,8 @@ void doParent(LanguagePass lp, ir.Function parent)
 	assert(parent.nestStruct !is null);
 	lp.actualize(parent.nestStruct);
 
-	handleNestedThis(parent, parent._body);
-	handleNestedParams(parent, parent._body);
+	handleNestedThis(lp.errSink, parent, parent._body);
+	handleNestedParams(lp.errSink, parent, parent._body);
 }
 
 /*!
@@ -313,7 +313,7 @@ ir.Struct createAndAddNestedStruct(ir.Function func)
  * Given a nested function func, add its parameters to the nested
  * struct and insert statements after the nested declaration.
  */
-void handleNestedParams(ir.Function func, ir.BlockStatement bs)
+void handleNestedParams(ErrorSink errSink, ir.Function func, ir.BlockStatement bs)
 {
 	auto np = func.nestedVariable;
 	auto ns = func.nestStruct;
@@ -350,7 +350,7 @@ void handleNestedParams(ir.Function func, ir.BlockStatement bs)
 			}
 			auto name = param.name != "" ? param.name : format("__anonparam_%s", toString(index));
 			auto var = buildVariableSmart(/*#ref*/param.loc, type, ir.Variable.Storage.Field, name);
-			addVarToStructSmart(ns, var);
+			addVarToStructSmart(errSink, ns, var);
 			// Insert an assignment of the param to the nest struct.
 
 			auto l = buildAccessExp(/*#ref*/param.loc, buildExpReference(/*#ref*/np.loc, np, np.name), var);
@@ -380,7 +380,7 @@ void handleNestedParams(ir.Function func, ir.BlockStatement bs)
  *
  * Rewrites them to refer to a this hosted on the nested struct.
  */
-void handleNestedThis(ir.Function func, ir.BlockStatement bs)
+void handleNestedThis(ErrorSink errSink, ir.Function func, ir.BlockStatement bs)
 {
 	bs = func._body;
 	auto np = func.nestedVariable;
@@ -406,9 +406,9 @@ void handleNestedThis(ir.Function func, ir.BlockStatement bs)
 		if (structOrUnion) {
 			auto tptr = buildPtrSmart(/*#ref*/lc, func.thisHiddenParameter.type);
 			auto nvar = buildVariableSmart(/*#ref*/lc, tptr, ir.Variable.Storage.Field, "this");
-			cvar = addVarToStructSmart(ns, nvar);
+			cvar = addVarToStructSmart(errSink, ns, nvar);
 		} else {
-			cvar = addVarToStructSmart(ns, func.thisHiddenParameter);
+			cvar = addVarToStructSmart(errSink, ns, func.thisHiddenParameter);
 		}
 
 		auto l = buildAccessExp(/*#ref*/func.loc,

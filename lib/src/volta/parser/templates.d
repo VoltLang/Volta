@@ -2,15 +2,15 @@
 // Copyright © 2017, Bernard Helyer.  All rights reserved.
 // Copyright © 2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.parser.templates;
+module volta.parser.templates;
 
 import ir = volta.ir;
-import volt.ir.util;
+import volta.util.util;
 
-import volt.parser.base;
-import volt.parser.declaration;
-import volt.parser.toplevel;
-import volt.parser.expression;
+import volta.parser.base;
+import volta.parser.declaration;
+import volta.parser.toplevel;
+import volta.parser.expression;
 import volta.ir.token : isPrimitiveTypeToken;
 
 /*!

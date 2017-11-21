@@ -10,7 +10,7 @@ module volt.llvm.common;
 
 import volta.ir.location;
 
-import volt.ir.util;
+import volta.util.util;
 import ir = volta.ir;
 import volt.interfaces;
 import volt.llvm.interfaces;

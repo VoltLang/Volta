@@ -11,12 +11,12 @@ import watt.text.string : replace;
 import watt.text.sink : StringSink;
 
 import ir = volta.ir;
-import volt.ir.util;
-import volt.ir.copy;
+import volta.util.util;
+import volta.util.copy;
 
 import volt.errors;
 import volt.interfaces;
-import volt.util.string;
+import volta.util.string;
 import volta.ir.location;
 
 import volt.visitor.visitor;
@@ -1598,7 +1598,7 @@ void extypeUnaryCastTo(Context ctx, ref ir.Exp exp, ir.Unary unary)
 		return;
 	}
 
-	auto tid = buildTypeidSmart(/*#ref*/unary.loc, ctx.lp, to);
+	auto tid = buildTypeidSmart(/*#ref*/unary.loc, ctx.lp.tiTypeInfo, to);
 	auto val = buildCastToVoidPtr(/*#ref*/unary.loc, unary.value);
 	rewriteCall(ctx, /*#ref*/unary.value, ctx.lp.castFunc, [val, cast(ir.Exp)tid]);
 }
@@ -1633,7 +1633,7 @@ void extypeUnaryNew(Context ctx, ref ir.Exp exp, ir.Unary _unary)
 
 		auto argument = _unary.argumentList[0];
 		_unary.argumentList = null;
-		auto ptrVar = buildVariableAnonSmart(/*#ref*/loc, ctx.current, sexp, ptr, _unary);
+		auto ptrVar = buildVariableAnonSmart(ctx.lp.errSink, /*#ref*/loc, ctx.current, sexp, ptr, _unary);
 
 		auto deref = buildDeref(/*#ref*/loc, buildExpReference(/*#ref*/loc, ptrVar, ptrVar.name));
 		auto assign = buildAssign(/*#ref*/loc, deref, argument);
@@ -2924,7 +2924,7 @@ ir.Type extypeTokenExp(Context ctx, ref ir.Exp exp, Parent parent)
 	if (fexp.type == ir.TokenExp.Type.File) {
 		string fname = getFname();
 		ir.Constant c;
-		exp = c = buildConstantString(/*#ref*/fexp.loc, fname);
+		exp = c = buildConstantString(ctx.lp.errSink, /*#ref*/fexp.loc, fname);
 		return c.type;
 	} else if (fexp.type == ir.TokenExp.Type.Line) {
 		ir.Constant c;
@@ -2934,7 +2934,7 @@ ir.Type extypeTokenExp(Context ctx, ref ir.Exp exp, Parent parent)
 		string fname = getFname();
 		ir.Constant c;
 		auto str = format("%s:%s", fname, toString(cast(int)fexp.loc.line));
-		exp = c = buildConstantString(/*#ref*/fexp.loc, str);
+		exp = c = buildConstantString(ctx.lp.errSink, /*#ref*/fexp.loc, str);
 		return c.type;
 	}
 
@@ -2985,7 +2985,7 @@ ir.Type extypeTokenExp(Context ctx, ref ir.Exp exp, Parent parent)
 	}
 
 	ir.Constant c;
-	exp = c = buildConstantString(/*#ref*/fexp.loc, buf.toString());
+	exp = c = buildConstantString(ctx.lp.errSink, /*#ref*/fexp.loc, buf.toString());
 	return c.type;
 }
 
@@ -4119,7 +4119,7 @@ void extypeAssertStatement(Context ctx, ref ir.Node n)
 	if (as.message !is null) {
 		msg = cast(ir.Constant) as.message;
 	} else {
-		msg = buildConstantString(/*#ref*/as.loc, "");
+		msg = buildConstantStringNoEscape(/*#ref*/as.loc, "");
 	}
 	if ((cond is null || msg is null) || (!isBool(cond.type) || !isString(msg.type))) {
 		throw panicUnhandled(as, "non simple static asserts (bool and string literal only).");
@@ -4644,7 +4644,7 @@ void resolveFunction(Context ctx, ir.Function func)
 	if (func.name == "main" && func.type.linkage == ir.Linkage.Volt) {
 
 		if (func.params.length == 0) {
-			addParam(/*#ref*/func.loc, func, buildStringArray(/*#ref*/func.loc), "");
+			addParam(ctx.lp.errSink, /*#ref*/func.loc, func, buildStringArray(/*#ref*/func.loc), "");
 		} else if (func.params.length > 1) {
 			throw makeInvalidMainSignature(func);
 		}

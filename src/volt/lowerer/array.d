@@ -7,8 +7,8 @@ module volt.lowerer.array;
 import watt.text.format : format;
 
 import ir = volta.ir;
-import volt.ir.copy;
-import volt.ir.util;
+import volta.util.copy;
+import volta.util.util;
 
 import volt.interfaces;
 import volta.ir.location;
@@ -65,23 +65,23 @@ ir.Function getArrayAppendFunction(ref in Location loc, LanguagePass lp, ir.Modu
 		return func;
 	}
 
-	func = buildFunction(/*#ref*/loc, thisModule.children, thisModule.myScope, name);
+	func = buildFunction(lp.errSink, /*#ref*/loc, thisModule.children, thisModule.myScope, name);
 	func.type.ret = copyTypeSmart(/*#ref*/loc, ltype);
 
 	ir.FunctionParam left, right;
 	if (isAssignment) {
-		left = addParam(/*#ref*/loc, func, buildPtrSmart(/*#ref*/loc, ltype), "left");
+		left = addParam(lp.errSink, /*#ref*/loc, func, buildPtrSmart(/*#ref*/loc, ltype), "left");
 	} else {
-		left = addParamSmart(/*#ref*/loc, func, ltype, "left");
+		left = addParamSmart(lp.errSink, /*#ref*/loc, func, ltype, "left");
 	}
-	right = addParamSmart(/*#ref*/loc, func, rtype, "right");
+	right = addParamSmart(lp.errSink, /*#ref*/loc, func, rtype, "right");
 
 	auto funcCopy = getLlvmMemCopy(/*#ref*/loc, lp);
 
 	ir.Exp[] args;
 
-	auto allocated = buildVarStatSmart(/*#ref*/loc, func._body, func._body.myScope, buildVoidPtr(/*#ref*/loc), "allocated");
-	auto count = buildVarStatSmart(/*#ref*/loc, func._body, func._body.myScope, buildSizeT(/*#ref*/loc, lp.target), "count");
+	auto allocated = buildVarStatSmart(lp.errSink, /*#ref*/loc, func._body, func._body.myScope, buildVoidPtr(/*#ref*/loc), "allocated");
+	auto count = buildVarStatSmart(lp.errSink, /*#ref*/loc, func._body, func._body.myScope, buildSizeT(/*#ref*/loc, lp.target), "count");
 	ir.Exp leftlength()
 	{
 		if (isAssignment) {
@@ -181,21 +181,21 @@ ir.Function getArrayPrependFunction(ref in Location loc, LanguagePass lp, ir.Mod
 		return func;
 	}
 
-	func = buildFunction(/*#ref*/loc, thisModule.children, thisModule.myScope, name);
+	func = buildFunction(lp.errSink, /*#ref*/loc, thisModule.children, thisModule.myScope, name);
 	func.mangledName = func.name;
 	func.isMergable = true;
 	func.type.ret = copyTypeSmart(/*#ref*/loc, ltype);
 
 	ir.FunctionParam left, right;
-	right = addParamSmart(/*#ref*/loc, func, rtype, "left");
-	left = addParamSmart(/*#ref*/loc, func, ltype, "right");
+	right = addParamSmart(lp.errSink, /*#ref*/loc, func, rtype, "left");
+	left = addParamSmart(lp.errSink, /*#ref*/loc, func, ltype, "right");
 
 	auto funcCopy = getLlvmMemCopy(/*#ref*/loc, lp);
 
 	ir.Exp[] args;
 
-	auto allocated = buildVarStatSmart(/*#ref*/loc, func._body, func._body.myScope, buildVoidPtr(/*#ref*/loc), "allocated");
-	auto count = buildVarStatSmart(/*#ref*/loc, func._body, func._body.myScope, buildSizeT(/*#ref*/loc, lp.target), "count");
+	auto allocated = buildVarStatSmart(lp.errSink, /*#ref*/loc, func._body, func._body.myScope, buildVoidPtr(/*#ref*/loc), "allocated");
+	auto count = buildVarStatSmart(lp.errSink, /*#ref*/loc, func._body, func._body.myScope, buildSizeT(/*#ref*/loc, lp.target), "count");
 
 	buildExpStat(/*#ref*/loc, func._body,
 		buildAssign(/*#ref*/loc,
@@ -259,12 +259,12 @@ ir.Function getArrayCopyFunction(ref in Location loc, LanguagePass lp, ir.Module
 		return func;
 	}
 
-	func = buildFunction(/*#ref*/loc, thisModule.children, thisModule.myScope, name);
+	func = buildFunction(lp.errSink, /*#ref*/loc, thisModule.children, thisModule.myScope, name);
 	func.mangledName = func.name;
 	func.isMergable = true;
 	func.type.ret = copyTypeSmart(/*#ref*/loc, type);
-	auto left = addParamSmart(/*#ref*/loc, func, type, "left");
-	auto right = addParamSmart(/*#ref*/loc, func, type, "right");
+	auto left = addParamSmart(lp.errSink, /*#ref*/loc, func, type, "left");
+	auto right = addParamSmart(lp.errSink, /*#ref*/loc, func, type, "right");
 
 	auto funcMove = getLlvmMemMove(/*#ref*/loc, lp);
 	auto expRef = buildExpReference(/*#ref*/loc, funcMove, funcMove.name);
@@ -307,25 +307,25 @@ ir.Function getArrayConcatFunction(ref in Location loc, LanguagePass lp, ir.Modu
 		return func;
 	}
 
-	func = buildFunction(/*#ref*/loc, thisModule.children, thisModule.myScope, name);
+	func = buildFunction(lp.errSink, /*#ref*/loc, thisModule.children, thisModule.myScope, name);
 	func.mangledName = func.name;
 	func.isMergable = true;
 	func.type.ret = copyTypeSmart(/*#ref*/loc, type);
 
 	ir.FunctionParam left;
 	if (isAssignment) {
-		left = addParam(/*#ref*/loc, func, buildPtrSmart(/*#ref*/loc, type), "left");
+		left = addParam(lp.errSink, /*#ref*/loc, func, buildPtrSmart(/*#ref*/loc, type), "left");
 	} else {
-		left = addParamSmart(/*#ref*/loc, func, type, "left");
+		left = addParamSmart(lp.errSink, /*#ref*/loc, func, type, "left");
 	}
-	auto right = addParamSmart(/*#ref*/loc, func, type, "right");
+	auto right = addParamSmart(lp.errSink, /*#ref*/loc, func, type, "right");
 
 	auto funcCopy = getLlvmMemCopy(/*#ref*/loc, lp);
 
 	ir.Exp[] args;
 
-	auto allocated = buildVarStatSmart(/*#ref*/loc, func._body, func._body.myScope, buildVoidPtr(/*#ref*/loc), "allocated");
-	auto count = buildVarStatSmart(/*#ref*/loc, func._body, func._body.myScope,
+	auto allocated = buildVarStatSmart(lp.errSink, /*#ref*/loc, func._body, func._body.myScope, buildVoidPtr(/*#ref*/loc), "allocated");
+	auto count = buildVarStatSmart(lp.errSink, /*#ref*/loc, func._body, func._body.myScope,
 		buildSizeT(/*#ref*/loc, lp.target), "count");
 	ir.Exp leftlength()
 	{
@@ -436,13 +436,13 @@ ir.Function getArrayCmpFunction(ref in Location loc, LanguagePass lp, ir.Module 
 		return func;
 	}
 
-	func = buildFunction(/*#ref*/loc, thisModule.children, thisModule.myScope, name);
+	func = buildFunction(lp.errSink, /*#ref*/loc, thisModule.children, thisModule.myScope, name);
 	func.mangledName = func.name;
 	func.isMergable = true;
 	func.type.ret = buildBool(/*#ref*/loc);
 
-	auto left = addParamSmart(/*#ref*/loc, func, type, "left");
-	auto right = addParamSmart(/*#ref*/loc, func, type, "right");
+	auto left = addParamSmart(lp.errSink, /*#ref*/loc, func, type, "left");
+	auto right = addParamSmart(lp.errSink, /*#ref*/loc, func, type, "right");
 
 	auto memCmp = lp.memcmpFunc;
 	auto memCmpExpRef = buildExpReference(/*#ref*/loc, memCmp, memCmp.name);

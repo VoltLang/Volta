@@ -11,7 +11,7 @@ module volt.llvm.constant;
 import watt.text.format : format;
 
 import volt.errors;
-import volt.ir.util;
+import volta.util.util;
 import ir = volta.ir;
 
 import volt.llvm.common;

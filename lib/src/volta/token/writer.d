@@ -3,10 +3,11 @@
 // Copyright © 2011, Jakob Ovrum.  All rights reserved.
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.token.writer;
+module volta.token.writer;
 
-import volt.token.error;
-import volt.token.source;
+import volta.interfaces;
+import volta.token.error;
+import volta.token.source;
 import volta.ir.tokenstream;
 
 
@@ -18,6 +19,7 @@ final class TokenWriter
 public:
 	LexerError[] errors;
 	bool noDoc;
+	ErrorSink errSink;
 
 	bool magicFlagD;
 
@@ -34,6 +36,7 @@ public:
 	this(Source source)
 	{
 		this.mSource = source;
+		this.errSink = errSink;
 		initTokenArray();
 	}
 

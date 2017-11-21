@@ -4,7 +4,7 @@
 module volt.semantic.cfg;
 
 import ir = volta.ir;
-import volt.ir.util;
+import volta.util.util;
 
 import volt.interfaces;
 import volt.errors;

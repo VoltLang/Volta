@@ -10,8 +10,8 @@ import watt.text.format : format;
 import watt.text.sink;
 
 import ir = volta.ir;
-import volt.ir.copy;
-import volt.ir.util;
+import volta.util.copy;
+import volta.util.util;
 
 import volt.errors;
 import volt.exceptions;
@@ -125,7 +125,7 @@ ir.Constant fold(ref ir.Exp exp, out bool needCopy, TargetInfo target)
 		if (!cs.compileTimeOnly) {
 			return null;
 		}
-		auto c = buildConstantString(/*#ref*/exp.loc, getConstantComposableString(target, cs));
+		auto c = buildConstantStringNoEscape(/*#ref*/exp.loc, getConstantComposableString(target, cs));
 		exp = c;
 		return c;
 	default:

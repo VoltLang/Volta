@@ -10,6 +10,7 @@ import watt.text.format;
 import ir = volta.ir;
 
 import volta.interfaces;
+import volta.settings;
 import volta.ir.location;
 
 
@@ -32,6 +33,13 @@ void panic(ErrorSink es, ref in Location loc, string message, string file = __FI
 void panic(ErrorSink es, ir.Node n, string message, string file = __FILE__, int line = __LINE__)
 {
 	es.panic(/*#ref*/ n.loc, message, file, line);
+}
+
+void passert(ErrorSink es, ir.Node n, bool condition, string file = __FILE__, int line = __LINE__)
+{
+	if (!condition) {
+		panic(es, "passert failure", file, line);
+	}
 }
 
 
@@ -75,4 +83,39 @@ void warning(ErrorSink es, ref in Location loc, string message, string file = __
 void warning(ErrorSink es, ir.Node n, string message, string file = __FILE__, int line = __LINE__)
 {
 	es.warning(/*#ref*/ n.loc, message, file, line);
+}
+
+void warningOldStyleVariable(ref in Location loc, bool magicFlagD, Settings settings)
+{
+	if (!magicFlagD && settings.warningsEnabled) {
+		warning(/*#ref*/loc, "old style variable declaration.");
+	}
+}
+
+void warningOldStyleFunction(ref in Location loc, bool magicFlagD, Settings settings)
+{
+	if (!magicFlagD && settings.warningsEnabled) {
+		warning(/*#ref*/loc, "old style function declaration.");
+	}
+}
+
+void warningOldStyleFunctionPtr(ref in Location loc, bool magicFlagD, Settings settings)
+{
+	if (!magicFlagD && settings.warningsEnabled) {
+		warning(/*#ref*/loc, "old style function pointer.");
+	}
+}
+
+void warningOldStyleDelegateType(ref in Location loc, bool magicFlagD, Settings settings)
+{
+	if (!magicFlagD && settings.warningsEnabled) {
+		warning(/*#ref*/loc, "old style delegate type.");
+	}
+}
+
+void warningOldStyleHexTypeSuffix(ref in Location loc, bool magicFlagD, Settings settings)
+{
+	if (!magicFlagD && settings.warningsEnabled) {
+		warning(/*#ref*/loc, "old style hex literal type suffix (U/L).");
+	}
 }
