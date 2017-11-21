@@ -7,6 +7,8 @@ module volta.errors;
 import watt.io.std;
 import watt.text.format;
 
+import ir = volta.ir;
+
 import volta.interfaces;
 import volta.ir.location;
 
@@ -17,9 +19,19 @@ import volta.ir.location;
  *
  */
 
+void panic(ErrorSink es, string message, string file = __FILE__, int line = __LINE__)
+{
+	es.onPanic(message, file, line);
+}
+
 void panic(ErrorSink es, ref in Location loc, string message, string file = __FILE__, int line = __LINE__)
 {
 	es.onPanic(/*#ref*/ loc, message, file, line);
+}
+
+void panic(ErrorSink es, ir.Node n, string message, string file = __FILE__, int line = __LINE__)
+{
+	es.panic(/*#ref*/ n.loc, message, file, line);
 }
 
 
@@ -29,11 +41,20 @@ void panic(ErrorSink es, ref in Location loc, string message, string file = __FI
  *
  */
 
-void error(ErrorSink es, ref in Location loc, string message, string file = __FILE__, int line = __LINE__)
+void errorMsg(ErrorSink es, ref in Location loc, string message, string file = __FILE__, int line = __LINE__)
 {
 	es.onError(/*#ref*/ loc, message, file, line);
 }
 
+void errorExpected(ErrorSink es, ref in Location loc, string expected, string file = __FILE__, int line = __LINE__)
+{
+	es.onError(/*#ref*/ loc, format("expected %s.", expected), file, line);
+}
+
+void errorExpected(ErrorSink es, ir.Node n, string expected, string file = __FILE__, int line = __LINE__)
+{
+	es.errorExpected(/*#ref*/ n.loc, expected, file, line);
+}
 
 /*
  *
