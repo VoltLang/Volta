@@ -7,8 +7,8 @@ module volt.semantic.templatelifter;
 import watt.text.format;
 
 import ir = volta.ir;
-import ircopy = volt.ir.copy;
-import volt.ir.util;
+import ircopy = volta.util.copy;
+import volta.util.util;
 
 import volt.errors;
 import volt.interfaces;

@@ -2,14 +2,15 @@
 // Copyright © 2010, Bernard Helyer.  All rights reserved.
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.token.source;
+module volta.token.source;
 
 import watt.io.file : read;
 import watt.text.utf : decode, validate;
 import watt.text.ascii : isWhite;
 import watt.text.format : format;
 
-import volt.errors : panic;
+import volta.interfaces : ErrorSink;
+import volta.errors : panic;
 import volta.ir.location : Location;
 
 
@@ -31,6 +32,8 @@ public:
 	Location loc;
 	//! Have we reached EOF, if we have current = dchar.init.
 	bool eof = false;
+	//! Sink for reporting errors.
+	ErrorSink errSink;
 
 private:
 	//! The current unicode character.
@@ -51,8 +54,9 @@ public:
 	 * Throws:
 	 *   UtfException if the source is not valid utf8.
 	 */
-	this(string s, string filename)
+	this(string s, string filename, ErrorSink errSink)
 	{
+		this.errSink = errSink;
 		source = s;
 		checkBOM();
 		validate(source);
@@ -71,6 +75,7 @@ public:
 		this.source = src.source;
 		this.loc = src.loc;
 		this.eof = src.eof;
+		this.errSink = src.errSink;
 		this.mChar = src.mChar;
 		this.mNextIndex = src.mNextIndex;
 		this.mLastIndex = src.mLastIndex;
@@ -286,8 +291,8 @@ public:
 	void sync(Source src)
 	{
 		if (src.source !is this.source) {
-			throw panic(
-				"attempted to sync different sources");
+			panic(errSink, "attempted to sync different sources");
+			assert(false);  // @todo abortless error handling
 		}
 		this.loc = src.loc;
 		this.mNextIndex = src.mNextIndex;

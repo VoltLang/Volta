@@ -9,8 +9,8 @@ import watt.text.sink;
 import watt.io.file : read, exists;
 
 import ir = volta.ir;
-import volt.ir.copy;
-import volt.ir.util;
+import volta.util.copy;
+import volta.util.util;
 
 import volt.errors;
 import volt.interfaces;
@@ -74,8 +74,8 @@ void lowerAAInsert(ref in Location loc, LanguagePass lp, ir.Module thisModule, i
 	if (buildif) {
 		auto thenState = buildBlockStat(/*#ref*/loc, statExp, current);
 		varExp = buildExpReference(/*#ref*/loc, var, var.name);
-		ir.Exp[] args = [ cast(ir.Exp)buildTypeidSmart(/*#ref*/loc, lp, aa.value),
-		                  cast(ir.Exp)buildTypeidSmart(/*#ref*/loc, lp, aa.key)
+		ir.Exp[] args = [ cast(ir.Exp)buildTypeidSmart(/*#ref*/loc, lp.tiTypeInfo, aa.value),
+		                  cast(ir.Exp)buildTypeidSmart(/*#ref*/loc, lp.tiTypeInfo, aa.key)
 		];
 		buildExpStat(/*#ref*/loc, thenState,
 			buildAssign(/*#ref*/loc,
@@ -132,7 +132,7 @@ void lowerAALookup(ref in Location loc, LanguagePass lp, ir.Module thisModule, i
 
 	auto thenState = buildBlockStat(/*#ref*/loc, statExp, current);
 
-	ir.Exp locstr = buildConstantString(/*#ref*/loc, format("%s:%s", loc.filename, loc.line), false);
+	ir.Exp locstr = buildConstantStringNoEscape(/*#ref*/loc, format("%s:%s", loc.filename, loc.line));
 
 	buildExpStat(/*#ref*/loc, thenState, buildCall(/*#ref*/loc, lp.ehThrowKeyNotFoundErrorFunc, [locstr]));
 
@@ -281,11 +281,11 @@ ir.ComposableString cs, LlvmLowerer lowerer)
 	auto loc = cs.loc;
 	auto sexp = buildStatementExp(/*#ref*/loc);
 	if (func.composableSinkVariable is null) {
-		func.composableSinkVariable = buildVariableAnonSmartAtTop(/*#ref*/loc,
+		func.composableSinkVariable = buildVariableAnonSmartAtTop(lp.errSink, /*#ref*/loc,
 			func._body, lp.sinkStore, null);
 	}
 	auto sinkStoreVar = func.composableSinkVariable;
-	auto sinkVar = buildVariableAnonSmart(/*#ref*/loc, current, sexp, lp.sinkType,
+	auto sinkVar = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, current, sexp, lp.sinkType,
 		buildCall(/*#ref*/loc, buildExpReference(/*#ref*/loc, lp.sinkInit, lp.sinkInit.name), [
 			cast(ir.Exp)buildExpReference(/*#ref*/loc, sinkStoreVar, sinkStoreVar.name)]));
 	StringSink constantSink;
@@ -298,7 +298,7 @@ ir.ComposableString cs, LlvmLowerer lowerer)
 			// Empty the constant sink, and place that into the sink proper.
 			string str = constantSink.toString();
 			if (str.length > 0) {
-				lowerComposableStringStringComponent(buildConstantString(/*#ref*/loc, str, /*escape:*/false), sexp, sinkVar);
+				lowerComposableStringStringComponent(buildConstantStringNoEscape(/*#ref*/loc, str), sexp, sinkVar);
 			}
 			constantSink.reset();
 			// ...and then route the runtime expression to the right place.
@@ -338,7 +338,7 @@ ir.ComposableString cs, LlvmLowerer lowerer)
 	// Empty the constant sink before finishing up.
 	string str = constantSink.toString();
 	if (str.length > 0) {
-		lowerComposableStringStringComponent(buildConstantString(/*#ref*/loc, str, /*escape:*/false), sexp, sinkVar);
+		lowerComposableStringStringComponent(buildConstantStringNoEscape(/*#ref*/loc, str), sexp, sinkVar);
 	}
 
 	sexp.exp = buildCall(/*#ref*/loc, buildExpReference(/*#ref*/loc, lp.sinkGetStr, lp.sinkGetStr.name), [
@@ -369,9 +369,9 @@ void lowerComposableStringComponent(LanguagePass lp, ir.Scope current,
 		break;
 	case ir.NodeType.ArrayType:
 		if (isString(type)) {
-			lowerComposableStringStringComponent(buildConstantString(/*#ref*/e.loc, "\""), sexp, sinkVar, dgt);
+			lowerComposableStringStringComponent(buildConstantStringNoEscape(/*#ref*/e.loc, "\""), sexp, sinkVar, dgt);
 			lowerComposableStringStringComponent(e, sexp, sinkVar, dgt);
-			lowerComposableStringStringComponent(buildConstantString(/*#ref*/e.loc, "\""), sexp, sinkVar, dgt);
+			lowerComposableStringStringComponent(buildConstantStringNoEscape(/*#ref*/e.loc, "\""), sexp, sinkVar, dgt);
 			return;
 		}
 		lowerComposableStringArrayComponent(lp, current, e, sexp, sinkVar, dgt, lowerer);
@@ -395,12 +395,12 @@ void lowerComposableStringComponent(LanguagePass lp, ir.Scope current,
 			auto toStrFn = selectFunction(lp.target, store.functions, args, /*#ref*/e.loc, DoNotThrow);
 			if (toStrFn !is null && isString(toStrFn.type.ret)) {
 				ir.Postfix _call = buildMemberCall(/*#ref*/e.loc, copyExp(e), buildExpReference(/*#ref*/e.loc, toStrFn), "toString", null);
-				auto var = buildVariableAnonSmart(/*#ref*/e.loc, current, sexp, buildString(/*#ref*/e.loc), _call);
+				auto var = buildVariableAnonSmart(lp.errSink, /*#ref*/e.loc, current, sexp, buildString(/*#ref*/e.loc), _call);
 				lowerComposableStringStringComponent(buildExpReference(/*#ref*/e.loc, var, var.name), sexp, sinkVar, dgt);
 				break;
 			}
 		}
-		lowerComposableStringStringComponent(buildConstantString(/*#ref*/e.loc, agg.name), sexp, sinkVar, dgt);
+		lowerComposableStringStringComponent(buildConstantStringNoEscape(/*#ref*/e.loc, agg.name), sexp, sinkVar, dgt);
 		break;
 	default:
 		assert(false);  // Should be caught in extyper.
@@ -417,17 +417,17 @@ void lowerComposableStringPrimitiveComponent(LanguagePass lp, ir.Scope current, 
 	final switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Bool:
 		outExp = buildCall(/*#ref*/loc, buildExpReference(/*#ref*/loc, sinkVar, sinkVar.name),
-			[cast(ir.Exp)buildTernary(/*#ref*/loc, copyExp(e), buildConstantString(/*#ref*/loc, "true"),
-			buildConstantString(/*#ref*/loc, "false"))]);
+			[cast(ir.Exp)buildTernary(/*#ref*/loc, copyExp(e), buildConstantStringNoEscape(/*#ref*/loc, "true"),
+			buildConstantStringNoEscape(/*#ref*/loc, "false"))]);
 		break;
 	case Char:
 	case Wchar:
 	case Dchar:
-		lowerComposableStringStringComponent(buildConstantString(/*#ref*/e.loc, "'"), sexp, sinkVar, dgt);
+		lowerComposableStringStringComponent(buildConstantStringNoEscape(/*#ref*/e.loc, "'"), sexp, sinkVar, dgt);
 		outExp = buildCall(/*#ref*/loc, buildExpReference(/*#ref*/loc, lp.formatDchar, lp.formatDchar.name), [
 			buildExpReference(/*#ref*/loc, sinkVar, sinkVar.name), 
 			buildCast(/*#ref*/loc, buildDchar(/*#ref*/loc), copyExp(e))]);
-		lowerComposableStringStringComponent(buildConstantString(/*#ref*/e.loc, "'"), sexp, sinkVar, dgt);
+		lowerComposableStringStringComponent(buildConstantStringNoEscape(/*#ref*/e.loc, "'"), sexp, sinkVar, dgt);
 		break;
 	case Ubyte:
 	case Ushort:
@@ -495,7 +495,7 @@ void lowerComposableStringAAComponent(LanguagePass lp, ir.Scope current, ir.Exp 
 	}
 
 	auto loc = e.loc;
-	lowerComposableStringStringComponent(buildConstantString(/*#ref*/loc, "["), sexp, sinkVar, dgt);
+	lowerComposableStringStringComponent(buildConstantStringNoEscape(/*#ref*/loc, "["), sexp, sinkVar, dgt);
 	ir.ForStatement fs;
 	ir.Variable ivar;
 	buildForStatement(/*#ref*/e.loc, lp.target, current, length(), /*#out*/fs, /*#out*/ivar);
@@ -523,7 +523,7 @@ void lowerComposableStringAAComponent(LanguagePass lp, ir.Scope current, ir.Exp 
 	lowerComposableStringComponent(lp, current, buildIndex(/*#ref*/e.loc, keys(),
 		buildExpReference(/*#ref*/ivar.loc, ivar, ivar.name)),
 		sexp, sinkVar, forDgt, lowerer);
-	lowerComposableStringStringComponent(buildConstantString(/*#ref*/loc, ":"), sexp, sinkVar, forDgt);
+	lowerComposableStringStringComponent(buildConstantStringNoEscape(/*#ref*/loc, ":"), sexp, sinkVar, forDgt);
 	lowerComposableStringComponent(lp, current, buildIndex(/*#ref*/e.loc, values(),
 		buildExpReference(/*#ref*/ivar.loc, ivar, ivar.name)),
 		sexp, sinkVar, forDgt, lowerer);
@@ -531,13 +531,13 @@ void lowerComposableStringAAComponent(LanguagePass lp, ir.Scope current, ir.Exp 
 	auto lengthSub1 = buildSub(/*#ref*/loc, length(), buildConstantSizeT(/*#ref*/loc, lp.target, 1));
 	auto cmp = buildBinOp(/*#ref*/loc, ir.BinOp.Op.Less, buildExpReference(/*#ref*/loc, ivar, ivar.name), lengthSub1);
 
-	lowerComposableStringStringComponent(buildConstantString(/*#ref*/loc, ", "), sexp, sinkVar, getDgt);
+	lowerComposableStringStringComponent(buildConstantStringNoEscape(/*#ref*/loc, ", "), sexp, sinkVar, getDgt);
 	auto bs = buildBlockStat(/*#ref*/loc, null, fs.block.myScope, buildExpStat(/*#ref*/e.loc, cast(ir.Exp)gottenNode));
 	auto ifs = buildIfStat(/*#ref*/loc, cmp, bs);
 	forDgt(ifs);
 
 	dgt(fs);
-	lowerComposableStringStringComponent(buildConstantString(/*#ref*/loc, "]"), sexp, sinkVar, dgt);
+	lowerComposableStringStringComponent(buildConstantStringNoEscape(/*#ref*/loc, "]"), sexp, sinkVar, dgt);
 }
 
 //! Lower an array component of a composable string.
@@ -545,7 +545,7 @@ void lowerComposableStringArrayComponent(LanguagePass lp, ir.Scope current, ir.E
 	ir.StatementExp sexp, ir.Variable sinkVar, NodeConsumer dgt, LlvmLowerer lowerer)
 {
 	auto loc = e.loc;
-	lowerComposableStringStringComponent(buildConstantString(/*#ref*/loc, "["), sexp, sinkVar, dgt);
+	lowerComposableStringStringComponent(buildConstantStringNoEscape(/*#ref*/loc, "["), sexp, sinkVar, dgt);
 	ir.ForStatement fs;
 	ir.Variable ivar;
 	buildForStatement(/*#ref*/e.loc, lp.target, current, buildArrayLength(/*#ref*/loc, lp.target, copyExp(e)), /*#out*/fs, /*#out*/ivar);
@@ -576,13 +576,13 @@ void lowerComposableStringArrayComponent(LanguagePass lp, ir.Scope current, ir.E
 	auto lengthSub1 = buildSub(/*#ref*/loc, buildArrayLength(/*#ref*/loc, lp.target, copyExp(e)), buildConstantSizeT(/*#ref*/loc, lp.target, 1));
 	auto cmp = buildBinOp(/*#ref*/loc, ir.BinOp.Op.Less, buildExpReference(/*#ref*/loc, ivar, ivar.name), lengthSub1);
 
-	lowerComposableStringStringComponent(buildConstantString(/*#ref*/loc, ", "), sexp, sinkVar, getDgt);
+	lowerComposableStringStringComponent(buildConstantStringNoEscape(/*#ref*/loc, ", "), sexp, sinkVar, getDgt);
 	auto bs = buildBlockStat(/*#ref*/loc, null, fs.block.myScope, buildExpStat(/*#ref*/e.loc, cast(ir.Exp)gottenNode));
 	auto ifs = buildIfStat(/*#ref*/loc, cmp, bs);
 	forDgt(ifs);
 
 	dgt(fs);
-	lowerComposableStringStringComponent(buildConstantString(/*#ref*/loc, "]"), sexp, sinkVar, dgt);
+	lowerComposableStringStringComponent(buildConstantStringNoEscape(/*#ref*/loc, "]"), sexp, sinkVar, dgt);
 }
 
 //! Lower a pointer component of a composable string.
@@ -629,9 +629,9 @@ ir.Function generateToSink(ref in Location loc, LanguagePass lp, ir.Scope curren
 	 */
 	auto mod = getModuleFromScope(/*#ref*/loc, current);
 	auto ftype = buildFunctionTypeSmart(/*#ref*/loc, buildVoid(/*#ref*/loc));
-	auto func = buildFunction(/*#ref*/loc, mod.children, mod.myScope, "__toSink" ~ _enum.mangledName);
-	auto enumParam = addParamSmart(/*#ref*/loc, func, _enum, "e");
-	auto sinkParam = addParamSmart(/*#ref*/loc, func, lp.sinkType, "sink");
+	auto func = buildFunction(lp.errSink, /*#ref*/loc, mod.children, mod.myScope, "__toSink" ~ _enum.mangledName);
+	auto enumParam = addParamSmart(lp.errSink, /*#ref*/loc, func, _enum, "e");
+	auto sinkParam = addParamSmart(lp.errSink, /*#ref*/loc, func, lp.sinkType, "sink");
 
 	auto em = buildEnumMembers(/*#ref*/loc, _enum,
 		buildExpReference(/*#ref*/loc, enumParam, enumParam.name), buildExpReference(/*#ref*/loc, sinkParam, sinkParam.name));
@@ -665,10 +665,10 @@ ir.IfStatement lowerAssertIf(LanguagePass lp, ir.Scope current, ir.AssertStateme
 	auto loc = as.loc;
 	ir.Exp message = as.message;
 	if (message is null) {
-		message = buildConstantString(/*#ref*/loc, "assertion failure");
+		message = buildConstantStringNoEscape(/*#ref*/loc, "assertion failure");
 	}
 	assert(message !is null);
-	ir.Exp locstr = buildConstantString(/*#ref*/loc, format("%s:%s", as.loc.filename, as.loc.line), false);
+	ir.Exp locstr = buildConstantStringNoEscape(/*#ref*/loc, format("%s:%s", as.loc.filename, as.loc.line));
 	auto theThrow = buildExpStat(/*#ref*/loc, buildCall(/*#ref*/loc, lp.ehThrowAssertErrorFunc, [locstr, message]));
 	auto thenBlock = buildBlockStat(/*#ref*/loc, null, current, theThrow);
 	auto ifS = buildIfStat(/*#ref*/loc, buildNot(/*#ref*/loc, as.condition), thenBlock);
@@ -685,7 +685,7 @@ ir.IfStatement lowerAssertIf(LanguagePass lp, ir.Scope current, ir.AssertStateme
 void lowerThrow(LanguagePass lp, ir.ThrowStatement t)
 {
 	t.exp = buildCall(/*#ref*/t.loc, lp.ehThrowFunc, [t.exp,
-	                  buildConstantString(/*#ref*/t.loc, format("%s:%s", t.loc.filename, t.loc.line), false)]);
+	                  buildConstantStringNoEscape(/*#ref*/t.loc, format("%s:%s", t.loc.filename, t.loc.line))]);
 }
 
 /*!
@@ -709,7 +709,7 @@ void lowerStringImport(Driver driver, ref ir.Exp exp, ir.StringImport simport)
 	auto str = driver.stringImport(/*#ref*/exp.loc, fname);
 
 	// Build and replace.
-	exp = buildConstantString(/*#ref*/exp.loc, str, false);
+	exp = buildConstantStringNoEscape(/*#ref*/exp.loc, str);
 }
 
 /*!
@@ -717,11 +717,12 @@ void lowerStringImport(Driver driver, ref ir.Exp exp, ir.StringImport simport)
  * into `Struct a; a.firstField = 1; b.secondField = "banana";`.
  *
  * Params:
+ *   lp: The LanguagePass.
  *   current: The scope where the StructLiteral occurs.
  *   exp: The expression of the StructLiteral.
  *   literal: The StructLiteral to lower.
  */
-void lowerStructLiteral(ir.Scope current, ref ir.Exp exp, ir.StructLiteral literal)
+void lowerStructLiteral(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.StructLiteral literal)
 {
 	// Pull out the struct and its fields.
 	panicAssert(exp, literal.type !is null);
@@ -734,7 +735,7 @@ void lowerStructLiteral(ir.Scope current, ref ir.Exp exp, ir.StructLiteral liter
 	// Struct __anon;
 	auto loc = exp.loc;
 	auto sexp = buildStatementExp(/*#ref*/loc);
-	auto var = buildVariableAnonSmart(/*#ref*/loc, current, sexp, theStruct, null);
+	auto var = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, current, sexp, theStruct, null);
 
 	// Assign the literal expressions to the fields.
 	foreach (i, e; literal.exps) {
@@ -795,14 +796,14 @@ void lowerIndexAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 	auto loc = postfix.loc;
 	auto statExp = buildStatementExp(/*#ref*/loc);
 
-	auto var = buildVariableAnonSmart(/*#ref*/loc, cast(ir.BlockStatement)current.node, statExp,
+	auto var = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, cast(ir.BlockStatement)current.node, statExp,
 		buildPtrSmart(/*#ref*/loc, aa), buildAddrOf(/*#ref*/loc, postfix.child)
 	);
 
-	auto key = buildVariableAnonSmart(/*#ref*/loc, cast(ir.BlockStatement)current.node, statExp,
+	auto key = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, cast(ir.BlockStatement)current.node, statExp,
 		copyTypeSmart(/*#ref*/loc, aa.key), postfix.arguments[0]
 	);
-	auto store = buildVariableAnonSmart(/*#ref*/loc, cast(ir.BlockStatement)current.node, statExp,
+	auto store = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, cast(ir.BlockStatement)current.node, statExp,
 		copyTypeSmart(/*#ref*/loc, aa.value), null
 	);
 
@@ -894,14 +895,14 @@ void lowerAssignAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 	}
 	panicAssert(exp, bs !is null);
 
-	auto var = buildVariableAnonSmart(/*#ref*/loc, bs, statExp,
+	auto var = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, bs, statExp,
 		buildPtrSmart(/*#ref*/loc, aa), buildAddrOf(/*#ref*/loc, asPostfix.child)
 	);
 
-	auto key = buildVariableAnonSmart(/*#ref*/loc, bs, statExp,
+	auto key = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, bs, statExp,
 		copyTypeSmart(/*#ref*/loc, aa.key), asPostfix.arguments[0]
 	);
-	auto value = buildVariableAnonSmart(/*#ref*/loc, bs, statExp,
+	auto value = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, bs, statExp,
 		copyTypeSmart(/*#ref*/loc, aa.value), binOp.right
 	);
 
@@ -935,20 +936,20 @@ void lowerOpAssignAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 	assert(asPostfix.op == ir.Postfix.Op.Index);
 	auto statExp = buildStatementExp(/*#ref*/loc);
 
-	auto var = buildVariableAnonSmart(/*#ref*/loc, cast(ir.BlockStatement)current.node, statExp,
+	auto var = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, cast(ir.BlockStatement)current.node, statExp,
 		buildPtrSmart(/*#ref*/loc, aa), null
 	);
 	buildExpStat(/*#ref*/loc, statExp,
 		buildAssign(/*#ref*/loc, var, buildAddrOf(/*#ref*/loc, asPostfix.child))
 	);
 
-	auto key = buildVariableAnonSmart(/*#ref*/loc, cast(ir.BlockStatement)current.node, statExp,
+	auto key = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, cast(ir.BlockStatement)current.node, statExp,
 		copyTypeSmart(/*#ref*/loc, aa.key), null
 	);
 	buildExpStat(/*#ref*/loc, statExp,
 		buildAssign(/*#ref*/loc, key, asPostfix.arguments[0])
 	);
-	auto store = buildVariableAnonSmart(/*#ref*/loc, cast(ir.BlockStatement)current.node, statExp,
+	auto store = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, cast(ir.BlockStatement)current.node, statExp,
 		copyTypeSmart(/*#ref*/loc, aa.value), null
 	);
 
@@ -1176,7 +1177,7 @@ void lowerArrayCast(ref in Location loc, LanguagePass lp, ir.Scope current,
 		//     vrt_throw_slice_error(arr.length, typeid(T).size);
 		auto ln = buildArrayLength(/*#ref*/loc, lp.target, buildExpReference(/*#ref*/loc, var, varName));
 		auto sz = getSizeOf(/*#ref*/loc, lp, toArray.base);
-		ir.Exp locstr = buildConstantString(/*#ref*/loc, format("%s:%s", exp.loc.filename, exp.loc.line), false);
+		ir.Exp locstr = buildConstantStringNoEscape(/*#ref*/loc, format("%s:%s", exp.loc.filename, exp.loc.line));
 		auto rtCall = buildCall(/*#ref*/loc, lp.ehThrowSliceErrorFunc, [locstr]);
 		auto bs = buildBlockStat(/*#ref*/loc, rtCall, current, buildExpStat(/*#ref*/loc, rtCall));
 		auto check = buildBinOp(/*#ref*/loc, ir.BinOp.Op.NotEqual,
@@ -1258,7 +1259,7 @@ void lowerStructLookupViaFunctionCall(LanguagePass lp, ir.Scope current, ref ir.
 	auto loc = ae.loc;
 	auto statExp = buildStatementExp(/*#ref*/loc);
 	auto host = getParentFunction(current);
-	auto var = buildVariableAnonSmart(/*#ref*/loc, host._body, statExp, type,
+	auto var = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, host._body, statExp, type,
 	                                  ae.child);
 	ae.child = buildExpReference(/*#ref*/loc, var, var.name);
 	statExp.exp = exp;
@@ -1332,7 +1333,7 @@ ir.ForStatement lowerForeach(ir.ForeachStatement fes, LanguagePass lp,
 	    aggType.nodeType == ir.NodeType.StaticArrayType) {
 	    //
 		aggType = realType(getExpType(buildSlice(/*#ref*/loc, fes.aggregate)));
-		auto anonVar = buildVariableAnonSmart(/*#ref*/loc, current, sexp, aggType,
+		auto anonVar = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, current, sexp, aggType,
 		                                      buildSlice(/*#ref*/loc, fes.aggregate));
 		anonVar.type.mangledName = mangle(aggType);
 		scope (exit) fs.initVars = anonVar ~ fs.initVars;
@@ -1424,7 +1425,7 @@ ir.ForStatement lowerForeach(ir.ForeachStatement fes, LanguagePass lp,
 
 	// foreach (k, v; aa) => for (size_t i; i < aa.keys.length; i++) k = aa.keys[i]; v = aa[k];
 	// foreach_reverse => error, as order is undefined.
-	auto aaanonVar = buildVariableAnonSmart(/*#ref*/loc, current, sexp, aggType, fes.aggregate);
+	auto aaanonVar = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, current, sexp, aggType, fes.aggregate);
 	aaanonVar.type.mangledName = mangle(aggType);
 	scope (exit) fs.initVars = aaanonVar ~ fs.initVars;
 	ir.ExpReference aaaggref() { return buildExpReference(/*#ref*/loc, aaanonVar, aaanonVar.name); }
@@ -1554,10 +1555,10 @@ void lowerArrayLiteral(LanguagePass lp, ir.Scope current,
 
 	if ((!isBaseConst || !isExpsBackend) && isScope) {
 		auto sa = buildStaticArrayTypeSmart(/*#ref*/exp.loc, al.exps.length, arr.base);
-		auto sexp = buildInternalStaticArrayLiteralSmart(/*#ref*/exp.loc, sa, al.exps);
+		auto sexp = buildInternalStaticArrayLiteralSmart(lp.errSink, /*#ref*/exp.loc, sa, al.exps);
 		exp = buildSlice(/*#ref*/exp.loc, sexp);
 	} else if (!isScope || !isBaseConst || !isExpsBackend) {
-		auto sexp = buildInternalArrayLiteralSmart(/*#ref*/al.loc, at, al.exps);
+		auto sexp = buildInternalArrayLiteralSmart(lp.errSink, /*#ref*/al.loc, at, al.exps);
 		sexp.originalExp = al;
 		exp = sexp;
 	}
@@ -1592,20 +1593,20 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 		auto asStatic = cast(ir.StaticArrayType)realType(type);
 		ir.Exp value = builtin.children[0];
 		value = buildSlice(/*#ref*/loc, value);
-		auto valueVar = buildVariableAnonSmart(/*#ref*/loc, current, sexp, type, value);
+		auto valueVar = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, current, sexp, type, value);
 		value = buildExpReference(/*#ref*/loc, valueVar, valueVar.name);
 
 		auto startCast = buildCastSmart(/*#ref*/loc, buildSizeT(/*#ref*/loc, lp.target), builtin.children[1]);
-		auto startVar = buildVariableAnonSmart(/*#ref*/loc, current, sexp, buildSizeT(/*#ref*/loc, lp.target), startCast);
+		auto startVar = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, current, sexp, buildSizeT(/*#ref*/loc, lp.target), startCast);
 		auto start = buildExpReference(/*#ref*/loc, startVar, startVar.name);
 		auto endCast = buildCastSmart(/*#ref*/loc, buildSizeT(/*#ref*/loc, lp.target), builtin.children[2]);
-		auto endVar = buildVariableAnonSmart(/*#ref*/loc, current, sexp, buildSizeT(/*#ref*/loc, lp.target), endCast);
+		auto endVar = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, current, sexp, buildSizeT(/*#ref*/loc, lp.target), endCast);
 		auto end = buildExpReference(/*#ref*/loc, endVar, endVar.name);
 
 
 		auto length = buildSub(/*#ref*/loc, end, start);
 		auto newExp = buildNewSmart(/*#ref*/loc, type, length);
-		auto var = buildVariableAnonSmart(/*#ref*/loc, current, sexp, type, newExp);
+		auto var = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, current, sexp, type, newExp);
 		auto evar = buildExpReference(/*#ref*/loc, var, var.name);
 		auto sliceL = buildSlice(/*#ref*/loc, evar, copyExp(start), copyExp(end));
 		auto sliceR = buildSlice(/*#ref*/loc, value, copyExp(start), copyExp(end));
@@ -1746,7 +1747,7 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 			ptr = buildSub(/*#ref*/loc, ptr, offset);
 		}
 		auto tinfos = buildDeref(/*#ref*/loc, buildDeref(/*#ref*/loc, buildCastSmart(/*#ref*/loc, ti, ptr)));
-		auto tvar = buildVariableAnonSmart(/*#ref*/loc, current, sexp,
+		auto tvar = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, current, sexp,
 		                                   buildArrayType(/*#ref*/loc,
 		                                   copyTypeSmart(/*#ref*/loc, lp.tiClassInfo)), tinfos);
 		ir.Exp tlen = buildArrayLength(/*#ref*/loc, lp.target, buildExpReference(/*#ref*/loc, tvar, tvar.name));
@@ -1960,8 +1961,8 @@ void lowerVarargCall(LanguagePass lp, ir.Scope current, ir.Postfix postfix, ir.F
 	if (numVarArgs > 0) {
 		auto idsType = buildStaticArrayTypeSmart(/*#ref*/loc, varArgsSlice.length, tr);
 		auto argsType = buildStaticArrayTypeSmart(/*#ref*/loc, 0, buildVoid(/*#ref*/loc));
-		auto ids = buildVariableAnonSmartAtTop(/*#ref*/loc, func._body, idsType, null);
-		auto args = buildVariableAnonSmartAtTop(/*#ref*/loc, func._body, argsType, null);
+		auto ids = buildVariableAnonSmartAtTop(lp.errSink, /*#ref*/loc, func._body, idsType, null);
+		auto args = buildVariableAnonSmartAtTop(lp.errSink, /*#ref*/loc, func._body, argsType, null);
 
 		int[] sizes;
 		size_t totalSize;
@@ -1975,7 +1976,7 @@ void lowerVarargCall(LanguagePass lp, ir.Scope current, ir.Postfix postfix, ir.F
 			}
 
 			auto ididx = buildIndex(/*#ref*/loc, buildExpReference(/*#ref*/loc, ids, ids.name), buildConstantSizeT(/*#ref*/loc, lp.target, i));
-			buildExpStat(/*#ref*/loc, sexp, buildAssign(/*#ref*/loc, ididx, buildTypeidSmart(/*#ref*/loc, lp, etype)));
+			buildExpStat(/*#ref*/loc, sexp, buildAssign(/*#ref*/loc, ididx, buildTypeidSmart(/*#ref*/loc, lp.tiTypeInfo, etype)));
 
 			// *(cast(T*)arr.ptr + totalSize) = exp;
 			auto argl = buildDeref(/*#ref*/loc, buildCastSmart(/*#ref*/loc, buildPtrSmart(/*#ref*/loc, etype),
@@ -2005,7 +2006,7 @@ void lowerVarargCall(LanguagePass lp, ir.Scope current, ir.Postfix postfix, ir.F
 void lowerGlobalAALiteral(LanguagePass lp, ir.Scope current, ir.Module mod, ir.Variable var)
 {
 	auto loc = var.loc;
-	auto gctor = buildGlobalConstructor(/*#ref*/loc, mod.children, current, "__ctor");
+	auto gctor = buildGlobalConstructor(lp.errSink, /*#ref*/loc, mod.children, current, "__ctor");
 	ir.BinOp assign = buildAssign(/*#ref*/loc, var, var.assign);
 	buildExpStat(/*#ref*/loc, gctor._body, assign);
 	var.assign = null;
@@ -2041,19 +2042,19 @@ void lowerAA(LanguagePass lp, ir.Scope current, ir.Module thisModule, ref ir.Exp
 	}
 	panicAssert(exp, bs !is null);
 
-	auto var = buildVariableAnonSmart(/*#ref*/loc, bs, statExp,
+	auto var = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, bs, statExp,
 		copyTypeSmart(/*#ref*/loc, aa), buildCall(/*#ref*/loc, aaNewFn, [
-			cast(ir.Exp)buildTypeidSmart(/*#ref*/loc, lp, aa.value),
-			cast(ir.Exp)buildTypeidSmart(/*#ref*/loc, lp, aa.key)
+			cast(ir.Exp)buildTypeidSmart(/*#ref*/loc, lp.tiTypeInfo, aa.value),
+			cast(ir.Exp)buildTypeidSmart(/*#ref*/loc, lp.tiTypeInfo, aa.key)
 		], aaNewFn.name)
 	);
 
 	foreach (pair; assocArray.pairs) {
-		auto key = buildVariableAnonSmart(/*#ref*/loc, bs, statExp,
+		auto key = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, bs, statExp,
 			copyTypeSmart(/*#ref*/loc, aa.key), pair.key
 		);
 
-		auto value = buildVariableAnonSmart(/*#ref*/loc, bs, statExp,
+		auto value = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, bs, statExp,
 			copyTypeSmart(/*#ref*/loc, aa.value), pair.value
 		);
 
@@ -2080,7 +2081,7 @@ void lowerStructUnionConstructor(LanguagePass lp, ir.Scope current, ref ir.Exp e
 	auto loc = exp.loc;
 	auto ctor = builtin.functions[0];
 	auto sexp = buildStatementExp(/*#ref*/loc);
-	auto svar = buildVariableAnonSmart(/*#ref*/loc, current, sexp, agg, null);
+	auto svar = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, current, sexp, agg, null);
 	auto args = buildCast(/*#ref*/loc, buildVoidPtr(/*#ref*/loc), buildAddrOf(/*#ref*/loc,
 		buildExpReference(/*#ref*/loc, svar, svar.name))) ~ postfix.arguments;
 	auto ctorCall = buildCall(/*#ref*/loc, ctor, args);
@@ -2345,7 +2346,7 @@ public:
 			// Global struct literals can use LLVM's native handling.
 			return Continue;
 		}
-		lowerStructLiteral(current, /*#ref*/exp, literal);
+		lowerStructLiteral(lp, current, /*#ref*/exp, literal);
 		return Continue;
 	}
 

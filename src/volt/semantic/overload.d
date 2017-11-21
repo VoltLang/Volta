@@ -8,7 +8,7 @@ version (Volt) import core.object; // Needed, sort.
 import watt.algorithm;
 
 import ir = volta.ir;
-import volt.ir.util;
+import volta.util.util;
 
 import volt.errors;
 import volt.interfaces;

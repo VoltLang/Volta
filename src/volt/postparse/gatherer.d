@@ -14,8 +14,8 @@ module volt.postparse.gatherer;
 import watt.text.format : format;
 
 import ir = volta.ir;
-import volt.ir.util;
-import volt.ir.copy;
+import volta.util.util;
+import volta.util.copy;
 
 import volt.errors;
 import volt.interfaces;

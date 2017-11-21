@@ -1,24 +1,22 @@
 /*#D*/
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.parser.statements;
+module volta.parser.statements;
 
 import watt.text.ascii;
 import watt.text.sink;
 
 import ir = volta.ir;
-import volt.ir.util;
-import volt.ir.copy : copyType;
+import volta.util.util;
+import volta.util.copy : copyType;
 
-import volt.errors;
-import volt.exceptions;
 import volta.ir.tokenstream;
 import volta.ir.token : TokenType, Token;
 
-import volt.parser.base;
-import volt.parser.declaration;
-import volt.parser.expression;
-import volt.parser.toplevel;
+import volta.parser.base;
+import volta.parser.declaration;
+import volta.parser.expression;
+import volta.parser.toplevel;
 
 
 ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
@@ -1404,7 +1402,7 @@ ParseStatus parseStaticIs(ParserStream ps, out ir.AssertStatement as)
 			break;
 		}
 	}
-	as.message = buildConstantString(/*#ref*/isExp.loc, msg.toString());
+	as.message = buildConstantString(ps.errSink, /*#ref*/isExp.loc, msg.toString());
 	return Succeeded;
 }
 

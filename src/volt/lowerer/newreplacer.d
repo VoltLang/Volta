@@ -6,8 +6,8 @@ module volt.lowerer.newreplacer;
 import watt.text.format : format;
 
 import ir = volta.ir;
-import volt.ir.util;
-import volt.ir.copy;
+import volta.util.util;
+import volta.util.copy;
 
 import volt.errors;
 import volt.interfaces;
@@ -28,7 +28,7 @@ ir.Exp createArrayAlloc(ref in Location loc, LanguagePass lp,
                         ir.Scope baseScope, ir.ArrayType atype, ir.Exp sizeArg)
 {
 	auto sexp = buildStatementExp(/*#ref*/loc);
-	auto sizeVar = buildVariableAnonSmart(/*#ref*/loc, baseScope, sexp,
+	auto sizeVar = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, baseScope, sexp,
 		buildSizeT(/*#ref*/loc, lp.target), sizeArg);
 	auto allocCall = buildAllocTypePtr(/*#ref*/loc, lp, atype.base,
 		buildExpReference(/*#ref*/loc, sizeVar, sizeVar.name));
@@ -136,7 +136,7 @@ public:
 		ir.Variable[] variables = new ir.Variable[](unary.argumentList.length);
 		ir.Exp sizeExp = buildConstantSizeT(/*#ref*/loc, lp.target, 0);
 		foreach (i, arg; unary.argumentList) {
-			auto var = buildVariableAnonSmart(/*#ref*/loc, cast(ir.BlockStatement)current.node, statExp, getExpType(arg), arg);
+			auto var = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, cast(ir.BlockStatement)current.node, statExp, getExpType(arg), arg);
 			panicAssert(exp, (cast(ir.ArrayType)realType(var.type)) !is null);
 			sizeExp = buildAdd(/*#ref*/loc, sizeExp,
 				buildArrayLength(/*#ref*/loc, lp.target, buildExpReference(/*#ref*/loc, var, var.name)));

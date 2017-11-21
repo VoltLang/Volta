@@ -1,13 +1,12 @@
 /*#D*/
 // Copyright © 2013, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.ir.copy;
+module volta.util.copy;
 
 import watt.text.format : format;
 
 import ir = volta.ir;
-import volt.errors;
-import volt.ir.util;
+import volta.util.util;
 import volta.util.dup;
 import volta.ir.location;
 
@@ -246,7 +245,7 @@ ir.FunctionType copy(ir.FunctionType old)
 	auto ft = new ir.FunctionType(old);
 	ft.loc = old.loc;
 	ft.ret = copyType(old.ret);
-	panicAssert(old, old.params.length == old.isArgRef.length && old.params.length == old.isArgOut.length);
+	assert(old.params.length == old.isArgRef.length && old.params.length == old.isArgOut.length);
 	ft.params = new ir.Type[](old.params.length);
 	ft.isArgOut = new bool[](old.isArgOut.length);
 	ft.isArgRef = new bool[](old.isArgRef.length);
@@ -263,7 +262,7 @@ ir.DelegateType copy(ir.DelegateType old)
 	auto dgt = new ir.DelegateType(old);
 	dgt.loc = old.loc;
 	dgt.ret = copyType(old.ret);
-	panicAssert(old, old.params.length == old.isArgRef.length && old.params.length == old.isArgOut.length);
+	assert(old.params.length == old.isArgRef.length && old.params.length == old.isArgOut.length);
 	dgt.params = new ir.Type[](old.params.length);
 	dgt.isArgOut = new bool[](old.isArgOut.length);
 	dgt.isArgRef = new bool[](old.isArgRef.length);
@@ -427,9 +426,9 @@ ir.Type copyType(ir.Type t)
 	case Struct:
 	case Class:
 	case Enum:
-		throw panic(/*#ref*/t.loc, "can't copy aggregate types");
+		assert(false, "can't copy aggregate types");
 	default:
-		throw panicUnhandled(t, ir.nodeToString(t));
+		assert(false, format("unhandled node: %s", ir.nodeToString(t)));
 	}
 	addStorage(newt, t);
 	return newt;
@@ -464,7 +463,7 @@ ir.Node copyNode(ir.Node n)
 	final switch (n.nodeType) with (ir.NodeType) {
 	case Invalid:
 		auto msg = format("cannot copy '%s'", ir.nodeToString(n));
-		throw panic(/*#ref*/n.loc, msg);
+		assert(false, msg);
 	case NonVisiting:
 		assert(false, "non-visiting node");
 	case AccessExp:

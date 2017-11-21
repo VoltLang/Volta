@@ -8,7 +8,7 @@ import watt.io.std : output;
 import watt.text.format : format;
 
 import ir = volta.ir;
-import volt.ir.util;
+import volta.util.util;
 
 import volt.errors;
 import volt.interfaces;

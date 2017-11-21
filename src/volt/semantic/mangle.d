@@ -8,7 +8,7 @@ import watt.text.format : format;
 import watt.text.sink : Sink, StringSink;
 
 import ir = volta.ir;
-import volt.ir.util;
+import volta.util.util;
 
 import volt.errors;
 

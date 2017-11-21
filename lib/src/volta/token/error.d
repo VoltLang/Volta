@@ -1,11 +1,10 @@
 /*#D*/
 // Copyright © 2015, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.token.error;
+module volta.token.error;
 
 import watt.text.format : format;
 
-import volt.exceptions;
 import volta.ir.location : Location;
 
 enum LexStatus {
@@ -92,23 +91,3 @@ public:
 		assert(false);
 	}
 }
-
-class LexerPanicError : LexerError
-{
-public:
-	CompilerException panicException;
-
-public:
-	this(ref in Location loc, dchar currentChar, CompilerException panicException)
-	{
-		super(LexerError.Kind.Panic, loc, currentChar);
-		panicException = panicException;
-	}
-
-public:
-	override string errorMessage()
-	{
-		throw panicException;
-	}
-}
-

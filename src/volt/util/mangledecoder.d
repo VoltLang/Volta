@@ -6,7 +6,7 @@ import watt.text.ascii : isDigit;
 import watt.text.sink : StringSink;
 
 import ir = volta.ir;
-import volt.ir.util;
+import volta.util.util;
 import volta.ir.location;
 
 

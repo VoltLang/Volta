@@ -1,25 +1,25 @@
 /*#D*/
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.parser.parser;
+module volta.parser.parser;
 
 import watt.io.std : writefln;
 import watt.text.format : format;
 
 import volta.ir.location : Location;
-import volt.token.lexer : lex;
+import volta.token.lexer : lex;
 import volta.ir.token : TokenType, tokenToString;
-import volt.token.source : Source;
+import volta.token.source : Source;
 
 import ir = volta.ir;
 
+import volta.errors;
+import volta.interfaces : ErrorSink, Frontend;
 import volta.settings : Settings;
-import volt.errors : makeError, panic;
-import volt.interfaces : Frontend;
-import volt.parser.base : ParseStatus, ParserStream, NodeSink;
-import volt.parser.errors : ParserPanic;
-import volt.parser.toplevel : parseModule;
-import volt.parser.statements : parseStatement;
+import volta.parser.base : ParseStatus, ParserStream, NodeSink;
+import volta.parser.errors : ParserPanic;
+import volta.parser.toplevel : parseModule;
+import volta.parser.statements : parseStatement;
 
 
 private void checkError(ParserStream ps, ParseStatus status)
@@ -44,10 +44,12 @@ private void checkError(ParserStream ps, ParseStatus status)
 
 	if (p !is null) {
 		addExtraInfo();
-		throw panic(/*#ref*/e.loc, msg, e.raiseFile, e.raiseLine);
+		panic(ps.errSink, /*#ref*/e.loc, msg, e.raiseFile, e.raiseLine);
+		assert(false);  // @todo abortless
 	} else {
 		debug addExtraInfo();
-		throw makeError(/*#ref*/e.loc, msg, e.raiseFile, e.raiseLine);
+		errorMsg(ps.errSink, /*#ref*/e.loc, msg, e.raiseFile, e.raiseLine);
+		assert(false);  // @todo abortless
 	}
 }
 
@@ -56,20 +58,22 @@ class Parser : Frontend
 public:
 	bool dumpLex;
 	Settings settings;
+	ErrorSink errSink;
 
 public:
-	this(Settings settings)
+	this(Settings settings, ErrorSink errSink)
 	{
 		this.settings = settings;
+		this.errSink = errSink;
 	}
 
 	override ir.Module parseNewFile(string source, string filename)
 	{
-		auto src = new Source(source, filename);
+		auto src = new Source(source, filename, errSink);
 		src.skipScriptLine();
 
 		auto tw = lex(src);
-		auto ps = new ParserStream(tw.getTokens(), settings);
+		auto ps = new ParserStream(tw.getTokens(), settings, errSink);
 		ps.magicFlagD = tw.magicFlagD;
 		if (dumpLex) {
 			doDumpLex(ps);
@@ -84,11 +88,11 @@ public:
 
 	override ir.Node[] parseStatements(string source, Location loc)
 	{
-		auto src = new Source(source, loc.filename);
+		auto src = new Source(source, loc.filename, errSink);
 		src.changeCurrentLocation(loc.filename, loc.line);
 
 		auto tw = lex(src);
-		auto ps = new ParserStream(tw.getTokens(), settings);
+		auto ps = new ParserStream(tw.getTokens(), settings, errSink);
 		ps.magicFlagD = tw.magicFlagD;
 		if (dumpLex) {
 			doDumpLex(ps);

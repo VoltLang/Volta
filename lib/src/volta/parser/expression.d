@@ -1,27 +1,26 @@
 /*#D*/
 // Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.parser.expression;
+module volta.parser.expression;
 // Most of these can pass through to a lower function, see the IR.
 
 import watt.conv : toInt, toUlong, toFloat, toDouble;
 import watt.text.utf : decode;
 
 import ir = volta.ir;
-import intir = volt.parser.intir;
-import volt.ir.copy;
-import volt.ir.util;
+import intir = volta.parser.intir;
+import volta.util.copy;
+import volta.util.util;
 
-import volt.exceptions;
-import volt.errors;
+import volta.errors;
 import volta.ir.location;
 import volta.ir.token : TokenType;
 import volta.util.dup;
-import volt.token.source : Source;
-import volt.token.lexer : lex;
-import volt.parser.base;
-import volt.parser.declaration;
-import volt.util.string;
+import volta.token.source : Source;
+import volta.token.lexer : lex;
+import volta.parser.base;
+import volta.parser.declaration;
+import volta.util.string;
 
 ParseStatus parseExp(ParserStream ps, out ir.Exp exp)
 {
@@ -425,7 +424,7 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 			int start = c._string[0] == '`' ? 1 : 2;
 			c.arrayData = cast(immutable(void)[]) c._string[cast(size_t)start .. $-1];
 		} else {
-			c.arrayData = unescapeString(/*#ref*/primary.loc, c._string[1 .. $-1]);
+			c.arrayData = unescapeString(ps.errSink, /*#ref*/primary.loc, c._string[1 .. $-1]);
 		}
 		exp = c;
 		break;
@@ -435,7 +434,7 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 		c.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Char);
 		c.type.loc = primary.loc;
 		assert(c._string[$-1] == '\'' && c._string.length >= 3);
-		c.arrayData = unescapeString(/*#ref*/primary.loc, c._string[1 .. $-1]);
+		c.arrayData = unescapeString(ps.errSink, /*#ref*/primary.loc, c._string[1 .. $-1]);
 		if (c.arrayData.length > 1) {
 			c.type = new ir.PrimitiveType(ir.PrimitiveType.Kind.Dchar);
 			c.type.loc = primary.loc;
@@ -1966,10 +1965,10 @@ ParseStatus parseRunExp(ParserStream ps, out ir.RunExp runexp)
  */
 ParseStatus parseInlineExp(ref in Location loc, ParserStream ps, string slice, out ir.Exp exp)
 {
-	auto src = new Source(slice, loc.filename);
+	auto src = new Source(slice, loc.filename, ps.errSink);
 	auto tw = lex(src);
 	auto tokens = tw.getTokens();
-	auto newPs = new ParserStream(tokens, ps.settings);
+	auto newPs = new ParserStream(tokens, ps.settings, ps.errSink);
 	newPs.magicFlagD = tw.magicFlagD;
 	newPs.get();
 	auto succeeded = parseExp(newPs, /*#out*/exp);
@@ -1994,8 +1993,10 @@ ParseStatus parseComposableString(ParserStream ps, out ir.Exp exp)
 
 	cs.compileTimeOnly = !matchIf(ps, TokenType.New);
 
-	panicAssert(cs, ps.peek.type == TokenType.StringLiteral);
-	panicAssert(cs, ps.peek.value[0] == '\"');
+	if (ps.peek.type != TokenType.StringLiteral || ps.peek.value[0] != '\"') {
+		panic(ps.errSink, cs, "invalid composable string literal token");
+		assert(false);
+	}
 
 	auto literal = ps.peek;
 	ps.get();
@@ -2005,7 +2006,7 @@ ParseStatus parseComposableString(ParserStream ps, out ir.Exp exp)
 		if (slice.length == 0) {
 			return;
 		}
-		cs.components ~= buildConstantString(/*#ref*/cs.loc, slice);
+		cs.components ~= buildConstantString(ps.errSink, /*#ref*/cs.loc, slice);
 	}
 
 	size_t a = 1, b = 1;  // skip "

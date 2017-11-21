@@ -11,12 +11,12 @@ module volt.llvm.expression;
 import watt.text.format : format;
 import watt.conv : toString;
 
-static import volt.ir.util;
+static import volta.util.util;
 
 import volta.ir.location : Location;
 import volt.errors;
 import ir = volta.ir;
-import volt.ir.util;
+import volta.util.util;
 
 import volt.llvm.common;
 import volt.llvm.interfaces;
@@ -1379,7 +1379,7 @@ private LLVMValueRef fromConstantString(State state, ref in Location loc, string
 	st.mangledName = "ac";
 	st.base.mangledName = "mc";
 	auto at = ArrayType.fromIr(state, st);
-	at.from(state, buildConstantString(/*#ref*/loc, str, false), result);
+	at.from(state, buildConstantString(state.lp.errSink, /*#ref*/loc, str, false), result);
 	return result.value;
 }
 

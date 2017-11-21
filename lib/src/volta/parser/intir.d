@@ -1,7 +1,7 @@
 /*#D*/
 // Copyright © 2012, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.parser.intir;
+module volta.parser.intir;
 
 import volta.ir.base;
 import volta.ir.type;

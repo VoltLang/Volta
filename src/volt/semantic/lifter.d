@@ -5,7 +5,7 @@ module volt.semantic.lifter;
 
 import ir = volta.ir;
 import volt.ir.lifter : Lifter;
-import volt.ir.util : buildQualifiedName;
+import volta.util.util : buildQualifiedName;
 
 import volt.errors;
 import volt.interfaces;

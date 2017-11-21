@@ -1,17 +1,19 @@
 /*#D*/
 // Copyright © 2013, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.ir.util;
+module volta.util.util;
+
+import watt.text.format : format;
 
 import ir = volta.ir;
 
-import volt.errors;
-import volt.interfaces;
+import volta.errors;
+import volta.interfaces;
 import volta.ir.location;
-import volt.ir.copy;
+import volta.util.copy;
 import volta.util.dup;
 import volta.util.sinks;
-import volt.util.string : unescapeString;
+import volta.util.string : unescapeString;
 
 
 /*!
@@ -119,21 +121,19 @@ ir.Scope getScopeFromStore(ir.Store store)
 	case FunctionParam:
 	case Template:
 	case EnumDeclaration:
-		return null;
 	case Merge:
 	case Alias:
-		throw panic(/*#ref*/store.node.loc, "unresolved alias");
 	case Reserved:
-		throw panic(store.node, "reserved ident '%s' found.", store.name);
+		return null;
 	}
 }
 
 /*!
  * Does a smart copy of a type.
  *
- * Meaning that well copy all types, but skipping
- * TypeReferences, but inserting one when it comes
- * across a named type.
+ * A smart copy is one in which all types are copied, but
+ * TypeReferences are skipped, and TypeReferences are inserted
+ * if we encounter a named type.
  */
 ir.Type copyTypeSmart(ref in Location loc, ir.Type type)
 {
@@ -239,7 +239,7 @@ ir.Type copyTypeSmart(ref in Location loc, ir.Type type)
 		outType = buildTypeReference(/*#ref*/loc, type, s !is null ? s.name : null);
 		break;
 	default:
-		throw panicUnhandled(type, ir.nodeToString(type));
+		assert(false);
 	}
 	addStorage(outType, type);
 	return outType;
@@ -413,12 +413,13 @@ ir.UnionLiteral buildUnionLiteralSmart(ref in Location loc, ir.Type type, scope 
  * Add a Variable to the BlockStatement scope and either to
  * its statement or if StatementExp given to it instead.
  */
-void addVariable(ir.BlockStatement b, ir.StatementExp statExp, ir.Variable var)
+void addVariable(ErrorSink errSink, ir.BlockStatement b, ir.StatementExp statExp, ir.Variable var)
 {
 	ir.Status status;
 	b.myScope.addValue(var, var.name, /*#out*/status);
 	if (status != ir.Status.Success) {
-		throw panic(/*#ref*/b.loc, "value redefinition");
+		panic(errSink, /*#ref*/b.loc, "value redefinition");
+		assert(false);
 	}
 	if (statExp !is null) {
 		statExp.statements ~= var;
@@ -449,7 +450,7 @@ ir.Variable buildVariable(ref in Location loc, ir.Type type, ir.Variable.Storage
  * lives in as the variable will be added to its scope and generated a uniqe
  * name from its context.
  */
-ir.Variable buildVariableAnonSmart(ref in Location loc, ir.BlockStatement b,
+ir.Variable buildVariableAnonSmart(ErrorSink errSink, ref in Location loc, ir.BlockStatement b,
                                    ir.StatementExp statExp,
                                    ir.Type type, ir.Exp assign)
 {
@@ -457,12 +458,12 @@ ir.Variable buildVariableAnonSmart(ref in Location loc, ir.BlockStatement b,
 	assert(b.myScope !is null);
 	auto name = b.myScope.genAnonIdent();
 	auto var = buildVariable(/*#ref*/loc, copyTypeSmart(/*#ref*/loc, type), ir.Variable.Storage.Function, name, assign);
-	addVariable(b, statExp, var);
+	addVariable(errSink, b, statExp, var);
 	return var;
 }
 
 //! Build a variable and add it to the top of a block statement.
-ir.Variable buildVariableAnonSmartAtTop(ref in Location loc, ir.BlockStatement b,
+ir.Variable buildVariableAnonSmartAtTop(ErrorSink errSink, ref in Location loc, ir.BlockStatement b,
                                    ir.Type type, ir.Exp assign)
 {
 	assert(b !is null);
@@ -473,7 +474,8 @@ ir.Variable buildVariableAnonSmartAtTop(ref in Location loc, ir.BlockStatement b
 	ir.Status status;
 	b.myScope.addValue(var, var.name, /*#out*/status);
 	if (status != ir.Status.Success) {
-		throw panic(/*#ref*/loc, "value redefinition");
+		panic(errSink, /*#ref*/loc, "value redefinition");
+		assert(false);
 	}
 	return var;
 }
@@ -482,7 +484,7 @@ ir.Variable buildVariableAnonSmartAtTop(ref in Location loc, ir.BlockStatement b
 /*!
  * Create an anonymous variable for a statementexp without a block statement.
  */
-ir.Variable buildVariableAnonSmart(ref in Location loc, ir.Scope current,
+ir.Variable buildVariableAnonSmart(ErrorSink errSink, ref in Location loc, ir.Scope current,
                                    ir.StatementExp statExp,
                                    ir.Type type, ir.Exp assign)
 {
@@ -491,7 +493,7 @@ ir.Variable buildVariableAnonSmart(ref in Location loc, ir.Scope current,
 	ir.Status status;
 	current.addValue(var, var.name, /*#out*/status);
 	if (status != ir.Status.Success) {
-		throw panic(/*#ref*/loc, "value redefinition");
+		panic(errSink, /*#ref*/loc, "value redefinition");
 	}
 	statExp.statements ~= var;
 	return var;
@@ -706,7 +708,7 @@ ir.Constant buildConstantSizeT(ref in Location loc, TargetInfo target, size_t va
 /*!
  * Builds a constant string.
  */
-ir.Constant buildConstantString(ref in Location loc, string val, bool escape = true)
+ir.Constant buildConstantString(ErrorSink errSink, ref in Location loc, string val, bool escape = true)
 {
 	auto c = new ir.Constant();
 	c.loc = loc;
@@ -715,20 +717,33 @@ ir.Constant buildConstantString(ref in Location loc, string val, bool escape = t
 	atype.base.isImmutable = true;
 	c.type = atype;
 	if (escape) {
-		c.arrayData = unescapeString(/*#ref*/loc, c._string);
+		c.arrayData = unescapeString(errSink, /*#ref*/loc, c._string);
 	} else {
 		c.arrayData = cast(immutable(void)[]) c._string;
 	}
 	return c;
 }
 
+ir.Constant buildConstantStringNoEscape(ref in Location loc, string val)
+{
+	auto c = new ir.Constant();
+	c.loc = loc;
+	c._string = val;
+	auto atype = buildArrayType(/*#ref*/loc, buildChar(/*#ref*/loc));
+	atype.base.isImmutable = true;
+	c.type = atype;
+	c.arrayData = cast(immutable(void)[]) c._string;
+	return c;
+}
+
+
 /*!
  * Builds a constant 'c' string.
  */
-ir.Exp buildConstantCString(ref in Location loc, string val, bool escape = true)
+ir.Exp buildConstantCString(ErrorSink errSink, ref in Location loc, string val, bool escape = true)
 {
 	return buildArrayPtr(/*#ref*/loc, buildChar(/*#ref*/loc),
-	                     buildConstantString(/*#ref*/loc, val, escape));
+	                     buildConstantString(errSink, /*#ref*/loc, val, escape));
 }
 
 /*!
@@ -874,9 +889,9 @@ ir.Typeid buildTypeidSmart(ref in Location loc, ir.Type type)
 /*!
  * Build a typeid casting if needed.
  */
-ir.Exp buildTypeidSmart(ref in Location loc, LanguagePass lp, ir.Type type)
+ir.Exp buildTypeidSmart(ref in Location loc, ir.Class typeInfoClass, ir.Type type)
 {
-	return buildCastSmart(/*#ref*/loc, lp.tiTypeInfo, buildTypeidSmart(/*#ref*/loc, type));
+	return buildCastSmart(/*#ref*/loc, typeInfoClass, buildTypeidSmart(/*#ref*/loc, type));
 }
 
 /*!
@@ -1441,7 +1456,7 @@ ir.FunctionParam buildFunctionParam(ref in Location loc, size_t index, string na
 /*!
  * Adds a variable argument to a function, also adds it to the scope.
  */
-ir.FunctionParam addParam(ref in Location loc, ir.Function func, ir.Type type, string name)
+ir.FunctionParam addParam(ErrorSink errSink, ref in Location loc, ir.Function func, ir.Type type, string name)
 {
 	auto var = buildFunctionParam(/*#ref*/loc, func.type.params.length, name, func);
 
@@ -1453,7 +1468,8 @@ ir.FunctionParam addParam(ref in Location loc, ir.Function func, ir.Type type, s
 	ir.Status status;
 	func.myScope.addValue(var, name, /*#out*/status);
 	if (status != ir.Status.Success) {
-		throw panic(/*#ref*/loc, "value redefinition");
+		panic(errSink, /*#ref*/loc, "value redefinition");
+		assert(false);
 	}
 	return var;
 }
@@ -1461,23 +1477,24 @@ ir.FunctionParam addParam(ref in Location loc, ir.Function func, ir.Type type, s
 /*!
  * Adds a variable argument to a function, also adds it to the scope.
  */
-ir.FunctionParam addParamSmart(ref in Location loc, ir.Function func, ir.Type type, string name)
+ir.FunctionParam addParamSmart(ErrorSink errSink, ref in Location loc, ir.Function func, ir.Type type, string name)
 {
-	return addParam(/*#ref*/loc, func, copyTypeSmart(/*#ref*/loc, type), name);
+	return addParam(errSink, /*#ref*/loc, func, copyTypeSmart(/*#ref*/loc, type), name);
 }
 
 /*!
  * Builds a variable statement smartly, inserting at the end of the
  * block statements and inserting it in the scope.
  */
-ir.Variable buildVarStatSmart(ref in Location loc, ir.BlockStatement block, ir.Scope _scope, ir.Type type, string name)
+ir.Variable buildVarStatSmart(ErrorSink errSink, ref in Location loc, ir.BlockStatement block, ir.Scope _scope, ir.Type type, string name)
 {
 	auto var = buildVariableSmart(/*#ref*/loc, type, ir.Variable.Storage.Function, name);
 	block.statements ~= var;
 	ir.Status status;
 	_scope.addValue(var, name, /*#out*/status);
 	if (status != ir.Status.Success) {
-		throw panic(/*#ref*/loc, "value redefinition");
+		panic(errSink, /*#ref*/loc, "value redefinition");
+		assert(false);
 	}
 	return var;
 }
@@ -1538,13 +1555,14 @@ ir.Ternary buildTernary(ref in Location loc, ir.Exp condition, ir.Exp l, ir.Exp 
 	return te;
 }
 
-ir.StatementExp buildInternalArrayLiteralSmart(ref in Location loc, ir.Type atype, ir.Exp[] exps)
+ir.StatementExp buildInternalArrayLiteralSmart(ErrorSink errSink, ref in Location loc, ir.Type atype, ir.Exp[] exps)
 {
 	if (atype.nodeType != ir.NodeType.ArrayType) {
-		throw panic(atype, "must be array type");
+		panic(errSink, atype, "must be array type");
+		assert(false);
 	}
 	auto arr = cast(ir.ArrayType) atype;
-	panicAssert(atype, arr !is null);
+	passert(errSink, atype, arr !is null);
 
 	auto sexp = new ir.StatementExp();
 	sexp.loc = loc;
@@ -1562,13 +1580,14 @@ ir.StatementExp buildInternalArrayLiteralSmart(ref in Location loc, ir.Type atyp
 	return sexp;
 }
 
-ir.StatementExp buildInternalStaticArrayLiteralSmart(ref in Location loc, ir.Type atype, ir.Exp[] exps)
+ir.StatementExp buildInternalStaticArrayLiteralSmart(ErrorSink errSink, ref in Location loc, ir.Type atype, ir.Exp[] exps)
 {
 	if (atype.nodeType != ir.NodeType.StaticArrayType) {
-		throw panic(atype, "must be staticarray type");
+		panic(errSink, atype, "must be staticarray type");
+		assert(false);
 	}
 	auto arr = cast(ir.StaticArrayType) atype;
-	panicAssert(atype, arr !is null);
+	passert(errSink, atype, arr !is null);
 
 	auto sexp = new ir.StatementExp();
 	sexp.loc = loc;
@@ -1583,43 +1602,6 @@ ir.StatementExp buildInternalStaticArrayLiteralSmart(ref in Location loc, ir.Typ
 	return sexp;
 }
 
-ir.StatementExp buildInternalArrayLiteralSliceSmart(ref in Location loc,
-	LanguagePass lp, ir.Type atype, ir.Type[] types,
-	int[] sizes, int totalSize, ir.Exp[] exps)
-{
-	if (atype.nodeType != ir.NodeType.ArrayType)
-		throw panic(atype, "must be array type");
-
-	auto memcpyFn = lp.target.isP64 ? lp.llvmMemcpy64 : lp.llvmMemcpy32;
-
-	auto sexp = new ir.StatementExp();
-	sexp.loc = loc;
-	auto var = buildVariableSmart(/*#ref*/loc, copyTypeSmart(/*#ref*/loc, atype), ir.Variable.Storage.Function, "array");
-
-	sexp.statements ~= var;
-	auto _new = buildNewSmart(/*#ref*/loc, atype, buildConstantUint(/*#ref*/loc, cast(uint) totalSize));
-	auto vassign = buildAssign(/*#ref*/loc, buildExpReference(/*#ref*/loc, var), _new);
-	buildExpStat(/*#ref*/loc, sexp, vassign);
-
-	int offset;
-	foreach (i, exp; exps) {
-		auto evar = buildVariableSmart(/*#ref*/loc, types[i], ir.Variable.Storage.Function, "exp");
-		sexp.statements ~= evar;
-		auto evassign = buildAssign(/*#ref*/loc, buildExpReference(/*#ref*/loc, evar), exp);
-		buildExpStat(/*#ref*/loc, sexp, evassign);
-
-		ir.Exp dst = buildAdd(/*#ref*/loc, buildArrayPtr(/*#ref*/loc, var.type, buildExpReference(/*#ref*/loc, var)), buildConstantUint(/*#ref*/loc, cast(uint)offset));
-		ir.Exp src = buildCastToVoidPtr(/*#ref*/loc, buildAddrOf(/*#ref*/loc, buildExpReference(/*#ref*/loc, evar)));
-		ir.Exp len = buildConstantSizeT(/*#ref*/loc, lp.target, cast(size_t)sizes[i]);
-		ir.Exp aln = buildConstantInt(/*#ref*/loc, 0);
-		ir.Exp vol = buildConstantBool(/*#ref*/loc, false);
-		auto call = buildCall(/*#ref*/loc, buildExpReference(/*#ref*/loc, memcpyFn), [dst, src, len, aln, vol]);
-		buildExpStat(/*#ref*/loc, sexp, call);
-		offset += sizes[i];
-	}
-	sexp.exp = buildExpReference(/*#ref*/loc, var, var.name);
-	return sexp;
-}
 /*!
  * Build an exp statement and add it to a block.
  */
@@ -1834,7 +1816,7 @@ ir.Function buildFunction(ref in Location loc, ir.Scope _scope, string name, ir.
  * Builds a completely useable Function and insert it into the
  * various places it needs to be inserted.
  */
-ir.Function buildFunction(ref in Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, string name, bool buildBody = true)
+ir.Function buildFunction(ErrorSink errSink, ref in Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, string name, bool buildBody = true)
 {
 	auto func = buildFunction(/*#ref*/loc, _scope, name, buildBody);
 
@@ -1842,15 +1824,16 @@ ir.Function buildFunction(ref in Location loc, ir.TopLevelBlock tlb, ir.Scope _s
 	ir.Status status;
 	_scope.addFunction(func, func.name, /*#out*/status);
 	if (status != ir.Status.Success) {
-		throw panic(/*#ref*/loc, "function redefinition");
+		panic(errSink, /*#ref*/loc, "function redefinition");
+		assert(false);
 	}
 	tlb.nodes ~= func;
 	return func;
 }
 
-ir.Function buildGlobalConstructor(ref in Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, string name, bool buildBody = true)
+ir.Function buildGlobalConstructor(ErrorSink errSink, ref in Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, string name, bool buildBody = true)
 {
-	auto func = buildFunction(/*#ref*/loc, tlb, _scope, name, buildBody);
+	auto func = buildFunction(errSink, /*#ref*/loc, tlb, _scope, name, buildBody);
 	func.kind = ir.Function.Kind.GlobalConstructor;
 	return func;
 }
@@ -1885,7 +1868,7 @@ ir.Alias buildAlias(ref in Location loc, string name, string from)
  *
  * The members list is used directly in the new struct; be wary not to duplicate IR nodes.
  */
-ir.Struct buildStruct(ref in Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, string name, scope ir.Variable[] members...)
+ir.Struct buildStruct(ErrorSink errSink, ref in Location loc, ir.TopLevelBlock tlb, ir.Scope _scope, string name, scope ir.Variable[] members...)
 {
 	auto s = new ir.Struct();
 	s.name = name;
@@ -1901,7 +1884,8 @@ ir.Struct buildStruct(ref in Location loc, ir.TopLevelBlock tlb, ir.Scope _scope
 		ir.Status status;
 		s.myScope.addValue(member, member.name, /*#out*/status);
 		if (status != ir.Status.Success) {
-			throw panic(/*#ref*/loc, "value redefinition");
+			panic(errSink, /*#ref*/loc, "value redefinition");
+			assert(false);
 		}
 	}
 
@@ -1909,7 +1893,8 @@ ir.Struct buildStruct(ref in Location loc, ir.TopLevelBlock tlb, ir.Scope _scope
 	ir.Status status;
 	_scope.addType(s, s.name, /*#out*/status);
 	if (status != ir.Status.Success) {
-		throw panic(/*#ref*/loc, "type redefinition");
+		panic(errSink,/*#ref*/loc, "type redefinition");
+		assert(false);
 	}
 	tlb.nodes ~= s;
 	return s;
@@ -1939,7 +1924,7 @@ ir.Struct buildStruct(ref in Location loc, string name, scope ir.Variable[] memb
 /*!
  * Add a variable to a pre-built struct.
  */
-ir.Variable addVarToStructSmart(ir.Struct _struct, ir.Variable var)
+ir.Variable addVarToStructSmart(ErrorSink errSink, ir.Struct _struct, ir.Variable var)
 {
 	assert(var.name != "");
 	auto cvar = buildVariableSmart(/*#ref*/var.loc, var.type, ir.Variable.Storage.Field, var.name);
@@ -1947,7 +1932,8 @@ ir.Variable addVarToStructSmart(ir.Struct _struct, ir.Variable var)
 	ir.Status status;
 	_struct.myScope.addValue(cvar, cvar.name, /*#out*/status);
 	if (status != ir.Status.Success) {
-		throw panic(/*#ref*/cvar.loc, "value redefinition");
+		panic(errSink, /*#ref*/cvar.loc, "value redefinition");
+		assert(false);
 	}
 	return cvar;
 }
@@ -2127,7 +2113,7 @@ void addStorageIgnoreNamed(ir.Type dest, ir.Type src)
 void addStorage(ir.Type dest, ir.Type src)
 {
 	auto named = cast(ir.Named) dest;
-	panicAssert(dest, named is null);
+	assert(named is null);
 	if (dest is null || src is null) {
 		return;
 	}
@@ -2172,9 +2158,9 @@ ir.NullType buildNullType(ref in Location loc)
 }
 
 //! Build a cast to a TypeInfo.
-ir.Exp buildTypeInfoCast(LanguagePass lp, ir.Exp e)
+ir.Exp buildTypeInfoCast(ir.Class typeInfoClass, ir.Exp e)
 {
-	return buildCastSmart(/*#ref*/e.loc, lp.tiTypeInfo, e);
+	return buildCastSmart(/*#ref*/e.loc, typeInfoClass, e);
 }
 
 ir.BreakStatement buildBreakStatement(ref in Location loc)

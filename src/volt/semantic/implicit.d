@@ -7,7 +7,7 @@ module volt.semantic.implicit;
 import volt.errors;
 
 import ir = volta.ir;
-import volt.ir.util;
+import volta.util.util;
 
 import volt.visitor.visitor;
 
@@ -446,6 +446,6 @@ void doConvertStaticArrayType(Context ctx, ir.StaticArrayType atype, ref ir.Exp 
 	}
 	checkAlit();
 	if (ctx.functionDepth > 0) {
-		exp = buildInternalStaticArrayLiteralSmart(/*#ref*/exp.loc, atype, alit.exps);
+		exp = buildInternalStaticArrayLiteralSmart(ctx.lp.errSink, /*#ref*/exp.loc, atype, alit.exps);
 	}
 }

@@ -1,7 +1,7 @@
 /*#D*/
 // Copyright © 2010-2017, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.token.lexer;
+module volta.token.lexer;
 
 import core.c.time : time, localtime;
 
@@ -12,12 +12,12 @@ import watt.text.vdoc : cleanComment;
 import watt.conv : toInt;
 import watt.text.utf : encode;
 
-import volt.errors;
+import volta.errors;
 import volta.ir.location : Location;
-import volt.token.source : Source, Mark;
+import volta.token.source : Source, Mark;
 import volta.ir.token : Token, TokenType, identifierType;
-import volt.token.writer : TokenWriter;
-import volt.token.error;
+import volta.token.writer : TokenWriter;
+import volta.token.error;
 
 
 /*!
@@ -37,28 +37,24 @@ TokenWriter lex(Source source)
 	auto tw = new TokenWriter(source);
 
 	if (lexMagicFlags(tw) == LexStatus.Failed) {
-		throw makeError(/*#ref*/tw.source.loc, "bad magic flag (/*#... at the top of the file).");
+		errorMsg(source.errSink, /*#ref*/tw.source.loc, "bad magic flag (/*#... at the top of the file).");
+		assert(false);  // @todo abortless error handling
 	}
 
 	if ((tw.source.loc.filename.endsWith(".d") != 0 ||
 		tw.source.loc.filename.endsWith(".D") != 0) &&
 		!tw.magicFlagD) {
-		throw makeError(/*#ref*/tw.source.loc,
+		errorMsg(source.errSink, /*#ref*/tw.source.loc,
 			"volta will only compile a file with the extension '.d' if '/*#D*/' is at the top of the file.");
+		assert(false);  // @todo abortless error handling
 	}
 
 	do {
-		if (lexNext(tw))
+		if (lexNext(tw)) {
 			continue;
-
-		assert(tw.errors.length > 0);
-		foreach (err; tw.errors) {
-			auto lpe = cast(LexerPanicError) err;
-			if (lpe !is null) {
-				throw lpe.panicException;
-			}
 		}
-		throw makeError(/*#ref*/tw.errors[0].loc, tw.errors[0].errorMessage());
+		errorMsg(source.errSink, /*#ref*/tw.errors[0].loc, tw.errors[0].errorMessage());
+		assert(false);  // @todo abortless error handling
 	} while (tw.lastAdded.type != TokenType.End);
 
 	return tw;
@@ -154,8 +150,8 @@ LexStatus lexUnsupported(TokenWriter tw, string s)
 
 LexStatus lexPanic(TokenWriter tw, Location loc, string msg)
 {
-	tw.errors ~= new LexerPanicError(/*#ref*/loc, tw.source.current, panic(/*#ref*/loc, msg));
-	return Failed;
+	panic(tw.errSink, /*#ref*/loc, msg);
+	assert(false);  // @todo abortless error handling
 }
 
 Token currentLocationToken(TokenWriter tw)

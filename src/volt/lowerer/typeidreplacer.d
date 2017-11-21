@@ -6,7 +6,7 @@ module volt.lowerer.typeidreplacer;
 import watt.text.format : format;
 
 import ir = volta.ir;
-import volt.ir.util;
+import volta.util.util;
 
 import volt.exceptions;
 import volt.interfaces;
