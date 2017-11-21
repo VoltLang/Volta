@@ -71,3 +71,8 @@ void warning(ErrorSink es, ref in Location loc, string message, string file = __
 {
 	es.onWarning(/*#ref*/ loc, message, file, line);
 }
+
+void warning(ErrorSink es, ir.Node n, string message, string file = __FILE__, int line = __LINE__)
+{
+	es.warning(/*#ref*/ n.loc, message, file, line);
+}
