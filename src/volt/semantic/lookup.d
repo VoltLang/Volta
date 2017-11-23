@@ -186,16 +186,16 @@ ir.Store lookupAsThisScope(LanguagePass lp, ir.Scope _scope, ref in Location loc
 			if (originalScopeIsClass) {
 				classLookup = isOrInheritsFrom(callingMethodsParentClass, _class);
 			}
-			ir.Module newModule;
-			if (ret.originalNode !is null) {
-				auto originalAlias = ret.originalNode.toAliasChecked();
-				if (originalAlias !is null && originalAlias.lookScope !is null) {
-					newModule = getModuleFromScope(/*#ref*/loc, originalAlias.lookScope);
-				}
-			}
-			if (newModule !is lookupModule) {
-				checkAccess(/*#ref*/loc, name, ret, classLookup);
-			}
+//			ir.Module newModule;
+//			if (ret.originalNodes.length > 0) {
+//				auto originalAlias = ret.originalNodes[0].toAliasChecked();
+//				if (originalAlias !is null && originalAlias.lookScope !is null) {
+//					newModule = getModuleFromScope(/*#ref*/loc, originalAlias.lookScope);
+//				}
+//			}
+//			if (newModule !is lookupModule) {
+			checkAccess(/*#ref*/loc, name, ret, classLookup);
+//			}
 		}
 
 		return ensureResolved(lp, ret);
@@ -613,8 +613,8 @@ void checkAccess(ref in Location loc, string name, ir.Store store, bool classPar
 		assert(store.node.nodeType == ir.NodeType.Alias);
 	}
 	auto alia = cast(ir.Alias)store.node;
-	if (alia is null) {
-		alia = cast(ir.Alias)store.originalNode;
+	if (alia is null && store.originalNodes.length > 0) {
+		alia = cast(ir.Alias)store.originalNodes[0];
 		if (alia !is null && alia.access == ir.Access.Public) {
 			// If it's a public alias, check the store it points at.
 			alia = null;

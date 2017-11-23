@@ -95,7 +95,7 @@ public:
 	/*!
 	 * If node was modified (e.g. alias) this is what it was first.
 	 */
-	Node originalNode;
+	Node[] originalNodes;
 
 	/*!
 	 * The scope for this context, node might point to owning node,
@@ -223,7 +223,7 @@ public:
 		assert(kind == Kind.Alias);
 		assert(myAlias is null);
 		myAlias = s;
-		s.originalNode = node;
+		s.originalNodes ~= node;
 	}
 
 	void markAliasResolved(Type t)
@@ -231,7 +231,7 @@ public:
 		assert(kind == Kind.Alias);
 		assert(myAlias is null);
 		kind = Kind.Type;
-		originalNode = node;
+		originalNodes ~= node;
 		node = t;
 	}
 }
@@ -375,7 +375,7 @@ public:
 		auto merge = *ret;
 
 		if (merge.kind == Store.Kind.Alias) {
-			assert(merge.originalNode is null);
+			assert(merge.originalNodes is null);
 			auto old = cast(Alias)merge.node;
 			assert(old !is null);
 
