@@ -186,7 +186,16 @@ ir.Store lookupAsThisScope(LanguagePass lp, ir.Scope _scope, ref in Location loc
 			if (originalScopeIsClass) {
 				classLookup = isOrInheritsFrom(callingMethodsParentClass, _class);
 			}
-			checkAccess(/*#ref*/loc, name, ret, classLookup);
+			ir.Module newModule;
+			if (ret.originalNode !is null) {
+				auto originalAlias = ret.originalNode.toAliasChecked();
+				if (originalAlias !is null && originalAlias.lookScope !is null) {
+					newModule = getModuleFromScope(/*#ref*/loc, originalAlias.lookScope);
+				}
+			}
+			if (newModule !is lookupModule) {
+				checkAccess(/*#ref*/loc, name, ret, classLookup);
+			}
 		}
 
 		return ensureResolved(lp, ret);
