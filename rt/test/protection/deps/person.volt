@@ -7,3 +7,6 @@ class Person
 		return 12;
 	}
 }
+
+private alias fuzzy = size_t;
+
