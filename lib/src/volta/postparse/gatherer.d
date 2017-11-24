@@ -87,7 +87,7 @@ void gather(ir.Scope current, ir.EnumDeclaration e, Where where, ErrorSink errSi
 	current.addEnumDeclaration(e, /*#out*/status);
 	if (status != ir.Status.Success) {
 		panic(errSink, e, "enum declaration redefinition");
-		assert(false);  // @todo abortless errors
+		return;
 	}
 }
 
@@ -102,7 +102,7 @@ void gather(ir.Scope current, ir.Alias a, Where where, ErrorSink errSink)
 	a.store = current.addAlias(a, a.name, /*#out*/status);
 	if (status != ir.Status.Success) {
 		panic(errSink, a, "multiple definition");
-		assert(false);  // @todo abortless errors
+		return;
 	}
 }
 
@@ -114,7 +114,7 @@ void checkInvalid(ir.Scope current, ir.Node n, string name, ErrorSink errSink)
 	auto store = current.getStore(name);
 	if (store !is null && store.kind == ir.Store.Kind.Reserved) {
 		errorMsg(errSink, store.node, format("'%s' is a reserved name in this scope.", name));
-		assert(false);  // @todo abortless errors
+		return;
 	}
 }
 
@@ -123,7 +123,7 @@ void checkTemplateRedefinition(ir.Scope current, string name, ErrorSink errSink)
 	auto store = current.getStore(name);
 	if (store !is null && store.kind == ir.Store.Kind.Type) {
 		errorMsg(errSink, store.node, format("'%s' is already defined in this scope.", name));
-		assert(false);  // @todo abortless errors
+		return;
 	}
 }
 
@@ -135,20 +135,20 @@ void gather(ir.Scope current, ir.Variable v, Where where, ir.Function[] function
 	auto shadowStore = findShadowed(current, /*#ref*/v.loc, v.name, warningsEnabled);
 	if (shadowStore !is null) {
 		errorMsg(errSink, v, shadowsDeclarationMsg(v));
-		assert(false);  // @todo abortless errors
+		return;
 	}
 
 	checkInvalid(current, v, v.name, errSink);
 	auto store = current.getStore(v.name);
 	if (store !is null) {
 		errorMsg(errSink, v, format("'%s' is in use @ %s.", v.name, store.node.loc.toString()));
-		assert(false);  // @todo abortless errors
+		return;
 	}
 	ir.Status status;
 	current.addValue(v, v.name, /*#out*/status);
 	if (status != ir.Status.Success) {
 		panic(errSink, v, "value redefinition");
-		assert(false);  // @todo abortless errors
+		return;
 	}
 
 	if (v.storage != ir.Variable.Storage.Invalid) {
@@ -157,7 +157,7 @@ void gather(ir.Scope current, ir.Variable v, Where where, ir.Function[] function
 
 	if (where == Where.Module) {
 		errorExpected(errSink, v, "global or local");
-		assert(false);  // @todo abortless errors
+		return;
 	}
 
 	v.storage = where == Where.Function ?
@@ -175,7 +175,7 @@ void gather(ir.Scope current, ir.Function func, Where where, ErrorSink errSink)
 		current.addFunction(func, func.name, /*#out*/status);
 		if (status != ir.Status.Success) {
 			panic(errSink, func, "function redefinition");
-			assert(false);  // @todo abortless errors
+			return;
 		}
 	}
 
@@ -185,7 +185,7 @@ void gather(ir.Scope current, ir.Function func, Where where, ErrorSink errSink)
 		} else {
 			if (func.isAbstract) {
 				errorMsg(errSink, func, abstractHasToBeMemberMsg(func));
-				assert(false);  // @todo abortless errors
+				return;
 			}
 			func.kind = ir.Function.Kind.Function;
 		}
@@ -203,7 +203,7 @@ void gather(ir.Scope current, ir.Struct s, Where where, ErrorSink errSink)
 	current.addType(s, s.name, /*#out*/status);
 	if (status != ir.Status.Success) {
 		panic(errSink, s, "gather redefinition");
-		assert(false);  // @todo abortless errors
+		return;
 	}
 }
 
@@ -218,7 +218,7 @@ void gather(ir.Scope current, ir.Union u, Where where, ErrorSink errSink)
 	current.addType(u, u.name, /*#out*/status);
 	if (status != ir.Status.Success) {
 		panic(errSink, u, "gather redefinition");
-		assert(false);  // @todo abortless errors
+		return;
 	}
 }
 
@@ -233,7 +233,7 @@ void gather(ir.Scope current, ir.Class c, Where where, ErrorSink errSink)
 	current.addType(c, c.name, /*#out*/status);
 	if (status != ir.Status.Success) {
 		panic(errSink, c, "gather redefinition");
-		assert(false);  // @todo abortless errors
+		return;
 	}
 }
 
@@ -248,7 +248,7 @@ void gather(ir.Scope current, ir.Enum e, Where where, ErrorSink errSink)
 	current.addType(e, e.name, /*#out*/status);
 	if (status != ir.Status.Success) {
 		panic(errSink, e, "gather redefinition");
-		assert(false);  // @todo abortless errors
+		return;
 	}
 }
 
@@ -263,7 +263,7 @@ void gather(ir.Scope current, ir._Interface i, Where where, ErrorSink errSink)
 	current.addType(i, i.name, /*#out*/status);
 	if (status != ir.Status.Success) {
 		panic(errSink, i, "gather redefinition");
-		assert(false);  // @todo abortless errors
+		return;
 	}
 }
 
@@ -276,7 +276,7 @@ void gather(ir.Scope current, ir.MixinFunction mf, Where where, ErrorSink errSin
 	current.addTemplate(mf, mf.name, /*#out*/status);
 	if (status != ir.Status.Success) {
 		panic(errSink, mf, "template redefinition");
-		assert(false);  // @todo abortless errors
+		return;
 	}
 }
 
@@ -289,7 +289,7 @@ void gather(ir.Scope current, ir.MixinTemplate mt, Where where, ErrorSink errSin
 	current.addTemplate(mt, mt.name, /*#out*/status);
 	if (status != ir.Status.Success) {
 		panic(errSink, mt, "template redefinition");
-		assert(false);  // @todo abortless errors
+		return;
 	}
 }
 
@@ -301,7 +301,7 @@ void gather(ir.Scope current, ir.TemplateDefinition td, Where where, ErrorSink e
 	current.addTemplate(td, td.name, /*#out*/status);
 	if (status != ir.Status.Success) {
 		panic(errSink, td, "template redefinition");
-		assert(false);  // @todo abortless errors
+		return;
 	}
 }
 
@@ -338,7 +338,7 @@ void addScope(ir.Scope current, ir.Function func, ir.Type thisType, ir.Function[
 				func.myScope.addValue(var, var.name, /*#out*/status);
 				if (status != ir.Status.Success) {
 					panic(errSink, func, "value redefinition");
-					assert(false);  // @todo abortless errors
+					return;
 				}
 			}
 		}
@@ -379,7 +379,7 @@ void addScope(ir.Scope current, ir.Struct s, ErrorSink errSink)
 	auto agg = cast(ir.Aggregate) current.node;
 	if (s.name is null && agg is null) {
 		errorMsg(errSink, s, anonymousAggregateAtTopLevelMsg());
-		assert(false);  // @todo abortless errors
+		return;
 	}
 	if (s.name is null) {
 		agg.anonymousAggregates ~= s;
@@ -397,7 +397,7 @@ void addScope(ir.Scope current, ir.Union u, ErrorSink errSink)
 	auto agg = cast(ir.Aggregate) current.node;
 	if (u.name is null && agg is null) {
 		errorMsg(errSink, u, anonymousAggregateAtTopLevelMsg());
-		assert(false);  // @todo abortless errors
+		return;
 	}
 	if (u.name is null) {
 		agg.anonymousAggregates ~= u;
@@ -420,7 +420,7 @@ void addScope(ir.Scope current, ir.Class c, Where where, ErrorSink errSink)
 {
 	if (c.name is null) {
 		panic(errSink, c, "anonymous classes not supported");
-		assert(false);  // @todo abortless errors
+		return;
 	}
 
 	assert(c.myScope is null);
@@ -431,7 +431,7 @@ void addScope(ir.Scope current, ir._Interface i, ErrorSink errSink)
 {
 	if (i.name is null) {
 		panic(errSink, i, "anonymous interfaces not supported");
-		assert(false);  // @todo abortless errors
+		return;
 	}
 
 	assert(i.myScope is null);
@@ -644,7 +644,7 @@ public:
 		// I don't think this is the right place for this.
 		if (func.isAbstract && func._body !is null) {
 			errorMsg(mErrSink, func, abstractBodyNotEmptyMsg(func));
-			assert(false);  // @todo abortless errors
+			return Continue;
 		}
 		return Continue;
 	}
@@ -694,7 +694,7 @@ public:
 		// TODO: unittest stuff triggers this
 		if (mFunctionStack.length == 0) {
 			panic(mErrSink, bs, "block statement outside of function");
-			assert(false);  // @todo abortless errors
+			return Continue;
 		}
 		return Continue;
 	}
