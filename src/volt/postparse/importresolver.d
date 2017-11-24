@@ -16,7 +16,7 @@ import volta.util.util;
 
 import volt.errors;
 import volt.interfaces;
-import volt.visitor.visitor;
+import volta.visitor.visitor;
 import volt.visitor.scopemanager;
 import volt.semantic.lookup : getModuleFromScope;
 import gatherer = volt.postparse.gatherer;

@@ -15,7 +15,7 @@ import volt.interfaces;
 
 import volt.ir.lifter;
 
-import volt.visitor.visitor;
+import volta.visitor.visitor;
 
 import volt.postparse.gatherer : Gatherer;
 import volt.postparse.attribremoval : AttribRemoval;

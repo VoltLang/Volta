@@ -10,7 +10,7 @@ import volta.util.util;
 
 import volt.exceptions;
 import volt.interfaces;
-import volt.visitor.visitor;
+import volta.visitor.visitor;
 
 import volt.semantic.mangle;
 import volt.semantic.lookup;

@@ -9,7 +9,7 @@ import volta.util.util;
 import volt.interfaces;
 import volt.errors;
 import volta.ir.location;
-import volt.visitor.visitor;
+import volta.visitor.visitor;
 import volt.visitor.scopemanager;
 
 import volt.semantic.evaluate;

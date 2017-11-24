@@ -15,7 +15,7 @@ import volt.errors;
 import volt.interfaces;
 import ir = volta.ir;
 
-import volt.visitor.visitor;
+import volta.visitor.visitor;
 
 import volta.ir.location;
 import volt.semantic.lookup;

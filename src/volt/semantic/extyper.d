@@ -19,7 +19,7 @@ import volt.interfaces;
 import volta.util.string;
 import volta.ir.location;
 
-import volt.visitor.visitor;
+import volta.visitor.visitor;
 import volt.visitor.scopemanager;
 import volt.visitor.prettyprinter;
 

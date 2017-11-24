@@ -9,7 +9,7 @@ import volt.errors;
 import ir = volta.ir;
 import volta.util.util;
 
-import volt.visitor.visitor;
+import volta.visitor.visitor;
 
 import volt.semantic.context;
 import volt.semantic.classify;

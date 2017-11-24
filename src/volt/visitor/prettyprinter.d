@@ -16,7 +16,7 @@ import volta.ir.location;
 import volt.errors;
 import volt.interfaces;
 import volta.ir.token;
-import volt.visitor.visitor;
+import volta.visitor.visitor;
 
 
 void prettyPrinter(ir.Module m)
@@ -52,6 +52,11 @@ public:
 		assert(mFilename is null);
 	}
 
+	override Status visitingError(ir.Node n, string msg)
+	{
+		writefln("visiting error: %s", msg);
+		return Stop;
+	}
 
 	/*
 	 *

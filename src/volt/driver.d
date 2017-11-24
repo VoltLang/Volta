@@ -35,7 +35,7 @@ import volt.llvm.backend;
 import volt.lowerer.image;
 import volt.util.mangledecoder;
 
-import volt.visitor.visitor;
+import volta.visitor.visitor;
 import volt.visitor.prettyprinter;
 import volt.visitor.debugprinter;
 import volt.visitor.jsonprinter;

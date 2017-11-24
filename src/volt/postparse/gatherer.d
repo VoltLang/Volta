@@ -20,7 +20,7 @@ import volta.util.copy;
 import volt.errors;
 import volt.interfaces;
 import volta.ir.location;
-import volt.visitor.visitor;
+import volta.visitor.visitor;
 
 
 //! Used to keep track of which level a symbol was found.

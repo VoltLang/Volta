@@ -10,7 +10,7 @@ import ir = volta.ir;
 import volt.errors;
 import volt.interfaces;
 import volta.ir.location;
-import volt.visitor.visitor;
+import volta.visitor.visitor;
 import volt.visitor.scopemanager;
 
 import volt.semantic.classify;

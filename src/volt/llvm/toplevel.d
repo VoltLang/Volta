@@ -13,7 +13,7 @@ import watt.text.format : format;
 import lib.llvm.core;
 
 import volt.errors;
-import volt.visitor.visitor;
+import volta.visitor.visitor;
 import volt.semantic.classify;
 import volt.llvm.di : diVariable;
 import volt.llvm.interfaces;

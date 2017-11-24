@@ -12,7 +12,7 @@ import ir = volta.ir;
 
 import volt.interfaces;
 import volta.ir.token;
-import volt.visitor.visitor;
+import volta.visitor.visitor;
 
 
 void debugPrinter(ir.Module m)
@@ -67,6 +67,11 @@ public:
 		mSink = sink;
 	}
 
+	override Status visitingError(ir.Node n, string msg)
+	{
+		writefln("visiting error: %s", msg);
+		return Stop;
+	}
 
 	/*
 	 *

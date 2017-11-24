@@ -6,7 +6,7 @@ module volt.semantic.folder;
 import volt.semantic.evaluate : foldBinOp, foldUnary;
 
 import volt.interfaces : Pass, TargetInfo;
-import volt.visitor.visitor : accept, NullVisitor;
+import volta.visitor.visitor : accept, NullVisitor;
 import ir = volta.ir;
 
 

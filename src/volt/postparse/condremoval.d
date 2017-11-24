@@ -14,7 +14,7 @@ import ir = volta.ir;
 import volt.errors;
 import volt.interfaces;
 import volt.visitor.manip;
-import volt.visitor.visitor;
+import volta.visitor.visitor;
 
 
 /*!

@@ -8,7 +8,7 @@ import watt.text.format : format;
 import ir = volta.ir;
 
 import volt.errors;
-import volt.visitor.visitor;
+import volta.visitor.visitor;
 import volta.ir.location : Location;
 
 

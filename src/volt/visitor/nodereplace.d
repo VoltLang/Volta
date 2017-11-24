@@ -1,7 +1,7 @@
 /*#D*/
 module volt.visitor.nodereplace;
 
-import volt.visitor.visitor;
+import volta.visitor.visitor;
 
 import volta.util.copy;
 import ir = volta.ir;

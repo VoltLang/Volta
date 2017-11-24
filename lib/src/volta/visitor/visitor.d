@@ -1,17 +1,18 @@
 /*#D*/
-// Copyright © 2012, Bernard Helyer.  All rights reserved.
-// Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
+// Copyright © 2012-2017, Bernard Helyer.  All rights reserved.
+// Copyright © 2012-2017, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.visitor.visitor;
+module volta.visitor.visitor;
 
 import watt.text.format : format;
 import watt.text.sink : StringSink;
 
 import ir = volta.ir;
 
-import volt.errors;
 
-
+/**
+ * Base class for all Visitors.
+ */
 abstract class Visitor
 {
 public:
@@ -25,7 +26,13 @@ public:
 	alias Continue = Status.Continue;
 	alias ContinueParent = Status.ContinueParent;
 
+
 public abstract:
+
+	/**
+	 * Called on a internal visiting error.
+	 */
+	Status visitingError(ir.Node n, string msg);
 
 	/*
 	 * Base.
@@ -224,123 +231,130 @@ alias VisitorContinueParent = Visitor.Status.ContinueParent;
 //! A visitor that does nothing.
 abstract class NullVisitor : Visitor
 {
-public:
-override:
-	Status enter(ir.Module m){ return Continue; }
-	Status leave(ir.Module m){ return Continue; }
+public override:
+	/*
+	 * Special.
+	 */
+	Status visitingError(ir.Node n, string msg) { return Stop; }
+
+	/*
+	 * Base.
+	 */
+	Status enter(ir.Module m) { return Continue; }
+	Status leave(ir.Module m) { return Continue; }
 	Status enter(ir.TopLevelBlock tlb) { return Continue; }
 	Status leave(ir.TopLevelBlock tlb) { return Continue; } 
-	Status enter(ir.Import i){ return Continue; }
-	Status leave(ir.Import i){ return Continue; }
-	Status enter(ir.Unittest u){ return Continue; }
-	Status leave(ir.Unittest u){ return Continue; }
-	Status enter(ir.Class c){ return Continue; }
-	Status leave(ir.Class c){ return Continue; }
-	Status enter(ir._Interface i){ return Continue; }
-	Status leave(ir._Interface i){ return Continue; }
-	Status enter(ir.Union u){ return Continue; }
-	Status leave(ir.Union u){ return Continue; }
-	Status enter(ir.Struct s){ return Continue; }
-	Status leave(ir.Struct s){ return Continue; }
-	Status enter(ir.Variable d){ return Continue; }
-	Status leave(ir.Variable d){ return Continue; }
-	Status enter(ir.FunctionParam fp){ return Continue; }
-	Status leave(ir.FunctionParam fp){ return Continue; }
-	Status enter(ir.Enum e){ return Continue; }
-	Status leave(ir.Enum e){ return Continue; }
-	Status enter(ir.Condition c){ return Continue; }
-	Status leave(ir.Condition c){ return Continue; }
-	Status enter(ir.ConditionTopLevel ctl){ return Continue; }
-	Status leave(ir.ConditionTopLevel ctl){ return Continue; }
-	Status enter(ir.MixinFunction mf){ return Continue; }
-	Status leave(ir.MixinFunction mf){ return Continue; }
-	Status enter(ir.MixinTemplate mt){ return Continue; }
-	Status leave(ir.MixinTemplate mt){ return Continue; }
-	Status visit(ir.QualifiedName qname){ return Continue; }
-	Status visit(ir.Identifier name){ return Continue; }
+	Status enter(ir.Import i) { return Continue; }
+	Status leave(ir.Import i) { return Continue; }
+	Status enter(ir.Unittest u) { return Continue; }
+	Status leave(ir.Unittest u) { return Continue; }
+	Status enter(ir.Class c) { return Continue; }
+	Status leave(ir.Class c) { return Continue; }
+	Status enter(ir._Interface i) { return Continue; }
+	Status leave(ir._Interface i) { return Continue; }
+	Status enter(ir.Union u) { return Continue; }
+	Status leave(ir.Union u) { return Continue; }
+	Status enter(ir.Struct s) { return Continue; }
+	Status leave(ir.Struct s) { return Continue; }
+	Status enter(ir.Variable d) { return Continue; }
+	Status leave(ir.Variable d) { return Continue; }
+	Status enter(ir.FunctionParam fp) { return Continue; }
+	Status leave(ir.FunctionParam fp) { return Continue; }
+	Status enter(ir.Enum e) { return Continue; }
+	Status leave(ir.Enum e) { return Continue; }
+	Status enter(ir.Condition c) { return Continue; }
+	Status leave(ir.Condition c) { return Continue; }
+	Status enter(ir.ConditionTopLevel ctl) { return Continue; }
+	Status leave(ir.ConditionTopLevel ctl) { return Continue; }
+	Status enter(ir.MixinFunction mf) { return Continue; }
+	Status leave(ir.MixinFunction mf) { return Continue; }
+	Status enter(ir.MixinTemplate mt) { return Continue; }
+	Status leave(ir.MixinTemplate mt) { return Continue; }
+	Status visit(ir.QualifiedName qname) { return Continue; }
+	Status visit(ir.Identifier name) { return Continue; }
 
 	/*
 	 * Statement Nodes.
 	 */
-	Status enter(ir.ExpStatement e){ return Continue; }
-	Status leave(ir.ExpStatement e){ return Continue; }
-	Status enter(ir.ReturnStatement ret){ return Continue; }
-	Status leave(ir.ReturnStatement ret){ return Continue; }
-	Status enter(ir.BlockStatement b){ return Continue; }
-	Status leave(ir.BlockStatement b){ return Continue; }
-	Status enter(ir.AsmStatement a){ return Continue; }
-	Status leave(ir.AsmStatement a){ return Continue; }
-	Status enter(ir.IfStatement i){ return Continue; }
-	Status leave(ir.IfStatement i){ return Continue; }
-	Status enter(ir.WhileStatement w){ return Continue; }
-	Status leave(ir.WhileStatement w){ return Continue; }
-	Status enter(ir.DoStatement d){ return Continue; }
-	Status leave(ir.DoStatement d){ return Continue; }
-	Status enter(ir.ForStatement f){ return Continue; }
-	Status leave(ir.ForStatement f){ return Continue; }
-	Status enter(ir.ForeachStatement fes){ return Continue; }
-	Status leave(ir.ForeachStatement fes){ return Continue; }
-	Status enter(ir.LabelStatement ls){ return Continue; }
-	Status leave(ir.LabelStatement ls){ return Continue; }
-	Status enter(ir.SwitchStatement ss){ return Continue; }
-	Status leave(ir.SwitchStatement ss){ return Continue; }
-	Status enter(ir.SwitchCase c){ return Continue; }
-	Status leave(ir.SwitchCase c){ return Continue; }
-	Status enter(ir.GotoStatement gs){ return Continue; }
-	Status leave(ir.GotoStatement gs){ return Continue; }
-	Status enter(ir.WithStatement ws){ return Continue; }
-	Status leave(ir.WithStatement ws){ return Continue; }
-	Status enter(ir.SynchronizedStatement ss){ return Continue; }
-	Status leave(ir.SynchronizedStatement ss){ return Continue; }
-	Status enter(ir.TryStatement ts){ return Continue; }
-	Status leave(ir.TryStatement ts){ return Continue; }
-	Status enter(ir.ThrowStatement ts){ return Continue; }
-	Status leave(ir.ThrowStatement ts){ return Continue; }
-	Status enter(ir.ScopeStatement ss){ return Continue; }
-	Status leave(ir.ScopeStatement ss){ return Continue; }
-	Status enter(ir.PragmaStatement ps){ return Continue; }
-	Status leave(ir.PragmaStatement ps){ return Continue; }
-	Status enter(ir.ConditionStatement cs){ return Continue; }
-	Status leave(ir.ConditionStatement cs){ return Continue; }
-	Status enter(ir.MixinStatement ms){ return Continue; }
-	Status leave(ir.MixinStatement ms){ return Continue; }
-	Status enter(ir.AssertStatement as){ return Continue; }
-	Status leave(ir.AssertStatement as){ return Continue; }
+	Status enter(ir.ExpStatement e) { return Continue; }
+	Status leave(ir.ExpStatement e) { return Continue; }
+	Status enter(ir.ReturnStatement ret) { return Continue; }
+	Status leave(ir.ReturnStatement ret) { return Continue; }
+	Status enter(ir.BlockStatement b) { return Continue; }
+	Status leave(ir.BlockStatement b) { return Continue; }
+	Status enter(ir.AsmStatement a) { return Continue; }
+	Status leave(ir.AsmStatement a) { return Continue; }
+	Status enter(ir.IfStatement i) { return Continue; }
+	Status leave(ir.IfStatement i) { return Continue; }
+	Status enter(ir.WhileStatement w) { return Continue; }
+	Status leave(ir.WhileStatement w) { return Continue; }
+	Status enter(ir.DoStatement d) { return Continue; }
+	Status leave(ir.DoStatement d) { return Continue; }
+	Status enter(ir.ForStatement f) { return Continue; }
+	Status leave(ir.ForStatement f) { return Continue; }
+	Status enter(ir.ForeachStatement fes) { return Continue; }
+	Status leave(ir.ForeachStatement fes) { return Continue; }
+	Status enter(ir.LabelStatement ls) { return Continue; }
+	Status leave(ir.LabelStatement ls) { return Continue; }
+	Status enter(ir.SwitchStatement ss) { return Continue; }
+	Status leave(ir.SwitchStatement ss) { return Continue; }
+	Status enter(ir.SwitchCase c) { return Continue; }
+	Status leave(ir.SwitchCase c) { return Continue; }
+	Status enter(ir.GotoStatement gs) { return Continue; }
+	Status leave(ir.GotoStatement gs) { return Continue; }
+	Status enter(ir.WithStatement ws) { return Continue; }
+	Status leave(ir.WithStatement ws) { return Continue; }
+	Status enter(ir.SynchronizedStatement ss) { return Continue; }
+	Status leave(ir.SynchronizedStatement ss) { return Continue; }
+	Status enter(ir.TryStatement ts) { return Continue; }
+	Status leave(ir.TryStatement ts) { return Continue; }
+	Status enter(ir.ThrowStatement ts) { return Continue; }
+	Status leave(ir.ThrowStatement ts) { return Continue; }
+	Status enter(ir.ScopeStatement ss) { return Continue; }
+	Status leave(ir.ScopeStatement ss) { return Continue; }
+	Status enter(ir.PragmaStatement ps) { return Continue; }
+	Status leave(ir.PragmaStatement ps) { return Continue; }
+	Status enter(ir.ConditionStatement cs) { return Continue; }
+	Status leave(ir.ConditionStatement cs) { return Continue; }
+	Status enter(ir.MixinStatement ms) { return Continue; }
+	Status leave(ir.MixinStatement ms) { return Continue; }
+	Status enter(ir.AssertStatement as) { return Continue; }
+	Status leave(ir.AssertStatement as) { return Continue; }
 	
-	Status visit(ir.ContinueStatement cs){ return Continue; }
-	Status visit(ir.BreakStatement bs){ return Continue; }
+	Status visit(ir.ContinueStatement cs) { return Continue; }
+	Status visit(ir.BreakStatement bs) { return Continue; }
 
 	/*
 	 * Declaration
 	 */
-	Status enter(ir.PointerType pointer){ return Continue; }
-	Status leave(ir.PointerType pointer){ return Continue; }
-	Status enter(ir.ArrayType array){ return Continue; }
-	Status leave(ir.ArrayType array){ return Continue; }
-	Status enter(ir.StaticArrayType array){ return Continue; }
-	Status leave(ir.StaticArrayType array){ return Continue; }
-	Status enter(ir.AAType array){ return Continue; }
-	Status leave(ir.AAType array){ return Continue; }
-	Status enter(ir.AmbiguousArrayType array){ return Continue; }
-	Status leave(ir.AmbiguousArrayType array){ return Continue; }
-	Status enter(ir.FunctionType func){ return Continue; }
-	Status leave(ir.FunctionType func){ return Continue; }
-	Status enter(ir.DelegateType func){ return Continue; }
-	Status leave(ir.DelegateType func){ return Continue; }
-	Status enter(ir.Function func){ return Continue; }
-	Status leave(ir.Function func){ return Continue; }
-	Status enter(ir.StorageType type){ return Continue; }
-	Status leave(ir.StorageType type){ return Continue; }
-	Status enter(ir.Attribute attr){ return Continue; }
-	Status leave(ir.Attribute attr){ return Continue; }
-	Status enter(ir.Alias a){ return Continue; }
-	Status leave(ir.Alias a){ return Continue; }
+	Status enter(ir.PointerType pointer) { return Continue; }
+	Status leave(ir.PointerType pointer) { return Continue; }
+	Status enter(ir.ArrayType array) { return Continue; }
+	Status leave(ir.ArrayType array) { return Continue; }
+	Status enter(ir.StaticArrayType array) { return Continue; }
+	Status leave(ir.StaticArrayType array) { return Continue; }
+	Status enter(ir.AAType array) { return Continue; }
+	Status leave(ir.AAType array) { return Continue; }
+	Status enter(ir.AmbiguousArrayType array) { return Continue; }
+	Status leave(ir.AmbiguousArrayType array) { return Continue; }
+	Status enter(ir.FunctionType func) { return Continue; }
+	Status leave(ir.FunctionType func) { return Continue; }
+	Status enter(ir.DelegateType func) { return Continue; }
+	Status leave(ir.DelegateType func) { return Continue; }
+	Status enter(ir.Function func) { return Continue; }
+	Status leave(ir.Function func) { return Continue; }
+	Status enter(ir.StorageType type) { return Continue; }
+	Status leave(ir.StorageType type) { return Continue; }
+	Status enter(ir.Attribute attr) { return Continue; }
+	Status leave(ir.Attribute attr) { return Continue; }
+	Status enter(ir.Alias a) { return Continue; }
+	Status leave(ir.Alias a) { return Continue; }
 	Status enter(ir.TypeOf to) { return Continue; }
 	Status leave(ir.TypeOf to) { return Continue; }
-	Status enter(ir.EnumDeclaration ed){ return Continue; }
-	Status leave(ir.EnumDeclaration ed){ return Continue; }
-	Status enter(ir.AliasStaticIf asi){ return Continue; }
-	Status leave(ir.AliasStaticIf asi){ return Continue; }
+	Status enter(ir.EnumDeclaration ed) { return Continue; }
+	Status leave(ir.EnumDeclaration ed) { return Continue; }
+	Status enter(ir.AliasStaticIf asi) { return Continue; }
+	Status leave(ir.AliasStaticIf asi) { return Continue; }
 
 	/*
 	 * Template Nodes.
@@ -349,8 +363,8 @@ override:
 	Status leave(ir.TemplateInstance ti) { return Continue; }
 	Status visit(ir.TemplateDefinition td) { return Continue; }
 
-	Status visit(ir.PrimitiveType it){ return Continue; }
-	Status visit(ir.TypeReference tr){ return Continue; }
+	Status visit(ir.PrimitiveType it) { return Continue; }
+	Status visit(ir.TypeReference tr) { return Continue; }
 	Status visit(ir.NullType nt) { return Continue; }
 	Status visit(ir.AutoType at) { return Continue; }
 	Status visit(ir.NoType at) { return Continue; }
@@ -358,57 +372,57 @@ override:
 	/*
 	 * Expression Nodes.
 	 */
-	Status enter(ref ir.Exp, ir.Postfix){ return Continue; }
-	Status leave(ref ir.Exp, ir.Postfix){ return Continue; }
-	Status enter(ref ir.Exp, ir.Unary){ return Continue; }
-	Status leave(ref ir.Exp, ir.Unary){ return Continue; }
-	Status enter(ref ir.Exp, ir.BinOp){ return Continue; }
-	Status leave(ref ir.Exp, ir.BinOp){ return Continue; }
-	Status enter(ref ir.Exp, ir.Ternary){ return Continue; }
-	Status leave(ref ir.Exp, ir.Ternary){ return Continue; }
-	Status enter(ref ir.Exp, ir.ArrayLiteral){ return Continue; }
-	Status leave(ref ir.Exp, ir.ArrayLiteral){ return Continue; }
-	Status enter(ref ir.Exp, ir.AssocArray){ return Continue; }
-	Status leave(ref ir.Exp, ir.AssocArray){ return Continue; }
-	Status enter(ref ir.Exp, ir.Assert){ return Continue; }
-	Status leave(ref ir.Exp, ir.Assert){ return Continue; }
-	Status enter(ref ir.Exp, ir.StringImport){ return Continue; }
-	Status leave(ref ir.Exp, ir.StringImport){ return Continue; }
-	Status enter(ref ir.Exp, ir.Typeid){ return Continue; }
-	Status leave(ref ir.Exp, ir.Typeid){ return Continue; }
-	Status enter(ref ir.Exp, ir.IsExp){ return Continue; }
-	Status leave(ref ir.Exp, ir.IsExp){ return Continue; }
-	Status enter(ref ir.Exp, ir.FunctionLiteral){ return Continue; }
-	Status leave(ref ir.Exp, ir.FunctionLiteral){ return Continue; }
-	Status enter(ref ir.Exp, ir.StructLiteral){ return Continue; }
-	Status leave(ref ir.Exp, ir.StructLiteral){ return Continue; }
-	Status enter(ref ir.Exp, ir.UnionLiteral){ return Continue; }
-	Status leave(ref ir.Exp, ir.UnionLiteral){ return Continue; }
-	Status enter(ref ir.Exp, ir.ClassLiteral){ return Continue; }
-	Status leave(ref ir.Exp, ir.ClassLiteral){ return Continue; }
-	Status enter(ref ir.Exp, ir.Constant){ return Continue; }
-	Status leave(ref ir.Exp, ir.Constant){ return Continue; }
-	Status enter(ref ir.Exp, ir.TypeExp){ return Continue; }
-	Status leave(ref ir.Exp, ir.TypeExp){ return Continue; }
-	Status enter(ref ir.Exp, ir.StatementExp){ return Continue; }
-	Status leave(ref ir.Exp, ir.StatementExp){ return Continue; }
-	Status enter(ref ir.Exp, ir.VaArgExp){ return Continue; }
-	Status leave(ref ir.Exp, ir.VaArgExp){ return Continue; }
-	Status enter(ref ir.Exp, ir.PropertyExp){ return Continue; }
-	Status leave(ref ir.Exp, ir.PropertyExp){ return Continue; }
-	Status enter(ref ir.Exp, ir.BuiltinExp){ return Continue; }
-	Status leave(ref ir.Exp, ir.BuiltinExp){ return Continue; }
-	Status enter(ref ir.Exp, ir.AccessExp){ return Continue; }
-	Status leave(ref ir.Exp, ir.AccessExp){ return Continue; }
-	Status enter(ref ir.Exp, ir.RunExp){ return Continue; }
-	Status leave(ref ir.Exp, ir.RunExp){ return Continue; }
-	Status enter(ref ir.Exp, ir.ComposableString){ return Continue; }
-	Status leave(ref ir.Exp, ir.ComposableString){ return Continue; }
+	Status enter(ref ir.Exp, ir.Postfix) { return Continue; }
+	Status leave(ref ir.Exp, ir.Postfix) { return Continue; }
+	Status enter(ref ir.Exp, ir.Unary) { return Continue; }
+	Status leave(ref ir.Exp, ir.Unary) { return Continue; }
+	Status enter(ref ir.Exp, ir.BinOp) { return Continue; }
+	Status leave(ref ir.Exp, ir.BinOp) { return Continue; }
+	Status enter(ref ir.Exp, ir.Ternary) { return Continue; }
+	Status leave(ref ir.Exp, ir.Ternary) { return Continue; }
+	Status enter(ref ir.Exp, ir.ArrayLiteral) { return Continue; }
+	Status leave(ref ir.Exp, ir.ArrayLiteral) { return Continue; }
+	Status enter(ref ir.Exp, ir.AssocArray) { return Continue; }
+	Status leave(ref ir.Exp, ir.AssocArray) { return Continue; }
+	Status enter(ref ir.Exp, ir.Assert) { return Continue; }
+	Status leave(ref ir.Exp, ir.Assert) { return Continue; }
+	Status enter(ref ir.Exp, ir.StringImport) { return Continue; }
+	Status leave(ref ir.Exp, ir.StringImport) { return Continue; }
+	Status enter(ref ir.Exp, ir.Typeid) { return Continue; }
+	Status leave(ref ir.Exp, ir.Typeid) { return Continue; }
+	Status enter(ref ir.Exp, ir.IsExp) { return Continue; }
+	Status leave(ref ir.Exp, ir.IsExp) { return Continue; }
+	Status enter(ref ir.Exp, ir.FunctionLiteral) { return Continue; }
+	Status leave(ref ir.Exp, ir.FunctionLiteral) { return Continue; }
+	Status enter(ref ir.Exp, ir.StructLiteral) { return Continue; }
+	Status leave(ref ir.Exp, ir.StructLiteral) { return Continue; }
+	Status enter(ref ir.Exp, ir.UnionLiteral) { return Continue; }
+	Status leave(ref ir.Exp, ir.UnionLiteral) { return Continue; }
+	Status enter(ref ir.Exp, ir.ClassLiteral) { return Continue; }
+	Status leave(ref ir.Exp, ir.ClassLiteral) { return Continue; }
+	Status enter(ref ir.Exp, ir.Constant) { return Continue; }
+	Status leave(ref ir.Exp, ir.Constant) { return Continue; }
+	Status enter(ref ir.Exp, ir.TypeExp) { return Continue; }
+	Status leave(ref ir.Exp, ir.TypeExp) { return Continue; }
+	Status enter(ref ir.Exp, ir.StatementExp) { return Continue; }
+	Status leave(ref ir.Exp, ir.StatementExp) { return Continue; }
+	Status enter(ref ir.Exp, ir.VaArgExp) { return Continue; }
+	Status leave(ref ir.Exp, ir.VaArgExp) { return Continue; }
+	Status enter(ref ir.Exp, ir.PropertyExp) { return Continue; }
+	Status leave(ref ir.Exp, ir.PropertyExp) { return Continue; }
+	Status enter(ref ir.Exp, ir.BuiltinExp) { return Continue; }
+	Status leave(ref ir.Exp, ir.BuiltinExp) { return Continue; }
+	Status enter(ref ir.Exp, ir.AccessExp) { return Continue; }
+	Status leave(ref ir.Exp, ir.AccessExp) { return Continue; }
+	Status enter(ref ir.Exp, ir.RunExp) { return Continue; }
+	Status leave(ref ir.Exp, ir.RunExp) { return Continue; }
+	Status enter(ref ir.Exp, ir.ComposableString) { return Continue; }
+	Status leave(ref ir.Exp, ir.ComposableString) { return Continue; }
 
-	Status visit(ref ir.Exp, ir.ExpReference){ return Continue; }
-	Status visit(ref ir.Exp, ir.IdentifierExp){ return Continue; }
-	Status visit(ref ir.Exp, ir.TokenExp){ return Continue; }
-	Status visit(ref ir.Exp, ir.StoreExp){ return Continue; }
+	Status visit(ref ir.Exp, ir.ExpReference) { return Continue; }
+	Status visit(ref ir.Exp, ir.IdentifierExp) { return Continue; }
+	Status visit(ref ir.Exp, ir.TokenExp) { return Continue; }
+	Status visit(ref ir.Exp, ir.StoreExp) { return Continue; }
 }
 
 
@@ -501,7 +515,7 @@ body {
 	case AccessExp:
 	case RunExp:
 	case ComposableString:
-		throw panic(/*#ref*/n.loc, "can not visit expressions");
+		return av.visitingError(n, "can not visit expressions");
 
 	/*
 	 * Statements.
@@ -611,7 +625,7 @@ body {
 	case AAPair:
 	case FunctionSetType:
 	case FunctionSet:
-		throw panicUnhandled(n, ir.nodeToString(n));
+		return av.visitingError(n, "unhandled in accept");
 	}
 }
 
@@ -673,7 +687,7 @@ Visitor.Status acceptExp(ref ir.Exp exp, Visitor av)
 	case ComposableString:
 		return acceptComposableString(/*#ref*/exp, exp.toComposableStringFast(), av);
 	default:
-		throw panicUnhandled(exp, ir.nodeToString(exp));
+		return av.visitingError(exp, "unhandled in acceptExp");
 	}
 }
 

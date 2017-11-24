@@ -20,7 +20,7 @@ import volta.util.util;
 import volt.errors;
 import volt.interfaces;
 import volta.ir.location;
-import volt.visitor.visitor;
+import volta.visitor.visitor;
 import volt.visitor.nodereplace;
 
 import volt.lowerer.array;
