@@ -155,8 +155,8 @@ public:
 	override Status leave(ir.Class c) { ctxPop(c); return Continue; }
 	override Status leave(ir._Interface i) { ctxPop(i); return Continue; }
 
-	override Status enter(ir.Attribute attr) { assert(false); }
-	override Status leave(ir.Attribute attr) { assert(false); }
+	override Status enter(ir.Attribute attr) { passert(errSink, attr, false); return Continue; }
+	override Status leave(ir.Attribute attr) { passert(errSink, attr, false); return Continue; }
 
 	override Status visit(ir.TemplateDefinition td)
 	{
@@ -176,7 +176,7 @@ public:
 			return accept(td._function, this);
 		}
 		panic(errSink, td, "Invalid TemplateDefinition");
-		assert(false);
+		return Continue;
 	}
 
 
@@ -282,7 +282,7 @@ protected:
 				auto constant = cast(ir.Constant) attr.arguments[0];
 				if (constant is null || constant._string.length <= 2 || constant._string[0] != '\"') {
 					errorExpected(errSink, attr, "non empty string literal argument to MangledName.");
-					assert(false);  // @todo abortless errors
+					return;
 				}
 				assert(constant._string[0] == '\"');
 				assert(constant._string[$-1] == '\"');
@@ -368,14 +368,14 @@ protected:
 				d.isExtern = true;
 				break;
 			case MangledName:
-				assert(attr.arguments.length == 1);
+				passert(errSink, attr, attr.arguments.length == 1);
 				auto constant = cast(ir.Constant) attr.arguments[0];
 				if (constant is null || constant._string.length <= 2 || constant._string[0] != '\"') {
 					errorExpected(errSink, attr, "non empty string literal argument to MangledName.");
-					assert(false);  // @todo abortless errors
+					passert(errSink, attr, false);
 				}
-				assert(constant._string[0] == '\"');
-				assert(constant._string[$-1] == '\"');
+				passert(errSink, attr, constant._string[0] == '\"');
+				passert(errSink, attr, constant._string[$-1] == '\"');
 				d.mangledName = constant._string[1..$-1];
 				break;
 			default:
@@ -404,7 +404,7 @@ protected:
 				auto c = cast(ir.Class) s;
 				if (c is null) {
 					errorMsg(errSink, s, badAbstractMsg());
-					assert(false);  // @todo abortless errors
+					return;
 				}
 				c.isAbstract = true;
 				break;
@@ -412,7 +412,7 @@ protected:
 				auto c = cast(ir.Class) s;
 				if (c is null) {
 					errorMsg(errSink, s, badFinalMsg());
-					assert(false);  // @todo abortless errors
+					return;
 				}
 				c.isFinal = true;
 				break;
@@ -518,7 +518,7 @@ protected:
 
 		if (node !is ctxTop.node) {
 			panic(errSink, node, "invalid attribute stack layout");
-			assert(false);  // @todo abortless errors
+			return;
 		}
 
 		mStack = ctxTop.oldStack;
@@ -539,7 +539,7 @@ protected:
 	{
 		if (attrTop !is attr) {
 			panic(errSink, attr, "invalid attribute stack layout");
-			assert(false);  // @todo abortless errors
+			return;
 		}
 		mStack = mStack[0 .. $-1];
 	}
@@ -622,8 +622,8 @@ public:
 	 */
 	override void transform(ir.Module m)
 	{
-		assert(mStack.length == 0);
-		assert(mCtx.length == 0);
+		passert(errSink, m, mStack.length == 0);
+		passert(errSink, m, mCtx.length == 0);
 		accept(m, this);
 		mStack = null;
 		mCtx = null;
