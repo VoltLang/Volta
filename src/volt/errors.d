@@ -39,13 +39,6 @@ void warningStringCat(ref in Location loc, bool warningsEnabled)
 	}
 }
 
-void warningShadowsField(ref in Location newDecl, ref in Location oldDecl, string name, bool warningsEnabled)
-{
-	if (warningsEnabled) {
-		warning(/*#ref*/newDecl, format("declaration '%s' shadows field at %s.", name, oldDecl.toString()));
-	}
-}
-
 void warningEmitBitcode()
 {
 	writefln("--emit-bitcode is deprecated use --emit-llvm and -c flags instead");
@@ -91,14 +84,6 @@ CompilerException makeExpressionForNew(ref in Location loc, string name, string 
 CompilerException makeMisplacedContinue(ref in Location loc, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(/*#ref*/loc, "continue statement outside of loop.", file, line);
-}
-
-CompilerException makeOverloadedFunctionsAccessMismatch(ir.Access importAccess, ir.Alias a, ir.Function b,
-	string file = __FILE__, const int line = __LINE__)
-{
-	auto msg = format("alias '%s' access level ('%s') does not match '%s' ('%s') @ %s.",
-		a.name, ir.accessToString(importAccess), b.name, ir.accessToString(b.access), b.loc.toString());
-	return new CompilerError(/*#ref*/a.loc, msg, file, line);
 }
 
 CompilerException makeOverloadedFunctionsAccessMismatch(ir.Function a, ir.Function b)
@@ -190,11 +175,6 @@ CompilerException makeExpectedCall(ir.RunExp runexp, string file = __FILE__, con
 CompilerException makeNonNestedAccess(ref in Location loc, ir.Variable var, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(/*#ref*/loc, format("cannot access variable '%s' from non-nested function.", var.name), file, line);
-}
-
-CompilerException makeRedefines(ref in Location loc, ref in Location loc2, string name, string file = __FILE__, const int line = __LINE__)
-{
-	return new CompilerError(/*#ref*/loc, format("redefines symbol '%s', defined @ %s", name, loc2.toString()));
 }
 
 CompilerException makeMultipleMatches(ref in Location loc, string name, string file = __FILE__, const int line = __LINE__)
@@ -381,11 +361,6 @@ CompilerException makeBadMerge(ir.Alias a, ir.Store s, string file = __FILE__, c
 	return new CompilerError(/*#ref*/a.loc, "cannot merge alias as it is not a function.", file, line);
 }
 
-CompilerException makeScopeOutsideFunction(ref in Location loc, string file = __FILE__, const int line = __LINE__)
-{
-	return new CompilerError(/*#ref*/loc, "scopes must be inside a function.", file, line);
-}
-
 CompilerException makeCannotDup(ref in Location loc, ir.Type type, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(/*#ref*/loc, format("cannot duplicate type '%s'.", type.typeString()), file, line);
@@ -564,12 +539,6 @@ CompilerException makeAnonymousAggregateRedefines(ir.Aggregate agg, string name,
 	return e;
 }
 
-CompilerException makeAnonymousAggregateAtTopLevel(ir.Aggregate agg, string file = __FILE__, const int line = __LINE__)
-{
-	auto e = new CompilerError(/*#ref*/agg.loc, "anonymous struct or union not inside aggregate.", file, line);
-	return e;
-}
-
 CompilerException makeInvalidMainSignature(ir.Function func, string file = __FILE__, const int line = __LINE__)
 {
 	auto e = new CompilerError(/*#ref*/func.loc, "invalid main signature.", file, line);
@@ -727,44 +696,14 @@ CompilerException makeMarkedOverrideDoesNotOverride(ir.Node node, ir.Function fu
 	return new CompilerError(/*#ref*/node.loc, format("function '%s' is marked override, but no matching function to override could be found.", func.name), file, line);
 }
 
-CompilerException makeAbstractHasToBeMember(ir.Node node, ir.Function func, string file = __FILE__, const int line = __LINE__)
-{
-	return new CompilerError(/*#ref*/node.loc, format("abstract functions like '%s' must be a member of an abstract class.", func.name), file, line);
-}
-
-CompilerException makeAbstractBodyNotEmpty(ir.Node node, ir.Function func, string file = __FILE__, const int line = __LINE__)
-{
-	return new CompilerError(/*#ref*/node.loc, format("abstract functions like '%s' may not have an implementation.", func.name), file, line);
-}
-
 CompilerException makeNewAbstract(ir.Node node, ir.Class _class, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(/*#ref*/node.loc, format("abstract classes like '%s' may not be instantiated.", _class.name), file, line);
 }
 
-CompilerException makeBadAbstract(ir.Node node, ir.Attribute attr, string file = __FILE__, const int line = __LINE__)
-{
-	return new CompilerError(/*#ref*/node.loc, "only classes and functions may be marked as abstract.", file, line);
-}
-
-CompilerException makeBadFinal(ir.Node node, ir.Attribute attr, string file = __FILE__, const int line = __LINE__)
-{
-	return new CompilerError(/*#ref*/node.loc, "only classes, functions, and switch statmenets may be marked as final.", file, line);
-}
-
 CompilerException makeSubclassFinal(ir.Class child, ir.Class parent, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(/*#ref*/child.loc, format("class '%s' attempts to subclass final class '%s'.", child.name, parent.name), file, line);
-}
-
-CompilerException makeCannotImport(ir.Node node, string name, string file = __FILE__, const int line = __LINE__)
-{
-	return new CompilerError(/*#ref*/node.loc, format("can't find module '%s'.", name), file, line);
-}
-
-CompilerException makeCannotImportAnonymous(ir.Node node, string name, string file = __FILE__, const int line = __LINE__)
-{
-	return new CompilerError(/*#ref*/node.loc, format("can't import anonymous module '%s'.", name), file, line);
 }
 
 CompilerException makeNotAvailableInCTFE(ir.Node node, string s, string file = __FILE__, const int line = __LINE__)
@@ -775,11 +714,6 @@ CompilerException makeNotAvailableInCTFE(ir.Node node, string s, string file = _
 CompilerException makeNotAvailableInCTFE(ir.Node node, ir.Node feature, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(/*#ref*/node.loc, format("%s is currently unevaluatable at compile time.", ir.nodeToString(feature)), file, line);
-}
-
-CompilerException makeShadowsDeclaration(ir.Node a, ir.Node b, string file = __FILE__, const int line = __LINE__)
-{
-	return new CompilerError(/*#ref*/a.loc, format("shadows declaration at %s.", b.loc.toString()), file, line);
 }
 
 CompilerException makeMultipleDefaults(in ref Location loc, string file = __FILE__, const int line = __LINE__)
@@ -998,12 +932,6 @@ CompilerException makeFailedLookup(ref in Location loc, string lookup, string fi
 {
 	return new CompilerError(/*#ref*/loc, format("unidentified identifier '%s'.", lookup), file, line);
 }
-
-CompilerException makeNonTopLevelImport(ref in Location loc, string file = __FILE__, const int line = __LINE__)
-{
-	return new CompilerError(/*#ref*/loc, "imports must occur in the top scope.", file, line);
-}
-
 
 /*
  *

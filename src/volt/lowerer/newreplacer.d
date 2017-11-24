@@ -13,7 +13,7 @@ import volt.errors;
 import volt.interfaces;
 import volta.ir.location;
 import volta.visitor.visitor;
-import volt.visitor.scopemanager;
+import volta.visitor.scopemanager;
 
 import volt.lowerer.alloc;
 import volt.lowerer.array;
@@ -76,6 +76,7 @@ public:
 	this(LanguagePass lp)
 	{
 		this.lp = lp;
+		super(lp.errSink);
 	}
 	
 	override void transform(ir.Module m)

@@ -1,13 +1,14 @@
 /*#D*/
 // Copyright © 2012, Bernard Helyer.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.visitor.scopemanager;
+module volta.visitor.scopemanager;
 
 import watt.text.format : format;
 
 import ir = volta.ir;
 
-import volt.errors;
+import volta.errors;
+import volta.interfaces;
 import volta.visitor.visitor;
 import volta.ir.location : Location;
 
@@ -18,8 +19,15 @@ public:
 	ir.Scope current;
 	ir.Function[] functionStack;
 
-private:
+protected:
 	ir.Module mThisModule;
+	ErrorSink mErr;
+
+public:
+	this(ErrorSink errSink)
+	{
+		mErr = errSink;
+	}
 
 public:
 	override Status enter(ir.Module m)
@@ -179,7 +187,8 @@ private:
 		auto str = format("invalid scope layout should be %s (%s) is %s (%s)",
 			ir.getNodeAddressString(a), ir.nodeToString(a.nodeType),
 			ir.getNodeAddressString(b), ir.nodeToString(b.nodeType));
-		throw panic(/*#ref*/a.loc, str);
+		panic(mErr, a, str);
+		assert(false);  // @todo abortless errors
 	}
 
 	void checkPreScope(ref in Location loc, ir.Scope _scope)
@@ -188,7 +197,8 @@ private:
 			auto str = format("invalid scope layout (parent) should be %s (%s) is %s (%s)",
 		           ir.getNodeAddressString(current.node), ir.nodeToString(current.node.nodeType),
 			   ir.getNodeAddressString(_scope.node), ir.nodeToString(_scope.node.nodeType));
-			throw panic(/*#ref*/loc, str);
+			panic(mErr, /*#ref*/loc, str);
+			assert(false);  // @todo abortless errors
 		}
 	}
 }

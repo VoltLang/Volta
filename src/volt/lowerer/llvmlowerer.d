@@ -16,7 +16,7 @@ import volt.errors;
 import volt.interfaces;
 import volta.ir.location;
 import volta.visitor.visitor;
-import volt.visitor.scopemanager;
+import volta.visitor.scopemanager;
 import volt.visitor.nodereplace;
 
 import volt.lowerer.array;
@@ -2164,6 +2164,7 @@ public:
 	{
 		this.lp = lp;
 		this.V_P64 = lp.ver.isP64;
+		super(lp.errSink);
 	}
 
 	/*!

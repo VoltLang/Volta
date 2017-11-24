@@ -7,19 +7,21 @@
  *
  * @ingroup passPost
  */
-module volt.postparse.importresolver;
+module volta.postparse.importresolver;
 
 import watt.text.format : format;
 
 import ir = volta.ir;
+import volta.ir.location;
 import volta.util.util;
 
-import volt.errors;
-import volt.interfaces;
+import volta.errors;
+import volta.interfaces;
 import volta.visitor.visitor;
-import volt.visitor.scopemanager;
-import volt.semantic.lookup : getModuleFromScope;
-import gatherer = volt.postparse.gatherer;
+import volta.visitor.scopemanager;
+import gatherer = volta.postparse.gatherer;
+
+alias GetMod = ir.Module delegate(ir.QualifiedName);
 
 
 /*!
@@ -30,14 +32,15 @@ import gatherer = volt.postparse.gatherer;
 class ImportResolver : ScopeManager, Pass
 {
 private:
-	LanguagePass lp;
 	ir.Module mModule;
+	GetMod mGetMod;
 
 
 public:
-	this(LanguagePass lp)
+	this(ErrorSink errSink, GetMod getMod)
 	{
-		this.lp = lp;
+		super(errSink);
+		mGetMod = getMod;
 	}
 
 
@@ -70,21 +73,25 @@ public:
 	override Status enter(ir.Import i)
 	{
 		if (current !is mModule.myScope) {
-			throw makeNonTopLevelImport(/*#ref*/i.loc);
+			errorMsg(mErr, i, nonTopLevelImportMsg());
+			return ContinueParent;
 		}
 
 		if (i.isStatic && i.access != ir.Access.Private) {
-			throw makeExpected(/*#ref*/i.loc, 
-				format("static import '%s' to be private", i.names[0]));
+			auto msg = format("static import '%s' to be private", i.names[0]);
+			errorExpected(mErr, i, msg);
+			return ContinueParent;
 		}
 
 		foreach (name; i.names) {
-			auto mod = lp.getModule(name);
+			auto mod = mGetMod(name);
 			if (mod is null) {
-				throw makeCannotImport(i, name.toString());
+				errorMsg(mErr, i, cannotImportMsg(name.toString()));
+				return ContinueParent;
 			}
 			if (mod.isAnonymous) {
-				throw makeCannotImportAnonymous(i, name.toString());
+				errorMsg(mErr, i, cannotImportAnonymousMsg(name.toString()));
+				return ContinueParent;
 			}
 			i.targetModules ~= mod;
 		}
@@ -115,7 +122,7 @@ public:
 		ir.Scope[] scopes;
 		foreach (mod; i.targetModules) {
 			gatherer.addScope(mod);
-			assert(mod.myScope !is null);
+			passert(mErr, i, mod.myScope !is null);
 			scopes ~= mod.myScope;
 		}
 
@@ -124,20 +131,23 @@ public:
 			if (store.fromImplicitContextChain) {
 				current.remove(i.bind.value);
 			} else {
-				throw makeRedefines(/*#ref*/i.loc, /*#ref*/store.node.loc, i.bind.value);
+				errorMsg(mErr, i, redefinesSymbolMsg(i.bind.value, /*#ref*/store.node.loc));
+				return;
 			}
 		}
 		if (scopes.length == 1) {
 			ir.Status status;
 			store = current.addScope(i, scopes[0], i.bind.value, /*#out*/status);
 			if (status != ir.Status.Success) {
-				throw panic(/*#ref*/i.loc, "scope redefinition");
+				panic(mErr, i, "scope redefinition");
+				return;
 			}
 		} else {
 			ir.Status status;
 			store = current.addMultiScope(i, scopes, i.bind.value, /*#out*/status);
 			if (status != ir.Status.Success) {
-				throw panic(/*#ref*/i.loc, "multi scope redefinition");
+				panic(mErr, i, "multi scope redefinition");
+				return;
 			}
 		}
 		store.importBindAccess = i.access;
@@ -151,18 +161,18 @@ public:
 	 */
 	void handleAliases(ir.Import i)
 	{
-		panicAssert(i, i.targetModules.length == 1);
-		panicAssert(i, i.names.length == i.targetModules.length);
+		passert(mErr, i, i.targetModules.length == 1);
+		passert(mErr, i, i.names.length == i.targetModules.length);
 		auto mod = i.targetModules[0];
 
 		auto bindScope = current;
 		if (i.bind !is null) {
 			bindScope = buildOrReturnScope(bindScope, i.bind, i.bind.value, false/*is low prio?*/);
 		} else {
-			assert(current is mModule.myScope);
+			passert(mErr, i, current is mModule.myScope);
 		}
 
-		auto parentMod = getModuleFromScope(/*#ref*/i.loc, current);
+		auto parentMod = getModuleFromScope(/*#ref*/i.loc, current, mErr);
 		foreach (ii, _alias; i.aliases) {
 			ir.Alias a;
 
@@ -177,7 +187,8 @@ public:
 			if (ret !is null && ret.functions.length > 0) {
 				foreach (func; ret.functions) {
 					if (func.access != i.access) {
-						throw makeOverloadedFunctionsAccessMismatch(i.access, a, func);
+						errorMsg(mErr, a, overloadFunctionAccessMismatchMsg(i.access, a, func));
+						return;
 					}
 				}
 			}
@@ -188,7 +199,8 @@ public:
 			ir.Status status;
 			a.store = bindScope.addAlias(a, a.name, /*#out*/status);
 			if (status != ir.Status.Success) {
-				throw panic(/*#ref*/a.loc, "bind scope redefines symbol");
+				panic(mErr, a, "bind scope redefines symbol");
+				return;
 			}
 			a.store.importBindAccess = i.access;
 		}
@@ -202,13 +214,13 @@ public:
 	 */
 	void handleRegularAndStatic(ir.Import i)
 	{
-		panicAssert(i, i.targetModules.length == 1);
+		passert(mErr, i, i.targetModules.length == 1);
 		auto mod = i.targetModules[0];
 
 		// TODO We should not use mod.myScope here,
 		// but intead link directly to the module.
 		gatherer.addScope(mod);
-		assert(mod.myScope !is null);
+		passert(mErr, i, mod.myScope !is null);
 
 		// Where we add the module binding.
 		ir.Scope parent = mModule.myScope;
@@ -224,13 +236,15 @@ public:
 		auto store = parent.getStore(i.names[0].identifiers[$-1].value);
 		if (store !is null) {
 			if (i.isStatic && store.myScope !is mod.myScope) {
-				throw makeExpected(/*#ref*/i.loc, "unique module");
+				errorExpected(mErr, i, "unique module");
+				return;
 			}
 		} else {
 			ir.Status status;
 			parent.addScope(i, mod.myScope, i.names[0].identifiers[$-1].value, /*#out*/status);
 			if (status != ir.Status.Success) {
-				throw panic(/*#ref*/i.loc, "regular scope import redefinition");
+				panic(mErr, i, "regular scope import redefinition");
+				return;
 			}
 		}
 
@@ -262,7 +276,8 @@ public:
 			// TODO Better error checking here,
 			// we could be adding to aggregates here.
 			if (store.myScope is null) {
-				throw makeExpected(/*#ref*/node.loc, "scope");
+				errorExpected(mErr, node, "scope");
+				return null;
 			}
 			return store.myScope;
 		} else {
@@ -271,7 +286,8 @@ public:
 				ir.Status status;
 				store = parent.addScope(node, s, name, /*#out*/status);
 				if (status != ir.Status.Success) {
-					throw panic(/*#ref*/node.loc, "return scope redefinition");
+					panic(mErr, node, "return scope redefinition");
+					return null;
 				}
 				store.fromImplicitContextChain = lowPriority;
 			}
@@ -279,4 +295,27 @@ public:
 		}
 		return parent;
 	}
+}
+
+// A local version that uses ErrorSink for error reporting.
+private ir.Module getModuleFromScope(ref in Location loc, ir.Scope _scope, ErrorSink errSink)
+{
+	while (_scope !is null) {
+		auto m = cast(ir.Module)_scope.node;
+		_scope = _scope.parent;
+
+		if (m is null) {
+			continue;
+		}
+
+		if (_scope !is null) {
+			panic(errSink, m, "module scope has parent");
+			return null;
+		}
+
+		return m;
+	}
+
+	panic(errSink, /*#ref*/loc, "scope chain without module base");
+	return null;
 }

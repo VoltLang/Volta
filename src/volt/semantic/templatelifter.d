@@ -17,9 +17,9 @@ import volt.ir.lifter;
 
 import volta.visitor.visitor;
 
-import volt.postparse.gatherer : Gatherer;
-import volt.postparse.attribremoval : AttribRemoval;
-import volt.postparse.scopereplacer : ScopeReplacer;
+import volta.postparse.gatherer : Gatherer;
+import volta.postparse.attribremoval : AttribRemoval;
+import volta.postparse.scopereplacer : ScopeReplacer;
 
 import volt.semantic.lookup;
 import volt.semantic.extyper;
@@ -423,7 +423,7 @@ public:
 
 		// Setup any passes that needs to process the copied nodes.
 		auto mod = getModuleFromScope(/*#ref*/s.loc, current);
-		auto gatherer = new Gatherer(/*warnings*/false);
+		auto gatherer = new Gatherer(/*warnings*/false, lp.errSink);
 
 		// Run the gatherer.
 		gatherer.push(s.myScope);

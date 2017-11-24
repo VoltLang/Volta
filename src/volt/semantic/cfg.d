@@ -10,7 +10,7 @@ import volt.interfaces;
 import volt.errors;
 import volta.ir.location;
 import volta.visitor.visitor;
-import volt.visitor.scopemanager;
+import volta.visitor.scopemanager;
 
 import volt.semantic.evaluate;
 import volt.semantic.classify;
@@ -146,6 +146,7 @@ public:
 	this(LanguagePass lp)
 	{
 		this.lp = lp;
+		super(lp.errSink);
 	}
 
 	@property Block block(Block b)

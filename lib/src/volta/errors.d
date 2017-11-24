@@ -5,13 +5,15 @@
 module volta.errors;
 
 import watt.io.std;
-import watt.text.format;
+import watt.text.format : format;  // @todo if this isn't specified, we get a lookup bug.
 
 import ir = volta.ir;
 
 import volta.interfaces;
 import volta.settings;
 import volta.ir.location;
+
+public import volta.util.errormessages;
 
 
 /*
@@ -27,12 +29,12 @@ void panic(ErrorSink es, string message, string file = __FILE__, int line = __LI
 
 void panic(ErrorSink es, ref in Location loc, string message, string file = __FILE__, int line = __LINE__)
 {
-	es.onPanic(/*#ref*/ loc, message, file, line);
+	es.onPanic(/*#ref*/loc, message, file, line);
 }
 
 void panic(ErrorSink es, ir.Node n, string message, string file = __FILE__, int line = __LINE__)
 {
-	es.panic(/*#ref*/ n.loc, message, file, line);
+	es.panic(/*#ref*/n.loc, message, file, line);
 }
 
 void passert(ErrorSink es, ir.Node n, bool condition, string file = __FILE__, int line = __LINE__)
@@ -51,17 +53,22 @@ void passert(ErrorSink es, ir.Node n, bool condition, string file = __FILE__, in
 
 void errorMsg(ErrorSink es, ref in Location loc, string message, string file = __FILE__, int line = __LINE__)
 {
-	es.onError(/*#ref*/ loc, message, file, line);
+	es.onError(/*#ref*/loc, message, file, line);
+}
+
+void errorMsg(ErrorSink es, ir.Node n, string message, string file = __FILE__, int line = __LINE__)
+{
+	es.errorMsg(/*#ref*/n.loc, message, file, line);
 }
 
 void errorExpected(ErrorSink es, ref in Location loc, string expected, string file = __FILE__, int line = __LINE__)
 {
-	es.onError(/*#ref*/ loc, format("expected %s.", expected), file, line);
+	es.onError(/*#ref*/loc, format("expected %s.", expected), file, line);
 }
 
 void errorExpected(ErrorSink es, ir.Node n, string expected, string file = __FILE__, int line = __LINE__)
 {
-	es.errorExpected(/*#ref*/ n.loc, expected, file, line);
+	es.errorExpected(/*#ref*/n.loc, expected, file, line);
 }
 
 void errorRedefine(ErrorSink es, ref in Location newDef, ref in Location oldDef, string name,
@@ -84,12 +91,12 @@ void warning(ref in Location loc, string message)
 
 void warning(ErrorSink es, ref in Location loc, string message, string file = __FILE__, int line = __LINE__)
 {
-	es.onWarning(/*#ref*/ loc, message, file, line);
+	es.onWarning(/*#ref*/loc, message, file, line);
 }
 
 void warning(ErrorSink es, ir.Node n, string message, string file = __FILE__, int line = __LINE__)
 {
-	es.warning(/*#ref*/ n.loc, message, file, line);
+	es.warning(/*#ref*/n.loc, message, file, line);
 }
 
 void warningOldStyleVariable(ref in Location loc, bool magicFlagD, Settings settings)
@@ -124,5 +131,12 @@ void warningOldStyleHexTypeSuffix(ref in Location loc, bool magicFlagD, Settings
 {
 	if (!magicFlagD && settings.warningsEnabled) {
 		warning(/*#ref*/loc, "old style hex literal type suffix (U/L).");
+	}
+}
+
+void warningShadowsField(ref in Location newDecl, ref in Location oldDecl, string name, bool warningsEnabled)
+{
+	if (warningsEnabled) {
+		warning(/*#ref*/newDecl, format("declaration '%s' shadows field at %s.", name, oldDecl.toString()));
 	}
 }

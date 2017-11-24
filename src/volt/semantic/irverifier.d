@@ -11,7 +11,7 @@ import volt.errors;
 import volt.interfaces;
 import volta.ir.location;
 import volta.visitor.visitor;
-import volt.visitor.scopemanager;
+import volta.visitor.scopemanager;
 
 import volt.semantic.classify;
 
@@ -30,6 +30,12 @@ class IrVerifier : ScopeManager, Pass
 private:
 	int[size_t] mNodes;
 	int mCount;
+
+public:
+	this(ErrorSink errSink)
+	{
+		super(errSink);
+	}
 
 public:
 	override void transform(ir.Module m)

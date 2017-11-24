@@ -40,11 +40,11 @@ import volt.semantic.typeinfo;
 import volt.semantic.irverifier;
 import volt.semantic.classresolver;
 
-import volt.postparse.missing;
-import volt.postparse.gatherer;
-import volt.postparse.attribremoval;
-import volt.postparse.scopereplacer;
-import volt.postparse.importresolver;
+import volta.postparse.missing;
+import volta.postparse.gatherer;
+import volta.postparse.attribremoval;
+import volta.postparse.scopereplacer;
+import volta.postparse.importresolver;
 
 
 enum Mode
@@ -121,19 +121,23 @@ public:
 		if (mMode == Mode.RemoveConditionalsOnly) {
 			return;
 		}
-		postParse ~= new TimerPass("p1-scope-rep", new ScopeReplacer());
-		postParse ~= new TimerPass("p1-attrib-rem", new AttribRemoval(target));
-		postParse ~= new TimerPass("p1-gatherer", new Gatherer(warningsEnabled));
+		postParse ~= new TimerPass("p1-scope-rep", new ScopeReplacer(err));
+		postParse ~= new TimerPass("p1-attrib-rem", new AttribRemoval(target, err));
+		postParse ~= new TimerPass("p1-gatherer", new Gatherer(warningsEnabled, err));
 		if (mMode == Mode.MissingDeps) {
-			missing = new MissingDeps(this);
+			version (D_Version2) auto getMod = &this.getModule;
+			else auto getMod = this.getModule;
+			missing = new MissingDeps(err, getMod);
 			postParse ~= new TimerPass("p1-missing", missing);
 		} else {
-			postParse ~= new TimerPass("p1-import", new ImportResolver(this));
+			version (D_Version2) auto getMod = &this.getModule;
+			else auto getMod = this.getModule;
+			postParse ~= new TimerPass("p1-import", new ImportResolver(err, getMod));
 		}
 
 		passes2 ~= new TimerPass("p2-extyper", new ExTyper(this));
 		passes2 ~= new TimerPass("p2-cfgbuilder", new CFGBuilder(this));
-		debug passes2 ~= new TimerPass("p2-irverifier", new IrVerifier());
+		debug passes2 ~= new TimerPass("p2-irverifier", new IrVerifier(errSink));
 
 		passes3 ~= new TimerPass("p3-expfolder", new ExpFolder(target));
 		passes3 ~= new TimerPass("p3-llvm", new LlvmLowerer(this));
@@ -141,7 +145,7 @@ public:
 		passes3 ~= new TimerPass("p3-typeid-rep", new TypeidReplacer(this));
 		passes3 ~= new TimerPass("p3-image", new ImageGatherer(this));
 		passes3 ~= new TimerPass("p3-mangle-writer", new MangleWriter());
-		debug passes3 ~= new TimerPass("p3-irverifier", new IrVerifier());
+		debug passes3 ~= new TimerPass("p3-irverifier", new IrVerifier(errSink));
 	}
 
 	override void close()
@@ -396,7 +400,7 @@ public:
 
 	override void gather(ir.Scope current, ir.BlockStatement bs)
 	{
-		auto g = new Gatherer(warningsEnabled);
+		auto g = new Gatherer(warningsEnabled, errSink);
 		g.transform(current, bs);
 		g.close();
 	}

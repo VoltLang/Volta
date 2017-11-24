@@ -20,7 +20,7 @@ import volta.util.string;
 import volta.ir.location;
 
 import volta.visitor.visitor;
-import volt.visitor.scopemanager;
+import volta.visitor.scopemanager;
 import volt.visitor.prettyprinter;
 
 import volt.semantic.util;

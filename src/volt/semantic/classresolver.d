@@ -10,6 +10,7 @@ import ir = volta.ir;
 import volta.util.util;
 
 import volt.errors;
+import volta.util.errormessages;
 import volt.interfaces;
 import volta.ir.location;
 
@@ -802,7 +803,7 @@ void emitVtableVariable(LanguagePass lp, ir.Class _class)
 		auto method = methods.get(i);
 		if (method.isAbstract) {
 			if (!_class.isAbstract) {
-				throw makeAbstractHasToBeMember(_class, method);
+				throw makeError(_class, abstractHasToBeMemberMsg(method));
 			}
 		}
 	}

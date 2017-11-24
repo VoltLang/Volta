@@ -7,13 +7,12 @@
  *
  * @ingroup passPost
  */
-module volt.postparse.attribremoval;
+module volta.postparse.attribremoval;
 
 import ir = volta.ir;
 
-import volt.errors;
-import volt.interfaces;
-
+import volta.errors;
+import volta.interfaces;
 import volta.util.util;
 import volta.util.sinks;
 import volta.visitor.visitor;
@@ -29,6 +28,7 @@ class AttribRemoval : NullVisitor, Pass
 {
 public:
 	TargetInfo target;
+	ErrorSink errSink;
 
 
 protected:
@@ -52,9 +52,10 @@ protected:
 
 
 public:
-	this(TargetInfo target)
+	this(TargetInfo target, ErrorSink errSink)
 	{
 		this.target = target;
+		this.errSink = errSink;
 	}
 
 	/*
@@ -174,7 +175,8 @@ public:
 		if (td._function !is null) {
 			return accept(td._function, this);
 		}
-		throw panic("Invalid TemplateDefinition");
+		panic(errSink, td, "Invalid TemplateDefinition");
+		assert(false);
 	}
 
 
@@ -279,7 +281,8 @@ protected:
 				assert(attr.arguments.length == 1);
 				auto constant = cast(ir.Constant) attr.arguments[0];
 				if (constant is null || constant._string.length <= 2 || constant._string[0] != '\"') {
-					throw makeExpected(attr, "non empty string literal argument to MangledName.");
+					errorExpected(errSink, attr, "non empty string literal argument to MangledName.");
+					assert(false);  // @todo abortless errors
 				}
 				assert(constant._string[0] == '\"');
 				assert(constant._string[$-1] == '\"');
@@ -368,7 +371,8 @@ protected:
 				assert(attr.arguments.length == 1);
 				auto constant = cast(ir.Constant) attr.arguments[0];
 				if (constant is null || constant._string.length <= 2 || constant._string[0] != '\"') {
-					throw makeExpected(attr, "non empty string literal argument to MangledName.");
+					errorExpected(errSink, attr, "non empty string literal argument to MangledName.");
+					assert(false);  // @todo abortless errors
 				}
 				assert(constant._string[0] == '\"');
 				assert(constant._string[$-1] == '\"');
@@ -399,14 +403,16 @@ protected:
 			case Abstract:
 				auto c = cast(ir.Class) s;
 				if (c is null) {
-					throw makeBadAbstract(s, attr);
+					errorMsg(errSink, s, badAbstractMsg());
+					assert(false);  // @todo abortless errors
 				}
 				c.isAbstract = true;
 				break;
 			case Final:
 				auto c = cast(ir.Class) s;
 				if (c is null) {
-					throw makeBadFinal(s, attr);
+					errorMsg(errSink, s, badFinalMsg());
+					assert(false);  // @todo abortless errors
 				}
 				c.isFinal = true;
 				break;
@@ -511,7 +517,8 @@ protected:
 		}
 
 		if (node !is ctxTop.node) {
-			throw panic(node, "invalid attribute stack layout");
+			panic(errSink, node, "invalid attribute stack layout");
+			assert(false);  // @todo abortless errors
 		}
 
 		mStack = ctxTop.oldStack;
@@ -531,7 +538,8 @@ protected:
 	void attrPop(ir.Attribute attr)
 	{
 		if (attrTop !is attr) {
-			throw panic(attr, "invalid attribute stack layout");
+			panic(errSink, attr, "invalid attribute stack layout");
+			assert(false);  // @todo abortless errors
 		}
 		mStack = mStack[0 .. $-1];
 	}

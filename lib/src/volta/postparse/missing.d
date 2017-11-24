@@ -7,16 +7,18 @@
  *
  * @ingroup passPost
  */
-module volt.postparse.missing;
+module volta.postparse.missing;
 
 import watt.text.format : format;
 
 import ir = volta.ir;
 
-import volt.errors;
-import volt.interfaces;
+import volta.errors;
+import volta.interfaces;
 import volta.visitor.visitor;
-import volt.visitor.scopemanager;
+import volta.visitor.scopemanager;
+
+alias GetMod = ir.Module delegate(ir.QualifiedName);
 
 
 /*!
@@ -27,18 +29,19 @@ import volt.visitor.scopemanager;
 class MissingDeps : ScopeManager, Pass
 {
 private:
-	//! Link back to @ref LanguagePass.
-	LanguagePass lp;
 	//! The current module we are walking.
 	ir.Module mModule;
 	//! Set of all the module names that are missing.
 	bool[string] mStore;
+	//! Where to get modules from.
+	GetMod mGetMod;
 
 
 public:
-	this(LanguagePass lp)
+	this(ErrorSink errSink, GetMod getMod)
 	{
-		this.lp = lp;
+		super(errSink);
+		mGetMod = getMod;
 	}
 
 
@@ -80,15 +83,16 @@ public:
 	override Status enter(ir.Import i)
 	{
 		if (current !is mModule.myScope) {
-			throw makeNonTopLevelImport(/*#ref*/i.loc);
+			errorMsg(mErr, i, nonTopLevelImportMsg());
+			assert(false);  // @todo abortless errors
 		}
 
 		if (i.isStatic && i.access != ir.Access.Private) {
-			throw makeExpected(/*#ref*/i.loc, 
-				format("static import '%s' to be private", i.names[0]));
+			errorExpected(mErr, i, format("static import '%s' to be private", i.names[0]));
+			assert(false);  // @todo abortless errors
 		}
 
-		auto mod = lp.getModule(i.names[0]);
+		auto mod = mGetMod(i.names[0]);
 		if (mod is null) {
 			mStore[i.names[0].toString()] = true;
 		}

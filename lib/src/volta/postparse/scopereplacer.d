@@ -7,17 +7,17 @@
  *
  * @ingroup passPost
  */
-module volt.postparse.scopereplacer;
+module volta.postparse.scopereplacer;
 
 import watt.text.format : format;
 
 import ir = volta.ir;
 import volta.util.util;
 
-import volt.errors;
-import volt.interfaces;
+import volta.errors;
+import volta.interfaces;
 import volta.visitor.visitor;
-import volt.visitor.scopemanager;
+import volta.visitor.scopemanager;
 
 
 /*!
@@ -29,7 +29,14 @@ class ScopeReplacer : NullVisitor, Pass
 {
 public:
 	ir.Function[] functionStack;
+	ErrorSink errSink;
 
+
+public:
+	this(ErrorSink errSink)
+	{
+		this.errSink = errSink;
+	}
 
 public:
 	override void transform(ir.Module m)
@@ -89,7 +96,8 @@ public:
 		if (td._function !is null) {
 			return accept(td._function, this);
 		}
-		throw panic("Invalid TemplateDefinition");
+		panic(errSink, td, "Invalid TemplateDefinition");
+		assert(false);  // @todo abortless errors
 	}
 
 
@@ -99,7 +107,7 @@ private:
 		if (t.finallyBlock is null) {
 			return t;
 		}
-		panicAssert(t, functionStack.length > 0);
+		passert(errSink, t, functionStack.length > 0);
 
 		auto f = t.finallyBlock;
 		t.finallyBlock = null;
@@ -117,7 +125,8 @@ private:
 	ir.Function handleScope(ir.ScopeStatement ss)
 	{
 		if (functionStack.length == 0) {
-			throw makeScopeOutsideFunction(/*#ref*/ss.loc);
+			errorMsg(errSink, ss, scopeOutsideFunctionMsg());
+			assert(false);  // @todo abortless errors
 		}
 
 		return convertToFunction(ss.kind, ss.block, functionStack[$-1]);

@@ -9,7 +9,7 @@
  *
  * @ingroup passPost
  */
-module volt.postparse.gatherer;
+module volta.postparse.gatherer;
 
 import watt.text.format : format;
 
@@ -17,8 +17,8 @@ import ir = volta.ir;
 import volta.util.util;
 import volta.util.copy;
 
-import volt.errors;
-import volt.interfaces;
+import volta.errors;
+import volta.interfaces;
 import volta.ir.location;
 import volta.visitor.visitor;
 
@@ -80,17 +80,18 @@ bool isValidAccess(ir.Access access)
  *
  */
 
-void gather(ir.Scope current, ir.EnumDeclaration e, Where where)
+void gather(ir.Scope current, ir.EnumDeclaration e, Where where, ErrorSink errSink)
 {
 	// @TODO assert(e.access.isValidAccess());
 	ir.Status status;
 	current.addEnumDeclaration(e, /*#out*/status);
 	if (status != ir.Status.Success) {
-		throw panic(/*#ref*/e.loc, "enum declaration redefinition");
+		panic(errSink, e, "enum declaration redefinition");
+		assert(false);  // @todo abortless errors
 	}
 }
 
-void gather(ir.Scope current, ir.Alias a, Where where)
+void gather(ir.Scope current, ir.Alias a, Where where, ErrorSink errSink)
 {
 	assert(a.access.isValidAccess());
 	assert(a.lookScope is null);
@@ -100,49 +101,54 @@ void gather(ir.Scope current, ir.Alias a, Where where)
 	ir.Status status;
 	a.store = current.addAlias(a, a.name, /*#out*/status);
 	if (status != ir.Status.Success) {
-		throw panic(/*#ref*/a.loc, "multiple definition");
+		panic(errSink, a, "multiple definition");
+		assert(false);  // @todo abortless errors
 	}
 }
 
 /*!
- * If name is reserved in current, throw an error pointing at n's location.
+ * If name is reserved in current, generate an error pointing at n's location.
  */
-void checkInvalid(ir.Scope current, ir.Node n, string name)
+void checkInvalid(ir.Scope current, ir.Node n, string name, ErrorSink errSink)
 {
 	auto store = current.getStore(name);
 	if (store !is null && store.kind == ir.Store.Kind.Reserved) {
-		throw makeError(store.node, format("'%s' is a reserved name in this scope.", name));
+		errorMsg(errSink, store.node, format("'%s' is a reserved name in this scope.", name));
+		assert(false);  // @todo abortless errors
 	}
 }
 
-void checkTemplateRedefinition(ir.Scope current, string name)
+void checkTemplateRedefinition(ir.Scope current, string name, ErrorSink errSink)
 {
 	auto store = current.getStore(name);
 	if (store !is null && store.kind == ir.Store.Kind.Type) {
-		throw makeError(store.node, format("'%s' is already defined in this scope.",
-		name));
+		errorMsg(errSink, store.node, format("'%s' is already defined in this scope.", name));
+		assert(false);  // @todo abortless errors
 	}
 }
 
-void gather(ir.Scope current, ir.Variable v, Where where, ir.Function[] functionStack, bool warningsEnabled)
+void gather(ir.Scope current, ir.Variable v, Where where, ir.Function[] functionStack, bool warningsEnabled, ErrorSink errSink)
 {
 	assert(v.access.isValidAccess());
 
 	// TODO Move to semantic.
 	auto shadowStore = findShadowed(current, /*#ref*/v.loc, v.name, warningsEnabled);
 	if (shadowStore !is null) {
-		throw makeShadowsDeclaration(v, shadowStore.node);
+		errorMsg(errSink, v, shadowsDeclarationMsg(v));
+		assert(false);  // @todo abortless errors
 	}
 
-	checkInvalid(current, v, v.name);
+	checkInvalid(current, v, v.name, errSink);
 	auto store = current.getStore(v.name);
 	if (store !is null) {
-		throw makeError(/*#ref*/v.loc, format("'%s' is in use @ %s.", v.name, store.node.loc.toString()));
+		errorMsg(errSink, v, format("'%s' is in use @ %s.", v.name, store.node.loc.toString()));
+		assert(false);  // @todo abortless errors
 	}
 	ir.Status status;
 	current.addValue(v, v.name, /*#out*/status);
 	if (status != ir.Status.Success) {
-		throw panic(/*#ref*/v.loc, "value redefinition");
+		panic(errSink, v, "value redefinition");
+		assert(false);  // @todo abortless errors
 	}
 
 	if (v.storage != ir.Variable.Storage.Invalid) {
@@ -150,7 +156,8 @@ void gather(ir.Scope current, ir.Variable v, Where where, ir.Function[] function
 	}
 
 	if (where == Where.Module) {
-		throw makeExpected(v, "global or local");
+		errorExpected(errSink, v, "global or local");
+		assert(false);  // @todo abortless errors
 	}
 
 	v.storage = where == Where.Function ?
@@ -158,16 +165,17 @@ void gather(ir.Scope current, ir.Variable v, Where where, ir.Function[] function
 		ir.Variable.Storage.Field;
 }
 
-void gather(ir.Scope current, ir.Function func, Where where)
+void gather(ir.Scope current, ir.Function func, Where where, ErrorSink errSink)
 {
 	assert(func.access.isValidAccess());
 
 	if (func.name !is null) {
-		checkInvalid(current, func, func.name);
+		checkInvalid(current, func, func.name, errSink);
 		ir.Status status;
 		current.addFunction(func, func.name, /*#out*/status);
 		if (status != ir.Status.Success) {
-			throw panic(/*#ref*/func.loc, "function redefinition");
+			panic(errSink, func, "function redefinition");
+			assert(false);  // @todo abortless errors
 		}
 	}
 
@@ -176,115 +184,124 @@ void gather(ir.Scope current, ir.Function func, Where where)
 			func.kind = ir.Function.Kind.Member;
 		} else {
 			if (func.isAbstract) {
-				throw makeAbstractHasToBeMember(func, func);
+				errorMsg(errSink, func, abstractHasToBeMemberMsg(func));
+				assert(false);  // @todo abortless errors
 			}
 			func.kind = ir.Function.Kind.Function;
 		}
 	}
 }
 
-void gather(ir.Scope current, ir.Struct s, Where where)
+void gather(ir.Scope current, ir.Struct s, Where where, ErrorSink errSink)
 {
 	assert(s.access.isValidAccess());
 	assert(s.myScope !is null);
 
-	checkInvalid(current, s, s.name);
-	checkTemplateRedefinition(current, s.name);
+	checkInvalid(current, s, s.name, errSink);
+	checkTemplateRedefinition(current, s.name, errSink);
 	ir.Status status;
 	current.addType(s, s.name, /*#out*/status);
 	if (status != ir.Status.Success) {
-		throw panic(/*#ref*/s.loc, "gather redefinition");
+		panic(errSink, s, "gather redefinition");
+		assert(false);  // @todo abortless errors
 	}
 }
 
-void gather(ir.Scope current, ir.Union u, Where where)
+void gather(ir.Scope current, ir.Union u, Where where, ErrorSink errSink)
 {
 	assert(u.access.isValidAccess());
 	assert(u.myScope !is null);
 
-	checkInvalid(current, u, u.name);
-	checkTemplateRedefinition(current, u.name);
+	checkInvalid(current, u, u.name, errSink);
+	checkTemplateRedefinition(current, u.name, errSink);
 	ir.Status status;
 	current.addType(u, u.name, /*#out*/status);
 	if (status != ir.Status.Success) {
-		throw panic(/*#ref*/u.loc, "gather redefinition");
+		panic(errSink, u, "gather redefinition");
+		assert(false);  // @todo abortless errors
 	}
 }
 
-void gather(ir.Scope current, ir.Class c, Where where)
+void gather(ir.Scope current, ir.Class c, Where where, ErrorSink errSink)
 {
 	assert(c.access.isValidAccess());
 	assert(c.myScope !is null);
 
-	checkInvalid(current, c, c.name);
-	checkTemplateRedefinition(current, c.name);
+	checkInvalid(current, c, c.name, errSink);
+	checkTemplateRedefinition(current, c.name, errSink);
 	ir.Status status;
 	current.addType(c, c.name, /*#out*/status);
 	if (status != ir.Status.Success) {
-		throw panic(/*#ref*/c.loc, "gather redefinition");
+		panic(errSink, c, "gather redefinition");
+		assert(false);  // @todo abortless errors
 	}
 }
 
-void gather(ir.Scope current, ir.Enum e, Where where)
+void gather(ir.Scope current, ir.Enum e, Where where, ErrorSink errSink)
 {
 	assert(e.access.isValidAccess());
 	assert(e.myScope !is null);
 
-	checkInvalid(current, e, e.name);
-	checkTemplateRedefinition(current, e.name);
+	checkInvalid(current, e, e.name, errSink);
+	checkTemplateRedefinition(current, e.name, errSink);
 	ir.Status status;
 	current.addType(e, e.name, /*#out*/status);
 	if (status != ir.Status.Success) {
-		throw panic(/*#ref*/e.loc, "gather redefinition");
+		panic(errSink, e, "gather redefinition");
+		assert(false);  // @todo abortless errors
 	}
 }
 
-void gather(ir.Scope current, ir._Interface i, Where where)
+void gather(ir.Scope current, ir._Interface i, Where where, ErrorSink errSink)
 {
 	assert(i.access.isValidAccess());
 	assert(i.myScope !is null);
 
-	checkInvalid(current, i, i.name);
-	checkTemplateRedefinition(current, i.name);
+	checkInvalid(current, i, i.name, errSink);
+	checkTemplateRedefinition(current, i.name, errSink);
 	ir.Status status;
 	current.addType(i, i.name, /*#out*/status);
 	if (status != ir.Status.Success) {
-		throw panic(/*#ref*/i.loc, "gather redefinition");
+		panic(errSink, i, "gather redefinition");
+		assert(false);  // @todo abortless errors
 	}
 }
 
-void gather(ir.Scope current, ir.MixinFunction mf, Where where)
+void gather(ir.Scope current, ir.MixinFunction mf, Where where, ErrorSink errSink)
 {
 	// @TODO assert(mf.access.isValidAccess());
 
-	checkInvalid(current, mf, mf.name);
+	checkInvalid(current, mf, mf.name, errSink);
 	ir.Status status;
 	current.addTemplate(mf, mf.name, /*#out*/status);
 	if (status != ir.Status.Success) {
-		throw panic(/*#ref*/mf.loc, "template redefinition");
+		panic(errSink, mf, "template redefinition");
+		assert(false);  // @todo abortless errors
 	}
 }
 
-void gather(ir.Scope current, ir.MixinTemplate mt, Where where)
+void gather(ir.Scope current, ir.MixinTemplate mt, Where where, ErrorSink errSink)
 {
 	// @TODO assert(mt.access.isValidAccess());
 
-	checkInvalid(current, mt, mt.name);
+	checkInvalid(current, mt, mt.name, errSink);
 	ir.Status status;
 	current.addTemplate(mt, mt.name, /*#out*/status);
 	if (status != ir.Status.Success) {
-		throw panic(/*#ref*/mt.loc, "template redefinition");
+		panic(errSink, mt, "template redefinition");
+		assert(false);  // @todo abortless errors
 	}
 }
 
-void gather(ir.Scope current, ir.TemplateDefinition td, Where where)
+void gather(ir.Scope current, ir.TemplateDefinition td, Where where, ErrorSink errSink)
 {
-	checkInvalid(current, td, td.name);
-	checkTemplateRedefinition(current, td.name);
+	checkInvalid(current, td, td.name, errSink);
+	checkTemplateRedefinition(current, td.name, errSink);
 	ir.Status status;
 	current.addTemplate(td, td.name, /*#out*/status);
 	if (status != ir.Status.Success) {
-		throw panic(/*#ref*/td.loc, "template redefinition");
+		panic(errSink, td, "template redefinition");
+		assert(false);  // @todo abortless errors
 	}
 }
 
@@ -305,7 +322,7 @@ void addScope(ir.Module m)
 	m.myScope = new ir.Scope(m, name);
 }
 
-void addScope(ir.Scope current, ir.Function func, ir.Type thisType, ir.Function[] functionStack)
+void addScope(ir.Scope current, ir.Function func, ir.Type thisType, ir.Function[] functionStack, ErrorSink errSink)
 {
 	int nestedDepth = current.nestedDepth;
 	if (func.kind == ir.Function.Kind.Nested ||
@@ -320,7 +337,8 @@ void addScope(ir.Scope current, ir.Function func, ir.Type thisType, ir.Function[
 				ir.Status status;
 				func.myScope.addValue(var, var.name, /*#out*/status);
 				if (status != ir.Status.Success) {
-					throw panic(/*#ref*/func.loc, "value redefinition");
+					panic(errSink, func, "value redefinition");
+					assert(false);  // @todo abortless errors
 				}
 			}
 		}
@@ -356,11 +374,12 @@ void addScope(ir.Scope current, ir.BlockStatement bs)
 	bs.myScope = new ir.Scope(current, bs, "block", current.nestedDepth);
 }
 
-void addScope(ir.Scope current, ir.Struct s)
+void addScope(ir.Scope current, ir.Struct s, ErrorSink errSink)
 {
 	auto agg = cast(ir.Aggregate) current.node;
 	if (s.name is null && agg is null) {
-		throw makeAnonymousAggregateAtTopLevel(s);
+		errorMsg(errSink, s, anonymousAggregateAtTopLevelMsg());
+		assert(false);  // @todo abortless errors
 	}
 	if (s.name is null) {
 		agg.anonymousAggregates ~= s;
@@ -373,11 +392,12 @@ void addScope(ir.Scope current, ir.Struct s)
 	s.myScope = new ir.Scope(current, s, s.name, current.nestedDepth);
 }
 
-void addScope(ir.Scope current, ir.Union u)
+void addScope(ir.Scope current, ir.Union u, ErrorSink errSink)
 {
 	auto agg = cast(ir.Aggregate) current.node;
 	if (u.name is null && agg is null) {
-		throw makeAnonymousAggregateAtTopLevel(u);
+		errorMsg(errSink, u, anonymousAggregateAtTopLevelMsg());
+		assert(false);  // @todo abortless errors
 	}
 	if (u.name is null) {
 		agg.anonymousAggregates ~= u;
@@ -396,20 +416,22 @@ void addScope(ir.Scope current, ir.Enum e)
 	e.myScope = new ir.Scope(current, e, e.name, current.nestedDepth);
 }
 
-void addScope(ir.Scope current, ir.Class c, Where where)
+void addScope(ir.Scope current, ir.Class c, Where where, ErrorSink errSink)
 {
 	if (c.name is null) {
-		throw panic(c, "anonymous classes not supported");
+		panic(errSink, c, "anonymous classes not supported");
+		assert(false);  // @todo abortless errors
 	}
 
 	assert(c.myScope is null);
 	c.myScope = new ir.Scope(current, c, c.name, current.nestedDepth);
 }
 
-void addScope(ir.Scope current, ir._Interface i)
+void addScope(ir.Scope current, ir._Interface i, ErrorSink errSink)
 {
 	if (i.name is null) {
-		throw panic(i, "anonymous interfaces not supported");
+		panic(errSink, i, "anonymous interfaces not supported");
+		assert(false);  // @todo abortless errors
 	}
 
 	assert(i.myScope is null);
@@ -431,11 +453,13 @@ protected:
 	ir.Function[] mFunctionStack;
 	ir.Module mModule;
 	bool mWarningsEnabled;
+	ErrorSink mErrSink;
 
 public:
-	this(bool warningsEnabled)
+	this(bool warningsEnabled, ErrorSink errSink)
 	{
 		mWarningsEnabled = warningsEnabled;
+		mErrSink = errSink;
 	}
 
 
@@ -552,28 +576,28 @@ public:
 
 	override Status enter(ir.Alias a)
 	{
-		gather(current, a, where);
+		gather(current, a, where, mErrSink);
 		return Continue;
 	}
 
 	override Status enter(ir.Variable v)
 	{
-		gather(current, v, where, mFunctionStack, mWarningsEnabled);
+		gather(current, v, where, mFunctionStack, mWarningsEnabled, mErrSink);
 		return Continue;
 	}
 
 	override Status enter(ir.Class c)
 	{
-		addScope(current, c, where);
-		gather(current, c, where);
+		addScope(current, c, where, mErrSink);
+		gather(current, c, where, mErrSink);
 		push(c.myScope, c);
 		return Continue;
 	}
 
 	override Status enter(ir._Interface i)
 	{
-		addScope(current, i);
-		gather(current, i, where);
+		addScope(current, i, mErrSink);
+		gather(current, i, where, mErrSink);
 		push(i.myScope, i);
 		return Continue;
 	}
@@ -581,8 +605,8 @@ public:
 	override Status enter(ir.Struct s)
 	{
 		if (s.myScope is null) {
-			addScope(current, s);
-			gather(current, s, where);
+			addScope(current, s, mErrSink);
+			gather(current, s, where, mErrSink);
 		}
 		push(s.myScope, s);
 		return Continue;
@@ -590,8 +614,8 @@ public:
 
 	override Status enter(ir.Union u)
 	{
-		addScope(current, u);
-		gather(current, u, where);
+		addScope(current, u, mErrSink);
+		gather(current, u, where, mErrSink);
 		push(u.myScope, u);
 		return Continue;
 	}
@@ -599,7 +623,7 @@ public:
 	override Status enter(ir.Enum e)
 	{
 		addScope(current, e);
-		gather(current, e, where);
+		gather(current, e, where, mErrSink);
 		push(e.myScope, e);
 		return Continue;
 	}
@@ -613,13 +637,14 @@ public:
 			func.kind = ir.Function.Kind.Nested;
 		}
 
-		gather(current, func, where);
-		addScope(current, func, thisType, mFunctionStack);
+		gather(current, func, where, mErrSink);
+		addScope(current, func, thisType, mFunctionStack, mErrSink);
 		push(func);
 
 		// I don't think this is the right place for this.
 		if (func.isAbstract && func._body !is null) {
-			throw makeAbstractBodyNotEmpty(func, func);
+			errorMsg(mErrSink, func, abstractBodyNotEmptyMsg(func));
+			assert(false);  // @todo abortless errors
 		}
 		return Continue;
 	}
@@ -628,11 +653,11 @@ public:
 	{
 		enter(fes.block);
 		foreach (var; fes.itervars) {
-			gather(current, var, where, mFunctionStack, mWarningsEnabled);
+			gather(current, var, where, mFunctionStack, mWarningsEnabled, mErrSink);
 		}
 		if (fes.aggregate !is null) acceptExp(/*#ref*/fes.aggregate, this);
 		if (fes.beginIntegerRange !is null) {
-			panicAssert(fes, fes.endIntegerRange !is null);
+			passert(mErrSink, fes, fes.endIntegerRange !is null);
 			acceptExp(/*#ref*/fes.beginIntegerRange, this);
 			acceptExp(/*#ref*/fes.endIntegerRange, this);
 		}
@@ -647,7 +672,7 @@ public:
 	{
 		enter(fs.block);
 		foreach (var; fs.initVars) {
-			gather(current, var, where, mFunctionStack, mWarningsEnabled);
+			gather(current, var, where, mFunctionStack, mWarningsEnabled, mErrSink);
 		}
 		if (fs.test !is null) {
 			acceptExp(/*#ref*/fs.test, this);
@@ -668,32 +693,33 @@ public:
 		push(bs.myScope);
 		// TODO: unittest stuff triggers this
 		if (mFunctionStack.length == 0) {
-			throw panic(/*#ref*/bs.loc, "block statement outside of function");
+			panic(mErrSink, bs, "block statement outside of function");
+			assert(false);  // @todo abortless errors
 		}
 		return Continue;
 	}
 
 	override Status enter(ir.MixinFunction mf)
 	{
-		gather(current, mf, where);
+		gather(current, mf, where, mErrSink);
 		return Continue;
 	}
 
 	override Status enter(ir.MixinTemplate mt)
 	{
-		gather(current, mt, where);
+		gather(current, mt, where, mErrSink);
 		return Continue;
 	}
 
 	override Status enter(ir.EnumDeclaration e)
 	{
-		gather(current, e, where);
+		gather(current, e, where, mErrSink);
 		return Continue;
 	}
 
 	override Status visit(ir.TemplateDefinition td)
 	{
-		gather(current, td, where);
+		gather(current, td, where, mErrSink);
 		return Continue;
 	}
 

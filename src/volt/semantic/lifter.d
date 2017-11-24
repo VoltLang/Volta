@@ -72,7 +72,7 @@ public:
 		auto ret = mMod;
 		mMod = null;
 		debug {
-			(new IrVerifier()).transform(ret);
+			(new IrVerifier(lp.errSink)).transform(ret);
 		}
 		return ret;
 	}
