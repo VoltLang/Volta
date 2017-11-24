@@ -8,6 +8,8 @@ import watt.io.std : output;
 import watt.text.format : format;
 
 import ir = volta.ir;
+import pp = volta.postparse.pass;
+
 import volta.util.util;
 
 import volt.errors;
@@ -40,7 +42,6 @@ import volt.semantic.classresolver;
 
 import volt.postparse.missing;
 import volt.postparse.gatherer;
-import volt.postparse.condremoval;
 import volt.postparse.attribremoval;
 import volt.postparse.scopereplacer;
 import volt.postparse.importresolver;
@@ -116,7 +117,7 @@ public:
 
 		mTracker = new WorkTracker();
 
-		postParse ~= new TimerPass("p1-cond-rem", new ConditionalRemoval(ver));
+		postParse ~= new TimerPass("pp", new pp.PostParsePass(err, ver));
 		if (mMode == Mode.RemoveConditionalsOnly) {
 			return;
 		}
