@@ -7,12 +7,18 @@ module volta.ir.tokenstream;
 
 public import volta.ir.token;
 
+import volta.interfaces : ErrorSink;
+import volta.errors;
+
 
 /*!
  * Class used by the parser to read lexed tokens.
  */
 class TokenStream
 {
+public:
+	ErrorSink errSink;
+
 protected:
 	Token[] mTokens;
 	size_t mIndex;
@@ -25,11 +31,18 @@ public:
 	 * Throws:
 	 *   CompilerPanic if token stream is not valid.
 	 */
-	this(Token[] tokens)
+	this(Token[] tokens, ErrorSink errSink)
 	{
-		assert(tokens.length >= 3, "Token stream too short.");
-		assert(tokens[0].type == TokenType.Begin, "Token stream not started correctly.");
-		assert(tokens[$-1].type == TokenType.End, "Token stream not terminated correctly.");
+		this.errSink = errSink;
+		if (tokens.length < 3) {
+			panic(errSink, "Token stream too short.");
+		}
+		if (tokens[0].type != TokenType.Begin) {
+			panic(errSink, "Token stream not started correctly.");
+		}
+		if (tokens[$-1].type != TokenType.End) {
+			panic(errSink, "Token stream not terminated correctly.");
+		}
 		this.mTokens = tokens;
 	}
 
@@ -64,7 +77,9 @@ public:
 	 */
 	final int opEquals(scope const(TokenType)[] types)
 	in {
-		assert(types.length > 0);
+		if (types.length == 0) {
+			panic(errSink, "Empty types array passed to opEquals.");
+		}
 	}
 	body {
 		foreach (i, right; types) {
@@ -131,7 +146,9 @@ public:
 	 */
 	final Token lookbehind(size_t n)
 	{
-		assert(n <= mIndex, "Token array access out of bounds.");
+		if (n > mIndex) {
+			panic(errSink, "Token array access out of bounds.");
+		}
 		return mTokens[mIndex - n];
 	}
 
@@ -154,7 +171,9 @@ public:
 	 */
 	final void restore(size_t index)
 	{
-		assert(index < mTokens.length);
+		if (index >= mTokens.length) {
+			panic(errSink, "Bad restore index.");
+		}
 		mIndex = index;
 	}
 }
