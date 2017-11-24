@@ -38,7 +38,7 @@ TokenWriter lex(Source source)
 
 	if (lexMagicFlags(tw) == LexStatus.Failed) {
 		errorMsg(source.errSink, /*#ref*/tw.source.loc, "bad magic flag (/*#... at the top of the file).");
-		assert(false);  // @todo abortless error handling
+		return tw;
 	}
 
 	if ((tw.source.loc.filename.endsWith(".d") != 0 ||
@@ -46,7 +46,7 @@ TokenWriter lex(Source source)
 		!tw.magicFlagD) {
 		errorMsg(source.errSink, /*#ref*/tw.source.loc,
 			"volta will only compile a file with the extension '.d' if '/*#D*/' is at the top of the file.");
-		assert(false);  // @todo abortless error handling
+		return tw;
 	}
 
 	do {
@@ -54,7 +54,7 @@ TokenWriter lex(Source source)
 			continue;
 		}
 		errorMsg(source.errSink, /*#ref*/tw.errors[0].loc, tw.errors[0].errorMessage());
-		assert(false);  // @todo abortless error handling
+		return tw;
 	} while (tw.lastAdded.type != TokenType.End);
 
 	return tw;
@@ -151,7 +151,7 @@ LexStatus lexUnsupported(TokenWriter tw, string s)
 LexStatus lexPanic(TokenWriter tw, Location loc, string msg)
 {
 	panic(tw.errSink, /*#ref*/loc, msg);
-	assert(false);  // @todo abortless error handling
+	return Failed;
 }
 
 Token currentLocationToken(TokenWriter tw)
