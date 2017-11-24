@@ -9,7 +9,7 @@ generate code.
 
 ## Volta
 
-Volta is the compiler for the language. This repo also contains the runtime,
+Volta is the compiler for the Volt language. This repo also contains the runtime,
 code needed to support language features. The runtime is not the standard library,
 which is code that supports software development in general. That can be found
 in the [Watt](https://github.com/VoltLang/Watt) repository.
