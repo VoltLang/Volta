@@ -517,7 +517,6 @@ class ParserStream : TokenStream
 {
 public:
 	ParserError[] parserErrors;
-	ErrorSink errSink;
 
 	//! Error raised shouldn't be ignored.
 	bool neverIgnoreError;
@@ -545,9 +544,8 @@ public:
 	this(Token[] tokens, Settings settings, ErrorSink errSink)
 	{
 		this.settings = settings;
-		this.errSink = errSink;
 		pushCommentLevel();
-		super(tokens);
+		super(tokens, errSink);
 	}
 
 	/*!
