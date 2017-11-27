@@ -10,11 +10,12 @@
 module volt.postparse.attribremoval;
 
 import ir = volta.ir;
-import volta.util.util;
 
 import volt.errors;
 import volt.interfaces;
-import volt.visitor.manip;
+
+import volta.util.util;
+import volta.util.sinks;
 import volta.visitor.visitor;
 
 
@@ -68,11 +69,7 @@ public:
 	override Status enter(ir.TopLevelBlock tlb)
 	{
 		// Filter out any Attributes.
-		version (Volt) {
-			tlb.nodes = manipNodes(tlb.nodes, nodeManipDg);
-		} else {
-			tlb.nodes = manipNodes(tlb.nodes, &nodeManipDg);
-		}
+		tlb.nodes = manip(tlb.nodes);
 		return ContinueParent;
 	}
 
@@ -544,7 +541,7 @@ protected:
 		mCtx[$-1].stack ~= mStack;
 	}
 
-	ir.Node[] attrManip(ir.Attribute attr)
+	void manipAttr(ref NodeSink ns, ir.Attribute attr)
 	{
 		auto stack = [attr];
 		attrPush(attr);
@@ -557,7 +554,7 @@ protected:
 		}
 
 		if (attr.members is null) {
-			return null;
+			return;
 		}
 
 		scope (exit) {
@@ -571,26 +568,42 @@ protected:
 
 		if (attr.members.nodes.length > 0) {
 			ctxPush(attr, true);
-			version (Volt) {
-				return manipNodes(attr.members.nodes, nodeManipDg);
-			} else {
-				return manipNodes(attr.members.nodes, &nodeManipDg);
-			}
-		} else {
-			return null;
+			return manip(/*#ref*/ns, attr.members.nodes);
 		}
 	}
 
-	bool nodeManipDg(ir.Node node, out ir.Node[] ret)
+
+	/*
+	 *
+	 * Manip flattening code.
+	 *
+	 */
+
+	ir.Node[] manip(ir.Node[] nodes)
 	{
-		switch (node.nodeType) with (ir.NodeType) {
+		NodeSink ns;
+		manip(/*#ref*/ns, nodes);
+		return ns.toArray();
+	}
+
+	void manip(ref NodeSink ns, ir.Node[] nodes)
+	{
+		foreach (n; nodes) {
+			manip(/*#ref*/ns, n);
+		}
+	}
+
+	void manip(ref NodeSink ns, ir.Node n)
+	{
+		switch (n.nodeType) with (ir.NodeType) {
 		case Attribute:
-			auto attr = cast(ir.Attribute)node;
-			ret = attrManip(attr);
-			return true;
+			auto attr = n.toAttributeFast();
+			manipAttr(/*#ref*/ns, attr);
+			break;
 		default:
-			accept(node, this);
-			return false;
+			accept(n, this);
+			ns.sink(n);
+			break;
 		}
 	}
 
