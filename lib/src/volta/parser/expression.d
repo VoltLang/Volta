@@ -2036,8 +2036,9 @@ ParseStatus parseComposableString(ParserStream ps, out ir.Exp exp)
 			if (c != '}') {
 				continue;
 			}
+			auto str = cast(string)unescapeString(ps.errSink, /*#ref*/cs.loc, literal.value[a .. b-1]);
 			ir.Exp e;
-			auto succeeded = parseInlineExp(/*#ref*/cs.loc, ps, literal.value[a .. b-1], /*#out*/e);
+			auto succeeded = parseInlineExp(/*#ref*/cs.loc, ps, str, /*#out*/e);
 			if (!succeeded) {
 				ps.parserErrors[$-1].loc = cs.loc;
 				return parseFailed(ps, cs); // TODO: better error
