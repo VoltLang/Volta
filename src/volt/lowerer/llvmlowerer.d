@@ -546,9 +546,20 @@ void lowerComposableStringArrayComponent(LanguagePass lp, ir.Scope current, ir.E
 {
 	auto loc = e.loc;
 	lowerComposableStringStringComponent(buildConstantStringNoEscape(/*#ref*/loc, "["), sexp, sinkVar, dgt);
+
+	ir.Variable arrayVariable;
+	auto type = getExpType(e);
+	arrayVariable = buildVariable(/*#ref*/loc, copyType(type), ir.Variable.Storage.Function, current.genAnonIdent(), copyExp(e));
+	arrayVariable.mangledName = arrayVariable.type.mangledName = mangle(type);
+	dgt(arrayVariable);
+	ir.ExpReference aref()
+	{
+		return buildExpReference(/*#ref*/loc, arrayVariable, arrayVariable.name);
+	}
+
 	ir.ForStatement fs;
 	ir.Variable ivar;
-	buildForStatement(/*#ref*/e.loc, lp.target, current, buildArrayLength(/*#ref*/loc, lp.target, copyExp(e)), /*#out*/fs, /*#out*/ivar);
+	buildForStatement(/*#ref*/e.loc, lp.target, current, buildArrayLength(/*#ref*/loc, lp.target, aref()), /*#out*/fs, /*#out*/ivar);
 	void addToForStatement(ir.Node n)
 	{
 		auto exp = cast(ir.Exp)n;
@@ -569,11 +580,11 @@ void lowerComposableStringArrayComponent(LanguagePass lp, ir.Scope current, ir.E
 		auto forDgt = addToForStatement;
 		auto getDgt = getNode;
 	}
-	lowerComposableStringComponent(lp, current, buildIndex(/*#ref*/e.loc, copyExp(e),
+	lowerComposableStringComponent(lp, current, buildIndex(/*#ref*/e.loc, aref(),
 		buildExpReference(/*#ref*/ivar.loc, ivar, ivar.name)),
 		sexp, sinkVar, forDgt, lowerer);
 
-	auto lengthSub1 = buildSub(/*#ref*/loc, buildArrayLength(/*#ref*/loc, lp.target, copyExp(e)), buildConstantSizeT(/*#ref*/loc, lp.target, 1));
+	auto lengthSub1 = buildSub(/*#ref*/loc, buildArrayLength(/*#ref*/loc, lp.target, aref()), buildConstantSizeT(/*#ref*/loc, lp.target, 1));
 	auto cmp = buildBinOp(/*#ref*/loc, ir.BinOp.Op.Less, buildExpReference(/*#ref*/loc, ivar, ivar.name), lengthSub1);
 
 	lowerComposableStringStringComponent(buildConstantStringNoEscape(/*#ref*/loc, ", "), sexp, sinkVar, getDgt);
