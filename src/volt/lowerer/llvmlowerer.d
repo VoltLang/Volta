@@ -470,9 +470,20 @@ void lowerComposableStringAAComponent(LanguagePass lp, ir.Scope current, ir.Exp 
 	ir.AAType aatype, ir.StatementExp sexp, ir.Variable sinkVar, NodeConsumer dgt,
 	LlvmLowerer lowerer)
 {
+	auto loc = e.loc;
+	ir.Variable aaVariable;
+	auto type = getExpType(e);
+	aaVariable = buildVariable(/*#ref*/loc, copyType(type), ir.Variable.Storage.Function, current.genAnonIdent(), copyExp(e));
+	aaVariable.mangledName = aaVariable.type.mangledName = mangle(type);
+	dgt(aaVariable);
+	ir.ExpReference aaref()
+	{
+		return buildExpReference(/*#ref*/loc, aaVariable, aaVariable.name);
+	}
+
 	ir.Exp keys()
 	{
-		auto _keys = buildAAKeys(/*#ref*/e.loc, aatype, [copyExp(e)]);
+		auto _keys = buildAAKeys(/*#ref*/e.loc, aatype, [aaref()]);
 		ir.Exp kexp = _keys;
 		lowerBuiltin(lp, current, /*#ref*/kexp, _keys, lowerer);
 		return kexp;
@@ -480,7 +491,7 @@ void lowerComposableStringAAComponent(LanguagePass lp, ir.Scope current, ir.Exp 
 
 	ir.Exp values()
 	{
-		auto _values = buildAAValues(/*#ref*/e.loc, aatype, [copyExp(e)]);
+		auto _values = buildAAValues(/*#ref*/e.loc, aatype, [aaref()]);
 		ir.Exp vexp = _values;
 		lowerBuiltin(lp, current,/*#ref*/ vexp, _values, lowerer);
 		return vexp;
@@ -488,13 +499,12 @@ void lowerComposableStringAAComponent(LanguagePass lp, ir.Scope current, ir.Exp 
 
 	ir.Exp length()
 	{
-		auto _length = buildAALength(/*#ref*/e.loc, lp.target, [copyExp(e)]);
+		auto _length = buildAALength(/*#ref*/e.loc, lp.target, [aaref()]);
 		ir.Exp lexp = _length;
 		lowerBuiltin(lp, current, /*#ref*/lexp, _length, lowerer);
 		return lexp;
 	}
 
-	auto loc = e.loc;
 	lowerComposableStringStringComponent(buildConstantStringNoEscape(/*#ref*/loc, "["), sexp, sinkVar, dgt);
 	ir.ForStatement fs;
 	ir.Variable ivar;
