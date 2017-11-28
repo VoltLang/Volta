@@ -186,16 +186,8 @@ ir.Store lookupAsThisScope(LanguagePass lp, ir.Scope _scope, ref in Location loc
 			if (originalScopeIsClass) {
 				classLookup = isOrInheritsFrom(callingMethodsParentClass, _class);
 			}
-//			ir.Module newModule;
-//			if (ret.originalNodes.length > 0) {
-//				auto originalAlias = ret.originalNodes[0].toAliasChecked();
-//				if (originalAlias !is null && originalAlias.lookScope !is null) {
-//					newModule = getModuleFromScope(/*#ref*/loc, originalAlias.lookScope);
-//				}
-//			}
-//			if (newModule !is lookupModule) {
+			// @todo https://trello.com/c/6ZNd3G9D/398-lookupd
 			checkAccess(/*#ref*/loc, name, ret, classLookup);
-//			}
 		}
 
 		return ensureResolved(lp, ret);
