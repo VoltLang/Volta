@@ -361,11 +361,6 @@ CompilerException makeNoFieldOrPropertyOrUFCS(ref in Location loc, string value,
 	return new CompilerError(/*#ref*/loc, format("'%s' is neither field, nor property, nor a UFCS function of %s.", value, typeString(t)), file, line);
 }
 
-CompilerException makeUsedBindFromPrivateImport(ref in Location loc, string bind, string file = __FILE__, const int line = __LINE__)
-{
-	return new CompilerError(/*#ref*/loc, format("may not bind from private import, as '%s' does.", bind), file, line);
-}
-
 CompilerException makeOverriddenNeedsProperty(ir.Function f, string file = __FILE__, const int line = __LINE__)
 {
 	return new CompilerError(/*#ref*/f.loc, format("functions like '%s' that override @property functions must be marked @property themselves.", f.name), file, line);

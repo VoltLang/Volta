@@ -812,11 +812,6 @@ ir.Store walkGetStore(LanguagePass lp, ref in Location loc, ref WalkContext ctx,
 	// Get only unqiue stores.
 	ir.Store[] stores = ctx.stores.values;
 
-	// Helpful error message if you happen to bind to a private symbol.
-	if (stores.length == 0 && ctx.privateLookup) {
-		throw makeUsedBindFromPrivateImport(/*#ref*/loc, name);
-	}
-
 	// We found nothing.
 	if (stores.length == 0) {
 		return null;
