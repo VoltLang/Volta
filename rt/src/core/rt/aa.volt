@@ -85,19 +85,3 @@ fn vrt_aa_rehash(rbtv: void*);
  * The `get` method for a pointer keyed associative array.
  */
 fn vrt_aa_get_ptr(rbtv: void*, key: void*, _default: void*) void*;
-/*!
- * The `get` method for a primitive key, primitive value associative array.
- */
-fn vrt_aa_get_pp(rbtv: void*, key: ulong, _default: ulong) ulong;
-/*!
- * The `get` method for an array key, array value associative array.
- */
-fn vrt_aa_get_aa(rbtv: void*, key: void[], _default: void[] ) void*;
-/*!
- * The `get` method for an array key, primitive value associative array.
- */
-fn vrt_aa_get_ap(rbtv: void*, key: void[], _default: ulong) ulong;
-/*!
- * The `get` method for a primitive key, array value associative array.
- */
-fn vrt_aa_get_pa(rbtv: void*, key: ulong, _default: void[] ) void*;
