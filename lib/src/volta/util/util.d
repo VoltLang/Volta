@@ -1882,6 +1882,18 @@ ir.Struct buildStruct(ErrorSink errSink, ref in Location loc, ir.TopLevelBlock t
 	foreach (i, member; members) {
 		s.members.nodes[i] = member;
 		ir.Status status;
+
+		/* In an ideal world, the caller would detect this error.
+		 * However, we don't want to incur another AA memory/lookup 
+		 * cost per struct/class, or a linear search, so it's cheaper
+		 * to do it here.
+		 */
+		auto store = s.myScope.getStore(member.name);
+		if (store !is null) {
+			errorRedefine(errSink, /*#ref*/loc, /*#ref*/store.node.loc, member.name);
+			return s;
+		}
+
 		s.myScope.addValue(member, member.name, /*#out*/status);
 		if (status != ir.Status.Success) {
 			panic(errSink, /*#ref*/loc, "value redefinition");

@@ -64,6 +64,13 @@ void errorExpected(ErrorSink es, ir.Node n, string expected, string file = __FIL
 	es.errorExpected(/*#ref*/ n.loc, expected, file, line);
 }
 
+void errorRedefine(ErrorSink es, ref in Location newDef, ref in Location oldDef, string name,
+				   string file = __FILE__, int line = __LINE__)
+{
+	auto msg = format("symbol '%s' redefinition. First defined @ %s.", name, oldDef.toString());
+	es.onError(/*#ref*/newDef, msg, file, line);
+}
+
 /*
  *
  * Warnings
