@@ -76,10 +76,10 @@ public:
  * @link passPost Phase 1, PostParse @endlink, works like this:
  * 1. All of the version statements are resolved for the entire module.
  * 2. Then, for each Module, Class, Struct, and Enum's TopLevelBlock:
- *   1. Apply all attributes in the current block or its direct children.
- *   2. Add symbols to scope in the current block or its direct children.
- *   3. Then do those steps for for each child TopLevelBlock that
- *      brings in a new scope (Classes, Enums, Structs).
+ *    1. Apply all attributes in the current block or its direct children.
+ *    2. Add symbols to scope in the current block or its direct children.
+ *    3. Then do those steps for for each child TopLevelBlock that
+ *       brings in a new scope (Classes, Enums, Structs).
  * 3. Resolve the imports.
  * 4. Go from top to bottom resolving static ifs (applying step 2
  *    to the selected TopLevelBlock).
