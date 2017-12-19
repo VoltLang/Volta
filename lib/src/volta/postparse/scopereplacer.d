@@ -97,7 +97,7 @@ public:
 			return accept(td._function, this);
 		}
 		panic(errSink, td, "Invalid TemplateDefinition");
-		assert(false);  // @todo abortless errors
+		return Continue;
 	}
 
 
@@ -126,7 +126,7 @@ private:
 	{
 		if (functionStack.length == 0) {
 			errorMsg(errSink, ss, scopeOutsideFunctionMsg());
-			assert(false);  // @todo abortless errors
+			return null;
 		}
 
 		return convertToFunction(ss.kind, ss.block, functionStack[$-1]);

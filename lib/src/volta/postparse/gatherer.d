@@ -82,7 +82,7 @@ bool isValidAccess(ir.Access access)
 
 void gather(ir.Scope current, ir.EnumDeclaration e, Where where, ErrorSink errSink)
 {
-	// @TODO assert(e.access.isValidAccess());
+	// @TODO passert(e.access.isValidAccess());
 	ir.Status status;
 	current.addEnumDeclaration(e, /*#out*/status);
 	if (status != ir.Status.Success) {
@@ -93,9 +93,9 @@ void gather(ir.Scope current, ir.EnumDeclaration e, Where where, ErrorSink errSi
 
 void gather(ir.Scope current, ir.Alias a, Where where, ErrorSink errSink)
 {
-	assert(a.access.isValidAccess());
-	assert(a.lookScope is null);
-	assert(a.lookModule is null);
+	passert(errSink, a, a.access.isValidAccess());
+	passert(errSink, a, a.lookScope is null);
+	passert(errSink, a, a.lookModule is null);
 
 	a.lookScope = current;
 	ir.Status status;
@@ -129,7 +129,7 @@ void checkTemplateRedefinition(ir.Scope current, string name, ErrorSink errSink)
 
 void gather(ir.Scope current, ir.Variable v, Where where, ir.Function[] functionStack, bool warningsEnabled, ErrorSink errSink)
 {
-	assert(v.access.isValidAccess());
+	passert(errSink, v, v.access.isValidAccess());
 
 	// TODO Move to semantic.
 	auto shadowStore = findShadowed(current, /*#ref*/v.loc, v.name, warningsEnabled);
@@ -167,7 +167,7 @@ void gather(ir.Scope current, ir.Variable v, Where where, ir.Function[] function
 
 void gather(ir.Scope current, ir.Function func, Where where, ErrorSink errSink)
 {
-	assert(func.access.isValidAccess());
+	passert(errSink, func, func.access.isValidAccess());
 
 	if (func.name !is null) {
 		checkInvalid(current, func, func.name, errSink);
@@ -194,8 +194,8 @@ void gather(ir.Scope current, ir.Function func, Where where, ErrorSink errSink)
 
 void gather(ir.Scope current, ir.Struct s, Where where, ErrorSink errSink)
 {
-	assert(s.access.isValidAccess());
-	assert(s.myScope !is null);
+	passert(errSink, s, s.access.isValidAccess());
+	passert(errSink, s, s.myScope !is null);
 
 	checkInvalid(current, s, s.name, errSink);
 	checkTemplateRedefinition(current, s.name, errSink);
@@ -209,8 +209,8 @@ void gather(ir.Scope current, ir.Struct s, Where where, ErrorSink errSink)
 
 void gather(ir.Scope current, ir.Union u, Where where, ErrorSink errSink)
 {
-	assert(u.access.isValidAccess());
-	assert(u.myScope !is null);
+	passert(errSink, u, u.access.isValidAccess());
+	passert(errSink, u, u.myScope !is null);
 
 	checkInvalid(current, u, u.name, errSink);
 	checkTemplateRedefinition(current, u.name, errSink);
@@ -224,8 +224,8 @@ void gather(ir.Scope current, ir.Union u, Where where, ErrorSink errSink)
 
 void gather(ir.Scope current, ir.Class c, Where where, ErrorSink errSink)
 {
-	assert(c.access.isValidAccess());
-	assert(c.myScope !is null);
+	passert(errSink, c, c.access.isValidAccess());
+	passert(errSink, c, c.myScope !is null);
 
 	checkInvalid(current, c, c.name, errSink);
 	checkTemplateRedefinition(current, c.name, errSink);
@@ -239,8 +239,8 @@ void gather(ir.Scope current, ir.Class c, Where where, ErrorSink errSink)
 
 void gather(ir.Scope current, ir.Enum e, Where where, ErrorSink errSink)
 {
-	assert(e.access.isValidAccess());
-	assert(e.myScope !is null);
+	passert(errSink, e, e.access.isValidAccess());
+	passert(errSink, e, e.myScope !is null);
 
 	checkInvalid(current, e, e.name, errSink);
 	checkTemplateRedefinition(current, e.name, errSink);
@@ -254,8 +254,8 @@ void gather(ir.Scope current, ir.Enum e, Where where, ErrorSink errSink)
 
 void gather(ir.Scope current, ir._Interface i, Where where, ErrorSink errSink)
 {
-	assert(i.access.isValidAccess());
-	assert(i.myScope !is null);
+	passert(errSink, i, i.access.isValidAccess());
+	passert(errSink, i, i.myScope !is null);
 
 	checkInvalid(current, i, i.name, errSink);
 	checkTemplateRedefinition(current, i.name, errSink);
@@ -269,7 +269,7 @@ void gather(ir.Scope current, ir._Interface i, Where where, ErrorSink errSink)
 
 void gather(ir.Scope current, ir.MixinFunction mf, Where where, ErrorSink errSink)
 {
-	// @TODO assert(mf.access.isValidAccess());
+	// @TODO passert(mf.access.isValidAccess());
 
 	checkInvalid(current, mf, mf.name, errSink);
 	ir.Status status;
@@ -282,7 +282,7 @@ void gather(ir.Scope current, ir.MixinFunction mf, Where where, ErrorSink errSin
 
 void gather(ir.Scope current, ir.MixinTemplate mt, Where where, ErrorSink errSink)
 {
-	// @TODO assert(mt.access.isValidAccess());
+	// @TODO passert(mt.access.isValidAccess());
 
 	checkInvalid(current, mt, mt.name, errSink);
 	ir.Status status;
@@ -345,7 +345,8 @@ void addScope(ir.Scope current, ir.Function func, ir.Type thisType, ir.Function[
 	}
 
 	if (thisType is null || func.kind == ir.Function.Kind.Function) {
-		assert(func.kind != ir.Function.Kind.Member &&
+		passert(errSink, func,
+		       func.kind != ir.Function.Kind.Member &&
 		       func.kind != ir.Function.Kind.Destructor &&
 		       func.kind != ir.Function.Kind.Constructor);
 		return;
@@ -388,7 +389,7 @@ void addScope(ir.Scope current, ir.Struct s, ErrorSink errSink)
 		agg.anonymousVars ~= buildVariableSmart(/*#ref*/s.loc, s, ir.Variable.Storage.Field, name);
 		agg.members.nodes ~= agg.anonymousVars[$-1];
 	}
-	assert(s.myScope is null);
+	passert(errSink, s, s.myScope is null);
 	s.myScope = new ir.Scope(current, s, s.name, current.nestedDepth);
 }
 
@@ -406,13 +407,13 @@ void addScope(ir.Scope current, ir.Union u, ErrorSink errSink)
 		agg.anonymousVars ~= buildVariableSmart(/*#ref*/u.loc, u, ir.Variable.Storage.Field, name);
 		agg.members.nodes ~= agg.anonymousVars[$-1];
 	}	
-	assert(u.myScope is null);
+	passert(errSink, u, u.myScope is null);
 	u.myScope = new ir.Scope(current, u, u.name, current.nestedDepth);
 }
 
-void addScope(ir.Scope current, ir.Enum e)
+void addScope(ir.Scope current, ir.Enum e, ErrorSink errSink)
 {
-	assert(e.myScope is null);
+	passert(errSink, e, e.myScope is null);
 	e.myScope = new ir.Scope(current, e, e.name, current.nestedDepth);
 }
 
@@ -423,7 +424,7 @@ void addScope(ir.Scope current, ir.Class c, Where where, ErrorSink errSink)
 		return;
 	}
 
-	assert(c.myScope is null);
+	passert(errSink, c, c.myScope is null);
 	c.myScope = new ir.Scope(current, c, c.name, current.nestedDepth);
 }
 
@@ -434,7 +435,7 @@ void addScope(ir.Scope current, ir._Interface i, ErrorSink errSink)
 		return;
 	}
 
-	assert(i.myScope is null);
+	passert(errSink, i, i.myScope is null);
 	i.myScope = new ir.Scope(current, i, i.name, current.nestedDepth);
 }
 
@@ -479,16 +480,16 @@ public:
 		accept(m, this);
 		m.gathered = true;
 
-		assert(mWhere.length == 0);
+		passert(mErrSink, m, mWhere.length == 0);
 	}
 
 	void transform(ir.Scope current, ir.BlockStatement bs)
 	{
-		assert(mWhere.length == 0);
+		passert(mErrSink, bs, mWhere.length == 0);
 		push(current);
 		accept(bs, this);
 		pop();
-		assert(mWhere.length == 0);
+		passert(mErrSink, bs, mWhere.length == 0);
 	}
 
 	override void close()
@@ -521,7 +522,7 @@ public:
 		mWhere = mWhere[0 .. $-1];
 
 		if (thisType !is null) {
-			assert(thisType is mThis[$-1]);
+			passert(mErrSink, thisType, thisType is mThis[$-1]);
 			mThis = mThis[0 .. $-1];
 		}
 	}
@@ -535,7 +536,7 @@ public:
 	void pop(ir.Function func)
 	{
 		pop();
-		assert(func is mFunctionStack[$-1]);
+		passert(mErrSink, func, func is mFunctionStack[$-1]);
 		mFunctionStack = mFunctionStack[0 .. $-1];
 	}
 
@@ -568,7 +569,7 @@ public:
 		push(m.myScope);
 
 		// The code will think this is a function otherwise.
-		assert(mWhere.length == 1);
+		passert(mErrSink, m, mWhere.length == 1);
 		mWhere[0] = Where.Module;
 
 		return Continue;
@@ -622,7 +623,7 @@ public:
 
 	override Status enter(ir.Enum e)
 	{
-		addScope(current, e);
+		addScope(current, e, mErrSink);
 		gather(current, e, where, mErrSink);
 		push(e.myScope, e);
 		return Continue;

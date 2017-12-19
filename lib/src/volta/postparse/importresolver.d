@@ -52,7 +52,7 @@ public:
 
 	override void transform(ir.Module m)
 	{
-		assert(mModule is null);
+		passert(mErr, m, mModule is null);
 
 		mModule = m;
 		accept(m, this);

@@ -278,14 +278,14 @@ protected:
 				} // with
 				break;
 			case MangledName:
-				assert(attr.arguments.length == 1);
+				passert(errSink, attr, attr.arguments.length == 1);
 				auto constant = cast(ir.Constant) attr.arguments[0];
 				if (constant is null || constant._string.length <= 2 || constant._string[0] != '\"') {
 					errorExpected(errSink, attr, "non empty string literal argument to MangledName.");
 					return;
 				}
-				assert(constant._string[0] == '\"');
-				assert(constant._string[$-1] == '\"');
+				passert(errSink, constant, constant._string[0] == '\"');
+				passert(errSink, constant, constant._string[$-1] == '\"');
 				func.mangledName = constant._string[1..$-1];
 				break;
 			case Label:

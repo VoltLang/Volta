@@ -53,7 +53,7 @@ public:
 
 	override void transform(ir.Module m)
 	{
-		assert(mModule is null);
+		passert(mErr, m, mModule is null);
 
 		mModule = m;
 		accept(m, this);
@@ -84,12 +84,12 @@ public:
 	{
 		if (current !is mModule.myScope) {
 			errorMsg(mErr, i, nonTopLevelImportMsg());
-			assert(false);  // @todo abortless errors
+			return ContinueParent;
 		}
 
 		if (i.isStatic && i.access != ir.Access.Private) {
 			errorExpected(mErr, i, format("static import '%s' to be private", i.names[0]));
-			assert(false);  // @todo abortless errors
+			return ContinueParent;
 		}
 
 		auto mod = mGetMod(i.names[0]);

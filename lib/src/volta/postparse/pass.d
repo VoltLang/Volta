@@ -74,7 +74,7 @@ public:
 			return Continue;
 		}
 		mErr.panic(c, "should not find condition here");
-		assert(false);
+		return Continue;
 	}
 
 	override Status visit(ir.TemplateDefinition td)
@@ -98,7 +98,7 @@ public:
 		}
 
 		mErr.panic(td, "Invalid TemplateDefinition");
-		assert(false);
+		return Continue;
 	}
 
 

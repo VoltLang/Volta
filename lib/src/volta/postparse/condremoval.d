@@ -71,7 +71,7 @@ public:
 			return Continue;
 		}
 		mErr.panic(c, "should not find condition here");
-		assert(false);
+		return Continue;
 	}
 
 	override Status visit(ir.TemplateDefinition td)
@@ -93,7 +93,7 @@ public:
 		}
 
 		mErr.panic("Invalid TemplateDefinition");
-		assert(false);
+		return Continue;
 	}
 
 
@@ -206,7 +206,7 @@ private:
 		}
 		bool[] stack;
 		evaluateCondition(c, c.exp, /*#ref*/stack);
-		assert(stack.length == 1);
+		passert(mErr, c, stack.length == 1);
 		return stack[0];
 	}
 
@@ -215,19 +215,19 @@ private:
 		switch (e.nodeType) with (ir.NodeType) {
 		case IdentifierExp:
 			auto i = cast(ir.IdentifierExp) e;
-			assert(i !is null);
+			passert(mErr, c, i !is null);
 			if (c.kind == ir.Condition.Kind.Version) {
 				stack ~= mVer.isVersionSet(i.value);
 			} else if (c.kind == ir.Condition.Kind.Debug) {
 				stack ~= mVer.isDebugSet(i.value);
 			} else {
 				mErr.panic(e, "should not enter this path.");
-				assert(false);
+				return;
 			}
 			return;
 		case Unary:
 			auto u = cast(ir.Unary) e;
-			assert(u !is null);
+			passert(mErr, c, u !is null);
 			if (u.op != ir.Unary.Op.Not) {
 				goto default;
 			}
@@ -239,7 +239,7 @@ private:
 			return;
 		case BinOp:
 			auto b = cast(ir.BinOp) e;
-			assert(b !is null);
+			passert(mErr, c, b !is null);
 			evaluateCondition(c, b.right, /*#ref*/stack);
 			evaluateCondition(c, b.left, /*#ref*/stack);
 			if (stack.length < 2) {
@@ -258,7 +258,7 @@ private:
 			return;
 		default:
 			mErr.errorExpected(e, "identifier, &&, ||, (), or !");
-			assert(false);
+			return;
 		}
 	}
 }
