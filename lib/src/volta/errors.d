@@ -37,11 +37,12 @@ void panic(ErrorSink es, ir.Node n, string message, string file = __FILE__, int 
 	es.panic(/*#ref*/n.loc, message, file, line);
 }
 
-void passert(ErrorSink es, ir.Node n, bool condition, string file = __FILE__, int line = __LINE__)
+bool passert(ErrorSink es, ir.Node n, bool condition, string file = __FILE__, int line = __LINE__)
 {
 	if (!condition) {
 		panic(es, "passert failure", file, line);
 	}
+	return condition;
 }
 
 

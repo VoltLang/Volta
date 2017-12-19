@@ -53,7 +53,9 @@ public:
 
 	override void transform(ir.Module m)
 	{
-		passert(mErr, m, mModule is null);
+		if (!passert(mErr, m, mModule is null)) {
+			return;
+		}
 
 		mModule = m;
 		accept(m, this);

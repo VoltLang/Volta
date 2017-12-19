@@ -107,7 +107,9 @@ private:
 		if (t.finallyBlock is null) {
 			return t;
 		}
-		passert(errSink, t, functionStack.length > 0);
+		if (!passert(errSink, t, functionStack.length > 0)) {
+			return null;
+		}
 
 		auto f = t.finallyBlock;
 		t.finallyBlock = null;

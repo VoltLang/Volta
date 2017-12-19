@@ -206,7 +206,9 @@ private:
 		}
 		bool[] stack;
 		evaluateCondition(c, c.exp, /*#ref*/stack);
-		passert(mErr, c, stack.length == 1);
+		if (!passert(mErr, c, stack.length == 1)) {
+			return false;
+		}
 		return stack[0];
 	}
 
@@ -215,7 +217,9 @@ private:
 		switch (e.nodeType) with (ir.NodeType) {
 		case IdentifierExp:
 			auto i = cast(ir.IdentifierExp) e;
-			passert(mErr, c, i !is null);
+			if (!passert(mErr, c, i !is null)) {
+				goto default;
+			}
 			if (c.kind == ir.Condition.Kind.Version) {
 				stack ~= mVer.isVersionSet(i.value);
 			} else if (c.kind == ir.Condition.Kind.Debug) {
@@ -227,7 +231,9 @@ private:
 			return;
 		case Unary:
 			auto u = cast(ir.Unary) e;
-			passert(mErr, c, u !is null);
+			if (!passert(mErr, c, u !is null)) {
+				goto default;
+			}
 			if (u.op != ir.Unary.Op.Not) {
 				goto default;
 			}
@@ -239,7 +245,9 @@ private:
 			return;
 		case BinOp:
 			auto b = cast(ir.BinOp) e;
-			passert(mErr, c, b !is null);
+			if (!passert(mErr, c, b !is null)) {
+				goto default;
+			}
 			evaluateCondition(c, b.right, /*#ref*/stack);
 			evaluateCondition(c, b.left, /*#ref*/stack);
 			if (stack.length < 2) {

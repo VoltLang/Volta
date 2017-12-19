@@ -278,14 +278,18 @@ protected:
 				} // with
 				break;
 			case MangledName:
-				passert(errSink, attr, attr.arguments.length == 1);
+				if (!passert(errSink, attr, attr.arguments.length == 1)) {
+					return;
+				}
 				auto constant = cast(ir.Constant) attr.arguments[0];
 				if (constant is null || constant._string.length <= 2 || constant._string[0] != '\"') {
 					errorExpected(errSink, attr, "non empty string literal argument to MangledName.");
 					return;
 				}
-				passert(errSink, constant, constant._string[0] == '\"');
-				passert(errSink, constant, constant._string[$-1] == '\"');
+				if (!passert(errSink, constant, constant._string[0] == '\"') ||
+					!passert(errSink, constant, constant._string[$-1] == '\"')) {
+					return;
+				}
 				func.mangledName = constant._string[1..$-1];
 				break;
 			case Label:
@@ -368,14 +372,19 @@ protected:
 				d.isExtern = true;
 				break;
 			case MangledName:
-				passert(errSink, attr, attr.arguments.length == 1);
+				if (!passert(errSink, attr, attr.arguments.length == 1)) {
+					return;
+				}
 				auto constant = cast(ir.Constant) attr.arguments[0];
 				if (constant is null || constant._string.length <= 2 || constant._string[0] != '\"') {
 					errorExpected(errSink, attr, "non empty string literal argument to MangledName.");
 					passert(errSink, attr, false);
+					return;
 				}
-				passert(errSink, attr, constant._string[0] == '\"');
-				passert(errSink, attr, constant._string[$-1] == '\"');
+				if (!passert(errSink, attr, constant._string[0] == '\"') ||
+					!passert(errSink, attr, constant._string[$-1] == '\"')) {
+					return;
+				}
 				d.mangledName = constant._string[1..$-1];
 				break;
 			default:

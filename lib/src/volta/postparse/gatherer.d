@@ -658,7 +658,9 @@ public:
 		}
 		if (fes.aggregate !is null) acceptExp(/*#ref*/fes.aggregate, this);
 		if (fes.beginIntegerRange !is null) {
-			passert(mErrSink, fes, fes.endIntegerRange !is null);
+			if (!passert(mErrSink, fes, fes.endIntegerRange !is null)) {
+				return ContinueParent;
+			}
 			acceptExp(/*#ref*/fes.beginIntegerRange, this);
 			acceptExp(/*#ref*/fes.endIntegerRange, this);
 		}

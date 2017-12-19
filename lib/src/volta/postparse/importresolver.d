@@ -122,7 +122,9 @@ public:
 		ir.Scope[] scopes;
 		foreach (mod; i.targetModules) {
 			gatherer.addScope(mod);
-			passert(mErr, i, mod.myScope !is null);
+			if (!passert(mErr, i, mod.myScope !is null)) {
+				return;
+			}
 			scopes ~= mod.myScope;
 		}
 
@@ -161,8 +163,10 @@ public:
 	 */
 	void handleAliases(ir.Import i)
 	{
-		passert(mErr, i, i.targetModules.length == 1);
-		passert(mErr, i, i.names.length == i.targetModules.length);
+		if (!passert(mErr, i, i.targetModules.length == 1) ||
+			!passert(mErr, i, i.names.length == i.targetModules.length)) {
+			return;
+		}
 		auto mod = i.targetModules[0];
 
 		auto bindScope = current;
@@ -214,13 +218,17 @@ public:
 	 */
 	void handleRegularAndStatic(ir.Import i)
 	{
-		passert(mErr, i, i.targetModules.length == 1);
+		if (!passert(mErr, i, i.targetModules.length == 1)) {
+			return;
+		}
 		auto mod = i.targetModules[0];
 
 		// TODO We should not use mod.myScope here,
 		// but intead link directly to the module.
 		gatherer.addScope(mod);
-		passert(mErr, i, mod.myScope !is null);
+		if (!passert(mErr, i, mod.myScope !is null)) {
+			return;
+		}
 
 		// Where we add the module binding.
 		ir.Scope parent = mModule.myScope;
