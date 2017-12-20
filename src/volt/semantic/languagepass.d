@@ -550,6 +550,7 @@ protected:
 	override void doResolve(ir.Class c)
 	{
 		fillInParentIfNeeded(this, c);
+		fillInInterfacesIfNeeded(this, c);
 		c.isResolved = true;
 		resolve(c.myScope, c.members);
 	}

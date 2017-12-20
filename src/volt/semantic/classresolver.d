@@ -229,6 +229,9 @@ void fillInParentIfNeeded(LanguagePass lp, ir.Class c)
 
 void fillInInterfacesIfNeeded(LanguagePass lp, ir.Class c)
 {
+	if (c.parentInterfaces.length != 0) {
+		return;
+	}
 	foreach (ifaceName; c.interfaces) {
 		auto iface = cast(ir._Interface) lookupType(lp, c.myScope.parent, ifaceName);
 		if (iface is null) {
