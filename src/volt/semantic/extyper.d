@@ -2349,6 +2349,31 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 		throw makeCannotModify(binop, ltype);
 	}
 
+	bool hasDeclaration(ir.Exp e)
+	{
+		return e.nodeType == ir.NodeType.ExpReference || e.nodeType == ir.NodeType.AccessExp;
+	}
+
+	if (isAssign && hasDeclaration(binop.left) && hasDeclaration(binop.right)) {
+		ir.Variable getVariable(ir.Exp e)
+		{
+			auto eref = e.toExpReferenceChecked();
+			if (eref !is null) {
+				return eref.decl.toVariableChecked();
+			}
+			auto aexp = e.toAccessExpChecked();
+			if (aexp !is null) {
+				return aexp.field;
+			}
+			return null;
+		}
+		auto lvar = getVariable(binop.left);
+		auto rvar = getVariable(binop.right);
+		if (lvar !is null && lvar is rvar) {
+			warningAssignToSelf(/*#ref*/exp.loc, lvar.name, ctx.lp.warningsEnabled);
+		}
+	}
+
 	if (handleIfNull(ctx, rtype, /*#ref*/binop.left)) {
 		ltype = rtype; // Update the type.
 	}

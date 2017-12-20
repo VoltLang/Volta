@@ -100,6 +100,13 @@ void warning(ErrorSink es, ir.Node n, string message, string file = __FILE__, in
 	es.warning(/*#ref*/n.loc, message, file, line);
 }
 
+void warningAssignToSelf(ref in Location loc, string name, bool warningsEnabled)
+{
+	if (warningsEnabled) {
+		warning(/*#ref*/loc, format("assigning %s to itself, expression has no effect.", name));
+	}
+}
+
 void warningOldStyleVariable(ref in Location loc, bool magicFlagD, Settings settings)
 {
 	if (!magicFlagD && settings.warningsEnabled) {
