@@ -11,6 +11,7 @@ import ir = volta.ir;
 import pp = volta.postparse.pass;
 
 import volta.util.util;
+import volta.util.dup;
 
 import volt.errors;
 import volt.interfaces;
@@ -359,11 +360,7 @@ public:
 
 	override ir.Module[] getModules()
 	{
-		version (Volt) {
-			return mModules.values;
-		} else {
-			return mModules.values.dup;
-		}
+		return mModules.values.dup();
 	}
 
 

@@ -15,6 +15,7 @@ import volt.interfaces;
 import volta.ir.location;
 
 import volta.util.sinks;
+import volta.util.dup;
 
 import volt.semantic.util;
 import volt.semantic.mangle;
@@ -397,11 +398,7 @@ void appendClassMethodFunctions(LanguagePass lp, ir.Class _class, ref FunctionSi
 	foreach (method; methodss[$-1]) {
 		FunctionSink fnsink;
 		appendPotentialOverrideFunctions(/*#ref*/ifaceMethods, method, /*#ref*/fnsink);
-		version (Volt) {
-			ir.Type[] params = new ir.Type[](method.type.params);
-		} else {
-			ir.Type[] params = method.type.params.dup;
-		}
+		ir.Type[] params = method.type.params.dup();
 		if (fnsink.length == 0) {
 			continue;
 		}
@@ -433,11 +430,7 @@ void appendClassMethodFunctions(LanguagePass lp, ir.Class _class, ref FunctionSi
 			fnsink.sink(method);
 			if (fnsink.length > 0) {
 				// Ensure that this function is the only overload possibility for itself in its own class.
-				version (Volt) {
-					ir.Type[] params = new ir.Type[](method.type.params);
-				} else {
-					ir.Type[] params = method.type.params.dup;
-				}
+				ir.Type[] params = method.type.params.dup();
 				if (method.type.homogenousVariadic) {
 					auto atype = cast(ir.ArrayType) params[$ - 1];
 					panicAssert(method, atype !is null);
