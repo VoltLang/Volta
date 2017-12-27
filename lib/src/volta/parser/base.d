@@ -19,6 +19,7 @@ import volta.ir.tokenstream : TokenStream;
 import volta.ir.location : Location;
 import volta.errors;
 import volta.parser.errors;
+import volta.visitor.setExpLocationVisitor;
 
 
 /*
@@ -533,6 +534,9 @@ public:
 	//! Did the lexer pick up a /*#D*/ magic flag?
 	bool magicFlagD;
 
+	//! Used when parsing composable strings.
+	SetExpLocationVisitor setExpLocationVisitor;
+
 
 private:
 	string[] mComment;
@@ -544,6 +548,7 @@ public:
 	this(Token[] tokens, Settings settings, ErrorSink errSink)
 	{
 		this.settings = settings;
+		this.setExpLocationVisitor = new SetExpLocationVisitor();
 		pushCommentLevel();
 		super(tokens, errSink);
 	}

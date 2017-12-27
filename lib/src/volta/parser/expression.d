@@ -21,6 +21,7 @@ import volta.token.lexer : lex;
 import volta.parser.base;
 import volta.parser.declaration;
 import volta.util.string;
+import volta.visitor.visitor;
 
 ParseStatus parseExp(ParserStream ps, out ir.Exp exp)
 {
@@ -1976,7 +1977,8 @@ ParseStatus parseInlineExp(ref in Location loc, ParserStream ps, string slice, o
 		ps.parserErrors ~= newPs.parserErrors[$-1];
 		return succeeded;
 	}
-	exp.loc = loc;
+	ps.setExpLocationVisitor.newLocation = loc;
+	acceptExp(/*#ref*/exp, ps.setExpLocationVisitor);
 	return Succeeded;
 }
 
