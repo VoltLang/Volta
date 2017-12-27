@@ -10,7 +10,7 @@ import watt.io.std : writefln, writef, output;
 import watt.text.format : format;
 
 import ir = volta.ir;
-import volt.ir.printer;
+import volta.ir.printer;
 import volta.ir.location;
 
 import volt.errors;

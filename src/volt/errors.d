@@ -10,7 +10,7 @@ import watt.text.sink : StringSink;
 import watt.io.std : writefln;
 
 import ir = volta.ir;
-import volt.ir.printer;
+import volta.ir.printer;
 
 import volt.exceptions;
 public import volta.errors;

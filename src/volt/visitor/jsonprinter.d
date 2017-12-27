@@ -10,7 +10,7 @@ import watt.text.utf : encode;
 import watt.text.sink;
 
 import ir = volta.ir;
-import volt.ir.printer;
+import volta.ir.printer;
 
 import volt.errors;
 import volt.interfaces;

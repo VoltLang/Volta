@@ -2,7 +2,7 @@
 // Copyright © 2013-2016, Bernard Helyer.  All rights reserved.
 // Copyright © 2013-2016, Jakob Bornecrantz.  All rights reserved.
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-module volt.ir.printer;
+module volta.ir.printer;
 
 import watt.conv : toLower;
 import watt.text.format : format;
@@ -45,7 +45,6 @@ void write(Sink sink, ir.Type type, bool alwaysGlossed)
 		return;
 	}
 
-	assert(type !is null);
 	switch(type.nodeType) with(ir.NodeType) {
 	case PrimitiveType:
 		ir.PrimitiveType prim = cast(ir.PrimitiveType)type;
@@ -127,7 +126,6 @@ void write(Sink sink, ir.Type type, bool alwaysGlossed)
 	case Struct:
 	case Interface:
 		auto agg = cast(ir.Aggregate)type;
-		assert(agg !is null);
 		sink.write(agg.myScope.parent);
 		sink(agg.name);
 		break;
