@@ -549,6 +549,9 @@ protected:
 
 	override void doResolve(ir.Class c)
 	{
+		if (c.templateInstance !is null) {
+			throw makeUnsupported(/*#ref*/c.loc, "non struct template definitions.");
+		}
 		fillInParentIfNeeded(this, c);
 		fillInInterfacesIfNeeded(this, c);
 		c.isResolved = true;
