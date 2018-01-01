@@ -18,6 +18,395 @@ import volta.util.sinks;
 import volta.visitor.visitor;
 
 
+/*
+ *
+ * Attribute application code.
+ *
+ */
+
+/*!
+ * Loops over all attributes and applies them.
+ */
+void applyAttributes(ir.Import i, ir.Attribute[] attrs, ErrorSink errSink)
+{
+	foreach (attr; attrs) {
+		applyAttribute(i, attr, errSink);
+	}
+}
+
+/*!
+ * Loops over all attributes and applies them.
+ */
+void applyAttributes(ir.Function func, ir.Attribute[] attrs, ErrorSink errSink, TargetInfo target)
+{
+	foreach (attr; attrs) {
+		applyAttribute(func, attr, errSink, target);
+	}
+}
+
+/*!
+ * Loops over all attributes and applies them.
+ */
+void applyAttributes(ir.EnumDeclaration ed, ir.Attribute[] attrs, ErrorSink errSink)
+{
+	foreach (attr; attrs) {
+		applyAttribute(ed, attr, errSink);
+	}
+}
+
+/*!
+ * Loops over all attributes and applies them.
+ */
+void applyAttributes(ir.Variable d, ir.Attribute[] attrs, ErrorSink errSink, TargetInfo target)
+{
+	foreach (attr; attrs) {
+		applyAttribute(d, attr, errSink, target);
+	}
+}
+
+/*!
+ * Loops over all attributes and applies them.
+ */
+void applyAttributes(ir.Aggregate s, ir.Attribute[] attrs, ErrorSink errSink)
+{
+	foreach (attr; attrs) {
+		applyAttribute(s, attr, errSink);
+	}
+}
+
+/*!
+ * Loops over all attributes and applies them.
+ */
+void applyAttributes(ir._Interface i, ir.Attribute[] attrs, ErrorSink errSink)
+{
+	foreach (attr; attrs) {
+		applyAttribute(i, attr, errSink);
+	}
+}
+
+/*!
+ * Loops over all attributes and applies them.
+ */
+void applyAttributes(ir.Enum e, ir.Attribute[] attrs, ErrorSink errSink)
+{
+	foreach (attr; attrs) {
+		applyAttribute(e, attr, errSink);
+	}
+}
+
+/*!
+ * Loops over all attributes and applies them.
+ */
+void applyAttributes(ir.Alias a, ir.Attribute[] attrs, ErrorSink errSink)
+{
+	foreach (attr; attrs) {
+		applyAttribute(a, attr, errSink);
+	}
+}
+
+/*!
+ * Applies a single attribute.
+ */
+void applyAttribute(ir.Import i, ir.Attribute attr, ErrorSink errSink)
+{
+	switch(attr.kind) with (ir.Attribute.Kind) {
+	case Public:
+		i.access = ir.Access.Public;
+		break;
+	case Private:
+		i.access = ir.Access.Private;
+		break;
+	case Protected:
+		i.access = ir.Access.Protected;
+		break;
+	case Static:
+		i.isStatic = true;
+		break;
+	default:
+		// Warn?
+	}
+}
+
+/*!
+ * Applies a single attribute.
+ */
+void applyAttribute(ir.Function func, ir.Attribute attr, ErrorSink errSink, TargetInfo target)
+{
+	switch(attr.kind) with (ir.Attribute.Kind) {
+	case LinkageVolt:
+		func.type.linkage = ir.Linkage.Volt;
+		break;
+	case LinkageC:
+		func.type.linkage = ir.Linkage.C;
+		break;
+	case LinkageCPlusPlus:
+		func.type.linkage = ir.Linkage.CPlusPlus;
+		break;
+	case LinkageWindows:
+		func.type.linkage = ir.Linkage.Windows;
+		break;
+	case LinkagePascal:
+		func.type.linkage = ir.Linkage.Pascal;
+		break;
+	case LinkageSystem:
+		if (target.platform == Platform.MinGW) {
+			func.type.linkage = ir.Linkage.Windows;
+		} else {
+			func.type.linkage = ir.Linkage.C;
+		}
+		break;
+	case LoadDynamic:
+		func.loadDynamic = true;
+		break;
+	case Public:
+		func.access = ir.Access.Public;
+		break;
+	case Private:
+		func.access = ir.Access.Private;
+		break;
+	case Protected:
+		func.access = ir.Access.Protected;
+		break;
+	case Scope:
+		func.type.isScope = true;
+		break;
+	case Property:
+		func.type.isProperty = true;
+		break;
+	case Override:
+		func.isMarkedOverride = true;
+		break;
+	case Abstract:
+		func.isAbstract = true;
+		break;
+	case Final:
+		func.isFinal = true;
+		break;
+	case Static: // TODO (selfhost) remove.
+	case Local, Global:
+		with (ir.Function.Kind) {
+		if (func.kind == Constructor ||
+		    func.kind == Destructor) {
+			// We do not make (con|de)structors like this.
+		} else {
+			func.kind = ir.Function.Kind.Function;
+		}
+		} // with
+		break;
+	case MangledName:
+		if (!passert(errSink, attr, attr.arguments.length == 1)) {
+			return;
+		}
+		auto constant = cast(ir.Constant) attr.arguments[0];
+		if (constant is null || constant._string.length <= 2 || constant._string[0] != '\"') {
+			errorExpected(errSink, attr, "non empty string literal argument to MangledName.");
+			return;
+		}
+		if (!passert(errSink, constant, constant._string[0] == '\"') ||
+			!passert(errSink, constant, constant._string[$-1] == '\"')) {
+			return;
+		}
+		func.mangledName = constant._string[1..$-1];
+		break;
+	case Label:
+		func.type.forceLabel = true;
+		break;
+	default:
+		// Warn?
+	}
+}
+
+/*!
+ * Applies a single attribute.
+ */
+void applyAttribute(ir.EnumDeclaration ed, ir.Attribute attr, ErrorSink errSink)
+{
+	switch(attr.kind) with (ir.Attribute.Kind) {
+	case Public:
+		ed.access = ir.Access.Public;
+		break;
+	case Private:
+		ed.access = ir.Access.Private;
+		break;
+	case Protected:
+		ed.access = ir.Access.Protected;
+		break;
+	default:
+		// Warn?
+	}
+}
+
+/*!
+ * Applies a single attribute.
+ */
+void applyAttribute(ir.Variable d, ir.Attribute attr, ErrorSink errSink, TargetInfo target)
+{
+	switch(attr.kind) with (ir.Attribute.Kind) {
+	case Public:
+		d.access = ir.Access.Public;
+		break;
+	case Private:
+		d.access = ir.Access.Private;
+		break;
+	case Protected:
+		d.access = ir.Access.Protected;
+		break;
+	case Static:
+	case Global:
+		d.storage = ir.Variable.Storage.Global;
+		break;
+	case Local:
+		d.storage = ir.Variable.Storage.Local;
+		break;
+	case LinkageVolt:
+		d.linkage = ir.Linkage.Volt;
+		break;
+	case LinkageC:
+		d.linkage = ir.Linkage.C;
+		break;
+	case LinkageCPlusPlus:
+		d.linkage = ir.Linkage.CPlusPlus;
+		break;
+	case LinkageWindows:
+		d.linkage = ir.Linkage.Windows;
+		break;
+	case LinkagePascal:
+		d.linkage = ir.Linkage.Pascal;
+		break;
+	case LinkageSystem:
+		if (target.platform == Platform.MinGW) {
+			d.linkage = ir.Linkage.Windows;
+		} else {
+			d.linkage = ir.Linkage.C;
+		}
+		break;
+	case Extern:
+		d.isExtern = true;
+		break;
+	case MangledName:
+		if (!passert(errSink, attr, attr.arguments.length == 1)) {
+			return;
+		}
+		auto constant = cast(ir.Constant) attr.arguments[0];
+		if (constant is null || constant._string.length <= 2 || constant._string[0] != '\"') {
+			errorExpected(errSink, attr, "non empty string literal argument to MangledName.");
+			passert(errSink, attr, false);
+			return;
+		}
+		if (!passert(errSink, attr, constant._string[0] == '\"') ||
+		    !passert(errSink, attr, constant._string[$-1] == '\"')) {
+			return;
+		}
+		d.mangledName = constant._string[1..$-1];
+		break;
+	default:
+		// Warn?
+	}
+}
+
+/*!
+ * Applies a single attribute.
+ */
+void applyAttribute(ir.Aggregate s, ir.Attribute attr, ErrorSink errSink)
+{
+	switch(attr.kind) with (ir.Attribute.Kind) {
+	case Public:
+		s.access = ir.Access.Public;
+		break;
+	case Private:
+		s.access = ir.Access.Private;
+		break;
+	case Protected:
+		s.access = ir.Access.Protected;
+		break;
+	case Abstract:
+		auto c = cast(ir.Class) s;
+		if (c is null) {
+			errorMsg(errSink, s, badAbstractMsg());
+			return;
+		}
+		c.isAbstract = true;
+		break;
+	case Final:
+		auto c = cast(ir.Class) s;
+		if (c is null) {
+			errorMsg(errSink, s, badFinalMsg());
+			return;
+		}
+		c.isFinal = true;
+		break;
+	default:
+		// Warn?
+	}
+}
+
+/*!
+ * Applies a single attribute.
+ */
+void applyAttribute(ir._Interface i, ir.Attribute attr, ErrorSink errSink)
+{
+	switch(attr.kind) with (ir.Attribute.Kind) {
+	case Public:
+		i.access = ir.Access.Public;
+		break;
+	case Private:
+		i.access = ir.Access.Private;
+		break;
+	case Protected:
+		i.access = ir.Access.Protected;
+		break;
+	default:
+		// Warn?
+	}
+}
+
+/*!
+ * Applies a single attribute.
+ */
+void applyAttribute(ir.Enum e, ir.Attribute attr, ErrorSink errSink)
+{
+	switch(attr.kind) with (ir.Attribute.Kind) {
+	case Public:
+		e.access = ir.Access.Public;
+		break;
+	case Private:
+		e.access = ir.Access.Private;
+		break;
+	case Protected:
+		e.access = ir.Access.Protected;
+		break;
+	default:
+		// Warn?
+	}
+}
+
+/*!
+ * Applies a single attribute.
+ */
+void applyAttribute(ir.Alias a, ir.Attribute attr, ErrorSink errSink)
+{
+	switch(attr.kind) with (ir.Attribute.Kind) {
+	case Public:
+		a.access = ir.Access.Public;
+		break;
+	case Private:
+		a.access = ir.Access.Private;
+		break;
+	case Protected:
+		a.access = ir.Access.Protected;
+		break;
+	default:
+		// Warn?
+	}
+}
+
+
+/*
+ *
+ * Visitor code.
+ *
+ */
+
 /*!
  * A pass that turns Attributes nodes into fields on to
  * Functions, Classes and the like.
@@ -76,76 +465,76 @@ public:
 
 	override Status enter(ir.Import i)
 	{
-		applyAttributes(i, ctxTop.stack);
-		applyAttributes(i, mStack);
+		applyAttributes(i, ctxTop.stack, errSink);
+		applyAttributes(i, mStack, errSink);
 		return Continue;
 	}
 
 	override Status enter(ir.Function func)
 	{
-		applyAttributes(func, ctxTop.stack);
-		applyAttributes(func, mStack);
+		applyAttributes(func, ctxTop.stack, errSink, target);
+		applyAttributes(func, mStack, errSink, target);
 		ctxPush(func);
 		return Continue;
 	}
 
 	override Status enter(ir.Variable d)
 	{
-		applyAttributes(d, ctxTop.stack);
-		applyAttributes(d, mStack);
+		applyAttributes(d, ctxTop.stack, errSink, target);
+		applyAttributes(d, mStack, errSink, target);
 		return Continue;
 	}
 
 	override Status enter(ir.EnumDeclaration ed)
 	{
-		applyAttributes(ed, ctxTop.stack);
-		applyAttributes(ed, mStack);
+		applyAttributes(ed, ctxTop.stack, errSink);
+		applyAttributes(ed, mStack, errSink);
 		return Continue;
 	}
 
 	override Status enter(ir.Struct s)
 	{
-		applyAttributes(s, ctxTop.stack);
-		applyAttributes(s, mStack);
+		applyAttributes(s, ctxTop.stack, errSink);
+		applyAttributes(s, mStack, errSink);
 		ctxPush(s);
 		return Continue;
 	}
 
 	override Status enter(ir.Union u)
 	{
-		applyAttributes(u, ctxTop.stack);
-		applyAttributes(u, mStack);
+		applyAttributes(u, ctxTop.stack, errSink);
+		applyAttributes(u, mStack, errSink);
 		ctxPush(u);
 		return Continue;
 	}
 
 	override Status enter(ir.Class c)
 	{
-		applyAttributes(c, ctxTop.stack);
-		applyAttributes(c, mStack);
+		applyAttributes(c, ctxTop.stack, errSink);
+		applyAttributes(c, mStack, errSink);
 		ctxPush(c);
 		return Continue;
 	}
 
 	override Status enter(ir._Interface i)
 	{
-		applyAttributes(i, ctxTop.stack);
-		applyAttributes(i, mStack);
+		applyAttributes(i, ctxTop.stack, errSink);
+		applyAttributes(i, mStack, errSink);
 		ctxPush(i);
 		return Continue;
 	}
 
 	override Status enter(ir.Enum e)
 	{
-		applyAttributes(e, ctxTop.stack);
-		applyAttributes(e, mStack);
+		applyAttributes(e, ctxTop.stack, errSink);
+		applyAttributes(e, mStack, errSink);
 		return Continue;
 	}
 
 	override Status enter(ir.Alias a)
 	{
-		applyAttributes(a, ctxTop.stack);
-		applyAttributes(a, mStack);
+		applyAttributes(a, ctxTop.stack, errSink);
+		applyAttributes(a, mStack, errSink);
 		return Continue;
 	}
 
@@ -185,317 +574,6 @@ protected:
 	 * Apply functions.
 	 */
 
-	/*!
-	 * Loops over all attributes and applies them.
-	 */
-	void applyAttributes(ir.Import i, ir.Attribute[] attrs)
-	{
-		foreach (attr; attrs) {
-			switch(attr.kind) with (ir.Attribute.Kind) {
-			case Public:
-				i.access = ir.Access.Public;
-				break;
-			case Private:
-				i.access = ir.Access.Private;
-				break;
-			case Protected:
-				i.access = ir.Access.Protected;
-				break;
-			case Static:
-				i.isStatic = true;
-				break;
-			default:
-				// Warn?
-			}
-		}
-	}
-
-	/*!
-	 * Loops over all attributes and applies them.
-	 */
-	void applyAttributes(ir.Function func, ir.Attribute[] attrs)
-	{
-		foreach (attr; attrs) {
-			switch(attr.kind) with (ir.Attribute.Kind) {
-			case LinkageVolt:
-				func.type.linkage = ir.Linkage.Volt;
-				break;
-			case LinkageC:
-				func.type.linkage = ir.Linkage.C;
-				break;
-			case LinkageCPlusPlus:
-				func.type.linkage = ir.Linkage.CPlusPlus;
-				break;
-			case LinkageWindows:
-				func.type.linkage = ir.Linkage.Windows;
-				break;
-			case LinkagePascal:
-				func.type.linkage = ir.Linkage.Pascal;
-				break;
-			case LinkageSystem:
-				if (target.platform == Platform.MinGW) {
-					func.type.linkage = ir.Linkage.Windows;
-				} else {
-					func.type.linkage = ir.Linkage.C;
-				}
-				break;
-			case LoadDynamic:
-				func.loadDynamic = true;
-				break;
-			case Public:
-				func.access = ir.Access.Public;
-				break;
-			case Private:
-				func.access = ir.Access.Private;
-				break;
-			case Protected:
-				func.access = ir.Access.Protected;
-				break;
-			case Scope:
-				func.type.isScope = true;
-				break;
-			case Property:
-				func.type.isProperty = true;
-				break;
-			case Override:
-				func.isMarkedOverride = true;
-				break;
-			case Abstract:
-				func.isAbstract = true;
-				break;
-			case Final:
-				func.isFinal = true;
-				break;
-			case Static: // TODO (selfhost) remove.
-			case Local, Global:
-				with (ir.Function.Kind) {
-				if (func.kind == Constructor ||
-				    func.kind == Destructor) {
-					// We do not make (con|de)structors like this.
-				} else {
-					func.kind = ir.Function.Kind.Function;
-				}
-				} // with
-				break;
-			case MangledName:
-				if (!passert(errSink, attr, attr.arguments.length == 1)) {
-					return;
-				}
-				auto constant = cast(ir.Constant) attr.arguments[0];
-				if (constant is null || constant._string.length <= 2 || constant._string[0] != '\"') {
-					errorExpected(errSink, attr, "non empty string literal argument to MangledName.");
-					return;
-				}
-				if (!passert(errSink, constant, constant._string[0] == '\"') ||
-					!passert(errSink, constant, constant._string[$-1] == '\"')) {
-					return;
-				}
-				func.mangledName = constant._string[1..$-1];
-				break;
-			case Label:
-				func.type.forceLabel = true;
-				break;
-			default:
-				// Warn?
-			}
-		}
-	}
-
-	/*!
-	 * Loops over all attributes and applies them.
-	 */
-	void applyAttributes(ir.EnumDeclaration ed, ir.Attribute[] attrs)
-	{
-		foreach (attr; attrs) {
-			switch(attr.kind) with (ir.Attribute.Kind) {
-			case Public:
-				ed.access = ir.Access.Public;
-				break;
-			case Private:
-				ed.access = ir.Access.Private;
-				break;
-			case Protected:
-				ed.access = ir.Access.Protected;
-				break;
-			default:
-				// Warn?
-			}
-		}
-	}
-
-	/*!
-	 * Loops over all attributes and applies them.
-	 */
-	void applyAttributes(ir.Variable d, ir.Attribute[] attrs)
-	{
-		foreach (attr; attrs) {
-			switch(attr.kind) with (ir.Attribute.Kind) {
-			case Public:
-				d.access = ir.Access.Public;
-				break;
-			case Private:
-				d.access = ir.Access.Private;
-				break;
-			case Protected:
-				d.access = ir.Access.Protected;
-				break;
-			case Static:
-			case Global:
-				d.storage = ir.Variable.Storage.Global;
-				break;
-			case Local:
-				d.storage = ir.Variable.Storage.Local;
-				break;
-			case LinkageVolt:
-				d.linkage = ir.Linkage.Volt;
-				break;
-			case LinkageC:
-				d.linkage = ir.Linkage.C;
-				break;
-			case LinkageCPlusPlus:
-				d.linkage = ir.Linkage.CPlusPlus;
-				break;
-			case LinkageWindows:
-				d.linkage = ir.Linkage.Windows;
-				break;
-			case LinkagePascal:
-				d.linkage = ir.Linkage.Pascal;
-				break;
-			case LinkageSystem:
-				if (target.platform == Platform.MinGW) {
-					d.linkage = ir.Linkage.Windows;
-				} else {
-					d.linkage = ir.Linkage.C;
-				}
-				break;
-			case Extern:
-				d.isExtern = true;
-				break;
-			case MangledName:
-				if (!passert(errSink, attr, attr.arguments.length == 1)) {
-					return;
-				}
-				auto constant = cast(ir.Constant) attr.arguments[0];
-				if (constant is null || constant._string.length <= 2 || constant._string[0] != '\"') {
-					errorExpected(errSink, attr, "non empty string literal argument to MangledName.");
-					passert(errSink, attr, false);
-					return;
-				}
-				if (!passert(errSink, attr, constant._string[0] == '\"') ||
-					!passert(errSink, attr, constant._string[$-1] == '\"')) {
-					return;
-				}
-				d.mangledName = constant._string[1..$-1];
-				break;
-			default:
-				// Warn?
-			}
-		}
-	}
-
-	/*!
-	 * Loops over all attributes and applies them.
-	 */
-	void applyAttributes(ir.Aggregate s, ir.Attribute[] attrs)
-	{
-		foreach (attr; attrs) {
-			switch(attr.kind) with (ir.Attribute.Kind) {
-			case Public:
-				s.access = ir.Access.Public;
-				break;
-			case Private:
-				s.access = ir.Access.Private;
-				break;
-			case Protected:
-				s.access = ir.Access.Protected;
-				break;
-			case Abstract:
-				auto c = cast(ir.Class) s;
-				if (c is null) {
-					errorMsg(errSink, s, badAbstractMsg());
-					return;
-				}
-				c.isAbstract = true;
-				break;
-			case Final:
-				auto c = cast(ir.Class) s;
-				if (c is null) {
-					errorMsg(errSink, s, badFinalMsg());
-					return;
-				}
-				c.isFinal = true;
-				break;
-			default:
-				// Warn?
-			}
-		}
-	}
-
-	/*!
-	 * Loops over all attributes and applies them.
-	 */
-	void applyAttributes(ir._Interface i, ir.Attribute[] attrs)
-	{
-		foreach (attr; attrs) {
-			switch(attr.kind) with (ir.Attribute.Kind) {
-			case Public:
-				i.access = ir.Access.Public;
-				break;
-			case Private:
-				i.access = ir.Access.Private;
-				break;
-			case Protected:
-				i.access = ir.Access.Protected;
-				break;
-			default:
-				// Warn?
-			}
-		}
-	}
-
-	/*!
-	 * Loops over all attributes and applies them.
-	 */
-	void applyAttributes(ir.Enum e, ir.Attribute[] attrs)
-	{
-		foreach (attr; attrs) {
-			switch(attr.kind) with (ir.Attribute.Kind) {
-			case Public:
-				e.access = ir.Access.Public;
-				break;
-			case Private:
-				e.access = ir.Access.Private;
-				break;
-			case Protected:
-				e.access = ir.Access.Protected;
-				break;
-			default:
-				// Warn?
-			}
-		}
-	}
-
-	/*!
-	 * Loops over all attributes and applies them.
-	 */
-	void applyAttributes(ir.Alias a, ir.Attribute[] attrs)
-	{
-		foreach (attr; attrs) {
-			switch(attr.kind) with (ir.Attribute.Kind) {
-			case Public:
-				a.access = ir.Access.Public;
-				break;
-			case Private:
-				a.access = ir.Access.Private;
-				break;
-			case Protected:
-				a.access = ir.Access.Protected;
-				break;
-			default:
-				// Warn?
-			}
-		}
-	}
 
 	@property Context ctxTop()
 	{
