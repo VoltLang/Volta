@@ -27,7 +27,12 @@ a.exe*
 
 # Misc files
 b.bat
+.DS_Store
 
 # IDE files
 *.kdev*
 *.gdb_history
+
+# VLS Cruft
+**/node_modules
+**/vls/out
