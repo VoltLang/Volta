@@ -87,7 +87,7 @@ void errorRedefine(ErrorSink es, ref in Location newDef, ref in Location oldDef,
 
 void warning(ref in Location loc, string message)
 {
-	writefln(format("%s: warning: %s", loc.toString(), message));
+	error.writefln(format("%s: warning: %s", loc.toString(), message));
 }
 
 void warning(ErrorSink es, ref in Location loc, string message, string file = __FILE__, int line = __LINE__)

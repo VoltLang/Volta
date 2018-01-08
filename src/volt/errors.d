@@ -7,7 +7,7 @@ module volt.errors;
 import watt.conv : toLower;
 import watt.text.format : format;
 import watt.text.sink : StringSink;
-import watt.io.std : writefln;
+import watt.io.std : writefln, error;
 
 import ir = volta.ir;
 import volta.ir.printer;
@@ -22,7 +22,7 @@ void hackTypeWarning(ir.Node n, ir.Type nt, ir.Type ot)
 {
 	auto str = format("%s: warning: types differ (new) %s vs (old) %s",
 	       n.loc.toString(), typeString(nt), typeString(ot));
-	writefln(str);
+	error.writefln(str);
 }
 
 void warningAssignInCondition(ref in Location loc, bool warningsEnabled)
