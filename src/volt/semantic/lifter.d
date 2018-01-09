@@ -6,6 +6,7 @@ module volt.semantic.lifter;
 import ir = volta.ir;
 import volt.ir.lifter : Lifter;
 import volta.util.util : buildQualifiedName;
+import volta.util.dup;
 
 import volt.errors;
 import volt.interfaces;
@@ -217,14 +218,19 @@ protected:
 		assert(old.scopeSuccesses is null);
 		assert(old.scopeFailures is null);
 		assert(old.scopeExits is null);
-		assert(old.inContract is null);
 		assert(old.thisHiddenParameter is null);
 		assert(old.nestedHiddenParameter is null);
 		assert(old.nestedVariable is null);
 		assert(old.nestStruct is null);
+		assert(!old.hasInContract);
+		assert(!old.hasOutContract);
 
-		if (old._body !is null) {
-			func._body = copy(func.myScope, old._body);
+		if (old.hasBody) {
+			if (old.parsedBody !is null) {
+				func.parsedBody = copy(func.myScope, old.parsedBody);
+			} else {
+				func.tokensBody = old.tokensBody.dup();
+			}
 		}
 		return func;
 	}

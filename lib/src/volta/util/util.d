@@ -1786,9 +1786,9 @@ ir.Function buildFunction(ref in Location loc, ir.Scope _scope, string name, boo
 	func.type.ret.loc = loc;
 
 	if (buildBody) {
-		func._body = new ir.BlockStatement();
-		func._body.loc = loc;
-		func._body.myScope = new ir.Scope(func.myScope, func._body, name, func.myScope.nestedDepth);
+		func.parsedBody = new ir.BlockStatement();
+		func.parsedBody.loc = loc;
+		func.parsedBody.myScope = new ir.Scope(func.myScope, func.parsedBody, name, func.myScope.nestedDepth);
 	}
 
 	return func;
@@ -1805,9 +1805,9 @@ ir.Function buildFunction(ref in Location loc, ir.Scope _scope, string name, ir.
 
 	func.type = ftype;
 
-	func._body = new ir.BlockStatement();
-	func._body.loc = loc;
-	func._body.myScope = new ir.Scope(func.myScope, func._body, name, func.myScope.nestedDepth);
+	func.parsedBody = new ir.BlockStatement();
+	func.parsedBody.loc = loc;
+	func.parsedBody.myScope = new ir.Scope(func.myScope, func.parsedBody, name, func.myScope.nestedDepth);
 
 	return func;
 }

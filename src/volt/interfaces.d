@@ -4,6 +4,7 @@
 module volt.interfaces;
 
 import core.exception;
+import volta.settings;
 import volta.ir.location;
 import ir = volta.ir;
 
@@ -142,11 +143,14 @@ public:
 	//! The driver that created this LanguagePass.
 	Driver driver;
 
-	//! Holds the current version symbols for this comile.
+	//! Holds the current version symbols for this compilation.
 	VersionSet ver;
 
 	//! For which target are we compiling against.
 	TargetInfo target;
+
+	//! The settings used for this run.
+	Settings settings;
 
 	//! Parsing front to be used when parsing new code.
 	Frontend frontend;
@@ -313,7 +317,6 @@ public:
 	 */
 	abstract ir.Module[] getModules();
 
-
 	/*
 	 *
 	 * Circular dependancy checker.
@@ -332,7 +335,6 @@ public:
 	/*!
 	 * @}
 	 */
-
 
 	/*
 	 *

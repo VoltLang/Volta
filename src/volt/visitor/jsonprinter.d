@@ -286,7 +286,7 @@ public:
 			endList();
 		}
 
-		tag("hasBody", f._body !is null);
+		tag("hasBody", f.hasBody);
 		tag("access", ir.accessToString(f.access));
 		tag("isScope", f.type.isScope);
 		tag("isProperty", f.type.isProperty);

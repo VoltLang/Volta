@@ -44,6 +44,13 @@ public:
 		accept(m, this);
 	}
 
+	void transform(ir.Module m, ir.Function func, ir.BlockStatement bs)
+	{
+		enter(func);
+		accept(bs, this);
+		leave(func);
+	}
+
 	override void close()
 	{
 	}
@@ -144,7 +151,7 @@ private:
 		func.type.loc = block.loc;
 		func.type.ret = buildVoid(/*#ref*/block.loc);
 
-		func._body = block;
+		func.parsedBody = block;
 
 		final switch (kind) with (ir.ScopeKind) {
 		case Exit:

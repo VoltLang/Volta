@@ -150,7 +150,7 @@ LexStatus lexUnsupported(TokenWriter tw, string s)
 
 LexStatus lexPanic(TokenWriter tw, Location loc, string msg)
 {
-	panic(tw.errSink, /*#ref*/loc, msg);
+	panic(tw.source.errSink, /*#ref*/loc, msg);
 	return Failed;
 }
 

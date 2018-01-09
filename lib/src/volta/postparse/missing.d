@@ -17,6 +17,7 @@ import volta.errors;
 import volta.interfaces;
 import volta.visitor.visitor;
 import volta.visitor.scopemanager;
+import volta.util.moduleFromScope;
 
 alias GetMod = ir.Module delegate(ir.QualifiedName);
 
@@ -59,6 +60,13 @@ public:
 
 		mModule = m;
 		accept(m, this);
+		mModule = null;
+	}
+
+	void transform(ir.Module m, ir.Function func, ir.BlockStatement bs)
+	{
+		mModule = m;
+		accept(bs, this);
 		mModule = null;
 	}
 

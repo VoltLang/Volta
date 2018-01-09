@@ -10,6 +10,7 @@ import ir = volta.ir;
 import volta.util.util;
 import volta.util.copy;
 import volta.util.string;
+import volta.token.writer;
 
 import volta.errors;
 import volta.ir.token : isPrimitiveTypeToken, isStorageTypeToken;
@@ -1147,7 +1148,7 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func, string templ
 				return parseExpected(ps, /*#ref*/ps.peek.loc, func, "only one in block");
 			}
 			_in = true;
-			succeeded = parseBlock(ps, /*#out*/func.inContract);
+			succeeded = parseBraceCountedTokenList(ps, /*#out*/func.tokensIn, func);
 			if (!succeeded) {
 				return parseFailed(ps, func);
 			}
@@ -1169,7 +1170,7 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func, string templ
 				func.outParameter = identTok.value;
 				ps.get();
 			}
-			succeeded = parseBlock(ps, /*#out*/func.outContract);
+			succeeded = parseBraceCountedTokenList(ps, /*#out*/func.tokensOut, func);
 			if (!succeeded) {
 				return parseFailed(ps, func);
 			}
@@ -1180,7 +1181,7 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func, string templ
 				ps.get();
 			}
 			inBlocks = false;
-			succeeded = parseBlock(ps, /*#out*/func._body);
+			succeeded = parseBraceCountedTokenList(ps, /*#out*/func.tokensBody, func);
 			if (!succeeded) {
 				return parseFailed(ps, func);
 			}
@@ -1191,6 +1192,30 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func, string templ
 	}
 	matchIf(ps, TokenType.Semicolon);
 
+	return Succeeded;
+}
+
+ParseStatus parseBraceCountedTokenList(ParserStream ps, out ir.Token[] tokens, ir.Node owner)
+{
+	if (ps.peek.type != TokenType.OpenBrace) {
+		return parseFailed(ps, ir.NodeType.Function);
+	}
+	auto tokenWriter = new TokenWriter();
+	tokenWriter.addToken(ps.get());
+	auto braceDepth = 1;
+	while (braceDepth > 0) {
+		auto t = ps.get();
+		tokenWriter.addToken(t);
+		if (t.type == TokenType.OpenBrace) {
+			braceDepth++;
+		} else if (t.type == TokenType.CloseBrace) {
+			braceDepth--;
+		} else if (t.type == TokenType.End) {
+			return parseExpected(ps, /*#ref*/ps.peek.loc, owner, "closing brace");
+		}
+	}
+	tokenWriter.addEnd();
+	tokens = tokenWriter.getTokens();
 	return Succeeded;
 }
 
@@ -1248,7 +1273,7 @@ ParseStatus parseFunction(ParserStream ps, out ir.Function func, ir.Type base)
 				return parseExpected(ps, /*#ref*/ps.peek.loc, func, "only one in block");
 			}
 			_in = true;
-			succeeded = parseBlock(ps, /*#out*/func.inContract);
+			succeeded = parseBraceCountedTokenList(ps, /*#out*/func.tokensIn, func);
 			if (!succeeded) {
 				return parseFailed(ps, func);
 			}
@@ -1270,7 +1295,7 @@ ParseStatus parseFunction(ParserStream ps, out ir.Function func, ir.Type base)
 				func.outParameter = identTok.value;
 				ps.get();
 			}
-			succeeded = parseBlock(ps, /*#out*/func.outContract);
+			succeeded = parseBraceCountedTokenList(ps, /*#out*/func.tokensOut, func);
 			if (!succeeded) {
 				return parseFailed(ps, func);
 			}
@@ -1281,7 +1306,7 @@ ParseStatus parseFunction(ParserStream ps, out ir.Function func, ir.Type base)
 				ps.get();
 			}
 			inBlocks = false;
-			succeeded = parseBlock(ps, /*#out*/func._body);
+			succeeded = parseBraceCountedTokenList(ps, /*#out*/func.tokensBody, func);
 			if (!succeeded) {
 				return parseFailed(ps, func);
 			}

@@ -543,6 +543,7 @@ public:
 	override Status leave(ir.Union u) { ctxPop(u); return Continue; }
 	override Status leave(ir.Class c) { ctxPop(c); return Continue; }
 	override Status leave(ir._Interface i) { ctxPop(i); return Continue; }
+	override Status leave(ir.Module m) { mCtx = null; return Continue; }
 
 	override Status enter(ir.Attribute attr) { passert(errSink, attr, false); return Continue; }
 	override Status leave(ir.Attribute attr) { passert(errSink, attr, false); return Continue; }
@@ -712,6 +713,26 @@ public:
 		passert(errSink, m, mStack.length == 0);
 		passert(errSink, m, mCtx.length == 0);
 		accept(m, this);
+		mStack = null;
+		mCtx = null;
+	}
+
+	void transform(ir.Module m, ir.Function func, ir.BlockStatement bs)
+	{
+		passert(errSink, bs, mStack.length == 0);
+		passert(errSink, bs, mCtx.length == 0);
+
+		// Just need to call enter on the module.
+		enter(m);
+
+		assert(func !is null);
+		enter(func);
+
+		accept(bs, this);
+
+		assert(func !is null);
+		leave(func);
+
 		mStack = null;
 		mCtx = null;
 	}

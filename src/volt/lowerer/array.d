@@ -80,8 +80,8 @@ ir.Function getArrayAppendFunction(ref in Location loc, LanguagePass lp, ir.Modu
 
 	ir.Exp[] args;
 
-	auto allocated = buildVarStatSmart(lp.errSink, /*#ref*/loc, func._body, func._body.myScope, buildVoidPtr(/*#ref*/loc), "allocated");
-	auto count = buildVarStatSmart(lp.errSink, /*#ref*/loc, func._body, func._body.myScope, buildSizeT(/*#ref*/loc, lp.target), "count");
+	auto allocated = buildVarStatSmart(lp.errSink, /*#ref*/loc, func.parsedBody, func.parsedBody.myScope, buildVoidPtr(/*#ref*/loc), "allocated");
+	auto count = buildVarStatSmart(lp.errSink, /*#ref*/loc, func.parsedBody, func.parsedBody.myScope, buildSizeT(/*#ref*/loc, lp.target), "count");
 	ir.Exp leftlength()
 	{
 		if (isAssignment) {
@@ -91,7 +91,7 @@ ir.Function getArrayAppendFunction(ref in Location loc, LanguagePass lp, ir.Modu
 		}
 	}
 
-	buildExpStat(/*#ref*/loc, func._body,
+	buildExpStat(/*#ref*/loc, func.parsedBody,
 		buildAssign(/*#ref*/loc,
 			buildExpReference(/*#ref*/loc, count, count.name),
 			buildAdd(/*#ref*/loc,
@@ -101,7 +101,7 @@ ir.Function getArrayAppendFunction(ref in Location loc, LanguagePass lp, ir.Modu
 		)
 	);
 
-	buildExpStat(/*#ref*/loc, func._body,
+	buildExpStat(/*#ref*/loc, func.parsedBody,
 		buildAssign(/*#ref*/loc,
 			buildExpReference(/*#ref*/loc, allocated, allocated.name),
 			buildAllocVoidPtr(/*#ref*/loc, lp, ltype.base, buildExpReference(/*#ref*/loc, count, count.name))
@@ -126,9 +126,9 @@ ir.Function getArrayAppendFunction(ref in Location loc, LanguagePass lp, ir.Modu
 		buildConstantInt(/*#ref*/loc, 0),
 		buildConstantFalse(/*#ref*/loc)
 	];
-	buildExpStat(/*#ref*/loc, func._body, buildCall(/*#ref*/loc, buildExpReference(/*#ref*/loc, funcCopy, funcCopy.name), args));
+	buildExpStat(/*#ref*/loc, func.parsedBody, buildCall(/*#ref*/loc, buildExpReference(/*#ref*/loc, funcCopy, funcCopy.name), args));
 
-	buildExpStat(/*#ref*/loc, func._body,
+	buildExpStat(/*#ref*/loc, func.parsedBody,
 		buildAssign(/*#ref*/loc,
 			buildDeref(/*#ref*/loc,
 				buildAdd(/*#ref*/loc,
@@ -141,7 +141,7 @@ ir.Function getArrayAppendFunction(ref in Location loc, LanguagePass lp, ir.Modu
 	);
 
 	if (isAssignment) {
-		buildExpStat(/*#ref*/loc, func._body,
+		buildExpStat(/*#ref*/loc, func.parsedBody,
 			buildAssign(/*#ref*/loc,
 				buildDeref(/*#ref*/loc, buildExpReference(/*#ref*/loc, left, left.name)),
 				buildSlice(/*#ref*/loc,
@@ -151,9 +151,9 @@ ir.Function getArrayAppendFunction(ref in Location loc, LanguagePass lp, ir.Modu
 				)
 			)
 		);
-		buildReturnStat(/*#ref*/loc, func._body, buildDeref(/*#ref*/loc, buildExpReference(/*#ref*/loc, left, left.name)));
+		buildReturnStat(/*#ref*/loc, func.parsedBody, buildDeref(/*#ref*/loc, buildExpReference(/*#ref*/loc, left, left.name)));
 	} else {
-		buildReturnStat(/*#ref*/loc, func._body,
+		buildReturnStat(/*#ref*/loc, func.parsedBody,
 			buildSlice(/*#ref*/loc,
 				buildCastSmart(/*#ref*/loc, buildPtrSmart(/*#ref*/loc, ltype.base), buildExpReference(/*#ref*/loc, allocated, allocated.name)),
 				[cast(ir.Exp)buildConstantSizeT(/*#ref*/loc, lp.target, 0),
@@ -194,10 +194,10 @@ ir.Function getArrayPrependFunction(ref in Location loc, LanguagePass lp, ir.Mod
 
 	ir.Exp[] args;
 
-	auto allocated = buildVarStatSmart(lp.errSink, /*#ref*/loc, func._body, func._body.myScope, buildVoidPtr(/*#ref*/loc), "allocated");
-	auto count = buildVarStatSmart(lp.errSink, /*#ref*/loc, func._body, func._body.myScope, buildSizeT(/*#ref*/loc, lp.target), "count");
+	auto allocated = buildVarStatSmart(lp.errSink, /*#ref*/loc, func.parsedBody, func.parsedBody.myScope, buildVoidPtr(/*#ref*/loc), "allocated");
+	auto count = buildVarStatSmart(lp.errSink, /*#ref*/loc, func.parsedBody, func.parsedBody.myScope, buildSizeT(/*#ref*/loc, lp.target), "count");
 
-	buildExpStat(/*#ref*/loc, func._body,
+	buildExpStat(/*#ref*/loc, func.parsedBody,
 		buildAssign(/*#ref*/loc,
 			buildExpReference(/*#ref*/loc, count, count.name),
 			buildAdd(/*#ref*/loc,
@@ -207,7 +207,7 @@ ir.Function getArrayPrependFunction(ref in Location loc, LanguagePass lp, ir.Mod
 		)
 	);
 
-	buildExpStat(/*#ref*/loc, func._body,
+	buildExpStat(/*#ref*/loc, func.parsedBody,
 		buildAssign(/*#ref*/loc,
 			buildExpReference(/*#ref*/loc, allocated, allocated.name),
 			buildAllocVoidPtr(/*#ref*/loc, lp, ltype.base, buildExpReference(/*#ref*/loc, count, count.name))
@@ -226,9 +226,9 @@ ir.Function getArrayPrependFunction(ref in Location loc, LanguagePass lp, ir.Mod
 		buildConstantInt(/*#ref*/loc, 0),
 		buildConstantFalse(/*#ref*/loc)
 	];
-	buildExpStat(/*#ref*/loc, func._body, buildCall(/*#ref*/loc, buildExpReference(/*#ref*/loc, funcCopy, funcCopy.name), args));
+	buildExpStat(/*#ref*/loc, func.parsedBody, buildCall(/*#ref*/loc, buildExpReference(/*#ref*/loc, funcCopy, funcCopy.name), args));
 
-	buildExpStat(/*#ref*/loc, func._body,
+	buildExpStat(/*#ref*/loc, func.parsedBody,
 		buildAssign(/*#ref*/loc,
 			buildDeref(/*#ref*/loc,
 					buildCastSmart(/*#ref*/loc, buildPtrSmart(/*#ref*/loc, ltype.base), buildExpReference(/*#ref*/loc, allocated, allocated.name))
@@ -237,7 +237,7 @@ ir.Function getArrayPrependFunction(ref in Location loc, LanguagePass lp, ir.Mod
 		)
 	);
 
-	buildReturnStat(/*#ref*/loc, func._body,
+	buildReturnStat(/*#ref*/loc, func.parsedBody,
 		buildSlice(/*#ref*/loc,
 			buildCastSmart(/*#ref*/loc, buildPtrSmart(/*#ref*/loc, ltype.base), buildExpReference(/*#ref*/loc, allocated, allocated.name)),
 			[cast(ir.Exp)buildConstantSizeT(/*#ref*/loc, lp.target, 0), buildExpReference(/*#ref*/loc, count, count.name)]
@@ -282,9 +282,9 @@ ir.Function getArrayCopyFunction(ref in Location loc, LanguagePass lp, ir.Module
 		buildConstantInt(/*#ref*/loc, 0),
 		buildConstantFalse(/*#ref*/loc)
 	];
-	buildExpStat(/*#ref*/loc, func._body, buildCall(/*#ref*/loc, expRef, args));
+	buildExpStat(/*#ref*/loc, func.parsedBody, buildCall(/*#ref*/loc, expRef, args));
 
-	buildReturnStat(/*#ref*/loc, func._body, buildExpReference(/*#ref*/loc, func.params[0], "left"));
+	buildReturnStat(/*#ref*/loc, func.parsedBody, buildExpReference(/*#ref*/loc, func.params[0], "left"));
 
 	return func;
 }
@@ -324,8 +324,8 @@ ir.Function getArrayConcatFunction(ref in Location loc, LanguagePass lp, ir.Modu
 
 	ir.Exp[] args;
 
-	auto allocated = buildVarStatSmart(lp.errSink, /*#ref*/loc, func._body, func._body.myScope, buildVoidPtr(/*#ref*/loc), "allocated");
-	auto count = buildVarStatSmart(lp.errSink, /*#ref*/loc, func._body, func._body.myScope,
+	auto allocated = buildVarStatSmart(lp.errSink, /*#ref*/loc, func.parsedBody, func.parsedBody.myScope, buildVoidPtr(/*#ref*/loc), "allocated");
+	auto count = buildVarStatSmart(lp.errSink, /*#ref*/loc, func.parsedBody, func.parsedBody.myScope,
 		buildSizeT(/*#ref*/loc, lp.target), "count");
 	ir.Exp leftlength()
 	{
@@ -336,7 +336,7 @@ ir.Function getArrayConcatFunction(ref in Location loc, LanguagePass lp, ir.Modu
 		}
 	}
 
-	buildExpStat(/*#ref*/loc, func._body,
+	buildExpStat(/*#ref*/loc, func.parsedBody,
 		buildAssign(/*#ref*/loc,
 			buildExpReference(/*#ref*/loc, count, count.name),
 			buildAdd(/*#ref*/loc,
@@ -346,7 +346,7 @@ ir.Function getArrayConcatFunction(ref in Location loc, LanguagePass lp, ir.Modu
 		)
 	);
 
-	buildExpStat(/*#ref*/loc, func._body,
+	buildExpStat(/*#ref*/loc, func.parsedBody,
 		buildAssign(/*#ref*/loc,
 			buildExpReference(/*#ref*/loc, allocated, allocated.name),
 			buildAllocVoidPtr(/*#ref*/loc, lp, type.base, buildExpReference(/*#ref*/loc, count, count.name))
@@ -371,7 +371,7 @@ ir.Function getArrayConcatFunction(ref in Location loc, LanguagePass lp, ir.Modu
 		buildConstantInt(/*#ref*/loc, 0),
 		buildConstantFalse(/*#ref*/loc)
 	];
-	buildExpStat(/*#ref*/loc, func._body, buildCall(/*#ref*/loc, buildExpReference(/*#ref*/loc, funcCopy, funcCopy.name), args));
+	buildExpStat(/*#ref*/loc, func.parsedBody, buildCall(/*#ref*/loc, buildExpReference(/*#ref*/loc, funcCopy, funcCopy.name), args));
 
 
 	args = [
@@ -391,11 +391,11 @@ ir.Function getArrayConcatFunction(ref in Location loc, LanguagePass lp, ir.Modu
 		buildConstantInt(/*#ref*/loc, 0),
 		buildConstantFalse(/*#ref*/loc)
 	];
-	buildExpStat(/*#ref*/loc, func._body, buildCall(/*#ref*/loc, buildExpReference(/*#ref*/loc, funcCopy, funcCopy.name), args));
+	buildExpStat(/*#ref*/loc, func.parsedBody, buildCall(/*#ref*/loc, buildExpReference(/*#ref*/loc, funcCopy, funcCopy.name), args));
 
 
 	if (isAssignment) {
-		buildExpStat(/*#ref*/loc, func._body,
+		buildExpStat(/*#ref*/loc, func.parsedBody,
 			buildAssign(/*#ref*/loc,
 				buildDeref(/*#ref*/loc, buildExpReference(/*#ref*/loc, left, left.name)),
 				buildSlice(/*#ref*/loc,
@@ -405,9 +405,9 @@ ir.Function getArrayConcatFunction(ref in Location loc, LanguagePass lp, ir.Modu
 				)
 			)
 		);
-		buildReturnStat(/*#ref*/loc, func._body, buildDeref(/*#ref*/loc, buildExpReference(/*#ref*/loc, left, left.name)));
+		buildReturnStat(/*#ref*/loc, func.parsedBody, buildDeref(/*#ref*/loc, buildExpReference(/*#ref*/loc, left, left.name)));
 	} else {
-		buildReturnStat(/*#ref*/loc, func._body,
+		buildReturnStat(/*#ref*/loc, func.parsedBody,
 			buildSlice(/*#ref*/loc,
 				buildCastSmart(/*#ref*/loc, buildPtrSmart(/*#ref*/loc, type.base), buildExpReference(/*#ref*/loc, allocated, allocated.name)),
 				[cast(ir.Exp)buildConstantSizeT(/*#ref*/loc, lp.target, 0),
@@ -448,9 +448,9 @@ ir.Function getArrayCmpFunction(ref in Location loc, LanguagePass lp, ir.Module 
 	auto memCmpExpRef = buildExpReference(/*#ref*/loc, memCmp, memCmp.name);
 
 
-	auto thenState = buildBlockStat(/*#ref*/loc, func, func._body.myScope);
+	auto thenState = buildBlockStat(/*#ref*/loc, func, func.parsedBody.myScope);
 	buildReturnStat(/*#ref*/loc, thenState, buildConstantBool(/*#ref*/loc, notEqual));
-	buildIfStat(/*#ref*/loc, func._body,
+	buildIfStat(/*#ref*/loc, func.parsedBody,
 		buildBinOp(/*#ref*/loc, ir.BinOp.Op.NotEqual,
 			buildArrayLength(/*#ref*/loc, lp.target, buildExpReference(/*#ref*/loc, left, left.name)),
 			buildArrayLength(/*#ref*/loc, lp.target, buildExpReference(/*#ref*/loc, right, right.name))
@@ -469,7 +469,7 @@ ir.Function getArrayCmpFunction(ref in Location loc, LanguagePass lp, ir.Module 
 		 */
 		ir.ForStatement forLoop;
 		ir.Variable iVar;
-		buildForStatement(/*#ref*/loc, lp.target, func._body.myScope,
+		buildForStatement(/*#ref*/loc, lp.target, func.parsedBody.myScope,
 			buildArrayLength(/*#ref*/loc, lp.target, buildExpReference(/*#ref*/loc, left, left.name)), /*#out*/forLoop, /*#out*/iVar);
 		auto l = buildIndex(/*#ref*/loc, buildExpReference(/*#ref*/loc, left, left.name), buildExpReference(/*#ref*/loc, iVar, iVar.name));
 		auto r = buildIndex(/*#ref*/loc, buildExpReference(/*#ref*/loc, right, right.name), buildExpReference(/*#ref*/loc, iVar, iVar.name));
@@ -478,10 +478,10 @@ ir.Function getArrayCmpFunction(ref in Location loc, LanguagePass lp, ir.Module 
 		buildReturnStat(/*#ref*/loc, then, buildConstantBool(/*#ref*/loc, true));
 		auto ifs = buildIfStat(/*#ref*/loc, cmp, then);
 		forLoop.block.statements ~= ifs;
-		func._body.statements ~= forLoop;
-		buildReturnStat(/*#ref*/loc, func._body, buildConstantBool(/*#ref*/loc, false));
+		func.parsedBody.statements ~= forLoop;
+		buildReturnStat(/*#ref*/loc, func.parsedBody, buildConstantBool(/*#ref*/loc, false));
 	} else {
-		buildReturnStat(/*#ref*/loc, func._body,
+		buildReturnStat(/*#ref*/loc, func.parsedBody,
 			buildBinOp(/*#ref*/loc, notEqual ? ir.BinOp.Op.NotEqual : ir.BinOp.Op.Equal,
 				buildCall(/*#ref*/loc, memCmpExpRef, [
 					buildCastSmart(/*#ref*/loc, buildVoidPtr(/*#ref*/loc), buildArrayPtr(/*#ref*/loc, left.type, buildExpReference(/*#ref*/loc, left, left.name))),

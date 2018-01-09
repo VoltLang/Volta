@@ -15,6 +15,7 @@ import volta.util.dup;
 
 import volt.errors;
 import volt.interfaces;
+import volta.settings;
 import volta.ir.location;
 
 import volt.util.perf;
@@ -72,7 +73,7 @@ public:
 	 * @}
 	 */
 
-	PostParsePassImpl postParseImpl;
+	PostParseImpl postParseImpl;
 
 
 private:
@@ -108,8 +109,9 @@ private:
 
 public:
 	this(ErrorSink err, Driver drv, VersionSet ver, TargetInfo target,
-	     Frontend frontend, Mode mode, bool warnings)
+	     Settings settings, Frontend frontend, Mode mode, bool warnings)
 	{
+		this.settings = settings;
 		this.warningsEnabled = warnings;
 		this.mMode = mode;
 		super(err, drv, ver, target, frontend);
@@ -119,7 +121,7 @@ public:
 		version (D_Version2) auto getMod = &this.getModule;
 		else auto getMod = this.getModule;
 
-		postParse = postParseImpl = new pp.PostParsePassImpl(
+		postParse = postParseImpl = new pp.PostParseImpl(
 			err, ver, target, warningsEnabled,
 			mMode == Mode.RemoveConditionalsOnly,
 			mMode == Mode.MissingDeps,
@@ -355,7 +357,6 @@ public:
 	{
 		return mModules.values.dup();
 	}
-
 
 	/*
 	 *

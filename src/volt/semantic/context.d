@@ -245,7 +245,6 @@ private:
 			throw panic(/*#ref*/n.loc, str);
 		}
 
-		assert(mLength > 0);
 		mFunctionStack[--mLength] = null;
 
 		if (mLength <= mParentIndex) {

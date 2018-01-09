@@ -15,7 +15,6 @@ import volta.visitor.scopemanager;
 import volt.semantic.evaluate;
 import volt.semantic.classify;
 
-
 //! A single node in the execution graph.
 class Block
 {
@@ -176,7 +175,7 @@ public:
 	override Status enter(ir.Function func)
 	{
 		super.enter(func);
-		if (func._body !is null) {
+		if (func.hasBody) {
 			blocks ~= new Block();  // Note: no parents.
 		}
 		return Continue;
@@ -185,15 +184,18 @@ public:
 	override Status leave(ir.Function func)
 	{
 		super.leave(func);
-		if (func._body is null) {
+		if (!func.hasBody) {
 			return Continue;
 		}
+
+		panicAssert(func, func.parsedBody !is null);
+
 		ensureNonNullBlock(/*#ref*/func.loc);
 		if (func.loc.filename == "test.volt") {
 		}
 		if (block.canReachEntry()) {
 			if (isVoid(realType(func.type.ret))) {
-				buildReturnStat(/*#ref*/func.loc, func._body);
+				buildReturnStat(/*#ref*/func.loc, func.parsedBody);
 			} else {
 				throw makeExpected(/*#ref*/func.loc, "return statement");
 			}
@@ -215,8 +217,8 @@ public:
 						ir.Exp tv = buildExpReference(/*#ref*/v.loc, v, v.name);
 						tv = buildCastSmart(/*#ref*/tv.loc, buildVoidPtr(/*#ref*/tv.loc), tv);
 						auto call = buildCall(/*#ref*/func.loc, buildExpReference(/*#ref*/func.loc, ctor, ctor.name), [tv]);
-						panicAssert(ctor, ctor._body !is null);
-						func._body.statements = buildExpStat(/*#ref*/func.loc, call) ~ func._body.statements;
+						panicAssert(ctor, ctor.parsedBody !is null);
+						func.parsedBody.statements = buildExpStat(/*#ref*/func.loc, call) ~ func.parsedBody.statements;
 						break;
 					}
 				}

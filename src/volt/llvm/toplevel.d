@@ -68,7 +68,7 @@ public:
 		}
 
 		// Don't export unused functions.
-		if (func._body is null) {
+		if (!func.hasBody) {
 			return ContinueParent;
 		}
 
@@ -162,7 +162,7 @@ public:
 		diUnsetPosition(state);
 
 		// Go over the function body.
-		accept(func._body, this);
+		accept(func.parsedBody, this);
 
 		// Assume language pass knows what it is doing.
 		if (state.fall) {

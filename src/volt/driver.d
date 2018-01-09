@@ -146,7 +146,7 @@ public:
 		auto mode = decideMode(s);
 		this.frontend = new Parser(s, this);
 		this.languagePass = new VoltLanguagePass(this, this, ver, target,
-			frontend, mode, s.warningsEnabled);
+			s, frontend, mode, s.warningsEnabled);
 
 		decideParts();
 		decideBackend();

@@ -14,6 +14,7 @@ module volta.postparse.gatherer;
 import watt.text.format : format;
 
 import ir = volta.ir;
+
 import volta.util.util;
 import volta.util.copy;
 
@@ -331,7 +332,7 @@ void addScope(ir.Scope current, ir.Function func, ir.Type thisType, ir.Function[
 	}
 	func.myScope = new ir.Scope(current, func, func.name, nestedDepth);
 
-	if (func._body !is null) {
+	if (func.hasBody) {
 		foreach (var; func.params) {
 			if (var.name !is null) {
 				ir.Status status;
@@ -483,18 +484,33 @@ public:
 		passert(mErrSink, m, mWhere.length == 0);
 	}
 
-	void transform(ir.Scope current, ir.BlockStatement bs)
-	{
-		passert(mErrSink, bs, mWhere.length == 0);
-		push(current);
-		accept(bs, this);
-		pop();
-		passert(mErrSink, bs, mWhere.length == 0);
-	}
-
 	override void close()
 	{
 
+	}
+
+
+	/*
+	 *
+	 * Out-of-band gathering.
+	 *
+	 */
+
+	void transform(ir.Module m, ir.Function func, ir.BlockStatement bs)
+	{
+		passert(mErrSink, bs, mWhere.length == 0);
+
+		enter(m);
+
+		pushScopesWithParents(func.myScope.parent);
+		push(func);
+		accept(bs, this);
+		pop();
+		popScopesWithParents(func.myScope.parent);
+
+		leave(m);
+
+		passert(mErrSink, bs, mWhere.length == 0);
 	}
 
 
@@ -538,6 +554,26 @@ public:
 		pop();
 		passert(mErrSink, func, func is mFunctionStack[$-1]);
 		mFunctionStack = mFunctionStack[0 .. $-1];
+	}
+
+	final void pushScopesWithParents(ir.Scope current)
+	{
+		if (current.parent is null) {
+			return;
+		}
+
+		pushScopesWithParents(current.parent);
+		push(current, current.node.toTypeChecked());
+	}
+
+	final void popScopesWithParents(ir.Scope current)
+	{
+		if (current.parent is null) {
+			return;
+		}
+
+		pop();
+		popScopesWithParents(current.parent);
 	}
 
 	@property Where where()
@@ -643,7 +679,7 @@ public:
 		push(func);
 
 		// I don't think this is the right place for this.
-		if (func.isAbstract && func._body !is null) {
+		if (func.isAbstract && func.hasBody) {
 			errorMsg(mErrSink, func, abstractBodyNotEmptyMsg(func));
 			return Continue;
 		}

@@ -19,6 +19,10 @@ import volt.interfaces;
 import volta.util.string;
 import volta.ir.location;
 
+import volta.parser.declaration : parseBlock;
+import volta.parser.base : ParserStream;
+import volta.parser.parser : checkError;
+
 import volta.visitor.visitor;
 import volta.visitor.scopemanager;
 import volt.visitor.prettyprinter;
@@ -4214,21 +4218,46 @@ void actualizeFunction(Context ctx, ir.Function func)
 		nestExtyperFunction(ctx.parentFunction, func);
 	}
 
-
 	// Visiting children.
 	ctx.enter(func);
 
-	if (func.inContract !is null) {
-		extypeBlockStatement(ctx, func.inContract);
+	{
+		lazyParseBlock(ctx, func.myScope, /*#ref*/func.tokensIn, /*#ref*/func.parsedIn);
+		lazyParseBlock(ctx, func.myScope, /*#ref*/func.tokensOut, /*#ref*/func.parsedOut);
+		lazyParseBlock(ctx, func.myScope, /*#ref*/func.tokensBody, /*#ref*/func.parsedBody);
+
+		if (func.tokensIn !is null || func.tokensOut !is null || func.tokensBody !is null) {
+			ctx.lp.postParse.transformChildBlocks(func);
+		}
 	}
 
-	if (func.outContract !is null) {
-		extypeBlockStatement(ctx, func.outContract);
+	addVarArgsVarsIfNeeded(ctx.lp, func);
+
+	if (func.outParameter.length > 0) {
+		assert(func.parsedOut !is null);
+		auto loc = func.parsedOut.loc;
+		auto var = buildVariableSmart(/*#ref*/loc, copyTypeSmart(/*#ref*/loc, func.type.ret), ir.Variable.Storage.Function, func.outParameter);
+		func.parsedOut.statements = var ~ func.parsedOut.statements;
+		ir.Status status;
+		func.parsedOut.myScope.addValue(var, var.name, /*#out*/status);
+		if (status != ir.Status.Success) {
+			throw panic(/*#ref*/loc, "value redefinition");
+		}
 	}
 
-	if (func._body !is null) {
-		extypeBlockStatement(ctx, func._body);
+	if (func.hasInContract) {
+		extypeBlockStatement(ctx, func.parsedIn);
 	}
+
+	if (func.hasOutContract) {
+		extypeBlockStatement(ctx, func.parsedOut);
+	}
+
+	if (func.hasBody) {
+		extypeBlockStatement(ctx, func.parsedBody);
+	}
+
+	assert(func !is null);
 
 	ctx.leave(func);
 
@@ -4630,6 +4659,14 @@ void resolveVariable(Context ctx, ir.Variable v)
 	v.isResolved = true;
 }
 
+void lazyParseBlock(Context ctx, ir.Scope current, ref ir.Token[] tokens, ref ir.BlockStatement blockStatement)
+{
+	if (tokens.length == 0 || blockStatement !is null) {
+		return;
+	}
+	blockStatement = ctx.lp.frontend.parseBlockStatement(/*#ref*/tokens);
+}
+
 void resolveFunction(Context ctx, ir.Function func)
 {
 	if (func.isResolved) {
@@ -4656,7 +4693,7 @@ void resolveFunction(Context ctx, ir.Function func)
 	           func.type.params.length > 1) {
 		throw makeWrongNumberOfArguments(func, func, func.type.params.length, isVoid(func.type.ret) ? 0U : 1U);
 	}
-	if (func.type.hasVarArgs && func.type.linkage == ir.Linkage.C && func._body !is null) {
+	if (func.type.hasVarArgs && func.type.linkage == ir.Linkage.C && func.hasBody) {
 		throw makeUnsupported(/*#ref*/func.loc, "extern (C) variadic function with body defined");
 	}
 
@@ -4688,22 +4725,8 @@ void resolveFunction(Context ctx, ir.Function func)
 		throw makeMarkedOverrideDoesNotOverride(func, func);
 	}
 
-	addVarArgsVarsIfNeeded(ctx.lp, func);
-
 	if (func.type.homogenousVariadic && !isArray(realType(func.type.params[$-1]))) {
 		throw makeExpected(/*#ref*/func.params[$-1].loc, "array type");
-	}
-
-	if (func.outParameter.length > 0) {
-		assert(func.outContract !is null);
-		auto loc = func.outContract.loc;
-		auto var = buildVariableSmart(/*#ref*/loc, copyTypeSmart(/*#ref*/loc, func.type.ret), ir.Variable.Storage.Function, func.outParameter);
-		func.outContract.statements = var ~ func.outContract.statements;
-		ir.Status status;
-		func.outContract.myScope.addValue(var, var.name, /*#out*/status);
-		if (status != ir.Status.Success) {
-			throw panic(/*#ref*/loc, "value redefinition");
-		}
 	}
 
 	foreach (i, ref param; func.params) {
@@ -4721,7 +4744,7 @@ void resolveFunction(Context ctx, ir.Function func)
 		param.assign = evaluate(ctx.lp, ctx.current, param.assign);
 	}
 
-	if (func.loadDynamic && func._body !is null) {
+	if (func.loadDynamic && func.hasBody) {
 		throw makeCannotLoadDynamic(func, func);
 	}
 
@@ -4914,7 +4937,8 @@ void writeVariableAssignsIntoCtors(Context ctx, ir.Class _class)
 			auto stat = new ir.ExpStatement();
 			stat.loc = ctor.loc;
 			stat.exp = copyExp(assign);
-			ctor._body.statements = stat ~ ctor._body.statements;
+			assert(ctor.parsedBody !is null);
+			ctor.parsedBody.statements = stat ~ ctor.parsedBody.statements;
 		}
 		v.assign = null;
 		if (v.type.isConst || v.type.isImmutable) {

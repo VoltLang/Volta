@@ -298,7 +298,7 @@ ir.Function generateDefaultConstructor(LanguagePass lp, ir.Scope current, ir.Cla
 	auto func = buildFunction(lp.errSink, /*#ref*/_class.loc, _class.members, current, "__ctor");
 	func.kind = ir.Function.Kind.Constructor;
 
-	buildReturnStat(/*#ref*/func.loc, func._body);
+	buildReturnStat(/*#ref*/func.loc, func.parsedBody);
 
 	auto tr = buildTypeReference(/*#ref*/_class.loc, _class,  "__this");
 	auto thisVar = new ir.Variable();

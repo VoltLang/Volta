@@ -362,10 +362,10 @@ public:
 		} else if (argFunc.mangledName == "vrt_eh_personality_v0") {
 
 			// This is a horribly hack to make ThinLTO work.
-			// The _body !is null path is not currently in use as
+			// The hasBody path is not currently in use as
 			// a different workaround is in place. But we keep
 			// the code here just in case we need it in the future.
-		        if (argFunc._body !is null) {
+		        if (argFunc.hasBody) {
 				v = ehPersonalityFunc;
 			} else {
 				v = LLVMAddFunction(mod, argFunc.mangledName, ft.llvmCallType);

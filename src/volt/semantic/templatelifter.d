@@ -9,6 +9,7 @@ import watt.text.format;
 import ir = volta.ir;
 import ircopy = volta.util.copy;
 import volta.util.util;
+import volta.util.dup;
 
 import volt.errors;
 import volt.interfaces;
@@ -121,14 +122,26 @@ public:
 		}
 
 		f.type = copy(old.type);
-		if (old.inContract !is null) {
-			f.inContract = copy(null, old.inContract);
+		if (old.hasInContract) {
+			if (f.parsedIn !is null) {
+				f.parsedIn = copy(null, old.parsedIn);
+			} else {
+				f.tokensIn = f.tokensIn.dup();
+			}
 		}
-		if (old.outContract!is null) {
-			f.outContract = copy(null, old.outContract);
+		if (old.hasOutContract) {
+			if (f.parsedOut !is null) {
+				f.parsedOut = copy(null, old.parsedOut);
+			} else {
+				f.tokensOut = f.tokensOut.dup();
+			}
 		}
-		if (old._body !is null) {
-			f._body = copy(null, old._body);
+		if (old.hasBody) {
+			if (f.parsedBody !is null) {
+				f.parsedBody = copy(null, old.parsedBody);
+			} else {
+				f.tokensBody = f.tokensBody.dup();
+			}
 		}
 
 		return f;

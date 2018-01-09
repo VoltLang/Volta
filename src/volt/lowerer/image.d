@@ -61,7 +61,7 @@ void lowerCMain(LanguagePass lp, ir.Module mod, ir.Function func)
 	ir.Exp argvRef = buildExpReference(/*#ref*/loc, argv, argv.name);
 	ir.Exp vref = buildExpReference(/*#ref*/loc, func, func.name);
 	auto call = buildCall(/*#ref*/loc, lp.runMainFunc, [argcRef, argvRef, vref]);
-	buildReturnStat(/*#ref*/loc, cmain._body, call);
+	buildReturnStat(/*#ref*/loc, cmain.parsedBody, call);
 }
 
 /*!

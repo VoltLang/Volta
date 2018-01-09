@@ -558,7 +558,7 @@ ParseStatus parseConstructor(ParserStream ps, out ir.Function c)
 				return unexpectedToken(ps, c);
 			}
 			ps.get();
-			succeeded = parseBlock(ps, /*#out*/c.inContract);
+			succeeded = parseBraceCountedTokenList(ps, /*#out*/c.tokensIn, c);
 			if (!succeeded) {
 				return parseFailed(ps, c);
 			}
@@ -586,7 +586,7 @@ ParseStatus parseConstructor(ParserStream ps, out ir.Function c)
 				}
 				ps.get();
 			}
-			succeeded = parseBlock(ps, /*#out*/c.outContract);
+			succeeded = parseBraceCountedTokenList(ps, /*#out*/c.tokensOut, c);
 			if (!succeeded) {
 				return parseFailed(ps, c);
 			}
@@ -597,7 +597,7 @@ ParseStatus parseConstructor(ParserStream ps, out ir.Function c)
 				ps.get();
 			}
 			inBlocks = false;
-			auto succeeded2 = parseBlock(ps, /*#out*/c._body);
+			auto succeeded2 = parseBraceCountedTokenList(ps, /*#out*/c.tokensBody, c);
 			if (!succeeded2) {
 				return parseFailed(ps, ir.NodeType.Function, ir.NodeType.BlockStatement);
 			}
@@ -648,7 +648,7 @@ ParseStatus parseDestructor(ParserStream ps, out ir.Function d)
 
 	d.type = new ir.FunctionType();
 	d.type.ret = pt;
-	succeeded = parseBlock(ps, /*#out*/d._body);
+	succeeded = parseBraceCountedTokenList(ps, /*#out*/d.tokensBody, d);
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.Function, ir.NodeType.BlockStatement);
 	}

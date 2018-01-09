@@ -1185,20 +1185,20 @@ Visitor.Status acceptFunction(ir.Function func, Visitor av)
 			return status;
 	}
 
-	if (func.inContract !is null) {
-		status = accept(func.inContract, av);
+	if (func.parsedIn !is null) {
+		status = accept(func.parsedIn, av);
 		if (status == VisitorStop)
 			return status;
 	}
 
-	if (func.outContract !is null) {
-		status = accept(func.outContract, av);
+	if (func.parsedOut !is null) {
+		status = accept(func.parsedOut, av);
 		if (status == VisitorStop)
 			return status;
 	}
 
-	if (func._body !is null) {
-		status = accept(func._body, av);
+	if (func.parsedBody !is null) {
+		status = accept(func.parsedBody, av);
 		if (status == VisitorStop)
 			return status;
 	}

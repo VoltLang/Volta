@@ -20,6 +20,7 @@ import volta.parser.base : ParseStatus, ParserStream, NodeSink;
 import volta.parser.errors : ParserPanic;
 import volta.parser.toplevel : parseModule;
 import volta.parser.statements : parseStatement;
+import volta.parser.declaration : parseBlock;
 
 
 private void checkError(ParserStream ps, ParseStatus status)
@@ -84,6 +85,16 @@ public:
 		ir.Module mod;
 		checkError(ps, parseModule(ps, /*#out*/mod));
 		return mod;
+	}
+
+	override ir.BlockStatement parseBlockStatement(ref ir.Token[] tokens)
+	{
+		auto parserStream = new ParserStream(tokens, settings, errSink);
+		parserStream.get();  // Eat BEGIN.
+		ir.BlockStatement blockStatement;
+		auto parserStatus = parseBlock(parserStream, /*#out*/blockStatement);
+		checkError(parserStream, parserStatus);
+		return blockStatement;
 	}
 
 	override ir.Node[] parseStatements(string source, Location loc)

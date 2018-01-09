@@ -351,10 +351,13 @@ public:
 	 */
 	string outParameter;
 
+	BlockStatement parsedIn;  //!< Optional in contract.
+	BlockStatement parsedOut;  //!< Optional out contract.
+	BlockStatement parsedBody;  //!< Optional body.
 
-	BlockStatement inContract;  //!< Optional.
-	BlockStatement outContract;  //!< Optional.
-	BlockStatement _body;  //!< Optional.
+	Token[] tokensIn;  //!< Optional lazy parsed in contract.
+	Token[] tokensOut;  //!< Optional lazy parsed out contract.
+	Token[] tokensBody;  //!< Optional lazy parsed body.
 
 	//! Optional this argument for member functions.
 	Variable thisHiddenParameter;
@@ -426,9 +429,12 @@ public:
 		this.name = old.name;
 		this.mangledName = old.mangledName;
 		this.outParameter = old.outParameter;
-		this.inContract = old.inContract;
-		this.outContract = old.outContract;
-		this._body = old._body;
+		this.parsedIn = old.parsedIn;
+		this.parsedOut = old.parsedOut;
+		this.parsedBody = old.parsedBody;
+		this.tokensIn = old.tokensIn.dup();
+		this.tokensOut = old.tokensOut.dup();
+		this.tokensBody = old.tokensBody.dup();
 		this.thisHiddenParameter = old.thisHiddenParameter;
 		this.nestedHiddenParameter = old.nestedHiddenParameter;
 		this.nestedVariable = old.nestedVariable;
@@ -447,6 +453,11 @@ public:
 		this.isLoweredScopeSuccess = old.isLoweredScopeSuccess;
 		this.templateInstance = old.templateInstance;
 	}
+
+	// These also check parsedFoo because artificial functions may lack the tokens.
+	@property bool hasBody() { return tokensBody !is null || parsedBody !is null; }
+	@property bool hasInContract() { return tokensIn !is null || parsedIn !is null; }
+	@property bool hasOutContract() { return tokensOut !is null || parsedOut !is null; }
 }
 
 class EnumDeclaration : Declaration

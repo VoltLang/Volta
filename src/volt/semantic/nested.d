@@ -140,7 +140,7 @@ void nestLowererFunction(LanguagePass lp, ir.Function parent, ir.Function func)
 	func.nestedVariable = decl;
 	func.nestStruct = ns;
 	func.type.hiddenParameter = true;
-	func._body.statements = decl ~ func._body.statements;
+	func.parsedBody.statements = decl ~ func.parsedBody.statements;
 }
 
 /*!
@@ -285,8 +285,8 @@ void doParent(LanguagePass lp, ir.Function parent)
 	assert(parent.nestStruct !is null);
 	lp.actualize(parent.nestStruct);
 
-	handleNestedThis(lp.errSink, parent, parent._body);
-	handleNestedParams(lp.errSink, parent, parent._body);
+	handleNestedThis(lp.errSink, parent, parent.parsedBody);
+	handleNestedParams(lp.errSink, parent, parent.parsedBody);
 }
 
 /*!
@@ -295,7 +295,7 @@ void doParent(LanguagePass lp, ir.Function parent)
  */
 ir.Struct createAndAddNestedStruct(ir.Function func)
 {
-	auto bs = func._body;
+	auto bs = func.parsedBody;
 	auto id = getModuleFromScope(/*#ref*/func.loc, func.myScope).getId();
 	auto s = buildStruct(/*#ref*/func.loc, format("__Nested%s", id));
 	s.myScope = new ir.Scope(bs.myScope, s, s.name, bs.myScope.nestedDepth);
@@ -382,7 +382,7 @@ void handleNestedParams(ErrorSink errSink, ir.Function func, ir.BlockStatement b
  */
 void handleNestedThis(ErrorSink errSink, ir.Function func, ir.BlockStatement bs)
 {
-	bs = func._body;
+	bs = func.parsedBody;
 	auto np = func.nestedVariable;
 	auto ns = func.nestStruct;
 	if (np is null || ns is null) {

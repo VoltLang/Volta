@@ -13,6 +13,7 @@ import volta.errors;
 import volta.interfaces;
 
 import volta.util.sinks;
+import volta.util.moduleFromScope;
 
 import volta.postparse.missing : MissingDeps;
 import volta.postparse.gatherer;
@@ -22,7 +23,7 @@ import volta.postparse.scopereplacer;
 import volta.postparse.importresolver;
 
 
-class PostParsePassImpl : vi.NullVisitor, PostParsePass
+class PostParseImpl : vi.NullVisitor, PostParsePass
 {
 public:
 	MissingDeps missing;
@@ -31,7 +32,12 @@ public:
 protected:
 	ErrorSink mErr;
 	ConditionalRemoval mCond;
+
 	Pass[] mPasses;
+
+	ScopeReplacer mScope;
+	AttribRemoval mAttrib;
+	Gatherer mGatherer;
 
 
 public:
@@ -44,9 +50,9 @@ public:
 			return;
 		}
 
-		mPasses ~= new ScopeReplacer(err);
-		mPasses ~= new AttribRemoval(target, err);
-		mPasses ~= new Gatherer(warningsEnabled, err);
+		mPasses ~= mScope = new ScopeReplacer(err);
+		mPasses ~= mAttrib = new AttribRemoval(target, err);
+		mPasses ~= mGatherer = new Gatherer(warningsEnabled, err);
 		if (doMissing) {
 			missing = new MissingDeps(err, getMod);
 			mPasses ~= missing;
@@ -64,9 +70,24 @@ public:
 		}
 	}
 
-	override void transform(ir.BlockStatement bs)
+	override void transformChildBlocks(ir.Function func)
 	{
-		assert(false, "implement me");
+		auto mod = getModuleFromScope(/*#ref*/func.loc, func.myScope, mErr);
+
+		if (func.hasInContract) {
+			passert(mErr, func, func.parsedIn !is null);
+			transform(mod, func, func.parsedIn);
+		}
+
+		if (func.hasOutContract) {
+			passert(mErr, func, func.parsedOut !is null);
+			transform(mod, func, func.parsedOut);
+		}
+
+		if (func.hasBody) {
+			passert(mErr, func, func.parsedBody !is null);
+			transform(mod, func, func.parsedBody);
+		}
 	}
 
 	override void close()
@@ -76,6 +97,20 @@ public:
 		}
 	}
 
+	/*
+	 *
+	 * Helper code.
+	 *
+	 */
+
+	void transform(ir.Module mod, ir.Function func, ir.BlockStatement bs)
+	{
+		vi.accept(bs, this);
+
+		mScope.transform(mod, func, bs);
+		mAttrib.transform(mod, func, bs);
+		mGatherer.transform(mod, func, bs);
+	}
 
 	/*
 	 *

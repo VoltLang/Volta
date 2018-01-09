@@ -369,7 +369,7 @@ void addVarArgsVarsIfNeeded(LanguagePass lp, ir.Function func)
 {
 	if (func.type.hasVarArgs &&
 	    !func.type.varArgsProcessed &&
-		func._body !is null &&
+	    func.hasBody &&
 	    func.type.linkage == ir.Linkage.Volt) {
 		auto tinfoClass = lp.tiTypeInfo;
 		auto tr = buildTypeReference(/*#ref*/func.loc, tinfoClass, tinfoClass.name);
@@ -378,18 +378,18 @@ void addVarArgsVarsIfNeeded(LanguagePass lp, ir.Function func)
 		func.type.varArgsTypeids = buildVariable(/*#ref*/func.loc, array, ir.Variable.Storage.Function, "_typeids");
 		func.type.varArgsTypeids.specialInitValue = true;
 		ir.Status status;
-		func._body.myScope.addValue(func.type.varArgsTypeids, "_typeids", /*#out*/status);
+		func.parsedBody.myScope.addValue(func.type.varArgsTypeids, "_typeids", /*#out*/status);
 		if (status != ir.Status.Success) {
 			throw panic(/*#ref*/func.loc, "value redefinition");
 		}
-		func._body.statements = func.type.varArgsTypeids ~ func._body.statements;
+		func.parsedBody.statements = func.type.varArgsTypeids ~ func.parsedBody.statements;
 		func.type.varArgsArgs = buildVariable(/*#ref*/func.loc, argArray, ir.Variable.Storage.Function, "_args");
 		func.type.varArgsArgs.specialInitValue = true;
-		func._body.myScope.addValue(func.type.varArgsArgs, "_args", /*#out*/status);
+		func.parsedBody.myScope.addValue(func.type.varArgsArgs, "_args", /*#out*/status);
 		if (status != ir.Status.Success) {
 			throw panic(/*#ref*/func.loc, "value redefinition");
 		}
-		func._body.statements = func.type.varArgsArgs ~ func._body.statements;
+		func.parsedBody.statements = func.type.varArgsArgs ~ func.parsedBody.statements;
 		func.type.varArgsProcessed = true;
 	}
 }

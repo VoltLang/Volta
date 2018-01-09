@@ -130,6 +130,18 @@ interface Frontend
 	ir.Module parseNewFile(string source, string filename);
 
 	/*!
+	 * Parse a BlockStatement from a list of tokens.
+	 *
+	 * Used to implement lazy parsing of functions.
+	 *
+	 * @param[in] tokens The list of tokens that comprise the body of the
+	 *                   function. Starts with BEGIN {, and ends with
+	 *                   } END tokens.
+	 * @return The parsed BlockStatement.
+	 */
+	ir.BlockStatement parseBlockStatement(ref ir.Token[] tokens);
+
+	/*!
 	 * Parse a zero or more statements from a string, does not
 	 * need to start with '{' or end with a '}'.
 	 *
@@ -309,9 +321,16 @@ interface Pass
  */
 interface PostParsePass : Pass
 {
-	// So all variants are available.
-	alias transform = Pass.transform;
-
-	//! Post parse transform block statements.
-	void transform(ir.BlockStatement bs);
+	/*!
+	 * Resume the post-parsing process on the given Function.
+	 *
+	 * The parser will leave the blocks unparsed and leave it up to the
+	 * @ref SemanticPass to trigger a full parsing of the function body.
+	 * This function does the post-parsing that would have been done if
+	 * all of the @ref ir.BlockStatement had been parsed up front.
+	 *
+	 * The function must have been post-parsed before calling this method,
+	 * so that it is inserted into a parent scope.
+	 */
+	void transformChildBlocks(ir.Function func);
 }

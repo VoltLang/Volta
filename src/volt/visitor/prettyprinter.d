@@ -1418,34 +1418,100 @@ public:
 			mIndent--;
 		}
 
-		if (func.inContract !is null) {
+		void printTokens(ir.Token[] tokens)
+		{
+			mIndent++;
+			if (tokens.length <= 4) {
+				return;
+			}
+			// Skip, BEGIN { } END tokens.
+			auto inFor = false;
+			auto newLine = false;
+			auto parenDepth = 0;
+			t();
+			foreach (i, token; tokens[2 .. $-2]) {
+				auto isFirstTokenForLine = i == 0 || newLine;
+				if (newLine) {
+					wf("\n");
+					if (token.type == TokenType.CloseBrace) {
+						mIndent--;
+					}
+					t();
+					newLine = false;
+				}
+				if (token.type == TokenType.For || token.type == TokenType.Foreach) {
+					inFor = true;
+					parenDepth = 0;
+				}
+				if (token.type == TokenType.OpenParen) {
+					parenDepth++;
+				} else if (token.type == TokenType.CloseParen) {
+					parenDepth--;
+				}
+				if (inFor && token.type != TokenType.For && token.type != TokenType.Foreach && parenDepth == 0) {
+					inFor = false;
+				}
+				switch (token.type) {
+				case TokenType.Colon, TokenType.Semicolon:
+					break;
+				default:
+					if (!isFirstTokenForLine) {
+						wf(" ");
+					}
+				}
+				wf(token.value);
+				if (token.type == TokenType.Semicolon && !inFor) {
+					newLine = true;
+				} else if (token.type == TokenType.OpenBrace) {
+					mIndent++;
+					newLine = true;
+				} else if (token.type == TokenType.CloseBrace) {
+					newLine = true;
+				}
+			}
+			mIndent--;
+		}
+
+		if (func.hasInContract) {
 			ln();
 			twfln("in {");
-			printNodes(func.inContract.statements);
+			if (func.parsedIn is null) {
+				printTokens(func.tokensIn);
+			} else {
+				printNodes(func.parsedIn.statements);
+			}
 			ln();
 			twfln("}");
 		}
 
-		if (func.outContract !is null) {
+		if (func.hasOutContract) {
 			if (func.outParameter.length > 0) {
 				twfln(format("out (%s) {", func.outParameter));
 			} else {
 				twfln("out {");
 			}
-			printNodes(func.outContract.statements);
+			if (func.parsedOut is null) {
+				printTokens(func.tokensOut);
+			} else {
+				printNodes(func.parsedOut.statements);
+			}
 			ln();
 			twfln("}");
 		}
 
-		if (func._body !is null) {
-			if (func.inContract is null || func.outContract is null) {
+		if (func.hasBody) {
+			if (func.hasInContract || func.hasOutContract) {
 				twfln("body {");
 			} else {
 				ln();
 				twfln("{");
 			}
 
-			printNodes(func._body.statements);
+			if (func.parsedBody is null) {
+				printTokens(func.tokensBody);
+			} else {
+				printNodes(func.parsedBody.statements);
+			}
 
 			ln();
 			twfln("}");
@@ -2342,11 +2408,16 @@ protected:
 		}
 	}
 
-	void twf(string[] strings...)
+	void t()
 	{
-		for (int i; i < mIndent; i++) {
+		for (int i; i < mIndent; ++i) {
 			mSink(mIndentText);
 		}
+	}
+
+	void twf(string[] strings...)
+	{
+		t();
 		foreach (s; strings) {
 			mSink(s);
 		}

@@ -282,7 +282,7 @@ ir.ComposableString cs, LlvmLowerer lowerer)
 	auto sexp = buildStatementExp(/*#ref*/loc);
 	if (func.composableSinkVariable is null) {
 		func.composableSinkVariable = buildVariableAnonSmartAtTop(lp.errSink, /*#ref*/loc,
-			func._body, lp.sinkStore, null);
+			func.parsedBody, lp.sinkStore, null);
 	}
 	auto sinkStoreVar = func.composableSinkVariable;
 	auto sinkVar = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, current, sexp, lp.sinkType,
@@ -657,8 +657,8 @@ ir.Function generateToSink(ref in Location loc, LanguagePass lp, ir.Scope curren
 	auto em = buildEnumMembers(/*#ref*/loc, _enum,
 		buildExpReference(/*#ref*/loc, enumParam, enumParam.name), buildExpReference(/*#ref*/loc, sinkParam, sinkParam.name));
 	em.functions ~= lp.ehThrowAssertErrorFunc;
-	func._body.statements ~= buildExpStat(/*#ref*/loc, em);
-	buildReturnStat(/*#ref*/loc, func._body);
+	func.parsedBody.statements ~= buildExpStat(/*#ref*/loc, em);
+	buildReturnStat(/*#ref*/loc, func.parsedBody);
 	return func;
 }
 
@@ -911,7 +911,7 @@ void lowerAssignAA(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 	if (bs is null) {
 		auto func = cast(ir.Function)current.node;
 		if (func !is null) {
-			bs = func._body;
+			bs = func.parsedBody;
 		}
 	}
 	panicAssert(exp, bs !is null);
@@ -1280,7 +1280,7 @@ void lowerStructLookupViaFunctionCall(LanguagePass lp, ir.Scope current, ref ir.
 	auto loc = ae.loc;
 	auto statExp = buildStatementExp(/*#ref*/loc);
 	auto host = getParentFunction(current);
-	auto var = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, host._body, statExp, type,
+	auto var = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, host.parsedBody, statExp, type,
 	                                  ae.child);
 	ae.child = buildExpReference(/*#ref*/loc, var, var.name);
 	statExp.exp = exp;
@@ -1982,8 +1982,8 @@ void lowerVarargCall(LanguagePass lp, ir.Scope current, ir.Postfix postfix, ir.F
 	if (numVarArgs > 0) {
 		auto idsType = buildStaticArrayTypeSmart(/*#ref*/loc, varArgsSlice.length, tr);
 		auto argsType = buildStaticArrayTypeSmart(/*#ref*/loc, 0, buildVoid(/*#ref*/loc));
-		auto ids = buildVariableAnonSmartAtTop(lp.errSink, /*#ref*/loc, func._body, idsType, null);
-		auto args = buildVariableAnonSmartAtTop(lp.errSink, /*#ref*/loc, func._body, argsType, null);
+		auto ids = buildVariableAnonSmartAtTop(lp.errSink, /*#ref*/loc, func.parsedBody, idsType, null);
+		auto args = buildVariableAnonSmartAtTop(lp.errSink, /*#ref*/loc, func.parsedBody, argsType, null);
 
 		int[] sizes;
 		size_t totalSize;
@@ -2029,9 +2029,9 @@ void lowerGlobalAALiteral(LanguagePass lp, ir.Scope current, ir.Module mod, ir.V
 	auto loc = var.loc;
 	auto gctor = buildGlobalConstructor(lp.errSink, /*#ref*/loc, mod.children, current, "__ctor");
 	ir.BinOp assign = buildAssign(/*#ref*/loc, var, var.assign);
-	buildExpStat(/*#ref*/loc, gctor._body, assign);
+	buildExpStat(/*#ref*/loc, gctor.parsedBody, assign);
 	var.assign = null;
-	buildReturnStat(/*#ref*/loc, gctor._body);
+	buildReturnStat(/*#ref*/loc, gctor.parsedBody);
 }
 
 /*!
@@ -2058,7 +2058,7 @@ void lowerAA(LanguagePass lp, ir.Scope current, ir.Module thisModule, ref ir.Exp
 	if (bs is null) {
 		auto func = cast(ir.Function)current.node;
 		if (func !is null) {
-			bs = func._body;
+			bs = func.parsedBody;
 		}
 	}
 	panicAssert(exp, bs !is null);

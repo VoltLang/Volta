@@ -14,6 +14,7 @@ import watt.text.format : format;
 import ir = volta.ir;
 import volta.ir.location;
 import volta.util.util;
+import volta.util.moduleFromScope;
 
 import volta.errors;
 import volta.interfaces;
@@ -303,27 +304,4 @@ public:
 		}
 		return parent;
 	}
-}
-
-// A local version that uses ErrorSink for error reporting.
-private ir.Module getModuleFromScope(ref in Location loc, ir.Scope _scope, ErrorSink errSink)
-{
-	while (_scope !is null) {
-		auto m = cast(ir.Module)_scope.node;
-		_scope = _scope.parent;
-
-		if (m is null) {
-			continue;
-		}
-
-		if (_scope !is null) {
-			panic(errSink, m, "module scope has parent");
-			return null;
-		}
-
-		return m;
-	}
-
-	panic(errSink, /*#ref*/loc, "scope chain without module base");
-	return null;
 }

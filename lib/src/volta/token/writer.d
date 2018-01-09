@@ -9,6 +9,7 @@ import volta.interfaces;
 import volta.token.error;
 import volta.token.source;
 import volta.ir.tokenstream;
+import volta.util.dup;
 
 
 /*!
@@ -19,7 +20,6 @@ final class TokenWriter
 public:
 	LexerError[] errors;
 	bool noDoc;
-	ErrorSink errSink;
 
 	bool magicFlagD;
 
@@ -36,7 +36,15 @@ public:
 	this(Source source)
 	{
 		this.mSource = source;
-		this.errSink = errSink;
+		initTokenArray();
+	}
+
+	/*!
+	 * Create a new TokenWriter that doesn't have a
+	 * Source reference.
+	 */
+	this()
+	{
 		initTokenArray();
 	}
 
@@ -68,6 +76,14 @@ public:
 
 		mTokens[mLength++] = token;
 		token.loc.length = token.value.length;
+	}
+
+	void addEnd()
+	{
+		Token endToken;
+		endToken.value = "END";
+		endToken.type = TokenType.End;
+		addToken(endToken);
 	}
 
 	/*!
