@@ -11,10 +11,11 @@ import watt.text.sink;
 
 import ir = volta.ir;
 import volta.ir.printer;
+import volta.util.string;
+import volta.visitor.visitor;
 
 import volt.errors;
 import volt.interfaces;
-import volta.visitor.visitor;
 import volt.semantic.classify;
 
 

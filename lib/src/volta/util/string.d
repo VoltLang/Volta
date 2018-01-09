@@ -13,6 +13,38 @@ import volta.interfaces;
 import volta.errors;
 import volta.ir.location;
 
+//! Convert a @ref CRuntime to lower case string.
+string cRuntimeToString(CRuntime cRuntime)
+{
+	final switch (cRuntime) with (CRuntime) {
+	case None: return "none";
+	case MinGW: return "mingw";
+	case Glibc: return "glibc";
+	case Darwin: return "darwin";
+	case Microsoft:  return "microsoft";
+	}
+}
+
+//! Convert @ref Platform to lower case string.
+string platformToString(Platform platform)
+{
+	final switch (platform) with (Platform) {
+	case MinGW: return "mingw";
+	case MSVC:  return "msvc";
+	case Linux: return "linux";
+	case OSX:   return "osx";
+	case Metal: return "metal";
+	}
+}
+
+//! Convert @ref Arch to lower case string.
+string archToString(Arch arch)
+{
+	final switch (arch) with (Arch) {
+	case X86: return "x86";
+	case X86_64: return "x86_64";
+	}
+}
 
 bool isHex(dchar d)
 {
