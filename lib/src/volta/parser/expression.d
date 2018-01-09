@@ -1587,7 +1587,9 @@ ParseStatus parsePrimaryExp(ParserStream ps, out intir.PrimaryExp exp)
 		exp.op = intir.PrimaryExp.Type.FloatLiteral;
 		break;
 	case TokenType.New:
-		assert(isComposableString(ps));
+		if (!isComposableString(ps)) {
+			return parseExpected(ps, /*#ref*/ps.peek.loc, ir.NodeType.ComposableString, "composable string");
+		}
 		goto case;
 	case TokenType.StringLiteral:
 		if (isComposableString(ps)) {
