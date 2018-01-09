@@ -352,7 +352,6 @@ public:
 	string outParameter;
 
 
-	//! @todo Make these @p BlockStatements?
 	BlockStatement inContract;  //!< Optional.
 	BlockStatement outContract;  //!< Optional.
 	BlockStatement _body;  //!< Optional.
