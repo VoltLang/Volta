@@ -78,17 +78,17 @@ enum CRuntime
 	Darwin,
 	Microsoft,
 }
- 
- /*!
-  * Each of these listed platforms corresponds
-  * to a Version identifier.
-  *
-  * Posix and Windows are not listed here as they
-  * they are available on multiple platforms.
-  *
-  * Posix on Linux and OSX.
-  * Windows on MinGW and MSVC.
-  */
+
+/*!
+ * Each of these listed platforms corresponds
+ * to a Version identifier.
+ *
+ * Posix and Windows are not listed here as they
+ * they are available on multiple platforms.
+ *
+ * Posix on Linux and OSX.
+ * Windows on MinGW and MSVC.
+ */
 enum Platform
 {
 	MinGW,
@@ -97,7 +97,7 @@ enum Platform
 	OSX,
 	Metal,
 }
- 
+
 /*!
  * Each of these listed architectures corresponds
  * to a Version identifier.
