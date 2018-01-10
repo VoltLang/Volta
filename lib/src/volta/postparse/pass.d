@@ -13,31 +13,67 @@ import volta.errors;
 import volta.interfaces;
 
 import volta.util.sinks;
+
+import volta.postparse.missing : MissingDeps;
+import volta.postparse.gatherer;
 import volta.postparse.condremoval;
+import volta.postparse.attribremoval;
+import volta.postparse.scopereplacer;
+import volta.postparse.importresolver;
 
 
-class PostParsePass : vi.NullVisitor, Pass
+class PostParsePassImpl : vi.NullVisitor, PostParsePass
 {
+public:
+	MissingDeps missing;
+
+
 protected:
 	ErrorSink mErr;
 	ConditionalRemoval mCond;
+	Pass[] mPasses;
 
 
 public:
-	this(ErrorSink es, VersionSet vs)
+	this(ErrorSink err, VersionSet vs, TargetInfo target, bool warningsEnabled, bool removalOnly, bool doMissing, GetMod getMod)
 	{
-		mErr = es;
-		mCond = new ConditionalRemoval(es, vs);
+		mErr = err;
+		mCond = new ConditionalRemoval(err, vs);
+
+		if (removalOnly) {
+			return;
+		}
+
+		mPasses ~= new ScopeReplacer(err);
+		mPasses ~= new AttribRemoval(target, err);
+		mPasses ~= new Gatherer(warningsEnabled, err);
+		if (doMissing) {
+			missing = new MissingDeps(err, getMod);
+			mPasses ~= missing;
+		} else {
+			mPasses ~= new ImportResolver(err, getMod);
+		}
 	}
 
 	override void transform(ir.Module mod)
 	{
 		vi.accept(mod, this);
+
+		foreach (p; mPasses) {
+			p.transform(mod);
+		}
+	}
+
+	override void transform(ir.BlockStatement bs)
+	{
+		assert(false, "implement me");
 	}
 
 	override void close()
 	{
-
+		foreach (p; mPasses) {
+			p.close();
+		}
 	}
 
 

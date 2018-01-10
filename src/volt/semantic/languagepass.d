@@ -41,12 +41,8 @@ import volt.semantic.typeinfo;
 import volt.semantic.irverifier;
 import volt.semantic.classresolver;
 
-import volta.postparse.missing;
+import volta.postparse.pass;
 import volta.postparse.gatherer;
-import volta.postparse.attribremoval;
-import volta.postparse.scopereplacer;
-import volta.postparse.importresolver;
-
 
 enum Mode
 {
@@ -69,14 +65,15 @@ public:
 	 * Phases fields.
 	 * @{
 	 */
-	Pass[] postParse;
+	Pass[] passes1;
 	Pass[] passes2;
 	Pass[] passes3;
 	/*!
 	 * @}
 	 */
 
-	MissingDeps missing;
+	PostParsePassImpl postParseImpl;
+
 
 private:
 	Mode mMode;
@@ -108,6 +105,7 @@ private:
 		}
 	}
 
+
 public:
 	this(ErrorSink err, Driver drv, VersionSet ver, TargetInfo target,
 	     Frontend frontend, Mode mode, bool warnings)
@@ -118,22 +116,17 @@ public:
 
 		mTracker = new WorkTracker();
 
-		postParse ~= new TimerPass("pp", new pp.PostParsePass(err, ver));
+		version (D_Version2) auto getMod = &this.getModule;
+		else auto getMod = this.getModule;
+
+		postParse = postParseImpl = new pp.PostParsePassImpl(
+			err, ver, target, warningsEnabled,
+			mMode == Mode.RemoveConditionalsOnly,
+			mMode == Mode.MissingDeps,
+			getMod);
+		passes1 ~= new TimerPass("pp", postParseImpl);
 		if (mMode == Mode.RemoveConditionalsOnly) {
 			return;
-		}
-		postParse ~= new TimerPass("p1-scope-rep", new ScopeReplacer(err));
-		postParse ~= new TimerPass("p1-attrib-rem", new AttribRemoval(target, err));
-		postParse ~= new TimerPass("p1-gatherer", new Gatherer(warningsEnabled, err));
-		if (mMode == Mode.MissingDeps) {
-			version (D_Version2) auto getMod = &this.getModule;
-			else auto getMod = this.getModule;
-			missing = new MissingDeps(err, getMod);
-			postParse ~= new TimerPass("p1-missing", missing);
-		} else {
-			version (D_Version2) auto getMod = &this.getModule;
-			else auto getMod = this.getModule;
-			postParse ~= new TimerPass("p1-import", new ImportResolver(err, getMod));
 		}
 
 		passes2 ~= new TimerPass("p2-extyper", new ExTyper(this));
@@ -151,7 +144,7 @@ public:
 
 	override void close()
 	{
-		foreach (pass; postParse) {
+		foreach (pass; passes1) {
 			pass.close();
 		}
 		foreach (pass; passes2) {
@@ -631,7 +624,7 @@ public:
 		m.hasPhase1 = true;
 
 		debugPrint("Phase 1 %s.", m.name);
-		foreach (pass; postParse) {
+		foreach (pass; passes1) {
 			pass.transform(m);
 		}
 		debugPrint("Phase 1 %s done.", m.name);

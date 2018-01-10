@@ -302,3 +302,16 @@ interface Pass
 	//! Run the pass on the given module.
 	void transform(ir.Module m);
 }
+
+/*!
+ * Interface implemented by PostParse code, allows running certain operations
+ * out of band from the normal transform entire module type.
+ */
+interface PostParsePass : Pass
+{
+	// So all variants are available.
+	alias transform = Pass.transform;
+
+	//! Post parse transform block statements.
+	void transform(ir.BlockStatement bs);
+}

@@ -537,7 +537,7 @@ protected:
 
 		// Are we only looking for missing deps?
 		if (mMissingDeps) {
-			foreach (m; lp.missing.getMissing()) {
+			foreach (m; lp.postParseImpl.missing.getMissing()) {
 				io.output.writefln("%s", m);
 			}
 			io.output.flush();

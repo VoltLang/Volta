@@ -151,6 +151,9 @@ public:
 	//! Parsing front to be used when parsing new code.
 	Frontend frontend;
 
+	//! PostParse code that is run on newly parsed code.
+	PostParsePass postParse;
+
 	//! Should the code emit warnings.
 	bool warningsEnabled;
 
