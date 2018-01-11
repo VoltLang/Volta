@@ -388,13 +388,6 @@ public:
 	 *
 	 */
 
-	override void gather(ir.Scope current, ir.BlockStatement bs)
-	{
-		auto g = new Gatherer(warningsEnabled, errSink);
-		g.transform(current, bs);
-		g.close();
-	}
-
 	override void resolve(ir.Scope current, ir.Attribute[] userAttrs)
 	{
 		foreach (a; userAttrs) {

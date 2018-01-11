@@ -341,16 +341,6 @@ public:
 	 */
 
 	/*!
-	 * Gathers all the symbols and adds scopes where needed from
-	 * the given block statement.
-	 *
-	 * This function is intended to be used for inserting new
-	 * block statements into already gathered functions, for
-	 * instance when processing mixin statemetns.
-	 */
-	abstract void gather(ir.Scope current, ir.BlockStatement bs);
-
-	/*!
 	 * Resolves an Attribute, for UserAttribute usages.
 	 */
 	abstract void resolve(ir.Scope current, ir.Attribute a);
