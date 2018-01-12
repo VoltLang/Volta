@@ -2132,7 +2132,7 @@ bool isFunctionLiteral(ParserStream ps)
 
 	assert(ps.peek.type == TokenType.OpenParen);
 	int parenDepth;
-	while (!(parenDepth == 0 && ps.peek.type == TokenType.CloseParen)) {
+	while (!(parenDepth == 0 && ps.peek.type == TokenType.CloseParen) && ps.peek.type != TokenType.End) {
 		ps.get();
 		if (ps.peek.type == TokenType.OpenParen) {
 			parenDepth++;
