@@ -456,7 +456,7 @@ ParseStatus parseAsmStatement(ParserStream ps, out ir.AsmStatement as)
 		return unexpectedToken(ps, as);
 	}
 	ps.get();
-	while (ps != TokenType.CloseBrace) {
+	while (ps != TokenType.CloseBrace && ps != TokenType.End) {
 		as.tokens ~= ps.get();
 	}
 	if (ps != TokenType.CloseBrace) {
