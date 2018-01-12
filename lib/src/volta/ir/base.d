@@ -319,6 +319,8 @@ public:
 	final MixinTemplate toMixinTemplateChecked() { if (nodeType == NodeType.MixinTemplate) return toMixinTemplateFast(); else return null; }
 
 	// Type
+	final Type toTypeFast() { return cast(Type)cast(void*)this; }
+	final Type toTypeChecked() { return cast(Type)this; }
 	final PrimitiveType toPrimitiveTypeFast() { return cast(PrimitiveType)cast(void*)this; }
 	final PrimitiveType toPrimitiveTypeChecked() { if (nodeType == NodeType.PrimitiveType) return toPrimitiveTypeFast(); else return null; }
 	final TypeReference toTypeReferenceFast() { return cast(TypeReference)cast(void*)this; }
