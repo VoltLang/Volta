@@ -27,9 +27,9 @@ import volta.visitor.visitor;
 /*!
  * Loops over all attributes and applies them.
  */
-void applyAttributes(ir.Import i, ir.Attribute[] attrs, ErrorSink errSink)
+void applyAttributes(ir.Import i, ref AttributeSink attrs, ErrorSink errSink)
 {
-	foreach (attr; attrs) {
+	foreach (attr; attrs.borrowUnsafe()) {
 		applyAttribute(i, attr, errSink);
 	}
 }
@@ -37,9 +37,9 @@ void applyAttributes(ir.Import i, ir.Attribute[] attrs, ErrorSink errSink)
 /*!
  * Loops over all attributes and applies them.
  */
-void applyAttributes(ir.Function func, ir.Attribute[] attrs, ErrorSink errSink, TargetInfo target)
+void applyAttributes(ir.Function func, ref AttributeSink attrs, ErrorSink errSink, TargetInfo target)
 {
-	foreach (attr; attrs) {
+	foreach (attr; attrs.borrowUnsafe()) {
 		applyAttribute(func, attr, errSink, target);
 	}
 }
@@ -47,9 +47,9 @@ void applyAttributes(ir.Function func, ir.Attribute[] attrs, ErrorSink errSink, 
 /*!
  * Loops over all attributes and applies them.
  */
-void applyAttributes(ir.EnumDeclaration ed, ir.Attribute[] attrs, ErrorSink errSink)
+void applyAttributes(ir.EnumDeclaration ed, ref AttributeSink attrs, ErrorSink errSink)
 {
-	foreach (attr; attrs) {
+	foreach (attr; attrs.borrowUnsafe()) {
 		applyAttribute(ed, attr, errSink);
 	}
 }
@@ -57,9 +57,9 @@ void applyAttributes(ir.EnumDeclaration ed, ir.Attribute[] attrs, ErrorSink errS
 /*!
  * Loops over all attributes and applies them.
  */
-void applyAttributes(ir.Variable d, ir.Attribute[] attrs, ErrorSink errSink, TargetInfo target)
+void applyAttributes(ir.Variable d, ref AttributeSink attrs, ErrorSink errSink, TargetInfo target)
 {
-	foreach (attr; attrs) {
+	foreach (attr; attrs.borrowUnsafe()) {
 		applyAttribute(d, attr, errSink, target);
 	}
 }
@@ -67,9 +67,9 @@ void applyAttributes(ir.Variable d, ir.Attribute[] attrs, ErrorSink errSink, Tar
 /*!
  * Loops over all attributes and applies them.
  */
-void applyAttributes(ir.Aggregate s, ir.Attribute[] attrs, ErrorSink errSink)
+void applyAttributes(ir.Aggregate s, ref AttributeSink attrs, ErrorSink errSink)
 {
-	foreach (attr; attrs) {
+	foreach (attr; attrs.borrowUnsafe()) {
 		applyAttribute(s, attr, errSink);
 	}
 }
@@ -77,9 +77,9 @@ void applyAttributes(ir.Aggregate s, ir.Attribute[] attrs, ErrorSink errSink)
 /*!
  * Loops over all attributes and applies them.
  */
-void applyAttributes(ir._Interface i, ir.Attribute[] attrs, ErrorSink errSink)
+void applyAttributes(ir._Interface i, ref AttributeSink attrs, ErrorSink errSink)
 {
-	foreach (attr; attrs) {
+	foreach (attr; attrs.borrowUnsafe()) {
 		applyAttribute(i, attr, errSink);
 	}
 }
@@ -87,9 +87,9 @@ void applyAttributes(ir._Interface i, ir.Attribute[] attrs, ErrorSink errSink)
 /*!
  * Loops over all attributes and applies them.
  */
-void applyAttributes(ir.Enum e, ir.Attribute[] attrs, ErrorSink errSink)
+void applyAttributes(ir.Enum e, ref AttributeSink attrs, ErrorSink errSink)
 {
-	foreach (attr; attrs) {
+	foreach (attr; attrs.borrowUnsafe()) {
 		applyAttribute(e, attr, errSink);
 	}
 }
@@ -97,9 +97,9 @@ void applyAttributes(ir.Enum e, ir.Attribute[] attrs, ErrorSink errSink)
 /*!
  * Loops over all attributes and applies them.
  */
-void applyAttributes(ir.Alias a, ir.Attribute[] attrs, ErrorSink errSink)
+void applyAttributes(ir.Alias a, ref AttributeSink attrs, ErrorSink errSink)
 {
-	foreach (attr; attrs) {
+	foreach (attr; attrs.borrowUnsafe()) {
 		applyAttribute(a, attr, errSink);
 	}
 }
@@ -421,8 +421,8 @@ public:
 
 
 protected:
-	ir.Attribute[] mStack;
-	Context[] mCtx;
+	ContextSink mCtxStack;
+	AttributeSink mAttrStack;
 
 	/*!
 	 * Helper class.
@@ -435,9 +435,11 @@ protected:
 		}
 
 		ir.Node node;
-		ir.Attribute[] stack;
-		ir.Attribute[] oldStack;
+		AttributeSink stack;
+		AttributeSink oldStack;
 	}
+
+	alias ContextSink = SinkStruct!Context;
 
 
 public:
@@ -452,7 +454,7 @@ public:
 	 */
 	override Status enter(ir.Module m)
 	{
-		mCtx = [new Context(m)];
+		mCtxStack.sink(new Context(m));
 		return Continue;
 	}
 
@@ -465,76 +467,76 @@ public:
 
 	override Status enter(ir.Import i)
 	{
-		applyAttributes(i, ctxTop.stack, errSink);
-		applyAttributes(i, mStack, errSink);
+		applyAttributes(i, /*#ref*/ctxTop.stack, errSink);
+		applyAttributes(i, /*#ref*/mAttrStack, errSink);
 		return Continue;
 	}
 
 	override Status enter(ir.Function func)
 	{
-		applyAttributes(func, ctxTop.stack, errSink, target);
-		applyAttributes(func, mStack, errSink, target);
+		applyAttributes(func, /*#ref*/ctxTop.stack, errSink, target);
+		applyAttributes(func, /*#ref*/mAttrStack, errSink, target);
 		ctxPush(func);
 		return Continue;
 	}
 
 	override Status enter(ir.Variable d)
 	{
-		applyAttributes(d, ctxTop.stack, errSink, target);
-		applyAttributes(d, mStack, errSink, target);
+		applyAttributes(d, /*#ref*/ctxTop.stack, errSink, target);
+		applyAttributes(d, /*#ref*/mAttrStack, errSink, target);
 		return Continue;
 	}
 
 	override Status enter(ir.EnumDeclaration ed)
 	{
-		applyAttributes(ed, ctxTop.stack, errSink);
-		applyAttributes(ed, mStack, errSink);
+		applyAttributes(ed, /*#ref*/ctxTop.stack, errSink);
+		applyAttributes(ed, /*#ref*/mAttrStack, errSink);
 		return Continue;
 	}
 
 	override Status enter(ir.Struct s)
 	{
-		applyAttributes(s, ctxTop.stack, errSink);
-		applyAttributes(s, mStack, errSink);
+		applyAttributes(s, /*#ref*/ctxTop.stack, errSink);
+		applyAttributes(s, /*#ref*/mAttrStack, errSink);
 		ctxPush(s);
 		return Continue;
 	}
 
 	override Status enter(ir.Union u)
 	{
-		applyAttributes(u, ctxTop.stack, errSink);
-		applyAttributes(u, mStack, errSink);
+		applyAttributes(u, /*#ref*/ctxTop.stack, errSink);
+		applyAttributes(u, /*#ref*/mAttrStack, errSink);
 		ctxPush(u);
 		return Continue;
 	}
 
 	override Status enter(ir.Class c)
 	{
-		applyAttributes(c, ctxTop.stack, errSink);
-		applyAttributes(c, mStack, errSink);
+		applyAttributes(c, /*#ref*/ctxTop.stack, errSink);
+		applyAttributes(c, /*#ref*/mAttrStack, errSink);
 		ctxPush(c);
 		return Continue;
 	}
 
 	override Status enter(ir._Interface i)
 	{
-		applyAttributes(i, ctxTop.stack, errSink);
-		applyAttributes(i, mStack, errSink);
+		applyAttributes(i, /*#ref*/ctxTop.stack, errSink);
+		applyAttributes(i, /*#ref*/mAttrStack, errSink);
 		ctxPush(i);
 		return Continue;
 	}
 
 	override Status enter(ir.Enum e)
 	{
-		applyAttributes(e, ctxTop.stack, errSink);
-		applyAttributes(e, mStack, errSink);
+		applyAttributes(e, /*#ref*/ctxTop.stack, errSink);
+		applyAttributes(e, /*#ref*/mAttrStack, errSink);
 		return Continue;
 	}
 
 	override Status enter(ir.Alias a)
 	{
-		applyAttributes(a, ctxTop.stack, errSink);
-		applyAttributes(a, mStack, errSink);
+		applyAttributes(a, /*#ref*/ctxTop.stack, errSink);
+		applyAttributes(a, /*#ref*/mAttrStack, errSink);
 		return Continue;
 	}
 
@@ -543,7 +545,7 @@ public:
 	override Status leave(ir.Union u) { ctxPop(u); return Continue; }
 	override Status leave(ir.Class c) { ctxPop(c); return Continue; }
 	override Status leave(ir._Interface i) { ctxPop(i); return Continue; }
-	override Status leave(ir.Module m) { mCtx = null; return Continue; }
+	override Status leave(ir.Module m) { mCtxStack.reset(); return Continue; }
 
 	override Status enter(ir.Attribute attr) { passert(errSink, attr, false); return Continue; }
 	override Status leave(ir.Attribute attr) { passert(errSink, attr, false); return Continue; }
@@ -572,35 +574,37 @@ public:
 
 protected:
 	/*
-	 * Apply functions.
+	 *
+	 * Helper functions. 
+	 *
 	 */
 
-
-	@property Context ctxTop()
+	final @property Context ctxTop()
 	{
-		return mCtx[$-1];
+		return mCtxStack.getLast();
 	}
 
-	void ctxPush(ir.Node node, bool inherit = false)
+	final void ctxPush(ir.Node node, bool inherit = false)
 	{
 		auto ctx = new Context(node);
 
 		ctx.node = node;
-		ctx.oldStack = this.mStack;
+		ctx.oldStack = this.mAttrStack;
 
 		if (inherit) {
-			ctx.stack = ctxTop.stack ~ mStack;
+			ctx.stack.append(ctxTop.stack);
+			ctx.stack.append(mAttrStack);
 		} else {
-			ctx.stack = mStack;
+			ctx.stack = mAttrStack;
 		}
 
-		mCtx ~= ctx;
-		mStack = null; // Stack has been saved.
+		mCtxStack.sink(ctx);
+		mAttrStack.reset(); // Stack has been saved.
 	}
 
-	void ctxPop(ir.Node node)
+	final void ctxPop(ir.Node node)
 	{
-		while (mStack.length > 0 && attrTop.members is null) {
+		while (mAttrStack.length > 0 && attrTop.members is null) {
 			attrPop(attrTop);
 		}
 
@@ -609,35 +613,42 @@ protected:
 			return;
 		}
 
-		mStack = ctxTop.oldStack;
-		mCtx = mCtx[0 .. $-1];
+		mAttrStack = ctxTop.oldStack;
+		mCtxStack.popLast();
 	}
 
-	@property ir.Attribute attrTop()
+	final @property ir.Attribute attrTop()
 	{
-		return mStack[$-1];
+		return mAttrStack.getLast();
 	}
 
-	void attrPush(ir.Attribute attr)
+	final void attrPush(ir.Attribute attr)
 	{
-		mStack ~= attr;
+		mAttrStack.sink(attr);
 	}
 
-	void attrPop(ir.Attribute attr)
+	final void attrPop(ir.Attribute attr)
 	{
 		if (attrTop !is attr) {
 			panic(errSink, attr, "invalid attribute stack layout");
 			return;
 		}
-		mStack = mStack[0 .. $-1];
+		mAttrStack.popLast();
 	}
 
-	void attrPushDown()
+	final void attrPushDown()
 	{
-		mCtx[$-1].stack ~= mStack;
+		ctxTop.stack.append(mAttrStack.borrowUnsafe());
 	}
 
-	void manipAttr(ref NodeSink ns, ir.Attribute attr)
+
+	/*
+	 *
+	 * Manip flattening code.
+	 *
+	 */
+
+	final void manipAttr(ref NodeSink ns, ir.Attribute attr)
 	{
 		auto stack = [attr];
 		attrPush(attr);
@@ -668,28 +679,21 @@ protected:
 		}
 	}
 
-
-	/*
-	 *
-	 * Manip flattening code.
-	 *
-	 */
-
-	ir.Node[] manip(ir.Node[] nodes)
+	final ir.Node[] manip(ir.Node[] nodes)
 	{
 		NodeSink ns;
 		manip(/*#ref*/ns, nodes);
 		return ns.toArray();
 	}
 
-	void manip(ref NodeSink ns, ir.Node[] nodes)
+	final void manip(ref NodeSink ns, ir.Node[] nodes)
 	{
 		foreach (n; nodes) {
 			manip(/*#ref*/ns, n);
 		}
 	}
 
-	void manip(ref NodeSink ns, ir.Node n)
+	final void manip(ref NodeSink ns, ir.Node n)
 	{
 		switch (n.nodeType) with (ir.NodeType) {
 		case Attribute:
@@ -706,21 +710,23 @@ protected:
 
 public:
 	/*
-	 * Pass.
+	 *
+	 * Pass functions.
+	 *
 	 */
 	override void transform(ir.Module m)
 	{
-		passert(errSink, m, mStack.length == 0);
-		passert(errSink, m, mCtx.length == 0);
+		passert(errSink, m, mCtxStack.length == 0);
+		passert(errSink, m, mAttrStack.length == 0);
 		accept(m, this);
-		mStack = null;
-		mCtx = null;
+		mCtxStack.reset();
+		mAttrStack.reset();
 	}
 
 	void transform(ir.Module m, ir.Function func, ir.BlockStatement bs)
 	{
-		passert(errSink, bs, mStack.length == 0);
-		passert(errSink, bs, mCtx.length == 0);
+		passert(errSink, bs, mCtxStack.length == 0);
+		passert(errSink, bs, mAttrStack.length == 0);
 
 		// Just need to call enter on the module.
 		enter(m);
@@ -733,8 +739,8 @@ public:
 		assert(func !is null);
 		leave(func);
 
-		mStack = null;
-		mCtx = null;
+		mCtxStack.reset();
+		mAttrStack.reset();
 	}
 
 	override void close()
