@@ -17,6 +17,7 @@ import ir = volta.ir;
 
 import volta.util.util;
 import volta.util.copy;
+import volta.util.sinks;
 
 import volta.errors;
 import volta.interfaces;
@@ -31,6 +32,10 @@ enum Where
 	TopLevel,
 	Function,
 }
+
+// @todo Add ! once template definitions get tagged with doccomments.
+// Stack/Sink for collecting wheres
+alias WhereSink = SinkStruct!(Where);
 
 ir.Store findShadowed(ir.Scope _scope, ref in Location loc, string name, bool warningsEnabled)
 {
@@ -128,7 +133,7 @@ void checkTemplateRedefinition(ir.Scope current, string name, ErrorSink errSink)
 	}
 }
 
-void gather(ir.Scope current, ir.Variable v, Where where, ir.Function[] functionStack, bool warningsEnabled, ErrorSink errSink)
+void gather(ir.Scope current, ir.Variable v, Where where, bool warningsEnabled, ErrorSink errSink)
 {
 	passert(errSink, v, v.access.isValidAccess());
 
@@ -323,7 +328,7 @@ void addScope(ir.Module m)
 	m.myScope = new ir.Scope(m, name);
 }
 
-void addScope(ir.Scope current, ir.Function func, ir.Type thisType, ir.Function[] functionStack, ErrorSink errSink)
+void addScope(ir.Scope current, ir.Function func, ir.Type thisType, ErrorSink errSink)
 {
 	int nestedDepth = current.nestedDepth;
 	if (func.kind == ir.Function.Kind.Nested ||
@@ -450,12 +455,15 @@ class Gatherer : NullVisitor, Pass
 {
 protected:
 	Where[] mWhere;
-	ir.Scope[] mScope;
-	ir.Type[] mThis;
-	ir.Function[] mFunctionStack;
+	WhereSink mWhereStack;
+	ScopeSink mScopeStack;
+	TypeSink mTypeStack;
+	FunctionSink mFunctionStack;
+
 	ir.Module mModule;
 	bool mWarningsEnabled;
 	ErrorSink mErrSink;
+
 
 public:
 	this(bool warningsEnabled, ErrorSink errSink)
@@ -520,40 +528,40 @@ public:
 	 *
 	 */
 
-	void push(ir.Scope s, ir.Type thisType = null)
+	final void push(ir.Scope s, ir.Type thisType = null)
 	{
-		mWhere ~= thisType is null ?
+		mWhereStack.sink(thisType is null ?
 			Where.Function :
-			Where.TopLevel;
-		mScope ~= s;
+			Where.TopLevel);
+		mScopeStack.sink(s);
 
 		if (thisType !is null) {
-			mThis ~= thisType;
+			mTypeStack.sink(thisType);
 		}
 	}
 
-	void pop(ir.Type thisType = null)
+	final void pop(ir.Type thisType = null)
 	{
-		mScope = mScope[0 .. $-1];
-		mWhere = mWhere[0 .. $-1];
+		mScopeStack.popLast();
+		mWhereStack.popLast();
 
 		if (thisType !is null) {
-			passert(mErrSink, thisType, thisType is mThis[$-1]);
-			mThis = mThis[0 .. $-1];
+			passert(mErrSink, thisType, thisType is mTypeStack.getLast());
+			mTypeStack.popLast();
 		}
 	}
 
-	void push(ir.Function func)
+	final void push(ir.Function func)
 	{
 		push(func.myScope);
-		mFunctionStack ~= func;
+		mFunctionStack.sink(func);
 	}
 
-	void pop(ir.Function func)
+	final void pop(ir.Function func)
 	{
 		pop();
-		passert(mErrSink, func, func is mFunctionStack[$-1]);
-		mFunctionStack = mFunctionStack[0 .. $-1];
+		passert(mErrSink, func, func is mFunctionStack.getLast());
+		mFunctionStack.popLast();
 	}
 
 	final void pushScopesWithParents(ir.Scope current)
@@ -576,19 +584,19 @@ public:
 		popScopesWithParents(current.parent);
 	}
 
-	@property Where where()
+	final @property Where where()
 	{
-		return mWhere[$-1];
+		return mWhereStack.getLast();
 	}
 
-	@property ir.Scope current()
+	final @property ir.Scope current()
 	{
-		return mScope[$-1];
+		return mScopeStack.getLast();
 	}
 
-	@property ir.Type thisType()
+	final @property ir.Type thisType()
 	{
-		return mThis[$-1];
+		return mTypeStack.getLast();
 	}
 
 
@@ -605,8 +613,8 @@ public:
 		push(m.myScope);
 
 		// The code will think this is a function otherwise.
-		passert(mErrSink, m, mWhere.length == 1);
-		mWhere[0] = Where.Module;
+		passert(mErrSink, m, mWhereStack.length == 1);
+		mWhereStack.set(0, Where.Module);
 
 		return Continue;
 	}
@@ -619,7 +627,7 @@ public:
 
 	override Status enter(ir.Variable v)
 	{
-		gather(current, v, where, mFunctionStack, mWarningsEnabled, mErrSink);
+		gather(current, v, where, mWarningsEnabled, mErrSink);
 		return Continue;
 	}
 
@@ -675,7 +683,7 @@ public:
 		}
 
 		gather(current, func, where, mErrSink);
-		addScope(current, func, thisType, mFunctionStack, mErrSink);
+		addScope(current, func, thisType, mErrSink);
 		push(func);
 
 		// I don't think this is the right place for this.
@@ -690,7 +698,7 @@ public:
 	{
 		enter(fes.block);
 		foreach (var; fes.itervars) {
-			gather(current, var, where, mFunctionStack, mWarningsEnabled, mErrSink);
+			gather(current, var, where, mWarningsEnabled, mErrSink);
 		}
 		if (fes.aggregate !is null) acceptExp(/*#ref*/fes.aggregate, this);
 		if (fes.beginIntegerRange !is null) {
@@ -711,7 +719,7 @@ public:
 	{
 		enter(fs.block);
 		foreach (var; fs.initVars) {
-			gather(current, var, where, mFunctionStack, mWarningsEnabled, mErrSink);
+			gather(current, var, where, mWarningsEnabled, mErrSink);
 		}
 		if (fs.test !is null) {
 			acceptExp(/*#ref*/fs.test, this);
