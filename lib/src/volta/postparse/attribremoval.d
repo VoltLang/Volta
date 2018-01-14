@@ -449,9 +449,53 @@ public:
 		this.errSink = errSink;
 	}
 
+
 	/*
-	 * Things that do stuff.
+	 *
+	 * Pass functions.
+	 *
 	 */
+
+	override void transform(ir.Module m)
+	{
+		passert(errSink, m, mCtxStack.length == 0);
+		passert(errSink, m, mAttrStack.length == 0);
+		accept(m, this);
+		mCtxStack.reset();
+		mAttrStack.reset();
+	}
+
+	void transform(ir.Module m, ir.Function func, ir.BlockStatement bs)
+	{
+		passert(errSink, bs, mCtxStack.length == 0);
+		passert(errSink, bs, mAttrStack.length == 0);
+
+		// Just need to call enter on the module.
+		enter(m);
+
+		assert(func !is null);
+		enter(func);
+
+		accept(bs, this);
+
+		assert(func !is null);
+		leave(func);
+
+		mCtxStack.reset();
+		mAttrStack.reset();
+	}
+
+	override void close()
+	{
+	}
+
+
+	/*
+	 *
+	 * Visitor functions.
+	 *
+	 */
+
 	override Status enter(ir.Module m)
 	{
 		mCtxStack.sink(new Context(m));
@@ -575,7 +619,7 @@ public:
 protected:
 	/*
 	 *
-	 * Helper functions. 
+	 * Stack functions.
 	 *
 	 */
 
@@ -705,45 +749,5 @@ protected:
 			ns.sink(n);
 			break;
 		}
-	}
-
-
-public:
-	/*
-	 *
-	 * Pass functions.
-	 *
-	 */
-	override void transform(ir.Module m)
-	{
-		passert(errSink, m, mCtxStack.length == 0);
-		passert(errSink, m, mAttrStack.length == 0);
-		accept(m, this);
-		mCtxStack.reset();
-		mAttrStack.reset();
-	}
-
-	void transform(ir.Module m, ir.Function func, ir.BlockStatement bs)
-	{
-		passert(errSink, bs, mCtxStack.length == 0);
-		passert(errSink, bs, mAttrStack.length == 0);
-
-		// Just need to call enter on the module.
-		enter(m);
-
-		assert(func !is null);
-		enter(func);
-
-		accept(bs, this);
-
-		assert(func !is null);
-		leave(func);
-
-		mCtxStack.reset();
-		mAttrStack.reset();
-	}
-
-	override void close()
-	{
 	}
 }
