@@ -153,6 +153,9 @@ public:
 alias IntSink = SinkStruct!int;
 alias BoolSink = SinkStruct!bool;
 alias NodeSink = SinkStruct!(ir.Node);
-alias FunctionSink = SinkStruct!(ir.Function);
-alias FunctionArraySink = SinkStruct!(ir.Function[]);
+alias TypeSink = SinkStruct!(ir.Type);
+alias ScopeSink = SinkStruct!(ir.Scope);
 alias VariableSink = SinkStruct!(ir.Variable);
+alias FunctionSink = SinkStruct!(ir.Function);
+alias AttributeSink = SinkStruct!(ir.Attribute);
+alias FunctionArraySink = SinkStruct!(ir.Function[]);
