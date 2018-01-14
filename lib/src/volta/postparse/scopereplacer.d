@@ -13,6 +13,7 @@ import watt.text.format : format;
 
 import ir = volta.ir;
 import volta.util.util;
+import volta.util.sinks;
 
 import volta.errors;
 import volta.interfaces;
@@ -28,8 +29,11 @@ import volta.visitor.scopemanager;
 class ScopeReplacer : NullVisitor, Pass
 {
 public:
-	ir.Function[] functionStack;
 	ErrorSink errSink;
+
+
+protected:
+	FunctionSink mFuncStack;
 
 
 public:
@@ -57,14 +61,13 @@ public:
 
 	override Status enter(ir.Function func)
 	{
-		functionStack ~= func;
+		funcPush(func);
 		return Continue;
 	}
 
 	override Status leave(ir.Function func)
 	{
-		assert(functionStack.length > 0 && func is functionStack[$-1]);
-		functionStack = functionStack[0 .. $-1];
+		funcPop(func);
 		return Continue;
 	}
 
@@ -108,13 +111,42 @@ public:
 	}
 
 
-private:
-	ir.Node handleTry(ir.TryStatement t)
+protected:
+	/*
+	 *
+	 * Stack code
+	 *
+	 */
+
+	final @property ir.Function funcTop()
+	{
+		return mFuncStack.getLast();
+	}
+
+	final void funcPush(ir.Function func)
+	{
+		mFuncStack.sink(func);
+	}
+
+	final void funcPop(ir.Function func)
+	{
+		assert(mFuncStack.length > 0 && func is funcTop);
+		mFuncStack.popLast();
+	}
+
+
+	/*
+	 *
+	 * Converting code.
+	 *
+	 */
+
+	final ir.Node handleTry(ir.TryStatement t)
 	{
 		if (t.finallyBlock is null) {
 			return t;
 		}
-		if (!passert(errSink, t, functionStack.length > 0)) {
+		if (!passert(errSink, t, mFuncStack.length > 0)) {
 			return null;
 		}
 
@@ -122,7 +154,7 @@ private:
 		t.finallyBlock = null;
 
 		auto func = convertToFunction(
-			ir.ScopeKind.Exit, f, functionStack[$-1]);
+			ir.ScopeKind.Exit, f, funcTop);
 
 		auto b = new ir.BlockStatement();
 		b.loc = t.loc;
@@ -131,17 +163,17 @@ private:
 		return b;
 	}
 
-	ir.Function handleScope(ir.ScopeStatement ss)
+	final ir.Function handleScope(ir.ScopeStatement ss)
 	{
-		if (functionStack.length == 0) {
+		if (mFuncStack.length == 0) {
 			errorMsg(errSink, ss, scopeOutsideFunctionMsg());
 			return null;
 		}
 
-		return convertToFunction(ss.kind, ss.block, functionStack[$-1]);
+		return convertToFunction(ss.kind, ss.block, funcTop);
 	}
 
-	ir.Function convertToFunction(ir.ScopeKind kind, ir.BlockStatement block, ir.Function parent)
+	final ir.Function convertToFunction(ir.ScopeKind kind, ir.BlockStatement block, ir.Function parent)
 	{
 		auto func = new ir.Function();
 		func.loc = block.loc;
