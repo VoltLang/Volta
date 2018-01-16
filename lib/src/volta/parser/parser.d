@@ -90,7 +90,6 @@ public:
 	override ir.BlockStatement parseBlockStatement(ref ir.Token[] tokens)
 	{
 		auto parserStream = new ParserStream(tokens, settings, errSink);
-		parserStream.get();  // Eat BEGIN.
 		ir.BlockStatement blockStatement;
 		auto parserStatus = parseBlock(parserStream, /*#out*/blockStatement);
 		checkError(parserStream, parserStatus);
@@ -112,7 +111,7 @@ public:
 		ps.get(); // Skip, stream already checks for Begin.
 
 		auto sink = new NodeSink();
-		while (ps != TokenType.End) {
+		while (!ps.eof) {
 			checkError(ps, parseStatement(ps, sink.push));
 		}
 		return sink.array;
@@ -132,7 +131,7 @@ protected:
 		ps.get();
 
 		ir.Token t;
-		while((t = ps.get()).type != TokenType.End) {
+		while(!ps.eof) {
 			string l = t.loc.toString();
 			string tStr = t.type.tokenToString();
 			string v = t.value;

@@ -728,7 +728,7 @@ private ParseStatus _parseArgumentList(ParserStream ps, out intir.AssignExp[] pe
 	auto matchedComma = false;
 	while (ps.peek.type != endChar) {
 		matchedComma = false;
-		if (ps.peek.type == TokenType.End) {
+		if (ps.eof) {
 			return parseExpected(ps, /*#ref*/ps.peek.loc, ir.NodeType.Postfix, "end of argument list");
 		}
 		intir.AssignExp e;
@@ -758,7 +758,7 @@ private ParseStatus _parseArgumentList(ParserStream ps, out intir.AssignExp[] pe
 	auto matchedComma = false;
 	while (ps.peek.type != endChar) {
 		matchedComma = false;
-		if (ps.peek.type == TokenType.End) {
+		if (ps.eof) {
 			return unexpectedToken(ps, ir.NodeType.Postfix);
 		}
 		if (ps.peek.type == TokenType.Identifier && ps.lookahead(1).type == TokenType.Colon) {
@@ -1682,7 +1682,7 @@ ParseStatus parsePrimaryExp(ParserStream ps, out intir.PrimaryExp exp)
 			}
 			i++;
 			if (ps.lookahead(i).type == TokenType.Comma ||
-				ps.lookahead(i).type == TokenType.End) {
+				ps.eof) {
 				break;
 			}
 		}
@@ -2132,7 +2132,7 @@ bool isFunctionLiteral(ParserStream ps)
 
 	assert(ps.peek.type == TokenType.OpenParen);
 	int parenDepth;
-	while (!(parenDepth == 0 && ps.peek.type == TokenType.CloseParen) && ps.peek.type != TokenType.End) {
+	while (!(parenDepth == 0 && ps.peek.type == TokenType.CloseParen) && !ps.eof) {
 		ps.get();
 		if (ps.peek.type == TokenType.OpenParen) {
 			parenDepth++;

@@ -366,7 +366,7 @@ body
 
 	ps.pushCommentLevel();
 
-	while (ps.peek.type != end && ps.peek.type != TokenType.End) {
+	while (ps.peek.type != end && !ps.eof) {
 		ir.TopLevelBlock tmp;
 		auto succeeded = parseOneTopLevelBlock(ps, /*#out*/tmp);
 		if (!succeeded) {
@@ -879,7 +879,7 @@ ParseStatus parseEnum(ParserStream ps, out ir.Node[] output)
 	bool braceAhead;
 	if (ps == TokenType.Identifier) {
 		auto pos = ps.save();
-		while (ps != TokenType.End) {
+		while (!ps.eof) {
 			if (ps == TokenType.OpenBrace) {
 				braceAhead = true;
 				break;

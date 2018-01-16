@@ -456,7 +456,7 @@ ParseStatus parseAsmStatement(ParserStream ps, out ir.AsmStatement as)
 		return unexpectedToken(ps, as);
 	}
 	ps.get();
-	while (ps != TokenType.CloseBrace && ps != TokenType.End) {
+	while (ps != TokenType.CloseBrace && !ps.eof) {
 		as.tokens ~= ps.get();
 	}
 	if (ps != TokenType.CloseBrace) {
@@ -1380,12 +1380,12 @@ ParseStatus parseStaticIs(ParserStream ps, out ir.AssertStatement as)
 {
 	ps.get();
 	ir.IsExp isExp;
-	ps.saveTokens();
+	size_t index = ps.saveTokens();
 	auto succeeded = parseIsExp(ps, /*#out*/isExp);
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.IsExp);
 	}
-	Token[] tokens = ps.doneSavingTokens();
+	Token[] tokens = ps.doneSavingTokens(index);
 	as = new ir.AssertStatement();
 	as.loc = isExp.loc;
 	as.isStatic = true;

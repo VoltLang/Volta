@@ -540,9 +540,6 @@ public:
 
 private:
 	string[] mComment;
-	Token[] mSavedTokens;
-	bool mSavingTokens;
-
 
 public:
 	this(Token[] tokens, Settings settings, ErrorSink errSink)
@@ -551,6 +548,11 @@ public:
 		this.setExpLocationVisitor = new SetExpLocationVisitor();
 		pushCommentLevel();
 		super(tokens, errSink);
+	}
+
+	final @property bool eof()
+	{
+		return mIndex >= mTokens.length - 1;
 	}
 
 	/*!
@@ -566,23 +568,17 @@ public:
 		if (mIndex < mTokens.length - 1) {
 			mIndex++;
 		}
-		if (mSavingTokens) {
-			mSavedTokens ~= retval;
-		}
 		return retval;
 	}
 
-	void saveTokens()
+	size_t saveTokens()
 	{
-		mSavingTokens = true;
-		mSavedTokens = null;
+		return mIndex;
 	}
 
-	Token[] doneSavingTokens()
+	Token[] doneSavingTokens(size_t startIndex)
 	{
-		assert(mSavingTokens);
-		mSavingTokens = false;
-		return mSavedTokens;
+		return mTokens[startIndex .. mIndex];
 	}
 
 	void resetErrors()

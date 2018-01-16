@@ -95,7 +95,7 @@ bool isUnambigouslyType(ParserStream ps)
 	auto mark = ps.save();
 	ps.get();
 	bool retval;
-	while (ps != TokenType.Semicolon && ps != TokenType.End && ps != TokenType.CloseParen && ps != TokenType.Comma) {
+	while (ps != TokenType.Semicolon && !ps.eof && ps != TokenType.CloseParen && ps != TokenType.Comma) {
 		if (ps == TokenType.Identifier || ps == TokenType.Dot) {
 			ps.get();
 			continue;

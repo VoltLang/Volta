@@ -149,7 +149,7 @@ ParseStatus parseAlias(ParserStream ps, out ir.Alias a)
 	size_t i = 1;
 	bool bang;
 	while (ps.lookahead(i).type != TokenType.Semicolon &&
-		   ps.lookahead(i).type != TokenType.End) {
+		   !ps.eof) {
 		bang = ps.lookahead(i).type == TokenType.Bang;
 		if (bang) {
 			break;
@@ -260,7 +260,7 @@ ParseStatus parseAliasStaticIf(ParserStream ps, out ir.AliasStaticIf asi)
 		if (!succeeded) {
 			return succeeded;
 		}
-	} while (ps != TokenType.End);
+	} while (!ps.eof);
 
 	if (ps == TokenType.Else) {
 		succeeded = match(ps, asi.nodeType,
@@ -514,7 +514,7 @@ ParseStatus parseStorageType(ParserStream ps, out ir.StorageType storageType)
 				autoDecl = false;
 			}
 			if (ps.lookahead(i).type == TokenType.Semicolon ||
-			    ps.lookahead(i).type == TokenType.End) {
+			    ps.eof) {
 				break;
 			}
 			i++;
@@ -1200,22 +1200,19 @@ ParseStatus parseBraceCountedTokenList(ParserStream ps, out ir.Token[] tokens, i
 	if (ps.peek.type != TokenType.OpenBrace) {
 		return parseFailed(ps, ir.NodeType.Function);
 	}
-	auto tokenWriter = new TokenWriter();
-	tokenWriter.addToken(ps.get());
-	auto braceDepth = 1;
-	while (braceDepth > 0) {
+	size_t index = ps.saveTokens();
+	int braceDepth;
+	do {
 		auto t = ps.get();
-		tokenWriter.addToken(t);
 		if (t.type == TokenType.OpenBrace) {
 			braceDepth++;
 		} else if (t.type == TokenType.CloseBrace) {
 			braceDepth--;
-		} else if (t.type == TokenType.End) {
+		} else if (ps.eof) {
 			return parseExpected(ps, /*#ref*/ps.peek.loc, owner, "closing brace");
 		}
-	}
-	tokenWriter.addEnd();
-	tokens = tokenWriter.getTokens();
+	} while (braceDepth > 0);
+	tokens = ps.doneSavingTokens(index);
 	return Succeeded;
 }
 

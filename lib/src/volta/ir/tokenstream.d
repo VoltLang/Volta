@@ -25,24 +25,12 @@ protected:
 
 public:
 	/*!
-	 * Takes the token array does some error checking and initializes
-	 * mTokens with it also sets the current token to the first token.
-	 *
-	 * Throws:
-	 *   CompilerPanic if token stream is not valid.
+	 * Takes the token array, initializes mTokens and 
+	 * sets the current token to the first token.
 	 */
 	this(Token[] tokens, ErrorSink errSink)
 	{
 		this.errSink = errSink;
-		if (tokens.length < 3) {
-			panic(errSink, "Token stream too short.");
-		}
-		if (tokens[0].type != TokenType.Begin) {
-			panic(errSink, "Token stream not started correctly.");
-		}
-		if (tokens[$-1].type != TokenType.End) {
-			panic(errSink, "Token stream not terminated correctly.");
-		}
 		this.mTokens = tokens;
 	}
 
