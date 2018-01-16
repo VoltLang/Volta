@@ -506,7 +506,7 @@ protected:
 		mLastIndent = mIndent;
 	}
 
-	void twf(string[] strings...)
+	void twf(scope string[] strings...)
 	{
 		for (int i; i < mIndent; i++)
 			mSink(mIndentText);
@@ -515,7 +515,7 @@ protected:
 		}
 	}
 
-	void twfln(string[] strings...)
+	void twfln(scope string[] strings...)
 	{
 		foreach (s; strings) {
 			twf(s);
@@ -523,7 +523,7 @@ protected:
 		}
 	}
 
-	void wf(string[] strings...)
+	void wf(scope string[] strings...)
 	{
 		foreach (s; strings) {
 			mSink(s);
