@@ -10,6 +10,8 @@ import volt.errors;
 import volt.interfaces;
 import volta.ir.location;
 import volta.visitor.visitor;
+import volta.util.stack;
+import volta.util.dup;
 
 
 class Context
@@ -29,8 +31,8 @@ private:
 	uint mParentIndex;
 	uint mFunctionDepth;
 	ir.Function[] mFunctionStack;
-	ir.Exp[] mIndexChildren;
-	ir.Exp[] mWithExps;
+	ExpStack mIndexChildren;
+	ExpStack mWithExps;
 
 public:
 	this(LanguagePass lp, Visitor extyper)
@@ -89,7 +91,7 @@ public:
 
 	final @property ir.Exp[] withExps()
 	{
-		return mWithExps;
+		return mWithExps.borrowUnsafe().dup();
 	}
 
 	final @property bool isNested()
@@ -105,7 +107,7 @@ public:
 
 	final @property ir.Exp lastIndexChild()
 	{
-		return mIndexChildren.length > 0 ? mIndexChildren[$-1] : null;
+		return mIndexChildren.length > 0 ? mIndexChildren.peek() : null;
 	}
 
 	/*
@@ -135,7 +137,7 @@ public:
 	 */
 	final void pushWith(ir.Exp exp)
 	{
-		mWithExps ~= exp;
+		mWithExps.push(exp);
 	}
 
 	/*!
@@ -143,11 +145,11 @@ public:
 	 */
 	final void popWith(ir.Exp exp)
 	{
-		if (mWithExps[$-1] !is exp) {
+		if (mWithExps.peek() !is exp) {
 			throw panic(exp, "invalid layout");
 		}
 
-		mWithExps = mWithExps[0 .. $-1];
+		mWithExps.pop();
 	}
 
 	/*
@@ -156,39 +158,41 @@ public:
 	final void enter(ir.Postfix postfix)
 	{
 		if (postfix.op == ir.Postfix.Op.Index || postfix.op == ir.Postfix.Op.Slice) {
-			mIndexChildren ~= postfix.child;
+			mIndexChildren.push(postfix.child);
 		}
 	}
 
 	final void leave(ir.Postfix postfix)
 	{
 		if (postfix.op == ir.Postfix.Op.Index || postfix.op == ir.Postfix.Op.Slice) {
-			mIndexChildren = mIndexChildren[0 .. $-1];
+			mIndexChildren.pop();
 		}
 	}
 
 	final void enter(ir.Unary unary)
 	{
 		if (unary.op == ir.Unary.Op.Dup) {
-			mIndexChildren ~= unary.value;
+			mIndexChildren.push(unary.value);
 		}
 	}
 
 	final void leave(ir.Unary unary)
 	{
 		if (unary.op == ir.Unary.Op.Dup) {
-			mIndexChildren = mIndexChildren[0 .. $-1];
+			mIndexChildren.pop();
 		}
 	}
 
 	final void enter(ir.BuiltinExp bin)
 	{
-		mIndexChildren ~= bin.children;
+		mIndexChildren.push(bin);
 	}
 
 	final void leave(ir.BuiltinExp bin)
 	{
-		mIndexChildren = mIndexChildren[0 .. $-bin.children.length];
+		foreach (i; 0 .. bin.children.length) {
+			mIndexChildren.pop();
+		}
 	}
 private:
 	/*!
