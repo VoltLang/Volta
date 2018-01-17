@@ -11,6 +11,7 @@ import volt.errors;
 import volta.ir.location;
 import volta.visitor.visitor;
 import volta.visitor.scopemanager;
+import volta.util.stack;
 
 import volt.semantic.evaluate;
 import volt.semantic.classify;
@@ -125,6 +126,8 @@ bool canReachChildBefore(Block block, bool delegate(Block) dgt, Block target)
 	return false;
 }
 
+alias BlockStack = Stack!Block;
+
 /*!
  * Builds and checks CFGs on Functions.
  *
@@ -135,11 +138,11 @@ class CFGBuilder : ScopeManager, Pass
 public:
 	LanguagePass lp;
 	Block[] blocks;
-	Block[] breakBlocks;
+	BlockStack breakBlocks;
 	ir.SwitchStatement currentSwitchStatement;
 	Block[] currentSwitchBlocks;
 	int currentCaseIndex = -1;
-	ir.Class[] classStack;
+	ClassStack classStack;
 
 public:
 	this(LanguagePass lp)
@@ -204,7 +207,7 @@ public:
 		if (func.kind == ir.Function.Kind.Constructor && block.canReachWithoutSuper() &&
 		    classStack.length > 0) {
 			panicAssert(func, classStack.length > 0);
-			auto pclass = classStack[$-1].parentClass;
+			auto pclass = classStack.peek().parentClass;
 			if (pclass !is null) {
 				bool noArgumentCtor;
 				foreach (ctor; pclass.userConstructors) {
@@ -318,9 +321,9 @@ public:
 		enterLoop();
 		auto currentBlock = block;
 		auto fesBlock = block = new Block(currentBlock);
-		breakBlocks ~= fesBlock;
+		breakBlocks.push(fesBlock);
 		accept(fes.block, this);
-		breakBlocks = breakBlocks[0 .. $-1];
+		breakBlocks.pop();
 		block = new Block(fesBlock);
 		return ContinueParent;
 	}
@@ -332,9 +335,9 @@ public:
 		enterLoop();
 		auto currentBlock = block;
 		auto doBlock = block = new Block(currentBlock);
-		breakBlocks ~= doBlock;
+		breakBlocks.push(doBlock);
 		accept(ds.block, this);
-		breakBlocks = breakBlocks[0 .. $-1];
+		breakBlocks.pop();
 		block = new Block(doBlock);
 		return ContinueParent;
 	}
@@ -379,7 +382,7 @@ public:
 
 		foreach (i, _case; ss.cases) {
 			currentCaseIndex = cast(int) i;
-			breakBlocks ~= currentSwitchBlocks[i];
+			breakBlocks.push(currentSwitchBlocks[i]);
 			block = currentSwitchBlocks[i];
 			accept(_case.statements, this);
 			currentSwitchBlocks[i] = block;
@@ -387,7 +390,7 @@ public:
 				&& block.canReachEntry() && i < ss.cases.length - 1 && block.parents.length != 0) {
 				throw makeCaseFallsThrough(/*#ref*/_case.loc);
 			}
-			breakBlocks = breakBlocks[0 .. $-1];
+			breakBlocks.pop();
 		}
 
 		block = new Block();
@@ -434,15 +437,15 @@ public:
 	override Status enter(ir.Class c)
 	{
 		super.enter(c);
-		classStack ~= c;
+		classStack.push(c);
 		return Continue;
 	}
 
 	override Status leave(ir.Class c)
 	{
 		super.leave(c);
-		panicAssert(c, classStack.length > 0 && classStack[$-1] is c);
-		classStack = classStack[0 .. $-1];
+		panicAssert(c, classStack.length > 0 && classStack.peek() is c);
+		classStack.pop();
 		return Continue;
 	}
 
@@ -593,7 +596,7 @@ public:
 		}
 		checkReachability(bs);
 		block._break = true;
-		breakBlocks[$-1].broken = true;
+		breakBlocks.peek().broken = true;
 		return Continue;
 	}
 
@@ -663,9 +666,9 @@ private:
 		ensureNonNullBlock(/*#ref*/n.loc);
 		auto currentBlock = block;
 		auto loopBlock = block = new Block(currentBlock);
-		breakBlocks ~= loopBlock;
+		breakBlocks.push(loopBlock);
 		accept(b, this);
-		breakBlocks = breakBlocks[0 .. $-1];
+		breakBlocks.pop();
 		if (exp !is null && constantTrue(exp)) {
 			block = new Block(loopBlock);
 			if (!loopBlock.broken) {

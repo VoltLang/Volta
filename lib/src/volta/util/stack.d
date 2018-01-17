@@ -78,5 +78,6 @@ public:
 
 alias FunctionStack = Stack!(ir.Function);
 alias ExpStack = Stack!(ir.Exp);
+alias ClassStack = Stack!(ir.Class);
 alias BinOpOpStack = Stack!(ir.BinOp.Op);
 alias BoolStack = Stack!bool;
