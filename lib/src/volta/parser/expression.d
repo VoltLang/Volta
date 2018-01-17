@@ -21,6 +21,7 @@ import volta.token.lexer : lex;
 import volta.parser.base;
 import volta.parser.declaration;
 import volta.util.string;
+import volta.util.stack;
 import volta.visitor.visitor;
 
 ParseStatus parseExp(ParserStream ps, out ir.Exp exp)
@@ -126,7 +127,7 @@ ParseStatus binexpToExp(ParserStream ps, intir.BinExp bin, out ir.Exp exp)
 
 	ExpOrOp[] tokens = gatherExps(bin);
 	ExpOrOp[] output;
-	ir.BinOp.Op[] stack;
+	BinOpOpStack stack;
 
 	// While there are tokens to be read.
 	while (tokens.length > 0) {
@@ -143,12 +144,11 @@ ParseStatus binexpToExp(ParserStream ps, intir.BinExp bin, out ir.Exp exp)
 			// While there is an operator token on the top of the stack
 			while (stack.length > 0) {
 				// and op1 is left associative and its precedence is <= op2.
-				if ((intir.isLeftAssociative(op1) && intir.getPrecedence(op1) <= intir.getPrecedence(stack[0])) || 
-					(intir.getPrecedence(op1) < intir.getPrecedence(stack[0]))) {
+				if ((intir.isLeftAssociative(op1) && intir.getPrecedence(op1) <= intir.getPrecedence(stack.peek())) ||
+					(intir.getPrecedence(op1) < intir.getPrecedence(stack.peek()))) {
 				// or op1 has precedence < op2) {
 					// pop op2 off the stack
-					auto op2 = stack[0];
-					stack = stack[1 .. $];
+					auto op2 = stack.pop();
 					// and onto the output queue.
 					output ~= new ExpOrOp(op2); 
 				} else {
@@ -156,7 +156,7 @@ ParseStatus binexpToExp(ParserStream ps, intir.BinExp bin, out ir.Exp exp)
 				}
 			}
 			// Push op1 onto the stack.
-			stack = op1 ~ stack;
+			stack.push(op1);
 		}
 	}
 
@@ -164,11 +164,10 @@ ParseStatus binexpToExp(ParserStream ps, intir.BinExp bin, out ir.Exp exp)
 	// While there are still operator tokens on the stack.
 	while (stack.length > 0) {
 		// Pop the operator onto the output queue.
-		output ~= new ExpOrOp(stack[0]);
-		stack = stack[1 .. $];
+		output ~= new ExpOrOp(stack.pop());
 	}
 
-	ir.Exp[] expstack;
+	ExpStack expstack;
 	while (output.length > 0) {
 		if (output[0].isExp) {
 			ir.Exp uexp;
@@ -176,21 +175,20 @@ ParseStatus binexpToExp(ParserStream ps, intir.BinExp bin, out ir.Exp exp)
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.BinOp);
 			}
-			expstack = uexp ~ expstack;
+			expstack.push(uexp);
 		} else {
 			assert(expstack.length >= 2);
 			auto binout = new ir.BinOp();
-			binout.loc = expstack[0].loc;
-			binout.left = expstack[1];
-			binout.right = expstack[0];
+			binout.right = expstack.pop();
+			binout.left = expstack.pop();
+			binout.loc = binout.right.loc;
 			binout.op = output[0].op;
-			expstack = expstack[2 .. $];
-			expstack = binout ~ expstack;
+			expstack.push(binout);
 		}
 		output = output[1 .. $];
 	}
 	assert(expstack.length == 1);
-	exp = expstack[0];
+	exp = expstack.pop();
 	return Succeeded;
 }
 
