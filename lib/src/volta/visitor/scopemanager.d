@@ -11,13 +11,14 @@ import volta.errors;
 import volta.interfaces;
 import volta.visitor.visitor;
 import volta.ir.location : Location;
+import volta.util.stack;
 
 
 class ScopeManager : NullVisitor
 {
 public:
 	ir.Scope current;
-	ir.Function[] functionStack;
+	FunctionStack functionStack;
 
 protected:
 	ir.Module mThisModule;
@@ -127,17 +128,14 @@ public:
 	override Status enter(ir.Function func)
 	{
 		checkPreScope(/*#ref*/func.loc, func.myScope);
-		functionStack ~= func;
+		functionStack.push(func);
 		current = func.myScope;
 		return Continue;
 	}
 
 	override Status leave(ir.Function func)
 	{
-		assert(functionStack.length > 0 && functionStack[$-1] is func);
-		functionStack = functionStack[0 .. $-1];
-
-
+		functionStack.pop();
 		if (current !is func.myScope) {
 			nodeError(func, current.node);
 		}

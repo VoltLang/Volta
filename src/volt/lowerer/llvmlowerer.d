@@ -2207,7 +2207,7 @@ public:
 	{
 		ir.Function parent;
 		if (functionStack.length == 1) {
-			parent = functionStack[0];
+			parent = functionStack.peek();
 		} else {
 			assert(functionStack.length == 0);
 		}
@@ -2340,7 +2340,7 @@ public:
 	{
 		auto oldExp = exp;
 		lowerPostfix(lp, current, thisModule, /*#ref*/exp,
-			functionStack.length == 0 ? null : functionStack[$-1], postfix, this);
+			functionStack.length == 0 ? null : functionStack.peek(), postfix, this);
 		return Continue;
 	}
 
@@ -2350,14 +2350,14 @@ public:
 		auto pfix = cast(ir.Postfix)exp;
 		if (pfix !is null) {
 			lowerPostfix(lp, current, thisModule, /*#ref*/exp,
-				functionStack.length == 0 ? null : functionStack[$-1], pfix, this);
+				functionStack.length == 0 ? null : functionStack.peek(), pfix, this);
 		}
 		return Continue;
 	}
 
 	override Status leave(ref ir.Exp exp, ir.ComposableString cs)
 	{
-		ir.Function currentFunc = functionStack.length == 0 ? null : functionStack[$-1];
+		ir.Function currentFunc = functionStack.length == 0 ? null : functionStack.peek();
 		lowerComposableString(lp, current, currentFunc, /*#ref*/exp, cs, this);
 		return Continue;
 	}
@@ -2391,7 +2391,7 @@ public:
 
 	override Status visit(ref ir.Exp exp, ir.ExpReference eref)
 	{
-		ir.Function currentFunc = functionStack.length == 0 ? null : functionStack[$-1];
+		ir.Function currentFunc = functionStack.length == 0 ? null : functionStack.peek();
 		bool replaced = replaceNested(lp, /*#ref*/exp, eref, currentFunc);
 		if (replaced) {
 			return Continue;
@@ -2400,10 +2400,10 @@ public:
 		if (func is null) {
 			return Continue;
 		}
-		if (functionStack.length == 0 || functionStack[$-1].nestedVariable is null) {
+		if (functionStack.length == 0 || functionStack.peek().nestedVariable is null) {
 			return Continue;
 		}
-		lowerExpReference(functionStack, /*#ref*/exp, eref, func);
+		lowerExpReference(functionStack.borrowUnsafe(), /*#ref*/exp, eref, func);
 		return Continue;
 	}
 
