@@ -77,3 +77,4 @@ public:
 }
 
 alias FunctionStack = Stack!(ir.Function);
+alias BoolStack = Stack!bool;

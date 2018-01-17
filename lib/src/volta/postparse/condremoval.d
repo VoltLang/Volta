@@ -15,6 +15,7 @@ import vi = volta.visitor;
 import volta.errors;
 import volta.interfaces;
 import volta.util.sinks;
+import volta.util.stack;
 
 
 /*!
@@ -204,15 +205,15 @@ private:
 		if (c.kind == ir.Condition.Kind.Debug) {
 			return mVer.debugEnabled;
 		}
-		bool[] stack;
+		BoolStack stack;
 		evaluateCondition(c, c.exp, /*#ref*/stack);
 		if (!passert(mErr, c, stack.length == 1)) {
 			return false;
 		}
-		return stack[0];
+		return stack.peek();
 	}
 
-	void evaluateCondition(ir.Condition c, ir.Exp e, ref bool[] stack)
+	void evaluateCondition(ir.Condition c, ir.Exp e, ref BoolStack stack)
 	{
 		switch (e.nodeType) with (ir.NodeType) {
 		case IdentifierExp:
@@ -221,9 +222,9 @@ private:
 				goto default;
 			}
 			if (c.kind == ir.Condition.Kind.Version) {
-				stack ~= mVer.isVersionSet(i.value);
+				stack.push(mVer.isVersionSet(i.value));
 			} else if (c.kind == ir.Condition.Kind.Debug) {
-				stack ~= mVer.isDebugSet(i.value);
+				stack.push(mVer.isDebugSet(i.value));
 			} else {
 				mErr.panic(e, "should not enter this path.");
 				return;
@@ -241,7 +242,8 @@ private:
 			if (stack.length == 0) {
 				goto default;
 			}
-			stack[$-1] = !stack[$-1];
+			auto val = stack.pop();
+			stack.push(!val);
 			return;
 		case BinOp:
 			auto b = cast(ir.BinOp) e;
@@ -253,13 +255,12 @@ private:
 			if (stack.length < 2) {
 				goto default;
 			}
-			auto l = stack[$-1];
-			auto r = stack[$-2];
-			stack = stack[0 .. $-2];
+			auto l = stack.pop();
+			auto r = stack.pop();
 			if (b.op == ir.BinOp.Op.AndAnd) {
-				stack ~= l && r;
+				stack.push(l && r);
 			} else if (b.op == ir.BinOp.Op.OrOr) {
-				stack ~= l || r;
+				stack.push(l || r);
 			} else {
 				goto default;
 			}
