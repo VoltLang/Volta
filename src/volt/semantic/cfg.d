@@ -137,7 +137,7 @@ class CFGBuilder : ScopeManager, Pass
 {
 public:
 	LanguagePass lp;
-	Block[] blocks;
+	BlockStack blocks;
 	BlockStack breakBlocks;
 	ir.SwitchStatement currentSwitchStatement;
 	Block[] currentSwitchBlocks;
@@ -154,14 +154,16 @@ public:
 	@property Block block(Block b)
 	{
 		assert(blocks.length > 0);
-		return blocks[$-1] = b;
+		blocks.pop();
+		blocks.push(b);
+		return b;
 	}
 
 	//! Returns the last block added.
 	@property Block block()
 	{
 		assert(blocks.length > 0);
-		return blocks[$-1];
+		return blocks.peek();
 	}
 
 	override void transform(ir.Module m)
@@ -171,7 +173,7 @@ public:
 
 	override void close()
 	{
-		blocks = null;
+		blocks.clear();
 		return;
 	}
 
@@ -179,7 +181,7 @@ public:
 	{
 		super.enter(func);
 		if (func.hasBody) {
-			blocks ~= new Block();  // Note: no parents.
+			blocks.push(new Block());  // Note: no parents.
 		}
 		return Continue;
 	}
@@ -231,7 +233,7 @@ public:
 			}
 		}
 
-		blocks = blocks[0 .. $-1];
+		blocks.pop();
 		return Continue;
 	}
 
@@ -692,7 +694,7 @@ private:
 	//! Sanity check function.
 	void ensureNonNullBlock(ref in Location loc)
 	{
-		if (blocks.length == 0 || blocks[$-1] is null) {
+		if (blocks.length == 0 || blocks.peek() is null) {
 			throw panic(/*#ref*/loc, "invalid layout");
 		}
 	}

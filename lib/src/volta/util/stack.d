@@ -67,6 +67,12 @@ public:
 		return mArr[mLength-1];
 	}
 
+	void clear()
+	{
+		mArr = null;
+		mLength = 0;
+	}
+
 	/*!
 	 * Unsafely get a reference to the array.
 	 */
