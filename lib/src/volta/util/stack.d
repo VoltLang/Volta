@@ -26,6 +26,9 @@ private:
 	size_t mLength;
 
 public:
+	/*!
+	 * Add a value to become the top of the stack.
+	 */
 	void push(T val)
 	{
 		auto newSize = mLength + 1;
@@ -53,6 +56,9 @@ public:
 		mArr = n;
 	}
 
+	/*!
+	 * Remove the top element of the stack and return it.
+	 */
 	T pop()
 	{
 		assert(mArr.length > 0);
@@ -61,12 +67,18 @@ public:
 		return val;
 	}
 
+	/*!
+	 * Return the top element of the stack without removing it.
+	 */
 	T peek()
 	{
 		assert(mArr.length > 0);
 		return mArr[mLength-1];
 	}
 
+	/*!
+	 * Reset the stack to an empty state.
+	 */
 	void clear()
 	{
 		mArr = null;
