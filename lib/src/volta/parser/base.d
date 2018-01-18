@@ -555,6 +555,11 @@ public:
 		return mIndex >= mTokens.length - 1;
 	}
 
+	final bool eofIndex(size_t i)
+	{
+		return i >= mTokens.length - 1;
+	}
+
 	/*!
 	 * Get the current token and advances the stream to the next token.
 	 *

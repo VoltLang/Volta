@@ -148,8 +148,7 @@ ParseStatus parseAlias(ParserStream ps, out ir.Alias a)
 
 	size_t i = 1;
 	bool bang;
-	while (ps.lookahead(i).type != TokenType.Semicolon &&
-		   !ps.eof) {
+	while (ps.lookahead(i).type != TokenType.Semicolon && !ps.eofIndex(i)) {
 		bang = ps.lookahead(i).type == TokenType.Bang;
 		if (bang) {
 			break;
