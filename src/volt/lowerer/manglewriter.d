@@ -8,6 +8,7 @@ import ir = volta.ir;
 import volt.errors;
 import volt.interfaces;
 import volta.visitor.visitor;
+import volta.util.stack;
 
 import volt.semantic.mangle;
 import volt.semantic.classify;
@@ -21,14 +22,17 @@ import volt.semantic.classify;
 class MangleWriter : NullVisitor, Pass
 {
 public:
-	string[] parentNames;
+	StringStack parentNames;
 	int functionDepth;
 	int aggregateDepth;
 
 public:
 	override void transform(ir.Module m)
 	{
-		parentNames = m.name.strings;
+		parentNames.clear();
+		foreach (name; m.name.strings) {
+			parentNames.push(name);
+		}
 		accept(m, this);
 	}
 
@@ -38,14 +42,14 @@ public:
 
 	final void push(string name)
 	{
-		parentNames ~= [name];
+		parentNames.push(name);
 		aggregateDepth++;
 	}
 
 	final void pop(string name)
 	{
-		assert(parentNames[$-1] == name);
-		parentNames = parentNames[0 .. $-1];
+		assert(parentNames.peek() == name);
+		parentNames.pop();
 		aggregateDepth--;
 	}
 
@@ -101,13 +105,13 @@ public:
 		} else if (func.loadDynamic) {
 			// @TODO mangle this so that it becomes a variable.
 			assert(func.name !is null);
-			func.mangledName = mangle(parentNames, func);
+			func.mangledName = mangle(parentNames.borrowUnsafe(), func);
 		} else if (func.type.linkage == ir.Linkage.C ||
 		           func.type.linkage == ir.Linkage.Windows) {
 			func.mangledName = func.name;
 		} else {
 			assert(func.name !is null);
-			func.mangledName = mangle(parentNames, func);
+			func.mangledName = mangle(parentNames.borrowUnsafe(), func);
 		}
 
 		push(func.name);
@@ -159,7 +163,7 @@ public:
 		}
 
 		if (v.linkage != ir.Linkage.C && v.linkage != ir.Linkage.Windows) {
-			v.mangledName = mangle(parentNames, v);
+			v.mangledName = mangle(parentNames.borrowUnsafe(), v);
 		} else {
 			v.mangledName = v.name;
 		}

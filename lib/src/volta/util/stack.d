@@ -99,3 +99,4 @@ alias ExpStack = Stack!(ir.Exp);
 alias ClassStack = Stack!(ir.Class);
 alias BinOpOpStack = Stack!(ir.BinOp.Op);
 alias BoolStack = Stack!bool;
+alias StringStack = Stack!string;
