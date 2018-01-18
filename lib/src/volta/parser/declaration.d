@@ -513,7 +513,7 @@ ParseStatus parseStorageType(ParserStream ps, out ir.StorageType storageType)
 				autoDecl = false;
 			}
 			if (ps.lookahead(i).type == TokenType.Semicolon ||
-			    ps.eof) {
+			    ps.eofIndex(i)) {
 				break;
 			}
 			i++;
