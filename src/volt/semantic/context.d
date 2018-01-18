@@ -27,10 +27,10 @@ private:
 	ir.Scope mCurrent;
 	ir.Module mThisModule;
 
-	uint mLength;
 	uint mParentIndex;
 	uint mFunctionDepth;
-	ir.Function[] mFunctionStack;
+	ir.Function mParentFunction;
+	FunctionStack mFunctionStack;
 	ExpStack mIndexChildren;
 	ExpStack mWithExps;
 
@@ -55,10 +55,7 @@ public:
 	 */
 	final void reset()
 	{
-		foreach (ref f; mFunctionStack[0 .. mLength]) {
-			f = null;
-		}
-		mLength = 0;
+		mFunctionStack.clear();
 		mCurrent = null;
 	}
 
@@ -73,12 +70,12 @@ public:
 
 	final @property ir.Function parentFunction()
 	{
-		return mFunctionStack[mParentIndex];
+		return mParentFunction;
 	}
 
 	final @property ir.Function currentFunction()
 	{
-		return mLength == 0 ? null : mFunctionStack[mLength-1];
+		return mFunctionStack.length == 0 ? null : mFunctionStack.peek();
 	}
 
 	/*!
@@ -96,8 +93,11 @@ public:
 
 	final @property bool isNested()
 	{
-		assert(mLength > 1);
-		return mFunctionStack[mLength-2] !is null;
+		assert(mFunctionStack.length > 1);
+		auto top = mFunctionStack.pop();
+		auto val = mFunctionStack.peek() !is null;
+		mFunctionStack.push(top);
+		return val;
 	}
 
 	final @property bool isFunction()
@@ -221,18 +221,12 @@ private:
 			mFunctionDepth++;
 		}
 
-		size_t len = mFunctionStack.length;
-		if (mLength + 1 > len) {
-			auto newStack = new ir.Function[](len * 2 + 3);
-			newStack[0 .. len] = mFunctionStack[0 .. len];
-			mFunctionStack = newStack;
-		}
-
 		if (func !is null && currentFunction is null) {
-			mParentIndex = mLength;
+			mParentFunction = func;
+			mParentIndex = cast(uint)mFunctionStack.length;
 		}
 
-		mFunctionStack[mLength++] = func;
+		mFunctionStack.push(func);
 		mCurrent = ctx;
 	}
 
@@ -249,10 +243,11 @@ private:
 			throw panic(/*#ref*/n.loc, str);
 		}
 
-		mFunctionStack[--mLength] = null;
+		mFunctionStack.pop();
 
-		if (mLength <= mParentIndex) {
+		if (mFunctionStack.length <= mParentIndex) {
 			mParentIndex = 0; // Module.
+			mParentFunction = null;
 		}
 
 		mCurrent = mCurrent.parent;
