@@ -470,7 +470,7 @@ ParseStatus parseImport(ParserStream ps, out ir.Import _import)
 				}
 			}
 			_import.aliases ~= [name, assign];
-		} while (ps.peek.type == TokenType.Comma);
+		} while (ps.peek.type == TokenType.Comma && !ps.eof);
 	}
 
 	return match(ps, ir.NodeType.Import, TokenType.Semicolon);
@@ -689,7 +689,7 @@ ParseStatus parseClass(ParserStream ps, out ir.Class c, string templateName = ""
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.Class, ir.NodeType.QualifiedName);
 		}
-		while (ps.peek.type != TokenType.OpenBrace) {
+		while (ps.peek.type != TokenType.OpenBrace && !ps.eof) {
 			if (ps.peek.type != TokenType.Comma) {
 				return unexpectedToken(ps, ir.NodeType.Class);
 			}
@@ -740,7 +740,7 @@ ParseStatus parseInterface(ParserStream ps, out ir._Interface i, string template
 	}
 
 	if (matchIf(ps, TokenType.Colon)) {
-		while (ps.peek.type != TokenType.OpenBrace) {
+		while (ps.peek.type != TokenType.OpenBrace && !ps.eof) {
 			ir.QualifiedName q;
 			auto succeeded = parseQualifiedName(ps, /*#out*/q);
 			if (!succeeded) {

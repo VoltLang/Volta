@@ -724,7 +724,7 @@ ParseStatus primaryToExp(ParserStream ps, intir.PrimaryExp primary, out ir.Exp e
 private ParseStatus _parseArgumentList(ParserStream ps, out intir.AssignExp[] pexps, TokenType endChar = TokenType.CloseParen)
 {
 	auto matchedComma = false;
-	while (ps.peek.type != endChar) {
+	while (ps.peek.type != endChar && !ps.eof) {
 		matchedComma = false;
 		if (ps.eof) {
 			return parseExpected(ps, /*#ref*/ps.peek.loc, ir.NodeType.Postfix, "end of argument list");
@@ -879,7 +879,7 @@ ParseStatus parseIsExp(ParserStream ps, out ir.IsExp ie)
 				break;
 			}
 			break;
-	} while (ps.peek.type != TokenType.CloseParen);
+	} while (ps.peek.type != TokenType.CloseParen && !ps.eof);
 	return match(ps, ie, TokenType.CloseParen);
 }
 
@@ -926,7 +926,7 @@ ParseStatus parseFunctionLiteral(ParserStream ps, out ir.FunctionLiteral fl)
 		return unexpectedToken(ps, fl);
 	}
 	ps.get();
-	while (ps.peek.type != TokenType.CloseParen) {
+	while (ps.peek.type != TokenType.CloseParen && !ps.eof) {
 		auto param = new ir.FunctionParameter();
 		param.loc = ps.peek.loc;
 		auto succeeded = parseType(ps, /*#out*/param.type);
@@ -1709,7 +1709,7 @@ ParseStatus parsePrimaryExp(ParserStream ps, out intir.PrimaryExp exp)
 					return succeeded;
 				}
 			} else {
-				while (ps.peek.type != TokenType.CloseBracket) {
+				while (ps.peek.type != TokenType.CloseBracket && !ps.eof) {
 					intir.AssignExp e;
 					auto succeeded = parseAssignExp(ps, /*#out*/e);
 					if (!succeeded) {
@@ -1821,7 +1821,7 @@ ParseStatus parsePrimaryExp(ParserStream ps, out intir.PrimaryExp exp)
 	case TokenType.OpenBrace:
 		ps.get();
 		exp.op = intir.PrimaryExp.Type.StructLiteral;
-		while (ps.peek.type != TokenType.CloseBrace) {
+		while (ps.peek.type != TokenType.CloseBrace && !ps.eof) {
 			intir.AssignExp e;
 			auto succeeded = parseAssignExp(ps, /*#out*/e);
 			if (!succeeded) {

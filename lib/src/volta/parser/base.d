@@ -408,7 +408,7 @@ bool matchIf(ParserStream ps, TokenType type)
  */
 ParseStatus eatComments(ParserStream ps)
 {
-	while (ps.peek.type == TokenType.DocComment) {
+	while (ps.peek.type == TokenType.DocComment && !ps.eof) {
 		auto commentTok = ps.get();
 		if (commentTok.value.indexOf("@defgroup") >= 0) {
 			ps.globalDocComments ~= commentTok.value;

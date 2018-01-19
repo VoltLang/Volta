@@ -729,7 +729,7 @@ ParseStatus parseParameterListFPtr(ParserStream ps, out ir.Type[] types, ir.Call
 		return succeeded;
 	}
 	auto matchedComma = false;
-	while (ps.peek.type != TokenType.CloseParen) {
+	while (ps.peek.type != TokenType.CloseParen && !ps.eof) {
 		matchedComma = false;
 		if (matchIf(ps, TokenType.TripleDot)) {
 			parentCallable.hasVarArgs = true;
@@ -757,7 +757,7 @@ ParseStatus parseParameterList(ParserStream ps, out ir.Variable[] vars, ir.Calla
 		return succeeded;
 	}
 	auto matchedComma = false;
-	while (ps.peek.type != TokenType.CloseParen) {
+	while (ps.peek.type != TokenType.CloseParen && !ps.eof) {
 		matchedComma = false;
 		if (matchIf(ps, TokenType.TripleDot)) {
 			if (parentCallable is null) {
