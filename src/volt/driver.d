@@ -216,6 +216,11 @@ public:
 		if (srcPath !is null) {
 			mSourceFiles ~= srcPath;
 			auto m = loadAndParse(srcPath);
+			if (!m.name.equals(name)) {
+				onWarning(/*#ref*/m.loc, format("module '%s' import/name mismatch -- named '%s', imported as '%s'.",
+					srcPath, m.name.toString(), name.toString()));
+				return null;
+			}
 			languagePass.addModule(m);
 			mCommandLineModules ~= m;
 			return m;

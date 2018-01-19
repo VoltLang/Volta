@@ -529,6 +529,20 @@ public:
 		return ret;
 	}
 
+	// Compiling as both D and Volt makes using an actual opEquals difficult.
+	bool equals(QualifiedName qname)
+	{
+		if (identifiers.length != qname.identifiers.length) {
+			return false;
+		}
+		foreach (i, ident; identifiers) {
+			if (!ident.equals(qname.identifiers[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 
 public:
 	this() { super(NodeType.QualifiedName); }
@@ -567,6 +581,11 @@ public:
 	{
 		super(NodeType.Identifier, old);
 		this.value = old.value;
+	}
+
+	bool equals(Identifier ident)
+	{
+		return value == ident.value;
 	}
 }
 
