@@ -1,4 +1,3 @@
-//T has-passed:no
 //T macro:importfail
 //T check:can't find module
 module test;
