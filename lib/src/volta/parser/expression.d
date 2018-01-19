@@ -754,12 +754,13 @@ private ParseStatus _parseArgumentList(ParserStream ps, out intir.AssignExp[] pe
 private ParseStatus _parseArgumentList(ParserStream ps, out intir.AssignExp[] pexps, ref string[] labels, TokenType endChar = TokenType.CloseParen)
 {
 	auto matchedComma = false;
-	while (ps.peek.type != endChar) {
+	while (ps.peek.type != endChar && !ps.eof) {
 		matchedComma = false;
 		if (ps.eof) {
 			return unexpectedToken(ps, ir.NodeType.Postfix);
 		}
-		if (ps.peek.type == TokenType.Identifier && ps.lookahead(1).type == TokenType.Colon) {
+		bool eof;
+		if (ps.peek.type == TokenType.Identifier && ps.lookahead(1, /*#out*/eof).type == TokenType.Colon) {
 			auto ident = ps.get();
 			labels ~= ident.value;
 			if (ps != TokenType.Colon) {
@@ -862,7 +863,8 @@ ParseStatus parseIsExp(ParserStream ps, out ir.IsExp ie)
 			case Struct, Union, Class, Enum, Interface, Function,
 				 Delegate, Super, Const, Immutable, Inout, Shared,
 				 Return:
-				if (ps.lookahead(1).type != CloseParen) {
+				bool eof;
+				if (ps.lookahead(1, /*#out*/eof).type != CloseParen) {
 					goto default;
 				}
 				ie.specialisation = cast(ir.IsExp.Specialisation) ps.peek.type;
@@ -1065,10 +1067,11 @@ ParseStatus parseBinExp(ParserStream ps, out intir.BinExp exp)
 
 	switch (ps.peek.type) {
 	case TokenType.Bang:
-		if (ps.lookahead(1).type == TokenType.Is) {
+		bool eof;
+		if (ps.lookahead(1, /*#out*/eof).type == TokenType.Is) {
 			ps.get();
 			exp.op = ir.BinOp.Op.NotIs;
-		} else if (ps.lookahead(1).type == TokenType.In) {
+		} else if (ps.lookahead(1, /*#out*/eof).type == TokenType.In) {
 			ps.get();
 			exp.op = ir.BinOp.Op.NotIn;
 		} else {
@@ -1424,8 +1427,9 @@ ParseStatus parsePostfixExp(ParserStream ps, out intir.PostfixExp exp, bool disa
 	switch (ps.peek.type) {
 	case TokenType.Dot:
 		ps.get();
-		auto twoAhead = ps.lookahead(2).type;
-		if (ps.lookahead(1).type == TokenType.Bang &&
+		bool eof;
+		auto twoAhead = ps.lookahead(2, /*#out*/eof).type;
+		if (ps.lookahead(1, /*#out*/eof).type == TokenType.Bang &&
 			twoAhead != TokenType.Is && twoAhead != TokenType.Assign) {
 			auto succeeded = parseExp(ps, /*#out*/exp.templateInstance);
 			if (!succeeded) {
@@ -1673,14 +1677,13 @@ ParseStatus parsePrimaryExp(ParserStream ps, out intir.PrimaryExp exp)
 		break;
 	case TokenType.OpenBracket:
 		size_t i;
-		bool isAA;
-		while (ps.lookahead(i).type != TokenType.CloseBracket) {
-			if (ps.lookahead(i).type == TokenType.Colon) {
+		bool isAA, eof;
+		while (ps.lookahead(i, /*#out*/eof).type != TokenType.CloseBracket) {
+			if (ps.lookahead(i, /*#out*/eof).type == TokenType.Colon) {
 				isAA = true;
 			}
 			i++;
-			if (ps.lookahead(i).type == TokenType.Comma ||
-				ps.eof) {
+			if (ps.lookahead(i, /*#out*/eof).type == TokenType.Comma || eof) {
 				break;
 			}
 		}

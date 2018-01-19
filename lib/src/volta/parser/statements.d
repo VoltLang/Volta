@@ -164,9 +164,10 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		dgt(t);
 		return eatComments(ps);
 	case TokenType.Scope:
-		if (ps.lookahead(1).type == TokenType.OpenParen && ps.lookahead(2).type == TokenType.Identifier &&
-			ps.lookahead(3).type == TokenType.CloseParen) {
-			auto identTok = ps.lookahead(2);
+		bool eof;
+		if (ps.lookahead(1, /*#out*/eof).type == TokenType.OpenParen && ps.lookahead(2, /*#out*/eof).type == TokenType.Identifier &&
+			ps.lookahead(3, /*#out*/eof).type == TokenType.CloseParen) {
+			auto identTok = ps.lookahead(2, /*#out*/eof);
 			if (identTok.value == "exit" || identTok.value == "failure" || identTok.value == "success") {
 				ir.ScopeStatement ss;
 				succeeded = parseScopeStatement(ps, /*#out*/ss);
@@ -187,9 +188,10 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		dgt(prs);
 		return eatComments(ps);
 	case TokenType.Identifier:
-		if (ps.lookahead(1).type == TokenType.Colon ||
-		    ps.lookahead(1).type == TokenType.ColonAssign ||
-			ps.lookahead(1).type == TokenType.Comma) {
+		bool eof;
+		if (ps.lookahead(1, /*#out*/eof).type == TokenType.Colon ||
+		    ps.lookahead(1, /*#out*/eof).type == TokenType.ColonAssign ||
+			ps.lookahead(1, /*#out*/eof).type == TokenType.Comma) {
 			succeeded = parseColonAssign(ps, dgt);
 			if (!succeeded) {
 				return succeeded;
@@ -199,17 +201,19 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 			goto default;
 		}
 	case TokenType.Final:
-		if (ps.lookahead(1).type == TokenType.Switch) {
+		bool eof;
+		if (ps.lookahead(1, /*#out*/eof).type == TokenType.Switch) {
 			goto case TokenType.Switch;
 		} else {
 			goto default;
 		}
 	case TokenType.Static:
-		if (ps.lookahead(1).type == TokenType.If) {
+		bool eof;
+		if (ps.lookahead(1, /*#out*/eof).type == TokenType.If) {
 			goto case TokenType.Version;
-		} else if (ps.lookahead(1).type == TokenType.Assert) {
+		} else if (ps.lookahead(1, /*#out*/eof).type == TokenType.Assert) {
 			goto case TokenType.Assert;
-		} else if (ps.lookahead(1).type == TokenType.Is) {
+		} else if (ps.lookahead(1, /*#out*/eof).type == TokenType.Is) {
 			ir.AssertStatement as;
 			succeeded = parseStaticIs(ps, /*#out*/as);
 			if (!succeeded) {

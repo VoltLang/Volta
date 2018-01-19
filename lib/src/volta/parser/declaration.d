@@ -80,9 +80,10 @@ ParseStatus parseVariable(ParserStream ps, NodeSinkDg dgt)
 		}
 	}
 
-	if (!colonDeclaration && (ps.lookahead(1).type == TokenType.Comma ||
-		ps.lookahead(1).type == TokenType.Semicolon ||
-		ps.lookahead(1).type == TokenType.Assign)) {
+	bool eof;
+	if (!colonDeclaration && (ps.lookahead(1, /*#out*/eof).type == TokenType.Comma ||
+		ps.lookahead(1, /*#out*/eof).type == TokenType.Semicolon ||
+		ps.lookahead(1, /*#out*/eof).type == TokenType.Assign)) {
 		// Normal declaration.
 		if (_global) {
 			return unexpectedToken(ps, ir.NodeType.Variable);
@@ -92,7 +93,7 @@ ParseStatus parseVariable(ParserStream ps, NodeSinkDg dgt)
 	} else if (colonDeclaration) {
 		// New variable declaration.
 		return parseColonAssign(ps, dgt);
-	} else if (ps.lookahead(1).type == TokenType.OpenParen) {
+	} else if (ps.lookahead(1, /*#out*/eof).type == TokenType.OpenParen) {
 		// Function!
 		ir.Function func;
 		auto succeeded = parseFunction(ps, /*#out*/func, base);
@@ -147,9 +148,9 @@ ParseStatus parseAlias(ParserStream ps, out ir.Alias a)
 	size_t pos = ps.save();
 
 	size_t i = 1;
-	bool bang;
-	while (ps.lookahead(i).type != TokenType.Semicolon && !ps.eofIndex(i)) {
-		bang = ps.lookahead(i).type == TokenType.Bang;
+	bool bang, eof;
+	while (ps.lookahead(i, /*#out*/eof).type != TokenType.Semicolon && !ps.eofIndex(i)) {
+		bang = ps.lookahead(i, /*#out*/eof).type == TokenType.Bang;
 		if (bang) {
 			break;
 		}
@@ -502,18 +503,18 @@ ParseStatus parseStorageType(ParserStream ps, out ir.StorageType storageType)
 		bool autoDecl = (ps == [TokenType.Identifier, TokenType.Assign]) != 0;
 		size_t i = 1;
 		int parenDepth;
-		while (autoDecl) {
-			if (ps.lookahead(i).type == TokenType.OpenParen) {
+		bool eof;
+		while (autoDecl && !eof) {
+			if (ps.lookahead(i, /*#out*/eof).type == TokenType.OpenParen) {
 				parenDepth++;
 			}
-			if (ps.lookahead(i).type == TokenType.CloseParen) {
+			if (ps.lookahead(i, /*#out*/eof).type == TokenType.CloseParen) {
 				parenDepth--;
 			}
 			if (parenDepth < 0) {
 				autoDecl = false;
 			}
-			if (ps.lookahead(i).type == TokenType.Semicolon ||
-			    ps.eofIndex(i)) {
+			if (ps.lookahead(i, /*#out*/eof).type == TokenType.Semicolon) {
 				break;
 			}
 			i++;
@@ -1057,19 +1058,20 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func, string templ
 		p.func = func;
 		p.loc = ps.peek.loc;
 		ir.Type t;
-		if (ps.lookahead(1).type == TokenType.Colon) {
+		bool eof;
+		if (ps.lookahead(1, /*#out*/eof).type == TokenType.Colon) {
 			succeeded = match(ps, p, TokenType.Identifier, /*#out*/nameTok);
 			if (!succeeded) {
 				return succeeded;
 			}
 			p.name = nameTok.value;
 			succeeded = match(ps, p, TokenType.Colon);
-		} else if (ps.lookahead(0).type == TokenType.Identifier &&
-		           ps.lookahead(1).type != TokenType.Comma &&
-			   ps.lookahead(1).type != TokenType.CloseParen &&
-			   ps.lookahead(1).type != TokenType.Asterix &&
-			   ps.lookahead(1).type != TokenType.OpenBracket &&
-			   ps.lookahead(1).type != TokenType.Dot) {
+		} else if (ps.lookahead(0, /*#out*/eof).type == TokenType.Identifier &&
+		           ps.lookahead(1, /*#out*/eof).type != TokenType.Comma &&
+			   ps.lookahead(1, /*#out*/eof).type != TokenType.CloseParen &&
+			   ps.lookahead(1, /*#out*/eof).type != TokenType.Asterix &&
+			   ps.lookahead(1, /*#out*/eof).type != TokenType.OpenBracket &&
+			   ps.lookahead(1, /*#out*/eof).type != TokenType.Dot) {
 			// Old style declaration in new-style function.
 			ps.get();
 			return parseExpected(ps, /*#ref*/ps.peek.loc, p, "new-style declaration (using a colon)");

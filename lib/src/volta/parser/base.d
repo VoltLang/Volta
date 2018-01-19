@@ -274,9 +274,10 @@ ParseStatus checkToken(ParserStream ps, ir.NodeType ntype, TokenType type,
 ParseStatus checkTokens(ParserStream ps, ir.NodeType ntype, scope const(TokenType)[] types,
                         string file = __FILE__, const int line = __LINE__)
 {
+	bool eof;
 	size_t i;
 	for (; i < types.length; i++) {
-		if (ps.lookahead(i).type != types[i]) {
+		if (ps.lookahead(i, /*#out*/eof).type != types[i]) {
 			break;
 		}
 	}
@@ -286,7 +287,7 @@ ParseStatus checkTokens(ParserStream ps, ir.NodeType ntype, scope const(TokenTyp
 		return Succeeded;
 	}
 
-	return wrongToken(ps, ntype, ps.lookahead(i), types[i], file, line);
+	return wrongToken(ps, ntype, ps.lookahead(i, /*#out*/eof), types[i], file, line);
 }
 
 /*!
@@ -335,9 +336,10 @@ ParseStatus match(ParserStream ps, ir.Node node, TokenType type,
 ParseStatus match(ParserStream ps, ir.NodeType ntype, scope const(TokenType)[] types,
                   string file = __FILE__, const int line = __LINE__)
 {
+	bool eof;
 	size_t i;
 	for (; i < types.length; i++) {
-		if (ps.lookahead(i).type != types[i]) {
+		if (ps.lookahead(i, /*#out*/eof).type != types[i]) {
 			break;
 		}
 	}
@@ -350,7 +352,7 @@ ParseStatus match(ParserStream ps, ir.NodeType ntype, scope const(TokenType)[] t
 		return Succeeded;
 	}
 
-	return wrongToken(ps, ntype, ps.lookahead(i), types[i], file, line);
+	return wrongToken(ps, ntype, ps.lookahead(i, /*#out*/eof), types[i], file, line);
 }
 
 /*!
@@ -495,14 +497,15 @@ ParseStatus parseIdentifier(ParserStream ps, out ir.Identifier i)
  */
 bool isColonDeclaration(ParserStream ps)
 {
-	bool colonDeclaration = (ps.lookahead(1).type == TokenType.Colon ||
-		ps.lookahead(1).type == TokenType.ColonAssign);
+	bool eof;
+	bool colonDeclaration = (ps.lookahead(1, /*#out*/eof).type == TokenType.Colon ||
+		ps.lookahead(1, /*#out*/eof).type == TokenType.ColonAssign);
 	size_t i = 1;
-	while (!colonDeclaration && (ps.lookahead(i).type == TokenType.Identifier ||
-	       ps.lookahead(i).type == TokenType.Comma)) {
+	while (!eof && !colonDeclaration && (ps.lookahead(i, /*#out*/eof).type == TokenType.Identifier ||
+	       ps.lookahead(i, /*#out*/eof).type == TokenType.Comma)) {
 		i++;
-		colonDeclaration = (ps.lookahead(i).type == TokenType.Colon ||
-			ps.lookahead(i).type == TokenType.ColonAssign);
+		colonDeclaration = (ps.lookahead(i, /*#out*/eof).type == TokenType.Colon ||
+			ps.lookahead(i, /*#out*/eof).type == TokenType.ColonAssign);
 	}
 	return colonDeclaration;
 }

@@ -229,7 +229,8 @@ body
 		sink.pushNodes(nodes);
 		break;
 	case TokenType.Mixin:
-		auto next = ps.lookahead(1).type;
+		bool eof;
+		auto next = ps.lookahead(1, /*#out*/eof).type;
 		if (next == TokenType.Function) {
 			ir.MixinFunction m;
 			succeeded = parseMixinFunction(ps, /*#out*/m);
@@ -249,7 +250,8 @@ body
 		}
 		break;
 	case TokenType.Const:
-		if (ps.lookahead(1).type == TokenType.OpenParen) {
+		bool eof;
+		if (ps.lookahead(1, /*#out*/eof).type == TokenType.OpenParen) {
 			goto default;
 		} else {
 			goto case;
@@ -278,7 +280,8 @@ body
 		break;
 	case TokenType.Global:
 	case TokenType.Local:
-		auto next = ps.lookahead(1).type;
+		bool eof;
+		auto next = ps.lookahead(1, /*#out*/eof).type;
 		if (next == TokenType.Tilde) {
 			goto case TokenType.Tilde;
 		} else if (next == TokenType.This) {
@@ -295,7 +298,8 @@ body
 		sink.push(c);
 		break;
 	case TokenType.Static:
-		auto next = ps.lookahead(1).type;
+		bool eof;
+		auto next = ps.lookahead(1, /*#out*/eof).type;
 		if (next == TokenType.Tilde) {
 			goto case TokenType.Tilde;
 		} else if (next == TokenType.This) {
@@ -340,9 +344,10 @@ bool ifDocCommentsUntilEndThenSkip(ParserStream ps)
 {
 	size_t n = 0;
 	TokenType tt;
+	bool eof;
 	do {
-		tt = ps.lookahead(n++).type;
-	} while (tt == TokenType.DocComment);
+		tt = ps.lookahead(n++, /*#out*/eof).type;
+	} while (tt == TokenType.DocComment && !eof);
 	if (tt == TokenType.End) {
 		foreach (size_t i; 0 .. n) {
 			ps.get();

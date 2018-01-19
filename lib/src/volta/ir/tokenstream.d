@@ -71,8 +71,9 @@ public:
 	}
 	body {
 		foreach (i, right; types) {
-			TokenType left = lookahead(i).type;
-			if (left != right)
+			bool eof;
+			TokenType left = lookahead(i, /*#out*/eof).type;
+			if (left != right && !eof)
 				return 0;
 		}
 		return 1;
@@ -109,13 +110,14 @@ public:
 	 * Side-effects:
 	 *   None.
 	 */
-	final Token lookahead(size_t n)
+	final Token lookahead(size_t n, out bool eof)
 	{
 		if (n == 0) {
 			return peek;
 		}
 		auto index = mIndex + n;
 		if (index >= mTokens.length) {
+			eof = true;
 			return mTokens[$-1];
 		}
 
