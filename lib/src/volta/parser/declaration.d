@@ -1341,7 +1341,7 @@ ParseStatus parseBlock(ParserStream ps, out ir.BlockStatement bs)
 		return succeeded;
 	}
 	auto sink = new NodeSink();
-	while (ps != TokenType.CloseBrace) {
+	while (ps != TokenType.CloseBrace && !ps.eof) {
 		succeeded = eatComments(ps);
 		if (!succeeded) {
 			return succeeded;

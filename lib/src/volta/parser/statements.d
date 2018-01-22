@@ -250,6 +250,9 @@ ParseStatus parseStatement(ParserStream ps, NodeSinkDg dgt)
 		dgt(ms);
 		return eatComments(ps);
 	default:
+		if (ps.eof) {
+			return Failed;
+		}
 		// It is safe to just set succeeded like this since
 		// only variable returns more then one node.
 		void func(ir.Node n) {
