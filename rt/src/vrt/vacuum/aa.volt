@@ -1066,9 +1066,9 @@ struct AA
 {
 	keytid: TypeInfo;
 	valuetid: TypeInfo;
+	u: HashUnion;
 	arrayKey: bool;
 	ptrKey: bool;
-	u: HashUnion;
 }
 
 extern(C):
