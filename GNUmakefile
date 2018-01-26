@@ -27,7 +27,7 @@ endif
 
 CFLAGS ?= -g
 CXXFLAGS ?= -g
-DFLAGS = -g -debug
+DFLAGS ?= -g -debug
 LDFLAGS ?=
 
 DDEFINES_ = $(DDEFINES)
