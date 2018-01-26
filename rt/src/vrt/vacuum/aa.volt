@@ -84,18 +84,47 @@ public:
 	}
 
 	//! Get the values from this AA.
-	fn values(ti: TypeInfo) void[]
+	fn values(aa: AA*) void[]
 	{
+		ti := aa.valuetid;
 		arr := allocDg(ti, mNumEntries)[0 .. mNumEntries * ti.size];
 		currentIndex: size_t;
 		foreach (i, distance; mDistances) {
 			if (distance == 0) {
 				continue;
 			}
-			arr[currentIndex .. currentIndex + ti.size] = mValues[i][0 .. ti.size];
+			aa.writeToPtr(&arr[currentIndex], mValues[i]);
 			currentIndex += ti.size;
 		}
 		return arr;
+	}
+
+	/*!
+	 * Find the given key in this hashmap, return a pointer to the value if
+	 * found, null otherwise.
+	 *
+	 * @Param[in] key  The key to look for.
+	 * @Return A pointer to the value or null if not found.
+	 */
+	fn findPtr(key: Key) Value*
+	{
+		hash := makeHash(key);
+		index := mSize.getIndex(hash);
+
+		for (distance: i32 = 1; distance < mTries; distance++, index++) {
+			distanceForIndex := mDistances.ptr[index];
+
+			if (distanceForIndex == 0) {
+				return null;
+			}
+
+			if (distanceForIndex == distance &&
+			    mKeys.ptr[index] == key) {
+				return &mValues.ptr[index];
+			}
+		}
+
+		return null;
 	}
 
 	/*!
@@ -108,24 +137,12 @@ public:
 	 */
 	fn find(key: Key, out ret: Value) bool
 	{
-		hash := makeHash(key);
-		index := mSize.getIndex(hash);
-
-		for (distance: i32 = 1; distance < mTries; distance++, index++) {
-			distanceForIndex := mDistances.ptr[index];
-
-			if (distanceForIndex == 0) {
-				return false;
-			}
-
-			if (distanceForIndex == distance &&
-			    mKeys.ptr[index] == key) {
-				ret = mValues.ptr[index];
-				return true;
-			}
+		ptr := findPtr(key);
+		if (ptr is null) {
+			return false;
 		}
-
-		return false;
+		ret = *ptr;
+		return true;
 	}
 
 	/*!
@@ -409,18 +426,48 @@ public:
 	}
 
 	//! Get the value keys for this AA.
-	fn values(ti: TypeInfo) void[]
+	fn values(aa: AA*) void[]
 	{
+		ti := aa.valuetid;
 		arr := allocDg(ti, mNumEntries)[0 .. mNumEntries * ti.size];
 		currentIndex: size_t;
 		foreach (i, distance; mDistances) {
 			if (distance == 0) {
 				continue;
 			}
-			arr[currentIndex .. currentIndex + ti.size] = mValues[i][0 .. ti.size];
+			aa.writeToPtr(&arr[currentIndex], mValues[i]);
 			currentIndex += ti.size;
 		}
 		return arr;
+	}
+
+	/*!
+	 * Find the given key in this hashmap, return a pointer to the value if
+	 * found, null otherwise.
+	 *
+	 * @Param[in] key  The key to look for.
+	 * @Return A pointer to the value or null if not found.
+	 */
+	fn findPtr(key: Key) Value*
+	{
+		hash := makeHash(key);
+		index := mSize.getIndex(hash);
+
+		for (distance: i32 = 1; distance < mTries; distance++, index++) {
+			distanceForIndex := mDistances.ptr[index];
+
+			if (distanceForIndex == 0) {
+				return null;
+			}
+
+			if (distanceForIndex == distance &&
+				mKeys.ptr[index].length == key.length &&
+				vrt_memcmp(cast(void*)mKeys.ptr[index].ptr, cast(void*)key.ptr, key.length) == 0) {
+				return &mValues.ptr[index];
+			}
+		}
+
+		return null;
 	}
 
 	/*!
@@ -433,25 +480,12 @@ public:
 	 */
 	fn find(key: Key, out ret: Value) bool
 	{
-		hash := makeHash(key);
-		index := mSize.getIndex(hash);
-
-		for (distance: i32 = 1; distance < mTries; distance++, index++) {
-			distanceForIndex := mDistances.ptr[index];
-
-			if (distanceForIndex == 0) {
-				return false;
-			}
-
-			if (distanceForIndex == distance &&
-				mKeys.ptr[index].length == key.length &&
-				vrt_memcmp(cast(void*)mKeys.ptr[index].ptr, cast(void*)key.ptr, key.length) == 0) {
-				ret = mValues.ptr[index];
-				return true;
-			}
+		ptr := findPtr(key);
+		if (ptr is null) {
+			return false;
 		}
-
-		return false;
+		ret = *ptr;
+		return true;
 	}
 
 	/*!
@@ -1053,8 +1087,9 @@ fn hashFNV1A_64(arr: scope const(void)[]) u64
 	return h;
 }
 
-struct ArrayHash = mixin HashMapArray!(void, void*, SizeBehaviourPrime, 0.5);
-struct ValueHash = mixin HashMapInteger!(u64, void*, SizeBehaviourPrime, 0.5);
+alias HashValue = void*;
+struct ArrayHash = mixin HashMapArray!(void, HashValue, SizeBehaviourPrime, 0.5);
+struct ValueHash = mixin HashMapInteger!(u64, HashValue, SizeBehaviourPrime, 0.5);
 
 union HashUnion
 {
@@ -1071,6 +1106,29 @@ struct AA
 	ptrKey: bool;
 }
 
+fn writeToPtr(aa: AA*, ret: void*, value: HashValue)
+{
+	__llvm_memcpy(ret, value, aa.valuetid.size, 0, false);
+}
+
+fn fromHashValuePtr(aa: AA*, ptr: HashValue*) void*
+{
+	if (ptr is null) {
+		return null;
+	}
+
+	return *ptr;
+}
+
+fn toHashValue(aa: AA*, value: void*) HashValue
+{
+	hashValue: HashValue = allocDg(aa.valuetid, 1);
+	__llvm_memcpy(hashValue, value, aa.valuetid.size, 0, false);
+	return hashValue;
+}
+
+
+
 extern(C):
 
 /*!
@@ -1081,6 +1139,7 @@ fn vrt_aa_new(value: TypeInfo, key: TypeInfo) void*
 	aa := new AA;
 	aa.valuetid = value;
 	aa.keytid = key;
+
 	switch (key.type) with (Type) {
 	case U8, I8, Char, Bool, U16, I16,
 		 Wchar, U32, I32, Dchar, F32,
@@ -1095,6 +1154,7 @@ fn vrt_aa_new(value: TypeInfo, key: TypeInfo) void*
 		aa.ptrKey = true;
 		break;
 	}
+
 	return cast(void*)aa;
 }
 
@@ -1134,7 +1194,9 @@ fn vrt_aa_in_primitive(rbtv: void*, key: ulong, ret: void*) bool
 	if (!retval) {
 		return false;
 	}
-	__llvm_memcpy(ret, value, aa.valuetid.size, 0, false);
+
+	aa.writeToPtr(ret, value);
+
 	return true;
 }
 
@@ -1152,7 +1214,9 @@ fn vrt_aa_in_array(rbtv: void*, key: void[], ret: void*) bool
 	if (!retval) {
 		return false;
 	}
-	__llvm_memcpy(ret, value, aa.valuetid.size, 0, false);
+
+	aa.writeToPtr(ret, value);
+
 	return true;
 }
 
@@ -1171,7 +1235,9 @@ fn vrt_aa_in_ptr(rbtv: void*, key: void*, ret: void*) bool
 	if (!retval) {
 		return false;
 	}
-	__llvm_memcpy(ret, value, aa.valuetid.size, 0, false);
+
+	aa.writeToPtr(ret, value);
+
 	return true;
 }
 
@@ -1181,9 +1247,8 @@ fn vrt_aa_in_ptr(rbtv: void*, key: void*, ret: void*) bool
 fn vrt_aa_insert_primitive(rbtv: void*, key: ulong, value: void*)
 {
 	aa := cast(AA*)rbtv;
-	mem: void* = allocDg(aa.valuetid, 1);
-	__llvm_memcpy(mem, value, aa.valuetid.size, 0, false);
-	aa.u.value.add(key, mem);
+	hashValue: HashValue = aa.toHashValue(value);
+	aa.u.value.add(key, hashValue);
 }
 
 /*!
@@ -1192,9 +1257,8 @@ fn vrt_aa_insert_primitive(rbtv: void*, key: ulong, value: void*)
 fn vrt_aa_insert_array(rbtv: void*, key: void[], value: void*)
 {
 	aa := cast(AA*)rbtv;
-	mem: void* = allocDg(aa.valuetid, 1);
-	__llvm_memcpy(mem, value, aa.valuetid.size, 0, false);
-	aa.u.array.add(key, mem);
+	hashValue: HashValue = aa.toHashValue(value);
+	aa.u.array.add(key, hashValue);
 }
 
 /*!
@@ -1203,10 +1267,9 @@ fn vrt_aa_insert_array(rbtv: void*, key: void[], value: void*)
 fn vrt_aa_insert_ptr(rbtv: void*, key: void*, value: void*)
 {
 	aa := cast(AA*)rbtv;
-	mem: void* = allocDg(aa.valuetid, 1);
-	__llvm_memcpy(mem, value, aa.valuetid.size, 0, false);
 	keyslice := key[0 .. aa.keytid.size];
-	aa.u.array.add(keyslice, mem);
+	hashValue: HashValue = aa.toHashValue(value);
+	aa.u.array.add(keyslice, hashValue);
 }
 
 /*!
@@ -1274,9 +1337,9 @@ fn vrt_aa_get_values(rbtv: void*) void[]
 	}
 	aa := cast(AA*)rbtv;
 	if (aa.arrayKey) {
-		return aa.u.array.values(aa.valuetid);
+		return aa.u.array.values(aa);
 	} else {
-		return aa.u.value.values(aa.valuetid);
+		return aa.u.value.values(aa);
 	}
 }
 
@@ -1305,9 +1368,8 @@ fn vrt_aa_in_binop_array(rbtv: void*, key: void[]) void*
 		return null;
 	}
 	aa := cast(AA*)rbtv;
-	ptr: void*;
-	aa.u.array.find(key, out ptr);
-	return ptr;
+
+	return aa.fromHashValuePtr(aa.u.array.findPtr(key));
 }
 
 /*!
@@ -1319,9 +1381,8 @@ fn vrt_aa_in_binop_primitive(rbtv: void*, key: ulong) void*
 		return null;
 	}
 	aa := cast(AA*)rbtv;
-	ptr: void*;
-	aa.u.value.find(key, out ptr);
-	return ptr;
+
+	return aa.fromHashValuePtr(aa.u.value.findPtr(key));
 }
 
 /*!
@@ -1333,10 +1394,9 @@ fn vrt_aa_in_binop_ptr(rbtv: void*, key: void*) void*
 		return null;
 	}
 	aa := cast(AA*)rbtv;
-	ptr: void*;
 	keyslice := key[0 .. aa.keytid.size];
-	aa.u.array.find(keyslice, out ptr);
-	return ptr;
+
+	return aa.fromHashValuePtr(aa.u.array.findPtr(keyslice));
 }
 
 /*!
