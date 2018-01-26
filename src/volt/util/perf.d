@@ -119,7 +119,7 @@ struct Perf
 
 
 		f.writef("--- Counters\n");
-		f.writef("name,GC-numAllocs,GC-numAllocBytes,GC-numArrayAllocs,GC-numArrayBytes,GC-numClassAllocs,GC-numClassBytes,GC-numZeroAllocs");
+		f.writef("name,GC-numCollections,GC-numAllocs,GC-numAllocBytes,GC-numArrayAllocs,GC-numArrayBytes,GC-numClassAllocs,GC-numClassBytes,GC-numZeroAllocs,");
 		for (auto c = counter; c !is null; c = c.next) {
 			f.writef("%s,", c.name);
 		}
@@ -127,13 +127,14 @@ struct Perf
 		version (Volt) {
 			Stats stats;
 			vrt_gc_get_stats(/*#out*/stats);
-			f.writef("%s,%s,%s,%s,%s,%s,%s,",
+			f.writef("%s,%s,%s,%s,%s,%s,%s,%s,",
+			         stats.num.collections,
 			         stats.num.allocs,      stats.num.allocBytes,
 			         stats.num.arrayAllocs, stats.num.arrayBytes,
 			         stats.num.classAllocs, stats.num.classBytes,
 			         stats.num.zeroAllocs);
 		} else {
-			f.writef("0,0,0,0,0,0,0,");
+			f.writef("0,0,0,0,0,0,0,0,");
 		}
 		for (auto c = counter; c !is null; c = c.next) {
 			f.writef("%s,", c.count);
@@ -144,6 +145,8 @@ struct Perf
 		f.close();
 	}
 
+
+private:
 	void printAccumName(OutputFileStream f, Accumulator a)
 	{
 		if (a is null) {
@@ -164,7 +167,6 @@ struct Perf
 		f.writef("%s,", mt.convClockFreq(a.accum, mt.ticksPerSecond, 1_000_000));
 	}
 
-private:
 	enum string[] markNames = [
 		"setup",
 		"parsing",
