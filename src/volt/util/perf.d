@@ -112,13 +112,9 @@ struct Perf
 
 		f.writef("--- Accumulators\n");
 		f.writef("name,");
-		for (auto a = accum; a !is null; a = a.next) {
-			f.writef("%s,", a.name);
-		}
+		printAccumName(f, accum);
 		f.writef("\n%s,", name);
-		for (auto a = accum; a !is null; a = a.next) {
-			doWrite(a.accum);
-		}
+		printAccumValue(f, accum);
 		f.writef("\n\n");
 
 
@@ -131,7 +127,7 @@ struct Perf
 		version (Volt) {
 			Stats stats;
 			vrt_gc_get_stats(/*#out*/stats);
-			f.writef("%s,%s,%s,%s,%s,%s,%s",
+			f.writef("%s,%s,%s,%s,%s,%s,%s,",
 			         stats.num.allocs,      stats.num.allocBytes,
 			         stats.num.arrayAllocs, stats.num.arrayBytes,
 			         stats.num.classAllocs, stats.num.classBytes,
@@ -146,6 +142,26 @@ struct Perf
 
 		f.flush();
 		f.close();
+	}
+
+	void printAccumName(OutputFileStream f, Accumulator a)
+	{
+		if (a is null) {
+			return;
+		}
+
+		printAccumName(f, a.next);
+		f.writef("%s,", a.name);
+	}
+
+	void printAccumValue(OutputFileStream f, Accumulator a)
+	{
+		if (a is null) {
+			return;
+		}
+
+		printAccumValue(f, a.next);
+		f.writef("%s,", mt.convClockFreq(a.accum, mt.ticksPerSecond, 1_000_000));
 	}
 
 private:
