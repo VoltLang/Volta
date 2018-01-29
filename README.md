@@ -1,5 +1,7 @@
 # Volt
 
+[![Join the chat at https://gitter.im/VoltLang/VoltLang](https://badges.gitter.im/VoltLang/VoltLang.svg)](https://gitter.im/VoltLang/VoltLang?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Volt is a systems level programming language, that aims to be safe by default but
 still allowing you access to nitty gritty low level details. All of
 the code in [Volta], [Watt] and other official Volt repos are under the
