@@ -132,6 +132,10 @@ void applyAttribute(ir.Import i, ir.Attribute attr, ErrorSink errSink)
  */
 void applyAttribute(ir.Function func, ir.Attribute attr, ErrorSink errSink, TargetInfo target)
 {
+	if (func.templateInstance !is null) {
+		func.delayedAttributes ~= attr;
+		return;
+	}
 	switch(attr.kind) with (ir.Attribute.Kind) {
 	case LinkageVolt:
 		func.type.linkage = ir.Linkage.Volt;

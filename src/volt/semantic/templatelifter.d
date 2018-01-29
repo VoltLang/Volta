@@ -19,13 +19,14 @@ import volt.ir.lifter;
 import volta.visitor.visitor;
 
 import volta.postparse.gatherer : Gatherer;
-import volta.postparse.attribremoval : AttribRemoval;
+import volta.postparse.attribremoval : AttribRemoval, applyAttribute;
 import volta.postparse.scopereplacer : ScopeReplacer;
 
 import volt.semantic.lookup;
 import volt.semantic.extyper;
 import volt.semantic.classify;
 import volt.semantic.typer;
+import volt.semantic.mangle;
 
 
 class TemplateLifter : Lifter
@@ -92,6 +93,13 @@ public:
 
 	override ir.Function lift(ir.Function old)
 	{
+		auto f = new ir.Function(old);
+		liftInPlace(old, /*#ref*/f);
+		return f;
+	}
+
+	void liftInPlace(ir.Function old, ref ir.Function f)
+	{
 		// These should never be set.
 		if (old.myScope !is null) { throw panic("invalid templated function"); }
 		if (old.thisHiddenParameter !is null) { throw panic("invalid templated function"); }
@@ -99,9 +107,6 @@ public:
 		if (old.nestedVariable !is null) { throw panic("invalid templated function"); }
 		if (old.nestStruct !is null) { throw panic("invalid templated function"); }
 		if (old.nestedFunctions !is null) { throw panic("invalid templated function"); }
-
-		// Do a deep copy of the function.
-		auto f = new ir.Function(old);
 
 		// Copy params.
 		foreach (ref p; f.params) {
@@ -143,8 +148,6 @@ public:
 				f.tokensBody = f.tokensBody.dup();
 			}
 		}
-
-		return f;
 	}
 
 	override ir.FunctionParam lift(ir.FunctionParam old)
@@ -359,77 +362,64 @@ public:
 
 
 public:
+	void templateLift(ref ir.Function func, LanguagePass lp, ir.TemplateInstance ti)
+	{
+		auto current = func.myScope;
+		auto td = getTemplateDefinition(current, lp, ti);
+		auto deffunc = td._function;
+		panicAssert(func, deffunc !is null);
+
+		currentTemplateDefinitionName = td.name;
+
+		auto processed = processTemplateArguments(lp, func.myScope.parent, func.myScope, td, ti);
+
+		func.copy(/*old*/deffunc, /*liftingTemplate*/true);
+		liftInPlace(deffunc, /*#ref*/func);
+
+		/* The attributes couldn't be applied with the other functions,
+		 * as it didn't have a type at that point. Hide the templateInstance
+		 * and apply them now.
+		 */
+		func.templateInstance = null;
+		foreach (delayedAttribute; func.delayedAttributes) {
+			applyAttribute(func, delayedAttribute, lp.errSink, lp.target);
+		}
+		func.templateInstance = ti;
+
+		auto mod = getModuleFromScope(/*#ref*/func.loc, current);
+		auto gatherer = new Gatherer(/*warnings*/false, lp.errSink);
+
+		foreach (var; func.params) {
+			if (var.name !is null) {
+				ir.Status status;
+				func.myScope.addValue(var, var.name, /*#out*/status);
+				if (status != ir.Status.Success) {
+					throw panic(/*#ref*/func.loc, "value redefinition");
+				}
+			}
+		}
+		if (func.myScope.parent.node.nodeType != ir.NodeType.Module) {
+			throw makeError(/*#ref*/func.loc, "non top level template function");
+		}
+		func.kind = ir.Function.Kind.Function;
+		void addNode(ir.Node n) { func.templateAdditions ~= n; }
+		version (D_Version2) auto _dg = &addNode;
+		else auto _dg = addNode;
+		addArgumentsToInstanceEnvironment(lp, processed, func.myScope, td, ti, _dg);
+	}
+
 	void templateLift(ref ir.Struct s, LanguagePass lp, ir.TemplateInstance ti)
 	{
 		auto current = s.myScope;
-		if (!ti.explicitMixin) {
-			throw makeExpected(/*#ref*/ti.loc, "explicit mixin");
-		}
-		auto store = lookup(lp, current, ti.name);
-		if (store is null) {
-			throw makeFailedLookup(/*#ref*/ti.loc, ti.name.toString());
-		}
-		auto td = cast(ir.TemplateDefinition)store.node;
-		assert(td !is null);
+		auto td = getTemplateDefinition(current, lp, ti);
 		auto defstruct = td._struct;
 		panicAssert(s, defstruct !is null);
 
 		currentTemplateDefinitionName = td.name;
 		currentInstanceType = s;
 
-		if (ti.arguments.length != td.parameters.length) {
-			throw makeExpected(ti, format("%s argument%s", td.parameters.length,
-				td.parameters.length == 1 ? "" : "s"));
-		}
-
 		// Make sure we look in the scope where the template inst. is.
-		auto lookScope = s.myScope.parent;
-		auto processed = new ir.Node[](ti.arguments.length);
-
-		// Loop over all arguments.
-		foreach (i, ref arg; ti.arguments) {
-
-			if (td.parameters[i].type !is null) {
-
-				// This is a expression.
-				processed[i] = arg;
-
-			} else if (auto type = cast(ir.Type)arg) {
-
-				// A simple type like 'u32' or 'typeof(Foo)'
-				resolveType(lp, lookScope, /*#ref*/type);
-				processed[i] = type;
-
-			} else {
-
-				// A qname like 'pkg.mod.Struct'
-				auto exp = cast(ir.Exp)arg;
-				if (exp is null) {
-					throw makeExpected(arg, "type");
-				}
-
-				// In order to properly set the store up as a
-				// alias to types we need to resolve the alias
-				// like normal aliases via the lp.
-				auto a = new ir.Alias();
-				a.isResolved = true;
-				a.name = td.parameters[i].name;
-				a.lookScope = lookScope;
-				a.access = ir.Access.Public;
-				a.id = exptoQualifiedName(exp);
-
-				// We don't do any lookup/resolving here
-				// because we need a.store to be a proper store
-				// that will still around.
-				processed[i] = a;
-			}
-
-			// All arguments reserve a name.
-			auto reservedStore = s.myScope.reserveId(td, td.parameters[i].name);
-			if (reservedStore is null) {
-				throw panic(/*#ref*/td.loc, "couldn't reserve identifier");
-			}
-		}
+		auto processed = processTemplateArguments(lp, s.myScope.parent, s.myScope, td, ti);
 
 		// Do the lifting of the children.
 		s.members = lift(defstruct.members);
@@ -441,20 +431,36 @@ public:
 		// Run the gatherer.
 		gatherer.push(s.myScope);
 		accept(s, gatherer);
+		void addNode(ir.Node n) { s.members.nodes ~= n; }
+		version (D_Version2) auto _dg = &addNode;
+		else auto _dg = addNode;
+		addArgumentsToInstanceEnvironment(lp, processed, s.myScope, td, ti, _dg);
+	}
+
+private:
+	bool isTemplateInstance(ir.Type t)
+	{
+		auto _struct = cast(ir.Struct)realType(t);
+		return _struct !is null && _struct.templateInstance !is null;
+	}
+
+	void addArgumentsToInstanceEnvironment(LanguagePass lp, ir.Node[] processed, ir.Scope instanceScope,
+	ir.TemplateDefinition td, ir.TemplateInstance ti, NodeAdder addNode)
+	{
 		foreach (param; td.parameters) {
-			s.templateInstance.names ~= param.name;
+			ti.names ~= param.name;
 		}
 		foreach (i, ref arg; ti.arguments) {
 			auto name = td.parameters[i].name;
-			s.myScope.remove(name);
+			instanceScope.remove(name);
 			if (auto a = cast(ir.Alias)processed[i]) {
 				// Add the alias to the scope and set its store.
 				ir.Status status;
-				a.store = s.myScope.addAlias(a, a.name, /*#out*/status);
+				a.store = instanceScope.addAlias(a, a.name, /*#out*/status);
 				if (status != ir.Status.Success) {
 					throw panic(/*#ref*/a.loc, "alias redefines symbol");
 				}
-				s.members.nodes ~= a;
+				addNode(a);
 
 				// Do the lookup here.
 				lp.resolveAlias(a);
@@ -466,33 +472,110 @@ public:
 				}
 			} else if (auto type = cast(ir.Type)processed[i]) {
 				ir.Status status;
-				s.myScope.addType(type, name, /*#out*/status);
+				instanceScope.addType(type, name, /*#out*/status);
 				if (status != ir.Status.Success) {
 					throw panic(/*#ref*/type.loc, "template type addition redefinition");
 				}
 			} else if (auto exp = cast(ir.Exp)processed[i]) {
-				auto ed = buildEnumDeclaration(/*#ref*/s.loc, copyType(td.parameters[i].type), exp, name);
+				auto type = copyType(td.parameters[i].type);
+				auto ed = buildEnumDeclaration(/*#ref*/ti.loc, type, exp, name);
 				ir.Status status;
-				s.myScope.addEnumDeclaration(ed, /*#out*/status);
+				instanceScope.addEnumDeclaration(ed, /*#out*/status);
 				if (status != ir.Status.Success) {
-					throw panic(/*#ref*/s.loc, "enum declaration redefinition");
+					throw panic(/*#ref*/ti.loc, "enum declaration redefinition");
 				}
-				s.members.nodes ~= ed;
+				addNode(ed);
 			} else {
 				throw makeExpected(/*#ref*/arg.loc, "expression or type");
 			}
 		}
 	}
-
+}
+import watt.io.std;
 private:
-	bool isTemplateInstance(ir.Type t)
-	{
-		auto _struct = cast(ir.Struct)realType(t);
-		return _struct !is null && _struct.templateInstance !is null;
+
+alias NodeAdder = void delegate(ir.Node);
+
+ir.TemplateDefinition getTemplateDefinition(ir.Scope current, LanguagePass lp, ir.TemplateInstance ti)
+{
+	if (!ti.explicitMixin) {
+		throw makeExpected(/*#ref*/ti.loc, "explicit mixin");
 	}
+	auto store = lookup(lp, current, ti.name);
+	if (store is null) {
+		throw makeFailedLookup(/*#ref*/ti.loc, ti.name.toString());
+	}
+	auto td = cast(ir.TemplateDefinition)store.node;
+	if (td is null) {
+		throw makeError(/*#ref*/ti.loc, format("'%s' is not a template definition", ti.name.toString()));
+	}
+	if (ti.arguments.length != td.parameters.length) {
+		throw makeExpected(ti, format("%s argument%s", td.parameters.length,
+			td.parameters.length == 1 ? "" : "s"));
+	}
+	return td;
 }
 
-/*!
+/*
+ * Given the definintion and instance, return a new list with
+ * resolved types of template instance arguments.
+ * (The expressions will be untouched, but in the
+ * new list also)
+ *
+ * The output list will be the same length as the instance's
+ * argument list, and will be in the same order.
+ */
+ir.Node[] processTemplateArguments(LanguagePass lp, ir.Scope lookScope, ir.Scope newScope, ir.TemplateDefinition td, ir.TemplateInstance ti)
+{
+	auto processed = new ir.Node[](ti.arguments.length);
+	// Loop over all arguments.
+	foreach (i, ref arg; ti.arguments) {
+
+		if (td.parameters[i].type !is null) {
+
+			// This is a expression.
+			processed[i] = arg;
+
+		} else if (auto type = cast(ir.Type)arg) {
+
+			// A simple type like 'u32' or 'typeof(Foo)'
+			resolveType(lp, lookScope, /*#ref*/type);
+			processed[i] = type;
+
+		} else {
+
+			// A qname like 'pkg.mod.Struct'
+			auto exp = cast(ir.Exp)arg;
+			if (exp is null) {
+				throw makeExpected(arg, "type");
+			}
+
+			// In order to properly set the store up as a
+			// alias to types we need to resolve the alias
+			// like normal aliases via the lp.
+			auto a = new ir.Alias();
+			a.isResolved = true;
+			a.name = td.parameters[i].name;
+			a.lookScope = lookScope;
+			a.access = ir.Access.Public;
+			a.id = exptoQualifiedName(exp);
+
+			// We don't do any lookup/resolving here
+			// because we need a.store to be a proper store
+			// that will still around.
+			processed[i] = a;
+		}
+
+		// All arguments reserve a name.
+		auto reservedStore = newScope.reserveId(td, td.parameters[i].name);
+		if (reservedStore is null) {
+			throw panic(/*#ref*/td.loc, "couldn't reserve identifier");
+		}
+	}
+	return processed;
+}
+
+/*
  * Given a Type that's been smuggled in as an expression (it'll either be an
  * IdentifierExp or a QualifiedName as a Postfix chain), return a QualifiedName,
  * or throw an error.

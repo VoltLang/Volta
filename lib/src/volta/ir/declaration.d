@@ -56,6 +56,11 @@ abstract class Declaration : Node
 	this(NodeType nt, Declaration old)
 	{
 		super(nt, old);
+		copy(old);
+	}
+
+	void copy(Declaration old)
+	{
 		this.annotations = old.annotations.dup();
 	}
 }
@@ -407,6 +412,10 @@ public:
 	//! @}
 
 	TemplateInstance templateInstance;  //!< Optional. Non-null if this is a template instantiation.
+	//! If an enum declaration etc is added, it'll show up here so the visitor can visit it.
+	Node[] templateAdditions;
+	//! If an attribute is applied to a function with a template instance, it goes here.
+	Attribute[] delayedAttributes;
 
 
 public:
@@ -415,10 +424,20 @@ public:
 	this(Function old)
 	{
 		super(NodeType.Function, old);
+		copy(old, false);
+	}
+
+	void copy(Function old, bool liftingTemplate)
+	{
+		if (liftingTemplate) {
+			super.copy(old);
+		}
 		this.isResolved = old.isResolved;
 		this.isActualized = old.isActualized;
 		this.access = old.access;
-		this.myScope = old.myScope;
+		if (!liftingTemplate) {
+			this.myScope = old.myScope;
+		}
 		this.kind = old.kind;
 		this.type = old.type;
 		this.params = old.params.dup();
@@ -426,8 +445,10 @@ public:
 		this.scopeSuccesses = old.scopeSuccesses.dup();
 		this.scopeExits = old.scopeExits.dup();
 		this.scopeFailures = old.scopeFailures.dup();
-		this.name = old.name;
-		this.mangledName = old.mangledName;
+		if (!liftingTemplate) {
+			this.name = old.name;
+			this.mangledName = old.mangledName;
+		}
 		this.outParameter = old.outParameter;
 		this.parsedIn = old.parsedIn;
 		this.parsedOut = old.parsedOut;
@@ -451,7 +472,11 @@ public:
 		this.isLoweredScopeExit = old.isLoweredScopeExit;
 		this.isLoweredScopeFailure = old.isLoweredScopeFailure;
 		this.isLoweredScopeSuccess = old.isLoweredScopeSuccess;
-		this.templateInstance = old.templateInstance;
+		if (!liftingTemplate) {
+			this.templateInstance = old.templateInstance;
+			this.templateAdditions = old.templateAdditions.dup();
+			this.delayedAttributes = old.delayedAttributes.dup();
+		}
 	}
 
 	// These also check parsedFoo because artificial functions may lack the tokens.

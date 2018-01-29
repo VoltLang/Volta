@@ -1203,6 +1203,13 @@ Visitor.Status acceptFunction(ir.Function func, Visitor av)
 			return status;
 	}
 
+	foreach (templateAddition; func.templateAdditions) {
+		status = accept(templateAddition, av);
+		if (status == VisitorStop) {
+			return status;
+		}
+	}
+
 	return av.leave(func);
 }
 

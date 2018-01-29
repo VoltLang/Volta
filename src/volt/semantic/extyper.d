@@ -3362,8 +3362,8 @@ void extypeThrowStatement(Context ctx, ref ir.Node n)
  */
 void extypeTemplateDefinition(Context ctx, ir.TemplateDefinition td)
 {
-	if (td._struct is null) {
-		throw makeUnsupported(/*#ref*/td.loc, "non struct template definitions");
+	if (td._struct is null && td._function is null) {
+		throw makeUnsupported(/*#ref*/td.loc, "non struct/function template definitions");
 	}
 }
 
@@ -4677,6 +4677,8 @@ void resolveFunction(Context ctx, ir.Function func)
 	auto done = ctx.lp.startResolving(func);
 	scope (success) done();
 
+	resolveFunctionTemplate(ctx.lp, func);
+
 	if (func.isAutoReturn) {
 		func.type.ret = buildVoid(/*#ref*/func.type.ret.loc);
 	}
@@ -4699,7 +4701,17 @@ void resolveFunction(Context ctx, ir.Function func)
 
 	// Ctx points the context surrounding the Function
 	ir.Type refType = func.type;
+	if (func.templateInstance !is null) {
+		/* We need to be able to see types a template
+		 * has introduced to the function scope.
+		 * This is the cleanest way.
+		 */
+		ctx.enter(func);
+	}
 	resolveType(ctx, /*#ref*/refType);
+	if (func.templateInstance !is null) {
+		ctx.leave(func);
+	}
 	func.type = cast(ir.FunctionType) refType;
 	func.type.typeInfo = ctx.lp.tiTypeInfo;
 
@@ -4799,6 +4811,16 @@ void resolveStructTemplate(LanguagePass lp, ir.Struct s)
 
 	auto tlifter = new TemplateLifter();
 	tlifter.templateLift(/*#ref*/s, lp, s.templateInstance);
+}
+
+void resolveFunctionTemplate(LanguagePass lp, ir.Function func)
+{
+	if (func.templateInstance is null) {
+		return;
+	}
+
+	auto tlifter = new TemplateLifter();
+	tlifter.templateLift(/*#ref*/func, lp, func.templateInstance);
 }
 
 void resolveUnion(LanguagePass lp, ir.Union u)
