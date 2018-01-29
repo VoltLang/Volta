@@ -2053,6 +2053,9 @@ ParseStatus parseComposableString(ParserStream ps, out ir.Exp exp)
 			inStringLiteral = true;
 		}
 	}
+	if (!inStringLiteral) {
+		return parseExpected(ps, /*#ref*/ps.peek.loc, cs, "end of composable string");
+	}
 	if (inStringLiteral && a < literal.value.length) {
 		addLiteral(literal.value[a .. $-1]);
 	}
