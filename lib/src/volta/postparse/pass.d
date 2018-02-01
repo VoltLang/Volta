@@ -139,15 +139,6 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ir.Condition c)
-	{
-		if (c.kind != ir.Condition.Kind.StaticIf) {
-			return Continue;
-		}
-		mErr.panic(c, "should not find condition here");
-		return Continue;
-	}
-
 	override Status visit(ir.TemplateDefinition td)
 	{
 		// Need to switch over to pure CondRemoval code.

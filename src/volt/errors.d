@@ -61,6 +61,18 @@ CompilerException makeEmitLLVMNoLink(string file = __FILE__, const int line = __
  *
  */
 
+CompilerException makeInvalidTraitsModifier(ref in Location loc, string modifier, string file = __FILE__, const int line = __LINE__)
+{
+	string msg = format("'%s' is not a valid traits modifier. Expected 'elementOf', 'keyOf', 'valueOf', or 'baseOf'.", modifier);
+	return makeError(/*#ref*/loc, msg, file, line);
+}
+
+CompilerException makeInvalidTraitsWord(ref in Location loc, string word, string file = __FILE__, const int line = __LINE__)
+{
+	string msg = format("'%s' is not a valid traits word. Expected 'isBitsType', 'isArray', 'isConst', 'isScope', or 'isImmutable'.", word);
+	return makeError(/*#ref*/loc, msg, file, line);
+}
+
 CompilerException makeFunctionNamedInit(ref in Location loc, string file = __FILE__, const int line = __LINE__)
 {
 	return makeError(/*#ref*/loc, "functions may not be named 'init', to avoid confusion with the built-in type field of the same name.", file, line);

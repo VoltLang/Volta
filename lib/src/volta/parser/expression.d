@@ -826,6 +826,18 @@ ParseStatus parseIsExp(ParserStream ps, out ir.IsExp ie)
 	if (!succeeded) {
 		return succeeded;
 	}
+	if (ps.peek.type == TokenType.At) {
+		ps.get();
+		if (ps.peek.type != TokenType.Identifier) {
+			return parseExpected(ps, /*#ref*/ps.peek.loc, ir.NodeType.IsExp, "identifier");
+		}
+		ie.traitsModifier = ps.peek.value;
+		ps.get();
+		succeeded = match(ps, ie, TokenType.Bang);
+		if (!succeeded) {
+			return succeeded;
+		}
+	}
 	succeeded = parseType(ps, /*#out*/ie.type);
 	if (!succeeded) {
 		return parseFailed(ps, ie);
@@ -853,6 +865,16 @@ ParseStatus parseIsExp(ParserStream ps, out ir.IsExp ie)
 				return parseExpected(ps, /*#ref*/ps.peek.loc, ir.NodeType.Identifier, "is expression");
 			}
 			ps.get();
+			if (ps.peek.type == TokenType.At) {
+				ie.compType = ir.IsExp.Comparison.TraitsWord;
+				ps.get();
+				if (ps.peek.type != TokenType.Identifier) {
+					return parseExpected(ps, /*#ref*/ps.peek.loc, ir.NodeType.IsExp, "identifier");
+				}
+				ie.traitsWord = ps.peek.value;
+				ps.get();
+				break;
+			}
 			ie.compType = ir.IsExp.Comparison.Exact;
 			break;
 		default:

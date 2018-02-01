@@ -245,12 +245,23 @@ ir.Constant foldAccessExp(ref ir.Exp exp, ir.AccessExp accessExp, TargetInfo tar
 {
 	assert(accessExp.child !is null);
 
-	// Currently, only `typeid(_).size` is supported.
-	if (accessExp.child.nodeType != ir.NodeType.Typeid ||
-	    accessExp.field.name != "size") {
+	// Currently, only `typeid(_).size` and `typeid(_).mutableIndirection` is supported.
+	if (accessExp.child.nodeType != ir.NodeType.Typeid) {
 		return null;
 	}
 	auto tid = cast(ir.Typeid)accessExp.child;
+	switch (accessExp.field.name) {
+	case "size":
+		return foldTypeIdSize(/*#ref*/exp, tid, target);
+	case "mutableIndirection":
+		return foldTypeIdMutableIndirection(/*#ref*/exp, tid, target);
+	default:
+		return null;
+	}
+}
+
+ir.Constant foldTypeIdSize(ref ir.Exp exp, ir.Typeid tid, TargetInfo target)
+{
 	auto type = tid.type;
 	if (tid.type is null && tid.exp !is null) {
 		type = getExpType(tid.exp);
@@ -260,6 +271,16 @@ ir.Constant foldAccessExp(ref ir.Exp exp, ir.AccessExp accessExp, TargetInfo tar
 	auto tsize = size(target, type);
 	assert(tsize > 0);
 	return buildConstantSizeT(/*#ref*/exp.loc, target, tsize);
+}
+
+ir.Constant foldTypeIdMutableIndirection(ref ir.Exp exp, ir.Typeid tid, TargetInfo target)
+{
+	auto type = tid.type;
+	if (tid.type is null && tid.exp !is null) {
+		type = getExpType(tid.exp);
+	}
+	assert(type !is null);
+	return buildConstantBool(/*#ref*/exp.loc, mutableIndirection(type));
 }
 
 ir.Constant foldBinOp(ref ir.Exp exp, ir.BinOp binop, TargetInfo target)

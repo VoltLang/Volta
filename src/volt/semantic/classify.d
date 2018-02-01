@@ -424,6 +424,11 @@ bool isArray(ir.Type t)
 	return t.nodeType == ir.NodeType.ArrayType;
 }
 
+bool isStaticArray(ir.Type t)
+{
+	return t.nodeType == ir.NodeType.StaticArrayType;
+}
+
 bool effectivelyConst(ir.Type type)
 {
 	return type.isConst || type.isImmutable;
@@ -539,6 +544,29 @@ bool isOkayForPointerArithmetic(ir.PrimitiveType.Kind kind)
 	case Uint:
 	case Long:
 	case Ulong:
+		return true;
+	default:
+		return false;
+	}
+}
+
+bool isBitsType(ir.Type type)
+{
+	auto pt = type.toPrimitiveTypeChecked();
+	if (pt is null) {
+		return false;
+	}
+	switch (pt.type) with (ir.PrimitiveType.Kind) {
+	case Byte:
+	case Ubyte:
+	case Short:
+	case Ushort:
+	case Int:
+	case Uint:
+	case Long:
+	case Ulong:
+	case Float:
+	case Double:
 		return true;
 	default:
 		return false;

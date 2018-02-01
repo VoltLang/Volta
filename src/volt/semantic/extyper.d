@@ -2598,12 +2598,79 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 
 ir.Constant evaluateIsExp(Context ctx, ir.IsExp isExp)
 {
+	ir.Type type = isExp.type;
+	switch (isExp.traitsModifier) {
+	case "elementOf":
+		if (!isArray(type) && !isStaticArray(type)) {
+			return buildConstantBool(/*#ref*/isExp.loc, false);
+		}
+		if (type.nodeType == ir.NodeType.StaticArrayType) {
+			auto arr = type.toStaticArrayTypeFast();
+			type = arr.base;
+		} else {
+			auto arr = type.toArrayTypeFast();
+			type = arr.base;
+		}
+		break;
+	case "keyOf":
+		if (type.nodeType != ir.NodeType.AAType) {
+			return buildConstantBool(/*#ref*/isExp.loc, false);
+		}
+		auto aa = type.toAATypeFast();
+		type = aa.key;
+		break;
+	case "valueOf":
+		if (type.nodeType != ir.NodeType.AAType) {
+			return buildConstantBool(/*#ref*/isExp.loc, false);
+		}
+		auto aa = type.toAATypeFast();
+		type = aa.value;
+		break;
+	case "baseOf":
+		if (type.nodeType != ir.NodeType.PointerType) {
+			return buildConstantBool(/*#ref*/isExp.loc, false);
+		}
+		auto ptr = type.toPointerTypeFast();
+		type = ptr.base;
+		break;
+	case "":
+		break;
+	default:
+		throw makeInvalidTraitsModifier(/*#ref*/isExp.loc, isExp.traitsModifier, isExp.traitsModifier);
+	}
+
+	if (isExp.compType == ir.IsExp.Comparison.TraitsWord) {
+		return evaluateTraitsWord(ctx, isExp, type);
+	}
 	if (isExp.specialisation != ir.IsExp.Specialisation.Type ||
 	    isExp.compType != ir.IsExp.Comparison.Exact ||
 	    isExp.specType is null) {
 		throw makeNotAvailableInCTFE(isExp, isExp);
 	}
-	return buildConstantBool(/*#ref*/isExp.loc, typesEqual(isExp.type, isExp.specType));
+	return buildConstantBool(/*#ref*/isExp.loc, typesEqual(type, isExp.specType));
+}
+
+ir.Constant evaluateTraitsWord(Context ctx, ir.IsExp isExp, ir.Type type)
+{
+	/* If you're adding something new here, make sure
+	 * you update the documentation and the makeInvalidTraits*
+	 * error(s).
+	 */
+
+	switch (isExp.traitsWord) {
+	case "isBitsType":
+		return buildConstantBool(/*#ref*/isExp.loc, isBitsType(type));
+	case "isArray":
+		return buildConstantBool(/*#ref*/isExp.loc, isArray(type) || isStaticArray(type));
+	case "isConst":
+		return buildConstantBool(/*#ref*/isExp.loc, type.isConst);
+	case "isImmutable":
+		return buildConstantBool(/*#ref*/isExp.loc, type.isImmutable);
+	case "isScope":
+		return buildConstantBool(/*#ref*/isExp.loc, type.isScope);
+	default:
+		throw makeInvalidTraitsWord(/*#ref*/isExp.loc, isExp.traitsWord);
+	}
 }
 
 ir.Type extypeIsExp(Context ctx, ref ir.Exp exp, Parent parent)
@@ -3301,6 +3368,7 @@ void extypeBlockStatement(Context ctx, ir.BlockStatement bs)
 		case AssertStatement: extypeAssertStatement(ctx, /*#ref*/stat); break;
 		case SwitchStatement: extypeSwitchStatement(ctx, /*#ref*/stat); break;
 		case ForeachStatement: extypeForeachStatement(ctx, /*#ref*/stat); break;
+		case ConditionStatement: extypeConditionStatement(ctx, /*#ref*/stat); break;
 		// False form (casting)
 		case BlockStatement:
 			auto s = cast(ir.BlockStatement) stat;
@@ -3786,6 +3854,27 @@ void extypeSwitchStatement(Context ctx, ref ir.Node n)
 
 	foreach_reverse(wexp; ss.withs) {
 		ctx.popWith(wexp);
+	}
+}
+
+void extypeConditionStatement(Context ctx, ref ir.Node n)
+{
+	auto cs = n.toConditionStatementFast();
+	extype(ctx, /*#ref*/cs.condition.exp, Parent.NA);
+
+	auto constant = evaluate(ctx.lp, ctx.current, cs.condition.exp);
+	if (constant is null || !isBool(getExpType(constant))) {
+		throw makeExpected(/*#ref*/n.loc, "constant expression that evaluates to a bool");
+	}
+
+	if (constant.u._bool) {
+		extypeBlockStatement(ctx, cs.block);
+		n = cs.block;
+	} else if (cs._else !is null) {
+		extypeBlockStatement(ctx, cs._else);
+		n = cs._else;
+	} else {
+		n = buildBlockStat(/*#ref*/n.loc, n, ctx.current);
 	}
 }
 

@@ -657,6 +657,7 @@ public:
 		None,
 		Implicit,  // is(T : int)
 		Exact,  // is(T == int)
+		TraitsWord,  // is(T == @isConst) etc
 	}
 
 public:
@@ -664,6 +665,9 @@ public:
 	Specialisation specialisation;
 	Type specType;  // If specialisation == Type.
 	Comparison compType;
+
+	string traitsWord;  // If Comparison == traitsWord
+	string traitsModifier;   // `@elementOf!T == blah` -- modifies the type being looked up.
 
 public:
 	this() { super(NodeType.IsExp); }
@@ -675,6 +679,8 @@ public:
 		this.specialisation = old.specialisation;
 		this.specType = old.specType;
 		this.compType = old.compType;
+		this.traitsWord = old.traitsWord;
+		this.traitsModifier = old.traitsModifier;
 	}
 }
 
