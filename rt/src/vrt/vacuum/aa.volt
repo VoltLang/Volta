@@ -1189,7 +1189,7 @@ fn vrt_aa_in_primitive(rbtv: void*, key: ulong, ret: void*) bool
 		return false;
 	}
 	aa := cast(AA*)rbtv;
-	value: void*;
+	value: HashValue;
 	retval := aa.u.value.find(key, out value);
 	if (!retval) {
 		return false;
@@ -1209,7 +1209,7 @@ fn vrt_aa_in_array(rbtv: void*, key: void[], ret: void*) bool
 		return false;
 	}
 	aa := cast(AA*)rbtv;
-	value: void*;
+	value: HashValue;
 	retval := aa.u.array.find(key, out value);
 	if (!retval) {
 		return false;
@@ -1229,7 +1229,7 @@ fn vrt_aa_in_ptr(rbtv: void*, key: void*, ret: void*) bool
 		return false;
 	}
 	aa := cast(AA*)rbtv;
-	value: void*;
+	value: HashValue;
 	keyslice := key[0 .. aa.keytid.size];
 	retval := aa.u.array.find(keyslice, out value);
 	if (!retval) {
