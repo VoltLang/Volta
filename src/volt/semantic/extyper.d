@@ -4314,25 +4314,24 @@ void doResolveType(Context ctx, ref ir.Type type,
 	case PointerType:
 		auto pt = cast(ir.PointerType)type;
 		doResolveType(ctx, /*#ref*/pt.base, null, 0);
-
-		auto current = pt;
-		while (current !is null) {
-			assert(cast(ir.Named) current.base is null);
-			addStorage(current.base, current);
-			current = cast(ir.PointerType) current.base;
-		}
-
+		propagateStorage(pt);
 		return;
 	case ArrayType:
 		auto at = cast(ir.ArrayType)type;
-		return doResolveType(ctx, /*#ref*/at.base, null, 0);
+		doResolveType(ctx, /*#ref*/at.base, null, 0);
+		propagateStorage(at);
+		return;
 	case AmbiguousArrayType:
 		return doResolveAmbiguousArrayType(ctx, /*#ref*/type);
 	case StaticArrayType:
 		auto sat = cast(ir.StaticArrayType)type;
-		return doResolveType(ctx, /*#ref*/sat.base, null, 0);
+		doResolveType(ctx, /*#ref*/sat.base, null, 0);
+		propagateStorage(sat);
+		return;
 	case AAType:
-		return doResolveAA(ctx, /*#ref*/type);
+		doResolveAA(ctx, /*#ref*/type);
+		propagateStorage(type);
+		return;
 	case StorageType:
 		auto st = cast(ir.StorageType)type;
 		// For auto and friends.
@@ -4341,7 +4340,8 @@ void doResolveType(Context ctx, ref ir.Type type,
 		}
 		flattenOneStorage(st, st.base, ct, ctIndex);
 		type = st.base;
-		return doResolveType(ctx, /*#ref*/type, ct, ctIndex);
+		doResolveType(ctx, /*#ref*/type, ct, ctIndex);
+		return;
 	case AutoType:
 		auto at = cast(ir.AutoType)type;
 		if (at.explicitType is null) {

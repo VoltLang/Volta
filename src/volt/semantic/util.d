@@ -178,6 +178,39 @@ bool getIfStoreOrTypeExp(ir.Exp exp, out ir.Store store, out ir.Type type)
 	return true;
 }
 
+void propagateStorage(ir.Type type)
+{
+	auto at = type.toArrayTypeChecked();
+	if (at !is null) {
+		addStorage(at.base, at);
+		propagateStorage(at.base);
+		return;
+	}
+
+	auto sat = type.toStaticArrayTypeChecked();
+	if (sat !is null) {
+		addStorage(sat.base, sat);
+		propagateStorage(sat.base);
+		return;
+	}
+
+	auto pt = type.toPointerTypeChecked();
+	if (pt !is null) {
+		addStorage(pt.base, pt);
+		propagateStorage(pt.base);
+		return;
+	}
+
+	auto aat = type.toAATypeChecked();
+	if (aat !is null) {
+		addStorage(aat.key, aat);
+		addStorage(aat.value, aat);
+		propagateStorage(aat.key);
+		propagateStorage(aat.value);
+		return;
+	}
+}
+
 /*!
  * Given a type, return a type that will have every storage flag
  * that are nested within it, by going into array and pointer bases, etc.
