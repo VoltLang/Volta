@@ -4326,7 +4326,6 @@ void doResolveType(Context ctx, ref ir.Type type,
 	case StaticArrayType:
 		auto sat = cast(ir.StaticArrayType)type;
 		doResolveType(ctx, /*#ref*/sat.base, null, 0);
-		propagateStorage(sat);
 		return;
 	case AAType:
 		doResolveAA(ctx, /*#ref*/type);
