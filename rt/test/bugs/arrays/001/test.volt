@@ -8,5 +8,5 @@ fn main() i32
 	var: string[];
 	var ~= arr;
 
-	return var[0].ptr !is arr[0].ptr;
+	return cast(void*)var[0].ptr !is cast(void*)arr[0].ptr;
 }
