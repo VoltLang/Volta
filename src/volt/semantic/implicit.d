@@ -444,7 +444,14 @@ void doConvertStaticArrayType(Context ctx, ir.StaticArrayType atype, ref ir.Exp 
 			return;
 		}
 	}
-	checkAlit();
+	if (isString(atype.base) && alit !is null) {
+		/* HACK to make assigning arrays of strings to static immutable arrays
+		 * not completely awful.
+		 * See test `arrays.staticArrays.immutableStaticArrayOfStrings`.
+		 */
+	} else {
+		checkAlit();
+	}
 	if (ctx.functionDepth > 0) {
 		exp = buildInternalStaticArrayLiteralSmart(ctx.lp.errSink, /*#ref*/exp.loc, atype, alit.exps);
 	}
