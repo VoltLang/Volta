@@ -89,8 +89,20 @@ bool isTemplateDefinition(ParserStream ps)
  */
 bool isUnambigouslyType(ParserStream ps)
 {
-	if (isPrimitiveTypeToken(ps.peek.type)) {
+	switch (ps.peek.type) {
+	case ir.TokenType.Bool, ir.TokenType.Ubyte, ir.TokenType.Byte,
+		 ir.TokenType.Short, ir.TokenType.Ushort,
+		 ir.TokenType.Int, ir.TokenType.Uint, ir.TokenType.Long,
+		 ir.TokenType.Ulong, ir.TokenType.Void, ir.TokenType.Float,
+		 ir.TokenType.Double, ir.TokenType.Real, ir.TokenType.Char,
+		 ir.TokenType.Wchar, ir.TokenType.Dchar, ir.TokenType.I8,
+		 ir.TokenType.I16, ir.TokenType.I32, ir.TokenType.I64,
+		 ir.TokenType.U8, ir.TokenType.U16, ir.TokenType.U32, ir.TokenType.U64,
+		 ir.TokenType.F32, ir.TokenType.F64,
+		 ir.TokenType.Const, ir.TokenType.Immutable, ir.TokenType.Scope:
 		return true;
+	default:
+		break;
 	}
 	auto mark = ps.save();
 	ps.get();
