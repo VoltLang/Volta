@@ -45,7 +45,7 @@
 			"//T run:%t"
 		],
 		"abi": [
-			"//T run:volta --internal-dbg -c %s"
+			"//T run:volta --internal-dbg -c %s -o %t.o"
 		],
 		"win64abi": [
 			"//T run:cl /c /Fo%t.obj %S/abitest.c",
