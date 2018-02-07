@@ -1181,18 +1181,25 @@ fn vrt_aa_dup(rbtv: void*) void*
 }
 
 /*!
- * Check if a primitive key is in an associative array.
+ * Check if a key is in an associative array.
  */
-fn vrt_aa_in_primitive(rbtv: void*, key: ulong, ret: void*) bool
+fn vrt_aa_in_primitive_template!(K)(rbtv: void*, key: K, ret: void*) bool
 {
 	if (rbtv is null) {
 		return false;
 	}
 	aa := cast(AA*)rbtv;
 	value: HashValue;
-	retval := aa.u.value.find(key, out value);
-	if (!retval) {
-		return false;
+	static if (is(K == u64)) {
+		retval := aa.u.value.find(key, out value);
+		if (!retval) return false;
+	} else static if (is(K == void[])) {
+		retval := aa.u.array.find(key, out value);
+		if (!retval) return false;
+	} else {
+		keyslice := key[0 .. aa.keytid.size];
+		retval := aa.u.array.find(keyslice, out value);
+		if (!retval) return false;
 	}
 
 	aa.writeToPtr(ret, value);
@@ -1200,114 +1207,53 @@ fn vrt_aa_in_primitive(rbtv: void*, key: ulong, ret: void*) bool
 	return true;
 }
 
-/*!
- * Check if an array key is in an associative array.
- */
-fn vrt_aa_in_array(rbtv: void*, key: void[], ret: void*) bool
-{
-	if (rbtv is null) {
-		return false;
-	}
-	aa := cast(AA*)rbtv;
-	value: HashValue;
-	retval := aa.u.array.find(key, out value);
-	if (!retval) {
-		return false;
-	}
-
-	aa.writeToPtr(ret, value);
-
-	return true;
-}
+fn vrt_aa_in_primitive = mixin vrt_aa_in_primitive_template!(u64);
+fn vrt_aa_in_array = mixin vrt_aa_in_primitive_template!(void[]);
+fn vrt_aa_in_ptr = mixin vrt_aa_in_primitive_template!(void*);
 
 /*!
- * Check if a pointer key is in an associative array.
+ * Insert a value into an associative array.
  */
-fn vrt_aa_in_ptr(rbtv: void*, key: void*, ret: void*) bool
-{
-	if (rbtv is null) {
-		return false;
-	}
-	aa := cast(AA*)rbtv;
-	value: HashValue;
-	keyslice := key[0 .. aa.keytid.size];
-	retval := aa.u.array.find(keyslice, out value);
-	if (!retval) {
-		return false;
-	}
-
-	aa.writeToPtr(ret, value);
-
-	return true;
-}
-
-/*!
- * Insert a value in a primitive keyed associative array.
- */
-fn vrt_aa_insert_primitive(rbtv: void*, key: ulong, value: void*)
+fn vrt_aa_insert_template!(K)(rbtv: void*, key: K, value: void*)
 {
 	aa := cast(AA*)rbtv;
 	hashValue: HashValue = aa.toHashValue(value);
-	aa.u.value.add(key, hashValue);
+	static if (is(K == u64)) {
+		aa.u.value.add(key, hashValue);
+	} else static if (is(K == void[])) {
+		aa.u.array.add(key, hashValue);
+	} else {
+		keyslice := key[0 .. aa.keytid.size];
+		aa.u.array.add(keyslice, hashValue);
+	}
 }
 
-/*!
- * Insert a value in an array keyed associative array.
- */
-fn vrt_aa_insert_array(rbtv: void*, key: void[], value: void*)
-{
-	aa := cast(AA*)rbtv;
-	hashValue: HashValue = aa.toHashValue(value);
-	aa.u.array.add(key, hashValue);
-}
+fn vrt_aa_insert_primitive = mixin vrt_aa_insert_template!(u64);
+fn vrt_aa_insert_array = mixin vrt_aa_insert_template!(void[]);
+fn vrt_aa_insert_ptr = mixin vrt_aa_insert_template!(void*);
 
 /*!
- * Insert a value in a pointer keyed associative array.
+ * Delete a value in an associative array.
  */
-fn vrt_aa_insert_ptr(rbtv: void*, key: void*, value: void*)
-{
-	aa := cast(AA*)rbtv;
-	keyslice := key[0 .. aa.keytid.size];
-	hashValue: HashValue = aa.toHashValue(value);
-	aa.u.array.add(keyslice, hashValue);
-}
-
-/*!
- * Delete a value associated with a primitive key.
- */
-fn vrt_aa_delete_primitive(rbtv: void*, key: ulong) bool
+fn vrt_aa_delete_template!(K)(rbtv: void*, key: K) bool
 {
 	if (rbtv is null) {
 		return false;
 	}
 	aa := cast(AA*)rbtv;
-	return aa.u.value.remove(key);
+	static if (is(K == u64)) {
+		return aa.u.value.remove(key);
+	} else static if (is(K == void[])) {
+		return aa.u.array.remove(key);
+	} else {
+		keyslice := key[0 .. aa.keytid.size];
+		return aa.u.array.remove(keyslice);
+	}
 }
 
-/*!
- * Delete a value associated with an array key.
- */
-fn vrt_aa_delete_array(rbtv: void*, key: void[]) bool
-{
-	if (rbtv is null) {
-		return false;
-	}
-	aa := cast(AA*)rbtv;
-	return aa.u.array.remove(key);
-}
-
-/*!
- * Delete a value associate with a pointer key.
- */
-fn vrt_aa_delete_ptr(rbtv: void*, key: void*) bool
-{
-	if (rbtv is null) {
-		return false;
-	}
-	aa := cast(AA*)rbtv;
-	keyslice := key[0 .. aa.keytid.size];
-	return aa.u.array.remove(keyslice);
-}
+fn vrt_aa_delete_primitive = mixin vrt_aa_delete_template!(u64);
+fn vrt_aa_delete_array = mixin vrt_aa_delete_template!(void[]);
+fn vrt_aa_delete_ptr = mixin vrt_aa_delete_template!(void*);
 
 /*!
  * Get the keys array for a given associative array.
@@ -1360,44 +1306,28 @@ fn vrt_aa_get_length(rbtv: void*) size_t
 }
 
 /*!
- * The `in` operator for an array keyed associative array.
+ * Implements the `in` operator for associative arrays.
  */
-fn vrt_aa_in_binop_array(rbtv: void*, key: void[]) void*
+fn vrt_aa_in_binop_template!(K)(rbtv: void*, key: K) void*
 {
 	if (rbtv is null) {
 		return null;
 	}
 	aa := cast(AA*)rbtv;
 
-	return aa.fromHashValuePtr(aa.u.array.findPtr(key));
-}
-
-/*!
- * The `in` operator for a primitive keyed associative array.
- */
-fn vrt_aa_in_binop_primitive(rbtv: void*, key: ulong) void*
-{
-	if (rbtv is null) {
-		return null;
+	static if (is(K == u64)) {
+		return aa.fromHashValuePtr(aa.u.value.findPtr(key));
+	} else static if (is(K == void[])) {
+		return aa.fromHashValuePtr(aa.u.array.findPtr(key));
+	} else {
+		keyslice := key[0 .. aa.keytid.size];
+		return aa.fromHashValuePtr(aa.u.array.findPtr(keyslice));
 	}
-	aa := cast(AA*)rbtv;
-
-	return aa.fromHashValuePtr(aa.u.value.findPtr(key));
 }
 
-/*!
- * The `in` operator for a pointer keyed associative array.
- */
-fn vrt_aa_in_binop_ptr(rbtv: void*, key: void*) void*
-{
-	if (rbtv is null) {
-		return null;
-	}
-	aa := cast(AA*)rbtv;
-	keyslice := key[0 .. aa.keytid.size];
-
-	return aa.fromHashValuePtr(aa.u.array.findPtr(keyslice));
-}
+fn vrt_aa_in_binop_primitive = mixin vrt_aa_in_binop_template!(u64);
+fn vrt_aa_in_binop_array = mixin vrt_aa_in_binop_template!(void[]);
+fn vrt_aa_in_binop_ptr = mixin vrt_aa_in_binop_template!(void*);
 
 /*!
  * Rehash an associative array to optimise performance.
