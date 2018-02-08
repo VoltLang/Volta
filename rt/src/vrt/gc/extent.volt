@@ -42,6 +42,7 @@ public:
 	enum size_t InternalShift = 4u;
 	enum size_t InternalMask = 1u << InternalShift;
 	enum size_t DataMask = SlabMask | KindMask | MarkedMask | InternalMask;
+	enum size_t Alignment = DataMask + 1;
 
 
 public:
