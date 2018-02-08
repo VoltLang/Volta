@@ -33,6 +33,7 @@ struct Slab
 {
 public:
 	enum MaxSlots = 512;
+	alias Alignment = Extent.Alignment;
 
 
 public:
