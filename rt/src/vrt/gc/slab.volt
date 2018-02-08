@@ -8,6 +8,7 @@
 module vrt.gc.slab;
 
 import core.object : Object;
+import core.compiler.llvm;
 
 import vrt.gc.util;
 import vrt.gc.extent;
@@ -165,6 +166,9 @@ public:
 		freeSlots++;
 		header = cast(u16)(header | (1 << hindex));
 		bitmap[hindex] |= (1 << bindex);
+
+		size := orderToSize(order);
+		__llvm_memset(ptr, 0, size, 0, false);
 	}
 
 	@property fn usedSlots() u16

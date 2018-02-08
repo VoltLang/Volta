@@ -179,12 +179,9 @@ public:
 			mNum.arrayBytes += size;
 		}
 
-		// Zero memory or do class init.
 		if (count == cast(size_t) -1) {
+			// Do class init.
 			__llvm_memcpy(memory, typeinfo.classInit, typeinfo.classSize, 0, false);
-		} else {
-			// TODO make the GC always return zeroed memory.
-			__llvm_memset(memory, 0, size, 0, false);
 		}
 
 		return memory;
@@ -345,6 +342,7 @@ protected:
 			gcAssert(obj !is null);
 			obj.__dtor();
 		}
+		__llvm_memset(large.extent.ptr, 0, large.extent.size, 0, false);
 		mManager.freeLargeStructAndMem(large);
 	}
 
