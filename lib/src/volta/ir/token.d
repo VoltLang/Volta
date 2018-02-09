@@ -59,7 +59,7 @@ version (Volt) {
 	static assert(_tokenToString.length == TokenType.max + 1, "the tokenToString array and TokenType enum are out of sync.");
 }
 
-enum TokenType
+enum TokenType : short
 {
 	None = 0,
 
