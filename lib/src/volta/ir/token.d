@@ -17,7 +17,7 @@ import volta.ir.location;
  * another are implicitly concatenated. I warn you of this out of experience.
  */
 enum string[] _tokenToString = [
-"none", "BEGIN", "END", "DocComment",
+"none", "BEGIN", "END", "DocComment", "BackwardsDocComment",
 "identifier", "string literal", "character literal",
 "integer literal", "float literal", "abstract", "alias", "align",
 "asm", "assert", "auto", "body", "bool", "break", "i8", "case",
@@ -67,6 +67,7 @@ enum TokenType
 	Begin,
 	End,
 	DocComment,
+	BackwardsDocComment,
 
 	// Literals
 	Identifier,
@@ -215,7 +216,6 @@ struct Token
 	TokenType type;
 	string value;
 	Location loc;
-	bool isBackwardsComment;
 }
 
 /*!

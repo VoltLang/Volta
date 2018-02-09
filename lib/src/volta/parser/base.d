@@ -408,11 +408,11 @@ bool matchIf(ParserStream ps, TokenType type)
  */
 ParseStatus eatComments(ParserStream ps)
 {
-	while (ps.peek.type == TokenType.DocComment && !ps.eof) {
+	while ((ps.peek.type == TokenType.DocComment || ps.peek.type == TokenType.BackwardsDocComment) && !ps.eof) {
 		auto commentTok = ps.get();
 		if (commentTok.value.indexOf("@defgroup") >= 0) {
 			ps.globalDocComments ~= commentTok.value;
-		} else if (commentTok.isBackwardsComment) {
+		} else if (commentTok.type == TokenType.BackwardsDocComment) {
 			if (ps.retroComment is null) {
 				return strayDocComment(ps, /*#ref*/commentTok.loc);
 			} else {

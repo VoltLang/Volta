@@ -255,14 +255,15 @@ void addIfDocComment(TokenWriter tw, Token commentToken, string s, string docsig
 		return;
 	}
 
+	bool isBackwardsComment;
 	if (s.indexOf("@}") < 0) {
 		commentToken.value = cleanComment(
-			s, /*#out*/commentToken.isBackwardsComment);
+			s, /*#out*/isBackwardsComment);
 	} else {
 		commentToken.value = "@}";
 	}
 
-	commentToken.type = TokenType.DocComment;
+	commentToken.type = isBackwardsComment ? TokenType.BackwardsDocComment : TokenType.DocComment;
 	tw.addToken(commentToken);
 }
 
