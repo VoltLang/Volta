@@ -270,7 +270,10 @@ ir.Constant foldBinOp(ref ir.Exp exp, ir.BinOp binop, TargetInfo target)
 	bool copyLeft, copyRight;
 	auto cl = fold(/*#ref*/binop.left, /*#out*/copyLeft, target);
 	auto cr = fold(/*#ref*/binop.right, /*#out*/copyRight, target);
-	if (cl is null || cr is null || !typesEqual(cl.type, cr.type)) {
+	if (cl is null || cr is null) {
+		return null;
+	}
+	if (!typesEqual(cl.type, cr.type)) {
 		return null;
 	}
 	auto c = foldBinOp(/*#ref*/exp, binop.op,
@@ -721,6 +724,20 @@ ir.Constant foldUnaryCast(ir.Constant c, ir.Type t, TargetInfo target)
 	long signedFrom;
 	ulong unsignedFrom;
 	switch (fromPrim.type) with (ir.PrimitiveType.Kind) {
+	case Byte:
+		signedFrom = c.u._byte;
+		signed = true;
+		break;
+	case Ubyte:
+		unsignedFrom = c.u._ubyte;
+		break;
+	case Short:
+		signedFrom = c.u._short;
+		signed = true;
+		break;
+	case Ushort:
+		unsignedFrom = c.u._ushort;
+		break;
 	case Int:
 		signedFrom = c.u._int;
 		signed = true;
@@ -740,6 +757,18 @@ ir.Constant foldUnaryCast(ir.Constant c, ir.Type t, TargetInfo target)
 	auto loc = c.loc;
 	ir.Constant outConstant;
 	switch (toPrim.type) with (ir.PrimitiveType.Kind) {
+	case Byte:
+		outConstant = buildConstantByte(/*#ref*/loc, signed ? cast(byte)signedFrom : cast(byte)unsignedFrom);
+		break;
+	case Ubyte:
+		outConstant = buildConstantUbyte(/*#ref*/loc, signed ? cast(ubyte)signedFrom : cast(ubyte)unsignedFrom);
+		break;
+	case Short:
+		outConstant = buildConstantShort(/*#ref*/loc, signed ? cast(short)signedFrom : cast(short)unsignedFrom);
+		break;
+	case Ushort:
+		outConstant = buildConstantUshort(/*#ref*/loc, signed ? cast(ushort)signedFrom : cast(ushort)unsignedFrom);
+		break;
 	case Int:
 		outConstant = buildConstantInt(/*#ref*/loc, signed ? cast(int)signedFrom : cast(int)unsignedFrom);
 		break;
