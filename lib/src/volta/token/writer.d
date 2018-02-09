@@ -75,7 +75,7 @@ public:
 		}
 
 		mTokens[mLength++] = token;
-		token.loc.length = token.value.length;
+		token.loc.length = cast(uint)token.value.length;
 	}
 
 	void addEnd()

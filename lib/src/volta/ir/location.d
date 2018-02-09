@@ -19,9 +19,9 @@ struct Location
 {
 public:
 	string filename;
-	size_t line;
-	size_t column;
-	size_t length;
+	uint line;
+	uint column;
+	uint length;
 
 public:
 	const string toString()
@@ -115,7 +115,7 @@ public:
 		loc.column = begin.column;
 
 		if (end.line != begin.line) {
-			loc.length = size_t.max; // End of line.
+			loc.length = uint.max; // End of line.
 		} else {
 			assert(begin.column <= end.column);
 			loc.length = end.column + end.length - begin.column;

@@ -1336,7 +1336,7 @@ LexStatus lexHashLine(TokenWriter tw)
 	if (lineNumber == 0) {
 		return lexExpected(tw, "line number greater than zero");
 	}
-	tw.source.changeCurrentLocation(filename, cast(size_t)lineNumber);
+	tw.source.changeCurrentLocation(filename, cast(uint)lineNumber);
 
 	tw.source.skipWhitespace();
 

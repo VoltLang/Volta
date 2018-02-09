@@ -107,7 +107,7 @@ public:
 	/*!
 	 * Set the loc to newFilename(line:1).
 	 */
-	void changeCurrentLocation(string newFilename, size_t newLine)
+	void changeCurrentLocation(string newFilename, uint newLine)
 	{
 		loc.filename = newFilename;
 		loc.line = newLine;

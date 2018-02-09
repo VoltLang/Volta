@@ -132,7 +132,7 @@ public:
 	this(ref Location pairStart, Location loc, string type, string token, string file = __FILE__, const int line = __LINE__)
 	{
 		loc.column += loc.length;
-		loc.length = token.length;
+		loc.length = cast(uint)token.length;
 
 		super(/*#ref*/loc, format("expected '%s' to close %s.", token, type), file, line);
 
