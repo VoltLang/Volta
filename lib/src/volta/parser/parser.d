@@ -46,11 +46,9 @@ void checkError(ParserStream ps, ParseStatus status)
 	if (p !is null) {
 		addExtraInfo();
 		panic(ps.errSink, /*#ref*/e.loc, msg, e.raiseFile, e.raiseLine);
-		assert(false);  // @todo abortless
 	} else {
 		debug addExtraInfo();
 		errorMsg(ps.errSink, /*#ref*/e.loc, msg, e.raiseFile, e.raiseLine);
-		assert(false);  // @todo abortless
 	}
 }
 

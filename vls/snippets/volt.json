@@ -1,0 +1,246 @@
+{
+	// Top Level
+	"Module": {
+		"prefix": "module",
+		"body": "module ${1:name};",
+		"description": "Module Declaration\n\nGive the full name of this module."
+	},
+	"Import": {
+		"prefix": "import",
+		"body": "import ${1:name} = ${2:module};",
+		"description": "Import Statement\n\nAdd a module to the places symbols are resolved. If `name =` is present, `name` must be used to look them up.",
+	},
+	"Version Block": {
+		"prefix": "version",
+		"body": [
+			"version (${1:condition}) {",
+			"\t$0",
+			"}"
+		],
+		"description": "Version Block\n\nOnly compile if the `condition` identifier is set."
+	},
+	"Function": {
+		"prefix": "fn",
+		"body": [
+			"fn ${1:name}(${2:args}) ${3:retval}",
+			"{",
+			"\t$0",
+			"}",
+		],
+		"description": "Function Declaration\n\nA unit of code that can be called independently."
+	},
+	"Class": {
+		"prefix": "class",
+		"body": [
+			"class ${1:name}",
+			"{",
+			"\t$0",
+			"}",
+		],
+		"description": "Class Declaration\n\nUser defined type supporting inheritence, and virtual functions. Always a reference type."
+	},
+	"Struct": {
+		"prefix": "struct",
+		"body": [
+			"struct ${1:name}",
+			"{",
+			"\t$0",
+			"}",
+		],
+		"description": "Struct Declaration\n\nSimple POD (plain old data) user defined type supporting variables and member functions. A value type."
+	},
+	"Union": {
+		"prefix": "union",
+		"body": [
+			"union ${1:name}",
+			"{",
+			"\t$0",
+			"}",
+		],
+		"description": "Union Declaration\n\nUser defined type that is at least as big as its largest field, and overlays its fields. A value type."
+	},
+	"Interface": {
+		"prefix": "interface",
+		"body": [
+			"interface ${1:name}",
+			"{",
+			"\t$0",
+			"}",
+		],
+		"description": "Interface Declaration\n\nDeclares a list of methods that a class may implement to be treated as an interface instance."
+	},
+
+	// Statement
+	"For Loop": {
+		"prefix": "for",
+		"body": [
+			"for (${1:index}; ${2:condition}; ${3:increment}) {",
+			"\t$0",
+			"}",
+		],
+		"description": "For Loop\n\n`index` is a declaration available in the loop body, it loops as long as `condition` is true, and `increment` is run at the end of each loop iteration.",
+	},
+	"Foreach Loop": {
+		"prefix": "foreach",
+		"body": [
+			"foreach (${2:element}; ${1:array}) {",
+			"\t$0",
+			"}"
+		],
+		"description": "Foreach Loop\n\nLoop body is run once for each member of `array`."
+	},
+	"While Loop": {
+		"prefix": "while",
+		"body": [
+			"while (${1:condition}) {",
+			"\t$0",
+			"}"
+		],
+		"description": "While Loop\n\nLoop body is run if, and as long as `condition` is true."
+	},
+	"Do While Loop": {
+		"prefix": "do",
+		"body": [
+			"do {",
+			"\t$0",
+			"while (${1:condition});"
+		],
+		"description": "Do While Loop\n\nLoop body is run once, and then the `condition` is checked to see if the loop continues."
+	},
+	"Try Statement": {
+		"prefix": "try",
+		"body": [
+			"try {",
+			"\t$1",
+			"} catch (${2:exceptionName}: ${3:exceptionType}) {",
+			"\t$0",
+			"}"
+		],
+		"description": "Try Statement\n\nAny exceptions thrown in the try body will transfer execution to an appropriate catch block, if present."
+	},
+	"Finally Statement": {
+		"prefix": "finally",
+		"body": [
+			"finally {",
+			"\t$0",
+			"}"
+		],
+		"description": "Finally Statement\n\nRegardless of if a catch was visited, this will be executed before leaving the try statement."
+	},
+	"If Statement": {
+		"prefix": "if",
+		"body": [
+			"if (${1:condition}) {",
+			"\t$0",
+			"}"
+		],
+		"description": "If Statement\n\nBody is executed provided the `condition` evaluates as true."
+	},
+	"Else If Statement": {
+		"prefix": "else if",
+		"body": [
+			" else if (${1:condition}) {",
+			"\t$0",
+			"}"
+		],
+		"description": "Else If Statement\n\nAn if statement directly proceeding an else statement."
+	},
+	"Else Statement": {
+		"prefix": "else",
+		"body": [
+			" else {",
+			"\t$0",
+			"}"
+		],
+		"description": "Else Statement\n\nIf the if statement it is attached is not evaluated, this will be evaluated if present."
+	},
+	"Switch Statement": {
+		"prefix": "switch",
+		"body": [
+			"switch (${1:value}) {",
+			"$0",
+			"}"
+		],
+		"description": "Switch Statement\n\nBranch execution based on a value."
+	},
+	"Final Switch Statement": {
+		"prefix": "final switch",
+		"body": [
+			"final switch (${1:value}) {",
+			"$0",
+			"}"
+		],
+		"description": "Final Switch Statement\n\nA switch statement over an enum, the compiler ensures that all enum entries are covered."
+	},
+	"Case Statement": {
+		"prefix": "case",
+		"body": [
+			"case ${1:expression}:",
+			"\t$0"
+		],
+		"description": "Case Statement\n\nDefine a branch point for a switch statement.",
+	},
+	"Default Statement": {
+		"prefix": "default",
+		"body": [
+			"default:",
+			"\t$0"
+		],
+		"description": "Default Statement\n\nIf no case statement matches in a switch statement, this is run."
+	},
+	"With Statement": {
+		"prefix": "with",
+		"body": [
+			"with (${1:prefix}) {",
+			"\t$0",
+			"}"
+		],
+		"description": "With Statement\n\nSymbol lookups in this block first check `prefix`.",
+	},
+	"Scope Statement": {
+		"prefix": "scope",
+		"body": [
+			"scope (${1|exit,success,failure|}) {",
+			"\t$0",
+			"}"
+		],
+		"description": "Scope Statement\n\nProvide code to execute when this function finishes. `exit` always runs, `success` doesn't run via throw, `failure` only runs via throw."
+	},
+	"Return Statement": {
+		"prefix": "return",
+		"body": "return ${1:exp};",
+		"description": "Return Expression\n\nCease executing this function, returning `exp` to the caller.",
+	},
+	"Assert Statement": {
+		"prefix": "assert",
+		"body": "assert(${1:condition}, ${2:message});",
+		"description": "Assert Statement.\n\nIf `condition` is false, throw an exception with `message` as an argument."
+	},
+	"Goto Statement": {
+		"prefix": "goto",
+		"body": "goto ${1:exp};",
+		"description": "Goto Statement\n\nUsed to control control flow in switch statements."
+	},
+	"Break Statement": {
+		"prefix": "break",
+		"body": "break;",
+		"description": "Break Statement\n\nStop executing a loop or switch statement."
+	},
+	"Continue Statement": {
+		"prefix": "continue",
+		"body": "continue;",
+		"description": "Continue Statement\n\nRestart a loop."
+	},
+	"Throw Statement": {
+		"prefix": "throw",
+		"body": "throw ${1:exception};",
+		"description": "Throw Statement\n\nUnwind execution to an appropriate catch handler, otherwise halt the process entirely."
+	},
+
+	// Expressions
+	"String Import": {
+		"prefix": "import",
+		"body": "import(${1:file})",
+		"description": "String Import Expression\n\nRead a file at compile time and use it as a string literal.",
+	}
+}
