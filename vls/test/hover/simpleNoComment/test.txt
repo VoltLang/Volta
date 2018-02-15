@@ -1,0 +1,1 @@
+//T check:{"jsonrcp":"2.0","id":1,"result":{"contents":{"kind":"markdown","value":"```volt\nfn addTwoIntegersTogether(a: i32, b: i32) i32\n```"}}}

@@ -1,0 +1,51 @@
+Content-Length: 1155
+
+{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"processId":15696,"rootPath":null,"rootUri":null,"capabilities":{"workspace":{"applyEdit":true,"didChangeConfiguration":{"dynamicRegistration":true},"didChangeWatchedFiles":{"dynamicRegistration":true},"symbol":{"dynamicRegistration":true},"executeCommand":{"dynamicRegistration":true}},"textDocument":{"synchronization":{"dynamicRegistration":true,"willSave":true,"willSaveWaitUntil":true,"didSave":true},"completion":{"dynamicRegistration":true,"completionItem":{"snippetSupport":true,"commitCharactersSupport":true}},"hover":{"dynamicRegistration":true},"signatureHelp":{"dynamicRegistration":true},"definition":{"dynamicRegistration":true},"references":{"dynamicRegistration":true},"documentHighlight":{"dynamicRegistration":true},"documentSymbol":{"dynamicRegistration":true},"codeAction":{"dynamicRegistration":true},"codeLens":{"dynamicRegistration":true},"formatting":{"dynamicRegistration":true},"rangeFormatting":{"dynamicRegistration":true},"onTypeFormatting":{"dynamicRegistration":true},"rename":{"dynamicRegistration":true},"documentLink":{"dynamicRegistration":true}}},"trace":"off"}}Content-Length: 52
+
+{"jsonrpc":"2.0","method":"initialized","params":{}}Content-Length: 208
+
+{"jsonrpc":"2.0","method":"workspace/didChangeConfiguration","params":{"settings":{"volt":{"pathToVolta":"D:\\F\\Code\\volt64\\Volta","pathToWatt":"D:\\F\\Code\\volt64\\Watt","additionalPackagePaths":null}}}}Content-Length: 438
+
+{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","languageId":"volt","version":1,"text":"module main;\r\n\r\n/*!\r\n * Add two integers.\r\n *\r\n * @Param a The first integer to add.\r\n * @Param b The second integer to add.\r\n */\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\treturn 0;\r\n}\r\n"}}}Content-Length: 447
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":2},"contentChanges":[{"text":"module main;\r\n\r\n/*!\r\n * Add two integers.\r\n *\r\n * @Param a The first integer to add.\r\n * @Param b The second integer to add.\r\n */\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\t\r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 448
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":3},"contentChanges":[{"text":"module main;\r\n\r\n/*!\r\n * Add two integers.\r\n *\r\n * @Param a The first integer to add.\r\n * @Param b The second integer to add.\r\n */\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\ta\r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 178
+
+{"jsonrpc":"2.0","id":1,"method":"textDocument/completion","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":13,"character":2}}}Content-Length: 469
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":4},"contentChanges":[{"text":"module main;\r\n\r\n/*!\r\n * Add two integers.\r\n *\r\n * @Param a The first integer to add.\r\n * @Param b The second integer to add.\r\n */\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\taddTwoIntegersTogether\r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 470
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":5},"contentChanges":[{"text":"module main;\r\n\r\n/*!\r\n * Add two integers.\r\n *\r\n * @Param a The first integer to add.\r\n * @Param b The second integer to add.\r\n */\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\taddTwoIntegersTogether(\r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 182
+
+{"jsonrpc":"2.0","id":2,"method":"textDocument/signatureHelp","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":13,"character":24}}}Content-Length: 472
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":7},"contentChanges":[{"text":"module main;\r\n\r\n/*!\r\n * Add two integers.\r\n *\r\n * @Param a The first integer to add.\r\n * @Param b The second integer to add.\r\n */\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\taddTwoIntegersTogether(12\r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 182
+
+{"jsonrpc":"2.0","id":3,"method":"textDocument/signatureHelp","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":13,"character":26}}}Content-Length: 473
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":8},"contentChanges":[{"text":"module main;\r\n\r\n/*!\r\n * Add two integers.\r\n *\r\n * @Param a The first integer to add.\r\n * @Param b The second integer to add.\r\n */\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\taddTwoIntegersTogether(12,\r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 182
+
+{"jsonrpc":"2.0","id":4,"method":"textDocument/signatureHelp","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":13,"character":27}}}Content-Length: 474
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":9},"contentChanges":[{"text":"module main;\r\n\r\n/*!\r\n * Add two integers.\r\n *\r\n * @Param a The first integer to add.\r\n * @Param b The second integer to add.\r\n */\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\taddTwoIntegersTogether(12, \r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 182
+
+{"jsonrpc":"2.0","id":5,"method":"textDocument/signatureHelp","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":13,"character":28}}}Content-Length: 477
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":11},"contentChanges":[{"text":"module main;\r\n\r\n/*!\r\n * Add two integers.\r\n *\r\n * @Param a The first integer to add.\r\n * @Param b The second integer to add.\r\n */\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\taddTwoIntegersTogether(12, 32\r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 182
+
+{"jsonrpc":"2.0","id":6,"method":"textDocument/signatureHelp","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":13,"character":30}}}Content-Length: 478
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":12},"contentChanges":[{"text":"module main;\r\n\r\n/*!\r\n * Add two integers.\r\n *\r\n * @Param a The first integer to add.\r\n * @Param b The second integer to add.\r\n */\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\taddTwoIntegersTogether(12, 32)\r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 182
+
+{"jsonrpc":"2.0","id":7,"method":"textDocument/signatureHelp","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":13,"character":31}}}Content-Length: 479
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":13},"contentChanges":[{"text":"module main;\r\n\r\n/*!\r\n * Add two integers.\r\n *\r\n * @Param a The first integer to add.\r\n * @Param b The second integer to add.\r\n */\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\taddTwoIntegersTogether(12, 32);\r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 182
+
+{"jsonrpc":"2.0","id":8,"method":"textDocument/signatureHelp","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":13,"character":32}}}Content-Length: 479
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":13},"contentChanges":[{"text":"module main;\r\n\r\n/*!\r\n * Add two integers.\r\n *\r\n * @Param a The first integer to add.\r\n * @Param b The second integer to add.\r\n */\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\taddTwoIntegersTogether(12, 32);\r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 456
+
+{"jsonrpc":"2.0","method":"textDocument/didSave","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":13},"text":"module main;\r\n\r\n/*!\r\n * Add two integers.\r\n *\r\n * @Param a The first integer to add.\r\n * @Param b The second integer to add.\r\n */\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\taddTwoIntegersTogether(12, 32);\r\n\treturn 0;\r\n}\r\n"}}Content-Length: 148
+
+{"jsonrpc":"2.0","method":"workspace/didChangeWatchedFiles","params":{"changes":[{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","type":2}]}}

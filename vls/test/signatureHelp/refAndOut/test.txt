@@ -1,0 +1,1 @@
+//T check:{"jsonrcp":"2.0","id":2,"result":{"signatures":[{"label":"fn setIntegerToValueThenDoubleValue(out integer: i32, ref value: i32) 

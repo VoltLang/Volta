@@ -1,0 +1,55 @@
+Content-Length: 1155
+
+{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"processId":10236,"rootPath":null,"rootUri":null,"capabilities":{"workspace":{"applyEdit":true,"didChangeConfiguration":{"dynamicRegistration":true},"didChangeWatchedFiles":{"dynamicRegistration":true},"symbol":{"dynamicRegistration":true},"executeCommand":{"dynamicRegistration":true}},"textDocument":{"synchronization":{"dynamicRegistration":true,"willSave":true,"willSaveWaitUntil":true,"didSave":true},"completion":{"dynamicRegistration":true,"completionItem":{"snippetSupport":true,"commitCharactersSupport":true}},"hover":{"dynamicRegistration":true},"signatureHelp":{"dynamicRegistration":true},"definition":{"dynamicRegistration":true},"references":{"dynamicRegistration":true},"documentHighlight":{"dynamicRegistration":true},"documentSymbol":{"dynamicRegistration":true},"codeAction":{"dynamicRegistration":true},"codeLens":{"dynamicRegistration":true},"formatting":{"dynamicRegistration":true},"rangeFormatting":{"dynamicRegistration":true},"onTypeFormatting":{"dynamicRegistration":true},"rename":{"dynamicRegistration":true},"documentLink":{"dynamicRegistration":true}}},"trace":"off"}}Content-Length: 52
+
+{"jsonrpc":"2.0","method":"initialized","params":{}}Content-Length: 208
+
+{"jsonrpc":"2.0","method":"workspace/didChangeConfiguration","params":{"settings":{"volt":{"pathToVolta":"D:\\F\\Code\\volt64\\Volta","pathToWatt":"D:\\F\\Code\\volt64\\Watt","additionalPackagePaths":null}}}}Content-Length: 311
+
+{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","languageId":"volt","version":1,"text":"module main;\r\n\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\treturn 0;\r\n}\r\n"}}}Content-Length: 320
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":2},"contentChanges":[{"text":"module main;\r\n\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\t\r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 321
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":3},"contentChanges":[{"text":"module main;\r\n\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\ta\r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 177
+
+{"jsonrpc":"2.0","id":1,"method":"textDocument/completion","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":7,"character":2}}}Content-Length: 342
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":4},"contentChanges":[{"text":"module main;\r\n\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\taddTwoIntegersTogether\r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 343
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":5},"contentChanges":[{"text":"module main;\r\n\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\taddTwoIntegersTogether(\r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 181
+
+{"jsonrpc":"2.0","id":2,"method":"textDocument/signatureHelp","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":7,"character":24}}}Content-Length: 345
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":7},"contentChanges":[{"text":"module main;\r\n\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\taddTwoIntegersTogether(23\r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 181
+
+{"jsonrpc":"2.0","id":3,"method":"textDocument/signatureHelp","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":7,"character":26}}}Content-Length: 346
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":8},"contentChanges":[{"text":"module main;\r\n\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\taddTwoIntegersTogether(23,\r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 181
+
+{"jsonrpc":"2.0","id":4,"method":"textDocument/signatureHelp","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":7,"character":27}}}Content-Length: 347
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":9},"contentChanges":[{"text":"module main;\r\n\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\taddTwoIntegersTogether(23, \r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 181
+
+{"jsonrpc":"2.0","id":5,"method":"textDocument/signatureHelp","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":7,"character":28}}}Content-Length: 349
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":10},"contentChanges":[{"text":"module main;\r\n\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\taddTwoIntegersTogether(23, 4\r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 181
+
+{"jsonrpc":"2.0","id":6,"method":"textDocument/signatureHelp","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":7,"character":29}}}Content-Length: 350
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":11},"contentChanges":[{"text":"module main;\r\n\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\taddTwoIntegersTogether(23, 43\r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 181
+
+{"jsonrpc":"2.0","id":7,"method":"textDocument/signatureHelp","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":7,"character":30}}}Content-Length: 351
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":12},"contentChanges":[{"text":"module main;\r\n\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\taddTwoIntegersTogether(23, 43)\r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 181
+
+{"jsonrpc":"2.0","id":8,"method":"textDocument/signatureHelp","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":7,"character":31}}}Content-Length: 352
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":13},"contentChanges":[{"text":"module main;\r\n\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\taddTwoIntegersTogether(23, 43);\r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 181
+
+{"jsonrpc":"2.0","id":9,"method":"textDocument/signatureHelp","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":7,"character":32}}}Content-Length: 352
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":13},"contentChanges":[{"text":"module main;\r\n\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\taddTwoIntegersTogether(23, 43);\r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 329
+
+{"jsonrpc":"2.0","method":"textDocument/didSave","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":13},"text":"module main;\r\n\r\nfn addTwoIntegersTogether(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn main() i32 {\r\n\taddTwoIntegersTogether(23, 43);\r\n\treturn 0;\r\n}\r\n"}}Content-Length: 148
+
+{"jsonrpc":"2.0","method":"workspace/didChangeWatchedFiles","params":{"changes":[{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","type":2}]}}

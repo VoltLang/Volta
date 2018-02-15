@@ -1,0 +1,39 @@
+Content-Length: 1155
+
+{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"processId":10649,"rootPath":null,"rootUri":null,"capabilities":{"workspace":{"applyEdit":true,"didChangeConfiguration":{"dynamicRegistration":true},"didChangeWatchedFiles":{"dynamicRegistration":true},"symbol":{"dynamicRegistration":true},"executeCommand":{"dynamicRegistration":true}},"textDocument":{"synchronization":{"dynamicRegistration":true,"willSave":true,"willSaveWaitUntil":true,"didSave":true},"completion":{"dynamicRegistration":true,"completionItem":{"snippetSupport":true,"commitCharactersSupport":true}},"hover":{"dynamicRegistration":true},"signatureHelp":{"dynamicRegistration":true},"definition":{"dynamicRegistration":true},"references":{"dynamicRegistration":true},"documentHighlight":{"dynamicRegistration":true},"documentSymbol":{"dynamicRegistration":true},"codeAction":{"dynamicRegistration":true},"codeLens":{"dynamicRegistration":true},"formatting":{"dynamicRegistration":true},"rangeFormatting":{"dynamicRegistration":true},"onTypeFormatting":{"dynamicRegistration":true},"rename":{"dynamicRegistration":true},"documentLink":{"dynamicRegistration":true}}},"trace":"off"}}Content-Length: 52
+
+{"jsonrpc":"2.0","method":"initialized","params":{}}Content-Length: 186
+
+{"jsonrpc":"2.0","method":"workspace/didChangeConfiguration","params":{"settings":{"volt":{"pathToVolta":"/Users/bernard/Code/volt/Volta","pathToWatt":"/Users/bernard/Code/volt/Watt"}}}}Content-Length: 241
+
+{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file:///Users/bernard/Desktop/test.volt","languageId":"volt","version":1,"text":"module test;\n\nimport fubnar = foo;\n\nfn main() i32 {\n\ts: fubnar.S;\n}"}}}Content-Length: 248
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///Users/bernard/Desktop/test.volt","version":2},"contentChanges":[{"text":"module test;\n\nimport fubnar = foo;\n\nfn main() i32 {\n\ts: fubnar.S;\n\t\n}"}]}}Content-Length: 249
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///Users/bernard/Desktop/test.volt","version":3},"contentChanges":[{"text":"module test;\n\nimport fubnar = foo;\n\nfn main() i32 {\n\ts: fubnar.S;\n\ts\n}"}]}}Content-Length: 171
+
+{"jsonrpc":"2.0","id":1,"method":"textDocument/completion","params":{"textDocument":{"uri":"file:///Users/bernard/Desktop/test.volt"},"position":{"line":6,"character":2}}}Content-Length: 116
+
+{"jsonrpc":"2.0","id":2,"method":"completionItem/resolve","params":{"label":"size_t","insertTextFormat":1,"kind":1}}Content-Length: 250
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///Users/bernard/Desktop/test.volt","version":4},"contentChanges":[{"text":"module test;\n\nimport fubnar = foo;\n\nfn main() i32 {\n\ts: fubnar.S;\n\ts.\n}"}]}}Content-Length: 171
+
+{"jsonrpc":"2.0","id":3,"method":"textDocument/completion","params":{"textDocument":{"uri":"file:///Users/bernard/Desktop/test.volt"},"position":{"line":6,"character":3}}}Content-Length: 62
+
+{"jsonrpc":"2.0","method":"$/cancelRequest","params":{"id":2}}Content-Length: 116
+
+{"jsonrpc":"2.0","id":4,"method":"completionItem/resolve","params":{"label":"field1","insertTextFormat":1,"kind":6}}Content-Length: 62
+
+{"jsonrpc":"2.0","method":"$/cancelRequest","params":{"id":4}}Content-Length: 256
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///Users/bernard/Desktop/test.volt","version":5},"contentChanges":[{"text":"module test;\n\nimport fubnar = foo;\n\nfn main() i32 {\n\ts: fubnar.S;\n\ts.field1\n}"}]}}Content-Length: 263
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///Users/bernard/Desktop/test.volt","version":11},"contentChanges":[{"text":"module test;\n\nimport fubnar = foo;\n\nfn main() i32 {\n\ts: fubnar.S;\n\ts.field1 = 12;\n}"}]}}Content-Length: 263
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///Users/bernard/Desktop/test.volt","version":11},"contentChanges":[{"text":"module test;\n\nimport fubnar = foo;\n\nfn main() i32 {\n\ts: fubnar.S;\n\ts.field1 = 12;\n}"}]}}Content-Length: 240
+
+{"jsonrpc":"2.0","method":"textDocument/didSave","params":{"textDocument":{"uri":"file:///Users/bernard/Desktop/test.volt","version":11},"text":"module test;\n\nimport fubnar = foo;\n\nfn main() i32 {\n\ts: fubnar.S;\n\ts.field1 = 12;\n}"}}Content-Length: 142
+
+{"jsonrpc":"2.0","method":"workspace/didChangeWatchedFiles","params":{"changes":[{"uri":"file:///Users/bernard/Desktop/test.volt","type":2}]}}Content-Length: 142
+
+{"jsonrpc":"2.0","method":"workspace/didChangeWatchedFiles","params":{"changes":[{"uri":"file:///Users/bernard/Desktop/test.volt","type":2}]}}

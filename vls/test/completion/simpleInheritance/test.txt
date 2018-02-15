@@ -1,0 +1,2 @@
+//T check:"result":[{"label":"currentHealthPoints","kind":3
+//T check:{"label":"maxHealthPoints","kind":3

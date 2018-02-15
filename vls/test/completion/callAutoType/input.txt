@@ -1,0 +1,19 @@
+Content-Length: 1155
+
+{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"processId":13516,"rootPath":null,"rootUri":null,"capabilities":{"workspace":{"applyEdit":true,"didChangeConfiguration":{"dynamicRegistration":true},"didChangeWatchedFiles":{"dynamicRegistration":true},"symbol":{"dynamicRegistration":true},"executeCommand":{"dynamicRegistration":true}},"textDocument":{"synchronization":{"dynamicRegistration":true,"willSave":true,"willSaveWaitUntil":true,"didSave":true},"completion":{"dynamicRegistration":true,"completionItem":{"snippetSupport":true,"commitCharactersSupport":true}},"hover":{"dynamicRegistration":true},"signatureHelp":{"dynamicRegistration":true},"definition":{"dynamicRegistration":true},"references":{"dynamicRegistration":true},"documentHighlight":{"dynamicRegistration":true},"documentSymbol":{"dynamicRegistration":true},"codeAction":{"dynamicRegistration":true},"codeLens":{"dynamicRegistration":true},"formatting":{"dynamicRegistration":true},"rangeFormatting":{"dynamicRegistration":true},"onTypeFormatting":{"dynamicRegistration":true},"rename":{"dynamicRegistration":true},"documentLink":{"dynamicRegistration":true}}},"trace":"off"}}Content-Length: 52
+
+{"jsonrpc":"2.0","method":"initialized","params":{}}Content-Length: 243
+
+{"jsonrpc":"2.0","method":"workspace/didChangeConfiguration","params":{"settings":{"volt":{"pathToVolta":"D:\\F\\Code\\volt64\\Volta","pathToWatt":"D:\\F\\Code\\volt64\\Watt","additionalPackagePaths":{"amp":"D:\\F\\Code\\volt64\\Amp\\src"}}}}}Content-Length: 333
+
+{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","languageId":"volt","version":1,"text":"module main;\r\n\r\nimport test;\r\n\r\nfn foo() ObjectA\r\n{\r\n\treturn new ObjectA();\r\n}\r\n\r\nfn main() i32\r\n{\r\n\ta := foo();\r\n\treturn 0;\r\n}\r\n"}}}Content-Length: 342
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":2},"contentChanges":[{"text":"module main;\r\n\r\nimport test;\r\n\r\nfn foo() ObjectA\r\n{\r\n\treturn new ObjectA();\r\n}\r\n\r\nfn main() i32\r\n{\r\n\ta := foo();\r\n\t\r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 343
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":3},"contentChanges":[{"text":"module main;\r\n\r\nimport test;\r\n\r\nfn foo() ObjectA\r\n{\r\n\treturn new ObjectA();\r\n}\r\n\r\nfn main() i32\r\n{\r\n\ta := foo();\r\n\ta\r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 178
+
+{"jsonrpc":"2.0","id":1,"method":"textDocument/completion","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":12,"character":2}}}Content-Length: 344
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":4},"contentChanges":[{"text":"module main;\r\n\r\nimport test;\r\n\r\nfn foo() ObjectA\r\n{\r\n\treturn new ObjectA();\r\n}\r\n\r\nfn main() i32\r\n{\r\n\ta := foo();\r\n\ta.\r\n\treturn 0;\r\n}\r\n"}]}}Content-Length: 178
+
+{"jsonrpc":"2.0","id":2,"method":"textDocument/completion","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":12,"character":3}}}

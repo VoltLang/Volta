@@ -1,0 +1,6 @@
+//T check:{"jsonrcp":"2.0","id":2,"result":[{"label":"currentHealthPoints","kind":3
+//T check:{"label":"subPlayer","kind":5
+//T check:{"label":"maxHealthPoints","kind":3
+//T check:{"jsonrcp":"2.0","id":3,"result":[{"label":"currentHealthPoints","kind":3
+//T check:{"label":"subPlayer","kind":5
+//T check:{"label":"maxHealthPoints","kind":3

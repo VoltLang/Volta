@@ -1,0 +1,29 @@
+Content-Length: 1155
+
+{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"processId":58870,"rootPath":null,"rootUri":null,"capabilities":{"workspace":{"applyEdit":true,"didChangeConfiguration":{"dynamicRegistration":true},"didChangeWatchedFiles":{"dynamicRegistration":true},"symbol":{"dynamicRegistration":true},"executeCommand":{"dynamicRegistration":true}},"textDocument":{"synchronization":{"dynamicRegistration":true,"willSave":true,"willSaveWaitUntil":true,"didSave":true},"completion":{"dynamicRegistration":true,"completionItem":{"snippetSupport":true,"commitCharactersSupport":true}},"hover":{"dynamicRegistration":true},"signatureHelp":{"dynamicRegistration":true},"definition":{"dynamicRegistration":true},"references":{"dynamicRegistration":true},"documentHighlight":{"dynamicRegistration":true},"documentSymbol":{"dynamicRegistration":true},"codeAction":{"dynamicRegistration":true},"codeLens":{"dynamicRegistration":true},"formatting":{"dynamicRegistration":true},"rangeFormatting":{"dynamicRegistration":true},"onTypeFormatting":{"dynamicRegistration":true},"rename":{"dynamicRegistration":true},"documentLink":{"dynamicRegistration":true}}},"trace":"off"}}Content-Length: 52
+
+{"jsonrpc":"2.0","method":"initialized","params":{}}Content-Length: 254
+
+{"jsonrpc":"2.0","method":"workspace/didChangeConfiguration","params":{"settings":{"volt":{"pathToVolta":"/Users/bernard/Code/volt/Volta","pathToWatt":"/Users/bernard/Code/volt/Watt","additionalPackagePaths":{"amp":"/Users/bernard/Code/volt/Amp/src"}}}}}Content-Length: 348
+
+{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file:///Users/bernard/Code/volt/Test/src/main.volt","languageId":"volt","version":1,"text":"module test;\n\nstruct AnotherAggregate\n{\n\tinteger: i32;\n}\n\nstruct Aggregate\n{\n\taggregatePointer: AnotherAggregate*;\n}\n\nfn main() i32\n{\n\tagg: Aggregate;\n}"}}}Content-Length: 355
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///Users/bernard/Code/volt/Test/src/main.volt","version":2},"contentChanges":[{"text":"module test;\n\nstruct AnotherAggregate\n{\n\tinteger: i32;\n}\n\nstruct Aggregate\n{\n\taggregatePointer: AnotherAggregate*;\n}\n\nfn main() i32\n{\n\tagg: Aggregate;\n\t\n}"}]}}Content-Length: 356
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///Users/bernard/Code/volt/Test/src/main.volt","version":3},"contentChanges":[{"text":"module test;\n\nstruct AnotherAggregate\n{\n\tinteger: i32;\n}\n\nstruct Aggregate\n{\n\taggregatePointer: AnotherAggregate*;\n}\n\nfn main() i32\n{\n\tagg: Aggregate;\n\ta\n}"}]}}Content-Length: 183
+
+{"jsonrpc":"2.0","id":1,"method":"textDocument/completion","params":{"textDocument":{"uri":"file:///Users/bernard/Code/volt/Test/src/main.volt"},"position":{"line":15,"character":2}}}Content-Length: 357
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///Users/bernard/Code/volt/Test/src/main.volt","version":4},"contentChanges":[{"text":"module test;\n\nstruct AnotherAggregate\n{\n\tinteger: i32;\n}\n\nstruct Aggregate\n{\n\taggregatePointer: AnotherAggregate*;\n}\n\nfn main() i32\n{\n\tagg: Aggregate;\n\tag\n}"}]}}Content-Length: 358
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///Users/bernard/Code/volt/Test/src/main.volt","version":5},"contentChanges":[{"text":"module test;\n\nstruct AnotherAggregate\n{\n\tinteger: i32;\n}\n\nstruct Aggregate\n{\n\taggregatePointer: AnotherAggregate*;\n}\n\nfn main() i32\n{\n\tagg: Aggregate;\n\tagg\n}"}]}}Content-Length: 359
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///Users/bernard/Code/volt/Test/src/main.volt","version":6},"contentChanges":[{"text":"module test;\n\nstruct AnotherAggregate\n{\n\tinteger: i32;\n}\n\nstruct Aggregate\n{\n\taggregatePointer: AnotherAggregate*;\n}\n\nfn main() i32\n{\n\tagg: Aggregate;\n\tagg.\n}"}]}}Content-Length: 183
+
+{"jsonrpc":"2.0","id":2,"method":"textDocument/completion","params":{"textDocument":{"uri":"file:///Users/bernard/Code/volt/Test/src/main.volt"},"position":{"line":15,"character":5}}}Content-Length: 375
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///Users/bernard/Code/volt/Test/src/main.volt","version":7},"contentChanges":[{"text":"module test;\n\nstruct AnotherAggregate\n{\n\tinteger: i32;\n}\n\nstruct Aggregate\n{\n\taggregatePointer: AnotherAggregate*;\n}\n\nfn main() i32\n{\n\tagg: Aggregate;\n\tagg.aggregatePointer\n}"}]}}Content-Length: 376
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///Users/bernard/Code/volt/Test/src/main.volt","version":8},"contentChanges":[{"text":"module test;\n\nstruct AnotherAggregate\n{\n\tinteger: i32;\n}\n\nstruct Aggregate\n{\n\taggregatePointer: AnotherAggregate*;\n}\n\nfn main() i32\n{\n\tagg: Aggregate;\n\tagg.aggregatePointer.\n}"}]}}Content-Length: 184
+
+{"jsonrpc":"2.0","id":3,"method":"textDocument/completion","params":{"textDocument":{"uri":"file:///Users/bernard/Code/volt/Test/src/main.volt"},"position":{"line":15,"character":22}}}

@@ -1,0 +1,2 @@
+//T check:"result":[{"label":"ObjectA","kind":1
+//T check:{"label":"ObjectB","kind":1
