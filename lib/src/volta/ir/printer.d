@@ -55,8 +55,13 @@ void write(Sink sink, ir.Type type, bool alwaysGlossed)
 		}
 		break;
 	case TypeReference:
-		ir.TypeReference tr = cast(ir.TypeReference)type;
-		sink.write(tr.type, alwaysGlossed);
+		ir.TypeReference tr = type.toTypeReferenceFast();
+		if (tr.type is null) {
+			// This will be true of an unprocessed IR.
+			sink(tr.id.toString());
+		} else {
+			sink.write(tr.type, alwaysGlossed);
+		}
 		break;
 	case PointerType:
 		ir.PointerType pt = cast(ir.PointerType)type;
@@ -112,11 +117,6 @@ void write(Sink sink, ir.Type type, bool alwaysGlossed)
 		sink(")");
 
 		break;
-	case StorageType:
-		ir.StorageType st = cast(ir.StorageType)type;
-		sink(toLower(format("%s", st.type)));
-		sink.write(st.base, alwaysGlossed);
-		break;
 	case Enum:
 		auto e = cast(ir.Enum)type;
 		sink.write(e.myScope.parent);
@@ -128,6 +128,36 @@ void write(Sink sink, ir.Type type, bool alwaysGlossed)
 		auto agg = cast(ir.Aggregate)type;
 		sink.write(agg.myScope.parent);
 		sink(agg.name);
+		break;
+	case StorageType:
+		/* The flag checks at the top of this function will
+		 * be used for semantically processed types; code
+		 * printing unprocessed types will go through this
+		 * type to print storage types.
+		 */
+		auto storageType = type.toStorageTypeFast();
+		switch (storageType.type) with (ir.StorageType.Kind) {
+		case Const:
+			sink("const(");
+			suffix = ")";
+			break;
+		case Immutable:
+			sink("immutable(");
+			suffix = ")";
+			break;
+		case Scope:
+			sink("scope(");
+			suffix = ")";
+			break;
+		case Ref:
+			sink("ref ");
+			break;
+		case Out:
+			sink("out ");
+			break;
+		default: break;
+		}
+		sink.write(storageType.base, alwaysGlossed);
 		break;
 	default:
 		sink(type.toString());
