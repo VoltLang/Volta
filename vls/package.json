@@ -1,0 +1,73 @@
+{
+    "name": "volt",
+    "displayName": "Volt",
+    "description": "Volt language support",
+    "version": "0.0.1",
+    "publisher": "bhelyer",
+    "engines": {
+        "vscode": "^1.18.0"
+    },
+    "categories": [
+        "Languages"
+    ],
+    "activationEvents": [
+        "onLanguage:volt"
+    ],
+    "main": "./out/src/extension",
+    "contributes": {
+        "languages": [{
+            "id": "volt",
+            "extensions": [".volt"],
+            "aliases": ["Volt"],
+            "configuration": "./volt.configuration.json"
+        }],
+        "grammars": [{
+            "language": "volt",
+            "scopeName": "text.volt",
+            "path": "./volt.tmLanguage"
+        }],
+        "configuration": {
+            "type": "object",
+            "title": "Volt Language Server configuration",
+            "properties": {
+                "volt.pathToVolta": {
+                    "type": ["string", "null"],
+                    "default": null,
+                    "description": "Specifies the folder path to the Volt compiler root."
+                },
+                "volt.pathToWatt": {
+                    "type": ["string", "null"],
+                    "default": null,
+                    "description": "Specifies the folder path to the Watt root."
+                },
+                "volt.additionalPackagePaths": {
+                    "type": ["object", "null"],
+                    "default": null,
+                    "description": "Supply additional paths to the src folder of additional packages."
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "tsc -p ./",
+        "compile": "tsc -watch -p ./",
+        "postinstall": "node ./node_modules/vscode/bin/install",
+        "test": "node ./node_modules/vscode/bin/test"
+    },
+    "devDependencies": {
+        "typescript": "^2.0.3",
+        "vscode": "^1.0.0",
+        "mocha": "^2.3.3",
+        "@types/node": "^6.0.40",
+        "@types/mocha": "^2.2.32"
+        
+    },
+    "dependencies": {
+        "vscode-languageclient": "^3.0.4"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/VoltLang/Volta/"
+    },
+    "icon": "icon.png"
+}
