@@ -1,0 +1,2 @@
+//T check:"label":"length","kind":5
+//T check:"label":"ptr","kind":5

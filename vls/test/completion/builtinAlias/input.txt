@@ -1,0 +1,43 @@
+Content-Length: 1155
+
+{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"processId":17880,"rootPath":null,"rootUri":null,"capabilities":{"workspace":{"applyEdit":true,"didChangeConfiguration":{"dynamicRegistration":true},"didChangeWatchedFiles":{"dynamicRegistration":true},"symbol":{"dynamicRegistration":true},"executeCommand":{"dynamicRegistration":true}},"textDocument":{"synchronization":{"dynamicRegistration":true,"willSave":true,"willSaveWaitUntil":true,"didSave":true},"completion":{"dynamicRegistration":true,"completionItem":{"snippetSupport":true,"commitCharactersSupport":true}},"hover":{"dynamicRegistration":true},"signatureHelp":{"dynamicRegistration":true},"definition":{"dynamicRegistration":true},"references":{"dynamicRegistration":true},"documentHighlight":{"dynamicRegistration":true},"documentSymbol":{"dynamicRegistration":true},"codeAction":{"dynamicRegistration":true},"codeLens":{"dynamicRegistration":true},"formatting":{"dynamicRegistration":true},"rangeFormatting":{"dynamicRegistration":true},"onTypeFormatting":{"dynamicRegistration":true},"rename":{"dynamicRegistration":true},"documentLink":{"dynamicRegistration":true}}},"trace":"off"}}Content-Length: 52
+
+{"jsonrpc":"2.0","method":"initialized","params":{}}Content-Length: 243
+
+{"jsonrpc":"2.0","method":"workspace/didChangeConfiguration","params":{"settings":{"volt":{"pathToVolta":"D:\\F\\Code\\volt64\\Volta","pathToWatt":"D:\\F\\Code\\volt64\\Watt","additionalPackagePaths":{"amp":"D:\\F\\Code\\volt64\\Amp\\src"}}}}}Content-Length: 304
+
+{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/test.volt","languageId":"volt","version":1,"text":"module test;\r\n\r\nalias AnArray = i32[];\r\nalias OfAn = AnArray;\r\n\r\nfn main() i32\r\n{\r\n\tss: AnArray;\r\n\tzz: OfAn;\r\n}"}}}Content-Length: 313
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/test.volt","version":2},"contentChanges":[{"text":"module test;\r\n\r\nalias AnArray = i32[];\r\nalias OfAn = AnArray;\r\n\r\nfn main() i32\r\n{\r\n\tss: AnArray;\r\n\t\r\n\tzz: OfAn;\r\n}"}]}}Content-Length: 314
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/test.volt","version":3},"contentChanges":[{"text":"module test;\r\n\r\nalias AnArray = i32[];\r\nalias OfAn = AnArray;\r\n\r\nfn main() i32\r\n{\r\n\tss: AnArray;\r\n\ts\r\n\tzz: OfAn;\r\n}"}]}}Content-Length: 177
+
+{"jsonrpc":"2.0","id":1,"method":"textDocument/completion","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/test.volt"},"position":{"line":8,"character":2}}}Content-Length: 315
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/test.volt","version":4},"contentChanges":[{"text":"module test;\r\n\r\nalias AnArray = i32[];\r\nalias OfAn = AnArray;\r\n\r\nfn main() i32\r\n{\r\n\tss: AnArray;\r\n\tss\r\n\tzz: OfAn;\r\n}"}]}}Content-Length: 316
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/test.volt","version":5},"contentChanges":[{"text":"module test;\r\n\r\nalias AnArray = i32[];\r\nalias OfAn = AnArray;\r\n\r\nfn main() i32\r\n{\r\n\tss: AnArray;\r\n\tss.\r\n\tzz: OfAn;\r\n}"}]}}Content-Length: 177
+
+{"jsonrpc":"2.0","id":2,"method":"textDocument/completion","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/test.volt"},"position":{"line":8,"character":4}}}Content-Length: 315
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/test.volt","version":6},"contentChanges":[{"text":"module test;\r\n\r\nalias AnArray = i32[];\r\nalias OfAn = AnArray;\r\n\r\nfn main() i32\r\n{\r\n\tss: AnArray;\r\n\tss\r\n\tzz: OfAn;\r\n}"}]}}Content-Length: 314
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/test.volt","version":7},"contentChanges":[{"text":"module test;\r\n\r\nalias AnArray = i32[];\r\nalias OfAn = AnArray;\r\n\r\nfn main() i32\r\n{\r\n\tss: AnArray;\r\n\ts\r\n\tzz: OfAn;\r\n}"}]}}Content-Length: 313
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/test.volt","version":8},"contentChanges":[{"text":"module test;\r\n\r\nalias AnArray = i32[];\r\nalias OfAn = AnArray;\r\n\r\nfn main() i32\r\n{\r\n\tss: AnArray;\r\n\t\r\n\tzz: OfAn;\r\n}"}]}}Content-Length: 311
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/test.volt","version":9},"contentChanges":[{"text":"module test;\r\n\r\nalias AnArray = i32[];\r\nalias OfAn = AnArray;\r\n\r\nfn main() i32\r\n{\r\n\tss: AnArray;\r\n\r\n\tzz: OfAn;\r\n}"}]}}Content-Length: 308
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/test.volt","version":10},"contentChanges":[{"text":"module test;\r\n\r\nalias AnArray = i32[];\r\nalias OfAn = AnArray;\r\n\r\nfn main() i32\r\n{\r\n\tss: AnArray;\r\n\tzz: OfAn;\r\n}"}]}}Content-Length: 314
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/test.volt","version":11},"contentChanges":[{"text":"module test;\r\n\r\nalias AnArray = i32[];\r\nalias OfAn = AnArray;\r\n\r\nfn main() i32\r\n{\r\n\tss: AnArray;\r\n\tzz: OfAn;\r\n\t\r\n}"}]}}Content-Length: 315
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/test.volt","version":12},"contentChanges":[{"text":"module test;\r\n\r\nalias AnArray = i32[];\r\nalias OfAn = AnArray;\r\n\r\nfn main() i32\r\n{\r\n\tss: AnArray;\r\n\tzz: OfAn;\r\n\tz\r\n}"}]}}Content-Length: 177
+
+{"jsonrpc":"2.0","id":3,"method":"textDocument/completion","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/test.volt"},"position":{"line":9,"character":2}}}Content-Length: 316
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/test.volt","version":13},"contentChanges":[{"text":"module test;\r\n\r\nalias AnArray = i32[];\r\nalias OfAn = AnArray;\r\n\r\nfn main() i32\r\n{\r\n\tss: AnArray;\r\n\tzz: OfAn;\r\n\tzz\r\n}"}]}}Content-Length: 317
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/test.volt","version":14},"contentChanges":[{"text":"module test;\r\n\r\nalias AnArray = i32[];\r\nalias OfAn = AnArray;\r\n\r\nfn main() i32\r\n{\r\n\tss: AnArray;\r\n\tzz: OfAn;\r\n\tzz.\r\n}"}]}}Content-Length: 177
+
+{"jsonrpc":"2.0","id":4,"method":"textDocument/completion","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/test.volt"},"position":{"line":9,"character":4}}}

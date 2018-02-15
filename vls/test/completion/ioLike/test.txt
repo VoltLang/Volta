@@ -1,0 +1,2 @@
+//T check:{"label":"childFunction"
+//T check:{"label":"parentFunction"

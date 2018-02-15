@@ -1,0 +1,2 @@
+//T check:{"label":"field1","kind":5
+//T check:{"label":"field2","kind":5

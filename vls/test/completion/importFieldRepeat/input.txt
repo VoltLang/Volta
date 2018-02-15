@@ -1,0 +1,27 @@
+Content-Length: 1155
+
+{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"processId":33190,"rootPath":null,"rootUri":null,"capabilities":{"workspace":{"applyEdit":true,"didChangeConfiguration":{"dynamicRegistration":true},"didChangeWatchedFiles":{"dynamicRegistration":true},"symbol":{"dynamicRegistration":true},"executeCommand":{"dynamicRegistration":true}},"textDocument":{"synchronization":{"dynamicRegistration":true,"willSave":true,"willSaveWaitUntil":true,"didSave":true},"completion":{"dynamicRegistration":true,"completionItem":{"snippetSupport":true,"commitCharactersSupport":true}},"hover":{"dynamicRegistration":true},"signatureHelp":{"dynamicRegistration":true},"definition":{"dynamicRegistration":true},"references":{"dynamicRegistration":true},"documentHighlight":{"dynamicRegistration":true},"documentSymbol":{"dynamicRegistration":true},"codeAction":{"dynamicRegistration":true},"codeLens":{"dynamicRegistration":true},"formatting":{"dynamicRegistration":true},"rangeFormatting":{"dynamicRegistration":true},"onTypeFormatting":{"dynamicRegistration":true},"rename":{"dynamicRegistration":true},"documentLink":{"dynamicRegistration":true}}},"trace":"off"}}Content-Length: 52
+
+{"jsonrpc":"2.0","method":"initialized","params":{}}Content-Length: 186
+
+{"jsonrpc":"2.0","method":"workspace/didChangeConfiguration","params":{"settings":{"volt":{"pathToVolta":"/Users/bernard/Code/volt/Volta","pathToWatt":"/Users/bernard/Code/volt/Watt"}}}}Content-Length: 239
+
+{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file:///Users/bernard/Desktop/test.volt","languageId":"volt","version":1,"text":"module test;\n\nimport s;\n\nfn main() i32\n{\n\tvar: S;\n\treturn 0;\n}"}}}Content-Length: 246
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///Users/bernard/Desktop/test.volt","version":2},"contentChanges":[{"text":"module test;\n\nimport s;\n\nfn main() i32\n{\n\tvar: S;\n\t\n\treturn 0;\n}"}]}}Content-Length: 247
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///Users/bernard/Desktop/test.volt","version":3},"contentChanges":[{"text":"module test;\n\nimport s;\n\nfn main() i32\n{\n\tvar: S;\n\tv\n\treturn 0;\n}"}]}}Content-Length: 171
+
+{"jsonrpc":"2.0","id":1,"method":"textDocument/completion","params":{"textDocument":{"uri":"file:///Users/bernard/Desktop/test.volt"},"position":{"line":7,"character":2}}}Content-Length: 249
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///Users/bernard/Desktop/test.volt","version":5},"contentChanges":[{"text":"module test;\n\nimport s;\n\nfn main() i32\n{\n\tvar: S;\n\tvar\n\treturn 0;\n}"}]}}Content-Length: 250
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///Users/bernard/Desktop/test.volt","version":6},"contentChanges":[{"text":"module test;\n\nimport s;\n\nfn main() i32\n{\n\tvar: S;\n\tvar.\n\treturn 0;\n}"}]}}Content-Length: 171
+
+{"jsonrpc":"2.0","id":2,"method":"textDocument/completion","params":{"textDocument":{"uri":"file:///Users/bernard/Desktop/test.volt"},"position":{"line":7,"character":5}}}Content-Length: 116
+
+{"jsonrpc":"2.0","id":3,"method":"completionItem/resolve","params":{"label":"field1","insertTextFormat":1,"kind":6}}Content-Length: 62
+
+{"jsonrpc":"2.0","method":"$/cancelRequest","params":{"id":3}}Content-Length: 171
+
+{"jsonrpc":"2.0","id":4,"method":"textDocument/completion","params":{"textDocument":{"uri":"file:///Users/bernard/Desktop/test.volt"},"position":{"line":7,"character":5}}}

@@ -1,0 +1,4 @@
+//T check:{"jsonrcp":"2.0","id":2,"result":{"uri":
+//T check:{"start":{"line":2,"character":0},"end":{"line":2,"character":0
+//T check:{"jsonrcp":"2.0","id":6,"result":{"uri":
+//T check:"range":{"start":{"line":2,"character":0},"end":{"line":2,"character":0

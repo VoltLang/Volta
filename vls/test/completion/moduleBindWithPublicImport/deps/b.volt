@@ -1,0 +1,5 @@
+module b;
+
+fn anotherFunction()
+{
+}
