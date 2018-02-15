@@ -1,2 +1,2 @@
 name = "volta.vls"
-dependencies = ["volta.lib"]
+dependencies = ["volta.lib", "volta.vls.lsp", "watt", "watt.json", "watt.http"]

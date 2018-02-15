@@ -1,0 +1,3 @@
+name = "volta.vls.lsp"
+dependencies = ["watt", "watt.json"]
+#versionIdentifiers = ["InputLog", "OutputLog"]
