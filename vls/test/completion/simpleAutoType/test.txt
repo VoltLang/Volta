@@ -1,0 +1,2 @@
+//T check:{"jsonrcp":"2.0","id":2,"result":[{"label":"veryImportant","kind":5,
+//T check:{"jsonrcp":"2.0","id":4,"result":[{"label":"y","kind":5

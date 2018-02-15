@@ -1,0 +1,17 @@
+Content-Length: 1154
+
+{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"processId":8744,"rootPath":null,"rootUri":null,"capabilities":{"workspace":{"applyEdit":true,"didChangeConfiguration":{"dynamicRegistration":true},"didChangeWatchedFiles":{"dynamicRegistration":true},"symbol":{"dynamicRegistration":true},"executeCommand":{"dynamicRegistration":true}},"textDocument":{"synchronization":{"dynamicRegistration":true,"willSave":true,"willSaveWaitUntil":true,"didSave":true},"completion":{"dynamicRegistration":true,"completionItem":{"snippetSupport":true,"commitCharactersSupport":true}},"hover":{"dynamicRegistration":true},"signatureHelp":{"dynamicRegistration":true},"definition":{"dynamicRegistration":true},"references":{"dynamicRegistration":true},"documentHighlight":{"dynamicRegistration":true},"documentSymbol":{"dynamicRegistration":true},"codeAction":{"dynamicRegistration":true},"codeLens":{"dynamicRegistration":true},"formatting":{"dynamicRegistration":true},"rangeFormatting":{"dynamicRegistration":true},"onTypeFormatting":{"dynamicRegistration":true},"rename":{"dynamicRegistration":true},"documentLink":{"dynamicRegistration":true}}},"trace":"off"}}Content-Length: 52
+
+{"jsonrpc":"2.0","method":"initialized","params":{}}Content-Length: 208
+
+{"jsonrpc":"2.0","method":"workspace/didChangeConfiguration","params":{"settings":{"volt":{"pathToVolta":"D:\\F\\Code\\volt64\\Volta","pathToWatt":"D:\\F\\Code\\volt64\\Watt","additionalPackagePaths":null}}}}Content-Length: 349
+
+{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","languageId":"volt","version":1,"text":"module test;\r\n\r\nclass Person\r\n{\r\n\tname: string;\r\n\tage: i32;\r\n\r\n\tfn toString() string\r\n\t{\r\n\t}\r\n}\r\n\r\nfn main() i32\r\n{\r\n\tperson: Person;\r\n}\r\n"}}}Content-Length: 358
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":2},"contentChanges":[{"text":"module test;\r\n\r\nclass Person\r\n{\r\n\tname: string;\r\n\tage: i32;\r\n\r\n\tfn toString() string\r\n\t{\r\n\t}\r\n}\r\n\r\nfn main() i32\r\n{\r\n\tperson: Person;\r\n\t\r\n}\r\n"}]}}Content-Length: 359
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":3},"contentChanges":[{"text":"module test;\r\n\r\nclass Person\r\n{\r\n\tname: string;\r\n\tage: i32;\r\n\r\n\tfn toString() string\r\n\t{\r\n\t}\r\n}\r\n\r\nfn main() i32\r\n{\r\n\tperson: Person;\r\n\tp\r\n}\r\n"}]}}Content-Length: 178
+
+{"jsonrpc":"2.0","id":1,"method":"textDocument/completion","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":15,"character":2}}}Content-Length: 364
+
+{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","version":4},"contentChanges":[{"text":"module test;\r\n\r\nclass Person\r\n{\r\n\tname: string;\r\n\tage: i32;\r\n\r\n\tfn toString() string\r\n\t{\r\n\t}\r\n}\r\n\r\nfn main() i32\r\n{\r\n\tperson: Person;\r\n\tperson\r\n}\r\n"}]}}

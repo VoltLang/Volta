@@ -1,0 +1,5 @@
+// This test has been disabled. Until we're MT capable, parsing changes mean
+// that we can choose between 'parsing everything all the time' or 'parse when
+// we need it' -- we've chosen the latter -- completion speed is more important,
+// and we can get errors when we integrate with battery for building etc.
+// check:{"jsonrpc":"2.0","method":"textDocument/publishDiagnostics","params":{"uri":"file:///Users/bernard/Desktop/test.volt","diagnostics":[{"range":{"start":{"line":5,"character":0},"end":{"line":5,"character":0}},"severity":1,"message":"unexpected '}' token, while parsing ReturnStatement."}]}}

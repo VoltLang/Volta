@@ -1,0 +1,33 @@
+Content-Length: 1154
+
+{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"processId":7788,"rootPath":null,"rootUri":null,"capabilities":{"workspace":{"applyEdit":true,"didChangeConfiguration":{"dynamicRegistration":true},"didChangeWatchedFiles":{"dynamicRegistration":true},"symbol":{"dynamicRegistration":true},"executeCommand":{"dynamicRegistration":true}},"textDocument":{"synchronization":{"dynamicRegistration":true,"willSave":true,"willSaveWaitUntil":true,"didSave":true},"completion":{"dynamicRegistration":true,"completionItem":{"snippetSupport":true,"commitCharactersSupport":true}},"hover":{"dynamicRegistration":true},"signatureHelp":{"dynamicRegistration":true},"definition":{"dynamicRegistration":true},"references":{"dynamicRegistration":true},"documentHighlight":{"dynamicRegistration":true},"documentSymbol":{"dynamicRegistration":true},"codeAction":{"dynamicRegistration":true},"codeLens":{"dynamicRegistration":true},"formatting":{"dynamicRegistration":true},"rangeFormatting":{"dynamicRegistration":true},"onTypeFormatting":{"dynamicRegistration":true},"rename":{"dynamicRegistration":true},"documentLink":{"dynamicRegistration":true}}},"trace":"off"}}Content-Length: 52
+
+{"jsonrpc":"2.0","method":"initialized","params":{}}Content-Length: 243
+
+{"jsonrpc":"2.0","method":"workspace/didChangeConfiguration","params":{"settings":{"volt":{"pathToVolta":"D:\\F\\Code\\volt64\\Volta","pathToWatt":"D:\\F\\Code\\volt64\\Watt","additionalPackagePaths":{"amp":"D:\\F\\Code\\volt64\\Amp\\src"}}}}}Content-Length: 515
+
+{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt","languageId":"volt","version":1,"text":"module main;\r\n\r\nimport imp = [test, test2];\r\n\r\nimport ir = volta.ir;\r\n\r\n/*!\r\n * Add two integers together, using maths.\r\n */\r\nfn addTwoIntegers(a: i32, b: i32) i32 {\r\n\treturn a + b;\r\n}\r\n\r\nfn foo(store: ir.Store) {\r\n}\r\n\r\nfn main() i32 {\r\n\to: imp.ObjectA;\r\n\tj: imp.ObjectB;\r\n\taddTwoIntegers(1, 2);\r\n}"}}}Content-Length: 174
+
+{"jsonrpc":"2.0","id":1,"method":"textDocument/hover","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":17,"character":11}}}Content-Length: 179
+
+{"jsonrpc":"2.0","id":2,"method":"textDocument/definition","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":17,"character":11}}}Content-Length: 353
+
+{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/test.volt","languageId":"volt","version":1,"text":"module test;\r\n\r\nclass ObjectA\r\n{\r\n\t//! A very important `integer`!\r\n\tveryImportant: i32;\r\n\r\n\t//! Not very important. Do not use!\r\n\tunimportant: string;\r\n}\r\n"}}}Content-Length: 132
+
+{"jsonrpc":"2.0","method":"textDocument/didClose","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/test.volt"}}}Content-Length: 174
+
+{"jsonrpc":"2.0","id":3,"method":"textDocument/hover","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":18,"character":10}}}Content-Length: 174
+
+{"jsonrpc":"2.0","id":4,"method":"textDocument/hover","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":18,"character":10}}}Content-Length: 174
+
+{"jsonrpc":"2.0","id":5,"method":"textDocument/hover","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":18,"character":10}}}Content-Length: 179
+
+{"jsonrpc":"2.0","id":6,"method":"textDocument/definition","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":18,"character":10}}}Content-Length: 235
+
+{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/test2.volt","languageId":"volt","version":1,"text":"module test2;\r\n\r\nclass ObjectB\r\n{\r\n\ty: i32;\r\n}\r\n"}}}Content-Length: 174
+
+{"jsonrpc":"2.0","id":7,"method":"textDocument/hover","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":18,"character":16}}}Content-Length: 174
+
+{"jsonrpc":"2.0","id":8,"method":"textDocument/hover","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/main.volt"},"position":{"line":17,"character":14}}}Content-Length: 133
+
+{"jsonrpc":"2.0","method":"textDocument/didClose","params":{"textDocument":{"uri":"file:///d%3A/F/Code/volt64/Test/src/test2.volt"}}}

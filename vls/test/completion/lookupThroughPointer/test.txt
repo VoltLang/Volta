@@ -1,0 +1,2 @@
+//T check:{"jsonrcp":"2.0","id":2,"result":[{"label":"aggregatePointer","kind":5
+//T check:{"jsonrcp":"2.0","id":3,"result":[{"label":"integer","kind":5

@@ -1,0 +1,10 @@
+{
+	"pattern": "test.txt",
+	"testCommandPrefix": "//T ",
+	"macros": {
+		"default": [
+			"//T run:volta.vls --input %S/input.txt --modulePath %S/deps"
+		]
+	}
+}
+

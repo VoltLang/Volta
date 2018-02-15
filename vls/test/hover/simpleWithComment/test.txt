@@ -1,0 +1,1 @@
+//T check:{"jsonrcp":"2.0","id":1,"result":{"contents":{"kind":"markdown","value":"This is a simple comment.\r"}}}
