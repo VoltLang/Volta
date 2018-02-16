@@ -61,6 +61,12 @@ alias VMain = fn(string[]) int;
  * Run global constructors for linked modules.
  */
 fn vrt_run_global_ctors() i32;
+
+/*!
+ * Run local constructors for linked modules.
+ */
+fn vrt_run_local_ctors() i32;
+
 /*!
  * Run the given main function with the given arguments.
  *
@@ -71,6 +77,11 @@ fn vrt_run_main(argc: i32, argv: char**, vMain: VMain) int;
  * Run global destructors for linked modules.
  */
 fn vrt_run_global_dtors() i32;
+
+/*!
+ * Run local destructors for linked modules.
+ */
+fn vrt_run_local_dtors() i32;
 
 /*
  * Unicode functions.

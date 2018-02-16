@@ -15,9 +15,23 @@ extern(C) fn vrt_run_global_ctors()
 	}
 }
 
+extern(C) fn vrt_run_local_ctors()
+{
+	foreach (ctor; localConstructors) {
+		ctor();
+	}
+}
+
 extern(C) fn vrt_run_global_dtors()
 {
 	foreach (dtor; globalDestructors) {
+		dtor();
+	}
+}
+
+extern(C) fn vrt_run_local_dtors()
+{
+	foreach (dtor; localDestructors) {
 		dtor();
 	}
 }

@@ -7,7 +7,7 @@ import core.exception: Throwable;
 import core.typeinfo: TypeInfo;
 import core.rt.gc: vrt_gc_init, allocDg, vrt_gc_get_alloc_dg, vrt_gc_shutdown;
 import core.rt.misc: VMain, vrt_run_global_ctors, vrt_run_global_dtors,
-	vrt_monotonic_init,  vrt_panic;
+	vrt_monotonic_init, vrt_panic, vrt_run_local_ctors, vrt_run_local_dtors;
 import vrt.os.thread : __stack_bottom;
 
 
@@ -30,7 +30,9 @@ extern(C) fn vrt_run_main(argc: i32, argv: char**, vmain: VMain) int
 	ret: i32;
 	try {
 		vrt_run_global_ctors();
+		vrt_run_local_ctors();
 		ret = vmain(args);
+		vrt_run_local_dtors();
 		vrt_run_global_dtors();
 	} catch (Throwable t) {
 		// For lack of T.classinfo
