@@ -1276,9 +1276,9 @@ void handleAccessExp(State state, ir.AccessExp ae, Value result)
 			index = *ptr;
 		}
 
-
-		// TODO rework this to not use makePointer, maybe we can get
-		// a pointer with GEP to the internal static array?
+		// We might be tempted to use a GEP here, but as far as I can
+		// tell it is not possible to do this. We want a pointer we can
+		// bitcast to what ever type we are reading.
 		makePointer(state, result);
 
 		result.type = ut.types[index];
