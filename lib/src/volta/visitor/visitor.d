@@ -829,21 +829,12 @@ Visitor.Status acceptStruct(ir.Struct s, Visitor av)
 		return parentContinue(status);
 	}
 
-	if (s.templateInstance !is null) {
-		// TODO: Do this for every template type
-		status = accept(s.templateInstance, av);
-		if (status == VisitorStop) {
-			return VisitorStop;
-		}
-	}
-
 	if (s.members !is null) {
 		status = accept(s.members, av);
 		if (status == VisitorStop) {
 			return VisitorStop;
 		}
 	}
-
 	return av.leave(s);
 }
 
@@ -1201,13 +1192,6 @@ Visitor.Status acceptFunction(ir.Function func, Visitor av)
 		status = accept(func.parsedBody, av);
 		if (status == VisitorStop)
 			return status;
-	}
-
-	foreach (templateAddition; func.templateAdditions) {
-		status = accept(templateAddition, av);
-		if (status == VisitorStop) {
-			return status;
-		}
 	}
 
 	return av.leave(func);
@@ -2349,14 +2333,13 @@ Visitor.Status acceptTemplateInstance(ir.TemplateInstance ti, Visitor av)
 		return parentContinue(status);
 	}
 
+	if (ti._struct !is null) {
+		accept(ti._struct, av);
+	} else if (ti._function !is null) {
+		accept(ti._function, av);
+	}
+
 	foreach (i, arg; ti.arguments) {
-		/+auto exp = cast(ir.Exp)arg; !!! TODO
-		if (exp !is null) {
-			acceptExp(/*#ref*/exp, av);
-			ti.arguments[i] = exp;
-		} else {
-			status = accept(arg, av);
-		}+/
 		if (status == VisitorContinueParent) {
 			continue;
 		} else if (status == VisitorStop) {

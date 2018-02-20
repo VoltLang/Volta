@@ -127,7 +127,7 @@ void checkInvalid(ir.Scope current, ir.Node n, string name, ErrorSink errSink)
 void checkTemplateRedefinition(ir.Scope current, string name, ErrorSink errSink)
 {
 	auto store = current.getStore(name);
-	if (store !is null && store.kind == ir.Store.Kind.Type) {
+	if (store !is null && (store.kind == ir.Store.Kind.Type || store.kind == ir.Store.Kind.TemplateInstance)) {
 		errorMsg(errSink, store.node, format("'%s' is already defined in this scope.", name));
 		return;
 	}
@@ -311,6 +311,18 @@ void gather(ir.Scope current, ir.TemplateDefinition td, Where where, ErrorSink e
 	}
 }
 
+void gather(ir.Scope current, ir.TemplateInstance ti, Where where, ErrorSink errSink)
+{
+	checkInvalid(current, ti, ti.instanceName, errSink);
+	checkTemplateRedefinition(current, ti.instanceName, errSink);
+	ir.Status status;
+	current.addTemplateInstance(ti, /*#out*/status);
+	if (status != ir.Status.Success) {
+		panic(errSink, ti, "template redefinition");
+		return;
+	}
+}
+
 
 /*
  *
@@ -445,6 +457,18 @@ void addScope(ir.Scope current, ir._Interface i, ErrorSink errSink)
 	i.myScope = new ir.Scope(current, i, i.name, current.nestedDepth);
 }
 
+void addScope(ir.Scope current, ir.TemplateInstance ti, ErrorSink errSink)
+{
+	if (ti.instanceName is null) {
+		panic(errSink, ti, "anonymous template instanciation not supported");
+		return;
+	}
+
+	passert(errSink, ti, ti.myScope is null);
+	ti.myScope = new ir.Scope(current, ti, ti.instanceName, current.nestedDepth);
+}
+
+
 /*!
  * Populate the scopes with Variables, Aliases, Functions, and Types.
  * Adds Scopes where needed as well.
@@ -562,6 +586,16 @@ public:
 		pop();
 		passert(mErrSink, func, func is mFunctionStack.getLast());
 		mFunctionStack.popLast();
+	}
+
+	final void push(ir.TemplateInstance ti)
+	{
+		push(ti.myScope);
+	}
+
+	final void pop(ir.TemplateInstance ti)
+	{
+		pop();
 	}
 
 	final void pushScopesWithParents(ir.Scope current)
@@ -694,6 +728,14 @@ public:
 		return Continue;
 	}
 
+	override Status enter(ir.TemplateInstance ti)
+	{
+		addScope(current, ti, mErrSink);
+		gather(current, ti, where, mErrSink);
+		push(ti);
+		return Continue;
+	}
+
 	override Status enter(ir.ForeachStatement fes)
 	{
 		enter(fes.block);
@@ -772,10 +814,11 @@ public:
 
 	override Status leave(ir.Module m) { pop(); return Continue; }
 	override Status leave(ir.Class c) { pop(c); return Continue; }
+	override Status leave(ir._Interface i) { pop(i); return Continue; }
 	override Status leave(ir.Struct s) { pop(s); return Continue; }
 	override Status leave(ir.Union u) { pop(u); return Continue; }
 	override Status leave(ir.Enum e) { pop(e); return Continue; }
 	override Status leave(ir.Function func) { pop(func); return Continue; }
+	override Status leave(ir.TemplateInstance ti) { pop(ti); return Continue; }
 	override Status leave(ir.BlockStatement bs) { pop(); return Continue; }
-	override Status leave(ir._Interface i) { pop(i); return Continue; }
 }

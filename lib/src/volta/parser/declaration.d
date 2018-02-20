@@ -27,9 +27,9 @@ ParseStatus parseVariable(ParserStream ps, NodeSinkDg dgt)
 {
 	if (ps == TokenType.Alias) {
 		if (ps.magicFlagD && isTemplateInstance(ps)) {
-			ir.Struct s;
-			parseLegacyTemplateInstance(ps, /*#out*/s);
-			dgt(s);
+			ir.TemplateInstance ti;
+			parseLegacyTemplateInstance(ps, /*#out*/ti);
+			dgt(ti);
 			return Succeeded;
 		}
 		ir.Alias a;
@@ -49,7 +49,13 @@ ParseStatus parseVariable(ParserStream ps, NodeSinkDg dgt)
 	}
 
 	if (ps == TokenType.Fn) {
-		if (isTemplateDefinition(ps)) {
+		if (isTemplateInstance(ps)) {
+			ir.TemplateInstance ti;
+			auto succeeded = parseTemplateInstance(ps, /*#out*/ti);
+			if (succeeded) {
+				dgt(ti);
+			}
+		} else if (isTemplateDefinition(ps)) {
 			ir.TemplateDefinition td;
 			auto succeeded = parseTemplateDefinition(ps, /*#out*/td);
 			if (!succeeded) {
@@ -999,11 +1005,6 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func, string templ
 
 	Token nameTok;
 	if (templateName.length == 0) {
-		if (isTemplateInstance(ps)) {
-			func.type = null;
-			return parseTemplateInstance(ps, /*#out*/func.templateInstance, /*#out*/func.name);
-		}
-
 		auto succeeded = match(ps, func, TokenType.Fn);
 		if (!succeeded) {
 			return succeeded;

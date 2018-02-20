@@ -365,6 +365,11 @@ public:
 	abstract void resolve(ir.Scope current, ir.EnumDeclaration ed);
 
 	/*!
+	 * Resolves a TemplateInstance, causing it to be instantiated.
+	 */
+	abstract void resolve(ir.Scope current, ir.TemplateInstance ti);
+
+	/*!
 	 * Resolves an ir.Store that is of kind Merge. Afterwards the kind
 	 * is changed to kind Function, since only functions can be merged.
 	 */

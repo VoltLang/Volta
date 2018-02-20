@@ -209,9 +209,6 @@ public:
 			ln();
 			twf("class ", c.name);
 		}
-		if (c.templateInstance !is null) {
-			return accept(c.templateInstance, this);
-		}
 		if (c.parent !is null || c.interfaces.length > 0) {
 			wf(" : ");
 			wf(c.parent);
@@ -243,9 +240,6 @@ public:
 		if (!mPrintingTemplateDefinition) {
 			ln();
 			twf("interface ", i.name);
-		}
-		if (i.templateInstance !is null) {
-			return accept(i.templateInstance, this);
 		}
 		if (i.interfaces.length > 0) {
 			wf(" : ");
@@ -281,9 +275,6 @@ public:
 			twf("struct ");
 			wf(s.name);
 		}
-		if (s.templateInstance !is null) {
-			return accept(s.templateInstance, this);
-		}
 		ln();
 		twf("{");
 		ln();
@@ -310,9 +301,6 @@ public:
 			ln();
 			twf("union ");
 			wf(u.name);
-		}
-		if (u.templateInstance !is null) {
-			return accept(u.templateInstance, this);
 		}
 		ln();
 		twf("{");
@@ -1336,13 +1324,6 @@ public:
 			ln();
 			twf("");
 
-			if (func.templateInstance !is null) {
-				wf("fn");
-				wf(func.name);
-				wf(" ");
-				return accept(func.templateInstance, this);
-			}
-
 			if (func.mangledName !is null) {
 				wf("@mangledName(\"");
 				wf(func.mangledName);
@@ -1651,11 +1632,11 @@ public:
 	 * Template Nodes.
 	 *
 	 */
-	
+
 	override Status enter(ir.TemplateInstance ti)
 	{
 		wf(" = ");
-		wf(ti.name);
+		wf(ti.definitionName);
 		wf("!(");
 		foreach (i, arg; ti.arguments) {
 			auto exp = cast(ir.Exp)arg;
@@ -1675,7 +1656,7 @@ public:
 	override Status leave(ir.TemplateInstance ti)
 	{
 		assert(false);
-	}	
+	}
 
 	override Status visit(ir.TemplateDefinition td)
 	{

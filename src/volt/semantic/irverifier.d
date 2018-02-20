@@ -126,6 +126,7 @@ public:
 			case EnumDeclaration:
 			case AssertStatement:
 			case TemplateDefinition:
+			case TemplateInstance:
 				auto s = accept(n, this);
 				if (s == Stop)
 					return Stop;
@@ -305,7 +306,6 @@ public:
 	/*
 	 * Template Nodes.
 	 */
-	override Status enter(ir.TemplateInstance ti) { return checkNode(ti); }
 	override Status visit(ir.TemplateDefinition td) { return checkNode(td); }
 
 

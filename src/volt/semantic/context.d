@@ -123,6 +123,7 @@ public:
 	final void enter(ir._Interface i) { push(i, i.myScope, null); }
 	final void enter(ir.Enum e) { push(e, e.myScope, null); }
 	final void enter(ir.Function func) { push(func, func.myScope, func); }
+	final void enter(ir.TemplateInstance ti) { push(ti, ti.myScope, null); }
 	final void enter(ir.BlockStatement bs) { mCurrent = bs.myScope; }
 
 	final void leave(ir.Module m) { pop(m, m.myScope, null); }
@@ -132,6 +133,7 @@ public:
 	final void leave(ir._Interface i) { pop(i, i.myScope, null); }
 	final void leave(ir.Enum e) { pop(e, e.myScope, null); }
 	final void leave(ir.Function func) { pop(func, func.myScope, func); }
+	final void leave(ir.TemplateInstance ti) { pop(ti, ti.myScope, null); }
 	final void leave(ir.BlockStatement bs) { mCurrent = mCurrent.parent; }
 
 	/*!

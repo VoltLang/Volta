@@ -438,6 +438,12 @@ public:
 		e.transform(current, a);
 	}
 
+	override void resolve(ir.Scope current, ir.TemplateInstance ti)
+	{
+		auto e = new ExTyper(this);
+		e.transform(current, ti);
+	}
+
 	override void resolve(ir.Scope current, ir.EnumDeclaration ed)
 	{
 		if (ed.resolved) {
@@ -536,9 +542,6 @@ protected:
 
 	override void doResolve(ir.Class c)
 	{
-		if (c.templateInstance !is null) {
-			throw makeUnsupported(/*#ref*/c.loc, "non struct template definitions.");
-		}
 		fillInParentIfNeeded(this, c);
 		fillInInterfacesIfNeeded(this, c);
 		c.isResolved = true;

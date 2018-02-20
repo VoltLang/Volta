@@ -36,10 +36,17 @@ class TemplateInstance : Node
 {
 public:
 	TemplateKind kind;
-	QualifiedName name;
-	Node[] arguments;  // Either a Type or an Exp.
+
+	QualifiedName definitionName; // struct Foo = <Bar>!i32;
+	string instanceName; // struct <Foo> = Bar!i32;
+
 	bool explicitMixin;
+	Node[] arguments;  // Either a Type or an Exp.
 	string[] names;  // Set by the lifter.
+	Scope myScope;  // Set by gatherer.
+
+	Struct _struct;
+	Function _function;
 
 public:
 	this()
@@ -51,9 +58,14 @@ public:
 	{
 		super(NodeType.TemplateInstance, old);
 		this.kind = old.kind;
-		this.name = old.name;
+		this.instanceName = old.instanceName;
+		this.definitionName = old.definitionName;
 		this.arguments = old.arguments.dup();
 		this.names = old.names.dup();
+		this.explicitMixin = old.explicitMixin;
+		this.myScope = old.myScope;
+		this._struct = old._struct;
+		this._function = old._function;
 	}
 }
 

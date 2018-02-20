@@ -61,6 +61,13 @@ CompilerException makeEmitLLVMNoLink(string file = __FILE__, const int line = __
  *
  */
 
+CompilerException makeRedefinesReservedIdentifier(ref in Location loc, string ident,
+	string file = __FILE__, const int line = __LINE__)
+{
+	string msg = format("redefinition of reserved identifier '%s'.", ident);
+	return makeError(/*#ref*/loc, msg, file, line);
+}
+
 CompilerException makeInvalidTraitsModifier(ref in Location loc, string modifier, string file = __FILE__, const int line = __LINE__)
 {
 	string msg = format("'%s' is not a valid traits modifier. Expected 'elementOf', 'keyOf', 'valueOf', or 'baseOf'.", modifier);

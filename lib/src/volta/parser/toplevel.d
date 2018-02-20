@@ -119,6 +119,19 @@ body
 
 	auto sink = new NodeSink();
 
+	bool parseIfTemplateInstance()
+	{
+		if (!isTemplateInstance(ps)) {
+			return false;
+		}
+		ir.TemplateInstance ti;
+		succeeded = parseTemplateInstance(ps, /*#out*/ti);
+		if (succeeded) {
+			sink.push(ti);
+		}
+		return true;
+	}
+
 	switch (ps.peek.type) {
 	case TokenType.Import:
 		ir.Import _import;
@@ -163,6 +176,12 @@ body
 			sink.push(td);
 			break;
 		}
+		if (parseIfTemplateInstance()) {
+			if (!succeeded) {
+				return parseFailed(ps, ir.NodeType.TopLevelBlock);
+			}
+			break;
+		}
 		succeeded = parseUnion(ps, /*#out*/u);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TopLevelBlock);
@@ -178,6 +197,12 @@ body
 				return parseFailed(ps, ir.NodeType.TopLevelBlock);
 			}
 			sink.push(td);
+			break;
+		}
+		if (parseIfTemplateInstance()) {
+			if (!succeeded) {
+				return parseFailed(ps, ir.NodeType.TopLevelBlock);
+			}
 			break;
 		}
 		succeeded = parseStruct(ps, /*#out*/s);
@@ -197,6 +222,12 @@ body
 			sink.push(td);
 			break;
 		}
+		if (parseIfTemplateInstance()) {
+			if (!succeeded) {
+				return parseFailed(ps, ir.NodeType.TopLevelBlock);
+			}
+			break;
+		}
 		succeeded = parseClass(ps, /*#out*/c);
 		if (!succeeded) {
 			return parseFailed(ps, ir.NodeType.TopLevelBlock);
@@ -212,6 +243,12 @@ body
 				return parseFailed(ps, ir.NodeType.TopLevelBlock);
 			}
 			sink.push(td);
+			break;
+		}
+		if (parseIfTemplateInstance()) {
+			if (!succeeded) {
+				return parseFailed(ps, ir.NodeType.TopLevelBlock);
+			}
 			break;
 		}
 		succeeded = parseInterface(ps, /*#out*/i);
@@ -669,9 +706,6 @@ ParseStatus parseClass(ParserStream ps, out ir.Class c, string templateName = ""
 	c.docComment = ps.comment();
 
 	if (templateName.length == 0) {
-		if (isTemplateInstance(ps)) {
-			return parseTemplateInstance(ps, /*#out*/c.templateInstance, /*#out*/c.name);
-		}
 		auto succeeded = match(ps, ir.NodeType.Class,
 			[TokenType.Class, TokenType.Identifier]);
 		if (!succeeded) {
@@ -723,10 +757,6 @@ ParseStatus parseInterface(ParserStream ps, out ir._Interface i, string template
 	i.docComment = ps.comment();
 
 	if (templateName.length == 0) {
-		if (isTemplateInstance(ps)) {
-			return parseTemplateInstance(ps, /*#out*/i.templateInstance, /*#out*/i.name);
-		}
-
 		auto succeeded = match(ps, ir.NodeType.Interface,
 			[TokenType.Interface, TokenType.Identifier]);
 		if (!succeeded) {
@@ -777,10 +807,6 @@ ParseStatus parseUnion(ParserStream ps, out ir.Union u, string templateName="")
 
 
 	if (templateName.length == 0) {
-		if (isTemplateInstance(ps)) {
-			return parseTemplateInstance(ps, /*#out*/u.templateInstance, /*#out*/u.name);
-		}
-
 		if (ps.peek.type != TokenType.Union) {
 			return unexpectedToken(ps, ir.NodeType.Union);
 		}
@@ -832,10 +858,6 @@ ParseStatus parseStruct(ParserStream ps, out ir.Struct s, string templateName=""
 	s.docComment = ps.comment();
 
 	if (templateName.length == 0) {
-		if (isTemplateInstance(ps)) {
-			return parseTemplateInstance(ps, /*#out*/s.templateInstance, /*#out*/s.name);
-		}
-
 		if (ps.peek.type != TokenType.Struct) {
 			return unexpectedToken(ps, ir.NodeType.Struct);
 		}

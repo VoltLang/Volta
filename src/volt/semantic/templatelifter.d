@@ -27,6 +27,7 @@ import volt.semantic.extyper;
 import volt.semantic.classify;
 import volt.semantic.typer;
 import volt.semantic.mangle;
+import volt.semantic.typeinfo;
 
 
 class TemplateLifter : Lifter
@@ -362,32 +363,38 @@ public:
 
 
 public:
-	void templateLift(ref ir.Function func, LanguagePass lp, ir.TemplateInstance ti)
+	void templateLift(ir.Scope _current, LanguagePass lp, ir.TemplateInstance ti)
 	{
-		auto current = func.myScope;
-		auto td = getTemplateDefinition(current, lp, ti);
+		switch (ti.kind) with (ir.TemplateKind) {
+		case Struct:
+			templateLiftStruct(_current, lp, ti);
+			break;
+		case Function:
+			templateLiftFunction(_current, lp, ti);
+			break;
+		default:
+			throw makeError(/*#ref*/ti.loc, "non struct/function template");
+		}
+	}
+
+	void templateLiftFunction(ir.Scope _current, LanguagePass lp, ir.TemplateInstance ti)
+	{
+		auto current = ti.myScope;
+		panicAssert(ti, current !is null);
+
+		auto td = getNewTemplateDefinition(current, lp, ti);
 		auto deffunc = td._function;
-		panicAssert(func, deffunc !is null);
+		panicAssert(ti, deffunc !is null);
+
+		auto func = lift(deffunc);
+		func.name = ti.instanceName;
+		func.kind = ir.Function.Kind.Function;
+		func.myScope = new ir.Scope(current, func, func.name, current.nestedDepth);
+		ti._function = func;
 
 		currentTemplateDefinitionName = td.name;
 
-		auto processed = processTemplateArguments(lp, func.myScope.parent, func.myScope, td, ti);
-
-		func.copy(/*old*/deffunc, /*liftingTemplate*/true);
-		liftInPlace(deffunc, /*#ref*/func);
-
-		/* The attributes couldn't be applied with the other functions,
-		 * as it didn't have a type at that point. Hide the templateInstance
-		 * and apply them now.
-		 */
-		func.templateInstance = null;
-		foreach (delayedAttribute; func.delayedAttributes) {
-			applyAttribute(func, delayedAttribute, lp.errSink, lp.target);
-		}
-		func.templateInstance = ti;
-
-		auto mod = getModuleFromScope(/*#ref*/func.loc, current);
-		auto gatherer = new Gatherer(/*warnings*/false, lp.errSink);
+		auto processed = processNewTemplateArguments(lp, func.myScope.parent, ti.myScope, td, ti);
 
 		foreach (var; func.params) {
 			if (var.name !is null) {
@@ -398,28 +405,47 @@ public:
 				}
 			}
 		}
-		if (func.myScope.parent.node.nodeType != ir.NodeType.Module) {
+
+		// Useless error checking?
+		panicAssert(ti, func.myScope !is null);
+		panicAssert(ti, func.myScope.parent !is null);
+		panicAssert(ti, func.myScope.parent.parent !is null);
+		panicAssert(ti, func.myScope.parent.parent.node !is null);
+		if (func.myScope.parent.parent.node.nodeType != ir.NodeType.Module) {
 			throw makeError(/*#ref*/func.loc, "non top level template function");
 		}
-		func.kind = ir.Function.Kind.Function;
-		void addNode(ir.Node n) { func.templateAdditions ~= n; }
-		version (D_Version2) auto _dg = &addNode;
-		else auto _dg = addNode;
-		addArgumentsToInstanceEnvironment(lp, processed, func.myScope, td, ti, _dg);
+
+		// Handle arguements.
+		addArgumentsToNewInstanceEnvironment(lp, processed, func.myScope, td, ti);
+
+		// Touch up store.
+		auto store = current.parent.getStore(ti.instanceName);
+		panicAssert(ti, store !is null);
+		panicAssert(ti, store.node is ti);
+		panicAssert(ti, store.kind == ir.Store.Kind.TemplateInstance);
+		store.functions = [func];
+		store.kind = ir.Store.Kind.Function;
+		store.name = ti.instanceName;
 	}
 
-	void templateLift(ref ir.Struct s, LanguagePass lp, ir.TemplateInstance ti)
+	void templateLiftStruct(ir.Scope _current, LanguagePass lp, ir.TemplateInstance ti)
 	{
-		auto current = s.myScope;
-		auto td = getTemplateDefinition(current, lp, ti);
+		auto current = ti.myScope;
+		assert(ti.explicitMixin);
+		auto td = getNewTemplateDefinition(current, lp, ti);
 		auto defstruct = td._struct;
-		panicAssert(s, defstruct !is null);
+		panicAssert(ti, defstruct !is null);
+		auto s = new ir.Struct(defstruct);
+		s.name = ti.instanceName;
+		assert(s.name !is null);
+		ti._struct = s;
+		s.myScope = new ir.Scope(current, s, s.name, current.nestedDepth);
 
 		currentTemplateDefinitionName = td.name;
-		currentInstanceType = s;
+		currentInstanceType = ti._struct;
 
 		// Make sure we look in the scope where the template inst. is.
-		auto processed = processTemplateArguments(lp, s.myScope.parent, s.myScope, td, ti);
+		auto processed = processNewTemplateArguments(lp, s.myScope.parent, ti.myScope, td, ti);
 
 		// Do the lifting of the children.
 		s.members = lift(defstruct.members);
@@ -431,48 +457,64 @@ public:
 		// Run the gatherer.
 		gatherer.push(s.myScope);
 		accept(s, gatherer);
-		void addNode(ir.Node n) { s.members.nodes ~= n; }
-		version (D_Version2) auto _dg = &addNode;
-		else auto _dg = addNode;
-		addArgumentsToInstanceEnvironment(lp, processed, s.myScope, td, ti, _dg);
+
+		// Handle arguements.
+		addArgumentsToNewInstanceEnvironment(lp, processed, s.myScope, td, ti);
+		ensureMangled(s);
+
+		// Touch up scope.
+		auto store = current.parent.getStore(ti.instanceName);
+		panicAssert(ti, store !is null);
+		panicAssert(ti, store.node is ti);
+		panicAssert(ti, store.kind == ir.Store.Kind.TemplateInstance);
+		store.node = s;
+		store.kind = ir.Store.Kind.Type;
+		store.myScope = s.myScope;
 	}
 
 private:
-	bool isTemplateInstance(ir.Type t)
-	{
-		auto _struct = cast(ir.Struct)realType(t);
-		return _struct !is null && _struct.templateInstance !is null;
-	}
-
-	void addArgumentsToInstanceEnvironment(LanguagePass lp, ir.Node[] processed, ir.Scope instanceScope,
-	ir.TemplateDefinition td, ir.TemplateInstance ti, NodeAdder addNode)
+	void addArgumentsToNewInstanceEnvironment(LanguagePass lp, ir.Node[] processed, ir.Scope instanceScope,
+	ir.TemplateDefinition td, ir.TemplateInstance ti)
 	{
 		foreach (param; td.parameters) {
 			ti.names ~= param.name;
 		}
 		foreach (i, ref arg; ti.arguments) {
 			auto name = td.parameters[i].name;
-			instanceScope.remove(name);
+			auto store = instanceScope.getStore(name);
+			if (store !is null) {
+				throw makeRedefinesReservedIdentifier(/*#ref*/store.node.loc, name);
+			}
+
 			if (auto a = cast(ir.Alias)processed[i]) {
 				// Add the alias to the scope and set its store.
 				ir.Status status;
-				a.store = instanceScope.addAlias(a, a.name, /*#out*/status);
+				a.store = ti.myScope.addAlias(a, a.name, /*#out*/status);
 				if (status != ir.Status.Success) {
 					throw panic(/*#ref*/a.loc, "alias redefines symbol");
 				}
-				addNode(a);
 
 				// Do the lookup here.
 				lp.resolveAlias(a);
 
 				// Make sure that the alias we got is a type.
 				assert(a.store.myAlias !is null);
-				if (cast(ir.Type)a.store.myAlias.node is null) {
+				auto typeAlias = a.store.myAlias.node !is null;
+				if (typeAlias) {
+					if (a.store.myAlias.node.nodeType != ir.NodeType.TemplateInstance) {
+						auto type = cast(ir.Type)a.store.myAlias.node;
+						typeAlias = type !is null;
+					} else {
+						auto _ti = a.store.myAlias.node.toTemplateInstanceFast();
+						typeAlias = _ti.kind != ir.TemplateKind.Function;
+					}
+				}
+				if (!typeAlias) {
 					throw makeExpected(arg, "type");
 				}
 			} else if (auto type = cast(ir.Type)processed[i]) {
 				ir.Status status;
-				instanceScope.addType(type, name, /*#out*/status);
+				ti.myScope.addType(type, name, /*#out*/status);
 				if (status != ir.Status.Success) {
 					throw panic(/*#ref*/type.loc, "template type addition redefinition");
 				}
@@ -480,34 +522,33 @@ private:
 				auto type = copyType(td.parameters[i].type);
 				auto ed = buildEnumDeclaration(/*#ref*/ti.loc, type, exp, name);
 				ir.Status status;
-				instanceScope.addEnumDeclaration(ed, /*#out*/status);
+				ti.myScope.addEnumDeclaration(ed, /*#out*/status);
 				if (status != ir.Status.Success) {
 					throw panic(/*#ref*/ti.loc, "enum declaration redefinition");
 				}
-				addNode(ed);
 			} else {
 				throw makeExpected(/*#ref*/arg.loc, "expression or type");
 			}
 		}
 	}
 }
-import watt.io.std;
+
 private:
 
 alias NodeAdder = void delegate(ir.Node);
 
-ir.TemplateDefinition getTemplateDefinition(ir.Scope current, LanguagePass lp, ir.TemplateInstance ti)
+ir.TemplateDefinition getNewTemplateDefinition(ir.Scope current, LanguagePass lp, ir.TemplateInstance ti)
 {
 	if (!ti.explicitMixin) {
 		throw makeExpected(/*#ref*/ti.loc, "explicit mixin");
 	}
-	auto store = lookup(lp, current, ti.name);
+	auto store = lookup(lp, current, ti.definitionName);
 	if (store is null) {
-		throw makeFailedLookup(/*#ref*/ti.loc, ti.name.toString());
+		throw makeFailedLookup(/*#ref*/ti.loc, ti.definitionName.toString());
 	}
 	auto td = cast(ir.TemplateDefinition)store.node;
 	if (td is null) {
-		throw makeError(/*#ref*/ti.loc, format("'%s' is not a template definition", ti.name.toString()));
+		throw makeError(/*#ref*/ti.loc, format("'%s' is not a template definition", ti.definitionName.toString()));
 	}
 	if (ti.arguments.length != td.parameters.length) {
 		throw makeExpected(ti, format("%s argument%s", td.parameters.length,
@@ -525,7 +566,7 @@ ir.TemplateDefinition getTemplateDefinition(ir.Scope current, LanguagePass lp, i
  * The output list will be the same length as the instance's
  * argument list, and will be in the same order.
  */
-ir.Node[] processTemplateArguments(LanguagePass lp, ir.Scope lookScope, ir.Scope newScope, ir.TemplateDefinition td, ir.TemplateInstance ti)
+ir.Node[] processNewTemplateArguments(LanguagePass lp, ir.Scope lookScope, ir.Scope newScope, ir.TemplateDefinition td, ir.TemplateInstance ti)
 {
 	auto processed = new ir.Node[](ti.arguments.length);
 	// Loop over all arguments.
@@ -564,12 +605,6 @@ ir.Node[] processTemplateArguments(LanguagePass lp, ir.Scope lookScope, ir.Scope
 			// because we need a.store to be a proper store
 			// that will still around.
 			processed[i] = a;
-		}
-
-		// All arguments reserve a name.
-		auto reservedStore = newScope.reserveId(td, td.parameters[i].name);
-		if (reservedStore is null) {
-			throw panic(/*#ref*/td.loc, "couldn't reserve identifier");
 		}
 	}
 	return processed;

@@ -126,18 +126,14 @@ bool isUnambigouslyType(ParserStream ps)
 	return retval;
 }
 
-ParseStatus parseLegacyTemplateInstance(ParserStream ps, out ir.Struct s)
+ParseStatus parseLegacyTemplateInstance(ParserStream ps, out ir.TemplateInstance ti)
 {
-	s = new ir.Struct();
-	s.loc = ps.peek.loc;
-	string nam;
-	auto succeeded = parseTemplateInstance(ps, /*#out*/s.templateInstance, /*#out*/nam);
-	s.templateInstance.explicitMixin = true;
-	s.name = nam;
+	auto succeeded = parseTemplateInstance(ps, /*#out*/ti);
+	ti.explicitMixin = true;
 	return succeeded;
 }
 
-ParseStatus parseTemplateInstance(ParserStream ps, out ir.TemplateInstance ti, out string instanceName)
+ParseStatus parseTemplateInstance(ParserStream ps, out ir.TemplateInstance ti)
 {
 	ti = new ir.TemplateInstance();
 	ti.docComment = ps.comment();
@@ -173,7 +169,7 @@ ParseStatus parseTemplateInstance(ParserStream ps, out ir.TemplateInstance ti, o
 	if (!succeeded) {
 		return succeeded;
 	}
-	instanceName = nameTok.value;
+	ti.instanceName = nameTok.value;
 
 	succeeded = match(ps, ti, TokenType.Assign);
 	if (!succeeded) {
@@ -182,7 +178,7 @@ ParseStatus parseTemplateInstance(ParserStream ps, out ir.TemplateInstance ti, o
 
 	ti.explicitMixin = matchIf(ps, TokenType.Mixin);
 
-	succeeded = parseQualifiedName(ps, /*#out*/ti.name);
+	succeeded = parseQualifiedName(ps, /*#out*/ti.definitionName);
 	if (!succeeded) {
 		return parseFailed(ps, ir.NodeType.TemplateInstance);
 	}

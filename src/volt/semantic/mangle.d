@@ -234,7 +234,10 @@ void mangleScope(ir.Scope _scope, Sink sink)
 
 	if (_scope.parent !is null) {
 		mangleScope(_scope.parent, sink);
-		mangleString(_scope.name, sink);
+		if (_scope.node is null ||
+		    _scope.node.nodeType != ir.NodeType.TemplateInstance) {
+			mangleString(_scope.name, sink);
+		}
 		return;
 	}
 

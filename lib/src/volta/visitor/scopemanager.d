@@ -24,6 +24,7 @@ protected:
 	ir.Module mThisModule;
 	ErrorSink mErr;
 
+
 public:
 	this(ErrorSink errSink)
 	{
@@ -173,6 +174,23 @@ public:
 	{
 		if (current !is e.myScope) {
 			nodeError(e, current.node);
+		}
+
+		current = current.parent;
+		return Continue;
+	}
+
+	override Status enter(ir.TemplateInstance ti)
+	{
+		checkPreScope(/*#ref*/ti.loc, ti.myScope);
+		current = ti.myScope;
+		return Continue;
+	}
+
+	override Status leave(ir.TemplateInstance ti)
+	{
+		if (current !is ti.myScope) {
+			nodeError(ti, current.node);
 		}
 
 		current = current.parent;

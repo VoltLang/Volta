@@ -12,6 +12,7 @@ import volta.ir.toplevel;
 import volta.ir.declaration;
 import volta.ir.expression;
 import volta.ir.location;
+import volta.ir.templates;
 
 enum Status
 {
@@ -74,6 +75,7 @@ public:
 		Reserved,
 		FunctionParam,
 		EnumDeclaration,
+		TemplateInstance,
 	}
 
 
@@ -207,6 +209,15 @@ public:
 		this.parent = parent;
 		this.node = ed;
 		this.kind = Kind.EnumDeclaration;
+	}
+
+	this(Scope parent, TemplateInstance ti)
+	{
+		this();
+		this.parent = parent;
+		this.node = ti;
+		this.kind = Kind.TemplateInstance;
+		this.name = ti.instanceName;
 	}
 
 	/*!
@@ -543,6 +554,17 @@ public:
 		errorOn(n, name, /*#out*/status);
 		auto store = new Store(this, n, name, Store.Kind.Template);
 		symbols[name] = store;
+		return store;
+	}
+
+	/*!
+	 * Add a template instance to the scope.
+	 */
+	Store addTemplateInstance(TemplateInstance ti, out Status status)
+	{
+		errorOn(ti, ti.instanceName, /*#out*/status);
+		auto store = new Store(this, ti);
+		symbols[ti.instanceName] = store;
 		return store;
 	}
 
