@@ -134,12 +134,14 @@ public:
 		}
 
 		if (mDump) {
+			io.output.flush();
 			io.error.writefln("Compiling module");
 			io.error.flush();
 		}
 
 		scope (failure) {
 			if (mDump) {
+				io.output.flush();
 				io.error.writefln("Failure, dumping module:");
 				io.error.flush();
 				LLVMDumpModule(state.mod);
@@ -148,6 +150,7 @@ public:
 		state.compile(m);
 
 		if (mDump) {
+			io.output.flush();
 			io.error.writefln("Dumping module");
 			io.error.flush();
 			LLVMDumpModule(mod);
@@ -156,6 +159,8 @@ public:
 		string result;
 		auto failed = LLVMVerifyModule(mod, /*#out*/result);
 		if (failed) {
+			io.output.flush();
+			io.error.flush();
 			LLVMDumpModule(mod);
 			io.error.writefln("%s", result);
 			io.error.flush();
