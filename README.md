@@ -1,4 +1,6 @@
 # Volt
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FVoltLang%2FVolta.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2FVoltLang%2FVolta?ref=badge_shield)
+
 
 Volt is a systems level programming language, that aims to be safe by default but
 still allowing you access to nitty gritty low level details. All of
@@ -41,3 +43,6 @@ Things to consider:
 [LLVM]: http://llvm.org
 [Volt]: http://www.volt-lang.org
 [Volta]: https://github.com/VoltLang/Volta
+
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FVoltLang%2FVolta.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2FVoltLang%2FVolta?ref=badge_large)
