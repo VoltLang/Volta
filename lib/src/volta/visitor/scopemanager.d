@@ -193,7 +193,7 @@ private:
 	{
 		if (current !is _scope.parent) {
 			auto str = format("invalid scope layout (parent) should be %s (%s) is %s (%s)",
-		           ir.getNodeAddressString(current.node), ir.nodeToString(current.node.nodeType),
+			   ir.getNodeAddressString(current.node), ir.nodeToString(current.node.nodeType),
 			   ir.getNodeAddressString(_scope.node), ir.nodeToString(_scope.node.nodeType));
 			panic(mErr, /*#ref*/loc, str);
 			assert(false);  // @todo abortless errors
