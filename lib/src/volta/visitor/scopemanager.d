@@ -191,9 +191,11 @@ private:
 
 	void checkPreScope(ref in Location loc, ir.Scope _scope)
 	{
-		if (current !is _scope.parent) {
-			auto str = format("invalid scope layout (parent) should be %s (%s) is %s (%s)",
+		auto parent = _scope.parent;
+		if (current !is parent) {
+			auto str = format("invalid scope layout (parent) should be %s (%s) is %s (%s) on %s (%s)",
 			   ir.getNodeAddressString(current.node), ir.nodeToString(current.node.nodeType),
+			   ir.getNodeAddressString(parent.node), ir.nodeToString(parent.node.nodeType),
 			   ir.getNodeAddressString(_scope.node), ir.nodeToString(_scope.node.nodeType));
 			panic(mErr, /*#ref*/loc, str);
 			assert(false);  // @todo abortless errors
