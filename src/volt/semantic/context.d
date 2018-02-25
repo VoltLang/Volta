@@ -6,6 +6,8 @@ module volt.semantic.context;
 
 import ir = volta.ir;
 
+import watt.text.format : format;
+
 import volt.errors;
 import volt.interfaces;
 import volta.ir.location;
@@ -237,9 +239,9 @@ private:
 		}
 
 		debug if (mCurrent !is ctx) {
-			auto str = "invalid scope layout should be " ~
-			           ir.getNodeAddressString(n) ~ " is " ~
-			           ir.getNodeAddressString(mCurrent.node);
+			auto str = format("invalid scope layout should be %s (%s) is %s (%s)",
+			                  ir.getNodeAddressString(n), ir.nodeToString(n.nodeType),
+			                  ir.getNodeAddressString(mCurrent.node), ir.nodeToString(mCurrent.node.nodeType));
 			throw panic(/*#ref*/n.loc, str);
 		}
 
