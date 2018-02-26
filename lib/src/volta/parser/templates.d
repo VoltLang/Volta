@@ -140,6 +140,7 @@ ParseStatus parseLegacyTemplateInstance(ParserStream ps, out ir.Struct s)
 ParseStatus parseTemplateInstance(ParserStream ps, out ir.TemplateInstance ti, out string instanceName)
 {
 	ti = new ir.TemplateInstance();
+	ti.docComment = ps.comment();
 	auto origin = ps.peek.loc;
 
 	switch (ps.peek.type) {
@@ -243,6 +244,7 @@ ParseStatus parseTemplateInstance(ParserStream ps, out ir.TemplateInstance ti, o
 ParseStatus parseTemplateDefinition(ParserStream ps, out ir.TemplateDefinition td)
 {
 	td = new ir.TemplateDefinition();
+	td.docComment = ps.comment();
 	auto origin = ps.peek.loc;
 
 	switch (ps.peek.type) {
