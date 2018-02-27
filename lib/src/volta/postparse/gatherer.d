@@ -49,11 +49,19 @@ ir.Store findShadowed(ir.Scope _scope, ref in Location loc, string name, bool wa
 		return null;
 	}
 
-	// BlockStatements attached directly to a function have their .node set to that function.
-	if ((_scope.node.nodeType != ir.NodeType.Function &&
-	    _scope.node.nodeType != ir.NodeType.BlockStatement) ||
-		(_scope.node.nodeType == ir.NodeType.Function &&
-		_scope.parent.node.nodeType == ir.NodeType.BlockStatement)) {
+	auto nt = _scope.node.nodeType;
+	bool funcOrBlock = nt == ir.NodeType.Function || nt == ir.NodeType.BlockStatement;
+	bool templateInstance = nt == ir.NodeType.TemplateInstance;
+	bool funcAndParentBlock = nt == ir.NodeType.Function && _scope.parent !is null &&
+		_scope.parent.node.nodeType == ir.NodeType.BlockStatement;
+	bool parentTemplateInstance = _scope.parent !is null &&
+		_scope.parent.node.nodeType == ir.NodeType.TemplateInstance;
+
+	if (store !is null && templateInstance) {
+		return store;
+	}
+
+	if ((!funcOrBlock || funcAndParentBlock) && !parentTemplateInstance) {
 		return null;
 	}
 
