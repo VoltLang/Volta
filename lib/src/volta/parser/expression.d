@@ -2048,6 +2048,11 @@ ParseStatus parseComposableString(ParserStream ps, out ir.Exp exp)
 			nextnextc = literal.value[b + 1];
 		}
 		if (inStringLiteral) {
+			if (c == '\\' && nextc == '\\') {
+				b += 1;
+				continue;
+			}
+
 			if (c == '\\' && nextc == '$' && nextnextc == '{') {
 				b += 2;
 				continue;
