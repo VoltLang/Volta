@@ -2124,6 +2124,10 @@ bool isComposableString(ParserStream ps)
 		if (i+2 < ps.peek.value.length) {
 			nextnextc = ps.peek.value[i+2];
 		}
+		if (c == '\\' && nextc == '\\') {
+			i += 1;
+			continue;
+		}
 		if (c == '\\' && nextc == '$' && nextnextc == '{') {
 			i += 3;
 			continue;
