@@ -1079,15 +1079,15 @@ void lowerCatAssign(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.Bi
 }
 
 /*!
- * Lower an equality operation, if it needs it.
+ * Lower a comparison operation, if it needs it.
  *
  * Params:
  *   lp: The LanguagePass.
  *   thisModule: The Module that this code is taking place in.
  *   exp: A reference to the relevant expression.
- *   binOp: The BinOp with the equality operation to potentially lower.
+ *   binOp: The BinOp with the comparison operation to potentially lower.
  */
-void lowerEqual(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp binOp)
+void lowerCmp(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp binOp)
 {
 	auto loc = binOp.loc;
 
@@ -1097,8 +1097,9 @@ void lowerEqual(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp 
 		return;
 	}
 
-	auto func = getArrayCmpFunction(/*#ref*/loc, lp, thisModule, leftArrayType, binOp.op == ir.BinOp.Op.NotEqual);
+	auto func = getArrayCmpFunction(/*#ref*/loc, lp, thisModule, leftArrayType);
 	exp = buildCall(/*#ref*/loc, func, [binOp.left, binOp.right], func.name);
+	exp = buildBinOp(/*#ref*/loc, binOp.op, exp, buildConstantInt(/*#ref*/loc, 0));
 }
 
 /*!
@@ -2298,7 +2299,11 @@ public:
 			break;
 		case ir.BinOp.Op.NotEqual:
 		case ir.BinOp.Op.Equal:
-			lowerEqual(lp, thisModule, /*#ref*/exp, binOp);
+		case ir.BinOp.Op.Greater:
+		case ir.BinOp.Op.GreaterEqual:
+		case ir.BinOp.Op.Less:
+		case ir.BinOp.Op.LessEqual:
+			lowerCmp(lp, thisModule, /*#ref*/exp, binOp);
 			break;
 		default:
 			break;

@@ -1695,6 +1695,17 @@ ir.IfStatement buildIfStat(ref in Location loc, ir.Exp exp,
 }
 
 /*!
+ * Build an if statement using an if statement as the else statement.
+ */
+ir.IfStatement buildIfElseIfStat(ref in Location loc, ir.Exp exp, ir.BlockStatement thenState,
+						   ir.IfStatement elseState)
+{
+	auto bs = buildBlockStat(/*#ref*/loc, null, thenState.myScope.parent);
+	bs.statements ~= elseState;
+	return buildIfStat(/*#ref*/loc, exp, thenState, bs);
+}
+
+/*!
  * Build an if statement.
  */
 ir.IfStatement buildIfStat(ref in Location loc, ir.BlockStatement block, ir.Exp exp,

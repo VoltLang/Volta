@@ -419,18 +419,13 @@ ir.Function getArrayConcatFunction(ref in Location loc, LanguagePass lp, ir.Modu
 	return func;
 }
 
-ir.Function getArrayCmpFunction(ref in Location loc, LanguagePass lp, ir.Module thisModule, ir.ArrayType type, bool notEqual)
+ir.Function getArrayCmpFunction(ref in Location loc, LanguagePass lp, ir.Module thisModule, ir.ArrayType type)
 {
 	if (type.mangledName is null) {
 		type.mangledName = mangle(type);
 	}
 
-	string name;
-	if (notEqual) {
-		name = format("__cmpNotArray%s", type.mangledName);
-	} else {
-		name = format("__cmpArray%s", type.mangledName);
-	}
+	auto name = format("__cmpArray%s", type.mangledName);
 	auto func = lookupFunction(lp, thisModule.myScope, /*#ref*/loc, name);
 	if (func !is null) {
 		return func;
@@ -439,62 +434,173 @@ ir.Function getArrayCmpFunction(ref in Location loc, LanguagePass lp, ir.Module 
 	func = buildFunction(lp.errSink, /*#ref*/loc, thisModule.children, thisModule.myScope, name);
 	func.mangledName = func.name;
 	func.isMergable = true;
-	func.type.ret = buildBool(/*#ref*/loc);
+	func.type.ret = buildInt(/*#ref*/loc);
 
 	auto left = addParamSmart(lp.errSink, /*#ref*/loc, func, type, "left");
 	auto right = addParamSmart(lp.errSink, /*#ref*/loc, func, type, "right");
 
+	ir.ExpReference lRef()
+	{
+		// left
+		return buildExpReference(/*#ref*/loc, left, left.name);
+	}
+	ir.ExpReference rRef()
+	{
+		// right
+		return buildExpReference(/*#ref*/loc, right, right.name);
+	}
+	ir.BinOp cmp(ir.Exp l, ir.BinOp.Op op, ir.Exp r)
+	{
+		return buildBinOp(/*#ref*/loc, op, l, r);
+	}
+	ir.BuiltinExp len(ir.ExpReference eref)
+	{
+		return buildArrayLength(/*#ref*/loc, lp.target, eref);
+	}
+
 	auto memCmp = lp.memcmpFunc;
 	auto memCmpExpRef = buildExpReference(/*#ref*/loc, memCmp, memCmp.name);
-
-
-	auto thenState = buildBlockStat(/*#ref*/loc, func, func.parsedBody.myScope);
-	buildReturnStat(/*#ref*/loc, thenState, buildConstantBool(/*#ref*/loc, notEqual));
-	buildIfStat(/*#ref*/loc, func.parsedBody,
-		buildBinOp(/*#ref*/loc, ir.BinOp.Op.NotEqual,
-			buildArrayLength(/*#ref*/loc, lp.target, buildExpReference(/*#ref*/loc, left, left.name)),
-			buildArrayLength(/*#ref*/loc, lp.target, buildExpReference(/*#ref*/loc, right, right.name))
-		),
-		thenState
-	);
 
 	auto childArray = cast(ir.ArrayType) type.base;
 	if (childArray !is null) {
 		/* for (size_t i = 0; i < left.length; ++i) {
-		 *     if (left[i] !=/== right[i]) {
-		 *         return true;
+		 *     if (i >= right.length || left[i] > right[i]) {
+		 *         return 1;
+		 *     }
+		 *     if (left[i] < right[i]) {
+		 *         return -1;
 		 *     }
 		 * }
-		 * return false;
+		 * if (left.length == right.length) {
+		 *     return 0;
+		 * }
+		 * if (left.length > right.length) {
+		 *     return 1;
+		 * }
+		 * return -1;
 		 */
 		ir.ForStatement forLoop;
 		ir.Variable iVar;
-		buildForStatement(/*#ref*/loc, lp.target, func.parsedBody.myScope,
-			buildArrayLength(/*#ref*/loc, lp.target, buildExpReference(/*#ref*/loc, left, left.name)), /*#out*/forLoop, /*#out*/iVar);
-		auto l = buildIndex(/*#ref*/loc, buildExpReference(/*#ref*/loc, left, left.name), buildExpReference(/*#ref*/loc, iVar, iVar.name));
-		auto r = buildIndex(/*#ref*/loc, buildExpReference(/*#ref*/loc, right, right.name), buildExpReference(/*#ref*/loc, iVar, iVar.name));
-		auto cmp = buildBinOp(/*#ref*/loc, notEqual ? ir.BinOp.Op.NotEqual : ir.BinOp.Op.Equal, l, r);
-		auto then = buildBlockStat(/*#ref*/loc, null, forLoop.block.myScope);
-		buildReturnStat(/*#ref*/loc, then, buildConstantBool(/*#ref*/loc, true));
-		auto ifs = buildIfStat(/*#ref*/loc, cmp, then);
-		forLoop.block.statements ~= ifs;
-		func.parsedBody.statements ~= forLoop;
-		buildReturnStat(/*#ref*/loc, func.parsedBody, buildConstantBool(/*#ref*/loc, false));
-	} else {
-		buildReturnStat(/*#ref*/loc, func.parsedBody,
-			buildBinOp(/*#ref*/loc, notEqual ? ir.BinOp.Op.NotEqual : ir.BinOp.Op.Equal,
-				buildCall(/*#ref*/loc, memCmpExpRef, [
-					buildCastSmart(/*#ref*/loc, buildVoidPtr(/*#ref*/loc), buildArrayPtr(/*#ref*/loc, left.type, buildExpReference(/*#ref*/loc, left, left.name))),
-					buildCastSmart(/*#ref*/loc, buildVoidPtr(/*#ref*/loc), buildArrayPtr(/*#ref*/loc, right.type, buildExpReference(/*#ref*/loc, right, right.name))),
-					cast(ir.Exp)buildBinOp(/*#ref*/loc, ir.BinOp.Op.Mul,
-						buildArrayLength(/*#ref*/loc, lp.target, buildExpReference(/*#ref*/loc, left, left.name)),
-						buildConstantSizeT(/*#ref*/loc, lp.target, size(lp.target, type.base))
-					)
 
-				]),
-				buildConstantInt(/*#ref*/loc, 0)
-			)
+		ir.ExpReference iRef()
+		{
+			// i
+			return buildExpReference(/*#ref*/loc, iVar, iVar.name);
+		}
+
+		buildForStatement(/*#ref*/loc, lp.target, func.parsedBody.myScope,
+			buildArrayLength(/*#ref*/loc, lp.target, lRef()), /*#out*/forLoop, /*#out*/iVar);
+
+		ir.Postfix lIndex()
+		{
+			// left[i]
+			return buildIndex(/*#ref*/loc, lRef(), iRef());
+		}
+		ir.Postfix rIndex()
+		{
+			// right[i]
+			return buildIndex(/*#ref*/loc, rRef(), iRef());
+		}
+		ir.BinOp lrCmp(ir.BinOp.Op op)
+		{
+			// left[i] op right[i]
+			return buildBinOp(/*#ref*/loc, op, lIndex(), rIndex());
+		}
+		ir.BinOp greaterEqualCmp(ir.Exp lExp, ir.Exp rExp)
+		{
+			return buildBinOp(/*#ref*/loc, ir.BinOp.Op.GreaterEqual, lExp, rExp);
+		}
+		ir.BinOp orCmp(ir.Exp lExp, ir.Exp rExp)
+		{
+			return buildBinOp(/*#ref*/loc, ir.BinOp.Op.OrOr, lExp, rExp);
+		}
+		ir.BlockStatement returnConstantInteger(int i)
+		{
+			// { return <i>; }
+			auto bs = buildBlockStat(/*#ref*/loc, null, forLoop.block.myScope);
+			buildReturnStat(/*#ref*/loc, bs, buildConstantInt(/*#ref*/loc, i));
+			return bs;
+		}
+
+		auto lengthCheck= greaterEqualCmp(iRef(), buildArrayLength(/*#ref*/loc, lp.target, rRef()));
+		auto greaterCmp = orCmp(lengthCheck, lrCmp(ir.BinOp.Op.Greater));
+		auto ifThen     = returnConstantInteger(1);
+		auto ifs        = buildIfStat(/*#ref*/loc, greaterCmp, ifThen);
+		forLoop.block.statements ~= ifs;
+
+		auto lessCmp    = lrCmp(ir.BinOp.Op.Less);
+		auto elseThen   = returnConstantInteger(-1);
+		auto elseIf     = buildIfStat(/*#ref*/loc, lessCmp, elseThen);
+		forLoop.block.statements ~= elseIf;
+
+		func.parsedBody.statements ~= forLoop;
+
+		auto lLength   = buildArrayLength(/*#ref*/loc, lp.target, lRef());
+		auto rLength   = buildArrayLength(/*#ref*/loc, lp.target, rRef());
+		auto lengthCmp = buildBinOp(/*#ref*/loc, ir.BinOp.Op.Equal, lLength, rLength);
+		auto lengthBs  = buildBlockStat(/*#ref*/loc, null, func.parsedBody.myScope);
+		buildReturnStat(/*#ref*/loc, lengthBs, buildConstantInt(/*#ref*/loc, 0));
+		auto lengthIf  = buildIfStat(/*#ref*/loc, lengthCmp, lengthBs);
+		func.parsedBody.statements ~= lengthIf;
+
+		auto leftLongerCmp = cmp(len(lRef()), ir.BinOp.Op.Greater, len(rRef()));
+		auto leftLongerBs  = buildBlockStat(/*#ref*/loc, null, func.parsedBody.myScope);
+		buildReturnStat(/*#ref*/loc, leftLongerBs, buildConstantInt(/*#ref*/loc, 1));
+		auto leftLongerIf  = buildIfStat(/*#ref*/loc, leftLongerCmp, leftLongerBs);
+		func.parsedBody.statements ~= leftLongerIf;
+
+		buildReturnStat(/*#ref*/loc, func.parsedBody, buildConstantInt(/*#ref*/loc, -1));
+	} else {
+		/* len := left.length;
+		 * if (right.length < left.length) {
+		 *     len = right.length;
+		 * }
+		 * val := memcmp(left.ptr, right.ptr, len * left.base.size);
+		 * if (val != 0 || left.length == right.length) {
+		 *     return val;
+		 * }
+		 * if (left.length < right.length) {
+		 *     return -1;
+		 * }
+		 * return 1;
+		 */
+		auto lenType = buildSizeT(/*#ref*/loc, lp.target);
+		auto lenVar  = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, func.parsedBody, null, lenType, len(lRef()));
+
+		auto rightShorterCmp = cmp(len(rRef()), ir.BinOp.Op.Less, len(lRef()));
+		auto rightShorterBs  = buildBlockStat(/*#ref*/loc, null, func.parsedBody.myScope);
+		buildExpStat(/*#ref*/loc, rightShorterBs, buildAssign(/*#ref*/loc, lenVar, len(rRef())));
+		auto rightShorterIf  = buildIfStat(/*#ref*/loc, rightShorterCmp, rightShorterBs);
+		func.parsedBody.statements ~= rightShorterIf;
+
+		auto valType = buildInt(/*#ref*/loc);
+		auto valVar  = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, func.parsedBody, null, valType,
+			buildCall(/*#ref*/loc, memCmpExpRef, [
+				buildCastSmart(/*#ref*/loc, buildVoidPtr(/*#ref*/loc), buildArrayPtr(/*#ref*/loc, left.type, lRef())),
+				buildCastSmart(/*#ref*/loc, buildVoidPtr(/*#ref*/loc), buildArrayPtr(/*#ref*/loc, right.type, rRef())),
+				cast(ir.Exp)buildBinOp(/*#ref*/loc, ir.BinOp.Op.Mul,
+					buildExpReference(/*#ref*/loc, lenVar, lenVar.name),
+					buildConstantSizeT(/*#ref*/loc, lp.target, size(lp.target, type.base))
+				)
+			])
 		);
+
+		auto vRef = buildExpReference(/*#ref*/loc, valVar, valVar.name);
+		auto zero = buildConstantInt(/*#ref*/loc, 0);
+		auto canReturnValCmp = cmp(vRef, ir.BinOp.Op.NotEqual, zero);
+		canReturnValCmp = cmp(canReturnValCmp, ir.BinOp.Op.OrOr, cmp(len(lRef()), ir.BinOp.Op.Equal, len(rRef())));
+		auto canReturnValBs  = buildBlockStat(/*#ref*/loc, null, func.parsedBody.myScope);
+		buildReturnStat(/*#ref*/loc, canReturnValBs, buildExpReference(/*#ref*/loc, valVar, valVar.name));
+		auto canReturnValIf  = buildIfStat(/*#ref*/loc, canReturnValCmp, canReturnValBs);
+		func.parsedBody.statements ~= canReturnValIf;
+
+		auto leftIsShorterCmp = cmp(len(lRef()), ir.BinOp.Op.Less, len(rRef()));
+		auto leftIsShorterBs  = buildBlockStat(/*#ref*/loc, null, func.parsedBody.myScope);
+		buildReturnStat(/*#ref*/loc, leftIsShorterBs, buildConstantInt(/*#ref*/loc, -1));
+		auto leftIsShorterIf  = buildIfStat(/*#ref*/loc, leftIsShorterCmp, leftIsShorterBs);
+		func.parsedBody.statements ~= leftIsShorterIf;
+
+		buildReturnStat(/*#ref*/loc, func.parsedBody, buildConstantInt(/*#ref*/loc, 1));
 	}
 
 	return func;

@@ -375,7 +375,10 @@ ir.Constant foldBinOpOrOr(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = buildEmptyConstant(cl, buildBool(/*#ref*/cl.loc));
 
-	auto pt = cast(ir.PrimitiveType)cl.type;
+	auto pt = cl.type.toPrimitiveTypeChecked();
+	if (pt is null) {
+		return null;
+	}
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Bool: c.u._bool = cl.u._bool || cr.u._bool; break;
 	case Int: c.u._bool = cl.u._int || cr.u._int; break;
@@ -392,7 +395,10 @@ ir.Constant foldBinOpOrOr(ir.Constant cl, ir.Constant cr, TargetInfo target)
 ir.Constant foldBinOpAndAnd(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = cl;
-	auto pt = cast(ir.PrimitiveType)c.type;
+	auto pt = cl.type.toPrimitiveTypeChecked();
+	if (pt is null) {
+		return null;
+	}
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Bool: c.u._bool = cl.u._bool && cr.u._bool; break;
 	case Int: c.u._bool = cl.u._int && cr.u._int; break;
@@ -409,7 +415,10 @@ ir.Constant foldBinOpAndAnd(ir.Constant cl, ir.Constant cr, TargetInfo target)
 ir.Constant foldBinOpOr(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = cl;
-	auto pt = cast(ir.PrimitiveType)c.type;
+	auto pt = cl.type.toPrimitiveTypeChecked();
+	if (pt is null) {
+		return null;
+	}
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Int: c.u._int = cl.u._int | cr.u._int; break;
 	case Uint: c.u._uint = cl.u._uint | cr.u._uint; break;
@@ -423,7 +432,10 @@ ir.Constant foldBinOpOr(ir.Constant cl, ir.Constant cr, TargetInfo target)
 ir.Constant foldBinOpXor(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = cl;
-	auto pt = cast(ir.PrimitiveType)c.type;
+	auto pt = cl.type.toPrimitiveTypeChecked();
+	if (pt is null) {
+		return null;
+	}
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Int: c.u._int = cl.u._int ^ cr.u._int; break;
 	case Uint: c.u._uint = cl.u._uint ^ cr.u._uint; break;
@@ -437,7 +449,10 @@ ir.Constant foldBinOpXor(ir.Constant cl, ir.Constant cr, TargetInfo target)
 ir.Constant foldBinOpAnd(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = cl;
-	auto pt = cast(ir.PrimitiveType)c.type;
+	auto pt = cl.type.toPrimitiveTypeChecked();
+	if (pt is null) {
+		return null;
+	}
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Int: c.u._int = cl.u._int & cr.u._int; break;
 	case Uint: c.u._uint = cl.u._uint & cr.u._uint; break;
@@ -496,7 +511,10 @@ ir.Constant foldBinOpLess(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = buildEmptyConstant(cl, buildBool(/*#ref*/cl.loc));
 
-	auto pt = cast(ir.PrimitiveType)cl.type;
+	auto pt = cl.type.toPrimitiveTypeChecked();
+	if (pt is null) {
+		return null;
+	}
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Bool: c.u._bool = cl.u._bool < cr.u._bool; break;
 	case Int: c.u._bool = cl.u._int < cr.u._int; break;
@@ -514,7 +532,10 @@ ir.Constant foldBinOpLessEqual(ir.Constant cl, ir.Constant cr, TargetInfo target
 {
 	auto c = buildEmptyConstant(cl, buildBool(/*#ref*/cl.loc));
 
-	auto pt = cast(ir.PrimitiveType)cl.type;
+	auto pt = cl.type.toPrimitiveTypeChecked();
+	if (pt is null) {
+		return null;
+	}
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Bool: c.u._bool = cl.u._bool <= cr.u._bool; break;
 	case Int: c.u._bool = cl.u._int <= cr.u._int; break;
@@ -532,7 +553,10 @@ ir.Constant foldBinOpGreaterEqual(ir.Constant cl, ir.Constant cr, TargetInfo tar
 {
 	auto c = buildEmptyConstant(cl, buildBool(/*#ref*/cl.loc));
 
-	auto pt = cast(ir.PrimitiveType)cl.type;
+	auto pt = cl.type.toPrimitiveTypeChecked();
+	if (pt is null) {
+		return null;
+	}
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Bool: c.u._bool = cl.u._bool >= cr.u._bool; break;
 	case Int: c.u._bool = cl.u._int >= cr.u._int; break;
@@ -550,7 +574,10 @@ ir.Constant foldBinOpGreater(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = buildEmptyConstant(cl, buildBool(/*#ref*/cl.loc));
 
-	auto pt = cast(ir.PrimitiveType)cl.type;
+	auto pt = cl.type.toPrimitiveTypeChecked();
+	if (pt is null) {
+		return null;
+	}
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Bool: c.u._bool = cl.u._bool > cr.u._bool; break;
 	case Int: c.u._bool = cl.u._int > cr.u._int; break;
@@ -567,7 +594,10 @@ ir.Constant foldBinOpGreater(ir.Constant cl, ir.Constant cr, TargetInfo target)
 ir.Constant foldBinOpLS(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = cl;
-	auto pt = cast(ir.PrimitiveType)c.type;
+	auto pt = cl.type.toPrimitiveTypeChecked();
+	if (pt is null) {
+		return null;
+	}
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Int: c.u._int = cl.u._int << cr.u._int; break;
 	case Uint: c.u._uint = cl.u._uint << cr.u._uint; break;
@@ -581,7 +611,10 @@ ir.Constant foldBinOpLS(ir.Constant cl, ir.Constant cr, TargetInfo target)
 ir.Constant foldBinOpSRS(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = cl;
-	auto pt = cast(ir.PrimitiveType)c.type;
+	auto pt = cl.type.toPrimitiveTypeChecked();
+	if (pt is null) {
+		return null;
+	}
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Int: c.u._int = cl.u._int >> cr.u._int; break;
 	case Uint: c.u._uint = cl.u._uint >> cr.u._uint; break;
@@ -595,7 +628,10 @@ ir.Constant foldBinOpSRS(ir.Constant cl, ir.Constant cr, TargetInfo target)
 ir.Constant foldBinOpRS(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = cl;
-	auto pt = cast(ir.PrimitiveType)c.type;
+	auto pt = cl.type.toPrimitiveTypeChecked();
+	if (pt is null) {
+		return null;
+	}
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Int: c.u._int = cl.u._int >>> cr.u._int; break;
 	case Uint: c.u._uint = cl.u._uint >>> cr.u._uint; break;
@@ -609,7 +645,10 @@ ir.Constant foldBinOpRS(ir.Constant cl, ir.Constant cr, TargetInfo target)
 ir.Constant foldBinOpAdd(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = cl;
-	auto pt = cast(ir.PrimitiveType)c.type;
+	auto pt = cl.type.toPrimitiveTypeChecked();
+	if (pt is null) {
+		return null;
+	}
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Int: c.u._int = cl.u._int + cr.u._int; break;
 	case Uint: c.u._uint = cl.u._uint + cr.u._uint; break;
@@ -626,7 +665,10 @@ ir.Constant foldBinOpAdd(ir.Constant cl, ir.Constant cr, TargetInfo target)
 ir.Constant foldBinOpSub(ir.Constant cl, ir.Constant cr, TargetInfo targert)
 {
 	auto c = cl;
-	auto pt = cast(ir.PrimitiveType)c.type;
+	auto pt = cl.type.toPrimitiveTypeChecked();
+	if (pt is null) {
+		return null;
+	}
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Int: c.u._int = cl.u._int - cr.u._int; break;
 	case Uint: c.u._uint = cl.u._uint - cr.u._uint; break;
@@ -643,7 +685,10 @@ ir.Constant foldBinOpSub(ir.Constant cl, ir.Constant cr, TargetInfo targert)
 ir.Constant foldBinOpMul(ir.Constant cl, ir.Constant cr, TargetInfo target)
 {
 	auto c = cl;
-	auto pt = cast(ir.PrimitiveType)c.type;
+	auto pt = cl.type.toPrimitiveTypeChecked();
+	if (pt is null) {
+		return null;
+	}
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Int: c.u._int = cl.u._int * cr.u._int; break;
 	case Uint: c.u._uint = cl.u._uint * cr.u._uint; break;
@@ -666,7 +711,10 @@ ir.Constant foldBinOpDiv(ir.Constant cl, ir.Constant cr, TargetInfo target)
 	}
 
 	auto c = cl;
-	auto pt = cast(ir.PrimitiveType)c.type;
+	auto pt = cl.type.toPrimitiveTypeChecked();
+	if (pt is null) {
+		return null;
+	}
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Int: dieIfZero(cr.u._int == 0); c.u._int = cl.u._int / cr.u._int; break;
 	case Uint: dieIfZero(cr.u._uint == 0); c.u._uint = cl.u._uint / cr.u._uint; break;
@@ -695,7 +743,10 @@ ir.Constant foldBinOpMod(ir.Constant cl, ir.Constant cr, TargetInfo target)
 	}
 
 	auto c = cl;
-	auto pt = cast(ir.PrimitiveType)c.type;
+	auto pt = cl.type.toPrimitiveTypeChecked();
+	if (pt is null) {
+		return null;
+	}
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Uint: dieIfZero(cr.u._uint == 0); c.u._uint = cl.u._uint % cr.u._uint; break;
 	case Long: dieIfZero(cr.u._long == 0); c.u._long = cl.u._long % cr.u._long; break;
@@ -814,7 +865,10 @@ ir.Constant foldUnaryCast(ir.Constant c, ir.Type t, TargetInfo target)
 ir.Constant foldUnaryMinus(ir.Constant c, TargetInfo target)
 {
 	auto nc = cast(ir.Constant)copyExp(c);
-	auto pt = cast(ir.PrimitiveType) c.type;
+	auto pt = c.type.toPrimitiveTypeChecked();
+	if (pt is null) {
+		return null;
+	}
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Int:
 		nc.u._int = -c.u._int;
@@ -846,7 +900,10 @@ ir.Constant foldUnaryMinus(ir.Constant c, TargetInfo target)
 ir.Constant foldUnaryPlus(ir.Constant c, TargetInfo target)
 {
 	auto nc = cast(ir.Constant)copyExp(c);
-	auto pt = cast(ir.PrimitiveType) c.type;
+	auto pt = c.type.toPrimitiveTypeChecked();
+	if (pt is null) {
+		return null;
+	}
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Int:
 		nc.u._int = +c.u._int;
@@ -876,7 +933,10 @@ ir.Constant foldUnaryPlus(ir.Constant c, TargetInfo target)
 ir.Constant foldUnaryNot(ir.Constant c, TargetInfo target)
 {
 	auto nc = cast(ir.Constant)copyExp(c);
-	auto pt = cast(ir.PrimitiveType)c.type;
+	auto pt = c.type.toPrimitiveTypeChecked();
+	if (pt is null) {
+		return null;
+	}
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Bool: nc.u._bool = !c.u._bool; break;
 	default:
@@ -889,7 +949,10 @@ ir.Constant foldUnaryNot(ir.Constant c, TargetInfo target)
 ir.Constant foldUnaryComplement(ir.Constant c, TargetInfo target)
 {
 	auto nc = cast(ir.Constant)copyExp(c);
-	auto pt = cast(ir.PrimitiveType)c.type;
+	auto pt = c.type.toPrimitiveTypeChecked();
+	if (pt is null) {
+		return null;
+	}
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
 	case Int: nc.u._int = ~c.u._int; break;
 	case Uint: nc.u._uint = ~c.u._uint; break;
