@@ -1,6 +1,6 @@
 module watt.text.utf;
 
-import std.utf : decode, validate;
+public import std.utf : decode, validate;
 private import std.conv : to;
 private import std.utf : utfencode = encode;
 private import std.utf;

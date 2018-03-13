@@ -1,4 +1,4 @@
 module watt.text.ascii;
 
-import std.uni : isWhite, isAlpha;
-import std.ascii : isDigit;
+public import std.uni : isWhite, isAlpha;
+public import std.ascii : isDigit;

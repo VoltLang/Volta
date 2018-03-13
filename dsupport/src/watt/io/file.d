@@ -1,7 +1,7 @@
 module watt.io.file;
 
-import std.file : read, exists, remove, isFile;
-import std.file : SpanMode, dirEntries;
+public import std.file : read, exists, remove, isFile;
+public import std.file : SpanMode, dirEntries;
 
 void searchDir(string dirName, string glob, scope void delegate(string) dg)
 {

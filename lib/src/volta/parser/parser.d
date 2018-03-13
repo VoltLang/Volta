@@ -23,7 +23,7 @@ import volta.parser.statements : parseStatement;
 import volta.parser.declaration : parseBlock;
 
 
-private void checkError(ParserStream ps, ParseStatus status)
+void checkError(ParserStream ps, ParseStatus status)
 {
 	if (status) {
 		return;

@@ -2,7 +2,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module watt.math.random;
 
-import std.random : uniform;
+public import std.random : uniform;
 
 /*!
  * Generate a random string `length` characters long.

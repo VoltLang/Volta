@@ -2843,7 +2843,7 @@ class MmFileStream : TArrayStream!(MmFile) {
   override void close() {
     if (isopen) {
       super.close();
-      delete buf;
+      destroy(buf);
       buf = null;
     }
   }

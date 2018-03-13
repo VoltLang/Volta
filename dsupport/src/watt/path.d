@@ -3,10 +3,10 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module watt.path;
 
-import std.random : uniform;
-import std.process : environment;
-import std.file : exists, mkdir, mkdirRecurse;
-import std.path : baseName, dirName, dirSeparator;
+public import std.random : uniform;
+public import std.process : environment;
+public import std.file : exists, mkdir, mkdirRecurse;
+public import std.path : baseName, dirName, dirSeparator;
 
 
 import watt.math.random;

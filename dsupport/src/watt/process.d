@@ -1,7 +1,7 @@
 module watt.process;
 
-import std.process : wait, Pid;
-import std.process : dspawnProcess = spawnProcess;
+public import std.process : wait, Pid;
+public import std.process : dspawnProcess = spawnProcess;
 
 
 Pid spawnProcess(string cmd, string[] args)
