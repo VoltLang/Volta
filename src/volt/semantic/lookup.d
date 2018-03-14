@@ -619,11 +619,7 @@ void checkAccess(ref in Location loc, string name, ir.Store store, bool classPar
 		}
 	}
 	if (alia !is null) {
-		if (alia.store.myAlias is null || alia.access != ir.Access.Public) {
-			return check(alia.access);
-		} else {
-			return checkAccess(/*#ref*/loc, name, alia.store.myAlias, classParentLookup);
-		}
+		return check(alia.access);
 	}
 	auto decl = cast(ir.Variable)store.node;
 	if (decl !is null) {
@@ -799,6 +795,22 @@ void walkPublicImports(LanguagePass lp, ref in Location loc, ref WalkContext ctx
 
 		// If we find a store in the module we added to the context.
 		if (store !is null) {
+			if (store.node.nodeType == ir.NodeType.Alias) {
+				/* Handle Schrödinger's Alias.
+				 * The test errors.32 states that a public alias of a private symbol
+				 * is considered on the alias's access.
+				 * However, the test import.36 states that a public alias of a private symbol
+				 * is considered on the symbol's access when accessed through a public import.
+				 * Thus the alias is simultaneously public and private.
+				 */
+				auto alia = store.node.toAliasChecked();
+				if (alia !is null) {
+					lp.resolve(alia);
+				}
+				if (alia !is null && alia.access == ir.Access.Public && alia.store.myAlias !is null) {
+					checkAccess(/*#ref*/loc, name, alia.store.myAlias);
+				}
+			}
 			checkPrivateAndAdd(/*#ref*/ctx, submod, store);  // @todo Is this needed? Can we remove it somehow?
 			checkAccess(/*#ref*/loc, name, store);
 			store = ensureResolved(lp, store);
