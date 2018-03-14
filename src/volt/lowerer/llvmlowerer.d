@@ -1917,6 +1917,7 @@ void lowerPostfix(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 		ftype.isArgRef = false ~ ftype.isArgRef;
 		ftype.isArgOut = false ~ ftype.isArgOut;
 		ftype.hiddenParameter = false;
+		ftype.mangledName = mangle(ftype);
 
 		panicAssert(postfix, var !is null);
 		panicAssert(postfix, fvar !is null);
