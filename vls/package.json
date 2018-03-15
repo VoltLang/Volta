@@ -15,33 +15,50 @@
     ],
     "main": "./out/src/extension",
     "contributes": {
-        "languages": [{
-            "id": "volt",
-            "extensions": [".volt"],
-            "aliases": ["Volt"],
-            "configuration": "./volt.configuration.json"
-        }],
-        "grammars": [{
-            "language": "volt",
-            "scopeName": "text.volt",
-            "path": "./volt.tmLanguage"
-        }],
+        "languages": [
+            {
+                "id": "volt",
+                "extensions": [
+                    ".volt"
+                ],
+                "aliases": [
+                    "Volt"
+                ],
+                "configuration": "./volt.configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "volt",
+                "scopeName": "text.volt",
+                "path": "./volt.tmLanguage"
+            }
+        ],
         "configuration": {
             "type": "object",
             "title": "Volt Language Server configuration",
             "properties": {
                 "volt.pathToVolta": {
-                    "type": ["string", "null"],
+                    "type": [
+                        "string",
+                        "null"
+                    ],
                     "default": null,
                     "description": "Specifies the folder path to the Volt compiler root."
                 },
                 "volt.pathToWatt": {
-                    "type": ["string", "null"],
+                    "type": [
+                        "string",
+                        "null"
+                    ],
                     "default": null,
                     "description": "Specifies the folder path to the Watt root."
                 },
                 "volt.additionalPackagePaths": {
-                    "type": ["object", "null"],
+                    "type": [
+                        "object",
+                        "null"
+                    ],
                     "default": null,
                     "description": "Supply additional paths to the src folder of additional packages."
                 }
@@ -60,7 +77,6 @@
         "mocha": "^2.3.3",
         "@types/node": "^6.0.40",
         "@types/mocha": "^2.2.32"
-        
     },
     "dependencies": {
         "vscode-languageclient": "^3.0.4"
