@@ -633,7 +633,6 @@ public:
 	ir.FunctionType copy(ir.FunctionType old)
 	{
 		auto n = new ir.FunctionType(old);
-		n.ret = copyType(n.ret);
 		foreach (ref type; n.params) {
 			type = copyType(type);
 		}
