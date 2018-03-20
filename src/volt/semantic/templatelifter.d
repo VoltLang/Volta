@@ -149,6 +149,9 @@ public:
 				f.tokensBody = f.tokensBody.dup();
 			}
 		}
+
+		f.templateName = currentTemplateDefinitionName;
+		f.templateType = currentInstanceType;
 	}
 
 	override ir.FunctionParam lift(ir.FunctionParam old)

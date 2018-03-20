@@ -4468,12 +4468,17 @@ void doResolveType(Context ctx, ref ir.Type type,
 		auto tr = cast(ir.TypeReference)type;
 
 		if (tr.type is null) {
-			auto store = lookup(ctx.lp, ctx.current, tr.id);
-			if (store !is null && store.node.nodeType == ir.NodeType.TemplateInstance) {
-				extypeTemplateInstance(ctx, store.node.toTemplateInstanceFast());
-				tr.type = lookupType(ctx.lp, ctx.current, tr.id);
+			if (ctx.currentFunction !is null && tr.id.identifiers.length == 1 &&
+				tr.id.identifiers[0].value == ctx.currentFunction.templateName) {
+				tr.type = ctx.currentFunction.templateType;
 			} else {
-				tr.type = lookupType(ctx.lp, ctx.current, tr.id, store);
+				auto store = lookup(ctx.lp, ctx.current, tr.id);
+				if (store !is null && store.node.nodeType == ir.NodeType.TemplateInstance) {
+					extypeTemplateInstance(ctx, store.node.toTemplateInstanceFast());
+					tr.type = lookupType(ctx.lp, ctx.current, tr.id);
+				} else {
+					tr.type = lookupType(ctx.lp, ctx.current, tr.id, store);
+				}
 			}
 		}
 		assert(tr.type !is null);

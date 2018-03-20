@@ -699,7 +699,7 @@ ir.Type ensureType(ir.Scope _scope, ref in Location loc, string name, ir.Store s
 		if (store.node.nodeType == ir.NodeType.Variable) {
 			throw makeExpressionForNew(/*#ref*/loc, name);
 		} else {
-			throw makeError(/*#ref*/loc, format("expected type, got '%s'.", name));
+			throw makeError(/*#ref*/loc, format("expected type, got '%s'.", ir.nodeToString(store.node.nodeType)));
 		}
 	}
 

@@ -406,6 +406,11 @@ public:
 	bool isLoweredScopeSuccess;
 	//! @}
 
+	//! If this function was in a larger template (e.g. a struct), what was that templates name?
+	string templateName;
+	//! If this function was in a larger template (e.g. a struct), what was the instantiated type?
+	Type templateType;
+
 public:
 	this() { super(NodeType.Function); }
 
@@ -448,6 +453,8 @@ public:
 		this.isLoweredScopeExit = old.isLoweredScopeExit;
 		this.isLoweredScopeFailure = old.isLoweredScopeFailure;
 		this.isLoweredScopeSuccess = old.isLoweredScopeSuccess;
+		this.templateName = old.templateName;
+		this.templateType = old.templateType;
 	}
 
 	// These also check parsedFoo because artificial functions may lack the tokens.
