@@ -4332,6 +4332,16 @@ void actualizeFunction(Context ctx, ir.Function func)
 		if (func.tokensIn !is null || func.tokensOut !is null || func.tokensBody !is null) {
 			ctx.lp.postParse.transformChildBlocks(func);
 		}
+
+		if (func.templateType !is null && func.templateName !is null) {
+			/* If the function is in a template named S (say), make sure S resolves to the instantiated
+			 * (e.g. S!i32) and not the raw template instance.
+			 */
+			ir.Status status;
+			if (func.parsedBody !is null) func.parsedBody.myScope.addType(func.templateType, func.templateName, /*#out*/status);
+			if (func.parsedOut !is null) func.parsedOut.myScope.addType(func.templateType, func.templateName, /*#out*/status);
+			if (func.parsedIn !is null) func.parsedIn.myScope.addType(func.templateType, func.templateName, /*#out*/status);
+		}
 	}
 
 	addVarArgsVarsIfNeeded(ctx.lp, func);
@@ -4468,17 +4478,12 @@ void doResolveType(Context ctx, ref ir.Type type,
 		auto tr = cast(ir.TypeReference)type;
 
 		if (tr.type is null) {
-			if (ctx.currentFunction !is null && tr.id.identifiers.length == 1 &&
-				tr.id.identifiers[0].value == ctx.currentFunction.templateName) {
-				tr.type = ctx.currentFunction.templateType;
+			auto store = lookup(ctx.lp, ctx.current, tr.id);
+			if (store !is null && store.node.nodeType == ir.NodeType.TemplateInstance) {
+				extypeTemplateInstance(ctx, store.node.toTemplateInstanceFast());
+				tr.type = lookupType(ctx.lp, ctx.current, tr.id);
 			} else {
-				auto store = lookup(ctx.lp, ctx.current, tr.id);
-				if (store !is null && store.node.nodeType == ir.NodeType.TemplateInstance) {
-					extypeTemplateInstance(ctx, store.node.toTemplateInstanceFast());
-					tr.type = lookupType(ctx.lp, ctx.current, tr.id);
-				} else {
-					tr.type = lookupType(ctx.lp, ctx.current, tr.id, store);
-				}
+				tr.type = lookupType(ctx.lp, ctx.current, tr.id, store);
 			}
 		}
 		assert(tr.type !is null);
