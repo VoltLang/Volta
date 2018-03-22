@@ -9,7 +9,7 @@ import watt.text.string : indexOf, replace;
 import watt.text.format : format;
 import watt.path : dirSeparator, baseName, dirName;
 import watt.conv : toLower;
-import watt.io.file : searchDir;
+import watt.io.file : searchDir, SearchStatus;
 
 import volt.errors;
 import volt.interfaces;
@@ -129,8 +129,9 @@ void filterArgs(Arg[] args, ref string[] files, VersionSet ver, Settings setting
 		final switch (arg.kind) with (Arg.Kind) {
 		case File:
 			auto barg = baseName(arg.arg);
-			void addFile(string s) {
+			SearchStatus addFile(string s) {
 				files ~= s;
+				return SearchStatus.Continue;
 			}
 
 			if (barg.length > 2 && barg[0 .. 2] == "*.") {
