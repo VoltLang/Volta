@@ -350,9 +350,9 @@ public:
 class SwitchCase : Node
 {
 public:
-	Exp firstExp;
-	Exp secondExp;
-	Exp[] exps;
+	Exp firstExp, originalFirstExp;
+	Exp secondExp, originalSecondExp;
+	Exp[] exps, originalExps;
 	bool isDefault;
 
 	BlockStatement statements;
@@ -364,8 +364,11 @@ public:
 	{
 		super(NodeType.SwitchCase, old);
 		this.firstExp = old.firstExp;
+		this.originalFirstExp = old.originalFirstExp;
 		this.secondExp = old.secondExp;
+		this.originalSecondExp = old.originalSecondExp;
 		this.exps = old.exps.dup();
+		this.originalExps = old.originalExps.dup();
 		this.isDefault = old.isDefault;
 
 		this.statements = old.statements;

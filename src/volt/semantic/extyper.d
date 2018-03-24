@@ -13,6 +13,7 @@ import watt.text.sink : StringSink;
 import ir = volta.ir;
 import volta.util.util;
 import volta.util.copy;
+import volta.util.dup;
 
 import volt.errors;
 import volt.interfaces;
@@ -3812,12 +3813,15 @@ void extypeSwitchStatement(Context ctx, ref ir.Node n)
 		}
 
 		if (_case.firstExp !is null) {
+			_case.originalFirstExp = _case.firstExp;
 			replaceWithHashIfNeeded(ctx, ss, _case, /*#ref*/arrayCases, i, condVar, /*#ref*/toRemove, /*#ref*/_case.firstExp);
 		}
 		if (_case.secondExp !is null) {
+			_case.originalSecondExp = _case.secondExp;
 			replaceWithHashIfNeeded(ctx, ss, _case, /*#ref*/arrayCases, i, condVar, /*#ref*/toRemove, /*#ref*/_case.secondExp);
 		}
 		if (_case.exps.length > 0) {
+			_case.originalExps = _case.exps.dup();
 			replaceExpsWithHashIfNeeded(ctx, ss, _case, /*#ref*/arrayCases, i, condVar, /*#ref*/_case.exps);
 		}
 	}
@@ -3864,7 +3868,7 @@ void extypeSwitchStatement(Context ctx, ref ir.Node n)
 		throw makeFinalSwitchBadCoverage(ss);
 	}
 
-	replaceGotoCase(ctx, ss);
+	replaceGotoCase(ctx, ss, arraySwitch);
 
 	foreach_reverse(wexp; ss.withs) {
 		ctx.popWith(wexp);
@@ -5133,10 +5137,11 @@ void tagLiteralType(ir.Exp exp, ir.Type type)
 class GotoReplacer : NullVisitor
 {
 public:
-	this(Context ctx, ir.SwitchStatement ss)
+	this(Context ctx, ir.SwitchStatement ss, bool isArraySwitch)
 	{
 		this.ctx = ctx;
 		this.ss = ss;
+		this.isArraySwitch = isArraySwitch;
 	}
 
 	override Status enter(ir.GotoStatement gs)
@@ -5154,12 +5159,16 @@ public:
 				continue;
 			}
 			auto gs = node.toGotoStatementFast();
-			if (!gs.isCase || gs.exp is null || !isArray(getExpType(gs.exp))) {
+			auto theExp = gs.exp;
+			if (theExp is null) {
+				theExp = originalExp;
+			}
+			if (!gs.isCase || theExp is null || !isArraySwitch) {
 				continue;
 			}
 			auto cv = buildExpReference(/*#ref*/ss.condVar.loc, ss.condVar, ss.condVar.name);
-			auto assign = buildExpStat(/*#ref*/node.loc, buildAssign(/*#ref*/node.loc, cv, copyExp(gs.exp)));
-			gs.exp = buildConstantUint(/*#ref*/gs.exp.loc, getExpHash(ctx, ss, gs.exp));
+			auto assign = buildExpStat(/*#ref*/node.loc, buildAssign(/*#ref*/node.loc, cv, copyExp(theExp)));
+			gs.exp = buildConstantUint(/*#ref*/theExp.loc, getExpHash(ctx, ss, theExp));
 			node = buildBlockStat(/*#ref*/node.loc, gs, bs.myScope, assign, gs);
 			return ContinueParent;
 		}
@@ -5167,20 +5176,23 @@ public:
 	}
 
 public:
-	ir.Exp exp;
+	ir.Exp exp;  // The next case (processed).
+	ir.Exp originalExp;  // The next case (unprocessed).
 	Context ctx;
 	ir.SwitchStatement ss;
+	bool isArraySwitch;
 }
 
 /*!
  * Given a switch statement, replace 'goto case' with an explicit
  * jump to the next case, or hash the expression if needed.
  */
-void replaceGotoCase(Context ctx, ir.SwitchStatement ss)
+void replaceGotoCase(Context ctx, ir.SwitchStatement ss, bool arraySwitch)
 {
-	auto gr = new GotoReplacer(ctx, ss);
+	auto gr = new GotoReplacer(ctx, ss, arraySwitch);
 	foreach_reverse (sc; ss.cases) {
 		accept(sc.statements, gr);
+		gr.originalExp = sc.originalExps.length > 0 ? sc.originalExps[0] : sc.originalFirstExp;
 		gr.exp = sc.exps.length > 0 ? sc.exps[0] : sc.firstExp;
 	}
 }
