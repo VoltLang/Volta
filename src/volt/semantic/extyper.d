@@ -4594,7 +4594,7 @@ void doResolveAA(Context ctx, ref ir.Type type)
 		needsConstness = true;
 	}
 
-	auto prim = cast(ir.PrimitiveType)base;
+	auto prim = cast(ir.PrimitiveType)realType(base);
 	if (prim !is null &&
 	    (!needsConstness || (prim.isConst || prim.isImmutable))) {
 		return;
