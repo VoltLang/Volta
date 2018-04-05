@@ -82,7 +82,7 @@ Instead of attaching the access (``public``, ``private``, ``protected``, etc) di
 
 Naming
 ======
-Modules and packages are all lower case. Types start with an upper case, and each word is distinguished with an upper case letter. Functions and variables are the same, but they start with a lower case letter.::
+Modules and packages are all lower case. Types and named constants start with an upper case letter, and each word is distinguished with an upper case letter. Functions and variables are the same, but they start with a lower case letter.::
 
     module test;
 
