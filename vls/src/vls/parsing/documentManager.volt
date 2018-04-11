@@ -115,8 +115,10 @@ private:
 
 	fn parse(uri: string)
 	{
+		path := getPathFromUri(uri);
+		tomlPath := getBatteryToml(path);
 		txt := getText(uri);
-		src := new Source(txt, getPathFromUri(uri), cast(ErrorSink)errSink);
+		src := new Source(txt, path, cast(ErrorSink)errSink);
 		mod: ir.Module;
 		tw := lex(src);
 		if (tw.lastAdded.type != TokenType.End) {
