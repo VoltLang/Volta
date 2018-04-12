@@ -24,6 +24,7 @@ import vls.parsing.postparse;
 import vls.parsing.documentManager;
 import vls.util.simpleCache;
 import vls.semantic.symbolGathererVisitor;
+import build = vls.build;
 
 class VoltLanguageServer : ErrorSink
 {
@@ -34,6 +35,7 @@ public:
 	documentManager: DocumentManager;
 	importCache: SimpleImportCache;
 	sgv: SymbolGathererVisitor;
+	buildManager: build.Manager;
 	retval: i32;
 
 	pathToVolta: string;
@@ -43,8 +45,10 @@ public:
 public:
 	this(argZero: string, modulePath: string)
 	{
+		execDir := getExecDir();
+		buildManager = new build.Manager(execDir);
 		this.modulePath = modulePath;
-		settings = new Settings(argZero, getExecDir());
+		settings = new Settings(argZero, execDir);
 		settings.warningsEnabled = true;
 		documentManager = new DocumentManager(settings, this);
 		sgv = new SymbolGathererVisitor();

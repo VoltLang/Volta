@@ -45,7 +45,7 @@ fn getUriFromPath(path: string) string
 fn getBatteryToml(path: string) string
 {
 	basePath := watt.dirName(path);
-	while (basePath !is null) {
+	while (basePath.length > 0) {
 		if (watt.endsWith(basePath, "/src") || watt.endsWith(basePath, "\\src")) {
 			parentDirectory(ref basePath);
 			btoml := watt.concatenatePath(basePath, "battery.toml");
