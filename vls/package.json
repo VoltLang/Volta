@@ -63,7 +63,13 @@
                     "description": "Supply additional paths to the src folder of additional packages."
                 }
             }
-        }
+        },
+        "commands": [
+            {
+                "command":  "vls.buildProject",
+                "title": "Build Project With Battery"
+            }
+        ]
     },
     "scripts": {
         "vscode:prepublish": "tsc -p ./",

@@ -59,7 +59,7 @@ fn responseInitialized(ro: RequestObject) string
 					},
 					\"renameProvider\": false,
 					\"executeCommandProvider\": {
-						\"commands\": []
+						\"commands\": [\"vls.buildProject\"]
 					}
 				}
 			}
