@@ -1,8 +1,8 @@
 /*#D*/
-// Copyright © 2010-2011, Bernard Helyer.  All rights reserved.
-// Copyright © 2010, Jakob Ovrum.  All rights reserved.
-// Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
-// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+// Copyright 2010, Jakob Ovrum.
+// Copyright 2010-2018, Bernard Helyer.
+// Copyright 2012-2018, Jakob Bornecrantz.
+// SPDX-License-Identifier: BSL-1.0
 module volta.ir.tokenstream;
 
 public import volta.ir.token;

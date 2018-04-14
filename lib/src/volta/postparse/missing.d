@@ -1,7 +1,7 @@
 /*#D*/
-// Copyright © 2012-2017, Bernard Helyer.
-// Copyright © 2012-2017, Jakob Bornecrantz.
-// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+// Copyright 2012-2017, Bernard Helyer.
+// Copyright 2012-2017, Jakob Bornecrantz.
+// SPDX-License-Identifier: BSL-1.0
 /*!
  * Module containing the @ref MissingDeps class.
  *

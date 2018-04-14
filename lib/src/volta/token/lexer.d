@@ -1,6 +1,6 @@
 /*#D*/
-// Copyright © 2010-2017, Bernard Helyer.  All rights reserved.
-// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+// Copyright 2010-2017, Bernard Helyer.
+// SPDX-License-Identifier: BSL-1.0
 module volta.token.lexer;
 
 import core.c.time : time, localtime;

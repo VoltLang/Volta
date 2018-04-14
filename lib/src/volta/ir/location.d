@@ -1,7 +1,7 @@
 /*#D*/
-// Copyright © 2012-2015, Jakob Bornecrantz.  All rights reserved.
-// Copyright © 2010-2015, Bernard Helyer.  All rights reserved.
-// Copyright © 2011, Jakob Ovrum.  All rights reserved.
+// Copyright 2011, Jakob Ovrum.
+// Copyright 2010-2015, Bernard Helyer.
+// Copyright 2012-2015, Jakob Bornecrantz.
 // See copyright notice in src/diode/license.volt (BOOST ver. 1.0).
 module volta.ir.location;
 

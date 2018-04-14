@@ -1,6 +1,6 @@
 /*#D*/
-// Copyright © 2018, Jakob Bornecrantz.  All rights reserved.
-// See copyright notice in src/volt/licence.d (BOOST ver 1.0).
+// Copyright 2018, Jakob Bornecrantz.
+// SPDX-License-Identifier: BSL-1.0
 module volta.util.stack;
 
 import ir = volta.ir;

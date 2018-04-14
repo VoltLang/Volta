@@ -1,6 +1,6 @@
 /*#D*/
-// Copyright © 2018, Bernard Helyer.  All rights reserved.
-// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+// Copyright 2018, Bernard Helyer.
+// SPDX-License-Identifier: BSL-1.0
 //! Code for getting a module from a scope.
 module volta.util.moduleFromScope;
 
