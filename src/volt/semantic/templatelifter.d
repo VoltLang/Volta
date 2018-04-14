@@ -415,7 +415,7 @@ public:
 		panicAssert(ti, func.myScope.parent.parent !is null);
 		panicAssert(ti, func.myScope.parent.parent.node !is null);
 		if (func.myScope.parent.parent.node.nodeType != ir.NodeType.Module) {
-			throw makeError(/*#ref*/func.loc, "non top level template function");
+			throw makeError(/*#ref*/func.loc, "non top level template function.");
 		}
 
 		// Handle arguements.
@@ -434,7 +434,9 @@ public:
 	void templateLiftStruct(ir.Scope _current, LanguagePass lp, ir.TemplateInstance ti)
 	{
 		auto current = ti.myScope;
-		assert(ti.explicitMixin);
+		if (!ti.explicitMixin) {
+			throw makeError(/*#ref*/ti.loc, "only mixin templates are supported.");
+		}
 		auto td = getNewTemplateDefinition(current, lp, ti);
 		auto defstruct = td._struct;
 		panicAssert(ti, defstruct !is null);
