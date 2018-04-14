@@ -1,5 +1,5 @@
-// Copyright © 2015, Bernard Helyer.  All rights reserved.
-// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+// Copyright 2015, Bernard Helyer.
+// SPDX-License-Identifier: BSL-1.0
 module watt.math.random;
 
 public import std.random : uniform;

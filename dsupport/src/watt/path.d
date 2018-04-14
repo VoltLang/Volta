@@ -1,6 +1,6 @@
-// Copyright © 2011, Bernard Helyer.  All rights reserved.
-// Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
-// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+// Copyright 2011, Bernard Helyer.
+// Copyright 2012, Jakob Bornecrantz.
+// SPDX-License-Identifier: BSL-1.0
 module watt.path;
 
 public import std.random : uniform;
