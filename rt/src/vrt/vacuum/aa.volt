@@ -1,4 +1,4 @@
-// Copyright © 2016-2017, Jakob Bornecrantz.
+// Copyright 2016-2017, Jakob Bornecrantz.
 // See copyright notice in src/charge/license.volt (BOOST ver. 1.0).
 module vrt.vacuum.aa;
 

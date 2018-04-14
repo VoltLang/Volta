@@ -1,5 +1,5 @@
-// Copyright © 2014-2017, Bernard Helyer.
-// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+// Copyright 2014-2017, Bernard Helyer.
+// SPDX-License-Identifier: BSL-1.0
 module vrt.vacuum.hash;
 
 

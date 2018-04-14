@@ -1,3 +1,7 @@
+; Copyright 2016-2017, Bernard Helyer
+; Copyright 2016-2017, Jakob Bornecrantz.
+; SPDX-License-Identifier: BSL-1.0
+
 global __vrt_push_registers
 
 section .text

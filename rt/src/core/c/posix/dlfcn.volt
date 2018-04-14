@@ -1,4 +1,6 @@
-// Copyright © 2017, Bernard Helyer.  All rights reserved.
+// Copyright 2017, Bernard Helyer.
+// SPDX-License-Identifier: BSL-1.0
+// Written by hand from documentation.
 //! `dlopen` and friends.
 module core.c.posix.dlfcn;
 

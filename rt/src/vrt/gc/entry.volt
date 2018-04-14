@@ -1,7 +1,7 @@
-// Copyright © 2012-2017, Jakob Bornecrantz.
-// Copyright © 2013-2017, David Herberth.
-// Copyright © 2016-2017, Bernard Helyer.
-// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+// Copyright 2012-2017, Jakob Bornecrantz.
+// Copyright 2013-2017, David Herberth.
+// Copyright 2016-2017, Bernard Helyer.
+// SPDX-License-Identifier: BSL-1.0
 module vrt.gc.entry;
 
 import core.rt.gc : Stats, AllocDg;

@@ -1,5 +1,5 @@
-// Copyright © 2016, Jakob Bornecrantz.
-// See copyright notice in src/volt/licence.volt (BOOST ver 1.0).
+// Copyright 2016, Jakob Bornecrantz.
+// SPDX-License-Identifier: BSL-1.0
 /*!
  * @ingroup cbind
  * @ingroup posixbind

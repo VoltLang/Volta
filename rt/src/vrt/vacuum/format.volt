@@ -1,6 +1,6 @@
-// Copyright © 2013-2017, Bernard Helyer.
-// Copyright © 2013-2017, Jakob Bornecrantz.
-// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+// Copyright 2013-2017, Bernard Helyer.
+// Copyright 2013-2017, Jakob Bornecrantz.
+// SPDX-License-Identifier: BSL-1.0
 module vrt.vacuum.format;
 
 import core.rt.format : Sink, SinkArg;

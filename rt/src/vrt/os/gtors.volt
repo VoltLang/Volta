@@ -1,5 +1,5 @@
-// Copyright © 2015-2017, Jakob Bornecrantz.
-// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+// Copyright 2015-2017, Jakob Bornecrantz.
+// SPDX-License-Identifier: BSL-1.0
 module vrt.os.gtors;
 
 extern @mangledName("__V_global_ctors") global globalConstructors: fn()[];

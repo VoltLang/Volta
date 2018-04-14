@@ -1,5 +1,5 @@
-// Copyright © 2012-2016, Jakob Bornecrantz.
-// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+// Copyright 2012-2016, Jakob Bornecrantz.
+// SPDX-License-Identifier: BSL-1.0
 //! LLVM intrinsic function definitions.
 module core.compiler.llvm;
 

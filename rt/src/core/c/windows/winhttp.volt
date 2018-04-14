@@ -1,5 +1,6 @@
-// Copyright © 2016-2017, Jakob Bornecrantz.  All rights reserved.
-// See copyright notice in src/watt/license.volt (BOOST ver. 1.0).
+// Copyright 2016-2017, Jakob Bornecrantz.
+// SPDX-License-Identifier: BSL-1.0
+// Written by hand from documentation.
 /*!
  * @ingroup cbind
  * @ingroup winbind

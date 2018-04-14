@@ -1,5 +1,6 @@
-// Copyright © 2013-2017, Bernard Helyer.
-// See copyright notice in src/watt/licence.volt (BOOST ver 1.0).
+// Copyright 2013-2017, Bernard Helyer.
+// SPDX-License-Identifier: BSL-1.0
+// Written by hand from documentation.
 /*!
  * Windows bindings.
  *

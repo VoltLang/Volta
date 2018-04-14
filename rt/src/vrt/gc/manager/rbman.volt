@@ -1,6 +1,6 @@
-// Copyright © 2016-2017, Bernard Helyer.
-// Copyright © 2016-2017, Jakob Bornecrantz.
-// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+// Copyright 2016-2017, Bernard Helyer.
+// Copyright 2016-2017, Jakob Bornecrantz.
+// SPDX-License-Identifier: BSL-1.0
 /*!
  * This module holds code that mangages allocating memory for extents and
  * memory for the objects in the extents. This manager uses a RBTree to search
