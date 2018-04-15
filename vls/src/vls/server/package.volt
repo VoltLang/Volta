@@ -170,6 +170,9 @@ private:
 		case "workspace/didChangeConfiguration":
 			updateConfiguration(ro);
 			return CONTINUE_LISTENING;
+		case "workspace/executeCommand":
+			handleCommand(ro);
+			return CONTINUE_LISTENING;
 		default:
 			if (ro.methodName.length > 2 && ro.methodName[0 .. 2] == "$/") {
 				/* "If a server or client receives notifications or requests starting
@@ -195,19 +198,8 @@ private:
 		}
 		voltKey := settingsKey.lookupObjectKey("volt");
 
-		fn getStringKey(keyName: string) string
-		{
-			if (voltKey.hasObjectKey(keyName)) {
-				vkey := voltKey.lookupObjectKey(keyName);
-				if (vkey.type() == json.DomType.STRING) {
-					return vkey.str();
-				}
-			}
-			return "";
-		}
-
-		pathToVolta = getStringKey("pathToVolta");
-		pathToWatt  = getStringKey("pathToWatt");
+		pathToVolta = getStringKey(voltKey, "pathToVolta");
+		pathToWatt  = getStringKey(voltKey, "pathToWatt");
 
 		if (voltKey.hasObjectKey("additionalPackagePaths")) {
 			vkey := voltKey.lookupObjectKey("additionalPackagePaths");
@@ -223,16 +215,93 @@ private:
 		}
 	}
 
+	fn handleCommand(ro: RequestObject)
+	{
+		command := getStringKey(ro.params, "command");
+		if (command is null) {
+//			send(responseError(ro, "expected 'command' string field"));
+			return;
+		}
+		switch (command) {
+		case "vls.buildProject":
+			buildProject(ro);
+			break;
+		default:
+//			send(responseError(ro, new "unknown command '${command}'"));
+			break;
+		}
+	}
+
 	fn handleTextDocument(ro: RequestObject, out uri: string) ir.Module
 	{
 		err := parseTextDocument(ro.params, out uri);
 		if (err !is null) {
-			send(responseError(ro, err));
+//			send(responseError(ro, err));
 			return null;
 		}
 		mod: ir.Module;
 		postParse: PostParsePass;
 		documentManager.getModule(uri, out mod, out postParse);
 		return mod;
+	}
+
+private:
+	// Commands.
+
+	fn buildProject(ro: RequestObject)
+	{
+		arguments := getArrayKey(ro.params, "arguments");
+		if (arguments.length == 0) {
+			error.writeln("a");error.flush();
+			return;
+		}
+		if (arguments[0].type() != json.DomType.OBJECT) {
+			error.writeln("b");error.flush();
+			return;
+		}
+		fspath := getStringKey(arguments[0], "fsPath");
+		//projectRoot := getBatteryToml(fspath);
+		//if (projectRoot is null) {
+		//	error.writeln("c");error.flush();
+		//	return;
+		//}
+		error.writeln(fspath);
+		error.flush();
+	}
+
+private:
+	// Helper JSON functions.
+
+	fn validateKey(root: json.Value, field: string, t: json.DomType, ref val: json.Value) bool
+	{
+		if (root.type() != json.DomType.OBJECT ||
+			!root.hasObjectKey(field)) {
+			return false;
+		}
+		val = root.lookupObjectKey(field);
+		if (val.type() != t) {
+			return false;
+		}
+		return true;
+	}
+
+	fn getStringKey(root: json.Value, field: string) string
+	{
+		val: json.Value;
+		retval := validateKey(root, field, json.DomType.STRING, ref val);
+		if (!retval) {
+			return null;
+		}
+		return val.str();
+	}
+
+	fn getArrayKey(root: json.Value, field: string) json.Value[]
+	{
+		val: json.Value;
+		retval := validateKey(root, field, json.DomType.ARRAY, ref val);
+		if (!retval) {
+			return null;
+		}
+		return val.array();
 	}
 }

@@ -69,7 +69,13 @@
                 "command":  "vls.buildProject",
                 "title": "Build Project With Battery"
             }
-        ]
+        ],
+        "menus": {
+            "explorer/context":[{
+                "command": "vls.buildProject",
+                "when": "explorerResourceIsFolder"
+            }]
+        }
     },
     "scripts": {
         "vscode:prepublish": "tsc -p ./",
