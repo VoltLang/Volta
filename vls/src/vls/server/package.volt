@@ -252,20 +252,17 @@ private:
 	{
 		arguments := getArrayKey(ro.params, "arguments");
 		if (arguments.length == 0) {
-			error.writeln("a");error.flush();
 			return;
 		}
 		if (arguments[0].type() != json.DomType.OBJECT) {
-			error.writeln("b");error.flush();
 			return;
 		}
 		fspath := getStringKey(arguments[0], "fsPath");
-		//projectRoot := getBatteryToml(fspath);
-		//if (projectRoot is null) {
-		//	error.writeln("c");error.flush();
-		//	return;
-		//}
-		error.writeln(fspath);
+		projectRoot := getBatteryToml(fspath);
+		if (projectRoot is null) {
+			return;
+		}
+		error.writeln(new "THE PATH '${projectRoot}'");
 		error.flush();
 	}
 
