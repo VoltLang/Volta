@@ -65,6 +65,10 @@ public:
 		}
 	}
 
+	fn spawnBuild(tomlPath: string)
+	{
+	}
+
 	/*!
 	 * Try and get the latest version of battery available.
 	 *

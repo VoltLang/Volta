@@ -258,12 +258,11 @@ private:
 			return;
 		}
 		fspath := getStringKey(arguments[0], "fsPath");
-		projectRoot := getBatteryToml(fspath);
-		if (projectRoot is null) {
+		btoml := getBatteryToml(fspath);
+		if (btoml is null) {
 			return;
 		}
-		error.writeln(new "THE PATH '${projectRoot}'");
-		error.flush();
+		buildManager.spawnBuild(btoml);
 	}
 
 private:
