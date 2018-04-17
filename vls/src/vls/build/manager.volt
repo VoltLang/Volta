@@ -2,9 +2,12 @@ module vls.build.manager;
 
 import core.rt.thread;
 
-import watt = [watt.io, watt.path, watt.text.path, watt.text.string, watt.http];
+import watt = [watt.io, watt.path, watt.text.path, watt.text.string, 
+	watt.http, watt.process.pipe];
 import file = watt.io.file;
 import semver = watt.text.semver;
+
+import vls.build.build;
 
 //! The directory in which the battery executable exists.
 enum BatteryBin    = "batteryBin";
@@ -18,7 +21,7 @@ version (Windows) {
  * Handles the build environment.
  *
  * Manager is in charge of retrieving battery,
- * and launching battery.
+ * and launching builds.
  */
 class Manager
 {
@@ -28,7 +31,6 @@ public:
 
 private:
 	mSetupThread: vrt_thread*;
-	//! Temporary for netget.
 	mBatteryPath: string;
 
 public:
@@ -65,10 +67,15 @@ public:
 		}
 	}
 
-	fn spawnBuild(tomlPath: string)
+	fn spawnBuild(tomlPath: string) Build
 	{
+		if (mBatteryPath is null) {
+			return null;
+		}
+		return new Build(mBatteryPath, tomlPath);
 	}
 
+private:
 	/*!
 	 * Try and get the latest version of battery available.
 	 *
