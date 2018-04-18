@@ -23,7 +23,6 @@ version (Volt) {
 } else {
 
 	import std.process : Pid, spawnProcess;
-	import std.format : format;
 
 	version (Windows) {
 		import core.sys.windows.windows : HANDLE, DWORD, FALSE,
