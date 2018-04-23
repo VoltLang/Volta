@@ -64,9 +64,10 @@ private:
 	// Spawn the build. Blocks until completion.
 	fn doBuild()
 	{
-		getOutput(mBatteryPath, mConfigArgs);
+		configOutput := getOutput(mBatteryPath, mConfigArgs);
 		mBuildOutput = getOutput(mBatteryPath, mBuildArgs);
 		mCompleted = true;
+		io.error.writeln(configOutput);
 		io.error.writeln(mBuildOutput);
 		io.error.flush();
 	}

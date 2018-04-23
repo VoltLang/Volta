@@ -35,7 +35,10 @@ public:
 	documentManager: DocumentManager;
 	importCache: SimpleImportCache;
 	sgv: SymbolGathererVisitor;
+
 	buildManager: build.Manager;
+	pendingBuild: build.Build;
+
 	retval: i32;
 
 	pathToVolta: string;
@@ -262,7 +265,7 @@ private:
 		if (btoml is null) {
 			return;
 		}
-		buildManager.spawnBuild(btoml);
+		pendingBuild = buildManager.spawnBuild(btoml);
 	}
 
 private:
