@@ -1630,7 +1630,7 @@ void lowerBuiltin(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.BuiltinE
 		auto newExp = buildNewSmart(/*#ref*/loc, type, length);
 		auto var = buildVariableAnonSmart(lp.errSink, /*#ref*/loc, current, sexp, type, newExp);
 		auto evar = buildExpReference(/*#ref*/loc, var, var.name);
-		auto sliceL = buildSlice(/*#ref*/loc, evar, copyExp(start), copyExp(end));
+		auto sliceL = buildSlice(/*#ref*/loc, evar);
 		auto sliceR = buildSlice(/*#ref*/loc, value, copyExp(start), copyExp(end));
 
 		sexp.exp = buildAssign(/*#ref*/loc, sliceL, sliceR);
