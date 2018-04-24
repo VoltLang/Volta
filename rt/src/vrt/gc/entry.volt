@@ -6,7 +6,7 @@ module vrt.gc.entry;
 
 import core.rt.gc : Stats, AllocDg;
 import core.rt.format : vrt_format_readable_size;
-import vrt.ext.stdc : calloc, free, getenv;
+import vrt.ext.stdc : calloc, free, getenv, printf;
 import vrt.gc.design;
 import vrt.gc.sbrk;
 import vrt.gc.arena;
