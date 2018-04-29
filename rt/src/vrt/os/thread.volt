@@ -13,6 +13,7 @@ version (!Metal):
 
 import vrt.gc.util;
 
+import core.exception;
 import core.rt.misc: vrt_run_local_ctors, vrt_run_local_dtors;
 import core.rt.gc: vrt_gc_init, allocDg, vrt_gc_get_alloc_dg, vrt_gc_shutdown;
 
@@ -37,9 +38,6 @@ version (Windows) {
 	}
 }
 
-/*!
- * An opaque data type representing a thread.
- */
 struct vrt_thread
 {
 private:
@@ -55,6 +53,76 @@ private:
 	 * they may be collected.
 	 */
 	mAdaptorPointer, mDelegatePointer: void*;
+}
+
+struct vrt_mutex
+{
+private:
+	version (Windows) {
+		mHandle: HANDLE;
+	} else {
+		mMutex: pthread_mutex_t;
+	}
+}
+
+extern (C) fn vrt_mutex_new() vrt_mutex*
+{
+	mutex := new vrt_mutex;
+	version (Windows) {
+		mutex.mHandle = CreateMutexA(null, FALSE, null);
+		if (mutex.mHandle is null) {
+			throw new Exception("could not create mutex");
+		}
+	} else {
+		rv := pthread_mutex_init(&mutex.mMutex, null);
+		if (rv != 0) {
+			throw new Exception("could not create mutex");
+		}
+	}
+	return mutex;
+}
+
+extern (C) fn vrt_mutex_trylock(mutex: vrt_mutex*) bool
+{
+	version (Windows) {
+		return waitForSingleObject(mutex.mHandle, 0);
+	} else {
+		return pthread_mutex_trylock(&mutex.mMutex) == 0;
+	}
+}
+
+extern (C) fn vrt_mutex_lock(mutex: vrt_mutex*) bool
+{
+	version (Windows) {
+		return waitForSingleObject(mutex.mHandle, INFINITE);
+	} else {
+		rv := pthread_mutex_lock(&mutex.mMutex);
+		if (rv != 0) {
+			throw new Exception("error in acquiring mutex lock");
+		}
+		return true;
+	}
+}
+
+extern (C) fn vrt_mutex_unlock(mutex: vrt_mutex*)
+{
+	version (Windows) {
+		ReleaseMutex(mutex.mHandle);
+	} else {
+		rv := pthread_mutex_unlock(&mutex.mMutex);
+		if (rv != 0) {
+			throw new Exception("error in unlocking mutex");
+		}
+	}
+}
+
+extern (C) fn vrt_mutex_delete(mutex: vrt_mutex*)
+{
+	version (Windows) {
+		CloseHandle(mutex.mHandle);
+	} else {
+		pthread_mutex_destroy(&mutex.mMutex);
+	}
 }
 
 struct FunctionAdaptor
@@ -157,6 +225,21 @@ fn vrt_get_stack_bottom() void*
 }
 
 private:
+
+version (Windows) fn waitForSingleObject(handle: HANDLE, timeout: DWORD) bool
+{
+	rv := WaitForSingleObject(handle, timeout);
+	switch (rv) {
+	case WAIT_OBJECT_0:
+		return true;
+	case WAIT_TIMEOUT:
+		return false;
+	case WAIT_ABANDONED:
+		throw new Exception("mutex has been abandoned (a thread terminated holding the lock)");
+	default:
+		throw new Exception("an error occured trying to gain ownership of a mutex");
+	}
+}
 
 version (Windows) extern (Windows) fn __vrt_thread_proc(ptr: LPVOID) DWORD
 {
