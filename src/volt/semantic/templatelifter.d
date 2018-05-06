@@ -5,6 +5,7 @@
 module volt.semantic.templatelifter;
 
 import watt.text.format;
+import watt.io.std;
 
 import ir = volta.ir;
 import ircopy = volta.util.copy;
@@ -424,9 +425,10 @@ public:
 		// Touch up store.
 		auto store = current.parent.getStore(ti.instanceName);
 		panicAssert(ti, store !is null);
-		panicAssert(ti, store.node is ti);
-		panicAssert(ti, store.kind == ir.Store.Kind.TemplateInstance);
-		store.functions = [func];
+		panicAssert(ti, store.templateInstances.length > 0);
+		panicAssert(ti, store.kind == ir.Store.Kind.TemplateInstance ||
+			store.kind == ir.Store.Kind.Function);
+		store.functions ~= func;
 		store.kind = ir.Store.Kind.Function;
 		store.name = ti.instanceName;
 	}
@@ -470,7 +472,8 @@ public:
 		// Touch up scope.
 		auto store = current.parent.getStore(ti.instanceName);
 		panicAssert(ti, store !is null);
-		panicAssert(ti, store.node is ti);
+		panicAssert(ti, store.templateInstances.length == 1);
+		panicAssert(ti, store.templateInstances[0] is ti);
 		panicAssert(ti, store.kind == ir.Store.Kind.TemplateInstance);
 		store.node = s;
 		store.kind = ir.Store.Kind.Type;
@@ -504,14 +507,19 @@ private:
 
 				// Make sure that the alias we got is a type.
 				assert(a.store.myAlias !is null);
-				auto typeAlias = a.store.myAlias.node !is null;
+				auto typeAlias = a.store.myAlias.node !is null ||
+					a.store.myAlias.templateInstances.length > 0;
 				if (typeAlias) {
-					if (a.store.myAlias.node.nodeType != ir.NodeType.TemplateInstance) {
+					if (a.store.myAlias.templateInstances.length == 0) {
 						auto type = cast(ir.Type)a.store.myAlias.node;
 						typeAlias = type !is null;
 					} else {
-						auto _ti = a.store.myAlias.node.toTemplateInstanceFast();
-						typeAlias = _ti.kind != ir.TemplateKind.Function;
+						if (a.store.myAlias.templateInstances.length == 0) {
+							typeAlias = false;
+						} else {
+							auto _ti = a.store.myAlias.templateInstances[0];
+							typeAlias = _ti.kind != ir.TemplateKind.Function;
+						}
 					}
 				}
 				if (!typeAlias) {

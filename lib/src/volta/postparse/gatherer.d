@@ -136,7 +136,14 @@ void checkTemplateRedefinition(ir.Scope current, string name, ErrorSink errSink)
 {
 	auto store = current.getStore(name);
 	if (store !is null && (store.kind == ir.Store.Kind.Type || store.kind == ir.Store.Kind.TemplateInstance)) {
-		errorMsg(errSink, store.node, format("'%s' is already defined in this scope.", name));
+		ir.Node node;
+		if (store.kind == ir.Store.Kind.Type) {
+			node = store.node;
+		} else {
+			assert(store.templateInstances.length > 0);
+			node = store.templateInstances[0];
+		}
+		errorMsg(errSink, node, format("'%s' is already defined in this scope.", name));
 		return;
 	}
 }
@@ -322,6 +329,11 @@ void gather(ir.Scope current, ir.TemplateDefinition td, Where where, ErrorSink e
 void gather(ir.Scope current, ir.TemplateInstance ti, Where where, ErrorSink errSink)
 {
 	checkInvalid(current, ti, ti.instanceName, errSink);
+	auto store = current.getStore(ti.instanceName);
+	if (store !is null && ti.kind == ir.TemplateKind.Function) {
+		store.addTemplateInstance(ti);
+		return;
+	}
 	checkTemplateRedefinition(current, ti.instanceName, errSink);
 	ir.Status status;
 	current.addTemplateInstance(ti, /*#out*/status);

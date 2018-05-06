@@ -121,6 +121,11 @@ public:
 	Alias[] aliases;
 
 	/*!
+	 * The template instances for a TemplateInstance store.
+	 */
+	TemplateInstance[] templateInstances;
+
+	/*!
 	 * Store pointed to by alias.
 	 */
 	Store myAlias;
@@ -215,8 +220,8 @@ public:
 	{
 		this();
 		this.parent = parent;
-		this.node = ti;
 		this.kind = Kind.TemplateInstance;
+		addTemplateInstance(ti);
 		this.name = ti.instanceName;
 	}
 
@@ -227,6 +232,12 @@ public:
 	this()
 	{
 		this.mUniqueId = mUniqueIdCounter++;
+	}
+
+	void addTemplateInstance(TemplateInstance templateInstance)
+	{
+		assert(kind == Kind.TemplateInstance);
+		templateInstances ~= templateInstance;
 	}
 
 	void markAliasResolved(Store s)

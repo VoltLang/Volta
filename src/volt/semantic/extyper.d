@@ -155,9 +155,12 @@ ir.Type handleStore(Context ctx, string ident, ref ir.Exp exp, ir.Store store,
 		return handleEnumDeclarationStore(ctx, ident, /*#ref*/exp, store, child,
 		                                  parent, via);
 	case TemplateInstance:
-		auto ti = store.node.toTemplateInstanceFast();
-		if (ti.kind == ir.TemplateKind.Function) {
-			extypeTemplateInstance(ctx, ti);
+		foreach (ti; store.templateInstances) {
+			if (ti.kind == ir.TemplateKind.Function) {
+				extypeTemplateInstance(ctx, ti);
+			}
+		}
+		if (store.templateInstances.length > 0) {
 			goto case Function;
 		}
 		goto case;
@@ -4483,8 +4486,10 @@ void doResolveType(Context ctx, ref ir.Type type,
 
 		if (tr.type is null) {
 			auto store = lookup(ctx.lp, ctx.current, tr.id);
-			if (store !is null && store.node.nodeType == ir.NodeType.TemplateInstance) {
-				extypeTemplateInstance(ctx, store.node.toTemplateInstanceFast());
+			if (store !is null && store.kind == ir.Store.Kind.TemplateInstance) {
+				foreach (ti; store.templateInstances) {
+					extypeTemplateInstance(ctx, ti);
+				}
 				tr.type = lookupType(ctx.lp, ctx.current, tr.id);
 			} else {
 				tr.type = lookupType(ctx.lp, ctx.current, tr.id, store);
