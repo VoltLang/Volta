@@ -114,6 +114,12 @@ public override:
 			removeLine(ref tokens, targetLocation.line);
 			p := new volta.Parser(mServer.settings, mServer);
 			func.parsedBody = p.parseBlockStatement(ref tokens);
+			if (func.tokensIn !is null) {
+				func.parsedIn = p.parseBlockStatement(ref func.tokensIn);
+			}
+			if (func.tokensOut !is null) {
+				func.parsedOut = p.parseBlockStatement(ref func.tokensBody);
+			}
 			mPostParse.transformChildBlocks(func);
 		}
 		mFunctionStack.push(func);
