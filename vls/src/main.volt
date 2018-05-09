@@ -40,8 +40,8 @@ fn printUsage()
 {
 	watt.writeln("VLS: Volt Language Server");
 	watt.writeln("usage: vls [options]");
-	watt.writeln("VLS is intended to be run by a language client, like");
-	watt.writeln("Visual Studio Code. These options are for VLS debugging purposes.");
+	watt.writeln("VLS is not intended to be run by hand.");
+	watt.writeln("These options are for internal purposes.");
 	watt.writeln("");
 	watt.writeln("--input <file>       specify a file to read input from, rather than stdin.");
 	watt.writeln("--modulePath <path>  specify a path to look for import modules from.");
