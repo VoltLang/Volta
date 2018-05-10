@@ -1328,6 +1328,8 @@ void postfixIdentifierUFCS(Context ctx, ref ir.Exp exp,
 
 ir.Type builtInField(Context ctx, ref ir.Exp exp, ir.Exp child, ir.Type type, string field)
 {
+	type = realType(type);
+
 	bool isPointer;
 	auto ptr = cast(ir.PointerType) type;
 	if (ptr !is null) {
@@ -4688,7 +4690,7 @@ void resolveEnum(LanguagePass lp, ir.Enum e)
 	// Do some extra error checking on out.
 	scope (success) {
 		if (!isIntegral(e.base)) {
-			throw panic(e, "only integral enums are supported.");
+			checkNonIntegralEnum(lp, e);
 		}
 	}
 
@@ -4704,6 +4706,26 @@ void resolveEnum(LanguagePass lp, ir.Enum e)
 	assert(first !is null && first.assign !is null);
 	auto type = getExpType(first.assign);
 	e.base = realType(copyTypeSmart(/*#ref*/e.loc, type));
+}
+
+/*!
+ * Check that a non integral enum is valid.
+ *
+ * A non integral enum is an enum with a base that is
+ * not integral. It is only valid if:
+ *   - Every member of the enum has an explicit assign set.
+ * If that condition is not met, this function
+ * will generate an error.
+ */
+void checkNonIntegralEnum(LanguagePass lp, ir.Enum e)
+{
+	panicAssert(e, !isIntegral(e.base));
+
+	foreach (member; e.members) {
+		if (member.assign is null) {
+			throw makeNonIntegralEnumNullAssign(/*#ref*/member.loc);
+		}
+	}
 }
 
 /*!

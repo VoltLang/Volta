@@ -1014,12 +1014,12 @@ void lowerCat(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp bi
 	auto leftType = getExpType(binOp.left);
 	auto rightType = getExpType(binOp.right);
 
-	auto arrayType = cast(ir.ArrayType)leftType;
+	auto arrayType = cast(ir.ArrayType)realType(leftType);
 	auto elementType = rightType;
 	bool reversed = false;
 	if (arrayType is null) {
 		reversed = true;
-		arrayType = cast(ir.ArrayType) rightType;
+		arrayType = cast(ir.ArrayType)realType(rightType);
 		elementType = leftType;
 		if (arrayType is null) {
 			throw panic(/*#ref*/exp.loc, "array concat failure");
@@ -1066,7 +1066,7 @@ void lowerCatAssign(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.Bi
 	// Currently realType is not needed here, but if it ever was
 	// needed remember to realType leftArrayType.base as well,
 	// since realType will remove enum's as well.
-	auto rightType = getExpType(binOp.right);
+	auto rightType = realType(getExpType(binOp.right));
 
 	if (typesEqual(realType(rightType, true), realType(leftArrayType.base, true))) {
 		// T[] ~ T
@@ -1092,7 +1092,7 @@ void lowerCmp(LanguagePass lp, ir.Module thisModule, ref ir.Exp exp, ir.BinOp bi
 	auto loc = binOp.loc;
 
 	auto leftType = getExpType(binOp.left);
-	auto leftArrayType = cast(ir.ArrayType)leftType;
+	auto leftArrayType = cast(ir.ArrayType)realType(leftType);
 	if (leftArrayType is null) {
 		return;
 	}

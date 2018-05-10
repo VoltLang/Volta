@@ -61,6 +61,12 @@ CompilerException makeEmitLLVMNoLink(string file = __FILE__, const int line = __
  *
  */
 
+CompilerException makeNonIntegralEnumNullAssign(ref in Location loc,
+	string file = __FILE__, const int line = __LINE__)
+{
+	return makeError(/*#ref*/loc, "member of non integral enum has no assign expression.");
+}
+
 CompilerException makeRedefinesReservedIdentifier(ref in Location loc, string ident,
 	string file = __FILE__, const int line = __LINE__)
 {
