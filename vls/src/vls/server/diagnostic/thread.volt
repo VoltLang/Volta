@@ -36,13 +36,13 @@ global ~this()
 //! Generate an error.
 fn addError(uri: string, ref in loc: ir.Location, message: string, batteryRoot: string = null)
 {
-	addDiagnostic(uri, ref loc, message, batteryRoot, lsp.DIAGNOSTIC_ERROR);
+	addDiagnostic(uri, ref loc, message, batteryRoot, lsp.DiagnosticLevel.Error);
 }
 
 //! Generate a warning.
 fn addWarning(uri: string, ref in loc: ir.Location, message: string, batteryRoot: string = null)
 {
-	addDiagnostic(uri, ref loc, message, batteryRoot, lsp.DIAGNOSTIC_WARNING);
+	addDiagnostic(uri, ref loc, message, batteryRoot, lsp.DiagnosticLevel.Warning);
 }
 
 //! Clear all messages associated with uri and no battery root.

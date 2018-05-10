@@ -352,7 +352,7 @@ fn getFieldCompletionItems(theServer: server.VoltLanguageServer, parentModule: i
 		}
 	}
 
-	completionList.exclude(lsp.COMPLETION_MODULE);
+	completionList.exclude(lsp.CompletionType.Module);
 	return completionList.jsonArray();
 }
 
@@ -544,13 +544,13 @@ fn isBuiltin(ref completionList: semantic.CompletionList, ref cache: server.Simp
 	case ArrayType:
 		array := vtype.toArrayTypeFast();
 		lengthDoc := semantic.getDocumentationTitle(ref store.node.loc, "length: size_t");
-		completionList.add("length", lsp.COMPLETION_FIELD, lengthDoc);
+		completionList.add("length", lsp.CompletionType.Field, lengthDoc);
 		ss: watt.StringSink;
 		ss.sink("ptr: ");
 		ss.sink(printer.printType(array.base));
 		ss.sink("*");
 		ptrDoc := semantic.getDocumentationTitle(ref store.node.loc, ss.toString());
-		completionList.add("ptr", lsp.COMPLETION_FIELD, ptrDoc);
+		completionList.add("ptr", lsp.CompletionType.Field, ptrDoc);
 		return true;
 	default:
 		return false;

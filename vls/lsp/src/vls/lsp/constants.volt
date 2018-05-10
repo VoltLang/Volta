@@ -1,64 +1,97 @@
 module vls.lsp.constants;
 
-enum STOP_LISTENING = false;
-enum CONTINUE_LISTENING = true;
+/* @todo this should work
+enum Listening : bool
+{
+	Stop = false,
+	Continue = true,
+}*/
+struct Listening
+{
+	enum Stop = false;
+	enum Continue = true;
+}
 
-enum LENGTH_HEADER = "Content-Length";
-enum TYPE_HEADER = "Content-Type";
+/* @todo this should work
+enum Header : string
+{
+	Length = "Content-Length",
+	Type   = "Content-Type",
+}*/
+struct Header
+{
+	enum Length = "Content-Length";
+	enum Type   = "Content-Type";
+}
 
-enum ERROR_SERVER_END = -32000;
-enum ERROR_INVALID_PARAMS = -32602;
+enum ErrorCode
+{
+	ServerEnd     = -32000,
+	InvalidParams = -32602,
+}
 
-enum SYMBOL_FILE = 1;
-enum SYMBOL_MODULE = 2;
-enum SYMBOL_NAMESPACE = 3;
-enum SYMBOL_PACKAGE = 4;
-enum SYMBOL_CLASS = 5;
-enum SYMBOL_METHOD = 6;
-enum SYMBOL_PROPERTY = 7;
-enum SYMBOL_FIELD = 8;
-enum SYMBOL_CONSTRUCTOR = 9;
-enum SYMBOL_ENUM = 10;
-enum SYMBOL_INTERFACE = 11;
-enum SYMBOL_FUNCTION = 12;
-enum SYMBOL_VARIABLE = 13;
-enum SYMBOL_CONSTANT = 14;
-enum SYMBOL_STRING = 15;
-enum SYMBOL_NUMBER = 16;
-enum SYMBOL_BOOLEAN = 17;
-enum SYMBOL_ARRAY = 18;
+enum SymbolType
+{
+	File = 1,
+	Module,
+	Namespace,
+	Package,
+	Class,
+	Method,
+	Property,
+	Field,
+	Constructor,
+	Enum,
+	Interface,
+	Function,
+	Variable,
+	Constant,
+	String,
+	Number,
+	Boolean,
+	Array,
+}
 
-enum DIAGNOSTIC_ERROR    = 1;
-enum DIAGNOSTIC_WARNING  = 2;
-enum DIAGNOSTIC_INFO     = 3;
-enum DIAGNOSTIC_HINT     = 4;
+enum DiagnosticLevel
+{
+	Error = 1,
+	Warning,
+	Info,
+	Hint,
+}
 
-enum FILE_CHANGED_CREATED = 1;
-enum FILE_CHANGED_CHANGED = 2;
-enum FILE_CHANGED_DELETED = 3;
+enum FileChanged
+{
+	Created = 1,
+	Changed,
+	Deleted,
+}
 
-enum COMPLETION_TEXT = 1;
-enum COMPLETION_METHOD = 2;
-enum COMPLETION_FUNCTION = 3;
-enum COMPLETION_CONSTRUCTOR = 4;
-enum COMPLETION_FIELD = 5;
-enum COMPLETION_VARIABLE = 6;
-enum COMPLETION_CLASS = 7;
-enum COMPLETION_INTERFACE = 8;
-enum COMPLETION_MODULE = 9;
-enum COMPLETION_PROPERTY = 10;
-enum COMPLETION_UNIT = 11;
-enum COMPLETION_VALUE = 12;
-enum COMPLETION_ENUM = 13;
-enum COMPLETION_KEYWORD = 14;
-enum COMPLETION_SNIPPET = 15;
-enum COMPLETION_COLOUR = 16;
-enum COMPLETION_FILE = 17;
-enum COMPLETION_REFERENCE = 18;
-enum COMPLETION_FOLDER = 19;
-enum COMPLETION_ENUMMEMBER = 20;
-enum COMPLETION_CONSTANT = 21;
-enum COMPLETION_STRUCT = 22;
-enum COMPLETION_EVENT = 23;
-enum COMPLETION_OPERATOR = 24;
-enum COMPLETION_TYPEPARAMETER = 25;
+enum CompletionType
+{
+	Text = 1,
+	Method,
+	Function,
+	Constructor,
+	Field,
+	Variable,
+	Class,
+	Interface,
+	Module,
+	Property,
+	Unit,
+	Value,
+	Enum,
+	Keyword,
+	Snippet,
+	Colour,
+	File,
+	Reference,
+	Folder,
+	EnumMember,
+	Constant,
+	Struct,
+	Event,
+	Operator,
+	TypeParameter,
+}

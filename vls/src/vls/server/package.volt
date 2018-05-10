@@ -81,7 +81,7 @@ public:
 
 	override void onWarning(ref in ir.Location loc, string msg, string file, int line)
 	{
-		send(notificationDiagnostic(getUriFromPath(loc.filename), loc, msg, DIAGNOSTIC_WARNING));
+		send(notificationDiagnostic(getUriFromPath(loc.filename), loc, msg, DiagnosticLevel.Warning));
 	}
 
 	override void onError(string msg, string file, int line)
@@ -92,7 +92,7 @@ public:
 
 	override void onError(ref in ir.Location loc, string msg, string file, int line)
 	{
-		send(notificationDiagnostic(getUriFromPath(loc.filename), loc, msg, DIAGNOSTIC_ERROR));
+		send(notificationDiagnostic(getUriFromPath(loc.filename), loc, msg, DiagnosticLevel.Error));
 	}
 
 	override void onPanic(string msg, string file, int line)
@@ -103,7 +103,7 @@ public:
 
 	override void onPanic(ref in ir.Location loc, string msg, string file, int line)
 	{
-		send(notificationDiagnostic(getUriFromPath(loc.filename), loc, msg, DIAGNOSTIC_ERROR));
+		send(notificationDiagnostic(getUriFromPath(loc.filename), loc, msg, DiagnosticLevel.Error));
 	}
 
 private:
@@ -112,77 +112,77 @@ private:
 		switch (ro.methodName) {
 		case "initialize":
 			send(responseInitialized(ro));
-			return CONTINUE_LISTENING;
+			return Listening.Continue;
 		case "initialized":
 			assert(ro.notification);
-			return CONTINUE_LISTENING;
+			return Listening.Continue;
 		case "shutdown":
 			retval = 0;
 			send(responseShutdown(ro));
-			return CONTINUE_LISTENING;
+			return Listening.Continue;
 		case "exit":
-			return STOP_LISTENING;
+			return Listening.Stop;
 		case "textDocument/didOpen":
 		case "textDocument/didChange":
 		case "textDocument/didSave":
 			documentManager.update(ro);
-			return CONTINUE_LISTENING;
+			return Listening.Continue;
 		case "textDocument/documentSymbol":
 			uri: string;
 			mod := handleTextDocument(ro, out uri);
 			if (mod is null) {
 				send(responseNull(ro));
-				return CONTINUE_LISTENING;
+				return Listening.Continue;
 			}
 			reply := responseSymbolInformation(this, ro, uri, mod);
 			send(reply);
-			return CONTINUE_LISTENING;
+			return Listening.Continue;
 		case "textDocument/completion":
 			uri: string;
 			mod := handleTextDocument(ro, out uri);
 			if (mod is null) {
 				send(responseNull(ro));
-				return CONTINUE_LISTENING;
+				return Listening.Continue;
 			}
 			reply := responseCompletionInformation(this, ro, uri, mod);
 			send(reply);
-			return CONTINUE_LISTENING;
+			return Listening.Continue;
 		case "textDocument/signatureHelp":
 			uri: string;
 			mod := handleTextDocument(ro, out uri);
 			if (mod is null) {
 				send(responseNull(ro));
-				return CONTINUE_LISTENING;
+				return Listening.Continue;
 			}
 			reply := responseSignatureHelp(this, ro, uri, mod);
 			send(reply);
-			return CONTINUE_LISTENING;
+			return Listening.Continue;
 		case "textDocument/definition":
 			uri: string;
 			mod := handleTextDocument(ro, out uri);
 			if (mod is null) {
 				send(responseNull(ro));
-				return CONTINUE_LISTENING;
+				return Listening.Continue;
 			}
 			reply := responseGotoDefinition(this, ro, uri, mod);
 			send(reply);
-			return CONTINUE_LISTENING;
+			return Listening.Continue;
 		case "textDocument/hover":
 			uri: string;
 			mod := handleTextDocument(ro, out uri);
 			if (mod is null) {
 				send(responseNull(ro));
-				return CONTINUE_LISTENING;
+				return Listening.Continue;
 			}
 			reply := responseHover(this, ro, uri, mod);
 			send(reply);
-			return CONTINUE_LISTENING;
+			return Listening.Continue;
 		case "workspace/didChangeConfiguration":
 			updateConfiguration(ro);
-			return CONTINUE_LISTENING;
+			return Listening.Continue;
 		case "workspace/executeCommand":
 			handleCommand(ro);
-			return CONTINUE_LISTENING;
+			return Listening.Continue;
 		default:
 			if (ro.methodName.length > 2 && ro.methodName[0 .. 2] == "$/") {
 				/* "If a server or client receives notifications or requests starting
@@ -190,10 +190,10 @@ private:
 				 * These are mostly $/cancelRequest -- we're single threaded, so we can't
 				 * do anything to that effect.
 				 */
-				return CONTINUE_LISTENING;
+				return Listening.Continue;
 			}
 			// TODO: Return error
-			return CONTINUE_LISTENING;
+			return Listening.Continue;
 		}
 	}
 

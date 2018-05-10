@@ -55,18 +55,18 @@ fn send(msg: string)
 
 	version (Windows) {
 		// TODO: Mirror the changes to the unix code and test etc.
-		output.writefln("%s: %s", LENGTH_HEADER, msg.length);
+		output.writefln("%s: %s", Header.Length, msg.length);
 		output.writeln("");
 		output.write(msg);
 		version (OutputLog) outlog.write(msg);
 		output.flush();
 		version (OutputLog) outlog.flush();
 	} else {
-		printf("%s: %d\r\n\r\n", LENGTH_HEADER.ptr, msg.length);
+		printf("%s: %d\r\n\r\n", Header.Length.ptr, msg.length);
 		printf("%s", toStringz(msg));
 		fflush(stdout);
 		version (OutputLog) {
-			outlog.writef("%s: %s\r\n", LENGTH_HEADER, msg.length);
+			outlog.writef("%s: %s\r\n", Header.Length, msg.length);
 			outlog.write("\r\n");
 			outlog.write(msg);
 			outlog.flush();

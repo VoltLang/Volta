@@ -63,7 +63,7 @@ fn parseDidChangeWatchedFiles(param: Value, out uris: string[]) Error
 		if (type.type() != DomType.LONG) {
 			return Error.invalidParams(new "changes element ${i} type key is not an integer");
 		}
-		if (type.integer() != FILE_CHANGED_CREATED || type.integer() != FILE_CHANGED_CHANGED) {
+		if (type.integer() != FileChanged.Created || type.integer() != FileChanged.Changed) {
 			continue;
 		}
 		if (!element.hasObjectKey("uri")) {

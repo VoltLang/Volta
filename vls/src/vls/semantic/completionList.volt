@@ -145,20 +145,20 @@ fn getItemKind(store: ir.Store) i32
 {
 	switch (store.kind) with (ir.Store.Kind) {
 	case Scope, MultiScope:
-		return lsp.COMPLETION_MODULE;
+		return lsp.CompletionType.Module;
 	default:
 		break;
 	}
 	switch (store.node.nodeType) with (ir.NodeType) {
-	case Function: return lsp.COMPLETION_FUNCTION;
-	case FunctionParam: return lsp.COMPLETION_VARIABLE;
+	case Function: return lsp.CompletionType.Function;
+	case FunctionParam: return lsp.CompletionType.Variable;
 	case Variable:
 		var := store.node.toVariableFast();
 		if (var.storage == ir.Variable.Storage.Field) {
-			return lsp.COMPLETION_FIELD;
+			return lsp.CompletionType.Field;
 		} else {
-			return lsp.COMPLETION_VARIABLE;
+			return lsp.CompletionType.Variable;
 		}
-	default: return lsp.COMPLETION_TEXT;
+	default: return lsp.CompletionType.Text;
 	}
 }

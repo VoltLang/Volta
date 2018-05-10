@@ -44,7 +44,7 @@ version (InputLog) {
 fn listen(handle: dg(LspMessage) bool, inputStream: InputStream) bool
 {
 	if (inputStream.eof()) {
-		return STOP_LISTENING;
+		return Listening.Stop;
 	}
 	buf: char[];
 	newline: bool;
@@ -111,10 +111,10 @@ fn parseHeader(text: char[], ref msg: LspMessage)
 		throw new Exception("headers are separated by a ':'");
 	}
 	switch (portions[0]) {
-	case LENGTH_HEADER:
+	case Header.Length:
 		msg.contentLength = cast(size_t)toUlong(strip(portions[1]));
 		break;
-	case TYPE_HEADER:
+	case Header.Type:
 		// We honestly don't care. Just assume UTF-8, no implementation uses anything else.
 		break;
 	default:

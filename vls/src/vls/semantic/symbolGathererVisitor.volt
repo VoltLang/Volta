@@ -16,7 +16,7 @@ struct Symbol
 {
 	name: string;
 	loc: Location;
-	type: i32;  //< See the SYMBOL_ enums in vls.lsp.constants.
+	type: SymbolType;
 	containerName: string;
 
 	fn jsonString(uri: string, sink: Sink)
@@ -76,7 +76,7 @@ private:
 public:
 	override fn enter(mod: ir.Module) Status
 	{
-		addSymbol(mod, mod.name.toString(), SYMBOL_MODULE);
+		addSymbol(mod, mod.name.toString(), SymbolType.Module);
 		return Status.Continue;
 	}
 
@@ -86,21 +86,21 @@ public:
 		name := func.name;
 		switch (func.kind) with (ir.Function.Kind) {
 		case Member:
-			kind = SYMBOL_METHOD;
+			kind = SymbolType.Method;
 			break;
 		case Constructor:
-			kind = SYMBOL_CONSTRUCTOR;
+			kind = SymbolType.Constructor;
 			name = "this";
 			break;
 		case Destructor:
 			name = "~this";
-			kind = SYMBOL_FUNCTION;
+			kind = SymbolType.Function;
 			break;
 		default:
 			if (func.type.isProperty) {
-				kind = SYMBOL_PROPERTY;
+				kind = SymbolType.Property;
 			} else {
-				kind = SYMBOL_FUNCTION;
+				kind = SymbolType.Function;
 			}
 			break;
 		}
@@ -110,7 +110,7 @@ public:
 
 	override fn enter(strct: ir.Struct) Status
 	{
-		addSymbol(strct, strct.name, SYMBOL_CLASS);
+		addSymbol(strct, strct.name, SymbolType.Class);
 		parents ~= strct.name;
 		return Status.Continue;
 	}
@@ -124,7 +124,7 @@ public:
 
 	override fn enter(clss: ir.Class) Status
 	{
-		addSymbol(clss, clss.name, SYMBOL_CLASS);
+		addSymbol(clss, clss.name, SymbolType.Class);
 		parents ~= clss.name;
 		return Status.Continue;
 	}
@@ -138,7 +138,7 @@ public:
 
 	override fn enter(intrfc: ir._Interface) Status
 	{
-		addSymbol(intrfc, intrfc.name, SYMBOL_INTERFACE);
+		addSymbol(intrfc, intrfc.name, SymbolType.Interface);
 		parents ~= intrfc.name;
 		return Status.Continue;
 	}
@@ -155,11 +155,11 @@ public:
 		kind: i32;
 		switch (var.storage) with (ir.Variable.Storage) {
 		case Field:
-			kind = SYMBOL_FIELD;
+			kind = SymbolType.Field;
 			break;
 		case Global:
 		case Local:
-			kind = SYMBOL_VARIABLE;
+			kind = SymbolType.Variable;
 			break;
 		default:
 			return Status.Continue;
@@ -170,7 +170,7 @@ public:
 
 	override fn enter(enm: ir.EnumDeclaration) Status
 	{
-		addSymbol(enm, enm.name, SYMBOL_ENUM);
+		addSymbol(enm, enm.name, SymbolType.Enum);
 		return Status.Continue;
 	}
 
