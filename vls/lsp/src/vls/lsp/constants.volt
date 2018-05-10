@@ -1,27 +1,15 @@
 module vls.lsp.constants;
 
-/* @todo this should work
-enum Listening : bool
+enum Listening
 {
 	Stop = false,
 	Continue = true,
-}*/
-struct Listening
-{
-	enum Stop = false;
-	enum Continue = true;
 }
 
-/* @todo this should work
-enum Header : string
+enum Header
 {
 	Length = "Content-Length",
 	Type   = "Content-Type",
-}*/
-struct Header
-{
-	enum Length = "Content-Length";
-	enum Type   = "Content-Type";
 }
 
 enum ErrorCode
