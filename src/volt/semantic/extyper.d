@@ -3862,7 +3862,7 @@ void extypeSwitchStatement(Context ctx, ref ir.Node n)
 		void checkOriginal(ir.Exp imitator, ir.Exp original)
 		{
 			if (conditionType !is originalConditionType && imitator !is original) {
-				if (!willConvert(ctx, originalConditionType, original)) {
+				if (!willConvert(ctx, originalConditionType, original, IgnoreConst)) {
 					auto rtype = getExpType(original);
 					throw makeBadImplicitCast(original, rtype, originalConditionType);
 				}

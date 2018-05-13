@@ -57,7 +57,7 @@ void checkAndDoConvert(Context ctx, ir.Type type, ref ir.Exp exp)
 /*!
  * Returns true if the given expression's type converts into type.
  */
-bool willConvert(Context ctx, ir.Type type, ir.Exp exp)
+bool willConvert(Context ctx, ir.Type type, ir.Exp exp, bool ignoreConst = false)
 {
 	auto prim = cast(ir.PrimitiveType)realType(type);
 	if (prim !is null && fitsInPrimitive(ctx.lp.target, prim, exp)) {
@@ -66,7 +66,7 @@ bool willConvert(Context ctx, ir.Type type, ir.Exp exp)
 	auto rtype = getExpType(exp);
 	assert(type !is null);
 	assert(rtype !is null);
-	return willConvert(type, rtype);
+	return willConvert(type, rtype, ignoreConst);
 }
 
 enum IgnoreConst = true;
