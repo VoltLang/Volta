@@ -3503,7 +3503,7 @@ void addExp(Context ctx, ir.SwitchStatement ss, ir.Exp element, ref ir.Exp exp, 
 
 uint getExpHash(Context ctx, ir.SwitchStatement ss, ir.Exp exp)
 {
-	auto etype = getExpType(exp);
+	auto etype = realType(getExpType(exp));
 	panicAssert(ss, isArray(etype));
 	uint h;
 	bool dummy;
@@ -3545,7 +3545,7 @@ void replaceWithHashIfNeeded(Context ctx, ir.SwitchStatement ss, ir.SwitchCase _
 		return;
 	}
 
-	if (!isArray(getExpType(exp))) {
+	if (!isArray(realType(getExpType(exp)))) {
 		return;
 	}
 
