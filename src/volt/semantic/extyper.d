@@ -3675,6 +3675,7 @@ void extypeSwitchStatement(Context ctx, ref ir.Node n)
 	auto conditionType = extype(ctx, /*#ref*/ss.condition, Parent.NA);
 	auto originalCondition = ss.condition;
 	conditionType = realType(conditionType);
+	auto originalConditionType = conditionType;
 
 	foreach (ref wexp; ss.withs) {
 		extype(ctx, /*#ref*/wexp, Parent.NA);
@@ -3855,16 +3856,34 @@ void extypeSwitchStatement(Context ctx, ref ir.Node n)
 	}
 	size_t caseCount;
 	foreach (_case; ss.cases) {
+		/* If we've turned an array into a hash, make sure the original
+		 * case matches the original condition.
+		 */
+		void checkOriginal(ir.Exp imitator, ir.Exp original)
+		{
+			if (conditionType !is originalConditionType && imitator !is original) {
+				if (!willConvert(ctx, originalConditionType, original)) {
+					auto rtype = getExpType(original);
+					throw makeBadImplicitCast(original, rtype, originalConditionType);
+				}
+			}
+		}
+	
 		if (_case.firstExp !is null) {
 			caseCount++;
 			checkAndDoConvert(ctx, conditionType, /*#ref*/_case.firstExp);
+			checkOriginal(_case.firstExp, _case.originalFirstExp);
 		}
 		if (_case.secondExp !is null) {
 			caseCount++;
 			checkAndDoConvert(ctx, conditionType, /*#ref*/_case.secondExp);
+			checkOriginal(_case.secondExp, _case.originalSecondExp);
 		}
-		foreach (ref exp; _case.exps) {
+		foreach (i, ref exp; _case.exps) {
 			checkAndDoConvert(ctx, conditionType, /*#ref*/exp);
+			if (_case.originalExps !is null) {
+				checkOriginal(exp, _case.originalExps[i]);
+			}
 		}
 		caseCount += _case.exps.length;
 	}
