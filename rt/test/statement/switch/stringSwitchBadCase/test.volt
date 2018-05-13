@@ -1,5 +1,5 @@
 //T macro:expect-failure
-//T has-passed:no
+//T check:cannot implicitly convert
 module main;
 
 enum Enum
