@@ -65,14 +65,14 @@ public:
 	this(requestValue: json.Value)
 	{
 		// Is this request value an object?
-		checkType(requestValue, json.DomType.OBJECT, "rpc request value");
+		checkType(requestValue, json.DomType.Object, "rpc request value");
 		// Does it have a valid jsonrpc?
 		jsonrpc := checkKey(requestValue, "jsonrpc", "rpc request value");
-		checkType(jsonrpc, json.DomType.STRING, "rpc request's jsonrpc");
+		checkType(jsonrpc, json.DomType.String, "rpc request's jsonrpc");
 		check(jsonrpc.str() == "2.0", "jsonrpc has wrong value");
 		// Get the method name.
 		method := checkKey(requestValue, "method", "rpc request value");
-		checkType(method, json.DomType.STRING, "rpc request's method");
+		checkType(method, json.DomType.String, "rpc request's method");
 		methodName = method.str();
 		// Get the parameters.
 		if (requestValue.hasObjectKey("params")) {
@@ -112,14 +112,14 @@ private fn checkType(val: json.Value, type: json.DomType, name: string)
 	}
 	msg: string;
 	final switch (type) with (json.DomType) {
-	case NULL: msg = new "${name} is not a null type"; break;
-	case BOOLEAN: msg = new "${name} is not a boolean type"; break;
-	case DOUBLE: msg = new "${name} is not a double type"; break;
-	case LONG: msg = new "${name} is not a long type"; break;
-	case ULONG: msg = new "${name} is not a ulong type"; break;
-	case STRING: msg = new "${name} is not a string type"; break;
-	case OBJECT: msg = new "${name} is not a object type"; break;
-	case ARRAY: msg = new "${name} is not a array type"; break;
+	case Null: msg = new "${name} is not a null type"; break;
+	case Boolean: msg = new "${name} is not a boolean type"; break;
+	case Double: msg = new "${name} is not a double type"; break;
+	case Long: msg = new "${name} is not a long type"; break;
+	case Ulong: msg = new "${name} is not a ulong type"; break;
+	case String: msg = new "${name} is not a string type"; break;
+	case Object: msg = new "${name} is not a object type"; break;
+	case Array: msg = new "${name} is not a array type"; break;
 	}
 	throw new RpcException(msg);
 }

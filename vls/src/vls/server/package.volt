@@ -213,11 +213,11 @@ private:
 
 		if (voltKey.hasObjectKey("additionalPackagePaths")) {
 			vkey := voltKey.lookupObjectKey("additionalPackagePaths");
-			if (vkey.type() == json.DomType.OBJECT) {
+			if (vkey.type() == json.DomType.Object) {
 				keys := vkey.keys();
 				foreach (key; keys) {
 					ckey := vkey.lookupObjectKey(key);
-					if (ckey.type() == json.DomType.STRING) {
+					if (ckey.type() == json.DomType.String) {
 						additionalPaths[key] = ckey.str();
 					}
 				}
@@ -264,7 +264,7 @@ private:
 		if (arguments.length == 0) {
 			return;
 		}
-		if (arguments[0].type() != json.DomType.OBJECT) {
+		if (arguments[0].type() != json.DomType.Object) {
 			return;
 		}
 		fspath := getStringKey(arguments[0], "fsPath");
@@ -280,7 +280,7 @@ private:
 
 	fn validateKey(root: json.Value, field: string, t: json.DomType, ref val: json.Value) bool
 	{
-		if (root.type() != json.DomType.OBJECT ||
+		if (root.type() != json.DomType.Object ||
 			!root.hasObjectKey(field)) {
 			return false;
 		}
@@ -294,7 +294,7 @@ private:
 	fn getStringKey(root: json.Value, field: string) string
 	{
 		val: json.Value;
-		retval := validateKey(root, field, json.DomType.STRING, ref val);
+		retval := validateKey(root, field, json.DomType.String, ref val);
 		if (!retval) {
 			return null;
 		}
@@ -304,7 +304,7 @@ private:
 	fn getArrayKey(root: json.Value, field: string) json.Value[]
 	{
 		val: json.Value;
-		retval := validateKey(root, field, json.DomType.ARRAY, ref val);
+		retval := validateKey(root, field, json.DomType.Array, ref val);
 		if (!retval) {
 			return null;
 		}
