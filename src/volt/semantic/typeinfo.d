@@ -128,6 +128,7 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 {
 	assert(type.nodeType != ir.NodeType.TypeReference);
 	assert(type.mangledName.length > 0);
+	type = realType(type);
 
 	resolveChildStructsAndUnions(lp, type);
 
@@ -166,7 +167,7 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 	literal.exps ~= mindirectionConstant;
 
 	// TypeInfo.classVtable and TypeInfo.classSize.
-	auto asClass = cast(ir.Class)type;
+	auto asClass = type.toClassChecked();
 	if (asClass !is null) {
 		literal.exps ~= buildCast(/*#ref*/type.loc, buildVoidPtr(/*#ref*/type.loc),
 				buildAddrOf(/*#ref*/type.loc, buildExpReference(/*#ref*/type.loc, asClass.initVariable, "__cinit")));
@@ -179,9 +180,9 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 	}
 
 	// TypeInfo.base.
-	auto asArray = cast(ir.ArrayType)type;
-	auto asPointer = cast(ir.PointerType)type;
-	auto asStaticArray = cast(ir.StaticArrayType)type;
+	auto asArray = type.toArrayTypeChecked();
+	auto asPointer = type.toPointerTypeChecked();
+	auto asStaticArray = type.toStaticArrayTypeChecked();
 	if (asArray !is null || asPointer !is null || asStaticArray !is null) {
 		ir.Type base;
 		if (asArray !is null) {
@@ -209,7 +210,7 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 	}
 
 	// TypeInfo.key and TypeInfo.value.
-	auto asAA = cast(ir.AAType)type;
+	auto asAA = type.toAATypeChecked();
 	if (asAA !is null) {
 		auto keyVar = getTypeInfo(lp, mod, asAA.key);
 		auto valVar = getTypeInfo(lp, mod, asAA.value);

@@ -709,7 +709,6 @@ bool typesEqual(ir.Type a, ir.Type b, bool ignoreStorage = false)
 
 int typeToRuntimeConstant(LanguagePass lp, ir.Scope current, ir.Type type)
 {
-	type = realType(type);
 	switch (type.nodeType) with (ir.NodeType) {
 	case Struct: return lp.TYPE_STRUCT;
 	case Class: return lp.TYPE_CLASS;
