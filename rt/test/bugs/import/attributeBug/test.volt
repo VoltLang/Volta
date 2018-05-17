@@ -1,5 +1,4 @@
 //T macro:import
-//T has-passed:no
 module test;
 
 import ol;
