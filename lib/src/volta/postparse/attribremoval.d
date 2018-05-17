@@ -632,14 +632,13 @@ protected:
 	{
 		auto ctx = new Context(node);
 
-		ctx.node = node;
-		ctx.oldStack = this.mAttrStack;
+		ctx.oldStack.append(mAttrStack);
 
 		if (inherit) {
 			ctx.stack.append(ctxTop.stack);
 			ctx.stack.append(mAttrStack);
 		} else {
-			ctx.stack = mAttrStack;
+			ctx.stack.append(mAttrStack);
 		}
 
 		mCtxStack.sink(ctx);
@@ -698,7 +697,7 @@ protected:
 		attrPush(attr);
 
 		// Take care of chaining.
-		while(attr.chain !is null) {
+		while (attr.chain !is null) {
 			attr = attr.chain;
 			attrPush(attr);
 			stack ~= attr;
