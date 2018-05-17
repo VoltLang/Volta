@@ -239,7 +239,7 @@ fn GetCurrentProcessId() DWORD;
 
 struct OVERLAPPED
 {
-	struct _s
+	private struct _s
 	{
 		Offset: DWORD;
 		OffsetHigh: DWORD;
