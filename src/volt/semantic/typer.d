@@ -100,6 +100,9 @@ ir.Type getExpTypeImpl(ir.Exp exp)
 		auto asStructLiteral = cast(ir.StructLiteral) exp;
 		assert(asStructLiteral !is null);
 		return getStructLiteralType(asStructLiteral);
+	case UnionLiteral:
+		auto asUnionLiteral = exp.toUnionLiteralFast();
+		return getUnionLiteralType(asUnionLiteral);
 	case ClassLiteral:
 		auto asClassLiteral = cast(ir.ClassLiteral) exp;
 		assert(asClassLiteral !is null);
@@ -185,9 +188,17 @@ ir.Type getStructLiteralType(ir.StructLiteral slit)
 	return slit.type;
 }
 
-ir.Type getClassLiteralType(ir.ClassLiteral clit)
+ir.Type getUnionLiteralType(ir.UnionLiteral ulit)
 {
-	return clit.type;
+	if (ulit.type is null) {
+		throw panic(/*#ref*/ulit.loc, "null union literal");
+	}
+	return ulit.type;
+}
+
+ir.Type getClassLiteralType(ir.ClassLiteral classlit)
+{
+	return classlit.type;
 }
 
 ir.Type getExpReferenceType(ir.ExpReference expref)

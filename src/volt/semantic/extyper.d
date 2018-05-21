@@ -5151,13 +5151,28 @@ void tagLiteralType(ir.Exp exp, ir.Type type)
 		auto stype = cast(ir.Struct)realType(type);
 		auto slit = cast(ir.StructLiteral)exp;
 		if (stype is null || slit is null) {
-			throw panic(/*#ref*/exp.loc, "tagging struct literal as not an struct.");
+			throw panic(/*#ref*/exp.loc, "tagging struct literal as not a struct.");
 		}
-		auto vars = getStructFieldVars(stype);
+		auto vars = getAggregateFieldVars(stype);
 		if (slit.exps.length > vars.length) {
 			throw makeWrongNumberOfArgumentsToStructLiteral(/*#ref*/exp.loc);
 		}
 		foreach (i, val; slit.exps) {
+			tagLiteralType(val, vars[i].type);
+		}
+		break;
+	case UnionLiteral:
+		auto utype = cast(ir.Union)realType(type);
+		auto ulit = exp.toUnionLiteralFast();
+		if (utype is null || ulit is null) {
+			throw panic(/*#ref*/exp.loc, "tagging union literal as not a union");
+		}
+		auto vars = getAggregateFieldVars(utype);
+		if (ulit.exps.length > vars.length) {
+			// @TODO: Union literals that can just take the largest field.
+			throw makeWrongNumberOfArgumentsToStructLiteral(/*#ref*/exp.loc);
+		}
+		foreach (i, val; ulit.exps) {
 			tagLiteralType(val, vars[i].type);
 		}
 		break;

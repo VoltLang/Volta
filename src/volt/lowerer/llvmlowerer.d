@@ -749,7 +749,7 @@ void lowerStructLiteral(LanguagePass lp, ir.Scope current, ref ir.Exp exp, ir.St
 	panicAssert(exp, literal.type !is null);
 	auto theStruct = cast(ir.Struct) realType(literal.type);
 	panicAssert(exp, theStruct !is null);
-	auto fields = getStructFieldVars(theStruct);
+	auto fields = getAggregateFieldVars(theStruct);
 	// The extyper should've caught this.
 	panicAssert(exp, fields.length >= literal.exps.length);
 

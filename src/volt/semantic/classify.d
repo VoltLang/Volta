@@ -1290,7 +1290,7 @@ ir.Type[] getStructFieldTypes(ir.Struct _struct)
 }
 
 //! Retrieves the Variables in _struct, in the order they appear.
-ir.Variable[] getStructFieldVars(ir.Struct _struct)
+ir.Variable[] getAggregateFieldVars(ir.Aggregate _struct)
 {
 	ir.Variable[] vars;
 
