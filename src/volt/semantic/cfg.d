@@ -302,13 +302,6 @@ public:
 		return ContinueParent;
 	}
 
-	override Status enter(ir.WhileStatement ws)
-	{
-		checkReachability(ws);
-		enterLoop();
-		return buildLoop(ws, ws.block, ws.condition);
-	}
-
 	override Status enter(ir.ForStatement fs)
 	{
 		checkReachability(fs);
@@ -330,18 +323,18 @@ public:
 		return ContinueParent;
 	}
 
+	override Status enter(ir.WhileStatement ws)
+	{
+		checkReachability(ws);
+		enterLoop();
+		return buildLoop(ws, ws.block, ws.condition);
+	}
+
 	override Status enter(ir.DoStatement ds)
 	{
-		ensureNonNullBlock(/*#ref*/ds.loc);
 		checkReachability(ds);
 		enterLoop();
-		auto currentBlock = block;
-		auto doBlock = block = new Block(currentBlock);
-		breakBlocks.push(doBlock);
-		accept(ds.block, this);
-		breakBlocks.pop();
-		block = new Block(doBlock);
-		return ContinueParent;
+		return buildDoLoop(ds, ds.block, ds.condition);
 	}
 
 	override Status enter(ir.LabelStatement ls)
@@ -679,6 +672,31 @@ private:
 		} else if (exp !is null && constantFalse(exp)) {
 			block = new Block(currentBlock);
 		} else {
+			block = new Block(currentBlock, loopBlock);
+		}
+		return ContinueParent;
+	}
+
+	//! Build a do loop. Could be done in `enter(DoStatement)`, but this is neater.
+	Status buildDoLoop(ir.Node n, ir.BlockStatement b, ir.Exp exp)
+	{
+		ensureNonNullBlock(/*#ref*/n.loc);
+		auto currentBlock = block;
+		auto loopBlock = block = new Block(currentBlock);
+		breakBlocks.push(loopBlock);
+		accept(b, this);
+		breakBlocks.pop();
+		if (exp !is null && constantTrue(exp)) {
+			block = new Block(loopBlock);
+			if (!loopBlock.broken) {
+				block.terminates = true;
+			}
+		} else {
+			/* This is the major difference with `buildLoop`.  
+			 * As long as the DW isn't an infinite loop (the
+			 * previous if statement), the loopBlock itselfg
+			 * is always a potential parent.
+			 */
 			block = new Block(currentBlock, loopBlock);
 		}
 		return ContinueParent;
