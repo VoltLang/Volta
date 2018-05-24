@@ -12,3 +12,4 @@ public import vls.lsp.error;
 public import vls.lsp.requests;
 public import vls.lsp.rpc;
 public import vls.lsp.util;
+public import vls.lsp.builder;

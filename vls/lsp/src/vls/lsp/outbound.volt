@@ -40,28 +40,34 @@ global ~this()
 	}
 }
 
+fn send(msg: string)
+{
+	send(msg, output);
+}
 
 /**
- * Send `msg` to the client, with the appropriate headers.
+ * Send `msg` to the client, with the appropriate headers,
+ * over the given `OutputStream`.
  *
  * Multithread safe insofar as send(AAA); on one thread while
  * send(BBB) runs on another will output AAA then BBB, or BBB then AAA.
  * They won't be intermixed.
  */
-fn send(msg: string)
+fn send(msg: string, outs: OutputStream)
 {
 	vrt_mutex_lock(outputMutex);
 	scope (exit) vrt_mutex_unlock(outputMutex);
 
 	version (Windows) {
-		// TODO: Mirror the changes to the unix code and test etc.
-		output.writefln("%s: %s", Header.Length, msg.length);
-		output.writeln("");
-		output.write(msg);
+		outs.writefln("%s: %s", Header.Length, msg.length);
+		outs.writeln("");
+		outs.write(msg);
 		version (OutputLog) outlog.write(msg);
-		output.flush();
+		outs.flush();
 		version (OutputLog) outlog.flush();
 	} else {
+		static assert(false, "implement outbound.send for *nix");
+		/*
 		printf("%s: %d\r\n\r\n", Header.Length.ptr, msg.length);
 		printf("%s", toStringz(msg));
 		fflush(stdout);
@@ -71,5 +77,6 @@ fn send(msg: string)
 			outlog.write(msg);
 			outlog.flush();
 		}
+		*/
 	}
 }

@@ -118,6 +118,6 @@ private:
 
 	fn reportNoDiagnostic(uri: string)
 	{
-		send(notificationNoDiagnostic(uri));
+		send(buildNoDiagnostic(uri));
 	}
 }

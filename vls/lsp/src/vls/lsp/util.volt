@@ -1,6 +1,7 @@
 module vls.lsp.util;
 
-import watt = [watt.text.string, watt.text.path, watt.io, watt.io.file, watt.path];
+import watt = [watt.text.string, watt.text.path, watt.text.ascii, watt.text.utf,
+	watt.io, watt.io.file, watt.path];
 
 //! @Returns The directory where a URI file resides, or `null`.
 fn getPathFromUri(uri: string) string
@@ -58,6 +59,23 @@ fn getBatteryToml(path: string) string
 		parentDirectory(ref basePath);
 	}
 	return null;
+}
+
+//! Remove all whitespace from a string.
+fn compress(s: string) string
+{
+	escaping, inString: bool;
+	ss: watt.StringSink;
+	foreach (c: dchar; s) {
+		if (c == '"' && !escaping) {
+			inString = !inString;
+		}
+		escaping = c == '\\';
+		if (!watt.isWhite(c) || inString) {
+			ss.sink(watt.encode(c));
+		}
+	}
+	return ss.toString();
 }
 
 private fn parentDirectory(ref path: string)

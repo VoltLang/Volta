@@ -141,35 +141,3 @@ fn notificationDiagnostic(uri: string, loc: Location, errmsg: string, diagnostic
 	ss.sink(`"}]}}`);
 	return compress(ss.toString());
 }
-
-fn notificationNoDiagnostic(uri: string) string
-{
-	msg := new "{
-		\"jsonrpc\": \"2.0\",
-		\"method\": \"textDocument/publishDiagnostics\",
-		\"params\": {
-			\"uri\": \"${uri}\",
-			\"diagnostics\": []
-		}
-	}";
-	return compress(msg);
-}
-
-private:
-
-//! Remove all whitespace from a string.
-fn compress(s: string) string
-{
-	escaping, inString: bool;
-	ss: StringSink;
-	foreach (c: dchar; s) {
-		if (c == '"' && !escaping) {
-			inString = !inString;
-		}
-		escaping = c == '\\';
-		if (!isWhite(c) || inString) {
-			ss.sink(encode(c));
-		}
-	}
-	return ss.toString();
-}
