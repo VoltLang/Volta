@@ -24,7 +24,7 @@ fn responseInitialized(ro: RequestObject) string
 {
 	msg := new "
 		{
-			\"jsonrcp\": \"2.0\",
+			\"jsonrpc\": \"2.0\",
 			\"id\": ${ro.id.integer()},
 			\"result\": {
 				\"capabilities\": {
