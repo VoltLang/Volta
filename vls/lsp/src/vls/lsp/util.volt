@@ -2,6 +2,7 @@ module vls.lsp.util;
 
 import watt = [watt.text.string, watt.text.path, watt.text.ascii, watt.text.utf,
 	watt.io, watt.io.file, watt.path];
+import json = watt.json;
 
 //! @Returns The directory where a URI file resides, or `null`.
 fn getPathFromUri(uri: string) string
@@ -78,7 +79,7 @@ fn compress(s: string) string
 	return ss.toString();
 }
 
-private fn parentDirectory(ref path: string)
+fn parentDirectory(ref path: string)
 {
 	while (path.length > 0 && path[$-1] != '/' && path[$-1] != '\\') {
 		path = path[0 .. $-1];
@@ -86,4 +87,39 @@ private fn parentDirectory(ref path: string)
 	if (path.length > 0) {
 		path = path[0 .. $-1];  // Trailing slash.
 	}
+}
+
+// Helper JSON functions.
+
+fn validateKey(root: json.Value, field: string, t: json.DomType, ref val: json.Value) bool
+{
+	if (root.type() != json.DomType.Object ||
+		!root.hasObjectKey(field)) {
+		return false;
+	}
+	val = root.lookupObjectKey(field);
+	if (val.type() != t) {
+		return false;
+	}
+	return true;
+}
+
+fn getStringKey(root: json.Value, field: string) string
+{
+	val: json.Value;
+	retval := validateKey(root, field, json.DomType.String, ref val);
+	if (!retval) {
+		return null;
+	}
+	return val.str();
+}
+
+fn getArrayKey(root: json.Value, field: string) json.Value[]
+{
+	val: json.Value;
+	retval := validateKey(root, field, json.DomType.Array, ref val);
+	if (!retval) {
+		return null;
+	}
+	return val.array();
 }

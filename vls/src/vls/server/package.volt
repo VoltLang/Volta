@@ -274,40 +274,4 @@ private:
 		}
 		pendingBuild = buildManager.spawnBuild(btoml);
 	}
-
-private:
-	// Helper JSON functions.
-
-	fn validateKey(root: json.Value, field: string, t: json.DomType, ref val: json.Value) bool
-	{
-		if (root.type() != json.DomType.Object ||
-			!root.hasObjectKey(field)) {
-			return false;
-		}
-		val = root.lookupObjectKey(field);
-		if (val.type() != t) {
-			return false;
-		}
-		return true;
-	}
-
-	fn getStringKey(root: json.Value, field: string) string
-	{
-		val: json.Value;
-		retval := validateKey(root, field, json.DomType.String, ref val);
-		if (!retval) {
-			return null;
-		}
-		return val.str();
-	}
-
-	fn getArrayKey(root: json.Value, field: string) json.Value[]
-	{
-		val: json.Value;
-		retval := validateKey(root, field, json.DomType.Array, ref val);
-		if (!retval) {
-			return null;
-		}
-		return val.array();
-	}
 }
