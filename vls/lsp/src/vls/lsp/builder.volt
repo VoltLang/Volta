@@ -105,14 +105,16 @@ fn buildNoDiagnostic(sink: watt.Sink, uri: string)
 	sink(`","diagnostics":[]}}`);
 }
 
-fn buildDiagnostic(uri: string, line: i32, column: i32, severity: DiagnosticLevel, msg: string) string
+fn buildDiagnostic(uri: string, line: i32, column: i32, severity: DiagnosticLevel, msg: string,
+	buildTag: string = null) string
 {
 	ss: watt.StringSink;
-	buildDiagnostic(ss.sink, uri, line, column, severity, msg);
+	buildDiagnostic(ss.sink, uri, line, column, severity, msg, buildTag);
 	return ss.toString();
 }
 
-fn buildDiagnostic(sink: watt.Sink, uri: string, line: i32, column: i32, severity: DiagnosticLevel, msg: string)
+fn buildDiagnostic(sink: watt.Sink, uri: string, line: i32, column: i32, severity: DiagnosticLevel, msg: string,
+	buildTag: string = null)
 {
 	sink(`{"jsonrpc":"2.0","method":"textDocument/publishDiagnostics","params":{"uri":"`);
 	sink(uri);
@@ -122,5 +124,27 @@ fn buildDiagnostic(sink: watt.Sink, uri: string, line: i32, column: i32, severit
 	vrt_format_i64(sink, severity);
 	sink(`,"message":"`);
 	sink(json.escapeString(msg));
-	sink(`"}]}}`);
+	sink(`"}]`);
+	if (buildTag !is null) {
+		sink(`,"buildTag":"`);
+		sink(json.escapeString(buildTag));
+		sink(`"`);
+	}
+	sink(`}}`);
+}
+
+// vls/buildSuccess
+
+fn buildVlsBuildSuccessNotification(buildTag: string) string
+{
+	ss: watt.StringSink;
+	buildVlsBuildSuccessNotification(ss.sink, buildTag);
+	return ss.toString();
+}
+
+fn buildVlsBuildSuccessNotification(sink: watt.Sink, buildTag: string)
+{
+	sink(`{"jsonrpc":"2.0","method":"vls/buildSuccess","params":{"buildTag":"`);
+	sink(json.escapeString(buildTag));
+	sink(`"}}`);
 }
