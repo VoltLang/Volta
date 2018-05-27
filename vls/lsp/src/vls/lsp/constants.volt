@@ -83,3 +83,11 @@ enum CompletionType
 	Operator,
 	TypeParameter,
 }
+
+enum MessageType
+{
+	Error = 1,
+	Warning,
+	Info,
+	Log,
+}

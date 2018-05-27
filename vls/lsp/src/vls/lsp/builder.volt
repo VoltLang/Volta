@@ -7,7 +7,7 @@ import core.rt.format : vrt_format_i64;
 import watt = watt.text.sink;
 import json = watt.json;
 
-import vls.lsp.constants : DiagnosticLevel;
+import vls.lsp.constants : DiagnosticLevel, MessageType;
 
 // interface Position
 
@@ -133,7 +133,25 @@ fn buildDiagnostic(sink: watt.Sink, uri: string, line: i32, column: i32, severit
 	sink(`}}`);
 }
 
-// vls/buildSuccess
+// window/showMessage notification
+
+fn buildShowMessage(type: MessageType, msg: string) string
+{
+	ss: watt.StringSink;
+	buildShowMessage(ss.sink, type, msg);
+	return ss.toString();
+}
+
+fn buildShowMessage(sink: watt.Sink, type: MessageType, msg: string)
+{
+	sink(`{"jsonrpc":"2.0","method":"window/showMessage","params":{"type":`);
+	vrt_format_i64(sink, type);
+	sink(`,"message":"`);
+	sink(json.escapeString(msg));
+	sink(`"}}`);
+}
+
+// vls/buildSuccess notification
 
 fn buildVlsBuildSuccessNotification(buildTag: string) string
 {
