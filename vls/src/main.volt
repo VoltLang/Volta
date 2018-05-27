@@ -32,7 +32,6 @@ fn main(args: string[]) i32
 	server := new VoltLanguageServer(args[0], modulePath);
 	while (lsp.listen(server.handle, inputStream)) {
 	}
-	server.cleanup();
 	return server.retval;
 }
 

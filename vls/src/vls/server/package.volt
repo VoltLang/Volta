@@ -24,7 +24,6 @@ import vls.parsing.postparse;
 import vls.parsing.documentManager;
 import vls.util.simpleCache;
 import vls.semantic.symbolGathererVisitor;
-import build = vls.build;
 
 class VoltLanguageServer : ErrorSink
 {
@@ -35,9 +34,6 @@ public:
 	documentManager: DocumentManager;
 	importCache: SimpleImportCache;
 	sgv: SymbolGathererVisitor;
-
-	buildManager: build.Manager;
-	pendingBuild: build.Build;
 
 	retval: i32;
 
@@ -50,8 +46,6 @@ public:
 	{
 		execDir := getExecDir();
 
-		buildManager = new build.Manager(execDir);
-
 		this.modulePath = modulePath;
 		settings = new Settings(argZero, execDir);
 		settings.warningsEnabled = true;
@@ -63,11 +57,6 @@ public:
 	fn handle(msg: LspMessage) bool
 	{
 		return handleRO(new RequestObject(msg.content));
-	}
-
-	fn cleanup()
-	{
-		buildManager.cleanup();
 	}
 
 public:
@@ -180,9 +169,6 @@ private:
 		case "workspace/didChangeConfiguration":
 			updateConfiguration(ro);
 			return Listening.Continue;
-		case "workspace/executeCommand":
-			handleCommand(ro);
-			return Listening.Continue;
 		default:
 			if (ro.methodName.length > 2 && ro.methodName[0 .. 2] == "$/") {
 				/* "If a server or client receives notifications or requests starting
@@ -225,23 +211,6 @@ private:
 		}
 	}
 
-	fn handleCommand(ro: RequestObject)
-	{
-		command := getStringKey(ro.params, "command");
-		if (command is null) {
-//			send(responseError(ro, "expected 'command' string field"));
-			return;
-		}
-		switch (command) {
-		case "vls.buildProject":
-			buildProject(ro);
-			break;
-		default:
-//			send(responseError(ro, new "unknown command '${command}'"));
-			break;
-		}
-	}
-
 	fn handleTextDocument(ro: RequestObject, out uri: string) ir.Module
 	{
 		err := parseTextDocument(ro.params, out uri);
@@ -253,25 +222,5 @@ private:
 		postParse: PostParsePass;
 		documentManager.getModule(uri, out mod, out postParse);
 		return mod;
-	}
-
-private:
-	// Commands.
-
-	fn buildProject(ro: RequestObject)
-	{
-		arguments := getArrayKey(ro.params, "arguments");
-		if (arguments.length == 0) {
-			return;
-		}
-		if (arguments[0].type() != json.DomType.Object) {
-			return;
-		}
-		fspath := getStringKey(arguments[0], "fsPath");
-		btoml := getBatteryToml(fspath);
-		if (btoml is null) {
-			return;
-		}
-		pendingBuild = buildManager.spawnBuild(btoml);
 	}
 }
