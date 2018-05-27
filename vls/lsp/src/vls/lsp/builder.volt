@@ -156,13 +156,22 @@ fn buildShowMessage(sink: watt.Sink, type: MessageType, msg: string)
 fn buildVlsBuildSuccessNotification(buildTag: string) string
 {
 	ss: watt.StringSink;
-	buildVlsBuildSuccessNotification(ss.sink, buildTag);
+	buildVlsCustomBuildTagNotification(ss.sink, "vls/buildSuccess", buildTag);
 	return ss.toString();
 }
 
-fn buildVlsBuildSuccessNotification(sink: watt.Sink, buildTag: string)
+fn buildVlsBuildPendingNotification(buildTag: string) string
 {
-	sink(`{"jsonrpc":"2.0","method":"vls/buildSuccess","params":{"buildTag":"`);
+	ss: watt.StringSink;
+	buildVlsCustomBuildTagNotification(ss.sink, "vls/buildPending", buildTag);
+	return ss.toString();
+}
+
+fn buildVlsCustomBuildTagNotification(sink: watt.Sink, methodName: string, buildTag: string)
+{
+	sink(`{"jsonrpc":"2.0","method":"`);
+	sink(methodName);
+	sink(`","params":{"buildTag":"`);
 	sink(json.escapeString(buildTag));
 	sink(`"}}`);
 }
