@@ -3,10 +3,18 @@
 module core.rt.format;
 
 
-/// The one true sink definition.
+/*!
+ * The argument that is passed to Sinks.
+ */
 alias SinkArg = scope const(char)[];
 
-/// The argument to the one true sink.
+/*!
+ * The Sink delegate.
+ *
+ * A Sink is a delegate that takes a `SinkArg`,
+ * and builds a string, usually with an aim
+ * to minimise needless allocations and GC calls.
+ */
 alias Sink = scope dg (SinkArg);
 
 /*!
