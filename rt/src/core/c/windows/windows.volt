@@ -880,6 +880,10 @@ fn RegQueryInfoKeyW(HKEY, LPCWSTR, LPDWORD, LPDWORD, LPDWORD, LPDWORD, LPDWORD, 
 fn CreateEventA(LPSECURITY_ATTRIBUTES, BOOL, BOOL, LPCSTR) HANDLE;
 fn CreateEventW(LPSECURITY_ATTRIBUTES, BOOL, BOOL, LPCWSTR) HANDLE;
 fn SetEvent(HANDLE) BOOL;
+alias LPTHREAD_START_ROUTINE = fn(LPVOID) DWORD;
+fn CreateThread(LPSECURITY_ATTRIBUTES, SIZE_T, LPTHREAD_START_ROUTINE, LPVOID, DWORD, LPDWORD) HANDLE;
+
+fn FlushFileBuffers(HANDLE) BOOL;
 
 // Helper functions needs to be marked with extern volt so
 // they do not collide with other C function with similar names.
