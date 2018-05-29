@@ -43,9 +43,33 @@ version (InputLog) {
  */
 fn listen(handle: dg(LspMessage) bool, inputStream: InputStream) bool
 {
+	/* TODO: This dies with a few bytes wrong. EOL characters? */
+	/*
 	if (inputStream.eof()) {
 		return Listening.Stop;
 	}
+
+	retval := false;
+	fn looping() bool { return true; }
+	fn readChar(ref c: dchar) bool {
+		c = inputStream.get();
+		continueExecution := !inputStream.eof();
+		if (continueExecution) {
+			version (InputLog) {
+				inlog.put(c);
+				inlog.flush();
+			}
+		}
+		return continueExecution;
+	}
+	fn readMsg(ref m: LspMessage) {
+		m.content = readContent(m.contentLength, inputStream);
+		retval = handle(m);
+	}
+
+	msg: LspMessage;
+	parseLspMessageImpl(readChar, readMsg, looping, out msg);
+	return retval;*/
 	buf: char[];
 	newline: bool;
 	msg: LspMessage;
@@ -68,7 +92,7 @@ fn listen(handle: dg(LspMessage) bool, inputStream: InputStream) bool
 					return handle(msg);
 				}
 			} else if (buf.length != 0) {
-				parseHeader(buf, ref msg);
+				parseLspHeader(buf, ref msg);
 			}
 			newline = true;
 		} else if (c != '\r') {
@@ -102,22 +126,4 @@ fn readContent(length: size_t, inputStream: InputStream) string
 		inlog.flush();
 	}
 	return str;
-}
-
-fn parseHeader(text: char[], ref msg: LspMessage)
-{
-	portions := split(cast(string)text, ':');
-	if (portions.length != 2) {
-		throw new Exception("headers are separated by a ':'");
-	}
-	switch (portions[0]) {
-	case Header.Length:
-		msg.contentLength = cast(size_t)toUlong(strip(portions[1]));
-		break;
-	case Header.Type:
-		// We honestly don't care. Just assume UTF-8, no implementation uses anything else.
-		break;
-	default:
-		throw new Exception(new "unknown header '${portions[0]}'");
-	}
 }

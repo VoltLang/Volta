@@ -11,7 +11,6 @@ import vls.lsp;
 import vls.server.responses;
 import vls.parsing.postparse;
 import vls.server;
-import diagnostic = vls.server.diagnostic;
 
 import volta.interfaces;
 import volta.settings;
@@ -130,11 +129,13 @@ private:
 		ps.magicFlagD = tw.magicFlagD;
 		ps.get();  // Skip begin
 		status := parseModule(ps, out mod);
-		diagnostic.clearUri(uri);
 		if (status != ParseStatus.Succeeded && ps.parserErrors.length >= 1) {
 			err := ps.parserErrors[0];
-			diagnostic.addError(uri, ref err.loc, err.errorMessage());
+			send(buildDiagnostic(uri, cast(i32)err.loc.line-1, cast(i32)err.loc.column,
+				DiagnosticLevel.Error, err.errorMessage()));
 			return;
+		} else if (status == ParseStatus.Succeeded){
+			send(buildNoDiagnostic(uri));
 		}
 		postPass := postParse(mod, getPathFromUri(uri), langServer, settings, ref langServer.importCache);
 		if ((uri in mDocuments) is null) {

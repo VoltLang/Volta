@@ -7,9 +7,11 @@ import watt.conv;
 import watt.io;
 import watt.io.streams;
 import watt.process.spawn;
+import watt.text.sink;
 
 import core.c.stdio;
 import core.rt.thread;
+import core.rt.format;
 
 version (OutputLog) {
 	version (Windows) {
@@ -58,25 +60,20 @@ fn send(msg: string, outs: OutputStream)
 	vrt_mutex_lock(outputMutex);
 	scope (exit) vrt_mutex_unlock(outputMutex);
 
+	ss: StringSink;
+	ss.sink(Header.Length);
+	ss.sink(": ");
+	vrt_format_u64(ss.sink, msg.length);
+	ss.sink("\n\n");
+	ss.sink(msg);
+
 	version (Windows) {
-		outs.writefln("%s: %s", Header.Length, msg.length);
-		outs.writeln("");
-		outs.write(msg);
-		version (OutputLog) outlog.write(msg);
+		str := ss.toString();
+		outs.write(str);
 		outs.flush();
+		version (OutputLog) outlog.write(str);
 		version (OutputLog) outlog.flush();
 	} else {
 		static assert(false, "implement outbound.send for *nix");
-		/*
-		printf("%s: %d\r\n\r\n", Header.Length.ptr, msg.length);
-		printf("%s", toStringz(msg));
-		fflush(stdout);
-		version (OutputLog) {
-			outlog.writef("%s: %s\r\n", Header.Length, msg.length);
-			outlog.write("\r\n");
-			outlog.write(msg);
-			outlog.flush();
-		}
-		*/
 	}
 }
