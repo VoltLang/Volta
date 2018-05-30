@@ -1,1 +1,1 @@
-//T check:main.volt","diagnostics":[{"range":{"start":{"line":4,"character":0},"end":{"line":4,"character":0}},"severity":1,"message":"expected closing brace."}]}}
+//T check:main.volt","diagnostics":[{"range":{"start":{"line":4,"character":0},"end":{"line":4,"character":1}},"severity":1,"message":"expected closing brace."}]}}
