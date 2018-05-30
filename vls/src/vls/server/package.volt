@@ -109,7 +109,7 @@ private:
 	{
 		switch (ro.methodName) {
 		case "initialize":
-			send(responseInitialized(ro));
+			send(buildInitialiseResponse(ro.id.integer()));
 			return Listening.Continue;
 		case "initialized":
 			assert(ro.notification);

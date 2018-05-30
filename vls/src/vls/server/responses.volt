@@ -20,53 +20,6 @@ import vls.semantic.symbolGathererVisitor;
 import vls.semantic.completion;
 import vls.server;
 
-fn responseInitialized(ro: RequestObject) string
-{
-	msg := new "
-		{
-			\"jsonrpc\": \"2.0\",
-			\"id\": ${ro.id.integer()},
-			\"result\": {
-				\"capabilities\": {
-					\"textDocumentSync\": {
-						\"openClose\": true,
-						\"change\": 1,
-						\"willSave\": false,
-						\"willSaveWaitUntil\": false,
-						\"save\": {
-							\"includeText\": true
-						}
-					},
-					\"hoverProvider\": true,
-					\"completionProvider\": {
-						\"resolveProvider\": false,
-						\"triggerCharacters\": [\".\"]
-					},
-					\"signatureHelpProvider\": {
-						\"triggerCharacters\": [\"(\", \",\"]
-					},
-					\"definitionProvider\": true,
-					\"referencesProvider\": false,
-					\"documentHighlightProvider\": false,
-					\"documentSymbolProvider\": true,
-					\"workspaceSymbolProvider\": false,
-					\"codeActionProvider\": false,
-					\"documentFormattingProvider\": false,
-					\"documentRangeFormattingProvider\": false,
-					\"documentOnTypeFormattingProvider\": {
-						\"firstTriggerCharacter\": \"\",
-						\"moreTriggerCharacters\": []
-					},
-					\"renameProvider\": false,
-					\"executeCommandProvider\": {
-						\"commands\": [\"vls.buildProject\"]
-					}
-				}
-			}
-		}";
-	return compress(msg);
-}
-
 fn responseNull(ro: RequestObject) string
 {
 	msg := new "{\"jsonrcp\":\"2.0\",\"id\":${ro.id.integer()}, \"result\": null}";

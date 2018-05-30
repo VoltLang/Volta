@@ -89,6 +89,47 @@ fn buildLocation(sink: watt.Sink, uri: string, line: i32)
 	sink("}");
 }
 
+// initialise response
+
+fn buildInitialiseResponse(id: i64) string
+{
+	ss: watt.StringSink;
+	buildInitialiseResponse(ss.sink, id);
+	return ss.toString();
+}
+
+fn buildInitialiseResponse(sink: watt.Sink, id: i64)
+{
+	sink(`{"jsonrpc":"2.0","id":`);
+	vrt_format_i64(sink, id);
+	sink(`,"result":{"capabilities":{`);
+
+	sink(`"textDocumentSync":{"openClose":true,"change":1,"willSave":false,`);
+	sink(`"willSaveWaitUntil":false,"save":{"includeText":true}},`);
+
+	sink(`"hoverProvider":true,`);
+
+	sink(`"completionProvider":{"resolveProvider":false,`);
+	sink(`"triggerCharacters":["."]},`);
+
+	sink(`"signatureHelpProvider":{"triggerCharacters":[")",","]},`);
+	sink(`"definitionProvider":true,`);
+	sink(`"referencesProvider":false,`);
+	sink(`"documentHighlightProvider":true,`);
+	sink(`"documentSymbolProvider":true,`);
+	sink(`"codeActionProvider":false,`);
+	sink(`"documentFormattingProvider":false,`);
+	sink(`"documentRangeFormattingProvider":false,`);
+
+	sink(`"documentOnTypeFormattingProvider":{`);
+	sink(`"firstTriggerCharacter":"","moreTriggerCharacters":[]},`);
+
+	sink(`"renameProvider":false,`);
+
+	sink(`"executeCommandProvider":{`);
+	sink(`"commands":["vls.buildProject"]}}}}`);
+}
+
 // shutdown response
 
 fn buildShutdownResponse(id: i64) string
