@@ -129,7 +129,7 @@ private:
 			uri: string;
 			mod := handleTextDocument(ro, out uri);
 			if (mod is null) {
-				send(responseNull(ro));
+				send(buildEmptyResponse(ro.id.integer()));
 				return Listening.Continue;
 			}
 			reply := responseSymbolInformation(this, ro, uri, mod);
@@ -139,7 +139,7 @@ private:
 			uri: string;
 			mod := handleTextDocument(ro, out uri);
 			if (mod is null) {
-				send(responseNull(ro));
+				send(buildEmptyResponse(ro.id.integer()));
 				return Listening.Continue;
 			}
 			reply := responseCompletionInformation(this, ro, uri, mod);
@@ -149,7 +149,7 @@ private:
 			uri: string;
 			mod := handleTextDocument(ro, out uri);
 			if (mod is null) {
-				send(responseNull(ro));
+				send(buildEmptyResponse(ro.id.integer()));
 				return Listening.Continue;
 			}
 			reply := responseSignatureHelp(this, ro, uri, mod);
@@ -159,7 +159,7 @@ private:
 			uri: string;
 			mod := handleTextDocument(ro, out uri);
 			if (mod is null) {
-				send(responseNull(ro));
+				send(buildEmptyResponse(ro.id.integer()));
 				return Listening.Continue;
 			}
 			reply := responseGotoDefinition(this, ro, uri, mod);
@@ -169,7 +169,7 @@ private:
 			uri: string;
 			mod := handleTextDocument(ro, out uri);
 			if (mod is null) {
-				send(responseNull(ro));
+				send(buildEmptyResponse(ro.id.integer()));
 				return Listening.Continue;
 			}
 			reply := responseHover(this, ro, uri, mod);
@@ -224,7 +224,6 @@ private:
 	{
 		err := parseTextDocument(ro.params, out uri);
 		if (err !is null) {
-//			send(responseError(ro, err));
 			return null;
 		}
 		mod: ir.Module;

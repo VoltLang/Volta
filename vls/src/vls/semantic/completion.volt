@@ -19,7 +19,7 @@ fn getCompletionResponse(ro: lsp.RequestObject, uri: string, theServer: server.V
 {
 	fn failedToFind() string
 	{
-		return server.responseNull(ro);
+		return lsp.buildEmptyResponse(ro.id.integer());
 	}
 
 	mod: ir.Module;
@@ -53,7 +53,7 @@ fn getHoverResponse(ro: lsp.RequestObject, uri: string, theServer: server.VoltLa
 {
 	fn failedToFind() string
 	{
-		return server.responseNull(ro);
+		return lsp.buildEmptyResponse(ro.id.integer());
 	}
 
 	mod: ir.Module;
@@ -108,7 +108,7 @@ fn getSignatureHelpResponse(ro: lsp.RequestObject, uri: string, theServer: serve
 {
 	fn failedToFind() string
 	{
-		return server.responseNull(ro);
+		return lsp.buildEmptyResponse(ro.id.integer());
 	}
 
 	mod: ir.Module;
@@ -189,7 +189,7 @@ fn getGotoDefinitionResponse(ro: lsp.RequestObject, uri: string, theServer: serv
 {
 	fn failedToFind() string
 	{
-		return server.responseNull(ro);
+		return lsp.buildEmptyResponse(ro.id.integer());
 	}
 
 	mod: ir.Module;

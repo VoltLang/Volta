@@ -20,18 +20,6 @@ import vls.semantic.symbolGathererVisitor;
 import vls.semantic.completion;
 import vls.server;
 
-fn responseNull(ro: RequestObject) string
-{
-	msg := new "{\"jsonrcp\":\"2.0\",\"id\":${ro.id.integer()}, \"result\": null}";
-	return compress(msg);
-}
-
-fn responseError(ro: RequestObject, err: Error) string
-{
-	msg := new "{\"jsonrcp\":\"2.0\",\"id\":${ro.id.integer()},\"error\":{\"code\":${err.code},\"message\":${err.message}}}";
-	return compress(msg);
-}
-
 fn responseSymbolInformation(theServer: VoltLanguageServer, ro: RequestObject, uri: string, mod: ir.Module) string
 {
 	theServer.sgv.symbols = null;

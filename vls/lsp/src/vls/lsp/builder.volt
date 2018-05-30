@@ -146,6 +146,22 @@ fn buildShutdownResponse(sink: watt.Sink, id: i64)
 	sink(`,"result":{}}`);
 }
 
+// empty response
+
+fn buildEmptyResponse(id: i64) string
+{
+	ss: watt.StringSink;
+	buildEmptyResponse(ss.sink, id);
+	return ss.toString();
+}
+
+fn buildEmptyResponse(sink: watt.Sink, id: i64)
+{
+	sink(`{"jsonrpc":"2.0","id":`);
+	vrt_format_i64(sink, id);
+	sink(`"result":null}`);
+}
+
 // textDocument/publishDiagnostics notification
 
 fn buildNoDiagnostic(uri: string) string
