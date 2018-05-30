@@ -128,16 +128,3 @@ fn responseGotoDefinition(theServer: VoltLanguageServer, ro: RequestObject, uri:
 {
 	return compress(getGotoDefinitionResponse(ro, uri, theServer));
 }
-
-fn notificationDiagnostic(uri: string, loc: Location, errmsg: string, diagnosticLevel: i32) string
-{
-	ss: StringSink;
-	ss.sink(`{"jsonrpc":"2.0","method":"textDocument/publishDiagnostics","params":{"uri":"`);
-	ss.sink(uri);
-	ss.sink(`","diagnostics":[{"range":`);
-	locationToRange(ref loc, ss.sink);
-	ss.sink(new ",\"severity\":${diagnosticLevel},\"message\":\"");
-	ss.sink(json.escapeString(errmsg));
-	ss.sink(`"}]}}`);
-	return compress(ss.toString());
-}

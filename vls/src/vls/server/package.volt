@@ -70,7 +70,10 @@ public:
 
 	override void onWarning(ref in ir.Location loc, string msg, string file, int line)
 	{
-		send(notificationDiagnostic(getUriFromPath(loc.filename), loc, msg, DiagnosticLevel.Warning));
+		uri := getUriFromPath(loc.filename);
+		rsp := buildDiagnostic(uri, cast(i32)loc.line-1, cast(i32)loc.column,
+			DiagnosticLevel.Warning, msg);
+		send(rsp);
 	}
 
 	override void onError(string msg, string file, int line)
@@ -81,7 +84,10 @@ public:
 
 	override void onError(ref in ir.Location loc, string msg, string file, int line)
 	{
-		send(notificationDiagnostic(getUriFromPath(loc.filename), loc, msg, DiagnosticLevel.Error));
+		uri := getUriFromPath(loc.filename);
+		rsp := buildDiagnostic(uri, cast(i32)loc.line-1, cast(i32)loc.column,
+			DiagnosticLevel.Error, msg);
+		send(rsp);
 	}
 
 	override void onPanic(string msg, string file, int line)
@@ -92,7 +98,10 @@ public:
 
 	override void onPanic(ref in ir.Location loc, string msg, string file, int line)
 	{
-		send(notificationDiagnostic(getUriFromPath(loc.filename), loc, msg, DiagnosticLevel.Error));
+		uri := getUriFromPath(loc.filename);
+		rsp := buildDiagnostic(uri, cast(i32)loc.line-1, cast(i32)loc.column,
+			DiagnosticLevel.Error, msg);
+		send(rsp);
 	}
 
 private:
