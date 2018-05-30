@@ -9,7 +9,7 @@ import json = watt.json;
 
 import vls.lsp.constants : DiagnosticLevel, MessageType;
 
-// interface Position
+// Position interface
 
 fn buildPosition(line: i32, column: i32) string
 {
@@ -27,7 +27,7 @@ fn buildPosition(sink: watt.Sink, line: i32, column: i32)
 	sink("}");
 }
 
-// interface Range
+// Range interface
 
 fn buildRange(line1: i32, column1: i32, line2: i32, column2: i32) string
 {
@@ -55,7 +55,7 @@ fn buildRange(sink: watt.Sink, line: i32, column: i32)
 	buildRange(sink, line, column, line, column + 1);
 }
 
-// interface Location
+// Location interface
 
 fn buildLocation(uri: string, line: i32, column: i32) string
 {
@@ -89,7 +89,23 @@ fn buildLocation(sink: watt.Sink, uri: string, line: i32)
 	sink("}");
 }
 
-// publish Diagnostic
+// shutdown response
+
+fn buildShutdownResponse(id: i64) string
+{
+	ss: watt.StringSink;
+	buildShutdownResponse(ss.sink, id);
+	return ss.toString();
+}
+
+fn buildShutdownResponse(sink: watt.Sink, id: i64)
+{
+	sink(`{"jsonrpc":"2.0","id":`);
+	vrt_format_i64(sink, id);
+	sink(`,"result":{}}`);
+}
+
+// textDocument/publishDiagnostics notification
 
 fn buildNoDiagnostic(uri: string) string
 {

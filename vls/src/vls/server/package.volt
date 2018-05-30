@@ -116,7 +116,7 @@ private:
 			return Listening.Continue;
 		case "shutdown":
 			retval = 0;
-			send(responseShutdown(ro));
+			send(buildShutdownResponse(ro.id.integer()));
 			return Listening.Continue;
 		case "exit":
 			return Listening.Stop;

@@ -79,18 +79,6 @@ fn responseError(ro: RequestObject, err: Error) string
 	return compress(msg);
 }
 
-fn responseShutdown(ro: RequestObject) string
-{
-	msg := new "
-		{
-			\"jsonrcp\": \"2.0\",
-			\"id\":${ro.id.integer()},
-			\"result\": {
-			}
-		}";
-	return compress(msg);
-}
-
 fn responseSymbolInformation(theServer: VoltLanguageServer, ro: RequestObject, uri: string, mod: ir.Module) string
 {
 	theServer.sgv.symbols = null;
