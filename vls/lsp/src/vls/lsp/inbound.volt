@@ -43,8 +43,6 @@ version (InputLog) {
  */
 fn listen(handle: dg(LspMessage) bool, inputStream: InputStream) bool
 {
-	/* TODO: This dies with a few bytes wrong. EOL characters? */
-	/*
 	if (inputStream.eof()) {
 		return Listening.Stop;
 	}
@@ -69,37 +67,7 @@ fn listen(handle: dg(LspMessage) bool, inputStream: InputStream) bool
 
 	msg: LspMessage;
 	parseLspMessageImpl(readChar, readMsg, looping, out msg);
-	return retval;*/
-	buf: char[];
-	newline: bool;
-	msg: LspMessage;
-	while (true) {
-		c := inputStream.get();
-		if (inputStream.eof()) {
-			break;
-		}
-		version (InputLog) {
-			inlog.put(c);
-			inlog.flush();
-		}
-		if (c == '\n') {
-			if (newline) {
-				// Beginning of content.
-				if (msg.contentLength == 0) {
-					throw new Exception("missing Content-Length header");
-				} else {
-					msg.content = readContent(msg.contentLength, inputStream);
-					return handle(msg);
-				}
-			} else if (buf.length != 0) {
-				parseLspHeader(buf, ref msg);
-			}
-			newline = true;
-		} else if (c != '\r') {
-			encode(ref buf, c);
-		}
-	}
-	return false;
+	return retval;
 }
 
 private:
