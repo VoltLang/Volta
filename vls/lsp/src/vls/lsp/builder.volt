@@ -224,12 +224,19 @@ fn buildShowMessage(sink: watt.Sink, type: MessageType, msg: string)
 	sink(`"}}`);
 }
 
-// vls/buildSuccess notification
+// vls/build* notification
 
 fn buildVlsBuildSuccessNotification(buildTag: string) string
 {
 	ss: watt.StringSink;
 	buildVlsCustomBuildTagNotification(ss.sink, "vls/buildSuccess", buildTag);
+	return ss.toString();
+}
+
+fn buildVlsBuildFailureNotification(buildTag: string) string
+{
+	ss: watt.StringSink;
+	buildVlsCustomBuildTagNotification(ss.sink, "vls/buildFailure", buildTag);
 	return ss.toString();
 }
 
