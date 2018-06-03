@@ -1297,6 +1297,15 @@ void postfixIdentifierUFCS(Context ctx, ref ir.Exp exp,
 {
 	assert(postfix.identifier !is null);
 
+	auto invalidstore = ctx.current.getStore(postfix.identifier.value);
+	if (invalidstore !is null && invalidstore.functions.length == 0) {
+		/* Bypass the worktracker to look for an invalid field lookup of the same
+		 * name of the variable that it's being assigned to.
+		 * See test `bugs.lookup.invalidSameNameField` for more details.
+		 */
+		throw makeNoFieldOrPropertyOrUFCS(/*#ref*/postfix.loc, postfix.identifier.value, getExpType(postfix.child));
+	}
+
 	auto store = lookup(ctx.lp, ctx.current, /*#ref*/postfix.loc, postfix.identifier.value);
 	if (store is null || store.functions.length == 0) {
 		throw makeNoFieldOrPropertyOrUFCS(/*#ref*/postfix.loc, postfix.identifier.value, getExpType(postfix.child));
