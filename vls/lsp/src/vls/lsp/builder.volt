@@ -127,7 +127,7 @@ fn buildInitialiseResponse(sink: watt.Sink, id: i64)
 	sink(`"renameProvider":false,`);
 
 	sink(`"executeCommandProvider":{`);
-	sink(`"commands":["vls.buildProject"]}}}}`);
+	sink(`"commands":["vls.buildProject", "vls.buildAllProjects"]}}}}`);
 }
 
 // shutdown response
