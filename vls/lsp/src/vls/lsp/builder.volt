@@ -126,6 +126,8 @@ fn buildInitialiseResponse(sink: watt.Sink, id: i64)
 
 	sink(`"renameProvider":false,`);
 
+	sink(`"workspace":{"workspaceFolders":{"supported":true,"changeNotifications":true}},`);
+
 	sink(`"executeCommandProvider":{`);
 	sink(`"commands":["vls.buildProject", "vls.buildAllProjects"]}}}}`);
 }
