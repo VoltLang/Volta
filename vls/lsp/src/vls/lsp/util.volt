@@ -17,7 +17,7 @@ fn getPathFromUri(uri: string) string
 	}
 	uri = uri[trimAmount .. $];
 	uri = watt.replace(uri, "%3A", ":");
-	return uri;
+	return watt.normalisePath(uri);
 }
 
 //! @Returns `path` as a URI.
