@@ -8,7 +8,10 @@ import watt.io;
 import watt.io.streams;
 import watt.process.spawn;
 import watt.text.sink;
+import watt.path;
 
+version (Windows) import core.c.windows;
+import core.exception;
 import core.c.stdio;
 import core.rt.thread;
 import core.rt.format;
@@ -24,13 +27,15 @@ version (OutputLog) {
 	global outlog: OutputStream;
 }
 global outputMutex: vrt_mutex*;
+version (Windows) global windowsOutput: WindowsOutput;
 global this()
 {
 	outputMutex = vrt_mutex_new();
+	version (Windows) windowsOutput = new WindowsOutput();
 	version (OutputLog) {
 		rng: RandomGenerator;
 		rng.seed(getHardwareSeedU32());
-		outputPath := getEnv(HOMEVAR) ~ "/Desktop/vlsOutLog." ~ rng.randomString(4) ~ ".txt";
+		outputPath := getEnv(HOMEVAR) ~ "/Desktop/vlsOutLog." ~ rng.randomString(4) ~ baseName(getExecFile()) ~ ".txt";
 		outlog = new OutputFileStream(outputPath);
 	}
 }
@@ -42,9 +47,64 @@ global ~this()
 	}
 }
 
+version (Windows) {
+	class WindowsOutput : OutputStream
+	{
+	private:
+		mHandle: HANDLE;
+
+	public:
+		this()
+		{
+			mHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+		}
+
+	public:
+		override @property fn isOpen() bool
+		{
+			return true;
+		}
+
+		override fn close()
+		{
+		}
+
+		override fn put(c: dchar)
+		{
+			WriteFile(mHandle, cast(LPCVOID)&c, 1, null, null);
+		}
+
+		override fn write(s: scope const(char)[])
+		{
+			dwBytesWritten: DWORD;
+			bResult := WriteFile(mHandle, cast(LPCVOID)s.ptr, cast(DWORD)s.length, &dwBytesWritten, null);
+			if (bResult == 0) {
+				err := GetLastError();
+				throw new Exception(new "WriteFile failure ${err}");
+			}
+			if (dwBytesWritten != cast(DWORD)s.length) {
+				throw new Exception("WriteFile didn't write all bytes");
+			}
+		}
+
+		override fn flush()
+		{
+			bResult := FlushFileBuffers(mHandle);
+			if (bResult == 0) {
+				err := GetLastError();
+				throw new Exception(new "FlushFileBuffers failure ${err}");
+			}
+		}
+	}
+}
+
 fn send(msg: string)
 {
-	send(msg, output);
+	version (Windows) {
+		send(msg, windowsOutput);
+	} else {
+		send(msg, output);
+	}
 }
 
 /**
@@ -64,16 +124,12 @@ fn send(msg: string, outs: OutputStream)
 	ss.sink(Header.Length);
 	ss.sink(": ");
 	vrt_format_u64(ss.sink, msg.length);
-	ss.sink("\n\n");
+	ss.sink("\r\n\r\n");
 	ss.sink(msg);
 
-	version (Windows) {
-		str := ss.toString();
-		outs.write(str);
-		outs.flush();
-		version (OutputLog) outlog.write(str);
-		version (OutputLog) outlog.flush();
-	} else {
-		static assert(false, "implement outbound.send for *nix");
-	}
+	str := ss.toString();
+	outs.write(str);
+	outs.flush();
+	version (OutputLog) outlog.write(str);
+	version (OutputLog) outlog.flush();
 }
