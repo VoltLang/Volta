@@ -98,7 +98,7 @@ version (UseDIBuilder) {
 		auto iver = state.diNode(
 				state.diNumber(2), // Magic.
 				state.diString("Debug Info Version"),
-				state.diNumber(LLVMGetDebugMetadataVersion())
+				state.diNumber(cast(i32)LLVMGetDebugMetadataVersion())
 				);
 
 		// This controls the dwarf version emitted.
@@ -139,7 +139,7 @@ version (UseDIBuilder) {
 	LLVMValueRef diBaseType(State state, ir.PrimitiveType pt)
 	{
 		size_t size, alignment;
-		pt.getSizeAndAlignment(state.target, size, alignment);
+		pt.getSizeAndAlignment(state.target, /*#out*/size, /*#out*/alignment);
 		DwAte encoding;
 		string name;
 
@@ -209,14 +209,14 @@ version (UseDIBuilder) {
 
 		return LLVMDIBuilderCreateBasicType(
 			state.diBuilder, name.ptr, name.length, size,
-			alignment, encoding);
+			alignment, cast(uint)encoding);
 	}
 
 	LLVMValueRef diPointerType(State state, ir.PointerType pt, Type base)
 	{
 		LLVMValueRef diType;
 
-		if (base.isVoid) {
+		if (base.isVoid()) {
 			diType = null; // Yes!
 		} else {
 			assert(base !is null);
@@ -224,7 +224,7 @@ version (UseDIBuilder) {
 		}
 
 		size_t size, alignment;
-		pt.getSizeAndAlignment(state.target, size, alignment);
+		pt.getSizeAndAlignment(state.target, /*#out*/size, /*#out*/alignment);
 
 		return LLVMDIBuilderCreatePointerType(
 			state.diBuilder, diType, size, alignment,
@@ -237,7 +237,7 @@ version (UseDIBuilder) {
 		assert(type !is null && type.diType !is null);
 
 		size_t size, alignment;
-		sat.getSizeAndAlignment(state.target, size, alignment);
+		sat.getSizeAndAlignment(state.target, /*#out*/size, /*#out*/alignment);
 
 		LLVMValueRef[1] sub;
 		sub[0] = LLVMDIBuilderGetOrCreateRange(
@@ -289,7 +289,7 @@ version (UseDIBuilder) {
 	LLVMValueRef diUnion(State state, ir.Type t)
 	{
 		size_t size, alignment;
-		t.getSizeAndAlignment(state.target, size, alignment);
+		t.getSizeAndAlignment(state.target, /*#out*/size, /*#out*/alignment);
 
 		string name = t.mangledName;
 		string uni = null;
@@ -315,7 +315,7 @@ version (UseDIBuilder) {
 	LLVMValueRef diStruct(State state, ir.Type t)
 	{
 		size_t size, alignment;
-		t.getSizeAndAlignment(state.target, size, alignment);
+		t.getSizeAndAlignment(state.target, /*#out*/size, /*#out*/alignment);
 
 		string name = t.mangledName;
 		string uni = null;
@@ -351,7 +351,7 @@ version (UseDIBuilder) {
 			assert(d !is null);
 
 			size_t size, alignment;
-			elm.type.getSizeAndAlignment(state.target, size, alignment);
+			elm.type.getSizeAndAlignment(state.target, /*#out*/size, /*#out*/alignment);
 
 			// Adjust offset to alignment
 			if (offset % alignment) {
@@ -384,8 +384,8 @@ version (UseDIBuilder) {
 
 		auto di = new LLVMValueRef[](2);
 		size_t s0, s1, a0, a1, offset;
-		t[0].irType.getSizeAndAlignment(state.target, s0, a0);
-		t[1].irType.getSizeAndAlignment(state.target, s1, a1);
+		t[0].irType.getSizeAndAlignment(state.target, /*#out*/s0, /*#out*/a0);
+		t[1].irType.getSizeAndAlignment(state.target, /*#out*/s1, /*#out*/a1);
 
 
 		// Adjust offset to alignment
@@ -420,7 +420,7 @@ version (UseDIBuilder) {
 		types[0] = ret.diType;
 
 		// Hold on to your butts (keep an eye on i).
-		for (int i; i < args.length; i++) {
+		for (size_t i; i < args.length; i++) {
 
 			assert(args[i] !is null && args[i].diType !is null);
 
@@ -435,7 +435,7 @@ version (UseDIBuilder) {
 
 		size_t size, alignment;
 		state.voidPtrType.irType.getSizeAndAlignment(
-			state.target, size, alignment);
+			state.target, /*#out*/size, /*#out*/alignment);
 
 		return LLVMDIBuilderCreatePointerType(
 			state.diBuilder, diCallType, size, alignment,
@@ -468,7 +468,7 @@ version (UseDIBuilder) {
 	{
 		string name = var.name;
 		auto file = diFile(state, var);
-		auto loc = diLocation(state, state.fnState.di, var.loc);
+		auto loc = diLocation(state, state.fnState.di, /*#ref*/var.loc);
 		auto expr = LLVMDIBuilderCreateExpression(
 			state.diBuilder, null, 0);
 
@@ -493,14 +493,14 @@ version (UseDIBuilder) {
 	{
 		string name = var.name;
 		auto file = diFile(state, var);
-		auto loc = diLocation(state, state.fnState.di, var.loc);
+		auto loc = diLocation(state, state.fnState.di, /*#ref*/var.loc);
 		auto expr = LLVMDIBuilderCreateExpression(
 			state.diBuilder, null, 0);
 
 		auto valinfo = LLVMDIBuilderCreateParameterVariable(
 			state.diBuilder, state.fnState.di,
 			name.ptr, name.length,
-			cast(int) var.index + 1,
+			cast(uint) (var.index + 1),
 			file, cast(uint) var.loc.line,
 			type.diType,
 			false, // AlwaysPreserve
@@ -529,12 +529,12 @@ private:
 	LLVMValueRef diString(State state, const(char)[] str)
 	{
 		return LLVMMDStringInContext(
-				state.context, str.ptr, cast(int)str.length);
+				state.context, str.ptr, cast(uint)str.length);
 	}
 
 	LLVMValueRef diNode(State state, LLVMValueRef[] val...)
 	{
-		return LLVMMDNodeInContext(state.context, val.ptr, cast(int)val.length);
+		return LLVMMDNodeInContext(state.context, val.ptr, cast(uint)val.length);
 	}
 
 	LLVMValueRef diNumber(State state, int val)
