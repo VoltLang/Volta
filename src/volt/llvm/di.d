@@ -98,7 +98,7 @@ version (UseDIBuilder) {
 		auto iver = state.diNode(
 				state.diNumber(2), // Magic.
 				state.diString("Debug Info Version"),
-				state.diNumber(cast(i32)LLVMGetDebugMetadataVersion())
+				state.diNumber(cast(int)LLVMGetDebugMetadataVersion())
 				);
 
 		// This controls the dwarf version emitted.
