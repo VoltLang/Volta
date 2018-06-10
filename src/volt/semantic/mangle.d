@@ -24,7 +24,7 @@ void ensureMangled(ir.Type t)
 }
 
 /*!
- * Mangle a type found in a given module.
+ * Mangle a type.
  */
 string mangle(ir.Type t)
 {
@@ -51,7 +51,7 @@ string mangle(ir.Type t)
 }
 
 /*!
- * Mangle a Variable found ina given module.
+ * Mangle a Variable.
  *
  * @todo figure out what to do about names argument.
  */
