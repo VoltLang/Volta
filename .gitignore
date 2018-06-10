@@ -22,16 +22,19 @@ build.bat
 *.bc
 *.o
 *.a
+*.ilk
 a.out*
 a.exe*
 
 # Misc files
 b.bat
 .DS_Store
+*.pdb
 
 # IDE files
 *.kdev*
 *.gdb_history
+**/.vs
 
 # VLS Cruft
 **/node_modules
