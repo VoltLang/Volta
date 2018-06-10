@@ -1,3 +1,4 @@
+//T requires:!x86
 module main;
 
 import core.rt.thread;
