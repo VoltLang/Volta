@@ -485,6 +485,14 @@ private:
 	ir.TemplateDefinition td, ir.TemplateInstance ti)
 	{
 		foreach (param; td.parameters) {
+			if (param.type !is null) {
+				auto tr = param.type.toTypeReferenceChecked();
+				if (tr !is null) {
+					if (tr.id.identifiers.length == 1 && tr.id.identifiers[0].value == param.name) {
+						throw makeError(/*#ref*/td.loc, "template definition parameter name cannot be the same as the type name.");
+					}
+				}
+			}
 			ti.names ~= param.name;
 		}
 		foreach (i, ref arg; ti.arguments) {
