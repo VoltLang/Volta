@@ -1,17 +1,23 @@
 module vls.semantic.scopeFinder;
 
 import watt = watt.io;
-import volta = [volta.interfaces, volta.parser.parser, volta.util.stack];
+import volta = [
+	volta.interfaces,
+	volta.parser.parser,
+	volta.util.stack,
+	volta.postparse.pass
+];
 import server = vls.server;
+import modules = vls.modules;
 import ir = [volta.ir, volta.ir.location];
 import visitor = volta.visitor;
 
 /*!
  * Convenience function that uses `ScopeFinder` to find a scope.
  */
-fn findScope(ref targetLocation: ir.Location, mod: ir.Module, postPass: volta.PostParsePass, langServer: server.VoltLanguageServer) ir.Scope
+fn findScope(ref targetLocation: ir.Location, mod: ir.Module, langServer: server.VoltLanguageServer) ir.Scope
 {
-	scopeFinder := new ScopeFinder(ref targetLocation, postPass, langServer);
+	scopeFinder := new ScopeFinder(ref targetLocation, langServer);
 	visitor.accept(mod, scopeFinder);
 	return scopeFinder.foundScope;
 }
@@ -62,11 +68,24 @@ public:
 	 *
 	 * @Param targetLocation The `Location` to search for a `Scope` to match.
 	 */
-	this(ref targetLocation: ir.Location, postPass: volta.PostParsePass, langServer: server.VoltLanguageServer)
+	this(ref targetLocation: ir.Location, langServer: server.VoltLanguageServer)
 	{
 		this.targetLocation = targetLocation;
-		this.mPostParse = postPass;
+	
+		versionSet := new volta.VersionSet();
+		target     := new volta.TargetInfo();
+		this.mPostParse = new volta.PostParseImpl(
+			err:langServer, vs:versionSet, target:target,
+			warningsEnabled:false, removalOnly:false, doMissing:false,
+			getMod:modulesGet
+		);
+
 		this.mServer = langServer;
+	}
+
+	fn modulesGet(qn: ir.QualifiedName) ir.Module
+	{
+		return modules.get(qn);
 	}
 
 protected:

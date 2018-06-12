@@ -21,9 +21,12 @@ import ir = volta.ir;
 import vls.lsp;
 import vls.server.responses;
 import vls.parsing.postparse;
-import vls.parsing.documentManager;
 import vls.util.simpleCache;
 import vls.semantic.symbolGathererVisitor;
+
+import documents = vls.documents;
+import parser    = vls.parser;
+import modules   = vls.modules;
 
 class VoltLanguageServer : ErrorSink
 {
@@ -31,7 +34,6 @@ public:
 	//! Used for testing external modules, unused in usual operation.
 	modulePath: string;
 	settings: Settings;
-	documentManager: DocumentManager;
 	importCache: SimpleImportCache;
 	sgv: SymbolGathererVisitor;
 
@@ -49,7 +51,6 @@ public:
 		this.modulePath = modulePath;
 		settings = new Settings(argZero, execDir);
 		settings.warningsEnabled = true;
-		documentManager = new DocumentManager(settings, this);
 		sgv = new SymbolGathererVisitor();
 	}
 
@@ -104,6 +105,15 @@ public:
 		send(rsp);
 	}
 
+	fn getModule(uri: string) ir.Module
+	{
+		mod := parser.parse(uri, this, settings);
+		if (mod is null) {
+			return null;
+		}
+		return modules.get(mod.name);
+	}
+
 private:
 	fn handleRO(ro: RequestObject) bool
 	{
@@ -123,12 +133,14 @@ private:
 		case "textDocument/didOpen":
 		case "textDocument/didChange":
 		case "textDocument/didSave":
-			documentManager.update(ro);
+			uri := documents.handleUpdate(ro);
+			parser.fullParse(uri, this, settings);
 			return Listening.Continue;
 		case "textDocument/documentSymbol":
 			uri: string;
 			mod := handleTextDocument(ro, out uri);
 			if (mod is null) {
+				error.writeln("NO MODULE");
 				send(buildEmptyResponse(ro.id.integer()));
 				return Listening.Continue;
 			}
@@ -226,9 +238,6 @@ private:
 		if (err !is null) {
 			return null;
 		}
-		mod: ir.Module;
-		postParse: PostParsePass;
-		documentManager.getModule(uri, out mod, out postParse);
-		return mod;
+		return getModule(uri);
 	}
 }

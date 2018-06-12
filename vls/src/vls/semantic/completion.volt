@@ -14,6 +14,9 @@ import semantic = [vls.semantic.completionList, vls.semantic.actualiseClass];
 import volta = [volta.interfaces, volta.settings, volta.token.lexer, volta.token.source];
 import printer = volta.ir.printer;
 
+import documents = vls.documents;
+import modules = vls.modules;
+
 //! Response for `textDocument/completion`.
 fn getCompletionResponse(ro: lsp.RequestObject, uri: string, theServer: server.VoltLanguageServer) string
 {
@@ -22,20 +25,18 @@ fn getCompletionResponse(ro: lsp.RequestObject, uri: string, theServer: server.V
 		return lsp.buildEmptyResponse(ro.id.integer());
 	}
 
-	mod: ir.Module;
-	postParse: volta.PostParsePass;
-	theServer.documentManager.getModule(uri, out mod, out postParse);
+	mod := theServer.getModule(uri);
 	if (mod is null) {
 		return failedToFind();
 	}
 
 	loc := getLocationFromRequestObject(ro);
-	theLine := getLineAtLocation(theServer.documentManager, uri, ref loc);
+	theLine := getLineAtLocation(uri, ref loc);
 	if (theLine.length == 0) {
 		return failedToFind();
 	}
 
-	completionItems := getCompletionItems(theServer, mod, postParse, ref loc, theLine);
+	completionItems := getCompletionItems(theServer, mod, ref loc, theLine);
 	if (completionItems.length == 0) {
 		return failedToFind();
 	}
@@ -56,18 +57,16 @@ fn getHoverResponse(ro: lsp.RequestObject, uri: string, theServer: server.VoltLa
 		return lsp.buildEmptyResponse(ro.id.integer());
 	}
 
-	mod: ir.Module;
-	postParse: volta.PostParsePass;
-	theServer.documentManager.getModule(uri, out mod, out postParse);
+	mod := theServer.getModule(uri);
 	if (mod is null) {
 		return failedToFind();
 	}
 
 	loc := getLocationFromRequestObject(ro);
-	theLine := getLineAtLocation(theServer.documentManager, uri, ref loc);
-	theWord := getWordAtLocation(theServer.documentManager, theLine, ref loc);
+	theLine := getLineAtLocation(uri, ref loc);
+	theWord := getWordAtLocation(theLine, ref loc);
 
-	parentScope := server.findScope(ref loc, mod, postParse, theServer);
+	parentScope := server.findScope(ref loc, mod, theServer);
 	if (parentScope is null) {
 		return failedToFind();
 	}
@@ -111,15 +110,13 @@ fn getSignatureHelpResponse(ro: lsp.RequestObject, uri: string, theServer: serve
 		return lsp.buildEmptyResponse(ro.id.integer());
 	}
 
-	mod: ir.Module;
-	postParse: volta.PostParsePass;
-	theServer.documentManager.getModule(uri, out mod, out postParse);
+	mod := theServer.getModule(uri);
 	if (mod is null) {
 		return failedToFind();
 	}
 
 	loc := getLocationFromRequestObject(ro);
-	theLine := watt.strip(getLineAtLocation(theServer.documentManager, uri, ref loc));
+	theLine := watt.strip(getLineAtLocation(uri, ref loc));
 
 	if (theLine.length > 0 && theLine[$-1] == ')') {
 		theLine = theLine[0 .. $-1];
@@ -138,7 +135,7 @@ fn getSignatureHelpResponse(ro: lsp.RequestObject, uri: string, theServer: serve
 		return failedToFind();
 	}
 
-	parentScope := server.findScope(ref loc, mod, postParse, theServer);
+	parentScope := server.findScope(ref loc, mod, theServer);
 	if (parentScope is null) {
 		return failedToFind();
 	}
@@ -192,18 +189,16 @@ fn getGotoDefinitionResponse(ro: lsp.RequestObject, uri: string, theServer: serv
 		return lsp.buildEmptyResponse(ro.id.integer());
 	}
 
-	mod: ir.Module;
-	postParse: volta.PostParsePass;
-	theServer.documentManager.getModule(uri, out mod, out postParse);
+	mod := theServer.getModule(uri);
 	if (mod is null) {
 		return failedToFind();
 	}
 
 	loc := getLocationFromRequestObject(ro);
-	theLine := getLineAtLocation(theServer.documentManager, uri, ref loc);
-	theWord := getWordAtLocation(theServer.documentManager, theLine, ref loc);
+	theLine := getLineAtLocation(uri, ref loc);
+	theWord := getWordAtLocation(theLine, ref loc);
 
-	parentScope := server.findScope(ref loc, mod, postParse, theServer);
+	parentScope := server.findScope(ref loc, mod, theServer);
 	if (parentScope is null) {
 		return failedToFind();
 	}
@@ -249,7 +244,7 @@ fn parseFragmentExpression(fragment: string, settings: volta.Settings, errSink: 
 	return exp;
 }
 
-fn getCompletionItems(theServer: server.VoltLanguageServer, parentModule: ir.Module, postParse: volta.PostParsePass, ref loc: ir.Location, theLine: string) string
+fn getCompletionItems(theServer: server.VoltLanguageServer, parentModule: ir.Module, ref loc: ir.Location, theLine: string) string
 {
 	/* Field completion items are items that are looked up in a parent item,
 	 * via the '.' operator.
@@ -257,26 +252,26 @@ fn getCompletionItems(theServer: server.VoltLanguageServer, parentModule: ir.Mod
 	 * Such as by typing an identifier and waiting, or hitting ctrl+space.
 	 */
 	if (theLine[$-1] == '.') {
-		return getFieldCompletionItems(theServer, parentModule, postParse, ref loc, theLine);
+		return getFieldCompletionItems(theServer, parentModule, ref loc, theLine);
 	} else {
-		return getNameCompletionItems(theServer,parentModule, postParse, ref loc, theLine);
+		return getNameCompletionItems(theServer,parentModule, ref loc, theLine);
 	}
 }
 
-fn getNameCompletionItems(theServer: server.VoltLanguageServer, parentModule: ir.Module, postParse: volta.PostParsePass,
+fn getNameCompletionItems(theServer: server.VoltLanguageServer, parentModule: ir.Module,
 	ref loc: ir.Location, theLine: string) string
 {
 	beginning := watt.strip(theLine);
 	completionList: semantic.CompletionList;
-	getSymbolsThatStartWith(ref loc, parentModule, beginning, theServer, postParse, ref completionList);
+	getSymbolsThatStartWith(ref loc, parentModule, beginning, theServer, ref completionList);
 	return completionList.jsonArray();
 }
 
 fn getSymbolsThatStartWith(ref loc: ir.Location, mod: ir.Module, beginning: string, theServer: server.VoltLanguageServer,
-	postParse: volta.PostParsePass, ref completionList: semantic.CompletionList, depth: i32 = 0)
+	ref completionList: semantic.CompletionList, depth: i32 = 0)
 {
 	if (depth == 0) {
-		parentScope := server.findScope(ref loc, mod, postParse, theServer);
+		parentScope := server.findScope(ref loc, mod, theServer);
 		while (parentScope !is null) {
 			foreach (name, store; parentScope.symbols) {
 				if (watt.startsWith(name, beginning)) {
@@ -298,21 +293,21 @@ fn getSymbolsThatStartWith(ref loc: ir.Location, mod: ir.Module, beginning: stri
 	// TODO: Public imports etc
 	if (depth == 0) {
 		foreach (importedMod; mod.myScope.importedModules) {
-			getSymbolsThatStartWith(ref loc, importedMod, beginning, theServer, postParse, ref completionList, depth + 1);
+			getSymbolsThatStartWith(ref loc, importedMod, beginning, theServer, ref completionList, depth + 1);
 		}
 	}
 }
 
 //! For the input line, at the given location in the given module, return an array of `CompletionItem`.
-fn getFieldCompletionItems(theServer: server.VoltLanguageServer, parentModule: ir.Module, postParse: volta.PostParsePass, ref loc: ir.Location, theLine: string) string
+fn getFieldCompletionItems(theServer: server.VoltLanguageServer, parentModule: ir.Module, ref loc: ir.Location, theLine: string) string
 {
 	oneTimeCache: server.SimpleImportCache;
 	theLine = theLine[0 .. $-1];  // Shave '.'
 	endOfLineLocation: ir.Location;
 	endOfLineLocation.line = loc.line;
 	endOfLineLocation.column = cast(u32)(theLine.length - 1);
-	childWord := getWordAtLocation(theServer.documentManager, theLine, ref endOfLineLocation);
-	parentScope := server.findScope(ref loc, parentModule, postParse, theServer);
+	childWord := getWordAtLocation(theLine, ref endOfLineLocation);
+	parentScope := server.findScope(ref loc, parentModule, theServer);
 	if (parentScope is null) {
 		return null;
 	}
@@ -389,9 +384,9 @@ fn getLocationFromRequestObject(ro: lsp.RequestObject) ir.Location
 }
 
 //! Get the line from the file pointed to by `uri`'s current text at the line pointed to by `loc`.
-fn getLineAtLocation(documentManager: server.DocumentManager, uri: string, ref loc: ir.Location) string
+fn getLineAtLocation(uri: string, ref loc: ir.Location) string
 {
-	src := documentManager.getText(uri);
+	src := documents.get(uri);
 	lines := watt.splitLines(src);
 	theLine: string;
 	foreach (i, line; lines) {
@@ -402,7 +397,7 @@ fn getLineAtLocation(documentManager: server.DocumentManager, uri: string, ref l
 	return theLine;
 }
 
-fn getWordAtLocation(documentManager: server.DocumentManager, line: string, ref loc: ir.Location) string
+fn getWordAtLocation(line: string, ref loc: ir.Location) string
 {
 	if (loc.column >= line.length) {
 		return "";
