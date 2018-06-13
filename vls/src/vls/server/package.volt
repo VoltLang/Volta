@@ -140,7 +140,6 @@ private:
 			uri: string;
 			mod := handleTextDocument(ro, out uri);
 			if (mod is null) {
-				error.writeln("NO MODULE");
 				send(buildEmptyResponse(ro.id.integer()));
 				return Listening.Continue;
 			}
@@ -216,7 +215,9 @@ private:
 		voltKey := settingsKey.lookupObjectKey("volt");
 
 		pathToVolta = getStringKey(voltKey, "pathToVolta");
+		modules.setPackagePath("core", pathToVolta, "rt/src");
 		pathToWatt  = getStringKey(voltKey, "pathToWatt");
+		modules.setPackagePath("watt", pathToWatt, "src");
 
 		if (voltKey.hasObjectKey("additionalPackagePaths")) {
 			vkey := voltKey.lookupObjectKey("additionalPackagePaths");
@@ -226,6 +227,7 @@ private:
 					ckey := vkey.lookupObjectKey(key);
 					if (ckey.type() == json.DomType.String) {
 						additionalPaths[key] = ckey.str();
+						modules.setPackagePath(key, ckey.str());
 					}
 				}
 			}

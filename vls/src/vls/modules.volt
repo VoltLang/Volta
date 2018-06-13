@@ -52,10 +52,22 @@ fn setModulePath(path: string)
 	gModulePath = path;
 }
 
+fn setPackagePath(_package: string, path: string, relativeSrc: string = null)
+{
+	finalPath: string;
+	if (relativeSrc !is null) {
+		finalPath = watt.concatenatePath(path, relativeSrc);
+	} else {
+		finalPath = path;
+	}
+	gPackagePath[_package] = finalPath;
+}
+
 private:
 
 global gModules: ir.Module[string];
 global gModulePath: string;
+global gPackagePath: string[string];
 
 fn getSrcFolder(path: string) string
 {
@@ -73,7 +85,12 @@ fn findAndParseFailedGet(moduleName: ir.QualifiedName, uri: string, errorSink: v
 	if (base is null) {
 		return null;
 	}
-	modpath := findLocal(base, moduleName);
+	modpath: string;
+	if (p := moduleName.identifiers[0].value in gPackagePath) {
+		modpath = findLocal(*p, moduleName);
+	} else {
+		modpath = findLocal(base, moduleName);
+	}
 	if (modpath is null) {
 		return null;
 	}

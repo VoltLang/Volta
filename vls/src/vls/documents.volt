@@ -80,7 +80,6 @@ fn isUpdateRequest(methodName: string) bool
  */
 fn setEntry(uri: string, _version: i64, text: string)
 {
-	io.error.writeln(new "Setting text for ${uri}");
 	if (p := uri in gDocuments) {
 		if (p._version > _version) {
 			return;
