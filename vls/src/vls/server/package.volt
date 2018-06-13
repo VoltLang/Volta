@@ -188,6 +188,9 @@ private:
 		case "workspace/didChangeConfiguration":
 			updateConfiguration(ro);
 			return Listening.Continue;
+		case "workspace/didChangeWatchedFiles":
+			updateChangedFiles(ro);
+			return Listening.Continue;
 		default:
 			if (ro.methodName.length > 2 && ro.methodName[0 .. 2] == "$/") {
 				/* "If a server or client receives notifications or requests starting
@@ -199,6 +202,31 @@ private:
 			}
 			// TODO: Return error
 			return Listening.Continue;
+		}
+	}
+
+	fn updateChangedFiles(ro: RequestObject)
+	{
+		changes := getArrayKey(ro.params, "changes");
+		if (changes is null) {
+			return;
+		}
+		foreach (change; changes) {
+			if (!change.hasObjectKey("type")) {
+				continue;
+			}
+			type := cast(FileChanged)change.lookupObjectKey("type").integer();
+			if (type == FileChanged.Deleted) {
+				continue;
+			}
+			uri := getStringKey(change, "uri");
+			path := getPathFromUri(uri);
+			if (!exists(path)) {
+				continue;
+			}
+			text := cast(string)read(path);
+			documents.set(uri, text);
+			parser.fullParse(uri, this, settings);
 		}
 	}
 
