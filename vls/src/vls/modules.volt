@@ -54,6 +54,9 @@ fn setModulePath(path: string)
 
 fn setPackagePath(_package: string, path: string, relativeSrc: string = null)
 {
+	if (checkTestPaths(_package, path)) {
+		return;
+	}
 	finalPath: string;
 	if (relativeSrc !is null) {
 		finalPath = watt.concatenatePath(path, relativeSrc);
@@ -121,6 +124,44 @@ fn findLocal(base: string, moduleName: ir.QualifiedName) string
 		if (watt.exists(packageExtension)) {
 			return packageExtension;
 		}
+	}
+	return null;
+}
+
+/* If we want to test Watt etc in the unittests,
+ * we doctor the input to set the library paths
+ * to testwatt testvolta etc. This triggers us to
+ * search upwards from the vls executable for the
+ * appropriate paths.
+ */
+
+fn checkTestPaths(_package: string, path: string) bool
+{
+	if (_package == "watt" && path == "testwatt") {
+		p := findParentFolder(watt.getExecDir(), "Watt/src");
+		if (p !is null) {
+			gPackagePath["watt"] = p;
+			return true;
+		}
+	}
+	if (_package == "core" && path == "testvolta") {
+		p := findParentFolder(watt.getExecDir(), "Volta/rt/src");
+		if (p !is null) {
+			gPackagePath["core"] = p;
+			return true;
+		}
+	}
+	return false;
+}
+
+fn findParentFolder(basePath: string, additionalPath: string) string
+{
+	while (basePath.length > 0) {
+		bpath := watt.concatenatePath(basePath, additionalPath);
+		if (watt.isDir(bpath)) {
+			return bpath;
+		}
+		lsp.parentDirectory(ref basePath);
 	}
 	return null;
 }
