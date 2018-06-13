@@ -111,7 +111,7 @@ public:
 		if (mod is null) {
 			return null;
 		}
-		return modules.get(mod.name);
+		return modules.get(mod.name, uri, this, settings);
 	}
 
 private:

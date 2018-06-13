@@ -36,7 +36,6 @@ fn handleUpdate(request: lsp.RequestObject) string
 
 	uri      := root.lookupObjectKey("uri").str();
 	_version := root.lookupObjectKey("version").integer();
-	io.error.writeln(new "Setting text for ${uri}");
 	setEntry(uri, _version, text);
 	return uri;
 }
@@ -47,6 +46,16 @@ fn get(uri: string) string
 		return p.text;
 	}
 	return null;
+}
+
+/*!
+ * Associate `uri` with `text`, regardless of current
+ * association.
+ */
+fn set(uri: string, text: string)
+{
+	gDocuments.remove(uri);
+	setEntry(uri, 0, text);
 }
 
 private:
@@ -71,6 +80,7 @@ fn isUpdateRequest(methodName: string) bool
  */
 fn setEntry(uri: string, _version: i64, text: string)
 {
+	io.error.writeln(new "Setting text for ${uri}");
 	if (p := uri in gDocuments) {
 		if (p._version > _version) {
 			return;

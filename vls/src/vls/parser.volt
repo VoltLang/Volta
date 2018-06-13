@@ -31,16 +31,15 @@ fn parse(uri: string, errorSink: volta.ErrorSink, settings: volta.Settings) ir.M
 	return mod;
 }
 
-fn fullParse(uri: string, errorSink: volta.ErrorSink, settings: volta.Settings)
+fn fullParse(uri: string, errorSink: volta.ErrorSink, settings: volta.Settings) ir.Module
 {
-	io.error.writeln(new "PARSING ${uri}");
 	mod := parse(uri, errorSink, settings);
 	if (mod !is null) {
-		io.error.writeln(new "ADDING ${uri}");
 		lsp.send(lsp.buildNoDiagnostic(uri));
 		modules.set(mod.name, mod);
-		postparse(mod, errorSink);
+		postparse(uri, mod, errorSink, settings);
 	}
+	return mod;
 }
 
 private:
@@ -49,10 +48,8 @@ fn getSource(uri: string, errorSink: volta.ErrorSink) volta.Source
 {
 	text := documents.get(uri);
 	if (text is null) {
-		io.error.writeln(new "${uri} no source");
 		return null;
 	}
-	io.error.writeln(new "${lsp.getPathFromUri(uri)}");
 	return new volta.Source(text, lsp.getPathFromUri(uri), errorSink);
 }
 
@@ -90,9 +87,9 @@ fn getModule(uri: string, tw: volta.TokenWriter, settings: volta.Settings, error
 	}
 }
 
-fn postparse(mod: ir.Module, errorSink: volta.ErrorSink)
+fn postparse(uri: string, mod: ir.Module, errorSink: volta.ErrorSink, settings: volta.Settings)
 {
-	fn modulesGet(qn: ir.QualifiedName) ir.Module { return modules.get(qn); }
+	fn modulesGet(qn: ir.QualifiedName) ir.Module { return modules.get(qn, uri, errorSink, settings); }
 	versionSet := new volta.VersionSet();
 	target     := new volta.TargetInfo();
 	pass       := new volta.PostParseImpl(
