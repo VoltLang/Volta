@@ -5,13 +5,17 @@ import watt = [watt.text.getopt, watt.io.streams, watt.io];
 import lsp = vls.lsp;
 import vls.server;
 
+import modules = vls.modules;
+
 fn main(args: string[]) i32
 {
 	inputStream: watt.InputStream = watt.input;
 	inputPath, modulePath: string;
 	wait, help: bool;
 	watt.getopt(ref args, "input", ref inputPath);
-	watt.getopt(ref args, "modulePath", ref modulePath);
+	if (watt.getopt(ref args, "modulePath", ref modulePath)) {
+		modules.setModulePath(modulePath);
+	}
 	watt.getopt(ref args, "help", ref help);
 	watt.getopt(ref args, "wait", ref wait);
 

@@ -46,13 +46,33 @@ fn set(moduleName: ir.QualifiedName, _module: ir.Module)
 	gModules[moduleName.toString()] = _module;
 }
 
+//! For testing purposes.
+fn setModulePath(path: string)
+{
+	gModulePath = path;
+}
+
 private:
+
+global gModules: ir.Module[string];
+global gModulePath: string;
+
+fn getSrcFolder(path: string) string
+{
+	if (gModulePath !is null) {
+		return gModulePath;
+	}
+	bpath := watt.dirName(lsp.getBatteryToml(path));
+	return watt.concatenatePath(bpath, "src");
+}
 
 fn findAndParseFailedGet(moduleName: ir.QualifiedName, uri: string, errorSink: volta.ErrorSink, settings: volta.Settings) ir.Module
 {
 	path := lsp.getPathFromUri(uri);
-	base := watt.dirName(lsp.getBatteryToml(path));
-	version (Windows) base = watt.replace(base, "\\", "/");
+	base := getSrcFolder(path);
+	if (base is null) {
+		return null;
+	}
 	modpath := findLocal(base, moduleName);
 	if (modpath is null) {
 		return null;
@@ -65,7 +85,7 @@ fn findAndParseFailedGet(moduleName: ir.QualifiedName, uri: string, errorSink: v
 
 fn findLocal(base: string, moduleName: ir.QualifiedName) string
 {
-	proposedPath := watt.concatenatePath(base, "src");
+	proposedPath := base;
 	idents := moduleName.identifiers;
 	foreach (i, ident; idents) {
 		if (!watt.isDir(proposedPath)) {
@@ -83,5 +103,3 @@ fn findLocal(base: string, moduleName: ir.QualifiedName) string
 	}
 	return null;
 }
-
-global gModules: ir.Module[string];
