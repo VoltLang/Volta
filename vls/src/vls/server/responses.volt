@@ -15,7 +15,6 @@ import ir = volta.ir;
 import volta.visitor.visitor : accept;
 
 import vls.lsp;
-import vls.parsing.documentManager;
 import vls.semantic.symbolGathererVisitor;
 import vls.semantic.completion;
 import vls.server;

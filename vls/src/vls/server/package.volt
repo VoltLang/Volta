@@ -20,7 +20,6 @@ import ir = volta.ir;
 
 import vls.lsp;
 import vls.server.responses;
-import vls.parsing.postparse;
 import vls.util.simpleCache;
 import vls.semantic.symbolGathererVisitor;
 

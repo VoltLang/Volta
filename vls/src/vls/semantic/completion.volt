@@ -7,7 +7,7 @@ import ir = [volta.ir, volta.ir.location];
 import parser = [volta.parser.base, volta.parser.expression];
 import visitor = [volta.visitor.visitor, volta.visitor.scopemanager];
 import lsp = vls.lsp;
-import server = [vls.parsing.documentManager, vls.server.responses, vls.semantic.scopeFinder,
+import server = [vls.server.responses, vls.semantic.scopeFinder,
 	vls.util.simpleCache, vls.parsing.docParser, vls.semantic.lookup, vls.server, vls.util.printing,
 	vls.semantic.symbolGathererVisitor];
 import semantic = [vls.semantic.completionList, vls.semantic.actualiseClass];
