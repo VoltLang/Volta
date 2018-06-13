@@ -100,6 +100,10 @@ fn findLocal(base: string, moduleName: ir.QualifiedName) string
 		if (watt.exists(voltExtension)) {
 			return voltExtension;
 		}
+		packageExtension := watt.concatenatePath(proposedPath, "package.volt");
+		if (watt.exists(packageExtension)) {
+			return packageExtension;
+		}
 	}
 	return null;
 }
