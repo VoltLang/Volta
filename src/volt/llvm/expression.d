@@ -181,6 +181,10 @@ void handleBinOp(State state, ir.BinOp bin, Value result)
 	case AndAssign:
 	case OrAssign:
 	case XorAssign:
+	case LSAssign:
+	case SRSAssign:
+	case RSAssign:
+	case PowAssign:
 		handleBinOpAssign(state, bin, result);
 		break;
 	case Is:
@@ -429,6 +433,9 @@ void handleBinOpAssign(State state, ir.BinOp bin, Value result)
 	case AndAssign: op = And; break;
 	case OrAssign: op = Or; break;
 	case XorAssign: op = Xor; break;
+	case LSAssign: op = LS; break;
+	case SRSAssign: op = SRS; break;
+	case RSAssign: op = RS; break;
 	default:
 		throw panicUnhandled(bin, toString(bin.op));
 	}
