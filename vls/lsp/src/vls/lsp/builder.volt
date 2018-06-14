@@ -112,7 +112,7 @@ fn buildInitialiseResponse(sink: watt.Sink, id: i64)
 	sink(`"completionProvider":{"resolveProvider":false,`);
 	sink(`"triggerCharacters":["."]},`);
 
-	sink(`"signatureHelpProvider":{"triggerCharacters":[")",","]},`);
+	sink(`"signatureHelpProvider":{"triggerCharacters":["(",","]},`);
 	sink(`"definitionProvider":true,`);
 	sink(`"referencesProvider":false,`);
 	sink(`"documentHighlightProvider":true,`);
