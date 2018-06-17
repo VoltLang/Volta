@@ -243,6 +243,8 @@ private:
 
 		pathToVolta = getStringKey(voltKey, "pathToVolta");
 		modules.setPackagePath("core", pathToVolta, "rt/src");
+		modules.setPackagePath("volt", pathToVolta, "src");
+		modules.setPackagePath("volta", pathToVolta, "lib/src");
 		pathToWatt  = getStringKey(voltKey, "pathToWatt");
 		modules.setPackagePath("watt", pathToWatt, "src");
 
