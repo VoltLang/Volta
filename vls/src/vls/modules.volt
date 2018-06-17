@@ -116,14 +116,31 @@ fn findLocal(base: string, moduleName: ir.QualifiedName) string
 			continue;
 		}
 		// Last ident.
-		voltExtension := new "${proposedPath}.volt";
-		if (watt.exists(voltExtension)) {
-			return voltExtension;
+		normalModule := sourceFileExists(proposedPath);
+		if (normalModule !is null) {
+			return normalModule;
 		}
-		packageExtension := watt.concatenatePath(proposedPath, "package.volt");
-		if (watt.exists(packageExtension)) {
+		packageExtension := sourceFileExists(watt.concatenatePath(proposedPath, "package"));
+		if (packageExtension !is null) {
 			return packageExtension;
 		}
+	}
+	return null;
+}
+
+/*!
+ * If `${base}.volt` or `${base}.d` exists, return that path.
+ * Otherwise return `null`.
+ */
+fn sourceFileExists(base: string) string
+{
+	vExtension := new "${base}.volt";
+	if (watt.exists(vExtension)) {
+		return vExtension;
+	}
+	dExtension := new "${base}.d";
+	if (watt.exists(dExtension)) {
+		return dExtension;
 	}
 	return null;
 }
