@@ -61,10 +61,16 @@ CompilerException makeEmitLLVMNoLink(string file = __FILE__, const int line = __
  *
  */
 
+CompilerException makeRangeForeachWithIndex(ref in Location loc,
+	string file = __FILE__, const int line = __LINE__)
+{
+	return makeError(/*#ref*/loc, "foreach over range cannot take an index variable.", file, line);
+}
+
 CompilerException makeNonIntegralEnumNullAssign(ref in Location loc,
 	string file = __FILE__, const int line = __LINE__)
 {
-	return makeError(/*#ref*/loc, "member of non integral enum has no assign expression.");
+	return makeError(/*#ref*/loc, "member of non integral enum has no assign expression.", file, line);
 }
 
 CompilerException makeRedefinesReservedIdentifier(ref in Location loc, string ident,

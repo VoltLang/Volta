@@ -1315,7 +1315,9 @@ ir.ForStatement lowerForeach(ir.ForeachStatement fes, LanguagePass lp,
 	// foreach_reverse (i; 5 .. 7) => for (int i = 7 - 1; i >= 5; i--)
 	if (fes.beginIntegerRange !is null) {
 		panicAssert(fes, fes.endIntegerRange !is null);
-		panicAssert(fes, fes.itervars.length == 1);
+		if (fes.itervars.length > 1) {
+			throw makeRangeForeachWithIndex(/*#ref*/fes.itervars[0].loc);
+		}
 		auto v = fs.initVars[0];
 		auto begin = realType(getExpType(fes.beginIntegerRange));
 		auto end = realType(getExpType(fes.endIntegerRange));
