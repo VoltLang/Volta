@@ -608,6 +608,10 @@ ParseStatus parseForeachStatement(ParserStream ps, out ir.ForeachStatement f)
 	}
 	ps.get();
 
+	if (ps == TokenType.Semicolon) {
+		return unexpectedToken(ps, f);
+	}
+
 	if (ps != [TokenType.IntegerLiteral, TokenType.DoubleDot]) {
 		while (ps != TokenType.Semicolon) {
 			bool isRef = matchIf(ps, TokenType.Ref);
