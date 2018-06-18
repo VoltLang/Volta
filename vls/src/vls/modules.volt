@@ -17,6 +17,7 @@ import volta     = [
 import lsp       = vls.lsp;
 import parser    = vls.parser;
 import documents = vls.documents;
+import util      = vls.util.pathTree;
 
 /*!
  * Get the module associated with `moduleName`, or `null`.
@@ -63,14 +64,14 @@ fn setPackagePath(_package: string, path: string, relativeSrc: string = null)
 	} else {
 		finalPath = path;
 	}
-	gPackagePath[_package] = finalPath;
+	gPackagePath.set(_package, finalPath);
 }
 
 private:
 
 global gModules: ir.Module[string];
 global gModulePath: string;
-global gPackagePath: string[string];
+global gPackagePath: util.PathTree;
 
 fn getSrcFolder(path: string) string
 {
@@ -89,8 +90,9 @@ fn findAndParseFailedGet(moduleName: ir.QualifiedName, uri: string, errorSink: v
 		return null;
 	}
 	modpath: string;
-	if (p := moduleName.identifiers[0].value in gPackagePath) {
-		modpath = findLocal(*p, moduleName);
+	packagePath := gPackagePath.get(moduleName.strings);
+	if (packagePath !is null) {
+		modpath = findLocal(packagePath, moduleName);
 	} else {
 		modpath = findLocal(base, moduleName);
 	}
@@ -157,14 +159,14 @@ fn checkTestPaths(_package: string, path: string) bool
 	if (_package == "watt" && path == "testwatt") {
 		p := findParentFolder(watt.getExecDir(), "Watt/src");
 		if (p !is null) {
-			gPackagePath["watt"] = p;
+			gPackagePath.set("watt", p);
 			return true;
 		}
 	}
 	if (_package == "core" && path == "testvolta") {
 		p := findParentFolder(watt.getExecDir(), "Volta/rt/src");
 		if (p !is null) {
-			gPackagePath["core"] = p;
+			gPackagePath.set("core", p);
 			return true;
 		}
 	}

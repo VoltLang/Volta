@@ -3,6 +3,17 @@ module vls.util.pathTree;
 
 import text = watt.text.string;
 
+unittest
+{
+	tree: PathTree;
+	tree.set("foo", "hello");
+	tree.set("foo.bar", "world");
+	assert(tree.get(["foo"]) == "hello");
+	assert(tree.get(["foo", "bar"]) == "world");
+	assert(tree.get(["food", "bar"]) is null);
+	assert(tree.get(["foo", "baz"]) == "hello");
+	assert(tree.get(["foo", "bar", "baz"]) == "world");
+}
 
 /*!
  * The user can set a specific module name chain to
@@ -60,52 +71,44 @@ public:
 	 */
 	fn get(names: string[]) string
 	{
-		nameIndex: size_t;
 		current := mRoot;
-		while (current !is null && nameIndex < names.length) {
-			if (current.type == PathType.Path) {
-				return current.u.path;
-			} else {
-				current = current.u.children[names[nameIndex++]];
+		lastName: string = null;
+
+		while (names.length > 0) {
+			name := names[0];
+			names = names[1 .. $];
+			p := name in current.children;
+			if (p is null) {
+				return lastName;
 			}
+			current = *p;
+			lastName = current.path;
 		}
-		if (current !is null && current.type == PathType.Path) {
-			return current.u.path;
+		if (names.length == 0 && current !is null) {
+			return current.path;
 		}
-		return null;
+		return lastName;
 	}
 
 private:
 	fn getNode(root: PathNode*, name: string) PathNode*
 	{
-		p: PathNode** = name in root.u.children;
-		if (p !is null && (*p).type == PathType.Node) {
+		p: PathNode** = name in root.children;
+		if (p !is null) {
 			return *p;
 		}
 		node := PathNode.createNode();
-		root.u.children[name] = node;
+		root.children[name] = node;
 		return node;
 	}
 
 	fn setPath(root: PathNode*, name: string, path: string)
 	{
-		root.u.children[name] = PathNode.createPath(path);
+		root.children[name] = PathNode.createPath(path);
 	}
 }
 
 private:
-
-enum PathType
-{
-	Node,
-	Path,
-}
-
-union PathUnion
-{
-	children: PathNode*[string];
-	path: string;
-}
 
 struct PathNode
 {
@@ -113,19 +116,17 @@ public:
 	global fn createNode() PathNode*
 	{
 		node := new PathNode;
-		node.type = PathType.Node;
 		return node;
 	}
 
 	global fn createPath(path: string) PathNode*
 	{
-		node := new PathNode;
-		node.type = PathType.Path;
-		node.u.path = path;
+		node := PathNode.createNode();
+		node.path = path;
 		return node;
 	}
 
 public:
-	type: PathType;
-	u:    PathUnion;
+	children: PathNode*[string];
+	path: string;
 }
