@@ -304,6 +304,9 @@ extern (C) fn _get_osfhandle(i32) HANDLE;
 extern(C) fn _fullpath(char*, const(char)*, length: size_t) char*;
 extern(C) fn _wfullpath(wchar*, const(wchar)*, length: size_t) char*;
 
+fn PathIsRelativeA(LPCSTR) BOOL;
+fn PathIsRelativeW(LPCWSTR) BOOL;
+
 fn Sleep(DWORD);
 fn SleepEx(DWORD, BOOL) DWORD;
 
