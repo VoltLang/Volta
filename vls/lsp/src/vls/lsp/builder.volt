@@ -271,3 +271,15 @@ fn buildVlsToolchainPresentNotification(sink: watt.Sink, toolchainUri: string)
 	sink(toolchainUri);
 	sink(`"}}`);
 }
+
+fn buildVlsToolchainRetrievalFailure() string
+{
+	ss: watt.StringSink;
+	buildVlsToolchainRetrievalFailure(ss.sink);
+	return ss.toString();
+}
+
+fn buildVlsToolchainRetrievalFailure(sink: watt.Sink)
+{
+	sink(`{"jsonrpc":"2.0","method":"vls/toolchainRetrievalFailure"}`);
+}
