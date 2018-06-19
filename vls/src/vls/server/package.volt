@@ -191,6 +191,12 @@ private:
 		case "workspace/didChangeWatchedFiles":
 			updateChangedFiles(ro);
 			return Listening.Continue;
+		case "vls/toolchainPresent":
+			turi  := getStringKey(ro.params, "uri");
+			tpath := concatenatePath(getPathFromUri(turi), "lib");
+			updateVoltaPaths(tpath);
+			updateWattPaths(tpath);
+			return Listening.Continue;
 		default:
 			if (ro.methodName.length > 2 && ro.methodName[0 .. 2] == "$/") {
 				/* "If a server or client receives notifications or requests starting
@@ -230,6 +236,22 @@ private:
 		}
 	}
 
+	fn updateVoltaPaths(base: string)
+	{
+		if (base is null) {
+			return;
+		}
+		modules.setPackagePath("core", base, "rt/src");
+	}
+
+	fn updateWattPaths(base: string)
+	{
+		if (base is null) {
+			return;
+		}
+		modules.setPackagePath("watt", base, "watt/src");
+	}
+
 	fn updateConfiguration(ro: RequestObject)
 	{
 		if (!ro.params.hasObjectKey("settings")) {
@@ -242,11 +264,9 @@ private:
 		voltKey := settingsKey.lookupObjectKey("volt");
 
 		pathToVolta = getStringKey(voltKey, "pathToVolta");
-		modules.setPackagePath("core", pathToVolta, "rt/src");
-		modules.setPackagePath("volt", pathToVolta, "src");
-		modules.setPackagePath("volta", pathToVolta, "lib/src");
+		updateVoltaPaths(pathToVolta);
 		pathToWatt  = getStringKey(voltKey, "pathToWatt");
-		modules.setPackagePath("watt", pathToWatt, "src");
+		updateWattPaths(pathToWatt);
 
 		if (voltKey.hasObjectKey("additionalPackagePaths")) {
 			vkey := voltKey.lookupObjectKey("additionalPackagePaths");
