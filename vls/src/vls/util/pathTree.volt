@@ -3,18 +3,6 @@ module vls.util.pathTree;
 
 import text = watt.text.string;
 
-unittest
-{
-	tree: PathTree;
-	tree.set("foo", "hello");
-	tree.set("foo.bar", "world");
-	assert(tree.get(["foo"]) == "hello");
-	assert(tree.get(["foo", "bar"]) == "world");
-	assert(tree.get(["food", "bar"]) is null);
-	assert(tree.get(["foo", "baz"]) == "hello");
-	assert(tree.get(["foo", "bar", "baz"]) == "world");
-}
-
 /*!
  * The user can set a specific module name chain to
  * a certain path.
