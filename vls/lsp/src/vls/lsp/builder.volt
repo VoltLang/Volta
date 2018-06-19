@@ -257,3 +257,17 @@ fn buildVlsCustomBuildTagNotification(sink: watt.Sink, methodName: string, build
 	sink(json.escapeString(buildTag));
 	sink(`"}}`);
 }
+
+fn buildVlsToolchainPresentNotification(toolchainUri: string) string
+{
+	ss: watt.StringSink;
+	buildVlsToolchainPresentNotification(ss.sink, toolchainUri);
+	return ss.toString();
+}
+
+fn buildVlsToolchainPresentNotification(sink: watt.Sink, toolchainUri: string)
+{
+	sink(`{"jsonrpc":"2.0","method":"vls/toolchainPresent","params":{"uri":"`);
+	sink(toolchainUri);
+	sink(`"}}`);
+}
