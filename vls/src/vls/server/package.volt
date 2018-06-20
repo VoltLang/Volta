@@ -49,6 +49,7 @@ public:
 
 		this.modulePath = modulePath;
 		settings = new Settings(argZero, execDir);
+		settings.processConfigs();
 		settings.warningsEnabled = true;
 		sgv = new SymbolGathererVisitor();
 	}
