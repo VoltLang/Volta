@@ -134,7 +134,7 @@ public:
 		mAccumParsing = new Accumulator("p1-parsing");
 
 		setTargetInfo(target, s.arch, s.platform, s.cRuntime);
-		setVersionSet(ver, s.arch, s.platform, s.cRuntime);
+		ver.set(s.arch, s.platform, s.cRuntime);
 
 		decideStuff(s);
 		decideJson(s);
@@ -907,62 +907,6 @@ TargetInfo setTargetInfo(TargetInfo target, Arch arch, Platform platform, CRunti
 	}
 
 	return target;
-}
-
-void setVersionSet(VersionSet ver, Arch arch, Platform platform, CRuntime cRuntime)
-{
-	final switch (cRuntime) with (CRuntime) {
-	case None:
-		ver.overwriteVersionIdentifier("CRuntime_None");
-		break;
-	case MinGW:
-		ver.overwriteVersionIdentifier("CRuntime_All");
-		break;
-	case Glibc:
-		ver.overwriteVersionIdentifier("CRuntime_All");
-		ver.overwriteVersionIdentifier("CRuntime_Glibc");
-		break;
-	case Darwin:
-		ver.overwriteVersionIdentifier("CRuntime_All");
-		break;
-	case Microsoft:
-		ver.overwriteVersionIdentifier("CRuntime_All");
-		ver.overwriteVersionIdentifier("CRuntime_Microsoft");
-		break;
-	}
-	final switch (platform) with (Platform) {
-	case MinGW:
-		ver.overwriteVersionIdentifier("Windows");
-		ver.overwriteVersionIdentifier("MinGW");
-		break;
-	case MSVC:
-		ver.overwriteVersionIdentifier("Windows");
-		ver.overwriteVersionIdentifier("MSVC");
-		break;
-	case Linux:
-		ver.overwriteVersionIdentifier("Linux");
-		ver.overwriteVersionIdentifier("Posix");
-		break;
-	case OSX:
-		ver.overwriteVersionIdentifier("OSX");
-		ver.overwriteVersionIdentifier("Posix");
-		break;
-	case Metal:
-		ver.overwriteVersionIdentifier("Metal");
-		break;
-	}
-	final switch (arch) with (Arch) {
-	case X86:
-		ver.overwriteVersionIdentifier("X86");
-		ver.overwriteVersionIdentifier("LittleEndian");
-		ver.overwriteVersionIdentifier("V_P32");
-		break;
-	case X86_64:
-		ver.overwriteVersionIdentifier("X86_64");
-		ver.overwriteVersionIdentifier("LittleEndian");
-		ver.overwriteVersionIdentifier("V_P64");
-		break;
-	}
 }
 
 version (Windows) {

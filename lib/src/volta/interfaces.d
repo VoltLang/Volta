@@ -273,6 +273,65 @@ public:
 	}
 
 	/*!
+	 * Set the correct version identifiers for the given arch, platform, and runtime.
+	 */
+	final void set(Arch arch, Platform platform, CRuntime cRuntime)
+	{
+		final switch (cRuntime) with (CRuntime) {
+		case None:
+			overwriteVersionIdentifier("CRuntime_None");
+			break;
+		case MinGW:
+			overwriteVersionIdentifier("CRuntime_All");
+			break;
+		case Glibc:
+			overwriteVersionIdentifier("CRuntime_All");
+			overwriteVersionIdentifier("CRuntime_Glibc");
+			break;
+		case Darwin:
+			overwriteVersionIdentifier("CRuntime_All");
+			break;
+		case Microsoft:
+			overwriteVersionIdentifier("CRuntime_All");
+			overwriteVersionIdentifier("CRuntime_Microsoft");
+			break;
+		}
+		final switch (platform) with (Platform) {
+		case MinGW:
+			overwriteVersionIdentifier("Windows");
+			overwriteVersionIdentifier("MinGW");
+			break;
+		case MSVC:
+			overwriteVersionIdentifier("Windows");
+			overwriteVersionIdentifier("MSVC");
+			break;
+		case Linux:
+			overwriteVersionIdentifier("Linux");
+			overwriteVersionIdentifier("Posix");
+			break;
+		case OSX:
+			overwriteVersionIdentifier("OSX");
+			overwriteVersionIdentifier("Posix");
+			break;
+		case Metal:
+			overwriteVersionIdentifier("Metal");
+			break;
+		}
+		final switch (arch) with (Arch) {
+		case X86:
+			overwriteVersionIdentifier("X86");
+			overwriteVersionIdentifier("LittleEndian");
+			overwriteVersionIdentifier("V_P32");
+			break;
+		case X86_64:
+			overwriteVersionIdentifier("X86_64");
+			overwriteVersionIdentifier("LittleEndian");
+			overwriteVersionIdentifier("V_P64");
+			break;
+		}
+	}
+
+	/*!
 	 * Quick helpers to get version flags.
 	 * @{
 	 */
