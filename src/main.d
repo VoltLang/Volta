@@ -54,7 +54,7 @@ int main(string[] strArgs)
 	strArgs = strArgs[1 .. $];
 
 	settings = new Settings(cmd, getExecDir());
-	setDefault(settings);
+	settings.setDefault();
 	auto ver = new VersionSet();
 	auto target = new TargetInfo();
 
@@ -418,34 +418,6 @@ bool getLinesFromFile(string file, ref string[] lines)
 		}
 	}
 	return true;
-}
-
-void setDefault(Settings settings)
-{
-	// Only MinGW is supported.
-	version (Windows) {
-		settings.platform = Platform.MinGW;
-		settings.cRuntime = CRuntime.MinGW;
-	} else version (linux) { // D2
-		settings.platform = Platform.Linux;
-		settings.cRuntime = CRuntime.Glibc;
-	} else version (Linux) { // Volt
-		settings.platform = Platform.Linux;
-		settings.cRuntime = CRuntime.Glibc;
-	} else version (OSX) {
-		settings.platform = Platform.OSX;
-		settings.cRuntime = CRuntime.Darwin;
-	} else {
-		static assert(false);
-	}
-
-	version (X86) {
-		settings.arch = Arch.X86;
-	} else version (X86_64) {
-		settings.arch = Arch.X86_64;
-	} else {
-		static assert(false);
-	}
 }
 
 bool printUsage()

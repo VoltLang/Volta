@@ -150,4 +150,31 @@ public:
 
 		return file;
 	}
+
+	final void setDefault()
+	{
+		version (Windows) {
+			platform = Platform.MSVC;
+			cRuntime = CRuntime.Microsoft;
+		} else version (linux) { // D2
+			platform = Platform.Linux;
+			cRuntime = CRuntime.Glibc;
+		} else version (Linux) { // Volt
+			platform = Platform.Linux;
+			cRuntime = CRuntime.Glibc;
+		} else version (OSX) {
+			platform = Platform.OSX;
+			cRuntime = CRuntime.Darwin;
+		} else {
+			static assert(false);
+		}
+
+		version (X86) {
+			arch = Arch.X86;
+		} else version (X86_64) {
+			arch = Arch.X86_64;
+		} else {
+			static assert(false);
+		}
+	}
 }
