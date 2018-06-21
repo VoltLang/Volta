@@ -268,9 +268,20 @@ fn getNameCompletionItems(theServer: server.VoltLanguageServer, parentModule: ir
 }
 
 fn getSymbolsThatStartWith(ref loc: ir.Location, mod: ir.Module, beginning: string, theServer: server.VoltLanguageServer,
-	ref completionList: semantic.CompletionList, depth: i32 = 0)
+	ref completionList: semantic.CompletionList)
 {
-	if (depth == 0) {
+	cache: server.SimpleImportCache;
+	getSymbolsThatStartWith(ref loc, mod, beginning, theServer, ref completionList, ref cache, true);
+}
+
+fn getSymbolsThatStartWith(ref loc: ir.Location, mod: ir.Module, beginning: string, theServer: server.VoltLanguageServer,
+	ref completionList: semantic.CompletionList, ref cache: server.SimpleImportCache, first: bool)
+{
+	if (cache.hasResult(mod.name.toString())) {
+		return;
+	}
+	cache.setResult(mod.name.toString(), mod);
+	if (first) {
 		parentScope := server.findScope(ref loc, mod, theServer);
 		while (parentScope !is null) {
 			foreach (name, store; parentScope.symbols) {
@@ -285,15 +296,15 @@ fn getSymbolsThatStartWith(ref loc: ir.Location, mod: ir.Module, beginning: stri
 	foreach (name, store; mod.myScope.symbols) {
 		if (watt.startsWith(name, beginning)) {
 			access := getAccess(store);
-			if (depth == 0 || access == ir.Access.Public) {
+			if (first || access == ir.Access.Public) {
 				completionList.add(name, store);
 			}
 		}
 	}
 	// TODO: Public imports etc
-	if (depth == 0) {
-		foreach (importedMod; mod.myScope.importedModules) {
-			getSymbolsThatStartWith(ref loc, importedMod, beginning, theServer, ref completionList, depth + 1);
+	foreach (i, importedMod; mod.myScope.importedModules) {
+		if (first || mod.myScope.importedAccess[i] == ir.Access.Public) {
+			getSymbolsThatStartWith(ref loc, importedMod, beginning, theServer, ref completionList, ref cache, false);
 		}
 	}
 }
