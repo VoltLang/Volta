@@ -59,6 +59,10 @@ public:
 	 */
 	fn get(names: string[]) string
 	{
+		if (mRoot is null) {
+			return null;
+		}
+
 		current := mRoot;
 		lastName: string = null;
 
