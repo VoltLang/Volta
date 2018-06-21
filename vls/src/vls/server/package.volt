@@ -33,6 +33,7 @@ public:
 	//! Used for testing external modules, unused in usual operation.
 	modulePath: string;
 	settings: Settings;
+	versionSet: VersionSet;
 	importCache: SimpleImportCache;
 	sgv: SymbolGathererVisitor;
 
@@ -49,8 +50,10 @@ public:
 
 		this.modulePath = modulePath;
 		settings = new Settings(argZero, execDir);
-		settings.processConfigs();
+		settings.setDefault();
 		settings.warningsEnabled = true;
+		versionSet = new VersionSet();
+		versionSet.set(settings.arch, settings.platform, settings.cRuntime);
 		sgv = new SymbolGathererVisitor();
 	}
 
@@ -107,11 +110,11 @@ public:
 
 	fn getModule(uri: string) ir.Module
 	{
-		mod := parser.parse(uri, this, settings);
+		mod := parser.parse(uri, this);
 		if (mod is null) {
 			return null;
 		}
-		return modules.get(mod.name, uri, this, settings);
+		return modules.get(mod.name, uri, this);
 	}
 
 private:
@@ -134,7 +137,7 @@ private:
 		case "textDocument/didChange":
 		case "textDocument/didSave":
 			uri := documents.handleUpdate(ro);
-			parser.fullParse(uri, this, settings);
+			parser.fullParse(uri, this);
 			return Listening.Continue;
 		case "textDocument/documentSymbol":
 			uri: string;
@@ -233,7 +236,7 @@ private:
 			}
 			text := cast(string)read(path);
 			documents.set(uri, text);
-			parser.fullParse(uri, this, settings);
+			parser.fullParse(uri, this);
 		}
 	}
 

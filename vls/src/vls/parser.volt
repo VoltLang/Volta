@@ -20,37 +20,39 @@ import volta = [
 
 import lsp = vls.lsp;
 
+import vls = vls.server;
+
 import documents = vls.documents;
 import modules   = vls.modules;
 
-fn parse(uri: string, errorSink: volta.ErrorSink, settings: volta.Settings) ir.Module
+fn parse(uri: string, langServer: vls.VoltLanguageServer) ir.Module
 {
-	source := getSource(uri, errorSink);
+	source := getSource(uri, langServer);
 	tw := getTokenWriter(source);
-	mod := getModule(uri, tw, settings, errorSink);
+	mod := getModule(uri, tw, langServer);
 	return mod;
 }
 
-fn fullParse(uri: string, errorSink: volta.ErrorSink, settings: volta.Settings) ir.Module
+fn fullParse(uri: string, langServer: vls.VoltLanguageServer) ir.Module
 {
-	mod := parse(uri, errorSink, settings);
+	mod := parse(uri, langServer);
 	if (mod !is null) {
 		lsp.send(lsp.buildNoDiagnostic(uri));
 		modules.set(mod.name, mod);
-		postparse(uri, mod, errorSink, settings);
+		postparse(uri, mod, langServer);
 	}
 	return mod;
 }
 
 private:
 
-fn getSource(uri: string, errorSink: volta.ErrorSink) volta.Source
+fn getSource(uri: string, langServer: vls.VoltLanguageServer) volta.Source
 {
 	text := documents.get(uri);
 	if (text is null) {
 		return null;
 	}
-	return new volta.Source(text, lsp.getPathFromUri(uri), errorSink);
+	return new volta.Source(text, lsp.getPathFromUri(uri), langServer);
 }
 
 fn getTokenWriter(source: volta.Source) volta.TokenWriter
@@ -60,19 +62,19 @@ fn getTokenWriter(source: volta.Source) volta.TokenWriter
 	}
 	tw := volta.lex(source);
 	if (tw.lastAdded.type != volta.TokenType.End) {
-		// Lexer errors get piped in by the ErrorSink handler.
+		// Lexer errors get piped in by the VoltLanguageServer handler.
 		return null;
 	}
 	return tw;
 }
 
-fn getModule(uri: string, tw: volta.TokenWriter, settings: volta.Settings, errorSink: volta.ErrorSink) ir.Module
+fn getModule(uri: string, tw: volta.TokenWriter, langServer: vls.VoltLanguageServer) ir.Module
 {
 	if (tw is null) {
 		return null;
 	}
 	tokens := tw.getTokens();
-	ps := new volta.ParserStream(tokens, settings, errorSink);
+	ps := new volta.ParserStream(tokens, langServer.settings, langServer);
 	ps.get();  // skip BEGIN
 	ps.magicFlagD = tw.magicFlagD;
 	mod: ir.Module;
@@ -87,13 +89,15 @@ fn getModule(uri: string, tw: volta.TokenWriter, settings: volta.Settings, error
 	}
 }
 
-fn postparse(uri: string, mod: ir.Module, errorSink: volta.ErrorSink, settings: volta.Settings)
+fn postparse(uri: string, mod: ir.Module, langServer: vls.VoltLanguageServer)
 {
-	fn modulesGet(qn: ir.QualifiedName) ir.Module { return modules.get(qn, uri, errorSink, settings); }
-	versionSet := new volta.VersionSet();
+	fn modulesGet(qn: ir.QualifiedName) ir.Module
+	{
+		return modules.get(qn, uri, langServer);
+	}
 	target     := new volta.TargetInfo();
 	pass       := new volta.PostParseImpl(
-		err:errorSink, vs:versionSet, target:target,
+		err:langServer, vs:langServer.versionSet, target:target,
 		warningsEnabled:false, removalOnly:false, doMissing:false,
 		getMod:modulesGet
 	);

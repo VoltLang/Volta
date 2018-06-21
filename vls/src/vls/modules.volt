@@ -18,6 +18,7 @@ import lsp       = vls.lsp;
 import parser    = vls.parser;
 import documents = vls.documents;
 import util      = vls.util.pathTree;
+import server    = vls.server;
 
 /*!
  * Get the module associated with `moduleName`, or `null`.
@@ -30,13 +31,13 @@ fn get(moduleName: ir.QualifiedName) ir.Module
 	return null;
 }
 
-fn get(moduleName: ir.QualifiedName, uri: string, errorSink: volta.ErrorSink, settings: volta.Settings) ir.Module
+fn get(moduleName: ir.QualifiedName, uri: string, langServer: server.VoltLanguageServer) ir.Module
 {
 	mod := get(moduleName);
 	if (mod !is null) {
 		return mod;
 	}
-	return findAndParseFailedGet(moduleName, uri, errorSink, settings);
+	return findAndParseFailedGet(moduleName, uri, langServer);
 }
 
 /*!
@@ -82,7 +83,7 @@ fn getSrcFolder(path: string) string
 	return watt.concatenatePath(bpath, "src");
 }
 
-fn findAndParseFailedGet(moduleName: ir.QualifiedName, uri: string, errorSink: volta.ErrorSink, settings: volta.Settings) ir.Module
+fn findAndParseFailedGet(moduleName: ir.QualifiedName, uri: string, langServer: server.VoltLanguageServer) ir.Module
 {
 	path := lsp.getPathFromUri(uri);
 	base := getSrcFolder(path);
@@ -102,7 +103,7 @@ fn findAndParseFailedGet(moduleName: ir.QualifiedName, uri: string, errorSink: v
 	text   := cast(string)watt.read(modpath);
 	moduri := lsp.getUriFromPath(modpath);
 	documents.set(moduri, text);
-	return parser.fullParse(moduri, errorSink, settings);
+	return parser.fullParse(moduri, langServer);
 }
 
 fn findLocal(base: string, moduleName: ir.QualifiedName) string

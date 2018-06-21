@@ -72,10 +72,9 @@ public:
 	{
 		this.targetLocation = targetLocation;
 	
-		versionSet := new volta.VersionSet();
 		target     := new volta.TargetInfo();
 		this.mPostParse = new volta.PostParseImpl(
-			err:langServer, vs:versionSet, target:target,
+			err:langServer, vs:langServer.versionSet, target:target,
 			warningsEnabled:false, removalOnly:false, doMissing:false,
 			getMod:modulesGet
 		);
