@@ -89,11 +89,7 @@ version (Windows) {
 
 		override fn flush()
 		{
-			bResult := FlushFileBuffers(mHandle);
-			if (bResult == 0) {
-				err := GetLastError();
-				throw new Exception(new "FlushFileBuffers failure ${err}");
-			}
+			FlushFileBuffers(mHandle);
 		}
 	}
 }
