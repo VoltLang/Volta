@@ -68,8 +68,10 @@ public:
 
 	override void onWarning(string msg, string file, int line)
 	{
-		error.writeln(new "warning: ${msg} (${file}:${line})");
-		error.flush();
+		loc: ir.Location;
+		loc.filename = file;
+		loc.line = cast(u32)line;
+		onWarning(ref loc, msg, null, 0);
 	}
 
 	override void onWarning(ref in ir.Location loc, string msg, string file, int line)
@@ -82,8 +84,10 @@ public:
 
 	override void onError(string msg, string file, int line)
 	{
-		error.writeln(new "error: ${msg} (${file}:${line})");
-		error.flush();
+		loc: ir.Location;
+		loc.filename = file;
+		loc.line = cast(u32)line;
+		onError(ref loc, msg, null, 0);
 	}
 
 	override void onError(ref in ir.Location loc, string msg, string file, int line)
@@ -96,8 +100,10 @@ public:
 
 	override void onPanic(string msg, string file, int line)
 	{
-		error.writeln(new "panic: ${msg} (${file}:${line})");
-		error.flush();
+		loc: ir.Location;
+		loc.filename = file;
+		loc.line = cast(u32)line;
+		onPanic(ref loc, msg, null, 0);
 	}
 
 	override void onPanic(ref in ir.Location loc, string msg, string file, int line)
