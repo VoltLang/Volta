@@ -7,6 +7,7 @@ import core.exception : Exception;
 import watt.io : input, error;
 import watt.io.streams;
 import watt.conv : toUlong;
+import watt.path : baseName, getExecFile;
 import watt.text.utf : encode;
 import watt.text.string : split, strip;
 import watt.text.format : format;
@@ -28,7 +29,7 @@ version (InputLog) {
 	{
 		rng: RandomGenerator;
 		rng.seed(getHardwareSeedU32());
-		inputPath := getEnv(HOMEVAR) ~ "/Desktop/vlsInLog." ~ rng.randomString(4) ~ ".txt";
+		inputPath := getEnv(HOMEVAR) ~ "/Desktop/vlsInLog." ~ rng.randomString(4) ~ baseName(getExecFile()) ~ ".txt";
 		inlog = new OutputFileStream(inputPath);
 	}
 	global ~this()
