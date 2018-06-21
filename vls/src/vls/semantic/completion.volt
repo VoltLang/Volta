@@ -364,6 +364,9 @@ fn getFieldCompletionItems(theServer: server.VoltLanguageServer, parentModule: i
 
 fn getAccess(store: ir.Store) ir.Access
 {
+	if (store is null || store.node is null) {
+		return ir.Access.Private;
+	}
 	switch (store.node.nodeType) with (ir.NodeType) {
 	case Variable:
 		var := store.node.toVariableFast();
