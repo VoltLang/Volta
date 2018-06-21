@@ -345,6 +345,11 @@ fn getFieldCompletionItems(theServer: server.VoltLanguageServer, parentModule: i
 	foreach (mscope; _scope.multibindScopes) {
 		completionList.add(mscope);
 	}
+	foreach (i, mod; _scope.importedModules) {
+		if (_scope.importedAccess[i] == ir.Access.Public) {
+			completionList.add(mod.myScope);
+		}
+	}
 
 	if (_scope.node !is null) {
 		asClass := _scope.node.toClassChecked();
