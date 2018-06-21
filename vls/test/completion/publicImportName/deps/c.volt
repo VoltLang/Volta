@@ -1,0 +1,4 @@
+module c;
+
+fn secretFunction() {
+}
