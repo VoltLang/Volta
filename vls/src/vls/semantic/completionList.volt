@@ -2,7 +2,7 @@
 module vls.semantic.completionList;
 
 import core = core.rt.format;
-import watt = [watt.text.sink, watt.path];
+import watt = [watt.text.sink, watt.path, watt.containers.stack];
 import json = watt.json;
 
 import ir = volta.ir;
@@ -11,7 +11,7 @@ import volta = volta.util.stack;
 import lsp = vls.lsp;
 import printing = vls.util.printing;
 
-struct I32Stack = mixin volta.Stack!i32;
+struct I32Stack = mixin watt.Stack!i32;
 
 /*!
  * Structure that generates a completion list
@@ -108,7 +108,7 @@ struct CompletionList
 
 private:
 
-struct ItemStack = mixin volta.Stack!CompletionItem;
+struct ItemStack = mixin watt.Stack!CompletionItem;
 
 struct CompletionItem
 {
