@@ -3,6 +3,8 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.semantic.cfg;
 
+import watt.containers.stack;
+
 import ir = volta.ir;
 import volta.util.util;
 
