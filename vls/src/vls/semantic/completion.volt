@@ -407,13 +407,11 @@ fn getLineAtLocation(uri: string, ref loc: ir.Location) string
 {
 	src := documents.get(uri);
 	lines := watt.splitLines(src);
-	theLine: string;
-	foreach (i, line; lines) {
-		if (i == loc.line - 1) {
-			theLine = line;
-		}
+	i := loc.line - 1;
+	if (i < lines.length) {
+		return lines[i];
 	}
-	return theLine;
+	return null;
 }
 
 fn getWordAtLocation(line: string, ref loc: ir.Location) string
