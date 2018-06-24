@@ -57,74 +57,7 @@ public:
 		sgv = new SymbolGathererVisitor();
 	}
 
-	/// LSP listen callback.
-	fn handle(msg: LspMessage) bool
-	{
-		return handleRO(new RequestObject(msg.content));
-	}
-
-public:
-	// ErrorSink methods.
-
-	override void onWarning(string msg, string file, int line)
-	{
-		loc: ir.Location;
-		loc.filename = file;
-		loc.line = cast(u32)line;
-		onWarning(ref loc, msg, null, 0);
-	}
-
-	override void onWarning(ref in ir.Location loc, string msg, string file, int line)
-	{
-		uri := getUriFromPath(loc.filename);
-		rsp := buildDiagnostic(uri, cast(i32)loc.line-1, cast(i32)loc.column,
-			DiagnosticLevel.Warning, msg);
-		send(rsp);
-	}
-
-	override void onError(string msg, string file, int line)
-	{
-		loc: ir.Location;
-		loc.filename = file;
-		loc.line = cast(u32)line;
-		onError(ref loc, msg, null, 0);
-	}
-
-	override void onError(ref in ir.Location loc, string msg, string file, int line)
-	{
-		uri := getUriFromPath(loc.filename);
-		rsp := buildDiagnostic(uri, cast(i32)loc.line-1, cast(i32)loc.column,
-			DiagnosticLevel.Error, msg);
-		send(rsp);
-	}
-
-	override void onPanic(string msg, string file, int line)
-	{
-		loc: ir.Location;
-		loc.filename = file;
-		loc.line = cast(u32)line;
-		onPanic(ref loc, msg, null, 0);
-	}
-
-	override void onPanic(ref in ir.Location loc, string msg, string file, int line)
-	{
-		uri := getUriFromPath(loc.filename);
-		rsp := buildDiagnostic(uri, cast(i32)loc.line-1, cast(i32)loc.column,
-			DiagnosticLevel.Error, msg);
-		send(rsp);
-	}
-
-	fn getModule(uri: string) ir.Module
-	{
-		mod := parser.parse(uri, this);
-		if (mod is null) {
-			return null;
-		}
-		return modules.get(mod.name, uri, this);
-	}
-
-private:
-	fn handleRO(ro: RequestObject) bool
+	fn handle(ro: RequestObject) bool
 	{
 		switch (ro.methodName) {
 		case "initialize":
@@ -221,6 +154,67 @@ private:
 		}
 	}
 
+public:
+	// ErrorSink methods.
+
+	override void onWarning(string msg, string file, int line)
+	{
+		loc: ir.Location;
+		loc.filename = file;
+		loc.line = cast(u32)line;
+		onWarning(ref loc, msg, null, 0);
+	}
+
+	override void onWarning(ref in ir.Location loc, string msg, string file, int line)
+	{
+		uri := getUriFromPath(loc.filename);
+		rsp := buildDiagnostic(uri, cast(i32)loc.line-1, cast(i32)loc.column,
+			DiagnosticLevel.Warning, msg);
+		send(rsp);
+	}
+
+	override void onError(string msg, string file, int line)
+	{
+		loc: ir.Location;
+		loc.filename = file;
+		loc.line = cast(u32)line;
+		onError(ref loc, msg, null, 0);
+	}
+
+	override void onError(ref in ir.Location loc, string msg, string file, int line)
+	{
+		uri := getUriFromPath(loc.filename);
+		rsp := buildDiagnostic(uri, cast(i32)loc.line-1, cast(i32)loc.column,
+			DiagnosticLevel.Error, msg);
+		send(rsp);
+	}
+
+	override void onPanic(string msg, string file, int line)
+	{
+		loc: ir.Location;
+		loc.filename = file;
+		loc.line = cast(u32)line;
+		onPanic(ref loc, msg, null, 0);
+	}
+
+	override void onPanic(ref in ir.Location loc, string msg, string file, int line)
+	{
+		uri := getUriFromPath(loc.filename);
+		rsp := buildDiagnostic(uri, cast(i32)loc.line-1, cast(i32)loc.column,
+			DiagnosticLevel.Error, msg);
+		send(rsp);
+	}
+
+	fn getModule(uri: string) ir.Module
+	{
+		mod := parser.parse(uri, this);
+		if (mod is null) {
+			return null;
+		}
+		return modules.get(mod.name, uri, this);
+	}
+
+private:
 	fn updateChangedFiles(ro: RequestObject)
 	{
 		changes := getArrayKey(ro.params, "changes");

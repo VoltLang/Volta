@@ -42,7 +42,8 @@ fn main(args: string[]) i32
 	while (!inputThread.done()) {
 		message: lsp.LspMessage;
 		while (inputThread.getMessage(out message)) {
-			server.handle(message);
+			ro := new lsp.RequestObject(message.content);
+			server.handle(ro);
 		}
 		vrt_sleep(1);
 	}

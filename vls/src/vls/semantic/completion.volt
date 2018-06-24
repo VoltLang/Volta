@@ -13,6 +13,7 @@ import server = [vls.server.responses, vls.semantic.scopeFinder,
 import semantic = [vls.semantic.completionList, vls.semantic.actualiseClass];
 import volta = [volta.interfaces, volta.settings, volta.token.lexer, volta.token.source];
 import printer = volta.ir.printer;
+import nullErrorSink = vls.util.nullErrorSink;
 
 import documents = vls.documents;
 import modules = vls.modules;
@@ -102,6 +103,27 @@ fn getHoverResponse(ro: lsp.RequestObject, uri: string, theServer: server.VoltLa
 	return ss.toString();
 }
 
+fn openParens(line: string) i32
+{
+	src    := new volta.Source(line, "dummyfilename.volt", nullErrorSink.get());
+	tw     := volta.lex(src);
+	tokens := tw.getTokens();
+	parens := 0;
+	foreach (token; tokens) {
+		switch (token.type) with (ir.TokenType) {
+		case OpenParen:
+			parens++;
+			break;
+		case CloseParen:
+			parens--;
+			break;
+		default:
+			break;
+		}
+	}
+	return parens;
+}
+
 //! Response for `textDocument/signatureHelp`
 fn getSignatureHelpResponse(ro: lsp.RequestObject, uri: string, theServer: server.VoltLanguageServer) string
 {
@@ -118,8 +140,9 @@ fn getSignatureHelpResponse(ro: lsp.RequestObject, uri: string, theServer: serve
 	loc := getLocationFromRequestObject(ro);
 	theLine := watt.strip(getLineAtLocation(uri, ref loc));
 
-	if (theLine.length > 0 && theLine[$-1] == ')') {
-		theLine = theLine[0 .. $-1];
+	watt.error.writeln(new "'${theLine}' ${openParens(theLine)}");
+	if (openParens(theLine) <= 0) {
+		return failedToFind();
 	}
 	commas: size_t;
 	while (theLine.length > 0 && theLine[$-1] != '(') {

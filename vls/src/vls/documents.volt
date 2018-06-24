@@ -25,7 +25,6 @@ fn handleUpdate(request: lsp.RequestObject) string
 	case "textDocument/didChange":
 		changes := request.params.lookupObjectKey("contentChanges").array();
 		if (changes.length != 1) {
-			io.error.writeln("BAD DID CHANGE");
 			return null;
 		}
 		text = changes[0].lookupObjectKey("text").str();
@@ -85,6 +84,8 @@ fn setEntry(uri: string, _version: i64, text: string)
 			return;
 		}
 	}
+
+	io.error.writeln(new "${uri} touched");
 
 	e: Entry;
 	e._version = _version;
