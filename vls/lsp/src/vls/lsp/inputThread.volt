@@ -50,10 +50,10 @@ fn threadFunction()
 	}
 	while (lsp.listen(listenDg, gInputStream)) {
 	}
-	gDone = true;
-	while (!gMessages.length != 0) {
+	while (gMessages.length != 0) {
 		vrt_sleep(10);
 	}
+	gDone = true;
 }
 
 /*!
@@ -70,8 +70,8 @@ fn getMessage(out message: lsp.LspMessage) bool
 	if (gMessages.length == 0) {
 		return false;
 	}
-	top := gMessages[$-1];
-	gMessages = gMessages[0 .. $-1];
+	top := gMessages[0];
+	gMessages = gMessages[1 .. $];
 	message = top.dup;
 	return true;
 }

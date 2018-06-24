@@ -1,11 +1,13 @@
 module main;
 
+import core.rt.thread;
 import watt = [watt.text.getopt, watt.io.streams, watt.io];
 
 import lsp = vls.lsp;
 import vls.server;
 
 import modules = vls.modules;
+import inputThread = vls.lsp.inputThread;
 
 fn main(args: string[]) i32
 {
@@ -20,7 +22,9 @@ fn main(args: string[]) i32
 	watt.getopt(ref args, "wait", ref wait);
 
 	if (inputPath !is null) {
-		inputStream = new watt.InputFileStream(inputPath);
+		inputThread.setInputFile(inputPath);
+	} else {
+		inputThread.setStandardInput();
 	}
 
 	if (help) {
@@ -33,9 +37,16 @@ fn main(args: string[]) i32
 		watt.input.readln();
 	}
 
+	ithread := vrt_thread_start_fn(inputThread.threadFunction);
 	server := new VoltLanguageServer(args[0], modulePath);
-	while (lsp.listen(server.handle, inputStream)) {
+	while (!inputThread.done()) {
+		message: lsp.LspMessage;
+		while (inputThread.getMessage(out message)) {
+			server.handle(message);
+		}
+		vrt_sleep(1);
 	}
+	vrt_thread_join(ithread);
 	return server.retval;
 }
 
