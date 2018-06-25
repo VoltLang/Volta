@@ -85,8 +85,6 @@ fn setEntry(uri: string, _version: i64, text: string)
 		}
 	}
 
-	io.error.writeln(new "${uri} touched");
-
 	e: Entry;
 	e._version = _version;
 	e.text = text;
