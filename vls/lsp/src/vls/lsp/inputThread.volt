@@ -8,6 +8,7 @@ module vls.lsp.inputThread;
 import io = [watt.io, watt.io.streams];
 import lsp = vls.lsp;
 import core.rt.thread;
+import containers = watt.containers.queue;
 
 fn done() bool
 {
@@ -70,8 +71,7 @@ fn getMessage(out message: lsp.LspMessage) bool
 	if (gMessages.length == 0) {
 		return false;
 	}
-	top := gMessages[0];
-	gMessages = gMessages[1 .. $];
+	top := gMessages.dequeue();
 	message = top.dup;
 	return true;
 }
@@ -89,8 +89,8 @@ global ~this()
 }
 
 global gLock: vrt_mutex*;  // This lock covers reading or writing all of the g* stuff here.
-//struct MessageStack = mixin stack.Stack!(lsp.LspMessage);
-global gMessages: lsp.LspMessage[];
+struct MessageQueue = mixin containers.Queue!(lsp.LspMessage);
+global gMessages: MessageQueue;
 global gInputStream: io.InputStream;
 global gDone: bool;
 
@@ -98,5 +98,5 @@ fn insertMessage(message: lsp.LspMessage)
 {
 	vrt_mutex_lock(gLock);
 	scope (exit) vrt_mutex_unlock(gLock);
-	gMessages ~= message;
+	gMessages.enqueue(message);
 }
