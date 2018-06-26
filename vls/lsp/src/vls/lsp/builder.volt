@@ -161,7 +161,7 @@ fn buildEmptyResponse(sink: watt.Sink, id: i64)
 {
 	sink(`{"jsonrpc":"2.0","id":`);
 	vrt_format_i64(sink, id);
-	sink(`"result":null}`);
+	sink(`,"result":null}`);
 }
 
 // textDocument/publishDiagnostics notification
