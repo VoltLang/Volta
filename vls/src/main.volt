@@ -8,6 +8,7 @@ import vls.server;
 
 import modules = vls.modules;
 import inputThread = vls.lsp.inputThread;
+import messageHopper = vls.messageHopper;
 
 fn main(args: string[]) i32
 {
@@ -41,11 +42,11 @@ fn main(args: string[]) i32
 	server := new VoltLanguageServer(args[0], modulePath);
 	while (!inputThread.done()) {
 		message: lsp.LspMessage;
-		while (inputThread.getMessage(out message)) {
+		if (inputThread.getMessage(out message)) {
 			ro := new lsp.RequestObject(message.content);
-			server.handle(ro);
+			messageHopper.add(ro);
 		}
-		vrt_sleep(1);
+		messageHopper.process(server.handle);
 	}
 	vrt_thread_join(ithread);
 	return server.retval;
