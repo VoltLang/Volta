@@ -155,7 +155,8 @@ fn getScopeFromStore(ref cache: SimpleImportCache, store: ir.Store, context: ir.
 		return null;
 	}
 
-	node := resolveAlias(tlstore.node, ref cache, context);
+	aliasCache: SimpleImportCache;
+	node := resolveAlias(tlstore.node, ref aliasCache, context);
 
 	agg: ir.Aggregate;
 	if (getAggregate(node, out agg)) {

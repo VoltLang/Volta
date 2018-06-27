@@ -140,7 +140,6 @@ fn getSignatureHelpResponse(ro: lsp.RequestObject, uri: string, theServer: serve
 	loc := getLocationFromRequestObject(ro);
 	theLine := watt.strip(getLineAtLocation(uri, ref loc));
 
-	watt.error.writeln(new "'${theLine}' ${openParens(theLine)}");
 	if (openParens(theLine) <= 0) {
 		return failedToFind();
 	}
@@ -373,6 +372,7 @@ fn getFieldCompletionItems(theServer: server.VoltLanguageServer, parentModule: i
 			completionList.add(mod.myScope);
 		}
 	}
+
 
 	if (_scope.node !is null) {
 		asClass := _scope.node.toClassChecked();
