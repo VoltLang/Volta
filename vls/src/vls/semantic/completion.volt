@@ -2,6 +2,7 @@ module vls.semantic.completion;
 
 import core = core.rt.format;
 import watt = [watt.text.string, watt.io, watt.conv, watt.path, watt.json.util, watt.text.ascii, watt.text.sink];
+import json = watt.json;
 
 import ir = [volta.ir, volta.ir.location];
 import parser = [volta.parser.base, volta.parser.expression];
@@ -37,10 +38,22 @@ fn getCompletionResponse(ro: lsp.RequestObject, uri: string, theServer: server.V
 		return failedToFind();
 	}
 
-	completionItems := getCompletionItems(theServer, mod, ref loc, theLine);
+	triggerCharacter: string;
+	if (ro.params.hasObjectKey("context")) {
+		context := ro.params.lookupObjectKey("context");
+		triggerCharacter = lsp.getStringKey(context, "triggerCharacter");
+	}
+
+	completionItems: string;
+	if (triggerCharacter.length != 0 || theLine[$-1] == '.') {
+		completionItems = getFieldCompletionItems(theServer, mod, ref loc, theLine);
+	} else {
+		completionItems = getNameCompletionItems(theServer, mod, ref loc, theLine);
+	}
 	if (completionItems.length == 0) {
 		return failedToFind();
 	}
+
 	ss: watt.StringSink;
 	ss.sink(`{"jsonrcp":"2.0","id":`);
 	core.vrt_format_i64(ss.sink, ro.id.integer());
@@ -334,8 +347,10 @@ fn getSymbolsThatStartWith(ref loc: ir.Location, mod: ir.Module, beginning: stri
 //! For the input line, at the given location in the given module, return an array of `CompletionItem`.
 fn getFieldCompletionItems(theServer: server.VoltLanguageServer, parentModule: ir.Module, ref loc: ir.Location, theLine: string) string
 {
+	if (theLine[$-1] == '.') {
+		theLine = theLine[0 .. $-1];
+	}
 	oneTimeCache: server.SimpleImportCache;
-	theLine = theLine[0 .. $-1];  // Shave '.'
 	endOfLineLocation: ir.Location;
 	endOfLineLocation.line = loc.line;
 	endOfLineLocation.column = cast(u32)(theLine.length - 1);
