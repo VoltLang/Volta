@@ -183,7 +183,7 @@ fn resolveAlias(node: ir.Node, ref cache: SimpleImportCache, context: ir.Scope) 
 			return node;
 		}
 		store := lookup(ref cache, context, _alias.id);
-		if (store is null) {
+		if (store is null || store.node is currentNode) {
 			return node;
 		}
 		currentNode = store.node;
