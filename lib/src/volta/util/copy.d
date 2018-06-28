@@ -366,6 +366,16 @@ ir.StatementExp copy(ir.StatementExp old)
 	return se;
 }
 
+ir.Ternary copy(ir.Ternary old)
+{
+	auto tn = new ir.Ternary(old);
+	tn.loc = old.loc;
+	tn.condition = copyExp(old.condition);
+	tn.ifTrue = copyExp(old.ifTrue);
+	tn.ifFalse = copyExp(old.ifFalse);
+	return tn;
+}
+
 /*
  *
  * Helpers.
@@ -526,6 +536,9 @@ ir.Node copyNode(ir.Node n)
 	case StatementExp:
 		auto se = cast(ir.StatementExp)n;
 		return copy(se);
+	case Ternary:
+		auto tn = n.toTernaryChecked();
+		return copy(tn);
 	case Enum:
 	case PrimitiveType:
 	case TypeReference:
@@ -584,7 +597,6 @@ ir.Node copyNode(ir.Node n)
 	case ConditionStatement:
 	case MixinStatement:
 	case AssertStatement:
-	case Ternary:
 	case AssocArray:
 	case Assert:
 	case StringImport:
