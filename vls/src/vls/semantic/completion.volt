@@ -253,13 +253,16 @@ fn getGotoDefinitionResponse(ro: lsp.RequestObject, uri: string, theServer: serv
 		return failedToFind();
 	}
 
+	aliasCache: server.SimpleImportCache;
+	node := server.resolveAlias(store.node, ref aliasCache, parentScope);
+
 	ss: watt.StringSink;
 	ss.sink(`{"jsonrcp":"2.0","id":`);
 	core.vrt_format_i64(ss.sink, ro.id.integer());
 	ss.sink(`,"result":{"uri":"`);
-	ss.sink(lsp.getUriFromPath(store.node.loc.filename));
+	ss.sink(lsp.getUriFromPath(node.loc.filename));
 	ss.sink(`","range":`);
-	server.locationToRange(ref store.node.loc, ss.sink);
+	server.locationToRange(ref node.loc, ss.sink);
 	ss.sink(`}}`);
 	return ss.toString();
 }
