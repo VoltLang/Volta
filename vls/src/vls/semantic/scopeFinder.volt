@@ -141,7 +141,7 @@ public override:
 			mPostParse.transformChildBlocks(func);
 		}
 		mFunctionStack.push(func);
-		return Continue;
+		return checkLocation(func, func.myScope);
 	}
 
 	fn leave(func: ir.Function) Status
