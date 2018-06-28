@@ -300,26 +300,28 @@ protected:
 	 */
 	fn pruneUsedSlabs(s: Slab*) Slab*
 	{
-		if (s is null) {
-			return null;
-		} else if (s.freeSlots == 0) {
-			// Is the next one still fully used?
-			s.next = pruneUsedSlabs(s.next);
-			// This is still fully used, return it.
-			return s;
-		} else if (s.usedSlots == 0) {
-			next := s.next;
-			s.next = null;
-			mManager.freeSlabStructAndMem(s);
-			// This was freed, return only next.
-			return pruneUsedSlabs(next);
-		} else {
-			next := s.next;
-			s.next = null;
-			pushFreeSlab(s);
-			// This slab turned into a free slab so return only next.
-			return pruneUsedSlabs(next);
+		currentSlab := s;
+		while (currentSlab !is null) {
+			if (currentSlab.freeSlots == 0) {
+				// Is the next one still fully used?
+				currentSlab.next = pruneUsedSlabs(currentSlab.next);
+				// This is still fully used, return it.
+				break;
+			} else if (currentSlab.usedSlots == 0) {
+				next := currentSlab.next;
+				currentSlab.next = null;
+				mManager.freeSlabStructAndMem(currentSlab);
+				// This was freed, return only next.
+				currentSlab = next;
+			} else {
+				next := currentSlab.next;
+				currentSlab.next = null;
+				pushFreeSlab(currentSlab);
+				// This slab turned into a free slab so return only next.
+				currentSlab = next;
+			}
 		}
+		return currentSlab;
 	}
 
 	fn free(ptr: void*)
