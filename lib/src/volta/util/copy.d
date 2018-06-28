@@ -477,64 +477,64 @@ ir.Node copyNode(ir.Node n)
 	case NonVisiting:
 		assert(false, "non-visiting node");
 	case AccessExp:
-		auto ae = cast(ir.AccessExp)n;
+		auto ae = n.toAccessExpChecked();
 		return copy(ae);
 	case Constant:
-		auto c = cast(ir.Constant)n;
+		auto c = n.toConstantChecked();
 		return copy(c);
 	case BlockStatement:
-		auto bs = cast(ir.BlockStatement)n;
+		auto bs = n.toBlockStatementChecked();
 		return copy(bs);
 	case ReturnStatement:
-		auto rs = cast(ir.ReturnStatement)n;
+		auto rs = n.toReturnStatementChecked();
 		return copy(rs);
 	case BinOp:
-		auto bo = cast(ir.BinOp)n;
+		auto bo = n.toBinOpChecked();
 		return copy(bo);
 	case IdentifierExp:
-		auto ie = cast(ir.IdentifierExp)n;
+		auto ie = n.toIdentifierExpChecked();
 		return copy(ie);
 	case TypeExp:
-		auto te = cast(ir.TypeExp)n;
+		auto te = n.toTypeExpChecked();
 		return copy(te);
 	case StoreExp:
-		auto se = cast(ir.StoreExp)n;
+		auto se = n.toStoreExpChecked();
 		return copy(se);
 	case ArrayLiteral:
-		auto ar = cast(ir.ArrayLiteral)n;
+		auto ar = n.toArrayLiteralChecked();
 		return copy(ar);
 	case TokenExp:
-		auto te = cast(ir.TokenExp)n;
+		auto te = n.toTokenExpChecked();
 		return copy(te);
 	case ExpReference:
-		auto er = cast(ir.ExpReference)n;
+		auto er = n.toExpReferenceChecked();
 		return copy(er);
 	case Postfix:
-		auto pfix = cast(ir.Postfix)n;
+		auto pfix = n.toPostfixChecked();
 		return copy(pfix);
 	case PropertyExp:
-		auto pe = cast(ir.PropertyExp)n;
+		auto pe = n.toPropertyExpChecked();
 		return copy(pe);
 	case Unary:
-		auto unary = cast(ir.Unary)n;
+		auto unary = n.toUnaryChecked();
 		return copy(unary);
 	case Typeid:
-		auto tid = cast(ir.Typeid)n;
+		auto tid = n.toTypeidChecked();
 		return copy(tid);
 	case AutoType:
-		auto at = cast(ir.AutoType)n;
+		auto at = n.toAutoTypeChecked();
 		return copy(at);
 	case BuiltinExp:
-		auto bi = cast(ir.BuiltinExp)n;
+		auto bi = n.toBuiltinExpChecked();
 		return copy(bi);
 	case RunExp:
-		auto re = cast(ir.RunExp)n;
+		auto re = n.toRunExpChecked();
 		return copy(re);
 	case ComposableString:
-		auto cs = cast(ir.ComposableString)n;
+		auto cs = n.toComposableStringChecked();
 		return copy(cs);
 	case StatementExp:
-		auto se = cast(ir.StatementExp)n;
+		auto se = n.toStatementExpChecked();
 		return copy(se);
 	case Ternary:
 		auto tn = n.toTernaryChecked();
@@ -557,7 +557,7 @@ ir.Node copyNode(ir.Node n)
 	case Class:
 	case Interface:
 	case AliasStaticIf:
-		auto t = cast(ir.Type)n;
+		auto t = n.toTypeChecked();
 		return copyTypeSmart(/*#ref*/t.loc, t);  // @todo do correctly.
 	case QualifiedName:
 	case Identifier:
