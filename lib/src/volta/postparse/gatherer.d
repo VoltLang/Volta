@@ -413,6 +413,11 @@ void addScope(ir.Scope current, ir.BlockStatement bs)
 	bs.myScope = new ir.Scope(current, bs, "block", current.nestedDepth);
 }
 
+void addScope(ir.Scope current, ir.TemplateDefinition td, ErrorSink errSink)
+{
+	td.myScope = new ir.Scope(current, td, td.name, current.nestedDepth);
+}
+
 void addScope(ir.Scope current, ir.Struct s, ErrorSink errSink)
 {
 	auto agg = cast(ir.Aggregate) current.node;
@@ -828,6 +833,7 @@ public:
 
 	override Status visit(ir.TemplateDefinition td)
 	{
+		addScope(current, td, mErrSink);
 		gather(current, td, where, mErrSink);
 		return Continue;
 	}

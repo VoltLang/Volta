@@ -5603,6 +5603,7 @@ public:
 	override Status leave(ir.TemplateInstance ti)
 	{
 		ctx.leave(ti);
+		ti.myScope.parent = ti.oldParent;
 		return Continue;
 	}
 

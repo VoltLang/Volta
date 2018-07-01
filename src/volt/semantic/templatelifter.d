@@ -369,6 +369,7 @@ public:
 public:
 	void templateLift(ir.Scope _current, LanguagePass lp, ir.TemplateInstance ti)
 	{
+		ti.oldParent = ti.myScope.parent;
 		switch (ti.kind) with (ir.TemplateKind) {
 		case Struct:
 			templateLiftStruct(_current, lp, ti);
@@ -384,9 +385,13 @@ public:
 	void templateLiftFunction(ir.Scope _current, LanguagePass lp, ir.TemplateInstance ti)
 	{
 		auto current = ti.myScope;
+		auto td = getNewTemplateDefinition(current, lp, ti);
 		panicAssert(ti, current !is null);
 
-		auto td = getNewTemplateDefinition(current, lp, ti);
+		if (!ti.explicitMixin) {
+			ti.myScope.parent = td.myScope.parent;
+		}
+
 		auto deffunc = td._function;
 		panicAssert(ti, deffunc !is null);
 
@@ -423,7 +428,7 @@ public:
 		addArgumentsToNewInstanceEnvironment(lp, processed, func.myScope, td, ti);
 
 		// Touch up store.
-		auto store = current.parent.getStore(ti.instanceName);
+		auto store = ti.oldParent.getStore(ti.instanceName);
 		panicAssert(ti, store !is null);
 		panicAssert(ti, store.templateInstances.length > 0);
 		panicAssert(ti, store.kind == ir.Store.Kind.TemplateInstance ||
@@ -436,10 +441,12 @@ public:
 	void templateLiftStruct(ir.Scope _current, LanguagePass lp, ir.TemplateInstance ti)
 	{
 		auto current = ti.myScope;
-		if (!ti.explicitMixin) {
-			throw makeError(/*#ref*/ti.loc, "only mixin templates are supported.");
-		}
 		auto td = getNewTemplateDefinition(current, lp, ti);
+
+		if (!ti.explicitMixin) {
+			ti.myScope.parent = td.myScope.parent;
+		}
+
 		auto defstruct = td._struct;
 		panicAssert(ti, defstruct !is null);
 		auto s = new ir.Struct(defstruct);
@@ -452,7 +459,7 @@ public:
 		currentInstanceType = ti._struct;
 
 		// Make sure we look in the scope where the template inst. is.
-		auto processed = processNewTemplateArguments(lp, s.myScope.parent, ti.myScope, td, ti);
+		auto processed = processNewTemplateArguments(lp, s.myScope.parent, current, td, ti);
 
 		// Do the lifting of the children.
 		s.members = lift(defstruct.members);
@@ -470,7 +477,8 @@ public:
 		ensureMangled(s);
 
 		// Touch up scope.
-		auto store = current.parent.getStore(ti.instanceName);
+		//ti.myScope.parent = oldParent;
+		auto store = ti.oldParent.getStore(ti.instanceName);
 		panicAssert(ti, store !is null);
 		panicAssert(ti, store.templateInstances.length == 1);
 		panicAssert(ti, store.templateInstances[0] is ti);
@@ -560,9 +568,6 @@ alias NodeAdder = void delegate(ir.Node);
 
 ir.TemplateDefinition getNewTemplateDefinition(ir.Scope current, LanguagePass lp, ir.TemplateInstance ti)
 {
-	if (!ti.explicitMixin) {
-		throw makeExpected(/*#ref*/ti.loc, "explicit mixin");
-	}
 	auto store = lookup(lp, current, ti.definitionName);
 	if (store is null) {
 		throw makeFailedLookup(/*#ref*/ti.loc, ti.definitionName.toString());
