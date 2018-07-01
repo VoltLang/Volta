@@ -44,6 +44,7 @@ public:
 	Node[] arguments;  // Either a Type or an Exp.
 	string[] names;  // Set by the lifter.
 	Scope myScope;  // Set by gatherer.
+	Scope oldParent;  // Used by the extyper to evaluate the instance in the right place.
 
 	Struct _struct;
 	Function _function;
@@ -66,6 +67,7 @@ public:
 		this.myScope = old.myScope;
 		this._struct = old._struct;
 		this._function = old._function;
+		this.oldParent = old.oldParent;
 	}
 }
 
@@ -83,6 +85,7 @@ public:
 	string name;
 	Parameter[] parameters;
 	TypeReference[] typeReferences;  //!< Filled in by the gatherer.
+	Scope myScope;  //!< Filled in by the gatherer.
 	/*!
 	 * Only one of these fields will be non-null, depending on kind.
 	 * @{
