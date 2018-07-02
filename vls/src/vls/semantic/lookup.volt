@@ -42,6 +42,13 @@ fn resolveAlias(node: ir.Node, context: ir.Scope) ir.Node
 	return resolveAliasImpl(ref cache, node, context);
 }
 
+//! If `store` is a variable or param, get the type.
+fn getTypeFromVariableLike(store: ir.Store, context: ir.Scope) ir.Type
+{
+	cache: SimpleImportCache;
+	return getTypeFromVariableLikeImpl(ref cache, store, context);
+}
+
 private:
 
 fn lookupImpl(ref cache: SimpleImportCache, context: ir.Scope, name: string) ir.Store
@@ -116,7 +123,7 @@ fn getScopeFromStoreImpl(ref cache: SimpleImportCache, store: ir.Store, context:
 	if (store.kind == ir.Store.Kind.Scope) {
 		return store.myScope;
 	}
-	vtype := getTypeFromVariableLike(ref cache, store, context);
+	vtype := getTypeFromVariableLikeImpl(ref cache, store, context);
 	if (vtype is null) {
 		return null;
 	}
@@ -172,7 +179,7 @@ fn lookupInScopeChain(ref cache: SimpleImportCache, _scope: ir.Scope, name: stri
 		if (current.node !is null) {
 			_class := current.node.toClassChecked();
 			if (_class !is null) {
-				actualise(ref cache, _class);
+				actualise(_class);
 				store = lookupClassChain(ref cache, _class, name);
 				if (store !is null) {
 					return store;
@@ -200,8 +207,7 @@ fn lookupClassChain(ref cache: SimpleImportCache, _class: ir.Class, name: string
 	return null;
 }
 
-//! If `store` is a variable or param, get the type.
-fn getTypeFromVariableLike(ref cache: SimpleImportCache, store: ir.Store, context: ir.Scope) ir.Type
+fn getTypeFromVariableLikeImpl(ref cache: SimpleImportCache, store: ir.Store, context: ir.Scope) ir.Type
 {
 	if (store is null) {
 		return null;

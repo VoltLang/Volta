@@ -7,21 +7,20 @@ module vls.semantic.actualiseClass;
 import watt.io;
 import ir = volta.ir;
 
-import vls.util.simpleCache;
 import vls.semantic.lookup;
 
-fn actualise(ref cache: SimpleImportCache, _class: ir.Class)
+fn actualise(_class: ir.Class)
 {
 	if (_class.isActualized) {
 		return;
 	}
 	_class.isActualized = true;
-	fillInParents(ref cache, _class);
+	fillInParents(_class);
 }
 
 private:
 
-fn fillInParents(ref cache: SimpleImportCache, _class: ir.Class)
+fn fillInParents(_class: ir.Class)
 {
 	if (_class.parent is null) {
 		return;
@@ -32,6 +31,6 @@ fn fillInParents(ref cache: SimpleImportCache, _class: ir.Class)
 	}
 	_class.parentClass = store.node.toClassChecked();
 	if (_class.parentClass !is null) {
-		actualise(ref cache, _class.parentClass);
+		actualise(_class.parentClass);
 	}
 }

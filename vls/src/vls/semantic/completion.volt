@@ -236,12 +236,11 @@ fn getGotoDefinitionResponse(ro: lsp.RequestObject, uri: string, theServer: serv
 		return failedToFind();
 	}
 
-	oneTimeCache: server.SimpleImportCache;
 	endOfLineLocation: ir.Location;
 	endOfLineLocation.line = loc.line;
 	endOfLineLocation.column = cast(u32)(theLine.length - 1);
 
-	getLookupWordAndScope(oneTimeCache, ref theWord, ref parentScope);
+	getLookupWordAndScope(ref theWord, ref parentScope);
 	if (parentScope is null) {
 		return failedToFind();
 	}
@@ -360,7 +359,7 @@ fn getFieldCompletionItems(theServer: server.VoltLanguageServer, parentModule: i
 	if (parentScope is null) {
 		return null;
 	}
-	getLookupWordAndScope(oneTimeCache, ref childWord, ref parentScope);
+	getLookupWordAndScope(ref childWord, ref parentScope);
 	if (parentScope is null) {
 		return null;
 	}
@@ -370,7 +369,7 @@ fn getFieldCompletionItems(theServer: server.VoltLanguageServer, parentModule: i
 	}
 
 	completionList: semantic.CompletionList;
-	if (isBuiltin(ref completionList, ref oneTimeCache, store, parentScope)) {
+	if (isBuiltin(ref completionList, store, parentScope)) {
 		return completionList.jsonArray();
 	}
 
@@ -393,7 +392,7 @@ fn getFieldCompletionItems(theServer: server.VoltLanguageServer, parentModule: i
 	if (_scope.node !is null) {
 		asClass := _scope.node.toClassChecked();
 		if (asClass !is null) {
-			semantic.actualise(ref oneTimeCache, asClass);
+			semantic.actualise(asClass);
 			asClass = asClass.parentClass;
 			while (asClass !is null) {
 				completionList.add(asClass.myScope);
@@ -547,11 +546,10 @@ fn getBlockStatement(node: ir.Node, ref bs: ir.BlockStatement) bool
  * Otherwise, `lookupString` will be the leaf word, and `parentScope`
  * will be the scope to look it up in.
  *
- * @Param cache The cache to use when doing lookups.
  * @Param lookupString The string to split apart, if needed.
  * @Param parentScope The scope to start lookup in.
  */
-fn getLookupWordAndScope(cache: server.SimpleImportCache, ref lookupString: string, ref parentScope: ir.Scope)
+fn getLookupWordAndScope(ref lookupString: string, ref parentScope: ir.Scope)
 {
 	if (watt.indexOf(lookupString, '.') > 0) {
 		parts := watt.split(lookupString, '.');
@@ -572,15 +570,14 @@ fn getLookupWordAndScope(cache: server.SimpleImportCache, ref lookupString: stri
 	}
 }
 
-fn isBuiltin(ref completionList: semantic.CompletionList, ref cache: server.SimpleImportCache, store: ir.Store, context: ir.Scope) bool
+fn isBuiltin(ref completionList: semantic.CompletionList, store: ir.Store, context: ir.Scope) bool
 {
-	vtype: ir.Node = server.getTypeFromVariableLike(ref cache, store, context);
+	vtype: ir.Node = server.getTypeFromVariableLike(store, context);
 	if (vtype is null) {
 		return false;
 	}
 	tr := vtype.toTypeReferenceChecked();
 	if (tr !is null) {
-		copyCache := cache;  // Don't mark modules as looked up with this.
 		tlstore := server.lookup(context, tr.id);
 		if (tlstore is null) {
 			return false;
