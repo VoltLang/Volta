@@ -4,7 +4,7 @@ import core = core.rt.format;
 import watt = [watt.text.string, watt.io, watt.conv, watt.path, watt.json.util, watt.text.ascii, watt.text.sink];
 import json = watt.json;
 
-import ir = [volta.ir, volta.ir.location];
+import ir = [volta.ir, volta.ir.location, volta.util.util];
 import parser = [volta.parser.base, volta.parser.expression];
 import visitor = [volta.visitor.visitor, volta.visitor.scopemanager];
 import lsp = vls.lsp;
@@ -240,12 +240,10 @@ fn getGotoDefinitionResponse(ro: lsp.RequestObject, uri: string, theServer: serv
 	endOfLineLocation.line = loc.line;
 	endOfLineLocation.column = cast(u32)(theLine.length - 1);
 
-	getLookupWordAndScope(ref theWord, ref parentScope);
-	if (parentScope is null) {
-		return failedToFind();
-	}
+	words := watt.split(theWord, ".");
+	qname := ir.buildQualifiedName(ref loc, words);
 
-	store := server.lookup(parentScope, theWord);
+	store := server.lookup(parentScope, qname);
 	if (store is null) {
 		return failedToFind();
 	}
