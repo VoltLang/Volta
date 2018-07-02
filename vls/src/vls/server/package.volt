@@ -34,7 +34,6 @@ public:
 	modulePath: string;
 	settings: Settings;
 	versionSet: VersionSet;
-	importCache: SimpleImportCache;
 	sgv: SymbolGathererVisitor;
 
 	retval: i32;
