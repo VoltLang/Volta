@@ -250,7 +250,6 @@ fn getGotoDefinitionResponse(ro: lsp.RequestObject, uri: string, theServer: serv
 		return failedToFind();
 	}
 
-	aliasCache: server.SimpleImportCache;
 	node := server.resolveAlias(store.node, parentScope);
 
 	ss: watt.StringSink;
@@ -350,7 +349,6 @@ fn getFieldCompletionItems(theServer: server.VoltLanguageServer, parentModule: i
 	if (theLine[$-1] == '.') {
 		theLine = theLine[0 .. $-1];
 	}
-	oneTimeCache: server.SimpleImportCache;
 	endOfLineLocation: ir.Location;
 	endOfLineLocation.line = loc.line;
 	endOfLineLocation.column = cast(u32)(theLine.length - 1);
