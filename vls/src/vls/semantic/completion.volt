@@ -90,8 +90,7 @@ fn getHoverResponse(ro: lsp.RequestObject, uri: string, theServer: server.VoltLa
 		return failedToFind();
 	}
 
-	oneTimeCache: server.SimpleImportCache;
-	store := server.getStoreFromFragment(ref oneTimeCache, exp, mod.myScope, parentScope);
+	store := server.getStoreFromFragment(exp, mod.myScope, parentScope);
 	if (store is null) {
 		return failedToFind();
 	}
@@ -180,8 +179,7 @@ fn getSignatureHelpResponse(ro: lsp.RequestObject, uri: string, theServer: serve
 		return failedToFind();
 	}
 
-	oneTimeCache: server.SimpleImportCache;
-	store := server.getStoreFromFragment(ref oneTimeCache, exp, mod.myScope, parentScope);
+	store := server.getStoreFromFragment(exp, mod.myScope, parentScope);
 	if (store is null) {
 		return failedToFind();
 	}
@@ -248,13 +246,13 @@ fn getGotoDefinitionResponse(ro: lsp.RequestObject, uri: string, theServer: serv
 		return failedToFind();
 	}
 
-	store := server.lookup(ref oneTimeCache, parentScope, theWord);
+	store := server.lookup(parentScope, theWord);
 	if (store is null) {
 		return failedToFind();
 	}
 
 	aliasCache: server.SimpleImportCache;
-	node := server.resolveAlias(store.node, ref aliasCache, parentScope);
+	node := server.resolveAlias(store.node, parentScope);
 
 	ss: watt.StringSink;
 	ss.sink(`{"jsonrcp":"2.0","id":`);
@@ -366,7 +364,7 @@ fn getFieldCompletionItems(theServer: server.VoltLanguageServer, parentModule: i
 	if (parentScope is null) {
 		return null;
 	}
-	store := server.lookup(ref oneTimeCache, parentScope, childWord);
+	store := server.lookup(parentScope, childWord);
 	if (store is null) {
 		return null;
 	}
@@ -376,7 +374,7 @@ fn getFieldCompletionItems(theServer: server.VoltLanguageServer, parentModule: i
 		return completionList.jsonArray();
 	}
 
-	_scope := server.getScopeFromStore(ref oneTimeCache, store, parentScope);
+	_scope := server.getScopeFromStore(store, parentScope);
 	if (_scope is null) {
 		return null;
 	}
@@ -559,12 +557,12 @@ fn getLookupWordAndScope(cache: server.SimpleImportCache, ref lookupString: stri
 		parts := watt.split(lookupString, '.');
 		lookupString = parts[$-1];
 		foreach (part; parts[0 .. $-1]) {
-			store := server.lookup(ref cache, parentScope, part);
+			store := server.lookup(parentScope, part);
 			if (store is null) {
 				parentScope = null;
 				return;
 			}
-			_scope := server.getScopeFromStore(ref cache, store, parentScope);
+			_scope := server.getScopeFromStore(store, parentScope);
 			if (_scope is null) {
 				parentScope = null;
 				return;
@@ -583,13 +581,13 @@ fn isBuiltin(ref completionList: semantic.CompletionList, ref cache: server.Simp
 	tr := vtype.toTypeReferenceChecked();
 	if (tr !is null) {
 		copyCache := cache;  // Don't mark modules as looked up with this.
-		tlstore := server.lookup(ref copyCache, context, tr.id);
+		tlstore := server.lookup(context, tr.id);
 		if (tlstore is null) {
 			return false;
 		}
 		vtype = tlstore.node;
 	}
-	vtype = server.resolveAlias(vtype, ref cache, context);
+	vtype = server.resolveAlias(vtype, context);
 	if (vtype is null) {
 		return false;
 	}

@@ -9,6 +9,145 @@ import ir = volta.ir;
 import vls.util.simpleCache;
 import vls.semantic.actualiseClass;
 
+fn lookup(context: ir.Scope, name: ir.QualifiedName) ir.Store
+{
+	cache: SimpleImportCache;
+	return lookupImpl(ref cache, context, name);
+}
+
+fn lookup(context: ir.Scope, name: string) ir.Store
+{
+	cache: SimpleImportCache;
+	return lookupImpl(ref cache, context, name);
+}
+
+fn getScopeFromStore(store: ir.Store, context: ir.Scope) ir.Scope
+{
+	cache: SimpleImportCache;
+	return getScopeFromStoreImpl(ref cache, store, context);
+}
+
+fn getStoreFromFragment(fragment: ir.Exp, context: ir.Scope, parentContext: ir.Scope) ir.Store
+{
+	cache: SimpleImportCache;
+	return getStoreFromFragmentImpl(ref cache, fragment, context, parentContext);
+}
+
+/*!
+ * If `node` is an alias, resolve it. Otherwise `node` is returned as is.
+ */
+fn resolveAlias(node: ir.Node, context: ir.Scope) ir.Node
+{
+	cache: SimpleImportCache;
+	return resolveAliasImpl(ref cache, node, context);
+}
+
+private:
+
+fn lookupImpl(ref cache: SimpleImportCache, context: ir.Scope, name: string) ir.Store
+{
+	modscope: ir.Scope;
+	store := lookupInScopeChain(ref cache, context, name, out modscope);
+	if (store !is null) {
+		return store;
+	}
+	foreach (importedMod; modscope.importedModules) {
+		if (cache.hasResult(importedMod.name.toString())) {
+			continue;
+		}
+		cache.setResult(importedMod.name.toString(), importedMod);
+		if (importedMod.myScope is modscope) {
+			continue;
+		}
+		store = lookupImpl(ref cache, importedMod.myScope, name);
+		if (store !is null) {
+			return store;
+		}
+	}
+	return null;
+}
+
+fn lookupImpl(ref cache: SimpleImportCache, context: ir.Scope, name: ir.QualifiedName) ir.Store
+{
+	store: ir.Store;
+	foreach (part; name.identifiers) {
+		if (store is null) {
+			store = lookupImpl(ref cache, context, part.value);
+			if (store is null) {
+				return null;
+			}
+		} else {
+			_scope := getScopeFromStoreImpl(ref cache, store, context);
+			if (_scope is null) {
+				return null;
+			}
+			store = _scope.getStore(part.value);
+			if (store is null) {
+				foreach (mscope; _scope.multibindScopes) {
+					store = mscope.getStore(part.value);
+					if (store !is null) {
+						break;
+					}
+				}
+			}
+			if (store is null) {
+				// Check public imports.
+				foreach (i, mod; _scope.importedModules) {
+					if (_scope.importedAccess[i] == ir.Access.Public) {
+						// TODO: lookup in here, share import cache.
+						store = mod.myScope.getStore(part.value);
+					}
+					if (store !is null) {
+						// TODO: Handle multiple matches etc.
+						break;
+					}
+				}
+			}
+		}
+	}
+	return store;
+}
+
+fn getScopeFromStoreImpl(ref cache: SimpleImportCache, store: ir.Store, context: ir.Scope) ir.Scope
+{
+	if (store.scopes.length > 1) {
+		return new ir.Scope(store.scopes);
+	}
+	if (store.kind == ir.Store.Kind.Scope) {
+		return store.myScope;
+	}
+	vtype := getTypeFromVariableLike(ref cache, store, context);
+	if (vtype is null) {
+		return null;
+	}
+
+	ptr := vtype.toPointerTypeChecked();
+	if (ptr !is null && ptr.base !is null) {
+		/* This doesn't need to support pointers to pointers,
+		 * as Volt only dereferences one level automatically.
+		 */
+		vtype = ptr.base;
+	}
+
+	tr := vtype.toTypeReferenceChecked();
+	if (tr is null) {
+		return null;
+	}
+	tlstore := lookupImpl(ref cache, context, tr.id);
+	if (tlstore is null) {
+		return null;
+	}
+
+	aliasCache: SimpleImportCache;
+	node := resolveAliasImpl(ref aliasCache, tlstore.node, context);
+
+	agg: ir.Aggregate;
+	if (getAggregate(node, out agg)) {
+		return agg.myScope;
+	}
+	return null;
+}
+
 //! If `node` is an `Aggregate`, return `true`. Otherwise `aggregate` is null and return `false`.
 fn getAggregate(node: ir.Node, out aggregate: ir.Aggregate) bool
 {
@@ -61,136 +200,6 @@ fn lookupClassChain(ref cache: SimpleImportCache, _class: ir.Class, name: string
 	return null;
 }
 
-fn lookup(ref cache: SimpleImportCache, context: ir.Scope, name: ir.QualifiedName) ir.Store
-{
-	store: ir.Store;
-	foreach (part; name.identifiers) {
-		if (store is null) {
-			store = lookup(ref cache, context, part.value);
-			if (store is null) {
-				return null;
-			}
-		} else {
-			_scope := getScopeFromStore(ref cache, store, context);
-			if (_scope is null) {
-				return null;
-			}
-			store = _scope.getStore(part.value);
-			if (store is null) {
-				foreach (mscope; _scope.multibindScopes) {
-					store = mscope.getStore(part.value);
-					if (store !is null) {
-						break;
-					}
-				}
-			}
-			if (store is null) {
-				// Check public imports.
-				foreach (i, mod; _scope.importedModules) {
-					if (_scope.importedAccess[i] == ir.Access.Public) {
-						// TODO: lookup in here, share import cache.
-						store = mod.myScope.getStore(part.value);
-					}
-					if (store !is null) {
-						// TODO: Handle multiple matches etc.
-						break;
-					}
-				}
-			}
-		}
-	}
-	return store;
-}
-
-fn lookup(ref cache: SimpleImportCache, context: ir.Scope, name: string) ir.Store
-{
-	modscope: ir.Scope;
-	store := lookupInScopeChain(ref cache, context, name, out modscope);
-	if (store !is null) {
-		return store;
-	}
-	foreach (importedMod; modscope.importedModules) {
-		if (cache.hasResult(importedMod.name.toString())) {
-			continue;
-		}
-		cache.setResult(importedMod.name.toString(), importedMod);
-		if (importedMod.myScope is modscope) {
-			continue;
-		}
-		store = lookup(ref cache, importedMod.myScope, name);
-		if (store !is null) {
-			return store;
-		}
-	}
-	return null;
-}
-
-fn getScopeFromStore(ref cache: SimpleImportCache, store: ir.Store, context: ir.Scope) ir.Scope
-{
-	if (store.scopes.length > 1) {
-		return new ir.Scope(store.scopes);
-	}
-	if (store.kind == ir.Store.Kind.Scope) {
-		return store.myScope;
-	}
-	vtype := getTypeFromVariableLike(ref cache, store, context);
-	if (vtype is null) {
-		return null;
-	}
-
-	ptr := vtype.toPointerTypeChecked();
-	if (ptr !is null && ptr.base !is null) {
-		/* This doesn't need to support pointers to pointers,
-		 * as Volt only dereferences one level automatically.
-		 */
-		vtype = ptr.base;
-	}
-
-	tr := vtype.toTypeReferenceChecked();
-	if (tr is null) {
-		return null;
-	}
-	tlstore := lookup(ref cache, context, tr.id);
-	if (tlstore is null) {
-		return null;
-	}
-
-	aliasCache: SimpleImportCache;
-	node := resolveAlias(tlstore.node, ref aliasCache, context);
-
-	agg: ir.Aggregate;
-	if (getAggregate(node, out agg)) {
-		return agg.myScope;
-	}
-	return null;
-}
-
-/*!
- * If `node` is an alias, resolve it. Otherwise `node` is returned as is.
- */
-fn resolveAlias(node: ir.Node, ref cache: SimpleImportCache, context: ir.Scope) ir.Node
-{
-	if (node is null) {
-		return null;
-	}
-	currentNode := node;
-	while (currentNode.nodeType == ir.NodeType.Alias) {
-		_alias := currentNode.toAliasFast();
-		if (_alias.type !is null) {
-			return _alias.type;
-		}
-		if (_alias.id is null) {
-			return node;
-		}
-		store := lookup(ref cache, context, _alias.id);
-		if (store is null || store.node is currentNode) {
-			return node;
-		}
-		currentNode = store.node;
-	}
-	return currentNode;
-}
-
 //! If `store` is a variable or param, get the type.
 fn getTypeFromVariableLike(ref cache: SimpleImportCache, store: ir.Store, context: ir.Scope) ir.Type
 {
@@ -221,7 +230,7 @@ fn getTypeFromVariableLike(ref cache: SimpleImportCache, store: ir.Store, contex
 			if (pfx.op != ir.Postfix.Op.Call) {
 				goto default;
 			}
-			_store := getStoreFromFragment(ref cache, pfx.child, context, context);
+			_store := getStoreFromFragmentImpl(ref cache, pfx.child, context, context);
 			if (_store !is null && _store.node.nodeType == ir.NodeType.Function) {
 				func := _store.node.toFunctionFast();
 				type = func.type.ret;
@@ -234,14 +243,37 @@ fn getTypeFromVariableLike(ref cache: SimpleImportCache, store: ir.Store, contex
 	return type;
 }
 
-fn getStoreFromFragment(ref cache: SimpleImportCache, fragment: ir.Exp, context: ir.Scope, parentContext: ir.Scope) ir.Store
+fn resolveAliasImpl(ref cache: SimpleImportCache, node: ir.Node, context: ir.Scope) ir.Node
+{
+	if (node is null) {
+		return null;
+	}
+	currentNode := node;
+	while (currentNode.nodeType == ir.NodeType.Alias) {
+		_alias := currentNode.toAliasFast();
+		if (_alias.type !is null) {
+			return _alias.type;
+		}
+		if (_alias.id is null) {
+			return node;
+		}
+		store := lookupImpl(ref cache, context, _alias.id);
+		if (store is null || store.node is currentNode) {
+			return node;
+		}
+		currentNode = store.node;
+	}
+	return currentNode;
+}
+
+fn getStoreFromFragmentImpl(ref cache: SimpleImportCache, fragment: ir.Exp, context: ir.Scope, parentContext: ir.Scope) ir.Store
 {
 	switch (fragment.nodeType) with (ir.NodeType) {
 	case IdentifierExp:
 		ie := fragment.toIdentifierExpFast();
-		store := lookup(ref cache, context, ie.value);
+		store := lookupImpl(ref cache, context, ie.value);
 		if (store is null && parentContext !is null) {
-			store = lookup(ref cache, parentContext, ie.value);
+			store = lookupImpl(ref cache, parentContext, ie.value);
 		}
 		return store;
 	case Postfix:
@@ -252,15 +284,15 @@ fn getStoreFromFragment(ref cache: SimpleImportCache, fragment: ir.Exp, context:
 		if (postfix.child is null) {
 			return null;
 		}
-		store := getStoreFromFragment(ref cache, postfix.child, context, parentContext);
+		store := getStoreFromFragmentImpl(ref cache, postfix.child, context, parentContext);
 		if (store is null) {
 			return null;
 		}
-		childContext := getScopeFromStore(ref cache, store, context);
+		childContext := getScopeFromStoreImpl(ref cache, store, context);
 		if (childContext is null) {
 			return null;
 		}
-		store = lookup(ref cache, childContext, postfix.identifier.value);
+		store = lookupImpl(ref cache, childContext, postfix.identifier.value);
 		return store;
 	default:
 		return null;

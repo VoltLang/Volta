@@ -26,7 +26,7 @@ fn fillInParents(ref cache: SimpleImportCache, _class: ir.Class)
 	if (_class.parent is null) {
 		return;
 	}
-	store := lookup(ref cache, _class.myScope, _class.parent);
+	store := lookup(_class.myScope, _class.parent);
 	if (store is null) {
 		return;
 	}
