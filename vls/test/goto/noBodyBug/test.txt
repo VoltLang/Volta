@@ -1,0 +1,2 @@
+//T check:main.volt","range":{"start":{"line":0,"character":1}
+//T check:core/compiler/defaultsymbols.volt","range":{"start":{
