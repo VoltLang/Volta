@@ -111,13 +111,14 @@ public override:
 
 	fn enter(func: ir.Function) Status
 	{
+		status := checkLocation(func, func.myScope);
 		if (!func.hasBody) {
-			return Continue;
+			return status;
 		}
 		if (func.parsedBody is null) {
 			if (targetLocation.line < func.tokensBody[0].loc.line ||
 				targetLocation.line > func.tokensBody[$-1].loc.line) {
-				return Continue;
+				return status;
 			}
 			tokens := func.tokensBody;
 			/* So if the user has
@@ -141,7 +142,7 @@ public override:
 			mPostParse.transformChildBlocks(func);
 		}
 		mFunctionStack.push(func);
-		return checkLocation(func, func.myScope);
+		return status;
 	}
 
 	fn leave(func: ir.Function) Status
