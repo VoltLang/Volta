@@ -5,7 +5,9 @@ module vls.semantic.lookup;
 
 import watt = watt.io;
 import ir = volta.ir;
+import util = volta.util.util;
 
+import modules = vls.modules;
 import vls.util.simpleCache;
 import vls.semantic.actualiseClass;
 
@@ -263,7 +265,14 @@ fn resolveAliasImpl(ref cache: SimpleImportCache, node: ir.Node, context: ir.Sco
 		if (_alias.id is null) {
 			return node;
 		}
-		store := lookupImpl(ref cache, context, _alias.id);
+		lookupScope := context;
+		if (_alias.lookModule !is null) {
+			mod := modules.get(_alias.lookModule.name);
+			if (mod !is null && mod.myScope !is null) {
+				lookupScope = mod.myScope;
+			}
+		}
+		store := lookupImpl(ref cache, lookupScope, _alias.id);
 		if (store is null || store.node is currentNode) {
 			return node;
 		}
