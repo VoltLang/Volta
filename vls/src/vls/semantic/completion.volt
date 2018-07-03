@@ -150,7 +150,7 @@ fn getSignatureHelpResponse(ro: lsp.RequestObject, uri: string, theServer: serve
 	}
 
 	loc := getLocationFromRequestObject(ro);
-	theLine := watt.strip(getLineAtLocation(uri, ref loc));
+	theLine := getLineAtLocation(uri, ref loc);
 
 	if (openParens(theLine) <= 0) {
 		return failedToFind();
@@ -174,12 +174,14 @@ fn getSignatureHelpResponse(ro: lsp.RequestObject, uri: string, theServer: serve
 		return failedToFind();
 	}
 
-	exp := parseFragmentExpression(theLine, theServer.settings, theServer);
-	if (exp is null) {
-		return failedToFind();
-	}
+	doctoredLocation := loc;
+	doctoredLocation.column = cast(u32)theLine.length - 1;
+	theWord := getWordAtLocation(theLine, ref doctoredLocation);
 
-	store := server.getStoreFromFragment(exp, mod.myScope, parentScope);
+	words := watt.split(theWord, ".");
+	qname := ir.buildQualifiedName(ref loc, words);
+
+	store := server.lookup(mod.myScope, qname);
 	if (store is null) {
 		return failedToFind();
 	}
