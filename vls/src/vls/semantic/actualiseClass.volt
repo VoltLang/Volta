@@ -25,11 +25,12 @@ fn fillInParents(_class: ir.Class)
 	if (_class.parent is null) {
 		return;
 	}
-	store := lookup(_class.myScope, _class.parent);
+	store := lookup(_class.myScope.parent, _class.parent);
 	if (store is null) {
 		return;
 	}
-	_class.parentClass = store.node.toClassChecked();
+	node := resolveAlias(store.node, _class.myScope);
+	_class.parentClass = node.toClassChecked();
 	if (_class.parentClass !is null) {
 		actualise(_class.parentClass);
 	}
