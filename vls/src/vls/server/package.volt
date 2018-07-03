@@ -253,6 +253,10 @@ private:
 			return;
 		}
 		modules.setPackagePath("watt", base, "watt/src");
+		modules.setPackagePath("watt.http", base, "watt/http/src");
+		modules.setPackagePath("watt.json", base, "watt/json/src");
+		modules.setPackagePath("watt.markdown", base, "watt/markdown/src");
+		modules.setPackagePath("watt.toml", base, "watt/toml/src");
 	}
 
 	fn updateConfiguration(ro: RequestObject)
