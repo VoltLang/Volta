@@ -692,16 +692,20 @@ public:
 
 	override Status enter(ir.Class c)
 	{
-		addScope(current, c, where, mErrSink);
-		gather(current, c, where, mErrSink);
+		if (c.myScope is null) {
+			addScope(current, c, where, mErrSink);
+			gather(current, c, where, mErrSink);
+		}
 		push(c.myScope, c);
 		return Continue;
 	}
 
 	override Status enter(ir._Interface i)
 	{
-		addScope(current, i, mErrSink);
-		gather(current, i, where, mErrSink);
+		if (i.myScope is null) {
+			addScope(current, i, mErrSink);
+			gather(current, i, where, mErrSink);
+		}
 		push(i.myScope, i);
 		return Continue;
 	}
@@ -718,8 +722,10 @@ public:
 
 	override Status enter(ir.Union u)
 	{
-		addScope(current, u, mErrSink);
-		gather(current, u, where, mErrSink);
+		if (u.myScope is null) {
+			addScope(current, u, mErrSink);
+			gather(current, u, where, mErrSink);
+		}
 		push(u.myScope, u);
 		return Continue;
 	}

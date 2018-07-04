@@ -48,6 +48,9 @@ public:
 
 	Struct _struct;
 	Function _function;
+	Class _class;
+	Union _union;
+	_Interface _interface;
 
 public:
 	this()
@@ -67,6 +70,9 @@ public:
 		this.myScope = old.myScope;
 		this._struct = old._struct;
 		this._function = old._function;
+		this._class = old._class;
+		this._union = old._union;
+		this._interface = old._interface;
 		this.oldParent = old.oldParent;
 	}
 }

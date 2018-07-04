@@ -134,9 +134,15 @@ ir.Type rewriteSuper(Context ctx, ref ir.Exp e, ir.IdentifierExp ident,
 
 ir.Type rewriteSuperIdentifier(ref ir.Exp e, ir.Class _class)
 {
+	auto lookupScope = _class.myScope.parent;
+	if (lookupScope.node.nodeType == ir.NodeType.TemplateInstance) {
+		lookupScope = lookupScope.parent;
+	}
+	assert(lookupScope !is null);
+
 	// No better way of doing this. :-(
 	// Also assumes that the class has a valid scope.
-	auto store = _class.myScope.parent.getStore(_class.name);
+	auto store = lookupScope.getStore(_class.name);
 	assert(store !is null);
 	assert(store.node is _class);
 

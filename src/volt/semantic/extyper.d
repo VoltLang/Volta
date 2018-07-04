@@ -3448,16 +3448,6 @@ void extypeThrowStatement(Context ctx, ref ir.Node n)
 	}
 }
 
-/*!
- * Just check that it's a struct template for now.
- */
-void extypeTemplateDefinition(Context ctx, ir.TemplateDefinition td)
-{
-	if (td._struct is null && td._function is null) {
-		throw makeUnsupported(/*#ref*/td.loc, "non struct/function template definitions");
-	}
-}
-
 void extypeTemplateInstance(Context ctx, ir.TemplateInstance ti)
 {
 	auto tlifter = new TemplateLifter();
@@ -5585,15 +5575,21 @@ public:
 		ctx.enter(ti);
 		if (ti._struct is null && ti._function is null) {
 			extypeTemplateInstance(ctx, ti);
-			switch (ti.kind) with (ir.TemplateKind) {
+			final switch (ti.kind) with (ir.TemplateKind) {
 			case Struct:
 				accept(ti._struct, ctx.extyper);
 				break;
 			case Function:
 				accept(ti._function, ctx.extyper);
 				break;
-			default:
-				panicAssert(ti, false);
+			case Class:
+				accept(ti._class, ctx.extyper);
+				break;
+			case Union:
+				accept(ti._union, ctx.extyper);
+				break;
+			case Interface:
+				accept(ti._interface, ctx.extyper);
 				break;
 			}
 		}
@@ -5604,12 +5600,6 @@ public:
 	{
 		ctx.leave(ti);
 		ti.myScope.parent = ti.oldParent;
-		return Continue;
-	}
-
-	override Status visit(ir.TemplateDefinition td)
-	{
-		extypeTemplateDefinition(ctx, td);
 		return Continue;
 	}
 

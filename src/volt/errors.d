@@ -61,6 +61,14 @@ CompilerException makeEmitLLVMNoLink(string file = __FILE__, const int line = __
  *
  */
 
+CompilerException makeMismatchedTemplateInstanceAndDefinition(ref in Location loc, ir.TemplateKind instanceKind,
+	ir.TemplateKind definitionKind, string file = __FILE__, const int line = __LINE__)
+{
+	string msg = format("template definition is of type '%s', but instance is of type '%s'.",
+		templateKindString(definitionKind), templateKindString(instanceKind));
+	return makeError(/*#ref*/loc, msg, file, line);
+}
+
 CompilerException makeRangeForeachWithIndex(ref in Location loc,
 	string file = __FILE__, const int line = __LINE__)
 {
@@ -1092,6 +1100,17 @@ void panicAssert(ref in Location loc, bool condition, string file = __FILE__, co
 
 
 private:
+
+string templateKindString(ir.TemplateKind kind)
+{
+	final switch (kind) with (ir.TemplateKind) {
+	case Struct:    return "struct";
+	case Class:     return "class";
+	case Union:     return "union";
+	case Interface: return "interface";
+	case Function:  return "function";
+	}
+}
 
 string typeString(ir.Type t)
 {

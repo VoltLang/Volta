@@ -371,8 +371,8 @@ public:
 	{
 		ti.oldParent = ti.myScope.parent;
 		switch (ti.kind) with (ir.TemplateKind) {
-		case Struct:
-			templateLiftStruct(_current, lp, ti);
+		case Struct, Class, Union, Interface:
+			templateLiftAggregate(_current, lp, ti);
 			break;
 		case Function:
 			templateLiftFunction(_current, lp, ti);
@@ -438,7 +438,7 @@ public:
 		store.name = ti.instanceName;
 	}
 
-	void templateLiftStruct(ir.Scope _current, LanguagePass lp, ir.TemplateInstance ti)
+	void templateLiftAggregate(ir.Scope _current, LanguagePass lp, ir.TemplateInstance ti)
 	{
 		auto current = ti.myScope;
 		auto td = getNewTemplateDefinition(current, lp, ti);
@@ -447,45 +447,65 @@ public:
 			ti.myScope.parent = td.myScope.parent;
 		}
 
-		auto defstruct = td._struct;
-		panicAssert(ti, defstruct !is null);
-		auto s = new ir.Struct(defstruct);
-		s.name = ti.instanceName;
-		assert(s.name !is null);
-		ti._struct = s;
-		s.myScope = new ir.Scope(current, s, s.name, current.nestedDepth);
+		ir.Aggregate defAgg;
+		ir.Aggregate a;
+		switch (ti.kind) with (ir.TemplateKind) {
+		case Class:
+			defAgg = td._class;
+			a = new ir.Class(td._class);
+			ti._class = a.toClassFast();
+			break;
+		case Struct:
+			defAgg = td._struct;
+			a = new ir.Struct(td._struct);
+			ti._struct = a.toStructFast();
+			break;
+		case Union:
+			defAgg = td._union;
+			a = new ir.Union(td._union);
+			ti._union = a.toUnionFast();
+			break;
+		case Interface:
+			defAgg = td._interface;
+			a = new ir._Interface(td._interface);
+			ti._interface = a.toInterfaceFast();
+			break;
+		default:
+			panicAssert(ti, false);
+		}
+		a.name = ti.instanceName;
+		panicAssert(ti, a.name !is null);
+		a.myScope = new ir.Scope(current, a, a.name, current.nestedDepth);
 
 		currentTemplateDefinitionName = td.name;
-		currentInstanceType = ti._struct;
+		currentInstanceType = a;
 
 		// Make sure we look in the scope where the template inst. is.
-		auto processed = processNewTemplateArguments(lp, s.myScope.parent, current, td, ti);
+		auto processed = processNewTemplateArguments(lp, a.myScope.parent, current, td, ti);
 
 		// Do the lifting of the children.
-		s.members = lift(defstruct.members);
+		a.members = lift(defAgg.members);
 
-		// Setup any passes that needs to process the copied nodes.
-		auto mod = getModuleFromScope(/*#ref*/s.loc, current);
+		// Setup any passes that need to process the copied nodes.
+		auto mod = getModuleFromScope(/*#ref*/a.loc, current);
 		auto gatherer = new Gatherer(/*warnings*/false, lp.errSink);
 
 		// Run the gatherer.
-		gatherer.push(s.myScope);
-		accept(s, gatherer);
+		gatherer.push(a.myScope);
+		accept(a, gatherer);
 
-		// Handle arguements.
-		addArgumentsToNewInstanceEnvironment(lp, processed, s.myScope, td, ti);
-		ensureMangled(s);
+		// Handle arguments.
+		addArgumentsToNewInstanceEnvironment(lp, processed, a.myScope, td, ti);
+		ensureMangled(a);
 
-		// Touch up scope.
-		//ti.myScope.parent = oldParent;
 		auto store = ti.oldParent.getStore(ti.instanceName);
 		panicAssert(ti, store !is null);
 		panicAssert(ti, store.templateInstances.length == 1);
 		panicAssert(ti, store.templateInstances[0] is ti);
 		panicAssert(ti, store.kind == ir.Store.Kind.TemplateInstance);
-		store.node = s;
+		store.node = a;
 		store.kind = ir.Store.Kind.Type;
-		store.myScope = s.myScope;
+		store.myScope = a.myScope;
 	}
 
 private:
@@ -579,6 +599,9 @@ ir.TemplateDefinition getNewTemplateDefinition(ir.Scope current, LanguagePass lp
 	if (ti.arguments.length != td.parameters.length) {
 		throw makeExpected(ti, format("%s argument%s", td.parameters.length,
 			td.parameters.length == 1 ? "" : "s"));
+	}
+	if (ti.kind != td.kind) {
+		throw makeMismatchedTemplateInstanceAndDefinition(/*#ref*/ti.loc, ti.kind, td.kind);
 	}
 	return td;
 }

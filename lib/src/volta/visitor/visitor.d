@@ -2337,6 +2337,12 @@ Visitor.Status acceptTemplateInstance(ir.TemplateInstance ti, Visitor av)
 		accept(ti._struct, av);
 	} else if (ti._function !is null) {
 		accept(ti._function, av);
+	} else if (ti._class !is null) {
+		accept(ti._class, av);
+	} else if (ti._union !is null) {
+		accept(ti._union, av);
+	} else if (ti._interface !is null) {
+		accept(ti._interface, av);
 	}
 
 	foreach (i, arg; ti.arguments) {
