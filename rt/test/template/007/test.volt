@@ -1,5 +1,5 @@
 //T macro:expect-failure
-//T check:unsupported feature
+//T check:template definition is of type 'union'
 module test;
 
 union Struct!(T)
