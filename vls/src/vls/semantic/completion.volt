@@ -186,8 +186,19 @@ fn getSignatureHelpResponse(ro: lsp.RequestObject, uri: string, theServer: serve
 		return failedToFind();
 	}
 
+	_function: ir.Function;
+
 	asFunction := store.node.toFunctionChecked();
-	if (asFunction is null || commas >= asFunction.params.length) {
+	asClass := store.node.toClassChecked();
+	if (asClass !is null) {
+		ctorStore := asClass.myScope.getStore("__ctor");
+		if (ctorStore !is null) {
+			asFunction = ctorStore.node.toFunctionChecked();
+		}
+	}
+	if (asFunction !is null && commas < asFunction.params.length) {
+		_function = asFunction;
+	} else {
 		return failedToFind();
 	}
 
@@ -195,17 +206,17 @@ fn getSignatureHelpResponse(ro: lsp.RequestObject, uri: string, theServer: serve
 	ss.sink(`{"jsonrcp":"2.0","id":`);
 	core.vrt_format_i64(ss.sink, ro.id.integer());
 	ss.sink(`,"result":{"signatures":[{"label":"`);
-	ss.sink(server.functionString(asFunction));
+	ss.sink(server.functionString(_function));
 	ss.sink(`","parameters":[`);
-	foreach (i, param; asFunction.params) {
+	foreach (i, param; _function.params) {
 		ss.sink(`{"label":"`);
 		ss.sink(param.name);
 		ss.sink(`: `);
 		ss.sink(printer.printType(param.type));
 		ss.sink(`","documentation":{"kind":"markdown","value": "`);
-		ss.sink(server.getFunctionParamDoc(asFunction, i));
+		ss.sink(server.getFunctionParamDoc(_function, i));
 		ss.sink(`"}}`);
-		if (i < asFunction.params.length - 1) {
+		if (i < _function.params.length - 1) {
 			ss.sink(`,`);
 		}
 	}
