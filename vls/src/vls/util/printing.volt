@@ -7,7 +7,11 @@ import irprinter = volta.ir.printer;
 fn functionString(func: ir.Function) string
 {
 	ss: watt.StringSink;
-	ss.sink(new "fn ${func.name}(");
+	name := func.name;
+	if (name == "__ctor") {
+		name = "this";
+	}
+	ss.sink(new "fn ${name}(");
 	foreach (i, param; func.params) {
 		if (func.type.isArgRef[i]) {
 			ss.sink("ref ");

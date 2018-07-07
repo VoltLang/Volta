@@ -25,6 +25,9 @@ struct CompletionList
 	 */
 	fn add(name: string, store: ir.Store)
 	{
+		if (name == "__ctor" && store.functions.length > 0) {
+			name = "this";
+		}
 		item: CompletionItem;
 		item.name = name;
 		item.kind = getItemKind(store);
