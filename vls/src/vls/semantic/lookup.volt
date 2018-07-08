@@ -119,6 +119,11 @@ fn lookupImpl(ref cache: SimpleImportCache, context: ir.Scope, name: ir.Qualifie
 
 fn getScopeFromStoreImpl(ref cache: SimpleImportCache, store: ir.Store, context: ir.Scope) ir.Scope
 {
+	__enum := store.node.toEnumChecked();
+	if (__enum !is null) {
+		return __enum.myScope;
+	}
+
 	if (store.scopes.length > 1) {
 		return new ir.Scope(store.scopes);
 	}
@@ -154,6 +159,12 @@ fn getScopeFromStoreImpl(ref cache: SimpleImportCache, store: ir.Store, context:
 	if (getAggregate(node, out agg)) {
 		return agg.myScope;
 	}
+
+	_enum := node.toEnumChecked();
+	if (_enum !is null) {
+		return _enum.myScope;
+	}
+
 	return null;
 }
 
