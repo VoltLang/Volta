@@ -85,12 +85,9 @@ fn getHoverResponse(ro: lsp.RequestObject, uri: string, theServer: server.VoltLa
 		return failedToFind();
 	}
 
-	exp := parseFragmentExpression(theWord, theServer.settings, theServer);
-	if (exp is null) {
-		return failedToFind();
-	}
-
-	store := server.getStoreFromFragment(exp, mod.myScope, parentScope);
+	words := watt.split(theWord, ".");
+	qname := ir.buildQualifiedName(ref loc, words);
+	store := server.lookup(parentScope, qname);
 	if (store is null) {
 		return failedToFind();
 	}
@@ -288,19 +285,6 @@ fn getGotoDefinitionResponse(ro: lsp.RequestObject, uri: string, theServer: serv
 }
 
 private:
-
-fn parseFragmentExpression(fragment: string, settings: volta.Settings, errSink: volta.ErrorSink) ir.Exp
-{
-	src := new volta.Source(fragment, "", errSink);
-	ps  := new parser.ParserStream(volta.lex(src).getTokens(), settings, errSink);
-	ps.get();  // Skip BEGIN token.
-	exp: ir.Exp;
-	status := parser.parseExp(ps, out exp);
-	if (status != parser.ParseStatus.Succeeded) {
-		return null;
-	}
-	return exp;
-}
 
 fn getCompletionItems(theServer: server.VoltLanguageServer, parentModule: ir.Module, ref loc: ir.Location, theLine: string) string
 {
