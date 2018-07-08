@@ -24,7 +24,13 @@ fn functionString(func: ir.Function) string
 		}
 	}
 	ss.sink(")");
-	ss.sink(new " ${irprinter.printType(func.type.ret)}");
+
+	primitiveType := func.type.ret.toPrimitiveTypeChecked();
+	isVoid := primitiveType !is null && primitiveType.type == ir.PrimitiveType.Kind.Void;
+
+	if (!isVoid) {
+		ss.sink(new " ${irprinter.printType(func.type.ret)}");
+	}
 	return ss.toString();
 }
 
