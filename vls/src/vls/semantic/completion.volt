@@ -97,13 +97,17 @@ fn getHoverResponse(ro: lsp.RequestObject, uri: string, theServer: server.VoltLa
 		return failedToFind();
 	}
 
-	str := asFunction.docComment;
-	if (watt.strip(str) == "") {
-		str = asFunction.loc.toString();
-		str = new "```volt\n${server.functionString(asFunction)}\n```";
-	}
-
 	ss: watt.StringSink;
+	ss.sink(asFunction.docComment);
+	if (asFunction.docComment != "") {
+		ss.sink("  \n");
+	}
+	ss.sink("```volt\n");
+	ss.sink(server.functionString(asFunction));
+	ss.sink("\n```");
+	str := ss.toString();
+	ss.reset();
+
 	ss.sink(`{"jsonrcp":"2.0","id":`);
 	core.vrt_format_i64(ss.sink, ro.id.integer());
 	ss.sink(`,"result":{"contents":{"kind":"markdown","value":"`);
