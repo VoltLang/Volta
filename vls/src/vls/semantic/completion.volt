@@ -186,41 +186,54 @@ fn getSignatureHelpResponse(ro: lsp.RequestObject, uri: string, theServer: serve
 		return failedToFind();
 	}
 
-	_function: ir.Function;
-
-	asFunction := store.node.toFunctionChecked();
-	asClass := store.node.toClassChecked();
-	if (asClass !is null) {
-		ctorStore := asClass.myScope.getStore("__ctor");
-		if (ctorStore !is null) {
-			asFunction = ctorStore.node.toFunctionChecked();
+	if (store.functions.length == 0) {
+		asClass := store.node.toClassChecked();
+		if (asClass !is null) {
+			store = asClass.myScope.getStore("__ctor");
+			if (store is null) {
+				return failedToFind();
+			}
 		}
 	}
-	if (asFunction !is null && commas < asFunction.params.length) {
-		_function = asFunction;
-	} else {
+	if (store.functions.length == 0) {
 		return failedToFind();
 	}
+
+	activeSignature: size_t;
+	signatureSet := false;  // Have we explicitly decided to use the activeSignature index?
 
 	ss: watt.StringSink;
 	ss.sink(`{"jsonrcp":"2.0","id":`);
 	core.vrt_format_i64(ss.sink, ro.id.integer());
-	ss.sink(`,"result":{"signatures":[{"label":"`);
-	ss.sink(server.functionString(_function));
-	ss.sink(`","parameters":[`);
-	foreach (i, param; _function.params) {
+	ss.sink(`,"result":{"signatures":[`);
+	foreach (i, _function; store.functions) {
+		if (commas < _function.params.length && !signatureSet) {
+			activeSignature = i;
+			signatureSet = true;
+		}
 		ss.sink(`{"label":"`);
-		ss.sink(param.name);
-		ss.sink(`: `);
-		ss.sink(printer.printType(param.type));
-		ss.sink(`","documentation":{"kind":"markdown","value": "`);
-		ss.sink(server.getFunctionParamDoc(_function, i));
-		ss.sink(`"}}`);
-		if (i < _function.params.length - 1) {
+		ss.sink(server.functionString(_function));
+		ss.sink(`","parameters":[`);
+		foreach (j, param; _function.params) {
+			ss.sink(`{"label":"`);
+			ss.sink(param.name);
+			ss.sink(`: `);
+			ss.sink(printer.printType(param.type));
+			ss.sink(`","documentation":{"kind":"markdown","value": "`);
+			ss.sink(server.getFunctionParamDoc(_function, j));
+			ss.sink(`"}}`);
+			if (j < _function.params.length - 1) {
+				ss.sink(`,`);
+			}
+		}
+		ss.sink(`]}`);
+		if (i < store.functions.length - 1) {
 			ss.sink(`,`);
 		}
 	}
-	ss.sink(`]}],"activeSignature":0,"activeParameter":`);
+	ss.sink(`],"activeSignature":`);
+	core.vrt_format_u64(ss.sink, activeSignature);
+	ss.sink(`,"activeParameter":`);
 	core.vrt_format_u64(ss.sink, commas);
 	ss.sink(`}}`);
 	return ss.toString();
