@@ -1,1 +1,1 @@
-//T check:"label":"fn this(a: i32, b: i32) void"
+//T check:"label":"fn this(a: i32, b: i32)"
