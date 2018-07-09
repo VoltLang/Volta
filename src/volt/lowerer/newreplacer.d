@@ -17,6 +17,7 @@ import volta.visitor.scopemanager;
 
 import volt.lowerer.alloc;
 import volt.lowerer.array;
+import callBuilder = volt.lowerer.callBuilder;
 
 import volt.semantic.typer;
 import volt.semantic.lookup;
@@ -153,24 +154,18 @@ public:
 			auto source = variables[i];
 			panicAssert(exp, (cast(ir.ArrayType)realType(source.type)) !is null);
 
-			ir.Exp[] args = [
-				cast(ir.Exp)
-				buildAdd(/*#ref*/loc,
-					buildCastToVoidPtr(/*#ref*/loc, buildArrayPtr(/*#ref*/loc, newArray.type,
-						buildExpReference(/*#ref*/loc, newArray, newArray.name)
-					)),
-					buildExpReference(/*#ref*/loc, offset, offset.name)
-				),
-				buildCastToVoidPtr(/*#ref*/loc, buildArrayPtr(/*#ref*/loc, source.type,
-					buildExpReference(/*#ref*/loc, source, source.name))),
-				buildBinOp(/*#ref*/loc, ir.BinOp.Op.Mul,
-					buildArrayLength(/*#ref*/loc, lp.target, buildExpReference(/*#ref*/loc, source, source.name)),
-					buildConstantSizeT(/*#ref*/loc, lp.target, size(lp.target, array.base))
-				),
-				buildConstantInt(/*#ref*/loc, 0),
-				buildConstantFalse(/*#ref*/loc)
-			];
-			buildExpStat(/*#ref*/loc, statExp, buildCall(/*#ref*/loc, copyFn, args, copyFn.name));
+			auto dst = buildAdd(/*#ref*/loc,
+				buildCastToVoidPtr(/*#ref*/loc, buildArrayPtr(/*#ref*/loc, newArray.type,
+					buildExpReference(/*#ref*/loc, newArray, newArray.name)
+				)),
+				buildExpReference(/*#ref*/loc, offset, offset.name)
+			);
+			auto src = buildArrayPtr(/*#ref*/loc, source.type,
+				buildExpReference(/*#ref*/loc, source, source.name));
+			auto len = buildArrayLength(/*#ref*/loc, lp.target,
+				buildExpReference(/*#ref*/loc, source, source.name));
+			callBuilder.buildAndAddMemfoo(/*#ref*/loc, statExp, copyFn,
+				dst, src, len, array.base, lp.target);
 
 			if (i+1 == unary.argumentList.length) {
 				// last iteration, skip advancing the offset.

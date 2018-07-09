@@ -6,6 +6,7 @@ module volt.driver;
 import core.exception;
 
 import io = watt.io.std : output, error;
+import intrinsicVersion = volt.llvm.intrinsicVersion;
 
 import watt.path : temporaryFilename, dirSeparator;
 import watt.process : spawnProcess, wait;
@@ -129,12 +130,14 @@ public:
 		this.tempMan = new TempfileManager();
 		this.mLLVMSettings = new LLVMDriverSettings();
 
+		int llvmIntrinsicVersion = intrinsicVersion.get();
+
 		// Timers
 		mAccumReading = new Accumulator("p1-reading");
 		mAccumParsing = new Accumulator("p1-parsing");
 
-		setTargetInfo(target, s.arch, s.platform, s.cRuntime);
-		ver.set(s.arch, s.platform, s.cRuntime);
+		setTargetInfo(target, s.arch, s.platform, s.cRuntime, llvmIntrinsicVersion);
+		ver.set(s.arch, s.platform, s.cRuntime, llvmIntrinsicVersion);
 
 		decideStuff(s);
 		decideJson(s);
@@ -862,11 +865,12 @@ private:
 	}
 }
 
-TargetInfo setTargetInfo(TargetInfo target, Arch arch, Platform platform, CRuntime cRuntime)
+TargetInfo setTargetInfo(TargetInfo target, Arch arch, Platform platform, CRuntime cRuntime, int llvmIntrinsicVersion)
 {
 	target.arch = arch;
 	target.platform = platform;
 	target.cRuntime = cRuntime;
+	target.llvmIntrinsicVersion = llvmIntrinsicVersion;
 
 	final switch (platform) with (Platform) {
 	case MSVC, Metal:

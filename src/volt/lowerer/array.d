@@ -19,6 +19,7 @@ import volt.semantic.lookup;
 import volt.semantic.classify;
 
 import volt.lowerer.alloc : buildAllocVoidPtr;
+import callBuilder = volt.lowerer.callBuilder;
 
 
 /*
@@ -115,18 +116,8 @@ ir.Function getArrayAppendFunction(ref in Location loc, LanguagePass lp, ir.Modu
 		leftPtr = buildArrayPtr(/*#ref*/loc, left.type, buildExpReference(/*#ref*/loc, left, left.name));
 	}
 
-	args = [
-		cast(ir.Exp)
-		buildExpReference(/*#ref*/loc, allocated, allocated.name),
-		buildCastToVoidPtr(/*#ref*/loc, leftPtr),
-		buildBinOp(/*#ref*/loc, ir.BinOp.Op.Mul,
-			leftlength(),
-			buildConstantSizeT(/*#ref*/loc, lp.target, size(lp.target, ltype.base))
-		),
-		buildConstantInt(/*#ref*/loc, 0),
-		buildConstantFalse(/*#ref*/loc)
-	];
-	buildExpStat(/*#ref*/loc, func.parsedBody, buildCall(/*#ref*/loc, buildExpReference(/*#ref*/loc, funcCopy, funcCopy.name), args));
+	callBuilder.buildAndAddMemfoo(/*#ref*/loc, func.parsedBody, funcCopy,
+		allocated, leftPtr, leftlength(), ltype.base, lp.target);
 
 	buildExpStat(/*#ref*/loc, func.parsedBody,
 		buildAssign(/*#ref*/loc,
@@ -214,19 +205,14 @@ ir.Function getArrayPrependFunction(ref in Location loc, LanguagePass lp, ir.Mod
 		)
 	);
 
-	args = [
-		cast(ir.Exp)
-		buildAdd(/*#ref*/loc, buildExpReference(/*#ref*/loc, allocated, allocated.name),
-			buildConstantSizeT(/*#ref*/loc, lp.target, size(lp.target, ltype.base))),
-		buildCastToVoidPtr(/*#ref*/loc, buildArrayPtr(/*#ref*/loc, left.type, buildExpReference(/*#ref*/loc, left, left.name))),
-		buildBinOp(/*#ref*/loc, ir.BinOp.Op.Mul,
-			buildArrayLength(/*#ref*/loc, lp.target, buildExpReference(/*#ref*/loc, left, left.name)),
-			buildConstantSizeT(/*#ref*/loc, lp.target, size(lp.target, ltype.base))
-		),
-		buildConstantInt(/*#ref*/loc, 0),
-		buildConstantFalse(/*#ref*/loc)
-	];
-	buildExpStat(/*#ref*/loc, func.parsedBody, buildCall(/*#ref*/loc, buildExpReference(/*#ref*/loc, funcCopy, funcCopy.name), args));
+	auto dst = buildAdd(/*#ref*/loc, buildExpReference(/*#ref*/loc,
+		allocated, allocated.name), buildConstantSizeT(/*#ref*/loc,
+			lp.target, size(lp.target, ltype.base)));
+	auto ptr = buildArrayPtr(/*#ref*/loc, left.type, buildExpReference(/*#ref*/loc,
+		left, left.name));
+	callBuilder.buildAndAddMemfoo(/*#ref*/loc, func.parsedBody, funcCopy,
+		dst, ptr, buildArrayLength(/*#ref*/loc, lp.target, buildExpReference(/*#ref*/loc,
+			left, left.name)), ltype.base, lp.target);
 
 	buildExpStat(/*#ref*/loc, func.parsedBody,
 		buildAssign(/*#ref*/loc,
@@ -267,22 +253,18 @@ ir.Function getArrayCopyFunction(ref in Location loc, LanguagePass lp, ir.Module
 	auto right = addParamSmart(lp.errSink, /*#ref*/loc, func, type, "right");
 
 	auto funcMove = getLlvmMemMove(/*#ref*/loc, lp);
-	auto expRef = buildExpReference(/*#ref*/loc, funcMove, funcMove.name);
 
 	auto typeSize = size(lp.target, type.base);
 
-	ir.Exp[] args = [
-		cast(ir.Exp)
-		buildCastToVoidPtr(/*#ref*/loc, buildArrayPtr(/*#ref*/loc, left.type, buildExpReference(/*#ref*/loc, left, "left"))),
-		buildCastToVoidPtr(/*#ref*/loc, buildArrayPtr(/*#ref*/loc, right.type, buildExpReference(/*#ref*/loc, right, "right"))),
-		buildBinOp(/*#ref*/loc, ir.BinOp.Op.Mul,
-			buildArrayLength(/*#ref*/loc, lp.target, buildExpReference(/*#ref*/loc, left, "left")),
-			buildConstantSizeT(/*#ref*/loc, lp.target, size(lp.target, type.base))
-			),
-		buildConstantInt(/*#ref*/loc, 0),
-		buildConstantFalse(/*#ref*/loc)
-	];
-	buildExpStat(/*#ref*/loc, func.parsedBody, buildCall(/*#ref*/loc, expRef, args));
+	auto dst = buildCastToVoidPtr(/*#ref*/loc,
+		buildArrayPtr(/*#ref*/loc, left.type,
+		buildExpReference(/*#ref*/loc, left, "left")));
+	auto ptr = buildArrayPtr(/*#ref*/loc, right.type,
+		buildExpReference(/*#ref*/loc, right, "right"));
+	auto len = buildArrayLength(/*#ref*/loc, lp.target, buildExpReference(
+		/*#ref*/loc, left, "left"));
+	callBuilder.buildAndAddMemfoo(/*#ref*/loc, func.parsedBody, funcMove,
+		dst, ptr, len, type.base, lp.target);
 
 	buildReturnStat(/*#ref*/loc, func.parsedBody, buildExpReference(/*#ref*/loc, func.params[0], "left"));
 
@@ -360,39 +342,23 @@ ir.Function getArrayConcatFunction(ref in Location loc, LanguagePass lp, ir.Modu
 		leftPtr = buildArrayPtr(/*#ref*/loc, left.type, buildExpReference(/*#ref*/loc, left, left.name));
 	}
 
-	args = [
-		cast(ir.Exp)
+	callBuilder.buildAndAddMemfoo(
+		/*#ref*/loc, func.parsedBody, funcCopy,
+		allocated, leftPtr, leftlength(), type.base, lp.target);
+
+	auto dst = buildAdd(/*#ref*/loc,
 		buildExpReference(/*#ref*/loc, allocated, allocated.name),
-		buildCastToVoidPtr(/*#ref*/loc, leftPtr),
 		buildBinOp(/*#ref*/loc, ir.BinOp.Op.Mul,
 			leftlength(),
 			buildConstantSizeT(/*#ref*/loc, lp.target, size(lp.target, type.base))
-		),
-		buildConstantInt(/*#ref*/loc, 0),
-		buildConstantFalse(/*#ref*/loc)
-	];
-	buildExpStat(/*#ref*/loc, func.parsedBody, buildCall(/*#ref*/loc, buildExpReference(/*#ref*/loc, funcCopy, funcCopy.name), args));
-
-
-	args = [
-		cast(ir.Exp)
-		buildAdd(/*#ref*/loc,
-			buildExpReference(/*#ref*/loc, allocated, allocated.name),
-			buildBinOp(/*#ref*/loc, ir.BinOp.Op.Mul,
-				leftlength(),
-				buildConstantSizeT(/*#ref*/loc, lp.target, size(lp.target, type.base))
-			)
-		),
-		buildCastToVoidPtr(/*#ref*/loc, buildArrayPtr(/*#ref*/loc, right.type, buildExpReference(/*#ref*/loc, right, right.name))),
-		buildBinOp(/*#ref*/loc, ir.BinOp.Op.Mul,
-			buildArrayLength(/*#ref*/loc, lp.target, buildExpReference(/*#ref*/loc, right, right.name)),
-			buildConstantSizeT(/*#ref*/loc, lp.target, size(lp.target, type.base))
-		),
-		buildConstantInt(/*#ref*/loc, 0),
-		buildConstantFalse(/*#ref*/loc)
-	];
-	buildExpStat(/*#ref*/loc, func.parsedBody, buildCall(/*#ref*/loc, buildExpReference(/*#ref*/loc, funcCopy, funcCopy.name), args));
-
+		)
+	);
+	auto src = buildArrayPtr(/*#ref*/loc, right.type,
+		buildExpReference(/*#ref*/loc, right, right.name));
+	auto len = buildArrayLength(/*#ref*/loc, lp.target,
+		buildExpReference(/*#ref*/loc, right, right.name));
+	callBuilder.buildAndAddMemfoo(/*#ref*/loc, func.parsedBody, funcCopy,
+		dst, src, len, type.base, lp.target);
 
 	if (isAssignment) {
 		buildExpStat(/*#ref*/loc, func.parsedBody,

@@ -16,6 +16,7 @@ import ir = volta.ir;
 import volt.llvm.abi.base;
 import volt.llvm.interfaces;
 
+
 void winAmd64AbiCoerceParameters(State state, ir.FunctionType ft, ref LLVMTypeRef retType, ref LLVMTypeRef[] params)
 {
 	LLVMTypeRef[] types;
@@ -92,7 +93,9 @@ void buildMemcpy(State state, LLVMValueRef dst, LLVMValueRef src, LLVMTypeRef ba
 	args ~= LLVMBuildBitCast(state.builder, dst, voidPtr, "");
 	args ~= LLVMBuildBitCast(state.builder, src, voidPtr, "");
 	args ~= LLVMSizeOf(base);
-	args ~= LLVMConstInt(LLVMInt32TypeInContext(state.context), 1, false);
+	if (state.target.llvmIntrinsicVersion == 1) {
+		args ~= LLVMConstInt(LLVMInt32TypeInContext(state.context), 1, false);
+	}
 	args ~= LLVMConstInt(LLVMInt1TypeInContext(state.context), 0, false);
 	LLVMBuildCall(state.builder, func, args.ptr, cast(uint)args.length, "".ptr);
 }

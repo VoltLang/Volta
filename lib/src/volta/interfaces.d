@@ -58,6 +58,8 @@ class TargetInfo
 	bool isP64;
 	//! Does this target have exception handling.
 	bool haveEH;
+	//! Which version is the inbuilt llvm intrinsics.
+	int llvmIntrinsicVersion;
 }
 
 /*!
@@ -275,7 +277,7 @@ public:
 	/*!
 	 * Set the correct version identifiers for the given arch, platform, and runtime.
 	 */
-	final void set(Arch arch, Platform platform, CRuntime cRuntime)
+	final void set(Arch arch, Platform platform, CRuntime cRuntime, int llvmIntrinsicVersion)
 	{
 		final switch (cRuntime) with (CRuntime) {
 		case None:
@@ -327,6 +329,16 @@ public:
 			overwriteVersionIdentifier("X86_64");
 			overwriteVersionIdentifier("LittleEndian");
 			overwriteVersionIdentifier("V_P64");
+			break;
+		}
+
+		switch (llvmIntrinsicVersion) {
+		default:
+		case 0, 1:
+			overwriteVersionIdentifier("LlvmIntrinsics1");
+			break;
+		case 2:
+			overwriteVersionIdentifier("LlvmIntrinsics2");
 			break;
 		}
 	}

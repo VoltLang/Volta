@@ -20,6 +20,7 @@ import volta.visitor.scopemanager;
 import volt.visitor.nodereplace;
 
 import volt.lowerer.array;
+import callBuilder = volt.lowerer.callBuilder;
 
 import volt.semantic.util;
 import volt.semantic.typer;
@@ -2125,13 +2126,10 @@ ir.Exp zeroVariableIfNeeded(LanguagePass lp, ir.Variable var)
 
 	auto loc = var.loc;
 	auto llvmMemset = lp.target.isP64 ? lp.llvmMemset64 : lp.llvmMemset32;
-	auto memset = buildExpReference(/*#ref*/loc, llvmMemset, llvmMemset.name);
 	auto ptr = buildCastToVoidPtr(/*#ref*/loc, buildAddrOf(/*#ref*/loc, buildExpReference(/*#ref*/loc, var, var.name)));
 	auto zero = buildConstantUbyte(/*#ref*/loc, 0);
 	auto size = buildConstantSizeT(/*#ref*/loc, lp.target, s);
-	auto alignment = buildConstantInt(/*#ref*/loc, 0);
-	auto isVolatile = buildConstantBool(/*#ref*/loc, false);
-	return buildCall(/*#ref*/loc, memset, [ptr, zero, size, alignment, isVolatile]);
+	return callBuilder.buildIntrinsicMemset(/*#ref*/loc, llvmMemset, ptr, zero, size, lp.target);
 }
 
 void zeroVariablesIfNeeded(LanguagePass lp, ir.BlockStatement bs)
