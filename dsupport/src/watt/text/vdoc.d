@@ -33,10 +33,13 @@ string cleanComment(string comment, out bool isBackwardsComment)
 			continue;
 		}
 
+		if (i == 2 && c == '<') {
+			isBackwardsComment = true;
+		}
+
 		switch (c) {
 		case '<':
 			if (whiteNum < whiteCal) {
-				isBackwardsComment = true;
 				whiteNum += 1;
 				break;
 			}
