@@ -644,6 +644,14 @@ LexStatus lexMagicToken(TokenWriter tw)
 		token.type = TokenType.Out;
 		token.value = "out";
 		break;
+	case "#global":
+		token.type = TokenType.Global;
+		token.value = "global";
+		break;
+	case "#local":
+		token.type = TokenType.Local;
+		token.value = "local";
+		break;
 	default:
 		tw.errors ~= new LexerStringError(LexerError.Kind.String, token.loc,
 			tw.source.current,format("bad magical token (/*#...*/) '%s'.", tokenstr));
