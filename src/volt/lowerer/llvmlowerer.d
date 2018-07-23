@@ -1885,6 +1885,9 @@ void lowerPostfix(LanguagePass lp, ir.Scope current, ir.Module thisModule,
 	case ir.Postfix.Op.Index:
 		lowerIndex(lp, current, thisModule, /*#ref*/exp, postfix, lowerer);
 		break;
+	case ir.Postfix.Op.Slice:
+		lowerStaticArraySliceNonLValue(lp, current, postfix, /*#ref*/exp);
+		break;
 	default:
 		break;
 	}
@@ -2037,6 +2040,42 @@ void lowerGlobalAALiteral(LanguagePass lp, ir.Scope current, ir.Module mod, ir.V
 	buildExpStat(/*#ref*/loc, gctor.parsedBody, assign);
 	var.assign = null;
 	buildReturnStat(/*#ref*/loc, gctor.parsedBody);
+}
+
+/*!
+ * If postfix is slicing a static array from a non-lvalue expression,
+ * lower it into a statement exp.
+ */
+void lowerStaticArraySliceNonLValue(LanguagePass lp, ir.Scope current,
+	ir.Postfix postfix, ref ir.Exp exp)
+{
+	if (postfix.op != ir.Postfix.Op.Slice) {
+		return;
+	}
+	auto ltype = realType(getExpType(postfix.child));
+	if (!isStaticArray(ltype) || isLValue(postfix.child)) {
+		return;
+	}
+
+	/* Turn
+	 *   foo()[..]
+	 * Into
+	 *   {
+	 *	 	bar = foo();
+	 *	 	return bar[..];
+	 *	 }
+	 * (Where `foo()` returns a static array.)
+	 */
+
+	auto loc = postfix.loc;
+
+	auto sexp = buildStatementExp(/*#ref*/loc);
+	auto anonVar = buildVariableAnonSmart(lp.errSink,
+		/*#ref*/loc, current, sexp, ltype, postfix.child);
+	sexp.originalExp = exp;
+	auto eref = buildExpReference(/*#ref*/loc, anonVar, anonVar.name);
+	sexp.exp = buildSlice(/*#ref*/loc, eref, postfix.arguments);
+	exp = sexp;
 }
 
 /*!
