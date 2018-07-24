@@ -496,9 +496,6 @@ public:
 			ts.catchVars[i] = var;
 		}
 
-		if (old.catchAll !is null) {
-			ts.catchAll = copy(parent, old.catchAll);
-		}
 		if (old.finallyBlock !is null) {
 			ts.finallyBlock = copy(parent, old.finallyBlock);
 		}

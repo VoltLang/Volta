@@ -1192,13 +1192,7 @@ ParseStatus parseTryStatement(ParserStream ps, out ir.TryStatement t)
 			t.catchVars ~= var;
 			t.catchBlocks ~= bs;
 		} else {
-			succeeded = parseBlockStatement(ps, /*#out*/t.catchAll);
-			if (!succeeded) {
-				return parseFailed(ps, t);
-			}
-			if (ps == TokenType.Catch) {
-				return parseExpected(ps, /*#ref*/ps.peek.loc, t, "catch all block as final catch in try statement");
-			}
+			return parseExpected(ps, /*#ref*/ps.peek.loc, t, "catch parameter list");
 		}
 	}
 
@@ -1209,7 +1203,7 @@ ParseStatus parseTryStatement(ParserStream ps, out ir.TryStatement t)
 		}
 	}
 
-	if (t.catchBlocks.length == 0 && t.catchAll is null && t.finallyBlock is null) {
+	if (t.catchBlocks.length == 0 && t.finallyBlock is null) {
 		return parseExpected(ps, /*#ref*/t.loc, t, "catch block");
 	}
 

@@ -4309,11 +4309,6 @@ void extypeTryStatement(Context ctx, ref ir.Node n)
 		extypeBlockStatement(ctx, t.catchBlocks[i]);
 	}
 
-	if (t.catchAll !is null) {
-		extypeBlockStatement(ctx, t.catchAll);
-	}
-
-
 	if (t.finallyBlock !is null) {
 		extypeBlockStatement(ctx, t.finallyBlock);
 	}

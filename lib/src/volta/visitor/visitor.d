@@ -1574,14 +1574,6 @@ Visitor.Status acceptTryStatement(ir.TryStatement ts, Visitor av)
 		}
 	}
 
-	if (ts.catchAll !is null) {
-		status = accept(ts.catchAll, av);
-		if (status == VisitorStop) {
-			return VisitorStop;
-		}
-	}
-
-
 	if (ts.finallyBlock !is null) {
 		status = accept(ts.finallyBlock, av);
 		if (status == VisitorStop) {

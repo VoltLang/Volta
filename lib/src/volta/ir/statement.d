@@ -533,7 +533,6 @@ public:
 	BlockStatement tryBlock;
 	Variable[] catchVars;  // Optional.
 	BlockStatement[] catchBlocks;  // Optional.
-	BlockStatement catchAll;  // Optional.
 	BlockStatement finallyBlock;  // Optional.
 
 public:
@@ -545,7 +544,6 @@ public:
 		this.tryBlock = old.tryBlock;
 		this.catchVars = old.catchVars.dup();
 		this.catchBlocks = old.catchBlocks.dup();
-		this.catchAll = old.catchAll;
 		this.finallyBlock = old.finallyBlock;
 	}
 }

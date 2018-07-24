@@ -993,14 +993,6 @@ public:
 			twf("} ");
 		}
 
-		if (ts.catchAll !is null) {
-			wfln("catch {");
-			mIndent++;
-			internalPrintBlock(ts.catchAll);
-			mIndent--;
-			twf("} ");
-		}
-
 		if (ts.finallyBlock !is null) {
 			wfln("finally {");
 			mIndent++;

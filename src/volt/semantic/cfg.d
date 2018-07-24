@@ -542,15 +542,9 @@ public:
 			catchBlocks[i] = block = new Block(tryBlock);
 			accept(catchBlock, this);
 		}
-		Block catchAll;
-		if (ts.catchAll !is null) {
-			catchAll = block = new Block(tryBlock);
-			accept(ts.catchAll, this);
-		}
 		Block finallyBlock;
 		if (ts.finallyBlock !is null) {
 			finallyBlock = block = new Block(catchBlocks);
-			finallyBlock.addParent(catchAll);
 			accept(ts.finallyBlock, this);
 		}
 		tryBlock.terminates = tryTerminates;
@@ -559,7 +553,6 @@ public:
 			block.addParent(finallyBlock);
 		} else {
 			block.addParents(catchBlocks);
-			block.addParent(catchAll);
 			if (!tryBlock.terminates) {
 				block.addParent(tryBlock);
 			}
