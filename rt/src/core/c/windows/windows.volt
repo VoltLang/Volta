@@ -24,6 +24,8 @@ extern (Windows):
 alias UINT = u32;
 alias WORD = u16;
 alias DWORD = u32;
+alias DWORD64 = u64;
+alias PDWORD64 = DWORD64*;
 alias BOOL = i32;
 alias BYTE = u8;
 alias LPBYTE = i8*;
@@ -48,6 +50,7 @@ alias HLOCAL = HANDLE;
 alias TCHAR = char;
 alias ULONG = u32;
 alias LONG = i32;
+alias ULONG64 = u64;
 alias LONG_PTR = LONG*;
 alias UINT_PTR = UINT*;
 alias WPARAM = UINT_PTR;
@@ -64,6 +67,14 @@ alias LARGE_INTEGER = i64;
 alias SIZE_T = size_t;
 alias HKEY = HANDLE;
 alias PHKEY = HKEY*;
+alias LONGLONG = i64;
+alias ULONGLONG = u64;
+
+struct M128A
+{
+	Low: ULONGLONG;
+	High: LONGLONG;
+}
 
 
 enum TRUE = 1;
@@ -897,9 +908,220 @@ fn CreateThread(LPSECURITY_ATTRIBUTES, SIZE_T, LPTHREAD_START_ROUTINE, LPVOID, D
 
 fn FlushFileBuffers(HANDLE) BOOL;
 
+fn RaiseException(DWORD, DWORD, DWORD, ULONG_PTR*);
+fn RtlRaiseException(PEXCEPTION_RECORD);
+fn RtlUnwindEx(PVOID, PVOID, PEXCEPTION_RECORD, PVOID, PCONTEXT, PUNWIND_HISTORY_TABLE);
+fn RtlLookupFunctionEntry(ControlPc: DWORD64, ImageBase: PDWORD64,
+	HistoryTable: PUNWIND_HISTORY_TABLE) PRUNTIME_FUNCTION;
+
+enum EXCEPTION_EXECUTE_HANDLER = 1;
+enum EXCEPTION_CONTINUE_SEARCH = 0;
+enum EXCEPTION_CONTINUE_EXECUTION = -1;
+
+enum EH_NONCONTINUABLE   = 0x01U;
+enum EH_UNWINDING        = 0x02U;
+enum EH_EXIT_UNWIND      = 0x04U;
+enum EH_STACK_INVALID    = 0x08U;
+enum EH_NESTED_CALL      = 0x10U;
+enum EH_TARGET_UNWIND    = 0x20U;
+enum EH_COLLIDED_UNWIND  = 0x40U;
+enum EH_UNWIND           = 0x66U;
+
+enum EXCEPTION_CONTINUABLE        = 0;
+enum EXCEPTION_NONCONTINUABLE     = EH_NONCONTINUABLE;
+enum STATUS_UNWIND_CONSOLIDATE = 0x80000029;
+
+enum EXCEPTION_DISPOSITION
+{
+	ExceptionContinueExecution,
+	ExceptionContinueSearch,
+	ExceptionNestedException,
+	ExceptionCollidedUnwind
+}
+
+enum EXCEPTION_MAXIMUM_PARAMETERS = 15;
+
+struct EXCEPTION_RECORD
+{
+	ExceptionCode: DWORD;
+	ExceptionFlags: DWORD;
+	ExceptionRecord: EXCEPTION_RECORD*;
+	ExceptionAddress: PVOID;
+	NumberParameters: DWORD;
+	ExceptionInformation: ULONG_PTR[EXCEPTION_MAXIMUM_PARAMETERS];
+}
+alias PEXCEPTION_RECORD = EXCEPTION_RECORD*;
+
+alias EXCEPTION_ROUTINE = fn(PEXCEPTION_RECORD, PVOID, PCONTEXT, PVOID)
+	EXCEPTION_DISPOSITION;
+alias PEXCEPTION_ROUTINE = EXCEPTION_ROUTINE;
+
+version (X86_64) {
+	struct XSAVE_FORMAT
+	{
+		ControlWorld: WORD;
+		StatusWord: WORD;
+		TagWord: BYTE;
+		Reserved1: BYTE;
+		ErrorOpcode: WORD;
+		ErrorOffset: DWORD;
+		ErrorSelector: WORD;
+		Reserved2: WORD;
+		DataOffset: DWORD;
+		DataSelector: WORD;
+		Reserved3: WORD;
+		MxCsr: DWORD;
+		MxCsr_Mask: DWORD;
+		FloatRegisters: M128A[8];
+		XmmRegisters: M128A[16];
+		Reserved4: BYTE[96];
+	}
+	alias PXSAVE_FORMAT = XSAVE_FORMAT*;
+	alias XMM_SAVE_AREA32 = XSAVE_FORMAT;
+
+	struct NEON128
+	{
+		Low: ULONGLONG;
+		High: LONGLONG;
+	}
+
+	struct CONTEXT
+	{
+		P1Home: DWORD64;
+		P2Home: DWORD64;
+		P3Home: DWORD64;
+		P4Home: DWORD64;
+		P5Home: DWORD64;
+		P6Home: DWORD64;
+
+		ContextFlags: DWORD;
+		MxCsr: DWORD;
+
+		SegCs: WORD;
+		SegDs: WORD;
+		SegEs: WORD;
+		SegFs: WORD;
+		SegGs: WORD;
+		SegSs: WORD;
+		EFlags: DWORD;
+
+		Dr0: DWORD64;
+		Dr1: DWORD64;
+		Dr2: DWORD64;
+		Dr3: DWORD64;
+		Dr6: DWORD64;
+		Dr7: DWORD64;
+
+		Rax: DWORD64;
+		Rcx: DWORD64;
+		Rdx: DWORD64;
+		Rbx: DWORD64;
+		Rsp: DWORD64;
+		Rbp: DWORD64;
+		Rsi: DWORD64;
+		Rdi: DWORD64;
+		 R8: DWORD64;
+		 R9: DWORD64;
+		R10: DWORD64;
+		R11: DWORD64;
+		R12: DWORD64;
+		R13: DWORD64;
+		R14: DWORD64;
+		R15: DWORD64;
+
+		Rip: DWORD64;
+
+		struct __FPREGS {
+			Header: M128A[2];
+			Legacy: M128A[8];
+			Xmm0: M128A;
+			Xmm1: M128A;
+			Xmm2: M128A;
+			Xmm3: M128A;
+			Xmm4: M128A;
+			Xmm5: M128A;
+			Xmm6: M128A;
+			Xmm7: M128A;
+			Xmm8: M128A;
+			Xmm9: M128A;
+			Xmm10: M128A;
+			Xmm11: M128A;
+			Xmm12: M128A;
+			Xmm13: M128A;
+			Xmm14: M128A;
+			Xmm15: M128A;
+		}
+
+		union _u {
+			FltSave: XMM_SAVE_AREA32;
+			Q: NEON128[16];
+			D: ULONGLONG[32];
+			s: __FPREGS;
+			S: DWORD[32];
+		}
+		u: _u;
+
+		VectorRegister: M128A[26];
+		VectorControl: DWORD64;
+
+		DebugControl: DWORD64;
+		LastBranchToRip: DWORD64;
+		LastBranchFromRip: DWORD64;
+		LastExceptionToRip: DWORD64;
+		LastExceptionFromRip: DWORD64;
+	}
+	alias PCONTEXT = CONTEXT*;
+
+	struct RUNTIME_FUNCTION
+	{
+		BeginAddress: DWORD;
+		EndAddress: DWORD;
+		UnwindInfoAddress: DWORD;
+	}
+	alias PRUNTIME_FUNCTION = RUNTIME_FUNCTION*;
+
+	enum UNWIND_HISTORY_TABLE_SIZE = 12;
+
+	struct UNWIND_HISTORY_TABLE_ENTRY
+	{
+		ImageBase: DWORD64;
+		FunctionEntry: PRUNTIME_FUNCTION;
+	}
+	alias PUNWIND_HISTORY_TABLE_ENTRY = UNWIND_HISTORY_TABLE_ENTRY*;
+
+	struct UNWIND_HISTORY_TABLE
+	{
+		Count: DWORD;
+		LocalHint: BYTE;
+		GlobalHint: BYTE;
+		Search: BYTE;
+		Once: BYTE;
+		LowAddress: DWORD64;
+		HighAddress: DWORD64;
+		Entry: UNWIND_HISTORY_TABLE_ENTRY[UNWIND_HISTORY_TABLE_SIZE];
+	}
+	alias PUNWIND_HISTORY_TABLE = UNWIND_HISTORY_TABLE*;
+
+	struct DISPATCHER_CONTEXT
+	{
+		ControlPc: DWORD64;
+		ImageBase: DWORD64;
+		FunctionEntry: PRUNTIME_FUNCTION;
+		EstablisherFrame: DWORD64;
+		TargetIp: DWORD64;
+		ContextRecord: PCONTEXT;
+		LanguageHandler: PEXCEPTION_ROUTINE;
+		HandlerData: PVOID;
+		HistoryTable: PUNWIND_HISTORY_TABLE;
+		ScopeIndex: DWORD;
+		Fill0: DWORD;
+	}
+	alias PDISPATCHER_CONTEXT = DISPATCHER_CONTEXT*;
+}
+
 // Helper functions needs to be marked with extern volt so
 // they do not collide with other C function with similar names.
-// DO NOT ADD ANY WINDOWS FUNCTIONS AFTER THIS!
+// DO NOT ADD ANY WINDOWS FUNCTIONS AFTER THIS POINT!
 extern(Volt):
 
 fn LOWORD(dw: DWORD) WORD
