@@ -1,6 +1,7 @@
 // Copyright 2013-2017, Jakob Bornecrantz.
 // SPDX-License-Identifier: BSL-1.0
-module vrt.os.eh;
+//! Exception handling using libunwind and DWARF.
+module vrt.os.eh.unwind;
 
 version (Linux || OSX || MinGW):
 
@@ -11,6 +12,7 @@ import core.exception: Throwable, Error, AssertError, KeyNotFoundException;
 import vrt.ext.unwind;
 import vrt.ext.dwarf;
 import vrt.ext.stdc: exit, uintptr_t;
+import vrt.os.eh.common;
 
 
 /*
@@ -43,11 +45,6 @@ struct vrt_eh_exception
 }
 
 /*!
- * Exception class, used to identify for other handlers.
- */
-global VRT_EH_NAME: string = "VOLT___\0";
-
-/*!
  * Per thread callback for applications getting exceptions.
  */
 local lCallback : fn(Throwable, location: string);
@@ -69,6 +66,24 @@ extern(C) fn vrt_eh_throw(t: Throwable, location: string)
 	e := new vrt_eh_exception;
 
 	t.throwLocation = location;
+
+	e.e.exception_class = *cast(u64*)VRT_EH_NAME.ptr;
+	e.e.exception_cleanup = vrt_eh_delete;
+	e.t = t;
+
+	f := _Unwind_RaiseException(&e.e);
+	msgs: char[][3];
+	msgs[0] = cast(char[])"FAILED TO RAISE EXCEPTION";
+	msgs[2] = cast(char[])t.throwLocation;
+	msgs[1] = cast(char[])t.msg;
+	vrt_panic(cast(char[][])msgs);
+}
+
+extern(C) fn vrt_eh_rethrow(t: Throwable)
+{
+	// No callback, don't touch throwLocation.
+
+	e := new vrt_eh_exception;
 
 	e.e.exception_class = *cast(u64*)VRT_EH_NAME.ptr;
 	e.e.exception_cleanup = vrt_eh_delete;

@@ -186,7 +186,12 @@ protected:
 
 		auto b = new ir.BlockStatement();
 		b.loc = t.loc;
-		b.statements = [func, t];
+		if (t.catchBlocks.length == 0) {
+			// try { ... } finally { ... } -- just strip the try block entirely.
+			b.statements = [func, t.tryBlock];
+		} else {
+			b.statements = [func, t];
+		}
 
 		return b;
 	}

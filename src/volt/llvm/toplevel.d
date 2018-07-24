@@ -405,8 +405,14 @@ public:
 
 	override Status enter(ir.TryStatement t)
 	{
-		if (state.target.haveEH) {
-			handleTryHaveEH(t);
+		if (state.target.ehType == ExceptionHandlingType.Posix) {
+			handleTryPosixEH(t);
+		} else if (state.target.ehType == ExceptionHandlingType.Windows) {
+			version (LLVMVersion7AndAbove) {
+				handleTryWindowsEH(t);
+			} else {
+				assert(false, "handleTryWindowsEH not avaible on LLVM < 7.");
+			}
 		} else {
 			handleTryNoEH(t);
 		}
@@ -423,7 +429,80 @@ public:
 		}
 	}
 
-	void handleTryHaveEH(ir.TryStatement t)
+	version (LLVMVersion7AndAbove) void handleTryWindowsEH(ir.TryStatement t)
+	{
+		if (!LLVMHasPersonalityFn(state.func)) {
+			LLVMSetPersonalityFn(state.func, state.ehPersonalityFunc);
+		}
+
+		LLVMBasicBlockRef catchDispatch, catchBlock, tryDone;
+
+		LLVMBasicBlockRef callBlock = state.block;
+		catchDispatch = LLVMAppendBasicBlockInContext(
+			state.context, state.func, "catch.dispatch");
+		auto catchBlocks   = new LLVMBasicBlockRef[](t.catchVars.length);
+		auto catchHandlers = new LLVMBasicBlockRef[](t.catchVars.length);
+		foreach (i; 0 .. t.catchVars.length) {
+			catchBlocks[i]   = LLVMAppendBasicBlockInContext(
+				state.context, state.func, "catch"
+			);
+			catchHandlers[i] = LLVMAppendBasicBlockInContext(
+				state.context, state.func, "catch.handler"
+			);
+		}
+		tryDone = LLVMAppendBasicBlockInContext(
+			state.context, state.func, "try.done");
+
+		state.pushPath();
+		auto p = state.path;
+
+		auto loads = new LLVMValueRef[](t.catchVars.length);
+		auto tinfos = new LLVMValueRef[](t.catchVars.length);
+		foreach (index, v; t.catchVars) {
+			Type type;
+			auto asTR = cast(ir.TypeReference) v.type;
+			ir.Class c = cast(ir.Class) asTR.type;
+			loads[index] = state.getVariableValue(t.catchVars[index], /*#out*/type);
+			tinfos[index] = state.getVariableValue(c.typeInfo, /*#out*/type);
+	
+			auto value = state.getVariableValue(c.typeInfo, /*#out*/type);
+		}
+
+		p.landingBlock = catchDispatch;
+
+		accept(t.tryBlock, this);
+		if (state.fall) {
+			LLVMBuildBr(b, tryDone);
+		}
+
+		state.popPath();
+
+		state.startBlock(catchDispatch);
+
+		auto cs = LLVMBuildCatchSwitch(b, null, null, cast(uint)t.catchVars.length, "");
+
+		foreach (i, v; t.catchVars) {
+			LLVMAddHandler(cs, catchBlocks[i]);
+			state.startBlock(catchBlocks[i]);
+
+			auto args = new LLVMValueRef[](3);
+			args[0] = tinfos[i];
+			args[1] = LLVMConstInt(LLVMInt32TypeInContext(state.context), 0, true);
+			args[2] = loads[i];
+			auto cpad = LLVMBuildCatchPad(b, cs, args.ptr, 3, "");
+
+			LLVMBuildCatchRet(b, cpad, catchHandlers[i]);
+			state.startBlock(catchHandlers[i]);
+			accept(t.catchBlocks[i], this);
+			if (state.fall) {
+				LLVMBuildBr(b, tryDone);
+			}
+		}
+
+		state.startBlock(tryDone);
+	}
+
+	void handleTryPosixEH(ir.TryStatement t)
 	{
 		LLVMBasicBlockRef landingPad, catchBlock, tryDone;
 
@@ -858,11 +937,93 @@ public:
 
 	void handleScopedFunction(ir.Function func, LLVMValueRef llvmFunc)
 	{
+		if (state.target.ehType == ExceptionHandlingType.Windows) {
+			version (LLVMVersion7AndAbove) {
+				handleScopedFunctionWindows(func, llvmFunc);
+			} else {
+				assert(false, "handleScopedFunctionWindows not avaible on LLVM < 7.");
+			}
+		} else {
+			handleScopedFunctionPosixAndNone(func, llvmFunc);
+		}
+	}
+
+	version (LLVMVersion7AndAbove) void handleScopedFunctionWindows(ir.Function func, LLVMValueRef llvmFunc)
+	{
+		auto success = func.isLoweredScopeExit | func.isLoweredScopeSuccess;
+		auto failure = func.isLoweredScopeExit | func.isLoweredScopeFailure;
+
+		if (!success && !failure) {
+			return;
+		}
+
+		auto landingPath = state.findLanding();
+		state.path.scopeSuccess ~= success ? llvmFunc : null;
+		state.path.scopeFailure ~= failure ? llvmFunc : null;
+		state.path.scopeLanding ~= landingPath !is null ?
+			landingPath.landingBlock : null;
+
+		if (!failure) {
+			return;
+		}
+
+		if (!LLVMHasPersonalityFn(state.func)) {
+			LLVMSetPersonalityFn(state.func, state.ehPersonalityFunc);
+		}
+
+		auto p = state.path;
+		auto oldBlock = state.block;
+		p.landingBlock = LLVMAppendBasicBlockInContext(
+			state.context, state.func, "scope.failure.cs");
+
+		auto callblock = LLVMAppendBasicBlockInContext(state.context, state.func, "scope.failure.catchswitch");
+		auto failblock = LLVMAppendBasicBlockInContext(state.context, state.func, "scope.failure");
+		state.startBlock(p.landingBlock);
+		auto cs = LLVMBuildCatchSwitch(b, null, null, 1, "");
+		LLVMAddHandler(cs, callblock);
+
+		state.startBlock(callblock);
+		auto args = new LLVMValueRef[](3);
+		Type type;
+		args[0] = state.getVariableValue(state.lp.exceptThrowable.typeInfo, /*#out*/type);
+		args[1] = LLVMConstInt(LLVMInt32TypeInContext(state.context), 0, true);
+		args[2] = state.buildAlloca(state.fromIr(state.lp.exceptThrowable).llvmType, "failcatchvar");
+		auto cpad = LLVMBuildCatchPad(b, cs, args.ptr, 3, "");
+
+		LLVMBuildCatchRet(b, cpad, failblock);
+		state.startBlock(failblock);
+
+		auto value = LLVMBuildBitCast(
+			state.builder, state.fnState.nested,
+			state.voidPtrType.llvmType, "");
+		auto arg = [value];
+
+		while (p !is null) {
+			foreach_reverse (loopFunc; p.scopeFailure) {
+				if (loopFunc is null) {
+					continue;
+				}
+				LLVMBuildCall(state.builder, loopFunc, arg);
+			}
+			p = p.prev;
+		}
+
+		auto throwFunc = state.getFunctionValue(state.lp.ehRethrowFunc, /*#out*/type);
+		LLVMValueRef[1] throwArgs;
+		throwArgs[0] = LLVMBuildLoad(b, args[2], "");
+		LLVMBuildCall(b, throwFunc, throwArgs[0 .. $]);
+		LLVMBuildUnreachable(b);
+
+		state.startBlock(oldBlock);
+	}
+
+	void handleScopedFunctionPosixAndNone(ir.Function func, LLVMValueRef llvmFunc)
+	{
 		auto success = func.isLoweredScopeExit | func.isLoweredScopeSuccess;
 		auto failure = func.isLoweredScopeExit | func.isLoweredScopeFailure;
 
 		// Disable scope(failure) handling when we don't have exception handling.
-		if (!state.target.haveEH) {
+		if (state.target.ehType != ExceptionHandlingType.Posix) {
 			failure = false;
 		}
 

@@ -71,6 +71,7 @@ protected:
 	LLVMValueRef mTrapFunc;
 	LLVMValueRef mPersonalityFunc;
 	LLVMValueRef mTypeIdFunc;
+	LLVMValueRef mPadFunc;
 	LLVMTypeRef mLandingType;
 
 public:

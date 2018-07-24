@@ -266,6 +266,7 @@ public:
 
 		// core.rt.eh
 		ehThrowFunc = getFunctionFrom(rtEHModule, "vrt_eh_throw");
+		ehRethrowFunc = getFunctionFrom(rtEHModule, "vrt_eh_rethrow");
 		ehThrowSliceErrorFunc = getFunctionFrom(rtEHModule, "vrt_eh_throw_slice_error");
 		ehThrowAssertErrorFunc = getFunctionFrom(rtEHModule, "vrt_eh_throw_assert_error");
 		ehThrowKeyNotFoundErrorFunc = getFunctionFrom(rtEHModule, "vrt_eh_throw_key_not_found_error");

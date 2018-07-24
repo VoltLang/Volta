@@ -188,16 +188,11 @@ protected:
 
 		BackendFileResult[] ret = new BackendFileResult[](mods.length);
 
-		auto ehPersonalityFunc = lp.ehPersonalityFunc;
-		auto llvmTypeidFor = lp.llvmTypeidFor;
-		auto execDir = d.execDir;
-		auto identStr = d.identStr;
-
 		// Generate bc files for the compiled modules.
 		foreach (i, m; mods) {
 			ret[i] = backend.compileFile(m, targetType,
-				ehPersonalityFunc, llvmTypeidFor,
-				execDir, getcwd(), identStr);
+				lp.ehPersonalityFunc, lp.llvmTypeidFor,
+				d.execDir, getcwd(), d.identStr);
 		}
 
 		return ret;

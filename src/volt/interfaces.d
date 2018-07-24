@@ -210,6 +210,7 @@ public:
 	ir.Function utfDecode_u8_d;
 	ir.Function utfReverseDecode_u8_d;
 	ir.Function ehThrowFunc;
+	ir.Function ehRethrowFunc;
 	ir.Function ehThrowSliceErrorFunc;
 	ir.Function ehPersonalityFunc;
 	ir.Function ehThrowAssertErrorFunc;

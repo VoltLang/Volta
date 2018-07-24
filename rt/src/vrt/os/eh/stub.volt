@@ -1,8 +1,8 @@
 // Copyright 2013-2017, Jakob Bornecrantz.
 // SPDX-License-Identifier: BSL-1.0
-module vrt.os.eh_stub;
+module vrt.os.eh.stub;
 
-version (!Linux && !OSX && !MinGW):
+version (!Linux && !OSX && !MinGW && !Windows):
 
 import core.exception: Throwable, Error, AssertError, KeyNotFoundException;
 import core.rt.misc: vrt_panic;
@@ -24,6 +24,14 @@ extern(C) fn vrt_eh_throw(t: Throwable, location: string)
 		lCallback(t, location);
 	}
 
+	msgs: const(char)[][2];
+	msgs[0] = "###EXCEPTION###\n";
+	msgs[1] = cast(char[])t.msg;
+	vrt_panic(cast(char[][])msgs, location);
+}
+
+extern(C) fn vrt_eh_rethrow(t: Throwable)
+{
 	msgs: const(char)[][2];
 	msgs[0] = "###EXCEPTION###\n";
 	msgs[1] = cast(char[])t.msg;

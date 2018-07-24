@@ -57,7 +57,7 @@ class TargetInfo
 	//! Are pointers 64bit for this target.
 	bool isP64;
 	//! Does this target have exception handling.
-	bool haveEH;
+	ExceptionHandlingType ehType;
 	//! Which version is the inbuilt llvm intrinsics.
 	int llvmIntrinsicVersion;
 }
@@ -108,6 +108,16 @@ enum Arch
 {
 	X86,
 	X86_64,
+}
+
+/*!
+ * What kind of exception handling should the backend implement.
+ */
+enum ExceptionHandlingType
+{
+	None,
+	Posix,
+	Windows,
 }
 
 /*!

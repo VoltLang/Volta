@@ -386,13 +386,15 @@ public:
 			return *p;
 		}
 
+		auto lp = languagePass;
+
 		// Need to run phase3 on it first.
-		languagePass.phase3([mod]);
+		lp.phase3([mod]);
 
 		// Then jit compile it so we can run it in our process.
-		auto d = languagePass.driver;
-		auto compMod = backend.compileHost(mod, languagePass.ehPersonalityFunc,
-		languagePass.llvmTypeidFor, d.execDir, getcwd(), d.identStr);
+		auto d = lp.driver;
+		auto compMod = backend.compileHost(mod, lp.ehPersonalityFunc,
+			lp.llvmTypeidFor, d.execDir, getcwd(), d.identStr);
 		mCompiledModules[mod.uniqueId] = compMod;
 		return compMod;
 	}
@@ -873,11 +875,18 @@ TargetInfo setTargetInfo(TargetInfo target, Arch arch, Platform platform, CRunti
 	target.llvmIntrinsicVersion = llvmIntrinsicVersion;
 
 	final switch (platform) with (Platform) {
-	case MSVC, Metal:
-		target.haveEH = false;
+	case Metal:
+		target.ehType = ExceptionHandlingType.None;
 		break;
 	case MinGW, Linux, OSX:
-		target.haveEH = true;
+		target.ehType = ExceptionHandlingType.Posix;
+		break;
+	case MSVC:
+		version (LLVMVersion7AndAbove) {
+			target.ehType = ExceptionHandlingType.Windows;
+		} else {
+			target.ehType = ExceptionHandlingType.None;
+		}
 		break;
 	}
 

@@ -5,7 +5,6 @@ module core.rt.eh;
 import core.rt.misc;
 import core.exception;
 
-
 extern(C):
 
 /*!
@@ -21,6 +20,11 @@ fn vrt_eh_set_callback(cb: fn(t: Throwable, location: string));
  * Perform a throw of the given `Throwable` object.
  */
 fn vrt_eh_throw(t: Throwable, location: string);
+
+/*!
+ * Throw a `Throwable` that has previously been thrown.
+ */
+fn vrt_eh_rethrow(t: Throwable);
 
 /*!
  * Throw an error for an invalid slice.
@@ -40,4 +44,14 @@ fn vrt_eh_throw_key_not_found_error(location: string);
 /*!
  * The personality function makes stack unwinding work.
  */
-fn vrt_eh_personality_v0(...) i32;
+version (Windows) {
+@mangledName("__CxxFrameHandler3")
+fn vrt_eh_personality_v0(
+	exceptionRecord:   void*,
+	establisherFrame:  void*,
+	contextRecord:     void*,
+	dispatcherContext: void*)
+	i32;
+} else {
+	fn vrt_eh_personality_v0(...) i32;
+}
