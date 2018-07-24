@@ -1006,6 +1006,11 @@ LLVMTypeRef LLVMDoubleTypeInContext(LLVMContextRef C);
 LLVMTypeRef LLVMX86FP80TypeInContext(LLVMContextRef C);
 
 /**
+ * Create a token type in a context.
+ */
+LLVMTypeRef LLVMTokenTypeInContext(LLVMContextRef C);
+
+/**
  * Obtain a 128-bit floating point type (112-bit mantissa) from a
  * context.
  */
@@ -3033,6 +3038,19 @@ LLVMValueRef LLVMBuildInvoke(LLVMBuilderRef, LLVMValueRef Fn,
 LLVMValueRef LLVMBuildLandingPad(LLVMBuilderRef B, LLVMTypeRef Ty,
                                  LLVMValueRef PersFn, uint NumClauses,
                                  const(char)* Name);
+LLVMValueRef LLVMBuildCleanupRet(LLVMBuilderRef B, LLVMValueRef CatchPad,
+                                 LLVMBasicBlockRef BB);
+LLVMValueRef LLVMBuildCatchRet(LLVMBuilderRef B, LLVMValueRef CatchPad,
+                               LLVMBasicBlockRef BB);
+LLVMValueRef LLVMBuildCatchPad(LLVMBuilderRef B, LLVMValueRef ParentPad,
+                               LLVMValueRef *Args, uint NumArgs,
+                               const(char)* Name);
+LLVMValueRef LLVMBuildCleanupPad(LLVMBuilderRef B, LLVMValueRef ParentPad,
+                                 LLVMValueRef *Args, uint NumArgs,
+                                 const(char)* Name);
+LLVMValueRef LLVMBuildCatchSwitch(LLVMBuilderRef B, LLVMValueRef ParentPad,
+                                  LLVMBasicBlockRef UnwindBB,
+                                  uint NumHandlers, const(char)* Name);
 LLVMValueRef LLVMBuildResume(LLVMBuilderRef B, LLVMValueRef Exn);
 LLVMValueRef LLVMBuildUnreachable(LLVMBuilderRef);
 
@@ -3057,6 +3075,51 @@ LLVMBool LLVMIsCleanup(LLVMValueRef LandingPad);
 
 /* Set the 'cleanup' flag in the landingpad instruction */
 void LLVMSetCleanup(LLVMValueRef LandingPad, LLVMBool Val);
+
+/* Add a destination to the catchswitch instruction */
+void LLVMAddHandler(LLVMValueRef CatchSwitch, LLVMBasicBlockRef Dest);
+
+/* Get the number of handlers on the catchswitch instruction */
+uint LLVMGetNumHandlers(LLVMValueRef CatchSwitch);
+
+/**
+ * Obtain the basic blocks acting as handlers for a catchswitch instruction.
+ *
+ * The Handlers parameter should point to a pre-allocated array of
+ * LLVMBasicBlockRefs at least LLVMGetNumHandlers() large. On return, the
+ * first LLVMGetNumHandlers() entries in the array will be populated
+ * with LLVMBasicBlockRef instances.
+ *
+ * @param CatchSwitch The catchswitch instruction to operate on.
+ * @param Handlers Memory address of an array to be filled with basic blocks.
+ */
+void LLVMGetHandlers(LLVMValueRef CatchSwitch, LLVMBasicBlockRef *Handlers);
+
+/* Funclets */
+
+/* Get the number of funcletpad arguments. */
+LLVMValueRef LLVMGetArgOperand(LLVMValueRef Funclet, uint i);
+
+/* Set a funcletpad argument at the given index. */
+void LLVMSetArgOperand(LLVMValueRef Funclet, uint i, LLVMValueRef value);
+
+/**
+ * Get the parent catchswitch instruction of a catchpad instruction.
+ *
+ * This only works on llvm::CatchPadInst instructions.
+ *
+ * @see llvm::CatchPadInst::getCatchSwitch()
+ */
+LLVMValueRef LLVMGetParentCatchSwitch(LLVMValueRef CatchPad);
+
+/**
+ * Set the parent catchswitch instruction of a catchpad instruction.
+ *
+ * This only works on llvm::CatchPadInst instructions.
+ *
+ * @see llvm::CatchPadInst::setCatchSwitch()
+ */
+void LLVMSetParentCatchSwitch(LLVMValueRef CatchPad, LLVMValueRef CatchSwitch);
 
 /* Arithmetic */
 LLVMValueRef LLVMBuildAdd(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS,
