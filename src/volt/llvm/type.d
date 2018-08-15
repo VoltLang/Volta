@@ -145,53 +145,24 @@ public:
 private:
 	this(State state, ir.PrimitiveType pt)
 	{
-		final switch(pt.type) with (ir.PrimitiveType.Kind) {
-		case Bool:
-			bits = 1;
-			boolean = true;
-			llvmType = LLVMInt1TypeInContext(state.context);
-			break;
-		case Byte:
-			signed = true;
-			goto case Char;
-		case Char:
-		case Ubyte:
-			bits = 8;
-			llvmType = LLVMInt8TypeInContext(state.context);
-			break;
-		case Short:
-			signed = true;
-			goto case Ushort;
-		case Ushort:
-		case Wchar:
-			bits = 16;
-			llvmType = LLVMInt16TypeInContext(state.context);
-			break;
-		case Int:
-			signed = true;
-			goto case Uint;
-		case Uint:
-		case Dchar:
-			bits = 32;
-			llvmType = LLVMInt32TypeInContext(state.context);
-			break;
-		case Long:
-			signed = true;
-			goto case Ulong;
-		case Ulong:
-			bits = 64;
-			llvmType = LLVMInt64TypeInContext(state.context);
-			break;
-		case Float:
-			bits = 32;
-			floating = true;
-			llvmType = LLVMFloatTypeInContext(state.context);
-			break;
-		case Double:
-			bits = 64;
-			floating = true;
-			llvmType = LLVMDoubleTypeInContext(state.context);
-			break;
+		boolean = pt.type == ir.PrimitiveType.Kind.Bool;
+		bits = getBits(pt);
+		signed = getSigned(pt);
+		floating = getFloating(pt);
+		llvmType = makeLLVMType(state, pt);
+		diType = diBaseType(state, pt);
+
+		super(state, pt, llvmType, diType);
+	}
+
+	static bool getFloating(ir.PrimitiveType pt)
+	{
+		final switch (pt.type) with (ir.PrimitiveType.Kind) {
+		case Bool, Byte, Ubyte, Char, Short, Ushort, Wchar,
+		     Int, Uint, Dchar, Long, Ulong:
+			return false;
+		case Float, Double:
+			return true;
 		case Real:
 			throw panic(pt, "PrmitiveType.Real not handled");
 		case Void:
@@ -199,9 +170,66 @@ private:
 		case Invalid:
 			throw panic(pt, "PrmitiveType.Invalid not handled");
 		}
+	}
 
-		diType = diBaseType(state, pt);
-		super(state, pt, llvmType, diType);
+	static bool getSigned(ir.PrimitiveType pt)
+	{
+		final switch (pt.type) with (ir.PrimitiveType.Kind) {
+		case Byte, Short, Int, Long:
+			return true;
+		case Bool, Char, Ubyte, Ushort, Wchar, Uint, Dchar, Ulong,
+		     Float, Double:
+			return false;
+		case Real:
+			throw panic(pt, "PrmitiveType.Real not handled");
+		case Void:
+			throw panic(pt, "PrmitiveType.Void not handled");
+		case Invalid:
+			throw panic(pt, "PrmitiveType.Invalid not handled");
+		}
+	}
+
+	static uint getBits(ir.PrimitiveType pt)
+	{
+		final switch (pt.type) with (ir.PrimitiveType.Kind) {
+		case Bool: return 1;
+		case Byte, Ubyte, Char: return 8;
+		case Short, Ushort, Wchar: return 16;
+		case Int, Uint, Dchar, Float: return 32;
+		case Long, Ulong, Double: return 64;
+		case Real:
+			throw panic(pt, "PrmitiveType.Real not handled");
+		case Void:
+			throw panic(pt, "PrmitiveType.Void not handled");
+		case Invalid:
+			throw panic(pt, "PrmitiveType.Invalid not handled");
+		}
+	}
+
+	static LLVMTypeRef makeLLVMType(State state, ir.PrimitiveType pt)
+	{
+		final switch(pt.type) with (ir.PrimitiveType.Kind) {
+		case Bool:
+			return LLVMInt1TypeInContext(state.context);
+		case Byte, Char, Ubyte:
+			return LLVMInt8TypeInContext(state.context);
+		case Short, Ushort, Wchar:
+			return LLVMInt16TypeInContext(state.context);
+		case Int, Uint, Dchar:
+			return LLVMInt32TypeInContext(state.context);
+		case Long, Ulong:
+			return LLVMInt64TypeInContext(state.context);
+		case Float:
+			return LLVMFloatTypeInContext(state.context);
+		case Double:
+			return LLVMDoubleTypeInContext(state.context);
+		case Real:
+			throw panic(pt, "PrmitiveType.Real not handled");
+		case Void:
+			throw panic(pt, "PrmitiveType.Void not handled");
+		case Invalid:
+			throw panic(pt, "PrmitiveType.Invalid not handled");
+		}
 	}
 }
 
