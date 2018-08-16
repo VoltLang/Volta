@@ -68,3 +68,13 @@ string scopeOutsideFunctionMsg()
 {
 	return "scopes must be inside a function.";
 }
+
+string returnInsideScopeMsg()
+{
+	return "return statements inside of scope statements are forbidden.";
+}
+
+string scopeInsideScopeMsg()
+{
+	return "scope statements inside of scope statements are forbidden.";
+}

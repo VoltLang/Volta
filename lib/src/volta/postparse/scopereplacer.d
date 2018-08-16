@@ -34,6 +34,7 @@ public:
 
 protected:
 	FunctionSink mFuncStack;
+	bool mInScopeStatement;
 
 
 public:
@@ -59,6 +60,33 @@ public:
 	{
 	}
 
+	override Status enter(ir.ScopeStatement ss)
+	{
+		if (mInScopeStatement) {
+			errorMsg(errSink, /*#ref*/ss.loc, scopeInsideScopeMsg());
+			return Stop;
+		}
+
+		mInScopeStatement = true;
+		return Continue;
+	}
+
+	override Status leave(ir.ScopeStatement ss)
+	{
+		assert(mInScopeStatement);
+		mInScopeStatement = false;
+		return Continue;
+	}
+
+	override Status enter(ir.ReturnStatement rs)
+	{
+		if (mInScopeStatement) {
+			errorMsg(errSink, /*#ref*/rs.loc, returnInsideScopeMsg());
+			return Stop;
+		}
+		return Continue;
+	}
+
 	override Status enter(ir.Function func)
 	{
 		funcPush(func);
@@ -71,7 +99,7 @@ public:
 		return Continue;
 	}
 
-	override Status enter(ir.BlockStatement bs)
+	override Status leave(ir.BlockStatement bs)
 	{
 		foreach (i, node; bs.statements) {
 			switch (node.nodeType) with (ir.NodeType) {
