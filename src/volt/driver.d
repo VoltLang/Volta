@@ -36,6 +36,8 @@ import volt.llvm.backend;
 import volt.lowerer.image;
 import volt.util.mangledecoder;
 
+version (Volt) import bbe = volt.bbe;
+
 import volta.visitor.visitor;
 import volt.visitor.prettyprinter;
 import volt.visitor.debugprinter;
@@ -474,7 +476,11 @@ protected:
 			}
 		}
 		if (mRunBBE) {
-			return intCompileBBE();
+			version (Volt) {
+				return intCompileBBE();
+			} else {
+				return 1;
+			}
 		} else if (mRunBackend) {
 			return intCompileBackend();
 		}
@@ -593,9 +599,9 @@ protected:
 		return 0;
 	}
 
-	int intCompileBBE()
+	version (Volt) int intCompileBBE()
 	{
-		return 0;
+		return bbe.process(mCommandLineModules);
 	}
 
 	int intCompileBackend()
