@@ -25,6 +25,7 @@ public:
 	bool internalDiff; //!< The --internal-diff argument.
 	bool internalDebug; //!< The --internal-dbg argument.
 	bool missingDeps; //!< The --missing argument;
+	bool useBbeBackend; //!< The --bbe argument.
 
 	Platform platform;
 	Arch arch;

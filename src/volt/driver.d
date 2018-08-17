@@ -112,6 +112,7 @@ protected:
 	//! Decide on the different parts of the driver to use.
 	bool mRunVoltend;
 	bool mRunBackend;
+	bool mRunBBE;
 
 
 public:
@@ -129,6 +130,7 @@ public:
 		this.internalDebug = s.internalDebug;
 		this.tempMan = new TempfileManager();
 		this.mLLVMSettings = new LLVMDriverSettings();
+		this.mRunBBE = s.useBbeBackend;
 
 		int llvmIntrinsicVersion = intrinsicVersion.get();
 
@@ -471,7 +473,9 @@ protected:
 				return ret;
 			}
 		}
-		if (mRunBackend) {
+		if (mRunBBE) {
+			return intCompileBBE();
+		} else if (mRunBackend) {
 			return intCompileBackend();
 		}
 		return 0;
@@ -586,6 +590,11 @@ protected:
 
 		// For the debug printing here if no exception has been thrown.
 		debugPasses();
+		return 0;
+	}
+
+	int intCompileBBE()
+	{
 		return 0;
 	}
 

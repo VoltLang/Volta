@@ -234,6 +234,9 @@ bool handleArgs(string[] strArgs, ref Arg[] args, VersionSet ver, Settings setti
 		case "--no-stdlib":
 			settings.noStdLib = true;
 			continue;
+		case "--bbe":
+			settings.useBbeBackend = true;
+			continue;
 
 		// Regular args.
 		case "-D":
@@ -460,6 +463,7 @@ bool printUsage()
 	writefln("\t                 and behave as if that module was being compiled.");
 	writefln("");
 	writefln("\t--no-stdlib      Don't include any stdlib (from config or arguments)");
+	writefln("\t--bbe            Use the experimental BBE backend rather than LLVM.");
 	writefln("");
 	writefln("\t--if-stdlib      Only apply the following argument if using stdlib.");
 	writefln("\t--if-'platform'  Only apply the following argument if platform is this.");
