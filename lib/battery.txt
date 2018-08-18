@@ -1,9 +1,0 @@
-#
-# We have D files tell it to scan for them
-#
---scan-for-d
-#
-# We need watt to build
-#
---dep
-watt
