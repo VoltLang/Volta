@@ -880,6 +880,22 @@ ParseStatus parseParameter(ParserStream ps, out ir.Variable p)
 	return Succeeded;
 }
 
+bool isUnambiguouslyAA(ParserStream ps)
+{
+	if (isPrimitiveTypeToken(ps.peek.type) || isStorageTypeToken(ps.peek.type)) {
+		return true;
+	}
+	auto mark = ps.save();
+	scope (exit) ps.restore(mark);
+	while (ps != TokenType.CloseBracket && !ps.eof) {
+		if (ps == [TokenType.Asterix, TokenType.CloseBracket]) {
+			return true;
+		}
+		ps.get();
+	}
+	return false;
+}
+
 // Parse things that go on the end of types like * or []. If none, base is returned.
 ParseStatus parseTypeSigils(ParserStream ps, out ir.Type outType, Location origin, ir.Type base)
 {
@@ -902,8 +918,7 @@ ParseStatus parseTypeSigils(ParserStream ps, out ir.Type outType, Location origi
 			a.loc = end.loc - origin;
 			a.base = outType;
 			outType = a;
-		} else if (isPrimitiveTypeToken(ps.peek.type) ||
-			isStorageTypeToken(ps.peek.type)) {
+		} else if (isUnambiguouslyAA(ps)) {
 			// Unambiguous associative array.
 			/* The expression parser can handle an identifier being maybe a type,
 			 * but not u32 (say) on its own, so handle that case here.
