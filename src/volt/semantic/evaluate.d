@@ -748,6 +748,7 @@ ir.Constant foldBinOpMod(ir.Constant cl, ir.Constant cr, TargetInfo target)
 		return null;
 	}
 	switch (pt.type) with (ir.PrimitiveType.Kind) {
+	case Int:  dieIfZero(cr.u._int == 0); c.u._int = cl.u._int % cr.u._int; break;
 	case Uint: dieIfZero(cr.u._uint == 0); c.u._uint = cl.u._uint % cr.u._uint; break;
 	case Long: dieIfZero(cr.u._long == 0); c.u._long = cl.u._long % cr.u._long; break;
 	case Ulong:
