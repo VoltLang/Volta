@@ -1609,6 +1609,10 @@ void extypeUnaryCastTo(Context ctx, ref ir.Exp exp, ir.Unary unary)
 		return;
 	}
 
+	if (isDelegate(toType) && isPointer(type)) {
+		throw makeCannotCastPointerToDelegate(/*#ref*/exp.loc);
+	}
+
 	if (isAggregate(type) && toType.nodeType == ir.NodeType.PrimitiveType) {
 		throw makeBadAggregateToPrimitive(unary, type, toType);
 	}

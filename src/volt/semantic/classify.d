@@ -439,6 +439,11 @@ bool isPointer(ir.Type t)
 	return t.nodeType == ir.NodeType.PointerType;
 }
 
+bool isDelegate(ir.Type t)
+{
+	return t.nodeType == ir.NodeType.DelegateType;
+}
+
 bool isIntegral(ir.Type t)
 {
 	auto prim = t.toPrimitiveTypeChecked();
