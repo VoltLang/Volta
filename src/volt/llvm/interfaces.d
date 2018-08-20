@@ -11,7 +11,6 @@ module volt.llvm.interfaces;
 import volt.errors;
 
 public import lib.llvm.core;
-public import lib.llvm.c.DIBuilder : LLVMDIBuilderRef;
 
 public import volta.ir.location;
 public import volt.interfaces;

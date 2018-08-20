@@ -557,7 +557,8 @@ private:
 
 } else {
 
-	import lib.llvm.c.DIBuilder : LLVMDIBuilderRef;
+	struct LLVMDIBuilder {}
+	alias LLVMDIBuilderRef = LLVMDIBuilder*;
 
 	LLVMDIBuilderRef LLVMCreateDIBuilder(LLVMModuleRef) { return null; }
 	void LLVMDisposeDIBuilder(LLVMDIBuilderRef builder) {}
