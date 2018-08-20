@@ -2380,7 +2380,7 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 	}
 
 	if (isAssign && hasDeclaration(binop.left) && hasDeclaration(binop.right)) {
-		ir.Variable getVariable(ir.Exp e)
+		ir.Variable getVariable(ir.Exp e, ref ir.Declaration child)
 		{
 			auto eref = e.toExpReferenceChecked();
 			if (eref !is null) {
@@ -2388,13 +2388,20 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 			}
 			auto aexp = e.toAccessExpChecked();
 			if (aexp !is null) {
+				if (aexp.child !is null) {
+					auto ceref = aexp.child.toExpReferenceChecked();
+					if (ceref !is null) {
+						child = ceref.decl;
+					}
+				}
 				return aexp.field;
 			}
 			return null;
 		}
-		auto lvar = getVariable(binop.left);
-		auto rvar = getVariable(binop.right);
-		if (lvar !is null && lvar is rvar) {
+		ir.Declaration lchild, rchild;
+		auto lvar = getVariable(binop.left, /*#ref*/lchild);
+		auto rvar = getVariable(binop.right, /*#ref*/rchild);
+		if (lvar !is null && lvar is rvar && lchild is rchild) {
 			warningAssignToSelf(/*#ref*/exp.loc, lvar.name, ctx.lp.warningsEnabled);
 		}
 	}
