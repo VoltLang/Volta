@@ -85,6 +85,14 @@ struct LLVMValue {}
 alias  LLVMValueRef = LLVMValue*;
 
 /**
+ * Represents an LLVM Metadata.
+ *
+ * This models llvm::Metadata.
+ */
+struct LLVMMetadata {}
+alias LLVMMetadataRef = LLVMMetadata*;
+
+/**
  * Represents an individual value in LLVM IR.
  *
  * This models llvm::Value.
@@ -108,6 +116,14 @@ alias  LLVMBasicBlockRef = LLVMBasicBlock*;
  */
 struct LLVMBuilder {}
 alias  LLVMBuilderRef = LLVMBuilder*;
+
+/**
+ * Represents an LLVM debug info builder.
+ *
+ * This models llvm::DIBuilder.
+ */
+struct LLVMDIBuilder {}
+alias  LLVMDIBuilderRef = LLVMDIBuilder*;
 
 /**
  * Interface used to provide a module to JIT or interpreter.
