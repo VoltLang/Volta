@@ -36,7 +36,7 @@ class Type
 public:
 	ir.Type irType;
 	LLVMTypeRef llvmType;
-	LLVMValueRef diType;
+	LLVMMetadataRef diType;
 	bool passByVal;
 
 public:
@@ -47,14 +47,14 @@ public:
 
 protected:
 	this(State state, ir.Type irType, LLVMTypeRef llvmType,
-	     LLVMValueRef diType)
+	     LLVMMetadataRef diType)
 	in {
 		assert(state !is null);
 		assert(irType !is null);
 		assert(llvmType !is null);
-		version (UseDIBuilder) assert(diType !is null ||
-		                              cast(VoidType) this !is null);
-
+		version (none) {
+			assert(diType !is null || cast(VoidType) this !is null);
+		}
 
 		assert(irType.mangledName !is null);
 		assert(state.getTypeNoCreate(irType.mangledName) is null);
@@ -382,7 +382,7 @@ public:
 private:
 	this(State state, ir.ArrayType at)
 	{
-		diType = diStruct(state, at);
+		diType = diForwardDeclareAggregate(state, at);
 		llvmType = LLVMStructCreateNamed(state.context, at.mangledName);
 		super(state, at, llvmType, diType);
 
@@ -414,7 +414,7 @@ private:
 
 
 		version (D_Version2) static assert(ptrIndex > lengthIndex);
-		diStructSetBody(state, cast(Type)this,
+		diStructReplace(state, /*#ref*/diType, cast(Type)this,
 			[lengthType, ptrType],
 			["length", "ptr"]);
 	}
@@ -498,7 +498,7 @@ public:
 
 public:
 	this(State state, ir.CallableType ct,
-	     LLVMTypeRef llvmType, LLVMValueRef diType)
+	     LLVMTypeRef llvmType, LLVMMetadataRef diType)
 	{
 		this.ct = ct;
 		super(state, ct, llvmType, diType);
@@ -515,7 +515,7 @@ class FunctionType : CallableType
 public:
 	bool hasStructRet;
 	LLVMTypeRef llvmCallType;
-	LLVMValueRef diCallType;
+	LLVMMetadataRef diCallType;
 
 public:
 	static FunctionType fromIr(State state, ir.FunctionType ft)
@@ -685,7 +685,7 @@ public:
 private:
 	this(State state, ir.DelegateType dt)
 	{
-		diType = diStruct(state, dt);
+		diType = diForwardDeclareAggregate(state, dt);
 		llvmType = LLVMStructCreateNamed(state.context, dt.mangledName);
 		super(state, dt, llvmType, diType);
 
@@ -710,7 +710,7 @@ private:
 		LLVMStructSetBody(llvmType, mt[], false);
 
 		version (D_Version2) static assert(voidPtrIndex < funcIndex);
-		diStructSetBody(state, this,
+		diStructReplace(state, /*#ref*/diType, this,
 			[state.voidPtrType, funcType],
 			["ptr", "func"]);
 	}
@@ -806,7 +806,7 @@ private:
 	{
 		auto mangled = getMangled(irType);
 
-		diType = state.diStruct(irType);
+		diType = diForwardDeclareAggregate(state, irType);
 		llvmType = LLVMStructCreateNamed(state.context, mangled);
 		super(state, irType, llvmType, diType);
 		this.passByVal = volt.semantic.classify.size(state.target, irType) > 16;
@@ -842,7 +842,7 @@ private:
 		}
 
 		LLVMStructSetBody(llvmType, mt, false);
-		diStructSetBody(state, diType, vars);
+		diStructReplace(state, /*#ref*/diType, irType, vars);
 	}
 }
 
@@ -898,7 +898,7 @@ private:
 	this(State state, ir.Union irType)
 	{
 		this.llvmType = LLVMStructCreateNamed(state.context, irType.mangledName);
-		this.diType = diUnion(state, irType);
+		this.diType = diForwardDeclareAggregate(state, irType);
 		this.utype = irType;
 		super(state, irType, llvmType, diType);
 
@@ -942,7 +942,7 @@ private:
 		// Check over this logic if unions ever explodes.
 		// mt[0] = LLVMArrayType(state.ubyteType.llvmType, cast(uint)irType.totalSize);
 		LLVMStructSetBody(llvmType, mt[], false);
-		diUnionSetBody(state, diType, vars);
+		diUnionReplace(state, /*#ref*/diType, this, vars);
 	}
 }
 

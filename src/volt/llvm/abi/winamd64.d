@@ -97,6 +97,7 @@ void buildMemcpy(State state, LLVMValueRef dst, LLVMValueRef src, LLVMTypeRef ba
 		args ~= LLVMConstInt(LLVMInt32TypeInContext(state.context), 1, false);
 	}
 	args ~= LLVMConstInt(LLVMInt1TypeInContext(state.context), 0, false);
+	// XXX TODO Should this be a buildCallNeverInvoke?
 	LLVMBuildCall(state.builder, func, args.ptr, cast(uint)args.length, "".ptr);
 }
 

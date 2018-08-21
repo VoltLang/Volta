@@ -20,7 +20,6 @@ import volta.visitor.visitor;
 import volta.ir.location;
 import volt.semantic.lookup;
 
-import volt.llvm.di;
 import volt.llvm.constant;
 import volt.llvm.toplevel;
 import volt.llvm.expression;
@@ -85,7 +84,7 @@ public:
 		this.context = LLVMContextCreate();
 		this.mod = LLVMModuleCreateWithNameInContext(name, context);
 		this.builder = LLVMCreateBuilderInContext(context);
-		this.diBuilder = LLVMCreateDIBuilder(mod);
+		this.diBuilder = diCreateDIBuilder(mod);
 		this.lp = lp;
 		this.target = lp.target;
 		this.execDir = execDir;
@@ -120,8 +119,7 @@ public:
 	override void close()
 	{
 		if (diBuilder !is null) {
-			LLVMDisposeDIBuilder(diBuilder);
-			diBuilder = null;
+			diDisposeDIBuilder(/*#ref*/diBuilder);
 		}
 		if (builder !is null) {
 			LLVMDisposeBuilder(builder);
@@ -273,6 +271,18 @@ public:
 		LLVMPositionBuilderAtEnd(builder, b);
 
 		return fnState.exitBlock = b;
+	}
+
+	override LLVMValueRef buildCallNeverInvoke(ref Location loc,
+	                                           LLVMValueRef argFunc,
+	                                           LLVMValueRef[] args)
+	{
+		diSetPosition(this, /*#ref*/loc);
+		scope (success) {
+			diUnsetPosition(this);
+		}
+
+		return LLVMBuildCall(builder, argFunc, args);
 	}
 
 	override LLVMValueRef buildCallOrInvoke(ref Location loc,
@@ -482,7 +492,7 @@ public:
 			diSetPosition(this, /*#ref*/var.loc);
 			v = buildAlloca(llvmType, var.name);
 
-			diAutoVariable(this, var, v, type);
+			diLocalVariable(this, var, type, v);
 			diUnsetPosition(this);
 
 			if (var.name == "__nested") {
@@ -558,7 +568,7 @@ public:
 		diSetPosition(this, /*#ref*/var.loc);
 		v = buildAlloca(llvmType, var.name);
 
-		diParameterVariable(this, var, v, type);
+		diParameterVariable(this, var, type, v);
 		diUnsetPosition(this);
 
 		Store add = { v, type };

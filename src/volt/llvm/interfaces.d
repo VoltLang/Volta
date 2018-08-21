@@ -16,7 +16,7 @@ public import volta.ir.location;
 public import volt.interfaces;
 public import ir = volta.ir;
 
-public import volt.llvm.di;
+public import volt.llvm.debugInfo;
 public import volt.llvm.type;
 
 
@@ -112,7 +112,7 @@ public:
 	static struct FunctionState
 	{
 		LLVMValueRef func;
-		LLVMValueRef di;
+		LLVMMetadataRef di;
 
 		bool fall; //!< Tracking for auto branch generation.
 
@@ -209,7 +209,7 @@ public:
 	 * Debug helper variables.
 	 * @{
 	 */
-	LLVMValueRef diCU;
+	LLVMMetadataRef diCU;
 	/*!
 	 * @}
 	 */
@@ -323,6 +323,7 @@ public:
 		getValueAnyForm(exp, result);
 		if (!result.isPointer)
 			return;
+		diSetPosition(this, /*#ref*/exp.loc);
 		result.value = LLVMBuildLoad(builder, result.value, "");
 		result.isPointer = false;
 	}
@@ -413,6 +414,16 @@ public:
 	 * Basic  store functions.
 	 *
 	 */
+
+	/*!
+	 * Builds a call instruction, and set the location for the call
+	 * automatically.
+	 *
+	 * Gets the landingPad from the current state.
+	 */
+	abstract LLVMValueRef buildCallNeverInvoke(ref Location loc,
+	                                           LLVMValueRef argFunc,
+	                                           LLVMValueRef[] args);
 
 	/*!
 	 * Builds either a call or a invoke. If invoke automatically
