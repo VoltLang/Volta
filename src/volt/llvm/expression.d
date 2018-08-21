@@ -896,6 +896,8 @@ void handleIncDec(State state, ir.Unary unary, Value result)
 
 	state.getValueRef(unary.value, result);
 
+	diSetPosition(state, /*#ref*/unary.loc);
+
 	ptr = result.value;
 	read = LLVMBuildLoad(state.builder, ptr, "");
 
@@ -914,6 +916,8 @@ void handleIncDec(State state, ir.Unary unary, Value result)
 	}
 
 	LLVMBuildStore(state.builder, value, ptr);
+
+	diUnsetPosition(state);
 
 	result.isPointer = false;
 	result.value = value;
@@ -1219,6 +1223,8 @@ void handleIncDec(State state, ir.Postfix postfix, Value result)
 
 	state.getValueRef(postfix.child, result);
 
+	diSetPosition(state, /*#ref*/postfix.loc);
+
 	ptr = result.value;
 	value = LLVMBuildLoad(state.builder, ptr, "");
 
@@ -1237,6 +1243,8 @@ void handleIncDec(State state, ir.Postfix postfix, Value result)
 	}
 
 	LLVMBuildStore(state.builder, store, ptr);
+
+	diUnsetPosition(state);
 
 	result.isPointer = false;
 	result.value = value;
@@ -1422,7 +1430,7 @@ void handleEnumMembers(State state, ir.BuiltinExp inbuilt, Value result)
 		auto args = new LLVMValueRef[](2);
 		args[0] = thisval;
 		args[1] = fromConstantString(state, /*#ref*/inbuilt.loc, member.name);
-		LLVMBuildCall(state.builder, callval, args.ptr, cast(uint)args.length, "".ptr);
+		state.buildCallNeverInvoke(/*#ref*/inbuilt.loc, callval,  args);
 		LLVMBuildBr(state.builder, endSwitch);
 	}
 
@@ -1434,7 +1442,7 @@ void handleEnumMembers(State state, ir.BuiltinExp inbuilt, Value result)
 	args[1] = fromConstantString(state, /*#ref*/inbuilt.loc, "invalid enum member passed as composable string component");
 	auto ct = cast(ir.CallableType)t.irType;
 	abiCoerceArguments(state, /*can be null*/ct, /*#ref*/args);
-	LLVMBuildCall(state.builder, assertval, args.ptr, cast(uint)args.length, "".ptr);
+	state.buildCallNeverInvoke(/*#ref*/inbuilt.loc, assertval, args);
 	LLVMBuildUnreachable(state.builder);
 
 	LLVMPositionBuilderAtEnd(state.builder, endSwitch);

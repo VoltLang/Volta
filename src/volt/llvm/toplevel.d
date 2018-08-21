@@ -15,7 +15,6 @@ import lib.llvm.core;
 import volt.errors;
 import volta.visitor.visitor;
 import volt.semantic.classify;
-import volt.llvm.di : diVariable;
 import volt.llvm.interfaces;
 import volt.llvm.abi.base;
 import ir = volta.ir;
@@ -166,7 +165,7 @@ public:
 
 		// Assume language pass knows what it is doing.
 		if (state.fall) {
-			LLVMBuildCall(state.builder, state.llvmTrap, null);
+			state.buildCallNeverInvoke(/*#ref*/func.loc, state.llvmTrap, null);
 			LLVMBuildUnreachable(state.builder);
 		}
 
@@ -212,7 +211,9 @@ public:
 				break;
 			} else if (var.assign !is null) {
 				auto ret = state.getValue(var.assign);
+				diSetPosition(state, /*#ref*/var.loc);
 				LLVMBuildStore(state.builder, ret, v);
+				diUnsetPosition(state);
 				break;
 			}
 
@@ -243,7 +244,7 @@ public:
 				init = LLVMConstNull(type.llvmType);
 			}
 			LLVMSetInitializer(v, init);
-			state.diVariable(v, var, type);
+			state.diGlobalVariable(var, type, v);
 			break;
 		}
 
@@ -389,7 +390,7 @@ public:
 			doNewBlock(state.switchDefault, defaultStatements, outBlock);
 		} else {
 			// No default block (e.g. final switches)
-			LLVMBuildCall(state.builder, state.llvmTrap, null);
+			state.buildCallNeverInvoke(/*#ref*/ss.loc, state.llvmTrap, null);
 			LLVMBuildUnreachable(state.builder);
 		}
 		state.replaceBreakBlock(breakBlock);
@@ -570,7 +571,7 @@ public:
 			value = LLVMBuildBitCast(state.builder, value, state.voidPtrType.llvmType, "");
 
 			auto func = state.ehTypeIdFunc;
-			auto test = LLVMBuildCall(state.builder, func, [value]);
+			auto test = state.buildCallNeverInvoke(/*#ref*/v.loc, func, [value]);
 			test = LLVMBuildICmp(state.builder, LLVMIntPredicate.EQ, test, i, "");
 
 
@@ -1003,7 +1004,7 @@ public:
 				if (loopFunc is null) {
 					continue;
 				}
-				LLVMBuildCall(state.builder, loopFunc, arg);
+				state.buildCallNeverInvoke(/*#ref*/func.loc, loopFunc, arg);
 			}
 			p = p.prev;
 		}
@@ -1011,7 +1012,7 @@ public:
 		auto throwFunc = state.getFunctionValue(state.lp.ehRethrowFunc, /*#out*/type);
 		LLVMValueRef[1] throwArgs;
 		throwArgs[0] = LLVMBuildLoad(b, args[2], "");
-		LLVMBuildCall(b, throwFunc, throwArgs[0 .. $]);
+		state.buildCallNeverInvoke(/*#ref*/func.loc, throwFunc, throwArgs[0 .. $]);
 		LLVMBuildUnreachable(b);
 
 		state.startBlock(oldBlock);
@@ -1061,7 +1062,7 @@ public:
 				if (loopFunc is null) {
 					continue;
 				}
-				LLVMBuildCall(state.builder, loopFunc, arg);
+				state.buildCallNeverInvoke(/*#ref*/func.loc, loopFunc, arg);
 			}
 
 			if (p is catchPath) {
