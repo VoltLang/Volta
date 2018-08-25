@@ -102,10 +102,10 @@ public:
 
 	override BackendFileResult compileFile(ir.Module m, TargetType type,
 		ir.Function ehPersonality, ir.Function llvmTypeidFor,
-		string execDir, string identStr)
+		string execDir, string currentWorkingDir, string identStr)
 	{
 		auto state = compileState(m, ehPersonality, llvmTypeidFor,
-		                          execDir, identStr);
+		                          execDir, currentWorkingDir, identStr);
 
 		switch (type) with (TargetType) {
 		case LlvmBitcode: return new BitcodeResult(this, state);
@@ -116,19 +116,19 @@ public:
 
 	override BackendHostResult compileHost(ir.Module m,
 		ir.Function ehPersonality, ir.Function llvmTypeidFor,
-		string execDir, string identStr)
+		string execDir, string currentWorkingDir, string identStr)
 	{
 		auto state = compileState(m, ehPersonality, llvmTypeidFor,
-		                          execDir, identStr);
+		                          execDir, currentWorkingDir, identStr);
 		return new HostResult(state);
 	}
 
 	VoltState compileState(ir.Module m,
 		ir.Function ehPersonality, ir.Function llvmTypeidFor,
-		string execDir, string identStr)
+		string execDir, string currentWorkingDir, string identStr)
 	{
 		auto state = new VoltState(lp, m, ehPersonality,
-			llvmTypeidFor, execDir, identStr);
+			llvmTypeidFor, execDir, currentWorkingDir, identStr);
 		auto mod = state.mod;
 		scope (failure) {
 			state.close();

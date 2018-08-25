@@ -571,11 +571,11 @@ public:
 	 */
 	BackendFileResult compileFile(ir.Module m, TargetType type,
 		ir.Function ehPersonality, ir.Function llvmTypeidFor,
-		string execDir, string identStr);
+		string execDir, string currentWorkingDir, string identStr);
 
 	BackendHostResult compileHost(ir.Module m,
 		ir.Function ehPersonality, ir.Function llvmTypeidFor,
-		string execDir, string identStr);
+		string execDir, string currentWorkingDir, string identStr);
 	//! @}
 }
 

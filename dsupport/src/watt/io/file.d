@@ -2,6 +2,7 @@ module watt.io.file;
 
 public import std.file : read, exists, remove, isFile;
 public import std.file : SpanMode, dirEntries;
+public import std.file : getcwd;
 
 enum SearchStatus
 {

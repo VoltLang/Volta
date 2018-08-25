@@ -66,6 +66,7 @@ public:
 	LanguagePass lp;
 	TargetInfo target;
 	ir.Module irMod;
+	string currentWorkingDir;
 	string execDir;
 	string identStr;
 	ir.Function ehPersonality;

@@ -3,7 +3,7 @@
 // See copyright notice in src/volt/license.d (BOOST ver. 1.0).
 module volt.llvm.driver;
 
-import watt.io.file : remove, exists, isFile;
+import watt.io.file : remove, exists, isFile, getcwd;
 import watt.text.format : format;
 import watt.process : spawnProcess, wait;
 
@@ -197,7 +197,7 @@ protected:
 		foreach (i, m; mods) {
 			ret[i] = backend.compileFile(m, targetType,
 				ehPersonalityFunc, llvmTypeidFor,
-				execDir, identStr);
+				execDir, getcwd(), identStr);
 		}
 
 		return ret;

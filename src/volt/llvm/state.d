@@ -75,7 +75,7 @@ protected:
 
 public:
 	this(LanguagePass lp, ir.Module irMod, ir.Function ehPersonality, ir.Function llvmTypeidFor,
-		string execDir, string identStr)
+		string execDir, string currentWorkingDir, string identStr)
 	{
 		assert(irMod.name.identifiers.length > 0);
 		string name = irMod.name.toString();
@@ -88,6 +88,7 @@ public:
 		this.lp = lp;
 		this.target = lp.target;
 		this.execDir = execDir;
+		this.currentWorkingDir = currentWorkingDir;
 		assert(this.execDir.length > 0);
 		this.identStr = identStr;
 		assert(this.identStr.length > 0);

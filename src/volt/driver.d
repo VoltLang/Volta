@@ -10,7 +10,7 @@ import intrinsicVersion = volt.llvm.intrinsicVersion;
 
 import watt.path : temporaryFilename, dirSeparator;
 import watt.process : spawnProcess, wait;
-import watt.io.file : remove, exists, read, isFile;
+import watt.io.file : remove, exists, read, isFile, getcwd;
 import watt.io.streams : OutputFileStream;
 import watt.conv : toLower;
 import watt.text.diff : diff;
@@ -392,7 +392,7 @@ public:
 		// Then jit compile it so we can run it in our process.
 		auto d = languagePass.driver;
 		auto compMod = backend.compileHost(mod, languagePass.ehPersonalityFunc,
-		languagePass.llvmTypeidFor, d.execDir, d.identStr);
+		languagePass.llvmTypeidFor, d.execDir, getcwd(), d.identStr);
 		mCompiledModules[mod.uniqueId] = compMod;
 		return compMod;
 	}
