@@ -122,8 +122,8 @@ public:
 			diBuilder = null;
 		}
 		if (builder !is null) {
-			builder = null;
 			LLVMDisposeBuilder(builder);
+			builder = null;
 		}
 		if (mod !is null) {
 			LLVMDisposeModule(mod);
