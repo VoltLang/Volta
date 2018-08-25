@@ -52,7 +52,7 @@ protected:
 		assert(state !is null);
 		assert(irType !is null);
 		assert(llvmType !is null);
-		version (none) {
+		version (LLVMVersion7AndAbove) if (!state.irMod.forceNoDebug) {
 			assert(diType !is null || cast(VoidType) this !is null);
 		}
 
