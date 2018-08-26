@@ -14,7 +14,7 @@ enum V2 = 2;
 
 int get()
 {
-	version (LlvmVersion8) {
+	version (LLVMVersion7AndAbove) {
 		return V2;
 	} else version (LlvmVersion7) {
 		return V2;
