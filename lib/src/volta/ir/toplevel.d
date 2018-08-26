@@ -95,6 +95,14 @@ public:
 	 */
 	bool magicFlagD;
 
+	/*!
+	 * Tell the backend not to emit DI for this module.
+	 * With CTFE we create a copy of a module that never gets written to disk,
+	 * which means targets never gets set, so LLVM balks at incorrect architecture
+	 * and layout information.
+	 */
+	bool forceNoDebug;
+
 	bool gathered;
 
 
@@ -115,6 +123,7 @@ public:
 		this.gathered = old.gathered;
 		this.mId = old.mId;
 		this.isAnonymous = old.isAnonymous;
+		this.forceNoDebug = old.forceNoDebug;
 	}
 
 	//! Get a unique number for this module.

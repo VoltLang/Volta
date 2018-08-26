@@ -172,6 +172,7 @@ protected:
 		mMod.children.loc = mMod.loc;
 		mMods ~= mMod;
 		mMod.myScope = new ir.Scope(mMod, name);
+		mMod.forceNoDebug = true;
 	}
 
 	/*!
