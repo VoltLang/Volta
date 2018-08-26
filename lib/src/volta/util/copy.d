@@ -210,15 +210,13 @@ ir.PrimitiveType copy(ir.PrimitiveType old)
 
 ir.PointerType copy(ir.PointerType old)
 {
-	auto pt = new ir.PointerType(copyType(old.base));
-	pt.loc = old.loc;
+	auto pt = new ir.PointerType(/*#ref*/old.loc, copyType(old.base));
 	return pt;
 }
 
 ir.ArrayType copy(ir.ArrayType old)
 {
-	auto at = new ir.ArrayType(copyType(old.base));
-	at.loc = old.loc;
+	auto at = new ir.ArrayType(/*#ref*/old.loc, copyType(old.base));
 	return at;
 }
 

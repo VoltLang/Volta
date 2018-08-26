@@ -4,6 +4,7 @@
 module volt.semantic.lifter;
 
 import ir = volta.ir;
+import volta.ir.location : Location;
 import volt.ir.lifter : Lifter;
 import volta.util.util : buildQualifiedName;
 import volta.util.dup;
@@ -89,7 +90,7 @@ public:
 		}
 
 		if (mMod is null) {
-			newModule();
+			newModule(/*#ref*/func.loc);
 		}
 
 		return doLift(func);
@@ -106,7 +107,7 @@ public:
 		}
 
 		if (mMod is null) {
-			newModule();
+			newModule(/*#ref*/var.loc);
 		}
 
 		return doLift(var);
@@ -123,7 +124,7 @@ public:
 		}
 
 		if (mMod is null) {
-			newModule();
+			newModule(/*#ref*/fp.loc);
 		}
 
 		return doLift(fp);
@@ -158,13 +159,14 @@ protected:
 	 * Does not clear the function cache, so functions can refer
 	 * to functions in earlier modules.
 	 */
-	void newModule()
+	void newModule(ref Location loc)
 	{
 		assert(mMod is null);
 
 		auto name = "CTFETESTMODULE";
 
 		mMod = new ir.Module();
+		mMod.loc = loc;
 		mMod.name = buildQualifiedName(/*#ref*/mMod.loc, name);
 		mMod.children = new ir.TopLevelBlock();
 		mMod.children.loc = mMod.loc;

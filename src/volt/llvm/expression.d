@@ -851,6 +851,7 @@ void handleAddrOf(State state, ir.Unary de, Value result)
 	state.getValueRef(de.value, result);
 
 	auto pt = new ir.PointerType();
+	pt.loc = de.loc;
 	pt.base = result.type.irType;
 	assert(pt.base !is null);
 	pt.mangledName = volt.semantic.mangle.mangle(pt);
@@ -1026,8 +1027,7 @@ void handleSliceTwo(State state, ir.Postfix postfix, Value result)
 		makeNonPointer(state, left);
 		auto irPt = cast(ir.PointerType)pt.irType;
 		assert(irPt !is null);
-		auto irAt = new ir.ArrayType(irPt.base);
-		irAt.loc = postfix.loc;
+		auto irAt = new ir.ArrayType(/*#ref*/postfix.loc, irPt.base);
 		addMangledName(irAt);
 		at = cast(ArrayType)state.fromIr(irAt);
 		assert(at !is null);

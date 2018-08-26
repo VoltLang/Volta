@@ -232,7 +232,12 @@ public:
 
 public:
 	this() { super(NodeType.PointerType); }
-	this(Type base) { super(NodeType.PointerType); this.base = base; }
+	this(ref in Location loc, Type base)
+	{
+		super(NodeType.PointerType);
+		this.base = base;
+		this.loc = loc;
+	}
 
 	this(PointerType old)
 	{
@@ -282,7 +287,12 @@ public:
 
 public:
 	this() { super(NodeType.ArrayType); }
-	this(Type base) { super(NodeType.ArrayType); this.base = base; }
+	this(ref in Location loc, Type base)
+	{
+		super(NodeType.ArrayType);
+		this.base = base;
+		this.loc = loc;
+	}
 
 	this(ArrayType old)
 	{

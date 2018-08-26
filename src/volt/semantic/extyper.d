@@ -1937,12 +1937,12 @@ ir.Type extypeBinOp(Context ctx, ir.BinOp bin, ir.PrimitiveType lprim, ir.Primit
 	    bin.op != ir.BinOp.Op.Equal &&
 	    bin.op != ir.BinOp.Op.NotEqual) {
 		if (isBool(lprim)) {
-			auto i = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
+			auto i = buildInt(/*#ref*/bin.left.loc);
 			lprim = i;
 			bin.left = buildCastSmart(i, bin.left);
 		}
 		if (isBool(rprim)) {
-			auto i = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
+			auto i = buildInt(/*#ref*/bin.right.loc);
 			rprim = i;
 			bin.right = buildCastSmart(i, bin.right);
 		}
@@ -1964,7 +1964,7 @@ ir.Type extypeBinOp(Context ctx, ir.BinOp bin, ir.PrimitiveType lprim, ir.Primit
 
 		if (bin.op != ir.BinOp.Op.Assign && intsz > largestsz && isIntegral(lprim)) {
 			largestsz = intsz;
-			largestType = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
+			largestType = buildInt(/*#ref*/bin.loc);
 		}
 
 		if (leftsz < largestsz) {
@@ -2525,7 +2525,7 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 	}
 
 	if (binop.op == ir.BinOp.Op.AndAnd || binop.op == ir.BinOp.Op.OrOr) {
-		auto boolType = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
+		auto boolType = buildBool(/*#ref*/exp.loc);
 		if (!typesEqual(ltype, boolType)) {
 			binop.left = buildCastSmart(boolType, binop.left);
 		}

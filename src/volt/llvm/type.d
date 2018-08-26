@@ -392,7 +392,7 @@ private:
 			base = state.ubyteType;
 		}
 
-		auto irPtr = new ir.PointerType(base.irType);
+		auto irPtr = new ir.PointerType(/*#ref*/at.loc, base.irType);
 		addMangledName(irPtr);
 		ptrType = cast(PointerType) .fromIr(state, irPtr);
 		base = ptrType.base;
@@ -471,7 +471,7 @@ public:
 private:
 	this(State state, ir.StaticArrayType sat)
 	{
-		auto irArray = new ir.ArrayType(sat.base);
+		auto irArray = new ir.ArrayType(/*#ref*/sat.loc, sat.base);
 		addMangledName(irArray);
 		arrayType = cast(ArrayType) .fromIr(state, irArray);
 		base = arrayType.base;
@@ -576,7 +576,7 @@ private:
 
 		foreach (i, type; params) {
 			if (ft.isArgRef[i] || ft.isArgOut[i] || type.passByVal) {
-				auto irPtr = new ir.PointerType(type.irType);
+				auto irPtr = new ir.PointerType(/*#ref*/type.irType.loc, type.irType);
 				addMangledName(irPtr);
 				auto ptrType = cast(PointerType) .fromIr(state, irPtr);
 
@@ -617,7 +617,7 @@ private:
 
 		// Handle return structs via arguments.
 		if (hasStructRet) {
-			auto irPtr = new ir.PointerType(argRet.irType);
+			auto irPtr = new ir.PointerType(/*#ref*/argRet.irType.loc, argRet.irType);
 			addMangledName(irPtr);
 			auto ptrType = cast(PointerType) .fromIr(state, irPtr);
 
@@ -1057,18 +1057,18 @@ Type fromIrImpl(State state, ir.Type irType)
  */
 void buildCommonTypes(State state, bool V_P64)
 {
-	auto voidTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Void);
+	auto l = state.irMod.loc;
+	auto voidTypeIr = buildVoid(/*#ref*/l);
 
-	auto boolTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Bool);
-	auto byteTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Byte);
-	auto ubyteTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Ubyte);
-	auto intTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Int);
-	auto uintTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Uint);
-	auto ulongTypeIr = new ir.PrimitiveType(ir.PrimitiveType.Kind.Ulong);
+	auto boolTypeIr = buildBool(/*#ref*/l);
+	auto byteTypeIr = buildByte(/*#ref*/l);
+	auto ubyteTypeIr = buildUbyte(/*#ref*/l);
+	auto intTypeIr = buildInt(/*#ref*/l);
+	auto uintTypeIr = buildUint(/*#ref*/l);
+	auto ulongTypeIr = buildUlong(/*#ref*/l);
 
-	auto voidPtrTypeIr = new ir.PointerType(voidTypeIr);
-	auto voidFunctionTypeIr = new ir.FunctionType();
-	voidFunctionTypeIr.ret = voidTypeIr;
+	auto voidPtrTypeIr = buildVoidPtr(/*#ref*/l);
+	auto voidFunctionTypeIr = buildFunctionTypeSmart(/*#ref*/l, voidTypeIr);
 
 	auto spingTypeIr = buildFunctionTypeSmart(
 		/*#ref*/voidTypeIr.loc, voidTypeIr, voidPtrTypeIr);

@@ -241,6 +241,7 @@ ParseStatus unaryToExp(ParserStream ps, intir.UnaryExp unary, out ir.Exp exp)
 		exp = u;
 	} else if (unary.op == ir.Unary.Op.Dup) {
 		auto u = new ir.Unary();
+		u.loc = unary.loc;
 		void transformDollar(ref ir.Exp rexp)
 		{
 			auto bop = cast(ir.BinOp)rexp;
@@ -255,7 +256,6 @@ ParseStatus unaryToExp(ParserStream ps, intir.UnaryExp unary, out ir.Exp exp)
 			}
 			rexp = buildPostfixIdentifier(/*#ref*/rexp.loc, u.value, "length");
 		}
-		u.loc = unary.dupExp.loc;
 		u.op = unary.op;
 		auto succeeded = postfixToExp(ps, /*#ref*/unary.loc, /*#out*/u.value, unary.dupExp.name);
 		auto pfix = cast(ir.Postfix)u.value;
@@ -1622,7 +1622,7 @@ ParseStatus parsePrimaryExp(ParserStream ps, out intir.PrimaryExp exp)
 			if (!succeeded) {
 				return parseFailed(ps, ir.NodeType.Assert);
 			}
-			return Succeeded;
+			break;
 		}
 		auto token = ps.get();
 		exp._string = token.value;

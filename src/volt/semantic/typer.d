@@ -413,8 +413,7 @@ ir.Type getPostfixSliceType(ir.Postfix postfix)
 
 	if (array is null) {
 		assert(base !is null);
-		array = new ir.ArrayType(base);
-		array.loc = postfix.loc;
+		array = new ir.ArrayType(/*#ref*/postfix.loc, base);
 	}
 
 	return array;
@@ -689,16 +688,14 @@ ir.Type getUnaryAddrOfType(ir.Unary unary)
 		throw panic(/*#ref*/unary.loc, "non lvalue addrof in typer.");
 	}
 	auto type = getExpType(unary.value);
-	auto pointer = new ir.PointerType(type);
-	pointer.loc = unary.loc;
+	auto pointer = new ir.PointerType(/*#ref*/unary.loc, type);
 	return pointer;
 }
 
 ir.Type getUnaryNewType(ir.Unary unary)
 {
 	if (!unary.hasArgumentList) {
-		auto pointer = new ir.PointerType(unary.type);
-		pointer.loc = unary.loc;
+		auto pointer = new ir.PointerType(/*#ref*/unary.loc, unary.type);
 		return pointer;
 	} else {
 		assert(unary.hasArgumentList);

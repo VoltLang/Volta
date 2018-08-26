@@ -133,6 +133,7 @@ void handleConstAddrOf(State state, ir.Unary de, Value result)
 	auto v = state.getVariableValue(var, /*#out*/type);
 
 	auto pt = new ir.PointerType();
+	pt.loc = de.loc;
 	pt.base = type.irType;
 	assert(pt.base !is null);
 	pt.mangledName = volt.semantic.mangle.mangle(pt);

@@ -29,37 +29,42 @@ int takeDigit(ref string mangledString)
 	return toInt(numbuf.toString());
 }
 
-ir.Identifier takeNameSegment(ref string mangledString)
+ir.Identifier takeNameSegment(ref string mangledString, ref Location loc)
 {
 	int count = mangledString.takeDigit();
 
 	auto ident = new ir.Identifier();
+	ident.loc = loc;
 	ident.value = mangledString.take(cast(size_t)count);
 	return ident;
 }
 
-ir.QualifiedName takeName(ref string mangledString)
+ir.QualifiedName takeName(ref string mangledString, ref Location loc)
 {
 	auto qname = new ir.QualifiedName();
+	qname.loc = loc;
 	while (mangledString[0].isDigit()) {
-		qname.identifiers ~= mangledString.takeNameSegment();
+		qname.identifiers ~= mangledString.takeNameSegment(/*#ref*/loc);
+		qname.identifiers[$-1].loc = loc;
 	}
 	return qname;
 }
 
-ir.Declaration mangledToDeclaration(string mangledString)
+ir.Declaration mangledToDeclaration(string mangledString, ref Location loc)
 {
 	auto exportTag = mangledString.take(2);
-	auto name = mangledString.takeName();
+	auto name = mangledString.takeName(/*#ref*/loc);
 
 	if (exportTag == "Vv") {
-		auto var = mangledString.mangledToVariable();
+		auto var = mangledString.mangledToVariable(/*#ref*/loc);
+		var.loc = loc;
 		var.name = name.identifiers[$-1].value;
 		return var;
 	} else if (exportTag == "Vf") {
 		auto func = new ir.Function();
+		func.loc = loc;
 		func.name = name.identifiers[$-1].value;
-		func.type = cast(ir.FunctionType) mangledString.mangleToCallable();
+		func.type = cast(ir.FunctionType) mangledString.mangleToCallable(/*#ref*/loc);
 		assert(func.type !is null);
 		return func;
 	}
@@ -67,15 +72,16 @@ ir.Declaration mangledToDeclaration(string mangledString)
 	assert(false);
 }
 
-ir.Variable mangledToVariable(string mangledString)
+ir.Variable mangledToVariable(string mangledString, ref Location loc)
 {
 	auto var = new ir.Variable();
+	var.loc = loc;
 	bool isRef;
 	if (mangledString[0] == 'r') {
 		mangledString.take(1);
 		isRef = true;
 	}
-	var.type = mangledString.mangledToType();
+	var.type = mangledString.mangledToType(/*#ref*/loc);
 	if (isRef) {
 		auto storage = new ir.StorageType();
 		storage.loc = var.type.loc;
@@ -86,9 +92,8 @@ ir.Variable mangledToVariable(string mangledString)
 	return var;
 }
 
-ir.Type mangledToType(ref string mangledString)
+ir.Type mangledToType(ref string mangledString, ref Location loc)
 {
-	Location loc;
 	switch (mangledString.take(1)) {
 	case "b":
 		return buildByte(/*#ref*/loc);
@@ -131,66 +136,71 @@ ir.Type mangledToType(ref string mangledString)
 			assert(false);
 		}
 	case "p":
-		return buildPtrSmart(/*#ref*/loc, mangledString.mangledToType());
+		return buildPtrSmart(/*#ref*/loc, mangledString.mangledToType(/*#ref*/loc));
 	case "a":
 		if (mangledString[0] == 't') {
 			mangledString.take(1);
 			auto length = cast(size_t)mangledString.takeDigit();
-			return buildStaticArrayTypeSmart(/*#ref*/loc, length, mangledString.mangledToType());
+			return buildStaticArrayTypeSmart(/*#ref*/loc, length, mangledString.mangledToType(/*#ref*/loc));
 		}
-		return buildArrayTypeSmart(/*#ref*/loc, mangledString.mangledToType());
+		return buildArrayTypeSmart(/*#ref*/loc, mangledString.mangledToType(/*#ref*/loc));
 	case "A":
 		if (mangledString[0] == 'a') {
 			mangledString.take(1);
-			ir.Type key = mangledString.mangledToType();
-			ir.Type value = mangledString.mangledToType();
+			ir.Type key = mangledString.mangledToType(/*#ref*/loc);
+			ir.Type value = mangledString.mangledToType(/*#ref*/loc);
 			return buildAATypeSmart(/*#ref*/loc, key, value);
 		} else {
 			assert(false, "annotation");
 		}
 	case "e":
-		return buildStorageType(/*#ref*/loc, ir.StorageType.Kind.Scope, mangledString.mangledToType());
+		return buildStorageType(/*#ref*/loc, ir.StorageType.Kind.Scope, mangledString.mangledToType(/*#ref*/loc));
 	case "o":
-		return buildStorageType(/*#ref*/loc, ir.StorageType.Kind.Const, mangledString.mangledToType());
+		return buildStorageType(/*#ref*/loc, ir.StorageType.Kind.Const, mangledString.mangledToType(/*#ref*/loc));
 	case "m":
-		return buildStorageType(/*#ref*/loc, ir.StorageType.Kind.Immutable, mangledString.mangledToType());
+		return buildStorageType(/*#ref*/loc, ir.StorageType.Kind.Immutable, mangledString.mangledToType(/*#ref*/loc));
 	case "n":
-		return buildStorageType(/*#ref*/loc, ir.StorageType.Kind.Immutable, mangledString.mangledToType());
+		return buildStorageType(/*#ref*/loc, ir.StorageType.Kind.Immutable, mangledString.mangledToType(/*#ref*/loc));
 	case "r":
 		assert(false, "ref");
 	case "E":
-		auto qname = mangledString.takeName();
+		auto qname = mangledString.takeName(/*#ref*/loc);
 		auto _enum = new ir.Enum();
+		_enum.loc = loc;
 		_enum.name = qname.identifiers[$-1].value;
 		return _enum;
 	case "C":
-		auto qname = mangledString.takeName();
+		auto qname = mangledString.takeName(/*#ref*/loc);
 		auto _class = new ir.Class();
+		_class.loc = loc;
 		_class.name = qname.identifiers[$-1].value;
 		return _class;
 	case "S":
-		auto qname = mangledString.takeName();
+		auto qname = mangledString.takeName(/*#ref*/loc);
 		auto _struct = new ir.Struct();
+		_struct.loc = loc;
 		_struct.name = qname.identifiers[$-1].value;
 		return _struct;
 	case "U":
-		auto qname = mangledString.takeName();
+		auto qname = mangledString.takeName(/*#ref*/loc);
 		auto _union = new ir.Union();
+		_union.loc = loc;
 		_union.name = qname.identifiers[$-1].value;
 		return _union;
 	case "I":
-		auto qname = mangledString.takeName();
+		auto qname = mangledString.takeName(/*#ref*/loc);
 		auto _iface = new ir._Interface();
+		_iface.loc = loc;
 		_iface.name = qname.identifiers[$-1].value;
 		return _iface;
 	case "F", "D":
-		return mangledString.mangleToCallable();
+		return mangledString.mangleToCallable(/*#ref*/loc);
 	default:
 		assert(false);
 	}
 }
 
-ir.CallableType mangleToCallable(ref string mangledString)
+ir.CallableType mangleToCallable(ref string mangledString, ref Location loc)
 {
 	ir.CallableType ctype;
 	auto t = mangledString.take(1);
@@ -201,6 +211,7 @@ ir.CallableType mangleToCallable(ref string mangledString)
 	} else {
 		assert(false);
 	}
+	ctype.loc = loc;
 
 	auto cc = mangledString.take(1);
 	switch (cc) {
@@ -227,7 +238,7 @@ ir.CallableType mangleToCallable(ref string mangledString)
 	}
 
 	while (mangledString[0] != 'X' && mangledString[0] != 'Y' && mangledString[0] != 'Z') {
-		ctype.params ~= mangledString.mangledToType();
+		ctype.params ~= mangledString.mangledToType(/*#ref*/loc);
 	}
 
 	auto argsclose = mangledString.take(1);
@@ -238,7 +249,7 @@ ir.CallableType mangleToCallable(ref string mangledString)
 		assert(false);
 	}
 
-	ctype.ret = mangledString.mangledToType();
+	ctype.ret = mangledString.mangledToType(/*#ref*/loc);
 
 	return ctype;
 }

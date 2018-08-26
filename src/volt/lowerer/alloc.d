@@ -68,8 +68,7 @@ ir.Exp buildAllocTypePtr(ref in Location loc, LanguagePass lp, ir.Type type,
 {
 	auto pfixCall = buildAllocVoidPtr(/*#ref*/loc, lp, type, countArg);
 
-	auto result = new ir.PointerType(copyTypeSmart(/*#ref*/loc, type));
-	result.loc = loc;
+	auto result = new ir.PointerType(/*#ref*/loc, copyTypeSmart(/*#ref*/loc, type));
 	auto resultCast = new ir.Unary(result, pfixCall);
 	resultCast.loc = loc;
 	return resultCast;

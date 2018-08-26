@@ -562,6 +562,7 @@ ParseStatus parseConstructor(ParserStream ps, out ir.Function c)
 	pt.loc = c.loc;
 
 	c.type = new ir.FunctionType();
+	c.type.loc = c.loc;
 	c.type.ret = pt;
 
 	ir.Variable[] params;
@@ -689,6 +690,7 @@ ParseStatus parseDestructor(ParserStream ps, out ir.Function d)
 	pt.loc = d.loc;
 
 	d.type = new ir.FunctionType();
+	d.type.loc = d.loc;
 	d.type.ret = pt;
 	succeeded = parseBraceCountedTokenList(ps, /*#out*/d.tokensBody, d);
 	if (!succeeded) {

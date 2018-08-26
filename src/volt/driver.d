@@ -500,6 +500,10 @@ protected:
 				q.identifiers ~= new ir.Identifier(id);
 			}
 			auto m = loadModule(q);
+			q.loc = m.loc;
+			foreach (ident; q.identifiers) {
+				ident.loc = m.loc;
+			}
 			bool hasAdded;
 			foreach_reverse (other; mCommandLineModules) {
 				if (other is m) {

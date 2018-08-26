@@ -1355,7 +1355,9 @@ ParseStatus parseMixinStatement(ParserStream ps, out ir.MixinStatement ms)
 		auto ident = ps.get();
 
 		auto qualifiedName = new ir.QualifiedName();
+		qualifiedName.loc = ps.peek.loc;
 		qualifiedName.identifiers ~= new ir.Identifier(ident.value);
+		qualifiedName.identifiers[$-1].loc = ps.peek.loc;
 
 		ms.id = qualifiedName;
 

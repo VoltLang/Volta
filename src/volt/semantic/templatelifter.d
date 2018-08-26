@@ -644,6 +644,7 @@ ir.Node[] processNewTemplateArguments(LanguagePass lp, ir.Scope lookScope, ir.Sc
 			// alias to types we need to resolve the alias
 			// like normal aliases via the lp.
 			auto a = new ir.Alias();
+			a.loc = arg.loc;
 			a.isResolved = true;
 			a.name = td.parameters[i].name;
 			a.lookScope = lookScope;

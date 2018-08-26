@@ -218,7 +218,7 @@ void propagateStorage(ir.Type type)
 ir.Type accumulateStorage(ir.Type toType, ir.Type seed=null)
 {
 	if (seed is null) {
-		seed = new ir.NullType();
+		seed = buildNullType(/*#ref*/toType.loc);
 	}
 	addStorage(seed, toType);
 

@@ -149,14 +149,12 @@ ir.Type copyTypeSmart(ref in Location loc, ir.Type type)
 		break;
 	case PointerType:
 		auto pt = cast(ir.PointerType)type;
-		pt = new ir.PointerType(copyTypeSmart(/*#ref*/loc, pt.base));
-		pt.loc = loc;
+		pt = new ir.PointerType(/*#ref*/loc, copyTypeSmart(/*#ref*/loc, pt.base));
 		outType = pt;
 		break;
 	case ArrayType:
 		auto at = cast(ir.ArrayType)type;
-		at = new ir.ArrayType(copyTypeSmart(/*#ref*/loc, at.base));
-		at.loc = loc;
+		at = new ir.ArrayType(/*#ref*/loc, copyTypeSmart(/*#ref*/loc, at.base));
 		outType = at;
 		break;
 	case StaticArrayType:
@@ -350,8 +348,7 @@ ir.ArrayType buildStringArray(ref in Location loc)
  */
 ir.PointerType buildVoidPtr(ref in Location loc)
 {
-	auto pt = new ir.PointerType(buildVoid(/*#ref*/loc));
-	pt.loc = loc;
+	auto pt = new ir.PointerType(/*#ref*/loc, buildVoid(/*#ref*/loc));
 
 	return pt;
 }
@@ -361,24 +358,21 @@ ir.PointerType buildVoidPtr(ref in Location loc)
  */
 ir.ArrayType buildVoidArray(ref in Location loc)
 {
-	auto at = new ir.ArrayType(buildVoid(/*#ref*/loc));
-	at.loc = loc;
+	auto at = new ir.ArrayType(/*#ref*/loc, buildVoid(/*#ref*/loc));
 
 	return at;
 }
 
 ir.PointerType buildPtrSmart(ref in Location loc, ir.Type base)
 {
-	auto pt = new ir.PointerType(copyTypeSmart(/*#ref*/loc, base));
-	pt.loc = loc;
+	auto pt = new ir.PointerType(/*#ref*/loc, copyTypeSmart(/*#ref*/loc, base));
 
 	return pt;
 }
 
 ir.PointerType buildPtr(ref in Location loc, ir.Type base)
 {
-	auto pt = new ir.PointerType(base);
-	pt.loc = loc;
+	auto pt = new ir.PointerType(/*#ref*/loc, base);
 
 	return pt;
 }

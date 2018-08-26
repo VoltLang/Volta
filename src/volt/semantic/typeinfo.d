@@ -146,7 +146,11 @@ ir.ClassLiteral buildTypeInfoLiteral(LanguagePass lp, ir.Module mod, ir.Type typ
 	mangledNameConstant.loc = type.loc;
 	mangledNameConstant._string = type.mangledName;
 	mangledNameConstant.arrayData = cast(immutable(void)[]) mangledNameConstant._string;
-	mangledNameConstant.type = new ir.ArrayType(new ir.PrimitiveType(ir.PrimitiveType.Kind.Char));
+	auto _at = new ir.ArrayType();
+	_at.loc = type.loc;
+	_at.base = new ir.PrimitiveType(ir.PrimitiveType.Kind.Char);
+	_at.base.loc = type.loc;
+	mangledNameConstant.type = _at;
 
 	bool mindirection = mutableIndirection(type);
 	auto mindirectionConstant = new ir.Constant();

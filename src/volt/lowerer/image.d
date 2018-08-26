@@ -124,6 +124,7 @@ public:
 	//! Collect the tors from @p m and emit extern(C) main if needed.
 	override void transform(ir.Module m)
 	{
+		setLocations(/*#ref*/m.loc);
 		prefix = "__V_";
 		foreach (id; m.name.identifiers) {
 			prefix ~= format("%s%s", id.value.length, id.value);
@@ -234,5 +235,13 @@ public:
 		}
 
 		arr.exps ~= buildExpReference(/*#ref*/func.loc, func);
+	}
+
+	void setLocations(ref Location loc)
+	{
+		globalConstructors.loc = loc;
+		globalDestructors.loc = loc;
+		localConstructors.loc = loc;
+		localDestructors.loc = loc;
 	}
 }
