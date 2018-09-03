@@ -52,7 +52,7 @@ public:
 		settings.setDefault();
 		settings.warningsEnabled = true;
 		versionSet = new VersionSet();
-		versionSet.set(settings.arch, settings.platform, settings.cRuntime);
+		versionSet.set(settings.arch, settings.platform, settings.cRuntime, /*Intrinsic version.*/2);
 		sgv = new SymbolGathererVisitor();
 	}
 
