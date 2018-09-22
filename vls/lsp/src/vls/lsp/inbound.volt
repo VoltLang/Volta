@@ -1,4 +1,6 @@
-/**
+// Copyright 2017-2018, Bernard Helyer.
+// SPDX-License-Identifier: BSL-1.0
+/*!
  * Handles inbound communication between the client (editor) and the server (us).
  */
 module vls.lsp.inbound;

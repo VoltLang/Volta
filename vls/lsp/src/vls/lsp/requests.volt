@@ -1,3 +1,5 @@
+// Copyright 2017-2018, Bernard Helyer.
+// SPDX-License-Identifier: BSL-1.0
 module vls.lsp.requests;
 
 import watt.json;

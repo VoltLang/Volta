@@ -1,4 +1,6 @@
-/**
+// Copyright 2017-2018, Bernard Helyer.
+// SPDX-License-Identifier: BSL-1.0
+/*!
  * Package to make dealing with VSCodes Language Server Protocol easier.
  * Which uses JSON RPC over stdin/stdout, with a few additional headers.
  */

@@ -1,4 +1,8 @@
-// Code for creating completion lists.
+// Copyright 2017-2018, Bernard Helyer.
+// SPDX-License-Identifier: BSL-1.0
+/*!
+ * Code for creating completion lists.
+ */
 module vls.semantic.completionList;
 
 import core = core.rt.format;

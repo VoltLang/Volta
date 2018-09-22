@@ -1,3 +1,5 @@
+// Copyright 2017-2018, Bernard Helyer.
+// SPDX-License-Identifier: BSL-1.0
 /*!
  * You approach the small yet mildly intricate module with apprehension.  
  * Rubbing your hand against it, you remark out loud to no one in particular

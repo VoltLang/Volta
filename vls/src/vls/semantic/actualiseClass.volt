@@ -1,3 +1,5 @@
+// Copyright 2017-2018, Bernard Helyer.
+// SPDX-License-Identifier: BSL-1.0
 module vls.semantic.actualiseClass;
 /* This should be replaced once the semantic pass
  * proper is made no throw and we can use the real

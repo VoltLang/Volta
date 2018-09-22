@@ -1,3 +1,5 @@
+// Copyright 2017-2018, Bernard Helyer.
+// SPDX-License-Identifier: BSL-1.0
 module vls.lsp.util;
 
 import watt = [watt.text.string, watt.text.path, watt.text.ascii, watt.text.utf,

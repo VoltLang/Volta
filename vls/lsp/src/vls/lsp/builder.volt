@@ -1,3 +1,5 @@
+// Copyright 2017-2018, Bernard Helyer.
+// SPDX-License-Identifier: BSL-1.0
 /*!
  * Convenience functions for creating JSON LSP response strings.
  */

@@ -1,4 +1,4 @@
-// Copyright 2018, Bernard Helyer.
+// Copyright 2017-2018, Bernard Helyer.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * A thread that checks vlsc's input for client messages.
