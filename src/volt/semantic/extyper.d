@@ -892,6 +892,16 @@ ir.Type extypePostfixLeave(Context ctx, ref ir.Exp exp, ir.Postfix postfix,
 	case Index:
 		extypePostfixIndex(ctx, /*#ref*/exp, postfix);
 		break;
+	case Default:
+		if (postfix.child.nodeType == ir.NodeType.TypeExp ||
+			postfix.child.nodeType == ir.NodeType.TypeReference ||
+			postfix.child.nodeType == ir.NodeType.StoreExp) {
+			auto t = realType(getExpType(postfix.child));
+			exp = getDefaultInit(/*#ref*/exp.loc, ctx.lp, t);
+		} else {
+			throw makeDefaultOnExpression(/*#ref*/exp.loc);
+		}
+		break;
 	case None:
 		throw panic(postfix, "invalid op");
 	}
@@ -4343,10 +4353,6 @@ void actualizeFunction(Context ctx, ir.Function func)
 		done();
 	}
 
-	if (func.name == "init") {
-		throw makeFunctionNamedInit(/*#ref*/func.loc);
-	}
-
 	// Error checking
 	if (ctx.functionDepth >= 2) {
 		throw makeNestedNested(/*#ref*/func.loc);
@@ -4796,13 +4802,6 @@ void resolveVariable(Context ctx, ir.Variable v)
 		throw makeConstField(v);
 	}
 
-	if (inAggregate &&
-		(v.storage == ir.Variable.Storage.Global ||
-		 v.storage == ir.Variable.Storage.Local) &&
-		v.name == "init") {
-		throw makeAggregateStaticVariableNamedInit(/*#ref*/v.loc);
-	}
-
 	if (v.assign !is null) {
 		if (!isAuto(v.type)) {
 			tagLiteralType(v.assign, v.type);
@@ -4838,7 +4837,8 @@ void lazyParseBlock(Context ctx, ir.Scope current, ref ir.Token[] tokens, ref ir
 	if (tokens.length == 0 || blockStatement !is null) {
 		return;
 	}
-	blockStatement = ctx.lp.frontend.parseBlockStatement(/*#ref*/tokens);
+	auto mod = getModuleFromScope(/*#ref*/tokens[0].loc, current);
+	blockStatement = ctx.lp.frontend.parseBlockStatement(/*#ref*/tokens, mod.magicFlagD);
 }
 
 void resolveFunction(Context ctx, ir.Function func)

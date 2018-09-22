@@ -61,10 +61,16 @@ CompilerException makeEmitLLVMNoLink(string file = __FILE__, const int line = __
  *
  */
 
+CompilerException makeDefaultOnExpression(ref in Location loc,
+	string file = __FILE__, const int line = __LINE__)
+{
+	return makeError(/*#ref*/loc, ".default on non-type expression.", file, line);
+}
+
 CompilerException makeCannotCastPointerToDelegate(ref in Location loc,
 	string file = __FILE__, const int line = __LINE__)
 {
-	return makeError(/*#ref*/loc, "cannot cast a delegate to a pointer.");
+	return makeError(/*#ref*/loc, "cannot cast a delegate to a pointer.", file, line);
 }
 
 CompilerException makeMismatchedTemplateInstanceAndDefinition(ref in Location loc, ir.TemplateKind instanceKind,

@@ -59,7 +59,7 @@ public:
 
 	/*!
 	 * Simpler helper for getting values,
-	 * returns `Value.init` if the key was not found.
+	 * returns `Value.default` if the key was not found.
 	 */
 	fn getOrInit(key: Key) Value
 	{
@@ -304,8 +304,8 @@ public:
 	fn clearAt(index: size_t)
 	{
 		mDistances.ptr[index] = 0;
-		mValues.ptr[index] = Value.init;
-		mKeys.ptr[index] = Key.init;
+		mValues.ptr[index] = Value.default;
+		mKeys.ptr[index] = Key.default;
 	}
 
 
@@ -386,7 +386,7 @@ public:
 
 	/*!
 	 * Simpler helper for getting values,
-	 * returns `Value.init` if the key was not found.
+	 * returns `Value.default` if the key was not found.
 	 */
 	fn getOrInit(key: Key) Value
 	{
@@ -646,8 +646,8 @@ public:
 	fn clearAt(index: size_t)
 	{
 		mDistances.ptr[index] = 0;
-		mValues.ptr[index] = Value.init;
-		mKeys.ptr[index] = null; // @todo Key.init;
+		mValues.ptr[index] = Value.default;
+		mKeys.ptr[index] = null; // @todo Key.default;
 	}
 
 

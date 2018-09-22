@@ -149,9 +149,12 @@ interface Frontend
 	 * @param[in] tokens The list of tokens that comprise the body of the
 	 *                   function. Starts with BEGIN {, and ends with
 	 *                   } END tokens.
+	 * @param[in] magicFlagD Whether the tokens should use legacy parsing
+	 *                       functionality, as if they had the magic D flag
+	 *                       on top.
 	 * @return The parsed BlockStatement.
 	 */
-	ir.BlockStatement parseBlockStatement(ref ir.Token[] tokens);
+	ir.BlockStatement parseBlockStatement(ref ir.Token[] tokens, bool magicFlagD);
 
 	/*!
 	 * Parse a zero or more statements from a string, does not

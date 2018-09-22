@@ -437,7 +437,7 @@ ir.Type[] expsToTypes(ir.Exp[] exps)
 }
 
 /*!
- * Gets a default value (The .init -- 0, or null, usually) for a given type.
+ * Gets a default value (The .default -- 0, or null, usually) for a given type.
  */
 ir.Exp getDefaultInit(ref in Location loc, LanguagePass lp, ir.Type t)
 {
@@ -508,6 +508,12 @@ bool typeLookup(Context ctx, ref ir.Exp exp, ir.Type type)
 		return false;
 	}
 	auto value = postfix.identifier.value;
+	bool initValue = value == "init" || value == "default";
+
+	auto mod = getModuleFromScope(/*#ref*/exp.loc, ctx.current);
+	if (value == "init" && !mod.magicFlagD) {
+		initValue = false;
+	}
 
 	bool max;
 	auto realt = realType(type);
@@ -515,7 +521,7 @@ bool typeLookup(Context ctx, ref ir.Exp exp, ir.Type type)
 	auto pointer = realt.toPointerTypeChecked();
 	auto named = cast(ir.Named)realt;
 
-	if (postfix.identifier.value == "init" &&
+	if (initValue &&
 		(named !is null || (prim is null && pointer is null))) {
 		exp = getDefaultInit(/*#ref*/exp.loc, ctx.lp, type);
 		return true;
@@ -532,9 +538,13 @@ bool typeLookup(Context ctx, ref ir.Exp exp, ir.Type type)
 	}
 
 	switch (value) {
-	case "init":
-		exp = getDefaultInit(/*#ref*/exp.loc, ctx.lp, type);
-		return true;
+	case "init", "default":
+		if (initValue) {
+			exp = getDefaultInit(/*#ref*/exp.loc, ctx.lp, type);
+			return true;
+		} else {
+			goto default;
+		}
 	case "max":
 		max = true;
 		break;
