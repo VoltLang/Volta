@@ -1,5 +1,3 @@
-//T macro:expect-failure
-//T check:static field 'init' collides
 module test;
 
 struct S

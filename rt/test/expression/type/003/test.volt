@@ -6,6 +6,6 @@ fn main() i32
 {
 	i: i32;
 	p := &i;
-	p = IntPointer.init;
+	p = IntPointer.default;
 	return cast(i32)p;
 }

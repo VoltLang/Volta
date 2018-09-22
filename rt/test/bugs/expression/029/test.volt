@@ -2,6 +2,6 @@ module test;
 
 fn main() i32
 {
-	foo := dchar.init;
+	foo := dchar.default;
 	return cast(i32)foo;
 }

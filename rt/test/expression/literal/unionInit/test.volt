@@ -15,6 +15,6 @@ fn main() i32
 	s: S;
 	s.x = 1;
 	s.u.y = 12;
-	s = S.init;
+	s = S.default;
 	return cast(i32)(s.x + s.u.y + s.u.z);
 }
