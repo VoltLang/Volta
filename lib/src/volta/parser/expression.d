@@ -1449,6 +1449,15 @@ ParseStatus parsePostfixExp(ParserStream ps, out intir.PostfixExp exp, bool disa
 	switch (ps.peek.type) {
 	case TokenType.Dot:
 		ps.get();
+		if (matchIf(ps, TokenType.Default)) {
+			exp.op = ir.Postfix.Op.Default;
+			auto succeeded = parsePostfixExp(ps, /*#out*/exp.postfix, disableNoDoubleDotSlice, depth);
+			if (!succeeded) {
+				return parseFailed(ps, ir.NodeType.Postfix);
+			}
+			break;
+		}
+
 		bool eof;
 		auto twoAhead = ps.lookahead(2, /*#out*/eof).type;
 		if (ps.lookahead(1, /*#out*/eof).type == TokenType.Bang &&
@@ -1775,6 +1784,8 @@ ParseStatus parsePrimaryExp(ParserStream ps, out intir.PrimaryExp exp)
 			}
 			if (matchIf(ps, TokenType.Typeid)) {
 				exp.op = intir.PrimaryExp.Type.Typeid;
+			} else if (matchIf(ps, TokenType.Default) && !ps.magicFlagD) {
+				exp._string = "default";
 			} else {
 				Token nameTok;
 				succeeded = match(ps, ir.NodeType.TypeExp, TokenType.Identifier, /*#out*/nameTok);
@@ -1831,6 +1842,8 @@ ParseStatus parsePrimaryExp(ParserStream ps, out intir.PrimaryExp exp)
 		}
 		if (matchIf(ps, TokenType.Typeid)) {
 			exp.op = intir.PrimaryExp.Type.Typeid;
+		} else if (matchIf(ps, TokenType.Default) && !ps.magicFlagD) {
+			exp._string = "default";
 		} else {
 			Token nameTok;
 			succeeded = match(ps, ir.NodeType.Constant, TokenType.Identifier, /*#out*/nameTok);

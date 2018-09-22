@@ -316,6 +316,7 @@ public:
 		Index,
 		Slice,
 		CreateDelegate,
+		Default,  //!< T.default -- default initialiser of T
 	}
 
 	enum TagKind
@@ -337,6 +338,7 @@ public:
 		case Op.Index: return "index";
 		case Op.Slice: return "slice";
 		case Op.CreateDelegate: return "createdelegate";
+		case Op.Default: return "default";
 		}
 	}
 

@@ -85,9 +85,10 @@ public:
 		return mod;
 	}
 
-	override ir.BlockStatement parseBlockStatement(ref ir.Token[] tokens)
+	override ir.BlockStatement parseBlockStatement(ref ir.Token[] tokens, bool magicFlagD)
 	{
 		auto parserStream = new ParserStream(tokens, settings, errSink);
+		parserStream.magicFlagD = magicFlagD;
 		ir.BlockStatement blockStatement;
 		auto parserStatus = parseBlock(parserStream, /*#out*/blockStatement);
 		checkError(parserStream, parserStatus);
