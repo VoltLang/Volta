@@ -6,7 +6,7 @@ scanForD = true
 #
 # We need the lib and dsupport to build
 #
-dependencies = ["volta.lib", "volta.dsupport"]
+dependencies = ["volta.lib", "volta.vls", "volta.dsupport"]
 #
 # Use llvm-config on osx and linux
 #

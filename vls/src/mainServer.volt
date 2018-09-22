@@ -1,4 +1,4 @@
-module main;
+module mainServer;
 
 import core.rt.thread;
 import watt = [watt.text.getopt, watt.io.streams, watt.io];
@@ -10,7 +10,8 @@ import modules = vls.modules;
 import inputThread = vls.lsp.inputThread;
 import messageHopper = vls.messageHopper;
 
-fn main(args: string[]) i32
+
+fn mainServer(args: string[]) i32
 {
 	inputStream: watt.InputStream = watt.input;
 	inputPath, modulePath: string;
