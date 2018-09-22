@@ -1,5 +1,3 @@
-//T macro:expect-failure
-//T check:functions may not be named 'init'
 module test;
 
 fn init(x: i32)

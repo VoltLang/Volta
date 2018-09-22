@@ -20,7 +20,7 @@ fn main() i32
 {
 	my: My;
 	my.foo = 42;
-	my = My.init;
+	my = My.default;
 
 	return my.foo;
 }

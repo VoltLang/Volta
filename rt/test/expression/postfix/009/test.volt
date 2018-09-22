@@ -8,6 +8,6 @@ fn main() i32
 {
 	s: S;
 	s.x = 32;
-	s = S.init;
+	s = S.default;
 	return s.x;
 }
