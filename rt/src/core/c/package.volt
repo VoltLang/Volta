@@ -1,5 +1,5 @@
 // Copyright 2013-2017, Bernard Helyer.
-// Copyright 2016-2017, Jakob Bornecrantz.
+// Copyright 2016-2018, Jakob Bornecrantz.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * @ref cbind, this package does not export anything, here for documentation.
@@ -13,7 +13,7 @@ module core.c;
  */
 
 /*!
- *  stdcbind C Standard Library Bindings
+ * @defgroup stdcbind C Standard Library Bindings
  *
  * Bindings to the C standard library.
  *
