@@ -56,4 +56,7 @@ version (Windows) {
 
 fn signal(sig: i32, func: fn(i32)) fn(i32);
 fn raise(sig: i32) i32;
-fn kill(pid: pid_t, sig: i32) i32;
+
+version (Posix) {
+	fn kill(pid: pid_t, sig: i32) i32;
+}
