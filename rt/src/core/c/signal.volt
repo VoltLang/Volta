@@ -1,4 +1,5 @@
 // Copyright 2005-2009, Sean Kelly.
+// Copyright 2017-2019, Jakob Bornecrantz.
 // SPDX-License-Identifier: BSL-1.0
 // File taken from druntime, and modified for Volt.
 /*!
@@ -8,6 +9,8 @@
 module core.c.signal;
 
 version (CRuntime_All):
+
+import core.c.posix.sys.types;
 
 
 extern(C):
@@ -53,3 +56,4 @@ version (Windows) {
 
 fn signal(sig: i32, func: fn(i32)) fn(i32);
 fn raise(sig: i32) i32;
+fn kill(pid: pid_t, sig: i32) i32;
