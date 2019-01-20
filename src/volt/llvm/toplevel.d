@@ -261,7 +261,7 @@ public:
 
 	override Status enter(ir.ReturnStatement ret)
 	{
-		assert(state.fall);
+		assert(state.fall, ret.loc.toString() ~ "Huh?");
 
 		Value val;
 		if (ret.exp !is null) {
