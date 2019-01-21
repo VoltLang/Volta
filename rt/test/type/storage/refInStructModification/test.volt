@@ -1,5 +1,4 @@
 //T macro:expect-failure
-//T has-passed:no
 module main;
 
 struct S

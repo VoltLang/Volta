@@ -2384,6 +2384,16 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 	}
 
 	// If assign and left is effectively const, throw an error.
+	auto ae = binop.left.toAccessExpChecked();
+	/* Prevent simple assignment modification of const aggregates. Proof-of-concept.
+	 * @todo:
+	 * This needs to handle nested structs.
+	 * Also, increment/decrement needs to be made verboten.
+	 * And calling non-const functions. Do we have a concept of that in the IR, or language?
+	 */
+	if (isAssign && ae !is null && effectivelyConst(getExpType(ae.child))) {
+		throw makeCannotModify(binop, ltype);
+	}
 	if (isAssign && effectivelyConst(ltype)) {
 		throw makeCannotModify(binop, ltype);
 	}
