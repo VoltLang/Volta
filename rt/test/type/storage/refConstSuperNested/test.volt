@@ -11,15 +11,20 @@ struct Y
 	myStruct: S;
 }
 
-fn breakTypeSystem(ref value: const Y)
+class Z
 {
-	value.myStruct.myValue = 23;
+	y: Y;
+}
+
+fn breakTypeSystem(ref value: const Z)
+{
+	value.y.myStruct.myValue = 23;
 }
 
 fn main() i32
 {
-	value: Y;
-	value.myStruct.myValue = 42;
+	value := new Z();
+	value.y.myStruct.myValue = 42;
 	breakTypeSystem(ref value);
 	return 0;
 }

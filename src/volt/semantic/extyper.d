@@ -882,6 +882,10 @@ ir.Type extypePostfixLeave(Context ctx, ref ir.Exp exp, ir.Postfix postfix,
 		break;
 	case Increment:
 	case Decrement:
+		if (effectiveConstAccessExp(postfix.child)) {
+			auto ptype = getExpType(postfix.child);
+			throw makeCannotModify(postfix.child, ptype);
+		}
 		// TODO Check that child is a PrimtiveType.
 		break;
 	case Identifier:
@@ -1871,6 +1875,10 @@ ir.Type extypeUnary(Context ctx, ref ir.Exp exp, Parent parent)
 		if (!isLValue(unary.value)) {
 			throw makeExpected(exp, "lvalue");
 		}
+		if (effectiveConstAccessExp(unary.value)) {
+			auto utype = getExpType(unary.value);
+			throw makeCannotModify(exp, utype);
+		}
 		return getExpType(exp);
 	case Dereference:
 		auto t = getExpType(unary.value);
@@ -2358,6 +2366,23 @@ bool rewriteOpIndexAssign(Context ctx, ir.BinOp binop, ref ir.Exp exp)
 }
 
 /*!
+ * If exp is an AccessExp that is effectively const,
+ * or an AccessExp with an effectively const AccessExp
+ * ancestor, return true. Otherwise, return false.
+ */
+bool effectiveConstAccessExp(ir.Exp exp)
+{
+	auto current = exp.toAccessExpChecked();
+	while (current !is null) {
+		if (effectivelyConst(getExpType(current.child))) {
+			return true;
+		}
+		current = current.child.toAccessExpChecked();
+	}
+	return false;
+}
+
+/*!
  * Handles logical operators (making a && b result in a bool),
  * binary of storage types, otherwise forwards to assign or primitive
  * specific functions.
@@ -2384,17 +2409,13 @@ ir.Type extypeBinOp(Context ctx, ref ir.Exp exp, Parent parent)
 	}
 
 	// If assign and left is effectively const, throw an error.
-	auto ae = binop.left.toAccessExpChecked();
 	/* Prevent simple assignment modification of const aggregates. Proof-of-concept.
 	 * @todo:
-	 * This needs to handle nested structs.
-	 * Also, increment/decrement needs to be made verboten.
-	 * And calling non-const functions. Do we have a concept of that in the IR, or language?
+	 * Taking the address of an effectively const lvalue should lead to an effectively const pointer.
+	 * Same goes for indexing operations etc.
+	 * Calling non-const functions. Do we have a concept of that in the IR, or language?
 	 */
-	if (isAssign && ae !is null && effectivelyConst(getExpType(ae.child))) {
-		throw makeCannotModify(binop, ltype);
-	}
-	if (isAssign && effectivelyConst(ltype)) {
+	if (isAssign && (effectiveConstAccessExp(binop.left) || effectivelyConst(ltype))) {
 		throw makeCannotModify(binop, ltype);
 	}
 
