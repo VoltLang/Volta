@@ -1,4 +1,5 @@
 //T macro:expect-failure
+//T has-passed:no
 module main;
 
 struct S
@@ -8,7 +9,7 @@ struct S
 
 fn breakTypeSystem(ref value: const S)
 {
-	*(&value.myValue) = 12;
+	(&value).myValue = 12;
 }
 
 fn main() i32
