@@ -1875,7 +1875,7 @@ ir.Type extypeUnary(Context ctx, ref ir.Exp exp, Parent parent)
 		if (!isLValue(unary.value)) {
 			throw makeExpected(exp, "lvalue");
 		}
-		if (effectiveConstAccessExp(unary.value)) {
+		if (unary.op != ir.Unary.Op.AddrOf && effectiveConstAccessExp(unary.value)) {
 			auto utype = getExpType(unary.value);
 			throw makeCannotModify(exp, utype);
 		}
