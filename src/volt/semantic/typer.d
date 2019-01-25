@@ -689,6 +689,7 @@ ir.Type getUnaryAddrOfType(ir.Unary unary)
 	}
 	auto type = getExpType(unary.value);
 	auto pointer = new ir.PointerType(/*#ref*/unary.loc, type);
+	addStorage(pointer, type);
 	return pointer;
 }
 
