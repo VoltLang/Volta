@@ -8,6 +8,10 @@ scanForD = true
 #
 dependencies = ["volta.lib", "volta.dsupport"]
 #
+# Hack to enable LLVMVersion versions when building.
+#
+llvmHack = true
+#
 # Use llvm-config on osx and linux
 #
 [platform.'osx || linux']
