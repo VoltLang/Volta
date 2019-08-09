@@ -54,6 +54,14 @@ void LLVMInitializeX86AsmPrinter();
 void LLVMInitializeX86AsmParser();
 void LLVMInitializeX86Disassembler();
 
+/* AArch64 target support */
+void LLVMInitializeAArch64TargetInfo();
+void LLVMInitializeAArch64Target();
+void LLVMInitializeAArch64TargetMC();
+void LLVMInitializeAArch64AsmPrinter();
+void LLVMInitializeAArch64AsmParser();
+void LLVMInitializeAArch64Disassembler();
+
 
 /*===-- Target Data -------------------------------------------------------===*/
 

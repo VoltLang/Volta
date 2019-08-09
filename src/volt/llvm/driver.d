@@ -311,6 +311,7 @@ protected:
 		final switch (target.arch) with (Arch) {
 		case X86: args ~= "-m32"; break;
 		case X86_64: args ~= "-m64"; break;
+		case AArch64: break;
 		}
 
 		foreach (objectFile; objectFiles) {
@@ -400,8 +401,9 @@ protected:
 		clangArgs ~= ls.xClang;
 
 		// Force -fPIC on linux.
-		if (target.arch == Arch.X86_64 &&
-		    target.platform == Platform.Linux) {
+		if (target.platform == Platform.Linux &&
+		    (target.arch == Arch.AArch64 ||
+		     target.arch == Arch.X86_64)) {
 			clangArgs ~= "-fPIC";
 		}
 
