@@ -108,6 +108,7 @@ enum Arch
 {
 	X86,
 	X86_64,
+	AArch64,
 }
 
 /*!
@@ -191,6 +192,7 @@ public:
 		"none",
 		"Volt",
 		// Arch
+		"AArch63",
 		"X86",
 		"X86_64",
 		"LE32",
@@ -340,6 +342,11 @@ public:
 			break;
 		case X86_64:
 			overwriteVersionIdentifier("X86_64");
+			overwriteVersionIdentifier("LittleEndian");
+			overwriteVersionIdentifier("V_P64");
+			break;
+		case AArch64:
+			overwriteVersionIdentifier("AArch64");
 			overwriteVersionIdentifier("LittleEndian");
 			overwriteVersionIdentifier("V_P64");
 			break;

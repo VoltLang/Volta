@@ -28,6 +28,11 @@ version (X86) {
 	enum vrt_eh_return_0 = 0;
 	enum vrt_eh_return_1 = 1;
 
+} else version (AArch64) {
+
+	enum vrt_eh_return_0 = 0;
+	enum vrt_eh_return_1 = 1;
+
 } else {
 
 	static assert(false, "arch not supported");
@@ -124,6 +129,7 @@ extern(C) fn vrt_eh_delete(
 /*!
  * Big do everything function.
  */
+
 extern(C) fn vrt_eh_personality_v0_real(
 	ver: i32,
 	actions: _Unwind_Action,

@@ -281,6 +281,8 @@ Arch parseArch(string a)
 		return Arch.X86;
 	case "x86_64":
 		return Arch.X86_64;
+	case "aarch64":
+		return Arch.AArch64;
 	default:
 		throw makeUnknownArch(a);
 	}

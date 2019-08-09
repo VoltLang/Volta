@@ -73,12 +73,20 @@ public:
 		LLVMInitializeAnalysis(passRegistry);
 		LLVMInitializeTarget(passRegistry);
 
-		if (target.arch == Arch.X86 ||
-		    target.arch == Arch.X86_64) {
+		final switch (target.arch) with (Arch) {
+		case X86:
+		case X86_64:
 			LLVMInitializeX86TargetInfo();
 			LLVMInitializeX86Target();
 			LLVMInitializeX86TargetMC();
 			LLVMInitializeX86AsmPrinter();
+			break;
+		case AArch64:
+			LLVMInitializeAArch64TargetInfo();
+			LLVMInitializeAArch64Target();
+			LLVMInitializeAArch64TargetMC();
+			LLVMInitializeAArch64AsmPrinter();
+			break;
 		}
 
 		LLVMLinkInMCJIT();
@@ -437,8 +445,9 @@ LLVMTargetMachineRef createTargetMachine(TargetInfo target)
 	auto reloc = LLVMRelocMode.Default;
 
 	// Force -fPIC on linux.
-	if (target.arch == Arch.X86_64 &&
-	    target.platform == Platform.Linux) {
+	if (target.platform == Platform.Linux &&
+	    (target.arch == Arch.AArch64 ||
+	     target.arch == Arch.X86_64)) {
 		reloc = LLVMRelocMode.PIC;
 	}
 
@@ -459,6 +468,7 @@ string getArchTarget(TargetInfo target)
 	final switch (target.arch) with (Arch) {
 	case X86: return "x86";
 	case X86_64: return "x86-64";
+	case AArch64: return "aarch64";
 	}
 }
 
@@ -476,26 +486,31 @@ string getTriple(TargetInfo target)
 		final switch (target.arch) with (Arch) {
 		case X86: return "i686-w64-windows-gnu";
 		case X86_64: return "x86_64-w64-windows-gnu";
+		case AArch64: assert(false);
 		}
 	case Metal:
 		final switch (target.arch) with (Arch) {
 		case X86: return "i686-pc-none-elf";
 		case X86_64: return "x86_64-pc-none-elf";
+		case AArch64: assert(false);
 		}
 	case MSVC:
 		final switch (target.arch) with (Arch) {
 		case X86: assert(false);
 		case X86_64: return "x86_64-pc-windows-msvc";
+		case AArch64: assert(false);
 		}
 	case Linux:
 		final switch (target.arch) with (Arch) {
 		case X86: return "i386-pc-linux-gnu";
 		case X86_64: return "x86_64-pc-linux-gnu";
+		case AArch64: return "aarch64-unknown-linux-gnu";
 		}
 	case OSX:
 		final switch (target.arch) with (Arch) {
 		case X86: return "i386-apple-macosx10.9.0";
 		case X86_64: return "x86_64-apple-macosx10.9.0";
+		case AArch64: assert(false);
 		}
 	}
 }
@@ -514,26 +529,31 @@ string getLayout(TargetInfo target)
 		final switch (target.arch) with (Arch) {
 		case X86: return layoutWinLinux32;
 		case X86_64: return layoutWinLinux64;
+		case AArch64: assert(false);
 		}
 	case Metal:
 		final switch (target.arch) with (Arch) {
 		case X86: return layoutMetal32;
 		case X86_64: return layoutMetal64;
+		case AArch64: assert(false);
 		}
 	case MSVC:
 		final switch (target.arch) with (Arch) {
 		case X86: assert(false);
 		case X86_64: return layoutWinLinux64;
+		case AArch64: assert(false);
 		}
 	case Linux:
 		final switch (target.arch) with (Arch) {
 		case X86: return layoutWinLinux32;
 		case X86_64: return layoutWinLinux64;
+		case AArch64: return layoutAArch64Linux64;
 		}
 	case OSX:
 		final switch (target.arch) with (Arch) {
 		case X86: return layoutOSX32;
 		case X86_64: return layoutOSX64;
+		case AArch64: assert(false);
 		}
 	}
 }
@@ -548,6 +568,7 @@ enum string layoutWinLinux32 = "e-m:e-p:32:32-f64:32:64-f80:32-n8:16:32-S128";
 enum string layoutWinLinux64 = "e-m:e-i64:64-f80:128-n8:16:32:64-S128";
 enum string layoutOSX32 = "e-m:o-p:32:32-f64:32:64-f80:128-n8:16:32-S128";
 enum string layoutOSX64 = "e-m:o-i64:64-f80:128-n8:16:32:64-S128";
+enum string layoutAArch64Linux64 = "e-m:e-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128";
 //! @}
 
 /*!

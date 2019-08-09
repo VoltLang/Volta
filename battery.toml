@@ -15,8 +15,8 @@ llvmHack = true
 # Use llvm-config on osx and linux
 #
 [platform.'osx || linux']
-commands = ["llvm-config --system-libs --ldflags --libs core bitwriter bitreader linker target x86codegen engine"]
 libraries = ["stdc++"]
+commands = ["llvm-config --system-libs --ldflags --libs core bitwriter bitreader linker target engine x86codegen aarch64codegen"]
 #
 # On Windows the user will need to provide LLVM.lib
 #

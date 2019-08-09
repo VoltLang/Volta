@@ -106,6 +106,7 @@ public:
 		case Metal: platformStr = "metal"; break;
 		}
 		final switch (arch) with (Arch) {
+		case AArch64: archStr = "aarch64"; break;
 		case X86: archStr = "x86"; break;
 		case X86_64: archStr = "x86_64"; break;
 		}
@@ -172,6 +173,8 @@ public:
 		version (X86) {
 			arch = Arch.X86;
 		} else version (X86_64) {
+			arch = Arch.X86_64;
+		} else version (AArch64) {
 			arch = Arch.X86_64;
 		} else {
 			static assert(false);
