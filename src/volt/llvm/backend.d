@@ -162,8 +162,14 @@ public:
 		if (failed) {
 			io.output.flush();
 			io.error.flush();
-			LLVMDumpModule(mod);
+			io.error.writefln("###### RESULTS START");
 			io.error.writefln("%s", result);
+			io.error.writefln("###### RESULTS END");
+			io.error.writefln("###### DUMP START");
+			io.error.flush();
+			LLVMDumpModule(mod);
+			io.error.flush();
+			io.error.writefln("###### DUMP END");
 			io.error.flush();
 			throw panic("Module verification failed.");
 		}
