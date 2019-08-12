@@ -165,12 +165,12 @@ version (Linux) {
 		{
 			st_dev: dev_t;
 			st_ino: ino_t;
-			st_nlink: nlink_t;
 			st_mode: mode_t;
+			st_nlink: nlink_t;
 			st_uid: uid_t;
 			st_gid: gid_t;
-			__pad0: u32;
 			st_rdev: dev_t;
+			__pad3: u32;
 			st_size: off_t;
 			st_blksize: blksize_t;
 			st_blocks: blkcnt_t;
@@ -182,7 +182,7 @@ version (Linux) {
 				st_ctime: time_t;
 				st_ctimensec: ulong_t;
 			//}
-			__unused: slong_t[3];
+			__unused: i32[1];
 		}
 
 	} else {

@@ -60,7 +60,11 @@ version (Linux) {
 	alias dev_t = u64;
 	alias gid_t = u32;
 	alias mode_t = u32;
-	alias nlink_t = c_ulong;
+	version (AArch64) {
+		alias nlink_t = u32;
+	} else {
+		alias nlink_t = c_ulong;
+	}
 	alias pid_t = i32;
 	//size_t (defined in core.stdc.stddef)
 	alias ssize_t = c_long;
