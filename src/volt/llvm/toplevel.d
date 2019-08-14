@@ -120,14 +120,15 @@ public:
 
 			bool isRef = func.type.isArgRef[irIndex];
 			bool isOut = func.type.isArgOut[irIndex];
-			bool isStruct = t.passByVal;
+			bool isByValAttr = t.passByValAttr;
+			bool isByValPtr = t.passByValPtr;
 
 			// These two conditions have to happen,
 			// even if the parameter isn't named.
 			if (isOut) {
 				auto initC = LLVMConstNull(t.llvmType);
 				LLVMBuildStore(state.builder, initC, v);
-			} else if (isStruct && !isRef) {
+			} else if (isByValAttr && !isRef) {
 				auto index = cast(LLVMAttributeIndex)(irIndex+offset+1);
 				LLVMAddAttributeAtIndex(llvmFunc, index, state.attrByVal);
 			}
@@ -135,7 +136,7 @@ public:
 			// Early out on unamed parameters.
 			if (p.name is null) {
 				continue;
-			} else if (isRef || isOut || isStruct) {
+			} else if (isRef || isOut || isByValAttr || isByValPtr) {
 				state.makeByValVariable(p, v);
 			} else {
 				if (!abiCoercePrologueParameter(state, llvmFunc, func, ct, v, irIndex+offset, /*#ref*/abiOffset)) {

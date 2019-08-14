@@ -1165,11 +1165,16 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 
 		bool isInBounds = i < ct.ct.params.length;
 		bool isRefOut = isInBounds && (ct.ct.isArgRef[i] || ct.ct.isArgOut[i]);
-		bool isStruct = v.type.passByVal;
-		if (isRefOut || isStruct) {
+		bool isByValAttr = v.type.passByValAttr;
+		bool isByValPtr = v.type.passByValPtr;
+
+		if (isRefOut || isByValAttr) {
 			makePointer(state, v);
 			llvmArgs[i+offset] = LLVMBuildBitCast(state.builder, v.value,
 				LLVMPointerType(ct.params[i].llvmType, 0), "");
+		} else if (!isRefOut && isByValPtr) {
+			makeByValPtrTemp(state, v);
+			llvmArgs[i+offset] = v.value;
 		} else {
 			makeNonPointer(state, v);
 			llvmArgs[i+offset] = v.value;
@@ -1185,8 +1190,8 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 	for (size_t i = 0; i < postfix.arguments.length; ++i) {
 		bool isInBounds = i < ct.ct.params.length;
 		bool isRefOut = isInBounds && (ct.ct.isArgRef[i] || ct.ct.isArgOut[i]);
-		bool isStruct = args[i+offset].type.passByVal;
-		if (!isRefOut && isStruct) {
+		bool isByValAttr = args[i+offset].type.passByValAttr;
+		if (!isRefOut && isByValAttr) {
 			auto index = cast(LLVMAttributeIndex)(i+offset+1+abiOffset);
 			LLVMAddCallSiteAttribute(result.value, index, state.attrByVal);
 		}
@@ -1580,6 +1585,20 @@ void makePointer(State state, Value result)
 		return;
 
 	auto v = state.buildAlloca(result.type.llvmType, "tempStorage");
+	LLVMBuildStore(state.builder, result.value, v);
+
+	result.value = v;
+	result.isPointer = true;
+}
+
+/*!
+ * Ensures that the given Value is a pointer by allocating temp storage for it.
+ */
+void makeByValPtrTemp(State state, Value result)
+{
+	makeNonPointer(state, result);
+
+	auto v = state.buildAlloca(result.type.llvmType, "tempByValStorage");
 	LLVMBuildStore(state.builder, result.value, v);
 
 	result.value = v;

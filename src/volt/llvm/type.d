@@ -37,7 +37,8 @@ public:
 	ir.Type irType;
 	LLVMTypeRef llvmType;
 	LLVMMetadataRef diType;
-	bool passByVal;
+	bool passByValAttr;
+	bool passByValPtr;
 
 public:
 	void from(State, ir.Constant, Value) { assert(false); }
@@ -575,7 +576,10 @@ private:
 		di = new typeof(di)(argsLength);
 
 		foreach (i, type; params) {
-			if (ft.isArgRef[i] || ft.isArgOut[i] || type.passByVal) {
+			if (ft.isArgRef[i] ||
+			    ft.isArgOut[i] ||
+			    type.passByValPtr ||
+			    type.passByValAttr) {
 				auto irPtr = new ir.PointerType(/*#ref*/type.irType.loc, type.irType);
 				addMangledName(irPtr);
 				auto ptrType = cast(PointerType) .fromIr(state, irPtr);
@@ -809,7 +813,13 @@ private:
 		diType = diForwardDeclareAggregate(state, irType);
 		llvmType = LLVMStructCreateNamed(state.context, mangled);
 		super(state, irType, llvmType, diType);
-		this.passByVal = volt.semantic.classify.size(state.target, irType) > 16;
+
+		auto semanticSize = volt.semantic.classify.size(state.target, irType);
+		if (state.target.arch == Arch.AArch64) {
+			this.passByValPtr = semanticSize > 16;
+		} else {
+			this.passByValAttr = semanticSize > 16;
+		}
 
 		createAlias(state, irType, mangled);
 
