@@ -20,8 +20,7 @@ public:
 	//! The argument to the one true sink.
 	alias SinkArg = scope T[];
 
-	enum size_t MinSize = 16;
-	enum size_t MaxSize = 2048;
+	enum size_t MaxSize = 256;
 
 	@property size_t length()
 	{
@@ -37,16 +36,11 @@ private:
 public:
 	void sink(T type)
 	{
-		auto newSize = mLength + 1;
 		if (mArr.length == 0) {
 			mArr = mStore[0 .. $];
 		}
 
-		if (newSize <= mArr.length) {
-			mArr[mLength++] = type;
-			return;
-		}
-
+		auto newSize = mLength + 1;
 		auto allocSize = mArr.length;
 		while (allocSize < newSize) {
 			if (allocSize >= MaxSize) {
@@ -56,10 +50,13 @@ public:
 			}
 		}
 
-		auto n = new T[](allocSize);
-		n[0 .. mLength] = mArr[0 .. mLength];
-		n[mLength++] = type;
-		mArr = n;
+		if (mArr.length != allocSize) {
+			auto n = new T[](allocSize);
+			n[0 .. mLength] = mArr[0 .. mLength];
+			mArr = n;
+		}
+
+		mArr[mLength++] = type;
 	}
 
 	void append(scope T[] arr)
