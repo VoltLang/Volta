@@ -403,8 +403,7 @@ void main()
  */
 void doFormat()(scope void delegate(dchar) putc, TypeInfo[] arguments, va_list ap)
 {
-    //import std.utf : encode, toUCSindex, isValidDchar, UTFException, toUTF8;
-    import std.utf; // Must use this way to silence toUTF8 warnings.
+    import std.utf : encode, toUCSindex, isValidDchar, UTFException, toUTF8;
     import core.stdc.string : strlen;
     import core.stdc.stdlib : alloca, malloc, realloc, free;
     import core.stdc.stdio : snprintf;

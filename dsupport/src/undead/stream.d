@@ -81,6 +81,7 @@ private {
   //import std.format;
   import std.system;    // for Endian enumeration
   import std.utf;
+  import undead.utf;
   import core.bitop; // for bswap
   import core.vararg;
   static import std.file;
@@ -1213,7 +1214,8 @@ class Stream : InputStream, OutputStream {
 
   private void doFormatCallback(dchar c) {
     char[4] buf;
-    writeString(buf[0 .. encode(buf, c)]);
+    auto b = undead.utf.toUTF8(buf, c);
+    writeString(b);
   }
 
   // writes data to stream using writef() syntax,
@@ -2843,7 +2845,7 @@ class MmFileStream : TArrayStream!(MmFile) {
   override void close() {
     if (isopen) {
       super.close();
-      destroy(buf);
+      buf.destroy();
       buf = null;
     }
   }
