@@ -20,7 +20,7 @@ public:
 	//! The argument to the one true sink.
 	alias SinkArg = scope T[];
 
-	enum size_t MaxSize = 256;
+	enum size_t MaxSize = 1024;
 
 	@property size_t length()
 	{
@@ -28,7 +28,7 @@ public:
 	}
 
 private:
-	T[32] mStore;
+	T[16] mStore;
 	T[] mArr;
 	size_t mLength;
 
