@@ -13,15 +13,19 @@ alias SinkArg = scope const(char)[];
 struct StringSink
 {
 private:
+	char[64] mStore;
 	char[] mArr;
 	size_t mLength;
 
-	enum size_t minSize = 16;
-	enum size_t maxSize = 2048;
+	enum size_t MaxSize = 1024;
 
 public:
 	void sink(scope SinkArg str)
 	{
+		if (mArr.length == 0) {
+			mArr = mStore;
+		}
+
 		auto newSize = str.length + mLength;
 		if (newSize <= mArr.length) {
 			mArr[mLength .. newSize] = str[];
@@ -31,20 +35,21 @@ public:
 
 		auto allocSize = mArr.length;
 		while (allocSize < newSize) {
-			if (allocSize < minSize) {
-				allocSize = minSize;
-			} else if (allocSize >= maxSize) {
-				allocSize += maxSize;
+			if (allocSize >= MaxSize) {
+				allocSize += MaxSize;
 			} else {
 				allocSize = allocSize * 2;
 			}
 		}
 
-		auto n = new char[](newSize + 256);
-		n[0 .. mLength] = mArr[0 .. mLength];
-		n[mLength .. newSize] = str[];
+		if (allocSize != mArr.length) {
+			auto n = new char[](allocSize);
+			n[0 .. mLength] = mArr[0 .. mLength];
+			mArr = n;
+		}
+
+		mArr[mLength .. newSize] = str[];
 		mLength = newSize;
-		mArr = n;
 	}
 
 	version (D_Version2) Sink sink()
@@ -63,7 +68,6 @@ public:
 
 	void reset()
 	{
-		mArr = [];
 		mLength = 0;
 	}
 }
