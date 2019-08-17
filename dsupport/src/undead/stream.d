@@ -78,7 +78,7 @@ private {
   import std.conv;
   import std.algorithm;
   import std.ascii;
-  //import std.format;
+  import std.format;
   import std.system;    // for Endian enumeration
   import std.utf;
   import undead.utf;
@@ -86,7 +86,9 @@ private {
   import core.vararg;
   static import std.file;
   import undead.internal.file;
+/+VOLTA
   import undead.doformat;
++/
 }
 
 /// InputStream is the interface for readable streams.
@@ -347,6 +349,7 @@ interface OutputStream {
   size_t vprintf(const(char)[] format, va_list args);
   size_t printf(const(char)[] format, ...);    /// ditto
 
+/+VOLTA
   /***
    * Print a formatted string into the stream using writef-style syntax.
    * References: <a href="std_format.html">std.format</a>.
@@ -355,6 +358,19 @@ interface OutputStream {
   OutputStream writef(...);
   OutputStream writefln(...); /// ditto
   OutputStream writefx(TypeInfo[] arguments, va_list argptr, int newline = false);  /// ditto
++/
+  OutputStream writef(A...)(A a) {
+    auto str = format(a);
+    writeString(str);
+    return this;
+  }
+
+  OutputStream writefln(A...)(A a) {
+    writef(a);
+    writeLine("");
+    return this;
+  }
+
 
   void flush(); /// Flush pending output if appropriate.
   void close(); /// Close the stream, flushing output if appropriate.
@@ -1212,6 +1228,7 @@ class Stream : InputStream, OutputStream {
     return result;
   }
 
+/+VOLTA
   private void doFormatCallback(dchar c) {
     char[4] buf;
     auto b = undead.utf.toUTF8(buf, c);
@@ -1235,6 +1252,7 @@ class Stream : InputStream, OutputStream {
       writeLine("");
     return this;
   }
++/
 
   /***
    * Copies all data from s into this stream.
