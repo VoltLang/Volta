@@ -921,6 +921,19 @@ TargetInfo setTargetInfo(TargetInfo target, Arch arch, Platform platform, CRunti
 		target.alignment.ptr = 8;
 		target.alignment.aggregate = 8; // abi X, prefered 8
 		break;
+	case ARMHF:
+		target.isP64 = false;
+		target.ptrSize = 4;
+		target.alignment.int1 = 1;
+		target.alignment.int8 = 1;
+		target.alignment.int16 = 2;
+		target.alignment.int32 = 4;
+		target.alignment.int64 = 8;
+		target.alignment.float32 = 4;
+		target.alignment.float64 = 4;
+		target.alignment.ptr = 4;
+		target.alignment.aggregate = 8;
+		break;
 	case AArch64:
 		target.isP64 = true;
 		target.ptrSize = 8;

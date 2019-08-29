@@ -311,6 +311,7 @@ protected:
 		final switch (target.arch) with (Arch) {
 		case X86: args ~= "-m32"; break;
 		case X86_64: args ~= "-m64"; break;
+		case ARMHF: break;
 		case AArch64: break;
 		}
 

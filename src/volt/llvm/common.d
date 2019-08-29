@@ -32,6 +32,7 @@ bool shouldCUseStructRet(TargetInfo target, ir.Struct irStruct)
 			return true;
 		case X86_64:
 			return structSize > 16;
+		case ARMHF:
 		case AArch64:
 			// !?!?!
 			return structSize > 16;
@@ -42,6 +43,7 @@ bool shouldCUseStructRet(TargetInfo target, ir.Struct irStruct)
 			return structSize != 4 && structSize != 8;
 		case X86_64:
 			return structSize > 16;
+		case ARMHF: assert(false);
 		case AArch64: assert(false);
 		}
 	case MSVC:
@@ -50,6 +52,7 @@ bool shouldCUseStructRet(TargetInfo target, ir.Struct irStruct)
 		case X86:
 		case X86_64:
 			return structSize != 4 && structSize != 8;
+		case ARMHF: assert(false);
 		case AArch64: assert(false);
 		}
 	}

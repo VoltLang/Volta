@@ -43,6 +43,7 @@ string archToString(Arch arch)
 	final switch (arch) with (Arch) {
 	case X86: return "x86";
 	case X86_64: return "x86_64";
+	case ARMHF: return "armhf";
 	case AArch64: return "aarch64";
 	}
 }

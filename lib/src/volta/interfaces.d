@@ -108,6 +108,7 @@ enum Arch
 {
 	X86,
 	X86_64,
+	ARMHF,
 	AArch64,
 }
 
@@ -192,6 +193,8 @@ public:
 		"none",
 		"Volt",
 		// Arch
+		"ARM",
+		"ARMHF",
 		"AArch64",
 		"X86",
 		"X86_64",
@@ -344,6 +347,11 @@ public:
 			overwriteVersionIdentifier("X86_64");
 			overwriteVersionIdentifier("LittleEndian");
 			overwriteVersionIdentifier("V_P64");
+			break;
+		case ARMHF:
+			overwriteVersionIdentifier("ARMHF");
+			overwriteVersionIdentifier("LittleEndian");
+			overwriteVersionIdentifier("V_P32");
 			break;
 		case AArch64:
 			overwriteVersionIdentifier("AArch64");
