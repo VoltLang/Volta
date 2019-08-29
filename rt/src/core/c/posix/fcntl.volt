@@ -191,7 +191,7 @@ version (Linux) {
         enum O_DSYNC        = 0x1000;   // octal   010000
         enum O_RSYNC        = O_SYNC;
 
-    } else version (ARM) {
+    } else version (ARMHF) {
 
         enum O_CREAT        = 0x40;     // octal     0100
         enum O_EXCL         = 0x80;     // octal     0200

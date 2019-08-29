@@ -16,8 +16,12 @@ isTheRT = true
 libraries = ["pthread", "dl", "rt"]
 
 # For Linux or OSX
-[cfg.'(osx || linux) && !aarch64']
+[cfg.'(osx || linux) && !armhf && !aarch64']
 asmFiles = ["src/vrt/gc/save_regs.asm", "src/vrt/os/eh.asm"]
+
+# ARMHF has its own special assembly.
+[cfg.armhf]
+sFiles = ["src/vrt/armhf.s"]
 
 # AArch has its own special assembly.
 [cfg.aarch64]

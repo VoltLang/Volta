@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: BSL-1.0
 module vrt.os.eh.stub;
 
-version (!Linux && !OSX && !MinGW && !Windows):
+version ((!Linux && !OSX && !MinGW && !Windows) || ARMHF):
 
 import core.exception: Throwable, Error, AssertError, KeyNotFoundException;
 import core.rt.misc: vrt_panic;

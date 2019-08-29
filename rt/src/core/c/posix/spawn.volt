@@ -33,6 +33,11 @@ version (Linux) {
 		struct posix_spawn_file_actions { __data: void[80]; }
 		struct posix_spawnattr { __data: void[336]; }
 
+	} else version (ARMHF) {
+
+		struct posix_spawn_file_actions { __data: void[76]; }
+		struct posix_spawnattr { __data: void[336]; }
+
 	} else version (AArch64) {
 
 		struct posix_spawn_file_actions { __data: void[80]; }

@@ -396,7 +396,7 @@ version (Linux) {
             SO_TYPE         = 3
         }
 
-    } else version (AArch64) {
+    } else version (ARMHF) {
 
         enum
         {
@@ -430,7 +430,7 @@ version (Linux) {
             SO_TYPE         = 3
         }
 
-    } else version (ARM) {
+    } else version (AArch64) {
 
         enum
         {

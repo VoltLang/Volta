@@ -159,6 +159,33 @@ version (Linux) {
 			__unused: slong_t[3];
 		}
 
+	} else version (ARMHF) {
+
+		struct stat_t
+		{
+			st_dev: dev_t;
+			__pad0: u16;
+			st_ino: ino_t;
+			st_mode: mode_t;
+			st_nlink: nlink_t;
+			st_uid: uid_t;
+			st_gid: gid_t;
+			st_rdev: dev_t;
+			__pad1: u32;
+			st_size: off_t;
+			st_blksize: blksize_t;
+			st_blocks: blkcnt_t;
+			//{
+				st_atime: time_t;
+				st_atimensec: c_ulong;
+				st_mtime: time_t;
+				st_mtimensec: c_ulong;
+				st_ctime: time_t;
+				st_ctimensec: c_ulong;
+			//}
+			__unused: i32[1];
+		}
+
 	} else version (AArch64) {
 
 		struct stat_t

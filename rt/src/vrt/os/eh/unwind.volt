@@ -3,7 +3,7 @@
 //! Exception handling using libunwind and DWARF.
 module vrt.os.eh.unwind;
 
-version (Linux || OSX || MinGW):
+version ((Linux || OSX || MinGW) && !ARMHF):
 
 import core.rt.misc: vrt_panic, vrt_handle_cast;
 import core.typeinfo: TypeInfo;
@@ -24,6 +24,11 @@ version (X86) {
 	enum vrt_eh_return_1 = 2;
 
 } else version (X86_64) {
+
+	enum vrt_eh_return_0 = 0;
+	enum vrt_eh_return_1 = 1;
+
+} else version (ARMHF) {
 
 	enum vrt_eh_return_0 = 0;
 	enum vrt_eh_return_1 = 1;
