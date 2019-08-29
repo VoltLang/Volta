@@ -35,7 +35,7 @@ extern(C) fn vrt_eh_rethrow(t: Throwable)
 	msgs: const(char)[][2];
 	msgs[0] = "###EXCEPTION###\n";
 	msgs[1] = cast(char[])t.msg;
-	vrt_panic(cast(char[][])msgs, location);
+	vrt_panic(cast(char[][])msgs, t.location);
 }
 
 extern(C) fn vrt_eh_throw_slice_error(length: size_t, targetSize: size_t, location: string)
