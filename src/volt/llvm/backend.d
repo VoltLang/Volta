@@ -439,6 +439,9 @@ LLVMTargetMachineRef createTargetMachine(TargetInfo target)
 	// Load the target mc/assmbler.
 	// Doesn't need to disposed.
 	LLVMTargetRef llvmTarget = LLVMGetTargetFromName(arch);
+	if (llvmTarget is null) {
+		throw makeArchNotSupported();
+	}
 
 	auto opt = LLVMCodeGenOptLevel.Default;
 	auto codeModel = LLVMCodeModel.Default;
