@@ -192,7 +192,7 @@ public:
 		"none",
 		"Volt",
 		// Arch
-		"AArch63",
+		"AArch64",
 		"X86",
 		"X86_64",
 		"LE32",
