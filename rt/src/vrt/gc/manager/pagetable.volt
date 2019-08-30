@@ -40,7 +40,13 @@ public:
 	enum size_t PageTableNum = TotalSize / PageSize;
 	enum size_t PageTableSize = PageTableNum * typeid(PageEntryType).size;
 
-	alias FirstEntryType = u64;
+	version (V_P32) {
+		alias FirstEntryType = u32;
+	} else version (V_P64) {
+		alias FirstEntryType = u64;
+	} else {
+		static assert(false, "What?!");
+	}
 	enum size_t FirstEntrySize = typeid(FirstEntryType).size;
 	enum size_t FirstEntryBits = FirstEntrySize * 8;
 	enum size_t FirstNumBits = TotalSize / FirstSize;
@@ -132,16 +138,19 @@ public:
 
 	fn checkFirst(index: size_t) bool
 	{
-		elmIndex := index / FirstNumBits;
-		bitIndex := index % FirstNumBits;
+		elmIndex := index / FirstEntryBits;
+		bitIndex := index % FirstEntryBits;
 
 		return cast(bool)(mFirst[elmIndex] >> bitIndex & 1);
 	}
 
 	fn setFirst(index: size_t)
 	{
-		elmIndex := index / FirstNumBits;
-		bitIndex := index % FirstNumBits;
+		elmIndex := index / FirstEntryBits;
+		bitIndex := index % FirstEntryBits;
+
+		// Paranoia
+		gcAssert(elmIndex < FirstNum);
 
 		mFirst[elmIndex] |= cast(FirstEntryType)(1UL << bitIndex);
 	}
@@ -150,6 +159,10 @@ public:
 	{
 		bit := (index * PageSize) / (TotalSize / FirstNumBits);
 		setFirst(bit);
+
+		// Paranoia
+		gcAssert(index < PageTableNum);
+
 		mPages[index] = data;
 	}
 
