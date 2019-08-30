@@ -160,6 +160,7 @@ public:
 
 	local fn allocGC(n: size_t) void*
 	{
+		n = roundUpToPageSize(n);
 		memory := pages_map(null, n);
 		if (memory is null) {
 			panicFailedToAlloc(n);
