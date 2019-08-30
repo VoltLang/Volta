@@ -40,7 +40,8 @@ private:
 	mHighestPointer: void*;
 	mTotalArenaSize: size_t;
 
-	mExtents: LinkedNode*;  // Every extent we allocate, external and internal.
+	mExtents: LinkedNode*;  // Every extent we allocate only external.
+	mInternalExtents: LinkedNode*;
 
 
 public:
@@ -148,7 +149,8 @@ public:
 			return s;
 		}
 
-		// Easy peasy.
+		// First try to find a slab that is free.
+		internalFindWithFree();
 		if (mSlabStruct !is null) {
 			return internalAlloc();
 		}
@@ -161,7 +163,12 @@ public:
 			return null;
 		}
 		slab := cast(Slab*)memory;
+		slab.extent.node.linked.prev = null;
+		slab.extent.node.linked.next = null;
 		slab.setup(order:order, memory:memory, finalizer: false, pointer:false, internal:true);
+
+		// Insert it into the internal list
+		internalInsert(&slab.extent.node);
 
 		// Mark the first slot as used, this slab resides
 		// there, because it manages itself.
@@ -244,6 +251,8 @@ public:
 		if (mSlabStruct is holder) {
 			mSlabStruct = null;
 		}
+
+		internalRemove(&holder.extent.node);
 
 		// Free the holder and the memory it manages.
 		// But since the holder lives in the memory it manages
@@ -358,6 +367,65 @@ private:
 			return null;
 		}
 		return e;
+	}
+
+	/*!
+	 * Find a internal extent with a free slot in it.
+	 */
+	fn internalFindWithFree()
+	{
+		// Well that was easy! :D
+		if (mSlabStruct !is null) {
+			return;
+		}
+
+		current := mInternalExtents;
+		while (current !is null) {
+			cache := cast(Slab*)current;
+			if (cache.freeSlots > 0) {
+				mSlabStruct = cache;
+				break;
+			}
+			current = current.next;
+		}
+	}
+
+	/*!
+	 * Insert n in the internal extents list.
+	 */
+	fn internalInsert(n: UnionNode*)
+	{
+		ln := cast(LinkedNode*)n;
+
+		gcAssert(ln.prev is null);
+		gcAssert(ln.next is null);
+
+		if (mInternalExtents !is null) {
+			mInternalExtents.prev = ln;
+			ln.next = mInternalExtents;
+		}
+		mInternalExtents = ln;
+	}
+
+	/*!
+	 * If n is present in the internal extents list, remove it.
+	 */
+	fn internalRemove(n: UnionNode*)
+	{
+		ln := cast(LinkedNode*)n;
+
+		if (mInternalExtents is ln) {
+			mInternalExtents = ln.next;
+		}
+		if (ln.prev !is null) {
+			ln.prev.next = ln.next;
+		}
+		if (ln.next !is null) {
+			ln.next.prev = ln.prev;
+		}
+
+		ln.prev = null;
+		ln.next = null;
 	}
 
 	/**
