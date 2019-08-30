@@ -302,6 +302,31 @@ public:
 		mHighestPointer = cast(void*)(cast(size_t)&this + PageTable.TotalSize);
 	}
 
+	fn compareExtent(n1: Node*, n2: Node*) i32
+	{
+		// We assume extents don't overlap,
+		// so only need to sort on starting address.
+		p1 := (cast(Extent*)n1).min;
+		p2 := (cast(Extent*)n2).min;
+		return p1 < p2 ? -1 : cast(i32)(p1 > p2);
+	}
+
+	fn alwaysHit(Node*, Node*) int
+	{
+		return 0;
+	}
+
+	/*!
+	 * Does n contain an empty Slab?
+	 */
+	fn emptySlab(n: Node*) bool
+	{
+		s := cast(Slab*)n;
+		return s.freeSlots > 0;
+	}
+
+
+private:
 	/**
 	 * Use the page entries to find what extent a given pointer belongs to.
 	 * Returns: a pointer to the extent, or null on failure.
@@ -335,28 +360,6 @@ public:
 		return e;
 	}
 
-	fn compareExtent(n1: Node*, n2: Node*) i32
-	{
-		// We assume extents don't overlap,
-		// so only need to sort on starting address.
-		p1 := (cast(Extent*)n1).min;
-		p2 := (cast(Extent*)n2).min;
-		return p1 < p2 ? -1 : cast(i32)(p1 > p2);
-	}
-
-	fn alwaysHit(Node*, Node*) int
-	{
-		return 0;
-	}
-
-	/// Does n contain an empty Slab?
-	fn emptySlab(n: Node*) bool
-	{
-		s := cast(Slab*)n;
-		return s.freeSlots > 0;
-	}
-
-private:
 	/**
 	 * For each page allocated, set the offset to the extent as its page entry.
 	 * Params:
