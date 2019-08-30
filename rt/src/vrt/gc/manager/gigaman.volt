@@ -229,6 +229,7 @@ public:
 		e := getExtent(ptr);
 		gcAssert(e !is null);
 		gcAssert(e.isSlab);
+		gcAssert(e.isInternal);
 
 		holder := cast(Slab*)e;
 		index := holder.pointerToSlot(ptr);

@@ -18,7 +18,7 @@ public:
 	fn setup(ptr: void*, n: size_t, finalizer: bool, pointers: bool)
 	{
 		extent.setupLarge(ptr:ptr, n:n, finalizer:finalizer,
-		                  pointers:pointers);
+		                  pointers:pointers, internal:false);
 	}
 
 	@property fn hasPointers() bool

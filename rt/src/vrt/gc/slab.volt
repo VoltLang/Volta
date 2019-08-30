@@ -56,7 +56,8 @@ public:
 		size := orderToSize(order);
 		extent.setupSlab(ptr:memory, n:size * MaxSlots,
 		                 finalizer:finalizer,
-		                 pointers:pointer);
+		                 pointers:pointer,
+		                 internal:internal);
 		this.order = order;
 
 		foreach (ref b; bitmap) {

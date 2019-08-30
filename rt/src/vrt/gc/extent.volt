@@ -51,21 +51,21 @@ public:
 		return (finalizer ? Kind.Fin : Kind.None) | (pointers ? Kind.Ptr : Kind.None);
 	}
 
-	fn setupSlab(ptr: void*, n: size_t, finalizer: bool, pointers: bool)
+	fn setupSlab(ptr: void*, n: size_t, finalizer: bool, pointers: bool, internal: bool)
 	{
 		gcAssert((cast(size_t)ptr & DataMask) == 0);
 
 		kind := makeKind(finalizer, pointers);
-		mData = cast(size_t)ptr | true << SlabShift | kind << KindShift;
+		mData = cast(size_t)ptr | true << SlabShift | kind << KindShift | internal << InternalShift;
 		mN = n;
 	}
 
-	fn setupLarge(ptr: void*, n: size_t, finalizer: bool, pointers: bool)
+	fn setupLarge(ptr: void*, n: size_t, finalizer: bool, pointers: bool, internal: bool)
 	{
 		gcAssert((cast(size_t)ptr & DataMask) == 0);
 
 		kind := makeKind(finalizer, pointers);
-		mData = cast(size_t)ptr | false << SlabShift | kind << KindShift;
+		mData = cast(size_t)ptr | false << SlabShift | kind << KindShift | internal << InternalShift;
 		mN = n;
 	}
 
