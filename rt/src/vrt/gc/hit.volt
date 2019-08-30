@@ -5,6 +5,7 @@ module vrt.gc.hit;
 import core.compiler.llvm;
 
 import vrt.gc.extent;
+import vrt.gc.errors;
 import vrt.gc.slab;
 import vrt.gc.util;
 import vrt.gc.mman;
@@ -39,6 +40,9 @@ public:
 			mMax += mEntriesPerPage;
 			n := size * mMax;
 			newList := cast(HitEntry*)pages_map(null, n);
+			if (newList is null) {
+				panicFailedToAlloc(n);
+			}
 			if (mList !is null) {
 				newList[0 .. oldMax] = mList[0 .. oldMax];
 				pages_unmap(cast(void*)mList, oldMax);
