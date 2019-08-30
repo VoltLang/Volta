@@ -4,19 +4,22 @@ module vrt.gc.mman.mmap;
 
 version (Linux || OSX):
 
+import vrt.gc.errors : panicMmapFailed;
+import core.c.errno : errno;
 
-fn pages_map(addr: void*, size: size_t) void*
+
+fn pages_map(addr: void*, size: size_t, loc: string = __LOCATION__) void*
 {
 	prot := Prot.Read | Prot.Write;
 	flags := Map.Private | Map.Anon;
-	return 	_map(addr, size, prot, flags);
+	return _map(addr, size, prot, flags, loc);
 }
 
-fn pages_reserve(addr: void*, size: size_t) void*
+fn pages_reserve(addr: void*, size: size_t, loc: string = __LOCATION__) void*
 {
 	prot := Prot.None;
 	flags := Map.Private | Map.Anon;
-	return 	_map(addr, size, prot, flags);
+	return _map(addr, size, prot, flags, loc);
 }
 
 /// Returns: true if successful
@@ -41,13 +44,14 @@ fn pages_unmap(addr: void*, size: size_t)
 
 private:
 
-fn _map(addr: void*, size: size_t, prot: int, flags: int) void*
+fn _map(addr: void*, size: size_t, prot: int, flags: int, loc: string) void*
 {
 	ret := mmap(addr, size, prot, flags, -1, 0);
 	assert(ret !is null);
 
 	MAP_FAILED := cast(void*) -1L;
 	if (ret is MAP_FAILED) {
+		panicMmapFailed(size, errno, loc);
 		ret = null;
 	} else if (addr !is null && ret !is addr) {
 		// We mapped, but not where expected.
