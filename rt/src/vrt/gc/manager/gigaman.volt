@@ -155,7 +155,7 @@ public:
 
 		// Here we solve the chicken and egg problem; the slab manages itself.
 		order := sizeToOrder(typeid(Slab).size);
-		sizeOfOSAlloc := orderToSize(order) * 512;
+		sizeOfOSAlloc := orderToSize(order) * Slab.MaxSlots;
 		memory := allocMemoryFromOS(sizeOfOSAlloc);
 		if (memory is null) {
 			return null;
