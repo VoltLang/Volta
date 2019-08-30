@@ -8,6 +8,7 @@
 module vrt.gc.manager.gigaman;
 
 import core.object;
+import core.compiler.llvm;
 
 import vrt.gc.mman;
 import vrt.gc.slab;
@@ -74,6 +75,9 @@ public:
 		if (ln.next !is null) {
 			ln.next.prev = ln.prev;
 		}
+
+		ln.prev = null;
+		ln.next = null;
 	}
 
 	fn treeInsert(n: UnionNode*, compare: RBTree.CompDg)
@@ -143,8 +147,7 @@ public:
 				mSlabStruct = null;
 			}
 			s := cast(Slab*)ptr;
-			s.extent.node.linked.prev = null;
-			s.extent.node.linked.next = null;
+			__llvm_memset(cast(void*)s, 0, typeid(Slab).size, 0, false);
 			markPages(associatedPtr, cast(void*)s, associatedSz);
 			return s;
 		}
@@ -163,8 +166,7 @@ public:
 			return null;
 		}
 		slab := cast(Slab*)memory;
-		slab.extent.node.linked.prev = null;
-		slab.extent.node.linked.next = null;
+		__llvm_memset(cast(void*)slab, 0, typeid(Slab).size, 0, false);
 		slab.setup(order:order, memory:memory, finalizer: false, pointer:false, internal:true);
 
 		// Insert it into the internal list
@@ -173,6 +175,7 @@ public:
 		// Mark the first slot as used, this slab resides
 		// there, because it manages itself.
 		i := slab.allocate();
+		gcAssert(i == 0);
 
 		// So we can free from this slab.
 		markPages(memory, cast(void*)slab, sizeOfOSAlloc);
@@ -191,6 +194,9 @@ public:
 	local fn allocGC(sz: size_t) void*
 	{
 		memory := pages_reserve(null, PageTable.TotalSize);
+		if (memory is null) {
+			panicFailedToAlloc(sz);
+		}
 
 		retval := pages_commit(memory, sz);
 		if (!retval) {
@@ -260,16 +266,20 @@ public:
 		freeMemoryToOS(holder.extent.ptr, holder.extent.size);
 	}
 
+
 	/*
 	 *
 	 * OS memory allocation functions.
 	 *
 	 */
-	/**
+
+	/*!
 	 * Allocates a chunk of memory from the OS.
 	 */
 	fn allocMemoryFromOS(n: size_t) void*
 	{
+		gcAssert(n % PageTable.PageSize == 0);
+
 		if (!mPageTable.canAlloc(n)) {
 			return null;
 		}
@@ -277,16 +287,22 @@ public:
 		pageIndex := mPageTable.allocIndex(n);
 		gcAssert(PageTable.pageIndexToRelative(pageIndex) != 0);
 		base := cast(void*)(cast(size_t)&this + PageTable.pageIndexToRelative(pageIndex));
+
 		retval := pages_commit(base, n);
 		if (!retval) {
 			panicFailedToAlloc(n);
 		}
+
 		gcAssert(cast(size_t)base >= (cast(size_t)&this + mTotalArenaSize));
 		return base;
 	}
 
 	fn freeMemoryToOS(ptr: void*, n: size_t)
 	{
+		m := cast(size_t)ptr;
+		gcAssert(m % PageTable.PageSize == 0);
+		gcAssert(n % PageTable.PageSize == 0);
+
 		rel := mPageTable.globalToRelative(ptr);
 		pageIndex := PageTable.relativeToPageIndex(rel);
 		mPageTable.free(pageIndex, n);
@@ -438,10 +454,14 @@ private:
 	 */
 	fn markPages(memory: void*, slab: void*, n: size_t)
 	{
-		gcAssert(n % PageTable.PageSize == 0);
+		m := cast(size_t)memory;
 		pages := n / PageTable.PageSize;
+
+		gcAssert(m % PageTable.PageSize == 0);
+		gcAssert(n % PageTable.PageSize == 0);
+
 		foreach (i; 0u .. pages) {
-			ptr := cast(void*)(cast(size_t)memory + (PageTable.PageSize * i));
+			ptr := cast(void*)(m + (PageTable.PageSize * i));
 			gcAssert(mPageTable.inBounds(ptr));
 			offset := cast(PageTable.PageEntryType)mPageTable.globalToRelative(slab);
 			mPageTable.setPageEntry(ptr, offset);
@@ -450,10 +470,14 @@ private:
 
 	fn unmarkPages(memory: void*, n: size_t)
 	{
-		gcAssert(n % PageTable.PageSize == 0);
+		m := cast(size_t)memory;
 		pages := n / PageTable.PageSize;
+
+		gcAssert(m % PageTable.PageSize == 0);
+		gcAssert(n % PageTable.PageSize == 0);
+
 		foreach (i; 0u .. pages) {
-			ptr := cast(void*)(cast(size_t)memory + (PageTable.PageSize * i));
+			ptr := cast(void*)(m + (PageTable.PageSize * i));
 			gcAssert(mPageTable.inBounds(ptr));
 			mPageTable.setPageEntry(ptr, 0);
 		}
