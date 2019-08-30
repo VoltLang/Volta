@@ -68,7 +68,11 @@ fn _map(addr: void*, size: size_t, prot: int, flags: int, loc: string) void*
 
 // XXX: this is a bad port of mman header.
 // We should be able to use an actual port of the C header soon.
-alias off_t = long;  // Good enough for now.
+version (ARMHF) {
+	alias off_t = u32;
+} else {
+	alias off_t = long;  // Good enough for now.
+}
 
 enum Prot {
 	None	= 0x0,
