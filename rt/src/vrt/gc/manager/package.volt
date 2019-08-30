@@ -9,4 +9,8 @@ module vrt.gc.manager;
 static import vrt.gc.manager.gigaman;
 static import vrt.gc.manager.rbman;
 
-alias Manager = vrt.gc.manager.gigaman.GigaMan;
+version (all) {
+	alias Manager = vrt.gc.manager.gigaman.GigaMan;
+} else {
+	alias Manager = vrt.gc.manager.rbman.RBMan;
+}
