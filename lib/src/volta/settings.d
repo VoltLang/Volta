@@ -85,7 +85,7 @@ public:
 
 	final void processConfigs()
 	{
-		identStr = "Volta 0.0.1";
+		identStr = "Volta 0.1.3-dev";
 		setStrs();
 		replaceMacros();
 	}
