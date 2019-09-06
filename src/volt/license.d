@@ -1,5 +1,8 @@
 /*#D*/
-// See copyright just below.
+// SPDX-License-Identifier: BSL-1.0
+/*!
+ * License information.
+ */
 module volt.license;
 
 /*!
@@ -9,8 +12,9 @@ enum string license = `
 Copyright © 2010-2011, Jakob Ovrum.
 Copyright © 2013-2014, David Herberth.
 Copyright © 2016-2017, Amaury Séchet.
-Copyright © 2010-2017, Bernard Helyer.
-Copyright © 2012-2017, Jakob Bornecrantz.
+Copyright © 2010-2018, Bernard Helyer.
+Copyright © 2012-2018, Jakob Bornecrantz.
+Copyright © 2018-2019, Collabora, Ltd.
 
 Boost Software License - Version 1.0 - August 17th, 2003
 
