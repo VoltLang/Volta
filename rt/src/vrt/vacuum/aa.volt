@@ -1,5 +1,8 @@
-// Copyright 2016-2017, Jakob Bornecrantz.
-// See copyright notice in src/charge/license.volt (BOOST ver. 1.0).
+// Copyright 2016-2019, Jakob Bornecrantz.
+// SPDX-License-Identifier: BSL-1.0
+/*!
+ * Platform independent AA implementation, see interface in @ref core.rt.aa.
+ */
 module vrt.vacuum.aa;
 
 import core.compiler.llvm: __llvm_memcpy;

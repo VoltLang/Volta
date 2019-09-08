@@ -1,5 +1,8 @@
 // Copyright 2013-2015, Bernard Helyer.
-// See copyright notice in src/volt/licence.d (BOOST ver 1.0)
+// SPDX-License-Identifier: BSL-1.0
+/*!
+ * Platform independent implementation of utf interface in @ref core.rt.misc.
+ */
 module vrt.vacuum.utf;
 
 import core.exception: MalformedUTF8Exception;

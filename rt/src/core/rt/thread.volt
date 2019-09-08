@@ -1,5 +1,5 @@
-// Copyright © 2016-2017, Bernard Helyer.
-// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+// Copyright 2016-2017, Bernard Helyer.
+// SPDX-License-Identifier: BSL-1.0
 /*!
  * Code to support spawning new threads.
  *
@@ -8,6 +8,7 @@
  * spawned through this interface.
  */
 module core.rt.thread;
+
 version (!Metal):
 
 /*!

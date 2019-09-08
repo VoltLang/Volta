@@ -1,3 +1,6 @@
+# Copyright 2019, Collabora, Ltd.
+# SPDX-License-Identifier: BSL-1.0
+#
 	.arch armv7-a
 	.text
 	.fpu	vfpv3-d16

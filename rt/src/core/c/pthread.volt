@@ -1,4 +1,10 @@
-// Just enough to start and join a thread.
+// Copyright 2018, Bernard Helyer.
+// SPDX-License-Identifier: BSL-1.0
+/*!
+ * Pthread bindings.
+ *
+ * Just enough to start and join a thread.
+ */
 module core.c.pthread;
 extern (C):
 

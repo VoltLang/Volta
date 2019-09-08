@@ -1,7 +1,10 @@
-// Copyright 2016-2017, Jakob Bornecrantz.  All rights reserved.
-// Copyright 2010-2012, Jonathan M Davis.  All rights reserved.
-// Copyright 2010-2012, Kato Shoichi.  All rights reserved.
-// See copyright notice in src/watt/license.volt (BOOST ver. 1.0).
+// Copyright 2010-2012, Jonathan M Davis.
+// Copyright 2010-2012, Kato Shoichi.
+// Copyright 2016-2019, Jakob Bornecrantz.
+// SPDX-License-Identifier: BSL-1.0
+/*!
+ * Implementation of monotic interface in @ref core.rt.misc.
+ */
 module vrt.os.monotonic;
 
 version (Windows || OSX || Posix):
