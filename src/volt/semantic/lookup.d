@@ -1,7 +1,7 @@
 /*#D*/
-// Copyright © 2012-2017, Bernard Helyer.  All rights reserved.
-// Copyright © 2013-2017, Jakob Bornecrantz.  All rights reserved.
-// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+// Copyright 2012-2017, Bernard Helyer.
+// Copyright 2013-2017, Jakob Bornecrantz.
+// SPDX-License-Identifier: BSL-1.0
 /*!
  * Functions that encode the semantic code for looking up symbols.
  *

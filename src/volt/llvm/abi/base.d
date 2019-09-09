@@ -1,6 +1,6 @@
 /*#D*/
-// Copyright © 2017, Bernard Helyer.  All rights reserved.
-// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+// Copyright 2017, Bernard Helyer.
+// SPDX-License-Identifier: BSL-1.0
 /*!
  * Perform ABI modifications to functions and function calls, if needed.
  *

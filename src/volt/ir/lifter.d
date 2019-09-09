@@ -1,7 +1,7 @@
 /*#D*/
-// Copyright © 2016, Jakob Bornecrantz.  All rights reserved.
-// Copyright © 2016, Bernard Helyer.  All rights reserved.
-// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+// Copyright 2016, Jakob Bornecrantz.
+// Copyright 2016, Bernard Helyer.
+// SPDX-License-Identifier: BSL-1.0
 module volt.ir.lifter;
 
 import ir = volta.ir;

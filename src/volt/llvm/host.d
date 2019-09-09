@@ -1,7 +1,7 @@
 /*#D*/
-// Copyright © 2012-2017, Jakob Bornecrantz.  All rights reserved.
-// Copyright © 2015-2017, Bernard Helyer.  All rights reserved.
-// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+// Copyright 2012-2017, Jakob Bornecrantz.
+// Copyright 2015-2017, Bernard Helyer.
+// SPDX-License-Identifier: BSL-1.0
 /*!
  * Host or JIT compilation code.
  *

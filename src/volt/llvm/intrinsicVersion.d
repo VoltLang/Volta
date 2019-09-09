@@ -1,6 +1,6 @@
 /*#D*/
-// Copyright © 2018, Jakob Bornecrantz.
-// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+// Copyright 2018, Jakob Bornecrantz.
+// SPDX-License-Identifier: BSL-1.0
 /*!
  * Get the intrinsic version.
  *

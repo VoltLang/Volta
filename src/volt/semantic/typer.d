@@ -1,7 +1,9 @@
 /*#D*/
-// Copyright © 2013, Bernard Helyer.  All rights reserved.
-// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
-// Routines to retrieve the types of expressions.
+// Copyright 2013, Bernard Helyer.
+// SPDX-License-Identifier: BSL-1.0
+/*!
+ * Routines to retrieve the types of expressions.
+ */
 module volt.semantic.typer;
 
 import watt.conv : toString;

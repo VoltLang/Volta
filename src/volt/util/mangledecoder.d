@@ -1,4 +1,7 @@
 /*#D*/
+// Copyright 2013-2018, Bernard Helyer.
+// Copyright 2015-2018, Jakob Bornecrantz.
+// SPDX-License-Identifier: BSL-1.0
 module volt.util.mangledecoder;
 
 import watt.conv : toInt;

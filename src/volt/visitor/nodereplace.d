@@ -1,4 +1,9 @@
 /*#D*/
+// Copyright 2015-2017, Bernard Helyer.
+// SPDX-License-Identifier: BSL-1.0
+/*!
+ * Home of @ref ExpReferenceReplacer.
+ */
 module volt.visitor.nodereplace;
 
 import volta.visitor.visitor;

@@ -1,6 +1,6 @@
 /*#D*/
-// Copyright © 2013-2017, Jakob Bornecrantz.  All rights reserved.
-// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+// Copyright 2013-2017, Jakob Bornecrantz.
+// SPDX-License-Identifier: BSL-1.0
 /*!
  * Interfaces that the rest of the @ref llvmbackend code uses.
  *

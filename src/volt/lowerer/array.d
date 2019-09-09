@@ -1,7 +1,7 @@
 /*#D*/
-// Copyright © 2013-2015, Jakob Bornecrantz.  All rights reserved.
-// Copyright © 2013-2015, David Herberth.  All rights reserved.
-// See copyright notice in src/volt/license.d (BOOST ver. 1.0).
+// Copyright 2013-2015, Jakob Bornecrantz.
+// Copyright 2013-2015, David Herberth.
+// SPDX-License-Identifier: BSL-1.0
 module volt.lowerer.array;
 
 import watt.text.format : format;
