@@ -3,7 +3,12 @@
 /*!
  * License information.
  */
-module volt.license;
+module volta.license;
+
+/*!
+ * Identifier string for this Volta.
+ */
+enum string ident = "Volta 0.1.4-dev";
 
 /*!
  * This is the license for the volt compiler.

@@ -15,7 +15,7 @@ import watt.text.format : format;
 import volt.arg;
 import volta.settings;
 import volt.errors;
-import volt.license;
+import volta.license;
 import volt.interfaces;
 import volt.driver;
 import volt.util.path;

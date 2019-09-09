@@ -5,6 +5,8 @@ module volta.settings;
 
 import watt.text.string;
 import volta.interfaces;
+import license = volta.license;
+
 
 /*!
  * Holds a set of compiler settings.
@@ -85,7 +87,7 @@ public:
 
 	final void processConfigs()
 	{
-		identStr = "Volta 0.1.4-dev";
+		identStr = license.ident;
 		setStrs();
 		replaceMacros();
 	}
