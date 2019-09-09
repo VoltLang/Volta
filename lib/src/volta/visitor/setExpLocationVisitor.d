@@ -1,4 +1,6 @@
 /*#D*/
+// Copyright 2017, Bernard Helyer.
+// SPDX-License-Identifier: BSL-1.0
 module volta.visitor.setExpLocationVisitor;
 
 import visitor = volta.visitor.visitor;

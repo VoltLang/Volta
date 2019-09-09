@@ -2,7 +2,7 @@
 // Copyright 2011, Jakob Ovrum.
 // Copyright 2010-2015, Bernard Helyer.
 // Copyright 2012-2015, Jakob Bornecrantz.
-// See copyright notice in src/diode/license.volt (BOOST ver. 1.0).
+// SPDX-License-Identifier: BSL-1.0
 module volta.ir.location;
 
 import watt.text.format : format;
