@@ -1,8 +1,7 @@
 /*#D*/
-// Copyright © 2012, Jakob Bornecrantz.  All rights reserved.
-// See copyright notice and license below.
-
-/**
+// Copyright 2012, Jakob Bornecrantz.
+// SPDX-License-Identifier: NCSA OR (Apache-2.0 WITH LLVM-exception)
+/*!
  * This file imports the regular C api of LLVM but also extends it
  * with simple wrappers that works on native arrays instead of C
  * pointer plus length arrays as well as string wrappers.

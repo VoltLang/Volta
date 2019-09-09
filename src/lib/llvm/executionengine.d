@@ -1,4 +1,6 @@
 /*#D*/
+// Copyright 2012, Jakob Bornecrantz.
+// SPDX-License-Identifier: NCSA OR (Apache-2.0 WITH LLVM-exception)
 module lib.llvm.executionengine;
 
 private import watt.conv : toStringz;

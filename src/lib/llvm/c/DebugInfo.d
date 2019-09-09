@@ -1,24 +1,25 @@
 /*#D*/
-//===------------ DebugInfo.h - LLVM C API Debug Info API -----------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-///
-/// This file declares the C API endpoints for generating DWARF Debug Info
-///
-/// Note: This interface is experimental. It is *NOT* stable, and may be
-///       changed without warning.
-///
-//===----------------------------------------------------------------------===//
+/*===-- llvm-c/DebugInfo.h - LLVM C API Debug Info API ------------*- D -*-===*\
+|*                                                                            *|
+|*                     The LLVM Compiler Infrastructure                       *|
+|*                                                                            *|
+|* This file is distributed under the University of Illinois Open Source      *|
+|* License. See src/lib/llvm/core.d for details.                              *|
+|*                                                                            *|
+|*===----------------------------------------------------------------------===*|
+|*                                                                            *|
+|* This file declares the C API endpoints for generating DWARF Debug Info     *|
+|*                                                                            *|
+|* Note: This interface is experimental. It is *NOT* stable, and may be       *|
+|*       changed without warning.                                             *|
+|*                                                                            *|
+\*===----------------------------------------------------------------------===*/
 module lib.llvm.c.DebugInfo;
-extern (C):
 
 import lib.llvm.c.Core;
 
+
+extern (C):
 
 /**
  * Debug info flags.

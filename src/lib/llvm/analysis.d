@@ -1,6 +1,6 @@
 /*#D*/
-// Copyright © 2012-2017, Jakob Bornecrantz.  All rights reserved.
-// See copyright notice and license in src/lib/llvm/core.d.
+// Copyright 2012-2017, Jakob Bornecrantz.
+// SPDX-License-Identifier: NCSA OR (Apache-2.0 WITH LLVM-Exception)
 module lib.llvm.analysis;
 
 import lib.llvm.core;

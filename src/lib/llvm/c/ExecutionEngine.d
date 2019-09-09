@@ -1,9 +1,29 @@
 /*#D*/
+/*===-- llvm-c/ExecutionEngine.h - ExecutionEngine Lib C Iface ----*- D -*-===*\
+|*                                                                            *|
+|*                     The LLVM Compiler Infrastructure                       *|
+|*                                                                            *|
+|* This file is distributed under the University of Illinois Open Source      *|
+|* License. See src/lib/llvm/core.d for details.                              *|
+|*                                                                            *|
+|*===----------------------------------------------------------------------===*|
+|*                                                                            *|
+|* This header declares the C interface to libLLVMExecutionEngine.o, which    *|
+|* implements various analyses of the LLVM IR.                                *|
+|*                                                                            *|
+|* Many exotic languages can interoperate with C code but have a harder time  *|
+|* with C++ due to name mangling. So in addition to C, this interface enables *|
+|* tools written in such languages.                                           *|
+|*                                                                            *|
+\*===----------------------------------------------------------------------===*/
 module lib.llvm.c.ExecutionEngine;
 
 import lib.llvm.c.Core;
 import lib.llvm.c.Target;
 import lib.llvm.c.TargetMachine;
+
+
+extern(C):
 
 private alias uintptr_t = size_t;
 private alias uint64_t = ulong;
@@ -17,9 +37,6 @@ alias LLVMExecutionEngineRef  = LLVMExecutionEngine*;
 
 struct LLVMMCJITMemoryManager {};
 alias LLVMMCJITMemoryManagerRef  = LLVMMCJITMemoryManager*;
-
-
-extern(C):
 
 struct LLVMMCJITCompilerOptions {
 	uint OptLevel;

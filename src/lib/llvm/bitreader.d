@@ -1,6 +1,6 @@
 /*#D*/
-// Copyright © 2014, Jakob Bornecrantz.  All rights reserved.
-// See copyright notice and license in src/lib/llvm/core.d.
+// Copyright 2014, Jakob Bornecrantz.  All rights reserved.
+// SPDX-License-Identifier: NCSA OR (Apache-2.0 WITH LLVM-exception)
 module lib.llvm.bitreader;
 
 import lib.llvm.core;
