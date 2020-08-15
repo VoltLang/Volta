@@ -349,7 +349,7 @@ public:
 			return ret;
 		} catch (CompilerPanic e) {
 			io.output.flush();
-			io.error.writefln(e.msg);
+			io.error.writefln("%s", e.msg);
 			auto loc = e.allocationLocation;
 			if (loc != "") {
 				io.error.writefln("%s", loc);
@@ -358,7 +358,7 @@ public:
 			return 2;
 		} catch (CompilerError e) {
 			io.output.flush();
-			io.error.writefln(e.msg);
+			io.error.writefln("%s", e.msg);
 			auto loc = e.allocationLocation;
 			debug if (loc != "") {
 				io.error.writefln("%s", loc);
