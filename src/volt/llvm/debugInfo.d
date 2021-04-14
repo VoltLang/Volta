@@ -90,19 +90,39 @@ version (LLVMVersion7AndAbove) {
 		auto ident = state.identStr;
 		auto file = state.diFile(filename, state.currentWorkingDir);
 
-		return LLVMDIBuilderCreateCompileUnit(state.diBuilder,
-			LLVMDWARFSourceLanguage.C,  // Lang
-			file,                       // FileRef
-			ident.ptr, ident.length,    // Producer
-			false,                      // isOptimized
-			null, 0,                    // Flags
-			0,                          // RuntimeVer
-			null, 0,                    // SplitName
-			LLVMDWARFEmissionKind.Full, // Kind
-			0,                          // DWOId
-			false,                      // SplitDebugInlining
-			true                        // DebugInfoForProfiling
-		);
+		version (LLVMVersion11AndAbove) {
+			return LLVMDIBuilderCreateCompileUnit(state.diBuilder,
+					LLVMDWARFSourceLanguage.C,  // Lang
+					file,                       // FileRef
+					ident.ptr, ident.length,    // Producer
+					false,                      // isOptimized
+					null, 0,                    // Flags
+					0,                          // RuntimeVer
+					null, 0,                    // SplitName
+					LLVMDWARFEmissionKind.Full, // Kind
+					0,                          // DWOId
+					false,                      // SplitDebugInlining
+					true,                       // DebugInfoForProfiling
+					null,                       // SysRoot
+					0,                          // SysRootLen
+					null,                       // SDK
+					0                           // SDKLen
+				);
+		} else {
+			return LLVMDIBuilderCreateCompileUnit(state.diBuilder,
+					LLVMDWARFSourceLanguage.C,  // Lang
+					file,                       // FileRef
+					ident.ptr, ident.length,    // Producer
+					false,                      // isOptimized
+					null, 0,                    // Flags
+					0,                          // RuntimeVer
+					null, 0,                    // SplitName
+					LLVMDWARFEmissionKind.Full, // Kind
+					0,                          // DWOId
+					false,                      // SplitDebugInlining
+					true                        // DebugInfoForProfiling
+				);
+		}
 	}
 
 	void diFinalize(State state)

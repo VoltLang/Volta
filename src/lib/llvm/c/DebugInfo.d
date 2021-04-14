@@ -198,14 +198,29 @@ void LLVMDIBuilderFinalize(LLVMDIBuilderRef Builder);
  * \param SplitDebugInlining    Whether to emit inline debug info.
  * \param DebugInfoForProfiling Whether to emit extra debug info for
  *                              profile collection.
+ * \param SysRoot       The Clang system root (value of -isysroot).
+ * \param SysRootLen    The length of the C string passed to \c SysRoot.
+ * \param SDK           The SDK. On Darwin, the last component of the sysroot.
+ * \param SDKLen        The length of the C string passed to \c SDK.
  */
-LLVMMetadataRef LLVMDIBuilderCreateCompileUnit(
-    LLVMDIBuilderRef Builder, LLVMDWARFSourceLanguage Lang,
-    LLVMMetadataRef FileRef, const(char)* Producer, size_t ProducerLen,
-    LLVMBool isOptimized, const(char)* Flags, size_t FlagsLen,
-    uint RuntimeVer, const(char)* SplitName, size_t SplitNameLen,
-    LLVMDWARFEmissionKind Kind, uint DWOId, LLVMBool SplitDebugInlining,
-    LLVMBool DebugInfoForProfiling);
+version (LLVMVersion11AndAbove) {
+	LLVMMetadataRef LLVMDIBuilderCreateCompileUnit(
+	    LLVMDIBuilderRef Builder, LLVMDWARFSourceLanguage Lang,
+	    LLVMMetadataRef FileRef, const(char)* Producer, size_t ProducerLen,
+	    LLVMBool isOptimized, const(char)* Flags, size_t FlagsLen,
+	    uint RuntimeVer, const(char)* SplitName, size_t SplitNameLen,
+	    LLVMDWARFEmissionKind Kind, uint DWOId, LLVMBool SplitDebugInlining,
+	    LLVMBool DebugInfoForProfiling, const char *SysRoot, size_t SysRootLen,
+	    const char *SDK, size_t SDKLen);
+} else {
+	LLVMMetadataRef LLVMDIBuilderCreateCompileUnit(
+	    LLVMDIBuilderRef Builder, LLVMDWARFSourceLanguage Lang,
+	    LLVMMetadataRef FileRef, const(char)* Producer, size_t ProducerLen,
+	    LLVMBool isOptimized, const(char)* Flags, size_t FlagsLen,
+	    uint RuntimeVer, const(char)* SplitName, size_t SplitNameLen,
+	    LLVMDWARFEmissionKind Kind, uint DWOId, LLVMBool SplitDebugInlining,
+	    LLVMBool DebugInfoForProfiling);
+}
 
 /**
  * Create a file descriptor to hold debugging information for a file.
@@ -233,13 +248,24 @@ LLVMDIBuilderCreateFile(LLVMDIBuilderRef Builder, const(char)* Filename,
  * \param IncludePathLen  The length of the C string passed to \c IncludePath.
  * \param ISysRoot        The Clang system root (value of -isysroot).
  * \param ISysRootLen     The length of the C string passed to \c ISysRoot.
+ * \param APINotesFile    The path to an API notes file for the module.
+ * \param APINotesFileLen The length of the C string passed to \c APINotestFile.
  */
-LLVMMetadataRef
-LLVMDIBuilderCreateModule(LLVMDIBuilderRef Builder, LLVMMetadataRef ParentScope,
-                          const(char)* Name, size_t NameLen,
-                          const(char)* ConfigMacros, size_t ConfigMacrosLen,
-                          const(char)* IncludePath, size_t IncludePathLen,
-                          const(char)* ISysRoot, size_t ISysRootLen);
+version (LLVMVersion11AndAbove) {
+	LLVMMetadataRef
+	LLVMDIBuilderCreateModule(LLVMDIBuilderRef Builder, LLVMMetadataRef ParentScope,
+	                          const(char)* Name, size_t NameLen,
+	                          const(char)* ConfigMacros, size_t ConfigMacrosLen,
+	                          const(char)* IncludePath, size_t IncludePathLen,
+	                          const(char)* APINotesFile, size_t APINotesFileLen);
+} else {
+	LLVMMetadataRef
+	LLVMDIBuilderCreateModule(LLVMDIBuilderRef Builder, LLVMMetadataRef ParentScope,
+	                          const(char)* Name, size_t NameLen,
+	                          const(char)* ConfigMacros, size_t ConfigMacrosLen,
+	                          const(char)* IncludePath, size_t IncludePathLen,
+	                          const(char)* ISysRoot, size_t ISysRootLen);
+}
 
 /**
  * Creates a new descriptor for a namespace with the specified parent scope.
@@ -730,11 +756,19 @@ LLVMDIBuilderCreateNullPtrType(LLVMDIBuilderRef Builder);
  * \param LineNo     Line number.
  * \param Scope      The surrounding context for the typedef.
  */
-LLVMMetadataRef
-LLVMDIBuilderCreateTypedef(LLVMDIBuilderRef Builder, LLVMMetadataRef Type,
-                           const(char)* Name, size_t NameLen,
-                           LLVMMetadataRef File, uint LineNo,
-                           LLVMMetadataRef Scope);
+version (LLVMVersion10AndAbove) {
+	LLVMMetadataRef
+	LLVMDIBuilderCreateTypedef(LLVMDIBuilderRef Builder, LLVMMetadataRef Type,
+	                           const(char)* Name, size_t NameLen,
+	                           LLVMMetadataRef File, uint LineNo,
+	                           LLVMMetadataRef Scope, uint AlignInBits);
+} else {
+	LLVMMetadataRef
+	LLVMDIBuilderCreateTypedef(LLVMDIBuilderRef Builder, LLVMMetadataRef Type,
+	                           const(char)* Name, size_t NameLen,
+	                           LLVMMetadataRef File, uint LineNo,
+	                           LLVMMetadataRef Scope);
+}
 
 /**
  * Create debugging information entry to establish inheritance relationship
