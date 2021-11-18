@@ -1188,12 +1188,17 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 	// Yes its the same loop again.
 	size_t abiOffset = 0;
 	for (size_t i = 0; i < postfix.arguments.length; ++i) {
+		auto t = args[i+offset].type;
 		bool isInBounds = i < ct.ct.params.length;
 		bool isRefOut = isInBounds && (ct.ct.isArgRef[i] || ct.ct.isArgOut[i]);
-		bool isByValAttr = args[i+offset].type.passByValAttr;
+		bool isByValAttr = t.passByValAttr;
 		if (!isRefOut && isByValAttr) {
 			auto index = cast(LLVMAttributeIndex)(i+offset+1+abiOffset);
-			LLVMAddCallSiteAttribute(result.value, index, state.attrByVal);
+			version (LLVMVersion12AndAbove) {
+				LLVMAddCallSiteAttribute(result.value, index, t.byValTypeAttr);
+			} else {
+				LLVMAddCallSiteAttribute(result.value, index, state.attrByVal);
+			}
 		}
 		if (irc !is null && irc.abiModified && irc.abiData[i+abiOffset].length == 2) {
 			abiOffset++;

@@ -99,7 +99,11 @@ public:
 		enumKind = LLVMGetEnumAttributeKindForName("sret", 4);
 		this.attrSRet = LLVMCreateEnumAttribute(this.context, enumKind, 0);
 		enumKind = LLVMGetEnumAttributeKindForName("byval", 5);
-		this.attrByVal = LLVMCreateEnumAttribute(this.context, enumKind, 0);
+		version (LLVMVersion12AndAbove) {
+			this.attrByValKind = enumKind;
+		} else {
+			this.attrByVal = LLVMCreateEnumAttribute(this.context, enumKind, 0);
+		}
 		enumKind = LLVMGetEnumAttributeKindForName("uwtable", 7);
 		this.attrUWTable = LLVMCreateEnumAttribute(this.context, enumKind, 0);
 

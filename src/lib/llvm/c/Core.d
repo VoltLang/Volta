@@ -631,6 +631,17 @@ uint LLVMGetEnumAttributeKind(LLVMAttributeRef A);
 ulong LLVMGetEnumAttributeValue(LLVMAttributeRef A);
 
 /**
+ * Create a type attribute
+ */
+LLVMAttributeRef LLVMCreateTypeAttribute(LLVMContextRef C, uint KindID,
+                                         LLVMTypeRef type_ref);
+
+/**
+ * Get the type attribute's value.
+ */
+LLVMTypeRef LLVMGetTypeAttributeValue(LLVMAttributeRef A);
+
+/**
  * Create a string attribute.
  */
 LLVMAttributeRef LLVMCreateStringAttribute(LLVMContextRef C,

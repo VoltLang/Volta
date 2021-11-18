@@ -130,7 +130,11 @@ public:
 				LLVMBuildStore(state.builder, initC, v);
 			} else if (isByValAttr && !isRef) {
 				auto index = cast(LLVMAttributeIndex)(irIndex+offset+1);
-				LLVMAddAttributeAtIndex(llvmFunc, index, state.attrByVal);
+				version (LLVMVersion12AndAbove) {
+					LLVMAddAttributeAtIndex(llvmFunc, index, t.byValTypeAttr);
+				} else {
+					LLVMAddAttributeAtIndex(llvmFunc, index, state.attrByVal);
+				}
 			}
 
 			// Early out on unamed parameters.

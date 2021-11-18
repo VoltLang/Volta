@@ -40,6 +40,11 @@ public:
 	bool passByValAttr;
 	bool passByValPtr;
 
+	version (LLVMVersion12AndAbove) {
+		// Need to have typed byVal enums in 12 and above.
+		LLVMAttributeRef byValTypeAttr;
+	}
+
 public:
 	void from(State, ir.Constant, Value) { assert(false); }
 	void from(State, ir.ArrayLiteral, Value) { assert(false); }
@@ -819,6 +824,10 @@ private:
 			this.passByValPtr = semanticSize > 16;
 		} else {
 			this.passByValAttr = semanticSize > 16;
+			version (LLVMVersion12AndAbove) {
+				// Need to have typed byVal enums in 12 and above.
+				this.byValTypeAttr = LLVMCreateTypeAttribute(state.context, state.attrByValKind, llvmType);
+			}
 		}
 
 		createAlias(state, irType, mangled);

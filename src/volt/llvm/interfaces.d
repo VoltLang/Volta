@@ -82,9 +82,16 @@ public:
 	 * @{
 	 */
 	LLVMAttributeRef attrSRet;
-	LLVMAttributeRef attrByVal;
 	LLVMAttributeRef attrUWTable;
+
+	version (LLVMVersion12AndAbove) {
+		// Need to have typed byVal enums in 12 and above.
+		uint attrByValKind;
+	} else {
+		LLVMAttributeRef attrByVal;
+	}
 	/*! @} */
+
 
 	static final class PathState
 	{
