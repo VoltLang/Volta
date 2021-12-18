@@ -355,14 +355,17 @@ protected:
 
 	fn scanStack() bool
 	{
-		p: const(void*);
+		// This needs to be a size_t to enforce alignment.
+		p: const(size_t) = 0;
 
 		iptr := cast(size_t)&p;
 		iend := cast(size_t)stackBottom;
 		length := (iend - iptr) / typeid(size_t).size;
 
-		range := (&p)[1 .. length];
-		return scanRange(range);
+		// Also grab the size_t value, needed for LLVM 13 aggresive optimizer.
+		range := (&p)[0 .. length];
+
+		return scanRange(cast(void*[])range);
 	}
 
 	fn scanSlab(s: Slab*, ptr: const(void*)) bool
