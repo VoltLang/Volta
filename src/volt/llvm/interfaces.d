@@ -81,7 +81,6 @@ public:
 	 * Cached llvm attributes.
 	 * @{
 	 */
-	LLVMAttributeRef attrSRet;
 	LLVMAttributeRef attrUWTable;
 
 	version (LLVMVersion12AndAbove) {
@@ -89,6 +88,13 @@ public:
 		uint attrByValKind;
 	} else {
 		LLVMAttributeRef attrByVal;
+	}
+
+	version (LLVMVersion13AndAbove) {
+		// Need to have typed SRet enums in 13 and above.
+		uint attrSRetKind;
+	} else {
+		LLVMAttributeRef attrSRet;
 	}
 	/*! @} */
 

@@ -44,6 +44,11 @@ public:
 		// Need to have typed byVal enums in 12 and above.
 		LLVMAttributeRef byValTypeAttr;
 	}
+	version (LLVMVersion13AndAbove) {
+		// Need to have typed sRet enums in 13 and above.
+		LLVMAttributeRef sRetTypeAttr;
+	}
+
 
 public:
 	void from(State, ir.Constant, Value) { assert(false); }
@@ -828,6 +833,10 @@ private:
 				// Need to have typed byVal enums in 12 and above.
 				this.byValTypeAttr = LLVMCreateTypeAttribute(state.context, state.attrByValKind, llvmType);
 			}
+		}
+		version (LLVMVersion13AndAbove) {
+			// Need to have typed sRet enums in 13 and above.
+			this.sRetTypeAttr = LLVMCreateTypeAttribute(state.context, state.attrSRetKind, llvmType);
 		}
 
 		createAlias(state, irType, mangled);

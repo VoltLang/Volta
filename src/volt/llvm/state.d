@@ -96,13 +96,17 @@ public:
 		this.llvmTypeidFor = llvmTypeidFor;
 
 		uint enumKind;
-		enumKind = LLVMGetEnumAttributeKindForName("sret", 4);
-		this.attrSRet = LLVMCreateEnumAttribute(this.context, enumKind, 0);
 		enumKind = LLVMGetEnumAttributeKindForName("byval", 5);
 		version (LLVMVersion12AndAbove) {
 			this.attrByValKind = enumKind;
 		} else {
 			this.attrByVal = LLVMCreateEnumAttribute(this.context, enumKind, 0);
+		}
+		enumKind = LLVMGetEnumAttributeKindForName("sret", 4);
+		version (LLVMVersion13AndAbove) {
+			this.attrSRetKind = enumKind;
+		} else {
+			this.attrSRet = LLVMCreateEnumAttribute(this.context, enumKind, 0);
 		}
 		enumKind = LLVMGetEnumAttributeKindForName("uwtable", 7);
 		this.attrUWTable = LLVMCreateEnumAttribute(this.context, enumKind, 0);
@@ -433,7 +437,12 @@ public:
 			}
 
 			auto index = cast(LLVMAttributeIndex)1;
-			LLVMAddAttributeAtIndex(v, index, attrSRet);
+			version (LLVMVersion13AndAbove) {
+				assert(ft.ret.sRetTypeAttr !is null);
+				LLVMAddAttributeAtIndex(v, index, ft.ret.sRetTypeAttr);
+			} else {
+				LLVMAddAttributeAtIndex(v, index, attrSRet);
+			}
 		}
 
 		Store add = { v, type };
