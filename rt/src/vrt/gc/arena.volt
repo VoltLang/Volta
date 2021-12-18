@@ -498,15 +498,16 @@ protected:
 			}
 		}
 
-		// Get the element.
-		elem := slab.allocate();
+		// Get the slot in the slab, then the pointer.
+		slot := slab.allocate();
+		ptr := slab.slotToPointer(slot);
 
 		// If the cache is empty, remove it from the cache.
 		if (slab.freeSlots == 0) {
 			popFreeSlab(slab);
 		}
 
-		return &slab.extent.ptr[elem * size];
+		return ptr;
 	}
 
 	fn getFreeSlab(order: u8, kind: Extent.Kind) Slab*
