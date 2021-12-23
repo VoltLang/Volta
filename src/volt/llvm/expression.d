@@ -1320,7 +1320,7 @@ void handleAccessExp(State state, ir.AccessExp ae, Value result)
 
 		getFieldFromAggregate(state, /*#ref*/ae.loc, result, index, st.types[index], result);
 	} else {
-		throw panic(ae, format("%s is not struct, array or pointer", ir.nodeToString(result.type.irType)));
+		throw panic(ae, format("%s is not struct, union or pointer", ir.nodeToString(result.type.irType)));
 	}
 }
 
