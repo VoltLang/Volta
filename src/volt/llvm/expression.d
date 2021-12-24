@@ -1320,6 +1320,10 @@ void handleAccessExp(State state, ir.AccessExp ae, Value result)
 
 		getFieldFromAggregate(state, /*#ref*/ae.loc, result, index, st.types[index], result);
 	} else {
+		/*
+		 * If you are ending up here wondering why you can't access a
+		 * ArrayType, that is handled by handleBuiltinExp.
+		 */
 		throw panic(ae, format("%s is not struct, union or pointer", ir.nodeToString(result.type.irType)));
 	}
 }
