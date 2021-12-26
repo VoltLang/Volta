@@ -525,7 +525,7 @@ string getTriple(TargetInfo target)
 		case X86: return "i386-apple-macosx10.9.0";
 		case X86_64: return "x86_64-apple-macosx10.9.0";
 		case ARMHF: assert(false);
-		case AArch64: assert(false);
+		case AArch64: return "arm64-apple-macosx12.0.0"; // Yes arm64
 		}
 	}
 }
@@ -573,7 +573,7 @@ string getLayout(TargetInfo target)
 		case X86: return layoutOSX32;
 		case X86_64: return layoutOSX64;
 		case ARMHF: assert(false);
-		case AArch64: assert(false);
+		case AArch64: return layoutAArch64OSX;
 		}
 	}
 }
@@ -588,6 +588,7 @@ enum string layoutWinLinux32 = "e-m:e-p:32:32-f64:32:64-f80:32-n8:16:32-S128";
 enum string layoutWinLinux64 = "e-m:e-i64:64-f80:128-n8:16:32:64-S128";
 enum string layoutOSX32 = "e-m:o-p:32:32-f64:32:64-f80:128-n8:16:32-S128";
 enum string layoutOSX64 = "e-m:o-i64:64-f80:128-n8:16:32:64-S128";
+enum string layoutAArch64OSX = "e-m:o-i64:64-i128:128-n32:64-S128";
 enum string layoutAArch64Linux64 = "e-m:e-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128";
 enum string layoutARMHFLinux32 = "e-m:e-p:32:32-i64:64-v128:64:128-a:0:32-n32-S64";
 //! @}

@@ -44,7 +44,9 @@ bool shouldCUseStructRet(TargetInfo target, ir.Struct irStruct)
 		case X86_64:
 			return structSize > 16;
 		case ARMHF: assert(false);
-		case AArch64: assert(false);
+		case AArch64:
+			// !?!?!
+			return structSize > 16;
 		}
 	case MSVC:
 	case MinGW:
