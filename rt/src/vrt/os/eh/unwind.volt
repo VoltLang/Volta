@@ -100,10 +100,11 @@ extern(C) fn vrt_eh_rethrow(t: Throwable)
 	e.t = t;
 
 	f := _Unwind_RaiseException(&e.e);
-	msgs: char[][3];
+	msgs: char[][4];
 	msgs[0] = cast(char[])"FAILED TO RAISE EXCEPTION";
-	msgs[2] = cast(char[])t.throwLocation;
 	msgs[1] = cast(char[])t.msg;
+	msgs[2] = cast(char[])t.location;
+	msgs[3] = cast(char[])t.throwLocation;
 	vrt_panic(cast(char[][])msgs);
 }
 
