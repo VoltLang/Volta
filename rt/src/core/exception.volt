@@ -118,8 +118,8 @@ class KeyNotFoundException : Exception
 	 *
 	 * @Param msg A message describing the error.
 	 */
-	this(msg: string)
+	this(msg: string, location: string = __LOCATION__)
 	{
-		super(msg);
+		super(msg, location);
 	}
 }

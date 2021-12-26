@@ -109,17 +109,20 @@ extern(C) fn vrt_eh_rethrow(t: Throwable)
 
 extern(C) fn vrt_eh_throw_assert_error(location: string, msg: string)
 {
-	vrt_eh_throw(new AssertError(msg), location);
+	e := new AssertError(msg, location);
+	vrt_eh_throw(e, location);
 }
 
 extern(C) fn vrt_eh_throw_slice_error(location: string)
 {
-	vrt_eh_throw(new Error("invalid array cast"), location);
+	e := new Error("invalid array cast", location);
+	vrt_eh_throw(e, location);
 }
 
 extern(C) fn vrt_eh_throw_key_not_found_error(location: string)
 {
-	vrt_eh_throw(new KeyNotFoundException("key does not exist"), location);
+	e := new KeyNotFoundException("key does not exist", location);
+	vrt_eh_throw(e, location);
 }
 
 /*!
