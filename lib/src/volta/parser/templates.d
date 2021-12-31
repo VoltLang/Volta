@@ -38,17 +38,22 @@ bool isTemplateInstance(ParserStream ps)
 	if (ps != [TokenType.Identifier, TokenType.Assign]) {
 		return false;
 	}
-	ps.get();
-	ps.get();
+	ps.get(); // TokenType.Identifier
+	ps.get(); // TokenType.Assign
+
 	if (ps == TokenType.Mixin) {
 		return true;
 	}
+
+	// Gobble up Qualified name
 	while (ps == TokenType.Identifier || ps == TokenType.Dot) {
 		ps.get();
 	}
+
 	if (ps == TokenType.Bang) {
 		return true;
 	}
+
 	return false;
 }
 
