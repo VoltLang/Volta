@@ -13,14 +13,17 @@ import volta.parser.toplevel;
 import volta.parser.expression;
 import volta.ir.token : isPrimitiveTypeToken;
 
+
+bool isLegacyTemplateInstance(ParserStream ps)
+{
+	return (ps == [TokenType.Alias, TokenType.Identifier, TokenType.Assign, TokenType.Identifier, TokenType.Bang]) != 0;
+}
+
 /*!
  * Returns: true if ps is at a template instantiation, false otherwise.
  */
 bool isTemplateInstance(ParserStream ps)
 {
-	if (ps.magicFlagD) {
-		return (ps == [TokenType.Alias, TokenType.Identifier, TokenType.Assign, TokenType.Identifier, TokenType.Bang]) != 0;
-	}
 	switch (ps.peek.type) {
 	case TokenType.Struct:
 	case TokenType.Class:

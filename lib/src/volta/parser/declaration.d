@@ -26,12 +26,28 @@ import volta.parser.templates;
 ParseStatus parseVariable(ParserStream ps, NodeSinkDg dgt)
 {
 	if (ps == TokenType.Alias) {
-		if (ps.magicFlagD && isTemplateInstance(ps)) {
-			ir.TemplateInstance ti;
-			parseLegacyTemplateInstance(ps, /*#out*/ti);
-			dgt(ti);
-			return Succeeded;
+		if (ps.magicFlagD) {
+			if (isLegacyTemplateInstance(ps)) {
+				ir.TemplateInstance ti;
+				parseLegacyTemplateInstance(ps, /*#out*/ti);
+				dgt(ti);
+				return Succeeded;
+			}
+
+			auto mark = ps.save();
+			ps.get(); // Pop the alias
+
+			if (isTemplateInstance(ps)) {
+				ir.TemplateInstance ti;
+				parseTemplateInstance(ps, /*#out*/ti);
+				dgt(ti);
+				return Succeeded;
+			}
+
+			// Only restore if this wasn't a new D TemplateInstance.
+			ps.restore(mark);
 		}
+
 		ir.Alias a;
 		auto succeeded = parseAlias(ps, /*#out*/a);
 		if (!succeeded) {
