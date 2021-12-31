@@ -139,17 +139,24 @@ ParseStatus parseJustVariable(ParserStream ps, NodeSinkDg dgt)
 
 ParseStatus parseAlias(ParserStream ps, out ir.Alias a)
 {
+	auto aliasTok = ps.get();
+	assert(aliasTok.type == TokenType.Alias);
+
 	a = new ir.Alias();
-	a.loc = ps.peek.loc;
+	a.loc = aliasTok.loc;
 	a.docComment = ps.comment();
 
-	if (ps != [TokenType.Alias, TokenType.Identifier, TokenType.Assign]) {
-		return unexpectedToken(ps, a);
+	if (ps != TokenType.Identifier) {
+		return parseExpected(ps, /*#ref*/ps.peek.loc, a, "identifier after 'alias' keyword");
 	}
-	ps.get();
+
 	auto nameTok = ps.get();
 	a.name = nameTok.value;
-	ps.get();
+
+	if (ps != TokenType.Assign) {
+		return parseExpected(ps, /*#ref*/ps.peek.loc, a, "'='' after alias identifier");
+	}
+	ps.get(); // Pop the '='
 
 	size_t pos = ps.save();
 
