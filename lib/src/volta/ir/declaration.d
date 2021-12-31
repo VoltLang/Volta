@@ -262,8 +262,6 @@ public:
 	Store store;
 
 
-	Exp templateInstance;  //!< Not with id. Optional.
-
 public:
 	this() { super(NodeType.Alias); }
 
@@ -278,7 +276,6 @@ public:
 		this.id = old.id;
 		this.lookScope = old.lookScope;
 		this.lookModule = old.lookModule;
-		this.templateInstance = old.templateInstance;
 		this.staticIf = old.staticIf;
 	}
 }

@@ -160,30 +160,12 @@ ParseStatus parseAlias(ParserStream ps, out ir.Alias a)
 
 	size_t pos = ps.save();
 
-	size_t i = 1;
-	bool bang, eof;
-	while (ps.lookahead(i, /*#out*/eof).type != TokenType.Semicolon && !ps.eofIndex(i)) {
-		bang = ps.lookahead(i, /*#out*/eof).type == TokenType.Bang;
-		if (bang) {
-			break;
-		}
-		i++;
-	}
-
 	ParseStatus succeeded = Succeeded;
 	do { // Poor mans goto.
-		if (bang) {
-			succeeded = parseExp(ps, /*#out*/a.templateInstance);
-			if (!succeeded) {
-				succeeded = unexpectedToken(ps, a);
-				break;
-			}
-		} else {
-			succeeded = parseQualifiedName(ps, /*#out*/a.id);
-			if (!succeeded) {
-				succeeded = parseFailed(ps, a);
-				break;
-			}
+		succeeded = parseQualifiedName(ps, /*#out*/a.id);
+		if (!succeeded) {
+			succeeded = parseFailed(ps, a);
+			break;
 		}
 		if (ps != TokenType.Semicolon) {
 			succeeded = unexpectedToken(ps, a);
