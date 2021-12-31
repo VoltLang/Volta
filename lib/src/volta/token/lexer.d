@@ -652,6 +652,22 @@ LexStatus lexMagicToken(TokenWriter tw)
 		token.type = TokenType.Local;
 		token.value = "local";
 		break;
+	case "#fn":
+		token.type = TokenType.Fn;
+		token.value = "fn";
+		break;
+	case "#struct":
+		token.type = TokenType.Struct;
+		token.value = "struct";
+		break;
+	case "#class":
+		token.type = TokenType.Class;
+		token.value = "class";
+		break;
+	case "#mixin":
+		token.type = TokenType.Mixin;
+		token.value = "mixin";
+		break;
 	default:
 		tw.errors ~= new LexerStringError(LexerError.Kind.String, token.loc,
 			tw.source.current,format("bad magical token (/*#...*/) '%s'.", tokenstr));
