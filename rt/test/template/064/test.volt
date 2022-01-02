@@ -2,7 +2,7 @@
 //T check:already defined in this scope
 module test;
 
-struct StructDefinition!(a: i32)
+struct StructDefinition!(T: i32)
 {
 	T b;
 }
