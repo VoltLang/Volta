@@ -1,5 +1,5 @@
 //T macro:expect-failure
-//T check:22:0: error: 'PiDoubler' is not a template definition
+//T check:24:0: error: 'NotTemplateDef' is not a template definition
 module main;
 
 struct ValueStore!(T, V: T)
@@ -18,8 +18,10 @@ struct ValueDoubler!(T, V: T)
 	}
 }
 
+struct NotTemplateDef { f: i32; }
+
 struct FortyStore = mixin ValueStore!(i32, 40);
-struct PiDoubler  = mixin PiDoubler!(f64, 3.1415926538);
+struct PiDoubler  = mixin NotTemplateDef!(f64, 3.1415926538);
 
 fn getGetter!(T, K)(getter: K) T
 {
