@@ -60,7 +60,7 @@
 	},
 	"requiresAliases": {
 		"exceptions": "!windows",
-		"sysvamd64": "posix && x86_64",
+		"sysvamd64": "none && posix && x86_64",
 		"win64": "windows && x86_64",
 		"lin32": "linux && x86"
 	}
