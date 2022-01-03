@@ -11,6 +11,7 @@ public import volta.ir.location : Location;
 public import volta.ir.token : Token, TokenType;
 
 import volta.ir.type;
+import volta.ir.context;
 import volta.ir.toplevel;
 import volta.ir.statement;
 import volta.ir.templates;
@@ -64,6 +65,9 @@ enum NodeType
 	ConditionTopLevel,
 	MixinFunction,
 	MixinTemplate,
+
+	/* context.d */
+	MergeNode,
 
 	/* type.d */
 	PrimitiveType,
@@ -317,6 +321,10 @@ public:
 	final MixinFunction toMixinFunctionChecked() { if (nodeType == NodeType.MixinFunction) return toMixinFunctionFast(); else return null; }
 	final MixinTemplate toMixinTemplateFast() { return cast(MixinTemplate)cast(void*)this; }
 	final MixinTemplate toMixinTemplateChecked() { if (nodeType == NodeType.MixinTemplate) return toMixinTemplateFast(); else return null; }
+
+	// Context
+	final MergeNode toMergeNodeFast() { return cast(MergeNode)cast(void*)this; }
+	final MergeNode toMergeNodeChecked() { if (nodeType == NodeType.PrimitiveType) return toMergeNodeFast(); else return null; }
 
 	// Type
 	final Type toTypeFast() { return cast(Type)cast(void*)this; }
@@ -629,6 +637,7 @@ string nodeToString(NodeType nodeType)
 	case MixinTemplate: return "MixinTemplate";
 	case Condition: return "Condition";
 	case ConditionTopLevel: return "ConditionTopLevel";
+	case MergeNode: return "MergeNode";
 	case FunctionSetType: return "FunctionSetType";
 	case FunctionSet: return "FunctionSet";
 	case PrimitiveType: return "PrimitiveType";

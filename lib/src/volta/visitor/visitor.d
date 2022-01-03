@@ -488,6 +488,12 @@ body {
 	/*
 	 * Expressions.
 	 */
+	case MergeNode:
+		return av.visitingError(n, "can not visit MergeNode");
+
+	/*
+	 * Expressions.
+	 */
 	case Constant:
 	case IdentifierExp:
 	case Postfix:

@@ -6,6 +6,7 @@ module volta.ir.context;
 import watt.conv : toString;
 import watt.text.format : format;
 
+import volta.ir.location : Location; // This is needed do to a bug :(
 import volta.ir.base;
 import volta.ir.type;
 import volta.ir.toplevel;
@@ -40,6 +41,19 @@ enum Status
  *
  * @ingroup irNode
  */
+
+/*!
+ * A very small node used to create a unique node for Merge stores. When
+ * resolving Merge store we want to be sure the circular dependency checker
+ * has a proper node to test on, but we can not used any of the nodes
+ * that it refers to if they are being resolved/actualized.
+ *
+ * @ingroup irNode irContext
+ */
+final class MergeNode : Node
+{
+	this(ref Location loc) { super(NodeType.MergeNode); this.loc = loc; }
+}
 
 /*!
  * A container class for a various things that can be stored

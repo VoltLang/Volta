@@ -569,6 +569,7 @@ ir.Node copyNode(ir.Node n)
 	case MixinFunction:
 	case Condition:
 	case ConditionTopLevel:
+	case MergeNode:
 	case Variable:
 	case Alias:
 	case Function:
