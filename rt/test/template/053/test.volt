@@ -1,3 +1,6 @@
+//T macro:expect-failure
+//T check:circular dependency detected
+// Alias circular dependency test.
 module test;
 
 struct Foo!(T)
