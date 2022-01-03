@@ -1,4 +1,3 @@
-//T has-passed:no
 module test;
 
 fn tmpl!(T)(t: T) T { return t; }
