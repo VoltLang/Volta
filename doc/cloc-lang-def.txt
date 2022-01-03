@@ -1,0 +1,9 @@
+Volt
+    filter rm_comments_in_strings " /* */
+    filter rm_comments_in_strings " // 
+    filter rm_comments_in_strings " /+ +/
+    filter remove_between_general /+ +/
+    filter call_regexp_common C++
+    extension volt
+    3rd_gen_scale 1.70
+    end_of_line_continuation \\$
