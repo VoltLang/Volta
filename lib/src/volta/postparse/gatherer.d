@@ -135,17 +135,18 @@ void checkInvalid(ir.Scope current, ir.Node n, string name, ErrorSink errSink)
 void checkTemplateRedefinition(ir.Scope current, string name, ErrorSink errSink)
 {
 	auto store = current.getStore(name);
-	if (store !is null && (store.kind == ir.Store.Kind.Type || store.kind == ir.Store.Kind.TemplateInstance)) {
-		ir.Node node;
-		if (store.kind == ir.Store.Kind.Type) {
-			node = store.node;
-		} else {
-			assert(store.templateInstances.length > 0);
-			node = store.templateInstances[0];
-		}
-		errorMsg(errSink, node, format("'%s' is already defined in this scope.", name));
+	if (store is null) {
 		return;
 	}
+
+	if (store.kind != ir.Store.Kind.Type &&
+	    store.kind != ir.Store.Kind.Merge &&
+	    store.kind != ir.Store.Kind.TypeTemplateInstance) {
+		return;
+	}
+
+	ir.Node node = store.node;
+	errorMsg(errSink, node, format("'%s' is already defined in this scope.", name));
 }
 
 void gather(ir.Scope current, ir.Variable v, Where where, bool warningsEnabled, ErrorSink errSink)
@@ -328,17 +329,22 @@ void gather(ir.Scope current, ir.TemplateDefinition td, Where where, ErrorSink e
 
 void gather(ir.Scope current, ir.TemplateInstance ti, Where where, ErrorSink errSink)
 {
-	checkInvalid(current, ti, ti.instanceName, errSink);
-	auto store = current.getStore(ti.instanceName);
-	if (store !is null && ti.kind == ir.TemplateKind.Function) {
-		store.addTemplateInstance(ti);
-		return;
-	}
-	checkTemplateRedefinition(current, ti.instanceName, errSink);
+	auto name = ti.instanceName;
+	checkInvalid(current, ti, name, errSink);
+
 	ir.Status status;
-	current.addTemplateInstance(ti, /*#out*/status);
+	if (ti.kind == ir.TemplateKind.Function) {
+		// We are dealing with a function here.
+		current.addFunctionTemplateInstance(ti, name, /*#out*/status);
+	} else {
+		// Only checked on the aggregate path.
+		checkTemplateRedefinition(current, name, errSink);
+
+		current.addTypeTemplateInstance(ti, name, /*#out*/status);
+	}
+
 	if (status != ir.Status.Success) {
-		panic(errSink, ti, "template redefinition");
+		panic(errSink, ti, "gather redefinition");
 		return;
 	}
 }

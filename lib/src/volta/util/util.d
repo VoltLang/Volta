@@ -116,7 +116,7 @@ ir.Scope getScopeFromStore(ir.Store store)
 		auto type = cast(ir.Type)store.node;
 		assert(type !is null);
 		return getScopeFromType(type);
-	case TemplateInstance:
+	case TypeTemplateInstance:
 	case Value:
 	case Function:
 	case FunctionParam:

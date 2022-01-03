@@ -154,16 +154,8 @@ ir.Type handleStore(Context ctx, string ident, ref ir.Exp exp, ir.Store store,
 	case EnumDeclaration:
 		return handleEnumDeclarationStore(ctx, ident, /*#ref*/exp, store, child,
 		                                  parent, via);
-	case TemplateInstance:
-		foreach (ti; store.templateInstances) {
-			if (ti.kind == ir.TemplateKind.Function) {
-				extypeTemplateInstance(ctx, ti);
-			}
-		}
-		if (store.templateInstances.length > 0) {
-			goto case Function;
-		}
-		goto case;
+	case TypeTemplateInstance:
+		throw panic(exp, "template instance used as a value.");
 	case Template:
 		throw panic(exp, "template used as a value.");
 	case Merge:
@@ -1071,7 +1063,7 @@ void checkCallRefOutTags(Context ctx, ir.CallableType ftype, ref ir.Exp[] argume
 }
 
 /*!
- * This function acts as a extyperExpReference function would do,
+ * This function acts as a ExpReference function would do,
  * but it also takes a extra type context which is used for the
  * cases when looking up Member variables via Types.
  *
@@ -3502,8 +3494,13 @@ void extypeThrowStatement(Context ctx, ref ir.Node n)
 
 void extypeTemplateInstance(Context ctx, ir.TemplateInstance ti)
 {
+	if (ti.isResolved) {
+		return;
+	}
+
 	auto tlifter = new TemplateLifter();
 	tlifter.templateLift(ctx.current, ctx.lp, ti);
+	ti.isResolved = true;
 }
 
 // Moved here for now.
@@ -4549,14 +4546,7 @@ void doResolveType(Context ctx, ref ir.Type type,
 
 		if (tr.type is null) {
 			auto store = lookup(ctx.lp, ctx.current, tr.id);
-			if (store !is null && store.kind == ir.Store.Kind.TemplateInstance) {
-				foreach (ti; store.templateInstances) {
-					extypeTemplateInstance(ctx, ti);
-				}
-				tr.type = lookupType(ctx.lp, ctx.current, tr.id);
-			} else {
-				tr.type = lookupType(ctx.lp, ctx.current, tr.id, store);
-			}
+			tr.type = lookupType(ctx.lp, ctx.current, tr.id, store);
 		}
 		assert(tr.type !is null);
 
@@ -5610,26 +5600,33 @@ public:
 	override Status enter(ir.TemplateInstance ti)
 	{
 		ctx.enter(ti);
-		if (ti._struct is null && ti._function is null) {
-			extypeTemplateInstance(ctx, ti);
-			final switch (ti.kind) with (ir.TemplateKind) {
-			case Struct:
-				accept(ti._struct, ctx.extyper);
-				break;
-			case Function:
-				accept(ti._function, ctx.extyper);
-				break;
-			case Class:
-				accept(ti._class, ctx.extyper);
-				break;
-			case Union:
-				accept(ti._union, ctx.extyper);
-				break;
-			case Interface:
-				accept(ti._interface, ctx.extyper);
-				break;
-			}
+		if (ti._struct !is null ||
+		    ti._function !is null ||
+		    ti._class !is null ||
+		    ti._union !is null ||
+		    ti._interface !is null) {
+			return Continue;
 		}
+
+		extypeTemplateInstance(ctx, ti);
+		final switch (ti.kind) with (ir.TemplateKind) {
+		case Struct:
+			accept(ti._struct, ctx.extyper);
+			break;
+		case Function:
+			accept(ti._function, ctx.extyper);
+			break;
+		case Class:
+			accept(ti._class, ctx.extyper);
+			break;
+		case Union:
+			accept(ti._union, ctx.extyper);
+			break;
+		case Interface:
+			accept(ti._interface, ctx.extyper);
+			break;
+		}
+
 		return Continue;
 	}
 

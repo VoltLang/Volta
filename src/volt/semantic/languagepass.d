@@ -439,12 +439,6 @@ public:
 		e.transform(current, a);
 	}
 
-	override void resolve(ir.Scope current, ir.TemplateInstance ti)
-	{
-		auto e = new ExTyper(this);
-		e.transform(current, ti);
-	}
-
 	override void resolve(ir.Scope current, ir.EnumDeclaration ed)
 	{
 		if (ed.resolved) {
@@ -458,10 +452,11 @@ public:
 	override void resolve(ir.Store s)
 	{
 		assert(s.kind == ir.Store.Kind.Merge);
-		assert(s.aliases.length > 0);
+		assert(s.node !is null);
+		assert(s.node.nodeType == ir.NodeType.MergeNode);
 
-		// Can't use Resolve action since we will resolve the alias soon.
-		auto w = mTracker.add(s.aliases[0], Work.Action.Actualize);
+		// We are using the MergeNode here.
+		auto w = mTracker.add(s.node, Work.Action.Resolve);
 		scope (exit) {
 			w.done();
 		}
@@ -471,9 +466,22 @@ public:
 		// the uniqueId of the Function node.
 		ir.Function[ir.NodeID] store;
 
+		foreach (ti; s.funcTemplateInstances) {
+			assert(ti.kind == ir.TemplateKind.Function);
+			assert(ti.myScope.parent is s.parent);
+
+			super.resolve(s.parent, ti);
+		}
+
 		foreach (func; s.functions) {
-			assert(s.parent is func.myScope.parent);
+			assert(func.myScope !is null);
+			assert(func.myScope.parent !is null);
+			// Regular and template instance functions.
+			assert(s.parent is func.myScope.parent ||
+			       s.parent is func.myScope.parent.parent);
+
 			super.resolve(func.myScope.parent, func);
+
 			store[func.uniqueId] = func;
 		}
 
@@ -488,8 +496,10 @@ public:
 			}
 		}
 
-		s.functions = store.values;
+		s.funcTemplateInstances = null;
 		s.aliases = null;
+		s.functions = store.values;
+		s.funcTemplateInstances = null;
 		s.kind = ir.Store.Kind.Function;
 	}
 
@@ -524,6 +534,17 @@ protected:
 		}
 
 		resolveAlias(this, a);
+	}
+
+	override void doResolve(ir.Scope current, ir.TemplateInstance ti)
+	{
+		auto w = mTracker.add(ti, Work.Action.Resolve);
+		scope (exit) {
+			w.done();
+		}
+
+		auto e = new ExTyper(this);
+		e.transform(current, ti);
 	}
 
 	override void doResolve(ir.Enum e)

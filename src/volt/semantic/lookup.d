@@ -402,7 +402,11 @@ ir.Store ensureResolved(LanguagePass lp, ir.Store s)
 			lp.resolveNamed(i);
 		}
 		return s;
-	case TemplateInstance:
+	case TypeTemplateInstance:
+		auto ti = cast(ir.TemplateInstance)s.node;
+		assert(ti !is null);
+		lp.resolve(s.parent, ti);
+		return s;
 	case Scope:
 	case Template:
 	case FunctionParam:
@@ -551,7 +555,7 @@ bool getClassParentsScope(LanguagePass lp, ir.Scope _scope, out ir.Scope outScop
 		outScope = asClass.parentClass.myScope;
 		return true;
 	default:
-		throw panic(/*#ref*/node.loc, format("unexpected nodetype %s", node.nodeType));
+		throw panic(/*#ref*/node.loc, format("unexpected nodetype %s", ir.nodeToString(node)));
 	}
 }
 

@@ -41,6 +41,7 @@ public:
 	string instanceName; // struct <Foo> = Bar!i32;
 
 	bool explicitMixin;
+	bool isResolved;  // Has this instance been resolved.
 	Node[] arguments;  // Either a Type or an Exp.
 	string[] names;  // Set by the lifter.
 	Scope myScope;  // Set by gatherer.

@@ -378,7 +378,7 @@ public:
 			templateLiftFunction(_current, lp, ti);
 			break;
 		default:
-			throw makeError(/*#ref*/ti.loc, "non struct/function template");
+			throw makeError(/*#ref*/ti.loc, "non struct/class/union/interface/function template");
 		}
 	}
 
@@ -427,15 +427,11 @@ public:
 		// Handle arguements.
 		addArgumentsToNewInstanceEnvironment(lp, processed, func.myScope, td, ti);
 
-		// Touch up store.
+		// We only need to add the function, unlike with Aggregates.
 		auto store = ti.oldParent.getStore(ti.instanceName);
 		panicAssert(ti, store !is null);
-		panicAssert(ti, store.templateInstances.length > 0);
-		panicAssert(ti, store.kind == ir.Store.Kind.TemplateInstance ||
-			store.kind == ir.Store.Kind.Function);
+		panicAssert(ti, store.kind == ir.Store.Kind.Merge); // Always merge
 		store.functions ~= func;
-		store.kind = ir.Store.Kind.Function;
-		store.name = ti.instanceName;
 	}
 
 	void templateLiftAggregate(ir.Scope _current, LanguagePass lp, ir.TemplateInstance ti)
@@ -500,12 +496,10 @@ public:
 
 		auto store = ti.oldParent.getStore(ti.instanceName);
 		panicAssert(ti, store !is null);
-		panicAssert(ti, store.templateInstances.length == 1);
-		panicAssert(ti, store.templateInstances[0] is ti);
-		panicAssert(ti, store.kind == ir.Store.Kind.TemplateInstance);
-		store.node = a;
-		store.kind = ir.Store.Kind.Type;
-		store.myScope = a.myScope;
+		panicAssert(ti, store.node is ti);
+		panicAssert(ti, store.kind == ir.Store.Kind.TypeTemplateInstance);
+
+		store.markTypeTemplateInstanceResolved(a, a.myScope);
 	}
 
 private:
@@ -543,21 +537,13 @@ private:
 
 				// Make sure that the alias we got is a type.
 				assert(a.store.myAlias !is null);
-				auto typeAlias = a.store.myAlias.node !is null ||
-					a.store.myAlias.templateInstances.length > 0;
-				if (typeAlias) {
-					if (a.store.myAlias.templateInstances.length == 0) {
-						auto type = cast(ir.Type)a.store.myAlias.node;
-						typeAlias = type !is null;
-					} else {
-						if (a.store.myAlias.templateInstances.length == 0) {
-							typeAlias = false;
-						} else {
-							auto _ti = a.store.myAlias.templateInstances[0];
-							typeAlias = _ti.kind != ir.TemplateKind.Function;
-						}
-					}
+				bool typeAlias = false;
+				if (auto type = cast(ir.Type)a.store.myAlias.node) {
+					typeAlias = true;
+				} else if (auto _ti = cast(ir.TemplateInstance)a.store.myAlias.node) {
+					typeAlias = _ti.kind != ir.TemplateKind.Function;
 				}
+
 				if (!typeAlias) {
 					throw makeExpected(arg, "type");
 				}

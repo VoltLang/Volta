@@ -89,7 +89,7 @@ public:
 		Reserved,
 		FunctionParam,
 		EnumDeclaration,
-		TemplateInstance,
+		TypeTemplateInstance,
 	}
 
 
@@ -103,7 +103,7 @@ public:
 	Kind kind;
 
 	/*!
-	 * Owning node, for all types.
+	 * Owning node, for all types, type template instance.
 	 * For function the first encountered one.
 	 */
 	Node node;
@@ -135,9 +135,11 @@ public:
 	Alias[] aliases;
 
 	/*!
-	 * The template instances for a TemplateInstance store.
+	 * The template instances for functions, for a Merge store.
+	 *
+	 * For TypeTemplateInstance node is set.
 	 */
-	TemplateInstance[] templateInstances;
+	TemplateInstance[] funcTemplateInstances;
 
 	/*!
 	 * Store pointed to by alias.
@@ -178,6 +180,21 @@ public:
 		this.name = name;
 		this.node = n;
 		this.kind = kind;
+		this.parent = s;
+	}
+
+	/*!
+	 * Used to create a MergeNode with the location set and name.
+	 */
+	this(Scope s, ref Location loc, string name)
+	in {
+		assert(name !is null);
+	}
+	body {
+		this();
+		this.name = name;
+		this.node = new MergeNode(/*#ref*/loc);
+		this.kind = Store.Kind.Merge;
 		this.parent = s;
 	}
 
@@ -230,13 +247,23 @@ public:
 		this.kind = Kind.EnumDeclaration;
 	}
 
-	this(Scope parent, TemplateInstance ti)
+	/*!
+	 * This is for template instance, handles both function and types.
+	 */
+	this(Scope parent, TemplateInstance ti, string name)
 	{
 		this();
 		this.parent = parent;
-		this.kind = Kind.TemplateInstance;
-		addTemplateInstance(ti);
-		this.name = ti.instanceName;
+		this.name = name;
+
+		if (ti.kind == TemplateKind.Function) {
+			this.node = new MergeNode(/*#ref*/ti.loc);
+			this.kind = Kind.Merge;
+			this.funcTemplateInstances ~= ti;
+		} else {
+			this.node = ti;
+			this.kind = Kind.TypeTemplateInstance;
+		}
 	}
 
 	/*!
@@ -248,17 +275,11 @@ public:
 		this.mUniqueId = mUniqueIdCounter++;
 	}
 
-	void addTemplateInstance(TemplateInstance templateInstance)
-	{
-		assert(kind == Kind.TemplateInstance);
-		templateInstances ~= templateInstance;
-	}
-
 	void markAliasResolved(Store s)
 	{
 		assert(kind == Kind.Alias);
 		assert(myAlias is null);
-		myAlias = s;
+		this.myAlias = s;
 		s.originalNodes ~= node;
 	}
 
@@ -266,9 +287,23 @@ public:
 	{
 		assert(kind == Kind.Alias);
 		assert(myAlias is null);
-		kind = Kind.Type;
-		originalNodes ~= node;
-		node = t;
+		this.kind = Kind.Type;
+		this.originalNodes ~= node;
+		this.node = t;
+	}
+
+	void markTypeTemplateInstanceResolved(Type t, Scope newMyScope)
+	in {
+		assert(this.kind == Kind.TypeTemplateInstance);
+		assert(this.myScope is null);
+		assert(t !is null);
+		assert(newMyScope !is null);
+	}
+	body {
+		this.kind = Kind.Type;
+		this.originalNodes ~= node;
+		this.node = t;
+		this.myScope = newMyScope;
 	}
 }
 
@@ -417,11 +452,13 @@ public:
 
 			// Pretend that the first alias has
 			// always been a merge store.
-			merge = new Store(this, old, name, Store.Kind.Merge);
-			merge.aliases ~= old;
-			symbols[name] = merge;
+			auto newStore = new Store(this, /*#ref*/n.loc, name);
+			replaceAlias(merge, newStore, name);
+			merge = newStore;
 		} else if (merge.kind == Store.Kind.Function) {
-			merge.kind = Store.Kind.Merge;
+			auto newStore = new Store(this, /*#ref*/n.loc, name);
+			replaceFunction(merge, newStore, name);
+			merge = newStore;
 		} else if (merge.kind != Store.Kind.Merge) {
 			status = Status.Error;
 		}
@@ -550,17 +587,57 @@ public:
 		}
 
 		if (merge.kind == Store.Kind.Alias) {
-			auto store = new Store(this, func, name);
-			store.kind = Store.Kind.Merge;
-			symbols[name] = store;
-
-			auto a = cast(Alias) merge.node;
-			assert(a !is null);
-			store.aliases ~= a;
+			auto store = new Store(this, /*#ref*/func.loc, name);
+			replaceAlias(merge, store, name);
+			store.functions ~= func;
 			return store;
 		}
 
 		status = Status.Error;
+		return null;
+	}
+
+	/*!
+	 * Add a function template instance to the scope.
+	 *
+	 * Side-effects:
+	 *   None.
+	 */
+	Store addFunctionTemplateInstance(TemplateInstance ti, string name, out Status status)
+	in {
+		assert(ti !is null);
+		assert(name !is null);
+		assert(ti.kind == TemplateKind.Function);
+	}
+	body {
+		auto ret = name in symbols;
+		status = Status.Success;
+
+
+		if (ret is null) {
+			auto store = new Store(this, ti, name);
+			symbols[name] = store;
+			return store;
+		}
+
+		auto merge = *ret;
+		if (ret.kind == Store.Kind.Merge) {
+			merge.funcTemplateInstances ~= ti;
+			return merge;
+		}
+
+		if (merge.kind == Store.Kind.Alias) {
+			auto store = new Store(this, /*#ref*/ti.loc, name);
+			replaceAlias(merge, store, name);
+			return store;
+		}
+
+		if (ret.kind == Store.Kind.Function) {
+			auto store = new Store(this, /*#ref*/ti.loc, name);
+			replaceFunction(merge, store, name);
+			return store;
+		}
+
 		return null;
 	}
 
@@ -584,12 +661,20 @@ public:
 
 	/*!
 	 * Add a template instance to the scope.
+	 *
+	 * Side-effects:
+	 *   None.
 	 */
-	Store addTemplateInstance(TemplateInstance ti, out Status status)
-	{
-		errorOn(ti, ti.instanceName, /*#out*/status);
-		auto store = new Store(this, ti);
-		symbols[ti.instanceName] = store;
+	Store addTypeTemplateInstance(TemplateInstance ti, string name, out Status status)
+	in {
+		assert(ti !is null);
+		assert(name !is null);
+		assert(ti.kind != TemplateKind.Function);
+	}
+	body {
+		errorOn(ti, name, /*#out*/status);
+		auto store = new Store(this, ti, name);
+		symbols[name] = store;
 		return store;
 	}
 
@@ -657,5 +742,46 @@ private:
 		} else {
 			status = Status.Error;
 		}
+	}
+
+	void replaceFunction(Store oldStore, Store newStore, string name)
+	in {
+		assert(oldStore !is null);
+		assert(oldStore.name !is null);
+		assert(oldStore.functions.length > 0);
+		assert(oldStore.kind == Store.Kind.Function);
+		assert(newStore !is null);
+		assert(newStore.name !is null);
+		assert(newStore.kind == Store.Kind.Merge);
+
+		assert(newStore.name == oldStore.name);
+	}
+	body {
+		symbols[name] = newStore; // Replace the old node.
+
+		auto func = cast(Function) oldStore.node;
+		assert(func !is null);
+		assert(func is oldStore.functions[0]);
+		newStore.functions ~= oldStore.functions;
+	}
+
+	void replaceAlias(Store oldStore, Store newStore, string name)
+	in {
+		assert(oldStore !is null);
+		assert(oldStore.name !is null);
+		assert(oldStore.kind == Store.Kind.Alias);
+		assert(oldStore.aliases.length == 0);
+		assert(newStore !is null);
+		assert(newStore.name !is null);
+		assert(newStore.kind == Store.Kind.Merge);
+
+		assert(newStore.name == oldStore.name);
+	}
+	body {
+		symbols[name] = newStore; // Replace the old node.
+
+		auto a = cast(Alias) oldStore.node;
+		assert(a !is null);
+		newStore.aliases ~= a;
 	}
 }
