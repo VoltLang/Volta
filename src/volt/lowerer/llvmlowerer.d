@@ -449,12 +449,18 @@ void lowerComposableStringPrimitiveComponent(LanguagePass lp, ir.Scope current, 
 	case Float:
 		outExp = buildCall(/*#ref*/loc, buildExpReference(/*#ref*/loc, lp.formatF32, lp.formatF32.name), [
 			buildExpReference(/*#ref*/loc, sinkVar, sinkVar.name), 
-			copyExp(e), buildConstantInt(/*#ref*/loc, -1)]);
+			copyExp(e),
+			buildConstantInt(/*#ref*/loc, -1),
+			buildConstantBool(/*#ref*/loc, false)
+			]);
 		break;
 	case Double:
 		outExp = buildCall(/*#ref*/loc, buildExpReference(/*#ref*/loc, lp.formatF64, lp.formatF64.name), [
 			buildExpReference(/*#ref*/loc, sinkVar, sinkVar.name), 
-			copyExp(e), buildConstantInt(/*#ref*/loc, -1)]);
+			copyExp(e),
+			buildConstantInt(/*#ref*/loc, -1),
+			buildConstantBool(/*#ref*/loc, false)
+			]);
 		break;
 	case Real:
 		assert(false);

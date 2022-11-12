@@ -31,14 +31,14 @@ extern(C) fn vrt_format_i64(sink: Sink, i: i64);
  * The `width` determines the rounding point. `-1` leaves it as the
  * implementation default.
  */
-extern(C) fn vrt_format_f32(sink: Sink, i: f32, width: i32 = -1);
+extern(C) fn vrt_format_f32(sink: Sink, i: f32, width: i32 = -1, always_signed: bool = false);
 /*!
  * Format a given `f64` as a string, and pass it to `sink`.
  *
  * The `width` determines the rounding point. `-1` leaves it as the
  * implementation default.
  */
-extern(C) fn vrt_format_f64(sink: Sink, i: f64, width: i32 = -1);
+extern(C) fn vrt_format_f64(sink: Sink, i: f64, width: i32 = -1, always_signed: bool = false);
 /*!
  * Format a given integer as a hex string, and pass it to `sink`.
  *

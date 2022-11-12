@@ -1,5 +1,6 @@
 // Copyright 2013-2017, Bernard Helyer.
 // Copyright 2013-2017, Jakob Bornecrantz.
+// Copyright 2022, Collabora, Ltd.
 // SPDX-License-Identifier: BSL-1.0
 module vrt.vacuum.format;
 
@@ -141,14 +142,14 @@ extern(C) fn vrt_format_hex(sink: Sink, i: u64, padding: size_t)
 	sink(buf[index .. $]);
 }
 
-extern(C) fn vrt_format_f32(sink: Sink, f: f32, width: i32)
+extern(C) fn vrt_format_f32(sink: Sink, f: f32, width: i32, always_signed: bool)
 {
-	vrt_format_f64(sink, cast(f64)f, width);
+	vrt_format_f64(sink, cast(f64)f, width, always_signed);
 }
 
-extern(C) fn vrt_format_f64(sink: Sink, f: f64, width: i32)
+extern(C) fn vrt_format_f64(sink: Sink, f: f64, width: i32, always_signed: bool)
 {
-	fmt_fp(sink, f, 0, width, 0);
+	fmt_fp(sink, f, 0, width, 0, always_signed);
 }
 
 extern(C) fn vrt_format_dchar(sink: Sink, c: dchar)
@@ -228,7 +229,7 @@ private fn fmt_u(x: u64, s: char*) char*
 	return s;
 }
 
-private fn fmt_fp(sink: Sink, f: f64, w: i32, p: i32, fl: i32)
+private fn fmt_fp(sink: Sink, f: f64, w: i32, p: i32, fl: i32, always_signed: bool)
 {
 	// 1835 == (LDBL_MANT_DIG+28)/29+1+(LDBL_MAX_EXP+LDBL_MANT_DIG+28+8)/9
 	// TODO: Use that expression directly in big's declaration, once we support that.
@@ -250,6 +251,11 @@ private fn fmt_fp(sink: Sink, f: f64, w: i32, p: i32, fl: i32)
 	pl = 1;
 	if (signbit(f)) {
 		f = -f;
+	} else if (always_signed) {
+		prefix++;
+		prefix++;
+		prefix++;
+		pl = 1;
 	} else {
 		prefix++;
 		pl = 0;
