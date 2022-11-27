@@ -128,12 +128,14 @@ interface InputStream {
   void read(out float x);       /// ditto
   void read(out double x);      /// ditto
   void read(out real x);        /// ditto
+/+VOLTA Complex types are deprecated and not used
   void read(out ifloat x);      /// ditto
   void read(out idouble x);     /// ditto
   void read(out ireal x);       /// ditto
   void read(out cfloat x);      /// ditto
   void read(out cdouble x);     /// ditto
   void read(out creal x);       /// ditto
++/
   void read(out char x);        /// ditto
   void read(out wchar x);       /// ditto
   void read(out dchar x);       /// ditto
@@ -290,12 +292,14 @@ interface OutputStream {
   void write(float x);          /// ditto
   void write(double x);         /// ditto
   void write(real x);           /// ditto
+/+VOLTA Complex types are deprecated and not used
   void write(ifloat x);         /// ditto
   void write(idouble x);        /// ditto
   void write(ireal x);          /// ditto
   void write(cfloat x);         /// ditto
   void write(cdouble x);        /// ditto
   void write(creal x);          /// ditto
++/
   void write(char x);           /// ditto
   void write(wchar x);          /// ditto
   void write(dchar x);          /// ditto
