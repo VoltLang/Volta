@@ -282,6 +282,23 @@ body
 				return parseFailed(ps, ir.NodeType.TopLevelBlock);
 			}
 			sink.push(m);
+		} else if (next == TokenType.OpenParen) {
+			/*
+			 * This is just to work around D code that can't be
+			 * parsed under Volt by wrapping it in a string mixin.
+			 * Like this `version(D_Version2) mixin("...");`.
+			 *
+			 * This code makes sure it is properly parsed still
+			 * but the node is just thrown away.
+			 */
+			ir.MixinStatement ms;
+			succeeded = parseMixinStatement(ps, /*#out*/ms);
+			if (!succeeded) {
+				return parseFailed(ps, ir.NodeType.TopLevelBlock);
+			}
+			if (!ps.magicFlagD) {
+				return unsupportedFeature(ps, tlb, "top level string mixin");
+			}
 		} else {
 			return unexpectedToken(ps, ir.NodeType.TopLevelBlock);
 		}
