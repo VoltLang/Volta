@@ -90,10 +90,20 @@ public:
 	 * end - begin == begin ... end
 	 * @see difference
 	 */
-	Location opSub(ref Location begin)
+	version(Volt) Location opSub(ref Location begin)
 	{
 		return difference(/*#ref*/this,/*#ref*/begin,/*#ref*/begin);
 	}
+
+	version (D_Version2) mixin(`
+	Location opBinary(string op)(ref Location begin)
+	{
+		static if (op == "-") {
+			return difference(/*#ref*/this,/*#ref*/begin,/*#ref*/begin);
+		} else {
+			assert(false);
+		}
+	}`);
 
 	/*!
 	 * Difference between two locations.
