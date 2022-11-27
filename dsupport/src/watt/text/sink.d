@@ -52,10 +52,11 @@ public:
 		mLength = newSize;
 	}
 
-	version (D_Version2) Sink sink()
+	version (D_Version2) mixin(`
+	Sink sink() return
 	{
 		return &sink;
-	}
+	}`);
 
 	string toString()
 	{
