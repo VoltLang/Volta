@@ -102,14 +102,12 @@ ir.Node createImport(ref in Location loc, scope string[] names...)
 }
 
 ParseStatus parseOneTopLevelBlock(ParserStream ps, out ir.TopLevelBlock tlb)
-out(result)
-{
+out(result) {
 	if (result) {
 		assert(tlb !is null);
 	}
 }
-body
-{
+do {
 	auto succeeded = eatComments(ps);
 	if (!succeeded) {
 		return succeeded;
@@ -412,14 +410,12 @@ bool ifDocCommentsUntilEndThenSkip(ParserStream ps)
 }
 
 ParseStatus parseTopLevelBlock(ParserStream ps, out ir.TopLevelBlock tlb, TokenType end)
-out(result)
-{
+out(result) {
 	if (result) {
 		assert(tlb !is null);
 	}
 }
-body
-{
+do {
 	tlb = new ir.TopLevelBlock();
 	tlb.loc = ps.peek.loc;
 

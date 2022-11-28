@@ -70,7 +70,7 @@ public:
 		assert(mStream is null);
 		assert(mFilename is null);
 	}
-	body {
+	do {
 		assert(mStream is null);
 		assert(mFilename is null);
 

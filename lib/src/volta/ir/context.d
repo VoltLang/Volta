@@ -175,7 +175,7 @@ public:
 		assert(kind != Kind.Function);
 		assert(n !is null);
 	}
-	body {
+	do {
 		this();
 		this.name = name;
 		this.node = n;
@@ -190,7 +190,7 @@ public:
 	in {
 		assert(name !is null);
 	}
-	body {
+	do {
 		this();
 		this.name = name;
 		this.node = new MergeNode(/*#ref*/loc);
@@ -207,7 +207,7 @@ public:
 	in {
 		assert(func !is null);
 	}
-	body {
+	do {
 		this();
 		this.name = name;
 		this.node = func;
@@ -240,7 +240,7 @@ public:
 	in {
 		assert(ed !is null);
 	}
-	body {
+	do {
 		this();
 		this.parent = parent;
 		this.node = ed;
@@ -299,7 +299,7 @@ public:
 		assert(t !is null);
 		assert(newMyScope !is null);
 	}
-	body {
+	do {
 		this.kind = Kind.Type;
 		this.originalNodes ~= node;
 		this.node = t;
@@ -434,7 +434,7 @@ public:
 		assert(n !is null);
 		assert(name !is null);
 	}
-	body {
+	do {
 		status = Status.Success;
 		auto store = new Store(this, n, name, Store.Kind.Alias);
 
@@ -479,7 +479,7 @@ public:
 		assert(n !is null);
 		assert(name !is null);
 	}
-	body {
+	do {
 		errorOn(n, name, /*#out*/status);
 
 		auto store = new Store(this, n, name, Store.Kind.Scope);
@@ -497,7 +497,8 @@ public:
 	in {
 		assert(n !is null);
 		assert(name !is null);
-	} body {
+	}
+	do {
 		errorOn(n, name, /*#out*/status);
 
 		auto store = new Store(this, n, name, Store.Kind.MultiScope);
@@ -569,7 +570,7 @@ public:
 		assert(func !is null);
 		assert(name !is null);
 	}
-	body {
+	do {
 		auto ret = name in symbols;
 		status = Status.Success;
 
@@ -609,7 +610,7 @@ public:
 		assert(name !is null);
 		assert(ti.kind == TemplateKind.Function);
 	}
-	body {
+	do {
 		auto ret = name in symbols;
 		status = Status.Success;
 
@@ -652,7 +653,7 @@ public:
 		assert(n !is null);
 		assert(name !is null);
 	}
-	body {
+	do {
 		errorOn(n, name, /*#out*/status);
 		auto store = new Store(this, n, name, Store.Kind.Template);
 		symbols[name] = store;
@@ -671,7 +672,7 @@ public:
 		assert(name !is null);
 		assert(ti.kind != TemplateKind.Function);
 	}
-	body {
+	do {
 		errorOn(ti, name, /*#out*/status);
 		auto store = new Store(this, ti, name);
 		symbols[name] = store;
@@ -689,7 +690,7 @@ public:
 		assert(e !is null);
 		assert(e.name.length > 0);
 	}
-	body {
+	do {
 		errorOn(e, e.name, /*#out*/status);
 		auto store = new Store(this, e, e.name);
 		symbols[e.name] = store;
@@ -735,7 +736,7 @@ private:
 	in {
 		assert(name !is null);
 	}
-	body {
+	do {
 		auto ret = name in symbols;
 		if (ret is null) {
 			status = Status.Success;
@@ -756,7 +757,7 @@ private:
 
 		assert(newStore.name == oldStore.name);
 	}
-	body {
+	do {
 		symbols[name] = newStore; // Replace the old node.
 
 		auto func = cast(Function) oldStore.node;
@@ -777,7 +778,7 @@ private:
 
 		assert(newStore.name == oldStore.name);
 	}
-	body {
+	do {
 		symbols[name] = newStore; // Replace the old node.
 
 		auto a = cast(Alias) oldStore.node;

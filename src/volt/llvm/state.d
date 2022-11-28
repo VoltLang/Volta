@@ -647,7 +647,7 @@ public:
 		assert(mangledName.length > 0);
 		assert((mangledName in typeStore) is null);
 	}
-	body {
+	do {
 		typeStore[mangledName] = type;
 	}
 
@@ -655,7 +655,7 @@ public:
 	in {
 		assert(mangledName.length > 0);
 	}
-	body {
+	do {
 		auto ret = mangledName in typeStore;
 		if (ret !is null)
 			return *ret;

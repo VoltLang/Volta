@@ -97,7 +97,7 @@ public:
 	in {
 		assert(mLength > 0);
 	}
-	body {
+	do {
 		mLength--;
 	}
 
@@ -111,7 +111,7 @@ public:
 	in {
 		assert(mLength > 0);
 	}
-	body {
+	do {
 		return mTokens[mLength - 1];
 	}
 

@@ -1005,7 +1005,7 @@ public:
 		assert(this.kind != Kind.Invalid);
 		assert(this.type !is null);
 	}
-	body {
+	do {
 		super(NodeType.BuiltinExp);
 		this.kind = kind;
 		this.type = type;

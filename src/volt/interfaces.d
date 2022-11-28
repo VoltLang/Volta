@@ -286,7 +286,7 @@ public:
 		assert(this.errSink !is null);
 		assert(this.frontend !is null);
 	}
-	body {
+	do {
 		this.ver = ver;
 		this.target = target;
 		this.driver = drv;

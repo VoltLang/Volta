@@ -70,7 +70,7 @@ protected:
 		assert(irType.mangledName !is null);
 		assert(state.getTypeNoCreate(irType.mangledName) is null);
 	}
-	body {
+	do {
 		state.addType(this, irType.mangledName);
 
 		this.irType = irType;

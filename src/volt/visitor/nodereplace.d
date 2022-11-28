@@ -19,7 +19,7 @@ public:
 		assert(decl !is null);
 		assert(exp !is null);
 	}
-	body {
+	do {
 		this.fromDecl = decl;
 		this.toExp = exp;
 	}

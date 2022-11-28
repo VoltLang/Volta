@@ -69,7 +69,7 @@ public:
 			panic(errSink, "Empty types array passed to opEquals.");
 		}
 	}
-	body {
+	do {
 		foreach (i, right; types) {
 			bool eof;
 			TokenType left = lookahead(i, /*#out*/eof).type;

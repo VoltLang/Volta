@@ -507,7 +507,7 @@ public:
 	out {
 		assert(this.hiddenParameter);
 	}
-	body {
+	do {
 		super(NodeType.DelegateType);
 		this.hiddenParameter = true;
 	}
@@ -516,7 +516,7 @@ public:
 	out {
 		assert(this.hiddenParameter);
 	}
-	body {
+	do {
 		super(NodeType.DelegateType, old);
 		this.hiddenParameter = true;
 	}

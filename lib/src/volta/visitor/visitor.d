@@ -443,7 +443,7 @@ Visitor.Status accept(ir.Node n, Visitor av)
 out (result) {
 	assert(result != VisitorContinueParent);
 }
-body {
+do {
 	final switch (n.nodeType) with (ir.NodeType) {
 	/*
 	 * Top Levels.

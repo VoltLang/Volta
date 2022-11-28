@@ -121,7 +121,7 @@ public:
 		assert(ver !is null);
 		assert(target !is null);
 	}
-	body {
+	do {
 		this.ver = ver;
 		this.target = target;
 		this.execDir = s.execDir;
