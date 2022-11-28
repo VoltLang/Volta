@@ -589,8 +589,9 @@ ParseStatus parseFunctionBody(ParserStream ps, ir.Function func)
 				return parseFailed(ps, func);
 			}
 			break;
-		case TokenType.Body:
-			ps.get(); // <body>
+		case TokenType.Do: // D2 function bodies
+		case TokenType.Body: // Volt function bodies
+			ps.get(); // <body> / <do>
 			goto case;
 		case TokenType.OpenBrace:
 			inBlocks = false;
