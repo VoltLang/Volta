@@ -1159,83 +1159,11 @@ ParseStatus parseNewFunction(ParserStream ps, out ir.Function func, string templ
 		}
 	}
 
-	bool inBlocks = ps.peek.type != TokenType.Semicolon;
-	while (inBlocks) {
-		bool _in, _out;
-		switch (ps.peek.type) {
-		case TokenType.In:
-			ps.get();
-			// <in> { }
-			if (_in) {
-				return parseExpected(ps, /*#ref*/ps.peek.loc, func, "only one in block");
-			}
-			_in = true;
-			succeeded = parseBraceCountedTokenList(ps, /*#out*/func.tokensIn, func);
-			if (!succeeded) {
-				return parseFailed(ps, func);
-			}
-			break;
-		case TokenType.Out:
-			ps.get();
-			// <out>
-			if (_out) {
-				return parseExpected(ps, /*#ref*/ps.peek.loc, func, "only one out block");
-			}
-			_out = true;
-			if (ps.peek.type == TokenType.OpenParen) {
-				ps.get();
-				// out <(result)>
-				if (ps != [TokenType.Identifier, TokenType.CloseParen]) {
-					return unexpectedToken(ps, func);
-				}
-				auto identTok = ps.get();
-				func.outParameter = identTok.value;
-				ps.get();
-			}
-			succeeded = parseBraceCountedTokenList(ps, /*#out*/func.tokensOut, func);
-			if (!succeeded) {
-				return parseFailed(ps, func);
-			}
-			break;
-		case TokenType.OpenBrace:
-		case TokenType.Body:
-			if (ps.peek.type == TokenType.Body) {
-				ps.get();
-			}
-			inBlocks = false;
-			succeeded = parseBraceCountedTokenList(ps, /*#out*/func.tokensBody, func);
-			if (!succeeded) {
-				return parseFailed(ps, func);
-			}
-			break;
-		default:
-			return parseExpected(ps, /*#ref*/ps.peek.loc, func, "block declaration");
-		}
+	if (matchIf(ps, TokenType.Semicolon)) {
+		return Succeeded;
+	} else {
+		return parseFunctionBody(ps, func);
 	}
-	matchIf(ps, TokenType.Semicolon);
-
-	return Succeeded;
-}
-
-ParseStatus parseBraceCountedTokenList(ParserStream ps, out ir.Token[] tokens, ir.Node owner)
-{
-	if (ps.peek.type != TokenType.OpenBrace) {
-		return parseFailed(ps, ir.NodeType.Function);
-	}
-	size_t index = ps.saveTokens();
-	int braceDepth;
-	do {
-		auto t = ps.get();
-		if (t.type == TokenType.OpenBrace) {
-			braceDepth++;
-		} else if (t.type == TokenType.CloseBrace) {
-			braceDepth--;
-		} else if (ps.eof) {
-			return parseExpected(ps, /*#ref*/ps.peek.loc, owner, "closing brace");
-		}
-	} while (braceDepth > 0);
-	tokens = ps.doneSavingTokens(index);
-	return Succeeded;
 }
 
 ParseStatus parseFunction(ParserStream ps, out ir.Function func, ir.Type base)
@@ -1281,62 +1209,11 @@ ParseStatus parseFunction(ParserStream ps, out ir.Function func, ir.Type base)
 	//func.type.params = parseParameterList(ps, func.type);
 	func.type.loc = ps.previous.loc - func.type.ret.loc;
 
-	bool inBlocks = ps.peek.type != TokenType.Semicolon;
-	while (inBlocks) {
-		bool _in, _out;
-		switch (ps.peek.type) {
-		case TokenType.In:
-			ps.get();
-			// <in> { }
-			if (_in) {
-				return parseExpected(ps, /*#ref*/ps.peek.loc, func, "only one in block");
-			}
-			_in = true;
-			succeeded = parseBraceCountedTokenList(ps, /*#out*/func.tokensIn, func);
-			if (!succeeded) {
-				return parseFailed(ps, func);
-			}
-			break;
-		case TokenType.Out:
-			ps.get();
-			// <out>
-			if (_out) {
-				return parseExpected(ps, /*#ref*/ps.peek.loc, func, "only one out block");
-			}
-			_out = true;
-			if (ps.peek.type == TokenType.OpenParen) {
-				ps.get();
-				// out <(result)>
-				if (ps != [TokenType.Identifier, TokenType.CloseParen]) {
-					return unexpectedToken(ps, func);
-				}
-				auto identTok = ps.get();
-				func.outParameter = identTok.value;
-				ps.get();
-			}
-			succeeded = parseBraceCountedTokenList(ps, /*#out*/func.tokensOut, func);
-			if (!succeeded) {
-				return parseFailed(ps, func);
-			}
-			break;
-		case TokenType.OpenBrace:
-		case TokenType.Body:
-			if (ps.peek.type == TokenType.Body) {
-				ps.get();
-			}
-			inBlocks = false;
-			succeeded = parseBraceCountedTokenList(ps, /*#out*/func.tokensBody, func);
-			if (!succeeded) {
-				return parseFailed(ps, func);
-			}
-			break;
-		default:
-			return parseExpected(ps, /*#ref*/ps.peek.loc, func, "block declaration");
-		}
+	if (matchIf(ps, TokenType.Semicolon)) {
+		return Succeeded;
+	} else {
+		return parseFunctionBody(ps, func);
 	}
-	matchIf(ps, TokenType.Semicolon);
-
-	return Succeeded;
 }
 
 /*!

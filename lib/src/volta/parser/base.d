@@ -510,12 +510,109 @@ bool isColonDeclaration(ParserStream ps)
 	return colonDeclaration;
 }
 
+/*!
+ * Collects a an array of tokens by counting the number open/close braces, used
+ * when parsing functions to delay the parsing of the function bodies.
+ */
+ParseStatus parseBraceCountedTokenList(ParserStream ps, out ir.Token[] tokens, ir.Node owner)
+{
+	if (ps.peek.type != TokenType.OpenBrace) {
+		return parseFailed(ps, ir.NodeType.Function);
+	}
+
+	size_t index = ps.saveTokens();
+
+	int braceDepth;
+	do {
+		auto t = ps.get();
+		if (t.type == TokenType.OpenBrace) {
+			braceDepth++;
+		} else if (t.type == TokenType.CloseBrace) {
+			braceDepth--;
+		} else if (ps.eof) {
+			return parseExpected(ps, /*#ref*/ps.peek.loc, owner, "closing brace");
+		}
+	} while (braceDepth > 0);
+
+	tokens = ps.doneSavingTokens(index);
+
+	return Succeeded;
+}
+
+/*!
+ * Function bodies are parsed in several places, functions, ctors/dtors and
+ * template functions.
+ */
+ParseStatus parseFunctionBody(ParserStream ps, ir.Function func)
+{
+	ParseStatus succeeded;
+
+	bool inBlocks = true;
+	while (inBlocks) {
+		bool _in, _out;
+		auto lastTokenType = ps.peek.type;
+		switch (lastTokenType) {
+		case TokenType.In:
+			ps.get(); // <in>
+
+			if (_in) {
+				return parseExpected(ps, /*#ref*/ps.peek.loc, func, "only one in block");
+			}
+
+			_in = true;
+			succeeded = parseBraceCountedTokenList(ps, /*#out*/func.tokensIn, func);
+			if (!succeeded) {
+				return parseFailed(ps, func);
+			}
+			break;
+		case TokenType.Out:
+			ps.get(); // <out>
+
+			if (_out) {
+				return parseExpected(ps, /*#ref*/ps.peek.loc, func, "only one out block");
+			}
+
+			_out = true;
+			if (ps.peek.type == TokenType.OpenParen) {
+				ps.get();
+				// out <(result)>
+				if (ps != [TokenType.Identifier, TokenType.CloseParen]) {
+					return unexpectedToken(ps, func);
+				}
+				auto identTok = ps.get();
+				func.outParameter = identTok.value;
+				ps.get();
+			}
+
+			succeeded = parseBraceCountedTokenList(ps, /*#out*/func.tokensOut, func);
+			if (!succeeded) {
+				return parseFailed(ps, func);
+			}
+			break;
+		case TokenType.Body:
+			ps.get(); // <body>
+			goto case;
+		case TokenType.OpenBrace:
+			inBlocks = false;
+			succeeded = parseBraceCountedTokenList(ps, /*#out*/func.tokensBody, func);
+			if (!succeeded) {
+				return parseFailed(ps, func);
+			}
+			break;
+		default:
+			return parseExpected(ps, /*#ref*/ps.peek.loc, func, "block declaration");
+		}
+	}
+
+	return Succeeded;
+}
+
+
 /*
  *
  * Common class(es).
  *
  */
-
 
 class ParserStream : TokenStream
 {

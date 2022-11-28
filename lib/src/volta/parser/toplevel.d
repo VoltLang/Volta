@@ -604,70 +604,8 @@ ParseStatus parseConstructor(ParserStream ps, out ir.Function c)
 		p.func = c;
 		c.params ~= p;
 	}
-	bool inBlocks = true;
-	while (inBlocks) {
-		bool _in, _out;
-		switch (ps.peek.type) {
-		case TokenType.In:
-			// <in> { }
-			if (_in) {
-				return parseExpected(ps, /*#ref*/ps.peek.loc, c, "one in block");
-			}
-			_in = true;
-			if (ps != TokenType.In) {
-				return unexpectedToken(ps, c);
-			}
-			ps.get();
-			succeeded = parseBraceCountedTokenList(ps, /*#out*/c.tokensIn, c);
-			if (!succeeded) {
-				return parseFailed(ps, c);
-			}
-			break;
-		case TokenType.Out:
-			// <out>
-			if (_out) {
-				return parseExpected(ps, /*#ref*/ps.peek.loc, c, "one out block");
-			}
-			_out = true;
-			if (ps != TokenType.Out) {
-				return unexpectedToken(ps, c);
-			}
-			ps.get();
-			if (ps.peek.type == TokenType.OpenParen) {
-				// out <(result)>
-				if (ps != [TokenType.OpenParen, TokenType.Identifier]) {
-					return unexpectedToken(ps, c);
-				}
-				ps.get();
-				auto identTok = ps.get();
-				c.outParameter = identTok.value;
-				if (ps != TokenType.CloseParen) {
-					return unexpectedToken(ps, c);
-				}
-				ps.get();
-			}
-			succeeded = parseBraceCountedTokenList(ps, /*#out*/c.tokensOut, c);
-			if (!succeeded) {
-				return parseFailed(ps, c);
-			}
-			break;
-		case TokenType.OpenBrace:
-		case TokenType.Body:
-			if (ps.peek.type == TokenType.Body) {
-				ps.get();
-			}
-			inBlocks = false;
-			auto succeeded2 = parseBraceCountedTokenList(ps, /*#out*/c.tokensBody, c);
-			if (!succeeded2) {
-				return parseFailed(ps, ir.NodeType.Function, ir.NodeType.BlockStatement);
-			}
-			break;
-		default:
-			return unexpectedToken(ps, ir.NodeType.Function);
-		}
-	}
 
-	return Succeeded;
+	return parseFunctionBody(ps, c);
 }
 
 ParseStatus parseDestructor(ParserStream ps, out ir.Function d)
