@@ -9,6 +9,7 @@ module vrt.gc.manager.gigaman;
 
 import core.object;
 import core.compiler.llvm;
+import core.c.errno : errno;
 
 import vrt.gc.mman;
 import vrt.gc.slab;
@@ -297,7 +298,7 @@ public:
 
 		retval := pages_commit(base, n);
 		if (!retval) {
-			panicFailedToAlloc(n);
+			panicFailedToAlloc(n, errno);
 		}
 
 		gcAssert(cast(size_t)base >= (cast(size_t)&this + mTotalArenaSize));

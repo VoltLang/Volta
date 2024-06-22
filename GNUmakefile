@@ -3,8 +3,9 @@
 #
 DMD ?= $(shell which dmd)
 RDMD ?= $(shell which rdmd)
+CC ?= $(shell which gcc)
 CXX ?= $(shell which g++)
-NASM ?= $(shell which nasm)
+ASM ?= $(shell which nasm)
 VOLT ?= ./$(TARGET)
 HOST_UNAME := $(strip $(shell uname))
 HOST_MACHINE := $(strip $(shell uname -m))
@@ -46,19 +47,28 @@ ifeq ($(UseDIBuilder),y)
   DDEFINES_ = -version=UseDIBuilder $(DDEFINES)
 endif
 
+SAVE_REGS_SRC = rt/src/vrt/gc/save_regs.asm
+
 ifeq ($(UNAME),Linux)
   PLATFORM = linux
   OBJ_TYPE := o
   ifeq ($(MACHINE),x86_64)
-    NASM_FORMAT = elf64
+    ASM_FLAGS = -f elf64
   else
-    NASM_FORMAT = elf32
+    ASM_FLAGS = -f elf32
   endif
 else
   ifeq ($(UNAME),Darwin)
     OBJ_TYPE := o
     PLATFORM = mac
-    NASM_FORMAT = macho64
+    ifeq ($(MACHINE),x86_64)
+      # Use nasm.
+      ASM_FLAGS = -f macho64
+    else
+      SAVE_REGS_SRC = rt/src/vrt/aarch64_macos.s
+      ASM = $(CC)
+      ASM_FLAGS = -c
+    endif
   else
     OBJ_TYPE := obj
     ifeq ($(UNAME),WindowsCross)
@@ -66,13 +76,13 @@ else
       PLATFORM = windows
       TARGET = volt.exe
       RUN_TARGET = a.out.exe
-      NASM_FORMAT = win
+      ASM_FLAGS = -f win
     else
       # Not tested
       PLATFORM = windows
       TARGET = volt.exe
       RUN_TARGET = a.out.exe
-      NASM_FORMAT = win
+      ASM_FLAGS = -f win
     endif
   endif
 endif
@@ -88,32 +98,26 @@ DOBJ = $(patsubst src/%.d, $(OBJ_DIR)/%.$(OBJ_TYPE), $(DSRC))
 CXXOBJ = $(patsubst src/%.cpp, $(OBJ_DIR)/%.$(OBJ_TYPE), $(CXXSRC))
 OBJ = $(DOBJ) $(EXTRA_OBJ)
 
-SAVE_REGS_SRC = rt/src/vrt/gc/save_regs.asm
 SAVE_REGS_TARGET = rt/save-regs-host.o
+ERRNO_C_TARGET = rt/errno.o
+ERRNO_C_SRC = rt/src/core/c/errno.c
 RT_HOST = rt/libvrt-host.bc
 RT_TARGETS = \
 	rt/libvrt-x86_64-msvc.bc \
-	rt/libvrt-x86-metal.bc \
-	rt/libvrt-x86_64-metal.bc \
-	rt/libvrt-x86-mingw.bc \
-	rt/libvrt-x86_64-mingw.bc \
 	rt/libvrt-x86-linux.bc \
 	rt/libvrt-x86_64-linux.bc \
 	rt/libvrt-x86-osx.bc \
-	rt/libvrt-x86_64-osx.bc
+	rt/libvrt-x86_64-osx.bc \
+	rt/libvrt-aarch64-osx.bc
 RT_BIN_TARGETS = \
 	rt/libvrt-x86_64-msvc.o \
-	rt/libvrt-x86-metal.o \
-	rt/libvrt-x86_64-metal.o \
-	rt/libvrt-x86-mingw.o \
-	rt/libvrt-x86_64-mingw.o \
 	rt/libvrt-x86-linux.o \
 	rt/libvrt-x86_64-linux.o \
-	rt/libvrt-x86-osx.o \
-	rt/libvrt-x86_64-osx.o
+	rt/libvrt-x86_64-osx.o \
+	rt/libvrt-aarch64-osx.o
 
 
-all: $(RT_HOST) $(RT_TARGETS) $(RT_BIN_TARGETS) $(SAVE_REGS_TARGET)
+all: $(RT_HOST) $(RT_TARGETS) $(RT_BIN_TARGETS) $(SAVE_REGS_TARGET) $(ERRNO_C_TARGET)
 
 $(OBJ_DIR)/%.$(OBJ_TYPE) : src/%.cpp Makefile
 	@echo "  CXX    src/$*.cpp"
@@ -150,13 +154,18 @@ $(TARGET): $(DSRC) $(EXTRA_OBJ)
 	@$(RDMD) --build-only --compiler=$(DMD) $(DCOMP_FLAGS) $(LINK_FLAGS) $(EXTRA_OBJ) -of$(TARGET) src/main.d
 
 $(SAVE_REGS_TARGET): $(SAVE_REGS_SRC) Makefile
-	@echo "  NASM   $(SAVE_REGS_TARGET)"
-	@$(NASM) -f $(NASM_FORMAT) -o $(SAVE_REGS_TARGET) $(SAVE_REGS_SRC)
+	@echo "  ASM    $(SAVE_REGS_TARGET)"
+	@$(ASM) $(ASM_FLAGS) -o $(SAVE_REGS_TARGET) $(SAVE_REGS_SRC)
+
+$(ERRNO_C_TARGET): $(ERRNO_C_SRC) Makefile
+	@echo "  CC   $(ERRNO_C_TARGET)"
+	@$(CC) -c -o $(ERRNO_C_TARGET) $(ERRNO_C_SRC)
 
 clean:
 	@rm -rf $(TARGET) $(RUN_TARGET) .obj
 	@rm -f $(RT_TARGETS) $(RT_HOST)
 	@rm -f $(SAVE_REGS_TARGET)
+	@rm -f $(ERRNO_C_TARGET)
 	@rm -rf .pkg
 	@rm -rf volt.tar.gz
 
