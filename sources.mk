@@ -16,7 +16,8 @@ RT_SRC = \
 	rt/src/vrt/gc/mman/*.volt \
 	rt/src/vrt/gc/manager/*.volt \
 	rt/src/vrt/gc/*.volt \
-	rt/src/vrt/os/*.volt
+	rt/src/vrt/os/*.volt \
+	rt/src/vrt/os/eh/*.volt
 
 
 VIV_SRC= \

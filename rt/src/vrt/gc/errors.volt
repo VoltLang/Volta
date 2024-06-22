@@ -1,5 +1,5 @@
-// Copyright 2016-2017, Bernard Helyer.
-// Copyright 2016-2017, Jakob Bornecrantz.
+// Copyright 2016-2024, Bernard Helyer.
+// Copyright 2016-2024, Jakob Bornecrantz.
 // SPDX-License-Identifier: BSL-1.0
 module vrt.gc.errors;
 
@@ -10,7 +10,7 @@ version (CRuntime_All) {
 	import core.c.string : strerror, strlen;
 }
 
-
+// General purpose allocation failure message.
 fn panicFailedToAlloc(n: size_t, loc: string = __LOCATION__)
 {
 	args: char[][1];
@@ -31,6 +31,30 @@ fn panicFailedToAlloc(n: size_t, loc: string = __LOCATION__)
 	vrt_panic(args[], loc);
 }
 
+// Same as above, but with an errno value describing the failure.
+fn panicFailedToAlloc(n: size_t, ret: int, loc: string = __LOCATION__)
+{
+	args: char[][1];
+	msg: char[128];
+	pos: size_t;
+
+	fn sink(buf: SinkArg) {
+		end := pos + buf.length;
+		msg[pos .. end] = buf;
+		pos += buf.length;
+	}
+
+	sink("Alloc of ");
+	vrt_format_u64(sink, n);
+	sink(" bytes failed with ");
+	errnoToSink(sink, ret);
+	sink(".");
+
+	args[0] = msg[0 .. pos];
+	vrt_panic(args[], loc);
+}
+
+// Specific error message for when mmap fails, where ret is errno.
 fn panicMmapFailed(n: size_t, ret: int, loc: string = __LOCATION__)
 {
 	args: char[][1];
@@ -46,6 +70,17 @@ fn panicMmapFailed(n: size_t, ret: int, loc: string = __LOCATION__)
 	sink("gc mmap of ");
 	vrt_format_u64(sink, n);
 	sink(" bytes failed with ");
+	errnoToSink(sink, ret);
+
+	args[0] = msg[0 .. pos];
+	vrt_panic(args[], loc);
+}
+
+private:
+
+// Helper function to pass errno into a sink.
+fn errnoToSink(sink: dg(SinkArg), ret: int)
+{
 	version (CRuntime_All) {
 		str := strerror(ret);
 		if (str !is null) {
@@ -60,7 +95,4 @@ fn panicMmapFailed(n: size_t, ret: int, loc: string = __LOCATION__)
 	} else {
 		vrt_format_i64(sink, ret);
 	}
-
-	args[0] = msg[0 .. pos];
-	vrt_panic(args[], loc);
 }

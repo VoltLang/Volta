@@ -25,12 +25,20 @@ Large: Are directly allocated from the OS and has its own extent.
 
 +/
 
+version (!OSX || !AArch64) {
+	// The log2 of PageSize - 4KB == 1 << 12
+	enum PageSizeLog = 12u;
 
-// The log2 of PageSize - 4KB == 1 << 12
-enum PageSizeLog = 12u;
+	//! The log2 of MinAllocSize - 8B == 1 << 3u
+	enum MinAllocSizeLog = 3u;
+} else {
+	// The log2 of PageSize - 16KB == 1 << 14
+	enum PageSizeLog = 14u;
 
-//! The log2 of MinAllocSize - 8B == 1 << 3u
-enum MinAllocSizeLog = 3u;
+	//! The log2 of MinAllocSize - 32B == 1 << 5u
+	enum MinAllocSizeLog = 5u;
+}
+
 
 //! The log2 of MaxAllocSize - 128MB == 1 << 27u
 enum MaxAllocSizeLog = 27u;
