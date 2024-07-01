@@ -186,334 +186,333 @@
  * func(a, b);
  * ```
  */
- module volt.llvm.abi.sysvamd64;
- 
- import lib.llvm.core;
- 
- import ir = volta.ir;
- 
- import volt.errors;
- import volt.interfaces;
- import volt.semantic.classify : calcAlignment;
- import volt.llvm.interfaces;
- import volt.llvm.type;
- import volt.llvm.abi.base;
- 
- enum Classification
- {
-	 Memory,
-	 Integer,
-	 Float,
-	 CoercedStructSingle,
-	 CoercedStructDouble,
- }
- 
- enum AMD64_SYSV_INTEGER_REGISTERS = 6;
- enum AMD64_SYSV_FLOAT_REGISTERS   = 8;
- enum AMD64_SYSV_MAX_COERCIBLE_SZ  = 128;  // In bits.
- enum AMD64_SYSV_WORD_SZ           = 64;   // In bits.
- enum AMD64_SYSV_HALFWORD_SZ       = 32;   // In bits.
- enum NOT_FLOAT                    = -1;
- enum ONE_FLOAT                    = 1;
- enum TWO_FLOATS                   = 2;
- enum ONE_DOUBLE                   = 3;
- 
- void sysvAmd64AbiCoerceParameters(State state, ir.FunctionType ft, ref LLVMTypeRef retType, ref LLVMTypeRef[] params)
- {
-	 int integerRegisters = AMD64_SYSV_INTEGER_REGISTERS;
-	 int floatRegisters   = AMD64_SYSV_FLOAT_REGISTERS;
- 
-	 LLVMTypeRef[] types;
- 
-	 foreach (param; params) {
-		 LLVMTypeRef[] structTypes;
-		 auto classification = classifyType(state, param, /*#out*/structTypes);
-		 if (classification == Classification.Memory) {
-			 types ~= param;
-			 ft.abiData ~= cast(void*[])null;
-			 continue;
-		 }
-		 if (classification == Classification.Integer) {
-			 integerRegisters--;
-			 types ~= param;
-			 ft.abiData ~= cast(void*[])null;
-		 } else if (classification == Classification.Float) {
-			 floatRegisters--;
-			 types ~= param;
-			 ft.abiData ~= cast(void*[])null;
-		 } else {
-			 consumeRegisters(state, structTypes, /*#ref*/integerRegisters, /*#ref*/floatRegisters);
-			 if (classification == Classification.CoercedStructSingle ||
-				 (integerRegisters >= 0 && floatRegisters >= 0)) {
-				 ft.abiModified = true;
-				 types ~= structTypes;
-				 ft.abiData ~= cast(void*[])structTypes;
-				 if (structTypes.length == 2) {
-					 /* In order to make the code that modifies the prologue and
-					  * call simpler, ensure that abiData will have the effective length
-					  * of the expanded call list.
-					  */
-					 ft.abiData ~= cast(void*[])null;
-				 }
-			 } else {
-				 types ~= param;
-				 ft.abiData ~= cast(void*[])null;
-			 }
-		 }
-	 }
- 
-	 params = types;
- }
- 
- void consumeRegisters(State state, LLVMTypeRef[] types, ref int integerRegisters, ref int floatRegisters)
- {
-	 foreach (type; types) {
-		 LLVMTypeRef[] structTypes;
-		 auto classification = classifyType(state, type, /*#out*/structTypes);
-		 if (classification == Classification.Memory) {
-			 continue;
-		 }
-		 if (classification == Classification.Integer) {
-			 integerRegisters--;
-		 } else if (classification == Classification.Float) {
-			 floatRegisters--;
-		 } else {
-			 consumeRegisters(state, structTypes, /*#ref*/integerRegisters, /*#ref*/floatRegisters);
-		 }
-	 }
- }
- 
- 
- Classification classifyType(State state, LLVMTypeRef type, out LLVMTypeRef[] structTypes)
- {
-	 auto kind = LLVMGetTypeKind(type);
-	 final switch(kind) with (LLVMTypeKind) {
-	 case Void, Half, X86_FP80, FP128, PPC_FP128, Label,
+module volt.llvm.abi.sysvamd64;
+
+import lib.llvm.core;
+
+import ir = volta.ir;
+
+import volt.errors;
+import volt.interfaces;
+import volt.semantic.classify : calcAlignment;
+import volt.llvm.interfaces;
+import volt.llvm.type;
+import volt.llvm.abi.base;
+
+enum Classification
+{
+	Memory,
+	Integer,
+	Float,
+	CoercedStructSingle,
+	CoercedStructDouble,
+}
+
+enum AMD64_SYSV_INTEGER_REGISTERS = 6;
+enum AMD64_SYSV_FLOAT_REGISTERS   = 8;
+enum AMD64_SYSV_MAX_COERCIBLE_SZ  = 128;  // In bits.
+enum AMD64_SYSV_WORD_SZ           = 64;   // In bits.
+enum AMD64_SYSV_HALFWORD_SZ       = 32;   // In bits.
+enum NOT_FLOAT                    = -1;
+enum ONE_FLOAT                    = 1;
+enum TWO_FLOATS                   = 2;
+enum ONE_DOUBLE                   = 3;
+
+void sysvAmd64AbiCoerceParameters(State state, ir.FunctionType ft, ref LLVMTypeRef retType, ref LLVMTypeRef[] params)
+{
+	int integerRegisters = AMD64_SYSV_INTEGER_REGISTERS;
+	int floatRegisters   = AMD64_SYSV_FLOAT_REGISTERS;
+
+	LLVMTypeRef[] types;
+
+	foreach (param; params) {
+		LLVMTypeRef[] structTypes;
+		auto classification = classifyType(state, param, /*#out*/structTypes);
+		if (classification == Classification.Memory) {
+			types ~= param;
+			ft.abiData ~= cast(void*[])null;
+			continue;
+		}
+		if (classification == Classification.Integer) {
+			integerRegisters--;
+			types ~= param;
+			ft.abiData ~= cast(void*[])null;
+		} else if (classification == Classification.Float) {
+			floatRegisters--;
+			types ~= param;
+			ft.abiData ~= cast(void*[])null;
+		} else {
+			consumeRegisters(state, structTypes, /*#ref*/integerRegisters, /*#ref*/floatRegisters);
+			if (classification == Classification.CoercedStructSingle ||
+				(integerRegisters >= 0 && floatRegisters >= 0)) {
+				ft.abiModified = true;
+				types ~= structTypes;
+				ft.abiData ~= cast(void*[])structTypes;
+				if (structTypes.length == 2) {
+					/* In order to make the code that modifies the prologue and
+					 * call simpler, ensure that abiData will have the effective length
+					 * of the expanded call list.
+					 */
+					ft.abiData ~= cast(void*[])null;
+				}
+			} else {
+				types ~= param;
+				ft.abiData ~= cast(void*[])null;
+			}
+		}
+	}
+
+	params = types;
+}
+
+void consumeRegisters(State state, LLVMTypeRef[] types, ref int integerRegisters, ref int floatRegisters)
+{
+	foreach (type; types) {
+		LLVMTypeRef[] structTypes;
+		auto classification = classifyType(state, type, /*#out*/structTypes);
+		if (classification == Classification.Memory) {
+			continue;
+		}
+		if (classification == Classification.Integer) {
+			integerRegisters--;
+		} else if (classification == Classification.Float) {
+			floatRegisters--;
+		} else {
+			consumeRegisters(state, structTypes, /*#ref*/integerRegisters, /*#ref*/floatRegisters);
+		}
+	}
+}
+
+
+Classification classifyType(State state, LLVMTypeRef type, out LLVMTypeRef[] structTypes)
+{
+	auto kind = LLVMGetTypeKind(type);
+	final switch(kind) with (LLVMTypeKind) {
+	case Void, Half, X86_FP80, FP128, PPC_FP128, Label,
 		 Function, Array, Vector, Metadata, X86_MMX, Token:
-		 return Classification.Memory;
-	 case Float, Double:
-		 return Classification.Float;
-	 case Integer, Pointer:
-		 return Classification.Integer;
-	 case Struct:
-		 return classifyStructType(state, type, /*#out*/structTypes);
-	 }
- }
- 
- Classification classifyStructType(State state, LLVMTypeRef type, out LLVMTypeRef[] structTypes)
- {
-	 auto name = LLVMGetStructName(type);
- 
-	 uint elementCount = LLVMCountStructElementTypes(type);
-	 auto elements = new LLVMTypeRef[](elementCount);
- 
-	 // The size of this struct, in bits.
-	 size_t sz;
-	 size_t firstWidth;
-	 // The struct alignment is equal to the strictest alignment of a member.
-	 size_t alignment;
-	 /* If a portion is <= `0`, that 8 byte segment is not FLOAT.
-	  * Otherwise, 1 == 1 float, 2 == 2 floats, 3 == 1 double.
-	  */
-	 int[2] floats;
-	 // A pointer will take up an entire section.
-	 // If a section is filled by a pointer, what type does it point to? Otherwise null.
-	 LLVMTypeRef[2] pointees;
-	 // Are we up to the second segment yet?
-	 bool secondSegment;
- 
-	 // Update the above values for a member of the given size (bytes) and floatness.
-	 void addSize(size_t val, Classification classification, LLVMTypeRef pointer = null)
-	 {
-		 bool floating = classification == Classification.Float;
-		 if (!floating) {
-			 floats[secondSegment] = NOT_FLOAT;
-		 }
-		 if (floating && floats[secondSegment] != NOT_FLOAT) {
-			 assert(val == AMD64_SYSV_HALFWORD_SZ || val == AMD64_SYSV_WORD_SZ);
-			 if (val == AMD64_SYSV_HALFWORD_SZ) {
-				 floats[secondSegment]++;
-			 } else if (val == AMD64_SYSV_WORD_SZ) {
-				 if (floats[secondSegment] != 0) {
-					 floats[secondSegment] = NOT_FLOAT;
-				 } else {
-					 floats[secondSegment] = ONE_DOUBLE;
-				 }
-			 }
-		 }
-		 if (val > alignment) {
-			 alignment = val;
-		 }
-		 if (sz + val > AMD64_SYSV_WORD_SZ && !secondSegment) {
-			 firstWidth = sz;
-			 sz = AMD64_SYSV_WORD_SZ + val;
-			 secondSegment = true;
-			 if (!floating) {
-				 floats[secondSegment] = NOT_FLOAT;
-			 }
-		 } else {
-			 sz += val;
-			 pointees[secondSegment] = pointer;  // If pointer is null, that's fine too.
-			 if (sz == AMD64_SYSV_WORD_SZ) {
-				 alignment = 0;  // Each eightbyte is treated separately.
-				 secondSegment = true;
-			 }
-		 }
-	 }
- 
-	 bool addElements(LLVMTypeRef[] theElements)
-	 {
-		 foreach (i, element; theElements) {
-			 LLVMTypeKind ekind = LLVMGetTypeKind(element);
-			 final switch(ekind) with (LLVMTypeKind) {
-			 case Void, Half, X86_FP80, FP128, PPC_FP128, Label,
+		return Classification.Memory;
+	case Float, Double:
+		return Classification.Float;
+	case Integer, Pointer:
+		return Classification.Integer;
+	case Struct:
+		return classifyStructType(state, type, /*#out*/structTypes);
+	}
+}
+
+Classification classifyStructType(State state, LLVMTypeRef type, out LLVMTypeRef[] structTypes)
+{
+	auto name = LLVMGetStructName(type);
+
+	uint elementCount = LLVMCountStructElementTypes(type);
+	auto elements = new LLVMTypeRef[](elementCount);
+
+	// The size of this struct, in bits.
+	size_t sz;
+	size_t firstWidth;
+	// The struct alignment is equal to the strictest alignment of a member.
+	size_t alignment;
+	/* If a portion is <= `0`, that 8 byte segment is not FLOAT.
+	 * Otherwise, 1 == 1 float, 2 == 2 floats, 3 == 1 double.
+	 */
+	int[2] floats;
+	// A pointer will take up an entire section.
+	// If a section is filled by a pointer, what type does it point to? Otherwise null.
+	LLVMTypeRef[2] pointees;
+	// Are we up to the second segment yet?
+	bool secondSegment;
+
+	// Update the above values for a member of the given size (bytes) and floatness.
+	void addSize(size_t val, Classification classification, LLVMTypeRef pointer = null)
+	{
+		bool floating = classification == Classification.Float;
+		if (!floating) {
+			floats[secondSegment] = NOT_FLOAT;
+		}
+		if (floating && floats[secondSegment] != NOT_FLOAT) {
+			assert(val == AMD64_SYSV_HALFWORD_SZ || val == AMD64_SYSV_WORD_SZ);
+			if (val == AMD64_SYSV_HALFWORD_SZ) {
+				floats[secondSegment]++;
+			} else if (val == AMD64_SYSV_WORD_SZ) {
+				if (floats[secondSegment] != 0) {
+					floats[secondSegment] = NOT_FLOAT;
+				} else {
+					floats[secondSegment] = ONE_DOUBLE;
+				}
+			}
+		}
+		if (val > alignment) {
+			alignment = val;
+		}
+		if (sz + val > AMD64_SYSV_WORD_SZ && !secondSegment) {
+			firstWidth = sz;
+			sz = AMD64_SYSV_WORD_SZ + val;
+			secondSegment = true;
+			if (!floating) {
+				floats[secondSegment] = NOT_FLOAT;
+			}
+		} else {
+			sz += val;
+			pointees[secondSegment] = pointer;  // If pointer is null, that's fine too.
+			if (sz == AMD64_SYSV_WORD_SZ) {
+				alignment = 0;  // Each eightbyte is treated separately.
+				secondSegment = true;
+			}
+		}
+	}
+
+	bool addElements(LLVMTypeRef[] theElements)
+	{
+		foreach (i, element; theElements) {
+			LLVMTypeKind ekind = LLVMGetTypeKind(element);
+			final switch(ekind) with (LLVMTypeKind) {
+			case Void, Half, X86_FP80, FP128, PPC_FP128, Label,
 				 Function, Vector, Metadata, X86_MMX, Token:
-				 return false;
-			 case Array:
-				 auto len = LLVMGetArrayLength(element);
-				 auto base = LLVMGetElementType(element);
-				 auto types = new LLVMTypeRef[](len);
-				 foreach (ref type; types) {
-					 type = base;
-				 }
-				 if (!addElements(types)) {
-					 return false;
-				 }
-				 break;
-			 case Float:
-				 addSize(AMD64_SYSV_HALFWORD_SZ, Classification.Float);
-				 break;
-			 case Double:
-				 addSize(AMD64_SYSV_WORD_SZ, Classification.Float);
-				 break;
-			 case Integer:
-				 auto width = LLVMGetIntTypeWidth(element);
-				 addSize(width, Classification.Integer);
-				 break;
-			 case Pointer:
-				 addSize(AMD64_SYSV_WORD_SZ, Classification.Integer, LLVMGetElementType(element));
-				 break;
-			 case Struct:
-				 LLVMTypeRef[] types;
-				 classifyStructType(state, element, /*#out*/types);
-				 if (types.length == 0) {
-					 return false;
-				 } else {
-					 addElements(types);
-				 }
-				 break;
-			 }
-		 }
-		 return true;
-	 }
- 
-	 LLVMGetStructElementTypes(type, elements.ptr);
-	 if (!addElements(elements)) {
-		 return Classification.Memory;
-	 }
- 
-	 if (alignment != 0) {
-		 sz = calcAlignment(alignment, sz);
-	 }
- 
-	 if (sz > AMD64_SYSV_MAX_COERCIBLE_SZ) {
-		 return Classification.Memory;
-	 }
- 
-	 LLVMTypeRef[] getSegmentType(size_t segment)
-	 {
-		 switch (floats[segment]) {
-		 case ONE_FLOAT:
-			 return [LLVMFloatTypeInContext(state.context)];
-		 case TWO_FLOATS:
-			 auto t = LLVMFloatTypeInContext(state.context);
-			 return [LLVMVectorType(t, 2)];
-		 case ONE_DOUBLE:
-			 return [LLVMDoubleTypeInContext(state.context)];
-		 default:
-			 if (pointees[segment] !is null) {
-				 return [LLVMPointerType(pointees[segment], 0)];
-			 }
-			 size_t segmentSize;
-			 if (segment == 0) {
-				 if (sz >= AMD64_SYSV_WORD_SZ) {
-					 segmentSize = AMD64_SYSV_WORD_SZ;
-				 } else {
-					 segmentSize = sz;
-				 }
-			 } else {
-				 segmentSize = sz - AMD64_SYSV_WORD_SZ;
-			 }
-			 return [LLVMIntTypeInContext(state.context, cast(uint)segmentSize)];
-		 }
-	 }
- 
-	 if (sz <= AMD64_SYSV_WORD_SZ) {
-		 structTypes = getSegmentType(0);
-		 return Classification.CoercedStructSingle;
-	 }
- 
-	 structTypes = getSegmentType(0) ~ getSegmentType(1);
- 
-	 return Classification.CoercedStructDouble;
- }
- 
- void sysvAmd64AbiCoerceArguments(State state, ir.CallableType ct, ref LLVMValueRef[] args)
- {
-	 for (size_t i = 0; i < args.length; ++i) {
-		 // We need a pointer. If it is a value, alloca and store.
-		 if (ct.abiData[i].length != 0 &&
-			 LLVMGetTypeKind(LLVMTypeOf(args[i])) != LLVMTypeKind.Pointer) {
-			 auto _alloca = state.buildAlloca(LLVMTypeOf(args[i]), "");
-			 LLVMBuildStore(state.builder, args[i], _alloca);
-			 args[i] = _alloca;
-		 }
-		 if (ct.abiData[i].length == 1) {
-			 auto lt = cast(LLVMTypeRef[])ct.abiData[i];
-			 auto bc = LLVMBuildBitCast(state.builder, args[i],
-				 LLVMPointerType(lt[0], 0), "");
-			 args[i] = LLVMBuildLoad(state.builder, bc, "");
-		 } else if (ct.abiData[i].length == 2) {
-			 auto vkind = LLVMGetValueKind(args[i]);
-			 auto lts = cast(LLVMTypeRef[])ct.abiData[i];
-			 auto _struct = LLVMStructTypeInContext(state.context, lts.ptr, cast(uint)lts.length, false);
-			 auto bc = LLVMBuildBitCast(state.builder, args[i], LLVMPointerType(_struct, 0), "");
-			 auto agep = buildGep(state, bc, 0, 0);
-			 args[i] = LLVMBuildLoad(state.builder, agep, "");
- 
-			 auto bgep = buildGep(state, bc, 0, 1);
-			 auto load = LLVMBuildLoad(state.builder, bgep, "");
-			 args = args[0 .. i] ~ [args[i], load] ~ args[i+1 .. $];
-			 i++;
-		 }
-	 }
- }
- 
+				return false;
+			case Array:
+				auto len = LLVMGetArrayLength(element);
+				auto base = LLVMGetElementType(element);
+				auto types = new LLVMTypeRef[](len);
+				foreach (ref type; types) {
+					type = base;
+				}
+				if (!addElements(types)) {
+					return false;
+				}
+				break;
+			case Float:
+				addSize(AMD64_SYSV_HALFWORD_SZ, Classification.Float);
+				break;
+			case Double:
+				addSize(AMD64_SYSV_WORD_SZ, Classification.Float);
+				break;
+			case Integer:
+				auto width = LLVMGetIntTypeWidth(element);
+				addSize(width, Classification.Integer);
+				break;
+			case Pointer:
+				addSize(AMD64_SYSV_WORD_SZ, Classification.Integer, LLVMGetElementType(element));
+				break;
+			case Struct:
+				LLVMTypeRef[] types;
+				classifyStructType(state, element, /*#out*/types);
+				if (types.length == 0) {
+					return false;
+				} else {
+					addElements(types);
+				}
+				break;
+			}
+		}
+		return true;
+	}
+
+	LLVMGetStructElementTypes(type, elements.ptr);
+	if (!addElements(elements)) {
+		return Classification.Memory;
+	}
+
+	if (alignment != 0) {
+		sz = calcAlignment(alignment, sz);
+	}
+
+	if (sz > AMD64_SYSV_MAX_COERCIBLE_SZ) {
+		return Classification.Memory;
+	}
+
+	LLVMTypeRef[] getSegmentType(size_t segment)
+	{
+		switch (floats[segment]) {
+		case ONE_FLOAT:
+			return [LLVMFloatTypeInContext(state.context)];
+		case TWO_FLOATS:
+			auto t = LLVMFloatTypeInContext(state.context);
+			return [LLVMVectorType(t, 2)];
+		case ONE_DOUBLE:
+			return [LLVMDoubleTypeInContext(state.context)];
+		default:
+			if (pointees[segment] !is null) {
+				return [LLVMPointerType(pointees[segment], 0)];
+			}
+			size_t segmentSize;
+			if (segment == 0) {
+				if (sz >= AMD64_SYSV_WORD_SZ) {
+					segmentSize = AMD64_SYSV_WORD_SZ;
+				} else {
+					segmentSize = sz;
+				}
+			} else {
+				segmentSize = sz - AMD64_SYSV_WORD_SZ;
+			}
+			return [LLVMIntTypeInContext(state.context, cast(uint)segmentSize)];
+		}
+	}
+
+	if (sz <= AMD64_SYSV_WORD_SZ) {
+		structTypes = getSegmentType(0);
+		return Classification.CoercedStructSingle;
+	}
+
+	structTypes = getSegmentType(0) ~ getSegmentType(1);
+
+	return Classification.CoercedStructDouble;
+}
+
+void sysvAmd64AbiCoerceArguments(State state, ir.CallableType ct, ref LLVMValueRef[] args)
+{
+	for (size_t i = 0; i < args.length; ++i) {
+		// We need a pointer. If it is a value, alloca and store.
+		if (ct.abiData[i].length != 0 &&
+			LLVMGetTypeKind(LLVMTypeOf(args[i])) != LLVMTypeKind.Pointer) {
+			auto _alloca = state.buildAlloca(LLVMTypeOf(args[i]), "");
+			LLVMBuildStore(state.builder, args[i], _alloca);
+			args[i] = _alloca;
+		}
+		if (ct.abiData[i].length == 1) {
+			auto lt = cast(LLVMTypeRef[])ct.abiData[i];
+			auto bc = LLVMBuildBitCast(state.builder, args[i],
+				LLVMPointerType(lt[0], 0), "");
+			args[i] = LLVMBuildLoad(state.builder, bc, "");
+		} else if (ct.abiData[i].length == 2) {
+			auto vkind = LLVMGetValueKind(args[i]);
+			auto lts = cast(LLVMTypeRef[])ct.abiData[i];
+			auto _struct = LLVMStructTypeInContext(state.context, lts.ptr, cast(uint)lts.length, false);
+			auto bc = LLVMBuildBitCast(state.builder, args[i], LLVMPointerType(_struct, 0), "");
+			auto agep = buildGep(state, bc, 0, 0);
+			args[i] = LLVMBuildLoad(state.builder, agep, "");
+
+			auto bgep = buildGep(state, bc, 0, 1);
+			auto load = LLVMBuildLoad(state.builder, bgep, "");
+			args = args[0 .. i] ~ [args[i], load] ~ args[i+1 .. $];
+			i++;
+		}
+	}
+}
+
 CoercedStatus sysvAmd64AbiCoercePrologueParameter(State state, LLVMValueRef llvmFunc, ir.Function func, ir.CallableType ct,
-	 LLVMValueRef val, size_t index, ref size_t offset)
- {
-	 if (ct.abiData[index+offset].length != 1 && ct.abiData[index+offset].length != 2) {
-		 return NotCoerced;
-	 }
-	 auto p = func.params[index];
-	 auto lts = cast(LLVMTypeRef[])ct.abiData[index+offset];
-	 auto type = state.fromIr(p.type);
-	 auto a = state.getVariableValue(p, /*#out*/type);
-	 if (ct.abiData[index+offset].length == 1) {
-		 auto bc = LLVMBuildBitCast(state.builder, a, LLVMPointerType(lts[0], 0), "");
-		 LLVMBuildStore(state.builder, val, bc);
-	 } else if (ct.abiData[index+offset].length == 2) {
-		 auto _struct = LLVMStructTypeInContext(state.context, lts.ptr, cast(uint)lts.length, false);
-		 auto bc = LLVMBuildBitCast(state.builder, a, LLVMPointerType(_struct, 0), "");
-		 auto agep = buildGep(state, bc, 0, 0);
-		 LLVMBuildStore(state.builder, val, agep);
-		 offset++;
-		 auto v2 = LLVMGetParam(llvmFunc, cast(uint)(index + offset));
-		 auto bgep = buildGep(state, bc, 0, 1);
-		 LLVMBuildStore(state.builder, v2, bgep);
-	 } else {
-		 panicAssert(ct, false);
-	 }
-	 return Coerced;
- }
- 
+	LLVMValueRef val, size_t index, ref size_t offset)
+{
+	if (ct.abiData[index+offset].length != 1 && ct.abiData[index+offset].length != 2) {
+		return NotCoerced;
+	}
+	auto p = func.params[index];
+	auto lts = cast(LLVMTypeRef[])ct.abiData[index+offset];
+	auto type = state.fromIr(p.type);
+	auto a = state.getVariableValue(p, /*#out*/type);
+	if (ct.abiData[index+offset].length == 1) {
+		auto bc = LLVMBuildBitCast(state.builder, a, LLVMPointerType(lts[0], 0), "");
+		LLVMBuildStore(state.builder, val, bc);
+	} else if (ct.abiData[index+offset].length == 2) {
+		auto _struct = LLVMStructTypeInContext(state.context, lts.ptr, cast(uint)lts.length, false);
+		auto bc = LLVMBuildBitCast(state.builder, a, LLVMPointerType(_struct, 0), "");
+		auto agep = buildGep(state, bc, 0, 0);
+		LLVMBuildStore(state.builder, val, agep);
+		offset++;
+		auto v2 = LLVMGetParam(llvmFunc, cast(uint)(index + offset));
+		auto bgep = buildGep(state, bc, 0, 1);
+		LLVMBuildStore(state.builder, v2, bgep);
+	} else {
+		panicAssert(ct, false);
+	}
+	return Coerced;
+}
