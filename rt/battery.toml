@@ -23,9 +23,13 @@ asmFiles = ["src/vrt/gc/save_regs.asm", "src/vrt/os/eh.asm"]
 [cfg.armhf]
 sFiles = ["src/vrt/armhf.s"]
 
-# AArch has its own special assembly.
-[cfg.aarch64]
+# AArch on Linux has its own special assembly.
+[cfg.linux && aarch64]
 sFiles = ["src/vrt/aarch64.s"]
+
+# AArch on OSX has its own special assembly.
+[cfg.osx && aarch64]
+sFiles = ["src/vrt/aarch64_macos.s"]
 
 # For all Windows builds.
 [cfg.msvc]
