@@ -95,13 +95,25 @@ version (Linux) {
 		DT_WHT      = 14
 	}
 
-	align(4) struct dirent
-	{
-		d_ino: ino_t;
-		d_reclen: u16;
-		d_type: u8;
-		d_namelen: u8;
-		d_name: char[256];
+	version (AArch64) {
+		struct dirent
+		{
+			d_ino: ino_t;
+			d_seekoff: u64;
+			d_reclen: u16;
+			d_namlen: u16;
+			d_type: u8;
+			d_name: char[1024];
+		}
+	} else {
+		align(4) struct dirent
+		{
+			d_ino: ino_t;
+			d_reclen: u16;
+			d_type: u8;
+			d_namelen: u8;
+			d_name: char[256];
+		}
 	}
 
 	struct DIR

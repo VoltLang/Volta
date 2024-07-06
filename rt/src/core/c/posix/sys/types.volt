@@ -77,7 +77,6 @@ version (Linux) {
 	alias blksize_t = i32;
 	alias dev_t = i32;
 	alias gid_t = u32;
-	alias ino_t = u32;
 	alias mode_t = u16;
 	alias nlink_t = u16;
 	alias off_t = i64;
@@ -87,6 +86,12 @@ version (Linux) {
 	//time_t (defined in core.stdc.time)
 	alias ssize_t = c_long;
 	alias uid_t = u32;
+
+	version (AArch64) {
+		alias ino_t = u64;
+	} else {
+		alias ino_t = u32;
+	}
 }
 
 //
