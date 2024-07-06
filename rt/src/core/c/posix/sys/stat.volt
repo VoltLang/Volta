@@ -266,37 +266,80 @@ version (Linux) {
 
 } else version (OSX) {
 
-	struct stat_t
-	{
-		st_dev: dev_t;
-		st_ino: ino_t;
-		st_mode: mode_t;
-		st_nlink: nlink_t;
-		st_uid: uid_t;
-		st_gid: gid_t;
-		st_rdev: dev_t;
-	  //static if( false /*!_POSIX_C_SOURCE || _DARWIN_C_SOURCE*/ )
-	  //{
-		  //timespec  st_atimespec;
-		  //timespec  st_mtimespec;
-		  //timespec  st_ctimespec;
-	  //}
-	  //else
-	  //{
-		st_atime: time_t;
-		st_atimensec: c_long;
-		st_mtime: time_t;
-		st_mtimensec: c_long;
-		st_ctime: time_t;
-		st_ctimensec: c_long;
-	  //}
-		st_size: off_t;
-		st_blocks: blkcnt_t;
-		st_blksize: blksize_t;
-		st_flags: u32;
-		st_gen: u32;
-		st_lspare: i32;
-		st_qspare: i64[2];
+
+	version (AArch64) {
+
+		struct stat_t
+		{
+			st_dev: dev_t;
+			st_mode: mode_t;
+			st_nlink: nlink_t;
+			st_ino: ino_t;
+			st_uid: uid_t;
+			st_gid: gid_t;
+			st_rdev: dev_t;
+		  //static if( false /*!_POSIX_C_SOURCE || _DARWIN_C_SOURCE*/ )
+		  //{
+			  //timespec  st_atimespec;
+			  //timespec  st_mtimespec;
+			  //timespec  st_ctimespec;
+			  //timespec  st_birthtimespec;
+		  //}
+		  //else
+		  //{
+			st_atime: time_t;
+			st_atimensec: c_long;
+			st_mtime: time_t;
+			st_mtimensec: c_long;
+			st_ctime: time_t;
+			st_ctimensec: c_long;
+			st_birthtime: time_t;
+			st_birthtimensec: c_long;
+		  //}
+			st_size: off_t;
+			st_blocks: blkcnt_t;
+			st_blksize: blksize_t;
+			st_flags: u32;
+			st_gen: u32;
+			st_lspare: i32;
+			st_qspare: i64[2];
+		}
+
+	} else {
+
+		struct stat_t
+		{
+			st_dev: dev_t;
+			st_ino: ino_t;
+			st_mode: mode_t;
+			st_nlink: nlink_t;
+			st_uid: uid_t;
+			st_gid: gid_t;
+			st_rdev: dev_t;
+		  //static if( false /*!_POSIX_C_SOURCE || _DARWIN_C_SOURCE*/ )
+		  //{
+			  //timespec  st_atimespec;
+			  //timespec  st_mtimespec;
+			  //timespec  st_ctimespec;
+		  //}
+		  //else
+		  //{
+			st_atime: time_t;
+			st_atimensec: c_long;
+			st_mtime: time_t;
+			st_mtimensec: c_long;
+			st_ctime: time_t;
+			st_ctimensec: c_long;
+		  //}
+			st_size: off_t;
+			st_blocks: blkcnt_t;
+			st_blksize: blksize_t;
+			st_flags: u32;
+			st_gen: u32;
+			st_lspare: i32;
+			st_qspare: i64[2];
+		}
+
 	}
 
 	enum S_IRUSR    = 0x100; // octal 0400
