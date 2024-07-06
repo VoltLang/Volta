@@ -161,6 +161,13 @@ public:
 		// Here we solve the chicken and egg problem; the slab manages itself.
 		order := sizeToOrder(typeid(Slab).size);
 		sizeOfOSAlloc := orderToSize(order) * Slab.MaxSlots;
+
+		// In case the page size is too large we round up.
+		if (sizeOfOSAlloc < PageTable.PageSize) {
+			sizeOfOSAlloc = PageTable.PageSize;
+			order = sizeToOrder(sizeOfOSAlloc / Slab.MaxSlots);
+		}
+
 		memory := allocMemoryFromOS(sizeOfOSAlloc);
 		if (memory is null) {
 			return null;

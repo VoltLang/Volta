@@ -23,7 +23,7 @@ import vrt.gc.util.buddy;
 struct PageTable
 {
 public:
-	static assert(GigaBuddy.MaxOrder == 18u);
+	static assert(GigaBuddy.MaxOrder == 18u || GigaBuddy.MaxOrder == 16u);
 	static assert(GigaBuddy.MaxNumBits * PageSize == TotalSize);
 	static assert(GigaBuddy.MinOrder == 3u);
 	static assert(TotalSize / GigaBuddy.MinNumBits == MaximumSize);

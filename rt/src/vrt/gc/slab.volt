@@ -11,8 +11,28 @@ import core.object : Object;
 
 import vrt.gc.util;
 import vrt.gc.extent;
+import dsgn = vrt.gc.design;
 
 
+/*!
+ * Return the log2 of the next highest power of two size (or itself if pot).
+ *
+ *     Size -> Order
+ *     2 GB -> 31
+ *     1 GB -> 30
+ *   512 MB -> 29
+ *   256 MB -> 28
+ *   128 MB -> 27
+ *     .
+ *     .
+ *     .
+ *    32 B  -> 5
+ *    16 B  -> 4
+ *     8 B  -> 3
+ *     4 B  -> 2
+ *     2 B  -> 1
+ *     1 B  -> 0
+ */
 fn sizeToOrder(n: size_t) u8
 {
 	pot := cast(u32)nextHighestPowerOfTwo(n);
@@ -32,8 +52,16 @@ fn orderToSize(order: u8) size_t
 struct Slab
 {
 public:
-	enum MaxSlots = 512;
+	enum MaxSlots = dsgn.SlabMaxAllocations;
+
 	alias Alignment = Extent.Alignment;
+
+	enum NumElems = 16;
+	enum NumBitsPerElm = 8 * typeid(u32).size;
+
+	// Hardcoded assumptions.
+	static assert(NumElems == 16);
+	static assert(MaxSlots == NumBitsPerElm * NumElems);
 
 
 public:

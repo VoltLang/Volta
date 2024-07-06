@@ -7,6 +7,7 @@ module vrt.gc.util.buddy;
 
 import vrt.gc.util;
 import vrt.ext.stdc;
+import dsgn = vrt.gc.design;
 
 
 /*!
@@ -28,6 +29,12 @@ private:
 	enum NumBitsPerElm = typeid(ElmType).size * 8u;
 	enum NumBits = (1u << (MaxOrder+1)) - (1 << MinOrder);
 	enum NumElems = NumBits / NumBitsPerElm;
+
+	/*
+	 * The minumum or top level order needs to have the same amount of bits
+	 * as the element, as the code makes some assumptions about.
+	 */
+	static assert(NumBitsPerElm == MinNumBits);
 
 	mNumFree: size_t[NumLevels];
 	mLowestFreeIndex: size_t[NumLevels];
@@ -194,10 +201,26 @@ private:
 fn countLeadingZeros(bits: u8, isZeroUndef: bool) u8;
 
 
-/**
- * A buddy allocator with 512*512 blocks in the last order.
+/*!
+ * Make the GigaBuddy cover a whole gigabyte, where the largest (min "order")
+ * is the largest allocation the allocator supports.
+ *
+ * The number of bits in the min level is (1 << GigaBuddyMinBitsLog).
  */
-struct GigaBuddy = mixin BuddyDefinition!(3u, 18u, u8);
+enum GigaBuddyMinBitsLog = dsgn.GigaSizeLog - dsgn.MaxAllocSizeLog;
+
+/*!
+ * Make the GigaBuddy cover a whole gigabyte, where the smallest (max "order")
+ * is a page size.
+ *
+ * The number of bits in the max level is (1 << GigaBuddyMaxBitsLog).
+ */
+enum GigaBuddyMaxBitsLog = dsgn.GigaSizeLog - dsgn.PageSizeLog;
+
+/*!
+ * A buddy allocator with X blocks in the largest level.
+ */
+struct GigaBuddy = mixin BuddyDefinition!(GigaBuddyMinBitsLog, GigaBuddyMaxBitsLog, u8);
 
 /*
 fn dump(ref b: DumpBuddy)
