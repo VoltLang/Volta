@@ -18,7 +18,7 @@ public:
 	alias Sink = void delegate(SinkArg);
 
 	//! The argument to the one true sink.
-	alias SinkArg = scope T[];
+	alias SinkArg = /*#scope*/ T[];
 
 	enum size_t MaxSize = 1024;
 

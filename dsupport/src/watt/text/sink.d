@@ -4,10 +4,10 @@ module watt.text.sink;
 
 
 //! The one true sink definition.
-alias Sink = scope void delegate(scope SinkArg);
+alias Sink = void delegate(scope SinkArg) scope;
 
 //! The argument to the one true sink.
-alias SinkArg = scope const(char)[];
+alias SinkArg = const(char)[];
 
 //! A sink to create long strings.
 struct StringSink
@@ -20,7 +20,7 @@ private:
 	enum size_t MaxSize = 1024;
 
 public:
-	void sink(scope SinkArg str)
+	void sink(scope SinkArg str) scope
 	{
 		if (mArr.length == 0) {
 			mArr = mStore;
