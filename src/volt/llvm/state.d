@@ -416,7 +416,7 @@ public:
 			// Needs to be done here, because this can not be set on a type.
 			if (argFunc.type.linkage == ir.Linkage.Windows) {
 				if (target.arch == Arch.X86_64) {
-					LLVMSetFunctionCallConv(v, LLVMCallConv.X86_64_Win64);
+					LLVMSetFunctionCallConv(v, LLVMCallConv.Win64);
 				} else {
 					LLVMSetFunctionCallConv(v, LLVMCallConv.X86Stdcall);
 				}

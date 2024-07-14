@@ -1,33 +1,33 @@
 /*#D*/
-/*===-- llvm-c/Initialization.h - Initialization C Interface ------*- D -*-===*\
-|*                                                                            *|
-|*                     The LLVM Compiler Infrastructure                       *|
-|*                                                                            *|
-|* This file is distributed under the University of Illinois Open Source      *|
-|* License. See src/lib/llvm/core.d for details.                              *|
-|*                                                                            *|
-|*===----------------------------------------------------------------------===*|
-|*                                                                            *|
-|* This header declares the C interface to LLVM initialization routines,      *|
-|* which must be called before you can use the functionality provided by      *|
-|* the corresponding LLVM library.                                            *|
-|*                                                                            *|
-\*===----------------------------------------------------------------------===*/
+// SPDX-FileCopyrightText: 2007-2026, LLVM Developers.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
 module lib.llvm.c.Initialization;
 
-import lib.llvm.c.Core;
+public import lib.llvm.c.Types;
 
 
 extern(C):
 
-//void LLVMInitializeCore(LLVMPassRegistryRef R);
-void LLVMInitializeTransformUtils(LLVMPassRegistryRef R);
-void LLVMInitializeScalarOpts(LLVMPassRegistryRef R);
-void LLVMInitializeVectorization(LLVMPassRegistryRef R);
-void LLVMInitializeInstCombine(LLVMPassRegistryRef R);
-void LLVMInitializeIPO(LLVMPassRegistryRef R);
-void LLVMInitializeInstrumentation(LLVMPassRegistryRef R);
-void LLVMInitializeAnalysis(LLVMPassRegistryRef R);
-void LLVMInitializeIPA(LLVMPassRegistryRef R);
-void LLVMInitializeCodeGen(LLVMPassRegistryRef R);
-void LLVMInitializeTarget(LLVMPassRegistryRef R);
+//#--- Auto generated below ---#
+version(LLVMVersion16AndAbove) {
+	// Removed
+} else {
+	void LLVMInitializeAggressiveInstCombiner(LLVMPassRegistryRef R);
+	void LLVMInitializeInstrumentation(LLVMPassRegistryRef R);
+	void LLVMInitializeObjCARCOpts(LLVMPassRegistryRef R);
+}
+version(LLVMVersion17AndAbove) {
+	// Removed
+} else {
+	void LLVMInitializeAnalysis(LLVMPassRegistryRef R);
+	void LLVMInitializeCodeGen(LLVMPassRegistryRef R);
+	void LLVMInitializeCore(LLVMPassRegistryRef R);
+	void LLVMInitializeIPA(LLVMPassRegistryRef R);
+	void LLVMInitializeIPO(LLVMPassRegistryRef R);
+	void LLVMInitializeInstCombine(LLVMPassRegistryRef R);
+	void LLVMInitializeScalarOpts(LLVMPassRegistryRef R);
+	void LLVMInitializeTarget(LLVMPassRegistryRef R);
+	void LLVMInitializeTransformUtils(LLVMPassRegistryRef R);
+	void LLVMInitializeVectorization(LLVMPassRegistryRef R);
+}

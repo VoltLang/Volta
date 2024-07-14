@@ -138,7 +138,7 @@ void structSizeInBits(LLVMTypeRef type, ref size_t accum)
 void typeSizeInBits(LLVMTypeRef element, ref size_t accum)
 {
 	LLVMTypeKind ekind = LLVMGetTypeKind(element);
-	final switch(ekind) with (LLVMTypeKind) {
+	switch(ekind) with (LLVMTypeKind) {
 	case Void, Half, X86_FP80, FP128, PPC_FP128, Label,
 		Function, Vector, Metadata, X86_MMX, Token:
 		accum = 0;
@@ -166,5 +166,7 @@ void typeSizeInBits(LLVMTypeRef element, ref size_t accum)
 	case Struct:
 		structSizeInBits(element, /*#ref*/accum);
 		break;
+	default:
+		assert(false);
 	}
 }

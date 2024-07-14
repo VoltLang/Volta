@@ -11,7 +11,7 @@ LLVMModuleRef LLVMModuleFromFileInContext(LLVMContextRef ctx, string filename, r
 {
 	LLVMMemoryBufferRef mem;
 	LLVMModuleRef mod;
-	const(char)* msg;
+	char* msg;
 	char[1024] stack;
 
 	auto ptr = nullTerminate(stack, filename);

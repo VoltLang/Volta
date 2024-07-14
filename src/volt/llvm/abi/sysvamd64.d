@@ -199,6 +199,9 @@ import volt.llvm.interfaces;
 import volt.llvm.type;
 import volt.llvm.abi.base;
 
+import watt.text.format : format;
+
+
 enum Classification
 {
 	Memory,
@@ -287,7 +290,7 @@ void consumeRegisters(State state, LLVMTypeRef[] types, ref int integerRegisters
 Classification classifyType(State state, LLVMTypeRef type, out LLVMTypeRef[] structTypes)
 {
 	auto kind = LLVMGetTypeKind(type);
-	final switch(kind) with (LLVMTypeKind) {
+	switch(kind) with (LLVMTypeKind) {
 	case Void, Half, X86_FP80, FP128, PPC_FP128, Label,
 		 Function, Array, Vector, Metadata, X86_MMX, Token:
 		return Classification.Memory;
@@ -297,6 +300,8 @@ Classification classifyType(State state, LLVMTypeRef type, out LLVMTypeRef[] str
 		return Classification.Integer;
 	case Struct:
 		return classifyStructType(state, type, /*#out*/structTypes);
+	default:
+		throw panic(format("Unhandle LLVMTypeKind in sysvamd64.classifyType %s", kind));
 	}
 }
 
@@ -365,7 +370,7 @@ Classification classifyStructType(State state, LLVMTypeRef type, out LLVMTypeRef
 	{
 		foreach (i, element; theElements) {
 			LLVMTypeKind ekind = LLVMGetTypeKind(element);
-			final switch(ekind) with (LLVMTypeKind) {
+			switch(ekind) with (LLVMTypeKind) {
 			case Void, Half, X86_FP80, FP128, PPC_FP128, Label,
 				 Function, Vector, Metadata, X86_MMX, Token:
 				return false;
@@ -402,6 +407,8 @@ Classification classifyStructType(State state, LLVMTypeRef type, out LLVMTypeRef
 					addElements(types);
 				}
 				break;
+			default:
+				throw panic(format("Unhandle LLVMTypeKind in sysvamd64.addElements %s", ekind));
 			}
 		}
 		return true;

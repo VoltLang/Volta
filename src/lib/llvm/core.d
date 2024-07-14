@@ -212,7 +212,7 @@ const(char)* nullTerminate(char[] stack, string str)
 /**
  * Small helper function that takes care of output messages.
  */
-string handleAndDisposeMessage(const(char)** msg)
+string handleAndDisposeMessage(char** msg)
 {
 	if (msg is null || *msg is null) {
 		return null;

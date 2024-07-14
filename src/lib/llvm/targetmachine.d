@@ -27,7 +27,7 @@ bool LLVMGetTargetFromTriple(string triple, LLVMTargetRef* outTarget,
                                  ref string errorMessage)
 {
 	char[64] stack;
-	const(char)* msg;
+	char* msg;
 
 	auto ret = lib.llvm.c.TargetMachine.LLVMGetTargetFromTriple(
 		nullTerminate(stack, triple), outTarget, &msg) != 0;
@@ -92,10 +92,12 @@ bool LLVMTargetMachineEmitToFile(LLVMTargetMachineRef machine,
                                  ref string errorMessage)
 {
 	char[1024] stack;
-	const(char)* msg;
+	char* msg;
+
+	const(char)* filenamez = nullTerminate(stack, filename);
 
 	auto ret = lib.llvm.c.TargetMachine.LLVMTargetMachineEmitToFile(
-		machine, mod, nullTerminate(stack, filename), codegen, &msg) != 0;
+		machine, mod, cast(char*)filenamez, codegen, &msg) != 0;
 
 	errorMessage = handleAndDisposeMessage(&msg);
 	return ret;
@@ -107,7 +109,7 @@ bool LLVMTargetMachineEmitToMemoryBuffer(LLVMTargetMachineRef machine,
                                          ref string errorMessage,
                                          LLVMMemoryBufferRef* outMemBuf)
 {
-	const(char)* msg;
+	char* msg;
 
 	auto ret = lib.llvm.c.TargetMachine.LLVMTargetMachineEmitToMemoryBuffer(
 		machine, mod, codegen, &msg, outMemBuf) != 0;

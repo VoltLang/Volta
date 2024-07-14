@@ -16,7 +16,7 @@ alias LLVMRunFunction = lib.llvm.c.ExecutionEngine.LLVMRunFunction;
 
 LLVMBool LLVMCreateExecutionEngineForModule(LLVMExecutionEngineRef *outEE, LLVMModuleRef mod, out string error)
 {
-	const(char)* str = null;
+	char* str = null;
 	auto ret = LLVMCreateExecutionEngineForModule(outEE, mod, &str);
 	error = handleAndDisposeMessage(&str);
 
@@ -26,7 +26,7 @@ LLVMBool LLVMCreateExecutionEngineForModule(LLVMExecutionEngineRef *outEE, LLVMM
 
 LLVMBool LLVMCreateMCJITCompilerForModule(LLVMExecutionEngineRef *outJIT, LLVMModuleRef mod, LLVMMCJITCompilerOptions options, out string error)
 {
-	const(char)* str = null;
+	char* str = null;
 	version (Volt) {
 		auto optsz = typeid(options).size;
 	} else {
@@ -40,7 +40,7 @@ LLVMBool LLVMCreateMCJITCompilerForModule(LLVMExecutionEngineRef *outJIT, LLVMMo
 
 LLVMBool LLVMCreateMCJITCompilerForModule(LLVMExecutionEngineRef *outJIT, LLVMModuleRef mod, LLVMMCJITCompilerOptions* options, size_t optionsSize, out string error)
 {
-	const(char)* str = null;
+	char* str = null;
 	auto ret = LLVMCreateMCJITCompilerForModule(outJIT, mod, options, optionsSize, &str);
 	error = handleAndDisposeMessage(&str);
 
@@ -49,7 +49,7 @@ LLVMBool LLVMCreateMCJITCompilerForModule(LLVMExecutionEngineRef *outJIT, LLVMMo
 
 LLVMBool LLVMRemoveModule(LLVMExecutionEngineRef ee, LLVMModuleRef mod, LLVMModuleRef* outMod, out string error)
 {
-	const(char)* str = null;
+	char* str = null;
 	auto ret = LLVMRemoveModule(ee, mod, outMod, &str);
 	error = handleAndDisposeMessage(&str);
 

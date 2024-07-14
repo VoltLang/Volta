@@ -1,155 +1,98 @@
 /*#D*/
-/*===-- llvm-c/TargetMachine.h - Target Machine Library C Interface -*- D -*-=*\
-|*                                                                            *|
-|*                     The LLVM Compiler Infrastructure                       *|
-|*                                                                            *|
-|* This file is distributed under the University of Illinois Open Source      *|
-|* License. See src/lib/llvm/core.d for details.                              *|
-|*                                                                            *|
-|*===----------------------------------------------------------------------===*|
-|*                                                                            *|
-|* This header declares the C interface to the Target and TargetMachine       *|
-|* classes, which can be used to generate assembly or object files.           *|
-|*                                                                            *|
-|* Many exotic languages can interoperate with C code but have a harder time  *|
-|* with C++ due to name mangling. So in addition to C, this interface enables *|
-|* tools written in such languages.                                           *|
-|*                                                                            *|
-|*===----------------------------------------------------------------------===*|
-|*                                                                            *|
-|* Up-to-date as of LLVM 3.4                                                  *|
-|*                                                                            *|
-\*===----------------------------------------------------------------------===*/
+// SPDX-FileCopyrightText: 2007-2026, LLVM Developers.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
 module lib.llvm.c.TargetMachine;
 
-import lib.llvm.c.Core;
+public import lib.llvm.c.Types;
 import lib.llvm.c.Target;
+
+
+struct LLVMTargetMachine {} alias  LLVMTargetMachineRef = LLVMTargetMachine*;
+struct LLVMTarget {} alias LLVMTargetRef = LLVMTarget*;
+version (LLVMVersion18AndAbove) {
+	struct LLVMTargetMachineOptions {} alias LLVMTargetMachineOptionsRef = LLVMTargetMachineOptions*;
+}
 
 
 extern(C):
 
-struct LLVMTargetMachine {}
-alias  LLVMTargetMachineRef = LLVMTargetMachine*;
-struct LLVMTarget {}
-alias  LLVMTargetRef = LLVMTarget*;
-
-enum LLVMCodeGenOptLevel
-{
-	None,
-	Less,
-	Default,
-	Aggressive
+//#--- Auto generated below ---#
+enum LLVMCodeGenFileType {
+	Assembly = 0,
+	Object = 1,
 }
-
-enum LLVMRelocMode
-{
-	Default,
-	Static,
-	PIC,
-	DynamicNoPic
+enum LLVMCodeGenOptLevel {
+	None = 0,
+	Less = 1,
+	Default = 2,
+	Aggressive = 3,
 }
-
-enum LLVMCodeModel
-{
-	Default,
-	JITDefault,
-	Small,
-	Kernel,
-	Medium,
-	Large
+enum LLVMCodeModel {
+	Default = 0,
+	JITDefault = 1,
+	Tiny = 2,
+	Small = 3,
+	Kernel = 4,
+	Medium = 5,
+	Large = 6,
 }
-
-enum LLVMCodeGenFileType
-{
-	Assembly,
-	Object
-} 
-
-/** Returns the first llvm::Target in the registered targets list. */
-LLVMTargetRef LLVMGetFirstTarget();
-/** Returns the next llvm::Target given a previous one (or null if there's none) */
-LLVMTargetRef LLVMGetNextTarget(LLVMTargetRef T);
-
-/*===-- Target ------------------------------------------------------------===*/
-/** Finds the target corresponding to the given name and stores it in \p T. 
-  Returns 0 on success. */
-LLVMTargetRef LLVMGetTargetFromName(const(char)* Name);
-
-/** Finds the target corresponding to the given triple and stores it in \p T.
-  Returns 0 on success. Optionally returns any error in ErrorMessage.
-  Use LLVMDisposeMessage to dispose the message. */
-LLVMBool LLVMGetTargetFromTriple(const(char)* Triple, LLVMTargetRef *T,
-                                 const(char)** ErrorMessage);
-
-/** Returns the name of a target. See llvm::Target::getName */
-const(char)* LLVMGetTargetName(LLVMTargetRef T);
-
-/** Returns the description  of a target. See llvm::Target::getDescription */
-const(char)* LLVMGetTargetDescription(LLVMTargetRef T);
-
-/** Returns if the target has a JIT */
-LLVMBool LLVMTargetHasJIT(LLVMTargetRef T);
-
-/** Returns if the target has a TargetMachine associated */
-LLVMBool LLVMTargetHasTargetMachine(LLVMTargetRef T);
-
-/** Returns if the target as an ASM backend (required for emitting output) */
-LLVMBool LLVMTargetHasAsmBackend(LLVMTargetRef T);
-
-/*===-- Target Machine ----------------------------------------------------===*/
-/** Creates a new llvm::TargetMachine. See llvm::Target::createTargetMachine */
-LLVMTargetMachineRef LLVMCreateTargetMachine(LLVMTargetRef T,
-                                             const(char)* Triple,
-                                             const(char)* CPU,
-                                             const(char)* Features,
-                                             LLVMCodeGenOptLevel Level,
-                                             LLVMRelocMode Reloc,
-                                             LLVMCodeModel CodeModel);
-
-/** Dispose the LLVMTargetMachineRef instance generated by
-  LLVMCreateTargetMachine. */
+enum LLVMRelocMode {
+	Default = 0,
+	Static = 1,
+	PIC = 2,
+	DynamicNoPic = 3,
+	ROPI = 4,
+	RWPI = 5,
+	ROPI_RWPI = 6,
+}
+version(LLVMVersion18AndAbove) {
+	enum LLVMGlobalISelAbortMode {
+		Enable = 0,
+		Disable = 1,
+		DisableWithDiag = 2,
+	}
+}
+void LLVMAddAnalysisPasses(LLVMTargetMachineRef T, LLVMPassManagerRef PM);
+LLVMTargetDataRef LLVMCreateTargetDataLayout(LLVMTargetMachineRef T);
+LLVMTargetMachineRef LLVMCreateTargetMachine(LLVMTargetRef T, const(char)* Triple, const(char)* CPU, const(char)* Features, LLVMCodeGenOptLevel Level, LLVMRelocMode Reloc, LLVMCodeModel CodeModel);
 void LLVMDisposeTargetMachine(LLVMTargetMachineRef T);
-
-/** Returns the Target used in a TargetMachine */
+char* LLVMGetDefaultTargetTriple();
+LLVMTargetRef LLVMGetFirstTarget();
+char* LLVMGetHostCPUFeatures();
+char* LLVMGetHostCPUName();
+LLVMTargetRef LLVMGetNextTarget(LLVMTargetRef T);
+const(char)* LLVMGetTargetDescription(LLVMTargetRef T);
+LLVMTargetRef LLVMGetTargetFromName(const(char)* Name);
+LLVMBool LLVMGetTargetFromTriple(const(char)* Triple, LLVMTargetRef* T, char** ErrorMessage);
+char* LLVMGetTargetMachineCPU(LLVMTargetMachineRef T);
+char* LLVMGetTargetMachineFeatureString(LLVMTargetMachineRef T);
 LLVMTargetRef LLVMGetTargetMachineTarget(LLVMTargetMachineRef T);
-
-/** Returns the triple used creating this target machine. See
-  llvm::TargetMachine::getTriple. The result needs to be disposed with
-  LLVMDisposeMessage. */
-const(char)* LLVMGetTargetMachineTriple(LLVMTargetMachineRef T);
-
-/** Returns the cpu used creating this target machine. See
-  llvm::TargetMachine::getCPU. The result needs to be disposed with
-  LLVMDisposeMessage. */
-const(char)* LLVMGetTargetMachineCPU(LLVMTargetMachineRef T);
-
-/** Returns the feature string used creating this target machine. See
-  llvm::TargetMachine::getFeatureString. The result needs to be disposed with
-  LLVMDisposeMessage. */
-const(char)* LLVMGetTargetMachineFeatureString(LLVMTargetMachineRef T);
-
-/** Returns the llvm::DataLayout used for this llvm:TargetMachine. */
-LLVMTargetDataRef LLVMGetTargetMachineData(LLVMTargetMachineRef T);
-
-/** Set the target machine's ASM verbosity. */
-void LLVMSetTargetMachineAsmVerbosity(LLVMTargetMachineRef T,
-                                      LLVMBool VerboseAsm);
-
-/** Emits an asm or object file for the given module to the filename. This
-  wraps several c++ only classes (among them a file stream). Returns any
-  error in ErrorMessage. Use LLVMDisposeMessage to dispose the message. */
-LLVMBool LLVMTargetMachineEmitToFile(LLVMTargetMachineRef T, LLVMModuleRef M,
-                                     const(char)* Filename,
-                                     LLVMCodeGenFileType codegen,
-                                     const(char)** ErrorMessage);
-
-/** Compile the LLVM IR stored in \p M and store the result in \p OutMemBuf. */
-LLVMBool LLVMTargetMachineEmitToMemoryBuffer(LLVMTargetMachineRef T, LLVMModuleRef M,
-                                             LLVMCodeGenFileType codegen,
-                                             const(char)** ErrorMessage,
-                                             LLVMMemoryBufferRef* OutMemBuf);
-
-/*===-- Triple ------------------------------------------------------------===*/
-/** Get a triple for the host machine as a string. The result needs to be
-  disposed with LLVMDisposeMessage. */
-const(char)* LLVMGetDefaultTargetTriple();
+char* LLVMGetTargetMachineTriple(LLVMTargetMachineRef T);
+const(char)* LLVMGetTargetName(LLVMTargetRef T);
+char* LLVMNormalizeTargetTriple(const(char)* triple);
+void LLVMSetTargetMachineAsmVerbosity(LLVMTargetMachineRef T, LLVMBool VerboseAsm);
+LLVMBool LLVMTargetHasAsmBackend(LLVMTargetRef T);
+LLVMBool LLVMTargetHasJIT(LLVMTargetRef T);
+LLVMBool LLVMTargetHasTargetMachine(LLVMTargetRef T);
+LLVMBool LLVMTargetMachineEmitToMemoryBuffer(LLVMTargetMachineRef T, LLVMModuleRef M, LLVMCodeGenFileType codegen, char** ErrorMessage, LLVMMemoryBufferRef* OutMemBuf);
+version(LLVMVersion15AndAbove) {
+	LLVMBool LLVMTargetMachineEmitToFile(LLVMTargetMachineRef T, LLVMModuleRef M, const(char)* Filename, LLVMCodeGenFileType codegen, char** ErrorMessage);
+} else {
+	LLVMBool LLVMTargetMachineEmitToFile(LLVMTargetMachineRef T, LLVMModuleRef M, char* Filename, LLVMCodeGenFileType codegen, char** ErrorMessage);
+}
+version(LLVMVersion18AndAbove) {
+	LLVMTargetMachineOptionsRef LLVMCreateTargetMachineOptions();
+	LLVMTargetMachineRef LLVMCreateTargetMachineWithOptions(LLVMTargetRef T, const(char)* Triple, LLVMTargetMachineOptionsRef Options);
+	void LLVMDisposeTargetMachineOptions(LLVMTargetMachineOptionsRef Options);
+	void LLVMSetTargetMachineFastISel(LLVMTargetMachineRef T, LLVMBool Enable);
+	void LLVMSetTargetMachineGlobalISel(LLVMTargetMachineRef T, LLVMBool Enable);
+	void LLVMSetTargetMachineGlobalISelAbort(LLVMTargetMachineRef T, LLVMGlobalISelAbortMode Mode);
+	void LLVMSetTargetMachineMachineOutliner(LLVMTargetMachineRef T, LLVMBool Enable);
+	void LLVMTargetMachineOptionsSetABI(LLVMTargetMachineOptionsRef Options, const(char)* ABI);
+	void LLVMTargetMachineOptionsSetCPU(LLVMTargetMachineOptionsRef Options, const(char)* CPU);
+	void LLVMTargetMachineOptionsSetCodeGenOptLevel(LLVMTargetMachineOptionsRef Options, LLVMCodeGenOptLevel Level);
+	void LLVMTargetMachineOptionsSetCodeModel(LLVMTargetMachineOptionsRef Options, LLVMCodeModel CodeModel);
+	void LLVMTargetMachineOptionsSetFeatures(LLVMTargetMachineOptionsRef Options, const(char)* Features);
+	void LLVMTargetMachineOptionsSetRelocMode(LLVMTargetMachineOptionsRef Options, LLVMRelocMode Reloc);
+}

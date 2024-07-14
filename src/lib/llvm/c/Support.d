@@ -1,24 +1,16 @@
 /*#D*/
-/*===-- llvm-c/Support.h - Support C Interface --------------------*- D -*-===*\
-|*                                                                            *|
-|*                     The LLVM Compiler Infrastructure                       *|
-|*                                                                            *|
-|* This file is distributed under the University of Illinois Open Source      *|
-|* License. See src/lib/llvm/core.d for details.                              *|
-|*                                                                            *|
-|*===----------------------------------------------------------------------===*|
-|*                                                                            *|
-|* This file defines the C interface to the LLVM support library.             *|
-|*                                                                            *|
-\*===----------------------------------------------------------------------===*/
+// SPDX-FileCopyrightText: 2007-2026, LLVM Developers.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
 module lib.llvm.c.Support;
 
-import lib.llvm.c.Core;
+public import lib.llvm.c.Types;
 
 
-extern (C):
+extern(C):
 
-LLVMBool LLVMLoadLibraryPermanently(const(char)* Filename);
-void LLVMParseCommandLineOptions(int argc, const(char*)* argv, const(char)* Overview);
-void* LLVMSearchForAddressOfSymbol(const(char)* symbolName);
+//#--- Auto generated below ---#
 void LLVMAddSymbol(const(char)* symbolName, void* symbolValue);
+LLVMBool LLVMLoadLibraryPermanently(const(char)* Filename);
+void LLVMParseCommandLineOptions(int argc, const(const(char)*)* argv, const(char)* Overview);
+void* LLVMSearchForAddressOfSymbol(const(char)* symbolName);
