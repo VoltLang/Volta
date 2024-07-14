@@ -668,6 +668,10 @@ LexStatus lexMagicToken(TokenWriter tw)
 		token.type = TokenType.Mixin;
 		token.value = "mixin";
 		break;
+	case "#scope":
+		token.type = TokenType.Scope;
+		token.value = "scope";
+		break;
 	default:
 		tw.errors ~= new LexerStringError(LexerError.Kind.String, token.loc,
 			tw.source.current,format("bad magical token (/*#...*/) '%s'.", tokenstr));
