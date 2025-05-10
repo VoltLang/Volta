@@ -337,7 +337,7 @@ public:
 		if (!result.isPointer)
 			return;
 		diSetPosition(this, /*#ref*/exp.loc);
-		result.value = LLVMBuildLoad(builder, result.value, "");
+		result.value = LLVMBuildLoad(builder, result.value);
 		result.isPointer = false;
 	}
 

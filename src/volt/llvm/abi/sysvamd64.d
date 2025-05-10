@@ -472,17 +472,17 @@ void sysvAmd64AbiCoerceArguments(State state, ir.CallableType ct, ref LLVMValueR
 			auto lt = cast(LLVMTypeRef[])ct.abiData[i];
 			auto bc = LLVMBuildBitCast(state.builder, args[i],
 				LLVMPointerType(lt[0], 0), "");
-			args[i] = LLVMBuildLoad(state.builder, bc, "");
+			args[i] = LLVMBuildLoad(state.builder, bc);
 		} else if (ct.abiData[i].length == 2) {
 			auto vkind = LLVMGetValueKind(args[i]);
 			auto lts = cast(LLVMTypeRef[])ct.abiData[i];
 			auto _struct = LLVMStructTypeInContext(state.context, lts.ptr, cast(uint)lts.length, false);
 			auto bc = LLVMBuildBitCast(state.builder, args[i], LLVMPointerType(_struct, 0), "");
 			auto agep = buildGep(state, bc, 0, 0);
-			args[i] = LLVMBuildLoad(state.builder, agep, "");
+			args[i] = LLVMBuildLoad(state.builder, agep);
 
 			auto bgep = buildGep(state, bc, 0, 1);
-			auto load = LLVMBuildLoad(state.builder, bgep, "");
+			auto load = LLVMBuildLoad(state.builder, bgep);
 			args = args[0 .. i] ~ [args[i], load] ~ args[i+1 .. $];
 			i++;
 		}

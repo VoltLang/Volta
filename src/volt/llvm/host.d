@@ -187,7 +187,7 @@ public:
 
 			auto bitType = LLVMPointerType(state.fromIr(t).llvmType, 0);
 			auto bit = LLVMBuildBitCast(builder, ptr, bitType, "");
-			args ~= LLVMBuildLoad(builder, bit, "");
+			args ~= LLVMBuildLoad(builder, bit);
 		}
 
 		// Call and then store the result in the array.

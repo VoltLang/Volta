@@ -566,8 +566,8 @@ public:
 		LLVMMoveBasicBlockAfter(catchBlock, state.block);
 		state.startBlock(catchBlock);
 
-		auto e = LLVMBuildLoad(state.builder, state.ehExceptionVar, "");
-		auto i = LLVMBuildLoad(state.builder, state.ehIndexVar, "");
+		auto e = LLVMBuildLoad(state.builder, state.ehExceptionVar);
+		auto i = LLVMBuildLoad(state.builder, state.ehIndexVar);
 		foreach (index, v; t.catchVars) {
 			Type type;
 			auto asTR = cast(ir.TypeReference)v.type;
@@ -1016,7 +1016,7 @@ public:
 
 		auto throwFunc = state.getFunctionValue(state.lp.ehRethrowFunc, /*#out*/type);
 		LLVMValueRef[1] throwArgs;
-		throwArgs[0] = LLVMBuildLoad(b, args[2], "");
+		throwArgs[0] = LLVMBuildLoad(b, args[2]);
 		state.buildCallNeverInvoke(/*#ref*/func.loc, throwFunc, throwArgs[0 .. $]);
 		LLVMBuildUnreachable(b);
 

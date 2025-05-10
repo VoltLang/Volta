@@ -147,7 +147,7 @@ LLVMValueRef getValueFromAggregate(State state, ref in Location loc,
 
 	if (left.isPointer) {
 		auto ptr = LLVMBuildStructGEP(state.builder, v, index, "");
-		return LLVMBuildLoad(state.builder, ptr, "");
+		return LLVMBuildLoad(state.builder, ptr);
 	} else {
 		return LLVMBuildExtractValue(state.builder, v, index, "");
 	}
