@@ -58,7 +58,7 @@ void winAmd64AbiCoerceArguments(State state, ir.CallableType ct, ref LLVMValueRe
 			} else {
 				auto bc = LLVMBuildBitCast(state.builder, args[i],
 					LLVMPointerType(lt[0], 0), "");
-				args[i] = LLVMBuildLoad(state.builder, bc, "");
+				args[i] = LLVMBuildLoad(state.builder, bc);
 			}
 		}
 	}

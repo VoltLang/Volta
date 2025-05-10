@@ -30,6 +30,7 @@ alias LLVMBuildCall = lib.llvm.c.Core.LLVMBuildCall;
 alias LLVMBuildInvoke = lib.llvm.c.Core.LLVMBuildInvoke;
 alias LLVMBuildAlloca = lib.llvm.c.Core.LLVMBuildAlloca;
 alias LLVMAddGlobal = lib.llvm.c.Core.LLVMAddGlobal;
+alias LLVMBuildLoad = lib.llvm.c.Core.LLVMBuildLoad;
 alias LLVMBuildGEP = lib.llvm.c.Core.LLVMBuildGEP;
 alias LLVMBuildInBoundsGEP = lib.llvm.c.Core.LLVMBuildInBoundsGEP;
 alias LLVMStructTypeInContext = lib.llvm.c.Core.LLVMStructTypeInContext;
@@ -149,6 +150,11 @@ LLVMValueRef LLVMAddGlobal(LLVMModuleRef mod, LLVMTypeRef type,
 	char[1024] stack;
 	auto ptr = nullTerminate(stack, name);
 	return lib.llvm.c.Core.LLVMAddGlobal(mod, type, ptr);
+}
+
+LLVMValueRef LLVMBuildLoad(LLVMBuilderRef b, LLVMValueRef ptr)
+{
+	return lib.llvm.c.Core.LLVMBuildLoad(b, ptr, "");
 }
 
 LLVMValueRef LLVMBuildGEP(LLVMBuilderRef b, LLVMValueRef ptr,

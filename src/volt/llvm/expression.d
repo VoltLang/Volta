@@ -899,7 +899,7 @@ void handleIncDec(State state, ir.Unary unary, Value result)
 	diSetPosition(state, /*#ref*/unary.loc);
 
 	ptr = result.value;
-	read = LLVMBuildLoad(state.builder, ptr, "");
+	read = LLVMBuildLoad(state.builder, ptr);
 
 	auto ptrType = cast(PointerType)result.type;
 	auto primType = cast(PrimitiveType)result.type;
@@ -1236,7 +1236,7 @@ void handleIncDec(State state, ir.Postfix postfix, Value result)
 	diSetPosition(state, /*#ref*/postfix.loc);
 
 	ptr = result.value;
-	value = LLVMBuildLoad(state.builder, ptr, "");
+	value = LLVMBuildLoad(state.builder, ptr);
 
 	auto ptrType = cast(PointerType)result.type;
 	auto primType = cast(PrimitiveType)result.type;
@@ -1568,7 +1568,7 @@ void getCreateDelegateValues(State state, ir.Postfix postfix, Value instance, Va
 		// void** + indexVal
 		func.value = LLVMBuildGEP(state.builder, func.value, [indexVal], "");
 		// void** -> void*
-		func.value = LLVMBuildLoad(state.builder, func.value, "");
+		func.value = LLVMBuildLoad(state.builder, func.value);
 		// void* -> fn
 		func.value = LLVMBuildBitCast(state.builder, func.value, fnType.llvmType, "");
 		func.type = fnType;
@@ -1586,7 +1586,7 @@ void makeNonPointer(State state, Value result)
 	if (!result.isPointer)
 		return;
 
-	result.value = LLVMBuildLoad(state.builder, result.value, "");
+	result.value = LLVMBuildLoad(state.builder, result.value);
 	result.isPointer = false;
 }
 
