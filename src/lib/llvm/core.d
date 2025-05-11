@@ -25,14 +25,20 @@ alias LLVMConstNamedStruct = lib.llvm.c.Core.LLVMConstNamedStruct;
 alias LLVMConstStringInContext = lib.llvm.c.Core.LLVMConstStringInContext;
 alias LLVMConstArray = lib.llvm.c.Core.LLVMConstArray;
 alias LLVMConstInBoundsGEP = lib.llvm.c.Core.LLVMConstInBoundsGEP;
+alias LLVMConstInBoundsGEP2 = lib.llvm.c.Core.LLVMConstInBoundsGEP2;
 alias LLVMAddFunction = lib.llvm.c.Core.LLVMAddFunction;
 alias LLVMBuildCall = lib.llvm.c.Core.LLVMBuildCall;
+alias LLVMBuildCall2 = lib.llvm.c.Core.LLVMBuildCall2;
 alias LLVMBuildInvoke = lib.llvm.c.Core.LLVMBuildInvoke;
+alias LLVMBuildInvoke2 = lib.llvm.c.Core.LLVMBuildInvoke2;
 alias LLVMBuildAlloca = lib.llvm.c.Core.LLVMBuildAlloca;
 alias LLVMAddGlobal = lib.llvm.c.Core.LLVMAddGlobal;
 alias LLVMBuildLoad = lib.llvm.c.Core.LLVMBuildLoad;
+alias LLVMBuildLoad2 = lib.llvm.c.Core.LLVMBuildLoad2;
 alias LLVMBuildGEP = lib.llvm.c.Core.LLVMBuildGEP;
+alias LLVMBuildGEP2 = lib.llvm.c.Core.LLVMBuildGEP2;
 alias LLVMBuildInBoundsGEP = lib.llvm.c.Core.LLVMBuildInBoundsGEP;
+alias LLVMBuildInBoundsGEP2 = lib.llvm.c.Core.LLVMBuildInBoundsGEP2;
 alias LLVMStructTypeInContext = lib.llvm.c.Core.LLVMStructTypeInContext;
 alias LLVMAddIncoming = lib.llvm.c.Core.LLVMAddIncoming;
 
@@ -128,12 +134,27 @@ LLVMValueRef LLVMBuildCall(LLVMBuilderRef b, LLVMValueRef func,
 		b, func, args.ptr, cast(uint)args.length, "");
 }
 
+LLVMValueRef LLVMBuildCall2(LLVMBuilderRef b, LLVMTypeRef type, LLVMValueRef func,
+                           LLVMValueRef[] args)
+{
+	return lib.llvm.c.Core.LLVMBuildCall2(
+		b, type, func, args.ptr, cast(uint)args.length, "");
+}
+
 LLVMValueRef LLVMBuildInvoke(LLVMBuilderRef b, LLVMValueRef func,
                              LLVMValueRef[] args,
                              LLVMBasicBlockRef then, LLVMBasicBlockRef pad)
 {
 	return lib.llvm.c.Core.LLVMBuildInvoke(
 		b, func, args.ptr, cast(uint)args.length, then, pad, "");
+}
+
+LLVMValueRef LLVMBuildInvoke2(LLVMBuilderRef b, LLVMTypeRef type, LLVMValueRef func,
+                              LLVMValueRef[] args,
+                              LLVMBasicBlockRef then, LLVMBasicBlockRef pad)
+{
+	return lib.llvm.c.Core.LLVMBuildInvoke2(
+		b, type, func, args.ptr, cast(uint)args.length, then, pad, "");
 }
 
 LLVMValueRef LLVMBuildAlloca(LLVMBuilderRef b, LLVMTypeRef type,
@@ -157,6 +178,11 @@ LLVMValueRef LLVMBuildLoad(LLVMBuilderRef b, LLVMValueRef ptr)
 	return lib.llvm.c.Core.LLVMBuildLoad(b, ptr, "");
 }
 
+LLVMValueRef LLVMBuildLoad2(LLVMBuilderRef b, LLVMTypeRef type, LLVMValueRef ptr)
+{
+	return lib.llvm.c.Core.LLVMBuildLoad2(b, type, ptr, "");
+}
+
 LLVMValueRef LLVMBuildGEP(LLVMBuilderRef b, LLVMValueRef ptr,
                           LLVMValueRef[] i,
                           string name)
@@ -167,6 +193,16 @@ LLVMValueRef LLVMBuildGEP(LLVMBuilderRef b, LLVMValueRef ptr,
 	return lib.llvm.c.Core.LLVMBuildGEP(b, ptr, i.ptr, cast(uint)i.length, namez);
 }
 
+LLVMValueRef LLVMBuildGEP2(LLVMBuilderRef b, LLVMTypeRef type, LLVMValueRef ptr,
+                          LLVMValueRef[] i,
+                          string name)
+{
+	char[1024] stack;
+	auto namez = nullTerminate(stack, name);
+
+	return lib.llvm.c.Core.LLVMBuildGEP2(b, type, ptr, i.ptr, cast(uint)i.length, namez);
+}
+
 LLVMValueRef LLVMBuildInBoundsGEP(LLVMBuilderRef b, LLVMValueRef ptr,
                                   LLVMValueRef[] i,
                                   string name)
@@ -175,6 +211,16 @@ LLVMValueRef LLVMBuildInBoundsGEP(LLVMBuilderRef b, LLVMValueRef ptr,
 	auto namez = nullTerminate(stack, name);
 
 	return lib.llvm.c.Core.LLVMBuildInBoundsGEP(b, ptr, i.ptr, cast(uint)i.length, namez);
+}
+
+LLVMValueRef LLVMBuildInBoundsGEP2(LLVMBuilderRef b, LLVMTypeRef type, LLVMValueRef ptr,
+                                  LLVMValueRef[] i,
+                                  string name)
+{
+	char[1024] stack;
+	auto namez = nullTerminate(stack, name);
+
+	return lib.llvm.c.Core.LLVMBuildInBoundsGEP2(b, type, ptr, i.ptr, cast(uint)i.length, namez);
 }
 
 void LLVMAddIncoming(LLVMValueRef phi, LLVMValueRef[] iv,
