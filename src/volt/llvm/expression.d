@@ -892,6 +892,7 @@ void handleNot(State state, ir.Unary unary, Value result)
 void handleIncDec(State state, ir.Unary unary, Value result)
 {
 	LLVMValueRef ptr, read, value;
+	LLVMTypeRef type;
 	bool isInc = unary.op == ir.Unary.Op.Increment;
 
 	state.getValueRef(unary.value, result);
@@ -899,7 +900,8 @@ void handleIncDec(State state, ir.Unary unary, Value result)
 	diSetPosition(state, /*#ref*/unary.loc);
 
 	ptr = result.value;
-	read = LLVMBuildLoad(state.builder, ptr);
+	type = result.type.llvmType;
+	read = LLVMBuildLoad2(state.builder, type, ptr);
 
 	auto ptrType = cast(PointerType)result.type;
 	auto primType = cast(PrimitiveType)result.type;
@@ -1229,6 +1231,7 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 void handleIncDec(State state, ir.Postfix postfix, Value result)
 {
 	LLVMValueRef ptr, store, value;
+	LLVMTypeRef type;
 	bool isInc = postfix.op == ir.Postfix.Op.Increment;
 
 	state.getValueRef(postfix.child, result);
@@ -1236,7 +1239,8 @@ void handleIncDec(State state, ir.Postfix postfix, Value result)
 	diSetPosition(state, /*#ref*/postfix.loc);
 
 	ptr = result.value;
-	value = LLVMBuildLoad(state.builder, ptr);
+	type = result.type.llvmType;
+	value = LLVMBuildLoad2(state.builder, type, ptr);
 
 	auto ptrType = cast(PointerType)result.type;
 	auto primType = cast(PrimitiveType)result.type;
@@ -1568,7 +1572,7 @@ void getCreateDelegateValues(State state, ir.Postfix postfix, Value instance, Va
 		// void** + indexVal
 		func.value = LLVMBuildGEP(state.builder, func.value, [indexVal], "");
 		// void** -> void*
-		func.value = LLVMBuildLoad(state.builder, func.value);
+		func.value = LLVMBuildLoad2(state.builder, state.voidPtrType.llvmType, func.value);
 		// void* -> fn
 		func.value = LLVMBuildBitCast(state.builder, func.value, fnType.llvmType, "");
 		func.type = fnType;
@@ -1586,7 +1590,8 @@ void makeNonPointer(State state, Value result)
 	if (!result.isPointer)
 		return;
 
-	result.value = LLVMBuildLoad(state.builder, result.value);
+	LLVMTypeRef llvmType = result.type.llvmType;
+	result.value = LLVMBuildLoad2(state.builder, llvmType, result.value);
 	result.isPointer = false;
 }
 
