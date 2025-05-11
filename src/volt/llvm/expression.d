@@ -1415,30 +1415,35 @@ private LLVMValueRef fromConstantString(State state, ref in Location loc, string
 //! Write the EnumMembers builtin.
 void handleEnumMembers(State state, ir.BuiltinExp inbuilt, Value result)
 {
+	/*
+	 * We can do this outside of the switch case since the sink variable
+	 * never changes, lets us save a lot of generated IR.
+	 */
+	auto sinkVal = new Value();
+	state.getValue(inbuilt.children[1], sinkVal);
+
+	// Load the delegate pair for the sink.
+	auto callval = LLVMBuildExtractValue(state.builder, sinkVal.value, 1, "");
+	auto thisval = LLVMBuildExtractValue(state.builder, sinkVal.value, 0, "");
+
+	// The enum argument, get the value and passed to switch.
 	auto cond = state.getValue(inbuilt.children[0]);
+
+	// Need to create this up front as it's passed into switch.
 	auto defaultCase = LLVMAppendBasicBlockInContext(state.context, state.func, "defaultCase");
+
+	// The actual switch case.
 	auto _switch = LLVMBuildSwitch(state.builder, cond, defaultCase, cast(uint)inbuilt._enum.members.length);
 
+	// Jumped to by call cases.
 	auto endSwitch = LLVMAppendBasicBlockInContext(state.context, state.func, "endEnumSwitch");
 
+	// Loop over the members of the enum.
 	foreach (member; inbuilt._enum.members) {
 		auto memberBlock = LLVMAppendBasicBlockInContext(state.context, state.func, "enumSwitchCase");
 		auto val = state.getValue(member.assign);
 		LLVMAddCase(_switch, val, memberBlock);
 		LLVMPositionBuilderAtEnd(state.builder, memberBlock);
-		auto sinkVal = new Value();
-		state.getValueAnyForm(inbuilt.children[1], sinkVal);
-
-		// Load the delegate pair for the sink.
-		auto i32t = LLVMInt32TypeInContext(state.context);
-		auto indices = new LLVMValueRef[](2);
-		indices[0] = LLVMConstInt(i32t, 0, false);
-		indices[1] = LLVMConstInt(i32t, 1, false);
-		auto callp = LLVMBuildGEP(state.builder, sinkVal.value, indices.ptr, cast(uint)indices.length, "".ptr);
-		auto callval = LLVMBuildLoad(state.builder, callp, "".ptr);
-		indices[1] = indices[0];  // now do a 0, 0 gep
-		auto thisp = LLVMBuildGEP(state.builder, sinkVal.value, indices.ptr, cast(uint)indices.length, "".ptr);
-		auto thisval = LLVMBuildLoad(state.builder, thisp, "".ptr);
 
 		// Now call the sink.
 		auto args = new LLVMValueRef[](2);
