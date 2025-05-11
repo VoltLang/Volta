@@ -35,6 +35,7 @@ alias LLVMBuildInBoundsGEP = lib.llvm.c.Core.LLVMBuildInBoundsGEP;
 alias LLVMStructTypeInContext = lib.llvm.c.Core.LLVMStructTypeInContext;
 alias LLVMAddIncoming = lib.llvm.c.Core.LLVMAddIncoming;
 
+
 void LLVMSetTarget(LLVMModuleRef mod, string str)
 {
 	char[1024] stack;
@@ -118,7 +119,6 @@ LLVMValueRef LLVMAddFunction(LLVMModuleRef mod, string name, LLVMTypeRef type)
 	auto ptr = nullTerminate(stack, name);
 	return lib.llvm.c.Core.LLVMAddFunction(mod, ptr, type);
 }
-
 
 LLVMValueRef LLVMBuildCall(LLVMBuilderRef b, LLVMValueRef func,
                            LLVMValueRef[] args)
