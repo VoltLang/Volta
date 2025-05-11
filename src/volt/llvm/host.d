@@ -185,9 +185,10 @@ public:
 			auto index = state.sizeType.fromNumber(state, cast(long)mPos[i]);
 			auto ptr = LLVMBuildGEP(builder, arr, [index], "");
 
-			auto bitType = LLVMPointerType(state.fromIr(t).llvmType, 0);
+			auto argType = state.fromIr(t);
+			auto bitType = LLVMPointerType(argType.llvmType, 0);
 			auto bit = LLVMBuildBitCast(builder, ptr, bitType, "");
-			args ~= LLVMBuildLoad(builder, bit);
+			args ~= LLVMBuildLoad2(builder, argType.llvmType, bit);
 		}
 
 		// Call and then store the result in the array.

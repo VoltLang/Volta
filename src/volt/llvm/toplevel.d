@@ -991,9 +991,10 @@ public:
 		state.startBlock(callblock);
 		auto args = new LLVMValueRef[](3);
 		Type type;
+		auto args2Type = state.fromIr(state.lp.exceptThrowable);
 		args[0] = state.getVariableValue(state.lp.exceptThrowable.typeInfo, /*#out*/type);
 		args[1] = LLVMConstInt(LLVMInt32TypeInContext(state.context), 0, true);
-		args[2] = state.buildAlloca(state.fromIr(state.lp.exceptThrowable).llvmType, "failcatchvar");
+		args[2] = state.buildAlloca(args2Type.llvmType, "failcatchvar");
 		auto cpad = LLVMBuildCatchPad(b, cs, args.ptr, 3, "");
 
 		LLVMBuildCatchRet(b, cpad, failblock);
@@ -1016,7 +1017,7 @@ public:
 
 		auto throwFunc = state.getFunctionValue(state.lp.ehRethrowFunc, /*#out*/type);
 		LLVMValueRef[1] throwArgs;
-		throwArgs[0] = LLVMBuildLoad(b, args[2]);
+		throwArgs[0] = LLVMBuildLoad2(b, args2Type.llvmType, args[2]);
 		state.buildCallNeverInvoke(/*#ref*/func.loc, throwFunc, throwArgs[0 .. $]);
 		LLVMBuildUnreachable(b);
 
