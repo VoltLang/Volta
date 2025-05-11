@@ -1902,6 +1902,9 @@ LLVMValueRef LLVMConstGEP(LLVMValueRef ConstantVal,
 LLVMValueRef LLVMConstInBoundsGEP(LLVMValueRef ConstantVal,
                                   LLVMValueRef *ConstantIndices,
                                   uint NumIndices);
+LLVMValueRef LLVMConstInBoundsGEP2(LLVMTypeRef Type, LLVMValueRef ConstantVal,
+                                   LLVMValueRef *ConstantIndices,
+                                   uint NumIndices);
 LLVMValueRef LLVMConstTrunc(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
 LLVMValueRef LLVMConstSExt(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
 LLVMValueRef LLVMConstZExt(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
@@ -3046,6 +3049,10 @@ LLVMValueRef LLVMBuildInvoke(LLVMBuilderRef, LLVMValueRef Fn,
                              LLVMValueRef *Args, uint NumArgs,
                              LLVMBasicBlockRef Then, LLVMBasicBlockRef Catch,
                              const(char)* Name);
+LLVMValueRef LLVMBuildInvoke2(LLVMBuilderRef, LLVMTypeRef Type, LLVMValueRef Fn,
+                             LLVMValueRef *Args, uint NumArgs,
+                             LLVMBasicBlockRef Then, LLVMBasicBlockRef Catch,
+                             const(char)* Name);
 LLVMValueRef LLVMBuildLandingPad(LLVMBuilderRef B, LLVMTypeRef Ty,
                                  LLVMValueRef PersFn, uint NumClauses,
                                  const(char)* Name);
@@ -3204,13 +3211,21 @@ LLVMValueRef LLVMBuildArrayAlloca(LLVMBuilderRef, LLVMTypeRef Ty,
 LLVMValueRef LLVMBuildFree(LLVMBuilderRef, LLVMValueRef PointerVal);
 LLVMValueRef LLVMBuildLoad(LLVMBuilderRef, LLVMValueRef PointerVal,
                            const(char)* Name);
+LLVMValueRef LLVMBuildLoad2(LLVMBuilderRef, LLVMTypeRef Type,
+                            LLVMValueRef PointerVal, const(char)* Name);
 LLVMValueRef LLVMBuildStore(LLVMBuilderRef, LLVMValueRef Val, LLVMValueRef Ptr);
 LLVMValueRef LLVMBuildGEP(LLVMBuilderRef B, LLVMValueRef Pointer,
                           LLVMValueRef *Indices, uint NumIndices,
                           const(char)* Name);
+LLVMValueRef LLVMBuildGEP2(LLVMBuilderRef B, LLVMTypeRef Type,
+                           LLVMValueRef Pointer, LLVMValueRef *Indices,
+                           uint NumIndices, const(char)* Name);
 LLVMValueRef LLVMBuildInBoundsGEP(LLVMBuilderRef B, LLVMValueRef Pointer,
                                   LLVMValueRef *Indices, uint NumIndices,
                                   const(char)* Name);
+LLVMValueRef LLVMBuildInBoundsGEP2(LLVMBuilderRef B, LLVMTypeRef Type,
+                                   LLVMValueRef Pointer, LLVMValueRef *Indices,
+                                   uint NumIndices, const(char)* Name);
 LLVMValueRef LLVMBuildStructGEP(LLVMBuilderRef B, LLVMValueRef Pointer,
                                 uint Idx, const(char)* Name);
 LLVMValueRef LLVMBuildGlobalString(LLVMBuilderRef B, const(char)* Str,
@@ -3275,6 +3290,9 @@ LLVMValueRef LLVMBuildFCmp(LLVMBuilderRef, LLVMRealPredicate Op,
 /* Miscellaneous instructions */
 LLVMValueRef LLVMBuildPhi(LLVMBuilderRef, LLVMTypeRef Ty, const(char)* Name);
 LLVMValueRef LLVMBuildCall(LLVMBuilderRef, LLVMValueRef Fn,
+                           LLVMValueRef *Args, uint NumArgs,
+                           const(char)* Name);
+LLVMValueRef LLVMBuildCall2(LLVMBuilderRef, LLVMTypeRef Type, LLVMValueRef Fn,
                            LLVMValueRef *Args, uint NumArgs,
                            const(char)* Name);
 LLVMValueRef LLVMBuildSelect(LLVMBuilderRef, LLVMValueRef If,
