@@ -1,0 +1,12 @@
+# SPDX-FileCopyrightText: 2026, Jakob Bornecrantz.
+#
+# SPDX-License-Identifier: CC0-1.0
+#
+# See mailmap docs: https://git-scm.com/docs/gitmailmap
+# Test with git shortlog --summary --email
+# Keep sorted for easier editing and smaller diffs
+# Only extend to fix names or unify duplicate entries
+
+David Herberth <admin@dav1d.de>
+Jakob Bornecrantz <jakob@collabora.com>
+Jakob Bornecrantz <wallbraker@gmail.com>
