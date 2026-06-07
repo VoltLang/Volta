@@ -109,7 +109,12 @@ public:
 			this.attrSRet = LLVMCreateEnumAttribute(this.context, enumKind, 0);
 		}
 		enumKind = LLVMGetEnumAttributeKindForName("uwtable", 7);
-		this.attrUWTable = LLVMCreateEnumAttribute(this.context, enumKind, 0);
+		version (LLVMVersion15AndAbove) {
+			// LLVM 15+: uwtable requires UWTableKind (Sync=1, Async=2).
+			this.attrUWTable = LLVMCreateEnumAttribute(this.context, enumKind, 2);
+		} else {
+			this.attrUWTable = LLVMCreateEnumAttribute(this.context, enumKind, 0);
+		}
 
 		buildCommonTypes(this, target.isP64);
 
