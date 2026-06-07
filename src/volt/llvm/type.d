@@ -325,14 +325,15 @@ public:
 	override void from(State state, ir.Constant cnst, Value result)
 	{
 		auto strConst = LLVMConstStringInContext(state.context, cast(char[])cnst.arrayData, false);
-		auto strGlobal = state.makeAnonGlobalConstant(
-			LLVMTypeOf(strConst), strConst);
+		auto strTy = LLVMArrayType(state.ubyteType.llvmType,
+			cast(uint)cnst.arrayData.length + 1);
+		auto strGlobal = state.makeAnonGlobalConstant(strTy, strConst);
 
 		LLVMValueRef[2] ind;
 		ind[0] = LLVMConstNull(lengthType.llvmType);
 		ind[1] = LLVMConstNull(lengthType.llvmType);
 
-		auto strGep = LLVMConstInBoundsGEP(strGlobal, ind[]);
+		auto strGep = LLVMConstInBoundsGEP2(strTy, strGlobal, ind[]);
 
 		LLVMValueRef[2] vals;
 		vals[lengthIndex] = lengthType.fromNumber(state, cast(long)cnst.arrayData.length);
@@ -373,15 +374,15 @@ public:
 			return LLVMConstNamedStruct(llvmType, vals[]);
 		}
 
+		auto litTy = LLVMArrayType(base.llvmType, cast(uint)arr.length);
 		auto litConst = LLVMConstArray(base.llvmType, arr);
-		auto litGlobal = state.makeAnonGlobalConstant(
-			LLVMTypeOf(litConst), litConst);
+		auto litGlobal = state.makeAnonGlobalConstant(litTy, litConst);
 
 		LLVMValueRef[2] ind;
 		ind[0] = LLVMConstNull(lengthType.llvmType);
 		ind[1] = LLVMConstNull(lengthType.llvmType);
 
-		auto strGep = LLVMConstInBoundsGEP(litGlobal, ind[]);
+		auto strGep = LLVMConstInBoundsGEP2(litTy, litGlobal, ind[]);
 
 		LLVMValueRef[2] vals;
 		vals[lengthIndex] = lengthType.fromNumber(state, cast(long)arr.length);
