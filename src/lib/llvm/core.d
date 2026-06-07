@@ -120,6 +120,13 @@ LLVMValueRef LLVMConstInBoundsGEP(LLVMValueRef val, LLVMValueRef[] indices)
 		val, indices.ptr, cast(uint)indices.length);
 }
 
+LLVMValueRef LLVMConstInBoundsGEP2(LLVMTypeRef type, LLVMValueRef val,
+                                   LLVMValueRef[] indices)
+{
+	return lib.llvm.c.Core.LLVMConstInBoundsGEP2(
+		type, val, indices.ptr, cast(uint)indices.length);
+}
+
 LLVMValueRef LLVMAddFunction(LLVMModuleRef mod, string name, LLVMTypeRef type)
 {
 	char[1024] stack;
