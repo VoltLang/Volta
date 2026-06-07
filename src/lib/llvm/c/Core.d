@@ -3228,6 +3228,9 @@ LLVMValueRef LLVMBuildInBoundsGEP2(LLVMBuilderRef B, LLVMTypeRef Type,
                                    uint NumIndices, const(char)* Name);
 LLVMValueRef LLVMBuildStructGEP(LLVMBuilderRef B, LLVMValueRef Pointer,
                                 uint Idx, const(char)* Name);
+LLVMValueRef LLVMBuildStructGEP2(LLVMBuilderRef B, LLVMTypeRef Ty,
+                                 LLVMValueRef Pointer, uint Idx,
+                                 const(char)* Name);
 LLVMValueRef LLVMBuildGlobalString(LLVMBuilderRef B, const(char)* Str,
                                    const(char)* Name);
 LLVMValueRef LLVMBuildGlobalStringPtr(LLVMBuilderRef B, const(char)* Str,

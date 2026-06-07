@@ -223,6 +223,24 @@ LLVMValueRef LLVMBuildInBoundsGEP2(LLVMBuilderRef b, LLVMTypeRef type, LLVMValue
 	return lib.llvm.c.Core.LLVMBuildInBoundsGEP2(b, type, ptr, i.ptr, cast(uint)i.length, namez);
 }
 
+LLVMValueRef LLVMBuildStructGEP(LLVMBuilderRef b, LLVMValueRef ptr,
+                                uint idx, string name)
+{
+	char[1024] stack;
+	auto namez = nullTerminate(stack, name);
+
+	return lib.llvm.c.Core.LLVMBuildStructGEP(b, ptr, idx, namez);
+}
+
+LLVMValueRef LLVMBuildStructGEP2(LLVMBuilderRef b, LLVMTypeRef type,
+                                 LLVMValueRef ptr, uint idx, string name)
+{
+	char[1024] stack;
+	auto namez = nullTerminate(stack, name);
+
+	return lib.llvm.c.Core.LLVMBuildStructGEP2(b, type, ptr, idx, namez);
+}
+
 void LLVMAddIncoming(LLVMValueRef phi, LLVMValueRef[] iv,
                      LLVMBasicBlockRef[] ib)
 {
