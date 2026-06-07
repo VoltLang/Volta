@@ -24,7 +24,6 @@ import volt.llvm.constant;
 import volt.llvm.toplevel;
 import volt.llvm.expression;
 import volt.llvm.interfaces;
-import volt.llvm.common : localGlobalForAccess, localUsesThreadLocal;
 
 
 /*!
@@ -466,16 +465,14 @@ public:
 	 *
 	 * If the value is not defined it will do so.
 	 */
-	override LLVMValueRef getVariableValue(
-		ir.Variable var, out Type type, bool forAccess = true)
+	override LLVMValueRef getVariableValue(ir.Variable var, out Type type)
 	{
 		auto k = var.uniqueId;
 		auto ret = k in valueStore;
 
 		if (ret !is null) {
 			type = ret.type;
-			return forAccess ?
-				localGlobalForAccess(this, var, ret.value) : ret.value;
+			return ret.value;
 		}
 
 		if (var.type is null) {
@@ -530,9 +527,15 @@ public:
 		case Local:
 			v = LLVMAddGlobal(mod, llvmType, var.mangledName);
 
-			// LLVM 15 (llvmIntrinsicVersion V3): ordinary global.
-			// LLVM 16+ (V4): thread_local + llvm.threadlocal.address.
-			if (localUsesThreadLocal(this)) {
+			/*
+			 * LLVM on Windows (as of 3.2) does not support TLS.
+			 * So for now, make all Variables marked as local global,
+			 * else nothing will work at all.
+			 *
+			 * Also disabled on Metal.
+			 */
+			if (target.platform != Platform.MinGW &&
+			    target.platform != Platform.Metal) {
 				LLVMSetThreadLocal(v, true);
 			}
 			break;
@@ -559,7 +562,7 @@ public:
 
 		Store add = { v, type };
 		valueStore[k] = add;
-		return forAccess ? localGlobalForAccess(this, var, v) : v;
+		return v;
 	}
 
 	override LLVMValueRef getVariableValue(ir.FunctionParam var, out Type type)

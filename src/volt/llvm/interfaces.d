@@ -406,8 +406,7 @@ public:
 	 *
 	 * If the value is not defined it will do so.
 	 */
-	abstract LLVMValueRef getVariableValue(
-		ir.Variable var, out Type type, bool forAccess = true);
+	abstract LLVMValueRef getVariableValue(ir.Variable var, out Type type);
 	abstract LLVMValueRef getVariableValue(ir.FunctionParam var, out Type type);
 
 	abstract void makeByValVariable(ir.FunctionParam var, LLVMValueRef v);

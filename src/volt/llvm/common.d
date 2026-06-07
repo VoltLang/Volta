@@ -8,8 +8,6 @@
  */
 module volt.llvm.common;
 
-import lib.llvm.core;
-
 import volta.ir.location;
 
 import volta.util.util;
@@ -287,46 +285,3 @@ void handleClassLiteral(State state, ir.ClassLiteral cl, Value result)
 /*!
  * @}
  */
-
-bool localUsesThreadLocal(State state)
-{
-	if (state.target.platform == Platform.MinGW ||
-	    state.target.platform == Platform.Metal) {
-		return false;
-	}
-	// LLVM 15 volted builds: emit `local` as an ordinary global.
-	// LLVM 16+ volted builds: thread_local + llvm.threadlocal.address.
-	version (LLVMVersion15AndAbove) version (LLVMVersion16AndAbove) {
-		return true;
-	} else version (LLVMVersion15AndAbove) {
-		return false;
-	} else {
-		return true;
-	}
-}
-
-LLVMValueRef localGlobalForAccess(State state, ir.Variable var, LLVMValueRef tlsSym)
-{
-	version (LLVMVersion16AndAbove) {
-		if (var.storage != ir.Variable.Storage.Local) {
-			return tlsSym;
-		}
-		if (!localUsesThreadLocal(state)) {
-			return tlsSym;
-		}
-		LLVMValueRef decl = LLVMGetNamedFunction(state.mod, "llvm.threadlocal.address");
-		auto ptrTy = LLVMPointerTypeInContext(state.context, 0);
-		LLVMTypeRef[1] paramTypes = [ptrTy];
-		auto fnTy = LLVMFunctionType(ptrTy, paramTypes.ptr, 1, false);
-		if (decl is null) {
-			decl = LLVMAddFunction(state.mod, "llvm.threadlocal.address", fnTy);
-		}
-		LLVMValueRef[] args = [tlsSym];
-		diSetPosition(state, /*#ref*/var.loc);
-		auto addr = LLVMBuildCall2(state.builder, fnTy, decl, args);
-		diUnsetPosition(state);
-		return addr;
-	} else {
-		return tlsSym;
-	}
-}
