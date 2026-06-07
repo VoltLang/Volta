@@ -1,6 +1,5 @@
 //T macro:expect-failure
 //T check:'field' is neither field
-//T has-passed:no
 module test;
 
 struct Struct

@@ -1477,6 +1477,12 @@ ir.Type extypePostfixIdentifier(Context ctx, ref ir.Exp exp,
 	// If we are pointing to a pointer to a class.
 	dereferenceInitialClass(postfix, oldType);
 
+	// Slices only have .ptr and .length; other names must be UFCS calls.
+	if (type.nodeType == ir.NodeType.ArrayType) {
+		postfixIdentifierUFCS(ctx, /*#ref*/exp, postfix, parent);
+		return getExpType(exp);
+	}
+
 	// Get store for ident on type, do not look for ufcs functions.
 	ir.Store store;
 	auto _scope = getScopeFromType(type);
