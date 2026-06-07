@@ -324,11 +324,14 @@ Classification classifyStructType(State state, LLVMTypeRef type, out LLVMTypeRef
 	// A pointer will take up an entire section.
 	// If a section is filled by a pointer, what type does it point to? Otherwise null.
 	LLVMTypeRef[2] pointees;
+	// LLVM 15+ opaque pointers: track pointer segments without LLVMGetElementType.
+	bool[2] pointerSegments;
 	// Are we up to the second segment yet?
 	bool secondSegment;
 
 	// Update the above values for a member of the given size (bytes) and floatness.
-	void addSize(size_t val, Classification classification, LLVMTypeRef pointer = null)
+	void addSize(size_t val, Classification classification, LLVMTypeRef pointer = null,
+	            bool isPointerSegment = false)
 	{
 		bool floating = classification == Classification.Float;
 		if (!floating) {
@@ -358,7 +361,11 @@ Classification classifyStructType(State state, LLVMTypeRef type, out LLVMTypeRef
 			}
 		} else {
 			sz += val;
-			pointees[secondSegment] = pointer;  // If pointer is null, that's fine too.
+			if (isPointerSegment) {
+				pointerSegments[secondSegment] = true;
+			} else {
+				pointees[secondSegment] = pointer;  // If pointer is null, that's fine too.
+			}
 			if (sz == AMD64_SYSV_WORD_SZ) {
 				alignment = 0;  // Each eightbyte is treated separately.
 				secondSegment = true;
@@ -396,7 +403,11 @@ Classification classifyStructType(State state, LLVMTypeRef type, out LLVMTypeRef
 				addSize(width, Classification.Integer);
 				break;
 			case Pointer:
-				addSize(AMD64_SYSV_WORD_SZ, Classification.Integer, LLVMGetElementType(element));
+				version (LLVMVersion15AndAbove) {
+					addSize(AMD64_SYSV_WORD_SZ, Classification.Integer, null, true);
+				} else {
+					addSize(AMD64_SYSV_WORD_SZ, Classification.Integer, LLVMGetElementType(element));
+				}
 				break;
 			case Struct:
 				LLVMTypeRef[] types;
@@ -438,6 +449,11 @@ Classification classifyStructType(State state, LLVMTypeRef type, out LLVMTypeRef
 		case ONE_DOUBLE:
 			return [LLVMDoubleTypeInContext(state.context)];
 		default:
+			if (pointerSegments[segment]) {
+				version (LLVMVersion15AndAbove) {
+					return [LLVMPointerTypeInContext(state.context, 0)];
+				}
+			}
 			if (pointees[segment] !is null) {
 				return [LLVMPointerType(pointees[segment], 0)];
 			}
