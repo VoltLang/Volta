@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2011-2026, Jakob Bornecrantz.
+# SPDX-License-Identifier: CC0-1.0
 
 # Build system
 /volt
@@ -35,6 +37,7 @@ b.bat
 *.kdev*
 *.gdb_history
 **/.vs
+.vscode/
 
 # VLS Cruft
 **/node_modules
