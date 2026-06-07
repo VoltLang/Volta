@@ -105,7 +105,12 @@ void getPointerFromStaticArray(State state, ref in Location loc, Value result)
 	assert(sat !is null);
 	assert(result.isPointer);
 
-	result.value = LLVMBuildStructGEP(state.builder, result.value, 0, "");
+	auto _i32 = LLVMInt32TypeInContext(state.context);
+	LLVMValueRef[2] ind;
+	ind[0] = LLVMConstInt(_i32, 0, false);
+	ind[1] = LLVMConstInt(_i32, 0, false);
+	result.value = LLVMBuildInBoundsGEP2(
+		state.builder, sat.llvmType, result.value, ind, "");
 	result.isPointer = false;
 	result.type = sat.ptrType;
 }
@@ -143,7 +148,7 @@ void getFieldFromAggregate(State state, ref in Location loc, Value left,
 	       cast(DelegateType)type !is null);
 
 	if (left.isPointer) {
-		v = LLVMBuildStructGEP(state.builder, v, index, "");
+		v = LLVMBuildStructGEP2(state.builder, type.llvmType, v, index, "");
 	} else {
 		v = LLVMBuildExtractValue(state.builder, v, index, "");
 	}
@@ -169,7 +174,7 @@ LLVMValueRef getValueFromAggregate(State state, ref in Location loc,
 
 	if (left.isPointer) {
 		auto fieldTy = aggregateFieldLlvmType(state, type, index);
-		auto ptr = LLVMBuildStructGEP(state.builder, v, index, "");
+		auto ptr = LLVMBuildStructGEP2(state.builder, type.llvmType, v, index, "");
 		return LLVMBuildLoad2(state.builder, fieldTy, ptr);
 	} else {
 		return LLVMBuildExtractValue(state.builder, v, index, "");
