@@ -67,11 +67,15 @@ public:
 		this.target = lp.target;
 		this.mDump = internalDebug;
 
-		auto passRegistry = LLVMGetGlobalPassRegistry();
+		version (LLVMVersion17AndAbove) {
+			// Removed
+		} else {
+			auto passRegistry = LLVMGetGlobalPassRegistry();
 
-		LLVMInitializeCore(passRegistry);
-		LLVMInitializeAnalysis(passRegistry);
-		LLVMInitializeTarget(passRegistry);
+			LLVMInitializeCore(passRegistry);
+			LLVMInitializeAnalysis(passRegistry);
+			LLVMInitializeTarget(passRegistry);
+		}
 
 		final switch (target.arch) with (Arch) {
 		case X86:
