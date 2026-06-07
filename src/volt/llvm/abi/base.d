@@ -121,5 +121,5 @@ LLVMValueRef buildGep(State state, LLVMValueRef ptr, ulong a, ulong b)
 	auto _i32 = LLVMInt32TypeInContext(state.context);
 	indices[0] = LLVMConstInt(_i32, a, false);
 	indices[1] = LLVMConstInt(_i32, b, false);
-	return LLVMBuildGEP(state.builder, ptr, indices.ptr, 2, "".ptr);
+	return LLVMBuildGEP(state.builder, ptr, indices, "");
 }
