@@ -260,8 +260,10 @@ public:
 		LLVMPositionBuilderAtEnd(builder, b);
 
 		auto v = LLVMGetUndef(ehLandingType);
-		v = LLVMBuildInsertValue(builder, v, LLVMBuildLoad(builder, ehExceptionVar), 0, "");
-		v = LLVMBuildInsertValue(builder, v, LLVMBuildLoad(builder, ehIndexVar), 1, "");
+		v = LLVMBuildInsertValue(builder, v,
+			LLVMBuildLoad2(builder, voidPtrType.llvmType, ehExceptionVar), 0, "");
+		v = LLVMBuildInsertValue(builder, v,
+			LLVMBuildLoad2(builder, intType.llvmType, ehIndexVar), 1, "");
 		LLVMBuildResume(builder, v);
 		LLVMPositionBuilderAtEnd(builder, block);
 

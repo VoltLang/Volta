@@ -73,6 +73,28 @@ void getPointerFromArray(State state, ref in Location loc, Value result)
 		state, /*#ref*/loc, result, ArrayType.ptrIndex, at.ptrType, result);
 }
 
+LLVMTypeRef aggregateFieldLlvmType(State state, Type type, uint index)
+{
+	auto at = cast(ArrayType)type;
+	if (at !is null) {
+		return at.types[index].llvmType;
+	}
+	auto dt = cast(DelegateType)type;
+	if (dt !is null) {
+		if (index == DelegateType.voidPtrIndex) {
+			return state.voidPtrType.llvmType;
+		}
+		if (index == DelegateType.funcIndex) {
+			return dt.llvmCallPtrType;
+		}
+	}
+	auto st = cast(StructType)type;
+	if (st !is null) {
+		return st.types[index].llvmType;
+	}
+	assert(false);
+}
+
 /*!
  * Turns a StaticArrayType Value into a Pointer Value. Value must be
  * of type StaticArrayType.
@@ -146,8 +168,9 @@ LLVMValueRef getValueFromAggregate(State state, ref in Location loc,
 	       cast(DelegateType)type !is null);
 
 	if (left.isPointer) {
+		auto fieldTy = aggregateFieldLlvmType(state, type, index);
 		auto ptr = LLVMBuildStructGEP(state.builder, v, index, "");
-		return LLVMBuildLoad(state.builder, ptr);
+		return LLVMBuildLoad2(state.builder, fieldTy, ptr);
 	} else {
 		return LLVMBuildExtractValue(state.builder, v, index, "");
 	}

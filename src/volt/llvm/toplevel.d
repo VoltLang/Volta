@@ -566,8 +566,8 @@ public:
 		LLVMMoveBasicBlockAfter(catchBlock, state.block);
 		state.startBlock(catchBlock);
 
-		auto e = LLVMBuildLoad(state.builder, state.ehExceptionVar);
-		auto i = LLVMBuildLoad(state.builder, state.ehIndexVar);
+		auto e = LLVMBuildLoad2(state.builder, state.voidPtrType.llvmType, state.ehExceptionVar);
+		auto i = LLVMBuildLoad2(state.builder, state.intType.llvmType, state.ehIndexVar);
 		foreach (index, v; t.catchVars) {
 			Type type;
 			auto asTR = cast(ir.TypeReference)v.type;
