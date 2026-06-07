@@ -183,7 +183,7 @@ public:
 		LLVMValueRef[] args;
 		foreach (i, t; type.params) {
 			auto index = state.sizeType.fromNumber(state, cast(long)mPos[i]);
-			auto ptr = LLVMBuildGEP(builder, arr, [index], "");
+			auto ptr = LLVMBuildGEP2(builder, state.ubyteType.llvmType, arr, [index], "");
 
 			auto argType = state.fromIr(t);
 			auto bitType = LLVMPointerType(argType.llvmType, 0);

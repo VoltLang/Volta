@@ -478,10 +478,10 @@ void sysvAmd64AbiCoerceArguments(State state, ir.CallableType ct, ref LLVMValueR
 			auto lts = cast(LLVMTypeRef[])ct.abiData[i];
 			auto _struct = LLVMStructTypeInContext(state.context, lts.ptr, cast(uint)lts.length, false);
 			auto bc = LLVMBuildBitCast(state.builder, args[i], LLVMPointerType(_struct, 0), "");
-			auto agep = buildGep(state, bc, 0, 0);
+			auto agep = buildGep(state, _struct, bc, 0, 0);
 			args[i] = LLVMBuildLoad2(state.builder, lts[0], agep);
 
-			auto bgep = buildGep(state, bc, 0, 1);
+			auto bgep = buildGep(state, _struct, bc, 0, 1);
 			auto load = LLVMBuildLoad2(state.builder, lts[1], bgep);
 			args = args[0 .. i] ~ [args[i], load] ~ args[i+1 .. $];
 			i++;
@@ -505,11 +505,11 @@ CoercedStatus sysvAmd64AbiCoercePrologueParameter(State state, LLVMValueRef llvm
 	} else if (ct.abiData[index+offset].length == 2) {
 		auto _struct = LLVMStructTypeInContext(state.context, lts.ptr, cast(uint)lts.length, false);
 		auto bc = LLVMBuildBitCast(state.builder, a, LLVMPointerType(_struct, 0), "");
-		auto agep = buildGep(state, bc, 0, 0);
+		auto agep = buildGep(state, _struct, bc, 0, 0);
 		LLVMBuildStore(state.builder, val, agep);
 		offset++;
 		auto v2 = LLVMGetParam(llvmFunc, cast(uint)(index + offset));
-		auto bgep = buildGep(state, bc, 0, 1);
+		auto bgep = buildGep(state, _struct, bc, 0, 1);
 		LLVMBuildStore(state.builder, v2, bgep);
 	} else {
 		panicAssert(ct, false);

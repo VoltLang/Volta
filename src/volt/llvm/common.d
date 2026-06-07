@@ -73,6 +73,14 @@ void getPointerFromArray(State state, ref in Location loc, Value result)
 		state, /*#ref*/loc, result, ArrayType.ptrIndex, at.ptrType, result);
 }
 
+LLVMTypeRef pointerGepElementType(State state, PointerType pt)
+{
+	if (cast(VoidType)pt.base !is null) {
+		return state.ubyteType.llvmType;
+	}
+	return pt.base.llvmType;
+}
+
 LLVMTypeRef aggregateFieldLlvmType(State state, Type type, uint index)
 {
 	auto at = cast(ArrayType)type;

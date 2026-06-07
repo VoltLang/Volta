@@ -115,11 +115,11 @@ CoercedStatus abiCoercePrologueParameter(State state, LLVMValueRef llvmFunc, ir.
 	return NotCoerced;
 }
 
-LLVMValueRef buildGep(State state, LLVMValueRef ptr, ulong a, ulong b)
+LLVMValueRef buildGep(State state, LLVMTypeRef structType, LLVMValueRef ptr, ulong a, ulong b)
 {
 	auto indices = new LLVMValueRef[](2);
 	auto _i32 = LLVMInt32TypeInContext(state.context);
 	indices[0] = LLVMConstInt(_i32, a, false);
 	indices[1] = LLVMConstInt(_i32, b, false);
-	return LLVMBuildGEP(state.builder, ptr, indices, "");
+	return LLVMBuildGEP2(state.builder, structType, ptr, indices, "");
 }

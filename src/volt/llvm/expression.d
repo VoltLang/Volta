@@ -525,7 +525,7 @@ void handleBinOpPointer(State state, ref in Location loc, ir.BinOp.Op binOp,
 
 	// Either ptr or other could be result, keep that in mind.
 	result.type = ptr.type;
-	result.value = LLVMBuildGEP(state.builder, ptr.value, [val], "");
+	result.value = LLVMBuildGEP2(state.builder, pointerGepElementType(state, ptrType), ptr.value, [val], "");
 }
 
 /*!
@@ -908,7 +908,7 @@ void handleIncDec(State state, ir.Unary unary, Value result)
 	if (ptrType !is null) {
 		auto v = isInc ? 1 : -1;
 		auto c = LLVMConstInt(LLVMInt32TypeInContext(state.context), cast(uint)v, true);
-		value = LLVMBuildGEP(state.builder, read, [c], "");
+		value = LLVMBuildGEP2(state.builder, pointerGepElementType(state, ptrType), read, [c], "");
 	} else if (primType !is null) {
 		auto op = isInc ? LLVMOpcode.Add : LLVMOpcode.Sub;
 		auto c = primType.fromNumber(state, 1);
@@ -983,7 +983,7 @@ void handleIndex(State state, ir.Postfix postfix, Value result)
 
 	makeNonPointer(state, left);
 
-	result.value = LLVMBuildGEP(state.builder, left.value, [right.value], "");
+	result.value = LLVMBuildGEP2(state.builder, pointerGepElementType(state, pt), left.value, [right.value], "");
 	result.type = pt.base;
 	result.isPointer = true;
 }
@@ -1062,7 +1062,7 @@ void handleSliceTwo(State state, ir.Postfix postfix, Value result)
 
 	LLVMValueRef ptr, len;
 
-	ptr = LLVMBuildGEP(state.builder, left.value, [start.value], "");
+	ptr = LLVMBuildGEP2(state.builder, at.base.llvmType, left.value, [start.value], "");
 
 	// Subtract start from end to get the length, which returned in end.
 	// Will set and leave debug info location and we want that.
@@ -1247,7 +1247,7 @@ void handleIncDec(State state, ir.Postfix postfix, Value result)
 	if (ptrType !is null) {
 		auto v = isInc ? 1 : -1;
 		auto c = LLVMConstInt(LLVMInt32TypeInContext(state.context), cast(uint)v, true);
-		store = LLVMBuildGEP(state.builder, value, [c], "");
+		store = LLVMBuildGEP2(state.builder, pointerGepElementType(state, ptrType), value, [c], "");
 	} else if (primType !is null) {
 		auto op = isInc ? LLVMOpcode.Add : LLVMOpcode.Sub;
 		auto c = primType.fromNumber(state, 1);
@@ -1570,7 +1570,7 @@ void getCreateDelegateValues(State state, ir.Postfix postfix, Value instance, Va
 		// vtableIndex
 		auto indexVal = LLVMConstInt(LLVMInt32TypeInContext(state.context), cast(uint)index, true);
 		// void** + indexVal
-		func.value = LLVMBuildGEP(state.builder, func.value, [indexVal], "");
+		func.value = LLVMBuildGEP2(state.builder, state.voidPtrType.llvmType, func.value, [indexVal], "");
 		// void** -> void*
 		func.value = LLVMBuildLoad2(state.builder, state.voidPtrType.llvmType, func.value);
 		// void* -> fn
