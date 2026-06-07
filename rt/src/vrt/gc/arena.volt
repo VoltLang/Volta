@@ -355,17 +355,26 @@ protected:
 
 	fn scanStack() bool
 	{
-		// This needs to be a size_t to enforce alignment.
-		p: const(size_t) = 0;
+		// Anchor on stack so we have a stable scan start address.
+		size_t anchor = 0;
 
-		iptr := cast(size_t)&p;
+		iptr := cast(size_t)&anchor;
 		iend := cast(size_t)stackBottom;
-		length := (iend - iptr) / typeid(size_t).size;
+		if (iend <= iptr) {
+			return false;
+		}
 
-		// Also grab the size_t value, needed for LLVM 13 aggresive optimizer.
-		range := (&p)[0 .. length];
-
-		return scanRange(cast(void*[])range);
+		// Walk stack slots explicitly. A slice over &anchor miscompiles
+		// under -O3 (LLVM 15): the loop loads anchor's value (0) instead
+		// of successive stack addresses.
+		newPtr := false;
+		foreach (i; 0 .. (iend - iptr) / typeid(size_t).size) {
+			slot := cast(void**)(iptr + i * typeid(size_t).size);
+			if (scan(*slot)) {
+				newPtr = true;
+			}
+		}
+		return newPtr;
 	}
 
 	fn scanSlab(s: Slab*, ptr: const(void*)) bool
