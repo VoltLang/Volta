@@ -109,7 +109,9 @@ public:
 		LLVMBasicBlockRef breakBlock;
 
 		LLVMValueRef[] scopeSuccess;
+		LLVMTypeRef[] scopeSuccessTypes;
 		LLVMValueRef[] scopeFailure;
+		LLVMTypeRef[] scopeFailureTypes;
 		LLVMBasicBlockRef[] scopeLanding;
 
 		LLVMBasicBlockRef catchBlock;
@@ -436,7 +438,8 @@ public:
 	 */
 	abstract LLVMValueRef buildCallNeverInvoke(ref Location loc,
 	                                           LLVMValueRef argFunc,
-	                                           LLVMValueRef[] args);
+	                                           LLVMValueRef[] args,
+	                                           LLVMTypeRef funcType);
 
 	/*!
 	 * Builds either a call or a invoke. If invoke automatically
@@ -446,7 +449,8 @@ public:
 	 */
 	abstract LLVMValueRef buildCallOrInvoke(ref Location loc,
 	                                        LLVMValueRef func,
-	                                        LLVMValueRef[] args);
+	                                        LLVMValueRef[] args,
+	                                        LLVMTypeRef funcType);
 
 	/*!
 	 * Builds either a call or a invoke. If invoke automatically
@@ -457,6 +461,7 @@ public:
 	abstract LLVMValueRef buildCallOrInvoke(ref Location loc,
 	                                        LLVMValueRef func,
 	                                        LLVMValueRef[] args,
+	                                        LLVMTypeRef funcType,
 	                                        LLVMBasicBlockRef landingPad);
 
 	/*!

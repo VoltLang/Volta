@@ -170,7 +170,8 @@ public:
 
 		// Assume language pass knows what it is doing.
 		if (state.fall) {
-			state.buildCallNeverInvoke(/*#ref*/func.loc, state.llvmTrap, null);
+			state.buildCallNeverInvoke(/*#ref*/func.loc, state.llvmTrap, null,
+				state.voidFunctionType.llvmCallType);
 			LLVMBuildUnreachable(state.builder);
 		}
 
@@ -395,7 +396,8 @@ public:
 			doNewBlock(state.switchDefault, defaultStatements, outBlock);
 		} else {
 			// No default block (e.g. final switches)
-			state.buildCallNeverInvoke(/*#ref*/ss.loc, state.llvmTrap, null);
+			state.buildCallNeverInvoke(/*#ref*/ss.loc, state.llvmTrap, null,
+				state.voidFunctionType.llvmCallType);
 			LLVMBuildUnreachable(state.builder);
 		}
 		state.replaceBreakBlock(breakBlock);
@@ -576,7 +578,10 @@ public:
 			value = LLVMBuildBitCast(state.builder, value, state.voidPtrType.llvmType, "");
 
 			auto func = state.ehTypeIdFunc;
-			auto test = state.buildCallNeverInvoke(/*#ref*/v.loc, func, [value]);
+			Type typeIdType;
+			state.getFunctionValue(state.llvmTypeidFor, /*#out*/typeIdType);
+			auto test = state.buildCallNeverInvoke(/*#ref*/v.loc, func, [value],
+				(cast(CallableType)typeIdType).llvmCallType);
 			test = LLVMBuildICmp(state.builder, LLVMIntPredicate.EQ, test, i, "");
 
 
@@ -935,7 +940,8 @@ public:
 
 				buildArgIfNeeded();
 				auto pad = p.scopeLanding[index];
-				state.buildCallOrInvoke(/*#ref*/loc, func, arg, pad);
+				state.buildCallOrInvoke(/*#ref*/loc, func, arg,
+					p.scopeSuccessTypes[index], pad);
 			}
 			p = p.prev;
 		}
@@ -963,9 +969,12 @@ public:
 			return;
 		}
 
+		auto callTy = (cast(FunctionType)state.fromIr(func.type)).llvmCallType;
 		auto landingPath = state.findLanding();
 		state.path.scopeSuccess ~= success ? llvmFunc : null;
+		state.path.scopeSuccessTypes ~= success ? callTy : null;
 		state.path.scopeFailure ~= failure ? llvmFunc : null;
+		state.path.scopeFailureTypes ~= failure ? callTy : null;
 		state.path.scopeLanding ~= landingPath !is null ?
 			landingPath.landingBlock : null;
 
@@ -1006,11 +1015,12 @@ public:
 		auto arg = [value];
 
 		while (p !is null) {
-			foreach_reverse (loopFunc; p.scopeFailure) {
+			foreach_reverse (index, loopFunc; p.scopeFailure) {
 				if (loopFunc is null) {
 					continue;
 				}
-				state.buildCallNeverInvoke(/*#ref*/func.loc, loopFunc, arg);
+				state.buildCallNeverInvoke(/*#ref*/func.loc, loopFunc, arg,
+					p.scopeFailureTypes[index]);
 			}
 			p = p.prev;
 		}
@@ -1018,7 +1028,8 @@ public:
 		auto throwFunc = state.getFunctionValue(state.lp.ehRethrowFunc, /*#out*/type);
 		LLVMValueRef[1] throwArgs;
 		throwArgs[0] = LLVMBuildLoad2(b, args2Type.llvmType, args[2]);
-		state.buildCallNeverInvoke(/*#ref*/func.loc, throwFunc, throwArgs[0 .. $]);
+		state.buildCallNeverInvoke(/*#ref*/func.loc, throwFunc, throwArgs[0 .. $],
+			(cast(CallableType)type).llvmCallType);
 		LLVMBuildUnreachable(b);
 
 		state.startBlock(oldBlock);
@@ -1039,9 +1050,12 @@ public:
 			return;
 		}
 
+		auto callTy = (cast(FunctionType)state.fromIr(func.type)).llvmCallType;
 		auto landingPath = state.findLanding();
 		state.path.scopeSuccess ~= success ? llvmFunc : null;
+		state.path.scopeSuccessTypes ~= success ? callTy : null;
 		state.path.scopeFailure ~= failure ? llvmFunc : null;
+		state.path.scopeFailureTypes ~= failure ? callTy : null;
 		state.path.scopeLanding ~= landingPath !is null ?
 			landingPath.landingBlock : null;
 
@@ -1064,11 +1078,12 @@ public:
 
 		auto p = state.path;
 		while (p !is null) {
-			foreach_reverse (loopFunc; p.scopeFailure) {
+			foreach_reverse (index, loopFunc; p.scopeFailure) {
 				if (loopFunc is null) {
 					continue;
 				}
-				state.buildCallNeverInvoke(/*#ref*/func.loc, loopFunc, arg);
+				state.buildCallNeverInvoke(/*#ref*/func.loc, loopFunc, arg,
+					p.scopeFailureTypes[index]);
 			}
 
 			if (p is catchPath) {

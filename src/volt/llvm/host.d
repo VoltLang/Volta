@@ -192,7 +192,7 @@ public:
 		}
 
 		// Call and then store the result in the array.
-		auto v = LLVMBuildCall(builder, realFunc, args);
+		auto v = LLVMBuildCall2(builder, realType, realFunc, args);
 		if (!type.ret.isVoid()) {
 			auto bitType = LLVMPointerType(LLVMTypeOf(v), 0);
 			auto bit = LLVMBuildBitCast(builder, arr, bitType, "");

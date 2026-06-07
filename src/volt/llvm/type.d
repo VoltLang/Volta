@@ -507,6 +507,7 @@ public:
 	Type ret;
 	ir.CallableType ct;
 	Type[] params;
+	LLVMTypeRef llvmCallType;
 
 public:
 	this(State state, ir.CallableType ct,
@@ -526,7 +527,6 @@ class FunctionType : CallableType
 {
 public:
 	bool hasStructRet;
-	LLVMTypeRef llvmCallType;
 	LLVMMetadataRef diCallType;
 
 public:
@@ -717,6 +717,7 @@ private:
 		assert(funcType !is null);
 
 		llvmCallPtrType = funcType.llvmType;
+		llvmCallType = funcType.llvmCallType;
 
 		LLVMTypeRef[2] mt;
 		mt[voidPtrIndex] = state.voidPtrType.llvmType;

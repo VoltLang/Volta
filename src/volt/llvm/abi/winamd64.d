@@ -100,7 +100,7 @@ void buildMemcpy(State state, LLVMValueRef dst, LLVMValueRef src, LLVMTypeRef ba
 	}
 	args ~= LLVMConstInt(LLVMInt1TypeInContext(state.context), 0, false);
 	// XXX TODO Should this be a buildCallNeverInvoke?
-	LLVMBuildCall(state.builder, func, args);
+	LLVMBuildCall2(state.builder, (cast(CallableType)memcpyType).llvmCallType, func, args);
 }
 
 LLVMTypeRef processStructParameter(State state, ir.FunctionType ft, size_t i, LLVMTypeRef structType)

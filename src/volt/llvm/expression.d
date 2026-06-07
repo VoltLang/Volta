@@ -1185,7 +1185,7 @@ void handleCall(State state, ir.Postfix postfix, Value result)
 
 	abiCoerceArguments(state, /*can be null*/irc, /*#ref*/llvmArgs);
 
-	result.value = state.buildCallOrInvoke(/*#ref*/postfix.loc, result.value, llvmArgs);
+	result.value = state.buildCallOrInvoke(/*#ref*/postfix.loc, result.value, llvmArgs, ct.llvmCallType);
 
 	// Yes its the same loop again.
 	size_t abiOffset = 0;
@@ -1453,7 +1453,8 @@ void handleEnumMembers(State state, ir.BuiltinExp inbuilt, Value result)
 		auto args = new LLVMValueRef[](2);
 		args[0] = thisval;
 		args[1] = fromConstantString(state, /*#ref*/inbuilt.loc, member.name);
-		state.buildCallNeverInvoke(/*#ref*/inbuilt.loc, callval,  args);
+		auto dt = cast(DelegateType)sinkVal.type;
+		state.buildCallNeverInvoke(/*#ref*/inbuilt.loc, callval, args, dt.llvmCallType);
 		LLVMBuildBr(state.builder, endSwitch);
 	}
 
@@ -1465,7 +1466,8 @@ void handleEnumMembers(State state, ir.BuiltinExp inbuilt, Value result)
 	args[1] = fromConstantString(state, /*#ref*/inbuilt.loc, "invalid enum member passed as composable string component");
 	auto ct = cast(ir.CallableType)t.irType;
 	abiCoerceArguments(state, /*can be null*/ct, /*#ref*/args);
-	state.buildCallNeverInvoke(/*#ref*/inbuilt.loc, assertval, args);
+	state.buildCallNeverInvoke(/*#ref*/inbuilt.loc, assertval, args,
+		(cast(CallableType)t).llvmCallType);
 	LLVMBuildUnreachable(state.builder);
 
 	LLVMPositionBuilderAtEnd(state.builder, endSwitch);

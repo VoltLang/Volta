@@ -285,31 +285,34 @@ public:
 
 	override LLVMValueRef buildCallNeverInvoke(ref Location loc,
 	                                           LLVMValueRef argFunc,
-	                                           LLVMValueRef[] args)
+	                                           LLVMValueRef[] args,
+	                                           LLVMTypeRef funcType)
 	{
 		diSetPosition(this, /*#ref*/loc);
 		scope (success) {
 			diUnsetPosition(this);
 		}
 
-		return LLVMBuildCall(builder, argFunc, args);
+		return LLVMBuildCall2(builder, funcType, argFunc, args);
 	}
 
 	override LLVMValueRef buildCallOrInvoke(ref Location loc,
 	                                        LLVMValueRef argFunc,
-	                                        LLVMValueRef[] args)
+	                                        LLVMValueRef[] args,
+	                                        LLVMTypeRef funcType)
 	{
 		auto p = findLanding();
 		if (p is null) {
-			return buildCallOrInvoke(/*#ref*/loc, argFunc, args, null);
+			return buildCallOrInvoke(/*#ref*/loc, argFunc, args, funcType, null);
 		} else {
-			return buildCallOrInvoke(/*#ref*/loc, argFunc, args, p.landingBlock);
+			return buildCallOrInvoke(/*#ref*/loc, argFunc, args, funcType, p.landingBlock);
 		}
 	}
 
 	override LLVMValueRef buildCallOrInvoke(ref Location loc,
 	                                        LLVMValueRef argFunc,
 	                                        LLVMValueRef[] args,
+	                                        LLVMTypeRef funcType,
 	                                        LLVMBasicBlockRef landingBlock)
 	{
 		diSetPosition(this, /*#ref*/loc);
@@ -321,11 +324,11 @@ public:
 		// if the function is a llvm intrinsic
 		if (landingBlock is null ||
 		    LLVMGetIntrinsicID(argFunc) != 0) {
-			return LLVMBuildCall(builder, argFunc, args);
+			return LLVMBuildCall2(builder, funcType, argFunc, args);
 		} else {
 			auto b = LLVMAppendBasicBlockInContext(
 				context, func, "");
-			auto ret = LLVMBuildInvoke(builder, argFunc, args, b,
+			auto ret = LLVMBuildInvoke2(builder, funcType, argFunc, args, b,
 				landingBlock);
 			LLVMMoveBasicBlockAfter(b, block);
 			LLVMPositionBuilderAtEnd(builder, b);
