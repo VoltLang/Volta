@@ -23,7 +23,7 @@ version (LlvmIntrinsics1) {
 	//! <http://releases.llvm.org/6.0.0/docs/LangRef.html#llvm-memmove-intrinsic>
 	@mangledName("llvm.memmove.p0i8.p0i8.i64") fn __llvm_memmove_p0i8_p0i8_i64(dest: void*, src: void*, len: u64, _align: i32, _volatile: bool);
 } else version (LlvmIntrinsics2) {
-	// LLVM 7 and later removed the align parameter.
+	// LLVM 7–14: typed pointers, no align parameter.
 	//! <http://llvm.org/docs/LangRef.html#llvm-memset-element-unordered-atomic-intrinsic>
 	@mangledName("llvm.memset.p0i8.i32") fn __llvm_memset_p0i8_i32(dest: void*, val: u8, len: u32, _volatile: bool);
 	//! <http://llvm.org/docs/LangRef.html#llvm-memset-element-unordered-atomic-intrinsic>
@@ -36,6 +36,14 @@ version (LlvmIntrinsics1) {
 	@mangledName("llvm.memmove.p0i8.p0i8.i32") fn __llvm_memmove_p0i8_p0i8_i32(dest: void*, src: void*, len: u32, _volatile: bool);
 	//! <http://llvm.org/docs/LangRef.html#llvm-memmove-intrinsic>
 	@mangledName("llvm.memmove.p0i8.p0i8.i64") fn __llvm_memmove_p0i8_p0i8_i64(dest: void*, src: void*, len: u64, _volatile: bool);
+} else version (LlvmIntrinsics3) {
+	// LLVM 15+: opaque pointers use p0 instead of p0i8 in intrinsic names.
+	@mangledName("llvm.memset.p0.i32") fn __llvm_memset_p0i8_i32(dest: void*, val: u8, len: u32, _volatile: bool);
+	@mangledName("llvm.memset.p0.i64") fn __llvm_memset_p0i8_i64(dest: void*, val: u8, len: u64, _volatile: bool);
+	@mangledName("llvm.memcpy.p0.p0.i32") fn __llvm_memcpy_p0i8_p0i8_i32(dest: void*, src: void*, len: u32, _volatile: bool);
+	@mangledName("llvm.memcpy.p0.p0.i64") fn __llvm_memcpy_p0i8_p0i8_i64(dest: void*, src: void*, len: u64, _volatile: bool);
+	@mangledName("llvm.memmove.p0.p0.i32") fn __llvm_memmove_p0i8_p0i8_i32(dest: void*, src: void*, len: u32, _volatile: bool);
+	@mangledName("llvm.memmove.p0.p0.i64") fn __llvm_memmove_p0i8_p0i8_i64(dest: void*, src: void*, len: u64, _volatile: bool);
 }
 //! <http://llvm.org/docs/ExceptionHandling.html#llvm-eh-typeid-for>
 @mangledName("llvm.eh.typeid.for") fn __llvm_typeid_for(void*) i32;
@@ -60,6 +68,21 @@ version (V_P32) {
 		{
 			__llvm_memmove_p0i8_p0i8_i32(dest, src, len, true);
 		}
+	} else version (LlvmIntrinsics3) {
+		fn __llvm_memset(dest: void*, val: u8, len: u32, _align: i32, _volatile: bool)
+		{
+			__llvm_memset_p0i8_i32(dest, val, len, true);
+		}
+
+		fn __llvm_memcpy(dest: void*, src: void*, len: u32, _align: i32 , _volatile: bool)
+		{
+			__llvm_memcpy_p0i8_p0i8_i32(dest, src, len, true);
+		}
+
+		fn __llvm_memmove(dest: void*, src: void*, len: u32, _align: i32 , _volatile: bool)
+		{
+			__llvm_memmove_p0i8_p0i8_i32(dest, src, len, true);
+		}
 	}
 } else version (V_P64) {
 	version (LlvmIntrinsics1) {
@@ -67,6 +90,21 @@ version (V_P32) {
 		alias __llvm_memcpy = __llvm_memcpy_p0i8_p0i8_i64;
 		alias __llvm_memmove = __llvm_memmove_p0i8_p0i8_i64;
 	} else version (LlvmIntrinsics2) {
+		fn __llvm_memset(dest: void*, val: u8, len: u64, _align: i32, _volatile: bool)
+		{
+			__llvm_memset_p0i8_i64(dest, val, len, true);
+		}
+
+		fn __llvm_memcpy(dest: void*, src: void*, len: u64, _align: i32 , _volatile: bool)
+		{
+			__llvm_memcpy_p0i8_p0i8_i64(dest, src, len, true);
+		}
+
+		fn __llvm_memmove(dest: void*, src: void*, len: u64, _align: i32 , _volatile: bool)
+		{
+			__llvm_memmove_p0i8_p0i8_i64(dest, src, len, true);
+		}
+	} else version (LlvmIntrinsics3) {
 		fn __llvm_memset(dest: void*, val: u8, len: u64, _align: i32, _volatile: bool)
 		{
 			__llvm_memset_p0i8_i64(dest, val, len, true);

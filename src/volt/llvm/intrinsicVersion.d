@@ -11,10 +11,13 @@ module volt.llvm.intrinsicVersion;
 
 enum V1 = 1;
 enum V2 = 2;
+enum V3 = 3;
 
 int get()
 {
-	version (LLVMVersion7AndAbove) {
+	version (LLVMVersion15AndAbove) {
+		return V3;
+	} else version (LLVMVersion7AndAbove) {
 		return V2;
 	} else version (LlvmVersion7) {
 		return V2;

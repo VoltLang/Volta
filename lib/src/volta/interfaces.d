@@ -368,6 +368,9 @@ public:
 		case 2:
 			overwriteVersionIdentifier("LlvmIntrinsics2");
 			break;
+		case 3:
+			overwriteVersionIdentifier("LlvmIntrinsics3");
+			break;
 		}
 	}
 

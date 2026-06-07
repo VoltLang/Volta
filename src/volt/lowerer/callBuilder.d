@@ -82,7 +82,7 @@ ir.Exp buildIntrinsicMemfoo(ref in token.Location loc,
 	ir.Exp dst, ir.Exp src, ir.Exp len, TargetInfo target)
 {
 	ir.Exp[] args;
-	if (target.llvmIntrinsicVersion == 2) {
+	if (target.llvmIntrinsicVersion >= 2) {
 		args = [dst, src, len, util.buildConstantFalse(/*#ref*/loc)];
 	} else {
 		args = [dst, src, len, util.buildConstantInt(/*#ref*/loc, 0),
@@ -105,7 +105,7 @@ ir.Exp buildIntrinsicMemset(ref in token.Location loc,
 	ir.Exp dst, ir.Exp val, ir.Exp len, TargetInfo target)
 {
 	ir.Exp[] args;
-	if (target.llvmIntrinsicVersion == 2) {
+	if (target.llvmIntrinsicVersion >= 2) {
 		args = [dst, val, len, util.buildConstantFalse(/*#ref*/loc)];
 	} else {
 		args = [dst, val, len, util.buildConstantInt(/*#ref*/loc, 0),
