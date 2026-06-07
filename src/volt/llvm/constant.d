@@ -130,7 +130,7 @@ void handleConstAddrOf(State state, ir.Unary de, Value result)
 	auto var = cast(ir.Variable)expRef.decl;
 	Type type;
 
-	auto v = state.getVariableValue(var, /*#out*/type);
+	auto v = state.getVariableValue(var, /*#out*/type, false);
 
 	auto pt = new ir.PointerType();
 	pt.loc = de.loc;
@@ -260,7 +260,7 @@ void handleConstExpReference(State state, ir.ExpReference expRef, Value result)
 		}
 
 		Type type;
-		auto v = state.getVariableValue(var, /*#out*/type);
+		auto v = state.getVariableValue(var, /*#out*/type, false);
 
 		result.value = v;
 		result.isPointer = false;
