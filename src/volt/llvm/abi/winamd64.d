@@ -26,7 +26,16 @@ void winAmd64AbiCoerceParameters(State state, ir.FunctionType ft, ref LLVMTypeRe
 		auto kind = LLVMGetTypeKind(param);
 		if (kind == LLVMTypeKind.Struct) {
 			auto newT = processStructParameter(state, ft, i, param);
-			ft.abiData ~= cast(void*[])[newT];
+			version (LLVMVersion15AndAbove) {
+				if (LLVMGetTypeKind(newT) == LLVMTypeKind.Pointer) {
+					// Opaque pointers: keep the struct type for memcpy coercion.
+					ft.abiData ~= cast(void*[])[newT, param];
+				} else {
+					ft.abiData ~= cast(void*[])[newT];
+				}
+			} else {
+				ft.abiData ~= cast(void*[])[newT];
+			}
 			types ~= newT;
 		} else {
 			ft.abiData ~= cast(void*[])null;
@@ -39,7 +48,7 @@ void winAmd64AbiCoerceParameters(State state, ir.FunctionType ft, ref LLVMTypeRe
 void winAmd64AbiCoerceArguments(State state, ir.CallableType ct, ref LLVMValueRef[] args)
 {
 	for (size_t i = 0; i < args.length; ++i) {
-		if (ct.abiData[i].length != 1) {
+		if (ct.abiData[i].length != 1 && ct.abiData[i].length != 2) {
 			continue;
 		}
 		// We need a pointer. If it is a value, alloca and store.
@@ -48,18 +57,25 @@ void winAmd64AbiCoerceArguments(State state, ir.CallableType ct, ref LLVMValueRe
 			LLVMBuildStore(state.builder, args[i], _alloca);
 			args[i] = _alloca;
 		}
-		if (ct.abiData[i].length == 1) {
-			auto lt = cast(LLVMTypeRef[])ct.abiData[i];
-			if (LLVMGetTypeKind(lt[0]) == LLVMTypeKind.Pointer) {
-				auto base = LLVMGetElementType(lt[0]);
-				auto _alloca = state.buildAlloca(base, "agg.tmp");
-				buildMemcpy(state, _alloca, args[i], base);
-				args[i] = _alloca;
+		auto lt = cast(LLVMTypeRef[])ct.abiData[i];
+		if (LLVMGetTypeKind(lt[0]) == LLVMTypeKind.Pointer) {
+			/*
+			 * Large struct: copy the argument into a local alloca before the call.
+			 * Need the struct type for alloca/memcpy; opaque pointers store it in abiData.
+			 * We can't use LLVMGetElementType because it asserts on opaque pointers.
+			 */
+			version (LLVMVersion15AndAbove) {
+				auto base = lt[1];
 			} else {
-				auto bc = LLVMBuildBitCast(state.builder, args[i],
-					LLVMPointerType(lt[0], 0), "");
-				args[i] = LLVMBuildLoad2(state.builder, lt[0], bc);
+				auto base = LLVMGetElementType(lt[0]);
 			}
+			auto _alloca = state.buildAlloca(base, "agg.tmp");
+			buildMemcpy(state, _alloca, args[i], base);
+			args[i] = _alloca;
+		} else {
+			auto bc = LLVMBuildBitCast(state.builder, args[i],
+				LLVMPointerType(lt[0], 0), "");
+			args[i] = LLVMBuildLoad2(state.builder, lt[0], bc);
 		}
 	}
 }
@@ -67,7 +83,7 @@ void winAmd64AbiCoerceArguments(State state, ir.CallableType ct, ref LLVMValueRe
 CoercedStatus winAmd64AbiPrologueParameter(State state, LLVMValueRef llvmFunc, ir.Function func,
 	ir.CallableType ct, LLVMValueRef val, size_t index, ref size_t offset)
 {
-	if (ct.abiData[index+offset].length != 1) {
+	if (ct.abiData[index+offset].length != 1 && ct.abiData[index+offset].length != 2) {
 		return NotCoerced;
 	}
 	auto p = func.params[index];
@@ -111,7 +127,16 @@ LLVMTypeRef processStructParameter(State state, ir.FunctionType ft, size_t i, LL
 	case 8, 16, 32, 64:
 		return LLVMIntTypeInContext(state.context, cast(uint)sz);
 	default:
-		return LLVMPointerType(structType, 0);
+		/*
+		 * LLVM 15+ opaque pointers: emit an untyped pointer and keep structType
+		 * in abiData; LLVMGetElementType on pointer types asserts.
+		 * https://llvm.org/docs/OpaquePointers.html#frontends
+		 */
+		version (LLVMVersion15AndAbove) {
+			return LLVMPointerTypeInContext(state.context, 0);
+		} else {
+			return LLVMPointerType(structType, 0);
+		}
 	}
 }
 
