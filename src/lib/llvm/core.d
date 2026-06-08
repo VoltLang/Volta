@@ -111,8 +111,18 @@ LLVMValueRef LLVMConstArray(LLVMTypeRef type, LLVMValueRef[] vals)
 LLVMValueRef LLVMConstInBoundsGEP2(LLVMTypeRef type, LLVMValueRef val,
                                    LLVMValueRef[] indices)
 {
-	return lib.llvm.c.Core.LLVMConstInBoundsGEP2(
-		type, val, indices.ptr, cast(uint)indices.length);
+	version (LLVMVersion15AndAbove) {
+		return lib.llvm.c.Core.LLVMConstInBoundsGEP2(
+			type, val, indices.ptr, cast(uint)indices.length);
+	} else {
+		/*
+		 * Even the 2 versions of LLVMConstInBoundsGEP are defined on
+		 * lower of versions of LLVM it's not there, at least in the
+		 * Windows build of LLVM 11. In LLVM 15 we are required to use
+		 * the typed version so switch there.
+		 */
+		return lib.llvm.c.Core.LLVMConstInBoundsGEP(val, indices.ptr, cast(uint)indices.length);
+	}
 }
 
 LLVMValueRef LLVMAddFunction(LLVMModuleRef mod, string name, LLVMTypeRef type)
