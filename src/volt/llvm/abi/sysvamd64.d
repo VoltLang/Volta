@@ -1,5 +1,7 @@
 /*#D*/
-// Copyright 2017, Bernard Helyer.
+// Copyright 2017-2024, Bernard Helyer.
+// Copyright 2018-2019, Collabora, Ltd.
+// Copyright 2024-2026, Jakob Bornecrantz.
 // SPDX-License-Identifier: BSL-1.0
 /*!
  * Provides a solution for implementing structs passed by value.
